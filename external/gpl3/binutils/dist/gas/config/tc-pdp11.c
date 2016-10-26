@@ -1,5 +1,5 @@
 /* tc-pdp11.c - pdp11-specific -
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -30,7 +30,7 @@ extern int flonum_gen2vax (int, FLONUM_TYPE * f, LITTLENUM_TYPE *);
 /* A representation for PDP-11 machine code.  */
 struct pdp11_code
 {
-  char *error;
+  const char *error;
   int code;
   int additional;	/* Is there an additional word?  */
   int word;		/* Additional word, if any.  */
@@ -85,7 +85,7 @@ const pseudo_typeS md_pseudo_table[] =
 static struct hash_control *insn_hash = NULL;
 
 static int
-set_option (char *arg)
+set_option (const char *arg)
 {
   int yes = 1;
 
@@ -279,9 +279,7 @@ md_apply_fix (fixS *fixP,
 }
 
 long
-md_chars_to_number (con, nbytes)
-     unsigned char con[];	/* Low order byte 1st.  */
-     int nbytes;		/* Number of bytes in the input.  */
+md_chars_to_number (unsigned char *con, int nbytes)
 {
   /* On a PDP-11, 0x1234 is stored as "\x12\x34", and
      0x12345678 is stored as "\x56\x78\x12\x34". It's
@@ -651,7 +649,7 @@ md_assemble (char *instruction_string)
   struct pdp11_code insn, op1, op2;
   int error;
   int size;
-  char *err = NULL;
+  const char *err = NULL;
   char *str;
   char *p;
   char c;
@@ -697,8 +695,6 @@ md_assemble (char *instruction_string)
     {
     case PDP11_OPCODE_NO_OPS:
       str = skip_whitespace (str);
-      if (*str == 0)
-	str = "";
       break;
 
     case PDP11_OPCODE_IMM3:
@@ -1045,7 +1041,7 @@ md_create_long_jump (char *ptr ATTRIBUTE_UNUSED,
 }
 
 static int
-set_cpu_model (char *arg)
+set_cpu_model (const char *arg)
 {
   char buf[4];
   char *model = buf;
@@ -1161,7 +1157,7 @@ set_cpu_model (char *arg)
 }
 
 static int
-set_machine_model (char *arg)
+set_machine_model (const char *arg)
 {
   if (strncmp (arg, "pdp-11/", 7) != 0
       && strncmp (arg, "pdp11/", 6) != 0
@@ -1248,7 +1244,7 @@ size_t md_longopts_size = sizeof (md_longopts);
    See if it's a processor-specific option.  */
 
 int
-md_parse_option (int c, char *arg)
+md_parse_option (int c, const char *arg)
 {
   init_defaults ();
 
@@ -1388,9 +1384,9 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED,
   arelent *reloc;
   bfd_reloc_code_real_type code;
 
-  reloc = xmalloc (sizeof (* reloc));
+  reloc = XNEW (arelent);
 
-  reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
@@ -1446,7 +1442,7 @@ pseudo_even (int c ATTRIBUTE_UNUSED)
   record_alignment (now_seg, alignment);
 }
 
-char *
+const char *
 md_atof (int type, char * litP, int * sizeP)
 {
   return vax_md_atof (type, litP, sizeP);

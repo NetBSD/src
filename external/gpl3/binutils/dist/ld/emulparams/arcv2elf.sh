@@ -1,3 +1,4 @@
+. ${srcdir}/emulparams/arc-endianness.sh
 MACHINE=
 SCRIPT_NAME=elfarcv2
 if [ "x${ARC_ENDIAN}" = "xbig" ]; then

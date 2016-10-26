@@ -418,3 +418,29 @@ bfd_boolean bfd_hide_sym_by_version
 Search an elf version script tree for symbol versioning
 info for a given symbol.  Return TRUE if the symbol is hidden.
 
+@findex bfd_link_check_relocs
+@subsubsection @code{bfd_link_check_relocs}
+@strong{Synopsis}
+@example
+bfd_boolean bfd_link_check_relocs
+   (bfd *abfd, struct bfd_link_info *info);
+@end example
+@strong{Description}@*
+Checks the relocs in ABFD for validity.
+Does not execute the relocs.
+Return TRUE if everything is OK, FALSE otherwise.
+This is the external entry point to this code.
+
+@findex _bfd_generic_link_check_relocs
+@subsubsection @code{_bfd_generic_link_check_relocs}
+@strong{Synopsis}
+@example
+bfd_boolean _bfd_generic_link_check_relocs
+   (bfd *abfd, struct bfd_link_info *info);
+@end example
+@strong{Description}@*
+Stub function for targets that do not implement reloc checking.
+Return TRUE.
+This is an internal function.  It should not be called from
+outside the BFD library.
+

@@ -1,3 +1,17 @@
+2016-03-03  Alan Modra  <amodra@gmail.com>
+
+	* fr30.cpu (f-m4): Replace bogus comment with a better guess
+	at what is really going on.
+
+2016-03-02  Alan Modra  <amodra@gmail.com>
+
+	* fr30.cpu (f-m4): Replace -1 << 4 with -16.
+
+2016-02-02  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* epiphany.opc (epiphany_print_insn): Set info->bytes_per_line to
+	a constant to better align disassembler output.
+
 2014-07-20  Stefan Kristiansson  <stefan.kristiansson@saunalahti.fi>
 
 	* or1korbis.cpu (l-msync, l-psync, l-csync): New instructions.

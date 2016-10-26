@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -155,7 +155,7 @@ nds32_parse_audio_ext (const field_t *pfd,
       else
 	int_value = __GF (insn, pfd->bitpos, pfd->bitsize) << pfd->shift;
 
-      if (int_value < 0)
+      if (int_value < 10)
 	func (stream, "#%d", int_value);
       else
 	func (stream, "#0x%x", int_value);
@@ -269,7 +269,7 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
       else if (strstr (opc->instruction, "tito"))
 	func (stream, "%s", opc->opcode);
       else
-	func (stream, "%s ", opc->opcode);
+	func (stream, "%s\t", opc->opcode);
     }
 
   while (*pstr_src)
@@ -280,7 +280,7 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
 	case '=':
 	case '&':
 	  pstr_src++;
-	  /* compare with operand_fields[].name.  */
+	  /* Compare with operand_fields[].name.  */
 	  pstr_tmp = &tmp_string[0];
 	  while (*pstr_src)
 	    {
@@ -304,7 +304,7 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
 	      pfd++;
 	    }
 
-	  /* for insn-16.  */
+	  /* For insn-16.  */
 	  if (parse_mode & NDS32_PARSE_INSN16)
 	    {
 	      if (pfd->hw_res == HW_GPR)
@@ -373,13 +373,18 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
 		    }
 		  else if (pfd->hw_res == HW_INT)
 		    {
-		      if (int_value < 0)
+		      if (int_value < 10)
 			func (stream, "#%d", int_value);
 		      else
 			func (stream, "#0x%x", int_value);
 		    }
-		  else		/* if(pfd->hw_res == HW_UINT).  */
-		    func (stream, "#0x%x", int_value);
+		  else /* if (pfd->hw_res == HW_UINT).  */
+		    {
+		      if (int_value < 10)
+			func (stream, "#%u", int_value);
+		      else
+			func (stream, "#0x%x", int_value);
+		    }
 		}
 
 	    }
@@ -491,14 +496,17 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
 		}
 	      else if (pfd->hw_res == HW_INT)
 		{
-		  if (int_value < 0)
+		  if (int_value < 10)
 		    func (stream, "#%d", int_value);
 		  else
 		    func (stream, "#0x%x", int_value);
 		}
-	      else		/* if(pfd->hw_res == HW_UINT).  */
+	      else /* if (pfd->hw_res == HW_UINT).  */
 		{
-		  func (stream, "#0x%x", int_value);
+		  if (int_value < 10)
+		    func (stream, "#%u", int_value);
+		  else
+		    func (stream, "#0x%x", int_value);
 		}
 	    }
 	  break;
@@ -508,13 +516,34 @@ nds32_parse_opcode (struct nds32_opcode *opc, bfd_vma pc ATTRIBUTE_UNUSED,
 	  pstr_src++;
 	  break;
 
+	case ',':
+	  func (stream, ", ");
+	  pstr_src++;
+	  break;
+	  
+	case '+':
+	  func (stream, " + ");
+	  pstr_src++;
+	  break;
+	  
+	case '<':
+	  if (pstr_src[1] == '<')
+	    {
+	      func (stream, " << ");
+	      pstr_src += 2;
+	    }
+	  else
+	    {
+	      func (stream, " <");
+	      pstr_src++;
+	    }
+	  break;
+	  
 	default:
 	  func (stream, "%c", *pstr_src++);
 	  break;
-	}			/* switch (*pstr_src).  */
-
-    }				/* while (*pstr_src).  */
-  return;
+	}
+    }
 }
 
 /* Filter instructions with some bits must be fixed.  */

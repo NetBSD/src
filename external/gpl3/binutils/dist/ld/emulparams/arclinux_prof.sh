@@ -1,3 +1,4 @@
+. ${srcdir}/emulparams/arc-endianness.sh
 SCRIPT_NAME=arclinux
 if [ "x${ARC_ENDIAN}" = "xbig" ]; then
   OUTPUT_FORMAT="elf32-bigarc"

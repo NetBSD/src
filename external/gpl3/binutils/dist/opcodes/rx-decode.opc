@@ -1,5 +1,5 @@
 /* -*- c -*- */
-/* Copyright (C) 2012-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -844,35 +844,35 @@ rx_decode_opcode (unsigned long pc AU,
 /*----------------------------------------------------------------------*/
 /* HI/LO stuff								*/
 
-/** 1111 1101 0000 0000 srca srcb	mulhi	%1, %2 */
-  ID(mulhi); SR(srca); S2R(srcb); F_____;
+/** 1111 1101 0000 a000 srca srcb	mulhi	%1, %2, %0 */
+  ID(mulhi); DR(a+32); SR(srca); S2R(srcb); F_____;
 
-/** 1111 1101 0000 0001 srca srcb	mullo	%1, %2 */
-  ID(mullo); SR(srca); S2R(srcb); F_____;
+/** 1111 1101 0000 a001 srca srcb	mullo	%1, %2, %0 */
+  ID(mullo); DR(a+32); SR(srca); S2R(srcb); F_____;
 
-/** 1111 1101 0000 0100 srca srcb	machi	%1, %2 */
-  ID(machi); SR(srca); S2R(srcb); F_____;
+/** 1111 1101 0000 a100 srca srcb	machi	%1, %2, %0 */
+  ID(machi); DR(a+32); SR(srca); S2R(srcb); F_____;
 
-/** 1111 1101 0000 0101 srca srcb	maclo	%1, %2 */
-  ID(maclo); SR(srca); S2R(srcb); F_____;
+/** 1111 1101 0000 a101 srca srcb	maclo	%1, %2, %0 */
+  ID(maclo); DR(a+32); SR(srca); S2R(srcb); F_____;
 
-/** 1111 1101 0001 0111 0000 rsrc	mvtachi	%1 */
-  ID(mvtachi); SR(rsrc); F_____;
+/** 1111 1101 0001 0111 a000 rsrc	mvtachi	%1, %0 */
+  ID(mvtachi); DR(a+32); SR(rsrc); F_____;
 
-/** 1111 1101 0001 0111 0001 rsrc	mvtaclo	%1 */
-  ID(mvtaclo); SR(rsrc); F_____;
+/** 1111 1101 0001 0111 a001 rsrc	mvtaclo	%1, %0 */
+  ID(mvtaclo); DR(a+32); SR(rsrc); F_____;
 
-/** 1111 1101 0001 1111 0000 rdst	mvfachi	%0 */
-  ID(mvfachi); DR(rdst); F_____;
+/** 1111 1101 0001 111i a m00 rdst	mvfachi	#%2, %1, %0 */
+  ID(mvfachi); S2C(((i^1)<<1)|m); SR(a+32); DR(rdst); F_____;
 
-/** 1111 1101 0001 1111 0010 rdst	mvfacmi	%0 */
-  ID(mvfacmi); DR(rdst); F_____;
+/** 1111 1101 0001 111i a m10 rdst	mvfacmi	#%2, %1, %0 */
+  ID(mvfacmi); S2C(((i^1)<<1)|m); SR(a+32); DR(rdst); F_____;
 
-/** 1111 1101 0001 1111 0001 rdst	mvfaclo	%0 */
-  ID(mvfaclo); DR(rdst); F_____;
+/** 1111 1101 0001 111i a m01 rdst	mvfaclo	#%2, %1, %0 */
+  ID(mvfaclo); S2C(((i^1)<<1)|m); SR(a+32); DR(rdst); F_____;
 
-/** 1111 1101 0001 1000 000i 0000	racw	#%1 */
-  ID(racw); SC(i+1); F_____;
+/** 1111 1101 0001 1000 a00i 0000	racw	#%1, %0 */
+  ID(racw); SC(i+1); DR(a+32); F_____;
 
 /*----------------------------------------------------------------------*/
 /* SAT									*/
@@ -1038,6 +1038,81 @@ rx_decode_opcode (unsigned long pc AU,
 
 /** 1111 1100 1101 sz sd rdst cond	sc%1%s	%0 */
   ID(sccnd); BWL(sz); DD (sd, rdst, sz); Scc(cond);
+
+/*----------------------------------------------------------------------*/
+/* RXv2 enhanced								*/
+
+/** 1111 1101 0010 0111 rdst rsrc	movco	%1, [%0] */
+   ID(movco); SR(rsrc); DR(rdst); F_____;
+
+/** 1111 1101 0010 1111 rsrc rdst	movli	[%1], %0 */
+   ID(movli); SR(rsrc); DR(rdst); F_____;
+
+/** 1111 1100 0100 1011 rsrc rdst	stz	%1, %0 */
+  ID(stcc); SR(rsrc); DR(rdst); S2cc(RXC_z);
+
+/** 1111 1100 0100 1111 rsrc rdst	stnz	%1, %0 */
+  ID(stcc); SR(rsrc); DR(rdst); S2cc(RXC_nz);
+
+/** 1111 1101 0000 a111 srca srcb 	emaca	%1, %2, %0 */
+  ID(emaca); DR(a+32); SR(srca); S2R(srcb); F_____;
+
+/** 1111 1101 0100 a111 srca srcb 	emsba	%1, %2, %0 */
+  ID(emsba); DR(a+32); SR(srca); S2R(srcb); F_____;
+
+/** 1111 1101 0000 a011 srca srcb 	emula	%1, %2, %0 */
+  ID(emula); DR(a+32); SR(srca); S2R(srcb); F_____;
+
+/** 1111 1101 0000 a110 srca srcb	maclh	%1, %2, %0 */
+  ID(maclh); DR(a+32); SR(srca); S2R(srcb); F_____;
+
+/** 1111 1101 0100 a100 srca srcb	msbhi	%1, %2, %0 */
+  ID(msbhi); DR(a+32); SR(srca); S2R(srcb); F_____;
+
+/** 1111 1101 0100 a110 srca srcb	msblh	%1, %2, %0 */
+  ID(msblh); DR(a+32); SR(srca); S2R(srcb); F_____;
+
+/** 1111 1101 0100 a101 srca srcb	msblo	%1, %2, %0 */
+  ID(msblo); DR(a+32); SR(srca); S2R(srcb); F_____;
+
+/** 1111 1101 0000 a010 srca srcb	mullh	%1, %2, %0 */
+  ID(mullh); DR(a+32); SR(srca); S2R(srcb); F_____;
+
+/** 1111 1101 0001 111i a m11 rdst	mvfacgu	#%2, %1, %0 */
+  ID(mvfacgu); S2C(((i^1)<<1)|m); SR(a+32); DR(rdst); F_____;
+
+/** 1111 1101 0001 0111 a011 rdst	mvtacgu	%0, %1 */
+  ID(mvtacgu); DR(a+32); SR(rdst); F_____;
+
+/** 1111 1101 0001 1001 a00i 0000	racl	#%1, %0 */
+  ID(racl); SC(i+1); DR(a+32); F_____;
+
+/** 1111 1101 0001 1001 a10i 0000	rdacl	#%1, %0 */
+  ID(rdacl); SC(i+1); DR(a+32); F_____;
+
+/** 1111 1101 0001 1000 a10i 0000	rdacw	#%1, %0 */
+  ID(rdacw); SC(i+1); DR(a+32); F_____;
+
+/** 1111 1111 1010 rdst srca srcb	fadd	%2, %1, %0 */
+  ID(fadd); DR(rdst); SR(srcb); S2R(srca); F__SZ_;
+
+/** 1111 1111 1000 rdst srca srcb	fsub	%2, %1, %0 */
+  ID(fsub); DR(rdst); SR(srcb); S2R(srca); F__SZ_;
+
+/** 1111 1111 1011 rdst srca srcb	fmul	%2, %1, %0 */
+  ID(fmul); DR(rdst); SR(srcb); S2R(srca); F__SZ_;
+
+/** 1111 1100 1010 00sd rsrc rdst	fsqrt	%1%S1, %0 */
+  ID(fsqrt); DR(rdst); SD(sd, rsrc, LSIZE); F__SZ_;
+
+/** 1111 1100 1010 01sd rsrc rdst	ftou	%1%S1, %0 */
+  ID(ftou); DR(rdst); SD(sd, rsrc, LSIZE); F__SZ_;
+
+/** 1111 1100 0101 01sd rsrc rdst	utof	%1%S1, %0 */
+  ID(utof); DR (rdst); SP(sd, rsrc); F__SZ_;
+
+/** 0000 0110 mx10 00sd 0001 0101 rsrc rdst	utof	%1%S1, %0 */
+  ID(utof); DR (rdst); SPm(sd, rsrc, mx); F__SZ_;
 
 /** */
 

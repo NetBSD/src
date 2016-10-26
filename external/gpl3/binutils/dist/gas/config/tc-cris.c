@@ -1,5 +1,5 @@
 /* tc-cris.c -- Assembler code for the CRIS CPU core.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB, Lund, Sweden.
    Originally written for GAS 1.38.1 by Mikael Asker.
@@ -119,7 +119,7 @@ enum cris_archs
   arch_cris_any_v0_v10, arch_crisv32, arch_cris_common_v10_v32
 };
 
-static enum cris_archs cris_arch_from_string (char **);
+static enum cris_archs cris_arch_from_string (const char **);
 static int cris_insn_ver_valid_for_arch (enum cris_insn_version_usage,
 					 enum cris_archs);
 
@@ -3591,7 +3591,7 @@ cris_get_reloc_suffix (char **cPP, bfd_reloc_code_real_type *relocp,
    code as assembly code, but if they do, they should be able enough to
    find out the correct bit patterns and use them.  */
 
-char *
+const char *
 md_atof (int type ATTRIBUTE_UNUSED, char *litp ATTRIBUTE_UNUSED,
 	 int *sizep ATTRIBUTE_UNUSED)
 {
@@ -3802,7 +3802,7 @@ cris_number_to_imm (char *bufp, long val, int n, fixS *fixP, segT seg)
    GAS does not understand.  */
 
 int
-md_parse_option (int arg, char *argp ATTRIBUTE_UNUSED)
+md_parse_option (int arg, const char *argp ATTRIBUTE_UNUSED)
 {
   switch (arg)
     {
@@ -3842,7 +3842,7 @@ md_parse_option (int arg, char *argp ATTRIBUTE_UNUSED)
 
     case OPTION_ARCH:
       {
-	char *str = argp;
+	const char *str = argp;
 	enum cris_archs argarch = cris_arch_from_string (&str);
 
 	if (argarch == arch_cris_unknown)
@@ -3959,9 +3959,9 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixP)
       return 0;
     }
 
-  relP = (arelent *) xmalloc (sizeof (arelent));
+  relP = XNEW (arelent);
   gas_assert (relP != 0);
-  relP->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  relP->sym_ptr_ptr = XNEW (asymbol *);
   *relP->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   relP->address = fixP->fx_frag->fr_address + fixP->fx_where;
 
@@ -4271,7 +4271,7 @@ s_cris_dtpoff (int bytes)
    arch_cris_unknown is returned.  */
 
 static enum cris_archs
-cris_arch_from_string (char **str)
+cris_arch_from_string (const char **str)
 {
   static const struct cris_arch_struct
   {
@@ -4398,7 +4398,7 @@ s_cris_arch (int dummy ATTRIBUTE_UNUSED)
      would be more useful than confusing, implementation-wise and
      user-wise.  */
 
-  char *str = input_line_pointer;
+  const char *str = input_line_pointer;
   enum cris_archs arch = cris_arch_from_string (&str);
 
   if (arch == arch_cris_unknown)
@@ -4414,7 +4414,7 @@ s_cris_arch (int dummy ATTRIBUTE_UNUSED)
   else if (arch != cris_arch)
     as_bad (_(".arch <arch> requires a matching --march=... option"));
 
-  input_line_pointer = str;
+  input_line_pointer = (char *) str;
   demand_empty_rest_of_line ();
   return;
 }

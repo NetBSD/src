@@ -1,5 +1,5 @@
 /* BFD back-end for oasys objects.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support, <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -272,37 +272,35 @@ oasys_archive_p (bfd *abfd)
     filepos = header.mod_tbl_offset;
     for (i = 0; i < header.mod_count; i++)
       {
+	oasys_extmodule_table_type_b_type record_ext;
+
 	if (bfd_seek (abfd, filepos, SEEK_SET) != 0)
 	  return NULL;
 
 	/* There are two ways of specifying the archive header.  */
-	  {
-	    oasys_extmodule_table_type_b_type record_ext;
+	amt = sizeof (record_ext);
+	if (bfd_bread ((void *) &record_ext, amt, abfd) != amt)
+	  return NULL;
 
-	    amt = sizeof (record_ext);
-	    if (bfd_bread ((void *) &record_ext, amt, abfd) != amt)
-	      return NULL;
+	record.mod_size = H_GET_32 (abfd, record_ext.mod_size);
+	record.file_offset = H_GET_32 (abfd, record_ext.file_offset);
 
-	    record.mod_size = H_GET_32 (abfd, record_ext.mod_size);
-	    record.file_offset = H_GET_32 (abfd, record_ext.file_offset);
+	record.dep_count = H_GET_32 (abfd, record_ext.dep_count);
+	record.depee_count = H_GET_32 (abfd, record_ext.depee_count);
+	record.sect_count = H_GET_32 (abfd, record_ext.sect_count);
+	record.module_name_size = H_GET_32 (abfd,
+					    record_ext.mod_name_length);
 
-	    record.dep_count = H_GET_32 (abfd, record_ext.dep_count);
-	    record.depee_count = H_GET_32 (abfd, record_ext.depee_count);
-	    record.sect_count = H_GET_32 (abfd, record_ext.sect_count);
-	    record.module_name_size = H_GET_32 (abfd,
-						record_ext.mod_name_length);
-
-	    amt = record.module_name_size;
-	    module[i].name = bfd_alloc (abfd, amt + 1);
-	    if (!module[i].name)
-	      return NULL;
-	    if (bfd_bread ((void *) module[i].name, amt, abfd) != amt)
-	      return NULL;
-	    module[i].name[record.module_name_size] = 0;
-	    filepos += (sizeof (record_ext)
-			+ record.dep_count * 4
-			+ record.module_name_size + 1);
-	  }
+	amt = record.module_name_size;
+	module[i].name = bfd_alloc (abfd, amt + 1);
+	if (!module[i].name)
+	  return NULL;
+	if (bfd_bread ((void *) module[i].name, amt, abfd) != amt)
+	  return NULL;
+	module[i].name[record.module_name_size] = 0;
+	filepos += (sizeof (record_ext)
+		    + record.dep_count * 4
+		    + record.module_name_size + 1);
 
 	module[i].size = record.mod_size;
 	module[i].pos = record.file_offset;
@@ -1194,6 +1192,7 @@ oasys_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
   _bfd_generic_copy_link_hash_symbol_type
 #define oasys_bfd_final_link                       _bfd_generic_final_link
 #define oasys_bfd_link_split_section               _bfd_generic_link_split_section
+#define oasys_bfd_link_check_relocs                _bfd_generic_link_check_relocs
 
 const bfd_target oasys_vec =
 {

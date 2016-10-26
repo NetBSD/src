@@ -1,6 +1,6 @@
 /* Opcode table for the TI MSP430 microcontrollers
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by Dmitry Diky <diwil@mail.ru>
    
    This program is free software; you can redistribute it and/or modify
@@ -35,18 +35,24 @@ struct msp430_operand_s
 #endif
 };
 
-#define BYTE_OPERATION  (1 << 6)  /* Byte operation flag for all instructions.  */
+/* Byte operation flag for all instructions.  Also used as the
+   A/L bit in the extension word to indicate a 20-bit operation.  */
+#define BYTE_OPERATION    (1 << 6)
+/* Z/C bit in the extension word.  If set the carry bit is ignored
+   for the duration of the operation, although it may be changed as
+   a result of the operation.  */
+#define IGNORE_CARRY_BIT  (1 << 8)  
 
 struct  msp430_opcode_s
 {
-  char *name;
+  const char *name;
   int fmt;
   int insn_opnumb;
   int bin_opcode;
   int bin_mask;
 };
 
-#define MSP_INSN(name, size, numb, bin, mask) { #name, size, numb, bin, mask }
+#define MSP_INSN(name, fmt, numb, bin, mask) { #name, fmt, numb, bin, mask }
 
 static struct msp430_opcode_s msp430_opcodes[] = 
 {
@@ -156,7 +162,8 @@ static struct msp430_opcode_s msp430_opcodes[] =
 
   MSP_INSN (pushx, -3, 1, 0x1200, 0xff80),
   MSP_INSN (rrax,  -3, 1, 0x1100, 0xff80),
-  MSP_INSN (rrcx,  -3, 1, 0x1000, 0xff80),
+  MSP_INSN (rrcx,  -3, 1, 0x1000, 0xff80), /* Synthesised as RRC but with the Z/C bit clear.  */
+  MSP_INSN (rrux,  -3, 1, 0x1000, 0xff80), /* Synthesised as RRC but with the Z/C bit set.  */
   MSP_INSN (swpbx, -3, 1, 0x1080, 0xffc0),
   MSP_INSN (sxtx,  -3, 1, 0x1180, 0xffc0),
 
@@ -172,8 +179,6 @@ static struct msp430_opcode_s msp430_opcodes[] =
   MSP_INSN (rram,  -1, 6, 0x0140, 0xf3e0),
   MSP_INSN (rlam,  -1, 6, 0x0240, 0xf3e0),
   MSP_INSN (rrum,  -1, 6, 0x0340, 0xf3e0),
-
-  MSP_INSN (rrux,  -1, 7, 0x0340, 0xffe0), /* Synthesized in terms of RRUM.  */
 
   MSP_INSN (adda,  -1, 8, 0x00a0, 0xf0b0),
   MSP_INSN (cmpa,  -1, 8, 0x0090, 0xf0b0),

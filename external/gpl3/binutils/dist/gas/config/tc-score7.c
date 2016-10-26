@@ -1,5 +1,5 @@
 /* tc-score7.c -- Assembler for Score7
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -191,7 +191,7 @@ enum s7_insn_type_for_dependency
 
 struct s7_insn_to_dependency
 {
-  char *insn_name;
+  const char *insn_name;
   enum s7_insn_type_for_dependency type;
 };
 
@@ -5121,14 +5121,15 @@ s7_build_dependency_insn_hsh (void)
       const struct s7_insn_to_dependency *tmp = s7_insn_to_dependency_table + i;
       size_t len = strlen (tmp->insn_name);
       struct s7_insn_to_dependency *new_i2d;
+      char *insn_name;
 
       new_i2d = (struct s7_insn_to_dependency *)
           obstack_alloc (&dependency_obstack,
                          sizeof (struct s7_insn_to_dependency));
-      new_i2d->insn_name = (char *) obstack_alloc (&dependency_obstack,
-                                                   len + 1);
+      insn_name = (char *) obstack_alloc (&dependency_obstack, len + 1);
 
-      strcpy (new_i2d->insn_name, tmp->insn_name);
+      strcpy (insn_name, tmp->insn_name);
+      new_i2d->insn_name = insn_name;
       new_i2d->type = tmp->type;
       hash_insert (s7_dependency_insn_hsh, new_i2d->insn_name,
                    (void *) new_i2d);
@@ -5352,8 +5353,8 @@ s7_insert_reg (const struct s7_reg_entry *r, struct hash_control *htab)
 {
   int i = 0;
   int len = strlen (r->name) + 2;
-  char *buf = xmalloc (len);
-  char *buf2 = xmalloc (len);
+  char *buf = XNEWVEC (char, len);
+  char *buf2 = XNEWVEC (char, len);
 
   strcpy (buf + i, r->name);
   for (i = 0; buf[i]; i++)
@@ -6208,7 +6209,7 @@ s7_operand (expressionS * exp)
    the byte sequence 3f f1 99 99 99 99 99 9a, and in little endian mode is
    the byte sequence 99 99 f1 3f 9a 99 99 99.  */
 
-static char *
+static const char *
 s7_atof (int type, char *litP, int *sizeP)
 {
   int prec;
@@ -6874,12 +6875,12 @@ s7_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
   static arelent *retval[MAX_RELOC_EXPANSION + 1];  /* MAX_RELOC_EXPANSION equals 2.  */
   arelent *reloc;
   bfd_reloc_code_real_type code;
-  char *type;
+  const char *type;
 
-  reloc = retval[0] = xmalloc (sizeof (arelent));
+  reloc = retval[0] = XNEW (arelent);
   retval[1] = NULL;
 
-  reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->addend = fixp->fx_offset;
@@ -6907,9 +6908,9 @@ s7_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
       newval |= (((off >> 14) & 0x3) << 16);
       s7_number_to_chars (buf, newval, s7_INSN_SIZE);
 
-      retval[1] = xmalloc (sizeof (arelent));
+      retval[1] = XNEW (arelent);
       retval[2] = NULL;
-      retval[1]->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+      retval[1]->sym_ptr_ptr = XNEW (asymbol *);
       *retval[1]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
       retval[1]->address = (reloc->address + s7_RELAX_RELOC2 (fixp->fx_frag->fr_subtype));
 
