@@ -1,5 +1,5 @@
 /* Special version of <a.out.h> for use under HP-UX.
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -60,10 +60,10 @@ struct exec
 #undef N_SET_MACHTYPE
 #undef N_SET_FLAGS
 
-#define N_MAGIC(exec) ((exec) . a_magic)
-#define N_MACHTYPE(exec) ((exec) . a_machtype)
-#define N_SET_MAGIC(exec, magic) (((exec) . a_magic) = (magic))
-#define N_SET_MACHTYPE(exec, machtype) (((exec) . a_machtype) = (machtype))
+#define N_MAGIC(execp) ((execp)->a_magic)
+#define N_MACHTYPE(execp) ((execp)->a_machtype)
+#define N_SET_MAGIC(execp, magic) (((execp)->a_magic) = (magic))
+#define N_SET_MACHTYPE(execp, machtype) (((execp)->a_machtype) = (machtype))
 
 #undef N_BADMAG
 #define N_BADMAG(x) ((_N_BADMAG (x)) || (_N_BADMACH (x)))

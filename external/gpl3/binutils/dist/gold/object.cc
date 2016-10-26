@@ -1,6 +1,6 @@
 // object.cc -- support for an object file for linking in gold
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -427,7 +427,8 @@ Sized_relobj<size, big_endian>::do_for_all_local_got_entries(
   unsigned int nsyms = this->local_symbol_count();
   for (unsigned int i = 0; i < nsyms; i++)
     {
-      Local_got_offsets::const_iterator p = this->local_got_offsets_.find(i);
+      Local_got_entry_key key(i, 0);
+      Local_got_offsets::const_iterator p = this->local_got_offsets_.find(key);
       if (p != this->local_got_offsets_.end())
 	{
 	  const Got_offset_list* got_offsets = p->second;
@@ -478,7 +479,8 @@ Sized_relobj_file<size, big_endian>::Sized_relobj_file(
     discarded_eh_frame_shndx_(-1U),
     is_deferred_layout_(false),
     deferred_layout_(),
-    deferred_layout_relocs_()
+    deferred_layout_relocs_(),
+    output_views_(NULL)
 {
   this->e_type_ = ehdr.get_e_type();
 }

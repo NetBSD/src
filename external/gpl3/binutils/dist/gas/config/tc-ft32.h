@@ -1,6 +1,6 @@
 /* tc-ft32.h -- Header file for tc-ft32.c.
 
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by FTDI (support@ftdichip.com)
 
    This file is part of GAS, the GNU Assembler.
@@ -24,9 +24,7 @@
 #define WORKING_DOT_WORD
 
 /* This macro is the BFD architecture to pass to `bfd_set_arch_mach'.  */
-const char *ft32_target_format;
-#define DEFAULT_TARGET_FORMAT  "elf32-ft32"
-#define TARGET_FORMAT          ft32_target_format
+#define TARGET_FORMAT  "elf32-ft32"
 
 #define TARGET_ARCH bfd_arch_ft32
 

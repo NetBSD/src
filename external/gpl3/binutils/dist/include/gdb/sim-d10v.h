@@ -1,6 +1,6 @@
 /* This file defines the interface between the d10v simulator and gdb.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,10 +19,6 @@
 
 #if !defined (SIM_D10V_H)
 #define SIM_D10V_H
-
-#ifdef __cplusplus
-extern "C" { // }
-#endif
 
 /* GDB interprets addresses as:
 
@@ -110,9 +106,5 @@ enum
   SIM_D10V_NR_DMAP_REGS = 4,
   SIM_D10V_NR_CR_REGS = 16
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

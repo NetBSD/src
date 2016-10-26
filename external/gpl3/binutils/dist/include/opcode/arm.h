@@ -1,5 +1,5 @@
 /* ARM assembler/disassembler support.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB and GAS.
 
@@ -33,8 +33,7 @@
 #define ARM_EXT_V5J	 0x00000800	/* Jazelle extension.	   */
 #define ARM_EXT_V6       0x00001000     /* ARM V6.                 */
 #define ARM_EXT_V6K      0x00002000     /* ARM V6K.                */
-/*			 0x00004000	   Was ARM V6Z.            */
-#define ARM_EXT_V8	 0x00004000     /* is now ARMv8.           */
+#define ARM_EXT_V8	 0x00004000     /* ARMv8 w/o atomics.      */
 #define ARM_EXT_V6T2	 0x00008000	/* Thumb-2.                */
 #define ARM_EXT_DIV	 0x00010000	/* Integer division.       */
 /* The 'M' in Arm V7M stands for Microcontroller.
@@ -53,11 +52,18 @@
 #define ARM_EXT_MP       0x08000000     /* Multiprocessing Extensions.  */
 #define ARM_EXT_SEC	 0x10000000	/* Security extensions.  */
 #define ARM_EXT_OS	 0x20000000	/* OS Extensions.  */
-#define ARM_EXT_ADIV	 0x40000000	/* Integer divide extensions in ARM 
+#define ARM_EXT_ADIV	 0x40000000	/* Integer divide extensions in ARM
 					   state.  */
 #define ARM_EXT_VIRT	 0x80000000	/* Virtualization extensions.  */
 
 #define ARM_EXT2_PAN	 0x00000001     /* PAN extension.  */
+#define ARM_EXT2_V8_2A	 0x00000002     /* ARM V8.2A.  */
+#define ARM_EXT2_V8M	 0x00000004	/* ARM V8M.  */
+#define ARM_EXT2_ATOMICS 0x00000008	/* ARMv8 atomics.  */
+#define ARM_EXT2_V6T2_V8M  0x00000010	/* V8M Baseline from V6T2.  */
+#define ARM_EXT2_FP16_INST 0x00000020	/* ARM V8.2A FP16 instructions.  */
+#define ARM_EXT2_V8M_MAIN  0x00000040	/* ARMv8-M Mainline.  */
+#define ARM_EXT2_RAS	 0x00000080	/* RAS extension.  */
 
 /* Co-processor space extensions.  */
 #define ARM_CEXT_XSCALE   0x00000001	/* Allow MIA etc.          */
@@ -140,6 +146,13 @@
 #define ARM_AEXT_V8A \
   (ARM_AEXT_V7A | ARM_EXT_MP | ARM_EXT_SEC | ARM_EXT_DIV | ARM_EXT_ADIV \
    | ARM_EXT_VIRT | ARM_EXT_V8)
+#define ARM_AEXT2_V8A	(ARM_EXT2_V6T2_V8M | ARM_EXT2_ATOMICS)
+#define ARM_AEXT2_V8_1A	(ARM_AEXT2_V8A | ARM_EXT2_PAN)
+#define ARM_AEXT2_V8_2A	(ARM_AEXT2_V8_1A | ARM_EXT2_V8_2A | ARM_EXT2_RAS)
+#define ARM_AEXT_V8M_BASE (ARM_AEXT_V6SM | ARM_EXT_DIV)
+#define ARM_AEXT_V8M_MAIN ARM_AEXT_V7M
+#define ARM_AEXT2_V8M	(ARM_EXT2_V8M | ARM_EXT2_ATOMICS | ARM_EXT2_V6T2_V8M)
+#define ARM_AEXT2_V8M_MAIN (ARM_AEXT2_V8M | ARM_EXT2_V8M_MAIN)
 
 /* Processors with specific extensions in the co-processor space.  */
 #define ARM_ARCH_XSCALE	ARM_FEATURE_LOW (ARM_AEXT_V5TE, ARM_CEXT_XSCALE)
@@ -237,20 +250,26 @@
 #define ARM_ARCH_V6K	ARM_FEATURE_CORE_LOW (ARM_AEXT_V6K)
 #define ARM_ARCH_V6Z	ARM_FEATURE_CORE_LOW (ARM_AEXT_V6Z)
 #define ARM_ARCH_V6KZ	ARM_FEATURE_CORE_LOW (ARM_AEXT_V6KZ)
-#define ARM_ARCH_V6T2	ARM_FEATURE_CORE_LOW (ARM_AEXT_V6T2)
-#define ARM_ARCH_V6KT2	ARM_FEATURE_CORE_LOW (ARM_AEXT_V6KT2)
-#define ARM_ARCH_V6ZT2	ARM_FEATURE_CORE_LOW (ARM_AEXT_V6ZT2)
-#define ARM_ARCH_V6KZT2	ARM_FEATURE_CORE_LOW (ARM_AEXT_V6KZT2)
+#define ARM_ARCH_V6T2	ARM_FEATURE_CORE (ARM_AEXT_V6T2, ARM_EXT2_V6T2_V8M)
+#define ARM_ARCH_V6KT2	ARM_FEATURE_CORE (ARM_AEXT_V6KT2, ARM_EXT2_V6T2_V8M)
+#define ARM_ARCH_V6ZT2	ARM_FEATURE_CORE (ARM_AEXT_V6ZT2, ARM_EXT2_V6T2_V8M)
+#define ARM_ARCH_V6KZT2	ARM_FEATURE_CORE (ARM_AEXT_V6KZT2, ARM_EXT2_V6T2_V8M)
 #define ARM_ARCH_V6M	ARM_FEATURE_CORE_LOW (ARM_AEXT_V6M)
 #define ARM_ARCH_V6SM	ARM_FEATURE_CORE_LOW (ARM_AEXT_V6SM)
-#define ARM_ARCH_V7	ARM_FEATURE_CORE_LOW (ARM_AEXT_V7)
-#define ARM_ARCH_V7A	ARM_FEATURE_CORE_LOW (ARM_AEXT_V7A)
-#define ARM_ARCH_V7VE	ARM_FEATURE_CORE_LOW (ARM_AEXT_V7VE)
-#define ARM_ARCH_V7R	ARM_FEATURE_CORE_LOW (ARM_AEXT_V7R)
-#define ARM_ARCH_V7M	ARM_FEATURE_CORE_LOW (ARM_AEXT_V7M)
-#define ARM_ARCH_V7EM	ARM_FEATURE_CORE_LOW (ARM_AEXT_V7EM)
-#define ARM_ARCH_V8A	ARM_FEATURE_CORE_LOW (ARM_AEXT_V8A)
-#define ARM_ARCH_V8_1A	ARM_FEATURE_CORE (ARM_AEXT_V8A, ARM_EXT2_PAN)
+#define ARM_ARCH_V7	ARM_FEATURE_CORE (ARM_AEXT_V7, ARM_EXT2_V6T2_V8M)
+#define ARM_ARCH_V7A	ARM_FEATURE_CORE (ARM_AEXT_V7A, ARM_EXT2_V6T2_V8M)
+#define ARM_ARCH_V7VE	ARM_FEATURE_CORE (ARM_AEXT_V7VE, ARM_EXT2_V6T2_V8M)
+#define ARM_ARCH_V7R	ARM_FEATURE_CORE (ARM_AEXT_V7R, ARM_EXT2_V6T2_V8M)
+#define ARM_ARCH_V7M	ARM_FEATURE_CORE (ARM_AEXT_V7M, ARM_EXT2_V6T2_V8M)
+#define ARM_ARCH_V7EM	ARM_FEATURE_CORE (ARM_AEXT_V7EM, ARM_EXT2_V6T2_V8M)
+#define ARM_ARCH_V8A	ARM_FEATURE_CORE (ARM_AEXT_V8A, ARM_AEXT2_V8A)
+#define ARM_ARCH_V8_1A	ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_1A,	\
+				     CRC_EXT_ARMV8 | FPU_NEON_EXT_RDMA)
+#define ARM_ARCH_V8_2A	ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_2A,	\
+				     CRC_EXT_ARMV8 | FPU_NEON_EXT_RDMA)
+#define ARM_ARCH_V8M_BASE ARM_FEATURE_CORE (ARM_AEXT_V8M_BASE, ARM_AEXT2_V8M)
+#define ARM_ARCH_V8M_MAIN ARM_FEATURE_CORE (ARM_AEXT_V8M_MAIN, \
+					    ARM_AEXT2_V8M_MAIN)
 
 /* Some useful combinations:  */
 #define ARM_ARCH_NONE	ARM_FEATURE_LOW (0, 0)
@@ -258,37 +277,41 @@
 #define ARM_ANY		ARM_FEATURE (-1, -1, 0)	/* Any basic core.  */
 #define ARM_FEATURE_ALL	ARM_FEATURE (-1, -1, -1)/* All CPU and FPU features.  */
 #define FPU_ANY_HARD	ARM_FEATURE_COPROC (FPU_FPA | FPU_VFP_HARD | FPU_MAVERICK)
-#define ARM_ARCH_THUMB2 ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2 | ARM_EXT_V7	\
-					      | ARM_EXT_V7A | ARM_EXT_V7R \
-					      | ARM_EXT_V7M | ARM_EXT_DIV \
-					      | ARM_EXT_V8)
+/* Extensions containing some Thumb-2 instructions.  If any is present, Thumb
+   ISA is Thumb-2.  */
+#define ARM_ARCH_THUMB2 ARM_FEATURE_CORE (ARM_EXT_V6T2 | ARM_EXT_V7	\
+					  | ARM_EXT_DIV | ARM_EXT_V8,	\
+					  ARM_EXT2_ATOMICS | ARM_EXT2_V6T2_V8M)
 /* v7-a+sec.  */
-#define ARM_ARCH_V7A_SEC ARM_FEATURE_CORE_LOW (ARM_AEXT_V7A | ARM_EXT_SEC)
+#define ARM_ARCH_V7A_SEC \
+  ARM_FEATURE_CORE (ARM_AEXT_V7A | ARM_EXT_SEC, ARM_EXT2_V6T2_V8M)
 /* v7-a+mp+sec.  */
 #define ARM_ARCH_V7A_MP_SEC \
-			ARM_FEATURE_CORE_LOW (ARM_AEXT_V7A | ARM_EXT_MP | ARM_EXT_SEC)
+  ARM_FEATURE_CORE (ARM_AEXT_V7A | ARM_EXT_MP | ARM_EXT_SEC, ARM_EXT2_V6T2_V8M)
 /* v7-r+idiv.  */
-#define ARM_ARCH_V7R_IDIV	ARM_FEATURE_CORE_LOW (ARM_AEXT_V7R | ARM_EXT_ADIV)
+#define ARM_ARCH_V7R_IDIV \
+  ARM_FEATURE_CORE (ARM_AEXT_V7R | ARM_EXT_ADIV, ARM_EXT2_V6T2_V8M)
 /* Features that are present in v6M and v6S-M but not other v6 cores.  */
 #define ARM_ARCH_V6M_ONLY ARM_FEATURE_CORE_LOW (ARM_AEXT_V6M_ONLY)
 /* v8-a+fp.  */
-#define ARM_ARCH_V8A_FP	ARM_FEATURE_LOW (ARM_AEXT_V8A, FPU_ARCH_VFP_ARMV8)
+#define ARM_ARCH_V8A_FP	\
+  ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8A, FPU_ARCH_VFP_ARMV8)
 /* v8-a+simd (implies fp).  */
-#define ARM_ARCH_V8A_SIMD	ARM_FEATURE_LOW (ARM_AEXT_V8A, \
-					     FPU_ARCH_NEON_VFP_ARMV8)
+#define ARM_ARCH_V8A_SIMD \
+  ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8A, FPU_ARCH_NEON_VFP_ARMV8)
 /* v8-a+crypto (implies simd+fp).  */
-#define ARM_ARCH_V8A_CRYPTOV1 	ARM_FEATURE_LOW (ARM_AEXT_V8A, \
-					     FPU_ARCH_CRYPTO_NEON_VFP_ARMV8)
+#define ARM_ARCH_V8A_CRYPTOV1 \
+  ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8A, FPU_ARCH_CRYPTO_NEON_VFP_ARMV8)
 
 /* v8.1-a+fp.  */
-#define ARM_ARCH_V8_1A_FP	ARM_FEATURE (ARM_AEXT_V8A, ARM_EXT2_PAN, \
-				     FPU_ARCH_VFP_ARMV8)
+#define ARM_ARCH_V8_1A_FP \
+  ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_1A, FPU_ARCH_VFP_ARMV8)
 /* v8.1-a+simd (implies fp).  */
-#define ARM_ARCH_V8_1A_SIMD	ARM_FEATURE (ARM_AEXT_V8A, ARM_EXT2_PAN, \
-				     FPU_ARCH_NEON_VFP_ARMV8_1)
+#define ARM_ARCH_V8_1A_SIMD \
+  ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_1A, FPU_ARCH_NEON_VFP_ARMV8_1)
 /* v8.1-a+crypto (implies simd+fp).  */
-#define ARM_ARCH_V8_1A_CRYPTOV1   ARM_FEATURE (ARM_AEXT_V8A, ARM_EXT2_PAN, \
-					       FPU_ARCH_CRYPTO_NEON_VFP_ARMV8_1)
+#define ARM_ARCH_V8_1A_CRYPTOV1 \
+  ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_1A, FPU_ARCH_CRYPTO_NEON_VFP_ARMV8_1)
 
 
 /* There are too many feature bits to fit in a single word, so use a
@@ -302,10 +325,17 @@ typedef struct
   unsigned long coproc;
 } arm_feature_set;
 
+/* Test whether CPU and FEAT have any features in common.  */
 #define ARM_CPU_HAS_FEATURE(CPU,FEAT) \
   (((CPU).core[0] & (FEAT).core[0]) != 0 \
    || ((CPU).core[1] & (FEAT).core[1]) != 0 \
    || ((CPU).coproc & (FEAT).coproc) != 0)
+
+/* Tests whether the features of A are a subset of B.  */
+#define ARM_FSET_CPU_SUBSET(A,B) \
+  (((A).core[0] & (B).core[0]) == (A).core[0] \
+   && ((A).core[1] & (B).core[1]) == (A).core[1] \
+   && ((A).coproc & (B).coproc) == (A).coproc)
 
 #define ARM_CPU_IS_ANY(CPU) \
   ((CPU).core[0] == ((arm_feature_set)ARM_ANY).core[0] \

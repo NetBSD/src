@@ -1,5 +1,5 @@
 /* write.h
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -112,7 +112,7 @@ struct fix
 
   /* The location of the instruction which created the reloc, used
      in error messages.  */
-  char *fx_file;
+  const char *fx_file;
   unsigned fx_line;
 
 #ifdef USING_CGEN
@@ -156,7 +156,7 @@ struct reloc_list
       arelent r;
     } b;
   } u;
-  char *file;
+  const char *file;
   unsigned int line;
 };
 
@@ -166,9 +166,9 @@ extern addressT dot_value;
 extern fragS *dot_frag;
 extern struct reloc_list* reloc_list;
 
-extern void append (char **charPP, char *fromP, unsigned long length);
-extern void record_alignment (segT seg, int align);
-extern int get_recorded_alignment (segT seg);
+extern void append (char **, char *, unsigned long);
+extern void record_alignment (segT, unsigned);
+extern int get_recorded_alignment (segT);
 extern void write_object_file (void);
 extern long relax_frag (segT, fragS *, long);
 extern int relax_segment (struct frag *, segT, int);

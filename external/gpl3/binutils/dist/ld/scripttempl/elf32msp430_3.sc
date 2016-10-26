@@ -1,11 +1,11 @@
-# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# Copyright (C) 2014-2016 Free Software Foundation, Inc.
 # 
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
 
 cat <<EOF
-/* Copyright (C) 2014-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -147,14 +147,19 @@ SECTIONS
     ${RELOCATING+ _edata = . ; }
   } ${RELOCATING+ > data ${RELOCATING+AT> text}}
   
+  __romdatastart = LOADADDR(.data);
+  __romdatacopysize = SIZEOF(.data);
+  
   .bss ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
   {
     ${RELOCATING+. = ALIGN(2);}
     ${RELOCATING+ PROVIDE (__bss_start = .) ; }
+    ${RELOCATING+ PROVIDE (__bssstart = .); }
     *(.bss)
     *(COMMON)
     ${RELOCATING+ PROVIDE (__bss_end = .) ; }
   } ${RELOCATING+ > data}
+  ${RELOCATING+ PROVIDE (__bsssize = SIZEOF(.bss)); }
 
   .noinit ${RELOCATING+ SIZEOF(.bss) + ADDR(.bss)} :
   {
@@ -180,7 +185,7 @@ SECTIONS
     ${RELOCATING+ _vectors_end = . ; }
   } ${RELOCATING+ > vectors}
 
-  .MP430.attributes 0 :
+  .MSP430.attributes 0 :
   {
     KEEP (*(.MSP430.attributes))
     KEEP (*(.gnu.attributes))

@@ -1,6 +1,6 @@
 // tilegx.cc -- tilegx target support for gold.
 
-// Copyright (C) 2012-2015 Free Software Foundation, Inc.
+// Copyright (C) 2012-2016 Free Software Foundation, Inc.
 // Written by Jiong Wang (jiwang@tilera.com)
 
 // This file is part of gold.
@@ -308,6 +308,21 @@ class Target_tilegx : public Sized_target<size, big_endian>
                           const unsigned char* plocal_symbols,
                           Relocatable_relocs*);
 
+  // Scan the relocs for --emit-relocs.
+  void
+  emit_relocs_scan(Symbol_table* symtab,
+		   Layout* layout,
+		   Sized_relobj_file<size, big_endian>* object,
+		   unsigned int data_shndx,
+		   unsigned int sh_type,
+		   const unsigned char* prelocs,
+		   size_t reloc_count,
+		   Output_section* output_section,
+		   bool needs_special_offset_handling,
+		   size_t local_symbol_count,
+		   const unsigned char* plocal_syms,
+		   Relocatable_relocs* rr);
+
   // Relocate a section during a relocatable link.
   void
   relocate_relocs(
@@ -317,7 +332,6 @@ class Target_tilegx : public Sized_target<size, big_endian>
       size_t reloc_count,
       Output_section* output_section,
       typename elfcpp::Elf_types<size>::Elf_Off offset_in_output_section,
-      const Relocatable_relocs*,
       unsigned char* view,
       typename elfcpp::Elf_types<size>::Elf_Addr view_address,
       section_size_type view_size,
@@ -517,22 +531,11 @@ class Target_tilegx : public Sized_target<size, big_endian>
     // Do a relocation.  Return false if the caller should not issue
     // any warnings about this relocation.
     inline bool
-    relocate(const Relocate_info<size, big_endian>*, Target_tilegx*,
-             Output_section*,
-             size_t relnum, const elfcpp::Rela<size, big_endian>&,
-             unsigned int r_type, const Sized_symbol<size>*,
-             const Symbol_value<size>*,
-             unsigned char*, typename elfcpp::Elf_types<size>::Elf_Addr,
-             section_size_type);
-  };
-
-  // A class which returns the size required for a relocation type,
-  // used while scanning relocs during a relocatable link.
-  class Relocatable_size_for_reloc
-  {
-   public:
-    unsigned int
-    get_size_for_reloc(unsigned int, Relobj*);
+    relocate(const Relocate_info<size, big_endian>*, unsigned int,
+	     Target_tilegx*, Output_section*, size_t, const unsigned char*,
+	     const Sized_symbol<size>*, const Symbol_value<size>*,
+	     unsigned char*, typename elfcpp::Elf_types<size>::Elf_Addr,
+	     section_size_type);
   };
 
   // Adjust TLS relocation type based on the options and whether this
@@ -4157,26 +4160,26 @@ Target_tilegx<size, big_endian>::gc_process_relocs(Symbol_table* symtab,
 {
   typedef Target_tilegx<size, big_endian> Tilegx;
   typedef typename Target_tilegx<size, big_endian>::Scan Scan;
+  typedef gold::Default_classify_reloc<elfcpp::SHT_RELA, size, big_endian>
+      Classify_reloc;
 
   if (sh_type == elfcpp::SHT_REL)
     {
       return;
     }
 
-   gold::gc_process_relocs<size, big_endian,
-                           Tilegx, elfcpp::SHT_RELA, Scan,
-      typename Target_tilegx<size, big_endian>::Relocatable_size_for_reloc>(
-          symtab,
-          layout,
-          this,
-          object,
-          data_shndx,
-          prelocs,
-          reloc_count,
-          output_section,
-          needs_special_offset_handling,
-          local_symbol_count,
-          plocal_symbols);
+   gold::gc_process_relocs<size, big_endian, Tilegx, Scan, Classify_reloc>(
+     symtab,
+     layout,
+     this,
+     object,
+     data_shndx,
+     prelocs,
+     reloc_count,
+     output_section,
+     needs_special_offset_handling,
+     local_symbol_count,
+     plocal_symbols);
 }
 // Scan relocations for a section.
 
@@ -4196,6 +4199,8 @@ Target_tilegx<size, big_endian>::scan_relocs(Symbol_table* symtab,
 {
   typedef Target_tilegx<size, big_endian> Tilegx;
   typedef typename Target_tilegx<size, big_endian>::Scan Scan;
+  typedef gold::Default_classify_reloc<elfcpp::SHT_RELA, size, big_endian>
+      Classify_reloc;
 
   if (sh_type == elfcpp::SHT_REL)
     {
@@ -4204,7 +4209,7 @@ Target_tilegx<size, big_endian>::scan_relocs(Symbol_table* symtab,
       return;
     }
 
-  gold::scan_relocs<size, big_endian, Tilegx, elfcpp::SHT_RELA, Scan>(
+  gold::scan_relocs<size, big_endian, Tilegx, Scan, Classify_reloc>(
     symtab,
     layout,
     this,
@@ -4327,11 +4332,11 @@ template<int size, bool big_endian>
 inline bool
 Target_tilegx<size, big_endian>::Relocate::relocate(
     const Relocate_info<size, big_endian>* relinfo,
+    unsigned int,
     Target_tilegx<size, big_endian>* target,
     Output_section*,
     size_t relnum,
-    const elfcpp::Rela<size, big_endian>& rela,
-    unsigned int r_type,
+    const unsigned char* preloc,
     const Sized_symbol<size>* gsym,
     const Symbol_value<size>* psymval,
     unsigned char* view,
@@ -4344,6 +4349,8 @@ Target_tilegx<size, big_endian>::Relocate::relocate(
   typedef Tilegx_relocate_functions<size, big_endian> TilegxReloc;
   typename TilegxReloc::Tilegx_howto r_howto;
 
+  const elfcpp::Rela<size, big_endian> rela(preloc);
+  unsigned int r_type = elfcpp::elf_r_type<size>(rela.get_r_info());
   const Sized_relobj_file<size, big_endian>* object = relinfo->object;
 
   // Pick the value to use for symbols defined in the PLT.
@@ -4744,11 +4751,13 @@ Target_tilegx<size, big_endian>::relocate_section(
 {
   typedef Target_tilegx<size, big_endian> Tilegx;
   typedef typename Target_tilegx<size, big_endian>::Relocate Tilegx_relocate;
+  typedef gold::Default_classify_reloc<elfcpp::SHT_RELA, size, big_endian>
+      Classify_reloc;
 
   gold_assert(sh_type == elfcpp::SHT_RELA);
 
-  gold::relocate_section<size, big_endian, Tilegx, elfcpp::SHT_RELA,
-			 Tilegx_relocate, gold::Default_comdat_behavior>(
+  gold::relocate_section<size, big_endian, Tilegx, Tilegx_relocate,
+			 gold::Default_comdat_behavior, Classify_reloc>(
     relinfo,
     this,
     prelocs,
@@ -4789,19 +4798,6 @@ Target_tilegx<size, big_endian>::apply_relocation(
     view_size);
 }
 
-// Return the size of a relocation while scanning during a relocatable
-// link.
-
-template<int size, bool big_endian>
-unsigned int
-Target_tilegx<size,big_endian>::Relocatable_size_for_reloc::get_size_for_reloc(
-  unsigned int, Relobj*)
-{
-  // We are always SHT_RELA, so we should never get here.
-  gold_unreachable();
-  return 0;
-}
-
 // Scan the relocs during a relocatable link.
 
 template<int size, bool big_endian>
@@ -4820,13 +4816,14 @@ Target_tilegx<size, big_endian>::scan_relocatable_relocs(
     const unsigned char* plocal_symbols,
     Relocatable_relocs* rr)
 {
+  typedef gold::Default_classify_reloc<elfcpp::SHT_RELA, size, big_endian>
+      Classify_reloc;
+  typedef gold::Default_scan_relocatable_relocs<Classify_reloc>
+      Scan_relocatable_relocs;
+
   gold_assert(sh_type == elfcpp::SHT_RELA);
 
-  typedef gold::Default_scan_relocatable_relocs<elfcpp::SHT_RELA,
-    Relocatable_size_for_reloc> Scan_relocatable_relocs;
-
-  gold::scan_relocatable_relocs<size, big_endian, elfcpp::SHT_RELA,
-      Scan_relocatable_relocs>(
+  gold::scan_relocatable_relocs<size, big_endian, Scan_relocatable_relocs>(
     symtab,
     layout,
     object,
@@ -4837,6 +4834,45 @@ Target_tilegx<size, big_endian>::scan_relocatable_relocs(
     needs_special_offset_handling,
     local_symbol_count,
     plocal_symbols,
+    rr);
+}
+
+// Scan the relocs for --emit-relocs.
+
+template<int size, bool big_endian>
+void
+Target_tilegx<size, big_endian>::emit_relocs_scan(
+    Symbol_table* symtab,
+    Layout* layout,
+    Sized_relobj_file<size, big_endian>* object,
+    unsigned int data_shndx,
+    unsigned int sh_type,
+    const unsigned char* prelocs,
+    size_t reloc_count,
+    Output_section* output_section,
+    bool needs_special_offset_handling,
+    size_t local_symbol_count,
+    const unsigned char* plocal_syms,
+    Relocatable_relocs* rr)
+{
+  typedef gold::Default_classify_reloc<elfcpp::SHT_RELA, size, big_endian>
+      Classify_reloc;
+  typedef gold::Default_emit_relocs_strategy<Classify_reloc>
+      Emit_relocs_strategy;
+
+  gold_assert(sh_type == elfcpp::SHT_RELA);
+
+  gold::scan_relocatable_relocs<size, big_endian, Emit_relocs_strategy>(
+    symtab,
+    layout,
+    object,
+    data_shndx,
+    prelocs,
+    reloc_count,
+    output_section,
+    needs_special_offset_handling,
+    local_symbol_count,
+    plocal_syms,
     rr);
 }
 
@@ -4851,22 +4887,23 @@ Target_tilegx<size, big_endian>::relocate_relocs(
     size_t reloc_count,
     Output_section* output_section,
     typename elfcpp::Elf_types<size>::Elf_Off offset_in_output_section,
-    const Relocatable_relocs* rr,
     unsigned char* view,
     typename elfcpp::Elf_types<size>::Elf_Addr view_address,
     section_size_type view_size,
     unsigned char* reloc_view,
     section_size_type reloc_view_size)
 {
+  typedef gold::Default_classify_reloc<elfcpp::SHT_RELA, size, big_endian>
+      Classify_reloc;
+
   gold_assert(sh_type == elfcpp::SHT_RELA);
 
-  gold::relocate_relocs<size, big_endian, elfcpp::SHT_RELA>(
+  gold::relocate_relocs<size, big_endian, Classify_reloc>(
     relinfo,
     prelocs,
     reloc_count,
     output_section,
     offset_in_output_section,
-    rr,
     view,
     view_address,
     view_size,

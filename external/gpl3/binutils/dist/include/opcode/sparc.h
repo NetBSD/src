@@ -1,5 +1,5 @@
 /* Definitions for opcode table for the sparc.
-   Copyright (C) 1989-2015 Free Software Foundation, Inc.
+   Copyright (C) 1989-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler, GDB, the GNU debugger, and
    the GNU Binutils.
@@ -20,6 +20,10 @@
    Boston, MA 02110-1301, USA.  */
 
 #include "ansidecl.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* The SPARC opcode table (and other related data) is defined in
    the opcodes library in sparc-opc.c.  If you change anything here, make
@@ -48,11 +52,16 @@ enum sparc_opcode_arch_val
   SPARC_OPCODE_ARCH_V9,
   SPARC_OPCODE_ARCH_V9A, /* V9 with ultrasparc additions.  */
   SPARC_OPCODE_ARCH_V9B, /* V9 with ultrasparc and cheetah additions.  */
+  SPARC_OPCODE_ARCH_V9C, /* V9 with UA2005 and T1 additions.  */
+  SPARC_OPCODE_ARCH_V9D, /* V9 with UA2007 and T3 additions.  */
+  SPARC_OPCODE_ARCH_V9E, /* V9 with OSA2011 and T4 additions modulus integer multiply-add.  */
+  SPARC_OPCODE_ARCH_V9V, /* V9 with OSA2011 and T4 additions, integer
+                            multiply and Fujitsu fp multiply-add.  */
+  SPARC_OPCODE_ARCH_V9M, /* V9 with OSA2015 and M7 additions.  */
+  SPARC_OPCODE_ARCH_MAX = SPARC_OPCODE_ARCH_V9M,
   SPARC_OPCODE_ARCH_BAD  /* Error return from sparc_opcode_lookup_arch.  */
 };
 
-/* The highest architecture in the table.  */
-#define SPARC_OPCODE_ARCH_MAX (SPARC_OPCODE_ARCH_BAD - 1)
 
 /* Given an enum sparc_opcode_arch_val, return the bitmask to use in
    insn encoding/decoding.  */
@@ -239,6 +248,8 @@ typedef struct sparc_opcode
 	9	%fcc3. (v9)
 	!	Privileged Register in rd (v9)
 	?	Privileged Register in rs1 (v9)
+	%	Hyperprivileged Register in rd (v9b)
+	$	Hyperprivileged Register in rs1 (v9b)
 	*	Prefetch function constant. (v9)
 	x	OPF field (v9 impdep).
 	0	32/64 bit immediate for set or setx (v9) insns
@@ -295,3 +306,6 @@ extern const char *sparc_decode_sparclet_cpreg (int);
    comment-column: 0
    End: */
 
+#ifdef __cplusplus
+}
+#endif

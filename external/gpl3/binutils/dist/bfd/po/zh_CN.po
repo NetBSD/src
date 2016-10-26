@@ -10,14 +10,14 @@ msgstr ""
 "Project-Id-Version: bfd 2.24.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
 "POT-Creation-Date: 2014-02-10 09:42+1030\n"
-"PO-Revision-Date: 2015-10-30 00:11-0400\n"
+"PO-Revision-Date: 2015-11-21 03:22-0500\n"
 "Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@gmail.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.4\n"
+"X-Generator: Poedit 1.8.6\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: aout-adobe.c:127
@@ -28,7 +28,7 @@ msgstr "%s：a.out.adobe 文件中节的类型未知：%x\n"
 #: aout-cris.c:200
 #, c-format
 msgid "%s: Invalid relocation type exported: %d"
-msgstr "%s：导出无效的重定位类型：%d"
+msgstr "%s：导出了无效的重定位类型：%d"
 
 #: aout-cris.c:243
 #, fuzzy
@@ -133,11 +133,11 @@ msgstr "不可识别的文件格式"
 
 #: bfd.c:424
 msgid "File format is ambiguous"
-msgstr "二义性的文件格式"
+msgstr "存有歧义的文件格式"
 
 #: bfd.c:425
 msgid "Section has no contents"
-msgstr "节没有内容"
+msgstr "节不含内容"
 
 #: bfd.c:426
 msgid "Nonrepresentable section on output"
@@ -166,7 +166,7 @@ msgstr "读取%s 时出错"
 
 #: bfd.c:432
 msgid "#<Invalid error code>"
-msgstr "#<无效的错误码>"
+msgstr "#<无效错误码>"
 
 #: bfd.c:1046
 #, c-format
@@ -1070,15 +1070,11 @@ msgstr "字符值超出可接受的范围以外"
 
 #: elf32-arm.c:10670 elf32-nios2.c:3525 elf32-tic6x.c:2740
 #: /src/binutils-gdb/bfd/elfnn-aarch64.c:4485
-#, fuzzy
 msgid "unsupported relocation"
-msgstr ""
-"\n"
-"重定位节 "
+msgstr "不支持的重定位"
 
 #: elf32-arm.c:10678 elf32-nios2.c:3535 elf32-tic6x.c:2748
 #: /src/binutils-gdb/bfd/elfnn-aarch64.c:4493
-#, fuzzy
 msgid "unknown error"
 msgstr "未知错误"
 
@@ -1763,22 +1759,18 @@ msgid "%B: relocation %s against STT_GNU_IFUNC symbol `%s' isn't handled by %s"
 msgstr ""
 
 #: elf32-i386.c:3610 elf64-x86-64.c:3777
-#, fuzzy
 msgid "hidden symbol"
-msgstr "无符号"
+msgstr "隐藏符号"
 
 #: elf32-i386.c:3613 elf64-x86-64.c:3780
-#, fuzzy
 msgid "internal symbol"
-msgstr "<内部数据>"
+msgstr "内部符号"
 
 #: elf32-i386.c:3616 elf64-x86-64.c:3783
-#, fuzzy
 msgid "protected symbol"
-msgstr "无符号"
+msgstr "受保护符号"
 
 #: elf32-i386.c:3619 elf64-x86-64.c:3786
-#, fuzzy
 msgid "symbol"
 msgstr "符号"
 
@@ -1866,9 +1858,9 @@ msgid ": m32rx instructions"
 msgstr "：m32rx 指令"
 
 #: elf32-m32r.c:3557
-#, fuzzy, c-format
+#, c-format
 msgid ": m32r2 instructions"
-msgstr "为 m32r2 编译"
+msgstr ": m32r2 指令"
 
 #: elf32-m68hc1x.c:1114
 #, c-format
@@ -1913,49 +1905,49 @@ msgid "%B: uses different e_flags (0x%lx) fields than previous modules (0x%lx)"
 msgstr ""
 
 #: elf32-m68hc1x.c:1430 elf32-xgate.c:677
-#, fuzzy, c-format
+#, c-format
 msgid "[abi=32-bit int, "
-msgstr "使用 32 位 ABI"
+msgstr "[abi=32-bit int, "
 
 #: elf32-m68hc1x.c:1432 elf32-xgate.c:679
-#, fuzzy, c-format
+#, c-format
 msgid "[abi=16-bit int, "
-msgstr "指定一个 ABI"
+msgstr "[abi=16-bit int, "
 
 #: elf32-m68hc1x.c:1435 elf32-xgate.c:682
-#, fuzzy, c-format
+#, c-format
 msgid "64-bit double, "
-msgstr "使用 64 位 long double"
+msgstr "64-bit double, "
 
 #: elf32-m68hc1x.c:1437 elf32-xgate.c:684
-#, fuzzy, c-format
+#, c-format
 msgid "32-bit double, "
-msgstr "指针是 32 位"
+msgstr "32-bit double, "
 
 #: elf32-m68hc1x.c:1440
-#, fuzzy, c-format
+#, c-format
 msgid "cpu=HC11]"
-msgstr "，不明 CPU"
+msgstr "cpu=HC11]"
 
 #: elf32-m68hc1x.c:1442
-#, fuzzy, c-format
+#, c-format
 msgid "cpu=HCS12]"
-msgstr "，不明 CPU"
+msgstr "cpu=HCS12]"
 
 #: elf32-m68hc1x.c:1444
-#, fuzzy, c-format
+#, c-format
 msgid "cpu=HC12]"
-msgstr "，不明 CPU"
+msgstr "cpu=HC12]"
 
 #: elf32-m68hc1x.c:1447
-#, fuzzy, c-format
+#, c-format
 msgid " [memory=bank-model]"
-msgstr "内存\n"
+msgstr " [memory=bank-model]"
 
 #: elf32-m68hc1x.c:1449
-#, fuzzy, c-format
+#, c-format
 msgid " [memory=flat]"
-msgstr "内存\n"
+msgstr " [memory=flat]"
 
 #: elf32-m68hc1x.c:1452
 #, fuzzy, c-format
@@ -2877,14 +2869,14 @@ msgid "private flags = %lx: "
 msgstr "私有标志 = %lx："
 
 #: elf32-v850.c:2558
-#, fuzzy, c-format
+#, c-format
 msgid "unknown v850 architecture"
-msgstr "未知的体系结构 %s"
+msgstr "未知的 v850 体系结构"
 
 #: elf32-v850.c:2560
-#, fuzzy, c-format
+#, c-format
 msgid "v850 E3 architecture"
-msgstr "为 v850 处理器编译"
+msgstr "v850 e3 体系结构"
 
 #: elf32-v850.c:2562 elf32-v850.c:2572
 #, c-format
@@ -2902,24 +2894,24 @@ msgid "v850e architecture"
 msgstr "v850e 体系结构"
 
 #: elf32-v850.c:2574
-#, fuzzy, c-format
+#, c-format
 msgid "v850e1 architecture"
-msgstr "为 v850e1 处理器编译"
+msgstr "v850e1 体系结构"
 
 #: elf32-v850.c:2575
-#, fuzzy, c-format
+#, c-format
 msgid "v850e2 architecture"
-msgstr "为 v850e2 处理器编译"
+msgstr "v850e2 体系结构"
 
 #: elf32-v850.c:2576
-#, fuzzy, c-format
+#, c-format
 msgid "v850e2v3 architecture"
-msgstr "为 v850e2v3 处理器编译"
+msgstr "v850e2v3 体系结构"
 
 #: elf32-v850.c:2577
-#, fuzzy, c-format
+#, c-format
 msgid "v850e3v5 architecture"
-msgstr "ESA/390 结构"
+msgstr "v850e3v5 体系结构"
 
 #: elf32-vax.c:532
 #, c-format
@@ -2927,14 +2919,14 @@ msgid " [nonpic]"
 msgstr ""
 
 #: elf32-vax.c:535
-#, fuzzy, c-format
+#, c-format
 msgid " [d-float]"
-msgstr "<无名浮点数："
+msgstr ""
 
 #: elf32-vax.c:538
-#, fuzzy, c-format
+#, c-format
 msgid " [g-float]"
-msgstr "<无名浮点数："
+msgstr ""
 
 #: elf32-vax.c:656
 #, c-format
@@ -5989,9 +5981,8 @@ msgid "GALAXY           "
 msgstr ""
 
 #: vms-alpha.c:7384
-#, fuzzy
 msgid "*unknown*        "
-msgstr "<未知>"
+msgstr "*未知*           "
 
 #: vms-alpha.c:7387
 #, fuzzy, c-format
@@ -6034,9 +6025,9 @@ msgid " Shared image  : 0x%08x 0x%08x\n"
 msgstr "回溯到 %-24.24s (0x%08x)\n"
 
 #: vms-alpha.c:7428
-#, fuzzy, c-format
+#, c-format
 msgid "cannot read EIHI\n"
-msgstr "无法读入头"
+msgstr "无法读入 EIHI\n"
 
 #: vms-alpha.c:7431
 #, c-format
@@ -6119,7 +6110,6 @@ msgid " vbn: %u, pfc: %u, matchctl: %u type: %u ("
 msgstr ""
 
 #: vms-alpha.c:7546
-#, fuzzy
 msgid "NORMAL"
 msgstr "一般"
 
@@ -6480,9 +6470,8 @@ msgid "Delay Import Directory"
 msgstr "延迟导入目录"
 
 #: peigen.c:1050 pepigen.c:1050 pex64igen.c:1050
-#, fuzzy
 msgid "CLR Runtime Header"
-msgstr "运行时名称。"
+msgstr "CLR 运行时标头"
 
 #: peigen.c:1051 pepigen.c:1051 pex64igen.c:1051
 msgid "Reserved"
