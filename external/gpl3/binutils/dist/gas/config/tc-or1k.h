@@ -1,5 +1,5 @@
 /* tc-or1k.h -- Header file for tc-or1k.c.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

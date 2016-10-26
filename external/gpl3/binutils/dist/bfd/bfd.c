@@ -1,5 +1,5 @@
 /* Generic BFD library interface and support routines.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -46,7 +46,7 @@ CODE_FRAGMENT
 .
 .enum bfd_plugin_format
 .  {
-.    bfd_plugin_uknown = 0,
+.    bfd_plugin_unknown = 0,
 .    bfd_plugin_yes = 1,
 .    bfd_plugin_no = 2
 .  };
@@ -91,7 +91,7 @@ CODE_FRAGMENT
 .  ENUM_BITFIELD (bfd_direction) direction : 2;
 .
 .  {* Format_specific flags.  *}
-.  flagword flags : 18;
+.  flagword flags : 20;
 .
 .  {* Values that may appear in the flags field of a BFD.  These also
 .     appear in the object_flags field of the bfd_target structure, where
@@ -171,16 +171,23 @@ CODE_FRAGMENT
 .  {* Compress sections in this BFD with SHF_COMPRESSED from gABI.  *}
 .#define BFD_COMPRESS_GABI 0x20000
 .
+.  {* Convert ELF common symbol type to STT_COMMON or STT_OBJECT in this
+.     BFD.  *}
+.#define BFD_CONVERT_ELF_COMMON 0x40000
+.
+.  {* Use the ELF STT_COMMON type in this BFD.  *}
+.#define BFD_USE_ELF_STT_COMMON 0x80000
+.
 .  {* Flags bits to be saved in bfd_preserve_save.  *}
 .#define BFD_FLAGS_SAVED \
 .  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN \
-.   | BFD_COMPRESS_GABI)
+.   | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON | BFD_USE_ELF_STT_COMMON)
 .
 .  {* Flags bits which are for BFD use only.  *}
 .#define BFD_FLAGS_FOR_BFD_USE_MASK \
 .  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
 .   | BFD_PLUGIN | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT \
-.   | BFD_COMPRESS_GABI)
+.   | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON | BFD_USE_ELF_STT_COMMON)
 .
 .  {* Is the file descriptor being cached?  That is, can it be closed as
 .     needed, and re-opened when accessed later?  *}
@@ -696,7 +703,8 @@ _bfd_default_error_handler (const char *fmt, ...)
 		  if (abfd == NULL)
 		    /* Invoking %B with a null bfd pointer is an internal error.  */
 		    abort ();
-		  else if (abfd->my_archive)
+		  else if (abfd->my_archive
+			   && !bfd_is_thin_archive (abfd->my_archive))
 		    snprintf (bufp, avail, "%s(%s)",
 			      abfd->my_archive->filename, abfd->filename);
 		  else

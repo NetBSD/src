@@ -3,7 +3,7 @@ dnl
 dnl And be careful when changing it!  If you must add tests with square
 dnl brackets, be sure changequote invocations surround it.
 dnl
-dnl   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ ac_default_compressed_debug_sections=unset
 # Provide a configure time option to override our default.
 AC_ARG_ENABLE(compressed_debug_sections,
 	      AS_HELP_STRING([--enable-compressed-debug-sections={all,gas,none}],
-	      [compress debug sections by default])],
+	      [compress debug sections by default]),
 [case ,"${enableval}", in
   ,yes, | ,all, | *,gas,*) ac_default_compressed_debug_sections=yes ;;
   ,no, | ,none,)  ac_default_compressed_debug_sections=no ;;
@@ -88,12 +88,34 @@ AC_ARG_ENABLE(x86_relax_relocations,
   no)  ac_default_x86_relax_relocations=0 ;;
 esac])dnl
 
+# Decide if ELF assembler should generate common symbols with the
+# STT_COMMON type.
+ac_default_elf_stt_common=unset
+# Provide a configure time option to override our default.
+AC_ARG_ENABLE(elf_stt_common,
+	      AS_HELP_STRING([--enable-elf-stt-common],
+	      [generate ELF common symbols with STT_COMMON type by default]),
+[case "${enableval}" in
+  yes)  ac_default_elf_stt_common=1 ;;
+esac])dnl
+
 using_cgen=no
 
 AM_BINUTILS_WARNINGS
 
 # Generate a header file
 AC_CONFIG_HEADERS(config.h:config.in)
+
+dnl Option --with-cpu=TYPE allows configure type control of the default
+dnl cpu type within the assembler.  Currently only the ARC target
+dnl supports this feature, but others may be added in the future.
+AC_ARG_WITH(cpu,
+            AS_HELP_STRING([--with-cpu=CPU],
+            [default cpu variant is CPU (currently only supported on ARC)]),
+            [AC_DEFINE_UNQUOTED(TARGET_WITH_CPU,
+                                "${with_cpu}",
+                                [Target specific CPU.])],
+            [])
 
 # PR 14072
 AH_VERBATIM([00_CONFIG_H_CHECK],
@@ -577,6 +599,14 @@ fi
 AC_DEFINE_UNQUOTED(DEFAULT_GENERATE_X86_RELAX_RELOCATIONS,
   $ac_default_x86_relax_relocations,
   [Define to 1 if you want to generate x86 relax relocations by default.])
+
+if test ${ac_default_elf_stt_common} = unset; then
+  ac_default_elf_stt_common=0
+fi
+AC_DEFINE_UNQUOTED(DEFAULT_GENERATE_ELF_STT_COMMON,
+  $ac_default_elf_stt_common,
+  [Define to 1 if you want to generate ELF common symbols with the
+   STT_COMMON type by default.])
 
 if test x$ac_default_compressed_debug_sections = xyes ; then
   AC_DEFINE(DEFAULT_FLAG_COMPRESS_DEBUG, 1, [Define if you want compressed debug sections by default.])

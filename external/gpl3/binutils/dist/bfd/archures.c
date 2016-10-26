@@ -1,5 +1,5 @@
 /* BFD library support routines for architectures.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Hacked by John Gilmore and Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -137,13 +137,29 @@ DESCRIPTION
 .#define bfd_mach_sparc_v9a		8 {* with ultrasparc add'ns.  *}
 .#define bfd_mach_sparc_v8plusb		9 {* with cheetah add'ns.  *}
 .#define bfd_mach_sparc_v9b		10 {* with cheetah add'ns.  *}
+.#define bfd_mach_sparc_v8plusc		11 {* with UA2005 and T1 add'ns.  *}
+.#define bfd_mach_sparc_v9c		12 {* with UA2005 and T1 add'ns.  *}
+.#define bfd_mach_sparc_v8plusd		13 {* with UA2007 and T3 add'ns.  *}
+.#define bfd_mach_sparc_v9d		14 {* with UA2007 and T3 add'ns.  *}
+.#define bfd_mach_sparc_v8pluse		15 {* with OSA2001 and T4 add'ns (no IMA).  *}
+.#define bfd_mach_sparc_v9e		16 {* with OSA2001 and T4 add'ns (no IMA).  *}
+.#define bfd_mach_sparc_v8plusv		17 {* with OSA2011 and T4 and IMA and FJMAU add'ns.  *}
+.#define bfd_mach_sparc_v9v		18 {* with OSA2011 and T4 and IMA and FJMAU add'ns.  *}
+.#define bfd_mach_sparc_v8plusm		19 {* with OSA2015 and M7 add'ns.  *}
+.#define bfd_mach_sparc_v9m		20 {* with OSA2015 and M7 add'ns.  *}
 .{* Nonzero if MACH has the v9 instruction set.  *}
 .#define bfd_mach_sparc_v9_p(mach) \
-.  ((mach) >= bfd_mach_sparc_v8plus && (mach) <= bfd_mach_sparc_v9b \
+.  ((mach) >= bfd_mach_sparc_v8plus && (mach) <= bfd_mach_sparc_v9m \
 .   && (mach) != bfd_mach_sparc_sparclite_le)
 .{* Nonzero if MACH is a 64 bit sparc architecture.  *}
 .#define bfd_mach_sparc_64bit_p(mach) \
-.  ((mach) >= bfd_mach_sparc_v9 && (mach) != bfd_mach_sparc_v8plusb)
+.  ((mach) >= bfd_mach_sparc_v9 \
+.   && (mach) != bfd_mach_sparc_v8plusb \
+.   && (mach) != bfd_mach_sparc_v8plusc \
+.   && (mach) != bfd_mach_sparc_v8plusd \
+.   && (mach) != bfd_mach_sparc_v8pluse \
+.   && (mach) != bfd_mach_sparc_v8plusv \
+.   && (mach) != bfd_mach_sparc_v8plusm)
 .  bfd_arch_spu,       {* PowerPC SPU *}
 .#define bfd_mach_spu		256
 .  bfd_arch_mips,      {* MIPS Rxxxx *}

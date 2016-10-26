@@ -1,6 +1,6 @@
 # config.bfd
 #
-#   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,6 +53,8 @@ case $targ in
     echo "*** Use or1k-*-elf or or1k-*-linux as the target instead" >&2
     exit 1
     ;;
+ i370-* | \
+ sh5*-*-* | sh64*-*-* | \
  null)
     if test "x$enable_obsolete" != xyes; then
       echo "*** Configuration $targ is obsolete." >&2
@@ -92,7 +94,7 @@ targ_cpu=`echo $targ | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
 case "${targ_cpu}" in
 aarch64*)	 targ_archs="bfd_aarch64_arch bfd_arm_arch";;
 alpha*)		 targ_archs=bfd_alpha_arch ;;
-am34*|am33_2.0*) targ_archs=bfd_mn10300_arch ;;
+am33_2.0*)	 targ_archs=bfd_mn10300_arch ;;
 arc*)		 targ_archs=bfd_arc_arch ;;
 arm*)		 targ_archs=bfd_arm_arch ;;
 bfin*)		 targ_archs=bfd_bfin_arch ;;
@@ -171,7 +173,13 @@ case "${targ}" in
 
 # START OF targmatch.h
 #ifdef BFD64
-  aarch64-*-elf)
+  aarch64-*-darwin*)
+    targ_defvec=aarch64_mach_o_vec
+    targ_selvecs="arm_mach_o_vec mach_o_le_vec mach_o_be_vec mach_o_fat_vec"
+    targ_archs="$targ_archs bfd_i386_arch bfd_powerpc_arch bfd_rs6000_arch"
+    want64=true
+    ;;
+  aarch64-*-elf | aarch64-*-rtems*)
     targ_defvec=aarch64_elf64_le_vec
     targ_selvecs="aarch64_elf64_be_vec aarch64_elf32_le_vec aarch64_elf32_be_vec arm_elf32_le_vec arm_elf32_be_vec"
     want64=true
@@ -266,15 +274,20 @@ case "${targ}" in
     ;;
 #endif /* BFD64 */
 
-  am34-*-linux* | am33_2.0-*-linux*)
+  am33_2.0-*-linux*)
     targ_defvec=am33_elf32_linux_vec
     ;;
 
-  arc*-*-elf* | arc*-*-linux-uclibc*)
+  arc*-*-elf* | arc*-*-linux*)
     targ_defvec=arc_elf32_le_vec
     targ_selvecs=arc_elf32_be_vec
     ;;
 
+  arm-*-darwin*)
+    targ_defvec=arm_mach_o_vec
+    targ_selvecs="mach_o_le_vec mach_o_be_vec mach_o_fat_vec"
+    targ_archs="$targ_archs bfd_i386_arch bfd_powerpc_arch bfd_rs6000_arch"
+    ;;
   arm-*-nacl*)
     targ_defvec=arm_elf32_nacl_le_vec
     targ_selvecs="arm_elf32_nacl_be_vec i386_elf32_nacl_vec"
@@ -337,6 +350,10 @@ case "${targ}" in
     targ_defvec=arm_coff_le_vec
     targ_selvecs=arm_coff_be_vec
     targ_underscore=yes
+    ;;
+  arm-*-phoenix*)
+    targ_defvec=arm_elf32_le_vec
+    targ_selvecs=arm_elf32_be_vec
     ;;
   arm-*-rtems*)
     targ_defvec=arm_elf32_le_vec
@@ -531,6 +548,7 @@ case "${targ}" in
     targ_defvec=i370_elf32_vec
     targ_selvecs="i370_elf32_vec"
     ;;
+
   i[3-7]86-*-sco3.2v5*coff)
     targ_defvec=i386_coff_vec
     targ_selvecs=i386_elf32_vec
@@ -677,7 +695,7 @@ case "${targ}" in
     targ_selvecs="i386_elf32_vec iamcu_elf32_vec l1om_elf64_vec k1om_elf64_vec"
     want64=true
     ;;
-  x86_64-*-elf*)
+  x86_64-*-elf* | x86_64-*-rtems*)
     targ_defvec=x86_64_elf64_vec
     targ_selvecs="i386_elf32_vec iamcu_elf32_vec x86_64_elf32_vec l1om_elf64_vec k1om_elf64_vec"
     want64=true
@@ -1060,15 +1078,11 @@ case "${targ}" in
     targ_defvec=mips_elf32_trad_be_vec
     targ_selvecs="mips_elf32_trad_le_vec mips_elf32_ntrad_be_vec mips_elf32_ntrad_le_vec mips_elf64_trad_be_vec mips_elf64_trad_le_vec"
     ;;
-  mips*el-*-elf* | mips*el-*-vxworks* | mips*-*-chorus*)
+  mips*el-*-elf* | mips*-*-chorus*)
     targ_defvec=mips_elf32_le_vec
     targ_selvecs="mips_elf32_be_vec mips_elf64_be_vec mips_elf64_le_vec"
     ;;
-  mips*-*-elf* | mips*-*-rtems* | mips*-*-vxworks | mips*-*-windiss)
-    targ_defvec=mips_elf32_be_vec
-    targ_selvecs="mips_elf32_le_vec mips_elf64_be_vec mips_elf64_le_vec"
-    ;;
-  mips*-*-none)
+  mips*-*-elf* | mips*-*-rtems* | mips*-*-windiss | mips*-*-none)
     targ_defvec=mips_elf32_be_vec
     targ_selvecs="mips_elf32_le_vec mips_elf64_be_vec mips_elf64_le_vec"
     ;;
