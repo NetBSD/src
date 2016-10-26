@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1261 2016/10/24 06:04:26 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1262 2016/10/26 06:50:43 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1269 2016/10/24 06:03:52 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1270 2016/10/26 06:50:20 msaitoh Exp
  */
 
 /*
@@ -2973,7 +2973,7 @@
 #define	PCI_PRODUCT_INTEL_82870P2_PPB	0x1460		/* 82870P2 P64H2 PCI-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_82870P2_IOxAPIC	0x1461		/* 82870P2 P64H2 IOxAPIC */
 #define	PCI_PRODUCT_INTEL_82870P2_HPLUG	0x1462		/* 82870P2 P64H2 Hot Plug Controller */
-#define	PCI_PRODUCT_INTEL_82801I_82567V_3	0x1501		/* i82567V-3 LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801H_82567V_3	0x1501		/* i82567V-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_PCH2_LV_LM	0x1502		/* 82579LM Gigabit Network Connection */
 #define	PCI_PRODUCT_INTEL_PCH2_LV_V	0x1503		/* 82579V Gigabit Network Connection */
 #define	PCI_PRODUCT_INTEL_82599_SFP_EM	0x1507		/* 82599 10G Ethernet Express Module */
