@@ -1,7 +1,5 @@
 /* Table of opcodes for the PA-RISC.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -895,8 +893,8 @@ static const struct pa_opcode pa_opcodes[] =
 { "fstdx",	0x2c000200, 0xfc0013c0, "cxcCft,x(s,b)", pa11, FLAG_STRICT},
 { "fstdx",	0x2c000200, 0xfc00dfc0, "cxft,x(b)", pa10, 0},
 { "fstdx",	0x2c000200, 0xfc001fc0, "cxft,x(s,b)", pa10, 0},
-{ "fstqx",	0x3c000200, 0xfc00dfc0, "cxft,x(b)", pa10, 0},
-{ "fstqx",	0x3c000200, 0xfc001fc0, "cxft,x(s,b)", pa10, 0},
+{ "fstqx",	0x3c000200, 0xfc00dfc0, "cXft,x(b)", pa10, 0},
+{ "fstqx",	0x3c000200, 0xfc001fc0, "cXft,x(s,b)", pa10, 0},
 { "fldws",	0x24001000, 0xfc00df80, "cm5(b),fT", pa10, FLAG_STRICT},
 { "fldws",	0x24001000, 0xfc001f80, "cm5(s,b),fT", pa10, FLAG_STRICT},
 { "fldws",	0x24001000, 0xfc00d380, "cmcc5(b),fT", pa11, FLAG_STRICT},
@@ -921,8 +919,8 @@ static const struct pa_opcode pa_opcodes[] =
 { "fstds",	0x2c001200, 0xfc0013c0, "cmcCft,5(s,b)", pa11, FLAG_STRICT},
 { "fstds",	0x2c001200, 0xfc00dfc0, "cmft,5(b)", pa10, 0},
 { "fstds",	0x2c001200, 0xfc001fc0, "cmft,5(s,b)", pa10, 0},
-{ "fstqs",	0x3c001200, 0xfc00dfc0, "cmft,5(b)", pa10, 0},
-{ "fstqs",	0x3c001200, 0xfc001fc0, "cmft,5(s,b)", pa10, 0},
+{ "fstqs",	0x3c001200, 0xfc00dfc0, "cMft,5(b)", pa10, 0},
+{ "fstqs",	0x3c001200, 0xfc001fc0, "cMft,5(s,b)", pa10, 0},
 { "fadd",	0x30000600, 0xfc00e7e0, "Ffa,fb,fT", pa10, 0},
 { "fadd",	0x38000600, 0xfc00e720, "IfA,fB,fT", pa10, 0},
 { "fsub",	0x30002600, 0xfc00e7e0, "Ffa,fb,fT", pa10, 0},

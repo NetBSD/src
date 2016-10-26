@@ -15,7 +15,23 @@
 
 @SET_MAKE@
 
-# Process this file with automake to generate Makefile.in
+#
+#  Copyright (C) 2006-2015 Free Software Foundation, Inc.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+#
 
 
 VPATH = @srcdir@
@@ -38,16 +54,24 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
+bin_PROGRAMS = dwp$(EXEEXT)
 noinst_PROGRAMS = ld-new$(EXEEXT) incremental-dump$(EXEEXT)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@check_PROGRAMS = ld1$(EXEEXT) \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	ld2$(EXEEXT) ld1-r$(EXEEXT) \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	ld2-r$(EXEEXT)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	ld2-r$(EXEEXT) ld4$(EXEEXT) \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__EXEEXT_1)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@am__append_1 = -Wl,--thread-count=3
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@am__append_2 = -Wl,--thread-count=3
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@am__append_3 = -Wl,--thread-count=13
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@am__append_4 = -Wl,--thread-count=3
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@am__append_5 = ld3
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@am__append_6 = bootstrap-test-treehash-chunksize
 subdir = .
 DIST_COMMON = NEWS README ChangeLog $(srcdir)/Makefile.in \
 	$(srcdir)/Makefile.am $(top_srcdir)/configure \
 	$(am__configure_deps) $(srcdir)/config.in \
-	$(srcdir)/../mkinstalldirs $(top_srcdir)/po/Make-in ffsll.c \
-	ftruncate.c pread.c mremap.c yyscript.h yyscript.c \
+	$(srcdir)/../mkinstalldirs $(top_srcdir)/po/Make-in pread.c \
+	ffsll.c ftruncate.c mremap.c yyscript.h yyscript.c \
 	$(srcdir)/../depcomp $(srcdir)/../ylwrap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../config/depstand.m4 \
@@ -95,16 +119,24 @@ am__objects_3 = yyscript.$(OBJEXT)
 am_libgold_a_OBJECTS = $(am__objects_1) $(am__objects_2) \
 	$(am__objects_3) $(am__objects_2)
 libgold_a_OBJECTS = $(am_libgold_a_OBJECTS)
-PROGRAMS = $(noinst_PROGRAMS)
+am__installdirs = "$(DESTDIR)$(bindir)"
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@am__EXEEXT_1 =  \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@	ld3$(EXEEXT)
+PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
+am_dwp_OBJECTS = dwp.$(OBJEXT)
+dwp_OBJECTS = $(am_dwp_OBJECTS)
+am__DEPENDENCIES_1 =
+dwp_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(dwp_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_incremental_dump_OBJECTS = incremental-dump.$(OBJEXT)
 incremental_dump_OBJECTS = $(am_incremental_dump_OBJECTS)
-am__DEPENDENCIES_1 =
 am__objects_4 = main.$(OBJEXT)
 am_ld_new_OBJECTS = $(am__objects_4)
 ld_new_OBJECTS = $(am_ld_new_OBJECTS)
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) libgold.a $(LIBIBERTY) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 ld_new_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ld_new_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@am_ld1_OBJECTS = $(am__objects_4)
@@ -123,6 +155,14 @@ ld2_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ld2_LDFLAGS) \
 ld2_r_OBJECTS = $(am_ld2_r_OBJECTS)
 ld2_r_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ld2_r_LDFLAGS) \
 	$(LDFLAGS) -o $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@am_ld3_OBJECTS = $(am__objects_4)
+ld3_OBJECTS = $(am_ld3_OBJECTS)
+ld3_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ld3_LDFLAGS) \
+	$(LDFLAGS) -o $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@am_ld4_OBJECTS = $(am__objects_4)
+ld4_OBJECTS = $(am_ld4_OBJECTS)
+ld4_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ld4_LDFLAGS) \
+	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/../depcomp
 am__depfiles_maybe = depfiles
@@ -139,9 +179,10 @@ CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 @MAINTAINER_MODE_FALSE@am__skipyacc = test -f $@ ||
 YACCCOMPILE = $(YACC) $(YFLAGS) $(AM_YFLAGS)
 YLWRAP = $(top_srcdir)/../ylwrap
-SOURCES = $(libgold_a_SOURCES) $(incremental_dump_SOURCES) \
-	$(ld_new_SOURCES) $(EXTRA_ld_new_SOURCES) $(ld1_SOURCES) \
-	$(ld1_r_SOURCES) $(ld2_SOURCES) $(ld2_r_SOURCES)
+SOURCES = $(libgold_a_SOURCES) $(dwp_SOURCES) \
+	$(incremental_dump_SOURCES) $(ld_new_SOURCES) \
+	$(EXTRA_ld_new_SOURCES) $(ld1_SOURCES) $(ld1_r_SOURCES) \
+	$(ld2_SOURCES) $(ld2_r_SOURCES) $(ld3_SOURCES) $(ld4_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-dvi-recursive install-exec-recursive \
@@ -247,8 +288,10 @@ CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DATADIRNAME = @DATADIRNAME@
+DEFAULT_TARGET = @DEFAULT_TARGET@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DLOPEN_LIBS = @DLOPEN_LIBS@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -276,6 +319,7 @@ LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
+MERGE_CONSTANTS_FLAG = @MERGE_CONSTANTS_FLAG@
 MKDIR_P = @MKDIR_P@
 MKINSTALLDIRS = @MKINSTALLDIRS@
 MSGFMT = @MSGFMT@
@@ -362,12 +406,20 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+zlibdir = @zlibdir@
+zlibinc = @zlibinc@
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = po testsuite
 tooldir = $(exec_prefix)/$(target_alias)
 ACLOCAL_AMFLAGS = -I ../bfd -I ../config
-AM_CFLAGS = $(WARN_CFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS)
-AM_CXXFLAGS = $(WARN_CXXFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS)
+
+# This is where we get zlib from.  zlibdir is -L../zlib and zlibinc is
+# -I../zlib, unless we were configured with --with-system-zlib, in which
+# case both are empty.
+ZLIB = @zlibdir@ -lz
+ZLIBINC = @zlibinc@
+AM_CFLAGS = $(WARN_CFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS) $(ZLIBINC)
+AM_CXXFLAGS = $(WARN_CXXFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS) $(ZLIBINC)
 AM_CPPFLAGS = \
 	-I$(srcdir) -I$(srcdir)/../include -I$(srcdir)/../elfcpp \
 	-DLOCALEDIR="\"$(datadir)/locale\"" \
@@ -375,7 +427,7 @@ AM_CPPFLAGS = \
 	-DTOOLLIBDIR="\"$(tooldir)/lib\"" @INCINTL@
 
 LIBIBERTY = ../libiberty/libiberty.a
-@PLUGINS_TRUE@LIBDL = -ldl
+@PLUGINS_TRUE@LIBDL = @DLOPEN_LIBS@
 @THREADS_TRUE@THREADSLIB = -lpthread
 AM_YFLAGS = -d
 
@@ -434,6 +486,7 @@ CCFILES = \
 
 HFILES = \
 	arm-reloc-property.h \
+	aarch64-reloc-property.h \
 	archive.h \
 	attributes.h \
 	binary.h \
@@ -486,21 +539,24 @@ HFILES = \
 YFILES = \
 	yyscript.y
 
-DEFFILES = arm-reloc.def
+DEFFILES = arm-reloc.def aarch64-reloc.def
 EXTRA_DIST = yyscript.c yyscript.h
 TARGETSOURCES = \
-	i386.cc x86_64.cc sparc.cc powerpc.cc arm.cc arm-reloc-property.cc
+	i386.cc x86_64.cc sparc.cc powerpc.cc arm.cc arm-reloc-property.cc tilegx.cc \
+	mips.cc aarch64.cc aarch64-reloc-property.cc s390.cc
 
 ALL_TARGETOBJS = \
 	i386.$(OBJEXT) x86_64.$(OBJEXT) sparc.$(OBJEXT) powerpc.$(OBJEXT) \
-	arm.$(OBJEXT) arm-reloc-property.$(OBJEXT)
+	arm.$(OBJEXT) arm-reloc-property.$(OBJEXT) tilegx.$(OBJEXT) \
+	mips.$(OBJEXT) aarch64.$(OBJEXT) aarch64-reloc-property.$(OBJEXT) \
+	s390.$(OBJEXT)
 
 libgold_a_SOURCES = $(CCFILES) $(HFILES) $(YFILES) $(DEFFILES)
 libgold_a_LIBADD = $(LIBOBJS)
 sources_var = main.cc
 deps_var = $(TARGETOBJS) libgold.a $(LIBIBERTY) $(LIBINTL_DEP)
 ldadd_var = $(TARGETOBJS) libgold.a $(LIBIBERTY) $(GOLD_LDADD) $(LIBINTL) \
-	 $(THREADSLIB) $(LIBDL)
+	 $(THREADSLIB) $(LIBDL) $(ZLIB)
 
 ldflags_var = $(GOLD_LDFLAGS)
 ld_new_SOURCES = $(sources_var)
@@ -513,17 +569,32 @@ incremental_dump_DEPENDENCIES = $(TARGETOBJS) libgold.a $(LIBIBERTY) \
 	$(LIBINTL_DEP)
 
 incremental_dump_LDADD = $(TARGETOBJS) libgold.a $(LIBIBERTY) $(LIBINTL) \
-	 $(THREADSLIB) $(LIBDL)
+	 $(THREADSLIB) $(LIBDL) $(ZLIB)
 
+dwp_SOURCES = dwp.cc
+dwp_DEPENDENCIES = libgold.a $(LIBIBERTY) $(LIBINTL_DEP)
+dwp_LDADD = libgold.a $(LIBIBERTY) $(GOLD_LDADD) $(LIBINTL) $(THREADSLIB) \
+	$(LIBDL) $(ZLIB)
+
+dwp_LDFLAGS = $(GOLD_LDFLAGS)
+CONFIG_STATUS_DEPENDENCIES = $(srcdir)/../bfd/development.sh
 POTFILES = $(CCFILES) $(HFILES) $(TARGETSOURCES)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_SOURCES = $(sources_var)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_DEPENDENCIES = $(deps_var) gcctestdir1/ld
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_LDADD = $(ldadd_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_LDFLAGS = -Bgcctestdir1/
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_LDFLAGS = -Bgcctestdir1/ \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id=tree \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-chunk-size-for-treehash=12345 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-min-file-size-for-treehash=0 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_1)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_SOURCES = $(sources_var)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_DEPENDENCIES = $(deps_var) gcctestdir2/ld
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_LDADD = $(ldadd_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_LDFLAGS = -Bgcctestdir2/
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_LDFLAGS = -Bgcctestdir2/ \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id=tree \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-chunk-size-for-treehash=12345 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-min-file-size-for-treehash=0 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_2)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_r_SOURCES = $(sources_var)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_r_DEPENDENCIES = libgold-1-r.o $(deps_var) gcctestdir1/ld
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_r_LDADD = libgold-1-r.o $(ldadd_var)
@@ -532,7 +603,25 @@ POTFILES = $(CCFILES) $(HFILES) $(TARGETSOURCES)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_r_DEPENDENCIES = libgold-2-r.o $(deps_var) gcctestdir2-r/ld
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_r_LDADD = libgold-2-r.o $(ldadd_var)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_r_LDFLAGS = -Bgcctestdir2-r/
-@GCC_TRUE@@NATIVE_LINKER_TRUE@TESTS = bootstrap-test bootstrap-test-r
+@GCC_TRUE@@NATIVE_LINKER_TRUE@TESTS = bootstrap-test bootstrap-test-r \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	bootstrap-test-treehash-chunksize \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_6)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld3_SOURCES = $(sources_var)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld3_DEPENDENCIES = $(deps_var) gcctestdir3/ld
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld3_LDADD = $(ldadd_var)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld3_LDFLAGS = -Bgcctestdir3/ \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id=tree \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-chunk-size-for-treehash=12345 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-min-file-size-for-treehash=0 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_3)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_SOURCES = $(sources_var)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_DEPENDENCIES = $(deps_var) gcctestdir4/ld
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_LDADD = $(ldadd_var)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_LDFLAGS = -Bgcctestdir4/ \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id=tree \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-chunk-size-for-treehash=12346 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-min-file-size-for-treehash=0 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_4)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -603,12 +692,52 @@ libgold.a: $(libgold_a_OBJECTS) $(libgold_a_DEPENDENCIES)
 	-rm -f libgold.a
 	$(libgold_a_AR) libgold.a $(libgold_a_OBJECTS) $(libgold_a_LIBADD)
 	$(RANLIB) libgold.a
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	for p in $$list; do echo "$$p $$p"; done | \
+	sed 's/$(EXEEXT)$$//' | \
+	while read p p1; do if test -f $$p; \
+	  then echo "$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n;h' -e 's|.*|.|' \
+	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
+	sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
+	    else { print "f", $$3 "/" $$4, $$1; } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	    test -z "$$files" || { \
+	      echo " $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
+	      $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
+	    } \
+	; done
+
+uninstall-binPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
+	      -e 's/$$/$(EXEEXT)/' `; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(bindir)" && rm -f $$files
+
+clean-binPROGRAMS:
+	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
 
 clean-checkPROGRAMS:
 	-test -z "$(check_PROGRAMS)" || rm -f $(check_PROGRAMS)
 
 clean-noinstPROGRAMS:
 	-test -z "$(noinst_PROGRAMS)" || rm -f $(noinst_PROGRAMS)
+dwp$(EXEEXT): $(dwp_OBJECTS) $(dwp_DEPENDENCIES) 
+	@rm -f dwp$(EXEEXT)
+	$(dwp_LINK) $(dwp_OBJECTS) $(dwp_LDADD) $(LIBS)
 incremental-dump$(EXEEXT): $(incremental_dump_OBJECTS) $(incremental_dump_DEPENDENCIES) 
 	@rm -f incremental-dump$(EXEEXT)
 	$(CXXLINK) $(incremental_dump_OBJECTS) $(incremental_dump_LDADD) $(LIBS)
@@ -627,6 +756,12 @@ ld2$(EXEEXT): $(ld2_OBJECTS) $(ld2_DEPENDENCIES)
 ld2-r$(EXEEXT): $(ld2_r_OBJECTS) $(ld2_r_DEPENDENCIES) 
 	@rm -f ld2-r$(EXEEXT)
 	$(ld2_r_LINK) $(ld2_r_OBJECTS) $(ld2_r_LDADD) $(LIBS)
+ld3$(EXEEXT): $(ld3_OBJECTS) $(ld3_DEPENDENCIES) 
+	@rm -f ld3$(EXEEXT)
+	$(ld3_LINK) $(ld3_OBJECTS) $(ld3_LDADD) $(LIBS)
+ld4$(EXEEXT): $(ld4_OBJECTS) $(ld4_DEPENDENCIES) 
+	@rm -f ld4$(EXEEXT)
+	$(ld4_LINK) $(ld4_OBJECTS) $(ld4_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -638,6 +773,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/ftruncate.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/mremap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@$(DEPDIR)/pread.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/aarch64-reloc-property.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/aarch64.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm-reloc-property.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm.Po@am__quote@
@@ -651,6 +788,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/descriptors.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dirsearch.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dwarf_reader.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dwp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dynobj.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ehframe.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/errors.Po@am__quote@
@@ -669,6 +807,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mapfile.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/merge.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mips.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nacl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/options.Po@am__quote@
@@ -680,6 +819,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reduced_debug_output.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reloc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/resolve.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/s390.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/script-sections.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/script.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sparc.Po@am__quote@
@@ -687,6 +827,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/symtab.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/target-select.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/target.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tilegx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/version.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/workqueue-threads.Po@am__quote@
@@ -1016,6 +1157,8 @@ bootstrap-test.log: bootstrap-test
 	@p='bootstrap-test'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 bootstrap-test-r.log: bootstrap-test-r
 	@p='bootstrap-test-r'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
+bootstrap-test-treehash-chunksize.log: bootstrap-test-treehash-chunksize
+	@p='bootstrap-test-treehash-chunksize'; $(am__check_pre) $(LOG_COMPILE) "$$tst" $(am__check_post)
 .test.log:
 	@p='$<'; $(am__check_pre) $(TEST_LOG_COMPILE) "$$tst" $(am__check_post)
 @am__EXEEXT_TRUE@.test$(EXEEXT).log:
@@ -1027,6 +1170,9 @@ check: check-recursive
 all-am: Makefile $(LIBRARIES) $(PROGRAMS) config.h
 installdirs: installdirs-recursive
 installdirs-am:
+	for dir in "$(DESTDIR)$(bindir)"; do \
+	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
+	done
 install: install-recursive
 install-exec: install-exec-recursive
 install-data: install-data-recursive
@@ -1060,8 +1206,8 @@ maintainer-clean-generic:
 	-rm -f yyscript.h
 clean: clean-recursive
 
-clean-am: clean-checkPROGRAMS clean-generic clean-noinstLIBRARIES \
-	clean-noinstPROGRAMS mostlyclean-am
+clean-am: clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
+	clean-noinstLIBRARIES clean-noinstPROGRAMS mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -1088,7 +1234,7 @@ install-dvi: install-dvi-recursive
 
 install-dvi-am:
 
-install-exec-am: install-exec-local
+install-exec-am: install-binPROGRAMS install-exec-local
 
 install-html: install-html-recursive
 
@@ -1129,7 +1275,7 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am:
+uninstall-am: uninstall-binPROGRAMS
 
 .MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) all check-am \
 	check-html ctags-recursive install-am install-strip recheck \
@@ -1137,20 +1283,23 @@ uninstall-am:
 
 .PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
 	all all-am am--refresh check check-TESTS check-am check-html \
-	clean clean-checkPROGRAMS clean-generic clean-noinstLIBRARIES \
-	clean-noinstPROGRAMS ctags ctags-recursive distclean \
-	distclean-compile distclean-generic distclean-hdr \
-	distclean-tags dvi dvi-am html html-am info info-am install \
-	install-am install-data install-data-am install-data-local \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-exec-local install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic pdf pdf-am ps ps-am recheck recheck-html \
-	tags tags-recursive uninstall uninstall-am
+	clean clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
+	clean-noinstLIBRARIES clean-noinstPROGRAMS ctags \
+	ctags-recursive distclean distclean-compile distclean-generic \
+	distclean-hdr distclean-tags dvi dvi-am html html-am info \
+	info-am install install-am install-binPROGRAMS install-data \
+	install-data-am install-data-local install-dvi install-dvi-am \
+	install-exec install-exec-am install-exec-local install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
+	ps ps-am recheck recheck-html tags tags-recursive uninstall \
+	uninstall-am uninstall-binPROGRAMS
 
+
+diststuff: $(EXTRA_DIST)
 
 # Use an explicit dependency for the bison generated header file.
 expression.$(OBJEXT): yyscript.h
@@ -1165,21 +1314,22 @@ check: libgold.a
 install-exec-local: ld-new$(EXEEXT)
 	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(tooldir)/bin
 	n=`echo $(installed_linker) | sed '$(transform)'`; \
-	$(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${n}$(EXEEXT); \
+	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
+	  ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${n}$(EXEEXT); \
 	if test "$(bindir)" != "$(tooldir)/bin"; then \
 	  rm -f $(DESTDIR)$(tooldir)/bin/$(installed_linker)$(EXEEXT); \
 	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$(installed_linker)$(EXEEXT) >/dev/null 2>/dev/null \
-	  || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$(installed_linker)$(EXEEXT); \
+	  || $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$(installed_linker)$(EXEEXT); \
 	fi; \
 	if test "x$(install_as_default)" = "xyes"; then \
 	  ld=`echo ld | sed '$(transform)'`; \
 	  rm -f $(DESTDIR)$(bindir)/$${ld}$(EXEEXT); \
 	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(bindir)/$${ld}$(EXEEXT) >/dev/null 2>/dev/null \
-	  || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${ld}$(EXEEXT); \
+	  || $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${ld}$(EXEEXT); \
 	  if test "$(bindir)" != "$(tooldir)/bin"; then \
 	    rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 	    ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
-	    || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
+	    || $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 	  fi; \
 	fi
 
@@ -1208,7 +1358,7 @@ po/POTFILES.in: @MAINT@ Makefile
 @GCC_TRUE@@NATIVE_LINKER_TRUE@bootstrap-test: ld2
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "#!/bin/sh" > $@
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "cmp ld1 ld2" > $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "cmp ld1 ld2" >> $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	chmod +x $@
 
 @GCC_TRUE@@NATIVE_LINKER_TRUE@libgold-1-r.o: gcctestdir1/ld libgold.a
@@ -1225,7 +1375,29 @@ po/POTFILES.in: @MAINT@ Makefile
 @GCC_TRUE@@NATIVE_LINKER_TRUE@bootstrap-test-r: ld2-r
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "#!/bin/sh" > $@
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "cmp ld1-r ld2-r" > $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "cmp ld1-r ld2-r" >> $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	chmod +x $@
+
+@GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir3/ld: ld-new
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	test -d gcctestdir3 || mkdir -p gcctestdir3
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f gcctestdir3/ld
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	(cd gcctestdir3 && $(LN_S) ../ld-new ld)
+
+@GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir4/ld: ld-new
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	test -d gcctestdir4 || mkdir -p gcctestdir4
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f gcctestdir4/ld
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	(cd gcctestdir4 && $(LN_S) ../ld-new ld)
+
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@bootstrap-test-treehash: ld1 ld3
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@	rm -f $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@	echo "#!/bin/sh" > $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@	echo "cmp ld1 ld3" >> $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@	chmod +x $@
+
+@GCC_TRUE@@NATIVE_LINKER_TRUE@bootstrap-test-treehash-chunksize: ld1 ld4
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "#!/bin/sh" > $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "cmp ld1 ld4 | grep ." >> $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	chmod +x $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

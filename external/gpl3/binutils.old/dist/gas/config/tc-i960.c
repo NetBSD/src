@@ -1,7 +1,5 @@
 /* tc-i960.c - All the i80960-specific stuff
-   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1989-2015 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -66,7 +64,6 @@
 #include "as.h"
 
 #include "safe-ctype.h"
-#include "obstack.h"
 
 #include "opcode/i960.h"
 
@@ -567,7 +564,7 @@ get_cdisp (char *dispP, /* Displacement as specified in source instruction.  */
 	   int numbits, /* # bits of displacement (13 for COBR, 24 for CTRL).  */
 	   int var_frag,/* 1 if varying length code fragment should be emitted;
 			   0 if an address fix should be emitted.  */
-	   int callj)	/* 1 if callj relocation should be done; else 0.  */	   
+	   int callj)	/* 1 if callj relocation should be done; else 0.  */
 {
   expressionS e;		/* Parsed expression.  */
   fixS *fixP;			/* Structure describing needed address fix.  */
@@ -805,7 +802,7 @@ parse_regop (struct regop *regopP,	/* Where to put description of register opera
 }
 
 /* get_ispec:	parse a memory operand for an index specification
-   
+
    Here, an "index specification" is taken to be anything surrounded
    by square brackets and NOT followed by anything else.
 
@@ -814,7 +811,7 @@ parse_regop (struct regop *regopP,	/* Where to put description of register opera
 
 static char *
 get_ispec (char *textP)  /* Pointer to memory operand from source instruction, no white space.  */
-	   
+
 {
   /* Points to start of index specification.  */
   char *start;
@@ -1261,7 +1258,7 @@ parse_ldconst (char *arg[])	/* See above.  */
               ldconst  64,<reg>  -> shlo 8,3,<reg>
               ldconst  -1,<reg>  -> subo 1,0,<reg>
               ldconst -31,<reg>  -> subo 31,0,<reg>
-        
+
          Anything else becomes:
                 lda xxx,<reg>.  */
       n = offs (e);
@@ -1754,7 +1751,7 @@ md_number_to_field (char *instrP,		/* Pointer to instruction to be fixed.  */
     {
       /* Put bit field into instruction and write back in target
          * byte order.  */
-      val &= ~(-1 << (int) numbits);	/* Clear unused sign bits.  */
+      val &= ~(-(1 << (int) numbits));	/* Clear unused sign bits.  */
       instr |= val;
       md_number_to_chars (instrP, instr, 4);
     }
@@ -2290,7 +2287,7 @@ parse_po (int po_num)	/* Pseudo-op number:  currently S_LEAFPROC or S_SYSPROC.  
   	passed fixup structure.  */
 
 int
-reloc_callj (fixS *fixP)  /* Relocation that can be done at assembly time.  */    
+reloc_callj (fixS *fixP)  /* Relocation that can be done at assembly time.  */
 {
   /* Points to the binary for the instruction being relocated.  */
   char *where;
@@ -2338,8 +2335,7 @@ s_endian (int ignore ATTRIBUTE_UNUSED)
   char *name;
   char c;
 
-  name = input_line_pointer;
-  c = get_symbol_end ();
+  c = get_symbol_name (&name);
   if (strcasecmp (name, "little") == 0)
     ;
   else if (strcasecmp (name, "big") == 0)
@@ -2347,7 +2343,7 @@ s_endian (int ignore ATTRIBUTE_UNUSED)
   else
     as_warn (_("ignoring unrecognized .endian type `%s'"), name);
 
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
 
   demand_empty_rest_of_line ();
 }
@@ -2470,7 +2466,7 @@ md_section_align (segT seg,
   int align;
 
   align = bfd_get_section_alignment (stdoutput, seg);
-  return (addr + (1 << align) - 1) & (-1 << align);
+  return (addr + (1 << align) - 1) & -(1 << align);
 }
 
 extern int coff_flags;

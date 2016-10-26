@@ -1,5 +1,5 @@
 /* BFD back-end for PDP-11 support.
-   Copyright 2001, 2002, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

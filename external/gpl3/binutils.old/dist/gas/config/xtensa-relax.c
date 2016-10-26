@@ -1,6 +1,5 @@
 /* Table of relaxations for Xtensa assembly.
-   Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -248,7 +247,7 @@ struct string_pattern_pair_struct
      addi.n a4, 0x1010
      => addi a4, 0x1010
      => addmi a4, 0x1010
-     => addmi a4, 0x1000, addi a4, 0x10.  
+     => addmi a4, 0x1000, addi a4, 0x10.
 
    See the comments in xg_assembly_relax for some important details
    regarding how these chains must be built.  */
@@ -352,7 +351,7 @@ static string_pattern_pair widen_spec_list[] =
      out-of-range branch.  Put the wide branch relaxations first in the
      table since they are more efficient than the branch-around
      relaxations.  */
-  
+
   {"beqz %as,%label ? IsaUseWideBranches", "WIDE.beqz %as,%label"},
   {"bnez %as,%label ? IsaUseWideBranches", "WIDE.bnez %as,%label"},
   {"bgez %as,%label ? IsaUseWideBranches", "WIDE.bgez %as,%label"},
@@ -377,7 +376,7 @@ static string_pattern_pair widen_spec_list[] =
   {"bnall %as,%at,%label ? IsaUseWideBranches", "WIDE.bnall %as,%at,%label"},
   {"bbc %as,%at,%label ? IsaUseWideBranches", "WIDE.bbc %as,%at,%label"},
   {"bbs %as,%at,%label ? IsaUseWideBranches", "WIDE.bbs %as,%at,%label"},
-  
+
   /* Widening branch comparisons eq/ne to zero.  Prefer relaxing to narrow
      branches if the density option is available.  */
   {"beqz %as,%label ? IsaUseDensityInstruction", "bnez.n %as,%LABEL;j %label;LABEL"},
@@ -870,7 +869,7 @@ clear_opname_map (opname_map *m)
 static bfd_boolean
 same_operand_name (const opname_map_e *m1, const opname_map_e *m2)
 {
-  if (m1->operand_name == NULL || m1->operand_name == NULL)
+  if (m1->operand_name == NULL || m2->operand_name == NULL)
     return FALSE;
   return (m1->operand_name == m2->operand_name);
 }
@@ -1544,7 +1543,7 @@ transition_applies (insn_pattern *initial_insn,
 	  else if (!strcmp (option_name, "Loops"))
 	    option_available = (XCHAL_HAVE_LOOPS == 1);
 	  else if (!strcmp (option_name, "WideBranches"))
-	    option_available 
+	    option_available
 	      = (XCHAL_HAVE_WIDE_BRANCHES == 1 && produce_flix == FLIX_ALL);
 	  else if (!strcmp (option_name, "PredictedBranches"))
 	    option_available
@@ -1613,7 +1612,7 @@ build_transition (insn_pattern *initial_insn,
   precond_e *precond;
   insn_repl_e *r;
 
-  if (!wide_branch_opcode (initial_insn->t.opcode_name, ".w18", &opcode) 
+  if (!wide_branch_opcode (initial_insn->t.opcode_name, ".w18", &opcode)
       && !wide_branch_opcode (initial_insn->t.opcode_name, ".w15", &opcode))
     opcode = xtensa_opcode_lookup (isa, initial_insn->t.opcode_name);
 

@@ -1,7 +1,6 @@
 /* SPU specific support for 32-bit ELF
 
-   Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -38,7 +37,7 @@ static bfd_reloc_status_type spu_elf_rel9 (bfd *, arelent *, asymbol *,
    array, so it must be declared in the order of that type.  */
 
 static reloc_howto_type elf_howto_table[] = {
-  HOWTO (R_SPU_NONE,       0, 0,  0, FALSE,  0, complain_overflow_dont,
+  HOWTO (R_SPU_NONE,       0, 3,  0, FALSE,  0, complain_overflow_dont,
 	 bfd_elf_generic_reloc, "SPU_NONE",
 	 FALSE, 0, 0x00000000, FALSE),
   HOWTO (R_SPU_ADDR10,     4, 2, 10, FALSE, 14, complain_overflow_bitfield,
@@ -106,6 +105,8 @@ spu_elf_bfd_to_reloc_type (bfd_reloc_code_real_type code)
   switch (code)
     {
     default:
+      return (enum elf_spu_reloc_type) -1;
+    case BFD_RELOC_NONE:
       return R_SPU_NONE;
     case BFD_RELOC_SPU_IMM10W:
       return R_SPU_ADDR10;
@@ -152,7 +153,14 @@ spu_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
   enum elf_spu_reloc_type r_type;
 
   r_type = (enum elf_spu_reloc_type) ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < R_SPU_max);
+  /* PR 17512: file: 90c2a92e.  */
+  if (r_type >= R_SPU_max)
+    {
+      (*_bfd_error_handler) (_("%B: unrecognised SPU reloc number: %d"),
+			     abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      r_type = R_SPU_NONE;
+    }
   cache_ptr->howto = &elf_howto_table[(int) r_type];
 }
 
@@ -162,7 +170,7 @@ spu_elf_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 {
   enum elf_spu_reloc_type r_type = spu_elf_bfd_to_reloc_type (code);
 
-  if (r_type == R_SPU_NONE)
+  if (r_type == (enum elf_spu_reloc_type) -1)
     return NULL;
 
   return elf_howto_table + r_type;
@@ -440,7 +448,7 @@ spu_elf_link_hash_table_create (bfd *abfd)
 {
   struct spu_link_hash_table *htab;
 
-  htab = bfd_malloc (sizeof (*htab));
+  htab = bfd_zmalloc (sizeof (*htab));
   if (htab == NULL)
     return NULL;
 
@@ -452,9 +460,6 @@ spu_elf_link_hash_table_create (bfd *abfd)
       free (htab);
       return NULL;
     }
-
-  memset (&htab->ovtab, 0,
-	  sizeof (*htab) - offsetof (struct spu_link_hash_table, ovtab));
 
   htab->elf.init_got_refcount.refcount = 0;
   htab->elf.init_got_refcount.glist = NULL;
@@ -559,7 +564,7 @@ spu_elf_create_sections (struct bfd_link_info *info)
   struct spu_link_hash_table *htab = spu_hash_table (info);
   bfd *ibfd;
 
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     if (bfd_get_section_by_name (ibfd, SPU_PTNOTE_SPUNAME) != NULL)
       break;
 
@@ -1146,7 +1151,7 @@ count_stub (struct spu_link_hash_table *htab,
 }
 
 /* Support two sizes of overlay stubs, a slower more compact stub of two
-   intructions, and a faster stub of four instructions.
+   instructions, and a faster stub of four instructions.
    Soft-icache stubs are four or eight words.  */
 
 static unsigned int
@@ -1486,7 +1491,7 @@ allocate_spuear_stubs (struct elf_link_hash_entry *h, void *inf)
     {
       return count_stub (htab, NULL, NULL, nonovl_stub, h, NULL);
     }
-  
+
   return TRUE;
 }
 
@@ -1512,7 +1517,7 @@ build_spuear_stubs (struct elf_link_hash_entry *h, void *inf)
       return build_stub (info, NULL, NULL, nonovl_stub, h, NULL,
 			 h->root.u.def.value, sym_sec);
     }
-  
+
   return TRUE;
 }
 
@@ -1524,14 +1529,14 @@ process_stubs (struct bfd_link_info *info, bfd_boolean build)
   struct spu_link_hash_table *htab = spu_hash_table (info);
   bfd *ibfd;
 
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     {
-      extern const bfd_target bfd_elf32_spu_vec;
+      extern const bfd_target spu_elf32_vec;
       Elf_Internal_Shdr *symtab_hdr;
       asection *isec;
       Elf_Internal_Sym *local_syms = NULL;
 
-      if (ibfd->xvec != &bfd_elf32_spu_vec)
+      if (ibfd->xvec != &spu_elf32_vec)
 	continue;
 
       /* We'll need the symbol table in a second.  */
@@ -1832,6 +1837,18 @@ ovl_mgr_pread (struct bfd *abfd ATTRIBUTE_UNUSED,
   return count;
 }
 
+static int
+ovl_mgr_stat (struct bfd *abfd ATTRIBUTE_UNUSED,
+	      void *stream,
+	      struct stat *sb)
+{
+  struct _ovl_stream *os = (struct _ovl_stream *) stream;
+
+  memset (sb, 0, sizeof (*sb));
+  sb->st_size = (const char *) os->end - (const char *) os->start;
+  return 0;
+}
+
 bfd_boolean
 spu_elf_open_builtin_lib (bfd **ovl_bfd, const struct _ovl_stream *stream)
 {
@@ -1841,7 +1858,7 @@ spu_elf_open_builtin_lib (bfd **ovl_bfd, const struct _ovl_stream *stream)
 			      (void *) stream,
 			      ovl_mgr_pread,
 			      NULL,
-			      NULL);
+			      ovl_mgr_stat);
   return *ovl_bfd != NULL;
 }
 
@@ -2155,7 +2172,7 @@ spu_elf_check_vma (struct bfd_link_info *info)
 
   htab->local_store = hi + 1 - lo;
 
-  for (m = elf_tdata (abfd)->segment_map; m != NULL; m = m->next)
+  for (m = elf_seg_map (abfd); m != NULL; m = m->next)
     if (m->p_type == PT_LOAD)
       for (i = 0; i < m->count; i++)
 	if (m->sections[i]->size != 0
@@ -2940,7 +2957,7 @@ discover_functions (struct bfd_link_info *info)
   bfd_boolean gaps = FALSE;
 
   bfd_idx = 0;
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     bfd_idx++;
 
   psym_arr = bfd_zmalloc (bfd_idx * sizeof (*psym_arr));
@@ -2949,19 +2966,19 @@ discover_functions (struct bfd_link_info *info)
   sec_arr = bfd_zmalloc (bfd_idx * sizeof (*sec_arr));
   if (sec_arr == NULL)
     return FALSE;
-  
+
   for (ibfd = info->input_bfds, bfd_idx = 0;
        ibfd != NULL;
-       ibfd = ibfd->link_next, bfd_idx++)
+       ibfd = ibfd->link.next, bfd_idx++)
     {
-      extern const bfd_target bfd_elf32_spu_vec;
+      extern const bfd_target spu_elf32_vec;
       Elf_Internal_Shdr *symtab_hdr;
       asection *sec;
       size_t symcount;
       Elf_Internal_Sym *syms, *sy, **psyms, **psy;
       asection **psecs, **p;
 
-      if (ibfd->xvec != &bfd_elf32_spu_vec)
+      if (ibfd->xvec != &spu_elf32_vec)
 	continue;
 
       /* Read all the symbols.  */
@@ -2982,7 +2999,7 @@ discover_functions (struct bfd_link_info *info)
       if (symtab_hdr->contents != NULL)
 	{
 	  /* Don't use cached symbols since the generic ELF linker
-	     code only reads local symbols, and we need globals too.  */ 
+	     code only reads local symbols, and we need globals too.  */
 	  free (symtab_hdr->contents);
 	  symtab_hdr->contents = NULL;
 	}
@@ -3060,7 +3077,7 @@ discover_functions (struct bfd_link_info *info)
 	 relocations.  */
       for (ibfd = info->input_bfds, bfd_idx = 0;
 	   ibfd != NULL;
-	   ibfd = ibfd->link_next, bfd_idx++)
+	   ibfd = ibfd->link.next, bfd_idx++)
 	{
 	  asection *sec;
 
@@ -3074,7 +3091,7 @@ discover_functions (struct bfd_link_info *info)
 
       for (ibfd = info->input_bfds, bfd_idx = 0;
 	   ibfd != NULL;
-	   ibfd = ibfd->link_next, bfd_idx++)
+	   ibfd = ibfd->link.next, bfd_idx++)
 	{
 	  Elf_Internal_Shdr *symtab_hdr;
 	  asection *sec;
@@ -3113,12 +3130,12 @@ discover_functions (struct bfd_link_info *info)
 	    }
 	}
 
-      for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+      for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
 	{
-	  extern const bfd_target bfd_elf32_spu_vec;
+	  extern const bfd_target spu_elf32_vec;
 	  asection *sec;
 
-	  if (ibfd->xvec != &bfd_elf32_spu_vec)
+	  if (ibfd->xvec != &spu_elf32_vec)
 	    continue;
 
 	  /* Some of the symbols we've installed as marking the
@@ -3156,7 +3173,7 @@ discover_functions (struct bfd_link_info *info)
 
   for (ibfd = info->input_bfds, bfd_idx = 0;
        ibfd != NULL;
-       ibfd = ibfd->link_next, bfd_idx++)
+       ibfd = ibfd->link.next, bfd_idx++)
     {
       if (psym_arr[bfd_idx] == NULL)
 	continue;
@@ -3185,12 +3202,12 @@ for_each_node (bfd_boolean (*doit) (struct function_info *,
 {
   bfd *ibfd;
 
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     {
-      extern const bfd_target bfd_elf32_spu_vec;
+      extern const bfd_target spu_elf32_vec;
       asection *sec;
 
-      if (ibfd->xvec != &bfd_elf32_spu_vec)
+      if (ibfd->xvec != &spu_elf32_vec)
 	continue;
 
       for (sec = ibfd->sections; sec != NULL; sec = sec->next)
@@ -3334,12 +3351,12 @@ build_call_tree (struct bfd_link_info *info)
   bfd *ibfd;
   unsigned int depth;
 
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     {
-      extern const bfd_target bfd_elf32_spu_vec;
+      extern const bfd_target spu_elf32_vec;
       asection *sec;
 
-      if (ibfd->xvec != &bfd_elf32_spu_vec)
+      if (ibfd->xvec != &spu_elf32_vec)
 	continue;
 
       for (sec = ibfd->sections; sec != NULL; sec = sec->next)
@@ -3711,12 +3728,12 @@ auto_ovl_lib_functions (struct bfd_link_info *info, unsigned int lib_size)
 
   memset (&dummy_caller, 0, sizeof (dummy_caller));
   lib_count = 0;
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     {
-      extern const bfd_target bfd_elf32_spu_vec;
+      extern const bfd_target spu_elf32_vec;
       asection *sec;
 
-      if (ibfd->xvec != &bfd_elf32_spu_vec)
+      if (ibfd->xvec != &spu_elf32_vec)
 	continue;
 
       for (sec = ibfd->sections; sec != NULL; sec = sec->next)
@@ -4081,7 +4098,7 @@ print_one_overlay_section (FILE *script,
 			   struct bfd_link_info *info)
 {
   unsigned int j;
-	  
+
   for (j = base; j < count && ovly_map[j] == ovlynum; j++)
     {
       asection *sec = ovly_sections[2 * j];
@@ -4178,7 +4195,7 @@ spu_elf_auto_overlay (struct bfd_link_info *info)
   /* Find the extents of our loadable image.  */
   lo = (unsigned int) -1;
   hi = 0;
-  for (m = elf_tdata (info->output_bfd)->segment_map; m != NULL; m = m->next)
+  for (m = elf_seg_map (info->output_bfd); m != NULL; m = m->next)
     if (m->p_type == PT_LOAD)
       for (i = 0; i < m->count; i++)
 	if (m->sections[i]->size != 0)
@@ -4256,7 +4273,7 @@ spu_elf_auto_overlay (struct bfd_link_info *info)
     goto err_exit;
 
   bfd_count = 0;
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     ++bfd_count;
   bfd_arr = bfd_malloc (bfd_count * sizeof (*bfd_arr));
   if (bfd_arr == NULL)
@@ -4266,13 +4283,13 @@ spu_elf_auto_overlay (struct bfd_link_info *info)
   count = 0;
   bfd_count = 0;
   total_overlay_size = 0;
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     {
-      extern const bfd_target bfd_elf32_spu_vec;
+      extern const bfd_target spu_elf32_vec;
       asection *sec;
       unsigned int old_count;
 
-      if (ibfd->xvec != &bfd_elf32_spu_vec)
+      if (ibfd->xvec != &spu_elf32_vec)
 	continue;
 
       old_count = count;
@@ -4712,7 +4729,7 @@ spu_elf_final_link (bfd *output_bfd, struct bfd_link_info *info)
   return bfd_elf_final_link (output_bfd, info);
 }
 
-/* Called when not normally emitting relocs, ie. !info->relocatable
+/* Called when not normally emitting relocs, ie. !bfd_link_relocatable (info)
    and !info->emitrelocations.  Returns a count of special relocs
    that need to be emitted.  */
 
@@ -4854,6 +4871,11 @@ spu_elf_relocate_section (bfd *output_bfd,
 
 	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
 
+	  if (info->wrap_hash != NULL
+	      && (input_section->flags & SEC_DEBUGGING) != 0)
+	    h = ((struct elf_link_hash_entry *)
+		 unwrap_hash_lookup (info, input_bfd, &h->root));
+
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
@@ -4880,7 +4902,7 @@ spu_elf_relocate_section (bfd *output_bfd,
 	  else if (info->unresolved_syms_in_objects == RM_IGNORE
 		   && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
 	    ;
-	  else if (!info->relocatable
+	  else if (!bfd_link_relocatable (info)
 		   && !(r_type == R_SPU_PPU32 || r_type == R_SPU_PPU64))
 	    {
 	      bfd_boolean err;
@@ -4900,7 +4922,7 @@ spu_elf_relocate_section (bfd *output_bfd,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       /* Change "a rt,ra,rb" to "ai rt,ra,0". */
@@ -4909,8 +4931,8 @@ spu_elf_relocate_section (bfd *output_bfd,
 	  && !(h->def_regular || ELF_COMMON_DEF_P (h)))
 	{
 	  bfd_byte *loc = contents + rel->r_offset;
-	  loc[0] = 0x1c; 
-	  loc[1] = 0x00; 
+	  loc[0] = 0x1c;
+	  loc[1] = 0x00;
 	  loc[2] &= 0x3f;
 	}
 
@@ -4968,7 +4990,7 @@ spu_elf_relocate_section (bfd *output_bfd,
 	    }
 	}
 
-      if (htab->params->emit_fixups && !info->relocatable
+      if (htab->params->emit_fixups && !bfd_link_relocatable (info)
 	  && (input_section->flags & SEC_ALLOC) != 0
 	  && r_type == R_SPU_ADDR32)
 	{
@@ -5113,7 +5135,7 @@ spu_elf_output_symbol_hook (struct bfd_link_info *info,
 {
   struct spu_link_hash_table *htab = spu_hash_table (info);
 
-  if (!info->relocatable
+  if (!bfd_link_relocatable (info)
       && htab->stub_sec != NULL
       && h != NULL
       && (h->root.type == bfd_link_hash_defined
@@ -5150,8 +5172,7 @@ spu_elf_plugin (int val)
 /* Set ELF header e_type for plugins.  */
 
 static void
-spu_elf_post_process_headers (bfd *abfd,
-			      struct bfd_link_info *info ATTRIBUTE_UNUSED)
+spu_elf_post_process_headers (bfd *abfd, struct bfd_link_info *info)
 {
   if (spu_plugin)
     {
@@ -5159,6 +5180,8 @@ spu_elf_post_process_headers (bfd *abfd,
 
       i_ehdrp->e_type = ET_DYN;
     }
+
+  _bfd_elf_post_process_headers (abfd, info);
 }
 
 /* We may add an extra PT_LOAD segment for .toe.  We also need extra
@@ -5201,7 +5224,7 @@ spu_elf_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
     return TRUE;
 
   toe = bfd_get_section_by_name (abfd, ".toe");
-  for (m = elf_tdata (abfd)->segment_map; m != NULL; m = m->next)
+  for (m = elf_seg_map (abfd); m != NULL; m = m->next)
     if (m->p_type == PT_LOAD && m->count > 1)
       for (i = 0; i < m->count; i++)
 	if ((s = m->sections[i]) == toe
@@ -5251,7 +5274,7 @@ spu_elf_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
      as PF_OVERLAY) will be placed into SPU local store on startup.  */
 
   /* Move all overlay segments onto a separate list.  */
-  p = &elf_tdata (abfd)->segment_map;
+  p = &elf_seg_map (abfd);
   p_overlay = &m_overlay;
   while (*p != NULL)
     {
@@ -5269,8 +5292,8 @@ spu_elf_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
     }
 
   /* Re-insert overlay segments at the head of the segment map.  */
-  *p_overlay = elf_tdata (abfd)->segment_map;
-  elf_tdata (abfd)->segment_map = m_overlay;
+  *p_overlay = elf_seg_map (abfd);
+  elf_seg_map (abfd) = m_overlay;
 
   return TRUE;
 }
@@ -5305,14 +5328,14 @@ spu_elf_modify_program_headers (bfd *abfd, struct bfd_link_info *info)
   bed = get_elf_backend_data (abfd);
   tdata = elf_tdata (abfd);
   phdr = tdata->phdr;
-  count = tdata->program_header_size / bed->s->sizeof_phdr;
+  count = elf_program_header_size (abfd) / bed->s->sizeof_phdr;
   htab = spu_hash_table (info);
   if (htab->num_overlays != 0)
     {
       struct elf_segment_map *m;
       unsigned int o;
 
-      for (i = 0, m = elf_tdata (abfd)->segment_map; m; ++i, m = m->next)
+      for (i = 0, m = elf_seg_map (abfd); m; ++i, m = m->next)
 	if (m->count != 0
 	    && (o = spu_elf_section_data (m->sections[0])->u.o.ovl_index) != 0)
 	  {
@@ -5393,7 +5416,7 @@ spu_elf_size_sections (bfd * output_bfd, struct bfd_link_info *info)
       bfd *ibfd;
       size_t size;
 
-      for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+      for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
 	{
 	  asection *isec;
 
@@ -5449,7 +5472,7 @@ spu_elf_size_sections (bfd * output_bfd, struct bfd_link_info *info)
   return TRUE;
 }
 
-#define TARGET_BIG_SYM		bfd_elf32_spu_vec
+#define TARGET_BIG_SYM		spu_elf32_vec
 #define TARGET_BIG_NAME		"elf32-spu"
 #define ELF_ARCH		bfd_arch_spu
 #define ELF_TARGET_ID		SPU_ELF_DATA

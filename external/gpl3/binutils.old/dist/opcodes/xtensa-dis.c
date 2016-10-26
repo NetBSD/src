@@ -1,5 +1,5 @@
 /* xtensa-dis.c.  Disassembly functions for Xtensa.
-   Copyright 2003, 2004, 2005, 2007, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
    Contributed by Bob Wilson at Tensilica, Inc. (bwilson@tensilica.com)
 
    This file is part of the GNU opcodes library.
@@ -42,7 +42,7 @@ int show_raw_fields;
 struct dis_private
 {
   bfd_byte *byte_buf;
-  jmp_buf bailout;
+  OPCODES_SIGJMP_BUF bailout;
 };
 
 
@@ -66,7 +66,7 @@ fetch_data (struct disassemble_info *info, bfd_vma memaddr)
 	return length;
     }
   (*info->memory_error_func) (status, memaddr, info);
-  longjmp (priv->bailout, 1);
+  OPCODES_SIGLONGJMP (priv->bailout, 1);
   /*NOTREACHED*/
 }
 
@@ -80,7 +80,7 @@ print_xtensa_operand (bfd_vma memaddr,
 {
   xtensa_isa isa = xtensa_default_isa;
   int signed_operand_val;
-    
+
   if (show_raw_fields)
     {
       if (operand_val < 0xa)
@@ -124,7 +124,7 @@ print_xtensa_operand (bfd_vma memaddr,
 				 xtensa_regfile_shortname (isa, opnd_rf),
 				 operand_val);
 	  i++;
-	} 
+	}
     }
 }
 
@@ -175,7 +175,7 @@ print_insn_xtensa (bfd_vma memaddr, struct disassemble_info *info)
   priv.byte_buf = byte_buf;
 
   info->private_data = (void *) &priv;
-  if (setjmp (priv.bailout) != 0)
+  if (OPCODES_SIGSETJMP (priv.bailout) != 0)
       /* Error return.  */
       return -1;
 

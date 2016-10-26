@@ -1,6 +1,6 @@
 // dynobj.h -- dynamic object support for gold   -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011  Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -72,6 +72,16 @@ class Dynobj : public Object
     this->unknown_needed_ = set ? UNKNOWN_NEEDED_TRUE : UNKNOWN_NEEDED_FALSE;
   }
 
+  // Return the word size of the object file.
+  int
+  elfsize() const
+  { gold_unreachable(); }
+
+  // Return TRUE if this is a big-endian object file.
+  bool
+  is_big_endian() const
+  { gold_unreachable(); }
+
   // Compute the ELF hash code for a string.
   static uint32_t
   elf_hash(const char*);
@@ -122,7 +132,7 @@ class Dynobj : public Object
 		       bool for_gnu_hash_table);
 
   // Sized version of create_elf_hash_table.
-  template<bool big_endian>
+  template<int size, bool big_endian>
   static void
   sized_create_elf_hash_table(const std::vector<uint32_t>& bucket,
 			      const std::vector<uint32_t>& chain,
@@ -203,7 +213,7 @@ class Sized_dynobj : public Dynobj
 
   // Get the name of a section.
   std::string
-  do_section_name(unsigned int shndx)
+  do_section_name(unsigned int shndx) const
   { return this->elf_file_.section_name(shndx); }
 
   // Return a view of the contents of a section.  Set *PLEN to the
@@ -269,6 +279,12 @@ class Sized_dynobj : public Dynobj
   const Symbols*
   do_get_global_symbols() const
   { return this->symbols_; }
+
+ protected:
+  // Read the symbols.  This is common code for all target-specific
+  // overrides of do_read_symbols().
+  void
+  base_read_symbols(Read_symbols_data*);
 
  private:
   // For convenience.

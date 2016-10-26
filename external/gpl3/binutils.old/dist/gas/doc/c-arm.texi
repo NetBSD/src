@@ -1,5 +1,4 @@
-@c Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-@c 2006, 2007, 2008, 2009, 2010, 2011  Free Software Foundation, Inc.
+@c Copyright (C) 1996-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -38,7 +37,7 @@
 This option specifies the target processor.  The assembler will issue an
 error message if an attempt is made to assemble an instruction which
 will not execute on the target processor.  The following processor names are
-recognized: 
+recognized:
 @code{arm1},
 @code{arm2},
 @code{arm250},
@@ -120,54 +119,71 @@ recognized:
 @code{cortex-a8},
 @code{cortex-a9},
 @code{cortex-a15},
+@code{cortex-a35},
+@code{cortex-a53},
+@code{cortex-a57},
+@code{cortex-a72},
 @code{cortex-r4},
 @code{cortex-r4f},
 @code{cortex-r5},
 @code{cortex-r7},
+@code{cortex-m7},
 @code{cortex-m4},
 @code{cortex-m3},
 @code{cortex-m1},
 @code{cortex-m0},
 @code{cortex-m0plus},
+@code{exynos-m1},
+@code{marvell-pj4},
+@code{marvell-whitney},
+@code{qdf24xx},
+@code{xgene1},
+@code{xgene2},
 @code{ep9312} (ARM920 with Cirrus Maverick coprocessor),
 @code{i80200} (Intel XScale processor)
 @code{iwmmxt} (Intel(r) XScale processor with Wireless MMX(tm) technology coprocessor)
 and
-@code{xscale}.  
+@code{xscale}.
 The special name @code{all} may be used to allow the
 assembler to accept instructions valid for any ARM processor.
 
-In addition to the basic instruction set, the assembler can be told to 
-accept various extension mnemonics that extend the processor using the 
+In addition to the basic instruction set, the assembler can be told to
+accept various extension mnemonics that extend the processor using the
 co-processor instruction space.  For example, @code{-mcpu=arm920+maverick}
-is equivalent to specifying @code{-mcpu=ep9312}.  
+is equivalent to specifying @code{-mcpu=ep9312}.
 
-Multiple extensions may be specified, separated by a @code{+}.  The 
+Multiple extensions may be specified, separated by a @code{+}.  The
 extensions should be specified in ascending alphabetical order.
 
-Some extensions may be restricted to particular architectures; this is 
+Some extensions may be restricted to particular architectures; this is
 documented in the list of extensions below.
 
-Extension mnemonics may also be removed from those the assembler accepts.  
-This is done be prepending @code{no} to the option that adds the extension.  
-Extensions that are removed should be listed after all extensions which have 
-been added, again in ascending alphabetical order.  For example, 
+Extension mnemonics may also be removed from those the assembler accepts.
+This is done be prepending @code{no} to the option that adds the extension.
+Extensions that are removed should be listed after all extensions which have
+been added, again in ascending alphabetical order.  For example,
 @code{-mcpu=ep9312+nomaverick} is equivalent to specifying @code{-mcpu=arm920}.
 
 
 The following extensions are currently supported:
+@code{crc}
 @code{crypto} (Cryptography Extensions for v8-A architecture, implies @code{fp+simd}),
 @code{fp} (Floating Point Extensions for v8-A architecture),
 @code{idiv} (Integer Divide Extensions for v7-A and v7-R architectures),
 @code{iwmmxt},
 @code{iwmmxt2},
+@code{xscale},
 @code{maverick},
-@code{mp} (Multiprocessing Extensions for v7-A and v7-R architectures),
+@code{mp} (Multiprocessing Extensions for v7-A and v7-R
+architectures),
 @code{os} (Operating System for v6M architecture),
 @code{sec} (Security Extensions for v6K and v7-A architectures),
 @code{simd} (Advanced SIMD Extensions for v8-A architecture, implies @code{fp}),
-@code{virt} (Virtualization Extensions for v7-A architecture, implies 
+@code{virt} (Virtualization Extensions for v7-A architecture, implies
 @code{idiv}),
+@code{pan} (Priviliged Access Never Extensions for v8-A architecture),
+@code{rdma} (ARMv8.1 Advanced SIMD extensions for v8-A architecture, implies
+@code{simd})
 and
 @code{xscale}.
 
@@ -175,8 +191,8 @@ and
 @item -march=@var{architecture}[+@var{extension}@dots{}]
 This option specifies the target architecture.  The assembler will issue
 an error message if an attempt is made to assemble an instruction which
-will not execute on the target architecture.  The following architecture 
-names are recognized: 
+will not execute on the target architecture.  The following architecture
+names are recognized:
 @code{armv1},
 @code{armv2},
 @code{armv2a},
@@ -196,16 +212,19 @@ names are recognized:
 @code{armv6j},
 @code{armv6k},
 @code{armv6z},
-@code{armv6zk},
+@code{armv6kz},
 @code{armv6-m},
 @code{armv6s-m},
 @code{armv7},
 @code{armv7-a},
+@code{armv7ve},
 @code{armv7-r},
 @code{armv7-m},
 @code{armv7e-m},
 @code{armv8-a},
+@code{armv8.1-a},
 @code{iwmmxt}
+@code{iwmmxt2}
 and
 @code{xscale}.
 If both @code{-mcpu} and
@@ -220,7 +239,7 @@ extension options as the @code{-mcpu} option.
 
 This option specifies the floating point format to assemble for.  The
 assembler will issue an error message if an attempt is made to assemble
-an instruction which will not execute on the target floating point unit.  
+an instruction which will not execute on the target floating point unit.
 The following format options are recognized:
 @code{softfpa},
 @code{fpe},
@@ -247,6 +266,8 @@ The following format options are recognized:
 @code{vfpv4},
 @code{vfpv4-d16},
 @code{fpv4-sp-d16},
+@code{fpv5-sp-d16},
+@code{fpv5-d16},
 @code{fp-armv8},
 @code{arm1020t},
 @code{arm1020e},
@@ -255,21 +276,23 @@ The following format options are recognized:
 @code{neon},
 @code{neon-vfpv4},
 @code{neon-fp-armv8},
+@code{crypto-neon-fp-armv8},
+@code{neon-fp-armv8.1}
 and
-@code{crypto-neon-fp-armv8}.
+@code{crypto-neon-fp-armv8.1}.
 
 In addition to determining which instructions are assembled, this option
 also affects the way in which the @code{.double} assembler directive behaves
 when assembling little-endian code.
 
-The default is dependent on the processor selected.  For Architecture 5 or 
-later, the default is to assembler for VFP instructions; for earlier 
+The default is dependent on the processor selected.  For Architecture 5 or
+later, the default is to assembler for VFP instructions; for earlier
 architectures the default is to assemble for FPA instructions.
 
 @cindex @code{-mthumb} command line option, ARM
 @item -mthumb
 This option specifies that the assembler should start assembling Thumb
-instructions; that is, it should behave as though the file starts with a 
+instructions; that is, it should behave as though the file starts with a
 @code{.code 16} directive.
 
 @cindex @code{-mthumb-interwork} command line option, ARM
@@ -305,7 +328,7 @@ Calling Standard.
 
 @cindex @code{-matpcs} command line option, ARM
 @item -matpcs
-This option specifies that the output generated by the assembler should 
+This option specifies that the output generated by the assembler should
 be marked as supporting the Arm/Thumb Procedure Calling Standard.  If
 enabled this option will cause the assembler to create an empty
 debugging section in the object file called .arm.atpcs.  Debuggers can
@@ -347,6 +370,12 @@ and
 This option specifies that the output generated by the assembler should
 be marked as being encoded for a big-endian processor.
 
+Note: If a program is being built for a system with big-endian data
+and little-endian instructions then it should be assembled with the
+@option{-EB} option, (all of it, code and data) and then linked with
+the @option{--be8} option.  This will reverse the endianness of the
+instructions back to little-endian, but leave the data as big-endian.
+
 @cindex @code{-EL} command line option, ARM
 @item -EL
 This option specifies that the output generated by the assembler should
@@ -369,6 +398,16 @@ the linker option of the same name.
 Enable or disable warnings about using deprecated options or
 features.  The default is to warn.
 
+@cindex @code{-mccs} command line option, ARM
+@item -mccs
+Turns on CodeComposer Studio assembly syntax compatibility mode.
+
+@cindex @code{-mwarn-syms} command line option, ARM
+@item -mwarn-syms
+@itemx -mno-warn-syms
+Enable or disable warnings about symbols that match the names of ARM
+instructions.  The default is to warn.
+
 @end table
 
 
@@ -390,7 +429,7 @@ ARM and THUMB instructions had their own, separate syntaxes.  The new,
 @code{unified} syntax, which can be selected via the @code{.syntax}
 directive, and has the following main features:
 
-@table @bullet
+@itemize @bullet
 @item
 Immediate operands do not require a @code{#} prefix.
 
@@ -415,7 +454,7 @@ The @code{.N} and @code{.W} suffixes are recognized and honored.
 @item
 All instructions set the flags if and only if they have an @code{s}
 affix.
-@end table
+@end itemize
 
 @node ARM-Chars
 @subsection Special Characters
@@ -450,28 +489,6 @@ Either @samp{#} or @samp{$} can be used to indicate immediate operands.
 @cindex ARM register names
 @cindex register names, ARM
 *TODO* Explain about ARM register naming, and the predefined names.
-
-@node ARM-Neon-Alignment
-@subsection NEON Alignment Specifiers
-
-@cindex alignment for NEON instructions
-Some NEON load/store instructions allow an optional address
-alignment qualifier.
-The ARM documentation specifies that this is indicated by
-@samp{@@ @var{align}}. However GAS already interprets
-the @samp{@@} character as a "line comment" start,
-so @samp{: @var{align}} is used instead.  For example:
-
-@smallexample
-        vld1.8 @{q0@}, [r0, :128]
-@end smallexample
-
-@node ARM Floating Point
-@section Floating Point
-
-@cindex floating point, ARM (@sc{ieee})
-@cindex ARM floating point (@sc{ieee})
-The ARM family uses @sc{ieee} floating-point numbers.
 
 @node ARM-Relocations
 @subsection ARM relocation generation
@@ -519,6 +536,28 @@ respectively.  For example to load the 32-bit address of foo into r0:
         MOVT r0, #:upper16:foo
 @end smallexample
 
+@node ARM-Neon-Alignment
+@subsection NEON Alignment Specifiers
+
+@cindex alignment for NEON instructions
+Some NEON load/store instructions allow an optional address
+alignment qualifier.
+The ARM documentation specifies that this is indicated by
+@samp{@@ @var{align}}. However GAS already interprets
+the @samp{@@} character as a "line comment" start,
+so @samp{: @var{align}} is used instead.  For example:
+
+@smallexample
+        vld1.8 @{q0@}, [r0, :128]
+@end smallexample
+
+@node ARM Floating Point
+@section Floating Point
+
+@cindex floating point, ARM (@sc{ieee})
+@cindex ARM floating point (@sc{ieee})
+The ARM family uses @sc{ieee} floating-point numbers.
+
 @node ARM Directives
 @section ARM Machine Directives
 
@@ -548,13 +587,13 @@ boundary).  This is for compatibility with ARM's own assembler.
 Select the target architecture.  Valid values for @var{name} are the same as
 for the @option{-march} commandline option.
 
-Specifying @code{.arch} clears any previously selected architecture 
+Specifying @code{.arch} clears any previously selected architecture
 extensions.
 
 @cindex @code{.arch_extension} directive, ARM
 @item .arch_extension @var{name}
-Add or remove an architecture extension to the target architecture.  Valid 
-values for @var{name} are the same as those accepted as architectural 
+Add or remove an architecture extension to the target architecture.  Valid
+values for @var{name} are the same as those accepted as architectural
 extensions by the @option{-mcpu} commandline option.
 
 @code{.arch_extension} may be used multiple times to add or remove extensions
@@ -563,13 +602,6 @@ incrementally to the architecture being compiled for.
 @cindex @code{.arm} directive, ARM
 @item .arm
 This performs the same action as @var{.code 32}.
-
-@anchor{arm_pad}
-@cindex @code{.pad} directive, ARM
-@item .pad #@var{count}
-Generate unwinder annotations for a stack adjustment of @var{count} bytes.
-A positive value indicates the function prologue allocated stack space by
-decrementing the stack pointer.
 
 @c BBBBBBBBBBBBBBBBBBBBBBBBBB
 
@@ -594,7 +626,7 @@ selects Thumb, with the value 32 selecting ARM.
 Select the target processor.  Valid values for @var{name} are the same as
 for the @option{-mcpu} commandline option.
 
-Specifying @code{.cpu} clears any previously selected architecture 
+Specifying @code{.cpu} clears any previously selected architecture
 extensions.
 
 @c DDDDDDDDDDDDDDDDDDDDDDDDDD
@@ -660,7 +692,7 @@ The @var{value} is either a @code{number}, @code{"string"}, or
 @code{number, "string"} depending on the tag.
 
 Note - the following legacy values are also accepted by @var{tag}:
-@code{Tag_VFP_arch}, @code{Tag_ABI_align8_needed}, 
+@code{Tag_VFP_arch}, @code{Tag_ABI_align8_needed},
 @code{Tag_ABI_align8_preserved}, @code{Tag_VFP_HP_extension},
 
 @cindex @code{.even} directive, ARM
@@ -770,6 +802,7 @@ This directive writes 12-byte packed floating-point values to the
 output section.  These are not compatible with current ARM processors
 or ABIs.
 
+@anchor{arm_pad}
 @cindex @code{.pad} directive, ARM
 @item .pad #@var{count}
 Generate unwinder annotations for a stack adjustment of @var{count} bytes.
@@ -952,7 +985,7 @@ used in favour of @code{.save} for saving VFP registers for ARMv6 and above.
 @cindex opcodes for ARM
 @code{@value{AS}} implements all the standard ARM opcodes.  It also
 implements several pseudo opcodes, including several synthetic load
-instructions. 
+instructions.
 
 @table @code
 
@@ -966,7 +999,7 @@ This pseudo op will always evaluate to a legal ARM instruction that does
 nothing.  Currently it will evaluate to MOV r0, r0.
 
 @cindex @code{LDR reg,=<label>} pseudo op, ARM
-@item LDR 
+@item LDR
 @smallexample
   ldr <register> , = <expression>
 @end smallexample
@@ -991,7 +1024,7 @@ the ADR instruction, then an error will be generated.  This instruction
 will not make use of the literal pool.
 
 @cindex @code{ADRL reg,<label>} pseudo op, ARM
-@item ADRL 
+@item ADRL
 @smallexample
   adrl <register> <label>
 @end smallexample
@@ -1067,12 +1100,12 @@ that G++ generates for the following C++ input:
 @verbatim
 void callee (int *);
 
-int 
-caller () 
+int
+caller ()
 {
   int i;
   callee (&i);
-  return i; 
+  return i;
 }
 @end verbatim
 
@@ -1129,7 +1162,7 @@ The @code{.fnstart} (@pxref{arm_fnstart,,.fnstart pseudo op}) pseudo
 op appears immediately before the first instruction of the function
 while the @code{.fnend} (@pxref{arm_fnend,,.fnend pseudo op}) pseudo
 op appears immediately after the last instruction of the function.
-These pseudo ops specify the range of the function.  
+These pseudo ops specify the range of the function.
 
 Only the order of the other pseudos ops (e.g., @code{.setfp} or
 @code{.pad}) matters; their exact locations are irrelevant.  In the

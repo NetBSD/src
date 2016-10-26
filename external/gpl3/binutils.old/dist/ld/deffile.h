@@ -1,6 +1,5 @@
 /* deffile.h - header for .DEF file parser
-   Copyright 1998, 1999, 2000, 2002, 2003, 2005, 2006, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Written by DJ Delorie dj@cygnus.com
 
    This file is part of the GNU Binutils.

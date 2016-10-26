@@ -1,6 +1,5 @@
 /* alpha-opc.c -- Alpha AXP opcode list
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007,
-   2012  Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@cygnus.com>,
    patterned after the PPC opcode handling written by Ian Lance Taylor.
 
@@ -275,7 +274,7 @@ const struct alpha_operand alpha_operands[] =
 
   /* The signed "23-bit" aligned displacement of Branch format insns.  */
 #define BDISP		(MDISP + 1)
-  { 21, 0, BFD_RELOC_23_PCREL_S2, 
+  { 21, 0, BFD_RELOC_23_PCREL_S2,
     AXP_OPERAND_RELATIVE, insert_bdisp, extract_bdisp },
 
   /* The 26-bit PALcode function */

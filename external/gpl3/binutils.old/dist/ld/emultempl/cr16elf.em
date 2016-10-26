@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright 2007, 2008, 2009 Free Software Foundation, Inc.
+# Copyright (C) 2007-2015 Free Software Foundation, Inc.
 # Contributed by M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 #
 # This file is part of the GNU Binutils.
@@ -39,7 +39,7 @@ cr16_elf_after_open (void)
   gld${EMULATION_NAME}_after_open ();
 
    if (command_line.embedded_relocs
-       && (! link_info.relocatable))
+       && !bfd_link_relocatable (&link_info))
      {
        bfd *abfd;
 
@@ -47,7 +47,7 @@ cr16_elf_after_open (void)
 	 input file with a nonzero .data section.  The BFD backend will fill in
 	 these sections with magic numbers which can be used to relocate the
 	 data section at run time.  */
-      for (abfd = link_info.input_bfds; abfd != NULL; abfd = abfd->link_next)
+      for (abfd = link_info.input_bfds; abfd != NULL; abfd = abfd->link.next)
 	{
 	  asection *datasec;
 
@@ -87,7 +87,7 @@ cr16_elf_after_open (void)
 
 	  /* Double check that all other data sections are empty, as is
 	     required for embedded PIC code.  */
-	  bfd_map_over_sections (abfd, check_sections, datasec); 
+	  bfd_map_over_sections (abfd, check_sections, datasec);
 	}
     }
 }
@@ -119,7 +119,7 @@ cr16elf_after_parse (void)
      is true the link sometimes fails.  */
   config.magic_demand_paged = FALSE;
 
-  after_parse_default ();
+  gld${EMULATION_NAME}_after_parse ();
 }
 
 /* This is called after the sections have been attached to output
@@ -132,14 +132,14 @@ cr16elf_before_allocation (void)
   gld${EMULATION_NAME}_before_allocation ();
 
    if (command_line.embedded_relocs
-       && (! link_info.relocatable))
+       && (!bfd_link_relocatable (&link_info)))
      {
 
    bfd *abfd;
 
    /* If we are generating embedded relocs, call a special BFD backend
 	 routine to do the work.  */
-   for (abfd = link_info.input_bfds; abfd != NULL; abfd = abfd->link_next)
+   for (abfd = link_info.input_bfds; abfd != NULL; abfd = abfd->link.next)
       {
 	  asection *datasec, *relsec;
 	  char *errmsg;

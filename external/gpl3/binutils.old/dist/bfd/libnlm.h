@@ -1,6 +1,5 @@
 /* BFD back-end data structures for NLM (NetWare Loadable Modules) files.
-   Copyright 1993, 1994, 2001, 2002, 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.

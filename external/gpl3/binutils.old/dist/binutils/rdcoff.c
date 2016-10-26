@@ -1,6 +1,5 @@
 /* stabs.c -- Parse COFF debugging information
-   Copyright 1996, 1999, 2000, 2002, 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -84,7 +83,7 @@ struct coff_types
   debug_type basic[T_MAX + 1];
 };
 
-static debug_type *coff_get_slot (struct coff_types *, int);
+static debug_type *coff_get_slot (struct coff_types *, long);
 static debug_type parse_coff_type
   (bfd *, struct coff_symbols *, struct coff_types *, long, int,
    union internal_auxent *, bfd_boolean, void *);
@@ -105,11 +104,16 @@ static bfd_boolean external_coff_symbol_p (int sym_class);
 /* Return the slot for a type.  */
 
 static debug_type *
-coff_get_slot (struct coff_types *types, int indx)
+coff_get_slot (struct coff_types *types, long indx)
 {
   struct coff_slots **pps;
 
   pps = &types->slots;
+
+  /* PR 17512: file: 078-18333-0.001:0.1.
+     FIXME: The value of 1000 is a guess.  Maybe a better heuristic is needed.  */
+  if (indx / COFF_SLOTS > 1000)
+    fatal (_("Excessively large slot index: %lx"), indx);
 
   while (indx >= COFF_SLOTS)
     {

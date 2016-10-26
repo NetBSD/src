@@ -1,6 +1,5 @@
 /* ldcref.c -- output a cross reference table
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008  Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -41,7 +40,8 @@
 /* We keep an instance of this structure for each reference to a
    symbol from a given object.  */
 
-struct cref_ref {
+struct cref_ref
+{
   /* The next reference.  */
   struct cref_ref *next;
   /* The object.  */
@@ -56,7 +56,8 @@ struct cref_ref {
 
 /* We keep a hash table of symbols.  Each entry looks like this.  */
 
-struct cref_hash_entry {
+struct cref_hash_entry
+{
   struct bfd_hash_entry root;
   /* The demangled name.  */
   const char *demangled;
@@ -66,7 +67,8 @@ struct cref_hash_entry {
 
 /* This is what the hash table looks like.  */
 
-struct cref_hash_table {
+struct cref_hash_table
+{
   struct bfd_hash_table root;
 };
 
@@ -110,8 +112,8 @@ static size_t cref_symcount;
 static struct bfd_hash_entry **old_table;
 static unsigned int old_size;
 static unsigned int old_count;
-static void *old_tab;
-static void *alloc_mark;
+static void * old_tab;
+static void * alloc_mark;
 static size_t tabsize, entsize, refsize;
 static size_t old_symcount;
 
@@ -349,7 +351,10 @@ cref_sort_array (const void *a1, const void *a2)
   const struct cref_hash_entry * const *p2 =
       (const struct cref_hash_entry * const *) a2;
 
-  return strcmp ((*p1)->demangled, (*p2)->demangled);
+  if (demangling)
+    return strcmp ((*p1)->demangled, (*p2)->demangled);
+  else
+    return strcmp ((*p1)->root.string, (*p2)->root.string);
 }
 
 /* Write out the cref table.  */
@@ -427,8 +432,16 @@ output_one_cref (FILE *fp, struct cref_hash_entry *h)
 	}
     }
 
-  fprintf (fp, "%s ", h->demangled);
-  len = strlen (h->demangled) + 1;
+  if (demangling)
+    {
+      fprintf (fp, "%s ", h->demangled);
+      len = strlen (h->demangled) + 1;
+    }
+  else
+    {
+      fprintf (fp, "%s ", h->root.string);
+      len = strlen (h->root.string) + 1;
+    }
 
   for (r = h->refs; r != NULL; r = r->next)
     {
@@ -446,7 +459,21 @@ output_one_cref (FILE *fp, struct cref_hash_entry *h)
 
   for (r = h->refs; r != NULL; r = r->next)
     {
-      if (! r->def)
+      if (r->common)
+	{
+	  while (len < FILECOL)
+	    {
+	      putc (' ', fp);
+	      ++len;
+	    }
+	  lfinfo (fp, "%B\n", r->abfd);
+	  len = 0;
+	}
+    }
+
+  for (r = h->refs; r != NULL; r = r->next)
+    {
+      if (! r->def && ! r->common)
 	{
 	  while (len < FILECOL)
 	    {

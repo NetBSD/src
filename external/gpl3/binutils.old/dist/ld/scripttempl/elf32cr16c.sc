@@ -1,11 +1,24 @@
 # Linker Script for National Semiconductor's CR16C-ELF32.
+#
+# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# 
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.
 
 test -z "$ENTRY" && ENTRY=_start
 cat <<EOF
 
 /* Example Linker Script for linking NS CR16C or CR16CPlus
    elf32 files, which were compiled with either the near data
-   model or the default data model.  */
+   model or the default data model.
+
+   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+
+   Copying and distribution of this script, with or without modification,
+   are permitted in any medium without royalty provided the copyright
+   notice and this notice are preserved.  */
+
 
 ${RELOCATING+ENTRY(${ENTRY})}
 
