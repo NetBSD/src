@@ -1,5 +1,5 @@
 /* macro.c - macro support for gas
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
       sac@cygnus.com
@@ -404,7 +404,7 @@ get_any_string (size_t idx, sb *in, sb *out)
 	}
       else
 	{
-	  char *br_buf = (char *) xmalloc (1);
+	  char *br_buf = XNEWVEC (char, 1);
 	  char *in_br = br_buf;
 
 	  *in_br = '\0';
@@ -438,7 +438,7 @@ get_any_string (size_t idx, sb *in, sb *out)
 		    --in_br;
 		  else
 		    {
-		      br_buf = (char *) xmalloc (strlen (in_br) + 2);
+		      br_buf = XNEWVEC (char, strlen (in_br) + 2);
 		      strcpy (br_buf + 1, in_br);
 		      free (in_br);
 		      in_br = br_buf;
@@ -471,7 +471,7 @@ new_formal (void)
 {
   formal_entry *formal;
 
-  formal = (formal_entry *) xmalloc (sizeof (formal_entry));
+  formal = XNEW (formal_entry);
 
   sb_new (&formal->name);
   sb_new (&formal->def);
@@ -648,14 +648,14 @@ free_macro (macro_entry *macro)
 const char *
 define_macro (size_t idx, sb *in, sb *label,
 	      size_t (*get_line) (sb *),
-	      char *file, unsigned int line,
+	      const char *file, unsigned int line,
 	      const char **namep)
 {
   macro_entry *macro;
   sb name;
   const char *error = NULL;
 
-  macro = (macro_entry *) xmalloc (sizeof (macro_entry));
+  macro = XNEW (macro_entry);
   sb_new (&macro->sub);
   sb_new (&name);
   macro->file = file;
@@ -1250,13 +1250,12 @@ check_macro (const char *line, sb *expand,
   if (is_name_ender (*s))
     ++s;
 
-  copy = (char *) alloca (s - line + 1);
-  memcpy (copy, line, s - line);
-  copy[s - line] = '\0';
+  copy = xmemdup0 (line, s - line);
   for (cls = copy; *cls != '\0'; cls ++)
     *cls = TOLOWER (*cls);
 
   macro = (macro_entry *) hash_find (macro_hash, copy);
+  free (copy);
 
   if (macro == NULL)
     return 0;
@@ -1288,7 +1287,7 @@ delete_macro (const char *name)
   macro_entry *macro;
 
   len = strlen (name);
-  copy = (char *) alloca (len + 1);
+  copy = XNEWVEC (char, len + 1);
   for (i = 0; i < len; ++i)
     copy[i] = TOLOWER (name[i]);
   copy[i] = '\0';
@@ -1303,6 +1302,7 @@ delete_macro (const char *name)
     }
   else
     as_warn (_("Attempt to purge non-existant macro `%s'"), copy);
+  free (copy);
 }
 
 /* Handle the MRI IRP and IRPC pseudo-ops.  These are handled as a

@@ -1,5 +1,5 @@
 /* Table of relaxations for Xtensa assembly.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -522,7 +522,7 @@ append_transition (TransitionTable *tt,
 		   TransitionRule *t,
 		   transition_cmp_fn cmp)
 {
-  TransitionList *tl = (TransitionList *) xmalloc (sizeof (TransitionList));
+  TransitionList *tl = XNEW (TransitionList);
   TransitionList *prev;
   TransitionList **t_p;
   gas_assert (tt != NULL);
@@ -554,8 +554,7 @@ append_transition (TransitionTable *tt,
 static void
 append_condition (TransitionRule *tr, Precondition *cond)
 {
-  PreconditionList *pl =
-    (PreconditionList *) xmalloc (sizeof (PreconditionList));
+  PreconditionList *pl = XNEW (PreconditionList);
   PreconditionList *prev = tr->conditions;
   PreconditionList *nxt;
 
@@ -582,7 +581,7 @@ append_value_condition (TransitionRule *tr,
 			unsigned op1,
 			unsigned op2)
 {
-  Precondition *cond = (Precondition *) xmalloc (sizeof (Precondition));
+  Precondition *cond = XNEW (Precondition);
 
   cond->cmp = cmp;
   cond->op_num = op1;
@@ -598,7 +597,7 @@ append_constant_value_condition (TransitionRule *tr,
 				 unsigned op1,
 				 unsigned cnst)
 {
-  Precondition *cond = (Precondition *) xmalloc (sizeof (Precondition));
+  Precondition *cond = XNEW (Precondition);
 
   cond->cmp = cmp;
   cond->op_num = op1;
@@ -654,7 +653,7 @@ append_op (BuildInstr *bi, BuildOp *b_op)
 static void
 append_literal_op (BuildInstr *bi, unsigned op1, unsigned src_op)
 {
-  BuildOp *b_op = (BuildOp *) xmalloc (sizeof (BuildOp));
+  BuildOp *b_op = XNEW (BuildOp);
 
   b_op->op_num = op1;
   b_op->typ = OP_LITERAL;
@@ -667,7 +666,7 @@ append_literal_op (BuildInstr *bi, unsigned op1, unsigned src_op)
 static void
 append_label_op (BuildInstr *bi, unsigned op1)
 {
-  BuildOp *b_op = (BuildOp *) xmalloc (sizeof (BuildOp));
+  BuildOp *b_op = XNEW (BuildOp);
 
   b_op->op_num = op1;
   b_op->typ = OP_LABEL;
@@ -680,7 +679,7 @@ append_label_op (BuildInstr *bi, unsigned op1)
 static void
 append_constant_op (BuildInstr *bi, unsigned op1, unsigned cnst)
 {
-  BuildOp *b_op = (BuildOp *) xmalloc (sizeof (BuildOp));
+  BuildOp *b_op = XNEW (BuildOp);
 
   b_op->op_num = op1;
   b_op->typ = OP_CONSTANT;
@@ -693,7 +692,7 @@ append_constant_op (BuildInstr *bi, unsigned op1, unsigned cnst)
 static void
 append_field_op (BuildInstr *bi, unsigned op1, unsigned src_op)
 {
-  BuildOp *b_op = (BuildOp *) xmalloc (sizeof (BuildOp));
+  BuildOp *b_op = XNEW (BuildOp);
 
   b_op->op_num = op1;
   b_op->typ = OP_OPERAND;
@@ -711,7 +710,7 @@ append_user_fn_field_op (BuildInstr *bi,
 			 OpType typ,
 			 unsigned src_op)
 {
-  BuildOp *b_op = (BuildOp *) xmalloc (sizeof (BuildOp));
+  BuildOp *b_op = XNEW (BuildOp);
 
   b_op->op_num = op1;
   b_op->typ = typ;
@@ -819,10 +818,8 @@ enter_opname_n (const char *name, int len)
 	  && strncmp (op->opname, name, len) == 0)
 	return op->opname;
     }
-  op = (opname_e *) xmalloc (sizeof (opname_e));
-  op->opname = (char *) xmalloc (len + 1);
-  strncpy (op->opname, name, len);
-  op->opname[len] = '\0';
+  op = XNEW (opname_e);
+  op->opname = xmemdup0 (name, len);
   return op->opname;
 }
 
@@ -837,7 +834,7 @@ enter_opname (const char *name)
       if (strcmp (op->opname, name) == 0)
 	return op->opname;
     }
-  op = (opname_e *) xmalloc (sizeof (opname_e));
+  op = XNEW (opname_e);
   op->opname = xstrdup (name);
   return op->opname;
 }
@@ -1024,7 +1021,7 @@ parse_special_fn (const char *name,
 		  const char **fn_name_p,
 		  const char **arg_name_p)
 {
-  char *p_start;
+  const char *p_start;
   const char *p_end;
 
   p_start = strchr (name, '(');
@@ -1107,7 +1104,7 @@ split_string (split_rec *rec,
   if (rec->count == 0)
     return;
 
-  rec->vec = (char **) xmalloc (sizeof (char *) * cnt);
+  rec->vec = XNEWVEC (char *, cnt);
   for (i = 0; i < cnt; i++)
     rec->vec[i] = 0;
 
@@ -1127,9 +1124,7 @@ split_string (split_rec *rec,
       else
 	{
 	  len = p - q;
-	  rec->vec[i] = (char *) xmalloc (sizeof (char) * (len + 1));
-	  strncpy (rec->vec[i], q, len);
-	  rec->vec[i][len] = '\0';
+	  rec->vec[i] = xmemdup0 (q, len);
 	  p++;
 	}
 
@@ -1193,7 +1188,7 @@ parse_insn_templ (const char *s, insn_templ *t)
   for (i = 0; i < oprec.count; i++)
     {
       const char *opname = oprec.vec[i];
-      opname_map_e *e = (opname_map_e *) xmalloc (sizeof (opname_map_e));
+      opname_map_e *e = XNEW (opname_map_e);
       e->next = NULL;
       e->operand_name = NULL;
       e->constant_value = 0;
@@ -1311,7 +1306,7 @@ clone_req_or_option_list (ReqOrOption *req_or_option)
   if (req_or_option == NULL)
     return NULL;
 
-  new_req_or_option = (ReqOrOption *) xmalloc (sizeof (ReqOrOption));
+  new_req_or_option = XNEW (ReqOrOption);
   new_req_or_option->option_name = xstrdup (req_or_option->option_name);
   new_req_or_option->is_true = req_or_option->is_true;
   new_req_or_option->next = NULL;
@@ -1328,7 +1323,7 @@ clone_req_option_list (ReqOption *req_option)
   if (req_option == NULL)
     return NULL;
 
-  new_req_option = (ReqOption *) xmalloc (sizeof (ReqOption));
+  new_req_option = XNEW (ReqOption);
   new_req_option->or_option_terms = NULL;
   new_req_option->next = NULL;
   new_req_option->or_option_terms =
@@ -1372,7 +1367,7 @@ parse_option_cond (const char *s, ReqOption *option)
       else
 	option_name = xstrdup (option_name);
 
-      req = (ReqOrOption *) xmalloc (sizeof (ReqOrOption));
+      req = XNEW (ReqOrOption);
       req->option_name = option_name;
       req->is_true = is_true;
       req->next = NULL;
@@ -1440,7 +1435,7 @@ parse_insn_pattern (const char *in, insn_pattern *insn)
 
   for (i = 1; i < rec.count; i++)
     {
-      precond_e *cond = (precond_e *) xmalloc (sizeof (precond_e));
+      precond_e *cond = XNEW (precond_e);
 
       if (!parse_precond (rec.vec[i], cond))
 	{
@@ -1459,7 +1454,7 @@ parse_insn_pattern (const char *in, insn_pattern *insn)
     {
       /* Handle the option conditions.  */
       ReqOption **r_p;
-      ReqOption *req_option = (ReqOption *) xmalloc (sizeof (ReqOption));
+      ReqOption *req_option = XNEW (ReqOption);
       req_option->or_option_terms = NULL;
       req_option->next = NULL;
 
@@ -1496,7 +1491,7 @@ parse_insn_repl (const char *in, insn_repl *r_p)
 
   for (i = 0; i < rec.count; i++)
     {
-      insn_repl_e *e = (insn_repl_e *) xmalloc (sizeof (insn_repl_e));
+      insn_repl_e *e = XNEW (insn_repl_e);
 
       e->next = NULL;
 
@@ -1572,7 +1567,7 @@ transition_applies (insn_pattern *initial_insn,
 
 static bfd_boolean
 wide_branch_opcode (const char *opcode_name,
-		    char *suffix,
+		    const char *suffix,
 		    xtensa_opcode *popcode)
 {
   xtensa_isa isa = xtensa_default_isa;
@@ -1632,7 +1627,7 @@ build_transition (insn_pattern *initial_insn,
       return NULL;
     }
 
-  tr = (TransitionRule *) xmalloc (sizeof (TransitionRule));
+  tr = XNEW (TransitionRule);
   tr->opcode = opcode;
   tr->conditions = NULL;
   tr->to_instr = NULL;
@@ -1727,7 +1722,7 @@ build_transition (insn_pattern *initial_insn,
       const char *fn_name;
       const char *operand_arg_name;
 
-      bi = (BuildInstr *) xmalloc (sizeof (BuildInstr));
+      bi = XNEW (BuildInstr);
       append_build_insn (tr, bi);
 
       bi->opcode = XTENSA_UNDEFINED;
@@ -1857,10 +1852,9 @@ build_transition_table (const string_pattern_pair *transitions,
     return table;
 
   /* Otherwise, build it now.  */
-  table = (TransitionTable *) xmalloc (sizeof (TransitionTable));
+  table = XNEW (TransitionTable);
   table->num_opcodes = num_opcodes;
-  table->table =
-    (TransitionList **) xmalloc (sizeof (TransitionTable *) * num_opcodes);
+  table->table = XNEWVEC (TransitionList *, num_opcodes);
 
   for (i = 0; i < num_opcodes; i++)
     table->table[i] = NULL;

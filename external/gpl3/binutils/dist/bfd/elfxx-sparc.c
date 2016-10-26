@@ -1,5 +1,5 @@
 /* SPARC-specific support for ELF
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -3481,7 +3481,8 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd,
 		}
 	      else
 		{
-		  if (r_type == R_SPARC_32 || r_type == R_SPARC_64)
+		  if (  (!ABI_64_P (output_bfd) && r_type == R_SPARC_32)
+		      || (ABI_64_P (output_bfd) && r_type == R_SPARC_64))
 		    {
 		      outrel.r_info = SPARC_ELF_R_INFO (htab, NULL,
 							0, R_SPARC_RELATIVE);
@@ -4199,11 +4200,9 @@ do_relocation:
 		    if (*name == '\0')
 		      name = bfd_section_name (input_bfd, sec);
 		  }
-		if (! ((*info->callbacks->reloc_overflow)
-		       (info, (h ? &h->root : NULL), name, howto->name,
-			(bfd_vma) 0, input_bfd, input_section,
-			rel->r_offset)))
-		  return FALSE;
+		(*info->callbacks->reloc_overflow)
+		  (info, (h ? &h->root : NULL), name, howto->name,
+		   (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      }
 	      break;
 	    }
@@ -4630,13 +4629,13 @@ sparc_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 	    {
 	      asection *s;
 
-	      s = bfd_get_section_by_name (output_bfd, name);
+	      s = bfd_get_linker_section (dynobj, name);
 	      if (s == NULL)
 		dyn.d_un.d_val = 0;
 	      else
 		{
 		  if (! size)
-		    dyn.d_un.d_ptr = s->vma;
+		    dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 		  else
 		    dyn.d_un.d_val = s->size;
 		}
@@ -4832,11 +4831,49 @@ _bfd_sparc_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
 bfd_boolean
 _bfd_sparc_elf_object_p (bfd *abfd)
 {
+  obj_attribute *attrs = elf_known_obj_attributes (abfd)[OBJ_ATTR_GNU];
+  obj_attribute *hwcaps = &attrs[Tag_GNU_Sparc_HWCAPS];
+  obj_attribute *hwcaps2 = &attrs[Tag_GNU_Sparc_HWCAPS2];
+
+  unsigned int v9c_hwcaps_mask = ELF_SPARC_HWCAP_ASI_BLK_INIT;
+  unsigned int v9d_hwcaps_mask = (ELF_SPARC_HWCAP_FMAF
+                                  | ELF_SPARC_HWCAP_VIS3
+                                  | ELF_SPARC_HWCAP_HPC);
+  unsigned int v9e_hwcaps_mask = (ELF_SPARC_HWCAP_AES
+                                  | ELF_SPARC_HWCAP_DES
+                                  | ELF_SPARC_HWCAP_KASUMI
+                                  | ELF_SPARC_HWCAP_CAMELLIA
+                                  | ELF_SPARC_HWCAP_MD5
+                                  | ELF_SPARC_HWCAP_SHA1
+                                  | ELF_SPARC_HWCAP_SHA256
+                                  | ELF_SPARC_HWCAP_SHA512
+                                  | ELF_SPARC_HWCAP_MPMUL
+                                  | ELF_SPARC_HWCAP_MONT
+                                  | ELF_SPARC_HWCAP_CRC32C
+                                  | ELF_SPARC_HWCAP_CBCOND
+                                  | ELF_SPARC_HWCAP_PAUSE);
+  unsigned int v9v_hwcaps_mask = (ELF_SPARC_HWCAP_FJFMAU
+                                 | ELF_SPARC_HWCAP_IMA);
+  unsigned int v9m_hwcaps2_mask = (ELF_SPARC_HWCAP2_SPARC5
+                                   | ELF_SPARC_HWCAP2_MWAIT
+                                   | ELF_SPARC_HWCAP2_XMPMUL
+                                   | ELF_SPARC_HWCAP2_XMONT);
+
   if (ABI_64_P (abfd))
     {
       unsigned long mach = bfd_mach_sparc_v9;
 
-      if (elf_elfheader (abfd)->e_flags & EF_SPARC_SUN_US3)
+      if (hwcaps2->i & v9m_hwcaps2_mask)
+        mach = bfd_mach_sparc_v9m;
+      else if (hwcaps->i & v9v_hwcaps_mask)
+        mach = bfd_mach_sparc_v9v;
+      else if (hwcaps->i & v9e_hwcaps_mask)
+        mach = bfd_mach_sparc_v9e;
+      else if (hwcaps->i & v9d_hwcaps_mask)
+        mach = bfd_mach_sparc_v9d;
+      else if (hwcaps->i & v9c_hwcaps_mask)
+        mach = bfd_mach_sparc_v9c;
+      else if (elf_elfheader (abfd)->e_flags & EF_SPARC_SUN_US3)
 	mach = bfd_mach_sparc_v9b;
       else if (elf_elfheader (abfd)->e_flags & EF_SPARC_SUN_US1)
 	mach = bfd_mach_sparc_v9a;
@@ -4846,7 +4883,22 @@ _bfd_sparc_elf_object_p (bfd *abfd)
     {
       if (elf_elfheader (abfd)->e_machine == EM_SPARC32PLUS)
 	{
-	  if (elf_elfheader (abfd)->e_flags & EF_SPARC_SUN_US3)
+          if (hwcaps2->i & v9m_hwcaps2_mask)
+	    return bfd_default_set_arch_mach (abfd, bfd_arch_sparc,
+					      bfd_mach_sparc_v8plusm);
+          else if (hwcaps->i & v9v_hwcaps_mask)
+            return bfd_default_set_arch_mach (abfd, bfd_arch_sparc,
+					      bfd_mach_sparc_v8plusv);
+          else if (hwcaps->i & v9e_hwcaps_mask)
+            return bfd_default_set_arch_mach (abfd, bfd_arch_sparc,
+					      bfd_mach_sparc_v8pluse);
+          else if (hwcaps->i & v9d_hwcaps_mask)
+            return bfd_default_set_arch_mach (abfd, bfd_arch_sparc,
+					      bfd_mach_sparc_v8plusd);
+          else if (hwcaps->i & v9c_hwcaps_mask)
+            return bfd_default_set_arch_mach (abfd, bfd_arch_sparc,
+					      bfd_mach_sparc_v8plusc);
+	  else if (elf_elfheader (abfd)->e_flags & EF_SPARC_SUN_US3)
 	    return bfd_default_set_arch_mach (abfd, bfd_arch_sparc,
 					      bfd_mach_sparc_v8plusb);
 	  else if (elf_elfheader (abfd)->e_flags & EF_SPARC_SUN_US1)

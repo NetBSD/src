@@ -1,5 +1,5 @@
 /* BFD back-end for a.out.adobe binaries.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.  Based on bout.c.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -86,8 +86,8 @@ aout_adobe_callback (bfd *abfd)
   bfd_set_arch_mach (abfd, bfd_arch_unknown, 0L);
 
   /* The positions of the string table and symbol table.  */
-  obj_str_filepos (abfd) = N_STROFF (*execp);
-  obj_sym_filepos (abfd) = N_SYMOFF (*execp);
+  obj_str_filepos (abfd) = N_STROFF (execp);
+  obj_sym_filepos (abfd) = N_SYMOFF (execp);
 
   /* Suck up the section information from the file, one section at a time.  */
   for (;;)
@@ -166,12 +166,12 @@ aout_adobe_callback (bfd *abfd)
 	switch (ext->e_type[0])
 	  {
 	  case N_TEXT:
-	    sect->rel_filepos = N_TRELOFF (*execp);
+	    sect->rel_filepos = N_TRELOFF (execp);
 	    sect->reloc_count = execp->a_trsize;
 	    break;
 
 	  case N_DATA:
-	    sect->rel_filepos = N_DRELOFF (*execp);
+	    sect->rel_filepos = N_DRELOFF (execp);
 	    sect->reloc_count = execp->a_drsize;
 	    break;
 
@@ -213,7 +213,7 @@ aout_adobe_object_p (bfd *abfd)
      If the environment variable GNUTARGET is set to "a.out.adobe", we will
      take just about any a.out file as an Adobe a.out file.  FIXME!  */
 
-  if (N_BADMAG (anexec))
+  if (N_BADMAG (&anexec))
     {
       targ = getenv ("GNUTARGET");
       if (targ && !strcmp (targ, aout_adobe_vec.name))
@@ -333,14 +333,14 @@ aout_adobe_write_object_contents (bfd *abfd)
   /* Now write out reloc info, followed by syms and strings.  */
   if (bfd_get_symcount (abfd) != 0)
     {
-      if (bfd_seek (abfd, (file_ptr) (N_SYMOFF (*exec_hdr (abfd))), SEEK_SET)
+      if (bfd_seek (abfd, (file_ptr) (N_SYMOFF (exec_hdr (abfd))), SEEK_SET)
 	  != 0)
 	return FALSE;
 
       if (! aout_32_write_syms (abfd))
 	return FALSE;
 
-      if (bfd_seek (abfd, (file_ptr) (N_TRELOFF (*exec_hdr (abfd))), SEEK_SET)
+      if (bfd_seek (abfd, (file_ptr) (N_TRELOFF (exec_hdr (abfd))), SEEK_SET)
 	  != 0)
 	return FALSE;
 
@@ -349,7 +349,7 @@ aout_adobe_write_object_contents (bfd *abfd)
 	  if (!aout_32_squirt_out_relocs (abfd, sect))
 	    return FALSE;
 
-      if (bfd_seek (abfd, (file_ptr) (N_DRELOFF (*exec_hdr (abfd))), SEEK_SET)
+      if (bfd_seek (abfd, (file_ptr) (N_DRELOFF (exec_hdr (abfd))), SEEK_SET)
 	  != 0)
 	return FALSE;
 
@@ -377,7 +377,7 @@ aout_adobe_set_section_contents (bfd *abfd,
     {
       /* Assign file offsets to sections.  Text sections are first, and
 	 are contiguous.  Then data sections.  Everything else at the end.  */
-      section_start = N_TXTOFF (ignore<-->me);
+      section_start = N_TXTOFF (0);
 
       for (sect = abfd->sections; sect; sect = sect->next)
 	{
@@ -472,6 +472,7 @@ aout_adobe_sizeof_headers (bfd *ignore_abfd ATTRIBUTE_UNUSED,
   _bfd_generic_copy_link_hash_symbol_type
 #define aout_32_bfd_final_link		            _bfd_generic_final_link
 #define aout_32_bfd_link_split_section	            _bfd_generic_link_split_section
+#define aout_32_bfd_link_check_relocs               _bfd_generic_link_check_relocs
 
 const bfd_target aout_adobe_vec =
 {

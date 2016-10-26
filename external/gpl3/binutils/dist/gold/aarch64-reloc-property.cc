@@ -1,6 +1,6 @@
 // aarch64-reloc-property.cc -- AArch64 relocation properties   -*- C++ -*-
 
-// Copyright (C) 2014-2015 Free Software Foundation, Inc.
+// Copyright (C) 2014-2016 Free Software Foundation, Inc.
 // Written by Han Shen <shenhan@google.com> and Jing Yu <jingyu@google.com>.
 
 // This file is part of gold.

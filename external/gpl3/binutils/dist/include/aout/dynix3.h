@@ -1,6 +1,6 @@
 /* a.out specifics for Sequent Symmetry running Dynix 3.x
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -69,19 +69,19 @@ struct dynix_external_exec
 
 #define N_TXTOFF(x) (EXEC_BYTES_SIZE)
 #define N_DATOFF(x) (N_TXTOFF(x) + N_TXTSIZE(x))
-#define N_SHDATOFF(x) (N_DATOFF(x) + (x).a_data)
-#define N_TRELOFF(x) (N_SHDATOFF(x) + (x).a_shdata)
-#define N_DRELOFF(x) (N_TRELOFF(x) + (x).a_trsize)
-#define N_SHDRELOFF(x) (N_DRELOFF(x) + (x).a_drsize)
-#define N_SYMOFF(x) (N_SHDRELOFF(x) + (x).a_shdrsize)
-#define N_STROFF(x) (N_SYMOFF(x) + (x).a_syms)
+#define N_SHDATOFF(x) (N_DATOFF(x) + (x)->a_data)
+#define N_TRELOFF(x) (N_SHDATOFF(x) + (x)->a_shdata)
+#define N_DRELOFF(x) (N_TRELOFF(x) + (x)->a_trsize)
+#define N_SHDRELOFF(x) (N_DRELOFF(x) + (x)->a_drsize)
+#define N_SYMOFF(x) (N_SHDRELOFF(x) + (x)->a_shdrsize)
+#define N_STROFF(x) (N_SYMOFF(x) + (x)->a_syms)
 
 #define N_TXTADDR(x) \
 	(((OMAGIC == N_MAGIC(x)) || (SMAGIC == N_MAGIC(x))) ? 0 \
 	 : TEXT_START_ADDR + EXEC_BYTES_SIZE)
 
 #define N_TXTSIZE(x) \
-	(((OMAGIC == N_MAGIC(x)) || (SMAGIC == N_MAGIC(x))) ? ((x).a_text) \
-	 : ((x).a_text - N_ADDRADJ(x) - EXEC_BYTES_SIZE))
+	(((OMAGIC == N_MAGIC(x)) || (SMAGIC == N_MAGIC(x))) ? ((x)->a_text) \
+	 : ((x)->a_text - N_ADDRADJ(x) - EXEC_BYTES_SIZE))
 
 #endif /* A_OUT_DYNIX3_H */

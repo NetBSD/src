@@ -1,6 +1,6 @@
 /* tc-microblaze.h -- Header file for tc-microblaze.c.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -100,8 +100,6 @@ extern const struct relax_type md_relax_table[];
 extern void      md_begin            (void);
 extern void      md_assemble         (char *);
 extern symbolS * md_undefined_symbol (char *);
-extern char *    md_atof             (int, char *, int *);
-extern int       md_parse_option     (int, char *);
 extern void      md_show_usage       (FILE *);
 extern void      md_convert_frag               (bfd *, segT, fragS *);
 extern void      md_operand                    (expressionS *);

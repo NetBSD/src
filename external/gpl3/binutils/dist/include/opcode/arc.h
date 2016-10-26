@@ -1,5 +1,5 @@
 /* Opcode table for the ARC.
-   Copyright 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -24,16 +24,28 @@
 #ifndef OPCODE_ARC_H
 #define OPCODE_ARC_H
 
-#define MAX_INSN_ARGS	     6
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef MAX_INSN_ARGS
+#define MAX_INSN_ARGS	     16
+#endif
+
+#ifndef MAX_INSN_FLGS
 #define MAX_INSN_FLGS	     3
+#endif
 
 /* Instruction Class.  */
 typedef enum
   {
+    ACL,
     ARITH,
     AUXREG,
+    BITOP,
     BRANCH,
     CONTROL,
+    DPI,
     DSP,
     FLOAT,
     INVALID,
@@ -41,6 +53,7 @@ typedef enum
     KERNEL,
     LOGICAL,
     MEMORY,
+    NET,
   } insn_class_t;
 
 /* Instruction Subclass.  */
@@ -51,31 +64,44 @@ typedef enum
     BTSCN,
     CD1,
     CD2,
+    COND,
     DIV,
     DP,
+    DPA,
+    DPX,
     MPY1E,
     MPY6E,
     MPY7E,
     MPY8E,
     MPY9E,
+    NPS400,
+    QUARKSE,
     SHFT1,
     SHFT2,
     SWAP,
-    SP
+    SP,
+    SPX
   } insn_subclass_t;
 
 /* Flags class.  */
 typedef enum
   {
-    FNONE,
-    CND,  /* Conditional flags.  */
-    WBM,  /* Write-back modes.  */
-    FLG,  /* F Flag.  */
-    SBP,  /* Static branch prediction.  */
-    DLY,  /* Delay slot.  */
-    DIF,  /* Bypass caches.  */
-    SGX,  /* Sign extend modes.  */
-    SZM   /* Data size modes.  */
+    F_CLASS_NONE = 0,
+
+    /* At most one flag from the set of flags can appear in the
+       instruction.  */
+    F_CLASS_OPTIONAL = (1 << 0),
+
+    /* Exactly one from from the set of flags must appear in the
+       instruction.  */
+    F_CLASS_REQUIRED = (1 << 1),
+
+    /* The conditional code can be extended over the standard variants
+       via .extCondCode pseudo-op.  */
+    F_CLASS_EXTEND = (1 << 2),
+
+    /* Condition code flag.  */
+    F_CLASS_COND = (1 << 3)
   } flag_class_t;
 
 /* The opcode table is an array of struct arc_opcode.  */
@@ -100,7 +126,7 @@ struct arc_opcode
   unsigned cpu;
 
   /* The instruction class.  This is used by gdb.  */
-  insn_class_t class;
+  insn_class_t insn_class;
 
   /* The instruction subclass.  */
   insn_subclass_t subclass;
@@ -116,17 +142,46 @@ struct arc_opcode
   unsigned char flags[MAX_INSN_FLGS + 1];
 };
 
+/* Structure used to describe 48 and 64 bit instructions.  */
+struct arc_long_opcode
+{
+  /* The base instruction is either 16 or 32 bits, and is described like a
+     normal instruction.  */
+  struct arc_opcode base_opcode;
+
+  /* The template value for the 32-bit LIMM extension.  Used by the
+     assembler and disassembler in the same way as the 'opcode' field of
+     'struct arc_opcode'.  */
+  unsigned limm_template;
+
+  /* The mask value for the 32-bit LIMM extension.  Used by the
+     disassembler just like the 'mask' field in 'struct arc_opcode'.  */
+  unsigned limm_mask;
+
+  /* Array of operand codes similar to the 'operands' array in 'struct
+     arc_opcode'.  These operands are used to fill in the LIMM value.  */
+  unsigned char operands[MAX_INSN_ARGS + 1];
+};
+
+extern const struct arc_long_opcode arc_long_opcodes[];
+extern const unsigned arc_num_long_opcodes;
+
 /* The table itself is sorted by major opcode number, and is otherwise
    in the order in which the disassembler should consider
    instructions.  */
 extern const struct arc_opcode arc_opcodes[];
-extern const unsigned arc_num_opcodes;
 
 /* CPU Availability.  */
+#define ARC_OPCODE_NONE     0x0000
 #define ARC_OPCODE_ARC600   0x0001  /* ARC 600 specific insns.  */
 #define ARC_OPCODE_ARC700   0x0002  /* ARC 700 specific insns.  */
 #define ARC_OPCODE_ARCv2EM  0x0004  /* ARCv2 EM specific insns.  */
 #define ARC_OPCODE_ARCv2HS  0x0008  /* ARCv2 HS specific insns.  */
+
+/* CPU combi.  */
+#define ARC_OPCODE_ARCALL  (ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700	\
+			    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS)
+#define ARC_OPCODE_ARCFPX  (ARC_OPCODE_ARC700 | ARC_OPCODE_ARCv2EM)
 
 /* CPU extensions.  */
 #define ARC_EA       0x0001
@@ -135,11 +190,13 @@ extern const unsigned arc_num_opcodes;
 #define ARC_ATOMIC   0x0002    /* Mutual exclusive with LLOCK.  */
 #define ARC_MPY      0x0004
 #define ARC_MULT     0x0004
+#define ARC_NPS400   0x0008
 
 /* Floating point support.  */
 #define ARC_DPFP     0x0010
 #define ARC_SPFP     0x0020
 #define ARC_FPU      0x0030
+#define ARC_FPUDA    0x0040
 
 /* NORM & SWAP.  */
 #define ARC_SWAP     0x0100
@@ -165,11 +222,6 @@ extern const unsigned arc_num_opcodes;
 /* V1 specific.  */
 #define ARC_XMAC     0x1000
 #define ARC_CRC      0x1000
-
-/* Base architecture -- all cpus.  */
-#define ARC_OPCODE_BASE				\
-  (ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700	\
-   | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS)
 
 /* A macro to check for short instructions.  */
 #define ARC_SHORT(mask)				\
@@ -317,7 +369,7 @@ extern const unsigned arc_num_flag_operands;
 struct arc_flag_class
 {
   /* Flag class.  */
-  flag_class_t class;
+  flag_class_t flag_class;
 
   /* List of valid flags (codes).  */
   unsigned flags[256];
@@ -343,7 +395,7 @@ struct arc_reloc_equiv_tab
 {
   const char * name;	   /* String to lookup.  */
   const char * mnemonic;   /* Extra matching condition.  */
-  unsigned     flagcode;   /* Extra matching condition.  */
+  unsigned     flags[32];  /* Extra matching condition.  */
   signed int   oldreloc;   /* Old relocation.  */
   signed int   newreloc;   /* New relocation.  */
 };
@@ -400,7 +452,15 @@ struct arc_aux_reg
   /* Register address.  */
   int address;
 
- /* Register name.  */
+  /* One bit flags for the opcode.  These are primarily used to
+     indicate specific processors and environments support the
+     instructions.  */
+  unsigned cpu;
+
+  /* AUX register subclass.  */
+  insn_subclass_t subclass;
+
+  /* Register name.  */
   const char *name;
 
   /* Size of the string.  */
@@ -409,5 +469,147 @@ struct arc_aux_reg
 
 extern const struct arc_aux_reg arc_aux_regs[];
 extern const unsigned arc_num_aux_regs;
+
+extern const struct arc_opcode arc_relax_opcodes[];
+extern const unsigned arc_num_relax_opcodes;
+
+/* Macro used for generating one class of NPS instructions.  */
+#define NPS_CMEM_HIGH_VALUE 0x57f0
+
+/* Macros to help generating regular pattern instructions.  */
+#define FIELDA(word) (word & 0x3F)
+#define FIELDB(word) (((word & 0x07) << 24) | (((word >> 3) & 0x07) << 12))
+#define FIELDC(word) ((word & 0x3F) << 6)
+#define FIELDF	     (0x01 << 15)
+#define FIELDQ	     (0x1F)
+
+#define INSN3OP(MOP,SOP)	(((MOP & 0x1F) << 27) | ((SOP & 0x3F) << 16))
+#define INSN2OPX(MOP,SOP1,SOP2) (INSN3OP (MOP,SOP1) | (SOP2 & 0x3F))
+#define INSN2OP(MOP,SOP)	(INSN2OPX (MOP,0x2F,SOP))
+
+#define INSN3OP_ABC(MOP,SOP)  (INSN3OP (MOP,SOP))
+#define INSN3OP_ALC(MOP,SOP)  (INSN3OP (MOP,SOP) | FIELDB (62))
+#define INSN3OP_ABL(MOP,SOP)  (INSN3OP (MOP,SOP) | FIELDC (62))
+#define INSN3OP_ALL(MOP,SOP)  (INSN3OP (MOP,SOP) | FIELDB (62) | FIELDC (62))
+#define INSN3OP_0BC(MOP,SOP)  (INSN3OP (MOP,SOP) | FIELDA (62))
+#define INSN3OP_0LC(MOP,SOP)  (INSN3OP (MOP,SOP) | FIELDA (62) | FIELDB (62))
+#define INSN3OP_0BL(MOP,SOP)  (INSN3OP (MOP,SOP) | FIELDA (62) | FIELDC (62))
+#define INSN3OP_0LL(MOP,SOP)					\
+  (INSN3OP (MOP,SOP) | FIELDA (62) | FIELDB (62) | FIELDC (62))
+#define INSN3OP_ABU(MOP,SOP)  (INSN3OP (MOP,SOP) | (0x01 << 22))
+#define INSN3OP_ALU(MOP,SOP)  (INSN3OP (MOP,SOP) | (0x01 << 22) | FIELDB (62))
+#define INSN3OP_0BU(MOP,SOP)  (INSN3OP (MOP,SOP) | FIELDA (62) | (0x01 << 22))
+#define INSN3OP_0LU(MOP,SOP)					\
+  (INSN3OP (MOP,SOP) | FIELDA (62) | (0x01 << 22) | FIELDB (62))
+#define INSN3OP_BBS(MOP,SOP)  (INSN3OP (MOP,SOP) | (0x02 << 22))
+#define INSN3OP_0LS(MOP,SOP)  (INSN3OP (MOP,SOP) | (0x02 << 22) | FIELDB (62))
+#define INSN3OP_CBBC(MOP,SOP) (INSN3OP (MOP,SOP) | (0x03 << 22))
+#define INSN3OP_CBBL(MOP,SOP) (INSN3OP (MOP,SOP) | (0x03 << 22) | FIELDC (62))
+#define INSN3OP_C0LC(MOP,SOP) (INSN3OP (MOP,SOP) | (0x03 << 22) | FIELDB (62))
+#define INSN3OP_C0LL(MOP,SOP)					\
+  (INSN3OP (MOP,SOP) | (0x03 << 22) | FIELDC (62) | FIELDB (62))
+#define INSN3OP_CBBU(MOP,SOP) (INSN3OP (MOP,SOP) | (0x03 << 22) | (0x01 << 5))
+#define INSN3OP_C0LU(MOP,SOP)					\
+  (INSN3OP (MOP,SOP) | (0x03 << 22) | (0x01 << 5) | FIELDB (62))
+
+#define MINSN3OP_ABC  (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63)))
+#define MINSN3OP_ALC  (~(FIELDF | FIELDA (63) | FIELDC (63)))
+#define MINSN3OP_ABL  (~(FIELDF | FIELDA (63) | FIELDB (63)))
+#define MINSN3OP_ALL  (~(FIELDF | FIELDA (63)))
+#define MINSN3OP_0BC  (~(FIELDF | FIELDB (63) | FIELDC (63)))
+#define MINSN3OP_0LC  (~(FIELDF | FIELDC (63)))
+#define MINSN3OP_0BL  (~(FIELDF | FIELDB (63)))
+#define MINSN3OP_0LL  (~(FIELDF))
+#define MINSN3OP_ABU  (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63)))
+#define MINSN3OP_ALU  (~(FIELDF | FIELDA (63) | FIELDC (63)))
+#define MINSN3OP_0BU  (~(FIELDF | FIELDB (63) | FIELDC (63)))
+#define MINSN3OP_0LU  (~(FIELDF | FIELDC (63)))
+#define MINSN3OP_BBS  (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63)))
+#define MINSN3OP_0LS  (~(FIELDF | FIELDA (63) | FIELDC (63)))
+#define MINSN3OP_CBBC (~(FIELDF | FIELDQ | FIELDB (63) | FIELDC (63)))
+#define MINSN3OP_CBBL (~(FIELDF | FIELDQ | FIELDB (63)))
+#define MINSN3OP_C0LC (~(FIELDF | FIELDQ | FIELDC (63)))
+#define MINSN3OP_C0LL (~(FIELDF | FIELDQ))
+#define MINSN3OP_CBBU (~(FIELDF | FIELDQ | FIELDB (63) | FIELDC (63)))
+#define MINSN3OP_C0LU (~(FIELDF | FIELDQ | FIELDC (63)))
+
+#define INSN2OP_BC(MOP,SOP) (INSN2OP (MOP,SOP))
+#define INSN2OP_BL(MOP,SOP) (INSN2OP (MOP,SOP) | FIELDC (62))
+#define INSN2OP_0C(MOP,SOP) (INSN2OP (MOP,SOP) | FIELDB (62))
+#define INSN2OP_0L(MOP,SOP) (INSN2OP (MOP,SOP) | FIELDB (62)  | FIELDC (62))
+#define INSN2OP_BU(MOP,SOP) (INSN2OP (MOP,SOP) | (0x01 << 22))
+#define INSN2OP_0U(MOP,SOP) (INSN2OP (MOP,SOP) | (0x01 << 22) | FIELDB (62))
+
+#define MINSN2OP_BC  (~(FIELDF | FIELDB (63) | FIELDC (63)))
+#define MINSN2OP_BL  (~(FIELDF | FIELDB (63)))
+#define MINSN2OP_0C  (~(FIELDF | FIELDC (63)))
+#define MINSN2OP_0L  (~(FIELDF))
+#define MINSN2OP_BU  (~(FIELDF | FIELDB (63) | FIELDC (63)))
+#define MINSN2OP_0U  (~(FIELDF | FIELDC (63)))
+
+/* Various constants used when defining an extension instruction.  */
+#define ARC_SYNTAX_3OP		(1 << 0)
+#define ARC_SYNTAX_2OP		(1 << 1)
+#define ARC_SYNTAX_1OP		(1 << 2)
+#define ARC_SYNTAX_NOP		(1 << 3)
+#define ARC_SYNTAX_MASK		(0x0F)
+
+#define ARC_OP1_MUST_BE_IMM	(1 << 0)
+#define ARC_OP1_IMM_IMPLIED	(1 << 1)
+
+#define ARC_SUFFIX_NONE		(1 << 0)
+#define ARC_SUFFIX_COND		(1 << 1)
+#define ARC_SUFFIX_FLAG		(1 << 2)
+
+#define ARC_REGISTER_READONLY    (1 << 0)
+#define ARC_REGISTER_WRITEONLY   (1 << 1)
+#define ARC_REGISTER_NOSHORT_CUT (1 << 2)
+
+/* Constants needed to initialize extension instructions.  */
+extern const unsigned char flags_none[MAX_INSN_FLGS + 1];
+extern const unsigned char flags_f[MAX_INSN_FLGS + 1];
+extern const unsigned char flags_cc[MAX_INSN_FLGS + 1];
+extern const unsigned char flags_ccf[MAX_INSN_FLGS + 1];
+
+extern const unsigned char arg_none[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_rarbrc[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_zarbrc[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_rbrbrc[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_rarbu6[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_zarbu6[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_rbrbu6[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_rbrbs12[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_ralimmrc[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_rarblimm[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_zalimmrc[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_zarblimm[MAX_INSN_ARGS + 1];
+
+extern const unsigned char arg_32bit_rbrblimm[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_ralimmu6[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_zalimmu6[MAX_INSN_ARGS + 1];
+
+extern const unsigned char arg_32bit_zalimms12[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_ralimmlimm[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_zalimmlimm[MAX_INSN_ARGS + 1];
+
+extern const unsigned char arg_32bit_rbrc[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_zarc[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_rbu6[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_zau6[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_rblimm[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_zalimm[MAX_INSN_ARGS + 1];
+
+extern const unsigned char arg_32bit_limmrc[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_limmu6[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_limms12[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_limmlimm[MAX_INSN_ARGS + 1];
+
+extern const unsigned char arg_32bit_rc[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_u6[MAX_INSN_ARGS + 1];
+extern const unsigned char arg_32bit_limm[MAX_INSN_ARGS + 1];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* OPCODE_ARC_H */

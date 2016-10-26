@@ -1,6 +1,6 @@
 // ehframe.h -- handle exception frame sections for gold  -*- C++ -*-
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -322,6 +322,11 @@ class Cie
 	section_offset_type offset, uint64_t address,
 	unsigned int addralign, Eh_frame_hdr* eh_frame_hdr,
 	Post_fdes* post_fdes);
+
+  // Return the FDE encoding.
+  unsigned char
+  fde_encoding() const
+  { return this->fde_encoding_; }
 
   friend bool operator<(const Cie&, const Cie&);
   friend bool operator==(const Cie&, const Cie&);

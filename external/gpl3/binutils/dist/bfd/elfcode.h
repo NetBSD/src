@@ -1,5 +1,5 @@
 /* ELF executable support for BFD.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -1302,6 +1302,7 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bfd_boolean dynamic)
 	    case STT_COMMON:
 	      /* FIXME: Do we have to put the size field into the value field
 		 as we do with symbols in SHN_COMMON sections (see above) ?  */
+	      sym->symbol.flags |= BSF_ELF_COMMON;
 	      /* Fall through.  */
 	    case STT_OBJECT:
 	      sym->symbol.flags |= BSF_OBJECT;
