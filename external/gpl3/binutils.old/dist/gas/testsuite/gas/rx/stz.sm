@@ -1,0 +1,1 @@
+	stz	#{imm},{reg}

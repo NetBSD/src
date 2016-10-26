@@ -1,0 +1,9 @@
+#nm: -n
+#name: APP with macro then NO_APP then more code
+#...
+0+ T a
+#...
+0+[1-f] T b
+#...
+0+[2-f] T c
+#pass

@@ -1,0 +1,7 @@
+SECTIONS
+{
+  . = SIZEOF_HEADERS;
+  .text : { *(.text) *(.stub) }
+  .data : { *(.data) *(.ovtab) }
+  .bss : { *(.bss) }
+}

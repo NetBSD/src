@@ -1,0 +1,53 @@
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  
+
+# run tests for target Z80.
+
+if [istarget z80-*-*] then {
+# test redefinitions
+    run_dump_test "redef"
+# test parsing of equ definitions
+    run_dump_test "equ"
+# test parsing of " and '
+    run_dump_test "quotes"
+# test suffixes
+    run_dump_test "suffix"
+# test assembling and disassembling instructions involving offsets
+    run_dump_test "offset"
+    gas_test_error "jr-forwf.s" "" "relative jump out of range (jr)"
+    gas_test_error "jr-backf.s" "" "relative jump out of range (jr)"
+    gas_test_error "djnz-backf.s" "" "relative jump out of range (djnz)"
+ 
+# test assembling instruction with offset that is a label defined later
+    run_dump_test "atend"
+# test for data transfer instructions
+    run_dump_test "ld-group"
+# test for block instructions
+    run_dump_test "block"
+# test for arithmetic and logic
+    run_dump_test "arith"
+# test for rotate and shift
+    run_dump_test "rotate"
+# test for bit manipulations
+    run_dump_test "bit"
+# test for branch instructions
+    run_dump_test "branch"
+# test for input and output instructions
+    run_dump_test "inout"
+#test for other instructions
+    run_dump_test "misc"
+    gas_test_error "ill_op.s" "" "Illegal operand: ld hl,(sp+0)"
+}
