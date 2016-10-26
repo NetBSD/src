@@ -1,0 +1,31 @@
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  
+
+#
+# Some m68k-coff tests
+#
+if [istarget m68*-*-coff] then {
+    gas_test "p2430.s" "" $stdoptlist "local branch not in text section"
+
+    gas_test "p2430a.s" "" $stdoptlist "local branch not in text section"
+
+    gas_test "t1.s" "" $stdoptlist "multiple .file directives"
+
+    gas_test "p2389.s" "" $stdoptlist "bss fill"
+
+    setup_xfail m68*-*-coff
+    gas_test_error "p2389a.s" "" "detect bss fill with non-zero data"
+}
