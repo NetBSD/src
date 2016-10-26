@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.148 2016/10/14 16:09:45 spz Exp $
+# $NetBSD: shl.mi,v 1.149 2016/10/26 21:24:20 christos Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.205.debug			comp-sys-debug	debug,dynamicroot
@@ -61,8 +61,7 @@
 ./usr/libdata/debug/usr/lib/libatf-c++.so.1.0.debug		comp-atf-debug	debug,compatfile,atf
 ./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug		comp-atf-debug	debug,compatfile,atf
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,compatfile,zfs
-./usr/libdata/debug/usr/lib/libbfd.so.13.0.debug		comp-sys-debug	debug,compatfile,binutils=223
-./usr/libdata/debug/usr/lib/libbfd.so.14.0.debug		comp-sys-debug	debug,compatfile,binutils=226
+./usr/libdata/debug/usr/lib/libbfd.so.14.0.debug		comp-sys-debug	debug,compatfile,binutils
 ./usr/libdata/debug/usr/lib/libbind9.so.8.4.debug		comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug		comp-sys-debug	debug,compatfile
@@ -145,8 +144,7 @@
 ./usr/libdata/debug/usr/lib/libnpf.so.0.0.debug			comp-npf-debug	debug,compatfile,npf
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug		comp-sys-debug	debug,compatfile,gcc
-./usr/libdata/debug/usr/lib/libopcodes.so.6.0.debug		comp-c-debug	debug,compatfile,binutils=223
-./usr/libdata/debug/usr/lib/libopcodes.so.7.0.debug		comp-c-debug	debug,compatfile,binutils=226
+./usr/libdata/debug/usr/lib/libopcodes.so.7.0.debug		comp-c-debug	debug,compatfile,binutils
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug			comp-puffs-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/libpam.so.4.0.debug			comp-sys-debug	debug,compatfile,pam
