@@ -1,5 +1,5 @@
 /* .eh_frame section optimization.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Written by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1369,14 +1369,26 @@ _bfd_elf_discard_section_eh_frame
 		     && ent->make_relative == 0)
 		    || (ent->fde_encoding & 0x70) == DW_EH_PE_aligned))
 	      {
+		static int num_warnings_issued = 0;
+
 		/* If a shared library uses absolute pointers
 		   which we cannot turn into PC relative,
 		   don't create the binary search table,
 		   since it is affected by runtime relocations.  */
 		hdr_info->u.dwarf.table = FALSE;
-		(*info->callbacks->einfo)
-		  (_("%P: FDE encoding in %B(%A) prevents .eh_frame_hdr"
-		     " table being created.\n"), abfd, sec);
+		if (num_warnings_issued < 10)
+		  {
+		    (*info->callbacks->einfo)
+		      (_("%P: FDE encoding in %B(%A) prevents .eh_frame_hdr"
+			 " table being created.\n"), abfd, sec);
+		    num_warnings_issued ++;
+		  }
+		else if (num_warnings_issued == 10)
+		  {
+		    (*info->callbacks->einfo)
+		      (_("%P: Further warnings about FDE encoding preventing .eh_frame_hdr generation dropped.\n"));
+		    num_warnings_issued ++;
+		  }
 	      }
 	    ent->removed = 0;
 	    hdr_info->u.dwarf.fde_count++;
