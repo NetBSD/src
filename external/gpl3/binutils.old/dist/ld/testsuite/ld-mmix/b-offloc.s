@@ -1,6 +1,6 @@
 % The .text contents is supposed to be linked --oformat binary with
 % b-post1.s and b-goodmain.s.  The code below will provide a LOP_LOC
-% with a 64-bit address (0x789abcdef0123456) then 16 bytes of % random data.
+% with a 64-bit address (0x789abcdef0123458) then 16 bytes of % random data.
 
  .text
  .byte 0x98,1,0,2

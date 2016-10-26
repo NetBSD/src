@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: bfd 2.22.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
 "POT-Creation-Date: 2011-10-25 11:58+0100\n"
-"PO-Revision-Date: 2012-08-10 20:17+0300\n"
+"PO-Revision-Date: 2012-09-09 21:27+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <translation-team-uk@lists.sourceforge.net>\n"
 "Language: uk\n"
@@ -2286,7 +2286,7 @@ msgstr "попередження: виклик нефункціональног�
 
 #: elf32-spu.c:1361
 msgid "%A:0x%v lrlive .brinfo (%u) differs from analysis (%u)\n"
-msgstr ""
+msgstr "%A:0x%v .brinfo lrlive (%u) відрізняється від визначеного шляхом аналізу (%u)\n"
 
 #: elf32-spu.c:1880
 msgid "%B is not allowed to define %s"
@@ -2666,6 +2666,11 @@ msgid ""
 " Please use the objcopy program to convert from ELF or mmo,\n"
 " or assemble using \"-no-expand\" (for gcc, \"-Wa,-no-expand\""
 msgstr ""
+"некоректне вхідне пересування під час створення даних не у\n"
+" форматі ELF і виведення даних не у форматі mmo.\n"
+" Будь ласка, скористайтеся програмою objcopy для перетворення\n"
+" даних з ELF або mmo або зберіть з використанням «-no-expand»\n"
+" (для gcc «-Wa,-no-expand»)"
 
 #: elf64-mmix.c:1218
 msgid ""
@@ -2673,6 +2678,11 @@ msgid ""
 " Please use the objcopy program to convert from ELF or mmo,\n"
 " or compile using the gcc-option \"-mno-base-addresses\"."
 msgstr ""
+"некоректне вхідне пересування під час створення даних не у\n"
+" форматі ELF і виведення даних не у форматі mmo.\n"
+" Будь ласка, скористайтеся програмою objcopy для перетворення\n"
+" даних з ELF або mmo або зберіть з використанням параметра gcc\n"
+" «-mno-base-addresses»."
 
 #: elf64-mmix.c:1244
 #, c-format
@@ -2737,7 +2747,7 @@ msgstr "%P: %B: не вдалося створити шаблонний запи
 
 #: elf64-ppc.c:6518
 msgid "%P: copy reloc against `%s' requires lazy plt linking; avoid setting LD_BIND_NOW=1 or upgrade gcc\n"
-msgstr ""
+msgstr "%P: копіювання пересування щодо «%s» потребує відкладеного компонування plt; не встановлюйте LD_BIND_NOW=1 або оновіть gcc\n"
 
 #: elf64-ppc.c:6788
 msgid "%B: undefined symbol on R_PPC64_TOCSAVE relocation"
@@ -2831,11 +2841,11 @@ msgstr "%P: %H: %s використовується з символом поза
 
 #: elf64-ppc.c:12556
 msgid "%P: %H: automatic multiple TOCs not supported using your crt files; recompile with -mminimal-toc or upgrade gcc\n"
-msgstr ""
+msgstr "%P: %H: автоматичне створення декількох TOC не можна виконати на основі ваших файлів crt; виконайте повторне збирання з -mminimal-toc або оновіть gcc\n"
 
 #: elf64-ppc.c:12562
 msgid "%P: %H: sibling call optimization to `%s' does not allow automatic multiple TOCs; recompile with -mminimal-toc or -fno-optimize-sibling-calls, or make `%s' extern\n"
-msgstr ""
+msgstr "%P: %H: у разі використання оптимізації викликів однакових функцій для «%s» не дасть змоги створити декілька TOC; виконайте повторне збирання з -mminimal-toc або -fno-optimize-sibling-calls чи зробіть «%s» зовнішньою (extern)\n"
 
 #: elf64-ppc.c:13286
 msgid "%P: %B: relocation %s is not supported for symbol %s\n"
@@ -3568,7 +3578,7 @@ msgstr "%s: некоректний файл mmo: очікувалося z = 16 �
 #: mmo.c:1728
 #, c-format
 msgid "%s: invalid mmo file: leading byte of operand word must be 0 or 1, got %d for lop_fixrx\n"
-msgstr ""
+msgstr "%s: некоректний файл mmo: початковим байтом слова оператора має бути 0 або 1, отримано ж %d для lop_fixrx\n"
 
 #: mmo.c:1751
 #, c-format
@@ -3578,7 +3588,7 @@ msgstr "%s: не вдалося розмістити назву файла дл�
 #: mmo.c:1771
 #, c-format
 msgid "%s: invalid mmo file: file number %d `%s', was already entered as `%s'\n"
-msgstr ""
+msgstr "%s: некоректний файл mmo: номер файла %d, «%s», уже здійснено вхід як у «%s»\n"
 
 #: mmo.c:1784
 #, c-format
@@ -3598,7 +3608,7 @@ msgstr "%s: некоректний файл mmo: lop_end не є останні�
 #: mmo.c:1939
 #, c-format
 msgid "%s: invalid mmo file: YZ of lop_end (%ld) not equal to the number of tetras to the preceding lop_stab (%ld)\n"
-msgstr ""
+msgstr "%s: некоректний файл mmo: YZ lop_end (%ld) не дорівнює кількості тетрад до попереднього lop_stab (%ld)\n"
 
 #: mmo.c:2649
 #, c-format
@@ -3613,7 +3623,7 @@ msgstr "%s: помилкове визначення символу: «Main» в�
 #: mmo.c:2981
 #, c-format
 msgid "%s: warning: symbol table too large for mmo, larger than 65535 32-bit words: %d.  Only `Main' will be emitted.\n"
-msgstr ""
+msgstr "%s: попередження: таблиця символів є надто великою для mmo, її розмір перевищує 65535 32-бітових слова: %d. Буде випущено лише «Main».\n"
 
 #: mmo.c:3026
 #, c-format
@@ -3638,7 +3648,7 @@ msgstr "%s: занадто багато ініціалізованих регі�
 #: mmo.c:3140
 #, c-format
 msgid "%s: invalid start address for initialized registers of length %ld: 0x%lx%08lx\n"
-msgstr ""
+msgstr "%s: некоректна початкова адреса для ініціалізованих регістрів довжини %ld: 0x%lx%08lx\n"
 
 #: oasys.c:882
 #, c-format
@@ -3693,7 +3703,7 @@ msgstr ""
 #: pei-x86_64.c:450
 #, c-format
 msgid "vma:\t\t\tBeginAddress\t EndAddress\t  UnwindData\n"
-msgstr ""
+msgstr "vma:\t\t\tПочаткАдреса\t КінцАдресаs\t  ДаніUnwind\n"
 
 #. XXX code yet to be written.
 #: peicode.h:751
@@ -3792,6 +3802,8 @@ msgid ""
 "\n"
 "Exec Auxiliary Header\n"
 msgstr ""
+"\n"
+"Допоміжний заголовок виконання\n"
 
 #: som.c:5776
 msgid "som_sizeof_headers unimplemented"
@@ -3807,7 +3819,7 @@ msgstr "%B:%d: помилкова контрольна сума у файлі з
 
 #: stabs.c:279
 msgid "%B(%A+0x%lx): Stabs entry has invalid string index."
-msgstr ""
+msgstr "%B(%A+0x%lx): запис таблиці stabs містить некоректний індекс рядка."
 
 #: syms.c:1079
 msgid "Unsupported .stab relocation"
@@ -3870,7 +3882,7 @@ msgstr "зарезервована команда %d"
 
 #: vms-alpha.c:2337
 msgid "Object module NOT error-free !\n"
-msgstr ""
+msgstr "У об’єктному модулі містяться помилки!\n"
 
 #: vms-alpha.c:2766
 #, c-format
@@ -4044,7 +4056,7 @@ msgstr "   авторські права: %.*s\n"
 #: vms-alpha.c:5725
 #, c-format
 msgid "unhandled emh subtype %u\n"
-msgstr ""
+msgstr "непридатний до обробки підтип emh, %u\n"
 
 #: vms-alpha.c:5735
 #, c-format
@@ -4054,7 +4066,7 @@ msgstr "  EEOM (довж=%u):\n"
 #: vms-alpha.c:5736
 #, c-format
 msgid "   number of cond linkage pairs: %u\n"
-msgstr ""
+msgstr "   кількість пар умовного компонування: %u\n"
 
 #: vms-alpha.c:5738
 #, c-format
@@ -4184,7 +4196,7 @@ msgstr "   прапорці    : 0x%04x"
 #: vms-alpha.c:5838
 #, c-format
 msgid "   alloc (len): %u (0x%08x)\n"
-msgstr ""
+msgstr "   alloc (довжина): %u (0x%08x)\n"
 
 #: vms-alpha.c:5839 vms-alpha.c:5896 vms-alpha.c:5945
 #, c-format
@@ -4194,12 +4206,12 @@ msgstr "   назва      : %.*s\n"
 #: vms-alpha.c:5849
 #, c-format
 msgid "SPSC - Shared Image Program section def\n"
-msgstr ""
+msgstr "SPSC — визначення програмного розділу спільного образу\n"
 
 #: vms-alpha.c:5855
 #, c-format
 msgid "   alloc (len)   : %u (0x%08x)\n"
-msgstr ""
+msgstr "   alloc (довжина): %u (0x%08x)\n"
 
 #: vms-alpha.c:5856
 #, c-format
@@ -4209,7 +4221,7 @@ msgstr "   відступ образу: 0x%08x\n"
 #: vms-alpha.c:5858
 #, c-format
 msgid "   symvec offset : 0x%08x\n"
-msgstr ""
+msgstr "   зсув symvec   : 0x%08x\n"
 
 #: vms-alpha.c:5860
 #, c-format
@@ -4269,7 +4281,7 @@ msgstr "   прапорці      : 0x%08x"
 #: vms-alpha.c:5912
 #, c-format
 msgid "   id match      : %x\n"
-msgstr ""
+msgstr "   ід. відповідності: %x\n"
 
 #: vms-alpha.c:5914
 #, c-format
@@ -4304,7 +4316,7 @@ msgstr "SYMG — Універсальне визначення символів\
 #: vms-alpha.c:5937
 #, c-format
 msgid "   symbol vector offset: 0x%08x\n"
-msgstr ""
+msgstr "   зсув вектора символів: 0x%08x\n"
 
 #: vms-alpha.c:5939
 #, c-format
@@ -4314,7 +4326,7 @@ msgstr "   точка входу: 0x%08x\n"
 #: vms-alpha.c:5941
 #, c-format
 msgid "   proc descr : 0x%08x\n"
-msgstr ""
+msgstr "   дескр. процесу: 0x%08x\n"
 
 #: vms-alpha.c:5943
 #, c-format
@@ -4354,7 +4366,7 @@ msgstr "непридатний до обробки тип запису egsd, %u\
 #: vms-alpha.c:6022
 #, c-format
 msgid "    linkage index: %u, replacement insn: 0x%08x\n"
-msgstr ""
+msgstr "    індекс компонування: %u, інструкція-замінник: 0x%08x\n"
 
 #: vms-alpha.c:6025
 #, c-format
@@ -4389,22 +4401,22 @@ msgstr "   (тип: %3u, розмір: 4+%3u): "
 #: vms-alpha.c:6068
 #, c-format
 msgid "STA_GBL (stack global) %.*s\n"
-msgstr ""
+msgstr "STA_GBL (загальний стек) %.*s\n"
 
 #: vms-alpha.c:6072
 #, c-format
 msgid "STA_LW (stack longword) 0x%08x\n"
-msgstr ""
+msgstr "STA_LW (стек довгих слів) 0x%08x\n"
 
 #: vms-alpha.c:6076
 #, c-format
 msgid "STA_QW (stack quadword) 0x%08x %08x\n"
-msgstr ""
+msgstr "STA_QW (стек четверних слів) 0x%08x %08x\n"
 
 #: vms-alpha.c:6081
 #, c-format
 msgid "STA_PQ (stack psect base + offset)\n"
-msgstr ""
+msgstr "STA_PQ (стек основи psect + зсув)\n"
 
 #: vms-alpha.c:6082
 #, c-format
@@ -4414,12 +4426,12 @@ msgstr "    psect: %u, зсув: 0x%08x %08x\n"
 #: vms-alpha.c:6088
 #, c-format
 msgid "STA_LI (stack literal)\n"
-msgstr ""
+msgstr "STA_LI (стек літералів)\n"
 
 #: vms-alpha.c:6091
 #, c-format
 msgid "STA_MOD (stack module)\n"
-msgstr ""
+msgstr "STA_MOD (стек модулів)\n"
 
 #: vms-alpha.c:6094
 #, c-format
@@ -4449,7 +4461,7 @@ msgstr "STO_QW (збережене quadword)\n"
 #: vms-alpha.c:6113
 #, c-format
 msgid "STO_IMMR (store immediate repeat) %u bytes\n"
-msgstr ""
+msgstr "STO_IMMR (збережене негайне повторення) %u байтів\n"
 
 #: vms-alpha.c:6120
 #, c-format
@@ -4459,22 +4471,22 @@ msgstr "STO_GBL (загальне збереження) %.*s\n"
 #: vms-alpha.c:6124
 #, c-format
 msgid "STO_CA (store code address) %.*s\n"
-msgstr ""
+msgstr "STO_CA (збережена адреса коду) %.*s\n"
 
 #: vms-alpha.c:6128
 #, c-format
 msgid "STO_RB (store relative branch)\n"
-msgstr ""
+msgstr "STO_RB (збережене відносне відгалуження)\n"
 
 #: vms-alpha.c:6131
 #, c-format
 msgid "STO_AB (store absolute branch)\n"
-msgstr ""
+msgstr "STO_AB (збережене абсолютне відгалуження)\n"
 
 #: vms-alpha.c:6134
 #, c-format
 msgid "STO_OFF (store offset to psect)\n"
-msgstr ""
+msgstr "STO_OFF (збережений зсув щодо psect)\n"
 
 #: vms-alpha.c:6140
 #, c-format
@@ -4494,12 +4506,12 @@ msgstr "STO_OFF (збереження LP з підписом підпрогра�
 #: vms-alpha.c:6154
 #, c-format
 msgid "STO_BR_GBL (store branch global) *todo*\n"
-msgstr ""
+msgstr "STO_BR_GBL (збережене загальне відгалуження) *ще не реалізовано*\n"
 
 #: vms-alpha.c:6157
 #, c-format
 msgid "STO_BR_PS (store branch psect + offset) *todo*\n"
-msgstr ""
+msgstr "STO_BR_PS (збережений psect відгалуження + зсув) *ще не реалізовано*\n"
 
 #: vms-alpha.c:6161
 #, c-format
@@ -4589,12 +4601,12 @@ msgstr "OPR_REDEF (визначення літерала)\n"
 #: vms-alpha.c:6213
 #, c-format
 msgid "STC_LP (store cond linkage pair)\n"
-msgstr ""
+msgstr "STC_LP (збережена пара умовного компонування)\n"
 
 #: vms-alpha.c:6217
 #, c-format
 msgid "STC_LP_PSB (store cond linkage pair + signature)\n"
-msgstr ""
+msgstr "STC_LP_PSB (збережена пара умовного компонування + підпис)\n"
 
 #: vms-alpha.c:6218
 #, c-format
@@ -4609,7 +4621,7 @@ msgstr "   підпис: %.*s\n"
 #: vms-alpha.c:6224
 #, c-format
 msgid "STC_GBL (store cond global)\n"
-msgstr ""
+msgstr "STC_GBL (збережена загальна умова)\n"
 
 #: vms-alpha.c:6225
 #, c-format
@@ -4619,7 +4631,7 @@ msgstr "   індекс компонування: %u, загальний: %.*s\n
 #: vms-alpha.c:6229
 #, c-format
 msgid "STC_GCA (store cond code address)\n"
-msgstr ""
+msgstr "STC_GCA (збережена адреса умовного коду)\n"
 
 #: vms-alpha.c:6230
 #, c-format
@@ -4629,7 +4641,7 @@ msgstr "   індекс компонування: %u, назва підпрог�
 #: vms-alpha.c:6234
 #, c-format
 msgid "STC_PS (store cond psect + offset)\n"
-msgstr ""
+msgstr "STC_PS (збережений умовний psect + зсув)\n"
 
 #: vms-alpha.c:6236
 #, c-format
@@ -4639,62 +4651,62 @@ msgstr "   індекс компонування: %u, psect: %u, зсув: 0x%08
 #: vms-alpha.c:6243
 #, c-format
 msgid "STC_NOP_GBL (store cond NOP at global addr)\n"
-msgstr ""
+msgstr "STC_NOP_GBL (збережений умовний NOP за загальною адресою)\n"
 
 #: vms-alpha.c:6247
 #, c-format
 msgid "STC_NOP_PS (store cond NOP at psect + offset)\n"
-msgstr ""
+msgstr "STC_NOP_PS (збережений умовний NOP за psect + зсув)\n"
 
 #: vms-alpha.c:6251
 #, c-format
 msgid "STC_BSR_GBL (store cond BSR at global addr)\n"
-msgstr ""
+msgstr "STC_BSR_GBL (збережений умовний BSR за загальною адресою)\n"
 
 #: vms-alpha.c:6255
 #, c-format
 msgid "STC_BSR_PS (store cond BSR at psect + offset)\n"
-msgstr ""
+msgstr "STC_BSR_PS (збережений умовний BSR за psect + зсув)\n"
 
 #: vms-alpha.c:6259
 #, c-format
 msgid "STC_LDA_GBL (store cond LDA at global addr)\n"
-msgstr ""
+msgstr "STC_LDA_GBL (збережений умовний LDA за загальною адресою)\n"
 
 #: vms-alpha.c:6263
 #, c-format
 msgid "STC_LDA_PS (store cond LDA at psect + offset)\n"
-msgstr ""
+msgstr "STC_LDA_PS (збережена умовна LDA за psect + зсув)\n"
 
 #: vms-alpha.c:6267
 #, c-format
 msgid "STC_BOH_GBL (store cond BOH at global addr)\n"
-msgstr ""
+msgstr "STC_BOH_GBL (збережений умовний BOH за загальною адресою)\n"
 
 #: vms-alpha.c:6271
 #, c-format
 msgid "STC_BOH_PS (store cond BOH at psect + offset)\n"
-msgstr ""
+msgstr "STC_BOH_PS (збережений умовний BOH за psect + зсув)\n"
 
 #: vms-alpha.c:6276
 #, c-format
 msgid "STC_NBH_GBL (store cond or hint at global addr)\n"
-msgstr ""
+msgstr "STC_NBH_GBL (збережена умова або вказівка за загальною адресою)\n"
 
 #: vms-alpha.c:6280
 #, c-format
 msgid "STC_NBH_PS (store cond or hint at psect + offset)\n"
-msgstr ""
+msgstr "STC_NBH_PS (збережена умова або вказівка за psect + зсув)\n"
 
 #: vms-alpha.c:6284
 #, c-format
 msgid "CTL_SETRB (set relocation base)\n"
-msgstr ""
+msgstr "CTL_SETRB (встановлення основи пересування)\n"
 
 #: vms-alpha.c:6290
 #, c-format
 msgid "CTL_AUGRB (augment relocation base) %u\n"
-msgstr ""
+msgstr "CTL_AUGRB (розширення основи пересування) %u\n"
 
 #: vms-alpha.c:6294
 #, c-format
@@ -4755,7 +4767,7 @@ msgstr "  кількість бітів: %u, базова адреса: 0x%08x\n
 #: vms-alpha.c:6466
 #, c-format
 msgid "   bitmap: 0x%08x (count: %u):\n"
-msgstr ""
+msgstr "   бітовий образ: 0x%08x (лічильник: %u):\n"
 
 #: vms-alpha.c:6473
 #, c-format
@@ -4786,7 +4798,7 @@ msgstr " 0x%08x"
 #: vms-alpha.c:6653
 #, c-format
 msgid "64 bits *unhandled*\n"
-msgstr ""
+msgstr "64 біти *не обробляється*\n"
 
 #: vms-alpha.c:6657
 #, c-format
@@ -4801,7 +4813,7 @@ msgstr "розривний масив %s\n"
 #: vms-alpha.c:6672
 #, c-format
 msgid "dimct: %u, aflags: 0x%02x, digits: %u, scale: %u\n"
-msgstr ""
+msgstr "dimct: %u, aflags: 0x%02x, цифр: %u, шкала: %u\n"
 
 #: vms-alpha.c:6676
 #, c-format
@@ -4871,7 +4883,7 @@ msgstr "(хвостове значення)\n"
 #: vms-alpha.c:6753
 #, c-format
 msgid "(value spec follows)\n"
-msgstr ""
+msgstr "(далі специфікація значень)\n"
 
 #: vms-alpha.c:6756
 #, c-format
@@ -4881,7 +4893,7 @@ msgstr "(за відступом у бітах %u)\n"
 #: vms-alpha.c:6759
 #, c-format
 msgid "(reg: %u, disp: %u, indir: %u, kind: "
-msgstr ""
+msgstr "(рег: %u, disp: %u, indir: %u, тип: "
 
 #: vms-alpha.c:6766
 msgid "literal"
@@ -4976,7 +4988,7 @@ msgstr "rtnend: розмір 0x%08x\n"
 #: vms-alpha.c:6977
 #, c-format
 msgid "prolog: bkpt address 0x%08x\n"
-msgstr ""
+msgstr "пролог: адреса bkpt 0x%08x\n"
 
 #: vms-alpha.c:6985
 #, c-format
@@ -5001,7 +5013,7 @@ msgstr "typspec (довж.: %u)\n"
 #: vms-alpha.c:7016
 #, c-format
 msgid "septyp, name: %.*s\n"
-msgstr ""
+msgstr "septyp, назва: %.*s\n"
 
 #: vms-alpha.c:7025
 #, c-format
@@ -5016,17 +5028,17 @@ msgstr "recend\n"
 #: vms-alpha.c:7035
 #, c-format
 msgid "enumbeg, len: %u, name: %.*s\n"
-msgstr ""
+msgstr "enumbeg, довжина: %u, назва: %.*s\n"
 
 #: vms-alpha.c:7039
 #, c-format
 msgid "enumelt, name: %.*s\n"
-msgstr ""
+msgstr "enumelt, назва: %.*s\n"
 
 #: vms-alpha.c:7043
 #, c-format
 msgid "enumend\n"
-msgstr ""
+msgstr "enumend\n"
 
 #: vms-alpha.c:7060
 #, c-format
@@ -5041,7 +5053,7 @@ msgstr "    адреса: 0x%08x, розмір: %u\n"
 #: vms-alpha.c:7072
 #, c-format
 msgid "line num  (len: %u)\n"
-msgstr ""
+msgstr "номер рядка  (довжина: %u)\n"
 
 #: vms-alpha.c:7089
 #, c-format
@@ -5091,7 +5103,7 @@ msgstr "delta_pc_l: +0x%08x\n"
 #: vms-alpha.c:7138
 #, c-format
 msgid "term(b): 0x%02x"
-msgstr ""
+msgstr "term(b): 0x%02x"
 
 #: vms-alpha.c:7140
 #, c-format
@@ -5131,12 +5143,12 @@ msgstr "джерело (довжина: %u)\n"
 #: vms-alpha.c:7190
 #, c-format
 msgid "   declfile: len: %u, flags: %u, fileid: %u\n"
-msgstr ""
+msgstr "   declfile: довжина: %u, прапорці: %u, ід. файла: %u\n"
 
 #: vms-alpha.c:7194
 #, c-format
 msgid "   rms: cdt: 0x%08x %08x, ebk: 0x%08x, ffb: 0x%04x, rfo: %u\n"
-msgstr ""
+msgstr "   rms: cdt: 0x%08x %08x, ebk: 0x%08x, ffb: 0x%04x, rfo: %u\n"
 
 #: vms-alpha.c:7203
 #, c-format
@@ -5146,27 +5158,27 @@ msgstr "   назва файла: %.*s\n"
 #: vms-alpha.c:7212
 #, c-format
 msgid "   setfile %u\n"
-msgstr ""
+msgstr "   setfile %u\n"
 
 #: vms-alpha.c:7217 vms-alpha.c:7222
 #, c-format
 msgid "   setrec %u\n"
-msgstr ""
+msgstr "   setrec %u\n"
 
 #: vms-alpha.c:7227 vms-alpha.c:7232
 #, c-format
 msgid "   setlnum %u\n"
-msgstr ""
+msgstr "   setlnum %u\n"
 
 #: vms-alpha.c:7237 vms-alpha.c:7242
 #, c-format
 msgid "   deflines %u\n"
-msgstr ""
+msgstr "   deflines %u\n"
 
 #: vms-alpha.c:7246
 #, c-format
 msgid "   formfeed\n"
-msgstr ""
+msgstr "   formfeed\n"
 
 #: vms-alpha.c:7250
 #, c-format
@@ -5191,7 +5203,7 @@ msgstr "EIHD: (розмір: %u, кількість блоків: %u)\n"
 #: vms-alpha.c:7300
 #, c-format
 msgid " majorid: %u, minorid: %u\n"
-msgstr ""
+msgstr " majorid: %u, minorid: %u\n"
 
 #: vms-alpha.c:7308
 msgid "executable"
@@ -5222,17 +5234,17 @@ msgstr ", підтип: %u (%s)\n"
 #: vms-alpha.c:7338
 #, c-format
 msgid " offsets: isd: %u, activ: %u, symdbg: %u, imgid: %u, patch: %u\n"
-msgstr ""
+msgstr " зсуви: isd: %u, activ: %u, symdbg: %u, imgid: %u, patch: %u\n"
 
 #: vms-alpha.c:7342
 #, c-format
 msgid " fixup info rva: "
-msgstr ""
+msgstr " дані щодо прив’язки rva: "
 
 #: vms-alpha.c:7344
 #, c-format
 msgid ", symbol vector rva: "
-msgstr ""
+msgstr ", вектор символів rva: "
 
 #: vms-alpha.c:7347
 #, c-format
@@ -5246,7 +5258,7 @@ msgstr ""
 #: vms-alpha.c:7351
 #, c-format
 msgid " img I/O count: %u, nbr channels: %u, req pri: %08x%08x\n"
-msgstr ""
+msgstr " лічильник введення-виведення образу: %u, к-ть каналів: %u, пріоритетність: %08x%08x\n"
 
 #: vms-alpha.c:7357
 #, c-format
@@ -5256,7 +5268,7 @@ msgstr " прапорці компонувальника: %08x:"
 #: vms-alpha.c:7387
 #, c-format
 msgid " ident: 0x%08x, sysver: 0x%08x, match ctrl: %u, symvect_size: %u\n"
-msgstr ""
+msgstr " ident: 0x%08x, sysver: 0x%08x, match ctrl: %u, symvect_size: %u\n"
 
 #: vms-alpha.c:7393
 #, c-format
@@ -5266,7 +5278,7 @@ msgstr " BPAGE: %u"
 #: vms-alpha.c:7399
 #, c-format
 msgid ", ext fixup offset: %u, no_opt psect off: %u"
-msgstr ""
+msgstr ", зсув розшир. прив’зяки: %u, зсув psect no_opt: %u"
 
 #: vms-alpha.c:7402
 #, c-format
@@ -5500,7 +5512,7 @@ msgstr " прапорці: 0x%04x"
 #: vms-alpha.c:7647
 #, c-format
 msgid " vbn: %u, pfc: %u, matchctl: %u type: %u ("
-msgstr ""
+msgstr " vbn: %u, pfc: %u, matchctl: %u тип: %u ("
 
 #: vms-alpha.c:7653
 msgid "NORMAL"
@@ -5654,22 +5666,22 @@ msgstr "  %u: розмір: %u, прапорці: 0x%02x, назва: %.*s\n"
 #: vms-alpha.c:7827
 #, c-format
 msgid " quad-word relocation fixups:\n"
-msgstr ""
+msgstr " прив’язки пересувань у чотири слова:\n"
 
 #: vms-alpha.c:7832
 #, c-format
 msgid " long-word relocation fixups:\n"
-msgstr ""
+msgstr " прив’язки пересувань у довге слово:\n"
 
 #: vms-alpha.c:7837
 #, c-format
 msgid " quad-word .address reference fixups:\n"
-msgstr ""
+msgstr " прив’язки посилань .address у чотири слова:\n"
 
 #: vms-alpha.c:7842
 #, c-format
 msgid " long-word .address reference fixups:\n"
-msgstr ""
+msgstr " прив’язки посилань .address у довге слово:\n"
 
 #: vms-alpha.c:7847
 #, c-format
@@ -5679,7 +5691,7 @@ msgstr " Прив’язки адрес коду:\n"
 #: vms-alpha.c:7852
 #, c-format
 msgid " Linkage Pairs Referece Fixups:\n"
-msgstr ""
+msgstr " Прив’язки посилань на пари компонування:\n"
 
 #: vms-alpha.c:7861
 #, c-format
@@ -5717,7 +5729,7 @@ msgstr "_bfd_vms_output_counted викликано для занадто вел�
 #: xcofflink.c:836
 #, c-format
 msgid "%s: XCOFF shared object when not producing XCOFF output"
-msgstr ""
+msgstr "%s: спільний об’єкт XCOFF, хоча дані XCOFF не створюються"
 
 #: xcofflink.c:857
 #, c-format
@@ -5738,11 +5750,11 @@ msgstr "B: символ «%s» належить до нерозпізнаног�
 
 #: xcofflink.c:1502
 msgid "%B: bad XTY_ER symbol `%s': class %d scnum %d scnlen %d"
-msgstr ""
+msgstr "%B: помилковий символ XTY_ER «%s»: клас %d, номер розділу %d, довжина розділу %d"
 
 #: xcofflink.c:1531
 msgid "%B: XMC_TC0 symbol `%s' is class %d scnlen %d"
-msgstr ""
+msgstr "%B: символ XMC_TC0 «%s» є класом %d, довжина розділу %d"
 
 #: xcofflink.c:1677
 msgid "%B: csect `%s' not in enclosing section"
@@ -5776,20 +5788,20 @@ msgstr "%B: пересування завантажувача у нерозпі�
 
 #: xcofflink.c:4068
 msgid "%B: `%s' in loader reloc but not loader sym"
-msgstr ""
+msgstr "%B: «%s» у пересуванні завантажувача, але не у символах завантаження"
 
 #: xcofflink.c:4084
 msgid "%B: loader reloc in read-only section %A"
-msgstr ""
+msgstr "%B: пересування завантажувача у розділі, призначеному лише для читання, %A"
 
 #: xcofflink.c:5106
 #, c-format
 msgid "TOC overflow: 0x%lx > 0x10000; try -mminimal-toc when compiling"
-msgstr ""
+msgstr "Переповнення TOC: 0x%lx > 0x10000; спробуйте параметр -mminimal-toc під час збирання"
 
 #: elf32-ia64.c:628 elf64-ia64.c:628
 msgid "%B: Can't relax br at 0x%lx in section `%A'. Please use brl or indirect branch."
-msgstr ""
+msgstr "%B: не вдалося оптимізувати br за адресою 0x%lx у розділі «%A». Будь ласка, скористайтеся brl або непрямим відгалуженням."
 
 #: elf32-ia64.c:2284 elf64-ia64.c:2284
 msgid "@pltoff reloc against local symbol"
@@ -5798,7 +5810,7 @@ msgstr "пересування @pltoff щодо локального симво�
 #: elf32-ia64.c:3687 elf64-ia64.c:3687
 #, c-format
 msgid "%s: short data segment overflowed (0x%lx >= 0x400000)"
-msgstr ""
+msgstr "%s: переповнено короткий сегмент даних (0x%lx >= 0x400000)"
 
 #: elf32-ia64.c:3698 elf64-ia64.c:3698
 #, c-format
@@ -5807,7 +5819,7 @@ msgstr "%s: __gp не вкриває короткого сегмента дан�
 
 #: elf32-ia64.c:3965 elf64-ia64.c:3965
 msgid "%B: non-pic code with imm relocation against dynamic symbol `%s'"
-msgstr ""
+msgstr "%B: не-pic код з пересуванням imm щодо динамічного символу «%s»"
 
 #: elf32-ia64.c:4032 elf64-ia64.c:4032
 msgid "%B: @gprel relocation against dynamic symbol %s"
@@ -5815,19 +5827,19 @@ msgstr "%B: пересування @gprel щодо динамічного сим
 
 #: elf32-ia64.c:4095 elf64-ia64.c:4095
 msgid "%B: linking non-pic code in a position independent executable"
-msgstr ""
+msgstr "%B: компонування не-pic коду у виконуваному файлі з незалежним позиціюванням"
 
 #: elf32-ia64.c:4232 elf64-ia64.c:4232
 msgid "%B: @internal branch to dynamic symbol %s"
-msgstr ""
+msgstr "%B: відгалуження @internal до динамічного символу %s"
 
 #: elf32-ia64.c:4234 elf64-ia64.c:4234
 msgid "%B: speculation fixup to dynamic symbol %s"
-msgstr ""
+msgstr "%B: здогадка щодо адресної прив’язки до динамічного символу %s"
 
 #: elf32-ia64.c:4236 elf64-ia64.c:4236
 msgid "%B: @pcrel relocation against dynamic symbol %s"
-msgstr ""
+msgstr "%B: пересування @pcrel щодо динамічного символу %s"
 
 #: elf32-ia64.c:4433 elf64-ia64.c:4433
 msgid "unsupported reloc"
@@ -5835,15 +5847,15 @@ msgstr "непідтримуване пересування"
 
 #: elf32-ia64.c:4471 elf64-ia64.c:4471
 msgid "%B: missing TLS section for relocation %s against `%s' at 0x%lx in section `%A'."
-msgstr ""
+msgstr "%B: не вистачає розділу TLS для пересування %s щодо «%s» за адресою 0x%lx у розділі «%A»."
 
 #: elf32-ia64.c:4486 elf64-ia64.c:4486
 msgid "%B: Can't relax br (%s) to `%s' at 0x%lx in section `%A' with size 0x%lx (> 0x1000000)."
-msgstr ""
+msgstr "%B: не вдалося оптимізувати br (%s) до «%s» за адресою 0x%lx у розділі «%A» з розміром 0x%lx (> 0x1000000)."
 
 #: elf32-ia64.c:4748 elf64-ia64.c:4748
 msgid "%B: linking trap-on-NULL-dereference with non-trapping files"
-msgstr ""
+msgstr "%B: компонування trap-on-NULL-dereference з файлами без захоплення (trapping)"
 
 #: elf32-ia64.c:4757 elf64-ia64.c:4757
 msgid "%B: linking big-endian files with little-endian files"
@@ -5855,11 +5867,11 @@ msgstr "%B: компонування 64-бітових файлів з 32-біт
 
 #: elf32-ia64.c:4775 elf64-ia64.c:4775
 msgid "%B: linking constant-gp files with non-constant-gp files"
-msgstr ""
+msgstr "%B: компонування файлів зі сталим gp з файлами зі змінним gp"
 
 #: elf32-ia64.c:4785 elf64-ia64.c:4785
 msgid "%B: linking auto-pic files with non-auto-pic files"
-msgstr ""
+msgstr "%B: компонування файлів з автоматичним pic з файлами без автоматичного pic"
 
 #: peigen.c:1002 pepigen.c:1002 pex64igen.c:1002
 #, c-format
@@ -5960,7 +5972,7 @@ msgstr ""
 #: peigen.c:1154 pepigen.c:1154 pex64igen.c:1154
 #, c-format
 msgid "\tcode-base %08lx toc (loadable/actual) %08lx/%08lx\n"
-msgstr ""
+msgstr "\ttoc основи коду %08lx (завантажуваний/дійсний) %08lx/%08lx\n"
 
 #: peigen.c:1162 pepigen.c:1162 pex64igen.c:1162
 #, c-format
@@ -5986,6 +5998,8 @@ msgid ""
 " vma:            Hint    Time      Forward  DLL       First\n"
 "                 Table   Stamp     Chain    Name      Thunk\n"
 msgstr ""
+" vma:            Таблиця Часова    Ланцюжок Назва     Перший\n"
+"                 вказ.   Позначка  спрям.   DLL       шлюз\n"
 
 #: peigen.c:1218 pepigen.c:1218 pex64igen.c:1218
 #, c-format
@@ -5999,7 +6013,7 @@ msgstr ""
 #: peigen.c:1229 pepigen.c:1229 pex64igen.c:1229
 #, c-format
 msgid "\tvma:  Hint/Ord Member-Name Bound-To\n"
-msgstr ""
+msgstr "\tvma:  Вказ/Пор Назва-елемента Прив’язано-до\n"
 
 #: peigen.c:1254 pepigen.c:1254 pex64igen.c:1254
 #, c-format
@@ -6025,6 +6039,8 @@ msgid ""
 "\n"
 "There is an export table in %s, but it does not fit into that section\n"
 msgstr ""
+"\n"
+"У %s зберігається таблиця експортування, але її не можна вмістити у цьому розділі\n"
 
 #: peigen.c:1430 pepigen.c:1430 pex64igen.c:1430
 #, c-format
@@ -6083,7 +6099,7 @@ msgstr "\tТаблиця експортованих адрес \t\t%08lx\n"
 #: peigen.c:1487 pepigen.c:1487 pex64igen.c:1487
 #, c-format
 msgid "\t[Name Pointer/Ordinal] Table\t%08lx\n"
-msgstr ""
+msgstr "\tТаблиця [вказівників назв/порядкових номерів]\t%08lx\n"
 
 #: peigen.c:1490 pepigen.c:1490 pex64igen.c:1490
 #, c-format
@@ -6098,7 +6114,7 @@ msgstr "\tТаблиця експортованих адрес \t\t"
 #: peigen.c:1498 pepigen.c:1498 pex64igen.c:1498
 #, c-format
 msgid "\tName Pointer Table \t\t"
-msgstr ""
+msgstr "\tТаблиця вказівників на назви \t\t"
 
 #: peigen.c:1503 pepigen.c:1503 pex64igen.c:1503
 #, c-format
@@ -6111,10 +6127,12 @@ msgid ""
 "\n"
 "Export Address Table -- Ordinal Base %ld\n"
 msgstr ""
+"\n"
+"Таблиця експортованих адрес — основа порядкових номерів: %ld\n"
 
 #: peigen.c:1536 pepigen.c:1536 pex64igen.c:1536
 msgid "Forwarder RVA"
-msgstr ""
+msgstr "Переспрямовний RVA"
 
 #: peigen.c:1547 pepigen.c:1547 pex64igen.c:1547
 msgid "Export RVA"
@@ -6126,6 +6144,8 @@ msgid ""
 "\n"
 "[Ordinal/Name Pointer] Table\n"
 msgstr ""
+"\n"
+"Таблиця [порядкових номерів/вказівників на назви]\n"
 
 #: peigen.c:1614 peigen.c:1797 pepigen.c:1614 pepigen.c:1797 pex64igen.c:1614
 #: pex64igen.c:1797
@@ -6136,7 +6156,7 @@ msgstr "Попередження: розмір розділу .pdata (%ld) не 
 #: peigen.c:1621 pepigen.c:1621 pex64igen.c:1621
 #, c-format
 msgid " vma:\t\t\tBegin Address    End Address      Unwind Info\n"
-msgstr ""
+msgstr " vma:\t\t\tПочат. адреса    Кінц. адреса      Дані unwind\n"
 
 #: peigen.c:1623 pepigen.c:1623 pex64igen.c:1623
 #, c-format
@@ -6144,6 +6164,8 @@ msgid ""
 " vma:\t\tBegin    End      EH       EH       PrologEnd  Exception\n"
 "     \t\tAddress  Address  Handler  Data     Address    Mask\n"
 msgstr ""
+" vma:\t\tПоч.     Кінц.    Обробник Дані     Адреса     Маска\n"
+"     \t\tадреса   адреса   EH       EH       кінц. прол.виключення\n"
 
 #: peigen.c:1697 pepigen.c:1697 pex64igen.c:1697
 #, c-format
@@ -6158,7 +6180,7 @@ msgstr " Мілікод відновлення регістра"
 #: peigen.c:1703 pepigen.c:1703 pex64igen.c:1703
 #, c-format
 msgid " Glue code sequence"
-msgstr ""
+msgstr " Послідовність з’єднувального коду"
 
 #: peigen.c:1803 pepigen.c:1803 pex64igen.c:1803
 #, c-format
@@ -6166,6 +6188,8 @@ msgid ""
 " vma:\t\tBegin    Prolog   Function Flags    Exception EH\n"
 "     \t\tAddress  Length   Length   32b exc  Handler   Data\n"
 msgstr ""
+" vma:\t\tПоч.     Довжина  Довжина  Прапорці Обробник  Дані\n"
+"     \t\tадреса   прологу  функції  32б вик. виключень EH\n"
 
 #: peigen.c:1929 pepigen.c:1929 pex64igen.c:1929
 #, c-format
@@ -6174,6 +6198,9 @@ msgid ""
 "\n"
 "PE File Base Relocations (interpreted .reloc section contents)\n"
 msgstr ""
+"\n"
+"\n"
+"Пересування щодо основи файла PE (оброблений вміст розділу .reloc)\n"
 
 #: peigen.c:1958 pepigen.c:1958 pex64igen.c:1958
 #, c-format
@@ -6181,6 +6208,8 @@ msgid ""
 "\n"
 "Virtual Address: %08lx Chunk size %ld (0x%lx) Number of fixups %ld\n"
 msgstr ""
+"\n"
+"Віртуальна адреса: %08lx, розмір фрагмента: %ld (0x%lx), кількість прив’язок: %ld\n"
 
 #: peigen.c:1971 pepigen.c:1971 pex64igen.c:1971
 #, c-format

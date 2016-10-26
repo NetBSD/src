@@ -3,7 +3,7 @@
 #as: -milp32
 #source: unwind.s
 
-There are 9 section headers, starting at offset 0xa0:
+There are 9 section headers, starting at offset .*:
 
 Section Headers:
   \[Nr\] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
@@ -13,8 +13,8 @@ Section Headers:
   \[ 3\] .bss              NOBITS          00000000 000040 000000 00  WA  0   0  1
   \[ 4\] .IA_64.unwind_inf PROGBITS        00000000 000040 000008 00   A  0   0  8
   \[ 5\] .IA_64.unwind     IA_64_UNWIND    00000000 000048 000008 00  AL  1   1  8
-  \[ 6\] .shstrtab         STRTAB          00000000 000050 00004d 00      0   0  1
-  \[ 7\] .symtab           SYMTAB          00000000 000208 000060 10      8   6  4
-  \[ 8\] .strtab           STRTAB          00000000 000268 000001 00      0   0  1
+  \[ 6\] .shstrtab         STRTAB          00000000 [0-9a-f]+ 00004d 00      0   0  1
+  \[ 7\] .symtab           SYMTAB          00000000 [0-9a-f]+ 000060 10      8   6  4
+  \[ 8\] .strtab           STRTAB          00000000 [0-9a-f]+ 000001 00      0   0  1
 Key to Flags:
 #...

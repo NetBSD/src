@@ -1,6 +1,5 @@
 # Expect script for various ELF tests.
-#   Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -38,6 +37,11 @@ if { [which $CC] == 0 } {
     return
 }
 
+# Add -ldl to extralibs if needed
+if { ![istarget *-*-freebsd*]} {
+    set extralibs "-ldl"
+}
+
 set build_tests {
   {"Build libfoo.so"
    "-shared" "-fPIC"
@@ -50,7 +54,7 @@ set build_tests {
    {begin.c end.c} {} "libbar.so"}
   {"Build warn libbar.so"
    "-shared" "-fPIC"
-   {beginwarn.c end.c} {} "libbarw.so"
+   {beginwarn.c end.c} {{readelf {-S --wide} libbarw.rd}} "libbarw.so"
     "C" "^.*\\\): warning: function foo is deprecated$"}
   {"Build hidden libbar.so"
    "-shared" "-fPIC"
@@ -173,6 +177,108 @@ set build_tests {
   {"Build libpr14323-2.so"
    "-shared" "-fPIC"
    {pr14323-2.c} {} "libpr14323-2.so"}
+  {"Build pr14862-1.o"
+   "-r -nostdlib" ""
+   {pr14862-1.c} {} "libpr14862-1.o"}
+  {"Build libpr14862.so"
+   "-shared -Wl,--version-script=pr11138-1.map" "-fPIC"
+   {pr14862-2.c} {} "libpr14862.so"}
+  {"Build libneeded1b.so"
+   "-shared" "-fPIC"
+   {needed1b.c} {} "libneeded1b.so"}
+  {"Build libneeded1a.so"
+   "-shared -Wl,--add-needed,--no-as-needed -Ltmpdir -lneeded1b" "-fPIC"
+   {needed1a.c} {} "libneeded1a.so"}
+  {"Build libneeded1c.o"
+   "-r -nostdlib" ""
+   {needed1c.c} {} "libneeded1c.o"}
+  {"Build libneeded1pic.o"
+   "-r -nostdlib" "-fPIC"
+   {needed1c.c} {} "libneeded1pic.o"}
+  {"Build needed1a.so with --add-needed"
+   "-shared tmpdir/libneeded1pic.o -Wl,--add-needed,-rpath=tmpdir,-z,defs -Ltmpdir -lneeded1a" ""
+   {dummy.c} {} "needed1a.so"}
+  {"Build needed1b.so with --copy-dt-needed-entries"
+   "-shared tmpdir/libneeded1pic.o -Wl,--copy-dt-needed-entries,-rpath=tmpdir,-z,defs -Ltmpdir -lneeded1a" ""
+   {dummy.c} {} "needed1b.so"}
+  {"Build needed1a.so with --no-add-needed"
+   "-shared tmpdir/libneeded1pic.o -Wl,--no-add-needed -Ltmpdir -lneeded1a" ""
+   {dummy.c} {} "needed1c.so"}
+  {"Build needed1b.so with --no-copy-dt-needed-entries"
+   "-shared tmpdir/libneeded1pic.o -Wl,--no-copy-dt-needed-entries -Ltmpdir -lneeded1a" ""
+   {dummy.c} {} "needed1d.so"}
+  {"Build librel.so"
+   "-shared" "-fPIC"
+   {rel.c} {} "librel.so"}
+  {"Build libneeded2a.so"
+   "-shared" "-fPIC"
+   {needed2a.c} {} "libneeded2a.so"}
+  {"Build libneeded2b.so"
+   "-shared -Wl,--version-script,needed2.ver" "-fPIC"
+   {needed2b.c} {} "libneeded2b.so"}
+  {"Build libneeded2c.o"
+   "-r -nostdlib" ""
+   {needed2c.c} {} "libneeded2c.o"}
+  {"Build needed2"
+   "tmpdir/libneeded2c.o -Wl,--as-needed tmpdir/libneeded2a.so tmpdir/libneeded2b.so" ""
+   {dummy.c} {} "needed2"}
+  {"Build libneeded3a.so"
+   "-shared -Wl,--no-add-needed" "-fPIC"
+   {needed1a.c} {} "libneeded3a.so"}
+  {"Build libneeded3b.so"
+   "-shared -Wl,--no-as-needed,--add-needed -Ltmpdir -lneeded1b" "-fPIC"
+   {dummy.c} {} "libneeded3b.so"}
+  {"Build needed3.o"
+   "-r -nostdlib" ""
+   {needed3.c} {} "libneeded3.so"}
+  {"Build needed3"
+   "tmpdir/needed3.o -Wl,--as-needed -Ltmpdir -lneeded3a -lneeded3b -lneeded1b" ""
+   {dummy.c} {} "needed3"}
+  {"Build libpr2404a.so"
+   "-shared" "-fPIC"
+   {pr2404a.c} {} "libpr2404a.so"}
+  {"Build libpr2404b.a"
+   "" ""
+   {pr2404b.c} {} "libpr2404b.a"}
+  {"Build rdynamic-1"
+   "-rdynamic -Wl,--gc-sections" "-ffunction-sections"
+   {rdynamic-1.c} {{readelf {-s} rdynamic-1.rd}} "rdynamic-1"}
+  {"Build dynamic-1"
+   "-Wl,--dynamic-list,dynamic-1.syms -Wl,--gc-sections" "-ffunction-sections"
+   {dynamic-1.c} {{readelf {-s} dynamic-1.rd}} "dynamic-1"}
+  {"Build libpr16496a.so"
+   "-shared -Wl,--version-script=pr16496a.map" "-fPIC"
+   {pr16496a.c} {} "libpr16496a.so"}
+  {"Build libpr16496b.a"
+   "" "-fPIC"
+   {pr16496b.c} {} "libpr16496b.a"}
+  {"Build libpr16496b.so"
+   "-shared tmpdir/pr16496b.o tmpdir/libpr16496a.so" ""
+   {dummy.c} {{objdump {-R} pr16496b.od}} "libpr16496b.so"}
+  {"Build libpr16452a.so"
+   "-shared -Wl,-soname,libpr16452a.so,--version-script=pr16452.map" "-fPIC"
+   {pr16452a.c} {} "libpr16452a.so"}
+  {"Build libpr16452b.so"
+   "-shared -Wl,-soname,libpr16452b.so,--no-as-needed tmpdir/libpr16452a.so" "-fPIC"
+   {dummy.c} {} "libpr16452b.so"}
+  {"Build pr16452"
+   "tmpdir/libpr16452b.so -Wl,-rpath=tmpdir" ""
+   {pr16452b.c} {{objdump {-p} pr16452.od}} "pr16452"}
+  {"Build pr16457"
+   "tmpdir/libpr16452b.so -Wl,-rpath=tmpdir" ""
+   {pr16452b.c} {{objdump {-p} pr16457.od}} "pr16457"}
+  {"Build libpr18458a.so"
+   "-shared -Wl,-z,now" "-fPIC"
+   {pr18458a.c} {} "libpr18458a.so"}
+  {"Build libpr18458b.so"
+   "-shared -Wl,-z,now tmpdir/libpr18458a.so" "-fPIC"
+   {pr18458b.c} {} "libpr18458b.so"}
+  {"Build pr19073a.o"
+   "-r -nostdlib" ""
+   {pr19073.s} {} "pr19073a.o"}
+  {"Build libpr19073.so"
+   "-shared -Wl,--version-script=pr19073.map tmpdir/pr19073a.o" "-fPIC"
+   {dummy.c} {{readelf {--dyn-syms --wide} pr19073.rd}} "libpr19073.so"}
 }
 
 run_cc_link_tests $build_tests
@@ -219,10 +325,10 @@ set run_tests {
      "tmpdir/libbarhfoov.so tmpdir/libfoov.so" ""
      {main.c} "hidden" "hidden.out"}
     {"Run dl1a with --dynamic-list=dl1.list and dlopen on libdl1.so"
-     "--dynamic-list=dl1.list -ldl" ""
+     "--dynamic-list=dl1.list $extralibs" ""
      {dl1main.c} "dl1a" "dl1.out"}
     {"Run dl1b with --dynamic-list-data and dlopen on libdl1.so"
-     "--dynamic-list-data -ldl" ""
+     "--dynamic-list-data $extralibs" ""
      {dl1main.c} "dl1b" "dl1.out"}
     {"Run with libdl2a.so"
      "tmpdir/libdl2a.so" ""
@@ -252,37 +358,37 @@ set run_tests {
      "tmpdir/libdl4f.so" ""
      {dl4main.c} "dl4f" "dl4a.out"}
     {"Run dl6a1 with --dynamic-list-data and dlopen on libdl6a.so"
-     "--dynamic-list-data -ldl" ""
+     "--dynamic-list-data $extralibs" ""
      {dl6amain.c} "dl6a1" "dl6a.out"}
     {"Run dl6a2 with -Bsymbolic-functions and dlopen on libdl6a.so"
-     "-Bsymbolic-functions -ldl" ""
+     "-Bsymbolic-functions $extralibs" ""
      {dl6amain.c} "dl6a2" "dl6b.out"}
     {"Run dl6a3 with -Bsymbolic and dlopen on libdl6a.so"
-     "-Bsymbolic -ldl" ""
+     "-Bsymbolic $extralibs" ""
      {dl6amain.c} "dl6a3" "dl6b.out"}
     {"Run dl6a4 with -Bsymbolic --dynamic-list-data and dlopen on libdl6a.so"
-     "-Bsymbolic --dynamic-list-data -ldl" ""
+     "-Bsymbolic --dynamic-list-data $extralibs" ""
      {dl6amain.c} "dl6a4" "dl6a.out"}
     {"Run dl6a5 with -Bsymbolic-functions --dynamic-list-cpp-new and dlopen on libdl6a.so"
-     "-Bsymbolic-functions --dynamic-list-cpp-new -ldl" ""
+     "-Bsymbolic-functions --dynamic-list-cpp-new $extralibs" ""
      {dl6amain.c} "dl6a5" "dl6b.out"}
     {"Run dl6a6 with --dynamic-list-cpp-new -Bsymbolic-functions and dlopen on libdl6a.so"
-     "--dynamic-list-cpp-new -Bsymbolic-functions -ldl" ""
+     "--dynamic-list-cpp-new -Bsymbolic-functions $extralibs" ""
      {dl6amain.c} "dl6a6" "dl6b.out"}
     {"Run dl6a7 with --dynamic-list-data -Bsymbolic and dlopen on libdl6a.so"
-     "--dynamic-list-data -Bsymbolic -ldl" ""
+     "--dynamic-list-data -Bsymbolic $extralibs" ""
      {dl6amain.c} "dl6a7" "dl6a.out"}
     {"Run dl6b1 with --dynamic-list-data and dlopen on libdl6b.so"
-     "--dynamic-list-data -ldl" ""
+     "--dynamic-list-data $extralibs" ""
      {dl6bmain.c} "dl6b1" "dl6a.out"}
     {"Run dl6b2 with dlopen on libdl6b.so"
-     "-ldl" ""
+     "$extralibs" ""
      {dl6bmain.c} "dl6b2" "dl6b.out"}
     {"Run dl6c1 with --dynamic-list-data and dlopen on libdl6c.so"
-     "--dynamic-list-data -ldl" ""
+     "--dynamic-list-data $extralibs" ""
      {dl6cmain.c} "dl6c1" "dl6b.out"}
     {"Run dl6d1 with --dynamic-list-data and dlopen on libdl6d.so"
-     "--dynamic-list-data -ldl" ""
+     "--dynamic-list-data $extralibs" ""
      {dl6dmain.c} "dl6d1" "dl6b.out"}
     {"Run with libdata1.so"
      "tmpdir/libdata1.so" ""
@@ -308,10 +414,58 @@ set run_tests {
     {"Run with pr14323-1.c pr14323-2.so"
      "tmpdir/libpr14323-2.so" ""
      {pr14323-1.c} "pr14323" "pass.out"}
+    {"Run with pr14862-1.c libpr14862.so"
+     "--as-needed tmpdir/libpr14862-1.o tmpdir/libpr14862.so" ""
+     {dummy.c} "pr14862" "pr14862.out"}
+    {"Link with --add-needed"
+     "tmpdir/libneeded1c.o --add-needed -rpath=tmpdir -Ltmpdir -lneeded1a" ""
+     {dummy.c} "needed1a" "needed1.out"}
+    {"Link with --copy-dt-needed-entries"
+     "tmpdir/libneeded1c.o --copy-dt-needed-entries -rpath=tmpdir -Ltmpdir -lneeded1a" ""
+     {dummy.c} "needed1b" "needed1.out"}
+    {"Run relmain"
+     "--no-as-needed -rpath=tmpdir -Ltmpdir -lrel" ""
+     {relmain.c} "relmain" "relmain.out"}
+    {"Run pr2404"
+     "tmpdir/pr2404b.o tmpdir/libpr2404a.so" ""
+     {dummy.c} "pr2404" "pr2404.out"}
+    {"Run pr18458"
+     "tmpdir/libpr18458a.so tmpdir/libpr18458b.so -z now" ""
+     {pr18458c.c} "pr18458" "pass.out"}
 }
 
 # NetBSD ELF systems do not currently support the .*_array sections.
 run_ld_link_exec_tests [list "*-*-netbsdelf*"] $run_tests
+
+# Check --no-add-needed and --no-copy-dt-needed-entries
+set testname "--no-add-needed"
+set exec_output [run_host_cmd "$CC" "tmpdir/libneeded1c.o -Wl,--no-add-needed,-rpath-link=tmpdir -Ltmpdir -lneeded1a"]
+if { [ regexp "tmpdir/libneeded1b.so: .*: DSO missing" $exec_output ] } {
+    pass $testname
+} {
+    fail $testname
+}
+set testname "--no-copy-dt-needed-entries"
+set exec_output [run_host_cmd "$CC" "tmpdir/libneeded1c.o -Wl,--no-copy-dt-needed-entries,-rpath-link=tmpdir -Ltmpdir -lneeded1a"]
+if { [ regexp "tmpdir/libneeded1b.so: .*: DSO missing" $exec_output ] } {
+    pass $testname
+} {
+    fail $testname
+}
+set testname "--no-add-needed -shared"
+set exec_output [run_host_cmd "$CC" "-shared tmpdir/libneeded1pic.o -Wl,--no-add-needed,-z,defs -Ltmpdir -lneeded1a"]
+if { [ regexp "undefined reference to `bar'" $exec_output ] } {
+    pass $testname
+} {
+    fail $testname
+}
+set testname "--no-copy-dt-needed-entries -shared"
+set exec_output [run_host_cmd "$CC" "-shared tmpdir/libneeded1pic.o -Wl,--no-copy-dt-needed-entries,-z,defs -Ltmpdir -lneeded1a"]
+if { [ regexp "undefined reference to `bar'" $exec_output ] } {
+    pass $testname
+} {
+    fail $testname
+}
 
 # Check to see if the C++ compiler works
 if { [which $CXX] == 0 } {
@@ -357,3 +511,98 @@ set run_cxx_tests {
 
 run_cc_link_tests $build_cxx_tests
 run_ld_link_exec_tests [] $run_cxx_tests
+
+if { [istarget *-*-linux*]
+     || [istarget *-*-nacl*]
+     || [istarget *-*-gnu*] } {
+    run_cc_link_tests [list \
+	[list \
+	    "Build libpr2404b.a with PIE" \
+	    "" \
+	    "-fPIE" \
+	    { pr2404b.c } \
+	    {} \
+	    "libpr2404b.a" \
+	] \
+	[list \
+	    "Build pr19579a.o" \
+	    "" "-fPIE" \
+	    {pr19579a.c} \
+	    {} \
+	    "libpr19579a.a" \
+	] \
+	[list \
+	    "Build libpr19579.so" \
+	    "-shared" \
+	    "-fPIC" \
+	    {pr19579b.c} \
+	    {} \
+	    "libpr19579.so" \
+	] \
+    ]
+    run_ld_link_exec_tests [] [list \
+	[list \
+	    "Run pr2404 with PIE" \
+	    "-pie tmpdir/pr2404b.o tmpdir/libpr2404a.so" \
+	    "" \
+	    { dummy.c } \
+	    "pr2404pie" \
+	    "pr2404.out" \
+	    "-fPIE" \
+	] \
+	[list \
+	    "Run pr18718" \
+	    "" \
+	    "" \
+	    { pr18718.c check-ptr-eq.c } \
+	    "pr18718" \
+	    "pass.out" \
+	    "-O2 -I../bfd" \
+	] \
+	[list \
+	    "Run pr18718 with PIE (1)" \
+	    "-pie" \
+	    "" \
+	    { pr18718.c check-ptr-eq.c } \
+	    "pr18718pie1" \
+	    "pass.out" \
+	    "-O2 -fPIE -I../bfd" \
+	] \
+	[list \
+	    "Run pr18718 with PIE (2)" \
+	    "" \
+	    "" \
+	    { pr18718.c check-ptr-eq.c } \
+	    "pr18718pie2" \
+	    "pass.out" \
+	    "-O2 -fPIE -I../bfd" \
+	] \
+	[list \
+	    "Run pr18718 with PIC (1)" \
+	    "" \
+	    "" \
+	    { pr18718.c check-ptr-eq.c } \
+	    "pr18718pic1" \
+	    "pass.out" \
+	    "-O2 -fPIC -I../bfd" \
+	] \
+	[list \
+	    "Run pr18718 with PIC (2)" \
+	    "-pie" \
+	    "" \
+	    { pr18718.c check-ptr-eq.c } \
+	    "pr18718pic2" \
+	    "pass.out" \
+	    "-O2 -fPIC -I../bfd" \
+	] \
+	[list \
+	    "Run pr19579" \
+	    "-pie -z text tmpdir/pr19579a.o tmpdir/libpr19579.so" \
+	    "" \
+	    {dummy.c} \
+	    "pr19579" \
+	    "pass.out" \
+	    "-fPIE" \
+	] \
+    ]
+}

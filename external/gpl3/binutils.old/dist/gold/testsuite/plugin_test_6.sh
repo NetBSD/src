@@ -2,7 +2,7 @@
 
 # plugin_test_6.sh -- a test case for the plugin API.
 
-# Copyright 2010 Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 # Written by Cary Coutant <ccoutant@google.com>.
 
 # This file is part of gold.
@@ -41,18 +41,18 @@ check()
 
 check plugin_test_6.err "API version:"
 check plugin_test_6.err "gold version:"
-check plugin_test_6.err "plugin_common_test_1.syms: claim file hook called"
-check plugin_test_6.err "plugin_common_test_2.syms: claim file hook called"
-check plugin_test_6.err "plugin_common_test_1.syms: c1: PREVAILING_DEF_IRONLY"
-check plugin_test_6.err "plugin_common_test_1.syms: c2: PREVAILING_DEF_IRONLY"
-check plugin_test_6.err "plugin_common_test_1.syms: c3: RESOLVED_IR"
-check plugin_test_6.err "plugin_common_test_1.syms: c4: RESOLVED_IR"
-check plugin_test_6.err "plugin_common_test_1.syms: c5: PREVAILING_DEF_IRONLY"
-check plugin_test_6.err "plugin_common_test_2.syms: c1: RESOLVED_IR"
-check plugin_test_6.err "plugin_common_test_2.syms: c2: RESOLVED_IR"
-check plugin_test_6.err "plugin_common_test_2.syms: c3: PREVAILING_DEF_IRONLY"
-check plugin_test_6.err "plugin_common_test_2.syms: c4: PREVAILING_DEF_IRONLY"
-check plugin_test_6.err "plugin_common_test_2.syms: c5: RESOLVED_IR"
+check plugin_test_6.err "plugin_common_test_1.o.syms: claim file hook called"
+check plugin_test_6.err "plugin_common_test_2.o.syms: claim file hook called"
+check plugin_test_6.err "plugin_common_test_1.o.syms: c1: PREVAILING_DEF_IRONLY"
+check plugin_test_6.err "plugin_common_test_1.o.syms: c2: PREVAILING_DEF_IRONLY"
+check plugin_test_6.err "plugin_common_test_1.o.syms: c3: RESOLVED_IR"
+check plugin_test_6.err "plugin_common_test_1.o.syms: c4: RESOLVED_IR"
+check plugin_test_6.err "plugin_common_test_1.o.syms: c5: PREVAILING_DEF_IRONLY"
+check plugin_test_6.err "plugin_common_test_2.o.syms: c1: RESOLVED_IR"
+check plugin_test_6.err "plugin_common_test_2.o.syms: c2: RESOLVED_IR"
+check plugin_test_6.err "plugin_common_test_2.o.syms: c3: PREVAILING_DEF_IRONLY"
+check plugin_test_6.err "plugin_common_test_2.o.syms: c4: PREVAILING_DEF_IRONLY"
+check plugin_test_6.err "plugin_common_test_2.o.syms: c5: RESOLVED_IR"
 check plugin_test_6.err "cleanup hook called"
 
 exit 0

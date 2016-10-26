@@ -1,7 +1,5 @@
 /* symbols.c -symbol table-
-   Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-   2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -106,7 +104,7 @@ symbol_new (const char *name, segT segment, valueT valu, fragS *frag)
 static char *
 save_symbol_name (const char *name)
 {
-  unsigned int name_length;
+  size_t name_length;
   char *ret;
 
   name_length = strlen (name) + 1;	/* +1 for \0.  */
@@ -267,7 +265,7 @@ colon (/* Just seen "x:" - rattle symbols & frags.  */
        const char *sym_name	/* Symbol name, as a cannonical string.  */
        /* We copy this string: OK to alter later.  */)
 {
-  register symbolS *symbolP;	/* Symbol we are working with.  */
+  symbolS *symbolP;	/* Symbol we are working with.  */
 
   /* Sun local labels go out of scope whenever a non-local symbol is
      defined.  */
@@ -484,7 +482,7 @@ colon (/* Just seen "x:" - rattle symbols & frags.  */
 void
 symbol_table_insert (symbolS *symbolP)
 {
-  register const char *error_string;
+  const char *error_string;
 
   know (symbolP);
   know (S_GET_NAME (symbolP));
@@ -512,7 +510,7 @@ symbol_table_insert (symbolS *symbolP)
 symbolS *
 symbol_find_or_make (const char *name)
 {
-  register symbolS *symbolP;
+  symbolS *symbolP;
 
   symbolP = symbol_find (name);
 
@@ -953,7 +951,7 @@ use_complex_relocs_for (symbolS * symp)
 
       if (  (S_IS_COMMON (symp->sy_value.X_add_symbol)
 	   || S_IS_LOCAL (symp->sy_value.X_add_symbol))
-	  && 
+	  &&
 	    (S_IS_COMMON (symp->sy_value.X_op_symbol)
 	   || S_IS_LOCAL (symp->sy_value.X_op_symbol))
 
@@ -963,7 +961,7 @@ use_complex_relocs_for (symbolS * symp)
 	  && S_GET_SEGMENT (symp->sy_value.X_op_symbol) != expr_section)
 	return 0;
       break;
-      
+
     default:
       break;
     }
@@ -1117,7 +1115,7 @@ resolve_symbol_value (symbolS *symp)
 	  if (symp->bsym->flags & BSF_SRELC)
 	    relc_symbol->bsym->flags |= BSF_SRELC;
 	  else
-	    relc_symbol->bsym->flags |= BSF_RELC;	  
+	    relc_symbol->bsym->flags |= BSF_RELC;
 	  /* symp->bsym->flags |= BSF_RELC; */
 	  copy_symbol_attributes (symp, relc_symbol);
 	  symp->sy_value.X_op = O_symbol;
@@ -1664,14 +1662,14 @@ define_dollar_label (long label)
    of ^A.  */
 
 char *				/* Return local label name.  */
-dollar_label_name (register long n,	/* we just saw "n$:" : n a number.  */
-		   register int augend	/* 0 for current instance, 1 for new instance.  */)
+dollar_label_name (long n,	/* we just saw "n$:" : n a number.  */
+		   int augend	/* 0 for current instance, 1 for new instance.  */)
 {
   long i;
   /* Returned to caller, then copied.  Used for created names ("4f").  */
   static char symbol_name_build[24];
-  register char *p;
-  register char *q;
+  char *p;
+  char *q;
   char symbol_name_temporary[20];	/* Build up a number, BACKWARDS.  */
 
   know (n >= 0);
@@ -1702,7 +1700,7 @@ dollar_label_name (register long n,	/* we just saw "n$:" : n a number.  */
       *q = i % 10 + '0';
       i /= 10;
     }
-  while ((*p++ = *--q) != '\0');;
+  while ((*p++ = *--q) != '\0');
 
   /* The label, as a '\0' ended string, starts at symbol_name_build.  */
   return symbol_name_build;
@@ -1749,7 +1747,7 @@ fb_label_instance_inc (long label)
 {
   long *i;
 
-  if (label < FB_LABEL_SPECIAL)
+  if ((unsigned long) label < FB_LABEL_SPECIAL)
     {
       ++fb_low_counter[label];
       return;
@@ -1797,7 +1795,7 @@ fb_label_instance (long label)
 {
   long *i;
 
-  if (label < FB_LABEL_SPECIAL)
+  if ((unsigned long) label < FB_LABEL_SPECIAL)
     {
       return (fb_low_counter[label]);
     }
@@ -1837,8 +1835,8 @@ fb_label_name (long n,	/* We just saw "n:", "nf" or "nb" : n a number.  */
   long i;
   /* Returned to caller, then copied.  Used for created names ("4f").  */
   static char symbol_name_build[24];
-  register char *p;
-  register char *q;
+  char *p;
+  char *q;
   char symbol_name_temporary[20];	/* Build up a number, BACKWARDS.  */
 
   know (n >= 0);
@@ -1873,7 +1871,7 @@ fb_label_name (long n,	/* We just saw "n:", "nf" or "nb" : n a number.  */
       *q = i % 10 + '0';
       i /= 10;
     }
-  while ((*p++ = *--q) != '\0');;
+  while ((*p++ = *--q) != '\0');
 
   /* The label, as a '\0' ended string, starts at symbol_name_build.  */
   return (symbol_name_build);
@@ -3120,10 +3118,10 @@ symbol_relc_make_expr (expressionS * exp)
   gas_assert (exp != NULL);
 
   /* Match known operators -> fill in opstr, arity, operands[] and fall
-     through to construct subexpression fragments; may instead return 
+     through to construct subexpression fragments; may instead return
      string directly for leaf nodes.  */
 
-  /* See expr.h for the meaning of all these enums.  Many operators 
+  /* See expr.h for the meaning of all these enums.  Many operators
      have an unnatural arity (X_add_number implicitly added).  The
      conversion logic expands them to explicit "+" subexpressions.   */
 
@@ -3138,10 +3136,10 @@ symbol_relc_make_expr (expressionS * exp)
       return symbol_relc_make_value (exp->X_add_number);
 
     case O_symbol:
-      if (exp->X_add_number) 
-	{ 
-	  arity = 2; 
-	  opstr = "+"; 
+      if (exp->X_add_number)
+	{
+	  arity = 2;
+	  opstr = "+";
 	  operands[0] = symbol_relc_make_sym (exp->X_add_symbol);
 	  operands[1] = symbol_relc_make_value (exp->X_add_number);
 	  break;
@@ -3167,7 +3165,7 @@ symbol_relc_make_expr (expressionS * exp)
           operands[0] = symbol_relc_make_sym (exp->X_add_symbol);	\
         }								\
       break
-      
+
 #define HANDLE_XADD_OPT2(str_) 						\
       if (exp->X_add_number)						\
         {								\
@@ -3224,16 +3222,16 @@ symbol_relc_make_expr (expressionS * exp)
   else
     {
       /* Allocate new string; include inter-operand padding gaps etc.  */
-      concat_string = xmalloc (strlen (opstr) 
+      concat_string = xmalloc (strlen (opstr)
 			       + 1
 			       + (arity >= 1 ? (strlen (operands[0]) + 1 ) : 0)
 			       + (arity >= 2 ? (strlen (operands[1]) + 1 ) : 0)
 			       + (arity >= 3 ? (strlen (operands[2]) + 0 ) : 0)
 			       + 1);
       gas_assert (concat_string != NULL);
-      
+
       /* Format the thing.  */
-      sprintf (concat_string, 
+      sprintf (concat_string,
 	       (arity == 0 ? "%s" :
 		arity == 1 ? "%s:%s" :
 		arity == 2 ? "%s:%s:%s" :

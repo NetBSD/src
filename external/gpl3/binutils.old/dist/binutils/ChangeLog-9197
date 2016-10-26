@@ -5209,6 +5209,12 @@ Fri May  3 22:21:44 1991  John Gilmore  (gnu at cygint.cygnus.com)
 	C compilers.
 
 
+Copyright (C) 1991-1997 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

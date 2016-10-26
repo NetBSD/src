@@ -1,7 +1,6 @@
 # Test weak symbols.
 # By Ian Lance Taylor, Cygnus Solutions.
-#   Copyright 1999, 2000, 2002, 2004, 2005, 2006, 2007, 2009, 2011
-#   Free Software Foundation, Inc.
+#   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -34,8 +33,8 @@ if {! [istarget i?86-*-*] && ! [istarget sh-*-*]} {
     setup_xfail *-*-pe*
 }
 
-# hppa64 and or32 are incredibly broken
-setup_xfail hppa64-*-* or32-*-*
+# hppa64 is incredibly broken
+setup_xfail hppa64-*-*
 
 if {! [ld_assemble $as $srcdir/$subdir/weak1.s tmpdir/weak1.o]
     || ! [ld_assemble $as $srcdir/$subdir/weak2.s tmpdir/weak2.o]} then {

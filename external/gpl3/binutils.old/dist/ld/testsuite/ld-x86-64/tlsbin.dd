@@ -68,7 +68,7 @@ Disassembly of section .text:
  +[0-9a-f]+:	90[ 	]+nop *
  +[0-9a-f]+:	90[ 	]+nop *
 #  LD -> LE
- +[0-9a-f]+:	66 66 66 64 48 8b 04[ 	]+data32 data32 data32 mov %fs:0x0,%rax
+ +[0-9a-f]+:	66 66 66 64 48 8b 04[ 	]+data16 data16 data16 mov %fs:0x0,%rax
  +[0-9a-f]+:	25 00 00 00 00 *
  +[0-9a-f]+:	90[ 	]+nop *
  +[0-9a-f]+:	90[ 	]+nop *
@@ -83,7 +83,7 @@ Disassembly of section .text:
  +[0-9a-f]+:	90[ 	]+nop *
  +[0-9a-f]+:	90[ 	]+nop *
 #  LD -> LE against hidden variables
- +[0-9a-f]+:	66 66 66 64 48 8b 04[ 	]+data32 data32 data32 mov %fs:0x0,%rax
+ +[0-9a-f]+:	66 66 66 64 48 8b 04[ 	]+data16 data16 data16 mov %fs:0x0,%rax
  +[0-9a-f]+:	25 00 00 00 00 *
  +[0-9a-f]+:	90[ 	]+nop *
  +[0-9a-f]+:	90[ 	]+nop *
@@ -174,7 +174,6 @@ Disassembly of section .text:
  +[0-9a-f]+:	90[ 	]+nop *
  +[0-9a-f]+:	c9[ 	]+leaveq *
  +[0-9a-f]+:	c3[ 	]+retq *
- +[0-9a-f]+:	0f 1f 00[ 	]+nopl   \(%rax\)
 
 [0-9a-f]+ <_start>:
  +[0-9a-f]+:	55[ 	]+push   %rbp

@@ -8,7 +8,7 @@ Disassembly of section \.plt:
 .*:	8f991000 	lw	t9,4096\(gp\)
 .*:	279c1000 	addiu	gp,gp,4096
 .*:	031cc023 	subu	t8,t8,gp
-.*:	03e07821 	move	t7,ra
+.*:	03e07825 	move	t7,ra
 .*:	0018c082 	srl	t8,t8,0x2
 .*:	0320f809 	jalr	t9
 .*:	2718fffe 	addiu	t8,t8,-2

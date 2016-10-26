@@ -6,7 +6,7 @@ Disassembly of section \.text:
 
 00008f00 <targetfn>:
     8f00:	e12fff1e 	bx	lr
-    8f04:	e320f000 	nop	\{0\}
+#...
 
 00008f08 <_start>:
     8f08:	bf00      	nop
@@ -75,5 +75,5 @@ Disassembly of section \.text:
     9002:	eb01 0002 	add\.w	r0, r1, r2
     9006:	f7ff ef7c 	blx	8f00 <targetfn>
     900a:	4770      	bx	lr
-    900c:	f3af 8000 	nop\.w
+#...
     9010:	eaffffba 	b	8f00 <targetfn>

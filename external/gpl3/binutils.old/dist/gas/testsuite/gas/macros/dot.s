@@ -1,12 +1,12 @@
  .altmacro
 
  .macro x.y.z val
-  .align 4
+  .balign 4
   .byte val,val
  .endm
 
  .macro .xyz val
-  .align 8
+  .balign 8
   .byte val,val
  .endm
 

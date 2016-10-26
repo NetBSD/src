@@ -1,6 +1,5 @@
 /* dllwrap.c -- wrapper for DLLTOOL and GCC to generate PE style DLLs
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2009,
-   2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Contributed by Mumit Khan (khan@xraylith.wisc.edu).
 
    This file is part of GNU Binutils.
@@ -144,28 +143,30 @@ display (const char * message, va_list args)
 
 
 static void
-inform VPARAMS ((const char *message, ...))
+inform (const char *message, ...)
 {
-  VA_OPEN (args, message);
-  VA_FIXEDARG (args, const char *, message);
+  va_list args;
+
+  va_start (args, message);
 
   if (!verbose)
     return;
 
   display (message, args);
 
-  VA_CLOSE (args);
+  va_end (args);
 }
 
 static void
-warn VPARAMS ((const char *format, ...))
+warn (const char *format, ...)
 {
-  VA_OPEN (args, format);
-  VA_FIXEDARG (args, const char *, format);
+  va_list args;
+
+  va_start (args, format);
 
   display (format, args);
 
-  VA_CLOSE (args);
+  va_end (args);
 }
 
 /* Look for the program formed by concatenating PROG_NAME and the
@@ -474,7 +475,7 @@ usage (FILE *file, int status)
 {
   fprintf (file, _("Usage %s <option(s)> <object-file(s)>\n"), prog_name);
   fprintf (file, _("  Generic options:\n"));
-  fprintf (file, _("   @<file>                Read options from <file>\n"));    
+  fprintf (file, _("   @<file>                Read options from <file>\n"));
   fprintf (file, _("   --quiet, -q            Work quietly\n"));
   fprintf (file, _("   --verbose, -v          Verbose\n"));
   fprintf (file, _("   --version              Print dllwrap version\n"));
@@ -1020,9 +1021,9 @@ Creating one, but that may not be what you want"));
 
   /* Step 1. Call GCC/LD to create base relocation file. If using GCC, the
      driver command line will look like the following:
-    
+
         % gcc -Wl,--dll --Wl,--base-file,foo.base [rest of command line]
-    
+
      If the user does not specify a base name, create temporary one that
      is deleted at exit.  */
 
@@ -1064,9 +1065,9 @@ Creating one, but that may not be what you want"));
 
   /* Step 2. generate the exp file by running dlltool.
      dlltool command line will look like the following:
-    
+
         % dlltool -Wl,--dll --Wl,--base-file,foo.base [rest of command line]
-    
+
      If the user does not specify a base name, create temporary one that
      is deleted at exit.  */
 

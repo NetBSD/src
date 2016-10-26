@@ -1,6 +1,5 @@
 /* CRIS-specific support for 32-bit ELF.
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2010, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson, based on elf32-fr30.c
    PIC and shlib bits based primarily on elf32-m68k.c and elf32-i386.c.
@@ -41,11 +40,11 @@ static reloc_howto_type cris_elf_howto_table [] =
   /* This reloc does nothing.  */
   HOWTO (R_CRIS_NONE,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
+	 complain_overflow_dont, /* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRIS_NONE",		/* name */
 	 FALSE,			/* partial_inplace */
@@ -462,7 +461,11 @@ cris_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
   enum elf_cris_reloc_type r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_CRIS_max);
+  if (r_type >= R_CRIS_max)
+    {
+      _bfd_error_handler (_("%B: invalid CRIS reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = & cris_elf_howto_table [r_type];
 }
 
@@ -511,10 +514,10 @@ cris_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 
       case 202:		/* Linux/CRISv32 */
 	/* pr_cursig */
-	elf_tdata (abfd)->core_signal = bfd_get_16 (abfd, note->descdata + 12);
+	elf_tdata (abfd)->core->signal = bfd_get_16 (abfd, note->descdata + 12);
 
 	/* pr_pid */
-	elf_tdata (abfd)->core_lwpid = bfd_get_32 (abfd, note->descdata + 22);
+	elf_tdata (abfd)->core->lwpid = bfd_get_32 (abfd, note->descdata + 22);
 
 	/* pr_reg */
 	offset = 70;
@@ -530,10 +533,10 @@ cris_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 
       case 214:		/* Linux/CRIS */
 	/* pr_cursig */
-	elf_tdata (abfd)->core_signal = bfd_get_16 (abfd, note->descdata + 12);
+	elf_tdata (abfd)->core->signal = bfd_get_16 (abfd, note->descdata + 12);
 
 	/* pr_pid */
-	elf_tdata (abfd)->core_lwpid = bfd_get_32 (abfd, note->descdata + 22);
+	elf_tdata (abfd)->core->lwpid = bfd_get_32 (abfd, note->descdata + 22);
 
 	/* pr_reg */
 	offset = 70;
@@ -557,9 +560,9 @@ cris_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 	return FALSE;
 
       case 124:		/* Linux/CRISv32 elf_prpsinfo */
-	elf_tdata (abfd)->core_program
+	elf_tdata (abfd)->core->program
 	  = _bfd_elfcore_strndup (abfd, note->descdata + 28, 16);
-	elf_tdata (abfd)->core_command
+	elf_tdata (abfd)->core->command
 	  = _bfd_elfcore_strndup (abfd, note->descdata + 44, 80);
       }
   else
@@ -569,9 +572,9 @@ cris_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 	return FALSE;
 
       case 124:		/* Linux/CRIS elf_prpsinfo */
-	elf_tdata (abfd)->core_program
+	elf_tdata (abfd)->core->program
 	  = _bfd_elfcore_strndup (abfd, note->descdata + 28, 16);
-	elf_tdata (abfd)->core_command
+	elf_tdata (abfd)->core->command
 	  = _bfd_elfcore_strndup (abfd, note->descdata + 44, 80);
       }
 
@@ -580,7 +583,7 @@ cris_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
      implementations, so strip it off if it exists.  */
 
   {
-    char *command = elf_tdata (abfd)->core_command;
+    char *command = elf_tdata (abfd)->core->command;
     int n = strlen (command);
 
     if (0 < n && command[n - 1] == ' ')
@@ -884,7 +887,7 @@ elf_cris_link_hash_table_create (bfd *abfd)
   struct elf_cris_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct elf_cris_link_hash_table);
 
-  ret = ((struct elf_cris_link_hash_table *) bfd_malloc (amt));
+  ret = ((struct elf_cris_link_hash_table *) bfd_zmalloc (amt));
   if (ret == (struct elf_cris_link_hash_table *) NULL)
     return NULL;
 
@@ -900,9 +903,6 @@ elf_cris_link_hash_table_create (bfd *abfd)
   /* Initialize to skip over the first three entries in the gotplt; they
      are used for run-time symbol evaluation.  */
   ret->next_gotplt_entry = 12;
-
-  /* We haven't seen any R_CRIS_nn_GOT_TPREL initially.  */
-  ret->dtpmod_refcount = 0;
 
   return &ret->root.root;
 }
@@ -1043,13 +1043,13 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 	  bfd_boolean unresolved_reloc;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 
 	  symname = h->root.root.string;
 
@@ -1092,8 +1092,8 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		 time.  FIXME: Not sure this example covers the
 		 h->elf_link_hash_flags test, though it's there in
 		 other targets.  */
-	      if (info->shared
-		  && ((! info->symbolic && h->dynindx != -1)
+	      if (bfd_link_pic (info)
+		  && ((!SYMBOLIC_BIND (info, h) && h->dynindx != -1)
 		      || !h->def_regular)
 		  && (input_section->flags & SEC_ALLOC) != 0
 		  && (r_type == R_CRIS_8
@@ -1103,7 +1103,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		      || r_type == R_CRIS_16_PCREL
 		      || r_type == R_CRIS_32_PCREL))
 		relocation = 0;
-	      else if (!info->relocatable && unresolved_reloc
+	      else if (!bfd_link_relocatable (info) && unresolved_reloc
 		       && (_bfd_elf_section_offset (output_bfd, info,
 						    input_section,
 						    rel->r_offset)
@@ -1125,7 +1125,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       switch (r_type)
@@ -1165,7 +1165,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	     these call-specific relocs don't address non-functions.  */
 	  if (h != NULL
 	      && (h->got.offset == (bfd_vma) -1
-		  || (!info->shared
+		  || (!bfd_link_pic (info)
 		      && !(h->def_regular
 			   || (!h->def_dynamic
 			       && h->root.type == bfd_link_hash_undefweak)))))
@@ -1207,20 +1207,20 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		BFD_ASSERT (off != (bfd_vma) -1);
 
 		if (!elf_hash_table (info)->dynamic_sections_created
-		    || (! info->shared
+		    || (! bfd_link_pic (info)
 			&& (h->def_regular
 			    || h->type == STT_FUNC
 			    || h->needs_plt))
-		    || (info->shared
-			&& (info->symbolic || h->dynindx == -1)
+		    || (bfd_link_pic (info)
+			&& (SYMBOLIC_BIND (info, h) || h->dynindx == -1)
 			&& h->def_regular))
 		  {
-		    /* This wasn't checked above for ! info->shared, but
+		    /* This wasn't checked above for ! bfd_link_pic (info), but
 		       must hold there if we get here; the symbol must
 		       be defined in the regular program or be undefweak
 		       or be a function or otherwise need a PLT.  */
 		    BFD_ASSERT (!elf_hash_table (info)->dynamic_sections_created
-				|| info->shared
+				|| bfd_link_pic (info)
 				|| h->def_regular
 				|| h->type == STT_FUNC
 				|| h->needs_plt
@@ -1266,7 +1266,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		  {
 		    bfd_put_32 (output_bfd, relocation, sgot->contents + off);
 
-		    if (info->shared)
+		    if (bfd_link_pic (info))
 		      {
 			Elf_Internal_Rela outrel;
 			bfd_byte *loc;
@@ -1327,7 +1327,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	     defined in an ordinary (non-DSO) object or is undefined weak.  */
 	  if (h != NULL
 	      && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
-	      && !(!info->shared
+	      && !(!bfd_link_pic (info)
 		   && (h->def_regular
 		       || (!h->def_dynamic
 			   && h->root.type == bfd_link_hash_undefweak))))
@@ -1426,13 +1426,13 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	case R_CRIS_8:
 	case R_CRIS_16:
 	case R_CRIS_32:
-	  if (info->shared
+	  if (bfd_link_pic (info)
 	      && r_symndx != STN_UNDEF
 	      && (input_section->flags & SEC_ALLOC) != 0
 	      && ((r_type != R_CRIS_8_PCREL
 		   && r_type != R_CRIS_16_PCREL
 		   && r_type != R_CRIS_32_PCREL)
-		  || (!info->symbolic
+		  || (!SYMBOLIC_BIND (info, h)
 		      || (h != NULL && !h->def_regular))))
 	    {
 	      Elf_Internal_Rela outrel;
@@ -1484,7 +1484,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	      /* h->dynindx may be -1 if the symbol was marked to
 		 become local.  */
 	      else if (h != NULL
-		       && ((! info->symbolic && h->dynindx != -1)
+		       && ((!SYMBOLIC_BIND (info, h) && h->dynindx != -1)
 			   || !h->def_regular))
 		{
 		  BFD_ASSERT (h->dynindx != -1);
@@ -1557,7 +1557,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  if (h != NULL
 	      && (input_section->flags & SEC_ALLOC) != 0
 	      && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
-	      && (info->shared
+	      && (bfd_link_pic (info)
 		  || (!h->def_regular
 		      && h->root.type != bfd_link_hash_undefined)))
 	    {
@@ -1592,7 +1592,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	      asection *sgotplt = bfd_get_linker_section (dynobj, ".got.plt");
 	      BFD_ASSERT (sgotplt != NULL);
 
-	      if (info->shared)
+	      if (bfd_link_pic (info))
 		{
 		  Elf_Internal_Rela outrel;
 		  bfd_byte *loc;
@@ -1631,7 +1631,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  break;
 
 	case R_CRIS_32_GD:
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    {
 	      bfd_set_error (bfd_error_invalid_operation);
 
@@ -1662,7 +1662,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	      return FALSE;
 	    }
 
-	  if (!info->shared
+	  if (!bfd_link_pic (info)
 	      && (h == NULL || h->def_regular || ELF_COMMON_DEF_P (h)))
 	    {
 	      /* Known contents of the GOT.  */
@@ -1783,7 +1783,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  break;
 
 	case R_CRIS_32_IE:
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    {
 	      bfd_set_error (bfd_error_invalid_operation);
 
@@ -1814,7 +1814,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	      return FALSE;
 	    }
 
-	  if (!info->shared
+	  if (!bfd_link_pic (info)
 	      && (h == NULL || h->def_regular || ELF_COMMON_DEF_P (h)))
 	    {
 	      /* Known contents of the GOT.  */
@@ -1920,7 +1920,7 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	case R_CRIS_32_TPREL:
 	  /* This relocation must only be performed against symbols
 	     defined in an ordinary (non-DSO) object.  */
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    {
 	      bfd_set_error (bfd_error_invalid_operation);
 
@@ -2139,7 +2139,7 @@ elf_cris_finish_dynamic_symbol (bfd *output_bfd,
       got_base = sgotplt->output_section->vma + sgotplt->output_offset;
 
       /* Fill in the entry in the procedure linkage table.  */
-      if (! info->shared)
+      if (! bfd_link_pic (info))
 	{
 	  memcpy (splt->contents + h->plt.offset, plt_entry,
 		  plt_entry_size);
@@ -2215,7 +2215,7 @@ elf_cris_finish_dynamic_symbol (bfd *output_bfd,
      references to the function symbol are redirected to the PLT.  */
   if (h->got.offset != (bfd_vma) -1
       && (elf_cris_hash_entry (h)->reg_got_refcount > 0)
-      && (info->shared
+      && (bfd_link_pic (info)
 	  || (h->dynindx != -1
 	      && h->plt.offset == (bfd_vma) -1
 	      && !h->def_regular
@@ -2244,8 +2244,8 @@ elf_cris_finish_dynamic_symbol (bfd *output_bfd,
 	 initialized in the relocate_section function.  */
       where = sgot->contents + (h->got.offset &~ (bfd_vma) 1);
       if (! elf_hash_table (info)->dynamic_sections_created
-	  || (info->shared
-	      && (info->symbolic || h->dynindx == -1)
+	  || (bfd_link_pic (info)
+	      && (SYMBOLIC_BIND (info, h) || h->dynindx == -1)
 	      && h->def_regular))
 	{
 	  rela.r_info = ELF32_R_INFO (0, R_CRIS_RELATIVE);
@@ -2288,7 +2288,7 @@ elf_cris_finish_dynamic_symbol (bfd *output_bfd,
     }
 
   /* Mark _DYNAMIC and _GLOBAL_OFFSET_TABLE_ as absolute.  */
-  if (strcmp (h->root.root.string, "_DYNAMIC") == 0
+  if (h == elf_hash_table (info)->hdynamic
       || h == elf_hash_table (info)->hgot)
     sym->st_shndx = SHN_ABS;
 
@@ -2380,7 +2380,7 @@ elf_cris_finish_dynamic_sections (bfd *output_bfd,
 	{
 	  if (bfd_get_mach (output_bfd) == bfd_mach_cris_v32)
 	    {
-	      if (info->shared)
+	      if (bfd_link_pic (info))
 		memcpy (splt->contents, elf_cris_pic_plt0_entry_v32,
 			PLT_ENTRY_SIZE_V32);
 	      else
@@ -2398,7 +2398,7 @@ elf_cris_finish_dynamic_sections (bfd *output_bfd,
 	    }
 	  else
 	    {
-	      if (info->shared)
+	      if (bfd_link_pic (info))
 		memcpy (splt->contents, elf_cris_pic_plt0_entry,
 			PLT_ENTRY_SIZE);
 	      else
@@ -2481,7 +2481,7 @@ cris_elf_gc_sweep_hook (bfd *abfd,
   asection *sgot;
   asection *srelgot;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -2592,7 +2592,7 @@ cris_elf_gc_sweep_hook (bfd *abfd,
 		{
 		  /* We don't need the .got entry any more.  */
 		  sgot->size -= got_element_size;
-		  if (info->shared)
+		  if (bfd_link_pic (info))
 		    srelgot->size -= sizeof (Elf32_External_Rela);
 		}
 	    }
@@ -2698,7 +2698,7 @@ cris_elf_plt_sym_val (bfd_vma i ATTRIBUTE_UNUSED, const asection *plt,
     {
       bfd_size_type got_offset;
       bfd_byte gotoffs_raw[4];
-      
+
       if (!bfd_get_section_contents (abfd, (asection *) plt, gotoffs_raw,
 				     pltoffs + plt_entry_got_offset,
 				     sizeof (gotoffs_raw)))
@@ -2886,7 +2886,7 @@ elf_cris_adjust_dynamic_symbol (struct bfd_link_info *info,
 	 result as one built without -fpic, specifically considering weak
 	 symbols.
 	 FIXME: m68k and i386 differ here, for unclear reasons.  */
-      if (! info->shared
+      if (! bfd_link_pic (info)
 	  && !h->def_dynamic)
 	{
 	  /* This case can occur if we saw a PLT reloc in an input file,
@@ -2908,7 +2908,7 @@ elf_cris_adjust_dynamic_symbol (struct bfd_link_info *info,
 	 like R_CRIS_JUMP_SLOT after symbol evaluation) we could get rid
 	 of the PLT.  We can't for the executable, because the GOT
 	 entries will point to the PLT there (and be constant).  */
-      if (info->shared
+      if (bfd_link_pic (info)
 	  && !elf_cris_try_fold_plt_to_got ((struct elf_cris_link_hash_entry*)
 					    h, info))
 	return FALSE;
@@ -2939,7 +2939,7 @@ elf_cris_adjust_dynamic_symbol (struct bfd_link_info *info,
       /* If this symbol is not defined in a regular file, and we are
 	 not generating a shared library, then set the symbol to this
 	 location in the .plt.  */
-      if (!info->shared
+      if (!bfd_link_pic (info)
 	  && !h->def_regular)
 	{
 	  h->root.u.def.section = s;
@@ -2952,7 +2952,7 @@ elf_cris_adjust_dynamic_symbol (struct bfd_link_info *info,
 	 executable, because then the reloc associated with the PLT
 	 would get a non-PLT reloc pointing to the PLT.  FIXME: Move
 	 this to elf_cris_try_fold_plt_to_got.  */
-      if (info->shared && h->got.refcount > 0)
+      if (bfd_link_pic (info) && h->got.refcount > 0)
 	{
 	  h->got.refcount += h->plt.refcount;
 
@@ -3023,7 +3023,7 @@ elf_cris_adjust_dynamic_symbol (struct bfd_link_info *info,
      only references to the symbol are via the global offset table.
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
-  if (info->shared)
+  if (bfd_link_pic (info))
     return TRUE;
 
   /* If there are no references to this symbol that do not use the
@@ -3058,7 +3058,7 @@ elf_cris_adjust_dynamic_symbol (struct bfd_link_info *info,
       h->needs_copy = 1;
     }
 
-  return _bfd_elf_adjust_dynamic_copy (h, s);
+  return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
 
 /* Adjust our "subclass" elements for an indirect symbol.  */
@@ -3143,7 +3143,7 @@ cris_elf_check_relocs (bfd *abfd,
   asection *srelgot;
   asection *sreloc;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   htab = elf_cris_hash_table (info);
@@ -3180,6 +3180,10 @@ cris_elf_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       r_type = ELF32_R_TYPE (rel->r_info);
@@ -3235,15 +3239,20 @@ cris_elf_check_relocs (bfd *abfd,
 		     abfd, sec);
 		  return FALSE;
 		}
-
-	      /* Create the .got section, so we can assume it's always
-		 present whenever there's a dynobj.  */
-	      if (!_bfd_elf_create_got_section (dynobj, info))
-		return FALSE;
 	    }
 
 	  if (sgot == NULL)
-	    sgot = bfd_get_linker_section (dynobj, ".got");
+	    {
+	      /* We may have a dynobj but no .got section, if machine-
+		 independent parts of the linker found a reason to create
+		 a dynobj.  We want to create the .got section now, so we
+		 can assume it's always present whenever there's a dynobj.
+		 It's ok to call this function more than once.  */
+	      if (!_bfd_elf_create_got_section (dynobj, info))
+		return FALSE;
+
+	      sgot = bfd_get_linker_section (dynobj, ".got");
+	    }
 
 	  if (local_got_refcounts == NULL)
 	    {
@@ -3277,7 +3286,7 @@ cris_elf_check_relocs (bfd *abfd,
 	     of the first entry is constant there.  For a shared
 	     library, we need .got.rela for the R_CRIS_DTPMOD
 	     relocation at index 3.  */
-	  if (!info->shared)
+	  if (!bfd_link_pic (info))
 	    break;
 	  /* Fall through.  */
 
@@ -3301,7 +3310,7 @@ cris_elf_check_relocs (bfd *abfd,
 	case R_CRIS_16_GOT:
 	case R_CRIS_32_GOT:
 	  if (srelgot == NULL
-	      && (h != NULL || info->shared))
+	      && (h != NULL || bfd_link_pic (info)))
 	    {
 	      srelgot = bfd_get_linker_section (dynobj, ".rela.got");
 	      if (srelgot == NULL)
@@ -3330,7 +3339,7 @@ cris_elf_check_relocs (bfd *abfd,
 	case R_CRIS_32_TPREL:
 	case R_CRIS_16_TPREL:
 	case R_CRIS_32_GD:
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    {
 	      (*_bfd_error_handler)
 		(_("%B, section %A:\n  relocation %s not valid"
@@ -3372,7 +3381,7 @@ cris_elf_check_relocs (bfd *abfd,
 	  /* Those relocs also require that a DSO is of type
 	     Initial Exec.  Like other targets, we don't reset this
 	     flag even if the relocs are GC:ed away.  */
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    info->flags |= DF_STATIC_TLS;
 	  break;
 
@@ -3475,7 +3484,7 @@ cris_elf_check_relocs (bfd *abfd,
 	      if (local_got_refcounts[r_symndx_lgot] == 0)
 		{
 		  sgot->size += got_element_size;
-		  if (info->shared)
+		  if (bfd_link_pic (info))
 		    {
 		      /* If we are generating a shared object, we need
 			 to output a R_CRIS_RELATIVE reloc so that the
@@ -3541,7 +3550,7 @@ cris_elf_check_relocs (bfd *abfd,
 	     can't help tables of (global) function pointers, for
 	     example, though they must be emitted in a (writable) data
 	     section to avoid having impure text sections.  */
-	  if (info->shared
+	  if (bfd_link_pic (info)
 	      && (sec->flags & SEC_ALLOC) != 0
 	      && (sec->flags & SEC_READONLY) != 0)
 	    {
@@ -3585,7 +3594,7 @@ cris_elf_check_relocs (bfd *abfd,
 	     render the symbol local.  */
 
 	  /* No need to do anything if we're not creating a shared object.  */
-	  if (! info->shared)
+	  if (! bfd_link_pic (info))
 	    break;
 
 	  /* We may need to create a reloc section in the dynobj and made room
@@ -3634,7 +3643,7 @@ cris_elf_check_relocs (bfd *abfd,
 	     render the symbol local.  */
 
 	  /* No need to do anything if we're not creating a shared object.  */
-	  if (! info->shared)
+	  if (! bfd_link_pic (info))
 	    break;
 
 	  /* We don't need to handle relocs into sections not going into
@@ -3652,7 +3661,7 @@ cris_elf_check_relocs (bfd *abfd,
 	     this shared library) then we can also eliminate the
 	     reloc.  See comment above for more eliminable cases which
 	     we can't identify at this time.  */
-	  if (info->symbolic
+	  if (SYMBOLIC_BIND (info, h)
 	      && h->root.type != bfd_link_hash_defweak
 	      && h->def_regular)
 	    break;
@@ -3755,7 +3764,7 @@ elf_cris_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (info->executable)
+      if (bfd_link_executable (info) && !info->nointerp)
 	{
 	  s = bfd_get_linker_section (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -3786,7 +3795,7 @@ elf_cris_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
      for relocs that have become for local symbols due to symbol
      visibility changes.  For programs, we discard space for relocs for
      symbols not referenced by any dynamic object.  */
-  if (info->shared)
+  if (bfd_link_pic (info))
     elf_cris_link_hash_traverse (htab,
 				 elf_cris_discard_excess_dso_dynamics,
 				 info);
@@ -3828,7 +3837,7 @@ elf_cris_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	{
 	  if (strcmp (name, ".rela.got") == 0
 	      && htab->dtpmod_refcount != 0
-	      && info->shared)
+	      && bfd_link_pic (info))
 	    s->size += sizeof (Elf32_External_Rela);
 
 	  if (s->size != 0)
@@ -3888,7 +3897,7 @@ elf_cris_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 #define add_dynamic_entry(TAG, VAL) \
   _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
-      if (!info->shared)
+      if (!bfd_link_pic (info))
 	{
 	  if (!add_dynamic_entry (DT_DEBUG, 0))
 	    return FALSE;
@@ -3944,7 +3953,7 @@ elf_cris_discard_excess_dso_dynamics (struct elf_cris_link_hash_entry *h,
      any relocs.  */
   if (h->root.def_regular
       && (h->root.forced_local
-	  || info->symbolic))
+	  || SYMBOLIC_BIND (info, &h->root)))
     {
       for (s = h->pcrel_relocs_copied; s != NULL; s = s->next)
 	{
@@ -4244,7 +4253,9 @@ cris_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 }
 
 static enum elf_reloc_type_class
-elf_cris_reloc_type_class (const Elf_Internal_Rela *rela)
+elf_cris_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			   const asection *rel_sec ATTRIBUTE_UNUSED,
+			   const Elf_Internal_Rela *rela)
 {
   enum elf_cris_reloc_type r_type = ELF32_R_TYPE (rela->r_info);
   switch (r_type)
@@ -4327,7 +4338,7 @@ elf_cris_got_elt_size (bfd *abfd ATTRIBUTE_UNUSED,
 #define ELF_MACHINE_CODE	EM_CRIS
 #define ELF_MAXPAGESIZE		0x2000
 
-#define TARGET_LITTLE_SYM	bfd_elf32_cris_vec
+#define TARGET_LITTLE_SYM	cris_elf32_vec
 #define TARGET_LITTLE_NAME	"elf32-cris"
 #define elf_symbol_leading_char 0
 
@@ -4396,7 +4407,7 @@ elf_cris_got_elt_size (bfd *abfd ATTRIBUTE_UNUSED,
 #undef TARGET_LITTLE_NAME
 #undef elf_symbol_leading_char
 
-#define TARGET_LITTLE_SYM bfd_elf32_us_cris_vec
+#define TARGET_LITTLE_SYM cris_elf32_us_vec
 #define TARGET_LITTLE_NAME "elf32-us-cris"
 #define elf_symbol_leading_char '_'
 #undef elf32_bed

@@ -2,7 +2,7 @@
 
 # arm_fix_1176.sh -- a test case for the ARM1176 workaround.
 
-# Copyright 2010, 2011, Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 # Written by Matthew Gretton-Dann <matthew.gretton-dann@arm.com>
 # Based upon arm_cortex_a8.sh
 # Written by Doug Kwan <dougkwan@google.com>.

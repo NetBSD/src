@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CR16 ELF
-   Copyright 2007, 2008, 2009, 2010, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
    Written by M R Swami Reddy.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -115,8 +115,8 @@ static reloc_howto_type cr16_elf_howto_table[] =
 {
   HOWTO (R_CR16_NONE,              /* type */
          0,                        /* rightshift */
-         2,                        /* size */
-         32,                       /* bitsize */
+         3,                        /* size */
+         0,                        /* bitsize */
          FALSE,                    /* pc_relative */
          0,                        /* bitpos */
          complain_overflow_dont,   /* complain_on_overflow */
@@ -673,7 +673,13 @@ elf_cr16_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
 {
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
 
-  BFD_ASSERT (r_type < (unsigned int) R_CR16_MAX);
+  if (r_type >= R_CR16_MAX)
+    {
+      (*_bfd_error_handler) (_("%B: unrecognised CR16 reloc number: %d"),
+			     abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      r_type = R_CR16_NONE;
+    }
   cache_ptr->howto = cr16_elf_howto_table + r_type;
 }
 
@@ -699,7 +705,7 @@ cr16_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
   srelgot = NULL;
   bfd_boolean result = FALSE;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -725,6 +731,10 @@ cr16_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
           while (h->root.type == bfd_link_hash_indirect
                  || h->root.type == bfd_link_hash_warning)
             h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
         }
 
       /* Some relocs require a global offset table.  */
@@ -757,11 +767,11 @@ cr16_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
             }
 
           if (srelgot == NULL
-              && (h != NULL || info->executable))
+              && (h != NULL || bfd_link_executable (info)))
             {
               srelgot = bfd_get_linker_section (dynobj, ".rela.got");
               if (srelgot == NULL)
-                { 
+                {
 		  flagword flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
 				    | SEC_IN_MEMORY | SEC_LINKER_CREATED
 				    | SEC_READONLY);
@@ -818,7 +828,7 @@ cr16_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 
               local_got_offsets[r_symndx] = sgot->size;
 
-              if (info->executable)
+              if (bfd_link_executable (info))
                 /* If we are generating a shared object, we need to
                    output a R_CR16_RELATIVE reloc so that the dynamic
                    linker can adjust this GOT entry.  */
@@ -912,7 +922,7 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
        /* We only care about the addend, where the difference between
           expressions is kept.  */
        Rvalue = 0;
-       
+
      default:
        break;
     }
@@ -1043,7 +1053,7 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
                         | ((Rvalue >> 16) & 0xf)), hit_data);
             bfd_put_16 (input_bfd, (Rvalue) & 0xffff, hit_data + 2);
           }
-        else if (r_type == R_CR16_GOT_REGREL20) 
+        else if (r_type == R_CR16_GOT_REGREL20)
           {
             asection * sgot = bfd_get_linker_section (dynobj, ".got");
 
@@ -1060,7 +1070,7 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
                        -Bsymbolic link and the symbol is defined
                        locally, or the symbol was forced to be local
                        because of a version file.  We must initialize
-                       this entry in the global offset table. 
+                       this entry in the global offset table.
                        When doing a dynamic link, we create a .rela.got
                        relocation entry to initialize the value.  This
                        is done in the finish_dynamic_symbol routine.  */
@@ -1080,7 +1090,7 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
 
              Rvalue += addend;
 
-             /* REVISIT: if ((long) Rvalue > 0xffffff || 
+             /* REVISIT: if ((long) Rvalue > 0xffffff ||
                                     (long) Rvalue < -0x800000).  */
              if ((long) Rvalue > 0xffffff || (long) Rvalue < 0)
                return bfd_reloc_overflow;
@@ -1111,7 +1121,7 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
                     -Bsymbolic link and the symbol is defined
                      locally, or the symbol was forced to be local
                      because of a version file.  We must initialize
-                     this entry in the global offset table. 
+                     this entry in the global offset table.
                      When doing a dynamic link, we create a .rela.got
                      relocation entry to initialize the value.  This
                      is done in the finish_dynamic_symbol routine.  */
@@ -1142,7 +1152,7 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
                Rvalue += Rvalue1;
 
               /* Check for range.  */
-             /* REVISIT: if ((long) Rvalue > 0xffffff 
+             /* REVISIT: if ((long) Rvalue > 0xffffff
                              || (long) Rvalue < -0x800000).  */
              if ((long) Rvalue > 0xffffff || (long) Rvalue < 0)
                return bfd_reloc_overflow;
@@ -1224,7 +1234,7 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
               }
             else if (r_type == R_CR16_NUM32)
               {
-                 Rvalue1 = (bfd_get_32 (input_bfd, hit_data)); 
+                 Rvalue1 = (bfd_get_32 (input_bfd, hit_data));
 
                  /* Add or subtract the offset value */
                  if (Rvalue1 & 0x80000000)
@@ -1309,7 +1319,7 @@ elf32_cr16_relax_delete_bytes (struct bfd_link_info *link_info, bfd *abfd,
                   && ELF32_R_TYPE (irel->r_info) != (int) R_CR16_SWITCH16
                   && ELF32_R_TYPE (irel->r_info) != (int) R_CR16_SWITCH32)
                  continue;
-        
+
               r_symndx = ELF32_R_SYM (irel->r_info);
               rsym = (Elf_Internal_Sym *) symtab_hdr->contents + r_symndx;
 
@@ -1421,19 +1431,19 @@ elf32_cr16_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
         }
       else
         {
-          bfd_boolean unresolved_reloc, warned;
+          bfd_boolean unresolved_reloc, warned, ignored;
 
           RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
                                    r_symndx, symtab_hdr, sym_hashes,
                                    h, sec, relocation,
-                                   unresolved_reloc, warned);
+                                   unresolved_reloc, warned, ignored);
         }
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
         continue;
 
       r = cr16_elf_final_link_relocate (howto, input_bfd, output_bfd,
@@ -1660,7 +1670,7 @@ elf32_cr16_link_hash_table_create (bfd *abfd)
   struct elf_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct elf_link_hash_table);
 
-  ret = (struct elf_link_hash_table *) bfd_malloc (amt);
+  ret = (struct elf_link_hash_table *) bfd_zmalloc (amt);
   if (ret == (struct elf_link_hash_table *) NULL)
     return NULL;
 
@@ -1674,18 +1684,6 @@ elf32_cr16_link_hash_table_create (bfd *abfd)
     }
 
   return &ret->root;
-}
-
-/* Free an cr16 ELF linker hash table.  */
-
-static void
-elf32_cr16_link_hash_table_free (struct bfd_link_hash_table *hash)
-{
-  struct elf_link_hash_table *ret
-    = (struct elf_link_hash_table *) hash;
-
-  _bfd_generic_link_hash_table_free
-    ((struct bfd_link_hash_table *) ret);
 }
 
 static unsigned long
@@ -1778,7 +1776,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
   /* We don't have to do anything for a relocatable link, if
      this section does not have relocs, or if this is not a
      code section.  */
-  if (link_info->relocatable
+  if (bfd_link_relocatable (link_info)
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
       || (sec->flags & SEC_CODE) == 0)
@@ -1981,7 +1979,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
           bfd_vma value = symval;
           unsigned short is_add_mov = 0;
           bfd_vma value1 = 0;
-          
+
           /* Get the existing value from the mcode */
           value1 = ((bfd_get_32 (abfd, contents + irel->r_offset + 2) >> 16)
                    |(((bfd_get_32 (abfd, contents + irel->r_offset + 2) & 0xffff) << 16)));
@@ -1996,7 +1994,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 
               /* Verify it's a 'arithmetic ADDD or MOVD instruction'.
                  For ADDD and MOVD only, convert to IMM32 -> IMM20.  */
-     
+
               if (((code & 0xfff0) == 0x0070) || ((code & 0xfff0) == 0x0020))
                  is_add_mov = 1;
 
@@ -2016,7 +2014,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 
                   bfd_put_8 (abfd, (code & 0xf) << 4, contents + irel->r_offset);
 
-                  /* If existing value is nagavive adjust approriately 
+                  /* If existing value is nagavive adjust approriately
                      place the 16-20bits (ie 4 bit) in new opcode,
                      as the 0xffffxxxx, the higher 2 byte values removed. */
                   if (value1 & 0x80000000)
@@ -2040,7 +2038,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
             }
 
           /* See if the value will fit in 16 bits.  */
-          if ((!is_add_mov) 
+          if ((!is_add_mov)
               && ((long)(value + value1) < 0x7fff && (long)(value + value1) > 0))
             {
               unsigned short code;
@@ -2065,7 +2063,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 
               bfd_put_8 (abfd, 0xb0 | (code & 0xf), contents + irel->r_offset);
 
-              /* If existing value is nagavive adjust approriately 
+              /* If existing value is nagavive adjust approriately
                  place the 12-16bits (ie 4 bit) in new opcode,
                  as the 0xfffffxxx, the higher 2 byte values removed. */
               if (value1 & 0x80000000)
@@ -2092,7 +2090,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 #if 0
       /* Try to turn a 16bit immediate address into a 4bit
          immediate address.  */
-      if ((ELF32_R_TYPE (irel->r_info) == (int) R_CR16_IMM20) 
+      if ((ELF32_R_TYPE (irel->r_info) == (int) R_CR16_IMM20)
           || (ELF32_R_TYPE (irel->r_info) == (int) R_CR16_IMM16))
         {
           bfd_vma value = symval;
@@ -2200,7 +2198,7 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
       else
        /* Cache the section contents for elf_link_input_bfd.  */
        elf_section_data (sec)->this_hdr.contents = contents;
-       
+
     }
 
   if (internal_relocs != NULL
@@ -2311,7 +2309,7 @@ _bfd_cr16_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
          be needed, we can discard it later.  We will never need this
          section when generating a shared object, since they do not use
          copy relocs.  */
-      if (! info->executable)
+      if (! bfd_link_executable (info))
         {
           s = bfd_make_section_anyway_with_flags (abfd,
 						  (bed->default_use_rela_p
@@ -2355,7 +2353,7 @@ _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
   if (h->type == STT_FUNC
       || h->needs_plt)
     {
-      if (! info->executable
+      if (! bfd_link_executable (info)
           && !h->def_dynamic
           && !h->ref_dynamic)
         {
@@ -2410,7 +2408,7 @@ _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
      only references to the symbol are via the global offset table.
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
-  if (info->executable)
+  if (bfd_link_executable (info))
     return TRUE;
 
   /* If there are no references to this symbol that do not use the
@@ -2445,7 +2443,7 @@ _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
       h->needs_copy = 1;
     }
 
-  return _bfd_elf_adjust_dynamic_copy (h, s);
+  return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
 
 /* Set the sizes of the dynamic sections.  */
@@ -2466,7 +2464,7 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (info->executable)
+      if (bfd_link_executable (info) && !info->nointerp)
         {
 #if 0
           s = bfd_get_linker_section (dynobj, ".interp");
@@ -2583,7 +2581,7 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
          but we must add the entries now so that we get the correct
          size for the .dynamic section.  The DT_DEBUG entry is filled
          in by the dynamic linker and used by the debugger.  */
-      if (! info->executable)
+      if (! bfd_link_executable (info))
         {
           if (!_bfd_elf_add_dynamic_entry (info, DT_DEBUG, 0))
             return FALSE;
@@ -2651,7 +2649,7 @@ _bfd_cr16_elf_finish_dynamic_symbol (bfd * output_bfd,
          the symbol was forced to be local because of a version file.
          The entry in the global offset table will already have been
          initialized in the relocate_section function.  */
-      if (info->executable
+      if (bfd_link_executable (info)
           && (info->symbolic || h->dynindx == -1)
           && h->def_regular)
         {
@@ -2698,7 +2696,7 @@ _bfd_cr16_elf_finish_dynamic_symbol (bfd * output_bfd,
     }
 
   /* Mark _DYNAMIC and _GLOBAL_OFFSET_TABLE_ as absolute.  */
-  if (strcmp (h->root.root.string, "_DYNAMIC") == 0
+  if (h == elf_hash_table (info)->hdynamic
       || h == elf_hash_table (info)->hgot)
     sym->st_shndx = SHN_ABS;
 
@@ -2821,7 +2819,7 @@ bfd_cr16_elf32_create_embedded_relocs (bfd *abfd,
   bfd_byte *p;
   bfd_size_type amt;
 
-  BFD_ASSERT (! info->relocatable);
+  BFD_ASSERT (! bfd_link_relocatable (info));
 
   *errmsg = NULL;
 
@@ -2928,7 +2926,9 @@ error_return:
    properly.  */
 
 static enum elf_reloc_type_class
-_bfd_cr16_elf_reloc_type_class (const Elf_Internal_Rela *rela)
+_bfd_cr16_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+				const asection *rel_sec ATTRIBUTE_UNUSED,
+				const Elf_Internal_Rela *rela)
 {
   switch ((int) ELF32_R_TYPE (rela->r_info))
     {
@@ -2941,7 +2941,7 @@ _bfd_cr16_elf_reloc_type_class (const Elf_Internal_Rela *rela)
 }
 
 /* Definitions for setting CR16 target vector.  */
-#define TARGET_LITTLE_SYM                 bfd_elf32_cr16_vec
+#define TARGET_LITTLE_SYM                 cr16_elf32_vec
 #define TARGET_LITTLE_NAME                "elf32-cr16"
 #define ELF_ARCH                          bfd_arch_cr16
 #define ELF_MACHINE_CODE                  EM_CR16
@@ -2973,8 +2973,6 @@ _bfd_cr16_elf_reloc_type_class (const Elf_Internal_Rela *rela)
 
 #define bfd_elf32_bfd_link_hash_table_create \
                                   elf32_cr16_link_hash_table_create
-#define bfd_elf32_bfd_link_hash_table_free \
-                                  elf32_cr16_link_hash_table_free
 
 #define elf_backend_create_dynamic_sections \
                                   _bfd_cr16_elf_create_dynamic_sections

@@ -184,28 +184,16 @@ to the linker hash table instead.)
 @findex _bfd_generic_link_add_archive_symbols
 In most cases the work of looking through the symbols in the
 archive should be done by the
-@code{_bfd_generic_link_add_archive_symbols} function.  This
-function builds a hash table from the archive symbol table and
-looks through the list of undefined symbols to see which
-elements should be included.
+@code{_bfd_generic_link_add_archive_symbols} function.
 @code{_bfd_generic_link_add_archive_symbols} is passed a function
 to call to make the final decision about adding an archive
 element to the link and to do the actual work of adding the
-symbols to the linker hash table.
-
-The function passed to
-@code{_bfd_generic_link_add_archive_symbols} must read the
-symbols of the archive element and decide whether the archive
-element should be included in the link.  If the element is to
+symbols to the linker hash table.  If the element is to
 be included, the @code{add_archive_element} linker callback
 routine must be called with the element as an argument, and
 the element's symbols must be added to the linker hash table
 just as though the element had itself been passed to the
-@code{_bfd_link_add_symbols} function.  The @code{add_archive_element}
-callback has the option to indicate that it would like to
-replace the element archive with a substitute BFD, in which
-case it is the symbols of that substitute BFD that must be
-added to the linker hash table instead.
+@code{_bfd_link_add_symbols} function.
 
 When the a.out @code{_bfd_link_add_symbols} function receives an
 archive, it calls @code{_bfd_generic_link_add_archive_symbols}
@@ -262,7 +250,7 @@ it sets up some data structures for the function to use.
 
 The @code{input_bfds} field of the @code{bfd_link_info} structure
 will point to a list of all the input files included in the
-link.  These files are linked through the @code{link_next} field
+link.  These files are linked through the @code{link.next} field
 of the @code{bfd} structure.
 
 Each section in the output file will have a list of
@@ -405,8 +393,8 @@ Return TRUE on success and FALSE on failure.
 
 @end example
 
-@findex bfd_find_version_for_sym 
-@subsubsection @code{bfd_find_version_for_sym }
+@findex bfd_find_version_for_sym
+@subsubsection @code{bfd_find_version_for_sym}
 @strong{Synopsis}
 @example
 struct bfd_elf_version_tree * bfd_find_version_for_sym

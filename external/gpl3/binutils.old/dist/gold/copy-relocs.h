@@ -1,6 +1,6 @@
 // copy-relocs.h -- handle COPY relocations for gold   -*- C++ -*-
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -54,7 +54,7 @@ class Copy_relocs
 
  public:
   Copy_relocs(unsigned int copy_reloc_type)
-    : copy_reloc_type_(copy_reloc_type), dynbss_(NULL), entries_()
+    : entries_(), copy_reloc_type_(copy_reloc_type), dynbss_(NULL)
   { }
 
   // This is called while scanning relocs if we see a relocation
@@ -65,10 +65,15 @@ class Copy_relocs
   // will wind up.  REL is the reloc itself.  The Output_data_reloc
   // section is where the dynamic relocs are put.
   void
-  copy_reloc(Symbol_table*, Layout*, Sized_symbol<size>* sym,
+  copy_reloc(Symbol_table*,
+	     Layout*,
+	     Sized_symbol<size>* sym,
              Sized_relobj_file<size, big_endian>* object,
-	     unsigned int shndx, Output_section* output_section,
-	     const Reloc& rel,
+	     unsigned int shndx,
+	     Output_section* output_section,
+	     unsigned int r_type,
+	     typename elfcpp::Elf_types<size>::Elf_Addr r_offset,
+	     typename elfcpp::Elf_types<size>::Elf_Swxword r_addend,
 	     Output_data_reloc<sh_type, true, size, big_endian>*);
 
   // Return whether there are any saved relocations.
@@ -87,16 +92,15 @@ class Copy_relocs
 		  Output_data*, off_t,
 		  Output_data_reloc<sh_type, true, size, big_endian>*);
 
- private:
+ protected:
   typedef typename elfcpp::Elf_types<size>::Elf_Addr Address;
   typedef typename elfcpp::Elf_types<size>::Elf_Addr Addend;
 
   // This POD class holds the relocations we are saving.  We will emit
   // these relocations if it turns out that the symbol does not
   // require a COPY relocation.
-  class Copy_reloc_entry
+  struct Copy_reloc_entry
   {
-   public:
     Copy_reloc_entry(Symbol* sym, unsigned int reloc_type,
 		     Sized_relobj_file<size, big_endian>* relobj,
                      unsigned int shndx,
@@ -107,13 +111,6 @@ class Copy_relocs
 	address_(address), addend_(addend)
     { }
 
-    // Emit this reloc if appropriate.  This is called after we have
-    // scanned all the relocations, so we know whether we emitted a
-    // COPY relocation for SYM_.
-    void
-    emit(Output_data_reloc<sh_type, true, size, big_endian>*);
-
-   private:
     Symbol* sym_;
     unsigned int reloc_type_;
     Sized_relobj_file<size, big_endian>* relobj_;
@@ -123,32 +120,39 @@ class Copy_relocs
     Addend addend_;
   };
 
+  // Make a new COPY reloc and emit it.
+  void
+  make_copy_reloc(Symbol_table*, Layout*, Sized_symbol<size>*,
+		  Output_data_reloc<sh_type, true, size, big_endian>*);
+
   // A list of relocs to be saved.
   typedef std::vector<Copy_reloc_entry> Copy_reloc_entries;
 
+  // The list of relocs we are saving.
+  Copy_reloc_entries entries_;
+
+ private:
   // Return whether we need a COPY reloc.
   bool
   need_copy_reloc(Sized_symbol<size>* gsym,
                   Sized_relobj_file<size, big_endian>* object,
 		  unsigned int shndx) const;
 
-  // Make a new COPY reloc and emit it.
-  void
-  make_copy_reloc(Symbol_table*, Layout*, Sized_symbol<size>*,
-		  Output_data_reloc<sh_type, true, size, big_endian>*);
-
   // Save a reloc against SYM for possible emission later.
   void
-  save(Symbol*, Sized_relobj_file<size, big_endian>*, unsigned int shndx,
-       Output_section*, const Reloc& rel);
+  save(Symbol*,
+       Sized_relobj_file<size, big_endian>*,
+       unsigned int shndx,
+       Output_section*,
+       unsigned int r_type,
+       typename elfcpp::Elf_types<size>::Elf_Addr r_offset,
+       typename elfcpp::Elf_types<size>::Elf_Swxword r_addend);
 
   // The target specific relocation type of the COPY relocation.
   const unsigned int copy_reloc_type_;
   // The dynamic BSS data which goes into the .bss section.  This is
   // where variables which require COPY relocations are placed.
   Output_data_space* dynbss_;
-  // The list of relocs we are saving.
-  Copy_reloc_entries entries_;
 };
 
 } // End namespace gold.

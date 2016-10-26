@@ -1,51 +1,61 @@
-#as: -EL
-#objdump: -dr -EL
+#as: -mcpu=arc700
+#objdump: -dr --prefix-addresses --show-raw-insn
 
-.*: +file format elf32-.*arc
+.*: +file format .*arc.*
 
 Disassembly of section .text:
-
-00000000 <.text>:
-   0:	00 86 00 18 	18008600     ror        r0,r1
-   4:	00 06 6e 1b 	1b6e0600     ror        fp,sp
-   8:	00 86 1f 18 	181f8600     ror        r0,0
-   c:	ff 87 3f 18 	183f87ff     ror        r1,-1
-  10:	00 06 e1 1f 	1fe10600     ror        0,r2
-  14:	00 86 e1 1f 	1fe18600     ror        0,r3
-  18:	ff 86 9f 18 	189f86ff     ror        r4,255
-  1c:	00 86 e2 1f 	1fe28600     ror        0,r5
-  20:	00 87 df 18 	18df8700     ror        r6,-256
-  24:	00 86 e3 1f 	1fe38600     ror        0,r7
-  28:	00 06 1f 19 	191f0600     ror        r8,0x100
-  2c:	00 01 00 00 
-  30:	00 06 3f 19 	193f0600     ror        r9,0xffff_feff
-  34:	ff fe ff ff 
-  38:	00 06 7f 19 	197f0600     ror        r11,0x4242_4242
-  3c:	42 42 42 42 
-  40:	00 06 ff 1f 	1fff0600     ror        0,0x100
-  44:	00 01 00 00 
-  48:	00 06 1f 18 	181f0600     ror        r0,0
-  4c:	00 00 00 00 
-			4c: R_ARC_32	foo
-  50:	01 86 45 19 	19458601     ror.z      r10,r11
-  54:	02 86 86 19 	19868602     ror.nz     r12,r13
-  58:	0b 06 df 19 	19df060b     ror.lt     r14,0
-  5c:	00 00 00 00 
-  60:	09 06 ff 19 	19ff0609     ror.gt     r15,0x200
-  64:	00 02 00 00 
-  68:	00 87 00 18 	18008700     ror.f      r0,r1
-  6c:	01 86 5e 18 	185e8601     ror.f      r2,1
-  70:	00 07 e2 1f 	1fe20700     ror.f      0,r4
-  74:	00 07 bf 18 	18bf0700     ror.f      r5,0x200
-  78:	00 02 00 00 
-  7c:	00 07 df 1f 	1fdf0700     ror.f      0,0x200
-  80:	00 02 00 00 
-  84:	01 87 00 18 	18008701     ror.z.f    r0,r1
-  88:	02 07 3f 18 	183f0702     ror.nz.f   r1,0
-  8c:	00 00 00 00 
-  90:	0b 07 c1 1f 	1fc1070b     ror.lt.f   0,r2
-  94:	00 00 00 00 	00000000                
-  98:	0c 07 1f 18 	181f070c     ror.le.f   r0,0x200
-  9c:	00 02 00 00 
-  a0:	04 07 df 1f 	1fdf0704     ror.n.f    0,0x200
-  a4:	00 02 00 00 
+0x[0-9a-f]+ 2903 0080           	ror	r0,r1,r2
+0x[0-9a-f]+ 2b03 371a           	ror	gp,fp,sp
+0x[0-9a-f]+ 2e03 37dd           	ror	ilink,r30,blink
+0x[0-9a-f]+ 2943 0000           	ror	r0,r1,0
+0x[0-9a-f]+ 2e03 7080 0000 0000 	ror	r0,0,r2
+0x[0-9a-f]+ 2903 00be           	ror	0,r1,r2
+0x[0-9a-f]+ 2903 0f80 ffff ffff 	ror	r0,r1,0xffffffff
+0x[0-9a-f]+ 2e03 7080 ffff ffff 	ror	r0,0xffffffff,r2
+0x[0-9a-f]+ 2903 0f80 0000 00ff 	ror	r0,r1,0xff
+0x[0-9a-f]+ 2e03 7080 0000 00ff 	ror	r0,0xff,r2
+0x[0-9a-f]+ 2903 0f80 ffff ff00 	ror	r0,r1,0xffffff00
+0x[0-9a-f]+ 2e03 7080 ffff ff00 	ror	r0,0xffffff00,r2
+0x[0-9a-f]+ 2903 0f80 0000 0100 	ror	r0,r1,0x100
+0x[0-9a-f]+ 2e03 7080 ffff feff 	ror	r0,0xfffffeff,r2
+0x[0-9a-f]+ 2e03 7f80 0000 0100 	ror	r0,0x100,0x100
+0x[0-9a-f]+ 2903 0f80 0000 0000 	ror	r0,r1,0
+			68: ARC_32_ME	foo
+0x[0-9a-f]+ 28c3 0080           	ror	r0,r0,r2
+0x[0-9a-f]+ 2bc3 0140           	ror	r3,r3,r5
+0x[0-9a-f]+ 2ec3 0201           	ror.eq	r6,r6,r8
+0x[0-9a-f]+ 29c3 12c1           	ror.eq	r9,r9,r11
+0x[0-9a-f]+ 2cc3 1382           	ror.ne	r12,r12,r14
+0x[0-9a-f]+ 2fc3 1442           	ror.ne	r15,r15,r17
+0x[0-9a-f]+ 2ac3 2503           	ror.p	r18,r18,r20
+0x[0-9a-f]+ 2dc3 25c3           	ror.p	r21,r21,r23
+0x[0-9a-f]+ 28c3 3684           	ror.n	r24,r24,gp
+0x[0-9a-f]+ 2bc3 3744           	ror.n	fp,fp,ilink
+0x[0-9a-f]+ 2ec3 37c5           	ror.c	r30,r30,blink
+0x[0-9a-f]+ 2bc3 00c5           	ror.c	r3,r3,r3
+0x[0-9a-f]+ 2bc3 0205           	ror.c	r3,r3,r8
+0x[0-9a-f]+ 2bc3 0106           	ror.nc	r3,r3,r4
+0x[0-9a-f]+ 2cc3 0106           	ror.nc	r4,r4,r4
+0x[0-9a-f]+ 2cc3 01c6           	ror.nc	r4,r4,r7
+0x[0-9a-f]+ 2cc3 0147           	ror.v	r4,r4,r5
+0x[0-9a-f]+ 2dc3 0147           	ror.v	r5,r5,r5
+0x[0-9a-f]+ 2dc3 0148           	ror.nv	r5,r5,r5
+0x[0-9a-f]+ 2dc3 0148           	ror.nv	r5,r5,r5
+0x[0-9a-f]+ 2ec3 0009           	ror.gt	r6,r6,r0
+0x[0-9a-f]+ 28c3 002a           	ror.ge	r0,r0,0
+0x[0-9a-f]+ 29c3 006b           	ror.lt	r1,r1,0x1
+0x[0-9a-f]+ 2bc3 00ed           	ror.hi	r3,r3,0x3
+0x[0-9a-f]+ 2cc3 012e           	ror.ls	r4,r4,0x4
+0x[0-9a-f]+ 2dc3 016f           	ror.pnz	r5,r5,0x5
+0x[0-9a-f]+ 2903 8080           	ror.f	r0,r1,r2
+0x[0-9a-f]+ 2943 8040           	ror.f	r0,r1,0x1
+0x[0-9a-f]+ 2e03 f080 0000 0001 	ror.f	r0,0x1,r2
+0x[0-9a-f]+ 2903 80be           	ror.f	0,r1,r2
+0x[0-9a-f]+ 2903 8f80 0000 0200 	ror.f	r0,r1,0x200
+0x[0-9a-f]+ 2e03 f080 0000 0200 	ror.f	r0,0x200,r2
+0x[0-9a-f]+ 29c3 8081           	ror.f.eq	r1,r1,r2
+0x[0-9a-f]+ 28c3 8022           	ror.f.ne	r0,r0,0
+0x[0-9a-f]+ 2ac3 808b           	ror.f.lt	r2,r2,r2
+0x[0-9a-f]+ 2ec3 f0a9 0000 0001 	ror.f.gt	0,0x1,0x2
+0x[0-9a-f]+ 2ec3 ff8c 0000 0200 	ror.f.le	0,0x200,0x200
+0x[0-9a-f]+ 2ec3 f0aa 0000 0200 	ror.f.ge	0,0x200,0x2

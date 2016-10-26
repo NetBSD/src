@@ -20,9 +20,9 @@ Section Headers:
  +\[[ 0-9]+\] .tbss +NOBITS +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 00 +WAT +0 +0 +4
  +\[[ 0-9]+\] .dynamic +DYNAMIC +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 08 +WA +3 +0 +4
  +\[[ 0-9]+\] .got +PROGBITS +[0-9a-f]+ [0-9a-f]+ [0-9a-f]+ 00 +WA +0 +0 +4
+ +\[[ 0-9]+\] .xtensa.info +NOTE +0+ .*
  +\[[ 0-9]+\] .xt.lit +PROGBITS +0+ .*
  +\[[ 0-9]+\] .xt.prop +PROGBITS +0+ .*
- +\[[ 0-9]+\] .xtensa.info +NOTE +0+ .*
  +\[[ 0-9]+\] .shstrtab +.*
  +\[[ 0-9]+\] .symtab +.*
  +\[[ 0-9]+\] .strtab +.*
@@ -55,20 +55,20 @@ Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 18 entries:
 [0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_ARG +0+ +sg1 \+ 0
 [0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +0+4 +sg2 \+ 0
 [0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +0+4 +sg2 \+ 0
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_FN +0+20
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_ARG +0+20
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +0+24
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_FN +0+40
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_ARG +0+40
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +0+44
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_FN +0+60
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_ARG +0+60
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +0+64
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_FN +0+
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_ARG +0+
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +0+24
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +0+44
-[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +0+64
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_FN +20
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_ARG +20
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +24
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_FN +40
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_ARG +40
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +44
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_FN +60
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_ARG +60
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +64
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_FN +0
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLSDESC_ARG +0
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +24
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +44
+[0-9a-f]+ +[0-9a-f]+ R_XTENSA_TLS_TPOFF +64
 
 Symbol table '\.dynsym' contains [0-9]+ entries:
  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
@@ -79,12 +79,12 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
  +[0-9]+: 0+10 +0 +TLS +GLOBAL +DEFAULT +7 sg5
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +7 sg1
  +[0-9]+: 0+350 +0 +FUNC +GLOBAL +DEFAULT +5 _start
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +10 __bss_start
  +[0-9]+: 0+4 +0 +TLS +GLOBAL +DEFAULT +7 sg2
  +[0-9]+: 0+14 +0 +TLS +GLOBAL +DEFAULT +7 sg6
  +[0-9]+: 0+18 +0 +TLS +GLOBAL +DEFAULT +7 sg7
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _edata
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _end
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +10 _edata
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +10 _end
 
 Symbol table '\.symtab' contains [0-9]+ entries:
  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
@@ -102,6 +102,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +11 *
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +12 *
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +13 *
+ +[0-9]+: [0-9a-f]+ +0 +FILE +LOCAL +DEFAULT +ABS +tmpdir/tlspic1.o
  +[0-9]+: 0+20 +0 +TLS +LOCAL +DEFAULT +7 sl1
  +[0-9]+: 0+24 +0 +TLS +LOCAL +DEFAULT +7 sl2
  +[0-9]+: 0+28 +0 +TLS +LOCAL +DEFAULT +7 sl3
@@ -110,6 +111,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 0+34 +0 +TLS +LOCAL +DEFAULT +7 sl6
  +[0-9]+: 0+38 +0 +TLS +LOCAL +DEFAULT +7 sl7
  +[0-9]+: 0+3c +0 +TLS +LOCAL +DEFAULT +7 sl8
+ +[0-9]+: 0+ +0 +FILE +LOCAL +DEFAULT +ABS *
  +[0-9]+: 0+60 +0 +TLS +LOCAL +DEFAULT +8 sH1
  +[0-9]+: 0+ +0 +TLS +LOCAL +DEFAULT +7 _TLS_MODULE_BASE_
  +[0-9]+: 0+144c +0 +OBJECT +LOCAL +DEFAULT +ABS _DYNAMIC
@@ -134,9 +136,9 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 0+10 +0 +TLS +GLOBAL +DEFAULT +7 sg5
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +7 sg1
  +[0-9]+: 0+350 +0 +FUNC +GLOBAL +DEFAULT +5 _start
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +10 __bss_start
  +[0-9]+: 0+4 +0 +TLS +GLOBAL +DEFAULT +7 sg2
  +[0-9]+: 0+14 +0 +TLS +GLOBAL +DEFAULT +7 sg6
  +[0-9]+: 0+18 +0 +TLS +GLOBAL +DEFAULT +7 sg7
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _edata
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _end
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +10 _edata
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +10 _end

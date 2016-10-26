@@ -1,6 +1,5 @@
 /* xSYM symbol-file support for BFD.
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-   2009, 2010, 2011, 2012  Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -34,7 +33,9 @@
 #define bfd_sym_bfd_is_target_special_symbol       ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #define bfd_sym_get_lineno                          _bfd_nosymbols_get_lineno
 #define bfd_sym_find_nearest_line                   _bfd_nosymbols_find_nearest_line
+#define bfd_sym_find_line                           _bfd_nosymbols_find_line
 #define bfd_sym_find_inliner_info                   _bfd_nosymbols_find_inliner_info
+#define bfd_sym_get_symbol_version_string	    _bfd_nosymbols_get_symbol_version_string
 #define bfd_sym_bfd_make_debug_symbol               _bfd_nosymbols_bfd_make_debug_symbol
 #define bfd_sym_read_minisymbols                    _bfd_generic_read_minisymbols
 #define bfd_sym_minisymbol_to_symbol                _bfd_generic_minisymbol_to_symbol
@@ -51,7 +52,6 @@
 #define bfd_sym_section_already_linked              _bfd_generic_section_already_linked
 #define bfd_sym_bfd_define_common_symbol            bfd_generic_define_common_symbol
 #define bfd_sym_bfd_link_hash_table_create          _bfd_generic_link_hash_table_create
-#define bfd_sym_bfd_link_hash_table_free            _bfd_generic_link_hash_table_free
 #define bfd_sym_bfd_link_add_symbols                _bfd_generic_link_add_symbols
 #define bfd_sym_bfd_link_just_syms                  _bfd_generic_link_just_syms
 #define bfd_sym_bfd_copy_link_hash_symbol_type \
@@ -2249,32 +2249,26 @@ bfd_sym_scan (bfd *abfd, bfd_sym_version version, bfd_sym_data_struct *mdata)
 const bfd_target *
 bfd_sym_object_p (bfd *abfd)
 {
-  struct bfd_preserve preserve;
   bfd_sym_version version = -1;
+  bfd_sym_data_struct *mdata;
 
-  preserve.marker = NULL;
   bfd_seek (abfd, 0, SEEK_SET);
   if (bfd_sym_read_version (abfd, &version) != 0)
     goto wrong;
 
-  preserve.marker = bfd_alloc (abfd, sizeof (bfd_sym_data_struct));
-  if (preserve.marker == NULL
-      || ! bfd_preserve_save (abfd, &preserve))
+  mdata = (bfd_sym_data_struct *) bfd_alloc (abfd, sizeof (*mdata));
+  if (mdata == NULL)
     goto fail;
 
-  if (bfd_sym_scan (abfd, version,
-		    (bfd_sym_data_struct *) preserve.marker) != 0)
+  if (bfd_sym_scan (abfd, version, mdata) != 0)
     goto wrong;
 
-  bfd_preserve_finish (abfd, &preserve);
   return abfd->xvec;
 
  wrong:
   bfd_set_error (bfd_error_wrong_format);
 
  fail:
-  if (preserve.marker != NULL)
-    bfd_preserve_restore (abfd, &preserve);
   return NULL;
 }
 

@@ -12,20 +12,20 @@ GAS LISTING .*
    4              	# will never be executed.  GAS should detect this.
    5              		
    6 \?\?\?\? ........ 		trap r21 -> add r2, r0, r0 ; right instruction will never be executed.
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
    6      ........ 
    7 \?\?\?\? 08002000 		dbt     -> add r2, r0, r0               ; ditto
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
    7      00F00000 
    7      00B00000 
    7      00F00000 
    8 \?\?\?\? 08002000 		rtd     -> add r2, r0, r0               ; ditto
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
    8      00F00000 
    8      00A00000 
    8      00F00000 
    9 \?\?\?\? 08002000 		reit    -> add r2, r0, r0               ; ditto
-\*\*\*\*  Error:Unable to mix instructions as specified
+.*  Error: Unable to mix instructions as specified
    9      00F00000 
    9      00800000 
    9      00F00000 

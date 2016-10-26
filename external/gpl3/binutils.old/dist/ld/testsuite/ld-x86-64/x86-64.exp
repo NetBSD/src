@@ -1,6 +1,5 @@
 # Expect script for ld-x86_64 tests
-#   Copyright (C) 2002, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-#   Free Software Foundation
+#   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -36,8 +35,8 @@ if [istarget "*-*-nacl*"] {
 }
 
 # List contains test-items with 3 items followed by 2 lists:
-# 0:name 1:ld options 2:assembler options
-# 3:filenames of assembler files 4: action and options. 5: name of output file
+# 0:name 1:ld early options 2:ld late options 3:assembler options
+# 4:filenames of assembler files 5: action and options. 6: name of output file
 
 # Actions:
 # objdump: Apply objdump options on result.  Compare with regex (last arg).
@@ -46,87 +45,117 @@ if [istarget "*-*-nacl*"] {
 
 set x86_64tests {
     {"Helper shared library (basic PLT test)"
-      "-shared -melf_x86_64" "--64" {pltlib.s} {} "libpltlib.so"}
+      "-shared -melf_x86_64" "" "--64" {pltlib.s} {} "libpltlib.so"}
     {"basic PLT generation"
-     "-melf_x86_64 tmpdir/libpltlib.so" "--64" {plt.s}
+     "-melf_x86_64 tmpdir/libpltlib.so" "" "--64" {plt.s}
      {{objdump -drj.plt plt.pd}} "plt"}
     {"TLS -fpic -shared transitions"
-     "-shared -melf_x86_64 --no-ld-generated-unwind-info"
+     "-shared -melf_x86_64 --no-ld-generated-unwind-info" ""
      "--64" {tlspic1.s tlspic2.s}
-     {{readelf -WSsrl tlspic.rd} {objdump -drj.text tlspic.dd}
+     {{readelf -WSsrl tlspic.rd} {objdump -drj.text\ -Mintel64 tlspic.dd}
       {objdump -sj.got tlspic.sd} {objdump -sj.tdata tlspic.td}}
       "libtlspic.so"}
     {"TLS descriptor -fpic -shared transitions"
-     "-shared -melf_x86_64 --no-ld-generated-unwind-info"
+     "-shared -melf_x86_64 --no-ld-generated-unwind-info" ""
      "--64" {tlsdesc.s tlspic2.s}
      {{readelf -WSsrld tlsdesc.rd} {objdump -drj.text tlsdesc.dd}
       {objdump "-s -j.got -j.got.plt" tlsdesc.sd} {objdump -sj.tdata tlsdesc.td}
       {objdump -drj.plt tlsdesc.pd}} "libtlsdesc.so"}
-    {"Helper shared library" "-shared -melf_x86_64"
+    {"Helper shared library" "-shared -melf_x86_64" ""
      "--64" {tlslib.s} {} "libtlslib.so"}
     {"TLS -fpic and -fno-pic exec transitions"
-     "-melf_x86_64 tmpdir/libtlslib.so --no-ld-generated-unwind-info"
+     "-melf_x86_64 tmpdir/libtlslib.so --no-ld-generated-unwind-info" ""
      "--64" {tlsbinpic.s tlsbin.s}
      {{readelf -WSsrl tlsbin.rd} {objdump -drj.text tlsbin.dd}
       {objdump -sj.got tlsbin.sd} {objdump -sj.tdata tlsbin.td}}
       "tlsbin"}
     {"TLS descriptor -fpic and -fno-pic exec transitions"
-     "-melf_x86_64 tmpdir/libtlslib.so --no-ld-generated-unwind-info"
+     "-melf_x86_64 tmpdir/libtlslib.so --no-ld-generated-unwind-info" ""
      "--64" {tlsbindesc.s tlsbin.s}
      {{readelf -WSsrl tlsbindesc.rd} {objdump -drj.text tlsbindesc.dd}
       {objdump -sj.got tlsbindesc.sd} {objdump -sj.tdata tlsbindesc.td}}
       "tlsbindesc"}
     {"TLS with global dynamic and descriptors"
-     "-shared -melf_x86_64 --no-ld-generated-unwind-info"
+     "-shared -melf_x86_64 --no-ld-generated-unwind-info" ""
      "--64" {tlsgdesc.s}
-     {{readelf -WSsrl tlsgdesc.rd} {objdump -drj.text tlsgdesc.dd}}
+     {{readelf -WSsrl tlsgdesc.rd} {objdump -drj.text\ -Mintel64 tlsgdesc.dd}}
       "libtlsgdesc.so"}
-    {"TLS in debug sections" "-melf_x86_64"
+    {"TLS in debug sections" "-melf_x86_64" ""
      "--64" {tlsg.s}
      {{objdump -sj.debug_foobar tlsg.sd}} "tlsg"}
-    {"TLS GD->LE transition" "-melf_x86_64"
+    {"TLS GD->LE transition" "-melf_x86_64" ""
      "--64" {tlsgd1.s}
      {{objdump -dwr tlsgd1.dd}} "tlsgd1"}
-    {"TLS LD->LE transition" "-melf_x86_64"
+    {"TLS LD->LE transition" "-melf_x86_64" ""
      "--64" {tlsld1.s}
      {{objdump -dwr tlsld1.dd}} "tlsld1"}
-    {"TLS IE->LE transition" "-melf_x86_64"
+    {"TLS IE->LE transition" "-melf_x86_64" ""
      "--64" {tlsie1.s}
      {{objdump -dwr tlsie1.dd}} "tlsie1"}
-    {"Helper 64bit object 1" "-r -melf_x86_64"
+    {"Helper 64bit object 1" "-r -melf_x86_64" ""
      "--64" {mixed1a.s} {} "libmixe1a.o"}
-    {"Helper 32bit object 1" "-r -melf_i386"
+    {"Helper 32bit object 1" "-r -melf_i386" ""
      "--32" {mixed1b.s} {} "libmixe1b.o"}
-    {"Helper 64bit object 2" "-r -melf_x86_64"
+    {"Helper 64bit object 2" "-r -melf_x86_64" ""
      "--64" {mixed2a.s} {} "libmixe2a.o"}
-    {"Helper 32bit object 2" "-r -melf_i386"
+    {"Helper 32bit object 2" "-r -melf_i386" ""
      "--32" {mixed2b.s} {} "libmixe2b.o"}
-    {"Split by file with 'l' flag on section." "-split-by-file -r -melf_x86_64"
+    {"Split by file with 'l' flag on section."
+     "-split-by-file -r -melf_x86_64" ""
      "--64" {split-by-file1.s split-by-file2.s}
      {{readelf -SW split-by-file.rd}} "split-by-file.o"}
-    {"TLS X32 IE->LE transition" "-melf32_x86_64"
+    {"TLS X32 IE->LE transition" "-melf32_x86_64" ""
      "--x32" {tlsie4.s}
      {{objdump -dwr tlsie4.dd}} "tlsie4"}
-    {"TLS X32 GD->LE transition" "-melf32_x86_64"
+    {"TLS X32 GD->LE transition" "-melf32_x86_64" ""
      "--x32" {tlsgd4.s}
      {{objdump -dwr tlsgd4.dd}} "tlsgd4"}
-    {"Helper TLS GD->IE transition DSO" "-shared -melf_x86_64"
+    {"Helper TLS GD->IE transition DSO" "-shared -melf_x86_64" ""
      "--64" {tlsgd5b.s} {} "libtlsgd5.so"}
-    {"TLS GD->IE transition" "-melf_x86_64 tmpdir/libtlsgd5.so"
+    {"TLS GD->IE transition" "-melf_x86_64 tmpdir/libtlsgd5.so" ""
      "--64" {tlsgd5a.s}
      {{objdump -dwr tlsgd5.dd}} "tlsgd5"}
-    {"Helper TLS X32 GD->IE transition DSO" "-shared -melf32_x86_64"
+    {"Helper TLS X32 GD->IE transition DSO" "-shared -melf32_x86_64" ""
      "--x32" {tlsgd6b.s} {} "libtlsgd6.so"}
-    {"TLS X32 GD->IE transition" "-melf32_x86_64 tmpdir/libtlsgd6.so"
+    {"TLS X32 GD->IE transition" "-melf32_x86_64 tmpdir/libtlsgd6.so" ""
      "--x32" {tlsgd6a.s}
      {{objdump -dwr tlsgd6.dd}} "tlsgd6"}
-    {"TLS X32 LD->LE transition" "-melf32_x86_64"
+    {"TLS X32 LD->LE transition" "-melf32_x86_64" ""
      "--x32" {tlsld2.s}
      {{objdump -dwr tlsld2.dd}} "tlsld2"}
+    {"TLS -mcmodel=large GD->LE transition" "-melf_x86_64" ""
+     "--64" {tlsgd7.s}
+     {{objdump -dwr tlsgd7.dd}} "tlsgd7"}
+    {"TLS -mcmodel=large LD->LE transition" "-melf_x86_64" ""
+     "--64" {tlsld3.s}
+     {{objdump -dwr tlsld3.dd}} "tlsld3"}
+    {"TLS -mcmodel=large GD->IE transition" "-melf_x86_64 tmpdir/libtlsgd5.so" ""
+     "--64" {tlsgd8.s}
+     {{objdump -dwrj.text tlsgd8.dd}} "tlsgd8"}
 
-     {"build 32-bit object with 33 locals" "-melf_x86_64 -e 0" "--32" {32bit.s} {{ ld incompatible.l }} "dummy" }
-     {"build 64-bit object" "-melf_x86_64 -e 0 --defsym foo=1" "--64" {64bit.s} {} "dummy" }
-     {"link mixed objects"  "-melf_x86_64 -e 0 tmpdir/32bit.o tmpdir/64bit.o" "" {} { { ld incompatible.l } } "mixed"}
+     {"build 32-bit object with 33 locals" "-melf_x86_64 -e 0" "" "--32" {32bit.s} {{ ld incompatible.l }} "dummy" }
+     {"build 64-bit object" "-melf_x86_64 -e 0 --defsym foo=1" "" "--64" {64bit.s} {} "dummy" }
+     {"link mixed objects"  "-melf_x86_64 -e 0 tmpdir/32bit.o tmpdir/64bit.o" "" "" {} { { ld incompatible.l } } "mixed"}
+    {"PR ld/17313 (1)" "-melf_x86_64" ""
+     "--64" {dummy.s} {} ""}
+    {"PR ld/17313 (2)" "-melf_x86_64 -shared --just-symbols=tmpdir/dummy.o" ""
+     "--64" {lea1.s} {} "libpr17313.so"}
+    {"PR ld/17306 (1)" "-melf_x86_64" ""
+     "--64" {pr17306b.s} {} ""}
+    {"PR ld/17306 (2)" "-melf_x86_64 -shared -Bsymbolic --just-symbols=tmpdir/pr17306b.o" ""
+     "--64" {pr17306a.s} {} "libpr17306.so"}
+    {"PR ld/17709 (1)" "-melf_x86_64 -shared" ""
+     "--64" {pr17709a.s} {} "libpr17709.so"}
+    {"PR ld/17709 (2)" "-melf_x86_64 tmpdir/libpr17709.so" ""
+     "--64" {pr17709b.s} {{readelf -rW pr17709.rd}} "pr17709"}
+    {"Build pr19827a.o" "" ""
+     "--64" { pr19827a.S }}
+    {"Build pr19827b.so" "-melf_x86_64 -shared" ""
+     "--64" { pr19827b.S } {} "pr19827b.so"}
+    {"Build pr19827" "-melf_x86_64 -pie tmpdir/pr19827a.o tmpdir/pr19827b.so" ""
+     "--64" { dummy.s } {{readelf {-rW} pr19827.rd}} "pr19827"}
+    {"Build pr19827.so" "-melf_x86_64 -shared -Bsymbolic" ""
+     "--64" { pr19827a.S }  {{readelf {-rW} pr19827.rd}} "pr19827.so"}
 }
 
 # So as to avoid rewriting every last test case here in a nacl variant,
@@ -162,7 +191,7 @@ global ld
 set test_name "Mixed x86_64 and i386 input test 1"
 set test mixed1
 if { ![ld_simple_link $ld tmpdir/$test "-m$emul tmpdir/${test}a.o tmpdir/${test}b.o"] } {
-    if [string match "*i386 architecture of input file `tmpdir/${test}b.o' is incompatible with i386:x86-64 output*" $link_output] {
+    if [string match "*i386* architecture of input file `tmpdir/${test}b.o' is incompatible with i386:x86-64* output*" $link_output] {
 	pass "$test_name"
     } {
 	fail "$test_name"
@@ -172,7 +201,7 @@ if { ![ld_simple_link $ld tmpdir/$test "-m$emul tmpdir/${test}a.o tmpdir/${test}
 set test_name "Mixed x86_64 and i386 input test 2"
 set test mixed2
 if { ![ld_simple_link $ld tmpdir/$test "-m$emul tmpdir/${test}a.o tmpdir/${test}b.o"] } {
-    if [string match "*i386 architecture of input file `tmpdir/${test}b.o' is incompatible with i386:x86-64 output*" $link_output] {
+    if [string match "*i386* architecture of input file `tmpdir/${test}b.o' is incompatible with i386:x86-64* output*" $link_output] {
 	pass "$test_name"
     } {
 	fail "$test_name"
@@ -190,6 +219,8 @@ run_dump_test "tlsie3"
 run_dump_test "hidden1"
 run_dump_test "hidden2"
 run_dump_test "hidden3"
+run_dump_test "hidden4"
+run_dump_test "hidden5"
 run_dump_test "protected1"
 run_dump_test "protected2"
 run_dump_test "protected2-l1om"
@@ -197,6 +228,10 @@ run_dump_test "protected3"
 run_dump_test "protected3-l1om"
 run_dump_test "protected4"
 run_dump_test "protected5"
+run_dump_test "protected6a"
+run_dump_test "protected6b"
+run_dump_test "protected7a"
+run_dump_test "protected7b"
 run_dump_test "tlsle1"
 run_dump_test "tlspie1"
 run_dump_test "unique1"
@@ -210,6 +245,10 @@ run_dump_test "pr12570a"
 run_dump_test "pr12570b"
 run_dump_test "pr14215"
 run_dump_test "pr14207"
+run_dump_test "gotplt1"
+run_dump_test "pie1"
+run_dump_test "pr20093-1"
+run_dump_test "pr20093-2"
 
 if { ![istarget "x86_64-*-linux*"] && ![istarget "x86_64-*-nacl*"]} {
     return
@@ -276,6 +315,59 @@ run_dump_test "pr13082-5a"
 run_dump_test "pr13082-5b"
 run_dump_test "pr13082-6a"
 run_dump_test "pr13082-6b"
+run_dump_test "lea1a"
+run_dump_test "lea1b"
+run_dump_test "lea1c"
+run_dump_test "lea1d"
+run_dump_test "lea1e"
+run_dump_test "lea1f"
+run_dump_test "lea1g"
+run_dump_test "lea1h"
+run_dump_test "lea1i"
+run_dump_test "lea1j"
+run_dump_test "lea1k"
+run_dump_test "lea1l"
+run_dump_test "mov1a"
+run_dump_test "mov1b"
+run_dump_test "mov1c"
+run_dump_test "mov1d"
+run_dump_test "mov2a"
+run_dump_test "mov2b"
+run_dump_test "mov2c"
+run_dump_test "mov2d"
+run_dump_test "load1a"
+run_dump_test "load1b"
+run_dump_test "load1c"
+run_dump_test "load1d"
+run_dump_test "load1a-nacl"
+run_dump_test "load1b-nacl"
+run_dump_test "load1c-nacl"
+run_dump_test "load1d-nacl"
+run_dump_test "call1a"
+run_dump_test "call1b"
+run_dump_test "call1c"
+run_dump_test "call1d"
+run_dump_test "call1e"
+run_dump_test "call1f"
+run_dump_test "call1g"
+run_dump_test "call1h"
+run_dump_test "call1i"
+run_dump_test "pr17935-1"
+run_dump_test "pr17935-2"
+run_dump_test "pr18160"
+run_dump_test "pr18176"
+run_dump_test "pr18801"
+run_dump_test "pr18815"
+run_dump_test "pr19013"
+run_dump_test "pr19013-x32"
+run_dump_test "pr19013-nacl"
+run_dump_test "pr19162"
+run_dump_test "pr19175"
+run_dump_test "pr18591"
+run_dump_test "pr19615"
+
+# Add $PLT_CFLAGS if PLT is expected.
+global PLT_CFLAGS
 
 # Must be native with the C compiler
 if { [isnative] && [which $CC] != 0 } {
@@ -295,7 +387,353 @@ if { [isnative] && [which $CC] != 0 } {
 
     run_ld_link_tests {
 	{"X32 DSO from x86-64 object"
-	 "-shared -melf32_x86_64 tmpdir/simple-x32.o" "--x32"
+	 "-shared -melf32_x86_64 tmpdir/simple-x32.o" "" "--x32"
 	{dummy.s} {{readelf {-s --wide} x86-64-x32.rd}} "x86-64-x32"}
     }
+
+    run_cc_link_tests [list \
+	[list \
+	    "Build plt-lib.so" \
+	    "-shared" \
+	    "-fPIC" \
+	    { plt-lib.c } \
+	    {} \
+	    "libplt-lib.so" \
+	] \
+	[list \
+	    "Build libplt-main1.a" \
+	    "" \
+	    "-fPIC -Wa,-mrelax-relocations=yes" \
+	    { plt-main1.c } \
+	    {{readelf {-Wr} plt-main1.rd}} \
+	    "libplt-main1.a" \
+	] \
+	[list \
+	    "Build libplt-main2.a" \
+	    "" \
+	    "-fPIC -Wa,-mrelax-relocations=yes" \
+	    { plt-main2.c } \
+	    {{readelf {-Wr} plt-main2.rd}} \
+	    "libplt-main2.a" \
+	] \
+	[list \
+	    "Build libplt-main3.a" \
+	    "" \
+	    "-fPIC -Wa,-mrelax-relocations=yes $PLT_CFLAGS" \
+	    { plt-main3.c } \
+	    {{readelf {-Wr} plt-main3.rd}} \
+	    "libplt-main3.a" \
+	] \
+	[list \
+	    "Build libplt-main4.a" \
+	    "" \
+	    "-fPIC -Wa,-mrelax-relocations=yes $PLT_CFLAGS" \
+	    { plt-main4.c } \
+	    {{readelf {-Wr} plt-main4.rd}} \
+	    "libplt-main4.a" \
+	] \
+	[list \
+	    "Build plt-main" \
+	    "tmpdir/plt-main1.o tmpdir/plt-main2.o tmpdir/plt-main3.o \
+	     tmpdir/plt-main4.o tmpdir/libplt-lib.so" \
+	    "" \
+	    { plt-main5.c } \
+	    {{readelf {-Wr} plt-main.rd}} \
+	    "plt-main" \
+	] \
+	[list \
+	    "Build plt-main with PIE" \
+	    "tmpdir/plt-main1.o tmpdir/plt-main2.o tmpdir/plt-main3.o \
+	     tmpdir/plt-main4.o tmpdir/libplt-lib.so -pie" \
+	    "-fPIC" \
+	    { plt-main5.c } \
+	    {{readelf {-Wr} plt-main.rd}} \
+	    "plt-main" \
+	] \
+	[list \
+	    "Build copyreloc-lib.so" \
+	    "-shared" \
+	    "-fPIC" \
+	    { copyreloc-lib.c } \
+	    {} \
+	    "copyreloc-lib.so" \
+	] \
+	[list \
+	    "Build libcopyreloc-main.a" \
+	    "" \
+	    "" \
+	    { copyreloc-main.S } \
+	    {} \
+	    "libcopyreloc-main.a" \
+	] \
+	[list \
+	    "Build copyreloc-main with PIE without -fPIE (1)" \
+	    "tmpdir/copyreloc-main.o tmpdir/copyreloc-lib.so -pie" \
+	    "" \
+	    { dummy.s } \
+	    {{readelf {-Wr} copyreloc-main1.rd}} \
+	    "copyreloc-main" \
+	] \
+	[list \
+	    "Build copyreloc-main with PIE without -fPIE (2)" \
+	    "tmpdir/copyreloc-main.o tmpdir/copyreloc-lib.so -pie" \
+	    "" \
+	    { dummy.s } \
+	    {{readelf {-Wr} copyreloc-main2.rd}} \
+	    "copyreloc-main" \
+	] \
+	[list \
+	    "Build pr17689.so" \
+	    "-shared" \
+	    "-fPIC" \
+	    { pr17689a.c } \
+	    {} \
+	    "pr17689.so" \
+	] \
+	[list \
+	    "Build pr17689now.so with -z now" \
+	    "-shared -Wl,-z,now" \
+	    "-fPIC" \
+	    { pr17689a.c } \
+	    {{readelf {-Wr} pr17689now.rd}} \
+	    "pr17689now.so" \
+	] \
+	[list \
+	    "Build pr17689b.o" \
+	    "" \
+	    "" \
+	    { pr17689b.S } \
+	    {} \
+	] \
+	[list \
+	    "Build pr17689 with PIE without -fPIE" \
+	    "tmpdir/pr17689b.o tmpdir/pr17689.so -pie" \
+	    "" \
+	    { dummy.s } \
+	    {{readelf {-Wr} pr17689.rd}} \
+	    "pr17689" \
+	] \
+	[list \
+	    "Build pr17689 with PIE -z now without -fPIE" \
+	    "tmpdir/pr17689b.o tmpdir/pr17689.so -pie -Wl,-z,now" \
+	    "" \
+	    { dummy.s } \
+	    {{readelf {-Wr} pr17689now.rd}} \
+	    "pr17689now" \
+	] \
+	[list \
+	    "Build pr17827 with PIE without -fPIE" \
+	    "-Wl,--as-needed tmpdir/pr17689b.o tmpdir/pr17689.so -pie" \
+	    "" \
+	    { dummy.s } \
+	    {{readelf {-Wr} pr17827.rd}} \
+	    "pr17827" \
+	] \
+	[list \
+	    "Build pr18900.so" \
+	    "-shared" \
+	    "-fPIC" \
+	    { pr18900a.c } \
+	    "" \
+	    "pr18900.so" \
+	] \
+	[list \
+	    "Build pr18900.o" \
+	    "-r -nostdlib" \
+	    "" \
+	    { pr18900b.c pr18900c.c } \
+	    "" \
+	    "pr18900.o" \
+	] \
+	[list \
+	    "Build pr18900a" \
+	    "tmpdir/pr18900.o tmpdir/pr18900.so" \
+	    "" \
+	    { dummy.s } \
+	    {{readelf {-Wrd} pr18900a.rd}} \
+	    "pr18900a" \
+	] \
+	[list \
+	    "Build pr18900b" \
+	    "-Wl,--as-needed tmpdir/pr18900.o tmpdir/pr18900.so" \
+	    "" \
+	    { dummy.s } \
+	    {{readelf {-Wrd} pr18900b.rd}} \
+	    "pr18900b" \
+	] \
+	[list \
+	    "Build pr19031.so" \
+	    "-shared" \
+	    "-fPIC" \
+	    { pr19031a.c } \
+	    "" \
+	    "pr19031.so" \
+	] \
+	[list \
+	    "Build gotpcrel1d.so" \
+	    "-shared" \
+	    "" \
+	    { gotpcrel1d.S } \
+	    "" \
+	    "gotpcrel1d.so" \
+	] \
+	[list \
+	    "Build libgotpcrel1.a" \
+	    "" \
+	    "" \
+	    { gotpcrel1a.S gotpcrel1b.c gotpcrel1c.c } \
+	    "" \
+	    "libgotpcrel1.a" \
+	] \
+	[list \
+	    "Build gotpcrel1" \
+	    "-Wl,--as-needed tmpdir/gotpcrel1a.o tmpdir/gotpcrel1b.o tmpdir/gotpcrel1c.o tmpdir/gotpcrel1d.so" \
+	    "-Wa,-mrelax-relocations=yes" \
+	    { dummy.s } \
+	    {{objdump {-dw} gotpcrel1.dd}} \
+	    "gotpcrel1" \
+	] \
+	[list \
+	    "Build pr19319.so" \
+	    "-shared" \
+	    "" \
+	    { pr19319a.S } \
+	    "" \
+	    "pr19319.so" \
+	] \
+	[list \
+	    "Build pr19319" \
+	    "-pie -nostdlib -nostartfiles tmpdir/pr19319.so" \
+	    "" \
+	    { pr19319b.S } \
+	    {{objdump {-dw} pr19319.dd}} \
+	    "pr19319" \
+	] \
+    ]
+
+    run_ld_link_exec_tests [] [list \
+	[list \
+	    "Run plt-main" \
+	    "tmpdir/plt-main1.o tmpdir/plt-main2.o tmpdir/plt-main3.o \
+	     tmpdir/plt-main4.o tmpdir/libplt-lib.so" \
+	    "" \
+	    { plt-main5.c } \
+	    "plt-main" \
+	    "plt-main.out" \
+	] \
+	[list \
+	    "Run plt-main with PIE" \
+	    "tmpdir/plt-main1.o tmpdir/plt-main2.o tmpdir/plt-main3.o \
+	     tmpdir/plt-main4.o tmpdir/libplt-lib.so -pie" \
+	    "" \
+	    { plt-main5.c } \
+	    "plt-main-pie" \
+	    "plt-main.out" \
+	    "-fPIC" \
+	] \
+	[list \
+	    "Run copyreloc-main with PIE without -fPIE" \
+	    "--as-needed tmpdir/copyreloc-main.o tmpdir/copyreloc-lib.so -pie" \
+	    "" \
+	    { dummy.s } \
+	    "copyreloc-main" \
+	    "copyreloc-main.out" \
+	] \
+	[list \
+	    "Run pr17689 with PIE without -fPIE" \
+	    "tmpdir/pr17689b.o tmpdir/pr17689.so -pie" \
+	    "" \
+	    { dummy.s } \
+	    "pr17689" \
+	    "pr17689.out" \
+	] \
+	[list \
+	    "Run pr17689 with PIE -z now without -fPIE" \
+	    "--as-needed tmpdir/pr17689b.o tmpdir/pr17689.so -pie -z now" \
+	    "" \
+	    { dummy.s } \
+	    "pr17689now" \
+	    "pr17689.out" \
+	] \
+	[list \
+	    "Run pr18900" \
+	    "tmpdir/pr18900.o tmpdir/pr18900.so" \
+	    "" \
+	    { dummy.s } \
+	    "pr18900" \
+	    "pr18900.out" \
+	] \
+	[list \
+	    "Run pr19031" \
+	    "tmpdir/pr19031.so" \
+	    "" \
+	    { pr19031b.S pr19031c.c } \
+	    "pr19031" \
+	    "pr19031.out" \
+	] \
+	[list \
+	    "Run gotpcrel1" \
+	    "tmpdir/gotpcrel1d.so" \
+	    "" \
+	    { gotpcrel1a.S gotpcrel1b.c gotpcrel1c.c } \
+	    "gotpcrel1" \
+	    "gotpcrel1.out" \
+	] \
+    ]
+
+    if { [istarget "x86_64-*-linux*"] \
+	 && ![istarget "x86_64-*-linux*-gnux32"]} {
+
+	run_cc_link_tests [list \
+	    [list \
+		"Build plt-main with -z bndplt" \
+		"tmpdir/plt-main1.o tmpdir/plt-main2.o tmpdir/plt-main3.o \
+		 tmpdir/plt-main4.o tmpdir/libplt-lib.so -z bndplt" \
+		"" \
+		{ plt-main5.c } \
+		{{objdump {-drw} plt-main-bnd.dd}} \
+		"plt-main-bnd" \
+	    ] \
+	    [list \
+		"Build plt-main with PIE and -z bndplt" \
+		"tmpdir/plt-main1.o tmpdir/plt-main2.o tmpdir/plt-main3.o \
+		 tmpdir/plt-main4.o tmpdir/libplt-lib.so -z bndplt -pie" \
+		"-fPIC" \
+		{ plt-main5.c } \
+		{{objdump {-drw} plt-main-bnd.dd}} \
+		"plt-main-pie-bnd" \
+	    ] \
+	]
+
+	run_ld_link_exec_tests [] [list \
+	    [list \
+		"Run plt-main with -z bndplt" \
+		"tmpdir/plt-main1.o tmpdir/plt-main2.o tmpdir/plt-main3.o \
+		 tmpdir/plt-main4.o tmpdir/libplt-lib.so -z bndplt" \
+		"" \
+		{ plt-main5.c } \
+		"plt-main-bnd" \
+		"plt-main.out" \
+	    ] \
+	    [list \
+		"Run plt-main with PIE and -z bndplt" \
+		"tmpdir/plt-main1.o tmpdir/plt-main2.o tmpdir/plt-main3.o \
+		 tmpdir/plt-main4.o tmpdir/libplt-lib.so -z bndplt -pie" \
+		"" \
+		{ plt-main5.c } \
+		"plt-main-pie-bnd" \
+		"plt-main.out" \
+		"-fPIC" \
+	    ] \
+	]
+    }
 }
+
+if { ![istarget "x86_64-*-linux*"]} {
+    return
+}
+
+# Linux only tests
+run_dump_test "pr17618"
+run_dump_test "pltgot-1"
+run_dump_test "pltgot-2"

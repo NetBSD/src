@@ -1,4 +1,4 @@
-. ${srcdir}/emulparams/bfin.sh
+. ${srcdir}/emulparams/elf32bfin.sh
 unset STACK_ADDR
 OUTPUT_FORMAT="elf32-bfinfdpic"
 MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"

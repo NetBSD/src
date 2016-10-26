@@ -1,6 +1,6 @@
 // icf.cc -- Identical Code Folding.
 //
-// Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright (C) 2009-2015 Free Software Foundation, Inc.
 // Written by Sriraman Tallam <tmsriram@google.com>.
 
 // This file is part of gold.
@@ -213,6 +213,45 @@ preprocess_for_unique_sections(const std::vector<Section_id>& id_section,
     }
 }
 
+// For SHF_MERGE sections that use REL relocations, the addend is stored in
+// the text section at the relocation offset.  Read  the addend value given
+// the pointer to the addend in the text section and the addend size.
+// Update the addend value if a valid addend is found.
+// Parameters:
+// RELOC_ADDEND_PTR   : Pointer to the addend in the text section.
+// ADDEND_SIZE        : The size of the addend.
+// RELOC_ADDEND_VALUE : Pointer to the addend that is updated.
+
+inline void
+get_rel_addend(const unsigned char* reloc_addend_ptr,
+	       const unsigned int addend_size,
+	       uint64_t* reloc_addend_value)
+{
+  switch (addend_size)
+    {
+    case 0:
+      break;
+    case 1:
+      *reloc_addend_value =
+        read_from_pointer<8>(reloc_addend_ptr);
+      break;
+    case 2:
+      *reloc_addend_value =
+          read_from_pointer<16>(reloc_addend_ptr);
+      break;
+    case 4:
+      *reloc_addend_value =
+        read_from_pointer<32>(reloc_addend_ptr);
+      break;
+    case 8:
+      *reloc_addend_value =
+        read_from_pointer<64>(reloc_addend_ptr);
+      break;
+    default:
+      gold_unreachable();
+    }
+}
+
 // This returns the buffer containing the section's contents, both
 // text and relocs.  Relocs are differentiated as those pointing to
 // sections that could be folded and those that cannot.  Only relocs
@@ -269,25 +308,44 @@ get_section_contents(bool first_iteration,
 
   if (it_reloc_info_list != reloc_info_list.end())
     {
-      Icf::Sections_reachable_info v =
+      Icf::Sections_reachable_info &v =
         (it_reloc_info_list->second).section_info;
       // Stores the information of the symbol pointed to by the reloc.
-      Icf::Symbol_info s = (it_reloc_info_list->second).symbol_info;
+      const Icf::Symbol_info &s = (it_reloc_info_list->second).symbol_info;
       // Stores the addend and the symbol value.
-      Icf::Addend_info a = (it_reloc_info_list->second).addend_info;
+      Icf::Addend_info &a = (it_reloc_info_list->second).addend_info;
       // Stores the offset of the reloc.
-      Icf::Offset_info o = (it_reloc_info_list->second).offset_info;
-      Icf::Reloc_addend_size_info reloc_addend_size_info =
+      const Icf::Offset_info &o = (it_reloc_info_list->second).offset_info;
+      const Icf::Reloc_addend_size_info &reloc_addend_size_info =
         (it_reloc_info_list->second).reloc_addend_size_info;
       Icf::Sections_reachable_info::iterator it_v = v.begin();
-      Icf::Symbol_info::iterator it_s = s.begin();
+      Icf::Symbol_info::const_iterator it_s = s.begin();
       Icf::Addend_info::iterator it_a = a.begin();
-      Icf::Offset_info::iterator it_o = o.begin();
-      Icf::Reloc_addend_size_info::iterator it_addend_size =
+      Icf::Offset_info::const_iterator it_o = o.begin();
+      Icf::Reloc_addend_size_info::const_iterator it_addend_size =
         reloc_addend_size_info.begin();
 
       for (; it_v != v.end(); ++it_v, ++it_s, ++it_a, ++it_o, ++it_addend_size)
         {
+	  if (first_iteration
+	      && it_v->first != NULL)
+	    {
+	      Symbol_location loc;
+	      loc.object = it_v->first;
+	      loc.shndx = it_v->second;
+	      loc.offset = convert_types<off_t, long long>(it_a->first
+							   + it_a->second);
+	      // Look through function descriptors
+	      parameters->target().function_location(&loc);
+	      if (loc.shndx != it_v->second)
+		{
+		  it_v->second = loc.shndx;
+		  // Modify symvalue/addend to the code entry.
+		  it_a->first = loc.offset;
+		  it_a->second = 0;
+		}
+	    }
+
           // ADDEND_STR stores the symbol value and addend and offset,
           // each at most 16 hex digits long.  it_a points to a pair
           // where first is the symbol value and second is the
@@ -378,58 +436,36 @@ get_section_contents(bool first_iteration,
                   uint64_t entsize =
                     (it_v->first)->section_entsize(it_v->second);
 		  long long offset = it_a->first;
+		  // Handle SHT_RELA and SHT_REL addends, only one of these
+		  // addends exists.
+		  // Get the SHT_RELA addend.  For RELA relocations, we have
+		  // the addend from the relocation.
+		  uint64_t reloc_addend_value = it_a->second;
 
-                  unsigned long long addend = it_a->second;
-                  // Ignoring the addend when it is a negative value.  See the 
-                  // comments in Merged_symbol_value::Value in object.h.
-                  if (addend < 0xffffff00)
-                    offset = offset + addend;
-
-		  // For SHT_REL relocation sections, the addend is stored in the
-		  // text section at the relocation offset.
-		  uint64_t reloc_addend_value = 0;
+		  // Handle SHT_REL addends.
+		  // For REL relocations, we need to fetch the addend from the
+		  // section contents.
                   const unsigned char* reloc_addend_ptr =
 		    contents + static_cast<unsigned long long>(*it_o);
-		  switch(*it_addend_size)
-		    {
-		      case 0:
-		        {
-                          break;
-                        }
-                      case 1:
-                        {
-                          reloc_addend_value =
-                            read_from_pointer<8>(reloc_addend_ptr);
-			  break;
-                        }
-                      case 2:
-                        {
-                          reloc_addend_value =
-                            read_from_pointer<16>(reloc_addend_ptr);
-			  break;
-                        }
-                      case 4:
-                        {
-                          reloc_addend_value =
-                            read_from_pointer<32>(reloc_addend_ptr);
-			  break;
-                        }
-                      case 8:
-                        {
-                          reloc_addend_value =
-                            read_from_pointer<64>(reloc_addend_ptr);
-			  break;
-                        }
-		      default:
-		        gold_unreachable();
-		    }
-		  offset = offset + reloc_addend_value;
+
+		  // Update the addend value with the SHT_REL addend if
+		  // available.
+		  get_rel_addend(reloc_addend_ptr, *it_addend_size,
+				 &reloc_addend_value);
+
+		  // Ignore the addend when it is a negative value.  See the
+		  // comments in Merged_symbol_value::value in object.h.
+		  if (reloc_addend_value < 0xffffff00)
+		    offset = offset + reloc_addend_value;
 
                   section_size_type secn_len;
+
                   const unsigned char* str_contents =
                   (it_v->first)->section_contents(it_v->second,
                                                   &secn_len,
                                                   false) + offset;
+		  gold_assert (offset < (long long) secn_len);
+
                   if ((secn_flags & elfcpp::SHF_STRINGS) != 0)
                     {
                       // String merge section.
@@ -470,10 +506,14 @@ get_section_contents(bool first_iteration,
                     }
                   else
                     {
-                      // Use the entsize to determine the length.
-                      buffer.append(reinterpret_cast<const 
+                      // Use the entsize to determine the length to copy.
+		      uint64_t bufsize = entsize;
+		      // If entsize is too big, copy all the remaining bytes.
+		      if ((offset + entsize) > secn_len)
+			bufsize = secn_len - offset;
+                      buffer.append(reinterpret_cast<const
                                                      char*>(str_contents),
-                                    entsize);
+                                    bufsize);
                     }
 		  buffer.append("@");
                 }
@@ -768,7 +808,7 @@ Icf::find_identical_sections(const Input_objects* input_objects,
       else if (sym->source() == Symbol::FROM_OBJECT 
                && !sym->object()->is_dynamic())
         {
-          Object* obj = sym->object();
+          Relobj* obj = static_cast<Relobj*>(sym->object());
           bool is_ordinary;
           unsigned int shndx = sym->shndx(&is_ordinary);
           if (is_ordinary)
@@ -785,7 +825,7 @@ Icf::find_identical_sections(const Input_objects* input_objects,
 // Unfolds the section denoted by OBJ and SHNDX if folded.
 
 void
-Icf::unfold_section(Object* obj, unsigned int shndx)
+Icf::unfold_section(Relobj* obj, unsigned int shndx)
 {
   Section_id secn(obj, shndx);
   Uniq_secn_id_map::iterator it = this->section_id_.find(secn);
@@ -802,7 +842,7 @@ Icf::unfold_section(Object* obj, unsigned int shndx)
 // is different from this section.
 
 bool
-Icf::is_section_folded(Object* obj, unsigned int shndx)
+Icf::is_section_folded(Relobj* obj, unsigned int shndx)
 {
   Section_id secn(obj, shndx);
   Uniq_secn_id_map::iterator it = this->section_id_.find(secn);
@@ -816,7 +856,7 @@ Icf::is_section_folded(Object* obj, unsigned int shndx)
 // This function returns the folded section for the given section.
 
 Section_id
-Icf::get_folded_section(Object* dup_obj, unsigned int dup_shndx)
+Icf::get_folded_section(Relobj* dup_obj, unsigned int dup_shndx)
 {
   Section_id dup_secn(dup_obj, dup_shndx);
   Uniq_secn_id_map::iterator it = this->section_id_.find(dup_secn);

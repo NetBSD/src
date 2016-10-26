@@ -5,7 +5,7 @@
 #objdump: -sj.tdata
 #target: powerpc64*-*-*
 
-.*: +file format elf64-powerpc
+.*
 
 Contents of section \.tdata:
 .* (12345678|f0debc9a) (9abcdef0|78563412) (23456789|01efcdab) (abcdef01|89674523)  .*

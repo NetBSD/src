@@ -1,17 +1,15 @@
-#   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-#   2004, 2006, 2007, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
@@ -56,7 +54,7 @@ proc objcopy_test {testname srcfile} {
 
     set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS $tempfile ${copyfile}.o"]
 
-    if ![string match "" $got] then {
+    if ![string equal "" $got] then {
 	fail "objcopy ($testname)"
     } else {
 	send_log "cmp $tempfile ${copyfile}.o\n"
@@ -86,7 +84,6 @@ proc objcopy_test {testname srcfile} {
 	setup_xfail "m68*-*-*coff" "m68*-*-hpux*" "m68*-*-lynxos*"
 	setup_xfail "m68*-*-sysv*" "m68*-apple-aux*"
 	setup_xfail "m8*-*"
-	setup_xfail "or32-*-rtems*" "or32-*-coff"
 	setup_xfail "sh-*-coff*"
 	setup_xfail "tic80-*-*" "w65-*"
 
@@ -94,7 +91,7 @@ proc objcopy_test {testname srcfile} {
 	clear_xfail "hppa*-*-*n*bsd*" "hppa*-*-rtems*" "*-*-*elf*"
 	clear_xfail "m68*-*-sysv4*"
 
-	if [string match "" $exec_output] then {
+	if [string equal "" $exec_output] then {
 	    pass "objcopy ($testname)"
 	} else {
 	    send_log "$exec_output\n"
@@ -115,7 +112,7 @@ objcopy_test "simple copy" bintest.s
 set reversed ${tempfile}-reversed
 set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -j .data --reverse-bytes=4 $tempfile $reversed"]
 
-if ![string match "" $got] then {
+if ![string equal "" $got] then {
     fail "objcopy --reverse-bytes"
 } else {
     if [is_remote host] {
@@ -162,7 +159,7 @@ if [is_remote host] {
 
 set got [binutils_run $OBJCOPY "-I binary -i 4 -b 0 --interleave-width 2 ${sequence_file} ${copyfile}"]
 
-if ![string match "" $got] then {
+if ![string equal "" $got] then {
     fail "objcopy -i --interleave-width"
 } else {
     if [is_remote host] {
@@ -177,7 +174,7 @@ if ![string match "" $got] then {
     send_log "$line\n"
     verbose $line
 
-    if ![string match "1256" $line] then {
+    if ![string equal "1256" $line] then {
 	fail "objcopy -i --interleave-width"
     }
     pass "objcopy -i --interleave-width"
@@ -200,7 +197,7 @@ if [is_remote host] {
 
 set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec $tempfile ${srecfile}"]
 
-if ![string match "" $got] then {
+if ![string equal "" $got] then {
     fail "objcopy -O srec"
 } else {
     if [is_remote host] {
@@ -260,7 +257,7 @@ if ![regexp "start address (\[0-9a-fA-FxX\]+)" $got all origstart] then {
     set origstart ""
 } else {
     set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec --set-start 0x7654 $tempfile ${copyfile}.srec"]
-    if ![string match "" $got] then {
+    if ![string equal "" $got] then {
 	fail "objcopy --set-start"
     } else {
 	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -f ${copyfile}.srec"]
@@ -277,7 +274,7 @@ if ![regexp "start address (\[0-9a-fA-FxX\]+)" $got all origstart] then {
     }
 
     set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec --adjust-start 0x123 $tempfile ${copyfile}.srec"]
-    if ![string match "" $got] then {
+    if ![string equal "" $got] then {
 	fail "objcopy --adjust-start"
     } else {
 	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -f ${copyfile}.srec"]
@@ -322,7 +319,7 @@ if {$low == "" || $origstart == ""} then {
     perror "objdump can not recognize bintest.o"
 } else {
     set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec --adjust-vma 0x123 $tempfile ${copyfile}.srec"]
-    if ![string match "" $got] then {
+    if ![string equal "" $got] then {
         fail "objcopy --adjust-vma"
     } else {
 	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -fh ${copyfile}.srec"]
@@ -356,7 +353,7 @@ if {$low == "" || $origstart == ""} then {
     }
 
     set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec $arg $tempfile ${copyfile}.srec"]
-    if ![string match "" $got] then {
+    if ![string equal "" $got] then {
 	fail "objcopy --adjust-section-vma +"
     } else {
 	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -h ${copyfile}.srec"]
@@ -376,7 +373,7 @@ if {$low == "" || $origstart == ""} then {
 
     regsub -all "\\+4" $arg "=[expr $low + 4]" argeq
     set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS -O srec $argeq $tempfile ${copyfile}.srec"]
-    if ![string match "" $got] then {
+    if ![string equal "" $got] then {
 	fail "objcopy --adjust-section-vma ="
     } else {
 	set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -h ${copyfile}.srec"]
@@ -420,7 +417,7 @@ proc strip_test { } {
 	verbose -log "$READELF -a tmpdir/testprog.o > tmpdir/osabi.in"
 	set exec_output [remote_exec host "$READELF -h tmpdir/testprog.o" "" "/dev/null" "tmpdir/osabi.in"]
 	if { [lindex $exec_output 0] != 0 } then {
-	    unresolved "$test preserving OS/ABI"	
+	    unresolved "$test preserving OS/ABI"
 	    set osabi_fail "true"
 	} else {
 	    verbose -log "grep OS/ABI tmpdir/osabi.in"
@@ -440,23 +437,23 @@ proc strip_test { } {
     remote_file build delete tmpdir/libstrip.a
 
     set exec_output [binutils_run $AR "rc $archive ${objfile}"]
-    if ![string match "" $exec_output] {
+    if ![string equal "" $exec_output] {
 	fail $test
-	unresolved "$test preserving OS/ABI"	
+	unresolved "$test preserving OS/ABI"
 	return
     }
 
     set exec_output [binutils_run $STRIP "-g $archive"]
-    if ![string match "" $exec_output] {
+    if ![string equal "" $exec_output] {
 	fail $test
-	unresolved "$test preserving OS/ABI"	
+	unresolved "$test preserving OS/ABI"
 	return
     }
 
     set exec_output [binutils_run $STRIP "$STRIPFLAGS $archive"]
-    if ![string match "" $exec_output] {
+    if ![string equal "" $exec_output] {
 	fail $test
-	unresolved "$test preserving OS/ABI"	
+	unresolved "$test preserving OS/ABI"
 	return
     }
 
@@ -464,7 +461,7 @@ proc strip_test { } {
 	verbose -log "$READELF -a tmpdir/testprog.o > tmpdir/osabi.out"
 	set exec_output [remote_exec host "$READELF -h tmpdir/testprog.o" "" "/dev/null" "tmpdir/osabi.out"]
 	if { [lindex $exec_output 0] != 0 } then {
-	    unresolved "$test preserving OS/ABI"	
+	    unresolved "$test preserving OS/ABI"
 	} else {
 	    verbose -log "grep OS/ABI tmpdir/osabi.out"
 	    catch "exec grep OS/ABI tmpdir/osabi.out" osabi_out
@@ -488,7 +485,7 @@ proc strip_test { } {
     }
 
     set exec_output [binutils_run $STRIP "$STRIPFLAGS $objfile"]
-    if ![string match "" $exec_output] {
+    if ![string equal "" $exec_output] {
 	fail $test
 	return
     }
@@ -529,7 +526,7 @@ proc strip_test_with_saving_a_symbol { } {
     }
 
     set exec_output [binutils_run $STRIP "$STRIPFLAGS -K main -K _main $objfile"]
-    if ![string match "" $exec_output] {
+    if ![string equal "" $exec_output] {
 	fail $test
 	return
     }
@@ -560,14 +557,14 @@ proc copy_setup { } {
     global gcc_gas_flag
     global test_prog
     global host_triplet
-    
+
     set res [build_wrapper testglue.o]
     set flags { debug }
-    
+
     if { [istarget *-*-uclinux*] && ![istarget tic6x-*-*] } {
 	return 1
     }
-    
+
     if { $res != "" } {
 	lappend flags "additional_flags=[lindex $res 1]"
 	set add_libs "testglue.o"
@@ -590,10 +587,7 @@ proc copy_setup { } {
 
     if { $status != "pass"  } {
 	send_log "cannot run executable, status = ${status} on ${host_triplet}\n"
-	if { [istarget $host_triplet] } {
-	  return 3
-	}
-      set status "pass"
+	return 3
     }
 
     return 0
@@ -603,7 +597,6 @@ proc copy_setup { } {
 
 proc copy_executable { prog flags test1 test2 } {
     global test_prog
-    global host_triplet
 
     if [is_remote host] {
 	set testfile [remote_download host tmpdir/$test_prog]
@@ -616,9 +609,9 @@ proc copy_executable { prog flags test1 test2 } {
 
     set exec_output [binutils_run $prog "$flags $testfile $testcopy"]
 
-    if ![string match "" $exec_output] {
+    if ![string equal "" $exec_output] {
 	fail $test1
-	if [string match "" $test2] {
+	if [string equal "" $test2] {
 	    return
 	}
 	fail $test2
@@ -632,7 +625,7 @@ proc copy_executable { prog flags test1 test2 } {
     set status [remote_exec build "cmp" "tmpdir/$test_prog tmpdir/copyprog"]
     set exec_output [lindex $status 1]
 
-    if [string match "" $exec_output] then {
+    if [string equal "" $exec_output] then {
 	pass $test1
     } else {
 	send_log "$exec_output\n"
@@ -657,19 +650,16 @@ proc copy_executable { prog flags test1 test2 } {
 	setup_xfail "arm*-*-pe"
 	setup_xfail "*-*-mingw*"
 	setup_xfail "*-*-cygwin*"
-    
+
 	fail $test1
     }
 
-    if [string match "" $test2] {
+    if [string equal "" $test2] {
 	return
     }
 
     set output [remote_load target tmpdir/copyprog]
     set status [lindex $output 0]
-    if { ![istarget $host_triplet] } {
-      set status "pass"
-    }
     if { $status != "pass" } {
 	fail $test2
     } else {
@@ -679,11 +669,10 @@ proc copy_executable { prog flags test1 test2 } {
 
 # Test stripping an executable
 
-proc strip_executable { prog flags test } {
+proc strip_executable { prog flags test1 test2 } {
     global NM
     global NMFLAGS
     global READELF
-    global host_triplet
 
     remote_file build delete tmpdir/striprog
     remote_download build tmpdir/copyprog tmpdir/striprog
@@ -698,7 +687,7 @@ proc strip_executable { prog flags test } {
 	verbose -log "$READELF -a ${copyfile} > tmpdir/osabi.in"
 	set exec_output [remote_exec host "$READELF -h ${copyfile}" "" "/dev/null" "tmpdir/osabi.in"]
 	if { [lindex $exec_output 0] != 0 } then {
-	    unresolved "$test preserving OS/ABI"	
+	    unresolved "$test1 preserving OS/ABI"
 	    set osabi_fail "true"
 	} else {
 	    verbose -log "grep OS/ABI tmpdir/osabi.in"
@@ -707,8 +696,12 @@ proc strip_executable { prog flags test } {
      }
 
     set exec_output [binutils_run $prog "$flags ${copyfile}"]
-    if ![string match "" $exec_output] {
-	fail $test
+    if ![string equal "" $exec_output] {
+	fail $test1
+	if [string equal "" $test2] {
+	    return
+	}
+	fail $test2
 	return
     }
 
@@ -716,46 +709,47 @@ proc strip_executable { prog flags test } {
 	remote_upload host ${copyfile} tmpdir/striprog
     }
 
-    set result [remote_load target tmpdir/striprog]
-    set status [lindex $result 0]
-    if { ![istarget $host_triplet] } {
-      set status "pass"
-    }
-    if { $status != "pass" } {
-	fail $test
-        return
-    }
-
     if { $osabi_fail != "true" && [is_elf_format] } {
 	verbose -log "$READELF -a ${copyfile} > tmpdir/osabi.out"
 	set exec_output [remote_exec host "$READELF -h ${copyfile}" "" "/dev/null" "tmpdir/osabi.out"]
 	if { [lindex $exec_output 0] != 0 } then {
-	    unresolved "$test preserving OS/ABI"	
+	    unresolved "$test1 preserving OS/ABI"
 	} else {
 	    verbose -log "grep OS/ABI tmpdir/osabi.out"
 	    catch "exec grep OS/ABI tmpdir/osabi.out" osabi_out
 	    if { "$osabi_in" == "$osabi_out" } {
-		pass "$test preserving OS/ABI"
+		pass "$test1 preserving OS/ABI"
 	    } else {
-		fail "$test preserving OS/ABI"
+		fail "$test1 preserving OS/ABI"
 	    }
 	}
     }
 
     set exec_output [binutils_run $NM "$NMFLAGS ${copyfile}"]
     if ![string match "*: no symbols*" $exec_output] {
-	fail $test
+	fail $test1
 	return
     }
-    pass $test
+
+    if [string equal "" $test2] {
+	return
+    }
+
+    set result [remote_load target tmpdir/striprog]
+    set status [lindex $result 0]
+    if { $status != "pass" } {
+	fail $test2
+        return
+    }
+
+    pass $test2
 }
 
 # Test stripping an executable with saving a symbol
 
-proc strip_executable_with_saving_a_symbol { prog flags test } {
+proc strip_executable_with_saving_a_symbol { prog flags test1 test2 } {
     global NM
     global NMFLAGS
-    global host_triplet
 
     remote_file build delete tmpdir/striprog
     remote_download build tmpdir/copyprog tmpdir/striprog
@@ -766,23 +760,13 @@ proc strip_executable_with_saving_a_symbol { prog flags test } {
     }
 
     set exec_output [binutils_run $prog "$flags ${copyfile}"]
-    if ![string match "" $exec_output] {
-	fail $test
+    if ![string equal "" $exec_output] {
+	fail $test1
+	if [string equal "" $test2] {
+	    return
+	}
+	fail $test2
 	return
-    }
-
-    if [is_remote host] {
-	remote_upload host ${copyfile} tmpdir/striprog
-    }
-
-    set result [remote_load target tmpdir/striprog]
-    set status [lindex $result 0]
-    if { ![istarget $host_triplet] } {
-      set status "pass"
-    }
-    if { $status != "pass" } {
-	fail $test
-        return
     }
 
     set exec_output [binutils_run $NM "$NMFLAGS ${copyfile}"]
@@ -797,18 +781,31 @@ proc strip_executable_with_saving_a_symbol { prog flags test } {
 
     if {![regexp {^([0-9a-fA-F]+)?[ ]+[TD] main} $exec_output] \
          && ![regexp {^([0-9a-fA-F]+)?[ ]+[TD] _main} $exec_output]} {
-	fail $test
+	fail $test1
 	return
     }
-    pass $test
+
+    if [string equal "" $test2] {
+	return
+    }
+
+    if [is_remote host] {
+	remote_upload host ${copyfile} tmpdir/striprog
+    }
+
+    set result [remote_load target tmpdir/striprog]
+    set status [lindex $result 0]
+    if { $status != "pass" } {
+	fail $test2
+        return
+    }
+
+    pass $test2
 }
 
 # Test keeping only debug symbols of an executable
 
 proc keep_debug_symbols_and_test_copy { prog1 flags1 test1 prog2 flags2 test2 } {
-    global NM
-    global NMFLAGS
-
     remote_file build delete tmpdir/striprog
     remote_download build tmpdir/copyprog tmpdir/striprog
     if [is_remote host] {
@@ -818,26 +815,86 @@ proc keep_debug_symbols_and_test_copy { prog1 flags1 test1 prog2 flags2 test2 } 
     }
 
     set exec_output [binutils_run $prog1 "$flags1 ${copyfile}"]
-    if ![string match "" $exec_output] {
+    if ![string equal "" $exec_output] {
 	fail $test1
 	return
     }
     pass $test1
 
     set exec_output [binutils_run $prog2 "$flags2 ${copyfile}"]
-    if ![string match "" $exec_output] {
+    if ![string equal "" $exec_output] {
 	fail $test2
 	return
     }
     pass $test2
 }
 
+# Tests that in a debug only copy of a file the sections
+# headers whoes types have been changed to NOBITS still
+# retain their sh_link fields.
+
+proc keep_debug_symbols_and_check_links { prog flags test } {
+    global READELF
+
+    remote_file build delete tmpdir/striprog
+    remote_download build tmpdir/copyprog tmpdir/striprog
+    if [is_remote host] {
+	set copyfile [remote_download host tmpdir/striprog]
+    } else {
+	set copyfile tmpdir/striprog
+    }
+
+    set exec_output [binutils_run $prog "$flags ${copyfile}"]
+    if ![string equal "" $exec_output] {
+	fail $test
+	return
+    }
+
+    set got [binutils_run $READELF "-S --wide ${copyfile}"]
+
+    set fails 0
+    # Regexp to match a section with NOBITS type and extract its name and sh_link fields
+    while {[regexp \
+		{[^a-zA-Z]+([a-zA-Z0-9_\.]+)[ 	]+NOBITS[ 	]+[0-9a-fA-F]+ [0-9a-fA-F]+ [0-9a-fA-F]+ [0-9]+[ A]+([0-9]+)(.*)} \
+		$got all name link rest]} {
+	set sh_link 0x$link
+	if {$sh_link == 0} {
+	    # Only some NOBITS sections should have a non-zero sh_link field.
+	    # Look for them by name.
+	    verbose "NOBITS section .$name has a 0 sh_link field\n"
+	    switch $name {
+		"rela.*"	{ set fails 1 ; send_log "Expected non-zero sh_link for .$name\n" }
+		"rel.*"		{ set fails 1 ; send_log "Expected non-zero sh_link for .$name\n" }
+		"hash"		{ set fails 1 ; send_log "Expected non-zero sh_link for .$name\n" }
+		"gnu_version"	{ set fails 1 ; send_log "Expected non-zero sh_link for .$name\n" }
+		"dynsym"	{ set fails 1 ; send_log "Expected non-zero sh_link for .$name\n" }
+		"gnu.version_r"	{ set fails 1 ; send_log "Expected non-zero sh_link for .$name\n" }
+		"dynamic"	{ set fails 1 ; send_log "Expected non-zero sh_link for .$name\n" }
+		"symtab"	{ set fails 1 ; send_log "Expected non-zero sh_link for .$name\n" }
+	    }
+	}
+	set got $rest
+    }
+
+    if {$fails == 0} {
+	pass $test
+    } else {
+	fail $test
+    }
+}
+
+
 set test1 "simple objcopy of executable"
-set test2 "run objcopy of executable"
-set test3 "run stripped executable"
-set test4 "run stripped executable with saving a symbol"
-set test5 "keep only debug data"
-set test6 "simple objcopy of debug data"
+set test1r "run objcopy of executable"
+set test2 "strip executable"
+set test2r "run stripped executable"
+set test3 "strip executable with saving a symbol"
+set test3r "run stripped executable with saving a symbol"
+set test4 "keep only debug data"
+set test5 "simple objcopy of debug data"
+if [is_elf_format] {
+    set test6 "NOBITS sections retain sh_link field"
+}
 
 switch [copy_setup] {
     "1" {
@@ -845,26 +902,39 @@ switch [copy_setup] {
     }
     "2" {
 	untested $test1
+	untested $test1r
 	untested $test2
+	untested $test2r
 	untested $test3
+	untested $test3r
 	untested $test4
 	untested $test5
-	untested $test6
+	if [is_elf_format] {
+	    untested $test6
+	}
     }
     "3" {
 	copy_executable "$OBJCOPY" "$OBJCOPYFLAGS" "$test1" ""
-	unsupported $test2
-	unsupported $test3
-	unsupported $test4
-	unsupported $test5
-	unsupported $test6
+	unsupported $test1r
+	strip_executable "$STRIP" "$STRIPFLAGS" "$test2" ""
+	unsupported $test2r
+	strip_executable_with_saving_a_symbol "$STRIP" "-K main -K _main $STRIPFLAGS" "$test3" ""
+	unsupported $test3r
+	keep_debug_symbols_and_test_copy "$STRIP" "--only-keep-debug $STRIPFLAGS" "$test4" \
+					 "$OBJCOPY" "$OBJCOPYFLAGS" "$test5"
+	if [is_elf_format] {
+	    keep_debug_symbols_and_check_links "$STRIP" "--only-keep-debug $STRIPFLAGS" "$test6"
+	}
     }
     "0" {
-	copy_executable "$OBJCOPY" "$OBJCOPYFLAGS" "$test1" "$test2"
-	strip_executable "$STRIP" "$STRIPFLAGS" "$test3"
-	strip_executable_with_saving_a_symbol "$STRIP" "-K main -K _main $STRIPFLAGS" "$test4"
-	keep_debug_symbols_and_test_copy "$STRIP" "--only-keep-debug $STRIPFLAGS" "$test5" \
-					 "$OBJCOPY" "$OBJCOPYFLAGS" "$test6"
+	copy_executable "$OBJCOPY" "$OBJCOPYFLAGS" "$test1" "$test1r"
+	strip_executable "$STRIP" "$STRIPFLAGS" "$test2" "$test2r"
+	strip_executable_with_saving_a_symbol "$STRIP" "-K main -K _main $STRIPFLAGS" "$test3" "$test3r"
+	keep_debug_symbols_and_test_copy "$STRIP" "--only-keep-debug $STRIPFLAGS" "$test4" \
+					 "$OBJCOPY" "$OBJCOPYFLAGS" "$test5"
+	if [is_elf_format] {
+	    keep_debug_symbols_and_check_links "$STRIP" "--only-keep-debug $STRIPFLAGS" "$test6"
+	}
     }
 }
 
@@ -883,7 +953,7 @@ proc objcopy_test_readelf {testname srcfile} {
     verbose -log "$OBJCOPY $OBJCOPYFLAGS tmpdir/bintest.o tmpdir/copy.o"
     set exec_output [remote_exec host "$OBJCOPY $OBJCOPYFLAGS tmpdir/bintest.o tmpdir/copy.o"]
     if { [lindex $exec_output 0] != 0
-	 || ![string match "" [lindex $exec_output 1]] } then {
+	 || ![string equal "" [lindex $exec_output 1]] } then {
 	fail "objcopy ($testname)"
 	return
     }
@@ -895,7 +965,7 @@ proc objcopy_test_readelf {testname srcfile} {
 	return
     }
     set exec_output [prune_warnings [lindex $exec_output 1]]
-    if ![string match "" $exec_output] then {
+    if ![string equal "" $exec_output] then {
 	unresolved "objcopy ($testname)"
 	return
     }
@@ -907,7 +977,7 @@ proc objcopy_test_readelf {testname srcfile} {
 	return
     }
     set exec_output [prune_warnings [lindex $exec_output 1]]
-    if ![string match "" $exec_output] then {
+    if ![string equal "" $exec_output] then {
 	unresolved "objcopy ($testname)"
 	return
     }
@@ -916,10 +986,22 @@ proc objcopy_test_readelf {testname srcfile} {
     catch "exec diff tmpdir/bintest.o.out tmpdir/copy.o.out" exec_output
     set exec_output [prune_warnings $exec_output]
 
-    if [string match "" $exec_output] then {
+    if [string equal "" $exec_output] then {
 	pass "objcopy ($testname)"
     } else {
 	fail "objcopy ($testname)"
+    }
+}
+
+proc objcopy_test_symbol_manipulation {} {
+    global srcdir
+    global subdir
+
+    set test_list [lsort [glob -nocomplain $srcdir/$subdir/symbols-*.d]]
+    foreach t $test_list {
+        # We need to strip the ".d", but can leave the dirname.
+        verbose [file rootname $t]
+        run_dump_test [file rootname $t]
     }
 }
 
@@ -931,6 +1013,7 @@ if { ([istarget "ia64-*-elf*"]
 
 # ELF specific tests
 if [is_elf_format] {
+    objcopy_test_symbol_manipulation
     objcopy_test "ELF unknown section type" unknown.s
     objcopy_test_readelf "ELF group" group.s
     objcopy_test_readelf "ELF group" group-2.s
@@ -945,6 +1028,8 @@ if [is_elf_format] {
 run_dump_test "copy-2"
 run_dump_test "copy-3"
 run_dump_test "copy-4"
+run_dump_test "pr19020a"
+run_dump_test "pr19020b"
 
 if [is_elf_format] {
     run_dump_test "strip-1"
@@ -956,10 +1041,22 @@ if [is_elf_format] {
     run_dump_test "strip-7"
     run_dump_test "strip-8"
     run_dump_test "strip-9"
+    run_dump_test "strip-12"
+    # Non-EABI ARM targets will set OSABI to ARM
+    # The V850 sets the OSABI to UNIX - System V
     if { ![istarget "*-*-hpux*"]
-	 && ![istarget "msp*-*-*"] } {
+	 && ![istarget "msp*-*-*"]
+	 && ![istarget "visium-*-*"]
+	 && ![istarget "v850*-*-*"]
+         && !([istarget "arm*-*-*"] && ![istarget "arm-*-*eabi*"])} {
 	run_dump_test "strip-10"
     }
+    set extra_strip11 ""
+    if { [istarget "sh64*-*"] } {
+	# pr17755 testcase
+	set extra_strip11 { { "as" "--isa=SHmedia --abi=64" } }
+    }
+    run_dump_test "strip-11" $extra_strip11
 
     if { [istarget "i*86-*"] || [istarget "x86_64-*-*"] } {
 	# Check to make sure we don't strip a symbol named in relocations.
@@ -983,12 +1080,14 @@ if [is_elf_format] {
     # The symbol table for some MIPS targets is sorted differently than
     # the ELF canonical order, so the regexps in localize-hidden-1.d fail
     # to match.  These tests must be matched to targets for which
-    # targ_defvec=bfd_elf32_bigmips_vec,
-    # targ_defvec=bfd_elf32_littlemips_vec,
-    # targ_defvec=bfd_elf32_nbigmips_vec or
-    # targ_defvec=bfd_elf32_nlittlemips_vec in config.bfd.  When syncing,
+    # targ_defvec=mips_elf32_be_vec,
+    # targ_defvec=mips_elf32_le_vec,
+    # targ_defvec=mips_elf32_n_be_vec or
+    # targ_defvec=mips_elf32_n_le_vec in config.bfd.  When syncing,
     # don't forget that earlier case-matches trump later ones.
-    if { ![istarget "mips*-sde-elf*"] && ![istarget "mips64*-*-openbsd*"] } {
+    if { ![istarget "mips*-sde-elf*"] && ![istarget "mips*-mti-elf*"]
+	 && ![istarget "mips*-img-elf*"]
+         && ![istarget "mips64*-*-openbsd*"] } {
 	setup_xfail "mips*-*-irix5*" "mips*-*-irix6*" "mips*-*-elf*" \
 	    "mips*-*-rtems*" "mips*-*-windiss" "mips*-*-none" \
 	    "mips*-*-openbsd*" "mips*-*-chorus*"
@@ -998,6 +1097,7 @@ if [is_elf_format] {
     run_dump_test "testranges-ia64"
 
     run_dump_test "add-section"
+    run_dump_test "add-symbol"
     run_dump_test "add-empty-section"
 
     run_dump_test "exclude-1a"

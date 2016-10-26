@@ -1,6 +1,6 @@
 // gc.cc -- garbage collection of unused sections
 
-// Copyright 2009 Free Software Foundation, Inc.
+// Copyright (C) 2009-2015 Free Software Foundation, Inc.
 // Written by Sriraman Tallam <tmsriram@google.com>.
 
 // This file is part of gold.
@@ -38,24 +38,18 @@ Garbage_collection::do_transitive_closure()
     {
       // Add elements from the work list to the referenced list
       // one by one.
-      Section_id entry = this->worklist().front();
-      this->worklist().pop();
-      if (this->referenced_list().find(entry)
-          == this->referenced_list().end()) 
-        {
-          this->referenced_list().insert(entry);
-        }
-      else
-        {
-          continue;
-        }
+      Section_id entry = this->worklist().back();
+      this->worklist().pop_back();
+      if (!this->referenced_list().insert(entry).second)
+        continue;
       Garbage_collection::Section_ref::iterator find_it = 
                 this->section_reloc_map().find(entry);
       if (find_it == this->section_reloc_map().end()) 
           continue;
-      Garbage_collection::Sections_reachable v = find_it->second;
+      const Garbage_collection::Sections_reachable &v = find_it->second;
       // Scan the vector of references for each work_list entry. 
-      for (Garbage_collection::Sections_reachable::iterator it_v = v.begin();
+      for (Garbage_collection::Sections_reachable::const_iterator it_v =
+               v.begin();
            it_v != v.end();
            ++it_v)
         {
@@ -63,7 +57,7 @@ Garbage_collection::do_transitive_closure()
           if (this->referenced_list().find(*it_v)
               == this->referenced_list().end())
             {
-              this->worklist().push(*it_v);   
+              this->worklist().push_back(*it_v);
             }
         }
     }

@@ -8,11 +8,11 @@
 .*: +file format.*
 
 Disassembly of section \.text:
-004000b0 <[^>]*> 3c1c0043 	lui	gp,0x43
-004000b4 <[^>]*> 279c9ff0 	addiu	gp,gp,-24592
-004000b8 <[^>]*> afbc0008 	sw	gp,8\(sp\)
+004000f0 <[^>]*> 3c1c0043 	lui	gp,0x43
+004000f4 <[^>]*> 279c9ff0 	addiu	gp,gp,-24592
+004000f8 <[^>]*> afbc0008 	sw	gp,8\(sp\)
 #...
-00408d60 <[^>]*> 3c1c0043 	lui	gp,0x43
-00408d64 <[^>]*> 279c2c98 	addiu	gp,gp,11416
-00408d68 <[^>]*> afbc0008 	sw	gp,8\(sp\)
+00408da0 <[^>]*> 3c1c0043 	lui	gp,0x43
+00408da4 <[^>]*> 279c2c98 	addiu	gp,gp,11416
+00408da8 <[^>]*> afbc0008 	sw	gp,8\(sp\)
 #pass

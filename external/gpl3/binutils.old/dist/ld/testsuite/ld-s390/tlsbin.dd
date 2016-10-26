@@ -109,17 +109,17 @@ Disassembly of section .text:
 # IE -> LE against global var defined in exec
   +[0-9a-f]+:	58 30 d0 38       	l	%r3,56\(%r13\)
   +[0-9a-f]+:	18 43             	lr	%r4,%r3
-  +[0-9a-f]+:	07 00             	nopr	%r0
+  +[0-9a-f]+:	07 00             	nopr
   +[0-9a-f]+:	41 54 90 00       	la	%r5,0\(%r4,%r9\)
 # IE -> LE against local var
   +[0-9a-f]+:	58 30 d0 3c       	l	%r3,60\(%r13\)
   +[0-9a-f]+:	18 43             	lr	%r4,%r3
-  +[0-9a-f]+:	07 00             	nopr	%r0
+  +[0-9a-f]+:	07 00             	nopr
   +[0-9a-f]+:	41 54 90 00       	la	%r5,0\(%r4,%r9\)
 # IE -> LE against hidden var
   +[0-9a-f]+:	58 30 d0 40       	l	%r3,64\(%r13\)
   +[0-9a-f]+:	18 43             	lr	%r4,%r3
-  +[0-9a-f]+:	07 00             	nopr	%r0
+  +[0-9a-f]+:	07 00             	nopr
   +[0-9a-f]+:	41 54 90 00       	la	%r5,0\(%r4,%r9\)
 # IE against global var with small got access (no optimization)
   +[0-9a-f]+:	58 30 c0 14       	l	%r3,20\(%r12\)
@@ -173,17 +173,17 @@ Disassembly of section .text:
 # IE -> LE against global var defined in exec
   +[0-9a-f]+:	58 30 d0 04       	l	%r3,4\(%r13\)
   +[0-9a-f]+:	18 43             	lr	%r4,%r3
-  +[0-9a-f]+:	07 00             	nopr	%r0
+  +[0-9a-f]+:	07 00             	nopr
   +[0-9a-f]+:	41 54 90 00       	la	%r5,0\(%r4,%r9\)
 # IE -> LE against local var
   +[0-9a-f]+:	58 30 d0 08       	l	%r3,8\(%r13\)
   +[0-9a-f]+:	18 43             	lr	%r4,%r3
-  +[0-9a-f]+:	07 00             	nopr	%r0
+  +[0-9a-f]+:	07 00             	nopr
   +[0-9a-f]+:	41 54 90 00       	la	%r5,0\(%r4,%r9\)
 # IE -> LE against hidden but not local var
   +[0-9a-f]+:	58 30 d0 0c       	l	%r3,12\(%r13\)
   +[0-9a-f]+:	18 43             	lr	%r4,%r3
-  +[0-9a-f]+:	07 00             	nopr	%r0
+  +[0-9a-f]+:	07 00             	nopr
   +[0-9a-f]+:	41 54 90 00       	la	%r5,0\(%r4,%r9\)
 # LE, global var defined in exec
   +[0-9a-f]+:	58 40 d0 10       	l	%r4,16\(%r13\)

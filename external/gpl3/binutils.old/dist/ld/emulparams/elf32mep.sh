@@ -23,7 +23,7 @@ OTHER_READONLY_SECTIONS='
   __stack_size = 0x100000;
   __stack0  = (__stack - (0 *  (__stack_size / 1)) + 15) / 16 * 16;
 
-  .rostacktab : 
+  .rostacktab :
   {
     /* Emit a table describing the location of the different stacks.
        Only 1 processor in the default configuration.  */

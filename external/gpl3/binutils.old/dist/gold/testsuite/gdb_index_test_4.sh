@@ -2,7 +2,7 @@
 
 # gdb_index_test_4.sh -- a test case for the --gdb-index option.
 
-# Copyright 2012 Free Software Foundation, Inc.
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
 # Written by Cary Coutant <ccoutant@google.com>.
 
 # This file is part of gold.
