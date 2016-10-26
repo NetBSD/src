@@ -1,6 +1,5 @@
 /* Intel x86-64 Mach-O support for BFD.
-   Copyright 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -54,7 +53,8 @@ bfd_mach_o_x86_64_mkobject (bfd *abfd)
   mdata = bfd_mach_o_get_data (abfd);
   mdata->header.magic = BFD_MACH_O_MH_MAGIC_64;
   mdata->header.cputype = BFD_MACH_O_CPU_TYPE_X86_64;
-  mdata->header.cpusubtype = BFD_MACH_O_CPU_SUBTYPE_X86_ALL;
+  mdata->header.cpusubtype =
+    BFD_MACH_O_CPU_SUBTYPE_X86_ALL | BFD_MACH_O_CPU_SUBTYPE_LIB64;
   mdata->header.byteorder = BFD_ENDIAN_LITTLE;
   mdata->header.version = 2;
 
@@ -285,7 +285,8 @@ bfd_mach_o_x86_64_swap_reloc_out (arelent *rel, bfd_mach_o_reloc_info *rinfo)
   if ((*rel->sym_ptr_ptr)->flags & BSF_SECTION_SYM)
     {
       rinfo->r_extern = 0;
-      rinfo->r_value = (*rel->sym_ptr_ptr)->section->target_index;
+      rinfo->r_value =
+	(*rel->sym_ptr_ptr)->section->output_section->target_index;
     }
   else
     {
@@ -352,9 +353,10 @@ const mach_o_segment_name_xlat mach_o_x86_64_segsec_names_xlat[] =
 #define bfd_mach_o_tgt_seg_table mach_o_x86_64_segsec_names_xlat
 #define bfd_mach_o_section_type_valid_for_tgt bfd_mach_o_section_type_valid_for_x86_64
 
-#define TARGET_NAME 		mach_o_x86_64_vec
+#define TARGET_NAME 		x86_64_mach_o_vec
 #define TARGET_STRING 		"mach-o-x86-64"
 #define TARGET_ARCHITECTURE	bfd_arch_i386
+#define TARGET_PAGESIZE		4096
 #define TARGET_BIG_ENDIAN 	0
 #define TARGET_ARCHIVE 		0
 #define TARGET_PRIORITY		0

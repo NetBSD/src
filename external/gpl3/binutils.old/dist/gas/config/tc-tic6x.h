@@ -1,6 +1,5 @@
 /* Definitions for TI C6X assembler.
-   Copyright 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -185,10 +184,10 @@ extern long tic6x_pcrel_from_section (struct fix *fixp, segT sec);
 #define md_start_line_hook() tic6x_start_line_hook ()
 extern void tic6x_start_line_hook (void);
 
-#define TC_CONS_FIX_NEW(frag, where, size, exp)	\
-  tic6x_cons_fix_new (frag, where, size, exp)
-extern void tic6x_cons_fix_new (fragS *frag, int where, int size,
-				expressionS *exp);
+#define TC_CONS_FIX_NEW(frag, where, size, exp, reloc)	\
+  tic6x_cons_fix_new (frag, where, size, exp, reloc)
+extern void tic6x_cons_fix_new (fragS *, int, int, expressionS *,
+				bfd_reloc_code_real_type);
 
 #define tc_fix_adjustable(FIX) tic6x_fix_adjustable (FIX)
 extern bfd_boolean tic6x_fix_adjustable (struct fix *);

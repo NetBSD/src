@@ -1,7 +1,6 @@
 /* tc-avr.c -- Assembler code for the ATMEL AVR
 
-   Copyright 1999, 2000, 2001, 2002, 2004, 2005, 2006, 2007, 2008, 2009,
-   2010, 2012  Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
    This file is part of GAS, the GNU Assembler.
@@ -24,8 +23,17 @@
 #include "as.h"
 #include "safe-ctype.h"
 #include "subsegs.h"
+#include "dwarf2dbg.h"
 #include "dw2gencfi.h"
+#include "elf/avr.h"
+#include "elf32-avr.h"
 
+/* For building a linked list of AVR_PROPERTY_RECORD structures.  */
+struct avr_property_record_link
+{
+  struct avr_property_record record;
+  struct avr_property_record_link *next;
+};
 
 struct avr_opcodes_s
 {
@@ -89,6 +97,7 @@ static struct mcu_type_s mcu_types[] =
   {"avrxmega5",  AVR_ISA_XMEGA,   bfd_mach_avrxmega5},
   {"avrxmega6",  AVR_ISA_XMEGA,   bfd_mach_avrxmega6},
   {"avrxmega7",  AVR_ISA_XMEGA,   bfd_mach_avrxmega7},
+  {"avrtiny",    AVR_ISA_AVRTINY, bfd_mach_avrtiny},
   {"at90s1200",  AVR_ISA_1200,    bfd_mach_avr1},
   {"attiny11",   AVR_ISA_AVR1,    bfd_mach_avr1},
   {"attiny12",   AVR_ISA_AVR1,    bfd_mach_avr1},
@@ -106,6 +115,7 @@ static struct mcu_type_s mcu_types[] =
   {"at90s8515",  AVR_ISA_AVR2,    bfd_mach_avr2},
   {"at90c8534",  AVR_ISA_AVR2,    bfd_mach_avr2},
   {"at90s8535",  AVR_ISA_AVR2,    bfd_mach_avr2},
+  {"ata5272",    AVR_ISA_AVR25,   bfd_mach_avr25},
   {"attiny13",   AVR_ISA_AVR25,   bfd_mach_avr25},
   {"attiny13a",  AVR_ISA_AVR25,   bfd_mach_avr25},
   {"attiny2313", AVR_ISA_AVR25,   bfd_mach_avr25},
@@ -130,8 +140,8 @@ static struct mcu_type_s mcu_types[] =
   {"attiny43u",  AVR_ISA_AVR25,   bfd_mach_avr25},
   {"attiny48",   AVR_ISA_AVR25,   bfd_mach_avr25},
   {"attiny88",   AVR_ISA_AVR25,   bfd_mach_avr25},
+  {"attiny828",  AVR_ISA_AVR25,   bfd_mach_avr25},
   {"at86rf401",  AVR_ISA_RF401,   bfd_mach_avr25},
-  {"ata6289",    AVR_ISA_AVR25,   bfd_mach_avr25},
   {"at43usb355", AVR_ISA_AVR3,    bfd_mach_avr3},
   {"at76c711",   AVR_ISA_AVR3,    bfd_mach_avr3},
   {"atmega103",  AVR_ISA_AVR31,   bfd_mach_avr31},
@@ -139,12 +149,19 @@ static struct mcu_type_s mcu_types[] =
   {"attiny167",  AVR_ISA_AVR35,   bfd_mach_avr35},
   {"at90usb82",  AVR_ISA_AVR35,   bfd_mach_avr35},
   {"at90usb162", AVR_ISA_AVR35,   bfd_mach_avr35},
+  {"ata5505",    AVR_ISA_AVR35,   bfd_mach_avr35},
   {"atmega8u2",  AVR_ISA_AVR35,   bfd_mach_avr35},
   {"atmega16u2", AVR_ISA_AVR35,   bfd_mach_avr35},
   {"atmega32u2", AVR_ISA_AVR35,   bfd_mach_avr35},
+  {"attiny1634", AVR_ISA_AVR35,   bfd_mach_avr35},
   {"atmega8",    AVR_ISA_M8,      bfd_mach_avr4},
+  {"ata6289",    AVR_ISA_AVR4,    bfd_mach_avr4},
+  {"atmega8a",   AVR_ISA_M8,      bfd_mach_avr4},
+  {"ata6285",    AVR_ISA_AVR4,    bfd_mach_avr4},
+  {"ata6286",    AVR_ISA_AVR4,    bfd_mach_avr4},
   {"atmega48",   AVR_ISA_AVR4,    bfd_mach_avr4},
   {"atmega48a",  AVR_ISA_AVR4,    bfd_mach_avr4},
+  {"atmega48pa", AVR_ISA_AVR4,    bfd_mach_avr4},
   {"atmega48p",  AVR_ISA_AVR4,    bfd_mach_avr4},
   {"atmega88",   AVR_ISA_AVR4,    bfd_mach_avr4},
   {"atmega88a",  AVR_ISA_AVR4,    bfd_mach_avr4},
@@ -159,6 +176,9 @@ static struct mcu_type_s mcu_types[] =
   {"at90pwm3",   AVR_ISA_AVR4,    bfd_mach_avr4},
   {"at90pwm3b",  AVR_ISA_AVR4,    bfd_mach_avr4},
   {"at90pwm81",  AVR_ISA_AVR4,    bfd_mach_avr4},
+  {"at90pwm161", AVR_ISA_AVR5,    bfd_mach_avr5},
+  {"ata5790",    AVR_ISA_AVR5,    bfd_mach_avr5},
+  {"ata5795",    AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega16",   AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega16a",  AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega161",  AVR_ISA_M161,    bfd_mach_avr5},
@@ -166,17 +186,21 @@ static struct mcu_type_s mcu_types[] =
   {"atmega163",  AVR_ISA_M161,    bfd_mach_avr5},
   {"atmega164a", AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega164p", AVR_ISA_AVR5,    bfd_mach_avr5},
+  {"atmega164pa",AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega165",  AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega165a", AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega165p", AVR_ISA_AVR5,    bfd_mach_avr5},
+  {"atmega165pa",AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega168",  AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega168a", AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega168p", AVR_ISA_AVR5,    bfd_mach_avr5},
+  {"atmega168pa",AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega169",  AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega169a", AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega169p", AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega169pa",AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega32",   AVR_ISA_AVR5,    bfd_mach_avr5},
+  {"atmega32a",  AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega323",  AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega324a", AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega324p", AVR_ISA_AVR5,    bfd_mach_avr5},
@@ -200,7 +224,10 @@ static struct mcu_type_s mcu_types[] =
   {"atmega3290p",AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega3290pa",AVR_ISA_AVR5,   bfd_mach_avr5},
   {"atmega406",  AVR_ISA_AVR5,    bfd_mach_avr5},
+  {"atmega64rfr2", AVR_ISA_AVR5,  bfd_mach_avr5},
+  {"atmega644rfr2",AVR_ISA_AVR5,  bfd_mach_avr5},
   {"atmega64",   AVR_ISA_AVR5,    bfd_mach_avr5},
+  {"atmega64a",  AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega640",  AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega644",  AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega644a", AVR_ISA_AVR5,    bfd_mach_avr5},
@@ -218,8 +245,10 @@ static struct mcu_type_s mcu_types[] =
   {"atmega6490", AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega6490a",AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega6490p",AVR_ISA_AVR5,    bfd_mach_avr5},
+  {"atmega64rfr2",AVR_ISA_AVR5,   bfd_mach_avr5},
+  {"atmega644rfr2",AVR_ISA_AVR5,  bfd_mach_avr5},
   {"atmega16hva",AVR_ISA_AVR5,    bfd_mach_avr5},
-  {"atmega16hva2",AVR_ISA_AVR5,    bfd_mach_avr5},
+  {"atmega16hva2",AVR_ISA_AVR5,   bfd_mach_avr5},
   {"atmega16hvb",AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega16hvbrevb",AVR_ISA_AVR5,bfd_mach_avr5},
   {"atmega32hvb",AVR_ISA_AVR5,    bfd_mach_avr5},
@@ -244,41 +273,78 @@ static struct mcu_type_s mcu_types[] =
   {"at94k",      AVR_ISA_94K,     bfd_mach_avr5},
   {"m3000",      AVR_ISA_AVR5,    bfd_mach_avr5},
   {"atmega128",  AVR_ISA_AVR51,   bfd_mach_avr51},
+  {"atmega128a", AVR_ISA_AVR51,   bfd_mach_avr51},
   {"atmega1280", AVR_ISA_AVR51,   bfd_mach_avr51},
   {"atmega1281", AVR_ISA_AVR51,   bfd_mach_avr51},
+  {"atmega1284", AVR_ISA_AVR51,   bfd_mach_avr51},
   {"atmega1284p",AVR_ISA_AVR51,   bfd_mach_avr51},
   {"atmega128rfa1",AVR_ISA_AVR51, bfd_mach_avr51},
+  {"atmega128rfr2",AVR_ISA_AVR51, bfd_mach_avr51},
+  {"atmega1284rfr2",AVR_ISA_AVR51, bfd_mach_avr51},
   {"at90can128", AVR_ISA_AVR51,   bfd_mach_avr51},
   {"at90usb1286",AVR_ISA_AVR51,   bfd_mach_avr51},
   {"at90usb1287",AVR_ISA_AVR51,   bfd_mach_avr51},
   {"atmega2560", AVR_ISA_AVR6,    bfd_mach_avr6},
   {"atmega2561", AVR_ISA_AVR6,    bfd_mach_avr6},
+  {"atmega256rfr2", AVR_ISA_AVR6, bfd_mach_avr6},
+  {"atmega2564rfr2", AVR_ISA_AVR6, bfd_mach_avr6},
   {"atxmega16a4", AVR_ISA_XMEGA,  bfd_mach_avrxmega2},
+  {"atxmega16a4u",AVR_ISA_XMEGAU, bfd_mach_avrxmega2},
+  {"atxmega16c4", AVR_ISA_XMEGAU, bfd_mach_avrxmega2},
   {"atxmega16d4", AVR_ISA_XMEGA,  bfd_mach_avrxmega2},
-  {"atxmega16x1", AVR_ISA_XMEGA,  bfd_mach_avrxmega2},
   {"atxmega32a4", AVR_ISA_XMEGA,  bfd_mach_avrxmega2},
+  {"atxmega32a4u",AVR_ISA_XMEGAU, bfd_mach_avrxmega2},
+  {"atxmega32c4", AVR_ISA_XMEGAU, bfd_mach_avrxmega2},
   {"atxmega32d4", AVR_ISA_XMEGA,  bfd_mach_avrxmega2},
+  {"atxmega32e5", AVR_ISA_XMEGA,  bfd_mach_avrxmega2},
+  {"atxmega16e5", AVR_ISA_XMEGA,  bfd_mach_avrxmega2},
+  {"atxmega8e5",  AVR_ISA_XMEGA,  bfd_mach_avrxmega2},
   {"atxmega32x1", AVR_ISA_XMEGA,  bfd_mach_avrxmega2},
   {"atxmega64a3", AVR_ISA_XMEGA,  bfd_mach_avrxmega4},
+  {"atxmega64a3u",AVR_ISA_XMEGAU, bfd_mach_avrxmega4},
+  {"atxmega64a4u",AVR_ISA_XMEGAU, bfd_mach_avrxmega4},
+  {"atxmega64b1", AVR_ISA_XMEGAU, bfd_mach_avrxmega4},
+  {"atxmega64b3", AVR_ISA_XMEGAU, bfd_mach_avrxmega4},
+  {"atxmega64c3", AVR_ISA_XMEGAU, bfd_mach_avrxmega4},
   {"atxmega64d3", AVR_ISA_XMEGA,  bfd_mach_avrxmega4},
+  {"atxmega64d4", AVR_ISA_XMEGA,  bfd_mach_avrxmega4},
   {"atxmega64a1", AVR_ISA_XMEGA,  bfd_mach_avrxmega5},
-  {"atxmega64a1u",AVR_ISA_XMEGA,  bfd_mach_avrxmega5},
+  {"atxmega64a1u",AVR_ISA_XMEGAU, bfd_mach_avrxmega5},
   {"atxmega128a3", AVR_ISA_XMEGA, bfd_mach_avrxmega6},
-  {"atxmega128b1", AVR_ISA_XMEGA, bfd_mach_avrxmega6},
+  {"atxmega128a3u",AVR_ISA_XMEGAU,bfd_mach_avrxmega6},
+  {"atxmega128b1", AVR_ISA_XMEGAU, bfd_mach_avrxmega6},
+  {"atxmega128b3", AVR_ISA_XMEGAU,bfd_mach_avrxmega6},
+  {"atxmega128c3", AVR_ISA_XMEGAU,bfd_mach_avrxmega6},
   {"atxmega128d3", AVR_ISA_XMEGA, bfd_mach_avrxmega6},
+  {"atxmega128d4", AVR_ISA_XMEGA, bfd_mach_avrxmega6},
   {"atxmega192a3", AVR_ISA_XMEGA, bfd_mach_avrxmega6},
+  {"atxmega192a3u",AVR_ISA_XMEGAU,bfd_mach_avrxmega6},
+  {"atxmega192c3", AVR_ISA_XMEGAU, bfd_mach_avrxmega6},
   {"atxmega192d3", AVR_ISA_XMEGA, bfd_mach_avrxmega6},
   {"atxmega256a3", AVR_ISA_XMEGA, bfd_mach_avrxmega6},
+  {"atxmega256a3u",AVR_ISA_XMEGAU,bfd_mach_avrxmega6},
   {"atxmega256a3b",AVR_ISA_XMEGA, bfd_mach_avrxmega6},
-  {"atxmega256a3bu",AVR_ISA_XMEGA,bfd_mach_avrxmega6},
+  {"atxmega256a3bu",AVR_ISA_XMEGAU, bfd_mach_avrxmega6},
+  {"atxmega256c3", AVR_ISA_XMEGAU,bfd_mach_avrxmega6},
   {"atxmega256d3", AVR_ISA_XMEGA, bfd_mach_avrxmega6},
+  {"atxmega384c3", AVR_ISA_XMEGAU,bfd_mach_avrxmega6},
+  {"atxmega384d3", AVR_ISA_XMEGA, bfd_mach_avrxmega6},
   {"atxmega128a1", AVR_ISA_XMEGA, bfd_mach_avrxmega7},
-  {"atxmega128a1u", AVR_ISA_XMEGA, bfd_mach_avrxmega7},
+  {"atxmega128a1u", AVR_ISA_XMEGAU, bfd_mach_avrxmega7},
+  {"atxmega128a4u", AVR_ISA_XMEGAU, bfd_mach_avrxmega7},
+  {"attiny4",      AVR_ISA_AVRTINY, bfd_mach_avrtiny},
+  {"attiny5",      AVR_ISA_AVRTINY, bfd_mach_avrtiny},
+  {"attiny9",      AVR_ISA_AVRTINY, bfd_mach_avrtiny},
+  {"attiny10",     AVR_ISA_AVRTINY, bfd_mach_avrtiny},
+  {"attiny20",     AVR_ISA_AVRTINY, bfd_mach_avrtiny},
+  {"attiny40",     AVR_ISA_AVRTINY, bfd_mach_avrtiny},
   {NULL, 0, 0}
 };
 
+
 /* Current MCU type.  */
 static struct mcu_type_s   default_mcu = {"avr2", AVR_ISA_AVR2, bfd_mach_avr2};
+static struct mcu_type_s   specified_mcu;
 static struct mcu_type_s * avr_mcu = & default_mcu;
 
 /* AVR target-specific switches.  */
@@ -287,9 +353,11 @@ struct avr_opt_s
   int all_opcodes;  /* -mall-opcodes: accept all known AVR opcodes.  */
   int no_skip_bug;  /* -mno-skip-bug: no warnings for skipping 2-word insns.  */
   int no_wrap;      /* -mno-wrap: reject rjmp/rcall with 8K wrap-around.  */
+  int no_link_relax;   /* -mno-link-relax / -mlink-relax: generate (or not)
+                          relocations for linker relaxation.  */
 };
 
-static struct avr_opt_s avr_opt = { 0, 0, 0 };
+static struct avr_opt_s avr_opt = { 0, 0, 0, 0 };
 
 const char EXP_CHARS[] = "eE";
 const char FLT_CHARS[] = "dD";
@@ -349,7 +417,10 @@ enum options
 {
   OPTION_ALL_OPCODES = OPTION_MD_BASE + 1,
   OPTION_NO_SKIP_BUG,
-  OPTION_NO_WRAP
+  OPTION_NO_WRAP,
+  OPTION_ISA_RMW,
+  OPTION_LINK_RELAX,
+  OPTION_NO_LINK_RELAX
 };
 
 struct option md_longopts[] =
@@ -358,6 +429,9 @@ struct option md_longopts[] =
   { "mall-opcodes", no_argument, NULL, OPTION_ALL_OPCODES },
   { "mno-skip-bug", no_argument, NULL, OPTION_NO_SKIP_BUG },
   { "mno-wrap",     no_argument, NULL, OPTION_NO_WRAP     },
+  { "mrmw",         no_argument, NULL, OPTION_ISA_RMW     },
+  { "mlink-relax",  no_argument, NULL, OPTION_LINK_RELAX  },
+  { "mno-link-relax",  no_argument, NULL, OPTION_NO_LINK_RELAX  },
   { NULL, no_argument, NULL, 0 }
 };
 
@@ -450,18 +524,23 @@ md_show_usage (FILE *stream)
 	"                   avr5  - enhanced AVR core with up to 64K program memory\n"
 	"                   avr51 - enhanced AVR core with up to 128K program memory\n"
 	"                   avr6  - enhanced AVR core with up to 256K program memory\n"
+	"                   avrxmega2 - XMEGA, > 8K, < 64K FLASH, < 64K RAM\n"
 	"                   avrxmega3 - XMEGA, > 8K, <= 64K FLASH, > 64K RAM\n"
 	"                   avrxmega4 - XMEGA, > 64K, <= 128K FLASH, <= 64K RAM\n"
 	"                   avrxmega5 - XMEGA, > 64K, <= 128K FLASH, > 64K RAM\n"
 	"                   avrxmega6 - XMEGA, > 128K, <= 256K FLASH, <= 64K RAM\n"
 	"                   avrxmega7 - XMEGA, > 128K, <= 256K FLASH, > 64K RAM\n"
-	"                   or immediate microcontroller name.\n"));
+	"                   avrtiny   - AVR Tiny core with 16 gp registers\n"));
   fprintf (stream,
       _("  -mall-opcodes    accept all AVR opcodes, even if not supported by MCU\n"
 	"  -mno-skip-bug    disable warnings for skipping two-word instructions\n"
 	"                   (default for avr4, avr5)\n"
 	"  -mno-wrap        reject rjmp/rcall instructions with 8K wrap-around\n"
-	"                   (default for avr3, avr5)\n"));
+	"                   (default for avr3, avr5)\n"
+	"  -mrmw            accept Read-Modify-Write instructions\n"
+	"  -mlink-relax     generate relocations for linker relaxation (default)\n"
+	"  -mno-link-relax  don't generate relocations for linker relaxation.\n"
+        ));
   show_mcu_list (stream);
 }
 
@@ -508,7 +587,12 @@ md_parse_option (int c, char *arg)
 	   type - this for allows passing -mmcu=... via gcc ASM_SPEC as well
 	   as .arch ... in the asm output at the same time.  */
 	if (avr_mcu == &default_mcu || avr_mcu->mach == mcu_types[i].mach)
-	  avr_mcu = &mcu_types[i];
+      {
+        specified_mcu.name = mcu_types[i].name;
+        specified_mcu.isa  |= mcu_types[i].isa;
+        specified_mcu.mach = mcu_types[i].mach;
+        avr_mcu = &specified_mcu;
+      }
 	else
 	  as_fatal (_("redefinition of mcu type `%s' to `%s'"),
 		    avr_mcu->name, mcu_types[i].name);
@@ -522,6 +606,15 @@ md_parse_option (int c, char *arg)
       return 1;
     case OPTION_NO_WRAP:
       avr_opt.no_wrap = 1;
+      return 1;
+    case OPTION_ISA_RMW:
+      specified_mcu.isa |= AVR_ISA_RMW;
+      return 1;
+    case OPTION_LINK_RELAX:
+      avr_opt.no_link_relax = 0;
+      return 1;
+    case OPTION_NO_LINK_RELAX:
+      avr_opt.no_link_relax = 1;
       return 1;
     }
 
@@ -573,6 +666,7 @@ md_begin (void)
     }
 
   bfd_set_arch_mach (stdoutput, TARGET_ARCH, avr_mcu->mach);
+  linkrelax = !avr_opt.no_link_relax;
 }
 
 /* Resolve STR as a constant expression and return the result.
@@ -781,30 +875,55 @@ avr_operand (struct avr_opcodes_s *opcode,
     case 'r':
     case 'a':
     case 'v':
-      if (*str == 'r' || *str == 'R')
-	{
-	  char r_name[20];
+      {
+        char * old_str = str;
+        char *lower;
+        char r_name[20];
 
-	  str = extract_word (str, r_name, sizeof (r_name));
-	  op_mask = 0xff;
-	  if (ISDIGIT (r_name[1]))
-	    {
-	      if (r_name[2] == '\0')
-		op_mask = r_name[1] - '0';
-	      else if (r_name[1] != '0'
-		       && ISDIGIT (r_name[2])
-		       && r_name[3] == '\0')
-		op_mask = (r_name[1] - '0') * 10 + r_name[2] - '0';
-	    }
-	}
-      else
-	{
-	  op_mask = avr_get_constant (str, 31);
-	  str = input_line_pointer;
-	}
+        str = extract_word (str, r_name, sizeof (r_name));
+        for (lower = r_name; *lower; ++lower)
+	  {
+	    if (*lower >= 'A' && *lower <= 'Z')
+	      *lower += 'a' - 'A';
+          }
 
-      if (op_mask <= 31)
-	{
+        if (r_name[0] == 'r' && ISDIGIT (r_name[1]) && r_name[2] == 0)
+          /* Single-digit register number, ie r0-r9.  */
+          op_mask = r_name[1] - '0';
+        else if (r_name[0] == 'r' && ISDIGIT (r_name[1])
+		 && ISDIGIT (r_name[2]) && r_name[3] == 0)
+          /* Double-digit register number, ie r10 - r32.  */
+          op_mask = (r_name[1] - '0') * 10 + r_name[2] - '0';
+        else if (r_name[0] >= 'x' && r_name[0] <= 'z'
+		 && (r_name[1] == 'l' || r_name[1] == 'h') && r_name[2] == 0)
+          /* Registers r26-r31 referred to by name, ie xl, xh, yl, yh, zl, zh.  */
+          op_mask = (r_name[0] - 'x') * 2 + (r_name[1] == 'h') + 26;
+        else if ((*op == 'v' || *op == 'w')
+		 && r_name[0] >= 'x' && r_name[0] <= 'z' && r_name[1] == 0)
+          /* For the movw and addiw instructions, refer to registers x, y and z by name.  */
+          op_mask = (r_name[0] - 'x') * 2 + 26;
+        else
+          {
+            /* Numeric or symbolic constant register number.  */
+            op_mask = avr_get_constant (old_str, 31);
+            str = input_line_pointer;
+          }
+      }
+
+      if (avr_mcu->mach == bfd_mach_avrtiny)
+        {
+          if (op_mask < 16 || op_mask > 31)
+            {
+              as_bad (_("register name or number from 16 to 31 required"));
+              break;
+            }
+        }
+      else if (op_mask > 31)
+        {
+          as_bad (_("register name or number from 0 to 31 required"));
+          break;
+        }
+
 	  switch (*op)
 	    {
 	    case 'a':
@@ -832,9 +951,6 @@ avr_operand (struct avr_opcodes_s *opcode,
 	      break;
 	    }
 	  break;
-	}
-      as_bad (_("register name or number from 0 to 31 required"));
-      break;
 
     case 'e':
       {
@@ -941,6 +1057,12 @@ avr_operand (struct avr_opcodes_s *opcode,
 		   &op_expr, FALSE, BFD_RELOC_16);
       break;
 
+    case 'j':
+      str = parse_exp (str, &op_expr);
+      fix_new_exp (frag_now, where, opcode->insn_size * 2,
+		   &op_expr, FALSE, BFD_RELOC_AVR_LDS_STS_16);
+      break;
+
     case 'M':
       {
 	bfd_reloc_code_real_type r_type;
@@ -985,23 +1107,15 @@ avr_operand (struct avr_opcodes_s *opcode,
       break;
 
     case 'P':
-      {
-	unsigned int x;
-
-	x = avr_get_constant (str, 63);
-	str = input_line_pointer;
-	op_mask |= (x & 0xf) | ((x & 0x30) << 5);
-      }
+      str = parse_exp (str, &op_expr);
+      fix_new_exp (frag_now, where, opcode->insn_size * 2,
+		     &op_expr, FALSE, BFD_RELOC_AVR_PORT6);
       break;
 
     case 'p':
-      {
-	unsigned int x;
-
-	x = avr_get_constant (str, 31);
-	str = input_line_pointer;
-	op_mask |= x << 3;
-      }
+      str = parse_exp (str, &op_expr);
+      fix_new_exp (frag_now, where, opcode->insn_size * 2,
+		     &op_expr, FALSE, BFD_RELOC_AVR_PORT5);
       break;
 
     case 'E':
@@ -1116,7 +1230,7 @@ valueT
 md_section_align (asection *seg, valueT addr)
 {
   int align = bfd_get_section_alignment (stdoutput, seg);
-  return ((addr + (1 << align) - 1) & (-1 << align));
+  return ((addr + (1 << align) - 1) & (-1UL << align));
 }
 
 /* If you define this macro, it should return the offset between the
@@ -1134,6 +1248,55 @@ md_pcrel_from_section (fixS *fixp, segT sec)
     return 0;
 
   return fixp->fx_frag->fr_address + fixp->fx_where;
+}
+
+static bfd_boolean
+relaxable_section (asection *sec)
+{
+  return ((sec->flags & SEC_DEBUGGING) == 0
+          && (sec->flags & SEC_CODE) != 0
+          && (sec->flags & SEC_ALLOC) != 0);
+}
+
+/* Does whatever the xtensa port does.  */
+int
+avr_validate_fix_sub (fixS *fix)
+{
+  segT add_symbol_segment, sub_symbol_segment;
+
+  /* The difference of two symbols should be resolved by the assembler when
+     linkrelax is not set.  If the linker may relax the section containing
+     the symbols, then an Xtensa DIFF relocation must be generated so that
+     the linker knows to adjust the difference value.  */
+  if (!linkrelax || fix->fx_addsy == NULL)
+    return 0;
+
+  /* Make sure both symbols are in the same segment, and that segment is
+     "normal" and relaxable.  If the segment is not "normal", then the
+     fix is not valid.  If the segment is not "relaxable", then the fix
+     should have been handled earlier.  */
+  add_symbol_segment = S_GET_SEGMENT (fix->fx_addsy);
+  if (! SEG_NORMAL (add_symbol_segment) ||
+      ! relaxable_section (add_symbol_segment))
+    return 0;
+
+  sub_symbol_segment = S_GET_SEGMENT (fix->fx_subsy);
+  return (sub_symbol_segment == add_symbol_segment);
+}
+
+/* TC_FORCE_RELOCATION hook */
+
+/* If linkrelax is turned on, and the symbol to relocate
+   against is in a relaxable segment, don't compute the value -
+   generate a relocation instead.  */
+int
+avr_force_relocation (fixS *fix)
+{
+  if (linkrelax && fix->fx_addsy
+      && relaxable_section (S_GET_SEGMENT (fix->fx_addsy)))
+    return 1;
+
+  return generic_force_reloc (fix);
 }
 
 /* GAS will call this for each fixup.  It should store the correct
@@ -1159,11 +1322,48 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg)
 	  fixP->fx_done = 1;
 	}
     }
+  else if (linkrelax && fixP->fx_subsy)
+    {
+      /* For a subtraction relocation expression, generate one
+         of the DIFF relocs, with the value being the difference.
+         Note that a sym1 - sym2 expression is adjusted into a
+         section_start_sym + sym4_offset_from_section_start - sym1
+         expression. fixP->fx_addsy holds the section start symbol,
+         fixP->fx_offset holds sym2's offset, and fixP->fx_subsy
+         holds sym1. Calculate the current difference and write value,
+         but leave fx_offset as is - during relaxation,
+         fx_offset - value gives sym1's value.  */
 
+       switch (fixP->fx_r_type)
+         {
+           case BFD_RELOC_8:
+             fixP->fx_r_type = BFD_RELOC_AVR_DIFF8;
+             break;
+           case BFD_RELOC_16:
+             fixP->fx_r_type = BFD_RELOC_AVR_DIFF16;
+             break;
+           case BFD_RELOC_32:
+             fixP->fx_r_type = BFD_RELOC_AVR_DIFF32;
+             break;
+           default:
+             as_bad_where (fixP->fx_file, fixP->fx_line, _("expression too complex"));
+             break;
+         }
+
+      value = S_GET_VALUE (fixP->fx_addsy) +
+          fixP->fx_offset - S_GET_VALUE (fixP->fx_subsy);
+      *valP = value;
+
+      fixP->fx_subsy = NULL;
+  }
   /* We don't actually support subtracting a symbol.  */
   if (fixP->fx_subsy != (symbolS *) NULL)
     as_bad_where (fixP->fx_file, fixP->fx_line, _("expression too complex"));
 
+  /* For the DIFF relocs, write the value into the object file while still
+     keeping fx_done FALSE, as both the difference (recorded in the object file)
+     and the sym offset (part of fixP) are needed at link relax time.  */
+  where = (unsigned char *) fixP->fx_frag->fr_literal + fixP->fx_where;
   switch (fixP->fx_r_type)
     {
     default:
@@ -1173,6 +1373,16 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg)
     case BFD_RELOC_AVR_13_PCREL:
     case BFD_RELOC_32:
     case BFD_RELOC_16:
+      break;
+    case BFD_RELOC_AVR_DIFF8:
+      *where = value;
+	  break;
+    case BFD_RELOC_AVR_DIFF16:
+      bfd_putl16 ((bfd_vma) value, where);
+      break;
+    case BFD_RELOC_AVR_DIFF32:
+      bfd_putl32 ((bfd_vma) value, where);
+      break;
     case BFD_RELOC_AVR_CALL:
       break;
     }
@@ -1249,11 +1459,21 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg)
 	  bfd_putl16 ((bfd_vma) insn | LDI_IMMEDIATE (value), where);
 	  break;
 
+	case BFD_RELOC_AVR_LDS_STS_16:
+	  if ((value < 0x40) || (value > 0xBF))
+	    as_warn_where (fixP->fx_file, fixP->fx_line,
+			   _("operand out of range: 0x%lx"),
+			   (unsigned long)value);
+	  insn |= ((value & 0xF) | ((value & 0x30) << 5) | ((value & 0x40) << 2));
+	  bfd_putl16 ((bfd_vma) insn, where);
+	  break;
+
 	case BFD_RELOC_AVR_6:
 	  if ((value > 63) || (value < 0))
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  _("operand out of range: %ld"), value);
-	  bfd_putl16 ((bfd_vma) insn | ((value & 7) | ((value & (3 << 3)) << 7) | ((value & (1 << 5)) << 8)), where);
+	  bfd_putl16 ((bfd_vma) insn | ((value & 7) | ((value & (3 << 3)) << 7)
+					| ((value & (1 << 5)) << 8)), where);
 	  break;
 
 	case BFD_RELOC_AVR_6_ADIW:
@@ -1350,6 +1570,20 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg)
 	  as_fatal (_("line %d: unknown relocation type: 0x%x"),
 		    fixP->fx_line, fixP->fx_r_type);
 	  break;
+
+	case BFD_RELOC_AVR_PORT6:
+	  if (value > 63)
+	    as_bad_where (fixP->fx_file, fixP->fx_line,
+			  _("operand out of range: %ld"), value);
+	  bfd_putl16 ((bfd_vma) insn | ((value & 0x30) << 5) | (value & 0x0f), where);
+	  break;
+
+	case BFD_RELOC_AVR_PORT5:
+	  if (value > 31)
+	    as_bad_where (fixP->fx_file, fixP->fx_line,
+			  _("operand out of range: %ld"), value);
+	  bfd_putl16 ((bfd_vma) insn | ((value & 0x1f) << 3), where);
+	  break;
 	}
     }
   else
@@ -1384,30 +1618,11 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED,
 	      fixS *fixp)
 {
   arelent *reloc;
+  bfd_reloc_code_real_type code = fixp->fx_r_type;
 
-  if (fixp->fx_addsy && fixp->fx_subsy)
+  if (fixp->fx_subsy != NULL)
     {
-      long value = 0;
-
-      if ((S_GET_SEGMENT (fixp->fx_addsy) != S_GET_SEGMENT (fixp->fx_subsy))
-          || S_GET_SEGMENT (fixp->fx_addsy) == undefined_section)
-        {
-          as_bad_where (fixp->fx_file, fixp->fx_line,
-              "Difference of symbols in different sections is not supported");
-          return NULL;
-        }
-
-      /* We are dealing with two symbols defined in the same section.
-         Let us fix-up them here.  */
-      value += S_GET_VALUE (fixp->fx_addsy);
-      value -= S_GET_VALUE (fixp->fx_subsy);
-
-      /* When fx_addsy and fx_subsy both are zero, md_apply_fix
-         only takes it's second operands for the fixup value.  */
-      fixp->fx_addsy = NULL;
-      fixp->fx_subsy = NULL;
-      md_apply_fix (fixp, (valueT *) &value, NULL);
-
+      as_bad_where (fixp->fx_file, fixp->fx_line, _("expression too complex"));
       return NULL;
     }
 
@@ -1417,7 +1632,21 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED,
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
 
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
-  reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
+
+  if ((fixp->fx_r_type == BFD_RELOC_32) && (fixp->fx_pcrel))
+    {
+      if (seg->use_rela_p)
+        fixp->fx_offset -= md_pcrel_from_section (fixp, seg);
+      else
+        fixp->fx_offset = reloc->address;
+
+      code = BFD_RELOC_32_PCREL;
+    }
+
+  reloc->addend = fixp->fx_offset;
+
+  reloc->howto = bfd_reloc_type_lookup (stdoutput, code);
+
   if (reloc->howto == (reloc_howto_type *) NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
@@ -1430,7 +1659,6 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED,
       || fixp->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
     reloc->address = fixp->fx_offset;
 
-  reloc->addend = fixp->fx_offset;
 
   return reloc;
 }
@@ -1448,6 +1676,28 @@ md_assemble (char *str)
 
   opcode = (struct avr_opcodes_s *) hash_find (avr_hash, op);
 
+  if (opcode && !avr_opt.all_opcodes)
+    {
+      /* Check if the instruction's ISA bit is ON in the ISA bits of the part
+         specified by the user.  If not look for other instructions
+	 specifications with same mnemonic who's ISA bits matches.
+
+         This requires include/opcode/avr.h to have the instructions with
+         same mnenomic to be specified in sequence.  */
+
+      while ((opcode->isa & avr_mcu->isa) != opcode->isa)
+        {
+          opcode++;
+
+          if (opcode->name && strcmp(op, opcode->name))
+            {
+              as_bad (_("illegal opcode %s for mcu %s"),
+                      opcode->name, avr_mcu->name);
+              return;
+            }
+        }
+    }
+
   if (opcode == NULL)
     {
       as_bad (_("unknown opcode `%s'"), op);
@@ -1459,9 +1709,6 @@ md_assemble (char *str)
 
   if (*str && *opcode->constraints == '?')
     ++opcode;
-
-  if (!avr_opt.all_opcodes && (opcode->isa & avr_mcu->isa) != opcode->isa)
-    as_bad (_("illegal opcode %s for mcu %s"), opcode->name, avr_mcu->name);
 
   dwarf2_emit_insn (0);
 
@@ -1477,22 +1724,7 @@ md_assemble (char *str)
   }
 }
 
-typedef struct
-{
-  /* Name of the expression modifier allowed with .byte, .word, etc.  */
-  const char *name;
-
-  /* Only allowed with n bytes of data.  */
-  int nbytes;
-
-  /* Associated RELOC.  */
-  bfd_reloc_code_real_type reloc;
-
-  /* Part of the error message.  */
-  const char *error;
-} exp_mod_data_t;
-
-static const exp_mod_data_t exp_mod_data[] =
+const exp_mod_data_t exp_mod_data[] =
 {
   /* Default, must be first.  */
   { "", 0, BFD_RELOC_16, "" },
@@ -1513,20 +1745,15 @@ static const exp_mod_data_t exp_mod_data[] =
   { NULL, 0, 0, NULL }
 };
 
-/* Data to pass between `avr_parse_cons_expression' and `avr_cons_fix_new'.  */
-static const exp_mod_data_t *pexp_mod_data = &exp_mod_data[0];
-
 /* Parse special CONS expression: pm (expression) or alternatively
    gs (expression).  These are used for addressing program memory.  Moreover,
    define lo8 (expression), hi8 (expression) and hlo8 (expression).  */
 
-void
+const exp_mod_data_t *
 avr_parse_cons_expression (expressionS *exp, int nbytes)
 {
   const exp_mod_data_t *pexp = &exp_mod_data[0];
   char *tmp;
-
-  pexp_mod_data = pexp;
 
   tmp = input_line_pointer = skip_space (input_line_pointer);
 
@@ -1545,18 +1772,18 @@ avr_parse_cons_expression (expressionS *exp, int nbytes)
 	  if (*input_line_pointer == '(')
 	    {
 	      input_line_pointer = skip_space (input_line_pointer + 1);
-	      pexp_mod_data = pexp;
 	      expression (exp);
 
 	      if (*input_line_pointer == ')')
-		++input_line_pointer;
+		{
+		  ++input_line_pointer;
+		  return pexp;
+		}
 	      else
 		{
 		  as_bad (_("`)' required"));
-		  pexp_mod_data = &exp_mod_data[0];
+		  return &exp_mod_data[0];
 		}
-
-	      return;
 	    }
 
 	  input_line_pointer = tmp;
@@ -1566,13 +1793,15 @@ avr_parse_cons_expression (expressionS *exp, int nbytes)
     }
 
   expression (exp);
+  return &exp_mod_data[0];
 }
 
 void
 avr_cons_fix_new (fragS *frag,
 		  int where,
 		  int nbytes,
-		  expressionS *exp)
+		  expressionS *exp,
+		  const exp_mod_data_t *pexp_mod_data)
 {
   int bad = 0;
 
@@ -1602,15 +1831,23 @@ avr_cons_fix_new (fragS *frag,
 
   if (bad)
     as_bad (_("illegal %srelocation size: %d"), pexp_mod_data->error, nbytes);
+}
 
-  pexp_mod_data = &exp_mod_data[0];
+static bfd_boolean
+mcu_has_3_byte_pc (void)
+{
+  int mach = avr_mcu->mach;
+
+  return mach == bfd_mach_avr6
+    || mach == bfd_mach_avrxmega6
+    || mach == bfd_mach_avrxmega7;
 }
 
 void
 tc_cfi_frame_initial_instructions (void)
 {
   /* AVR6 pushes 3 bytes for calls.  */
-  int return_size = (avr_mcu->mach == bfd_mach_avr6 ? 3 : 2);
+  int return_size = (mcu_has_3_byte_pc () ? 3 : 2);
 
   /* The CFA is the caller's stack location before the call insn.  */
   /* Note that the stack pointer is dwarf register number 32.  */
@@ -1619,4 +1856,366 @@ tc_cfi_frame_initial_instructions (void)
   /* Note that AVR consistently uses post-decrement, which means that things
      do not line up the same way as for targers that use pre-decrement.  */
   cfi_add_CFA_offset (DWARF2_DEFAULT_RETURN_COLUMN, 1-return_size);
+}
+
+bfd_boolean
+avr_allow_local_subtract (expressionS * left,
+			     expressionS * right,
+			     segT section)
+{
+  /* If we are not in relaxation mode, subtraction is OK.  */
+  if (!linkrelax)
+    return TRUE;
+
+  /* If the symbols are not in a code section then they are OK.  */
+  if ((section->flags & SEC_CODE) == 0)
+    return TRUE;
+
+  if (left->X_add_symbol == right->X_add_symbol)
+    return TRUE;
+
+  /* We have to assume that there may be instructions between the
+     two symbols and that relaxation may increase the distance between
+     them.  */
+  return FALSE;
+}
+
+void
+avr_elf_final_processing (void)
+{
+  if (linkrelax)
+    elf_elfheader (stdoutput)->e_flags |= EF_AVR_LINKRELAX_PREPARED;
+}
+
+/* Write out the header of a .avr.prop section into the area pointed to by
+   DATA.  The RECORD_COUNT will be placed in the header as the number of
+   records that are to follow.
+   The area DATA must be big enough the receive the header, which is
+   AVR_PROPERTY_SECTION_HEADER_SIZE bytes long.  */
+
+static char *
+avr_output_property_section_header (char *data,
+                                    unsigned int record_count)
+{
+  char *orig_data = data;
+
+  md_number_to_chars (data, AVR_PROPERTY_RECORDS_VERSION, 1);
+  data++;
+  /* There's space for a single byte flags field, but right now there's
+     nothing to go in here, so just set the value to zero.  */
+  md_number_to_chars (data, 0, 1);
+  data++;
+  md_number_to_chars (data, record_count, 2);
+  data+=2;
+
+  gas_assert (data - orig_data == AVR_PROPERTY_SECTION_HEADER_SIZE);
+
+  return data;
+}
+
+/* Return the number of bytes required to store RECORD into the .avr.prop
+   section. The size returned is the compressed size that corresponds to
+   how the record will be written out in AVR_OUTPUT_PROPERTY_RECORD.  */
+
+static int
+avr_record_size (const struct avr_property_record *record)
+{
+  /* The first 5 bytes are a 4-byte address, followed by a 1-byte type
+     identifier.  */
+  int size = 5;
+
+  switch (record->type)
+    {
+    case RECORD_ORG:
+      size += 0; /* No extra information.  */
+      break;
+
+    case RECORD_ORG_AND_FILL:
+      size += 4; /* A 4-byte fill value.  */
+      break;
+
+    case RECORD_ALIGN:
+      size += 4; /* A 4-byte alignment value.  */
+      break;
+
+    case RECORD_ALIGN_AND_FILL:
+      size += 8; /* A 4-byte alignment, and 4-byte fill value.  */
+      break;
+
+    default:
+      as_fatal (_("unknown record type %d (in %s)"),
+                record->type, __PRETTY_FUNCTION__);
+    }
+
+  return size;
+}
+
+/* Write out RECORD.  FRAG_BASE points to the start of the data area setup
+   to hold all of the .avr.prop content, FRAG_PTR points to the next
+   writable location.  The data area must be big enough to hold all of the
+   records.  The size of the data written out for this RECORD must match
+   the size from AVR_RECORD_SIZE.  */
+
+static char *
+avr_output_property_record (char * const frag_base, char *frag_ptr,
+                            const struct avr_property_record *record)
+{
+  fixS *fix;
+  int where;
+  char *init_frag_ptr = frag_ptr;
+
+  where = frag_ptr - frag_base;
+  fix = fix_new (frag_now, where, 4,
+                 section_symbol (record->section),
+                 record->offset, FALSE, BFD_RELOC_32);
+  fix->fx_file = "<internal>";
+  fix->fx_line = 0;
+  frag_ptr += 4;
+
+  md_number_to_chars (frag_ptr, (bfd_byte) record->type, 1);
+  frag_ptr += 1;
+
+  /* Write out the rest of the data.  */
+  switch (record->type)
+    {
+    case RECORD_ORG:
+      break;
+
+    case RECORD_ORG_AND_FILL:
+      md_number_to_chars (frag_ptr, record->data.org.fill, 4);
+      frag_ptr += 4;
+      break;
+
+    case RECORD_ALIGN:
+      md_number_to_chars (frag_ptr, record->data.align.bytes, 4);
+      frag_ptr += 4;
+      break;
+
+    case RECORD_ALIGN_AND_FILL:
+      md_number_to_chars (frag_ptr, record->data.align.bytes, 4);
+      md_number_to_chars (frag_ptr + 4, record->data.align.fill, 4);
+      frag_ptr += 8;
+      break;
+
+    default:
+      as_fatal (_("unknown record type %d (in %s)"),
+                record->type, __PRETTY_FUNCTION__);
+    }
+
+  gas_assert (frag_ptr - init_frag_ptr == avr_record_size (record));
+
+  return frag_ptr;
+}
+
+/* Create the section to hold the AVR property information.  Return the
+   section.  */
+
+static asection *
+avr_create_property_section (void)
+{
+  asection *sec;
+  flagword flags = (SEC_RELOC | SEC_HAS_CONTENTS | SEC_READONLY);
+  const char *section_name = AVR_PROPERTY_RECORD_SECTION_NAME;
+
+  sec = bfd_make_section (stdoutput, section_name);
+  if (sec == NULL)
+    as_fatal (_("Failed to create property section `%s'\n"), section_name);
+  bfd_set_section_flags (stdoutput, sec, flags);
+  sec->output_section = sec;
+  return sec;
+}
+
+/* This hook is called when alignment is performed, and allows us to
+   capture the details of both .org and .align directives.  */
+
+void
+avr_handle_align (fragS *fragP)
+{
+  if (linkrelax)
+    {
+      /* Ignore alignment requests at FR_ADDRESS 0, these are at the very
+         start of a section, and will be handled by the standard section
+         alignment mechanism.  */
+      if ((fragP->fr_type == rs_align
+           || fragP->fr_type == rs_align_code)
+          && fragP->fr_offset > 0)
+        {
+          char *p = fragP->fr_literal + fragP->fr_fix;
+
+          fragP->tc_frag_data.is_align = TRUE;
+          fragP->tc_frag_data.alignment = fragP->fr_offset;
+          fragP->tc_frag_data.fill = *p;
+          fragP->tc_frag_data.has_fill = (fragP->tc_frag_data.fill != 0);
+        }
+
+      if (fragP->fr_type == rs_org && fragP->fr_offset > 0)
+        {
+          char *p = fragP->fr_literal + fragP->fr_fix;
+
+          fragP->tc_frag_data.is_org = TRUE;
+          fragP->tc_frag_data.fill = *p;
+          fragP->tc_frag_data.has_fill = (fragP->tc_frag_data.fill != 0);
+        }
+    }
+}
+
+/* Return TRUE if this section is not one for which we need to record
+   information in the avr property section.  */
+
+static bfd_boolean
+exclude_section_from_property_tables (segT sec)
+{
+  /* Only generate property information for sections on which linker
+     relaxation could be performed.  */
+  return !relaxable_section (sec);
+}
+
+/* Create a property record for fragment FRAGP from section SEC and place
+   it into an AVR_PROPERTY_RECORD_LINK structure, which can then formed
+   into a linked list by the caller.  */
+
+static struct avr_property_record_link *
+create_record_for_frag (segT sec, fragS *fragP)
+{
+  struct avr_property_record_link *prop_rec_link;
+
+  prop_rec_link = xmalloc (sizeof (struct avr_property_record_link));
+  memset (prop_rec_link, 0, sizeof (*prop_rec_link));
+  gas_assert (fragP->fr_next != NULL);
+
+  if (fragP->tc_frag_data.is_org)
+    {
+      prop_rec_link->record.offset = fragP->fr_next->fr_address;
+      prop_rec_link->record.section = sec;
+
+      if (fragP->tc_frag_data.has_fill)
+        {
+          prop_rec_link->record.data.org.fill = fragP->tc_frag_data.fill;
+          prop_rec_link->record.type = RECORD_ORG_AND_FILL;
+        }
+      else
+        prop_rec_link->record.type = RECORD_ORG;
+    }
+  else
+    {
+      prop_rec_link->record.offset = fragP->fr_next->fr_address;
+      prop_rec_link->record.section = sec;
+
+      gas_assert (fragP->tc_frag_data.is_align);
+      if (fragP->tc_frag_data.has_fill)
+        {
+          prop_rec_link->record.data.align.fill = fragP->tc_frag_data.fill;
+          prop_rec_link->record.type = RECORD_ALIGN_AND_FILL;
+        }
+      else
+        prop_rec_link->record.type = RECORD_ALIGN;
+      prop_rec_link->record.data.align.bytes = fragP->tc_frag_data.alignment;
+    }
+
+  return prop_rec_link;
+}
+
+/* Build a list of AVR_PROPERTY_RECORD_LINK structures for section SEC, and
+   merged them onto the list pointed to by NEXT_PTR.  Return a pointer to
+   the last list item created.  */
+
+static struct avr_property_record_link **
+append_records_for_section (segT sec,
+                            struct avr_property_record_link **next_ptr)
+{
+  segment_info_type *seginfo = seg_info (sec);
+  fragS *fragP;
+
+  if (seginfo && seginfo->frchainP)
+    {
+      for (fragP = seginfo->frchainP->frch_root;
+           fragP;
+           fragP = fragP->fr_next)
+	{
+          if (fragP->tc_frag_data.is_align
+              || fragP->tc_frag_data.is_org)
+            {
+              /* Create a single new entry.  */
+              struct avr_property_record_link *new_link
+                = create_record_for_frag (sec, fragP);
+
+              *next_ptr = new_link;
+              next_ptr = &new_link->next;
+            }
+	}
+    }
+
+  return next_ptr;
+}
+
+/* Create the AVR property section and fill it with records of .org and
+   .align directives that were used.  The section is only created if it
+   will actually have any content.  */
+
+static void
+avr_create_and_fill_property_section (void)
+{
+  segT *seclist;
+  asection *prop_sec;
+  struct avr_property_record_link *r_list, **next_ptr;
+  char *frag_ptr, *frag_base;
+  bfd_size_type sec_size;
+  struct avr_property_record_link *rec;
+  unsigned int record_count;
+
+  /* First walk over all sections.  For sections on which linker
+     relaxation could be applied, extend the record list.  The record list
+     holds information that the linker will need to know.  */
+
+  prop_sec = NULL;
+  r_list = NULL;
+  next_ptr = &r_list;
+  for (seclist = &stdoutput->sections;
+       seclist && *seclist;
+       seclist = &(*seclist)->next)
+    {
+      segT sec = *seclist;
+
+      if (exclude_section_from_property_tables (sec))
+	continue;
+
+      next_ptr = append_records_for_section (sec, next_ptr);
+    }
+
+  /* Create property section and ensure the size is correct.  We've already
+     passed the point where gas could size this for us.  */
+  sec_size = AVR_PROPERTY_SECTION_HEADER_SIZE;
+  record_count = 0;
+  for (rec = r_list; rec != NULL; rec = rec->next)
+    {
+      record_count++;
+      sec_size += avr_record_size (&rec->record);
+    }
+
+  if (record_count == 0)
+    return;
+
+  prop_sec = avr_create_property_section ();
+  bfd_set_section_size (stdoutput, prop_sec, sec_size);
+
+  subseg_set (prop_sec, 0);
+  frag_base = frag_more (sec_size);
+
+  frag_ptr =
+    avr_output_property_section_header (frag_base, record_count);
+
+  for (rec = r_list; rec != NULL; rec = rec->next)
+    frag_ptr = avr_output_property_record (frag_base, frag_ptr, &rec->record);
+
+  frag_wane (frag_now);
+  frag_new (0);
+  frag_wane (frag_now);
+}
+
+/* We're using this hook to build up the AVR property section.  It's called
+   late in the assembly process which suits our needs.  */
+void
+avr_post_relax_hook (void)
+{
+  avr_create_and_fill_property_section ();
 }

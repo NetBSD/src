@@ -1,6 +1,5 @@
 /* BFD back-end for TMS320C54X coff binaries.
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -322,15 +321,6 @@ ticoff_bfd_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 #define coff_bfd_is_local_label_name ticoff_bfd_is_local_label_name
-
-/* Clear the r_reserved field in relocs.  */
-#define SWAP_OUT_RELOC_EXTRA(abfd,src,dst) \
-  do \
-    { \
-      dst->r_reserved[0] = 0; \
-      dst->r_reserved[1] = 0; \
-    } \
-  while (0)
 
 /* Customize coffcode.h; the default coff_ functions are set up to use COFF2;
    coff_bad_format_hook uses BADMAG, so set that for COFF2.  The COFF1

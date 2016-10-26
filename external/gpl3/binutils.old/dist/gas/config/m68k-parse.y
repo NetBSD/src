@@ -1,6 +1,5 @@
 /* m68k.y -- bison grammar for m68k operand parsing
-   Copyright 1995, 1996, 1997, 1998, 2001, 2003, 2004, 2005, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    Written by Ken Raeburn and Ian Lance Taylor, Cygnus Support
 
    This file is part of GAS, the GNU Assembler.
@@ -45,13 +44,13 @@
 #define	yylval	m68k_lval
 #define	yychar	m68k_char
 #define	yydebug	m68k_debug
-#define	yypact	m68k_pact	
-#define	yyr1	m68k_r1			
-#define	yyr2	m68k_r2			
-#define	yydef	m68k_def		
-#define	yychk	m68k_chk		
-#define	yypgo	m68k_pgo		
-#define	yyact	m68k_act		
+#define	yypact	m68k_pact
+#define	yyr1	m68k_r1
+#define	yyr2	m68k_r2
+#define	yydef	m68k_def
+#define	yychk	m68k_chk
+#define	yypgo	m68k_pgo
+#define	yyact	m68k_act
 #define	yyexca	m68k_exca
 #define yyerrflag m68k_errflag
 #define yynerrs	m68k_nerrs
@@ -686,8 +685,7 @@ static char *strorig;
    *CCP.  Otherwise don't change *CCP, and return 0.  */
 
 static enum m68k_register
-m68k_reg_parse (ccp)
-     register char **ccp;
+m68k_reg_parse (char **ccp)
 {
   char *start = *ccp;
   char c;
@@ -749,7 +747,7 @@ m68k_reg_parse (ccp)
 /* The lexer.  */
 
 static int
-yylex ()
+yylex (void)
 {
   enum m68k_register reg;
   char *s;
@@ -1044,12 +1042,12 @@ yylex ()
 	  {
 	    yylval.exp.pic_reloc = pic_tls_ie;
 	    tail += 6;
-	  }	
+	  }
 	else if (strncmp (cp - 6, "@TLSLE", 6) == 0)
 	  {
 	    yylval.exp.pic_reloc = pic_tls_le;
 	    tail += 6;
-	  }	
+	  }
       }
     else if (cp - 4 > str && cp[-4] == '@')
       {
@@ -1092,9 +1090,7 @@ yylex ()
    from outside this file.  */
 
 int
-m68k_ip_op (s, oparg)
-     char *s;
-     struct m68k_op *oparg;
+m68k_ip_op (char *s, struct m68k_op *oparg)
 {
   memset (oparg, 0, sizeof *oparg);
   oparg->error = NULL;
@@ -1112,8 +1108,7 @@ m68k_ip_op (s, oparg)
 /* The error handler.  */
 
 static void
-yyerror (s)
-     const char *s;
+yyerror (const char *s)
 {
   op->error = s;
 }

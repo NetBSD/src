@@ -1,7 +1,5 @@
 /* ldemul.c -- clearing house for ld emulation states
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2005, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -207,7 +205,7 @@ void
 after_parse_default (void)
 {
   if (entry_symbol.name != NULL
-      && (link_info.executable || entry_from_cmdline))
+      && (bfd_link_executable (&link_info) || entry_from_cmdline))
     {
       bfd_boolean is_vma = FALSE;
 
@@ -237,14 +235,14 @@ after_allocation_default (void)
 void
 before_allocation_default (void)
 {
-  if (!link_info.relocatable)
+  if (!bfd_link_relocatable (&link_info))
     strip_excluded_output_sections ();
 }
 
 void
 finish_default (void)
 {
-  if (!link_info.relocatable)
+  if (!bfd_link_relocatable (&link_info))
     _bfd_fix_excluded_sec_syms (link_info.output_bfd, &link_info);
 }
 
@@ -349,4 +347,11 @@ ldemul_new_vers_pattern (struct bfd_elf_version_expr *entry)
   if (ld_emulation->new_vers_pattern)
     entry = (*ld_emulation->new_vers_pattern) (entry);
   return entry;
+}
+
+void
+ldemul_extra_map_file_text (bfd *abfd, struct bfd_link_info *info, FILE *mapf)
+{
+  if (ld_emulation->extra_map_file_text)
+    ld_emulation->extra_map_file_text (abfd, info, mapf);
 }

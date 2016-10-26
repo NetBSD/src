@@ -7,9 +7,15 @@ AC_DEFUN([_GCC_PICFLAG], [
 case "${$2}" in
     # PIC is the default on some targets or must not be used.
     *-*-darwin*)
-	# PIC is the default on this platform
-	# Common symbols not allowed in MH_DYLIB files
-	$1=-fno-common
+	# For darwin, common symbols are not allowed in MH_DYLIB files
+	case "${CFLAGS}" in
+	  # If we are using a compiler supporting mdynamic-no-pic
+	  # and the option has been tested as safe to add, then cancel
+	  # it here, since the code generated is incompatible with shared
+	  # libs.
+	  *-mdynamic-no-pic*) $1='-fno-common -mno-dynamic-no-pic' ;;
+	  *) $1=-fno-common ;;
+	esac
 	;;
     alpha*-dec-osf5*)
 	# PIC is the default.
@@ -17,7 +23,9 @@ case "${$2}" in
     hppa*64*-*-hpux*)
 	# PIC is the default for 64-bit PA HP-UX.
 	;;
-    i[[34567]]86-*-cygwin* | i[[34567]]86-*-mingw* | x86_64-*-mingw*)
+    i[[34567]]86-*-cygwin* | x86_64-*-cygwin*)
+	;;
+    i[[34567]]86-*-mingw* | x86_64-*-mingw*)
 	;;
     i[[34567]]86-*-interix[[3-9]]*)
 	# Interix 3.x gcc -fpic/-fPIC options generate broken code.
@@ -46,9 +54,6 @@ case "${$2}" in
     # Some targets support both -fPIC and -fpic, but prefer the latter.
     # FIXME: Why?
     i[[34567]]86-*-* | x86_64-*-*)
-	$1=-fpic
-	;;
-    m68k-*-*)
 	$1=-fpic
 	;;
     # FIXME: Override -fPIC default in libgcc only? 

@@ -1,6 +1,5 @@
 /* SOM object file format.
-   Copyright 1993, 1994, 1995, 1998, 2000, 2004, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

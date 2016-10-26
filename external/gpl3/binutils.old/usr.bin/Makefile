@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2016/01/26 17:27:00 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2016/10/26 17:03:44 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ BINUTILS_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
 .if ${MKBINUTILS} != "no" && exists(${.CURDIR}/common/arch/${BINUTILS_MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/common/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
 
-SSUBDIR+=	gas gprof ld ${G_PROGRAMS:C/-new$//:C/sysdump//:C/srconv//:cxxfilt=c++filt}
+SSUBDIR+=	gas gprof ld ${G_PROGRAMS:C/-new$//:C/sysdump//:C/bfdtest1//:C/bfdtest2//:C/srconv//:cxxfilt=c++filt/}
 SUBDIR+=	common .WAIT ${SSUBDIR:O} # alphabetize
 
 .endif	# MKBINUTILS != no

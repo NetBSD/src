@@ -1,15 +1,12 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2016/01/26 17:27:00 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2016/10/26 17:03:45 christos Exp $
 
-.include <bsd.own.mk>
-
-TOP=		${NETBSDSRCDIR}/external/gpl3/binutils
+CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}
 
 .include "${.CURDIR}/../common/Makefile.inc"
 .include "${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
 
 PROG=		gprof
 SRCS=		${G_gprof_OBJECTS:.o=.c}
-CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}
 
 PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
 PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty

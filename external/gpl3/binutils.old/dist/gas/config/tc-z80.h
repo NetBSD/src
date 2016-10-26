@@ -1,5 +1,5 @@
 /* this is tc-z80.h
-   Copyright 2005, 2006, 2007, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
@@ -55,7 +55,7 @@
 /* Define some functions to be called by generic code.  */
 #define md_end               z80_md_end
 #define md_start_line_hook() { if (z80_start_line_hook ()) continue; }
-#define TC_CONS_FIX_NEW z80_cons_fix_new
+#define TC_CONS_FIX_NEW(f,w,s,e,r)  z80_cons_fix_new ((f), (w), (s), (e))
 
 extern void z80_md_end (void);
 extern int z80_start_line_hook (void);
@@ -102,7 +102,7 @@ extern void z80_cons_fix_new (fragS *, int, int, expressionS *);
    P2VAR to the truncated power of two of sizes up to eight bytes.  */
 #define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR) (P2VAR) = 0
 
-/* It does not make any sense to perform arithmetic on the numbers 
+/* It does not make any sense to perform arithmetic on the numbers
    we use to identify registers.  */
 #define md_register_arithmetic 0
 

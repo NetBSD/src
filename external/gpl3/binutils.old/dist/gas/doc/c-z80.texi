@@ -1,4 +1,4 @@
-@c Copyright 2011 Free Software Foundation, Inc.
+@c Copyright (C) 2011-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -70,14 +70,14 @@ for the R800 processor, as far as they exist.
 The assembler syntax closely follows the 'Z80 family CPU User Manual' by
 Zilog.
 In expressions a single @samp{=} may be used as ``is equal to''
-comparison operator.  
+comparison operator.
 
 Suffices can be used to indicate the radix of integer constants;
 @samp{H} or @samp{h} for hexadecimal, @samp{D} or @samp{d} for decimal,
 @samp{Q}, @samp{O}, @samp{q} or @samp{o} for octal, and @samp{B} for
 binary.
 
-The suffix @samp{b} denotes a backreference to local label.  
+The suffix @samp{b} denotes a backreference to local label.
 
 @menu
 * Z80-Chars::                Special Characters
@@ -90,7 +90,7 @@ The suffix @samp{b} denotes a backreference to local label.
 
 @cindex line comment character, Z80
 @cindex Z80 line comment character
-The semicolon @samp{;} is the line comment character; 
+The semicolon @samp{;} is the line comment character;
 
 If a @samp{#} appears as the first character of a line then the whole
 line is treated as a comment, but in this case the line could also be
@@ -111,7 +111,7 @@ and as a symbol denoting the current location counter.
 @cindex character escapes, Z80
 @cindex Z80, \
 A backslash @samp{\} is an ordinary character for the Z80 assembler.
- 
+
 @cindex character constant, Z80
 @cindex single quote, Z80
 @cindex Z80 '
@@ -125,9 +125,9 @@ a string constant.
 @cindex register names, Z80
 
 The registers are referred to with the letters assigned to them by
-Zilog. In addition @command{@value{AS}} recognizes @samp{ixl} and 
+Zilog. In addition @command{@value{AS}} recognizes @samp{ixl} and
 @samp{ixh} as the least and most significant octet in @samp{ix}, and
-similarly @samp{iyl} and  @samp{iyh} as parts of @samp{iy}. 
+similarly @samp{iyl} and  @samp{iyh} as parts of @samp{iy}.
 
 @c The @samp{'} in @samp{ex af,af'} may be omitted.
 
@@ -137,7 +137,7 @@ similarly @samp{iyl} and  @samp{iyh} as parts of @samp{iy}.
 @cindex case sensitivity, Z80
 
 Upper and lower case are equivalent in register names, opcodes,
-condition codes  and assembler directives. 
+condition codes  and assembler directives.
 The case of letters is significant in labels and symbol names. The case
 is also important to distinguish the suffix @samp{b} for a backward reference
 to a local label from the suffix @samp{B} for a number in binary notation.
@@ -152,7 +152,7 @@ Floating-point numbers are not supported.
 @section Z80 Assembler Directives
 
 @command{@value{AS}} for the Z80 supports some additional directives for
-compatibility with other assemblers. 
+compatibility with other assemblers.
 
 @cindex Z80-only directives
 These are the additional directives in @code{@value{AS}} for the Z80:
@@ -161,27 +161,27 @@ These are the additional directives in @code{@value{AS}} for the Z80:
 @item db @var{expression}|@var{string}[,@var{expression}|@var{string}...]
 @itemx defb @var{expression}|@var{string}[,@var{expression}|@var{string}...]
 For each @var{string} the characters are copied to the object file, for
-each other @var{expression} the value is stored in one byte. 
-A warning is issued in case of an overflow. 
+each other @var{expression} the value is stored in one byte.
+A warning is issued in case of an overflow.
 
 @item dw @var{expression}[,@var{expression}...]
 @itemx defw @var{expression}[,@var{expression}...]
 For each @var{expression} the value is stored in two bytes, ignoring
-overflow. 
+overflow.
 
 @item d24 @var{expression}[,@var{expression}...]
 @itemx def24 @var{expression}[,@var{expression}...]
 For each @var{expression} the value is stored in three bytes, ignoring
-overflow. 
+overflow.
 
 @item d32 @var{expression}[,@var{expression}...]
 @itemx def32 @var{expression}[,@var{expression}...]
 For each @var{expression} the value is stored in four bytes, ignoring
-overflow. 
+overflow.
 
 @item ds @var{count}[, @var{value}]
 @itemx defs @var{count}[, @var{value}]
-@c Synonyms for @code{ds.b}, 
+@c Synonyms for @code{ds.b},
 @c which should have been described elsewhere
 Fill @var{count} bytes in the object file with @var{value}, if
 @var{value} is omitted it defaults to zero.
@@ -193,10 +193,10 @@ These directives set the value of @var{symbol} to @var{expression}. If
 Symbols defined with @code{equ} are not protected from redefinition.
 
 @item set
-This is a normal instruction on Z80, and not an assembler directive. 
+This is a normal instruction on Z80, and not an assembler directive.
 
 @item psect @var{name}
-A synonym for @xref{Section}, no second argument should be given. 
+A synonym for @xref{Section}, no second argument should be given.
 @ignore
 
 The following attributes will possibly be recognized in the future
@@ -224,7 +224,7 @@ The section is marked as read only.
 @node Z80 Opcodes
 @section Opcodes
 In line with common practice, Z80 mnemonics are used for both the Z80 and
-the R800. 
+the R800.
 
 In many instructions it is possible to use one of the half index
 registers (@samp{ixl},@samp{ixh},@samp{iyl},@samp{iyh}) in stead of an
@@ -245,7 +245,7 @@ be any operand that is valid for @samp{sla}. One can use @samp{sll} as a
 synonym for @samp{sli}.
 
 @item @var{op} (ix+@var{d}), @var{r}
-This is equivalent to 
+This is equivalent to
 
 @example
 ld @var{r}, (ix+@var{d})

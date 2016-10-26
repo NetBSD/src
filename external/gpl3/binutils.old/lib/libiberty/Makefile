@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2016/01/26 17:27:00 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2016/10/26 17:03:44 christos Exp $
 
 NOLINT=		# defined
 NOPROFILE=	# defined
@@ -6,7 +6,7 @@ NOPIC=		# defined
 NOLINKLIB=	# defined
 NOCLANGERROR=	# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 LIB=		iberty
 
@@ -18,8 +18,6 @@ COPTS.argv.c = -Wno-stack-protector
 COPTS.cp-demangle.c = -Wno-stack-protector
 COPTS.make-relative-prefix.c = -Wno-stack-protector
 COPTS.regex.c = -Wno-stack-protector
-
-DIST=		${NETBSDSRCDIR}/external/gpl3/binutils/dist
 
 SRCS=		${G_REQUIRED_OFILES:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
 		${G_LIBOBJS:.o=.c} ${G_ALLOCA:.o=.c}

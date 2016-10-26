@@ -1,19 +1,18 @@
 /* Internal format of COFF object file data structures, for GNU BFD.
    This file is part of BFD, the Binary File Descriptor library.
-   
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004. 2005, 2006, 2007, 2009,
-   2010  Free Software Foundation, Inc.
+
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
@@ -56,7 +55,7 @@ struct internal_extra_pe_filehdr
   unsigned short e_res2[10];	/* Reserved words, all 0x0 */
   bfd_vma  e_lfanew;		/* File address of new exe header, 0x80 */
   unsigned long dos_message[16]; /* text which always follows dos header */
-  bfd_vma  nt_signature;   	/* required NT signature, 0x4550 */ 
+  bfd_vma  nt_signature;   	/* required NT signature, 0x4550 */
 };
 
 #define GO32_STUBSIZE 2048
@@ -67,14 +66,14 @@ struct internal_filehdr
 
   /* coff-stgo32 EXE stub header before BFD tdata has been allocated.
      Its data is kept in INTERNAL_FILEHDR.GO32STUB afterwards.
-     
+
      F_GO32STUB is set iff go32stub contains a valid data.  Artifical headers
      created in BFD have no pre-set go32stub.  */
   char go32stub[GO32_STUBSIZE];
 
   /* Standard coff internal info.  */
   unsigned short f_magic;	/* magic number			*/
-  unsigned short f_nscns;	/* number of sections		*/
+  unsigned int   f_nscns;	/* number of sections		*/
   long f_timdat;		/* time & date stamp		*/
   bfd_vma f_symptr;		/* file pointer to symtab	*/
   long f_nsyms;			/* number of symtab entries	*/
@@ -110,7 +109,7 @@ struct internal_filehdr
 #define F_GO32STUB      (0x4000)
 
 /* Extra structure which is used in the optional header.  */
-typedef struct _IMAGE_DATA_DIRECTORY 
+typedef struct _IMAGE_DATA_DIRECTORY
 {
   bfd_vma VirtualAddress;
   long    Size;
@@ -133,6 +132,44 @@ typedef struct _IMAGE_DATA_DIRECTORY
 /* DataDirectory[15] is currently reserved, so no define. */
 #define IMAGE_NUMBEROF_DIRECTORY_ENTRIES  16
 
+/* Extra structure used in debug directory.  */
+struct internal_IMAGE_DEBUG_DIRECTORY
+{
+  unsigned long  Characteristics;
+  unsigned long  TimeDateStamp;
+  unsigned short MajorVersion;
+  unsigned short MinorVersion;
+  unsigned long  Type;
+  unsigned long  SizeOfData;
+  unsigned long  AddressOfRawData;
+  unsigned long  PointerToRawData;
+};
+
+#define PE_IMAGE_DEBUG_TYPE_UNKNOWN          0
+#define PE_IMAGE_DEBUG_TYPE_COFF             1
+#define PE_IMAGE_DEBUG_TYPE_CODEVIEW         2
+#define PE_IMAGE_DEBUG_TYPE_FPO              3
+#define PE_IMAGE_DEBUG_TYPE_MISC             4
+#define PE_IMAGE_DEBUG_TYPE_EXCEPTION        5
+#define PE_IMAGE_DEBUG_TYPE_FIXUP            6
+#define PE_IMAGE_DEBUG_TYPE_OMAP_TO_SRC      7
+#define PE_IMAGE_DEBUG_TYPE_OMAP_FROM_SRC    8
+#define PE_IMAGE_DEBUG_TYPE_BORLAND          9
+#define PE_IMAGE_DEBUG_TYPE_RESERVED10       10
+#define PE_IMAGE_DEBUG_TYPE_CLSID            11
+
+/* Extra structure for a codeview debug record */
+#define CV_INFO_SIGNATURE_LENGTH 16
+
+typedef struct _CODEVIEW_INFO
+{
+  unsigned long CVSignature;
+  char          Signature[CV_INFO_SIGNATURE_LENGTH];
+  unsigned int  SignatureLength;
+  unsigned long Age;
+  // char PdbFileName[];
+} CODEVIEW_INFO;
+
 /* Default image base for NT.  */
 #define NT_EXE_IMAGE_BASE 0x400000
 #define NT_DLL_IMAGE_BASE 0x10000000
@@ -148,22 +185,22 @@ typedef struct _IMAGE_DATA_DIRECTORY
 # define PE_DEF_FILE_ALIGNMENT 0x200
 #endif
 
-struct internal_extra_pe_aouthdr 
+struct internal_extra_pe_aouthdr
 {
   /* FIXME: The following entries are in AOUTHDR.  But they aren't
      available internally in bfd.  We add them here so that objdump
      can dump them.  */
-  /* The state of the image file  */
+  /* The state of the image file.  */
   short Magic;
-  /* Linker major version number */
+  /* Linker major version number.  */
   char MajorLinkerVersion;
-  /* Linker minor version number  */
+  /* Linker minor version number.  */
   char MinorLinkerVersion;	
-  /* Total size of all code sections  */
+  /* Total size of all code sections.  */
   long SizeOfCode;
-  /* Total size of all initialized data sections  */
+  /* Total size of all initialized data sections.  */
   long SizeOfInitializedData;
-  /* Total size of all uninitialized data sections  */
+  /* Total size of all uninitialized data sections.  */
   long SizeOfUninitializedData;
   /* Address of entry point relative to image base.  */
   bfd_vma AddressOfEntryPoint;
@@ -171,40 +208,40 @@ struct internal_extra_pe_aouthdr
   bfd_vma BaseOfCode;
   /* Address of the first data section relative to image base.  */
   bfd_vma BaseOfData;
- 
-  /* PE stuff  */
-  bfd_vma ImageBase;		/* address of specific location in memory that
-				   file is located, NT default 0x10000 */
 
-  bfd_vma SectionAlignment;	/* section alignment default 0x1000 */
-  bfd_vma FileAlignment;	/* file alignment default 0x200 */
-  short   MajorOperatingSystemVersion; /* minimum version of the operating */
-  short   MinorOperatingSystemVersion; /* system req'd for exe, default to 1*/
-  short   MajorImageVersion;	/* user defineable field to store version of */
-  short   MinorImageVersion;	/* exe or dll being created, default to 0 */ 
-  short   MajorSubsystemVersion; /* minimum subsystem version required to */
-  short   MinorSubsystemVersion; /* run exe; default to 3.1 */
-  long    Reserved1;		/* seems to be 0 */
-  long    SizeOfImage;		/* size of memory to allocate for prog */
-  long    SizeOfHeaders;	/* size of PE header and section table */
-  long    CheckSum;		/* set to 0 */
+  /* PE stuff  */
+  bfd_vma ImageBase;		/* Address of specific location in memory that
+				    file is located, NT default 0x10000.  */
+
+  bfd_vma SectionAlignment;	/* Section alignment default 0x1000.  */
+  bfd_vma FileAlignment;	/* File alignment default 0x200.  */
+  short   MajorOperatingSystemVersion; /* Minimum version of the operating.  */
+  short   MinorOperatingSystemVersion; /* System req'd for exe, default to 1.  */
+  short   MajorImageVersion;	/* User defineable field to store version of */
+  short   MinorImageVersion;	/*  exe or dll being created, default to 0.  */ 
+  short   MajorSubsystemVersion; /* Minimum subsystem version required to */
+  short   MinorSubsystemVersion; /*  run exe; default to 3.1.  */
+  long    Reserved1;		/* Seems to be 0.  */
+  long    SizeOfImage;		/* Size of memory to allocate for prog.  */
+  long    SizeOfHeaders;	/* Size of PE header and section table.  */
+  long    CheckSum;		/* Set to 0.  */
   short   Subsystem;	
 
-  /* type of subsystem exe uses for user interface,
+  /* Type of subsystem exe uses for user interface,
      possible values:
      1 - NATIVE   Doesn't require a subsystem
      2 - WINDOWS_GUI runs in Windows GUI subsystem
      3 - WINDOWS_CUI runs in Windows char sub. (console app)
      5 - OS2_CUI runs in OS/2 character subsystem
-     7 - POSIX_CUI runs in Posix character subsystem */
-  unsigned short DllCharacteristics; /* flags for DLL init  */
-  bfd_vma SizeOfStackReserve;	/* amount of memory to reserve  */
-  bfd_vma SizeOfStackCommit;	/* amount of memory initially committed for 
-				   initial thread's stack, default is 0x1000 */
-  bfd_vma SizeOfHeapReserve;	/* amount of virtual memory to reserve and */
-  bfd_vma SizeOfHeapCommit;	/* commit, don't know what to defaut it to */
-  long    LoaderFlags;		/* can probably set to 0 */
-  long    NumberOfRvaAndSizes;	/* number of entries in next entry, 16 */
+     7 - POSIX_CUI runs in Posix character subsystem.  */
+  unsigned short DllCharacteristics; /* flags for DLL init.  */
+  bfd_vma SizeOfStackReserve;	/* Amount of memory to reserve.  */
+  bfd_vma SizeOfStackCommit;	/* Amount of memory initially committed for
+				    initial thread's stack, default is 0x1000.  */
+  bfd_vma SizeOfHeapReserve;	/* Amount of virtual memory to reserve and */
+  bfd_vma SizeOfHeapCommit;	/*  commit, don't know what to defaut it to.  */
+  long    LoaderFlags;		/* Can probably set to 0.  */
+  long    NumberOfRvaAndSizes;	/* Number of entries in next entry, 16.  */
   IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 };
 
@@ -343,6 +380,8 @@ struct internal_aouthdr
 #define C_FUN           (0x8e)
 #define C_BSTAT         (0x8f)
 #define C_ESTAT         (0x90)
+#define C_GTLS          (0x97)
+#define C_STTLS         (0x98)
 
 /* Storage classes for Thumb symbols */
 #define C_THUMBEXT      (128 + C_EXT)		/* 130 */
@@ -549,7 +588,11 @@ union internal_auxent
 
   union
   {
-    char x_fname[FILNMLEN];
+    /* PR 17754: We use to FILNMLEN for the size of the x_fname
+       array, but that cause problems as PE targets use a larger
+       value.  We cannot use their definition of EFILNMLEN as this
+       header can be used without including any PE headers.  */
+    char x_fname[20];
     struct
     {
       long x_zeroes;

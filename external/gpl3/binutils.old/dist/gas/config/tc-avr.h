@@ -1,6 +1,5 @@
 /* This file is tc-avr.h
-   Copyright 1999, 2000, 2001, 2002, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    Contributed by Denis Chertykov <denisc@overta.ru>
 
@@ -46,21 +45,43 @@
    nonstandard escape sequences in a string.  */
 #define ONLY_STANDARD_ESCAPES
 
+#define DIFF_EXPR_OK    /* .-foo gets turned into PC relative relocs */
+
 /* GAS will call this function for any expression that can not be
    recognized.  When the function is called, `input_line_pointer'
    will point to the start of the expression.  */
 #define md_operand(x)
 
+typedef struct
+{
+  /* Name of the expression modifier allowed with .byte, .word, etc.  */
+  const char *name;
+
+  /* Only allowed with n bytes of data.  */
+  int nbytes;
+
+  /* Associated RELOC.  */
+  bfd_reloc_code_real_type reloc;
+
+  /* Part of the error message.  */
+  const char *error;
+} exp_mod_data_t;
+
+extern const exp_mod_data_t exp_mod_data[];
+#define TC_PARSE_CONS_RETURN_TYPE const exp_mod_data_t *
+#define TC_PARSE_CONS_RETURN_NONE exp_mod_data
+
 /* You may define this macro to parse an expression used in a data
    allocation pseudo-op such as `.word'.  You can use this to
    recognize relocation directives that may appear in such directives.  */
 #define TC_PARSE_CONS_EXPRESSION(EXPR,N) avr_parse_cons_expression (EXPR, N)
-extern void avr_parse_cons_expression (expressionS *, int);
+extern const exp_mod_data_t *avr_parse_cons_expression (expressionS *, int);
 
 /* You may define this macro to generate a fixup for a data
    allocation pseudo-op.  */
-#define TC_CONS_FIX_NEW(FRAG,WHERE,N,EXP) avr_cons_fix_new (FRAG, WHERE, N, EXP)
-extern void avr_cons_fix_new (fragS *,int, int, expressionS *);
+#define TC_CONS_FIX_NEW avr_cons_fix_new
+extern void avr_cons_fix_new (fragS *,int, int, expressionS *,
+			      const exp_mod_data_t *);
 
 /* This should just call either `number_to_chars_bigendian' or
    `number_to_chars_littleendian', whichever is appropriate.  On
@@ -92,6 +113,18 @@ extern void avr_cons_fix_new (fragS *,int, int, expressionS *);
 /* No shared lib support, so we don't need to ensure externally
    visible symbols can be overridden.  */
 #define EXTERN_FORCE_RELOC 0
+
+/* If defined, this macro allows control over whether fixups for a
+   given section will be processed when the linkrelax variable is
+   set. Define it to zero and handle things in md_apply_fix instead.*/
+#define TC_LINKRELAX_FIXUP(SEG) 0
+
+/* If this macro returns non-zero, it guarantees that a relocation will be emitted
+   even when the value can be resolved locally. Do that if linkrelax is turned on */
+#define TC_FORCE_RELOCATION(fix)	avr_force_relocation (fix)
+#define TC_FORCE_RELOCATION_SUB_SAME(fix, seg) \
+  (! SEG_NORMAL (seg) || avr_force_relocation (fix))
+extern int avr_force_relocation (struct fix *);
 
 /* Values passed to md_apply_fix don't include the symbol value.  */
 #define MD_APPLY_SYM_VALUE(FIX) 0
@@ -125,9 +158,9 @@ extern long md_pcrel_from_section (struct fix *, segT);
 /* We don't want gas to fixup the following program memory related relocations.
    We will need them in case that we want to do linker relaxation.
    We could in principle keep these fixups in gas when not relaxing.
-   However, there is no serious performance penilty when making the linker
+   However, there is no serious performance penalty when making the linker
    make the fixup work.  Check also that fx_addsy is not NULL, in order to make
-   sure that the fixup refers to some sort of lable.  */
+   sure that the fixup refers to some sort of label.  */
 #define TC_VALIDATE_FIX(FIXP,SEG,SKIP)                       \
   if (   (FIXP->fx_r_type == BFD_RELOC_AVR_7_PCREL           \
        || FIXP->fx_r_type == BFD_RELOC_AVR_13_PCREL          \
@@ -139,11 +172,22 @@ extern long md_pcrel_from_section (struct fix *, segT);
        || FIXP->fx_r_type == BFD_RELOC_AVR_LO8_LDI_PM_NEG    \
        || FIXP->fx_r_type == BFD_RELOC_AVR_HI8_LDI_PM_NEG    \
        || FIXP->fx_r_type == BFD_RELOC_AVR_HH8_LDI_PM_NEG    \
+       || FIXP->fx_r_type == BFD_RELOC_AVR_8_LO              \
+       || FIXP->fx_r_type == BFD_RELOC_AVR_8_HI              \
+       || FIXP->fx_r_type == BFD_RELOC_AVR_8_HLO             \
        || FIXP->fx_r_type == BFD_RELOC_AVR_16_PM)            \
-      && (FIXP->fx_addsy))			             \
-    {                                                        \
-      goto SKIP;                                             \
-   }
+      && FIXP->fx_addsy != NULL				     \
+      && FIXP->fx_subsy == NULL)			     \
+    {							     \
+      symbol_mark_used_in_reloc (FIXP->fx_addsy);	     \
+      goto SKIP;					     \
+    }
+
+/* This macro is evaluated for any fixup with a fx_subsy that
+   fixup_segment cannot reduce to a number.  If the macro returns
+   false an error will be reported. */
+#define TC_VALIDATE_FIX_SUB(fix, seg)   avr_validate_fix_sub (fix)
+extern int avr_validate_fix_sub (struct fix *);
 
 /* This target is buggy, and sets fix size too large.  */
 #define TC_FX_SIZE_SLACK(FIX) 2
@@ -166,3 +210,28 @@ extern long md_pcrel_from_section (struct fix *, segT);
 /* Define a hook to setup initial CFI state.  */
 extern void tc_cfi_frame_initial_instructions (void);
 #define tc_cfi_frame_initial_instructions tc_cfi_frame_initial_instructions
+
+/* The difference between same-section symbols may be affected by linker
+   relaxation, so do not resolve such expressions in the assembler.  */
+#define md_allow_local_subtract(l,r,s) avr_allow_local_subtract (l, r, s)
+extern bfd_boolean avr_allow_local_subtract (expressionS *, expressionS *, segT);
+
+#define elf_tc_final_processing 	avr_elf_final_processing
+extern void avr_elf_final_processing (void);
+
+#define md_post_relax_hook avr_post_relax_hook ()
+extern void avr_post_relax_hook (void);
+
+#define HANDLE_ALIGN(fragP) avr_handle_align (fragP)
+extern void avr_handle_align (fragS *fragP);
+
+struct avr_frag_data
+{
+  unsigned is_org : 1;
+  unsigned is_align : 1;
+  unsigned has_fill : 1;
+
+  char fill;
+  offsetT alignment;
+};
+#define TC_FRAG_TYPE			struct avr_frag_data

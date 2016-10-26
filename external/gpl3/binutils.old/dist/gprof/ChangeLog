@@ -1,40 +1,57 @@
-2012-09-11  Molly Heidecker <tworoses1@gmail.com>
+2016-06-29  Tristan Gingold  <gingold@adacore.com>
 
-	PR gprof/13836
-	* fsf_callg_bl.m: Fix typo.
-
-2012-08-09  Nick Clifton  <nickc@redhat.com>
-
-	* po/vi.po: Updated Vietnamese translation.
-
-2012-08-07  Nick Clifton  <nickc@redhat.com>
-
-	* po/ja.po: Updated Japanese translation.
-
-2012-07-30  Nick Clifton  <nickc@redhat.com>
-
-	* po/gprof.pot: Updated template.
-	* po/bg.po: Updated Bulgarian translation.
-	* po/es.po: Updated Spanish translation.
-
-2012-06-02  Andreas Schwab  <schwab@linux-m68k.org>
-
-	* Makefile.am (TEXINFO_TEX): Remove $(top_srcdir) prefix.
-	* Makefile.in: Regenerate.
-
-2012-03-06  Tristan Gingold  <gingold@adacore.com>
-
-	* corefile.c (core_create_function_syms): Do not call bsearch if
-	symbol_map_count is 0.
-
-2012-02-06  Nick Clifton  <nickc@redhat.com>
-
-	* po/sr.po: New Serbian translation.
-	* configure.in (ALL_LINGUAS): Add sr.
 	* configure: Regenerate.
 
-For older changes see ChangeLog-2011
+2016-01-25  Tristan Gingold  <gingold@adacore.com>
+
+	* configure: Regenerate.
+
+2016-01-25  Tristan Gingold  <gingold@adacore.com>
+
+	* configure: Regenerate.
+
+2015-11-13  Tristan Gingold  <gingold@adacore.com>
+
+	* configure: Regenerate.
+
+2015-11-13  Tristan Gingold  <gingold@adacore.com>
+
+	* configure: Regenerate.
+
+2015-08-12  Nick Clifton  <nickc@redhat.com>
+
+	* po/sv.po: Updated Swedish translation.
+
+2015-07-27  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure: Regenerated.
+
+2015-07-24  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* alpha.c (OP_Jxx): Add 'U' suffix to make it unsigned.
+	(OP_BSR): Likewise.
+	(Jxx_FUNC_JMP): Likewise.
+	(Jxx_FUNC_JSR): Likewise.
+	(Jxx_FUNC_RET): Likewise.
+	(Jxx_FUNC_JSR_COROUTINE): Likewise.
+	(alpha_find_call): Replace 0x3f with 0x3fU.
+
+2015-04-29  Nick Clifton  <nickc@redhat.com>
+
+	* po/da.po: Update Danish translation.
+
+2015-01-01  Alan Modra  <amodra@gmail.com>
+
+	Update year range in copyright notice of all files.
+
+For older changes see ChangeLog-2014
 
+Copyright (C) 2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

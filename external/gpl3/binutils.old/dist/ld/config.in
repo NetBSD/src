@@ -1,4 +1,4 @@
-/* config.in.  Generated from configure.in by autoheader.  */
+/* config.in.  Generated from configure.ac by autoheader.  */
 
 /* Check that config.h is #included before system headers
    (this works only for glibc, but that should be enough).  */
@@ -6,6 +6,9 @@
 #  error config.h must be #included before system headers
 #endif
 #define __CONFIG_H__ 1
+
+/* Define if you want compressed debug sections by default. */
+#undef DEFAULT_FLAG_COMPRESS_DEBUG
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -47,23 +50,17 @@
    */
 #undef HAVE_DIRENT_H
 
-/* Define to 1 if you have the `dlclose' function. */
-#undef HAVE_DLCLOSE
-
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
-
-/* Define to 1 if you have the `dlopen' function. */
-#undef HAVE_DLOPEN
-
-/* Define to 1 if you have the `dlsym' function. */
-#undef HAVE_DLSYM
 
 /* Define to 1 if you have the <elf-hints.h> header file. */
 #undef HAVE_ELF_HINTS_H
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the `getpagesize' function. */
+#undef HAVE_GETPAGESIZE
 
 /* Define to 1 if you have the `glob' function. */
 #undef HAVE_GLOB
@@ -91,6 +88,9 @@
 
 /* Define to 1 if you have the `mkstemp' function. */
 #undef HAVE_MKSTEMP
+
+/* Define to 1 if you have a working `mmap' system call. */
+#undef HAVE_MMAP
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
@@ -150,9 +150,6 @@
 
 /* Define to 1 if you have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
-
-/* Define to 1 if you have the <zlib.h> header file. */
-#undef HAVE_ZLIB_H
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */

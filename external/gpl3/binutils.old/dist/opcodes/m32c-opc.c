@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2010 Free Software Foundation, Inc.
+Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -35,19 +35,19 @@ static unsigned int
 m32c_asm_hash (const char *mnem)
 {
   unsigned int h;
-  
+
   /* The length of the mnemonic for the Jcnd insns is 1.  Hash jsri.  */
   if (mnem[0] == 'j' && mnem[1] != 's')
     return 'j';
-  
+
   /* Don't hash scCND  */
   if (mnem[0] == 's' && mnem[1] == 'c')
     return 's';
-  
+
   /* Don't hash bmCND  */
   if (mnem[0] == 'b' && mnem[1] == 'm')
     return 'b';
-  
+
   for (h = 0; *mnem && *mnem != ' ' && *mnem != ':'; ++mnem)
     h += *mnem;
   return h % CGEN_ASM_HASH_SIZE;

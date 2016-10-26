@@ -1,10 +1,22 @@
 # Linker script for Itanium VMS systems.
 # Tristan Gingold <gingold@adacore.com>.
+#
+# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# 
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.
 
 PAGESIZE=0x10000
 BLOCKSIZE=0x200
 
 cat <<EOF
+/* Copyright (C) 2014-2015 Free Software Foundation, Inc.
+
+   Copying and distribution of this script, with or without modification,
+   are permitted in any medium without royalty provided the copyright
+   notice and this notice are preserved.  */
+
 OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 ${LIB_SEARCH_DIRS}
 ENTRY(__entry)
@@ -16,14 +28,14 @@ SECTIONS
 
   \$DATA\$ ALIGN (${BLOCKSIZE}) : {
     *(\$DATA\$ .data .data.*)
-    *(\$BSS\$ .bss)
+    *(\$BSS\$ .bss .bss.*)
   }
 
   /* Code segment.  Note: name must be \$CODE\$ */
   ${RELOCATING+. = ALIGN (${PAGESIZE});}
 
   \$CODE\$ ALIGN (${BLOCKSIZE}) : {
-    *(\$CODE\$ .text)
+    *(\$CODE\$ .text .text.*)
   }
   .plt ALIGN (8) : {
     *(.plt)
@@ -35,7 +47,7 @@ SECTIONS
   /* RO initialized data.  */
   \$LITERAL\$ ALIGN (${BLOCKSIZE}) : {
     *(\$LITERAL\$)
-    *(\$READONLY\$ .rodata)
+    *(\$READONLY\$ .rodata .rodata.*)
     *(.jcr)
     *(.ctors)
     *(.dtors)
@@ -53,7 +65,7 @@ SECTIONS
   ${RELOCATING+. = ALIGN (${PAGESIZE});}
 
   .srodata : {
-    *(.srodata)
+    *(.srodata .srodata.*)
   }
   .got ALIGN (8) : {
     *(.got)
@@ -71,7 +83,7 @@ SECTIONS
 
   \$RW_SHORT\$ ALIGN (${BLOCKSIZE}) : {
     *(.sdata .sdata.*)
-    *(.sbss)
+    *(.sbss .sbss.*)
   }
 
   ${RELOCATING+. = ALIGN (${PAGESIZE});}
@@ -104,29 +116,13 @@ SECTIONS
   .gnu.version_r : { *(.gnu.version_r) }
   .rela.IA_64.pltoff : { *(.rela.IA_64.pltoff) }
 
-  /* DWARF 2 */
-  .debug_info     0 : { *(.debug_info${RELOCATING+ .gnu.linkonce.wi.*}) }
-  .debug_abbrev   0 : { *(.debug_abbrev) }
-  .debug_line     0 : { *(.debug_line) }
-  .debug_frame    0 : { *(.debug_frame) }
-  .debug_str      0 : { *(.debug_str) }
-  .debug_loc      0 : { *(.debug_loc) }
-  .debug_macinfo  0 : { *(.debug_macinfo) }
-  .debug_aranges  0 : { *(.debug_aranges) }
-  .debug_pubnames 0 : { *(.debug_pubnames) }
-  .trace_info     0 : { *(.trace_info) }
-  .trace_abbrev   0 : { *(.trace_abbrev) }
-  .trace_aranges  0 : { *(.trace_aranges) }
+EOF
 
-  /* DWARF 3 */
-  .debug_pubtypes 0 : { *(.debug_pubtypes) }
-  .debug_ranges   0 : { *(.debug_ranges) }
+. $srcdir/scripttempl/DWARF.sc
 
-  /* DWARF Extension.  */
-  .debug_macro    0 : { *(.debug_macro) } 
-  
+cat <<EOF  
   .note : { *(.vms.note) }
 
-  /DISCARD/ : { *(.note) }
+  /DISCARD/ : { *(.note) *(.vms_display_name_info) }
 }
 EOF

@@ -38,7 +38,7 @@
 	fields.
 	(dtab): Stop compile time warnings about unused parameter.
 	(long_options): Stop compile time warning about missing
-	initialiser. 
+	initialiser.
 
 1999-12-10  Nick Clifton  <nickc@cygnus.com>
 
@@ -49,7 +49,7 @@
 	* dlltool.c (mtable): Add epoc-arm specific entry.
 	Make default arm entry pass -mpacs-26 to assembler.
 	(flush_page): Do not mangle null entries.
-	
+
 1999-12-07  H . J . Lu  hjl@valinux.com
 
 	* readelf.c: Fix compile time warnings.  Support more than 999
@@ -100,7 +100,7 @@
 	* dlltool.c (flush_page): Clip short values to prevent warnings
 	from the assembler.
 	Change default mcore machine name to 'mcore-le' and rename
-	big-endian version to 'mcore-be'. 
+	big-endian version to 'mcore-be'.
 
 1999-10-27  Fred Fish  <fnf@cygnus.com>
 
@@ -1900,6 +1900,12 @@ Wed Jan 14 15:29:43 1998  Richard Henderson  <rth@cygnus.com>
 
 For older changes see ChangeLog-9197
 
+Copyright (C) 1998-1999 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

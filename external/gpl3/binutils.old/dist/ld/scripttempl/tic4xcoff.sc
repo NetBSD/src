@@ -1,3 +1,9 @@
+# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# 
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.
+
 # In microcomputer (MC) mode, the vectors are mapped into the on-chip ROM,
 # otherwise in microprocessor (MP) mode the vectors are mapped to address 0
 # on the external bus.  In MC mode, the on-chip ROM contains a bootloader program
@@ -69,6 +75,12 @@ test -z "$ENTRY" && ENTRY=_start
 cat <<EOF
 ${RELOCATING+/* Linker script for $OUTPUT_ARCHNAME executable.  */}
 ${RELOCATING-/* Linker script for $OUTPUT_ARCHNAME object file (ld -r).  */}
+
+/* Copyright (C) 2014-2015 Free Software Foundation, Inc.
+
+   Copying and distribution of this script, with or without modification,
+   are permitted in any medium without royalty provided the copyright
+   notice and this notice are preserved.  */
 
 OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 OUTPUT_ARCH("${OUTPUT_ARCH}")

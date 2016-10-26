@@ -1,6 +1,5 @@
 /* ecoff.h -- header file for ECOFF debugging support
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2003, 2004, 2005,
-   2007, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Put together by Ian Lance Taylor <ian@cygnus.com>.
 

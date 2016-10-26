@@ -1,6 +1,5 @@
 /* HPPA ELF support for BFD.
-   Copyright 1993, 1994, 1995, 1998, 1999, 2000, 2005, 2006, 2008, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

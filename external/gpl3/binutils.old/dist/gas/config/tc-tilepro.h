@@ -1,5 +1,5 @@
 /* tc-tile.h - Macros and type defines for a TILEPro chip.
-   Copyright 2011 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -54,7 +54,7 @@ struct tilepro_operand;
 extern void tilepro_cons_fix_new (struct frag *, int,
 				  int, struct expressionS *);
 
-#define TC_CONS_FIX_NEW(FRAG, WHERE, NBYTES, EXP)	\
+#define TC_CONS_FIX_NEW(FRAG, WHERE, NBYTES, EXP, RELOC)	\
   tilepro_cons_fix_new (FRAG, WHERE, NBYTES, EXP)
 
 extern int tilepro_parse_name (char *, expressionS *, char *);

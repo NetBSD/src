@@ -1,3 +1,68 @@
+2015-11-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-cr16.h (sim_cr16_translate_dmap_addr): Delete.
+	(sim_cr16_translate_imap_addr): Likewise.
+	(sim_cr16_translate_addr): Likewise.
+	* sim-d10v.h (sim_d10v_translate_dmap_addr): Delete.
+	(sim_d10v_translate_imap_addr): Likewise.
+	(sim_d10v_translate_addr): Likewise.
+
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* callback.h (CB_TARGET_DEFS_MAP): Add name member.
+	(cb_host_str_syscall, cb_host_str_errno, cb_host_str_signal,
+	cb_target_str_syscall, cb_target_str_errno, cb_target_str_signal):
+	Declare.
+
+2015-03-28  James Bowman  <james.bowman@ftdichip.com>
+
+	* sim-ft32.h: New file.
+
+2015-05-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* remote-sim.h (struct host_callback_struct): Define.
+
+2015-01-31  Doug Evans  <xdje42@gmail.com>
+
+	* section-scripts.h: Remove "future extension" comment.
+	(SECTION_SCRIPT_ID_PYTHON_TEXT): New macro.
+	(SECTION_SCRIPT_ID_SCHEME_TEXT): New macro.
+
+2014-12-03  Joel Brobecker  <brobecker@adacore.com>
+
+	* callback.h (struct host_callback_struct) <to_stat>: Renamed
+	from "stat".
+	<to_fstat>: Renamed from "fstat".
+	<to_lstat>: Renamed from "lstat".
+
+2014-03-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* remote-sim.h (sim_do_command): Add const to cmd.
+
+2014-03-05  Alan Modra  <amodra@gmail.com>
+
+	Update copyright notice.
+
+2014-03-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* remote-sim.h (sim_load): Add const to prog.
+
+2014-02-09  Doug Evans  <xdje42@gmail.com>
+
+	* section-scripts.h: New file.
+
+2013-10-22  Sterling Augustine  <saugustine@google.com>
+
+	* gdb-index.h: Merge from gdb tree.
+
+2013-03-15  Steve Ellcey  <sellcey@mips.com>
+
+	* remote-sim.h (sim_command_completer): Make char arguments const.
+
+2013-01-01  Joel Brobecker  <brobecker@adacore.com>
+
+	Update year range in copyright notice of all files.
+
 2012-06-23  Doug Evans  <dje@google.com>
 
 	* gdb-index.h: New file.
@@ -6,7 +71,7 @@
 
 	PR gdb/7205
 
-        Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
+	Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
 
 2012-05-24  Pedro Alves  <palves@redhat.com>
 
@@ -70,7 +135,7 @@
 
 2009-05-18  Jon Beniston <jon@beniston.com>
 
-        * sim-lm32.h: New file.
+	* sim-lm32.h: New file.
 
 2009-01-07  Hans-Peter Nilsson  <hp@axis.com>
 
@@ -157,7 +222,7 @@
 
 2003-06-10  Corinna Vinschen  <vinschen@redhat.com>
 
-	* gdb/fileio.h: New file.
+	* fileio.h: New file.
 
 2003-05-07  Andrew Cagney  <cagney@redhat.com>
 
@@ -195,7 +260,7 @@
 2002-07-29  Andrey Volkov  <avolkov@transas.com>
 
 	* sim-h8300.h: Rename all enums from H8300_ to SIM_H8300_
-	 prefix.
+	prefix.
 
 2002-07-23  Andrey Volkov  <avolkov@transas.com>
 
@@ -237,7 +302,7 @@ Wed Jul 17 19:36:38 2002  J"orn Rennecke <joern.rennecke@superh.com>
 
 2002-05-10  Elena Zannoni  <ezannoni@redhat.com>
 
-        * sim-sh.h: New file, for sh gdb<->sim interface.
+	* sim-sh.h: New file, for sh gdb<->sim interface.
 
 2002-05-09  Daniel Jacobowitz  <drow@mvista.com>
 
@@ -250,6 +315,12 @@ Wed Jul 17 19:36:38 2002  J"orn Rennecke <joern.rennecke@superh.com>
 	* signals.h: New file, from gdb/defs.h.
 
 
+Copyright (C) 2002-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

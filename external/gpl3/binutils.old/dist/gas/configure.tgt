@@ -1,4 +1,21 @@
 # gas target specific configuration file.  This is a -*- sh -*- file.
+#
+#   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+#
 
 # This is invoked by configure.  Putting it in a separate shell file
 # lets us skip running autoconf when modifying target specific
@@ -33,6 +50,7 @@ case ${cpu} in
   aarch64_be)		cpu_type=aarch64 endian=big ;;
   alpha*)		cpu_type=alpha ;;
   am33_2.0)		cpu_type=mn10300 endian=little ;;
+  arc*eb)		cpu_type=arc endian=big ;;
   arm*be|arm*b)		cpu_type=arm endian=big ;;
   arm*)			cpu_type=arm endian=little ;;
   bfin*)		cpu_type=bfin endian=little ;;
@@ -57,11 +75,14 @@ case ${cpu} in
   m6811|m6812|m68hc12)	cpu_type=m68hc11 ;;
   m683??)		cpu_type=m68k ;;
   mep)			cpu_type=mep endian=little ;;
-  microblaze*)		cpu_type=microblaze ;;
+  microblazeel*)	cpu_type=microblaze endian=little;;
+  microblaze*)		cpu_type=microblaze endian=big;;
   mips*el)		cpu_type=mips endian=little ;;
   mips*)		cpu_type=mips endian=big ;;
   mt)			cpu_type=mt endian=big ;;
-  or1k*)		cpu_type=or1k endian=big ;;
+  nds32be)		cpu_type=nds32 endian=big ;;
+  nds32le)		cpu_type=nds32 endian=little ;;
+  or1k* | or1knd*)	cpu_type=or1k endian=big ;;
   pjl*)			cpu_type=pj endian=little ;;
   pj*)			cpu_type=pj endian=big ;;
   powerpc*le*)		cpu_type=ppc endian=little ;;
@@ -89,6 +110,7 @@ case ${cpu} in
   tilegx*be)		cpu_type=tilegx endian=big ;;
   tilegx*)		cpu_type=tilegx endian=little ;;
   v850*)		cpu_type=v850 ;;
+  visium)		cpu_type=visium endian=big ;;
   x86_64*)		cpu_type=i386 arch=x86_64;;
   xgate)		cpu_type=xgate ;;
   xtensa*)		cpu_type=xtensa arch=xtensa ;;
@@ -106,12 +128,13 @@ case ${generic_target} in
 
   alpha-*-*vms*)			fmt=evax ;;
   alpha-*-osf*)				fmt=ecoff ;;
-  alpha-*-linuxecoff*)			fmt=ecoff ;;
+  alpha-*-linux*ecoff*)			fmt=ecoff ;;
   alpha-*-linux-*)			fmt=elf em=linux ;;
   alpha-*-netbsd*)			fmt=elf em=nbsd ;;
   alpha-*-openbsd*)			fmt=elf em=obsd ;;
 
   arc-*-elf*)				fmt=elf ;;
+  arc*-*-linux-uclibc*)			fmt=elf bfd_gas=yes ;;
 
   arm-*-aout)				fmt=aout ;;
   arm-*-coff | thumb-*-coff)		fmt=coff ;;
@@ -123,6 +146,10 @@ case ${generic_target} in
   arm-*-symbianelf*)			fmt=elf em=symbian ;;
   arm-*-kaos*)				fmt=elf ;;
   arm-*-conix*)				fmt=elf ;;
+  arm-*-freebsd[89].* | armeb-*-freebsd[89].*)
+					fmt=elf  em=freebsd ;;
+  arm-*-freebsd* | armeb-*-freebsd*)	fmt=elf  em=armfbsdeabi ;;
+  arm*-*-freebsd*)			fmt=elf  em=armfbsdvfp ;;
   arm-*-linux*aout*)			fmt=aout em=linux ;;
   arm-*-linux-*eabi*)			fmt=elf  em=armlinuxeabi ;;
   arm-*-linux-*)			fmt=elf  em=linux ;;
@@ -163,6 +190,8 @@ case ${generic_target} in
   frv-*-*linux*)			fmt=elf em=linux;;
   frv-*-*)				fmt=elf ;;
 
+  ft32-*-*)				fmt=elf ;;
+
   hppa-*-linux*)
     case ${cpu} in
       hppa*64*)				fmt=elf em=hppalinux64 ;;
@@ -184,6 +213,7 @@ case ${generic_target} in
   hppa-*-hiux*)				fmt=som em=hppa ;;
 
   h8300-*-elf | h8300-*-rtems*)		fmt=elf ;;
+  h8300-*-linux*)			fmt=elf em=linux ;;
 
   i370-*-elf* | i370-*-linux*)		fmt=elf ;;
 
@@ -192,7 +222,8 @@ case ${generic_target} in
   i386-*-beospe*)			fmt=coff em=pe ;;
   i386-*-beos*)				fmt=elf ;;
   i386-*-coff)				fmt=coff ;;
-  i386-*-elf)				fmt=elf ;;
+  i386-*-elfiamcu)			fmt=elf arch=iamcu ;;
+  i386-*-elf*)				fmt=elf ;;
   i386-*-kaos*)				fmt=elf ;;
   i386-*-bsd*)				fmt=aout em=386bsd ;;
   i386-*-nacl*)				fmt=elf em=nacl
@@ -241,7 +272,11 @@ case ${generic_target} in
   i386-*-msdos*)			fmt=aout ;;
   i386-*-moss*)				fmt=elf ;;
   i386-*-pe)				fmt=coff em=pe ;;
-  i386-*-cygwin*)			fmt=coff em=pe ;;
+  i386-*-cygwin*)
+   case ${cpu} in
+     x86_64*)				fmt=coff em=pep ;;
+     i*)				fmt=coff em=pe ;;
+   esac ;;
   i386-*-interix*)			fmt=coff em=interix ;;
   i386-*-mingw*)
     case ${cpu} in
@@ -293,28 +328,22 @@ case ${generic_target} in
 
   mep-*-elf)				fmt=elf ;;
 
+  metag-*-elf)				fmt=elf ;;
+  metag-*-linux*)			fmt=elf em=linux ;;
+
   mcore-*-elf)				fmt=elf ;;
   mcore-*-pe)				fmt=coff em=pe bfd_gas=yes ;;
 
   microblaze-*-*)			fmt=elf ;;
 
-  # don't change em like *-*-bsd does
-  mips-sony-bsd*)			fmt=ecoff ;;
-  mips-*-ultrix*)			fmt=ecoff endian=little ;;
-  mips-*-osf*)				fmt=ecoff endian=little ;;
-  mips-*-ecoff*)			fmt=ecoff ;;
-  mips-*-pe*)				fmt=coff endian=little em=pe ;;
   mips-*-irix6*)			fmt=elf em=irix ;;
   mips-*-irix5*)			fmt=elf em=irix ;;
-  mips-*-irix*)				fmt=ecoff em=irix ;;
-  mips-*-lnews*)			fmt=ecoff em=lnews ;;
-  mips-*-riscos*)			fmt=ecoff ;;
   mips*-*-linux*)			fmt=elf em=tmips ;;
   mips*-*-freebsd* | mips*-*-kfreebsd*-gnu)
 					fmt=elf em=freebsd ;;
   mips-*-sysv4*MP* | mips-*-gnu*)	fmt=elf em=tmips ;;
-  mips*-sde-elf*)			fmt=elf em=tmips ;;
-  mips-*-sysv*)				fmt=ecoff ;;
+  mips*-sde-elf* | mips*-mti-elf* | mips*-img-elf*)
+					fmt=elf em=tmips ;;
   mips-*-elf* | mips-*-rtems*)		fmt=elf ;;
   mips-*-netbsd*)			fmt=elf em=tmips ;;
   mips-*-openbsd*)			fmt=elf em=tmips ;;
@@ -327,20 +356,27 @@ case ${generic_target} in
   mn10300-*-linux*)			fmt=elf em=linux ;;
   mn10300-*-*)				fmt=elf ;;
 
-  moxie-*-uclinux)			fmt=elf em=linux;;
+  moxie-*-uclinux)			fmt=elf em=linux ;;
+  moxie-*-moxiebox*)                    fmt=elf endian=little ;;
   moxie-*-*)				fmt=elf ;;
-
+    
   mt-*-elf)				fmt=elf bfd_gas=yes ;;
 
   msp430-*-*)				fmt=elf ;;
+
+  nds32-*-elf*)				fmt=elf ;;
+  nds32-*-linux*)			fmt=elf em=linux ;;
+
+  nios2-*-rtems*)			fmt=elf ;;
+  nios2*-linux*)			fmt=elf em=linux ;;
 
   ns32k-pc532-mach*)			fmt=aout em=pc532mach ;;
   ns32k-pc532-ux*)			fmt=aout em=pc532mach ;;
   ns32k-pc532-lites*)			fmt=aout em=nbsd532 ;;
   ns32k-*-*n*bsd*)			fmt=aout em=nbsd532 ;;
 
-  or1k-*-elf)				fmt=elf ;;
-  or1k-*-linux*)			fmt=elf em=linux ;;
+  or1k*-*-elf | or1k*-*-rtems*) 	fmt=elf endian=big ;;
+  or1k*-*-linux*)			fmt=elf em=linux endian=big ;;
   or1k-*-netbsd*)			fmt=elf em=nbsd ;;
 
   pj*)					fmt=elf ;;
@@ -349,7 +385,7 @@ case ${generic_target} in
   ppc-*-winnt*)				fmt=coff em=pe ;;
   ppc-*-aix5.[01])			fmt=coff em=aix5 ;;
   ppc-*-aix[5-9].*)			fmt=coff em=aix5 ;;
-  ppc-*-aix*)				fmt=coff ;;
+  ppc-*-aix*)				fmt=coff em=aix ;;
   ppc-*-beos*)				fmt=coff ;;
   ppc-*-*n*bsd* | ppc-*-elf*)		fmt=elf ;;
   ppc-*-eabi* | ppc-*-sysv4*)		fmt=elf ;;
@@ -435,6 +471,8 @@ case ${generic_target} in
   vax-*-netbsdelf*)			fmt=elf em=nbsd ;;
   vax-*-linux-*)			fmt=elf em=linux ;;
 
+  visium-*-elf)				fmt=elf ;;
+
   xstormy16-*-*)			fmt=elf ;;
   
   xgate-*-*)    			fmt=elf ;;
@@ -446,6 +484,7 @@ case ${generic_target} in
   z8k-*-coff | z8k-*-sim)		fmt=coff ;;
 
   *-*-aout | *-*-scout)			fmt=aout ;;
+  *-*-cloudabi*)			fmt=elf ;;
   *-*-dragonfly*)			fmt=elf em=dragonfly ;;
   *-*-freebsd* | *-*-kfreebsd*-gnu)	fmt=elf em=freebsd ;;
   *-*-bsd*)				fmt=aout em=sun3 ;;

@@ -1,8 +1,70 @@
 -*- text -*-
 
+* Add a configure option --enable-x86-relax-relocations to decide whether
+  x86 assembler should generate relax relocations by default.  Default to
+  yes, except for x86 Solaris targets older than Solaris 12.
+
+* New command line option -mrelax-relocations= for x86 target to control
+  whether to generate relax relocations.
+
+Changes in 2.26:
+
+* Add a configure option --enable-compressed-debug-sections={all,gas} to
+  decide whether DWARF debug sections should be compressed by default.
+
+* Add support for the ARC EM/HS, and ARC600/700 architectures.  Remove
+  assembler support for Argonaut RISC architectures.
+
+* Symbol and label names can now be enclosed in double quotes (") which allows
+  them to contain characters that are not part of valid symbol names in high
+  level languages.
+
+* Added the correctly spelled -march=armv6kz, for ARMv6KZ support.  The
+  previous spelling, -march=armv6zk, is still accepted.
+
+* Support for the ARMv8.1 architecture has been added to the Aarch64 port.
+  Support for the individual ARMv8.1 Adv.SIMD, LOR and PAN architecture
+  extensions has also been added to the Aarch64 port.
+
+* Support for the ARMv8.1 architecture has been added to the ARM port.  Support
+  for the individual ARMv8.1 Adv.SIMD and PAN architecture extensions has also
+  been added to the ARM port.
+
+* Extend --compress-debug-sections option to support
+  --compress-debug-sections=[none|zlib|zlib-gnu|zlib-gabi] for ELF
+  targets.
+
+* --compress-debug-sections is turned on for Linux/x86 by default.
+
+Changes in 2.25:
+
+* Add support for the AVR Tiny microcontrollers.
+
+* Replace support for openrisc and or32 with support for or1k.
+
+* Enhanced the ARM port to accept the assembler output from the CodeComposer
+  Studio tool.  Support is enabled via the new command line option -mccs.
+
+* Add support for the Andes NDS32.
+
+Changes in 2.24:
+
+* Add support for the Texas Instruments MSP430X processor.
+
+* Add -gdwarf-sections command line option to enable per-code-section
+  generation of DWARF .debug_line sections.
+
+* Add support for Altera Nios II.
+
+* Add support for the Imagination Technologies Meta processor.
+
+* Add support for the v850e3v5.
+
+* Remove assembler support for MIPS ECOFF targets.
+
 Changes in 2.23:
 
-* Add support for 64-bit ARM architecture: AArch64
+* Add support for the 64-bit ARM architecture: AArch64.
 
 * Add support for S12X processor.
 
@@ -600,6 +662,12 @@ Changes in 1.93.01:
   of new CPUs and formats, lots of bugs fixed.
 
 
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local variables:
 fill-column: 79
 End:

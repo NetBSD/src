@@ -1,9 +1,60 @@
-2013-03-25  Tristan Gingold  <gingold@adacore.com>
-	Backport of: 2013-03-08  Yann Sionneau  <yann.sionneau@gmail.com>
+2014-07-20  Stefan Kristiansson  <stefan.kristiansson@saunalahti.fi>
+
+	* or1korbis.cpu (l-msync, l-psync, l-csync): New instructions.
+
+2014-06-12  Alan Modra  <amodra@gmail.com>
+
+	* or1k.opc: Whitespace fixes.
+
+2014-05-08  Stefan Kristiansson  <stefan.kristiansson@saunalahti.fi>
+
+	* or1korbis.cpu (h-atomic-reserve): New hardware.
+	(h-atomic-address): Likewise.
+	(insn-opcode): Add opcodes for LWA and SWA.
+	(atomic-reserve): New operand.
+	(atomic-address): Likewise.
+	(l-lwa, l-swa): New instructions.
+	(l-lbs): Fix typo in comment.
+	(store-insn): Clear atomic reserve on store to atomic-address.
+	Fix register names in fmt field.
+
+2014-04-22  Christian Svensson  <blue@cmd.nu>
+
+	* openrisc.cpu: Delete.
+	* openrisc.opc: Delete.
+	* or1k.cpu: New file.
+	* or1k.opc: New file.
+	* or1kcommon.cpu: New file.
+	* or1korbis.cpu: New file.
+	* or1korfpx.cpu: New file.
+
+2013-12-07  Mike Frysinger  <vapier@gentoo.org>
+
+	* epiphany.opc: Remove +x file mode.
+
+2013-03-08  Yann Sionneau  <yann.sionneau@gmail.com>
 
 	PR binutils/15241
 	* lm32.cpu (Control and status registers): Add CFG2, PSW,
 	TLBVADDR, TLBPADDR and TLBBADVADDR.
+
+2012-11-30  Oleg Raikhman  <oleg@adapteva.com>
+	    Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	* epiphany.cpu (keyword gr-names): Move sb/sl/ip after r9/r10/r12.
+	(load_insn): Add NO-DIS attribute to x, p, d, dpm, dl0, dl0.l.
+	(testset-insn): Add NO_DIS attribute to t.l.
+	(store-insn): Add NO-DIS attribute to x.l, p.l, d.l, dpm.l, dl0.l.
+	(move-insns): Add NO-DIS attribute to cmov.l.
+	(op-mmr-movts): Add NO-DIS attribute to movts.l.
+	(op-mmr-movfs): Add NO-DIS attribute to movfs.l.
+	(op-rrr): Add NO-DIS attribute to .l.
+	(shift-rrr): Add NO-DIS attribute to .l.
+	(op-shift-rri): Add NO-DIS attribute to i32.l.
+	(bitrl, movtl): Add NO-DIS attribute.
+	(op-iextrrr): Add NO-DIS attribute to .l
+	(op-two_operands-float, op-fabs-float): Add NO-DIS attribute to f32.l.
+	(op-fix2float-float, op-float2fix-float, op-fextop-float): Likewise.
 
 2012-02-27  Alan Modra  <amodra@gmail.com>
 
@@ -210,7 +261,7 @@
 	(dst32-16-16sa-Unprefixed-*): New
 	(jsri): Fix operands.
 	(setzx): Fix encoding.
-	
+
 2007-03-08  Alan Modra  <amodra@bigpond.net.au>
 
 	* m32r.opc: Formatting.
@@ -232,7 +283,7 @@
 	(parse_signed_bitbase8): Likewise.
 	(parse_signed_bitbase11): Likewise.
 	(parse_signed_bitbase19): Likewise.
-	
+
 2006-03-13  DJ Delorie  <dj@redhat.com>
 
 	* m32c.cpu (Bit3-S): New.
@@ -269,10 +320,10 @@
 	attribute.
 	(jsri16, jsri32): Add 1ADDR attribute.
 	(jsr32.w, jsr32.a): Add JUMP attribute.
-	
+
 2006-02-17  Shrirang Khisti  <shrirangk@kpitcummins.com>
-            Anil Paranjape   <anilp1@kpitcummins.com>
-            Shilin Shakti    <shilins@kpitcummins.com>
+	    Anil Paranjape   <anilp1@kpitcummins.com>
+	    Shilin Shakti    <shilins@kpitcummins.com>
 
 	* xc16x.cpu: New file containing complete CGEN specific XC16X CPU
 	description.
@@ -373,7 +424,7 @@
 	stzx16-imm8-imm8-abs16): Fix operand typos.
 	* m32c.opc (m32c_asm_hash): Support bnCND.
 	(parse_signed4n, print_signed4n): New.
-	
+
 2005-10-26  DJ Delorie  <dj@redhat.com>
 
 	* m32c.cpu (f-dsp-8-s24, Dsp-8-s24): New.
@@ -447,7 +498,7 @@
 	Fix compile time warnings about signedness mismatches.
 	Remove dead code.
 	(parse_lab_5_3): New parser function.
-	
+
 2005-07-16  Jim Blandy  <jimb@redhat.com>
 
 	* m32c.opc (m32c_cgen_insn_supported): Use int, not CGEN_BITSET,
@@ -814,6 +865,12 @@
 	* New file.
 
 
+Copyright (C) 2003-2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

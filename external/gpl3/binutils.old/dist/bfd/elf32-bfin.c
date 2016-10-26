@@ -1,6 +1,5 @@
 /* ADI Blackfin BFD support for 32-bit ELF.
-   Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -424,11 +423,11 @@ static reloc_howto_type bfin_howto_table [] =
   /* This reloc does nothing. .  */
   HOWTO (R_BFIN_UNUSED0,	/* type.  */
 	 0,			/* rightshift.  */
-	 2,			/* size (0 = byte, 1 = short, 2 = long).  */
-	 32,			/* bitsize.  */
+	 3,			/* size (0 = byte, 1 = short, 2 = long).  */
+	 0,			/* bitsize.  */
 	 FALSE,			/* pc_relative.  */
 	 0,			/* bitpos.  */
-	 complain_overflow_bitfield, /* complain_on_overflow.  */
+	 complain_overflow_dont, /* complain_on_overflow.  */
 	 bfd_elf_generic_reloc,	/* special_function.  */
 	 "R_BFIN_UNUSED0",	/* name.  */
 	 FALSE,			/* partial_inplace.  */
@@ -452,11 +451,11 @@ static reloc_howto_type bfin_howto_table [] =
 
   HOWTO (R_BFIN_UNUSED1,	/* type.  */
 	 0,			/* rightshift.  */
-	 2,			/* size (0 = byte, 1 = short, 2 = long).  */
-	 32,			/* bitsize.  */
+	 3,			/* size (0 = byte, 1 = short, 2 = long).  */
+	 0,			/* bitsize.  */
 	 FALSE,			/* pc_relative.  */
 	 0,			/* bitpos.  */
-	 complain_overflow_bitfield, /* complain_on_overflow.  */
+	 complain_overflow_dont, /* complain_on_overflow.  */
 	 bfd_elf_generic_reloc,	/* special_function.  */
 	 "R_BFIN_UNUSED1",	/* name.  */
 	 FALSE,			/* partial_inplace.  */
@@ -582,8 +581,8 @@ static reloc_howto_type bfin_howto_table [] =
 
   HOWTO (R_BFIN_UNUSEDB,	/* type.  */
 	 0,			/* rightshift.  */
-	 2,			/* size (0 = byte, 1 = short, 2 = long).  */
-	 32,			/* bitsize.  */
+	 3,			/* size (0 = byte, 1 = short, 2 = long).  */
+	 0,			/* bitsize.  */
 	 FALSE,			/* pc_relative.  */
 	 0,			/* bitpos.  */
 	 complain_overflow_dont, /* complain_on_overflow.  */
@@ -596,8 +595,8 @@ static reloc_howto_type bfin_howto_table [] =
 
   HOWTO (R_BFIN_UNUSEDC,	/* type.  */
 	 0,			/* rightshift.  */
-	 2,			/* size (0 = byte, 1 = short, 2 = long).  */
-	 32,			/* bitsize.  */
+	 3,			/* size (0 = byte, 1 = short, 2 = long).  */
+	 0,			/* bitsize.  */
 	 FALSE,			/* pc_relative.  */
 	 0,			/* bitpos.  */
 	 complain_overflow_dont, /* complain_on_overflow.  */
@@ -1066,13 +1065,13 @@ bfin_bfd_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED,
 			    bfd_reloc_code_real_type code)
 {
   unsigned int i;
-  unsigned int r_type = BFIN_RELOC_MIN;
+  unsigned int r_type = (unsigned int) -1;
 
-  for (i = sizeof (bfin_reloc_map) / sizeof (bfin_reloc_map[0]); --i;)
+  for (i = sizeof (bfin_reloc_map) / sizeof (bfin_reloc_map[0]); i--;)
     if (bfin_reloc_map[i].bfd_reloc_val == code)
       r_type = bfin_reloc_map[i].bfin_reloc_val;
 
-  if (r_type <= BFIN_RELOC_MAX && r_type > BFIN_RELOC_MIN)
+  if (r_type <= BFIN_RELOC_MAX)
     return &bfin_howto_table [r_type];
 
   else if (r_type >= BFIN_GNUEXT_RELOC_MIN && r_type <= BFIN_GNUEXT_RELOC_MAX)
@@ -1166,7 +1165,7 @@ bfin_check_relocs (bfd * abfd,
   asection *sgot;
   asection *srelgot;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -1187,7 +1186,13 @@ bfin_check_relocs (bfd * abfd,
       if (r_symndx < symtab_hdr->sh_info)
 	h = NULL;
       else
-	h = sym_hashes[r_symndx - symtab_hdr->sh_info];
+	{
+	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
+	}
 
       switch (ELF32_R_TYPE (rel->r_info))
 	{
@@ -1227,7 +1232,7 @@ bfin_check_relocs (bfd * abfd,
 	      BFD_ASSERT (sgot != NULL);
 	    }
 
-	  if (srelgot == NULL && (h != NULL || info->shared))
+	  if (srelgot == NULL && (h != NULL || bfd_link_pic (info)))
 	    {
 	      srelgot = bfd_get_linker_section (dynobj, ".rela.got");
 	      if (srelgot == NULL)
@@ -1280,7 +1285,7 @@ bfin_check_relocs (bfd * abfd,
 	      if (local_got_refcounts[r_symndx] == 0)
 		{
 		  sgot->size += 4;
-		  if (info->shared)
+		  if (bfd_link_pic (info))
 		    {
 		      /* If we are generating a shared object, we need to
 		         output a R_68K_RELATIVE reloc so that the dynamic
@@ -1301,7 +1306,9 @@ bfin_check_relocs (bfd * abfd,
 }
 
 static enum elf_reloc_type_class
-elf32_bfin_reloc_type_class (const Elf_Internal_Rela * rela)
+elf32_bfin_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			     const asection *rel_sec ATTRIBUTE_UNUSED,
+			     const Elf_Internal_Rela * rela)
 {
   switch ((int) ELF32_R_TYPE (rela->r_info))
     {
@@ -1436,19 +1443,19 @@ bfin_relocate_section (bfd * output_bfd,
 	}
       else
 	{
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 	}
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       address = rel->r_offset;
@@ -1495,8 +1502,10 @@ bfin_relocate_section (bfd * output_bfd,
 		BFD_ASSERT (off != (bfd_vma) - 1);
 		dyn = elf_hash_table (info)->dynamic_sections_created;
 
-		if (!WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared, h)
-		    || (info->shared
+		if (!WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn,
+						      bfd_link_pic (info),
+						      h)
+		    || (bfd_link_pic (info)
 			&& (info->symbolic
 			    || h->dynindx == -1
 			    || h->forced_local)
@@ -1541,7 +1550,7 @@ bfin_relocate_section (bfd * output_bfd,
 		  {
 		    bfd_put_32 (output_bfd, relocation, sgot->contents + off);
 
-		    if (info->shared)
+		    if (bfd_link_pic (info))
 		      {
 			asection *s;
 			Elf_Internal_Rela outrel;
@@ -1712,7 +1721,7 @@ bfin_gc_sweep_hook (bfd * abfd,
 		    {
 		      /* We don't need the .got entry any more.  */
 		      sgot->size -= 4;
-		      if (info->shared)
+		      if (bfd_link_pic (info))
 			srelgot->size -= sizeof (Elf32_External_Rela);
 		    }
 		}
@@ -1725,8 +1734,8 @@ bfin_gc_sweep_hook (bfd * abfd,
   return TRUE;
 }
 
-extern const bfd_target bfd_elf32_bfinfdpic_vec;
-#define IS_FDPIC(bfd) ((bfd)->xvec == &bfd_elf32_bfinfdpic_vec)
+extern const bfd_target bfin_elf32_fdpic_vec;
+#define IS_FDPIC(bfd) ((bfd)->xvec == &bfin_elf32_fdpic_vec)
 
 /* An extension of the elf hash table data structure,
    containing some additional Blackfin-specific data.  */
@@ -1821,7 +1830,7 @@ bfinfdpic_elf_link_hash_table_create (bfd *abfd)
   struct bfinfdpic_elf_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct bfinfdpic_elf_link_hash_table);
 
-  ret = bfd_zalloc (abfd, amt);
+  ret = bfd_zmalloc (amt);
   if (ret == NULL)
     return NULL;
 
@@ -2206,7 +2215,7 @@ _bfinfdpic_emit_got_relocs_plt_entries (struct bfinfdpic_relocs_info *entry,
       /* If we're linking an executable at a fixed address, we can
 	 omit the dynamic relocation as long as the symbol is local to
 	 this module.  */
-      if (info->executable && !info->pie
+      if (bfd_link_pde (info)
 	  && (entry->symndx != -1
 	      || BFINFDPIC_SYM_LOCAL (info, entry->d.h)))
 	{
@@ -2261,7 +2270,7 @@ _bfinfdpic_emit_got_relocs_plt_entries (struct bfinfdpic_relocs_info *entry,
 	  if (entry->symndx == -1
 	      && ! BFINFDPIC_FUNCDESC_LOCAL (info, entry->d.h)
 	      && BFINFDPIC_SYM_LOCAL (info, entry->d.h)
-	      && !(info->executable && !info->pie))
+	      && !bfd_link_pde (info))
 	    {
 	      reloc = R_BFIN_FUNCDESC;
 	      idx = elf_section_data (entry->d.h->root.u.def.section
@@ -2297,7 +2306,7 @@ _bfinfdpic_emit_got_relocs_plt_entries (struct bfinfdpic_relocs_info *entry,
 	     dynamic symbol entry for the got section, so idx will be
 	     zero, which means we can and should compute the address
 	     of the private descriptor ourselves.  */
-	  if (info->executable && !info->pie
+	  if (bfd_link_pde (info)
 	      && (entry->symndx != -1
 		  || BFINFDPIC_FUNCDESC_LOCAL (info, entry->d.h)))
 	    {
@@ -2360,7 +2369,7 @@ _bfinfdpic_emit_got_relocs_plt_entries (struct bfinfdpic_relocs_info *entry,
       /* If we're linking an executable at a fixed address, we can
 	 omit the dynamic relocation as long as the symbol is local to
 	 this module.  */
-      if (info->executable && !info->pie
+      if (bfd_link_pde (info)
 	  && (entry->symndx != -1 || BFINFDPIC_SYM_LOCAL (info, entry->d.h)))
 	{
 	  if (sec)
@@ -2408,7 +2417,9 @@ _bfinfdpic_emit_got_relocs_plt_entries (struct bfinfdpic_relocs_info *entry,
 
       /* If we've omitted the dynamic relocation, just emit the fixed
 	 addresses of the symbol and of the local GOT base offset.  */
-      if (info->executable && !info->pie && sec && sec->output_section)
+      if (bfd_link_pde (info)
+	  && sec
+	  && sec->output_section)
 	{
 	  lowword = ad;
 	  highword = bfinfdpic_got_section (info)->output_section->vma
@@ -2588,7 +2599,7 @@ bfinfdpic_relocate_section (bfd * output_bfd,
   Elf_Internal_Rela *relend;
   unsigned isec_segment, got_segment, plt_segment,
     check_segment[2];
-  int silence_segment_error = !(info->shared || info->pie);
+  int silence_segment_error = !bfd_link_pic (info);
 
   symtab_hdr = & elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
@@ -2654,13 +2665,13 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 	}
       else
 	{
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 	  bfd_boolean unresolved_reloc;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 	  osec = sec;
 	}
 
@@ -2668,7 +2679,7 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       if (h != NULL
@@ -2822,7 +2833,7 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 		   section+offset.  */
 		if (h && ! BFINFDPIC_FUNCDESC_LOCAL (info, h)
 		    && BFINFDPIC_SYM_LOCAL (info, h)
-		    && !(info->executable && !info->pie))
+		    && !bfd_link_pde (info))
 		  {
 		    dynindx = elf_section_data (h->root.u.def.section
 						->output_section)->dynindx;
@@ -2859,7 +2870,7 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 		   dynamic symbol entry for the got section, so idx will
 		   be zero, which means we can and should compute the
 		   address of the private descriptor ourselves.  */
-		if (info->executable && !info->pie
+		if (bfd_link_pde (info)
 		    && (!h || BFINFDPIC_FUNCDESC_LOCAL (info, h)))
 		  {
 		    bfd_vma offset;
@@ -2982,7 +2993,7 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 	       can omit the dynamic relocation as long as the symbol
 	       is defined in the current link unit (which is implied
 	       by its output section not being NULL).  */
-	    if (info->executable && !info->pie
+	    if (bfd_link_pde (info)
 		&& (!h || BFINFDPIC_SYM_LOCAL (info, h)))
 	      {
 		if (osec)
@@ -3062,7 +3073,7 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 		/* If we've omitted the dynamic relocation, just emit
 		   the fixed addresses of the symbol and of the local
 		   GOT base offset.  */
-		if (info->executable && !info->pie
+		if (bfd_link_pde (info)
 		    && (!h || BFINFDPIC_SYM_LOCAL (info, h)))
 		  bfd_put_32 (output_bfd,
 			      bfinfdpic_got_section (info)->output_section->vma
@@ -3120,11 +3131,11 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 		   && picrel->d.h->root.type == bfd_link_hash_undefined))
 	    info->callbacks->warning
 	      (info,
-	       (info->shared || info->pie)
+	       bfd_link_pic (info)
 	       ? _("relocations between different segments are not supported")
 	       : _("warning: relocation references a different segment"),
 	       name, input_bfd, input_section, rel->r_offset);
-	  if (!silence_segment_error && (info->shared || info->pie))
+	  if (!silence_segment_error && bfd_link_pic (info))
 	    return FALSE;
 	  elf_elfheader (output_bfd)->e_flags |= EF_BFIN_PIC;
 	}
@@ -3490,7 +3501,7 @@ _bfin_create_got_section (bfd *abfd, struct bfd_link_info *info)
       h->def_regular = 1;
       h->type = STT_OBJECT;
 
-      if (! info->executable
+      if (! bfd_link_executable (info)
 	  && ! bfd_elf_link_record_dynamic_symbol (info, h))
 	return FALSE;
     }
@@ -3559,7 +3570,7 @@ elf32_bfinfdpic_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 	 be needed, we can discard it later.  We will never need this
 	 section when generating a shared object, since they do not use
 	 copy relocs.  */
-      if (! info->shared)
+      if (! bfd_link_pic (info))
 	{
 	  s = bfd_make_section_anyway_with_flags (abfd,
 						  ".rela.bss",
@@ -3642,7 +3653,7 @@ _bfinfdpic_count_relocs_fixups (struct bfinfdpic_relocs_info *entry,
 {
   bfd_vma relocs = 0, fixups = 0;
 
-  if (!dinfo->info->executable || dinfo->info->pie)
+  if (!bfd_link_pde (dinfo->info))
     relocs = entry->relocs32 + entry->relocsfd + entry->relocsfdv;
   else
     {
@@ -4244,7 +4255,7 @@ elf32_bfinfdpic_size_dynamic_sections (bfd *output_bfd,
   if (htab->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (info->executable)
+      if (bfd_link_executable (info) && !info->nointerp)
 	{
 	  s = bfd_get_linker_section (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -4311,35 +4322,10 @@ static bfd_boolean
 elf32_bfinfdpic_always_size_sections (bfd *output_bfd,
 				     struct bfd_link_info *info)
 {
-  if (!info->relocatable)
-    {
-      struct elf_link_hash_entry *h;
-
-      /* Force a PT_GNU_STACK segment to be created.  */
-      if (! elf_tdata (output_bfd)->stack_flags)
-	elf_tdata (output_bfd)->stack_flags = PF_R | PF_W | PF_X;
-
-      /* Define __stacksize if it's not defined yet.  */
-      h = elf_link_hash_lookup (elf_hash_table (info), "__stacksize",
-				FALSE, FALSE, FALSE);
-      if (! h || h->root.type != bfd_link_hash_defined
-	  || h->type != STT_OBJECT
-	  || !h->def_regular)
-	{
-	  struct bfd_link_hash_entry *bh = NULL;
-
-	  if (!(_bfd_generic_link_add_one_symbol
-		(info, output_bfd, "__stacksize",
-		 BSF_GLOBAL, bfd_abs_section_ptr, DEFAULT_STACK_SIZE,
-		 (const char *) NULL, FALSE,
-		 get_elf_backend_data (output_bfd)->collect, &bh)))
-	    return FALSE;
-
-	  h = (struct elf_link_hash_entry *) bh;
-	  h->def_regular = 1;
-	  h->type = STT_OBJECT;
-	}
-    }
+  if (!bfd_link_relocatable (info)
+      && !bfd_elf_stack_segment_size (output_bfd, info,
+				      "__stacksize", DEFAULT_STACK_SIZE))
+    return FALSE;
 
   return TRUE;
 }
@@ -4454,51 +4440,6 @@ bfinfdpic_elf_discard_info (bfd *ibfd,
 
       if (!_bfinfdpic_size_got_plt (obfd, &gpinfo))
 	return FALSE;
-    }
-
-  return TRUE;
-}
-
-static bfd_boolean
-elf32_bfinfdpic_modify_program_headers (bfd *output_bfd,
-					struct bfd_link_info *info)
-{
-  struct elf_obj_tdata *tdata = elf_tdata (output_bfd);
-  struct elf_segment_map *m;
-  Elf_Internal_Phdr *p;
-
-  /* objcopy and strip preserve what's already there using
-     elf32_bfinfdpic_copy_private_bfd_data ().  */
-  if (! info)
-    return TRUE;
-
-  for (p = tdata->phdr, m = tdata->segment_map; m != NULL; m = m->next, p++)
-    if (m->p_type == PT_GNU_STACK)
-      break;
-
-  if (m)
-    {
-      struct elf_link_hash_entry *h;
-
-      /* Obtain the pointer to the __stacksize symbol.  */
-      h = elf_link_hash_lookup (elf_hash_table (info), "__stacksize",
-				FALSE, FALSE, FALSE);
-      if (h)
-	{
-	  while (h->root.type == bfd_link_hash_indirect
-		 || h->root.type == bfd_link_hash_warning)
-	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-	  BFD_ASSERT (h->root.type == bfd_link_hash_defined);
-	}
-
-      /* Set the header p_memsz from the symbol value.  We
-	 intentionally ignore the symbol section.  */
-      if (h && h->root.type == bfd_link_hash_defined)
-	p->p_memsz = h->root.u.def.value;
-      else
-	p->p_memsz = DEFAULT_STACK_SIZE;
-
-      p->p_align = 8;
     }
 
   return TRUE;
@@ -4798,7 +4739,7 @@ bfinfdpic_check_relocs (bfd *abfd, struct bfd_link_info *info,
   bfd *dynobj;
   struct bfinfdpic_relocs_info *picrel;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -4993,72 +4934,6 @@ elf32_bfin_set_private_flags (bfd * abfd, flagword flags)
   return TRUE;
 }
 
-/* Copy backend specific data from one object module to another.  */
-
-static bfd_boolean
-bfin_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
-{
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
-
-  BFD_ASSERT (!elf_flags_init (obfd)
-	      || elf_elfheader (obfd)->e_flags == elf_elfheader (ibfd)->e_flags);
-
-  elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
-  elf_flags_init (obfd) = TRUE;
-
-  /* Copy object attributes.  */
-  _bfd_elf_copy_obj_attributes (ibfd, obfd);
-
-  return TRUE;
-}
-
-static bfd_boolean
-elf32_bfinfdpic_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
-{
-  unsigned i;
-
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
-
-  if (! bfin_elf_copy_private_bfd_data (ibfd, obfd))
-    return FALSE;
-
-  if (! elf_tdata (ibfd) || ! elf_tdata (ibfd)->phdr
-      || ! elf_tdata (obfd) || ! elf_tdata (obfd)->phdr)
-    return TRUE;
-
-  /* Copy the stack size.  */
-  for (i = 0; i < elf_elfheader (ibfd)->e_phnum; i++)
-    if (elf_tdata (ibfd)->phdr[i].p_type == PT_GNU_STACK)
-      {
-	Elf_Internal_Phdr *iphdr = &elf_tdata (ibfd)->phdr[i];
-
-	for (i = 0; i < elf_elfheader (obfd)->e_phnum; i++)
-	  if (elf_tdata (obfd)->phdr[i].p_type == PT_GNU_STACK)
-	    {
-	      memcpy (&elf_tdata (obfd)->phdr[i], iphdr, sizeof (*iphdr));
-
-	      /* Rewrite the phdrs, since we're only called after they
-		 were first written.  */
-	      if (bfd_seek (obfd, (bfd_signed_vma) get_elf_backend_data (obfd)
-			    ->s->sizeof_ehdr, SEEK_SET) != 0
-		  || get_elf_backend_data (obfd)->s
-		  ->write_out_phdrs (obfd, elf_tdata (obfd)->phdr,
-				     elf_elfheader (obfd)->e_phnum) != 0)
-		return FALSE;
-	      break;
-	    }
-
-	break;
-      }
-
-  return TRUE;
-}
-
-
 /* Display the flags field.  */
 static bfd_boolean
 elf32_bfin_print_private_bfd_data (bfd * abfd, void * ptr)
@@ -5185,7 +5060,7 @@ bfin_link_hash_table_create (bfd * abfd)
   struct bfin_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct bfin_link_hash_table);
 
-  ret = bfd_zalloc (abfd, amt);
+  ret = bfd_zmalloc (amt);
   if (ret == NULL)
     return NULL;
 
@@ -5274,7 +5149,7 @@ bfin_finish_dynamic_symbol (bfd * output_bfd,
          the symbol was forced to be local because of a version file.
          The entry in the global offset table will already have been
          initialized in the relocate_section function.  */
-      if (info->shared
+      if (bfd_link_pic (info)
 	  && (info->symbolic
 	      || h->dynindx == -1 || h->forced_local) && h->def_regular)
 	{
@@ -5361,7 +5236,7 @@ bfin_adjust_dynamic_symbol (struct bfd_link_info *info,
      only references to the symbol are via the global offset table.
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
-  if (info->shared)
+  if (bfd_link_pic (info))
     return TRUE;
 
   /* We must allocate the symbol in our .dynbss section, which will
@@ -5491,7 +5366,7 @@ bfin_size_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (info->executable)
+      if (bfd_link_executable (info))
 	{
 	  s = bfd_get_linker_section (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -5517,7 +5392,7 @@ bfin_size_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
      against symbols that have become local due to visibility changes.
      We allocated space for them in the check_relocs routine, but we
      will not fill them in in the relocate_section routine.  */
-  if (info->shared)
+  if (bfd_link_pic (info))
     elf_link_hash_traverse (elf_hash_table (info),
 			    bfin_discard_copies, info);
 
@@ -5596,7 +5471,7 @@ bfin_size_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
 #define add_dynamic_entry(TAG, VAL) \
   _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
-      if (!info->shared)
+      if (!bfd_link_pic (info))
 	{
 	  if (!add_dynamic_entry (DT_DEBUG, 0))
 	    return FALSE;
@@ -5644,7 +5519,7 @@ bfd_bfin_elf32_create_embedded_relocs (bfd *abfd,
   bfd_byte *p;
   bfd_size_type amt;
 
-  BFD_ASSERT (! info->relocatable);
+  BFD_ASSERT (! bfd_link_relocatable (info));
 
   *errmsg = NULL;
 
@@ -5753,7 +5628,7 @@ struct bfd_elf_special_section const elf32_bfin_special_sections[] =
 };
 
 
-#define TARGET_LITTLE_SYM		bfd_elf32_bfin_vec
+#define TARGET_LITTLE_SYM		bfin_elf32_vec
 #define TARGET_LITTLE_NAME		"elf32-bfin"
 #define ELF_ARCH			bfd_arch_bfin
 #define ELF_TARGET_ID			BFIN_ELF_DATA
@@ -5802,6 +5677,7 @@ struct bfd_elf_special_section const elf32_bfin_special_sections[] =
 #define elf_backend_final_write_processing \
                                         elf32_bfin_final_write_processing
 #define elf_backend_reloc_type_class    elf32_bfin_reloc_type_class
+#define elf_backend_stack_align		8
 #define elf_backend_can_gc_sections 1
 #define elf_backend_special_sections	elf32_bfin_special_sections
 #define elf_backend_can_refcount 1
@@ -5814,7 +5690,7 @@ struct bfd_elf_special_section const elf32_bfin_special_sections[] =
 #include "elf32-target.h"
 
 #undef TARGET_LITTLE_SYM
-#define TARGET_LITTLE_SYM          bfd_elf32_bfinfdpic_vec
+#define TARGET_LITTLE_SYM          bfin_elf32_fdpic_vec
 #undef TARGET_LITTLE_NAME
 #define TARGET_LITTLE_NAME		"elf32-bfinfdpic"
 #undef	elf32_bed
@@ -5837,12 +5713,6 @@ struct bfd_elf_special_section const elf32_bfin_special_sections[] =
 #undef elf_backend_always_size_sections
 #define elf_backend_always_size_sections \
 		elf32_bfinfdpic_always_size_sections
-#undef elf_backend_modify_program_headers
-#define elf_backend_modify_program_headers \
-		elf32_bfinfdpic_modify_program_headers
-#undef bfd_elf32_bfd_copy_private_bfd_data
-#define bfd_elf32_bfd_copy_private_bfd_data \
-		elf32_bfinfdpic_copy_private_bfd_data
 
 #undef elf_backend_create_dynamic_sections
 #define elf_backend_create_dynamic_sections \
