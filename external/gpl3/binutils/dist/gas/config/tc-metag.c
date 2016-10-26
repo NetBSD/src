@@ -1,5 +1,5 @@
 /* tc-metag.c -- Assembler for the Imagination Technologies Meta.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This file is part of GAS, the GNU Assembler.
@@ -5791,7 +5791,7 @@ static const insn_parser insn_parsers[ENC_MAX] =
 
 struct metag_core_option
 {
-  char *name;
+  const char *name;
   unsigned int value;
 };
 
@@ -5821,7 +5821,7 @@ static const struct metag_core_option metag_dsps[] =
 
 /* Parse a CPU command line option.  */
 static int
-metag_parse_cpu (char * str)
+metag_parse_cpu (const char * str)
 {
   const struct metag_core_option * opt;
   int optlen;
@@ -5847,7 +5847,7 @@ metag_parse_cpu (char * str)
 
 /* Parse an FPU command line option.  */
 static int
-metag_parse_fpu (char * str)
+metag_parse_fpu (const char * str)
 {
   const struct metag_core_option * opt;
   int optlen;
@@ -5873,7 +5873,7 @@ metag_parse_fpu (char * str)
 
 /* Parse a DSP command line option.  */
 static int
-metag_parse_dsp (char * str)
+metag_parse_dsp (const char * str)
 {
   const struct metag_core_option * opt;
   int optlen;
@@ -5899,10 +5899,10 @@ metag_parse_dsp (char * str)
 
 struct metag_long_option
 {
-  char * option;                /* Substring to match.  */
-  char * help;                  /* Help information.  */
-  int (* func) (char * subopt); /* Function to decode sub-option.  */
-  char * deprecated;            /* If non-null, print this message.  */
+  const char * option;                /* Substring to match.  */
+  const char * help;                  /* Help information.  */
+  int (* func) (const char * subopt); /* Function to decode sub-option.  */
+  const char * deprecated;            /* If non-null, print this message.  */
 };
 
 struct metag_long_option metag_long_opts[] =
@@ -5917,7 +5917,7 @@ struct metag_long_option metag_long_opts[] =
   };
 
 int
-md_parse_option (int c, char * arg)
+md_parse_option (int c, const char * arg)
 {
   struct metag_long_option *lopt;
 
@@ -6331,7 +6331,7 @@ create_mnemonic_htab (void)
       insn_templates **slot = NULL;
       insn_templates *new_entry;
 
-      new_entry = xmalloc (sizeof (insn_templates));
+      new_entry = XNEW (insn_templates);
 
       new_entry->template = template;
       new_entry->next = NULL;
@@ -6707,7 +6707,7 @@ md_number_to_chars (char * buf, valueT val, int n)
 /* Equal to MAX_PRECISION in atof-ieee.c */
 #define MAX_LITTLENUMS 6
 
-char *
+const char *
 md_atof (int type, char * litP, int * sizeP)
 {
   int              i;
@@ -6847,7 +6847,7 @@ md_convert_frag (bfd * abfd ATTRIBUTE_UNUSED, segT sec ATTRIBUTE_UNUSED,
 void
 metag_handle_align (fragS * fragP)
 {
-  static char const noop[4] = { 0xfe, 0xff, 0xff, 0xa0 };
+  static unsigned char const noop[4] = { 0xfe, 0xff, 0xff, 0xa0 };
   int bytes, fix;
   char *p;
 
@@ -6879,7 +6879,7 @@ metag_handle_align (fragS * fragP)
 }
 
 static char *
-metag_end_of_match (char * cont, char * what)
+metag_end_of_match (char * cont, const char * what)
 {
   int len = strlen (what);
 
@@ -7002,14 +7002,12 @@ metag_parse_name (char const * name, expressionS * exprP, enum expr_mode mode,
    then it is done here.  */
 
 arelent *
-tc_gen_reloc (seg, fixp)
-     asection *seg ATTRIBUTE_UNUSED;
-     fixS *fixp;
+tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
 
-  reloc		      = (arelent *) xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr  = (asymbol **) xmalloc (sizeof (asymbol *));
+  reloc		      = XNEW (arelent);
+  reloc->sym_ptr_ptr  = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address      = fixp->fx_frag->fr_address + fixp->fx_where;
 

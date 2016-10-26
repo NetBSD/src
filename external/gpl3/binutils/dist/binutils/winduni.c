@@ -1,5 +1,5 @@
 /* winduni.c -- unicode support for the windres program.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -213,7 +213,7 @@ unicode_from_ascii_len (rc_uint_type *length, unichar **unicode, const char *asc
     }
 
   /* Make sure we have zero terminated string.  */
-  p = tmp = (char *) alloca (a_length + 1);
+  p = tmp = (char *) xmalloc (a_length + 1);
   memcpy (tmp, ascii, a_length);
   tmp[a_length] = 0;
 
@@ -279,6 +279,8 @@ unicode_from_ascii_len (rc_uint_type *length, unichar **unicode, const char *asc
 
   if (length)
     *length = idx;
+
+  free (tmp);
 }
 
 /* Convert an unicode string to an ASCII string.  We just copy it,

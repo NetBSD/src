@@ -1,5 +1,5 @@
 /* SOM object file format.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -210,7 +210,8 @@ obj_som_init_stab_section (segT seg)
   segT saved_seg = now_seg;
   segT space;
   subsegT saved_subseg = now_subseg;
-  char *p, *file;
+  char *p;
+ const char * file;
   unsigned int stroff;
 
   /* Make the space which will contain the debug subspaces.  */
@@ -241,7 +242,7 @@ obj_som_init_stab_section (segT seg)
      the call to get_stab_string_offset.  */
   p = frag_more (12);
   memset (p, 0, 12);
-  as_where (&file, (unsigned int *) NULL);
+  file = as_where ((unsigned int *) NULL);
   stroff = get_stab_string_offset (file, "$GDB_STRINGS$");
   know (stroff == 1);
   md_number_to_chars (p, stroff, 4);

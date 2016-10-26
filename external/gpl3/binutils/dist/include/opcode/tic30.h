@@ -1,5 +1,5 @@
 /* tic30.h -- Header file for TI TMS320C30 opcode table
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -27,7 +27,7 @@
 
 struct _register
 {
-  char *name;
+  const char *name;
   unsigned char opcode;
   unsigned char regtype;
 };
@@ -135,7 +135,7 @@ static const reg *const tic30_regtab_end
 #define PostIR0_Add_BitRev 0x19
 
 typedef struct {
-  char *syntax;
+  const char *syntax;
   unsigned char modfield;
   unsigned char displacement;
 } ind_addr_type;
@@ -215,7 +215,7 @@ static const ind_addr_type *const tic30_indaddrtab_end
 
 typedef struct _template
 {
-  char *name;
+  const char *name;
   unsigned int operands; /* how many operands */
   unsigned int base_opcode; /* base_opcode is the fundamental opcode byte */
   /* the bits in opcode_modifier are used to generate the final opcode from
@@ -608,7 +608,7 @@ static const insn_template *const tic30_optab_end =
   tic30_optab + sizeof(tic30_optab)/sizeof(tic30_optab[0]);
 
 typedef struct {
-  char *name;
+  const char *name;
   unsigned int operands_1;
   unsigned int operands_2;
   unsigned int base_opcode;

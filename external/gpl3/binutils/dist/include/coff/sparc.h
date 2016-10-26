@@ -1,6 +1,6 @@
 /* coff information for Sparc.
    
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -137,6 +137,14 @@ union external_auxent
 #define	SYMESZ	20	
 #define	AUXENT	union external_auxent
 #define	AUXESZ	20
+
+#define COFF_ADJUST_SYM_OUT_POST(ABFD, INP, EXTP)	\
+  do							\
+    {							\
+      SYMENT *extsym = (SYMENT *) (EXTP);		\
+      extsym->padding[0] = 0;				\
+      extsym->padding[1] = 0;				\
+    } while (0)
 
 #define _ETEXT	"etext"
 

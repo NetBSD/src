@@ -1,5 +1,5 @@
 /* cond.c - conditional assembly pseudo-ops, and .include
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -29,7 +29,7 @@
 struct obstack cond_obstack;
 
 struct file_line {
-  char *file;
+  const char *file;
   unsigned int line;
 };
 
@@ -317,8 +317,8 @@ s_elseif (int arg)
     }
   else
     {
-      as_where (&current_cframe->else_file_line.file,
-		&current_cframe->else_file_line.line);
+      current_cframe->else_file_line.file
+       	= as_where (&current_cframe->else_file_line.line);
 
       current_cframe->dead_tree |= !current_cframe->ignoring;
       current_cframe->ignoring = current_cframe->dead_tree;
@@ -423,8 +423,8 @@ s_else (int arg ATTRIBUTE_UNUSED)
     }
   else
     {
-      as_where (&current_cframe->else_file_line.file,
-		&current_cframe->else_file_line.line);
+      current_cframe->else_file_line.file
+       	= as_where (&current_cframe->else_file_line.line);
 
       current_cframe->ignoring =
 	current_cframe->dead_tree | !current_cframe->ignoring;
@@ -527,8 +527,8 @@ static void
 initialize_cframe (struct conditional_frame *cframe)
 {
   memset (cframe, 0, sizeof (*cframe));
-  as_where (&cframe->if_file_line.file,
-	    &cframe->if_file_line.line);
+  cframe->if_file_line.file
+	    = as_where (&cframe->if_file_line.line);
   cframe->previous_cframe = current_cframe;
   cframe->dead_tree = current_cframe != NULL && current_cframe->ignoring;
   cframe->macro_nest = macro_nest;

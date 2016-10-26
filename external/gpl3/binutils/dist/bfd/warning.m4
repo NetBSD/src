@@ -1,6 +1,6 @@
 dnl Common configure.ac fragment
 dnl
-dnl   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -21,8 +21,18 @@ AC_DEFUN([AM_BINUTILS_WARNINGS],[
 # Set the 'development' global.
 . $srcdir/../bfd/development.sh
 
+# Default set of GCC warnings to enable.
 GCC_WARN_CFLAGS="-W -Wall -Wstrict-prototypes -Wmissing-prototypes"
+
+# Add -Wshadow if the compiler is a sufficiently recent version of GCC.
 AC_EGREP_CPP([^[0-3]$],[__GNUC__],,GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wshadow")
+
+# Add -Wstack-usage if the compiler is a sufficiently recent version of GCC.
+AC_EGREP_CPP([^[0-4]$],[__GNUC__],,GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wstack-usage=262144")
+
+# Set WARN_WRITE_STRINGS if the compiler supports -Wwrite-strings.
+WARN_WRITE_STRINGS=""
+AC_EGREP_CPP([^[0-3]$],[__GNUC__],,WARN_WRITE_STRINGS="-Wwrite-strings")
 
 AC_ARG_ENABLE(werror,
   [  --enable-werror         treat compile warnings as errors],
@@ -77,4 +87,5 @@ fi
 
 AC_SUBST(WARN_CFLAGS)
 AC_SUBST(NO_WERROR)
+     AC_SUBST(WARN_WRITE_STRINGS)
 ])

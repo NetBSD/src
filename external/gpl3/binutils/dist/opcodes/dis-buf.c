@@ -1,5 +1,5 @@
 /* Disassemble from a buffer, for GNU.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

@@ -1,6 +1,6 @@
 // script-sections.cc -- linker script SECTIONS for gold
 
-// Copyright (C) 2008-2015 Free Software Foundation, Inc.
+// Copyright (C) 2008-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -1524,18 +1524,69 @@ class Input_section_sorter
   operator()(const Input_section_info&, const Input_section_info&) const;
 
  private:
+  static unsigned long
+  get_init_priority(const char*);
+
   Sort_wildcard filename_sort_;
   Sort_wildcard section_sort_;
 };
+
+// Return a relative priority of the section with the specified NAME
+// (a lower value meand a higher priority), or 0 if it should be compared
+// with others as strings.
+// The implementation of this function is copied from ld/ldlang.c.
+
+unsigned long
+Input_section_sorter::get_init_priority(const char* name)
+{
+  char* end;
+  unsigned long init_priority;
+
+  // GCC uses the following section names for the init_priority
+  // attribute with numerical values 101 and 65535 inclusive. A
+  // lower value means a higher priority.
+  // 
+  // 1: .init_array.NNNN/.fini_array.NNNN: Where NNNN is the
+  //    decimal numerical value of the init_priority attribute.
+  //    The order of execution in .init_array is forward and
+  //    .fini_array is backward.
+  // 2: .ctors.NNNN/.dtors.NNNN: Where NNNN is 65535 minus the
+  //    decimal numerical value of the init_priority attribute.
+  //    The order of execution in .ctors is backward and .dtors
+  //    is forward.
+
+  if (strncmp(name, ".init_array.", 12) == 0
+      || strncmp(name, ".fini_array.", 12) == 0)
+    {
+      init_priority = strtoul(name + 12, &end, 10);
+      return *end ? 0 : init_priority;
+    }
+  else if (strncmp(name, ".ctors.", 7) == 0
+	   || strncmp(name, ".dtors.", 7) == 0)
+    {
+      init_priority = strtoul(name + 7, &end, 10);
+      return *end ? 0 : 65535 - init_priority;
+    }
+
+  return 0;
+}
 
 bool
 Input_section_sorter::operator()(const Input_section_info& isi1,
 				 const Input_section_info& isi2) const
 {
+  if (this->section_sort_ == SORT_WILDCARD_BY_INIT_PRIORITY)
+    {
+      unsigned long ip1 = get_init_priority(isi1.section_name().c_str());
+      unsigned long ip2 = get_init_priority(isi2.section_name().c_str());
+      if (ip1 != 0 && ip2 != 0 && ip1 != ip2)
+	return ip1 < ip2;
+    }
   if (this->section_sort_ == SORT_WILDCARD_BY_NAME
       || this->section_sort_ == SORT_WILDCARD_BY_NAME_BY_ALIGNMENT
       || (this->section_sort_ == SORT_WILDCARD_BY_ALIGNMENT_BY_NAME
-	  && isi1.addralign() == isi2.addralign()))
+	  && isi1.addralign() == isi2.addralign())
+      || this->section_sort_ == SORT_WILDCARD_BY_INIT_PRIORITY)
     {
       if (isi1.section_name() != isi2.section_name())
 	return isi1.section_name() < isi2.section_name();
@@ -1595,6 +1646,7 @@ Output_section_element_input::set_section_addresses(
 
   typedef std::vector<std::vector<Input_section_info> > Matching_sections;
   size_t input_pattern_count = this->input_section_patterns_.size();
+  size_t bin_count = 1;
   bool any_patterns_with_sort = false;
   for (size_t i = 0; i < input_pattern_count; ++i)
     {
@@ -1602,9 +1654,9 @@ Output_section_element_input::set_section_addresses(
       if (isp.sort != SORT_WILDCARD_NONE)
 	any_patterns_with_sort = true;
     }
-  if (input_pattern_count == 0 || !any_patterns_with_sort)
-    input_pattern_count = 1;
-  Matching_sections matching_sections(input_pattern_count);
+  if (any_patterns_with_sort)
+    bin_count = input_pattern_count;
+  Matching_sections matching_sections(bin_count);
 
   // Look through the list of sections for this output section.  Add
   // each one which matches to one of the elements of
@@ -1661,11 +1713,11 @@ Output_section_element_input::set_section_addresses(
 		break;
 	    }
 
-	  if (i >= this->input_section_patterns_.size())
+	  if (i >= input_pattern_count)
 	    ++p;
 	  else
 	    {
-	      if (!any_patterns_with_sort)
+	      if (i >= bin_count)
 		i = 0;
 	      matching_sections[i].push_back(isi);
 	      p = input_sections->erase(p);
@@ -1679,7 +1731,7 @@ Output_section_element_input::set_section_addresses(
   // output section.
 
   uint64_t dot = *dot_value;
-  for (size_t i = 0; i < input_pattern_count; ++i)
+  for (size_t i = 0; i < bin_count; ++i)
     {
       if (matching_sections[i].empty())
 	continue;
@@ -1825,6 +1877,10 @@ Output_section_element_input::print(FILE* f) const
 	    case SORT_WILDCARD_BY_ALIGNMENT_BY_NAME:
 	      fprintf(f, "SORT_BY_ALIGNMENT(SORT_BY_NAME(");
 	      close_parens = 2;
+	      break;
+	    case SORT_WILDCARD_BY_INIT_PRIORITY:
+	      fprintf(f, "SORT_BY_INIT_PRIORITY(");
+	      close_parens = 1;
 	      break;
 	    default:
 	      gold_unreachable();

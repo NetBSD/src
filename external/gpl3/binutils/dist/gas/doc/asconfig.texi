@@ -1,4 +1,4 @@
-@c Copyright (C) 1992-2015 Free Software Foundation, Inc.
+@c Copyright (C) 1992-2016 Free Software Foundation, Inc.
 @c This file is part of the documentation for the GAS manual
 
 @c Configuration settings for all-inclusive version of manual

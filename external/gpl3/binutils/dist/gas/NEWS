@@ -1,11 +1,44 @@
 -*- text -*-
 
+Changes in 2.27:
+
+* Default to --enable-compressed-debug-sections=gas for Linux/x86 targets.
+
+* Add --no-pad-sections to stop the assembler from padding the end of output
+  sections up to their alignment boundary.
+
+* Support for the ARMv8-M architecture has been added to the ARM port.  Support
+  for the ARMv8-M Security and DSP Extensions has also been added to the ARM
+  port.
+
+* ARC backend accepts .extInstruction, .extCondCode, .extAuxRegister, and
+  .extCoreRegister pseudo-ops that allow an user to define custom
+  instructions, conditional codes, auxiliary and core registers.
+
+* Add a configure option --enable-elf-stt-common to decide whether ELF
+  assembler should generate common symbols with the STT_COMMON type by
+  default.  Default to no.
+
+* New command line option --elf-stt-common= for ELF targets to control
+  whether to generate common symbols with the STT_COMMON type.
+
+* Add ability to set section flags and types via numeric values for ELF
+  based targets.
+
 * Add a configure option --enable-x86-relax-relocations to decide whether
   x86 assembler should generate relax relocations by default.  Default to
   yes, except for x86 Solaris targets older than Solaris 12.
 
 * New command line option -mrelax-relocations= for x86 target to control
   whether to generate relax relocations.
+
+* New command line option -mfence-as-lock-add=yes for x86 target to encode
+  lfence, mfence and sfence as "lock addl $0x0, (%[re]sp)".
+
+* Add assembly-time relaxation option for ARC cpus.
+
+* Add --with-cpu=TYPE configure option for ARC gas.  This allows the default
+  cpu type to be adjusted at configure time.
 
 Changes in 2.26:
 
@@ -662,7 +695,7 @@ Changes in 1.93.01:
   of new CPUs and formats, lots of bugs fixed.
 
 
-Copyright (C) 2012-2015 Free Software Foundation, Inc.
+Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

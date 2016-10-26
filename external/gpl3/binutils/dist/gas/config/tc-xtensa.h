@@ -1,5 +1,5 @@
 /* tc-xtensa.h -- Header file for tc-xtensa.c.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -333,7 +333,7 @@ extern void xtensa_elf_section_change_hook (void);
 extern int xtensa_unrecognized_line (int);
 extern bfd_boolean xtensa_check_inside_bundle (void);
 extern void xtensa_handle_align (fragS *);
-extern char *xtensa_section_rename (char *);
+extern char *xtensa_section_rename (const char *);
 
 #define TARGET_FORMAT			xtensa_target_format ()
 #define TARGET_ARCH			bfd_arch_xtensa

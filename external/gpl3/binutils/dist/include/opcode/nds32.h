@@ -1,5 +1,5 @@
 /* nds32.h -- Header file for nds32 opcode table
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This program is free software; you can redistribute it and/or modify
@@ -36,13 +36,13 @@
 #define REG_SP		31
 
 /* Macros for extracting fields or making an instruction.  */
-static const int nds32_r45map[] =
+static const int nds32_r45map[] ATTRIBUTE_UNUSED =
 {
   0, 1, 2,  3,  4,  5,  6,  7,
   8, 9, 10, 11, 16, 17, 18, 19
 };
 
-static const int nds32_r54map[] =
+static const int nds32_r54map[] ATTRIBUTE_UNUSED =
 {
    0,  1,  2,  3,  4,  5,  6,  7,
    8,  9, 10, 11, -1, -1, -1, -1,

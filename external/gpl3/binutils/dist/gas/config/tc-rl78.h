@@ -1,5 +1,5 @@
 /* tc-rl78.h - header file for Renesas RL78
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -99,3 +99,5 @@ extern void rl78_elf_final_processing (void);
    || TC_FORCE_RELOCATION (FIX))
 
 #define DWARF2_USE_FIXED_ADVANCE_PC 1
+
+#define TC_FORCE_RELOCATION(FIX) (linkrelax)
