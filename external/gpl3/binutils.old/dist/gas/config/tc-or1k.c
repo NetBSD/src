@@ -1,5 +1,5 @@
 /* tc-or1k.c -- Assembler for the OpenRISC family.
-   Copyright 2001-2014 Free Software Foundation.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed for OR32 by Johan Rydberg, jrydberg@opencores.org
 
    This file is part of GAS, the GNU Assembler.
@@ -166,7 +166,7 @@ valueT
 md_section_align (segT segment, valueT size)
 {
   int align = bfd_get_section_alignment (stdoutput, segment);
-  return ((size + (1 << align) - 1) & (-1 << align));
+  return ((size + (1 << align) - 1) & -(1 << align));
 }
 
 symbolS *
@@ -298,27 +298,59 @@ or1k_fix_adjustable (fixS * fixP)
 #define GOT_NAME "_GLOBAL_OFFSET_TABLE_"
 
 arelent *
-tc_gen_reloc (asection *sec, fixS *fx)
+tc_gen_reloc (asection * section, fixS * fixp)
 {
-  bfd_reloc_code_real_type code = fx->fx_r_type;
+  arelent *reloc;
+  bfd_reloc_code_real_type code;
 
-  if (fx->fx_addsy != NULL
-      && strcmp (S_GET_NAME (fx->fx_addsy), GOT_NAME) == 0
-      && (code == BFD_RELOC_OR1K_GOTPC_HI16
-          || code == BFD_RELOC_OR1K_GOTPC_LO16))
+  reloc = xmalloc (sizeof (arelent));
+
+  reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
+  reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
+
+  if (fixp->fx_pcrel)
     {
-      arelent * reloc;
+      if (section->use_rela_p)
+        fixp->fx_offset -= md_pcrel_from_section (fixp, section);
+      else
+        fixp->fx_offset = reloc->address;
+    }
+  reloc->addend = fixp->fx_offset;
 
-      reloc = xmalloc (sizeof (* reloc));
-      reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
-      *reloc->sym_ptr_ptr = symbol_get_bfdsym (fx->fx_addsy);
-      reloc->address = fx->fx_frag->fr_address + fx->fx_where;
-      reloc->howto = bfd_reloc_type_lookup (stdoutput, fx->fx_r_type);
-      reloc->addend = fx->fx_offset;
-      return reloc;
+  code = fixp->fx_r_type;
+  switch (code)
+    {
+    case BFD_RELOC_16:
+      if (fixp->fx_pcrel)
+        code = BFD_RELOC_16_PCREL;
+      break;
+
+    case BFD_RELOC_32:
+      if (fixp->fx_pcrel)
+        code = BFD_RELOC_32_PCREL;
+      break;
+
+    case BFD_RELOC_64:
+      if (fixp->fx_pcrel)
+        code = BFD_RELOC_64_PCREL;
+      break;
+
+    default:
+      break;
     }
 
-  return gas_cgen_tc_gen_reloc (sec, fx);
+  reloc->howto = bfd_reloc_type_lookup (stdoutput, code);
+  if (reloc->howto == NULL)
+    {
+      as_bad_where (fixp->fx_file, fixp->fx_line,
+                    _
+                    ("cannot represent %s relocation in this object file format"),
+                    bfd_get_reloc_code_name (code));
+      return NULL;
+    }
+
+  return reloc;
 }
 
 void

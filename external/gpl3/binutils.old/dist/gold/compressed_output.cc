@@ -1,6 +1,6 @@
 // compressed_output.cc -- manage compressed debug sections for gold
 
-// Copyright 2007, 2008, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2007-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -21,19 +21,13 @@
 // MA 02110-1301, USA.
 
 #include "gold.h"
-
-#ifdef HAVE_ZLIB_H
 #include <zlib.h>
-#endif
-
 #include "parameters.h"
 #include "options.h"
 #include "compressed_output.h"
 
 namespace gold
 {
-
-#ifdef HAVE_ZLIB_H
 
 // Compress UNCOMPRESSED_DATA of size UNCOMPRESSED_SIZE.  Returns true
 // if it successfully compressed, false if it failed for any reason
@@ -45,12 +39,12 @@ namespace gold
 // order.
 
 static bool
-zlib_compress(const unsigned char* uncompressed_data,
+zlib_compress(int header_size,
+              const unsigned char* uncompressed_data,
               unsigned long uncompressed_size,
               unsigned char** compressed_data,
               unsigned long* compressed_size)
 {
-  const int header_size = 12;
   *compressed_size = uncompressed_size + uncompressed_size / 1000 + 128;
   *compressed_data = new unsigned char[*compressed_size + header_size];
 
@@ -67,9 +61,6 @@ zlib_compress(const unsigned char* uncompressed_data,
                      compress_level);
   if (rc == Z_OK)
     {
-      memcpy(*compressed_data, "ZLIB", 4);
-      elfcpp::Swap_unaligned<64, true>::writeval(*compressed_data + 4,
-						 uncompressed_size);
       *compressed_size += header_size;
       return true;
     }
@@ -124,24 +115,6 @@ zlib_decompress(const unsigned char* compressed_data,
   return true;
 }
 
-#else // !defined(HAVE_ZLIB_H)
-
-static bool
-zlib_compress(const unsigned char*, unsigned long,
-              unsigned char**, unsigned long*)
-{
-  return false;
-}
-
-static bool
-zlib_decompress(const unsigned char*, unsigned long,
-		unsigned char*, unsigned long)
-{
-  return false;
-}
-
-#endif // !defined(HAVE_ZLIB_H)
-
 // Read the compression header of a compressed debug section and return
 // the uncompressed size.
 
@@ -167,8 +140,55 @@ bool
 decompress_input_section(const unsigned char* compressed_data,
 			 unsigned long compressed_size,
 			 unsigned char* uncompressed_data,
-			 unsigned long uncompressed_size)
+			 unsigned long uncompressed_size,
+			 int size,
+			 bool big_endian,
+			 elfcpp::Elf_Xword sh_flags)
 {
+  if ((sh_flags & elfcpp::SHF_COMPRESSED) != 0)
+    {
+      unsigned int compression_header_size;
+      if (size == 32)
+	{
+	  compression_header_size = elfcpp::Elf_sizes<32>::chdr_size;
+	  if (big_endian)
+	    {
+	      elfcpp::Chdr<32, true> chdr(compressed_data);
+	      if (chdr.get_ch_type() != elfcpp::ELFCOMPRESS_ZLIB)
+		return false;
+	    }
+	  else
+	    {
+	      elfcpp::Chdr<32, false> chdr(compressed_data);
+	      if (chdr.get_ch_type() != elfcpp::ELFCOMPRESS_ZLIB)
+		return false;
+	    }
+	}
+      else if (size == 64)
+	{
+	  compression_header_size = elfcpp::Elf_sizes<64>::chdr_size;
+	  if (big_endian)
+	    {
+	      elfcpp::Chdr<64, true> chdr(compressed_data);
+	      if (chdr.get_ch_type() != elfcpp::ELFCOMPRESS_ZLIB)
+		return false;
+	    }
+	  else
+	    {
+	      elfcpp::Chdr<64, false> chdr(compressed_data);
+	      if (chdr.get_ch_type() != elfcpp::ELFCOMPRESS_ZLIB)
+		return false;
+	    }
+	}
+      else
+	gold_unreachable();
+
+      return zlib_decompress(compressed_data + compression_header_size,
+			     compressed_size - compression_header_size,
+			     uncompressed_data,
+			     uncompressed_size);
+    }
+
   const unsigned int zlib_header_size = 12;
 
   /* Verify the compression header.  Currently, we support only zlib
@@ -210,14 +230,85 @@ Output_compressed_section::set_final_data_size()
   this->write_to_postprocessing_buffer();
 
   bool success = false;
-  if (strcmp(this->options_->compress_debug_sections(), "zlib") == 0)
-    success = zlib_compress(uncompressed_data, uncompressed_size,
-                            &this->data_, &compressed_size);
+  enum { none, gnu_zlib, gabi_zlib } compress;
+  int compression_header_size = 12;
+  const int size = parameters->target().get_size();
+  if (strcmp(this->options_->compress_debug_sections(), "zlib-gnu") == 0)
+    compress = gnu_zlib;
+  else if (strcmp(this->options_->compress_debug_sections(), "zlib-gabi") == 0
+	   || strcmp(this->options_->compress_debug_sections(), "zlib") == 0)
+    {
+      compress = gabi_zlib;
+      if (size == 32)
+	compression_header_size = elfcpp::Elf_sizes<32>::chdr_size;
+      else if (size == 64)
+	compression_header_size = elfcpp::Elf_sizes<64>::chdr_size;
+      else
+	gold_unreachable();
+    }
+  else
+    compress = none;
+  if (compress != none)
+    success = zlib_compress(compression_header_size, uncompressed_data,
+			    uncompressed_size, &this->data_,
+			    &compressed_size);
   if (success)
     {
-      // This converts .debug_foo to .zdebug_foo
-      this->new_section_name_ = std::string(".z") + (this->name() + 1);
-      this->set_name(this->new_section_name_.c_str());
+      elfcpp::Elf_Xword flags = this->flags();
+      if (compress == gabi_zlib)
+	{
+	  // Set the SHF_COMPRESSED bit.
+	  flags |= elfcpp::SHF_COMPRESSED;
+	  const bool is_big_endian = parameters->target().is_big_endian();
+	  uint64_t addralign = this->addralign();
+	  if (size == 32)
+	    {
+	      if (is_big_endian)
+		{
+		  elfcpp::Chdr_write<32, true> chdr(this->data_);
+		  chdr.put_ch_type(elfcpp::ELFCOMPRESS_ZLIB);
+		  chdr.put_ch_size(uncompressed_size);
+		  chdr.put_ch_addralign(addralign);
+		}
+	      else
+		{
+		  elfcpp::Chdr_write<32, false> chdr(this->data_);
+		  chdr.put_ch_type(elfcpp::ELFCOMPRESS_ZLIB);
+		  chdr.put_ch_size(uncompressed_size);
+		  chdr.put_ch_addralign(addralign);
+		}
+	    }
+	  else if (size == 64)
+	    {
+	      if (is_big_endian)
+		{
+		  elfcpp::Chdr_write<64, true> chdr(this->data_);
+		  chdr.put_ch_type(elfcpp::ELFCOMPRESS_ZLIB);
+		  chdr.put_ch_size(uncompressed_size);
+		  chdr.put_ch_addralign(addralign);
+		}
+	      else
+		{
+		  elfcpp::Chdr_write<64, false> chdr(this->data_);
+		  chdr.put_ch_type(elfcpp::ELFCOMPRESS_ZLIB);
+		  chdr.put_ch_size(uncompressed_size);
+		  chdr.put_ch_addralign(addralign);
+		}
+	    }
+	  else
+	    gold_unreachable();
+	}
+      else
+	{
+	  // Write out the zlib header.
+	  memcpy(this->data_, "ZLIB", 4);
+	  elfcpp::Swap_unaligned<64, true>::writeval(this->data_ + 4,
+						     uncompressed_size);
+	  // This converts .debug_foo to .zdebug_foo
+	  this->new_section_name_ = std::string(".z") + (this->name() + 1);
+	  this->set_name(this->new_section_name_.c_str());
+	}
+      this->set_flags(flags);
       this->set_data_size(compressed_size);
     }
   else

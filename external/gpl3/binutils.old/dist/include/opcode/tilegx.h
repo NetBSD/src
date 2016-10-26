@@ -1,6 +1,6 @@
 /* TILE-Gx opcode information.
  *
- *    Copyright 2011 Free Software Foundation, Inc.
+ *    Copyright (C) 2011-2015 Free Software Foundation, Inc.
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -20,6 +20,10 @@
 
 #ifndef opcode_tile_h
 #define opcode_tile_h
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef unsigned long long tilegx_bundle_bits;
 
@@ -1300,5 +1304,9 @@ typedef tilegx_bundle_bits tile_bundle_bits;
 #define TILE_BUNDLE_ALIGNMENT_IN_BYTES TILEGX_BUNDLE_ALIGNMENT_IN_BYTES
 #define TILE_LOG2_BUNDLE_ALIGNMENT_IN_BYTES \
   TILEGX_LOG2_BUNDLE_ALIGNMENT_IN_BYTES
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* opcode_tilegx_h */

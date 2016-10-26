@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola 68000 COFF binaries having underscore with name.
-   Copyright 1990, 1991, 1992, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -19,7 +19,7 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#define TARGET_SYM	m68kcoffun_vec
+#define TARGET_SYM	m68k_coff_un_vec
 #define TARGET_NAME	"coff-m68k-un"
 
 #define NAMES_HAVE_UNDERSCORE

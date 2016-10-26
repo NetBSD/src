@@ -13,6 +13,15 @@ There are README and NEWS files in most of the program sub-directories
 which give more information about those specific programs.
 
 
+Copyright Notices
+=================
+
+Copyright years on binutils source files may be listed using range
+notation, e.g., 1991-2012, indicating that every year in the range,
+inclusive, is a copyrightable year that could otherwise be listed
+individually.
+
+
 Unpacking and Installation -- quick overview
 ============================================
 
@@ -48,7 +57,7 @@ By default, the binutils will be configured to support the system on
 which they are built.  When doing cross development, use the --target
 configure option to specify a different target, eg:
 
-	./configure --target=foo-elf        
+	./configure --target=foo-elf
 
 The --enable-targets option adds support for more binary file formats
 besides the default.  List them as the argument to --enable-targets,
@@ -170,7 +179,7 @@ Always mention the version number you are running; this is printed by
 running any of the binutils with the --version option.  We appreciate
 reports about bugs, but we do not promise to fix them, particularly so
 when the bug report is against an old version.  If you are able, please
-consider building the latest tools from CVS to check that your bug has
+consider building the latest tools from git to check that your bug has
 not already been fixed.
 
 When reporting problems about gas and ld, it's useful to provide a
@@ -282,3 +291,9 @@ unneeded objects and libraries:
 
 If you have any problems or questions about the binutils on VMS, feel
 free to mail me at kkaempf@rmi.de.
+
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

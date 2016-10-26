@@ -1,8 +1,6 @@
 /* Declarations and definitions of codes relating to the DWARF2 and
    DWARF3 symbolic debugging information formats.
-   Copyright (C) 1992, 1993, 1995, 1996, 1997, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    Written by Gary Funck (gary@intrepid.com) The Ada Joint Program
    Office (AJPO), Florida State University and Silicon Graphics Inc.
@@ -259,6 +257,17 @@ enum dwarf_line_number_hp_sfc_ops
     DW_LNE_HP_SFC_associate = 3
   };
 
+/* Type codes for location list entries.
+   Extension for Fission.  See http://gcc.gnu.org/wiki/DebugFission.  */
+
+enum dwarf_location_list_entry_type
+  {
+    DW_LLE_GNU_end_of_list_entry = 0,
+    DW_LLE_GNU_base_address_selection_entry = 1,
+    DW_LLE_GNU_start_end_entry = 2,
+    DW_LLE_GNU_start_length_entry = 3
+  };
+
 #define DW_CIE_ID	  0xffffffff
 #define DW64_CIE_ID	  0xffffffffffffffffULL
 #define DW_CIE_VERSION	  1
@@ -297,6 +306,12 @@ enum dwarf_source_language
     DW_LANG_Python = 0x0014,
     /* DWARF 5.  */
     DW_LANG_Go = 0x0016,
+
+    DW_LANG_C_plus_plus_11 = 0x001a, /* dwarf5.20141029.pdf DRAFT */
+    DW_LANG_C11 = 0x001d,
+    DW_LANG_C_plus_plus_14 = 0x0021,
+    DW_LANG_Fortran03 = 0x0022,
+    DW_LANG_Fortran08 = 0x0023,
 
     DW_LANG_lo_user = 0x8000,	/* Implementation-defined range start.  */
     DW_LANG_hi_user = 0xffff,	/* Implementation-defined range start.  */
@@ -365,6 +380,20 @@ enum dwarf_macro_record_type
 
 #define DW_EH_PE_indirect	0x80
 
+/* Codes for the debug sections in a dwarf package (.dwp) file.
+   Extensions for Fission.  See http://gcc.gnu.org/wiki/DebugFissionDWP.  */
+enum dwarf_sect
+  {
+    DW_SECT_INFO = 1,
+    DW_SECT_TYPES = 2,
+    DW_SECT_ABBREV = 3,
+    DW_SECT_LINE = 4,
+    DW_SECT_LOC = 5,
+    DW_SECT_STR_OFFSETS = 6,
+    DW_SECT_MACINFO = 7,
+    DW_SECT_MACRO = 8,
+    DW_SECT_MAX = 8
+  };
 
 #ifdef __cplusplus
 extern "C" {

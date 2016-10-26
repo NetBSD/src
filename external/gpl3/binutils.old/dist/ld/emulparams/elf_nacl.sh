@@ -6,7 +6,7 @@ NACL_RODATA_DISTANCE=0x10000000
 nacl_rodata_addr()
 {
   nacl_text_addr="SEGMENT_START(\"text-segment\", $1)"
-  nacl_rodata_addr="$nacl_text_addr + ${NACL_RODATA_DISTANCE} + SIZEOF_HEADERS"
+  nacl_rodata_addr="$nacl_text_addr + ${NACL_RODATA_DISTANCE}"
   echo "$nacl_rodata_addr"
 }
 

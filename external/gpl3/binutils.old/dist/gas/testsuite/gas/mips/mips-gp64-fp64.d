@@ -67,7 +67,7 @@ Disassembly of section .text:
   e0:	2c840001 	sltiu	a0,a0,1
   e4:	64a40064 	daddiu	a0,a1,100
   e8:	0004202b 	sltu	a0,zero,a0
-  ec:	00a0202d 	move	a0,a1
+  ec:	00a02025 	move	a0,a1
   f0:	27840000 	addiu	a0,gp,0
   f4:	3c040000 	lui	a0,0x0
   f8:	24840000 	addiu	a0,a0,0

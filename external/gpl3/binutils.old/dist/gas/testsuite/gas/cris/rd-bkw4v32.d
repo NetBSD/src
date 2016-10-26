@@ -43,7 +43,7 @@ Disassembly of section \.text:
     4acc:	b005                	nop 
     4ace:	ffed 4635           	ba 8014 <x\+0x8014>
     4ad2:	b005                	nop 
-    4ad4:	0000                	bcc \.
+    4ad4:	b005                	nop 
     4ad6:	6f9e 0000 0000      	move.d 0 <x>,r9
 			4ad8: R_CRIS_32	x336
     4adc:	bfbd 0000 0000      	jsr 0 <x>

@@ -1,6 +1,5 @@
 /* struct_symbol.h - Internal symbol structure
-   Copyright 1987, 1992, 1993, 1994, 1995, 1998, 1999, 2000, 2001, 2005,
-   2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

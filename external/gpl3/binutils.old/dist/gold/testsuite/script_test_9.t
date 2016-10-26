@@ -16,6 +16,7 @@ SECTIONS
   .data :
   {
   } :data
+  .got : { *(.got .toc) }
   .tdata :
   {
     *(.tdata*)

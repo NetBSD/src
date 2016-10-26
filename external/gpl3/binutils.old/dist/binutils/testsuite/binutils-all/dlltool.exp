@@ -1,4 +1,4 @@
-# Copyright 2002, 2004, 2006, 2007, 2009 Free Software Foundation, Inc.
+# Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,8 +53,8 @@ if { "$target_xfail" == "yes" } {
     setup_xfail *-*
 }
 
-verbose "$DLLTOOL -l libversion.a --def $srcdir/$subdir/version.def" 1
-catch "exec $DLLTOOL -l libersion.a --def $srcdir/$subdir/version.def" err
+verbose "$DLLTOOL -l libversion.a --def $srcdir/$subdir/version.def $dlltool_gas_flag" 1
+catch "exec $DLLTOOL -l libersion.a --def $srcdir/$subdir/version.def $dlltool_gas_flag" err
 
 if ![string match "" $err] then {
     send_log "$err\n"

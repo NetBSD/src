@@ -1,6 +1,6 @@
 // merge.cc -- handle section merging for gold
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -45,69 +45,62 @@ Object_merge_map::~Object_merge_map()
 
 // Get the Input_merge_map to use for an input section, or NULL.
 
-Object_merge_map::Input_merge_map*
-Object_merge_map::get_input_merge_map(unsigned int shndx)
+const Object_merge_map::Input_merge_map*
+Object_merge_map::get_input_merge_map(unsigned int shndx) const
 {
   gold_assert(shndx != -1U);
-  if (shndx == this->first_shnum_)
-    return &this->first_map_;
-  if (shndx == this->second_shnum_)
-    return &this->second_map_;
-  Section_merge_maps::const_iterator p = this->section_merge_maps_.find(shndx);
-  if (p != this->section_merge_maps_.end())
-    return p->second;
+  const Section_merge_maps &maps = this->section_merge_maps_;
+  for (Section_merge_maps::const_iterator i = maps.begin(), e = maps.end();
+       i != e; ++i)
+    {
+      if (i->first == shndx)
+	return i->second;
+    }
   return NULL;
 }
 
 // Get or create the Input_merge_map to use for an input section.
 
 Object_merge_map::Input_merge_map*
-Object_merge_map::get_or_make_input_merge_map(const Merge_map* merge_map,
-					      unsigned int shndx)
-{
+Object_merge_map::get_or_make_input_merge_map(
+    const Output_section_data* output_data, unsigned int shndx) {
   Input_merge_map* map = this->get_input_merge_map(shndx);
   if (map != NULL)
     {
       // For a given input section in a given object, every mapping
       // must be done with the same Merge_map.
-      gold_assert(map->merge_map == merge_map);
+      gold_assert(map->output_data == output_data);
       return map;
     }
 
-  // We need to create a new entry.
-  if (this->first_shnum_ == -1U)
-    {
-      this->first_shnum_ = shndx;
-      this->first_map_.merge_map = merge_map;
-      return &this->first_map_;
-    }
-  if (this->second_shnum_ == -1U)
-    {
-      this->second_shnum_ = shndx;
-      this->second_map_.merge_map = merge_map;
-      return &this->second_map_;
-    }
-
   Input_merge_map* new_map = new Input_merge_map;
-  new_map->merge_map = merge_map;
-  this->section_merge_maps_[shndx] = new_map;
+  new_map->output_data = output_data;
+  Section_merge_maps &maps = this->section_merge_maps_;
+  maps.push_back(std::make_pair(shndx, new_map));
   return new_map;
 }
 
 // Add a mapping.
 
 void
-Object_merge_map::add_mapping(const Merge_map* merge_map, unsigned int shndx,
+Object_merge_map::add_mapping(const Output_section_data* output_data,
+			      unsigned int shndx,
 			      section_offset_type input_offset,
 			      section_size_type length,
 			      section_offset_type output_offset)
 {
-  Input_merge_map* map = this->get_or_make_input_merge_map(merge_map, shndx);
+  Input_merge_map* map = this->get_or_make_input_merge_map(output_data, shndx);
+  map->add_mapping(input_offset, length, output_offset);
+}
 
+void
+Object_merge_map::Input_merge_map::add_mapping(
+    section_offset_type input_offset, section_size_type length,
+    section_offset_type output_offset) {
   // Try to merge the new entry in the last one we saw.
-  if (!map->entries.empty())
+  if (!this->entries.empty())
     {
-      Input_merge_entry& entry(map->entries.back());
+      Input_merge_entry& entry(this->entries.back());
 
       // Use section_size_type to avoid signed/unsigned warnings.
       section_size_type input_offset_u = input_offset;
@@ -120,7 +113,7 @@ Object_merge_map::add_mapping(const Merge_map* merge_map, unsigned int shndx,
 	  gold_assert(input_offset < entry.input_offset);
 	  gold_assert(input_offset_u + length
 		      <= static_cast<section_size_type>(entry.input_offset));
-	  map->sorted = false;
+	  this->sorted = false;
 	}
       else if (entry.input_offset + entry.length == input_offset_u
 	       && (output_offset == -1
@@ -136,20 +129,18 @@ Object_merge_map::add_mapping(const Merge_map* merge_map, unsigned int shndx,
   entry.input_offset = input_offset;
   entry.length = length;
   entry.output_offset = output_offset;
-  map->entries.push_back(entry);
+  this->entries.push_back(entry);
 }
 
 // Get the output offset for an input address.
 
 bool
-Object_merge_map::get_output_offset(const Merge_map* merge_map,
-				    unsigned int shndx,
+Object_merge_map::get_output_offset(unsigned int shndx,
 				    section_offset_type input_offset,
 				    section_offset_type* output_offset)
 {
   Input_merge_map* map = this->get_input_merge_map(shndx);
-  if (map == NULL
-      || (merge_map != NULL && map->merge_map != merge_map))
+  if (map == NULL)
     return false;
 
   if (!map->sorted)
@@ -162,15 +153,12 @@ Object_merge_map::get_output_offset(const Merge_map* merge_map,
   Input_merge_entry entry;
   entry.input_offset = input_offset;
   std::vector<Input_merge_entry>::const_iterator p =
-    std::lower_bound(map->entries.begin(), map->entries.end(),
+    std::upper_bound(map->entries.begin(), map->entries.end(),
 		     entry, Input_merge_compare());
-  if (p == map->entries.end() || p->input_offset > input_offset)
-    {
-      if (p == map->entries.begin())
-	return false;
-      --p;
-      gold_assert(p->input_offset <= input_offset);
-    }
+  if (p == map->entries.begin())
+    return false;
+  --p;
+  gold_assert(p->input_offset <= input_offset);
 
   if (input_offset - p->input_offset
       >= static_cast<section_offset_type>(p->length))
@@ -184,12 +172,13 @@ Object_merge_map::get_output_offset(const Merge_map* merge_map,
 
 // Return whether this is the merge map for section SHNDX.
 
-inline bool
-Object_merge_map::is_merge_section_for(const Merge_map* merge_map,
-				       unsigned int shndx)
-{
-  Input_merge_map* map = this->get_input_merge_map(shndx);
-  return map != NULL && map->merge_map == merge_map;
+const Output_section_data*
+Object_merge_map::find_merge_section(unsigned int shndx) const {
+  const Object_merge_map::Input_merge_map* map =
+    this->get_input_merge_map(shndx);
+  if (map == NULL)
+    return NULL;
+  return map->output_data;
 }
 
 // Initialize a mapping from input offsets to output addresses.
@@ -231,57 +220,6 @@ Object_merge_map::initialize_input_to_output_map(
     }
 }
 
-// Class Merge_map.
-
-// Add a mapping for the bytes from OFFSET to OFFSET + LENGTH in input
-// section SHNDX in object OBJECT to an OUTPUT_OFFSET in merged data
-// in an output section.
-
-void
-Merge_map::add_mapping(Relobj* object, unsigned int shndx,
-		       section_offset_type offset, section_size_type length,
-		       section_offset_type output_offset)
-{
-  gold_assert(object != NULL);
-  Object_merge_map* object_merge_map = object->merge_map();
-  if (object_merge_map == NULL)
-    {
-      object_merge_map = new Object_merge_map();
-      object->set_merge_map(object_merge_map);
-    }
-
-  object_merge_map->add_mapping(this, shndx, offset, length, output_offset);
-}
-
-// Return the output offset for an input address.  The input address
-// is at offset OFFSET in section SHNDX in OBJECT.  This sets
-// *OUTPUT_OFFSET to the offset in the merged data in the output
-// section.  This returns true if the mapping is known, false
-// otherwise.
-
-bool
-Merge_map::get_output_offset(const Relobj* object, unsigned int shndx,
-			     section_offset_type offset,
-			     section_offset_type* output_offset) const
-{
-  Object_merge_map* object_merge_map = object->merge_map();
-  if (object_merge_map == NULL)
-    return false;
-  return object_merge_map->get_output_offset(this, shndx, offset,
-					     output_offset);
-}
-
-// Return whether this is the merge section for SHNDX in OBJECT.
-
-bool
-Merge_map::is_merge_section_for(const Relobj* object, unsigned int shndx) const
-{
-  Object_merge_map* object_merge_map = object->merge_map();
-  if (object_merge_map == NULL)
-    return false;
-  return object_merge_map->is_merge_section_for(this, shndx);
-}
-
 // Class Output_merge_base.
 
 // Return the output offset for an input offset.  The input address is
@@ -294,16 +232,7 @@ Output_merge_base::do_output_offset(const Relobj* object,
 				    section_offset_type offset,
 				    section_offset_type* poutput) const
 {
-  return this->merge_map_.get_output_offset(object, shndx, offset, poutput);
-}
-
-// Return whether this is the merge section for SHNDX in OBJECT.
-
-bool
-Output_merge_base::do_is_merge_section_for(const Relobj* object,
-					   unsigned int shndx) const
-{
-  return this->merge_map_.is_merge_section_for(object, shndx);
+  return object->merge_output_offset(shndx, offset, poutput);
 }
 
 // Record a merged input section for script processing.
@@ -421,6 +350,10 @@ Output_merge_data::do_add_input_section(Relobj* object, unsigned int shndx)
 
   this->input_count_ += len / entsize;
 
+  Object_merge_map* merge_map = object->get_or_create_merge_map();
+  Object_merge_map::Input_merge_map* input_merge_map =
+    merge_map->get_or_make_input_merge_map(this, shndx);
+
   for (section_size_type i = 0; i < len; i += entsize, p += entsize)
     {
       // Add the constant to the section contents.  If we find that it
@@ -439,7 +372,7 @@ Output_merge_data::do_add_input_section(Relobj* object, unsigned int shndx)
 	}
 
       // Record the offset of this constant in the output section.
-      this->add_mapping(object, shndx, i, entsize, k);
+      input_merge_map->add_mapping(i, entsize, k);
     }
 
   // For script processing, we keep the input sections.
@@ -505,17 +438,17 @@ bool
 Output_merge_string<Char_type>::do_add_input_section(Relobj* object,
 						     unsigned int shndx)
 {
-  section_size_type len;
+  section_size_type sec_len;
   bool is_new;
   const unsigned char* pdata = object->decompressed_section_contents(shndx,
-								     &len,
+								     &sec_len,
 								     &is_new);
 
   const Char_type* p = reinterpret_cast<const Char_type*>(pdata);
-  const Char_type* pend = p + len / sizeof(Char_type);
+  const Char_type* pend = p + sec_len / sizeof(Char_type);
   const Char_type* pend0 = pend;
 
-  if (len % sizeof(Char_type) != 0)
+  if (sec_len % sizeof(Char_type) != 0)
     {
       object->error(_("mergeable string section length not multiple of "
 		      "character size"));
@@ -540,37 +473,45 @@ Output_merge_string<Char_type>::do_add_input_section(Relobj* object,
   this->merged_strings_lists_.push_back(merged_strings_list);
   Merged_strings& merged_strings = merged_strings_list->merged_strings;
 
-  // Count the number of strings in the section and size the list.
+  // Count the number of non-null strings in the section and size the list.
   size_t count = 0;
-  for (const Char_type* pt = p; pt < pend0; pt += string_length(pt) + 1)
-    ++count;
+  const Char_type* pt = p;
+  while (pt < pend0)
+    {
+      size_t len = string_length(pt);
+      if (len != 0)
+	++count;
+      pt += len + 1;
+    }
   if (pend0 < pend)
     ++count;
   merged_strings.reserve(count + 1);
 
   // The index I is in bytes, not characters.
   section_size_type i = 0;
-  while (p < pend0)
+
+  // We assume here that the beginning of the section is correctly
+  // aligned, so each string within the section must retain the same
+  // modulo.
+  uintptr_t init_align_modulo = (reinterpret_cast<uintptr_t>(pdata)
+				 & (this->addralign() - 1));
+  bool has_misaligned_strings = false;
+
+  while (p < pend)
     {
-      size_t len = string_length(p);
+      size_t len = p < pend0 ? string_length(p) : pend - p;
+
+      // Within merge input section each string must be aligned.
+      if (len != 0
+	  && ((reinterpret_cast<uintptr_t>(p) & (this->addralign() - 1))
+	      != init_align_modulo))
+	  has_misaligned_strings = true;
 
       Stringpool::Key key;
       this->stringpool_.add_with_length(p, len, true, &key);
 
       merged_strings.push_back(Merged_string(i, key));
-
       p += len + 1;
-      i += (len + 1) * sizeof(Char_type);
-    }
-  if (p < pend)
-    {
-      size_t len = pend - p;
-
-      Stringpool::Key key;
-      this->stringpool_.add_with_length(p, len, true, &key);
-
-      merged_strings.push_back(Merged_string(i, key));
-
       i += (len + 1) * sizeof(Char_type);
     }
 
@@ -579,7 +520,13 @@ Output_merge_string<Char_type>::do_add_input_section(Relobj* object,
   merged_strings.push_back(Merged_string(i, 0));
 
   this->input_count_ += count;
-  this->input_size_ += len;
+  this->input_size_ += i;
+
+  if (has_misaligned_strings)
+    gold_warning(_("%s: section %s contains incorrectly aligned strings;"
+		   " the alignment of those strings won't be preserved"),
+		 object->name().c_str(),
+		 object->section_name(shndx).c_str());
 
   // For script processing, we keep the input sections.
   if (this->keeps_input_sections())
@@ -607,6 +554,11 @@ Output_merge_string<Char_type>::finalize_merged_data()
     {
       section_offset_type last_input_offset = 0;
       section_offset_type last_output_offset = 0;
+      Relobj *object = (*l)->object;
+      Object_merge_map* merge_map = object->get_or_create_merge_map();
+      Object_merge_map::Input_merge_map* input_merge_map =
+        merge_map->get_or_make_input_merge_map(this, (*l)->shndx);
+
       for (typename Merged_strings::const_iterator p =
 	     (*l)->merged_strings.begin();
 	   p != (*l)->merged_strings.end();
@@ -614,8 +566,8 @@ Output_merge_string<Char_type>::finalize_merged_data()
 	{
 	  section_size_type length = p->offset - last_input_offset;
 	  if (length > 0)
-	    this->add_mapping((*l)->object, (*l)->shndx, last_input_offset,
-	    		      length, last_output_offset);
+	    input_merge_map->add_mapping(last_input_offset, length,
+                                         last_output_offset);
 	  last_input_offset = p->offset;
 	  if (p->stringpool_key != 0)
 	    last_output_offset =

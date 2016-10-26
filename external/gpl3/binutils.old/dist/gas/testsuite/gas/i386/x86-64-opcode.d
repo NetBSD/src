@@ -51,6 +51,11 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	48 0f c3 00          	movnti %rax,\(%rax\)
 [ 	]*[a-f0-9]+:	4d 0f c3 00          	movnti %r8,\(%r8\)
 [ 	]*[a-f0-9]+:	4c 0f c3 00          	movnti %r8,\(%rax\)
+[ 	]*[a-f0-9]+:	e2 fe                	loop   .*
+[ 	]*[a-f0-9]+:	e2 fe                	loop   .*
+[ 	]*[a-f0-9]+:	67 e2 fd             	loopl  .*
+[ 	]*[a-f0-9]+:	e3 fe                	jrcxz  .*
+[ 	]*[a-f0-9]+:	67 e3 fd             	jecxz  .*
 [ 	]*[a-f0-9]+:	41 f6 38             	idivb  \(%r8\)
 [ 	]*[a-f0-9]+:	f6 38                	idivb  \(%rax\)
 [ 	]*[a-f0-9]+:	66 41 f7 38          	idivw  \(%r8\)
@@ -296,5 +301,4 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	0f 07                	sysret 
 [ 	]*[a-f0-9]+:	0f 01 f8             	swapgs 
 [ 	]*[a-f0-9]+:	66 68 22 22          	pushw  \$0x2222
-[ 	]*[a-f0-9]+:	67 e3 ff             	jecxz  0x49d
 #pass

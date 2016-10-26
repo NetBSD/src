@@ -30,17 +30,11 @@ thumb2_relax:
 .equ far_ldrh, 0x3e
 .equ far_ldrsh, 0x3e
 .equ far_ldr, 0x7c
-.equ far_strb, 0x1f
-.equ far_strh, 0x3e
-.equ far_str, 0x7c
 	ls	ldrb
 	ls	ldrsb
 	ls	ldrh
 	ls	ldrsh
 	ls	ldr
-	ls	strb
-	ls	strh
-	ls	str
 	.purgem ls
 1:
 	adr	r1, 1f

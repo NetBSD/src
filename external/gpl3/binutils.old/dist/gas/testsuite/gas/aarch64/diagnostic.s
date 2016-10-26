@@ -41,7 +41,7 @@
 	shl	v1.2s, v2.2s, 32
 	sqshrn2	v2.16b, v3.8h, #17
 	movi	v1.4h, 256
-	movi	v1.4h, -1
+	movi	v1.4h, -129
 	movi	v1.4h, 255, msl #8
 	movi	d0, 256
 	movi	v1.4h, 255, lsl #7
@@ -89,3 +89,123 @@
 	movi	v1.8b, 97, lsl #8
 	msr	dummy, x1
 	fmov	s0, 0x42000000
+	ldp	x0, x1, [x2, #4]
+	ldp	x0, x1, [x2, #4]!
+	ldp	x0, x1, [x2], #4
+	stp	w0, w1, [x2, #3]
+	stp	w0, w1, [x2, #2]!
+	stp	w0, w1, [x2], #1
+	cinc	w0, w1, al
+	cinc	w0, w1, nv
+	cset	w0, al
+	cset	w0, nv
+
+	# test diagnostic info on optional operand
+	ret	lr
+	ret	kk
+	clrex	x0
+	clrex	w0
+	clrex	kk
+	sys	#0, c0, c0, #0, kk
+	sys	#0, c0, c0, #0,
+
+	casp w0,w1,w2,w3,[x4]
+
+	# test warning of unpredictable load pairs
+	ldp     x0, x0, [sp]
+	ldp     d0, d0, [sp]
+	ldp     x0, x0, [sp], #16
+	ldnp    x0, x0, [sp]
+
+	# test warning of unpredictable writeback
+	ldr	x0, [x0, #8]!
+	str	x0, [x0, #8]!
+	str	x1, [x1], #8
+	stp	x0, x1, [x0, #16]!
+	ldp	x0, x1, [x1], #16
+	adr	x2, :got:s1
+	ldr	x0, [x0, :got:s1]
+
+	# Test error of 32-bit base reg
+	ldr	x1, [wsp, #8]!
+	ldp	x6, x29, [w7, #8]!
+	str	x30, [w11, #8]!
+	stp	x8, x27, [wsp, #8]!
+
+	# Test various valid load/store reg combination.
+	# especially we shouldn't warn on xzr, although
+	# xzr is with the same encoding 31 as sp.
+	.macro ldst_pair_wb_2 op, reg1, reg2
+	.irp base x3, x6, x25, sp
+	\op	\reg1, \reg2, [\base], #16
+	\op	\reg1, \reg2, [\base, #32]!
+	\op	\reg2, \reg1, [\base], #32
+	\op	\reg2, \reg1, [\base, #16]!
+	.endr
+	.endm
+
+	.macro ldst_pair_wb_1 op, reg1, width
+	.irp reg2 0, 14, 21, 23, 29
+	ldst_pair_wb_2	\op, \reg1, \width\reg2
+	.endr
+	.endm
+
+	.macro ldst_pair_wb_64 op
+	.irp	reg1 x2, x15, x16, x27, x30, xzr
+	ldst_pair_wb_1	\op, \reg1, x
+	.endr
+	.endm
+
+	.macro ldst_pair_wb_32 op
+	.irp	reg1 w1, w12, w16, w19, w30, wzr
+	ldst_pair_wb_1	\op, \reg1, w
+	.endr
+	.endm
+
+	.macro ldst_single_wb_1 op, reg
+	.irp	base x1, x4, x13, x26, sp
+	\op	\reg, [\base], #16
+	.endr
+	.endm
+
+	.macro ldst_single_wb_32 op
+	.irp reg w0, w3, w12, w21, w28, w30, wzr
+	ldst_single_wb_1	\op, \reg
+	.endr
+	.endm
+
+	.macro ldst_single_wb_64 op
+	.irp reg x2, x5, x17, x23, x24, x30, xzr
+	ldst_single_wb_1	\op, \reg
+	.endr
+	.endm
+
+	ldst_pair_wb_32	stp
+	ldst_pair_wb_64 stp
+
+	ldst_pair_wb_32	ldp
+	ldst_pair_wb_64 ldp
+
+	ldst_pair_wb_64	ldpsw
+
+	ldst_single_wb_32 str
+	ldst_single_wb_64 str
+
+	ldst_single_wb_32 strb
+
+	ldst_single_wb_32 strh
+
+	ldst_single_wb_32 ldr
+	ldst_single_wb_64 ldr
+
+	ldst_single_wb_32 ldrb
+
+	ldst_single_wb_32 ldrh
+
+	ldst_single_wb_32 ldrsb
+	ldst_single_wb_64 ldrsb
+
+	ldst_single_wb_32 ldrsh
+	ldst_single_wb_64 ldrsh
+
+	ldst_single_wb_64 ldrsw

@@ -34,6 +34,9 @@ _forward_test:
 	bl	_forward_target
 	.size	_forward_test, .-_forward_test
 	
+# Align stub table for address matching
+	.align	8
+
 	.section	.text.post,"x"
 
 # Add padding so that target is just out of branch range. 

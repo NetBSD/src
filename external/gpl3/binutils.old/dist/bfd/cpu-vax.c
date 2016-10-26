@@ -1,6 +1,5 @@
 /* bfd back-end for vax support
-   Copyright 1990, 1991, 1994, 2000, 2002, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.

@@ -6,5 +6,6 @@
 	.eabi_attribute 24, 1
 	.eabi_attribute 25, 1
 	.eabi_attribute 26, 1
+	.eabi_attribute 28, 3
 	.eabi_attribute 30, 6
 	.file	"attr-merge-2a.s"

@@ -1,5 +1,4 @@
-#   Copyright 1995, 1997, 2002, 2004, 2007, 2008, 2009, 2010
-#   Free Software Foundation, Inc.
+#   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,9 +30,10 @@ if ![is_remote host] {
 
 # Test long file name support
 
-proc long_filenames { } {
+proc long_filenames { bfdtests } {
     global AR
     global host_triplet
+    global base_dir
 
     set testname "ar long file names"
 
@@ -115,13 +115,21 @@ proc long_filenames { } {
 	remote_file host delete $file2
     }
 
-    verbose -log "$AR x $dest"
     set exec_output [binutils_run $AR "x $dest"]
     set exec_output [prune_warnings $exec_output]
     if ![string match "" $exec_output] {
 	verbose -log $exec_output
 	fail $testname
 	return
+    }
+
+    foreach bfdtest $bfdtests {
+	set exec_output [binutils_run "$base_dir/$bfdtest" "$dest"]
+	if ![string match "" $exec_output] {
+	    verbose -log $exec_output
+	    fail "$testname ($bfdtest)"
+	    return
+	}
     }
 
     if [is_remote host] {
@@ -218,12 +226,13 @@ proc symbol_table { } {
 
 # Test building a thin archive.
 
-proc thin_archive { } {
+proc thin_archive { bfdtests } {
     global AR
     global AS
     global NM
     global srcdir
     global subdir
+    global base_dir
 
     set testname "ar thin archive"
 
@@ -249,6 +258,15 @@ proc thin_archive { } {
 	return
     }
 
+    foreach bfdtest $bfdtests {
+	set exec_output [binutils_run "$base_dir/$bfdtest" "$archive"]
+	if ![string match "" $exec_output] {
+	    verbose -log $exec_output
+	    fail "$testname ($bfdtest)"
+	    return
+	}
+    }
+
     set got [binutils_run $NM "--print-armap $archive"]
     if { ![string match "*text_symbol in *bintest.o*" $got] \
 	 || ![string match "*data_symbol in *bintest.o*" $got] \
@@ -265,12 +283,13 @@ proc thin_archive { } {
 
 # Test building a thin archive with a nested archive.
 
-proc thin_archive_with_nested { } {
+proc thin_archive_with_nested { bfdtests } {
     global AR
     global AS
     global NM
     global srcdir
     global subdir
+    global base_dir
 
     set testname "ar thin archive with nested archive"
 
@@ -304,6 +323,22 @@ proc thin_archive_with_nested { } {
     if ![string match "" $got] {
 	fail $testname
 	return
+    }
+
+    foreach bfdtest $bfdtests {
+	set exec_output [binutils_run "$base_dir/$bfdtest" "$archive"]
+	if ![string match "" $exec_output] {
+	    verbose -log $exec_output
+	    fail "$testname ($bfdtest)"
+	    return
+	}
+
+	set exec_output [binutils_run "$base_dir/$bfdtest" "$archive2"]
+	if ![string match "" $exec_output] {
+	    verbose -log $exec_output
+	    fail "$testname ($bfdtest)"
+	    return
+	}
     }
 
     set got [binutils_run $NM "--print-armap $archive"]
@@ -520,16 +555,66 @@ proc move_an_element { } {
     pass $testname
 }
 
+# PR 19775: Test creating and listing archives with an empty element.
+
+proc empty_archive { } {
+    global AR
+    global srcdir
+    global subdir
+
+    set testname "archive with empty element"
+
+    # FIXME: There ought to be a way to dynamically create an empty file.
+    set empty $srcdir/$subdir/empty
+    
+    if [is_remote host] {
+	set archive artest.a
+	set objfile [remote_download host $empty]
+	remote_file host delete $archive
+    } else {
+	set archive tmpdir/artest.a
+	set objfile $empty
+    }
+
+    remote_file build delete tmpdir/artest.a
+
+    set got [binutils_run $AR "-r -c $archive ${objfile}"]
+    if ![string match "" $got] {
+	fail $testname
+	return
+    }
+
+    # This commmand used to fail with: "Malformed archive".
+    set got [binutils_run $AR "-t $archive"]
+    if ![string match "empty" $got] {
+	fail $testname
+	return
+    }
+
+    pass $testname
+}
+
 # Run the tests.
 
-long_filenames
+# Only run the bfdtest checks if the programs exist.  Since these
+# programs are built but not installed, running the testsuite on an
+# installed toolchain will produce ERRORs about missing bfdtest1 and
+# bfdtest2 executables.
+if { [file exists $base_dir/bfdtest1] && [file exists $base_dir/bfdtest2] } {
+    set bfdtests [list bfdtest1 bfdtest2]
+
+    long_filenames $bfdtests
+    thin_archive $bfdtests
+    thin_archive_with_nested $bfdtests
+}
+
 symbol_table
-thin_archive
-thin_archive_with_nested
 argument_parsing
 deterministic_archive
 delete_an_element
 move_an_element
+empty_archive
+
 if { [is_elf_format]
      && ![istarget "*-*-hpux*"]
      && ![istarget "msp*-*-*"] } {

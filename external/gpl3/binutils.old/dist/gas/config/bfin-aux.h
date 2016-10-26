@@ -1,6 +1,5 @@
 /* bfin-aux.h ADI Blackfin Header file for gas
-   Copyright 2005, 2007, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

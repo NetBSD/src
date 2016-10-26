@@ -1,6 +1,6 @@
 # j test
-	
-text_label:	
+
+text_label:
 
 	j	text_label
 	jal	text_label

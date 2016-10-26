@@ -156,4 +156,13 @@ func_all_registers:
 	.cfi_undefined mm6	; nop
 	.cfi_undefined mm7	; nop
 
+	.cfi_undefined k0	; nop
+	.cfi_undefined k1	; nop
+	.cfi_undefined k2	; nop
+	.cfi_undefined k3	; nop
+	.cfi_undefined k4	; nop
+	.cfi_undefined k5	; nop
+	.cfi_undefined k6	; nop
+	.cfi_undefined k7	; nop
+
 	.cfi_endproc

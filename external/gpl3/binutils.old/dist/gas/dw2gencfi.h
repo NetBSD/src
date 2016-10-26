@@ -1,5 +1,5 @@
 /* dw2gencfi.h - Support for generating Dwarf2 CFI information.
-   Copyright 2003, 2004, 2005, 2007, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
    Contributed by Michal Ludvig <mludvig@suse.cz>
 
    This file is part of GAS, the GNU Assembler.
@@ -36,7 +36,9 @@ extern void cfi_finish (void);
 extern void cfi_new_fde (struct symbol *);
 extern void cfi_end_fde (struct symbol *);
 extern void cfi_set_return_column (unsigned);
+extern void cfi_set_sections (void);
 extern void cfi_add_advance_loc (struct symbol *);
+extern void cfi_add_label (const char *);
 
 extern void cfi_add_CFA_offset (unsigned, offsetT);
 extern void cfi_add_CFA_def_cfa (unsigned, offsetT);
@@ -57,10 +59,18 @@ extern void cfi_add_CFA_restore_state (void);
 #define SUPPORT_FRAME_LINKONCE 0
 #endif
 
+#ifdef tc_cfi_reloc_for_encoding
+#define SUPPORT_COMPACT_EH 1
+#else
+#define SUPPORT_COMPACT_EH 0
+#endif
+
+#define MULTIPLE_FRAME_SECTIONS (SUPPORT_FRAME_LINKONCE || SUPPORT_COMPACT_EH)
+
 struct cfi_insn_data
 {
   struct cfi_insn_data *next;
-#if SUPPORT_FRAME_LINKONCE
+#if MULTIPLE_FRAME_SECTIONS
   segT cur_seg;
 #endif
   int insn;
@@ -94,13 +104,40 @@ struct cfi_insn_data
       unsigned reg, encoding;
       expressionS exp;
     } ea;
+
+    const char *sym_name;
   } u;
+};
+
+/* An enumeration describing the Compact EH header format.  The least
+   significant bit is used to distinguish the entries.
+
+   Inline Compact:			Function offset [0]
+					Four chars of unwind data.
+   Out-of-line Compact:			Function offset [1]
+					Compact unwind data offset [0]
+   Legacy:				Function offset [1]
+					Unwind data offset [1]
+
+   The header type is initialized to EH_COMPACT_UNKNOWN until the
+   format is discovered by encountering a .fde_data entry.
+   Failure to find a .fde_data entry will cause an EH_COMPACT_LEGACY
+   header to be generated.  */
+
+enum {
+  EH_COMPACT_UNKNOWN,
+  EH_COMPACT_LEGACY,
+  EH_COMPACT_INLINE,
+  EH_COMPACT_OUTLINE,
+  EH_COMPACT_OUTLINE_DONE,
+  /* Outline if .cfi_inline_lsda used, otherwise legacy FDE.  */
+  EH_COMPACT_HAS_LSDA
 };
 
 struct fde_entry
 {
   struct fde_entry *next;
-#if SUPPORT_FRAME_LINKONCE
+#if MULTIPLE_FRAME_SECTIONS
   segT cur_seg;
 #endif
   symbolS *start_address;
@@ -109,13 +146,21 @@ struct fde_entry
   struct cfi_insn_data **last;
   unsigned char per_encoding;
   unsigned char lsda_encoding;
+  int personality_id;
   expressionS personality;
   expressionS lsda;
   unsigned int return_column;
   unsigned int signal_frame;
-#if SUPPORT_FRAME_LINKONCE
+#if MULTIPLE_FRAME_SECTIONS
   int handled;
 #endif
+  int eh_header_type;
+  /* Compact unwinding opcodes, not including the PR byte or LSDA.  */
+  int eh_data_size;
+  bfd_byte *eh_data;
+  /* For out of line tables and FDEs.  */
+  symbolS *eh_loc;
+  int sections;
 };
 
 /* The list of all FDEs that have been collected.  */
@@ -128,5 +173,12 @@ extern struct fde_entry *all_fde_data;
 #define CFI_escape		0x103
 #define CFI_signal_frame	0x104
 #define CFI_val_encoded_addr	0x105
+#define CFI_label		0x106
+
+/* By default emit .eh_frame only, not .debug_frame.  */
+#define CFI_EMIT_eh_frame               (1 << 0)
+#define CFI_EMIT_debug_frame            (1 << 1)
+#define CFI_EMIT_target                 (1 << 2)
+#define CFI_EMIT_eh_frame_compact       (1 << 3)
 
 #endif /* DW2GENCFI_H */

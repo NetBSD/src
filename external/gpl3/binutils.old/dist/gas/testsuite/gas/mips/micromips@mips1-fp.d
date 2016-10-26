@@ -8,5 +8,5 @@
 Disassembly of section \.text:
 [0-9a-f]+ <foo>:
 [0-9a-f ]+:	5482 0030 	add\.s	\$f0,\$f2,\$f4
-[0-9a-f ]+:	5440 103b 	cfc1	\$2,\$0
+[0-9a-f ]+:	5440 203b 	mfc1	\$2,\$f0
 #pass

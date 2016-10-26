@@ -1,25 +1,14 @@
-#as: -EL -marc6
-#objdump: -dr -EL
+#as: -mcpu=archs
+#objdump: -dr --show-raw-insn
 
-.*: +file format elf32-.*arc
+.*: +file format .*arc.*
 
 Disassembly of section .text:
 
-00000000 <text_label>:
-   0:	40 02 1f 38 	381f0240     jl         0 <text_label>
-
-   4:	00 00 00 00 
-			4: R_ARC_B26	.text
-   8:	40 03 1f 38 	381f0340     jl.f       0 <text_label>
-
-   c:	00 00 00 00 
-			c: R_ARC_B26	.text
-  10:	02 82 00 38 	38008202     jlnz       \[r1\]
-  14:	40 02 1f 38 	381f0240     jl         0 <text_label>
-
-  18:	00 00 00 00 
-			18: R_ARC_B26	.text
-  1c:	40 03 1f 38 	381f0340     jl.f       0 <text_label>
-
-  20:	00 00 00 00 
-			20: R_ARC_B26	.text
+[0-9a-f]+ <text_label>:
+   0:	2022 0f80 0000 0000 	jl	0
+			4: ARC_32_ME	text_label
+   8:	20e3 0042           	jlne.d	\[r1\]
+   c:	78e0                	nop_s
+   e:	20e2 0f80 0000 0000 	jl	0
+			12: ARC_32_ME	text_label
