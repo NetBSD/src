@@ -1,5 +1,5 @@
 /* vms.c -- BFD back-end for EVAX (openVMS/Alpha) files.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    Initial version written by Klaus Kaempf (kkaempf@rmi.de)
    Major rewrite by Adacore.
@@ -1641,9 +1641,8 @@ _bfd_vms_get_value (bfd *abfd, const unsigned char *ascic,
     *vma = 0;
   else
     {
-      if (!(*info->callbacks->undefined_symbol)
-          (info, name, abfd, PRIV (image_section), PRIV (image_offset), TRUE))
-        abort ();
+      (*info->callbacks->undefined_symbol)
+	(info, name, abfd, PRIV (image_section), PRIV (image_offset), TRUE);
       *vma = 0;
     }
 }
@@ -8202,7 +8201,7 @@ alpha_vms_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
 	 to include it.  We don't need to check anything.  */
       if (!(*info->callbacks
 	    ->add_archive_element) (info, element, h->root.string, &element))
-	return FALSE;
+	continue;
       if (!alpha_vms_link_add_object_symbols (element, info))
 	return FALSE;
 
@@ -9260,6 +9259,7 @@ bfd_vms_get_data (bfd *abfd)
   _bfd_nodynamic_get_dynamic_reloc_upper_bound
 #define alpha_vms_canonicalize_dynamic_reloc \
   _bfd_nodynamic_canonicalize_dynamic_reloc
+#define alpha_vms_bfd_link_check_relocs              _bfd_generic_link_check_relocs
 
 const bfd_target alpha_vms_vec =
 {

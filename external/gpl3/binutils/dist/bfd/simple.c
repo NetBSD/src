@@ -1,5 +1,5 @@
 /* simple.c -- BFD simple client routines
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by MontaVista Software, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -24,7 +24,7 @@
 #include "libbfd.h"
 #include "bfdlink.h"
 
-static bfd_boolean
+static void
 simple_dummy_warning (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
 		      const char *warning ATTRIBUTE_UNUSED,
 		      const char *symbol ATTRIBUTE_UNUSED,
@@ -32,10 +32,9 @@ simple_dummy_warning (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
 		      asection *section ATTRIBUTE_UNUSED,
 		      bfd_vma address ATTRIBUTE_UNUSED)
 {
-  return TRUE;
 }
 
-static bfd_boolean
+static void
 simple_dummy_undefined_symbol (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
 			       const char *name ATTRIBUTE_UNUSED,
 			       bfd *abfd ATTRIBUTE_UNUSED,
@@ -43,10 +42,9 @@ simple_dummy_undefined_symbol (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
 			       bfd_vma address ATTRIBUTE_UNUSED,
 			       bfd_boolean fatal ATTRIBUTE_UNUSED)
 {
-  return TRUE;
 }
 
-static bfd_boolean
+static void
 simple_dummy_reloc_overflow (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
 			     struct bfd_link_hash_entry *entry ATTRIBUTE_UNUSED,
 			     const char *name ATTRIBUTE_UNUSED,
@@ -56,37 +54,33 @@ simple_dummy_reloc_overflow (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
 			     asection *section ATTRIBUTE_UNUSED,
 			     bfd_vma address ATTRIBUTE_UNUSED)
 {
-  return TRUE;
 }
 
-static bfd_boolean
+static void
 simple_dummy_reloc_dangerous (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
 			      const char *message ATTRIBUTE_UNUSED,
 			      bfd *abfd ATTRIBUTE_UNUSED,
 			      asection *section ATTRIBUTE_UNUSED,
 			      bfd_vma address ATTRIBUTE_UNUSED)
 {
-  return TRUE;
 }
 
-static bfd_boolean
+static void
 simple_dummy_unattached_reloc (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
 			       const char *name ATTRIBUTE_UNUSED,
 			       bfd *abfd ATTRIBUTE_UNUSED,
 			       asection *section ATTRIBUTE_UNUSED,
 			       bfd_vma address ATTRIBUTE_UNUSED)
 {
-  return TRUE;
 }
 
-static bfd_boolean
+static void
 simple_dummy_multiple_definition (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
 				  struct bfd_link_hash_entry *h ATTRIBUTE_UNUSED,
 				  bfd *nbfd ATTRIBUTE_UNUSED,
 				  asection *nsec ATTRIBUTE_UNUSED,
 				  bfd_vma nval ATTRIBUTE_UNUSED)
 {
-  return TRUE;
 }
 
 static void

@@ -1,5 +1,5 @@
 /* tc-ppc.h -- Header file for tc-ppc.c.
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -51,7 +51,7 @@ extern int target_big_endian;
 
 /* The target BFD format.  */
 #define TARGET_FORMAT (ppc_target_format ())
-extern char *ppc_target_format (void);
+extern const char *ppc_target_format (void);
 
 /* Permit temporary numeric labels.  */
 #define LOCAL_LABELS_FB 1
@@ -85,7 +85,9 @@ extern char *ppc_target_format (void);
 extern void ppc_handle_align (struct frag *);
 extern void ppc_frag_check (struct frag *);
 
+#ifdef OBJ_ELF
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 0
+#endif
 
 #define md_frag_check(FRAGP) ppc_frag_check (FRAGP)
 

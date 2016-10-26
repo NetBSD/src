@@ -1,13 +1,14 @@
-/* A Bison parser, made by GNU Bison 3.0.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
-/* Bison interface for Yacc-like parsers in C
+/* Skeleton interface for Bison's Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,7 +16,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -30,139 +33,130 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_RL78_RL_PARSE_H_INCLUDED
-# define YY_RL78_RL_PARSE_H_INCLUDED
-/* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int rl78_debug;
-#endif
-
-/* Token type.  */
+/* Tokens.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-  enum yytokentype
-  {
-    A = 258,
-    X = 259,
-    B = 260,
-    C = 261,
-    D = 262,
-    E = 263,
-    H = 264,
-    L = 265,
-    AX = 266,
-    BC = 267,
-    DE = 268,
-    HL = 269,
-    SPL = 270,
-    SPH = 271,
-    PSW = 272,
-    CS = 273,
-    ES = 274,
-    PMC = 275,
-    MEM = 276,
-    FLAG = 277,
-    SP = 278,
-    CY = 279,
-    RB0 = 280,
-    RB1 = 281,
-    RB2 = 282,
-    RB3 = 283,
-    EXPR = 284,
-    UNKNOWN_OPCODE = 285,
-    IS_OPCODE = 286,
-    DOT_S = 287,
-    DOT_B = 288,
-    DOT_W = 289,
-    DOT_L = 290,
-    DOT_A = 291,
-    DOT_UB = 292,
-    DOT_UW = 293,
-    ADD = 294,
-    ADDC = 295,
-    ADDW = 296,
-    AND_ = 297,
-    AND1 = 298,
-    BF = 299,
-    BH = 300,
-    BNC = 301,
-    BNH = 302,
-    BNZ = 303,
-    BR = 304,
-    BRK = 305,
-    BRK1 = 306,
-    BT = 307,
-    BTCLR = 308,
-    BZ = 309,
-    CALL = 310,
-    CALLT = 311,
-    CLR1 = 312,
-    CLRB = 313,
-    CLRW = 314,
-    CMP = 315,
-    CMP0 = 316,
-    CMPS = 317,
-    CMPW = 318,
-    DEC = 319,
-    DECW = 320,
-    DI = 321,
-    DIVHU = 322,
-    DIVWU = 323,
-    EI = 324,
-    HALT = 325,
-    INC = 326,
-    INCW = 327,
-    MACH = 328,
-    MACHU = 329,
-    MOV = 330,
-    MOV1 = 331,
-    MOVS = 332,
-    MOVW = 333,
-    MULH = 334,
-    MULHU = 335,
-    MULU = 336,
-    NOP = 337,
-    NOT1 = 338,
-    ONEB = 339,
-    ONEW = 340,
-    OR = 341,
-    OR1 = 342,
-    POP = 343,
-    PUSH = 344,
-    RET = 345,
-    RETI = 346,
-    RETB = 347,
-    ROL = 348,
-    ROLC = 349,
-    ROLWC = 350,
-    ROR = 351,
-    RORC = 352,
-    SAR = 353,
-    SARW = 354,
-    SEL = 355,
-    SET1 = 356,
-    SHL = 357,
-    SHLW = 358,
-    SHR = 359,
-    SHRW = 360,
-    SKC = 361,
-    SKH = 362,
-    SKNC = 363,
-    SKNH = 364,
-    SKNZ = 365,
-    SKZ = 366,
-    STOP = 367,
-    SUB = 368,
-    SUBC = 369,
-    SUBW = 370,
-    XCH = 371,
-    XCHW = 372,
-    XOR = 373,
-    XOR1 = 374
-  };
+   /* Put the tokens into the symbol table, so that GDB and other debuggers
+      know about them.  */
+   enum yytokentype {
+     A = 258,
+     X = 259,
+     B = 260,
+     C = 261,
+     D = 262,
+     E = 263,
+     H = 264,
+     L = 265,
+     AX = 266,
+     BC = 267,
+     DE = 268,
+     HL = 269,
+     SPL = 270,
+     SPH = 271,
+     PSW = 272,
+     CS = 273,
+     ES = 274,
+     PMC = 275,
+     MEM = 276,
+     FLAG = 277,
+     SP = 278,
+     CY = 279,
+     RB0 = 280,
+     RB1 = 281,
+     RB2 = 282,
+     RB3 = 283,
+     EXPR = 284,
+     UNKNOWN_OPCODE = 285,
+     IS_OPCODE = 286,
+     DOT_S = 287,
+     DOT_B = 288,
+     DOT_W = 289,
+     DOT_L = 290,
+     DOT_A = 291,
+     DOT_UB = 292,
+     DOT_UW = 293,
+     ADD = 294,
+     ADDC = 295,
+     ADDW = 296,
+     AND_ = 297,
+     AND1 = 298,
+     BF = 299,
+     BH = 300,
+     BNC = 301,
+     BNH = 302,
+     BNZ = 303,
+     BR = 304,
+     BRK = 305,
+     BRK1 = 306,
+     BT = 307,
+     BTCLR = 308,
+     BZ = 309,
+     CALL = 310,
+     CALLT = 311,
+     CLR1 = 312,
+     CLRB = 313,
+     CLRW = 314,
+     CMP = 315,
+     CMP0 = 316,
+     CMPS = 317,
+     CMPW = 318,
+     DEC = 319,
+     DECW = 320,
+     DI = 321,
+     DIVHU = 322,
+     DIVWU = 323,
+     EI = 324,
+     HALT = 325,
+     INC = 326,
+     INCW = 327,
+     MACH = 328,
+     MACHU = 329,
+     MOV = 330,
+     MOV1 = 331,
+     MOVS = 332,
+     MOVW = 333,
+     MULH = 334,
+     MULHU = 335,
+     MULU = 336,
+     NOP = 337,
+     NOT1 = 338,
+     ONEB = 339,
+     ONEW = 340,
+     OR = 341,
+     OR1 = 342,
+     POP = 343,
+     PUSH = 344,
+     RET = 345,
+     RETI = 346,
+     RETB = 347,
+     ROL = 348,
+     ROLC = 349,
+     ROLWC = 350,
+     ROR = 351,
+     RORC = 352,
+     SAR = 353,
+     SARW = 354,
+     SEL = 355,
+     SET1 = 356,
+     SHL = 357,
+     SHLW = 358,
+     SHR = 359,
+     SHRW = 360,
+     SKC = 361,
+     SKH = 362,
+     SKNC = 363,
+     SKNH = 364,
+     SKNZ = 365,
+     SKZ = 366,
+     STOP = 367,
+     SUB = 368,
+     SUBC = 369,
+     SUBW = 370,
+     XCH = 371,
+     XCHW = 372,
+     XOR = 373,
+     XOR1 = 374
+   };
 #endif
 /* Tokens.  */
 #define A 258
@@ -283,25 +277,23 @@ extern int rl78_debug;
 #define XOR 373
 #define XOR1 374
 
-/* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE YYSTYPE;
-union YYSTYPE
-{
-#line 144 "./config/rl78-parse.y" /* yacc.c:1915  */
 
+
+
+#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+typedef union YYSTYPE
+#line 144 "./config/rl78-parse.y"
+{
   int regno;
   expressionS exp;
-
-#line 297 "rl78-parse.h" /* yacc.c:1915  */
-};
-# define YYSTYPE_IS_TRIVIAL 1
+}
+/* Line 1529 of yacc.c.  */
+#line 292 "rl78-parse.h"
+	YYSTYPE;
+# define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
-
 
 extern YYSTYPE rl78_lval;
 
-int rl78_parse (void);
-
-#endif /* !YY_RL78_RL_PARSE_H_INCLUDED  */

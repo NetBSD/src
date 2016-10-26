@@ -1,6 +1,6 @@
 /* gmon_io.c - Input and output from/to gmon.out files.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -61,7 +61,7 @@ int gmon_input = 0;
 int gmon_file_version = 0;	/* 0 == old (non-versioned) file format.  */
 
 static enum gmon_ptr_size
-gmon_get_ptr_size ()
+gmon_get_ptr_size (void)
 {
   int size;
 
@@ -87,7 +87,7 @@ gmon_get_ptr_size ()
 }
 
 static enum gmon_ptr_signedness
-gmon_get_ptr_signedness ()
+gmon_get_ptr_signedness (void)
 {
   int sext;
 

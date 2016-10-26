@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries under dynix.
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

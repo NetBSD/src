@@ -1,5 +1,5 @@
 /* tc-xgate.c -- Assembler code for Freescale XGATE
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Sean Keys <skeys@ipdatasys.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -193,14 +193,14 @@ struct option md_longopts[] =
 
 size_t md_longopts_size = sizeof(md_longopts);
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, TRUE);
 }
 
 int
-md_parse_option (int c, char *arg)
+md_parse_option (int c, const char *arg)
 {
   switch (c)
     {
@@ -291,15 +291,14 @@ md_begin (void)
   struct xgate_opcode *xgate_opcode_ptr = NULL;
   struct xgate_opcode *xgate_op_table = NULL;
   struct xgate_opcode_handle *op_handles = 0;
-  char *prev_op_name = 0;
+  const char *prev_op_name = 0;
   int handle_enum = 0;
   int number_of_op_handles = 0;
   int i, j = 0;
 
   /* Create a local copy of our opcode table
      including an extra line for NULL termination.  */
-  xgate_op_table = (struct xgate_opcode *)
-    xmalloc ((xgate_num_opcodes) * sizeof (struct xgate_opcode));
+  xgate_op_table = XNEWVEC (struct xgate_opcode, xgate_num_opcodes);
 
   memset (xgate_op_table, 0,
 	  sizeof(struct xgate_opcode) * (xgate_num_opcodes));
@@ -322,8 +321,7 @@ md_begin (void)
       prev_op_name = xgate_opcode_ptr->name;
     }
 
-  op_handles = (struct xgate_opcode_handle *)
-    xmalloc (sizeof(struct xgate_opcode_handle) * (number_of_op_handles));
+  op_handles = XNEWVEC (struct xgate_opcode_handle, number_of_op_handles);
 
   /* Insert unique opcode names into hash table, aliasing duplicates.  */
   xgate_hash = hash_new ();
@@ -616,8 +614,8 @@ tc_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
 {
   arelent * reloc;
 
-  reloc = (arelent *) xmalloc (sizeof(arelent));
-  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof(asymbol *));
+  reloc = XNEW (arelent);
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 

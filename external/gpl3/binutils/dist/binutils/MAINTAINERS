@@ -81,7 +81,7 @@ responsibility among the other maintainers.
   FRV		   Dave Brolley <brolley@redhat.com>
   FRV		   Alexandre Oliva <aoliva@redhat.com>
   GOLD		   Ian Lance Taylor <iant@google.com>
-  GOLD		   Cary Coutant <ccoutant@google.com>
+  GOLD		   Cary Coutant <ccoutant@gmail.com>
   H8300		   Prafulla Thakare <prafulla.thakare@kpitcummins.com>
   HPPA		   Dave Anglin <dave.anglin@nrc.ca>
   HPPA elf32	   Alan Modra <amodra@gmail.com>
@@ -105,6 +105,7 @@ responsibility among the other maintainers.
   METAG            Markos Chandras <markos.chandras@imgtec.com>
   MICROBLAZE	   Michael Eager <eager@eagercon.com>
   MIPS		   Eric Christopher <echristo@apple.com>
+  MIPS		   Maciej W. Rozycki <macro@imgtec.com>
   MMIX		   Hans-Peter Nilsson <hp@bitrange.com>
   MN10300	   Eric Christopher <echristo@apple.com>
   MN10300	   Alexandre Oliva <aoliva@redhat.com>
@@ -284,7 +285,7 @@ Having selected the branch name, create the branch as follows:
 Please do not commit any patches to a branch you did not create
 without the explicit permission of the person who created the branch.
 
-Copyright (C) 2012-2015 Free Software Foundation, Inc.
+Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

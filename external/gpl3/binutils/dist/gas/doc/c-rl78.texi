@@ -1,4 +1,4 @@
-@c Copyright (C) 2011-2015 Free Software Foundation, Inc.
+@c Copyright (C) 2011-2016 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -27,6 +27,9 @@
 @table @code
 @item relax
 Enable support for link-time relaxation.
+
+@item norelax
+Disable support for link-time relaxation (default).
 
 @item mg10
 Mark the generated binary as targeting the G10 variant of the RL78

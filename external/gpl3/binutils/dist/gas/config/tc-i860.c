@@ -1,5 +1,5 @@
 /* tc-i860.c -- Assembler for the Intel i860 architecture.
-   Copyright (C) 1989-2015 Free Software Foundation, Inc.
+   Copyright (C) 1989-2016 Free Software Foundation, Inc.
 
    Brought back from the dead and completely reworked
    by Jason Eckhardt <jle@cygnus.com>.
@@ -53,7 +53,7 @@ static char reg_prefix;
 
 struct i860_it
 {
-  char *error;
+  const char *error;
   unsigned long opcode;
   enum expand_type expand;
   struct i860_fi
@@ -1010,7 +1010,7 @@ i860_get_expression (char *str)
   return 0;
 }
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, TRUE);
@@ -1084,7 +1084,7 @@ struct option md_longopts[] = {
 size_t md_longopts_size = sizeof (md_longopts);
 
 int
-md_parse_option (int c, char *arg ATTRIBUTE_UNUSED)
+md_parse_option (int c, const char *arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
@@ -1426,8 +1426,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED,
 {
   arelent *reloc;
 
-  reloc = xmalloc (sizeof (*reloc));
-  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  reloc = XNEW (arelent);
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->addend = fixp->fx_offset;

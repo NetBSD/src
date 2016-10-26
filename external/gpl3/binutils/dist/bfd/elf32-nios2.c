@@ -1,5 +1,5 @@
 /* 32-bit ELF support for Nios II.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -1905,7 +1905,7 @@ nios2_elf32_install_imm16 (asection *sec, bfd_vma offset, bfd_vma value)
 {
   bfd_vma word = bfd_get_32 (sec->owner, sec->contents + offset);
 
-  BFD_ASSERT(value <= 0xffff);
+  BFD_ASSERT (value <= 0xffff || ((bfd_signed_vma) value) >= -0xffff);
 
   bfd_put_32 (sec->owner, word | ((value & 0xffff) << 6),
 	      sec->contents + offset);
@@ -3086,7 +3086,15 @@ lookup:
 	case bfd_link_hash_defined:
 	case bfd_link_hash_defweak:
 	  gp_found = TRUE;
-	  *pgp = lh->u.def.value;
+	  {
+	    asection *sym_sec = lh->u.def.section;
+	    bfd_vma sym_value = lh->u.def.value;
+
+	    if (sym_sec->output_section)
+	      sym_value = (sym_value + sym_sec->output_offset
+			   + sym_sec->output_section->vma);
+	    *pgp = sym_value;
+	  }
 	  break;
 	case bfd_link_hash_indirect:
 	case bfd_link_hash_warning:
@@ -3719,7 +3727,6 @@ nios2_elf32_relocate_section (bfd *output_bfd,
       struct elf32_nios2_link_hash_entry *eh;
       bfd_vma relocation;
       bfd_vma gp;
-      bfd_vma reloc_address;
       bfd_reloc_status_type r = bfd_reloc_ok;
       const char *name = NULL;
       int r_type;
@@ -3761,12 +3768,6 @@ nios2_elf32_relocate_section (bfd *output_bfd,
       /* Nothing more to do unless this is a final link.  */
       if (bfd_link_relocatable (info))
 	continue;
-
-      if (sec && sec->output_section)
-	reloc_address = (sec->output_section->vma + sec->output_offset
-			 + rel->r_offset);
-      else
-	reloc_address = 0;
 
       if (howto)
 	{
@@ -3816,6 +3817,15 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 	      /* Turns an absolute address into a gp-relative address.  */
 	      if (!nios2_elf_assign_gp (output_bfd, &gp, info))
 		{
+		  bfd_vma reloc_address;
+
+		  if (sec && sec->output_section)
+		    reloc_address = (sec->output_section->vma
+				     + sec->output_offset
+				     + rel->r_offset);
+		  else
+		    reloc_address = 0;
+
 		  format = _("global pointer relative relocation at address "
 			     "0x%08x when _gp not defined\n");
 		  sprintf (msgbuf, format, reloc_address);
@@ -3825,7 +3835,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 	      else
 		{
 		  bfd_vma symbol_address = rel->r_addend + relocation;
-		  relocation = relocation + rel->r_addend - gp;
+		  relocation = symbol_address - gp;
 		  rel->r_addend = 0;
 		  if (((signed) relocation < -32768
 		       || (signed) relocation > 32767)
@@ -3833,6 +3843,8 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 			  || h->root.type == bfd_link_hash_defined
 			  || h->root.type == bfd_link_hash_defweak))
 		    {
+		      if (h)
+			name = h->root.root.string;
 		      format = _("Unable to reach %s (at 0x%08x) from the "
 				 "global pointer (at 0x%08x) because the "
 				 "offset (%d) is out of the allowed range, "
@@ -3848,7 +3860,6 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 						  rel->r_offset, relocation,
 						  rel->r_addend);
 		}
-
 	      break;
 	    case R_NIOS2_UJMP:
 	      r = nios2_elf32_do_ujmp_relocate (input_bfd, howto,
@@ -4469,16 +4480,16 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 	  switch (r)
 	    {
 	    case bfd_reloc_overflow:
-	      r = info->callbacks->reloc_overflow (info, NULL, name,
-						   howto->name, (bfd_vma) 0,
-						   input_bfd, input_section,
-						   rel->r_offset);
+	      (*info->callbacks->reloc_overflow) (info, NULL, name,
+						  howto->name, (bfd_vma) 0,
+						  input_bfd, input_section,
+						  rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      r = info->callbacks->undefined_symbol (info, name, input_bfd,
-						     input_section,
-						     rel->r_offset, TRUE);
+	      (*info->callbacks->undefined_symbol) (info, name, input_bfd,
+						    input_section,
+						    rel->r_offset, TRUE);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -4504,8 +4515,8 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 
 	  if (msg)
 	    {
-	      r = info->callbacks->warning
-		(info, msg, name, input_bfd, input_section, rel->r_offset);
+	      (*info->callbacks->warning) (info, msg, name, input_bfd,
+					   input_section, rel->r_offset);
 	      return FALSE;
 	    }
 	}
@@ -5333,22 +5344,19 @@ nios2_elf32_finish_dynamic_sections (bfd *output_bfd,
 	      break;
 
 	    case DT_PLTGOT:
-	      s = htab->root.sgot;
-	      BFD_ASSERT (s != NULL);
-	      dyn.d_un.d_ptr = s->output_section->vma;
+	      s = htab->root.sgotplt;
+	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 
 	    case DT_JMPREL:
 	      s = htab->root.srelplt;
-	      BFD_ASSERT (s != NULL);
-	      dyn.d_un.d_ptr = s->output_section->vma;
+	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 
 	    case DT_PLTRELSZ:
 	      s = htab->root.srelplt;
-	      BFD_ASSERT (s != NULL);
 	      dyn.d_un.d_val = s->size;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
@@ -5368,9 +5376,9 @@ nios2_elf32_finish_dynamic_sections (bfd *output_bfd,
 	      break;
 
 	    case DT_NIOS2_GP:
-	      s = htab->root.sgot;
-	      BFD_ASSERT (s != NULL);
-	      dyn.d_un.d_ptr = s->output_section->vma + 0x7ff0;
+	      s = htab->root.sgotplt;
+	      dyn.d_un.d_ptr
+		= s->output_section->vma + s->output_offset + 0x7ff0;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 	    }
@@ -5383,12 +5391,17 @@ nios2_elf32_finish_dynamic_sections (bfd *output_bfd,
 				 + sgotplt->output_offset);
 	  if (bfd_link_pic (info))
 	    {
-	      bfd_vma corrected = got_address - (splt->output_section->vma
-						 + splt->output_offset + 4);
+	      bfd_vma got_pcrel = got_address - (splt->output_section->vma
+						 + splt->output_offset);
+	      /* Both GOT and PLT must be aligned to a 16-byte boundary
+		 for the two loads to share the %hiadj part.  The 4-byte
+		 offset for nextpc is accounted for in the %lo offsets
+		 on the loads.  */
+	      BFD_ASSERT ((got_pcrel & 0xf) == 0);
 	      nios2_elf32_install_data (splt, nios2_so_plt0_entry, 0, 6);
-	      nios2_elf32_install_imm16 (splt, 4, hiadj (corrected));
-	      nios2_elf32_install_imm16 (splt, 12, (corrected & 0xffff) + 4);
-	      nios2_elf32_install_imm16 (splt, 16, (corrected & 0xffff) + 8);
+	      nios2_elf32_install_imm16 (splt, 4, hiadj (got_pcrel));
+	      nios2_elf32_install_imm16 (splt, 12, got_pcrel & 0xffff);
+	      nios2_elf32_install_imm16 (splt, 16, (got_pcrel + 4) & 0xffff);
 	    }
 	  else
 	    {
@@ -5404,6 +5417,10 @@ nios2_elf32_finish_dynamic_sections (bfd *output_bfd,
 			    6 | ((res_size - (res_offset + 4)) << 6),
 			    splt->contents + res_offset);
 
+	      /* The GOT must be aligned to a 16-byte boundary for the
+		 two loads to share the same %hiadj part.  */
+	      BFD_ASSERT ((got_address & 0xf) == 0);
+
 	      nios2_elf32_install_data (splt, nios2_plt0_entry, res_size, 7);
 	      nios2_elf32_install_imm16 (splt, res_size, hiadj (res_start));
 	      nios2_elf32_install_imm16 (splt, res_size + 4,
@@ -5411,9 +5428,9 @@ nios2_elf32_finish_dynamic_sections (bfd *output_bfd,
 	      nios2_elf32_install_imm16 (splt, res_size + 12,
 					 hiadj (got_address));
 	      nios2_elf32_install_imm16 (splt, res_size + 16,
-					 (got_address & 0xffff) + 4);
+					 (got_address + 4) & 0xffff);
 	      nios2_elf32_install_imm16 (splt, res_size + 20,
-					 (got_address & 0xffff) + 8);
+					 (got_address + 8) & 0xffff);
 	    }
 	}
     }

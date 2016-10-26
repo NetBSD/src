@@ -1,5 +1,5 @@
 /* ADI Blackfin BFD support for 32-bit ELF.
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1623,12 +1623,9 @@ bfin_relocate_section (bfd * output_bfd,
 	    }
 
 	  if (r == bfd_reloc_overflow)
-	    {
-	      if (!(info->callbacks->reloc_overflow
-		    (info, (h ? &h->root : NULL), name, howto->name,
-		     (bfd_vma) 0, input_bfd, input_section, rel->r_offset)))
-		return FALSE;
-	    }
+	    (*info->callbacks->reloc_overflow)
+	      (info, (h ? &h->root : NULL), name, howto->name,
+	       (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	  else
 	    {
 	      (*_bfd_error_handler)
@@ -3209,13 +3206,13 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 	  switch (r)
 	    {
 	    case bfd_reloc_overflow:
-	      r = info->callbacks->reloc_overflow
+	      (*info->callbacks->reloc_overflow)
 		(info, (h ? &h->root : NULL), name, howto->name,
 		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      r = info->callbacks->undefined_symbol
+	      (*info->callbacks->undefined_symbol)
 		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
 
@@ -3237,11 +3234,8 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 	    }
 
 	  if (msg)
-	    r = info->callbacks->warning
-	      (info, msg, name, input_bfd, input_section, rel->r_offset);
-
-	  if (! r)
-	    return FALSE;
+	    (*info->callbacks->warning) (info, msg, name, input_bfd,
+					 input_section, rel->r_offset);
 	}
     }
 
@@ -4457,7 +4451,13 @@ elf32_bfinfdpic_finish_dynamic_sections (bfd *output_bfd,
   if (bfinfdpic_got_section (info))
     {
       BFD_ASSERT (bfinfdpic_gotrel_section (info)->size
-		  == (bfinfdpic_gotrel_section (info)->reloc_count
+		  /* PR 17334: It appears that the GOT section can end up
+		     being bigger than the number of relocs.  Presumably
+		     because some relocs have been deleted.  A test case has
+		     yet to be generated for verify this, but in the meantime
+		     the test below has been changed from == to >= so that
+		     applications can continue to be built.  */
+		  >= (bfinfdpic_gotrel_section (info)->reloc_count
 		      * sizeof (Elf32_External_Rel)));
 
       if (bfinfdpic_gotfixup_section (info))
@@ -5252,7 +5252,8 @@ bfin_adjust_dynamic_symbol (struct bfd_link_info *info,
   s = bfd_get_linker_section (dynobj, ".dynbss");
   BFD_ASSERT (s != NULL);
 
-  /* We must generate a R_68K_COPY reloc to tell the dynamic linker to
+#if 0 /* Bfin does not currently have a COPY reloc.  */
+  /* We must generate a R_BFIN_COPY reloc to tell the dynamic linker to
      copy the initial value out of the dynamic object and into the
      runtime process image.  We need to remember the offset into the
      .rela.bss section we are going to use.  */
@@ -5265,7 +5266,13 @@ bfin_adjust_dynamic_symbol (struct bfd_link_info *info,
       srel->size += sizeof (Elf32_External_Rela);
       h->needs_copy = 1;
     }
-
+#else
+  if ((h->root.u.def.section->flags & SEC_ALLOC) != 0)
+    {
+      (*_bfd_error_handler) (_("the bfin target does not currently support the generation of copy relocations"));
+      return FALSE;
+    }
+#endif
   /* We need to figure out the alignment required for this symbol.  I
      have no idea how ELF linkers handle this.  */
   power_of_two = bfd_log2 (h->size);

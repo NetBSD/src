@@ -1,5 +1,5 @@
 /* IBM S/390-specific support for 32-bit ELF
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Carl B. Pedersen and Martin Schwidefsky.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -3442,14 +3442,9 @@ elf_s390_relocate_section (bfd *output_bfd,
 	    }
 
 	  if (r == bfd_reloc_overflow)
-	    {
-
-	      if (! ((*info->callbacks->reloc_overflow)
-		     (info, (h ? &h->root : NULL), name, howto->name,
-		      (bfd_vma) 0, input_bfd, input_section,
-		      rel->r_offset)))
-		return FALSE;
-	    }
+	    (*info->callbacks->reloc_overflow)
+	      (info, (h ? &h->root : NULL), name, howto->name,
+	       (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	  else
 	    {
 	      (*_bfd_error_handler)
@@ -3696,7 +3691,7 @@ elf_s390_finish_dynamic_symbol (bfd *output_bfd,
 
 	      /* Put in the GOT offset as displacement value.  The 0xc000
 		 value comes from the first word of the plt entry.  Look
-		 at the elf_s390_plt_pic16_entry content.  */
+		 at the elf_s390_plt_pic12_entry content.  */
 	      bfd_put_16 (output_bfd, (bfd_vma)0xc000 | got_offset,
 			  htab->elf.splt->contents + h->plt.offset + 2);
 
@@ -3953,16 +3948,17 @@ elf_s390_finish_dynamic_sections (bfd *output_bfd,
 	      continue;
 
 	    case DT_PLTGOT:
-	      dyn.d_un.d_ptr = htab->elf.sgot->output_section->vma;
+	      s = htab->elf.sgotplt;
+	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      break;
 
 	    case DT_JMPREL:
-	      dyn.d_un.d_ptr = htab->elf.srelplt->output_section->vma;
+	      s = htab->elf.srelplt;
+	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      break;
 
 	    case DT_PLTRELSZ:
-	      s = htab->elf.srelplt->output_section;
-	      dyn.d_un.d_val = s->size;
+	      dyn.d_un.d_val = htab->elf.srelplt->size + htab->elf.irelplt->size;
 	      break;
 	    }
 

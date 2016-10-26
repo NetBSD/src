@@ -1,5 +1,5 @@
 /* expr.c -operands, expressions-
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -46,15 +46,13 @@ static void clean_up_expression (expressionS * expressionP);
 static segT operand (expressionS *, enum expr_mode);
 static operatorT operatorf (int *);
 
-extern const char EXP_CHARS[], FLT_CHARS[];
-
 /* We keep a mapping of expression symbols to file positions, so that
    we can provide better error messages.  */
 
 struct expr_symbol_line {
   struct expr_symbol_line *next;
   symbolS *sym;
-  char *file;
+  const char *file;
   unsigned int line;
 };
 
@@ -108,9 +106,9 @@ make_expr_symbol (expressionS *expressionP)
   if (expressionP->X_op == O_constant)
     resolve_symbol_value (symbolP);
 
-  n = (struct expr_symbol_line *) xmalloc (sizeof *n);
+  n = XNEW (struct expr_symbol_line);
   n->sym = symbolP;
-  as_where (&n->file, &n->line);
+  n->file = as_where (&n->line);
   n->next = expr_symbol_lines;
   expr_symbol_lines = n;
 
@@ -122,7 +120,7 @@ make_expr_symbol (expressionS *expressionP)
    the symbol.  */
 
 int
-expr_symbol_where (symbolS *sym, char **pfile, unsigned int *pline)
+expr_symbol_where (symbolS *sym, const char **pfile, unsigned int *pline)
 {
   struct expr_symbol_line *l;
 
@@ -509,6 +507,13 @@ integer_constant (int radix, expressionS *expressionP)
       && suffix != NULL
       && input_line_pointer - 1 == suffix)
     c = *input_line_pointer++;
+
+#ifndef tc_allow_U_suffix
+#define tc_allow_U_suffix 1
+#endif
+  /* PR 19910: Look for, and ignore, a U suffix to the number.  */
+  if (tc_allow_U_suffix && (c == 'U' || c == 'u'))
+    c = * input_line_pointer++;
 
   if (small)
     {
@@ -952,7 +957,13 @@ operand (expressionS *expressionP, enum expr_mode mode)
       /* expression () will pass trailing whitespace.  */
       if ((c == '(' && *input_line_pointer != ')')
 	  || (c == '[' && *input_line_pointer != ']'))
-	as_bad (_("missing '%c'"), c == '(' ? ')' : ']');
+	{
+	  if (* input_line_pointer)
+	    as_bad (_("found '%c', expected: '%c'"),
+		    * input_line_pointer, c == '(' ? ')' : ']');
+	  else
+	    as_bad (_("missing '%c'"), c == '(' ? ')' : ']');
+	}	    
       else
 	input_line_pointer++;
       SKIP_WHITESPACE ();
@@ -1144,11 +1155,8 @@ operand (expressionS *expressionP, enum expr_mode mode)
 	      SKIP_WHITESPACE ();
 	      c = get_symbol_name (& name);
 
-	      buf = (char *) xmalloc (strlen (name) + 10);
-	      if (start)
-		sprintf (buf, ".startof.%s", name);
-	      else
-		sprintf (buf, ".sizeof.%s", name);
+	      buf = concat (start ? ".startof." : ".sizeof.", name,
+			    (char *) NULL);
 	      symbolP = symbol_make (buf);
 	      free (buf);
 
@@ -1290,11 +1298,8 @@ operand (expressionS *expressionP, enum expr_mode mode)
 
 	      c = get_symbol_name (& name);
 
-	      buf = (char *) xmalloc (strlen (name) + 10);
-	      if (start)
-		sprintf (buf, ".startof.%s", name);
-	      else
-		sprintf (buf, ".sizeof.%s", name);
+	      buf = concat (start ? ".startof." : ".sizeof.", name,
+			    (char *) NULL);
 	      symbolP = symbol_make (buf);
 	      free (buf);
 

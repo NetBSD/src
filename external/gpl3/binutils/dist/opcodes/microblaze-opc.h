@@ -1,6 +1,6 @@
 /* microblaze-opc.h -- MicroBlaze Opcodes
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -105,7 +105,7 @@
 
 struct op_code_struct
 {
-  char * name;
+  const char * name;
   short inst_type;            /* Registers and immediate values involved.  */
   short inst_offset_type;     /* Immediate vals offset from PC? (= 1 for branches).  */
   short delay_slots;          /* Info about delay slots needed after this instr. */

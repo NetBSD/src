@@ -6,8 +6,7 @@
 
 void  bsd_callg_blurb (FILE *);
 void
-bsd_callg_blurb (file)
-     FILE *file;
+bsd_callg_blurb (FILE *file)
 {
   fputs ("\n", file);
   fputs ("\n", file);
@@ -117,7 +116,7 @@ bsd_callg_blurb (file)
   fputs ("          the members of the cycle, and their contributions\n", file);
   fputs ("          to the time and call counts of the cycle.\n", file);
   fputs ("\n", file);
-  fputs ("Copyright (C) 2012-2015 Free Software Foundation, Inc.\n", file);
+  fputs ("Copyright (C) 2012-2016 Free Software Foundation, Inc.\n", file);
   fputs ("\n", file);
   fputs ("Copying and distribution of this file, with or without modification,\n", file);
   fputs ("are permitted in any medium without royalty provided the copyright\n", file);

@@ -1,5 +1,5 @@
 /* macro.h - header file for macro support for gas
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
       sac@cygnus.com
@@ -65,7 +65,7 @@ typedef struct macro_struct
   formal_entry *formals;		/* Pointer to list of formal_structs.  */
   struct hash_control *formal_hash;	/* Hash table of formals.  */
   const char *name;			/* Macro name.  */
-  char *file;				/* File the macro was defined in.  */
+  const char *file;				/* File the macro was defined in.  */
   unsigned int line;			/* Line number of definition.  */
 } macro_entry;
 
@@ -88,7 +88,7 @@ extern void macro_init (int, int, int,
 extern void macro_set_alternate (int);
 extern void macro_mri_mode (int);
 extern const char *define_macro (size_t, sb *, sb *, size_t (*) (sb *),
-				 char *, unsigned int, const char **);
+				 const char *, unsigned int, const char **);
 extern int check_macro (const char *, sb *, const char **, macro_entry **);
 extern void delete_macro (const char *);
 extern const char *expand_irp (int, size_t, sb *, sb *, size_t (*) (sb *));

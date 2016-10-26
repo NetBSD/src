@@ -1,6 +1,6 @@
 /* This file is aout_gnu.h
 
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -126,23 +126,23 @@ enum machine_type
     M_HPUX23 = 0x020C		/* hp200/300 HPUX binary */
   };
 
-#define N_MAGIC(exec) ((exec).a_info & 0xffff)
-#define N_MACHTYPE(exec) ((enum machine_type)(((exec).a_info >> 16) & 0xff))
-#define N_FLAGS(exec) (((exec).a_info >> 24) & 0xff)
-#define N_SET_INFO(exec, magic, type, flags) \
-    ((exec).a_info = ((magic) & 0xffff) \
+#define N_MAGIC(execp) ((execp)->a_info & 0xffff)
+#define N_MACHTYPE(execp) ((enum machine_type)(((execp)->a_info >> 16) & 0xff))
+#define N_FLAGS(execp) (((execp)->a_info >> 24) & 0xff)
+#define N_SET_INFO(execp, magic, type, flags) \
+    ((execp)->a_info = ((magic) & 0xffff) \
      | (((int)(type) & 0xff) << 16) \
      | (((flags) & 0xff) << 24))
-#define N_SET_MAGIC(exec, magic) \
-    ((exec).a_info = (((exec).a_info & 0xffff0000) | ((magic) & 0xffff)))
+#define N_SET_MAGIC(execp, magic) \
+    ((execp)->a_info = (((execp)->a_info & 0xffff0000) | ((magic) & 0xffff)))
 
-#define N_SET_MACHTYPE(exec, machtype) \
-    ((exec).a_info = \
-     ((exec).a_info&0xff00ffff) | ((((int)(machtype))&0xff) << 16))
+#define N_SET_MACHTYPE(execp, machtype) \
+    ((execp)->a_info = \
+     ((execp)->a_info & 0xff00ffff) | ((((int) (machtype)) & 0xff) << 16))
 
-#define N_SET_FLAGS(exec, flags) \
-    ((exec).a_info = \
-     ((exec).a_info&0x00ffffff) | (((flags) & 0xff) << 24))
+#define N_SET_FLAGS(execp, flags) \
+    ((execp)->a_info = \
+     ((execp)->a_info & 0x00ffffff) | (((flags) & 0xff) << 24))
 
 /* Code indicating object file or impure executable.  */
 #ifndef OMAGIC
@@ -185,23 +185,23 @@ enum machine_type
 #endif
 
 #ifndef N_DATOFF
-#define N_DATOFF(x)	( N_TXTOFF(x) + (x).a_text )
+#define N_DATOFF(x)	( N_TXTOFF(x) + (x)->a_text )
 #endif
 
 #ifndef N_TRELOFF
-#define N_TRELOFF(x)	( N_DATOFF(x) + (x).a_data )
+#define N_TRELOFF(x)	( N_DATOFF(x) + (x)->a_data )
 #endif
 
 #ifndef N_DRELOFF
-#define N_DRELOFF(x)	( N_TRELOFF(x) + (x).a_trsize )
+#define N_DRELOFF(x)	( N_TRELOFF(x) + (x)->a_trsize )
 #endif
 
 #ifndef N_SYMOFF
-#define N_SYMOFF(x)	( N_DRELOFF(x) + (x).a_drsize )
+#define N_SYMOFF(x)	( N_DRELOFF(x) + (x)->a_drsize )
 #endif
 
 #ifndef N_STROFF
-#define N_STROFF(x)	( N_SYMOFF(x) + (x).a_syms )
+#define N_STROFF(x)	( N_SYMOFF(x) + (x)->a_syms )
 #endif
 
 /* Address of text segment in memory after it is loaded.  */
@@ -211,12 +211,12 @@ enum machine_type
 
 #ifndef N_DATADDR
 #define N_DATADDR(x) \
-    (N_MAGIC(x)==OMAGIC? (N_TXTADDR(x)+(x).a_text) \
-     :  (N_SEGSIZE(x) + ((N_TXTADDR(x)+(x).a_text-1) & ~(N_SEGSIZE(x)-1))))
+    (N_MAGIC(x)==OMAGIC? (N_TXTADDR(x)+(x)->a_text) \
+     :  (N_SEGSIZE(x) + ((N_TXTADDR(x)+(x)->a_text-1) & ~(N_SEGSIZE(x)-1))))
 #endif
 
 /* Address of bss segment in memory after it is loaded.  */
-#define N_BSSADDR(x) (N_DATADDR(x) + (x).a_data)
+#define N_BSSADDR(x) (N_DATADDR(x) + (x)->a_data)
 
 struct nlist
   {
