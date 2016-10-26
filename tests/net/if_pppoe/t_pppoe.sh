@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.6 2016/10/19 00:19:13 ozaki-r Exp $
+#	$NetBSD: t_pppoe.sh,v 1.7 2016/10/26 03:27:24 knakahara Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -35,6 +35,8 @@ CLIENT=unix://commsock2
 
 SERVER_IP=10.3.3.1
 CLIENT_IP=10.3.3.3
+SERVER_IP6=fc00::1
+CLIENT_IP6=fc00::3
 AUTHNAME=foobar@baz.com
 SECRET=oink
 BUS=bus0
@@ -44,6 +46,12 @@ DEBUG=false
 
 setup()
 {
+	inet=true
+
+	if [ $# -ne 0 ]; then
+		eval $@
+	fi
+
 	atf_check -s exit:0 ${server} $SERVER
 	atf_check -s exit:0 ${server} $CLIENT
 
@@ -53,7 +61,8 @@ setup()
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 
 	atf_check -s exit:0 rump.ifconfig pppoe0 create
-	atf_check -s exit:0 rump.ifconfig pppoe0 inet $SERVER_IP $CLIENT_IP down
+	$inet && atf_check -s exit:0 rump.ifconfig pppoe0 \
+	    inet $SERVER_IP $CLIENT_IP down
 	atf_check -s exit:0 rump.ifconfig pppoe0 link0
 
 	$DEBUG && rump.ifconfig
@@ -68,7 +77,8 @@ setup()
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 
 	atf_check -s exit:0 rump.ifconfig pppoe0 create
-	atf_check -s exit:0 rump.ifconfig pppoe0 inet 0.0.0.0 0.0.0.1 down
+	$inet && atf_check -s exit:0 rump.ifconfig pppoe0 \
+	    inet 0.0.0.0 0.0.0.1 down
 
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
 	unset RUMP_SERVER
@@ -94,6 +104,22 @@ wait_for_session_established()
 
 	if [ $dontfail != "dontfail" ]; then
 		atf_fail "Couldn't connect to the server for $n seconds."
+	fi
+}
+
+wait_for_disconnected()
+{
+	local dontfail=$1
+	local n=$WAITTIME
+
+	for i in $(seq $n); do
+		$HIJACKING pppoectl -d pppoe0 | grep -q "state = session"
+		[ $? -eq 0 ] || return
+		sleep 1
+	done
+
+	if [ $dontfail != "dontfail" ]; then
+		atf_fail "Couldn't disconnect for $n seconds."
 	fi
 }
 
@@ -220,8 +246,155 @@ pppoe_chap_cleanup()
 	cleanup
 }
 
+run_test6()
+{
+	local auth=$1
+	setup "inet=false"
+
+	# As pppoe client doesn't support rechallenge yet.
+	local server_optparam=""
+	if [ $auth = "chap" ]; then
+		server_optparam="norechallenge"
+	fi
+
+	export RUMP_SERVER=$SERVER
+	local setup_serverparam="pppoectl pppoe0 hisauthproto=$auth \
+				    'hisauthname=$AUTHNAME' \
+				    'hisauthsecret=$SECRET' \
+				    'myauthproto=none' \
+				    $server_optparam"
+	atf_check -s exit:0 -x "$HIJACKING $setup_serverparam"
+	atf_check -s exit:0 rump.ifconfig pppoe0 inet6 $SERVER_IP6/64 down
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	unset RUMP_SERVER
+
+	export RUMP_SERVER=$CLIENT
+	local setup_clientparam="pppoectl pppoe0 myauthproto=$auth \
+				    'myauthname=$AUTHNAME' \
+				    'myauthsecret=$SECRET' \
+				    'hisauthproto=none'"
+	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
+	atf_check -s exit:0 rump.ifconfig pppoe0 inet6 $CLIENT_IP6/64 down
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_session_established
+	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
+	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -X $TIMEOUT $SERVER_IP6
+	unset RUMP_SERVER
+
+	# test for disconnection from server
+	export RUMP_SERVER=$SERVER
+	session_id=`$HIJACKING pppoectl -d pppoe0 | grep state`
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+	export RUMP_SERVER=$CLIENT
+	wait_for_disconnected
+	atf_check -s not-exit:0 -o ignore -e ignore \
+	    rump.ping6 -c 1 -w $TIMEOUT $SERVER_IP6
+	atf_check -s exit:0 -o not-match:"$session_id" -x "$HIJACKING pppoectl -d pppoe0"
+	unset RUMP_SERVER
+
+	# test for recoonecting
+	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	wait_for_session_established
+	atf_check -s exit:0 rump.ifconfig -w 10
+	$DEBUG && $HIJACKING pppoectl -d pppoe0
+	$DEBUG && rump.ifconfig pppoe0
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
+	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -X $TIMEOUT $SERVER_IP6
+	unset RUMP_SERVER
+
+	# test for disconnection from client
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+
+	export RUMP_SERVER=$SERVER
+	$DEBUG && $HIJACKING pppoectl -d pppoe0
+	wait_for_disconnected
+	atf_check -s not-exit:0 -o ignore -e ignore \
+	    rump.ping6 -c 1 -X $TIMEOUT $CLIENT_IP6
+	atf_check -s exit:0 -o match:'initial' -x "$HIJACKING pppoectl -d pppoe0"
+	unset RUMP_SERVER
+
+	# test for recconecting
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	wait_for_session_established
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	$DEBUG && rump.ifconfig pppoe0
+	$DEBUG && $HIJACKING pppoectl -d pppoe0
+	unset RUMP_SERVER
+
+	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -X $TIMEOUT $CLIENT_IP6
+	atf_check -s exit:0 -o match:'session' -x "$HIJACKING pppoectl -d pppoe0"
+	$DEBUG && HIJACKING pppoectl -d pppoe0
+	unset RUMP_SERVER
+
+	# test for invalid password
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
+	local setup_clientparam="pppoectl pppoe0 myauthproto=$auth \
+				    'myauthname=$AUTHNAME' \
+				    'myauthsecret=invalidsecret' \
+				    'hisauthproto=none'"
+	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	wait_for_session_established dontfail
+	atf_check -s not-exit:0 -o ignore -e ignore \
+	    rump.ping6 -c 1 -X $TIMEOUT $SERVER_IP6
+	atf_check -s exit:0 -o match:'DETACHED' rump.ifconfig pppoe0
+	unset RUMP_SERVER
+}
+
+atf_test_case pppoe6_pap cleanup
+
+pppoe6_pap_head()
+{
+	atf_set "descr" "Does simple pap using IPv6 tests"
+	atf_set "require.progs" "rump_server pppoectl"
+}
+
+pppoe6_pap_body()
+{
+	run_test6 pap
+}
+
+pppoe6_pap_cleanup()
+{
+	cleanup
+}
+
+atf_test_case pppoe6_chap cleanup
+
+pppoe6_chap_head()
+{
+	atf_set "descr" "Does simple chap using IPv6 tests"
+	atf_set "require.progs" "rump_server pppoectl"
+}
+
+pppoe6_chap_body()
+{
+	run_test6 chap
+}
+
+pppoe6_chap_cleanup()
+{
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case pppoe_pap
 	atf_add_test_case pppoe_chap
+	atf_add_test_case pppoe6_pap
+	atf_add_test_case pppoe6_chap
 }
