@@ -1,5 +1,5 @@
 /* itbl-parse.y
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -450,8 +450,7 @@ value:
 %%
 
 static int
-yyerror (msg)
-     const char *msg;
+yyerror (const char *msg)
 {
   printf ("line %d: %s\n", insntbl_line, msg);
   return 0;

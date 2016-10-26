@@ -3,7 +3,7 @@
    Run "make headers" in your build bfd/ to regenerate.  */
 
 /* BFD COFF object file private structure.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -316,8 +316,8 @@ extern void coff_mangle_symbols
 extern bfd_boolean coff_write_symbols
   (bfd *);
 extern bfd_boolean coff_write_alien_symbol
-  (bfd *, asymbol *, struct internal_syment *, bfd_vma *,
-   bfd_size_type *, asection **, bfd_size_type *);
+  (bfd *, asymbol *, struct internal_syment *, union internal_auxent *,
+   bfd_vma *, bfd_size_type *, asection **, bfd_size_type *);
 extern bfd_boolean coff_write_linenumbers
   (bfd *);
 extern alent *coff_get_lineno

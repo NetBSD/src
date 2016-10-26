@@ -1,5 +1,5 @@
 /* ldbuildid.c - Build Id support routines
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -45,10 +45,10 @@ bfd_size_type
 compute_build_id_size (const char *style)
 {
   if (streq (style, "md5") || streq (style, "uuid"))
-    return  128 / 8;
+    return 128 / 8;
 
   if (streq (style, "sha1"))
-    return  160 / 8;
+    return 160 / 8;
 
   if (strneq (style, "0x", 2))
     {

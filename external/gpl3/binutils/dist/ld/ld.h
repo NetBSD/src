@@ -1,5 +1,5 @@
 /* ld.h -- general linker header file
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -72,8 +72,9 @@
    discarded.  */
 #define DISCARD_SECTION_NAME "/DISCARD/"
 
-/* A file name list */
-typedef struct name_list {
+/* A file name list.  */
+typedef struct name_list
+{
   const char *name;
   struct name_list *next;
 }
@@ -83,21 +84,24 @@ typedef enum {sort_none, sort_ascending, sort_descending} sort_order;
 
 /* A wildcard specification.  */
 
-typedef enum {
+typedef enum
+{
   none, by_name, by_alignment, by_name_alignment, by_alignment_name,
   by_none, by_init_priority
 } sort_type;
 
 extern sort_type sort_section;
 
-struct wildcard_spec {
+struct wildcard_spec
+{
   const char *name;
   struct name_list *exclude_name_list;
   sort_type sorted;
   struct flag_info *section_flag_list;
 };
 
-struct wildcard_list {
+struct wildcard_list
+{
   struct wildcard_list *next;
   struct wildcard_spec spec;
 };
@@ -110,20 +114,21 @@ struct wildcard_list {
 enum endian_enum { ENDIAN_UNSET = 0, ENDIAN_BIG, ENDIAN_LITTLE };
 
 enum symbolic_enum
-  {
-    symbolic_unset = 0,
-    symbolic,
-    symbolic_functions,
-  };
+{
+  symbolic_unset = 0,
+  symbolic,
+  symbolic_functions,
+};
 
 enum dynamic_list_enum
-  {
-    dynamic_list_unset = 0,
-    dynamic_list_data,
-    dynamic_list
-  };
+{
+  dynamic_list_unset = 0,
+  dynamic_list_data,
+  dynamic_list
+};
 
-typedef struct {
+typedef struct
+{
   /* 1 => assign space to common symbols even if `relocatable_output'.  */
   bfd_boolean force_common_definition;
 
@@ -209,7 +214,8 @@ typedef int token_code_type;
 
 /* Different ways we can handle orphan sections.  */
 
-enum orphan_handling_enum {
+enum orphan_handling_enum
+{
   /* The classic strategy, find a suitable section to place the orphan
      into.  */
   orphan_handling_place = 0,
@@ -226,7 +232,8 @@ enum orphan_handling_enum {
   orphan_handling_error,
 };
 
-typedef struct {
+typedef struct
+{
   bfd_boolean magic_demand_paged;
   bfd_boolean make_executable;
 
@@ -291,8 +298,6 @@ typedef struct {
 
   unsigned int split_by_reloc;
   bfd_size_type split_by_file;
-
-  bfd_size_type specified_data_size;
 
   /* The size of the hash table to use.  */
   unsigned long hash_table_size;

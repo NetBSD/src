@@ -1,5 +1,5 @@
 /* d10v.h -- Header file for D10V opcode table
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    Written by Martin Hunt (hunt@cygnus.com), Cygnus Support
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -21,6 +21,10 @@
 
 #ifndef D10V_H
 #define D10V_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Format Specifier */
 #define FM00	0
@@ -204,5 +208,9 @@ int d10v_reg_name_cnt (void);
 /* an expressionS only has one register type, so we fake it */
 /* by setting high bits to indicate type */
 #define REGISTER_MASK	0xFF
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* D10V_H */

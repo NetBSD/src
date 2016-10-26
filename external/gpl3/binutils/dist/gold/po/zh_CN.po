@@ -10,100 +10,100 @@ msgstr ""
 "Project-Id-Version: gold 2.24.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
 "POT-Creation-Date: 2014-02-10 09:42+1030\n"
-"PO-Revision-Date: 2015-10-30 00:09-0400\n"
+"PO-Revision-Date: 2016-02-23 15:25+0100\n"
 "Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@gmail.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.4\n"
+"X-Generator: Poedit 1.8.7\n"
 
 # Warning: I am starting off, and is importing translations from other binutil family + gcc.
 #: archive.cc:135
 #, c-format
 msgid "script or expression reference to %s"
-msgstr ""
+msgstr "指向 %s 的脚本或引用"
 
 #: archive.cc:229
 #, c-format
 msgid "%s: no archive symbol table (run ranlib)"
-msgstr ""
+msgstr "%s：没有存档符号表（请运行 ranlib）"
 
 #: archive.cc:317
 #, c-format
 msgid "%s: bad archive symbol table names"
-msgstr ""
+msgstr "%s：不当的存档符号表名称"
 
 #: archive.cc:349
 #, c-format
 msgid "%s: malformed archive header at %zu"
-msgstr ""
+msgstr "%s：于 %zu 处的结构有误的存档标头"
 
 #: archive.cc:369
 #, c-format
 msgid "%s: malformed archive header size at %zu"
-msgstr ""
+msgstr "%s：于 %zu 处的结构有误的存档标头大小"
 
 #: archive.cc:380
 #, c-format
 msgid "%s: malformed archive header name at %zu"
-msgstr ""
+msgstr "%s：于 %zu 处的结构有误的存档标头名"
 
 #: archive.cc:411
 #, c-format
 msgid "%s: bad extended name index at %zu"
-msgstr ""
+msgstr "%s：于 %zu 处有不当的拓展名索引"
 
 #: archive.cc:421
 #, c-format
 msgid "%s: bad extended name entry at header %zu"
-msgstr ""
+msgstr "%s：于 %zu 处有不当的拓展名项"
 
 #: archive.cc:518
 #, c-format
 msgid "%s: short archive header at %zu"
-msgstr ""
+msgstr "%s：于 %zu 处有短存档表头"
 
 #: archive.cc:702
 #, c-format
 msgid "%s: member at %zu is not an ELF object"
-msgstr ""
+msgstr "%s：于 %zu 处的成员非 ELF 对象"
 
 #: archive.cc:1043
 #, c-format
 msgid "%s: archive libraries: %u\n"
-msgstr ""
+msgstr "%s: 存档库: %u\n"
 
 #: archive.cc:1045
 #, c-format
 msgid "%s: total archive members: %u\n"
-msgstr ""
+msgstr "%s: 存档成员总数: %u\n"
 
 #: archive.cc:1047
 #, c-format
 msgid "%s: loaded archive members: %u\n"
-msgstr ""
+msgstr "%s: 已加载存档成员：%u\n"
 
 #: archive.cc:1277
 #, c-format
 msgid "%s: lib groups: %u\n"
-msgstr ""
+msgstr "%s: 库组: %u\n"
 
 #: archive.cc:1279
 #, c-format
 msgid "%s: total lib groups members: %u\n"
-msgstr ""
+msgstr "%s: 总库组成员: %u\n"
 
 #: archive.cc:1281
 #, c-format
 msgid "%s: loaded lib groups members: %u\n"
-msgstr ""
+msgstr "%s: 已加载库组成员：%u\n"
 
 #: arm-reloc-property.cc:303
 #, c-format
 msgid "invalid reloc %u"
-msgstr ""
+msgstr "无效重定位 %u"
 
 #: arm-reloc-property.cc:316
 msgid "reloc "
@@ -111,23 +111,24 @@ msgstr "重定位 "
 
 #: arm-reloc-property.cc:316
 msgid "unimplemented reloc "
-msgstr ""
+msgstr "未实现的重定位 "
 
 #: arm-reloc-property.cc:319
 msgid "dynamic reloc "
-msgstr ""
+msgstr "动态重定位 "
 
 #: arm-reloc-property.cc:322
 msgid "private reloc "
-msgstr ""
+msgstr "私有重定位 "
 
 #: arm-reloc-property.cc:325
 msgid "obsolete reloc "
-msgstr ""
+msgstr "过时重定位"
 
 #: arm.cc:1074
+#, fuzzy
 msgid "** ARM cantunwind"
-msgstr ""
+msgstr "** ARM 无法展开"
 
 #: arm.cc:4037
 #, c-format
@@ -221,7 +222,7 @@ msgstr ""
 
 #: arm.cc:7293 i386.cc:168 sparc.cc:1349 tilegx.cc:182 x86_64.cc:257
 msgid "** PLT"
-msgstr ""
+msgstr "** PLT"
 
 #: arm.cc:7800 i386.cc:1685 powerpc.cc:5111 sparc.cc:2117 tilegx.cc:3123
 #: tilegx.cc:3575 x86_64.cc:2169 x86_64.cc:2598
@@ -286,14 +287,14 @@ msgstr ""
 #: i386.cc:3102 powerpc.cc:7562 sparc.cc:3589 sparc.cc:3780 sparc.cc:3841
 #: sparc.cc:3948 tilegx.cc:4712 x86_64.cc:3486 x86_64.cc:3586 x86_64.cc:3664
 #: x86_64.cc:3698
-#, fuzzy, c-format
+#, c-format
 msgid "unsupported reloc %u"
-msgstr "不支持的重定位"
+msgstr "不支持的重定位 %u"
 
 #: arm.cc:9564
-#, fuzzy, c-format
+#, c-format
 msgid "%s: unexpected %s in object file"
-msgstr "%s：%d：Intel 十六进制文件中的意外字符“%s\n"
+msgstr "%s: 对象文件中未预期的 %s"
 
 #: arm.cc:9899
 #, fuzzy, c-format
@@ -609,12 +610,12 @@ msgid "** eh_frame"
 msgstr ""
 
 #: errors.cc:81 errors.cc:92
-#, fuzzy, c-format
+#, c-format
 msgid "%s: fatal error: "
-msgstr "致命错误："
+msgstr "%s：致命错误："
 
 #: errors.cc:103 errors.cc:139
-#, fuzzy, c-format
+#, c-format
 msgid "%s: error: "
 msgstr "%s：错误："
 
@@ -624,19 +625,17 @@ msgid "%s: warning: "
 msgstr "%s：警告："
 
 #: errors.cc:179
-#, fuzzy
 msgid "warning"
-msgstr "警告："
+msgstr "警告"
 
 #: errors.cc:184
-#, fuzzy
 msgid "error"
 msgstr "错误"
 
 #: errors.cc:190
-#, fuzzy, c-format
+#, c-format
 msgid "%s: %s: undefined reference to '%s'\n"
-msgstr "%X%C：对‘%T’未定义的引用\n"
+msgstr "%s: %s: 对‘%s’未定义的引用\n"
 
 #: errors.cc:194
 #, fuzzy, c-format
@@ -649,14 +648,14 @@ msgid "%s: the vtable symbol may be undefined because the class is missing its k
 msgstr ""
 
 #: errors.cc:208
-#, fuzzy, c-format
+#, c-format
 msgid "%s: "
-msgstr "%s：%m"
+msgstr "%s: "
 
 #: expression.cc:192
-#, fuzzy, c-format
+#, c-format
 msgid "undefined symbol '%s' referenced in expression"
-msgstr "%F%S：未定义的符号‘%s’在表达式中被引用\n"
+msgstr "未定义的符号‘%s’在表达式中被引用"
 
 #: expression.cc:230
 msgid "invalid reference to dot symbol outside of SECTIONS clause"
@@ -681,9 +680,8 @@ msgid "binary "
 msgstr ""
 
 #: expression.cc:450
-#, fuzzy
 msgid " by zero"
-msgstr "%F%S 被零除\n"
+msgstr " 以零"
 
 #: expression.cc:636
 msgid "max applied to section relative value"
@@ -719,9 +717,9 @@ msgid "could not reopen file %s"
 msgstr "无法打开响应文件 %s"
 
 #: fileread.cc:401
-#, fuzzy, c-format
+#, c-format
 msgid "%s: pread failed: %s"
-msgstr "%s：fread 失败"
+msgstr "%s：pread 失败: %s"
 
 #: fileread.cc:415
 #, c-format
@@ -734,14 +732,14 @@ msgid "%s: attempt to map %lld bytes at offset %lld exceeds size of file; the fi
 msgstr ""
 
 #: fileread.cc:678
-#, fuzzy, c-format
+#, c-format
 msgid "%s: lseek failed: %s"
-msgstr "%s：检索失败：%s\n"
+msgstr "%s：lseek 失败：%s"
 
 #: fileread.cc:684
-#, fuzzy, c-format
+#, c-format
 msgid "%s: readv failed: %s"
-msgstr "%s：fread 失败"
+msgstr "%s：readv 失败: %s"
 
 #: fileread.cc:687
 #, c-format
@@ -759,9 +757,9 @@ msgid "%s: maximum bytes mapped for read at one time: %llu\n"
 msgstr ""
 
 #: fileread.cc:949
-#, fuzzy, c-format
+#, c-format
 msgid "%s: stat failed: %s"
-msgstr "%s：检索失败：%s\n"
+msgstr "%s：stat 失败：%s"
 
 #: fileread.cc:1046
 #, fuzzy, c-format
@@ -2072,7 +2070,7 @@ msgstr ""
 
 #: options.h:890
 msgid "PERCENT"
-msgstr ""
+msgstr "百分比"
 
 #: options.h:893
 msgid "Call SYMBOL at load-time"
@@ -2126,7 +2124,7 @@ msgstr "将“目录”添加到库搜索路径中"
 
 #: options.h:915 options.h:1039 options.h:1042 options.h:1046 options.h:1136
 msgid "DIR"
-msgstr ""
+msgstr "目录"
 
 #: options.h:918
 msgid "Enable text section reordering for GCC section names (default)"
@@ -2151,7 +2149,7 @@ msgstr ""
 
 #: options.h:932
 msgid "OFFSET"
-msgstr ""
+msgstr "偏移量"
 
 #: options.h:935
 msgid "Set GNU linker emulation; obsolete"
@@ -2226,7 +2224,7 @@ msgstr "优化输出文件"
 
 #: options.h:967
 msgid "LEVEL"
-msgstr ""
+msgstr "等级"
 
 #: options.h:970
 #, fuzzy
@@ -2288,7 +2286,7 @@ msgstr ""
 
 #: options.h:1000
 msgid "OPTION"
-msgstr ""
+msgstr "选项"
 
 #: options.h:1004
 msgid "Use posix_fallocate to reserve space in the output file (default)."
@@ -3169,19 +3167,16 @@ msgid "COPY reloc"
 msgstr ""
 
 #: resolve.cc:864 resolve.cc:887
-#, fuzzy
 msgid "command line"
-msgstr "<命令行>"
+msgstr "命令行"
 
 #: resolve.cc:867
-#, fuzzy
 msgid "linker script"
-msgstr "读取链接脚本"
+msgstr "链接器脚本"
 
 #: resolve.cc:871
-#, fuzzy
 msgid "linker defined"
-msgstr "用户定义："
+msgstr "链接器定义的"
 
 #: script-sections.cc:105
 #, fuzzy, c-format
@@ -3197,9 +3192,8 @@ msgid "dot may not move backward"
 msgstr ""
 
 #: script-sections.cc:1019
-#, fuzzy
 msgid "** expression"
-msgstr "需要表达式"
+msgstr "** 表达式"
 
 #: script-sections.cc:1204
 #, fuzzy
@@ -3486,9 +3480,9 @@ msgid "%s: symbol table entries: %zu; buckets: %zu\n"
 msgstr ""
 
 #: symtab.cc:3158
-#, fuzzy, c-format
+#, c-format
 msgid "%s: symbol table entries: %zu\n"
-msgstr "%s：跳过归档符号表失败\n"
+msgstr "%s: 符号表条目数: %zu\n"
 
 #: symtab.cc:3310
 #, c-format
@@ -3496,29 +3490,26 @@ msgid "while linking %s: symbol '%s' defined in multiple places (possible ODR vi
 msgstr ""
 
 #: symtab.cc:3319 symtab.cc:3322
-#, fuzzy, c-format
+#, c-format
 msgid "  %s from %s\n"
-msgstr "%<%s %T%>需要模板参数"
+msgstr "  %s 来自 %s\n"
 
 #: target-reloc.h:163
-#, fuzzy
 msgid "internal"
-msgstr "<内部数据>"
+msgstr "内部"
 
 #: target-reloc.h:166
-#, fuzzy
 msgid "hidden"
-msgstr "无符号"
+msgstr "已隐藏"
 
 #: target-reloc.h:169
-#, fuzzy
 msgid "protected"
-msgstr "无符号"
+msgstr "受保护"
 
 #: target-reloc.h:174
-#, fuzzy, c-format
+#, c-format
 msgid "%s symbol '%s' is not defined locally"
-msgstr "%s：.opd 节中未定义的“%s”"
+msgstr "%s 符号‘%s’未在本地定义"
 
 #: target-reloc.h:414
 #, c-format
@@ -3548,14 +3539,12 @@ msgid "requires unsupported dynamic reloc %u; recompile with -fPIC"
 msgstr ""
 
 #: tls.h:59
-#, fuzzy
 msgid "TLS relocation out of range"
-msgstr "字符值超出可接受的范围以外"
+msgstr "TLS 重定位越界"
 
 #: tls.h:73
-#, fuzzy
 msgid "TLS relocation against invalid instruction"
-msgstr "GPDISP 重定位无法找到 ldah 和 lda 指令"
+msgstr "TLS 对无效指令重定位"
 
 #. This output is intended to follow the GNU standards.
 #: version.cc:66
@@ -3575,9 +3564,9 @@ msgstr ""
 "这个程序完全没有任何担保。\n"
 
 #: workqueue-threads.cc:106
-#, fuzzy, c-format
+#, c-format
 msgid "%s failed: %s"
-msgstr "打开 %s 失败：%s"
+msgstr "%s 失败：%s"
 
 #: x86_64.cc:2222
 msgid "requires dynamic R_X86_64_32 reloc which may overflow at runtime; recompile with -fPIC"
@@ -3589,11 +3578,11 @@ msgid "requires dynamic %s reloc against '%s' which may overflow at runtime; rec
 msgstr ""
 
 #: x86_64.cc:3776
-#, fuzzy, c-format
+#, c-format
 msgid "unsupported reloc type %u"
-msgstr "不支持的重定位类型"
+msgstr "不支持的重定位类型 %u"
 
 #: x86_64.cc:4211
-#, fuzzy, c-format
+#, c-format
 msgid "unsupported reloc %u against local symbol"
-msgstr "不支持的重定位类型"
+msgstr "不支持对本地符号的重定位 %u"

@@ -1,6 +1,6 @@
 // dirsearch.cc -- directory searching for gold
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -102,7 +102,7 @@ class Dir_caches
     : lock_(), caches_()
   { }
 
-  ~Dir_caches();
+  ~Dir_caches() ATTRIBUTE_UNUSED;
 
   // Add a cache for a directory.
   void add(const char*);
