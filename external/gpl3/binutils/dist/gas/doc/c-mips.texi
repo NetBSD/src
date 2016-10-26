@@ -1,4 +1,4 @@
-@c Copyright (C) 1991-2015 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2016 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -187,9 +187,16 @@ This tells the assembler to accept DSP Release 1 instructions.
 @item -mdspr2
 @itemx -mno-dspr2
 Generate code for the DSP Release 2 Application Specific Extension.
-This option implies -mdsp.
+This option implies @samp{-mdsp}.
 This tells the assembler to accept DSP Release 2 instructions.
 @samp{-mno-dspr2} turns off this option.
+
+@item -mdspr3
+@itemx -mno-dspr3
+Generate code for the DSP Release 3 Application Specific Extension.
+This option implies @samp{-mdsp} and @samp{-mdspr2}.
+This tells the assembler to accept DSP Release 3 instructions.
+@samp{-mno-dspr3} turns off this option.
 
 @item -mmt
 @itemx -mno-mt
@@ -388,6 +395,7 @@ p5600,
 sb1,
 sb1a,
 i6400,
+p6600,
 loongson2e,
 loongson2f,
 loongson3a,
@@ -1014,6 +1022,15 @@ from the DSP Release 2 Application Specific Extension from that point
 on in the assembly.  This directive implies @code{.set dsp}.  The
 @code{.set nodspr2} directive prevents DSP Release 2 instructions from
 being accepted.
+
+@cindex MIPS DSP Release 3 instruction generation override
+@kindex @code{.set dspr3}
+@kindex @code{.set nodspr3}
+The directive @code{.set dspr3} makes the assembler accept instructions
+from the DSP Release 3 Application Specific Extension from that point
+on in the assembly.  This directive implies @code{.set dsp} and
+@code{.set dspr2}.  The @code{.set nodspr3} directive prevents DSP
+Release 3 instructions from being accepted.
 
 @cindex MIPS MT instruction generation override
 @kindex @code{.set mt}

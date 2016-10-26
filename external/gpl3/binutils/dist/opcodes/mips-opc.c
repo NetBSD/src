@@ -1,5 +1,5 @@
 /* mips-opc.c -- MIPS opcode list.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    Contributed by Ralph Campbell and OSF
    Commented and modified by Ian Lance Taylor, Cygnus Support
    Extended for MIPS32 support by Anders Norlander, and by SiByte, Inc.
@@ -374,6 +374,7 @@ decode_mips_operand (const char *p)
 #define DSP_VOLA INSN_NO_DELAY_SLOT
 #define D32	ASE_DSP
 #define D33	ASE_DSPR2
+#define D34	ASE_DSPR3
 #define D64	ASE_DSP64
 
 /* MIPS MT ASE support.  */
@@ -2149,6 +2150,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"addwc",		"d,s,t",	0x7c000450, 0xfc0007ff, WR_1|RD_2|RD_3,		0,		0,		D32,	0 },
 {"bitrev",		"d,t",		0x7c0006d2, 0xffe007ff, WR_1|RD_2,		0,		0,		D32,	0 },
 {"bposge32",		"p",		0x041c0000, 0xffff0000, CBD,			0,		0,		D32,	0 },
+{"bposge32c",		"p",		0x04180000, 0xffff0000, NODS,			FS,		0,		D34,	0 },
 {"bposge64",		"p",		0x041d0000, 0xffff0000, CBD,			0,		0,		D64,	0 },
 {"cmp.eq.ph",		"s,t",		0x7c000211, 0xfc00ffff, RD_1|RD_2,		0,		0,		D32,	0 },
 {"cmp.eq.pw",		"s,t",		0x7c000415, 0xfc00ffff, RD_1|RD_2,		0,		0,		D64,	0 },
