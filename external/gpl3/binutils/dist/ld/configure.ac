@@ -226,11 +226,23 @@ AC_SEARCH_LIBS([dlopen], [dl])
 AM_CONDITIONAL([ENABLE_PLUGINS], [test x$plugins = xyes])
 
 AC_ARG_ENABLE(initfini-array,
-[  --disable-initfini-array do not use .init_array/.fini_array sections],
-[case "${enableval}" in
- yes|no) ;;
- *) AC_MSG_ERROR([invalid --enable-initfini-array argument]) ;;
- esac], [enable_initfini_array=yes])
+	[  --enable-initfini-array	use .init_array/.fini_array sections],
+	[], [
+AC_CACHE_CHECK(for .preinit_array/.init_array/.fini_array support,
+		 gcc_cv_initfini_array, [dnl
+  if test "x${build}" = "x${target}" ; then
+    AC_RUN_IFELSE([AC_LANG_SOURCE([
+static int x = -1;
+int main (void) { return x; }
+int foo (void) { x = 0; }
+int (*fp) (void) __attribute__ ((section (".init_array"))) = foo;])],
+	     [gcc_cv_initfini_array=yes], [gcc_cv_initfini_array=no],
+	     [gcc_cv_initfini_array=no])
+   else
+     gcc_cv_initfini_array=no
+   fi])
+  enable_initfini_array=$gcc_cv_initfini_array
+])
 AC_SUBST(enable_initfini_array)
 if test $enable_initfini_array = yes; then
   AC_DEFINE(HAVE_INITFINI_ARRAY, 1,
