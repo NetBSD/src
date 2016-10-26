@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.1 2014/09/21 14:30:22 christos Exp $
+#	$NetBSD: devlist2h.awk,v 1.2 2016/10/26 01:03:23 pgoyette Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -31,6 +31,7 @@
 #
 NR == 1 {
 	nproducts = nvendors = blanklines = 0
+	vendormaxlen = productmaxlen = 0
 	nchars = 1
 	dfile= FILENAME "_data.h"
 	hfile= FILENAME ".h"
@@ -117,6 +118,10 @@ NF > 0 && $1 == "vendor" {
 		printf(" */") > hfile
 	printf("\n") > hfile
 
+	if (length($2) > vendormaxlen) {
+		vendormaxlen = length($2)
+	}
+
 	next
 }
 NF > 0 && $1 == "product" {
@@ -131,7 +136,7 @@ NF > 0 && $1 == "product" {
 	i=4; f = 5;
 
 	# comments
-	ocomment = oparen = 0
+	productlen = ocomment = oparen = 0
 	if (f <= NF) {
 		printf("\t\t/* ") > hfile
 		ocomment = 1;
@@ -161,6 +166,7 @@ NF > 0 && $1 == "product" {
 			wordlist[nwords, 3] = nchars;
 			nchars = nchars + l + 1;
 		}
+		productlen += words[$f, 2] + 1;
 		wordlist[words[$f, 1], 2]++;
 		products[nproducts, i] = words[$f, 1];
 		printf("%s", $f) > hfile
@@ -173,6 +179,10 @@ NF > 0 && $1 == "product" {
 	if (ocomment)
 		printf(" */") > hfile
 	printf("\n") > hfile
+
+	if (productlen > productmaxlen) {
+		productmaxlen = productlen;
+	}
 
 	next
 }
@@ -239,6 +249,11 @@ END {
 	printf("const int %s_nwords = %d;\n", prefix, nwords) > dfile
 
 	printf("\n") > dfile
+
+	printf("Maximum vendor string length:  %d\n", vendormaxlen + 1)
+	printf("Maximum product string length: %d\n", productmaxlen + 1)
+	printf("\nEnsure that device-specific values are sufficiently large");
+	printf("\ncheck Makefile.%s for details).\n", FILENAME);
 
 	close(dfile)
 	close(hfile)
