@@ -1,0 +1,3 @@
+.*bad-size\.s: Assembler messages:
+#...
+.*bad-size\.s:.* Error: \.size expression .* does not evaluate to a constant

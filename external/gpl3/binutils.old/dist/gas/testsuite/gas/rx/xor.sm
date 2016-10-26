@@ -1,0 +1,4 @@
+	xor	#{imm},{reg}
+
+	xor	{reg},{reg}
+	xor	{memx},{reg}
