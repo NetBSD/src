@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.34 2016/10/07 10:37:42 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.35 2016/10/26 07:31:24 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.34 2016/10/07 10:37:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.35 2016/10/26 07:31:24 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1261,6 +1261,11 @@ usbd_new_device(device_t parent, struct usbd_bus* bus, int depth,
 		err = usbd_get_initial_ddesc(dev, dd);
 		if (!err)
 			break;
+		/*
+		 * The root hub can never fail to give the initial descriptor,
+		 * but assert it just in case.
+		 */
+		KASSERT(up->up_parent);
 		usbd_delay_ms(dev, 200);
 		if ((i & 3) == 3)
 			usbd_reset_port(up->up_parent, port, &ps);
