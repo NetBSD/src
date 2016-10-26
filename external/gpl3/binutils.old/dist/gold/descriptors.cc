@@ -1,6 +1,6 @@
 // descriptors.cc -- manage file descriptors for gold
 
-// Copyright 2008, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "debug.h"
 #include "parameters.h"
 #include "options.h"
 #include "gold-threads.h"
@@ -81,6 +82,9 @@ Descriptors::open(int descriptor, const char* name, int flags, int mode)
 
   gold_assert(lock_initialized || descriptor < 0);
 
+  if (is_debugging_enabled(DEBUG_FILES))
+    this->limit_ = 8;
+
   if (descriptor >= 0)
     {
       Hold_lock hl(*this->lock_);
@@ -99,6 +103,8 @@ Descriptors::open(int descriptor, const char* name, int flags, int mode)
 	      pod->stack_next = -1;
 	      pod->is_on_stack = false;
 	    }
+	  gold_debug(DEBUG_FILES, "Reused existing descriptor %d for \"%s\"",
+		     descriptor, name);
 	  return descriptor;
 	}
     }
@@ -128,6 +134,8 @@ Descriptors::open(int descriptor, const char* name, int flags, int mode)
 	      errno = ENOENT;
 	    }
 
+	  gold_debug(DEBUG_FILES, "Opened new descriptor %d for \"%s\"",
+		     new_descriptor, name);
 	  return new_descriptor;
 	}
 
@@ -162,6 +170,8 @@ Descriptors::open(int descriptor, const char* name, int flags, int mode)
 	    if (this->current_ >= this->limit_)
 	      this->close_some_descriptor();
 
+	    gold_debug(DEBUG_FILES, "Opened new descriptor %d for \"%s\"",
+		       new_descriptor, name);
 	    return new_descriptor;
 	  }
 	}
@@ -209,6 +219,9 @@ Descriptors::release(int descriptor, bool permanent)
 	  pod->is_on_stack = true;
 	}
     }
+
+  gold_debug(DEBUG_FILES, "Released descriptor %d for \"%s\"",
+	     descriptor, pod->name);
 }
 
 // Close some descriptor.  The lock is held when this is called.  We
@@ -233,6 +246,8 @@ Descriptors::close_some_descriptor()
 	  if (::close(i) < 0)
 	    gold_warning(_("while closing %s: %s"), pod->name, strerror(errno));
 	  --this->current_;
+	  gold_debug(DEBUG_FILES, "Closed descriptor %d for \"%s\"",
+		     i, pod->name);
 	  pod->name = NULL;
 	  if (last < 0)
 	    this->stack_top_ = pod->stack_next;
@@ -249,6 +264,30 @@ Descriptors::close_some_descriptor()
   // We couldn't find any descriptors to close.  This is weird but not
   // necessarily an error.
   return false;
+}
+
+// Close all the descriptors open for reading.
+
+void
+Descriptors::close_all()
+{
+  Hold_optional_lock hl(this->lock_);
+
+  for (size_t i = 0; i < this->open_descriptors_.size(); i++)
+    {
+      Open_descriptor* pod = &this->open_descriptors_[i];
+      if (pod->name != NULL && !pod->inuse && !pod->is_write)
+	{
+	  if (::close(i) < 0)
+	    gold_warning(_("while closing %s: %s"), pod->name, strerror(errno));
+	  gold_debug(DEBUG_FILES, "Closed descriptor %d for \"%s\" (close_all)",
+		     static_cast<int>(i), pod->name);
+	  pod->name = NULL;
+	  pod->stack_next = -1;
+	  pod->is_on_stack = false;
+	}
+    }
+  this->stack_top_ = -1;
 }
 
 // The single global variable which manages descriptors.

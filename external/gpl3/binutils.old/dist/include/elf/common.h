@@ -1,7 +1,5 @@
 /* ELF support for BFD.
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -75,6 +73,7 @@
 #define ELFOSABI_NSK	     14	/* Hewlett-Packard Non-Stop Kernel */
 #define ELFOSABI_AROS	     15	/* AROS */
 #define ELFOSABI_FENIXOS     16 /* FenixOS */
+#define ELFOSABI_CLOUDABI    17 /* Nuxi CloudABI */
 #define ELFOSABI_C6000_ELFABI 64 /* Bare-metal TMS320C6000 */
 #define ELFOSABI_C6000_LINUX 65 /* Linux TMS320C6000 */
 #define ELFOSABI_ARM	     97	/* ARM */
@@ -107,7 +106,7 @@
 #define EM_386		  3	/* Intel 80386 */
 #define EM_68K		  4	/* Motorola m68k family */
 #define EM_88K		  5	/* Motorola m88k family */
-#define EM_486		  6	/* Intel 80486 *//* Reserved for future use */
+#define EM_IAMCU	  6	/* Intel MCU */
 #define EM_860		  7	/* Intel 80860 */
 #define EM_MIPS		  8	/* MIPS R3000 (officially, big-endian only) */
 #define EM_S370		  9	/* IBM System/370 */
@@ -195,7 +194,7 @@
 #define EM_MN10200	 90	/* Matsushita MN10200 */
 #define EM_PJ		 91	/* picoJava */
 #define EM_OR1K		 92	/* OpenRISC 1000 32-bit embedded processor */
-#define EM_ARC_A5	 93	/* ARC Cores Tangent-A5 */
+#define EM_ARC_COMPACT	 93	/* ARC International ARCompact processor */
 #define EM_XTENSA	 94	/* Tensilica Xtensa Architecture */
 #define EM_VIDEOCORE	 95	/* Alphamosaic VideoCore processor */
 #define EM_TMM_GPP	 96	/* Thompson Multimedia General Purpose Processor */
@@ -278,7 +277,7 @@
 #define EM_MANIK	171	/* M2000 Reconfigurable RISC Microprocessor */
 #define EM_CRAYNV2	172	/* Cray Inc. NV2 vector architecture */
 #define EM_RX		173	/* Renesas RX family */
-#define EM_METAG	174	/* Imagination Technologies META processor architecture */
+#define EM_METAG	174	/* Imagination Technologies Meta processor architecture */
 #define EM_MCST_ELBRUS	175	/* MCST Elbrus general purpose hardware architecture */
 #define EM_ECOG16	176	/* Cyan Technology eCOG16 family */
 #define EM_CR16		177	/* National Semiconductor CompactRISC 16-bit processor */
@@ -296,8 +295,17 @@
 #define EM_MICROBLAZE	189	/* Xilinx MicroBlaze 32-bit RISC soft processor core */
 #define EM_CUDA		190	/* NVIDIA CUDA architecture */
 #define EM_TILEGX	191	/* Tilera TILE-Gx multicore architecture family */
+#define EM_ARC_COMPACT2 195	/* Synopsys ARCompact V2 */
 #define EM_RL78		197	/* Renesas RL78 family.  */
 #define EM_78K0R	199	/* Renesas 78K0R.  */
+#define EM_INTEL205	205	/* Reserved by Intel */
+#define EM_INTEL206	206	/* Reserved by Intel */
+#define EM_INTEL207	207	/* Reserved by Intel */
+#define EM_INTEL208	208	/* Reserved by Intel */
+#define EM_INTEL209	209	/* Reserved by Intel */
+#define EM_VISIUM	221	/* Controls and Data Services VISIUMcore processor */
+#define EM_FT32         222     /* FTDI Chip FT32 high performance 32-bit RISC architecture */
+#define EM_MOXIE        223     /* Moxie processor family */
 #define EM_RISCV	243	/* RISC-V */
 
 /* If it is necessary to assign new unofficial EM_* values, please pick large
@@ -336,9 +344,6 @@
 
 /* FR30 magic number - no EABI available.  */
 #define EM_CYGNUS_FR30		0x3330
-
-/* OpenRISC magic number.  Written in the absense of an ABI.  */
-#define EM_OPENRISC_OLD		0x3426
 
 /* DLX magic number.  Written in the absense of an ABI.  */
 #define EM_DLX			0x5aa5
@@ -394,7 +399,8 @@
 
 #define EM_CYGNUS_MEP		0xF00D  /* Toshiba MeP */
 
-#define EM_MOXIE                0xFEED  /* Moxie */
+/* Old, unofficial value for Moxie.  */
+#define EM_MOXIE_OLD            0xFEED
 
 /* Old Sunplus S+core7 backend magic number. Written in the absence of an ABI.  */
 #define EM_SCORE_OLD            95
@@ -402,6 +408,9 @@
 #define EM_MICROBLAZE_OLD	0xbaab	/* Old MicroBlaze */
 
 #define EM_ADAPTEVA_EPIPHANY   0x1223  /* Adapteva's Epiphany architecture.  */
+
+/* Old constant that might be in use by some software. */
+#define EM_OPENRISC		EM_OR1K
 
 /* See the above comment before you add a new EM_* value here.  */
 
@@ -500,6 +509,7 @@
 #define SHF_OS_NONCONFORMING (1 << 8)	/* OS specific processing required */
 #define SHF_GROUP	(1 << 9)	/* Member of a section group */
 #define SHF_TLS		(1 << 10)	/* Thread local storage section */
+#define SHF_COMPRESSED	(1 << 11)	/* Section with compressed data */
 
 /* #define SHF_MASKOS	0x0F000000    *//* OS-specific semantics */
 #define SHF_MASKOS	0x0FF00000	/* New value, Oct 4, 1999 Draft */
@@ -514,6 +524,13 @@
 					   are not to be further
 					   relocated.  */
 
+/* Compression types */
+#define ELFCOMPRESS_ZLIB   1		/* Compressed with zlib.  */
+#define ELFCOMPRESS_LOOS   0x60000000	/* OS-specific semantics, lo */
+#define ELFCOMPRESS_HIOS   0x6FFFFFFF	/* OS-specific semantics, hi */
+#define ELFCOMPRESS_LOPROC 0x70000000	/* Processor-specific semantics, lo */
+#define ELFCOMPRESS_HIPROC 0x7FFFFFFF	/* Processor-specific semantics, hi */
+
 /* Values of note segment descriptor types for core files.  */
 
 #define NT_PRSTATUS	1		/* Contains copy of prstatus struct */
@@ -526,6 +543,10 @@
 #define NT_PPC_VMX	0x100		/* PowerPC Altivec/VMX registers */
 					/*   note name must be "LINUX".  */
 #define NT_PPC_VSX	0x102		/* PowerPC VSX registers */
+					/*   note name must be "LINUX".  */
+#define NT_386_TLS	0x200		/* x86 TLS information */
+					/*   note name must be "LINUX".  */
+#define NT_386_IOPERM	0x201		/* x86 io permissions */
 					/*   note name must be "LINUX".  */
 #define NT_X86_XSTATE	0x202		/* x86 XSAVE extended state */
 					/*   note name must be "LINUX".  */
@@ -545,8 +566,23 @@
 					/*   note name must be "LINUX".  */
 #define NT_S390_SYSTEM_CALL     0x307   /* S390 system call restart data */
 					/*   note name must be "LINUX".  */
-#define NT_ARM_VFP	0x400		/* ARM VFP registers */
+#define NT_S390_TDB	0x308		/* S390 transaction diagnostic block */
 					/*   note name must be "LINUX".  */
+#define NT_S390_VXRS_LOW	0x309	/* S390 vector registers 0-15 upper half */
+					/*   note name must be "LINUX".  */
+#define NT_S390_VXRS_HIGH	0x30a	/* S390 vector registers 16-31 */
+					/*   note name must be "LINUX".  */
+#define NT_ARM_VFP	0x400		/* ARM VFP registers */
+/* The following definitions should really use NT_AARCH_..., but defined
+   this way for compatibility with Linux.  */
+#define NT_ARM_TLS	0x401		/* AArch TLS registers */
+					/*   note name must be "LINUX".  */
+#define NT_ARM_HW_BREAK	0x402		/* AArch hardware breakpoint registers */
+					/*   note name must be "LINUX".  */
+#define NT_ARM_HW_WATCH	0x403		/* AArch hardware watchpoint registers */
+					/*   note name must be "LINUX".  */
+#define NT_SIGINFO	0x53494749	/* Fields of siginfo_t.  */
+#define NT_FILE		0x46494c45	/* Description of mapped files.  */
 
 /* Note segments for core files on dir-style procfs systems.  */
 
@@ -601,6 +637,8 @@
 #define GNU_ABI_TAG_SOLARIS	2
 #define GNU_ABI_TAG_FREEBSD	3
 #define GNU_ABI_TAG_NETBSD	4
+#define GNU_ABI_TAG_SYLLABLE	5
+#define GNU_ABI_TAG_NACL	6
 
 /* Values for NetBSD .note.netbsd.ident notes.  Note name is "NetBSD".  */
 
@@ -828,7 +866,21 @@
 #define DF_1_INTERPOSE	0x00000400
 #define DF_1_NODEFLIB	0x00000800
 #define DF_1_NODUMP	0x00001000
-#define DF_1_CONLFAT	0x00002000
+#define DF_1_CONFALT	0x00002000
+#define DF_1_ENDFILTEE	0x00004000
+#define	DF_1_DISPRELDNE	0x00008000
+#define	DF_1_DISPRELPND	0x00010000
+#define	DF_1_NODIRECT	0x00020000
+#define	DF_1_IGNMULDEF	0x00040000
+#define	DF_1_NOKSYMS	0x00080000
+#define	DF_1_NOHDR	0x00100000
+#define	DF_1_EDITED	0x00200000
+#define	DF_1_NORELOC	0x00400000
+#define	DF_1_SYMINTPOSE	0x00800000
+#define	DF_1_GLOBAUDIT	0x01000000
+#define	DF_1_SINGLETON	0x02000000
+#define	DF_1_STUB	0x04000000
+#define	DF_1_PIE	0x08000000
 
 /* Flag values for the DT_FLAGS entry.	*/
 #define DF_ORIGIN	(1 << 0)
@@ -937,6 +989,7 @@
 #define AT_BASE_PLATFORM 24		/* String identifying real platform,
 					   may differ from AT_PLATFORM.  */
 #define AT_RANDOM	25		/* Address of 16 random bytes.  */
+#define AT_HWCAP2	26		/* Extension of AT_HWCAP.  */
 #define AT_EXECFN	31		/* Filename of executable.  */
 /* Pointer to the global system page used for system calls and other
    nice things.  */

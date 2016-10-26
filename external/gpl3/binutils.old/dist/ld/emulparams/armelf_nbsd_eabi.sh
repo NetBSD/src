@@ -9,12 +9,19 @@ OTHER_READONLY_SECTIONS="
 
 case "$target" in
   arm*-*-netbsdelf*-*eabihf*)
-    LIB_PATH='=/usr/lib/eabi'
+    case "$EMULATION_NAME" in
+    *armelf*eabi)
+      LIB_PATH='=/usr/lib/eabi'
+      ;;
+    esac
     ;;
   arm*-*-netbsdelf*-*eabi*)
-    LIB_PATH='=/usr/lib'
     ;;
   aarch64*-*-netbsd* | arm*-*-netbsdelf*)
-    LIB_PATH='=/usr/lib/eabi'
+    case "$EMULATION_NAME" in
+    *armelf*eabi)
+      LIB_PATH='=/usr/lib/eabi'
+      ;;
+    esac
     ;;
 esac

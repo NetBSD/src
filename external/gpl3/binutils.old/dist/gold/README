@@ -30,7 +30,7 @@ gold is written in C++.  It is a GNU program, and therefore follows
 the GNU formatting standards as modified for C++.  Source documents in
 order of decreasing precedence:
     http://www.gnu.org/prep/standards/
-    http://gcc.gnu.org/onlinedocs/libstdc++/17_intro/C++STYLE
+    http://gcc.gnu.org/onlinedocs/libstdc++/manual/source_code_style.html
     http://www.zembu.com/eng/procs/c++style.html
 
 The linker is intended to have complete support for cross-compilation,
@@ -60,3 +60,10 @@ The linker script parser uses features which are only in newer
 versions of bison.  bison 2.3 is known to work.  bison 1.26 is known
 to fail.  If you are building gold from an official binutils release,
 the bison output should already be included.
+
+
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

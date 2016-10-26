@@ -1,5 +1,5 @@
 /* tc-mt.h -- Header file for tc-mt.c.
-   Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -45,7 +45,7 @@
 #define LITERAL_PREFIXPERCENT_BIN
 
 #define md_apply_fix mt_apply_fix
-extern void mt_apply_fix (struct fix *, valueT *, segT); 
+extern void mt_apply_fix (struct fix *, valueT *, segT);
 
 /* Call md_pcrel_from_section(), not md_pcrel_from().  */
 #define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section (FIXP, SEC)

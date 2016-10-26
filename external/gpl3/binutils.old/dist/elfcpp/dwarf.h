@@ -1,6 +1,6 @@
 // dwarf.h -- DWARF2 constants  -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2011, 2012 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of elfcpp.
@@ -180,44 +180,66 @@ enum DW_CHILDREN
 
 // Source language names and codes.
 enum DW_LANG
-  {
-    DW_LANG_C89 = 0x0001,
-    DW_LANG_C = 0x0002,
-    DW_LANG_Ada83 = 0x0003,
-    DW_LANG_C_plus_plus = 0x0004,
-    DW_LANG_Cobol74 = 0x0005,
-    DW_LANG_Cobol85 = 0x0006,
-    DW_LANG_Fortran77 = 0x0007,
-    DW_LANG_Fortran90 = 0x0008,
-    DW_LANG_Pascal83 = 0x0009,
-    DW_LANG_Modula2 = 0x000a,
-    // DWARF 3.
-    DW_LANG_Java = 0x000b,
-    DW_LANG_C99 = 0x000c,
-    DW_LANG_Ada95 = 0x000d,
-    DW_LANG_Fortran95 = 0x000e,
-    DW_LANG_PLI = 0x000f,
-    DW_LANG_ObjC = 0x0010,
-    DW_LANG_ObjC_plus_plus = 0x0011,
-    DW_LANG_UPC = 0x0012,
-    DW_LANG_D = 0x0013,
-    // DWARF 4.
-    DW_LANG_Python = 0x0014,
-    // DWARF 5.
-    DW_LANG_Go = 0x0016,
-    DW_LANG_lo_user = 0x8000,	// Implementation-defined range start.
-    DW_LANG_hi_user = 0xffff,	// Implementation-defined range start.
-    // MIPS.
-    DW_LANG_Mips_Assembler = 0x8001,
-    // UPC.
-    DW_LANG_Upc = 0x8765,
-    // HP extensions.
-    DW_LANG_HP_Bliss     = 0x8003,
-    DW_LANG_HP_Basic91   = 0x8004,
-    DW_LANG_HP_Pascal91  = 0x8005,
-    DW_LANG_HP_IMacro    = 0x8006,
-    DW_LANG_HP_Assembler = 0x8007
-  };
+{
+  DW_LANG_C89 = 0x0001,
+  DW_LANG_C = 0x0002,
+  DW_LANG_Ada83 = 0x0003,
+  DW_LANG_C_plus_plus = 0x0004,
+  DW_LANG_Cobol74 = 0x0005,
+  DW_LANG_Cobol85 = 0x0006,
+  DW_LANG_Fortran77 = 0x0007,
+  DW_LANG_Fortran90 = 0x0008,
+  DW_LANG_Pascal83 = 0x0009,
+  DW_LANG_Modula2 = 0x000a,
+  // DWARF 3.
+  DW_LANG_Java = 0x000b,
+  DW_LANG_C99 = 0x000c,
+  DW_LANG_Ada95 = 0x000d,
+  DW_LANG_Fortran95 = 0x000e,
+  DW_LANG_PLI = 0x000f,
+  DW_LANG_ObjC = 0x0010,
+  DW_LANG_ObjC_plus_plus = 0x0011,
+  DW_LANG_UPC = 0x0012,
+  DW_LANG_D = 0x0013,
+  // DWARF 4.
+  DW_LANG_Python = 0x0014,
+  // DWARF 5.
+  DW_LANG_Go = 0x0016,
+  DW_LANG_C_plus_plus_11 = 0x001a,
+  DW_LANG_C11 = 0x001d,
+  DW_LANG_C_plus_plus_14 = 0x0021,
+  DW_LANG_Fortran03 = 0x0022,
+  DW_LANG_Fortran08 = 0x0023,
+
+  DW_LANG_lo_user = 0x8000,	// Implementation-defined range start.
+  DW_LANG_hi_user = 0xffff,	// Implementation-defined range start.
+  // MIPS.
+  DW_LANG_Mips_Assembler = 0x8001,
+  // UPC.
+  DW_LANG_Upc = 0x8765,
+  // HP extensions.
+  DW_LANG_HP_Bliss     = 0x8003,
+  DW_LANG_HP_Basic91   = 0x8004,
+  DW_LANG_HP_Pascal91  = 0x8005,
+  DW_LANG_HP_IMacro    = 0x8006,
+  DW_LANG_HP_Assembler = 0x8007
+};
+
+// DWARF section identifiers used in the package format.
+// Extensions for Fission.  See http://gcc.gnu.org/wiki/DebugFissionDWP.
+
+enum DW_SECT
+{
+  DW_SECT_INFO = 1,
+  DW_SECT_TYPES = 2,
+  DW_SECT_ABBREV = 3,
+  DW_SECT_LINE = 4,
+  DW_SECT_LOC = 5,
+  DW_SECT_STR_OFFSETS = 6,
+  DW_SECT_MACINFO = 7,
+  DW_SECT_MACRO = 8,
+  DW_SECT_MAX = DW_SECT_MACRO,
+};
 
 } // End namespace elfcpp.
 

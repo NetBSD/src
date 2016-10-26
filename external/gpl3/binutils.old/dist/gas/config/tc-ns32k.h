@@ -1,6 +1,5 @@
 /* tc-ns32k.h -- Opcode table for National Semi 32k processor
-   Copyright 1987, 1992, 1993, 1994, 1995, 1997, 2000, 2002, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -55,7 +54,8 @@ extern int md_pcrel_adjust (fragS *);
 #define ARG_LEN 50
 
 #define TC_CONS_FIX_NEW cons_fix_new_ns32k
-extern void cons_fix_new_ns32k (fragS *, int, int, expressionS *);
+extern void cons_fix_new_ns32k (fragS *, int, int, expressionS *,
+				bfd_reloc_code_real_type);
 
 /* The NS32x32 has a non 0 nop instruction which should be used in aligns.  */
 #define NOP_OPCODE 0xa2

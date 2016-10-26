@@ -1,6 +1,6 @@
 // stringpool.cc -- a string pool for gold
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -34,11 +34,14 @@ namespace gold
 {
 
 template<typename Stringpool_char>
-Stringpool_template<Stringpool_char>::Stringpool_template()
+Stringpool_template<Stringpool_char>::Stringpool_template(uint64_t addralign)
   : string_set_(), key_to_offset_(), strings_(), strtab_size_(0),
-    zero_null_(true), optimize_(false), offset_(sizeof(Stringpool_char))
+    zero_null_(true), optimize_(false), offset_(sizeof(Stringpool_char)),
+    addralign_(addralign)
 {
-  if (parameters->options_valid() && parameters->options().optimize() >= 2)
+  if (parameters->options_valid()
+      && parameters->options().optimize() >= 2
+      && addralign <= sizeof(Stringpool_char))
     this->optimize_ = true;
 }
 
@@ -72,7 +75,10 @@ Stringpool_template<Stringpool_char>::reserve(unsigned int n)
 {
   this->key_to_offset_.reserve(n);
 
-#if defined(HAVE_TR1_UNORDERED_MAP)
+#if defined(HAVE_UNORDERED_MAP)
+  this->string_set_.rehash(this->string_set_.size() + n);
+  return;
+#elif defined(HAVE_TR1_UNORDERED_MAP)
   // rehash() implementation is broken in gcc 4.0.3's stl
   //this->string_set_.rehash(this->string_set_.size() + n);
   //return;
@@ -222,7 +228,9 @@ Stringpool_template<Stringpool_char>::new_key_offset(size_t length)
   else
     {
       offset = this->offset_;
-      this->offset_ += (length + 1) * sizeof(Stringpool_char);
+      // Align strings.
+      offset = align_address(offset, this->addralign_);
+      this->offset_ = offset + (length + 1) * sizeof(Stringpool_char);
     }
   this->key_to_offset_.push_back(offset);
 }
@@ -412,6 +420,8 @@ Stringpool_template<Stringpool_char>::set_string_offsets()
           if (this->zero_null_ && (*curr)->first.string[0] == 0)
             this_offset = 0;
           else if (last != v.end()
+                   && ((((*curr)->first.length - (*last)->first.length)
+			% this->addralign_) == 0)
                    && is_suffix((*curr)->first.string,
 				(*curr)->first.length,
                                 (*last)->first.string,
@@ -421,8 +431,8 @@ Stringpool_template<Stringpool_char>::set_string_offsets()
 			      * charsize));
           else
             {
-              this_offset = offset;
-              offset += ((*curr)->first.length + 1) * charsize;
+              this_offset = align_address(offset, this->addralign_);
+              offset = this_offset + ((*curr)->first.length + 1) * charsize;
             }
 	  this->key_to_offset_[(*curr)->second - 1] = this_offset;
 	  last_offset = this_offset;
@@ -499,7 +509,7 @@ template<typename Stringpool_char>
 void
 Stringpool_template<Stringpool_char>::print_stats(const char* name) const
 {
-#if defined(HAVE_TR1_UNORDERED_MAP) || defined(HAVE_EXT_HASH_MAP)
+#if defined(HAVE_UNORDERED_MAP) || defined(HAVE_TR1_UNORDERED_MAP) || defined(HAVE_EXT_HASH_MAP)
   fprintf(stderr, _("%s: %s entries: %zu; buckets: %zu\n"),
 	  program_name, name, this->string_set_.size(),
 	  this->string_set_.bucket_count());

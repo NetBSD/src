@@ -1,6 +1,6 @@
 // mapfile.cc -- map file generation for gold
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -258,8 +258,11 @@ Mapfile::print_input_section(Relobj* relobj, unsigned int shndx)
     }
 
   char sizebuf[50];
+  section_size_type size;
+  if (!relobj->section_is_compressed(shndx, &size))
+    size = relobj->section_size(shndx);
   snprintf(sizebuf, sizeof sizebuf, "0x%llx",
-	   static_cast<unsigned long long>(relobj->section_size(shndx)));
+	   static_cast<unsigned long long>(size));
 
   fprintf(this->map_file_, "0x%0*llx %10s %s\n",
 	  parameters->target().get_size() / 4,
@@ -328,11 +331,13 @@ Mapfile::print_output_data(const Output_data* od, const char* name)
 
   char sizebuf[50];
   snprintf(sizebuf, sizeof sizebuf, "0x%llx",
-	   static_cast<unsigned long long>(od->data_size()));
+	   static_cast<unsigned long long>(od->current_data_size()));
 
   fprintf(this->map_file_, "0x%0*llx %10s\n",
 	  parameters->target().get_size() / 4,
-	  static_cast<unsigned long long>(od->address()),
+	  (od->is_address_valid()
+	   ? static_cast<unsigned long long>(od->address())
+	   : 0),
 	  sizebuf);
 }
 
@@ -387,7 +392,7 @@ Mapfile::print_output_section(const Output_section* os)
 
   char sizebuf[50];
   snprintf(sizebuf, sizeof sizebuf, "0x%llx",
-	   static_cast<unsigned long long>(os->data_size()));
+	   static_cast<unsigned long long>(os->current_data_size()));
 
   fprintf(this->map_file_, "0x%0*llx %10s",
 	  parameters->target().get_size() / 4,
@@ -397,6 +402,9 @@ Mapfile::print_output_section(const Output_section* os)
     fprintf(this->map_file_, " load address 0x%-*llx",
 	    parameters->target().get_size() / 4,
 	    static_cast<unsigned long long>(os->load_address()));
+
+  if (os->requires_postprocessing())
+    fprintf(this->map_file_, " (before compression)");
 
   putc('\n', this->map_file_);
 }
