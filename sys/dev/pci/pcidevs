@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1269 2016/10/24 06:03:52 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1270 2016/10/26 06:50:20 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2966,7 +2966,7 @@ product INTEL 82439HX		0x1250	82439HX (TXC) System Controller
 product INTEL 82870P2_PPB	0x1460	82870P2 P64H2 PCI-PCI Bridge
 product INTEL 82870P2_IOxAPIC	0x1461	82870P2 P64H2 IOxAPIC
 product INTEL 82870P2_HPLUG	0x1462	82870P2 P64H2 Hot Plug Controller
-product INTEL 82801I_82567V_3	0x1501	i82567V-3 LAN Controller
+product INTEL 82801H_82567V_3	0x1501	i82567V-3 LAN Controller
 product INTEL PCH2_LV_LM	0x1502	82579LM Gigabit Network Connection
 product INTEL PCH2_LV_V		0x1503	82579V Gigabit Network Connection
 product INTEL 82599_SFP_EM	0x1507	82599 10G Ethernet Express Module
