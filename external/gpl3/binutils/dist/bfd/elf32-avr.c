@@ -1,5 +1,5 @@
 /* AVR-specific support for 32-bit ELF
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1487,14 +1487,13 @@ elf32_avr_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  switch (r)
 	    {
 	    case bfd_reloc_overflow:
-	      r = info->callbacks->reloc_overflow
-		(info, (h ? &h->root : NULL),
-		 name, howto->name, (bfd_vma) 0,
-		 input_bfd, input_section, rel->r_offset);
+	      (*info->callbacks->reloc_overflow)
+		(info, (h ? &h->root : NULL), name, howto->name,
+		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      r = info->callbacks->undefined_symbol
+	      (*info->callbacks->undefined_symbol)
 		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
 
@@ -1516,11 +1515,8 @@ elf32_avr_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    }
 
 	  if (msg)
-	    r = info->callbacks->warning
-	      (info, msg, name, input_bfd, input_section, rel->r_offset);
-
-	  if (! r)
-	    return FALSE;
+	    (*info->callbacks->warning) (info, msg, name, input_bfd,
+					 input_section, rel->r_offset);
 	}
     }
 
@@ -4094,11 +4090,13 @@ avr_elf32_load_records_from_section (bfd *abfd, asection *sec)
     }
 
   free (contents);
-  free (internal_relocs);
+  if (elf_section_data (sec)->relocs != internal_relocs)
+    free (internal_relocs);
   return r_list;
 
  load_failed:
-  free (internal_relocs);
+  if (elf_section_data (sec)->relocs != internal_relocs)
+    free (internal_relocs);
   free (contents);
   free (r_list);
   return NULL;

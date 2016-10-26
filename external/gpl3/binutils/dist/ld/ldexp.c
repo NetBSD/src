@@ -1,5 +1,5 @@
 /* This module handles expression trees.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of the GNU Binutils.
@@ -82,7 +82,7 @@ exp_print_token (token_code_type code, int infix_p)
   static const struct
   {
     token_code_type code;
-    const char * name;
+    const char *name;
   }
   table[] =
   {
@@ -441,7 +441,8 @@ fold_binary (etree_type *tree)
 	    if (!seg->used
 		&& config.magic_demand_paged
 		&& (seg->value % config.maxpagesize) != 0)
-	      einfo (_("%P: warning: address of `%s' isn't multiple of maximum page size\n"),
+	      einfo (_("%P: warning: address of `%s' "
+		       "isn't multiple of maximum page size\n"),
 		     segment_name);
 	    seg->used = TRUE;
 	    new_rel_from_abs (seg->value);
@@ -848,17 +849,17 @@ fold_name (etree_type *tree)
     case LENGTH:
       {
       if (expld.phase != lang_first_phase_enum)
-        {
-          lang_memory_region_type *mem;
+	{
+	  lang_memory_region_type *mem;
 
-          mem = lang_memory_region_lookup (tree->name.name, FALSE);
-          if (mem != NULL)
-            new_number (mem->length);
-          else
-            einfo (_("%F%S: undefined MEMORY region `%s'"
-             " referenced in expression\n"),
-           tree, tree->name.name);
-        }
+	  mem = lang_memory_region_lookup (tree->name.name, FALSE);
+	  if (mem != NULL)
+	    new_number (mem->length);
+	  else
+	    einfo (_("%F%S: undefined MEMORY region `%s'"
+		     " referenced in expression\n"),
+		   tree, tree->name.name);
+	}
       }
       break;
 
@@ -979,7 +980,7 @@ is_align_conditional (const etree_type *tree)
 /* Subroutine of exp_fold_tree_1 for copying a symbol type.  */
 
 static void
-try_copy_symbol_type (struct bfd_link_hash_entry * h, etree_type *src)
+try_copy_symbol_type (struct bfd_link_hash_entry *h, etree_type *src)
 {
   if (src->type.node_class == etree_name)
     {
@@ -1186,7 +1187,7 @@ exp_fold_tree_1 (etree_type *tree)
 		tree->type.node_class = etree_provided;
 
 	      /* Copy the symbol type if this is a simple assignment of
-	         one symbol to another.  Also, handle the case of a foldable
+		 one symbol to another.  Also, handle the case of a foldable
 		 ternary conditional with names on either side.  */
 	      if (tree->assign.src->type.node_class == etree_name)
 		try_copy_symbol_type (h, tree->assign.src);
