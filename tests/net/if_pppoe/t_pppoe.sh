@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.7 2016/10/26 03:27:24 knakahara Exp $
+#	$NetBSD: t_pppoe.sh,v 1.8 2016/10/26 03:55:56 knakahara Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -102,7 +102,7 @@ wait_for_session_established()
 		sleep 1
 	done
 
-	if [ $dontfail != "dontfail" ]; then
+	if [ "$dontfail" != "dontfail" ]; then
 		atf_fail "Couldn't connect to the server for $n seconds."
 	fi
 }
@@ -118,7 +118,7 @@ wait_for_disconnected()
 		sleep 1
 	done
 
-	if [ $dontfail != "dontfail" ]; then
+	if [ "$dontfail" != "dontfail" ]; then
 		atf_fail "Couldn't disconnect for $n seconds."
 	fi
 }
