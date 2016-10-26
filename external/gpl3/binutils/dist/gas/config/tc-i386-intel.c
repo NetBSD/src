@@ -1,5 +1,5 @@
 /* tc-i386.c -- Assemble Intel syntax code for ix86/x86-64
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -821,6 +821,8 @@ i386_intel_operand (char *operand_string, int got_a_float)
 	   || intel_state.is_mem)
     {
       /* Memory operand.  */
+      if (i.mem_operands == 1 && !maybe_adjust_templates ())
+	return 0;
       if ((int) i.mem_operands
 	  >= 2 - !current_templates->start->opcode_modifier.isstring)
 	{
@@ -983,6 +985,8 @@ i386_intel_operand (char *operand_string, int got_a_float)
 	return 0;
 
       i.types[this_operand].bitfield.mem = 1;
+      if (i.mem_operands == 0)
+	i.memop1_string = xstrdup (operand_string);
       ++i.mem_operands;
     }
   else

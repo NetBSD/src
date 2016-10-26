@@ -1,5 +1,5 @@
 /* Print VAX instructions.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    Contributed by Pauline Middelink <middelin@polyware.iaf.nl>
 
    This file is part of the GNU opcodes library.

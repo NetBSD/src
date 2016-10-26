@@ -1,5 +1,5 @@
 /* Disassemble Motorola M*Core instructions.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -20,6 +20,7 @@
 
 #include "sysdep.h"
 #include <stdio.h>
+#include "libiberty.h"
 #define STATIC_TABLE
 #define DEFINE_TABLE
 
@@ -95,7 +96,7 @@ print_insn_mcore (bfd_vma memaddr,
   fprintf_ftype print_func = info->fprintf_func;
   void *stream = info->stream;
   unsigned short inst;
-  const mcore_opcode_info *op;
+  unsigned int i;
   int status;
 
   info->bytes_per_chunk = 2;
@@ -116,19 +117,19 @@ print_insn_mcore (bfd_vma memaddr,
     abort ();
 
   /* Just a linear search of the table.  */
-  for (op = mcore_table; op->name != 0; op++)
-    if (op->inst == (inst & imsk[op->opclass]))
+  for (i = 0; i < ARRAY_SIZE (mcore_table); i++)
+    if (mcore_table[i].inst == (inst & imsk[mcore_table[i].opclass]))
       break;
 
-  if (op->name == 0)
+  if (i == ARRAY_SIZE (mcore_table))
     (*print_func) (stream, ".short 0x%04x", inst);
   else
     {
       const char *name = grname[inst & 0x0F];
 
-      (*print_func) (stream, "%s", op->name);
+      (*print_func) (stream, "%s", mcore_table[i].name);
 
-      switch (op->opclass)
+      switch (mcore_table[i].opclass)
 	{
 	case O0:
 	  break;
@@ -202,7 +203,7 @@ print_insn_mcore (bfd_vma memaddr,
 
 	    (*print_func) (stream, "\t0x%lx", (long)(memaddr + 2 + (val << 1)));
 
-	    if (strcmp (op->name, "bsr") == 0)
+	    if (strcmp (mcore_table[i].name, "bsr") == 0)
 	      {
 		/* For bsr, we'll try to get a symbol for the target.  */
 		val = memaddr + 2 + (val << 1);

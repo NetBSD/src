@@ -1,6 +1,6 @@
 /* hist.c  -  Histogram related operations.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -289,7 +289,7 @@ hist_write_hist (FILE * ofp, const char *filename)
    next bin.  */
 
 static void
-scale_and_align_entries ()
+scale_and_align_entries (void)
 {
   Sym *sym;
   bfd_vma bin_of_entry;
@@ -445,7 +445,7 @@ hist_assign_samples_1 (histogram *r)
 
 /* Calls 'hist_assign_sampes_1' for all histogram records read so far. */
 void
-hist_assign_samples ()
+hist_assign_samples (void)
 {
   unsigned i;
 
@@ -562,7 +562,7 @@ cmp_time (const PTR lp, const PTR rp)
 /* Print the flat histogram profile.  */
 
 void
-hist_print ()
+hist_print (void)
 {
   Sym **time_sorted_syms, *top_dog, *sym;
   unsigned int sym_index;

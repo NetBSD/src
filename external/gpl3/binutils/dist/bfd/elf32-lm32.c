@@ -1,5 +1,5 @@
 /* Lattice Mico32-specific support for 32-bit ELF
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
    Contributed by Jon Beniston <jon@beniston.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1149,17 +1149,14 @@ lm32_elf_relocate_section (bfd *output_bfd,
 	      if ((h != NULL)
                  && (h->root.type == bfd_link_hash_undefweak))
 	        break;
-	      if (! ((*info->callbacks->reloc_overflow)
-		     (info, (h ? &h->root : NULL), name, howto->name,
-		      (bfd_vma) 0, input_bfd, input_section, rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->reloc_overflow)
+		(info, (h ? &h->root : NULL), name, howto->name,
+		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
             case bfd_reloc_undefined:
-              if (! ((*info->callbacks->undefined_symbol)
-                     (info, name, input_bfd, input_section,
-                      rel->r_offset, TRUE)))
-                return FALSE;
+	      (*info->callbacks->undefined_symbol)
+		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
               break;
 
             case bfd_reloc_outofrange:
@@ -1179,10 +1176,8 @@ lm32_elf_relocate_section (bfd *output_bfd,
               /* fall through */
 
             common_error:
-              if (!((*info->callbacks->warning)
-                    (info, msg, name, input_bfd, input_section,
-                     rel->r_offset)))
-                return FALSE;
+	      (*info->callbacks->warning) (info, msg, name, input_bfd,
+					   input_section, rel->r_offset);
               break;
             }
         }
@@ -1456,19 +1451,17 @@ lm32_elf_finish_dynamic_sections (bfd *output_bfd,
               break;
 
             case DT_PLTGOT:
-              s = htab->sgot->output_section;
+              s = htab->sgotplt;
               goto get_vma;
             case DT_JMPREL:
-              s = htab->srelplt->output_section;
+              s = htab->srelplt;
             get_vma:
-              BFD_ASSERT (s != NULL);
-              dyn.d_un.d_ptr = s->vma;
+              dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
               bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
               break;
 
             case DT_PLTRELSZ:
-              s = htab->srelplt->output_section;
-              BFD_ASSERT (s != NULL);
+              s = htab->srelplt;
 	      dyn.d_un.d_val = s->size;
               bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
               break;
@@ -1485,7 +1478,7 @@ lm32_elf_finish_dynamic_sections (bfd *output_bfd,
                  about changing the DT_RELA entry.  */
               if (htab->srelplt != NULL)
                 {
-                  s = htab->srelplt->output_section;
+                  s = htab->srelplt;
 		  dyn.d_un.d_val -= s->size;
                 }
               bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);

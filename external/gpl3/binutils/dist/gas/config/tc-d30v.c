@@ -1,5 +1,5 @@
 /* tc-d30v.c -- Assembler code for the Mitsubishi D30V
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -245,7 +245,7 @@ md_show_usage (FILE *stream)
 }
 
 int
-md_parse_option (int c, char *arg ATTRIBUTE_UNUSED)
+md_parse_option (int c, const char *arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
@@ -285,7 +285,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
   return 0;
 }
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, TRUE);
@@ -1158,7 +1158,7 @@ find_format (struct d30v_opcode *opcode,
 	    {
 	      int flags = d30v_operand_table[fm->operands[j]].flags;
 	      int bits = d30v_operand_table[fm->operands[j]].bits;
-	      int X_op = myops[j].X_op;
+	      operatorT X_op = myops[j].X_op;
 	      int num = myops[j].X_add_number;
 
 	      if (flags & OPERAND_SPECIAL)
@@ -1760,8 +1760,8 @@ arelent *
 tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
-  reloc = xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  reloc = XNEW (arelent);
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
@@ -1840,7 +1840,7 @@ d30v_start_line (void)
 }
 
 static void
-check_size (long value, int bits, char *file, int line)
+check_size (long value, int bits, const char *file, int line)
 {
   int tmp, max;
 

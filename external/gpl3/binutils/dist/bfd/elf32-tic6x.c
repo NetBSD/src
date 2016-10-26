@@ -1,5 +1,5 @@
 /* 32-bit ELF support for TI C6X
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -2719,20 +2719,16 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 	      /* If the overflowing reloc was to an undefined symbol,
 		 we have already printed one error message and there
 		 is no point complaining again.  */
-	      if ((! h ||
-		   h->root.type != bfd_link_hash_undefined)
-		  && (!((*info->callbacks->reloc_overflow)
-			(info, (h ? &h->root : NULL), name, howto->name,
-			 (bfd_vma) 0, input_bfd, input_section,
-			 rel->r_offset))))
-		  return FALSE;
+	      if (!h || h->root.type != bfd_link_hash_undefined)
+		(*info->callbacks->reloc_overflow)
+		  (info, (h ? &h->root : NULL), name, howto->name,
+		   (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      if (!((*info->callbacks->undefined_symbol)
-		    (info, name, input_bfd, input_section,
-		     rel->r_offset, TRUE)))
-		return FALSE;
+	      (*info->callbacks->undefined_symbol) (info, name, input_bfd,
+						    input_section,
+						    rel->r_offset, TRUE);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -2753,10 +2749,8 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 
 	    common_error:
 	      BFD_ASSERT (error_message != NULL);
-	      if (!((*info->callbacks->reloc_dangerous)
-		    (info, error_message, input_bfd, input_section,
-		     rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->reloc_dangerous)
+		(info, error_message, input_bfd, input_section, rel->r_offset);
 	      break;
 	    }
 	}

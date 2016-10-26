@@ -1,5 +1,5 @@
 /* BFD back-end for MIPS PE COFF files.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Modified from coff-i386.c by DJ Delorie, dj@cygnus.com
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -95,44 +95,44 @@ coff_mips_reloc (bfd *abfd,
 #define DOIT(x) \
   x = ((x & ~howto->dst_mask) | (((x & howto->src_mask) + (diff >> howto->rightshift)) & howto->dst_mask))
 
-    if (diff != 0)
-      {
-	reloc_howto_type *howto = reloc_entry->howto;
-	unsigned char *addr = (unsigned char *) data + reloc_entry->address;
+  if (diff != 0)
+    {
+      reloc_howto_type *howto = reloc_entry->howto;
+      unsigned char *addr = (unsigned char *) data + reloc_entry->address;
 
-	switch (howto->size)
+      switch (howto->size)
+	{
+	case 0:
 	  {
-	  case 0:
-	    {
-	      char x = bfd_get_8 (abfd, addr);
+	    char x = bfd_get_8 (abfd, addr);
 
-	      DOIT (x);
-	      bfd_put_8 (abfd, x, addr);
-	    }
-	    break;
-
-	  case 1:
-	    {
-	      short x = bfd_get_16 (abfd, addr);
-
-	      DOIT (x);
-	      bfd_put_16 (abfd, (bfd_vma) x, addr);
-	    }
-	    break;
-
-	  case 2:
-	    {
-	      long x = bfd_get_32 (abfd, addr);
-
-	      DOIT (x);
-	      bfd_put_32 (abfd, (bfd_vma) x, addr);
-	    }
-	    break;
-
-	  default:
-	    abort ();
+	    DOIT (x);
+	    bfd_put_8 (abfd, x, addr);
 	  }
-      }
+	  break;
+
+	case 1:
+	  {
+	    short x = bfd_get_16 (abfd, addr);
+
+	    DOIT (x);
+	    bfd_put_16 (abfd, (bfd_vma) x, addr);
+	  }
+	  break;
+
+	case 2:
+	  {
+	    long x = bfd_get_32 (abfd, addr);
+
+	    DOIT (x);
+	    bfd_put_32 (abfd, (bfd_vma) x, addr);
+	  }
+	  break;
+
+	default:
+	  abort ();
+	}
+    }
 
   /* Now let bfd_perform_relocation finish everything up.  */
   return bfd_reloc_continue;
@@ -702,12 +702,9 @@ coff_pe_mips_relocate_section (bfd *output_bfd,
 	      }
 
 	  else if (! bfd_link_relocatable (info))
-	    {
-	      if (! ((*info->callbacks->undefined_symbol)
-		     (info, h->root.root.string, input_bfd, input_section,
-		      rel->r_vaddr - input_section->vma, TRUE)))
-		return FALSE;
-	    }
+	    (*info->callbacks->undefined_symbol)
+	      (info, h->root.root.string, input_bfd, input_section,
+	       rel->r_vaddr - input_section->vma, TRUE);
 	}
 
       src = rel->r_vaddr + input_section->output_section->vma

@@ -1,6 +1,6 @@
 /* Table of opcodes for the Texas Instruments TMS320C[34]X family.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
   
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
    
@@ -58,7 +58,7 @@ c4x_reg_t;
 
 struct tic4x_register
 {
-  char *        name;
+  const char *  name;
   unsigned long regno;
 };
 
@@ -131,7 +131,7 @@ const unsigned int tic4x_num_registers = (((sizeof tic4x_registers) / (sizeof ti
 
 struct tic4x_cond
 {
-  char *        name;
+  const char *  name;
   unsigned long cond;
 };
 
@@ -171,7 +171,7 @@ const unsigned int tic4x_num_conds = (((sizeof tic4x_conds) / (sizeof tic4x_cond
 
 struct tic4x_indirect
 {
-  char *        name;
+  const char *  name;
   unsigned long modn;
 };
 
@@ -223,10 +223,10 @@ const unsigned int tic4x_num_indirects = (((sizeof tic4x_indirects) / (sizeof ti
 /* Instruction template.  */
 struct tic4x_inst
 {
-  char *        name;
+  const char *  name;
   unsigned long opcode;
   unsigned long opmask;
-  char *        args;
+  const char *        args;
   unsigned long oplevel;
 };
 

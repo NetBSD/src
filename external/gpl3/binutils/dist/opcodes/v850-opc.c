@@ -1,5 +1,5 @@
 /* Assemble V850 instructions.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -1578,11 +1578,11 @@ const struct v850_opcode v850_opcodes[] =
 { "ldacc",	two (0x07e0, 0x0bc4),	two (0x07e0, 0xffff),	{R1, R2},		0, PROCESSOR_V850E2_UP | PROCESSOR_OPTION_EXTENSION },
 
 { "ld.b",	two (0x0700, 0x0000),	two (0x07e0, 0x0000), 	{D16, R1, R2}, 		2, PROCESSOR_ALL },
-{ "ld.b",	two (0x0780, 0x0005),	two (0x07e0, 0x000f), 	{D23, R1, R3}, 		2, PROCESSOR_V850E2_UP },
+{ "ld.b",	two (0x0780, 0x0005),	two (0xffe0, 0x000f), 	{D23, R1, R3}, 		2, PROCESSOR_V850E2_UP },
 { "ld.b23",	two (0x0780, 0x0005),	two (0x07e0, 0x000f), 	{D23, R1, R3}, 		2, PROCESSOR_V850E2_UP | PROCESSOR_OPTION_ALIAS },
 
 { "ld.bu",	two (0x0780, 0x0001),   two (0x07c0, 0x0001), 	{D16_16, R1, R2_NOTR0},	2, PROCESSOR_NOT_V850 },
-{ "ld.bu",	two (0x07a0, 0x0005),	two (0x07e0, 0x000f), 	{D23, R1, R3}, 		2, PROCESSOR_V850E2_UP },
+{ "ld.bu",	two (0x07a0, 0x0005),	two (0xffe0, 0x000f), 	{D23, R1, R3}, 		2, PROCESSOR_V850E2_UP },
 { "ld.bu23",	two (0x07a0, 0x0005),	two (0x07e0, 0x000f), 	{D23, R1, R3}, 		2, PROCESSOR_V850E2_UP | PROCESSOR_OPTION_ALIAS },
 
 { "ld.dw",   	two (0x07a0, 0x0009), 	two (0xffe0, 0x001f), {D23_ALIGN1, R1, R3_EVEN}, 2, PROCESSOR_V850E3V5_UP },

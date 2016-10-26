@@ -1,6 +1,6 @@
 /* SPU specific support for 32-bit ELF
 
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -4908,12 +4908,11 @@ spu_elf_relocate_section (bfd *output_bfd,
 	      bfd_boolean err;
 	      err = (info->unresolved_syms_in_objects == RM_GENERATE_ERROR
 		     || ELF_ST_VISIBILITY (h->other) != STV_DEFAULT);
-	      if (!info->callbacks->undefined_symbol (info,
-						      h->root.root.string,
-						      input_bfd,
-						      input_section,
-						      rel->r_offset, err))
-		return FALSE;
+	      (*info->callbacks->undefined_symbol) (info,
+						    h->root.root.string,
+						    input_bfd,
+						    input_section,
+						    rel->r_offset, err);
 	    }
 	  sym_name = h->root.root.string;
 	}
@@ -5050,17 +5049,14 @@ spu_elf_relocate_section (bfd *output_bfd,
 	  switch (r)
 	    {
 	    case bfd_reloc_overflow:
-	      if (!((*info->callbacks->reloc_overflow)
-		    (info, (h ? &h->root : NULL), sym_name, howto->name,
-		     (bfd_vma) 0, input_bfd, input_section, rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->reloc_overflow)
+		(info, (h ? &h->root : NULL), sym_name, howto->name,
+		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      if (!((*info->callbacks->undefined_symbol)
-		    (info, sym_name, input_bfd, input_section,
-		     rel->r_offset, TRUE)))
-		return FALSE;
+	      (*info->callbacks->undefined_symbol)
+		(info, sym_name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -5081,10 +5077,8 @@ spu_elf_relocate_section (bfd *output_bfd,
 
 	    common_error:
 	      ret = FALSE;
-	      if (!((*info->callbacks->warning)
-		    (info, msg, sym_name, input_bfd, input_section,
-		     rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->warning) (info, msg, sym_name, input_bfd,
+					   input_section, rel->r_offset);
 	      break;
 	    }
 	}
