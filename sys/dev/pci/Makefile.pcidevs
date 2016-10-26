@@ -1,11 +1,17 @@
-#	$NetBSD: Makefile.pcidevs,v 1.6 2014/09/21 14:30:22 christos Exp $
+#	$NetBSD: Makefile.pcidevs,v 1.7 2016/10/26 01:03:23 pgoyette Exp $
 #
 # As per tron@NetBSD.org, the proper procedure is
 #
 # 1.) Change "src/sys/dev/pci/pcidevs".
 # 2.) Commit "src/sys/dev/pci/pcidevs".
 # 3.) Execute "make -f Makefile.pcidevs" in "src/sys/dev/pci".
-# 4.) Commit "src/sys/dev/pci/pcidevs.h" and "src/sys/dev/pci/pcidevs_data.h".
+# 4.) Ensure that the values of PCI_VENDORSTR_LEN and PCI_PRODUCTSTR_LEN
+#     are at least as large as the values reported.  If necessary, update
+#     the values in "src/sys/dev/pci/pci_verbose.h" and bump the kernel
+#     version in "src/sys/sys/param/h".
+# 5.) Commit "src/sys/dev/pci/pcidevs.h" and "src/sys/dev/pci/pcidevs_data.h";
+#     if you changed them, also commit "src/sys/dev/pci/pci_verbose.h" and
+#     "src/sys/sys/param/h".
 
 .include <bsd.own.mk>
 
