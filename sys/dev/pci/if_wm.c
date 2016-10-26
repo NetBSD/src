@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.427 2016/10/26 07:22:14 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.428 2016/10/26 10:21:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.427 2016/10/26 07:22:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.428 2016/10/26 10:21:44 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8157,7 +8157,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	case PCI_PRODUCT_INTEL_82801J_D_BM_LM:
 	case PCI_PRODUCT_INTEL_82801J_D_BM_LF:
 	case PCI_PRODUCT_INTEL_82801J_R_BM_V:
-		/* 82567 */
+		/* ICH8, 9, 10 with 82567 */
 		sc->sc_phytype = WMPHY_BM;
 		mii->mii_readreg = wm_gmii_bm_readreg;
 		mii->mii_writereg = wm_gmii_bm_writereg;
@@ -8168,6 +8168,10 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 			/* SGMII */
 			mii->mii_readreg = wm_sgmii_readreg;
 			mii->mii_writereg = wm_sgmii_writereg;
+		} else if (sc->sc_type >= WM_T_ICH8) {
+			/* non-82567 ICH8, 9 and 10 */
+			mii->mii_readreg = wm_gmii_i82544_readreg;
+			mii->mii_writereg = wm_gmii_i82544_writereg;
 		} else if (sc->sc_type >= WM_T_80003) {
 			/* 80003 */
 			mii->mii_readreg = wm_gmii_i80003_readreg;
