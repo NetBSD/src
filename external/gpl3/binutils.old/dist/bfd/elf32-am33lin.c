@@ -1,6 +1,5 @@
 /* Matsushita AM33/2.0 support for 32-bit GNU/Linux ELF
-   Copyright 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -26,7 +25,7 @@
 
 #define elf_symbol_leading_char 0
 
-#define TARGET_LITTLE_SYM	bfd_elf32_am33lin_vec
+#define TARGET_LITTLE_SYM	am33_elf32_linux_vec
 #define TARGET_LITTLE_NAME	"elf32-am33lin"
 #define ELF_ARCH		bfd_arch_mn10300
 #define ELF_MACHINE_CODE	EM_MN10300
@@ -53,10 +52,10 @@ elf32_am33lin_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
       case 184:
       case 188:		/* Linux/am33 */
 	/* pr_cursig */
-	elf_tdata (abfd)->core_signal = bfd_get_16 (abfd, note->descdata + 12);
+	elf_tdata (abfd)->core->signal = bfd_get_16 (abfd, note->descdata + 12);
 
 	/* pr_pid */
-	elf_tdata (abfd)->core_lwpid = bfd_get_32 (abfd, note->descdata + 24);
+	elf_tdata (abfd)->core->lwpid = bfd_get_32 (abfd, note->descdata + 24);
 
 	/* pr_reg */
 	offset = 72;
@@ -79,9 +78,9 @@ elf32_am33lin_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 	return FALSE;
 
       case 124:		/* Linux/am33 elf_prpsinfo */
-	elf_tdata (abfd)->core_program
+	elf_tdata (abfd)->core->program
 	 = _bfd_elfcore_strndup (abfd, note->descdata + 28, 16);
-	elf_tdata (abfd)->core_command
+	elf_tdata (abfd)->core->command
 	 = _bfd_elfcore_strndup (abfd, note->descdata + 44, 80);
     }
 
@@ -90,7 +89,7 @@ elf32_am33lin_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
      implementations, so strip it off if it exists.  */
 
   {
-    char *command = elf_tdata (abfd)->core_command;
+    char *command = elf_tdata (abfd)->core->command;
     int n = strlen (command);
 
     if (0 < n && command[n - 1] == ' ')

@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2010 Free Software Foundation, Inc.
+Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -2267,22 +2267,22 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* ldrb.l $rd6,[$rn6,$direction$rm6] */
   {
     -1, "ldrbx", "ldrb.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrb.l $rd6,[$rn6],$direction$rm6 */
   {
     -1, "ldrbp", "ldrb.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrb.l $rd6,[$rn6,$dpmi$disp11] */
   {
     -1, "ldrbd", "ldrb.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrb.l $rd6,[$rn6],$dpmi$disp11 */
   {
     -1, "ldrbdpm", "ldrb.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrb $rd,[$rn] */
   {
@@ -2292,32 +2292,32 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* ldrb $rd6,[$rn6] */
   {
     -1, "ldrbdl0", "ldrb", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrb.l $rd6,[$rn6] */
   {
     -1, "ldrbdl0.l", "ldrb.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrh.l $rd6,[$rn6,$direction$rm6] */
   {
     -1, "ldrhx", "ldrh.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrh.l $rd6,[$rn6],$direction$rm6 */
   {
     -1, "ldrhp", "ldrh.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrh.l $rd6,[$rn6,$dpmi$disp11] */
   {
     -1, "ldrhd", "ldrh.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrh.l $rd6,[$rn6],$dpmi$disp11 */
   {
     -1, "ldrhdpm", "ldrh.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrh $rd,[$rn] */
   {
@@ -2327,32 +2327,32 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* ldrh $rd6,[$rn6] */
   {
     -1, "ldrhdl0", "ldrh", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrh.l $rd6,[$rn6] */
   {
     -1, "ldrhdl0.l", "ldrh.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldr.l $rd6,[$rn6,$direction$rm6] */
   {
     -1, "ldrx", "ldr.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldr.l $rd6,[$rn6],$direction$rm6 */
   {
     -1, "ldrp", "ldr.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldr.l $rd6,[$rn6,$dpmi$disp11] */
   {
     -1, "ldrd", "ldr.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldr.l $rd6,[$rn6],$dpmi$disp11 */
   {
     -1, "ldrdpm", "ldr.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldr $rd,[$rn] */
   {
@@ -2362,32 +2362,32 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* ldr $rd6,[$rn6] */
   {
     -1, "ldrdl0", "ldr", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldr.l $rd6,[$rn6] */
   {
     -1, "ldrdl0.l", "ldr.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrd.l $rd6,[$rn6,$direction$rm6] */
   {
     -1, "ldrdx", "ldrd.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrd.l $rd6,[$rn6],$direction$rm6 */
   {
     -1, "ldrdp", "ldrd.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrd.l $rd6,[$rn6,$dpmi$disp11] */
   {
     -1, "ldrdd", "ldrd.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrd.l $rd6,[$rn6],$dpmi$disp11 */
   {
     -1, "ldrddpm", "ldrd.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrd $rd,[$rn] */
   {
@@ -2397,47 +2397,47 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* ldrd $rd6,[$rn6] */
   {
     -1, "ldrddl0", "ldrd", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* ldrd.l $rd6,[$rn6] */
   {
     -1, "ldrddl0.l", "ldrd.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* testsetb.l $rd6,[$rn6,$direction$rm6] */
   {
     -1, "testsetbt.l", "testsetb.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* testseth.l $rd6,[$rn6,$direction$rm6] */
   {
     -1, "testsetht.l", "testseth.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* testset.l $rd6,[$rn6,$direction$rm6] */
   {
     -1, "testsett.l", "testset.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strb.l $rd6,[$rn6,$direction$rm6] */
   {
     -1, "strbx.l", "strb.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strb.l $rd6,[$rn6],$direction$rm6 */
   {
     -1, "strbp.l", "strb.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strb.l $rd6,[$rn6,$dpmi$disp11] */
   {
     -1, "strbd.l", "strb.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strb.l $rd6,[$rn6],$dpmi$disp11 */
   {
     -1, "strbdpm.l", "strb.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strb $rd,[$rn] */
   {
@@ -2452,27 +2452,27 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* strb.l $rd6,[$rn6] */
   {
     -1, "strbdl0.l", "strb.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strh.l $rd6,[$rn6,$direction$rm6] */
   {
     -1, "strhx.l", "strh.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strh.l $rd6,[$rn6],$direction$rm6 */
   {
     -1, "strhp.l", "strh.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strh.l $rd6,[$rn6,$dpmi$disp11] */
   {
     -1, "strhd.l", "strh.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strh.l $rd6,[$rn6],$dpmi$disp11 */
   {
     -1, "strhdpm.l", "strh.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strh $rd,[$rn] */
   {
@@ -2487,27 +2487,27 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* strh.l $rd6,[$rn6] */
   {
     -1, "strhdl0.l", "strh.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* str.l $rd6,[$rn6,$direction$rm6] */
   {
     -1, "strx.l", "str.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* str.l $rd6,[$rn6],$direction$rm6 */
   {
     -1, "strp.l", "str.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* str.l $rd6,[$rn6,$dpmi$disp11] */
   {
     -1, "strd.l", "str.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* str.l $rd6,[$rn6],$dpmi$disp11 */
   {
     -1, "strdpm.l", "str.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* str $rd,[$rn] */
   {
@@ -2522,27 +2522,27 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* str.l $rd6,[$rn6] */
   {
     -1, "strdl0.l", "str.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strd.l $rd6,[$rn6,$direction$rm6] */
   {
     -1, "strdx.l", "strd.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strd.l $rd6,[$rn6],$direction$rm6 */
   {
     -1, "strdp.l", "strd.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strd.l $rd6,[$rn6,$dpmi$disp11] */
   {
     -1, "strdd.l", "strd.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strd.l $rd6,[$rn6],$dpmi$disp11 */
   {
     -1, "strddpm.l", "strd.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* strd $rd,[$rn] */
   {
@@ -2557,147 +2557,147 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* strd.l $rd6,[$rn6] */
   {
     -1, "strddl0.l", "strd.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* moveq.l $rd6,$rn6 */
   {
     -1, "cmov.lEQ", "moveq.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movne.l $rd6,$rn6 */
   {
     -1, "cmov.lNE", "movne.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movgtu.l $rd6,$rn6 */
   {
     -1, "cmov.lGTU", "movgtu.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movgteu.l $rd6,$rn6 */
   {
     -1, "cmov.lGTEU", "movgteu.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movlteu.l $rd6,$rn6 */
   {
     -1, "cmov.lLTEU", "movlteu.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movltu.l $rd6,$rn6 */
   {
     -1, "cmov.lLTU", "movltu.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movgt.l $rd6,$rn6 */
   {
     -1, "cmov.lGT", "movgt.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movgte.l $rd6,$rn6 */
   {
     -1, "cmov.lGTE", "movgte.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movlt.l $rd6,$rn6 */
   {
     -1, "cmov.lLT", "movlt.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movlte.l $rd6,$rn6 */
   {
     -1, "cmov.lLTE", "movlte.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* mov.l $rd6,$rn6 */
   {
     -1, "cmov.lB", "mov.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movbeq.l $rd6,$rn6 */
   {
     -1, "cmov.lBEQ", "movbeq.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movbne.l $rd6,$rn6 */
   {
     -1, "cmov.lBNE", "movbne.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movblt.l $rd6,$rn6 */
   {
     -1, "cmov.lBLT", "movblt.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movblte.l $rd6,$rn6 */
   {
     -1, "cmov.lBLTE", "movblte.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movts.l $sn6,$rd6 */
   {
     -1, "movts.l6", "movts.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movts.l $sndma,$rd6 */
   {
     -1, "movts.ldma", "movts.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movts.l $snmem,$rd6 */
   {
     -1, "movts.lmem", "movts.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movts.l $snmesh,$rd6 */
   {
     -1, "movts.lmesh", "movts.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movfs.l $rd6,$sn6 */
   {
     -1, "movfs.l6", "movfs.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movfs.l $rd6,$sndma */
   {
     -1, "movfs.ldma", "movfs.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movfs.l $rd6,$snmem */
   {
     -1, "movfs.lmem", "movfs.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* movfs.l $rd6,$snmesh */
   {
     -1, "movfs.lmesh", "movfs.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* add.l $rd6,$rn6,$rm6 */
   {
     -1, "add.l", "add.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* sub.l $rd6,$rn6,$rm6 */
   {
     -1, "sub.l", "sub.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* and.l $rd6,$rn6,$rm6 */
   {
     -1, "and.l", "and.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* orr.l $rd6,$rn6,$rm6 */
   {
     -1, "orr.l", "orr.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* eor.l $rd6,$rn6,$rm6 */
   {
     -1, "eor.l", "eor.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* add $rd,$rn,$simm3 */
   {
@@ -2732,52 +2732,52 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* asr.l $rd6,$rn6,$rm6 */
   {
     -1, "asr.l", "asr.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* lsr.l $rd6,$rn6,$rm6 */
   {
     -1, "lsr.l", "lsr.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* lsl.l $rd6,$rn6,$rm6 */
   {
     -1, "lsl.l", "lsl.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* lsr.l $rd6,$rn6,$shift */
   {
     -1, "lsri32.l", "lsr.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* lsl.l $rd6,$rn6,$shift */
   {
     -1, "lsli32.l", "lsl.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* asr.l $rd6,$rn6,$shift */
   {
     -1, "asri32.l", "asr.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* bitr.l $rd6,$rn6 */
   {
     -1, "bitrl", "bitr.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* fext.l $rd6,$rn6,$rm6 */
   {
     -1, "fext.l", "fext.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* fdep.l $rd6,$rn6,$rm6 */
   {
     -1, "fdep.l", "fdep.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* lfsr.l $rd6,$rn6,$rm6 */
   {
     -1, "lfsr.l", "lfsr.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* mov $rd,$imm8 */
   {
@@ -2792,7 +2792,7 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* movt.l $rd6,$imm16 */
   {
     -1, "movtl", "movt.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* iadd $rd,$rn,$rm */
   {
@@ -2802,7 +2802,7 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* fadd.l $rd6,$rn6,$rm6 */
   {
     -1, "f_addf32.l", "fadd.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* iadd $rd6,$rn6,$rm6 */
   {
@@ -2822,7 +2822,7 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* fsub.l $rd6,$rn6,$rm6 */
   {
     -1, "f_subf32.l", "fsub.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* isub $rd6,$rn6,$rm6 */
   {
@@ -2842,7 +2842,7 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* fmul.l $rd6,$rn6,$rm6 */
   {
     -1, "f_mulf32.l", "fmul.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* imul $rd6,$rn6,$rm6 */
   {
@@ -2862,7 +2862,7 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* fmadd.l $rd6,$rn6,$rm6 */
   {
     -1, "f_maddf32.l", "fmadd.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* imadd $rd6,$rn6,$rm6 */
   {
@@ -2882,7 +2882,7 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* fmsub.l $rd6,$rn6,$rm6 */
   {
     -1, "f_msubf32.l", "fmsub.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* imsub $rd6,$rn6,$rm6 */
   {
@@ -2897,27 +2897,27 @@ static const CGEN_IBASE epiphany_cgen_macro_insn_table[] =
 /* fabs.l $rd6,$rn6 */
   {
     -1, "f_absf32.l", "fabs.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* float.l $rd6,$rn6 */
   {
     -1, "f_loatf32.l", "float.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* fix.l $rd6,$rn6 */
   {
     -1, "f_ixf32.l", "fix.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* frecip.l $frd6,$frn6 */
   {
     -1, "f_recipf32.l", "frecip.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 /* fsqrt.l $frd6,$frn6 */
   {
     -1, "f_sqrtf32.l", "fsqrt.l", 32,
-    { 0|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
+    { 0|A(NO_DIS)|A(ALIAS), { { { (1<<MACH_BASE), 0 } } } }
   },
 };
 

@@ -1,7 +1,5 @@
 \input texinfo
-@c  Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-@c  2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
-@c  Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2015 Free Software Foundation, Inc.
 @setfilename internals.info
 @node Top
 @top Assembler Internals
@@ -732,7 +730,7 @@ all the fixups (@code{fixup_segment}), resolves all the symbol values (using
 @cindex porting
 
 Each GAS target specifies two main things: the CPU file and the object format
-file.  Two main switches in the @file{configure.in} file handle this.  The
+file.  Two main switches in the @file{configure.ac} file handle this.  The
 first switches on CPU type to set the shell variable @code{cpu_type}.  The
 second switches on the entire target to set the shell variable @code{fmt}.
 
@@ -886,6 +884,8 @@ comment.
 @item tc_comment_chars
 @cindex tc_comment_chars
 If this macro is defined, GAS will use it instead of @code{comment_chars}.
+This has the advantage that this macro does not have to refer to a constant
+array.
 
 @item tc_symbol_chars
 @cindex tc_symbol_chars
@@ -909,6 +909,13 @@ lines (null and newline are such characters by default, and need not be
 listed in this array).  Note that line_separator_chars do not separate lines
 if found in a comment, such as after a character in line_comment_chars or
 comment_chars.
+
+@item tc_line_separator_chars
+@cindex tc_line_separator_chars
+If this macro is defined, GAS will use it instead of
+@code{line_separator_chars}.  This has the advantage that this macro does not
+have to refer to a constant array.
+
 
 @item EXP_CHARS
 @cindex EXP_CHARS
@@ -1250,7 +1257,7 @@ It may also create any necessary relocations.
 @cindex TC_FINALIZE_SYMS_BEFORE_SIZE_SEG
 Specifies the value to be assigned to @code{finalize_syms} before the function
 @code{size_segs} is called.  Since @code{size_segs} calls @code{cvt_frag_to_fill}
-which can call @code{md_convert_frag}, this constant governs whether the symbols 
+which can call @code{md_convert_frag}, this constant governs whether the symbols
 accessed in @code{md_convert_frag} will be fully resolved.  In particular it
 governs whether local symbols will have been resolved, and had their frag
 information removed.  Depending upon the processing performed by
@@ -1465,6 +1472,12 @@ completed, but before the relocations have been generated.
 @item tc_frob_file_after_relocs
 If you define this macro, GAS will call it after the relocs have been
 generated.
+
+@item tc_cfi_reloc_for_encoding
+@cindex tc_cfi_reloc_for_encoding
+This macro is used to indicate whether a cfi encoding requires a relocation.
+It should return the required relocation type.  Defining this macro implies
+that Compact EH is supported.
 
 @item md_post_relax_hook
 If you define this macro, GAS will call it after relaxing and sizing the

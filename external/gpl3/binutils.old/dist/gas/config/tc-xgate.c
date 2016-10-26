@@ -1,6 +1,5 @@
 /* tc-xgate.c -- Assembler code for Freescale XGATE
-   Copyright 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Sean Keys <skeys@ipdatasys.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -33,9 +32,12 @@ const char line_separator_chars[] = "";
 const char EXP_CHARS[] = "eE";
 const char FLT_CHARS[] = "dD";
 
-#define SIXTEENTH_BIT           0x8000
-#define N_BITS_IN_WORD          16
-#define MAX_NUM_OPERANDS        3
+/* Max opcodes per opcode handle.  */
+#define MAX_OPCODES     0x05
+
+#define SIXTEENTH_BIT		0x8000
+#define N_BITS_IN_WORD		16
+#define MAX_NUM_OPERANDS	3
 
 /* #define STATE_CONDITIONAL_BRANCH		(1) */
 #define STATE_PC_RELATIVE	(2)
@@ -60,7 +62,8 @@ struct xgate_opcode_handle
   struct xgate_opcode *opc0[MAX_OPCODES];
 };
 
-/* XGATE's registers all are 16-bit general purpose.  They are numbered according to the specifications.  */
+/* XGATE's registers all are 16-bit general purpose.
+   They are numbered according to the specifications.  */
 typedef enum register_id
 {
   REG_NONE = -1,
@@ -95,43 +98,21 @@ typedef struct s_operand
 } s_operand;
 
 
-/*  LOCAL FUNCTIONS */
-static char *
-xgate_parse_exp (char *, expressionS *);
-static inline char *
-skip_whitespace (char *);
-static void
-get_default_target (void);
-static char *
-extract_word (char *, char *, int);
-static char *
-xgate_new_instruction (int size);
-unsigned short
-xgate_apply_operand (unsigned short, unsigned short *, unsigned short,
-    unsigned char);
-static struct xgate_opcode *
-xgate_find_match (struct xgate_opcode_handle *, int, unsigned int);
-static int
-cmp_opcode (struct xgate_opcode *, struct xgate_opcode *);
-void
-xgate_print_syntax (char *);
-void
-xgate_print_table (void);
-unsigned int
-xgate_get_operands (char *, s_operand []);
-static register_id
-reg_name_search (char *);
-op_modifiers
-xgate_determine_modifiers(char **);
+/* Forward declarations.  */
+static inline char *skip_whitespace (char *);
+static void get_default_target (void);
+static char *extract_word (char *, char *, int);
+static struct xgate_opcode *xgate_find_match (struct xgate_opcode_handle *,
+					      int, s_operand [], unsigned int);
+static int cmp_opcode (struct xgate_opcode *, struct xgate_opcode *);
+static void xgate_print_table (void);
+static unsigned int xgate_get_operands (char *, s_operand []);
+static register_id reg_name_search (char *);
+static op_modifiers xgate_determine_modifiers(char **);
+static void xgate_scan_operands (struct xgate_opcode *opcode, s_operand []);
+static unsigned int xgate_parse_operand (struct xgate_opcode *, int *, int,
+					 char **, s_operand);
 
-void
-xgate_scan_operands (struct xgate_opcode *opcode, s_operand []);
-
-static unsigned int
-xgate_parse_operand (struct xgate_opcode *, int *, int where, char **,
-               s_operand);
-
-/* LOCAL DATA */
 static struct hash_control *xgate_hash;
 
 /* Previous opcode.  */
@@ -140,7 +121,7 @@ static unsigned int prev = 0;
 static unsigned char fixup_required = 0;
 
 /* Used to enable clipping of 16 bit operands into 8 bit constraints.  */
-static unsigned char autoHiLo = 0;	
+static unsigned char autoHiLo = 0;
 
 static char oper_check;
 static char flag_print_insn_syntax = 0;
@@ -294,11 +275,11 @@ get_default_target (void)
   if (target && target->name)
     {
       if (strcmp (target->name, "elf32-xgate") == 0)
-        {
-          current_architecture = cpuxgate;
-          default_cpu = "XGATE V1";
-          return;
-        }
+	{
+	  current_architecture = cpuxgate;
+	  default_cpu = "XGATE V1";
+	  return;
+	}
 
       as_bad (_("Default target `%s' is not supported."), target->name);
     }
@@ -324,7 +305,7 @@ md_begin (void)
 	  sizeof(struct xgate_opcode) * (xgate_num_opcodes));
 
   for (xgate_opcode_ptr = (struct xgate_opcode*) xgate_opcodes, i = 0;
-      i < xgate_num_opcodes; i++)
+       i < xgate_num_opcodes; i++)
     xgate_op_table[i] = xgate_opcode_ptr[i];
 
   qsort (xgate_op_table, xgate_num_opcodes, sizeof(struct xgate_opcode),
@@ -334,10 +315,10 @@ md_begin (void)
      smaller than the raw number of opcodes in the table.  */
   prev_op_name = "";
   for (xgate_opcode_ptr = xgate_op_table, i = 0;  i < xgate_num_opcodes;
-      xgate_opcode_ptr++, i++)
+       xgate_opcode_ptr++, i++)
     {
       if (strcmp (prev_op_name, xgate_opcode_ptr->name))
-        number_of_op_handles++;
+	number_of_op_handles++;
       prev_op_name = xgate_opcode_ptr->name;
     }
 
@@ -349,29 +330,32 @@ md_begin (void)
 
   prev_op_name = "";
   for (xgate_opcode_ptr = xgate_op_table, i = 0, j = 0; i < xgate_num_opcodes;
-      i++, xgate_opcode_ptr++)
+       i++, xgate_opcode_ptr++)
     {
       if (!strcmp (prev_op_name, xgate_opcode_ptr->name))
-        {
-          handle_enum++;
-          op_handles[j].opc0[handle_enum] = xgate_opcode_ptr;
-        }
+	{
+	  handle_enum++;
+	  op_handles[j].opc0[handle_enum] = xgate_opcode_ptr;
+	}
       else
-        {
-          handle_enum = 0;
-          if (i)
-            j++;
-          op_handles[j].name = xgate_opcode_ptr->name;
-          op_handles[j].opc0[0] = xgate_opcode_ptr;
-          hash_insert (xgate_hash, (char *) op_handles[j].name,
-              (char *) &(op_handles[j]));
-        }
+	{
+	  handle_enum = 0;
+	  if (i)
+	    j++;
+	  op_handles[j].name = xgate_opcode_ptr->name;
+	  op_handles[j].opc0[0] = xgate_opcode_ptr;
+	  hash_insert (xgate_hash, (char *) op_handles[j].name,
+		       (char *) &(op_handles[j]));
+	}
       op_handles[j].number_of_modes = handle_enum;
       prev_op_name = op_handles[j].name;
     }
 
-  if (flag_print_opcodes == 1)
-    xgate_print_table ();
+  if (flag_print_opcodes)
+    {
+      xgate_print_table ();
+      exit (EXIT_SUCCESS);
+    }
 }
 
 void
@@ -384,18 +368,17 @@ md_show_usage (FILE * stream)
 {
   get_default_target ();
 
-  fprintf (
-	   stream,
+  fprintf (stream,
 	   _("\
-      Freescale XGATE co-processor options:\n			\
-       -mshort                 use 16-bit int ABI (default)\n	\
-       -mlong                  use 32-bit int ABI\n		\
-       -mshort-double          use 32-bit double ABI\n			\
-       -mlong-double           use 64-bit double ABI (default)\n\
-      --mxgate                 specify the processor variant[default %s]\n\
-      --print-insn-syntax     print the syntax of instruction in case of error\n\
-      --print-opcodes         print the list of instructions with syntax\n\
-      --generate-example      generate an example of each instruction"),
+Freescale XGATE co-processor options:\n\
+  -mshort                 use 16-bit int ABI (default)\n\
+  -mlong                  use 32-bit int ABI\n\
+  -mshort-double          use 32-bit double ABI\n\
+  -mlong-double           use 64-bit double ABI (default)\n\
+  --mxgate                specify the processor variant[default %s]\n\
+  --print-insn-syntax     print the syntax of instruction in case of error\n\
+  --print-opcodes         print the list of instructions with syntax\n\
+  --generate-example      generate an example of each instruction"),
 	   default_cpu);
 }
 
@@ -412,7 +395,7 @@ xgate_mach (void)
   return 0;
 }
 
-void
+static void
 xgate_print_syntax (char *name)
 {
   int i;
@@ -420,40 +403,40 @@ xgate_print_syntax (char *name)
   for (i = 0; i < xgate_num_opcodes; i++)
     {
       if (!strcmp (xgate_opcodes[i].name, name))
-        {
-          if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_IDR))
-            printf ("\tFormat is %s\tRx, Rx, Rx+|-Rx|Rx\n",
+	{
+	  if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_IDR))
+	    printf ("\tFormat is %s\tRx, Rx, Rx+|-Rx|Rx\n",
 		    xgate_opcodes[i].name);
-          if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_INH))
-            printf ("\tFormat is %s\n", xgate_opcodes[i].name);
-          if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_TRI))
-            printf ("\tFormat is %s\tRx, Rx, Rx\n", xgate_opcodes[i].name);
-          if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_DYA))
-            printf ("\tFormat is %s\tRx, Rx\n", xgate_opcodes[i].name);
-          if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_IMM3))
-            printf ("\tFormat is %s\t<3-bit value>\n", xgate_opcodes[i].name);
-          if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_IMM4))
-            printf ("\tFormat is %s\t<4 -bit value>\n", xgate_opcodes[i].name);
-          if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_IMM8))
-            printf ("\tFormat is %s\tRx, <8-bit value>\n",
+	  if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_INH))
+	    printf ("\tFormat is %s\n", xgate_opcodes[i].name);
+	  if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_TRI))
+	    printf ("\tFormat is %s\tRx, Rx, Rx\n", xgate_opcodes[i].name);
+	  if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_DYA))
+	    printf ("\tFormat is %s\tRx, Rx\n", xgate_opcodes[i].name);
+	  if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_IMM3))
+	    printf ("\tFormat is %s\t<3-bit value>\n", xgate_opcodes[i].name);
+	  if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_IMM4))
+	    printf ("\tFormat is %s\t<4 -bit value>\n", xgate_opcodes[i].name);
+	  if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_IMM8))
+	    printf ("\tFormat is %s\tRx, <8-bit value>\n",
 		    xgate_opcodes[i].name);
-          if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_IMM16))
-            printf ("\tFormat is %s\tRx, <16-bit value>\n",
+	  if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_IMM16))
+	    printf ("\tFormat is %s\tRx, <16-bit value>\n",
 		    xgate_opcodes[i].name);
-          if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_MON_R_C))
-            printf ("\tFormat is %s\tRx, CCR\n", xgate_opcodes[i].name);
-          if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_MON_C_R))
-            printf ("\tFormat is %s\tCCR, Rx\n", xgate_opcodes[i].name);
-          if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_MON_R_P))
-            printf ("\tFormat is %s\tRx, PC\n", xgate_opcodes[i].name);
-          if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_IMM16mLDW))
-            printf ("\tFormat is %s\tRx, <16-bit value>\n",
+	  if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_MON_R_C))
+	    printf ("\tFormat is %s\tRx, CCR\n", xgate_opcodes[i].name);
+	  if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_MON_C_R))
+	    printf ("\tFormat is %s\tCCR, Rx\n", xgate_opcodes[i].name);
+	  if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_MON_R_P))
+	    printf ("\tFormat is %s\tRx, PC\n", xgate_opcodes[i].name);
+	  if (!strcmp (xgate_opcodes[i].constraints, XGATE_OP_IMM16mLDW))
+	    printf ("\tFormat is %s\tRx, <16-bit value>\n",
 		    xgate_opcodes[i].name);
-        }
+	}
     }
 }
 
-void
+static void
 xgate_print_table (void)
 {
   int i;
@@ -486,7 +469,7 @@ valueT
 md_section_align (asection * seg, valueT addr)
 {
   int align = bfd_get_section_alignment (stdoutput, seg);
-  return ((addr + (1 << align) - 1) & (-1 << align));
+  return ((addr + (1 << align) - 1) & -(1 << align));
 }
 
 void
@@ -498,7 +481,7 @@ md_assemble (char *input_line)
   /* Caller expects it to be returned as it was passed.  */
   char *saved_input_line = input_line;
   char op_name[9] =  { 0 };
-  unsigned int sh_format = 0;
+  unsigned int operandCount = 0;
   char *p = 0;
 
   s_operand new_operands[MAX_NUM_OPERANDS];
@@ -512,7 +495,7 @@ md_assemble (char *input_line)
     as_bad (_("opcode missing or not found on input line"));
 
   if (!(opcode_handle = (struct xgate_opcode_handle *) hash_find (xgate_hash,
-      op_name)))
+								  op_name)))
     {
       as_bad (_("opcode %s not found in opcode hash table"), op_name);
     }
@@ -520,64 +503,65 @@ md_assemble (char *input_line)
     {
       /* Parse operands so we can find the proper opcode bin.  */
 
-      sh_format = xgate_get_operands(input_line, new_operands);
+      operandCount = xgate_get_operands (input_line, new_operands);
 
       opcode = xgate_find_match (opcode_handle, opcode_handle->number_of_modes,
-          sh_format);
+				 new_operands, operandCount);
 
       if (!opcode)
-        {
-          as_bad (_("matching operands to opcode "));
-          xgate_print_syntax (opcode_handle->opc0[0]->name);
-        }
+	{
+	  as_bad (_("matching operands to opcode "));
+	  xgate_print_syntax (opcode_handle->opc0[0]->name);
+	}
       else if (opcode->size == 2)
-        {
+	{
 	  /* Size is one word - assemble that native insn.  */
-          xgate_scan_operands (opcode, new_operands);
-        }
+	  xgate_scan_operands (opcode, new_operands);
+	}
       else
-        {
+	{
 	  /* Insn is a simplified instruction - expand it out.  */
-          autoHiLo = 1;
-          unsigned int i;
+	  autoHiLo = 1;
+	  unsigned int i;
 
-          /* skip past our ';' separator.  */
-          for (i = strlen (opcode->constraints), p = opcode->constraints; i > 0;
-              i--, p++)
-            {
-              if (*p == ';')
-                {
-                  p++;
-                  break;
-                }
-            }
-          input_line = skip_whitespace (input_line);
-          char *macro_inline = input_line;
+	  /* skip past our ';' separator.  */
+	  for (i = strlen (opcode->constraints), p = opcode->constraints; i > 0;
+	       i--, p++)
+	    {
+	      if (*p == ';')
+		{
+		  p++;
+		  break;
+		}
+	    }
+	  input_line = skip_whitespace (input_line);
+	  char *macro_inline = input_line;
 
-          /* Loop though the macro's opcode list and apply operands to each real opcode. */
-          for (i = 0; *p && i < (opcode->size / 2); i++)
-            {
+	  /* Loop though the macro's opcode list and apply operands to
+	     each real opcode. */
+	  for (i = 0; *p && i < (opcode->size / 2); i++)
+	    {
 	      /* Loop though macro operand list.  */
-              input_line = macro_inline; /* Rewind.  */
-              p = extract_word (p, op_name, 10);
+	      input_line = macro_inline; /* Rewind.  */
+	      p = extract_word (p, op_name, 10);
 
-              if (!(opcode_handle = (struct xgate_opcode_handle *)
+	      if (!(opcode_handle = (struct xgate_opcode_handle *)
 		    hash_find (xgate_hash, op_name)))
-                {
-                  as_bad (
-                      _(": processing macro, real opcode handle not found in hash"));
-                  break;
-                }
-              else
-                {
-                  sh_format = xgate_get_operands(input_line, new_operands);
-                  macro_opcode = xgate_find_match (opcode_handle,
-                      opcode_handle->number_of_modes, sh_format);
-                  xgate_scan_operands (macro_opcode, new_operands);
-
-                }
-            }
-        }
+		{
+		  as_bad (_(": processing macro, real opcode handle"
+			    " not found in hash"));
+		  break;
+		}
+	      else
+		{
+		  operandCount = xgate_get_operands(input_line, new_operands);
+		  macro_opcode = xgate_find_match (opcode_handle,
+						   opcode_handle->number_of_modes, new_operands,
+					       operandCount);
+		  xgate_scan_operands (macro_opcode, new_operands);
+		}
+	    }
+	}
     }
   autoHiLo = 0;
   input_line = saved_input_line;
@@ -592,18 +576,17 @@ md_estimate_size_before_relax (fragS *fragp, asection *seg)
   /* If symbol is undefined or located in a different section,
      select the largest supported relocation.  */
   relax_substateT subtype;
-  relax_substateT rlx_state[] =
-    { 0, 2 };
+  relax_substateT rlx_state[] = { 0, 2 };
 
   for (subtype = 0; subtype < ARRAY_SIZE (rlx_state); subtype += 2)
     {
       if (fragp->fr_subtype == rlx_state[subtype]
-          && (!S_IS_DEFINED (fragp->fr_symbol)
-              || seg != S_GET_SEGMENT (fragp->fr_symbol)))
-        {
-          fragp->fr_subtype = rlx_state[subtype + 1];
-          break;
-        }
+	  && (!S_IS_DEFINED (fragp->fr_symbol)
+	      || seg != S_GET_SEGMENT (fragp->fr_symbol)))
+	{
+	  fragp->fr_subtype = rlx_state[subtype + 1];
+	  break;
+	}
     }
 
   if (fragp->fr_subtype >= ARRAY_SIZE (md_relax_table))
@@ -639,19 +622,15 @@ tc_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
   if (fixp->fx_r_type == 0)
-    {
-      reloc->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_16);
-    }
+    reloc->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_16);
   else
-    {
-      reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
-    }
+    reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
 
   if (reloc->howto == (reloc_howto_type *) NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line, _
-      ("Relocation %d is not supported by object file format."),
-          (int) fixp->fx_r_type);
+		    ("Relocation %d is not supported by object file format."),
+		    (int) fixp->fx_r_type);
       return NULL;
     }
 
@@ -676,11 +655,10 @@ md_apply_fix (fixS * fixP, valueT * valP, segT seg ATTRIBUTE_UNUSED)
   int opcode = 0;
   ldiv_t result;
 
-  /* If the fixup is done mark it done so no further symbol resolution will take place.  */
+  /* If the fixup is done mark it done so no further symbol resolution
+     will take place.  */
   if (fixP->fx_addsy == (symbolS *) NULL)
-    {
-      fixP->fx_done = 1;
-    }
+    fixP->fx_done = 1;
 
   /* We don't actually support subtracting a symbol.  */
   if (fixP->fx_subsy != (symbolS *) NULL)
@@ -695,26 +673,34 @@ md_apply_fix (fixS * fixP, valueT * valP, segT seg ATTRIBUTE_UNUSED)
     case R_XGATE_PCREL_9:
       if (value < -512 || value > 511)
 	as_bad_where (fixP->fx_file, fixP->fx_line,
-		      _("Value %ld too large for 9-bit PC-relative branch."), value);
+		      _("Value %ld too large for 9-bit PC-relative branch."),
+		      value);
       result = ldiv (value, 2); /* from bytes to words */
       value = result.quot;
       if (result.rem)
 	as_bad_where (fixP->fx_file, fixP->fx_line, _
-		      ("Value %ld not aligned by 2 for 9-bit PC-relative branch."), value);
-      mask = 0x1FF; /* Clip into 8-bit field FIXME I'm sure there is a more proper place for this */
+		      ("Value %ld not aligned by 2 for 9-bit"
+		       " PC-relative branch."), value);
+      /* Clip into 8-bit field.
+	 FIXME I'm sure there is a more proper place for this.  */
+      mask = 0x1FF;
       value &= mask;
       number_to_chars_bigendian (where, (opcode | value), 2);
       break;
     case R_XGATE_PCREL_10:
       if (value < -1024 || value > 1023)
 	as_bad_where (fixP->fx_file, fixP->fx_line,
-		      _("Value %ld too large for 10-bit PC-relative branch."), value);
+		      _("Value %ld too large for 10-bit PC-relative branch."),
+		      value);
       result = ldiv (value, 2); /* from bytes to words */
       value = result.quot;
       if (result.rem)
 	as_bad_where (fixP->fx_file, fixP->fx_line, _
-		      ("Value %ld not aligned by 2 for 10-bit PC-relative branch."), value);
-      mask = 0x3FF; /* Clip into 9-bit field FIXME I'm sure there is a more proper place for this */
+		      ("Value %ld not aligned by 2 for 10-bit"
+		       " PC-relative branch."), value);
+      /* Clip into 9-bit field.
+	 FIXME I'm sure there is a more proper place for this.  */
+      mask = 0x3FF;
       value &= mask;
       number_to_chars_bigendian (where, (opcode | value), 2);
       break;
@@ -850,7 +836,7 @@ extract_word (char *from, char *to, int limit)
     {
       to[size++] = *op_end++;
       if (size + 1 >= limit)
-        break;
+	break;
     }
   to[size] = 0;
   return op_end;
@@ -864,7 +850,7 @@ xgate_new_instruction (int size)
   return f;
 }
 
-unsigned short
+static unsigned short
 xgate_apply_operand (unsigned short new_mask,
 		     unsigned short *availiable_mask_bits,
 		     unsigned short mask,
@@ -873,13 +859,15 @@ xgate_apply_operand (unsigned short new_mask,
   unsigned short n_shifts;
   unsigned int n_drop_bits;
 
-  /* Shift until you find an available operand bit "1" and record the number of shifts.  */
+  /* Shift until you find an available operand bit "1" and record
+     the number of shifts.  */
   for (n_shifts = 0;
        !(*availiable_mask_bits & SIXTEENTH_BIT) && n_shifts < 16;
        n_shifts++)
     *availiable_mask_bits <<= 1;
 
-  /* Shift for the number of bits your operand requires while bits are available.  */
+  /* Shift for the number of bits your operand requires while bits
+     are available.  */
   for (n_drop_bits = n_bits;
        n_drop_bits && (*availiable_mask_bits & SIXTEENTH_BIT);
        --n_drop_bits)
@@ -917,8 +905,7 @@ cmp_opcode (struct xgate_opcode *op1, struct xgate_opcode *op2)
 
 static struct xgate_opcode *
 xgate_find_match (struct xgate_opcode_handle *opcode_handle,
-		  int numberOfModes,
-		  unsigned int sh_format)
+		  int numberOfModes, s_operand oprs[], unsigned int operandCount)
 {
   int i;
 
@@ -926,10 +913,84 @@ xgate_find_match (struct xgate_opcode_handle *opcode_handle,
     return opcode_handle->opc0[0];
 
   for (i = 0; i <= numberOfModes; i++)
-    if (opcode_handle->opc0[i]->sh_format & sh_format)
-      return opcode_handle->opc0[i];
+    {
+      switch (operandCount)
+        {
+      case 0:
+        if (!strcmp(opcode_handle->opc0[i]->constraints, XGATE_OP_INH))
+          return opcode_handle->opc0[i];
+        break;
+      case 1:
+        if (oprs[0].reg >= REG_R0 && oprs[0].reg <= REG_R7)
+          if (!strcmp(opcode_handle->opc0[i]->constraints, XGATE_OP_MON))
+            return opcode_handle->opc0[i];
+          if (!strcmp(opcode_handle->opc0[i]->constraints, XGATE_OP_DYA_MON))
+            return opcode_handle->opc0[i];
+        if (oprs[0].reg == REG_NONE)
+          if (!strcmp(opcode_handle->opc0[i]->constraints, XGATE_OP_IMM3))
+            return opcode_handle->opc0[i];
+        break;
+      case 2:
+        if (oprs[0].reg >= REG_R0 && oprs[0].reg <= REG_R7)
+          {
+            if (oprs[1].reg >= REG_R0 && oprs[1].reg <= REG_R7)
+              if (!strcmp(opcode_handle->opc0[i]->constraints, XGATE_OP_DYA))
+                return opcode_handle->opc0[i];
+            if (oprs[1].reg == REG_CCR)
+              if (!strcmp(opcode_handle->opc0[i]->constraints,
+                  XGATE_OP_MON_R_C))
+                return opcode_handle->opc0[i];
+            if (oprs[1].reg == REG_PC)
+              if (!strcmp(opcode_handle->opc0[i]->constraints,
+                  XGATE_OP_MON_R_P))
+                return opcode_handle->opc0[i];
+            if (oprs[1].reg == REG_NONE)
+              if (!strcmp(opcode_handle->opc0[i]->constraints, XGATE_OP_IMM16)
+                  || !strcmp(opcode_handle->opc0[i]->constraints, XGATE_OP_IMM8)
+                  || !strcmp(opcode_handle->opc0[i]->constraints, XGATE_OP_IMM4)
+                  || !strcmp(opcode_handle->opc0[i]->constraints,
+                      XGATE_OP_IMM16mADD)
+                  || !strcmp(opcode_handle->opc0[i]->constraints,
+                      XGATE_OP_IMM16mAND)
+                  || !strcmp(opcode_handle->opc0[i]->constraints,
+                      XGATE_OP_IMM16mCPC)
+                  || !strcmp(opcode_handle->opc0[i]->constraints,
+                      XGATE_OP_IMM16mSUB)
+                  || !strcmp(opcode_handle->opc0[i]->constraints,
+                      XGATE_OP_IMM16mLDW))
+                return opcode_handle->opc0[i];
+          }
+        if (oprs[0].reg == REG_CCR)
+          if (!strcmp(opcode_handle->opc0[i]->constraints, XGATE_OP_MON_C_R))
+            return opcode_handle->opc0[i];
+        break;
+      case 3:
+        if (oprs[0].reg >= REG_R0 && oprs[0].reg <= REG_R7)
+          {
+            if (oprs[1].reg >= REG_R0 && oprs[1].reg <= REG_R7)
+              {
+                if (oprs[2].reg >= REG_R0 && oprs[2].reg <= REG_R7)
+                  {
+                    if (!strcmp(opcode_handle->opc0[i]->constraints,
+                        XGATE_OP_IDR)
+                        || !strcmp(opcode_handle->opc0[i]->constraints,
+                            XGATE_OP_TRI))
+                      return opcode_handle->opc0[i];
+                  }
 
-  return NULL;
+                if (oprs[2].reg == REG_NONE)
+                  if (!strcmp(opcode_handle->opc0[i]->constraints,
+                      XGATE_OP_IDO5))
+                    return opcode_handle->opc0[i];
+              }
+          }
+        break;
+      default:
+        as_bad(_("unknown operand count"));
+        break;
+        }
+    }
+  return NULL ;
 }
 
 /* Because we are dealing with two different core that view the system
@@ -953,83 +1014,41 @@ xgate_frob_symbol (symbolS *sym)
   return 0;
 }
 
-unsigned int
+static unsigned int
 xgate_get_operands (char *line, s_operand oprs[])
 {
   int num_operands;
 
   /* If there are no operands, then it must be inherent.  */
   if (*line == 0 || *line == '\n' || *line == '\r')
-    return XG_INH;
+    return 0;
 
   for (num_operands = 0; strlen (line) && (num_operands < MAX_NUM_OPERANDS);
-      num_operands++)
+       num_operands++)
     {
       line = skip_whitespace (line);
       if (*line == '#')
-        line++;
+	line++;
 
       oprs[num_operands].mod = xgate_determine_modifiers (&line);
 
       if ((oprs[num_operands].reg = reg_name_search (line)) == REG_NONE)
-        line = xgate_parse_exp (line, &oprs[num_operands].exp);
+	line = xgate_parse_exp (line, &oprs[num_operands].exp);
 
       /* skip to next operand */
       while (*line != 0)
-        {
-          if (*line == ',')
-            {
-              line++;
-              break;
-            }
-          line++;
-        }
+	{
+	  if (*line == ',')
+	    {
+	      line++;
+	      break;
+	    }
+	  line++;
+	}
     }
-
   if (num_operands > MAX_NUM_OPERANDS)
     return 0;
-
-  switch (num_operands)
-    {
-  case 1:
-    if (oprs[0].reg >= REG_R0 && oprs[0].reg <= REG_R7)
-      return XG_R;
-    if (oprs[0].reg == REG_NONE)
-      return XG_I;
-    break;
-  case 2:
-    if (oprs[0].reg >= REG_R0 && oprs[0].reg <= REG_R7)
-      {
-        if (oprs[1].reg >= REG_R0 && oprs[1].reg <= REG_R7)
-          return XG_R_R;
-        if (oprs[1].reg == REG_CCR)
-          return XG_R_C;
-        if (oprs[1].reg == REG_PC)
-          return XG_R_P;
-        if (oprs[1].reg == REG_NONE)
-          return XG_R_I;
-      }
-    if (oprs[0].reg == REG_CCR)
-      return XG_C_R;
-    break;
-  case 3:
-    if (oprs[0].reg >= REG_R0 && oprs[0].reg <= REG_R7)
-      {
-        if (oprs[1].reg >= REG_R0 && oprs[1].reg <= REG_R7)
-          {
-            if (oprs[2].reg >= REG_R0 && oprs[2].reg <= REG_R7)
-              return XG_R_R_R;
-            if (oprs[2].reg >= REG_NONE)
-              return XG_R_R_I;
-          }
-      }
-    break;
-  default:
-    as_bad (_("unknown operand format"));
-    break;
-    }
-
-  return 0;
+  return num_operands;
 }
 
 /* reg_name_search() finds the register number given its name.
@@ -1062,7 +1081,7 @@ reg_name_search (char *name)
 
 /* Parse operand modifiers such as inc/dec/hi/low.  */
 
-op_modifiers
+static op_modifiers
 xgate_determine_modifiers(char **line)
 {
   char *local_line = line[0];
@@ -1078,18 +1097,18 @@ xgate_determine_modifiers(char **line)
       return MOD_LOAD_LOW;
     }
   if (*(local_line + 2) == '+')
-        return MOD_POSTINC;
+    return MOD_POSTINC;
   if (strncasecmp (local_line, "-r", 2) == 0)
     {
       *line += 1;
       return MOD_PREDEC;
-   }
+    }
   return MOD_NONE;
 }
 
 /* Parse instruction operands.  */
 
-void
+static void
 xgate_scan_operands (struct xgate_opcode *opcode, s_operand oprs[])
 {
   char *frag = xgate_new_instruction (opcode->size);
@@ -1108,67 +1127,70 @@ xgate_scan_operands (struct xgate_opcode *opcode, s_operand oprs[])
   for (i = 0; (c = opcode->format[i]); i++)
     {
       if (ISDIGIT (c) || (c == 's'))
-        {
-          oper_mask <<= 1;
-        }
+	{
+	  oper_mask <<= 1;
+	}
       else
-        {
-          oper_mask <<= 1;
-          oper_mask += 1;
-          n_operand_bits++;
-        }
+	{
+	  oper_mask <<= 1;
+	  oper_mask += 1;
+	  n_operand_bits++;
+	}
     }
 
   /* Parse first operand.  */
   if (*op)
     {
       if (*op == '=')
-        {
-          first_operand_equals_second = 1;
-          ++op;
-        }
-      operand = xgate_parse_operand (opcode, &operand_bit_length, where, &op, oprs[0]);
+	{
+	  first_operand_equals_second = 1;
+	  ++op;
+	}
+      operand = xgate_parse_operand (opcode, &operand_bit_length, where,
+				     &op, oprs[0]);
       ++op;
       bin = xgate_apply_operand (operand, &oper_mask, bin, operand_bit_length);
 
       if(first_operand_equals_second)
-        bin = xgate_apply_operand (operand, &oper_mask, bin, operand_bit_length);
+	bin = xgate_apply_operand (operand, &oper_mask, bin,
+				   operand_bit_length);
       /* Parse second operand.  */
       if (*op)
-        {
-          if (*op == ',')
-            ++op;
-          if (first_operand_equals_second)
-            {
-              bin = xgate_apply_operand (operand, &oper_mask, bin,
-                  operand_bit_length);
-              ++op;
-            }
-          else
-            {
-              operand = xgate_parse_operand (opcode, &operand_bit_length, where,
-                  &op, oprs[1]);
-              bin = xgate_apply_operand (operand, &oper_mask, bin,
-                  operand_bit_length);
-              ++op;
-            }
-        }
+	{
+	  if (*op == ',')
+	    ++op;
+	  if (first_operand_equals_second)
+	    {
+	      bin = xgate_apply_operand (operand, &oper_mask, bin,
+					 operand_bit_length);
+	      ++op;
+	    }
+	  else
+	    {
+	      operand = xgate_parse_operand (opcode, &operand_bit_length, where,
+					     &op, oprs[1]);
+	      bin = xgate_apply_operand (operand, &oper_mask, bin,
+					 operand_bit_length);
+	      ++op;
+	    }
+	}
       /* Parse the third register.  */
       if (*op)
-        {
-          if (*op == ',')
-            ++op;
-          operand = xgate_parse_operand (opcode, &operand_bit_length, where, &op,
-              oprs[2]);
-          bin = xgate_apply_operand (operand, &oper_mask, bin,
-              operand_bit_length);
-        }
+	{
+	  if (*op == ',')
+	    ++op;
+	  operand = xgate_parse_operand (opcode, &operand_bit_length, where,
+					 &op, oprs[2]);
+	  bin = xgate_apply_operand (operand, &oper_mask, bin,
+				     operand_bit_length);
+	}
     }
   if (opcode->size == 2 && fixup_required)
     {
       bfd_putl16 (bin, frag);
     }
-  else if ((opcode->sh_format & XG_PCREL))
+  else if ( !strcmp (opcode->constraints, XGATE_OP_REL9)
+      || !strcmp (opcode->constraints, XGATE_OP_REL10))
     {
       /* Write our data to a frag for further processing.  */
       bfd_putl16 (opcode->bin_opcode, frag);
@@ -1185,12 +1207,11 @@ xgate_scan_operands (struct xgate_opcode *opcode, s_operand oprs[])
 
 static unsigned int
 xgate_parse_operand (struct xgate_opcode *opcode,
-               int *bit_width,
-               int where,
-               char **op_con,
-               s_operand operand)
+		     int *bit_width,
+		     int where,
+		     char **op_con,
+		     s_operand operand)
 {
-  fixS *fixp = 0;
   char *op_constraint = *op_con;
   unsigned int op_mask = 0;
   unsigned int pp_fix = 0;
@@ -1208,23 +1229,23 @@ xgate_parse_operand (struct xgate_opcode *opcode,
       *bit_width = 5;
 
       if (operand.reg == REG_NONE)
-            as_bad (_(": expected register name r0-r7 ") );
+	as_bad (_(": expected register name r0-r7 ") );
       op_mask = operand.reg;
       if(operand.mod == MOD_POSTINC)
-        pp_fix = INCREMENT;
+	pp_fix = INCREMENT;
       if(operand.mod == MOD_PREDEC)
-        pp_fix = DECREMENT;
+	pp_fix = DECREMENT;
       op_mask <<= 2;
       op_mask |= pp_fix;
       break;
 
     case 'r': /* Register operand.  */
-    if (operand.reg == REG_NONE)
-      as_bad (_(": expected register name r0-r7 "));
+      if (operand.reg == REG_NONE)
+	as_bad (_(": expected register name r0-r7 "));
 
-    *bit_width = 3;
+      *bit_width = 3;
 
-    op_mask = operand.reg;
+      op_mask = operand.reg;
       break;
 
     case 'i': /* Immediate value or expression expected.  */
@@ -1232,103 +1253,75 @@ xgate_parse_operand (struct xgate_opcode *opcode,
       (*op_con)++;
       op_constraint++;
       if (ISDIGIT (*op_constraint))
-        {
-          *bit_width = (int) *op_constraint - '0';
-        }
+	*bit_width = (int) *op_constraint - '0';
       else if (*op_constraint == 'a')
-        {
-          *bit_width = 0x0A;
-        }
+	*bit_width = 0x0A;
       else if (*op_constraint == 'f')
-        {
-          *bit_width = 0x0F;
-        }
+	*bit_width = 0x0F;
+
       /* http://tigcc.ticalc.org/doc/gnuasm.html#SEC31 */
       if (operand.exp.X_op == O_constant)
-        {
-          op_mask = operand.exp.X_add_number;
-          if (((opcode->name[strlen (opcode->name) - 1] == 'l') && autoHiLo)
-              || operand.mod == MOD_LOAD_LOW)
-            {
-              op_mask &= 0x00FF;
-            }
-          else if (((opcode->name[strlen (opcode->name) - 1]) == 'h'
-                   && autoHiLo) || operand.mod == MOD_LOAD_HIGH)
-            {
-              op_mask >>= 8;
-            }
+	{
+	  op_mask = operand.exp.X_add_number;
+	  if (((opcode->name[strlen (opcode->name) - 1] == 'l') && autoHiLo)
+	      || operand.mod == MOD_LOAD_LOW)
+	    op_mask &= 0x00FF;
+	  else if (((opcode->name[strlen (opcode->name) - 1]) == 'h'
+		    && autoHiLo) || operand.mod == MOD_LOAD_HIGH)
+	    op_mask >>= 8;
 
-          /* Make sure it fits.  */
-          for (i = *bit_width; i; i--)
-            {
-              max_size <<= 1;
-              max_size += 1;
-            }
-          if (op_mask > max_size)
-            as_bad (_(":operand value(%d) too big for constraint"), op_mask);
-        }
+	  /* Make sure it fits.  */
+	  for (i = *bit_width; i; i--)
+	    {
+	      max_size <<= 1;
+	      max_size += 1;
+	    }
+	  if (op_mask > max_size)
+	    as_bad (_(":operand value(%d) too big for constraint"), op_mask);
+	}
       else
-        {
-          /* Should be BFD_RELOC_XGATE_IMM8_LO instead of BFD_RELOC_XGATE_24
-             TODO fix.  */
-          fixup_required = 1;
-          if (*op_constraint == '8')
-            {
-              if (((opcode->name[strlen (opcode->name) - 1] == 'l')
-                  && autoHiLo) || operand.mod == MOD_LOAD_LOW)
-                {
-                    fixp = fix_new_exp (frag_now, where, 2, &operand.exp, FALSE,
-                                      BFD_RELOC_XGATE_24);
-                }
-              else if (((opcode->name[strlen (opcode->name) - 1]) == 'h'
-                  && autoHiLo) || operand.mod == MOD_LOAD_HIGH )
-                {
-                    fixp = fix_new_exp (frag_now, where, 2, &operand.exp, FALSE,
-                                      BFD_RELOC_XGATE_IMM8_HI);
-                }
-              else
-                {
-                  as_bad (_("you must use a hi/lo directive or 16-bit macro "
-                      "to load a 16-bit value."));
-                  break;
-                }
-              fixp->fx_pcrel_adjust = 0;
-            }
-          else if (*op_constraint == '5')
-            {
-              fixp = fix_new_exp (frag_now, where, 2, &operand.exp, FALSE,
-                                  BFD_RELOC_XGATE_IMM5);
-              fixp->fx_pcrel_adjust = 0;
-            }
-          else if (*op_constraint == '4')
-            {
-              fixp = fix_new_exp (frag_now, where, 2, &operand.exp, FALSE,
-                                  BFD_RELOC_XGATE_IMM4);
-              fixp->fx_pcrel_adjust = 0;
-            }
-          else if (*op_constraint == '3')
-            {
-            fixp = fix_new_exp (frag_now, where, 2, &operand.exp, FALSE,
-                BFD_RELOC_XGATE_IMM3);
-            fixp->fx_pcrel_adjust = 0;
-          }
-        else
-          {
-            as_bad (_(":unknown relocation constraint size"));
-          }
-      }
+	{
+	  /* Should be BFD_RELOC_XGATE_IMM8_LO instead of BFD_RELOC_XGATE_24
+	     TODO fix.  */
+	  fixup_required = 1;
+	  if (*op_constraint == '8')
+	    {
+	      if (((opcode->name[strlen (opcode->name) - 1] == 'l')
+		   && autoHiLo) || operand.mod == MOD_LOAD_LOW)
+		fix_new_exp (frag_now, where, 2, &operand.exp, FALSE,
+			     BFD_RELOC_XGATE_24);
+	      else if (((opcode->name[strlen (opcode->name) - 1]) == 'h'
+			&& autoHiLo) || operand.mod == MOD_LOAD_HIGH )
+		fix_new_exp (frag_now, where, 2, &operand.exp, FALSE,
+			     BFD_RELOC_XGATE_IMM8_HI);
+	      else
+		as_bad (_("you must use a hi/lo directive or 16-bit macro "
+			  "to load a 16-bit value."));
+	    }
+	  else if (*op_constraint == '5')
+	    fix_new_exp (frag_now, where, 2, &operand.exp, FALSE,
+			 BFD_RELOC_XGATE_IMM5);
+	  else if (*op_constraint == '4')
+	    fix_new_exp (frag_now, where, 2, &operand.exp, FALSE,
+			 BFD_RELOC_XGATE_IMM4);
+	  else if (*op_constraint == '3')
+	    fix_new_exp (frag_now, where, 2, &operand.exp, FALSE,
+			 BFD_RELOC_XGATE_IMM3);
+	  else
+	    as_bad (_(":unknown relocation constraint size"));
+	}
       break;
 
     case 'c': /* CCR register expected.  */
       *bit_width = 0;
       if (operand.reg != REG_CCR)
-            as_bad (_(": expected register name ccr "));
+	as_bad (_(": expected register name ccr "));
       break;
 
     case 'p': /* PC register expected.  */
       *bit_width = 0;
-            if (operand.reg != REG_PC)
-                  as_bad (_(": expected register name pc "));
+      if (operand.reg != REG_PC)
+	as_bad (_(": expected register name pc "));
       break;
 
     case 'b': /* Branch expected.  */
@@ -1336,24 +1329,17 @@ xgate_parse_operand (struct xgate_opcode *opcode,
       op_constraint++;
 
       if (operand.exp.X_op != O_register)
-        {
-          if (*op_constraint == '9')
-            {
-              fixp = fix_new_exp (frag_now, where, 2, &operand.exp, TRUE,
-                                  R_XGATE_PCREL_9);
-              fixp->fx_pcrel_adjust = 1;
-            }
-          else if (*op_constraint == 'a')
-            {
-              fixp = fix_new_exp (frag_now, where, 2, &operand.exp, TRUE,
-                                  R_XGATE_PCREL_10);
-              fixp->fx_pcrel_adjust = 1;
-            }
-        }
+	{
+	  if (*op_constraint == '9')
+	    fix_new_exp (frag_now, where, 2, &operand.exp, TRUE,
+			 R_XGATE_PCREL_9);
+	  else if (*op_constraint == 'a')
+	    fix_new_exp (frag_now, where, 2, &operand.exp, TRUE,
+			 R_XGATE_PCREL_10);
+	}
       else
-        {
-          as_fatal (_("Operand `%x' not recognized in fixup8."), operand.exp.X_op);
-        }
+	as_fatal (_("Operand `%x' not recognized in fixup8."),
+		  operand.exp.X_op);
       break;
     case '?':
       break;

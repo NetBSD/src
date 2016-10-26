@@ -1,6 +1,5 @@
 /* This file is obj-evax.h
-   Copyright 1996, 2000, 2005, 2007, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    Contributed by Klaus Kämpf (kkaempf@progis.de) of
      proGIS Software, Aachen, Germany.
 

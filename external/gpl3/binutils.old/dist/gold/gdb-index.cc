@@ -1,6 +1,6 @@
 // gdb-index.cc -- generate .gdb_index section for fast debug lookup
 
-// Copyright 2012 Free Software Foundation, Inc.
+// Copyright (C) 2012-2015 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.
@@ -32,7 +32,7 @@
 namespace gold
 {
 
-const int gdb_index_version = 5;
+const int gdb_index_version = 7;
 
 // Sizes of various records in the .gdb_index section.
 const int gdb_index_offset_size = 4;
@@ -203,8 +203,8 @@ class Gdb_index_info_reader : public Dwarf_info_reader
 
   // Visit a type unit.
   virtual void
-  visit_type_unit(off_t tu_offset, off_t type_offset, uint64_t signature,
-		  Dwarf_die*);
+  visit_type_unit(off_t tu_offset, off_t tu_length, off_t type_offset,
+		  uint64_t signature, Dwarf_die*);
 
  private:
   // A map for recording DIEs we've seen that may be referred to be
@@ -273,9 +273,13 @@ class Gdb_index_info_reader : public Dwarf_info_reader
   void
   record_cu_ranges(Dwarf_die* die);
 
-  // Read the .debug_pubnames and .debug_pubtypes tables.
+  // Wrapper for read_pubtable.
   bool
   read_pubnames_and_pubtypes(Dwarf_die* die);
+
+  // Read the .debug_pubnames and .debug_pubtypes tables.
+  bool
+  read_pubtable(Dwarf_pubnames_table* table, off_t offset);
 
   // Clear the declarations map.
   void
@@ -325,8 +329,9 @@ Gdb_index_info_reader::visit_compilation_unit(off_t cu_offset, off_t cu_length,
 // Process a type unit and parse its child DIE.
 
 void
-Gdb_index_info_reader::visit_type_unit(off_t tu_offset, off_t type_offset,
-				       uint64_t signature, Dwarf_die* root_die)
+Gdb_index_info_reader::visit_type_unit(off_t tu_offset, off_t,
+				       off_t type_offset, uint64_t signature,
+				       Dwarf_die* root_die)
 {
   ++Gdb_index_info_reader::dwarf_tu_count;
   // Use a negative index to flag this as a TU instead of a CU.
@@ -352,20 +357,6 @@ Gdb_index_info_reader::visit_top_die(Dwarf_die* die)
       case elfcpp::DW_TAG_compile_unit:
       case elfcpp::DW_TAG_type_unit:
 	this->cu_language_ = die->int_attribute(elfcpp::DW_AT_language);
-	// Check for languages that require specialized knowledge to
-	// construct fully-qualified names, that we don't yet support.
-	if (this->cu_language_ == elfcpp::DW_LANG_Ada83
-	    || this->cu_language_ == elfcpp::DW_LANG_Fortran77
-	    || this->cu_language_ == elfcpp::DW_LANG_Fortran90
-	    || this->cu_language_ == elfcpp::DW_LANG_Java
-	    || this->cu_language_ == elfcpp::DW_LANG_Ada95
-	    || this->cu_language_ == elfcpp::DW_LANG_Fortran95)
-	  {
-	    gold_warning(_("%s: --gdb-index currently supports "
-			   "only C and C++ languages"),
-			 this->object()->name().c_str());
-	    return;
-	  }
 	if (die->tag() == elfcpp::DW_TAG_compile_unit)
 	  this->record_cu_ranges(die);
 	// If there is a pubnames and/or pubtypes section for this
@@ -373,6 +364,22 @@ Gdb_index_info_reader::visit_top_die(Dwarf_die* die)
 	// info to extract the names.
 	if (!this->read_pubnames_and_pubtypes(die))
 	  {
+	    // Check for languages that require specialized knowledge to
+	    // construct fully-qualified names, that we don't yet support.
+	    if (this->cu_language_ == elfcpp::DW_LANG_Ada83
+		|| this->cu_language_ == elfcpp::DW_LANG_Fortran77
+		|| this->cu_language_ == elfcpp::DW_LANG_Fortran90
+		|| this->cu_language_ == elfcpp::DW_LANG_Java
+		|| this->cu_language_ == elfcpp::DW_LANG_Ada95
+		|| this->cu_language_ == elfcpp::DW_LANG_Fortran95
+		|| this->cu_language_ == elfcpp::DW_LANG_Fortran03
+		|| this->cu_language_ == elfcpp::DW_LANG_Fortran08)
+	      {
+		gold_warning(_("%s: --gdb-index currently supports "
+			       "only C and C++ languages"),
+			     this->object()->name().c_str());
+		return;
+	      }
 	    if (die->tag() == elfcpp::DW_TAG_compile_unit)
 	      ++Gdb_index_info_reader::dwarf_cu_nopubnames_count;
 	    else
@@ -387,7 +394,6 @@ Gdb_index_info_reader::visit_top_die(Dwarf_die* die)
 		     this->object()->name().c_str());
 	return;
     }
-
 }
 
 // Visit the children of PARENT, looking for symbols to add to the index.
@@ -431,7 +437,8 @@ Gdb_index_info_reader::visit_die(Dwarf_die* die, Dwarf_die* context)
 	    // If the DIE is not a declaration, add it to the index.
 	    std::string full_name = this->get_qualified_name(die, context);
 	    if (!full_name.empty())
-	      this->gdb_index_->add_symbol(this->cu_index_, full_name.c_str());
+	      this->gdb_index_->add_symbol(this->cu_index_,
+                                           full_name.c_str(), 0);
 	  }
 	break;
       case elfcpp::DW_TAG_typedef:
@@ -471,7 +478,7 @@ Gdb_index_info_reader::visit_die(Dwarf_die* die, Dwarf_die* context)
 		full_name = this->get_qualified_name(die, context);
 	      if (!full_name.empty())
 		this->gdb_index_->add_symbol(this->cu_index_,
-					     full_name.c_str());
+					     full_name.c_str(), 0);
 	    }
 
 	  // We're interested in the children only for namespaces and
@@ -850,67 +857,95 @@ Gdb_index_info_reader::record_cu_ranges(Dwarf_die* die)
     }
 }
 
+// Read table and add the relevant names to the index.  Returns true
+// if any names were added.
+
+bool
+Gdb_index_info_reader::read_pubtable(Dwarf_pubnames_table* table, off_t offset)
+{
+  // If we couldn't read the section when building the cu_pubname_map,
+  // then we won't find any pubnames now.
+  if (table == NULL)
+    return false;
+
+  if (!table->read_header(offset))
+    return false;
+  while (true)
+    {
+      uint8_t flag_byte;
+      const char* name = table->next_name(&flag_byte);
+      if (name == NULL)
+        break;
+
+      this->gdb_index_->add_symbol(this->cu_index_, name, flag_byte);
+    }
+  return true;
+}
+
 // Read the .debug_pubnames and .debug_pubtypes tables for the CU or TU.
 // Returns TRUE if either a pubnames or pubtypes section was found.
 
 bool
 Gdb_index_info_reader::read_pubnames_and_pubtypes(Dwarf_die* die)
 {
-  bool ret = false;
+  // If this is a skeleton debug-type die (generated via
+  // -gsplit-dwarf), then the associated pubnames should have been
+  // read along with the corresponding CU.  In any case, there isn't
+  // enough info inside to build a gdb index entry.
+  if (die->tag() == elfcpp::DW_TAG_type_unit
+      && die->string_attribute(elfcpp::DW_AT_GNU_dwo_name))
+    return true;
 
-  // If we find a DW_AT_GNU_pubnames attribute, read the pubnames table.
-  unsigned int pubnames_shndx;
-  off_t pubnames_offset = die->ref_attribute(elfcpp::DW_AT_GNU_pubnames,
-					     &pubnames_shndx);
-  if (pubnames_offset != -1)
+  // We use stmt_list_off as a unique identifier for the
+  // compilation unit and its associated type units.
+  unsigned int shndx;
+  off_t stmt_list_off = die->ref_attribute (elfcpp::DW_AT_stmt_list,
+                                            &shndx);
+  // Look for the attr as either a flag or a ref.
+  off_t offset = die->ref_attribute(elfcpp::DW_AT_GNU_pubnames, &shndx);
+
+  // Newer versions of GCC generate CUs, but not TUs, with
+  // DW_AT_FORM_flag_present.
+  unsigned int flag = die->uint_attribute(elfcpp::DW_AT_GNU_pubnames);
+  if (offset == -1 && flag == 0)
     {
-      if (this->gdb_index_->pubnames_read(pubnames_shndx, pubnames_offset))
-	ret = true;
+      // Didn't find the attribute.
+      if (die->tag() == elfcpp::DW_TAG_type_unit)
+        {
+          // If die is a TU, then it might correspond to a CU which we
+          // have read. If it does, then no need to read the pubnames.
+          // If it doesn't, then the caller will have to parse the
+          // dies manually to find the names.
+          return this->gdb_index_->pubnames_read(this->object(),
+                                                 stmt_list_off);
+        }
       else
-	{
-	  Dwarf_pubnames_table pubnames(false);
-	  if (!pubnames.read_section(this->object(), pubnames_shndx))
-	    return false;
-	  if (!pubnames.read_header(pubnames_offset))
-	    return false;
-	  while (true)
-	    {
-	      const char* name = pubnames.next_name();
-	      if (name == NULL)
-		break;
-	      this->gdb_index_->add_symbol(this->cu_index_, name);
-	    }
-	  ret = true;
-	}
+        {
+          // No attribute on the CU means that no pubnames were read.
+          return false;
+        }
     }
 
-  // If we find a DW_AT_GNU_pubtypes attribute, read the pubtypes table.
-  unsigned int pubtypes_shndx;
-  off_t pubtypes_offset = die->ref_attribute(elfcpp::DW_AT_GNU_pubtypes,
-					     &pubtypes_shndx);
-  if (pubtypes_offset != -1)
-    {
-      if (this->gdb_index_->pubtypes_read(pubtypes_shndx, pubtypes_offset))
-	ret = true;
-      else
-	{
-	  Dwarf_pubnames_table pubtypes(true);
-	  if (!pubtypes.read_section(this->object(), pubtypes_shndx))
-	    return false;
-	  if (!pubtypes.read_header(pubtypes_offset))
-	    return false;
-	  while (true)
-	    {
-	      const char* name = pubtypes.next_name();
-	      if (name == NULL)
-		break;
-	      this->gdb_index_->add_symbol(this->cu_index_, name);
-	    }
-	  ret = true;
-	}
-    }
+  // We found the attribute, so we can check if the corresponding
+  // pubnames have been read.
+  if (this->gdb_index_->pubnames_read(this->object(), stmt_list_off))
+    return true;
 
-  return ret;
+  this->gdb_index_->set_pubnames_read(this->object(), stmt_list_off);
+
+  // We have an attribute, and the pubnames haven't been read, so read
+  // them.
+  bool names = false;
+  // In some of the cases, we could rely on the previous value of
+  // offset here, but sorting out which cases complicates the logic
+  // enough that it isn't worth it. So just look up the offset again.
+  offset = this->gdb_index_->find_pubname_offset(this->cu_offset());
+  names = this->read_pubtable(this->gdb_index_->pubnames_table(), offset);
+
+  bool types = false;
+  offset = this->gdb_index_->find_pubtype_offset(this->cu_offset());
+  types = this->read_pubtable(this->gdb_index_->pubtypes_table(), offset);
+  return names || types;
 }
 
 // Clear the declarations map.
@@ -949,6 +984,8 @@ Gdb_index_info_reader::print_stats()
 
 Gdb_index::Gdb_index(Output_section* gdb_index_section)
   : Output_section_data(4),
+    pubnames_table_(NULL),
+    pubtypes_table_(NULL),
     gdb_index_section_(gdb_index_section),
     comp_units_(),
     type_units_(),
@@ -961,10 +998,8 @@ Gdb_index::Gdb_index(Output_section* gdb_index_section)
     symtab_offset_(0),
     cu_pool_offset_(0),
     stringpool_offset_(0),
-    pubnames_shndx_(0),
-    pubnames_offset_(0),
-    pubtypes_shndx_(0),
-    pubtypes_offset_(0)
+    pubnames_object_(NULL),
+    stmt_list_offset_(-1)
 {
   this->gdb_symtab_ = new Gdb_hashtab<Gdb_symbol>();
 }
@@ -976,6 +1011,93 @@ Gdb_index::~Gdb_index()
   // Free the memory used by the CU vectors.
   for (unsigned int i = 0; i < this->cu_vector_list_.size(); ++i)
     delete this->cu_vector_list_[i];
+}
+
+
+// Scan the pubnames and pubtypes sections and build a map of the
+// various cus and tus they refer to, so we can process the entries
+// when we encounter the die for that cu or tu.
+// Return the just-read table so it can be cached.
+
+Dwarf_pubnames_table*
+Gdb_index::map_pubtable_to_dies(unsigned int attr,
+                                Gdb_index_info_reader* dwinfo,
+                                Relobj* object,
+                                const unsigned char* symbols,
+                                off_t symbols_size)
+{
+  uint64_t section_offset = 0;
+  Dwarf_pubnames_table* table;
+  Pubname_offset_map* map;
+
+  if (attr == elfcpp::DW_AT_GNU_pubnames)
+    {
+      table = new Dwarf_pubnames_table(dwinfo, false);
+      map = &this->cu_pubname_map_;
+    }
+  else
+    {
+      table = new Dwarf_pubnames_table(dwinfo, true);
+      map = &this->cu_pubtype_map_;
+    }
+
+  map->clear();
+  if (!table->read_section(object, symbols, symbols_size))
+    return NULL;
+
+  while (table->read_header(section_offset))
+    {
+      map->insert(std::make_pair(table->cu_offset(), section_offset));
+      section_offset += table->subsection_size();
+    }
+
+  return table;
+}
+
+// Wrapper for map_pubtable_to_dies
+
+void
+Gdb_index::map_pubnames_and_types_to_dies(Gdb_index_info_reader* dwinfo,
+                                          Relobj* object,
+                                          const unsigned char* symbols,
+                                          off_t symbols_size)
+{
+  // This is a new object, so reset the relevant variables.
+  this->pubnames_object_ = object;
+  this->stmt_list_offset_ = -1;
+
+  delete this->pubnames_table_;
+  this->pubnames_table_
+      = this->map_pubtable_to_dies(elfcpp::DW_AT_GNU_pubnames, dwinfo,
+                                   object, symbols, symbols_size);
+  delete this->pubtypes_table_;
+  this->pubtypes_table_
+      = this->map_pubtable_to_dies(elfcpp::DW_AT_GNU_pubtypes, dwinfo,
+                                   object, symbols, symbols_size);
+}
+
+// Given a cu_offset, find the associated section of the pubnames
+// table.
+
+off_t
+Gdb_index::find_pubname_offset(off_t cu_offset)
+{
+  Pubname_offset_map::iterator it = this->cu_pubname_map_.find(cu_offset);
+  if (it != this->cu_pubname_map_.end())
+    return it->second;
+  return -1;
+}
+
+// Given a cu_offset, find the associated section of the pubnames
+// table.
+
+off_t
+Gdb_index::find_pubtype_offset(off_t cu_offset)
+{
+  Pubname_offset_map::iterator it = this->cu_pubtype_map_.find(cu_offset);
+  if (it != this->cu_pubtype_map_.end())
+    return it->second;
+  return -1;
 }
 
 // Scan a .debug_info or .debug_types input section.
@@ -993,13 +1115,15 @@ Gdb_index::scan_debug_info(bool is_type_unit,
 			       symbols, symbols_size,
 			       shndx, reloc_shndx,
 			       reloc_type, this);
+  if (object != this->pubnames_object_)
+    map_pubnames_and_types_to_dies(&dwinfo, object, symbols, symbols_size);
   dwinfo.parse();
 }
 
 // Add a symbol.
 
 void
-Gdb_index::add_symbol(int cu_index, const char* sym_name)
+Gdb_index::add_symbol(int cu_index, const char* sym_name, uint8_t flags)
 {
   unsigned int hash = mapped_index_string_hash(
       reinterpret_cast<const unsigned char*>(sym_name));
@@ -1026,34 +1150,31 @@ Gdb_index::add_symbol(int cu_index, const char* sym_name)
   // if it's not already on the list.  We only need to
   // check the last added entry.
   Cu_vector* cu_vec = this->cu_vector_list_[found->cu_vector_index];
-  if (cu_vec->size() == 0 || cu_vec->back() != cu_index)
-    cu_vec->push_back(cu_index);
+  if (cu_vec->size() == 0
+      || cu_vec->back().first != cu_index
+      || cu_vec->back().second != flags)
+    cu_vec->push_back(std::make_pair(cu_index, flags));
 }
 
-// Return TRUE if we have already processed the pubnames set at
-// OFFSET in section SHNDX
+// Return TRUE if we have already processed the pubnames associated
+// with the statement list at the given OFFSET.
 
 bool
-Gdb_index::pubnames_read(unsigned int shndx, off_t offset)
+Gdb_index::pubnames_read(const Relobj* object, off_t offset)
 {
-  bool ret = (this->pubnames_shndx_ == shndx
-	      && this->pubnames_offset_ == offset);
-  this->pubnames_shndx_ = shndx;
-  this->pubnames_offset_ = offset;
+  bool ret = (this->pubnames_object_ == object
+	      && this->stmt_list_offset_ == offset);
   return ret;
 }
 
-// Return TRUE if we have already processed the pubtypes set at
-// OFFSET in section SHNDX
+// Record that we have processed the pubnames associated with the
+// statement list for OBJECT at the given OFFSET.
 
-bool
-Gdb_index::pubtypes_read(unsigned int shndx, off_t offset)
+void
+Gdb_index::set_pubnames_read(const Relobj* object, off_t offset)
 {
-  bool ret = (this->pubtypes_shndx_ == shndx
-	      && this->pubtypes_offset_ == offset);
-  this->pubtypes_shndx_ = shndx;
-  this->pubtypes_offset_ = offset;
-  return ret;
+  this->pubnames_object_ = object;
+  this->stmt_list_offset_ = offset;
 }
 
 // Set the size of the .gdb_index section.
@@ -1209,9 +1330,11 @@ Gdb_index::do_write(Output_file* of)
       pov += 4;
       for (unsigned int j = 0; j < cu_vec->size(); ++j)
 	{
-	  int cu_index = (*cu_vec)[j];
+	  int cu_index = (*cu_vec)[j].first;
+          uint8_t flags = (*cu_vec)[j].second;
 	  if (cu_index < 0)
 	    cu_index = comp_units_count + (-1 - cu_index);
+          cu_index |= flags << 24;
 	  elfcpp::Swap<32, false>::writeval(pov, cu_index);
 	  pov += 4;
 	}

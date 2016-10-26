@@ -1,6 +1,5 @@
 /* BFD library support routines for the Renesas H8/300 architecture.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -83,7 +82,7 @@ h8300_scan (const struct bfd_arch_info *info, const char *string)
 
 	  return (info->mach == bfd_mach_h8300sx);
 	}
-      
+
       return (info->mach == bfd_mach_h8300s);
     }
   else

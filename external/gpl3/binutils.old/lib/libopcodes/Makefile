@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2016/01/26 17:27:00 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2016/10/26 17:03:44 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -6,7 +6,7 @@ NOMAN=		# defined
 NOPROFILE=	# defined
 NOCLANGERROR=	# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 LIB=		opcodes
 
@@ -15,9 +15,7 @@ BFD_MACHINE_ARCH?=	${MACHINE_ARCH:C/armv[4-7]/arm/}
 .if exists(${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk"
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/binutils/dist
-
-SHLIB_MAJOR=	6
+SHLIB_MAJOR=	7
 SHLIB_MINOR=	0
 
 GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}

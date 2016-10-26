@@ -44,15 +44,20 @@ OTHER_READWRITE_SECTIONS=".fardata ${RELOCATING-0} : { *(.fardata${RELOCATING+ .
 OTHER_READWRITE_RELOC_SECTIONS="
   .rel.fardata     ${RELOCATING-0} : { *(.rel.fardata${RELOCATING+ .rel.fardata.*}) }
   .rela.fardata    ${RELOCATING-0} : { *(.rela.fardata${RELOCATING+ .rela.fardata.*}) }"
-case ${target} in
+# For relocating operation, skip OTHER_BSS_SECTIONS, or will cause multiple definition.
+if [ ${RELOCATING-0} ]; then
+  OTHER_BSS_SECTIONS="";
+else
+  case ${target} in
+
     *-elf)
 	OTHER_BSS_SECTIONS="
-  .heap : 
-  { 
-    . = ALIGN(4); 
-    _HEAP_START = .; 
-    . += 0x2000000; 
-    _HEAP_MAX = .; 
+  .heap :
+  {
+    . = ALIGN(4);
+    _HEAP_START = .;
+    . += 0x2000000;
+    _HEAP_MAX = .;
   }
   .stack :
   {
@@ -60,5 +65,6 @@ case ${target} in
     _STACK_START = .;
   }"
 	;;
-esac
+  esac
+fi
 ATTRS_SECTIONS='.c6xabi.attributes 0 : { KEEP (*(.c6xabi.attributes)) KEEP (*(.gnu.attributes)) }'

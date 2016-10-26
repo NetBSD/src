@@ -31,12 +31,12 @@
 	and AT&T mnemonic vs. Intel mnemonic.
 
 2007-12-20  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* config/tc-xtensa.c (xtensa_elf_cons): Set frag flags for
 	expressions without suffixes.
 	(get_frag_property_flags): Preserve is_no_transform flag for frags
 	not marked as either instructions or literals.
-	
+
 2007-12-17  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* config/tc-i386.c (output_insn): Use ARRAY_SIZE.
@@ -63,7 +63,7 @@
 
 2007-12-11  Sterling Augustine  <sterling@tensilica.com>
 	    Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* config/tc-xtensa.c (frag_format_size): Handle frags that expand to
 	wide branches.
 	(get_aligned_diff): For RELAX_ALIGN_NEXT_OPCODE, skip to the next
@@ -93,7 +93,7 @@
 	nop sequence is needed.  Use md_number_to_chars and mips16_nop_insn.
 
 2007-12-07  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* config/tc-xtensa.c (O_pcrel): Define.
 	(suffix_relocs): Add pcrel suffix.
 	(md_pseudo_table): Add 4byte and 2byte directives.
@@ -103,7 +103,7 @@
 	(xg_valid_literal_expression): Allow O_pcrel.
 	(md_pcrel_from, md_apply_fix): Handle BFD_RELOC_32_PCREL.
 	(tc_gen_reloc): Fix punctuation in error message.
-	
+
 2007-12-06  Bob Wilson  <bob.wilson@acm.org>
 
 	* config/tc-xtensa.c (xg_force_frag_space): Delete.
@@ -123,7 +123,7 @@
 	name and bracket.
 
 2007-11-30  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* config/tc-xtensa.h (md_allow_eh_opt): Define.
 
 2007-11-29  Mark Shinwell  <shinwell@codesourcery.com>
@@ -155,21 +155,21 @@
 	(xg_assemble_vliw_tokens): Update the code to select the "best" line
 	number to use new information.  Call dwarf2_gen_line_info instead
 	of dwarf2_emit_insn.
-	
+
 2007-11-19  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* dwarf2dbg.h (dwarf2_loc_directive_seen): New.
 	* dwarf2dbg.c (loc_directive_seen): Make external and rename to...
 	(dwarf2_loc_directive_seen): ...this.
 	(dwarf2_emit_insn, dwarf2_consume_line_info)
 	(dwarf2_emit_label, dwarf2_directive_loc): Use new name.
-	
+
 2007-11-19  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* dwarf2dbg.c (dwarf2_emit_label): Use dwarf2_consume_line_info.
-	
+
 2007-11-19  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* dwarf2dbg.c (dwarf2_consume_line_info): New.
 	(dwarf2_emit_insn): Use it here.
 	(dwarf2_directive_loc): Fix check for consecutive .loc directives
@@ -177,7 +177,7 @@
 	* dwarf2dbg.h (dwarf2_consume_line_info): New prototype.
 	* config/tc-ia64.c (ia64_flush_insns): Call dwarf2_consume_line_info.
 	(md_assemble): Likewise.
-	
+
 2007-11-17  Thiemo Seufer  <ths@mips.com>
 
 	* config/tc-mips.c (md_parse_option): Match mips_optimize to the -O
@@ -287,7 +287,7 @@
 
 	* config/tc-i386.c (process_suffix): Check addrprefixop0 to
 	see if the address size override prefix changes the size of the
-	first operand. 
+	first operand.
 	(check_byte_reg): Don't warn if byteokintel is set.
 	(check_long_reg): Set i.suffix to QWORD_MNEM_SUFFIX if toqword
 	is set.
@@ -463,9 +463,9 @@
 	* po/gas.pot: Regenerate.
 
 2007-10-16  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* doc/as.texinfo (Overview): Add Xtensa --rename-section option.
-	
+
 2007-10-16  Nick Clifton  <nickc@redhat.com>
 
 	* config/obj-elf.c (obj_elf_type): Accept "common" as a valid
@@ -612,7 +612,7 @@
 
 	PR gas/5133
 	* config/tc-arm.c (md_apply_fix): Correct error message.
-	PR gas/5134	
+	PR gas/5134
 	* config/tc-arm.c (md_apply_fix): Likewise.
 	PR gas/5136
 	* config/tc-bfin.c (md_apply_fix): Fix error message.
@@ -660,7 +660,7 @@
 
 2007-10-03  Nick Clifton  <nickc@redhat.com>
 
-	* config/tc-avr.c (avr_get_constant): 
+	* config/tc-avr.c (avr_get_constant):
 	PR gas/5089
 	* config/tc-arm.c (s_arm_unwind_handlerdata): Fix spelling typo.
 	PR gas/5090
@@ -749,7 +749,7 @@
 2007-09-24  Carlos O'Donell  <carlos@codesourcery.com>
 
 	* config/tc-mips.c (s_align): Set max_alignment to 28.
-	
+
 2007-09-20  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR 658
@@ -836,7 +836,7 @@
 	    Tony Linthicum  <tony.linthicum@amd.com>
 
 	* NEWS: Add SSE5 support to NEWS file.
-	
+
 	* config/tc-i386.h (drex_byte): Add fields to allow process_drex
 	and build_modrm_byte to communicate.
 	(DREX_OC0): New SSE5 macro.
@@ -1268,7 +1268,7 @@
 	macro.c, messages.c, obj.h, output-file.c, output-file.h, read.c,
 	read.h, sb.c, sb,h, stabs.c, struc-symbol.h, subsegs.c, subsegs.h,
 	symbols.c, symbols.h, tc.h, write.c, write.h, config/aout_gnu.h,
-	config/config/atof-ieee.c, config/atof-vax.c, config/bfin-aux.h, 
+	config/config/atof-ieee.c, config/atof-vax.c, config/bfin-aux.h,
 	config/bfin-defs.h, config/bfin-lex.l, config/bfin-parse.y,
 	config/itbl-mips.h, config/m68k-parse.h, config/m68k-parse.y,
 	config/obj-aout.c, config/obj-aout.h, config/obj-coff.c,
@@ -1318,7 +1318,7 @@
 	config/te-netware.h, config/te-sparcaout.h,  config/te-tmips.h,
 	config/te-vxworks.h, config/vax-inst.h, config/xtensa-istack.h,
 	config/xtensa-relax.c, config/xtensa-relax.h: Likewise.
-	
+
 	* flonum-mult.c: Likewise, and also correct typo referring to
 	non-existant GNU Assembler General Public License.
 	* config/tc-m68851.h: Likewise.
@@ -1412,10 +1412,10 @@
 	* Makefile.in: Regenerate.
 	* config/tc-cr16.h: New file
 	* config/tc-cr16.c: New file
-	* doc/c-cr16.texi: New file for cr16 
-	* doc/all.texi: Entry for cr16 
+	* doc/c-cr16.texi: New file for cr16
+	* doc/all.texi: Entry for cr16
 	* doc/Makefile.am: Added c-cr16.texi
-	* doc/Makefile.in: Regenerate 
+	* doc/Makefile.in: Regenerate
 	* doc/as.texinfo: Entry for CR16 target
 	* NEWS: Announce the support for the new target.
 
@@ -1447,7 +1447,7 @@
 	* config/xtensa-relax.c (widen_spec_list): Add transitions from
 	wide branches to branch-over-jumps.
 	(build_transition): Handle wide branches in transition patterns.
-	
+
 2007-06-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* config/tc-i386.c (disp_size): New.
@@ -1484,7 +1484,7 @@
 
 2007-06-11  Sterling Augustine  <sterling@tensilica.com>
 	    Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* config/tc-xtensa.c (XTENSA_PROP_INSN_NO_TRANSFORM): Renamed to...
 	(XTENSA_PROP_NO_TRANSFORM): ...this.
 	(frag_flags_struct): Move is_no_transform out of the insn sub-struct.
@@ -1495,7 +1495,7 @@
 	(xtensa_frag_flags_combinable): Likewise.
 	(frag_flags_to_number): Likewise.  Use XTENSA_PROP_NO_TRANSFORM.
 	* config/tc-xtensa.h (xtensa_relax_statesE): Add RELAX_ORG.
-	
+
 2007-06-06  Paul Brook  <paul@codesourcery.com>
 
 	* config/tc-arm.c (s_align): Pad code sections appropriately.
@@ -1569,10 +1569,10 @@
 	* doc/Makefile.in: Regenerate.
 
 2007-05-22  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* doc/c-xtensa.texi (Xtensa Automatic Alignment): Remove statements
 	and index entries about automatic alignment of ENTRY instructions.
-	
+
 2007-05-22  Nick Clifton  <nickc@redhat.com>
 
 	* doc/as.texinfo: Use @copying around the copyright notice.
@@ -1586,8 +1586,8 @@
 
 	PR gas/4517
 	2003-06-05  Michal Ludvig  <mludvig@suse.cz>
-	* doc/as.texinfo: Document new directives: .cfi_restore, 
-	.cfi_undefined, .cfi_same_value, .cfi_return_column, 
+	* doc/as.texinfo: Document new directives: .cfi_restore,
+	.cfi_undefined, .cfi_same_value, .cfi_return_column,
 	.cfi_remember_state and .cfi_restore_state.
 
 2007-05-17  Nathan Sidwell  <nathan@codesourcery.com>
@@ -1605,7 +1605,7 @@
 
 	* app.c (do_scrub_chars): Don't damage \@ pseudo-variables.
 
-2007-05-15  Vincent Riviere  <vincent.riviere@freesbee.fr>	
+2007-05-15  Vincent Riviere  <vincent.riviere@freesbee.fr>
 
 	PR gas/3041
 	* config/tc-m68k.c (relaxable_symbol): Make sure that the correct
@@ -1623,7 +1623,7 @@
 	addri, addri.c, subi, and subi.c when immediate number is hex.
 	(score_insns): Remove subis and subis.c.
 	(do_sub_rdi16): Delete.
-	
+
 2007-05-11  Alan Modra  <amodra@bigpond.net.au>
 
 	* config/tc-spu.c (md_pseudo_table): Add int, long, quad.  Call
@@ -1635,7 +1635,7 @@
 	(TC_FORCE_RELOCATION): Don't resolve them either.
 
 2007-05-05  Mark Shinwell  <shinwell@codesourcery.com>
- 
+
 	* config/tc-arm.c (md_apply_fix): Generate more accurate
 	diagnostic when 8-bit immediate range is exceeded for
 	BFD_RELOC_ARM_OFFSET_IMM8.
@@ -1904,7 +1904,7 @@
 	(xtensa_frob_label): Adjust calls to xtensa_move_labels.
 	(xg_assemble_vliw_tokens): Likewise.  Also avoid calling
 	xtensa_move_labels for alignment of loop opcodes.
-	
+
 2007-03-30  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* config/tc-i386.c (process_suffix): Reindent a bit.
@@ -1950,10 +1950,10 @@
 	* NEWS: Mention ".reloc".
 
 2007-03-26  Sterling Augustine  <sterling@tensilica.com>
-	
+
 	* config/tc-xtensa.c (xg_translate_idioms): Allow assembly idioms
 	in FLIX instructions.
-	
+
 2007-03-26  Julian Brown  <julian@codesourcery.com>
 
 	* config/tc-arm.c (arm_it): Add immisfloat field.
@@ -2066,7 +2066,7 @@
 
 2007-03-15  H.J. Lu  <hongjiu.lu@intel.com>
 
-	* config/tc-i386.c (md_begin): Use i386_regtab_size to scan 
+	* config/tc-i386.c (md_begin): Use i386_regtab_size to scan
 	i386_regtab.
 	(parse_register): Use i386_regtab_size instead of ARRAY_SIZE
 	on i386_regtab.
@@ -2414,7 +2414,7 @@
 	cgen_maybe_multi_ifield field to fx_cgen substructure.
 	* cgen.h (GAS_CGEN_MAX_FIXUPS): Bump from 3 up to 32.
 	* symbols.h (symbol_relc_make_sym,value,expr): New prototypes.
-	
+
 2007-02-03  DJ Delorie  <dj@delorie.com>
 
 	* config/tc-m32c.c (m32c_cons_fix_new): New.  Added to support 3
@@ -2423,10 +2423,10 @@
 	(m32c_cons_fix_new): Prototype.
 
 2007-02-02  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* config/tc-xtensa.c (xg_build_to_insn): Use tinsn_init.
 	(xg_expand_assembly_insn, istack_push_space, istack_pop): Likewise.
-	
+
 2007-02-02  Bob Wilson  <bob.wilson@acm.org>
 
 	* config/tc-xtensa.c (SUFFIX_MAP, suffix_relocs): New.
@@ -2442,7 +2442,7 @@
 	* config/xtensa-istack.h (struct tinsn_struct): Delete fixup field.
 	(tinsn_get_tok): Delete prototype.
 	* config/tc-xtensa.c (tinsn_get_tok): Delete.
-	
+
 2007-02-02  Bob Wilson  <bob.wilson@acm.org>
 
 	* config/xtensa-relax.h (struct build_instr): Delete id field.
@@ -2521,7 +2521,7 @@
 	* config/tc-score.c : Using _() for const string.
 	Do not assign inst.error with a local string pointer.
 	(md_section_align): Pad section.
-	
+
 2007-01-13  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* config/tc-i386.c (build_modrm_byte): Check number of operands
@@ -2630,6 +2630,12 @@
 
 For older changes see ChangeLog-2006
 
+Copyright (C) 2006 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

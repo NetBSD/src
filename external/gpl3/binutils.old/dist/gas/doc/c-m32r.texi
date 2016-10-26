@@ -1,6 +1,4 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-@c 2000, 2003, 2004, 2006
-@c Free Software Foundation, Inc.
+@c Copyright (C) 1991-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -46,7 +44,7 @@ the original instructions.
 @cindex @samp{-m32rx} option, M32R2
 @cindex architecture options, M32R2
 @cindex M32R architecture options
-This option changes the target processor to the the M32R2
+This option changes the target processor to the M32R2
 microprocessor.
 
 @item -m32r
@@ -192,7 +190,7 @@ places the lower 16-bits of the result into the immediate-field of the
 instruction.  For example:
 
 @smallexample
-   or3   r0, r0, #low(0x12345678) ; compute r0 = r0 | 0x5678 
+   or3   r0, r0, #low(0x12345678) ; compute r0 = r0 | 0x5678
    add3, r0, r0, #low(fred)   ; compute r0 = r0 + low 16-bits of address of fred
 @end smallexample
 
@@ -203,7 +201,7 @@ places the upper 16-bits of the result into the immediate-field of the
 instruction.  For example:
 
 @smallexample
-   seth  r0, #high(0x12345678) ; compute r0 = 0x12340000 
+   seth  r0, #high(0x12345678) ; compute r0 = 0x12340000
    seth, r0, #high(fred)       ; compute r0 = upper 16-bits of address of fred
 @end smallexample
 
@@ -211,7 +209,7 @@ instruction.  For example:
 @cindex @code{shigh} directive, M32R
 The @code{shigh} directive is very similar to the @code{high}
 directive.  It also computes the value of its expression and places
-the upper 16-bits of the result into the immediate-field of the 
+the upper 16-bits of the result into the immediate-field of the
 instruction.  The difference is that @code{shigh} also checks to see
 if the lower 16-bits could be interpreted as a signed number, and if
 so it assumes that a borrow will occur from the upper-16 bits.  To
@@ -237,15 +235,15 @@ treats its 16-bit immediate argument as unsigned whereas the
 example:
 
 @smallexample
-   seth  r0, #shigh(0x00008000) 
-   add3  r0, r0, #low(0x00008000) 
+   seth  r0, #shigh(0x00008000)
+   add3  r0, r0, #low(0x00008000)
 @end smallexample
 
 Produces the correct result in r0, whereas:
 
 @smallexample
-   seth  r0, #shigh(0x00008000) 
-   or3   r0, r0, #low(0x00008000) 
+   seth  r0, #shigh(0x00008000)
+   or3   r0, r0, #low(0x00008000)
 @end smallexample
 
 Stores 0xffff8000 into r0.
@@ -324,7 +322,7 @@ neg instruction and the input to the move instruction.
 This message is produced when the assembler encounters an instruction
 which is only supported by the M32Rx processor, and the @samp{-m32rx}
 command line flag has not been specified to allow assembly of such
-instructions. 
+instructions.
 
 @item unknown instruction @samp{...}
 This message is produced when the assembler encounters an instruction
@@ -351,8 +349,8 @@ instruction where both components attempt to modify the same register.
 For example these code fragments will produce this message:
 @samp{mv r1, r2 || neg r1, r3}
 @samp{jl r0 || mv r14, r1}
-@samp{st r2, @@-r1 || mv r1, r3} 
-@samp{mv r1, r2 || ld r0, @@r1+} 
+@samp{st r2, @@-r1 || mv r1, r3}
+@samp{mv r1, r2 || ld r0, @@r1+}
 @samp{cmp r1, r2 || addx r3, r4} (Both write to the condition bit)
 
 @end table

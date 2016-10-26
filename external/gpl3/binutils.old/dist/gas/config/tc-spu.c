@@ -1,6 +1,6 @@
 /* spu.c -- Assembler for the IBM Synergistic Processing Unit (SPU)
 
-   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -22,7 +22,7 @@
 #include "as.h"
 #include "safe-ctype.h"
 #include "subsegs.h"
-#include "dwarf2dbg.h" 
+#include "dwarf2dbg.h"
 
 const struct spu_opcode spu_opcodes[] = {
 #define APUOP(TAG,MACFORMAT,OPCODE,MNEMONIC,ASMFORMAT,DEP,PIPE) \
@@ -246,16 +246,16 @@ insn_fmt_string (struct spu_opcode *format)
     {
       int arg = format->arg[i];
       char *exp;
-      if (i > 1 && arg != A_P && format->arg[i-1] != A_P) 
+      if (i > 1 && arg != A_P && format->arg[i-1] != A_P)
 	buf[len++] =  ',';
       if (arg == A_P)
 	exp = "(";
       else if (arg < A_P)
 	exp = i == syntax_error_arg ? "REG" : "reg";
-      else 
+      else
 	exp = i == syntax_error_arg ? "IMM" : "imm";
       len += sprintf (&buf[len], "%s", exp);
-      if (i > 1 && format->arg[i-1] == A_P) 
+      if (i > 1 && format->arg[i-1] == A_P)
 	buf[len++] =  ')';
     }
   buf[len] = 0;
@@ -363,7 +363,7 @@ md_assemble (char *op)
   /* if this instruction requires labels mark it for later */
 
   for (i = 0; i < MAX_RELOCS; i++)
-    if (insn.reloc_arg[i] >= 0) 
+    if (insn.reloc_arg[i] >= 0)
       {
         fixS *fixP;
         bfd_reloc_code_real_type reloc = insn.reloc[i];
@@ -504,7 +504,7 @@ get_reg (const char *param, struct spu_insn *insn, int arg, int accept_expr)
       saw_prefix = 1;
       param++;
     }
-    
+
   if (arg == A_H) /* Channel */
     {
       if ((param[0] == 'c' || param[0] == 'C')
@@ -620,7 +620,7 @@ get_imm (const char *param, struct spu_insn *insn, int arg)
 	 i.e. for code loaded at address 0 $toc will be 0.  */
       param += 4;
     }
-      
+
   if (*param == '$')
     {
       /* Symbols can start with $, but if this symbol matches a register
@@ -632,7 +632,7 @@ get_imm (const char *param, struct spu_insn *insn, int arg)
       if (np)
 	syntax_error_param = np;
     }
-      
+
   save_ptr = input_line_pointer;
   input_line_pointer = (char *) param;
   expression (&insn->exp[reloc_i]);
@@ -661,12 +661,12 @@ get_imm (const char *param, struct spu_insn *insn, int arg)
 
       if (emulate_apuasm)
 	{
-	  /* Convert the value to a format we expect. */ 
+	  /* Convert the value to a format we expect. */
           val <<= arg_encode[arg].rshift;
 	  if (arg == A_U7A)
 	    val = 173 - val;
 	  else if (arg == A_U7B)
-	    val = 155 - val; 
+	    val = 155 - val;
 	}
 
       if (high)
@@ -692,7 +692,7 @@ get_imm (const char *param, struct spu_insn *insn, int arg)
       if (arg == A_U7A)
         val = 173 - val;
       else if (arg == A_U7B)
-        val = 155 - val; 
+        val = 155 - val;
 
       /* Branch hints have a split encoding.  Do the bottom part. */
       if (arg == A_S11 || arg == A_S11I)

@@ -1,6 +1,5 @@
 /* simple.c -- BFD simple client routines
-   Copyright 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    Contributed by MontaVista Software, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -101,14 +100,39 @@ struct saved_output_info
   asection *section;
 };
 
+struct saved_offsets
+{
+  unsigned int section_count;
+  struct saved_output_info *sections;
+};
+
+/* The sections in ABFD may already have output sections and offsets
+   set if we are here during linking.
+
+   DWARF-2 specifies offsets into debug sections in many cases and
+   bfd_simple_get_relocated_section_contents is called to relocate
+   debug info for a single relocatable object file.  So we want
+   offsets relative to that object file's sections, not offsets in the
+   output file.  For that reason, reset a debug section->output_offset
+   to zero.
+
+   If not called during linking then set section->output_section to
+   point back to the input section, because output_section must not be
+   NULL when calling the relocation routines.
+
+   Save the original output offset and section to restore later.  */
+
 static void
 simple_save_output_info (bfd *abfd ATTRIBUTE_UNUSED,
 			 asection *section,
 			 void *ptr)
 {
-  struct saved_output_info *output_info = (struct saved_output_info *) ptr;
-  output_info[section->index].offset = section->output_offset;
-  output_info[section->index].section = section->output_section;
+  struct saved_offsets *saved_offsets = (struct saved_offsets *) ptr;
+  struct saved_output_info *output_info;
+
+  output_info = &saved_offsets->sections[section->index];
+  output_info->offset = section->output_offset;
+  output_info->section = section->output_section;
   if ((section->flags & SEC_DEBUGGING) != 0
       || section->output_section == NULL)
     {
@@ -122,9 +146,15 @@ simple_restore_output_info (bfd *abfd ATTRIBUTE_UNUSED,
 			    asection *section,
 			    void *ptr)
 {
-  struct saved_output_info *output_info = (struct saved_output_info *) ptr;
-  section->output_offset = output_info[section->index].offset;
-  section->output_section = output_info[section->index].section;
+  struct saved_offsets *saved_offsets = (struct saved_offsets *) ptr;
+  struct saved_output_info *output_info;
+
+  if (section->index >= saved_offsets->section_count)
+    return;
+
+  output_info = &saved_offsets->sections[section->index];
+  section->output_offset = output_info->offset;
+  section->output_section = output_info->section;
 }
 
 /*
@@ -157,7 +187,8 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
   struct bfd_link_callbacks callbacks;
   bfd_byte *contents, *data;
   int storage_needed;
-  void *saved_offsets;
+  struct saved_offsets saved_offsets;
+  bfd *link_next;
 
   /* Don't apply relocation on executable and shared library.  See
      PR 4756.  */
@@ -177,8 +208,10 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
   memset (&link_info, 0, sizeof (link_info));
   link_info.output_bfd = abfd;
   link_info.input_bfds = abfd;
-  link_info.input_bfds_tail = &abfd->link_next;
+  link_info.input_bfds_tail = &abfd->link.next;
 
+  link_next = abfd->link.next;
+  abfd->link.next = NULL;
   link_info.hash = _bfd_generic_link_hash_table_create (abfd);
   link_info.callbacks = &callbacks;
   callbacks.warning = simple_dummy_warning;
@@ -202,28 +235,26 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
       bfd_size_type amt = sec->rawsize > sec->size ? sec->rawsize : sec->size;
       data = (bfd_byte *) bfd_malloc (amt);
       if (data == NULL)
-	return NULL;
+	{
+	  _bfd_generic_link_hash_table_free (abfd);
+	  abfd->link.next = link_next;
+	  return NULL;
+	}
       outbuf = data;
     }
 
-  /* The sections in ABFD may already have output sections and offsets set.
-     Because this function is primarily for debug sections, and GCC uses the
-     knowledge that debug sections will generally have VMA 0 when emitting
-     relocations between DWARF-2 sections (which are supposed to be
-     section-relative offsets anyway), we need to reset the output offsets
-     to zero.  We also need to arrange for section->output_section->vma plus
-     section->output_offset to equal section->vma, which we do by setting
-     section->output_section to point back to section.  Save the original
-     output offset and output section to restore later.  */
-  saved_offsets = malloc (sizeof (struct saved_output_info)
-			  * abfd->section_count);
-  if (saved_offsets == NULL)
+  saved_offsets.section_count = abfd->section_count;
+  saved_offsets.sections = malloc (sizeof (*saved_offsets.sections)
+				   * saved_offsets.section_count);
+  if (saved_offsets.sections == NULL)
     {
       if (data)
 	free (data);
+      _bfd_generic_link_hash_table_free (abfd);
+      abfd->link.next = link_next;
       return NULL;
     }
-  bfd_map_over_sections (abfd, simple_save_output_info, saved_offsets);
+  bfd_map_over_sections (abfd, simple_save_output_info, &saved_offsets);
 
   if (symbol_table == NULL)
     {
@@ -245,9 +276,10 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
   if (contents == NULL && data != NULL)
     free (data);
 
-  bfd_map_over_sections (abfd, simple_restore_output_info, saved_offsets);
-  free (saved_offsets);
+  bfd_map_over_sections (abfd, simple_restore_output_info, &saved_offsets);
+  free (saved_offsets.sections);
 
-  _bfd_generic_link_hash_table_free (link_info.hash);
+  _bfd_generic_link_hash_table_free (abfd);
+  abfd->link.next = link_next;
   return contents;
 }

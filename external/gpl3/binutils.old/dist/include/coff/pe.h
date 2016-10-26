@@ -1,7 +1,6 @@
-/* pe.h  -  PE COFF header information 
+/* pe.h  -  PE COFF header information
 
-   Copyright 1999, 2000, 2001, 2003, 2004, 2005, 2006, 2007, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -41,6 +40,7 @@
 
 /* DllCharacteristics flag bits.  The inconsistent naming may seem
    odd, but that is how they are defined in the PE specification.  */
+#define IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA       0x0020
 #define IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE          0x0040
 #define IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY       0x0080
 #define IMAGE_DLL_CHARACTERISTICS_NX_COMPAT             0x0100
@@ -60,16 +60,16 @@
 
 /* Section characteristics added for ppc-nt.  */
 
-#define IMAGE_SCN_TYPE_NO_PAD                0x00000008  /* Reserved. */
+#define IMAGE_SCN_TYPE_NO_PAD                0x00000008  /* Reserved.  */
 
-#define IMAGE_SCN_CNT_CODE                   0x00000020  /* Section contains code. */
-#define IMAGE_SCN_CNT_INITIALIZED_DATA       0x00000040  /* Section contains initialized data. */
-#define IMAGE_SCN_CNT_UNINITIALIZED_DATA     0x00000080  /* Section contains uninitialized data. */
+#define IMAGE_SCN_CNT_CODE                   0x00000020  /* Section contains code.  */
+#define IMAGE_SCN_CNT_INITIALIZED_DATA       0x00000040  /* Section contains initialized data.  */
+#define IMAGE_SCN_CNT_UNINITIALIZED_DATA     0x00000080  /* Section contains uninitialized data.  */
 
-#define IMAGE_SCN_LNK_OTHER                  0x00000100  /* Reserved. */
-#define IMAGE_SCN_LNK_INFO                   0x00000200  /* Section contains comments or some other type of information. */
-#define IMAGE_SCN_LNK_REMOVE                 0x00000800  /* Section contents will not become part of image. */
-#define IMAGE_SCN_LNK_COMDAT                 0x00001000  /* Section contents comdat. */
+#define IMAGE_SCN_LNK_OTHER                  0x00000100  /* Reserved.  */
+#define IMAGE_SCN_LNK_INFO                   0x00000200  /* Section contains comments or some other type of information.  */
+#define IMAGE_SCN_LNK_REMOVE                 0x00000800  /* Section contents will not become part of image.  */
+#define IMAGE_SCN_LNK_COMDAT                 0x00001000  /* Section contents comdat.  */
 
 #define IMAGE_SCN_MEM_FARDATA                0x00008000
 
@@ -78,7 +78,7 @@
 #define IMAGE_SCN_MEM_LOCKED                 0x00040000
 #define IMAGE_SCN_MEM_PRELOAD                0x00080000
 
-/* Bit position in the s_flags field where the alignment values start. */
+/* Bit position in the s_flags field where the alignment values start.  */
 #define IMAGE_SCN_ALIGN_POWER_BIT_POS	     20
 #define IMAGE_SCN_ALIGN_POWER_BIT_MASK	     0x00f00000
 #define IMAGE_SCN_ALIGN_POWER_NUM(val)	     \
@@ -90,7 +90,7 @@
 #define IMAGE_SCN_ALIGN_2BYTES		     IMAGE_SCN_ALIGN_POWER_CONST (1)
 #define IMAGE_SCN_ALIGN_4BYTES		     IMAGE_SCN_ALIGN_POWER_CONST (2)
 #define IMAGE_SCN_ALIGN_8BYTES		     IMAGE_SCN_ALIGN_POWER_CONST (3)
-/* Default alignment if no others are specified. */
+/* Default alignment if no others are specified.  */
 #define IMAGE_SCN_ALIGN_16BYTES		     IMAGE_SCN_ALIGN_POWER_CONST (4)
 #define IMAGE_SCN_ALIGN_32BYTES		     IMAGE_SCN_ALIGN_POWER_CONST (5)
 #define IMAGE_SCN_ALIGN_64BYTES		     IMAGE_SCN_ALIGN_POWER_CONST (6)
@@ -102,7 +102,7 @@
 #define IMAGE_SCN_ALIGN_4096BYTES	     IMAGE_SCN_ALIGN_POWER_CONST (12)
 #define IMAGE_SCN_ALIGN_8192BYTES	     IMAGE_SCN_ALIGN_POWER_CONST (13)
 
-/* Encode alignment power into IMAGE_SCN_ALIGN bits of s_flags */
+/* Encode alignment power into IMAGE_SCN_ALIGN bits of s_flags.  */
 #define COFF_ENCODE_ALIGNMENT(SECTION, ALIGNMENT_POWER) \
   ((SECTION).s_flags |= IMAGE_SCN_ALIGN_POWER_CONST ((ALIGNMENT_POWER)))
 
@@ -164,9 +164,9 @@
 #define IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER	12
 #define IMAGE_SUBSYSTEM_SAL_RUNTIME_DRIVER	13
 #define IMAGE_SUBSYSTEM_XBOX			14
-  
+
 /* Magic values that are true for all dos/nt implementations.  */
-#define DOSMAGIC       0x5a4d  
+#define DOSMAGIC       0x5a4d
 #define NT_SIGNATURE   0x00004550
 
 /* NT allows long filenames, we want to accommodate this.
@@ -201,7 +201,7 @@ struct external_PEI_DOS_hdr
 
 struct external_PEI_IMAGE_hdr
 {
-  char nt_signature[4];		/* required NT signature, 0x4550.  */
+  char nt_signature[4];		/* Required NT signature, 0x4550.  */
 
   /* From standard header.  */
   char f_magic[2];		/* Magic number.		*/
@@ -240,7 +240,7 @@ struct external_PEI_filehdr
   /* Note: additional bytes may be inserted before the signature.  Use
    the e_lfanew field to find the actual location of the NT signature.  */
 
-  char nt_signature[4];		/* required NT signature, 0x4550.  */
+  char nt_signature[4];		/* Required NT signature, 0x4550.  */
 
   /* From standard header.  */
   char f_magic[2];		/* Magic number.		*/
@@ -263,9 +263,9 @@ struct external_PEI_filehdr
 
 #endif /* COFF_IMAGE_WITH_PE */
 
-/* 32-bit PE a.out header: */
+/* 32-bit PE a.out header:  */
 
-typedef struct 
+typedef struct
 {
   AOUTHDR standard;
 
@@ -301,7 +301,7 @@ typedef struct
 /* Like PEAOUTHDR, except that the "standard" member has no BaseOfData
    (aka data_start) member and that some of the members are 8 instead
    of just 4 bytes long.  */
-typedef struct 
+typedef struct
 {
 #ifdef AOUTHDRSZ64
   AOUTHDR64 standard;
@@ -339,7 +339,7 @@ typedef struct
 #else
 #define PEPAOUTSZ	240
 #endif
-  
+
 #undef  E_FILNMLEN
 #define E_FILNMLEN	18	/* # characters in a file name.  */
 
@@ -359,6 +359,85 @@ typedef struct
 #define IMAGE_WEAK_EXTERN_SEARCH_LIBRARY	2
 #define IMAGE_WEAK_EXTERN_SEARCH_ALIAS		3
 
+/* Bigobj header.  */
+struct external_ANON_OBJECT_HEADER_BIGOBJ
+{
+  /* ANON_OBJECT_HEADER_V2 header.  */
+  char Sig1[2];
+  char Sig2[2];
+  char Version[2];
+  char Machine[2];
+  char TimeDateStamp[4];
+  char ClassID[16];
+  char SizeOfData[4];
+  char Flags[4];
+  char MetaDataSize[4];
+  char MetaDataOffset[4];
+
+  /* BIGOBJ specific.  */
+  char NumberOfSections[4];
+  char PointerToSymbolTable[4];
+  char NumberOfSymbols[4];
+};
+
+#define FILHSZ_BIGOBJ (14 * 4)
+
+struct external_SYMBOL_EX
+{
+  union
+  {
+    char e_name[E_SYMNMLEN];
+
+    struct
+    {
+      char e_zeroes[4];
+      char e_offset[4];
+    } e;
+  } e;
+
+  char e_value[4];
+  char e_scnum[4];
+  char e_type[2];
+  char e_sclass[1];
+  char e_numaux[1];
+} ATTRIBUTE_PACKED ;
+
+#define	SYMENT_BIGOBJ	struct external_SYMBOL_EX
+#define	SYMESZ_BIGOBJ	20
+
+#define FILNMLEN_BIGOBJ	20
+
+union external_AUX_SYMBOL_EX
+{
+  struct
+  {
+    char WeakDefaultSymIndex[4];
+    char WeakSearchType[4];
+    char rgbReserved[12];
+  } Sym;
+
+  struct
+  {
+    char Name[FILNMLEN_BIGOBJ];
+  } File;
+
+  struct
+  {
+    char Length[4];		/* Section length.  */
+    char NumberOfRelocations[2];/* # relocation entries.  */
+    char NumberOfLinenumbers[2];/* # line numbers.  */
+    char Checksum[4];		/* Section COMDAT checksum.  */
+    char Number[2];	   	/* COMDAT associated section index.  */
+    char Selection[1];		/* COMDAT selection number.  */
+    char bReserved[1];
+    char HighNumber[2];         /* High bits of COMDAT associated sec.  */
+    char rgbReserved[2];
+  } Section;
+} ATTRIBUTE_PACKED;
+
+#define	AUXENT_BIGOBJ	union external_AUX_SYMBOL_EX
+#define	AUXESZ_BIGOBJ	20
+
 /* .pdata/.xdata defines and structures for x64 PE+ for exception handling.  */
 
 /* .pdata in exception directory.  */
@@ -368,7 +447,6 @@ struct pex64_runtime_function
   bfd_vma rva_BeginAddress;
   bfd_vma rva_EndAddress;
   bfd_vma rva_UnwindData;
-  unsigned int isChained : 1;
 };
 
 struct external_pex64_runtime_function
@@ -393,8 +471,10 @@ struct external_pex64_runtime_function
 #define UWOP_SET_FPREG	      3
 #define UWOP_SAVE_NONVOL      4
 #define UWOP_SAVE_NONVOL_FAR  5
-#define UWOP_SAVE_XMM	      6
-#define UWOP_SAVE_XMM_FAR     7
+#define UWOP_SAVE_XMM         6 /* For version 1.  */
+#define UWOP_EPILOG           6 /* For version 2.  */
+#define UWOP_SAVE_XMM_FAR     7 /* For version 1 (deprecated).  */
+#define UWOP_SPARE            7 /* For version 2.  */
 #define UWOP_SAVE_XMM128      8
 #define UWOP_SAVE_XMM128_FAR  9
 #define UWOP_PUSH_MACHFRAME   10
@@ -441,14 +521,10 @@ struct pex64_unwind_info
   bfd_vma FrameOffset;
   bfd_vma sizeofUnwindCodes;
   bfd_byte *rawUnwindCodes;
-  /* Valid for UNW_FLAG_EHANDLER and UNW_FLAG_UHANDLER.  */
-  bfd_vma CountOfScopes;
-  bfd_byte *rawScopeEntries;
-  bfd_vma rva_ExceptionHandler; /* UNW_EHANDLER.  */
-  bfd_vma rva_TerminationHandler; /* UNW_FLAG_UHANDLER.  */
-  bfd_vma rva_FrameHandler; /* UNW_FLAG_FHANDLER.  */
-  bfd_vma FrameHandlerArgument; /* UNW_FLAG_FHANDLER.  */
-  bfd_vma rva_FunctionEntry; /* UNW_FLAG_CHAININFO.  */
+  bfd_vma rva_ExceptionHandler; /* UNW_EHANDLER or UNW_FLAG_UHANDLER.  */
+  bfd_vma rva_BeginAddress;	/* UNW_FLAG_CHAININFO.  */
+  bfd_vma rva_EndAddress;	/* UNW_FLAG_CHAININFO.  */
+  bfd_vma rva_UnwindData;	/* UNW_FLAG_CHAININFO.  */
 };
 
 struct external_pex64_unwind_info
@@ -508,5 +584,43 @@ struct external_pex64_scope_entry
 #define PEX64_SCOPE_ENTRY(COUNTOFUNWINDCODES, IDX) \
   (PEX64_OFFSET_TO_SCOPE_COUNT(COUNTOFUNWINDCODES) + \
    PEX64_SCOPE_ENTRY_SIZE * (IDX))
+
+/* Extra structure used in debug directory.  */
+struct external_IMAGE_DEBUG_DIRECTORY
+{
+  char Characteristics[4];
+  char TimeDateStamp[4];
+  char MajorVersion[2];
+  char MinorVersion[2];
+  char Type[4];
+  char SizeOfData[4];
+  char AddressOfRawData[4];
+  char PointerToRawData[4];
+};
+
+/* Extra structures used in codeview debug record.  */
+/* This is not part of the PE specification.  */
+
+#define CVINFO_PDB70_CVSIGNATURE 0x53445352 // "RSDS"
+#define CVINFO_PDB20_CVSIGNATURE 0x3031424e // "NB10"
+#define CVINFO_CV50_CVSIGNATURE  0x3131424e // "NB11"
+#define CVINFO_CV41_CVSIGNATURE  0x3930424e // âNB09"
+
+typedef struct _CV_INFO_PDB70
+{
+  char CvSignature[4];
+  char Signature[16];
+  char Age[4];
+  char PdbFileName[];
+} CV_INFO_PDB70;
+
+typedef struct _CV_INFO_PDB20
+{
+  char CvHeader[4];
+  char Offset[4];
+  char Signature[4];
+  char Age[4];
+  char PdbFileName[];
+} CV_INFO_PDB20;
 
 #endif /* _PE_H */

@@ -1,6 +1,5 @@
 /* tc-rx.c -- Assembler for the Renesas RX
-   Copyright 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -21,7 +20,6 @@
 
 #include "as.h"
 #include "struc-symbol.h"
-#include "obstack.h"
 #include "safe-ctype.h"
 #include "dwarf2dbg.h"
 #include "libbfd.h"
@@ -46,7 +44,7 @@ const char EXP_CHARS[]            = "eE";
 const char FLT_CHARS[]            = "dD";
 
 /* ELF flags to set in the output file header.  */
-static int elf_flags = 0;
+static int elf_flags = E_FLAG_RX_ABI;
 
 bfd_boolean rx_use_conventional_section_names = FALSE;
 static bfd_boolean rx_use_small_data_limit = FALSE;
@@ -55,6 +53,8 @@ static bfd_boolean rx_pid_mode = FALSE;
 static int rx_num_int_regs = 0;
 int rx_pid_register;
 int rx_gp_register;
+
+enum rx_cpu_types rx_cpu = RX600;
 
 static void rx_fetchalign (int ignore ATTRIBUTE_UNUSED);
 
@@ -70,6 +70,10 @@ enum options
   OPTION_RELAX,
   OPTION_PID,
   OPTION_INT_REGS,
+  OPTION_USES_GCC_ABI,
+  OPTION_USES_RX_ABI,
+  OPTION_CPU,
+  OPTION_DISALLOW_STRING_INSNS,
 };
 
 #define RX_SHORTOPTS ""
@@ -94,6 +98,10 @@ struct option md_longopts[] =
   {"relax", no_argument, NULL, OPTION_RELAX},
   {"mpid", no_argument, NULL, OPTION_PID},
   {"mint-register", required_argument, NULL, OPTION_INT_REGS},
+  {"mgcc-abi", no_argument, NULL, OPTION_USES_GCC_ABI},
+  {"mrx-abi", no_argument, NULL, OPTION_USES_RX_ABI},
+  {"mcpu", required_argument, NULL, OPTION_CPU},
+  {"mno-allow-string-insns", no_argument, NULL, OPTION_DISALLOW_STRING_INSNS},
   {NULL, no_argument, NULL, 0}
 };
 size_t md_longopts_size = sizeof (md_longopts);
@@ -143,6 +151,34 @@ md_parse_option (int c ATTRIBUTE_UNUSED, char * arg ATTRIBUTE_UNUSED)
     case OPTION_INT_REGS:
       rx_num_int_regs = atoi (optarg);
       return 1;
+
+    case OPTION_USES_GCC_ABI:
+      elf_flags &= ~ E_FLAG_RX_ABI;
+      return 1;
+
+    case OPTION_USES_RX_ABI:
+      elf_flags |= E_FLAG_RX_ABI;
+      return 1;
+
+    case OPTION_CPU:
+      if (strcasecmp (arg, "rx100") == 0)
+        rx_cpu = RX100;
+      else if (strcasecmp (arg, "rx200") == 0)
+	rx_cpu = RX200;
+      else if (strcasecmp (arg, "rx600") == 0)
+	rx_cpu = RX600;
+      else if (strcasecmp (arg, "rx610") == 0)
+	rx_cpu = RX610;
+      else
+	{
+	  as_warn (_("unrecognised RX CPU type %s"), arg);
+	  break;
+	}
+      return 1;
+
+    case OPTION_DISALLOW_STRING_INSNS:
+      elf_flags |= E_FLAG_RX_SINSNS_SET | E_FLAG_RX_SINSNS_NO;
+      return 1;
     }
   return 0;
 }
@@ -161,6 +197,8 @@ md_show_usage (FILE * stream)
   fprintf (stream, _("  --mrelax\n"));
   fprintf (stream, _("  --mpid\n"));
   fprintf (stream, _("  --mint-register=<value>\n"));
+  fprintf (stream, _("  --mcpu=<rx100|rx200|rx600|rx610>\n"));
+  fprintf (stream, _("  --mno-allow-string-insns"));
 }
 
 static void
@@ -212,7 +250,7 @@ rx_include (int ignore)
   char * path;
   char * filename;
   char * current_filename;
-  char * eof;
+  char * last_char;
   char * p;
   char * d;
   char * f;
@@ -231,17 +269,17 @@ rx_include (int ignore)
 
   /* Get the filename.  Spaces are allowed, NUL characters are not.  */
   filename = input_line_pointer;
-  eof = find_end_of_line (filename, FALSE);
-  input_line_pointer = eof;
+  last_char = find_end_of_line (filename, FALSE);
+  input_line_pointer = last_char;
 
-  while (eof >= filename && (* eof == ' ' || * eof == '\n'))
-    -- eof;
-  end_char = *(++ eof);
-  * eof = 0;
-  if (eof == filename)
+  while (last_char >= filename && (* last_char == ' ' || * last_char == '\n'))
+    -- last_char;
+  end_char = *(++ last_char);
+  * last_char = 0;
+  if (last_char == filename)
     {
       as_bad (_("no filename following .INCLUDE pseudo-op"));
-      * eof = end_char;
+      * last_char = end_char;
       return;
     }
 
@@ -353,7 +391,7 @@ rx_include (int ignore)
       input_scrub_insert_file (path);
     }
 
-  * eof = end_char;
+  * last_char = end_char;
 }
 
 static void
@@ -362,7 +400,7 @@ parse_rx_section (char * name)
   asection * sec;
   int   type;
   int   attr = SHF_ALLOC | SHF_EXECINSTR;
-  int   align = 2;
+  int   align = 1;
   char  end_char;
 
   do
@@ -390,9 +428,9 @@ parse_rx_section (char * name)
 		p++;
 	      switch (*p)
 		{
-		case '2': align = 2; break;
-		case '4': align = 4; break;
-		case '8': align = 8; break;
+		case '2': align = 1; break;
+		case '4': align = 2; break;
+		case '8': align = 3; break;
 		default:
 		  as_bad (_("unrecognised alignment value in .SECTION directive: %s"), p);
 		  ignore_rest_of_line ();
@@ -904,43 +942,50 @@ rx_field5s2 (expressionS exp)
 void
 rx_op (expressionS exp, int nbytes, int type)
 {
-  int v = 0;
+  offsetT v = 0;
 
   if ((exp.X_op == O_constant || exp.X_op == O_big)
       && type != RXREL_PCREL)
     {
-      if (exp.X_op == O_big && exp.X_add_number <= 0)
+      if (exp.X_op == O_big)
 	{
-	  LITTLENUM_TYPE w[2];
-	  char * ip = rx_bytes.ops + rx_bytes.n_ops;
+	  if (exp.X_add_number == -1)
+	    {
+	      LITTLENUM_TYPE w[2];
+	      char * ip = rx_bytes.ops + rx_bytes.n_ops;
 
-	  gen_to_words (w, F_PRECISION, 8);
+	      gen_to_words (w, F_PRECISION, 8);
 #if RX_OPCODE_BIG_ENDIAN
-	  ip[0] = w[0] >> 8;
-	  ip[1] = w[0];
-	  ip[2] = w[1] >> 8;
-	  ip[3] = w[1];
+	      ip[0] = w[0] >> 8;
+	      ip[1] = w[0];
+	      ip[2] = w[1] >> 8;
+	      ip[3] = w[1];
 #else
-	  ip[3] = w[0] >> 8;
-	  ip[2] = w[0];
-	  ip[1] = w[1] >> 8;
-	  ip[0] = w[1];
+	      ip[3] = w[0] >> 8;
+	      ip[2] = w[0];
+	      ip[1] = w[1] >> 8;
+	      ip[0] = w[1];
 #endif
-	  rx_bytes.n_ops += 4;
+	      rx_bytes.n_ops += 4;
+	      return;
+	    }
+
+	  v = ((generic_bignum[1] & LITTLENUM_MASK) << LITTLENUM_NUMBER_OF_BITS)
+	    |  (generic_bignum[0] & LITTLENUM_MASK);
+
 	}
       else
+	v = exp.X_add_number;
+
+      while (nbytes)
 	{
-	  v = exp.X_add_number;
-	  while (nbytes)
-	    {
 #if RX_OPCODE_BIG_ENDIAN
-	      OP ((v >> (8 * (nbytes - 1))) & 0xff);
+	  OP ((v >> (8 * (nbytes - 1))) & 0xff);
 #else
-	      OP (v & 0xff);
-	      v >>= 8;
+	  OP (v & 0xff);
+	  v >>= 8;
 #endif
-	      nbytes --;
-	    }
+	  nbytes --;
 	}
     }
   else
@@ -1203,7 +1248,7 @@ valueT
 md_section_align (segT segment, valueT size)
 {
   int align = bfd_get_section_alignment (stdoutput, segment);
-  return ((size + (1 << align) - 1) & (-1 << align));
+  return ((size + (1 << align) - 1) & -(1 << align));
 }
 
 				/* NOP - 1 cycle */
@@ -1218,8 +1263,8 @@ static unsigned char nop_4[] = { 0x76, 0x10, 0x01, 0x00 };
 static unsigned char nop_5[] = { 0x77, 0x10, 0x01, 0x00, 0x00 };
 				/* MUL #1,R0 - 1 cycle */
 static unsigned char nop_6[] = { 0x74, 0x10, 0x01, 0x00, 0x00, 0x00 };
-				/* BRA.S .+7 - 1 cycle */
-static unsigned char nop_7[] = { 0x0F, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03 };
+				/* MAX 0x80000000,R0 - 1 cycle */
+static unsigned char nop_7[] = { 0xFD, 0x70, 0x40, 0x00, 0x00, 0x00, 0x80 };
 
 static unsigned char *nops[] = { NULL, nop_1, nop_2, nop_3, nop_4, nop_5, nop_6, nop_7 };
 #define BIGGEST_NOP 7
@@ -2138,10 +2183,9 @@ void
 rx_cons_fix_new (fragS *	frag,
 		 int		where,
 		 int		size,
-		 expressionS *  exp)
+		 expressionS *  exp,
+		 bfd_reloc_code_real_type type)
 {
-  bfd_reloc_code_real_type type;
-
   switch (size)
     {
     case 1:
@@ -2396,7 +2440,7 @@ tc_gen_reloc (asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
     }
   else if (sec)
     is_opcode = sec->flags & SEC_CODE;
-      
+
   /* Certain BFD relocations cannot be translated directly into
      a single (non-Red Hat) RX relocation, but instead need
      multiple RX relocations - handle them here.  */
@@ -2591,6 +2635,14 @@ tc_gen_reloc (asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
     }
 
   return reloc;
+}
+
+void
+rx_note_string_insn_use (void)
+{
+  if ((elf_flags & E_FLAG_RX_SINSNS_MASK) == (E_FLAG_RX_SINSNS_SET | E_FLAG_RX_SINSNS_NO))
+    as_bad (_("Use of an RX string instruction detected in a file being assembled without string instruction support"));
+  elf_flags |= E_FLAG_RX_SINSNS_SET | E_FLAG_RX_SINSNS_YES;
 }
 
 /* Set the ELF specific flags.  */

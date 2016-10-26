@@ -1,5 +1,5 @@
 /* tc-or1k.h -- Header file for tc-or1k.c.
-   Copyright 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -56,8 +56,6 @@ extern long md_pcrel_from_section (struct fix *, segT);
 /* For 8 vs 16 vs 32 bit branch selection.  */
 extern const struct relax_type md_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_relax_table
-
-#define GAS_CGEN_PCREL_R_TYPE(r_type) gas_cgen_pcrel_r_type(r_type)
 
 #define elf_tc_final_processing or1k_elf_final_processing
 void or1k_elf_final_processing (void);

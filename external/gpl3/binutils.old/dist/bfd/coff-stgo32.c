@@ -1,6 +1,5 @@
 /* BFD back-end for Intel 386 COFF files (DJGPP variant with a stub).
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2005, 2006, 2007, 2009,
-   2011, 2012  Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    Written by Robert Hoehne.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -36,7 +35,7 @@
    To be compatible with any existing executables I have fixed this
    here and NOT in the DJGPP startup code.  */
 
-#define TARGET_SYM		go32stubbedcoff_vec
+#define TARGET_SYM		i386_coff_go32stubbed_vec
 #define TARGET_NAME		"coff-go32-exe"
 #define TARGET_UNDERSCORE	'_'
 #define COFF_GO32_EXE

@@ -37,7 +37,7 @@ test $gas_cv_assert_ok = yes || AC_DEFINE(BROKEN_ASSERT, 1, [assert broken?])
 ])dnl
 dnl
 dnl Since many Bourne shell implementations lack subroutines, use this
-dnl hack to simplify the code in configure.in.
+dnl hack to simplify the code in configure.ac.
 dnl GAS_UNIQ(listvar)
 AC_DEFUN([GAS_UNIQ],
 [_gas_uniq_list="[$]$1"

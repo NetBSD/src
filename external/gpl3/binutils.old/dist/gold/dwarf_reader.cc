@@ -1,6 +1,6 @@
 // dwarf_reader.cc -- parse dwarf2/3 debug information
 
-// Copyright 2007, 2008, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+// Copyright (C) 2007-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -23,12 +23,12 @@
 #include "gold.h"
 
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 #include "elfcpp_swap.h"
 #include "dwarf.h"
 #include "object.h"
-#include "parameters.h"
 #include "reloc.h"
 #include "dwarf_reader.h"
 #include "int_encoding.h"
@@ -90,34 +90,53 @@ Sized_elf_reloc_mapper<size, big_endian>::do_get_reloc_target(
 }
 
 static inline Elf_reloc_mapper*
-make_elf_reloc_mapper(Object* object, const unsigned char* symtab,
+make_elf_reloc_mapper(Relobj* object, const unsigned char* symtab,
 		      off_t symtab_size)
 {
-  switch (parameters->size_and_endianness())
+  if (object->elfsize() == 32)
     {
-#ifdef HAVE_TARGET_32_LITTLE
-      case Parameters::TARGET_32_LITTLE:
-	return new Sized_elf_reloc_mapper<32, false>(object, symtab,
-						     symtab_size);
-#endif
+      if (object->is_big_endian())
+        {
 #ifdef HAVE_TARGET_32_BIG
-      case Parameters::TARGET_32_BIG:
-	return new Sized_elf_reloc_mapper<32, true>(object, symtab,
-						    symtab_size);
+	  return new Sized_elf_reloc_mapper<32, true>(object, symtab,
+						      symtab_size);
+#else
+	  gold_unreachable();
 #endif
-#ifdef HAVE_TARGET_64_LITTLE
-      case Parameters::TARGET_64_LITTLE:
-	return new Sized_elf_reloc_mapper<64, false>(object, symtab,
-						     symtab_size);
+        }
+      else
+        {
+#ifdef HAVE_TARGET_32_LITTLE
+	  return new Sized_elf_reloc_mapper<32, false>(object, symtab,
+						       symtab_size);
+#else
+	  gold_unreachable();
 #endif
-#ifdef HAVE_TARGET_64_BIG
-      case Parameters::TARGET_64_BIG:
-	return new Sized_elf_reloc_mapper<64, true>(object, symtab,
-						    symtab_size);
-#endif
-      default:
-	gold_unreachable();
+        }
     }
+  else if (object->elfsize() == 64)
+    {
+      if (object->is_big_endian())
+        {
+#ifdef HAVE_TARGET_64_BIG
+	  return new Sized_elf_reloc_mapper<64, true>(object, symtab,
+						      symtab_size);
+#else
+	  gold_unreachable();
+#endif
+        }
+      else
+        {
+#ifdef HAVE_TARGET_64_LITTLE
+	  return new Sized_elf_reloc_mapper<64, false>(object, symtab,
+						       symtab_size);
+#else
+	  gold_unreachable();
+#endif
+        }
+    }
+  else
+    gold_unreachable();
 }
 
 // class Dwarf_abbrev_table
@@ -162,7 +181,7 @@ Dwarf_abbrev_table::do_read_abbrevs(
       for (unsigned int i = 1; i < object->shnum(); ++i)
 	{
 	  std::string name = object->section_name(i);
-	  if (name == ".debug_abbrev")
+	  if (name == ".debug_abbrev" || name == ".zdebug_abbrev")
 	    {
 	      abbrev_shndx = i;
 	      // Correct the offset.  For incremental update links, we have a
@@ -299,7 +318,7 @@ Dwarf_ranges_table::read_ranges_table(
       for (unsigned int i = 1; i < object->shnum(); ++i)
 	{
 	  std::string name = object->section_name(i);
-	  if (name == ".debug_ranges")
+	  if (name == ".debug_ranges" || name == ".zdebug_ranges")
 	    {
 	      ranges_shndx = i;
 	      this->output_section_offset_ = object->output_section_offset(i);
@@ -356,6 +375,7 @@ Dwarf_ranges_table::read_ranges_table(
   this->ranges_reloc_mapper_ = make_elf_reloc_mapper(object, symtab,
 						     symtab_size);
   this->ranges_reloc_mapper_->initialize(reloc_shndx, reloc_type);
+  this->reloc_type_ = reloc_type;
 
   return true;
 }
@@ -394,13 +414,17 @@ Dwarf_ranges_table::read_range_list(
       // Read the raw contents of the section.
       if (addr_size == 4)
 	{
-	  start = read_from_pointer<32>(this->ranges_buffer_ + offset);
-	  end = read_from_pointer<32>(this->ranges_buffer_ + offset + 4);
+	  start = this->dwinfo_->read_from_pointer<32>(this->ranges_buffer_
+						       + offset);
+	  end = this->dwinfo_->read_from_pointer<32>(this->ranges_buffer_
+						     + offset + 4);
 	}
       else
 	{
-	  start = read_from_pointer<64>(this->ranges_buffer_ + offset);
-	  end = read_from_pointer<64>(this->ranges_buffer_ + offset + 8);
+	  start = this->dwinfo_->read_from_pointer<64>(this->ranges_buffer_
+						       + offset);
+	  end = this->dwinfo_->read_from_pointer<64>(this->ranges_buffer_
+						     + offset + 8);
 	}
 
       // Check for relocations and adjust the values.
@@ -408,11 +432,8 @@ Dwarf_ranges_table::read_range_list(
       unsigned int shndx2 = 0;
       if (this->ranges_reloc_mapper_ != NULL)
         {
-	  shndx1 =
-	      this->ranges_reloc_mapper_->get_reloc_target(offset, &start);
-	  shndx2 =
-	      this->ranges_reloc_mapper_->get_reloc_target(offset + addr_size,
-							   &end);
+	  shndx1 = this->lookup_reloc(offset, &start);
+	  shndx2 = this->lookup_reloc(offset + addr_size, &end);
         }
 
       // End of list is marked by a pair of zeroes.
@@ -438,34 +459,63 @@ Dwarf_ranges_table::read_range_list(
   return ranges;
 }
 
+// Look for a relocation at offset OFF in the range table,
+// and return the section index and offset of the target.
+
+unsigned int
+Dwarf_ranges_table::lookup_reloc(off_t off, off_t* target_off)
+{
+  off_t value;
+  unsigned int shndx =
+      this->ranges_reloc_mapper_->get_reloc_target(off, &value);
+  if (shndx == 0)
+    return 0;
+  if (this->reloc_type_ == elfcpp::SHT_REL)
+    *target_off += value;
+  else
+    *target_off = value;
+  return shndx;
+}
+
 // class Dwarf_pubnames_table
 
-// Read the pubnames section SHNDX from the object file.
+// Read the pubnames section from the object file.
 
 bool
-Dwarf_pubnames_table::read_section(Relobj* object, unsigned int shndx)
+Dwarf_pubnames_table::read_section(Relobj* object, const unsigned char* symtab,
+                                   off_t symtab_size)
 {
   section_size_type buffer_size;
+  unsigned int shndx = 0;
+  const char* name = this->is_pubtypes_ ? "pubtypes" : "pubnames";
+  const char* gnu_name = (this->is_pubtypes_
+			  ? "gnu_pubtypes"
+			  : "gnu_pubnames");
 
-  // If we don't have relocations, shndx will be 0, and
-  // we'll have to hunt for the .debug_pubnames/pubtypes section.
-  if (shndx == 0)
+  for (unsigned int i = 1; i < object->shnum(); ++i)
     {
-      const char* name = (this->is_pubtypes_
-			  ? ".debug_pubtypes"
-			  : ".debug_pubnames");
-      for (unsigned int i = 1; i < object->shnum(); ++i)
-	{
-	  if (object->section_name(i) == name)
-	    {
-	      shndx = i;
-	      this->output_section_offset_ = object->output_section_offset(i);
-	      break;
-	    }
-	}
-      if (shndx == 0)
-	return false;
+      std::string section_name = object->section_name(i);
+      const char* section_name_suffix = section_name.c_str();
+      if (is_prefix_of(".debug_", section_name_suffix))
+	section_name_suffix += 7;
+      else if (is_prefix_of(".zdebug_", section_name_suffix))
+	section_name_suffix += 8;
+      else
+	continue;
+      if (strcmp(section_name_suffix, name) == 0)
+        {
+          shndx = i;
+          break;
+        }
+      else if (strcmp(section_name_suffix, gnu_name) == 0)
+        {
+          shndx = i;
+          this->is_gnu_style_ = true;
+          break;
+        }
     }
+  if (shndx == 0)
+    return false;
 
   this->buffer_ = object->decompressed_section_contents(shndx,
 							&buffer_size,
@@ -473,6 +523,30 @@ Dwarf_pubnames_table::read_section(Relobj* object, unsigned int shndx)
   if (this->buffer_ == NULL)
     return false;
   this->buffer_end_ = this->buffer_ + buffer_size;
+
+  // For incremental objects, we have no relocations.
+  if (object->is_incremental())
+    return true;
+
+  // Find the relocation section
+  unsigned int reloc_shndx = 0;
+  unsigned int reloc_type = 0;
+  for (unsigned int i = 0; i < object->shnum(); ++i)
+    {
+      reloc_type = object->section_type(i);
+      if ((reloc_type == elfcpp::SHT_REL
+	   || reloc_type == elfcpp::SHT_RELA)
+	  && object->section_info(i) == shndx)
+	{
+	  reloc_shndx = i;
+	  break;
+	}
+    }
+
+  this->reloc_mapper_ = make_elf_reloc_mapper(object, symtab, symtab_size);
+  this->reloc_mapper_->initialize(reloc_shndx, reloc_type);
+  this->reloc_type_ = reloc_type;
+
   return true;
 }
 
@@ -481,10 +555,8 @@ Dwarf_pubnames_table::read_section(Relobj* object, unsigned int shndx)
 bool
 Dwarf_pubnames_table::read_header(off_t offset)
 {
-  // Correct the offset.  For incremental update links, we have a
-  // relocated offset that is relative to the output section, but
-  // here we need an offset relative to the input section.
-  offset -= this->output_section_offset_;
+  // Make sure we have actually read the section.
+  gold_assert(this->buffer_ != NULL);
 
   if (offset < 0 || offset + 14 >= this->buffer_end_ - this->buffer_)
     return false;
@@ -492,22 +564,36 @@ Dwarf_pubnames_table::read_header(off_t offset)
   const unsigned char* pinfo = this->buffer_ + offset;
 
   // Read the unit_length field.
-  uint32_t unit_length = read_from_pointer<32>(pinfo);
+  uint64_t unit_length = this->dwinfo_->read_from_pointer<32>(pinfo);
   pinfo += 4;
   if (unit_length == 0xffffffff)
     {
-      unit_length = read_from_pointer<64>(pinfo);
+      unit_length = this->dwinfo_->read_from_pointer<64>(pinfo);
+      this->unit_length_ = unit_length + 12;
       pinfo += 8;
       this->offset_size_ = 8;
     }
   else
-    this->offset_size_ = 4;
+    {
+      this->unit_length_ = unit_length + 4;
+      this->offset_size_ = 4;
+    }
+  this->end_of_table_ = pinfo + unit_length;
+
+  // If unit_length is too big, maybe we should reject the whole table,
+  // but in cases we know about, it seems OK to assume that the table
+  // is valid through the actual end of the section.
+  if (this->end_of_table_ > this->buffer_end_)
+    this->end_of_table_ = this->buffer_end_;
 
   // Check the version.
-  unsigned int version = read_from_pointer<16>(pinfo);
+  unsigned int version = this->dwinfo_->read_from_pointer<16>(pinfo);
   pinfo += 2;
   if (version != 2)
     return false;
+
+  this->reloc_mapper_->get_reloc_target(pinfo - this->buffer_,
+                                        &this->cu_offset_);
 
   // Skip the debug_info_offset and debug_info_size fields.
   pinfo += 2 * this->offset_size_;
@@ -522,19 +608,26 @@ Dwarf_pubnames_table::read_header(off_t offset)
 // Read the next name from the set.
 
 const char*
-Dwarf_pubnames_table::next_name()
+Dwarf_pubnames_table::next_name(uint8_t* flag_byte)
 {
   const unsigned char* pinfo = this->pinfo_;
 
-  // Read the offset within the CU.  If this is zero, we have reached
-  // the end of the list.
-  uint32_t offset;
-  if (this->offset_size_ == 4)
-    offset = read_from_pointer<32>(&pinfo);
-  else
-    offset = read_from_pointer<64>(&pinfo);
-  if (offset == 0)
+  // Check for end of list.  The table should be terminated by an
+  // entry containing nothing but a DIE offset of 0.
+  if (pinfo + this->offset_size_ >= this->end_of_table_)
     return NULL;
+
+  // Skip the offset within the CU.  If this is zero, but we're not
+  // at the end of the table, then we have a real pubnames entry
+  // whose DIE offset is 0 (likely to be a GCC bug).  Since we
+  // don't actually use the DIE offset in building .gdb_index,
+  // it's harmless.
+  pinfo += this->offset_size_;
+
+  if (this->is_gnu_style_)
+    *flag_byte = *pinfo++;
+  else
+    *flag_byte = 0;
 
   // Return a pointer to the string at the current location,
   // and advance the pointer to the next entry.
@@ -620,9 +713,9 @@ Dwarf_die::read_attributes()
 	    {
 	      off_t str_off;
 	      if (this->dwinfo_->offset_size() == 4)
-		str_off = read_from_pointer<32>(&pattr);
+		str_off = this->dwinfo_->read_from_pointer<32>(&pattr);
 	      else
-		str_off = read_from_pointer<64>(&pattr);
+		str_off = this->dwinfo_->read_from_pointer<64>(&pattr);
 	      unsigned int shndx =
 		  this->dwinfo_->lookup_reloc(attr_off, &str_off);
 	      attr_value.aux.shndx = shndx;
@@ -633,9 +726,9 @@ Dwarf_die::read_attributes()
 	    {
 	      off_t sec_off;
 	      if (this->dwinfo_->offset_size() == 4)
-		sec_off = read_from_pointer<32>(&pattr);
+		sec_off = this->dwinfo_->read_from_pointer<32>(&pattr);
 	      else
-		sec_off = read_from_pointer<64>(&pattr);
+		sec_off = this->dwinfo_->read_from_pointer<64>(&pattr);
 	      unsigned int shndx =
 		  this->dwinfo_->lookup_reloc(attr_off, &sec_off);
 	      attr_value.aux.shndx = shndx;
@@ -648,9 +741,9 @@ Dwarf_die::read_attributes()
 	    {
 	      off_t sec_off;
 	      if (this->dwinfo_->address_size() == 4)
-		sec_off = read_from_pointer<32>(&pattr);
+		sec_off = this->dwinfo_->read_from_pointer<32>(&pattr);
 	      else
-		sec_off = read_from_pointer<64>(&pattr);
+		sec_off = this->dwinfo_->read_from_pointer<64>(&pattr);
 	      unsigned int shndx =
 		  this->dwinfo_->lookup_reloc(attr_off, &sec_off);
 	      attr_value.aux.shndx = shndx;
@@ -664,12 +757,14 @@ Dwarf_die::read_attributes()
 	    pattr += attr_value.aux.blocklen;
 	    break;
 	  case elfcpp::DW_FORM_block2:
-	    attr_value.aux.blocklen = read_from_pointer<16>(&pattr);
+	    attr_value.aux.blocklen =
+		this->dwinfo_->read_from_pointer<16>(&pattr);
 	    attr_value.val.blockval = pattr;
 	    pattr += attr_value.aux.blocklen;
 	    break;
 	  case elfcpp::DW_FORM_block4:
-	    attr_value.aux.blocklen = read_from_pointer<32>(&pattr);
+	    attr_value.aux.blocklen =
+		this->dwinfo_->read_from_pointer<32>(&pattr);
 	    attr_value.val.blockval = pattr;
 	    pattr += attr_value.aux.blocklen;
 	    break;
@@ -688,16 +783,18 @@ Dwarf_die::read_attributes()
 	    ref_form = true;
 	    break;
 	  case elfcpp::DW_FORM_data2:
-	    attr_value.val.intval = read_from_pointer<16>(&pattr);
+	    attr_value.val.intval =
+		this->dwinfo_->read_from_pointer<16>(&pattr);
 	    break;
 	  case elfcpp::DW_FORM_ref2:
-	    attr_value.val.refval = read_from_pointer<16>(&pattr);
+	    attr_value.val.refval =
+		this->dwinfo_->read_from_pointer<16>(&pattr);
 	    ref_form = true;
 	    break;
 	  case elfcpp::DW_FORM_data4:
 	    {
 	      off_t sec_off;
-	      sec_off = read_from_pointer<32>(&pattr);
+	      sec_off = this->dwinfo_->read_from_pointer<32>(&pattr);
 	      unsigned int shndx =
 		  this->dwinfo_->lookup_reloc(attr_off, &sec_off);
 	      attr_value.aux.shndx = shndx;
@@ -707,7 +804,7 @@ Dwarf_die::read_attributes()
 	  case elfcpp::DW_FORM_ref4:
 	    {
 	      off_t sec_off;
-	      sec_off = read_from_pointer<32>(&pattr);
+	      sec_off = this->dwinfo_->read_from_pointer<32>(&pattr);
 	      unsigned int shndx =
 		  this->dwinfo_->lookup_reloc(attr_off, &sec_off);
 	      attr_value.aux.shndx = shndx;
@@ -718,7 +815,7 @@ Dwarf_die::read_attributes()
 	  case elfcpp::DW_FORM_data8:
 	    {
 	      off_t sec_off;
-	      sec_off = read_from_pointer<64>(&pattr);
+	      sec_off = this->dwinfo_->read_from_pointer<64>(&pattr);
 	      unsigned int shndx =
 		  this->dwinfo_->lookup_reloc(attr_off, &sec_off);
 	      attr_value.aux.shndx = shndx;
@@ -726,12 +823,13 @@ Dwarf_die::read_attributes()
 	      break;
 	    }
 	  case elfcpp::DW_FORM_ref_sig8:
-	    attr_value.val.uintval = read_from_pointer<64>(&pattr);
+	    attr_value.val.uintval =
+		this->dwinfo_->read_from_pointer<64>(&pattr);
 	    break;
 	  case elfcpp::DW_FORM_ref8:
 	    {
 	      off_t sec_off;
-	      sec_off = read_from_pointer<64>(&pattr);
+	      sec_off = this->dwinfo_->read_from_pointer<64>(&pattr);
 	      unsigned int shndx =
 		  this->dwinfo_->lookup_reloc(attr_off, &sec_off);
 	      attr_value.aux.shndx = shndx;
@@ -745,6 +843,8 @@ Dwarf_die::read_attributes()
 	    pattr += len;
 	    break;
 	  case elfcpp::DW_FORM_udata:
+	  case elfcpp::DW_FORM_GNU_addr_index:
+	  case elfcpp::DW_FORM_GNU_str_index:
 	    attr_value.val.uintval = read_unsigned_LEB_128(pattr, &len);
 	    pattr += len;
 	    break;
@@ -856,14 +956,14 @@ Dwarf_die::skip_attributes()
 	  case elfcpp::DW_FORM_block2:
 	    {
 	      uint16_t block_size;
-	      block_size = read_from_pointer<16>(&pattr);
+	      block_size = this->dwinfo_->read_from_pointer<16>(&pattr);
 	      pattr += block_size;
 	      break;
 	    }
 	  case elfcpp::DW_FORM_block4:
 	    {
 	      uint32_t block_size;
-	      block_size = read_from_pointer<32>(&pattr);
+	      block_size = this->dwinfo_->read_from_pointer<32>(&pattr);
 	      pattr += block_size;
 	      break;
 	    }
@@ -895,6 +995,8 @@ Dwarf_die::skip_attributes()
 	    break;
 	  case elfcpp::DW_FORM_ref_udata:
 	  case elfcpp::DW_FORM_udata:
+	  case elfcpp::DW_FORM_GNU_addr_index:
+	  case elfcpp::DW_FORM_GNU_str_index:
 	    read_unsigned_LEB_128(pattr, &len);
 	    pattr += len;
 	    break;
@@ -1110,21 +1212,6 @@ Dwarf_die::sibling_offset()
 
 // class Dwarf_info_reader
 
-// Check that the pointer P is within the current compilation unit.
-
-inline bool
-Dwarf_info_reader::check_buffer(const unsigned char* p) const
-{
-  if (p > this->buffer_ + this->cu_offset_ + this->cu_length_)
-    {
-      gold_warning(_("%s: corrupt debug info in %s"),
-		   this->object_->name().c_str(),
-		   this->object_->section_name(this->shndx_).c_str());
-      return false;
-    }
-  return true;
-}
-
 // Begin parsing the debug info.  This calls visit_compilation_unit()
 // or visit_type_unit() for each compilation or type unit found in the
 // section, and visit_die() for each top-level DIE.
@@ -1132,30 +1219,21 @@ Dwarf_info_reader::check_buffer(const unsigned char* p) const
 void
 Dwarf_info_reader::parse()
 {
-  switch (parameters->size_and_endianness())
+  if (this->object_->is_big_endian())
     {
-#ifdef HAVE_TARGET_32_LITTLE
-      case Parameters::TARGET_32_LITTLE:
-        this->do_parse<false>();
-        break;
+#if defined(HAVE_TARGET_32_BIG) || defined(HAVE_TARGET_64_BIG)
+      this->do_parse<true>();
+#else
+      gold_unreachable();
 #endif
-#ifdef HAVE_TARGET_32_BIG
-      case Parameters::TARGET_32_BIG:
-        this->do_parse<true>();
-        break;
+    }
+  else
+    {
+#if defined(HAVE_TARGET_32_LITTLE) || defined(HAVE_TARGET_64_LITTLE)
+      this->do_parse<false>();
+#else
+      gold_unreachable();
 #endif
-#ifdef HAVE_TARGET_64_LITTLE
-      case Parameters::TARGET_64_LITTLE:
-        this->do_parse<false>();
-        break;
-#endif
-#ifdef HAVE_TARGET_64_BIG
-      case Parameters::TARGET_64_BIG:
-        this->do_parse<true>();
-        break;
-#endif
-      default:
-	gold_unreachable();
     }
 }
 
@@ -1182,7 +1260,7 @@ Dwarf_info_reader::do_parse()
   this->reloc_mapper_->initialize(this->reloc_shndx_, this->reloc_type_);
 
   // Loop over compilation units (or type units).
-  unsigned int abbrev_shndx = 0;
+  unsigned int abbrev_shndx = this->abbrev_shndx_;
   off_t abbrev_offset = 0;
   const unsigned char* pinfo = this->buffer_;
   while (pinfo < this->buffer_end_)
@@ -1278,7 +1356,8 @@ Dwarf_info_reader::do_parse()
 	  // Visit the CU or TU.
 	  if (this->is_type_unit_)
 	    this->visit_type_unit(section_offset + this->cu_offset_,
-				  type_offset, signature, &root_die);
+				  cu_end - cu_start, type_offset, signature,
+				  &root_die);
 	  else
 	    this->visit_compilation_unit(section_offset + this->cu_offset_,
 					 cu_end - cu_start, &root_die);
@@ -1309,7 +1388,7 @@ Dwarf_info_reader::do_read_string_table(unsigned int string_shndx)
       for (unsigned int i = 1; i < this->object_->shnum(); ++i)
 	{
 	  std::string name = object->section_name(i);
-	  if (name == ".debug_str")
+	  if (name == ".debug_str" || name == ".zdebug_str")
 	    {
 	      string_shndx = i;
 	      this->string_output_section_offset_ =
@@ -1337,6 +1416,33 @@ Dwarf_info_reader::do_read_string_table(unsigned int string_shndx)
   this->string_buffer_end_ = this->string_buffer_ + buffer_size;
   this->string_shndx_ = string_shndx;
   return true;
+}
+
+// Read a possibly unaligned integer of SIZE.
+template <int valsize>
+inline typename elfcpp::Valtype_base<valsize>::Valtype
+Dwarf_info_reader::read_from_pointer(const unsigned char* source)
+{
+  typename elfcpp::Valtype_base<valsize>::Valtype return_value;
+  if (this->object_->is_big_endian())
+    return_value = elfcpp::Swap_unaligned<valsize, true>::readval(source);
+  else
+    return_value = elfcpp::Swap_unaligned<valsize, false>::readval(source);
+  return return_value;
+}
+
+// Read a possibly unaligned integer of SIZE.  Update SOURCE after read.
+template <int valsize>
+inline typename elfcpp::Valtype_base<valsize>::Valtype
+Dwarf_info_reader::read_from_pointer(const unsigned char** source)
+{
+  typename elfcpp::Valtype_base<valsize>::Valtype return_value;
+  if (this->object_->is_big_endian())
+    return_value = elfcpp::Swap_unaligned<valsize, true>::readval(*source);
+  else
+    return_value = elfcpp::Swap_unaligned<valsize, false>::readval(*source);
+  *source += valsize / 8;
+  return return_value;
 }
 
 // Look for a relocation at offset ATTR_OFF in the dwarf info,
@@ -1394,8 +1500,18 @@ Dwarf_info_reader::visit_compilation_unit(off_t, off_t, Dwarf_die*)
 // Process a type unit and parse its child DIE.
 
 void
-Dwarf_info_reader::visit_type_unit(off_t, off_t, uint64_t, Dwarf_die*)
+Dwarf_info_reader::visit_type_unit(off_t, off_t, off_t, uint64_t, Dwarf_die*)
 {
+}
+
+// Print a warning about a corrupt debug section.
+
+void
+Dwarf_info_reader::warn_corrupt_debug_section() const
+{
+  gold_warning(_("%s: corrupt debug info in %s"),
+	       this->object_->name().c_str(),
+	       this->object_->section_name(this->shndx_).c_str());
 }
 
 // class Sized_dwarf_line_info
@@ -2089,13 +2205,33 @@ Sized_dwarf_line_info<size, big_endian>::do_addr2line(
     return "";
 
   std::string result = this->format_file_lineno(*it);
+  gold_debug(DEBUG_LOCATION, "do_addr2line: canonical result: %s",
+	     result.c_str());
   if (other_lines != NULL)
-    for (++it; it != offsets->end() && it->offset == offset; ++it)
-      {
-        if (it->line_num == -1)
-          continue;  // The end of a previous function.
-        other_lines->push_back(this->format_file_lineno(*it));
-      }
+    {
+      unsigned int last_file_num = it->file_num;
+      int last_line_num = it->line_num;
+      // Return up to 4 more locations from the beginning of the function
+      // for fuzzy matching.
+      for (++it; it != offsets->end(); ++it)
+	{
+	  if (it->offset == offset && it->line_num == -1)
+	    continue;  // The end of a previous function.
+	  if (it->line_num == -1)
+	    break;  // The end of the current function.
+	  if (it->file_num != last_file_num || it->line_num != last_line_num)
+	    {
+	      other_lines->push_back(this->format_file_lineno(*it));
+	      gold_debug(DEBUG_LOCATION, "do_addr2line: other: %s",
+			 other_lines->back().c_str());
+	      last_file_num = it->file_num;
+	      last_line_num = it->line_num;
+	    }
+	  if (it->offset > offset && other_lines->size() >= 4)
+	    break;
+	}
+    }
+
   return result;
 }
 

@@ -1,7 +1,5 @@
 /* SPARC-specific support for 64-bit ELF
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -99,7 +97,9 @@ elf64_sparc_slurp_one_reloc_table (bfd *abfd, asection *asect,
       else
 	relent->address = rela.r_offset - asect->vma;
 
-      if (ELF64_R_SYM (rela.r_info) == STN_UNDEF)
+      if (ELF64_R_SYM (rela.r_info) == STN_UNDEF
+	  /* PR 17512: file: 996185f8.  */
+	  || ELF64_R_SYM (rela.r_info) > bfd_get_symcount (abfd))
 	relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
       else
 	{
@@ -426,10 +426,11 @@ elf64_sparc_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 {
   static const char *const stt_types[] = { "NOTYPE", "OBJECT", "FUNCTION" };
 
-  if ((abfd->flags & DYNAMIC) == 0
-      && (ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
-	  || ELF_ST_BIND (sym->st_info) == STB_GNU_UNIQUE))
-    elf_tdata (info->output_bfd)->has_gnu_symbols = TRUE;
+  if ((ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
+       || ELF_ST_BIND (sym->st_info) == STB_GNU_UNIQUE)
+      && (abfd->flags & DYNAMIC) == 0
+      && bfd_get_flavour (info->output_bfd) == bfd_target_elf_flavour)
+    elf_tdata (info->output_bfd)->has_gnu_symbols = elf_gnu_symbol_any;
 
   if (ELF_ST_TYPE (sym->st_info) == STT_REGISTER)
     {
@@ -765,7 +766,9 @@ elf64_sparc_print_symbol_all (bfd *abfd ATTRIBUTE_UNUSED, void * filep,
 }
 
 static enum elf_reloc_type_class
-elf64_sparc_reloc_type_class (const Elf_Internal_Rela *rela)
+elf64_sparc_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			      const asection *rel_sec ATTRIBUTE_UNUSED,
+			      const Elf_Internal_Rela *rela)
 {
   switch ((int) ELF64_R_TYPE (rela->r_info))
     {
@@ -821,7 +824,7 @@ const struct elf_size_info elf64_sparc_size_info =
   bfd_elf64_swap_reloca_out
 };
 
-#define TARGET_BIG_SYM	bfd_elf64_sparc_vec
+#define TARGET_BIG_SYM	sparc_elf64_vec
 #define TARGET_BIG_NAME	"elf64-sparc"
 #define ELF_ARCH	bfd_arch_sparc
 #define ELF_MAXPAGESIZE 0x100000
@@ -864,8 +867,6 @@ const struct elf_size_info elf64_sparc_size_info =
   _bfd_sparc_elf_plt_sym_val
 #define bfd_elf64_bfd_link_hash_table_create \
   _bfd_sparc_elf_link_hash_table_create
-#define bfd_elf64_bfd_link_hash_table_free \
-  _bfd_sparc_elf_link_hash_table_free
 #define elf_info_to_howto \
   _bfd_sparc_elf_info_to_howto
 #define elf_backend_copy_indirect_symbol \
@@ -920,13 +921,11 @@ const struct elf_size_info elf64_sparc_size_info =
 /* Section 5.2.4 of the ABI specifies a 256-byte boundary for the table.  */
 #define elf_backend_plt_alignment 8
 
-#define elf_backend_post_process_headers	_bfd_elf_set_osabi
-
 #include "elf64-target.h"
 
 /* FreeBSD support */
 #undef  TARGET_BIG_SYM
-#define TARGET_BIG_SYM bfd_elf64_sparc_freebsd_vec
+#define TARGET_BIG_SYM sparc_elf64_fbsd_vec
 #undef  TARGET_BIG_NAME
 #define TARGET_BIG_NAME "elf64-sparc-freebsd"
 #undef	ELF_OSABI
@@ -940,7 +939,7 @@ const struct elf_size_info elf64_sparc_size_info =
 /* Solaris 2.  */
 
 #undef	TARGET_BIG_SYM
-#define	TARGET_BIG_SYM				bfd_elf64_sparc_sol2_vec
+#define	TARGET_BIG_SYM				sparc_elf64_sol2_vec
 #undef	TARGET_BIG_NAME
 #define	TARGET_BIG_NAME				"elf64-sparc-sol2"
 

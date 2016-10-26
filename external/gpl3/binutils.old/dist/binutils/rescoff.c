@@ -1,6 +1,5 @@
 /* rescoff.c -- read and write resources in Windows COFF files.
-   Copyright 1997, 1998, 1999, 2000, 2003, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -143,8 +142,14 @@ read_coff_rsrc (const char *filename, const char *target)
 
   set_windres_bfd (&wrbfd, abfd, sec, WR_KIND_BFD);
   size = bfd_section_size (abfd, sec);
-  data = (bfd_byte *) res_alloc (size);
+  /* PR 17512: file: 1b25ba5d
+     The call to get_file_size here may be expensive
+     but there is no other way to determine if the section size
+     is reasonable.  */
+  if (size > (bfd_size_type) get_file_size (filename))
+    fatal (_("%s: .rsrc section is bigger than the file!"), filename);
 
+  data = (bfd_byte *) res_alloc (size);
   get_windres_bfd_content (&wrbfd, data, 0, size);
 
   flaginfo.filename = filename;
@@ -159,7 +164,7 @@ read_coff_rsrc (const char *filename, const char *target)
      this will have to be cleaned up.  */
 
   ret = read_coff_res_dir (&wrbfd, data, &flaginfo, (const rc_res_id *) NULL, 0);
-  
+
   bfd_close (abfd);
 
   return ret;
@@ -185,6 +190,13 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
   int name_count, id_count, i;
   rc_res_entry **pp;
   const struct extern_res_entry *ere;
+
+  /* PR 17512: file: 09d80f53.
+     Whilst in theory resources can nest to any level, in practice
+     Microsoft only defines 3 levels.  Corrupt files however might
+     claim to use more.  */
+  if (level > 4)
+    overrun (flaginfo, _("Resources nest too deep"));
 
   if ((size_t) (flaginfo->data_end - data) < sizeof (struct extern_res_directory))
     overrun (flaginfo, _("directory"));
@@ -235,7 +247,12 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
       re->id.u.n.length = length;
       re->id.u.n.name = (unichar *) res_alloc (length * sizeof (unichar));
       for (j = 0; j < length; j++)
-	re->id.u.n.name[j] = windres_get_16 (wrbfd, ers + j * 2 + 2, 2);
+	{
+	  /* PR 17512: file: 05dc4a16.  */
+	  if (length < 0 || ers >= (bfd_byte *) ere || ers + j * 2 + 4 >= (bfd_byte *) ere)
+	    overrun (flaginfo, _("resource name"));
+	  re->id.u.n.name[j] = windres_get_16 (wrbfd, ers + j * 2 + 2, 2);
+	}
 
       if (level == 0)
 	type = &re->id;
@@ -501,22 +518,22 @@ write_coff_file (const char *filename, const char *target,
      know the various offsets we will need.  */
   coff_bin_sizes (resources, &cwi);
 
-  /* Force the directory strings to be 32 bit aligned.  Every other
-     structure is 32 bit aligned anyhow.  */
-  cwi.dirstrsize = (cwi.dirstrsize + 3) &~ 3;
+  /* Force the directory strings to be 64 bit aligned.  Every other
+     structure is 64 bit aligned anyhow.  */
+  cwi.dirstrsize = (cwi.dirstrsize + 7) & ~7;
 
   /* Actually convert the resources to binary.  */
   coff_to_bin (resources, &cwi);
 
-  /* Add another 2 bytes to the directory strings if needed for
+  /* Add another few bytes to the directory strings if needed for
      alignment.  */
-  if ((cwi.dirstrs.length & 3) != 0)
+  if ((cwi.dirstrs.length & 7) != 0)
     {
+      rc_uint_type pad = 8 - (cwi.dirstrs.length & 7);
       bfd_byte *ex;
 
-      ex = coff_alloc (&cwi.dirstrs, 2);
-      ex[0] = 0;
-      ex[1] = 0;
+      ex = coff_alloc (& cwi.dirstrs, pad);
+      memset (ex, 0, pad);
     }
 
   /* Make sure that the data we built came out to the same size as we
@@ -741,10 +758,10 @@ coff_res_to_bin (const rc_res_resource *res, struct coff_write_info *cwi)
     cwi->resources.last->next = d;
 
   cwi->resources.last = d;
-  cwi->resources.length += (d->length + 3) & ~3;
+  cwi->resources.length += (d->length + 7) & ~7;
 
   windres_put_32 (cwi->wrbfd, erd->size, d->length);
 
-  /* Force the next resource to have 32 bit alignment.  */
-  d->length = (d->length + 3) & ~3;
+  /* Force the next resource to have 64 bit alignment.  */
+  d->length = (d->length + 7) & ~7;
 }

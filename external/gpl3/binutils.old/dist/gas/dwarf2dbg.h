@@ -1,6 +1,5 @@
 /* dwarf2dbg.h - DWARF2 debug support
-   Copyright 1999, 2000, 2002, 2003, 2005, 2006, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -60,7 +59,7 @@ extern void dwarf2_directive_loc_mark_labels (int dummy);
    returned.  */
 extern void dwarf2_where (struct dwarf2_line_info *l);
 
-/* A hook to allow the target backend to inform the line number state 
+/* A hook to allow the target backend to inform the line number state
    machine of isa changes when assembler debug info is enabled.  */
 extern void dwarf2_set_isa (unsigned int isa);
 
@@ -74,6 +73,8 @@ extern void dwarf2_gen_line_info (addressT addr, struct dwarf2_line_info *l);
 /* Must be called for each generated instruction.  */
 extern void dwarf2_emit_insn (int);
 
+void dwarf2_move_insn (int);
+
 /* Reset the state of the line number information to reflect that
    it has been used.  */
 extern void dwarf2_consume_line_info (void);
@@ -86,7 +87,7 @@ extern void dwarf2_emit_label (symbolS *);
 extern bfd_boolean dwarf2_loc_directive_seen;
 
 /* True when we're supposed to set the basic block mark whenever a label
-   is seen.  Unless the target is doing Something Weird, just call 
+   is seen.  Unless the target is doing Something Weird, just call
    dwarf2_emit_label.  */
 extern bfd_boolean dwarf2_loc_mark_labels;
 

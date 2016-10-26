@@ -58,15 +58,17 @@ responsibility among the other maintainers.
 
   ALPHA            Richard Henderson <rth@redhat.com>
   AARCH64	   Richard Earnshaw <rearnsha@arm.com>
+  AARCH64	   Marcus Shawcroft <marcus.shawcroft@arm.com>
   ARM		   Nick Clifton <nickc@redhat.com>
   ARM		   Richard Earnshaw <rearnsha@arm.com>
   ARM		   Paul Brook <paul@codesourcery.com>
+  ARM		   Ramana Radhakrishnan <ramana.radhakrishnan@arm.com>
   ARM (Symbian)	   Mark Mitchell <mark@codesourcery.com>
-  AVR		   Denis Chertykov <denisc@overta.ru>
+  AVR		   Denis Chertykov <chertykov@gmail.com>
   AVR		   Marek Michalkiewicz <marekm@amelek.gda.pl>
   BFIN		   Jie Zhang <jzhang918@gmail.com>
   BFIN		   Bernd Schmidt <bernd.schmidt@analog.com>
-  BFIN		   Mike Frysinger <michael.frysinger@analog.com>
+  BFIN		   Mike Frysinger <vapier@gentoo.org>
   BUILD SYSTEM	   Daniel Jacobowitz <drow@false.org>
   CR16		   M R Swami Reddy <MR.Swami.Reddy@nsc.com>
   CRIS		   Hans-Peter Nilsson <hp@axis.com>
@@ -78,6 +80,8 @@ responsibility among the other maintainers.
   FR30		   Dave Brolley <brolley@redhat.com>
   FRV		   Dave Brolley <brolley@redhat.com>
   FRV		   Alexandre Oliva <aoliva@redhat.com>
+  GOLD		   Ian Lance Taylor <iant@google.com>
+  GOLD		   Cary Coutant <ccoutant@google.com>
   H8300		   Prafulla Thakare <prafulla.thakare@kpitcummins.com>
   HPPA		   Dave Anglin <dave.anglin@nrc.ca>
   HPPA elf32	   Alan Modra <amodra@gmail.com>
@@ -92,12 +96,13 @@ responsibility among the other maintainers.
   ix86 INTEL MODE  Jan Beulich <jbeulich@novell.com>
   LM32             Jon Beniston <jon@beniston.com>
   M32R             Doug Evans <dje@sebabeach.org>
-  M68HC11 M68HC12  Stephane Carrez <stcarrez@nerim.fr>
+  M68HC11 M68HC12  Stephane Carrez <Stephane.Carrez@gmail.com>
   M68HC11 M68HC12  Sean Keys <skeys@ipdatasys.com>
   M88k		   Mark Kettenis <kettenis@gnu.org>
   MACH-O           Tristan Gingold <gingold@adacore.com>
   MAXQ		   Inderpreet Singh <inderpreetb@noida.hcltech.com>
   MEP		   Dave Brolley <brolley@redhat.com>
+  METAG            Markos Chandras <markos.chandras@imgtec.com>
   MICROBLAZE	   Michael Eager <eager@eagercon.com>
   MIPS		   Eric Christopher <echristo@apple.com>
   MMIX		   Hans-Peter Nilsson <hp@bitrange.com>
@@ -105,14 +110,22 @@ responsibility among the other maintainers.
   MN10300	   Alexandre Oliva <aoliva@redhat.com>
   Moxie		   Anthony Green <green@moxielogic.com>
   MSP430	   Dmitry Diky <diwil@spec.ru>
+  NDS32		   Kuan-Lin Chen <kuanlinchentw@gmail.com>
+  NDS32		   Wei-Cheng Wang <cole945@gmail.com>
   NetBSD support   Matt Thomas <matt@netbsd.org>
+  Nios II	   Sandra Loosemore <sandra@codesourcery.com>
+  Nios II	   Andrew Jenner <andrew@codesourcery.com>
+  OR1K		   Christian Svensson <blue@cmd.nu>
+  OR1K		   Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>
   PPC		   Geoff Keating <geoffk@geoffk.org>
   PPC		   Alan Modra <amodra@gmail.com>
+  PPC		   Peter Bergner <bergner@vnet.ibm.com>
   PPC vector ext   Aldy Hernandez <aldyh@redhat.com>
   RL78             DJ Delorie <dj@redhat.com>
   RX               DJ Delorie <dj@redhat.com>
   RX               Nick Clifton <nickc@redhat.com>
   s390, s390x	   Martin Schwidefsky <schwidefsky@de.ibm.com>
+  s390, s390x	   Andreas Krebbel <krebbel@linux.vnet.ibm.com>
   SCORE		   Mei Ligang <ligang@sunnorth.com.cn>
   SH		   Alexandre Oliva <aoliva@redhat.com>
   SH		   Kaz Kojima <kkojima@rr.iij4u.or.jp>
@@ -131,7 +144,7 @@ responsibility among the other maintainers.
   x86_64	   H.J. Lu <hjl.tools@gmail.com>
   XCOFF 	   Richard Sandiford <r.sandiford@uk.ibm.com>
   XGATE            Sean Keys <skeys@ipdatasys.com>
-  Xtensa	   Sterling Augustine <augustine.sterling@gmail.com> 
+  Xtensa	   Sterling Augustine <augustine.sterling@gmail.com>
   z80		   Arnold Metselaar <arnold.metselaar@planet.nl>
   z8k		   Christian Groessler <chris@groessler.org>
 
@@ -246,20 +259,20 @@ would be appropriate if the branch was created on January 1st, 2005.
 
 Having selected the branch name, create the branch as follows:
 
-1. Check out binutils, so that you have a CVS checkout corresponding
+1. Check out binutils, so that you have a git checkout corresponding
    to the initial state of your branch.
 
 2. Create a tag:
 
-     cvs tag binutils-<org>-<name>-branchpoint
+     git tag binutils-<org>-<name>-branchpoint
 
    That tag will allow you, and others, to easily determine what's
    changed on the branch relative to the initial state.
 
-3. Create the branch:
+3. Create and push the branch:
 
-     cvs rtag -b -r binutils-<org>-<name>-branchpoint \
-       binutils-<org>-<name>-branch
+     git checkout -b binutils-<org>-<name>-branch
+     git push origin HEAD
 
 4. Document the branch:
 
@@ -270,3 +283,9 @@ Having selected the branch name, create the branch as follows:
 
 Please do not commit any patches to a branch you did not create
 without the explicit permission of the person who created the branch.
+
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

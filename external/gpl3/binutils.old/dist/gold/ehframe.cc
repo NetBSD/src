@@ -1,6 +1,6 @@
 // ehframe.cc -- handle exception frame sections for gold
 
-// Copyright 2006, 2007, 2008, 2010, 2011, 2012 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -326,15 +326,16 @@ Eh_frame_hdr::get_fde_addresses(Output_file* of,
 // Class Fde.
 
 // Write the FDE to OVIEW starting at OFFSET.  CIE_OFFSET is the
-// offset of the CIE in OVIEW.  FDE_ENCODING is the encoding, from the
-// CIE.  ADDRALIGN is the required alignment.  ADDRESS is the virtual
-// address of OVIEW.  Record the FDE pc for EH_FRAME_HDR.  Return the
-// new offset.
+// offset of the CIE in OVIEW.  OUTPUT_OFFSET is the offset of the
+// Eh_frame section within the output section.  FDE_ENCODING is the
+// encoding, from the CIE.  ADDRALIGN is the required alignment.
+// ADDRESS is the virtual address of OVIEW.  Record the FDE pc for
+// EH_FRAME_HDR.  Return the new offset.
 
 template<int size, bool big_endian>
 section_offset_type
-Fde::write(unsigned char* oview, section_offset_type offset,
-	   uint64_t address, unsigned int addralign,
+Fde::write(unsigned char* oview, section_offset_type output_offset,
+	   section_offset_type offset, uint64_t address, unsigned int addralign,
 	   section_offset_type cie_offset, unsigned char fde_encoding,
 	   Eh_frame_hdr* eh_frame_hdr)
 {
@@ -368,10 +369,13 @@ Fde::write(unsigned char* oview, section_offset_type offset,
   if (this->object_ == NULL)
     {
       gold_assert(memcmp(oview + offset + 8, "\0\0\0\0\0\0\0\0", 8) == 0);
-      Output_data* plt = this->u_.from_linker.plt;
-      uint64_t poffset = plt->address() - (address + offset + 8);
+      uint64_t paddress;
+      off_t psize;
+      parameters->target().plt_fde_location(this->u_.from_linker.plt,
+					    oview + offset + 8,
+					    &paddress, &psize);
+      uint64_t poffset = paddress - (address + offset + 8);
       int32_t spoffset = static_cast<int32_t>(poffset);
-      off_t psize = plt->data_size();
       uint32_t upsize = static_cast<uint32_t>(psize);
       if (static_cast<uint64_t>(static_cast<int64_t>(spoffset)) != poffset
 	  || static_cast<off_t>(upsize) != psize)
@@ -386,7 +390,7 @@ Fde::write(unsigned char* oview, section_offset_type offset,
 
   // Tell the exception frame header about this FDE.
   if (eh_frame_hdr != NULL)
-    eh_frame_hdr->record_fde(offset, fde_encoding);
+    eh_frame_hdr->record_fde(output_offset + offset, fde_encoding);
 
   return offset + aligned_full_length;
 }
@@ -408,7 +412,7 @@ Cie::~Cie()
 section_offset_type
 Cie::set_output_offset(section_offset_type output_offset,
 		       unsigned int addralign,
-		       Merge_map* merge_map)
+		       Output_section_data *output_data)
 {
   size_t length = this->contents_.length();
 
@@ -418,8 +422,9 @@ Cie::set_output_offset(section_offset_type output_offset,
   if (this->object_ != NULL)
     {
       // Add a mapping so that relocations are applied correctly.
-      merge_map->add_mapping(this->object_, this->shndx_, this->input_offset_,
-			     length, output_offset);
+      this->object_->add_merge_mapping(output_data, this->shndx_,
+                                       this->input_offset_, length,
+                                       output_offset);
     }
 
   length = align_address(length, addralign);
@@ -428,7 +433,7 @@ Cie::set_output_offset(section_offset_type output_offset,
        p != this->fdes_.end();
        ++p)
     {
-      (*p)->add_mapping(output_offset + length, merge_map);
+      (*p)->add_mapping(output_offset + length, output_data);
 
       size_t fde_length = (*p)->length();
       fde_length = align_address(fde_length, addralign);
@@ -438,15 +443,19 @@ Cie::set_output_offset(section_offset_type output_offset,
   return output_offset + length;
 }
 
-// Write the CIE to OVIEW starting at OFFSET.  EH_FRAME_HDR is for FDE
-// recording.  Round up the bytes to ADDRALIGN.  Return the new
-// offset.
+// Write the CIE to OVIEW starting at OFFSET.  OUTPUT_OFFSET is the
+// offset of the Eh_frame section within the output section.  Round up
+// the bytes to ADDRALIGN.  ADDRESS is the virtual address of OVIEW.
+// EH_FRAME_HDR is the exception frame header for FDE recording.
+// POST_FDES stashes FDEs created after mappings were done, for later
+// writing.  Return the new offset.
 
 template<int size, bool big_endian>
 section_offset_type
-Cie::write(unsigned char* oview, section_offset_type offset,
-	   uint64_t address, unsigned int addralign,
-	   Eh_frame_hdr* eh_frame_hdr)
+Cie::write(unsigned char* oview, section_offset_type output_offset,
+	   section_offset_type offset, uint64_t address,
+	   unsigned int addralign, Eh_frame_hdr* eh_frame_hdr,
+	   Post_fdes* post_fdes)
 {
   gold_assert((offset & (addralign - 1)) == 0);
 
@@ -479,9 +488,14 @@ Cie::write(unsigned char* oview, section_offset_type offset,
   for (std::vector<Fde*>::const_iterator p = this->fdes_.begin();
        p != this->fdes_.end();
        ++p)
-    offset = (*p)->write<size, big_endian>(oview, offset, address, addralign,
-                                           cie_offset, fde_encoding,
-                                           eh_frame_hdr);
+    {
+      if ((*p)->post_map())
+	post_fdes->push_back(Post_fde(*p, cie_offset, fde_encoding));
+      else
+	offset = (*p)->write<size, big_endian>(oview, output_offset, offset,
+					       address, addralign, cie_offset,
+					       fde_encoding, eh_frame_hdr);
+    }
 
   return offset;
 }
@@ -518,7 +532,6 @@ Eh_frame::Eh_frame()
     eh_frame_hdr_(NULL),
     cie_offsets_(),
     unmergeable_cie_offsets_(),
-    merge_map_(),
     mappings_are_done_(false),
     final_data_size_(0)
 {
@@ -554,7 +567,7 @@ Eh_frame::skip_leb128(const unsigned char** pp, const unsigned char* pend)
 // section.
 
 template<int size, bool big_endian>
-bool
+Eh_frame::Eh_frame_section_disposition
 Eh_frame::add_ehframe_input_section(
     Sized_relobj_file<size, big_endian>* object,
     const unsigned char* symbols,
@@ -571,7 +584,7 @@ Eh_frame::add_ehframe_input_section(
 							    &contents_len,
 							    false);
   if (contents_len == 0)
-    return false;
+    return EH_EMPTY_SECTION;
 
   // If this is the marker section for the end of the data, then
   // return false to force it to be handled as an ordinary input
@@ -579,7 +592,7 @@ Eh_frame::add_ehframe_input_section(
   // of unrecognized .eh_frame sections.
   if (contents_len == 4
       && elfcpp::Swap<32, big_endian>::readval(pcontents) == 0)
-    return false;
+    return EH_END_MARKER_SECTION;
 
   New_cies new_cies;
   if (!this->do_add_ehframe_input_section(object, symbols, symbols_size,
@@ -596,7 +609,7 @@ Eh_frame::add_ehframe_input_section(
 	   ++p)
 	delete p->first;
 
-      return false;
+      return EH_UNRECOGNIZED_SECTION;
     }
 
   // Now that we know we are using this section, record any new CIEs
@@ -611,7 +624,7 @@ Eh_frame::add_ehframe_input_section(
 	this->unmergeable_cie_offsets_.push_back(p->first);
     }
 
-  return true;
+  return EH_OPTIMIZABLE_SECTION;
 }
 
 // The bulk of the implementation of add_ehframe_input_section.
@@ -945,8 +958,8 @@ Eh_frame::read_cie(Sized_relobj_file<size, big_endian>* object,
       // know for sure that we are doing a special mapping for this
       // input section, but that's OK--if we don't do a special
       // mapping, nobody will ever ask for the mapping we add here.
-      this->merge_map_.add_mapping(object, shndx, (pcie - 8) - pcontents,
-				   pcieend - (pcie - 8), -1);
+      object->add_merge_mapping(this, shndx, (pcie - 8) - pcontents,
+                                pcieend - (pcie - 8), -1);
     }
 
   // Record this CIE plus the offset in the input section.
@@ -1013,8 +1026,8 @@ Eh_frame::read_fde(Sized_relobj_file<size, big_endian>* object,
     {
       // This FDE applies to a section which we are discarding.  We
       // can discard this FDE.
-      this->merge_map_.add_mapping(object, shndx, (pfde - 8) - pcontents,
-				   pfdeend - (pfde - 8), -1);
+      object->add_merge_mapping(this, shndx, (pfde - 8) - pcontents,
+                                pfdeend - (pfde - 8), -1);
       return true;
     }
 
@@ -1039,12 +1052,16 @@ Eh_frame::add_ehframe_for_plt(Output_data* plt, const unsigned char* cie_data,
     pcie = *find_cie;
   else
     {
+      gold_assert(!this->mappings_are_done_);
       pcie = new Cie(cie);
       this->cie_offsets_.insert(pcie);
     }
 
-  Fde* fde = new Fde(plt, fde_data, fde_length);
+  Fde* fde = new Fde(plt, fde_data, fde_length, this->mappings_are_done_);
   pcie->add_fde(fde);
+
+  if (this->mappings_are_done_)
+    this->final_data_size_ += align_address(fde_length + 8, this->addralign());
 }
 
 // Return the number of FDEs.
@@ -1079,7 +1096,10 @@ Eh_frame::set_final_data_size()
       return;
     }
 
-  section_offset_type output_offset = 0;
+  section_offset_type output_start = 0;
+  if (this->is_offset_valid())
+    output_start = this->offset() - this->output_section()->offset();
+  section_offset_type output_offset = output_start;
 
   for (Unmergeable_cie_offsets::iterator p =
 	 this->unmergeable_cie_offsets_.begin();
@@ -1087,20 +1107,20 @@ Eh_frame::set_final_data_size()
        ++p)
     output_offset = (*p)->set_output_offset(output_offset,
 					    this->addralign(),
-					    &this->merge_map_);
+					    this);
 
   for (Cie_offsets::iterator p = this->cie_offsets_.begin();
        p != this->cie_offsets_.end();
        ++p)
     output_offset = (*p)->set_output_offset(output_offset,
 					    this->addralign(),
-					    &this->merge_map_);
+					    this);
 
   this->mappings_are_done_ = true;
-  this->final_data_size_ = output_offset;
+  this->final_data_size_ = output_offset - output_start;
 
   gold_assert((output_offset & (this->addralign() - 1)) == 0);
-  this->set_data_size(output_offset);
+  this->set_data_size(this->final_data_size_);
 }
 
 // Return an output offset for an input offset.
@@ -1110,16 +1130,7 @@ Eh_frame::do_output_offset(const Relobj* object, unsigned int shndx,
 			   section_offset_type offset,
 			   section_offset_type* poutput) const
 {
-  return this->merge_map_.get_output_offset(object, shndx, offset, poutput);
-}
-
-// Return whether this is the merge section for an input section.
-
-bool
-Eh_frame::do_is_merge_section_for(const Relobj* object,
-				  unsigned int shndx) const
-{
-  return this->merge_map_.is_merge_section_for(object, shndx);
+  return object->merge_output_offset(shndx, offset, poutput);
 }
 
 // Write the data to the output file.
@@ -1169,22 +1180,33 @@ Eh_frame::do_sized_write(unsigned char* oview)
   uint64_t address = this->address();
   unsigned int addralign = this->addralign();
   section_offset_type o = 0;
+  const off_t output_offset = this->offset() - this->output_section()->offset();
+  Post_fdes post_fdes;
   for (Unmergeable_cie_offsets::iterator p =
 	 this->unmergeable_cie_offsets_.begin();
        p != this->unmergeable_cie_offsets_.end();
        ++p)
-    o = (*p)->write<size, big_endian>(oview, o, address, addralign,
-                                      this->eh_frame_hdr_);
+    o = (*p)->write<size, big_endian>(oview, output_offset, o, address,
+				      addralign, this->eh_frame_hdr_,
+				      &post_fdes);
   for (Cie_offsets::iterator p = this->cie_offsets_.begin();
        p != this->cie_offsets_.end();
        ++p)
-    o = (*p)->write<size, big_endian>(oview, o, address, addralign,
-                                      this->eh_frame_hdr_);
+    o = (*p)->write<size, big_endian>(oview, output_offset, o, address,
+				      addralign, this->eh_frame_hdr_,
+				      &post_fdes);
+  for (Post_fdes::iterator p = post_fdes.begin();
+       p != post_fdes.end();
+       ++p)
+    o = (*p).fde->write<size, big_endian>(oview, output_offset, o, address,
+					  addralign, (*p).cie_offset,
+					  (*p).fde_encoding,
+					  this->eh_frame_hdr_);
 }
 
 #ifdef HAVE_TARGET_32_LITTLE
 template
-bool
+Eh_frame::Eh_frame_section_disposition
 Eh_frame::add_ehframe_input_section<32, false>(
     Sized_relobj_file<32, false>* object,
     const unsigned char* symbols,
@@ -1198,7 +1220,7 @@ Eh_frame::add_ehframe_input_section<32, false>(
 
 #ifdef HAVE_TARGET_32_BIG
 template
-bool
+Eh_frame::Eh_frame_section_disposition
 Eh_frame::add_ehframe_input_section<32, true>(
     Sized_relobj_file<32, true>* object,
     const unsigned char* symbols,
@@ -1212,7 +1234,7 @@ Eh_frame::add_ehframe_input_section<32, true>(
 
 #ifdef HAVE_TARGET_64_LITTLE
 template
-bool
+Eh_frame::Eh_frame_section_disposition
 Eh_frame::add_ehframe_input_section<64, false>(
     Sized_relobj_file<64, false>* object,
     const unsigned char* symbols,
@@ -1226,7 +1248,7 @@ Eh_frame::add_ehframe_input_section<64, false>(
 
 #ifdef HAVE_TARGET_64_BIG
 template
-bool
+Eh_frame::Eh_frame_section_disposition
 Eh_frame::add_ehframe_input_section<64, true>(
     Sized_relobj_file<64, true>* object,
     const unsigned char* symbols,

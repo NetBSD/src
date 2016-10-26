@@ -1,7 +1,5 @@
 /* BFD back-end for s-record objects.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -248,10 +246,10 @@ srec_bad_byte (bfd *abfd,
     }
   else
     {
-      char buf[10];
+      char buf[40];
 
       if (! ISPRINT (c))
-	sprintf (buf, "\\%03o", (unsigned int) c);
+	sprintf (buf, "\\%03o", (unsigned int) c & 0xff);
       else
 	{
 	  buf[0] = c;
@@ -454,8 +452,8 @@ srec_scan (bfd *abfd)
 	case 'S':
 	  {
 	    file_ptr pos;
-	    char hdr[3];
-	    unsigned int bytes;
+	    unsigned char hdr[3];
+	    unsigned int bytes, min_bytes;
 	    bfd_vma address;
 	    bfd_byte *data;
 	    unsigned char check_sum;
@@ -478,6 +476,19 @@ srec_scan (bfd *abfd)
 	      }
 
 	    check_sum = bytes = HEX (hdr + 1);
+	    min_bytes = 3;
+	    if (hdr[0] == '2' || hdr[0] == '8')
+	      min_bytes = 4;
+	    else if (hdr[0] == '3' || hdr[0] == '7')
+	      min_bytes = 5;
+	    if (bytes < min_bytes)
+	      {
+		(*_bfd_error_handler) (_("%B:%d: byte count %d too small\n"),
+				       abfd, lineno, bytes);
+		bfd_set_error (bfd_error_bad_value);
+		goto error_return;
+	      }
+
 	    if (bytes * 2 > bufsize)
 	      {
 		if (buf != NULL)
@@ -870,6 +881,7 @@ srec_set_section_contents (bfd *abfd,
 			   file_ptr offset,
 			   bfd_size_type bytes_to_do)
 {
+  int opb = bfd_octets_per_byte (abfd);
   tdata_type *tdata = abfd->tdata.srec_data;
   srec_data_list_type *entry;
 
@@ -892,16 +904,16 @@ srec_set_section_contents (bfd *abfd,
 	 regardless of the siez of the addresses.  */
       if (S3Forced)
 	tdata->type = 3;
-      else if ((section->lma + offset + bytes_to_do - 1) <= 0xffff)
+      else if ((section->lma + (offset + bytes_to_do) / opb - 1) <= 0xffff)
 	;  /* The default, S1, is OK.  */
-      else if ((section->lma + offset + bytes_to_do - 1) <= 0xffffff
+      else if ((section->lma + (offset + bytes_to_do) / opb - 1) <= 0xffffff
 	       && tdata->type <= 2)
 	tdata->type = 2;
       else
 	tdata->type = 3;
 
       entry->data = data;
-      entry->where = section->lma + offset;
+      entry->where = section->lma + offset / opb;
       entry->size = bytes_to_do;
 
       /* Sort the records by address.  Optimize for the common case of
@@ -1243,8 +1255,10 @@ srec_print_symbol (bfd *abfd,
 #define srec_bfd_is_local_label_name              bfd_generic_is_local_label_name
 #define srec_get_lineno                           _bfd_nosymbols_get_lineno
 #define srec_find_nearest_line                    _bfd_nosymbols_find_nearest_line
+#define srec_find_line                            _bfd_nosymbols_find_line
 #define srec_find_inliner_info                    _bfd_nosymbols_find_inliner_info
 #define srec_make_empty_symbol                    _bfd_generic_make_empty_symbol
+#define srec_get_symbol_version_string		  _bfd_nosymbols_get_symbol_version_string
 #define srec_bfd_make_debug_symbol                _bfd_nosymbols_bfd_make_debug_symbol
 #define srec_read_minisymbols                     _bfd_generic_read_minisymbols
 #define srec_minisymbol_to_symbol                 _bfd_generic_minisymbol_to_symbol
@@ -1259,7 +1273,6 @@ srec_print_symbol (bfd *abfd,
 #define srec_section_already_linked               _bfd_generic_section_already_linked
 #define srec_bfd_define_common_symbol             bfd_generic_define_common_symbol
 #define srec_bfd_link_hash_table_create           _bfd_generic_link_hash_table_create
-#define srec_bfd_link_hash_table_free             _bfd_generic_link_hash_table_free
 #define srec_bfd_link_add_symbols                 _bfd_generic_link_add_symbols
 #define srec_bfd_link_just_syms                   _bfd_generic_link_just_syms
 #define srec_bfd_copy_link_hash_symbol_type \

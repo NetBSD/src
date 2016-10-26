@@ -1,6 +1,5 @@
 /* ldmain.h -
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2002, 2003, 2004,
-   2005, 2007, 2008, 2009, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -39,9 +38,25 @@ extern const char *output_filename;
 extern struct bfd_link_info link_info;
 extern int overflow_cutoff_limit;
 
+#define RELAXATION_DISABLED_BY_DEFAULT	\
+  (link_info.disable_target_specific_optimizations < 0)
+#define RELAXATION_DISABLED_BY_USER	\
+  (link_info.disable_target_specific_optimizations > 1)
+#define RELAXATION_ENABLED		\
+  (link_info.disable_target_specific_optimizations == 0 \
+   || link_info.disable_target_specific_optimizations == 1)
+#define RELAXATION_ENABLED_BY_USER		\
+  (link_info.disable_target_specific_optimizations == 0)
+#define TARGET_ENABLE_RELAXATION		\
+  do { link_info.disable_target_specific_optimizations = 1; } while (0)
+#define DISABLE_RELAXATION		\
+  do { link_info.disable_target_specific_optimizations = 2; } while (0)
+#define ENABLE_RELAXATION		\
+  do { link_info.disable_target_specific_optimizations = 0; } while (0)
+
 extern void add_ysym (const char *);
 extern void add_wrap (const char *);
-extern void add_ignoresym (const char *);
+extern void add_ignoresym (struct bfd_link_info *, const char *);
 extern void add_keepsyms_file (const char *);
 
 #endif

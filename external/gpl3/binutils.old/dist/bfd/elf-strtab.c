@@ -1,6 +1,5 @@
 /* ELF strtab with GC and suffix merging support.
-   Copyright 2001, 2002, 2003, 2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Written by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -216,16 +215,45 @@ _bfd_elf_strtab_clear_all_refs (struct elf_strtab_hash *tab)
     tab->array[idx]->refcount = 0;
 }
 
-/* Downsizes strtab.  Entries from IDX up to the current size are
-   removed from the array.  */
-void
-_bfd_elf_strtab_restore_size (struct elf_strtab_hash *tab, bfd_size_type idx)
+/* Save strtab refcounts prior to adding --as-needed library.  */
+
+struct strtab_save
 {
-  bfd_size_type curr_size = tab->size;
+  bfd_size_type size;
+  unsigned int refcount[1];
+};
+
+void *
+_bfd_elf_strtab_save (struct elf_strtab_hash *tab)
+{
+  struct strtab_save *save;
+  bfd_size_type idx, size;
+
+  size = sizeof (*save) + (tab->size - 1) * sizeof (save->refcount[0]);
+  save = bfd_malloc (size);
+  if (save == NULL)
+    return save;
+
+  save->size = tab->size;
+  for (idx = 1; idx < tab->size; idx++)
+    save->refcount[idx] = tab->array[idx]->refcount;
+  return save;
+}
+
+/* Restore strtab refcounts on finding --as-needed library not needed.  */
+
+void
+_bfd_elf_strtab_restore (struct elf_strtab_hash *tab, void *buf)
+{
+  bfd_size_type idx, curr_size = tab->size;
+  struct strtab_save *save = (struct strtab_save *) buf;
 
   BFD_ASSERT (tab->sec_size == 0);
-  BFD_ASSERT (idx <= curr_size);
-  tab->size = idx;
+  BFD_ASSERT (save->size <= curr_size);
+  tab->size = save->size;
+  for (idx = 1; idx < save->size; ++idx)
+    tab->array[idx]->refcount = save->refcount[idx];
+
   for (; idx < curr_size; ++idx)
     {
       /* We don't remove entries from the hash table, just set their

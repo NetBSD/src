@@ -1,6 +1,5 @@
 /* IBM S/390-specific support for ELF 32 and 64 bit functions
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Andreas Krebbel.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -46,7 +45,7 @@ s390_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 
   flags = bed->dynamic_sec_flags;
 
-  if (info->shared)
+  if (bfd_link_pic (info))
     {
       s = bfd_make_section_with_flags (abfd, ".rela.ifunc",
 				       flags | SEC_READONLY);
@@ -88,12 +87,12 @@ s390_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 
 static bfd_boolean
 s390_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
-				    struct elf_link_hash_entry *h,
-				    struct elf_dyn_relocs **head)
+				    struct elf_link_hash_entry *h)
 {
   struct elf_dyn_relocs *p;
   struct elf_link_hash_table *htab;
   struct elf_s390_link_hash_entry *eh = (struct elf_s390_link_hash_entry*)h;
+  struct elf_dyn_relocs **head = &eh->dyn_relocs;
 
   htab = elf_hash_table (info);
   eh->ifunc_resolver_address = h->root.u.def.value;
@@ -106,7 +105,7 @@ s390_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
          where it is marked with regular reference, but not non-GOT
 	 reference.  It may happen if we didn't see STT_GNU_IFUNC
 	 symbol at the time when checking relocations.  */
-      if (info->shared
+      if (bfd_link_pic (info)
 	  && !h->non_got_ref
 	  && h->ref_regular)
 	for (p = *head; p != NULL; p = p->next)
@@ -152,7 +151,9 @@ keep:
      point to the IPLT slot.  That way the referencing shared lib will
      always get the PLT slot address when resolving the respective
      R_390_GLOB_DAT/R_390_64 relocs on that symbol.  */
-  if (info->executable && !info->shared && h->def_regular && h->ref_dynamic)
+  if (bfd_link_pde (info)
+      && h->def_regular
+      && h->ref_dynamic)
     {
       h->root.u.def.section = htab->iplt;
       h->root.u.def.value = h->plt.offset;
@@ -162,7 +163,7 @@ keep:
 
   /* We need dynamic relocation for STT_GNU_IFUNC symbol only when
      there is a non-GOT reference in a shared object.  */
-  if (!info->shared || !h->non_got_ref)
+  if (!bfd_link_pic (info) || !h->non_got_ref)
     *head = NULL;
 
   /* Finally, allocate space.  */
@@ -183,9 +184,9 @@ keep:
      avoided if the values in the GOT slots could differ for pointer
      equality reasons.  */
   if (h->got.refcount <= 0
-      || (info->shared
+      || (bfd_link_pic (info)
 	  && (h->dynindx == -1 || h->forced_local))
-      || (info->executable && info->shared)
+      || bfd_link_pie (info)
       || htab->sgot == NULL)
     {
       /* Use .got.iplt.  */
@@ -195,7 +196,7 @@ keep:
     {
       h->got.offset = htab->sgot->size;
       htab->sgot->size += GOT_ENTRY_SIZE;
-      if (info->shared)
+      if (bfd_link_pic (info))
 	htab->srelgot->size += RELA_ENTRY_SIZE;
     }
 
@@ -235,9 +236,81 @@ elf_s390_add_symbol_hook (bfd *abfd,
 			  asection **secp ATTRIBUTE_UNUSED,
 			  bfd_vma *valp ATTRIBUTE_UNUSED)
 {
-  if ((abfd->flags & DYNAMIC) == 0
-      && ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC)
-    elf_tdata (info->output_bfd)->has_gnu_symbols = TRUE;
+  if ((ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
+       || ELF_ST_BIND (sym->st_info) == STB_GNU_UNIQUE)
+      && (abfd->flags & DYNAMIC) == 0
+      && bfd_get_flavour (info->output_bfd) == bfd_target_elf_flavour)
+    elf_tdata (info->output_bfd)->has_gnu_symbols = elf_gnu_symbol_any;
+
+  return TRUE;
+}
+
+/* Whether to sort relocs output by ld -r or ld --emit-relocs, by
+   r_offset.  Don't do so for code sections.  We want to keep ordering
+   of GDCALL / PLT32DBL for TLS optimizations as is.  On the other
+   hand, elf-eh-frame.c processing requires .eh_frame relocs to be
+   sorted.  */
+
+static bfd_boolean
+elf_s390_elf_sort_relocs_p (asection *sec)
+{
+  return (sec->flags & SEC_CODE) == 0;
+}
+
+/* Merge object attributes from IBFD into OBFD.  Raise an error if
+   there are conflicting attributes.  */
+static bfd_boolean
+elf_s390_merge_obj_attributes (bfd *ibfd, bfd *obfd)
+{
+  obj_attribute *in_attr, *in_attrs;
+  obj_attribute *out_attr, *out_attrs;
+
+  if (!elf_known_obj_attributes_proc (obfd)[0].i)
+    {
+      /* This is the first object.  Copy the attributes.  */
+      _bfd_elf_copy_obj_attributes (ibfd, obfd);
+
+      /* Use the Tag_null value to indicate the attributes have been
+	 initialized.  */
+      elf_known_obj_attributes_proc (obfd)[0].i = 1;
+
+      return TRUE;
+    }
+
+  in_attrs = elf_known_obj_attributes (ibfd)[OBJ_ATTR_GNU];
+  out_attrs = elf_known_obj_attributes (obfd)[OBJ_ATTR_GNU];
+
+  /* Check for conflicting Tag_GNU_S390_ABI_Vector attributes and
+     merge non-conflicting ones.  */
+  in_attr = &in_attrs[Tag_GNU_S390_ABI_Vector];
+  out_attr = &out_attrs[Tag_GNU_S390_ABI_Vector];
+
+  if (in_attr->i > 2)
+    _bfd_error_handler
+      (_("Warning: %B uses unknown vector ABI %d"), ibfd,
+       in_attr->i);
+  else if (out_attr->i > 2)
+    _bfd_error_handler
+      (_("Warning: %B uses unknown vector ABI %d"), obfd,
+       out_attr->i);
+  else if (in_attr->i != out_attr->i)
+    {
+      out_attr->type = ATTR_TYPE_FLAG_INT_VAL;
+
+      if (in_attr->i && out_attr->i)
+	{
+	  const char abi_str[3][9] = { "none", "software", "hardware" };
+
+	  _bfd_error_handler
+	    (_("Warning: %B uses vector %s ABI, %B uses %s ABI"),
+	     ibfd, obfd, abi_str[in_attr->i], abi_str[out_attr->i]);
+	}
+      if (in_attr->i > out_attr->i)
+	out_attr->i = in_attr->i;
+    }
+
+  /* Merge Tag_compatibility attributes and any common GNU ones.  */
+  _bfd_elf_merge_object_attributes (ibfd, obfd);
 
   return TRUE;
 }

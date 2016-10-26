@@ -1,6 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -124,7 +123,7 @@ struct mach_o_reloc_info_external
 #define BFD_MACH_O_SR_SCATTERED		0x80000000
 
 /* For a non-scattered reloc, the relocation info is found in r_symbolnum.
-   Bytes 1 to 3 contain the symbol number (0xffffff, in a non-scattered PAIR).  
+   Bytes 1 to 3 contain the symbol number (0xffffff, in a non-scattered PAIR).
    Byte 4 contains the relocation info - but with differing bit-positions
    dependent on target endian-ness - as below.  */
 
@@ -288,6 +287,24 @@ struct mach_o_dyld_info_command_external
   unsigned char export_size[4];
 };
 
+struct mach_o_prebound_dylib_command_external
+{
+  unsigned char name[4];
+  unsigned char nmodules[4];
+  unsigned char linked_modules[4];
+};
+
+struct mach_o_prebind_cksum_command_external
+{
+  unsigned char cksum[4];
+};
+
+struct mach_o_twolevel_hints_command_external
+{
+  unsigned char offset[4];
+  unsigned char nhints[4];
+};
+
 struct mach_o_version_min_command_external
 {
   unsigned char version[4];
@@ -306,6 +323,28 @@ struct mach_o_fvmlib_command_external
   unsigned char name[4];	/* Offset of the name.  */
   unsigned char minor_version[4];
   unsigned char header_addr[4];
+};
+
+struct mach_o_entry_point_command_external
+{
+  unsigned char entryoff[8];	/* File offset of the entry point.  */
+  unsigned char stacksize[8];   /* Initial stack size, if no null.  */
+};
+
+struct mach_o_source_version_command_external
+{
+  unsigned char version[8];	/* Version A.B.C.D.E, with 10 bits for B-E,
+				   and 24 bits for A.  */
+};
+
+/* The LD_DATA_IN_CODE command use a linkedit_data_command that points to
+   a table of entries.  */
+
+struct mach_o_data_in_code_entry_external
+{
+  unsigned char offset[4];	/* Offset from the mach_header. */
+  unsigned char length[2];	/* Number of bytes.  */
+  unsigned char kind[2];	/* Kind.  See BFD_MACH_O_DICE_ values.  */
 };
 
 struct mach_o_fat_header_external

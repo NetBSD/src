@@ -52,7 +52,7 @@ three pieces of information in the following pattern:
 `sparc-sun-sunos4'.
 
    The `configure' script accompanying GAS does not provide any query
-facility to list all supported host and target names or aliases. 
+facility to list all supported host and target names or aliases.
 `configure' calls the Bourne shell script `config.sub' to map
 abbreviations to full names; you can read the script, if you wish, or
 you can use it to test your guesses on abbreviations--for example:
@@ -108,7 +108,7 @@ prefer; but you may abbreviate option names if you use `--'.
      targets.
 
 `--enable-OPTION'
-     These flags tell the program or library being configured to 
+     These flags tell the program or library being configured to
      configure itself differently from the default for the specified
      host/target combination.  See below for a list of `--enable'
      options recognized in the gas distribution.
@@ -162,3 +162,9 @@ gas with gcc.  They should not be reported just to gcc-bugs, since not
 all of the maintainers read that list.
 
 See ../binutils/README for what we need in a bug report.
+
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
