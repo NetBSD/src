@@ -1454,7 +1454,7 @@ Optional Features:
   --enable-werror         treat compile warnings as errors
   --enable-build-warnings enable build-time compiler warnings
   --disable-nls           do not use Native Language Support
-  --disable-initfini-array do not use .init_array/.fini_array sections
+  --enable-initfini-array	use .init_array/.fini_array sections
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -16866,14 +16866,44 @@ fi
 
 # Check whether --enable-initfini-array was given.
 if test "${enable_initfini_array+set}" = set; then :
-  enableval=$enable_initfini_array; case "${enableval}" in
- yes|no) ;;
- *) as_fn_error "invalid --enable-initfini-array argument" "$LINENO" 5 ;;
- esac
+  enableval=$enable_initfini_array;
 else
-  enable_initfini_array=yes
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for .preinit_array/.init_array/.fini_array support" >&5
+$as_echo_n "checking for .preinit_array/.init_array/.fini_array support... " >&6; }
+if test "${gcc_cv_initfini_array+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+    if test "x${build}" = "x${target}" ; then
+    if test "$cross_compiling" = yes; then :
+  gcc_cv_initfini_array=no
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+static int x = -1;
+int main (void) { return x; }
+int foo (void) { x = 0; }
+int (*fp) (void) __attribute__ ((section (".init_array"))) = foo;
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  gcc_cv_initfini_array=yes
+ else
+  gcc_cv_initfini_array=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
+   else
+     gcc_cv_initfini_array=no
+   fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_initfini_array" >&5
+$as_echo "$gcc_cv_initfini_array" >&6; }
+  enable_initfini_array=$gcc_cv_initfini_array
+
+ fi
 
 if test $enable_initfini_array = yes; then
 
