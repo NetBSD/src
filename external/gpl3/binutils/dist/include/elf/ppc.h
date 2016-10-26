@@ -1,5 +1,5 @@
 /* PPC ELF support for BFD.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
    By Michael Meissner, Cygnus Support, <meissner@cygnus.com>,
    from information in the System V Application Binary Interface,
@@ -201,6 +201,19 @@ END_RELOC_NUMBERS (R_PPC_max)
 						   based on the address \
 						   specified in the associated \
 						   symbol table entry.  */
+
+/* APUinfo note section.  */
+#define APUINFO_SECTION_NAME	".PPC.EMB.apuinfo"
+#define APUINFO_LABEL		"APUinfo"
+
+#define PPC_APUINFO_ISEL	0x40
+#define PPC_APUINFO_PMR		0x41
+#define PPC_APUINFO_RFMCI	0x42
+#define PPC_APUINFO_CACHELCK	0x43
+#define PPC_APUINFO_SPE		0x100
+#define PPC_APUINFO_EFS		0x101
+#define PPC_APUINFO_BRLOCK	0x102
+#define PPC_APUINFO_VLE		0x104
 
 /* Object attribute tags.  */
 enum

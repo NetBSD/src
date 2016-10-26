@@ -1,5 +1,13 @@
 -*- text -*-
 
+Changes in 2.27:
+
+* Add a configure option, --enable-64-bit-archive, to force use of a
+  64-bit format when creating an archive symbol index.
+
+* Add --elf-stt-common= option to objcopy for ELF targets to control
+  whether to convert common symbols to the STT_COMMON type.
+
 Changes in 2.26:
 
 * Add option to objcopy to insert new symbols into a file:
@@ -509,7 +517,7 @@ Changes in binutils 2.1:
   and/or local symbols only.  They now also support long options.
 
 
-Copyright (C) 2012-2015 Free Software Foundation, Inc.
+Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
