@@ -1,5 +1,5 @@
 /* Generic target-file-type support for the BFD library.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -452,6 +452,7 @@ BFD_JUMP_TABLE macros.
 .  NAME##_bfd_copy_link_hash_symbol_type, \
 .  NAME##_bfd_final_link, \
 .  NAME##_bfd_link_split_section, \
+.  NAME##_bfd_link_check_relocs, \
 .  NAME##_bfd_gc_sections, \
 .  NAME##_bfd_lookup_section_flags, \
 .  NAME##_bfd_merge_sections, \
@@ -492,6 +493,9 @@ BFD_JUMP_TABLE macros.
 .
 .  {* Should this section be split up into smaller pieces during linking.  *}
 .  bfd_boolean (*_bfd_link_split_section) (bfd *, struct bfd_section *);
+.
+.  {* Check the relocations in the bfd for validity.  *}
+.  bfd_boolean (* _bfd_link_check_relocs)(bfd *, struct bfd_link_info *);
 .
 .  {* Remove sections that are not referenced from the output.  *}
 .  bfd_boolean (*_bfd_gc_sections) (bfd *, struct bfd_link_info *);
@@ -571,6 +575,7 @@ extern const bfd_target aarch64_elf64_be_vec;
 extern const bfd_target aarch64_elf64_be_cloudabi_vec;
 extern const bfd_target aarch64_elf64_le_vec;
 extern const bfd_target aarch64_elf64_le_cloudabi_vec;
+extern const bfd_target aarch64_mach_o_vec;
 extern const bfd_target alpha_ecoff_le_vec;
 extern const bfd_target alpha_elf64_vec;
 extern const bfd_target alpha_elf64_fbsd_vec;
@@ -598,6 +603,7 @@ extern const bfd_target arm_elf32_symbian_be_vec;
 extern const bfd_target arm_elf32_symbian_le_vec;
 extern const bfd_target arm_elf32_vxworks_be_vec;
 extern const bfd_target arm_elf32_vxworks_le_vec;
+extern const bfd_target arm_mach_o_vec;
 extern const bfd_target arm_pe_be_vec;
 extern const bfd_target arm_pe_le_vec;
 extern const bfd_target arm_pe_epoc_be_vec;
@@ -955,6 +961,7 @@ static const bfd_target * const _bfd_target_vector[] =
 	&aarch64_elf64_be_cloudabi_vec,
 	&aarch64_elf64_le_vec,
 	&aarch64_elf64_le_cloudabi_vec,
+	&aarch64_mach_o_vec,
 #endif
 
 #ifdef BFD64
@@ -1000,6 +1007,7 @@ static const bfd_target * const _bfd_target_vector[] =
 	&arm_elf32_symbian_le_vec,
 	&arm_elf32_vxworks_be_vec,
 	&arm_elf32_vxworks_le_vec,
+	&arm_mach_o_vec,
 	&arm_pe_be_vec,
 	&arm_pe_le_vec,
 	&arm_pe_epoc_be_vec,
