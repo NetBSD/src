@@ -1,6 +1,5 @@
 /* Routines to link ECOFF debugging information.
-   Copyright 1993, 1994, 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008, 2009, 2012  Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -497,7 +496,7 @@ bfd_ecoff_debug_init (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   ainfo->largest_file_shuffle = 0;
 
-  if (! info->relocatable)
+  if (! bfd_link_relocatable (info))
     {
       if (!bfd_hash_table_init (&ainfo->str_hash.table, string_hash_newfunc,
 				sizeof (struct string_hash_entry)))
@@ -530,7 +529,7 @@ bfd_ecoff_debug_free (void * handle,
 
   bfd_hash_table_free (&ainfo->fdr_hash.table);
 
-  if (! info->relocatable)
+  if (! bfd_link_relocatable (info))
     bfd_hash_table_free (&ainfo->str_hash.table);
 
   objalloc_free (ainfo->memory);
@@ -819,7 +818,7 @@ bfd_ecoff_debug_accumulate (void * handle,
 	     of space required by debugging information.  We don't do
 	     this when performing a relocatable link because it would
 	     prevent us from easily merging different FDR's.  */
-	  if (! info->relocatable)
+	  if (! bfd_link_relocatable (info))
 	    {
 	      bfd_boolean ffilename;
 	      const char *name;
@@ -896,7 +895,7 @@ bfd_ecoff_debug_accumulate (void * handle,
 	  fdr.iauxBase = output_symhdr->iauxMax;
 	  output_symhdr->iauxMax += fdr.caux;
 	}
-      if (! info->relocatable)
+      if (! bfd_link_relocatable (info))
 	{
 
 	  /* When are are hashing strings, we lie about the number of
@@ -1042,7 +1041,7 @@ ecoff_add_string (struct accumulate *ainfo,
 
   symhdr = &debug->symbolic_header;
   len = strlen (string);
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     {
       if (!add_memory_shuffle (ainfo, &ainfo->ss, &ainfo->ss_end,
                                (bfd_byte *) string, len + 1))
@@ -1599,7 +1598,7 @@ bfd_ecoff_write_accumulated_debug (void * handle,
 
   /* The string table is written out from the hash table if this is a
      final link.  */
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     {
       BFD_ASSERT (ainfo->ss_hash == (struct string_hash_entry *) NULL);
       if (! ecoff_write_shuffle (abfd, swap, ainfo->ss, space))
@@ -1788,7 +1787,7 @@ mk_fdrtab (bfd *abfd,
 	     'lookup_line'.  */
 	  /* The address of the first PDR is the offset of that
 	     procedure relative to the beginning of file FDR.  */
-	  tab->base_addr = fdr_ptr->adr; 
+	  tab->base_addr = fdr_ptr->adr;
 	}
       else
 	{
@@ -1887,7 +1886,7 @@ lookup_line (bfd *abfd,
   i = fdrtab_lookup (line_info, offset);
   if (i < 0)
     return FALSE;		/* no FDR, no fun...  */
-  
+
   /* eraxxon: 'fdrtab_lookup' doesn't give what we want, at least for Compaq's
      C++ compiler 6.2.  Consider three FDRs with starting addresses of x, y,
      and z, respectively, such that x < y < z.  Assume further that
@@ -2052,7 +2051,7 @@ lookup_line (bfd *abfd,
 	 read stabs FDRs as ECOFF ones.  However, I don't think this will
 	 harm anything.  */
       i = 0;
-      
+
       /* Search FDR list starting at tab[i] for the PDR that best matches
          OFFSET.  Normally, the FDR list is only one entry long.  */
       best_fdr = NULL;
@@ -2097,7 +2096,7 @@ lookup_line (bfd *abfd,
 
 	  if (!best_pdr || (min_dist >= 0 && min_dist < best_dist))
 	    {
-	      best_dist = (bfd_vma) min_dist;  
+	      best_dist = (bfd_vma) min_dist;
 	      best_fdr = fdr_ptr;
 	      best_pdr = pdr_hold;
 	    }

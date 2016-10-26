@@ -1,6 +1,6 @@
 /* This file is tc-xc16x.h
-   Copyright 2006, 2007 Free Software Foundation, Inc.
-   Contributed by KPIT Cummins Infosystems 
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Contributed by KPIT Cummins Infosystems
 
    This file is part of GAS, the GNU Assembler.
 
@@ -32,10 +32,8 @@
 #define FAKE_LABEL_NAME     ".L0\001"
 #endif
 
-#if ANSI_PROTOTYPES
 struct fix;
 struct internal_reloc;
-#endif
 
 #define WORKING_DOT_WORD
 

@@ -1,5 +1,5 @@
 /* tc-z80.c -- Assemble code for the Zilog Z80 and ASCII R800
-   Copyright 2005, 2006, 2007, 2008, 2009, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -332,6 +332,7 @@ z80_start_line_hook (void)
   /* Check for <label>[:] [.](EQU|DEFL) <value>.  */
   if (is_name_beginner (*input_line_pointer))
     {
+      char *name;
       char c, *rest, *line_start;
       int len;
 
@@ -339,7 +340,7 @@ z80_start_line_hook (void)
       if (ignore_input ())
 	return 0;
 
-      c = get_symbol_end ();
+      c = get_symbol_name (&name);
       rest = input_line_pointer + 1;
 
       if (*rest == ':')
@@ -364,13 +365,13 @@ z80_start_line_hook (void)
 	    }
 	  input_line_pointer = rest + len - 1;
 	  /* Allow redefining with "DEFL" (len == 4), but not with "EQU".  */
-	  equals (line_start, len == 4);
+	  equals (name, len == 4);
 	  return 1;
 	}
       else
 	{
 	  /* Restore line and pointer.  */
-	  *input_line_pointer = c;
+	  (void) restore_line_pointer (c);
 	  input_line_pointer = line_start;
 	}
     }
@@ -467,7 +468,7 @@ wrong_mach (int ins_type)
   if (ins_type & ins_err)
     error (_(p));
   else
-    as_warn (_(p));
+    as_warn ("%s", _(p));
 }
 
 static void
@@ -524,14 +525,14 @@ is_indir (const char *s)
 }
 
 /* Check whether a symbol involves a register.  */
-static int 
+static int
 contains_register(symbolS *sym)
 {
   if (sym)
   {
     expressionS * ex = symbol_get_value_expression(sym);
-    return (O_register == ex->X_op) 
-      || (ex->X_add_symbol && contains_register(ex->X_add_symbol)) 
+    return (O_register == ex->X_op)
+      || (ex->X_add_symbol && contains_register(ex->X_add_symbol))
       || (ex->X_op_symbol && contains_register(ex->X_op_symbol));
   }
   else
@@ -544,12 +545,11 @@ parse_exp_not_indexed (const char *s, expressionS *op)
 {
   const char *p;
   int indir;
-  segT dummy;
 
   p = skip_space (s);
   op->X_md = indir = is_indir (p);
   input_line_pointer = (char*) s ;
-  dummy = expression (op);
+  expression (op);
   switch (op->X_op)
     {
     case O_absent:
@@ -557,6 +557,8 @@ parse_exp_not_indexed (const char *s, expressionS *op)
       break;
     case O_illegal:
       error (_("bad expression syntax"));
+      break;
+    default:
       break;
     }
   return input_line_pointer;
@@ -605,6 +607,8 @@ parse_exp (const char *s, expressionS *op)
 	  op->X_op = O_md1;
 	}
 	break;
+    default:
+      break;
     }
   return res;
 }
@@ -690,7 +694,7 @@ void z80_cons_fix_new (fragS *frag_p, int offset, int nbytes, expressionS *exp)
       BFD_RELOC_32
     };
 
-  if (nbytes < 1 || nbytes > 4) 
+  if (nbytes < 1 || nbytes > 4)
     {
       as_bad (_("unsupported BFD relocation size %u"), nbytes);
     }
@@ -705,7 +709,6 @@ emit_byte (expressionS * val, bfd_reloc_code_real_type r_type)
 {
   char *p;
   int lo, hi;
-  fixS * fixp;
 
   p = frag_more (1);
   *p = val->X_add_number;
@@ -732,8 +735,8 @@ emit_byte (expressionS * val, bfd_reloc_code_real_type r_type)
     }
   else
     {
-      fixp = fix_new_exp (frag_now, p - frag_now->fr_literal, 1, val,
-			  (r_type == BFD_RELOC_8_PCREL) ? TRUE : FALSE, r_type);
+      fix_new_exp (frag_now, p - frag_now->fr_literal, 1, val,
+		   (r_type == BFD_RELOC_8_PCREL) ? TRUE : FALSE, r_type);
       /* FIXME : Process constant offsets immediately.  */
     }
 }
@@ -1098,7 +1101,7 @@ emit_adc (char prefix, char opcode, const char * args)
   p = parse_exp (args, &term);
   if (*p++ != ',')
     {
-      error (_("bad intruction syntax"));
+      error (_("bad instruction syntax"));
       return p;
     }
 
@@ -1141,7 +1144,7 @@ emit_add (char prefix, char opcode, const char * args)
   p = parse_exp (args, &term);
   if (*p++ != ',')
     {
-      error (_("bad intruction syntax"));
+      error (_("bad instruction syntax"));
       return p;
     }
 
@@ -1185,7 +1188,7 @@ emit_bit (char prefix, char opcode, const char * args)
 
   p = parse_exp (args, &b);
   if (*p++ != ',')
-    error (_("bad intruction syntax"));
+    error (_("bad instruction syntax"));
 
   bn = b.X_add_number;
   if ((!b.X_md)
@@ -1305,7 +1308,7 @@ emit_in (char prefix ATTRIBUTE_UNUSED, char opcode ATTRIBUTE_UNUSED,
   p = parse_exp (args, &reg);
   if (*p++ != ',')
     {
-      error (_("bad intruction syntax"));
+      error (_("bad instruction syntax"));
       return p;
     }
 
@@ -1359,7 +1362,7 @@ emit_out (char prefix ATTRIBUTE_UNUSED, char opcode ATTRIBUTE_UNUSED,
   p = parse_exp (args, & port);
   if (*p++ != ',')
     {
-      error (_("bad intruction syntax"));
+      error (_("bad instruction syntax"));
       return p;
     }
   p = parse_exp (p, &reg);
@@ -1628,7 +1631,7 @@ emit_ld (char prefix_in ATTRIBUTE_UNUSED, char opcode_in ATTRIBUTE_UNUSED,
 
   p = parse_exp (args, &dst);
   if (*p++ != ',')
-    error (_("bad intruction syntax"));
+    error (_("bad instruction syntax"));
   p = parse_exp (p, &src);
 
   switch (dst.X_op)
@@ -1820,7 +1823,7 @@ const pseudo_typeS md_pseudo_table[] =
   { "d32", cons, 4},
   { "def24", cons, 3},
   { "def32", cons, 4},
-  { "defb", emit_data, 1},  
+  { "defb", emit_data, 1},
   { "defs", s_space, 1}, /* Synonym for ds on some assemblers.  */
   { "defw", cons, 2},
   { "ds",   s_space, 1}, /* Fill with bytes rather than words.  */
@@ -1927,12 +1930,12 @@ md_assemble (char* str)
     }
   else if ((*p) && (!ISSPACE (*p)))
     as_bad (_("syntax error"));
-  else 
+  else
     {
       buf[i] = 0;
       p = skip_space (p);
       key = buf;
-      
+
       insp = bsearch (&key, instab, ARRAY_SIZE (instab),
 		    sizeof (instab[0]), key_cmp);
       if (!insp)
@@ -1995,7 +1998,7 @@ md_apply_fix (fixS * fixP, valueT* valP, segT seg ATTRIBUTE_UNUSED)
       if (val > 255 || val < -128)
 	as_warn_where (fixP->fx_file, fixP->fx_line, _("overflow"));
       *p_lit++ = val;
-      fixP->fx_no_overflow = 1; 
+      fixP->fx_no_overflow = 1;
       if (fixP->fx_addsy == NULL)
 	fixP->fx_done = 1;
       break;
@@ -2003,7 +2006,7 @@ md_apply_fix (fixS * fixP, valueT* valP, segT seg ATTRIBUTE_UNUSED)
     case BFD_RELOC_16:
       *p_lit++ = val;
       *p_lit++ = (val >> 8);
-      fixP->fx_no_overflow = 1; 
+      fixP->fx_no_overflow = 1;
       if (fixP->fx_addsy == NULL)
 	fixP->fx_done = 1;
       break;
@@ -2012,7 +2015,7 @@ md_apply_fix (fixS * fixP, valueT* valP, segT seg ATTRIBUTE_UNUSED)
       *p_lit++ = val;
       *p_lit++ = (val >> 8);
       *p_lit++ = (val >> 16);
-      fixP->fx_no_overflow = 1; 
+      fixP->fx_no_overflow = 1;
       if (fixP->fx_addsy == NULL)
 	fixP->fx_done = 1;
       break;

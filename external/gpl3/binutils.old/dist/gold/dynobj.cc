@@ -1,6 +1,6 @@
 // dynobj.cc -- dynamic object support for gold
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -336,6 +336,17 @@ template<int size, bool big_endian>
 void
 Sized_dynobj<size, big_endian>::do_read_symbols(Read_symbols_data* sd)
 {
+  this->base_read_symbols(sd);
+}
+
+// Read the symbols and sections from a dynamic object.  We read the
+// dynamic symbols, not the normal symbols.  This is common code for
+// all target-specific overrides of do_read_symbols().
+
+template<int size, bool big_endian>
+void
+Sized_dynobj<size, big_endian>::base_read_symbols(Read_symbols_data* sd)
+{
   this->read_section_data(&this->elf_file_, sd);
 
   const unsigned char* const pshdrs = sd->section_headers->data();
@@ -362,6 +373,17 @@ Sized_dynobj<size, big_endian>::do_read_symbols(Read_symbols_data* sd)
   sd->verneed = NULL;
   sd->verneed_size = 0;
   sd->verneed_info = 0;
+
+  const unsigned char* namesu = sd->section_names->data();
+  const char* names = reinterpret_cast<const char*>(namesu);
+  if (memmem(names, sd->section_names_size, ".zdebug_", 8) != NULL)
+    {
+      Compressed_section_map* compressed_sections =
+	  build_compressed_section_map<size, big_endian>(
+	      pshdrs, this->shnum(), names, sd->section_names_size, this, true);
+      if (compressed_sections != NULL)
+        this->set_compressed_sections(compressed_sections);
+    }
 
   if (this->dynsym_shndx_ != -1U)
     {
@@ -924,31 +946,59 @@ Dynobj::create_elf_hash_table(const std::vector<Symbol*>& dynsyms,
       bucket[bucketpos] = dynsym_index;
     }
 
+  int size = parameters->target().hash_entry_size();
   unsigned int hashlen = ((2
 			   + bucketcount
 			   + local_dynsym_count
 			   + dynsym_count)
-			  * 4);
+			  * size / 8);
   unsigned char* phash = new unsigned char[hashlen];
 
-  if (parameters->target().is_big_endian())
+  bool big_endian = parameters->target().is_big_endian();
+  if (size == 32)
     {
+      if (big_endian)
+	{
 #if defined(HAVE_TARGET_32_BIG) || defined(HAVE_TARGET_64_BIG)
-      Dynobj::sized_create_elf_hash_table<true>(bucket, chain, phash,
-						hashlen);
+	  Dynobj::sized_create_elf_hash_table<32, true>(bucket, chain, phash,
+							hashlen);
 #else
-      gold_unreachable();
+	  gold_unreachable();
 #endif
+	}
+      else
+	{
+#if defined(HAVE_TARGET_32_LITTLE) || defined(HAVE_TARGET_64_LITTLE)
+	  Dynobj::sized_create_elf_hash_table<32, false>(bucket, chain, phash,
+							 hashlen);
+#else
+	  gold_unreachable();
+#endif
+	}
+    }
+  else if (size == 64)
+    {
+      if (big_endian)
+	{
+#if defined(HAVE_TARGET_32_BIG) || defined(HAVE_TARGET_64_BIG)
+	  Dynobj::sized_create_elf_hash_table<64, true>(bucket, chain, phash,
+							hashlen);
+#else
+	  gold_unreachable();
+#endif
+	}
+      else
+	{
+#if defined(HAVE_TARGET_32_LITTLE) || defined(HAVE_TARGET_64_LITTLE)
+	  Dynobj::sized_create_elf_hash_table<64, false>(bucket, chain, phash,
+							 hashlen);
+#else
+	  gold_unreachable();
+#endif
+	}
     }
   else
-    {
-#if defined(HAVE_TARGET_32_LITTLE) || defined(HAVE_TARGET_64_LITTLE)
-      Dynobj::sized_create_elf_hash_table<false>(bucket, chain, phash,
-						 hashlen);
-#else
-      gold_unreachable();
-#endif
-    }
+    gold_unreachable();
 
   *pphash = phash;
   *phashlen = hashlen;
@@ -956,7 +1006,7 @@ Dynobj::create_elf_hash_table(const std::vector<Symbol*>& dynsyms,
 
 // Fill in an ELF hash table.
 
-template<bool big_endian>
+template<int size, bool big_endian>
 void
 Dynobj::sized_create_elf_hash_table(const std::vector<uint32_t>& bucket,
 				    const std::vector<uint32_t>& chain,
@@ -968,21 +1018,21 @@ Dynobj::sized_create_elf_hash_table(const std::vector<uint32_t>& bucket,
   const unsigned int bucketcount = bucket.size();
   const unsigned int chaincount = chain.size();
 
-  elfcpp::Swap<32, big_endian>::writeval(p, bucketcount);
-  p += 4;
-  elfcpp::Swap<32, big_endian>::writeval(p, chaincount);
-  p += 4;
+  elfcpp::Swap<size, big_endian>::writeval(p, bucketcount);
+  p += size / 8;
+  elfcpp::Swap<size, big_endian>::writeval(p, chaincount);
+  p += size / 8;
 
   for (unsigned int i = 0; i < bucketcount; ++i)
     {
-      elfcpp::Swap<32, big_endian>::writeval(p, bucket[i]);
-      p += 4;
+      elfcpp::Swap<size, big_endian>::writeval(p, bucket[i]);
+      p += size / 8;
     }
 
   for (unsigned int i = 0; i < chaincount; ++i)
     {
-      elfcpp::Swap<32, big_endian>::writeval(p, chain[i]);
-      p += 4;
+      elfcpp::Swap<size, big_endian>::writeval(p, chain[i]);
+      p += size / 8;
     }
 
   gold_assert(static_cast<unsigned int>(p - phash) == hashlen);
@@ -1477,6 +1527,10 @@ Versions::record_version(const Symbol_table* symtab,
   gold_assert(!this->is_finalized_);
   gold_assert(sym->version() != NULL);
 
+  // A symbol defined as "sym@" is bound to an unspecified base version.
+  if (sym->version()[0] == '\0')
+    return;
+
   Stringpool::Key version_key;
   const char* version = dynpool->add(sym->version(), false, &version_key);
 
@@ -1709,15 +1763,17 @@ Versions::symbol_section_contents(const Symbol_table* symtab,
     {
       unsigned int version_index;
       const char* version = (*p)->version();
-      if (version != NULL)
-	version_index = this->version_index(symtab, dynpool, *p);
-      else
+      if (version == NULL)
 	{
 	  if ((*p)->is_defined() && !(*p)->is_from_dynobj())
 	    version_index = elfcpp::VER_NDX_GLOBAL;
 	  else
 	    version_index = elfcpp::VER_NDX_LOCAL;
 	}
+      else if (version[0] == '\0')
+        version_index = elfcpp::VER_NDX_GLOBAL;
+      else
+	version_index = this->version_index(symtab, dynpool, *p);
       // If the symbol was defined as foo@V1 instead of foo@@V1, add
       // the hidden bit.
       if ((*p)->version() != NULL && !(*p)->is_default())

@@ -1,5 +1,5 @@
 /* tc-aarch64.h -- Header file for tc-aarch64.c.
-   Copyright 2009, 2010, 2011, 2012  Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GAS.
@@ -91,8 +91,8 @@ void aarch64_copy_symbol_attributes (symbolS *, symbolS *);
   (aarch64_copy_symbol_attributes (DEST, SRC))
 #endif
 
-#define TC_START_LABEL(C,S,STR)           ((C) == ':' \
-					   || ((C) == '/' && aarch64_data_in_code ()))
+#define TC_START_LABEL(STR, NUL_CHAR, NEXT_CHAR)			\
+  (NEXT_CHAR == ':' || (NEXT_CHAR == '/' && aarch64_data_in_code ()))
 #define tc_canonicalize_symbol_name(str) aarch64_canonicalize_symbol_name (str);
 #define obj_adjust_symtab() 		 aarch64_adjust_symtab ()
 
@@ -114,10 +114,11 @@ void aarch64_copy_symbol_attributes (symbolS *, symbolS *);
    || (FIX)->fx_r_type == BFD_RELOC_32			\
    || TC_FORCE_RELOCATION (FIX))
 
-#define TC_CONS_FIX_NEW cons_fix_new_aarch64
+#define TC_CONS_FIX_NEW(f,w,s,e,r) cons_fix_new_aarch64 ((f), (w), (s), (e))
 
-/* Max code alignment is 32 bytes */
-#define MAX_MEM_FOR_RS_ALIGN_CODE 31
+/* Max space for a rs_align_code fragment is 3 unaligned bytes
+   (fr_fix) plus 4 bytes to contain the repeating NOP (fr_var).  */
+#define MAX_MEM_FOR_RS_ALIGN_CODE 7
 
 /* For frags in code sections we need to record whether they contain
    code or data.  */
@@ -141,17 +142,22 @@ struct aarch64_frag_type
 #define md_do_align(N, FILL, LEN, MAX, LABEL)					\
   if (FILL == NULL && (N) != 0 && ! need_pass_2 && subseg_text_p (now_seg))	\
     {										\
-      aarch64_frag_align_code (N, MAX);						\
+      frag_align_code (N, MAX);							\
       goto LABEL;								\
     }
 
-#define DWARF2_LINE_MIN_INSN_LENGTH 	2
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 0
+
+#define DWARF2_LINE_MIN_INSN_LENGTH 	4
 
 /* The lr register is r30.  */
 #define DWARF2_DEFAULT_RETURN_COLUMN  30
 
 /* Registers are generally saved at negative offsets to the CFA.  */
-#define DWARF2_CIE_DATA_ALIGNMENT     (-4)
+#define DWARF2_CIE_DATA_ALIGNMENT     (-8)
+
+extern int aarch64_dwarf2_addr_size (void);
+#define DWARF2_ADDR_SIZE(bfd) aarch64_dwarf2_addr_size ()
 
 #ifdef OBJ_ELF
 # define obj_frob_symbol(sym, punt)	aarch64elf_frob_symbol ((sym), & (punt))

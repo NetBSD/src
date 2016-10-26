@@ -1,5 +1,4 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 1997, 2001, 2003, 2004,
-@c 2005, 2008, 2010, 2011, 2012  Free Software Foundation, Inc.
+@c Copyright (C) 1991-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @page
@@ -186,21 +185,21 @@ Immediate data
 @cindex floating point, SH (@sc{ieee})
 @cindex SH floating point (@sc{ieee})
 SH2E, SH3E and SH4 groups have on-chip floating-point unit (FPU). Other
-SH groups can use @code{.float} directive to generate @sc{ieee} 
-floating-point numbers. 
+SH groups can use @code{.float} directive to generate @sc{ieee}
+floating-point numbers.
 
-SH2E and SH3E support single-precision floating point calculations as 
-well as entirely PCAPI compatible emulation of double-precision 
+SH2E and SH3E support single-precision floating point calculations as
+well as entirely PCAPI compatible emulation of double-precision
 floating point calculations. SH2E and SH3E instructions are a subset of
 the floating point calculations conforming to the IEEE754 standard.
 
-In addition to single-precision and double-precision floating-point 
-operation capability, the on-chip FPU of SH4 has a 128-bit graphic 
-engine that enables 32-bit floating-point data to be processed 128 
-bits at a time. It also supports 4 * 4 array operations and inner 
-product operations. Also, a superscalar architecture is employed that 
-enables simultaneous execution of two instructions (including FPU 
-instructions), providing performance of up to twice that of 
+In addition to single-precision and double-precision floating-point
+operation capability, the on-chip FPU of SH4 has a 128-bit graphic
+engine that enables 32-bit floating-point data to be processed 128
+bits at a time. It also supports 4 * 4 array operations and inner
+product operations. Also, a superscalar architecture is employed that
+enables simultaneous execution of two instructions (including FPU
+instructions), providing performance of up to twice that of
 conventional architectures at the same frequency.
 
 @node SH Directives
@@ -267,73 +266,73 @@ disp      @r{displacement}
 disp8     @r{8-bit displacement}
 disp12    @r{12-bit displacement}
 
-add #imm,Rn                    lds.l @@Rn+,PR              
-add Rm,Rn                      mac.w @@Rm+,@@Rn+           
-addc Rm,Rn                     mov #imm,Rn                 
-addv Rm,Rn                     mov Rm,Rn                   
-and #imm,R0                    mov.b Rm,@@(R0,Rn)          
-and Rm,Rn                      mov.b Rm,@@-Rn              
-and.b #imm,@@(R0,GBR)           mov.b Rm,@@Rn               
-bf disp8                       mov.b @@(disp,Rm),R0        
-bra disp12                     mov.b @@(disp,GBR),R0       
-bsr disp12                     mov.b @@(R0,Rm),Rn          
-bt disp8                       mov.b @@Rm+,Rn              
-clrmac                         mov.b @@Rm,Rn               
-clrt                           mov.b R0,@@(disp,Rm)        
-cmp/eq #imm,R0                 mov.b R0,@@(disp,GBR)       
-cmp/eq Rm,Rn                   mov.l Rm,@@(disp,Rn)        
-cmp/ge Rm,Rn                   mov.l Rm,@@(R0,Rn)          
-cmp/gt Rm,Rn                   mov.l Rm,@@-Rn              
-cmp/hi Rm,Rn                   mov.l Rm,@@Rn               
-cmp/hs Rm,Rn                   mov.l @@(disp,Rn),Rm        
-cmp/pl Rn                      mov.l @@(disp,GBR),R0       
-cmp/pz Rn                      mov.l @@(disp,PC),Rn        
-cmp/str Rm,Rn                  mov.l @@(R0,Rm),Rn          
-div0s Rm,Rn                    mov.l @@Rm+,Rn              
-div0u                          mov.l @@Rm,Rn               
-div1 Rm,Rn                     mov.l R0,@@(disp,GBR)       
-exts.b Rm,Rn                   mov.w Rm,@@(R0,Rn)          
-exts.w Rm,Rn                   mov.w Rm,@@-Rn              
-extu.b Rm,Rn                   mov.w Rm,@@Rn               
-extu.w Rm,Rn                   mov.w @@(disp,Rm),R0        
-jmp @@Rn                        mov.w @@(disp,GBR),R0       
-jsr @@Rn                        mov.w @@(disp,PC),Rn        
-ldc Rn,GBR                     mov.w @@(R0,Rm),Rn          
-ldc Rn,SR                      mov.w @@Rm+,Rn              
-ldc Rn,VBR                     mov.w @@Rm,Rn               
-ldc.l @@Rn+,GBR                 mov.w R0,@@(disp,Rm)        
-ldc.l @@Rn+,SR                  mov.w R0,@@(disp,GBR)       
-ldc.l @@Rn+,VBR                 mova @@(disp,PC),R0         
-lds Rn,MACH                    movt Rn                     
-lds Rn,MACL                    muls Rm,Rn                  
-lds Rn,PR                      mulu Rm,Rn                  
-lds.l @@Rn+,MACH                neg Rm,Rn                   
-lds.l @@Rn+,MACL                negc Rm,Rn                  
+add #imm,Rn                    lds.l @@Rn+,PR
+add Rm,Rn                      mac.w @@Rm+,@@Rn+
+addc Rm,Rn                     mov #imm,Rn
+addv Rm,Rn                     mov Rm,Rn
+and #imm,R0                    mov.b Rm,@@(R0,Rn)
+and Rm,Rn                      mov.b Rm,@@-Rn
+and.b #imm,@@(R0,GBR)           mov.b Rm,@@Rn
+bf disp8                       mov.b @@(disp,Rm),R0
+bra disp12                     mov.b @@(disp,GBR),R0
+bsr disp12                     mov.b @@(R0,Rm),Rn
+bt disp8                       mov.b @@Rm+,Rn
+clrmac                         mov.b @@Rm,Rn
+clrt                           mov.b R0,@@(disp,Rm)
+cmp/eq #imm,R0                 mov.b R0,@@(disp,GBR)
+cmp/eq Rm,Rn                   mov.l Rm,@@(disp,Rn)
+cmp/ge Rm,Rn                   mov.l Rm,@@(R0,Rn)
+cmp/gt Rm,Rn                   mov.l Rm,@@-Rn
+cmp/hi Rm,Rn                   mov.l Rm,@@Rn
+cmp/hs Rm,Rn                   mov.l @@(disp,Rn),Rm
+cmp/pl Rn                      mov.l @@(disp,GBR),R0
+cmp/pz Rn                      mov.l @@(disp,PC),Rn
+cmp/str Rm,Rn                  mov.l @@(R0,Rm),Rn
+div0s Rm,Rn                    mov.l @@Rm+,Rn
+div0u                          mov.l @@Rm,Rn
+div1 Rm,Rn                     mov.l R0,@@(disp,GBR)
+exts.b Rm,Rn                   mov.w Rm,@@(R0,Rn)
+exts.w Rm,Rn                   mov.w Rm,@@-Rn
+extu.b Rm,Rn                   mov.w Rm,@@Rn
+extu.w Rm,Rn                   mov.w @@(disp,Rm),R0
+jmp @@Rn                        mov.w @@(disp,GBR),R0
+jsr @@Rn                        mov.w @@(disp,PC),Rn
+ldc Rn,GBR                     mov.w @@(R0,Rm),Rn
+ldc Rn,SR                      mov.w @@Rm+,Rn
+ldc Rn,VBR                     mov.w @@Rm,Rn
+ldc.l @@Rn+,GBR                 mov.w R0,@@(disp,Rm)
+ldc.l @@Rn+,SR                  mov.w R0,@@(disp,GBR)
+ldc.l @@Rn+,VBR                 mova @@(disp,PC),R0
+lds Rn,MACH                    movt Rn
+lds Rn,MACL                    muls Rm,Rn
+lds Rn,PR                      mulu Rm,Rn
+lds.l @@Rn+,MACH                neg Rm,Rn
+lds.l @@Rn+,MACL                negc Rm,Rn
 @page
-nop                            stc VBR,Rn                
-not Rm,Rn                      stc.l GBR,@@-Rn           
-or #imm,R0                     stc.l SR,@@-Rn            
-or Rm,Rn                       stc.l VBR,@@-Rn           
-or.b #imm,@@(R0,GBR)            sts MACH,Rn               
-rotcl Rn                       sts MACL,Rn               
-rotcr Rn                       sts PR,Rn                 
-rotl Rn                        sts.l MACH,@@-Rn          
-rotr Rn                        sts.l MACL,@@-Rn          
-rte                            sts.l PR,@@-Rn            
-rts                            sub Rm,Rn                 
-sett                           subc Rm,Rn                
-shal Rn                        subv Rm,Rn                
-shar Rn                        swap.b Rm,Rn              
-shll Rn                        swap.w Rm,Rn              
-shll16 Rn                      tas.b @@Rn                
-shll2 Rn                       trapa #imm                
-shll8 Rn                       tst #imm,R0               
-shlr Rn                        tst Rm,Rn                 
-shlr16 Rn                      tst.b #imm,@@(R0,GBR)     
-shlr2 Rn                       xor #imm,R0               
-shlr8 Rn                       xor Rm,Rn                 
-sleep                          xor.b #imm,@@(R0,GBR)     
-stc GBR,Rn                     xtrct Rm,Rn               
+nop                            stc VBR,Rn
+not Rm,Rn                      stc.l GBR,@@-Rn
+or #imm,R0                     stc.l SR,@@-Rn
+or Rm,Rn                       stc.l VBR,@@-Rn
+or.b #imm,@@(R0,GBR)            sts MACH,Rn
+rotcl Rn                       sts MACL,Rn
+rotcr Rn                       sts PR,Rn
+rotl Rn                        sts.l MACH,@@-Rn
+rotr Rn                        sts.l MACL,@@-Rn
+rte                            sts.l PR,@@-Rn
+rts                            sub Rm,Rn
+sett                           subc Rm,Rn
+shal Rn                        subv Rm,Rn
+shar Rn                        swap.b Rm,Rn
+shll Rn                        swap.w Rm,Rn
+shll16 Rn                      tas.b @@Rn
+shll2 Rn                       trapa #imm
+shll8 Rn                       tst #imm,R0
+shlr Rn                        tst Rm,Rn
+shlr16 Rn                      tst.b #imm,@@(R0,GBR)
+shlr2 Rn                       xor #imm,R0
+shlr8 Rn                       xor Rm,Rn
+sleep                          xor.b #imm,@@(R0,GBR)
+stc GBR,Rn                     xtrct Rm,Rn
 stc SR,Rn
 @end smallexample
 @end ifset

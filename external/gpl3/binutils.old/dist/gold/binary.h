@@ -1,6 +1,6 @@
 // binary.h -- binary input files for gold   -*- C++ -*-
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -95,7 +95,8 @@ class Binary_to_elf
   template<int size, bool big_endian>
   void
   write_symbol(const std::string&, const Stringpool_template<char>*,
-	       section_size_type, unsigned int, unsigned char**);
+	       section_size_type, typename elfcpp::Elf_types<32>::Elf_WXword,
+	       unsigned int, unsigned char**);
 
   // The ELF machine code of the file to create.
   elfcpp::EM elf_machine_;

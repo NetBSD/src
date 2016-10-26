@@ -7,8 +7,7 @@ else
 fi
 fragment <<EOF
 /* This file is part of GLD, the Gnu Linker.
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -330,7 +329,7 @@ gld_${EMULATION_NAME}_set_symbols (void)
 
   if (!init[IMAGEBASEOFF].inited)
     {
-      if (link_info.relocatable)
+      if (bfd_link_relocatable (&link_info))
 	init[IMAGEBASEOFF].value = 0;
       else if (init[DLLOFF].value)
 	init[IMAGEBASEOFF].value = BEOS_DLL_IMAGE_BASE;
@@ -339,7 +338,7 @@ gld_${EMULATION_NAME}_set_symbols (void)
     }
 
   /* Don't do any symbol assignments if this is a relocatable link.  */
-  if (link_info.relocatable)
+  if (bfd_link_relocatable (&link_info))
     return;
 
   /* Glue the assignments into the abs section */
@@ -675,7 +674,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
      If they're marked as COMDAT sections, we don't want .text\$foo to
      end up in .text and then have .text disappear because it's marked
      link-once-discard.  */
-  if (link_info.relocatable)
+  if (bfd_link_relocatable (&link_info))
     return NULL;
 
   /* Everything from the '\$' on gets deleted so don't allow '\$' as the
@@ -735,11 +734,11 @@ fragment <<EOF
 {
   *isfile = 0;
 
-  if (link_info.relocatable && config.build_constructors)
+  if (bfd_link_relocatable (&link_info) && config.build_constructors)
     return
 EOF
 sed $sc ldscripts/${EMULATION_NAME}.xu                 >> e${EMULATION_NAME}.c
-echo '  ; else if (link_info.relocatable) return'     >> e${EMULATION_NAME}.c
+echo '  ; else if (bfd_link_relocatable (&link_info)) return' >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xr                 >> e${EMULATION_NAME}.c
 echo '  ; else if (!config.text_read_only) return'     >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xbn                >> e${EMULATION_NAME}.c
@@ -778,6 +777,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
   NULL,	/* list options */
   NULL,	/* recognized file */
   NULL,	/* find_potential_libraries */
-  NULL	/* new_vers_pattern */
+  NULL,	/* new_vers_pattern */
+  NULL	/* extra_map_file_text */
 };
 EOF

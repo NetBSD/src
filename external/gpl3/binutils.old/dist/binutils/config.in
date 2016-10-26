@@ -1,4 +1,4 @@
-/* config.in.  Generated from configure.in by autoheader.  */
+/* config.in.  Generated from configure.ac by autoheader.  */
 
 /* Check that config.h is #included before system headers
    (this works only for glibc, but that should be enough).  */
@@ -17,6 +17,9 @@
 
 /* Should ar and ranlib use -D behavior by default? */
 #undef DEFAULT_AR_DETERMINISTIC
+
+/* Should strings use -a behavior by default? */
+#undef DEFAULT_STRINGS_ALL
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -63,6 +66,10 @@
    */
 #undef HAVE_DECL_STPCPY
 
+/* Define to 1 if you have the declaration of `strnlen', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRNLEN
+
 /* Define to 1 if you have the declaration of `strstr', and to 0 if you don't.
    */
 #undef HAVE_DECL_STRSTR
@@ -100,6 +107,9 @@
 
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H
+
+/* Define to 1 if the system has the type `long long'. */
+#undef HAVE_LONG_LONG
 
 /* Define if mbstate_t exists in wchar.h. */
 #undef HAVE_MBSTATE_T
@@ -167,8 +177,8 @@
 /* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H
 
-/* Define to 1 if you have the <zlib.h> header file. */
-#undef HAVE_ZLIB_H
+/* Define to 1 if you have the <windows.h> header file. */
+#undef HAVE_WINDOWS_H
 
 /* Define as const if the declaration of iconv() needs const. */
 #undef ICONV_CONST
@@ -197,6 +207,12 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* The size of `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of `long long', as computed by sizeof. */
+#undef SIZEOF_LONG_LONG
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be

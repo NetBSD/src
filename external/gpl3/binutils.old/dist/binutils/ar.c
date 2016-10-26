@@ -1,7 +1,5 @@
 /* ar.c - Archive modify and extract.
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013
-   Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -140,7 +138,11 @@ static int show_version = 0;
 
 static int show_help = 0;
 
+#if BFD_SUPPORTS_PLUGINS
+static const char *plugin_target = "plugin";
+#else
 static const char *plugin_target = NULL;
+#endif
 
 static const char *target = NULL;
 
@@ -191,6 +193,9 @@ map_over_members (bfd *arch, void (*function)(bfd *), char **files, int count)
      mapping over each file each time -- we want to hack multiple
      references.  */
 
+  for (head = arch->archive_next; head; head = head->archive_next)
+    head->archive_pass = 0;
+
   for (; count > 0; files++, count--)
     {
       bfd_boolean found = FALSE;
@@ -201,6 +206,14 @@ map_over_members (bfd *arch, void (*function)(bfd *), char **files, int count)
 	  const char * filename;
 
 	  PROGRESS (1);
+	  /* PR binutils/15796: Once an archive element has been matched
+	     do not match it again.  If the user provides multiple same-named
+	     parameters on the command line their intent is to match multiple
+	     same-named entries in the archive, not the same entry multiple
+	     times.  */
+	  if (head->archive_pass)
+	    continue;
+
 	  filename = head->filename;
 	  if (filename == NULL)
 	    {
@@ -229,6 +242,13 @@ map_over_members (bfd *arch, void (*function)(bfd *), char **files, int count)
 
 	      found = TRUE;
 	      function (head);
+	      head->archive_pass = 1;
+	      /* PR binutils/15796: Once a file has been matched, do not
+		 match any more same-named files in the archive.  If the
+		 user does want to match multiple same-name files in an
+		 archive they should provide multiple same-name parameters
+		 to the ar command.  */
+	      break;
 	    }
 	}
 
@@ -245,8 +265,6 @@ usage (int help)
 {
   FILE *s;
 
-  s = help ? stdout : stderr;
-
 #if BFD_SUPPORTS_PLUGINS
   /* xgettext:c-format */
   const char *command_line
@@ -259,6 +277,8 @@ usage (int help)
     = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoPsSTuvV]"
 	" [member-name] [count] archive-file file...\n");
 #endif
+  s = help ? stdout : stderr;
+
   fprintf (s, command_line, program_name);
 
   /* xgettext:c-format */
@@ -555,7 +575,6 @@ decode_options (int argc, char **argv)
           break;
 	case OPTION_PLUGIN:
 #if BFD_SUPPORTS_PLUGINS
-	  plugin_target = "plugin";
 	  bfd_plugin_set_plugin (optarg);
 #else
 	  fprintf (stderr, _("sorry - this program has been built without plugin support\n"));
@@ -616,7 +635,6 @@ ranlib_main (int argc, char **argv)
 	  /* PR binutils/13493: Support plugins.  */
 	case OPTION_PLUGIN:
 #if BFD_SUPPORTS_PLUGINS
-	  plugin_target = "plugin";
 	  bfd_plugin_set_plugin (optarg);
 #else
 	  fprintf (stderr, _("sorry - this program has been built without plugin support\n"));
@@ -673,6 +691,7 @@ main (int argc, char **argv)
 
   program_name = argv[0];
   xmalloc_set_program_name (program_name);
+  bfd_set_error_program_name (program_name);
 #if BFD_SUPPORTS_PLUGINS
   bfd_plugin_set_program_name (program_name);
 #endif
@@ -721,6 +740,7 @@ main (int argc, char **argv)
 
   if (mri_mode)
     {
+      default_deterministic ();
       mri_emul ();
     }
   else
@@ -918,6 +938,25 @@ open_inarch (const char *archive_filename, const char *file)
       xexit (1);
     }
 
+  if ((operation == replace || operation == quick_append)
+      && bfd_openr_next_archived_file (arch, NULL) != NULL)
+    {
+      /* PR 15140: Catch attempts to convert a normal
+	 archive into a thin archive or vice versa.  */
+      if (make_thin_archive && ! bfd_is_thin_archive (arch))
+	{
+	  fatal (_("Cannot convert existing library %s to thin format"),
+		 bfd_get_filename (arch));
+	  goto bloser;
+	}
+      else if (! make_thin_archive && bfd_is_thin_archive (arch))
+	{
+	  fatal (_("Cannot convert existing thin library %s to normal format"),
+		 bfd_get_filename (arch));
+	  goto bloser;
+	}
+    }
+
   last_one = &(arch->archive_next);
   /* Read all the contents right away, regardless.  */
   for (next_one = bfd_openr_next_archived_file (arch, NULL);
@@ -995,6 +1034,16 @@ extract_file (bfd *abfd)
   bfd_size_type ncopied = 0;
   bfd_size_type size;
   struct stat buf;
+
+  /* PR binutils/17533: Do not allow directory traversal
+     outside of the current directory tree.  */
+  if (! is_valid_archive_path (bfd_get_filename (abfd)))
+    {
+      non_fatal (_("illegal pathname found in archive member: %s"),
+		 bfd_get_filename (abfd));
+      free (cbuf);
+      return;
+    }
 
   if (bfd_stat_arch_elt (abfd, &buf) != 0)
     /* xgettext:c-format */

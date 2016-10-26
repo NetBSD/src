@@ -1,6 +1,5 @@
 /* tc-mep.c -- Assembler for the Toshiba Media Processor.
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2007, 2009, 2012
-   Free Software Foundation. Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -487,12 +486,12 @@ md_begin ()
   mep_cop = mep_config_map[mep_config_index].cpu_flag & EF_MEP_COP_MASK;
 
   /* Set the machine number and endian.  */
-  gas_cgen_cpu_desc = mep_cgen_cpu_open (CGEN_CPU_OPEN_MACHS, 0,
+  gas_cgen_cpu_desc = mep_cgen_cpu_open (CGEN_CPU_OPEN_MACHS, 0U,
 					 CGEN_CPU_OPEN_ENDIAN,
 					 target_big_endian
 					 ? CGEN_ENDIAN_BIG
 					 : CGEN_ENDIAN_LITTLE,
-					 CGEN_CPU_OPEN_ISAS, 0,
+					 CGEN_CPU_OPEN_ISAS, (CGEN_BITSET *) 0,
 					 CGEN_CPU_OPEN_END);
   mep_cgen_init_asm (gas_cgen_cpu_desc);
 
@@ -509,7 +508,7 @@ md_begin ()
   gas_cgen_initialize_saved_fixups_array();
 }
 
-/* Variant of mep_cgen_assemble_insn.  Assemble insn STR of cpu CD as a 
+/* Variant of mep_cgen_assemble_insn.  Assemble insn STR of cpu CD as a
    coprocessor instruction, if possible, into FIELDS, BUF, and INSN.  */
 
 static const CGEN_INSN *
@@ -524,14 +523,14 @@ mep_cgen_assemble_cop_insn (CGEN_CPU_DESC cd,
   const char *errmsg = NULL;
 
   /* The instructions are stored in hashed lists. */
-  ilist = CGEN_ASM_LOOKUP_INSN (gas_cgen_cpu_desc, 
+  ilist = CGEN_ASM_LOOKUP_INSN (gas_cgen_cpu_desc,
 				CGEN_INSN_MNEMONIC (pinsn));
 
   start = str;
   for ( ; ilist != NULL ; ilist = CGEN_ASM_NEXT_INSN (ilist))
     {
       const CGEN_INSN *insn = ilist->insn;
-      if (strcmp (CGEN_INSN_MNEMONIC (ilist->insn), 
+      if (strcmp (CGEN_INSN_MNEMONIC (ilist->insn),
 		  CGEN_INSN_MNEMONIC (pinsn)) == 0
 	  && MEP_INSN_COP_P (ilist->insn)
 	  && mep_cgen_insn_supported (cd, insn))
@@ -549,7 +548,7 @@ mep_cgen_assemble_cop_insn (CGEN_CPU_DESC cd,
 	  errmsg = CGEN_PARSE_FN (cd, insn) (cd, insn, & str, fields);
 	  if (errmsg != NULL)
 	    continue;
-	  
+
 	  errmsg = CGEN_INSERT_FN (cd, insn) (cd, insn, fields, buf,
 					      (bfd_vma) 0);
 	  if (errmsg != NULL)
@@ -613,7 +612,7 @@ mep_check_parallel32_scheduling (void)
 	    as_bad (_("core and copro insn lengths must total 32 bits."));
 	}
       else
-        as_bad (_("vliw group must consist of 1 core and 1 copro insn.")); 
+        as_bad (_("vliw group must consist of 1 core and 1 copro insn."));
     }
   else
     {
@@ -649,15 +648,15 @@ mep_check_parallel32_scheduling (void)
                                 CGEN_INSN_VLIW32_NO_MATCHING_NOP))
 	as_fatal ("No valid nop.");
 
-      /* At this point we know that we have a single 16-bit insn that has 
-	 a matching nop.  We have to assemble it and put it into the saved 
+      /* At this point we know that we have a single 16-bit insn that has
+	 a matching nop.  We have to assemble it and put it into the saved
          insn and fixup chain arrays. */
 
       if (insn0iscopro)
 	{
           char *errmsg;
           mep_insn insn;
-         
+
           /* Move the insn and it's fixups to the second element of the
              saved insns arrary and insert a 16 bit core nope into the
              first element. */
@@ -672,7 +671,7 @@ mep_check_parallel32_scheduling (void)
 
              /* Move the insn in element 0 to element 1 and insert the
                  nop into element 0.  Move the fixups in element 0 to
-                 element 1 and save the current fixups to element 0.  
+                 element 1 and save the current fixups to element 0.
                  Really there aren't any fixups at this point because we're
                  inserting a nop but we might as well be general so that
                  if there's ever a need to insert a general insn, we'll
@@ -819,7 +818,7 @@ mep_check_parallel64_scheduling (void)
                  nop has been added, then make the necessary changes and
                  handle its assembly and insertion here.  Otherwise,
                  go figure out why either:
-              
+
                  1. The assembler thinks that there is a 32-bit core nop
                     to match a 32-bit coprocessor insn, or
                  2. The assembler thinks that there is a 48-bit core nop
@@ -836,7 +835,7 @@ mep_check_parallel64_scheduling (void)
 
          /* Move the insn in element 0 to element 1 and insert the
             nop into element 0.  Move the fixups in element 0 to
-            element 1 and save the current fixups to element 0. 
+            element 1 and save the current fixups to element 0.
 	    Really there aren't any fixups at this point because we're
 	    inserting a nop but we might as well be general so that
 	    if there's ever a need to insert a general insn, we'll
@@ -1155,7 +1154,7 @@ static void
 mep_check_parallel_scheduling (void)
 {
   /* This is where we will eventually read the config information
-     and choose which scheduling checking function to call.  */   
+     and choose which scheduling checking function to call.  */
 #ifdef MEP_IVC2_SUPPORTED
   if (mep_cop == EF_MEP_COP_IVC2)
     mep_check_ivc2_scheduling ();
@@ -1245,9 +1244,9 @@ md_assemble (char * str)
       int thisInsnIsCopro = 0;
       mep_insn insn;
       int i;
-      
+
       /* Initialize the insn buffer */
-	
+
       if (! CGEN_INT_INSN_P)
          for (i=0; i < CGEN_MAX_INSN_SIZE; i++)
             insn.buffer[i]='\0';
@@ -1383,7 +1382,7 @@ valueT
 md_section_align (segT segment, valueT size)
 {
   int align = bfd_get_section_alignment (stdoutput, segment);
-  return ((size + (1 << align) - 1) & (-1 << align));
+  return ((size + (1 << align) - 1) & -(1 << align));
 }
 
 
@@ -1547,7 +1546,7 @@ md_estimate_size_before_relax (fragS * fragP, segT segment)
       switch (fragP->fr_cgen.insn->base->num)
 	{
 	case MEP_INSN_BSR12:
-	  fragP->fr_subtype = insn_to_subtype 
+	  fragP->fr_subtype = insn_to_subtype
 	    (subtype_mappings[fragP->fr_subtype].insn_for_extern);
 	  break;
 	case MEP_INSN_BEQZ:
@@ -1615,7 +1614,7 @@ target_address_for (fragS *frag)
 }
 
 void
-md_convert_frag (bfd *abfd  ATTRIBUTE_UNUSED, 
+md_convert_frag (bfd *abfd  ATTRIBUTE_UNUSED,
 		 segT seg ATTRIBUTE_UNUSED,
 		 fragS *fragP)
 {
@@ -1867,7 +1866,7 @@ md_cgen_lookup_reloc (const CGEN_INSN *insn ATTRIBUTE_UNUSED,
 #ifdef OBJ_COMPLEX_RELC
       /* coalescing this into RELOC_MEP_16 is actually a bug,
 	 since it's a signed operand. let the relc code handle it. */
-      return BFD_RELOC_RELC; 
+      return BFD_RELOC_RELC;
 #endif
 
     case MEP_OPERAND_UIMM16:
@@ -1880,7 +1879,7 @@ md_cgen_lookup_reloc (const CGEN_INSN *insn ATTRIBUTE_UNUSED,
 
     default:
 #ifdef OBJ_COMPLEX_RELC
-      /* this is not an error, yet. 
+      /* this is not an error, yet.
 	 pass it to the linker. */
       return BFD_RELOC_RELC;
 #endif
@@ -2199,5 +2198,5 @@ mep_flush_pending_output (void)
       pluspresent = 0;
     }
 
-  return 1; 
+  return 1;
 }

@@ -1,5 +1,5 @@
 /* od-xcoff.c -- dump information about an xcoff object file.
-   Copyright 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Written by Tristan Gingold, Adacore.
 
    This file is part of GNU Binutils.
@@ -49,6 +49,7 @@
 #define OPT_TYPCHK 8
 #define OPT_TRACEBACK 9
 #define OPT_TOC 10
+#define OPT_LDINFO 11
 
 /* List of actions.  */
 static struct objdump_private_option options[] =
@@ -64,6 +65,7 @@ static struct objdump_private_option options[] =
     { "typchk", 0 },
     { "traceback", 0 },
     { "toc", 0 },
+    { "ldinfo", 0 },
     { NULL, 0 }
   };
 
@@ -85,6 +87,7 @@ For XCOFF files:\n\
   typchk      Display type-check section\n\
   traceback   Display traceback tags\n\
   toc         Display toc symbols\n\
+  ldinfo      Display loader info in core files\n\
 "));
 }
 
@@ -353,7 +356,7 @@ union xcoff32_symbol
 
   struct sym
   {
-    /* Pointer the the NUL-terminated name.  */
+    /* Pointer to the NUL-terminated name.  */
     char *name;
 
     /* XCOFF symbol fields.  */
@@ -448,7 +451,7 @@ dump_xcoff32_aout_header (bfd *abfd, struct xcoff_dump *data)
     }
   if (data->opthdr > sizeof (auxhdr))
     {
-      printf (_("warning: optionnal header size too large (> %d)\n"),
+      printf (_("warning: optional header size too large (> %d)\n"),
               (int)sizeof (auxhdr));
       sz = sizeof (auxhdr);
     }
@@ -1628,7 +1631,7 @@ dump_xcoff32 (bfd *abfd, struct external_filehdr *fhdr)
 /* Dump ABFD (according to the options[] array).  */
 
 static void
-xcoff_dump (bfd *abfd)
+xcoff_dump_obj (bfd *abfd)
 {
   struct external_filehdr fhdr;
   unsigned short magic;
@@ -1660,6 +1663,7 @@ xcoff_dump (bfd *abfd)
           break;
         default:
           printf (_("unknown magic"));
+	  break;
         }
       putchar ('\n');
     }
@@ -1667,6 +1671,164 @@ xcoff_dump (bfd *abfd)
     dump_xcoff32 (abfd, &fhdr);
   else
     printf (_("  Unhandled magic\n"));
+}
+
+/* Handle an AIX dumpx core file.  */
+
+static void
+dump_dumpx_core (bfd *abfd, struct external_core_dumpx *hdr)
+{
+  if (options[OPT_FILE_HEADER].selected)
+    {
+      printf ("  signal:     %u\n", bfd_h_get_8 (abfd, hdr->c_signo));
+      printf ("  flags:      0x%02x\n", bfd_h_get_8 (abfd, hdr->c_flag));
+      printf ("  entries:    %u\n",
+	      (unsigned) bfd_h_get_16 (abfd, hdr->c_entries));
+#ifdef BFD64
+      printf ("  fdsinfox:   offset: 0x%08" BFD_VMA_FMT "x\n",
+	      bfd_h_get_64 (abfd, hdr->c_fdsinfox));
+      printf ("  loader:     offset: 0x%08" BFD_VMA_FMT "x, "
+	      "size: 0x%" BFD_VMA_FMT"x\n",
+	      bfd_h_get_64 (abfd, hdr->c_loader),
+	      bfd_h_get_64 (abfd, hdr->c_lsize));
+      printf ("  thr:        offset: 0x%08" BFD_VMA_FMT "x, nbr: %u\n",
+	      bfd_h_get_64 (abfd, hdr->c_thr),
+	      (unsigned) bfd_h_get_32 (abfd, hdr->c_n_thr));
+      printf ("  segregions: offset: 0x%08" BFD_VMA_FMT "x, "
+	      "nbr: %" BFD_VMA_FMT "u\n",
+	      bfd_h_get_64 (abfd, hdr->c_segregion),
+	      bfd_h_get_64 (abfd, hdr->c_segs));
+      printf ("  stack:      offset: 0x%08" BFD_VMA_FMT "x, "
+	      "org: 0x%" BFD_VMA_FMT"x, "
+	      "size: 0x%" BFD_VMA_FMT"x\n",
+	      bfd_h_get_64 (abfd, hdr->c_stack),
+	      bfd_h_get_64 (abfd, hdr->c_stackorg),
+	      bfd_h_get_64 (abfd, hdr->c_size));
+      printf ("  data:       offset: 0x%08" BFD_VMA_FMT "x, "
+	      "org: 0x%" BFD_VMA_FMT"x, "
+	      "size: 0x%" BFD_VMA_FMT"x\n",
+	      bfd_h_get_64 (abfd, hdr->c_data),
+	      bfd_h_get_64 (abfd, hdr->c_dataorg),
+	      bfd_h_get_64 (abfd, hdr->c_datasize));
+      printf ("  sdata:         org: 0x%" BFD_VMA_FMT"x, "
+	      "size: 0x%" BFD_VMA_FMT"x\n",
+	      bfd_h_get_64 (abfd, hdr->c_sdorg),
+	      bfd_h_get_64 (abfd, hdr->c_sdsize));
+      printf ("  vmmregions: offset: 0x%" BFD_VMA_FMT"x, "
+	      "num: 0x%" BFD_VMA_FMT"x\n",
+	      bfd_h_get_64 (abfd, hdr->c_vmm),
+	      bfd_h_get_64 (abfd, hdr->c_vmmregions));
+      printf ("  impl:       0x%08x\n",
+	      (unsigned) bfd_h_get_32 (abfd, hdr->c_impl));
+      printf ("  cprs:       0x%" BFD_VMA_FMT "x\n",
+	      bfd_h_get_64 (abfd, hdr->c_cprs));
+#endif
+    }
+  if (options[OPT_LDINFO].selected)
+    {
+#ifdef BFD64
+      file_ptr off = (file_ptr) bfd_h_get_64 (abfd, hdr->c_loader);
+      bfd_size_type len = (bfd_size_type) bfd_h_get_64 (abfd, hdr->c_lsize);
+      char *ldr;
+
+      ldr = xmalloc (len);
+      if (bfd_seek (abfd, off, SEEK_SET) != 0
+	  || bfd_bread (ldr, len, abfd) != len)
+	non_fatal (_("cannot read loader info table"));
+      else
+	{
+	  char *p;
+
+	  printf ("\n"
+		  "ld info:\n");
+	  printf ("  next     core off textorg  textsize dataorg  datasize\n");
+	  p = ldr;
+	  while (1)
+	    {
+	      struct external_ld_info32 *l = (struct external_ld_info32 *)p;
+	      unsigned int next;
+	      size_t n1;
+
+	      next = bfd_h_get_32 (abfd, l->ldinfo_next);
+	      printf ("  %08x %08x %08x %08x %08x %08x\n",
+		      next,
+		      (unsigned) bfd_h_get_32 (abfd, l->core_offset),
+		      (unsigned) bfd_h_get_32 (abfd, l->ldinfo_textorg),
+		      (unsigned) bfd_h_get_32 (abfd, l->ldinfo_textsize),
+		      (unsigned) bfd_h_get_32 (abfd, l->ldinfo_dataorg),
+		      (unsigned) bfd_h_get_32 (abfd, l->ldinfo_datasize));
+	      n1 = strlen ((char *) l->ldinfo_filename);
+	      printf ("    %s %s\n",
+		      l->ldinfo_filename, l->ldinfo_filename + n1 + 1);
+	      if (next == 0)
+		break;
+	      p += next;
+	    }
+	}
+#else
+      printf (_("\n"
+		"ldinfo dump not supported in 32 bits environments\n"));
+#endif
+    }
+}
+
+/* Dump a core file.  */
+
+static void
+xcoff_dump_core (bfd *abfd)
+{
+  struct external_core_dumpx hdr;
+  unsigned int version;
+
+  /* Read file header.  */
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0
+      || bfd_bread (&hdr, sizeof (hdr), abfd) != sizeof (hdr))
+    {
+      non_fatal (_("cannot core read header"));
+      return;
+    }
+
+  version = bfd_h_get_32 (abfd, hdr.c_version);
+  if (options[OPT_FILE_HEADER].selected)
+    {
+      printf (_("Core header:\n"));
+      printf (_("  version:    0x%08x  "), version);
+      switch (version)
+	{
+	case CORE_DUMPX_VERSION:
+	  printf (_("(dumpx format - aix4.3 / 32 bits)"));
+	  break;
+	case CORE_DUMPXX_VERSION:
+	  printf (_("(dumpxx format - aix5.0 / 64 bits)"));
+	  break;
+	default:
+	  printf (_("unknown format"));
+	  break;
+	}
+      putchar ('\n');
+    }
+  if (version == CORE_DUMPX_VERSION)
+    dump_dumpx_core (abfd, &hdr);
+  else
+    printf (_("  Unhandled magic\n"));
+}
+
+/* Dump an XCOFF file.  */
+
+static void
+xcoff_dump (bfd *abfd)
+{
+  /* We rely on BFD to decide if the file is a core file.  Note that core
+     files are only supported on native environment by BFD.  */
+  switch (bfd_get_format (abfd))
+    {
+    case bfd_core:
+      xcoff_dump_core (abfd);
+      break;
+    default:
+      xcoff_dump_obj (abfd);
+      break;
+    }
 }
 
 /* Vector for xcoff.  */

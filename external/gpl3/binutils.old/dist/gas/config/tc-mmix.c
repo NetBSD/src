@@ -1,6 +1,5 @@
 /* tc-mmix.c -- Assembler for Don Knuth's MMIX.
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-   2012  Free Software Foundation.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -113,6 +112,7 @@ static struct loc_assert_s
  {
    segT old_seg;
    symbolS *loc_sym;
+   fragS *frag;
    struct loc_assert_s *next;
  } *loc_asserts = NULL;
 
@@ -587,8 +587,10 @@ get_putget_operands (struct mmix_opcode *insn, char *operands,
 	    p++;
 	  sregp = p;
 	  input_line_pointer = sregp;
-	  c = get_symbol_end ();
+	  c = get_symbol_name (&sregp);
 	  sregend = input_line_pointer;
+	  if (c == '"')
+	    ++ input_line_pointer;
 	}
     }
   else
@@ -596,10 +598,10 @@ get_putget_operands (struct mmix_opcode *insn, char *operands,
       expp_sreg = &exp[0];
       expp_reg = &exp[1];
 
-      sregp = p;
-      c = get_symbol_end ();
-      sregend = p = input_line_pointer;
-      *p = c;
+      c = get_symbol_name (&sregp);
+      sregend = input_line_pointer;
+      restore_line_pointer (c);
+      p = input_line_pointer;
 
       /* Skip whitespace */
       while (*p == ' ' || *p == '\t')
@@ -1475,8 +1477,8 @@ md_assemble (char *str)
 		&& ((exp[1].X_op == O_register
 		     && exp[1].X_add_number < 512)
 		    || (exp[1].X_op == O_constant
-			&& exp[1].X_add_number < 0
-			&& exp[1].X_add_number > 4)
+			&& (exp[1].X_add_number < 0
+			    || exp[1].X_add_number > 4))
 		    || (exp[1].X_op != O_register
 			&& exp[1].X_op != O_constant))))
 	  {
@@ -1939,10 +1941,8 @@ s_prefix (int unused ATTRIBUTE_UNUSED)
 
   SKIP_WHITESPACE ();
 
-  p = input_line_pointer;
-
-  c = get_symbol_end ();
-
+  c = get_symbol_name (&p);
+  
   /* Reseting prefix?  */
   if (*p == ':' && p[1] == 0)
     mmix_current_prefix = NULL;
@@ -1961,7 +1961,7 @@ s_prefix (int unused ATTRIBUTE_UNUSED)
       mmix_current_prefix = p;
     }
 
-  *input_line_pointer = c;
+  (void) restore_line_pointer (c);
 
   mmix_handle_rest_of_empty_line ();
 }
@@ -2057,13 +2057,15 @@ s_greg (int unused ATTRIBUTE_UNUSED)
 {
   char *p;
   char c;
-  p = input_line_pointer;
 
   /* This will skip over what can be a symbol and zero out the next
      character, which we assume is a ',' or other meaningful delimiter.
      What comes after that is the initializer expression for the
      register.  */
-  c = get_symbol_end ();
+  c = get_symbol_name (&p);
+
+  if (c == '"')
+    c = * ++ input_line_pointer;
 
   if (! is_end_of_line[(unsigned char) c])
     input_line_pointer++;
@@ -2973,7 +2975,7 @@ mmix_handle_mmixal (void)
   if (*s == 0 || is_end_of_line[(unsigned int) *s])
     /* We avoid handling empty lines here.  */
     return;
-      
+
   if (is_name_beginner (*s))
     label = s;
 
@@ -3007,7 +3009,7 @@ mmix_handle_mmixal (void)
 	 it the same alignment and address as the associated instruction.  */
 
       /* Make room for the label including the ending nul.  */
-      int len_0 = s - label + 1;
+      size_t len_0 = s - label + 1;
 
       /* Save this label on the MMIX symbol obstack.  Saving it on an
 	 obstack is needless for "IS"-pseudos, but it's harmless and we
@@ -3413,7 +3415,7 @@ mmix_md_relax_frag (segT seg, fragS *fragP, long stretch)
 	fragP->fr_subtype = ENCODE_RELAX (STATE_PUSHJSTUB, STATE_ZERO);
       }
       /* FALLTHROUGH.  */
-    
+
       /* See if this PUSHJ is redirectable to a stub.  */
     case ENCODE_RELAX (STATE_PUSHJSTUB, STATE_ZERO):
       {
@@ -3561,6 +3563,15 @@ mmix_md_end (void)
 	  as_bad_where (fnam, line,
 			_("LOC to section unknown or indeterminable "
 			  "at first pass"));
+
+	  /* Patch up the generic location data to avoid cascading
+	     error messages from later passes.  (See original in
+	     write.c:relax_segment.)  */
+	  fragP = loc_assert->frag;
+	  fragP->fr_type = rs_align;
+	  fragP->fr_subtype = 0;
+	  fragP->fr_offset = 0;
+	  fragP->fr_fix = 0;
 	}
     }
 
@@ -4085,6 +4096,7 @@ s_loc (int ignore ATTRIBUTE_UNUSED)
 	  loc_asserts->next = next;
 	  loc_asserts->old_seg = now_seg;
 	  loc_asserts->loc_sym = esym;
+	  loc_asserts->frag = frag_now;
 	}
 
       p = frag_var (rs_org, 1, 1, (relax_substateT) 0, sym, off, (char *) 0);

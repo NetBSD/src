@@ -1,7 +1,5 @@
 /* VAX series support for 32-bit ELF
-   Copyright 1993, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Contributed by Matt Thomas <matt@3am-software.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -58,7 +56,7 @@ static bfd_boolean elf32_vax_print_private_bfd_data (bfd *, void *);
 static reloc_howto_type howto_table[] = {
   HOWTO (R_VAX_NONE,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
 	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
@@ -282,11 +280,19 @@ static reloc_howto_type howto_table[] = {
 };
 
 static void
-rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
-		Elf_Internal_Rela *dst)
+rtype_to_howto (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
-  BFD_ASSERT (ELF32_R_TYPE(dst->r_info) < (unsigned int) R_VAX_max);
-  cache_ptr->howto = &howto_table[ELF32_R_TYPE(dst->r_info)];
+  unsigned int r_type;
+
+  r_type = ELF32_R_TYPE (dst->r_info);
+  if (r_type >= R_VAX_max)
+    {
+      (*_bfd_error_handler) (_("%B: unrecognised VAX reloc number: %d"),
+			     abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      r_type = R_VAX_NONE;
+    }
+  cache_ptr->howto = &howto_table[r_type];
 }
 
 #define elf_info_to_howto rtype_to_howto
@@ -465,7 +471,7 @@ elf_vax_link_hash_table_create (bfd *abfd)
   struct elf_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct elf_link_hash_table);
 
-  ret = bfd_malloc (amt);
+  ret = bfd_zmalloc (amt);
   if (ret == NULL)
     return NULL;
 
@@ -576,7 +582,7 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
   asection *srelgot;
   asection *sreloc;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -603,20 +609,22 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       switch (ELF32_R_TYPE (rel->r_info))
 	{
 	case R_VAX_GOT32:
 	  BFD_ASSERT (h != NULL);
-	  if (h->forced_local
-	      || h == elf_hash_table (info)->hgot
-	      || h == elf_hash_table (info)->hplt)
-	    break;
 
 	  /* If this is a local symbol, we resolve it directly without
 	     creating a global offset table entry.  */
-	  if (h == NULL || ELF_ST_VISIBILITY (h->other) != STV_DEFAULT)
+	  if (h->forced_local
+	      || h == elf_hash_table (info)->hgot
+	      || h == elf_hash_table (info)->hplt)
 	    break;
 
 	  /* This symbol requires a global offset table entry.  */
@@ -636,7 +644,7 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	    }
 
 	  if (srelgot == NULL
-	      && (h != NULL || info->shared))
+	      && (h != NULL || bfd_link_pic (info)))
 	    {
 	      srelgot = bfd_get_linker_section (dynobj, ".rela.got");
 	      if (srelgot == NULL)
@@ -686,11 +694,11 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
              never referenced by a dynamic object, in which case we
              don't need to generate a procedure linkage table entry
              after all.  */
+	  BFD_ASSERT (h != NULL);
 
 	  /* If this is a local symbol, we resolve it directly without
 	     creating a procedure linkage table entry.  */
-	  BFD_ASSERT (h != NULL);
-	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT || h->forced_local)
+	  if (h->forced_local)
 	    break;
 
 	  h->needs_plt = 1;
@@ -713,7 +721,7 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	     will be set later (it is never cleared).  We account for that
 	     possibility below by storing information in the
 	     pcrel_relocs_copied field of the hash table entry.  */
-	  if (!(info->shared
+	  if (!(bfd_link_pic (info)
 		&& (sec->flags & SEC_ALLOC) != 0
 		&& h != NULL
 		&& (!info->symbolic
@@ -755,7 +763,7 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 
 	  /* If we are creating a shared library, we need to copy the
 	     reloc into the shared library.  */
-	  if (info->shared
+	  if (bfd_link_pic (info)
 	      && (sec->flags & SEC_ALLOC) != 0)
 	    {
 	      /* When creating a shared object, we must copy these
@@ -773,8 +781,8 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 		    {
 			if (info->warn_shared_textrel)
 			  (*_bfd_error_handler)
-			    (_("warning: dynamic relocation in readonly section `%s'"),
-			     sec->name);
+			    (_("warning: dynamic relocation to `%s' in readonly section `%s'"),
+			     h ? h->root.root.string : "?", sec->name);
 			info->flags |= DF_TEXTREL;
 		    }
 		}
@@ -876,7 +884,7 @@ elf_vax_gc_sweep_hook (bfd *abfd, struct bfd_link_info *info, asection *sec,
   const Elf_Internal_Rela *rel, *relend;
   bfd *dynobj;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -934,9 +942,8 @@ elf_vax_gc_sweep_hook (bfd *abfd, struct bfd_link_info *info, asection *sec,
    understand.  */
 
 static bfd_boolean
-elf_vax_adjust_dynamic_symbol (info, h)
-     struct bfd_link_info *info;
-     struct elf_link_hash_entry *h;
+elf_vax_adjust_dynamic_symbol (struct bfd_link_info *info,
+			       struct elf_link_hash_entry *h)
 {
   bfd *dynobj;
   asection *s;
@@ -988,7 +995,7 @@ elf_vax_adjust_dynamic_symbol (info, h)
 	 location in the .plt.  This is required to make function
 	 pointers compare as equal between the normal executable and
 	 the shared library.  */
-      if (!info->shared
+      if (!bfd_link_pic (info)
 	  && !h->def_regular)
 	{
 	  h->root.u.def.section = s;
@@ -1039,7 +1046,7 @@ elf_vax_adjust_dynamic_symbol (info, h)
      only references to the symbol are via the global offset table.
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
-  if (info->shared)
+  if (bfd_link_pic (info))
     return TRUE;
 
   /* We must allocate the symbol in our .dynbss section, which will
@@ -1069,7 +1076,60 @@ elf_vax_adjust_dynamic_symbol (info, h)
       h->needs_copy = 1;
     }
 
-  return _bfd_elf_adjust_dynamic_copy (h, s);
+  return _bfd_elf_adjust_dynamic_copy (info, h, s);
+}
+
+/* This function is called via elf_link_hash_traverse.  It resets GOT
+   and PLT (.GOT) reference counts back to -1 so normal PC32 relocation
+   will be done.  */
+
+static bfd_boolean
+elf_vax_discard_got_entries (struct elf_link_hash_entry *h,
+			     void *infoptr ATTRIBUTE_UNUSED)
+{
+  h->got.refcount = -1;
+  h->plt.refcount = -1;
+
+  return TRUE;
+}
+
+/* Discard unused dynamic data if this is a static link.  */
+
+static bfd_boolean
+elf_vax_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			      struct bfd_link_info *info)
+{
+  bfd *dynobj;
+  asection *s;
+
+  dynobj = elf_hash_table (info)->dynobj;
+
+  if (dynobj && !elf_hash_table (info)->dynamic_sections_created)
+    {
+      /* We may have created entries in the .rela.got and .got sections.
+	 However, if we are not creating the dynamic sections, we will
+	 not actually use these entries.  Reset the size of .rela.got
+	 and .got, which will cause them to get stripped from the output
+	 file below.  */
+      s = bfd_get_linker_section (dynobj, ".rela.got");
+      if (s != NULL)
+	s->size = 0;
+      s = bfd_get_linker_section (dynobj, ".got.plt");
+      if (s != NULL)
+	s->size = 0;
+      s = bfd_get_linker_section (dynobj, ".got");
+      if (s != NULL)
+	s->size = 0;
+    }
+
+  /* If this is a static link, we need to discard all the got entries we've
+     recorded.  */
+  if (!dynobj || !elf_hash_table (info)->dynamic_sections_created)
+    elf_link_hash_traverse (elf_hash_table (info),
+			    elf_vax_discard_got_entries,
+			    info);
+
+  return TRUE;
 }
 
 /* Set the sizes of the dynamic sections.  */
@@ -1089,7 +1149,7 @@ elf_vax_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (info->executable)
+      if (bfd_link_executable (info) && !info->nointerp)
 	{
 	  s = bfd_get_linker_section (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -1097,36 +1157,19 @@ elf_vax_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
 	}
     }
-  else
-    {
-      /* We may have created entries in the .rela.got and .got sections.
-	 However, if we are not creating the dynamic sections, we will
-	 not actually use these entries.  Reset the size of .rela.got
-	 and .got, which will cause it to get stripped from the output
-	 file below.  */
-      s = bfd_get_linker_section (dynobj, ".rela.got");
-      if (s != NULL)
-	s->size = 0;
-      s = bfd_get_linker_section (dynobj, ".got.plt");
-      if (s != NULL)
-	s->size = 0;
-      s = bfd_get_linker_section (dynobj, ".got");
-      if (s != NULL)
-	s->size = 0;
-    }
 
   /* If this is a -Bsymbolic shared link, then we need to discard all PC
      relative relocs against symbols defined in a regular object.  We
      allocated space for them in the check_relocs routine, but we will not
      fill them in in the relocate_section routine.  */
-  if (info->shared && info->symbolic)
+  if (bfd_link_pic (info) && info->symbolic)
     elf_vax_link_hash_traverse (elf_hash_table (info),
 				elf_vax_discard_copies,
 				NULL);
 
-  /* If this is a -Bsymbolic shared link or a static link, we need to
-     discard all the got entries we've recorded.  Otherwise, we need to
-     instantiate (allocate space for them).  */
+  /* If this is a -Bsymbolic shared link, we need to discard all the got
+     entries we've recorded.  Otherwise, we need to instantiate (allocate
+     space for them).  */
   elf_link_hash_traverse (elf_hash_table (info),
 			  elf_vax_instantiate_got_entries,
 			  info);
@@ -1211,11 +1254,6 @@ elf_vax_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	continue;
 
       /* Allocate memory for the section contents.  */
-      /* FIXME: This should be a call to bfd_alloc not bfd_zalloc.
-	 Unused entries should be reclaimed before the section's contents
-	 are written out, but at the moment this does not happen.  Thus in
-	 order to prevent writing out garbage, we initialise the section's
-	 contents to zero.  */
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return FALSE;
@@ -1231,7 +1269,7 @@ elf_vax_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 #define add_dynamic_entry(TAG, VAL) \
   _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
-      if (!info->shared)
+      if (!bfd_link_pic (info))
 	{
 	  if (!add_dynamic_entry (DT_DEBUG, 0))
 	    return FALSE;
@@ -1287,12 +1325,12 @@ elf_vax_discard_copies (struct elf_vax_link_hash_entry *h,
   return TRUE;
 }
 
-/* This function is called via elf_link_hash_traverse.  It looks for entries
-   that have GOT or PLT (.GOT) references.  If creating a static object or a
-   shared object with -Bsymbolic, it resets the reference count back to 0
-   and sets the offset to -1 so normal PC32 relocation will be done.  If
-   creating a shared object or executable, space in the .got and .rela.got
-   will be reserved for the symbol.  */
+/* This function is called via elf_link_hash_traverse.  It looks for
+   entries that have GOT or PLT (.GOT) references.  If creating a shared
+   object with -Bsymbolic, or the symbol has been forced local, then it
+   resets the reference count back to -1 so normal PC32 relocation will
+   be done.  Otherwise space in the .got and .rela.got will be reserved
+   for the symbol.  */
 
 static bfd_boolean
 elf_vax_instantiate_got_entries (struct elf_link_hash_entry *h, void * infoptr)
@@ -1307,26 +1345,18 @@ elf_vax_instantiate_got_entries (struct elf_link_hash_entry *h, void * infoptr)
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
-  if (dynobj == NULL)
-    return TRUE;
+  BFD_ASSERT (dynobj != NULL);
 
   sgot = bfd_get_linker_section (dynobj, ".got");
   srelgot = bfd_get_linker_section (dynobj, ".rela.got");
 
-  if (!elf_hash_table (info)->dynamic_sections_created
-      || (info->shared && info->symbolic)
-      || ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
-      || h->forced_local)
+  if (SYMBOL_REFERENCES_LOCAL (info, h))
     {
-      h->got.refcount = 0;
-      h->got.offset = (bfd_vma) -1;
-      h->plt.refcount = 0;
-      h->plt.offset = (bfd_vma) -1;
+      h->got.refcount = -1;
+      h->plt.refcount = -1;
     }
   else if (h->got.refcount > 0)
     {
-      bfd_boolean dyn;
-
       /* Make sure this symbol is output as a dynamic symbol.  */
       if (h->dynindx == -1)
 	{
@@ -1334,9 +1364,9 @@ elf_vax_instantiate_got_entries (struct elf_link_hash_entry *h, void * infoptr)
 	    return FALSE;
 	}
 
-      dyn = elf_hash_table (info)->dynamic_sections_created;
       /* Allocate space in the .got and .rela.got sections.  */
-      if (info->shared || WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, 0, h))
+      if (bfd_link_pic (info) || WILL_CALL_FINISH_DYNAMIC_SYMBOL (
+          elf_hash_table (info)->dynamic_sections_created, 0, h))
 	{
 	  sgot->size += 4;
 	  srelgot->size += sizeof (Elf32_External_Rela);
@@ -1413,12 +1443,12 @@ elf_vax_relocate_section (bfd *output_bfd,
       else
 	{
 	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 
 	  if ((h->root.type == bfd_link_hash_defined
 	      || h->root.type == bfd_link_hash_defweak)
@@ -1430,10 +1460,10 @@ elf_vax_relocate_section (bfd *output_bfd,
 		      && h->got.offset != (bfd_vma) -1
 		      && !h->forced_local
 		      && elf_hash_table (info)->dynamic_sections_created
-		      && (! info->shared
+		      && (! bfd_link_pic (info)
 			  || (! info->symbolic && h->dynindx != -1)
 			  || !h->def_regular))
-		  || (info->shared
+		  || (bfd_link_pic (info)
 		      && ((! info->symbolic && h->dynindx != -1)
 			  || !h->def_regular)
 		      && ((input_section->flags & SEC_ALLOC) != 0
@@ -1457,7 +1487,7 @@ elf_vax_relocate_section (bfd *output_bfd,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       switch (r_type)
@@ -1465,17 +1495,14 @@ elf_vax_relocate_section (bfd *output_bfd,
 	case R_VAX_GOT32:
 	  /* Relocation is to the address of the entry for this symbol
 	     in the global offset table.  */
+
+	  /* Resolve a GOTxx reloc against a local symbol directly,
+	     without using the global offset table.  */
 	  if (h == NULL
-	      || ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
-	      || h->got.offset == (bfd_vma) -1
-	      || h->forced_local)
+	      || h->got.offset == (bfd_vma) -1)
 	    break;
 
-	  /* Relocation is the offset of the entry for this symbol in
-	     the global offset table.  */
-
 	  {
-	    bfd_boolean dyn;
 	    bfd_vma off;
 
 	    if (sgot == NULL)
@@ -1484,37 +1511,10 @@ elf_vax_relocate_section (bfd *output_bfd,
 		BFD_ASSERT (sgot != NULL);
 	      }
 
-	    BFD_ASSERT (h != NULL);
 	    off = h->got.offset;
-	    BFD_ASSERT (off != (bfd_vma) -1);
 	    BFD_ASSERT (off < sgot->size);
 
-	    dyn = elf_hash_table (info)->dynamic_sections_created;
-	    if (! WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared, h)
-		|| (info->shared
-		    && SYMBOL_REFERENCES_LOCAL (info, h)))
-	      {
-		/* The symbol was forced to be local
-		   because of a version file..  We must initialize
-		   this entry in the global offset table.  Since
-		   the offset must always be a multiple of 4, we
-		   use the least significant bit to record whether
-		   we have initialized it already.
-
-		   When doing a dynamic link, we create a .rela.got
-		   relocation entry to initialize the value.  This
-		   is done in the finish_dynamic_symbol routine.  */
-		if ((off & 1) != 0)
-		  off &= ~1;
-		else
-		  {
-		    bfd_put_32 (output_bfd, relocation + rel->r_addend,
-				sgot->contents + off);
-		    h->got.offset |= 1;
-		  }
-	      } else {
-		bfd_put_32 (output_bfd, rel->r_addend, sgot->contents + off);
-	      }
+	    bfd_put_32 (output_bfd, rel->r_addend, sgot->contents + off);
 
 	    relocation = sgot->output_offset + off;
 	    /* The GOT relocation uses the addend.  */
@@ -1531,7 +1531,7 @@ elf_vax_relocate_section (bfd *output_bfd,
 	     reloc refers to is in a shared lib, then we made a PLT
 	     entry for this symbol and need to handle the reloc like
 	     a PLT reloc.  */
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	     goto r_vax_pc32_shared;
 	  /* Fall through.  */
 	case R_VAX_PLT32:
@@ -1541,18 +1541,8 @@ elf_vax_relocate_section (bfd *output_bfd,
 	  /* Resolve a PLTxx reloc against a local symbol directly,
 	     without using the procedure linkage table.  */
 	  if (h == NULL
-	      || ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
-	      || h->forced_local)
+	      || h->plt.offset == (bfd_vma) -1)
 	    break;
-
-	  if (h->plt.offset == (bfd_vma) -1
-	      || !elf_hash_table (info)->dynamic_sections_created)
-	    {
-	      /* We didn't make a PLT entry for this symbol.  This
-		 happens when statically linking PIC code, or when
-		 using -Bsymbolic.  */
-	      break;
-	    }
 
 	  if (splt == NULL)
 	    {
@@ -1604,7 +1594,7 @@ elf_vax_relocate_section (bfd *output_bfd,
 	case R_VAX_8:
 	case R_VAX_16:
 	case R_VAX_32:
-	  if (info->shared
+	  if (bfd_link_pic (info)
 	      && r_symndx != STN_UNDEF
 	      && (input_section->flags & SEC_ALLOC) != 0
 	      && ((r_type != R_VAX_PC8
@@ -1891,25 +1881,10 @@ elf_vax_finish_dynamic_symbol (bfd *output_bfd, struct bfd_link_info *info,
 
       rela.r_offset = (sgot->output_section->vma
 		       + sgot->output_offset
-		       + (h->got.offset &~ 1));
-
-      /* If the symbol was forced to be local because of a version file
-	 locally we just want to emit a RELATIVE reloc.  The entry in
-	 the global offset table will already have been initialized in
-	 the relocate_section function.  */
-      if (info->shared
-	  && h->dynindx == -1
-	  && h->def_regular)
-	{
-	  rela.r_info = ELF32_R_INFO (0, R_VAX_RELATIVE);
-	}
-      else
-	{
-	  rela.r_info = ELF32_R_INFO (h->dynindx, R_VAX_GLOB_DAT);
-	}
+		       + h->got.offset);
+      rela.r_info = ELF32_R_INFO (h->dynindx, R_VAX_GLOB_DAT);
       rela.r_addend = bfd_get_signed_32 (output_bfd,
-					 (sgot->contents
-					  + (h->got.offset & ~1)));
+					 sgot->contents + h->got.offset);
 
       loc = srela->contents;
       loc += srela->reloc_count++ * sizeof (Elf32_External_Rela);
@@ -1940,7 +1915,7 @@ elf_vax_finish_dynamic_symbol (bfd *output_bfd, struct bfd_link_info *info,
     }
 
   /* Mark _DYNAMIC and _GLOBAL_OFFSET_TABLE_ as absolute.  */
-  if (strcmp (h->root.root.string, "_DYNAMIC") == 0
+  if (h == elf_hash_table (info)->hdynamic
       || h == elf_hash_table (info)->hgot)
     sym->st_shndx = SHN_ABS;
 
@@ -2052,13 +2027,16 @@ elf_vax_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
       bfd_put_32 (output_bfd, (bfd_vma) 0, sgot->contents + 8);
     }
 
-  elf_section_data (sgot->output_section)->this_hdr.sh_entsize = 4;
+  if (elf_section_data (sgot->output_section) != NULL)
+    elf_section_data (sgot->output_section)->this_hdr.sh_entsize = 4;
 
   return TRUE;
 }
 
 static enum elf_reloc_type_class
-elf_vax_reloc_type_class (const Elf_Internal_Rela *rela)
+elf_vax_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			  const asection *rel_sec ATTRIBUTE_UNUSED,
+			  const Elf_Internal_Rela *rela)
 {
   switch ((int) ELF32_R_TYPE (rela->r_info))
     {
@@ -2080,7 +2058,7 @@ elf_vax_plt_sym_val (bfd_vma i, const asection *plt,
   return plt->vma + (i + 1) * PLT_ENTRY_SIZE;
 }
 
-#define TARGET_LITTLE_SYM		bfd_elf32_vax_vec
+#define TARGET_LITTLE_SYM		vax_elf32_vec
 #define TARGET_LITTLE_NAME		"elf32-vax"
 #define ELF_MACHINE_CODE		EM_VAX
 #define ELF_MAXPAGESIZE			0x10000
@@ -2097,6 +2075,8 @@ elf_vax_plt_sym_val (bfd_vma i, const asection *plt,
 #define elf_backend_check_relocs	elf_vax_check_relocs
 #define elf_backend_adjust_dynamic_symbol \
 					elf_vax_adjust_dynamic_symbol
+#define elf_backend_always_size_sections \
+					elf_vax_always_size_sections
 #define elf_backend_size_dynamic_sections \
 					elf_vax_size_dynamic_sections
 #define elf_backend_init_index_section	_bfd_elf_init_1_index_section

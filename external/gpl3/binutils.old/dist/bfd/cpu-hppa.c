@@ -1,6 +1,5 @@
 /* BFD support for the HP Precision Architecture architecture.
-   Copyright 1992, 1995, 1998, 1999, 2000, 2002, 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

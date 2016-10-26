@@ -1,5 +1,5 @@
 /* Remote target system call callback support.
-   Copyright 1997, 2007-2012 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.
@@ -59,6 +59,7 @@
    name of the symbol.  */
 
 typedef struct {
+  const char *name;
   int host_val;
   int target_val;
 } CB_TARGET_DEFS_MAP;
@@ -88,9 +89,9 @@ struct host_callback_struct
   void (*flush_stdout) (host_callback *);
   int (*write_stderr) (host_callback *, const char *, int);
   void (*flush_stderr) (host_callback *);
-  int (*stat) (host_callback *, const char *, struct stat *);
-  int (*fstat) (host_callback *, int, struct stat *);
-  int (*lstat) (host_callback *, const char *, struct stat *);
+  int (*to_stat) (host_callback *, const char *, struct stat *);
+  int (*to_fstat) (host_callback *, int, struct stat *);
+  int (*to_lstat) (host_callback *, const char *, struct stat *);
   int (*ftruncate) (host_callback *, int, long);
   int (*truncate) (host_callback *, const char *, long);
   int (*pipe) (host_callback *, int *);
@@ -315,6 +316,14 @@ int cb_target_to_host_signal (host_callback *, int);
 
 /* Translate host signal number to target.  */
 int cb_host_to_gdb_signal (host_callback *, int);
+
+/* Translate symbols into human readable strings.  */
+const char *cb_host_str_syscall (host_callback *, int);
+const char *cb_host_str_errno (host_callback *, int);
+const char *cb_host_str_signal (host_callback *, int);
+const char *cb_target_str_syscall (host_callback *, int);
+const char *cb_target_str_errno (host_callback *, int);
+const char *cb_target_str_signal (host_callback *, int);
 
 /* Translate host stat struct to target.
    If stat struct ptr is NULL, just compute target stat struct size.

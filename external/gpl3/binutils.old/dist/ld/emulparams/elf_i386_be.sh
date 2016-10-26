@@ -1,3 +1,5 @@
+. ${srcdir}/emulparams/extern_protected_data.sh
+. ${srcdir}/emulparams/call_nop.sh
 SCRIPT_NAME=elf
 OUTPUT_FORMAT="elf32-i386"
 NO_RELA_RELOCS=yes

@@ -1,6 +1,6 @@
 /* Disassemble Xilinx microblaze instructions.
 
-   Copyright 2009, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -62,6 +62,15 @@ get_field_imm5 (long instr)
 
   sprintf (tmpstr, "%d", (short)((instr & IMM5_MASK) >> IMM_LOW));
   return (strdup (tmpstr));
+}
+
+static char *
+get_field_imm5_mbar (long instr)
+{
+  char tmpstr[25];
+
+  sprintf(tmpstr, "%d", (short)((instr & IMM5_MBAR_MASK) >> IMM_MBAR));
+  return(strdup(tmpstr));
 }
 
 static char *
@@ -129,6 +138,12 @@ get_field_special (long instr, struct op_code_struct * op)
       break;
     case REG_TLBSX_MASK :
       strcpy (spr, "tlbsx");
+      break;
+    case REG_SHR_MASK :
+      strcpy (spr, "shr");
+      break;
+    case REG_SLR_MASK :
+      strcpy (spr, "slr");
       break;
     default :
       if (((((instr & IMM_MASK) >> IMM_LOW) ^ op->immval_mask) & 0xE000)
@@ -368,12 +383,19 @@ print_insn_microblaze (bfd_vma memaddr, struct disassemble_info * info)
 	case INST_TYPE_R1:
 	  print_func (stream, "\t%s", get_field_r1 (inst));
 	  break;
-	case INST_TYPE_RD_R1_SPECIAL:
-	  print_func (stream, "\t%s, %s", get_field_rd (inst), get_field_r2 (inst));
+	case INST_TYPE_R1_R2_SPECIAL:
+	  print_func (stream, "\t%s, %s", get_field_r1 (inst), get_field_r2 (inst));
 	  break;
 	case INST_TYPE_RD_IMM15:
 	  print_func (stream, "\t%s, %s", get_field_rd (inst), get_field_imm15 (inst));
 	  break;
+        /* For mbar insn.  */
+        case INST_TYPE_IMM5:
+          print_func (stream, "\t%s", get_field_imm5_mbar (inst));
+          break;
+        /* For mbar 16 or sleep insn.  */
+        case INST_TYPE_NONE:
+          break;
 	/* For tuqula instruction */
 	case INST_TYPE_RD:
 	  print_func (stream, "\t%s", get_field_rd (inst));

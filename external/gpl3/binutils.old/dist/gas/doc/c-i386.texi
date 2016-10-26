@@ -1,6 +1,4 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1998, 1999, 2000,
-@c 2001, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011
-@c Free Software Foundation, Inc.
+@c Copyright (C) 1991-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -49,7 +47,7 @@ extending the Intel architecture to 64-bits.
 @cindex options for i386
 @cindex options for x86-64
 @cindex i386 options
-@cindex x86-64 options 
+@cindex x86-64 options
 
 The i386 version of @code{@value{AS}} has a few machine
 dependent options:
@@ -92,7 +90,7 @@ affect using @samp{#} for starting a comment.
 This option specifies the target processor.  The assembler will
 issue an error message if an attempt is made to assemble an instruction
 which will not execute on the target processor.  The following
-processor names are recognized: 
+processor names are recognized:
 @code{i8086},
 @code{i186},
 @code{i286},
@@ -112,6 +110,7 @@ processor names are recognized:
 @code{corei7},
 @code{l1om},
 @code{k1om},
+@code{iamcu},
 @code{k6},
 @code{k6_2},
 @code{athlon},
@@ -121,12 +120,14 @@ processor names are recognized:
 @code{bdver1},
 @code{bdver2},
 @code{bdver3},
+@code{bdver4},
+@code{znver1},
 @code{btver1},
 @code{btver2},
 @code{generic32} and
 @code{generic64}.
 
-In addition to the basic instruction set, the assembler can be told to 
+In addition to the basic instruction set, the assembler can be told to
 accept various extension mnemonics.  For example,
 @code{-march=i686+sse4+vmx} extends @var{i686} with @var{sse4} and
 @var{vmx}.  The following extensions are currently supported:
@@ -149,12 +150,31 @@ accept various extension mnemonics.  For example,
 @code{adx},
 @code{rdseed},
 @code{prfchw},
+@code{smap},
+@code{mpx},
+@code{sha},
+@code{prefetchwt1},
+@code{clflushopt},
+@code{se1},
+@code{clwb},
+@code{pcommit},
+@code{avx512f},
+@code{avx512cd},
+@code{avx512er},
+@code{avx512pf},
+@code{avx512vl},
+@code{avx512bw},
+@code{avx512dq},
+@code{avx512ifma},
+@code{avx512vbmi},
 @code{noavx},
 @code{vmx},
 @code{vmfunc},
 @code{smx},
 @code{xsave},
 @code{xsaveopt},
+@code{xsavec},
+@code{xsaves},
 @code{aes},
 @code{pclmul},
 @code{fsgsbase},
@@ -169,9 +189,12 @@ accept various extension mnemonics.  For example,
 @code{rtm},
 @code{invpcid},
 @code{clflush},
+@code{mwaitx},
+@code{clzero},
 @code{lwp},
 @code{fma4},
 @code{xop},
+@code{cx16},
 @code{syscall},
 @code{rdtscp},
 @code{3dnow},
@@ -209,12 +232,12 @@ with VEX prefix.
 @item -msse-check=@var{none}
 @itemx -msse-check=@var{warning}
 @itemx -msse-check=@var{error}
-These options control if the assembler should check SSE intructions.
+These options control if the assembler should check SSE instructions.
 @option{-msse-check=@var{none}} will make the assembler not to check SSE
 instructions,  which is the default.  @option{-msse-check=@var{warning}}
-will make the assembler issue a warning for any SSE intruction.
+will make the assembler issue a warning for any SSE instruction.
 @option{-msse-check=@var{error}} will make the assembler issue an error
-for any SSE intruction.
+for any SSE instruction.
 
 @cindex @samp{-mavxscalar=} option, i386
 @cindex @samp{-mavxscalar=} option, x86-64
@@ -226,11 +249,33 @@ AVX instructions with 128bit vector length, which is the default.
 @option{-mavxscalar=@var{256}} will encode scalar AVX instructions
 with 256bit vector length.
 
+@cindex @samp{-mevexlig=} option, i386
+@cindex @samp{-mevexlig=} option, x86-64
+@item -mevexlig=@var{128}
+@itemx -mevexlig=@var{256}
+@itemx -mevexlig=@var{512}
+These options control how the assembler should encode length-ignored
+(LIG) EVEX instructions.  @option{-mevexlig=@var{128}} will encode LIG
+EVEX instructions with 128bit vector length, which is the default.
+@option{-mevexlig=@var{256}} and @option{-mevexlig=@var{512}} will
+encode LIG EVEX instructions with 256bit and 512bit vector length,
+respectively.
+
+@cindex @samp{-mevexwig=} option, i386
+@cindex @samp{-mevexwig=} option, x86-64
+@item -mevexwig=@var{0}
+@itemx -mevexwig=@var{1}
+These options control how the assembler should encode w-ignored (WIG)
+EVEX instructions.  @option{-mevexwig=@var{0}} will encode WIG
+EVEX instructions with evex.w = 0, which is the default.
+@option{-mevexwig=@var{1}} will encode WIG EVEX instructions with
+evex.w = 1.
+
 @cindex @samp{-mmnemonic=} option, i386
 @cindex @samp{-mmnemonic=} option, x86-64
 @item -mmnemonic=@var{att}
 @itemx -mmnemonic=@var{intel}
-This option specifies instruction mnemonic for matching instructions. 
+This option specifies instruction mnemonic for matching instructions.
 The @code{.att_mnemonic} and @code{.intel_mnemonic} directives will
 take precedent.
 
@@ -238,7 +283,7 @@ take precedent.
 @cindex @samp{-msyntax=} option, x86-64
 @item -msyntax=@var{att}
 @itemx -msyntax=@var{intel}
-This option specifies instruction syntax when processing instructions. 
+This option specifies instruction syntax when processing instructions.
 The @code{.att_syntax} and @code{.intel_syntax} directives will
 take precedent.
 
@@ -247,6 +292,72 @@ take precedent.
 @item -mnaked-reg
 This opetion specifies that registers don't require a @samp{%} prefix.
 The @code{.att_syntax} and @code{.intel_syntax} directives will take precedent.
+
+@cindex @samp{-madd-bnd-prefix} option, i386
+@cindex @samp{-madd-bnd-prefix} option, x86-64
+@item -madd-bnd-prefix
+This option forces the assembler to add BND prefix to all branches, even
+if such prefix was not explicitly specified in the source code.
+
+@cindex @samp{-mshared} option, i386
+@cindex @samp{-mshared} option, x86-64
+@item -mno-shared
+On ELF target, the assembler normally optimizes out non-PLT relocations
+against defined non-weak global branch targets with default visibility.
+The @samp{-mshared} option tells the assembler to generate code which
+may go into a shared library where all non-weak global branch targets
+with default visibility can be preempted.  The resulting code is
+slightly bigger.  This option only affects the handling of branch
+instructions.
+
+@cindex @samp{-mbig-obj} option, x86-64
+@item -mbig-obj
+On x86-64 PE/COFF target this option forces the use of big object file
+format, which allows more than 32768 sections.
+
+@cindex @samp{-momit-lock-prefix=} option, i386
+@cindex @samp{-momit-lock-prefix=} option, x86-64
+@item -momit-lock-prefix=@var{no}
+@itemx -momit-lock-prefix=@var{yes}
+These options control how the assembler should encode lock prefix.
+This option is intended as a workaround for processors, that fail on
+lock prefix. This option can only be safely used with single-core,
+single-thread computers
+@option{-momit-lock-prefix=@var{yes}} will omit all lock prefixes.
+@option{-momit-lock-prefix=@var{no}} will encode lock prefix as usual,
+which is the default.
+
+@cindex @samp{-mrelax-relocations=} option, i386
+@cindex @samp{-mrelax-relocations=} option, x86-64
+@item -mrelax-relocations=@var{no}
+@itemx -mrelax-relocations=@var{yes}
+These options control whether the assembler should generate relax
+relocations, R_386_GOT32X, in 32-bit mode, or R_X86_64_GOTPCRELX and
+R_X86_64_REX_GOTPCRELX, in 64-bit mode.
+@option{-mrelax-relocations=@var{yes}} will generate relax relocations.
+@option{-mrelax-relocations=@var{no}} will not generate relax
+relocations.  The default can be controlled by a configure option
+@option{--enable-x86-relax-relocations}.
+
+@cindex @samp{-mevexrcig=} option, i386
+@cindex @samp{-mevexrcig=} option, x86-64
+@item -mevexrcig=@var{rne}
+@itemx -mevexrcig=@var{rd}
+@itemx -mevexrcig=@var{ru}
+@itemx -mevexrcig=@var{rz}
+These options control how the assembler should encode SAE-only
+EVEX instructions.  @option{-mevexrcig=@var{rne}} will encode RC bits
+of EVEX instruction with 00, which is the default.
+@option{-mevexrcig=@var{rd}}, @option{-mevexrcig=@var{ru}}
+and @option{-mevexrcig=@var{rz}} will encode SAE-only EVEX instructions
+with 01, 10 and 11 RC bits, respectively.
+
+@cindex @samp{-mamd64} option, x86-64
+@cindex @samp{-mintel64} option, x86-64
+@item -mamd64
+@itemx -mintel64
+This option specifies that the assembler should accept only AMD64 or
+Intel64 ISA in 64-bit mode.  The default is to accept both.
 
 @end table
 @c man end
@@ -408,7 +519,8 @@ The @samp{;} character can be used to separate statements on the same
 line.
 
 @node i386-Mnemonics
-@section Instruction Naming
+@section i386-Mnemonics
+@subsection Instruction Naming
 
 @cindex i386 instruction naming
 @cindex instruction naming, i386
@@ -492,7 +604,7 @@ Far call/jump instructions are @samp{lcall} and @samp{ljmp} in
 AT&T syntax, but are @samp{call far} and @samp{jump far} in Intel
 convention.
 
-@section AT&T Mnemonic versus Intel Mnemonic
+@subsection AT&T Mnemonic versus Intel Mnemonic
 
 @cindex i386 mnemonic compatibility
 @cindex mnemonic compatibility, i386
@@ -902,7 +1014,7 @@ For detailed information on the LWP instruction set, see the
 
 BMI instructions provide several instructions implementing individual
 bit manipulation operations such as isolation, masking, setting, or
-resetting.  
+resetting.
 
 @c Need to add a specification citation here when available.
 
@@ -974,27 +1086,6 @@ opcode bytes @samp{6a 04} (i.e., without the operand size prefix), which
 is correct since the processor default operand size is assumed to be 16
 bits in a 16-bit code section.
 
-@node i386-Bugs
-@section AT&T Syntax bugs
-
-The UnixWare assembler, and probably other AT&T derived ix86 Unix
-assemblers, generate floating point instructions with reversed source
-and destination registers in certain cases.  Unfortunately, gcc and
-possibly many other programs use this reversed syntax, so we're stuck
-with it.
-
-For example
-
-@smallexample
-        fsub %st,%st(3)
-@end smallexample
-@noindent
-results in @samp{%st(3)} being updated to @samp{%st - %st(3)} rather
-than the expected @samp{%st(3) - %st}.  This happens with all the
-non-commutative arithmetic floating point operations with two register
-operands where the source register is @samp{%st} and the destination
-register is @samp{%st(i)}.
-
 @node i386-Arch
 @section Specifying CPU Architecture
 
@@ -1013,10 +1104,10 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{i486} @tab @samp{i586} @tab @samp{i686} @tab @samp{pentium}
 @item @samp{pentiumpro} @tab @samp{pentiumii} @tab @samp{pentiumiii} @tab @samp{pentium4}
 @item @samp{prescott} @tab @samp{nocona} @tab @samp{core} @tab @samp{core2}
-@item @samp{corei7} @tab @samp{l1om} @tab @samp{k1om}
+@item @samp{corei7} @tab @samp{l1om} @tab @samp{k1om} @samp{iamcu}
 @item @samp{k6} @tab @samp{k6_2} @tab @samp{athlon} @tab @samp{k8}
 @item @samp{amdfam10} @tab @samp{bdver1} @tab @samp{bdver2} @tab @samp{bdver3}
-@item @samp{btver1} @tab @samp{btver2}
+@item @samp{bdver4} @tab @samp{znver1} @tab @samp{btver1} @tab @samp{btver2}
 @item @samp{generic32} @tab @samp{generic64}
 @item @samp{.mmx} @tab @samp{.sse} @tab @samp{.sse2} @tab @samp{.sse3}
 @item @samp{.ssse3} @tab @samp{.sse4.1} @tab @samp{.sse4.2} @tab @samp{.sse4}
@@ -1026,10 +1117,15 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{.rdrnd} @tab @samp{.f16c} @tab @samp{.avx2} @tab @samp{.bmi2}
 @item @samp{.lzcnt} @tab @samp{.invpcid} @tab @samp{.vmfunc} @tab @samp{.hle}
 @item @samp{.rtm} @tab @samp{.adx} @tab @samp{.rdseed} @tab @samp{.prfchw}
+@item @samp{.smap} @tab @samp{.mpx} @tab @samp{.sha} @tab @samp{.prefetchwt1}
+@item @samp{.clflushopt} @tab @samp{.xsavec} @tab @samp{.xsaves} @tab @samp{.se1}
+@item @samp{.avx512f} @tab @samp{.avx512cd} @tab @samp{.avx512er} @tab @samp{.avx512pf}
+@item @samp{.avx512vl} @tab @samp{.avx512bw} @tab @samp{.avx512dq} @tab @samp{.avx512ifma}
+@item @samp{.avx512vbmi} @tab @samp{.clwb} @tab @samp{.pcommit}
 @item @samp{.3dnow} @tab @samp{.3dnowa} @tab @samp{.sse4a} @tab @samp{.sse5}
 @item @samp{.syscall} @tab @samp{.rdtscp} @tab @samp{.svme} @tab @samp{.abm}
-@item @samp{.lwp} @tab @samp{.fma4} @tab @samp{.xop}
-@item @samp{.padlock}
+@item @samp{.lwp} @tab @samp{.fma4} @tab @samp{.xop} @tab @samp{.cx16}
+@item @samp{.padlock} @tab @samp{.clzero} @tab @samp{.mwaitx}
 @end multitable
 
 Apart from the warning, there are only two other effects on
@@ -1060,6 +1156,27 @@ For example
 @smallexample
  .arch i8086,nojumps
 @end smallexample
+
+@node i386-Bugs
+@section AT&T Syntax bugs
+
+The UnixWare assembler, and probably other AT&T derived ix86 Unix
+assemblers, generate floating point instructions with reversed source
+and destination registers in certain cases.  Unfortunately, gcc and
+possibly many other programs use this reversed syntax, so we're stuck
+with it.
+
+For example
+
+@smallexample
+        fsub %st,%st(3)
+@end smallexample
+@noindent
+results in @samp{%st(3)} being updated to @samp{%st - %st(3)} rather
+than the expected @samp{%st(3) - %st}.  This happens with all the
+non-commutative arithmetic floating point operations with two register
+operands where the source register is @samp{%st} and the destination
+register is @samp{%st(i)}.
 
 @node i386-Notes
 @section Notes
