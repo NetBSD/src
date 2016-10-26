@@ -1,4 +1,4 @@
-@c Copyright (C) 1991-2015 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2016 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -252,6 +252,14 @@ restrictions when referencing the upper 32 registers.  They
 can only be accessed as double or quad, and thus only even
 or quad numbered accesses are allowed.  For example, @samp{%f34}
 is a legal floating point register, but @samp{%f35} is not.
+
+Floating point registers accessed as double can also be referred using
+the @samp{%d@var{n}} notation, where @var{n} is even.  Similarly,
+floating point registers accessed as quad can be referred using the
+@samp{%q@var{n}} notation, where @var{n} is a multiple of 4.  For
+example, @samp{%f4} can be denoted as both @samp{%d4} and @samp{%q4}.
+On the other hand, @samp{%f2} can be denoted as @samp{%d2} but not as
+@samp{%q2}.
 
 Certain V9 instructions allow access to ancillary state registers.
 Most simply they can be referred to as @samp{%asr@var{n}} where

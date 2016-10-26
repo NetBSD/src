@@ -1,5 +1,5 @@
 /* hash.c -- gas hash table code
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -87,7 +87,7 @@ hash_new_sized (unsigned long size)
   unsigned long alloc;
   struct hash_control *ret;
 
-  ret = (struct hash_control *) xmalloc (sizeof *ret);
+  ret = XNEW (struct hash_control);
   obstack_begin (&ret->memory, chunksize);
   alloc = size * sizeof (struct hash_entry *);
   ret->table = (struct hash_entry **) obstack_alloc (&ret->memory, alloc);

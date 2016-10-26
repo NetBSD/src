@@ -1,6 +1,6 @@
 /* sym_ids.c
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -273,7 +273,7 @@ extend_match (struct match *m, Sym *sym, Sym_Table *tab, bfd_boolean second_pass
    requests---you get what you ask for!  */
 
 void
-sym_id_parse ()
+sym_id_parse (void)
 {
   Sym *sym, *left, *right;
   struct sym_id *id;

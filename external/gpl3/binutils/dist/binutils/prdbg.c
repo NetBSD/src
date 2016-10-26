@@ -1,5 +1,5 @@
 /* prdbg.c -- Print out generic debugging information.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
    Tags style generation written by Salvador E. Tropea <set@computer.org>.
 

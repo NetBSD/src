@@ -1,5 +1,5 @@
 /* tc-mmix.c -- Assembler for Don Knuth's MMIX.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -186,7 +186,7 @@ int mmix_next_semicolon_is_eoln = 1;
 
 /* Do we have a BSPEC in progress?  */
 static int doing_bspec = 0;
-static char *bspec_file;
+static const char *bspec_file;
 static unsigned int bspec_line;
 
 struct option md_longopts[] =
@@ -395,9 +395,9 @@ const char line_comment_chars[] = "*#";
 
 const char line_separator_chars[] = ";";
 
-const char mmix_exp_chars[] = "eE";
+const char EXP_CHARS[] = "eE";
 
-const char mmix_flt_chars[] = "rf";
+const char FLT_CHARS[] = "rf";
 
 
 /* Fill in the offset-related part of GETA or Bcc.  */
@@ -640,7 +640,7 @@ get_putget_operands (struct mmix_opcode *insn, char *operands,
 /* Handle MMIX-specific option.  */
 
 int
-md_parse_option (int c, char *arg ATTRIBUTE_UNUSED)
+md_parse_option (int c, const char *arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
@@ -2141,7 +2141,7 @@ s_bspec (int unused ATTRIBUTE_UNUSED)
   subseg_set (sec, 0);
 
   /* Save position for missing ESPEC.  */
-  as_where (&bspec_file, &bspec_line);
+  bspec_file = as_where (&bspec_line);
 
   doing_bspec = 1;
 }
@@ -2272,12 +2272,12 @@ md_estimate_size_before_relax (fragS *fragP, segT segment)
    emitted is stored in *sizeP .  An error message is returned, or NULL on
    OK.  */
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   if (type == 'r')
     type = 'f';
-  /* FIXME: Having 'f' in mmix_flt_chars (and here) makes it
+  /* FIXME: Having 'f' in FLT_CHARS (and here) makes it
      problematic to also have a forward reference in an expression.
      The testsuite wants it, and it's customary.
      We'll deal with the real problems when they come; we share the
@@ -2874,9 +2874,9 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixP)
       return NULL;
     }
 
-  relP = (arelent *) xmalloc (sizeof (arelent));
+  relP = XNEW (arelent);
   gas_assert (relP != 0);
-  relP->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  relP->sym_ptr_ptr = XNEW (asymbol *);
   *relP->sym_ptr_ptr = baddsy;
   relP->address = fixP->fx_frag->fr_address + fixP->fx_where;
 
@@ -2939,18 +2939,16 @@ mmix_handle_mmixal (void)
 	 caller is about to bump the counters.  Adjust the error messages.  */
       if (is_end_of_line[(unsigned int) *s])
 	{
-	  char *name;
 	  unsigned int line;
-	  as_where (&name, &line);
+	  const char * name = as_where (&line);
 	  as_bad_where (name, line + 1,
 			_("[0-9]H labels may not appear alone on a line"));
 	  current_fb_label = -1;
 	}
       if (*s == '.')
 	{
-	  char *name;
 	  unsigned int line;
-	  as_where (&name, &line);
+	  const char * name  = as_where (&line);
 	  as_bad_where (name, line + 1,
 			_("[0-9]H labels do not mix with dot-pseudos"));
 	  current_fb_label = -1;
@@ -3555,7 +3553,7 @@ mmix_md_end (void)
       actual_seg = S_GET_SEGMENT (loc_assert->loc_sym);
       if (actual_seg != loc_assert->old_seg)
 	{
-	  char *fnam;
+	  const char *fnam;
 	  unsigned int line;
 	  int e_valid = expr_symbol_where (loc_assert->loc_sym, &fnam, &line);
 
@@ -3777,7 +3775,7 @@ mmix_frob_file (void)
 
       if (gregs == NULL)
 	{
-	  gregs = xmalloc (sizeof (*gregs));
+	  gregs = XNEW (struct mmix_symbol_gregs);
 	  gregs->n_gregs = 0;
 	  symbol_set_tc (sym, &gregs);
 	  all_greg_symbols[n_greg_symbols++] = gregs;
@@ -3815,7 +3813,7 @@ int
 mmix_parse_predefined_name (char *name, expressionS *expP)
 {
   char *canon_name;
-  char *handler_charp;
+  const char *handler_charp;
   const char handler_chars[] = "DVWIOUZX";
   symbolS *symp;
 
@@ -4091,8 +4089,7 @@ s_loc (int ignore ATTRIBUTE_UNUSED)
       if (section == undefined_section)
 	{
 	  struct loc_assert_s *next = loc_asserts;
-	  loc_asserts
-	    = (struct loc_assert_s *) xmalloc (sizeof (*loc_asserts));
+	  loc_asserts = XNEW (struct loc_assert_s);
 	  loc_asserts->next = next;
 	  loc_asserts->old_seg = now_seg;
 	  loc_asserts->loc_sym = esym;

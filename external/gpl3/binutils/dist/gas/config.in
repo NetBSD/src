@@ -39,6 +39,10 @@
 /* Define if you want compressed debug sections by default. */
 #undef DEFAULT_FLAG_COMPRESS_DEBUG
 
+/* Define to 1 if you want to generate ELF common symbols with the STT_COMMON
+   type by default. */
+#undef DEFAULT_GENERATE_ELF_STT_COMMON
+
 /* Define to 1 if you want to generate x86 relax relocations by default. */
 #undef DEFAULT_GENERATE_X86_RELAX_RELOCATIONS
 
@@ -313,6 +317,9 @@
 
 /* Target vendor. */
 #undef TARGET_VENDOR
+
+/* Target specific CPU. */
+#undef TARGET_WITH_CPU
 
 /* Use b modifier when opening binary files? */
 #undef USE_BINARY_FOPEN

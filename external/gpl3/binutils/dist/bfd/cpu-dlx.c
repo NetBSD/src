@@ -1,5 +1,5 @@
 /* BFD support for the DLX Microprocessor architecture.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Hacked by Kuang Hwa Lin <kuang@sbcglobal.net>
 
    This file is part of BFD, the Binary File Descriptor library.
