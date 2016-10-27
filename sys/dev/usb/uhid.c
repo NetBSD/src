@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.92.4.10 2016/07/09 20:25:16 skrll Exp $	*/
+/*	$NetBSD: uhid.c,v 1.92.4.11 2016/10/27 07:46:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.10 2016/07/09 20:25:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.11 2016/10/27 07:46:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -229,8 +229,10 @@ uhid_detach(device_t self, int flags)
 			/* Wake everyone */
 			cv_broadcast(&sc->sc_cv);
 			/* Wait for processes to go away. */
-			usb_detach_wait(sc->sc_hdev.sc_dev,
-			    &sc->sc_detach_cv, &sc->sc_lock);
+			if (cv_timedwait(&sc->sc_detach_cv, &sc->sc_lock, hz * 60)) {
+				printf("%s: %s didn't detach\n", __func__,
+				    device_xname(sc->sc_hdev.sc_dev));
+			}
 		}
 	}
 	mutex_exit(&sc->sc_lock);
@@ -457,7 +459,7 @@ uhidread(dev_t dev, struct uio *uio, int flag)
 
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_hdev.sc_dev, &sc->sc_detach_cv);
+		cv_broadcast(&sc->sc_detach_cv);
 	mutex_exit(&sc->sc_lock);
 	return error;
 }
@@ -507,7 +509,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_hdev.sc_dev, &sc->sc_detach_cv);
+		cv_broadcast(&sc->sc_detach_cv);
 	mutex_exit(&sc->sc_lock);
 	return error;
 }
@@ -699,7 +701,7 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_hdev.sc_dev, &sc->sc_detach_cv);
+		cv_broadcast(&sc->sc_detach_cv);
 	mutex_exit(&sc->sc_lock);
 	return error;
 }

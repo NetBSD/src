@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.23 2016/10/25 07:32:25 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.24 2016/10/27 07:46:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.23 2016/10/25 07:32:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.24 2016/10/27 07:46:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,10 @@ ucom_detach(device_t self, int flags)
 			mutex_spin_exit(&tty_lock);
 		}
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev, &sc->sc_detachcv, &sc->sc_lock);
+		if (cv_timedwait(&sc->sc_detachcv, &sc->sc_lock, hz * 60)) {
+			printf("%s: %s didn't detach\n", __func__,
+			    device_xname(sc->sc_dev));
+		}
 	}
 
 	softint_disestablish(sc->sc_si);
@@ -736,7 +739,7 @@ ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_methods->ucom_close(sc->sc_parent, sc->sc_portno);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_dev, &sc->sc_detachcv);
+		cv_broadcast(&sc->sc_detachcv);
 
 out:
 	sc->sc_closing = 0;
@@ -773,7 +776,7 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_dev, &sc->sc_detachcv);
+		cv_broadcast(&sc->sc_detachcv);
 	mutex_exit(&sc->sc_lock);
 
 	return error;
@@ -803,7 +806,7 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_dev, &sc->sc_detachcv);
+		cv_broadcast(&sc->sc_detachcv);
 	mutex_exit(&sc->sc_lock);
 
 	return error;
@@ -833,7 +836,7 @@ ucompoll(dev_t dev, int events, struct lwp *l)
 
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_dev, &sc->sc_detachcv);
+		cv_broadcast(&sc->sc_detachcv);
 	mutex_exit(&sc->sc_lock);
 
 	return revents;
@@ -869,7 +872,7 @@ ucomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_broadcast(sc->sc_dev, &sc->sc_detachcv);
+		cv_broadcast(&sc->sc_detachcv);
 	mutex_exit(&sc->sc_lock);
 
 	return error;
