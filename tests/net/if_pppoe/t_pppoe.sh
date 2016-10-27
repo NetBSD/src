@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.8 2016/10/26 03:55:56 knakahara Exp $
+#	$NetBSD: t_pppoe.sh,v 1.9 2016/10/27 09:59:17 knakahara Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -180,7 +180,7 @@ run_test()
 	atf_check -s exit:0 -o match:'initial' -x "$HIJACKING pppoectl -d pppoe0"
 	unset RUMP_SERVER
 
-	# test for recconecting
+	# test for reconnecting
 	export RUMP_SERVER=$CLIENT
 	atf_check -s exit:0 -x rump.ifconfig pppoe0 up
 	wait_for_session_established
@@ -189,6 +189,7 @@ run_test()
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 rump.ifconfig -w 10
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -w $TIMEOUT $CLIENT_IP
 	atf_check -s exit:0 -o match:'session' -x "$HIJACKING pppoectl -d pppoe0"
 	$DEBUG && HIJACKING pppoectl -d pppoe0
@@ -322,7 +323,7 @@ run_test6()
 	atf_check -s exit:0 -o match:'initial' -x "$HIJACKING pppoectl -d pppoe0"
 	unset RUMP_SERVER
 
-	# test for recconecting
+	# test for reconnecting
 	export RUMP_SERVER=$CLIENT
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	wait_for_session_established
@@ -333,6 +334,7 @@ run_test6()
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 rump.ifconfig -w 10
 	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -X $TIMEOUT $CLIENT_IP6
 	atf_check -s exit:0 -o match:'session' -x "$HIJACKING pppoectl -d pppoe0"
 	$DEBUG && HIJACKING pppoectl -d pppoe0
