@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.63.2.13 2016/02/06 08:01:57 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.63.2.14 2016/10/27 07:46:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.13 2016/02/06 08:01:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.14 2016/10/27 07:46:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -544,27 +544,6 @@ usbd_intr_transfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
 	USBHIST_LOG(usbdebug, "<- done xfer %p err %d", xfer, err, 0, 0);
 
 	return err;
-}
-
-void
-usb_detach_wait(device_t dv, kcondvar_t *cv, kmutex_t *lock)
-{
-	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
-
-	DPRINTFN(1, "waiting for dv %p", dv, 0, 0, 0);
-	if (cv_timedwait(cv, lock, hz * 60))	// dv, PZERO, "usbdet", hz * 60
-		printf("usb_detach_wait: %s didn't detach\n",
-			device_xname(dv));
-	DPRINTFN(1, "done", 0, 0, 0, 0);
-}
-
-void
-usb_detach_broadcast(device_t dv, kcondvar_t *cv)
-{
-	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
-
-	DPRINTFN(1, "for dv %p", dv, 0, 0, 0);
-	cv_broadcast(cv);
 }
 
 void

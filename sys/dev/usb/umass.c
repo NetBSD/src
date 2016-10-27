@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.14 2016/07/09 20:25:16 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.15 2016/10/27 07:46:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.14 2016/07/09 20:25:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.15 2016/10/27 07:46:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -812,7 +812,10 @@ umass_detach(device_t self, int flags)
 		aprint_normal_dev(self, "waiting for refcnt\n");
 #endif
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev, &sc->sc_detach_cv, &sc->sc_lock);
+		if (cv_timedwait(&sc->sc_detach_cv, &sc->sc_lock, hz * 60)) {
+			printf("%s: %s didn't detach\n", __func__,
+			    device_xname(sc->sc_dev));
+		}
 	}
 	mutex_exit(&sc->sc_lock);
 
