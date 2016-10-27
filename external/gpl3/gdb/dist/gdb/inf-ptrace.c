@@ -500,9 +500,10 @@ inf_ptrace_xfer_partial (struct target_ops *ops, enum target_object object,
 	   to indicate failure.  */
 	if (errno == EACCES)
 	  {
-	    fprintf_unfiltered (gdb_stderr, "Cannot set breakpoint at %p (%s). "
+	    fprintf_unfiltered (gdb_stderr, "Cannot %s process at %p (%s). "
 				"Is PaX MPROTECT active? See security(7), "
-				"sysctl(7), paxctl(8)\n", piod.piod_offs,
+				"sysctl(7), paxctl(8)\n", writebuf ? "write to" :
+				"read from", piod.piod_offs,
 				strerror(errno));
 	    return TARGET_XFER_E_IO;	/* Some other error perhaps? */
 	  }
