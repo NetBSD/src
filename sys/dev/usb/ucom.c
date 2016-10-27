@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.24 2016/10/27 07:46:19 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.25 2016/10/27 12:30:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.24 2016/10/27 07:46:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.25 2016/10/27 12:30:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,8 +538,8 @@ ucom_shutdown(struct ucom_softc *sc)
 int
 ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = UCOMUNIT(dev);
-	struct ucom_softc *sc = device_lookup_private(&ucom_cd, unit);
+	const int unit = UCOMUNIT(dev);
+	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 	struct ucom_buffer *ub;
 	int error;
 
@@ -701,7 +701,8 @@ bad:
 int
 ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
+	const int unit = UCOMUNIT(dev);
+	struct ucom_softc *sc = device_lookup_private(&ucom_cd, unit);
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
@@ -753,7 +754,8 @@ out:
 int
 ucomread(dev_t dev, struct uio *uio, int flag)
 {
-	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
+	const int unit = UCOMUNIT(dev);
+	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 	int error;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
@@ -785,7 +787,8 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 int
 ucomwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
+	const int unit = UCOMUNIT(dev);
+	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 	int error;
 
 	if (sc == NULL)
@@ -815,10 +818,9 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 int
 ucompoll(dev_t dev, int events, struct lwp *l)
 {
-	struct ucom_softc *sc;
-	int revents;
+	const int unit = UCOMUNIT(dev);
+	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 
-	sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
 	if (sc == NULL)
 		return POLLHUP;
 
@@ -832,7 +834,7 @@ ucompoll(dev_t dev, int events, struct lwp *l)
 	sc->sc_refcnt++;
 	mutex_exit(&sc->sc_lock);
 
-	revents = ((*tp->t_linesw->l_poll)(tp, events, l));
+	int revents = ((*tp->t_linesw->l_poll)(tp, events, l));
 
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
@@ -845,7 +847,8 @@ ucompoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 ucomtty(dev_t dev)
 {
-	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
+	const int unit = UCOMUNIT(dev);
+	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 
 	return sc != NULL ? sc->sc_tty : NULL;
 }
@@ -853,7 +856,8 @@ ucomtty(dev_t dev)
 int
 ucomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
+	const int unit = UCOMUNIT(dev);
+	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 	int error;
 
 	if (sc == NULL)
@@ -1111,8 +1115,8 @@ ucom_status_change(struct ucom_softc *sc)
 static int
 ucomparam(struct tty *tp, struct termios *t)
 {
-	struct ucom_softc *sc = device_lookup_private(&ucom_cd,
-	    UCOMUNIT(tp->t_dev));
+	const int unit = UCOMUNIT(tp->t_dev);
+	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 	int error;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
@@ -1182,8 +1186,8 @@ XXX what if the hardware is not open
 static int
 ucomhwiflow(struct tty *tp, int block)
 {
-	struct ucom_softc *sc = device_lookup_private(&ucom_cd,
-	    UCOMUNIT(tp->t_dev));
+	const int unit = UCOMUNIT(tp->t_dev);
+	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 	int old;
 
 	if (sc == NULL)
@@ -1205,8 +1209,8 @@ ucomhwiflow(struct tty *tp, int block)
 static void
 ucomstart(struct tty *tp)
 {
-	struct ucom_softc *sc = device_lookup_private(&ucom_cd,
-	    UCOMUNIT(tp->t_dev));
+	const int unit = UCOMUNIT(tp->t_dev);
+	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 	struct ucom_buffer *ub;
 	u_char *data;
 	int cnt;
@@ -1270,8 +1274,8 @@ void
 ucomstop(struct tty *tp, int flag)
 {
 #if 0
-	struct ucom_softc *sc =
-	    device_lookup_private(&ucom_cd, UCOMUNIT(tp->t_dev));
+	const int unit = UCOMUNIT(tp->t_dev);
+	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 
 	mutex_enter(&sc->sc_lock);
 	mutex_spin_enter(&tty_lock);
