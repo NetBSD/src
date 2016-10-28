@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.84 2016/10/02 16:52:27 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.85 2016/10/28 20:38:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.84 2016/10/02 16:52:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.85 2016/10/28 20:38:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1929,22 +1929,35 @@ wapbl_dump(struct wapbl *wl)
 
 /****************************************************************/
 
-void
-wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
+int
+wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len, bool force)
 {
 	struct wapbl_dealloc *wd;
+	int error = 0;
 
 	wapbl_jlock_assert(wl);
 
 	mutex_enter(&wl->wl_mtx);
-	/* XXX should eventually instead tie this into resource estimation */
-	/*
-	 * XXX this panic needs locking/mutex analysis and the
-	 * ability to cope with the failure.
-	 */
-	/* XXX this XXX doesn't have enough XXX */
-	if (__predict_false(wl->wl_dealloccnt >= wl->wl_dealloclim))
-		panic("wapbl_register_deallocation: out of resources");
+
+	if (__predict_false(wl->wl_dealloccnt >= wl->wl_dealloclim)) {
+		if (!force) {
+			error = EAGAIN;
+			goto out;
+		}
+
+		/*
+		 * Forced registration can only be used when:
+		 * 1) the caller can't cope with failure
+		 * 2) the path can be triggered only bounded, small
+		 *    times per transaction
+		 * If this is not fullfilled, and the path would be triggered
+		 * many times, this could overflow maximum transaction size
+		 * and panic later.
+		 */
+		printf("%s: forced dealloc registration over limit: %d >= %d\n",
+			wl->wl_mount->mnt_stat.f_mntonname,
+			wl->wl_dealloccnt, wl->wl_dealloclim);
+	}
 
 	wl->wl_dealloccnt++;
 	mutex_exit(&wl->wl_mtx);
@@ -1955,10 +1968,15 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 
 	mutex_enter(&wl->wl_mtx);
 	SIMPLEQ_INSERT_TAIL(&wl->wl_dealloclist, wd, wd_entries);
+
+ out:
 	mutex_exit(&wl->wl_mtx);
 
 	WAPBL_PRINTF(WAPBL_PRINT_ALLOC,
-	    ("wapbl_register_deallocation: blk=%"PRId64" len=%d\n", blk, len));
+	    ("wapbl_register_deallocation: blk=%"PRId64" len=%d error=%d\n",
+	    blk, len, error));
+
+	return error;
 }
 
 /****************************************************************/
