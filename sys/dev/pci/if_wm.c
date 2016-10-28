@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.434 2016/10/28 06:59:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.435 2016/10/28 09:16:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.434 2016/10/28 06:59:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.435 2016/10/28 09:16:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8246,6 +8246,12 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 			/* SGMII */
 			mii->mii_readreg = wm_sgmii_readreg;
 			mii->mii_writereg = wm_sgmii_writereg;
+		} else if ((sc->sc_type == WM_T_82574)
+		    || (sc->sc_type == WM_T_82583)) {
+			/* BM2 (phyaddr == 1) */
+			sc->sc_phytype = WMPHY_BM;
+			mii->mii_readreg = wm_gmii_bm_readreg;
+			mii->mii_writereg = wm_gmii_bm_writereg;
 		} else if (sc->sc_type >= WM_T_ICH8) {
 			/* non-82567 ICH8, 9 and 10 */
 			mii->mii_readreg = wm_gmii_i82544_readreg;
@@ -8750,6 +8756,8 @@ static int
 wm_gmii_bm_readreg(device_t self, int phy, int reg)
 {
 	struct wm_softc *sc = device_private(self);
+	uint16_t page = reg >> BME1000_PAGE_SHIFT;
+	uint16_t val;
 	int rv;
 
 	if (sc->phy.acquire(sc)) {
@@ -8758,17 +8766,29 @@ wm_gmii_bm_readreg(device_t self, int phy, int reg)
 		return 0;
 	}
 
+	if ((sc->sc_type != WM_T_82574) && (sc->sc_type != WM_T_82583))
+		phy = ((page >= 768) || ((page == 0) && (reg == 25))
+		    || (reg == 31)) ? 1 : phy;
+	/* Page 800 works differently than the rest so it has its own func */
+	if (page == BM_WUC_PAGE) {
+		wm_access_phy_wakeup_reg_bm(self, reg, &val, 1);
+		rv = val;
+		goto release;
+	}
+
 	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
-		if (phy == 1)
+		if ((phy == 1) && (sc->sc_type != WM_T_82574)
+		    && (sc->sc_type != WM_T_82583))
 			wm_gmii_mdic_writereg(self, phy,
-			    MII_IGPHY_PAGE_SELECT, reg);
+			    MII_IGPHY_PAGE_SELECT, page << BME1000_PAGE_SHIFT);
 		else
 			wm_gmii_mdic_writereg(self, phy,
-			    BME1000_PHY_PAGE_SELECT,
-			    reg >> GG82563_PAGE_SHIFT);
+			    BME1000_PHY_PAGE_SELECT, page);
 	}
 
 	rv = wm_gmii_mdic_readreg(self, phy, reg & MII_ADDRMASK);
+
+release:
 	sc->phy.release(sc);
 	return rv;
 }
@@ -8784,6 +8804,7 @@ static void
 wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
 {
 	struct wm_softc *sc = device_private(self);
+	uint16_t page = reg >> BME1000_PAGE_SHIFT;
 
 	if (sc->phy.acquire(sc)) {
 		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
@@ -8791,17 +8812,31 @@ wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
 		return;
 	}
 
+	if ((sc->sc_type != WM_T_82574) && (sc->sc_type != WM_T_82583))
+		phy = ((page >= 768) || ((page == 0) && (reg == 25))
+		    || (reg == 31)) ? 1 : phy;
+	/* Page 800 works differently than the rest so it has its own func */
+	if (page == BM_WUC_PAGE) {
+		uint16_t tmp;
+
+		tmp = val;
+		wm_access_phy_wakeup_reg_bm(self, reg, &tmp, 0);
+		goto release;
+	}
+
 	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
-		if (phy == 1)
+		if ((phy == 1) && (sc->sc_type != WM_T_82574)
+		    && (sc->sc_type != WM_T_82583))
 			wm_gmii_mdic_writereg(self, phy,
-			    MII_IGPHY_PAGE_SELECT, reg);
+			    MII_IGPHY_PAGE_SELECT, page << BME1000_PAGE_SHIFT);
 		else
 			wm_gmii_mdic_writereg(self, phy,
-			    BME1000_PHY_PAGE_SELECT,
-			    reg >> GG82563_PAGE_SHIFT);
+			    BME1000_PHY_PAGE_SELECT, page);
 	}
 
 	wm_gmii_mdic_writereg(self, phy, reg & MII_ADDRMASK, val);
+
+release:
 	sc->phy.release(sc);
 }
 
