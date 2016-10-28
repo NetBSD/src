@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.428 2016/10/26 10:21:44 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.429 2016/10/28 04:14:13 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.428 2016/10/26 10:21:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.429 2016/10/28 04:14:13 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -324,6 +324,8 @@ struct wm_txqueue {
 	int txq_flags;			/* flags for H/W queue, see below */
 #define	WM_TXQ_NO_SPACE	0x1
 
+	bool txq_stopping;
+
 #ifdef WM_EVENT_COUNTERS
 	WM_Q_EVCNT_DEFINE(txq, txsstall)	/* Tx stalled due to no txs */
 	WM_Q_EVCNT_DEFINE(txq, txdstall)	/* Tx stalled due to no txd */
@@ -372,6 +374,8 @@ struct wm_rxqueue {
 	struct mbuf *rxq_head;
 	struct mbuf *rxq_tail;
 	struct mbuf **rxq_tailp;
+
+	bool rxq_stopping;
 
 #ifdef WM_EVENT_COUNTERS
 	WM_Q_EVCNT_DEFINE(rxq, rxintr);		/* Rx interrupts */
@@ -447,7 +451,7 @@ struct wm_softc {
 	int sc_link_intr_idx;		/* index of MSI-X tables */
 
 	callout_t sc_tick_ch;		/* tick callout */
-	bool sc_stopping;
+	bool sc_core_stopping;
 
 	int sc_nvm_ver_major;
 	int sc_nvm_ver_minor;
@@ -643,6 +647,8 @@ static int	wm_setup_legacy(struct wm_softc *);
 static int	wm_setup_msix(struct wm_softc *);
 static int	wm_init(struct ifnet *);
 static int	wm_init_locked(struct ifnet *);
+static void	wm_turnon(struct wm_softc *);
+static void	wm_turnoff(struct wm_softc *);
 static void	wm_stop(struct ifnet *, int);
 static void	wm_stop_locked(struct ifnet *, int);
 static void	wm_dump_mbuf_chain(struct wm_softc *, struct mbuf *);
@@ -1596,7 +1602,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, CALLOUT_FLAGS);
-	sc->sc_stopping = false;
+	sc->sc_core_stopping = false;
 
 	wmp = wm_lookup(pa);
 #ifdef DIAGNOSTIC
@@ -2840,7 +2846,7 @@ wm_tick(void *arg)
 
 	WM_CORE_LOCK(sc);
 
-	if (sc->sc_stopping)
+	if (sc->sc_core_stopping)
 		goto out;
 
 	if (sc->sc_type >= WM_T_82542_2_1) {
@@ -2876,7 +2882,7 @@ out:
 	splx(s);
 #endif
 
-	if (!sc->sc_stopping)
+	if (!sc->sc_core_stopping)
 		callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
 }
 
@@ -4552,6 +4558,52 @@ wm_setup_msix(struct wm_softc *sc)
 	return ENOMEM;
 }
 
+static void
+wm_turnon(struct wm_softc *sc)
+{
+	int i;
+
+	for(i = 0; i < sc->sc_nqueues; i++) {
+		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
+		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
+
+		mutex_enter(txq->txq_lock);
+		txq->txq_stopping = false;
+		mutex_exit(txq->txq_lock);
+
+		mutex_enter(rxq->rxq_lock);
+		rxq->rxq_stopping = false;
+		mutex_exit(rxq->rxq_lock);
+	}
+
+	WM_CORE_LOCK(sc);
+	sc->sc_core_stopping = false;
+	WM_CORE_UNLOCK(sc);
+}
+
+static void
+wm_turnoff(struct wm_softc *sc)
+{
+	int i;
+
+	WM_CORE_LOCK(sc);
+	sc->sc_core_stopping = true;
+	WM_CORE_UNLOCK(sc);
+
+	for(i = 0; i < sc->sc_nqueues; i++) {
+		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
+		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
+
+		mutex_enter(rxq->rxq_lock);
+		rxq->rxq_stopping = true;
+		mutex_exit(rxq->rxq_lock);
+
+		mutex_enter(txq->txq_lock);
+		txq->txq_stopping = true;
+		mutex_exit(txq->txq_lock);
+	}
+}
+
 /*
  * wm_init:		[ifnet interface function]
  *
@@ -5086,7 +5138,7 @@ wm_init_locked(struct ifnet *ifp)
 		}
 	}
 
-	sc->sc_stopping = false;
+	wm_turnon(sc);
 
 	/* Start the one second link check clock. */
 	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
@@ -5129,7 +5181,7 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 		device_xname(sc->sc_dev), __func__));
 	KASSERT(WM_CORE_LOCKED(sc));
 
-	sc->sc_stopping = true;
+	wm_turnoff(sc);
 
 	/* Stop the one second clock. */
 	callout_stop(&sc->sc_tick_ch);
@@ -5276,7 +5328,7 @@ wm_82547_txfifo_stall(void *arg)
 
 	mutex_enter(txq->txq_lock);
 
-	if (sc->sc_stopping)
+	if (txq->txq_stopping)
 		goto out;
 
 	if (txq->txq_fifo_stall) {
@@ -6217,7 +6269,7 @@ wm_start(struct ifnet *ifp)
 	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
 
 	mutex_enter(txq->txq_lock);
-	if (!sc->sc_stopping)
+	if (!txq->txq_stopping)
 		wm_start_locked(ifp);
 	mutex_exit(txq->txq_lock);
 }
@@ -6736,7 +6788,7 @@ wm_nq_start(struct ifnet *ifp)
 	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
 
 	mutex_enter(txq->txq_lock);
-	if (!sc->sc_stopping)
+	if (!txq->txq_stopping)
 		wm_nq_start_locked(ifp);
 	mutex_exit(txq->txq_lock);
 }
@@ -6786,7 +6838,7 @@ wm_nq_transmit(struct ifnet *ifp, struct mbuf *m)
 		if (m->m_flags & M_MCAST)
 			ifp->if_omcasts++;
 
-		if (!sc->sc_stopping)
+		if (!txq->txq_stopping)
 			wm_nq_transmit_locked(ifp, txq);
 		mutex_exit(txq->txq_lock);
 	}
@@ -7099,7 +7151,7 @@ wm_txeof(struct wm_softc *sc, struct wm_txqueue *txq)
 
 	KASSERT(mutex_owned(txq->txq_lock));
 
-	if (sc->sc_stopping)
+	if (txq->txq_stopping)
 		return 0;
 
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
@@ -7387,7 +7439,7 @@ wm_rxeof(struct wm_rxqueue *rxq)
 
 		mutex_enter(rxq->rxq_lock);
 
-		if (sc->sc_stopping)
+		if (rxq->rxq_stopping)
 			break;
 	}
 
@@ -7659,7 +7711,7 @@ wm_intr_legacy(void *arg)
 
 		mutex_enter(rxq->rxq_lock);
 
-		if (sc->sc_stopping) {
+		if (rxq->rxq_stopping) {
 			mutex_exit(rxq->rxq_lock);
 			break;
 		}
@@ -7680,6 +7732,11 @@ wm_intr_legacy(void *arg)
 		mutex_exit(rxq->rxq_lock);
 		mutex_enter(txq->txq_lock);
 
+		if (txq->txq_stopping) {
+			mutex_exit(txq->txq_lock);
+			break;
+		}
+
 #if defined(WM_DEBUG) || defined(WM_EVENT_COUNTERS)
 		if (icr & ICR_TXDW) {
 			DPRINTF(WM_DEBUG_TX,
@@ -7692,6 +7749,11 @@ wm_intr_legacy(void *arg)
 
 		mutex_exit(txq->txq_lock);
 		WM_CORE_LOCK(sc);
+
+		if (sc->sc_core_stopping) {
+			WM_CORE_UNLOCK(sc);
+			break;
+		}
 
 		if (icr & (ICR_LSC | ICR_RXSEQ)) {
 			WM_EVCNT_INCR(&sc->sc_ev_linkintr);
@@ -7739,35 +7801,42 @@ wm_txrxintr_msix(void *arg)
 	else
 		CSR_WRITE(sc, WMREG_EIMC, 1 << wmq->wmq_intr_idx);
 
-	if (!sc->sc_stopping) {
-		mutex_enter(txq->txq_lock);
+	mutex_enter(txq->txq_lock);
 
-		WM_Q_EVCNT_INCR(txq, txdw);
-		wm_txeof(sc, txq);
-
-		/* Try to get more packets going. */
-		if (pcq_peek(txq->txq_interq) != NULL)
-			wm_nq_transmit_locked(ifp, txq);
-		/*
-		 * There are still some upper layer processing which call
-		 * ifp->if_start(). e.g. ALTQ
-		 */
-		if (wmq->wmq_id == 0) {
-			if (!IFQ_IS_EMPTY(&ifp->if_snd))
-				wm_nq_start_locked(ifp);
-		}
+	if (txq->txq_stopping) {
 		mutex_exit(txq->txq_lock);
+		return 0;
 	}
+
+	WM_Q_EVCNT_INCR(txq, txdw);
+	wm_txeof(sc, txq);
+
+	/* Try to get more packets going. */
+	if (pcq_peek(txq->txq_interq) != NULL)
+		wm_nq_transmit_locked(ifp, txq);
+	/*
+	 * There are still some upper layer processing which call
+	 * ifp->if_start(). e.g. ALTQ
+	 */
+	if (wmq->wmq_id == 0) {
+		if (!IFQ_IS_EMPTY(&ifp->if_snd))
+			wm_nq_start_locked(ifp);
+	}
+
+	mutex_exit(txq->txq_lock);
 
 	DPRINTF(WM_DEBUG_RX,
 	    ("%s: RX: got Rx intr\n", device_xname(sc->sc_dev)));
+	mutex_enter(rxq->rxq_lock);
 
-	if (!sc->sc_stopping) {
-		mutex_enter(rxq->rxq_lock);
-		WM_Q_EVCNT_INCR(rxq, rxintr);
-		wm_rxeof(rxq);
+	if (rxq->rxq_stopping) {
 		mutex_exit(rxq->rxq_lock);
+		return 0;
 	}
+
+	WM_Q_EVCNT_INCR(rxq, rxintr);
+	wm_rxeof(rxq);
+	mutex_exit(rxq->rxq_lock);
 
 	if (sc->sc_type == WM_T_82574)
 		CSR_WRITE(sc, WMREG_IMS, ICR_TXQ(wmq->wmq_id) | ICR_RXQ(wmq->wmq_id));
@@ -7795,7 +7864,7 @@ wm_linkintr_msix(void *arg)
 
 	reg = CSR_READ(sc, WMREG_ICR);
 	WM_CORE_LOCK(sc);
-	if ((sc->sc_stopping) || ((reg & ICR_LSC) == 0))
+	if ((sc->sc_core_stopping) || ((reg & ICR_LSC) == 0))
 		goto out;
 
 	WM_EVCNT_INCR(&sc->sc_ev_linkintr);
