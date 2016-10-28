@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.430 2016/10/28 05:21:48 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.431 2016/10/28 05:29:11 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.430 2016/10/28 05:21:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.431 2016/10/28 05:29:11 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2866,7 +2866,16 @@ wm_tick(void *arg)
 	    + CSR_READ(sc, WMREG_SEC)
 	    + CSR_READ(sc, WMREG_CEXTERR)
 	    + CSR_READ(sc, WMREG_RLEC);
-	ifp->if_iqdrops += CSR_READ(sc, WMREG_MPC) + CSR_READ(sc, WMREG_RNBC);
+	/*
+	 * WMREG_RNBC is incremented when there is no available buffers in host
+	 * memory. It does not mean the number of dropped packet. Because
+	 * ethernet controller can receive packets in such case if there is
+	 * space in phy's FIFO.
+	 *
+	 * If you want to know the nubmer of WMREG_RMBC, you should use such as
+	 * own EVCNT instead of if_iqdrops.
+	 */
+	ifp->if_iqdrops += CSR_READ(sc, WMREG_MPC);
 
 	if (sc->sc_flags & WM_F_HAS_MII)
 		mii_tick(&sc->sc_mii);
