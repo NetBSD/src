@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.23 2016/10/18 14:39:52 kiyohara Exp $ */
+/*	$NetBSD: gxio.c,v 1.24 2016/10/28 19:00:48 christos Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.23 2016/10/18 14:39:52 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.24 2016/10/28 19:00:48 christos Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_gumstix.h"
@@ -261,6 +261,7 @@ static const struct omap_mux_conf overo_mux_mmchs2_conf[] = {
 	  MUXMODE(0) | PULLUDENABLE | PULLTYPESELECT | INPUTENABLE },
 	{ -1 }
 };
+#if defined(OVERO) 
 static const struct omap_mux_conf overo_mux_wireless_conf[] = {
 	{ 0x0b4, MUXMODE(4) },				/* gpio_54:BT_nPOWERON*/
 	{ 0x0bc, MUXMODE(4) | INPUTENABLE },		/* gpio_58: WIFI_IRQ */
@@ -269,6 +270,7 @@ static const struct omap_mux_conf overo_mux_wireless_conf[] = {
 	{ -1 }
 };
 
+#elif defined(DUOVERO)
 static const struct omap_mux_conf duovero_mux_led_conf[] = {
 	{ 0x116, MUXMODE(3) },				/* GPIO 122 */
 	{ -1 }
@@ -279,6 +281,7 @@ static const struct omap_mux_conf duovero_mux_button_conf[] = {
 	{ -1 }
 };
 
+#elif defined(PEPPER)
 static const struct omap_mux_conf pepper_mux_led_conf[] = {
 	{ 0x850, MMODE(7) | PUDEN },			/* GPIO 52: Blue */
 	{ 0x854, MMODE(7) | PUDEN },			/* GPIO 53: Red */
@@ -301,6 +304,7 @@ static const struct omap_mux_conf pepper_mux_audio_codec_conf[] = {
 	{ 0x840, MMODE(7) | PUDEN },			/* GPIO 48: #Reset */
 	{ -1 }
 };
+#endif
 
 #endif
 
