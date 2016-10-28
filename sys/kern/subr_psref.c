@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_psref.c,v 1.4 2016/04/13 08:31:00 riastradh Exp $	*/
+/*	$NetBSD: subr_psref.c,v 1.5 2016/10/28 07:27:52 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.4 2016/04/13 08:31:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.5 2016/10/28 07:27:52 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -457,19 +457,28 @@ _psref_held(const struct psref_target *target, struct psref_class *class,
 
 	/* Search through all the references on this CPU.  */
 	LIST_FOREACH(psref, &pcpu->pcpu_head, psref_entry) {
-		/* Sanity-check the reference.  */
-		KASSERTMSG((lwp_mismatch_ok || psref->psref_lwp == curlwp),
-		    "passive reference transferred from lwp %p to lwp %p",
-		    psref->psref_lwp, curlwp);
+		/* Sanity-check the reference's CPU.  */
 		KASSERTMSG((psref->psref_cpu == curcpu()),
 		    "passive reference transferred from CPU %u to CPU %u",
 		    cpu_index(psref->psref_cpu), cpu_index(curcpu()));
 
-		/* If it matches, stop here and answer yes.  */
-		if (psref->psref_target == target) {
-			held = true;
-			break;
-		}
+		/* If it doesn't match, skip it and move on.  */
+		if (psref->psref_target != target)
+			continue;
+
+		/*
+		 * Sanity-check the reference's LWP if we are asserting
+		 * via psref_held that this LWP holds it, but not if we
+		 * are testing in psref_target_destroy whether any LWP
+		 * still holds it.
+		 */
+		KASSERTMSG((lwp_mismatch_ok || psref->psref_lwp == curlwp),
+		    "passive reference transferred from lwp %p to lwp %p",
+		    psref->psref_lwp, curlwp);
+
+		/* Stop here and report that we found it.  */
+		held = true;
+		break;
 	}
 
 	/* Release the CPU list and restore interrupts.  */
