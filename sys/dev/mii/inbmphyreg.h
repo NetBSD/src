@@ -1,4 +1,4 @@
-/*	$NetBSD: inbmphyreg.h,v 1.6 2016/10/19 08:22:57 msaitoh Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.7 2016/10/28 05:50:18 msaitoh Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
 All rights reserved.
@@ -44,16 +44,15 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 #define BME1000_PAGE_SHIFT        5
 #define BME1000_REG(page, reg)    \
-        (((page) << BME1000_PAGE_SHIFT) | ((reg) & BME1000_MAX_REG_ADDRESS))
+        (((page) << BME1000_PAGE_SHIFT) | ((reg) & MII_ADDRMASK))
 
-#define BME1000_MAX_REG_ADDRESS        0x1f  /* 5 bit address bus (0-0x1f) */
 #define BME1000_MAX_MULTI_PAGE_REG     0xf   /* Registers equal on all pages */
 
 #define	BM_PHY_REG_PAGE(offset)			\
 	((uint16_t)(((offset) >> BME1000_PAGE_SHIFT) & 0xffff))
-#define	BM_PHY_REG_NUM(offset)			\
-	((uint16_t)((offset) & BME1000_MAX_REG_ADDRESS)		\
-	| (((offset) >> (21 - BME1000_PAGE_SHIFT)) & ~BME1000_MAX_REG_ADDRESS))
+#define	BM_PHY_REG_NUM(offset)				\
+	((uint16_t)((offset) & MII_ADDRMASK)		\
+	| (((offset) >> (21 - BME1000_PAGE_SHIFT)) & ~MII_ADDRMASK))
 
 /* BME1000 Specific Registers */
 #define BME1000_PHY_SPEC_CTRL	BME1000_REG(0, 16) /* PHY Specific Control */
