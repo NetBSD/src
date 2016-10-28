@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.138 2016/09/01 13:23:44 mbalmer Exp $	*/
+/*	$NetBSD: readline.c,v 1.139 2016/10/28 18:32:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.138 2016/09/01 13:23:44 mbalmer Exp $");
+__RCSID("$NetBSD: readline.c,v 1.139 2016/10/28 18:32:26 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -196,7 +196,7 @@ _getc_function(EditLine *el __attribute__((__unused__)), wchar_t *c)
 {
 	int i;
 
-	i = (*rl_getc_function)(NULL);
+	i = (*rl_getc_function)(rl_instream);
 	if (i == -1)
 		return 0;
 	*c = (wchar_t)i;
