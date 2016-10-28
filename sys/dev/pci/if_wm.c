@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.433 2016/10/28 06:27:11 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.434 2016/10/28 06:59:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.433 2016/10/28 06:27:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.434 2016/10/28 06:59:08 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8166,7 +8166,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t reg;
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
 	/* We have GMII. */
@@ -8387,7 +8387,7 @@ wm_gmii_mediachange(struct ifnet *ifp)
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	int rc;
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return 0;
@@ -8812,7 +8812,7 @@ wm_access_phy_wakeup_reg_bm(device_t self, int offset, int16_t *val, int rd)
 	uint16_t regnum = BM_PHY_REG_NUM(offset);
 	uint16_t wuce;
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	/* XXX Gig must be disabled for MDIO accesses to page 800 */
 	if (sc->sc_type == WM_T_PCH) {
@@ -8861,7 +8861,7 @@ wm_gmii_hv_readreg(device_t self, int phy, int reg)
 	struct wm_softc *sc = device_private(self);
 	int rv;
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	if (sc->phy.acquire(sc)) {
 		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
@@ -8924,7 +8924,7 @@ wm_gmii_hv_writereg(device_t self, int phy, int reg, int val)
 {
 	struct wm_softc *sc = device_private(self);
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
 	if (sc->phy.acquire(sc)) {
@@ -11267,7 +11267,7 @@ wm_get_swsm_semaphore(struct wm_softc *sc)
 	int32_t timeout;
 	uint32_t swsm;
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	KASSERT(sc->sc_nvm_wordsize > 0);
 
@@ -11323,7 +11323,7 @@ wm_put_swsm_semaphore(struct wm_softc *sc)
 {
 	uint32_t swsm;
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
 	swsm = CSR_READ(sc, WMREG_SWSM);
@@ -11343,7 +11343,7 @@ wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 	uint32_t fwmask = mask << SWFW_FIRM_SHIFT;
 	int timeout = 200;
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	KASSERT((sc->sc_flags & WM_F_LOCK_SWSM) != 0);
 
@@ -11378,7 +11378,7 @@ wm_put_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 {
 	uint32_t swfw_sync;
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	KASSERT((sc->sc_flags & WM_F_LOCK_SWSM) != 0);
 
@@ -11417,7 +11417,7 @@ wm_get_swfwhw_semaphore(struct wm_softc *sc)
 	uint32_t ext_ctrl;
 	int timeout = 200;
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
 	mutex_enter(sc->sc_ich_phymtx); /* Use PHY mtx for both PHY and NVM */
@@ -11442,7 +11442,7 @@ wm_put_swfwhw_semaphore(struct wm_softc *sc)
 {
 	uint32_t ext_ctrl;
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
 	ext_ctrl = CSR_READ(sc, WMREG_EXTCNFCTR);
@@ -11518,7 +11518,7 @@ static int
 wm_get_nvm_ich8lan(struct wm_softc *sc)
 {
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	mutex_enter(sc->sc_ich_nvmmtx);
 
@@ -11529,7 +11529,7 @@ static void
 wm_put_nvm_ich8lan(struct wm_softc *sc)
 {
 
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 	mutex_exit(sc->sc_ich_nvmmtx);
 }
