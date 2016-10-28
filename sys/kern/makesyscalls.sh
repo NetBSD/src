@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.164 2016/01/26 23:46:37 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.165 2016/10/28 23:44:32 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -470,6 +470,11 @@ syscall != $1 {
 	print
 	exit 1
 }
+function isarg64(type) {
+	gsub("netbsd32_", "", type);
+	return type == "quad_t" || type == "off_t" \
+	    || type == "dev_t" ||  type == "time_t";
+}
 function parserr(was, wanted) {
 	printf "%s: line %d: unexpected %s (expected <%s>)\n", \
 	    infile, NR, was, wanted
@@ -573,7 +578,7 @@ function parseline() {
 	} else {
 		funcname=fprefix "_" fbase
 	}
-	if (returntype == "quad_t" || returntype == "off_t") {
+	if (isarg64(returntype)) {
 		if (sycall_flags == "0")
 			sycall_flags = "SYCALL_RET_64";
 		else
@@ -646,8 +651,7 @@ function parseline() {
 		} else {
 			argalign++;
 		}
-		if (argtype[argc] == "quad_t" || argtype[argc] == "off_t" \
-		  || argtype[argc] == "dev_t" || argtype[argc] == "time_t") {
+		if (isarg64(argtype[argc])) {
 			if (sycall_flags == "0")
 				sycall_flags = "SYCALL_ARG"argc-1"_64";
 			else
