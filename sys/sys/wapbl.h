@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.18 2016/10/01 13:15:45 jdolecek Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.19 2016/10/28 20:38:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ void	wapbl_unregister_inode(struct wapbl *, ino_t, mode_t);
  * the corresponding blocks from being reused as data
  * blocks until the log is on disk.
  */
-void	wapbl_register_deallocation(struct wapbl *, daddr_t, int);
+int	wapbl_register_deallocation(struct wapbl *, daddr_t, int, bool);
 
 void	wapbl_jlock_assert(struct wapbl *wl);
 void	wapbl_junlock_assert(struct wapbl *wl);

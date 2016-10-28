@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.11 2016/05/19 18:32:20 riastradh Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.12 2016/10/28 20:38:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -147,7 +147,14 @@ ufs_wapbl_end(struct mount *mp)
 	if (mp->mnt_wapbl) wapbl_unregister_inode(mp->mnt_wapbl, ino, mode)
 
 #define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)			\
-	if (mp->mnt_wapbl) wapbl_register_deallocation(mp->mnt_wapbl, blk, len)
+	(mp->mnt_wapbl)							\
+	    ? wapbl_register_deallocation(mp->mnt_wapbl, blk, len, false) : 0
+
+#define	UFS_WAPBL_REGISTER_DEALLOCATION_FORCE(mp, blk, len)		\
+	(								\
+	  (mp->mnt_wapbl)						\
+	    ? wapbl_register_deallocation(mp->mnt_wapbl, blk, len, true) : 0 \
+	)
 
 #else /* ! WAPBL */
 #define	UFS_WAPBL_BEGIN(mp) (__USE(mp), 0)
@@ -157,7 +164,8 @@ ufs_wapbl_end(struct mount *mp)
 #define	UFS_WAPBL_JUNLOCK_ASSERT(mp)
 #define	UFS_WAPBL_REGISTER_INODE(mp, ino, mode)		do { } while (0)
 #define	UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)	do { } while (0)
-#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)
+#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)		0
+#define	UFS_WAPBL_REGISTER_DEALLOCATION_FORCE(mp, blk, len)	0
 #endif
 
 #endif /* !_UFS_UFS_UFS_WAPBL_H_ */

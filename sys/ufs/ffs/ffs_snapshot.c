@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.142 2016/10/21 19:28:03 jdolecek Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.143 2016/10/28 20:38:12 jdolecek Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.142 2016/10/21 19:28:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.143 2016/10/28 20:38:12 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -402,6 +402,12 @@ out:
 	}
 	if (error) {
 		if (UFS_WAPBL_BEGIN(mp) == 0) {
+			/*
+			 * We depend on ffs_truncate() to call ffs_snapremove()
+			 * before it may return an error. On failed
+			 * ffs_truncate() we have normal file with leaked
+			 * (meta-) data, but no snapshot to use.
+			 */
 			(void) ffs_truncate(vp, (off_t)0, 0, NOCRED);
 			UFS_WAPBL_END(mp);
 		}
@@ -437,7 +443,12 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 		return EACCES;
 
 	if (vp->v_size != 0) {
-		error = ffs_truncate(vp, 0, 0, NOCRED);
+		/*
+		 * Must completely truncate the file here. Allocated
+		 * blocks on a snapshot mean that block has been copied
+		 * on write, see ffs_copyonwrite() testing "blkno != 0"
+		 */
+		error = ufs_truncate_retry(vp, 0, NOCRED);
 		if (error)
 			return error;
 	}
