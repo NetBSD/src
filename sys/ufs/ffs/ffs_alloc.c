@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.152 2016/09/25 17:14:59 jdolecek Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.153 2016/10/28 20:38:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.152 2016/09/25 17:14:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.153 2016/10/28 20:38:12 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -478,11 +478,20 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	}
 	bno = ffs_hashalloc(ip, cg, bpref, request, nsize, 0, ffs_alloccg);
 	if (bno > 0) {
+		/*
+		 * Use forced deallocation registration, we can't handle
+		 * failure here. This is safe, as this place is ever hit
+		 * maximum once per write operation, when fragment is extended
+		 * to longer fragment, or a full block.
+		 */
 		if ((ip->i_ump->um_mountp->mnt_wapbl) &&
 		    (ITOV(ip)->v_type != VREG)) {
-			UFS_WAPBL_REGISTER_DEALLOCATION(
+			/* this should never fail */
+			error = UFS_WAPBL_REGISTER_DEALLOCATION_FORCE(
 			    ip->i_ump->um_mountp, FFS_FSBTODB(fs, bprev),
 			    osize);
+			if (error)
+				panic("ffs_realloccg: dealloc registration failed");
 		} else {
 			ffs_blkfree(fs, ip->i_devvp, bprev, (long)osize,
 			    ip->i_number);
