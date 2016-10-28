@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.432 2016/10/28 05:50:18 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.433 2016/10/28 06:27:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.432 2016/10/28 05:50:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.433 2016/10/28 06:27:11 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8252,10 +8252,12 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 			mii->mii_writereg = wm_gmii_i82544_writereg;
 		} else if (sc->sc_type >= WM_T_80003) {
 			/* 80003 */
+			sc->sc_phytype = WMPHY_GG82563;
 			mii->mii_readreg = wm_gmii_i80003_readreg;
 			mii->mii_writereg = wm_gmii_i80003_writereg;
 		} else if (sc->sc_type >= WM_T_I210) {
 			/* I210 and I211 */
+			sc->sc_phytype = WMPHY_210;
 			mii->mii_readreg = wm_gmii_gs40g_readreg;
 			mii->mii_writereg = wm_gmii_gs40g_writereg;
 		} else if (sc->sc_type >= WM_T_82580) {
@@ -8762,7 +8764,7 @@ wm_gmii_bm_readreg(device_t self, int phy, int reg)
 			    MII_IGPHY_PAGE_SELECT, reg);
 		else
 			wm_gmii_mdic_writereg(self, phy,
-			    GG82563_PHY_PAGE_SELECT,
+			    BME1000_PHY_PAGE_SELECT,
 			    reg >> GG82563_PAGE_SHIFT);
 	}
 
@@ -8795,7 +8797,7 @@ wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
 			    MII_IGPHY_PAGE_SELECT, reg);
 		else
 			wm_gmii_mdic_writereg(self, phy,
-			    GG82563_PHY_PAGE_SELECT,
+			    BME1000_PHY_PAGE_SELECT,
 			    reg >> GG82563_PAGE_SHIFT);
 	}
 
