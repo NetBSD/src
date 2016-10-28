@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.124 2016/10/19 09:45:25 skrll Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.125 2016/10/28 23:44:54 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.124 2016/10/19 09:45:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.125 2016/10/28 23:44:54 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -774,10 +774,12 @@ struct sysent netbsd32_sysent[] = {
 	},		/* 172 = filler */
 	{
 		ns(struct netbsd32_pread_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 		.sy_call = (sy_call_t *)netbsd32_pread
 	},		/* 173 = netbsd32_pread */
 	{
 		ns(struct netbsd32_pwrite_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 		.sy_call = (sy_call_t *)netbsd32_pwrite
 	},		/* 174 = netbsd32_pwrite */
 #if defined(NTP) || !defined(_KERNEL_OPT)
@@ -870,6 +872,7 @@ struct sysent netbsd32_sysent[] = {
 	},		/* 196 = compat_12_netbsd32_getdirentries */
 	{
 		ns(struct netbsd32_mmap_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG6_64,
 		.sy_call = (sy_call_t *)netbsd32_mmap
 	},		/* 197 = netbsd32_mmap */
 	{
@@ -879,14 +882,17 @@ struct sysent netbsd32_sysent[] = {
 	},		/* 198 = netbsd32____syscall */
 	{
 		ns(struct netbsd32_lseek_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64 | SYCALL_RET_64,
 		.sy_call = (sy_call_t *)netbsd32_lseek
 	},		/* 199 = netbsd32_lseek */
 	{
 		ns(struct netbsd32_truncate_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 		.sy_call = (sy_call_t *)netbsd32_truncate
 	},		/* 200 = netbsd32_truncate */
 	{
 		ns(struct netbsd32_ftruncate_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 		.sy_call = (sy_call_t *)netbsd32_ftruncate
 	},		/* 201 = netbsd32_ftruncate */
 	{
@@ -1224,10 +1230,12 @@ struct sysent netbsd32_sysent[] = {
 	},		/* 288 = netbsd32_fktrace */
 	{
 		ns(struct netbsd32_preadv_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 		.sy_call = (sy_call_t *)netbsd32_preadv
 	},		/* 289 = netbsd32_preadv */
 	{
 		ns(struct netbsd32_pwritev_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 		.sy_call = (sy_call_t *)netbsd32_pwritev
 	},		/* 290 = netbsd32_pwritev */
 	{
@@ -1460,6 +1468,7 @@ struct sysent netbsd32_sysent[] = {
 	},		/* 353 = filler */
 	{
 		ns(struct netbsd32_fsync_range_args),
+		.sy_flags = SYCALL_NARGS64_VAL(2) | SYCALL_ARG3_64 | SYCALL_ARG2_64,
 		.sy_call = (sy_call_t *)netbsd32_fsync_range
 	},		/* 354 = netbsd32_fsync_range */
 	{
@@ -1702,6 +1711,7 @@ struct sysent netbsd32_sysent[] = {
 	},		/* 415 = netbsd32__pset_bind */
 	{
 		ns(struct netbsd32___posix_fadvise50_args),
+		.sy_flags = SYCALL_NARGS64_VAL(2) | SYCALL_ARG3_64 | SYCALL_ARG2_64,
 		.sy_call = (sy_call_t *)netbsd32___posix_fadvise50
 	},		/* 416 = netbsd32___posix_fadvise50 */
 	{
@@ -1842,6 +1852,7 @@ struct sysent netbsd32_sysent[] = {
 	},		/* 449 = netbsd32___wait450 */
 	{
 		ns(struct netbsd32___mknod50_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 		.sy_call = (sy_call_t *)netbsd32___mknod50
 	},		/* 450 = netbsd32___mknod50 */
 	{
@@ -1881,6 +1892,7 @@ struct sysent netbsd32_sysent[] = {
 	},		/* 459 = netbsd32_mkfifoat */
 	{
 		ns(struct netbsd32_mknodat_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG4_64,
 		.sy_call = (sy_call_t *)netbsd32_mknodat
 	},		/* 460 = netbsd32_mknodat */
 	{
@@ -1955,10 +1967,12 @@ struct sysent netbsd32_sysent[] = {
 	},		/* 478 = netbsd32____lwp_park60 */
 	{
 		ns(struct netbsd32_posix_fallocate_args),
+		.sy_flags = SYCALL_NARGS64_VAL(2) | SYCALL_ARG3_64 | SYCALL_ARG2_64,
 		.sy_call = (sy_call_t *)netbsd32_posix_fallocate
 	},		/* 479 = netbsd32_posix_fallocate */
 	{
 		ns(struct netbsd32_fdiscard_args),
+		.sy_flags = SYCALL_NARGS64_VAL(2) | SYCALL_ARG3_64 | SYCALL_ARG2_64,
 		.sy_call = (sy_call_t *)netbsd32_fdiscard
 	},		/* 480 = netbsd32_fdiscard */
 	{
