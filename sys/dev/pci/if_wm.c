@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.431 2016/10/28 05:29:11 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.432 2016/10/28 05:50:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.431 2016/10/28 05:29:11 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.432 2016/10/28 05:50:18 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8685,7 +8685,7 @@ wm_gmii_i80003_readreg(device_t self, int phy, int reg)
 		return 0;
 	}
 
-	if ((reg & GG82563_MAX_REG_ADDRESS) < GG82563_MIN_ALT_REG) {
+	if ((reg & MII_ADDRMASK) < GG82563_MIN_ALT_REG) {
 		wm_gmii_mdic_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
 		    reg >> GG82563_PAGE_SHIFT);
 	} else {
@@ -8694,7 +8694,7 @@ wm_gmii_i80003_readreg(device_t self, int phy, int reg)
 	}
 	/* Wait more 200us for a bug of the ready bit in the MDIC register */
 	delay(200);
-	rv = wm_gmii_mdic_readreg(self, phy, reg & GG82563_MAX_REG_ADDRESS);
+	rv = wm_gmii_mdic_readreg(self, phy, reg & MII_ADDRMASK);
 	delay(200);
 	sc->phy.release(sc);
 
@@ -8722,7 +8722,7 @@ wm_gmii_i80003_writereg(device_t self, int phy, int reg, int val)
 		return;
 	}
 
-	if ((reg & GG82563_MAX_REG_ADDRESS) < GG82563_MIN_ALT_REG) {
+	if ((reg & MII_ADDRMASK) < GG82563_MIN_ALT_REG) {
 		wm_gmii_mdic_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
 		    reg >> GG82563_PAGE_SHIFT);
 	} else {
@@ -8731,7 +8731,7 @@ wm_gmii_i80003_writereg(device_t self, int phy, int reg, int val)
 	}
 	/* Wait more 200us for a bug of the ready bit in the MDIC register */
 	delay(200);
-	wm_gmii_mdic_writereg(self, phy, reg & GG82563_MAX_REG_ADDRESS, val);
+	wm_gmii_mdic_writereg(self, phy, reg & MII_ADDRMASK, val);
 	delay(200);
 
 	sc->phy.release(sc);
@@ -8766,7 +8766,7 @@ wm_gmii_bm_readreg(device_t self, int phy, int reg)
 			    reg >> GG82563_PAGE_SHIFT);
 	}
 
-	rv = wm_gmii_mdic_readreg(self, phy, reg & GG82563_MAX_REG_ADDRESS);
+	rv = wm_gmii_mdic_readreg(self, phy, reg & MII_ADDRMASK);
 	sc->phy.release(sc);
 	return rv;
 }
@@ -8799,7 +8799,7 @@ wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
 			    reg >> GG82563_PAGE_SHIFT);
 	}
 
-	wm_gmii_mdic_writereg(self, phy, reg & GG82563_MAX_REG_ADDRESS, val);
+	wm_gmii_mdic_writereg(self, phy, reg & MII_ADDRMASK, val);
 	sc->phy.release(sc);
 }
 
@@ -8906,7 +8906,7 @@ wm_gmii_hv_readreg_locked(device_t self, int phy, int reg)
 		    page << BME1000_PAGE_SHIFT);
 	}
 
-	rv = wm_gmii_mdic_readreg(self, phy, regnum & IGPHY_MAXREGADDR);
+	rv = wm_gmii_mdic_readreg(self, phy, regnum & MII_ADDRMASK);
 	return rv;
 }
 
@@ -8971,7 +8971,7 @@ wm_gmii_hv_writereg_locked(device_t self, int phy, int reg, int val)
 		    page << BME1000_PAGE_SHIFT);
 	}
 
-	wm_gmii_mdic_writereg(self, phy, regnum & IGPHY_MAXREGADDR, val);
+	wm_gmii_mdic_writereg(self, phy, regnum & MII_ADDRMASK, val);
 }
 
 /*
@@ -12277,7 +12277,6 @@ wm_hv_phy_workaround_ich8lan(struct wm_softc *sc)
 		 */
 		child = LIST_FIRST(&sc->sc_mii.mii_phys);
 		if ((child != NULL) && (child->mii_mpd_rev < 2)) {
-			printf("XXX 82578 rev < 2\n");
 			PHY_RESET(child);
 			sc->sc_mii.mii_writereg(sc->sc_dev, 2, MII_BMCR,
 			    0x3140);
