@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.261 2016/09/29 18:47:35 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.262 2016/10/28 20:17:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.261 2016/09/29 18:47:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.262 2016/10/28 20:17:27 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -999,7 +999,7 @@ brelsel(buf_t *bp, int set)
 	/* Wake up any processes waiting for any buffer to become free. */
 	cv_signal(&needbuffer_cv);
 
-	/* Wake up any proceeses waiting for _this_ buffer to become */
+	/* Wake up any proceeses waiting for _this_ buffer to become free */
 	if (ISSET(bp->b_cflags, BC_WANTED))
 		CLR(bp->b_cflags, BC_WANTED|BC_AGE);
 
