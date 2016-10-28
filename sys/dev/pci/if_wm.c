@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.429 2016/10/28 04:14:13 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.430 2016/10/28 05:21:48 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.429 2016/10/28 04:14:13 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.430 2016/10/28 05:21:48 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -12120,6 +12120,9 @@ wm_lplu_d0_disable(struct wm_softc *sc)
 {
 	uint32_t reg;
 
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
 	reg = CSR_READ(sc, WMREG_PHY_CTRL);
 	reg &= ~(PHY_CTRL_GBE_DIS | PHY_CTRL_D0A_LPLU);
 	CSR_WRITE(sc, WMREG_PHY_CTRL, reg);
@@ -12129,6 +12132,9 @@ static void
 wm_lplu_d0_disable_pch(struct wm_softc *sc)
 {
 	uint32_t reg;
+
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
 
 	reg = wm_gmii_hv_readreg(sc->sc_dev, 1, HV_OEM_BITS);
 	reg &= ~(HV_OEM_BITS_A1KDIS | HV_OEM_BITS_LPLU);
@@ -12240,6 +12246,8 @@ static void
 wm_hv_phy_workaround_ich8lan(struct wm_softc *sc)
 {
 
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
 	KASSERT(sc->sc_type == WM_T_PCH);
 
 	if (sc->sc_phytype == WMPHY_82577)
@@ -12251,20 +12259,23 @@ wm_hv_phy_workaround_ich8lan(struct wm_softc *sc)
 
 	/* 82578 */
 	if (sc->sc_phytype == WMPHY_82578) {
-		/* PCH rev. < 3 */
-		if (sc->sc_rev < 3) {
-			/* XXX 6 bit shift? Why? Is it page2? */
-			wm_gmii_hv_writereg(sc->sc_dev, 1, ((1 << 6) | 0x29),
-			    0x66c0);
-			wm_gmii_hv_writereg(sc->sc_dev, 1, ((1 << 6) | 0x1e),
-			    0xffff);
-		}
+		struct mii_softc *child;
 
-		/* XXX phy rev. < 2 */
+		/*
+		 * Return registers to default by doing a soft reset then
+		 * writing 0x3140 to the control register
+		 * 0x3140 == BMCR_SPEED0 | BMCR_AUTOEN | BMCR_FDX | BMCR_SPEED1
+		 */
+		child = LIST_FIRST(&sc->sc_mii.mii_phys);
+		if ((child != NULL) && (child->mii_mpd_rev < 2)) {
+			printf("XXX 82578 rev < 2\n");
+			PHY_RESET(child);
+			sc->sc_mii.mii_writereg(sc->sc_dev, 2, MII_BMCR,
+			    0x3140);
+		}
 	}
 
 	/* Select page 0 */
-
 	sc->phy.acquire(sc);
 	wm_gmii_mdic_writereg(sc->sc_dev, 1, MII_IGPHY_PAGE_SELECT, 0);
 	sc->phy.release(sc);
@@ -12280,6 +12291,8 @@ static void
 wm_lv_phy_workaround_ich8lan(struct wm_softc *sc)
 {
 
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
 	KASSERT(sc->sc_type == WM_T_PCH2);
 
 	wm_set_mdio_slow_mode_hv(sc);
