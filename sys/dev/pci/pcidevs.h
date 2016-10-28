@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1262 2016/10/26 06:50:43 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1263 2016/10/28 07:26:41 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1270 2016/10/26 06:50:20 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1271 2016/10/28 07:25:25 msaitoh Exp
  */
 
 /*
@@ -3705,13 +3705,28 @@
 #define	PCI_PRODUCT_INTEL_XE55_IMC_CH2_RANK	0x2c32		/* Xeon 5500 IMC Channel 2 Rank */
 #define	PCI_PRODUCT_INTEL_XE55_IMC_CH2_THERM	0x2c33		/* Xeon 5500 IMC Channel 2 Thermal Control */
 #define	PCI_PRODUCT_INTEL_XE55_QP_REG	0x2c40		/* Xeon 5500 QuickPath Generic Non-Core Register */
-#define	PCI_PRODUCT_INTEL_CORE_QP_REG_1	0x2c61		/* QuickPath Generic Non-Core Register */
+#define	PCI_PRODUCT_INTEL_CORE_QP_REG_2	0x2c51		/* Core i7-800 and i5-700 QuickPath Generic Non-Core Register */
+#define	PCI_PRODUCT_INTEL_CORE_QP_REG_1	0x2c61		/* Core i5-600, i3-500 and Pentium 6000 QuickPath Generic Non-Core Register */
 #define	PCI_PRODUCT_INTEL_XE56_QP_REG	0x2c70		/* Xeon 5600 QuickPath Generic Non-Core Register */
-#define	PCI_PRODUCT_INTEL_CORE_QP_SAD	0x2d01		/* QuickPath Generic System Address Decoder */
-#define	PCI_PRODUCT_INTEL_CORE_QPI_LINK	0x2d10		/* QPI Link */
-#define	PCI_PRODUCT_INTEL_CORE_QPI_PHYS	0x2d11		/* QPI Physical */
-#define	PCI_PRODUCT_INTEL_CORE_RSVD_1	0x2d12		/* Reserved */
-#define	PCI_PRODUCT_INTEL_CORE_RSVD_2	0x2d13		/* Reserved */
+#define	PCI_PRODUCT_INTEL_CORE_QP_SAD_2	0x2c81		/* Core i7-800 and i5-700 QuickPath Generic System Address Decoder */
+#define	PCI_PRODUCT_INTEL_CORE_QPI_LINK_2	0x2c90		/* Core i7-800 and i5-700 QPI Link */
+#define	PCI_PRODUCT_INTEL_CORE_QPI_PHYS_2	0x2c91		/* Core i7-800 and i5-700 QPI Physical */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_REG	0x2c98		/* Core i7-800 and i5-700 IMC */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_TAD	0x2c99		/* Core i7-800 and i5-700 IMC Target Address Decoder */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_TEST	0x2c9c		/* Core i7-800 and i5-700 IMC Test */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH0_CTRL	0x2ca0		/* Core i7-800 and i5-700 IMC Channel 0 Control */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH0_ADDR	0x2ca1		/* Core i7-800 and i5-700 IMC Channel 0 Address */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH0_RANK	0x2ca2		/* Core i7-800 and i5-700 IMC Channel 0 Rank */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH0_THERM	0x2ca3		/* Core i7-800 and i5-700 IMC Channel 0 Thermal Control */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH1_CTRL	0x2ca8		/* Core i7-800 and i5-700 IMC Channel 1 Control */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH1_ADDR	0x2ca9		/* Core i7-800 and i5-700 IMC Channel 1 Address */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH1_RANK	0x2caa		/* Core i7-800 and i5-700 IMC Channel 1 Rank */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH1_THERM	0x2cab		/* Core i7-800 and i5-700 IMC Channel 1 Thermal Control */
+#define	PCI_PRODUCT_INTEL_CORE_QP_SAD	0x2d01		/* Core i5-600, i3-500 and Pentium 6000 QuickPath Generic System Address Decoder */
+#define	PCI_PRODUCT_INTEL_CORE_QPI_LINK	0x2d10		/* Core i5-600, i3-500 and Pentium 6000 QPI Link */
+#define	PCI_PRODUCT_INTEL_CORE_QPI_PHYS	0x2d11		/* Core i5-600, i3-500 and Pentium 6000 QPI Physical */
+#define	PCI_PRODUCT_INTEL_CORE_RSVD_1	0x2d12		/* Core i5-600, i3-500 and Pentium 6000 Reserved */
+#define	PCI_PRODUCT_INTEL_CORE_RSVD_2	0x2d13		/* Core i5-600, i3-500 and Pentium 6000 Reserved */
 #define	PCI_PRODUCT_INTEL_XE56_QP_SAD	0x2d81		/* QuickPath System Address Decoder */
 #define	PCI_PRODUCT_INTEL_XE56_QPI_LINK0	0x2d90		/* Xeon 5600 QPI Link 0 */
 #define	PCI_PRODUCT_INTEL_XE56_QPI_PHYS0	0x2d91		/* Xeon 5600 QPI Physical 0 */
