@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.63 2016/10/20 19:22:35 macallan Exp $
+# $NetBSD: ad.mips,v 1.64 2016/10/29 10:56:57 mlelstv Exp $
 -./usr/libdata/debug/usr/lib/64/libgomp.so.1.1.debug	comp-c-debug		debug,compatfile,gcc=48
 -./usr/libdata/debug/usr/lib/64/libgomp.so.1.2.debug	comp-c-debug		debug,compatfile,gcc=53
 -./usr/lib/64/libgomp_g.a				comp-c-debuglib		debuglib,compatfile,gcc=48
@@ -8,9 +8,9 @@
 ./usr/libdata/debug/usr/bin/elf2ecoff.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/libexec/ld.elf_so-64.debug	comp-sys-debug		debug,compat,arch64
 ./usr/libdata/debug/usr/libexec/ld.elf_so-o32.debug	comp-sys-debug		debug,compat,arch64
-./usr/lib/64/libc_fp_g.a				comp-c-debuglib		debug,softfloat,compat,arch64
-./usr/lib/libc_fp_g.a					comp-c-debuglib		debug,softfloat,arch64
-./usr/lib/o32/libc_fp_g.a				comp-c-debuglib		debug,softfloat,compat,arch64
+./usr/lib/64/libc_fp_g.a				comp-c-debuglib		debuglib,softfloat,compat,arch64
+./usr/lib/libc_fp_g.a					comp-c-debuglib		debuglib,softfloat,arch64
+./usr/lib/o32/libc_fp_g.a				comp-c-debuglib		debuglib,softfloat,compat,arch64
 ./usr/libdata/debug/lib/libc_fp.so.0.0.debug		comp-c-debug		debug,softfloat,arch64
 ./usr/libdata/debug/usr/lib/64/libc_fp.so.0.0.debug	comp-c-debug		debug,softfloat,compat,arch64
 ./usr/libdata/debug/usr/lib/libc_fp.so.0.0.debug	comp-c-debug		debug,softfloat,arch64
