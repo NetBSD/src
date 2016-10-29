@@ -22,6 +22,7 @@
 #include "defs.h"
 #include "frame.h"
 #include "gdbcore.h"
+#include "objfiles.h"
 #include "osabi.h"
 #include "regcache.h"
 #include "regset.h"
@@ -35,6 +36,19 @@
 #include "frame-unwind.h"
 #include "tramp-frame.h"
 #include "target.h"
+
+/* from obsd-tdep.c with symbol name adjusted to ours */
+static CORE_ADDR
+alphanbsd_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
+{
+  struct bound_minimal_symbol msym;
+
+  msym = lookup_minimal_symbol("_rtld_bind_start", NULL, NULL);
+  if (msym.minsym && BMSYMBOL_VALUE_ADDRESS (msym) == pc)
+    return frame_unwind_caller_pc (get_current_frame ());
+  else
+    return find_solib_trampoline_target (get_current_frame (), pc);
+}
 
 /* Core file support.  */
 
@@ -333,6 +347,7 @@ alphanbsd_init_abi (struct gdbarch_info info,
   /* NetBSD/alpha has SVR4-style shared libraries.  */
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_lp64_fetch_link_map_offsets);
+  set_gdbarch_skip_solib_resolver (gdbarch, alphanbsd_skip_solib_resolver);
 
 #ifdef notyet
   tdep->dynamic_sigtramp_offset = alphanbsd_sigtramp_offset;
