@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1537 2016/10/14 16:09:45 spz Exp $
+# $NetBSD: mi,v 1.1538 2016/10/29 17:12:20 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -371,8 +371,10 @@
 ./usr/share/man/cat1/openssl.0			man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_CA.pl.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_asn1parse.0	man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_c_rehash.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_ca.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_ciphers.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_cms.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_crl.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_crl2pkcs7.0	man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_dgst.0		man-crypto-catman	crypto,.cat
@@ -384,9 +386,13 @@
 ./usr/share/man/cat1/openssl_enc.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_errstr.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_gendsa.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_genpkey.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_genrsa.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_nseq.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_passwd.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_pkey.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_pkeyparam.0	man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_pkeyutl.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_pkcs12.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_pkcs7.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_pkcs8.0		man-crypto-catman	crypto,.cat
@@ -401,6 +407,8 @@
 ./usr/share/man/cat1/openssl_smime.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_speed.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_spkac.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_ts.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_tsget.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_verify.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_version.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_x509.0		man-crypto-catman	crypto,.cat
