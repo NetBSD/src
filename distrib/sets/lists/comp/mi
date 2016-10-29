@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2067 2016/10/15 14:21:59 kamil Exp $
+#	$NetBSD: mi,v 1.2068 2016/10/29 17:12:20 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4330,6 +4330,7 @@
 ./usr/share/man/cat3/BIO_f_ssl.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_find_type.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_new.0			comp-c-catman		crypto,.cat
+./usr/share/man/cat3/BIO_new_CMS.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_new_bio_pair.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/BIO_push.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_read.0			comp-c-catman		crypto,.cat
@@ -4384,6 +4385,22 @@
 ./usr/share/man/cat3/CMSG_LEN.0			comp-c-catman		.cat
 ./usr/share/man/cat3/CMSG_NXTHDR.0		comp-c-catman		.cat
 ./usr/share/man/cat3/CMSG_SPACE.0		comp-c-catman		.cat
+./usr/share/man/cat3/CMS_add0_cert.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_add1_recipient_cert.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_add1_signer.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_compress.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_decrypt.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_encrypt.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_final.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_get0_RecipientInfos.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_get0_SignerInfos.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_get0_type.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_get1_ReceiptRequest.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_sign.0			comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_sign_receipt.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_uncompress.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_verify.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_verify_receipt.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/CONF_modules_free.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/CONF_modules_load_file.0	comp-c-man		crypto,.cat
 ./usr/share/man/cat3/CRYPTO_set_ex_data.0	comp-c-catman		crypto,.cat
@@ -4416,11 +4433,24 @@
 ./usr/share/man/cat3/ERR_set_mark.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_BytesToKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_DigestInit.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_DigestSignInit.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_DigestVerifyInit.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_EncodeInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_EncryptInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_OpenInit.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_CTX_ctrl.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_CTX_new.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_cmp.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_decrypt.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_derive.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_encrypt.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_get_default_digest.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_keygen.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_PKEY_new.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_print_private.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_PKEY_set1_RSA.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_sign.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_verify.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_PKEY_verify_recover.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_SealInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_SignInit.0		comp-c-catman		crypto,.cat
@@ -4526,11 +4556,14 @@
 ./usr/share/man/cat3/OPENSSL_ia32cap.0		comp-c-man		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_load_builtin_modules.0	comp-c-man		crypto,.cat
 ./usr/share/man/cat3/OpenSSL_add_all_algorithms.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/PEM_write_bio_CMS_stream.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/PEM_write_bio_PKCS7_stream.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS12_create.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS12_parse.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS7_decrypt.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS7_encrypt.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS7_sign.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/PKCS7_sign_add_signer.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS7_verify.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/RAND_add.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/RAND_bytes.0		comp-c-catman		crypto,.cat
@@ -4660,7 +4693,9 @@
 ./usr/share/man/cat3/SLIST_REMOVE.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SLIST_REMOVE_AFTER.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SLIST_REMOVE_HEAD.0	comp-c-catman		.cat
+./usr/share/man/cat3/SMIME_read_CMS.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SMIME_read_PKCS7.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SMIME_write_CMS.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SMIME_write_PKCS7.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SPLAY_EMPTY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SPLAY_ENTRY.0		comp-c-catman		.cat
@@ -4738,7 +4773,9 @@
 ./usr/share/man/cat3/SSL_CTX_set_mode.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_msg_callback.0 comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_options.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SSL_CTX_set_psk_client_callback.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_quiet_shutdown.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SSL_CTX_set_read_ahead.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_session_cache_mode.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_session_id_context.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_ssl_version.0	comp-c-catman		crypto,.cat
@@ -4749,6 +4786,7 @@
 ./usr/share/man/cat3/SSL_CTX_set_tmp_rsa_callback.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_verify.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_use_certificate.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SSL_CTX_use_psk_identity_hint.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_SESSION_free.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_SESSION_get_ex_new_index.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_SESSION_get_time.0	comp-c-catman		crypto,.cat
@@ -4769,6 +4807,7 @@
 ./usr/share/man/cat3/SSL_get_fd.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_get_peer_cert_chain.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_get_peer_certificate.0 comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SSL_get_psk_identity.0 	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_get_rbio.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_get_session.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_get_verify_result.0	comp-c-catman		crypto,.cat
@@ -5700,8 +5739,10 @@
 ./usr/share/man/cat3/curses_window.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cuserid.0			comp-c-catman		.cat
 ./usr/share/man/cat3/d2i_ASN1_OBJECT.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/d2i_CMS_ContentInfo.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_DHparams.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_DSAPublicKey.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/d2i_ECPrivateKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_PKCS8PrivateKey.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_RSAPublicKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_SSL_SESSION.0		comp-c-catman		crypto,.cat
@@ -6738,6 +6779,8 @@
 ./usr/share/man/cat3/humanize_number.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hypot.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hypotf.0			comp-c-catman		.cat
+./usr/share/man/cat3/i2d_CMS_bio_stream.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/i2d_PKCS7_bio_stream.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/iconv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/iconv_close.0		comp-c-catman		.cat
 ./usr/share/man/cat3/iconv_open.0		comp-c-catman		.cat
