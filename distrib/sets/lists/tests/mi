@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.688 2016/10/22 14:13:39 abhinav Exp $
+# $NetBSD: mi,v 1.689 2016/10/30 16:17:16 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3000,6 +3000,7 @@
 ./usr/tests/lib/libpthread/t_sleep		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_status		tests-obsolete		obsolete
 ./usr/tests/lib/libpthread/t_swapcontext	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/t_timedmutex		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librt				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librt/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librt/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
