@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.153 2016/10/28 20:38:12 jdolecek Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.154 2016/10/30 15:01:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.153 2016/10/28 20:38:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.154 2016/10/30 15:01:46 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -136,14 +136,13 @@ ffs_check_bad_allocation(const char *func, struct fs *fs, daddr_t bno,
 {
 	if ((u_int)size > fs->fs_bsize || ffs_fragoff(fs, size) != 0 ||
 	    ffs_fragnum(fs, bno) + ffs_numfrags(fs, size) > fs->fs_frag) {
-		printf("dev = 0x%llx, bno = %" PRId64 " bsize = %d, "
-		    "size = %ld, fs = %s\n",
+		panic("%s: bad size: dev = 0x%llx, bno = %" PRId64 
+		    " bsize = %d, size = %ld, fs = %s", func,
 		    (long long)dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
-		panic("%s: bad size", func);
 	}
 
 	if (bno >= fs->fs_size) {
-		printf("bad block %" PRId64 ", ino %llu\n", bno,
+		printf("%s: bad block %" PRId64 ", ino %llu\n", func, bno,
 		    (unsigned long long)inum);
 		ffs_fserr(fs, NOCRED, "bad block");
 		return EINVAL;
@@ -229,14 +228,13 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 
 	*bnp = 0;
 #ifdef DIAGNOSTIC
-	if ((u_int)size > fs->fs_bsize || ffs_fragoff(fs, size) != 0) {
-		printf("dev = 0x%llx, bsize = %d, size = %d, fs = %s\n",
-		    (unsigned long long)ip->i_dev, fs->fs_bsize, size,
-		    fs->fs_fsmnt);
-		panic("ffs_alloc: bad size");
-	}
 	if (cred == NOCRED)
-		panic("ffs_alloc: missing credential");
+		panic("%s: missing credential", __func__);
+	if ((u_int)size > fs->fs_bsize || ffs_fragoff(fs, size) != 0) {
+		panic("%s: bad size: dev = 0x%llx, bsize = %d, size = %d, "
+		    "fs = %s", __func__, (unsigned long long)ip->i_dev,
+		    fs->fs_bsize, size, fs->fs_fsmnt);
+	}
 #endif /* DIAGNOSTIC */
 	if (size == fs->fs_bsize && fs->fs_cstotal.cs_nbfree == 0)
 		goto nospace;
@@ -348,16 +346,15 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 #endif
 
 #ifdef DIAGNOSTIC
+	if (cred == NOCRED)
+		panic("%s: missing credential", __func__);
 	if ((u_int)osize > fs->fs_bsize || ffs_fragoff(fs, osize) != 0 ||
 	    (u_int)nsize > fs->fs_bsize || ffs_fragoff(fs, nsize) != 0) {
-		printf(
-		    "dev = 0x%llx, bsize = %d, osize = %d, nsize = %d, fs = %s\n",
+		panic("%s: bad size: dev = 0x%llx, bsize = %d, osize = %d, "
+		    "nsize = %d, fs = %s", __func__,
 		    (unsigned long long)ip->i_dev, fs->fs_bsize, osize, nsize,
 		    fs->fs_fsmnt);
-		panic("ffs_realloccg: bad size");
 	}
-	if (cred == NOCRED)
-		panic("ffs_realloccg: missing credential");
 #endif /* DIAGNOSTIC */
 	if (freespace(fs, fs->fs_minfree) <= 0 &&
 	    kauth_authorize_system(cred, KAUTH_SYSTEM_FS_RESERVEDSPACE, 0, NULL,
@@ -371,10 +368,10 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		bprev = ufs_rw32(ip->i_ffs1_db[lbprev], UFS_FSNEEDSWAP(fs));
 
 	if (bprev == 0) {
-		printf("dev = 0x%llx, bsize = %d, bprev = %" PRId64 ", fs = %s\n",
+		panic("%s: bad bprev: dev = 0x%llx, bsize = %d, bprev = %"
+		    PRId64 ", fs = %s", __func__,
 		    (unsigned long long)ip->i_dev, fs->fs_bsize, bprev,
 		    fs->fs_fsmnt);
-		panic("ffs_realloccg: bad bprev");
 	}
 	mutex_exit(&ump->um_lock);
 
@@ -403,8 +400,11 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 
 		if (bpp != NULL) {
-			if (bp->b_blkno != FFS_FSBTODB(fs, bno))
-				panic("bad blockno");
+			if (bp->b_blkno != FFS_FSBTODB(fs, bno)) {
+				panic("%s: bad blockno %#llx != %#llx",
+				    __func__, (unsigned long long) bp->b_blkno,
+				    (unsigned long long)FFS_FSBTODB(fs, bno));
+			}
 			allocbuf(bp, nsize, 1);
 			memset((char *)bp->b_data + osize, 0, nsize - osize);
 			mutex_enter(bp->b_objlock);
@@ -471,9 +471,9 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		fs->fs_optim = FS_OPTSPACE;
 		break;
 	default:
-		printf("dev = 0x%llx, optim = %d, fs = %s\n",
-		    (unsigned long long)ip->i_dev, fs->fs_optim, fs->fs_fsmnt);
-		panic("ffs_realloccg: bad optim");
+		panic("%s: bad optim: dev = 0x%llx, optim = %d, fs = %s",
+		    __func__, (unsigned long long)ip->i_dev, fs->fs_optim,
+		    fs->fs_fsmnt);
 		/* NOTREACHED */
 	}
 	bno = ffs_hashalloc(ip, cg, bpref, request, nsize, 0, ffs_alloccg);
@@ -1324,18 +1324,16 @@ retry:
 		start = 0;
 		loc = skpc(0xff, len, &inosused[0]);
 		if (loc == 0) {
-			printf("cg = %d, irotor = %d, fs = %s\n",
-			    cg, ufs_rw32(cgp->cg_irotor, needswap),
-				fs->fs_fsmnt);
-			panic("ffs_nodealloccg: map corrupted");
+			panic("%s: map corrupted: cg=%d, irotor=%d, fs=%s",
+			    __func__, cg, ufs_rw32(cgp->cg_irotor, needswap),
+			    fs->fs_fsmnt);
 			/* NOTREACHED */
 		}
 	}
 	i = start + len - loc;
 	map = inosused[i] ^ 0xff;
 	if (map == 0) {
-		printf("fs = %s\n", fs->fs_fsmnt);
-		panic("ffs_nodealloccg: block not in map");
+		panic("%s: block not in map: fs=%s", __func__, fs->fs_fsmnt);
 	}
 	ipref = i * NBBY + ffs(map) - 1;
 	cgp->cg_irotor = ufs_rw32(ipref, needswap);
@@ -1854,9 +1852,9 @@ ffs_blkfree_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
 				mutex_exit(&ump->um_lock);
 				return;
 			}
-			printf("dev = 0x%llx, block = %" PRId64 ", fs = %s\n",
+			panic("%s: freeing free block: dev = 0x%llx, block = %"
+			    PRId64 ", fs = %s", __func__,
 			    (unsigned long long)dev, bno, fs->fs_fsmnt);
-			panic("blkfree: freeing free block");
 		}
 		ffs_setblock(fs, blksfree, fragno);
 		ffs_clusteracct(fs, cgp, fragno, 1);
@@ -1887,11 +1885,11 @@ ffs_blkfree_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
 		frags = ffs_numfrags(fs, size);
 		for (i = 0; i < frags; i++) {
 			if (isset(blksfree, cgbno + i)) {
-				printf("dev = 0x%llx, block = %" PRId64
-				       ", fs = %s\n",
+				panic("%s: freeing free frag: "
+				    "dev = 0x%llx, block = %" PRId64
+				    ", fs = %s", __func__,
 				    (unsigned long long)dev, bno + i,
 				    fs->fs_fsmnt);
-				panic("blkfree: freeing free frag");
 			}
 			setbit(blksfree, cgbno + i);
 		}
@@ -1968,7 +1966,7 @@ ffs_freefile(struct mount *mp, ino_t ino, int mode)
 	cgbno = FFS_FSBTODB(fs, cgtod(fs, cg));
 
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
-		panic("ifree: range: dev = 0x%llx, ino = %llu, fs = %s",
+		panic("%s: range: dev = 0x%llx, ino = %llu, fs = %s", __func__,
 		    (long long)dev, (unsigned long long)ino, fs->fs_fsmnt);
 	error = bread(devvp, cgbno, (int)fs->fs_cgsize,
 	    B_MODIFY, &bp);
@@ -2006,7 +2004,7 @@ ffs_freefile_snap(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 	ump = VFSTOUFS(devvp->v_mount);
 	cgbno = ffs_fragstoblks(fs, cgtod(fs, cg));
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
-		panic("ifree: range: dev = 0x%llx, ino = %llu, fs = %s",
+		panic("%s: range: dev = 0x%llx, ino = %llu, fs = %s", __func__,
 		    (unsigned long long)dev, (unsigned long long)ino,
 		    fs->fs_fsmnt);
 	error = bread(devvp, cgbno, (int)fs->fs_cgsize,
@@ -2048,7 +2046,7 @@ ffs_freefile_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
 		    (unsigned long long)dev, (unsigned long long)ino +
 		    cg * fs->fs_ipg, fs->fs_fsmnt);
 		if (fs->fs_ronly == 0)
-			panic("ifree: freeing free inode");
+			panic("%s: freeing free inode", __func__);
 	}
 	clrbit(inosused, ino);
 	if (!devvp_is_snapshot)
@@ -2149,13 +2147,11 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 			(const u_char *)fragtbl[fs->fs_frag],
 			(1 << (allocsiz - 1 + (fs->fs_frag & (NBBY - 1)))));
 		if (loc == 0) {
-			printf("start = %d, len = %d, fs = %s\n",
-			    ostart, olen, fs->fs_fsmnt);
-			printf("offset=%d %ld\n",
-				ufs_rw32(cgp->cg_freeoff, needswap),
-				(long)blksfree - (long)cgp);
-			printf("cg %d\n", cgp->cg_cgx);
-			panic("ffs_alloccg: map corrupted");
+			panic("%s: map corrupted: start=%d, len=%d, "
+			    "fs = %s, offset=%d/%ld, cg %d", __func__,
+			    ostart, olen, fs->fs_fsmnt,
+			    ufs_rw32(cgp->cg_freeoff, needswap),
+			    (long)blksfree - (long)cgp, cgp->cg_cgx);
 			/* NOTREACHED */
 		}
 	}
@@ -2177,8 +2173,8 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 			subfield <<= 1;
 		}
 	}
-	printf("bno = %d, fs = %s\n", bno, fs->fs_fsmnt);
-	panic("ffs_alloccg: block not in map");
+	panic("%s: block not in map: bno=%d, fs=%s", __func__,
+	    bno, fs->fs_fsmnt);
 	/* return (-1); */
 }
 
