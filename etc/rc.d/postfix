@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postfix,v 1.17 2015/07/23 17:12:16 riz Exp $
+# $NetBSD: postfix,v 1.18 2016/10/30 15:47:06 riastradh Exp $
 #
 
 # PROVIDE: mail
@@ -44,9 +44,10 @@ postfix_precmd()
 		fi
 	done
 
-	for f in $($postconf -h alias_database); do
-		OIFS="${IFS}"
-		IFS="${IFS}:"
+	OIFS="${IFS}"
+	IFS="${IFS},"
+	for f in $($postconf -hx alias_database); do
+		IFS="${OIFS}:"
 		set -- $f
 		IFS="${OIFS}"
 		case "$1" in
