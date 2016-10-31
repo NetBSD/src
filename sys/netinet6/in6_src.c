@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.72 2016/10/31 04:16:25 ozaki-r Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.73 2016/10/31 04:57:10 ozaki-r Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.72 2016/10/31 04:16:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.73 2016/10/31 04:57:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -171,138 +171,25 @@ static struct in6_addrpolicy *match_addrsel_policy(struct sockaddr_in6 *);
 #define BREAK(r) goto out
 #endif
 
-int
-in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts, 
-	struct ip6_moptions *mopts, struct route *ro, struct in6_addr *laddr, 
-	struct ifnet **ifpp, struct psref *psref, struct in6_addr *ret_ia6)
+/*
+ * Called inside pserialize critical section. Don't sleep/block.
+ */
+static struct in6_ifaddr *
+in6_select_best_ia(struct sockaddr_in6 *dstsock, struct in6_addr *dst,
+    const struct ifnet *ifp, const struct ip6_pktopts *opts,
+    const u_int32_t odstzone)
 {
-	struct in6_addr dst;
-	struct ifnet *ifp = NULL;
-	struct in6_ifaddr *ia = NULL, *ia_best = NULL;
-	struct in6_pktinfo *pi = NULL;
+	struct in6_ifaddr *ia, *ia_best = NULL;
 	int dst_scope = -1, best_scope = -1, best_matchlen = -1;
 	struct in6_addrpolicy *dst_policy = NULL, *best_policy = NULL;
-	u_int32_t odstzone;
-	int error;
-	int prefer_tempaddr;
-#if defined(MIP6) && NMIP > 0
-	u_int8_t ip6po_usecoa = 0;
-#endif /* MIP6 && NMIP > 0 */
-	struct psref local_psref;
-	int bound = curlwp_bind();
-#define PSREF (psref == NULL) ? &local_psref : psref
-	int s;
 
-	KASSERT((ifpp != NULL && psref != NULL) ||
-	        (ifpp == NULL && psref == NULL));
-
-	dst = dstsock->sin6_addr; /* make a copy for local operation */
-	if (ifpp)
-		*ifpp = NULL;
-
-	/*
-	 * Try to determine the outgoing interface for the given destination.
-	 * We do this regardless of whether the socket is bound, since the
-	 * caller may need this information as a side effect of the call
-	 * to this function (e.g., for identifying the appropriate scope zone
-	 * ID).
-	 */
-	error = in6_selectif(dstsock, opts, mopts, ro, &ifp, PSREF);
-	if (ifpp != NULL)
-		*ifpp = ifp;
-
-	/*
-	 * If the source address is explicitly specified by the caller,
-	 * check if the requested source address is indeed a unicast address
-	 * assigned to the node, and can be used as the packet's source
-	 * address.  If everything is okay, use the address as source.
-	 */
-	if (opts && (pi = opts->ip6po_pktinfo) &&
-	    !IN6_IS_ADDR_UNSPECIFIED(&pi->ipi6_addr)) {
-		struct sockaddr_in6 srcsock;
-		struct in6_ifaddr *ia6;
-		int _s;
-		struct ifaddr *ifa;
-
-		/*
-		 * Determine the appropriate zone id of the source based on
-		 * the zone of the destination and the outgoing interface.
-		 * If the specified address is ambiguous wrt the scope zone,
-		 * the interface must be specified; otherwise, ifa_ifwithaddr()
-		 * will fail matching the address.
-		 */
-		memset(&srcsock, 0, sizeof(srcsock));
-		srcsock.sin6_family = AF_INET6;
-		srcsock.sin6_len = sizeof(srcsock);
-		srcsock.sin6_addr = pi->ipi6_addr;
-		if (ifp) {
-			error = in6_setscope(&srcsock.sin6_addr, ifp, NULL);
-			if (error != 0)
-				goto exit;
-		}
-
-		_s = pserialize_read_enter();
-		ifa = ifa_ifwithaddr(sin6tosa(&srcsock));
-		if ((ia6 = ifatoia6(ifa)) == NULL ||
-		    ia6->ia6_flags &
-		    (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY)) {
-			pserialize_read_exit(_s);
-			error = EADDRNOTAVAIL;
-			goto exit;
-		}
-		pi->ipi6_addr = srcsock.sin6_addr; /* XXX: this overrides pi */
-		if (ifpp)
-			*ifpp = ifp;
-		*ret_ia6 = ia6->ia_addr.sin6_addr;
-		pserialize_read_exit(_s);
-		goto exit;
-	}
-
-	/*
-	 * If the socket has already bound the source, just use it.  We don't
-	 * care at the moment whether in6_selectif() succeeded above, even
-	 * though it would eventually cause an error.
-	 */
-	if (laddr && !IN6_IS_ADDR_UNSPECIFIED(laddr)) {
-		*ret_ia6 = *laddr;
-		goto exit;
-	}
-
-	/*
-	 * The outgoing interface is crucial in the general selection procedure
-	 * below.  If it is not known at this point, we fail.
-	 */
-	if (ifp == NULL)
-		goto exit;
-
-	/*
-	 * If the address is not yet determined, choose the best one based on
-	 * the outgoing interface and the destination address.
-	 */
-
-#if defined(MIP6) && NMIP > 0
-	/*
-	 * a caller can specify IP6PO_USECOA to not to use a home
-	 * address.  for example, the case that the neighbour
-	 * unreachability detection to the global address.
-	 */
-	if (opts != NULL &&
-	    (opts->ip6po_flags & IP6PO_USECOA) != 0) {
-		ip6po_usecoa = 1;
-	}
-#endif /* MIP6 && NMIP > 0 */
-
-	error = in6_setscope(&dst, ifp, &odstzone);
-	if (error != 0)
-		goto exit;
-
-	s = pserialize_read_enter();
 	IN6_ADDRLIST_READER_FOREACH(ia) {
 		int new_scope = -1, new_matchlen = -1;
 		struct in6_addrpolicy *new_policy = NULL;
 		u_int32_t srczone, osrczone, dstzone;
 		struct in6_addr src;
 		struct ifnet *ifp1 = ia->ia_ifp;
+		int prefer_tempaddr;
 
 		/*
 		 * We'll never take an address that breaks the scope zone
@@ -310,7 +197,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		 * does not contain the outgoing interface.
 		 * XXX: we should probably use sin6_scope_id here.
 		 */
-		if (in6_setscope(&dst, ifp1, &dstzone) ||
+		if (in6_setscope(dst, ifp1, &dstzone) ||
 		    odstzone != dstzone) {
 			continue;
 		}
@@ -337,7 +224,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 #endif /* MIP6 && NMIP > 0 */
 
 		/* Rule 1: Prefer same address */
-		if (IN6_ARE_ADDR_EQUAL(&dst, &ia->ia_addr.sin6_addr)) {
+		if (IN6_ARE_ADDR_EQUAL(dst, &ia->ia_addr.sin6_addr)) {
 			ia_best = ia;
 			BREAK(1); /* there should be no better candidate */
 		}
@@ -347,7 +234,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 
 		/* Rule 2: Prefer appropriate scope */
 		if (dst_scope < 0)
-			dst_scope = in6_addrscope(&dst);
+			dst_scope = in6_addrscope(dst);
 		new_scope = in6_addrscope(&ia->ia_addr.sin6_addr);
 		if (IN6_ARE_SCOPE_CMP(best_scope, new_scope) < 0) {
 			if (IN6_ARE_SCOPE_CMP(best_scope, dst_scope) < 0)
@@ -525,7 +412,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		 * a large number so that it is easy to assign smaller numbers
 		 * to more preferred rules.
 		 */
-		new_matchlen = in6_matchlen(&ia->ia_addr.sin6_addr, &dst);
+		new_matchlen = in6_matchlen(&ia->ia_addr.sin6_addr, dst);
 		if (best_matchlen < new_matchlen)
 			REPLACE(14);
 		if (new_matchlen < best_matchlen)
@@ -547,7 +434,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			       lookup_addrsel_policy(&ia_best->ia_addr));
 		best_matchlen = (new_matchlen >= 0 ? new_matchlen :
 				 in6_matchlen(&ia_best->ia_addr.sin6_addr,
-					      &dst));
+					      dst));
 
 	  next:
 		continue;
@@ -556,13 +443,144 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		break;
 	}
 
-	if ((ia = ia_best) == NULL) {
+	return ia_best;
+}
+#undef REPLACE
+#undef BREAK
+#undef NEXT
+
+int
+in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
+	struct ip6_moptions *mopts, struct route *ro, struct in6_addr *laddr,
+	struct ifnet **ifpp, struct psref *psref, struct in6_addr *ret_ia6)
+{
+	struct in6_addr dst;
+	struct ifnet *ifp = NULL;
+	struct in6_ifaddr *ia = NULL;
+	struct in6_pktinfo *pi = NULL;
+	u_int32_t odstzone;
+	int error;
+#if defined(MIP6) && NMIP > 0
+	u_int8_t ip6po_usecoa = 0;
+#endif /* MIP6 && NMIP > 0 */
+	struct psref local_psref;
+	int bound = curlwp_bind();
+#define PSREF (psref == NULL) ? &local_psref : psref
+	int s;
+
+	KASSERT((ifpp != NULL && psref != NULL) ||
+	        (ifpp == NULL && psref == NULL));
+
+	dst = dstsock->sin6_addr; /* make a copy for local operation */
+	if (ifpp)
+		*ifpp = NULL;
+
+	/*
+	 * Try to determine the outgoing interface for the given destination.
+	 * We do this regardless of whether the socket is bound, since the
+	 * caller may need this information as a side effect of the call
+	 * to this function (e.g., for identifying the appropriate scope zone
+	 * ID).
+	 */
+	error = in6_selectif(dstsock, opts, mopts, ro, &ifp, PSREF);
+	if (ifpp != NULL)
+		*ifpp = ifp;
+
+	/*
+	 * If the source address is explicitly specified by the caller,
+	 * check if the requested source address is indeed a unicast address
+	 * assigned to the node, and can be used as the packet's source
+	 * address.  If everything is okay, use the address as source.
+	 */
+	if (opts && (pi = opts->ip6po_pktinfo) &&
+	    !IN6_IS_ADDR_UNSPECIFIED(&pi->ipi6_addr)) {
+		struct sockaddr_in6 srcsock;
+		struct in6_ifaddr *ia6;
+		int _s;
+		struct ifaddr *ifa;
+
+		/*
+		 * Determine the appropriate zone id of the source based on
+		 * the zone of the destination and the outgoing interface.
+		 * If the specified address is ambiguous wrt the scope zone,
+		 * the interface must be specified; otherwise, ifa_ifwithaddr()
+		 * will fail matching the address.
+		 */
+		memset(&srcsock, 0, sizeof(srcsock));
+		srcsock.sin6_family = AF_INET6;
+		srcsock.sin6_len = sizeof(srcsock);
+		srcsock.sin6_addr = pi->ipi6_addr;
+		if (ifp) {
+			error = in6_setscope(&srcsock.sin6_addr, ifp, NULL);
+			if (error != 0)
+				goto exit;
+		}
+
+		_s = pserialize_read_enter();
+		ifa = ifa_ifwithaddr(sin6tosa(&srcsock));
+		if ((ia6 = ifatoia6(ifa)) == NULL ||
+		    ia6->ia6_flags &
+		    (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY)) {
+			pserialize_read_exit(_s);
+			error = EADDRNOTAVAIL;
+			goto exit;
+		}
+		pi->ipi6_addr = srcsock.sin6_addr; /* XXX: this overrides pi */
+		if (ifpp)
+			*ifpp = ifp;
+		*ret_ia6 = ia6->ia_addr.sin6_addr;
+		pserialize_read_exit(_s);
+		goto exit;
+	}
+
+	/*
+	 * If the socket has already bound the source, just use it.  We don't
+	 * care at the moment whether in6_selectif() succeeded above, even
+	 * though it would eventually cause an error.
+	 */
+	if (laddr && !IN6_IS_ADDR_UNSPECIFIED(laddr)) {
+		*ret_ia6 = *laddr;
+		goto exit;
+	}
+
+	/*
+	 * The outgoing interface is crucial in the general selection procedure
+	 * below.  If it is not known at this point, we fail.
+	 */
+	if (ifp == NULL)
+		goto exit;
+
+	/*
+	 * If the address is not yet determined, choose the best one based on
+	 * the outgoing interface and the destination address.
+	 */
+
+#if defined(MIP6) && NMIP > 0
+	/*
+	 * a caller can specify IP6PO_USECOA to not to use a home
+	 * address.  for example, the case that the neighbour
+	 * unreachability detection to the global address.
+	 */
+	if (opts != NULL &&
+	    (opts->ip6po_flags & IP6PO_USECOA) != 0) {
+		ip6po_usecoa = 1;
+	}
+#endif /* MIP6 && NMIP > 0 */
+
+	error = in6_setscope(&dst, ifp, &odstzone);
+	if (error != 0)
+		goto exit;
+
+	s = pserialize_read_enter();
+
+	ia = in6_select_best_ia(dstsock, &dst, ifp, opts, odstzone);
+	if (ia == NULL) {
 		pserialize_read_exit(s);
 		error = EADDRNOTAVAIL;
 		goto exit;
 	}
-
 	*ret_ia6 = ia->ia_addr.sin6_addr;
+
 	pserialize_read_exit(s);
 exit:
 	if (ifpp == NULL)
@@ -571,9 +589,6 @@ exit:
 	return error;
 #undef PSREF
 }
-#undef REPLACE
-#undef BREAK
-#undef NEXT
 
 static int
 selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts, 
