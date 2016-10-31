@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.13 2016/10/31 16:23:03 christos Exp $ */
+/* $NetBSD: t_mutex.c,v 1.14 2016/10/31 23:51:20 christos Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.13 2016/10/31 16:23:03 christos Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.14 2016/10/31 23:51:20 christos Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -591,14 +591,14 @@ ATF_TC_BODY(timedmutex1, tc)
 
 	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
 
-	printf("Before acquiring regular mutex\n");
+	printf("Before acquiring mutex\n");
 	PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
 
 	printf("Before endeavor to reacquire timed-mutex (timeout expected)\n");
 	PTHREAD_REQUIRE_STATUS(mutex_lock(&mutex, &ts_shortlived),
 	    ETIMEDOUT);
 
-	printf("Unlocking timed-mutex\n");
+	printf("Unlocking mutex\n");
 	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
 }
 
@@ -616,14 +616,80 @@ ATF_TC_BODY(timedmutex2, tc)
 
 	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
 
-	printf("Before acquiring timed-mutex with timedlock\n");
+	printf("Before acquiring mutex with timedlock\n");
 	PTHREAD_REQUIRE(mutex_lock(&mutex, &ts_lengthy));
 
 	printf("Before endeavor to reacquire timed-mutex (timeout expected)\n");
 	PTHREAD_REQUIRE_STATUS(mutex_lock(&mutex, &ts_shortlived),
 	    ETIMEDOUT);
 
-	printf("Unlocking timed-mutex\n");
+	printf("Unlocking mutex\n");
+	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
+}
+
+ATF_TC(timedmutex3);
+ATF_TC_HEAD(timedmutex3, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks timeout on selflock in a new thread");
+}
+
+static void *
+timedmtx_thrdfunc(void *arg)
+{
+	printf("Before endeavor to reacquire timed-mutex (timeout expected)\n");
+	PTHREAD_REQUIRE_STATUS(mutex_lock(&mutex, &ts_shortlived),
+	    ETIMEDOUT);
+
+	return NULL;
+}
+
+ATF_TC_BODY(timedmutex3, tc)
+{
+	pthread_t new;
+
+	printf("Timed mutex-test 3\n");
+
+	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
+
+	printf("Before acquiring mutex with timedlock\n");
+	PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
+
+	printf("Before creating new thread\n");
+	PTHREAD_REQUIRE(pthread_create(&new, NULL, timedmtx_thrdfunc, NULL));
+
+	printf("Before joining the mutex\n");
+	PTHREAD_REQUIRE(pthread_join(new, NULL));
+
+	printf("Unlocking mutex\n");
+	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
+}
+
+ATF_TC(timedmutex4);
+ATF_TC_HEAD(timedmutex4, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks timeout on selflock with timedlock in a new thread");
+}
+
+ATF_TC_BODY(timedmutex4, tc)
+{
+	pthread_t new;
+
+	printf("Timed mutex-test 4\n");
+
+	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
+
+	printf("Before acquiring mutex with timedlock\n");
+	PTHREAD_REQUIRE(mutex_lock(&mutex, &ts_lengthy));
+
+	printf("Before creating new thread\n");
+	PTHREAD_REQUIRE(pthread_create(&new, NULL, timedmtx_thrdfunc, NULL));
+
+	printf("Before joining the mutex\n");
+	PTHREAD_REQUIRE(pthread_join(new, NULL));
+
+	printf("Unlocking mutex\n");
 	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
 }
 #endif
@@ -642,6 +708,8 @@ ATF_TP_ADD_TCS(tp)
 #ifdef TIMEDMUTEX
 	ATF_TP_ADD_TC(tp, timedmutex1);
 	ATF_TP_ADD_TC(tp, timedmutex2);
+	ATF_TP_ADD_TC(tp, timedmutex3);
+	ATF_TP_ADD_TC(tp, timedmutex4);
 #endif
 
 	return atf_no_error();
