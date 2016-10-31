@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.151 2016/10/31 04:16:25 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.152 2016/10/31 14:34:32 christos Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.151 2016/10/31 04:16:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.152 2016/10/31 14:34:32 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -534,21 +534,22 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 		error = in6_selectsrc(sin6, in6p->in6p_outputopts,
 		    in6p->in6p_moptions, &in6p->in6p_route, &in6p->in6p_laddr,
 		    &ifp, &psref, &ia6);
+		if (error == 0)
+			in6a = &ia6;
 		if (ifp && scope_ambiguous &&
 		    (error = in6_setscope(&sin6->sin6_addr, ifp, NULL)) != 0) {
 			if_put(ifp, &psref);
 			curlwp_bindx(bound);
-			return(error);
+			return error;
 		}
 
-		if (error != 0) {
+		if (in6a == NULL) {
 			if_put(ifp, &psref);
 			curlwp_bindx(bound);
 			if (error == 0)
 				error = EADDRNOTAVAIL;
-			return (error);
+			return error;
 		}
-		in6a = &ia6;
 	}
 
 	if (ifp != NULL) {
