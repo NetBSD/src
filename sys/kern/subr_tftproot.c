@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.18 2016/06/10 13:27:15 ozaki-r Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.19 2016/10/31 15:27:24 maxv Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.18 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.19 2016/10/31 15:27:24 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -316,16 +316,16 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	printf("\n");
 
 	/*
-	 * Ack the last block. so_send frees m_outbuf, therefore
-	 * we do not want to free it ourselves.
-	 * Ignore errors, as we already have the whole file.
+	 * Ack the last block. Ignore errors, as we already have the whole
+	 * file.
 	 */
 	if ((error = (*so->so_send)(so, mtod(m_serv, struct sockaddr *), NULL,
 	    m_outbuf, NULL, 0, l)) != 0)
 		DPRINTF(("%s():%d tftproot: sosend returned %d\n", 
 		    __func__, __LINE__, error));
-	else
-		m_outbuf = NULL;
+
+	/* Freed by the protocol */
+	m_outbuf = NULL;
 
 	/* 
 	 * And use it as the root ramdisk. 
