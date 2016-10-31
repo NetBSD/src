@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.46 2016/06/10 23:24:33 christos Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.47 2016/10/31 15:08:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.46 2016/06/10 23:24:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.47 2016/10/31 15:08:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -335,9 +335,11 @@ ksem_create(lwp_t *l, const char *name, ksem_t **ksret, mode_t mode, u_int val)
 	}
 
 	if (atomic_inc_uint_nv(&l->l_proc->p_nsems) > SEM_NSEMS_MAX) {
-               atomic_dec_uint(&l->l_proc->p_nsems);
+		atomic_dec_uint(&l->l_proc->p_nsems);
+		if (kname != NULL)
+			kmem_free(kname, len);
 		return -1;
-       }
+	}
 
 	ks = kmem_zalloc(sizeof(ksem_t), KM_SLEEP);
 	mutex_init(&ks->ks_lock, MUTEX_DEFAULT, IPL_NONE);
