@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.713 2016/10/31 03:19:23 dholland Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.714 2016/10/31 04:16:29 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.721 2016/10/31 03:18:41 dholland Exp
+ *	NetBSD: usbdevs,v 1.722 2016/10/31 04:15:22 nonaka Exp
  */
 
 /*
@@ -1796,7 +1796,6 @@
 #define	USB_PRODUCT_HUAWEI_E1820	0x14ac		/* Huawei E1820 */
 #define	USB_PRODUCT_HUAWEI_E171INIT	0x14fe		/* Huawei E171 USB CD */
 #define	USB_PRODUCT_HUAWEI_E171	0x1506		/* Huawei E171 */
-#define	USB_PRODUCT_HUAWEI_E353	0x1507		/* Huawei E353 */
 #define	USB_PRODUCT_HUAWEI_E353_HiLink	0x1507		/* Huawei E353_HiLink */
 /* Accessing http://192.168.1.1/html/switchProjectMode.html on 
    a Huawei HiLink device will switch it to u3g mode */
