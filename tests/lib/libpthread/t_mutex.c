@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.12 2016/10/31 16:21:23 christos Exp $ */
+/* $NetBSD: t_mutex.c,v 1.13 2016/10/31 16:23:03 christos Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.12 2016/10/31 16:21:23 christos Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.13 2016/10/31 16:23:03 christos Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -591,7 +591,7 @@ ATF_TC_BODY(timedmutex1, tc)
 
 	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
 
-	printf("Before acquiring timed-mutex\n");
+	printf("Before acquiring regular mutex\n");
 	PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
 
 	printf("Before endeavor to reacquire timed-mutex (timeout expected)\n");
@@ -612,14 +612,14 @@ ATF_TC_HEAD(timedmutex2, tc)
 ATF_TC_BODY(timedmutex2, tc)
 {
 
-	printf("Timed mutex-test 1\n");
+	printf("Timed mutex-test 2\n");
 
 	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
 
 	printf("Before acquiring timed-mutex with timedlock\n");
 	PTHREAD_REQUIRE(mutex_lock(&mutex, &ts_lengthy));
 
-	printf("Before endavor to reacquire timed-mutex (timeout expected)\n");
+	printf("Before endeavor to reacquire timed-mutex (timeout expected)\n");
 	PTHREAD_REQUIRE_STATUS(mutex_lock(&mutex, &ts_shortlived),
 	    ETIMEDOUT);
 
