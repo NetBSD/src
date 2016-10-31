@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.150 2016/09/29 12:19:47 roy Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.151 2016/10/31 04:16:25 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.150 2016/09/29 12:19:47 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.151 2016/10/31 04:16:25 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -444,6 +444,7 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 {
 	struct in6pcb *in6p = v;
 	struct in6_addr *in6a = NULL;
+	struct in6_addr ia6;
 	struct ifnet *ifp = NULL;	/* outgoing interface */
 	int error = 0;
 	int scope_ambiguous = 0;
@@ -530,10 +531,9 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 		 * with the address specified by setsockopt(IPV6_PKTINFO).
 		 * Is it the intended behavior?
 		 */
-		in6a = in6_selectsrc(sin6, in6p->in6p_outputopts,
-				     in6p->in6p_moptions,
-				     &in6p->in6p_route,
-				     &in6p->in6p_laddr, &ifp, &psref, &error);
+		error = in6_selectsrc(sin6, in6p->in6p_outputopts,
+		    in6p->in6p_moptions, &in6p->in6p_route, &in6p->in6p_laddr,
+		    &ifp, &psref, &ia6);
 		if (ifp && scope_ambiguous &&
 		    (error = in6_setscope(&sin6->sin6_addr, ifp, NULL)) != 0) {
 			if_put(ifp, &psref);
@@ -541,13 +541,14 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 			return(error);
 		}
 
-		if (in6a == NULL) {
+		if (error != 0) {
 			if_put(ifp, &psref);
 			curlwp_bindx(bound);
 			if (error == 0)
 				error = EADDRNOTAVAIL;
 			return (error);
 		}
+		in6a = &ia6;
 	}
 
 	if (ifp != NULL) {
