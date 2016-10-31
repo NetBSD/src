@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.7 2016/08/20 06:31:15 skrll Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.8 2016/10/31 12:27:22 skrll Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.7 2016/08/20 06:31:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.8 2016/10/31 12:27:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -74,7 +74,7 @@ static const struct ipl_sr_map octeon_ipl_sr_map = {
 	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
 	[IPL_VM] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
 	[IPL_SCHED] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0
-				    | MIPS_INT_MASK_5,
+				    | MIPS_INT_MASK_1 | MIPS_INT_MASK_5,
 	[IPL_DDB] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0
 				    | MIPS_INT_MASK_1 | MIPS_INT_MASK_5,
 	[IPL_HIGH] =		MIPS_INT_MASK,
@@ -326,7 +326,7 @@ octeon_intr_init(struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 	// Enable the IPIs
-	cpu->cpu_int0_enable0 |= __BIT(_CIU_INT_MBOX_15_0_SHIFT);
+	cpu->cpu_int1_enable0 |= __BIT(_CIU_INT_MBOX_15_0_SHIFT);
 	cpu->cpu_int2_enable0 |= __BIT(_CIU_INT_MBOX_31_16_SHIFT);
 #endif
 
