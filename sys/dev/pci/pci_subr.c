@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.153 2016/10/31 05:10:45 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.154 2016/10/31 09:13:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.153 2016/10/31 05:10:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.154 2016/10/31 09:13:20 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3056,7 +3056,11 @@ pci_conf_print_resizbar_cap(const pcireg_t *regs, int capoff, int extcapoff)
 			if ((cap & (1 << i)) != 0) {
 				humanize_number(pbuf, MEM_PBUFSIZE,
 				    (int64_t)1024 * 1024 << (i - 4), "B",
+#ifdef _KERNEL
+				    1);
+#else
 				    HN_AUTOSCALE, HN_NOSPACE);
+#endif
 				printf(" %s", pbuf);
 			}
 		}
@@ -3069,7 +3073,12 @@ pci_conf_print_resizbar_cap(const pcireg_t *regs, int capoff, int extcapoff)
 		humanize_number(pbuf, MEM_PBUFSIZE,
 		    (int64_t)1024 * 1024
 		    << __SHIFTOUT(ctl, PCI_RESIZBAR_CTL_BARSIZ),
-		    "B", HN_AUTOSCALE, HN_NOSPACE);
+		    "B",
+#ifdef _KERNEL
+		    1);
+#else
+		    HN_AUTOSCALE, HN_NOSPACE);
+#endif
 		printf("      BAR Size: %s\n", pbuf);
 	}
 }
