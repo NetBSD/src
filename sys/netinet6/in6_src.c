@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.71 2016/10/31 02:50:31 ozaki-r Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.72 2016/10/31 04:16:25 ozaki-r Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.71 2016/10/31 02:50:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.72 2016/10/31 04:16:25 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -171,10 +171,10 @@ static struct in6_addrpolicy *match_addrsel_policy(struct sockaddr_in6 *);
 #define BREAK(r) goto out
 #endif
 
-struct in6_addr *
+int
 in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts, 
 	struct ip6_moptions *mopts, struct route *ro, struct in6_addr *laddr, 
-	struct ifnet **ifpp, struct psref *psref, int *errorp)
+	struct ifnet **ifpp, struct psref *psref, struct in6_addr *ret_ia6)
 {
 	struct in6_addr dst;
 	struct ifnet *ifp = NULL;
@@ -189,7 +189,6 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	u_int8_t ip6po_usecoa = 0;
 #endif /* MIP6 && NMIP > 0 */
 	struct psref local_psref;
-	struct in6_addr *ret_ia = NULL;
 	int bound = curlwp_bind();
 #define PSREF (psref == NULL) ? &local_psref : psref
 	int s;
@@ -198,7 +197,6 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	        (ifpp == NULL && psref == NULL));
 
 	dst = dstsock->sin6_addr; /* make a copy for local operation */
-	*errorp = 0;
 	if (ifpp)
 		*ifpp = NULL;
 
@@ -238,8 +236,8 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		srcsock.sin6_len = sizeof(srcsock);
 		srcsock.sin6_addr = pi->ipi6_addr;
 		if (ifp) {
-			*errorp = in6_setscope(&srcsock.sin6_addr, ifp, NULL);
-			if (*errorp != 0)
+			error = in6_setscope(&srcsock.sin6_addr, ifp, NULL);
+			if (error != 0)
 				goto exit;
 		}
 
@@ -249,15 +247,14 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		    ia6->ia6_flags &
 		    (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY)) {
 			pserialize_read_exit(_s);
-			*errorp = EADDRNOTAVAIL;
+			error = EADDRNOTAVAIL;
 			goto exit;
 		}
 		pi->ipi6_addr = srcsock.sin6_addr; /* XXX: this overrides pi */
 		if (ifpp)
 			*ifpp = ifp;
-		ret_ia = &ia6->ia_addr.sin6_addr;
+		*ret_ia6 = ia6->ia_addr.sin6_addr;
 		pserialize_read_exit(_s);
-		/* XXX don't return pointer */
 		goto exit;
 	}
 
@@ -267,7 +264,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * though it would eventually cause an error.
 	 */
 	if (laddr && !IN6_IS_ADDR_UNSPECIFIED(laddr)) {
-		ret_ia = laddr;
+		*ret_ia6 = *laddr;
 		goto exit;
 	}
 
@@ -275,10 +272,8 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * The outgoing interface is crucial in the general selection procedure
 	 * below.  If it is not known at this point, we fail.
 	 */
-	if (ifp == NULL) {
-		*errorp = error;
+	if (ifp == NULL)
 		goto exit;
-	}
 
 	/*
 	 * If the address is not yet determined, choose the best one based on
@@ -297,8 +292,8 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	}
 #endif /* MIP6 && NMIP > 0 */
 
-	*errorp = in6_setscope(&dst, ifp, &odstzone);
-	if (*errorp != 0)
+	error = in6_setscope(&dst, ifp, &odstzone);
+	if (error != 0)
 		goto exit;
 
 	s = pserialize_read_enter();
@@ -560,19 +555,20 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	  out:
 		break;
 	}
-	pserialize_read_exit(s);
 
 	if ((ia = ia_best) == NULL) {
-		*errorp = EADDRNOTAVAIL;
+		pserialize_read_exit(s);
+		error = EADDRNOTAVAIL;
 		goto exit;
 	}
 
-	ret_ia = &ia->ia_addr.sin6_addr;
+	*ret_ia6 = ia->ia_addr.sin6_addr;
+	pserialize_read_exit(s);
 exit:
 	if (ifpp == NULL)
 		if_put(ifp, PSREF);
 	curlwp_bindx(bound);
-	return ret_ia;
+	return error;
 #undef PSREF
 }
 #undef REPLACE
