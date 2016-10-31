@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.116 2016/10/20 04:11:02 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.117 2016/10/31 05:10:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1396,7 +1396,7 @@ struct pci_rom {
 #define	PCI_EXTCAP_MCAST	0x0012	/* Multicast */
 #define	PCI_EXTCAP_PAGE_REQ	0x0013	/* Page Request */
 #define	PCI_EXTCAP_AMD		0x0014	/* Reserved for AMD */
-#define	PCI_EXTCAP_RESIZ_BAR	0x0015	/* Resizable BAR */
+#define	PCI_EXTCAP_RESIZBAR	0x0015	/* Resizable BAR */
 #define	PCI_EXTCAP_DPA		0x0016	/* Dynamic Power Allocation */
 #define	PCI_EXTCAP_TPH_REQ	0x0017	/* TPH Requester */
 #define	PCI_EXTCAP_LTR		0x0018	/* Latency Tolerance Reporting */
@@ -1411,7 +1411,7 @@ struct pci_rom {
 #define	PCI_EXTCAP_FRSQ		0x0021	/* Function Reading Status Queueing */
 #define	PCI_EXTCAP_RTR		0x0022	/* Readiness Time Reporting */
 #define	PCI_EXTCAP_DESIGVNDSP	0x0023	/* Designated Vendor-Specific */
-#define	PCI_EXTCAP_VF_RESIZ_BAR	0x0024	/* VF Resizable BAR */
+#define	PCI_EXTCAP_VF_RESIZBAR	0x0024	/* VF Resizable BAR */
 
 /*
  * Extended capability ID: 0x0001
@@ -1786,6 +1786,14 @@ struct pci_rom {
  * Extended capability ID: 0x0015
  * Resizable BAR
  */
+#define	PCI_RESIZBAR_CAP0	0x04	/* Capability Register(0) */
+#define	PCI_RESIZBAR_CAP(x)	(PCI_RESIZBAR_CAP0 + ((x) * 8))
+#define	PCI_RESIZBAR_CAP_SIZEMASK __BITS(23, 4)	/* BAR size bitmask */
+#define	PCI_RESIZBAR_CTL0	0x08	/* Control Register(0) */
+#define	PCI_RESIZBAR_CTL(x)	(PCI_RESIZBAR_CTL0 + ((x) * 8))
+#define	PCI_RESIZBAR_CTL_BARIDX __BITS(2, 0)
+#define	PCI_RESIZBAR_CTL_NUMBAR	__BITS(7, 5)
+#define	PCI_RESIZBAR_CTL_BARSIZ	__BITS(12, 8)
 
 /*
  * Extended capability ID: 0x0016
