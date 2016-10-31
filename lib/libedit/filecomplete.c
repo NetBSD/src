@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.43 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.44 2016/10/31 17:46:32 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.43 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.44 2016/10/31 17:46:32 abhinav Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -482,8 +482,6 @@ fn_complete(EditLine *el,
 			    ct_decode_string(matches[0], &el->el_scratch));
 		}
 
-		if (what_to_do == '?')
-			goto display_matches;
 
 		if (matches[2] == NULL &&
 		    (matches[1] == NULL || strcmp(matches[0], matches[1]) == 0)) {
@@ -495,8 +493,7 @@ fn_complete(EditLine *el,
 			el_winsertstr(el,
 			    ct_decode_string((*app_func)(matches[0]),
 			    &el->el_scratch));
-		} else if (what_to_do == '!') {
-    display_matches:
+		} else if (what_to_do == '!' || what_to_do == '?') {
 			/*
 			 * More than one match and requested to list possible
 			 * matches.
