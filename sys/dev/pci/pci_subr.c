@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.152 2016/10/20 04:11:02 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.153 2016/10/31 05:10:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.152 2016/10/20 04:11:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.153 2016/10/31 05:10:45 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3023,7 +3023,56 @@ pci_conf_print_page_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 /* XXX pci_conf_print_amd_cap */
-/* XXX pci_conf_print_resiz_bar_cap */
+
+#define MEM_PBUFSIZE	sizeof("999GB")
+
+static void
+pci_conf_print_resizbar_cap(const pcireg_t *regs, int capoff, int extcapoff)
+{
+	pcireg_t cap, ctl;
+	unsigned int bars, i, n;
+	char pbuf[MEM_PBUFSIZE];
+	
+	printf("\n  Resizable BAR\n");
+
+	/* Get Number of Resizable BARs */
+	ctl = regs[o2i(extcapoff + PCI_RESIZBAR_CTL(0))];
+	bars = __SHIFTOUT(ctl, PCI_RESIZBAR_CTL_NUMBAR);
+	printf("    Number of Resizable BARs: ");
+	if (bars <= 6)
+		printf("%u\n", bars);
+	else {
+		printf("incorrect (%u)\n", bars);
+		return;
+	}
+
+	for (n = 0; n < 6; n++) {
+		cap = regs[o2i(extcapoff + PCI_RESIZBAR_CAP(n))];
+		printf("    Capability register(%u): 0x%08x\n", n, cap);
+		if ((cap & PCI_RESIZBAR_CAP_SIZEMASK) == 0)
+			continue; /* Not Used */
+		printf("      Acceptable BAR sizes:");
+		for (i = 4; i <= 23; i++) {
+			if ((cap & (1 << i)) != 0) {
+				humanize_number(pbuf, MEM_PBUFSIZE,
+				    (int64_t)1024 * 1024 << (i - 4), "B",
+				    HN_AUTOSCALE, HN_NOSPACE);
+				printf(" %s", pbuf);
+			}
+		}
+		printf("\n");
+
+		ctl = regs[o2i(extcapoff + PCI_RESIZBAR_CTL(n))];
+		printf("    Control register(%u): 0x%08x\n", n, ctl);
+		printf("      BAR Index: %u\n",
+		    (unsigned int)__SHIFTOUT(ctl, PCI_RESIZBAR_CTL_BARIDX));
+		humanize_number(pbuf, MEM_PBUFSIZE,
+		    (int64_t)1024 * 1024
+		    << __SHIFTOUT(ctl, PCI_RESIZBAR_CTL_BARSIZ),
+		    "B", HN_AUTOSCALE, HN_NOSPACE);
+		printf("      BAR Size: %s\n", pbuf);
+	}
+}
 
 static void
 pci_conf_print_dpa_cap(const pcireg_t *regs, int capoff, int extcapoff)
@@ -3377,7 +3426,7 @@ pci_conf_print_ptm_cap(const pcireg_t *regs, int capoff, int extcapoff)
 /* XXX pci_conf_print_frsq_cap */
 /* XXX pci_conf_print_rtr_cap */
 /* XXX pci_conf_print_desigvndsp_cap */
-/* XXX pci_conf_print_vf_resiz_bar_cap */
+/* XXX pci_conf_print_vf_resizbar_cap */
 
 #undef	MS
 #undef	SM
@@ -3430,8 +3479,8 @@ static struct {
 	  pci_conf_print_page_req_cap },
 	{ PCI_EXTCAP_AMD,	"Reserved for AMD",
 	  NULL },
-	{ PCI_EXTCAP_RESIZ_BAR,	"Resizable BAR",
-	  NULL },
+	{ PCI_EXTCAP_RESIZBAR,	"Resizable BAR",
+	  pci_conf_print_resizbar_cap },
 	{ PCI_EXTCAP_DPA,	"Dynamic Power Allocation",
 	  pci_conf_print_dpa_cap },
 	{ PCI_EXTCAP_TPH_REQ,	"TPH Requester",
@@ -3460,7 +3509,7 @@ static struct {
 	  NULL },
 	{ PCI_EXTCAP_DESIGVNDSP, "Designated Vendor-Specific",
 	  NULL },
-	{ PCI_EXTCAP_VF_RESIZ_BAR, "VF Resizable BARs",
+	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
 	  NULL },
 };
 
