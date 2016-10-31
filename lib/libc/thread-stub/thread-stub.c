@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.27 2013/05/28 17:29:41 christos Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.28 2016/10/31 18:10:11 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.27 2013/05/28 17:29:41 christos Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.28 2016/10/31 18:10:11 kamil Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -145,6 +145,8 @@ __libc_mutexattr_settype_stub(mutexattr_t *ma, int type)
 	(void)ma;
 	/* LINTED deliberate lack of effect */
 	(void)type;
+
+	CHECK_NOT_THREADED();
 
 	return (0);
 }
