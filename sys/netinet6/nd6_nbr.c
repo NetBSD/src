@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.128 2016/10/18 07:30:31 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.129 2016/10/31 04:16:25 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.128 2016/10/18 07:30:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.129 2016/10/31 04:16:25 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -469,15 +469,16 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 
 			sockaddr_in6_init(&dst_sa, &ip6->ip6_dst, 0, 0, 0);
 
-			src = in6_selectsrc(&dst_sa, NULL,
-			    NULL, &ro, NULL, NULL, NULL, &error);
-			if (src == NULL) {
+			error = in6_selectsrc(&dst_sa, NULL,
+			    NULL, &ro, NULL, NULL, NULL, &src_in);
+			if (error != 0) {
 				nd6log(LOG_DEBUG, "source can't be "
 				    "determined: dst=%s, error=%d\n",
 				    ip6_sprintf(&dst_sa.sin6_addr), error);
 				pserialize_read_exit(s);
 				goto bad;
 			}
+			src = &src_in;
 		}
 		pserialize_read_exit(s);
 	} else {
@@ -894,7 +895,7 @@ nd6_na_output(
 		struct sockaddr		dst;
 		struct sockaddr_in6	dst6;
 	} u;
-	struct in6_addr *src, daddr6;
+	struct in6_addr daddr6;
 	int icmp6len, maxlen, error;
 	const void *mac;
 	struct route ro;
@@ -967,14 +968,14 @@ nd6_na_output(
 	/*
 	 * Select a source whose scope is the same as that of the dest.
 	 */
-	src = in6_selectsrc(satosin6(dst), NULL, NULL, &ro, NULL, NULL, NULL, &error);
-	if (src == NULL) {
+	error = in6_selectsrc(satosin6(dst), NULL, NULL, &ro, NULL, NULL, NULL,
+	    &ip6->ip6_src);
+	if (error != 0) {
 		nd6log(LOG_DEBUG, "source can't be "
 		    "determined: dst=%s, error=%d\n",
 		    ip6_sprintf(&satocsin6(dst)->sin6_addr), error);
 		goto bad;
 	}
-	ip6->ip6_src = *src;
 	nd_na = (struct nd_neighbor_advert *)(ip6 + 1);
 	nd_na->nd_na_type = ND_NEIGHBOR_ADVERT;
 	nd_na->nd_na_code = 0;

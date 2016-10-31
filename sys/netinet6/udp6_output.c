@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.53 2016/08/01 03:15:31 ozaki-r Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.54 2016/10/31 04:16:25 ozaki-r Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.53 2016/08/01 03:15:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.54 2016/10/31 04:16:25 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -120,7 +120,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 	u_int32_t plen = sizeof(struct udphdr) + ulen;
 	struct ip6_hdr *ip6;
 	struct udphdr *udp6;
-	struct in6_addr *laddr, *faddr;
+	struct in6_addr _laddr, *laddr, *faddr;
 	struct in6_addr laddr_mapped; /* XXX ugly */
 	struct sockaddr_in6 *sin6 = NULL;
 	struct ifnet *oifp = NULL;
@@ -229,10 +229,11 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 			struct psref psref;
 			int bound = curlwp_bind();
 
-			laddr = in6_selectsrc(sin6, optp,
+			error = in6_selectsrc(sin6, optp,
 			    in6p->in6p_moptions,
 			    &in6p->in6p_route,
-			    &in6p->in6p_laddr, &oifp, &psref, &error);
+			    &in6p->in6p_laddr, &oifp, &psref, &_laddr);
+			/* XXX need error check? */
 			if (oifp && scope_ambiguous &&
 			    (error = in6_setscope(&sin6->sin6_addr,
 			    oifp, NULL))) {
@@ -242,6 +243,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 			}
 			if_put(oifp, &psref);
 			curlwp_bindx(bound);
+			laddr = &_laddr;
 		} else {
 			/*
 			 * XXX: freebsd[34] does not have in_selectsrc, but
