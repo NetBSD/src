@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.721 2016/10/31 03:18:41 dholland Exp $
+$NetBSD: usbdevs,v 1.722 2016/10/31 04:15:22 nonaka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1789,7 +1789,6 @@ product HUAWEI K3765		0x1465	Huawei K3765
 product HUAWEI E1820		0x14ac	Huawei E1820
 product HUAWEI E171INIT		0x14fe	Huawei E171 USB CD
 product HUAWEI E171		0x1506	Huawei E171
-product HUAWEI E353		0x1507	Huawei E353
 product HUAWEI E353_HiLink	0x1507	Huawei E353_HiLink
 /* Accessing http://192.168.1.1/html/switchProjectMode.html on 
    a Huawei HiLink device will switch it to u3g mode */
