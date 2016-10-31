@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.435 2016/10/28 09:16:02 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.436 2016/10/31 02:44:54 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.435 2016/10/28 09:16:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.436 2016/10/31 02:44:54 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4572,6 +4572,8 @@ wm_turnon(struct wm_softc *sc)
 {
 	int i;
 
+	KASSERT(WM_CORE_LOCKED(sc));
+
 	for(i = 0; i < sc->sc_nqueues; i++) {
 		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
 		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
@@ -4585,9 +4587,7 @@ wm_turnon(struct wm_softc *sc)
 		mutex_exit(rxq->rxq_lock);
 	}
 
-	WM_CORE_LOCK(sc);
 	sc->sc_core_stopping = false;
-	WM_CORE_UNLOCK(sc);
 }
 
 static void
@@ -4595,9 +4595,9 @@ wm_turnoff(struct wm_softc *sc)
 {
 	int i;
 
-	WM_CORE_LOCK(sc);
+	KASSERT(WM_CORE_LOCKED(sc));
+
 	sc->sc_core_stopping = true;
-	WM_CORE_UNLOCK(sc);
 
 	for(i = 0; i < sc->sc_nqueues; i++) {
 		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
