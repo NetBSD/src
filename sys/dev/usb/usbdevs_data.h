@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.714 2016/10/31 03:19:23 dholland Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.715 2016/10/31 04:16:29 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.721 2016/10/31 03:18:41 dholland Exp
+ *	NetBSD: usbdevs,v 1.722 2016/10/31 04:15:22 nonaka Exp
  */
 
 /*
@@ -2310,16 +2310,14 @@ static const uint16_t usb_products[] = {
 	    3942, 11076, 4718, 11061, 0,
 	    USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E171, 
 	    3942, 11076, 0,
-	    USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E353, 
-	    3942, 11081, 0,
 	    USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E353_HiLink, 
-	    3942, 11086, 0,
-	    USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E353, 
 	    3942, 11081, 0,
+	    USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E353, 
+	    3942, 11093, 0,
 	    USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_K3765INIT, 
 	    3942, 11064, 4718, 11061, 0,
 	    USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E353INIT, 
-	    3942, 11081, 4718, 11061, 0,
+	    3942, 11093, 4718, 11061, 0,
 	    USB_VENDOR_HUAWEI3COM, USB_PRODUCT_HUAWEI3COM_RT2573, 
 	    5105, 0,
 	    USB_VENDOR_HYUNDAI, USB_PRODUCT_HYUNDAI_PC5740, 
@@ -5271,7 +5269,7 @@ static const char usb_words[] = { "."
 	    "Targus\0" /* 1 refs @ 3918 */
 	    "TwinMOS\0" /* 1 refs @ 3925 */
 	    "CyberTAN\0" /* 1 refs @ 3933 */
-	    "Huawei\0" /* 16 refs @ 3942 */
+	    "Huawei\0" /* 15 refs @ 3942 */
 	    "Aincomm\0" /* 1 refs @ 3949 */
 	    "Mobility\0" /* 1 refs @ 3957 */
 	    "Dick\0" /* 1 refs @ 3966 */
@@ -6230,8 +6228,8 @@ static const char usb_words[] = { "."
 	    "K3765\0" /* 2 refs @ 11064 */
 	    "E1820\0" /* 1 refs @ 11070 */
 	    "E171\0" /* 2 refs @ 11076 */
-	    "E353\0" /* 3 refs @ 11081 */
-	    "E353_HiLink\0" /* 1 refs @ 11086 */
+	    "E353_HiLink\0" /* 1 refs @ 11081 */
+	    "E353\0" /* 2 refs @ 11093 */
 	    "PC5740\0" /* 1 refs @ 11098 */
 	    "EVDO\0" /* 2 refs @ 11105 */
 	    "UM175\0" /* 1 refs @ 11110 */
