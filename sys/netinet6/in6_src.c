@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.70 2016/08/26 20:29:31 roy Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.71 2016/10/31 02:50:31 ozaki-r Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.70 2016/08/26 20:29:31 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.71 2016/10/31 02:50:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -590,11 +590,14 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	struct sockaddr_in6 *sin6_next;
 	struct in6_pktinfo *pi = NULL;
 	struct in6_addr *dst;
-	struct psref local_psref;
-#define PSREF	((psref == NULL) ? &local_psref : psref)
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in6	dst6;
+	} u;
 
-	KASSERT((retifp != NULL && psref != NULL) ||
-	        (retifp == NULL && psref == NULL));
+	KASSERT(ro != NULL);
+	KASSERT(retifp != NULL && psref != NULL);
+	KASSERT(retrt != NULL);
 
 	dst = &dstsock->sin6_addr;
 
@@ -614,17 +617,16 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	/* If the caller specify the outgoing interface explicitly, use it. */
 	if (opts && (pi = opts->ip6po_pktinfo) != NULL && pi->ipi6_ifindex) {
 		/* XXX boundary check is assumed to be already done. */
-		ifp = if_get_byindex(pi->ipi6_ifindex, PSREF);
+		ifp = if_get_byindex(pi->ipi6_ifindex, psref);
 		if (ifp != NULL &&
-		    (norouteok || retrt == NULL ||
-		    IN6_IS_ADDR_MULTICAST(dst))) {
+		    (norouteok || IN6_IS_ADDR_MULTICAST(dst))) {
 			/*
 			 * we do not have to check or get the route for
 			 * multicast.
 			 */
 			goto done;
 		} else {
-			if_put(ifp, PSREF);
+			if_put(ifp, psref);
 			ifp = NULL;
 			goto getroute;
 		}
@@ -635,7 +637,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * interface for the address is specified by the caller, use it.
 	 */
 	if (IN6_IS_ADDR_MULTICAST(dst) && mopts != NULL) {
-		ifp = if_get_byindex(mopts->im6o_multicast_if_index, PSREF);
+		ifp = if_get_byindex(mopts->im6o_multicast_if_index, psref);
 		if (ifp != NULL)
 			goto done; /* we do not need a route for multicast. */
 	}
@@ -671,7 +673,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		ifp = rt->rt_ifp;
 		if (ifp != NULL) {
 			if (!if_is_deactivated(ifp))
-				if_acquire_NOMPSAFE(ifp, PSREF);
+				if_acquire_NOMPSAFE(ifp, psref);
 			else
 				ifp = NULL;
 		}
@@ -690,52 +692,42 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * a new one.  Note that we should check the address family of the
 	 * cached destination, in case of sharing the cache with IPv4.
 	 */
-	if (ro != NULL) {
-		union {
-			struct sockaddr		dst;
-			struct sockaddr_in6	dst6;
-		} u;
+	u.dst6 = *dstsock;
+	u.dst6.sin6_scope_id = 0;
+	rt = rtcache_lookup1(ro, &u.dst, clone);
 
-		/* No route yet, so try to acquire one */
-		u.dst6 = *dstsock;
-		u.dst6.sin6_scope_id = 0;
-		rt = rtcache_lookup1(ro, &u.dst, clone);
+	/*
+	 * do not care about the result if we have the nexthop
+	 * explicitly specified.
+	 */
+	if (opts && opts->ip6po_nexthop)
+		goto done;
 
-		/*
-		 * do not care about the result if we have the nexthop
-		 * explicitly specified.
-		 */
-		if (opts && opts->ip6po_nexthop)
-			goto done;
-
-		if (rt == NULL)
-			error = EHOSTUNREACH;
-		else {
-			if_put(ifp, PSREF);
-			ifp = rt->rt_ifp;
-			if (ifp != NULL) {
-				if (!if_is_deactivated(ifp))
-					if_acquire_NOMPSAFE(ifp, PSREF);
-				else
-					ifp = NULL;
-			}
+	if (rt == NULL)
+		error = EHOSTUNREACH;
+	else {
+		if_put(ifp, psref);
+		ifp = rt->rt_ifp;
+		if (ifp != NULL) {
+			if (!if_is_deactivated(ifp))
+				if_acquire_NOMPSAFE(ifp, psref);
+			else
+				ifp = NULL;
 		}
+	}
 
-		/*
-		 * Check if the outgoing interface conflicts with
-		 * the interface specified by ipi6_ifindex (if specified).
-		 * Note that loopback interface is always okay.
-		 * (this may happen when we are sending a packet to one of
-		 *  our own addresses.)
-		 */
-		if (opts && opts->ip6po_pktinfo &&
-		    opts->ip6po_pktinfo->ipi6_ifindex) {
-			if (!(ifp->if_flags & IFF_LOOPBACK) &&
-			    ifp->if_index !=
-			    opts->ip6po_pktinfo->ipi6_ifindex) {
-				error = EHOSTUNREACH;
-				goto done;
-			}
+	/*
+	 * Check if the outgoing interface conflicts with
+	 * the interface specified by ipi6_ifindex (if specified).
+	 * Note that loopback interface is always okay.
+	 * (this may happen when we are sending a packet to one of
+	 *  our own addresses.)
+	 */
+	if (opts && opts->ip6po_pktinfo && opts->ip6po_pktinfo->ipi6_ifindex) {
+		if (!(ifp->if_flags & IFF_LOOPBACK) &&
+		    ifp->if_index != opts->ip6po_pktinfo->ipi6_ifindex) {
+			error = EHOSTUNREACH;
+			goto done;
 		}
 	}
 
@@ -750,15 +742,10 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	if (error == EHOSTUNREACH)
 		IP6_STATINC(IP6_STAT_NOROUTE);
 
-	if (retifp != NULL)
-		*retifp = ifp;
-	else
-		if_put(ifp, PSREF);
-	if (retrt != NULL)
-		*retrt = rt;	/* rt may be NULL */
+	*retifp = ifp;
+	*retrt = rt;	/* rt may be NULL */
 
 	return (error);
-#undef PSREF
 }
 
 static int
