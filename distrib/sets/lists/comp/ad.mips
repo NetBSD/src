@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.63 2016/10/18 06:40:06 mrg Exp $
+# $NetBSD: ad.mips,v 1.64 2016/10/31 20:14:08 skrll Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/g++/bits/mips32			comp-c-include		arch64
@@ -72,6 +72,9 @@
 ./usr/include/mips/varargs.h			comp-obsolete		obsolete
 ./usr/include/mips/vmparam.h			comp-c-include
 ./usr/include/mips/wchar_limits.h		comp-c-include
+./usr/lib/64/libc_fp.a				comp-c-lib		softfloat,arch64
+./usr/lib/64/libc_fp_p.a			comp-c-lib		profile,softfloat,arch64
+./usr/lib/64/libc_fp_pic.a			comp-c-piclib		picinstall,compat,arch64
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
 -./usr/lib/64/libgomp.so.1
@@ -81,9 +84,6 @@
 ./usr/lib/libc_fp.a				comp-c-lib		softfloat,arch64
 ./usr/lib/libc_fp_p.a				comp-c-lib		profile,softfloat,arch64
 ./usr/lib/libc_fp_pic.a				comp-c-piclib		softfloat,picinstall,arch64
-./usr/lib/64/libc_fp.a				comp-c-lib		softfloat,arch64
-./usr/lib/64/libc_fp_p.a			comp-c-lib		profile,softfloat,arch64
-./usr/lib/64/libc_fp_pic.a			comp-c-piclib		picinstall,compat,arch64
 ./usr/lib/o32/libc_fp.a				comp-c-lib		softfloat,arch64
 ./usr/lib/o32/libc_fp_p.a			comp-c-lib		profile,softfloat,arch64
 ./usr/lib/o32/libc_fp_pic.a			comp-c-piclib		picinstall,compat,arch64
