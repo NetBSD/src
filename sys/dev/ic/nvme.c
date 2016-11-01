@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.20 2016/11/01 14:24:35 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.21 2016/11/01 14:39:38 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.20 2016/11/01 14:24:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.21 2016/11/01 14:39:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,7 +460,8 @@ nvme_rescan(device_t self, const char *attr, const int *flags)
 			continue;
 		memset(&naa, 0, sizeof(naa));
 		naa.naa_nsid = i + 1;
-		naa.naa_qentries = ioq_entries;
+		naa.naa_qentries = (ioq_entries - 1) * sc->sc_nq;
+		naa.naa_maxphys = sc->sc_mdts;
 		sc->sc_namespaces[i].dev = config_found(sc->sc_dev, &naa,
 		    nvme_print);
 	}

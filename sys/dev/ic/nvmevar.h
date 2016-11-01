@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.10 2016/11/01 14:24:35 jdolecek Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.11 2016/11/01 14:39:38 jdolecek Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -145,7 +145,8 @@ struct nvme_softc {
 
 struct nvme_attach_args {
 	uint16_t	naa_nsid;
-	uint32_t	naa_qentries;
+	uint32_t	naa_qentries;	/* total number of queue slots */
+	uint32_t	naa_maxphys;	/* maximum device transfer size */
 };
 
 int	nvme_attach(struct nvme_softc *);
