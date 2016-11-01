@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.21 2016/11/01 14:39:38 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.22 2016/11/01 14:46:31 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.21 2016/11/01 14:39:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.22 2016/11/01 14:46:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.21 2016/11/01 14:39:38 jdolecek Exp $");
 #include <dev/ic/nvmevar.h>
 #include <dev/ic/nvmeio.h>
 
-int nvme_adminq_size = 128;
+int nvme_adminq_size = 32;
 int nvme_ioq_size = 1024;
 
 static int	nvme_print(void *, const char *);
