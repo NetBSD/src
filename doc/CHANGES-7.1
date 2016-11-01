@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.116 2016/10/14 12:03:37 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.117 2016/11/01 20:40:14 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -6775,4 +6775,51 @@ external/bsd/bind/include/isc/platform.h        up to 1.22 via patch
 
 	Update BIND to 9.10.4-P3.
 	[snj, ticket #1264]
+
+sys/arch/amd64/conf/std.xen			1.8
+sys/arch/xen/conf/std.xen			1.8
+
+	Make Xen process and file limits match the native ones.
+	[joerg, ticket #1258]
+
+usr.bin/ftp/fetch.c				1.225
+
+	Fix crash in ftp when given an IPv6 URL that's missing a slash.
+	PR bin/51558.
+	[dholland, ticket #1265]
+
+lib/libperfuse/fuse.h				1.7
+lib/libperfuse/libperfuse.3			1.4, 1.5
+lib/libperfuse/perfuse.c			1.38-1.40
+lib/libperfuse/perfuse_if.h			1.21, 1.22
+usr.sbin/perfused/msg.c				1.23, 1.24
+usr.sbin/perfused/perfused.8			1.12
+
+	Make FUSE socket buffer tunable.
+
+	When dealing with high I/O throughput, we could run out of buffer
+	space if the filesystem was not consuming requests fast enough.
+	Here we slightly raise the buffer size, and we make it tunable
+	through the PERFUSE_BUFSIZE environment variable so that we can
+	cope with higher requirement later.
+	[manu, ticket #1266]
+
+etc/namedb/root.cache				1.22
+
+	Update root.cache to 2016102001 (October 20, 2016).
+	[taca, ticket #1267]
+
+sys/kern/uipc_usrreq.c				1.181
+
+	Fix a memory leak.
+	[maxv, ticket #1268]
+
+sys/arch/alpha/alpha/machdep.c			1.347
+sys/arch/alpha/alpha/prom.c			1.49
+sys/arch/alpha/stand/common/booted_dev.c	1.4
+sys/arch/alpha/stand/common/prom.c		1.15
+
+	Match the two prom_getenv() and fix buffer overflow causing
+	wrong host controller SCSI ID for DEC 3000.
+	[flxd, ticket #1269]
 
