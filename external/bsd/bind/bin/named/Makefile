@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2015/01/25 15:51:53 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2016/11/01 21:56:12 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,8 @@ SRCS=	builtin.c client.c config.c control.c controlconf.c \
 	main.c notify.c query.c server.c sortlist.c statschannel.c \
 	pfilter.c tkeyconf.c tsigconf.c \
 	update.c xfrout.c zoneconf.c ${SRCS_UNIX}
+
+main.o: ${VERSIONFILE}
 
 LDADD+=-lblacklist
 DPADD+=${LIBBLACKLIST}
