@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.49 2016/09/11 21:38:16 sevan Exp $
+.\" $NetBSD: gpt.8,v 1.50 2016/11/01 16:15:51 jdolecek Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd September 11, 2016
+.Dd November 1, 2016
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -570,7 +570,6 @@ The order of precedence for the options are:
 .Fl u .
 .\" ==== type ====
 .It Nm Ic type Oo Fl a Oc Fl T Ar newtype
-.It Nm Ic type Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
 .It Nm Ic type Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
 Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
 Fl T Ar newtype
