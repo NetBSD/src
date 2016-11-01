@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.37 2015/07/02 03:50:21 christos Exp $
+.\"	$NetBSD: ptrace.2,v 1.38 2016/11/01 13:51:13 kamil Exp $
 .\"
 .\" This file is in the public domain.
 .Dd July 1, 2015
@@ -308,6 +308,57 @@ Stops a process before and after executing each system call.
 .It Dv PT_SYSCALLEMU
 Intercept and ignore a system call before it has been executed, for use with
 .Dv PT_SYSCALL .
+.It Dv PT_SET_EVENT_MASK
+This request can be used to specify which events in the traced process
+should be reported to the tracing process.
+These events are specified in a
+.Dq Li "struct ptrace_event"
+defined as:
+.Bd -literal -offset indent
+typedef struct ptrace_event {
+	int	pe_set_event;
+} ptrace_event_t;
+.Ed
+.Pp
+Where
+.Fa pe_set_event
+is the set of events to be reported.
+This set is formed by OR'ing together the following values:
+.Bl -tag -width 18n
+.It PTRACE_FORK
+Report
+.Xr fork 2 .
+.El
+.Pp
+A pointer to this structure is passed in
+.Fa addr .
+The
+.Fa data
+argument should be set to
+.Li sizeof(struct ptrace_event) .
+.It Dv PT_GET_EVENT_MASK
+This request can be used to determine which events in the traced
+process will be reported.
+The information is read into the
+.Dq Li struct ptrace_event
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument should be set to
+.Li sizeof(struct ptrace_event) .
+.It Dv PT_GET_PROCESS_STATE
+This request reads the state information associated with the event
+that stopped the traced process.
+The information is reported in a
+.Dq Li "struct ptrace_state"
+defined as:
+.Bd -literal -offset indent
+typedef struct ptrace_state {
+	int	pe_report_event;
+	pid_t	pe_other_pid;
+} ptrace_state_t;
+.Ed
 .El
 .Pp
 Additionally, the following requests exist but are
