@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.25 2016/10/27 12:30:54 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.26 2016/11/01 08:27:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.25 2016/10/27 12:30:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.26 2016/11/01 08:27:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -584,8 +584,6 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	sc->sc_opening = 1;
 
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
-		struct termios t;
-
 		tp->t_dev = dev;
 
 		if (sc->sc_methods->ucom_open != NULL) {
@@ -613,6 +611,8 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 * Initialize the termios status to the defaults.  Add in the
 		 * sticky bits from TIOCSFLAGS.
 		 */
+		struct termios t;
+
 		t.c_ispeed = 0;
 		t.c_ospeed = TTYDEF_SPEED;
 		t.c_cflag = TTYDEF_CFLAG;
