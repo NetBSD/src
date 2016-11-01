@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.75 2016/10/17 20:16:57 mrg Exp $
+# $NetBSD: ad.arm,v 1.76 2016/11/01 14:45:25 skrll Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -393,10 +393,13 @@
 ./usr/include/evbarm/varargs.h			comp-obsolete		obsolete
 ./usr/include/evbarm/vmparam.h			comp-obsolete		obsolete
 ./usr/include/evbarm/wchar_limits.h		comp-obsolete		obsolete
-./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/unwind-arm-common.h	comp-c-include		gcccmds,gcc=48,eabi
+./usr/include/gcc-4.5/arm_neon.h		comp-c-include		obsolete
+./usr/include/gcc-4.5/mmintrin.h		comp-c-include		obsolete
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-4.8/arm_neon.h		comp-c-include		obsolete
+./usr/include/gcc-4.8/mmintrin.h		comp-c-include		obsolete
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-4.8/unwind-arm-common.h	comp-c-include		obsolete
 ./usr/include/gcc-5/arm_acle.h			comp-c-include		gcccmds,gcc=53
 ./usr/include/gcc-5/arm_neon.h			comp-c-include		gcccmds,gcc=53
 ./usr/include/gcc-5/mmintrin.h			comp-c-include		gcccmds,gcc=53
