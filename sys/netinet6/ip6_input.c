@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.169 2016/10/18 07:30:31 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.170 2016/11/01 10:32:57 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.169 2016/10/18 07:30:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.170 2016/11/01 10:32:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -701,14 +701,11 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 
 			if (error != 0) {
 				IP6_STATINC(IP6_STAT_CANTFORWARD);
-				m_freem(m);
-				return;
+				goto bad;
 			}
 		}
-		if (!ours) {
-			m_freem(m);
-			return;
-		}
+		if (!ours)
+			goto bad;
 	} else if (!ours) {
 		ip6_forward(m, srcrt);
 		return;
