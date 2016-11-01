@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.19 2016/10/20 19:20:40 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.20 2016/11/01 14:24:35 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.19 2016/10/20 19:20:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.20 2016/11/01 14:24:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ static int	nvme_identify(struct nvme_softc *, u_int);
 static void	nvme_fill_identify(struct nvme_queue *, struct nvme_ccb *,
 		    void *);
 
-static int	nvme_ccbs_alloc(struct nvme_queue *, u_int);
+static int	nvme_ccbs_alloc(struct nvme_queue *, uint16_t);
 static void	nvme_ccbs_free(struct nvme_queue *);
 
 static struct nvme_ccb *
@@ -333,8 +333,8 @@ nvme_attach(struct nvme_softc *sc)
 	uint32_t reg;
 	u_int dstrd;
 	u_int mps = PAGE_SHIFT;
-	int adminq_entries = nvme_adminq_size;
-	int ioq_entries = nvme_ioq_size;
+	uint16_t adminq_entries = nvme_adminq_size;
+	uint16_t ioq_entries = nvme_ioq_size;
 	int i;
 
 	reg = nvme_read4(sc, NVME_VS);
@@ -1079,7 +1079,8 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 			/* NOTREACHED */
 		}
 #endif
-		rv = 1;
+
+		rv++;
 
 		/*
 		 * Unlock the mutex before calling the ccb_done callback
@@ -1097,6 +1098,12 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 		nvme_write4(sc, q->q_cqhdbl, q->q_cq_head);
 
 	mutex_exit(&q->q_cq_mtx);
+
+	if (rv) {
+		mutex_enter(&q->q_ccb_mtx);
+		q->q_nccbs_avail += rv;
+		mutex_exit(&q->q_ccb_mtx);
+	}
 
 	return rv;
 }
@@ -1263,7 +1270,7 @@ nvme_fill_identify(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 }
 
 static int
-nvme_ccbs_alloc(struct nvme_queue *q, u_int nccbs)
+nvme_ccbs_alloc(struct nvme_queue *q, uint16_t nccbs)
 {
 	struct nvme_softc *sc = q->q_sc;
 	struct nvme_ccb *ccb;
@@ -1279,6 +1286,7 @@ nvme_ccbs_alloc(struct nvme_queue *q, u_int nccbs)
 		return 1;
 
 	q->q_nccbs = nccbs;
+	q->q_nccbs_avail = nccbs;
 	q->q_ccb_prpls = nvme_dmamem_alloc(sc,
 	    sizeof(*prpl) * sc->sc_max_sgl * nccbs);
 
@@ -1315,11 +1323,14 @@ free_maps:
 static struct nvme_ccb *
 nvme_ccb_get(struct nvme_queue *q)
 {
-	struct nvme_ccb *ccb;
+	struct nvme_ccb *ccb = NULL;
 
 	mutex_enter(&q->q_ccb_mtx);
-	ccb = SIMPLEQ_FIRST(&q->q_ccb_list);
-	if (ccb != NULL) {
+	if (q->q_nccbs_avail > 0) {
+		ccb = SIMPLEQ_FIRST(&q->q_ccb_list);
+		KASSERT(ccb != NULL);
+		q->q_nccbs_avail--;
+
 		SIMPLEQ_REMOVE_HEAD(&q->q_ccb_list, ccb_entry);
 #ifdef DEBUG
 		ccb->ccb_cookie = NULL;
@@ -1397,7 +1408,12 @@ nvme_q_alloc(struct nvme_softc *sc, uint16_t id, u_int entries, u_int dstrd)
 	nvme_dmamem_sync(sc, q->q_sq_dmamem, BUS_DMASYNC_PREWRITE);
 	nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_PREREAD);
 
-	if (nvme_ccbs_alloc(q, entries) != 0) {
+	/*
+	 * Due to definition of full and empty queue (queue is empty
+	 * when head == tail, full when tail is one less then head),
+	 * we can actually only have (entries - 1) in-flight commands.
+	 */
+	if (nvme_ccbs_alloc(q, entries - 1) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to allocate ccbs\n");
 		goto free_cq;
 	}
