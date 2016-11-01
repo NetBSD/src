@@ -1,4 +1,4 @@
-/*  $NetBSD: fuse.h,v 1.5.18.1 2014/11/05 18:11:30 snj Exp $ */
+/*  $NetBSD: fuse.h,v 1.5.18.2 2016/11/01 19:49:04 snj Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -34,8 +34,8 @@
 #define FUSE_UNKNOWN_FH (uint64_t)0
 
 #ifndef FUSE_BUFSIZE
-#define FUSE_MIN_BUFSIZE 0x21000
-#define FUSE_PREF_BUFSIZE (sysconf(_SC_PAGESIZE) + 0x1000)
+#define FUSE_MIN_BUFSIZE ((size_t)0x21000)
+#define FUSE_PREF_BUFSIZE ((size_t)(sysconf(_SC_PAGESIZE) + 0x1000))
 #define FUSE_BUFSIZE MAX(FUSE_PREF_BUFSIZE /* CONSTCOND */, FUSE_MIN_BUFSIZE)
 #endif /* FUSE_BUFSIZE */
 
