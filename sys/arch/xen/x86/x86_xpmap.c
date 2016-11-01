@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.61 2016/08/25 17:03:57 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.62 2016/11/01 12:00:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.61 2016/08/25 17:03:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.62 2016/11/01 12:00:21 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -950,8 +950,8 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
 				/* Map the kernel data+bss RW. */
 				pte[pl1_pi(page)] |= PG_RW | pg_nx;
 			} else {
-				/* map page RW */
-				pte[pl1_pi(page)] |= PG_RW;
+				/* Map the page RW. */
+				pte[pl1_pi(page)] |= PG_RW | pg_nx;
 			}
 				
 			if ((page  >= old_pgd && page < old_pgd + (old_count * PAGE_SIZE))
