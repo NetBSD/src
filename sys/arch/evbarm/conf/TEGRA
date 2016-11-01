@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.6.2.3 2016/10/05 20:55:26 skrll Exp $
+#	$NetBSD: TEGRA,v 1.6.2.4 2016/11/01 21:27:15 jakllsch Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -154,8 +154,8 @@ nouveau*	at fdt?			# GPU
 tegrasoctherm*	at fdt?			# SOC_THERM
 
 # USB XHCI
-#xhci*		at fdt?			# XUSB
-#usb*		at xhci?
+xhci*		at fdt?			# XUSB
+usb*		at xhci?
 
 # USB 2.0
 tegrausbphy*	at fdt?			# USB PHY
