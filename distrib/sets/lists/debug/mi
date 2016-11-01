@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.168 2016/10/30 16:17:16 kamil Exp $
+# $NetBSD: mi,v 1.169 2016/11/01 19:21:17 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -77,7 +77,7 @@
 ./usr/lib/libheimbase_g.a			comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libheimntlm_g.a			comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libhx509_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
-./usr/lib/libiberty_g.a				comp-c-debuglib		debuglib,compatfile,binutils
+./usr/lib/libiberty_g.a				comp-c-obsolete		obsolete,compatfile,binutils
 ./usr/lib/libintl_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libipsec_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libirs_g.a				comp-c-debuglib		debuglib,compatfile
