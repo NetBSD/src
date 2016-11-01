@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.1 2016/10/21 06:18:33 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.2 2016/11/01 20:43:39 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -8,4 +8,29 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 7.0.2_PATCH.
 	[snj]
+
+sys/arch/amd64/conf/std.xen			1.8
+sys/arch/xen/conf/std.xen			1.8
+
+	Make Xen process and file limits match the native ones.
+	[joerg, ticket #1258]
+
+etc/namedb/root.cache				1.22
+
+	Update root.cache to 2016102001 (October 20, 2016).
+	[taca, ticket #1267]
+
+sys/kern/uipc_usrreq.c				1.181
+
+	Fix a memory leak.
+	[maxv, ticket #1268]
+
+sys/arch/alpha/alpha/machdep.c			1.347
+sys/arch/alpha/alpha/prom.c			1.49
+sys/arch/alpha/stand/common/booted_dev.c	1.4
+sys/arch/alpha/stand/common/prom.c		1.15
+
+	Match the two prom_getenv() and fix buffer overflow causing
+	wrong host controller SCSI ID for DEC 3000.
+	[flxd, ticket #1269]
 
