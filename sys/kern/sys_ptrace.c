@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.175 2016/11/02 00:11:59 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace.c,v 1.1 2016/11/02 00:11:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,12 +118,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.175 2016/11/02 00:11:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.1 2016/11/02 00:11:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
-#include "opt_ktrace.h"
-#include "opt_pax.h"
 #endif
 
 #include <sys/param.h>
@@ -139,93 +137,160 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.175 2016/11/02 00:11:59 pgoyette E
 #include <sys/kauth.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
+#include <sys/syscall.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/reg.h>
 
-#if defined(KTRACE) || defined(PTRACE_HOOKS)
+/*
+ * PTRACE methods
+ */
+
+static int ptrace_copyinpiod(struct ptrace_io_desc *, const void *);
+static void ptrace_copyoutpiod(const struct ptrace_io_desc *, void *);
+static int ptrace_doregs(struct lwp *, struct lwp *, struct uio *);
+static int ptrace_dofpregs(struct lwp *, struct lwp *, struct uio *);
+
+static int
+ptrace_copyinpiod(struct ptrace_io_desc *piod, const void *addr)
+{
+	return copyin(addr, piod, sizeof(*piod));
+}
+
+static void
+ptrace_copyoutpiod(const struct ptrace_io_desc *piod, void *addr)
+{
+	(void) copyout(piod, addr, sizeof(*piod));
+}
+
 int
-process_domem(struct lwp *curl /*tracer*/,
+ptrace_doregs(struct lwp *curl /*tracer*/,
     struct lwp *l /*traced*/,
     struct uio *uio)
 {
-	struct proc *p = l->l_proc;	/* traced */
-	struct vmspace *vm;
+#if defined(PT_GETREGS) || defined(PT_SETREGS)
 	int error;
+	struct reg r;
+	char *kv;
+	int kl;
 
-	size_t len;
-#ifdef PMAP_NEED_PROCWR
-	vaddr_t	addr;
-#endif
+	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
+		return EINVAL;
 
-	error = 0;
-	len = uio->uio_resid;
+	kl = sizeof(r);
+	kv = (char *)&r;
 
-	if (len == 0)
-		return 0;
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+	if ((size_t)kl > uio->uio_resid)
+		kl = uio->uio_resid;
 
-#ifdef PMAP_NEED_PROCWR
-	addr = uio->uio_offset;
-#endif
-
-	vm = p->p_vmspace;
-
-	mutex_enter(&vm->vm_map.misc_lock);
-	if ((l->l_flag & LW_WEXIT) || vm->vm_refcnt < 1)
-		error = EFAULT;
+	error = process_read_regs(l, &r);
 	if (error == 0)
-		p->p_vmspace->vm_refcnt++;  /* XXX */
-	mutex_exit(&vm->vm_map.misc_lock);
-	if (error != 0)
-		return error;
-	error = uvm_io(&vm->vm_map, uio, pax_mprotect_prot(l));
-	uvmspace_free(vm);
+		error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		if (l->l_stat != LSSTOP)
+			error = EBUSY;
+		else
+			error = process_write_regs(l, &r);
+	}
 
-#ifdef PMAP_NEED_PROCWR
-	if (error == 0 && uio->uio_rw == UIO_WRITE)
-		pmap_procwr(p, addr, len);
+	uio->uio_offset = 0;
+	return error;
+#else
+	return EINVAL;
 #endif
+}
+
+int
+ptrace_dofpregs(struct lwp *curl /*tracer*/,
+    struct lwp *l /*traced*/,
+    struct uio *uio)
+{
+#if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
+	int error;
+	struct fpreg r;
+	char *kv;
+	size_t kl;
+
+	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
+		return EINVAL;
+
+	kl = sizeof(r);
+	kv = (char *)&r;
+
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	error = process_read_fpregs(l, &r, &kl);
+	if (error == 0)
+		error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		if (l->l_stat != LSSTOP)
+			error = EBUSY;
+		else
+			error = process_write_fpregs(l, &r, kl);
+	}
+	uio->uio_offset = 0;
+	return error;
+#else
+	return EINVAL;
+#endif
+}
+
+static struct ptrace_methods native_ptm = {
+	.ptm_copyinpiod = ptrace_copyinpiod,
+	.ptm_copyoutpiod = ptrace_copyoutpiod,
+	.ptm_doregs = ptrace_doregs,
+	.ptm_dofpregs = ptrace_dofpregs,
+};
+
+static const struct syscall_package ptrace_syscalls[] = {
+	{ SYS_ptrace, 0, (sy_call_t *)sys_ptrace },
+	{ 0, 0, NULL },
+}; 
+
+/*    
+ * Process debugging system call.
+ */   
+int   
+sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
+{
+	/* { 
+		syscallarg(int) req;
+		syscallarg(pid_t) pid;
+		syscallarg(void *) addr;
+		syscallarg(int) data;
+	} */
+ 
+        return do_ptrace(&native_ptm, l, SCARG(uap, req), SCARG(uap, pid),
+            SCARG(uap, addr), SCARG(uap, data), retval);
+}
+
+#define	DEPS	"ptrace_common"  
+
+MODULE(MODULE_CLASS_EXEC, ptrace, DEPS);
+ 
+static int
+ptrace_modcmd(modcmd_t cmd, void *arg)
+{
+	int error;
+ 
+	switch (cmd) {
+	case MODULE_CMD_INIT: 
+		error = syscall_establish(&emul_netbsd, ptrace_syscalls);
+		break;
+	case MODULE_CMD_FINI:
+		error = syscall_disestablish(&emul_netbsd, ptrace_syscalls);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
 	return error;
 }
-
-void
-process_stoptrace(void)
-{
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc, *pp;
-
-	mutex_enter(proc_lock);
-	mutex_enter(p->p_lock);
-	pp = p->p_pptr;
-	if (pp->p_pid == 1) {
-		CLR(p->p_slflag, PSL_SYSCALL);	/* XXXSMP */
-		mutex_exit(p->p_lock);
-		mutex_exit(proc_lock);
-		return;
-	}
-
-	p->p_xsig = SIGTRAP;
-	proc_stop(p, 1, SIGSTOP);
-	mutex_exit(proc_lock);
-
-	if (sigispending(l, 0)) {
-		lwp_lock(l);
-		l->l_flag |= LW_PENDSIG;
-		lwp_unlock(l);
-	}
-	mutex_exit(p->p_lock);
-}
-#endif	/* KTRACE || PTRACE_HOOKS */
-
-/*
- * Dummy routine so that ptrace_common module will fail to load if this
- * routine is not defined.
- */
-#if defined(PTRACE_HOOKS)
-void
-ptrace_hooks(void)
-{
-
-}
-#endif

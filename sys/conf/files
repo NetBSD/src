@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1165 2016/11/01 22:54:33 pgoyette Exp $
+#	$NetBSD: files,v 1.1166 2016/11/02 00:11:59 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -21,7 +21,7 @@ defparam opt_param.h		MAXUSERS
 defflag				INSECURE
 defflag				KTRACE
 defflag				MBUFTRACE
-defflag				PTRACE
+defflag	opt_ptrace.h		PTRACE PTRACE_HOOKS
 defflag				COREDUMP
 defflag	opt_modular.h		MODULAR
 defflag	opt_modular.h		MODULAR_DEFAULT_AUTOLOAD

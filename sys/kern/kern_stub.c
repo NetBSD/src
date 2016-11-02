@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.42 2015/08/28 07:18:39 knakahara Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.43 2016/11/02 00:11:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,10 +62,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.42 2015/08/28 07:18:39 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.43 2016/11/02 00:11:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_ptrace.h"
 #include "opt_ktrace.h"
 #endif
 
@@ -85,14 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.42 2015/08/28 07:18:39 knakahara Exp
 bool default_bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
 bool default_bus_space_handle_is_equal(bus_space_tag_t, bus_space_handle_t,
     bus_space_handle_t);
-
-/*
- * Nonexistent system call-- signal process (may want to handle it).  Flag
- * error in case process won't see signal immediately (blocked or ignored).
- */
-#ifndef PTRACE
-__strong_alias(sys_ptrace,sys_nosys);
-#endif	/* PTRACE */
 
 /*
  * ktrace stubs.  ktruser() goes to enosys as we want to fail the syscall,
