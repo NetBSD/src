@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.181 2016/10/19 09:44:01 skrll Exp $
+#	$NetBSD: Makefile,v 1.182 2016/11/02 00:12:00 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -96,6 +96,8 @@ SUBDIR+=	pf
 SUBDIR+=	ppp_bsdcomp
 SUBDIR+=	ppp_deflate
 SUBDIR+=	procfs
+SUBDIR+=	ptrace
+SUBDIR+=	ptrace_common
 SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
