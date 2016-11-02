@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.28 2016/11/02 08:31:25 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.29 2016/11/02 08:41:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.28 2016/11/02 08:31:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.29 2016/11/02 08:41:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -587,7 +587,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		if (sc->sc_methods->ucom_open != NULL) {
 			error = sc->sc_methods->ucom_open(sc->sc_parent,
-							  sc->sc_portno);
+			    sc->sc_portno);
 			if (error) {
 				ucom_cleanup(sc);
 				sc->sc_opening = 0;
@@ -1153,7 +1153,7 @@ ucomparam(struct tty *tp, struct termios *t)
 
 	if (sc->sc_methods->ucom_param != NULL) {
 		error = sc->sc_methods->ucom_param(sc->sc_parent, sc->sc_portno,
-			    t);
+		    t);
 		if (error)
 			return error;
 	}
@@ -1253,7 +1253,7 @@ ucomstart(struct tty *tp)
 
 	if (sc->sc_methods->ucom_write != NULL)
 		sc->sc_methods->ucom_write(sc->sc_parent, sc->sc_portno,
-					   ub->ub_data, data, &cnt);
+		    ub->ub_data, data, &cnt);
 	else
 		memcpy(ub->ub_data, data, cnt);
 
