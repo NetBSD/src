@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.154 2016/10/31 09:13:20 martin Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.155 2016/11/02 00:39:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.154 2016/10/31 09:13:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.155 2016/11/02 00:39:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.154 2016/10/31 09:13:20 martin Exp $"
 #include <sys/module.h>
 #else
 #include <pci.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -567,6 +568,43 @@ static const struct pci_class pci_class[] = {
 
 DEV_VERBOSE_DEFINE(pci);
 
+/*
+ * Append a formatted string to dest without writing more than len
+ * characters (including the trailing NUL character).  dest and len
+ * are updated for use in subsequent calls to snappendf().
+ *
+ * Returns 0 on success, a negative value if vnsprintf() fails, or
+ * a positive value if the dest buffer would have overflowed.
+ */
+
+static int __printflike(3,4)
+snappendf(char **dest, size_t *len, const char * restrict fmt, ...)
+{
+	va_list	ap;
+	int count;
+
+	va_start(ap, fmt);
+	count = vsnprintf(*dest, *len, fmt, ap);
+	va_end(ap);
+
+	/* Let vsnprintf() errors bubble up to caller */
+	if (count < 0 || *len == 0)
+		return count;
+
+	/* Handle overflow */
+	if ((size_t)count >= *len) {
+		*dest += *len - 1;
+		*len = 1;
+		return 1;
+	}
+
+	/* Update dest & len to point at trailing NUL */
+	*dest += count;
+	*len -= count;
+		
+	return 0;
+}
+
 void
 pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
     size_t l)
@@ -577,9 +615,6 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 	pci_revision_t revision;
 	char vendor[PCI_VENDORSTR_LEN], product[PCI_PRODUCTSTR_LEN];
 	const struct pci_class *classp, *subclassp, *interfacep;
-	char *ep;
-
-	ep = cp + l;
 
 	pciclass = PCI_CLASS(class_reg);
 	subclass = PCI_SUBCLASS(class_reg);
@@ -612,32 +647,31 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 		interfacep++;
 	}
 
-	cp += snprintf(cp, ep - cp, "%s %s", vendor, product);
+	(void)snappendf(&cp, &l, "%s %s", vendor, product);
 	if (showclass) {
-		cp += snprintf(cp, ep - cp, " (");
+		(void)snappendf(&cp, &l, " (");
 		if (classp->name == NULL)
-			cp += snprintf(cp, ep - cp,
-			    "class 0x%02x, subclass 0x%02x", pciclass, subclass);
+			(void)snappendf(&cp, &l,
+			    "class 0x%02x, subclass 0x%02x",
+			    pciclass, subclass);
 		else {
 			if (subclassp == NULL || subclassp->name == NULL)
-				cp += snprintf(cp, ep - cp,
+				(void)snappendf(&cp, &l,
 				    "%s, subclass 0x%02x",
 				    classp->name, subclass);
 			else
-				cp += snprintf(cp, ep - cp, "%s %s",
+				(void)snappendf(&cp, &l, "%s %s",
 				    subclassp->name, classp->name);
 		}
 		if ((interfacep == NULL) || (interfacep->name == NULL)) {
 			if (interface != 0)
-				cp += snprintf(cp, ep - cp,
-				    ", interface 0x%02x", interface);
+				(void)snappendf(&cp, &l, ", interface 0x%02x",
+				    interface);
 		} else if (strncmp(interfacep->name, "", 1) != 0)
-			cp += snprintf(cp, ep - cp, ", %s",
-			    interfacep->name);
+			(void)snappendf(&cp, &l, ", %s", interfacep->name);
 		if (revision != 0)
-			cp += snprintf(cp, ep - cp, ", revision 0x%02x",
-			    revision);
-		cp += snprintf(cp, ep - cp, ")");
+			(void)snappendf(&cp, &l, ", revision 0x%02x", revision);
+		(void)snappendf(&cp, &l, ")");
 	}
 }
 
