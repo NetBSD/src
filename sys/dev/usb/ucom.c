@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.27 2016/11/02 08:28:10 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.28 2016/11/02 08:31:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.27 2016/11/02 08:28:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.28 2016/11/02 08:31:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,6 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	const int unit = UCOMUNIT(dev);
 	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
-	struct ucom_buffer *ub;
 	int error;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
@@ -648,8 +647,8 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		/*
 		 * ucomsubmitread handles bulk vs other
 		 */
-		for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS];
-		    ub++) {
+		for (size_t i = 0; i < UCOM_IN_BUFFS; i++) {
+			struct ucom_buffer *ub = &sc->sc_ibuff[i];
 			error = ucomsubmitread(sc, ub);
 			if (error)
 				goto fail_2;
