@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.436 2016/10/31 02:44:54 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.437 2016/11/02 10:14:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.436 2016/10/31 02:44:54 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.437 2016/11/02 10:14:04 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4003,17 +4003,8 @@ wm_reset(struct wm_softc *sc)
 		break;
 	}
 
-	if (phy_reset != 0) {
+	if (phy_reset != 0)
 		wm_get_cfg_done(sc);
-		delay(10 * 1000);
-		if (sc->sc_type >= WM_T_PCH) {
-			reg = wm_gmii_hv_readreg(sc->sc_dev, 2,
-			    BM_PORT_GEN_CFG);
-			reg &= ~BM_WUC_HOST_WU_BIT;
-			wm_gmii_hv_writereg(sc->sc_dev, 2,
-			    BM_PORT_GEN_CFG, reg);
-		}
-	}
 
 	/* reload EEPROM */
 	switch (sc->sc_type) {
@@ -4129,9 +4120,15 @@ wm_reset(struct wm_softc *sc)
 	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type <= WM_T_I211))
 		wm_set_eee_i350(sc);
 
-	/* dummy read from WUC */
-	if (sc->sc_type == WM_T_PCH)
-		reg = wm_gmii_hv_readreg(sc->sc_dev, 1, BM_WUC);
+	/* Clear the host wakeup bit after lcd reset */
+	if (sc->sc_type >= WM_T_PCH) {
+		reg = wm_gmii_hv_readreg(sc->sc_dev, 2,
+		    BM_PORT_GEN_CFG);
+		reg &= ~BM_WUC_HOST_WU_BIT;
+		wm_gmii_hv_writereg(sc->sc_dev, 2,
+		    BM_PORT_GEN_CFG, reg);
+	}
+
 	/*
 	 * For PCH, this write will make sure that any noise will be detected
 	 * as a CRC error and be dropped rather than show up as a bad packet
@@ -8090,12 +8087,13 @@ wm_gmii_reset(struct wm_softc *sc)
 		if (sc->sc_type == WM_T_PCH2)
 			wm_lv_phy_workaround_ich8lan(sc);
 
-		if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)) {
-			/*
-			 * dummy read to clear the phy wakeup bit after lcd
-			 * reset
-			 */
-			reg = wm_gmii_hv_readreg(sc->sc_dev, 1, BM_WUC);
+		/* Clear the host wakeup bit after lcd reset */
+		if (sc->sc_type >= WM_T_PCH) {
+			reg = wm_gmii_hv_readreg(sc->sc_dev, 2,
+			    BM_PORT_GEN_CFG);
+			reg &= ~BM_WUC_HOST_WU_BIT;
+			wm_gmii_hv_writereg(sc->sc_dev, 2,
+			    BM_PORT_GEN_CFG, reg);
 		}
 
 		/*
@@ -8378,6 +8376,9 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 			sc->sc_phytype = WMPHY_IGP_3;
 
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
+
+		printf("XXX OUI = %08x, model = %04x, rev = %04x\n",
+		    child->mii_mpd_oui, child->mii_mpd_model, child->mii_mpd_rev);
 	}
 }
 
@@ -8912,16 +8913,12 @@ wm_gmii_hv_readreg(device_t self, int phy, int reg)
 static int
 wm_gmii_hv_readreg_locked(device_t self, int phy, int reg)
 {
-	struct wm_softc *sc = device_private(self);
 	uint16_t page = BM_PHY_REG_PAGE(reg);
 	uint16_t regnum = BM_PHY_REG_NUM(reg);
 	uint16_t val;
 	int rv;
 
-	/* XXX Workaround failure in MDIO access while cable is disconnected */
-	if (sc->sc_phytype == WMPHY_82577) {
-		/* XXX must write */
-	}
+	phy = (page >= HV_INTC_FC_PAGE_START) ? 1 : phy;
 
 	/* Page 800 works differently than the rest so it has its own func */
 	if (page == BM_WUC_PAGE) {
@@ -8975,10 +8972,11 @@ wm_gmii_hv_writereg(device_t self, int phy, int reg, int val)
 static void
 wm_gmii_hv_writereg_locked(device_t self, int phy, int reg, int val)
 {
+	struct wm_softc *sc = device_private(self);
 	uint16_t page = BM_PHY_REG_PAGE(reg);
 	uint16_t regnum = BM_PHY_REG_NUM(reg);
 
-	/* XXX Workaround failure in MDIO access while cable is disconnected */
+	phy = (page >= HV_INTC_FC_PAGE_START) ? 1 : phy;
 
 	/* Page 800 works differently than the rest so it has its own func */
 	if (page == BM_WUC_PAGE) {
@@ -8998,14 +8996,27 @@ wm_gmii_hv_writereg_locked(device_t self, int phy, int reg, int val)
 		return;
 	}
 
-	/*
-	 * XXX Workaround MDIO accesses being disabled after entering IEEE
-	 * Power Down (whenever bit 11 of the PHY control register is set)
-	 */
+	{
+		/*
+		 * XXX Workaround MDIO accesses being disabled after entering
+		 * IEEE Power Down (whenever bit 11 of the PHY control
+		 * register is set)
+		 */
+		if (sc->sc_phytype == WMPHY_82578) {
+			struct mii_softc *child;
 
-	if (regnum > BME1000_MAX_MULTI_PAGE_REG) {
-		wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
-		    page << BME1000_PAGE_SHIFT);
+			child = LIST_FIRST(&sc->sc_mii.mii_phys);
+			if ((child != NULL) && (child->mii_mpd_rev >= 1)
+			    && (phy == 2) && ((regnum & MII_ADDRMASK) == 0)
+			    && ((val & (1 << 11)) != 0)) {
+				printf("XXX need workaround\n");
+			}
+		}
+
+		if (regnum > BME1000_MAX_MULTI_PAGE_REG) {
+			wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+			    page << BME1000_PAGE_SHIFT);
+		}
 	}
 
 	wm_gmii_mdic_writereg(self, phy, regnum & MII_ADDRMASK, val);
@@ -11827,7 +11838,6 @@ wm_release_hw_control(struct wm_softc *sc)
 
 	if (sc->sc_type == WM_T_82573) {
 		reg = CSR_READ(sc, WMREG_SWSM);
-		reg &= ~SWSM_DRV_LOAD;
 		CSR_WRITE(sc, WMREG_SWSM, reg & ~SWSM_DRV_LOAD);
 	} else {
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
