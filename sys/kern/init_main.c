@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.483 2016/09/17 12:09:22 maxv Exp $	*/
+/*	$NetBSD: init_main.c,v 1.484 2016/11/02 00:11:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.483 2016/09/17 12:09:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.484 2016/11/02 00:11:59 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -190,9 +190,6 @@ extern void *_binary_splash_image_end;
 #endif
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
-#ifdef PTRACE
-#include <sys/ptrace.h>
-#endif /* PTRACE */
 #include <sys/cprng.h>
 
 #include <sys/syscall.h>
@@ -562,11 +559,6 @@ main(void)
 	/* Initialize ktrace. */
 	ktrinit();
 #endif
-
-#ifdef PTRACE
-	/* Initialize ptrace. */
-	ptrace_init();
-#endif /* PTRACE */
 
 	machdep_init();
 

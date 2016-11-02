@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.47 2016/10/19 09:44:01 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.48 2016/11/02 00:12:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -146,7 +146,9 @@ struct ptrace_methods {
 	int (*ptm_dofpregs)(struct lwp *, struct lwp *, struct uio *);
 };
 
-void	ptrace_init(void);
+int	ptrace_init(void);
+int	ptrace_fini(void);
+void	ptrace_hooks(void);
 
 int	process_doregs(struct lwp *, struct lwp *, struct uio *);
 int	process_validregs(struct lwp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ptrace.c,v 1.1 2016/10/19 09:44:01 skrll Exp $	*/
+/*	$NetBSD: netbsd32_ptrace.c,v 1.2 2016/11/02 00:11:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.1 2016/10/19 09:44:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.2 2016/11/02 00:11:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -193,7 +193,9 @@ static const struct syscall_package compat_ptrace_syscalls[] = {
 	{ 0, 0, NULL },
 };
 
-MODULE(MODULE_CLASS_EXEC, compat_netbsd32_ptrace, "compat_netbsd32");
+#define	DEPS	"compat_netbsd32,ptrace_common"
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_ptrace, DEPS);
 
 static int
 compat_netbsd32_ptrace_modcmd(modcmd_t cmd, void *arg)
