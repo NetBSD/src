@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.99 2016/09/27 23:25:10 pgoyette Exp $
+# $NetBSD: mi,v 1.100 2016/11/02 00:12:41 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -272,6 +272,10 @@
 ./@MODULEDIR@/procfs/procfs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/profile				base-obsolete		obsolete
 ./@MODULEDIR@/profile/profile.kmod		base-obsolete		obsolete
+./@MODULEDIR@/ptrace				base-kernel-modules	kmod
+./@MODULEDIR@/ptrace/ptrace.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ptrace_common			base-kernel-modules	kmod
+./@MODULEDIR@/ptrace_common/ptrace_common.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/ptyfs				base-kernel-modules	kmod
 ./@MODULEDIR@/ptyfs/ptyfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/puffs				base-kernel-modules	kmod
