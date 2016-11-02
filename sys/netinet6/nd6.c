@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.209 2016/10/18 07:30:31 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.210 2016/11/02 03:43:27 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.209 2016/10/18 07:30:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.210 2016/11/02 03:43:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2259,8 +2259,10 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 			 * when the outgoing interface is p2p.
 			 * XXX: we may need a more generic rule here.
 			 */
-			if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
+			if ((ifp->if_flags & IFF_POINTOPOINT) == 0) {
+				pserialize_read_exit(s);
 				senderr(EHOSTUNREACH);
+			}
 
 			pserialize_read_exit(s);
 			goto sendpkt;
