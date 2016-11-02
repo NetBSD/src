@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2203 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2204 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -388,3 +388,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	zoneinfo: Import tzdata2016h.  [kre 20161020]
 	binutils: Updated to FSF binutils 2.27.  [christos 20161026]
 	wapbl(4): Improved truncate performance, and stability [jdolecek 20161028]
+	bind: Import version 9.10.4-P4. [christos 20161101]
