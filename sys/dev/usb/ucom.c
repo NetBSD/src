@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.26 2016/11/01 08:27:57 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.27 2016/11/02 08:28:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.26 2016/11/01 08:27:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.27 2016/11/02 08:28:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ static void	ucom_write_status(struct ucom_softc *, struct ucom_buffer *,
 
 static void	ucomwritecb(struct usbd_xfer *, void *, usbd_status);
 static void	ucom_read_complete(struct ucom_softc *);
-static usbd_status ucomsubmitread(struct ucom_softc *, struct ucom_buffer *);
+static int	ucomsubmitread(struct ucom_softc *, struct ucom_buffer *);
 static void	ucom_softintr(void *);
 
 int ucom_match(device_t, cfdata_t, void *);
@@ -650,10 +650,9 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 */
 		for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS];
 		    ub++) {
-			if (ucomsubmitread(sc, ub) != USBD_NORMAL_COMPLETION) {
-				error = EIO;
+			error = ucomsubmitread(sc, ub);
+			if (error)
 				goto fail_2;
-			}
 		}
 	}
 	sc->sc_opening = 0;
@@ -1423,7 +1422,7 @@ ucom_read_complete(struct ucom_softc *sc)
 	sc->sc_rx_unblock = (ub != NULL);
 }
 
-static usbd_status
+static int
 ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 {
 	usbd_status err;
@@ -1435,13 +1434,13 @@ ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 		if ((err = usbd_transfer(ub->ub_xfer)) != USBD_IN_PROGRESS) {
 			/* XXX: Recover from this, please! */
 			printf("%s: err=%s\n", __func__, usbd_errstr(err));
-			return err;
+			return EIO;
 		}
 	}
 
 	SIMPLEQ_INSERT_TAIL(&sc->sc_ibuff_empty, ub, ub_link);
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
 void
