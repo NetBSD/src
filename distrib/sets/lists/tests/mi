@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.690 2016/10/31 10:38:25 ozaki-r Exp $
+# $NetBSD: mi,v 1.691 2016/11/02 12:51:22 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2125,6 +2125,7 @@
 ./usr/tests/kernel/t_posix_fadvise		tests-obsolete		obsolete
 ./usr/tests/kernel/t_posix_fallocate		tests-obsolete		obsolete
 ./usr/tests/kernel/t_ps_strings			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/t_ptrace			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_pty			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_rnd			tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_sigaction			tests-obsolete		obsolete
