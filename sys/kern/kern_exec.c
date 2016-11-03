@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.437 2016/09/15 17:44:16 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.438 2016/11/03 22:08:30 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.437 2016/09/15 17:44:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.438 2016/11/03 22:08:30 kamil Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1213,7 +1213,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	if (__predict_false(ktrace_on))
 		fd_ktrexecfd();
 
-	execsigs(p);		/* reset catched signals */
+	execsigs(p);		/* reset caught signals */
 
 	mutex_enter(p->p_lock);
 	l->l_ctxlink = NULL;	/* reset ucontext link */
