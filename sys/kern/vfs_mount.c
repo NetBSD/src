@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.40 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.41 2016/11/03 11:03:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,9 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.40 2016/07/07 06:55:43 msaitoh Exp $");
-
-#define _VFS_VNODE_PRIVATE
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.41 2016/11/03 11:03:31 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.40 2016/07/07 06:55:43 msaitoh Exp $
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/vfs_syscalls.h>
-#include <sys/vnode.h>
+#include <sys/vnode_impl.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>

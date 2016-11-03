@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.57 2016/11/03 11:02:09 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.58 2016/11/03 11:03:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,9 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.57 2016/11/03 11:02:09 hannken Exp $");
-
-#define _VFS_VNODE_PRIVATE
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.58 2016/11/03 11:03:31 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -177,7 +175,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.57 2016/11/03 11:02:09 hannken Exp $
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
-#include <sys/vnode.h>
+#include <sys/vnode_impl.h>
 #include <sys/wapbl.h>
 #include <sys/fstrans.h>
 
@@ -186,30 +184,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.57 2016/11/03 11:02:09 hannken Exp $
 
 /* Flags to vrelel. */
 #define	VRELEL_ASYNC_RELE	0x0001	/* Always defer to vrele thread. */
-
-enum vnode_state {
-	VS_MARKER,	/* Stable, used as marker. Will not change. */
-	VS_LOADING,	/* Intermediate, initialising the fs node. */
-	VS_ACTIVE,	/* Stable, valid fs node attached. */
-	VS_BLOCKED,	/* Intermediate, active, no new references allowed. */
-	VS_RECLAIMING,	/* Intermediate, detaching the fs node. */
-	VS_RECLAIMED	/* Stable, no fs node attached. */
-};
-struct vcache_key {
-	struct mount *vk_mount;
-	const void *vk_key;
-	size_t vk_key_len;
-};
-struct vnode_impl {
-	struct vnode vi_vnode;
-	enum vnode_state vi_state;
-	SLIST_ENTRY(vnode_impl) vi_hash;
-	struct vcache_key vi_key;
-};
-typedef struct vnode_impl vnode_impl_t;
-
-#define VIMPL_TO_VNODE(node)	((vnode_t *)(node))
-#define VNODE_TO_VIMPL(vp)	((vnode_impl_t *)(vp))
 
 u_int			numvnodes		__cacheline_aligned;
 
