@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.1 2016/11/03 11:03:31 hannken Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.2 2016/11/03 11:04:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -61,11 +61,11 @@ typedef struct vnode_impl vnode_impl_t;
 /*
  * Vnode manipulation functions.
  */
+const char *
+	vstate_name(enum vnode_state);
 vnode_t *
 	vnalloc_marker(struct mount *);
 void	vnfree_marker(vnode_t *);
 bool	vnis_marker(vnode_t *);
-void	vcache_print(vnode_t *, const char *,
-    void (*)(const char *, ...) __printflike(1, 2));
 
 #endif /* !_SYS_VNODE_IMPL_H_ */

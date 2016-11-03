@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.58 2016/11/03 11:03:31 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.59 2016/11/03 11:04:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.58 2016/11/03 11:03:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.59 2016/11/03 11:04:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -231,28 +231,6 @@ extern int		(**dead_vnodeop_p)(void *);
 extern struct vfsops	dead_vfsops;
 
 /* Vnode state operations and diagnostics. */
-
-static const char *
-vstate_name(enum vnode_state state)
-{
-
-	switch (state) {
-	case VS_MARKER:
-		return "MARKER";
-	case VS_LOADING:
-		return "LOADING";
-	case VS_ACTIVE:
-		return "ACTIVE";
-	case VS_BLOCKED:
-		return "BLOCKED";
-	case VS_RECLAIMING:
-		return "RECLAIMING";
-	case VS_RECLAIMED:
-		return "RECLAIMED";
-	default:
-		return "ILLEGAL";
-	}
-}
 
 #if defined(DIAGNOSTIC)
 
@@ -1574,27 +1552,6 @@ vcache_reclaim(vnode_t *vp)
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
 
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
-}
-
-/*
- * Print a vcache node.
- */
-void
-vcache_print(vnode_t *vp, const char *prefix, void (*pr)(const char *, ...))
-{
-	int n;
-	const uint8_t *cp;
-	vnode_impl_t *node;
-
-	node = VNODE_TO_VIMPL(vp);
-	n = node->vi_key.vk_key_len;
-	cp = node->vi_key.vk_key;
-
-	(*pr)("%sstate %s, key(%d)", prefix, vstate_name(node->vi_state), n);
-
-	while (n-- > 0)
-		(*pr)(" %02x", *cp++);
-	(*pr)("\n");
 }
 
 /*
