@@ -5557,7 +5557,7 @@ ppc_elf_tls_optimize (bfd *obfd ATTRIBUTE_UNUSED,
 /* Return true if we have dynamic relocs that apply to read-only sections.  */
 
 static bfd_boolean
-readonly_dynrelocs (struct elf_link_hash_entry *h)
+readonly_dynrelocs (struct elf_link_hash_entry *h, void *inf, bfd_boolean warn)
 {
   struct elf_dyn_relocs *p;
 
@@ -5568,7 +5568,16 @@ readonly_dynrelocs (struct elf_link_hash_entry *h)
       if (s != NULL
 	  && ((s->flags & (SEC_READONLY | SEC_ALLOC))
 	      == (SEC_READONLY | SEC_ALLOC)))
-	return TRUE;
+	{
+	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
+
+	  if (warn && ((info->warn_shared_textrel && bfd_link_pic (info))
+	      || info->error_textrel))
+	    info->callbacks->einfo (_("%P: %B: warning: relocation against `%s' in readonly section `%A'\n"),
+				    p->sec->owner, h->root.root.string,
+				    p->sec);
+	  return TRUE;
+	}
     }
   return FALSE;
 }
@@ -5642,7 +5651,7 @@ ppc_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 	      && h->type != STT_GNU_IFUNC
 	      && !htab->is_vxworks
 	      && !ppc_elf_hash_entry (h)->has_sda_refs
-	      && !readonly_dynrelocs (h))
+	      && !readonly_dynrelocs (h, info, FALSE))
 	    {
 	      h->pointer_equality_needed = 0;
 	      h->non_got_ref = 0;
@@ -5662,7 +5671,7 @@ ppc_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 		   && h->type != STT_GNU_IFUNC
 		   && !htab->is_vxworks
 		   && !ppc_elf_hash_entry (h)->has_sda_refs
-		   && !readonly_dynrelocs (h))
+		   && !readonly_dynrelocs (h, info, FALSE))
 	    h->non_got_ref = 0;
 	}
       h->protected_def = 0;
@@ -5739,7 +5748,7 @@ ppc_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
       && !ppc_elf_hash_entry (h)->has_sda_refs
       && !htab->is_vxworks
       && !h->def_regular
-      && !readonly_dynrelocs (h))
+      && !readonly_dynrelocs (h, info, FALSE))
     {
       h->non_got_ref = 0;
       return TRUE;
@@ -6249,7 +6258,7 @@ maybe_set_textrel (struct elf_link_hash_entry *h, void *info)
   if (h->root.type == bfd_link_hash_indirect)
     return TRUE;
 
-  if (readonly_dynrelocs (h))
+  if (readonly_dynrelocs (h, info, TRUE))
     {
       ((struct bfd_link_info *) info)->flags |= DF_TEXTREL;
 
