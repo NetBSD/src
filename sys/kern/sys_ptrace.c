@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace.c,v 1.1 2016/11/02 00:11:59 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace.c,v 1.2 2016/11/03 03:57:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.1 2016/11/02 00:11:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.2 2016/11/03 03:57:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -151,8 +151,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.1 2016/11/02 00:11:59 pgoyette Exp 
 
 static int ptrace_copyinpiod(struct ptrace_io_desc *, const void *);
 static void ptrace_copyoutpiod(const struct ptrace_io_desc *, void *);
-static int ptrace_doregs(struct lwp *, struct lwp *, struct uio *);
-static int ptrace_dofpregs(struct lwp *, struct lwp *, struct uio *);
 
 static int
 ptrace_copyinpiod(struct ptrace_io_desc *piod, const void *addr)
@@ -166,88 +164,11 @@ ptrace_copyoutpiod(const struct ptrace_io_desc *piod, void *addr)
 	(void) copyout(piod, addr, sizeof(*piod));
 }
 
-int
-ptrace_doregs(struct lwp *curl /*tracer*/,
-    struct lwp *l /*traced*/,
-    struct uio *uio)
-{
-#if defined(PT_GETREGS) || defined(PT_SETREGS)
-	int error;
-	struct reg r;
-	char *kv;
-	int kl;
-
-	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
-		return EINVAL;
-
-	kl = sizeof(r);
-	kv = (char *)&r;
-
-	kv += uio->uio_offset;
-	kl -= uio->uio_offset;
-	if ((size_t)kl > uio->uio_resid)
-		kl = uio->uio_resid;
-
-	error = process_read_regs(l, &r);
-	if (error == 0)
-		error = uiomove(kv, kl, uio);
-	if (error == 0 && uio->uio_rw == UIO_WRITE) {
-		if (l->l_stat != LSSTOP)
-			error = EBUSY;
-		else
-			error = process_write_regs(l, &r);
-	}
-
-	uio->uio_offset = 0;
-	return error;
-#else
-	return EINVAL;
-#endif
-}
-
-int
-ptrace_dofpregs(struct lwp *curl /*tracer*/,
-    struct lwp *l /*traced*/,
-    struct uio *uio)
-{
-#if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
-	int error;
-	struct fpreg r;
-	char *kv;
-	size_t kl;
-
-	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
-		return EINVAL;
-
-	kl = sizeof(r);
-	kv = (char *)&r;
-
-	kv += uio->uio_offset;
-	kl -= uio->uio_offset;
-	if (kl > uio->uio_resid)
-		kl = uio->uio_resid;
-
-	error = process_read_fpregs(l, &r, &kl);
-	if (error == 0)
-		error = uiomove(kv, kl, uio);
-	if (error == 0 && uio->uio_rw == UIO_WRITE) {
-		if (l->l_stat != LSSTOP)
-			error = EBUSY;
-		else
-			error = process_write_fpregs(l, &r, kl);
-	}
-	uio->uio_offset = 0;
-	return error;
-#else
-	return EINVAL;
-#endif
-}
-
 static struct ptrace_methods native_ptm = {
 	.ptm_copyinpiod = ptrace_copyinpiod,
 	.ptm_copyoutpiod = ptrace_copyoutpiod,
-	.ptm_doregs = ptrace_doregs,
-	.ptm_dofpregs = ptrace_dofpregs,
+	.ptm_doregs = process_doregs,
+	.ptm_dofpregs = process_dofpregs,
 };
 
 static const struct syscall_package ptrace_syscalls[] = {
