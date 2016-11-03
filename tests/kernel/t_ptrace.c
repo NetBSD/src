@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.2 2016/11/02 22:18:04 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.3 2016/11/03 08:48:53 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.2 2016/11/02 22:18:04 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.3 2016/11/03 08:48:53 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -141,7 +141,6 @@ ATF_TC_BODY(traceme1, tc)
 		    sys_errlist[ECHILD], sys_errlist[errno]);
 		ATF_REQUIRE(errno == ECHILD);
 	}
-
 }
 
 ATF_TC(traceme2);
@@ -271,13 +270,121 @@ ATF_TC_BODY(traceme2, tc)
 		    sys_errlist[ECHILD], sys_errlist[errno]);
 		ATF_REQUIRE(errno == ECHILD);
 	}
+}
 
+ATF_TC(traceme3);
+ATF_TC_HEAD(traceme3, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify SIGSTOP followed by termination by a signal in a child");
+}
+
+ATF_TC_BODY(traceme3, tc)
+{
+	int status;
+	const int sigval = SIGSTOP, sigsent = SIGINT /* Without core-dump */;
+	pid_t child, wpid;
+
+	printf("1: Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		/* printf(3) messages from a child aren't intercepted by ATF */
+		/* "2: Child process PID=%d\n", getpid() */
+
+		/* "2: Before calling ptrace(PT_TRACE_ME, ...)\n" */
+		if (ptrace(PT_TRACE_ME, 0, NULL, 0) == -1) {
+			/* XXX: Is it safe to use ATF functions in a child? */
+			err(EXIT_FAILURE, "2: ptrace(2) call failed with "
+			    "status %s", sys_errlist[errno]);
+		}
+
+		/* "2: Before raising SIGSTOP\n" */
+		raise(sigval);
+
+		/* NOTREACHED */
+		errx(EXIT_FAILURE, "2: Child should be terminated here by a "
+		    "signal from parent");
+	} else {
+		printf("1: Parent process PID=%d, child's PID=%d\n", getpid(),
+		    child);
+
+		printf("1: Before calling waitpid() for the child\n");
+		wpid = waitpid(child, &status, 0);
+
+		printf("1: Validating child's PID (expected %d, got %d)\n",
+		    child, wpid);
+		ATF_REQUIRE(child == wpid);
+
+		printf("1: Ensuring that the child has not been exited\n");
+		ATF_REQUIRE(!WIFEXITED(status));
+
+		printf("1: Ensuring that the child has not been continued\n");
+		ATF_REQUIRE(!WIFCONTINUED(status));
+
+		printf("1: Ensuring that the child has not been terminated "
+		    "with a signal\n");
+		ATF_REQUIRE(!WIFSIGNALED(status));
+
+		printf("1: Ensuring that the child has been stopped\n");
+		ATF_REQUIRE(WIFSTOPPED(status));
+
+		printf("1: Verifying that he child has been stopped with the"
+		    " %s signal (received %s)\n", sys_signame[sigval],
+		    sys_signame[WSTOPSIG(status)]);
+		ATF_REQUIRE(WSTOPSIG(status) == sigval);
+
+		printf("1: Before resuming the child process where it left "
+		    "off and with signal %s to be sent\n",
+		    sys_signame[sigsent]);
+		ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent)
+		    != -1);
+
+		printf("1: Before calling waitpid() for the child\n");
+		wpid = waitpid(child, &status, 0);
+
+		printf("1: Validating that child's PID is still there\n");
+		ATF_REQUIRE(wpid == child);
+
+		printf("1: Ensuring that the child has not been exited\n");
+		ATF_REQUIRE(!WIFEXITED(status));
+
+		printf("1: Ensuring that the child has not been continued\n");
+		ATF_REQUIRE(!WIFCONTINUED(status));
+
+		printf("1: Ensuring that the child hast been terminated with "
+		    "a signal\n");
+		ATF_REQUIRE(WIFSIGNALED(status));
+
+		printf("1: Ensuring that the child has not been stopped\n");
+		ATF_REQUIRE(!WIFSTOPPED(status));
+
+		printf("1: Verifying that he child has not core dumped "
+		    "for the %s signal (it is the default behavior)\n",
+		    sys_signame[sigsent]);
+		ATF_REQUIRE(!WCOREDUMP(status));
+
+		printf("1: Verifying that he child has been stopped with the"
+		    " %s signal (received %s)\n", sys_signame[sigsent],
+		    sys_signame[WTERMSIG(status)]);
+		ATF_REQUIRE(WTERMSIG(status) == sigsent);
+
+		printf("1: Before calling waitpid() for the exited child\n");
+		wpid = waitpid(child, &status, 0);
+
+		printf("1: Validating that child's PID no longer exists\n");
+		ATF_REQUIRE(wpid == -1);
+
+		printf("1: Validating that errno is set to %s (got %s)\n",
+		    sys_errlist[ECHILD], sys_errlist[errno]);
+		ATF_REQUIRE(errno == ECHILD);
+	}
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, traceme1);
 	ATF_TP_ADD_TC(tp, traceme2);
+	ATF_TP_ADD_TC(tp, traceme3);
 
 	return atf_no_error();
 }
