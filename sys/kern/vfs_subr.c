@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.449 2016/05/26 11:07:33 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.450 2016/11/03 11:03:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,15 +68,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.449 2016/05/26 11:07:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.450 2016/11/03 11:03:31 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #endif
-
-#define _VFS_VNODE_PRIVATE	/* for vcache_print(). */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.449 2016/05/26 11:07:33 hannken Exp $
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
+#include <sys/vnode_impl.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/namei.h>
