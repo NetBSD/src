@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sysio,v 1.3 2016/11/03 06:28:04 pgoyette Exp $
+#	$NetBSD: Makefile.sysio,v 1.4 2016/11/03 06:54:08 pgoyette Exp $
 
 # Sources for syscall and ioctl compatibility across the versions.
 
@@ -11,8 +11,8 @@ SRCS+=	kern_exit_43.c kern_info_43.c kern_resource_43.c kern_sig_43.c \
 # a pointer to a no-op compat_cvtcmd() and that pointer would get
 # replaced by compat_mnodcmd(MODULE_CMD_INIT, ...) code.  But for now,
 # just don't include it in the compat module at all.
-
-SRCS+=	if_43.c
+#
+#SRCS+=	if_43.c
 #
 
 # Compatibility code for NetBSD 0.9
