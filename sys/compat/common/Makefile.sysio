@@ -1,10 +1,20 @@
-#	$NetBSD: Makefile.sysio,v 1.1 2016/11/03 04:26:58 riastradh Exp $
+#	$NetBSD: Makefile.sysio,v 1.2 2016/11/03 06:22:29 pgoyette Exp $
 
 # Sources for syscall and ioctl compatibility across the versions.
 
 # Compatibility code for 4.3BSD
 SRCS+=	kern_exit_43.c kern_info_43.c kern_resource_43.c kern_sig_43.c \
-	tty_43.c uipc_syscalls_43.c vfs_syscalls_43.c vm_43.c if_43.c
+	tty_43.c uipc_syscalls_43.c vfs_syscalls_43.c vm_43.c
+
+/*
+ * if_43.o gets included from libcompat automatically, due to two calls
+ * to compat_cvtcmd() in if.c.  Ideally, if.c would be modified to have
+ * a pointer to a no-op compat_cvtcmd() and that pointer would get
+ * replaced by compat_mnodcmd(MODULE_CMD_INIT, ...) code.  But for now,
+ * just don't include it in the compat module at all.
+
+SRCS+=	if_43.c
+ */
 
 # Compatibility code for NetBSD 0.9
 SRCS+=	kern_info_09.c
