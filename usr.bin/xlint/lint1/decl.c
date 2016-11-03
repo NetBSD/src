@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.65 2016/08/23 16:42:55 christos Exp $ */
+/* $NetBSD: decl.c,v 1.66 2016/11/03 22:08:30 kamil Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.65 2016/08/23 16:42:55 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.66 2016/11/03 22:08:30 kamil Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2035,7 +2035,7 @@ isredec(sym_t *dsym, int *dowarn)
 		return(0);
 	if (rsym->s_scl == EXTERN && rsym->s_def == DEF) {
 		/*
-		 * All cases except "int a = 1; static int a;" are catched
+		 * All cases except "int a = 1; static int a;" are caught
 		 * above with or without a warning
 		 */
 		/* redeclaration of %s */
