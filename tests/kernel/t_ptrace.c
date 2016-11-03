@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.6 2016/11/03 18:54:16 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.7 2016/11/03 20:24:18 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.6 2016/11/03 18:54:16 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.7 2016/11/03 20:24:18 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,6 +44,31 @@ __RCSID("$NetBSD: t_ptrace.c,v 1.6 2016/11/03 18:54:16 kamil Exp $");
 
 #include "../h_macros.h"
 
+/*
+ * A child process cannot call atf functions and expect them to magically
+ * work like in the parent.
+ * The printf(3) messaging from a child will not work out of the box as well
+ * without estabilishing a communication protocol with its parent. To not
+ * overcomplicate the tests - do not log from a child and use err(3)/errx(3)
+ * wrapped with FORKEE_ASSERT()/FORKEE_ASSERTX() as that is guaranteed to work.
+ */
+#define FORKEE_ASSERTX(x)							\
+do {										\
+	int ret = (x);								\
+	if (!ret)								\
+		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",	\
+		     __FILE__, __LINE__, __func__, #x);				\
+} while (0)
+
+#define FORKEE_ASSERT(x)							\
+do {										\
+	int ret = (x);								\
+	if (!ret)								\
+		err(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",	\
+		     __FILE__, __LINE__, __func__, #x);				\
+} while (0)
+
+
 ATF_TC(traceme1);
 ATF_TC_HEAD(traceme1, tc)
 {
@@ -58,85 +83,75 @@ ATF_TC_BODY(traceme1, tc)
 	const int sigval = SIGSTOP;
 	pid_t child, wpid;
 
-	printf("1: Before forking process PID=%d\n", getpid());
+	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		/* printf(3) messages from a child aren't intercepted by ATF */
-		/* "2: Child process PID=%d\n", getpid() */
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		/* "2: Before calling ptrace(PT_TRACE_ME, ...)\n" */
-		if (ptrace(PT_TRACE_ME, 0, NULL, 0) == -1) {
-			/* XXX: Is it safe to use ATF functions in a child? */
-			err(EXIT_FAILURE, "2: ptrace(2) call failed");
-		}
+		FORKEE_ASSERT(raise(sigval) == 0);
 
-		/* "2: Before raising SIGSTOP\n" */
-		raise(sigval);
-
-		/* "2: Before calling _exit(%d)\n", exitval */
 		_exit(exitval);
 	}
-	printf("1: Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("1: Before calling waitpid() for the child\n");
+	printf("Before calling waitpid() for the child\n");
 	wpid = waitpid(child, &status, 0);
 
-	printf("1: Validating child's PID (expected %d, got %d)\n", child,
-	    wpid);
+	printf("Validating child's PID (expected %d, got %d)\n", child, wpid);
 	ATF_REQUIRE(child == wpid);
 
-	printf("1: Ensuring that the child has not been exited\n");
+	printf("Ensuring that the child has not been exited\n");
 	ATF_REQUIRE(!WIFEXITED(status));
 
-	printf("1: Ensuring that the child has not been continued\n");
+	printf("Ensuring that the child has not been continued\n");
 	ATF_REQUIRE(!WIFCONTINUED(status));
 
-	printf("1: Ensuring that the child has not been terminated with a "
+	printf("Ensuring that the child has not been terminated with a "
 	    "signal\n");
 	ATF_REQUIRE(!WIFSIGNALED(status));
 
-	printf("1: Ensuring that the child has been stopped\n");
+	printf("Ensuring that the child has been stopped\n");
 	ATF_REQUIRE(WIFSTOPPED(status));
 
-	printf("1: Verifying that he child has been stopped with the %s "
-	    "signal (received %s)\n", sys_signame[sigval],
+	printf("Verifying that he child has been stopped with the %s signal "
+	    "(received %s)\n", sys_signame[sigval],
 	    sys_signame[WSTOPSIG(status)]);
 	ATF_REQUIRE(WSTOPSIG(status) == sigval);
 
-	printf("1: Before resuming the child process where it left off and "
+	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("1: Before calling waitpid() for the child\n");
+	printf("Before calling waitpid() for the child\n");
 	wpid = waitpid(child, &status, 0);
 
-	printf("1: Validating that child's PID is still there\n");
+	printf("Validating that child's PID is still there\n");
 	ATF_REQUIRE(wpid == child);
 
-	printf("1: Ensuring that the child has been exited\n");
+	printf("Ensuring that the child has been exited\n");
 	ATF_REQUIRE(WIFEXITED(status));
 
-	printf("1: Ensuring that the child has not been continued\n");
+	printf("Ensuring that the child has not been continued\n");
 	ATF_REQUIRE(!WIFCONTINUED(status));
 
-	printf("1: Ensuring that the child has not been terminated with a "
+	printf("Ensuring that the child has not been terminated with a "
 	    "signal\n");
 	ATF_REQUIRE(!WIFSIGNALED(status));
 
-	printf("1: Ensuring that the child has not been stopped\n");
+	printf("Ensuring that the child has not been stopped\n");
 	ATF_REQUIRE(!WIFSTOPPED(status));
 
-	printf("1: Verifying that he child has exited with the %d status "
+	printf("Verifying that he child has exited with the %d status "
 	    "(received %d)\n", exitval, WEXITSTATUS(status));
 	ATF_REQUIRE(WEXITSTATUS(status) == exitval);
 
-	printf("1: Before calling waitpid() for the exited child\n");
+	printf("Before calling waitpid() for the exited child\n");
 	wpid = waitpid(child, &status, 0);
 
-	printf("1: Validating that child's PID no longer exists\n");
+	printf("Validating that child's PID no longer exists\n");
 	ATF_REQUIRE(wpid == -1);
 
-	printf("1: Validating that errno is set to %s (got %s)\n",
+	printf("Validating that errno is set to %s (got %s)\n",
 	    strerror(ECHILD), strerror(errno));
 	ATF_REQUIRE(errno == ECHILD);
 }
@@ -148,16 +163,14 @@ ATF_TC_HEAD(traceme2, tc)
 	    "Verify SIGSTOP followed by _exit(2) in a child");
 }
 
-static int traceme2_catched = 0;
+static int traceme2_caught = 0;
 
 static void
 traceme2_sighandler(int sig)
 {
-	if (sig != SIGINT)
-		errx(EXIT_FAILURE, "sighandler: Unexpected signal received: "
-		    "%s, expected SIGINT", sys_signame[sig]);
+	FORKEE_ASSERTX(sig == SIGINT);
 
-	++traceme2_catched;
+	++traceme2_caught;
 }
 
 ATF_TC_BODY(traceme2, tc)
@@ -168,98 +181,83 @@ ATF_TC_BODY(traceme2, tc)
 	pid_t child, wpid;
 	struct sigaction sa;
 
-	printf("1: Before forking process PID=%d\n", getpid());
+	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		/* printf(3) messages from a child aren't intercepted by ATF */
-		/* "2: Child process PID=%d\n", getpid() */
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		/* "2: Before calling ptrace(PT_TRACE_ME, ...)\n" */
-		if (ptrace(PT_TRACE_ME, 0, NULL, 0) == -1) {
-			/* XXX: Is it safe to use ATF functions in a child? */
-			err(EXIT_FAILURE, "2: ptrace(2) call failed");
-		}
-
-		/* "2: Setup sigaction(2) in the child" */
 		sa.sa_handler = traceme2_sighandler;
 		sa.sa_flags = SA_SIGINFO;
 		sigemptyset(&sa.sa_mask);
 
-		if (sigaction(sigsent, &sa, NULL) == -1)
-			err(EXIT_FAILURE, "2: sigaction(2) call failed");
+		FORKEE_ASSERT(sigaction(sigsent, &sa, NULL) != -1);
 
-		/* "2: Before raising SIGSTOP\n" */
-		raise(sigval);
+		FORKEE_ASSERT(raise(sigval) == 0);
 
-		if (traceme2_catched != 1)
-			errx(EXIT_FAILURE, "2: signal handler not called? "
-			    "traceme2_catched (equal to %d) != 1",
-			    traceme2_catched);
+		FORKEE_ASSERTX(traceme2_caught == 1);
 
-		/* "2: Before calling _exit(%d)\n", exitval */
 		_exit(exitval);
 	}
-	printf("1: Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("1: Before calling waitpid() for the child\n");
+	printf("Before calling waitpid() for the child\n");
 	wpid = waitpid(child, &status, 0);
 
-	printf("1: Validating child's PID (expected %d, got %d)\n", child,
-	    wpid);
+	printf("Validating child's PID (expected %d, got %d)\n", child, wpid);
 	ATF_REQUIRE(child == wpid);
 
-	printf("1: Ensuring that the child has not been exited\n");
+	printf("Ensuring that the child has not been exited\n");
 	ATF_REQUIRE(!WIFEXITED(status));
 
-	printf("1: Ensuring that the child has not been continued\n");
+	printf("Ensuring that the child has not been continued\n");
 	ATF_REQUIRE(!WIFCONTINUED(status));
 
-	printf("1: Ensuring that the child has not been terminated with a "
+	printf("Ensuring that the child has not been terminated with a "
 	    "signal\n");
 	ATF_REQUIRE(!WIFSIGNALED(status));
 
-	printf("1: Ensuring that the child has been stopped\n");
+	printf("Ensuring that the child has been stopped\n");
 	ATF_REQUIRE(WIFSTOPPED(status));
 
-	printf("1: Verifying that he child has been stopped with the %s "
-	    "signal (received %s)\n", sys_signame[sigval],
+	printf("Verifying that he child has been stopped with the %s signal "
+	    "(received %s)\n", sys_signame[sigval],
 	    sys_signame[WSTOPSIG(status)]);
 	ATF_REQUIRE(WSTOPSIG(status) == sigval);
 
-	printf("1: Before resuming the child process where it left off and "
-	    "with signal %s to be sent\n", sys_signame[sigsent]);
+	printf("Before resuming the child process where it left off and with "
+	    "signal %s to be sent\n", sys_signame[sigsent]);
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
 
-	printf("1: Before calling waitpid() for the child\n");
+	printf("Before calling waitpid() for the child\n");
 	wpid = waitpid(child, &status, 0);
 
-	printf("1: Validating that child's PID is still there\n");
+	printf("Validating that child's PID is still there\n");
 	ATF_REQUIRE(wpid == child);
 
-	printf("1: Ensuring that the child has been exited\n");
+	printf("Ensuring that the child has been exited\n");
 	ATF_REQUIRE(WIFEXITED(status));
 
-	printf("1: Ensuring that the child has not been continued\n");
+	printf("Ensuring that the child has not been continued\n");
 	ATF_REQUIRE(!WIFCONTINUED(status));
 
-	printf("1: Ensuring that the child has not been terminated with a "
+	printf("Ensuring that the child has not been terminated with a "
 	    "signal\n");
 	ATF_REQUIRE(!WIFSIGNALED(status));
 
-	printf("1: Ensuring that the child has not been stopped\n");
+	printf("Ensuring that the child has not been stopped\n");
 	ATF_REQUIRE(!WIFSTOPPED(status));
 
-	printf("1: Verifying that he child has exited with the %d status "
+	printf("Verifying that he child has exited with the %d status "
 	    "(received %d)\n", exitval, WEXITSTATUS(status));
 	ATF_REQUIRE(WEXITSTATUS(status) == exitval);
 
-	printf("1: Before calling waitpid() for the exited child\n");
+	printf("Before calling waitpid() for the exited child\n");
 	wpid = waitpid(child, &status, 0);
 
-	printf("1: Validating that child's PID no longer exists\n");
+	printf("Validating that child's PID no longer exists\n");
 	ATF_REQUIRE(wpid == -1);
 
-	printf("1: Validating that errno is set to %s (got %s)\n",
+	printf("Validating that errno is set to %s (got %s)\n",
 	    strerror(ECHILD), strerror(errno));
 	ATF_REQUIRE(errno == ECHILD);
 }
@@ -277,92 +275,82 @@ ATF_TC_BODY(traceme3, tc)
 	const int sigval = SIGSTOP, sigsent = SIGINT /* Without core-dump */;
 	pid_t child, wpid;
 
-	printf("1: Before forking process PID=%d\n", getpid());
+	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		/* printf(3) messages from a child aren't intercepted by ATF */
-		/* "2: Child process PID=%d\n", getpid() */
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		/* "2: Before calling ptrace(PT_TRACE_ME, ...)\n" */
-		if (ptrace(PT_TRACE_ME, 0, NULL, 0) == -1) {
-			/* XXX: Is it safe to use ATF functions in a child? */
-			err(EXIT_FAILURE, "2: ptrace(2) call failed");
-		}
-
-		/* "2: Before raising SIGSTOP\n" */
-		raise(sigval);
+		FORKEE_ASSERT(raise(sigval) == 0);
 
 		/* NOTREACHED */
-		errx(EXIT_FAILURE, "2: Child should be terminated here by a "
-		    "signal from parent");
+		FORKEE_ASSERTX(0 &&
+		    "Child should be terminated by a signal from its parent");
 	}
-	printf("1: Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("1: Before calling waitpid() for the child\n");
+	printf("Before calling waitpid() for the child\n");
 	wpid = waitpid(child, &status, 0);
 
-	printf("1: Validating child's PID (expected %d, got %d)\n", child,
-	    wpid);
+	printf("Validating child's PID (expected %d, got %d)\n", child, wpid);
 	ATF_REQUIRE(child == wpid);
 
-	printf("1: Ensuring that the child has not been exited\n");
+	printf("Ensuring that the child has not been exited\n");
 	ATF_REQUIRE(!WIFEXITED(status));
 
-	printf("1: Ensuring that the child has not been continued\n");
+	printf("Ensuring that the child has not been continued\n");
 	ATF_REQUIRE(!WIFCONTINUED(status));
 
-	printf("1: Ensuring that the child has not been terminated with a "
+	printf("Ensuring that the child has not been terminated with a "
 	    "signal\n");
 	ATF_REQUIRE(!WIFSIGNALED(status));
 
-	printf("1: Ensuring that the child has been stopped\n");
+	printf("Ensuring that the child has been stopped\n");
 	ATF_REQUIRE(WIFSTOPPED(status));
 
-	printf("1: Verifying that he child has been stopped with the %s "
-	    "signal (received %s)\n", sys_signame[sigval],
+	printf("Verifying that he child has been stopped with the %s signal "
+	    "(received %s)\n", sys_signame[sigval],
 	    sys_signame[WSTOPSIG(status)]);
 	ATF_REQUIRE(WSTOPSIG(status) == sigval);
 
-	printf("1: Before resuming the child process where it left off and "
-	    "with signal %s to be sent\n", sys_signame[sigsent]);
+	printf("Before resuming the child process where it left off and with "
+	    "signal %s to be sent\n", sys_signame[sigsent]);
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
 
-	printf("1: Before calling waitpid() for the child\n");
+	printf("Before calling waitpid() for the child\n");
 	wpid = waitpid(child, &status, 0);
 
-	printf("1: Validating that child's PID is still there\n");
+	printf("Validating that child's PID is still there\n");
 	ATF_REQUIRE(wpid == child);
 
-	printf("1: Ensuring that the child has not been exited\n");
+	printf("Ensuring that the child has not been exited\n");
 	ATF_REQUIRE(!WIFEXITED(status));
 
-	printf("1: Ensuring that the child has not been continued\n");
+	printf("Ensuring that the child has not been continued\n");
 	ATF_REQUIRE(!WIFCONTINUED(status));
 
-	printf("1: Ensuring that the child hast been terminated with a "
+	printf("Ensuring that the child hast been terminated with a "
 	    "signal\n");
 	ATF_REQUIRE(WIFSIGNALED(status));
 
-	printf("1: Ensuring that the child has not been stopped\n");
+	printf("Ensuring that the child has not been stopped\n");
 	ATF_REQUIRE(!WIFSTOPPED(status));
 
-	printf("1: Verifying that he child has not core dumped for the %s "
-	    "signal (it is the default behavior)\n",
-	    sys_signame[sigsent]);
+	printf("Verifying that he child has not core dumped for the %s signal "
+	    "(it is the default behavior)\n", sys_signame[sigsent]);
 	ATF_REQUIRE(!WCOREDUMP(status));
 
-	printf("1: Verifying that he child has been stopped with the %s "
+	printf("Verifying that he child has been stopped with the %s "
 	    "signal (received %s)\n", sys_signame[sigsent],
 	    sys_signame[WTERMSIG(status)]);
 	ATF_REQUIRE(WTERMSIG(status) == sigsent);
 
-	printf("1: Before calling waitpid() for the exited child\n");
+	printf("Before calling waitpid() for the exited child\n");
 	wpid = waitpid(child, &status, 0);
 
-	printf("1: Validating that child's PID no longer exists\n");
+	printf("Validating that child's PID no longer exists\n");
 	ATF_REQUIRE(wpid == -1);
 
-	printf("1: Validating that errno is set to %s (got %s)\n",
+	printf("Validating that errno is set to %s (got %s)\n",
 	    strerror(ECHILD), strerror(errno));
 	ATF_REQUIRE(errno == ECHILD);
 }
@@ -387,111 +375,100 @@ ATF_TC_BODY(traceme4, tc)
 	 * ultimate standard to verify it. */
 	atf_tc_expect_fail("PR kern/51596");
 
-	printf("1: Before forking process PID=%d\n", getpid());
+	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		/* printf(3) messages from a child aren't intercepted by ATF */
-		/* "2: Child process PID=%d\n", getpid() */
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		/* "2: Before calling ptrace(PT_TRACE_ME, ...)\n" */
-		if (ptrace(PT_TRACE_ME, 0, NULL, 0) == -1) {
-			/* XXX: Is it safe to use ATF functions in a child? */
-			err(EXIT_FAILURE, "2: ptrace(2) call failed");
-		}
+		FORKEE_ASSERT(raise(sigval) == 0);
 
-		/* "2: Before raising SIGSTOP\n" */
-		raise(sigval);
+		FORKEE_ASSERT(raise(sigsent) == 0);
 
-		/* "2: Before raising SIGCONT\n" */
-		raise(sigsent);
-
-		/* "2: Before calling _exit(%d)\n", exitval */
 		_exit(exitval);
 	}
-	printf("1: Parent process PID=%d, child's PID=%d\n", getpid(),child);
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(),child);
 
-	printf("1: Before calling waitpid() for the child\n");
+	printf("Before calling waitpid() for the child\n");
 	wpid = waitpid(child, &status, 0);
 
-	printf("1: Validating child's PID (expected %d, got %d)\n", child,
-	    wpid);
+	printf("Validating child's PID (expected %d, got %d)\n", child, wpid);
 	ATF_REQUIRE(child == wpid);
 
-	printf("1: Ensuring that the child has not been exited\n");
+	printf("Ensuring that the child has not been exited\n");
 	ATF_REQUIRE(!WIFEXITED(status));
 
-	printf("1: Ensuring that the child has not been continued\n");
+	printf("Ensuring that the child has not been continued\n");
 	ATF_REQUIRE(!WIFCONTINUED(status));
 
-	printf("1: Ensuring that the child has not been terminated with a "
+	printf("Ensuring that the child has not been terminated with a "
 	    "signal\n");
 	ATF_REQUIRE(!WIFSIGNALED(status));
 
-	printf("1: Ensuring that the child has been stopped\n");
+	printf("Ensuring that the child has been stopped\n");
 	ATF_REQUIRE(WIFSTOPPED(status));
 
-	printf("1: Verifying that he child has been stopped with the %s "
-	    "signal (received %s)\n", sys_signame[sigval],
+	printf("Verifying that he child has been stopped with the %s signal "
+	    "(received %s)\n", sys_signame[sigval],
 	    sys_signame[WSTOPSIG(status)]);
 	ATF_REQUIRE(WSTOPSIG(status) == sigval);
 
-	printf("1: Before resuming the child process where it left off and "
+	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("1: Before calling waitpid() for the child\n");
+	printf("Before calling waitpid() for the child\n");
 	wpid = waitpid(child, &status, WALLSIG);
 
-	printf("1: Validating that child's PID is still there\n");
+	printf("Validating that child's PID is still there\n");
 	ATF_REQUIRE(wpid == child);
 
-	printf("1: Ensuring that the child has not been exited\n");
+	printf("Ensuring that the child has not been exited\n");
 	ATF_REQUIRE(!WIFEXITED(status));
 
-	printf("1: Ensuring that the child has not been continued\n");
+	printf("Ensuring that the child has not been continued\n");
 	ATF_REQUIRE(!WIFCONTINUED(status));
 
-	printf("1: Ensuring that the child has not been terminated with a "
+	printf("Ensuring that the child has not been terminated with a "
 	    "signal\n");
 	ATF_REQUIRE(!WIFSIGNALED(status));
 
-	printf("1: Ensuring that the child has not been stopped\n");
+	printf("Ensuring that the child has not been stopped\n");
 	ATF_REQUIRE(WIFSTOPPED(status));
 
-	printf("1: Before resuming the child process where it left off and "
+	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("1: Before calling waitpid() for the child\n");
+	printf("Before calling waitpid() for the child\n");
 	wpid = waitpid(child, &status, 0);
 
-	printf("1: Validating that child's PID is still there\n");
+	printf("Validating that child's PID is still there\n");
 	ATF_REQUIRE(wpid == child);
 
-	printf("1: Ensuring that the child has been exited\n");
+	printf("Ensuring that the child has been exited\n");
 	ATF_REQUIRE(WIFEXITED(status));
 
-	printf("1: Ensuring that the child has not been continued\n");
+	printf("Ensuring that the child has not been continued\n");
 	ATF_REQUIRE(!WIFCONTINUED(status));
 
-	printf("1: Ensuring that the child has not been terminated with a "
+	printf("Ensuring that the child has not been terminated with a "
 	    "signal\n");
 	ATF_REQUIRE(!WIFSIGNALED(status));
 
-	printf("1: Ensuring that the child has not been stopped\n");
+	printf("Ensuring that the child has not been stopped\n");
 	ATF_REQUIRE(!WIFSTOPPED(status));
 
-	printf("1: Verifying that he child has exited with the %d status "
+	printf("Verifying that he child has exited with the %d status "
 	    "(received %d)\n", exitval, WEXITSTATUS(status));
 	ATF_REQUIRE(WEXITSTATUS(status) == exitval);
 
-	printf("1: Before calling waitpid() for the exited child\n");
+	printf("Before calling waitpid() for the exited child\n");
 	wpid = waitpid(child, &status, 0);
 
-	printf("1: Validating that child's PID no longer exists\n");
+	printf("Validating that child's PID no longer exists\n");
 	ATF_REQUIRE(wpid == -1);
 
-	printf("1: Validating that errno is set to %s (got %s)\n",
+	printf("Validating that errno is set to %s (got %s)\n",
 	    strerror(ECHILD), strerror(errno));
 	ATF_REQUIRE(errno == ECHILD);
 }
