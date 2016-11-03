@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.4 2016/11/03 11:20:45 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.5 2016/11/03 18:25:54 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.4 2016/11/03 11:20:45 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.5 2016/11/03 18:25:54 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -395,6 +395,12 @@ ATF_TC_BODY(traceme4, tc)
 	const int sigval = SIGSTOP, sigsent = SIGCONT;
 	pid_t child, wpid;
 
+	/* XXX: Linux&FreeBSD and NetBSD have different behavior here.
+	 * Assume that they are right and NetBSD is wrong.
+	 * The ptrace(2) interface is out of POSIX scope so there is no
+	 * ultimate standard to verify it. */
+	atf_tc_expect_fail("PR kern/51596");
+
 	printf("1: Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -459,11 +465,8 @@ ATF_TC_BODY(traceme4, tc)
 		printf("1: Ensuring that the child has not been exited\n");
 		ATF_REQUIRE(!WIFEXITED(status));
 
-		/* XXX: Linux and NetBSD behavior differ here, is it a bug or
-		 * a valid result? ptrace(2) is out of POSIX scope so there is
-		 * no standard to verify it. */
-		printf("1: Ensuring that the child has been continued\n");
-		ATF_REQUIRE(WIFCONTINUED(status));
+		printf("1: Ensuring that the child has not been continued\n");
+		ATF_REQUIRE(!WIFCONTINUED(status));
 
 		printf("1: Ensuring that the child has not been terminated "
 		    "with a signal\n");
