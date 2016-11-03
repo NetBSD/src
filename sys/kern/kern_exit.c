@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.260 2016/09/23 14:16:44 skrll Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.261 2016/11/03 20:58:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.260 2016/09/23 14:16:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.261 2016/11/03 20:58:25 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -684,9 +684,9 @@ do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
 			proc_free(child, wru);
 		}
 	} else {
-		/* Child state must have been SSTOP. */
-		*status = child->p_xsig == SIGCONT ? W_CONTCODE() :
-		    W_STOPCODE(child->p_xsig);
+		/* Don't mark SIGCONT if we are being stopped */
+		*status = (child->p_xsig == SIGCONT && child->p_stat != SSTOP) ?
+		    W_CONTCODE() : W_STOPCODE(child->p_xsig);
 		mutex_exit(proc_lock);
 	}
 	return 0;
