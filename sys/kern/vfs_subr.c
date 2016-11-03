@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.450 2016/11/03 11:03:31 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.451 2016/11/03 11:04:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.450 2016/11/03 11:03:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.451 2016/11/03 11:04:21 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1056,13 +1056,78 @@ vattr_null(struct vattr *vap)
 	vap->va_bytes = VNOVAL;
 }
 
+/*
+ * Vnode state to string.
+ */
+const char *
+vstate_name(enum vnode_state state)
+{
+
+	switch (state) {
+	case VS_MARKER:
+		return "MARKER";
+	case VS_LOADING:
+		return "LOADING";
+	case VS_ACTIVE:
+		return "ACTIVE";
+	case VS_BLOCKED:
+		return "BLOCKED";
+	case VS_RECLAIMING:
+		return "RECLAIMING";
+	case VS_RECLAIMED:
+		return "RECLAIMED";
+	default:
+		return "ILLEGAL";
+	}
+}
+
+/*
+ * Print a description of a vnode (common part).
+ */
+static void
+vprint_common(struct vnode *vp, const char *prefix,
+    void (*pr)(const char *, ...) __printflike(1, 2))
+{
+	int n;
+	char bf[96];
+	const uint8_t *cp;
+	vnode_impl_t *node;
+	const char * const vnode_tags[] = { VNODE_TAGS };
+	const char * const vnode_types[] = { VNODE_TYPES };
+	const char vnode_flagbits[] = VNODE_FLAGBITS;
+
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 #define ARRAY_PRINT(idx, arr) \
     ((unsigned int)(idx) < ARRAY_SIZE(arr) ? (arr)[(idx)] : "UNKNOWN")
 
-const char * const vnode_tags[] = { VNODE_TAGS };
-const char * const vnode_types[] = { VNODE_TYPES };
-const char vnode_flagbits[] = VNODE_FLAGBITS;
+	node = VNODE_TO_VIMPL(vp);
+
+	snprintb(bf, sizeof(bf),
+	    vnode_flagbits, vp->v_iflag | vp->v_vflag | vp->v_uflag);
+
+	(*pr)("vnode %p flags %s\n", vp, bf);
+	(*pr)("%stag %s(%d) type %s(%d) mount %p typedata %p\n", prefix,
+	    ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
+	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
+	    vp->v_mount, vp->v_mountedhere);
+	(*pr)("%susecount %d writecount %d holdcount %d\n", prefix,
+	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
+	(*pr)("%ssize %" PRIx64 " writesize %" PRIx64 " numoutput %d\n",
+	    prefix, vp->v_size, vp->v_writesize, vp->v_numoutput);
+	(*pr)("%sfreelisthd %p data %p lock %p\n", prefix,
+	    vp->v_freelisthd, vp->v_data, &vp->v_lock);
+
+	(*pr)("%sstate %s key(%p %zd)", prefix, vstate_name(node->vi_state),
+	    node->vi_key.vk_mount, node->vi_key.vk_key_len);
+	n = node->vi_key.vk_key_len;
+	cp = node->vi_key.vk_key;
+	while (n-- > 0)
+		(*pr)(" %02x", *cp++);
+	(*pr)("\n");
+
+#undef ARRAY_PRINT
+#undef ARRAY_SIZE
+}
 
 /*
  * Print out a description of a vnode.
@@ -1070,22 +1135,10 @@ const char vnode_flagbits[] = VNODE_FLAGBITS;
 void
 vprint(const char *label, struct vnode *vp)
 {
-	char bf[96];
-	int flag;
-
-	flag = vp->v_iflag | vp->v_vflag | vp->v_uflag;
-	snprintb(bf, sizeof(bf), vnode_flagbits, flag);
 
 	if (label != NULL)
 		printf("%s: ", label);
-	printf("vnode @ %p, flags (%s)\n\ttag %s(%d), type %s(%d), "
-	    "usecount %d, writecount %d, holdcount %d\n"
-	    "\tfreelisthd %p, mount %p, data %p lock %p\n",
-	    vp, bf, ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
-	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
-	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt,
-	    vp->v_freelisthd, vp->v_mount, vp->v_data, &vp->v_lock);
-	vcache_print(vp, "\t", printf);
+	vprint_common(vp, "\t", printf);
 	if (vp->v_data != NULL) {
 		printf("\t");
 		VOP_PRINT(vp);
@@ -1463,27 +1516,10 @@ vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
 void
 vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 {
-	char bf[256];
 
 	uvm_object_printit(&vp->v_uobj, full, pr);
-	snprintb(bf, sizeof(bf),
-	    vnode_flagbits, vp->v_iflag | vp->v_vflag | vp->v_uflag);
-	(*pr)("\nVNODE flags %s\n", bf);
-	(*pr)("mp %p numoutput %d size 0x%llx writesize 0x%llx\n",
-	      vp->v_mount, vp->v_numoutput, vp->v_size, vp->v_writesize);
-
-	(*pr)("data %p writecount %ld holdcnt %ld\n",
-	      vp->v_data, vp->v_writecount, vp->v_holdcnt);
-
-	(*pr)("tag %s(%d) type %s(%d) mount %p typedata %p\n",
-	      ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
-	      ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
-	      vp->v_mount, vp->v_mountedhere);
-
-	(*pr)("v_lock %p\n", &vp->v_lock);
-
-	vcache_print(vp, "", pr);
-
+	(*pr)("\n");
+	vprint_common(vp, "", printf);
 	if (full) {
 		struct buf *bp;
 
