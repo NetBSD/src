@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.7 2016/11/03 20:24:18 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.8 2016/11/04 09:08:11 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.7 2016/11/03 20:24:18 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.8 2016/11/04 09:08:11 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -368,12 +368,6 @@ ATF_TC_BODY(traceme4, tc)
 	const int exitval = 5;
 	const int sigval = SIGSTOP, sigsent = SIGCONT;
 	pid_t child, wpid;
-
-	/* XXX: Linux&FreeBSD and NetBSD have different behavior here.
-	 * Assume that they are right and NetBSD is wrong.
-	 * The ptrace(2) interface is out of POSIX scope so there is no
-	 * ultimate standard to verify it. */
-	atf_tc_expect_fail("PR kern/51596");
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
