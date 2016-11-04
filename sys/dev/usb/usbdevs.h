@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.714 2016/10/31 04:16:29 nonaka Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.715 2016/11/04 20:40:11 mlelstv Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.722 2016/10/31 04:15:22 nonaka Exp
+ *	NetBSD: usbdevs,v 1.723 2016/11/04 20:39:33 mlelstv Exp
  */
 
 /*
@@ -656,6 +656,7 @@
 #define	USB_PRODUCT_ABOCOM_UFE2000	0x420a		/* UFE2000 USB2.0 Fast Ethernet Adapter */
 #define	USB_PRODUCT_ABOCOM_WL54	0x6001		/* WL54 */
 #define	USB_PRODUCT_ABOCOM_RTL8192CU	0x8178		/* RTL8192CU */
+#define	USB_PRODUCT_ABOCOM_RTL8188EU	0x8179		/* RTL8188EU */
 #define	USB_PRODUCT_ABOCOM_RTL8188CU_1	0x8188		/* RTL8188CU */
 #define	USB_PRODUCT_ABOCOM_RTL8188CU_2	0x8189		/* RTL8188CU */
 #define	USB_PRODUCT_ABOCOM_XX10	0xabc1		/* XX10 */
