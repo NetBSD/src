@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.47 2016/10/20 17:41:34 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.48 2016/11/04 19:41:53 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -225,12 +225,16 @@ typedef long		int_fast64_t;
 # endif
 #endif
 
-#ifndef SCNdFAST64
+#ifndef PRIdFAST64
 # if INT_FAST64_MAX == LLONG_MAX
-#  define SCNdFAST64 "lld"
+#  define PRIdFAST64 "lld"
 # else
-#  define SCNdFAST64 "ld"
+#  define PRIdFAST64 "ld"
 # endif
+#endif
+
+#ifndef SCNdFAST64
+# define SCNdFAST64 PRIdFAST64
 #endif
 
 #ifndef INT_FAST32_MAX
@@ -332,6 +336,13 @@ typedef unsigned long uintmax_t;
 ** Workarounds for compilers/systems.
 */
 
+#ifndef EPOCH_LOCAL
+# define EPOCH_LOCAL 0
+#endif
+#ifndef EPOCH_OFFSET
+# define EPOCH_OFFSET 0
+#endif
+
 /*
 ** Compile with -Dtime_tz=T to build the tz package with a private
 ** time_t type equivalent to T rather than the system-supplied time_t.
@@ -339,7 +350,7 @@ typedef unsigned long uintmax_t;
 ** (e.g., time_t wider than 'long', or unsigned time_t) even on
 ** typical platforms.
 */
-#ifdef time_tz
+#if defined time_tz || EPOCH_LOCAL || EPOCH_OFFSET != 0
 # ifdef LOCALTIME_IMPLEMENTATION
 static time_t sys_time(time_t *x) { return time(x); }
 # endif
@@ -527,9 +538,28 @@ time_t time2posix_z(timezone_t __restrict, time_t) ATTRIBUTE_PURE;
   ((t) (TYPE_SIGNED(t) ? - TWOS_COMPLEMENT(t) - MAXVAL(t, b) : 0))
 
 #ifdef LOCALTIME_IMPLEMENTATION
-/* The minimum and maximum finite time values.  This assumes no padding.  */
+/* The minimum and maximum finite time values.  This implementation
+   assumes no padding if time_t is signed and either the compiler is
+   pre-C11 or time_t is not one of the standard signed integer types.  */
+#if (201112 <= __STDC_VERSION__) && !defined(__lint__)
+static time_t const time_t_min
+  = (TYPE_SIGNED(time_t)
+     ? _Generic((time_t) 0,
+		signed char: SCHAR_MIN, short: SHRT_MIN,
+		int: INT_MIN, long: LONG_MIN, long long: LLONG_MIN,
+		default: MINVAL(time_t, TYPE_BIT(time_t)))
+     : 0);
+static time_t const time_t_max
+  = (TYPE_SIGNED(time_t)
+     ? _Generic((time_t) 0,
+		signed char: SCHAR_MAX, short: SHRT_MAX,
+		int: INT_MAX, long: LONG_MAX, long long: LLONG_MAX,
+		default: MAXVAL(time_t, TYPE_BIT(time_t)))
+     : -1);
+#else
 static time_t const time_t_min = MINVAL(time_t, TYPE_BIT(time_t));
 static time_t const time_t_max = MAXVAL(time_t, TYPE_BIT(time_t));
+#endif
 #endif
 
 #ifndef INT_STRLEN_MAXIMUM

@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.104 2016/10/07 15:29:42 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.105 2016/11/04 19:41:53 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.104 2016/10/07 15:29:42 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.105 2016/11/04 19:41:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1604,6 +1604,45 @@ offtime_r(const time_t *timep, long offset, struct tm *tmp)
 }
 
 #endif /* defined STD_INSPIRED */
+
+#if defined time_tz || EPOCH_LOCAL || EPOCH_OFFSET != 0
+
+# ifndef USG_COMPAT
+#  define daylight 0
+#  define timezone 0
+# endif
+# ifndef ALTZONE
+#  define altzone 0
+# endif
+ 
+/* Convert from the underlying system's time_t to the ersatz time_tz,
+   which is called 'time_t' in this file.  Typically, this merely
+   converts the time's integer width.  On some platforms, the system
+   time is local time not UT, or uses some epoch other than the POSIX
+   epoch.
+
+   Although this code appears to define a function named 'time' that
+   returns time_t, the macros in private.h cause this code to actually
+   define a function named 'tz_time' that returns tz_time_t.  The call
+   to sys_time invokes the underlying system's 'time' function.  */
+ 
+time_t
+time(time_t *p)
+{
+  time_t r = sys_time(0);
+  if (r != (time_t) -1) {
+    int_fast32_t offset = EPOCH_LOCAL ? (daylight ? timezone : altzone) : 0;
+    if (increment_overflow32(&offset, -EPOCH_OFFSET)
+	|| increment_overflow_time (&r, offset)) {
+      errno = EOVERFLOW;
+      r = -1;
+    }
+  }
+  if (p)
+    *p = r;
+  return r;
+}
+#endif
 
 /*
 ** Return the number of leap years through the end of the given year
