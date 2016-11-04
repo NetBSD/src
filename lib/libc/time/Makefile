@@ -129,6 +129,10 @@ LDLIBS=
 #  -DHAVE_SYS_WAIT_H=0 if your compiler lacks a "sys/wait.h"
 #  -DHAVE_TZSET=0 if your system lacks a tzset function
 #  -DHAVE_UNISTD_H=0 if your compiler lacks a "unistd.h" (Microsoft C++ 7?)
+#  -DEPOCH_LOCAL=1 if the 'time' function returns local time not UT
+#  -DEPOCH_OFFSET=N if the 'time' function returns a value N greater
+#	than what POSIX specifies, assuming local time is UT.
+#	For example, N is 252460800 on AmigaOS.
 #  -DNO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU=1
 #	if you do not want run time warnings about formats that may cause
 #	year 2000 grief
@@ -714,18 +718,12 @@ check_time_t_alternatives:
 		done
 		rm -fr time_t.dir
 
-tarballs signatures: version
-		$(MAKE) VERSION="$$(cat version)" $@_version
-
 tarballs_version: tzcode$(VERSION).tar.gz tzdata$(VERSION).tar.gz \
 		tzdb-$(VERSION).tar.lz
 tarballs traditional_tarballs signatures traditional_signatures: version
 		VERSION=`cat version` && \
 		$(MAKE) VERSION="$$VERSION" $@_version
 
-tarballs_version: traditional_tarballs_version tzdb-$(VERSION).tar.lz
-traditional_tarballs_version: \
-  tzcode$(VERSION).tar.gz tzdata$(VERSION).tar.gz
 signatures_version: traditional_signatures_version tzdb-$(VERSION).tar.lz.asc
 traditional_signatures_version: \
   tzcode$(VERSION).tar.gz.asc tzdata$(VERSION).tar.gz.asc \
