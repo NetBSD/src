@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.70 2016/10/03 14:26:02 rkujawa Exp $
+# $NetBSD: WSCONS,v 1.71 2016/11/04 18:06:08 phx Exp $
 
 # GENERIC with wscons(4)
 #
@@ -28,12 +28,10 @@ no grfcc0	at mainbus0
 no grfrt0	at zbus0
 no grfrh0	at zbus0
 no grful0	at zbus0
-no grfet*	at zbus0
 no grf0		at grfcc0
 no grf1		at grfrt0
 no grf2		at grfrh0
 no grf4		at grful0
-no grf6		at grfet?
 
 # Disable ite(4) for all grf(4) drivers.
 no ite0		at grf0
