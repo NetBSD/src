@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.60 2015/09/06 23:48:39 nakayama Exp $	*/
+/*	$NetBSD: pmap.h,v 1.60.2.1 2016/11/04 14:49:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -164,7 +164,7 @@ struct prom_map {
 	uint64_t	tte;
 };
 
-#define PMAP_NC		0x001	/* Set the E bit in the page */
+#define PMAP_NC		0x001	/* Don't cache, set the E bit in the page */
 #define PMAP_NVC	0x002	/* Don't enable the virtual cache */
 #define PMAP_LITTLE	0x004	/* Map in little endian mode */
 /* Large page size hints --
@@ -177,6 +177,7 @@ struct prom_map {
 /* If these bits are different in va's to the same PA
    then there is an aliasing in the d$ */
 #define VA_ALIAS_MASK   (1 << 13)
+#define PMAP_WC		0x20	/* allow write combinimg */
 
 #ifdef	_KERNEL
 #ifdef PMAP_COUNT_DEBUG

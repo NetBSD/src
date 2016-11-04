@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.42 2016/06/10 13:27:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.42.2.1 2016/11/04 14:49:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.42 2016/06/10 13:27:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.42.2.1 2016/11/04 14:49:02 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -407,7 +407,7 @@ maceput(struct mc_softc *sc, struct mbuf *m)
 		totlen += len;
 		memcpy(buff, data, len);
 		buff += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 
 	if (totlen > PAGE_SIZE)

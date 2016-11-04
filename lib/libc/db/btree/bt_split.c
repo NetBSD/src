@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_split.c,v 1.20 2011/06/20 09:11:17 mrg Exp $	*/
+/*	$NetBSD: bt_split.c,v 1.20.24.1 2016/11/04 14:48:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_split.c,v 1.20 2011/06/20 09:11:17 mrg Exp $");
+__RCSID("$NetBSD: bt_split.c,v 1.20.24.1 2016/11/04 14:48:52 pgoyette Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>

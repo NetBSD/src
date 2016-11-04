@@ -1,6 +1,6 @@
 // debug_msg.cc -- a test case for printing debug info for missing symbols.
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -66,7 +66,7 @@ OdrBase* CreateOdrDerived2();  // in odr_violation2.cc
 extern "C" int OverriddenCFunction(int i);  // in odr_violation*.cc
 
 inline int SometimesInlineFunction(int i) {  // strong in odr_violation2.cc.
-  return i;
+  return i * i * 3;
 }
 
 

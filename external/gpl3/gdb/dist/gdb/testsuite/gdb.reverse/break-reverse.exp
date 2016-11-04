@@ -1,4 +1,4 @@
-#   Copyright 2008-2015 Free Software Foundation, Inc.
+#   Copyright 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ gdb_test "break bar" \
 
 gdb_test "break $end_location" \
     "Breakpoint $decimal at .* line $end_location\." \
-    set breakpoint at end of main"
+    "set breakpoint at end of main"
 
 gdb_continue_to_breakpoint "foo" ".*$srcfile:$foo_location.*"
 gdb_continue_to_breakpoint "bar" ".*$srcfile:$bar_location.*"

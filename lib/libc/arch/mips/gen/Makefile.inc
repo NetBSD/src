@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.34 2016/01/24 16:01:56 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.34.2.1 2016/11/04 14:48:52 pgoyette Exp $
 
 .if ${MKSOFTFLOAT} == "no"
 SRCS+=	fabs.S ldexp.S modf.S
 .else
-SRCS+=	fabs_ieee754.c ldexp_ieee754.c modf_ieee754.c
+SRCS+=	fabs_ieee754.c compat_ldexp_ieee754.c compat_modf_ieee754.c
 .endif
 
 # Common ieee754 constants and functions

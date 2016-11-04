@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.101 2015/01/23 07:27:05 nonaka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.101.2.1 2016/11/04 14:49:03 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -51,7 +51,7 @@ struct cache_info {
 #endif
 
 #ifdef _KERNEL
-#include <machine/intr.h>
+#include <sys/intr.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
 #endif

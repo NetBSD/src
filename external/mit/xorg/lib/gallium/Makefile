@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2016/02/28 22:55:21 joerg Exp $
+# $NetBSD: Makefile,v 1.14.2.1 2016/11/04 14:48:48 pgoyette Exp $
 
 # Link the gallium mega driver.
 
@@ -607,6 +607,10 @@ SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR} ${DRIDIR}/${_d}_dri.so.${SHLIB_MAJOR}
 SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.${SHLIB_MAJOR}.debug
 .endif
 .endfor
+
+.if ${MACHINE_ARCH} == "sparc" || ${COMMON_MACHINE_ARCH:U} == "sparc"
+COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
+.endif
 
 .include <bsd.lib.mk>
 # Don't regenerate c files

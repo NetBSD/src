@@ -1,5 +1,5 @@
 /* Disassemble ft32 instructions.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by FTDI (support@ftdichip.com)
 
    This file is part of the GNU opcodes library.

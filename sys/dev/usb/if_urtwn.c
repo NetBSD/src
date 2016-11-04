@@ -1,9 +1,10 @@
-/*	$NetBSD: if_urtwn.c,v 1.45 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.45.2.1 2016/11/04 14:49:15 pgoyette Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2014 Kevin Lo <kevlo@FreeBSD.org>
+ * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,11 +20,12 @@
  */
 
 /*-
- * Driver for Realtek RTL8188CE-VAU/RTL8188CUS/RTL8188EU/RTL8188RU/RTL8192CU.
+ * Driver for Realtek RTL8188CE-VAU/RTL8188CUS/RTL8188EU/RTL8188RU/RTL8192CU
+ * RTL8192EU.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.45 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.45.2.1 2016/11/04 14:49:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -99,10 +101,13 @@ u_int urtwn_debug = 0;
 #define URTWN_DEV(v,p)	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, 0 }
 #define URTWN_RTL8188E_DEV(v,p) \
 	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, FLAG_RTL8188E }
+#define URTWN_RTL8192EU_DEV(v,p) \
+	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, FLAG_RTL8192E }
 static const struct urtwn_dev {
 	struct usb_devno	dev;
 	uint32_t		flags;
 #define	FLAG_RTL8188E	__BIT(0)
+#define	FLAG_RTL8192E	__BIT(1)
 } urtwn_devs[] = {
 	URTWN_DEV(ABOCOM,	RTL8188CU_1),
 	URTWN_DEV(ABOCOM,	RTL8188CU_2),
@@ -180,12 +185,17 @@ static const struct urtwn_dev {
 	URTWN_DEV(ZYXEL,	RTL8192CU),
 
 	/* URTWN_RTL8188E */
+	URTWN_RTL8188E_DEV(DLINK, DWA125D1),
 	URTWN_RTL8188E_DEV(ELECOM, WDC150SU2M),
 	URTWN_RTL8188E_DEV(REALTEK, RTL8188ETV),
 	URTWN_RTL8188E_DEV(REALTEK, RTL8188EU),
+	
+	/* URTWN_RTL8192EU */
+	URTWN_RTL8192EU_DEV(REALTEK,	RTL8192EU),
 };
 #undef URTWN_DEV
 #undef URTWN_RTL8188E_DEV
+#undef URTWN_RTL8192EU_DEV
 
 static int	urtwn_match(device_t, cfdata_t, void *);
 static void	urtwn_attach(device_t, device_t, void *);
@@ -221,6 +231,8 @@ static int	urtwn_fw_cmd(struct urtwn_softc *, uint8_t, const void *, int);
 static void	urtwn_r92c_rf_write(struct urtwn_softc *, int, uint8_t,
 		    uint32_t);
 static void	urtwn_r88e_rf_write(struct urtwn_softc *, int, uint8_t,
+		    uint32_t);
+static void	urtwn_r92e_rf_write(struct urtwn_softc *, int, uint8_t,
 		    uint32_t);
 static uint32_t	urtwn_rf_read(struct urtwn_softc *, int, uint8_t);
 static int	urtwn_llt_write(struct urtwn_softc *, uint32_t, uint32_t);
@@ -261,6 +273,7 @@ static void	urtwn_start(struct ifnet *);
 static void	urtwn_watchdog(struct ifnet *);
 static int	urtwn_ioctl(struct ifnet *, u_long, void *);
 static int	urtwn_r92c_power_on(struct urtwn_softc *);
+static int	urtwn_r92e_power_on(struct urtwn_softc *);
 static int	urtwn_r88e_power_on(struct urtwn_softc *);
 static int	urtwn_llt_init(struct urtwn_softc *);
 static void	urtwn_fw_reset(struct urtwn_softc *);
@@ -292,6 +305,7 @@ static void	urtwn_stop(struct ifnet *, int);
 static int	urtwn_reset(struct ifnet *);
 static void	urtwn_chip_stop(struct urtwn_softc *);
 static void	urtwn_newassoc(struct ieee80211_node *, int);
+static void	urtwn_delay_ms(struct urtwn_softc *, int ms);
 
 /* Aliases. */
 #define	urtwn_bb_write	urtwn_write_4
@@ -299,13 +313,21 @@ static void	urtwn_newassoc(struct ieee80211_node *, int);
 
 #define	urtwn_lookup(d,v,p)	((const struct urtwn_dev *)usb_lookup(d,v,p))
 
+static const uint16_t addaReg[] = {
+	R92C_FPGA0_XCD_SWITCHCTL, R92C_BLUETOOTH, R92C_RX_WAIT_CCA,
+	R92C_TX_CCK_RFON, R92C_TX_CCK_BBON, R92C_TX_OFDM_RFON,
+	R92C_TX_OFDM_BBON, R92C_TX_TO_RX, R92C_TX_TO_TX, R92C_RX_CCK,
+	R92C_RX_OFDM, R92C_RX_WAIT_RIFS, R92C_RX_TO_RX,
+	R92C_STANDBY, R92C_SLEEP, R92C_PMPD_ANAEN
+};
+
 static int
 urtwn_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return urtwn_lookup(urtwn_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
+	return urtwn_lookup(urtwn_devs, uaa->uaa_vendor, uaa->uaa_product) !=
+	    NULL ?  UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 static void
@@ -317,6 +339,7 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	char *devinfop;
 	const struct urtwn_dev *dev;
+	usb_device_request_t req;
 	size_t i;
 	int error;
 
@@ -327,6 +350,8 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	dev = urtwn_lookup(urtwn_devs, uaa->uaa_vendor, uaa->uaa_product);
 	if (dev != NULL && ISSET(dev->flags, FLAG_RTL8188E))
 		SET(sc->chip, URTWN_CHIP_88E);
+	if (dev != NULL && ISSET(dev->flags, FLAG_RTL8192E))
+		SET(sc->chip, URTWN_CHIP_92EU);
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -337,8 +362,17 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
+	req.bmRequestType = UT_WRITE_DEVICE;
+	req.bRequest = UR_SET_FEATURE;
+	USETW(req.wValue, UF_DEVICE_REMOTE_WAKEUP);
+	USETW(req.wIndex, UHF_PORT_SUSPEND);
+	USETW(req.wLength, 0);
+
+	(void) usbd_do_request(sc->sc_udev, &req, 0);
+
 	mutex_init(&sc->sc_task_mtx, MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&sc->sc_tx_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_rx_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_fwcmd_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_write_mtx, MUTEX_DEFAULT, IPL_NONE);
 
@@ -373,17 +407,22 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	if (sc->chip & URTWN_CHIP_92C) {
 		sc->ntxchains = (sc->chip & URTWN_CHIP_92C_1T2R) ? 1 : 2;
 		sc->nrxchains = 2;
+	} else if (sc->chip & URTWN_CHIP_92EU) {
+		sc->ntxchains = 2;
+		sc->nrxchains = 2;
 	} else {
 		sc->ntxchains = 1;
 		sc->nrxchains = 1;
 	}
 
-	if (ISSET(sc->chip, URTWN_CHIP_88E))
+	if (ISSET(sc->chip, URTWN_CHIP_88E) ||
+	    ISSET(sc->chip, URTWN_CHIP_92EU))
 		urtwn_r88e_read_rom(sc);
 	else
 		urtwn_read_rom(sc);
 
 	aprint_normal_dev(self, "MAC/BB RTL%s, RF 6052 %zdT%zdR, address %s\n",
+	    (sc->chip & URTWN_CHIP_92EU) ? "8192EU" :
 	    (sc->chip & URTWN_CHIP_92C) ? "8192CU" :
 	    (sc->chip & URTWN_CHIP_88E) ? "8188EU" :
 	    (sc->board_type == R92C_BOARD_TYPE_HIGHPA) ? "8188RU" :
@@ -521,6 +560,7 @@ urtwn_detach(device_t self, int flags)
 	mutex_destroy(&sc->sc_write_mtx);
 	mutex_destroy(&sc->sc_fwcmd_mtx);
 	mutex_destroy(&sc->sc_tx_mtx);
+	mutex_destroy(&sc->sc_rx_mtx);
 	mutex_destroy(&sc->sc_task_mtx);
 
 	return 0;
@@ -546,10 +586,11 @@ static int
 urtwn_open_pipes(struct urtwn_softc *sc)
 {
 	/* Bulk-out endpoints addresses (from highest to lowest prio). */
-	static const uint8_t epaddr[] = { 0x02, 0x03, 0x05 };
+	static uint8_t epaddr[3];
+	static uint8_t rxepaddr[3];
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	size_t i, ntx = 0;
+	size_t i, ntx = 0, nrx = 0;
 	int error;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
@@ -560,8 +601,16 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed != NULL &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
-		    UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT)
+		    UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT) {
+			epaddr[ntx] = ed->bEndpointAddress;
 			ntx++;
+		}
+		if (ed != NULL &&
+		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
+		    UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN) {
+			rxepaddr[nrx] = ed->bEndpointAddress;
+			nrx++;
+		}
 	}
 	DPRINTFN(DBG_INIT, ("%s: %s: found %zd bulk-out pipes\n",
 	    device_xname(sc->sc_dev), __func__, ntx));
@@ -570,16 +619,19 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 		    "%zd: invalid number of Tx bulk pipes\n", ntx);
 		return EIO;
 	}
-	sc->rx_npipe = 1;
+	sc->rx_npipe = nrx;
 	sc->tx_npipe = ntx;
 
 	/* Open bulk-in pipe at address 0x81. */
-	error = usbd_open_pipe(sc->sc_iface, 0x81, USBD_EXCLUSIVE_USE,
-	    &sc->rx_pipe);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "could not open Rx bulk pipe"
-		    ": %d\n", error);
-		goto fail;
+	for (i = 0; i < nrx; i++) {
+		error = usbd_open_pipe(sc->sc_iface, rxepaddr[i],
+		    USBD_EXCLUSIVE_USE, &sc->rx_pipe[i]);
+		if (error != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "could not open Rx bulk pipe 0x%02x: %d\n",
+			    rxepaddr[i], error);
+			goto fail;
+		}
 	}
 
 	/* Open bulk-out pipes (up to 3). */
@@ -614,14 +666,17 @@ urtwn_close_pipes(struct urtwn_softc *sc)
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
-	/* Close Rx pipe. */
+	/* Close Rx pipes. */
 	CTASSERT(sizeof(pipe) == sizeof(void *));
-	pipe = atomic_swap_ptr(&sc->rx_pipe, NULL);
-	if (pipe != NULL) {
-		usbd_close_pipe(pipe);
+	for (i = 0; i < sc->rx_npipe; i++) {
+		pipe = atomic_swap_ptr(&sc->rx_pipe[i], NULL);
+		if (pipe != NULL) {
+			usbd_close_pipe(pipe);
+		}
 	}
+
 	/* Close Tx pipes. */
-	for (i = 0; i < R92C_MAX_EPOUT; i++) {
+	for (i = 0; i < sc->tx_npipe; i++) {
 		pipe = atomic_swap_ptr(&sc->tx_pipe[i], NULL);
 		if (pipe != NULL) {
 			usbd_close_pipe(pipe);
@@ -638,20 +693,24 @@ urtwn_alloc_rx_list(struct urtwn_softc *sc)
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
-	for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
-		data = &sc->rx_data[i];
+	for (size_t j = 0; j < sc->rx_npipe; j++) {
+		TAILQ_INIT(&sc->rx_free_list[j]);
+		for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
+			data = &sc->rx_data[j][i];
 
-		data->sc = sc;	/* Backpointer for callbacks. */
+			data->sc = sc;	/* Backpointer for callbacks. */
 
-		error = usbd_create_xfer(sc->rx_pipe, URTWN_RXBUFSZ,
-		    USBD_SHORT_XFER_OK, 0, &data->xfer);
-		if (error) {
-			aprint_error_dev(sc->sc_dev,
-			    "could not allocate xfer\n");
-			break;
+			error = usbd_create_xfer(sc->rx_pipe[j], URTWN_RXBUFSZ,
+			    USBD_SHORT_XFER_OK, 0, &data->xfer);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "could not allocate xfer\n");
+				break;
+			}
+
+			data->buf = usbd_get_buffer(data->xfer);
+			TAILQ_INSERT_TAIL(&sc->rx_free_list[j], data, next);
 		}
-
-		data->buf = usbd_get_buffer(data->xfer);
 	}
 	if (error != 0)
 		urtwn_free_rx_list(sc);
@@ -667,11 +726,13 @@ urtwn_free_rx_list(struct urtwn_softc *sc)
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	/* NB: Caller must abort pipe first. */
-	for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
-		CTASSERT(sizeof(xfer) == sizeof(void *));
-		xfer = atomic_swap_ptr(&sc->rx_data[i].xfer, NULL);
-		if (xfer != NULL)
-			usbd_destroy_xfer(xfer);
+	for (size_t j = 0; j < sc->rx_npipe; j++) {
+		for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
+			CTASSERT(sizeof(xfer) == sizeof(void *));
+			xfer = atomic_swap_ptr(&sc->rx_data[j][i].xfer, NULL);
+			if (xfer != NULL)
+				usbd_destroy_xfer(xfer);
+		}
 	}
 }
 
@@ -959,7 +1020,7 @@ urtwn_fw_cmd(struct urtwn_softc *sc, uint8_t id, const void *buf, int len)
 	for (ntries = 0; ntries < 100; ntries++) {
 		if (!(urtwn_read_1(sc, R92C_HMETFR) & (1 << fwcur)))
 			break;
-		DELAY(1);
+		DELAY(10);
 	}
 	if (ntries == 100) {
 		aprint_error_dev(sc->sc_dev,
@@ -973,13 +1034,23 @@ urtwn_fw_cmd(struct urtwn_softc *sc, uint8_t id, const void *buf, int len)
 
 	/* Write the first word last since that will trigger the FW. */
 	cp = (uint8_t *)&cmd;
+	cmd.id = id;
 	if (len >= 4) {
-		cmd.id = id | R92C_CMD_FLAG_EXT;
-		urtwn_write_region(sc, R92C_HMEBOX_EXT(fwcur), &cp[1], 2);
-		urtwn_write_4(sc, R92C_HMEBOX(fwcur),
-		    cp[0] + (cp[3] << 8) + (cp[4] << 16) + (cp[5] << 24));
+		if (!ISSET(sc->chip, URTWN_CHIP_92EU)) {
+			cmd.id |= R92C_CMD_FLAG_EXT;
+			urtwn_write_region(sc, R92C_HMEBOX_EXT(fwcur),
+			    &cp[1], 2);
+			urtwn_write_4(sc, R92C_HMEBOX(fwcur),
+			    cp[0] + (cp[3] << 8) + (cp[4] << 16) +
+			    (cp[5] << 24));
+		} else {
+			urtwn_write_region(sc, R92E_HMEBOX_EXT(fwcur),
+			    &cp[4], 2);
+			urtwn_write_4(sc, R92C_HMEBOX(fwcur),
+			    cp[0] + (cp[1] << 8) + (cp[2] << 16) +
+			    (cp[3] << 24));
+		}
 	} else {
-		cmd.id = id;
 		urtwn_write_region(sc, R92C_HMEBOX(fwcur), cp, len);
 	}
 
@@ -1004,6 +1075,15 @@ urtwn_r92c_rf_write(struct urtwn_softc *sc, int chain, uint8_t addr,
 
 static void
 urtwn_r88e_rf_write(struct urtwn_softc *sc, int chain, uint8_t addr,
+    uint32_t val)
+{
+
+	urtwn_bb_write(sc, R92C_LSSI_PARAM(chain),
+	    SM(R88E_LSSI_PARAM_ADDR, addr) | SM(R92C_LSSI_PARAM_DATA, val));
+}
+
+static void
+urtwn_r92e_rf_write(struct urtwn_softc *sc, int chain, uint8_t addr,
     uint32_t val)
 {
 
@@ -1166,7 +1246,8 @@ urtwn_read_chipid(struct urtwn_softc *sc)
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
-	if (ISSET(sc->chip, URTWN_CHIP_88E))
+	if (ISSET(sc->chip, URTWN_CHIP_88E) ||
+	    ISSET(sc->chip, URTWN_CHIP_92EU))
 		return 0;
 
 	reg = urtwn_read_4(sc, R92C_SYS_CFG);
@@ -1331,7 +1412,7 @@ urtwn_r88e_read_rom(struct urtwn_softc *sc)
 
 	/* Read full ROM image. */
 	memset(&sc->r88e_rom, 0xff, sizeof(sc->r88e_rom));
-	while (addr < 1024) {
+	while (addr < 4096) {
 		reg = urtwn_efuse_read_1(sc, addr);
 		if (reg == 0xff)
 			break;
@@ -1374,8 +1455,13 @@ urtwn_r88e_read_rom(struct urtwn_softc *sc)
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, &sc->r88e_rom[0xd7]);
 
-	sc->sc_rf_write = urtwn_r88e_rf_write;
-	sc->sc_power_on = urtwn_r88e_power_on;
+	if (ISSET(sc->chip, URTWN_CHIP_92EU)) {
+		sc->sc_power_on = urtwn_r92e_power_on;
+		sc->sc_rf_write = urtwn_r92e_rf_write;
+	} else {
+		sc->sc_power_on = urtwn_r88e_power_on;
+		sc->sc_rf_write = urtwn_r88e_rf_write;
+	}
 	sc->sc_dma_init = urtwn_r88e_dma_init;
 
 	mutex_exit(&sc->sc_write_mtx);
@@ -1415,7 +1501,7 @@ urtwn_ra_init(struct urtwn_softc *sc)
 	struct ieee80211_rateset *rs = &ni->ni_rates;
 	struct r92c_fw_cmd_macid_cfg cmd;
 	uint32_t rates, basicrates;
-	uint32_t mask;
+	uint32_t mask, rrsr_mask, rrsr_rate;
 	uint8_t mode;
 	size_t maxrate, maxbasicrate, i, j;
 	int error;
@@ -1425,7 +1511,7 @@ urtwn_ra_init(struct urtwn_softc *sc)
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
 	/* Get normal and basic rates mask. */
-	rates = basicrates = 0;
+	rates = basicrates = 1;
 	maxrate = maxbasicrate = 0;
 	for (i = 0; i < rs->rs_nrates; i++) {
 		/* Convert 802.11 rate to HW rate index. */
@@ -1460,12 +1546,17 @@ urtwn_ra_init(struct urtwn_softc *sc)
 	    "maxrate=%zx, maxbasicrate=%zx\n",
 	    device_xname(sc->sc_dev), __func__, mode, rates, basicrates,
 	    maxrate, maxbasicrate));
-	if (basicrates == 0) {
-		basicrates |= 1;	/* add 1Mbps */
+
+	if (ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_PREAMBLE) {
+		maxbasicrate |= R92C_RATE_SHORTGI;
+		maxrate |= R92C_RATE_SHORTGI;
 	}
 
 	/* Set rates mask for group addressed frames. */
 	cmd.macid = URTWN_MACID_BC | URTWN_MACID_VALID;
+	if (ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_PREAMBLE)
+		cmd.macid |= URTWN_MACID_SHORTGI;
+
 	mask = (mode << 28) | basicrates;
 	cmd.mask[0] = (uint8_t)mask;
 	cmd.mask[1] = (uint8_t)(mask >> 8);
@@ -1484,6 +1575,9 @@ urtwn_ra_init(struct urtwn_softc *sc)
 
 	/* Set rates mask for unicast frames. */
 	cmd.macid = URTWN_MACID_BSS | URTWN_MACID_VALID;
+	if (ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_PREAMBLE)
+		cmd.macid |= URTWN_MACID_SHORTGI;
+
 	mask = (mode << 28) | rates;
 	cmd.mask[0] = (uint8_t)mask;
 	cmd.mask[1] = (uint8_t)(mask >> 8);
@@ -1498,6 +1592,13 @@ urtwn_ra_init(struct urtwn_softc *sc)
 	DPRINTFN(DBG_INIT, ("%s: %s: maxrate=%zd\n", device_xname(sc->sc_dev),
 	    __func__, maxrate));
 	urtwn_write_1(sc, R92C_INIDATA_RATE_SEL(URTWN_MACID_BSS), maxrate);
+
+	rrsr_rate = ic->ic_fixed_rate;
+	if (rrsr_rate == -1)
+		rrsr_rate = 11;
+
+	rrsr_mask = 0xffff >> (15 - rrsr_rate);
+	urtwn_write_2(sc, R92C_RRSR, rrsr_mask);
 
 	/* Indicate highest supported rate. */
 	ni->ni_txrate = rs->rs_nrates - 1;
@@ -1585,7 +1686,17 @@ urtwn_set_led(struct urtwn_softc *sc, int led, int on)
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
 	if (led == URTWN_LED_LINK) {
-		if (ISSET(sc->chip, URTWN_CHIP_88E)) {
+		if (ISSET(sc->chip, URTWN_CHIP_92EU)) {
+			urtwn_write_1(sc, 0x64, urtwn_read_1(sc, 0x64) & 0xfe);
+			reg = urtwn_read_1(sc, R92C_LEDCFG1) & R92E_LEDSON;
+			urtwn_write_1(sc, R92C_LEDCFG1, reg |
+			    (R92C_LEDCFG0_DIS << 1));
+			if (on) {
+				reg = urtwn_read_1(sc, R92C_LEDCFG1) &
+				    R92E_LEDSON;
+				urtwn_write_1(sc, R92C_LEDCFG1, reg);
+			}
+		} else if (ISSET(sc->chip, URTWN_CHIP_88E)) {
 			reg = urtwn_read_1(sc, R92C_LEDCFG2) & 0xf0;
 			urtwn_write_1(sc, R92C_LEDCFG2, reg | 0x60);
 			if (!on) {
@@ -1626,6 +1737,7 @@ static void
 urtwn_calib_to_cb(struct urtwn_softc *sc, void *arg)
 {
 	struct r92c_fw_cmd_rssi cmd;
+	struct r92e_fw_cmd_rssi cmde;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -1636,11 +1748,20 @@ urtwn_calib_to_cb(struct urtwn_softc *sc, void *arg)
 	if (sc->avg_pwdb != -1) {
 		/* Indicate Rx signal strength to FW for rate adaptation. */
 		memset(&cmd, 0, sizeof(cmd));
+		memset(&cmde, 0, sizeof(cmde));
 		cmd.macid = 0;	/* BSS. */
+		cmde.macid = 0;	/* BSS. */
 		cmd.pwdb = sc->avg_pwdb;
+		cmde.pwdb = sc->avg_pwdb;
 		DPRINTFN(DBG_RF, ("%s: %s: sending RSSI command avg=%d\n",
 		    device_xname(sc->sc_dev), __func__, sc->avg_pwdb));
-		urtwn_fw_cmd(sc, R92C_CMD_RSSI_SETTING, &cmd, sizeof(cmd));
+		if (!ISSET(sc->chip, URTWN_CHIP_92EU)) {
+			urtwn_fw_cmd(sc, R92C_CMD_RSSI_SETTING, &cmd,
+			    sizeof(cmd));
+		} else {
+			urtwn_fw_cmd(sc, R92E_CMD_RSSI_REPORT, &cmde,
+			    sizeof(cmde));
+		}
 	}
 
 	/* Do temperature compensation. */
@@ -1845,20 +1966,12 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 	case IEEE80211_S_AUTH:
 		/* Set initial gain under link. */
 		reg = urtwn_bb_read(sc, R92C_OFDM0_AGCCORE1(0));
-#ifdef doaslinux
 		reg = RW(reg, R92C_OFDM0_AGCCORE1_GAIN, 0x32);
-#else
-		reg = RW(reg, R92C_OFDM0_AGCCORE1_GAIN, 0x20);
-#endif
 		urtwn_bb_write(sc, R92C_OFDM0_AGCCORE1(0), reg);
 
 		if (!ISSET(sc->chip, URTWN_CHIP_88E)) {
 			reg = urtwn_bb_read(sc, R92C_OFDM0_AGCCORE1(1));
-#ifdef doaslinux
 			reg = RW(reg, R92C_OFDM0_AGCCORE1_GAIN, 0x32);
-#else
-			reg = RW(reg, R92C_OFDM0_AGCCORE1_GAIN, 0x20);
-#endif
 			urtwn_bb_write(sc, R92C_OFDM0_AGCCORE1(1), reg);
 		}
 
@@ -1976,7 +2089,8 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 		urtwn_write_1(sc, R92C_T2T_SIFS + 1, sifs_time);
 
 		/* Intialize rate adaptation. */
-		if (ISSET(sc->chip, URTWN_CHIP_88E))
+		if (ISSET(sc->chip, URTWN_CHIP_88E) ||
+		    ISSET(sc->chip, URTWN_CHIP_92EU))
 			ni->ni_txrate = ni->ni_rates.rs_nrates - 1;
 		else
 			urtwn_ra_init(sc);
@@ -2234,7 +2348,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 
 	/* Get RSSI from PHY status descriptor if present. */
 	if (infosz != 0 && (rxdw0 & R92C_RXDW0_PHYST)) {
-		if (ISSET(sc->chip, URTWN_CHIP_88E))
+		if (!ISSET(sc->chip, URTWN_CHIP_92C))
 			rssi = urtwn_r88e_get_rssi(sc, rate, &stat[1]);
 		else
 			rssi = urtwn_get_rssi(sc, rate, &stat[1]);
@@ -2320,6 +2434,7 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct urtwn_rx_data *data = priv;
 	struct urtwn_softc *sc = data->sc;
 	struct r92c_rx_stat *stat;
+	size_t pidx = data->pidx;
 	uint32_t rxdw0;
 	uint8_t *buf;
 	int len, totlen, pktlen, infosz, npkts;
@@ -2327,9 +2442,15 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	DPRINTFN(DBG_FN|DBG_RX, ("%s: %s: status=%d\n",
 	    device_xname(sc->sc_dev), __func__, status));
 
+	mutex_enter(&sc->sc_rx_mtx);
+	TAILQ_REMOVE(&sc->rx_free_list[pidx], data, next);
+	TAILQ_INSERT_TAIL(&sc->rx_free_list[pidx], data, next);
+	/* Put this Rx buffer back to our free list. */
+	mutex_exit(&sc->sc_rx_mtx);
+
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall_async(sc->rx_pipe);
+			usbd_clear_endpoint_stall_async(sc->rx_pipe[pidx]);
 		else if (status != USBD_CANCELLED)
 			goto resubmit;
 		return;
@@ -2421,6 +2542,7 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 				struct usbd_pipe *pipe = sc->tx_pipe[pidx];
 				usbd_clear_endpoint_stall_async(pipe);
 			}
+			printf("ERROR1\n");
 			ifp->if_oerrors++;
 		}
 		splx(s);
@@ -2429,8 +2551,8 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	ifp->if_opackets++;
 	urtwn_start(ifp);
-
 	splx(s);
+
 }
 
 static int
@@ -2441,7 +2563,7 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
 	struct r92c_tx_desc *txd;
-	size_t i, padsize, xferlen;
+	size_t i, padsize, xferlen, txd_len;
 	uint16_t seq, sum;
 	uint8_t raid, type, tid;
 	int s, hasqos, error;
@@ -2450,6 +2572,10 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 
 	wh = mtod(m, struct ieee80211_frame *);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+	txd_len = sizeof(*txd);
+
+	if (!ISSET(sc->chip, URTWN_CHIP_92EU))
+		txd_len = 32;
 
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		k = ieee80211_crypto_encap(ic, ni, m);
@@ -2484,19 +2610,25 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		tid = R92C_TXDW1_QSEL_MGNT;
 	}
 
-	if (((sizeof(*txd) + m->m_pkthdr.len) % 64) == 0) /* XXX: 64 */
+	if (((txd_len + m->m_pkthdr.len) % 64) == 0) /* XXX: 64 */
 		padsize = 8;
 	else
 		padsize = 0;
 
+	if (ISSET(sc->chip, URTWN_CHIP_92EU))
+		padsize = 0;
+
 	/* Fill Tx descriptor. */
 	txd = (struct r92c_tx_desc *)data->buf;
-	memset(txd, 0, sizeof(*txd) + padsize);
+	memset(txd, 0, txd_len + padsize);
 
 	txd->txdw0 |= htole32(
 	    SM(R92C_TXDW0_PKTLEN, m->m_pkthdr.len) |
-	    SM(R92C_TXDW0_OFFSET, sizeof(*txd)) |
-	    R92C_TXDW0_OWN | R92C_TXDW0_FSG | R92C_TXDW0_LSG);
+	    SM(R92C_TXDW0_OFFSET, txd_len));
+	if (!ISSET(sc->chip, URTWN_CHIP_92EU)) {
+		txd->txdw0 |= htole32(
+		    R92C_TXDW0_OWN | R92C_TXDW0_FSG | R92C_TXDW0_LSG);
+	}
 
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1))
 		txd->txdw0 |= htole32(R92C_TXDW0_BMCAST);
@@ -2518,19 +2650,23 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		    ("%s: %s: data packet: tid=%d, raid=%d\n",
 		    device_xname(sc->sc_dev), __func__, tid, raid));
 
-		if (ISSET(sc->chip, URTWN_CHIP_88E)) {
+		if (!ISSET(sc->chip, URTWN_CHIP_92C)) {
 			txd->txdw1 |= htole32(
 			    SM(R88E_TXDW1_MACID, URTWN_MACID_BSS) |
 			    SM(R92C_TXDW1_QSEL, tid) |
 			    SM(R92C_TXDW1_RAID, raid) |
 			    R92C_TXDW1_AGGBK);
-			txd->txdw2 |= htole32(R88E_TXDW2_AGGBK);
 		} else
 			txd->txdw1 |= htole32(
 			    SM(R92C_TXDW1_MACID, URTWN_MACID_BSS) |
 			    SM(R92C_TXDW1_QSEL, tid) |
 			    SM(R92C_TXDW1_RAID, raid) |
 			    R92C_TXDW1_AGGBK);
+
+		if (ISSET(sc->chip, URTWN_CHIP_88E))
+			txd->txdw2 |= htole32(R88E_TXDW2_AGGBK);
+		if (ISSET(sc->chip, URTWN_CHIP_92EU))
+			txd->txdw3 |= htole32(R92E_TXDW3_AGGBK);
 
 		if (hasqos) {
 			txd->txdw4 |= htole32(R92C_TXDW4_QOS);
@@ -2579,25 +2715,34 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		/* Use 1Mbps */
 		txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE, 0));
 	}
-
 	/* Set sequence number */
 	seq = LE_READ_2(&wh->i_seq[0]) >> IEEE80211_SEQ_SEQ_SHIFT;
-	txd->txdseq |= htole16(seq);
+	if (!ISSET(sc->chip, URTWN_CHIP_92EU)) {
+		txd->txdseq |= htole16(seq);
 
-	if (!hasqos) {
-		/* Use HW sequence numbering for non-QoS frames. */
-		txd->txdw4  |= htole32(R92C_TXDW4_HWSEQ);
-		txd->txdseq |= htole16(0x8000);		/* WTF? */
+		if (!hasqos) {
+			/* Use HW sequence numbering for non-QoS frames. */
+			txd->txdw4  |= htole32(R92C_TXDW4_HWSEQ);
+			txd->txdseq |= htole16(R92C_HWSEQ_EN);
+		}
+	} else {
+		txd->txdseq2 |= htole16((seq & R92E_HWSEQ_MASK) <<
+		    R92E_HWSEQ_SHIFT);
+		if (!hasqos) {
+			/* Use HW sequence numbering for non-QoS frames. */
+			txd->txdw4  |= htole32(R92C_TXDW4_HWSEQ);
+			txd->txdw7 |= htole16(R92C_HWSEQ_EN);
+		}
 	}
 
 	/* Compute Tx descriptor checksum. */
 	sum = 0;
-	for (i = 0; i < sizeof(*txd) / 2; i++)
+	for (i = 0; i < R92C_TXDESC_SUMSIZE / 2; i++)
 		sum ^= ((uint16_t *)txd)[i];
 	txd->txdsum = sum;	/* NB: already little endian. */
 
-	xferlen = sizeof(*txd) + m->m_pkthdr.len + padsize;
-	m_copydata(m, 0, m->m_pkthdr.len, (char *)&txd[1] + padsize);
+	xferlen = txd_len + m->m_pkthdr.len + padsize;
+	m_copydata(m, 0, m->m_pkthdr.len, (char *)&txd[0] + txd_len + padsize);
 
 	s = splnet();
 	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
@@ -2696,6 +2841,7 @@ urtwn_start(struct ifnet *ifp)
 
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
+			printf("ERROR6\n");
 			ifp->if_oerrors++;
 			continue;
 		}
@@ -2703,6 +2849,7 @@ urtwn_start(struct ifnet *ifp)
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
 			m_freem(m);
+			printf("ERROR5\n");
 			ifp->if_oerrors++;
 			continue;
 		}
@@ -2711,6 +2858,7 @@ urtwn_start(struct ifnet *ifp)
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
+			printf("ERROR4\n");
 			ifp->if_oerrors++;
 			continue;
 		}
@@ -2720,6 +2868,7 @@ urtwn_start(struct ifnet *ifp)
 		if (urtwn_tx(sc, m, ni, data) != 0) {
 			m_freem(m);
 			ieee80211_free_node(ni);
+			printf("ERROR3\n");
 			ifp->if_oerrors++;
 			continue;
 		}
@@ -2743,6 +2892,7 @@ urtwn_watchdog(struct ifnet *ifp)
 		if (--sc->tx_timer == 0) {
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			/* urtwn_init(ifp); XXX needs a process context! */
+			printf("ERROR2\n");
 			ifp->if_oerrors++;
 			return;
 		}
@@ -2840,7 +2990,7 @@ urtwn_r92c_power_on(struct urtwn_softc *sc)
 	urtwn_write_1(sc, R92C_RSV_CTRL, 0);
 	/* Move SPS into PWM mode. */
 	urtwn_write_1(sc, R92C_SPS0_CTRL, 0x2b);
-	DELAY(100);
+	DELAY(5);
 
 	reg = urtwn_read_1(sc, R92C_LDOV12D_CTRL);
 	if (!(reg & R92C_LDOV12D_CTRL_LDV12_EN)) {
@@ -2859,7 +3009,7 @@ urtwn_r92c_power_on(struct urtwn_softc *sc)
 		if (!(urtwn_read_2(sc, R92C_APS_FSMCO) &
 		    R92C_APS_FSMCO_APFM_ONMAC))
 			break;
-		DELAY(5);
+		DELAY(100);
 	}
 	if (ntries == 1000) {
 		aprint_error_dev(sc->sc_dev,
@@ -2903,6 +3053,86 @@ urtwn_r92c_power_on(struct urtwn_softc *sc)
 	urtwn_write_2(sc, R92C_CR, reg);
 
 	urtwn_write_1(sc, 0xfe10, 0x19);
+	return 0;
+}
+
+static int
+urtwn_r92e_power_on(struct urtwn_softc *sc)
+{
+	uint32_t reg;
+	uint32_t val;
+	int ntries;
+
+	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
+
+	KASSERT(mutex_owned(&sc->sc_write_mtx));
+
+	/* Enable radio, GPIO and LED functions. */
+	KASSERT((R92C_APS_FSMCO_AFSM_HSUS | R92C_APS_FSMCO_PDN_EN |
+	    R92C_APS_FSMCO_PFM_ALDN) == 0x0812);
+	urtwn_write_2(sc, R92C_APS_FSMCO,
+	    R92C_APS_FSMCO_AFSM_HSUS |
+	    R92C_APS_FSMCO_PDN_EN |
+	    R92C_APS_FSMCO_PFM_ALDN);
+
+	if (urtwn_read_4(sc, R92E_SYS_CFG1_8192E) & R92E_SPSLDO_SEL){
+		/* LDO. */
+		urtwn_write_1(sc, R92E_LDO_SWR_CTRL, 0xc3); 
+	}
+	else	{
+		urtwn_write_2(sc, R92C_SYS_SWR_CTRL2, urtwn_read_2(sc,
+		    R92C_SYS_SWR_CTRL2) & 0xffff);
+		urtwn_write_1(sc, R92E_LDO_SWR_CTRL, 0x83);
+	}
+
+	for (ntries = 0; ntries < 2; ntries++) {
+		urtwn_write_1(sc, R92C_AFE_PLL_CTRL,
+		    urtwn_read_1(sc, R92C_AFE_PLL_CTRL));
+		urtwn_write_2(sc, R92C_AFE_CTRL4, urtwn_read_2(sc,
+		    R92C_AFE_CTRL4));
+	}
+
+	/* Reset BB. */
+	urtwn_write_1(sc, R92C_SYS_FUNC_EN,
+	urtwn_read_1(sc, R92C_SYS_FUNC_EN) & ~(R92C_SYS_FUNC_EN_BBRSTB |
+	    R92C_SYS_FUNC_EN_BB_GLB_RST));
+
+	urtwn_write_1(sc, R92C_AFE_XTAL_CTRL + 2, urtwn_read_1(sc,
+	    R92C_AFE_XTAL_CTRL + 2) | 0x80);
+
+	/* Disable HWPDN. */
+	urtwn_write_2(sc, R92C_APS_FSMCO, urtwn_read_2(sc,
+	    R92C_APS_FSMCO) & ~R92C_APS_FSMCO_APDM_HPDN);
+
+	/* Disable WL suspend. */
+	urtwn_write_2(sc, R92C_APS_FSMCO, urtwn_read_2(sc,
+	    R92C_APS_FSMCO) & ~(R92C_APS_FSMCO_AFSM_PCIE |
+	    R92C_APS_FSMCO_AFSM_HSUS));
+
+	urtwn_write_4(sc, R92C_APS_FSMCO, urtwn_read_4(sc,
+	    R92C_APS_FSMCO) | R92C_APS_FSMCO_RDY_MACON);
+	urtwn_write_2(sc, R92C_APS_FSMCO, urtwn_read_2(sc,
+	    R92C_APS_FSMCO) | R92C_APS_FSMCO_APFM_ONMAC);
+	for (ntries = 0; ntries < 10000; ntries++) {
+		val = urtwn_read_2(sc, R92C_APS_FSMCO) &
+		 R92C_APS_FSMCO_APFM_ONMAC;
+		if (val == 0x0)
+			break;
+		DELAY(10);
+	}
+	if (ntries == 10000) {
+		aprint_error_dev(sc->sc_dev,
+		    "timeout waiting for chip power up\n");
+		return ETIMEDOUT;
+	}
+	    
+	urtwn_write_2(sc, R92C_CR, 0x00);
+	reg = urtwn_read_2(sc, R92C_CR);
+	reg |= R92C_CR_HCI_TXDMA_EN | R92C_CR_HCI_RXDMA_EN |
+	    R92C_CR_TXDMA_EN | R92C_CR_RXDMA_EN | R92C_CR_PROTOCOL_EN |
+	    R92C_CR_SCHEDULE_EN | R92C_CR_ENSEC;
+	urtwn_write_2(sc, R92C_CR, reg);
+
 	return 0;
 }
 
@@ -2970,16 +3200,35 @@ static int
 urtwn_llt_init(struct urtwn_softc *sc)
 {
 	size_t i, page_count, pktbuf_count;
+	uint32_t val;
 	int error;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
-	page_count = (sc->chip & URTWN_CHIP_88E) ?
-	    R88E_TX_PAGE_COUNT : R92C_TX_PAGE_COUNT;
-	pktbuf_count = (sc->chip & URTWN_CHIP_88E) ?
-	    R88E_TXPKTBUF_COUNT : R92C_TXPKTBUF_COUNT;
+	if (sc->chip & URTWN_CHIP_88E) 
+		page_count = R88E_TX_PAGE_COUNT;
+	else if (sc->chip & URTWN_CHIP_92EU) 
+		page_count = R92E_TX_PAGE_COUNT;
+	else
+		page_count = R92C_TX_PAGE_COUNT;
+	if (sc->chip & URTWN_CHIP_88E)
+		pktbuf_count = R88E_TXPKTBUF_COUNT;
+	else if (sc->chip & URTWN_CHIP_92EU)
+		pktbuf_count = R88E_TXPKTBUF_COUNT;
+	else
+		pktbuf_count = R92C_TXPKTBUF_COUNT;
+
+	if (sc->chip & URTWN_CHIP_92EU) {
+		val = urtwn_read_4(sc, R92E_AUTO_LLT) | R92E_AUTO_LLT_EN;
+		urtwn_write_4(sc, R92E_AUTO_LLT, val);
+		DELAY(100);
+		val = urtwn_read_4(sc, R92E_AUTO_LLT);
+		if (val & R92E_AUTO_LLT_EN)
+			return EIO;
+		return 0;
+	}
 
 	/* Reserve pages [0; page_count]. */
 	for (i = 0; i < page_count; i++) {
@@ -3036,9 +3285,25 @@ urtwn_r88e_fw_reset(struct urtwn_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
+	if (ISSET(sc->chip, URTWN_CHIP_92EU)) {
+		reg = urtwn_read_2(sc, R92C_RSV_CTRL) & ~R92E_RSV_MIO_EN;
+		urtwn_write_2(sc,R92C_RSV_CTRL, reg);
+	}
+	DELAY(50);
+
 	reg = urtwn_read_2(sc, R92C_SYS_FUNC_EN);
 	urtwn_write_2(sc, R92C_SYS_FUNC_EN, reg & ~R92C_SYS_FUNC_EN_CPUEN);
+	DELAY(50);
+
 	urtwn_write_2(sc, R92C_SYS_FUNC_EN, reg | R92C_SYS_FUNC_EN_CPUEN);
+	DELAY(50);
+
+	if (ISSET(sc->chip, URTWN_CHIP_92EU)) {
+		reg = urtwn_read_2(sc, R92C_RSV_CTRL) | R92E_RSV_MIO_EN;
+		urtwn_write_2(sc,R92C_RSV_CTRL, reg);
+	}
+	DELAY(50);
+
 }
 
 static int
@@ -3090,6 +3355,8 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 	/* Read firmware image from the filesystem. */
 	if (ISSET(sc->chip, URTWN_CHIP_88E))
 		name = "rtl8188eufw.bin";
+	else if (ISSET(sc->chip, URTWN_CHIP_92EU))
+		name = "rtl8192eefw.bin";
 	else if ((sc->chip & (URTWN_CHIP_UMC_A_CUT | URTWN_CHIP_92C)) ==
 	    URTWN_CHIP_UMC_A_CUT)
 		name = "rtl8192cfwU.bin";
@@ -3118,11 +3385,13 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 		return error;
 	}
 
+	len = fwlen;
 	ptr = fw;
 	hdr = (const struct r92c_fw_hdr *)ptr;
 	/* Check if there is a valid FW header and skip it. */
 	if ((le16toh(hdr->signature) >> 4) == 0x88c ||
 	    (le16toh(hdr->signature) >> 4) == 0x88e ||
+	    (le16toh(hdr->signature) >> 4) == 0x92e ||
 	    (le16toh(hdr->signature) >> 4) == 0x92c) {
 		DPRINTFN(DBG_INIT, ("%s: %s: FW V%d.%d %02d-%02d %02d:%02d\n",
 		    device_xname(sc->sc_dev), __func__,
@@ -3133,13 +3402,14 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 	}
 
 	if (urtwn_read_1(sc, R92C_MCUFWDL) & R92C_MCUFWDL_RAM_DL_SEL) {
-		if (ISSET(sc->chip, URTWN_CHIP_88E))
+		if (ISSET(sc->chip, URTWN_CHIP_88E) ||
+		    ISSET(sc->chip, URTWN_CHIP_92EU))
 			urtwn_r88e_fw_reset(sc);
 		else
 			urtwn_fw_reset(sc);
-		urtwn_write_1(sc, R92C_MCUFWDL, 0);
 	}
-	if (!ISSET(sc->chip, URTWN_CHIP_88E)) {
+	if (!ISSET(sc->chip, URTWN_CHIP_88E) &&
+	    !ISSET(sc->chip, URTWN_CHIP_92EU)) {
 		urtwn_write_2(sc, R92C_SYS_FUNC_EN,
 		    urtwn_read_2(sc, R92C_SYS_FUNC_EN) |
 		    R92C_SYS_FUNC_EN_CPUEN);
@@ -3153,8 +3423,9 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 
 	/* Reset the FWDL checksum. */
 	urtwn_write_1(sc, R92C_MCUFWDL,
-	    urtwn_read_1(sc, R92C_MCUFWDL) | R92C_MCUFWDL_CHKSUM_RPT);
+   	    urtwn_read_1(sc, R92C_MCUFWDL) | R92C_MCUFWDL_CHKSUM_RPT);
 
+	DELAY(50);
 	/* download firmware */
 	for (page = 0; len > 0; page++) {
 		mlen = MIN(len, R92C_FW_PAGE_SIZE);
@@ -3190,7 +3461,8 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 	reg = urtwn_read_4(sc, R92C_MCUFWDL);
 	reg = (reg & ~R92C_MCUFWDL_WINTINI_RDY) | R92C_MCUFWDL_RDY;
 	urtwn_write_4(sc, R92C_MCUFWDL, reg);
-	if (ISSET(sc->chip, URTWN_CHIP_88E))
+	if (ISSET(sc->chip, URTWN_CHIP_88E) ||
+	    ISSET(sc->chip, URTWN_CHIP_92EU))
 		urtwn_r88e_fw_reset(sc);
 	for (ntries = 0; ntries < 1000; ntries++) {
 		if (urtwn_read_4(sc, R92C_MCUFWDL) & R92C_MCUFWDL_WINTINI_RDY)
@@ -3372,6 +3644,10 @@ urtwn_mac_init(struct urtwn_softc *sc)
 		for (i = 0; i < __arraycount(rtl8188eu_mac); i++)
 			urtwn_write_1(sc, rtl8188eu_mac[i].reg,
 			    rtl8188eu_mac[i].val);
+ 	} else if (ISSET(sc->chip, URTWN_CHIP_92EU)) {
+		for (i = 0; i < __arraycount(rtl8192eu_mac); i++)
+			urtwn_write_1(sc, rtl8192eu_mac[i].reg,
+			    rtl8192eu_mac[i].val);
 	} else {
 		for (i = 0; i < __arraycount(rtl8192cu_mac); i++)
 			urtwn_write_1(sc, rtl8192cu_mac[i].reg,
@@ -3397,7 +3673,8 @@ urtwn_bb_init(struct urtwn_softc *sc)
 	    R92C_SYS_FUNC_EN_BBRSTB | R92C_SYS_FUNC_EN_BB_GLB_RST |
 	    R92C_SYS_FUNC_EN_DIO_RF);
 
-	if (!ISSET(sc->chip, URTWN_CHIP_88E)) {
+	if (!ISSET(sc->chip, URTWN_CHIP_88E) &&
+	    !ISSET(sc->chip, URTWN_CHIP_92EU)) {
 		urtwn_write_1(sc, R92C_AFE_PLL_CTRL, 0x83);
 		urtwn_write_1(sc, R92C_AFE_PLL_CTRL + 1, 0xdb);
 	}
@@ -3408,7 +3685,8 @@ urtwn_bb_init(struct urtwn_softc *sc)
 	    R92C_SYS_FUNC_EN_USBA | R92C_SYS_FUNC_EN_USBD |
 	    R92C_SYS_FUNC_EN_BB_GLB_RST | R92C_SYS_FUNC_EN_BBRSTB);
 
-	if (!ISSET(sc->chip, URTWN_CHIP_88E)) {
+	if (!ISSET(sc->chip, URTWN_CHIP_88E) &&
+	    !ISSET(sc->chip, URTWN_CHIP_92EU)) {
 		urtwn_write_1(sc, R92C_LDOHCI12_CTRL, 0x0f);
 		urtwn_write_1(sc, 0x15, 0xe9);
 		urtwn_write_1(sc, R92C_AFE_XTAL_CTRL + 1, 0x80);
@@ -3417,6 +3695,8 @@ urtwn_bb_init(struct urtwn_softc *sc)
 	/* Select BB programming based on board type. */
 	if (ISSET(sc->chip, URTWN_CHIP_88E))
 		prog = &rtl8188eu_bb_prog;
+	else if (ISSET(sc->chip, URTWN_CHIP_92EU))
+		prog = &rtl8192eu_bb_prog;
 	else if (!(sc->chip & URTWN_CHIP_92C)) {
 		if (sc->board_type == R92C_BOARD_TYPE_MINICARD) {
 			prog = &rtl8188ce_bb_prog;
@@ -3437,13 +3717,13 @@ urtwn_bb_init(struct urtwn_softc *sc)
 		/* additional delay depend on registers */
 		switch (prog->regs[i]) {
 		case 0xfe:
-			usbd_delay_ms(sc->sc_udev, 50);
+			urtwn_delay_ms(sc, 50);
 			break;
 		case 0xfd:
-			usbd_delay_ms(sc->sc_udev, 5);
+			urtwn_delay_ms(sc, 5);
 			break;
 		case 0xfc:
-			usbd_delay_ms(sc->sc_udev, 1);
+			urtwn_delay_ms(sc, 1);
 			break;
 		case 0xfb:
 			DELAY(50);
@@ -3504,11 +3784,17 @@ urtwn_bb_init(struct urtwn_softc *sc)
 		DELAY(1);
 	}
 
-	if (ISSET(sc->chip, URTWN_CHIP_88E)) {
+	if (ISSET(sc->chip, URTWN_CHIP_88E) ||
+	    ISSET(sc->chip, URTWN_CHIP_92EU)) {
 		urtwn_bb_write(sc, R92C_OFDM0_AGCCORE1(0), 0x69553422);
 		DELAY(1);
 		urtwn_bb_write(sc, R92C_OFDM0_AGCCORE1(0), 0x69553420);
 		DELAY(1);
+
+		if (ISSET(sc->chip, URTWN_CHIP_92EU)) {
+			urtwn_write_2(sc, R92C_AFE_CTRL3, urtwn_read_2(sc,
+			    R92C_AFE_CTRL3));
+		}
 
 		crystalcap = sc->r88e_rom[0xb9];
 		if (crystalcap == 0xff)
@@ -3538,6 +3824,8 @@ urtwn_rf_init(struct urtwn_softc *sc)
 	/* Select RF programming based on board type. */
 	if (ISSET(sc->chip, URTWN_CHIP_88E))
 		prog = rtl8188eu_rf_prog;
+	else if (ISSET(sc->chip, URTWN_CHIP_92EU))
+		prog = rtl8192eu_rf_prog;
 	else if (!(sc->chip & URTWN_CHIP_92C)) {
 		if (sc->board_type == R92C_BOARD_TYPE_MINICARD) {
 			prog = rtl8188ce_rf_prog;
@@ -3560,23 +3848,23 @@ urtwn_rf_init(struct urtwn_softc *sc)
 		reg = urtwn_bb_read(sc, R92C_FPGA0_RFIFACEOE(i));
 		reg |= 0x100000;
 		urtwn_bb_write(sc, R92C_FPGA0_RFIFACEOE(i), reg);
-		DELAY(1);
+		DELAY(50);
 
 		/* Set RF_ENV output high. */
 		reg = urtwn_bb_read(sc, R92C_FPGA0_RFIFACEOE(i));
 		reg |= 0x10;
 		urtwn_bb_write(sc, R92C_FPGA0_RFIFACEOE(i), reg);
-		DELAY(1);
+		DELAY(50);
 
 		/* Set address and data lengths of RF registers. */
 		reg = urtwn_bb_read(sc, R92C_HSSI_PARAM2(i));
 		reg &= ~R92C_HSSI_PARAM2_ADDR_LENGTH;
 		urtwn_bb_write(sc, R92C_HSSI_PARAM2(i), reg);
-		DELAY(1);
+		DELAY(50);
 		reg = urtwn_bb_read(sc, R92C_HSSI_PARAM2(i));
 		reg &= ~R92C_HSSI_PARAM2_DATA_LENGTH;
 		urtwn_bb_write(sc, R92C_HSSI_PARAM2(i), reg);
-		DELAY(1);
+		DELAY(50);
 
 		/* Write RF initialization values for this chain. */
 		for (j = 0; j < prog[i].count; j++) {
@@ -3586,11 +3874,11 @@ urtwn_rf_init(struct urtwn_softc *sc)
 				 * These are fake RF registers offsets that
 				 * indicate a delay is required.
 				 */
-				usbd_delay_ms(sc->sc_udev, 50);
+				urtwn_delay_ms(sc, 50);
 				continue;
 			}
 			urtwn_rf_write(sc, i, prog[i].regs[j], prog[i].vals[j]);
-			DELAY(1);
+			DELAY(5);
 		}
 
 		/* Restore RF_ENV control type. */
@@ -3620,6 +3908,8 @@ urtwn_cam_init(struct urtwn_softc *sc)
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
+	if (ISSET(sc->chip, URTWN_CHIP_92EU))
+		return;
 
 	for (idx = 0; idx < R92C_CAM_ENTRY_COUNT; idx++) {
 		content = (idx & 3)
@@ -3990,7 +4280,8 @@ urtwn_set_txpower(struct urtwn_softc *sc, u_int chan, u_int ht40m)
 
 	for (i = 0; i < sc->ntxchains; i++) {
 		/* Compute per-rate Tx power values. */
-		if (ISSET(sc->chip, URTWN_CHIP_88E))
+		if (ISSET(sc->chip, URTWN_CHIP_88E) ||
+		    ISSET(sc->chip, URTWN_CHIP_92EU))
 			urtwn_r88e_get_txpower(sc, i, chan, ht40m, power);
 		else
 			urtwn_get_txpower(sc, i, chan, ht40m, power);
@@ -4073,7 +4364,8 @@ urtwn_set_chan(struct urtwn_softc *sc, struct ieee80211_channel *c, u_int ht40m)
 		urtwn_bb_write(sc, R92C_FPGA1_RFMOD,
 		    urtwn_bb_read(sc, R92C_FPGA1_RFMOD) & ~R92C_RFMOD_40MHZ);
 
-		if (!ISSET(sc->chip, URTWN_CHIP_88E)) {
+		if (!ISSET(sc->chip, URTWN_CHIP_88E) &&
+		    !ISSET(sc->chip, URTWN_CHIP_92EU)) {
 			urtwn_bb_write(sc, R92C_FPGA0_ANAPARAM2,
 			    urtwn_bb_read(sc, R92C_FPGA0_ANAPARAM2) |
 			    R92C_FPGA0_ANAPARAM2_CBW20);
@@ -4082,7 +4374,8 @@ urtwn_set_chan(struct urtwn_softc *sc, struct ieee80211_channel *c, u_int ht40m)
 		/* Select 20MHz bandwidth. */
 		urtwn_rf_write(sc, 0, R92C_RF_CHNLBW,
 		    (sc->rf_chnlbw[0] & ~0xfff) | chan |
-		    (ISSET(sc->chip, URTWN_CHIP_88E) ?
+		    (ISSET(sc->chip, URTWN_CHIP_88E) ||
+		     ISSET(sc->chip, URTWN_CHIP_92EU) ?
 		      R88E_RF_CHNLBW_BW20 : R92C_RF_CHNLBW_BW20));
 	}
 }
@@ -4094,7 +4387,144 @@ urtwn_iq_calib(struct urtwn_softc *sc, bool inited)
 	DPRINTFN(DBG_FN, ("%s: %s: inited=%d\n", device_xname(sc->sc_dev),
 	    __func__, inited));
 
-	/* TODO */
+	uint32_t addaBackup[16], iqkBackup[4], piMode;
+
+#ifdef notyet
+	uint32_t odfm0_agccore_regs[3];
+	uint32_t ant_regs[3];
+	uint32_t rf_regs[8];
+#endif
+	uint32_t reg0, reg1, reg2;
+	int i, attempt;
+
+#ifdef notyet
+	urtwn_write_1(sc, R92E_STBC_SETTING + 2, urtwn_read_1(sc,
+	    R92E_STBC_SETTING + 2));
+	urtwn_write_1(sc, R92C_ACLK_MON, 0);
+	/* Save AGCCORE regs. */
+	for (i = 0; i < sc->nrxchains; i++) {
+		odfm0_agccore_regs[i] = urtwn_read_4(sc,
+		    R92C_OFDM0_AGCCORE1(i));
+	}
+#endif
+	/* Save BB regs. */
+	reg0 = urtwn_bb_read(sc, R92C_OFDM0_TRXPATHENA);
+	reg1 = urtwn_bb_read(sc, R92C_OFDM0_TRMUXPAR);
+	reg2 = urtwn_bb_read(sc, R92C_FPGA0_RFIFACESW(1));
+	
+	/* Save adda regs to be restored when finished. */
+	for (i = 0; i < __arraycount(addaReg); i++)
+		addaBackup[i] = urtwn_bb_read(sc, addaReg[i]);
+	/* Save mac regs. */
+	iqkBackup[0] = urtwn_read_1(sc, R92C_TXPAUSE);
+	iqkBackup[1] = urtwn_read_1(sc, R92C_BCN_CTRL);
+	iqkBackup[2] = urtwn_read_1(sc, R92C_USTIME_TSF);
+	iqkBackup[3] = urtwn_read_4(sc, R92C_GPIO_MUXCFG);
+
+#ifdef notyet
+	ant_regs[0] = urtwn_read_4(sc, R92C_CONFIG_ANT_A);
+	ant_regs[1] = urtwn_read_4(sc, R92C_CONFIG_ANT_B);
+
+	rf_regs[0] = urtwn_read_4(sc, R92C_FPGA0_RFIFACESW(0));
+	for (i = 0; i < sc->nrxchains; i++)
+		rf_regs[i+1] = urtwn_read_4(sc, R92C_FPGA0_RFIFACEOE(i));
+	reg4 = urtwn_read_4(sc, R92C_CCK0_AFESETTING);
+#endif
+
+	piMode = (urtwn_bb_read(sc, R92C_HSSI_PARAM1(0)) &
+	    R92C_HSSI_PARAM1_PI);
+	if (piMode == 0) {
+		urtwn_bb_write(sc, R92C_HSSI_PARAM1(0),
+		    urtwn_bb_read(sc, R92C_HSSI_PARAM1(0))|
+		    R92C_HSSI_PARAM1_PI);
+		urtwn_bb_write(sc, R92C_HSSI_PARAM1(1),
+		    urtwn_bb_read(sc, R92C_HSSI_PARAM1(1))|
+		    R92C_HSSI_PARAM1_PI);
+	}
+	
+	attempt = 1;
+
+next_attempt:
+
+	/* Set mac regs for calibration. */
+	for (i = 0; i < __arraycount(addaReg); i++) {
+		urtwn_bb_write(sc, addaReg[i],
+		    addaReg[__arraycount(addaReg) - 1]);
+	}
+	urtwn_write_2(sc, R92C_CCK0_AFESETTING, urtwn_read_2(sc,
+	    R92C_CCK0_AFESETTING));
+	urtwn_write_2(sc, R92C_OFDM0_TRXPATHENA, R92C_IQK_TRXPATHENA);
+	urtwn_write_2(sc, R92C_OFDM0_TRMUXPAR, R92C_IQK_TRMUXPAR);
+	urtwn_write_2(sc, R92C_FPGA0_RFIFACESW(1), R92C_IQK_RFIFACESW1);
+	urtwn_write_4(sc, R92C_LSSI_PARAM(0), R92C_IQK_LSSI_PARAM);
+
+	if (sc->ntxchains > 1)
+		urtwn_bb_write(sc, R92C_LSSI_PARAM(1), R92C_IQK_LSSI_PARAM);
+		
+	urtwn_write_1(sc, R92C_TXPAUSE, (~TP_STOPBECON) & TP_STOPALL);
+	urtwn_write_1(sc, R92C_BCN_CTRL, (iqkBackup[1] &
+	    ~R92C_BCN_CTRL_EN_BCN));
+	urtwn_write_1(sc, R92C_USTIME_TSF, (iqkBackup[2] & ~0x8));
+
+	urtwn_write_1(sc, R92C_GPIO_MUXCFG, (iqkBackup[3] &
+	    ~R92C_GPIO_MUXCFG_ENBT));
+
+	urtwn_bb_write(sc, R92C_CONFIG_ANT_A, R92C_IQK_CONFIG_ANT);
+
+	if (sc->ntxchains > 1)
+		urtwn_bb_write(sc, R92C_CONFIG_ANT_B, R92C_IQK_CONFIG_ANT);
+	urtwn_bb_write(sc, R92C_FPGA0_IQK, R92C_FPGA0_IQK_SETTING);
+	urtwn_bb_write(sc, R92C_TX_IQK, R92C_TX_IQK_SETTING);
+	urtwn_bb_write(sc, R92C_RX_IQK, R92C_RX_IQK_SETTING);
+
+	/* Restore BB regs. */
+	urtwn_bb_write(sc, R92C_OFDM0_TRXPATHENA, reg0);
+	urtwn_bb_write(sc, R92C_FPGA0_RFIFACESW(1), reg2);
+	urtwn_bb_write(sc, R92C_OFDM0_TRMUXPAR, reg1);
+
+	urtwn_bb_write(sc, R92C_FPGA0_IQK, 0x0);
+	urtwn_bb_write(sc, R92C_LSSI_PARAM(0), R92C_IQK_LSSI_RESTORE);
+	if (sc->nrxchains > 1)
+		urtwn_bb_write(sc, R92C_LSSI_PARAM(1), R92C_IQK_LSSI_RESTORE);
+
+	if (attempt-- > 0)
+		goto next_attempt;
+
+	/* Restore mode. */
+	if (piMode == 0) {
+		urtwn_bb_write(sc, R92C_HSSI_PARAM1(0),
+		    urtwn_bb_read(sc, R92C_HSSI_PARAM1(0)) &
+		    ~R92C_HSSI_PARAM1_PI);
+		urtwn_bb_write(sc, R92C_HSSI_PARAM1(1),
+		    urtwn_bb_read(sc, R92C_HSSI_PARAM1(1)) &
+		    ~R92C_HSSI_PARAM1_PI);
+	}
+
+#ifdef notyet
+	for (i = 0; i < sc->nrxchains; i++) {
+		urtwn_write_4(sc, R92C_OFDM0_AGCCORE1(i),
+		    odfm0_agccore_regs[i]);
+	}
+#endif
+
+	/* Restore adda regs. */
+	for (i = 0; i < __arraycount(addaReg); i++)
+		urtwn_bb_write(sc, addaReg[i], addaBackup[i]);
+	/* Restore mac regs. */
+	urtwn_write_1(sc, R92C_TXPAUSE, iqkBackup[0]);
+	urtwn_write_1(sc, R92C_BCN_CTRL, iqkBackup[1]);
+	urtwn_write_1(sc, R92C_USTIME_TSF, iqkBackup[2]);
+	urtwn_write_4(sc, R92C_GPIO_MUXCFG, iqkBackup[3]);
+
+#ifdef notyet
+	urtwn_write_4(sc, R92C_CONFIG_ANT_A, ant_regs[0]);
+	urtwn_write_4(sc, R92C_CONFIG_ANT_B, ant_regs[1]);
+
+	urtwn_write_4(sc, R92C_FPGA0_RFIFACESW(0), rf_regs[0]);
+	for (i = 0; i < sc->nrxchains; i++)
+		urtwn_write_4(sc, R92C_FPGA0_RFIFACEOE(i), rf_regs[i+1]);
+	urtwn_write_4(sc, R92C_CCK0_AFESETTING, reg4);
+#endif
 }
 
 static void
@@ -4129,7 +4559,7 @@ urtwn_lc_calib(struct urtwn_softc *sc)
 	    urtwn_rf_read(sc, 0, R92C_RF_CHNLBW) | R92C_RF_CHNLBW_LCSTART);
 
 	/* Give calibration the time to complete. */
-	usbd_delay_ms(sc->sc_udev, 100);
+	urtwn_delay_ms(sc, 100);
 
 	/* Restore configuration. */
 	if ((txmode & 0x70) != 0) {
@@ -4148,17 +4578,22 @@ urtwn_lc_calib(struct urtwn_softc *sc)
 static void
 urtwn_temp_calib(struct urtwn_softc *sc)
 {
-	int temp;
+	int temp, t_meter_reg;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
+	if (!ISSET(sc->chip, URTWN_CHIP_92EU))
+		t_meter_reg = R92C_RF_T_METER;
+	else
+		t_meter_reg = R92E_RF_T_METER;
+
 	if (sc->thcal_state == 0) {
 		/* Start measuring temperature. */
 		DPRINTFN(DBG_RF, ("%s: %s: start measuring temperature\n",
 		    device_xname(sc->sc_dev), __func__));
-		urtwn_rf_write(sc, 0, R92C_RF_T_METER, 0x60);
+		urtwn_rf_write(sc, 0, t_meter_reg, 0x60);
 		sc->thcal_state = 1;
 		return;
 	}
@@ -4168,7 +4603,7 @@ urtwn_temp_calib(struct urtwn_softc *sc)
 	temp = urtwn_rf_read(sc, 0, R92C_RF_T_METER) & 0x1f;
 	DPRINTFN(DBG_RF, ("%s: %s: temperature=%d\n", device_xname(sc->sc_dev),
 	    __func__, temp));
-	if (temp == 0)	/* Read failed, skip. */
+	if (temp == 0)		/* Read failed, skip. */
 		return;
 
 	/*
@@ -4243,15 +4678,20 @@ urtwn_init(struct ifnet *ifp)
 	urtwn_write_1(sc, R92C_RX_DRVINFO_SZ, 4);
 
 	/* Init interrupts. */
-	if (ISSET(sc->chip, URTWN_CHIP_88E)) {
+	if (ISSET(sc->chip, URTWN_CHIP_88E) ||
+	     ISSET(sc->chip, URTWN_CHIP_92EU)) {
 		urtwn_write_4(sc, R88E_HISR, 0xffffffff);
 		urtwn_write_4(sc, R88E_HIMR, R88E_HIMR_CPWM | R88E_HIMR_CPWM2 |
 		    R88E_HIMR_TBDER | R88E_HIMR_PSTIMEOUT);
 		urtwn_write_4(sc, R88E_HIMRE, R88E_HIMRE_RXFOVW |
 		    R88E_HIMRE_TXFOVW | R88E_HIMRE_RXERR | R88E_HIMRE_TXERR);
-		urtwn_write_1(sc, R92C_USB_SPECIAL_OPTION,
-		    urtwn_read_1(sc, R92C_USB_SPECIAL_OPTION) |
-		      R92C_USB_SPECIAL_OPTION_INT_BULK_SEL);
+		if (ISSET(sc->chip, URTWN_CHIP_88E)) {
+			urtwn_write_1(sc, R92C_USB_SPECIAL_OPTION,
+			    urtwn_read_1(sc, R92C_USB_SPECIAL_OPTION) |
+			      R92C_USB_SPECIAL_OPTION_INT_BULK_SEL);
+		}
+		if (ISSET(sc->chip, URTWN_CHIP_92EU))
+			urtwn_write_1(sc, R92C_USB_HRPWM, 0);
 	} else {
 		urtwn_write_4(sc, R92C_HISR, 0xffffffff);
 		urtwn_write_4(sc, R92C_HIMR, 0xffffffff);
@@ -4292,7 +4732,8 @@ urtwn_init(struct ifnet *ifp)
 	urtwn_edca_init(sc);
 
 	/* Setup rate fallback. */
-	if (!ISSET(sc->chip, URTWN_CHIP_88E)) {
+	if (!ISSET(sc->chip, URTWN_CHIP_88E) &&
+	    !ISSET(sc->chip, URTWN_CHIP_92EU)) {
 		urtwn_write_4(sc, R92C_DARFRC + 0, 0x00000000);
 		urtwn_write_4(sc, R92C_DARFRC + 4, 0x10080404);
 		urtwn_write_4(sc, R92C_RARFRC + 0, 0x04030201);
@@ -4318,7 +4759,8 @@ urtwn_init(struct ifnet *ifp)
 	    urtwn_read_1(sc, R92C_USB_SPECIAL_OPTION) &
 	      ~R92C_USB_SPECIAL_OPTION_AGG_EN);
 	urtwn_write_1(sc, R92C_RXDMA_AGG_PG_TH, 48);
-	if (ISSET(sc->chip, URTWN_CHIP_88E))
+	if (ISSET(sc->chip, URTWN_CHIP_88E) ||
+	    ISSET(sc->chip, URTWN_CHIP_92EU))
 		urtwn_write_1(sc, R92C_RXDMA_AGG_PG_TH + 1, 4);
 	else
 		urtwn_write_1(sc, R92C_USB_DMA_AGG_TO, 4);
@@ -4330,7 +4772,8 @@ urtwn_init(struct ifnet *ifp)
 	urtwn_write_1(sc, R92C_BCNDMATIM, R92C_DMA_ATIME_INT_TIME);
 	urtwn_write_2(sc, R92C_BCNTCFG, 0x660f);
 
-	if (!ISSET(sc->chip, URTWN_CHIP_88E)) {
+	if (!ISSET(sc->chip, URTWN_CHIP_88E) &&
+	    !ISSET(sc->chip, URTWN_CHIP_92EU)) {
 		/* Setup AMPDU aggregation. */
 		urtwn_write_4(sc, R92C_AGGLEN_LMT, 0x99997631);	/* MCS7~0 */
 		urtwn_write_1(sc, R92C_AGGR_BREAK_TIME, 0x16);
@@ -4357,7 +4800,8 @@ urtwn_init(struct ifnet *ifp)
 	urtwn_bb_init(sc);
 	urtwn_rf_init(sc);
 
-	if (ISSET(sc->chip, URTWN_CHIP_88E)) {
+	if (ISSET(sc->chip, URTWN_CHIP_88E) ||
+	    ISSET(sc->chip, URTWN_CHIP_92EU)) {
 		urtwn_write_2(sc, R92C_CR,
 		    urtwn_read_2(sc, R92C_CR) | R92C_CR_MACTXEN |
 		      R92C_CR_MACRXEN);
@@ -4384,7 +4828,8 @@ urtwn_init(struct ifnet *ifp)
 	/* Perform LC calibration. */
 	urtwn_lc_calib(sc);
 
-	if (!ISSET(sc->chip, URTWN_CHIP_88E)) {
+	if (!ISSET(sc->chip, URTWN_CHIP_88E) &&
+	    !ISSET(sc->chip, URTWN_CHIP_92EU)) {
 		/* Fix USB interference issue. */
 		urtwn_write_1(sc, 0xfe40, 0xe0);
 		urtwn_write_1(sc, 0xfe41, 0x8d);
@@ -4394,7 +4839,8 @@ urtwn_init(struct ifnet *ifp)
 		urtwn_pa_bias_init(sc);
 	}
 
-	if (!(sc->chip & (URTWN_CHIP_92C | URTWN_CHIP_92C_1T2R))) {
+	if (!(sc->chip & (URTWN_CHIP_92C | URTWN_CHIP_92C_1T2R)) ||
+	    !(sc->chip & URTWN_CHIP_92EU)) {
 		/* 1T1R */
 		urtwn_bb_write(sc, R92C_FPGA0_RFPARAM(0),
 		    urtwn_bb_read(sc, R92C_FPGA0_RFPARAM(0)) | __BIT(13));
@@ -4405,26 +4851,31 @@ urtwn_init(struct ifnet *ifp)
 	    urtwn_read_1(sc, R92C_GPIO_MUXCFG) & ~R92C_GPIO_MUXCFG_ENBT);
 
 	/* Fix for lower temperature. */
-	if (!ISSET(sc->chip, URTWN_CHIP_88E))
+	if (!ISSET(sc->chip, URTWN_CHIP_88E) &&
+	    !ISSET(sc->chip, URTWN_CHIP_92EU))
 		urtwn_write_1(sc, 0x15, 0xe9);
 
 	/* Set default channel. */
 	urtwn_set_chan(sc, ic->ic_curchan, IEEE80211_HTINFO_2NDCHAN_NONE);
 
 	/* Queue Rx xfers. */
-	for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
-		data = &sc->rx_data[i];
-		usbd_setup_xfer(data->xfer, data, data->buf, URTWN_RXBUFSZ,
-		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, urtwn_rxeof);
-		error = usbd_transfer(data->xfer);
-		if (__predict_false(error != USBD_NORMAL_COMPLETION &&
-		    error != USBD_IN_PROGRESS))
-			goto fail;
+	for (size_t j = 0; j < sc->rx_npipe; j++) {
+		for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
+			data = &sc->rx_data[j][i];
+			usbd_setup_xfer(data->xfer, data, data->buf,
+			    URTWN_RXBUFSZ, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
+			    urtwn_rxeof);
+			error = usbd_transfer(data->xfer);
+			if (__predict_false(error != USBD_NORMAL_COMPLETION &&
+			    error != USBD_IN_PROGRESS))
+				goto fail;
+		}
 	}
 
 	/* We're ready to go. */
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
+	sc->sc_running = true;
 
 	mutex_exit(&sc->sc_write_mtx);
 
@@ -4466,18 +4917,22 @@ urtwn_stop(struct ifnet *ifp, int disable)
 	callout_stop(&sc->sc_calib_to);
 
 	/* Abort Tx. */
-	for (i = 0; i < R92C_MAX_EPOUT; i++) {
+	for (i = 0; i < sc->tx_npipe; i++) {
 		if (sc->tx_pipe[i] != NULL)
 			usbd_abort_pipe(sc->tx_pipe[i]);
 	}
 
 	/* Stop Rx pipe. */
-	usbd_abort_pipe(sc->rx_pipe);
+	for (i = 0; i < sc->rx_npipe; i++) {
+		if (sc->rx_pipe[i] != NULL)
+			usbd_abort_pipe(sc->rx_pipe[i]);
+	}
 
 	/* Free Tx/Rx buffers. */
 	urtwn_free_tx_list(sc);
 	urtwn_free_rx_list(sc);
 
+	sc->sc_running = false;
 	if (disable)
 		urtwn_chip_stop(sc);
 }
@@ -4503,6 +4958,9 @@ urtwn_chip_stop(struct urtwn_softc *sc)
 	bool disabled = true;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
+
+	if (ISSET(sc->chip, URTWN_CHIP_92EU))
+		return;
 
 	mutex_enter(&sc->sc_write_mtx);
 
@@ -4533,7 +4991,8 @@ urtwn_chip_stop(struct urtwn_softc *sc)
 		urtwn_write_1(sc, R92C_MCUFWDL, 0);
 		/* If firmware in ram code, do reset */
 		if (ISSET(sc->sc_flags, URTWN_FLAG_FWREADY)) {
-			if (ISSET(sc->chip, URTWN_CHIP_88E))
+			if (ISSET(sc->chip, URTWN_CHIP_88E) ||
+			    ISSET(sc->chip, URTWN_CHIP_92EU))
 				urtwn_r88e_fw_reset(sc);
 			else
 				urtwn_fw_reset(sc);
@@ -4612,6 +5071,15 @@ urtwn_chip_stop(struct urtwn_softc *sc)
 	urtwn_write_1(sc, R92C_RSV_CTRL, 0x0E);
 
 	mutex_exit(&sc->sc_write_mtx);
+}
+
+static void
+urtwn_delay_ms(struct urtwn_softc *sc, int ms)
+{
+	if (sc->sc_running == false)
+		DELAY(ms * 1000);
+	else
+		usbd_delay_ms(sc->sc_udev, ms);
 }
 
 MODULE(MODULE_CLASS_DRIVER, if_urtwn, "bpf");

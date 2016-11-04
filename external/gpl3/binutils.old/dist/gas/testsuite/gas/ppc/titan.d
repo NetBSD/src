@@ -229,8 +229,8 @@ Disassembly of section \.text:
  36c:	(7c 9f 62 a6|a6 62 9f 7c) 	mfivor15 r4
  370:	(7c 93 82 a6|a6 82 93 7c) 	mfivor35 r4
  374:	(7c 93 82 a6|a6 82 93 7c) 	mfivor35 r4
- 378:	(7c 9a 8a a6|a6 8a 9a 7c) 	mfdc_dat r4
- 37c:	(7c 9a 8a a6|a6 8a 9a 7c) 	mfdc_dat r4
+ 378:	(7c 9a 8a a6|a6 8a 9a 7c) 	mfmcsrr0 r4
+ 37c:	(7c 9a 8a a6|a6 8a 9a 7c) 	mfmcsrr0 r4
  380:	(7c 9b 8a a6|a6 8a 9b 7c) 	mfmcsrr1 r4
  384:	(7c 9b 8a a6|a6 8a 9b 7c) 	mfmcsrr1 r4
  388:	(7c 9c 8a a6|a6 8a 9c 7c) 	mfmcsr  r4

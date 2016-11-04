@@ -453,11 +453,14 @@ xstormy16_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
   return (CORE_ADDR) pc;
 }
 
-/* The epilogue is defined here as the area at the end of a function,
+/* Implement the stack_frame_destroyed_p gdbarch method.
+
+   The epilogue is defined here as the area at the end of a function,
    either on the `ret' instruction itself or after an instruction which
    destroys the function's stack frame.  */
+
 static int
-xstormy16_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+xstormy16_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR func_addr = 0, func_end = 0;
@@ -835,8 +838,8 @@ xstormy16_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   frame_base_set_default (gdbarch, &xstormy16_frame_base);
 
   set_gdbarch_skip_prologue (gdbarch, xstormy16_skip_prologue);
-  set_gdbarch_in_function_epilogue_p (gdbarch,
-				      xstormy16_in_function_epilogue_p);
+  set_gdbarch_stack_frame_destroyed_p (gdbarch,
+				       xstormy16_stack_frame_destroyed_p);
 
   /* These values and methods are used when gdb calls a target function.  */
   set_gdbarch_push_dummy_call (gdbarch, xstormy16_push_dummy_call);

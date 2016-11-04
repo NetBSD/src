@@ -1,7 +1,7 @@
 #    Makefile template for Configure for the h8300 sim library.
 #    Copyright (C) 1990-2015 Free Software Foundation, Inc.
 #    Written by Cygnus Support.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -17,15 +17,9 @@
 
 ## COMMON_PRE_CONFIG_FRAG
 
-# List of main object files for `run'.
-SIM_RUN_OBJS = nrun.o
-
 SIM_OBJS = compile.o \
 	   $(SIM_NEW_COMMON_OBJS) \
-	   sim-cpu.o \
-	   sim-engine.o \
-	   sim-load.o \
-	   $(SIM_EXTRA_OBJS)
+	   sim-load.o
 
 ## COMMON_POST_CONFIG_FRAG
 

@@ -1,4 +1,4 @@
-# Copyright 2012-2015 Free Software Foundation, Inc.
+# Copyright 2012-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,8 @@ if { [gdb_compile "${srcdir}/${subdir}/${executable}.c" \
 }
 
 clean_restart $executable
-gdb_load_shlibs $libobj1 $libobj2
+gdb_load_shlib $libobj1
+gdb_load_shlib $libobj2
 
 if ![runto_main] {
     untested "could not run to main"

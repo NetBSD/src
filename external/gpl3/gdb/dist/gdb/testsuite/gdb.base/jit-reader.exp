@@ -1,0 +1,251 @@
+# Copyright 2012-2016 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+standard_testfile jithost.c
+
+if { (![istarget x86_64-*-*] && ![istarget i?86-*-*]) || ![is_lp64_target] } {
+    return -1;
+}
+
+if {[skip_shlib_tests]} {
+    return -1
+}
+
+if { ![isnative] } {
+    return -1
+}
+
+if {[get_compiler_info]} {
+    untested "could not get compiler info"
+    return 1
+}
+
+set jit_host_src $srcfile
+set jit_host_bin $binfile
+
+# We inject the complete path to jit-reader.h into the source file
+# lest we end up (incorrectly) building against a system-installed
+# version.
+set jit_reader_header [standard_output_file "../../../../../gdb/jit-reader.h"]
+set jit_reader_flag "-DJIT_READER_H=\"$jit_reader_header\""
+
+if  { [gdb_compile "${srcdir}/${subdir}/${jit_host_src}" "${jit_host_bin}" \
+       executable  [list debug additional_flags=$jit_reader_flag]] != "" } {
+    untested jit-reader.exp
+    return -1
+}
+
+set jit_reader jitreader
+set jit_reader_src ${jit_reader}.c
+set jit_reader_bin [standard_output_file ${jit_reader}.so]
+
+if { [gdb_compile_shlib "${srcdir}/${subdir}/${jit_reader_src}" "${jit_reader_bin}" \
+	  [list debug additional_flags=$jit_reader_flag]] != "" } {
+    untested jit-reader.exp
+    return -1
+}
+
+# Test "info registers" in the current frame, expecting RSP's value to
+# be SP.
+
+proc info_registers_current_frame {sp} {
+    global hex decimal
+
+    set any "\[^\r\n\]*"
+
+    gdb_test "info registers" \
+	[multi_line \
+	     "rax            $hex	$decimal" \
+	     "rbx            $hex	$decimal" \
+	     "rcx            $hex	$decimal" \
+	     "rdx            $hex	$decimal" \
+	     "rsi            $hex	$decimal" \
+	     "rdi            $hex	$decimal" \
+	     "rbp            $hex	$hex" \
+	     "rsp            $sp	$sp" \
+	     "r8             $hex	$decimal" \
+	     "r9             $hex	$decimal" \
+	     "r10            $hex	$decimal" \
+	     "r11            $hex	$decimal" \
+	     "r12            $hex	$decimal" \
+	     "r13            $hex	$decimal" \
+	     "r14            $hex	$decimal" \
+	     "r15            $hex	$decimal" \
+	     "rip            $hex	$hex$any" \
+	     "eflags         $hex	\\\[$any\\\]" \
+	     "cs             $hex	$decimal" \
+	     "ss             $hex	$decimal" \
+	     "ds             $hex	$decimal" \
+	     "es             $hex	$decimal" \
+	     "fs             $hex	$decimal" \
+	     "gs             $hex	$decimal" \
+	    ]
+}
+
+proc jit_reader_test {} {
+    global jit_host_bin
+    global jit_reader_bin
+    global verbose
+    global hex decimal
+
+    set any "\[^\r\n\]*"
+
+    clean_restart $jit_host_bin
+    gdb_load_shlib $jit_reader_bin
+
+    if {$verbose > 0} {
+	gdb_test_no_output "set debug jit 1"
+    }
+
+    gdb_test_no_output "jit-reader-load ${jit_reader_bin}" "jit-reader-load"
+    gdb_run_cmd
+    gdb_test "" "Program received signal SIGTRAP, .*" "expect SIGTRAP"
+
+    # Test the JIT reader unwinder.
+    with_test_prefix "with jit-reader" {
+
+	with_test_prefix "before mangling" {
+	    gdb_test "bt" \
+		[multi_line \
+		     "#0 ${any} in jit_function_00 ${any}" \
+		     "#1 ${any} in main ${any}" \
+		    ] \
+		"bt works"
+
+	    set sp_before_mangling \
+		[get_hexadecimal_valueof "\$sp" 0 "get sp"]
+
+	    gdb_test "up" "#1  $any in main $any\r\n$any  function $any" \
+		"move up to caller"
+
+	    set caller_sp \
+		[get_hexadecimal_valueof "\$sp" 0 "get caller sp"]
+	}
+
+	# Step over the instruction that mangles the stack pointer.
+	# While that confuses GDB's built-in unwinder, the JIT
+	# reader's unwinder understands the mangling and should thus
+	# be able to unwind at that location.
+	with_test_prefix "after mangling" {
+	    gdb_test "si" "in jit_function_00 .*" "step over stack mangling"
+
+	    set sp_after_mangling \
+		[get_hexadecimal_valueof "\$sp" 0 "get sp"]
+
+	    gdb_assert {$sp_before_mangling != $sp_after_mangling} \
+		"sp is mangled"
+
+	    # Check that the jit unwinder manages to backtrace through
+	    # the mangled stack pointer.
+	    gdb_test "bt" \
+		[multi_line \
+		     "#0 ${any} in jit_function_00 ${any}" \
+		     "#1 ${any} in main ${any}" \
+		    ] \
+		"bt works"
+
+	    with_test_prefix "current frame" {
+		info_registers_current_frame $sp_after_mangling
+
+		gdb_test "info frame" \
+		    "Stack level 0, frame at $sp_before_mangling.*in jit_function_00.*"
+	    }
+
+	    with_test_prefix "caller frame" {
+		gdb_test "up" "#1  $any in main $any\r\n$any  function $any" \
+		    "up to caller"
+
+		# Since the JIT unwinder only provides RIP/RSP/RBP,
+		# all other registers should show as "<not saved>".
+		gdb_test "info registers" \
+		    [multi_line \
+			 "rax            <not saved>" \
+			 "rbx            <not saved>" \
+			 "rcx            <not saved>" \
+			 "rdx            <not saved>" \
+			 "rsi            <not saved>" \
+			 "rdi            <not saved>" \
+			 "rbp            $hex	$hex" \
+			 "rsp            $caller_sp	$caller_sp" \
+			 "r8             <not saved>" \
+			 "r9             <not saved>" \
+			 "r10            <not saved>" \
+			 "r11            <not saved>" \
+			 "r12            <not saved>" \
+			 "r13            <not saved>" \
+			 "r14            <not saved>" \
+			 "r15            <not saved>" \
+			 "rip            $hex	$hex $any" \
+			 "eflags         <not saved>" \
+			 "cs             <not saved>" \
+			 "ss             <not saved>" \
+			 "ds             <not saved>" \
+			 "es             <not saved>" \
+			 "fs             <not saved>" \
+			 "gs             <not saved>" \
+			]
+
+		# Make sure that "info frame" doesn't crash.
+		gdb_test "info frame" "Stack level 1, .*in main.*"
+
+		# ... and that neither does printing a pseudo
+		# register.
+		gdb_test "print /x \$ebp" " = $hex" "print pseudo register"
+
+		# There's no way for the JIT reader API to support
+		# modifyiable values.
+		gdb_test "print \$rbp = -1" \
+		    "Attempt to assign to an unmodifiable value\." \
+		    "cannot assign to register"
+	    }
+	}
+    }
+
+    # Now unload the jit reader, and ensure that backtracing really
+    # doesn't work without it.
+    with_test_prefix "without jit-reader" {
+	gdb_test_no_output "jit-reader-unload ${jit_reader_bin}" \
+	    "jit-reader-unload"
+
+	# Check that we're no longer using the JIT unwinder, and that
+	# the built-in unwinder cannot backtrace through the mangled
+	# stack pointer.
+	gdb_test "bt" \
+	    [multi_line \
+		 "Backtrace stopped: Cannot access memory at address $sp_after_mangling" \
+		] \
+	    "bt shows error"
+
+	gdb_test "info frame" "Cannot access memory at address.*" \
+	    "info frame shows error"
+	info_registers_current_frame $sp_after_mangling
+	gdb_test "up" "Initial frame selected; you cannot go up\\." \
+	    "cannot go up"
+    }
+
+    with_test_prefix "with jit-reader again" {
+	gdb_test_no_output "jit-reader-load ${jit_reader_bin}" "jit-reader-load"
+
+	# Check that the jit unwinder manages to backtrace through
+	# the mangled stack pointer.
+	gdb_test "bt" \
+	    [multi_line \
+		 "#0 ${any} in jit_function_00 ${any}" \
+		 "#1 ${any} in main ${any}" \
+		]
+    }
+}
+
+jit_reader_test

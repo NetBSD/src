@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.21 2011/08/26 01:10:49 joerg Exp $	*/
+/*	$NetBSD: assert.h,v 1.21.24.1 2016/11/04 14:48:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -104,3 +104,9 @@ void __diagassert(const char *, int, const char *);
 void __diagassert13(const char *, int, const char *, const char *);
 __END_DECLS
 #endif /* __ASSERT_DECLARED */
+
+#if ((__cplusplus - 0) < 201103L)
+#ifndef static_assert
+#define static_assert _Static_assert
+#endif /* static_assert */
+#endif

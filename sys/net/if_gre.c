@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.169 2016/06/10 13:27:16 ozaki-r Exp $ */
+/*	$NetBSD: if_gre.c,v 1.169.2.1 2016/11/04 14:49:20 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.169 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.169.2.1 2016/11/04 14:49:20 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -600,8 +600,7 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 			panic("receive 1a");
 #endif
 		sbfree(&so->so_rcv, m);
-		MFREE(m, so->so_rcv.sb_mb);
-		m = so->so_rcv.sb_mb;
+		m = so->so_rcv.sb_mb = m_free(m);
 	}
 	while (m != NULL && m->m_type == MT_CONTROL && error == 0) {
 		sbfree(&so->so_rcv, m);
@@ -612,8 +611,7 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 		if (pr->pr_domain->dom_dispose &&
 		    mtod(m, struct cmsghdr *)->cmsg_type == SCM_RIGHTS)
 			(*pr->pr_domain->dom_dispose)(m);
-		MFREE(m, so->so_rcv.sb_mb);
-		m = so->so_rcv.sb_mb;
+		m = so->so_rcv.sb_mb = m_free(m);
 	}
 
 	/*

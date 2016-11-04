@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.34.2.2 2016/08/06 00:19:06 pgoyette Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.34.2.3 2016/11/04 14:49:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,11 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-<<<<<<< bus_dma.c
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.34.2.2 2016/08/06 00:19:06 pgoyette Exp $");
-=======
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.34.2.2 2016/08/06 00:19:06 pgoyette Exp $");
->>>>>>> 1.37
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.34.2.3 2016/11/04 14:49:02 pgoyette Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 

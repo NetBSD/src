@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.37 2015/06/19 17:33:20 christos Exp $ */
+/*  $NetBSD: perfuse.c,v 1.37.2.1 2016/11/04 14:48:54 pgoyette Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -32,6 +32,7 @@
 #include <string.h>
 #include <errno.h>
 #include <puffs.h>
+#include <inttypes.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -51,7 +52,6 @@ extern char **environ;
 
 static struct perfuse_state *init_state(void);
 static int get_fd(const char *);
-
 
 static struct perfuse_state *
 init_state(void)
@@ -146,6 +146,25 @@ get_fd(const char *data)
 
 }
 
+uint32_t 
+perfuse_bufvar_from_env(const char *name, uint32_t defval)
+{
+	char valstr[1024];
+	int e;
+	uint32_t retval;
+
+	if (getenv_r(name, valstr, sizeof(valstr)) == -1)
+		return defval;
+
+	retval = (uint32_t)strtoi(valstr, NULL, 0, 0, UINT32_MAX, &e);
+	if (!e)
+		return retval;
+
+	DWARNC(e, "conversion from `%s' to uint32_t failed, using %u",
+	    valstr, defval);
+	return defval;
+}
+
 int
 perfuse_open(const char *path, int flags, mode_t mode)
 {
@@ -180,10 +199,11 @@ perfuse_open(const char *path, int flags, mode_t mode)
 	}
 
 	/*
-	 * Set a buffer lentgh large enough so that any FUSE packet
+	 * Set a buffer lentgh large enough so that enough FUSE packets
 	 * will fit.
 	 */
-	opt = (uint32_t)FUSE_BUFSIZE;
+	opt = perfuse_bufvar_from_env("PERFUSE_BUFSIZE",
+	    (uint32_t)(16 * FUSE_BUFSIZE));
 	optlen = sizeof(opt);
 	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
@@ -211,10 +231,11 @@ perfuse_open(const char *path, int flags, mode_t mode)
 	}
 
 	/*
-	 * Set a buffer lentgh large enough so that any FUSE packet
+	 * Set a buffer lentgh large enough so that enough FUSE packets
 	 * will fit.
 	 */
-	opt = (uint32_t)(4 * FUSE_BUFSIZE);
+	opt = perfuse_bufvar_from_env("PERFUSE_BUFSIZE",
+	    (uint32_t)(16 * FUSE_BUFSIZE));
 	optlen = sizeof(opt);
 	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);

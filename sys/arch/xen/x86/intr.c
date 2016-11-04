@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29 2011/08/13 16:22:15 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29.34.1 2016/11/04 14:49:07 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -186,6 +186,16 @@ cpu_intr_init(struct cpu_info *ci)
 }
 
 #if NPCI > 0 || NISA > 0
+void *
+intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
+    int type, int level, int (*handler)(void *) , void *arg,
+    bool known_mpsafe, const char *xname)
+{
+	/* XXX xname registration not supported */
+	return intr_establish(legacy_irq, pic, pin, type, level, handler, arg,
+	    known_mpsafe);
+}
+
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin,
     int type, int level, int (*handler)(void *) , void *arg,

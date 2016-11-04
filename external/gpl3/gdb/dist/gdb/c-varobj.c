@@ -1,6 +1,6 @@
 /* varobj support for C and C++.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -370,7 +370,7 @@ c_describe_child (const struct varobj *parent, int index,
 
 	    if (cfull_expression)
 	      {
-		char *join = was_ptr ? "->" : ".";
+		const char *join = was_ptr ? "->" : ".";
 
 		*cfull_expression = xstrprintf ("(%s)%s%s", parent_expression,
 						join, field_name);
@@ -741,7 +741,7 @@ cplus_describe_child (const struct varobj *parent, int index,
   if (TYPE_CODE (type) == TYPE_CODE_STRUCT
       || TYPE_CODE (type) == TYPE_CODE_UNION)
     {
-      char *join = was_ptr ? "->" : ".";
+      const char *join = was_ptr ? "->" : ".";
 
       if (CPLUS_FAKE_CHILD (parent))
 	{
@@ -825,7 +825,7 @@ cplus_describe_child (const struct varobj *parent, int index,
 
 	  if (cfull_expression)
 	    {
-	      char *ptr = was_ptr ? "*" : "";
+	      const char *ptr = was_ptr ? "*" : "";
 
 	      /* Cast the parent to the base' type.  Note that in gdb,
 		 expression like 

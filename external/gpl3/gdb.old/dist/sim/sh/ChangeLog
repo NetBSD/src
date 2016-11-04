@@ -1,3 +1,154 @@
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (SIM_CPU): Delete.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (sim_cia): Delete.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (CIA_GET, CIA_SET): Delete.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sh_pc_get, sh_pc_set): New functions.
+	(sim_open): Call CPU_PC_FETCH & CPU_PC_STORE for all cpus.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-cpu.o.
+	* sim-main.h (STATE_CPU): Delete.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-engine.o.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-28  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_RUN_OBJS, SIM_EXTRA_CFLAGS): Delete.
+	(SIM_OBJS): Change to $(SIM_NEW_COMMON_OBJS).
+	* interp.c: Delete run-sim.h include.  Include sim-main.h, sim-base.h,
+	and sim-options.h.
+	(SEXT, SEXT32): Undefine.
+	(sim_write): Delete prototype.
+	(regstacktype, saved_state_type): Move to sim-main.h.
+	(target_little_endian): Replace with CURRENT_TARGET_BYTE_ORDER.
+	(host_little_endian): Replace with CURRENT_HOST_BYTE_ORDER.
+	(sim_kind, myname, tracing, sim_stop, sim_trace, sim_set_profile,
+	sim_set_profile_size, sim_load, sim_set_callbacks,
+	sim_complete_command): Delete.
+	(sim_size): Mark static.
+	(init_pointers): Delete host_little_endian setup.
+	(sim_resume): Delete tracing check.
+	(free_state): New cleanup function.
+	(sim_open): Rewrite to use new common logic.
+	(sim_create_inferior): Call init_dsp.
+	* sim-main.h: New file.
+	* tconfig.h: Delete file.
+
+2015-03-28  Mike Frysinger  <vapier@gentoo.org>
+
+	* gencode.c (ppi_gensim): Convert old style prototype with ppi_insn.
+	* interp.c: Include ctype.h and run-sim.h.
+	[HAVE_TIME_H]: Include time.h
+	[HAVE_SYS_TIME_H]: Include sys/time.h
+	[!_WIN32]: Include utime.h and sys/wait.h.
+	(set_fpscr1, raise_exception, raise_buserror, get_dr, set_dr, set_sr,
+	do_rdat, do_wdat, process_wlat_addr, process_wwat_addr,
+	process_wbat_addr, process_rlat_addr, process_rwat_addr,
+	process_rbat_addr, IOMEM, get_now, now_persec, swapout, swapout16,
+	ptr, strswaplen, strnswap, dmul, macw, macl, get_loop_bounds_ext,
+	get_loop_bounds, sim_size, init_dsp, init_pointers, dump_profile,
+	gotcall, sim_stop, sim_write, sim_read, sim_store_register,
+	sim_fetch_register, sim_trace, sim_stop_reason, sim_info,
+	sim_set_profile, sim_set_profile_size, sim_open,
+	parse_and_set_memory_size, sim_close, sim_load, sim_create_inferior,
+	sim_do_command, sim_set_callbacks): Convert old style prototype.
+	(fail): Delete unused function.
+	(wlat_fast, wwat_fast, wbat_fast, rlat_fast, rwat_fast, rbat_fast):
+	Delete unused prototypes.
+	(wlat_fast, wwat_fast, wbat_fast, rlat_fast, rwat_fast, rbat_fast,
+	swap, swap16):
+	Convert old style prototype and move INLINE before the type.
+	(trap): Convert old style prototype.  Add casts to wait and sim_write
+	calls.
+	(div1): Convert old style prototype.  Change return to void.
+	(do_long_move_insn, do_blog_insn, fsca_s, fsrra_s, mcalloc): Mark
+	static.
+	(sim_resume): Convert old style prototype.  Align printf format and
+	args.
+
+2015-03-28  Mike Frysinger  <vapier@gentoo.org>
+
+	* gencode.c (ppi_gensim): Add missing */.  Change case 4 to case 5.
+
+2015-03-28  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (gencode): Add $(BUILD_CFLAGS), $(BUILD_LDFLAGS),
+	and $(WARN_CFLAGS).
+	* gencode.c: Include ctype.h, stdlib.h, string.h, and unistd.h.
+	(struct op): Mark members const.
+	(tab): Mark static.
+	(nibble_type_list): Mark const.
+	(arg_type_list): Mark const.
+	(make_enum_list): Delete unused func.
+	(qfunc, expand_opcode, dumptable, expand_ppi_code): Convert old
+	style prototype and mark args const.
+	(sorttab, gengastab, conflict_warn, filltable, expand_ppi_movxy,
+	gensim, ppi_filltable): Convert old style prototype.
+	(gensim_caselist): Convert old style prototype.  Mark local
+	variables s and r const.
+	(gendefines): Convert old style prototype.  Mark s const.  Move
+	tolower call into printf statement.
+	(ppi_gensim): Convert old style prototype.  Mark local variable
+	s const.
+	(main): Convert old style prototype.  Change printf %d to %zu.
+
+2015-03-28  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+	* configure.ac: Call SIM_AC_OPTION_ENDIAN, SIM_AC_OPTION_ALIGNMENT,
+	SIM_AC_OPTION_HOSTENDIAN, SIM_AC_OPTION_ENVIRONMENT,
+	SIM_AC_OPTION_INLINE, SIM_AC_OPTION_WARNINGS.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+	* tconfig.in: Rename file ...
+	* tconfig.h: ... here.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_EXTRA_CFLAGS): Set to
+	-DSIM_USE_DEPRECATED_RUN_FRONTEND.
+	(SIM_RUN_OBJS): Set to run.o.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (AC_CHECK_HEADERS): Delete.
+	* aclocal.m4, configure: Regenerate.
+
 2014-10-14  Oleg Endo <olegendo@gcc.gnu.org>  (tiny patch)
 
 	* gencode.c (fabs, fneg): Implement as integer operation

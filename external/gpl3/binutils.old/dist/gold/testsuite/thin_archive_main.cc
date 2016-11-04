@@ -1,6 +1,6 @@
 // thin_archive_main.cc -- a test case for gold
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.

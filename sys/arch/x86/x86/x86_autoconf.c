@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.74 2015/05/10 22:21:38 mlelstv Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.74.2.1 2016/11/04 14:49:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.74 2015/05/10 22:21:38 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.74.2.1 2016/11/04 14:49:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,6 +541,8 @@ void
 device_register(device_t dev, void *aux)
 {
 	device_t isaboot, pciboot;
+
+	device_acpi_register(dev, aux);
 
 	isaboot = device_isa_register(dev, aux);
 	pciboot = device_pci_register(dev, aux);

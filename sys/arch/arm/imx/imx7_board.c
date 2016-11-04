@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_board.c,v 1.1 2016/05/17 06:44:45 ryo Exp $	*/
+/*	$NetBSD: imx7_board.c,v 1.1.4.1 2016/11/04 14:48:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_board.c,v 1.1 2016/05/17 06:44:45 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_board.c,v 1.1.4.1 2016/11/04 14:48:58 pgoyette Exp $");
 
 #include "opt_imx.h"
 
@@ -217,7 +217,7 @@ imx7_device_register(device_t self, void *aux)
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
 		 * addresses by 2.  The simpliest remedy is to replace with our
-		 * bus space used for the armcore regisers
+		 * bus space used for the armcore registers
 		 * (which armperiph uses).
 		 */
 		struct mainbus_attach_args * const mb = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_seq.c,v 1.18 2013/09/04 13:03:22 ryoon Exp $	*/
+/*	$NetBSD: bt_seq.c,v 1.18.8.1 2016/11/04 14:48:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_seq.c,v 1.18 2013/09/04 13:03:22 ryoon Exp $");
+__RCSID("$NetBSD: bt_seq.c,v 1.18.8.1 2016/11/04 14:48:52 pgoyette Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -54,6 +54,8 @@ __RCSID("$NetBSD: bt_seq.c,v 1.18 2013/09/04 13:03:22 ryoon Exp $");
 static int __bt_first(BTREE *, const DBT *, EPG *, int *);
 static int __bt_seqadv(BTREE *, EPG *, int);
 static int __bt_seqset(BTREE *, EPG *, DBT *, int);
+static int __bt_rseq_next(BTREE *, EPG *);
+static int __bt_rseq_prev(BTREE *, EPG *);
 
 /*
  * Sequential scan support.
@@ -71,7 +73,7 @@ static int __bt_seqset(BTREE *, EPG *, DBT *, int);
  *	dbp:	pointer to access method
  *	key:	key for positioning and return value
  *	data:	data return value
- *	flags:	R_CURSOR, R_FIRST, R_LAST, R_NEXT, R_PREV.
+ *	flags:	R_CURSOR, R_FIRST, R_LAST, R_NEXT, R_PREV, R_RNEXT, R_RPREV.
  *
  * Returns:
  *	RET_ERROR, RET_SUCCESS or RET_SPECIAL if there's no next key.
@@ -99,6 +101,8 @@ __bt_seq(const DB *dbp, DBT *key, DBT *data, u_int flags)
 	switch (flags) {
 	case R_NEXT:
 	case R_PREV:
+	case R_RNEXT:
+	case R_RPREV:
 		if (F_ISSET(&t->bt_cursor, CURS_INIT)) {
 			status = __bt_seqadv(t, &e, (int)flags);
 			break;
@@ -140,7 +144,7 @@ __bt_seq(const DB *dbp, DBT *key, DBT *data, u_int flags)
  *	t:	tree
  *	ep:	storage for returned key
  *	key:	key for initial scan position
- *	flags:	R_CURSOR, R_FIRST, R_LAST, R_NEXT, R_PREV
+ *	flags:	R_CURSOR, R_FIRST, R_LAST, R_NEXT, R_PREV, R_RNEXT, R_RPREV.
  *
  * Side effects:
  *	Pins the page the cursor references.
@@ -173,6 +177,8 @@ __bt_seqset(BTREE *t, EPG *ep, DBT *key, int flags)
 		return (__bt_first(t, key, ep, &exact));
 	case R_FIRST:				/* First record. */
 	case R_NEXT:
+	case R_RNEXT:
+		BT_CLR(t);
 		/* Walk down the left-hand side of the tree. */
 		for (pg = P_ROOT;;) {
 			if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
@@ -187,6 +193,7 @@ __bt_seqset(BTREE *t, EPG *ep, DBT *key, int flags)
 			if (h->flags & (P_BLEAF | P_RLEAF))
 				break;
 			pg = GETBINTERNAL(h, 0)->pgno;
+			BT_PUSH(t, h->pgno, 0);
 			mpool_put(t->bt_mp, h, 0);
 		}
 		ep->page = h;
@@ -194,6 +201,8 @@ __bt_seqset(BTREE *t, EPG *ep, DBT *key, int flags)
 		break;
 	case R_LAST:				/* Last record. */
 	case R_PREV:
+	case R_RPREV:
+		BT_CLR(t);
 		/* Walk down the right-hand side of the tree. */
 		for (pg = P_ROOT;;) {
 			if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
@@ -208,6 +217,7 @@ __bt_seqset(BTREE *t, EPG *ep, DBT *key, int flags)
 			if (h->flags & (P_BLEAF | P_RLEAF))
 				break;
 			pg = GETBINTERNAL(h, NEXTINDEX(h) - 1)->pgno;
+			BT_PUSH(t, h->pgno, NEXTINDEX(h) - 1);
 			mpool_put(t->bt_mp, h, 0);
 		}
 
@@ -224,7 +234,7 @@ __bt_seqset(BTREE *t, EPG *ep, DBT *key, int flags)
  *
  * Parameters:
  *	t:	tree
- *	flags:	R_NEXT, R_PREV
+ *	flags:	R_NEXT, R_PREV, R_RNEXT, R_RPREV
  *
  * Side effects:
  *	Pins the page the new key/data record is on.
@@ -239,7 +249,7 @@ __bt_seqadv(BTREE *t, EPG *ep, int flags)
 	PAGE *h;
 	indx_t idx = 0;	/* pacify gcc */
 	pgno_t pg;
-	int exact;
+	int exact, rval;
 
 	/*
 	 * There are a couple of states that we can be in.  The cursor has
@@ -248,15 +258,45 @@ __bt_seqadv(BTREE *t, EPG *ep, int flags)
 	c = &t->bt_cursor;
 
 	/*
-	 * The cursor was deleted where there weren't any duplicate records,
-	 * so the key was saved.  Find out where that key would go in the
-	 * current tree.  It doesn't matter if the returned key is an exact
-	 * match or not -- if it's an exact match, the record was added after
-	 * the delete so we can just return it.  If not, as long as there's
-	 * a record there, return it.
+	 * The cursor was deleted and there weren't any duplicate records,
+	 * so the cursor's key was saved.  Find out where that key would
+	 * be in the current tree.  If the returned key is an exact match,
+	 * it means that a key/data pair was inserted into the tree after
+	 * the delete.  We could reasonably return the key, but the problem
+	 * is that this is the access pattern we'll see if the user is
+	 * doing seq(..., R_NEXT)/put(..., 0) pairs, i.e. the put deletes
+	 * the cursor record and then replaces it, so the cursor was saved,
+	 * and we'll simply return the same "new" record until the user
+	 * notices and doesn't do a put() of it.  Since the key is an exact
+	 * match, we could as easily put the new record before the cursor,
+	 * and we've made no guarantee to return it.  So, move forward or
+	 * back a record if it's an exact match.
+	 *
+	 * XXX
+	 * In the current implementation, put's to the cursor are done with
+	 * delete/add pairs.  This has two consequences.  First, it means
+	 * that seq(..., R_NEXT)/put(..., R_CURSOR) pairs are going to exhibit
+	 * the same behavior as above.  Second, you can return the same key
+	 * twice if you have duplicate records.  The scenario is that the
+	 * cursor record is deleted, moving the cursor forward or backward
+	 * to a duplicate.  The add then inserts the new record at a location
+	 * ahead of the cursor because duplicates aren't sorted in any way,
+	 * and the new record is later returned.  This has to be fixed at some
+	 * point.
 	 */
-	if (F_ISSET(c, CURS_ACQUIRE))
-		return (__bt_first(t, &c->key, ep, &exact));
+	if (F_ISSET(c, CURS_ACQUIRE)) {
+		if ((rval = __bt_first(t, &c->key, ep, &exact)) == RET_ERROR)
+			return RET_ERROR;
+		if (!exact)
+			return rval;
+		/*
+		 * XXX
+		 * Kluge -- get, release, get the page.
+		 */
+		c->pg.pgno = ep->page->pgno;
+		c->pg.index = ep->index;
+		mpool_put(t->bt_mp, ep->page, 0);
+	}
 
 	/* Get the page referenced by the cursor. */
 	if ((h = mpool_get(t->bt_mp, c->pg.pgno, 0)) == NULL)
@@ -268,6 +308,7 @@ __bt_seqadv(BTREE *t, EPG *ep, int flags)
 	 */
 	switch (flags) {
 	case R_NEXT:			/* Next record. */
+	case R_RNEXT:
 		/*
 		 * The cursor was deleted in duplicate records, and moved
 		 * forward to a record that has yet to be returned.  Clear
@@ -277,16 +318,22 @@ __bt_seqadv(BTREE *t, EPG *ep, int flags)
 			goto usecurrent;
 		idx = c->pg.index;
 		if (++idx == NEXTINDEX(h)) {
+			if (flags == R_RNEXT) {
+				ep->page = h;
+				ep->index = idx;
+				return __bt_rseq_next(t, ep);
+			}
 			pg = h->nextpg;
 			mpool_put(t->bt_mp, h, 0);
 			if (pg == P_INVALID)
-				return (RET_SPECIAL);
+				return RET_SPECIAL;
 			if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
-				return (RET_ERROR);
+				return RET_ERROR;
 			idx = 0;
 		}
 		break;
 	case R_PREV:			/* Previous record. */
+	case R_RPREV:
 		/*
 		 * The cursor was deleted in duplicate records, and moved
 		 * backward to a record that has yet to be returned.  Clear
@@ -300,12 +347,17 @@ usecurrent:		F_CLR(c, CURS_AFTER | CURS_BEFORE);
 		}
 		idx = c->pg.index;
 		if (idx == 0) {
+			if (flags == R_RPREV) {
+				ep->page = h;
+				ep->index = idx;
+				return __bt_rseq_prev(t, ep);
+			}
 			pg = h->prevpg;
 			mpool_put(t->bt_mp, h, 0);
 			if (pg == P_INVALID)
-				return (RET_SPECIAL);
+				return RET_SPECIAL;
 			if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
-				return (RET_ERROR);
+				return RET_ERROR;
 			idx = NEXTINDEX(h) - 1;
 		} else
 			--idx;
@@ -315,6 +367,83 @@ usecurrent:		F_CLR(c, CURS_AFTER | CURS_BEFORE);
 	ep->page = h;
 	ep->index = idx;
 	return (RET_SUCCESS);
+}
+/*
+ * Get the first item on the next page, but by going up and down the tree.
+ */
+static int
+__bt_rseq_next(BTREE *t, EPG *ep)
+{
+	PAGE *h;
+	indx_t idx;
+	EPGNO *up;
+	pgno_t pg;
+
+	h = ep->page;
+	idx = ep->index;
+	do {
+		/* Move up the tree. */
+		up = BT_POP(t);
+		mpool_put(t->bt_mp, h, 0);
+		/* Did we hit the right edge of the root? */
+		if (up == NULL)
+			return RET_SPECIAL;
+		if ((h = mpool_get(t->bt_mp, up->pgno, 0)) == NULL)
+			return RET_ERROR;
+		idx = up->index;
+	} while (++idx == NEXTINDEX(h));
+
+	while (!(h->flags & (P_BLEAF | P_RLEAF))) {
+		/* Move back down the tree. */
+		BT_PUSH(t, h->pgno, idx);
+		pg = GETBINTERNAL(h, idx)->pgno;
+		mpool_put(t->bt_mp, h, 0);
+		if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
+			return RET_ERROR;
+		idx = 0;
+	}
+	ep->page = h;
+	ep->index = idx;
+	return RET_SUCCESS;
+}
+
+/*
+ * Get the last item on the previous page, but by going up and down the tree.
+ */
+static int
+__bt_rseq_prev(BTREE *t, EPG *ep)
+{
+	PAGE *h;
+	indx_t idx;
+	EPGNO *up;
+	pgno_t pg;
+
+	h = ep->page;
+	idx = ep->index;
+	do {
+		/* Move up the tree. */
+		up = BT_POP(t);
+		mpool_put(t->bt_mp, h, 0);
+		/* Did we hit the left edge of the root? */
+		if (up == NULL)
+			return RET_SPECIAL;
+		if ((h = mpool_get(t->bt_mp, up->pgno, 0)) == NULL)
+			return RET_ERROR;
+		idx = up->index;
+	} while (idx == 0);
+	--idx;
+	while (!(h->flags & (P_BLEAF | P_RLEAF))) {
+		/* Move back down the tree. */
+		BT_PUSH(t, h->pgno, idx);
+		pg = GETBINTERNAL(h, idx)->pgno;
+		mpool_put(t->bt_mp, h, 0);
+		if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
+			return RET_ERROR;
+		idx = NEXTINDEX(h) - 1;
+	}
+	ep->page = h;
+	ep->index = idx;
+	return RET_SUCCESS;
 }
 
 /*
@@ -334,7 +463,7 @@ usecurrent:		F_CLR(c, CURS_AFTER | CURS_BEFORE);
 static int
 __bt_first(BTREE *t, const DBT *key, EPG *erval, int *exactp)
 {
-	PAGE *h;
+	PAGE *h, *hprev;
 	EPG *ep, save;
 	pgno_t pg;
 
@@ -347,13 +476,13 @@ __bt_first(BTREE *t, const DBT *key, EPG *erval, int *exactp)
 	 * page) and return it.
 	 */
 	if ((ep = __bt_search(t, key, exactp)) == NULL)
-		return (0);
+		return RET_SPECIAL;
 	if (*exactp) {
 		if (F_ISSET(t, B_NODUPS)) {
 			*erval = *ep;
 			return (RET_SUCCESS);
 		}
-			
+
 		/*
 		 * Walk backwards, as long as the entry matches and there are
 		 * keys left in the tree.  Save a copy of each match in case
@@ -378,10 +507,14 @@ __bt_first(BTREE *t, const DBT *key, EPG *erval, int *exactp)
 					break;
 				if (h->pgno != save.page->pgno)
 					mpool_put(t->bt_mp, h, 0);
-				if ((h = mpool_get(t->bt_mp,
-				    h->prevpg, 0)) == NULL)
-					return (RET_ERROR);
-				ep->page = h;
+				if ((hprev = mpool_get(t->bt_mp,
+				    h->prevpg, 0)) == NULL) {
+					if (h->pgno == save.page->pgno)
+						mpool_put(t->bt_mp,
+						    save.page, 0);
+ 					return RET_ERROR;
+				}
+				ep->page = h = hprev;
 				ep->index = NEXTINDEX(h);
 			}
 			--ep->index;

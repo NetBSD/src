@@ -1,3 +1,166 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (sim_open): Update sim_parse_args comment.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENDIAN): Change BIG_ENDIAN to BIG.
+	* configure: Regenerate.
+
+2015-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (sim_state_initialize): Delete.
+	(sim_open): Replace sim_state_initialize call with SBR_REGNUM
+	assignment.
+
+2015-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (h8300_reg_store): Delete sd.  Change init_pointers to
+	use CPU_STATE (cpu).  Change h8_set_pc to cpu->pc.  Return -1 and
+	drop the printf if the default case.  Change all the set func calls
+	to use cpu->regs[rn] instead.
+	(h8300_reg_store): Delete sd.  Change init_pointers to
+	use CPU_STATE (cpu).  Change h8_get_pc to cpu->pc.  Return -1 and
+	drop the printf if the default case.  Change all the get func calls
+	to use cpu->regs[rn] instead.  Add ZERO_REGNUM case.  Return 2 and
+	4 instead of -1 at the end.
+
+2015-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (lvalue): Change sim_engine_set_run_state calls to
+	sim_engine_halt.  Declare local cpu.
+	(fetch_1): Likewise.
+	(store_1): Likewise.
+	(sim_resume): Rename to ...
+	(step_once): ... this.  Declare init1, poll_count, reason, and
+	sigrc variables.  Delete step checking.  Change
+	sim_engine_set_run_state calls to sim_engine_halt.  Delete poll
+	logic.  Change while(1) loop to while(0).
+	(sim_engine_run): New function.
+	* Makefile.in (SIM_OBJS): Add sim-resume.o.
+
+2015-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (sim_open): Delete current_alignment and
+	current_target_byte_order assignments.
+	* configure.ac: Call SIM_AC_OPTION_ENDIAN and
+	SIM_AC_OPTION_ALIGNMENT.
+	* configure: Regenerate.
+
+2015-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* wrapper.c (sim_store_register): Rename to ...
+	(h8300_reg_store): ... this.  Declare sd.
+	(sim_fetch_register): Rename to ...
+	(h8300_reg_fetch): ... this.  Declare sd.
+	(sim_open): Call CPU_REG_FETCH/CPU_REG_STORE.
+
+2015-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (lreg): Delete.
+	(init_pointers): Delete lreg assignments.
+
+2015-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* inst.h: Delete file.
+	* Makefile.in (compile.o): Delete rule.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (H8300_OPTIONS): New enum from common/sim-options.c.
+	(h8300_option_handler): New func from common/sim-options.c.
+	(h8300_options): New options from common/sim-options.c.
+	(sim_open): Call sim_add_option_table.
+	* tconfig.h: Delete file.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (SIM_HAVE_SIMCACHE): Delete.
+
+2015-11-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (sim_callback, sim_kind, myname): Delete.
+	(init_pointers, sim_store_register, sim_fetch_register, sim_info):
+	Change sim_callback->printf_filtered calls to sim_io_printf.
+	(sim_resume): Likewise.  Declare sim_callback.
+	(sim_open): Delete sim_callback, sim_kind, and myname assignment.
+	(sim_load); Use sd to look up myname, sim_callback, and sim_kind.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-reason.o and sim-stop.o.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Add sim-reason.o and sim-stop.o.
+	* compile.c (sim_stop, sim_stop_reason): Delete.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-load.o.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (sim_close): Delete.
+
+2015-11-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (littleendian): Delete.
+	(init_pointers): Delete littleendian usage.
+
 2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.
@@ -180,8 +343,8 @@
 	* config.in: Ditto.
 
 2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
-            Daniel Jacobowitz  <dan@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
 
 	* configure: Regenerate.
 
@@ -267,7 +430,7 @@
 
 2003-12-11  Dhananjay Deshpande  <dhananjayd@kpitcummins.com>
 
-        * compile.c (set_h8300h): Initialize globals to zero.
+	* compile.c (set_h8300h): Initialize globals to zero.
 
 2003-10-17  Shrinivas Atre  <shrinivasa@KPITCummins.com>
 
@@ -355,13 +518,13 @@
 
 2003-03-20  D.Venkatasubramanian  <dvenkat@noida.hcltech.com>
 
-	* compile.c (cmdline_location): Added function to 
+	* compile.c (cmdline_location): Added function to
 	return the location of 8-bit (256 locations) where the
 	Command Line arguments would be stored.
-	(decode): Added a TRAP to 0xcc for Commandline 
+	(decode): Added a TRAP to 0xcc for Commandline
 	processing using pseudo opcode O_SYS_CMDLINE.
 	(sim_resume): Added handling of O_SYS_CMDLINE Trap.
-	(sim_create_inferior): Setting a pointer to 
+	(sim_create_inferior): Setting a pointer to
 	Commandline Args array.
 	* inst.h: Added a new variable ptr_command_line for
 	storing pointer to Commandline array.
@@ -423,24 +586,24 @@
 2002-05-17  Andrey Volkov  (avolkov@transas.com)
 
 	* compile.c: Add absented opcodes: LDC, STC, EEPMOV, TAS.
-	
+
 2002-05-17  Andrey Volkov  (avolkov@transas.com)
 
 	* compile.c: Add support of EXR register
 	* inst.h: Ditto.
-	
+
 2002-05-17  Andrey Volkov  (avolkov@transas.com)
 
 	* compile.c: Made h8300s as new target, not h8300h alias.
 	* inst.h: Ditto.
-	     	
-2002-05-17  Andrey Volkov  (avolkov@transas.com)
-
-	* compile.c: Add additional CCR flags (I,UI,H,U) 
 
 2002-05-17  Andrey Volkov  (avolkov@transas.com)
 
-	* compile.c: Change literal regnumbers to REGNUMS. 
+	* compile.c: Add additional CCR flags (I,UI,H,U)
+
+2002-05-17  Andrey Volkov  (avolkov@transas.com)
+
+	* compile.c: Change literal regnumbers to REGNUMS.
 	Fix instruction and cycles counting
 
 2001-12-20  Kazu Hirata  <kazu@hxi.com>
@@ -485,7 +648,7 @@ Thu Sep  2 18:15:53 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 1999-05-08  Felix Lee  <flee@cygnus.com>
 
 	* configure: Regenerated to track ../common/aclocal.m4 changes.
-	
+
 1999-04-02  Keith Seitz  <keiths@cygnus.com>
 
 	* compile.c (POLL_QUIT_INTERVAL): Define. Used to tweak the
@@ -494,7 +657,7 @@ Thu Sep  2 18:15:53 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 
 Tue Apr 28 18:33:31 1998  Geoffrey Noer  <noer@cygnus.com>
 
-        * configure: Regenerated to track ../common/aclocal.m4 changes.
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
 
 Sun Apr 26 15:31:55 1998  Tom Tromey  <tromey@creche>
 
@@ -767,18 +930,18 @@ Wed Jun 26 08:58:53 1996  Jeffrey A Law  (law@cygnus.com)
 
 Wed Jun 26 12:20:56 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
 
-        * Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
-        INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
-        (docdir): Removed.
-        * configure.in (AC_PREREQ): autoconf 2.5 or higher.
-        (AC_PROG_INSTALL): Added.
-        * configure: Rebuilt.
+	* Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
+	INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
+	(docdir): Removed.
+	* configure.in (AC_PREREQ): autoconf 2.5 or higher.
+	(AC_PROG_INSTALL): Added.
+	* configure: Rebuilt.
 
 Tue Jun 18 16:31:10 1996  Jeffrey A. Law  <law@rtl.cygnus.com>
 
 	* compile.c (sim_load): Treat the H8/S like the H8/300H for now.
 	* run.c (main): Treat the H8/S like the H8/300H for now.
-	
+
 Fri May 24 10:35:25 1996  Jeffrey A Law  (law@cygnus.com)
 
 	* compile.c (SEXTCHAR): Clear upper bits when sign
@@ -1030,7 +1193,7 @@ Fri Jul  9 14:36:48 1993  Doug Evans  (dje@canuck.cygnus.com)
 	(sim_resume): Add support for extu,exts insns.
 	(sim_resume): Fix logical right shifting.
 	(sim_resume, label alu32): Fix setting of carry flag.
-	
+
 Sun Jul  4 00:35:41 1993  Doug Evans  (dje@canuck.cygnus.com)
 
 	* compile.c (sim_csize): Initialize cpu.cache.
@@ -1081,5 +1244,5 @@ Sun Jan  3 14:15:07 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
 
 Tue Dec 22 13:56:48 1992  Steve Chamberlain  (sac@thepub.cygnus.com)
 
-	* new 
+	* new
 

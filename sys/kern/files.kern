@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.11.2.1 2016/07/15 02:29:19 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.11.2.2 2016/11/04 14:49:17 pgoyette Exp $
 
 #
 # kernel sources
@@ -33,7 +33,10 @@ file	kern/kern_clock.c		kern
 file	kern/kern_condvar.c		kern
 file	kern/kern_core.c		coredump
 file	kern/kern_cpu.c			kern
-file	kern/kern_ctf.c			kdtrace_hooks
+
+#kern/kern_ctf.c is only needed as part of dtrace_fbt module
+#file	kern/kern_ctf.c			kdtrace_hooks
+
 file	kern/kern_descrip.c		kern
 file	kern/kern_event.c		kern
 file	kern/kern_exec.c		kern
@@ -142,7 +145,9 @@ file	kern/sys_mqueue.c		mqueue
 file	kern/sys_lwp.c			kern
 file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_pmc.c			kern
-file	kern/sys_process.c		ptrace | ktrace
+file	kern/sys_process.c		ptrace_hooks | ktrace
+file	kern/sys_ptrace.c		ptrace
+file	kern/sys_ptrace_common.c	ptrace
 file	kern/sys_pset.c			kern
 file	kern/sys_select.c		kern
 file	kern/sys_sig.c			kern

@@ -1,14 +1,14 @@
 # Finnish messages for opcodes
-# Copyright © 2005, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+# Copyright © 2005, 2009, 2010, 2011, 2012, 2014 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
-# Jorma Karvonen <karvonen.jorma@gmail.com>, 2006-2012.
+# Jorma Karvonen <karvonen.jorma@gmail.com>, 2006-2012, 2014.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: opcodes 2.22.90\n"
+"Project-Id-Version: opcodes 2.24.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2011-11-02 12:03+0000\n"
-"PO-Revision-Date: 2012-07-28 16:21+0200\n"
+"POT-Creation-Date: 2014-02-10 09:42+1030\n"
+"PO-Revision-Date: 2014-11-02 17:43+0200\n"
 "Last-Translator: Jorma Karvonen <karvonen.jorma@gmail.com>\n"
 "Language-Team: Finnish <translation-team-fi@lists.sourceforge.net>\n"
 "Language: fi\n"
@@ -21,6 +21,182 @@ msgstr ""
 "X-Poedit-Country: FINLAND\n"
 "X-Poedit-SourceCharset: utf-8\n"
 
+#. Invalid option.
+#. XXX - should break 'option' at following delimiter.
+#: aarch64-dis.c:81 arm-dis.c:4606
+#, c-format
+msgid "Unrecognised disassembler option: %s\n"
+msgstr "Tunnistamaton disassembler-valinta: %s\n"
+
+#: aarch64-dis.c:2395
+#, c-format
+msgid ""
+"\n"
+"The following AARCH64 specific disassembler options are supported for use\n"
+"with the -M switch (multiple options should be separated by commas):\n"
+msgstr ""
+"\n"
+"Seuraavat AARCH64-kohtaiset disassembler-valinnat ovat tuettuja käyttöön\n"
+"-M -valinnan kanssa (monivalinnat pitää erottaa pilkulla):\n"
+
+#: aarch64-dis.c:2399
+#, c-format
+msgid ""
+"\n"
+"  no-aliases         Don't print instruction aliases.\n"
+msgstr ""
+"\n"
+"  no-aliases         Älä tulosta käskyaliaksia.\n"
+
+#: aarch64-dis.c:2402
+#, c-format
+msgid ""
+"\n"
+"  aliases            Do print instruction aliases.\n"
+msgstr ""
+"\n"
+"  aliases            Tulosta käskyaliakset.\n"
+
+#: aarch64-dis.c:2406
+#, c-format
+msgid ""
+"\n"
+"  debug_dump         Temp switch for debug trace.\n"
+msgstr ""
+"\n"
+"  debug_dump         Tilapäiskytkin vianetsintäjälkeen.\n"
+
+#: aarch64-dis.c:2410 mips-dis.c:2231 mips-dis.c:2239 mips-dis.c:2241
+#, c-format
+msgid "\n"
+msgstr "\n"
+
+#: aarch64-opc.c:1152
+msgid "immediate value"
+msgstr "suoraan muistiosoitettu arvo"
+
+#: aarch64-opc.c:1162
+msgid "immediate offset"
+msgstr "suoraan muistiosoitettu siirrososoite"
+
+#: aarch64-opc.c:1172
+msgid "register number"
+msgstr "rekisterinumero"
+
+#: aarch64-opc.c:1182
+msgid "register element index"
+msgstr "rekisterielementti-indeksi"
+
+#: aarch64-opc.c:1192
+msgid "shift amount"
+msgstr "siirrosmäärä"
+
+#: aarch64-opc.c:1264
+msgid "extraneous register"
+msgstr "ylimääräinen rekisteri"
+
+#: aarch64-opc.c:1269
+msgid "missing register"
+msgstr "puuttuva rekisteri"
+
+#: aarch64-opc.c:1280
+msgid "stack pointer register expected"
+msgstr "otaksuttu pino-osoitinrekisteri"
+
+#: aarch64-opc.c:1310
+msgid "unexpected address writeback"
+msgstr "odottamaton osoitteen takaisinkirjoitus"
+
+#: aarch64-opc.c:1321
+msgid "address writeback expected"
+msgstr "odotettiin osoitteen takaisinkirjoitusta"
+
+#: aarch64-opc.c:1367
+msgid "negative or unaligned offset expected"
+msgstr "negatiivinen tai tasaamaton siirrososoite odotettu"
+
+#: aarch64-opc.c:1380
+msgid "invalid register offset"
+msgstr "virheellinen rekisterisiirrososoite"
+
+#: aarch64-opc.c:1402
+msgid "invalid post-increment amount"
+msgstr "virheellinen jälkiaskelkasvatusmäärä"
+
+#: aarch64-opc.c:1418 aarch64-opc.c:1685
+msgid "invalid shift amount"
+msgstr "virheellinen siirrosmäärä"
+
+#: aarch64-opc.c:1431
+msgid "invalid extend/shift operator"
+msgstr "virheellinen laajennos/siirrosoperaattori"
+
+#: aarch64-opc.c:1477 aarch64-opc.c:1551 aarch64-opc.c:1586 aarch64-opc.c:1605
+#: aarch64-opc.c:1613 aarch64-opc.c:1663 aarch64-opc.c:1814
+msgid "immediate out of range"
+msgstr "suoraan muistiosoitettu arvo ei ole rajojen sisällä"
+
+#: aarch64-opc.c:1539 aarch64-opc.c:1561 aarch64-opc.c:1718 aarch64-opc.c:1726
+#: aarch64-opc.c:1792 aarch64-opc.c:1820
+msgid "invalid shift operator"
+msgstr "virheellinen siirrosoperaattori"
+
+#: aarch64-opc.c:1545
+msgid "shift amount expected to be 0 or 12"
+msgstr "siirrosmäärän otaksuttiin oleva 0 tai 12"
+
+#: aarch64-opc.c:1568
+msgid "shift amount should be a multiple of 16"
+msgstr "siirrosmäärän pitäisi olla 16 monikerta"
+
+#: aarch64-opc.c:1580
+msgid "negative immediate value not allowed"
+msgstr "negatiivinen suora muistiosoitusarvo ei ole sallittu"
+
+#: aarch64-opc.c:1674
+msgid "immediate zero expected"
+msgstr "suora muistinosoitusnolla otaksuttu"
+
+#: aarch64-opc.c:1734
+msgid "shift is not permitted"
+msgstr "siirros ei ole sallittu"
+
+#: aarch64-opc.c:1759
+msgid "invalid value for immediate"
+msgstr "virheellinen välittömän muistiosoitteen arvo"
+
+#: aarch64-opc.c:1784
+msgid "shift amount expected to be 0 or 16"
+msgstr "siirrosmäärän otaksuttiin olevan 0 tai 16"
+
+#: aarch64-opc.c:1804
+msgid "floating-point immediate expected"
+msgstr "liukulukumuistiosoitusarvo otaksuttu"
+
+#: aarch64-opc.c:1895
+msgid "extend operator expected"
+msgstr "laajennettu operaattori otaksuttu"
+
+#: aarch64-opc.c:1908
+msgid "missing extend operator"
+msgstr "puuttuva laajennusoperaattori"
+
+#: aarch64-opc.c:1914
+msgid "'LSL' operator not allowed"
+msgstr "’LSL’-operaattori ei ole sallittu"
+
+#: aarch64-opc.c:1935
+msgid "W register expected"
+msgstr "W-rekisteri otaksuttu"
+
+#: aarch64-opc.c:1946
+msgid "shift operator expected"
+msgstr "siirrosoperaattori otaksuttu"
+
+#: aarch64-opc.c:1953
+msgid "'ROR' operator not allowed"
+msgstr "’ROR’-operaattori ei ole sallittu"
+
 #: alpha-opc.c:155
 msgid "branch operand unaligned"
 msgstr "haaroitusoperandi ei ole tasarajalla"
@@ -29,7 +205,7 @@ msgstr "haaroitusoperandi ei ole tasarajalla"
 msgid "jump hint unaligned"
 msgstr "hyppyvihje ei ole tasarajalla"
 
-#: arc-dis.c:77
+#: arc-dis.c:75
 msgid "Illegal limm reference in last instruction!\n"
 msgstr "Viimeisimmän käskyn virheellinen long-tyyppinen suora muistiosoiteviittaus!\n"
 
@@ -115,23 +291,17 @@ msgstr "haaroitusosoite ei ole 4-tavurajalla"
 msgid "must specify .jd or no nullify suffix"
 msgstr "on määriteltävä .jd tai nollattava suffiksi"
 
-#: arm-dis.c:2000
+#: arm-dis.c:2145
 msgid "<illegal precision>"
 msgstr "<virheellinen tarkkuus>"
 
 #. XXX - should break 'option' at following delimiter.
-#: arm-dis.c:4395
+#: arm-dis.c:4598
 #, c-format
 msgid "Unrecognised register name set: %s\n"
 msgstr "Tunnistamaton rekisterinimijoukko: %s\n"
 
-#. XXX - should break 'option' at following delimiter.
-#: arm-dis.c:4403
-#, c-format
-msgid "Unrecognised disassembler option: %s\n"
-msgstr "Tunnistamaton disassembler-valinta: %s\n"
-
-#: arm-dis.c:4995
+#: arm-dis.c:5208
 #, c-format
 msgid ""
 "\n"
@@ -157,7 +327,7 @@ msgstr "Sisäinen disassembler-virhe"
 msgid "unknown constraint `%c'"
 msgstr "tuntematon rajoite ”%c”"
 
-#: cgen-asm.c:336 epiphany-ibld.c:201 fr30-ibld.c:201 frv-ibld.c:201
+#: cgen-asm.c:352 epiphany-ibld.c:201 fr30-ibld.c:201 frv-ibld.c:201
 #: ip2k-ibld.c:201 iq2000-ibld.c:201 lm32-ibld.c:201 m32c-ibld.c:201
 #: m32r-ibld.c:201 mep-ibld.c:201 mt-ibld.c:201 openrisc-ibld.c:201
 #: xc16x-ibld.c:201 xstormy16-ibld.c:201
@@ -165,7 +335,7 @@ msgstr "tuntematon rajoite ”%c”"
 msgid "operand out of range (%ld not between %ld and %ld)"
 msgstr "operandi ei ole rajojen sisällä (%ld ei ole %ld:n ja %ld:n välillä)"
 
-#: cgen-asm.c:358
+#: cgen-asm.c:374
 #, c-format
 msgid "operand out of range (%lu not between %lu and %lu)"
 msgstr "operandi ei ole rajojen sisällä (%lu ei ole %lu:n ja %lu:n välillä)"
@@ -301,8 +471,9 @@ msgstr "väärä käsky ”%.50s”"
 
 #. Default text to print if an instruction isn't recognized.
 #: epiphany-dis.c:41 fr30-dis.c:41 frv-dis.c:41 ip2k-dis.c:41 iq2000-dis.c:41
-#: lm32-dis.c:41 m32c-dis.c:41 m32r-dis.c:41 mep-dis.c:41 mmix-dis.c:277
-#: mt-dis.c:41 openrisc-dis.c:41 xc16x-dis.c:41 xstormy16-dis.c:41
+#: lm32-dis.c:41 m32c-dis.c:41 m32r-dis.c:41 mep-dis.c:41 mmix-dis.c:276
+#: mt-dis.c:41 nds32-dis.c:56 openrisc-dis.c:41 xc16x-dis.c:41
+#: xstormy16-dis.c:41
 msgid "*unknown*"
 msgstr "*tuntematon*"
 
@@ -431,11 +602,11 @@ msgstr "kohteen %d sijoittamisesta ei selviydytty\n"
 msgid "%02x\t\t*unknown*"
 msgstr "%02x\t\t*tuntematon*"
 
-#: i386-dis.c:10504
+#: i386-dis.c:11550
 msgid "<internal disassembler error>"
 msgstr "<sisäinen disassembler-virhe>"
 
-#: i386-dis.c:10801
+#: i386-dis.c:11859
 #, c-format
 msgid ""
 "\n"
@@ -446,32 +617,32 @@ msgstr ""
 "Seuraavat i386/x86-64-kohtaiset disassembler-valinnat ovat tuettuja käyttöön\n"
 "-M -valinnan kanssa (monivalinnat pitää erottaa pilkulla):\n"
 
-#: i386-dis.c:10805
+#: i386-dis.c:11863
 #, c-format
 msgid "  x86-64      Disassemble in 64bit mode\n"
 msgstr "  x86-64      Disassembloi 64-bittitilassa\n"
 
-#: i386-dis.c:10806
+#: i386-dis.c:11864
 #, c-format
 msgid "  i386        Disassemble in 32bit mode\n"
 msgstr "  i386        Disassembloi 32-bittitilassa\n"
 
-#: i386-dis.c:10807
+#: i386-dis.c:11865
 #, c-format
 msgid "  i8086       Disassemble in 16bit mode\n"
 msgstr "  i8086       Disassembloi 16-bittitilassa\n"
 
-#: i386-dis.c:10808
+#: i386-dis.c:11866
 #, c-format
 msgid "  att         Display instruction in AT&T syntax\n"
 msgstr "  att         Näyttää käskyn AT&T-syntaksissa\n"
 
-#: i386-dis.c:10809
+#: i386-dis.c:11867
 #, c-format
 msgid "  intel       Display instruction in Intel syntax\n"
 msgstr "  intel       Näyttää käskyn Intel-syntaksissa\n"
 
-#: i386-dis.c:10810
+#: i386-dis.c:11868
 #, c-format
 msgid ""
 "  att-mnemonic\n"
@@ -480,7 +651,7 @@ msgstr ""
 "  att-mnemonic\n"
 "              Näyttää käskyn AT&T-syntaksissa\n"
 
-#: i386-dis.c:10812
+#: i386-dis.c:11870
 #, c-format
 msgid ""
 "  intel-mnemonic\n"
@@ -489,87 +660,87 @@ msgstr ""
 "  intel-mnemonic\n"
 "              Näyttää käskyn Intel-syntaksissa\n"
 
-#: i386-dis.c:10814
+#: i386-dis.c:11872
 #, c-format
 msgid "  addr64      Assume 64bit address size\n"
 msgstr "  addr64      Otaksuu osoitekooksi 64 bittiä\n"
 
-#: i386-dis.c:10815
+#: i386-dis.c:11873
 #, c-format
 msgid "  addr32      Assume 32bit address size\n"
 msgstr "  addr32      Otaksuu osoitekooksi 32 bittiä\n"
 
-#: i386-dis.c:10816
+#: i386-dis.c:11874
 #, c-format
 msgid "  addr16      Assume 16bit address size\n"
 msgstr "  addr16      Otaksuu osoitekooksi 16 bittiä\n"
 
-#: i386-dis.c:10817
+#: i386-dis.c:11875
 #, c-format
 msgid "  data32      Assume 32bit data size\n"
 msgstr "  data32      Otaksuu datakooksi 32 bittiä\n"
 
-#: i386-dis.c:10818
+#: i386-dis.c:11876
 #, c-format
 msgid "  data16      Assume 16bit data size\n"
 msgstr "  data16      Otaksuu datakooksi 16 bittiä\n"
 
-#: i386-dis.c:10819
+#: i386-dis.c:11877
 #, c-format
 msgid "  suffix      Always display instruction suffix in AT&T syntax\n"
 msgstr "  suffix      Näyttää käskysuffiksin aina AT&T-syntaksissa\n"
 
-#: i386-gen.c:483 ia64-gen.c:307
+#: i386-gen.c:560 ia64-gen.c:307
 #, c-format
 msgid "%s: Error: "
 msgstr "%s: Virhe: "
 
-#: i386-gen.c:615
+#: i386-gen.c:692
 #, c-format
 msgid "%s: %d: Unknown bitfield: %s\n"
 msgstr "%s: %d: Tuntematon bittikenttä: %s\n"
 
-#: i386-gen.c:617
+#: i386-gen.c:694
 #, c-format
 msgid "Unknown bitfield: %s\n"
 msgstr "Tuntematon bittikenttä: %s\n"
 
-#: i386-gen.c:673
+#: i386-gen.c:750
 #, c-format
 msgid "%s: %d: Missing `)' in bitfield: %s\n"
 msgstr "%s: %d: Puuttuva ”)” bittikentässä: %s\n"
 
-#: i386-gen.c:938
+#: i386-gen.c:1015
 #, c-format
 msgid "can't find i386-opc.tbl for reading, errno = %s\n"
 msgstr "i386-opc.tbl ei löytynyt luettavaksi, virhenumero = %s\n"
 
-#: i386-gen.c:1069
+#: i386-gen.c:1146
 #, c-format
 msgid "can't find i386-reg.tbl for reading, errno = %s\n"
 msgstr "i386-reg.tbl ei löytynyt luettavaksi, virhenumero = %s\n"
 
-#: i386-gen.c:1146
+#: i386-gen.c:1223
 #, c-format
 msgid "can't create i386-init.h, errno = %s\n"
 msgstr "ei voi luoda tiedostoa i386-init.h, virhenumero = %s\n"
 
-#: i386-gen.c:1235 ia64-gen.c:2820
+#: i386-gen.c:1312 ia64-gen.c:2830
 #, c-format
 msgid "unable to change directory to \"%s\", errno = %s\n"
 msgstr "vaihtaminen hakemistoon ”%s” ei onnistu, virhenumero = %s\n"
 
-#: i386-gen.c:1242
+#: i386-gen.c:1319
 #, c-format
 msgid "%d unused bits in i386_cpu_flags.\n"
 msgstr "%d käyttämätöntä bittiä i386_cpu_flags-lipussa.\n"
 
-#: i386-gen.c:1249
+#: i386-gen.c:1326
 #, c-format
 msgid "%d unused bits in i386_operand_type.\n"
 msgstr "%d käyttämätöntä bittiä i386_operand_type-lipussa.\n"
 
-#: i386-gen.c:1263
+#: i386-gen.c:1340
 #, c-format
 msgid "can't create i386-tbl.h, errno = %s\n"
 msgstr "ei voi luoda tiedostoa i386-tbl.h, virhenumero = %s\n"
@@ -593,7 +764,7 @@ msgstr "ia64-ic.tbl ei löytynyt luettavaksi\n"
 msgid "can't find %s for reading\n"
 msgstr "%s ei löytynyt luettavaksi\n"
 
-#: ia64-gen.c:1043
+#: ia64-gen.c:1051
 #, c-format
 msgid ""
 "most recent format '%s'\n"
@@ -602,77 +773,77 @@ msgstr ""
 "viimeisin muoto ’%s’\n"
 "näyttää rajoittavammalta kuin ’%s’\n"
 
-#: ia64-gen.c:1054
+#: ia64-gen.c:1062
 #, c-format
 msgid "overlapping field %s->%s\n"
 msgstr "päällekkäinen kenttä %s->%s\n"
 
-#: ia64-gen.c:1251
+#: ia64-gen.c:1259
 #, c-format
 msgid "overwriting note %d with note %d (IC:%s)\n"
 msgstr "merkki %d kirjoitetaan merkin %d päälle (IC:%s)\n"
 
-#: ia64-gen.c:1456
+#: ia64-gen.c:1466
 #, c-format
 msgid "don't know how to specify %% dependency %s\n"
 msgstr "kohteen %% riippuvuutta %s ei osattu määritellä\n"
 
-#: ia64-gen.c:1478
+#: ia64-gen.c:1488
 #, c-format
 msgid "Don't know how to specify # dependency %s\n"
 msgstr "Kohteen # riippuvuutta %s ei osattu määritellä\n"
 
-#: ia64-gen.c:1517
+#: ia64-gen.c:1527
 #, c-format
 msgid "IC:%s [%s] has no terminals or sub-classes\n"
 msgstr "Kohteella IC:%s [%s] ei ole päätepisteitä tai alaluokkia\n"
 
-#: ia64-gen.c:1520
+#: ia64-gen.c:1530
 #, c-format
 msgid "IC:%s has no terminals or sub-classes\n"
 msgstr "Kohteella IC:%s ei ole päätepisteitä tai alaluokkia\n"
 
-#: ia64-gen.c:1529
+#: ia64-gen.c:1539
 #, c-format
 msgid "no insns mapped directly to terminal IC %s [%s]"
 msgstr "yhtään käskyä ei ole mapattu suoraan päätepisteeseen IC %s [%s]"
 
-#: ia64-gen.c:1532
+#: ia64-gen.c:1542
 #, c-format
 msgid "no insns mapped directly to terminal IC %s\n"
 msgstr "yhtään käskyä ei ole mapattu suoraan päätepisteeseen IC %s\n"
 
-#: ia64-gen.c:1543
+#: ia64-gen.c:1553
 #, c-format
 msgid "class %s is defined but not used\n"
 msgstr "luokka %s on määritelty mutta käyttämätön\n"
 
-#: ia64-gen.c:1556
+#: ia64-gen.c:1566
 #, c-format
 msgid "Warning: rsrc %s (%s) has no chks\n"
 msgstr "Varoitus: kohteessa rsrc %s (%s) ei ole tarkistuksia\n"
 
-#: ia64-gen.c:1559
+#: ia64-gen.c:1569
 #, c-format
 msgid "Warning: rsrc %s (%s) has no chks or regs\n"
 msgstr "Varoitus: kohteessa rsrc %s (%s) ei ole tarkistuksia tai rekistereitä\n"
 
-#: ia64-gen.c:1563
+#: ia64-gen.c:1573
 #, c-format
 msgid "rsrc %s (%s) has no regs\n"
 msgstr "kohteessa rsrc %s (%s) ei ole rekistereitä\n"
 
-#: ia64-gen.c:2455
+#: ia64-gen.c:2465
 #, c-format
 msgid "IC note %d in opcode %s (IC:%s) conflicts with resource %s note %d\n"
 msgstr "IC-merkintä %d käskyssä %s (IC:%s) on ristiriidassa resurssin %s merkinnän %d kanssa\n"
 
-#: ia64-gen.c:2483
+#: ia64-gen.c:2493
 #, c-format
 msgid "IC note %d for opcode %s (IC:%s) conflicts with resource %s note %d\n"
 msgstr "IC-merkintä %d käskyyn %s (IC:%s) on ristiriidassa resurssin %s merkinnän %d kanssa\n"
 
-#: ia64-gen.c:2497
+#: ia64-gen.c:2507
 #, c-format
 msgid "opcode %s has no class (ops %d %d %d)\n"
 msgstr "käskyssä %s ei ole luokkaa (toiminnat %d %d %d)\n"
@@ -757,7 +928,7 @@ msgstr "odotetaan got-suhteellista osoitetta: gotoffhi16(symboli)"
 msgid "expecting got relative address: gotofflo16(symbol)"
 msgstr "odotetaan got-suhteellinen osoite: gotofflo16(symboli)"
 
-#: m10200-dis.c:158 m10300-dis.c:582
+#: m10200-dis.c:158 m10300-dis.c:581
 #, c-format
 msgid "unknown\t0x%04lx"
 msgstr "tuntematon\t0x%04lx"
@@ -889,41 +1060,12 @@ msgstr "Suora muistiosoitusarvo ei ole rajojen -128 ... 127 sisällä"
 msgid "Value is not aligned enough"
 msgstr "Uudelleensijoitusarvo ei ole tasarajalla"
 
-#: mips-dis.c:947
-msgid "# internal error, incomplete extension sequence (+)"
-msgstr "# sisäinen virhe, epätäydellinen laajennussekvenssi (+)"
-
-#: mips-dis.c:1113
+#: mips-dis.c:1392 mips-dis.c:1580
 #, c-format
-msgid "# internal error, undefined extension sequence (+%c)"
-msgstr "# sisäinen virhe, määrittelemätön laajennussekvenssi (+%c)"
+msgid "# internal error, undefined operand in `%s %s'"
+msgstr "# sisäinen virhe, määrittelemätön operandi ”%s %s”"
 
-#: mips-dis.c:1485
-#, c-format
-msgid "# internal error, undefined modifier (%c)"
-msgstr "# sisäinen virhe, määrittelemätön määrite (%c)"
-
-#: mips-dis.c:2089
-#, c-format
-msgid "# internal disassembler error, unrecognised modifier (%c)"
-msgstr "# sisäinen disassembler-virhe, tunnistamaton määrite (%c)"
-
-#: mips-dis.c:2664
-#, c-format
-msgid "# internal disassembler error, unrecognized modifier (+%c)"
-msgstr "# sisäinen disassembler-virhe, tunnistamaton määrite (+%c)"
-
-#: mips-dis.c:2894
-#, c-format
-msgid "# internal disassembler error, unrecognized modifier (m%c)"
-msgstr "# sisäinen disassembler-virhe, tunnistamaton määrite (m%c)"
-
-#: mips-dis.c:2904
-#, c-format
-msgid "# internal disassembler error, unrecognized modifier (%c)"
-msgstr "# sisäinen disassembler-virhe, tunnistamaton määrite (%c)"
-
-#: mips-dis.c:3052
+#: mips-dis.c:2190
 #, c-format
 msgid ""
 "\n"
@@ -934,7 +1076,25 @@ msgstr ""
 "Seuraavat MIPS-kohtaiset disassembler-valinnat ovat tuettuja käyttöön\n"
 "-M -valinnan kanssa (monivalinnat pitää erottaa pilkulla):\n"
 
-#: mips-dis.c:3056
+#: mips-dis.c:2194
+#, c-format
+msgid ""
+"\n"
+"  msa             Recognize MSA instructions.\n"
+msgstr ""
+"\n"
+"  msa             Tunnista MSA-käskyt.\n"
+
+#: mips-dis.c:2197
+#, c-format
+msgid ""
+"\n"
+"  virt            Recognize the virtualization ASE instructions.\n"
+msgstr ""
+"\n"
+"  virt            Tunnista ASE-virtualisointikäskyt.\n"
+
+#: mips-dis.c:2200
 #, c-format
 msgid ""
 "\n"
@@ -945,7 +1105,7 @@ msgstr ""
 "  gpr-names=ABI            Tulosta GPR-nimet määritellyn ABI:n mukaisesti.\n"
 "                           Oletus: perustuu disassembloitavaan binääritiedostoon.\n"
 
-#: mips-dis.c:3060
+#: mips-dis.c:2204
 #, c-format
 msgid ""
 "\n"
@@ -956,7 +1116,7 @@ msgstr ""
 "  fpr-names=ABI            Tulosta FPR-nimet määritellyn ABI:n mukaisesti.\n"
 "                           Oletus: numeerinen.\n"
 
-#: mips-dis.c:3064
+#: mips-dis.c:2208
 #, c-format
 msgid ""
 "\n"
@@ -969,7 +1129,7 @@ msgstr ""
 "                           määritellyn arkkitehtuurin mukaisesti.\n"
 "                           Oletus: perustuu disassemloitavaan binääritiedostoon.\n"
 
-#: mips-dis.c:3069
+#: mips-dis.c:2213
 #, c-format
 msgid ""
 "\n"
@@ -982,7 +1142,7 @@ msgstr ""
 "\t\t\t   arkkitehtuurin mukaisesti.\n"
 "                           Oletus: perustuu disassembloitavaan binääritiedostoon.\n"
 
-#: mips-dis.c:3074
+#: mips-dis.c:2218
 #, c-format
 msgid ""
 "\n"
@@ -993,7 +1153,7 @@ msgstr ""
 "  reg-names=ABI            Tulosta GPR- ja FPR-nimet määritellyn\n"
 "                           ABI:n mukaisesti.\n"
 
-#: mips-dis.c:3078
+#: mips-dis.c:2222
 #, c-format
 msgid ""
 "\n"
@@ -1004,7 +1164,7 @@ msgstr ""
 "  reg-names=ARCH           Tulosta CP0-rekisteri ja HWR-nimet määritellyn\n"
 "                           arkkitehtuurin mukaisesti.\n"
 
-#: mips-dis.c:3082
+#: mips-dis.c:2226
 #, c-format
 msgid ""
 "\n"
@@ -1015,12 +1175,7 @@ msgstr ""
 "  Ylläolevista valinnoista ”ABI” tukee seuraavia arvoja:\n"
 "   "
 
-#: mips-dis.c:3087 mips-dis.c:3095 mips-dis.c:3097
-#, c-format
-msgid "\n"
-msgstr "\n"
-
-#: mips-dis.c:3089
+#: mips-dis.c:2233
 #, c-format
 msgid ""
 "\n"
@@ -1031,33 +1186,42 @@ msgstr ""
 "  Ylläolevista valinnoista ”ARCH” tukee seuraavia arvoja:\n"
 "   "
 
-#: mmix-dis.c:35
+#: mmix-dis.c:34
 #, c-format
 msgid "Bad case %d (%s) in %s:%d\n"
 msgstr "%d (%s) on virheellinen tapaus kohteessa %s:%d\n"
 
-#: mmix-dis.c:45
+#: mmix-dis.c:44
 #, c-format
 msgid "Internal: Non-debugged code (test-case missing): %s:%d"
 msgstr "Sisäinen: Vikajäljittämätön koodi (testitapaus puuttuu): %s:%d"
 
-#: mmix-dis.c:54
+#: mmix-dis.c:53
 msgid "(unknown)"
 msgstr "(tuntematon)"
 
-#: mmix-dis.c:512
+#: mmix-dis.c:511
 #, c-format
 msgid "*unknown operands type: %d*"
 msgstr "*tuntematon operandityyppi: %d*"
 
-#: msp430-dis.c:328
+#: msp430-dis.c:412
 msgid "Illegal as emulation instr"
 msgstr "Virheellinen emulointikäskynä"
 
 #. R2/R3 are illegal as dest: may be data section.
-#: msp430-dis.c:379
+#: msp430-dis.c:487
 msgid "Illegal as 2-op instr"
 msgstr "Virheellinen kaksikäskykoodina"
+
+#: msp430-dis.c:839
+msgid "unrecognised CALLA addressing mode"
+msgstr "tunnistamaton CALLA-osoitteenmuodostustila"
+
+#: msp430-dis.c:1110 msp430-dis.c:1127 msp430-dis.c:1148
+#, c-format
+msgid "Reserved use of A/L and B/W bits detected"
+msgstr "A/L- ja B/W-bittien varattu käyttö havaittu"
 
 #: mt-asm.c:110 mt-asm.c:190
 msgid "Operand out of range. Must be between -32768 and 32767."
@@ -1085,12 +1249,12 @@ msgstr "virheellinen operandi. tyypin arvo saa olla vain 0,1 tai 2."
 msgid "$<undefined>"
 msgstr "$<määrittelemätön>"
 
-#: ppc-dis.c:234
+#: ppc-dis.c:320
 #, c-format
 msgid "warning: ignoring unknown -M%s option\n"
 msgstr "varoitus: ei välitetä tuntemattomasta -M%s-valitsimesta\n"
 
-#: ppc-dis.c:523
+#: ppc-dis.c:745
 #, c-format
 msgid ""
 "\n"
@@ -1101,55 +1265,63 @@ msgstr ""
 "Seuraavia PPC-kohtaisia disassembler-valintoja tuetaan käytössä\n"
 "-M -valinnan kanssa:\n"
 
-#: ppc-opc.c:906 ppc-opc.c:936
+#: ppc-opc.c:887 ppc-opc.c:910 ppc-opc.c:935 ppc-opc.c:964
+msgid "invalid register"
+msgstr "virheellinen rekisteri"
+
+#: ppc-opc.c:1212 ppc-opc.c:1242
 msgid "invalid conditional option"
 msgstr "virheellinen ehdollinen valinta"
 
-#: ppc-opc.c:908 ppc-opc.c:938
+#: ppc-opc.c:1214 ppc-opc.c:1244
 msgid "invalid counter access"
 msgstr "virheellinen laskinhaku"
 
-#: ppc-opc.c:940
+#: ppc-opc.c:1246
 msgid "attempt to set y bit when using + or - modifier"
 msgstr "yritys asettaa y-bitti kun käytetään + tai - määritettä"
 
-#: ppc-opc.c:972
+#: ppc-opc.c:1278
 msgid "invalid mask field"
 msgstr "virheellinen peitekenttä"
 
-#: ppc-opc.c:998
+#: ppc-opc.c:1304
 msgid "ignoring invalid mfcr mask"
 msgstr "virheellistä mfcr-peitettä ei oteta huomioon"
 
-#: ppc-opc.c:1048 ppc-opc.c:1083
+#: ppc-opc.c:1403 ppc-opc.c:1438
 msgid "illegal bitmask"
 msgstr "virheellinen bittipeite"
 
-#: ppc-opc.c:1170
+#: ppc-opc.c:1525
 msgid "address register in load range"
 msgstr "osoiterekisteri on latauslukurajojen sisällä"
 
-#: ppc-opc.c:1223
+#: ppc-opc.c:1578
 msgid "index register in load range"
 msgstr "indeksirekisteri on latauslukurajojen sisällä"
 
-#: ppc-opc.c:1239 ppc-opc.c:1295
+#: ppc-opc.c:1594 ppc-opc.c:1650
 msgid "source and target register operands must be different"
 msgstr "lähde- ja kohderekisterin kohdemuuttujien on oltava erilaiset"
 
-#: ppc-opc.c:1254
+#: ppc-opc.c:1609
 msgid "invalid register operand when updating"
 msgstr "rekisterin operandi virheellinen päivitettäessä"
 
-#: ppc-opc.c:1349
+#: ppc-opc.c:1700
+msgid "illegal immediate value"
+msgstr "virheellinen suora muistiosoitusarvo"
+
+#: ppc-opc.c:1839
 msgid "invalid sprg number"
 msgstr "virheellinen sprg-numero"
 
-#: ppc-opc.c:1519
+#: ppc-opc.c:2009
 msgid "invalid constant"
 msgstr "virheellinen vakio"
 
-#: s390-dis.c:301
+#: s390-dis.c:291
 #, c-format
 msgid ""
 "\n"
@@ -1160,12 +1332,12 @@ msgstr ""
 "Seuraavat S/390-kohtaiset disassembler-valinnat ovat tuettuja käyttöön\n"
 "-M -valinnan kanssa (monivalinnat pitää erottaa pilkulla):\n"
 
-#: s390-dis.c:305
+#: s390-dis.c:295
 #, c-format
 msgid "  esa         Disassemble in ESA architecture mode\n"
 msgstr "  esa        Disassembloi ESA-arkkitehtuuritilassa\n"
 
-#: s390-dis.c:306
+#: s390-dis.c:296
 #, c-format
 msgid "  zarch       Disassemble in z/Architecture mode\n"
 msgstr "  zarch        Disassembloi z/Arkkitehtuuritilassa\n"
@@ -1175,32 +1347,32 @@ msgstr "  zarch        Disassembloi z/Arkkitehtuuritilassa\n"
 msgid "<illegal instruction>"
 msgstr "<virheellinen käsky>"
 
-#: sparc-dis.c:285
+#: sparc-dis.c:286
 #, c-format
 msgid "Internal error:  bad sparc-opcode.h: \"%s\", %#.8lx, %#.8lx\n"
 msgstr "Sisäinen virhe:  virheellinen sparc-opcode.h: ”%s”, %#.8lx, %#.8lx\n"
 
-#: sparc-dis.c:296
+#: sparc-dis.c:297
 #, c-format
 msgid "Internal error: bad sparc-opcode.h: \"%s\", %#.8lx, %#.8lx\n"
 msgstr "Sisäinen virhe: virheellinen sparc-opcode.h: ”%s”, %#.8lx, %#.8lx\n"
 
-#: sparc-dis.c:346
+#: sparc-dis.c:356
 #, c-format
 msgid "Internal error: bad sparc-opcode.h: \"%s\" == \"%s\"\n"
 msgstr "Sisäinen virhe: virheellinen sparc-opcode.h: ”%s” == ”%s”\n"
 
 #. Mark as non-valid instruction.
-#: sparc-dis.c:1028
+#: sparc-dis.c:1047
 msgid "unknown"
 msgstr "tuntematon"
 
-#: v850-dis.c:372
+#: v850-dis.c:453
 #, c-format
 msgid "unknown operand shift: %x\n"
 msgstr "tuntematon operandin siirto: %x\n"
 
-#: v850-dis.c:384
+#: v850-dis.c:465
 #, c-format
 msgid "unknown reg: %d\n"
 msgstr "tuntematon rekisteri: %d\n"
@@ -1210,39 +1382,67 @@ msgstr "tuntematon rekisteri: %d\n"
 #. v850_insert_operand() in gas/config/tc-v850.c.  Error messages
 #. containing the string 'out of range' will be ignored unless a
 #. specific command line option is given to GAS.
-#: v850-opc.c:55
+#: v850-opc.c:53
 msgid "displacement value is not in range and is not aligned"
 msgstr "uudelleensijoitusarvo ei ole rajojen sisällä eikä sijaitse tasarajalla"
 
-#: v850-opc.c:56
+#: v850-opc.c:54
 msgid "displacement value is out of range"
 msgstr "uudelleensijoitusarvo ei ole rajojen sisällä"
 
-#: v850-opc.c:57
+#: v850-opc.c:55
 msgid "displacement value is not aligned"
 msgstr "uudelleensijoitusarvo ei ole tasarajalla"
 
-#: v850-opc.c:59
+#: v850-opc.c:57
 msgid "immediate value is out of range"
 msgstr "suora muistiosoitusarvo ei ole rajojen sisällä"
 
-#: v850-opc.c:60
+#: v850-opc.c:58
 msgid "branch value out of range"
 msgstr "haaroitusarvo ei ole rajojen sisällä"
 
-#: v850-opc.c:61
+#: v850-opc.c:59
 msgid "branch value not in range and to odd offset"
 msgstr "haaroitusarvo ei ole rajojen sisällä ja kohdistuu parittomaan siirrososoitteeseen"
 
-#: v850-opc.c:62
+#: v850-opc.c:60
 msgid "branch to odd offset"
 msgstr "haaroitus parittomaan siirrososoitteeseen"
 
-#: v850-opc.c:497
+#: v850-opc.c:61
+msgid "position value is out of range"
+msgstr "sijaintiarvo ei ole rajojen sisällä"
+
+#: v850-opc.c:62
+msgid "width value is out of range"
+msgstr "leveysarvo ei ole rajojen sisällä"
+
+#: v850-opc.c:63
+msgid "SelID is out of range"
+msgstr "SelID ei ole rajojen sisällä"
+
+#: v850-opc.c:64
+msgid "vector8 is out of range"
+msgstr "vector8 ei ole rajojen sisällä"
+
+#: v850-opc.c:65
+msgid "vector5 is out of range"
+msgstr "vector5 ei ole rajojen sisällä"
+
+#: v850-opc.c:66
+msgid "imm10 is out of range"
+msgstr "imm10 ei ole rajojen sisällä"
+
+#: v850-opc.c:67
+msgid "SR/SelID is out of range"
+msgstr "SR/SelID ei ole rajojen sisällä"
+
+#: v850-opc.c:512
 msgid "invalid register for stack adjustment"
 msgstr "virheellinen rekisteri pinosäädössä"
 
-#: v850-opc.c:518
+#: v850-opc.c:532
 msgid "invalid register name"
 msgstr "virheellinen rekisterinimi"
 
@@ -1309,6 +1509,28 @@ msgstr "Kohdemuuttuja ei ole symboli"
 #: xstormy16-asm.c:165
 msgid "Syntax error: No trailing ')'"
 msgstr "Syntaksivirhe: loppukaarisulku ’)’ puuttuu"
+
+#~ msgid "# internal error, incomplete extension sequence (+)"
+#~ msgstr "# sisäinen virhe, epätäydellinen laajennussekvenssi (+)"
+
+#~ msgid "# internal error, undefined extension sequence (+%c)"
+#~ msgstr "# sisäinen virhe, määrittelemätön laajennussekvenssi (+%c)"
+
+#~ msgid "# internal disassembler error, unrecognised modifier (%c)"
+#~ msgstr "# sisäinen disassembler-virhe, tunnistamaton määrite (%c)"
+
+#~ msgid "# internal disassembler error, unrecognized modifier (+%c)"
+#~ msgstr "# sisäinen disassembler-virhe, tunnistamaton määrite (+%c)"
+
+#~ msgid "# internal disassembler error, unrecognized modifier (m%c)"
+#~ msgstr "# sisäinen disassembler-virhe, tunnistamaton määrite (m%c)"
+
+#~ msgid "# internal disassembler error, unrecognized modifier (%c)"
+#~ msgstr "# sisäinen disassembler-virhe, tunnistamaton määrite (%c)"
+
+#  should be unrecognised, I suppose
+#~ msgid "unercognised CALLA addressing mode"
+#~ msgstr "tunnistamaton CALLA-osoitteenmuodostustila"
 
 #~ msgid "branch value not in range and to an odd offset"
 #~ msgstr "haaroitusarvo ei ole rajojen sisällä ja sijaitsee parittomassa siirrososoitteessa"

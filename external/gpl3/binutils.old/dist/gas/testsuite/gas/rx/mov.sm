@@ -1,5 +1,11 @@
+	mov{bwl}	{reg7},[{reg7}]
+	mov{bwl}	{reg7},0[{reg7}]
 	mov{bwl}	{reg7},{dsp5}[{reg7}]
+	
+	mov{bwl}	[{reg7}],{reg7}
+	mov{bwl}	0[{reg7}],{reg7}
 	mov{bwl}	{dsp5}[{reg7}],{reg7}
+
 	mov.L		#{uimm4},{reg}
 	mov.B		#{simm8},{dsp5}[{reg7}]
 	mov.{W;L}	#{uimm8},{dsp5}[{reg7}]

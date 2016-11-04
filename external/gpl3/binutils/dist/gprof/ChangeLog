@@ -1,52 +1,46 @@
-2016-06-29  Tristan Gingold  <gingold@adacore.com>
+2016-08-03  Tristan Gingold  <gingold@adacore.com>
 
 	* configure: Regenerate.
 
-2016-01-25  Tristan Gingold  <gingold@adacore.com>
+2016-07-01  Tristan Gingold  <gingold@adacore.com>
 
 	* configure: Regenerate.
 
-2016-01-25  Tristan Gingold  <gingold@adacore.com>
+2016-07-01  Tristan Gingold  <gingold@adacore.com>
 
 	* configure: Regenerate.
 
-2015-11-13  Tristan Gingold  <gingold@adacore.com>
+2016-04-20  Trevor Saunders  <tbsaunde+binutils@tbsaunde.org>
+
+	* basic_blocks.c: Update old style function definitions.
+	* cg_arcs.c: Likewise.
+	* cg_print.c: Likewise.
+	* gen-c-prog.awk: Likewise.
+	* gmon_io.c: Likewise.
+	* hertz.c: Likewise.
+	* hist.c: Likewise.
+	* sym_ids.c: Likewise.
+
+2016-04-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.in: Regenerated with automake 1.11.6.
+	* aclocal.m4: Likewise.
+
+2016-03-22  Nick Clifton  <nickc@redhat.com>
 
 	* configure: Regenerate.
 
-2015-11-13  Tristan Gingold  <gingold@adacore.com>
+2016-01-17  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.
 
-2015-08-12  Nick Clifton  <nickc@redhat.com>
-
-	* po/sv.po: Updated Swedish translation.
-
-2015-07-27  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* configure: Regenerated.
-
-2015-07-24  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* alpha.c (OP_Jxx): Add 'U' suffix to make it unsigned.
-	(OP_BSR): Likewise.
-	(Jxx_FUNC_JMP): Likewise.
-	(Jxx_FUNC_JSR): Likewise.
-	(Jxx_FUNC_RET): Likewise.
-	(Jxx_FUNC_JSR_COROUTINE): Likewise.
-	(alpha_find_call): Replace 0x3f with 0x3fU.
-
-2015-04-29  Nick Clifton  <nickc@redhat.com>
-
-	* po/da.po: Update Danish translation.
-
-2015-01-01  Alan Modra  <amodra@gmail.com>
+2016-01-01  Alan Modra  <amodra@gmail.com>
 
 	Update year range in copyright notice of all files.
 
-For older changes see ChangeLog-2014
+For older changes see ChangeLog-2015
 
-Copyright (C) 2015 Free Software Foundation, Inc.
+Copyright (C) 2016 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

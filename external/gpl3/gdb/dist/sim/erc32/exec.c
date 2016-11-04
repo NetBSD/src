@@ -1,6 +1,6 @@
 /* This file is part of SIS (SPARC instruction simulator)
 
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    Contributed by Jiri Gaisler, European Space Agency
 
    This program is free software; you can redistribute it and/or modify
@@ -1728,7 +1728,7 @@ fpexec(op3, rd, rs1, rs2, sregs)
     /* SPARC is big-endian - swap double floats if host is little-endian */
     /* This is ugly - I know ... */
 
-    /* FIXME: should use (CURRENT_HOST_BYTE_ORDER == CURRENT_TARGET_BYTE_ORDER)
+    /* FIXME: should use (HOST_BYTE_ORDER == CURRENT_TARGET_BYTE_ORDER)
        but what about machines where float values are different endianness
        from integer values? */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: igphyreg.h,v 1.8 2015/10/26 02:31:31 msaitoh Exp $	*/
+/*	$NetBSD: igphyreg.h,v 1.8.2.1 2016/11/04 14:49:09 pgoyette Exp $	*/
 
 /*******************************************************************************
 
@@ -165,9 +165,8 @@
  * IGP3 regs
  */
 #define IGP3_PAGE_SHIFT		5
-#define IGP3_MAX_REG_ADDRESS	0x1f  /* 5 bit address bus (0-0x1f) */
 #define IGP3_REG(page, reg) \
-	(((page) << IGP3_PAGE_SHIFT) | ((reg) & IGP3_MAX_REG_ADDRESS))
+	(((page) << IGP3_PAGE_SHIFT) | ((reg) & MII_MAXREGADDR))
 
 #define IGP3_VR_CTRL	IGP3_REG(776, 18)
 #define IGP3_VR_CTRL_DEV_POWERDOWN_MODE_MASK	0x0300

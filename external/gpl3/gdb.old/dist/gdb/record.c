@@ -189,6 +189,25 @@ record_kill (struct target_ops *t)
   target_kill ();
 }
 
+/* See record.h.  */
+
+int
+record_check_stopped_by_breakpoint (struct address_space *aspace, CORE_ADDR pc,
+				    enum target_stop_reason *reason)
+{
+  if (breakpoint_inserted_here_p (aspace, pc))
+    {
+      if (hardware_breakpoint_inserted_here_p (aspace, pc))
+	*reason = TARGET_STOPPED_BY_HW_BREAKPOINT;
+      else
+	*reason = TARGET_STOPPED_BY_SW_BREAKPOINT;
+      return 1;
+    }
+
+  *reason = TARGET_STOPPED_BY_NO_REASON;
+  return 0;
+}
+
 /* Implement "show record debug" command.  */
 
 static void

@@ -1,7 +1,5 @@
 /* BFD back-end for Intel 960 COFF files.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005, 2007, 2008, 2009, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -64,22 +62,22 @@ coff_i960_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED, const char *name)
 /* This is just like the usual CALC_ADDEND, but it includes the
    section VMA for PC relative relocs.  */
 #ifndef CALC_ADDEND
-#define CALC_ADDEND(abfd, ptr, reloc, cache_ptr)                \
-  {                                                             \
-    coff_symbol_type *coffsym = (coff_symbol_type *) NULL;      \
-    if (ptr && bfd_asymbol_bfd (ptr) != abfd)                   \
-      coffsym = (obj_symbols (abfd)                             \
-                 + (cache_ptr->sym_ptr_ptr - symbols));         \
-    else if (ptr)                                               \
-      coffsym = coff_symbol_from (abfd, ptr);                   \
-    if (coffsym != (coff_symbol_type *) NULL                    \
-        && coffsym->native->u.syment.n_scnum == 0)              \
-      cache_ptr->addend = 0;                                    \
-    else if (ptr && bfd_asymbol_bfd (ptr) == abfd               \
-             && ptr->section != (asection *) NULL)              \
-      cache_ptr->addend = - (ptr->section->vma + ptr->value);   \
-    else                                                        \
-      cache_ptr->addend = 0;                                    \
+#define CALC_ADDEND(abfd, ptr, reloc, cache_ptr)		\
+  {								\
+    coff_symbol_type *coffsym = (coff_symbol_type *) NULL;	\
+    if (ptr && bfd_asymbol_bfd (ptr) != abfd)			\
+      coffsym = (obj_symbols (abfd)				\
+		 + (cache_ptr->sym_ptr_ptr - symbols));		\
+    else if (ptr)						\
+      coffsym = coff_symbol_from (ptr);				\
+    if (coffsym != (coff_symbol_type *) NULL			\
+	&& coffsym->native->u.syment.n_scnum == 0)		\
+      cache_ptr->addend = 0;					\
+    else if (ptr && bfd_asymbol_bfd (ptr) == abfd		\
+	     && ptr->section != (asection *) NULL)		\
+      cache_ptr->addend = - (ptr->section->vma + ptr->value);	\
+    else							\
+      cache_ptr->addend = 0;					\
     if (ptr && (reloc.r_type == 25 || reloc.r_type == 27))	\
       cache_ptr->addend += asect->vma;				\
   }
@@ -324,7 +322,7 @@ coff_i960_start_final_link (bfd *abfd, struct bfd_link_info *info)
   asection *o;
   bfd_byte *esym;
 
-  if (! info->relocatable)
+  if (! bfd_link_relocatable (info))
     return TRUE;
 
   esym = (bfd_byte *) bfd_malloc (symesz);
@@ -449,7 +447,7 @@ coff_i960_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		     + sec->output_section->vma
 		     + sec->output_offset);
 	    }
-	  else if (! info->relocatable)
+	  else if (! bfd_link_relocatable (info))
 	    {
 	      if (! ((*info->callbacks->undefined_symbol)
 		     (info, h->root.root.string, input_bfd, input_section,
@@ -460,7 +458,7 @@ coff_i960_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       done = FALSE;
 
-      if (howto->type == R_OPTCALL && ! info->relocatable && symndx != -1)
+      if (howto->type == R_OPTCALL && ! bfd_link_relocatable (info) && symndx != -1)
 	{
 	  int class_val;
 
@@ -610,11 +608,11 @@ coff_i960_adjust_symndx (bfd *obfd ATTRIBUTE_UNUSED,
 
 #include "coffcode.h"
 
-extern const bfd_target icoff_big_vec;
+extern const bfd_target icoff_be_vec;
 
-CREATE_LITTLE_COFF_TARGET_VEC (icoff_little_vec, "coff-Intel-little", 0, 0, '_', & icoff_big_vec, COFF_SWAP_TABLE)
+CREATE_LITTLE_COFF_TARGET_VEC (icoff_le_vec, "coff-Intel-little", 0, 0, '_', & icoff_be_vec, COFF_SWAP_TABLE)
 
-const bfd_target icoff_big_vec =
+const bfd_target icoff_be_vec =
 {
   "coff-Intel-big",		/* name */
   bfd_target_coff_flavour,
@@ -655,7 +653,7 @@ bfd_getb64, bfd_getb_signed_64, bfd_putb64,
      BFD_JUMP_TABLE_LINK (coff),
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-  & icoff_little_vec,
+  & icoff_le_vec,
 
   COFF_SWAP_TABLE
 };

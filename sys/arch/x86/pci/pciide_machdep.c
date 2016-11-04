@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.15 2015/07/27 15:45:20 msaitoh Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.15.2.1 2016/11/04 14:49:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.15 2015/07/27 15:45:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.15.2.1 2016/11/04 14:49:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,14 @@ pciide_machdep_compat_intr_establish(device_t dev,
 	intr_handle_t mpih;
 	char buf[PCI_INTRSTR_LEN];
 #endif
+	char intr_xname[64];
+
+	snprintf(intr_xname, sizeof(intr_xname), "%s %s",
+	    device_xname(dev), PCIIDE_CHANNEL_NAME(chan));
 
 	irq = PCIIDE_COMPAT_IRQ(chan);
-	cookie = isa_intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg);
+	cookie = isa_intr_establish_xname(NULL, irq, IST_EDGE, IPL_BIO,
+	    func, arg, intr_xname);
 	if (cookie == NULL)
 		return NULL;
 #if NIOAPIC > 0

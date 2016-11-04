@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/05/31 22:55:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.8.1 2016/11/04 14:45:15 pgoyette Exp $
 
 LIBISPRIVATE=	yes
 
@@ -19,8 +19,9 @@ CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
 		-DCONFIGURE_SPECS="\"\"" \
 		-I${BACKENDOBJ}
 
-COPTS.prefix.c=		-Wno-stack-protector
-COPTS.opts-common.c=	-Wno-stack-protector
+COPTS.prefix.c+=	-Wno-stack-protector
+COPTS.opts-common.c+=	-Wno-stack-protector
+COPTS.rs6000-common.c+=	-Wno-stack-protector
 
 GENPROG_ERROR_DEPENDS=errors.lo
 

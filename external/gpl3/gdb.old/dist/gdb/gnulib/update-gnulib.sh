@@ -45,6 +45,7 @@ IMPORTED_GNULIB_MODULES="\
     readlink \
     rename \
     strstr \
+    strtok_r \
     sys_stat \
     unistd \
     update-copyright \
@@ -110,7 +111,23 @@ if [ "$ver" != "$AUTOMAKE_VERSION" ]; then
 fi
 
 # Verify that we have the correct version of aclocal.
-ver=`aclocal --version 2>&1 | head -1 | sed 's/.*) //'`
+#
+# The grep below is needed because Perl >= 5.16 dumps a "called too
+# early to check prototype" warning when running aclocal 1.11.1.  This
+# causes trouble below, because the warning is the first line output
+# by aclocal, resulting in:
+#
+# $ sh ./update-gnulib.sh ~/src/gnulib/src/
+# Error: Wrong aclocal version: called too early to check prototype at /opt/automake-1.11.1/bin/aclocal line 617.. Aborting.
+#
+# Some distros carry an automake patch for that:
+#  https://bugs.debian.org/cgi-bin/bugreport.cgi?msg=5;filename=aclocal-function-prototypes.debdiff;att=1;bug=752784
+#
+# But since we prefer pristine FSF versions of autotools, work around
+# the issue here.  This can be removed later when we bump the required
+# automake version.
+#
+ver=`aclocal --version 2>&1 | grep -v "called too early to check prototype" | head -1 | sed 's/.*) //'`
 if [ "$ver" != "$ACLOCAL_VERSION" ]; then
    echo "Error: Wrong aclocal version: $ver. Aborting."
    exit 1

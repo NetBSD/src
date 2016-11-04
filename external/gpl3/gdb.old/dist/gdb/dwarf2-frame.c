@@ -165,29 +165,34 @@ static CORE_ADDR read_encoded_value (struct comp_unit *unit, gdb_byte encoding,
 				     CORE_ADDR func_base);
 
 
+enum cfa_how_kind
+{
+  CFA_UNSET,
+  CFA_REG_OFFSET,
+  CFA_EXP
+};
+
+struct dwarf2_frame_state_reg_info
+{
+  struct dwarf2_frame_state_reg *reg;
+  int num_regs;
+
+  LONGEST cfa_offset;
+  ULONGEST cfa_reg;
+  enum cfa_how_kind cfa_how;
+  const gdb_byte *cfa_exp;
+
+  /* Used to implement DW_CFA_remember_state.  */
+  struct dwarf2_frame_state_reg_info *prev;
+};
+
 /* Structure describing a frame state.  */
 
 struct dwarf2_frame_state
 {
   /* Each register save state can be described in terms of a CFA slot,
      another register, or a location expression.  */
-  struct dwarf2_frame_state_reg_info
-  {
-    struct dwarf2_frame_state_reg *reg;
-    int num_regs;
-
-    LONGEST cfa_offset;
-    ULONGEST cfa_reg;
-    enum {
-      CFA_UNSET,
-      CFA_REG_OFFSET,
-      CFA_EXP
-    } cfa_how;
-    const gdb_byte *cfa_exp;
-
-    /* Used to implement DW_CFA_remember_state.  */
-    struct dwarf2_frame_state_reg_info *prev;
-  } regs;
+  struct dwarf2_frame_state_reg_info regs;
 
   /* The PC described by the current frame state.  */
   CORE_ADDR pc;
@@ -873,7 +878,7 @@ dwarf2_frame_find_quirks (struct dwarf2_frame_state *fs,
 	 this problem is fixed (no quirk needed).  If the armcc
 	 augmentation is missing, the quirk is needed.  */
       if (fde->cie->version == 3
-	  && (strncmp (fde->cie->augmentation, "armcc", 5) != 0
+	  && (!startswith (fde->cie->augmentation, "armcc")
 	      || strchr (fde->cie->augmentation + 5, '+') == NULL))
 	fs->armcc_cfa_offsets_reversed = 1;
 
@@ -1020,7 +1025,6 @@ dwarf2_frame_cache (struct frame_info *this_frame, void **this_cache)
   struct dwarf2_frame_cache *cache;
   struct dwarf2_frame_state *fs;
   struct dwarf2_fde *fde;
-  volatile struct gdb_exception ex;
   CORE_ADDR entry_pc;
   const gdb_byte *instr;
 
@@ -1097,7 +1101,7 @@ dwarf2_frame_cache (struct frame_info *this_frame, void **this_cache)
   execute_cfa_program (fde, instr, fde->end, gdbarch,
 		       get_frame_address_in_block (this_frame), fs);
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       /* Calculate the CFA.  */
       switch (fs->regs.cfa_how)
@@ -1121,7 +1125,7 @@ dwarf2_frame_cache (struct frame_info *this_frame, void **this_cache)
 	  internal_error (__FILE__, __LINE__, _("Unknown CFA rule."));
 	}
     }
-  if (ex.reason < 0)
+  CATCH (ex, RETURN_MASK_ERROR)
     {
       if (ex.error == NOT_AVAILABLE_ERROR)
 	{
@@ -1133,6 +1137,7 @@ dwarf2_frame_cache (struct frame_info *this_frame, void **this_cache)
 
       throw_exception (ex);
     }
+  END_CATCH
 
   /* Initialize the register state.  */
   {
@@ -1930,7 +1935,7 @@ decode_frame_entry_1 (struct comp_unit *unit, const gdb_byte *start,
 
       /* Ignore armcc augmentations.  We only use them for quirks,
 	 and that doesn't happen until later.  */
-      if (strncmp (augmentation, "armcc", 5) == 0)
+      if (startswith (augmentation, "armcc"))
 	augmentation += strlen (augmentation);
 
       /* The GCC 2.x "eh" augmentation has a pointer immediately
@@ -2264,7 +2269,6 @@ dwarf2_build_frame_info (struct objfile *objfile)
   struct dwarf2_cie_table cie_table;
   struct dwarf2_fde_table fde_table;
   struct dwarf2_fde_table *fde_table2;
-  volatile struct gdb_exception e;
 
   cie_table.num_entries = 0;
   cie_table.entries = NULL;
@@ -2306,7 +2310,7 @@ dwarf2_build_frame_info (struct objfile *objfile)
           if (txt)
             unit->tbase = txt->vma;
 
-	  TRY_CATCH (e, RETURN_MASK_ERROR)
+	  TRY
 	    {
 	      frame_ptr = unit->dwarf_frame_buffer;
 	      while (frame_ptr < unit->dwarf_frame_buffer + unit->dwarf_frame_size)
@@ -2315,7 +2319,7 @@ dwarf2_build_frame_info (struct objfile *objfile)
 						EH_CIE_OR_FDE_TYPE_ID);
 	    }
 
-	  if (e.reason < 0)
+	  CATCH (e, RETURN_MASK_ERROR)
 	    {
 	      warning (_("skipping .eh_frame info of %s: %s"),
 		       objfile_name (objfile), e.message);
@@ -2328,6 +2332,7 @@ dwarf2_build_frame_info (struct objfile *objfile)
 		}
 	      /* The cie_table is discarded by the next if.  */
 	    }
+	  END_CATCH
 
           if (cie_table.num_entries != 0)
             {
@@ -2347,7 +2352,7 @@ dwarf2_build_frame_info (struct objfile *objfile)
     {
       int num_old_fde_entries = fde_table.num_entries;
 
-      TRY_CATCH (e, RETURN_MASK_ERROR)
+      TRY
 	{
 	  frame_ptr = unit->dwarf_frame_buffer;
 	  while (frame_ptr < unit->dwarf_frame_buffer + unit->dwarf_frame_size)
@@ -2355,7 +2360,7 @@ dwarf2_build_frame_info (struct objfile *objfile)
 					    &cie_table, &fde_table,
 					    EH_CIE_OR_FDE_TYPE_ID);
 	}
-      if (e.reason < 0)
+      CATCH (e, RETURN_MASK_ERROR)
 	{
 	  warning (_("skipping .debug_frame info of %s: %s"),
 		   objfile_name (objfile), e.message);
@@ -2378,6 +2383,7 @@ dwarf2_build_frame_info (struct objfile *objfile)
 	  fde_table.num_entries = num_old_fde_entries;
 	  /* The cie_table is discarded by the next if.  */
 	}
+      END_CATCH
     }
 
   /* Discard the cie_table, it is no longer needed.  */

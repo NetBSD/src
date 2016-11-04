@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.157 2016/03/16 05:32:09 mrg Exp $
+# $NetBSD: md.i386,v 1.157.2.1 2016/11/04 14:42:38 pgoyette Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -62,8 +62,8 @@
 ./usr/include/clang-3.5/xopintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.6/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.6/__wmmintrin_pclmul.h	comp-obsolete		obsolete
-./usr/include/clang-3.6/ammintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.6/adxintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.6/ammintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.6/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.6/avx512bwintrin.h	comp-obsolete		obsolete
 ./usr/include/clang-3.6/avx512erintrin.h	comp-obsolete		obsolete
@@ -100,8 +100,8 @@
 ./usr/include/clang-3.6/xopintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.8/__wmmintrin_aes.h	comp-c-include		llvm
 ./usr/include/clang-3.8/__wmmintrin_pclmul.h	comp-c-include		llvm
-./usr/include/clang-3.8/ammintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.8/adxintrin.h		comp-c-include		llvm
+./usr/include/clang-3.8/ammintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.8/avx2intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.8/avx512bwintrin.h	comp-c-include		llvm
 ./usr/include/clang-3.8/avx512cdintrin.h	comp-c-include		llvm

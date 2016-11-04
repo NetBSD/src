@@ -1,5 +1,5 @@
 /* Handle FR-V (FDPIC) shared libraries for GDB, the GNU Debugger.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -132,7 +132,7 @@ fetch_loadmap (CORE_ADDR ldmaddr)
   /* Allocate space for the complete (external) loadmap.  */
   ext_ldmbuf_size = sizeof (struct ext_elf32_fdpic_loadmap)
                + (nsegs - 1) * sizeof (struct ext_elf32_fdpic_loadseg);
-  ext_ldmbuf = xmalloc (ext_ldmbuf_size);
+  ext_ldmbuf = (struct ext_elf32_fdpic_loadmap *) xmalloc (ext_ldmbuf_size);
 
   /* Copy over the portion of the loadmap that's already been read.  */
   memcpy (ext_ldmbuf, &ext_ldmbuf_partial, sizeof ext_ldmbuf_partial);
@@ -151,7 +151,7 @@ fetch_loadmap (CORE_ADDR ldmaddr)
      external loadsegs.  I.e, allocate the internal loadsegs.  */
   int_ldmbuf_size = sizeof (struct int_elf32_fdpic_loadmap)
                + (nsegs - 1) * sizeof (struct int_elf32_fdpic_loadseg);
-  int_ldmbuf = xmalloc (int_ldmbuf_size);
+  int_ldmbuf = (struct int_elf32_fdpic_loadmap *) xmalloc (int_ldmbuf_size);
 
   /* Place extracted information in internal structs.  */
   int_ldmbuf->version = version;
@@ -388,8 +388,8 @@ frv_current_sos (void)
 	      break;
 	    }
 
-	  sop = xcalloc (1, sizeof (struct so_list));
-	  sop->lm_info = xcalloc (1, sizeof (struct lm_info));
+	  sop = XCNEW (struct so_list);
+	  sop->lm_info = XCNEW (struct lm_info);
 	  sop->lm_info->map = loadmap;
 	  sop->lm_info->got_value = got_addr;
 	  sop->lm_info->lm_addr = lm_addr;
@@ -484,7 +484,7 @@ enable_break_failure_warning (void)
 /* Helper function for gdb_bfd_lookup_symbol.  */
 
 static int
-cmp_name (asymbol *sym, void *data)
+cmp_name (const asymbol *sym, const void *data)
 {
   return (strcmp (sym->name, (const char *) data) == 0);
 }
@@ -517,8 +517,6 @@ static int
 enable_break2 (void)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
-  int success = 0;
-  char **bkpt_namep;
   asection *interp_sect;
 
   if (enable_break2_done)
@@ -543,7 +541,7 @@ enable_break2 (void)
       /* Read the contents of the .interp section into a local buffer;
          the contents specify the dynamic linker this program uses.  */
       interp_sect_size = bfd_section_size (exec_bfd, interp_sect);
-      buf = alloca (interp_sect_size);
+      buf = (char *) alloca (interp_sect_size);
       bfd_get_section_contents (exec_bfd, interp_sect,
 				buf, 0, interp_sect_size);
 
@@ -799,11 +797,11 @@ frv_relocate_main_executable (void)
 
   if (main_executable_lm_info)
     xfree (main_executable_lm_info);
-  main_executable_lm_info = xcalloc (1, sizeof (struct lm_info));
+  main_executable_lm_info = XCNEW (struct lm_info);
   main_executable_lm_info->map = ldm;
 
-  new_offsets = xcalloc (symfile_objfile->num_sections,
-			 sizeof (struct section_offsets));
+  new_offsets = XCNEWVEC (struct section_offsets,
+			  symfile_objfile->num_sections);
   old_chain = make_cleanup (xfree, new_offsets);
   changed = 0;
 
@@ -975,7 +973,6 @@ frv_fdpic_find_canonical_descriptor (CORE_ADDR entry_point)
   const char *name;
   CORE_ADDR addr;
   CORE_ADDR got_value;
-  struct int_elf32_fdpic_loadmap *ldm = 0;
   struct symbol *sym;
 
   /* Fetch the corresponding global pointer for the entry point.  */

@@ -78,7 +78,7 @@ proc default_prompt_gdb_start { } {
 	    return -1
 	}
     }
-    set gdb_spawn_id -1
+    set gdb_spawn_id $res
     return 0
 }
 

@@ -1,7 +1,7 @@
 /*  maverick.c -- Cirrus/DSP co-processor interface.
-    Copyright (C) 2003-2015 Free Software Foundation, Inc.
+    Copyright (C) 2003-2016 Free Software Foundation, Inc.
     Contributed by Aldy Hernandez (aldyh@redhat.com).
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 3 of the License, or
@@ -47,7 +47,7 @@ struct maverick_regs
     int i;
     float f;
   } upper;
-  
+
   union
   {
     int i;
@@ -93,7 +93,7 @@ cirrus_not_implemented (char * insn)
 {
   fprintf (stderr, "Cirrus instruction '%s' not implemented.\n", insn);
   fprintf (stderr, "aborting!\n");
-  
+
   exit (1);
 }
 
@@ -110,19 +110,19 @@ DSPMRC4 (ARMul_State * state ATTRIBUTE_UNUSED,
       printfdbg ("cfmvrdl\n");
       printfdbg ("\tlower half=0x%x\n", DSPregs[SRC1_REG].lower.i);
       printfdbg ("\tentire thing=%g\n", mv_getRegDouble (SRC1_REG));
-      
+
       *value = (ARMword) DSPregs[SRC1_REG].lower.i;
       break;
-      
+
     case 1: /* cfmvrdh */
       /* Move upper half of a DF stored in a DSP reg into an Arm reg.  */
       printfdbg ("cfmvrdh\n");
       printfdbg ("\tupper half=0x%x\n", DSPregs[SRC1_REG].upper.i);
       printfdbg ("\tentire thing=%g\n", mv_getRegDouble (SRC1_REG));
-      
+
       *value = (ARMword) DSPregs[SRC1_REG].upper.i;
       break;
-      
+
     case 2: /* cfmvrs */
       /* Move SF from upper half of a DSP register to an Arm register.  */
       *value = (ARMword) DSPregs[SRC1_REG].upper.i;
@@ -130,7 +130,7 @@ DSPMRC4 (ARMul_State * state ATTRIBUTE_UNUSED,
 		 SRC1_REG,
 		 DSPregs[SRC1_REG].upper.f);
       break;
-      
+
 #ifdef doesnt_work
     case 4: /* cfcmps */
       {
@@ -150,7 +150,7 @@ DSPMRC4 (ARMul_State * state ATTRIBUTE_UNUSED,
 	*value = (n << 31) | (z << 30) | (c << 29) | (v << 28);
 	break;
       }
-      
+
     case 5: /* cfcmpd */
       {
 	double a, b;
@@ -177,7 +177,7 @@ DSPMRC4 (ARMul_State * state ATTRIBUTE_UNUSED,
 
 	  a = DSPregs[SRC1_REG].upper.f;
 	  b = DSPregs[SRC2_REG].upper.f;
-  
+
 	  printfdbg ("cfcmps\n");
 	  printfdbg ("\tcomparing %f and %f\n", a, b);
 
@@ -197,10 +197,10 @@ DSPMRC4 (ARMul_State * state ATTRIBUTE_UNUSED,
 
 	  a = mv_getRegDouble (SRC1_REG);
 	  b = mv_getRegDouble (SRC2_REG);
-  
+
 	  printfdbg ("cfcmpd\n");
 	  printfdbg ("\tcomparing %g and %g\n", a, b);
-  
+
 	  z = a == b;		/* zero */
 	  n = a < b;		/* negative */
 	  c = a > b;		/* carry */
@@ -233,13 +233,13 @@ DSPMRC5 (ARMul_State * state ATTRIBUTE_UNUSED,
 		 DEST_REG,
 		 (int) *value);
       break;
-      
+
     case 1: /* cfmvr64h */
       /* Move upper half of 64bit int from Cirrus to Arm.  */
       *value = (ARMword) DSPregs[SRC1_REG].upper.i;
       printfdbg ("cfmvr64h <-- %d\n", (int) *value);
       break;
-      
+
     case 4: /* cfcmp32 */
       {
 	int res;
@@ -270,7 +270,7 @@ DSPMRC5 (ARMul_State * state ATTRIBUTE_UNUSED,
 	*value = (n << 31) | (z << 30) | (c << 29) | (v << 28);
 	break;
       }
-      
+
     case 5: /* cfcmp64 */
       {
 	long long res;
@@ -302,7 +302,7 @@ DSPMRC5 (ARMul_State * state ATTRIBUTE_UNUSED,
 	*value = (n << 31) | (z << 30) | (c << 29) | (v << 28);
 	break;
       }
-      
+
     default:
       fprintf (stderr, "unknown opcode in DSPMRC5 0x%x\n", instr);
       cirrus_not_implemented ("unknown");
@@ -323,27 +323,27 @@ DSPMRC6 (ARMul_State * state ATTRIBUTE_UNUSED,
     case 0: /* cfmval32 */
       cirrus_not_implemented ("cfmval32");
       break;
-      
+
     case 1: /* cfmvam32 */
       cirrus_not_implemented ("cfmvam32");
       break;
-      
+
     case 2: /* cfmvah32 */
       cirrus_not_implemented ("cfmvah32");
       break;
-      
+
     case 3: /* cfmva32 */
       cirrus_not_implemented ("cfmva32");
       break;
-      
+
     case 4: /* cfmva64 */
       cirrus_not_implemented ("cfmva64");
       break;
-      
+
     case 5: /* cfmvsc32 */
       cirrus_not_implemented ("cfmvsc32");
       break;
-      
+
     default:
       fprintf (stderr, "unknown opcode in DSPMRC6 0x%x\n", instr);
       cirrus_not_implemented ("unknown");
@@ -367,20 +367,20 @@ DSPMCR4 (ARMul_State * state,
       printfdbg ("cfmvdlr <-- 0x%x\n", (int) value);
       DSPregs[SRC1_REG].lower.i = (int) value;
       break;
-      
+
     case 1: /* cfmvdhr */
       /* Move the upper half of a DF value from an Arm register into
 	 the upper half of a Cirrus register.  */
       printfdbg ("cfmvdhr <-- 0x%x\n", (int) value);
       DSPregs[SRC1_REG].upper.i = (int) value;
       break;
-      
+
     case 2: /* cfmvsr */
       /* Move SF from Arm register into upper half of Cirrus register.  */
       printfdbg ("cfmvsr <-- 0x%x\n", (int) value);
       DSPregs[SRC1_REG].upper.i = (int) value;
       break;
-      
+
     default:
       fprintf (stderr, "unknown opcode in DSPMCR4 0x%x\n", instr);
       cirrus_not_implemented ("unknown");
@@ -410,7 +410,7 @@ DSPMCR5 (ARMul_State * state,
       printfdbg ("cfmv64lr mvdx%d <-- 0x%x\n", SRC1_REG, (int) value);
       DSPregs[SRC1_REG].lower.i = (int) value;
       break;
-      
+
     case 1: /* cfmv64hr */
       /* Move upper half of a 64bit int from an ARM register into the
 	 upper half of a DSP register.  */
@@ -419,7 +419,7 @@ DSPMCR5 (ARMul_State * state,
 		 (int) value);
       DSPregs[SRC1_REG].upper.i = (int) value;
       break;
-      
+
     case 2: /* cfrshl32 */
       printfdbg ("cfrshl32\n");
       val.us = value;
@@ -428,7 +428,7 @@ DSPMCR5 (ARMul_State * state,
       else
 	DSPregs[SRC2_REG].lower.i = DSPregs[SRC1_REG].lower.i >> -value;
       break;
-      
+
     case 3: /* cfrshl64 */
       printfdbg ("cfrshl64\n");
       val.us = value;
@@ -437,7 +437,7 @@ DSPMCR5 (ARMul_State * state,
       else
 	mv_setReg64int (SRC2_REG, mv_getReg64int (SRC1_REG) >> -value);
       break;
-      
+
     default:
       fprintf (stderr, "unknown opcode in DSPMCR5 0x%x\n", instr);
       cirrus_not_implemented ("unknown");
@@ -458,27 +458,27 @@ DSPMCR6 (ARMul_State * state,
     case 0: /* cfmv32al */
       cirrus_not_implemented ("cfmv32al");
       break;
-      
+
     case 1: /* cfmv32am */
       cirrus_not_implemented ("cfmv32am");
       break;
-      
+
     case 2: /* cfmv32ah */
       cirrus_not_implemented ("cfmv32ah");
       break;
-      
+
     case 3: /* cfmv32a */
       cirrus_not_implemented ("cfmv32a");
       break;
-      
+
     case 4: /* cfmv64a */
       cirrus_not_implemented ("cfmv64a");
       break;
-      
+
     case 5: /* cfmv32sc */
       cirrus_not_implemented ("cfmv32sc");
       break;
-      
+
     default:
       fprintf (stderr, "unknown opcode in DSPMCR6 0x%x\n", instr);
       cirrus_not_implemented ("unknown");
@@ -501,14 +501,14 @@ DSPLDC4 (ARMul_State * state ATTRIBUTE_UNUSED,
       words = 0;
       return ARMul_DONE;
     }
-  
+
   if (BIT (22))
     {				/* it's a long access, get two words */
       /* cfldrd */
 
       printfdbg ("cfldrd: %x (words = %d) (bigend = %d) DESTREG = %d\n",
 		 data, words, state->bigendSig, DEST_REG);
-      
+
       if (words == 0)
 	{
 	  if (state->bigendSig)
@@ -523,14 +523,14 @@ DSPLDC4 (ARMul_State * state ATTRIBUTE_UNUSED,
 	  else
 	    DSPregs[DEST_REG].upper.i = (int) data;
 	}
-      
+
       ++ words;
-      
+
       if (words == 2)
 	{
 	  printfdbg ("\tmvd%d <-- mem = %g\n", DEST_REG,
 		     mv_getRegDouble (DEST_REG));
-	  
+
 	  return ARMul_DONE;
 	}
       else
@@ -539,7 +539,7 @@ DSPLDC4 (ARMul_State * state ATTRIBUTE_UNUSED,
   else
     {
       /* Get just one word.  */
-      
+
       /* cfldrs */
       printfdbg ("cfldrs\n");
 
@@ -565,11 +565,11 @@ DSPLDC5 (ARMul_State * state ATTRIBUTE_UNUSED,
       words = 0;
       return ARMul_DONE;
     }
-  
+
   if (BIT (22))
     {
       /* It's a long access, get two words.  */
-      
+
       /* cfldr64 */
       printfdbg ("cfldr64: %d\n", data);
 
@@ -587,14 +587,14 @@ DSPLDC5 (ARMul_State * state ATTRIBUTE_UNUSED,
 	  else
 	    DSPregs[DEST_REG].upper.i = (int) data;
 	}
-      
+
       ++ words;
-      
+
       if (words == 2)
 	{
 	  printfdbg ("\tmvdx%d <-- mem = %lld\n", DEST_REG,
 		     mv_getReg64int (DEST_REG));
-	  
+
 	  return ARMul_DONE;
 	}
       else
@@ -603,10 +603,10 @@ DSPLDC5 (ARMul_State * state ATTRIBUTE_UNUSED,
   else
     {
       /* Get just one word.  */
-      
+
       /* cfldr32 */
       printfdbg ("cfldr32 mvfx%d <-- %d\n", DEST_REG, (int) data);
-      
+
       /* 32bit ints should be sign extended to 64bits when loaded.  */
       mv_setReg64int (DEST_REG, (long long) data);
 
@@ -627,7 +627,7 @@ DSPSTC4 (ARMul_State * state ATTRIBUTE_UNUSED,
       words = 0;
       return ARMul_DONE;
     }
-  
+
   if (BIT (22))
     {
       /* It's a long access, get two words.  */
@@ -648,14 +648,14 @@ DSPSTC4 (ARMul_State * state ATTRIBUTE_UNUSED,
 	  else
 	    *data = (ARMword) DSPregs[DEST_REG].upper.i;
 	}
-      
+
       ++ words;
-      
+
       if (words == 2)
 	{
 	  printfdbg ("\tmem = mvd%d = %g\n", DEST_REG,
 		     mv_getRegDouble (DEST_REG));
-	  
+
 	  return ARMul_DONE;
 	}
       else
@@ -687,7 +687,7 @@ DSPSTC5 (ARMul_State * state ATTRIBUTE_UNUSED,
       words = 0;
       return ARMul_DONE;
     }
-  
+
   if (BIT (22))
     {
       /* It's a long access, store two words.  */
@@ -708,14 +708,14 @@ DSPSTC5 (ARMul_State * state ATTRIBUTE_UNUSED,
 	  else
 	    *data = (ARMword) DSPregs[DEST_REG].upper.i;
 	}
-      
+
       ++ words;
-      
+
       if (words == 2)
 	{
 	  printfdbg ("\tmem = mvd%d = %lld\n", DEST_REG,
 		     mv_getReg64int (DEST_REG));
-	  
+
 	  return ARMul_DONE;
 	}
       else
@@ -726,7 +726,7 @@ DSPSTC5 (ARMul_State * state ATTRIBUTE_UNUSED,
       /* Store just one word.  */
       /* cfstr32 */
       *data = (ARMword) DSPregs[DEST_REG].lower.i;
-      
+
       printfdbg ("cfstr32 MEM = %d\n", (int) *data);
 
       return ARMul_DONE;
@@ -754,7 +754,7 @@ DSPCDP4 (ARMul_State * state,
 		     DSPregs[SRC1_REG].upper.f);
 	  DSPregs[DEST_REG].upper.f = DSPregs[SRC1_REG].upper.f;
 	  break;
-	  
+
 	case 1: /* cfcpyd */
 	  printfdbg ("cfcpyd mvd%d = mvd%d = %g\n",
 		     DEST_REG,
@@ -762,7 +762,7 @@ DSPCDP4 (ARMul_State * state,
 		     mv_getRegDouble (SRC1_REG));
 	  mv_setRegDouble (DEST_REG, mv_getRegDouble (SRC1_REG));
 	  break;
-	  
+
 	case 2: /* cfcvtds */
 	  printfdbg ("cfcvtds mvf%d = (float) mvd%d = %f\n",
 		     DEST_REG,
@@ -770,7 +770,7 @@ DSPCDP4 (ARMul_State * state,
 		     (float) mv_getRegDouble (SRC1_REG));
 	  DSPregs[DEST_REG].upper.f = (float) mv_getRegDouble (SRC1_REG);
 	  break;
-	  
+
 	case 3: /* cfcvtsd */
 	  printfdbg ("cfcvtsd mvd%d = mvf%d = %g\n",
 		     DEST_REG,
@@ -778,7 +778,7 @@ DSPCDP4 (ARMul_State * state,
 		     (double) DSPregs[SRC1_REG].upper.f);
 	  mv_setRegDouble (DEST_REG, (double) DSPregs[SRC1_REG].upper.f);
 	  break;
-	  
+
 	case 4: /* cfcvt32s */
 	  printfdbg ("cfcvt32s mvf%d = mvfx%d = %f\n",
 		     DEST_REG,
@@ -786,7 +786,7 @@ DSPCDP4 (ARMul_State * state,
 		     (float) DSPregs[SRC1_REG].lower.i);
 	  DSPregs[DEST_REG].upper.f = (float) DSPregs[SRC1_REG].lower.i;
 	  break;
-	  
+
 	case 5: /* cfcvt32d */
 	  printfdbg ("cfcvt32d mvd%d = mvfx%d = %g\n",
 		     DEST_REG,
@@ -794,7 +794,7 @@ DSPCDP4 (ARMul_State * state,
 		     (double) DSPregs[SRC1_REG].lower.i);
 	  mv_setRegDouble (DEST_REG, (double) DSPregs[SRC1_REG].lower.i);
 	  break;
-	  
+
 	case 6: /* cfcvt64s */
 	  printfdbg ("cfcvt64s mvf%d = mvdx%d = %f\n",
 		     DEST_REG,
@@ -802,7 +802,7 @@ DSPCDP4 (ARMul_State * state,
 		     (float) mv_getReg64int (SRC1_REG));
 	  DSPregs[DEST_REG].upper.f = (float) mv_getReg64int (SRC1_REG);
 	  break;
-	  
+
 	case 7: /* cfcvt64d */
 	  printfdbg ("cfcvt64d mvd%d = mvdx%d = %g\n",
 		     DEST_REG,
@@ -821,11 +821,11 @@ DSPCDP4 (ARMul_State * state,
 		     DEST_REG,
 		     SRC1_REG,
 		     DSPregs[SRC1_REG].upper.f * DSPregs[SRC2_REG].upper.f);
-		     
+
 	  DSPregs[DEST_REG].upper.f = DSPregs[SRC1_REG].upper.f
 	    * DSPregs[SRC2_REG].upper.f;
 	  break;
-	  
+
 	case 1: /* cfmuld */
 	  printfdbg ("cfmuld mvd%d = mvd%d = %g\n",
 		     DEST_REG,
@@ -836,7 +836,7 @@ DSPCDP4 (ARMul_State * state,
 			   mv_getRegDouble (SRC1_REG)
 			   * mv_getRegDouble (SRC2_REG));
 	  break;
-	  
+
 	default:
 	  fprintf (stderr, "unknown opcode in DSPCDP4 0x%x\n", instr);
 	  cirrus_not_implemented ("unknown");
@@ -856,7 +856,7 @@ DSPCDP4 (ARMul_State * state,
 		     SRC1_REG,
 		     DSPregs[DEST_REG].upper.f);
 	  break;
-	  
+
 	case 1: /* cfabsd */
 	  mv_setRegDouble (DEST_REG,
 			   (mv_getRegDouble (SRC1_REG) < 0.0 ?
@@ -867,7 +867,7 @@ DSPCDP4 (ARMul_State * state,
 		     SRC1_REG,
 		     mv_getRegDouble (DEST_REG));
 	  break;
-	  
+
 	case 2: /* cfnegs */
 	  DSPregs[DEST_REG].upper.f = -DSPregs[SRC1_REG].upper.f;
 	  printfdbg ("cfnegs mvf%d = -mvf%d = %f\n",
@@ -875,7 +875,7 @@ DSPCDP4 (ARMul_State * state,
 		     SRC1_REG,
 		     DSPregs[DEST_REG].upper.f);
 	  break;
-	  
+
 	case 3: /* cfnegd */
 	  mv_setRegDouble (DEST_REG,
 			   -mv_getRegDouble (SRC1_REG));
@@ -883,7 +883,7 @@ DSPCDP4 (ARMul_State * state,
 		     DEST_REG,
 		     mv_getRegDouble (DEST_REG));
 	  break;
-	  
+
 	case 4: /* cfadds */
 	  DSPregs[DEST_REG].upper.f = DSPregs[SRC1_REG].upper.f
 	    + DSPregs[SRC2_REG].upper.f;
@@ -893,7 +893,7 @@ DSPCDP4 (ARMul_State * state,
 		     SRC2_REG,
 		     DSPregs[DEST_REG].upper.f);
 	  break;
-	  
+
 	case 5: /* cfaddd */
 	  mv_setRegDouble (DEST_REG,
 			   mv_getRegDouble (SRC1_REG)
@@ -904,7 +904,7 @@ DSPCDP4 (ARMul_State * state,
 		     SRC2_REG,
 		     mv_getRegDouble (DEST_REG));
 	  break;
-	  
+
 	case 6: /* cfsubs */
 	  DSPregs[DEST_REG].upper.f = DSPregs[SRC1_REG].upper.f
 	    - DSPregs[SRC2_REG].upper.f;
@@ -914,7 +914,7 @@ DSPCDP4 (ARMul_State * state,
 		     SRC2_REG,
 		     DSPregs[DEST_REG].upper.f);
 	  break;
-	  
+
 	case 7: /* cfsubd */
 	  mv_setRegDouble (DEST_REG,
 			   mv_getRegDouble (SRC1_REG)
@@ -978,7 +978,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC2_REG,
 		      DSPregs[DEST_REG].lower.i);
            break;
-	   
+
          case 1: /* cfmul64 */
 	   mv_setReg64int (DEST_REG,
 			   mv_getReg64int (SRC1_REG)
@@ -989,7 +989,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC2_REG,
 		      mv_getReg64int (DEST_REG));
            break;
-	   
+
          case 2: /* cfmac32 */
 	   DSPregs[DEST_REG].lower.i
 	     += DSPregs[SRC1_REG].lower.i * DSPregs[SRC2_REG].lower.i;
@@ -999,7 +999,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC2_REG,
 		      DSPregs[DEST_REG].lower.i);
            break;
-	   
+
          case 3: /* cfmsc32 */
 	   DSPregs[DEST_REG].lower.i
 	     -= DSPregs[SRC1_REG].lower.i * DSPregs[SRC2_REG].lower.i;
@@ -1009,7 +1009,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC2_REG,
 		      DSPregs[DEST_REG].lower.i);
            break;
-	   
+
          case 4: /* cfcvts32 */
 	   /* fixme: this should round */
 	   DSPregs[DEST_REG].lower.i = (int) DSPregs[SRC1_REG].upper.f;
@@ -1018,7 +1018,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC1_REG,
 		      DSPregs[DEST_REG].lower.i);
            break;
-	   
+
          case 5: /* cfcvtd32 */
 	   /* fixme: this should round */
 	   DSPregs[DEST_REG].lower.i = (int) mv_getRegDouble (SRC1_REG);
@@ -1027,7 +1027,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC1_REG,
 		      DSPregs[DEST_REG].lower.i);
            break;
-	   
+
          case 6: /* cftruncs32 */
 	   DSPregs[DEST_REG].lower.i = (int) DSPregs[SRC1_REG].upper.f;
 	   printfdbg ("cftruncs32 mvfx%d = mvf%d = %d\n",
@@ -1035,7 +1035,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC1_REG,
 		      DSPregs[DEST_REG].lower.i);
            break;
-	   
+
          case 7: /* cftruncd32 */
 	   DSPregs[DEST_REG].lower.i = (int) mv_getRegDouble (SRC1_REG);
 	   printfdbg ("cftruncd32 mvfx%d = mvd%d = %d\n",
@@ -1049,7 +1049,7 @@ DSPCDP5 (ARMul_State * state,
      case 2:
        /* cfsh64 */
        printfdbg ("cfsh64\n");
-       
+
        if (shift < 0)
 	 /* Negative shift is a right shift.  */
 	 mv_setReg64int (DEST_REG,
@@ -1073,7 +1073,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC2_REG,
 		      DSPregs[DEST_REG].lower.i);
            break;
-	   
+
          case 1: /* cfabs64 */
 	   mv_setReg64int (DEST_REG,
 			   (mv_getReg64int (SRC1_REG) < 0
@@ -1085,7 +1085,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC2_REG,
 		      mv_getReg64int (DEST_REG));
            break;
-	   
+
          case 2: /* cfneg32 */
 	   DSPregs[DEST_REG].lower.i = -DSPregs[SRC1_REG].lower.i;
 	   printfdbg ("cfneg32 mvfx%d = -mvfx%d = %d\n",
@@ -1094,7 +1094,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC2_REG,
 		      DSPregs[DEST_REG].lower.i);
            break;
-	   
+
          case 3: /* cfneg64 */
 	   mv_setReg64int (DEST_REG, -mv_getReg64int (SRC1_REG));
 	   printfdbg ("cfneg64 mvdx%d = -mvdx%d = %lld\n",
@@ -1103,7 +1103,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC2_REG,
 		      mv_getReg64int (DEST_REG));
            break;
-	   
+
          case 4: /* cfadd32 */
 	   DSPregs[DEST_REG].lower.i = DSPregs[SRC1_REG].lower.i
 	     + DSPregs[SRC2_REG].lower.i;
@@ -1113,7 +1113,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC2_REG,
 		      DSPregs[DEST_REG].lower.i);
            break;
-	   
+
          case 5: /* cfadd64 */
 	   mv_setReg64int (DEST_REG,
 			   mv_getReg64int (SRC1_REG)
@@ -1124,7 +1124,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC2_REG,
 		      mv_getReg64int (DEST_REG));
            break;
-	   
+
          case 6: /* cfsub32 */
 	   DSPregs[DEST_REG].lower.i = DSPregs[SRC1_REG].lower.i
 	     - DSPregs[SRC2_REG].lower.i;
@@ -1134,7 +1134,7 @@ DSPCDP5 (ARMul_State * state,
 		      SRC2_REG,
 		      DSPregs[DEST_REG].lower.i);
            break;
-	   
+
          case 7: /* cfsub64 */
 	   mv_setReg64int (DEST_REG,
 			   mv_getReg64int (SRC1_REG)
@@ -1168,17 +1168,17 @@ DSPCDP6 (ARMul_State * state,
        /* cfmadd32 */
        cirrus_not_implemented ("cfmadd32");
        break;
-       
+
      case 1:
        /* cfmsub32 */
        cirrus_not_implemented ("cfmsub32");
        break;
-       
+
      case 2:
        /* cfmadda32 */
        cirrus_not_implemented ("cfmadda32");
        break;
-       
+
      case 3:
        /* cfmsuba32 */
        cirrus_not_implemented ("cfmsuba32");

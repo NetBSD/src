@@ -307,6 +307,15 @@ proc test_ptype_class_objects {} {
 	    { method public "Bar(int, int, int);" }
 	}
 
+    # Derived class with typedef'd baseclass with virtual methods.
+
+    cp_test_ptype_class \
+	"class DynamicBar" "" "class" "DynamicBar" \
+	{
+	    { base          "public DynamicBase2" }
+	    { field  public "int y;" }
+	    { method public "DynamicBar(int, int);" }
+	}
 }
 
 # Test simple access to class members.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.530.2.1 2016/08/06 00:18:39 pgoyette Exp $
+.\"	$NetBSD: main,v 1.530.2.2 2016/11/04 14:42:38 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1157,6 +1157,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Jed Davis Ta Mt jld@NetBSD.org
 .It Ta Matt DeBergalis Ta Mt deberg@NetBSD.org
 .It Ta Arnaud Degroote Ta Mt degroote@NetBSD.org
+.It Ta Felix Deichmann Ta Mt flxd@NetBSD.org
 .It Ta Rob Deker Ta Mt deker@NetBSD.org
 .It Ta Chris G. Demetriou Ta Mt cgd@NetBSD.org
 .It Ta Tracy Di Marco White Ta Mt gendalia@NetBSD.org

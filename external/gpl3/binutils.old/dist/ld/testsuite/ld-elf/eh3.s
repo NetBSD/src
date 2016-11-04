@@ -3,8 +3,11 @@
 	.type	_start, %function
 _start:
 .LFB2:
+	.space	8
 .LCFI0:
+	.space	8
 .LCFI1:
+	.space	8
 .LFE2:
 	.size	_start, .-_start
 	.section	.eh_frame,"a",%progbits

@@ -1,3 +1,182 @@
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-05-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* erc32.c: Re-add file overview & author info.
+	* exec.c, float.c, func.c, help.c, interf.c, sis.c: Likewise.
+
+2015-05-08  Joel Brobecker  <brobecker@adacore.com>
+
+	* configure.ac: Add copyright header.
+	* erc32.c: Change copyright holder to FSF.  Reformat.
+	* exec.c, float.c, func.c, interf.c, sis.c, sis.h: Likewise.
+	* help.c, startsim: Add copyright header.
+
+2015-04-29  Nick Clifton  <nickc@redhat.com>
+
+	PR 18273
+	* sis.c (main): Remove unreachable code.
+
+2015-04-24  David Binderman  <dcb314@hotmail.com>
+	    Nick Clifton  <nickc@redhat.com>
+
+	PR 18273
+	* exec.c (add32): Fix typo in check for overflow.
+
+2015-04-19  Jiri Gaisler  <jiri@gaisler.se>
+
+	* erc32.c (current_target_byte_order): Delete.
+	(fetch_bytes): Remove.
+	(store_bytes): Remove byte twisting.
+	(memory_read, memory_write): Access memory directly.
+	(extract_short, extract_short_signed, extract_byte,
+	extract_byte_signed): New function for for sub-word LD instructions.
+	* exec.c (extract_short, extract_short_signed, extract_byte,
+	extract_byte_signed): New functions.
+	(dispatch_instruction): Update memory reads.
+	* func.c (current_target_byte_order): Delete.
+	(get_regi): Delete little endian handling.
+	(disp_ctrl, dis_mem): Adjust print-out to new data endian.
+	(bfd_load): Delete little endian handling.
+	* interf.c (current_target_byte_order): Delete.
+	(sim_open): Set dinfo to host endian to get correct disassembly.
+	(sim_write, sim_read): Convert endian when gdb reads or writes
+	memory.
+	* sis.c (main): Set endian.
+	* sis.h (EBT): Define.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-28  Jiri Gaisler  <jiri@gaisler.se>
+
+	* func.c (exec_cmd): Fix old style prototype.  Mark cmd const.  Save
+	the command in a new cmdsave2 to avoid modifying.
+	(bfd_load): Fix old style prototype.  Mark fname const.
+	* sis.h (exec_cmd): Mark cmd const.
+	(bfd_load): Mark fname const.
+
+2015-03-28  Jiri Gaisler  <jiri@gaisler.se>
+
+	* erc32.c (memory_iread): New function to fetch instructions.
+	(memory_read): Print message in verbose mode.
+	* interf.c (run_sim): Use memory_iread.
+	* sis.c (run_sim): As above.
+	* sis.h (memory_iread): New prototype.
+	(sregs): Declare.
+
+2015-03-28  Mike Frysinger  <vapier@gentoo.org>
+
+	* erc32.c (mec_read): Delete parenthesis around return statement.
+	(mec_write, read_uart, rtc_counter_read, gpt_counter_read, memory_read,
+	memory_write, get_mem_ptr, sis_memory_write, sis_memory_read): Likewise.
+	* exec.c (sub_cc, add_cc, add32, dispatch_instruction, fpexec, chk_asi,
+	execute_trap, check_interrupts): Likewise.
+	* float.c (get_accex): Likewise.
+	* func.c (batch, limcalc, exec_cmd, disp_fpu, now, wait_for_irq,
+	check_bpt, bfd_load, get_time): Likewise.
+	* interf.c (run_sim, sim_write, sim_read): Likewise.
+	* sis.c (run_sim): Likewise.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* interf.c (sim_set_callbacks, sim_size, sim_trace): Delete.
+
+2015-03-17  Jiri Gaisler  <jiri@gaisler.se>
+
+	* func.c (exec_cmd): Silence compiler warnings when calling system().
+	(batch): Replace fgets() with getline().
+
+2015-03-17  Jiri Gaisler  <jiri@gaisler.se>
+
+	* func.c (show_stat): Print simulation time in portable long long
+	format.
+	* help.c (usage): Update usage help print-out.
+	* sis.c (run_sim): Increase debug level with -v. Also print
+	simulation time in portable long long format.
+	* sis.h: Use stdint.h for portable 32- and 64-bit ints.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-16  Jiri Gaisler  <jiri@gaisler.se>
+
+	* Makefile.in (end, end.h): Remove target rules.
+	(clean): Remove end and end.h.
+	(erc32.o, exec.o, float.o, func.o, help.o, interf.o, sis.o): Delete
+	rules.
+	* configure, config.in: Regenerate.
+	* configure.ac: Use SIM_AC_OPTION_HOSTENDIAN
+	* end.c: Delete.
+	* erc32.c: Remove end.h include.
+	* exec.c: Remove end.h include. Use HOST_LITTLE_ENDIAN.
+	* func.c, sis.c: Likewise.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_RUN_OBJS): Set to sis.o.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (AC_CHECK_HEADERS): Delete.
+	* aclocal.m4, configure: Regenerate.
+
+2015-02-22  Jiri Gaisler  <jiri@gaisler.se>
+
+	* Makefile.in: Add include path to readline.h.
+	sis.c: Remove locally define readline types.
+
+2015-02-21  Jiri Gaisler  <jiri@gaisler.se>
+
+	* func.c (reset_stat, show_stat): Switch to double in time keeping.
+	(get_time): New function to get system time.
+	* interf.c (run_sim): Use get_time() for system time.
+	* sis.c (run_sim): Likewise.
+	* sis.h: Likewise.
+
+2015-02-21  Jiri Gaisler  <jiri@gaisler.se>
+
+	* Makefile.in: Remove unused defines
+
+2015-02-21  Jiri Gaisler  <jiri@gaisler.se>
+
+	* float.c (get_accex, clear_accex, set_fsr): Use functions from fenv.h
+	instead of custom assembly.
+
+2015-02-21  Jiri Gaisler  <jiri@gaisler.se>
+
+	* erc32.c (mec_read): Allow simulator memory size to be read
+	by application.
+	(boot_init): initialize memory and timers if start address is
+	not 0.
+	* func.c (exe_cmd): Call boot_init if start address not 0.
+	* interf.c (run_sim): Likewise.
+
+2015-02-21  Jiri Gaisler  <jiri@gaisler.se>
+
+	* exec.c (init_regs): erc32 has vendor ID 1 and version ID 1 in %psr.
+
+2015-02-21  Jiri Gaisler  <jiri@gaisler.se>
+
+	* func.c (print_insn_sparc_sis): Add helper function for disassembly.
+	(disp_ctrl): Use helper function.
+
 2014-08-19  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

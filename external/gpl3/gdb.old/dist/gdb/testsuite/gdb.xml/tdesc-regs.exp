@@ -27,6 +27,9 @@ set core-regs ""
 set regdir ""
 set architecture ""
 switch -glob -- [istarget] {
+    "aarch64*-*-*" {
+	set core-regs {aarch64-core.xml}
+    }
     "arm*-*-*" {
         set core-regs {arm-core.xml}
     }

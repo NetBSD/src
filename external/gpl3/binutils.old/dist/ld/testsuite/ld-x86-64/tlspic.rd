@@ -16,12 +16,12 @@ Section Headers:
  +\[[ 0-9]+\] .rela.dyn +.*
  +\[[ 0-9]+\] .rela.plt +.*
  +\[[ 0-9]+\] .plt +.*
- +\[[ 0-9]+\] .text +PROGBITS +0+1000 0+1000 0+1ac 00 +AX +0 +0 4096
- +\[[ 0-9]+\] .tdata +PROGBITS +0+2011ac 0+11ac 0+60 00 WAT +0 +0 +1
- +\[[ 0-9]+\] .tbss +NOBITS +0+20120c 0+120c 0+20 00 WAT +0 +0 +1
- +\[[ 0-9]+\] .dynamic +DYNAMIC +0+201210 0+1210 0+130 10 +WA +3 +0 +8
- +\[[ 0-9]+\] .got +PROGBITS +0+201340 0+1340 0+90 08 +WA +0 +0 +8
- +\[[ 0-9]+\] .got.plt +PROGBITS +0+2013d0 0+13d0 0+20 08 +WA +0 +0 +8
+ +\[[ 0-9]+\] .text +PROGBITS +0+1000 0+1000 0+31a 00 +AX +0 +0 4096
+ +\[[ 0-9]+\] .tdata +PROGBITS +0+20131a 0+131a 0+60 00 WAT +0 +0 +1
+ +\[[ 0-9]+\] .tbss +NOBITS +0+20137a 0+137a 0+20 00 WAT +0 +0 +1
+ +\[[ 0-9]+\] .dynamic +DYNAMIC +0+201380 0+1380 0+130 10 +WA +3 +0 +8
+ +\[[ 0-9]+\] .got +PROGBITS +0+2014b0 0+14b0 0+90 08 +WA +0 +0 +8
+ +\[[ 0-9]+\] .got.plt +PROGBITS +0+201540 0+1540 0+20 08 +WA +0 +0 +8
  +\[[ 0-9]+\] .shstrtab +.*
  +\[[ 0-9]+\] .symtab +.*
  +\[[ 0-9]+\] .strtab +.*
@@ -37,9 +37,9 @@ There are [0-9]+ program headers, starting at offset [0-9]+
 Program Headers:
  +Type +Offset +VirtAddr +PhysAddr +FileSiz +MemSiz +Flg Align
  +LOAD +0x0+ 0x0+ 0x0+ 0x[0-9a-f]+ 0x[0-9a-f]+ R E 0x200000
- +LOAD +0x0+11ac 0x0+2011ac 0x0+2011ac 0x0+244 0x0+244 RW +0x200000
- +DYNAMIC +0x0+1210 0x0+201210 0x0+201210 0x0+130 0x0+130 RW +0x8
- +TLS +0x0+11ac 0x0+2011ac 0x0+2011ac 0x0+60 0x0+80 R +0x1
+ +LOAD +0x0+131a 0x0+20131a 0x0+20131a 0x0+246 0x0+246 RW +0x200000
+ +DYNAMIC +0x0+1380 0x0+201380 0x0+201380 0x0+130 0x0+130 RW +0x8
+ +TLS +0x0+131a 0x0+20131a 0x0+20131a 0x0+60 0x0+80 R +0x1
 
  Section to Segment mapping:
  +Segment Sections...
@@ -103,7 +103,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* SECTION +LOCAL +DEFAULT +10 *
 .* SECTION +LOCAL +DEFAULT +11 *
 .* SECTION +LOCAL +DEFAULT +12 *
-.* FILE +LOCAL +DEFAULT +ABS .*
+.* FILE +LOCAL +DEFAULT +ABS tmpdir/tlspic1.o
 .* TLS +LOCAL +DEFAULT +8 sl1
 .* TLS +LOCAL +DEFAULT +8 sl2
 .* TLS +LOCAL +DEFAULT +8 sl3
@@ -112,7 +112,9 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +LOCAL +DEFAULT +8 sl6
 .* TLS +LOCAL +DEFAULT +8 sl7
 .* TLS +LOCAL +DEFAULT +8 sl8
+.* FILE +LOCAL +DEFAULT +ABS 
 .* TLS +LOCAL +DEFAULT +9 sH1
+.* OBJECT +LOCAL +DEFAULT +10 _DYNAMIC
 .* TLS +LOCAL +DEFAULT +8 sh3
 .* TLS +LOCAL +DEFAULT +9 sH2
 .* TLS +LOCAL +DEFAULT +9 sH7
@@ -126,11 +128,9 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +LOCAL +DEFAULT +9 sH6
 .* TLS +LOCAL +DEFAULT +9 sH8
 .* TLS +LOCAL +DEFAULT +8 sh1
+.* OBJECT +LOCAL +DEFAULT +12 _GLOBAL_OFFSET_TABLE_
 .* TLS +LOCAL +DEFAULT +8 sh2
 .* TLS +LOCAL +DEFAULT +8 sh6
-.* FILE +LOCAL +DEFAULT +ABS .*
-.* OBJECT +LOCAL +DEFAULT +10 _DYNAMIC
-.* OBJECT +LOCAL +DEFAULT +12 _GLOBAL_OFFSET_TABLE_
 .* TLS +GLOBAL +DEFAULT +8 sg8
 .* TLS +GLOBAL +DEFAULT +8 sg3
 .* TLS +GLOBAL +DEFAULT +8 sg4

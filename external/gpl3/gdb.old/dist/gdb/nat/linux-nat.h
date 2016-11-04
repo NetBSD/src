@@ -20,9 +20,64 @@
 #ifndef LINUX_NAT_H
 #define LINUX_NAT_H
 
+#include "target/waitstatus.h"
+
+struct lwp_info;
+struct arch_lwp_info;
+
 /* Unlike other extended result codes, WSTOPSIG (status) on
    PTRACE_O_TRACESYSGOOD syscall events doesn't return SIGTRAP, but
    instead SIGTRAP with bit 7 set.  */
 #define SYSCALL_SIGTRAP (SIGTRAP | 0x80)
+
+/* Return the ptid of the current lightweight process.  With NPTL
+   threads and LWPs map 1:1, so this is equivalent to returning the
+   ptid of the current thread.  This function must be provided by
+   the client. */
+
+extern ptid_t current_lwp_ptid (void);
+
+/* Function type for the CALLBACK argument of iterate_over_lwps.  */
+typedef int (iterate_over_lwps_ftype) (struct lwp_info *lwp, void *arg);
+
+/* Iterate over all LWPs.  Calls CALLBACK with its second argument set
+   to DATA for every LWP in the list.  If CALLBACK returns nonzero for
+   a particular LWP, return a pointer to the structure describing that
+   LWP immediately.  Otherwise return NULL.  This function must be
+   provided by the client.  */
+
+extern struct lwp_info *iterate_over_lwps (ptid_t filter,
+					   iterate_over_lwps_ftype callback,
+					   void *data);
+
+/* Return the ptid of LWP.  */
+
+extern ptid_t ptid_of_lwp (struct lwp_info *lwp);
+
+/* Set the architecture-specific data of LWP.  This function must be
+   provided by the client. */
+
+extern void lwp_set_arch_private_info (struct lwp_info *lwp,
+				       struct arch_lwp_info *info);
+
+/* Return the architecture-specific data of LWP.  This function must
+   be provided by the client. */
+
+extern struct arch_lwp_info *lwp_arch_private_info (struct lwp_info *lwp);
+
+/* Return nonzero if LWP is stopped, zero otherwise.  This function
+   must be provided by the client.  */
+
+extern int lwp_is_stopped (struct lwp_info *lwp);
+
+/* Return the reason the LWP last stopped.  This function must be
+   provided by the client.  */
+
+extern enum target_stop_reason lwp_stop_reason (struct lwp_info *lwp);
+
+/* Cause LWP to stop.  This function must be provided by the
+   client.  */
+
+extern void linux_stop_lwp (struct lwp_info *lwp);
 
 #endif /* LINUX_NAT_H */

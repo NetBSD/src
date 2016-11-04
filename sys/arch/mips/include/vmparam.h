@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.55 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.55.2.1 2016/11/04 14:49:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -164,8 +164,7 @@
 #else
 #define VM_MAXUSER_ADDRESS	MIPS_VM_MAXUSER_ADDRESS
 #endif
-							/* 0x0000010000000000 */
-#define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
+#define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS	/* 0x0000010000000000 */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 3L << 62)	/* 0xC000000000000000 */
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t) -1L << 31)	/* 0xFFFFFFFF80000000 */
 #else
@@ -178,7 +177,7 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x00004000)	/* 0xFFFFFFFFFFFFC000 */
 #endif
 #endif
-#define VM_MAXUSER32_ADDRESS	((vaddr_t)(1UL << 31))/* 0x0000000080000000 */
+#define VM_MAXUSER32_ADDRESS	((vaddr_t)(1UL << 31))	/* 0x0000000080000000 */
 
 /*
  * The address to which unspecified mapping requests default

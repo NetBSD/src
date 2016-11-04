@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux AMD64.
 
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,6 +35,7 @@
 extern struct target_desc *tdesc_amd64_linux;
 extern struct target_desc *tdesc_amd64_avx_linux;
 extern struct target_desc *tdesc_amd64_mpx_linux;
+extern struct target_desc *tdesc_amd64_avx_mpx_linux;
 extern struct target_desc *tdesc_amd64_avx512_linux;
 
 extern struct target_desc *tdesc_x32_linux;

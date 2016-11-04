@@ -30,7 +30,7 @@ Key to Flags:
 .*
 
 Elf file type is EXEC \(Executable file\)
-Entry point 0x8049158
+Entry point 0x8049156
 There are [0-9]+ program headers, starting at offset [0-9]+
 
 Program Headers:
@@ -93,7 +93,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +9 *
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +10 *
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +11 *
-.* FILE +LOCAL +DEFAULT +ABS .*
+.* FILE +LOCAL +DEFAULT +ABS tmpdir/tlsbindesc.o
  +[0-9]+: 00000020 +0 +TLS +LOCAL +DEFAULT +7 sl1
  +[0-9]+: 00000024 +0 +TLS +LOCAL +DEFAULT +7 sl2
  +[0-9]+: 00000028 +0 +TLS +LOCAL +DEFAULT +7 sl3
@@ -102,7 +102,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 00000034 +0 +TLS +LOCAL +DEFAULT +7 sl6
  +[0-9]+: 00000038 +0 +TLS +LOCAL +DEFAULT +7 sl7
  +[0-9]+: 0000003c +0 +TLS +LOCAL +DEFAULT +7 sl8
-.* FILE +LOCAL +DEFAULT +ABS .*
+.* FILE +LOCAL +DEFAULT +ABS tmpdir/tlsbin.o
  +[0-9]+: 00000080 +0 +TLS +LOCAL +DEFAULT +8 bl1
  +[0-9]+: 00000084 +0 +TLS +LOCAL +DEFAULT +8 bl2
  +[0-9]+: 00000088 +0 +TLS +LOCAL +DEFAULT +8 bl3
@@ -111,7 +111,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 00000094 +0 +TLS +LOCAL +DEFAULT +8 bl6
  +[0-9]+: 00000098 +0 +TLS +LOCAL +DEFAULT +8 bl7
  +[0-9]+: 0000009c +0 +TLS +LOCAL +DEFAULT +8 bl8
-.* FILE +LOCAL +DEFAULT +ABS .*
+.* FILE +LOCAL +DEFAULT +ABS 
  +[0-9]+: 00001000 +0 +TLS +LOCAL +DEFAULT +7 _TLS_MODULE_BASE_
  +[0-9]+: 0+804a060 +0 +OBJECT +LOCAL +DEFAULT +9 _DYNAMIC
  +[0-9]+: [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +11 _GLOBAL_OFFSET_TABLE_
@@ -132,7 +132,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 00000058 +0 +TLS +GLOBAL +HIDDEN +7 sh7
  +[0-9]+: 0000005c +0 +TLS +GLOBAL +HIDDEN +7 sh8
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +7 sg1
- +[0-9]+: 0+8049158 +0 +FUNC +GLOBAL +DEFAULT +6 _start
+ +[0-9]+: 0+8049156 +0 +FUNC +GLOBAL +DEFAULT +6 _start
  +[0-9]+: 0000004c +0 +TLS +GLOBAL +HIDDEN +7 sh4
  +[0-9]+: 00000078 +0 +TLS +GLOBAL +DEFAULT +8 bg7
  +[0-9]+: 00000050 +0 +TLS +GLOBAL +HIDDEN +7 sh5

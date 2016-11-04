@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.95.2.1 2016/11/04 14:49:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.95.2.1 2016/11/04 14:49:22 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -92,17 +92,28 @@ ufs_inactive(void *v)
 	UFS_WAPBL_JUNLOCK_ASSERT(mp);
 
 	fstrans_start(mp, FSTRANS_LAZY);
+
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
 	if (ip->i_mode == 0)
 		goto out;
+
 	if (ip->i_nlink <= 0 && (mp->mnt_flag & MNT_RDONLY) == 0) {
 #ifdef UFS_EXTATTR
 		ufs_extattr_vnode_inactive(vp, curlwp);
 #endif
-		if (ip->i_size != 0)
-			allerror = ufs_truncate(vp, 0, NOCRED);
+
+		/*
+		 * All file blocks must be freed before we can let the vnode
+		 * be reclaimed, so can't postpone full truncating any further.
+		 */
+		if (ip->i_size != 0) {
+			allerror = ufs_truncate_retry(vp, 0, NOCRED);
+			if (allerror)
+				goto out;
+		}
+
 #if defined(QUOTA) || defined(QUOTA2)
 		error = UFS_WAPBL_BEGIN(mp);
 		if (error) {
@@ -285,49 +296,30 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	return error;
 }
 
-static int
-ufs_wapbl_truncate(struct vnode *vp, uint64_t newsize, kauth_cred_t cred)
+int
+ufs_truncate_retry(struct vnode *vp, uint64_t newsize, kauth_cred_t cred)
 {
 	struct inode *ip = VTOI(vp);
+	struct mount *mp = vp->v_mount;
 	int error = 0;
-	uint64_t base, incr;
 
-	base = UFS_NDADDR << vp->v_mount->mnt_fs_bshift;
-	incr = MNINDIR(ip->i_ump) << vp->v_mount->mnt_fs_bshift;/* Power of 2 */
-	while (ip->i_size > base + incr &&
-	    (newsize == 0 || ip->i_size > newsize + incr)) {
-		/*
-		 * round down to next full indirect
-		 * block boundary.
-		 */
-		uint64_t nsize = base + ((ip->i_size - base - 1) & ~(incr - 1));
-		error = UFS_TRUNCATE(vp, nsize, 0, cred);
+	UFS_WAPBL_JUNLOCK_ASSERT(mp);
+
+	/*
+	 * Truncate might temporarily fail, loop until done.
+	 */
+	while (ip->i_size != newsize) {
+		error = UFS_WAPBL_BEGIN(mp);
 		if (error)
-			break;
-		UFS_WAPBL_END(vp->v_mount);
-		error = UFS_WAPBL_BEGIN(vp->v_mount);
-		if (error)
-			return error;
-	}
-	return error;
-}
+			goto out;
 
-int
-ufs_truncate(struct vnode *vp, uint64_t newsize, kauth_cred_t cred)
-{
-	int error;
-
-	error = UFS_WAPBL_BEGIN(vp->v_mount);
-	if (error)
-		return error;
-
-	if (vp->v_mount->mnt_wapbl)
-		error = ufs_wapbl_truncate(vp, newsize, cred);
-
-	if (error == 0)
 		error = UFS_TRUNCATE(vp, newsize, 0, cred);
-	UFS_WAPBL_END(vp->v_mount);
+		UFS_WAPBL_END(mp);
 
+		if (error != 0 && error != EAGAIN)
+			goto out;
+	}
+
+  out:
 	return error;
 }
-

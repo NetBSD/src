@@ -531,7 +531,7 @@ hex_or_minus_one (char *buf, char **obuf)
 {
   ULONGEST ret;
 
-  if (strncmp (buf, "-1", 2) == 0)
+  if (startswith (buf, "-1"))
     {
       ret = (ULONGEST) -1;
       buf += 2;
@@ -1114,12 +1114,35 @@ prepare_resume_reply (char *buf, ptid_t ptid,
   switch (status->kind)
     {
     case TARGET_WAITKIND_STOPPED:
+    case TARGET_WAITKIND_FORKED:
+    case TARGET_WAITKIND_VFORKED:
+    case TARGET_WAITKIND_VFORK_DONE:
       {
 	struct thread_info *saved_thread;
 	const char **regp;
 	struct regcache *regcache;
 
-	sprintf (buf, "T%02x", status->value.sig);
+	if ((status->kind == TARGET_WAITKIND_FORKED && report_fork_events)
+	    || (status->kind == TARGET_WAITKIND_VFORKED && report_vfork_events))
+	  {
+	    enum gdb_signal signal = GDB_SIGNAL_TRAP;
+	    const char *event = (status->kind == TARGET_WAITKIND_FORKED
+				 ? "fork" : "vfork");
+
+	    sprintf (buf, "T%02x%s:", signal, event);
+	    buf += strlen (buf);
+	    buf = write_ptid (buf, status->value.related_pid);
+	    strcat (buf, ";");
+	  }
+	else if (status->kind == TARGET_WAITKIND_VFORK_DONE && report_vfork_events)
+	  {
+	    enum gdb_signal signal = GDB_SIGNAL_TRAP;
+
+	    sprintf (buf, "T%02xvforkdone:;", signal);
+	  }
+	else
+	  sprintf (buf, "T%02x", status->value.sig);
+
 	buf += strlen (buf);
 
 	saved_thread = current_thread;
@@ -1148,6 +1171,16 @@ prepare_resume_reply (char *buf, ptid_t ptid,
 	    for (i = sizeof (void *) * 2; i > 0; i--)
 	      *buf++ = tohex ((addr >> (i - 1) * 4) & 0xf);
 	    *buf++ = ';';
+	  }
+	else if (swbreak_feature && target_stopped_by_sw_breakpoint ())
+	  {
+	    sprintf (buf, "swbreak:;");
+	    buf += strlen (buf);
+	  }
+	else if (hwbreak_feature && target_stopped_by_hw_breakpoint ())
+	  {
+	    sprintf (buf, "hwbreak:;");
+	    buf += strlen (buf);
 	  }
 
 	while (*regp)
@@ -1437,7 +1470,7 @@ look_up_one_symbol (const char *name, CORE_ADDR *addrp, int may_ask_gdb)
 	return -1;
     }
 
-  if (strncmp (own_buf, "qSymbol:", strlen ("qSymbol:")) != 0)
+  if (!startswith (own_buf, "qSymbol:"))
     {
       warning ("Malformed response to qSymbol, ignoring: %s\n", own_buf);
       return -1;
@@ -1546,7 +1579,7 @@ relocate_instruction (CORE_ADDR *to, CORE_ADDR oldloc)
       return -1;
     }
 
-  if (strncmp (own_buf, "qRelocInsn:", strlen ("qRelocInsn:")) != 0)
+  if (!startswith (own_buf, "qRelocInsn:"))
     {
       warning ("Malformed response to qRelocInsn, ignoring: %s\n",
 	       own_buf);

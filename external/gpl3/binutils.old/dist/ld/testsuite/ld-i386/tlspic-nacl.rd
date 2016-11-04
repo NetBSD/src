@@ -115,7 +115,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +10 *
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +11 *
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +12 *
-.* FILE +LOCAL +DEFAULT +ABS .*
+.* FILE +LOCAL +DEFAULT +ABS tmpdir/tlspic1.o
  +[0-9]+: 0+20 +0 +TLS +LOCAL +DEFAULT +8 sl1
  +[0-9]+: 0+24 +0 +TLS +LOCAL +DEFAULT +8 sl2
  +[0-9]+: 0+28 +0 +TLS +LOCAL +DEFAULT +8 sl3
@@ -124,7 +124,9 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 0+34 +0 +TLS +LOCAL +DEFAULT +8 sl6
  +[0-9]+: 0+38 +0 +TLS +LOCAL +DEFAULT +8 sl7
  +[0-9]+: 0+3c +0 +TLS +LOCAL +DEFAULT +8 sl8
+.* FILE +LOCAL +DEFAULT +ABS 
  +[0-9]+: 0+60 +0 +TLS +LOCAL +DEFAULT +9 sH1
+ +[0-9]+: [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +10 _DYNAMIC
  +[0-9]+: 0+48 +0 +TLS +LOCAL +DEFAULT +8 sh3
  +[0-9]+: 0+64 +0 +TLS +LOCAL +DEFAULT +9 sH2
  +[0-9]+: 0+78 +0 +TLS +LOCAL +DEFAULT +9 sH7
@@ -138,11 +140,9 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 0+74 +0 +TLS +LOCAL +DEFAULT +9 sH6
  +[0-9]+: 0+7c +0 +TLS +LOCAL +DEFAULT +9 sH8
  +[0-9]+: 0+40 +0 +TLS +LOCAL +DEFAULT +8 sh1
+ +[0-9]+: [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +12 _GLOBAL_OFFSET_TABLE_
  +[0-9]+: 0+44 +0 +TLS +LOCAL +DEFAULT +8 sh2
  +[0-9]+: 0+54 +0 +TLS +LOCAL +DEFAULT +8 sh6
-.* FILE +LOCAL +DEFAULT +ABS .*
- +[0-9]+: [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +10 _DYNAMIC
- +[0-9]+: [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +12 _GLOBAL_OFFSET_TABLE_
  +[0-9]+: 0+1c +0 +TLS +GLOBAL +DEFAULT +8 sg8
  +[0-9]+: 0+8 +0 +TLS +GLOBAL +DEFAULT +8 sg3
  +[0-9]+: 0+c +0 +TLS +GLOBAL +DEFAULT +8 sg4

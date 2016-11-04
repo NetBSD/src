@@ -23,5 +23,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 extern int default_machine;
 
-void m32c_set_mach (int mach);
+void m32c_set_mach (unsigned long mach);
 void m32c_load (bfd *);

@@ -217,4 +217,19 @@ extern void output_command_const (const char *args, int from_tty);
 
 extern int val_print_scalar_type_p (struct type *type);
 
+struct format_data
+  {
+    int count;
+    char format;
+    char size;
+
+    /* True if the value should be printed raw -- that is, bypassing
+       python-based formatters.  */
+    unsigned char raw;
+  };
+
+extern void print_command_parse_format (const char **expp, const char *cmdname,
+					struct format_data *fmtp);
+extern void print_value (struct value *val, const struct format_data *fmtp);
+
 #endif

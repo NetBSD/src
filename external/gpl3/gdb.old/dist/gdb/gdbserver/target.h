@@ -26,9 +26,9 @@
 #include "target/wait.h"
 #include "target/waitstatus.h"
 #include "mem-break.h"
+#include "btrace-common.h"
 
 struct emit_ops;
-struct btrace_target_info;
 struct buffer;
 struct process_info;
 
@@ -207,6 +207,25 @@ struct target_ops
   int (*remove_point) (enum raw_bkpt_type type, CORE_ADDR addr,
 		       int size, struct raw_breakpoint *bp);
 
+  /* Returns 1 if the target stopped because it executed a software
+     breakpoint instruction, 0 otherwise.  */
+  int (*stopped_by_sw_breakpoint) (void);
+
+  /* Returns true if the target knows whether a trap was caused by a
+     SW breakpoint triggering.  */
+  int (*supports_stopped_by_sw_breakpoint) (void);
+
+  /* Returns 1 if the target stopped for a hardware breakpoint.  */
+  int (*stopped_by_hw_breakpoint) (void);
+
+  /* Returns true if the target knows whether a trap was caused by a
+     HW breakpoint triggering.  */
+  int (*supports_stopped_by_hw_breakpoint) (void);
+
+  /* Returns true if the target can evaluate conditions of
+     breakpoints.  */
+  int (*supports_conditional_breakpoints) (void);
+
   /* Returns 1 if target was stopped due to a watchpoint hit, 0 otherwise.  */
 
   int (*stopped_by_watchpoint) (void);
@@ -261,6 +280,15 @@ struct target_ops
 
   /* Returns true if the target supports multi-process debugging.  */
   int (*supports_multi_process) (void);
+
+  /* Returns true if fork events are supported.  */
+  int (*supports_fork_events) (void);
+
+  /* Returns true if vfork events are supported.  */
+  int (*supports_vfork_events) (void);
+
+  /* Allows target to re-initialize connection-specific settings.  */
+  void (*handle_new_gdb_connection) (void);
 
   /* If not NULL, target-specific routine to process monitor command.
      Returns 1 if handled, or 0 to perform default processing.  */
@@ -355,11 +383,12 @@ struct target_ops
   int (*supports_agent) (void);
 
   /* Check whether the target supports branch tracing.  */
-  int (*supports_btrace) (struct target_ops *);
+  int (*supports_btrace) (struct target_ops *, enum btrace_format);
 
-  /* Enable branch tracing for @ptid and allocate a branch trace target
-     information struct for reading and for disabling branch trace.  */
-  struct btrace_target_info *(*enable_btrace) (ptid_t ptid);
+  /* Enable branch tracing for PTID based on CONF and allocate a branch trace
+     target information struct for reading and for disabling branch trace.  */
+  struct btrace_target_info *(*enable_btrace)
+    (ptid_t ptid, const struct btrace_config *conf);
 
   /* Disable branch tracing.
      Returns zero on success, non-zero otherwise.  */
@@ -371,8 +400,42 @@ struct target_ops
      otherwise.  */
   int (*read_btrace) (struct btrace_target_info *, struct buffer *, int type);
 
+  /* Read the branch trace configuration into BUFFER.
+     Return 0 on success; print an error message into BUFFER and return -1
+     otherwise.  */
+  int (*read_btrace_conf) (const struct btrace_target_info *, struct buffer *);
+
   /* Return true if target supports range stepping.  */
   int (*supports_range_stepping) (void);
+
+  /* Return the full absolute name of the executable file that was
+     run to create the process PID.  If the executable file cannot
+     be determined, NULL is returned.  Otherwise, a pointer to a
+     character string containing the pathname is returned.  This
+     string should be copied into a buffer by the client if the string
+     will not be immediately used, or if it must persist.  */
+  char *(*pid_to_exec_file) (int pid);
+
+  /* Multiple-filesystem-aware open.  Like open(2), but operating in
+     the filesystem as it appears to process PID.  Systems where all
+     processes share a common filesystem should set this to NULL.
+     If NULL, the caller should fall back to open(2).  */
+  int (*multifs_open) (int pid, const char *filename,
+		       int flags, mode_t mode);
+
+  /* Multiple-filesystem-aware unlink.  Like unlink(2), but operates
+     in the filesystem as it appears to process PID.  Systems where
+     all processes share a common filesystem should set this to NULL.
+     If NULL, the caller should fall back to unlink(2).  */
+  int (*multifs_unlink) (int pid, const char *filename);
+
+  /* Multiple-filesystem-aware readlink.  Like readlink(2), but
+     operating in the filesystem as it appears to process PID.
+     Systems where all processes share a common filesystem should
+     set this to NULL.  If NULL, the caller should fall back to
+     readlink(2).  */
+  ssize_t (*multifs_readlink) (int pid, const char *filename,
+			       char *buf, size_t bufsiz);
 };
 
 extern struct target_ops *the_target;
@@ -386,6 +449,21 @@ void set_target_ops (struct target_ops *);
   (*the_target->attach) (pid)
 
 int kill_inferior (int);
+
+#define target_supports_fork_events() \
+  (the_target->supports_fork_events ? \
+   (*the_target->supports_fork_events) () : 0)
+
+#define target_supports_vfork_events() \
+  (the_target->supports_vfork_events ? \
+   (*the_target->supports_vfork_events) () : 0)
+
+#define target_handle_new_gdb_connection()		 \
+  do							 \
+    {							 \
+      if (the_target->handle_new_gdb_connection != NULL) \
+	(*the_target->handle_new_gdb_connection) ();	 \
+    } while (0)
 
 #define detach_inferior(pid) \
   (*the_target->detach) (pid)
@@ -489,12 +567,12 @@ int kill_inferior (int);
   (the_target->supports_agent ? \
    (*the_target->supports_agent) () : 0)
 
-#define target_supports_btrace()			\
+#define target_supports_btrace(format)			\
   (the_target->supports_btrace				\
-   ? (*the_target->supports_btrace) (the_target) : 0)
+   ? (*the_target->supports_btrace) (the_target, format) : 0)
 
-#define target_enable_btrace(ptid) \
-  (*the_target->enable_btrace) (ptid)
+#define target_enable_btrace(ptid, conf) \
+  (*the_target->enable_btrace) (ptid, conf)
 
 #define target_disable_btrace(tinfo) \
   (*the_target->disable_btrace) (tinfo)
@@ -502,9 +580,32 @@ int kill_inferior (int);
 #define target_read_btrace(tinfo, buffer, type)	\
   (*the_target->read_btrace) (tinfo, buffer, type)
 
+#define target_read_btrace_conf(tinfo, buffer)	\
+  (*the_target->read_btrace_conf) (tinfo, buffer)
+
 #define target_supports_range_stepping() \
   (the_target->supports_range_stepping ? \
    (*the_target->supports_range_stepping) () : 0)
+
+#define target_supports_stopped_by_sw_breakpoint() \
+  (the_target->supports_stopped_by_sw_breakpoint ? \
+   (*the_target->supports_stopped_by_sw_breakpoint) () : 0)
+
+#define target_stopped_by_sw_breakpoint() \
+  (the_target->stopped_by_sw_breakpoint ? \
+   (*the_target->stopped_by_sw_breakpoint) () : 0)
+
+#define target_supports_stopped_by_hw_breakpoint() \
+  (the_target->supports_stopped_by_hw_breakpoint ? \
+   (*the_target->supports_stopped_by_hw_breakpoint) () : 0)
+
+#define target_supports_conditional_breakpoints() \
+  (the_target->supports_conditional_breakpoints ? \
+   (*the_target->supports_conditional_breakpoints) () : 0)
+
+#define target_stopped_by_hw_breakpoint() \
+  (the_target->stopped_by_hw_breakpoint ? \
+   (*the_target->stopped_by_hw_breakpoint) () : 0)
 
 /* Start non-stop mode, returns 0 on success, -1 on failure.   */
 

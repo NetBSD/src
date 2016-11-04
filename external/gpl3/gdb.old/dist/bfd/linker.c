@@ -2434,7 +2434,7 @@ _bfd_generic_reloc_link_order (bfd *abfd,
 
       size = bfd_get_reloc_size (r->howto);
       buf = (bfd_byte *) bfd_zmalloc (size);
-      if (buf == NULL)
+      if (buf == NULL && size != 0)
 	return FALSE;
       rstat = _bfd_relocate_contents (r->howto, abfd,
 				      (bfd_vma) link_order->u.reloc.p->addend,
@@ -2896,7 +2896,7 @@ _bfd_handle_already_linked (asection *sec,
 	 files over IR because the first pass may contain a
 	 mix of LTO and normal objects and we must keep the
 	 first match, be it IR or real.  */
-      if (info->loading_lto_outputs
+      if (sec->owner->lto_output
 	  && (l->sec->owner->flags & BFD_PLUGIN) != 0)
 	{
 	  l->sec = sec;

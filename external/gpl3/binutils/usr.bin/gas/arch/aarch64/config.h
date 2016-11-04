@@ -44,6 +44,9 @@
 /* Define if you want compressed debug sections by default. */
 /* #undef DEFAULT_FLAG_COMPRESS_DEBUG */
 
+/* Define to 1 if you want to generate x86 relax relocations by default. */
+#define DEFAULT_GENERATE_X86_RELAX_RELOCATIONS 1
+
 /* Supported emulations. */
 #define EMULATIONS 
 
@@ -261,7 +264,7 @@
 #define PACKAGE_NAME "gas"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "gas 2.26"
+#define PACKAGE_STRING "gas 2.26.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "gas"
@@ -270,7 +273,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.26"
+#define PACKAGE_VERSION "2.26.1"
 
 /* Define if defaulting to ELF on SCO 5. */
 /* #undef SCO_ELF */
@@ -351,7 +354,7 @@
 /* #undef USING_CGEN */
 
 /* Version number of package */
-#define VERSION "2.26"
+#define VERSION "2.26.1"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -367,7 +370,7 @@
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
-/* #undef YYTEXT_POINTER */
+#define YYTEXT_POINTER 1
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

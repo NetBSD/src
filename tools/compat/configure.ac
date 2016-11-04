@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.84 2015/07/26 14:01:53 kamil Exp $
+#	$NetBSD: configure.ac,v 1.84.2.1 2016/11/04 14:49:25 pgoyette Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -169,14 +169,16 @@ AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
 AC_CHECK_DECLS([group_from_gid, gid_from_group, pwcache_groupdb],,,[
 #include <grp.h>
 ])
-AC_CHECK_DECLS([strndup, strnlen],,,[#include <string.h>])
-AC_CHECK_DECLS([strsuftoll],,,[#include <stdlib.h>])
+AC_CHECK_DECLS([strlcpy, strlcat, strndup, strnlen],,,[
+#include <string.h>
+])
+AC_CHECK_DECLS([strsuftoll, mi_vector_hash],,,[#include <stdlib.h>])
 AC_CHECK_DECLS([lchflags, lchmod, lchown],,,[
 #include <sys/stat.h>
 #include <unistd.h>
 ])
 
-AC_CHECK_DECLS([errc, verrc, warnc, vwarnc],,, [
+AC_CHECK_DECLS([err, errc, errx, verrc, verrx, warn, warnc, warnx, vwarnc, vwarnx],,, [
 #ifdef HAVE_ERR_H
 #include <err.h>
 #endif

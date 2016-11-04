@@ -1,4 +1,3 @@
-#skip: mips-*-ecoff
 #objdump: -dr --prefix-addresses --show-raw-insn
 #name: MIPS branch-misc-1
 #as: -32

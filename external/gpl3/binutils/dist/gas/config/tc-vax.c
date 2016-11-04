@@ -1,5 +1,5 @@
 /* tc-vax.c - vax-specific -
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -237,7 +237,7 @@ const relax_typeS md_relax_table[] =
 #undef WB
 
 void float_cons (int);
-int flonum_gen2vax (char, FLONUM_TYPE *, LITTLENUM_TYPE *);
+int flonum_gen2vax (int, FLONUM_TYPE *, LITTLENUM_TYPE *);
 
 const pseudo_typeS md_pseudo_table[] =
 {
@@ -2362,7 +2362,7 @@ struct option md_longopts[] =
 size_t md_longopts_size = sizeof (md_longopts);
 
 int
-md_parse_option (int c, char *arg)
+md_parse_option (int c, const char *arg)
 {
   switch (c)
     {
@@ -2540,8 +2540,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 #undef F
 #undef MAP
 
-  reloc = xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  reloc = XNEW (arelent);
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 #ifndef OBJ_ELF
@@ -3434,7 +3434,7 @@ bfd_reloc_code_real_type
 vax_cons (expressionS *exp, int size)
 {
   char *save;
-  char *vax_cons_special_reloc;
+  const char *vax_cons_special_reloc;
 
   SKIP_WHITESPACE ();
   vax_cons_special_reloc = NULL;
@@ -3563,7 +3563,7 @@ vax_cons_fix_new (fragS *frag, int where, unsigned int nbytes, expressionS *exp,
   fix_new_exp (frag, where, (int) nbytes, exp, 0, r);
 }
 
-char *
+const char *
 md_atof (int type, char * litP, int * sizeP)
 {
   return vax_md_atof (type, litP, sizeP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.61.2.1 2016/07/20 23:47:57 pgoyette Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.61.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,9 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.61.2.1 2016/07/20 23:47:57 pgoyette Exp $");
-
-#include "ppp.h"
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.61.2.2 2016/11/04 14:49:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppp.h"
@@ -836,8 +834,7 @@ pppasyncstart(struct ppp_softc *sc)
 	    }
 
 	    /* Finished with this mbuf; free it and move on. */
-	    MFREE(m, m2);
-	    m = m2;
+	    m = m2 = m_free(m);
 	    if (m == NULL) {
 		/* Finished a packet */
 		break;

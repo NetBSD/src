@@ -28,19 +28,19 @@ Raw dump of debug contents of section \.z?debug_line:
   Opcode 11 has 0 args
   Opcode 12 has 1 args
 
- The Directory Table:
+ The Directory Table \(offset 0x.*\):
   .*
 
- The File Name Table:
+ The File Name Table \(offset 0x.*\):
   Entry	Dir	Time	Size	Name
   1	1	0	0	debug1.s
 
  Line Number Statements:
-  Extended opcode 2: set Address to 0x0
-  Special opcode 7: advance Address by 0 to 0x0 and Line by 2 to 3
-  Special opcode 20: advance Address by 1 to 0x1 and Line by 1 to 4
-  Special opcode 20: advance Address by 1 to 0x2 and Line by 1 to 5
-  Advance PC by 1 to 0x3
-  Extended opcode 1: End of Sequence
+  \[0x.*\]  Extended opcode 2: set Address to 0x0
+  \[0x.*\]  Special opcode 7: advance Address by 0 to 0x0 and Line by 2 to 3
+  \[0x.*\]  Special opcode 20: advance Address by 1 to 0x1 and Line by 1 to 4
+  \[0x.*\]  Special opcode 20: advance Address by 1 to 0x2 and Line by 1 to 5
+  \[0x.*\]  Advance PC by 1 to 0x3
+  \[0x.*\]  Extended opcode 1: End of Sequence
 
 

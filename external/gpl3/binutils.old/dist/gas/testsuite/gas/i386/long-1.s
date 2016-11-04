@@ -14,7 +14,7 @@ foo:
 .byte 0xf2
 .byte 0xf0
 .byte 0xf0
-movapd	(%eax), %xmm0
+movss	(%eax), %xmm0
 .byte 0xf2
 .byte 0xf0
 .byte 0xf0
@@ -27,4 +27,4 @@ movapd	(%eax), %xmm0
 .byte 0xf0
 .byte 0xf0
 .byte 0xf0
-movapd	(%eax), %xmm0
+movss	(%eax), %xmm0

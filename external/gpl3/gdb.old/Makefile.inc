@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2016/02/02 20:57:28 christos Exp $
+# $NetBSD: Makefile.inc,v 1.5.2.1 2016/11/04 14:48:05 pgoyette Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes
@@ -6,7 +6,7 @@ BINDIR=/usr/bin
 WARNS?=		0
 CPPFLAGS+=	-D_KERNTYPES
 
-GDB_MACHINE_ARCH=	${MACHINE_ARCH:C/armv[4-7]/arm/}
+.include "Makefile.gdb_arch"
 
 CWARNFLAGS.clang+=	-Wno-unused-value -Wno-conversion \
 			-Wno-switch-enum -Wno-parentheses -Wno-comment \

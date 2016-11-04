@@ -1,5 +1,5 @@
 /* tc-ip2k.c -- Assembler for the Scenix IP2xxx.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -72,35 +72,18 @@ ip2k_elf_section_rtn (int i)
 
   if (force_code_align)
     {
-      /* The s_align_ptwo function expects that we are just after a .align
-	 directive and it will either try and read the align value or stop
-	 if end of line so we must fake it out so it thinks we are at the
-	 end of the line.  */
-      char *old_input_line_pointer = input_line_pointer;
-      input_line_pointer = "\n";
-      s_align_ptwo (1);
+      do_align (1, NULL, 0, 0);
       force_code_align = 0;
-      /* Restore.  */
-      input_line_pointer = old_input_line_pointer;
     }
 }
 
 static void
 ip2k_elf_section_text (int i)
 {
-  char *old_input_line_pointer;
   obj_elf_text(i);
 
-  /* the s_align_ptwo function expects that we are just after a .align
-     directive and it will either try and read the align value or stop if
-     end of line so we must fake it out so it thinks we are at the end of
-     the line.  */
-  old_input_line_pointer = input_line_pointer;
-  input_line_pointer = "\n";
-  s_align_ptwo (1);
+  do_align (1, NULL, 0, 0);
   force_code_align = 0;
-  /* Restore.  */
-  input_line_pointer = old_input_line_pointer;
 }
 
 /* The target specific pseudo-ops which we support.  */
@@ -130,7 +113,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 const char * md_shortopts = "";
 
 int
-md_parse_option (int c ATTRIBUTE_UNUSED, char * arg ATTRIBUTE_UNUSED)
+md_parse_option (int c ATTRIBUTE_UNUSED, const char * arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
@@ -328,7 +311,7 @@ md_number_to_chars (char * buf, valueT val, int n)
   number_to_chars_bigendian (buf, val, n);
 }
 
-char *
+const char *
 md_atof (int type, char * litP, int *  sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, TRUE);

@@ -1,5 +1,5 @@
 # Expect script for FRV FDPIC TLS linker tests
-#   Copyright 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -31,7 +31,7 @@ global LDFLAGS
 set saved_LDFLAGS "$LDFLAGS"
 set LDFLAGS "$LDFLAGS -melf32frvfd"
 
-run_ld_link_tests [list [list "tls-1-dep" "$LDFLAGS -shared" "" "tls-1-dep.s" [list] "tls-1-dep.so" ""]]
+run_ld_link_tests [list [list "tls-1-dep" "$LDFLAGS -shared" "" "" "tls-1-dep.s" [list] "tls-1-dep.so" ""]]
 run_dump_test "tls-static-1"
 run_dump_test "tls-dynamic-1"
 run_dump_test "tls-pie-1"

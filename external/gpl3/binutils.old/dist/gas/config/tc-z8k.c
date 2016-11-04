@@ -1,6 +1,5 @@
 /* tc-z8k.c -- Assemble code for the Zilog Z800n
-   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001, 2002, 2003,
-   2005, 2006, 2007, 2009  Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -34,7 +33,8 @@ extern int machine;
 extern int coff_flags;
 int segmented_mode;
 
-/* This is non-zero if target was set from the command line.  */
+/* This is non-zero if target was set from the command line.
+   If non-zero, 1 means Z8002 (non-segmented), 2 means Z8001 (segmented).  */
 static int z8k_target_from_cmdline;
 
 static void
@@ -156,8 +156,7 @@ md_begin (void)
     }
 
   /* Default to z8002.  */
-  if (! z8k_target_from_cmdline)
-    s_segm (0);
+  s_segm (z8k_target_from_cmdline ? z8k_target_from_cmdline - 1 : 0);
 
   /* Insert the pseudo ops, too.  */
   for (idx = 0; md_pseudo_table[idx].poc_name; idx++)
@@ -1310,15 +1309,14 @@ md_parse_option (int c, char *arg)
     {
     case 'z':
       if (!strcmp (arg, "8001"))
-	s_segm (1);
+	z8k_target_from_cmdline = 2;
       else if (!strcmp (arg, "8002"))
-	s_segm (0);
+	z8k_target_from_cmdline = 1;
       else
 	{
 	  as_bad (_("invalid architecture -z%s"), arg);
 	  return 0;
 	}
-      z8k_target_from_cmdline = 1;
       break;
 
     case OPTION_RELAX:

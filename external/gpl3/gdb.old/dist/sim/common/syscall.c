@@ -240,7 +240,7 @@ cb_syscall (host_callback *cb, CB_SYSCALL *sc)
 #endif /* wip */
 
     case CB_SYS_exit :
-      /* Caller must catch and handle.  */
+      /* Caller must catch and handle; see sim_syscall as an example.  */
       break;
 
     case CB_SYS_open :

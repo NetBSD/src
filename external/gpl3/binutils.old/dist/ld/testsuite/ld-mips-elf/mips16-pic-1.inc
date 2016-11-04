@@ -1,5 +1,5 @@
 	# Declare a function called NAME and an __fn_NAME stub for it.
-	# Make the stub use la_TYPE to load the the target address into $2.
+	# Make the stub use la_TYPE to load the target address into $2.
 	.macro	stub,name,type
 	.set	nomips16
 	.section .mips16.fn.\name, "ax", @progbits

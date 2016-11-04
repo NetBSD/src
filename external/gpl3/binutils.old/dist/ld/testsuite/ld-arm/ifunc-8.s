@@ -63,9 +63,7 @@
 arm:
 	test_relocs foo
 	test_relocs2 f1,a,
-	test_relocs2 f2,a,
 	test_relocs2 f3,a,
-	test_relocs2 f4,a,
 	.size	arm,.-arm
 
 	.globl	_thumb
@@ -74,15 +72,11 @@ arm:
 _thumb:
 	test_relocs foo
 	test_relocs2 f1,t,.w
-	test_relocs2 f2,t,.w
 	test_relocs2 f3,t,.w
-	test_relocs2 f4,t,.w
 	.size	_thumb,.-_thumb
 
 	.data
 foo:
 	.word	0x11223344
 	alldirs	diff,f1
-	alldirs	diff,f2
 	alldirs	diff,f3
-	alldirs	diff,f4

@@ -4,9 +4,9 @@
 #
 G_DEFS=-DHAVE_CONFIG_H
 G_EMUL=armelfb_nbsd
-G_EMULATION_OFILES=earmelfb_nbsd.o earmelfb_fbsd.o earmelf.o
+G_EMULATION_OFILES=earmelfb_nbsd.o earmelf_nbsd.o earmelf.o earmnbsd.o
 G_INCLUDES=
-G_OFILES=ldgram.o ldlex-wrapper.o lexsup.o ldlang.o  mri.o ldctor.o ldmain.o plugin.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o earmelfb_nbsd.o earmelfb_fbsd.o earmelf.o   ldbuildid.o
+G_OFILES=ldgram.o ldlex-wrapper.o lexsup.o ldlang.o  mri.o ldctor.o ldmain.o plugin.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o earmelfb_nbsd.o earmelf_nbsd.o earmelf.o earmnbsd.o   ldbuildid.o
 G_STRINGIFY=astring.sed
 G_TEXINFOS=ld.texinfo
 G_target_alias=armeb--netbsdelf

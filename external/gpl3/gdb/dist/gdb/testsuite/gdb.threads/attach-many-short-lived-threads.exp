@@ -1,4 +1,4 @@
-# Copyright 2008-2015 Free Software Foundation, Inc.
+# Copyright 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,6 +21,40 @@
 # end up leaving stale state behind that confuse the following
 # attach).
 
+# Return true if the running version of DejaGnu is known to not be
+# able to run this test.
+proc bad_dejagnu {} {
+    global frame_version
+
+    verbose -log "DejaGnu version: $frame_version"
+    verbose -log "Expect version: [exp_version]"
+    verbose -log "Tcl version: [info tclversion]"
+
+    set dj_ver [split $frame_version .]
+    set dj_ver_major [lindex $dj_ver 0]
+    set dj_ver_minor [lindex $dj_ver 1]
+
+    # DejaGnu versions prior to 1.6 manage to kill the wrong process
+    # due to PID-reuse races.  Since this test spawns many threads, it
+    # widens the race window a whole lot, enough that the inferior is
+    # often killed, and thus the test randomly fails.  See:
+    # http://lists.gnu.org/archive/html/dejagnu/2015-07/msg00005.html
+    # The fix added a close_wait_program procedure.  If that procedure
+    # is defined, and DejaGnu is older than 1.6, assume that means the
+    # fix was backported.
+    if {$dj_ver_major == 1
+	&& ($dj_ver_minor < 6 && [info procs close_wait_program] == "")} {
+	return 1
+    }
+
+    return 0
+}
+
+if {[bad_dejagnu]} {
+    unsupported "broken DejaGnu"
+    return 0
+}
+
 if {![can_spawn_for_attach]} {
     return 0
 }
@@ -36,7 +70,8 @@ proc test {} {
 
     clean_restart ${binfile}
 
-    set testpid [spawn_wait_for_attach $binfile]
+    set test_spawn_id [spawn_wait_for_attach $binfile]
+    set testpid [spawn_id_get_pid $test_spawn_id]
 
     set attempts 10
     for {set attempt 1} { $attempt <= $attempts } { incr attempt } {
@@ -127,8 +162,7 @@ proc test {} {
 	    delete_breakpoints
 	}
     }
-
-    remote_exec target "kill -9 ${testpid}"
+    kill_wait_spawned_process $test_spawn_id
 }
 
 # The test program exits after a while, in case GDB crashes.  Make it

@@ -1,5 +1,5 @@
 # Expect script for binutils tests
-#   Copyright 2006, 2007, 2008, 2009, 2010, 2012 Free Software Foundation, Inc.
+# Copyright (C) 2006-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -38,8 +38,9 @@ if { [istarget *-*-linux*aout*]
 # to hardwire the test name. This is important if ld_options contains
 # absolute path names because the default test name is constructed
 # from the prog_name and ld_options and we do not want absolute paths
-# to appear in the test_name.
-proc binutils_test { prog_name ld_options test {test_name ""}} {
+# to appear in the test_name.  The optional readelf_options can be
+# used to specify different options for readelf.
+proc binutils_test { prog_name ld_options test {test_name ""} {readelf_options "-l"}} {
     global as
     global ld
     global READELF
@@ -60,7 +61,7 @@ proc binutils_test { prog_name ld_options test {test_name ""}} {
 	return
     }
 
-    if { ![ld_simple_link $ld tmpdir/$test "$ld_options tmpdir/$test.o"] } {
+    if { ![ld_simple_link $ld tmpdir/$test "$ld_options -z stack-size=0 tmpdir/$test.o"] } {
 	if { [string match "*not supported*" $link_output]
 	     || [string match "*unrecognized option*" $link_output]
 	     || [string match "*-z relro ignored*" $link_output] } {
@@ -71,12 +72,36 @@ proc binutils_test { prog_name ld_options test {test_name ""}} {
 	return
     }
 
-    send_log "$READELF -l --wide tmpdir/$test > tmpdir/$test.exp\n"
-    set got [remote_exec host "$READELF -l --wide tmpdir/$test" "" "/dev/null" "tmpdir/$test.exp"]
+    send_log "$READELF $readelf_options --wide tmpdir/$test > tmpdir/$test.exp\n"
+    set got [remote_exec host "$READELF $readelf_options --wide tmpdir/$test" "" "/dev/null" "tmpdir/$test.exp"]
     if { [lindex $got 0] != 0 || ![string match "" [lindex $got 1]] } then {
 	send_log "$got\n"
 	unresolved "$test_name"
 	return
+    }
+
+    if [string match "*-z relro*" $ld_options] {
+	# Check if GNU_RELRO segment is generated.
+	set got [remote_exec host "grep GNU_RELRO tmpdir/$test.exp"]
+	if { ![string match "*GNU_RELRO*" $got] } then {
+	    set got [remote_exec host "cat tmpdir/$test.exp"]
+	    if { [string match "*.data.rel.ro*" $got]
+		 || [string match "*.dynamic*" $got]
+		 || [string match "*.got*" $got]
+		 || [string match "*.eh_frame*" $got]
+		 || [string match "*.gcc_except_table*" $got]
+		 || [string match "*.exception_ranges*" $got]
+		 || [string match "*.ctors*" $got]
+		 || [string match "*.dtors*" $got]
+		 || [string match "*.tdata*" $got]
+		 || [string match "*.preinit_array*" $got]
+		 || [string match "*.init_array*" $got]
+		 || [string match "*.fini_array*" $got] } then {
+		# Fail if GNU_RELRO segment isn't generated, but should.
+		fail "$test_name"
+		return
+	    }
+	}
     }
 
     send_log "$prog tmpdir/$test\n"
@@ -87,8 +112,8 @@ proc binutils_test { prog_name ld_options test {test_name ""}} {
 	return
     }
 
-    send_log "$READELF -l --wide tmpdir/$test > tmpdir/$test.out\n"
-    set got [remote_exec host "$READELF -l --wide tmpdir/$test" "" "/dev/null" "tmpdir/$test.out"]
+    send_log "$READELF $readelf_options --wide tmpdir/$test > tmpdir/$test.out\n"
+    set got [remote_exec host "$READELF $readelf_options --wide tmpdir/$test" "" "/dev/null" "tmpdir/$test.out"]
     if { [lindex $got 0] != 0 || ![string match "" [lindex $got 1]] } then {
 	send_log "$got\n"
 	unresolved "$test_name"
@@ -152,3 +177,5 @@ foreach testitem $tls_tests {
 	binutils_test objcopy $testopt $testitem
     }
 }
+
+binutils_test strip "-s" gap "" "-lS"

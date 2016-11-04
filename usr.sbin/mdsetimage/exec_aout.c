@@ -1,4 +1,4 @@
-/* $NetBSD: exec_aout.c,v 1.7 2009/07/30 15:16:37 tsutsui Exp $ */
+/* $NetBSD: exec_aout.c,v 1.7.30.1 2016/11/04 14:49:27 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_aout.c,v 1.7 2009/07/30 15:16:37 tsutsui Exp $");
+__RCSID("$NetBSD: exec_aout.c,v 1.7.30.1 2016/11/04 14:49:27 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -45,13 +45,8 @@ __RCSID("$NetBSD: exec_aout.c,v 1.7 2009/07/30 15:16:37 tsutsui Exp $");
 #define	check(off, size)	((off < 0) || (off + size > mappedsize))
 #define	BAD			do { rv = -1; goto out; } while (0)
 
-extern int	T_flag_specified;
-extern u_long	text_start;
-
 int
-check_aout(mappedfile, mappedsize)
-	const char *mappedfile;
-	size_t mappedsize;
+check_aout(const char *mappedfile, size_t mappedsize)
 {
 	const struct exec *execp;
 	int rv;
@@ -70,10 +65,8 @@ out:
 }
 
 int
-findoff_aout(mappedfile, mappedsize, vmaddr, fileoffp)
-	const char *mappedfile;
-	size_t mappedsize, *fileoffp;
-	u_long vmaddr;
+findoff_aout(const char *mappedfile, size_t mappedsize, u_long vmaddr,
+    size_t *fileoffp, u_long text_start)
 {
 	const struct exec *execp;
 	int rv;
@@ -87,7 +80,7 @@ findoff_aout(mappedfile, mappedsize, vmaddr, fileoffp)
 		    (execp->a_entry & (N_PAGSIZ(*execp)-1)) - execp->a_entry;
 
 	/* apply correction based on the supplied text start address, if any */
-	if (T_flag_specified)
+	if (text_start != (unsigned long)~0)
 		vmaddr += N_TXTADDR(*execp) - text_start;
 
 	if (N_TXTADDR(*execp) <= vmaddr &&

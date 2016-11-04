@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/08/05 15:40:58 apb Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2016/11/04 14:42:38 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,6 +8,7 @@ RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
 MDSETTARGETS=		RAMDISK ${RAMDISK} -
 MDSET_RELEASEDIR=	binary/kernel
+MDSET_STRIPSECTIONS=	-R .MIPS.abiflags -R .gnu.attributes -R .pdr -R .reginfo
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
@@ -18,7 +19,7 @@ all realall:	${BOOT_RAMDISK}.gz
 
 ${BOOT_RAMDISK}.gz:	netbsd-RAMDISK.gz ${DESTDIR}/usr/mdec/boot_kernel.gz
 	gunzip -c ${DESTDIR}/usr/mdec/boot_kernel.gz > ${BOOT_RAMDISK}.tmp
-	${TOOL_MDSETIMAGE} ${BOOT_RAMDISK}.tmp netbsd-RAMDISK.gz
+	${TOOL_MDSETIMAGE} -v ${BOOT_RAMDISK}.tmp netbsd-RAMDISK.gz
 	${ELF2ECOFF} ${BOOT_RAMDISK}.tmp ${BOOT_RAMDISK}.coff
 	${TOOL_GZIP_N} -9c ${BOOT_RAMDISK}.coff > ${.TARGET}
 

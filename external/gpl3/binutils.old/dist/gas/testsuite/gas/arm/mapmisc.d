@@ -2,7 +2,7 @@
 #objdump: --syms --special-syms -d
 #name: ARM Mapping Symbols for miscellaneous directives
 # This test is only valid on EABI based ports.
-#target: *-*-*eabi *-*-symbianelf *-*-linux-* *-*-elf *-*-nacl*
+#target: *-*-*eabi* *-*-symbianelf *-*-linux-* *-*-elf *-*-nacl*
 #source: mapmisc.s
 
 
@@ -47,6 +47,10 @@ SYMBOL TABLE:
 0+a0 l       .text	00000000 \$d
 0+a4 l       .text	00000000 \$a
 0+a8 l       .text	00000000 \$a
+0+b0 l       .text	00000000 string
+0+b0 l       .text	00000000 \$d
+0+b4 l       .text	00000000 \$d
+0+b3 l       .text	00000000 \$d
 0+00 l    d  .ARM.attributes	00000000 .ARM.attributes
 
 
@@ -95,3 +99,9 @@ Disassembly of section .text:
   a0:	7778797a 	.word	0x7778797a
   a4:	e1a00000 	nop			; \(mov r0, r0\)
   a8:	e1a00000 	nop			; \(mov r0, r0\)
+  ac:	e51f0000 	ldr	r0, \[pc, #-0\]	; b4 <string\+0x4>
+000000b0 <string>:
+  b0:	6261      	.short	0x6261
+  b2:	63          	.byte	0x63
+  b3:	00          	.byte	0x00
+  b4:	000000b0 	.word	0x000000b0

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.78.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: in_var.h,v 1.78.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@ struct in_ifaddr {
 	int	ia4_flags;		/* address flags */
 	void	(*ia_dad_start) (struct ifaddr *);	/* DAD start function */
 	void	(*ia_dad_stop) (struct ifaddr *);	/* DAD stop function */
+	time_t	ia_dad_defended;	/* last time of DAD defence */
 
 #ifdef _KERNEL
 	struct pslist_entry	ia_hash_pslist_entry;
@@ -375,6 +376,13 @@ struct in_multi {
 extern pktqueue_t *ip_pktq;
 
 extern int ip_dad_count;		/* Duplicate Address Detection probes */
+#if defined(INET) && NARP > 0
+extern int arp_debug;
+#define arplog(level, fmt, args...) \
+	do { if (arp_debug) log(level, "%s: " fmt, __func__, ##args);} while (0)
+#else
+#define arplog(level, fmt, args...)
+#endif
 
 /*
  * Structure used by functions below to remember position when stepping
@@ -398,12 +406,11 @@ int in_multi_lock_held(void);
 
 struct ifaddr;
 
-int	in_ifinit(struct ifnet *,
-	    struct in_ifaddr *, const struct sockaddr_in *, int, int);
+int	in_ifinit(struct ifnet *, struct in_ifaddr *,
+    const struct sockaddr_in *, const struct sockaddr_in *, int);
 void	in_savemkludge(struct in_ifaddr *);
 void	in_restoremkludge(struct in_ifaddr *, struct ifnet *);
 void	in_purgemkludge(struct ifnet *);
-void	in_ifscrub(struct ifnet *, struct in_ifaddr *);
 void	in_setmaxmtu(void);
 const char *in_fmtaddr(struct in_addr);
 int	in_control(struct socket *, u_long, void *, struct ifnet *);

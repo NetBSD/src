@@ -37,4 +37,6 @@ SECTIONS
 
   . = 0xa2000;
   .bss : { *(.dynbss) }
+
+  /DISCARD/ : { *(.MIPS.abiflags) *(.gnu.attributes) }
 }

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.25 2015/08/12 07:53:57 maxv Exp $
+# $NetBSD: GENERIC,v 1.25.2.1 2016/11/04 14:48:58 pgoyette Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.25 $"
+#ident          "GENERIC-$Revision: 1.25.2.1 $"
 
 maxusers	8
 
@@ -269,6 +269,10 @@ ite4		at grf4			# terminal emulators for grfs
 ite5		at grf5			# terminal emulators for grfs
 ite6		at grf6			# terminal emulators for grfs
 ite7		at grf7			# terminal emulators for grfs
+
+# Needs wscons
+#mntva*          at zbus?                # MNTMN VA2000
+#options         MNTVA_CONSOLE
 
 #
 # Zorro-II, Zorro-III devices (sans graphics)

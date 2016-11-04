@@ -2,23 +2,24 @@
 #source: symtocbase-2.s
 #as: -a64
 #ld: -shared -melf64ppc
-#objdump: -dj.data
+#objdump: -dj.data -z
 #target: powerpc64*-*-*
 
-.*:     file format elf64-powerpc
+.*
 
 Disassembly of section \.data:
 
 .* <i>:
-	\.\.\.
-.*:	00 02 80 00 	\.long 0x28000
-.*:	00 00 00 00 	\.long 0x0
-.*:	00 02 80 00 	\.long 0x28000
-.*:	00 00 00 00 	\.long 0x0
-.*:	00 03 80 00 	\.long 0x38000
-.*:	00 00 00 00 	\.long 0x0
-.*:	00 03 80 00 	\.long 0x38000
-.*:	00 00 00 00 	\.long 0x0
-.*:	00 02 80 00 	\.long 0x28000
-.*:	00 00 00 00 	\.long 0x0
-.*:	00 03 80 00 	\.long 0x38000
+#...
+.*	\.long 0x28000
+.*	\.long 0x0
+.*	\.long 0x28000
+.*	\.long 0x0
+.*	\.long 0x38000
+.*	\.long 0x0
+.*	\.long 0x38000
+.*	\.long 0x0
+.*	\.long 0x28000
+.*	\.long 0x0
+.*	\.long 0x38000
+#pass

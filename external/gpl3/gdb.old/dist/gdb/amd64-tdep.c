@@ -39,6 +39,7 @@
 #include "disasm.h"
 #include "amd64-tdep.h"
 #include "i387-tdep.h"
+#include "x86-xstate.h"
 
 #include "features/i386/amd64.c"
 #include "features/i386/amd64-avx.c"
@@ -508,7 +509,7 @@ amd64_merge_classes (enum amd64_reg_class class1, enum amd64_reg_class class2)
   return AMD64_SSE;
 }
 
-static void amd64_classify (struct type *type, enum amd64_reg_class class[2]);
+static void amd64_classify (struct type *type, enum amd64_reg_class theclass[2]);
 
 /* Return non-zero if TYPE is a non-POD structure or union type.  */
 
@@ -527,19 +528,19 @@ amd64_non_pod_p (struct type *type)
    arrays) and union types, and store the result in CLASS.  */
 
 static void
-amd64_classify_aggregate (struct type *type, enum amd64_reg_class class[2])
+amd64_classify_aggregate (struct type *type, enum amd64_reg_class theclass[2])
 {
   /* 1. If the size of an object is larger than two eightbytes, or in
         C++, is a non-POD structure or union type, or contains
         unaligned fields, it has class memory.  */
   if (TYPE_LENGTH (type) > 16 || amd64_non_pod_p (type))
     {
-      class[0] = class[1] = AMD64_MEMORY;
+      theclass[0] = theclass[1] = AMD64_MEMORY;
       return;
     }
 
   /* 2. Both eightbytes get initialized to class NO_CLASS.  */
-  class[0] = class[1] = AMD64_NO_CLASS;
+  theclass[0] = theclass[1] = AMD64_NO_CLASS;
 
   /* 3. Each field of an object is classified recursively so that
         always two fields are considered. The resulting class is
@@ -551,9 +552,9 @@ amd64_classify_aggregate (struct type *type, enum amd64_reg_class class[2])
       struct type *subtype = check_typedef (TYPE_TARGET_TYPE (type));
 
       /* All fields in an array have the same type.  */
-      amd64_classify (subtype, class);
-      if (TYPE_LENGTH (type) > 8 && class[1] == AMD64_NO_CLASS)
-	class[1] = class[0];
+      amd64_classify (subtype, theclass);
+      if (TYPE_LENGTH (type) > 8 && theclass[1] == AMD64_NO_CLASS)
+	theclass[1] = theclass[0];
     }
   else
     {
@@ -582,7 +583,7 @@ amd64_classify_aggregate (struct type *type, enum amd64_reg_class class[2])
 	  gdb_assert (pos == 0 || pos == 1);
 
 	  amd64_classify (subtype, subclass);
-	  class[pos] = amd64_merge_classes (class[pos], subclass[0]);
+	  theclass[pos] = amd64_merge_classes (theclass[pos], subclass[0]);
 	  if (bitsize <= 64 && pos == 0 && endpos == 1)
 	    /* This is a bit of an odd case:  We have a field that would
 	       normally fit in one of the two eightbytes, except that
@@ -606,9 +607,9 @@ amd64_classify_aggregate (struct type *type, enum amd64_reg_class class[2])
 	       use up all 16 bytes of the aggregate, and are already
 	       handled just fine (because each portion sits on its own
 	       8-byte).  */
-	    class[1] = amd64_merge_classes (class[1], subclass[0]);
+	    theclass[1] = amd64_merge_classes (theclass[1], subclass[0]);
 	  if (pos == 0)
-	    class[1] = amd64_merge_classes (class[1], subclass[1]);
+	    theclass[1] = amd64_merge_classes (theclass[1], subclass[1]);
 	}
     }
 
@@ -616,26 +617,26 @@ amd64_classify_aggregate (struct type *type, enum amd64_reg_class class[2])
 
   /* Rule (a): If one of the classes is MEMORY, the whole argument is
      passed in memory.  */
-  if (class[0] == AMD64_MEMORY || class[1] == AMD64_MEMORY)
-    class[0] = class[1] = AMD64_MEMORY;
+  if (theclass[0] == AMD64_MEMORY || theclass[1] == AMD64_MEMORY)
+    theclass[0] = theclass[1] = AMD64_MEMORY;
 
   /* Rule (b): If SSEUP is not preceded by SSE, it is converted to
      SSE.  */
-  if (class[0] == AMD64_SSEUP)
-    class[0] = AMD64_SSE;
-  if (class[1] == AMD64_SSEUP && class[0] != AMD64_SSE)
-    class[1] = AMD64_SSE;
+  if (theclass[0] == AMD64_SSEUP)
+    theclass[0] = AMD64_SSE;
+  if (theclass[1] == AMD64_SSEUP && theclass[0] != AMD64_SSE)
+    theclass[1] = AMD64_SSE;
 }
 
 /* Classify TYPE, and store the result in CLASS.  */
 
 static void
-amd64_classify (struct type *type, enum amd64_reg_class class[2])
+amd64_classify (struct type *type, enum amd64_reg_class theclass[2])
 {
   enum type_code code = TYPE_CODE (type);
   int len = TYPE_LENGTH (type);
 
-  class[0] = class[1] = AMD64_NO_CLASS;
+  theclass[0] = theclass[1] = AMD64_NO_CLASS;
 
   /* Arguments of types (signed and unsigned) _Bool, char, short, int,
      long, long long, and pointers are in the INTEGER class.  Similarly,
@@ -646,28 +647,28 @@ amd64_classify (struct type *type, enum amd64_reg_class class[2])
        || code == TYPE_CODE_CHAR
        || code == TYPE_CODE_PTR || code == TYPE_CODE_REF)
       && (len == 1 || len == 2 || len == 4 || len == 8))
-    class[0] = AMD64_INTEGER;
+    theclass[0] = AMD64_INTEGER;
 
   /* Arguments of types float, double, _Decimal32, _Decimal64 and __m64
      are in class SSE.  */
   else if ((code == TYPE_CODE_FLT || code == TYPE_CODE_DECFLOAT)
 	   && (len == 4 || len == 8))
     /* FIXME: __m64 .  */
-    class[0] = AMD64_SSE;
+    theclass[0] = AMD64_SSE;
 
   /* Arguments of types __float128, _Decimal128 and __m128 are split into
      two halves.  The least significant ones belong to class SSE, the most
      significant one to class SSEUP.  */
   else if (code == TYPE_CODE_DECFLOAT && len == 16)
     /* FIXME: __float128, __m128.  */
-    class[0] = AMD64_SSE, class[1] = AMD64_SSEUP;
+    theclass[0] = AMD64_SSE, theclass[1] = AMD64_SSEUP;
 
   /* The 64-bit mantissa of arguments of type long double belongs to
      class X87, the 16-bit exponent plus 6 bytes of padding belongs to
      class X87UP.  */
   else if (code == TYPE_CODE_FLT && len == 16)
     /* Class X87 and X87UP.  */
-    class[0] = AMD64_X87, class[1] = AMD64_X87UP;
+    theclass[0] = AMD64_X87, theclass[1] = AMD64_X87UP;
 
   /* Arguments of complex T where T is one of the types float or
      double get treated as if they are implemented as:
@@ -679,19 +680,19 @@ amd64_classify (struct type *type, enum amd64_reg_class class[2])
 
   */
   else if (code == TYPE_CODE_COMPLEX && len == 8)
-    class[0] = AMD64_SSE;
+    theclass[0] = AMD64_SSE;
   else if (code == TYPE_CODE_COMPLEX && len == 16)
-    class[0] = class[1] = AMD64_SSE;
+    theclass[0] = theclass[1] = AMD64_SSE;
 
   /* A variable of type complex long double is classified as type
      COMPLEX_X87.  */
   else if (code == TYPE_CODE_COMPLEX && len == 32)
-    class[0] = AMD64_COMPLEX_X87;
+    theclass[0] = AMD64_COMPLEX_X87;
 
   /* Aggregates.  */
   else if (code == TYPE_CODE_ARRAY || code == TYPE_CODE_STRUCT
 	   || code == TYPE_CODE_UNION)
-    amd64_classify_aggregate (type, class);
+    amd64_classify_aggregate (type, theclass);
 }
 
 static enum return_value_convention
@@ -699,7 +700,7 @@ amd64_return_value (struct gdbarch *gdbarch, struct value *function,
 		    struct type *type, struct regcache *regcache,
 		    gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  enum amd64_reg_class class[2];
+  enum amd64_reg_class theclass[2];
   int len = TYPE_LENGTH (type);
   static int integer_regnum[] = { AMD64_RAX_REGNUM, AMD64_RDX_REGNUM };
   static int sse_regnum[] = { AMD64_XMM0_REGNUM, AMD64_XMM1_REGNUM };
@@ -710,7 +711,7 @@ amd64_return_value (struct gdbarch *gdbarch, struct value *function,
   gdb_assert (!(readbuf && writebuf));
 
   /* 1. Classify the return type with the classification algorithm.  */
-  amd64_classify (type, class);
+  amd64_classify (type, theclass);
 
   /* 2. If the type has class MEMORY, then the caller provides space
      for the return value and passes the address of this storage in
@@ -719,7 +720,7 @@ amd64_return_value (struct gdbarch *gdbarch, struct value *function,
 
      On return %rax will contain the address that has been passed in
      by the caller in %rdi.  */
-  if (class[0] == AMD64_MEMORY)
+  if (theclass[0] == AMD64_MEMORY)
     {
       /* As indicated by the comment above, the ABI guarantees that we
          can always find the return value just after the function has
@@ -738,7 +739,7 @@ amd64_return_value (struct gdbarch *gdbarch, struct value *function,
 
   /* 8. If the class is COMPLEX_X87, the real part of the value is
         returned in %st0 and the imaginary part in %st1.  */
-  if (class[0] == AMD64_COMPLEX_X87)
+  if (theclass[0] == AMD64_COMPLEX_X87)
     {
       if (readbuf)
 	{
@@ -760,7 +761,7 @@ amd64_return_value (struct gdbarch *gdbarch, struct value *function,
       return RETURN_VALUE_REGISTER_CONVENTION;
     }
 
-  gdb_assert (class[1] != AMD64_MEMORY);
+  gdb_assert (theclass[1] != AMD64_MEMORY);
   gdb_assert (len <= 16);
 
   for (i = 0; len > 0; i++, len -= 8)
@@ -768,7 +769,7 @@ amd64_return_value (struct gdbarch *gdbarch, struct value *function,
       int regnum = -1;
       int offset = 0;
 
-      switch (class[i])
+      switch (theclass[i])
 	{
 	case AMD64_INTEGER:
 	  /* 3. If the class is INTEGER, the next available register
@@ -801,7 +802,7 @@ amd64_return_value (struct gdbarch *gdbarch, struct value *function,
 	case AMD64_X87UP:
 	  /* 7. If the class is X87UP, the value is returned together
              with the previous X87 value in %st0.  */
-	  gdb_assert (i > 0 && class[0] == AMD64_X87);
+	  gdb_assert (i > 0 && theclass[0] == AMD64_X87);
 	  regnum = AMD64_ST0_REGNUM;
 	  offset = 8;
 	  len = 2;
@@ -865,21 +866,21 @@ amd64_push_arguments (struct regcache *regcache, int nargs,
     {
       struct type *type = value_type (args[i]);
       int len = TYPE_LENGTH (type);
-      enum amd64_reg_class class[2];
+      enum amd64_reg_class theclass[2];
       int needed_integer_regs = 0;
       int needed_sse_regs = 0;
       int j;
 
       /* Classify argument.  */
-      amd64_classify (type, class);
+      amd64_classify (type, theclass);
 
       /* Calculate the number of integer and SSE registers needed for
          this argument.  */
       for (j = 0; j < 2; j++)
 	{
-	  if (class[j] == AMD64_INTEGER)
+	  if (theclass[j] == AMD64_INTEGER)
 	    needed_integer_regs++;
-	  else if (class[j] == AMD64_SSE)
+	  else if (theclass[j] == AMD64_SSE)
 	    needed_sse_regs++;
 	}
 
@@ -906,7 +907,7 @@ amd64_push_arguments (struct regcache *regcache, int nargs,
 	      int regnum = -1;
 	      int offset = 0;
 
-	      switch (class[j])
+	      switch (theclass[j])
 		{
 		case AMD64_INTEGER:
 		  regnum = integer_regnum[integer_reg++];
@@ -1661,7 +1662,7 @@ amd64_displaced_step_fixup (struct gdbarch *gdbarch,
 
       regcache_cooked_read_unsigned (regs, AMD64_RSP_REGNUM, &rsp);
       retaddr = read_memory_unsigned_integer (rsp, retaddr_len, byte_order);
-      retaddr = (retaddr - insn_offset) & 0xffffffffUL;
+      retaddr = (retaddr - insn_offset) & 0xffffffffffffffffULL;
       write_memory_unsigned_integer (rsp, retaddr_len, byte_order, retaddr);
 
       if (debug_displaced)
@@ -2378,8 +2379,7 @@ amd64_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
       if (post_prologue_pc
 	  && (cust != NULL
 	      && COMPUNIT_PRODUCER (cust) != NULL
-	      && strncmp (COMPUNIT_PRODUCER (cust), "clang ",
-			  sizeof ("clang ") - 1) == 0))
+	      && startswith (COMPUNIT_PRODUCER (cust), "clang ")))
         return max (start_pc, post_prologue_pc);
     }
 
@@ -2467,7 +2467,6 @@ amd64_frame_cache_1 (struct frame_info *this_frame,
 static struct amd64_frame_cache *
 amd64_frame_cache (struct frame_info *this_frame, void **this_cache)
 {
-  volatile struct gdb_exception ex;
   struct amd64_frame_cache *cache;
 
   if (*this_cache)
@@ -2476,12 +2475,16 @@ amd64_frame_cache (struct frame_info *this_frame, void **this_cache)
   cache = amd64_alloc_frame_cache ();
   *this_cache = cache;
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       amd64_frame_cache_1 (this_frame, cache);
     }
-  if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
-    throw_exception (ex);
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+    }
+  END_CATCH
 
   return cache;
 }
@@ -2580,7 +2583,6 @@ amd64_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  volatile struct gdb_exception ex;
   struct amd64_frame_cache *cache;
   CORE_ADDR addr;
   gdb_byte buf[8];
@@ -2591,7 +2593,7 @@ amd64_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
 
   cache = amd64_alloc_frame_cache ();
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       get_frame_register (this_frame, AMD64_RSP_REGNUM, buf);
       cache->base = extract_unsigned_integer (buf, 8, byte_order) - 8;
@@ -2605,8 +2607,12 @@ amd64_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
 
       cache->base_p = 1;
     }
-  if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
-    throw_exception (ex);
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+    }
+  END_CATCH
 
   *this_cache = cache;
   return cache;
@@ -2713,12 +2719,14 @@ static const struct frame_base amd64_frame_base =
 
 /* Normal frames, but in a function epilogue.  */
 
-/* The epilogue is defined here as the 'ret' instruction, which will
+/* Implement the stack_frame_destroyed_p gdbarch method.
+
+   The epilogue is defined here as the 'ret' instruction, which will
    follow any instruction such as 'leave' or 'pop %ebp' that destroys
    the function's stack frame.  */
 
 static int
-amd64_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+amd64_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   gdb_byte insn;
   struct compunit_symtab *cust;
@@ -2742,8 +2750,8 @@ amd64_epilogue_frame_sniffer (const struct frame_unwind *self,
 			      void **this_prologue_cache)
 {
   if (frame_relative_level (this_frame) == 0)
-    return amd64_in_function_epilogue_p (get_frame_arch (this_frame),
-					 get_frame_pc (this_frame));
+    return amd64_stack_frame_destroyed_p (get_frame_arch (this_frame),
+					  get_frame_pc (this_frame));
   else
     return 0;
 }
@@ -2753,7 +2761,6 @@ amd64_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  volatile struct gdb_exception ex;
   struct amd64_frame_cache *cache;
   gdb_byte buf[8];
 
@@ -2763,7 +2770,7 @@ amd64_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
   cache = amd64_alloc_frame_cache ();
   *this_cache = cache;
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       /* Cache base will be %esp plus cache->sp_offset (-8).  */
       get_frame_register (this_frame, AMD64_RSP_REGNUM, buf);
@@ -2781,8 +2788,12 @@ amd64_epilogue_frame_cache (struct frame_info *this_frame, void **this_cache)
 
       cache->base_p = 1;
     }
-  if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
-    throw_exception (ex);
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+    }
+  END_CATCH
 
   return cache;
 }
@@ -3108,6 +3119,25 @@ amd64_x32_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   set_gdbarch_long_bit (gdbarch, 32);
   set_gdbarch_ptr_bit (gdbarch, 32);
+}
+
+/* Return the target description for a specified XSAVE feature mask.  */
+
+const struct target_desc *
+amd64_target_description (uint64_t xcr0)
+{
+  switch (xcr0 & X86_XSTATE_ALL_MASK)
+    {
+    case X86_XSTATE_MPX_AVX512_MASK:
+    case X86_XSTATE_AVX512_MASK:
+      return tdesc_amd64_avx512;
+    case X86_XSTATE_MPX_MASK:
+      return tdesc_amd64_mpx;
+    case X86_XSTATE_AVX_MASK:
+      return tdesc_amd64_avx;
+    default:
+      return tdesc_amd64;
+    }
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

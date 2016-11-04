@@ -2,7 +2,7 @@
 
 # split_i386.sh -- test -fstack-split for i386
 
-# Copyright 2009 Free Software Foundation, Inc.
+# Copyright (C) 2009-2015 Free Software Foundation, Inc.
 # Written by Ian Lance Taylor <iant@google.com>.
 
 # This file is part of gold.

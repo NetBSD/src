@@ -1,6 +1,5 @@
 /* M32R ELF support for BFD.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2003, 2004, 2008, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

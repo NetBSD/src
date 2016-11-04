@@ -27,8 +27,6 @@
 #include "serial.h"
 #include "gdbthread.h"
 
-const struct gdb_exception exception_none = { 0, GDB_NO_ERROR, NULL };
-
 void
 prepare_to_throw_exception (void)
 {
@@ -176,7 +174,7 @@ catch_exceptions_with_msg (struct ui_out *func_uiout,
 			   char **gdberrmsg,
 		  	   return_mask mask)
 {
-  volatile struct gdb_exception exception;
+  struct gdb_exception exception = exception_none;
   volatile int val = 0;
   struct ui_out *saved_uiout;
 
@@ -184,10 +182,15 @@ catch_exceptions_with_msg (struct ui_out *func_uiout,
   saved_uiout = current_uiout;
   current_uiout = func_uiout;
 
-  TRY_CATCH (exception, RETURN_MASK_ALL)
+  TRY
     {
       val = (*func) (current_uiout, func_args);
     }
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      exception = ex;
+    }
+  END_CATCH
 
   /* Restore the global builder.  */
   current_uiout = saved_uiout;
@@ -225,17 +228,22 @@ int
 catch_errors (catch_errors_ftype *func, void *func_args, char *errstring,
 	      return_mask mask)
 {
+  struct gdb_exception exception = exception_none;
   volatile int val = 0;
-  volatile struct gdb_exception exception;
   struct ui_out *saved_uiout;
 
   /* Save the global ``struct ui_out'' builder.  */
   saved_uiout = current_uiout;
 
-  TRY_CATCH (exception, RETURN_MASK_ALL)
+  TRY
     {
       val = func (func_args);
     }
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      exception = ex;
+    }
+  END_CATCH
 
   /* Restore the global builder.  */
   current_uiout = saved_uiout;

@@ -2130,6 +2130,12 @@ Thu Jun  4 11:34:02 1992  Mark Eichin  (eichin at cygnus.com)
 	* gprof.c: symbol values are now real values, don't add the vma
 	anymore. (done for solaris; should verify this on other platforms)
 
+Copyright (C) 1992-2003 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

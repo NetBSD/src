@@ -260,13 +260,13 @@ This file is part of the GNU simulators.
 
 /* If hyper-fast [well not unnecessarily slow] execution is selected, turn
    off frills like tracing and profiling.  */
-/* FIXME: A better way would be to have TRACE_RESULT check for something
+/* FIXME: A better way would be to have CGEN_TRACE_RESULT check for something
    that can cause it to be optimized out.  Another way would be to emit
    special handlers into the instruction "stream".  */
 
 #if FAST_P
-#undef TRACE_RESULT
-#define TRACE_RESULT(cpu, abuf, name, type, val)
+#undef CGEN_TRACE_RESULT
+#define CGEN_TRACE_RESULT(cpu, abuf, name, type, val)
 #endif
 
 #undef GET_ATTR
@@ -452,12 +452,12 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -483,19 +483,19 @@ SWITCH (sem, SEM_ARGBUF (vpc) -> semantic.sem_case)
   {
     SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -503,12 +503,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -536,19 +536,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -556,12 +556,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -586,18 +586,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -605,12 +605,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -636,18 +636,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_pcval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_pcval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_pcval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -655,12 +655,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -686,7 +686,7 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
 SET_H_NBIT_MOVE (LTSI (tmp_newval, 0));
@@ -697,12 +697,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -729,18 +729,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -748,12 +748,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -780,18 +780,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -799,12 +799,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -831,18 +831,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -850,12 +850,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -882,18 +882,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -901,12 +901,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -934,19 +934,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -954,12 +954,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -987,19 +987,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -1007,12 +1007,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1037,18 +1037,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -1056,12 +1056,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1086,18 +1086,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -1105,12 +1105,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1135,18 +1135,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -1154,12 +1154,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1184,18 +1184,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -1203,12 +1203,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1233,18 +1233,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -1252,12 +1252,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1288,39 +1288,39 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1351,39 +1351,39 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1416,33 +1416,33 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = ORIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), ORIF (ANDIF (GEQI (tmp_tmpopd, 0), LTQI (tmp_newval, 0)), ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), GEQI (tmp_newval, 0)), ANDIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), LTQI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1475,33 +1475,33 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = ORIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), ORIF (ANDIF (GEHI (tmp_tmpopd, 0), LTHI (tmp_newval, 0)), ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), GEHI (tmp_newval, 0)), ANDIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), LTHI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1534,33 +1534,33 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1599,7 +1599,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -1612,33 +1612,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), ORIF (ANDIF (GEQI (tmp_tmpopd, 0), LTQI (tmp_newval, 0)), ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), GEQI (tmp_newval, 0)), ANDIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), LTQI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1678,7 +1678,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -1691,33 +1691,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), ORIF (ANDIF (GEHI (tmp_tmpopd, 0), LTHI (tmp_newval, 0)), ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), GEHI (tmp_newval, 0)), ANDIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), LTHI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1757,7 +1757,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -1770,33 +1770,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1830,33 +1830,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), ORIF (ANDIF (GEQI (tmp_tmpopd, 0), LTQI (tmp_newval, 0)), ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), GEQI (tmp_newval, 0)), ANDIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), LTQI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1889,33 +1889,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), ORIF (ANDIF (GEHI (tmp_tmpopd, 0), LTHI (tmp_newval, 0)), ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), GEHI (tmp_newval, 0)), ANDIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), LTHI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -1948,33 +1948,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2007,33 +2007,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2072,7 +2072,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -2085,33 +2085,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2151,7 +2151,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -2164,33 +2164,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2224,33 +2224,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2283,33 +2283,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2348,7 +2348,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -2361,33 +2361,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2427,7 +2427,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -2440,33 +2440,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2500,33 +2500,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2559,33 +2559,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2621,7 +2621,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -2632,19 +2632,19 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_tmp, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTQI (tmp_tmp, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_tmp, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -2652,12 +2652,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2694,7 +2694,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -2705,19 +2705,19 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_tmp, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTHI (tmp_tmp, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_tmp, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -2725,12 +2725,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2767,7 +2767,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -2775,18 +2775,18 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmp, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmp, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -2794,12 +2794,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2836,7 +2836,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -2846,26 +2846,26 @@ if (ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) {
     SI opval = tmp_tmp;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 } else {
   {
     SI opval = tmp_tmp;
     SET_H_GR (FLD (f_operand2), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTSI (tmp_tmp, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmp, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -2873,12 +2873,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2915,7 +2915,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -2925,26 +2925,26 @@ if (ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) {
     SI opval = tmp_tmp;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 } else {
   {
     SI opval = tmp_tmp;
     SET_H_GR (FLD (f_operand2), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTSI (tmp_tmp, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmp, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -2952,12 +2952,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -2994,7 +2994,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3004,26 +3004,26 @@ if (ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) {
     SI opval = tmp_tmp;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 } else {
   {
     SI opval = tmp_tmp;
     SET_H_GR (FLD (f_operand2), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTSI (tmp_tmp, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmp, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -3031,12 +3031,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3073,7 +3073,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3083,26 +3083,26 @@ if (ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) {
     SI opval = tmp_tmp;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 } else {
   {
     SI opval = tmp_tmp;
     SET_H_GR (FLD (f_operand2), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTSI (tmp_tmp, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmp, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -3110,12 +3110,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3148,19 +3148,19 @@ cgen_rtx_error (current_cpu, "move-r-spr: trying to set a read-only special regi
     SI opval = tmp_tmp;
     SET_H_SR (FLD (f_operand2), opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3193,7 +3193,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3202,7 +3202,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
  else if (EQSI (tmp_prno, 10)) {
@@ -3210,7 +3210,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
  else if (EQSI (tmp_prno, 11)) {
@@ -3218,7 +3218,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
  else if (EQSI (tmp_prno, 12)) {
@@ -3226,7 +3226,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
  else if (EQSI (tmp_prno, 13)) {
@@ -3234,7 +3234,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
  else if (EQSI (tmp_prno, 0)) {
@@ -3245,7 +3245,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3257,7 +3257,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3269,7 +3269,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3278,7 +3278,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
  else if (EQSI (tmp_prno, 7)) {
@@ -3286,7 +3286,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
  else if (EQSI (tmp_prno, 14)) {
@@ -3294,7 +3294,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
  else if (EQSI (tmp_prno, 15)) {
@@ -3302,7 +3302,7 @@ if (EQSI (tmp_prno, 5)) {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
  else {
@@ -3312,12 +3312,12 @@ cgen_rtx_error (current_cpu, "move-spr-r from unimplemented register");
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3344,19 +3344,19 @@ cgen_rtx_error (current_cpu, "move-spr-r from unimplemented register");
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 {
   {
     USI opval = tmp_retaddr;
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -3395,7 +3395,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3417,7 +3417,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3439,7 +3439,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3461,7 +3461,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3483,7 +3483,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3505,7 +3505,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3527,7 +3527,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3549,7 +3549,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3571,7 +3571,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3583,18 +3583,18 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
   {
     SI opval = tmp_newval;
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3617,18 +3617,18 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
   {
     SI opval = FLD (f_indir_pc__word);
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3650,18 +3650,18 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
   {
     SI opval = FLD (f_indir_pc__dword);
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3683,18 +3683,18 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
   {
     SI opval = FLD (f_indir_pc__dword);
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3716,18 +3716,18 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
   {
     SI opval = FLD (f_indir_pc__dword);
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3749,18 +3749,18 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
   {
     SI opval = FLD (f_indir_pc__dword);
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3782,18 +3782,18 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
   {
     SI opval = FLD (f_indir_pc__dword);
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3815,18 +3815,18 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
   {
     SI opval = FLD (f_indir_pc__dword);
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3848,18 +3848,18 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
   {
     SI opval = FLD (f_indir_pc__dword);
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3881,18 +3881,18 @@ cgen_rtx_error (current_cpu, "Trying to set unimplemented special register");
   {
     SI opval = FLD (f_indir_pc__dword);
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -3926,13 +3926,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     HI opval = GET_H_SR (FLD (f_operand2));
     SETMEMHI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -3940,7 +3940,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -3948,7 +3948,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     HI opval = GET_H_SR (FLD (f_operand2));
     SETMEMHI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -3960,7 +3960,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -3979,13 +3979,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -3993,7 +3993,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4001,7 +4001,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -4013,7 +4013,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -4032,13 +4032,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4046,7 +4046,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4054,7 +4054,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -4066,7 +4066,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -4085,13 +4085,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4099,7 +4099,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4107,7 +4107,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -4119,7 +4119,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -4138,13 +4138,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4152,7 +4152,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4160,7 +4160,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -4172,7 +4172,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -4191,13 +4191,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4205,7 +4205,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4213,7 +4213,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -4225,7 +4225,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -4244,13 +4244,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     QI opval = GET_H_SR (FLD (f_operand2));
     SETMEMQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4258,7 +4258,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4266,7 +4266,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     QI opval = GET_H_SR (FLD (f_operand2));
     SETMEMQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -4278,7 +4278,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -4297,13 +4297,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     QI opval = GET_H_SR (FLD (f_operand2));
     SETMEMQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4311,7 +4311,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4319,7 +4319,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     QI opval = GET_H_SR (FLD (f_operand2));
     SETMEMQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -4331,7 +4331,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -4350,13 +4350,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     HI opval = GET_H_SR (FLD (f_operand2));
     SETMEMHI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4364,7 +4364,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4372,7 +4372,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     HI opval = GET_H_SR (FLD (f_operand2));
     SETMEMHI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -4384,7 +4384,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -4403,13 +4403,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4417,7 +4417,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4425,7 +4425,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -4437,7 +4437,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -4456,13 +4456,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4470,7 +4470,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4478,7 +4478,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -4490,7 +4490,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -4509,13 +4509,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4523,7 +4523,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4531,7 +4531,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -4543,7 +4543,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -4562,13 +4562,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4576,7 +4576,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -4584,7 +4584,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = GET_H_SR (FLD (f_operand2));
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -4596,7 +4596,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -4609,12 +4609,12 @@ cgen_rtx_error (current_cpu, "write from unimplemented special register");
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -4666,7 +4666,7 @@ if (GESI (FLD (f_operand2), 15)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4679,7 +4679,7 @@ if (GESI (FLD (f_operand2), 14)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4692,7 +4692,7 @@ if (GESI (FLD (f_operand2), 13)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4705,7 +4705,7 @@ if (GESI (FLD (f_operand2), 12)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4718,7 +4718,7 @@ if (GESI (FLD (f_operand2), 11)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4731,7 +4731,7 @@ if (GESI (FLD (f_operand2), 10)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4744,7 +4744,7 @@ if (GESI (FLD (f_operand2), 9)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4757,7 +4757,7 @@ if (GESI (FLD (f_operand2), 8)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4770,7 +4770,7 @@ if (GESI (FLD (f_operand2), 7)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4783,7 +4783,7 @@ if (GESI (FLD (f_operand2), 6)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4796,7 +4796,7 @@ if (GESI (FLD (f_operand2), 5)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4809,7 +4809,7 @@ if (GESI (FLD (f_operand2), 4)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4822,7 +4822,7 @@ if (GESI (FLD (f_operand2), 3)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4835,7 +4835,7 @@ if (GESI (FLD (f_operand2), 2)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4848,7 +4848,7 @@ if (GESI (FLD (f_operand2), 1)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4861,7 +4861,7 @@ if (GESI (FLD (f_operand2), 0)) {
     SI opval = tmp_tmp;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 23);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4872,19 +4872,19 @@ if (NEBI (tmp_postinc, 0)) {
     SI opval = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (tmp_addr) : (CPU (h_prefixreg_pre_v32)));
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 22);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -4921,7 +4921,7 @@ if (GESI (FLD (f_operand2), 14)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 14), opval);
     written |= (1 << 14);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4934,7 +4934,7 @@ if (GESI (FLD (f_operand2), 13)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 13), opval);
     written |= (1 << 13);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4947,7 +4947,7 @@ if (GESI (FLD (f_operand2), 12)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 12), opval);
     written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4960,7 +4960,7 @@ if (GESI (FLD (f_operand2), 11)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 11), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4973,7 +4973,7 @@ if (GESI (FLD (f_operand2), 10)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 10), opval);
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4986,7 +4986,7 @@ if (GESI (FLD (f_operand2), 9)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 9), opval);
     written |= (1 << 22);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -4999,7 +4999,7 @@ if (GESI (FLD (f_operand2), 8)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 8), opval);
     written |= (1 << 21);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5012,7 +5012,7 @@ if (GESI (FLD (f_operand2), 7)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 7), opval);
     written |= (1 << 20);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5025,7 +5025,7 @@ if (GESI (FLD (f_operand2), 6)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 6), opval);
     written |= (1 << 19);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5038,7 +5038,7 @@ if (GESI (FLD (f_operand2), 5)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 5), opval);
     written |= (1 << 18);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5051,7 +5051,7 @@ if (GESI (FLD (f_operand2), 4)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 4), opval);
     written |= (1 << 17);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5064,7 +5064,7 @@ if (GESI (FLD (f_operand2), 3)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 3), opval);
     written |= (1 << 16);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5077,7 +5077,7 @@ if (GESI (FLD (f_operand2), 2)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 2), opval);
     written |= (1 << 15);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5090,7 +5090,7 @@ if (GESI (FLD (f_operand2), 1)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5103,7 +5103,7 @@ if (GESI (FLD (f_operand2), 0)) {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 0), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5114,19 +5114,19 @@ if (NEBI (tmp_postinc, 0)) {
     SI opval = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (tmp_addr) : (CPU (h_prefixreg_pre_v32)));
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -5155,7 +5155,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     USI opval = GETMEMSI (current_cpu, pc, tmp_addr);
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 {
@@ -5164,7 +5164,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 14), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5174,7 +5174,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 13), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5184,7 +5184,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 12), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5194,7 +5194,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 11), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5204,7 +5204,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 10), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5214,7 +5214,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 9), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5224,7 +5224,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 8), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5234,7 +5234,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 7), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5244,7 +5244,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 6), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5254,7 +5254,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 5), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5264,7 +5264,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 4), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5274,7 +5274,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 3), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5284,7 +5284,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5294,7 +5294,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 1), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5304,7 +5304,7 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_tmp;
     SET_H_GR (((UINT) 0), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   tmp_addr = ADDSI (tmp_addr, 4);
 }
@@ -5314,19 +5314,19 @@ if (NEBI (tmp_postinc, 0)) {
     SI opval = ((EQBI (GET_H_INSN_PREFIXED_P (), 0)) ? (tmp_addr) : (CPU (h_prefixreg_pre_v32)));
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 5);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -5361,40 +5361,40 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), ORIF (ANDIF (LTQI (tmp_tmpopd, 0), GEQI (tmp_newval, 0)), ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), GEQI (tmp_newval, 0)), ANDIF (ANDIF (GEQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), LTQI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -5428,40 +5428,40 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), ORIF (ANDIF (LTHI (tmp_tmpopd, 0), GEHI (tmp_newval, 0)), ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), GEHI (tmp_newval, 0)), ANDIF (ANDIF (GEHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), LTHI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -5492,39 +5492,39 @@ if (NEBI (tmp_postinc, 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -5563,7 +5563,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -5577,40 +5577,40 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), ORIF (ANDIF (LTQI (tmp_tmpopd, 0), GEQI (tmp_newval, 0)), ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), GEQI (tmp_newval, 0)), ANDIF (ANDIF (GEQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), LTQI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -5650,7 +5650,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -5664,40 +5664,40 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), ORIF (ANDIF (LTHI (tmp_tmpopd, 0), GEHI (tmp_newval, 0)), ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), GEHI (tmp_newval, 0)), ANDIF (ANDIF (GEHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), LTHI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -5737,7 +5737,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -5748,39 +5748,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -5815,40 +5815,40 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), ORIF (ANDIF (LTQI (tmp_tmpopd, 0), GEQI (tmp_newval, 0)), ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), GEQI (tmp_newval, 0)), ANDIF (ANDIF (GEQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), LTQI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -5882,40 +5882,40 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), ORIF (ANDIF (LTHI (tmp_tmpopd, 0), GEHI (tmp_newval, 0)), ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), GEHI (tmp_newval, 0)), ANDIF (ANDIF (GEHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), LTHI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -5946,39 +5946,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6008,39 +6008,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     USI opval = tmp_newpc;
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_offs, 0), LTSI (tmp_oldpc, 0)), ORIF (ANDIF (LTSI (tmp_oldpc, 0), GESI (tmp_newpc, 0)), ANDIF (LTSI (tmp_offs, 0), GESI (tmp_newpc, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newpc, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newpc, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_offs, 0), LTSI (tmp_oldpc, 0)), GESI (tmp_newpc, 0)), ANDIF (ANDIF (GESI (tmp_offs, 0), GESI (tmp_oldpc, 0)), LTSI (tmp_newpc, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6072,39 +6072,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6135,39 +6135,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6206,7 +6206,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -6217,39 +6217,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6289,7 +6289,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -6300,39 +6300,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6364,39 +6364,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6427,39 +6427,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6492,39 +6492,39 @@ cgen_rtx_error (current_cpu, "Unexpected adds.w [PC],PC without prefix");
   {
     USI opval = tmp_newpc;
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (EXTHISI (tmp_offs), 0), LTSI (tmp_oldpc, 0)), ORIF (ANDIF (LTSI (tmp_oldpc, 0), GESI (tmp_newpc, 0)), ANDIF (LTSI (EXTHISI (tmp_offs), 0), GESI (tmp_newpc, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newpc, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newpc, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (EXTHISI (tmp_offs), 0), LTSI (tmp_oldpc, 0)), GESI (tmp_newpc, 0)), ANDIF (ANDIF (GESI (EXTHISI (tmp_offs), 0), GESI (tmp_oldpc, 0)), LTSI (tmp_newpc, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6556,39 +6556,39 @@ cgen_rtx_error (current_cpu, "Unexpected adds.w [PC],PC without prefix");
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6619,39 +6619,39 @@ cgen_rtx_error (current_cpu, "Unexpected adds.w [PC],PC without prefix");
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6690,7 +6690,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -6701,39 +6701,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6773,7 +6773,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -6784,39 +6784,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6848,39 +6848,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6911,39 +6911,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), ORIF (ANDIF (LTSI (tmp_tmpopd, 0), GESI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (GESI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -6977,40 +6977,40 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), ORIF (ANDIF (GEQI (tmp_tmpopd, 0), LTQI (tmp_newval, 0)), ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), GEQI (tmp_newval, 0)), ANDIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), LTQI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7044,40 +7044,40 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), ORIF (ANDIF (GEHI (tmp_tmpopd, 0), LTHI (tmp_newval, 0)), ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), GEHI (tmp_newval, 0)), ANDIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), LTHI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7108,39 +7108,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7179,7 +7179,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -7193,40 +7193,40 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), ORIF (ANDIF (GEQI (tmp_tmpopd, 0), LTQI (tmp_newval, 0)), ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), GEQI (tmp_newval, 0)), ANDIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), LTQI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7266,7 +7266,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 12);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -7280,40 +7280,40 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), ORIF (ANDIF (GEHI (tmp_tmpopd, 0), LTHI (tmp_newval, 0)), ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), GEHI (tmp_newval, 0)), ANDIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), LTHI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7353,7 +7353,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -7364,39 +7364,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7431,40 +7431,40 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), ORIF (ANDIF (GEQI (tmp_tmpopd, 0), LTQI (tmp_newval, 0)), ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), GEQI (tmp_newval, 0)), ANDIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), LTQI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7498,40 +7498,40 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), ORIF (ANDIF (GEHI (tmp_tmpopd, 0), LTHI (tmp_newval, 0)), ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), GEHI (tmp_newval, 0)), ANDIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), LTHI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7562,39 +7562,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7625,39 +7625,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7688,39 +7688,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7759,7 +7759,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -7770,39 +7770,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7842,7 +7842,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -7853,39 +7853,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7917,39 +7917,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -7980,39 +7980,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8043,39 +8043,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8106,39 +8106,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8177,7 +8177,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -8188,39 +8188,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8260,7 +8260,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -8271,39 +8271,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8335,39 +8335,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8398,39 +8398,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8453,18 +8453,18 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand1)), MULSI (GET_H_GR (FLD (f_operand2)), 1));
     SET_H_GR (FLD (f_operand1), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8486,18 +8486,18 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand1)), MULSI (GET_H_GR (FLD (f_operand2)), 2));
     SET_H_GR (FLD (f_operand1), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8519,18 +8519,18 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand1)), MULSI (GET_H_GR (FLD (f_operand2)), 4));
     SET_H_GR (FLD (f_operand1), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8563,40 +8563,40 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), ORIF (ANDIF (GEQI (tmp_tmpopd, 0), LTQI (tmp_newval, 0)), ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), GEQI (tmp_newval, 0)), ANDIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), LTQI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8630,40 +8630,40 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_newval, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = ORIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), ORIF (ANDIF (GEHI (tmp_tmpopd, 0), LTHI (tmp_newval, 0)), ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), GEHI (tmp_newval, 0)), ANDIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), LTHI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8694,39 +8694,39 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8762,7 +8762,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -8781,33 +8781,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), ORIF (ANDIF (GEQI (tmp_tmpopd, 0), LTQI (tmp_newval, 0)), ANDIF (LTQI (tmp_tmpops, 0), LTQI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTQI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEQI (tmp_tmpops, 0), LTQI (tmp_tmpopd, 0)), GEQI (tmp_newval, 0)), ANDIF (ANDIF (LTQI (tmp_tmpops, 0), GEQI (tmp_tmpopd, 0)), LTQI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8845,7 +8845,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -8864,33 +8864,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), ORIF (ANDIF (GEHI (tmp_tmpopd, 0), LTHI (tmp_newval, 0)), ANDIF (LTHI (tmp_tmpops, 0), LTHI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTHI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GEHI (tmp_tmpops, 0), LTHI (tmp_tmpopd, 0)), GEHI (tmp_newval, 0)), ANDIF (ANDIF (LTHI (tmp_tmpops, 0), GEHI (tmp_tmpopd, 0)), LTHI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -8928,7 +8928,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -8947,33 +8947,33 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = ORIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), ORIF (ANDIF (GESI (tmp_tmpopd, 0), LTSI (tmp_newval, 0)), ANDIF (LTSI (tmp_tmpops, 0), LTSI (tmp_newval, 0))));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = ORIF (ANDIF (ANDIF (GESI (tmp_tmpops, 0), LTSI (tmp_tmpopd, 0)), GESI (tmp_newval, 0)), ANDIF (ANDIF (LTSI (tmp_tmpops, 0), GESI (tmp_tmpopd, 0)), LTSI (tmp_newval, 0)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9009,13 +9009,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     QI opval = tmp_tmpd;
     SETMEMQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -9023,7 +9023,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -9031,7 +9031,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     QI opval = tmp_tmpd;
     SETMEMQI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -9043,7 +9043,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -9052,12 +9052,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9091,13 +9091,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     HI opval = tmp_tmpd;
     SETMEMHI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -9105,7 +9105,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -9113,7 +9113,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     HI opval = tmp_tmpd;
     SETMEMHI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -9125,7 +9125,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -9134,12 +9134,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9173,13 +9173,13 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = tmp_tmpd;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
   {
     BI opval = CPU (h_pbit);
     CPU (h_cbit) = opval;
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -9187,7 +9187,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 } else {
@@ -9195,7 +9195,7 @@ if (EQBI (CPU (h_pbit), 0)) {
     SI opval = tmp_tmpd;
     SETMEMSI (current_cpu, pc, tmp_addr, opval);
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "memory", 'x', opval);
   }
 }
 if (NEBI (tmp_postinc, 0)) {
@@ -9207,7 +9207,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -9216,12 +9216,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9250,44 +9250,44 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = TRUNCDISI (tmp_tmpr);
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   {
     SI opval = TRUNCDISI (SRLDI (tmp_tmpr, 32));
     SET_H_SR (((UINT) 7), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = ANDIF (GET_H_V32_NON_V32 (), CPU (h_cbit));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTDI (tmp_tmpr, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQDI (tmp_tmpr, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = NEDI (tmp_tmpr, EXTSIDI (TRUNCDISI (tmp_tmpr)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9316,44 +9316,44 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = TRUNCDISI (tmp_tmpr);
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   {
     SI opval = TRUNCDISI (SRLDI (tmp_tmpr, 32));
     SET_H_SR (((UINT) 7), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = ANDIF (GET_H_V32_NON_V32 (), CPU (h_cbit));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTDI (tmp_tmpr, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQDI (tmp_tmpr, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = NEDI (tmp_tmpr, EXTSIDI (TRUNCDISI (tmp_tmpr)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9382,44 +9382,44 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = TRUNCDISI (tmp_tmpr);
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   {
     SI opval = TRUNCDISI (SRLDI (tmp_tmpr, 32));
     SET_H_SR (((UINT) 7), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = ANDIF (GET_H_V32_NON_V32 (), CPU (h_cbit));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTDI (tmp_tmpr, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQDI (tmp_tmpr, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = NEDI (tmp_tmpr, EXTSIDI (TRUNCDISI (tmp_tmpr)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9448,44 +9448,44 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = TRUNCDISI (tmp_tmpr);
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   {
     SI opval = TRUNCDISI (SRLDI (tmp_tmpr, 32));
     SET_H_SR (((UINT) 7), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = ANDIF (GET_H_V32_NON_V32 (), CPU (h_cbit));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTDI (tmp_tmpr, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQDI (tmp_tmpr, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = NEDI (tmp_tmpr, ZEXTSIDI (TRUNCDISI (tmp_tmpr)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9514,44 +9514,44 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = TRUNCDISI (tmp_tmpr);
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   {
     SI opval = TRUNCDISI (SRLDI (tmp_tmpr, 32));
     SET_H_SR (((UINT) 7), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = ANDIF (GET_H_V32_NON_V32 (), CPU (h_cbit));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTDI (tmp_tmpr, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQDI (tmp_tmpr, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = NEDI (tmp_tmpr, ZEXTSIDI (TRUNCDISI (tmp_tmpr)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9580,44 +9580,44 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = TRUNCDISI (tmp_tmpr);
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
   {
     SI opval = TRUNCDISI (SRLDI (tmp_tmpr, 32));
     SET_H_SR (((UINT) 7), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
 {
   {
     BI opval = ANDIF (GET_H_V32_NON_V32 (), CPU (h_cbit));
     CPU (h_cbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
   {
     BI opval = LTDI (tmp_tmpr, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQDI (tmp_tmpr, 0), ORIF (CPU (h_zbit), NOTBI (CPU (h_xbit))));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
   {
     BI opval = NEDI (tmp_tmpr, ZEXTSIDI (TRUNCDISI (tmp_tmpr)));
     CPU (h_vbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9644,18 +9644,18 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -9663,12 +9663,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9697,18 +9697,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -9716,12 +9716,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9746,18 +9746,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -9765,12 +9765,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9798,19 +9798,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTQI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -9818,12 +9818,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9851,19 +9851,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTHI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -9871,12 +9871,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9901,18 +9901,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -9920,12 +9920,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -9961,7 +9961,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -9972,19 +9972,19 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTQI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -9992,12 +9992,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10034,7 +10034,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -10045,19 +10045,19 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTHI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10065,12 +10065,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10107,7 +10107,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -10115,18 +10115,18 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_tmpd;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10134,12 +10134,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10168,19 +10168,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTQI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10188,12 +10188,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10221,19 +10221,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTHI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10241,12 +10241,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10271,18 +10271,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10290,12 +10290,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10320,18 +10320,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10339,12 +10339,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10372,19 +10372,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTQI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10392,12 +10392,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10425,19 +10425,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTHI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10445,12 +10445,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10475,18 +10475,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10494,12 +10494,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10535,7 +10535,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -10546,19 +10546,19 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTQI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10566,12 +10566,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10608,7 +10608,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 11);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -10619,19 +10619,19 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTHI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10639,12 +10639,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10681,7 +10681,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 10);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -10689,18 +10689,18 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_tmpd;
     SET_H_GR (((ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) ? (FLD (f_operand1)) : (FLD (f_operand2))), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10708,12 +10708,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10742,19 +10742,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTQI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10762,12 +10762,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10795,19 +10795,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTHI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10815,12 +10815,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10845,18 +10845,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10864,12 +10864,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10894,18 +10894,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10913,12 +10913,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -10943,18 +10943,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -10962,12 +10962,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11095,18 +11095,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand1), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11114,12 +11114,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11151,19 +11151,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTQI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11171,12 +11171,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11208,19 +11208,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTHI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11228,12 +11228,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11262,18 +11262,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11281,12 +11281,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11311,18 +11311,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11330,12 +11330,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11365,19 +11365,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTQI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11385,12 +11385,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11420,19 +11420,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTHI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11440,12 +11440,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11472,18 +11472,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11491,12 +11491,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11521,18 +11521,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11540,12 +11540,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11575,19 +11575,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 255), ANDSI (tmp_oldregval, 0xffffff00));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTQI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQQI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11595,12 +11595,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11630,19 +11630,19 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ORSI (ANDSI (tmp_tmpd, 65535), ANDSI (tmp_oldregval, 0xffff0000));
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTHI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQHI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11650,12 +11650,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11682,18 +11682,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11701,12 +11701,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11731,18 +11731,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11750,12 +11750,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11782,12 +11782,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11795,12 +11795,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11826,12 +11826,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -11839,12 +11839,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -11871,7 +11871,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 0)), 0)) {
     BI opval = 1;
     CPU (h_cbit) = opval;
     written |= (1 << 1);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 1)), 0)) {
@@ -11879,7 +11879,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 1)), 0)) {
     BI opval = 1;
     CPU (h_vbit) = opval;
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 2)), 0)) {
@@ -11887,7 +11887,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 2)), 0)) {
     BI opval = 1;
     CPU (h_zbit) = opval;
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 3)), 0)) {
@@ -11895,7 +11895,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 3)), 0)) {
     BI opval = 1;
     CPU (h_nbit) = opval;
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 4)), 0)) {
@@ -11903,7 +11903,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 4)), 0)) {
     BI opval = 1;
     CPU (h_xbit) = opval;
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 5)), 0)) {
@@ -11911,7 +11911,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 5)), 0)) {
     BI opval = 1;
     SET_H_IBIT (opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "ibit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "ibit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 6)), 0)) {
@@ -11919,7 +11919,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 6)), 0)) {
     BI opval = 1;
     SET_H_UBIT (opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "ubit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "ubit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 7)), 0)) {
@@ -11927,20 +11927,20 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 7)), 0)) {
     BI opval = 1;
     CPU (h_pbit) = opval;
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "pbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pbit", 'x', opval);
   }
 }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 if (EQSI (ANDSI (tmp_tmp, SLLSI (1, 4)), 0)) {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
 }
 }
@@ -11967,7 +11967,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 0)), 0)) {
     BI opval = 0;
     CPU (h_cbit) = opval;
     written |= (1 << 1);
-    TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "cbit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 1)), 0)) {
@@ -11975,7 +11975,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 1)), 0)) {
     BI opval = 0;
     CPU (h_vbit) = opval;
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "vbit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 2)), 0)) {
@@ -11983,7 +11983,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 2)), 0)) {
     BI opval = 0;
     CPU (h_zbit) = opval;
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 3)), 0)) {
@@ -11991,7 +11991,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 3)), 0)) {
     BI opval = 0;
     CPU (h_nbit) = opval;
     written |= (1 << 3);
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 4)), 0)) {
@@ -11999,7 +11999,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 4)), 0)) {
     BI opval = 0;
     CPU (h_xbit) = opval;
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 5)), 0)) {
@@ -12007,7 +12007,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 5)), 0)) {
     BI opval = 0;
     SET_H_IBIT (opval);
     written |= (1 << 2);
-    TRACE_RESULT (current_cpu, abuf, "ibit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "ibit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 6)), 0)) {
@@ -12015,7 +12015,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 6)), 0)) {
     BI opval = 0;
     SET_H_UBIT (opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "ubit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "ubit", 'x', opval);
   }
 }
 if (NESI (ANDSI (tmp_tmp, SLLSI (1, 7)), 0)) {
@@ -12023,7 +12023,7 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 7)), 0)) {
     BI opval = 0;
     CPU (h_pbit) = opval;
     written |= (1 << 4);
-    TRACE_RESULT (current_cpu, abuf, "pbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pbit", 'x', opval);
   }
 }
 {
@@ -12031,12 +12031,12 @@ if (NESI (ANDSI (tmp_tmp, SLLSI (1, 7)), 0)) {
     BI opval = 0;
     CPU (h_xbit) = opval;
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -12115,12 +12115,12 @@ crisv10f_branch_taken (current_cpu, pc, FLD (i_o_pcrel), tmp_truthval);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 if (tmp_truthval) {
@@ -12129,7 +12129,7 @@ if (tmp_truthval) {
     USI opval = FLD (i_o_pcrel);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -12156,19 +12156,19 @@ if (tmp_truthval) {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 {
   {
     USI opval = FLD (i_o_pcrel);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -12247,12 +12247,12 @@ crisv10f_branch_taken (current_cpu, pc, FLD (i_o_word_pcrel), tmp_truthval);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 if (tmp_truthval) {
@@ -12261,7 +12261,7 @@ if (tmp_truthval) {
     USI opval = FLD (i_o_word_pcrel);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -12288,19 +12288,19 @@ if (tmp_truthval) {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 {
   {
     USI opval = FLD (i_o_word_pcrel);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -12324,23 +12324,23 @@ if (tmp_truthval) {
   {
     SI opval = ADDSI (pc, 2);
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
   {
     USI opval = GET_H_GR (FLD (f_operand1));
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -12364,7 +12364,7 @@ if (tmp_truthval) {
   {
     SI opval = ADDSI (pc, 2);
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
   {
     USI opval = ({   SI tmp_addr;
@@ -12382,24 +12382,24 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
 ; tmp_tmp_mem; });
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -12424,23 +12424,23 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (pc, 6);
     SET_H_SR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "sr", 'x', opval);
   }
   {
     USI opval = FLD (f_indir_pc__dword);
     SEM_BRANCH_VIA_CACHE (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -12465,18 +12465,18 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
   {
     USI opval = crisv10f_break_handler (current_cpu, FLD (f_u4), pc);
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 
@@ -12504,18 +12504,18 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -12523,12 +12523,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -12557,18 +12557,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -12576,12 +12576,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -12610,18 +12610,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -12629,12 +12629,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -12672,7 +12672,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -12684,26 +12684,26 @@ if (ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 } else {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -12711,12 +12711,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -12755,7 +12755,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -12767,26 +12767,26 @@ if (ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 } else {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -12794,12 +12794,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -12838,7 +12838,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -12850,26 +12850,26 @@ if (ANDIF (GET_H_INSN_PREFIXED_P (), NOTSI (FLD (f_memmode)))) {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 9);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 } else {
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
     written |= (1 << 8);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -12877,12 +12877,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -12912,18 +12912,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -12931,12 +12931,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -12965,18 +12965,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -12984,12 +12984,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -13018,18 +13018,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = tmp_newval;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_newval, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_newval, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -13037,12 +13037,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -13118,18 +13118,18 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ZEXTBISI (tmp_truthval);
     SET_H_GR (FLD (f_operand1), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -13349,18 +13349,18 @@ if (GESI (tmp_tmp, 0)) {
   {
     SI opval = tmp_tmpd;
     SET_H_GR (FLD (f_operand2), opval);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 {
   {
     BI opval = LTSI (tmp_tmpd, 0);
     CPU (h_nbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "nbit", 'x', opval);
   }
   {
     BI opval = ANDIF (EQSI (tmp_tmpd, 0), ((CPU (h_xbit)) ? (CPU (h_zbit)) : (1)));
     CPU (h_zbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "zbit", 'x', opval);
   }
 SET_H_CBIT_MOVE (0);
 SET_H_VBIT_MOVE (0);
@@ -13368,12 +13368,12 @@ SET_H_VBIT_MOVE (0);
   {
     BI opval = 0;
     CPU (h_xbit) = opval;
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -13396,12 +13396,12 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand2)), FLD (f_s8));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13423,12 +13423,12 @@ SET_H_VBIT_MOVE (0);
   {
     SI opval = ADDSI (ADDSI (pc, 2), FLD (f_s8));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 cris_flush_simulator_decode_cache (current_cpu, pc);
 }
@@ -13457,12 +13457,12 @@ cris_flush_simulator_decode_cache (current_cpu, pc);
   {
     SI opval = tmp_newpc;
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13498,7 +13498,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     USI opval = tmp_addr;
     SEM_BRANCH_VIA_ADDR (current_cpu, sem_arg, opval, vpc);
     written |= (1 << 5);
-    TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "pc", 'x', opval);
   }
 }
 }
@@ -13508,13 +13508,13 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     BI opval = 0;
     CPU (h_xbit) = opval;
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -13555,7 +13555,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (((UINT) 14), opval);
     written |= (1 << 5);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -13565,13 +13565,13 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     BI opval = 0;
     CPU (h_xbit) = opval;
     written |= (1 << 7);
-    TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "xbit", 'x', opval);
   }
   {
     BI opval = 0;
     SET_H_INSN_PREFIXED_P (opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 }
@@ -13610,7 +13610,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -13618,12 +13618,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand2)), EXTQISI (tmp_tmps));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13658,7 +13658,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -13666,12 +13666,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand2)), EXTHISI (tmp_tmps));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13706,7 +13706,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 6);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -13714,12 +13714,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand2)), tmp_tmps);
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13741,12 +13741,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand2)), EXTQISI (TRUNCSIQI (FLD (f_indir_pc__byte))));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13767,12 +13767,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand2)), EXTHISI (TRUNCSIHI (FLD (f_indir_pc__word))));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13793,12 +13793,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand2)), FLD (f_indir_pc__dword));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13832,7 +13832,7 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
     SI opval = tmp_addr;
     SET_H_GR (FLD (f_operand1), opval);
     written |= (1 << 5);
-    TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "gr", 'x', opval);
   }
 }
 }
@@ -13840,12 +13840,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = tmp_tmps;
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13867,12 +13867,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = FLD (f_indir_pc__dword);
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13893,12 +13893,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand1)), MULSI (GET_H_GR (FLD (f_operand2)), 1));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13919,12 +13919,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand1)), MULSI (GET_H_GR (FLD (f_operand2)), 2));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13945,12 +13945,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (GET_H_GR (FLD (f_operand1)), MULSI (GET_H_GR (FLD (f_operand2)), 4));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13971,12 +13971,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (ADDSI (pc, 4), MULSI (GET_H_GR (FLD (f_operand2)), 1));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -13997,12 +13997,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (ADDSI (pc, 4), MULSI (GET_H_GR (FLD (f_operand2)), 2));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 
@@ -14023,12 +14023,12 @@ if (EQBI (GET_H_INSN_PREFIXED_P (), 0)) {
   {
     SI opval = ADDSI (ADDSI (pc, 4), MULSI (GET_H_GR (FLD (f_operand2)), 4));
     CPU (h_prefixreg_pre_v32) = opval;
-    TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "prefixreg", 'x', opval);
   }
   {
     BI opval = 1;
     SET_H_INSN_PREFIXED_P (opval);
-    TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
+    CGEN_TRACE_RESULT (current_cpu, abuf, "insn-prefixed-p", 'x', opval);
   }
 }
 

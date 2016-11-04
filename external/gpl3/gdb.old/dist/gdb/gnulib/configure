@@ -5250,6 +5250,7 @@ fi
   # Code from module strnlen1:
   # Code from module strstr:
   # Code from module strstr-simple:
+  # Code from module strtok_r:
   # Code from module sys_stat:
   # Code from module sys_types:
   # Code from module time:
@@ -11059,6 +11060,17 @@ $as_echo "$gl_cv_func_strstr_works_always" >&6; }
     esac
   fi
 
+ac_fn_c_check_decl "$LINENO" "strtok_r" "ac_cv_have_decl_strtok_r" "$ac_includes_default"
+if test "x$ac_cv_have_decl_strtok_r" = x""yes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRTOK_R $ac_have_decl
+_ACEOF
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether stat file-mode macros are broken" >&5
 $as_echo_n "checking whether stat file-mode macros are broken... " >&6; }
 if test "${ac_cv_header_stat_broken+set}" = set; then :
@@ -16590,6 +16602,119 @@ $as_echo "$gl_cv_func_strstr_works_always" >&6; }
 
 
 $as_echo "#define GNULIB_TEST_STRSTR 1" >>confdefs.h
+
+
+
+
+
+
+
+     for ac_func in strtok_r
+do :
+  ac_fn_c_check_func "$LINENO" "strtok_r" "ac_cv_func_strtok_r"
+if test "x$ac_cv_func_strtok_r" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STRTOK_R 1
+_ACEOF
+
+fi
+done
+
+  if test $ac_cv_func_strtok_r = yes; then
+    HAVE_STRTOK_R=1
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether strtok_r works" >&5
+$as_echo_n "checking whether strtok_r works... " >&6; }
+if test "${gl_cv_func_strtok_r_works+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "$cross_compiling" = yes; then :
+
+          case "$host_os" in
+                    # Guess no on glibc systems.
+            *-gnu*) gl_cv_func_strtok_r_works="guessing no";;
+            *)      gl_cv_func_strtok_r_works="guessing yes";;
+          esac
+
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+              #ifndef __OPTIMIZE__
+              # define __OPTIMIZE__ 1
+              #endif
+              #undef __OPTIMIZE_SIZE__
+              #undef __NO_INLINE__
+              #include <stdlib.h>
+              #include <string.h>
+
+int
+main ()
+{
+static const char dummy[] = "\177\01a";
+              char delimiters[] = "xxxxxxxx";
+              char *save_ptr = (char *) dummy;
+              strtok_r (delimiters, "x", &save_ptr);
+              strtok_r (NULL, "x", &save_ptr);
+              return 0;
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  gl_cv_func_strtok_r_works=yes
+else
+  gl_cv_func_strtok_r_works=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gl_cv_func_strtok_r_works" >&5
+$as_echo "$gl_cv_func_strtok_r_works" >&6; }
+    case "$gl_cv_func_strtok_r_works" in
+      *no)
+                                UNDEFINE_STRTOK_R=1
+        ;;
+    esac
+  else
+    HAVE_STRTOK_R=0
+  fi
+
+  if test $ac_cv_have_decl_strtok_r = no; then
+    HAVE_DECL_STRTOK_R=0
+  fi
+
+  if test $HAVE_STRTOK_R = 0 || test $REPLACE_STRTOK_R = 1; then
+
+
+
+
+
+
+
+
+  gl_LIBOBJS="$gl_LIBOBJS strtok_r.$ac_objext"
+
+
+  :
+
+  fi
+
+
+
+
+
+          GNULIB_STRTOK_R=1
+
+
+
+
+
+$as_echo "#define GNULIB_TEST_STRTOK_R 1" >>confdefs.h
 
 
 

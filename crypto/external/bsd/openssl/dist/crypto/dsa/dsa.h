@@ -213,7 +213,7 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen,
 int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
                const unsigned char *sigbuf, int siglen, DSA *dsa);
 int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *freefunc);
 int DSA_set_ex_data(DSA *d, int idx, void *arg);
 void *DSA_get_ex_data(DSA *d, int idx);
 
@@ -287,6 +287,7 @@ void ERR_load_DSA_strings(void);
 # define DSA_F_DO_DSA_PRINT                               104
 # define DSA_F_DSAPARAMS_PRINT                            100
 # define DSA_F_DSAPARAMS_PRINT_FP                         101
+# define DSA_F_DSA_BUILTIN_PARAMGEN2                      126
 # define DSA_F_DSA_DO_SIGN                                112
 # define DSA_F_DSA_DO_VERIFY                              113
 # define DSA_F_DSA_GENERATE_KEY                           124
@@ -316,12 +317,14 @@ void ERR_load_DSA_strings(void);
 # define DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE                100
 # define DSA_R_DECODE_ERROR                               104
 # define DSA_R_INVALID_DIGEST_TYPE                        106
+# define DSA_R_INVALID_PARAMETERS                         112
 # define DSA_R_MISSING_PARAMETERS                         101
 # define DSA_R_MODULUS_TOO_LARGE                          103
 # define DSA_R_NEED_NEW_SETUP_VALUES                      110
 # define DSA_R_NON_FIPS_DSA_METHOD                        111
 # define DSA_R_NO_PARAMETERS_SET                          107
 # define DSA_R_PARAMETER_ENCODING_ERROR                   105
+# define DSA_R_Q_NOT_PRIME                                113
 
 #ifdef  __cplusplus
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: nvme.4,v 1.2 2016/05/02 09:43:33 wiz Exp $
+.\"	$NetBSD: nvme.4,v 1.2.2.1 2016/11/04 14:48:56 pgoyette Exp $
 .\"	$OpenBSD: nvme.4,v 1.2 2016/04/14 11:53:37 jmc Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd May 1, 2016
+.Dd October 21, 2016
 .Dt NVME 4
 .Os
 .Sh NAME
@@ -29,10 +29,76 @@ The
 driver provides support for NVMe, or NVM Express,
 storage controllers conforming to the
 Non-Volatile Memory Host Controller Interface specification.
+Controllers complying to specification version 1.1 and 1.2 are known to work.
+Other versions should work too for normal operation with the exception of some
+pass-through commands.
+.Pp
+The driver supports the following features:
+.Bl -bullet -compact -offset indent
+.It
+controller and namespace configuration and management using
+.Xr nvmectl 8
+.It
+highly parallel I/O using per-CPU I/O queues
+.It
+PCI MSI/MSI-X attachment, and INTx for legacy systems
+.El
+.Pp
+On systems supporting MSI/MSI-X, the
+.Nm
+driver uses per-CPU IO queue pairs for lockless and highly parallelized I/O.
+Interrupt handlers are scheduled on distinct CPUs.
+The driver allocates as many interrupt vectors as available, up to number
+of CPUs + 1.
+MSI supports up to 32 interrupt vectors within the system,
+MSI-X can have up to 2k.
+Each I/O queue pair has a separate command circular buffer.
+The
+.Nm
+specification allows up to 64k commands per queue, the driver currently
+allocates 1024 entries per queue, or controller maximum, whatever is smaller.
+Command submissions are done always on the current CPU, the command completion
+interrupt is handled on the CPU corresponding to the I/O queue ID
+- first I/O queue on CPU0, second I/O queue on CPU1, etc.
+Admin queue command completion is handled by CPU0 by default.
+To keep lock contention to minimum, it is recommended to keep this assignment,
+even though it is possible to reassign the interrupt handlers differently
+using
+.Xr intrctl 8 .
+.Pp
+On systems without MSI, the driver uses a single HW interrupt handler for
+both admin and standard I/O commands.
+Command submissions are done on the current CPU, the command completion
+interrupt is handled on CPU0 by default.
+This leads to some lock contention, especially on command ccbs.
+.Pp
+The driver offloads command completion processing to soft interrupt,
+in order to increase the total system I/O capacity and throughput.
+.Sh FILES
+.Bl -tag -width /dev/nvmeX -compact
+.It Pa /dev/nvme*
+nvme device special files used by
+.Xr nvmectl 8 .
+.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr ld 4 ,
-.Xr pci 4
+.Xr pci 4 ,
+.Xr intrctl 8 ,
+.Xr MAKEDEV 8 ,
+.Xr nvmectl 8
+.Rs
+.%A NVM Express, Inc.
+.%T "NVM Express \- scalable, efficient, and industry standard"
+.%D 2016-06-12
+.%U http://nvmexpress.org/
+.Re
+.Rs
+.%A NVM Express, Inc.
+.%T "NVM Express Revision 1.2.1"
+.%D 2016-06-05
+.%U http://www.nvmexpress.org/wp-content/uploads/NVM_Express_1_2_1_Gold_20160603.pdf
+.Re
 .Sh HISTORY
 The
 .Nm
@@ -54,3 +120,30 @@ and ported to
 by
 .An NONAKA Kimihiro
 .Aq Mt nonaka@NetBSD.org .
+.An Jaromir Dolecek
+.Aq Mt jdolecek@NetBSD.org
+contributed to making this driver MPSAFE.
+.Sh NOTES
+At least some
+.Tn Intel
+.Nm
+adapter cards are known to require
+.Tn PCIe
+Generation 3 slot.
+Such cards do not even probe when plugged
+into older generation slot.
+.Pp
+The driver also attaches and works fine for emulated
+.Nm
+devices under QEMU and
+.Tn Oracle
+.Tn VirtualBox .
+However, there seems to be some broken interaction between
+.Tn VirtualBox
+5.1.6
+and the driver, the emulated
+.Nm
+controller responds to commands only the first time it is attached,
+after reboot or module reload it stops responding.
+The virtual machine must be completely powered off
+(or even killed) to fix this.

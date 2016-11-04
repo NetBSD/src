@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2016/05/31 02:35:49 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2016/11/04 14:48:48 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -134,6 +134,15 @@ PKGCONFIG_SED_FLAGS= \
 CPPFLAGS.fcxml.c=	-Wno-error
 
 CWARNFLAGS.clang+=	-Wno-pointer-sign -Wno-switch
+
+.if ${MACHINE_ARCH} == "sparc" || ${COMMON_MACHINE_ARCH:U} == "sparc"
+COPTS.fccache.c+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
+COPTS.fccfg.c+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
+COPTS.fccharset.c+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
+COPTS.fcobjs.c+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
+COPTS.fcpat.c+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
+COPTS.fcstr.c+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
+.endif
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

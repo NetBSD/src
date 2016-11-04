@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.678.2.2 2016/08/06 00:18:40 pgoyette Exp $
+# $NetBSD: mi,v 1.678.2.3 2016/11/04 14:42:39 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2120,6 +2120,7 @@
 ./usr/tests/kernel/t_posix_fadvise		tests-obsolete		obsolete
 ./usr/tests/kernel/t_posix_fallocate		tests-obsolete		obsolete
 ./usr/tests/kernel/t_ps_strings			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/t_ptrace			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_pty			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_rnd			tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_sigaction			tests-obsolete		obsolete
@@ -2993,6 +2994,7 @@
 ./usr/tests/lib/libpthread/t_sleep		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_status		tests-obsolete		obsolete
 ./usr/tests/lib/libpthread/t_swapcontext	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/t_timedmutex		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librt				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librt/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librt/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
@@ -3232,6 +3234,8 @@
 ./usr/tests/net/net/t_ipaddress			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_ipv6address		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_ipv6_lifetime		tests-net-tests		atf,rump
+./usr/tests/net/net/t_mtudisc			tests-net-tests		atf,rump
+./usr/tests/net/net/t_ping6_opts		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_pktinfo			tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/t_raw			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_tcp			tests-net-tests		compattestfile,atf
@@ -3804,6 +3808,15 @@
 ./usr/tests/usr.bin/unifdef/d_basic.in		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/unifdef/d_basic.out		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/unifdef/t_basic		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/uniq			tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/Atffile	tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/d_basic.in		tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/d_basic.out	tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/d_input.in		tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/d_counts.out	tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/d_show_duplicates.out 		tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/d_show_uniques.out		tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/t_uniq 	tests-usr.bin-tests compattestfile,atf
 ./usr/tests/usr.bin/vmstat			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/vmstat/Atffile		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/vmstat/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua

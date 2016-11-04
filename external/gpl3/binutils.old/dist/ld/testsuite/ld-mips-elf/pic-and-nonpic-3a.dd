@@ -31,9 +31,9 @@ Disassembly of section \.text:
 #...
 Disassembly of section \.MIPS\.stubs:
 
-00000c00 <.MIPS.stubs>:
+00000c00 <_MIPS_STUBS_>:
  c00:	8f998010 	lw	t9,-32752\(gp\)
- c04:	03e07821 	move	t7,ra
+ c04:	03e07825 	move	t7,ra
  c08:	0320f809 	jalr	t9
- c0c:	24180006 	li	t8,6
+ c0c:	24180005 	li	t8,5
 	\.\.\.

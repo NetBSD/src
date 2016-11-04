@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.166.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.166.2.3 2016/11/04 14:49:21 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.166.2.2 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.166.2.3 2016/11/04 14:49:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -297,7 +297,7 @@ in_pcbbind_addr(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 		}
 		if (ia == NULL)
 			goto error;
-		if (ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
+		if (ia->ia4_flags & IN_IFF_DUPLICATED)
 			goto error;
 	}
 	pserialize_read_exit(s);

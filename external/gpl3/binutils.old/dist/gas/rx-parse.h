@@ -1,14 +1,13 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 3.0.  */
 
-/* Skeleton interface for Bison's Yacc-like parsers in C
+/* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,9 +15,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -33,125 +30,134 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Tokens.  */
+#ifndef YY_RX_RX_PARSE_H_INCLUDED
+# define YY_RX_RX_PARSE_H_INCLUDED
+/* Debug traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int rx_debug;
+#endif
+
+/* Token type.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     REG = 258,
-     FLAG = 259,
-     CREG = 260,
-     EXPR = 261,
-     UNKNOWN_OPCODE = 262,
-     IS_OPCODE = 263,
-     DOT_S = 264,
-     DOT_B = 265,
-     DOT_W = 266,
-     DOT_L = 267,
-     DOT_A = 268,
-     DOT_UB = 269,
-     DOT_UW = 270,
-     ABS = 271,
-     ADC = 272,
-     ADD = 273,
-     AND_ = 274,
-     BCLR = 275,
-     BCND = 276,
-     BMCND = 277,
-     BNOT = 278,
-     BRA = 279,
-     BRK = 280,
-     BSET = 281,
-     BSR = 282,
-     BTST = 283,
-     CLRPSW = 284,
-     CMP = 285,
-     DBT = 286,
-     DIV = 287,
-     DIVU = 288,
-     EDIV = 289,
-     EDIVU = 290,
-     EMUL = 291,
-     EMULU = 292,
-     FADD = 293,
-     FCMP = 294,
-     FDIV = 295,
-     FMUL = 296,
-     FREIT = 297,
-     FSUB = 298,
-     FTOI = 299,
-     INT = 300,
-     ITOF = 301,
-     JMP = 302,
-     JSR = 303,
-     MACHI = 304,
-     MACLO = 305,
-     MAX = 306,
-     MIN = 307,
-     MOV = 308,
-     MOVU = 309,
-     MUL = 310,
-     MULHI = 311,
-     MULLO = 312,
-     MULU = 313,
-     MVFACHI = 314,
-     MVFACMI = 315,
-     MVFACLO = 316,
-     MVFC = 317,
-     MVTACHI = 318,
-     MVTACLO = 319,
-     MVTC = 320,
-     MVTIPL = 321,
-     NEG = 322,
-     NOP = 323,
-     NOT = 324,
-     OR = 325,
-     POP = 326,
-     POPC = 327,
-     POPM = 328,
-     PUSH = 329,
-     PUSHA = 330,
-     PUSHC = 331,
-     PUSHM = 332,
-     RACW = 333,
-     REIT = 334,
-     REVL = 335,
-     REVW = 336,
-     RMPA = 337,
-     ROLC = 338,
-     RORC = 339,
-     ROTL = 340,
-     ROTR = 341,
-     ROUND = 342,
-     RTE = 343,
-     RTFI = 344,
-     RTS = 345,
-     RTSD = 346,
-     SAT = 347,
-     SATR = 348,
-     SBB = 349,
-     SCCND = 350,
-     SCMPU = 351,
-     SETPSW = 352,
-     SHAR = 353,
-     SHLL = 354,
-     SHLR = 355,
-     SMOVB = 356,
-     SMOVF = 357,
-     SMOVU = 358,
-     SSTR = 359,
-     STNZ = 360,
-     STOP = 361,
-     STZ = 362,
-     SUB = 363,
-     SUNTIL = 364,
-     SWHILE = 365,
-     TST = 366,
-     WAIT = 367,
-     XCHG = 368,
-     XOR = 369
-   };
+  enum yytokentype
+  {
+    REG = 258,
+    FLAG = 259,
+    CREG = 260,
+    EXPR = 261,
+    UNKNOWN_OPCODE = 262,
+    IS_OPCODE = 263,
+    DOT_S = 264,
+    DOT_B = 265,
+    DOT_W = 266,
+    DOT_L = 267,
+    DOT_A = 268,
+    DOT_UB = 269,
+    DOT_UW = 270,
+    ABS = 271,
+    ADC = 272,
+    ADD = 273,
+    AND_ = 274,
+    BCLR = 275,
+    BCND = 276,
+    BMCND = 277,
+    BNOT = 278,
+    BRA = 279,
+    BRK = 280,
+    BSET = 281,
+    BSR = 282,
+    BTST = 283,
+    CLRPSW = 284,
+    CMP = 285,
+    DBT = 286,
+    DIV = 287,
+    DIVU = 288,
+    EDIV = 289,
+    EDIVU = 290,
+    EMUL = 291,
+    EMULU = 292,
+    FADD = 293,
+    FCMP = 294,
+    FDIV = 295,
+    FMUL = 296,
+    FREIT = 297,
+    FSUB = 298,
+    FTOI = 299,
+    INT = 300,
+    ITOF = 301,
+    JMP = 302,
+    JSR = 303,
+    MACHI = 304,
+    MACLO = 305,
+    MAX = 306,
+    MIN = 307,
+    MOV = 308,
+    MOVU = 309,
+    MUL = 310,
+    MULHI = 311,
+    MULLO = 312,
+    MULU = 313,
+    MVFACHI = 314,
+    MVFACMI = 315,
+    MVFACLO = 316,
+    MVFC = 317,
+    MVTACHI = 318,
+    MVTACLO = 319,
+    MVTC = 320,
+    MVTIPL = 321,
+    NEG = 322,
+    NOP = 323,
+    NOT = 324,
+    OR = 325,
+    POP = 326,
+    POPC = 327,
+    POPM = 328,
+    PUSH = 329,
+    PUSHA = 330,
+    PUSHC = 331,
+    PUSHM = 332,
+    RACW = 333,
+    REIT = 334,
+    REVL = 335,
+    REVW = 336,
+    RMPA = 337,
+    ROLC = 338,
+    RORC = 339,
+    ROTL = 340,
+    ROTR = 341,
+    ROUND = 342,
+    RTE = 343,
+    RTFI = 344,
+    RTS = 345,
+    RTSD = 346,
+    SAT = 347,
+    SATR = 348,
+    SBB = 349,
+    SCCND = 350,
+    SCMPU = 351,
+    SETPSW = 352,
+    SHAR = 353,
+    SHLL = 354,
+    SHLR = 355,
+    SMOVB = 356,
+    SMOVF = 357,
+    SMOVU = 358,
+    SSTR = 359,
+    STNZ = 360,
+    STOP = 361,
+    STZ = 362,
+    SUB = 363,
+    SUNTIL = 364,
+    SWHILE = 365,
+    TST = 366,
+    WAIT = 367,
+    XCHG = 368,
+    XOR = 369
+  };
 #endif
 /* Tokens.  */
 #define REG 258
@@ -267,23 +273,25 @@
 #define XCHG 368
 #define XOR 369
 
-
-
-
+/* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE
-#line 134 "rx-parse.y"
+typedef union YYSTYPE YYSTYPE;
+union YYSTYPE
 {
+#line 134 "./config/rx-parse.y" /* yacc.c:1915  */
+
   int regno;
   expressionS exp;
-}
-/* Line 1529 of yacc.c.  */
-#line 282 "rx-parse.h"
-	YYSTYPE;
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
-# define YYSTYPE_IS_DECLARED 1
+
+#line 287 "rx-parse.h" /* yacc.c:1915  */
+};
 # define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
 #endif
+
 
 extern YYSTYPE rx_lval;
 
+int rx_parse (void);
+
+#endif /* !YY_RX_RX_PARSE_H_INCLUDED  */

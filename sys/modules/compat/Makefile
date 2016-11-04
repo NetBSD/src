@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2016/04/06 19:45:45 roy Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2016/11/04 14:49:18 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -25,16 +25,9 @@ CPPFLAGS+=	-DCOMPAT_30 -DCOMPAT_40 -DCOMPAT_50
 CPPFLAGS+=	-DCOMPAT_60 -DCOMPAT_70 -DCOMPAT_80
 CPPFLAGS+=	-DCOMPAT_43
 
-SRCS=	kern_exit_43.c kern_info_09.c
-SRCS+=	kern_info_43.c kern_resource_43.c kern_select_50.c
-SRCS+=	kern_sig_13.c kern_sig_43.c kern_xxx_12.c
-SRCS+=	tty_43.c uipc_syscalls_30.c
-SRCS+=	uipc_syscalls_43.c vfs_syscalls_12.c kern_sig_16.c
-SRCS+=	vfs_syscalls_20.c vfs_syscalls_30.c vfs_syscalls_40.c
-SRCS+=	vfs_syscalls_43.c vm_12.c vm_43.c compat_mod.c
-SRCS+=	kern_time_50.c kern_50.c vfs_syscalls_50.c
-SRCS+=	tty_60.c kern_time_60.c
-SRCS+=	uipc_usrreq_70.c
+.include "../../compat/common/Makefile.sysio"
+
+SRCS+=	compat_mod.c
 
 .PATH:	${S}/arch/${MACHINE}/${MACHINE}
 .PATH:	${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}

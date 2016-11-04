@@ -1,6 +1,4 @@
-@c Copyright 1992, 1993, 1994, 1996, 1997, 1999, 2000, 2001, 2002,
-@c 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-@c Free Software Foundation, Inc.
+@c Copyright (C) 1992-2015 Free Software Foundation, Inc.
 @c This file is part of the documentation for the GAS manual
 
 @c Configuration settings for all-inclusive version of manual
@@ -52,11 +50,14 @@
 @set M68HC11
 @set M680X0
 @set MCORE
+@set METAG
 @set MICROBLAZE
 @set MIPS
 @set MMIX
 @set MS1
 @set MSP430
+@set NIOSII
+@set NDS32
 @set NS32K
 @set PDP11
 @set PJ
@@ -73,6 +74,7 @@
 @set TILEPRO
 @set V850
 @set VAX
+@set VISIUM
 @set XGATE
 @set XSTORMY16
 @set XTENSA

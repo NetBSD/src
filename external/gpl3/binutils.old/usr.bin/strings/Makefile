@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/01/26 19:38:11 christos Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2016/11/04 14:45:10 pgoyette Exp $
 
 PROG=		strings
 

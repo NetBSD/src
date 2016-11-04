@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola MCore COFF/PE
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -454,12 +454,9 @@ coff_mcore_relocate_section (bfd * output_bfd,
 		     + sec->output_offset);
 	    }
 	  else
-	    {
-	      if (! ((*info->callbacks->undefined_symbol)
-		     (info, h->root.root.string, input_bfd, input_section,
-		      rel->r_vaddr - input_section->vma, TRUE)))
-		return FALSE;
-	    }
+	    (*info->callbacks->undefined_symbol)
+	      (info, h->root.root.string, input_bfd, input_section,
+	       rel->r_vaddr - input_section->vma, TRUE);
 
 	  my_name = h->root.root.string;
 	}
@@ -519,11 +516,10 @@ coff_mcore_relocate_section (bfd * output_bfd,
 	  break;
 
 	case bfd_reloc_overflow:
-	  if (! ((*info->callbacks->reloc_overflow)
-		 (info, (h ? &h->root : NULL), my_name, howto->name,
-		  (bfd_vma) 0, input_bfd,
-		  input_section, rel->r_vaddr - input_section->vma)))
-	    return FALSE;
+	  (*info->callbacks->reloc_overflow)
+	    (info, (h ? &h->root : NULL), my_name, howto->name,
+	     (bfd_vma) 0, input_bfd,
+	     input_section, rel->r_vaddr - input_section->vma);
 	}
     }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.12 2016/01/28 23:50:04 htodd Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.12.2.1 2016/11/04 14:49:06 pgoyette Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.12 2016/01/28 23:50:04 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.12.2.1 2016/11/04 14:49:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.12 2016/01/28 23:50:04 htodd Exp 
 
 #include <machine/cpufunc.h>
 #include <machine/bootinfo.h>
+#include <machine/autoconf.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
@@ -76,6 +77,16 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.12 2016/01/28 23:50:04 htodd Exp 
 #include "acpica.h"
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
+#include "opt_vga.h"
+
+/*
+ * Default VBIOS reset method for non-HW accelerated VGA drivers.
+ */
+#ifdef VGA_POST
+# define VBIOS_RESET_DEFAULT	2
+#else
+# define VBIOS_RESET_DEFAULT	1
+#endif
 
 ACPI_STATUS
 acpi_md_OsInitialize(void)
@@ -230,8 +241,8 @@ acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
 	/*
 	 * XXX probably, IPL_BIO is enough.
 	 */
-	ih = intr_establish(irq, pic, pin, type, IPL_TTY,
-	    (int (*)(void *)) ServiceRoutine, Context, false);
+	ih = intr_establish_xname(irq, pic, pin, type, IPL_TTY,
+	    (int (*)(void *)) ServiceRoutine, Context, false, "acpi SCI");
 
 #if NIOAPIC > 0
 	if (mipp) {
@@ -455,3 +466,26 @@ acpi_md_callback(struct acpi_softc *sc)
 
 	acpimcfg_init(x86_bus_space_mem, &acpi_md_mcfg_ops);
 }
+
+#ifndef XEN
+void
+device_acpi_register(device_t dev, void *aux)
+{
+	device_t parent;
+	bool device_is_vga, device_is_pci, device_is_isa;
+
+	parent = device_parent(dev);
+	if (parent == NULL)
+		return;
+
+	device_is_vga = device_is_a(dev, "vga") || device_is_a(dev, "genfb");
+	device_is_pci = device_is_a(parent, "pci");
+	device_is_isa = device_is_a(parent, "isa");
+
+	if (device_is_vga && (device_is_pci || device_is_isa)) {
+		extern int acpi_md_vbios_reset;
+
+		acpi_md_vbios_reset = VBIOS_RESET_DEFAULT;
+	}
+}
+#endif

@@ -1,4 +1,4 @@
-# Copyright 2010-2015 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,22 +27,13 @@ if {[skip_gdbserver_tests] || [skip_shlib_tests]} {
     return
 }
 
-# This test case (currently) does not support remote targets, since it
-# assumes the ELF interpreter can be found on the host system
-if [is_remote target] then {
-    return
-}
-
 standard_testfile solib-list-main.c
 set srclibfile ${testfile}-lib.c
 set binlibfile [standard_output_file ${testfile}.so]
-set executable ${testfile}
-set objfile ${binfile}.o
 
 if { [get_compiler_info]
-     || [gdb_compile_shlib "${srcdir}/${subdir}/${srclibfile}" "${binlibfile}" [list debug ldflags=-Wl,-soname,${binlibfile}]] != ""
-     || [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${objfile}" object {debug}] != ""
-     || [gdb_compile "${objfile} ${binlibfile}" "${binfile}" executable {}] != "" } {
+     || [gdb_compile_shlib "${srcdir}/${subdir}/${srclibfile}" "${binlibfile}" {debug}] != ""
+     || [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "shlib=${binlibfile}"] != "" } {
     untested "could not compile sources"
     return -1
 }
@@ -57,9 +48,16 @@ foreach nonstop { 0 1 } { with_test_prefix "non-stop $nonstop" {
     gdb_exit
     gdb_start
     gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load ${interp_system}
-    gdb_load_shlibs ${binfile}
-    gdb_load_shlibs ${binlibfile}
+    gdb_load_shlib ${binlibfile}
+
+    set remote_binfile [gdb_remote_download target $binfile]
+
+    # When testing remote, the file path we receive may be only the file name,
+    # "solib-list".  ld-linux doesn't seem to be able to find the file when
+    # passing just the file name, it wants either the absolute path or a
+    # relative path with at least one directory component.  Calling readlink on
+    # the target to get the full path will make it happy.
+    set remote_binfile [lindex [remote_exec target "readlink -f $remote_binfile"] 1]
 
     # Make sure we're disconnected, in case we're testing with an
     # extended-remote board, therefore already connected.
@@ -72,8 +70,17 @@ foreach nonstop { 0 1 } { with_test_prefix "non-stop $nonstop" {
     # But GDB having symbols from the main executable it would try to use
     # displaced-stepping buffer at unmapped that time address _start.
     gdb_test "set displaced-stepping off"
-	
-    set res [gdbserver_spawn ${binfile}]
+
+    # Unset last_loaded_file because we want GDBserver spawn
+    # ${interp_system} not ${last_loaded_file}.
+    global last_loaded_file
+    unset -nocomplain last_loaded_file
+
+    # Note we pass ${interp_system}, the program gdbserver spawns, as
+    # argument here, instead of using gdb_load, because we don't want
+    # to download the interpreter to the target (it's already there)
+    # or to the test output directory.
+    set res [gdbserver_spawn "${interp_system} ${remote_binfile}"]
     set gdbserver_protocol [lindex $res 0]
     set gdbserver_gdbport [lindex $res 1]
 
@@ -89,15 +96,6 @@ foreach nonstop { 0 1 } { with_test_prefix "non-stop $nonstop" {
 	-re "Remote debugging using .*\r\n$gdb_prompt " {
 	    # Do not anchor end, there may be more output in non-stop mode.
 	    pass $test
-	}
-    }
-
-    if $nonstop {
-	set test "non-stop interior stop"
-	gdb_test_multiple "" $test {
-	    -re " #1 stopped\\.\r\n" {
-		pass $test
-	    }
 	}
     }
 

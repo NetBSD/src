@@ -207,7 +207,7 @@ AC_SUBST(BFD_HOSTPTR_T)
 
 BFD_CC_FOR_BUILD
 
-AC_CHECK_HEADERS(alloca.h stddef.h string.h strings.h stdlib.h time.h unistd.h wchar.h)
+AC_CHECK_HEADERS(alloca.h stddef.h string.h strings.h stdlib.h time.h unistd.h wchar.h wctype.h)
 AC_CHECK_HEADERS(fcntl.h sys/file.h sys/time.h sys/stat.h sys/resource.h)
 GCC_HEADER_STDINT(bfd_stdint.h)
 AC_HEADER_TIME
@@ -232,6 +232,8 @@ AC_CHECK_DECLS(malloc)
 AC_CHECK_DECLS(realloc)
 AC_CHECK_DECLS(stpcpy)
 AC_CHECK_DECLS(strstr)
+AC_CHECK_DECLS(asprintf)
+AC_CHECK_DECLS(vasprintf)
 AC_CHECK_DECLS(snprintf)
 AC_CHECK_DECLS(vsnprintf)
 AC_CHECK_DECLS(strnlen)
@@ -757,6 +759,7 @@ do
     frv_elf32_fdpic_vec)	 tb="$tb elf32-frv.lo elf32.lo $elf" ;;
     h8300_coff_vec)		 tb="$tb coff-h8300.lo reloc16.lo $coffgen" ;;
     h8300_elf32_vec)		 tb="$tb elf32-h8300.lo elf32.lo $elf" ;;
+    h8300_elf32_linux_vec)	 tb="$tb elf32-h8300.lo elf32.lo $elf" ;;
     h8500_coff_vec)		 tb="$tb coff-h8500.lo reloc16.lo $coffgen" ;;
     hppa_elf32_vec)		 tb="$tb elf32-hppa.lo elf32.lo $elf" ;;
     hppa_elf32_linux_vec)	 tb="$tb elf32-hppa.lo elf32.lo $elf" ;;
@@ -788,6 +791,7 @@ do
     i386_nlm32_vec)		 tb="$tb nlm32-i386.lo nlm32.lo nlm.lo" ;;
     i386_pe_vec)		 tb="$tb pe-i386.lo peigen.lo $coff" ;;
     i386_pei_vec)		 tb="$tb pei-i386.lo peigen.lo $coff" ;;
+    iamcu_elf32_vec)		 tb="$tb elf32-i386.lo elf-ifunc.lo elf-nacl.lo elf-vxworks.lo elf32.lo $elf" ;;
     i860_coff_vec)		 tb="$tb coff-i860.lo $coff" ;;
     i860_elf32_vec)		 tb="$tb elf32-i860.lo elf32.lo $elf" ;;
     i860_elf32_le_vec)		 tb="$tb elf32-i860.lo elf32.lo $elf" ;;
@@ -999,6 +1003,7 @@ do
     vax_aout_bsd_vec)		 tb="$tb vaxbsd.lo aout32.lo" ;;
     vax_aout_nbsd_vec)		 tb="$tb vaxnetbsd.lo aout32.lo" ;;
     vax_elf32_vec)		 tb="$tb elf32-vax.lo elf32.lo $elf" ;;
+    ft32_elf32_vec)		 tb="$tb elf32-ft32.lo elf32.lo $elf" ;;
     visium_elf32_vec)		 tb="$tb elf32-visium.lo elf32.lo $elf" ;;
     w65_coff_vec)		 tb="$tb coff-w65.lo reloc16.lo $coffgen" ;;
     we32k_coff_vec)		 tb="$tb coff-we32k.lo $coffgen" ;;
@@ -1006,6 +1011,7 @@ do
     x86_64_elf32_vec)		 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo elf32.lo $elf"; target_size=64 ;;
     x86_64_elf32_nacl_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo elf32.lo $elf"; target_size=64 ;;
     x86_64_elf64_vec)		 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
+    x86_64_elf64_cloudabi_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
     x86_64_elf64_fbsd_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
     x86_64_elf64_nacl_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
     x86_64_elf64_sol2_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;

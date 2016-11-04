@@ -1,7 +1,7 @@
 # This shell script emits C code -*- C -*-
 # to keep track of the machine type of Z80 object files
 # It does some substitutions.
-#   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+#   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 # This file is part of the GNU Binutils.
 #
 # This program is free software; you can redistribute it and/or modify

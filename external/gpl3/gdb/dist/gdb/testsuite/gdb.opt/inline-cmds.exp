@@ -1,4 +1,4 @@
-# Copyright 2008-2015 Free Software Foundation, Inc.
+# Copyright 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
 standard_testfile .c inline-markers.c
 
 if {[prepare_for_testing $testfile.exp $testfile \
-	 [list $srcfile $srcfile2] {debug optimize=-O2}]} {
+	 [list $srcfile $srcfile2] {debug additional_flags=-Winline}]} {
     return -1
 }
 
@@ -315,3 +318,62 @@ gdb_test "up" "#3  .*outer_inline2.*" "up to outer_inline2"
 gdb_test "info frame" ".*inlined into frame.*" "outer_inline2 inlined"
 gdb_test "up" "#4  main.*" "up from outer_inline2"
 gdb_test "info frame" ".*\n caller of frame.*" "main not inlined"
+
+gdb_exit
+
+# Send a CLI "step" command over MI.  CLI_OUTPUT_RE is a regexp that
+# matches the expected CLI output.  MESSAGE is used as test message.
+
+proc mi_cli_step {cli_output_re message} {
+    global mi_gdb_prompt
+    global srcfile
+    global decimal
+
+    send_gdb "interpreter-exec console \"step\"\n"
+    gdb_expect {
+	-re "\\^running\r\n\\*running,thread-id=\"all\"\r\n${mi_gdb_prompt}${cli_output_re}" {
+	    pass $message
+	}
+	timeout {
+	    fail "$message (timeout)"
+	}
+	eof {
+	    fail "$message (eof)"
+	}
+    }
+
+    # mi_expect_stop handles "set mi-async on/off" differences.
+    mi_expect_stop "end-stepping-range" "\[^\r\n\]*" "" ".*$srcfile" "$decimal" \
+	"" "got *stopped for $message"
+}
+
+# Test that stepping into an inlined function with the CLI "step"
+# command run while the top interpreter is MI results in the expected
+# CLI output sent to MI's console.
+with_test_prefix "mi" {
+    if [mi_gdb_start] {
+	continue
+    }
+    mi_gdb_load ${binfile}
+    mi_runto main
+
+    set line_number [gdb_get_line_number "set mi break here"]
+    mi_gdb_test "-break-insert ${srcfile}:${line_number}" \
+	{\^done,bkpt=.number="2",type="breakpoint".*\}} \
+	"set breakpoint"
+
+    mi_execute_to "exec-continue" "breakpoint-hit" "main" "" ".*" ".*" \
+	{ "" "disp=\"keep\"" } "breakpoint hit"
+
+    incr line_number 2
+
+    # Step to the line that does an inline call.
+    set re "~\"$line_number\\\\t  result = func1 \\(\\);\\\\n\"\r\n"
+    mi_cli_step "${re}" "step to inline call"
+
+    # Step into the inlined function.
+    set re [multi_line \
+		"~\"func1 \\(\\) at .*$srcfile:$decimal\\\\n\"" \
+		"~\"$decimal\\\\t  bar \\(\\);\\\\n\"\r\n"]
+    mi_cli_step "${re}" "step into inline call"
+}

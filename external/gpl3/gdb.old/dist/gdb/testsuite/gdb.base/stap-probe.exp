@@ -30,7 +30,7 @@ proc stap_test {exec_name {arg ""}} {
 	return -1
     }
 
-    gdb_test "print \$_probe_argc" "No SystemTap probe at PC $hex" \
+    gdb_test "print \$_probe_argc" "No probe at PC $hex" \
 	"check argument not at probe point"
 
     gdb_test "info probes stap" \

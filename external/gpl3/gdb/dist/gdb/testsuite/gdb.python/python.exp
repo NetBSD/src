@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2015 Free Software Foundation, Inc.
+# Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -95,6 +95,19 @@ gdb_py_test_multiple "indented multi-line python command" \
 gdb_test "source $remote_source2_py" "yes" "source source2.py"
 
 gdb_test "source -s source2.py" "yes" "source -s source2.py"
+
+set remote_source2_symlink_notpy \
+    [gdb_remote_download host ${srcdir}/${subdir}/source2.py \
+	 [standard_output_file "source2-symlink.notpy"]]
+set remote_source2_symlink_py [standard_output_file "source2-symlink.py"]
+remote_file host delete $remote_source2_symlink_py
+set status [remote_exec host "ln -sf $remote_source2_symlink_notpy $remote_source2_symlink_py"]
+set test "source -s source2-symlink.py"
+if {[lindex $status 0] == 0} {
+    gdb_test "source -s $remote_source2_symlink_py" "yes" $test
+} else {
+    unsupported "$test (host does not support symbolic links)"
+}
 
 gdb_test "python print (gdb.current_objfile())" "None"
 gdb_test "python print (gdb.objfiles())" "\\\[\\\]"

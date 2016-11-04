@@ -84,10 +84,10 @@ Disassembly of section \.text:
 
 0000a00c <f4>:
     a00c:	46f7      	mov	pc, lr
-    a00e:	0000      	movs	r0, r0
+    a00e:	0000      	.short	0x0000
     a010:	e1a0f00e 	mov	pc, lr
     a014:	46f7      	mov	pc, lr
-    a016:	0000      	movs	r0, r0
+    a016:	0000      	.short	0x0000
     a018:	e1a0f00e 	mov	pc, lr
     a01c:	46f7      	mov	pc, lr
 	\.\.\.

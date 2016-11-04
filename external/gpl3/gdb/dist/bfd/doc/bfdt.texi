@@ -21,7 +21,7 @@ enum bfd_direction
 
 enum bfd_plugin_format
   @{
-    bfd_plugin_uknown = 0,
+    bfd_plugin_unknown = 0,
     bfd_plugin_yes = 1,
     bfd_plugin_no = 2
   @};
@@ -66,7 +66,7 @@ struct bfd
   ENUM_BITFIELD (bfd_direction) direction : 2;
 
   /* Format_specific flags.  */
-  flagword flags : 18;
+  flagword flags : 20;
 
   /* Values that may appear in the flags field of a BFD.  These also
      appear in the object_flags field of the bfd_target structure, where
@@ -146,16 +146,23 @@ struct bfd
   /* Compress sections in this BFD with SHF_COMPRESSED from gABI.  */
 #define BFD_COMPRESS_GABI 0x20000
 
+  /* Convert ELF common symbol type to STT_COMMON or STT_OBJECT in this
+     BFD.  */
+#define BFD_CONVERT_ELF_COMMON 0x40000
+
+  /* Use the ELF STT_COMMON type in this BFD.  */
+#define BFD_USE_ELF_STT_COMMON 0x80000
+
   /* Flags bits to be saved in bfd_preserve_save.  */
 #define BFD_FLAGS_SAVED \
   (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN \
-   | BFD_COMPRESS_GABI)
+   | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON | BFD_USE_ELF_STT_COMMON)
 
   /* Flags bits which are for BFD use only.  */
 #define BFD_FLAGS_FOR_BFD_USE_MASK \
   (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
    | BFD_PLUGIN | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT \
-   | BFD_COMPRESS_GABI)
+   | BFD_COMPRESS_GABI | BFD_CONVERT_ELF_COMMON | BFD_USE_ELF_STT_COMMON)
 
   /* Is the file descriptor being cached?  That is, can it be closed as
      needed, and re-opened when accessed later?  */
@@ -966,4 +973,30 @@ Return the size of the compression header of SEC in ABFD.
 
 @strong{Returns}@*
 Return the size of the compression header in bytes.
+
+@findex bfd_convert_section_size
+@subsubsection @code{bfd_convert_section_size}
+@strong{Synopsis}
+@example
+bfd_size_type bfd_convert_section_size
+   (bfd *ibfd, asection *isec, bfd *obfd, bfd_size_type size);
+@end example
+@strong{Description}@*
+Convert the size @var{size} of the section @var{isec} in input
+BFD @var{ibfd} to the section size in output BFD @var{obfd}.
+
+@findex bfd_convert_section_contents
+@subsubsection @code{bfd_convert_section_contents}
+@strong{Synopsis}
+@example
+bfd_boolean bfd_convert_section_contents
+   (bfd *ibfd, asection *isec, bfd *obfd,
+    bfd_byte **ptr, bfd_size_type *ptr_size);
+@end example
+@strong{Description}@*
+Convert the contents, stored in @var{*ptr}, of the section
+@var{isec} in input BFD @var{ibfd} to output BFD @var{obfd}
+if needed.  The original buffer pointed to by @var{*ptr} may
+be freed and @var{*ptr} is returned with memory malloc'd by this
+function, and the new size written to @var{ptr_size}.
 

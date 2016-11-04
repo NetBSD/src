@@ -1,6 +1,6 @@
 /* microblaze-opcm.h -- Header used in microblaze-opc.h
 
-   Copyright 2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -18,28 +18,31 @@
    along with this file; see the file COPYING.  If not, write to the
    Free Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
- 
+
 
 #ifndef MICROBLAZE_OPCM
 #define MICROBLAZE_OPCM
 
 enum microblaze_instr
 {
-  add, rsub, addc, rsubc, addk, rsubk, addkc, rsubkc, cmp, cmpu,
-  addi, rsubi, addic, rsubic, addik, rsubik, addikc, rsubikc, mul, 
-  mulh, mulhu, mulhsu,
+  add, rsub, addc, rsubc, addk, rsubk, addkc, rsubkc, clz, cmp, cmpu,
+  addi, rsubi, addic, rsubic, addik, rsubik, addikc, rsubikc, mul,
+  mulh, mulhu, mulhsu,swapb,swaph,
   idiv, idivu, bsll, bsra, bsrl, get, put, nget, nput, cget, cput,
-  ncget, ncput, muli, bslli, bsrai, bsrli, mului, or, and, xor,
-  andn, pcmpbf, pcmpbc, pcmpeq, pcmpne, sra, src, srl, sext8, sext16, 
-  wic, wdc, wdcclear, wdcflush, mts, mfs, br, brd,
+  ncget, ncput, muli, bslli, bsrai, bsrli, mului,
+  /* 'or/and/xor' are C++ keywords.  */
+  microblaze_or, microblaze_and, microblaze_xor,
+  andn, pcmpbf, pcmpbc, pcmpeq, pcmpne, sra, src, srl, sext8, sext16,
+  wic, wdc, wdcclear, wdcflush, mts, mfs, mbar, br, brd,
   brld, bra, brad, brald, microblaze_brk, beq, beqd, bne, bned, blt,
   bltd, ble, bled, bgt, bgtd, bge, bged, ori, andi, xori, andni,
   imm, rtsd, rtid, rtbd, rted, bri, brid, brlid, brai, braid, bralid,
   brki, beqi, beqid, bnei, bneid, blti, bltid, blei, bleid, bgti,
-  bgtid, bgei, bgeid, lbu, lhu, lw, lwx, sb, sh, sw, swx, lbui, lhui, lwi,
-  sbi, shi, swi, msrset, msrclr, tuqula, fadd, frsub, fmul, fdiv, 
-  fcmp_lt, fcmp_eq, fcmp_le, fcmp_gt, fcmp_ne, fcmp_ge, fcmp_un, flt, 
-  fint, fsqrt, 
+  bgtid, bgei, bgeid, lbu, lbur, lhu, lhur, lw, lwr, lwx, sb, sbr, sh,
+  shr, sw, swr, swx, lbui, lhui, lwi,
+  sbi, shi, swi, msrset, msrclr, tuqula, fadd, frsub, fmul, fdiv,
+  fcmp_lt, fcmp_eq, fcmp_le, fcmp_gt, fcmp_ne, fcmp_ge, fcmp_un, flt,
+  fint, fsqrt,
   tget, tcget, tnget, tncget, tput, tcput, tnput, tncput,
   eget, ecget, neget, necget, eput, ecput, neput, necput,
   teget, tecget, tneget, tnecget, teput, tecput, tneput, tnecput,
@@ -78,6 +81,8 @@ enum microblaze_instr_type
 #define REG_BTR_MASK 0x800b
 #define REG_EDR_MASK 0x800d
 #define REG_PVR_MASK 0xa000
+#define REG_SLR_MASK 0x8800
+#define REG_SHR_MASK 0x8802
 
 #define REG_PID_MASK   0x9000
 #define REG_ZPR_MASK   0x9001
@@ -99,6 +104,8 @@ enum microblaze_instr_type
 #define REG_FSR 39 /* FPU Status reg.  */
 #define REG_BTR 43 /* Branch Target reg.  */
 #define REG_EDR 45 /* Exception reg.  */
+#define REG_SHR 50 /* Stack High reg.  */
+#define REG_SLR 51 /* Stack Low reg.  */
 #define REG_PVR 40960 /* Program Verification reg.  */
 
 #define REG_PID   36864 /* MMU: Process ID reg.  */
@@ -116,11 +123,12 @@ enum microblaze_instr_type
 /* Assembler Register - Used in Delay Slot Optimization.  */
 #define REG_AS    18
 #define REG_ZERO  0
- 
+
 #define RD_LOW  21 /* Low bit for RD.  */
 #define RA_LOW  16 /* Low bit for RA.  */
 #define RB_LOW  11 /* Low bit for RB.  */
 #define IMM_LOW  0 /* Low bit for immediate.  */
+#define IMM_MBAR 21 /* low bit for mbar instruction.  */
 
 #define RD_MASK 0x03E00000
 #define RA_MASK 0x001F0000
@@ -129,6 +137,9 @@ enum microblaze_instr_type
 
 /* Imm mask for barrel shifts.  */
 #define IMM5_MASK 0x0000001F
+
+/* Imm mask for mbar.  */
+#define IMM5_MBAR_MASK 0x03E00000
 
 /* FSL imm mask for get, put instructions.  */
 #define  RFSL_MASK 0x000000F

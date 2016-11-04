@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.31 2013/12/17 01:29:39 joerg Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.31.10.1 2016/11/04 14:48:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.31 2013/12/17 01:29:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.31.10.1 2016/11/04 14:48:59 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -276,7 +276,7 @@ saost_tc_init(void)
 	};
 
 #if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
-	saost_tc.tc_frequency = TIMER_FREQUENCY,
+	saost_tc.tc_frequency = TIMER_FREQUENCY;
 #endif
 	tc_init(&saost_tc);
 }

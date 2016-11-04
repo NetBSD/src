@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2016/01/26 17:47:57 christos Exp $
+#	$NetBSD: Makefile,v 1.25.2.1 2016/11/04 14:49:24 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,8 @@ INSTALL_TARGET+=install-gprof
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+CCADDFLAGS=	-I${DESTDIR}/usr/include -B${DESTDIR}/usr/lib/
+LDADDFLAGS=	-L${DESTDIR}/lib -L${DESTDIR}/usr/lib
 
 # Force avoiding possibly non-executable install-sh.
 CONFIGURE_ENV+= ac_cv_path_mkdir="${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-install -d"
@@ -55,7 +56,8 @@ native-binutils: .native/.configure_done
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q} \
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
-			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS= \
+			CFLAGS= CPPFLAGS= CXXFLAGS= \
+			LDFLAGS=${LDADDFLAGS:Q} \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
 			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
 			LIBS=-lintl \

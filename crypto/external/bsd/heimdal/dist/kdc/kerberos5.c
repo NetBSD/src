@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.5 2014/04/24 13:45:34 pettai Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.5.6.1 2016/11/04 14:42:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -1455,7 +1455,7 @@ _kdc_as_rep(krb5_context context,
 
 	e_data.data   = buf;
 	e_data.length = len;
-	e_text ="Need to use PA-ENC-TIMESTAMP/PA-PK-AS-REQ",
+	e_text ="Need to use PA-ENC-TIMESTAMP/PA-PK-AS-REQ";
 
 	ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
 

@@ -1,6 +1,6 @@
 // dwarf_reader.h -- parse dwarf2/3 debug information for gold  -*- C++ -*-
 
-// Copyright (C) 2007-2015 Free Software Foundation, Inc.
+// Copyright (C) 2007-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.

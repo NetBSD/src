@@ -1,0 +1,3 @@
+#	$NetBSD#
+
+GDB_MACHINE_ARCH=	${MACHINE_ARCH:C/^e//:C/e?armv?[4-7]?h?f?/arm/}

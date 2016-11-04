@@ -56,6 +56,13 @@ void * malloc ();
 void * realloc ();
 #endif
 
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+#ifndef INT_MAX
+# define INT_MAX       (int)(((unsigned int) ~0) >> 1)          /* 0x7FFFFFFF */ 
+#endif
+
 #include <demangle.h>
 #undef CURRENT_DEMANGLING_STYLE
 #define CURRENT_DEMANGLING_STYLE work->options
@@ -237,6 +244,7 @@ typedef enum type_kind_t
   tk_none,
   tk_pointer,
   tk_reference,
+  tk_rvalue_reference,
   tk_integral,
   tk_bool,
   tk_char,
@@ -1237,11 +1245,13 @@ squangle_mop_up (struct work_stuff *work)
     {
       free ((char *) work -> btypevec);
       work->btypevec = NULL;
+      work->bsize = 0;
     }
   if (work -> ktypevec != NULL)
     {
       free ((char *) work -> ktypevec);
       work->ktypevec = NULL;
+      work->ksize = 0;
     }
 }
 
@@ -2033,7 +2043,8 @@ demangle_template_value_parm (struct work_stuff *work, const char **mangled,
     }
   else if (tk == tk_real)
     success = demangle_real_value (work, mangled, s);
-  else if (tk == tk_pointer || tk == tk_reference)
+  else if (tk == tk_pointer || tk == tk_reference
+	   || tk == tk_rvalue_reference)
     {
       if (**mangled == 'Q')
 	success = demangle_qualified (work, mangled, s,
@@ -2042,7 +2053,8 @@ demangle_template_value_parm (struct work_stuff *work, const char **mangled,
       else
 	{
 	  int symbol_len  = consume_count (mangled);
-	  if (symbol_len == -1)
+	  if (symbol_len == -1
+	      || symbol_len > (long) strlen (*mangled))
 	    return -1;
 	  if (symbol_len == 0)
 	    string_appendn (s, "0", 1);
@@ -2999,6 +3011,11 @@ gnu_special (struct work_stuff *work, const char **mangled, string *declp)
 		      success = 1;
 		      break;
 		    }
+		  else if (n == -1)
+		    {
+		      success = 0;
+		      break;
+		    }
 		}
 	      else
 		{
@@ -3574,6 +3591,14 @@ do_type (struct work_stuff *work, const char **mangled, string *result)
 	    tk = tk_reference;
 	  break;
 
+	  /* An rvalue reference type */
+	case 'O':
+	  (*mangled)++;
+	  string_prepend (&decl, "&&");
+	  if (tk == tk_none)
+	    tk = tk_rvalue_reference;
+	  break;
+
 	  /* An array */
 	case 'A':
 	  {
@@ -3597,7 +3622,7 @@ do_type (struct work_stuff *work, const char **mangled, string *result)
 	/* A back reference to a previously seen type */
 	case 'T':
 	  (*mangled)++;
-	  if (!get_count (mangled, &n) || n >= work -> ntypes)
+	  if (!get_count (mangled, &n) || n < 0 || n >= work -> ntypes)
 	    {
 	      success = 0;
 	    }
@@ -3631,7 +3656,6 @@ do_type (struct work_stuff *work, const char **mangled, string *result)
 	  break;
 
 	case 'M':
-	case 'O':
 	  {
 	    type_quals = TYPE_UNQUALIFIED;
 
@@ -3775,7 +3799,7 @@ do_type (struct work_stuff *work, const char **mangled, string *result)
     /* A back reference to a previously seen squangled type */
     case 'B':
       (*mangled)++;
-      if (!get_count (mangled, &n) || n >= work -> numb)
+      if (!get_count (mangled, &n) || n < 0 || n >= work -> numb)
 	success = 0;
       else
 	string_append (result, work->btypevec[n]);
@@ -4116,7 +4140,8 @@ do_hpacc_template_literal (struct work_stuff *work, const char **mangled,
 
   literal_len = consume_count (mangled);
 
-  if (literal_len <= 0)
+  if (literal_len <= 0
+      || literal_len > (long) strlen (*mangled))
     return 0;
 
   /* Literal parameters are names of arrays, functions, etc.  and the
@@ -4254,6 +4279,8 @@ remember_type (struct work_stuff *work, const char *start, int len)
 	}
       else
 	{
+          if (work -> typevec_size > INT_MAX / 2)
+	    xmalloc_failed (INT_MAX);
 	  work -> typevec_size *= 2;
 	  work -> typevec
 	    = XRESIZEVEC (char *, work->typevec, work->typevec_size);
@@ -4281,6 +4308,8 @@ remember_Ktype (struct work_stuff *work, const char *start, int len)
 	}
       else
 	{
+          if (work -> ksize > INT_MAX / 2)
+	    xmalloc_failed (INT_MAX);
 	  work -> ksize *= 2;
 	  work -> ktypevec
 	    = XRESIZEVEC (char *, work->ktypevec, work->ksize);
@@ -4310,6 +4339,8 @@ register_Btype (struct work_stuff *work)
 	}
       else
 	{
+          if (work -> bsize > INT_MAX / 2)
+	    xmalloc_failed (INT_MAX);
 	  work -> bsize *= 2;
 	  work -> btypevec
 	    = XRESIZEVEC (char *, work->btypevec, work->bsize);
@@ -4764,6 +4795,8 @@ string_need (string *s, int n)
   else if (s->e - s->p < n)
     {
       tem = s->p - s->b;
+      if (n > INT_MAX / 2 - tem)
+        xmalloc_failed (INT_MAX); 
       n += tem;
       n *= 2;
       s->b = XRESIZEVEC (char, s->b, n);

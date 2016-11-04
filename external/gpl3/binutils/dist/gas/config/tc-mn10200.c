@@ -1,5 +1,5 @@
 /* tc-mn10200.c -- Assembler code for the Matsushita 10200
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -303,7 +303,7 @@ none yet\n"));
 
 int
 md_parse_option (int c ATTRIBUTE_UNUSED,
-		 char *arg ATTRIBUTE_UNUSED)
+		 const char *arg ATTRIBUTE_UNUSED)
 {
   return 0;
 }
@@ -314,7 +314,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
   return 0;
 }
 
-char *
+const char *
 md_atof (int type, char *litp, int *sizep)
 {
   return ieee_md_atof (type, litp, sizep, FALSE);
@@ -682,7 +682,7 @@ md_section_align (asection *seg, valueT addr)
 void
 md_begin (void)
 {
-  char *prev_name = "";
+  const char *prev_name = "";
   const struct mn10200_opcode *op;
 
   mn10200_hash = hash_new ();
@@ -748,7 +748,7 @@ arelent *
 tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
-  reloc = xmalloc (sizeof (arelent));
+  reloc = XNEW (arelent);
 
   if (fixp->fx_subsy != NULL)
     {
@@ -781,7 +781,7 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
       return NULL;
     }
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
-  reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->addend = fixp->fx_offset;
   return reloc;
@@ -1154,7 +1154,7 @@ keep_going:
     abort ();
 
   /* Write out the instruction.  */
-  dwarf2_emit_insn (0);
+  dwarf2_emit_insn (size);
   if (relaxable && fc > 0)
     {
       /* On a 64-bit host the size of an 'int' is not the same

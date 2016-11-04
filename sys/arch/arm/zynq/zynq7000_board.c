@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq7000_board.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $	*/
+/*	$NetBSD: zynq7000_board.c,v 1.1.6.1 2016/11/04 14:48:59 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: zynq7000_board.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: zynq7000_board.c,v 1.1.6.1 2016/11/04 14:48:59 pgoyette Exp $");
 
 #include "opt_zynq.h"
 #include "arml2cc.h"
@@ -113,7 +113,7 @@ zynq7000_device_register(device_t self, void *aux)
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
 		 * addresses by 2.  The simpliest remedy is to replace with our
-		 * bus space used for the armcore regisers (which armperiph uses).
+		 * bus space used for the armcore registers (which armperiph uses).
 		 */
 		struct mainbus_attach_args * const mb = aux;
 		mb->mb_iot = zynq7000_armcore_bst;

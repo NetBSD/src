@@ -1,5 +1,5 @@
 /* BFD back-end for BSD and Ultrix/VAX (1K page size) a.out-ish binaries.
-   Copyright 2002, 2003, 2005, 2007, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,10 +25,10 @@
 #define SEGMENT_SIZE TARGET_PAGE_SIZE
 #define DEFAULT_ARCH bfd_arch_vax
 
-/* Do not "beautify" the CONCAT* macro args.  Traditional C will not   
-   remove whitespace added here, and thus will fail to concatenate the 
+/* Do not "beautify" the CONCAT* macro args.  Traditional C will not
+   remove whitespace added here, and thus will fail to concatenate the
    tokens.  */
-#define MY(OP) CONCAT2 (vaxbsd_,OP)
+#define MY(OP) CONCAT2 (vax_aout_bsd_,OP)
 
 #define TARGETNAME "a.out-vax-bsd"
 

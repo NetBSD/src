@@ -23,12 +23,12 @@
 #include <string.h>
 #endif
 #include "bfd.h"
-#include "gdb/callback.h"
-#include "gdb/signals.h"
 #include "libiberty.h"
 #include "gdb/remote-sim.h"
-#include "dis-asm.h"
-#include "sim-utils.h"
+
+#include "sim-main.h"
+#include "sim-base.h"
+#include "sim-options.h"
 
 /* As AVR is a 8/16 bits processor, define handy types.  */
 typedef unsigned short int word;
@@ -36,28 +36,14 @@ typedef signed short int sword;
 typedef unsigned char byte;
 typedef signed char sbyte;
 
-/* Debug flag to display instructions and registers.  */
-static int tracing = 0;
-static int lock_step = 0;
-static int verbose;
-
 /* The only real register.  */
-static unsigned int pc;
+unsigned int pc;
 
 /* We update a cycle counter.  */
 static unsigned int cycles = 0;
 
 /* If true, the pc needs more than 2 bytes.  */
 static int avr_pc22;
-
-static struct bfd *cur_bfd;
-
-static enum sim_stop cpu_exception;
-static int cpu_signal;
-
-static SIM_OPEN_KIND sim_kind;
-static char *myname;
-static host_callback *callback;
 
 /* Max size of I space (which is always flash on avr).  */
 #define MAX_AVR_FLASH (128 * 1024)
@@ -237,13 +223,9 @@ struct avr_insn_cell
 };
 
 /* I&D memories.  */
+/* TODO: Should be moved to SIM_CPU.  */
 static struct avr_insn_cell flash[MAX_AVR_FLASH];
 static byte sram[MAX_AVR_SRAM];
-
-void
-sim_size (int s)
-{
-}
 
 /* Sign extend a value.  */
 static int sign_ext (word val, int nb_bits)
@@ -747,61 +729,8 @@ decode (unsigned int pc)
           break;
         }
     }
-  sim_cb_eprintf (callback,
-                  "Unhandled instruction at pc=0x%x, op=%04x\n", pc * 2, op1);
+
   return OP_bad;
-}
-
-/* Disassemble an instruction.  */
-
-static int
-disasm_read_memory (bfd_vma memaddr, bfd_byte *myaddr, unsigned int length,
-			struct disassemble_info *info)
-{
-  int res;
-
-  res = sim_read (NULL, memaddr, myaddr, length);
-  if (res != length)
-    return -1;
-  return 0;
-}
-
-/* Memory error support for an opcodes disassembler.  */
-
-static void
-disasm_perror_memory (int status, bfd_vma memaddr,
-			  struct disassemble_info *info)
-{
-  if (status != -1)
-    /* Can't happen.  */
-    info->fprintf_func (info->stream, "Unknown error %d.", status);
-  else
-    /* Actually, address between memaddr and memaddr + len was
-       out of bounds.  */
-    info->fprintf_func (info->stream,
-			"Address 0x%x is out of bounds.",
-			(int) memaddr);
-}
-
-static void
-disassemble_insn (SIM_DESC sd, SIM_ADDR pc)
-{
-  struct disassemble_info disasm_info;
-  int len;
-  int i;
-
-  INIT_DISASSEMBLE_INFO (disasm_info, callback, sim_cb_eprintf);
-
-  disasm_info.arch = bfd_get_arch (cur_bfd);
-  disasm_info.mach = bfd_get_mach (cur_bfd);
-  disasm_info.endian = BFD_ENDIAN_LITTLE;
-  disasm_info.read_memory_func = disasm_read_memory;
-  disasm_info.memory_error_func = disasm_perror_memory;
-
-  len = print_insn_avr (pc << 1, &disasm_info);
-  len = len / 2;
-  for (i = 0; i < len; i++)
-    sim_cb_eprintf (callback, " %04x", flash[pc + i].op);
 }
 
 static void
@@ -862,37 +791,27 @@ gen_mul (unsigned int res)
   cycles++;
 }
 
-void
-sim_resume (SIM_DESC sd, int step, int signal)
+static void
+step_once (SIM_CPU *cpu)
 {
   unsigned int ipc;
 
-  if (step)
-    {
-      cpu_exception = sim_stopped;
-      cpu_signal = GDB_SIGNAL_TRAP;
-    }
-  else
-    cpu_exception = sim_running;
+  int code;
+  word op;
+  byte res;
+  byte r, d, vd;
 
-  do
-    {
-      int code;
-      word op;
-      byte res;
-      byte r, d, vd;
+ again:
+  code = flash[pc].code;
+  op = flash[pc].op;
 
-    again:
-      code = flash[pc].code;
-      op = flash[pc].op;
-
-
-      if ((tracing || lock_step) && code != OP_unknown)
+#if 0
+      if (tracing && code != OP_unknown)
 	{
 	  if (verbose > 0) {
 	    int flags;
 	    int i;
-	    
+
 	    sim_cb_eprintf (callback, "R00-07:");
 	    for (i = 0; i < 8; i++)
 	      sim_cb_eprintf (callback, " %02x", sram[i]);
@@ -916,709 +835,701 @@ sim_resume (SIM_DESC sd, int step, int signal)
 	    sim_cb_eprintf (callback, "\n");
 	  }
 
-	  if (lock_step && !tracing)
+	  if (!tracing)
 	    sim_cb_eprintf (callback, "%06x: %04x\n", 2 * pc, flash[pc].op);
 	  else
 	    {
 	      sim_cb_eprintf (callback, "pc=0x%06x insn=0x%04x code=%d r=%d\n",
                               2 * pc, flash[pc].op, code, flash[pc].r);
-	      disassemble_insn (sd, pc);
+	      disassemble_insn (CPU_STATE (cpu), pc);
 	      sim_cb_eprintf (callback, "\n");
 	    }
 	}
+#endif
 
-      ipc = pc;
-      pc = (pc + 1) & PC_MASK;
-      cycles++;
+  ipc = pc;
+  pc = (pc + 1) & PC_MASK;
+  cycles++;
 
-      switch (code)
+  switch (code)
+    {
+      case OP_unknown:
+	flash[ipc].code = decode(ipc);
+	pc = ipc;
+	cycles--;
+	goto again;
+
+      case OP_nop:
+	break;
+
+      case OP_jmp:
+	/* 2 words instruction, but we don't care about the pc.  */
+	pc = ((flash[ipc].r << 16) | flash[ipc + 1].op) & PC_MASK;
+	cycles += 2;
+	break;
+
+      case OP_eijmp:
+	pc = ((sram[EIND] << 16) | read_word (REGZ)) & PC_MASK;
+	cycles += 2;
+	break;
+
+      case OP_ijmp:
+	pc = read_word (REGZ) & PC_MASK;
+	cycles += 1;
+	break;
+
+      case OP_call:
+	/* 2 words instruction.  */
+	pc++;
+	do_call ((flash[ipc].r << 16) | flash[ipc + 1].op);
+	break;
+
+      case OP_eicall:
+	do_call ((sram[EIND] << 16) | read_word (REGZ));
+	break;
+
+      case OP_icall:
+	do_call (read_word (REGZ));
+	break;
+
+      case OP_rcall:
+	do_call (pc + sign_ext (op & 0xfff, 12));
+	break;
+
+      case OP_reti:
+	sram[SREG] |= SREG_I;
+	/* Fall through */
+      case OP_ret:
 	{
-	case OP_unknown:
-          flash[ipc].code = decode(ipc);
-	  pc = ipc;
-	  cycles--;
-	  goto again;
-	  break;
-
-	case OP_nop:
-          break;
-
-	case OP_jmp:
-	  /* 2 words instruction, but we don't care about the pc.  */
-	  pc = ((flash[ipc].r << 16) | flash[ipc + 1].op) & PC_MASK;
-	  cycles += 2;
-	  break;
-
-	case OP_eijmp:
-	  pc = ((sram[EIND] << 16) | read_word (REGZ)) & PC_MASK;
-	  cycles += 2;
-	  break;
-
-	case OP_ijmp:
-	  pc = read_word (REGZ) & PC_MASK;
-	  cycles += 1;
-	  break;
-
-	case OP_call:
-	  /* 2 words instruction.  */
-	  pc++;
-	  do_call ((flash[ipc].r << 16) | flash[ipc + 1].op);
-	  break;
-
-	case OP_eicall:
-	  do_call ((sram[EIND] << 16) | read_word (REGZ));
-	  break;
-
-	case OP_icall:
-	  do_call (read_word (REGZ));
-	  break;
-
-	case OP_rcall:
-	  do_call (pc + sign_ext (op & 0xfff, 12));
-	  break;
-
-	case OP_reti:
-          sram[SREG] |= SREG_I;
-          /* Fall through */
-	case OP_ret:
-	  {
-	    unsigned int sp = read_word (REG_SP);
-	    if (avr_pc22)
-	      {
-		pc = sram[++sp] << 16;
-		cycles++;
-	      }
-	    else
-	      pc = 0;
-	    pc |= sram[++sp] << 8;
-	    pc |= sram[++sp];
-	    write_word (REG_SP, sp);
-	  }
-	  cycles += 3;
-	  break;
-	  
-	case OP_break:
-	  /* Stop on this address.  */
-	  cpu_exception = sim_stopped;
-	  cpu_signal = GDB_SIGNAL_TRAP;
-	  pc = ipc;
-	  break;
-
-	case OP_bld:
-	  d = get_d (op);
-	  r = flash[ipc].r;
-	  if (sram[SREG] & SREG_T)
-	    sram[d] |= r;
-	  else
-	    sram[d] &= ~r;
-	  break;
-
-	case OP_bst:
-	  if (sram[get_d (op)] & flash[ipc].r)
-	    sram[SREG] |= SREG_T;
-	  else
-	    sram[SREG] &= ~SREG_T;
-	  break;
-
-	case OP_sbrc:
-	case OP_sbrs:
-	  if (((sram[get_d (op)] & flash[ipc].r) == 0) ^ ((op & 0x0200) != 0))
-            {
-              int l = get_insn_length(pc);
-              pc += l;
-              cycles += l;
-            }
-	  break;
-
-	case OP_push:
-	  {
-	    unsigned int sp = read_word (REG_SP);
-	    sram[sp--] = sram[get_d (op)];
-	    write_word (REG_SP, sp);
-	  }
-	  cycles++;
-	  break;
-
-	case OP_pop:
-	  {
-	    unsigned int sp = read_word (REG_SP);
-	    sram[get_d (op)] = sram[++sp];
-	    write_word (REG_SP, sp);
-	  }
-	  cycles++;
-	  break;
-
-	case OP_bclr:
-	  sram[SREG] &= ~(1 << ((op >> 4) & 0x7));
-	  break;
-
-	case OP_bset:
-	  sram[SREG] |= 1 << ((op >> 4) & 0x7);
-	  break;
-
-	case OP_rjmp:
-	  pc = (pc + sign_ext (op & 0xfff, 12)) & PC_MASK;
-	  cycles++;
-	  break;
-
-	case OP_eor:
-	  d = get_d (op);
-	  res = sram[d] ^ sram[get_r (op)];
-	  sram[d] = res;
-	  update_flags_logic (res);
-	  break;
-
-	case OP_and:
-	  d = get_d (op);
-	  res = sram[d] & sram[get_r (op)];
-	  sram[d] = res;
-	  update_flags_logic (res);
-	  break;
-
-	case OP_andi:
-	  d = get_d16 (op);
-	  res = sram[d] & get_K (op);
-	  sram[d] = res;
-	  update_flags_logic (res);
-	  break;
-
-	case OP_or:
-	  d = get_d (op);
-	  res = sram[d] | sram[get_r (op)];
-	  sram[d] = res;
-	  update_flags_logic (res);
-	  break;
-
-	case OP_ori:
-	  d = get_d16 (op);
-	  res = sram[d] | get_K (op);
-	  sram[d] = res;
-	  update_flags_logic (res);
-	  break;
-
-	case OP_com:
-	  d = get_d (op);
-	  res = ~sram[d];
-	  sram[d] = res;
-	  update_flags_logic (res);
-	  sram[SREG] |= SREG_C;
-	  break;
-
-	case OP_swap:
-	  d = get_d (op);
-	  vd = sram[d];
-	  sram[d] = (vd >> 4) | (vd << 4);
-	  break;
-
-	case OP_neg:
-	  d = get_d (op);
-	  vd = sram[d];
-	  res = -vd;
-	  sram[d] = res;
-	  sram[SREG] &= ~(SREG_H | SREG_S | SREG_V | SREG_N | SREG_Z | SREG_C);
-	  if (res == 0)
-	    sram[SREG] |= SREG_Z;
-	  else
-	    sram[SREG] |= SREG_C;
-	  if (res == 0x80)
-	    sram[SREG] |= SREG_V | SREG_N;
-	  else if (res & 0x80)
-	    sram[SREG] |= SREG_N | SREG_S;
-	  if ((res | vd) & 0x08)
-	    sram[SREG] |= SREG_H;
-	  break;
-
-	case OP_inc:
-	  d = get_d (op);
-	  res = sram[d] + 1;
-	  sram[d] = res;
-	  sram[SREG] &= ~(SREG_S | SREG_V | SREG_N | SREG_Z);
-	  if (res == 0x80)
-	    sram[SREG] |= SREG_V | SREG_N;
-	  else if (res & 0x80)
-	    sram[SREG] |= SREG_N | SREG_S;
-	  else if (res == 0)
-	    sram[SREG] |= SREG_Z;
-	  break;
-
-	case OP_dec:
-	  d = get_d (op);
-	  res = sram[d] - 1;
-	  sram[d] = res;
-	  sram[SREG] &= ~(SREG_S | SREG_V | SREG_N | SREG_Z);
-	  if (res == 0x7f)
-	    sram[SREG] |= SREG_V | SREG_S;
-	  else if (res & 0x80)
-	    sram[SREG] |= SREG_N | SREG_S;
-	  else if (res == 0)
-	    sram[SREG] |= SREG_Z;
-	  break;
-
-	case OP_lsr:
-	case OP_asr:
-	  d = get_d (op);
-	  vd = sram[d];
-	  res = (vd >> 1) | (vd & flash[ipc].r);
-	  sram[d] = res;
-	  sram[SREG] &= ~(SREG_S | SREG_V | SREG_N | SREG_Z | SREG_C);
-	  if (vd & 1)
-	    sram[SREG] |= SREG_C | SREG_S;
-	  if (res & 0x80)
-	    sram[SREG] |= SREG_N;
-          if (!(sram[SREG] & SREG_N) ^ !(sram[SREG] & SREG_C))
-            sram[SREG] |= SREG_V;
-	  if (res == 0)
-	    sram[SREG] |= SREG_Z;
-	  break;
-
-	case OP_ror:
-	  d = get_d (op);
-	  vd = sram[d];
-	  res = vd >> 1 | (sram[SREG] << 7);
-	  sram[d] = res;
-	  sram[SREG] &= ~(SREG_S | SREG_V | SREG_N | SREG_Z | SREG_C);
-	  if (vd & 1)
-	    sram[SREG] |= SREG_C | SREG_S;
-	  if (res & 0x80)
-	    sram[SREG] |= SREG_N;
-          if (!(sram[SREG] & SREG_N) ^ !(sram[SREG] & SREG_C))
-            sram[SREG] |= SREG_V;
-	  if (res == 0)
-	    sram[SREG] |= SREG_Z;
-	  break;
-
-	case OP_mul:
-          gen_mul ((word)sram[get_r (op)] * (word)sram[get_d (op)]);
-	  break;
-
-	case OP_muls:
-	  gen_mul((sword)(sbyte)sram[get_r16 (op)] 
-                  * (sword)(sbyte)sram[get_d16 (op)]);
-	  break;
-
-	case OP_mulsu:
-	  gen_mul ((sword)(word)sram[get_r16_23 (op)] 
-                   * (sword)(sbyte)sram[get_d16_23 (op)]);
-	  break;
-
-	case OP_fmul:
-	  gen_mul(((word)sram[get_r16_23 (op)] 
-                   * (word)sram[get_d16_23 (op)]) << 1);
-	  break;
-
-	case OP_fmuls:
-	  gen_mul(((sword)(sbyte)sram[get_r16_23 (op)] 
-                   * (sword)(sbyte)sram[get_d16_23 (op)]) << 1);
-	  break;
-
-	case OP_fmulsu:
-	  gen_mul(((sword)(word)sram[get_r16_23 (op)] 
-                   * (sword)(sbyte)sram[get_d16_23 (op)]) << 1);
-	  break;
-
-	case OP_adc:
-	case OP_add:
-	  r = sram[get_r (op)];
-	  d = get_d (op);
-	  vd = sram[d];
-	  res = r + vd + (sram[SREG] & flash[ipc].r);
-	  sram[d] = res;
-	  update_flags_add (res, vd, r);
-	  break;
-
-	case OP_sub:
-	  d = get_d (op);
-	  vd = sram[d];
-	  r = sram[get_r (op)];
-	  res = vd - r;
-	  sram[d] = res;
-	  update_flags_sub (res, vd, r);
-	  if (res == 0)
-	    sram[SREG] |= SREG_Z;
-	  break;
-
-	case OP_sbc:
-	  {
-	    byte old = sram[SREG];
-	    d = get_d (op);
-	    vd = sram[d];
-	    r = sram[get_r (op)];
-	    res = vd - r - (old & SREG_C);
-	    sram[d] = res;
-	    update_flags_sub (res, vd, r);
-	    if (res == 0 && (old & SREG_Z))
-	      sram[SREG] |= SREG_Z;
-	  }
-	  break;
-
-	case OP_subi:
-	  d = get_d16 (op);
-	  vd = sram[d];
-	  r = get_K (op);
-	  res = vd - r;
-	  sram[d] = res;
-	  update_flags_sub (res, vd, r);
-	  if (res == 0)
-	    sram[SREG] |= SREG_Z;
-	  break;
-
-	case OP_sbci:
-	  {
-	    byte old = sram[SREG];
-
-	    d = get_d16 (op);
-	    vd = sram[d];
-	    r = get_K (op);
-	    res = vd - r - (old & SREG_C);
-	    sram[d] = res;
-	    update_flags_sub (res, vd, r);
-	    if (res == 0 && (old & SREG_Z))
-	      sram[SREG] |= SREG_Z;
-	  }
-	  break;
-
-	case OP_mov:
-	  sram[get_d (op)] = sram[get_r (op)];
-	  break;
-
-	case OP_movw:
-	  d = (op & 0xf0) >> 3;
-	  r = (op & 0x0f) << 1;
-	  sram[d] = sram[r];
-	  sram[d + 1] = sram[r + 1];
-	  break;
-
-	case OP_out:
-	  d = get_A (op) + 0x20;
-	  res = sram[get_d (op)];
-	  sram[d] = res;
-	  if (d == STDIO_PORT)
-	    putchar (res);
-	  else if (d == EXIT_PORT)
+	  unsigned int sp = read_word (REG_SP);
+	  if (avr_pc22)
 	    {
-	      cpu_exception = sim_exited;
-	      cpu_signal = 0;
-	      return;
-	    }
-	  else if (d == ABORT_PORT)
-	    {
-	      cpu_exception = sim_exited;
-	      cpu_signal = 1;
-	      return;
-	    }
-	  break;
-
-	case OP_in:
-	  d = get_A (op) + 0x20;
-	  sram[get_d (op)] = sram[d];
-	  break;
-
-        case OP_cbi:
-	  d = get_biA (op) + 0x20;
-          sram[d] &= ~(1 << get_b(op));
-          break;
-
-        case OP_sbi:
-	  d = get_biA (op) + 0x20;
-          sram[d] |= 1 << get_b(op);
-          break;
-
-        case OP_sbic:
-          if (!(sram[get_biA (op) + 0x20] & 1 << get_b(op)))
-            {
-              int l = get_insn_length(pc);
-              pc += l;
-              cycles += l;
-            }
-          break;
-
-        case OP_sbis:
-          if (sram[get_biA (op) + 0x20] & 1 << get_b(op))
-            {
-              int l = get_insn_length(pc);
-              pc += l;
-              cycles += l;
-            }
-          break;
-
-	case OP_ldi:
-	  res = get_K (op);
-	  d = get_d16 (op);
-	  sram[d] = res;
-	  break;
-
-	case OP_lds:
-	  sram[get_d (op)] = sram[flash[pc].op];
-	  pc++;
-	  cycles++;
-	  break;
-
-	case OP_sts:
-	  sram[flash[pc].op] = sram[get_d (op)];
-	  pc++;
-	  cycles++;
-	  break;
-
-	case OP_cpse:
-	  if (sram[get_r (op)] == sram[get_d (op)])
-            {
-              int l = get_insn_length(pc);
-              pc += l;
-              cycles += l;
-            }
-	  break;
-
-	case OP_cp:
-	  r = sram[get_r (op)];
-	  d = sram[get_d (op)];
-	  res = d - r;
-	  update_flags_sub (res, d, r);
-	  if (res == 0)
-	    sram[SREG] |= SREG_Z;
-	  break;
-
-	case OP_cpi:
-	  r = get_K (op);
-	  d = sram[get_d16 (op)];
-	  res = d - r;
-	  update_flags_sub (res, d, r);
-	  if (res == 0)
-	    sram[SREG] |= SREG_Z;
-	  break;
-
-	case OP_cpc:
-	  {
-	    byte old = sram[SREG];
-	    d = sram[get_d (op)];
-	    r = sram[get_r (op)];
-	    res = d - r - (old & SREG_C);
-	    update_flags_sub (res, d, r);
-	    if (res == 0 && (old & SREG_Z))
-	      sram[SREG] |= SREG_Z;
-	  }
-	  break;
-
-	case OP_brbc:
-	  if (!(sram[SREG] & flash[ipc].r))
-	    {
-	      pc = (pc + get_k (op)) & PC_MASK;
+	      pc = sram[++sp] << 16;
 	      cycles++;
 	    }
-	  break;
-
-	case OP_brbs:
-	  if (sram[SREG] & flash[ipc].r)
-	    {
-	      pc = (pc + get_k (op)) & PC_MASK;
-	      cycles++;
-	    }
-	  break;
-
-	case OP_lpm:
-          sram[0] = get_lpm (read_word (REGZ));
-	  cycles += 2;
-	  break;
-
-	case OP_lpm_Z:
-          sram[get_d (op)] = get_lpm (read_word (REGZ));
-	  cycles += 2;
-	  break;
-
-	case OP_lpm_inc_Z:
-          sram[get_d (op)] = get_lpm (read_word_post_inc (REGZ));
-	  cycles += 2;
-	  break;
-
-	case OP_elpm:
-          sram[0] = get_lpm (get_z ());
-	  cycles += 2;
-	  break;
-
-	case OP_elpm_Z:
-          sram[get_d (op)] = get_lpm (get_z ());
-	  cycles += 2;
-	  break;
-
-	case OP_elpm_inc_Z:
-	  {
-	    unsigned int z = get_z ();
-
-	    sram[get_d (op)] = get_lpm (z);
-	    z++;
-	    sram[REGZ_LO] = z;
-	    sram[REGZ_HI] = z >> 8;
-	    sram[RAMPZ] = z >> 16;
-	  }
-	  cycles += 2;
-	  break;
-
-	case OP_ld_Z_inc:
-	  sram[get_d (op)] = sram[read_word_post_inc (REGZ) & SRAM_MASK];
-	  cycles++;
-	  break;
-
-	case OP_ld_dec_Z:
-	  sram[get_d (op)] = sram[read_word_pre_dec (REGZ) & SRAM_MASK];
-	  cycles++;
-	  break;
-
-	case OP_ld_X_inc:
-	  sram[get_d (op)] = sram[read_word_post_inc (REGX) & SRAM_MASK];
-	  cycles++;
-	  break;
-
-	case OP_ld_dec_X:
-	  sram[get_d (op)] = sram[read_word_pre_dec (REGX) & SRAM_MASK];
-	  cycles++;
-	  break;
-
-	case OP_ld_Y_inc:
-	  sram[get_d (op)] = sram[read_word_post_inc (REGY) & SRAM_MASK];
-	  cycles++;
-	  break;
-
-	case OP_ld_dec_Y:
-	  sram[get_d (op)] = sram[read_word_pre_dec (REGY) & SRAM_MASK];
-	  cycles++;
-	  break;
-
-	case OP_st_X:
-	  sram[read_word (REGX) & SRAM_MASK] = sram[get_d (op)];
-	  cycles++;
-	  break;
-
-	case OP_st_X_inc:
-	  sram[read_word_post_inc (REGX) & SRAM_MASK] = sram[get_d (op)];
-	  cycles++;
-	  break;
-
-	case OP_st_dec_X:
-	  sram[read_word_pre_dec (REGX) & SRAM_MASK] = sram[get_d (op)];
-	  cycles++;
-	  break;
-
-	case OP_st_Z_inc:
-	  sram[read_word_post_inc (REGZ) & SRAM_MASK] = sram[get_d (op)];
-	  cycles++;
-	  break;
-
-	case OP_st_dec_Z:
-	  sram[read_word_pre_dec (REGZ) & SRAM_MASK] = sram[get_d (op)];
-	  cycles++;
-	  break;
-
-	case OP_st_Y_inc:
-	  sram[read_word_post_inc (REGY) & SRAM_MASK] = sram[get_d (op)];
-	  cycles++;
-	  break;
-
-	case OP_st_dec_Y:
-	  sram[read_word_pre_dec (REGY) & SRAM_MASK] = sram[get_d (op)];
-	  cycles++;
-	  break;
-
-	case OP_std_Y:
-	  sram[read_word (REGY) + flash[ipc].r] = sram[get_d (op)];
-	  cycles++;
-	  break;
-
-	case OP_std_Z:
-	  sram[read_word (REGZ) + flash[ipc].r] = sram[get_d (op)];
-	  cycles++;
-	  break;
-
-	case OP_ldd_Z:
-	  sram[get_d (op)] = sram[read_word (REGZ) + flash[ipc].r];
-	  cycles++;
-	  break;
-
-	case OP_ldd_Y:
-	  sram[get_d (op)] = sram[read_word (REGY) + flash[ipc].r];
-	  cycles++;
-	  break;
-
-	case OP_ld_X:
-	  sram[get_d (op)] = sram[read_word (REGX) & SRAM_MASK];
-	  cycles++;
-	  break;
-
-	case OP_sbiw:
-	  {
-	    word wk = get_k6 (op);
-	    word wres;
-	    word wr;
-	    
-	    d = get_d24 (op);
-	    wr = read_word (d);
-	    wres = wr - wk;
-
-	    sram[SREG] &= ~(SREG_S | SREG_V | SREG_N | SREG_Z | SREG_C);
-	    if (wres == 0)
-	      sram[SREG] |= SREG_Z;
-	    if (wres & 0x8000)
-	      sram[SREG] |= SREG_N;
-	    if (wres & ~wr & 0x8000)
-	      sram[SREG] |= SREG_C;
-	    if (~wres & wr & 0x8000)
-	      sram[SREG] |= SREG_V;
-	    if (((~wres & wr) ^ wres) & 0x8000)
-	      sram[SREG] |= SREG_S;
-	    write_word (d, wres);
-	  }
-	  cycles++;
-	  break;
-
-	case OP_adiw:
-	  {
-	    word wk = get_k6 (op);
-	    word wres;
-	    word wr;
-	    
-	    d = get_d24 (op);
-	    wr = read_word (d);
-	    wres = wr + wk;
-
-	    sram[SREG] &= ~(SREG_S | SREG_V | SREG_N | SREG_Z | SREG_C);
-	    if (wres == 0)
-	      sram[SREG] |= SREG_Z;
-	    if (wres & 0x8000)
-	      sram[SREG] |= SREG_N;
-	    if (~wres & wr & 0x8000)
-	      sram[SREG] |= SREG_C;
-	    if (wres & ~wr & 0x8000)
-	      sram[SREG] |= SREG_V;
-	    if (((wres & ~wr) ^ wres) & 0x8000)
-	      sram[SREG] |= SREG_S;
-	    write_word (d, wres);
-	  }
-	  cycles++;
-	  break;
-
-	case OP_bad:
-	  sim_cb_eprintf (callback, "Bad instruction at pc=0x%x\n", ipc * 2);
-	  return;
-
-	default:
-	  sim_cb_eprintf (callback,
-                          "Unhandled instruction at pc=0x%x, code=%d\n",
-                          2 * ipc, code);
-	  return;
+	  else
+	    pc = 0;
+	  pc |= sram[++sp] << 8;
+	  pc |= sram[++sp];
+	  write_word (REG_SP, sp);
 	}
-    }
-  while (cpu_exception == sim_running);
+	cycles += 3;
+	break;
+
+      case OP_break:
+	/* Stop on this address.  */
+	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, pc, sim_stopped, SIM_SIGTRAP);
+	pc = ipc;
+	break;
+
+      case OP_bld:
+	d = get_d (op);
+	r = flash[ipc].r;
+	if (sram[SREG] & SREG_T)
+	  sram[d] |= r;
+	else
+	  sram[d] &= ~r;
+	break;
+
+      case OP_bst:
+	if (sram[get_d (op)] & flash[ipc].r)
+	  sram[SREG] |= SREG_T;
+	else
+	  sram[SREG] &= ~SREG_T;
+	break;
+
+      case OP_sbrc:
+      case OP_sbrs:
+	if (((sram[get_d (op)] & flash[ipc].r) == 0) ^ ((op & 0x0200) != 0))
+	  {
+	    int l = get_insn_length(pc);
+	    pc += l;
+	    cycles += l;
+	  }
+	break;
+
+      case OP_push:
+	{
+	  unsigned int sp = read_word (REG_SP);
+	  sram[sp--] = sram[get_d (op)];
+	  write_word (REG_SP, sp);
+	}
+	cycles++;
+	break;
+
+      case OP_pop:
+	{
+	  unsigned int sp = read_word (REG_SP);
+	  sram[get_d (op)] = sram[++sp];
+	  write_word (REG_SP, sp);
+	}
+	cycles++;
+	break;
+
+      case OP_bclr:
+	sram[SREG] &= ~(1 << ((op >> 4) & 0x7));
+	break;
+
+      case OP_bset:
+	sram[SREG] |= 1 << ((op >> 4) & 0x7);
+	break;
+
+      case OP_rjmp:
+	pc = (pc + sign_ext (op & 0xfff, 12)) & PC_MASK;
+	cycles++;
+	break;
+
+      case OP_eor:
+	d = get_d (op);
+	res = sram[d] ^ sram[get_r (op)];
+	sram[d] = res;
+	update_flags_logic (res);
+	break;
+
+      case OP_and:
+	d = get_d (op);
+	res = sram[d] & sram[get_r (op)];
+	sram[d] = res;
+	update_flags_logic (res);
+	break;
+
+      case OP_andi:
+	d = get_d16 (op);
+	res = sram[d] & get_K (op);
+	sram[d] = res;
+	update_flags_logic (res);
+	break;
+
+      case OP_or:
+	d = get_d (op);
+	res = sram[d] | sram[get_r (op)];
+	sram[d] = res;
+	update_flags_logic (res);
+	break;
+
+      case OP_ori:
+	d = get_d16 (op);
+	res = sram[d] | get_K (op);
+	sram[d] = res;
+	update_flags_logic (res);
+	break;
+
+      case OP_com:
+	d = get_d (op);
+	res = ~sram[d];
+	sram[d] = res;
+	update_flags_logic (res);
+	sram[SREG] |= SREG_C;
+	break;
+
+      case OP_swap:
+	d = get_d (op);
+	vd = sram[d];
+	sram[d] = (vd >> 4) | (vd << 4);
+	break;
+
+      case OP_neg:
+	d = get_d (op);
+	vd = sram[d];
+	res = -vd;
+	sram[d] = res;
+	sram[SREG] &= ~(SREG_H | SREG_S | SREG_V | SREG_N | SREG_Z | SREG_C);
+	if (res == 0)
+	  sram[SREG] |= SREG_Z;
+	else
+	  sram[SREG] |= SREG_C;
+	if (res == 0x80)
+	  sram[SREG] |= SREG_V | SREG_N;
+	else if (res & 0x80)
+	  sram[SREG] |= SREG_N | SREG_S;
+	if ((res | vd) & 0x08)
+	  sram[SREG] |= SREG_H;
+	break;
+
+      case OP_inc:
+	d = get_d (op);
+	res = sram[d] + 1;
+	sram[d] = res;
+	sram[SREG] &= ~(SREG_S | SREG_V | SREG_N | SREG_Z);
+	if (res == 0x80)
+	  sram[SREG] |= SREG_V | SREG_N;
+	else if (res & 0x80)
+	  sram[SREG] |= SREG_N | SREG_S;
+	else if (res == 0)
+	  sram[SREG] |= SREG_Z;
+	break;
+
+      case OP_dec:
+	d = get_d (op);
+	res = sram[d] - 1;
+	sram[d] = res;
+	sram[SREG] &= ~(SREG_S | SREG_V | SREG_N | SREG_Z);
+	if (res == 0x7f)
+	  sram[SREG] |= SREG_V | SREG_S;
+	else if (res & 0x80)
+	  sram[SREG] |= SREG_N | SREG_S;
+	else if (res == 0)
+	  sram[SREG] |= SREG_Z;
+	break;
+
+      case OP_lsr:
+      case OP_asr:
+	d = get_d (op);
+	vd = sram[d];
+	res = (vd >> 1) | (vd & flash[ipc].r);
+	sram[d] = res;
+	sram[SREG] &= ~(SREG_S | SREG_V | SREG_N | SREG_Z | SREG_C);
+	if (vd & 1)
+	  sram[SREG] |= SREG_C | SREG_S;
+	if (res & 0x80)
+	  sram[SREG] |= SREG_N;
+	if (!(sram[SREG] & SREG_N) ^ !(sram[SREG] & SREG_C))
+	  sram[SREG] |= SREG_V;
+	if (res == 0)
+	  sram[SREG] |= SREG_Z;
+	break;
+
+      case OP_ror:
+	d = get_d (op);
+	vd = sram[d];
+	res = vd >> 1 | (sram[SREG] << 7);
+	sram[d] = res;
+	sram[SREG] &= ~(SREG_S | SREG_V | SREG_N | SREG_Z | SREG_C);
+	if (vd & 1)
+	  sram[SREG] |= SREG_C | SREG_S;
+	if (res & 0x80)
+	  sram[SREG] |= SREG_N;
+	if (!(sram[SREG] & SREG_N) ^ !(sram[SREG] & SREG_C))
+	  sram[SREG] |= SREG_V;
+	if (res == 0)
+	  sram[SREG] |= SREG_Z;
+	break;
+
+      case OP_mul:
+	gen_mul ((word)sram[get_r (op)] * (word)sram[get_d (op)]);
+	break;
+
+      case OP_muls:
+	gen_mul ((sword)(sbyte)sram[get_r16 (op)]
+		 * (sword)(sbyte)sram[get_d16 (op)]);
+	break;
+
+      case OP_mulsu:
+	gen_mul ((sword)(word)sram[get_r16_23 (op)]
+		 * (sword)(sbyte)sram[get_d16_23 (op)]);
+	break;
+
+      case OP_fmul:
+	gen_mul (((word)sram[get_r16_23 (op)]
+		  * (word)sram[get_d16_23 (op)]) << 1);
+	break;
+
+      case OP_fmuls:
+	gen_mul (((sword)(sbyte)sram[get_r16_23 (op)]
+		  * (sword)(sbyte)sram[get_d16_23 (op)]) << 1);
+	break;
+
+      case OP_fmulsu:
+	gen_mul (((sword)(word)sram[get_r16_23 (op)]
+		  * (sword)(sbyte)sram[get_d16_23 (op)]) << 1);
+	break;
+
+      case OP_adc:
+      case OP_add:
+	r = sram[get_r (op)];
+	d = get_d (op);
+	vd = sram[d];
+	res = r + vd + (sram[SREG] & flash[ipc].r);
+	sram[d] = res;
+	update_flags_add (res, vd, r);
+	break;
+
+      case OP_sub:
+	d = get_d (op);
+	vd = sram[d];
+	r = sram[get_r (op)];
+	res = vd - r;
+	sram[d] = res;
+	update_flags_sub (res, vd, r);
+	if (res == 0)
+	  sram[SREG] |= SREG_Z;
+	break;
+
+      case OP_sbc:
+	{
+	  byte old = sram[SREG];
+	  d = get_d (op);
+	  vd = sram[d];
+	  r = sram[get_r (op)];
+	  res = vd - r - (old & SREG_C);
+	  sram[d] = res;
+	  update_flags_sub (res, vd, r);
+	  if (res == 0 && (old & SREG_Z))
+	    sram[SREG] |= SREG_Z;
+	}
+	break;
+
+      case OP_subi:
+	d = get_d16 (op);
+	vd = sram[d];
+	r = get_K (op);
+	res = vd - r;
+	sram[d] = res;
+	update_flags_sub (res, vd, r);
+	if (res == 0)
+	  sram[SREG] |= SREG_Z;
+	break;
+
+      case OP_sbci:
+	{
+	  byte old = sram[SREG];
+
+	  d = get_d16 (op);
+	  vd = sram[d];
+	  r = get_K (op);
+	  res = vd - r - (old & SREG_C);
+	  sram[d] = res;
+	  update_flags_sub (res, vd, r);
+	  if (res == 0 && (old & SREG_Z))
+	    sram[SREG] |= SREG_Z;
+	}
+	break;
+
+      case OP_mov:
+	sram[get_d (op)] = sram[get_r (op)];
+	break;
+
+      case OP_movw:
+	d = (op & 0xf0) >> 3;
+	r = (op & 0x0f) << 1;
+	sram[d] = sram[r];
+	sram[d + 1] = sram[r + 1];
+	break;
+
+      case OP_out:
+	d = get_A (op) + 0x20;
+	res = sram[get_d (op)];
+	sram[d] = res;
+	if (d == STDIO_PORT)
+	  putchar (res);
+	else if (d == EXIT_PORT)
+	  sim_engine_halt (CPU_STATE (cpu), cpu, NULL, pc, sim_exited, 0);
+	else if (d == ABORT_PORT)
+	  sim_engine_halt (CPU_STATE (cpu), cpu, NULL, pc, sim_exited, 1);
+	break;
+
+      case OP_in:
+	d = get_A (op) + 0x20;
+	sram[get_d (op)] = sram[d];
+	break;
+
+      case OP_cbi:
+	d = get_biA (op) + 0x20;
+	sram[d] &= ~(1 << get_b(op));
+	break;
+
+      case OP_sbi:
+	d = get_biA (op) + 0x20;
+	sram[d] |= 1 << get_b(op);
+	break;
+
+      case OP_sbic:
+	if (!(sram[get_biA (op) + 0x20] & 1 << get_b(op)))
+	  {
+	    int l = get_insn_length(pc);
+	    pc += l;
+	    cycles += l;
+	  }
+	break;
+
+      case OP_sbis:
+	if (sram[get_biA (op) + 0x20] & 1 << get_b(op))
+	  {
+	    int l = get_insn_length(pc);
+	    pc += l;
+	    cycles += l;
+	  }
+	break;
+
+      case OP_ldi:
+	res = get_K (op);
+	d = get_d16 (op);
+	sram[d] = res;
+	break;
+
+      case OP_lds:
+	sram[get_d (op)] = sram[flash[pc].op];
+	pc++;
+	cycles++;
+	break;
+
+      case OP_sts:
+	sram[flash[pc].op] = sram[get_d (op)];
+	pc++;
+	cycles++;
+	break;
+
+      case OP_cpse:
+	if (sram[get_r (op)] == sram[get_d (op)])
+	  {
+	    int l = get_insn_length(pc);
+	    pc += l;
+	    cycles += l;
+	  }
+	break;
+
+      case OP_cp:
+	r = sram[get_r (op)];
+	d = sram[get_d (op)];
+	res = d - r;
+	update_flags_sub (res, d, r);
+	if (res == 0)
+	  sram[SREG] |= SREG_Z;
+	break;
+
+      case OP_cpi:
+	r = get_K (op);
+	d = sram[get_d16 (op)];
+	res = d - r;
+	update_flags_sub (res, d, r);
+	if (res == 0)
+	  sram[SREG] |= SREG_Z;
+	break;
+
+      case OP_cpc:
+	{
+	  byte old = sram[SREG];
+	  d = sram[get_d (op)];
+	  r = sram[get_r (op)];
+	  res = d - r - (old & SREG_C);
+	  update_flags_sub (res, d, r);
+	  if (res == 0 && (old & SREG_Z))
+	    sram[SREG] |= SREG_Z;
+	}
+	break;
+
+      case OP_brbc:
+	if (!(sram[SREG] & flash[ipc].r))
+	  {
+	    pc = (pc + get_k (op)) & PC_MASK;
+	    cycles++;
+	  }
+	break;
+
+      case OP_brbs:
+	if (sram[SREG] & flash[ipc].r)
+	  {
+	    pc = (pc + get_k (op)) & PC_MASK;
+	    cycles++;
+	  }
+	break;
+
+      case OP_lpm:
+	sram[0] = get_lpm (read_word (REGZ));
+	cycles += 2;
+	break;
+
+      case OP_lpm_Z:
+	sram[get_d (op)] = get_lpm (read_word (REGZ));
+	cycles += 2;
+	break;
+
+      case OP_lpm_inc_Z:
+	sram[get_d (op)] = get_lpm (read_word_post_inc (REGZ));
+	cycles += 2;
+	break;
+
+      case OP_elpm:
+	sram[0] = get_lpm (get_z ());
+	cycles += 2;
+	break;
+
+      case OP_elpm_Z:
+	sram[get_d (op)] = get_lpm (get_z ());
+	cycles += 2;
+	break;
+
+      case OP_elpm_inc_Z:
+	{
+	  unsigned int z = get_z ();
+
+	  sram[get_d (op)] = get_lpm (z);
+	  z++;
+	  sram[REGZ_LO] = z;
+	  sram[REGZ_HI] = z >> 8;
+	  sram[RAMPZ] = z >> 16;
+	}
+	cycles += 2;
+	break;
+
+      case OP_ld_Z_inc:
+	sram[get_d (op)] = sram[read_word_post_inc (REGZ) & SRAM_MASK];
+	cycles++;
+	break;
+
+      case OP_ld_dec_Z:
+	sram[get_d (op)] = sram[read_word_pre_dec (REGZ) & SRAM_MASK];
+	cycles++;
+	break;
+
+      case OP_ld_X_inc:
+	sram[get_d (op)] = sram[read_word_post_inc (REGX) & SRAM_MASK];
+	cycles++;
+	break;
+
+      case OP_ld_dec_X:
+	sram[get_d (op)] = sram[read_word_pre_dec (REGX) & SRAM_MASK];
+	cycles++;
+	break;
+
+      case OP_ld_Y_inc:
+	sram[get_d (op)] = sram[read_word_post_inc (REGY) & SRAM_MASK];
+	cycles++;
+	break;
+
+      case OP_ld_dec_Y:
+	sram[get_d (op)] = sram[read_word_pre_dec (REGY) & SRAM_MASK];
+	cycles++;
+	break;
+
+      case OP_st_X:
+	sram[read_word (REGX) & SRAM_MASK] = sram[get_d (op)];
+	cycles++;
+	break;
+
+      case OP_st_X_inc:
+	sram[read_word_post_inc (REGX) & SRAM_MASK] = sram[get_d (op)];
+	cycles++;
+	break;
+
+      case OP_st_dec_X:
+	sram[read_word_pre_dec (REGX) & SRAM_MASK] = sram[get_d (op)];
+	cycles++;
+	break;
+
+      case OP_st_Z_inc:
+	sram[read_word_post_inc (REGZ) & SRAM_MASK] = sram[get_d (op)];
+	cycles++;
+	break;
+
+      case OP_st_dec_Z:
+	sram[read_word_pre_dec (REGZ) & SRAM_MASK] = sram[get_d (op)];
+	cycles++;
+	break;
+
+      case OP_st_Y_inc:
+	sram[read_word_post_inc (REGY) & SRAM_MASK] = sram[get_d (op)];
+	cycles++;
+	break;
+
+      case OP_st_dec_Y:
+	sram[read_word_pre_dec (REGY) & SRAM_MASK] = sram[get_d (op)];
+	cycles++;
+	break;
+
+      case OP_std_Y:
+	sram[read_word (REGY) + flash[ipc].r] = sram[get_d (op)];
+	cycles++;
+	break;
+
+      case OP_std_Z:
+	sram[read_word (REGZ) + flash[ipc].r] = sram[get_d (op)];
+	cycles++;
+	break;
+
+      case OP_ldd_Z:
+	sram[get_d (op)] = sram[read_word (REGZ) + flash[ipc].r];
+	cycles++;
+	break;
+
+      case OP_ldd_Y:
+	sram[get_d (op)] = sram[read_word (REGY) + flash[ipc].r];
+	cycles++;
+	break;
+
+      case OP_ld_X:
+	sram[get_d (op)] = sram[read_word (REGX) & SRAM_MASK];
+	cycles++;
+	break;
+
+      case OP_sbiw:
+	{
+	  word wk = get_k6 (op);
+	  word wres;
+	  word wr;
+
+	  d = get_d24 (op);
+	  wr = read_word (d);
+	  wres = wr - wk;
+
+	  sram[SREG] &= ~(SREG_S | SREG_V | SREG_N | SREG_Z | SREG_C);
+	  if (wres == 0)
+	    sram[SREG] |= SREG_Z;
+	  if (wres & 0x8000)
+	    sram[SREG] |= SREG_N;
+	  if (wres & ~wr & 0x8000)
+	    sram[SREG] |= SREG_C;
+	  if (~wres & wr & 0x8000)
+	    sram[SREG] |= SREG_V;
+	  if (((~wres & wr) ^ wres) & 0x8000)
+	    sram[SREG] |= SREG_S;
+	  write_word (d, wres);
+	}
+	cycles++;
+	break;
+
+      case OP_adiw:
+	{
+	  word wk = get_k6 (op);
+	  word wres;
+	  word wr;
+
+	  d = get_d24 (op);
+	  wr = read_word (d);
+	  wres = wr + wk;
+
+	  sram[SREG] &= ~(SREG_S | SREG_V | SREG_N | SREG_Z | SREG_C);
+	  if (wres == 0)
+	    sram[SREG] |= SREG_Z;
+	  if (wres & 0x8000)
+	    sram[SREG] |= SREG_N;
+	  if (~wres & wr & 0x8000)
+	    sram[SREG] |= SREG_C;
+	  if (wres & ~wr & 0x8000)
+	    sram[SREG] |= SREG_V;
+	  if (((wres & ~wr) ^ wres) & 0x8000)
+	    sram[SREG] |= SREG_S;
+	  write_word (d, wres);
+	}
+	cycles++;
+	break;
+
+      case OP_bad:
+	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, pc, sim_signalled, SIM_SIGILL);
+
+      default:
+	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, pc, sim_signalled, SIM_SIGILL);
+      }
 }
 
-
-int
-sim_trace (SIM_DESC sd)
+void
+sim_engine_run (SIM_DESC sd,
+		int next_cpu_nr, /* ignore  */
+		int nr_cpus, /* ignore  */
+		int siggnal) /* ignore  */
 {
-  tracing = 1;
-  
-  sim_resume (sd, 0, 0);
+  SIM_CPU *cpu;
 
-  tracing = 0;
-  
-  return 1;
+  SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
+
+  cpu = STATE_CPU (sd, 0);
+
+  while (1)
+    {
+      step_once (cpu);
+      if (sim_events_tick (sd))
+	sim_events_process (sd);
+    }
 }
 
 int
@@ -1752,110 +1663,118 @@ sim_fetch_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
   return 0;
 }
 
-void
-sim_stop_reason (SIM_DESC sd, enum sim_stop * reason,  int *sigrc)
+static sim_cia
+avr_pc_get (sim_cpu *cpu)
 {
-  *reason = cpu_exception;
-  *sigrc = cpu_signal;
+  return pc;
 }
 
-int
-sim_stop (SIM_DESC sd)
+static void
+avr_pc_set (sim_cpu *cpu, sim_cia _pc)
 {
-  cpu_exception = sim_stopped;
-  cpu_signal = GDB_SIGNAL_INT;
-  return 1;
+  pc = _pc;
 }
 
-void
-sim_info (SIM_DESC sd, int verbose)
+static void
+free_state (SIM_DESC sd)
 {
-  callback->printf_filtered
-    (callback, "\n\n# cycles  %10u\n", cycles);
+  if (STATE_MODULES (sd) != NULL)
+    sim_module_uninstall (sd);
+  sim_cpu_free_all (sd);
+  sim_state_free (sd);
 }
 
 SIM_DESC
 sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
 {
-  myname = argv[0];
-  callback = cb;
-  
-  cur_bfd = abfd;
+  int i;
+  SIM_DESC sd = sim_state_alloc (kind, cb);
+  SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
-  /* Fudge our descriptor for now.  */
-  return (SIM_DESC) 1;
-}
+  /* The cpu data is kept in a separately allocated chunk of memory.  */
+  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
 
-void
-sim_close (SIM_DESC sd, int quitting)
-{
-  /* nothing to do */
-}
+  STATE_WATCHPOINTS (sd)->pc = &pc;
+  STATE_WATCHPOINTS (sd)->sizeof_pc = sizeof (pc);
 
-SIM_RC
-sim_load (SIM_DESC sd, const char *prog, bfd *abfd, int from_tty)
-{
-  bfd *prog_bfd;
+  if (sim_pre_argv_init (sd, argv[0]) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
+
+  /* getopt will print the error message so we just have to exit if this fails.
+     FIXME: Hmmm...  in the case of gdb we need getopt to call
+     print_filtered.  */
+  if (sim_parse_args (sd, argv) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
+
+  /* Check for/establish the a reference program image.  */
+  if (sim_analyze_program (sd,
+			   (STATE_PROG_ARGV (sd) != NULL
+			    ? *STATE_PROG_ARGV (sd)
+			    : NULL), abfd) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
+
+  /* Configure/verify the target byte order and other runtime
+     configuration options.  */
+  if (sim_config (sd) != SIM_RC_OK)
+    {
+      sim_module_uninstall (sd);
+      return 0;
+    }
+
+  if (sim_post_argv_init (sd) != SIM_RC_OK)
+    {
+      /* Uninstall the modules to avoid memory leaks,
+	 file descriptor leaks, etc.  */
+      sim_module_uninstall (sd);
+      return 0;
+    }
+
+  /* CPU specific initialization.  */
+  for (i = 0; i < MAX_NR_PROCESSORS; ++i)
+    {
+      SIM_CPU *cpu = STATE_CPU (sd, i);
+
+      CPU_PC_FETCH (cpu) = avr_pc_get;
+      CPU_PC_STORE (cpu) = avr_pc_set;
+    }
 
   /* Clear all the memory.  */
   memset (sram, 0, sizeof (sram));
   memset (flash, 0, sizeof (flash));
 
-  prog_bfd = sim_load_file (sd, myname, callback, prog, abfd,
-                            sim_kind == SIM_OPEN_DEBUG,
-                            0, sim_write);
-  if (prog_bfd == NULL)
-    return SIM_RC_FAIL;
+  return sd;
+}
 
-  avr_pc22 = (bfd_get_mach (prog_bfd) >= bfd_mach_avr6);
-
-  if (abfd != NULL)
-    cur_bfd = abfd;
-
-  return SIM_RC_OK;
+void
+sim_close (SIM_DESC sd, int quitting)
+{
+  sim_module_uninstall (sd);
 }
 
 SIM_RC
-sim_create_inferior (SIM_DESC sd, struct bfd *prog_bfd, char **argv, char **env)
+sim_create_inferior (SIM_DESC sd, struct bfd *abfd, char **argv, char **env)
 {
-  /* Set the initial register set.  */
-  pc = 0;
-  
-  return SIM_RC_OK;
-}
-
-void
-sim_kill (SIM_DESC sd)
-{
-  /* nothing to do */
-}
-
-void
-sim_do_command (SIM_DESC sd, const char *cmd)
-{
-  /* Nothing there yet; it's all an error.  */
-  
-  if (cmd == NULL)
-    return;
-
-  if (strcmp (cmd, "verbose") == 0)
-    verbose = 2;
-  else if (strcmp (cmd, "trace") == 0)
-    tracing = 1;
+  /* Set the PC.  */
+  if (abfd != NULL)
+    pc = bfd_get_start_address (abfd);
   else
-    sim_cb_eprintf (callback,
-                    "Error: \"%s\" is not a valid avr simulator command.\n",
-                    cmd);
-}
+    pc = 0;
 
-void
-sim_set_callbacks (host_callback *ptr)
-{
-  callback = ptr; 
-}
+  if (abfd != NULL)
+    avr_pc22 = (bfd_get_mach (abfd) >= bfd_mach_avr6);
 
-char **
-sim_complete_command (SIM_DESC sd, const char *text, const char *word)
-{
-  return NULL;
+  return SIM_RC_OK;
 }

@@ -129,6 +129,7 @@ load_byte_sign_extend:
 	r7 = B [ sp+0] (x);
 	r6 = b [fp-0x7fff] (X);
 
+	.data
 	.global load_data
 load_data1:	.byte 0
 load_data2:	.word 16

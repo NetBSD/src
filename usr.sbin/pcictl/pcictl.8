@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcictl.8,v 1.16 2014/09/10 21:13:50 wiz Exp $
+.\"	$NetBSD: pcictl.8,v 1.16.2.1 2016/11/04 14:49:27 pgoyette Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 31, 2014
+.Dd September 23, 2016
 .Dt PCICTL 8
 .Os
 .Sh NAME
@@ -96,7 +96,7 @@ If the bus is not specified, it defaults to the bus number of the
 PCI bus specified on the command line.
 If the function is not specified, it defaults to 0.
 .Pp
-.Em WARNING:
+.Em WARNING :
 .Nm
 .Cm read
 is a dangerous command that can damage hardware and panic the operating
@@ -118,7 +118,7 @@ If the bus is not specified, it defaults to the bus number of the
 PCI bus specified on the command line.
 If the function is not specified, it defaults to 0.
 .Pp
-.Em WARNING:
+.Em WARNING :
 .Nm
 .Cm write
 is a dangerous command that can damage hardware and panic the operating
@@ -129,6 +129,14 @@ Do not use it as a substitute for a device driver!
 .Sh FILES
 .Pa /dev/pci*
 - PCI bus device nodes
+.Sh EXAMPLES
+This shows all PCI devices on the system:
+.Pp
+.Dl pcictl pci0 list
+.Pp
+This shows all PCI devices on the system, including attached drivers:
+.Pp
+.Dl pcictl pci0 list -N
 .Sh SEE ALSO
 .Xr pci 3 ,
 .Xr pci 4 ,

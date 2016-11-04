@@ -60,6 +60,7 @@ foo:
 	sw      $4,15($8)	
 	break
 
+	.ifndef r6
 	swl      $2,4($sp)
 	swl      $3,10($sp)
 	swl      $4,17($sp)
@@ -94,6 +95,7 @@ foo:
 	swl      $3,17($8)
 	swr      $4,28($8)
 	break		
+	.endif
 
 # Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
 	.align	2

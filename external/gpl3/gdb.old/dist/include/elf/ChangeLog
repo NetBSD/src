@@ -1,3 +1,111 @@
+2015-07-01  Sandra Loosemore  <sandra@codesourcery.com>
+	    Cesar Philippidis  <cesar@codesourcery.com>
+
+	* nios2.h (R_NIOS2_R2_S12): New.
+	(R_NIOS2_R2_I10_1_PCREL): New.
+	(R_NIOS2_R2_T1I7_1_PCREL): New.
+	(R_NIOS2_R2_T1I7_2): New.
+	(R_NIOS2_R2_T2I4): New.
+	(R_NIOS2_R2_T2I4_1): New.
+	(R_NIOS2_R2_T2I4_2): New.
+	(R_NIOS2_R2_X1I7_2): New.
+	(R_NIOS2_R2_X2L5): New.
+	(R_NIOS2_R2_F1I5_2): New.
+	(R_NIOS2_R2_L5I4X1): New.
+	(R_NIOS2_R2_T1X1I6): New.
+	(R_NIOS2_R2_T1X1I6_2): New.
+	(R_NIOS2_ILLEGAL): Renumber.
+
+2015-07-01  Sandra Loosemore  <sandra@codesourcery.com>
+	    Cesar Philippidis  <cesar@codesourcery.com>
+
+	* nios2.h (EF_NIOS2_ARCH_R1, EF_NIOS2_ARCH_R2): Define.
+
+2015-05-29  Roland McGrath  <mcgrathr@google.com>
+
+	* common.h (GNU_ABI_TAG_SYLLABLE): New macro.
+	(GNU_ABI_TAG_NACL): New macro.
+
+2015-05-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common.h (EM_486): Renamed to ...
+	(EM_IAMCU): This.
+
+2015-04-27  Andreas Krebbel  <krebbel@linux.vnet.ibm.com>
+
+	* s390.h: Define Tag_GNU_S390_ABI_Vector.
+
+2015-04-24  Alan Modra  <amodra@gmail.com>
+
+	* internal.h (ELF_SECTION_IN_SEGMENT_1): Ensure PT_LOAD and
+	similar segments only contain alloc sections.
+
+2015-04-24  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/18316
+	* mep.h (SEC_MEP_VLIW): Removed.
+
+2015-04-09  Nick Clifton  <nickc@redhat.com>
+
+	* rx.h (E_FLAG_RX_SINSNS_SET): New bit in e_flags field.
+	(E_FLAG_RX_SINSNS_YES): Likewise.
+	(E_FLAG_RX_SINSNS_MASK): New define.
+
+2015-04-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* external.h (Elf32_External_Chdr): New.
+	(Elf64_External_Chdr): Likewise.
+	* internal.h (Elf_Internal_Chdr): Likewise.
+
+2015-03-26  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common.h (ELFOSABI_CLOUDABI): New.
+	(SHF_COMPRESSED): Likewise.
+	(ELFCOMPRESS_ZLIB): Likewise.
+	(ELFCOMPRESS_LOOS): Likewise.
+	(ELFCOMPRESS_HIOS): Likewise.
+	(ELFCOMPRESS_LOPROC): Likewise.
+	(ELFCOMPRESS_HIPROC): Likewise.
+
+2015-03-19  Nick Clifton  <nickc@redhat.com>
+
+	* rl78.h (E_FLAG_RL78_G10): Redefine.
+	(E_FLAG_RL78_CPU_MASK, E_FLAG_RL78_ANY_CPU, E_FLAG_RL78_G13
+	E_FLAG_RL78_G14): New flags.
+
+2015-02-19  Marcus Shawcroft  <marcus.shawcroft@arm.com>
+
+	* aarch64.h (R_AARCH64_P32_TLSGD_ADR_PREL21): Add.
+
+2015-02-24  Nick Clifton  <nickc@redhat.com>
+
+	* v850.h (EF_RH850_SIMD): Delete deprecated flag.
+	(EF_RH850_CACHE): Likewise.
+	(EF_RH850_MMU): Likewise.
+	(EF_RH850_DATA_ALIGN8): Likewise.
+	(SHT_RENESAS_IOP): Fix typo in name.
+	(SHT_RENESAS_INFO): Define.
+	(V850_NOTE_SECNAME): Define.
+	(SIZEOF_V850_NOTE): Define.
+	(V850_NOTE_NAME): Define.
+	(enum v850_notes): New enum.
+	(NUM_V850_NOTES): Define.
+
+2015-02-23  Nick Clifton  <nickc@redhat.com>
+
+	PR 17915
+	* score.h: Fix typo in license header.
+
+2015-02-20  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* common.h (NT_S390_VXRS_LOW): New macro.
+	(NT_S390_VXRS_HIGH): Likewise.
+
+2015-01-28  James Bowman  <james.bowman@ftdichip.com>
+
+	* common.h (EM_FT32): Define.
+	* ft32.h: New file.
+
 2015-01-09  Anthony Green  <green@moxielogic.com>
 
 	* common.h (EM_MOXIE): Redefine to official number.

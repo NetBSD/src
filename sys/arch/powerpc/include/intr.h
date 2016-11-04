@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2013/08/23 06:18:14 matt Exp $ */
+/*	$NetBSD: intr.h,v 1.11.10.1 2016/11/04 14:49:03 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.11 2013/08/23 06:18:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.11.10.1 2016/11/04 14:49:03 pgoyette Exp $");
 #endif
 
 #ifndef _POWERPC_INTR_MACHDEP_H_
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.11 2013/08/23 06:18:14 matt Exp $");
 
 #if !defined(_LOCORE)
 void *	intr_establish(int, int, int, int (*)(void *), void *);
+void *	intr_establish_xname(int, int, int, int (*)(void *), void *,
+	    const char *);
 void	intr_disestablish(void *);
 const char *
 	intr_typename(int);
@@ -85,6 +87,7 @@ struct intrhand {
 	struct	intrhand *ih_next;
 	int	ih_ipl;
 	int	ih_virq;
+	char	ih_xname[INTRDEVNAMEBUF];
 };
 
 void softint_fast_dispatch(struct lwp *, int);

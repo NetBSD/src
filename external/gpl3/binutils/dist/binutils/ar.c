@@ -1,5 +1,5 @@
 /* ar.c - Archive modify and extract.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -1003,7 +1003,7 @@ print_contents (bfd *abfd)
       if (nread != tocopy)
 	/* xgettext:c-format */
 	fatal (_("%s is not a valid archive"),
-	       bfd_get_filename (bfd_my_archive (abfd)));
+	       bfd_get_filename (abfd->my_archive));
 
       /* fwrite in mingw32 may return int instead of bfd_size_type. Cast the
 	 return value to bfd_size_type to avoid comparison between signed and
@@ -1081,7 +1081,7 @@ extract_file (bfd *abfd)
 	if (nread != tocopy)
 	  /* xgettext:c-format */
 	  fatal (_("%s is not a valid archive"),
-		 bfd_get_filename (bfd_my_archive (abfd)));
+		 bfd_get_filename (abfd->my_archive));
 
 	/* See comment above; this saves disk arm motion */
 	if (ostream == NULL)

@@ -1,3 +1,120 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENVIRONMENT): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Update sim_parse_args comment.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HOSTENDIAN): Delete.
+	* configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* arch.h (TARGET_BIG_ENDIAN): Delete.
+	* configure.ac (SIM_AC_OPTION_ENDIAN): Change BIG_ENDIAN to BIG.
+	* configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (free_state, print_lm32_misc_cpu): Delete prototypes.
+	(lm32_option_handler, OPTION_ENDIAN, lm32_options): Delete.
+	(sim_open): Delete sim_add_option_table call.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (current_state): Delete.
+	(sim_open): Delete current_state assignment.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-hload.o.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_create_inferior): Replace old #if 0 code with dupargv.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-model.o.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* arch.c: Rename MACH to SIM_MACH.
+	* cpuall.h: Likewise.
+	* model.c: Rename MACH to SIM_MACH, MACH_IMP_PROPERTIES to
+	SIM_MACH_IMP_PROPERTIES, and MODEL to SIM_MODEL.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (WITH_SCACHE_PBB): Move from ...
+	* tconfig.h (WITH_SCACHE_PBB): ... here.  Delete file.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (SIM_HANDLES_LMA): Delete.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-reason.o, sim-reg.o, and
+	sim-stop.o.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-signal.o.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_close): Delete.
+
 2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.
@@ -217,28 +334,28 @@
 
 2009-05-18  Jon Beniston <jon@beniston.com>
 
-        * Makefile.in: New file.
-        * arch.c: New file.
-        * arch.h: New file.
-        * config.in: New file.
-        * configure: New file.
-        * configure.ac: New file.
-        * cpu.c: New file.
-        * cpu.h: New file.
-        * cpuall.h: New file.
-        * decode.c: New file.
-        * decode.h: New file.
-        * dv-lm32cpu.c: New file.
-        * dv-lm32timer.c: New file.
-        * dv-lm32uart.c: New file.
-        * lm32.c: New file.
-        * lm32-sim.h: New file.
-        * mloop.in: New file.
-        * model.c: New file.
-        * sem.c: New file.
-        * sem-switch.c: New file.
-        * sim-if.c: New file.
-        * sim-main.c: New file.
-        * tconfig.in: New file.
-        * traps.c: New file.
-        * user.c: New file.
+	* Makefile.in: New file.
+	* arch.c: New file.
+	* arch.h: New file.
+	* config.in: New file.
+	* configure: New file.
+	* configure.ac: New file.
+	* cpu.c: New file.
+	* cpu.h: New file.
+	* cpuall.h: New file.
+	* decode.c: New file.
+	* decode.h: New file.
+	* dv-lm32cpu.c: New file.
+	* dv-lm32timer.c: New file.
+	* dv-lm32uart.c: New file.
+	* lm32.c: New file.
+	* lm32-sim.h: New file.
+	* mloop.in: New file.
+	* model.c: New file.
+	* sem.c: New file.
+	* sem-switch.c: New file.
+	* sim-if.c: New file.
+	* sim-main.c: New file.
+	* tconfig.in: New file.
+	* traps.c: New file.
+	* user.c: New file.

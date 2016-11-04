@@ -1,5 +1,4 @@
-@c Copyright 2002, 2003, 2005, 2009, 2011
-@c Free Software Foundation, Inc.
+@c Copyright (C) 2002-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -48,7 +47,7 @@ assemble an instruction which will not execute on the target processor,
 the assembler may either expand the instruction as a macro or issue an
 error message.  This option is equivalent to the @code{.arch} directive.
 
-The following processor names are recognized: 
+The following processor names are recognized:
 @code{21064},
 @code{21064a},
 @code{21066},
@@ -167,7 +166,7 @@ The 32 floating-point registers are referred to as @samp{$f@var{n}}.
 @cindex relocations, Alpha
 
 Some of these relocations are available for ECOFF, but mostly
-only for ELF.  They are modeled after the relocation format 
+only for ELF.  They are modeled after the relocation format
 introduced in Digital Unix 4.0, but there are additions.
 
 The format is @samp{!@var{tag}} or @samp{!@var{tag}!@var{number}}
@@ -243,13 +242,13 @@ jsr  $26,($27),foo  !lituse_jsr!1
 
 @item !lituse_tlsgd!@var{N}
 Used with a register branch format instruction to indicate that the
-literal is the call to @code{__tls_get_addr} used to compute the 
+literal is the call to @code{__tls_get_addr} used to compute the
 address of the thread-local storage variable whose descriptor was
 loaded with @code{!tlsgd!@var{N}}.
 
 @item !lituse_tlsldm!@var{N}
 Used with a register branch format instruction to indicate that the
-literal is the call to @code{__tls_get_addr} used to compute the 
+literal is the call to @code{__tls_get_addr} used to compute the
 address of the base of the thread-local storage block for the current
 module.  The descriptor for the module must have been loaded with
 @code{!tlsldm!@var{N}}.
@@ -259,7 +258,7 @@ Used with @code{ldah} and @code{lda} to load the GP from the current
 address, a-la the @code{ldgp} macro.  The source register for the
 @code{ldah} instruction must contain the address of the @code{ldah}
 instruction.  There must be exactly one @code{lda} instruction paired
-with the @code{ldah} instruction, though it may appear anywhere in 
+with the @code{ldah} instruction, though it may appear anywhere in
 the instruction stream.  The immediate operands must be zero.
 
 @example
@@ -401,8 +400,8 @@ used in some non-standard way and so the linker cannot elide the load of
 the procedure vector during relaxation.
 
 @item .usepv @var{function}, @var{which}
-Used to indicate the use of the @code{$27} register, similar to 
-@code{.prologue}, but without the other semantics of needing to 
+Used to indicate the use of the @code{$27} register, similar to
+@code{.prologue}, but without the other semantics of needing to
 be inside an open @code{.ent}/@code{.end} block.
 
 The @var{which} argument should be either @code{no}, indicating that

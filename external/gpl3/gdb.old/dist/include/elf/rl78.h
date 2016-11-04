@@ -106,7 +106,11 @@ END_RELOC_NUMBERS (R_RL78_max)
 /* Values for the e_flags field in the ELF header.  */
 #define E_FLAG_RL78_64BIT_DOUBLES	(1 << 0)
 #define E_FLAG_RL78_DSP			(1 << 1) /* Defined in the RL78 CPU Object file specification, but not explained.  */
-#define E_FLAG_RL78_G10			(1 << 2) /* CPU is missing register banks 1-3, so uses different ABI.  */
+#define E_FLAG_RL78_CPU_MASK            0x0c
+#define E_FLAG_RL78_ANY_CPU             0x00     /* CPU not specified.  Assume no CPU specific code usage.  */
+#define E_FLAG_RL78_G10			0x04     /* CPU is missing register banks 1-3, so uses different ABI.  */
+#define E_FLAG_RL78_G13			0x08     /* CPU uses a peripheral for multiply/divide.  */
+#define E_FLAG_RL78_G14			0x0c     /* CPU has multiply/divide instructions.  */
 
 /* These define the addend field of R_RL78_RH_RELAX relocations.  */
 #define RL78_RELAXA_MASK	0x000000f0	/* Mask for relax types */

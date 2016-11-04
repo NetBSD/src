@@ -23,44 +23,31 @@
 #include "bfd.h"
 #include "libbfd.h"
 
-const bfd_arch_info_type bfd_s390_64_arch =
-{
-    64,        /* bits in a word */
-    64,        /* bits in an address */
-    8, /* bits in a byte */
-    bfd_arch_s390,
-    bfd_mach_s390_64,
-    "s390",
-    "s390:64-bit",
-    3, /* section alignment power */
-#if BFD_DEFAULT_TARGET_SIZE == 64
-    TRUE, /* the default */
-#else
-    FALSE, /* the default */
-#endif
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    NULL
-};
+#define N(bits, number, print, is_default, next)	\
+  {							\
+    bits,	       /* bits in a word */		\
+    bits,	       /* bits in an address */		\
+    8,		       /* bits in a byte */		\
+    bfd_arch_s390,					\
+    number,						\
+    "s390",						\
+    print,						\
+    3,		       /* section alignment power */	\
+    is_default,						\
+    bfd_default_compatible,				\
+    bfd_default_scan,					\
+    bfd_arch_default_fill,				\
+    next						\
+  }
 
-const bfd_arch_info_type bfd_s390_arch =
-{
-    32,	/* bits in a word */
-    32,	/* bits in an address */
-    8,	/* bits in a byte */
-    bfd_arch_s390,
-    bfd_mach_s390_31,
-    "s390",
-    "s390:31-bit",
-    3, /* section alignment power */
 #if BFD_DEFAULT_TARGET_SIZE == 64
-    FALSE, /* the default */
+static const bfd_arch_info_type bfd_s390_31_arch =
+  N (32, bfd_mach_s390_31, "s390:31-bit", FALSE, NULL);
+const bfd_arch_info_type bfd_s390_arch =
+  N (64, bfd_mach_s390_64, "s390:64-bit", TRUE, &bfd_s390_31_arch);
 #else
-    TRUE, /* the default */
+static const bfd_arch_info_type bfd_s390_64_arch =
+  N (64, bfd_mach_s390_64, "s390:64-bit", FALSE, NULL);
+const bfd_arch_info_type bfd_s390_arch =
+  N (32, bfd_mach_s390_31, "s390:31-bit", TRUE, &bfd_s390_64_arch);
 #endif
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_s390_64_arch
-};

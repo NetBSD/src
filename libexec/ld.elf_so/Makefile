@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.133 2016/06/16 11:34:13 christos Exp $
+#	$NetBSD: Makefile,v 1.133.2.1 2016/11/04 14:48:55 pgoyette Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -62,6 +62,8 @@ COPTS+=		-fvisibility=hidden
 .if defined(MLIBDIR)
 PROG=		ld.elf_so-${MLIBDIR}
 CPPFLAGS+=	-DRTLD_ARCH_SUBDIR=\"${MLIBDIR}\"
+.	if ${MLIBDIR} == "o32"
+.	endif
 .else
 PROG=		ld.elf_so
 .endif

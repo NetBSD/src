@@ -24,6 +24,19 @@
       This document summarizes changes since BIND 9.10.4:
     </para>
     <para>
+      BIND 9.10.4-P4 addresses the security issue described in
+      CVE-2016-8864.
+    </para>
+    <para>
+      BIND 9.10.4-P3 addresses the security issue described in
+      CVE-2016-2776 and addresses an interoperability issue with
+      ECS clients.
+    </para>
+    <para>
+      BIND 9.10.4-P2 addresses the security issue described in
+      CVE-2016-2775.
+    </para>
+    <para>
       BIND 9.10.4-P1 addresses Windows installation issues, the %z
       modifier is not supported under Windows and a race condition
       in the rbt/rbtdb implementation resulting in named exiting
@@ -46,7 +59,24 @@
     <itemizedlist>
       <listitem>
 	<para>
-	  None.
+	  It was possible to trigger assertions when processing
+	  a response. This flaw is disclosed in CVE-2016-8864. [RT #43465]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  It was possible to trigger a assertion when rendering a
+	  message using a specially crafted request. This flaw is
+	  disclosed in CVE-2016-2776. [RT #43139]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	 getrrsetbyname with a non absolute name could trigger an
+	 infinite recursion bug in lwresd and named with lwres
+	 configured if when combined with a search list entry the
+	 resulting name is too long.  This flaw is disclosed in
+	 CVE-2016-2775. [RT #42694]
 	</para>
       </listitem>
     </itemizedlist>
@@ -66,7 +96,7 @@
   <section xml:id="relnotes_changes"><info><title>Feature Changes</title></info>
     <itemizedlist>
       <listitem>
-        <para>
+	<para>
 	  None.
 	</para>
       </listitem>
@@ -85,6 +115,12 @@
 
   <section xml:id="relnotes_bugs"><info><title>Bug Fixes</title></info>
     <itemizedlist>
+      <listitem>
+	<para>
+	  ECS clients with the option set to 0.0.0.0/0/0 or ::/0/0
+	  where incorrectly getting a FORMERR response.
+	</para>
+      </listitem>
       <listitem>
 	<para>
 	  Windows installs were failing due to triggering UAC without

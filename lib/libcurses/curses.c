@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.25 2013/10/16 19:59:29 roy Exp $	*/
+/*	$NetBSD: curses.c,v 1.25.8.1 2016/11/04 14:48:53 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.25 2013/10/16 19:59:29 roy Exp $");
+__RCSID("$NetBSD: curses.c,v 1.25.8.1 2016/11/04 14:48:53 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -95,7 +95,7 @@ _cursesi_copy_nsp(nschar_t *src_nsp, struct __ldata *ch)
 				pnp = tnp;
 				tnp = tnp->next;
 			} else {
-				tnp = (nschar_t *)malloc(sizeof(nschar_t));
+				tnp = malloc(sizeof(nschar_t));
 				if (!tnp)
 					return ERR;
 				tnp->ch = np->ch;

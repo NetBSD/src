@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.46 2016/04/23 23:10:10 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.46.2.1 2016/11/04 14:48:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -137,9 +137,12 @@ struct tm *getdate(const char *);
 extern int getdate_err;
 #endif
 
+/* ISO/IEC 9899:201x 7.27.1/3 Components of time */
+#include <sys/timespec.h>
+
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
-#include <sys/time.h>		/* XXX for struct timespec */
+#include <sys/time.h>
 struct sigevent;
 struct itimerspec;
 int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *);
@@ -230,6 +233,10 @@ char *strptime_l(const char * __restrict, const char * __restrict,
     struct tm * __restrict, locale_t);
 
 #endif /* _NETBSD_SOURCE */
+
+/* ISO/IEC 9899:201x 7.27.2.5 The timespec_get function */
+#define TIME_UTC	1	/* time elapsed since epoch */
+int timespec_get(struct timespec *ts, int base);
 
 __END_DECLS
 

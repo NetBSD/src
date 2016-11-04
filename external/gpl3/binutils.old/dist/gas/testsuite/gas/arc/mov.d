@@ -1,68 +1,56 @@
-#as: -EL
-#objdump: -dr -EL
+#as: -mcpu=arc700
+#objdump: -dr --prefix-addresses --show-raw-insn
 
-.*: +file format elf32-.*arc
+.*: +file format .*arc.*
 
 Disassembly of section .text:
-
-00000000 <.text>:
-   0:	00 82 00 60 	60008200     mov        r0,r1
-   4:	00 38 6e 63 	636e3800     mov        fp,sp
-   8:	00 fe 1f 60 	601ffe00     mov        r0,0
-   c:	ff ff 3f 60 	603fffff     mov        r1,-1
-  10:	00 04 e1 67 	67e10400     mov        0,r2
-  14:	00 86 e1 67 	67e18600     mov        0,r3
-  18:	ff fe 9f 60 	609ffeff     mov        r4,255
-  1c:	00 8a e2 67 	67e28a00     mov        0,r5
-  20:	00 ff df 60 	60dfff00     mov        r6,-256
-  24:	00 8e e3 67 	67e38e00     mov        0,r7
-  28:	00 7c 1f 61 	611f7c00     mov        r8,0x100
-  2c:	00 01 00 00 
-  30:	00 7c 3f 61 	613f7c00     mov        r9,0xffff_feff
-  34:	ff fe ff ff 
-  38:	00 7c 7f 61 	617f7c00     mov        r11,0x4242_4242
-  3c:	42 42 42 42 
-  40:	00 7c ff 67 	67ff7c00     mov        0,0x100
-  44:	00 01 00 00 
-  48:	00 7c 1f 60 	601f7c00     mov        r0,0
-  4c:	00 00 00 00 
-			4c: R_ARC_32	foo
-  50:	00 82 00 60 	60008200     mov        r0,r1
-  54:	00 08 62 60 	60620800     mov        r3,r4
-  58:	01 8e c3 60 	60c38e01     mov.z      r6,r7
-  5c:	01 14 25 61 	61251401     mov.z      r9,r10
-  60:	02 9a 86 61 	61869a02     mov.nz     r12,r13
-  64:	02 20 e8 61 	61e82002     mov.nz     r15,r16
-  68:	03 a6 49 62 	6249a603     mov.p      r18,r19
-  6c:	03 2c ab 62 	62ab2c03     mov.p      r21,r22
-  70:	04 b2 0c 63 	630cb204     mov.n      r24,r25
-  74:	04 38 6e 63 	636e3804     mov.n      fp,sp
-  78:	05 be cf 63 	63cfbe05     mov.c      ilink2,blink
-  7c:	05 44 31 64 	64314405     mov.c      r33,r34
-  80:	05 ca 92 64 	6492ca05     mov.c      r36,r37
-  84:	06 50 f4 64 	64f45006     mov.nc     r39,r40
-  88:	06 d6 55 65 	6555d606     mov.nc     r42,r43
-  8c:	06 5c b7 65 	65b75c06     mov.nc     r45,r46
-  90:	07 e2 18 66 	6618e207     mov.v      r48,r49
-  94:	07 64 39 66 	66396407     mov.v      r49,r50
-  98:	08 ee 3b 66 	663bee08     mov.nv     r49,r55
-  9c:	08 74 3d 66 	663d7408     mov.nv     r49,r58
-  a0:	09 78 9e 67 	679e7809     mov.gt     lp_count,lp_count
-  a4:	0a 7c 1f 60 	601f7c0a     mov.ge     r0,0
-  a8:	00 00 00 00 
-  ac:	0c 7c df 67 	67df7c0c     mov.le     0,2
-  b0:	02 00 00 00 
-  b4:	0d 86 61 60 	6061860d     mov.hi     r3,r3
-  b8:	0e 08 82 60 	6082080e     mov.ls     r4,r4
-  bc:	0f 8a a2 60 	60a28a0f     mov.pnz    r5,r5
-  c0:	00 83 00 60 	60008300     mov.f      r0,r1
-  c4:	01 fa 5e 60 	605efa01     mov.f      r2,1
-  c8:	00 87 e1 67 	67e18700     mov.f      0,r3
-  cc:	00 09 e2 67 	67e20900     mov.f      0,r4
-  d0:	00 7d bf 60 	60bf7d00     mov.f      r5,0x200
-  d4:	00 02 00 00 
-  d8:	00 7d df 67 	67df7d00     mov.f      0,0x200
-  dc:	00 02 00 00 
-  e0:	01 83 00 60 	60008301     mov.z.f    r0,r1
-  e4:	02 7d 3f 60 	603f7d02     mov.nz.f   r1,0
-  e8:	00 00 00 00 
+0x[0-9a-f]+ 200a 0040           	mov	r0,r1
+0x[0-9a-f]+ 230a 3700           	mov	fp,sp
+0x[0-9a-f]+ 204a 0000           	mov	r0,0
+0x[0-9a-f]+ 218a 0fff           	mov	r1,-1
+0x[0-9a-f]+ 260a 7080           	mov	0,r2
+0x[0-9a-f]+ 248a 0fc3           	mov	r4,255
+0x[0-9a-f]+ 268a 7fc3           	mov	0,255
+0x[0-9a-f]+ 268a 003c           	mov	r6,-256
+0x[0-9a-f]+ 230a 1f80 4242 4242 	mov	r11,0x42424242
+0x[0-9a-f]+ 260a 7f80 1234 5678 	mov	0,0x12345678
+0x[0-9a-f]+ 200a 0f80 0000 0000 	mov	r0,0
+			34: ARC_32_ME	foo
+0x[0-9a-f]+ 20ca 0040           	mov	r0,r1
+0x[0-9a-f]+ 23ca 0100           	mov	r3,r4
+0x[0-9a-f]+ 26ca 01c1           	mov.eq	r6,r7
+0x[0-9a-f]+ 21ca 1281           	mov.eq	r9,r10
+0x[0-9a-f]+ 24ca 1342           	mov.ne	r12,r13
+0x[0-9a-f]+ 27ca 1402           	mov.ne	r15,r16
+0x[0-9a-f]+ 22ca 24c3           	mov.p	r18,r19
+0x[0-9a-f]+ 25ca 2583           	mov.p	r21,r22
+0x[0-9a-f]+ 20ca 3644           	mov.n	r24,r25
+0x[0-9a-f]+ 23ca 3704           	mov.n	fp,sp
+0x[0-9a-f]+ 20ca 0045           	mov.c	r0,r1
+0x[0-9a-f]+ 23ca 0105           	mov.c	r3,r4
+0x[0-9a-f]+ 26ca 01c5           	mov.c	r6,r7
+0x[0-9a-f]+ 21ca 1006           	mov.nc	r9,r0
+0x[0-9a-f]+ 22ca 00c6           	mov.nc	r2,r3
+0x[0-9a-f]+ 25ca 0186           	mov.nc	r5,r6
+0x[0-9a-f]+ 20ca 1247           	mov.v	r8,r9
+0x[0-9a-f]+ 21ca 0087           	mov.v	r1,r2
+0x[0-9a-f]+ 24ca 0148           	mov.nv	r4,r5
+0x[0-9a-f]+ 27ca 0208           	mov.nv	r7,r8
+0x[0-9a-f]+ 20ca 0009           	mov.gt	r0,r0
+0x[0-9a-f]+ 20ca 002a           	mov.ge	r0,0
+0x[0-9a-f]+ 26ca 704b           	mov.lt	0,r1
+0x[0-9a-f]+ 26ca 70ac           	mov.le	0,0x2
+0x[0-9a-f]+ 23ca 00cd           	mov.hi	r3,r3
+0x[0-9a-f]+ 24ca 010e           	mov.ls	r4,r4
+0x[0-9a-f]+ 25ca 014f           	mov.pnz	r5,r5
+0x[0-9a-f]+ 200a 8040           	mov.f	r0,r1
+0x[0-9a-f]+ 224a 8040           	mov.f	r2,0x1
+0x[0-9a-f]+ 260a f100           	mov.f	0,r4
+0x[0-9a-f]+ 258a 8008           	mov.f	r5,512
+0x[0-9a-f]+ 20ca 8041           	mov.f.eq	r0,r1
+0x[0-9a-f]+ 21ca 8022           	mov.f.ne	r1,0
+0x[0-9a-f]+ 26ca f08b           	mov.f.lt	0,r2
+0x[0-9a-f]+ 26ca f089           	mov.f.gt	0,r2
+0x[0-9a-f]+ 20ca 8f8c 0000 0200 	mov.f.le	r0,0x200
+0x[0-9a-f]+ 26ca f08a           	mov.f.ge	0,r2
+0x[0-9a-f]+ 26ca ff84 0000 0200 	mov.f.n	0,0x200

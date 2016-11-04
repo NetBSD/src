@@ -1,6 +1,6 @@
 # Expect script for linker support of STB_GNU_UNIQUE symbols
 #
-#   Copyright 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+#   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 #   Contributed by Red Hat.
 #
 # This file is part of the GNU Binutils.
@@ -28,7 +28,7 @@
 # arm, powerpc, and sparc so far.
 if {!(([istarget "i?86-*-*"]
        || [istarget "x86_64-*-*"]
-       || [istarget "arm-*-*"]
+       || [istarget "arm*-*-*"]
        || [istarget "powerpc*-*-*"]
        || [istarget "sparc*-*-*"])
       && ([istarget "*-*-elf*"]
@@ -145,6 +145,12 @@ if ![default_ld_link $ld "tmpdir/unique_shared_prog" "-Ltmpdir tmpdir/unique_emp
     set fails [expr $fails + 1]
 }
 
+# Create shared library containing unique symbol with reference.
+if ![ld_simple_link $ld "tmpdir/libunique_shared_ref.so" "-shared tmpdir/unique_shared.o tmpdir/unique_empty.o"] {
+    fail "Could not create a shared library containing an unique symbol with reference"
+    set fails [expr $fails + 1]
+}
+
 if { $fails != 0 } {
     return
 }
@@ -220,6 +226,17 @@ if {[contains_unique_symbol tmpdir/libunique_shared.so] != 1} {
     set fails [expr $fails + 1]
 }
 
+# Check the unique shared library with reference.
+if {! [check_osabi tmpdir/libunique_shared_ref.so {UNIX - GNU}]} {
+    fail "Shared library containing unique with reference does not have an OS/ABI field of GNU"
+    set fails [expr $fails + 1]
+}
+
+if {[contains_unique_symbol tmpdir/libunique_shared_ref.so] != 1} {
+    fail "Shared library containing unique with reference does not contain an UNIQUE symbol"
+    set fails [expr $fails + 1]
+}
+
 if { $fails == 0 } {
   pass "Checking unique PIC object"
 }
@@ -245,6 +262,7 @@ if { $verbose < 1 } {
     remote_file host delete "tmpdir/unique.o"
     remote_file host delete "tmpdir/unique_shared.o"
     remote_file host delete "tmpdir/libunique_shared.so"
+    remote_file host delete "tmpdir/libunique_shared_ref.so"
     remote_file host delete "tmpdir/unique_prog"
     remote_file host delete "tmpdir/unique_shared_prog"
 }

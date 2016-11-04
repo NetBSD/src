@@ -1,6 +1,6 @@
 /* script-c.h -- C interface for linker scripts in gold.  */
 
-/* Copyright (C) 2006-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2016 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <iant@google.com>.
 
    This file is part of gold.
@@ -139,7 +139,8 @@ enum Sort_wildcard
   SORT_WILDCARD_BY_NAME,
   SORT_WILDCARD_BY_ALIGNMENT,
   SORT_WILDCARD_BY_NAME_BY_ALIGNMENT,
-  SORT_WILDCARD_BY_ALIGNMENT_BY_NAME
+  SORT_WILDCARD_BY_ALIGNMENT_BY_NAME,
+  SORT_WILDCARD_BY_INIT_PRIORITY
 };
 
 /* The information we build for a single wildcard specification.  */

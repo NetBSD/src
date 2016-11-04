@@ -1,3 +1,164 @@
+2016-07-14  Nick Clifton  <nickc@redhat.com>
+
+	* armemu.c (Multiply64): Only issue error messages about invalid
+	arguments if debugging is enabled.
+	* armos.c (ARMul_OSHandleSWI): Ignore invalid flags.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENVIRONMENT): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_INLINE): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* wrapper.c (sim_create_inferior): Mark argv and env const.
+	(sim_open): Mark argv const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* wrapper.c (sim_open): Update sim_parse_args comment.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* wrapper.c (sim_target_parse_arg_array): Replace for loop with
+	a call to countargv.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HOSTENDIAN): Delete.
+	* configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+	* wrapper.c (init): Change BIG_ENDIAN to BFD_ENDIAN_BIG.
+
+2015-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* wrapper.c (sim_store_register): Rename to ...
+	(arm_reg_store): ... this.
+	(sim_fetch_register): Rename to ...
+	(arm_reg_fetch): ... this.
+	(sim_open): Call CPU_REG_FETCH/CPU_REG_STORE.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-hload.o.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete bag.o.
+	* armdefs.h (struct ARMul_State): Delete ErrorCode.
+	(ResetPin, FIQPin, IRQPin, AbortPin, TransPin, BigEndPin, Prog32Pin,
+	Data32Pin, LateAbortPin, ARMul_OSExit, ARMul_OSLastErrorP,
+	ARMul_Debug, ARMul_OSException,rdi_log, SpinCursor, HOURGLASS,
+	HOURGLASS_RATE): Delete.
+	* armemu.c (ARMul_Emulate26): Delete ARMul_Debug call.
+	* arminit.c (ARMul_Reset): Do not set state->ErrorCode.
+	(ARMul_Abort): Delete ARMul_OSException call.
+	* armopts.h: Delete file.
+	* armos.c (isatty_, ARMul_OSExit, ARMul_OSException,
+	ARMul_OSLastErrorP, ARMul_Debug, BUFFERSIZE, UNIQUETEMPS, NOOP,
+	BINARY, READOP, WRITEOP, FIXCRLF): Delete.
+	(struct OSblock): Delete Time0, ErrorP, FileTable, FileFlags, and
+	tempnames.
+	(ARMul_OSInit): Do not set OSptr->ErrorP, OSptr->FileTable, or
+	OSptr->tempnames.
+	* armrdi.c: Delete file.
+	* armvirt.c: Delete armopts.h include.
+	(ARMul_LoadInstrS): Delete HOURGLASS logic.
+	* bag.c, bag.h, communicate.c, communicate.h, dbg_conf.h, dbg_cp.h,
+	dbg_hif.h: Delete files.
+	* dbg_rdi.h (RDP_*, RDI*): Delete defines.
+	(PointHandle, ThreadHandle, Dbg_ConfigBlock, Dbg_HostosInterface,
+	Dbg_MCState, getbufferproc): Delete.
+	(rdi_*): Delete Functions.
+	(RDI_ConfigAspect, RDI_ConfigMatchType, RDI_NameList): Delete
+	(struct RDIProcVec): Delete.
+	* gdbhost.c, gdbhost.h, kid.c, main.c, parent.c: Delete files.
+	* wrapper.c (ARMul_Debug): Delete.
+
+2015-12-15  Dominik Vogt  <vogt@linux.vnet.ibm.com>
+
+	* thumbemu.c (handle_T2_insn): Fix left shift of negative value.
+	* armemu.c (handle_v6_insn): Likewise.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* wrapper.c (sim_close): Delete.
+
+2015-07-14  Nick Clifton  <nickc@redhat.com>
+
+	* armcopro.c: Remove extraneous whitespace.
+	* armdefs.h: Likewise.
+	* armfpe.h: Likewise.
+	* arminit.c: Likewise.
+	* armopts.h: Likewise.
+	* armos.c: Likewise.
+	* armos.h: Likewise.
+	* armrdi.c: Likewise.
+	* armsupp.c: Likewise.
+	* armvirt.c: Likewise.
+	* bag.c: Likewise.
+	* bag.h: Likewise.
+	* communicate.c: Likewise.
+	* communicate.h: Likewise.
+	* dbg_conf.h: Likewise.
+	* dbg_cp.h: Likewise.
+	* dbg_hif.h: Likewise.
+	* dbg_rdi.h: Likewise.
+	* gdbhost.c: Likewise.
+	* gdbhost.h: Likewise.
+	* iwmmxt.c: Likewise.
+	* iwmmxt.h: Likewise.
+	* kid.c: Likewise.
+	* main.c: Likewise.
+	* maverick.c: Likewise.
+	* parent.c: Likewise.
+	* thumbemu.c: Likewise.
+	* wrapper.c: Likewise.
+
 2015-07-02  Nick Clifton  <nickc@redhat.com>
 
 	* Makefile.in (SIM_EXTRA_CFLAGS): Revert previous delta.
@@ -292,7 +453,7 @@
 
 	PR gdb/7205
 
-        Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
+	Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
 
 2012-05-18  Nick Clifton  <nickc@redhat.com>
 
@@ -362,8 +523,8 @@
 	* config.in: Ditto.
 
 2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
-            Daniel Jacobowitz  <dan@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
 
 	* configure: Regenerate.
 	* wrapper.c (sim_target_display_usage): Add help parameter.
@@ -471,7 +632,7 @@
 	set.
 	* wrapper.c (sim_create_inferior): For unknown architectures,
 	default to allowing the v6 instructions.
-	
+
 2005-04-18  Nick Clifton  <nickc@redhat.com>
 
 	* iwmmxt.c (WMAC, WMADD): Move casts from the LHS of an assignment
@@ -570,25 +731,25 @@
 2003-03-20  Nick Clifton  <nickc@redhat.com>
 
 	* Contribute support for Cirrus Maverick ARM co-processor,
-        written by Aldy Hernandez  <aldyh@redhat.com> and
-        Andrew Cagney  <cagney@redhat.com>:
+	written by Aldy Hernandez  <aldyh@redhat.com> and
+	Andrew Cagney  <cagney@redhat.com>:
 
 	* maverick.c: New file: Support for Maverick floating point
-	co-processor. 
-        * Makefile.in: Add maverick.o target.
-        * configure.in (COPRO): Add maverick.o.
-        * configure: Regenerate.
-        * armcopro.c (ARMul_CoProInit): Only initialise co-processors
+	co-processor.
+	* Makefile.in: Add maverick.o target.
+	* configure.in (COPRO): Add maverick.o.
+	* configure: Regenerate.
+	* armcopro.c (ARMul_CoProInit): Only initialise co-processors
 	available on target processor.  Add code to initialse Maverick
 	co-processor support code.
-        * armdefs.h (ARMul_state): Add is_ep9312 field.
-        (ARM_ep9312_Prop): Define.
-        * armemu.h: Add prototypes for Maverick co-processor
+	* armdefs.h (ARMul_state): Add is_ep9312 field.
+	(ARM_ep9312_Prop): Define.
+	* armemu.h: Add prototypes for Maverick co-processor
 	functions.
-        * arminit.c (ARMul_SelectProcessor): Initialise the
+	* arminit.c (ARMul_SelectProcessor): Initialise the
 	co-processor support once the chip has been selected.
-        * wrapper.c: Add support for Maverick co-processor.
-        (init): Do not call ARMul_CoProInit.  Delays this until the
+	* wrapper.c: Add support for Maverick co-processor.
+	(init): Do not call ARMul_CoProInit.  Delays this until the
 	chip has been selected.
 
 2003-03-02  Nick Clifton  <nickc@redhat.com>
@@ -599,7 +760,7 @@
 2003-02-27  Andrew Cagney  <cagney@redhat.com>
 
 	* wrapper.c (sim_create_inferior, sim_open): Rename _bfd to bfd.
-	
+
 2003-01-10  Ben Elliston  <bje@redhat.com>
 
 	* README.Cygnus: Rename from this ..
@@ -620,7 +781,7 @@
 
 	* armemu.c (ARMul_Emulate32): Add more tests for valid MIA, MIAPH
 	and MIAxy instructions.
-	
+
 2002-06-21  Nick Clifton  <nickc@cambridge.redhat.com>
 
 	* armos.h (ADP_Stopped_RunTimeError): Set correct value.
@@ -677,7 +838,7 @@
 	(ARMul_OSInit): For XScale targets, only support the ANGEL
 	SWI interface.  (This is at the request if Intel).
 	(ARMul_OSHandleSWI): Examine swi_mask to see if a particular
-        SWI call should be emulated.
+	SWI call should be emulated.
 	Do not fall through from AngelSWI_Reason_WriteC.
 	Propagate exit code from RedBoot Exit SWI.
 	* rdi-dgb.h (swi_mask): Prototype.
@@ -818,8 +979,8 @@
 2001-03-06  Nick Clifton  <nickc@redhat.com>
 
 	* thumbemu.c (ARMul_ThumbDecode): Delete label bo_blx2.
-        Compute destination address of BLX(1) instruction by
-        taking bit 1 from PC and not from bit 0 of the offset.        
+	Compute destination address of BLX(1) instruction by
+	taking bit 1 from PC and not from bit 0 of the offset.
 
 2001-02-27  Nick Clifton  <nickc@redhat.com>
 
@@ -835,10 +996,10 @@
 	(ARMul_SwapWord): Pass extra parameter to PutWord.
 	(ARMul_SafeReadByte): New Function: Read a byte but do not abort.
 	(ARMul_SafeWriteByte): New Function: Write a byte but do not abort.
-	
+
 	* armdefs.h: Add prototypes for ARMul_SafeReadByte and
 	ARMul_SafeWriteByte.
-	
+
 	* wrapper.c (sim_write): Use ARMul_SafeWriteByte.
 	(sim_read): Use ARMul_SafeReadByte.
 
@@ -850,7 +1011,7 @@
 	(SWIwrite): Use ARMul_SafeReadByte.
 	(ARMul_OSHandleSWI): Remove use of is_SWI_handler.
 	(ARMul_OSException): Remove use of is_SWI_handler.
-	
+
 2001-02-16  Nick Clifton  <nickc@redhat.com>
 
 	* armemu.c: Remove Prefetch abort for breakpoints.  Instead set
@@ -919,12 +1080,12 @@
 	* armdefs.h (State): Add 'v5e' and 'xscale' fields.
 	(ARM_v5e_Prop): Define.
 	(ARM_XScale_Prop): Define.
-	
+
 	* wrapper.c (sim_create_inferior): Select processor based on
 	machine number.
 	(SWI_vector_installed): New boolean.  Set to true if the SWI
 	vector address is written to by the executable.
-	
+
 	* arminit.c (ARMul_NewState): Switch default to 32 bit mode.
 	(ARMul_SelectProcessor): Initialise v5e and xscale signals.
 	(ARMul_Abort): Fix calculation of LR address.
@@ -934,13 +1095,13 @@
 	vector, otherwise issue a warning message and continue.
 
 	* armsupp.c (ARMul_CPSRAltered): Set S bit aswell.
-	
+
 	* thumbemu.c: Add v5 instruction simulation.
 	* armemu.c: Add v5, XScale and El Segundo instruction simulation.
 
 	* armcopro.c: Add XScale co-processor emulation.
 	* armemu.h: Add exported XScale co-processor functions.
-	
+
 2000-09-15  Nick Clifton  <nickc@redhat.com>
 
 	* armdefs.h: Rename StrongARM property to v4_ARM and add v5 ARM
@@ -1100,7 +1261,7 @@ Wed Mar 22 15:24:21 2000  glen mccready  <gkm@pobox.com>
 	* armsupp.c: Fix compile time warning messages.
 	* armvirt.c: Fix compile time warning messages.
 	* bag.c: Fix compile time warning messages.
-	
+
 2000-02-02  Bernd Schmidt  <bernds@cygnus.co.uk>
 
 	* *.[ch]: Use indent to make readable.
@@ -1115,7 +1276,7 @@ Wed Mar 22 15:24:21 2000  glen mccready  <gkm@pobox.com>
 1999-10-27  Nick Clifton  <nickc@cygnus.com>
 
 	* thumbemu.c (ARMul_ThumbDecode): Accept 0xbebe as a thumb
-	breakpoint. 
+	breakpoint.
 
 1999-10-08  Ulrich Drepper  <drepper@cygnus.com>
 
@@ -1135,7 +1296,7 @@ Thu Sep  2 18:15:53 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 1999-05-08  Felix Lee  <flee@cygnus.com>
 
 	* configure: Regenerated to track ../common/aclocal.m4 changes.
-	
+
 1999-04-06  Keith Seitz  <keiths@cygnus.com>
 
 	* wrapper.c (stop_simulator): New global.
@@ -1183,11 +1344,11 @@ Thu Jun  4 15:22:03 1998  Jason Molenda  (crash@bugshack.cygnus.com)
 	(SWIread): New function.
 	(SWIwrite): New function.
 	(SWIflen): New function.
-	(ARMul_OSHandleSWI): Call new functions instead of handling	
+	(ARMul_OSHandleSWI): Call new functions instead of handling
 	these here.
 	(ARMul_OSHandleSWI): Handle Angel SWIs correctly.
 	(*): Reformat spacing to be a bit more GNUly.
-	Most code taken from a patch by Anthony Thompson 
+	Most code taken from a patch by Anthony Thompson
 	(athompso@cambridge.arm.com)
 
 Tue Jun  2 15:22:22 1998  Nick Clifton  <nickc@cygnus.com>
@@ -1299,7 +1460,7 @@ Thu Dec  4 09:21:05 1997  Doug Evans  <devans@canuck.cygnus.com>
 Thu Oct 30 13:54:06 1997  Nick Clifton  <nickc@cygnus.com>
 
 	* armos.c (ARMul_OSHandleSWI): Add support for GetEnv SWI.  Patch
-	from Tony Thompson at ARM: athompso@arm.com 
+	from Tony Thompson at ARM: athompso@arm.com
 
 	* wrapper.c (sim_create_inferior): Add code to create an execution
 	environment.  Patch from Tony Thompson at ARM: athompso@arm.com
@@ -1469,12 +1630,12 @@ Thu Oct  3 16:10:27 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
 
 Wed Jun 26 12:17:24 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
 
-        * Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
-        INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
-        (docdir): Removed.
-        * configure.in (AC_PREREQ): autoconf 2.5 or higher.
-        (AC_PROG_INSTALL): Added.
-        * configure: Rebuilt.
+	* Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
+	INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
+	(docdir): Removed.
+	* configure.in (AC_PREREQ): autoconf 2.5 or higher.
+	(AC_PROG_INSTALL): Added.
+	* configure: Rebuilt.
 
 Wed Feb 21 12:14:31 1996  Ian Lance Taylor  <ian@cygnus.com>
 
@@ -1494,7 +1655,7 @@ Mon Nov 20 17:40:38 1995  Doug Evans  <dje@canuck.cygnus.com>
 	* wrapper.c (mem_size, verbosity): New static global.
 	(arm_sim_set_mem_size): Renamed from sim_size.	Callers updated.
 	(arm_sim_set_profile{,_size}): Renamed from sim_foo.  Callers updated.
-	
+
 Fri Nov 17 19:35:11 1995  Doug Evans  <dje@canuck.cygnus.com>
 
 	* armdefs.h (ARMul_State): New member `verbose'.

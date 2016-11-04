@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.259.2.1 2016/08/06 00:19:09 pgoyette Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.259.2.2 2016/11/04 14:49:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.259.2.1 2016/08/06 00:19:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.259.2.2 2016/11/04 14:49:17 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -999,7 +999,7 @@ brelsel(buf_t *bp, int set)
 	/* Wake up any processes waiting for any buffer to become free. */
 	cv_signal(&needbuffer_cv);
 
-	/* Wake up any proceeses waiting for _this_ buffer to become */
+	/* Wake up any proceeses waiting for _this_ buffer to become free */
 	if (ISSET(bp->b_cflags, BC_WANTED))
 		CLR(bp->b_cflags, BC_WANTED|BC_AGE);
 
@@ -1882,19 +1882,18 @@ vfs_bufstats(void)
 	int i, j, count;
 	buf_t *bp;
 	struct bqueue *dp;
-	int counts[(MAXBSIZE / PAGE_SIZE) + 1];
+	int counts[MAXBSIZE / MIN_PAGE_SIZE + 1];
 	static const char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE" };
 
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;
-		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
-			counts[j] = 0;
+		memset(counts, 0, sizeof(counts));
 		TAILQ_FOREACH(bp, &dp->bq_queue, b_freelist) {
-			counts[bp->b_bufsize/PAGE_SIZE]++;
+			counts[bp->b_bufsize / PAGE_SIZE]++;
 			count++;
 		}
 		printf("%s: total-%d", bname[i], count);
-		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
+		for (j = 0; j <= MAXBSIZE / PAGE_SIZE; j++)
 			if (counts[j] != 0)
 				printf(", %d-%d", j * PAGE_SIZE, counts[j]);
 		printf("\n");

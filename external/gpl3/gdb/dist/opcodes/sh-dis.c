@@ -1,5 +1,5 @@
 /* Disassemble SH instructions.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -152,7 +152,7 @@ print_insn_ddt (int insn, struct disassemble_info *info)
 	while (op->nibbles[2] != (unsigned) ((insn >> 4) & 3)
 	       || op->nibbles[3] != (unsigned) (insn & 0xf))
 	  op++;
-	
+
 	print_movxy (op,
 		     (4 * ((insn & (is_movy ? 0x200 : 0x100)) == 0)
 		      + 2 * is_movy

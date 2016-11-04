@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2015 Free Software Foundation, Inc.
+# Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,6 +36,8 @@ if { [skip_python_tests] } { continue }
 gdb_test "python print (gdb.current_progspace().filename)" "None" \
   "current progspace filename (None)"
 gdb_test "python print (gdb.progspaces())" "\\\[<gdb.Progspace object at $hex>\\\]"
+
+gdb_test_no_output "python dir(gdb.current_progspace())"
 
 gdb_load ${binfile}
 

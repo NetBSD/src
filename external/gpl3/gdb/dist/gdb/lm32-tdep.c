@@ -1,7 +1,7 @@
 /* Target-dependent code for Lattice Mico32 processor, for GDB.
    Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -289,7 +289,8 @@ lm32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	regcache_cooked_write_unsigned (regcache, first_arg_reg + i, val);
       else
 	{
-	  write_memory (sp, (void *) &val, TYPE_LENGTH (arg_type));
+	  write_memory_unsigned_integer (sp, TYPE_LENGTH (arg_type), byte_order,
+					 val);
 	  sp -= 4;
 	}
     }
@@ -422,7 +423,7 @@ lm32_frame_cache (struct frame_info *this_frame, void **this_prologue_cache)
   int i;
 
   if ((*this_prologue_cache))
-    return (*this_prologue_cache);
+    return (struct lm32_frame_cache *) (*this_prologue_cache);
 
   info = FRAME_OBSTACK_ZALLOC (struct lm32_frame_cache);
   (*this_prologue_cache) = info;

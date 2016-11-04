@@ -1,6 +1,6 @@
 // aarch64-reloc.def -- AArch64 relocation definitions.
 
-// Copyright (C) 2014-2015 Free Software Foundation, Inc.
+// Copyright (C) 2014-2016 Free Software Foundation, Inc.
 // Written by Han Shen <shenhan@google.com> and Jing Yu <jingyu@google.com>.
 
 // This file is part of gold.
@@ -32,6 +32,9 @@
 // Type----------------------------+         |              |    |      |                       |     |                                              |
 // Name                            |         |              |    |      |                       |     |                                              |
 //  |                              |         |              |    |      |                       |     |                                              |
+ARD(NONE                         , STATIC  , NONE       ,   Y,  -1,    0,0                ,    0,0  , 0                    ,                         DATA  )
+// Above is from Table 4-5, Null relocation codes
+
 ARD(ABS64                        , STATIC ,  DATA       ,   Y,  -1,    0,0                ,    0,0  , Symbol::ABSOLUTE_REF ,                         DATA  )
 ARD(ABS32                        , STATIC ,  DATA       ,   Y,  -1,   31,32               ,    0,0  , Symbol::ABSOLUTE_REF ,                         DATA  )
 ARD(ABS16                        , STATIC ,  DATA       ,   Y,  -1,   15,16               ,    0,0  , Symbol::ABSOLUTE_REF ,                         DATA  )
@@ -54,6 +57,7 @@ ARD(LDST128_ABS_LO12_NC          , STATIC ,  AARCH64    ,   Y,  -1,    0,RL_CHEC
 
 ARD(ADR_GOT_PAGE                 , STATIC ,  AARCH64    ,   Y,  -1,   32,32               ,   12,32 , Symbol::RELATIVE_REF ,                         ADRP  )
 ARD(LD64_GOT_LO12_NC             , STATIC ,  AARCH64    ,   Y,  -1,    0,RL_CHECK_ALIGN8  ,    3,11 , Symbol::ABSOLUTE_REF ,                         LDST  )
+ARD(LD64_GOTPAGE_LO15            , STATIC ,  AARCH64    ,   Y,  -1,    0,15               ,    3,14 , Symbol::RELATIVE_REF ,                         LDST  )
 // Above 2 relocs are from Table 4-14, GOT-relative instruction relocations. (Some relocs in the table are not implemented yet.)
 
 ARD(TSTBR14                      , STATIC ,  CFLOW      ,   N,  -1,   15,15               ,    2,15 , (Symbol::FUNCTION_CALL|Symbol::ABSOLUTE_REF) , TBZNZ )

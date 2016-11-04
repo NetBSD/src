@@ -1,4 +1,4 @@
-# Copyright 2010-2015 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,19 +17,16 @@
 
 # Test arm displaced stepping.
 
-if {![istarget "arm*-*-*"]} then {
+if {![is_aarch32_target]} then {
     verbose "Skipping arm displaced stepping tests."
     return
 }
 
-set testfile "arm-disp-step"
-set srcfile ${testfile}.S
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .S
 
 set additional_flags "-Wa,-g"
 
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug $additional_flags]] != "" } {
-    untested arm-disp-step.exp
+if { [prepare_for_testing $testfile.exp $testfile $srcfile [list debug $additional_flags]] } {
     return -1
 }
 
@@ -409,10 +406,6 @@ proc test_add_rn_pc {} {
     # Test the value in r3 is correct.
     gdb_assert { [expr {$pc_val + 4 + 4} == $r3_val] }
 }
-
-# Get things started.
-
-clean_restart ${testfile}
 
 # Turn displaced stepping off before runto main. When displaced stepping
 # is on, and we type 'run', GDB will first try to single step on _dl_debug_state,

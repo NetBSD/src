@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.11 2014/01/29 00:42:15 matt Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.11.10.1 2016/11/04 14:48:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,8 @@ void	isa_detach_hook(isa_chipset_tag_t, device_t);
 const struct evcnt *isa_intr_evcnt(isa_chipset_tag_t ic, int irq);
 void	*isa_intr_establish(isa_chipset_tag_t ic, int irq, int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg);
+void	*isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type,
+	    int level, int (*ih_fun)(void *), void *ih_arg, const char *xname);
 void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
 
 #define	isa_dmainit(ic, bst, dmat, d)					\

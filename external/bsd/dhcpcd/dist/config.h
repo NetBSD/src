@@ -1,4 +1,4 @@
-/* $NetBSD: config.h,v 1.11 2016/05/09 10:15:59 roy Exp $ */
+/* $NetBSD: config.h,v 1.11.2.1 2016/11/04 14:42:45 pgoyette Exp $ */
 
 /* netbsd */
 #define SYSCONFDIR	"/etc"
@@ -7,6 +7,9 @@
 #define LIBEXECDIR	"/libexec"
 #define DBDIR		"/var/db"
 #define RUNDIR		"/var/run"
+#define HAVE_IFAM_PID
+#define HAVE_IFAM_ADDRFLAGS
+#define HAVE_IFADDRS_ADDRFLAGS
 #define HAVE_UTIL_H
 #define HAVE_SYS_QUEUE_H
 #define HAVE_SPAWN_H

@@ -1,3 +1,63 @@
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-01  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Call SIM_AC_OPTION_WARNINGS.
+	* configure: Regenerate.
+	* cpu.h (decode_opcode, decode_r8c, decode_m32c,
+	trace_register_changes): Convert old style prototypes.
+	(m32c_dump_all_registers): New prototype.
+	* gdb-if.c: Include stdlib.h.
+	(sim_info): Delete.
+	(siggnal, handle_step): Mark static.
+	(sim_resume): Move rc decl to top of scope.
+	* load.c: Include load.h.
+	(decode_opcode); Convert old style prototype.
+	(m32c_load): Move base decl to top of scope.
+	* load.h (m32c_set_mach): Change mach type to unsigned long.
+	* m32c.opc (getbyte, decode_m32c): Convert old style prototypes.
+	(prefix): Convert old style prototype and mark static.
+	* mem.c (mem_ptr, mem_usage_stats, e, mem_get_pc, stdin_ready,
+	m32c_sim_restore_console, update_timer_a): Convert old style
+	prototypes.
+	(mem_put_byte): Mark static.
+	* mem.h (mem_get_pc, m32c_sim_restore_console): Convert old style
+	prototypes.
+	* r8c.opc (getbyte, IMM, decode_r8c): Convert old style prototypes.
+	* reg.c (stack_heap_stats, trace_register_changes,
+	m32c_dump_all_registers): Convert old style prototypes.
+	(put_reg): Move b decl to top of scope.
+	* sample2.c (start): Convert old style prototype.
+	* srcdest.c (disp8, disp16, disp24, disp20): Convert old style
+	prototypes.
+	(decode_srcdest4, decode_jumpdest): Move sd init below decls.
+	* timer_a.h (update_timer_a): Convert old style prototype.
+	* trace.c: Include trace.h.
+	(load_file_and_line): Move file decl to top of scope.
+	(sim_disasm_one): Convert old style prototype.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, config.in, configure: Regenerate.
+
 2014-08-19  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

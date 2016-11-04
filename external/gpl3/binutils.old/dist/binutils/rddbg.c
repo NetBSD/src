@@ -1,6 +1,5 @@
 /* rddbg.c -- Read debugging information into a generic form.
-   Copyright 1995, 1996, 1997, 2000, 2002, 2003, 2005, 2007, 2008,
-   2010  Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -140,7 +139,7 @@ read_section_stabs_debugging_info (bfd *abfd, asymbol **syms, long symcount,
 	    }
 
 	  strsize = bfd_section_size (abfd, strsec);
-	  strings = (bfd_byte *) xmalloc (strsize);
+	  strings = (bfd_byte *) xmalloc (strsize + 1);
 	  if (! bfd_get_section_contents (abfd, strsec, strings, 0, strsize))
 	    {
 	      fprintf (stderr, "%s: %s: %s\n",
@@ -148,7 +147,8 @@ read_section_stabs_debugging_info (bfd *abfd, asymbol **syms, long symcount,
 		       bfd_errmsg (bfd_get_error ()));
 	      return FALSE;
 	    }
-
+	  /* Zero terminate the strings table, just in case.  */
+	  strings [strsize] = 0;
 	  if (shandle == NULL)
 	    {
 	      shandle = start_stab (dhandle, abfd, TRUE, syms, symcount);
@@ -160,7 +160,8 @@ read_section_stabs_debugging_info (bfd *abfd, asymbol **syms, long symcount,
 
 	  stroff = 0;
 	  next_stroff = 0;
-	  for (stab = stabs; stab < stabs + stabsize; stab += 12)
+	  /* PR 17512: file: 078-60391-0.001:0.1.  */
+	  for (stab = stabs; stab <= (stabs + stabsize) - 12; stab += 12)
 	    {
 	      unsigned int strx;
 	      int type;
@@ -185,33 +186,43 @@ read_section_stabs_debugging_info (bfd *abfd, asymbol **syms, long symcount,
 		}
 	      else
 		{
+		  size_t len;
 		  char *f, *s;
 
-		  f = NULL;
-
-		  if (stroff + strx > strsize)
+		  if (stroff + strx >= strsize)
 		    {
-		      fprintf (stderr, "%s: %s: stab entry %ld is corrupt, strx = 0x%x, type = %d\n",
+		      fprintf (stderr, _("%s: %s: stab entry %ld is corrupt, strx = 0x%x, type = %d\n"),
 			       bfd_get_filename (abfd), names[i].secname,
 			       (long) (stab - stabs) / 12, strx, type);
 		      continue;
 		    }
 
 		  s = (char *) strings + stroff + strx;
+		  f = NULL;
 
-		  while (s[strlen (s) - 1] == '\\'
+		  /* PR 17512: file: 002-87578-0.001:0.1.
+		     It is possible to craft a file where, without the 'strlen (s) > 0',
+		     an attempt to read the byte before 'strings' would occur.  */
+		  while ((len = strlen (s)) > 0
+			 && s[len  - 1] == '\\'
 			 && stab + 12 < stabs + stabsize)
 		    {
 		      char *p;
 
 		      stab += 12;
-		      p = s + strlen (s) - 1;
+		      p = s + len - 1;
 		      *p = '\0';
-		      s = concat (s,
-				  ((char *) strings
-				   + stroff
-				   + bfd_get_32 (abfd, stab)),
-				  (const char *) NULL);
+		      strx = stroff + bfd_get_32 (abfd, stab);
+		      if (strx >= strsize)
+			{
+			  fprintf (stderr, _("%s: %s: stab entry %ld is corrupt\n"),
+				   bfd_get_filename (abfd), names[i].secname,
+				   (long) (stab - stabs) / 12);
+			  break;
+			}
+		      else
+			s = concat (s, (char *) strings + strx,
+				    (const char *) NULL);
 
 		      /* We have to restore the backslash, because, if
 			 the linker is hashing stabs strings, we may

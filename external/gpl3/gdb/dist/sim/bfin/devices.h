@@ -1,6 +1,6 @@
 /* Common Blackfin device stuff.
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -133,10 +133,12 @@ dv_get_state (SIM_CPU *cpu, const char *device_name)
   })
 
 void dv_bfin_mmr_invalid (struct hw *, address_word, unsigned nr_bytes, bool write);
-void dv_bfin_mmr_require (struct hw *, address_word, unsigned nr_bytes, unsigned size, bool write);
-bool dv_bfin_mmr_check (struct hw *, address_word, unsigned nr_bytes, bool write);
-
+bool dv_bfin_mmr_require (struct hw *, address_word, unsigned nr_bytes, unsigned size, bool write);
+/* For 32-bit memory mapped registers that allow 16-bit or 32-bit access.  */
+bool dv_bfin_mmr_require_16_32 (struct hw *, address_word, unsigned nr_bytes, bool write);
+/* For 32-bit memory mapped registers that only allow 16-bit access.  */
 #define dv_bfin_mmr_require_16(hw, addr, nr_bytes, write) dv_bfin_mmr_require (hw, addr, nr_bytes, 2, write)
+/* For 32-bit memory mapped registers that only allow 32-bit access.  */
 #define dv_bfin_mmr_require_32(hw, addr, nr_bytes, write) dv_bfin_mmr_require (hw, addr, nr_bytes, 4, write)
 
 #define HW_TRACE_WRITE() \

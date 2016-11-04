@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.938.2.1 2016/08/06 00:19:03 pgoyette Exp $
+#	$NetBSD: bsd.own.mk,v 1.938.2.2 2016/11/04 14:48:56 pgoyette Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -66,22 +66,8 @@ MKGCC?=		no
 #
 .if ${MACHINE_CPU} == "aarch64"
 HAVE_GCC?=	0
-.elif \
-    ${MACHINE} == "alpha" || \
-    ${MACHINE} == "amd64" || \
-    ${MACHINE} == "hppa" || \
-    ${MACHINE} == "i386" || \
-    ${MACHINE} == "ia64" || \
-    ${MACHINE} == "playstation2" || \
-    ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_CPU} == "powerpc" || \
-    ${MACHINE_ARCH} == "vax"
-HAVE_GCC?=	53
 .else
-# Otherwise, default to GCC4.8
-HAVE_GCC?=	48
+HAVE_GCC?=	53
 .endif
 
 #
@@ -96,8 +82,6 @@ MKGCCCMDS?=	no
 #
 .if ${HAVE_GCC} == 53
 EXTERNAL_GCC_SUBDIR=	gcc
-.elif ${HAVE_GCC} == 48
-EXTERNAL_GCC_SUBDIR=	gcc.old
 .else
 EXTERNAL_GCC_SUBDIR=	/does/not/exist
 .endif
@@ -110,6 +94,7 @@ _LIBC_COMPILER_RT.${MACHINE_ARCH}=	yes
 .endif
 
 _LIBC_COMPILER_RT.aarch64=	yes
+_LIBC_COMPILER_RT.aarch64eb=	yes
 _LIBC_COMPILER_RT.i386=		yes
 _LIBC_COMPILER_RT.powerpc=	yes
 _LIBC_COMPILER_RT.powerpc64=	yes
@@ -146,52 +131,38 @@ USE_SSP?=	yes
 #
 # What GDB is used?
 #
-.if ${MACHINE} == "alpha" || \
-    ${MACHINE} == "amd64" || \
-    ${MACHINE} == "i386" || \
-    ${MACHINE} == "ia64" || \
-    ${MACHINE} == "playstation2" || \
-    ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || \
+.if \
     ${MACHINE} == "vax" || \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_CPU} == "powerpc" || \
-    ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+    ${MACHINE_CPU} == "m68k" || \
+    ${MACHINE_ARCH} == "mips64el" || \
+    ${MACHINE_ARCH} == "mips64eb"
 HAVE_GDB?=	710
 .else
-HAVE_GDB?=	79
+HAVE_GDB?=	712
 .endif
 
-.if ${HAVE_GDB} == 79
+.if ${HAVE_GDB} == 712
+EXTERNAL_GDB_SUBDIR=		gdb
+.elif ${HAVE_GDB} == 710
 EXTERNAL_GDB_SUBDIR=		gdb.old
 .else
-EXTERNAL_GDB_SUBDIR=		gdb
+EXTERNAL_GDB_SUBDIR=		/does/not/exist
 .endif
 
 #
 # What binutils is used?
 #
-.if ${MACHINE} == "alpha" || \
-    ${MACHINE} == "amd64" || \
-    ${MACHINE} == "evbarm" || \
-    ${MACHINE} == "hppa" || \
-    ${MACHINE} == "i386" || \
-    ${MACHINE} == "ia64" || \
-    ${MACHINE} == "playstation2" || \
-    ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || \
-    ${MACHINE} == "vax" || \
-    ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE_ARCH} == "powerpc"
-HAVE_BINUTILS?=	226
+.if \
+    ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
+HAVE_BINUTILS?=	227
 .else
-HAVE_BINUTILS?=	223
+HAVE_BINUTILS?=	226
 .endif
 
-.if ${HAVE_BINUTILS} == 223
+.if ${HAVE_BINUTILS} == 226
 EXTERNAL_BINUTILS_SUBDIR=	binutils.old
-.elif ${HAVE_BINUTILS} == 226
+.elif ${HAVE_BINUTILS} == 227
 EXTERNAL_BINUTILS_SUBDIR=	binutils
 .else
 EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
@@ -806,6 +777,7 @@ MKGCC:= no
 
 # No GDB support for aarch64
 MKGDB.aarch64=	no
+MKGDB.aarch64eb=no
 MKGDB.or1k=	no
 MKGDB.riscv32=	no
 MKGDB.riscv64=	no
@@ -975,7 +947,7 @@ dependall:	.NOTMAIN realdepend .MAKE
 #
 .for var in \
 	NOCRYPTO NODOC NOHTML NOINFO NOLINKLIB NOLINT NOMAN NONLS NOOBJ NOPIC \
-	NOPICINSTALL NOPROFILE NOSHARE NOSTATICLIB
+	NOPICINSTALL NOPROFILE NOSHARE NOSTATICLIB NODEBUGLIB
 .if defined(${var})
 MK${var:S/^NO//}:=	no
 .endif
@@ -993,9 +965,11 @@ MK${var}:=	yes
 #
 # MK* options which have variable defaults.
 #
+# aarch64eb is not yet supported.
+#
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" \
     || ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" \
-    || ${MACHINE_ARCH} == "powerpc64" || ${MACHINE_CPU} == "aarch64" \
+    || ${MACHINE_ARCH} == "powerpc64" || ${MACHINE_ARCH} == "aarch64" \
     || ${MACHINE_ARCH} == "riscv64" || !empty(MACHINE_ARCH:Mearm*)
 MKCOMPAT?=	yes
 .else
@@ -1071,7 +1045,10 @@ MKCTF?=		yes
 #
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE} == "evbarm" || \
+    ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_CPU} == "m68k" || \
+    ${MACHINE_CPU} == "mips" || \
+    ${MACHINE_CPU} == "sh3" || \
     ${MACHINE} == "sparc64"
 MKPIE?=		yes
 .else
@@ -1247,6 +1224,7 @@ MKNLS:=		no
 _NEEDS_LIBCXX.${MACHINE_ARCH}=	yes
 .endif
 _NEEDS_LIBCXX.aarch64=		yes
+_NEEDS_LIBCXX.aarch64eb=	yes
 _NEEDS_LIBCXX.i386=		yes
 _NEEDS_LIBCXX.powerpc=		yes
 _NEEDS_LIBCXX.powerpc64=	yes
@@ -1389,7 +1367,32 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .endfor
 
 # During transition from xorg-server 1.10 to 1.18
-.if 0
+.if \
+    ${MACHINE} == "alpha"	|| \
+    ${MACHINE} == "amiga"	|| \
+    ${MACHINE} == "bebox"	|| \
+    ${MACHINE} == "cats"	|| \
+    ${MACHINE} == "dreamcast"	|| \
+    ${MACHINE} == "ews4800mips"	|| \
+    ${MACHINE} == "hp300"	|| \
+    ${MACHINE} == "hpcarm"	|| \
+    ${MACHINE} == "hpcmips"	|| \
+    ${MACHINE} == "hpcsh"	|| \
+    ${MACHINE} == "ibmnws"	|| \
+    ${MACHINE} == "luna68k"	|| \
+    ${MACHINE} == "mac68k"	|| \
+    ${MACHINE} == "netwinder"	|| \
+    ${MACHINE} == "newsmips"	|| \
+    ${MACHINE} == "prep"	|| \
+    ${MACHINE} == "sgimips"	|| \
+    ${MACHINE} == "vax"		|| \
+    ${MACHINE} == "zaurus"
+HAVE_XORG_SERVER_VER?=110
+.else
+HAVE_XORG_SERVER_VER?=118
+.endif
+
+.if ${HAVE_XORG_SERVER_VER} == "118"
 XORG_SERVER_SUBDIR?=xorg-server
 .else
 XORG_SERVER_SUBDIR?=xorg-server.old
@@ -1432,10 +1435,18 @@ X11SRCDIR.${_dir}?=		${X11SRCDIRMIT}/${_dir}/dist
 X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 .endfor
 
+# xf86-video-modesetting move into the server build.
+EXTRA_DRIVERS=
+.if ${HAVE_XORG_SERVER_VER} == "118"
+X11SRCDIR.xf86-video-modesetting=${X11SRCDIR.xorg-server}/hw/xfree86/drivers/modesetting
+.else
+EXTRA_DRIVERS=	modesetting 
+.endif
+
 .for _v in \
 	ag10e apm ark ast ati ati-kms chips cirrus crime \
 	geode glint i128 i740 igs imstt intel intel-old \
-	modesetting mach64 mga \
+	${EXTRA_DRIVERS} mach64 mga \
 	neomagic newport nouveau nsc nv nvxbox openchrome pnozz \
 	r128 radeonhd rendition \
 	s3 s3virge savage siliconmotion sis suncg14 \

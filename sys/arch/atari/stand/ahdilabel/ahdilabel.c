@@ -1,4 +1,4 @@
-/* $NetBSD: ahdilabel.c,v 1.10 2014/03/28 13:35:13 ozaki-r Exp $ */
+/* $NetBSD: ahdilabel.c,v 1.10.10.1 2016/11/04 14:48:59 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -262,7 +262,7 @@ show_parts (struct ahdi_ptable *ptable, int start, int finish, int units)
 			printf ("%5u/%2u/%3u  ", cylinder, track, sector);
 			sector = ptable->parts[i].start +
 			    (ptable->parts[i].size ?
-			    ptable->parts[i].size - 1 : 0),
+			    ptable->parts[i].size - 1 : 0);
 			cylinder = sector / ptable->secpercyl;
 			sector -= cylinder * ptable->secpercyl;
 			track = sector / ptable->nsectors;

@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.27 2016/05/16 09:53:59 ozaki-r Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.27.2.1 2016/11/04 14:49:21 pgoyette Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.27 2016/05/16 09:53:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.27.2.1 2016/11/04 14:49:21 pgoyette Exp $");
 #endif
 
 /*
@@ -468,7 +468,7 @@ static void
 ieee80211_sysctl_setup(void)
 {
 	int rc;
-	const struct sysctlnode *cnode, *rnode;
+	const struct sysctlnode *rnode;
 
 	if ((rnode = ieee80211_sysctl_treetop(&ieee80211_sysctllog)) == NULL)
 		return;
@@ -480,7 +480,7 @@ ieee80211_sysctl_setup(void)
 
 #ifdef IEEE80211_DEBUG
 	/* control debugging printfs */
-	if ((rc = sysctl_createv(&ieee80211_sysctllog, 0, &rnode, &cnode,
+	if ((rc = sysctl_createv(&ieee80211_sysctllog, 0, &rnode, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "debug", SYSCTL_DESCR("control debugging printfs"),
 	    NULL, 0, &ieee80211_debug, 0, CTL_CREATE, CTL_EOL)) != 0)

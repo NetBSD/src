@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2015 Free Software Foundation, Inc.
+# Copyright (C) 2010-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -487,6 +487,18 @@ proc test_bkpt_registration {} {
     }
 }
 
+proc test_bkpt_address {} {
+    global decimal srcfile
+
+    # Leading whitespace is intentional!
+    gdb_scm_test_silent_cmd \
+	"guile (define bp1 (make-breakpoint \"  *multiply\"))" \
+	"create address breakpoint a '  *multiply'" 1
+
+    gdb_test "guile (register-breakpoint! bp1)" \
+	".*Breakpoint ($decimal)+ at .*$srcfile, line ($decimal)+\."
+}
+
 test_bkpt_basic
 test_bkpt_deletion
 test_bkpt_cond_and_cmds
@@ -495,3 +507,4 @@ test_watchpoints
 test_bkpt_internal
 test_bkpt_eval_funcs
 test_bkpt_registration
+test_bkpt_address

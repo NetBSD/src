@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.48.2.1 2016/07/26 03:24:17 pgoyette Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.48.2.2 2016/11/04 14:49:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.48.2.1 2016/07/26 03:24:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.48.2.2 2016/11/04 14:49:02 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -621,13 +621,13 @@ bmac_put(struct bmac_softc *sc, void *buff, struct mbuf *m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		memcpy(buff, mtod(m, void *), len);
 		buff = (char *)buff + len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	if (tlen > PAGE_SIZE)
 		panic("%s: putpacket packet overflow",

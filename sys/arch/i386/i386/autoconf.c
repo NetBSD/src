@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.100 2014/02/12 23:24:09 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.100.10.1 2016/11/04 14:49:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.100 2014/02/12 23:24:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.100.10.1 2016/11/04 14:49:01 pgoyette Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_intrdebug.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.100 2014/02/12 23:24:09 dsl Exp $");
 #endif
 
 #if NLAPIC > 0
+#include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #endif
 
@@ -130,6 +131,6 @@ cpu_configure(void)
 
 	spl0();
 #if NLAPIC > 0
-	lapic_tpr = 0;
+	i82489_writereg(LAPIC_TPRI, 0);
 #endif
 }

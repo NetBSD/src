@@ -1042,3 +1042,16 @@ Sun Feb 21 10:55:55 1993  Mike Werner  (mtw@poseidon.cygnus.com)
 	of dejagnu.  The modifications to these testcases, etc., which
 	will allow them to work with the new version of dejagnu will be
 	made in a future update.
+
+Copyright (C) 1993-2003 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 74
+version-control: never
+End:

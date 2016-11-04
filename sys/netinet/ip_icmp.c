@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.150.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.150.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.150.2.1 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.150.2.2 2016/11/04 14:49:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -795,7 +795,8 @@ icmp_reflect(struct mbuf *m)
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			sin = &(ifatoia(ifa)->ia_addr);
-			ia4_acquire(ifatoia(ifa), &psref_ia);
+			ia = ifatoia(ifa);
+			ia4_acquire(ia, &psref_ia);
 			break;
 		}
 		pserialize_read_exit(s);
@@ -1017,8 +1018,7 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 	 */
 	if (icmp_redirect_timeout_q != NULL) {
 		if (icmp_redirtimeout == 0) {
-			rt_timer_queue_destroy(icmp_redirect_timeout_q,
-			    true);
+			rt_timer_queue_destroy(icmp_redirect_timeout_q);
 			icmp_redirect_timeout_q = NULL;
 		} else {
 			rt_timer_queue_change(icmp_redirect_timeout_q,

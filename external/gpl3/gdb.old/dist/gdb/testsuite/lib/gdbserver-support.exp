@@ -270,7 +270,13 @@ proc gdbserver_start { options arguments } {
 	    append gdbserver_command " $arguments"
 	}
 
+	global server_spawn_id
 	set server_spawn_id [remote_spawn target $gdbserver_command]
+
+	# GDBserver doesn't do inferior I/O through GDB.  But we can
+	# talk to the program using GDBserver's tty instead.
+	global inferior_spawn_id
+	set inferior_spawn_id $server_spawn_id
 
 	# Wait for the server to open its TCP socket, so that GDB can connect.
 	expect {
@@ -294,19 +300,6 @@ proc gdbserver_start { options arguments } {
 	break
     }
 
-    # We can't just call close, because if gdbserver is local then that means
-    # that it will get a SIGHUP.  Doing it this way could also allow us to
-    # get at the inferior's input or output if necessary, and means that we
-    # don't need to redirect output.
-    expect_background {
-	-i $server_spawn_id
-	full_buffer { }
-	eof {
-	    # The spawn ID is already closed now (but not yet waited for).
-	    wait -i $expect_out(spawn_id)
-	}
-    }
-
     return [list $protocol [$get_remote_address $debughost $portnum]]
 }
 
@@ -326,6 +319,71 @@ proc gdbserver_spawn { child_args } {
 	append arguments " $child_args"
     }
     return [gdbserver_start "" $arguments]
+}
+
+# Close the GDBserver connection.
+
+proc close_gdbserver {} {
+    global server_spawn_id inferior_spawn_id
+
+    # We can't just call close, because if gdbserver is local then that means
+    # that it will get a SIGHUP.  Doing it this way could also allow us to
+    # get at the inferior's input or output if necessary, and means that we
+    # don't need to redirect output.
+
+    if {![info exists server_spawn_id]} {
+	return
+    }
+
+    verbose "Quitting GDBserver"
+
+    catch "close -i $server_spawn_id"
+    catch "wait -i $server_spawn_id"
+    unset server_spawn_id
+    unset inferior_spawn_id
+}
+
+# Hook into GDB exit, and close GDBserver.
+
+if { [info procs gdbserver_gdb_exit] == "" } {
+    rename gdb_exit gdbserver_orig_gdb_exit
+}
+proc gdb_exit {} {
+    global gdb_spawn_id server_spawn_id inferior_spawn_id
+    global gdb_prompt
+    global gdbserver_reconnect_p
+
+    # Leave GDBserver running if we're exiting GDB in order to
+    # reconnect to the same instance of GDBserver again.
+    if {[info exists gdbserver_reconnect_p] && $gdbserver_reconnect_p} {
+	gdbserver_orig_gdb_exit
+	return
+    }
+
+    if {[info exists gdb_spawn_id] && [info exists server_spawn_id]} {
+	# GDB may be terminated in an expected way or an unexpected way,
+	# but DejaGNU doesn't know that, so gdb_spawn_id isn't unset.
+	# Catch the exceptions.
+	catch {
+	    send_gdb "monitor exit\n";
+	    # We use expect rather than gdb_expect because
+	    # we want to suppress printing exception messages, otherwise,
+	    # remote_expect, invoked by gdb_expect, prints the exceptions.
+	    expect {
+		-i "$gdb_spawn_id" -re "$gdb_prompt $" {
+		    exp_continue
+		}
+		-i "$server_spawn_id" eof {
+		    wait -i $expect_out(spawn_id)
+		    unset server_spawn_id
+		    unset inferior_spawn_id
+		}
+	    }
+	}
+    }
+    close_gdbserver
+
+    gdbserver_orig_gdb_exit
 }
 
 # Start a gdbserver process running HOST_EXEC and pass CHILD_ARGS

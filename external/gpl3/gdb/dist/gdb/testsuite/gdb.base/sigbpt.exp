@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2004-2015 Free Software Foundation, Inc.
+# Copyright 2004-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -157,6 +157,10 @@ proc stepi_out { name args } {
     gdb_test_multiple "stepi" "$test" {
 	-re "Could not insert single-step breakpoint.*$gdb_prompt $" {
 	    setup_kfail gdb/8841 "sparc*-*-openbsd*"
+	    fail "$test (could not insert single-step breakpoint)"
+	}
+	-re "Cannot insert breakpoint.*Cannot access memory.*$gdb_prompt $" {
+	    setup_kfail gdb/8841 "nios2*-*-linux*"
 	    fail "$test (could not insert single-step breakpoint)"
 	}
 	-re "keeper.*$gdb_prompt $" {

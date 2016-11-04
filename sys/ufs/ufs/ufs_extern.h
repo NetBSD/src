@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.82 2016/04/12 16:12:22 christos Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.82.2.1 2016/11/04 14:49:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -111,7 +111,7 @@ int	ufs_getlbns(struct vnode *, daddr_t, struct indir *, int *);
 /* ufs_inode.c */
 int	ufs_reclaim(struct vnode *);
 int	ufs_balloc_range(struct vnode *, off_t, off_t, kauth_cred_t, int);
-int	ufs_truncate(struct vnode *, uint64_t, kauth_cred_t);
+int	ufs_truncate_retry(struct vnode *, uint64_t, kauth_cred_t);
 
 /* ufs_lookup.c */
 void	ufs_dirbad(struct inode *, doff_t, const char *);

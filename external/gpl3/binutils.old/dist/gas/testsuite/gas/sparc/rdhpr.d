@@ -12,4 +12,6 @@ Disassembly of section .text:
    8:	87 48 c0 00 	rdhpr  %hintp, %g3
    c:	89 49 40 00 	rdhpr  %htba, %g4
   10:	8b 49 80 00 	rdhpr  %hver, %g5
-  14:	8d 4f c0 00 	rdhpr  %hstick_cmpr, %g6
+  14:	8d 4f 00 00 	rdhpr  %hstick_offset, %g6
+  18:	8b 4f 40 00 	rdhpr  %hstick_enable, %g5
+  1c:	89 4f c0 00 	rdhpr  %hstick_cmpr, %g4

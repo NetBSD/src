@@ -24,8 +24,10 @@
 #include <stdio.h>
 
 #include "bfd.h"
+#include "elf-bfd.h"
 #include "dis-asm.h"
 #include "opcode/rl78.h"
+#include "elf/rl78.h"
 
 #define DEBUG_SEMANTICS 0
 
@@ -80,8 +82,8 @@ indirect_type (int t)
     }
 }
 
-int
-print_insn_rl78 (bfd_vma addr, disassemble_info * dis)
+static int
+print_insn_rl78_common (bfd_vma addr, disassemble_info * dis, RL78_Dis_Isa isa)
 {
   int rv;
   RL78_Data rl78_data;
@@ -94,7 +96,7 @@ print_insn_rl78 (bfd_vma addr, disassemble_info * dis)
   rl78_data.pc = addr;
   rl78_data.dis = dis;
 
-  rv = rl78_decode_opcode (addr, &opcode, rl78_get_byte, &rl78_data);
+  rv = rl78_decode_opcode (addr, &opcode, rl78_get_byte, &rl78_data, isa);
 
   dis->bytes_per_line = 10;
 
@@ -284,7 +286,7 @@ print_insn_rl78 (bfd_vma addr, disassemble_info * dis)
 		    PR (PS, "[%s", register_names[oper->reg]);
 		    if (oper->reg2 != RL78_Reg_None)
 		      PR (PS, "+%s", register_names[oper->reg2]);
-		    if (oper->addend)
+		    if (oper->addend || do_addr)
 		      PR (PS, "+%d", oper->addend);
 		    PC (']');
 		    break;
@@ -326,4 +328,45 @@ print_insn_rl78 (bfd_vma addr, disassemble_info * dis)
 #endif
 
   return rv;
+}
+
+int
+print_insn_rl78 (bfd_vma addr, disassemble_info * dis)
+{
+  return print_insn_rl78_common (addr, dis, RL78_ISA_DEFAULT);
+}
+
+int
+print_insn_rl78_g10 (bfd_vma addr, disassemble_info * dis)
+{
+  return print_insn_rl78_common (addr, dis, RL78_ISA_G10);
+}
+
+int
+print_insn_rl78_g13 (bfd_vma addr, disassemble_info * dis)
+{
+  return print_insn_rl78_common (addr, dis, RL78_ISA_G13);
+}
+
+int
+print_insn_rl78_g14 (bfd_vma addr, disassemble_info * dis)
+{
+  return print_insn_rl78_common (addr, dis, RL78_ISA_G14);
+}
+
+disassembler_ftype
+rl78_get_disassembler (bfd *abfd)
+{
+  int cpu = abfd->tdata.elf_obj_data->elf_header->e_flags & E_FLAG_RL78_CPU_MASK;
+  switch (cpu)
+    {
+    case E_FLAG_RL78_G10:
+      return print_insn_rl78_g10;
+    case E_FLAG_RL78_G13:
+      return print_insn_rl78_g13;
+    case E_FLAG_RL78_G14:
+      return print_insn_rl78_g14;
+    default:
+      return print_insn_rl78;
+    }
 }

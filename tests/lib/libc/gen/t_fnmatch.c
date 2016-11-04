@@ -1,4 +1,4 @@
-/* $NetBSD: t_fnmatch.c,v 1.6 2014/10/12 22:33:41 christos Exp $ */
+/* $NetBSD: t_fnmatch.c,v 1.6.2.1 2016/11/04 14:49:23 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fnmatch.c,v 1.6 2014/10/12 22:33:41 christos Exp $");
+__RCSID("$NetBSD: t_fnmatch.c,v 1.6.2.1 2016/11/04 14:49:23 pgoyette Exp $");
 
 #include <atf-c.h>
 #include <fnmatch.h>
@@ -166,6 +166,7 @@ ATF_TC_BODY(fnmatch_initialbracket, tc)
 	ATF_CHECK(fnmatch("[!]a-]", "b", 0) == 0);
 	ATF_CHECK(fnmatch("[]-_]", "^", 0) == 0); /* range: ']', '^', '_' */
 	ATF_CHECK(fnmatch("[!]-_]", "X", 0) == 0);
+	ATF_CHECK(fnmatch("[A-\\\\]", "[", 0) == 0);
 	ATF_CHECK(fnmatch("[a-z]/[a-z]", "a/b", 0) == 0);
 	ATF_CHECK(fnmatch("[*]/b", "*/b", 0) == 0);
 	ATF_CHECK(fnmatch("[?]/b", "?/b", 0) == 0);

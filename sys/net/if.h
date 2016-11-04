@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.221.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: if.h,v 1.221.2.3 2016/11/04 14:49:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -243,7 +243,7 @@ typedef struct ifnet {
 	struct bpf_if *if_bpf;		/* packet filter structure */
 	if_index_t	if_index;	/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_slowtimo called */
-	short	if_flags;		/* up/down, broadcast, etc. */
+	unsigned short	if_flags;	/* up/down, broadcast, etc. */
 	short	if_extflags;		/* if_output MP-safe, etc. */
 	struct	if_data if_data;	/* statistics and other data about if */
 	/*
@@ -634,10 +634,12 @@ struct ifa_msghdr {
 				/* to skip over non-understood messages */
 	u_char	ifam_version;	/* future binary compatibility */
 	u_char	ifam_type;	/* message type */
-	int	ifam_addrs;	/* like rtm_addrs */
-	int	ifam_flags;	/* value of ifa_flags */
-	int	ifam_metric;	/* value of ifa_metric */
 	u_short	ifam_index;	/* index for associated ifp */
+	int	ifam_flags;	/* value of ifa_flags */
+	int	ifam_addrs;	/* like rtm_addrs */
+	pid_t	ifam_pid;	/* identify sender */
+	int	ifam_addrflags;	/* family specific address flags */
+	int	ifam_metric;	/* value of ifa_metric */
 };
 
 /*
@@ -914,6 +916,11 @@ do {									\
 #define	IFQ_CLASSIFY(ifq, m, af) /* nothing */
 
 #endif /* ALTQ */
+
+#define IFQ_LOCK_INIT(ifq)	(ifq)->ifq_lock =			\
+	    mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET)
+#define IFQ_LOCK(ifq)		mutex_enter((ifq)->ifq_lock)
+#define IFQ_UNLOCK(ifq)		mutex_exit((ifq)->ifq_lock)
 
 #define	IFQ_IS_EMPTY(ifq)		IF_IS_EMPTY((ifq))
 #define	IFQ_INC_LEN(ifq)		((ifq)->ifq_len++)

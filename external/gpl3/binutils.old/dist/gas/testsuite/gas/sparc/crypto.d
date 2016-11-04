@@ -13,27 +13,27 @@ Disassembly of section .text:
    c:	81 b0 28 60 	sha512 
   10:	8d b0 a8 e4 	crc32c  %f2, %f4, %f6
   14:	91 b1 26 06 	aes_kexpand0  %f4, %f6, %f8
-  18:	94 41 8f 08 	aes_kexpand1  %f6, %f8, 0x7, %f10
-  1c:	94 41 8d 08 	aes_kexpand1  %f6, %f8, 0x6, %f10
+  18:	94 c9 8f 08 	aes_kexpand1  %f6, %f8, 0x7, %f10
+  1c:	94 c9 8d 08 	aes_kexpand1  %f6, %f8, 0x6, %f10
   20:	99 b2 26 2a 	aes_kexpand2  %f8, %f10, %f12
-  24:	a0 42 9c 0c 	aes_eround01  %f10, %f12, %f14, %f16
-  28:	a4 43 20 2e 	aes_eround23  %f12, %f14, %f16, %f18
-  2c:	a8 43 a4 50 	aes_dround01  %f14, %f16, %f18, %f20
-  30:	ac 44 28 72 	aes_dround23  %f16, %f18, %f20, %f22
-  34:	b0 44 ac 94 	aes_eround01_l  %f18, %f20, %f22, %f24
-  38:	b4 45 30 b6 	aes_eround23_l  %f20, %f22, %f24, %f26
-  3c:	b8 45 b4 d8 	aes_dround01_l  %f22, %f24, %f26, %f28
-  40:	bc 46 38 fa 	aes_dround23_l  %f24, %f26, %f28, %f30
+  24:	a0 ca 9c 0c 	aes_eround01  %f10, %f12, %f14, %f16
+  28:	a4 cb 20 2e 	aes_eround23  %f12, %f14, %f16, %f18
+  2c:	a8 cb a4 50 	aes_dround01  %f14, %f16, %f18, %f20
+  30:	ac cc 28 72 	aes_dround23  %f16, %f18, %f20, %f22
+  34:	b0 cc ac 94 	aes_eround01_l  %f18, %f20, %f22, %f24
+  38:	b4 cd 30 b6 	aes_eround23_l  %f20, %f22, %f24, %f26
+  3c:	b8 cd b4 d8 	aes_dround01_l  %f22, %f24, %f26, %f28
+  40:	bc ce 38 fa 	aes_dround23_l  %f24, %f26, %f28, %f30
   44:	87 b0 66 80 	des_ip  %f32, %f34
   48:	8b b0 e6 a0 	des_iip  %f34, %f36
   4c:	8f b1 66 c7 	des_kexpand  %f36, 7, %f38
-  50:	9a 41 d7 29 	des_round  %f38, %f40, %f42, %f44
+  50:	9a c9 d7 29 	des_round  %f38, %f40, %f42, %f44
   54:	9f b2 e7 0d 	kasumi_fi_fi  %f42, %f44, %f46
-  58:	a6 43 63 4f 	kasumi_fl_xor  %f44, %f46, %f48, %f50
-  5c:	aa 43 e7 71 	kasumi_fi_xor  %f46, %f48, %f50, %f52
+  58:	a6 cb 63 4f 	kasumi_fl_xor  %f44, %f46, %f48, %f50
+  5c:	aa cb e7 71 	kasumi_fi_xor  %f46, %f48, %f50, %f52
   60:	af b4 e7 95 	camellia_fi  %f50, %f52, %f54
   64:	b3 b5 67 b7 	camellia_fli  %f52, %f54, %f56
-  68:	ba 45 f7 99 	camellia_f  %f54, %f56, %f58, %f60
+  68:	ba cd f7 99 	camellia_f  %f54, %f56, %f58, %f60
   6c:	81 b0 29 00 	mpmul  0
   70:	81 b0 29 01 	mpmul  1
   74:	81 b0 29 02 	mpmul  2

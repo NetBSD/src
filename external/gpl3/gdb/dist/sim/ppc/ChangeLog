@@ -1,3 +1,108 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (sim-assert): Call AC_MSG_CHECKING,
+	AC_DEFINE_UNQUOTED, and AC_MSG_RESULT
+	(sim-env, sim-stdio, sim-trace): Delete.
+	* config.in, configure: Regenerate.
+	* Make-common.in (ENV_CFLAGS, TRACE_CFLAGS, ASSERT_CFLAGS,
+	STDIO_CFLAGS): Delete.
+	(CONFIG_CFLAGS): Delete $(ENV_CFLAGS), $(TRACE_CFLAGS),
+	$(ASSERT_CFLAGS), and $(STDIO_CFLAGS).
+	* std-config.h (WITH_ENVIRONMENT, WITH_TRACE, WITH_ASSERT,
+	WITH_STDIO): Delete.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Delete --enable-sim-regparm and sim_regparm,
+	and --enable-sim-stdcall and sim_stdcall.
+	* configure: Regenerate.
+	* Makefile.in (REGPARM_CFLAGS, STDCALL_CFLAGS): Delete.
+	(CONFIG_CFLAGS): Delete $(REGPARM_CFLAGS) and $(STDCALL_CFLAGS).
+	* inline.h: Delete REGPARM everywhere.
+	* options.c (print_options): Delete WITH_REGPARM and
+	WITH_STDCALL.
+	* std-config.h (WITH_REGPARM, WITH_STDCALL, REGPARM): Delete.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Delete --enable-sim-cflags and sim_cflags.
+	* configure: Regenerate.
+	* INSTALL: Delete all mention of --enable-sim-cflags.
+	* Makefile.in (SIM_CFLAGS): Delete.
+	(STD_CFLAGS, NOWARN_CFLAGS): Delete $(SIM_CFLAGS).
+	(psim): Likewise.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim_calls.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (sim-bswap): Delete.
+	* configure: Regenerate.
+	* INSTALL: Delete --enable-sim-bswap docs.
+	* Makefile.in (BSWAP_CFLAGS): Delete.
+	(CONFIG_CFLAGS): Delete $(BSWAP_CFLAGS).
+	* options.c (print_options): Delete WITH_BSWAP.
+	* sim-endian.h (htonl, ntohl): Delete.
+	* std-config.h (WITH_BSWAP): Delete.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* main.c (main): Pass SIM_OPEN_STANDALONE to psim_options and
+	psim_usage.
+	* psim.c (psim_usage): Add new kind arg.  Only show bug URL and
+	exit when kind is SIM_OPEN_STANDALONE.
+	(psim_options): Add new kind arg.  Pass kind down to all psim_usage
+	calls.  Replace error/break calls after psim_usage with return NULL.
+	Only exit with version case when kind is SIM_OPEN_STANDALONE.
+	* psim.h: Include gdb/remote-sim.h.
+	(psim_options): Add new kind arg.
+	(psim_usage): Likewise.
+	* sim_calls.c (sim_open): Pass kind to psim_options.  Return NULL
+	when it returns NULL.
+
+2015-12-29  Kevin Buettner  <kevinb@redhat.com>
+
+	* emul_netbsd.c (fd_closed): New static array.
+	(fdbad): New function.
+	(do_read, do_write, do_close, do_dup, do_ioctl, do_dup2, do_fcntl)
+	(do_fstatfs, do_fstat, do_lseek): Call `fdbad'.
+	(emul_netbsd_init): Initialize `fd_closed'.
+	* emul_unix.c (fd_closed): New static array.
+	(fdbad): New function.
+	(do_unix_read, do_unix_write, do_unix_close, do_unix_dup)
+	(do_unix_dup2, do_unix_lseek, do_solaris_fstat, do_solaris_ioctl)
+	(do_linux_fstat, do_linux_ioctl): Call `fdbad'.
+	(emul_solaris_init, emul_linux_init): Initialize `fd_closed'.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (TCONFIG_H): Delete.
+	(sim-fpu.o): Delete $(TCONFIG_H).
+	(tconfig.h): Delete rule.
+
+2015-11-21  Mike Frysinger  <vapier@gentoo.org>
+
+	PR sim/13834
+	* Makefile.in (gentmap): Change $< to $(srcdir)/../common/gentmap.c.
+	(callback.o): Change $< to $(srcdir)/../common/callback.c.
+	(options.o): Change $< to $(srcdir)/options.c.
+
+2015-11-17  Pedro Alves  <palves@redhat.com>
+
+	* debug.h (TRACE, ITRACE, DTRACE, DITRACE, PTRACE): Call
+	sim_io_printf_filtered instead of printf_filtered.
+
 2015-06-12  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.
@@ -260,8 +365,8 @@
 	* config.in: Ditto.
 
 2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
-            Daniel Jacobowitz  <dan@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
 
 	* configure.ac: Use ACX_PKGVERSION and ACX_BUGURL.
 	* configure, config.in: Regenerated.
@@ -276,8 +381,8 @@
 
 2008-03-14  Nick Hudson  <nick.hudson@dsl.pipex.com
 
-        * configure.ac: Pass ../../intl to ZW_GNU_GETTEXT_SISTER_DIR.
-        * configure: Regenerate.
+	* configure.ac: Pass ../../intl to ZW_GNU_GETTEXT_SISTER_DIR.
+	* configure: Regenerate.
 
 2007-10-15  Daniel Jacobowitz  <dan@codesourcery.com>
 
@@ -298,7 +403,7 @@
 
 	Committed by Andrew Cagney.
 	* ppc-instructions: Implement optional PowerPC stfiwx instruction.
-	
+
 2006-07-12  Fred Fish  <fnf@specifix.com>
 
 	* sim-endian.h (asm/byteorder.h): Don't include private kernel
@@ -360,7 +465,7 @@
 2005-11-28  Mark Mitchell  <mark@codesourcery.com>
 
 	* psim.c: Include gdb/signals.h.
-	
+
 	* sim_calls.c (gdb/signals.h): Include it.
 	(sim_stop_reason): Use TARGET_SIGNAL_*.
 	* psim.c (cntrl_c_simulation): Use TARGET_SIGNAL_*.
@@ -542,7 +647,7 @@
 	Written by matthew green <mrg@redhat.com>, with fixes from Aldy
 	Hernandez <aldyh@redhat.com>, Jim Wilson <wilson@redhat.com>, and
 	Nick Clifton <nickc@redhat.com>.
-	
+
 	* ppc-instructions: Include altivec.igen and e500.igen.
 	(model_busy, model_data): Add vr_busy and vscr_busy.
 	(model_trace_release): Trace vr_busy and vscr_busy.
@@ -587,7 +692,7 @@
 
 	* ppc-instructions: Add missing +8 line.  Found by blofeldus at
 	yahoo.com.
-	
+
 2003-06-21  Andrew Cagney  <cagney@redhat.com>
 
 	From Ian Lance Taylor <ian@airs.com>: * hw_nvram.c
@@ -661,7 +766,7 @@
 	Move to before "support.h".
 	* Makefile.in, gen-support.c, gen-idecode.c, igen.c: Update
 	copyright.
-	
+
 2003-05-16  Ian Lance Taylor  <ian@airs.com>
 
 	* Makefile.in (various): Use $(SHELL) whenever we invoke
@@ -706,8 +811,8 @@
 
 2002-04-15  Elena Zannoni  <ezannoni@redhat.com>
 
-        * sim_calls.c (sim_fetch_register, sim_store_register): Return -1 for
-        AltiVec registers as a temporary stopgap.
+	* sim_calls.c (sim_fetch_register, sim_store_register): Return -1 for
+	AltiVec registers as a temporary stopgap.
 
 2002-03-24  David O'Brien  <obrien@FreeBSD.org>
 
@@ -846,7 +951,7 @@ Wed Mar  7 10:45:12 HST 2001  Glen Nakamura  <gen@lava.net>
 
 	* hw_init.c (dma_file): Fixed problem with loading last 1KB of
 	file.
-	
+
 2001-03-04  Andrew Cagney  <ac131313@redhat.com>
 
 	* emul_netbsd.c [WITH_NetBSD_HOST]: Include <sys/mount.h> and
@@ -908,9 +1013,9 @@ Thu Sep  2 18:15:53 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 
 1999-05-08  Felix Lee  <flee@cygnus.com>
 
-        * configure.in: Use AC_EXEEXT instead of AM_EXEEXT.
+	* configure.in: Use AC_EXEEXT instead of AM_EXEEXT.
 	* configure: Regenerated to track ../common/aclocal.m4 changes.
-	
+
 1999-04-02  Keith Seitz  <keiths@cygnus.com>
 
 	* sim_calls.c (POLL_QUIT_INTERVAL): Define. Used to tweak
@@ -1027,7 +1132,7 @@ Sat May  2 01:10:12 1998  Stu Grossman  <grossman@babylon-5.cygnus.com>
 	now defined in ../common/aclocal.m4, and the double definition causes
 	problems with AC_SUBST of EXEEXT.
 	* configure:  Regenerate.
-	
+
 Wed Apr 29 15:44:52 1998  Geoffrey Noer  <noer@cygnus.com>
 
 	* aclocal.m4: new file for AM_EXEEXT macro
@@ -1084,7 +1189,7 @@ Mon Feb  9 14:13:14 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* ppc-instructions (fdiv, fdivs): Check for divide by zero.
 	(is_invalid_zero_divide, invalid_zero_divide_operation): New
  	functions.
-	
+
 Wed Dec 10 17:38:28 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim_calls.c (sim_load): Do not parse PROG using buildargv, use
@@ -1136,7 +1241,7 @@ Wed Aug 27 10:15:48 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim_calls.c (sim_load): From Ian Lance Taylor - free argv after
  	it has been used, not before.
-	
+
 Tue Aug 26 10:41:35 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim_calls.c (sim_kill): Delete.
@@ -1157,11 +1262,11 @@ Thu Jul  3 10:18:06 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* ppc-instructions (Load String Word Immediate): From Brad Parker
  	- sense of wrap test in check for overwriting RA wrong.
 	(Load String Word Indexed): Ditto.
-	
+
 	* configure.in: From Erik Landry - set sim_default_model not
  	sim_model for sim-default-model option.
 	* configure: Regenerate.
-	
+
 	* interrupts.c (check_masked_interrupts): Schedule a hardware
  	interrupt delivery when FP interrupts get enabled.
 	(program_interrupt): Generate FP exceptions instead of aborting.
@@ -1175,7 +1280,7 @@ Thu Jul  3 10:18:06 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(FPSCR_END): Explicitly check for possible floating point
  	exception conditions.
 	(FPSCR_BEGIN): Simplify.
-	
+
 	* ppc-instructions (Move From FPSCR): Enable.
 	(Move To FPSCR Bit 1): Ditto.
 	(Move To FPSCR Bit 0): Ditto.
@@ -1183,7 +1288,7 @@ Thu Jul  3 10:18:06 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(Move to Condition Register from FPSCR): Simplify.
 	(invalid_arithemetic_operation): Generate a QNaN when invalid
  	operation exception disabled.
-	
+
 Tue May 20 10:22:50 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim_calls.c (sim_open): Add callback argument.
@@ -1300,7 +1405,7 @@ Wed Feb 12 19:33:45 1997  Andrew Cagney  <cagney@phydeaux.cygnus.com>
 	* Many of the ppc-opcode-* files are identical baring the type of
  	lookup table.  Instead of having multiple tables, igen can do this
 	via an additional option.
-	
+
 	* ld-decode.h, ld-decode.c (force_decode_gen_type): New function,
  	allow the type of generated table specified in the decode file to
  	be overridden.
@@ -1316,7 +1421,7 @@ Wed Feb 12 19:33:45 1997  Andrew Cagney  <cagney@phydeaux.cygnus.com>
 	* Makefile.in (IGEN_FLAGS): Add IGEN_IDECODE_MECHANISM set by the
  	configure script.
 	* configure: Regenerate.
-	
+
 Tue Feb 11 13:49:10 1997  Michael Meissner  <meissner@tiktok.cygnus.com>
 
 	* events.c (event_queue_create): Don't use NULL to initialize an
@@ -1346,7 +1451,7 @@ Wed Feb  5 10:56:27 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 	* Property create/initialization still wasn't correctly ordered.
   	Should be delaying everything related to ihandle creation until
  	after the rest of the tree has been established.
-	
+
 	* device.c (device_find_ihandle_runtime_property): Update.
 	(device_add_ihandle_runtime_property): Update.
 
@@ -1355,7 +1460,7 @@ Wed Feb  5 10:56:27 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 	* tree.c (print_properties): Update.
 
 Wed Feb  5 10:56:27 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
-	
+
 	* gen-icache.c (print_icache_extraction): Add a reason parameter.
   	Augment each extracted field with a comment citing the codes
  	origin.  Should simplify tracking down incorrect cache
@@ -1391,7 +1496,7 @@ Fri Jan 31 16:20:26 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 	* gen-idecode.c: Correct generated igen body so that it no drops
  	or doubles clock interrupts.
 
-	
+
 Thu Jan 30 11:23:20 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* Makefile.in (BUILT_SRC_WO_CONFIG): Change targ-vals.* to
@@ -1419,7 +1524,7 @@ Wed Jan 29 12:14:19 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* igen wasn't aborting if the opcode table contained no valid
  	fields.
-	
+
 	* misc.c (name2i): Possibly abort if an invalid name is
  	encountered.
 	* ld-decode.c: Abort if the table type isn't found.
@@ -1429,7 +1534,7 @@ Wed Jan 29 12:14:19 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 	* When performance monitoring is disabled, it is still possible to
  	determine the simulation speed by looking at the number of elapsed
  	ticks recorded by the event queue.
-	
+
 	* psim.c (psim_write_register, psim_read_register): Force the cpu
  	to zero when it is either of `-1' or `nr_cpus'.  In both cases the
  	next cpu would be zero any way.
@@ -1443,10 +1548,10 @@ Wed Jan 29 12:14:19 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 	* The code to allow an event queue to be updated during a signal
  	was missing.  For main.c, a cntrl-c simulation termination wasn't
  	handled cleanly.
-	
+
 	* The simulation would not correctly restart if an event requested
  	that the simulation be halted.
-	
+
 	* psim.c (psim_options): Add hack to -i option to optionally
  	include a level vis -i2.
 	(psim_usage): Document.
@@ -1467,7 +1572,7 @@ Wed Jan 29 12:14:19 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
  	false.
 	(event_queue_tick): Check that processing isn't still being
  	performed.
-	
+
 	* gen-idecode.c (print_run_until_stop_body): Call
  	event_queue_process_events to clear possibly pending events before
  	starting a simulation run.  Re-arange main loop so that simulator
@@ -1483,10 +1588,10 @@ Wed Jan 29 12:14:19 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
  	RA.  Based on instruction frequency stats, expand additional
  	instructions.
 	* ppc-instructions: Change all `RA == 0' to RA_is_0.
-	
+
 	* ppc-opcode-stupid: Move all but the basic table in -complex into
  	here.  Update to new format.
-	
+
 	* Makefile.in (tmp-defines): New target. Force defines.h to always
  	be built.  Hence get ppc-opcode-goto to build.
 
@@ -1494,7 +1599,7 @@ Tue Jan 28 13:00:19 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* hw_com.c (hw_com_instance_read, hw_com_instance_write):
  	Implement.
-	
+
 Thu Jan 23 09:07:26 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* hw_trace.c (hw_trace_init_data): Delete.  The trace options need
@@ -1508,10 +1613,10 @@ Thu Jan 23 09:07:26 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
  	debug.c.  It could be much simpler.
 
 Thu Jan 23 09:07:26 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
-	
+
 	* Some devices support removable media.  Add hooks to the disk
  	device so that it supports this.
-	
+
 	* device.c (device_add_string_array_property,
  	device_find_string_array_property): New functions, manipulate
  	properties containing an array of strings.
@@ -1532,7 +1637,7 @@ Thu Jan 23 09:07:26 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* device.h: Define an ioctl to `change-media' with an optional new
  	media image.
-	
+
 	* hw_disk.c: Allow floppy disk devices to be specified.
 
 	* psim.c (psim_command): New function, parse more complex psim
@@ -1554,9 +1659,9 @@ Wed Jan 22 09:38:33 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* gen-icache.c (print_icache_struct): If there is no cache, do not
  	output expressions in idecode.h file.
-	
+
 	* gen-icache.c (print_icache_body): Output them here.
-	
+
 	* ppc-opcode-complex: Clarify constant values for SPR==LR register
  	expansion.
 
@@ -1574,16 +1679,16 @@ Wed Jan 22 12:24:52 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
  	filled. Change the definition of a COMPUTE variable to be defined
  	when the cache entry is being used.
 	* gen-icache.c: Update.
-	
+
 	* ld-cache.h, ld-cache.c: Change field names so that their meaning
  	is more obvious.  old_name->field_name, new_name->derived_name.
 	* gen-icache.c: Update
-	
+
 	* gen-icache.h, gen-icache.c (print_icache_body): Make the three
  	different types of cache code - put into cache, extract from
  	cache, no cache - an explicit argument to print_icache_body.
 	* gen-icache.c (print_icache_extraction): Ditto.
-	
+
 	* gen-semantics.c (print_c_semantic): Update use.
 	* gen-idecode.c (print_jump_insn): Update use.
 	* gen-icache.c (print_icache_function): Update use.
@@ -1612,32 +1717,32 @@ Mon Jan 20 11:20:15 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
  	cap db as they are created and deleted.  This ensuring that a
  	capibility is only used during the lifetime of the corresponding
  	object.
-	
+
 	* cap.h, cap.c: Correct cap type - was signed32 should be
  	signed_cell.
-	
+
 	* cap.c (cap_add, cap_remove): New methods for cap object that
  	allow the explicit addition and removal of internal objects that
  	the cap knows about.
-	
+
 	* cap.c (cap_init): Rewrite.  Verify that the only objects
  	remaining in the cap data base are those that were entered first.
   	Thse objects will be the permenant ones.
 	* device.c (device_init_address): Remember to initialize the cap
  	database.
-	
+
 	* device.c (device_create_instance_from): Explicitly add device
  	instances to the cap database.  Simplify create code.
 	(device_instance_delete): Explicitly remove device instances from
  	the cap database.
-	
+
 	* device.c (device_create_from): Explicitly add a device to the
  	cap data base.
-	
+
 	* device.c (device_create_from): Always set the cap members.
 
 	* hw_disk.c: Output the instance when tracing.
-	
+
 Sun Jan 19 16:44:29 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* tree.c (split_device_specifier): Add support for aliases when
@@ -1650,10 +1755,10 @@ Sun Jan 19 15:28:23 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
  	size as arguments.  These may be multi cell values. Initially fix
  	the memory code so that they check/detect this.  Leave the
  	adjustment of any clients to later.
-	
+
 	* hw_memory.c (hw_memory_instance_claim,
  	hw_memory_instance_release): Handle multi-cell memory devices.
-	
+
 	* hw_memory.c (hw_memory_instance_claim): Be tolerant towards the
  	release of memory regions that were not claimed.
 
@@ -1662,18 +1767,18 @@ Fri Jan 17 12:01:07 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 	* device.h, device.c (device_instance_call_method): Correct return
  	type - can return either 0 or -1, hence should be a signed type.
 	* device_table.h: Ditto.
-	
+
 	* hw_memory.c (hw_memory_instance_claim,
  	hw_memory_instance_release): Update.
 	* hw_disk.c (hw_disk_max_transfer, hw_disk_block_size,
  	hw_disk_nr_blocks): Ditto.
-	
+
 Fri Jan 17 11:50:13 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* emul_chirp.c (chirp_emul_claim): Implement using the "claim"
  	method belonging to "/chosen/memory".
 	(chirm_emul_release): Ditto.
-	
+
 	* Makefile.in (LIB_INLINE_SRC): Remove emul_* from list of files
  	that are inlined.  These modules are called via a table and are
  	not made inline.
@@ -1700,7 +1805,7 @@ Thu Jan 16 08:51:25 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* vm_n.h (vm_data_map_read_N, vm_data_map_write_N): For a
  	miss-aligned access when a transfer fails abort.
-	
+
 	* emul_bugapi.c (emul_bugapi_do_write): Use emul_read_buffer
  	instead of the vm_read_buffer.
 	* emul_netbsd.c (do_write): Ditto.
@@ -1710,10 +1815,10 @@ Wed Jan 15 14:38:25 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* configure.in (--enable-sim-jump): Default is NULL and not -E.
 	* configure: Regenerate.
-	
+
 	* basics.h (__attribute__): Enable attributes if GCC >= 2.6.
 	(UNUSED): Only enable UNUSED if GCC >= 2.7.
-	
+
 	* gen-icache.c (print_icache_extraction): Print UNUSED macro
  	instead of explicit __unused__ attribute.
 	(print_icache_body): Ditto.
@@ -1741,7 +1846,7 @@ Wed Jan 15 12:25:11 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* cpu.h, cpu.c (cpu_error): Aborts simulation with error message,
  	but also saves current processor state.
-	
+
 	* basics.h: Move #include <stdarg.h> to here from device_table.h.
 
 	* interrupts.c (perform_oea_interrupt): Use.  No longer loose CIA
@@ -1771,7 +1876,7 @@ Mon Jan 13 16:58:12 1997  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 	(system_call_interrupt): Ditto.
 	(floating_point_assist_interrupt): Ditto.
 	(deliver_hardware_interrupt): Ditto.
-	
+
 	* interrupts.c (program_interrupt): For UEA mode, halt the
  	processor - so that the current state is saved - instead of
  	aborting.
@@ -1828,7 +1933,7 @@ Thu Dec 19 11:09:43 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* emul_chirp.c (chirp_emul_boot): Implement. Well report the new
  	string and exit.
-	
+
 	* emul_chirp.c (chirp_emul_exit): Correct type of args struct
  	members - *_cell not host dependant int.
 
@@ -1838,13 +1943,13 @@ Wed Dec 18 17:49:59 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
  	information if a double interrupt is encountered.
 
 Wed Dec 18 17:49:59 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
-	
+
 	* psim.c (psim_merge_device_file): Tolerate an incorrect file-name
  	being specified with the -f option.
 	(psim_merge_device_file): Correct check for end of string.
 
 Wed Dec 18 17:49:59 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
-	
+
 	* emul_chirp.c (chirp_emul_peer): Was falling off the end of the
  	list of devices. Return zero to the client instead.
 	* emul_chirp.c (chirp_emul_child): Ditto
@@ -1928,7 +2033,7 @@ Tue Dec 10 10:12:44 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 	* device.h, device.c (device_find_ihandle_runtime_property): New
  	function. Reverse of add_ihandle_runtime property.
 	(device_init_runtime_properties): Use it.
-	
+
 	* device.c (find_property_entry): New function returns the
  	internal property spec.
 	(device_set_property): Use.
@@ -1938,7 +2043,7 @@ Tue Dec 10 10:12:44 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* psim.c (psim_merge_device_file): Strip newline from device
  	specs.
-	
+
 Tue Dec 10 10:12:44 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* hw_htab.c (htab_map_binary): For overlapping text / data maps
@@ -1946,7 +2051,7 @@ Tue Dec 10 10:12:44 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* emul_chirp.c (emul_chirp_create): Add a description property to
  	the pte's so that they are easier to identify.
-	
+
 	(emul_chirp_create): Don't specify a load address for the CHRP
  	image.  Always use the values specified by the executable.
 
@@ -1960,7 +2065,7 @@ Mon Dec  9 12:08:46 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 	* emul_chirp.c (emul_chirp_instruction_call): Check for a NULL
  	method name when handling the client call. Also check for other
  	bad call arguments.
-	
+
 	* emul_chirp.c (emul_chirp_create): Allow real-mode?, real-base,
  	etc to be overriden.
 
@@ -1972,7 +2077,7 @@ Mon Dec  9 12:08:46 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 Thu Dec  5 10:46:42 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* 961205: Release snapshot 961205.
-	
+
 Thu Dec  5 10:46:42 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* configure.in (hostbitsize, bitsize): Fix typo in error message -
@@ -1985,7 +2090,7 @@ Thu Dec  5 10:46:42 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* configure.in: Sort options.
 	* configure: Rebuild
-	
+
 Wed Dec  4 13:57:31 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 
 	* psim.c (psim_usage): Add -n option - specify number of
@@ -2001,7 +2106,7 @@ Fri Nov 29 11:12:22 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 	* hw_pal.c (hw_pal_attach_address): New function, if an attach is
  	encountered, assume that it is the single disk.
 	* hw_pal.c: Add generic device/size decode methods.
-	
+
 	* hw_nvram.c (hw_nvram_init_address): Use the first nonzero reg
  	property entry when determining the nvram size.
 
@@ -2030,26 +2135,26 @@ Thu Nov 28 13:19:46 1996  Andrew Cagney  <cagney@kremvax.tpgi.com.au>
 	* emul_bugapi.c (emul_bugapi_create): Add a small memory device to
  	the device tree at the address of the hi-mem interrupt vector
  	addreses.  Used by bugapi to establish its trap instructions.
-	
+
 	* debug.h: Add a new macro DITRACE for tracing device instances.
-	
+
 	* debug.h: Extend the DTRACE macro so that it can also tests for
  	device specific tracint.
-	
+
 	* device.h, device.c (device_trace): Add method to determine
  	device specific tracing.
 	(device_init_address): Set the devices tracing level.
-	
+
 Thu Nov 21 12:05:32 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* tree.h, tree.c (tree_device): New files - separate out the
  	device parser and other tree operations from the device.
-	
+
 	* inline.h, inline.c (INLINE_TREE): Add.
 	* device.h, device.c (device_tree_add_parsed): Delete.
 	* Makefile.in (tree.c): Add rules for new file.
 	* Makefile.in: Better order the emul_* files.
-	
+
 	* emul_generic.c (emul_add_tree_hardware): Update.
 	* emul_netbsd.c (emul_netbsd_create): Update.
 	* emul_unix.c (emul_unix_create): Ditto.
@@ -2057,20 +2162,20 @@ Thu Nov 21 12:05:32 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	* emul_bugapi.c (emul_bugapi_create): Ditto.
 	* psim.c (psim_tree): Ditto.
 	* hw_init.c: Ditto.
-	
+
 	* emul_generic.h: Include tree.h
 	* Makefile.in: Add to EMUL_GENERIC_H dependencies.
-	
+
 	* device.h, device.c (device_root): New function - returns the
  	root of the tree.
 	* corefile.c: Use.
-	
+
 	* device.h, device.c (device_clean): New function, clean up device
  	ready for next simulation run. This includes things like deleting
  	interrupt edges and properties created during the simulation and
  	also scrubbing any pre-defined properties.
 	* tree.c (tree_init): Use.
-	
+
 	* device.h, device.c (device_init_static_properties): New
  	function.  Initialize any static predefined properties.  By static
  	we mean those that have values that can be determined before the
@@ -2082,20 +2187,20 @@ Thu Nov 21 12:05:32 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	(device_add_integer_property): Delete corresponding code.
 	(device_nr_address_cells, device_nr_data_cells): Check for
 	property when returning value.
-	
+
 	* device.h, device.c (device_init_runtime_properties): New
  	function.  Initialize those properties that are not `static'.  At
  	present the only such property is the ihandle.
 	* tree.c (tree_init): Use.
-	
+
 	* device.h, device.c (reg, ranges): Rework these so that they use
  	an array of the fundamental type - single reg or single range
  	entry.
-	
+
 	* device.h, device.c (device_add_ihandle_runtime_property):
  	Re-implement the adding of an ihandle during tree construction so
  	that it better fits in with device initialization.
-	
+
 Thu Nov 21 12:05:32 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.h, device.c (device_ioctl): Add additional argument -
@@ -2107,9 +2212,9 @@ Thu Nov 21 12:05:32 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	* hw_vm.c (hw_vm_ioctl_callback): Ditto.
 	* hw_init.c (hw_stack_ioctl_callback): Ditto.
 	* psim.c (psim_options): Ditto.
-	
+
 Thu Nov 21 12:05:32 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
-	
+
 	* BUGS: Updated a bit.
 
 Wed Nov 20 14:06:37 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
@@ -2129,9 +2234,9 @@ Tue Nov 19 21:17:08 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* debug.h, debug.c (events): Add support for event queue tracing.
 	* events.c: Add event tracing.
-	
+
 	* debug.h, debug.c: Order device trace options.
-	
+
 Fri Nov 15 15:23:39 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 
 	* pk_disklabel.c (pk_disklabel_create_instance): Fix up some
@@ -2141,21 +2246,21 @@ Sun Nov 17 17:59:14 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* sim-endian.h: Add LE versions of byte swap macros.  Needed for
  	PCI devices which are little-endian.
-	
+
 	* sim-endian-n.h (endian_le2h_N, endian_h2le_N): Ditto
 
 Sun Nov 17 17:59:14 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* hw_iobus.c (hw_iobus_attach_address_callback): Change the iobus
  	so that it is implementing a 1-1 address map.
-	
+
 	* emul_generic.c (emul_add_tree_hardware): Adjust.
 
 	* emul_generic.c (emul_add_tree_hardware): Don't add the nvram as
  	a default.
 
 Sun Nov 17 17:59:14 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
-	
+
 	* device.c (split_find_device): Be tolerant of missing unit
  	addresses.
 
@@ -2163,16 +2268,16 @@ Fri Nov 15 16:49:49 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* basics.h (port_direction): New type, specify the direction of
  	any `port'.
-	
+
 	* device.h, device.c (device_interrupt_decode): Include
  	specification of port direction in operations.
  	(device_interrupt_encode): Ditto.
-	
+
 	* device_table.h: Add a direction field to the interrupt port
  	table.
 
 	* device.c (device_tree_add_parsed): Specify port direction.
-	
+
 Thu Nov 14 21:38:13 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* hw_opic.c: Finish - second round.
@@ -2213,7 +2318,7 @@ Wed Nov  6 20:20:58 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	(program_interrupt): For OEA mode, as per spec, generate an
  	illegal instruction program interrupt when an optional instruction
  	is encountered.
-	
+
 	* gen-semantics.c (print_semantic_body): Delete code
  	differentiating between an unimplemented floating point and normal
  	instruction.  Instead, such a case can be handled explicitly.
@@ -2231,7 +2336,7 @@ Wed Nov  6 20:20:58 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	(Move To FPSCR Field Immediate): Ditto.
 	(Move To FPSCR Bit 0): Ditto.
 	(Move To FPSCR Bit 1): Ditto.
-	
+
 Mon Nov  4 12:49:13 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* corefile.c (core_map_read_buffer, core_map_write_buffer): Avoid
@@ -2239,7 +2344,7 @@ Mon Nov  4 12:49:13 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* corefile.c: Adjust arguments so that the client server
 	relationship is clarified.
-	
+
 	* hw_glue.c (hw_glue_init_address): Update so it can be attached
  	to a PCI bus.
 
@@ -2263,7 +2368,7 @@ Sat Nov  2 21:48:57 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	* Makefile.in (tmp-hw, tmp-pk): Retain the user specified order of
  	packages when building them.  Consequently, a user can override a
  	standard device by prefixing their own version.
-	
+
 	* Makefile.in (hw_opic.o, hw_pci.o, hw_ide.o): Add dependencies.
 
 Fri Nov  1 14:42:57 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
@@ -2286,7 +2391,7 @@ Tue Oct 29 17:55:43 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 	({solaris,linux}_descriptors): Add support for access.
 
 Tue, 8 Oct 18:42:26 1996  Jason Molenda <crash@cygnus.co.jp>
-        
+
 	* Makefile.in (clean): Move config.log to distclean.
 
 Fri Nov  1 16:44:28 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
@@ -2331,7 +2436,7 @@ Tue Oct 29 02:01:29 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.c (device_tree_print_device): Clean out printing of
  	properties.
-	
+
 	* device.c (split_device_specifier): Don't detect comments here -
  	"#" can be a valid prefix - eg #size-cells.
 
@@ -2359,13 +2464,13 @@ Mon Oct 28 22:55:48 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* hw_ide.c: New file.  Model of a basic IDE interface attached to
  	a PCI bus.
-	
+
 	* configure.in (hardware): Add the ide device to the default
  	configuration.
 	* configure: Regenerate.
-	
+
 	* debug.h, debug.c: Add tracing option for the IDE device.
-	
+
 Fri Oct 25 21:28:25 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* hw_phb.c, hw_phb.h: New files - implement a PHB.
@@ -2381,11 +2486,11 @@ Fri Oct 25 21:28:25 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	* hw_eeprom.c: Ditto.
 	* hw_init.c: Ditto.
 	* hw_cpu.c: Ditto.
-	
+
 	* hw_com.c: Update event handling.
 
 	* hw_disk.c: Implement tracing.
-	
+
 Fri Oct 25 21:28:25 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device_table.c (generic_device_init_address): Use
@@ -2396,16 +2501,16 @@ Fri Oct 25 21:28:25 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.h, device.c (device_find_ranges_property): New function.
   	Simplify the manipulation of "ranges" properties.
-	
+
 	* device.c (device_add_parsed): Extend to include support for the
  	ranges property.
 
 	* device.c (device_add_parsed): Add assigned-addresses to the list
  	of reg type properties.
-	
+
 	* device.c (device_tree_print_device): Add code to format and
  	print a ranges property.
-	
+
 	* device.h, device.c (device_nr_address_cells,
  	device_nr_size_cells): New functions. Determine the values of the
  	standard properties #address-cells and #size-cells.  Both of which
@@ -2417,7 +2522,7 @@ Fri Oct 25 21:28:25 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* debug.h, debug.c: Sort debug options, Add entries for the
  	comming PHB device.
-	
+
 Fri Oct 18 12:12:21 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 
 	* ppc-instructions (Floating Select): Add support for fsel unless
@@ -2446,7 +2551,7 @@ Wed Sep 25 10:20:29 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	* hw_glue.c: New device.  Hooks for manipulating interrupt ports.
 
 	* debug.h, debug.c (trace_glue_device): Add tracing support for
-        the interrupt glue logic device.
+	the interrupt glue logic device.
 
 	* configure.in (hardware): Add glue device.
 	* configure: Regenerate.
@@ -2454,13 +2559,13 @@ Wed Sep 25 10:20:29 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 Tue Sep 24 20:55:38 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.c (device_tree_parse_integer_property): New function,
-        parse a list of integers as an array property.
+	parse a list of integers as an array property.
 	(device_tree_add_parsed): Call it.
 
 	* device.c (device_tree_parse_string_property): New function,
-        parse a list of strings as a string property (with embeded
-        null's).  For moment, don't try to implement a complext string
-        parser.
+	parse a list of strings as a string property (with embeded
+	null's).  For moment, don't try to implement a complext string
+	parser.
 	(device_tree_add_parsed): Call it.
 
 Tue Sep 24 16:30:48 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
@@ -2473,31 +2578,31 @@ Tue Sep 24 16:30:48 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	* hw_pic.c: Delete, replaced with hw_opic.c.
 
 	* debug.h, debug.c: Add debug option for OpenPIC device. -
-        opic-device.
+	opic-device.
 
 Tue Sep 24 16:30:48 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* Makefile.in (psim.o, idecode.o): Since idecode and not psim is
-        now the file that does all the inlining.
+	now the file that does all the inlining.
 
 	* Makefile.in (LIB_SRC, LIB_INLINE_SRC, idecode.o): Break out the
-        library source code that could be involved in an inlining.  Make
-        idecode.o only dependant on the inlined library source code.
+	library source code that could be involved in an inlining.  Make
+	idecode.o only dependant on the inlined library source code.
 
 	* Makefile.in (LIB_OBJ): Put options last on the list so that it
-        is compiled last.
+	is compiled last.
 
 	* std-config.h (DEVICE_INLINE): Only inline locals when the
-        default is to inline.
+	default is to inline.
 
 Mon Sep 23 00:37:49 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* hw_htab.c (htab_sum_binary): Determine the real-base for the
-        binary.
+	binary.
 
 	* hw_htab.c (htab_map_binary): Depending on the value of the
-        load-base, either map the program in as a contiguous section or as
-        separate sections controled by th binaries lma values.
+	load-base, either map the program in as a contiguous section or as
+	separate sections controled by th binaries lma values.
 	(htab_init_data_callback): Ditto.
 
 Sun Sep 22 15:56:22 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
@@ -2505,35 +2610,35 @@ Sun Sep 22 15:56:22 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	* emul_generic.c (emul_add_tree_options): Remove load-base option.
 
 	* emul_chirp.c (map_over_chirp_note): Add load_base field to note
-        struct.  Don't require the load_base field to be present - just
-        issue warning - it is a recent addition.
+	struct.  Don't require the load_base field to be present - just
+	issue warning - it is a recent addition.
 	(emul_chirp_create): Support both virtual and physical modes.
 
 	* emul_chirp.c (emul_chirp_create): Add a stack initialization
-        property so that any arguments specified on the command line can
-        be passed on to user programs.
+	property so that any arguments specified on the command line can
+	be passed on to user programs.
 
 	* hw_init.c (create_ppc_chirp_bootargs): Add support for chirp
-        argument passing to the pseudo device stack.
+	argument passing to the pseudo device stack.
 
 Sat Sep 21 19:39:56 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.c (device_error): Make it more tolerant to incomplete
-        devices.
+	devices.
 
 	* hw_init.c (hw_data_init_data_callback): Extend the data device
-        so that it can perform initialization operations either dma or a
-        more complex instance open, seek, write operation.
+	so that it can perform initialization operations either dma or a
+	more complex instance open, seek, write operation.
 	* hw_init.c: Update the description of the data device to reflect
-        this.
+	this.
 
 Sat Sep 21 00:13:02 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.c (device_event_queue_schedule,
-        device_event_queue_deschedule, device_event_queue_time): Have the
-        device object export the event operations.  Making these available
-        from the device object should hopefully simplify writing device
-        models.
+	device_event_queue_deschedule, device_event_queue_time): Have the
+	device object export the event operations.  Making these available
+	from the device object should hopefully simplify writing device
+	models.
 
 Fri Sep 20 14:04:40 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
@@ -2542,7 +2647,7 @@ Fri Sep 20 14:04:40 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	* hw_eeprom.c: Rewrite so it works.
 
 	* debug.h, debug.c: Add tracing support for the eeprom and com
-        devices.
+	devices.
 
 Thu Sep 19 14:40:40 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
@@ -2552,99 +2657,99 @@ Thu Sep 19 14:40:40 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 Thu Sep 19 14:40:40 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.c (device_create_instance_from): Tighten up loop
-        searching for device instances.
+	searching for device instances.
 	(device_instance_delete): Ditto.
 	(device_instance_delete): Only leaf instances need to be removed
-        from a devices list of active instances.
+	from a devices list of active instances.
 
 Thu Sep 19 14:40:40 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* hw_disk.c: Add the cdrom as an alias.
 
 	* pk_disklabel.c (disklabel_delete): Implement, remembering to
-        delete the raw disk instance while we're at it.
+	delete the raw disk instance while we're at it.
 
 	* pk_disklabel.c (pk_disklabel_create_instance): Implement a
-        little bit more - still a long way to go.
+	little bit more - still a long way to go.
 
 	* pk_disklabel.c (disklabel_write, disklabel_read): Remember the
-        new head position after a read or write.
+	new head position after a read or write.
 
 Thu Sep 19 13:05:40 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* emul_chirp.c (chirp_emul_read): Allow reads to be longer then
-        the internal buffer.
+	the internal buffer.
 
 Thu Sep 19 13:05:40 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* emul_chirp.c (chirp_read_t2h_args): Call memset-0 with the args
-        in the correct order.
+	in the correct order.
 
 	* emul_chirp.c (chirp_emul_call_method): Correct computation for
-        the address of the first stack argument passed in from the client
-        program.
+	the address of the first stack argument passed in from the client
+	program.
 
 Wed Sep 18 19:33:54 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* words.h: Add new types signed_cell and unsigned_cell which
-        correspond to the signed and unsigned IEEE 1275 memory locations.
+	correspond to the signed and unsigned IEEE 1275 memory locations.
 	* device.h, device.c, emul_chirp.c: Where refering to an IEEE 1275
-        memory cell, replace uses of unsigned32 with unsigned_cell.
+	memory cell, replace uses of unsigned32 with unsigned_cell.
 	* device_table.h: Ditto.
 
 	* sim-endian.h: Add new macros H2BE_cell and BE2H_cell which
-        convert cell sized values to from big endian.
+	convert cell sized values to from big endian.
 	* device.c, emul_chirp.c: Where refering to IEEE 1275 memory cells
-        use these new macros.
+	use these new macros.
 
 Tue Sep 17 15:57:44 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.c (device_tree_add_parsed): Detect and report an
-        interrupt being attached to an invalid device. Was dumping core.
+	interrupt being attached to an invalid device. Was dumping core.
 
 Mon Sep 16 23:09:12 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.h, device.c (device_address_to_attach_address,
-        device_size_to_attach_size): New functions.  Convert a devices
-        unit address or unit size structure into a form suitable for
-        passing on to the attach and detach functions.
+	device_size_to_attach_size): New functions.  Convert a devices
+	unit address or unit size structure into a form suitable for
+	passing on to the attach and detach functions.
 	* device_table.h: Add extra methods to device table.
 
 	* device.h, device.c (device_find_reg_property): New function.
-        For a reg type property, return the selected address + size
-        tupple, along with a positive success status.  Add a reg_property
-        to the list of property types.
+	For a reg type property, return the selected address + size
+	tupple, along with a positive success status.  Add a reg_property
+	to the list of property types.
 	* (device_tree_add_parsed): Make array properties with the name
-        reg or alternate-reg of type reg_property.
+	reg or alternate-reg of type reg_property.
 
 	* hw_memory.c (hw_memory_init_address): Rewrite to use new
-        find_reg_property method.
+	find_reg_property method.
 	* hw_nvram.c (hw_nvram_init_address): Ditto.
 
 	* device.c (device_tree_print_device): Add code to print out a reg
-        property.
+	property.
 
 	* device_table.c (generic_device_address_to_attach_address,
-        generic_device_size_to_attach_size ): New functions.  Generic
-        functions for converting between unit and attach address or size.
+	generic_device_size_to_attach_size ): New functions.  Generic
+	functions for converting between unit and attach address or size.
 
 	* device_table.c (generic_device_init_address): Rewrite to use the
-        new find_reg and address convert functions.  Look for both reg and
-        alternate-reg properties.
+	new find_reg and address convert functions.  Look for both reg and
+	alternate-reg properties.
 
 Mon Sep 16 23:09:12 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* hw_com.c: New file.  A '550 serial device that can quickly be
-        attached to any bus.
+	attached to any bus.
 	* configure.in (enable-sim-hardware): Add the com device.
 	* configure: re-generate.
 
 Thu Sep 12 17:30:56 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.c (device_tree_verify_reg_unit_address): New
-        function. Check that the unit address as specified by the reg
-        property correctly corresponds to any unit address previously
-        specified by the devices name.
+	function. Check that the unit address as specified by the reg
+	property correctly corresponds to any unit address previously
+	specified by the devices name.
 	(device_tree_add_parsed): When adding a reg property, verify
 	that the unit-address - first value of property - correctly
 	matches any previous value specified when creating the device
@@ -2729,7 +2834,7 @@ Wed Aug  7 20:19:55 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	* gen-idecode.c (*switch_*): As an option output a switch that is
  	implemented using a jump table but only if the switch is not
  	boolean.
-	
+
 Tue Aug  6 09:28:22 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 
 	* configure.in (--enable-sim-{hardware,packages}): Fix typos.
@@ -2742,17 +2847,17 @@ Tue Aug  6 09:28:22 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 Wed Aug  7 00:17:37 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device_table.c (generic_device_unit_decode): Require a comma
-        between elements of a unit address.
+	between elements of a unit address.
 
 	* device.c (device_tree_print_device): For reg, alternate-reg and
-        ranges properties use special print functions.
+	ranges properties use special print functions.
 	(device_print_ranges_property): Print formatted ranges property.
 	(device_print_reg_property): Print formatted reg property.
 
 Tue Aug  6 21:35:18 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.c (device_tree_add_parsed): For reg, ranges and
-        alternate-reg properties use a special parser.
+	alternate-reg properties use a special parser.
 	(device_tree_parse_reg_property): New function to parse a reg
 	property.
 	(device_tree_parse_ranges_property): New function to parse a
@@ -2763,35 +2868,35 @@ Tue Aug  6 21:35:18 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 Wed Jul 31 00:02:30 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device_table.h (device_instance_callbacks): Relace the claim and
-        release methods with a more general table mapping from method-name
-        to method-function.
+	release methods with a more general table mapping from method-name
+	to method-function.
 
 	* device.c (device_instance_call_method): New function.  Implement
-        the OpenBoot call-method client interface.  Attempts to locate the
-        instances method in the callback table.
+	the OpenBoot call-method client interface.  Attempts to locate the
+	instances method in the callback table.
 	(device_instance_claim, device_instance_release): Delete.
-        Replaced with call-method and a lookup table.
+	Replaced with call-method and a lookup table.
 
 	* emul_chirp.c (chirp_emul_call_method): Use the new device
-        instance call method and let that handle a client claim call.
+	instance call method and let that handle a client claim call.
 
 	* hw_htab.c (claim_memory): Wrapper function to call the memory
-        devices "claim" method using the new device-instance call-method
-        interface.  Replaces the previous direct calls to claim.
+	devices "claim" method using the new device-instance call-method
+	interface.  Replaces the previous direct calls to claim.
 	(htab_map_region): Use claim_memory.
 	(htab_init_data_callback): Ditto.
 
 	* hw_memory.c (hw_memory_instance_claim): Update function
-        interface so that it is compatible with call-method.
+	interface so that it is compatible with call-method.
 	(hw_memory_instance_release): Ditto.
 	(hw_memory_instance_methods): New table of memory specific
-        methods claim and release.  Add to the hw_memory_callback
+	methods claim and release.  Add to the hw_memory_callback
 	table.
 
 Tue Jul 30 21:26:14 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* psim.c (psim_init): Back out of change to initial value of
-        system->last_cpu.
+	system->last_cpu.
 
 Tue Jul 30 21:12:24 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
@@ -2800,26 +2905,26 @@ Tue Jul 30 21:12:24 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	#define printf_filtered to simplify updating of existing code.
 
 	* sim_callbacks.h (sim_io_write_stdout, sim_io_read_stdin,
-        sim_io_write_stderr): New functions.  Read / write to the
-        simulations stdin and stdout and stderr interfaces.  Merge in code
-        from hw_pal that previously handled async I/O.
+	sim_io_write_stderr): New functions.  Read / write to the
+	simulations stdin and stdout and stderr interfaces.  Merge in code
+	from hw_pal that previously handled async I/O.
 	(sim_io_flush_stdoutput): Rename flush_stdoutput.  Add #define
 	flush_stdoutput to simplify updating of existing code.
 
 	* hw_pal.c (scan_hw_pal, write_hw_pal,
-        hw_pal_instance_write_callback): Use the new sim_io functions.
+	hw_pal_instance_write_callback): Use the new sim_io functions.
 
 	* main.c: Implement standalone versions of the new sim_io
-        functions.  Include support for async I/O.
+	functions.  Include support for async I/O.
 	* sim_calls.c: Ditto.  This time using the gdb callback table.
 
 	* std-config.h (CURRENT_STDIO, current_stdio): New macro. Set up
-        stdio configuration so that it works in the same way as the rest
-        of the simulation.
+	stdio configuration so that it works in the same way as the rest
+	of the simulation.
 	* psim.c (psim_create): Initialize current_stdio from the device
-        tree.
+	tree.
 	* emul_generic.c (emul_add_tree_options): Enter a default value
-        for use-stdio in the device tree.
+	for use-stdio in the device tree.
 
 Fri Jul 26 19:43:03 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
@@ -2829,7 +2934,7 @@ Fri Jul 26 19:43:03 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
  	startup when the processor was still undefined.
 	(print_jump): For safety, restart smp loop when cpu_nr >= nr_cpus,
  	not just equal.
-	
+
 	* options.c (print_options): Add printing of WITH_REGPARM and
  	WITH_STDCALL.
 
@@ -2839,10 +2944,10 @@ Fri Jul 26 19:43:03 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 Fri Jul 26 00:36:35 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* ppc-cache-rules (cache): Change RS and RB to cache instead of
-        compute.  The block move instructions use them.
+	compute.  The block move instructions use them.
 
 	* idecode_expression.h (FPSCR_SET): New macro, set specific FPSCR
-        register.
+	register.
 	(CR_FIELD): New macro, extract specific CR register.
 	(FPSCR_FIELD): New macro, extract specific FPSCR register.
 
@@ -2873,25 +2978,25 @@ Fri Jul 26 00:36:35 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 Thu Jul 25 22:10:40 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* std-config.h (SEMANTICS_INLINE): By default, mask out the
-        inlining of semantic functions from DEFAULT_INLINE.  Almost all
-        configurations call the semantic code via a pointer so there is
-        little benefit.
+	inlining of semantic functions from DEFAULT_INLINE.  Almost all
+	configurations call the semantic code via a pointer so there is
+	little benefit.
 
 	* std-config.h (ICACHE_INLINE): Ditto.
 
 Thu Jul 25 20:07:30 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* configure.in (sim_regparm): Add configuration option for
-        enabling GCC's regparm attribute.
+	enabling GCC's regparm attribute.
 	* (sim_stdcall): Add configuration option for enabling GCC's
-        stdcall attribute.
+	stdcall attribute.
 
 	* Makefile.in (REGPARM_CFLAGS): Pass regparam configuration onto
-        compilations.
+	compilations.
 	* (STDCALL_CFLAGS): Pass stdcall configuration onto compilations.
 
 	* std-config.h (REGPARM): Extend construction of REGPARM macro so
-        that it can include __stdcall__ function attribute.
+	that it can include __stdcall__ function attribute.
 
 Wed Jul 24 19:04:20 1996  Andrew Cagney  <cagney@sawnoff>
 
@@ -2915,23 +3020,23 @@ Wed Jul 24 15:47:09 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 Tue Jul 23 20:57:01 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* igen.c (print_my_defines): Replaces print_define_my_index.
-        Print both a definition for MY_INDEX and MY_PREFIX.
+	Print both a definition for MY_INDEX and MY_PREFIX.
 	* gen-icache.c (print_icache_function): Adjust.
 	* gen-idecode.c (print_jump_insn): Adjust.
 	* gen-semantics.c (print_c_semantic): Adjust.
 
 	* gen-support.c (gen_support_h): Add optional include to created
-        support.h so that, like cpu, it is optionally inlined for all
-        modules that include it.
+	support.h so that, like cpu, it is optionally inlined for all
+	modules that include it.
 	* inline.h, inline.c: Adjust so that support.[hc] is handled the
-        same as cpu.[hc].
+	same as cpu.[hc].
 
 	* idecode_fields.h (LABEL, GOTO): Macro's that create a unique
-        name for a lable and then branch to it.
+	name for a lable and then branch to it.
 
 	* ppc-instructions (convert_to_integer, Floating Round to
-        Single-Precision, Floating Convert from Integer Doubleword): Use
-        LABEL and GOTO instead of the recently added switch statements.
+	Single-Precision, Floating Convert from Integer Doubleword): Use
+	LABEL and GOTO instead of the recently added switch statements.
 
 Wed Jul 24 14:02:42 1996  Andrew Cagney  <cagney@sawnoff.highland.com.au>
 
@@ -2942,16 +3047,16 @@ Tue Jul 23 20:57:01 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* configure.in (--enable-sim-line-nr): Typo - sim_line-nr.
 	* (--enable-sim-inline): Reorder patern matching of arguments so
-        that SUPPORT=ALL_INLINE is reconized as *=* and not *_INLINE.
+	that SUPPORT=ALL_INLINE is reconized as *=* and not *_INLINE.
 
 	* configure: rebuild.
 
 Mon Jul 22 23:25:08 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* configure.in (--enable-sim-hardware, --enable-sim-packages): New
-        configuration options.  Let the user specify the packages or
-        hardware devices that are to be included in the build.  Makes it
-        possible for user packages to be specified.
+	configuration options.  Let the user specify the packages or
+	hardware devices that are to be included in the build.  Makes it
+	possible for user packages to be specified.
 
 	* Makefile.in (tmp-pk, tmp-hw): Just use the list of packages and
 	hardware instead of checking it using ls.  configure.in should
@@ -2961,138 +3066,138 @@ Mon Jul 22 23:25:08 1996  Andrew Cagney  <cagney@highland.com.au>
 Mon Jul 22 22:38:59 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* psim.c (psim_options): Enter the argument to the memory size
-        option directly into the device tree.  Was using atol() which is
-        dangerously non portable.
+	option directly into the device tree.  Was using atol() which is
+	dangerously non portable.
 
 Mon Jul 22 22:17:08 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* configure.in (icache): Extend icache flag to include an insn
-        option.  If specifyed the insn - aka instruction - is included in
-        the instruction cache.  Make this the default.
+	option.  If specifyed the insn - aka instruction - is included in
+	the instruction cache.  Make this the default.
 	* configure: re-generate.
 
 	* igen.c (main), igen.h: Add option -S - inSn - for specifying
-        that the instruction should be included in the icache.
+	that the instruction should be included in the icache.
 
 	* gen-icache.c (print_icache_body): If enabled, output code to put
-        the instruction into the icache.
+	the instruction into the icache.
 	(print_icache_struct): If enabled, add insn to the icache struct.
 
 Mon Jul 22 20:46:12 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* Makefile.in (BUILD_CFLAGS): Include -g when building the
-        generators.
+	generators.
 
 Mon Jul 22 20:00:25 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* emul_generic.c (emul_add_tree_options): Was incorrectly setting
-        the strict-alignment option when hardwired for non-strict
-        alignment.
+	the strict-alignment option when hardwired for non-strict
+	alignment.
 
 Sun Jul 21 21:18:05 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* gen-semantics.c: Make the my_index variable a macro MY_INDEX.
 
 	* ppc-instructions: Adjust so that references are to MY_INDEX and
-        not my_index.
+	not my_index.
 
 Sun Jul 21 21:18:05 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* gen-idecode.c: Output the complete run_until_stop function
-        instead of just the code to handle a single instruction issue.
+	instead of just the code to handle a single instruction issue.
 	* : Have the generated idecode.c include inline.c (instead of psim.c).
 
 	* std-config.h: Change psim.c so that it isn't inlined (as this is
-        no longer needed).
+	no longer needed).
 
 	* psim.c (run_until_stop): Delete the old run_until_stop function
-        instead calling the idecode_run and idecode_run_until_stop
-        functions that gen-idecode.c is now creating.
+	instead calling the idecode_run and idecode_run_until_stop
+	functions that gen-idecode.c is now creating.
 
 Sun Jul 21 21:18:05 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* dgen.c: Maintenance - update to use new features found in lf.c.
 
 	* filter_filename.c (filter_filename): Maintenance - make the
-        string constant.
+	string constant.
 
 Sun Jul 21 21:18:05 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* debug.c (TRACE, ITRACE, DTRACE): Have GCC instead of CPP
-        eliminate trace statements.
+	eliminate trace statements.
 
 	* debug.c: Change trace format so that it is consistent
-        (file:line-nr) with CC's error output.
+	(file:line-nr) with CC's error output.
 
 	* gen-itable.c (itable_c_insn): Add the source file name and
-        source line number to the instruction's informational entry.
+	source line number to the instruction's informational entry.
 
 	* debug.c (ITRACE): Use the itable (and my_index) to get the
-        current instructions name and source line number.
+	current instructions name and source line number.
 
 	* gen-semantics.c, gen-icache.c: Adjust generated ITRACE calls to
-        match new interface.
+	match new interface.
 
 	* emul_bugapi.c (emul_bugapi_instruction_call): Adjust
-        corresponding call to ITRACE so that it still matches.
+	corresponding call to ITRACE so that it still matches.
 
 	* idecode_expression.h (ALU_END, CR0_COMPARE): Use TRACE instead
-        of ITRACE.  The CPP line directives would have previously set the
-        line-nr and file name so ITRACE isn't needed.
+	of ITRACE.  The CPP line directives would have previously set the
+	line-nr and file name so ITRACE isn't needed.
 
 Sun Jul 21 21:18:05 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* gen-idecode.c (print_jump_until_stop_body): New function and
-        idecode generation option.  Instead of generating and calling
-        separate functions containing the semantic and icache code
-        generate a single monolythic function and use goto's (and GCC's
-        indirect jump) to move between code blocks.
+	idecode generation option.  Instead of generating and calling
+	separate functions containing the semantic and icache code
+	generate a single monolythic function and use goto's (and GCC's
+	indirect jump) to move between code blocks.
 
 	* Makefile.in: Add sim_jump flag to those passed to igen.
 
 	* configure.in: New option --enable-sim-jump (default disabled)
 
 	* ppc-instructions: Eliminate any uses of labels and goto's.
-        These result in duplicate declarations when a single flat function
-        is being create.
+	These result in duplicate declarations when a single flat function
+	is being create.
 
 	* ppc-opcode-jump: New file.  Set of opcode rules useful when
-        testing jumping idecodes.
+	testing jumping idecodes.
 
 Sun Jul 21 21:18:05 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* gen-idecode.c: Optionally include the semantic code for an
-        instruction in the function that is doing the decoding.
+	instruction in the function that is doing the decoding.
 
 	* igen.c: Add option (-C) to generate semantics in the instruction
-        decode functions.
+	decode functions.
 
 	* configure.in (--enable-sim-icache): Accept an option list such
-        as 1024,define.  Add a new choice to the list - semantic - which
-        will cause igen to generate instruction decode functions that
-        include the corresponding semantic code.
+	as 1024,define.  Add a new choice to the list - semantic - which
+	will cause igen to generate instruction decode functions that
+	include the corresponding semantic code.
 
 Sun Jul 21 21:18:05 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* configure.in: New option --enable-sim-line-nr (default enabled).
-        Enable/disable the inclusion of CPP line directives in the
-        generated files.  Such directives refer back to the source files
-        used when generating the simulator code.
+	Enable/disable the inclusion of CPP line directives in the
+	generated files.  Such directives refer back to the source files
+	used when generating the simulator code.
 
 	* Makefile.in (sim_line_nr): Pass to igen.
 
 Sun Jul 21 21:18:05 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* igen.c (main): Revamp the options so that more letters are
-        available.
+	available.
 
 	* configure.in: Adjust to match igen's revamped options
 
 Sun Jul 21 21:18:05 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* Makefile.in (pk.h, hw.h): Rewrite depenencies for hw.h (etc) so
-        that they use the same technique as igen (ie a dummy targets
-        tmp-pk and tmp-hw are created).
+	that they use the same technique as igen (ie a dummy targets
+	tmp-pk and tmp-hw are created).
 
 Mon Jun 24 22:28:00 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
@@ -3101,18 +3206,18 @@ Mon Jun 24 22:28:00 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 Wed Jun 19 21:45:28 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* ld-cache.[hc], ld-decode.[hc], ld-insn.[hc]: New files. Separate
-        out the loading of each of the tables from the rest of igen.
+	out the loading of each of the tables from the rest of igen.
 	* Makefile.in: Adjust.
 	* igen.c: Adjust.
 
 	* gen-icache.[hc], gen-idecode.[hc], gen-itable.[hc],
-        gen-model.[hc], gen-semantics.[hc]: New files. Separate out the
-        code creating each separate set of generated files.
+	gen-model.[hc], gen-semantics.[hc]: New files. Separate out the
+	code creating each separate set of generated files.
 	* Makefile.in: Adjust.
 	* igen.c: Adjust.
 
 	* gen-support.[ch]: New files. Output the support functions (found
-        in the ppc-instructions file) into a separate file.
+	in the ppc-instructions file) into a separate file.
 	* Makefile.in: Add.
 	* inline.h, inline.c: Add.
 	* std-config.h: Add.
@@ -3126,22 +3231,22 @@ Wed Jun 19 21:45:28 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	* ppc-opcode-flat: Ditto
 
 	* filter.h, filter.c: New files. Separate the opcode filter table
-        reading code from the rest of igen.c.  Re-design the filter so that
+	reading code from the rest of igen.c.  Re-design the filter so that
 	it works inclusivly not exclusivly.
 	* igen.c: Remove the opcode filter table loading code.
 	* Makefile.in (filter.o): Adjust
 	* configure.in: Adjust filter flag so that default includes 32bit
 	and floating point.
 	* ppc-instructions: Clean up filter fields so that only in use
-        entries are specified (ie delete `be').
+	entries are specified (ie delete `be').
 
 	* misc.c (name2i, i2name): New function.  Map between a string and
-        an integer value.
+	an integer value.
 
 Mon Jun 17 20:08:03 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* sim_calls.c (sim_close): If simulator not created, skip printing
-        of run information.
+	of run information.
 
 Mon Jun 17 20:08:03 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
@@ -3160,8 +3265,8 @@ Mon Jun 17 20:08:03 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 Fri Jun 14 00:11:56 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device_table.h: Don't pass the parent device into a devices
-        create function.  This makes the create function consistent with
-        the documentation.
+	create function.  This makes the create function consistent with
+	the documentation.
 	* device.c (device_template_create_device): Ditto
 	* hw_pal.c (hw_pal_create): Ditto
 	* hw_core.c (hw_core_create): Ditto
@@ -3175,44 +3280,44 @@ Fri Jun 14 00:11:56 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	(device_template_create_device): Ditto.
 
 	* device.c (device_create_from): Make local (static) only used
-        within device.c.
+	within device.c.
 	* device_table.h: typedef device_callbacks moved here (from
-        device.h) where it belongs.
+	device.h) where it belongs.
 
 	* hw_core.c: New file. Implements just the core device using the
-        core object.
+	core object.
 
 	* corefile.c: Moved all core device functions into the new
-        hw_core.c file. core_device_create() disapears.
+	hw_core.c file. core_device_create() disapears.
 
 	* psim.c (psim_tree): Use device_tree_add_parsed() to create the
-        core device.
+	core device.
 
 Thu Jun 13 00:09:29 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* hw_init.c: Correct typo in comment.
 
 	* corefile.c (core_init): Remove any remaining references to a
-        default map.
+	default map.
 	(core_map_find_mapping): Ditto.
 
 Wed Jun 12 22:30:32 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* corefile.c (core_init): Make function global so that other
-        devices are able to use the full core object.
+	devices are able to use the full core object.
 
 	* corefile.c (core_create, core_from_device): Break core_create
-        into two functions.  The first creates a core object, the second
-        returns the core object associated with a core device.
+	into two functions.  The first creates a core object, the second
+	returns the core object associated with a core device.
 
 	* corefile.c (core_device_create): Use core_create to make the
-        core object.
+	core object.
 
 	* psim.c (psim_create): Use core_from_device() instead of
-        core_create().
+	core_create().
 
 	* device.c (device_template_create_device): Make static as only
-        needed by functions internal to device.c.
+	needed by functions internal to device.c.
 
 Fri Jun  7 23:47:18 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
@@ -3243,18 +3348,18 @@ Wed Jun 26 12:50:33 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 
 Wed Jun 26 12:26:55 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
 
-        * Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
-        INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
-        (docdir): Removed.
-        * configure.in (AC_PREREQ): autoconf 2.5 or higher.
-        (AC_PROG_INSTALL): Added.
-        * configure: Rebuilt.
+	* Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
+	INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
+	(docdir): Removed.
+	* configure.in (AC_PREREQ): autoconf 2.5 or higher.
+	(AC_PROG_INSTALL): Added.
+	* configure: Rebuilt.
 
 Wed Jun  5 23:53:42 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* corefile.h: Rewrite documentation so that it can be extracted and
-        converted into texinfo (and hence ready for translation into html,
-        tex or nroff).
+	converted into texinfo (and hence ready for translation into html,
+	tex or nroff).
 	* device.h: Ditto
 
 Thu Jun  6 09:52:37 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
@@ -3269,7 +3374,7 @@ Wed Jun  5 11:46:52 1996  Andrew Cagney  <cagney@puddin>
 Wed Jun  5 01:39:07 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* psim.c (psim_options): Correct type of dummy arguments being
-        passed to a device_ioctl call.
+	passed to a device_ioctl call.
 
 	* hw_init.c (hw_data_init_data_callback): Adjust printf arguments.
 	(write_stack_arguments): Ditto.
@@ -3301,7 +3406,7 @@ Mon Jun  3 15:02:04 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 Mon Jun  3 23:19:57 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* emul_netbsd.c (emul_netbsd_create): Use the more specific names
-        `ppc-elf' and `ppc-xcoff' for the stack-type.
+	`ppc-elf' and `ppc-xcoff' for the stack-type.
 	* emul_unix.c (emul_unix_create): Ditto.
 	* emul_bugapi.c (emul_bugapi_create): Ditto.
 	* hw_init.c: Reconize the new names.
@@ -3350,45 +3455,45 @@ Thu May 30 00:00:10 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 Wed May 29 23:50:26 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* basics.h: New global type object_disposition, used to indicate
-        the status of objects when things are restarted.
+	the status of objects when things are restarted.
 
 Fri May 17 17:28:52 1996  Andrew Cagney  <cagney@benjimen.highland.com.au>
 
 	* device_table.h: Change the interrupt descriptor structure so
-        that it includes an additional member - an upper bound on the
-        interrupts by that name.
+	that it includes an additional member - an upper bound on the
+	interrupts by that name.
 
 	* device.c (device_interrupt_decode): Allow a range of interrupt
-        ports (eg rst0 .. rst6) if the port descriptors bound is non zero.
+	ports (eg rst0 .. rst6) if the port descriptors bound is non zero.
 
 	* device.c (device_tree_print_device): Include a list of valid
-        interrupt ports when listing supported devices.
+	interrupt ports when listing supported devices.
 
 	* device.h, device.c (device_child_interrupt_*): Delete. Not used.
 
 	* emul_generic.c (emul_add_tree_hardware): Modify the creation of
-        the interrupt net so that it uses int0 .. intN.
+	the interrupt net so that it uses int0 .. intN.
 
 Tue May 14 23:03:53 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.h, device.c (device_ioctl): Drop the system argument.
-        Devices can not obtain this using the device_system() call.
+	Devices can not obtain this using the device_system() call.
 	* device_table.h: Adjust accordingly.
 	* hw_*.c: Adjust accordingly.
 	* emul_netbsd.c (do_break): Adjust call to vm device accordingly.
 	* psim.c (psim_options): Use a device_ioctl call to force the
-        hw_trace device to update the trace options.
+	hw_trace device to update the trace options.
 	* hw_trace.c: Replace the init function with an ioctl call.  Adjust
 	doc accordingly.
 
 	* psim.c (psim_init): Re-order initialization so that the
-        os-emulation is initialized after the device tree.  Without this,
-        os-emul's are not able to create instances or access properties
-        that contain an instance handle.
+	os-emulation is initialized after the device tree.  Without this,
+	os-emul's are not able to create instances or access properties
+	that contain an instance handle.
 
 	* device.h, device.c (device_add_*_property): Make these functions
-        internal to device.c.  The user has access to the more generic
-        device_tree_add_parsed function.  Differentiate between the initial
+	internal to device.c.  The user has access to the more generic
+	device_tree_add_parsed function.  Differentiate between the initial
 	and current value for each property.
 	* (clean_device_properties): New function that deletes any
 	properties created after the start of a simulation and restores
@@ -3397,20 +3502,20 @@ Tue May 14 23:03:53 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	contain ihandles. create
 
 	* (device_tree_init): Include calls to clean the device tree's
-        properties and then initialize them.  Document this in the device.h
+	properties and then initialize them.  Document this in the device.h
 	file.
 
 Mon May  6 17:36:15 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* interrupts.c (decrementer_interrupt): Always pend a decrementer
-        interrupt even if it is not yet possible to deliver it.
+	interrupt even if it is not yet possible to deliver it.
 
 Wed May  1 12:26:51 1996  Andrew Cagney  <cagney@benjimen>
 
 	* mon.h, mon.c (mon_get_number_of_insns): Make this externally
  	visable adjusting the arguments so that the interface is correct.
 	(mon_print_info): Adjust calls.
-	
+
 	* registers.h, registers.c (register_description): Add phony
  	cycle, insn and stall registers.
 
@@ -3420,25 +3525,25 @@ Wed May  1 12:26:51 1996  Andrew Cagney  <cagney@benjimen>
 Tue Apr 30 22:09:09 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* hw_htab.c: New file. Extract contents from disk_table.c.
-        Contains a device that, during initialization will create a
-        PowerPC htab in memory.
+	Contains a device that, during initialization will create a
+	PowerPC htab in memory.
 	* hw_register.c: New file. Extract contents from disk_table.c.
-        Contains a device that, during initialization, will parse its
-        property list and use that to initialize various processor
-        registers (not target specific).
+	Contains a device that, during initialization, will parse its
+	property list and use that to initialize various processor
+	registers (not target specific).
 	* hw_vm.c: New file. Extract contents from disk_table.c.  Contains
-        a device that handles accesses to invalid virtual memory addresses
-        (in user mode).
+	a device that handles accesses to invalid virtual memory addresses
+	(in user mode).
 	* hw_init.c: New file. Extract contents from disk_table.c.  Misc
-        devices that can initialize memory from a file.
+	devices that can initialize memory from a file.
 	* hw_trace.c: New file. Extract contents from disk_table.c.
-        Configure trace options from property values.
+	Configure trace options from property values.
 
 	* Makefile.in (hw_htab.o, hw_register.o, hw_vm.o, hw_init.o,
-        hw_trace.c): Add new device files.
+	hw_trace.c): Add new device files.
 
 	* device_table.c: Remove above code, now in separate independant
-        files.
+	files.
 
 Fri Apr 26 00:00:07 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
@@ -3447,20 +3552,20 @@ Fri Apr 26 00:00:07 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	* Makefile.in (hw_disk.o): Add device hw_disk.c.
 
 	* pk_disklabel.c: New file.  Implement the miss-named disk-label
-        package.
+	package.
 
 	* Makefile.in (pk.h): Create the file pk.h that contains a list of all
 	the packages.
 
 	* Makefile.in (hw.h, hw.c): Add dependancy on Makefile so that
-        they are re-created when the makefile is updated.
+	they are re-created when the makefile is updated.
 
 	* emul_generic.c (emul_add_tree_hardware): Add a disk device
-        (below the iobus) to the device tree.  Include an ihandle of
+	(below the iobus) to the device tree.  Include an ihandle of
 	the disk as /chosen/disk.
 
 	* emul_bugapi.c (emul_bugapi_create): Don't initialize the input,
-        output and (new) disk handles yet.
+	output and (new) disk handles yet.
 	* (emul_bugapi_init): Initialize the input, output (and just added)
 	disk ihandles here.
 	* (emul_bugapi_do_diskio): New.  Performs disk i/o (well at least
@@ -3476,7 +3581,7 @@ Fri Apr 26 00:00:07 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	the exit method.  Makes it possible for chirp emul simulations
 	to abort upon an error.
 	* device.h, device.c (device_instance_claim,
-        device_instance_release): New methods for claiming and releasing
+	device_instance_release): New methods for claiming and releasing
 	memory.
 	* hw_memory.c: add claim and release memory methods.
 	* hw_*: Use the claim memory method when allocating physical
@@ -3485,7 +3590,7 @@ Fri Apr 26 00:00:07 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 Thu Apr 18 23:38:10 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* hw_nvram.c (hw_nvram_update_clock): Use the current not previous
-        time when updating the clock.
+	time when updating the clock.
 
 	* hw_nvram.c: Tidy up documentation
 
@@ -3548,7 +3653,7 @@ Tue Apr 30 18:46:05 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 	the AC_C_BIGENDIAN results.  Only run AC_C_BIGENDIAN if not cross
 	compiling.
 	* configure: Regenerate.
-	
+
 	* sim-endian.h: Add more tests for host endian to support more
 	platforms in a cross compilation environment.
 
@@ -3581,19 +3686,19 @@ Wed Apr 17 14:38:06 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 Mon Apr 15 23:30:56 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* events.c (insert_event_entry): Allow events to be scheduled
-        *NOW* (at delta time 0).  Add assertions to clarify behavour of
-        event queue.
+	*NOW* (at delta time 0).  Add assertions to clarify behavour of
+	event queue.
 
 	* events.c (update_time_from_event): New function. Calculates the
-        number of ticks from the next event.  Use this.
+	number of ticks from the next event.  Use this.
 
 Sun Apr 14 21:39:45 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* emul_netbsd.c (do_break): Return 0 if success (instead of
-        adjusted break).
+	adjusted break).
 
 	* device_table.c (vm_ioctl_callback): Don't return adjusted break
-        (isn't needed).
+	(isn't needed).
 
 Sun Apr 14 21:32:41 1996  Andrew Cagney  <cagney@highland.com.au>
 
@@ -3627,75 +3732,75 @@ Sat Apr 13 00:00:24 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 Fri Apr 12 20:56:47 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device_table.c (vm_ioctl_callback): Don't access the processor
-        registers directly, instead leave it to the caller to handle this.
+	registers directly, instead leave it to the caller to handle this.
 
 	* emul_netbsd.c (do_break): Which calls vm_ioctl_callback to
-        perform a break.  Pass in the new break value and set the
-        registers according to the result.
+	perform a break.  Pass in the new break value and set the
+	registers according to the result.
 
 	* emul_generic.c (emul_write_status): Change so that r3 contains
-        either status or errno and failure is indicated by SO.
+	either status or errno and failure is indicated by SO.
 
 Thu Apr  4 23:03:38 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* emul_bugapi.c (emul_bugapi_create): More strict check of OEA
-        address.
+	address.
 
 Thu Apr  4 20:58:05 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* interrupts.h (interrupts): New structure contains state of
-        pending interrupts.
+	pending interrupts.
 
 	* cpu.c (cpu_interrupts): New function.  Pending interrupt status
-        in the cpu and grant access to it.  Add interrupts to cpu
-        structure.
+	in the cpu and grant access to it.  Add interrupts to cpu
+	structure.
 
 Fri Mar 29 22:09:25 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* device.c (device_tree_add_parsed): Check that the creation of a
-        device instance worked before using it.
+	device instance worked before using it.
 
 	* psim.c (psim_halt): Remove cia argument from psim_halt.  This
-        function does not save the CIA so do not pass it in.
+	function does not save the CIA so do not pass it in.
 
 Fri Mar 29 21:30:56 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* hw_pal.c (hw_pal): Merge the halt and icu and console devices
-        found in device_table.c into a single hack pal.
+	found in device_table.c into a single hack pal.
 
 	* device_table.c (halt, icu, console): Delete.
 
 	* Makefile.in (hw_pal.o): New dependency.
 
 	* emul_generic.c (emul_add_tree_hardware): Re-arange device tree
-        so that it uses the pal instead of the icu/halt/console devices.
-        Wire the pal's interrupt ports up to the cpu nodes.
+	so that it uses the pal instead of the icu/halt/console devices.
+	Wire the pal's interrupt ports up to the cpu nodes.
 
 Fri Mar 29 20:17:17 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* hw_iobus.c (hw_iobus_attach_address_callback): Move from
-        device_table.c to here.
+	device_table.c to here.
 
 	* Makefile.in (hw_iobus.o): New dependency.
 
 Fri Mar 29 12:17:58 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* emul_bugapi.c (_os_emul_data): Add fields for output, input.
-        (emul_bugapi_create): Create input, output from /chosen/stdin and
-        /chosen/stdout.
-        (emul_bugapi_do_{read,write}): Switch to use device_instance
-        interface.
-        (emul_bugapi_instruction_call): Change calls to
-        emul_bugapi_do_{read,write} to pass device instance argument.
+	(emul_bugapi_create): Create input, output from /chosen/stdin and
+	/chosen/stdout.
+	(emul_bugapi_do_{read,write}): Switch to use device_instance
+	interface.
+	(emul_bugapi_instruction_call): Change calls to
+	emul_bugapi_do_{read,write} to pass device instance argument.
 
 Tue Mar 26 14:57:58 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 
 	* igen.c (idecode_switch_end): Fix 2/26 change so that an extra
-        default is not written out if a default was already written.
+	default is not written out if a default was already written.
 
 	* psim.c (psim_{read,write}_register): Use sizeof unsigned_8 to
-        size cooked_buf, not sizeof natural_word, since floating point
-        registers are 8 bytes.
+	size cooked_buf, not sizeof natural_word, since floating point
+	registers are 8 bytes.
 
 Mon Mar 25 22:07:13 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
@@ -3708,28 +3813,28 @@ Thu Mar 21 00:14:26 1996  Andrew Cagney  <cagney@highland.com.au>
 Thu Mar 21 00:06:09 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* main.c (error): Be careful to not try to print out statistics
-        when the simulation was never created.
+	when the simulation was never created.
 
 Sun Mar 17 22:40:57 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* basics.h: Move the event queue's definition to here so that it
-        can be refered to globally with out importing all of events.h.
+	can be refered to globally with out importing all of events.h.
 
 	* psim.h, psim.c (psim_event_queue): New function.  Grant access
-        to the simulation event queue.  Will make this the single point of
-        access (there is after all only one event queue in the
-        simulation).
+	to the simulation event queue.  Will make this the single point of
+	access (there is after all only one event queue in the
+	simulation).
 
 	* cpu.c (cpu_create): Use psim_event_queue to obtain the event
-        queue instead of it being passed in.  No longer allow access to
-        the cpu's copy of the event queue.
+	queue instead of it being passed in.  No longer allow access to
+	the cpu's copy of the event queue.
 
 Sun Mar 17 22:40:57 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* events.h, events.c (event_handler): Remove event_queue from
-        arguments passed to an event handler.  That argument is redundant
-        - the `data' should refer to a data structure that contains the
-        event queue if queing is needed.
+	arguments passed to an event handler.  That argument is redundant
+	- the `data' should refer to a data structure that contains the
+	event queue if queing is needed.
 
 	* cpu.c (cpu_decrement_event): adjust
 
@@ -3738,106 +3843,106 @@ Sun Mar 17 22:40:57 1996  Andrew Cagney  <cagney@highland.com.au>
 Sun Mar 17 22:40:57 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* device.h, device.c (device_system): New, returns a handle for
-        the system given the device.
+	the system given the device.
 
 	* device.c (device_address_init): Store a pointer back to the
-        system in each devices node.
+	system in each devices node.
 
 	* device_table.h: Don't pass `system' into each device when it is
-        being initialized, this is now available using device_system(me).
+	being initialized, this is now available using device_system(me).
 
 	* device.c (device_address_init, device_data_init): Adjust.
 
 	* hw_cpu.c, hw_nvram.c, hw_memory.c, hw_eeprom.c, device_table.c:
-        Adjust.
+	Adjust.
 
 Sun Mar 17 22:40:57 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* interrupts.c (decrementer_interrupt, external_interrupt):
-        Remember that an interrupt wasn't delivered so that it can be
-        tried again later.
+	Remember that an interrupt wasn't delivered so that it can be
+	tried again later.
 
 	* interrupts.c (check_masked_interrupt): New function.  (re)
-        checks for the posibility that a recent change to the MSR may have
-        made it possible to deliver an interrupt that was previously
-        masked be the EE bit.
+	checks for the posibility that a recent change to the MSR may have
+	made it possible to deliver an interrupt that was previously
+	masked be the EE bit.
 
 	* ppc-instructions (mtmsr, mfmsr, rfi): Check for posibility of
 	a pending interrupt being delivered using check_masked_interrupt().
 
 	* cpu.c (cpu_decrement_event): Just call decrementer_interrupt()
-        leaving it to that module to handle both interrupt synchronization
-        and masking.
+	leaving it to that module to handle both interrupt synchronization
+	and masking.
 
 	* cpu.c (struct _cpu): remove variables that were going to record
-        pending decrementer and external interrupts.
+	pending decrementer and external interrupts.
 
 Sun Mar 17 22:40:57 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* hw_cpu.c, hw_cpu.h: New files.  Implement a device that sits
-        between the interrupt controller and the simulators internal
-        processor model.  Maps device interrupts onto the processor
+	between the interrupt controller and the simulators internal
+	processor model.  Maps device interrupts onto the processor
 	interrupt function calls.
 
 Mon Mar  4 06:06:54 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* hw_nvram.c: NVRAM device that includes a real-time clock that is
-        updated each second.
+	updated each second.
 
 Mon Mar  4 04:18:50 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.h (attach_type): Remove attach_default type address
-        spaces.  Will replace with levels of callback memory.
+	spaces.  Will replace with levels of callback memory.
 
 	* corefile.h, corefile.c (new_core_mapping), corefile.c
-        (core_map_attach): Replace default attach with a layerd callback
-        approach.
+	(core_map_attach): Replace default attach with a layerd callback
+	approach.
 
 Sun Mar  3 03:58:46 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.c (split_property_specifier): ensure that only a single
-        property is found.
+	property is found.
 	(split_value): New function, parses the value part of a device
 	spec.
 
 	* device.c (device_tree_add_parsed): Use the interrupt conversion
-        functions to determine the interrupt port numbers.
+	functions to determine the interrupt port numbers.
 
 	* device_table.h: Add table that maps between an interrupts
-        symbolic name and its port number.
+	symbolic name and its port number.
 
 	* device.h, device.c (device_interrupt_decode,
-        device_interrupt_encode): new functions use the recently added
-        interrupt port name/number tables to perform conversion.
+	device_interrupt_encode): new functions use the recently added
+	interrupt port name/number tables to perform conversion.
 
 Sun Mar  3 03:23:59 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.h, device.c (device_set_array_property,
-        device_set_boolean_property, device_set_ihandle_property,
-        device_set_integer_property, device_set_string_property): New
-        functions - allow the value of a given property to be changed.
+	device_set_boolean_property, device_set_ihandle_property,
+	device_set_integer_property, device_set_string_property): New
+	functions - allow the value of a given property to be changed.
 
 	* device.h, device.c: Re-order declaration and definition of
-        property functions.
+	property functions.
 
 Sun Mar  3 03:10:22 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* device.c (device_tree_print_device, device_tree_add_parsed):
-        Remove references to phandle properties.
+	Remove references to phandle properties.
 
 Wed Feb 28 00:43:07 1996  Andrew Cagney - aka Noid  <cagney@highland.com.au>
 
 	* Makefile.in (corefile.o): missing dependency on device_table.h
-        etc.
+	etc.
 
 Tue Feb 27 23:59:35 1996  Andrew Cagney - aka Noid  <cagney@highland.com.au>
 
 	* device_table.h: Revamp device init callbacks so that they are a
-        sub structure.
+	sub structure.
 	* device.c (device_init_data, device_init_address): If an init
-        callback is NULL assume it should do nothing.
+	callback is NULL assume it should do nothing.
 	* device_table.c (ignore_device_init, unimp_device_init): delete
-        as redundant.
+	as redundant.
 	* device_table.c, hw_memory.c: adjust.
 
 	* (io): ditto.
@@ -3850,26 +3955,26 @@ Tue Feb 27 23:59:35 1996  Andrew Cagney - aka Noid  <cagney@highland.com.au>
 Mon Feb 26 21:11:20 1996  Andrew Cagney - aka Noid  <cagney@highland.com.au>
 
 	* igen.c (idecode_switch_end): Output a default entry when the
-        switch statement is perfect.  Firstly stops GCC complaining about
-        an incomplete switch and secondly it will be eliminated by a good
-        compiler any way.
+	switch statement is perfect.  Firstly stops GCC complaining about
+	an incomplete switch and secondly it will be eliminated by a good
+	compiler any way.
 
 Mon Feb 26 22:47:15 1996  Andrew Cagney - aka Noid  <cagney@highland.com.au>
 
 	* Makefile.in (hw.h, hw.c): New targets. Create from the list of
-        hw_*.c files. hw.h declares a device descriptor table for each hw
-        device while hw.c lists those tables in a form suitable for the
-        construction of a top leveltable in device_table.c.
+	hw_*.c files. hw.h declares a device descriptor table for each hw
+	device while hw.c lists those tables in a form suitable for the
+	construction of a top leveltable in device_table.c.
 
 	* Makefile.in (device_table.o): now depends on hw.c a generated
-        table of hw.
+	table of hw.
 
 	* device_table.c (device_table): Re-arange the table of devices so
-        that two levels are possible.  Make use of hw.c.
+	that two levels are possible.  Make use of hw.c.
 	* device_table.h: ditto.
 
 	* device.c (device_template_create_device): Handle new two level
-        device lookup table.
+	device lookup table.
 	* device.c (device_usage): ditto.
 
 Mon Feb 26 22:24:00 1996  Andrew Cagney - aka Noid  <cagney@highland.com.au>
@@ -3881,20 +3986,20 @@ Mon Feb 26 22:24:00 1996  Andrew Cagney - aka Noid  <cagney@highland.com.au>
 Wed Jan 17 21:47:34 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* device.c (device_init_address): New.  Split initialization into
-        two stages, address and address spaces
+	two stages, address and address spaces
 	* device.c (device_init_data): New. ... and data or other work.
-        With out this, devices try to modify memory before it as been
-        attached.
+	With out this, devices try to modify memory before it as been
+	attached.
 
 	* device.c (device_tree_init): Update to perform staged
-        initialization.
+	initialization.
 
 	* device.c (device_init): Delete.
 
 Wed Jan 17 21:43:09 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* device_table.c (data_*): Rewrite to make heaver use of property
-        nodes. Allow initialization by different data types.
+	nodes. Allow initialization by different data types.
 	* device_table.c (htab_* pte_*): Rewrite to use properties.
 
 	* emul_chirp.c (emul_chirp_create): Use
@@ -3904,21 +4009,21 @@ Wed Jan 17 21:43:09 1996  Andrew Cagney  <cagney@highland.com.au>
 Wed Jan 17 21:24:50 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* emul_generic.c (emul_add_tree_options): Annotate existing tree
-        with options that haven't yet been specified.
+	with options that haven't yet been specified.
 	* emul_generic.c (emul_add_tree_hardware): Annotate existing tree
-        with demo devices and properties.
+	with demo devices and properties.
 
 	* emul_chirp.c (emul_chirp_create): Update to use new
-        device_tree_add_parsed call and additional information now
-        included in the device tree.  Use emul_add_tree* functions to add
-        any missing details.
+	device_tree_add_parsed call and additional information now
+	included in the device tree.  Use emul_add_tree* functions to add
+	any missing details.
 	* emul_bugapi.c (emul_bugapi_create): Ditto
 	* emul_netbsd.c (emul_netbsd_create): Ditto
 
 Wed Jan 17 21:18:27 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* device.c (device_instance_create): New. Create/delete and
-        operate on instances of a device.
+	operate on instances of a device.
 	* device.c (device_instance_delete): Ditto
 	* device.c (device_instance_read): Ditto
 	* device.c (device_instance_write): Ditto
@@ -3934,19 +4039,19 @@ Wed Jan 17 21:18:27 1996  Andrew Cagney  <cagney@highland.com.au>
 	* emul_chirp.c (chirp_emul_seek): Ditto
 
 	* emul_chirp.c (chirp_read_t2h_args): Read arguments from device.
-        Being careful to convert all from target to host byte order.
+	Being careful to convert all from target to host byte order.
 	* emul_chirp.c (chirp_write_h2t_args): Converse.
 
 Wed Jan 17 20:07:15 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* device.c (device_tree_add_parsed): New.  Rewrite code to add
-        devices to the device tree so that a single printf style function
-        is used.
+	devices to the device tree so that a single printf style function
+	is used.
 
 	* device.c (device_tree_add_*): Delete. Replaced by above.
 
 	* device.c (split_device_specifier): Functions to manipulate a
-        device specifier (path) breaking it into its components
+	device specifier (path) breaking it into its components
 	* device.c (split_property_specifier): Ditto
 	* device.c (split_device_name): Ditto
 	* device.c (split_find_device): Ditto
@@ -3959,15 +4064,15 @@ Wed Jan 17 20:07:15 1996  Andrew Cagney  <cagney@highland.com.au>
 Wed Jan 17 19:51:56 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* psim.c(psim_options): Parse the psim options, installing their
-        value in the device tree.  Options are now first entered into a
-        device tree and then extracted out again when needed.  This allows
-        greater flexability in configuration.
+	value in the device tree.  Options are now first entered into a
+	device tree and then extracted out again when needed.  This allows
+	greater flexability in configuration.
 
 	* psim.c (psim_tree): Returns a basic device tree ready for
-        parsing by psim_options.
+	parsing by psim_options.
 	* psim.c (psim_usage): New.  Give usage to varing levels of detail
-        according to the verbosity.  In turn output device and trace
-        usage.
+	according to the verbosity.  In turn output device and trace
+	usage.
 
 	* main.c (main): Update to use new system
 	* sim_calls.c (sim_open, sim_do_command): Ditto
@@ -3978,26 +4083,26 @@ Wed Jan 17 19:51:56 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* debug.c (trace_usage): Add more detailed help.
 	* device.c (device_usage): New. Output help including a list of
-        the devices currently available in the device table.
+	the devices currently available in the device table.
 	* device_table.c: Add usage operator to each device.
 
 	* corefile.c (core_create, core_device_create): Adjust so that the
-        core device is created earlier for psim_tree().  Core can later be
-        created from it.
+	core device is created earlier for psim_tree().  Core can later be
+	created from it.
 
 	* psim.c (psim_create): Update to handle above way of creating
-        things.  Extract all information from the device tree.
+	things.  Extract all information from the device tree.
 
 	* device_tree.c (trace_*): New device node, its properties are
-        used to set the value of the trace options.  Init this device (in
-        psim_options) when ever the options are updated.
+	used to set the value of the trace options.  Init this device (in
+	psim_options) when ever the options are updated.
 
 Wed Jan 17 19:46:07 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* debug.h: Add trace_print_info, trace_print_device_tree and
-        trace_dump_device_tree.  The first is a replacement for the
-        variable `print_info' found in main.c and sim_calls.c.  The latter
-        two enable the dumping of the entire device tree.
+	trace_dump_device_tree.  The first is a replacement for the
+	variable `print_info' found in main.c and sim_calls.c.  The latter
+	two enable the dumping of the entire device tree.
 
 	* debug.c: Add to trace_description table.
 
@@ -4005,32 +4110,32 @@ Wed Jan 17 19:46:07 1996  Andrew Cagney  <cagney@highland.com.au>
 	* sim_calls.c (sim_close): Ditto
 
 	* device.c (device_tree_print_device): New.  Prints the device
-        tree in a format that is consistent with what can be parsed by the
-        device tree load from file code.
+	tree in a format that is consistent with what can be parsed by the
+	device tree load from file code.
 
 	* psim.c (psim_create): Dump device tree if enabled. If nump
-        selected, exit psim immediately.
+	selected, exit psim immediately.
 
 Wed Jan 17 19:36:52 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* corefile-n.h (core_map_read_N): When mapping from an address to
-        a device, do not subtract the devices base.  The device its self
-        can do this.  Brings the behavour into line with OpenBoot.
+	a device, do not subtract the devices base.  The device its self
+	can do this.  Brings the behavour into line with OpenBoot.
 	* corefile-n.h (core_map_write_N): Ditto
 	* corefile.c (core_map_read_buffer): Ditto
 	* corefile.c (core_map_write_buffer): Ditto
 
 	* device_table.c (console_io_read_buffer_callback): Adjust to
-        handle biased address.
+	handle biased address.
 	* device_table.c (console_io_write_buffer_callback): Ditto
 
 Wed Jan 17 18:36:09 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* device.c (attach_device_interrupt_edge): New. Interrupt model
-        did not allow interrupts to be wired up as a general net (edges).
-        Re-implement so that interrupt events can be passed to multiple
-        controllers and interrupt controllers can further propogate
-        interrupt events.
+	did not allow interrupts to be wired up as a general net (edges).
+	Re-implement so that interrupt events can be passed to multiple
+	controllers and interrupt controllers can further propogate
+	interrupt events.
 
 	* device.c (attach_device_interrupt_edge) : New, Ditto
 	* device.c (detach_device_interrupt_edge) : New, Ditto
@@ -4047,29 +4152,29 @@ Wed Jan 17 18:36:09 1996  Andrew Cagney  <cagney@highland.com.au>
 	* device.c (device_interrupt_ack) : Delete old
 
 	* device_table.c (unimp_*) : Update to match
-	
-        * device_table.c (icu_io_write_buffer_callback) : Update to use
-        interface.
+
+	* device_table.c (icu_io_write_buffer_callback) : Update to use
+	interface.
 	* device_table.c (icu_interrupt_event_callback) : Ditto
 
 Wed Jan 17 18:18:40 1996  Andrew Cagney  <cagney@highland.com.au>
 
 	* device.c (external_to_device) : New function that provides a
-        standard mapping between a devices internal representation (a
-        pointer) and its external (or what is passed to a client)
-        representation (a phandle).  Implement using the cap object
-        attached to the root node.
+	standard mapping between a devices internal representation (a
+	pointer) and its external (or what is passed to a client)
+	representation (a phandle).  Implement using the cap object
+	attached to the root node.
 
 	* device.c (device_to_external) : Ditto
 	* device.c (external_to_device_instance) : Ditto but for ihandle
-        and device instance.
+	and device instance.
 	* device.c (device_instance_to_external) : Ditto
 
 	* Makefile (device.o): Add dependency on cap.
 
 	* emul_chirp.c (struct _emul_chirp_data) : Elimate use of cap. Code
-        needing to translate between internal and external representations
-        changed to use the external_to_device et.al. device operations.
+	needing to translate between internal and external representations
+	changed to use the external_to_device et.al. device operations.
 	* emul_chirp.c (chirp_emul_*) : Ditto
 
 	* Makefile (emul_chirp.o): Remove dependency on cap
@@ -4077,7 +4182,7 @@ Wed Jan 17 18:18:40 1996  Andrew Cagney  <cagney@highland.com.au>
 Sat Jan  6 10:13:26 1996  Andrew Cagney - aka Noid  <cagney@highland.com.au>
 
 	* emul_chirp.c (map_over_chirp_note): Tighten up (and fix) checks
-        on OpenBoot note section.
+	on OpenBoot note section.
 
 Fri Jan  5 20:28:53 1996  Andrew Cagney  <cagney@hignland.com.au>
 
@@ -4085,10 +4190,10 @@ Fri Jan  5 20:28:53 1996  Andrew Cagney  <cagney@hignland.com.au>
  	read/write calls for buffer transfers.  This will cause a fault to
  	occure if the transfer fails.  CHRP catches the fault while the
  	others suffer the consequences.
-        (emul_read_buffer): Ditto.
-        (emul_write_word): Ditto.
-        (emul_read_word): Ditto.
-        (emul_read_string): Ditto.
+	(emul_read_buffer): Ditto.
+	(emul_write_word): Ditto.
+	(emul_read_word): Ditto.
+	(emul_read_string): Ditto.
 
 Fri Jan  5 18:55:34 1996  Andrew Cagney  <cagney@highland.com.au>
 
@@ -4110,5 +4215,5 @@ Fri Jan  5 18:52:28 1996  Andrew Cagney  <cagney@highland.com.au>
 Wed May 29 22:57:40 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 
 	* ChangeLog.00, ChangeLog: ChangeLog from gdb-4.16 becomes
-        ChangeLog.00
+	ChangeLog.00
 

@@ -140,7 +140,7 @@ Disassembly of section \.text:
 .*:	44846000 	mtc1	a0,\$f12
 
 000404f0 <__call_fp_used2>:
-.*:	03e09021 	move	s2,ra
+.*:	03e09025 	move	s2,ra
 .*:	3c190004 	lui	t9,.*
 .*:	27390418 	addiu	t9,t9,.*
 .*:	0320f809 	jalr	t9
@@ -150,7 +150,7 @@ Disassembly of section \.text:
 .*:	00000000 	nop
 
 00040510 <__call_fp_used4>:
-.*:	03e09021 	move	s2,ra
+.*:	03e09025 	move	s2,ra
 .*:	3c190004 	lui	t9,.*
 .*:	27390428 	addiu	t9,t9,.*
 .*:	0320f809 	jalr	t9
@@ -160,7 +160,7 @@ Disassembly of section \.text:
 .*:	00000000 	nop
 
 00040530 <__call_fp_used8>:
-.*:	03e09021 	move	s2,ra
+.*:	03e09025 	move	s2,ra
 .*:	3c190004 	lui	t9,.*
 .*:	27390448 	addiu	t9,t9,.*
 .*:	0320f809 	jalr	t9
@@ -170,7 +170,7 @@ Disassembly of section \.text:
 .*:	00000000 	nop
 
 00040550 <__call_fp_extern2>:
-.*:	03e09021 	move	s2,ra
+.*:	03e09025 	move	s2,ra
 .*:	3c190004 	lui	t9,.*
 .*:	27390630 	addiu	t9,t9,.*
 .*:	0320f809 	jalr	t9
@@ -198,7 +198,7 @@ Disassembly of section \.text:
 .*:	44846000 	mtc1	a0,\$f12
 
 000405a0 <__call_fp_used6>:
-.*:	03e09021 	move	s2,ra
+.*:	03e09025 	move	s2,ra
 .*:	3c190004 	lui	t9,.*
 .*:	27390438 	addiu	t9,t9,.*
 .*:	0320f809 	jalr	t9
@@ -208,7 +208,7 @@ Disassembly of section \.text:
 .*:	00000000 	nop
 
 000405c0 <__call_fp_used10>:
-.*:	03e09021 	move	s2,ra
+.*:	03e09025 	move	s2,ra
 .*:	3c190004 	lui	t9,.*
 .*:	27390458 	addiu	t9,t9,.*
 .*:	0320f809 	jalr	t9
@@ -218,7 +218,7 @@ Disassembly of section \.text:
 .*:	00000000 	nop
 
 000405e0 <__call_fp_extern4>:
-.*:	03e09021 	move	s2,ra
+.*:	03e09025 	move	s2,ra
 .*:	3c190004 	lui	t9,.*
 .*:	27390640 	addiu	t9,t9,.*
 .*:	0320f809 	jalr	t9
@@ -234,7 +234,7 @@ Disassembly of section \.plt:
 .*:	8f990400 	lw	t9,1024\(gp\)
 .*:	279c0400 	addiu	gp,gp,1024
 .*:	031cc023 	subu	t8,t8,gp
-.*:	03e07821 	move	t7,ra
+.*:	03e07825 	move	t7,ra
 .*:	0018c082 	srl	t8,t8,0x2
 .*:	0320f809 	jalr	t9
 .*:	2718fffe 	addiu	t8,t8,-2

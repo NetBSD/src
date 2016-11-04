@@ -1,5 +1,5 @@
 /* BFD back-end for linux flavored i386 a.out binaries.
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -70,11 +70,11 @@ i386linux_write_object_contents (bfd *abfd)
   struct external_exec exec_bytes;
   struct internal_exec *execp = exec_hdr (abfd);
 
-  N_SET_MACHTYPE (*execp, M_386);
+  N_SET_MACHTYPE (execp, M_386);
 
   obj_reloc_entry_size (abfd) = RELOC_STD_SIZE;
 
-  WRITE_HEADERS(abfd, execp);
+  WRITE_HEADERS (abfd, execp);
 
   return TRUE;
 }

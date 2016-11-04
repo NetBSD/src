@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2016/03/23 05:28:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2016/11/04 14:45:12 pgoyette Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -19,7 +19,7 @@ NOPICINSTALL=	# defined
 SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 
-LDFLAGS+=	-nodefaultlibs
+LDFLAGS+=	-nodefaultlibs -Wl,-z -Wl,nodelete
 LDFLAGS+=	-Wl,--version-script=${.OBJDIR}/libgcc.map
 
 # XXX handle this better?  GCC 4.8 moved them.

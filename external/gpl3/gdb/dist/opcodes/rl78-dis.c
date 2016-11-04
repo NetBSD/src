@@ -1,5 +1,5 @@
 /* Disassembler code for Renesas RL78.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -204,7 +204,7 @@ print_insn_rl78_common (bfd_vma addr, disassemble_info * dis, RL78_Dis_Isa isa)
 		{
 		  char *comma = "";
 		  PR (PS, "  \033[35m");
-	      
+
 		  if (opcode.flags & RL78_PSW_Z)
 		    { PR (PS, "Z"); comma = ","; }
 		  if (opcode.flags & RL78_PSW_AC)
@@ -227,7 +227,18 @@ print_insn_rl78_common (bfd_vma addr, disassemble_info * dis, RL78_Dis_Isa isa)
 	      }
 
 	    if (do_bang)
-	      PC ('!');
+	      {
+		/* If we are going to display SP by name, we must omit the bang.  */
+		if ((oper->type == RL78_Operand_Indirect
+		     || oper->type == RL78_Operand_BitIndirect)
+		    && oper->reg == RL78_Reg_None
+		    && do_sfr
+		    && ((oper->addend == 0xffff8 && opcode.size == RL78_Word)
+			|| (oper->addend == 0x0fff8 && do_es && opcode.size == RL78_Word)))
+		  ;
+		else
+		  PC ('!');
+	      }
 
 	    if (do_cond)
 	      {
@@ -265,6 +276,20 @@ print_insn_rl78_common (bfd_vma addr, disassemble_info * dis, RL78_Dis_Isa isa)
 		      PR (PS, "psw");
 		    else if (oper->addend == 0xffff8 && do_sfr && opcode.size == RL78_Word)
 		      PR (PS, "sp");
+		    else if (oper->addend == 0x0fff8 && do_sfr && do_es && opcode.size == RL78_Word)
+		      PR (PS, "sp");
+                    else if (oper->addend == 0xffff8 && do_sfr && opcode.size == RL78_Byte)
+                      PR (PS, "spl");
+                    else if (oper->addend == 0xffff9 && do_sfr && opcode.size == RL78_Byte)
+                      PR (PS, "sph");
+                    else if (oper->addend == 0xffffc && do_sfr && opcode.size == RL78_Byte)
+                      PR (PS, "cs");
+                    else if (oper->addend == 0xffffd && do_sfr && opcode.size == RL78_Byte)
+                      PR (PS, "es");
+                    else if (oper->addend == 0xffffe && do_sfr && opcode.size == RL78_Byte)
+                      PR (PS, "pmc");
+                    else if (oper->addend == 0xfffff && do_sfr && opcode.size == RL78_Byte)
+                      PR (PS, "mem");
 		    else if (oper->addend >= 0xffe20)
 		      PR (PS, "%#x", oper->addend);
 		    else
@@ -290,7 +315,7 @@ print_insn_rl78_common (bfd_vma addr, disassemble_info * dis, RL78_Dis_Isa isa)
 		      PR (PS, "+%d", oper->addend);
 		    PC (']');
 		    break;
-		      
+
 		  }
 		if (oper->type == RL78_Operand_BitIndirect)
 		  PR (PS, ".%d", oper->bit_number);

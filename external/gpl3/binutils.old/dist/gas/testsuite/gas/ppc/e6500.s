@@ -56,9 +56,9 @@ start:
 	sync
 	sync	0,0
 	sync	1,0
-	sync	2,0
-	sync	3,7
-	sync	3,8
+	sync	1,1
+	sync	0,7
+	sync	1,8
 	dni	0,0
 	dni	31,31
 	dcblq.	2,0,1
@@ -67,3 +67,19 @@ start:
 	icblq.	2,3,1
 	mftmr	0,16
 	mttmr	16,0
+	lbarx   20,0,7
+	lbarx   20,1,7
+	lharx   21,0,8
+	lharx   21,1,8
+	lwarx   22,0,9
+	lwarx   22,1,9
+	ldarx   23,0,10
+	ldarx   23,1,10
+	stbcx.  10,0,7
+	stbcx.  10,1,7
+	sthcx.  11,0,8
+	sthcx.  11,1,8
+	stwcx.  12,0,9
+	stwcx.  12,1,9
+	stdcx.  13,0,10
+	stdcx.  13,1,10

@@ -486,8 +486,8 @@ static reloc_howto_type elf64_alpha_howto_table[] =
 {
   HOWTO (R_ALPHA_NONE,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
-	 8,			/* bitsize */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
 	 TRUE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
@@ -1105,7 +1105,14 @@ elf64_alpha_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
 			   Elf_Internal_Rela *dst)
 {
   unsigned r_type = ELF64_R_TYPE(dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_ALPHA_max);
+
+  if (r_type >= R_ALPHA_max)
+    {
+      (*_bfd_error_handler) (_("%B: unrecognised Alpha reloc number: %d"),
+			     abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      r_type = R_ALPHA_NONE;
+    }
   cache_ptr->howto = &elf64_alpha_howto_table[r_type];
 }
 

@@ -1,6 +1,5 @@
 /* Core file generic interface routines for BFD.
-   Copyright 1990, 1991, 1992, 1993, 1994, 2000, 2001, 2002, 2003, 2005,
-   2007 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -169,7 +168,7 @@ generic_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
      of the const char * returned by bfd_core_file_failing_command to a
      non-const char *.  In this case, the assignement does not lead to
      breaking the const, as we're only reading the string.  */
-     
+
   core = (char *) bfd_core_file_failing_command (core_bfd);
   if (core == NULL)
     return TRUE;
@@ -185,7 +184,7 @@ generic_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
   last_slash = strrchr (exec, '/');
   if (last_slash != NULL)
     exec = last_slash + 1;
-  
+
   return filename_cmp (exec, core) == 0;
 }
 

@@ -1,6 +1,6 @@
 /* Java language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +26,7 @@ struct parser_state;
 
 extern int java_parse (struct parser_state *); /* Defined in jv-exp.y */
 
-extern void java_error (char *);	/* Defined in jv-exp.y */
+extern void java_yyerror (char *);	/* Defined in jv-exp.y */
 
 struct builtin_java_type
 {

@@ -140,6 +140,27 @@ foo:
 	dsll3216 $10, $11, 5
 	dsll3232 $10, $11, 5
 
+# Test out-of-range mapped constants
+	addiu16 $2, $4, 4		# OK
+	addiu16 $2, $4, 5		# error
+	addiu16 $2, $4, 7		# error
+	addiu16 $2, $4, 8		# OK
+	andi16 $2, $4, 4		# OK
+	andi16 $2, $4, 5		# error
+	andi16 $2, $4, 7		# OK
+	andi16 $2, $4, 8		# OK
+
+# Test invalid ADDIUSP
+	addiusp16 4			# error
+	addiusp16 7			# error
+	addiusp16 8			# OK
+	addiusp16 10			# error
+	addiusp16 12			# OK
+	addiusp16 1028			# OK
+	addiusp16 1032			# error
+	addiusp16 -1032			# OK
+	addiusp16 -1036			# error
+
 # Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
 	.align	2
 	.space	8

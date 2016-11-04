@@ -1,5 +1,5 @@
 /* tc-fr30.c -- Assembler for the Fujitsu FR30.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -65,7 +65,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (int c ATTRIBUTE_UNUSED,
-		 char *arg ATTRIBUTE_UNUSED)
+		 const char *arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
@@ -317,7 +317,7 @@ md_number_to_chars (char * buf, valueT val, int n)
   number_to_chars_bigendian (buf, val, n);
 }
 
-char *
+const char *
 md_atof (int type, char * litP, int * sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, TRUE);
@@ -363,7 +363,7 @@ fr30_is_colon_insn (char *start, char *nul_char)
 	{
 	  /* Yup - it might be delay slot instruction.  */
 	  int           i;
-	  static char * delay_insns [] =
+	  static const char * delay_insns [] =
 	  {
 	    "call", "jmp", "ret", "bra", "bno",
 	    "beq",  "bne", "bc",  "bnc", "bn",
@@ -373,7 +373,7 @@ fr30_is_colon_insn (char *start, char *nul_char)
 
 	  for (i = sizeof (delay_insns) / sizeof (delay_insns[0]); i--;)
 	    {
-	      char * insn = delay_insns[i];
+	      const char * insn = delay_insns[i];
 	      int    len  = strlen (insn);
 
 	      if (start [len] != 0)

@@ -4,7 +4,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-dis.in isn't
 
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -79,7 +79,7 @@ print_register_list (void * dis_info,
       (*info->fprintf_func) (info->stream, "r%li", reg_index + offset);
       comma = ",";
     }
-    
+
   for (reg_index = 1; reg_index <= 7; ++reg_index)
     {
       if (load_store)
@@ -301,7 +301,7 @@ fr30_cgen_print_operand (CGEN_CPU_DESC cd,
   }
 }
 
-cgen_print_fn * const fr30_cgen_print_handlers[] = 
+cgen_print_fn * const fr30_cgen_print_handlers[] =
 {
   print_insn_normal,
 };
@@ -491,7 +491,7 @@ print_insn (CGEN_CPU_DESC cd,
       int length;
       unsigned long insn_value_cropped;
 
-#ifdef CGEN_VALIDATE_INSN_SUPPORTED 
+#ifdef CGEN_VALIDATE_INSN_SUPPORTED
       /* Not needed as insn shouldn't be in hash lists if not supported.  */
       /* Supported by this cpu?  */
       if (! fr30_cgen_insn_supported (cd, insn))
@@ -509,7 +509,7 @@ print_insn (CGEN_CPU_DESC cd,
          relevant part from the buffer. */
       if ((unsigned) (CGEN_INSN_BITSIZE (insn) / 8) < buflen &&
 	  (unsigned) (CGEN_INSN_BITSIZE (insn) / 8) <= sizeof (unsigned long))
-	insn_value_cropped = bfd_get_bits (buf, CGEN_INSN_BITSIZE (insn), 
+	insn_value_cropped = bfd_get_bits (buf, CGEN_INSN_BITSIZE (insn),
 					   info->endian == BFD_ENDIAN_BIG);
       else
 	insn_value_cropped = insn_value;
@@ -628,7 +628,7 @@ print_insn_fr30 (bfd_vma pc, disassemble_info *info)
   arch = info->arch;
   if (arch == bfd_arch_unknown)
     arch = CGEN_BFD_ARCH;
-   
+
   /* There's no standard way to compute the machine or isa number
      so we leave it to the target.  */
 #ifdef CGEN_COMPUTE_MACH
@@ -669,7 +669,7 @@ print_insn_fr30 (bfd_vma pc, disassemble_info *info)
 	      break;
 	    }
 	}
-    } 
+    }
 
   /* If we haven't initialized yet, initialize the opcode table.  */
   if (! cd)

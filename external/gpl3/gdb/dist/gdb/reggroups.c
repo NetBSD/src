@@ -1,6 +1,6 @@
 /* Register groupings for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -102,13 +102,14 @@ add_group (struct reggroups *groups, struct reggroup *group,
 void
 reggroup_add (struct gdbarch *gdbarch, struct reggroup *group)
 {
-  struct reggroups *groups = gdbarch_data (gdbarch, reggroups_data);
+  struct reggroups *groups
+    = (struct reggroups *) gdbarch_data (gdbarch, reggroups_data);
 
   if (groups == NULL)
     {
       /* ULGH, called during architecture initialization.  Patch
          things up.  */
-      groups = reggroups_init (gdbarch);
+      groups = (struct reggroups *) reggroups_init (gdbarch);
       deprecated_set_gdbarch_data (gdbarch, reggroups_data, groups);
     }
   add_group (groups, group,
@@ -129,7 +130,7 @@ reggroup_next (struct gdbarch *gdbarch, struct reggroup *last)
 
   /* Don't allow this function to be called during architecture
      creation.  If there are no groups, use the default groups list.  */
-  groups = gdbarch_data (gdbarch, reggroups_data);
+  groups = (struct reggroups *) gdbarch_data (gdbarch, reggroups_data);
   gdb_assert (groups != NULL);
   if (groups->first == NULL)
     groups = &default_groups;
@@ -161,7 +162,7 @@ reggroup_prev (struct gdbarch *gdbarch, struct reggroup *curr)
 
   /* Don't allow this function to be called during architecture
      creation.  If there are no groups, use the default groups list.  */
-  groups = gdbarch_data (gdbarch, reggroups_data);
+  groups = (struct reggroups *) gdbarch_data (gdbarch, reggroups_data);
   gdb_assert (groups != NULL);
   if (groups->first == NULL)
     groups = &default_groups;

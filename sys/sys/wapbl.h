@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.17 2016/01/23 16:02:09 christos Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.17.2.1 2016/11/04 14:49:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,13 @@ struct wapbl_entry;
 struct wapbl_replay;
 struct wapbl;
 
-typedef void (*wapbl_flush_fn_t)(struct mount *, daddr_t *, int *, int);
+struct wapbl_dealloc {
+	SIMPLEQ_ENTRY(wapbl_dealloc) wd_entries;
+	daddr_t wd_blkno;	/* address of block */
+	int wd_len;		/* size of block */
+};
+
+typedef void (*wapbl_flush_fn_t)(struct mount *, struct wapbl_dealloc *);
 
 /*
  * This structure holds per transaction log information
@@ -167,7 +173,7 @@ void	wapbl_unregister_inode(struct wapbl *, ino_t, mode_t);
  * the corresponding blocks from being reused as data
  * blocks until the log is on disk.
  */
-void	wapbl_register_deallocation(struct wapbl *, daddr_t, int);
+int	wapbl_register_deallocation(struct wapbl *, daddr_t, int, bool);
 
 void	wapbl_jlock_assert(struct wapbl *wl);
 void	wapbl_junlock_assert(struct wapbl *wl);

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.87 2016/03/17 23:41:21 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.87.2.1 2016/11/04 14:49:25 pgoyette Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.

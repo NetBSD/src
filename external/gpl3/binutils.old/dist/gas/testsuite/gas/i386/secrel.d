@@ -21,7 +21,7 @@ OFFSET[ 	]+TYPE[ 	]+VALUE
 0+89 secrel32          ext2d
 0+8e secrel32          ext36
 0+93 secrel32          ext3f
-
+0+a2 secrel32          bar
 
 Contents of section \.text:
  0000 3e3e3e3e 3c3c3c3c 3e3e3e3e 3e3c3c3c  >>>><<<<>>>>><<<
@@ -37,6 +37,7 @@ Contents of section \.data:
  0070 0000111f 00000011 3c3c3c3c 3c3c3c3c  ........<<<<<<<<
  0080 3e3e3e3e 00000000 11000000 00110000  >>>>............
  0090 00001100 00000011 3c3c3c3c 3c3c3c3c  ........<<<<<<<<
+ 00a0 8d902c00 00000000                    ..,.....        
 Contents of section \.rdata:
  0000 3e3e3e3e 3c3c3c3c 3e3e3e3e 3e3c3c3c  >>>><<<<>>>>><<<
  0010 3e3e3e3e 3e3e3c3c 3e3e3e3e 3e3e3e3c  >>>>>><<>>>>>>><

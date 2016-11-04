@@ -1,6 +1,386 @@
 		What has changed in GDB?
 	     (Organized release by release)
 
+*** Changes in GDB 7.12
+
+* GDB and GDBserver now build with a C++ compiler by default.
+
+  The --enable-build-with-cxx configure option is now enabled by
+  default.  One must now explicitly configure with
+  --disable-build-with-cxx in order to build with a C compiler.  This
+  option will be removed in a future release.
+
+* GDBserver now supports recording btrace without maintaining an active
+  GDB connection.
+
+* GDB now supports a negative repeat count in the 'x' command to examine
+  memory backward from the given address.  For example:
+
+    (gdb) bt
+    #0  Func1 (n=42, p=0x40061c "hogehoge") at main.cpp:4
+    #1  0x400580 in main (argc=1, argv=0x7fffffffe5c8) at main.cpp:8
+    (gdb) x/-5i 0x0000000000400580
+       0x40056a <main(int, char**)+8>:      mov    %edi,-0x4(%rbp)
+       0x40056d <main(int, char**)+11>:     mov    %rsi,-0x10(%rbp)
+       0x400571 <main(int, char**)+15>:     mov    $0x40061c,%esi
+       0x400576 <main(int, char**)+20>:     mov    $0x2a,%edi
+       0x40057b <main(int, char**)+25>:
+        callq  0x400536 <Func1(int, char const*)>
+
+* Fortran: Support structures with fields of dynamic types and 
+  arrays of dynamic types.
+
+* GDB now supports multibit bitfields and enums in target register
+  descriptions.
+
+* New Python-based convenience function $_as_string(val), which returns
+  the textual representation of a value.  This function is especially
+  useful to obtain the text label of an enum value.
+
+* Intel MPX bound violation handling.
+
+   Segmentation faults caused by a Intel MPX boundary violation
+   now display the kind of violation (upper or lower), the memory
+   address accessed and the memory bounds, along with the usual
+   signal received and code location.
+
+   For example:
+
+   Program received signal SIGSEGV, Segmentation fault
+   Upper bound violation while accessing address 0x7fffffffc3b3
+   Bounds: [lower = 0x7fffffffc390, upper = 0x7fffffffc3a3]
+   0x0000000000400d7c in upper () at i386-mpx-sigsegv.c:68
+
+* Rust language support.
+  GDB now supports debugging programs written in the Rust programming
+  language.  See https://www.rust-lang.org/ for more information about
+  Rust.
+
+* Support for running interpreters on specified input/output devices
+
+  GDB now supports a new mechanism that allows frontends to provide
+  fully featured GDB console views, as a better alternative to
+  building such views on top of the "-interpreter-exec console"
+  command.  See the new "new-ui" command below.  With that command,
+  frontends can now start GDB in the traditional command-line mode
+  running in an embedded terminal emulator widget, and create a
+  separate MI interpreter running on a specified i/o device.  In this
+  way, GDB handles line editing, history, tab completion, etc. in the
+  console all by itself, and the GUI uses the separate MI interpreter
+  for its own control and synchronization, invisible to the command
+  line.
+
+* The "catch syscall" command catches groups of related syscalls.
+
+  The "catch syscall" command now supports catching a group of related
+  syscalls using the 'group:' or 'g:' prefix.
+
+* New commands
+
+skip -file file
+skip -gfile file-glob-pattern
+skip -function function
+skip -rfunction regular-expression
+  A generalized form of the skip command, with new support for
+  glob-style file names and regular expressions for function names.
+  Additionally, a file spec and a function spec may now be combined.
+
+maint info line-table REGEXP
+  Display the contents of GDB's internal line table data struture.
+
+maint selftest
+  Run any GDB unit tests that were compiled in.
+
+new-ui INTERP TTY
+  Start a new user interface instance running INTERP as interpreter,
+  using the TTY file for input/output.
+
+* Python Scripting
+
+  ** gdb.Breakpoint objects have a new attribute "pending", which
+     indicates whether the breakpoint is pending.
+  ** Three new breakpoint-related events have been added:
+     gdb.breakpoint_created, gdb.breakpoint_modified, and
+     gdb.breakpoint_deleted.
+
+signal-event EVENTID
+  Signal ("set") the given MS-Windows event object.  This is used in
+  conjunction with the Windows JIT debugging (AeDebug) support, where
+  the OS suspends a crashing process until a debugger can attach to
+  it.  Resuming the crashing process, in order to debug it, is done by
+  signalling an event.
+
+* Support for tracepoints and fast tracepoints on s390-linux and s390x-linux
+  was added in GDBserver, including JIT compiling fast tracepoint's
+  conditional expression bytecode into native code.
+
+* Support for various remote target protocols and ROM monitors has
+  been removed:
+
+  target m32rsdi	Remote M32R debugging over SDI
+  target mips		MIPS remote debugging protocol
+  target pmon		PMON ROM monitor
+  target ddb		NEC's DDB variant of PMON for Vr4300
+  target rockhopper	NEC RockHopper variant of PMON
+  target lsi		LSI variant of PMO
+
+* Support for tracepoints and fast tracepoints on powerpc-linux,
+  powerpc64-linux, and powerpc64le-linux was added in GDBserver,
+  including JIT compiling fast tracepoint's conditional expression
+  bytecode into native code.
+
+* MI async record =record-started now includes the method and format used for
+  recording.  For example:
+
+    =record-started,thread-group="i1",method="btrace",format="bts"
+
+* MI async record =thread-selected now includes the frame field.  For example:
+
+     =thread-selected,id="3",frame={level="0",addr="0x00000000004007c0"}
+
+* New targets
+
+Andes NDS32			nds32*-*-elf
+
+*** Changes in GDB 7.11
+
+* GDB now supports debugging kernel-based threads on FreeBSD.
+
+* Per-inferior thread numbers
+
+  Thread numbers are now per inferior instead of global.  If you're
+  debugging multiple inferiors, GDB displays thread IDs using a
+  qualified INF_NUM.THR_NUM form.  For example:
+
+     (gdb) info threads
+       Id   Target Id         Frame
+       1.1  Thread 0x7ffff7fc2740 (LWP 8155) (running)
+       1.2  Thread 0x7ffff7fc1700 (LWP 8168) (running)
+     * 2.1  Thread 0x7ffff7fc2740 (LWP 8157) (running)
+       2.2  Thread 0x7ffff7fc1700 (LWP 8190) (running)
+
+  As consequence, thread numbers as visible in the $_thread
+  convenience variable and in Python's InferiorThread.num attribute
+  are no longer unique between inferiors.
+
+  GDB now maintains a second thread ID per thread, referred to as the
+  global thread ID, which is the new equivalent of thread numbers in
+  previous releases.  See also $_gthread below.
+
+  For backwards compatibility, MI's thread IDs always refer to global
+  IDs.
+
+* Commands that accept thread IDs now accept the qualified
+  INF_NUM.THR_NUM form as well.  For example:
+
+     (gdb) thread 2.1
+     [Switching to thread 2.1 (Thread 0x7ffff7fc2740 (LWP 8157))] (running)
+     (gdb)
+
+* In commands that accept a list of thread IDs, you can now refer to
+  all threads of an inferior using a star wildcard.  GDB accepts
+  "INF_NUM.*", to refer to all threads of inferior INF_NUM, and "*" to
+  refer to all threads of the current inferior.  For example, "info
+  threads 2.*".
+
+* You can use "info threads -gid" to display the global thread ID of
+  all threads.
+
+* The new convenience variable $_gthread holds the global number of
+  the current thread.
+
+* The new convenience variable $_inferior holds the number of the
+  current inferior.
+
+* GDB now displays the ID and name of the thread that hit a breakpoint
+  or received a signal, if your program is multi-threaded.  For
+  example:
+
+   Thread 3 "bar" hit Breakpoint 1 at 0x40087a: file program.c, line 20.
+   Thread 1 "main" received signal SIGINT, Interrupt.
+
+* Record btrace now supports non-stop mode.
+
+* Support for tracepoints on aarch64-linux was added in GDBserver.
+
+* The 'record instruction-history' command now indicates speculative execution
+  when using the Intel Processor Trace recording format.
+
+* GDB now allows users to specify explicit locations, bypassing
+  the linespec parser.  This feature is also available to GDB/MI
+  clients.
+
+* Multi-architecture debugging is supported on AArch64 GNU/Linux.
+  GDB now is able to debug both AArch64 applications and ARM applications
+  at the same time.
+
+* Support for fast tracepoints on aarch64-linux was added in GDBserver,
+  including JIT compiling fast tracepoint's conditional expression bytecode
+  into native code.
+
+* GDB now supports displaced stepping on AArch64 GNU/Linux.
+
+* "info threads", "info inferiors", "info display", "info checkpoints"
+  and "maint info program-spaces" now list the corresponding items in
+  ascending ID order, for consistency with all other "info" commands.
+
+* In Ada, the overloads selection menu has been enhanced to display the
+  parameter types and the return types for the matching overloaded subprograms.
+
+* New commands
+
+maint set target-non-stop (on|off|auto)
+maint show target-non-stop
+  Control whether GDB targets always operate in non-stop mode even if
+  "set non-stop" is "off".  The default is "auto", meaning non-stop
+  mode is enabled if supported by the target.
+
+maint set bfd-sharing
+maint show bfd-sharing
+  Control the reuse of bfd objects.
+
+set debug bfd-cache
+show debug bfd-cache
+  Control display of debugging info regarding bfd caching.
+
+set debug fbsd-lwp
+show debug fbsd-lwp
+  Control display of debugging info regarding FreeBSD threads.
+
+set remote multiprocess-extensions-packet
+show remote multiprocess-extensions-packet
+  Set/show the use of the remote protocol multiprocess extensions.
+
+set remote thread-events
+show remote thread-events
+  Set/show the use of thread create/exit events.
+
+set ada print-signatures on|off
+show ada print-signatures"
+  Control whether parameter types and return types are displayed in overloads
+  selection menus.  It is activaled (@code{on}) by default.
+
+set max-value-size
+show max-value-size
+  Controls the maximum size of memory, in bytes, that GDB will
+  allocate for value contents.  Prevents incorrect programs from
+  causing GDB to allocate overly large buffers.  Default is 64k.
+
+* The "disassemble" command accepts a new modifier: /s.
+  It prints mixed source+disassembly like /m with two differences:
+  - disassembled instructions are now printed in program order, and
+  - and source for all relevant files is now printed.
+  The "/m" option is now considered deprecated: its "source-centric"
+  output hasn't proved useful in practice.
+
+* The "record instruction-history" command accepts a new modifier: /s.
+  It behaves exactly like /m and prints mixed source+disassembly.
+
+* The "set scheduler-locking" command supports a new mode "replay".
+  It behaves like "off" in record mode and like "on" in replay mode.
+
+* Support for various ROM monitors has been removed:
+
+  target dbug		dBUG ROM monitor for Motorola ColdFire
+  target picobug	Motorola picobug monitor
+  target dink32		DINK32 ROM monitor for PowerPC
+  target m32r		Renesas M32R/D ROM monitor
+  target mon2000	mon2000 ROM monitor
+  target ppcbug		PPCBUG ROM monitor for PowerPC
+
+* Support for reading/writing memory and extracting values on architectures
+  whose memory is addressable in units of any integral multiple of 8 bits.
+
+* New remote packets
+
+exec stop reason
+  Indicates that an exec system call was executed.
+
+exec-events feature in qSupported
+  The qSupported packet allows GDB to request support for exec
+  events using the new 'gdbfeature' exec-event, and the qSupported
+  response can contain the corresponding 'stubfeature'.  Set and
+  show commands can be used to display whether these features are enabled.
+
+vCtrlC
+  Equivalent to interrupting with the ^C character, but works in
+  non-stop mode.
+
+thread created stop reason (T05 create:...)
+  Indicates that the thread was just created and is stopped at entry.
+
+thread exit stop reply (w exitcode;tid)
+  Indicates that the thread has terminated.
+
+QThreadEvents
+  Enables/disables thread create and exit event reporting.  For
+  example, this is used in non-stop mode when GDB stops a set of
+  threads and synchronously waits for the their corresponding stop
+  replies.  Without exit events, if one of the threads exits, GDB
+  would hang forever not knowing that it should no longer expect a
+  stop for that same thread.
+
+N stop reply
+  Indicates that there are no resumed threads left in the target (all
+  threads are stopped).  The remote stub reports support for this stop
+  reply to GDB's qSupported query.
+
+QCatchSyscalls
+  Enables/disables catching syscalls from the inferior process.
+  The remote stub reports support for this packet to GDB's qSupported query.
+
+syscall_entry stop reason
+  Indicates that a syscall was just called.
+
+syscall_return stop reason
+  Indicates that a syscall just returned.
+
+* Extended-remote exec events
+
+  ** GDB now has support for exec events on extended-remote Linux targets.
+     For such targets with Linux kernels 2.5.46 and later, this enables
+     follow-exec-mode and exec catchpoints.
+
+set remote exec-event-feature-packet
+show remote exec-event-feature-packet
+  Set/show the use of the remote exec event feature.
+
+ * Thread names in remote protocol
+
+   The reply to qXfer:threads:read may now include a name attribute for each
+   thread.
+
+* Target remote mode fork and exec events
+
+  ** GDB now has support for fork and exec events on target remote mode
+     Linux targets.  For such targets with Linux kernels 2.5.46 and later,
+     this enables follow-fork-mode, detach-on-fork, follow-exec-mode, and
+     fork and exec catchpoints.
+
+* Remote syscall events
+
+  ** GDB now has support for catch syscall on remote Linux targets,
+     currently enabled on x86/x86_64 architectures.
+
+set remote catch-syscall-packet
+show remote catch-syscall-packet
+  Set/show the use of the remote catch syscall feature.
+
+* MI changes
+
+  ** The -var-set-format command now accepts the zero-hexadecimal
+     format.  It outputs data in hexadecimal format with zero-padding on the
+     left.
+
+* Python Scripting
+
+  ** gdb.InferiorThread objects have a new attribute "global_num",
+     which refers to the thread's global thread ID.  The existing
+     "num" attribute now refers to the thread's per-inferior number.
+     See "Per-inferior thread numbers" above.
+  ** gdb.InferiorThread objects have a new attribute "inferior", which
+     is the Inferior object the thread belongs to.
+
 *** Changes in GDB 7.10
 
 * Support for process record-replay and reverse debugging on aarch64*-linux*
@@ -110,11 +490,11 @@ tui disable
 
 show mpx bound
 set mpx bound on i386 and amd64
-   Support for bound table investigation on Intel(R) MPX enabled applications.
+   Support for bound table investigation on Intel MPX enabled applications.
 
 record btrace pt
 record pt
-  Start branch trace recording using Intel(R) Processor Trace format.
+  Start branch trace recording using Intel Processor Trace format.
 
 maint info btrace
   Print information about branch tracing internals.
@@ -182,7 +562,7 @@ show debug linux-namespaces
 
 set|show record btrace pt buffer-size
   Set and show the size of the ring buffer used for branch tracing in
-  Intel(R) Processor Trace format.
+  Intel Processor Trace format.
   The obtained size may differ from the requested size.  Use "info
   record" to see the obtained buffer size.
 
@@ -207,12 +587,12 @@ Qbtrace-conf:bts:size
   Set the requested ring buffer size for branch tracing in BTS format.
 
 Qbtrace:pt
-  Enable Intel(R) Procesor Trace-based branch tracing for the current
+  Enable Intel Procesor Trace-based branch tracing for the current
   process.  The remote stub reports support for this packet to GDB's
   qSupported query.
 
 Qbtrace-conf:pt:size
-  Set the requested ring buffer size for branch tracing in Intel(R) Processor
+  Set the requested ring buffer size for branch tracing in Intel Processor
   Trace format.
 
 swbreak stop reason
@@ -286,7 +666,7 @@ Itanium running HP-UX         ia64-*-hpux*
 
 --with-intel-pt
   This configure option allows the user to build GDB with support for
-  Intel(R) Processor Trace (default: auto).  This requires libipt.
+  Intel Processor Trace (default: auto).  This requires libipt.
 
 --with-libipt-prefix=PATH
   Specify the path to the version of libipt that GDB should use.
@@ -558,10 +938,10 @@ show mi-async
   can be used to launch native programs even when "set
   auto-connect-native-target" is set to off.
 
-* GDB now supports access to Intel(R) MPX registers on GNU/Linux.
+* GDB now supports access to Intel MPX registers on GNU/Linux.
 
-* Support for Intel(R) AVX-512 registers on GNU/Linux.
-  Support displaying and modifying Intel(R) AVX-512 registers
+* Support for Intel AVX-512 registers on GNU/Linux.
+  Support displaying and modifying Intel AVX-512 registers
   $zmm0 - $zmm31 and $k0 - $k7 on GNU/Linux.
 
 * New remote packets

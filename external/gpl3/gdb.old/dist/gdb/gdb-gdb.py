@@ -209,6 +209,8 @@ class StructMainTypePrettyPrinter:
             img = ("calling_convention = %d"
                    % type_specific['func_stuff']['calling_convention'])
             # tail_call_list is not printed.
+        elif type_specific_kind == "TYPE_SPECIFIC_SELF_TYPE":
+            img = "self_type = %s" % type_specific['self_type']
         else:
             img = ("type_specific = ??? (unknown type_secific_kind: %s)"
                    % type_specific_kind)
@@ -224,7 +226,6 @@ class StructMainTypePrettyPrinter:
         fields.append("flags = [%s]" % self.flags_to_string())
         fields.append("owner = %s" % self.owner_to_string())
         fields.append("target_type = %s" % self.val['target_type'])
-        fields.append("vptr_basetype = %s" % self.val['vptr_basetype'])
         if self.val['nfields'] > 0:
             for fieldno in range(self.val['nfields']):
                 fields.append(self.struct_field_img(fieldno))

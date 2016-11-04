@@ -13,6 +13,6 @@ SIM_AC_OPTION_RESERVED_BITS
 SIM_AC_OPTION_BITSIZE(32,31)
 
 AC_CHECK_FUNCS(time chmod utime fork execve execv chown)
-AC_CHECK_HEADERS(unistd.h stdlib.h string.h strings.h utime.h time.h)
+AC_CHECK_HEADERS(utime.h)
 
 SIM_AC_OUTPUT

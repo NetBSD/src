@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.15 2013/10/18 19:53:34 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.15.8.1 2016/11/04 14:42:22 pgoyette Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.15 2013/10/18 19:53:34 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.15.8.1 2016/11/04 14:42:22 pgoyette Exp $");
 #endif
 
 #include <stdint.h>
@@ -345,7 +345,7 @@ expand(cp, wp, f)
 						 * expected)
 						 */
 						*dp++ = MAGIC;
-						*dp++ = '@' + 0x80;
+						*dp++ = (char)('@' + 0x80);
 						break;
 					  case '=':
 						/* Enabling tilde expansion

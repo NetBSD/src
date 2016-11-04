@@ -1,6 +1,6 @@
 /* start_lib_test_2.c -- test --start-lib/--end-lib.
 
-   Copyright 2010 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Written by Cary Coutant <ccoutant@google.com>
 
    This file is part of gold.

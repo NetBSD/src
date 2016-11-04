@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.200 2016/05/13 16:54:36 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.200.2.1 2016/11/04 14:49:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.200 2016/05/13 16:54:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.200.2.1 2016/11/04 14:49:07 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #include "opt_ntp.h"
+#include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_sysv.h"
@@ -401,25 +402,6 @@ netbsd32_setuid(struct lwp *l, const struct netbsd32_setuid_args *uap, register_
 
 	NETBSD32TO64_UAP(uid);
 	return (sys_setuid(l, &ua, retval));
-}
-
-int
-netbsd32_ptrace(struct lwp *l, const struct netbsd32_ptrace_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) req;
-		syscallarg(pid_t) pid;
-		syscallarg(netbsd32_voidp) addr;
-		syscallarg(int) data;
-	} */
-	struct sys_ptrace_args ua;
-
-	NETBSD32TO64_UAP(req);
-	NETBSD32TO64_UAP(pid);
-	NETBSD32TOP_UAP(addr, void *);
-	NETBSD32TO64_UAP(data);
-
-	return (*sysent[SYS_ptrace].sy_call)(l, &ua, retval);
 }
 
 int

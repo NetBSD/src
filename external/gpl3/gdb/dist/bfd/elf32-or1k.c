@@ -1,5 +1,5 @@
 /* Or1k-specific support for 32-bit ELF.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Contributed for OR32 by Johan Rydberg, jrydberg@opencores.org
 
    PIC parts added by Stefan Kristiansson, stefan.kristiansson@saunalahti.fi,
@@ -199,7 +199,7 @@ static reloc_howto_type or1k_elf_howto_table[] =
          FALSE,                 /* partial_inplace */
          0,                     /* src_mask */
          0xffffffff,            /* dst_mask */
-         FALSE),                /* pcrel_offset */
+         TRUE),                 /* pcrel_offset */
 
   HOWTO (R_OR1K_16_PCREL,
          0,                     /* rightshift */
@@ -213,7 +213,7 @@ static reloc_howto_type or1k_elf_howto_table[] =
          FALSE,                 /* partial_inplace */
          0,                     /* src_mask */
          0xffff,                /* dst_mask */
-         FALSE),                /* pcrel_offset */
+         TRUE),                 /* pcrel_offset */
 
   HOWTO (R_OR1K_8_PCREL,
          0,                     /* rightshift */
@@ -227,7 +227,7 @@ static reloc_howto_type or1k_elf_howto_table[] =
          FALSE,                 /* partial_inplace */
          0,                     /* src_mask */
          0xff,                  /* dst_mask */
-         FALSE),                /* pcrel_offset */
+         TRUE),                 /* pcrel_offset */
 
    HOWTO (R_OR1K_GOTPC_HI16,    /* Type.  */
          16,                    /* Rightshift.  */
@@ -879,7 +879,7 @@ or1k_elf_relocate_section (bfd *output_bfd,
         RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
                                          rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
         continue;
 
       switch (howto->type)
@@ -909,8 +909,10 @@ or1k_elf_relocate_section (bfd *output_bfd,
               BFD_ASSERT (off != (bfd_vma) -1);
 
               dyn = htab->root.dynamic_sections_created;
-              if (! WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared, h)
-                  || (info->shared
+              if (! WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn,
+						     bfd_link_pic (info),
+						     h)
+                  || (bfd_link_pic (info)
                       && SYMBOL_REFERENCES_LOCAL (info, h)))
                 {
                   /* This is actually a static link, or it is a
@@ -959,7 +961,7 @@ or1k_elf_relocate_section (bfd *output_bfd,
                 {
                   /* Write entry in GOT.  */
                   bfd_put_32 (output_bfd, relocation, sgot->contents + off);
-                  if (info->shared)
+                  if (bfd_link_pic (info))
                     {
                       asection *srelgot;
                       Elf_Internal_Rela outrel;
@@ -1012,13 +1014,13 @@ or1k_elf_relocate_section (bfd *output_bfd,
                 || (input_section->flags & SEC_ALLOC) == 0)
               break;
 
-            if ((info->shared
+            if ((bfd_link_pic (info)
                  && (h == NULL
                      || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
                      || h->root.type != bfd_link_hash_undefweak)
 		 && (howto->type != R_OR1K_INSN_REL_26
 		     || !SYMBOL_CALLS_LOCAL (info, h)))
-                || (!info->shared
+                || (!bfd_link_pic (info)
                     && h != NULL
                     && h->dynindx != -1
                     && !h->non_got_ref
@@ -1138,7 +1140,7 @@ or1k_elf_relocate_section (bfd *output_bfd,
             /* Dynamic entries will require relocations. if we do not need
                them we will just use the default R_OR1K_NONE and
                not set anything.  */
-            dynamic = info->shared
+            dynamic = bfd_link_pic (info)
 	      || (sec && (sec->flags & SEC_ALLOC) != 0
 		  && h != NULL
 		  && (h->root.type == bfd_link_hash_defweak || !h->def_regular));
@@ -1247,13 +1249,13 @@ or1k_elf_relocate_section (bfd *output_bfd,
           switch (r)
             {
             case bfd_reloc_overflow:
-              r = info->callbacks->reloc_overflow
+	      (*info->callbacks->reloc_overflow)
                 (info, (h ? &h->root : NULL), name, howto->name,
                  (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
               break;
 
             case bfd_reloc_undefined:
-              r = info->callbacks->undefined_symbol
+	      (*info->callbacks->undefined_symbol)
                 (info, name, input_bfd, input_section, rel->r_offset, TRUE);
               break;
 
@@ -1275,11 +1277,8 @@ or1k_elf_relocate_section (bfd *output_bfd,
             }
 
           if (msg)
-            r = info->callbacks->warning
-              (info, msg, name, input_bfd, input_section, rel->r_offset);
-
-          if (!r)
-            return FALSE;
+	    (*info->callbacks->warning) (info, msg, name, input_bfd,
+					 input_section, rel->r_offset);
         }
     }
 
@@ -1419,7 +1418,7 @@ or1k_elf_check_relocs (bfd *abfd,
   bfd *dynobj;
   asection *sreloc = NULL;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -1574,7 +1573,7 @@ or1k_elf_check_relocs (bfd *abfd,
         case R_OR1K_32:
           /* R_OR1K_16? */
           {
-            if (h != NULL && !info->shared)
+            if (h != NULL && !bfd_link_pic (info))
               {
                 /* We may need a copy reloc.  */
                 h->non_got_ref = 1;
@@ -1607,14 +1606,14 @@ or1k_elf_check_relocs (bfd *abfd,
                dynamic library if we manage to avoid copy relocs for the
                symbol.  */
 
-            if ((info->shared
+            if ((bfd_link_pic (info)
                  && (sec->flags & SEC_ALLOC) != 0
                  && (ELF32_R_TYPE (rel->r_info) != R_OR1K_INSN_REL_26
                      || (h != NULL
                          && (!SYMBOLIC_BIND (info, h)
                              || h->root.type == bfd_link_hash_defweak
                              || !h->def_regular))))
-                || (!info->shared
+                || (!bfd_link_pic (info)
                     && (sec->flags & SEC_ALLOC) != 0
                     && h != NULL
                     && (h->root.type == bfd_link_hash_defweak
@@ -1757,20 +1756,17 @@ or1k_elf_finish_dynamic_sections (bfd *output_bfd,
               continue;
 
             case DT_PLTGOT:
-              s = htab->sgot->output_section;
-              BFD_ASSERT (s != NULL);
-              dyn.d_un.d_ptr = s->vma;
+              s = htab->sgotplt;
+              dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
               break;
 
             case DT_JMPREL:
-              s = htab->srelplt->output_section;
-              BFD_ASSERT (s != NULL);
-              dyn.d_un.d_ptr = s->vma;
+              s = htab->srelplt;
+              dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
               break;
 
             case DT_PLTRELSZ:
-              s = htab->srelplt->output_section;
-              BFD_ASSERT (s != NULL);
+              s = htab->srelplt;
               dyn.d_un.d_val = s->size;
               break;
 
@@ -1786,19 +1782,8 @@ or1k_elf_finish_dynamic_sections (bfd *output_bfd,
                  about changing the DT_RELA entry.  */
               if (htab->srelplt != NULL)
                 {
-                  /* FIXME: this calculation sometimes produces
-                     wrong result, the problem is that the dyn.d_un.d_val
-                     is not always correct, needs investigation why
-                     that happens. In the meantime, reading the
-                     ".rela.dyn" section by name seems to yield
-                     correct result.
-
-                  s = htab->srelplt->output_section;
+                  s = htab->srelplt;
                   dyn.d_un.d_val -= s->size;
-                  */
-
-                  s = bfd_get_section_by_name (output_bfd, ".rela.dyn");
-                  dyn.d_un.d_val = s ? s->size : 0;
                 }
               break;
             }
@@ -1810,7 +1795,7 @@ or1k_elf_finish_dynamic_sections (bfd *output_bfd,
       splt = htab->splt;
       if (splt && splt->size > 0)
         {
-          if (info->shared)
+          if (bfd_link_pic (info))
             {
               bfd_put_32 (output_bfd, PLT0_PIC_ENTRY_WORD0,
                           splt->contents);
@@ -1911,7 +1896,7 @@ or1k_elf_finish_dynamic_symbol (bfd *output_bfd,
       got_addr = got_offset;
 
       /* Fill in the entry in the procedure linkage table.  */
-      if (! info->shared)
+      if (! bfd_link_pic (info))
         {
           got_addr += htab->sgotplt->output_section->vma
             + htab->sgotplt->output_offset;
@@ -1989,7 +1974,7 @@ or1k_elf_finish_dynamic_symbol (bfd *output_bfd,
          the symbol was forced to be local because of a version file.
          The entry in the global offset table will already have been
          initialized in the relocate_section function.  */
-      if (info->shared && SYMBOL_REFERENCES_LOCAL (info, h))
+      if (bfd_link_pic (info) && SYMBOL_REFERENCES_LOCAL (info, h))
         {
           rela.r_info = ELF32_R_INFO (0, R_OR1K_RELATIVE);
           rela.r_addend = (h->root.u.def.value
@@ -2089,7 +2074,7 @@ or1k_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   if (h->type == STT_FUNC
       || h->needs_plt)
     {
-      if (! info->shared
+      if (! bfd_link_pic (info)
           && !h->def_dynamic
           && !h->ref_dynamic
           && h->root.type != bfd_link_hash_undefweak
@@ -2128,7 +2113,7 @@ or1k_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
      only references to the symbol are via the global offset table.
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
-  if (info->shared)
+  if (bfd_link_pic (info))
     return TRUE;
 
   /* If there are no references to this symbol that do not use the
@@ -2227,7 +2212,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
             return FALSE;
         }
 
-      if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (1, info->shared, h))
+      if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (1, bfd_link_pic (info), h))
         {
           asection *s = htab->splt;
 
@@ -2243,7 +2228,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
              location in the .plt.  This is required to make function
              pointers compare as equal between the normal executable and
              the shared library.  */
-          if (! info->shared
+          if (! bfd_link_pic (info)
               && !h->def_regular)
             {
               h->root.u.def.section = s;
@@ -2299,7 +2284,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
       else
         s->size += 4;
       dyn = htab->root.dynamic_sections_created;
-      if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared, h))
+      if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, bfd_link_pic (info), h))
         {
           if (tls_type == TLS_GD)
             htab->srelgot->size += 2 * sizeof (Elf32_External_Rela);
@@ -2319,7 +2304,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
      space for pc-relative relocs that have become local due to symbol
      visibility changes.  */
 
-  if (info->shared)
+  if (bfd_link_pic (info))
     {
       if (SYMBOL_CALLS_LOCAL (info, h))
         {
@@ -2445,7 +2430,7 @@ or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (htab->root.dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (info->executable)
+      if (bfd_link_executable (info) && !info->nointerp)
         {
           s = bfd_get_section_by_name (dynobj, ".interp");
           BFD_ASSERT (s != NULL);
@@ -2516,7 +2501,7 @@ or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
                 s->size += 8;
               else
                 s->size += 4;
-              if (info->shared)
+              if (bfd_link_pic (info))
                 {
                   if (local_tls_type != NULL && *local_tls_type == TLS_GD)
                     srel->size += 2 * sizeof (Elf32_External_Rela);
@@ -2605,7 +2590,7 @@ or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 #define add_dynamic_entry(TAG, VAL) \
   _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
-     if (info->executable)
+     if (bfd_link_executable (info))
        {
          if (! add_dynamic_entry (DT_DEBUG, 0))
            return FALSE;
@@ -2666,11 +2651,11 @@ or1k_elf_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   htab->splt = bfd_get_section_by_name (dynobj, ".plt");
   htab->srelplt = bfd_get_section_by_name (dynobj, ".rela.plt");
   htab->sdynbss = bfd_get_section_by_name (dynobj, ".dynbss");
-  if (!info->shared)
+  if (!bfd_link_pic (info))
     htab->srelbss = bfd_get_section_by_name (dynobj, ".rela.bss");
 
   if (!htab->splt || !htab->srelplt || !htab->sdynbss
-      || (!info->shared && !htab->srelbss))
+      || (!bfd_link_pic (info) && !htab->srelbss))
     abort ();
 
   return TRUE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.16 2016/03/17 04:07:41 khorben Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.16.2.1 2016/11/04 14:49:16 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.16 2016/03/17 04:07:41 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.16.2.1 2016/11/04 14:49:16 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -4621,8 +4621,8 @@ ipf_nat_lookupredir(ipf_main_softc_t *softc, natlookup_t *np)
 				}
 			}
 
-			np->nl_realip = nat->nat_ndstip;
-			np->nl_realport = nat->nat_ndport;
+			np->nl_realip = nat->nat_odstip;
+			np->nl_realport = nat->nat_odport;
 		}
  	}
 

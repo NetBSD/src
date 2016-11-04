@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.28 2014/01/04 00:10:03 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.28.10.1 2016/11/04 14:49:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -78,5 +78,8 @@ int netbsd32_md_ioctl(struct file *, netbsd32_u_long, void *, struct lwp *);
 
 int netbsd32_process_read_regs(struct lwp *, struct reg32 *);
 int netbsd32_process_read_fpregs(struct lwp *, struct fpreg32 *, size_t *);
+
+int netbsd32_process_write_regs(struct lwp *, const struct reg32 *);
+int netbsd32_process_write_fpregs(struct lwp *, const struct fpreg32 *, size_t);
 
 #endif /* _MACHINE_NETBSD32_H_ */

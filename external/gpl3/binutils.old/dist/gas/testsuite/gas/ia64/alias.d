@@ -1,7 +1,7 @@
 #readelf: -Ss
 #name: ia64 alias and secalias
 
-There are 8 section headers, starting at offset 0x78:
+There are 8 section headers, starting at offset .*:
 
 Section Headers:
  +\[Nr\] +Name +Type +Address +Offset
@@ -16,11 +16,11 @@ Section Headers:
  +0000000000000000 +0000000000000000 +WA +0 +0 +1
  +\[ 4\] 1234 +PROGBITS +0000000000000000 +00000040
  +0000000000000005 +0000000000000000 +WA +0 +0 +1
- +\[ 5\] \.shstrtab +STRTAB +0000000000000000 +00000045
+ +\[ 5\] \.shstrtab +STRTAB +0000000000000000 +[0-9a-f]+
  +0000000000000031 +0000000000000000 +0 +0 +1
- +\[ 6\] \.symtab +SYMTAB +0000000000000000 +00000278
+ +\[ 6\] \.symtab +SYMTAB +0000000000000000 .*
  +0000000000000090 +0000000000000018 +7 +6 +8
- +\[ 7\] \.strtab +STRTAB +0000000000000000 +00000308
+ +\[ 7\] \.strtab +STRTAB +0000000000000000 .*
  +0000000000000006 +0000000000000000 +0 +0 +1
 Key to Flags:
 #...

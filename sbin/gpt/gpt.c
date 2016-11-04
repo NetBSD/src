@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.68 2016/06/09 15:12:54 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.68.2.1 2016/11/04 14:48:55 pgoyette Exp $");
 #endif
 
 #include <sys/param.h>
@@ -795,7 +795,8 @@ gpt_create(gpt_t gpt, off_t last, u_int parts, int primary_only)
 
 	if (map_find(gpt, MAP_TYPE_PRI_GPT_HDR) != NULL ||
 	    map_find(gpt, MAP_TYPE_SEC_GPT_HDR) != NULL) {
-		gpt_warnx(gpt, "Device already contains a GPT");
+		gpt_warnx(gpt, "Device already contains a GPT, "
+		    "destroy it first");
 		return -1;
 	}
 

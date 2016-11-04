@@ -1,5 +1,5 @@
 /* General Cpu tools GENerated simulator support.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -138,12 +138,6 @@ typedef enum {
 #define ENDSWITCH(N)
 #endif
 
-/* Simulator state.  */
-
-/* Records simulator descriptor so utilities like @cpu@_dump_regs can be
-   called from gdb.  */
-extern SIM_DESC current_state;
-
 /* Simulator state.  */
 
 /* CGEN_STATE contains additional state information not present in

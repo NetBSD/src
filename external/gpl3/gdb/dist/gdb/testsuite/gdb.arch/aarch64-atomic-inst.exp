@@ -1,4 +1,4 @@
-# Copyright 2008-2015 Free Software Foundation, Inc.
+# Copyright 2008-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # Test single stepping through atomic sequences beginning with
 # a ldxr instruction and ending with a stxr instruction.
 
-if {![istarget "aarch64*"]} {
+if {![is_aarch64_target]} {
     verbose "Skipping ${gdb_test_file_name}."
     return
 }

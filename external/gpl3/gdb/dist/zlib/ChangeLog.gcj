@@ -1,8 +1,12 @@
-2015-03-31  H.J. Lu  <hongjiu.lu@intel.com>
+2015-11-23  Matthias Klose  <doko@ubuntu.com>
 
-	* configure.ac (AM_ENABLE_MULTILIB): Use only if
-	${with_target_subdir} isn't empty.
-	* configure: Regenerated.
+	* Imported zlib 1.2.8; merged local changes.
+
+2015-05-13  Michael Haubenwallner  <michael.haubenwallner@ssi-schaefer.com>
+
+	* Makefile.in: Regenerated with automake-1.11.6.
+	* aclocal.m4: Likewise.
+	* configure: Likewise.
 
 2014-11-11  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
 

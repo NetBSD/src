@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2007-2015 Free Software Foundation, Inc.
+   Copyright 2007-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,11 +31,11 @@ thread_func (void* arg)
 
   h = dlopen (libname, RTLD_LAZY);  /* set breakpoint here */
   if (h == NULL)
-    return;
+    return NULL;
 
   p_func = dlsym (h, "pendfunc3");
   if (p_func == NULL)
-    return;
+    return NULL;
 
   (*p_func) ();
 }

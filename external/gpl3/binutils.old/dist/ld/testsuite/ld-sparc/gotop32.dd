@@ -14,7 +14,7 @@ Disassembly of section .text:
 00001008 <foo>:
  +1008:	9d e3 bf 98 	save  %sp, -104, %sp
  +100c:	2f 00 00 44 	sethi  %hi\(0x11000\), %l7
- +1010:	7f ff ff fc 	call  1000 <_.*>
+ +1010:	7f ff ff fc 	call  1000 <foo-0x8>
  +1014:	ae 05 e0 60 	add  %l7, 0x60, %l7	! 11060 <.*>
  +1018:	01 00 00 00 	nop *
  +101c:	23 00 00 00 	sethi  %hi\(0\), %l1

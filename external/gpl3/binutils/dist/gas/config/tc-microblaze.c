@@ -1,6 +1,6 @@
 /* tc-microblaze.c -- Assemble code for Xilinx MicroBlaze
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -621,7 +621,7 @@ parse_exp (char *s, expressionS *e)
 #define IMM_MAX    9
 
 struct imm_type {
-	char *isuffix;	 /* Suffix String */
+	const char *isuffix;	 /* Suffix String */
 	int itype;       /* Suffix Type */
 	int otype;       /* Offset Type */
 };
@@ -737,9 +737,9 @@ parse_imm (char * s, expressionS * e, offsetT min, offsetT max)
     as_fatal (_("operand must be a constant or a label"));
   else if (e->X_op == O_constant)
     {
-      /* Special case: sign extend negative 32-bit values to 64-bits.  */
+      /* Special case: sign extend negative 32-bit values to offsetT size.  */
       if ((e->X_add_number >> 31) == 1)
-	e->X_add_number |= -((offsetT) 1 << 31);
+	e->X_add_number |= -((addressT) (1U << 31));
 
       if (e->X_add_number < min || e->X_add_number > max)
 	{
@@ -798,7 +798,8 @@ check_got (int * got_type, int * got_len)
   for (new_pointer = past_got; !is_end_of_line[(unsigned char) *new_pointer++];)
     ;
   second = new_pointer - past_got;
-  tmpbuf = xmalloc (first + second + 2); /* One extra byte for ' ' and one for NUL.  */
+  /* One extra byte for ' ' and one for NUL.  */
+  tmpbuf = XNEWVEC (char, first + second + 2);
   memcpy (tmpbuf, input_line_pointer, first);
   tmpbuf[first] = ' '; /* @GOTOFF is replaced with a single space.  */
   memcpy (tmpbuf + first + 1, past_got, second);
@@ -840,8 +841,8 @@ parse_cons_expression_microblaze (expressionS *exp, int size)
    machine dependent instruction.  This function is supposed to emit
    the frags/bytes it assembles to.  */
 
-static char * str_microblaze_ro_anchor = "RO";
-static char * str_microblaze_rw_anchor = "RW";
+static const char * str_microblaze_ro_anchor = "RO";
+static const char * str_microblaze_rw_anchor = "RW";
 
 static bfd_boolean
 check_spl_reg (unsigned * reg)
@@ -1014,7 +1015,7 @@ md_assemble (char * str)
 
       if (exp.X_op != O_constant)
 	{
-          char *opc;
+          const char *opc;
 	  relax_substateT subtype;
 
           if (streq (name, "lmi"))
@@ -1039,7 +1040,7 @@ md_assemble (char * str)
 			     subtype,   /* PC-relative or not.  */
 			     exp.X_add_symbol,
 			     exp.X_add_number,
-			     opc);
+			     (char *) opc);
 	  immed = 0;
         }
       else
@@ -1758,7 +1759,7 @@ md_undefined_symbol (char * name ATTRIBUTE_UNUSED)
 /* Turn a string in input_line_pointer into a floating point constant of type
    type, and store the appropriate bytes in *litP.  The number of LITTLENUMS
    emitted is stored in *sizeP.  An error message is returned, or NULL on OK.*/
-char *
+const char *
 md_atof (int type, char * litP, int * sizeP)
 {
   int prec;
@@ -1960,7 +1961,7 @@ md_apply_fix (fixS *   fixP,
 	      segT     segment)
 {
   char *       buf  = fixP->fx_where + fixP->fx_frag->fr_literal;
-  char *       file = fixP->fx_file ? fixP->fx_file : _("unknown");
+  const char *       file = fixP->fx_file ? fixP->fx_file : _("unknown");
   const char * symname;
   /* Note: use offsetT because it is signed, valueT is unsigned.  */
   offsetT      val  = (offsetT) * valp;
@@ -2257,7 +2258,7 @@ md_estimate_size_before_relax (fragS * fragP,
 		{
                   /* Variable not in small data read only segment accessed
 		     using small data read only anchor.  */
-                  char *file = fragP->fr_file ? fragP->fr_file : _("unknown");
+                  const char *file = fragP->fr_file ? fragP->fr_file : _("unknown");
 
                   as_bad_where (file, fragP->fr_line,
                                 _("Variable is accessed using small data read "
@@ -2280,7 +2281,7 @@ md_estimate_size_before_relax (fragS * fragP,
                 }
 	      else
 		{
-                  char *file = fragP->fr_file ? fragP->fr_file : _("unknown");
+                  const char *file = fragP->fr_file ? fragP->fr_file : _("unknown");
 
                   as_bad_where (file, fragP->fr_line,
                                 _("Variable is accessed using small data read "
@@ -2431,8 +2432,8 @@ tc_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
       break;
     }
 
-  rel = (arelent *) xmalloc (sizeof (arelent));
-  rel->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  rel = XNEW (arelent);
+  rel->sym_ptr_ptr = XNEW (asymbol *);
 
   if (code == BFD_RELOC_MICROBLAZE_32_SYM_OP_SYM)
     *rel->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
@@ -2458,7 +2459,7 @@ tc_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
 }
 
 int
-md_parse_option (int c, char * arg ATTRIBUTE_UNUSED)
+md_parse_option (int c, const char * arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {

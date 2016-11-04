@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../lib/unbuffer_output.c"
+
 char buf[100];
 char bigbuf[1000];
 char * s;
@@ -47,6 +49,8 @@ link_malloc ()
 
 int main()
 {
+  gdb_unbuffer_output ();
+
   s = &buf[0];
   strcpy(buf, "test string");
   str_func("abcd", "efgh", "ijkl", "mnop", "qrst", "uvwx", "yz12");

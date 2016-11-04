@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141 2015/06/26 22:55:06 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141.2.1 2016/11/04 14:49:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 2015/06/26 22:55:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141.2.1 2016/11/04 14:49:04 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -394,7 +394,7 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 
 	/*
 	 * The case where the kernel has been loaded by a
-	 * boot loader will usually have been catched by
+	 * boot loader will usually have been caught by
 	 * the first makebootdev() case earlier on, but
 	 * we still use OSLoadPartition to get the preferred
 	 * root filesystem location, even if it's not

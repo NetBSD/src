@@ -1,3 +1,132 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENVIRONMENT): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_INLINE): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_open): Update sim_parse_args comment.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HOSTENDIAN): Delete.
+	* configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-hload.o.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-reason.o, sim-reg.o, and
+	sim-stop.o.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (mcore_regset, LAST_VALID_CREG, NUM_MCORE_REGS: Move
+	to sim-main.h.
+	(cpu): Delete.
+	(gr, cr): Change from asregs to cpu.
+	(sr, vbr, esr, fsr, epc, fpc, ss0, ss1, ss2, ss3, ss4, gcr, gsr):
+	Change from asregs to cr.
+	(C_ON, C_VALUE, C_OFF, SET_C, CLR_C, NEW_C, SR_AF): Change from
+	cpu.sr to sr.
+	(set_active_regs): Define.
+	(set_initial_gprs): Rename scpu to cpu.  Change cpu.sr to sr and
+	cpu.gr to gr.  Replace for loop with memset.  Replace SR_AF with
+	set_active_regs.
+	(handle_trap1): Add cpu arg.
+	(process_stub): Likewise.  Change cpu.gr to gr.
+	(util): Rename scpu to cpu.  Change cpu.gr to gr.
+	(rbat, rhat, rlat, wbat, what, wlat, ILLEGAL, sim_engine_run,
+	mcore_reg_store, mcore_reg_fetch, sim_create_inferior): Rename scpu
+	to cpu.
+	(step_once): Likewise.  Replace SR_AF with set_active_regs.  Adjust
+	cpu.asregs to cpu.
+	(mcore_pc_get, mcore_pc_set): Adjust cpu->pc to cpu->regs.pc.
+	* sim-main.h (mcore_regset, LAST_VALID_CREG, NUM_MCORE_REGS: Move
+	from interp.c.
+	(_sim_cpu): Add regs, asints, active_gregs, ticks, stalls, cycles,
+	and insts members.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Add sim-reg.o.
+	* interp.c (sim_store_register): Rename to ...
+	(mcore_reg_store): ... this.  Change SIM_DESC to SIM_CPU.
+	(sim_fetch_register): Rename to ...
+	(mcore_reg_fetch): ... this.  Change SIM_DESC to SIM_CPU.
+	(sim_open): Call CPU_REG_FETCH and CPU_REG_STORE.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Add sim-reason.o and sim-resume.o.
+	* interp.c (struct mcore_regset): Delete exception.
+	(util): Add SIM_DESC and SIM_CPU args.  Call sim_engine_halt instead
+	of setting cpu.asregs.exception.
+	(ILLEGAL): Define.
+	(sim_resume): Rename to ...
+	(step_once): ... this.  Delete cpu.asregs.exception initialization.
+	Delete do/while statements while keeping the body.  Replace SIGTRAP
+	usage with sim_engine_halt(SIM_SIGTRAP).  Replace SIGILL usage with
+	ILLEGAL.  Pass sd and cpu down to util.
+	(sim_engine_run): Define.
+	(sim_stop_reason): Delete.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_close): Delete.
+
 2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.
@@ -286,8 +415,8 @@
 	* config.in: Ditto.
 
 2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
-            Daniel Jacobowitz  <dan@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
 
 	* configure: Regenerate.
 
@@ -366,7 +495,7 @@ Tue May 23 21:39:23 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 	* interp.c (target_big_endian): New variable.
 	(mcore_extract_unsigned_integer, mcore_store_unsigned_integer,
 	wlat, rlat, sim_resume, sim_load): Add supprot for little
-	endian targets. 
+	endian targets.
 
 2000-01-13  Nick Clifton  <nickc@cygnus.com>
 
@@ -395,7 +524,7 @@ Thu Sep  2 18:15:53 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 1999-05-08  Felix Lee  <flee@cygnus.com>
 
 	* configure: Regenerated to track ../common/aclocal.m4 changes.
-	
+
 1999-05-10  Nick Clifton  <nickc@cygnus.com>
 
 	* interp.c (sim_resume): Record PC in case it is needed for error

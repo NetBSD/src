@@ -2,7 +2,7 @@
 #source: tlspic2.s
 #as: --64
 #ld: -shared -melf_x86_64 --no-ld-generated-unwind-info
-#objdump: -drj.text
+#objdump: -drj.text -Mintel64
 #target: x86_64-*-*
 
 .*: +file format elf64-x86-64.*
@@ -17,10 +17,10 @@ Disassembly of section .text:
  +1006:	90[ 	]+nop *
  +1007:	90[ 	]+nop *
 #  GD
- +1008:	66 48 8d 3d ([0-9a-f]{2} ){3}[ 	]+data32 lea 0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x180>
+ +1008:	66 48 8d 3d ([0-9a-f]{2} ){3}[ 	]+data16 lea 0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x180>
  +100f:	[0-9a-f 	]+
 #				-> R_X86_64_DTPMOD64	sg1
- +1010:	66 66 48 e8 [0-9a-f 	]+data32 data32 callq [0-9a-f]+ <.*>
+ +1010:	66 66 48 e8 [0-9a-f 	]+data16 data16 rex.W callq [0-9a-f]+ <.*>
 #				-> R_X86_64_JUMP_SLOT	__tls_get_addr
  +1017:	[0-9a-f 	]+
  +1018:	90[ 	]+nop *
@@ -37,10 +37,10 @@ Disassembly of section .text:
  +102e:	90[ 	]+nop *
  +102f:	90[ 	]+nop *
 #  GD against local variable
- +1030:	66 48 8d 3d ([0-9a-f]{2} ){3}[ 	]+data32 lea 0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x130>
+ +1030:	66 48 8d 3d ([0-9a-f]{2} ){3}[ 	]+data16 lea 0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x130>
  +1037:	[0-9a-f 	]+
 #				-> R_X86_64_DTPMOD64	[0 0x2000000000000000]
- +1038:	66 66 48 e8 [0-9a-f 	]+data32 data32 callq [0-9a-f]+ <.*>
+ +1038:	66 66 48 e8 [0-9a-f 	]+data16 data16 rex.W callq [0-9a-f]+ <.*>
 #				-> R_X86_64_JUMP_SLOT	__tls_get_addr
  +103f:	[0-9a-f 	]+
  +1040:	90[ 	]+nop *
@@ -57,10 +57,10 @@ Disassembly of section .text:
  +1056:	90[ 	]+nop *
  +1057:	90[ 	]+nop *
 #  GD against hidden and local variable
- +1058:	66 48 8d 3d ([0-9a-f]{2} ){3}[ 	]+data32 lea 0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x1a8>
+ +1058:	66 48 8d 3d ([0-9a-f]{2} ){3}[ 	]+data16 lea 0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x1a8>
  +105f:	[0-9a-f 	]+
 #				-> R_X86_64_DTPMOD64	[0 0x4000000000000000]
- +1060:	66 66 48 e8 [0-9a-f 	]+data32 data32 callq [0-9a-f]+ <.*>
+ +1060:	66 66 48 e8 [0-9a-f 	]+data16 data16 rex.W callq [0-9a-f]+ <.*>
 #				-> R_X86_64_JUMP_SLOT	__tls_get_addr
  +1067:	[0-9a-f 	]+
  +1068:	90[ 	]+nop *
@@ -77,10 +77,10 @@ Disassembly of section .text:
  +107e:	90[ 	]+nop *
  +107f:	90[ 	]+nop *
 #  GD against hidden but not local variable
- +1080:	66 48 8d 3d ([0-9a-f]{2} ){3}[ 	]+data32 lea 0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x160>
+ +1080:	66 48 8d 3d ([0-9a-f]{2} ){3}[ 	]+data16 lea 0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x160>
  +1087:	[0-9a-f 	]+
 #				-> R_X86_64_DTPMOD64	[0 0x6000000000000000]
- +1088:	66 66 48 e8 [0-9a-f 	]+data32 data32 callq [0-9a-f]+ <.*>
+ +1088:	66 66 48 e8 [0-9a-f 	]+data16 data16 rex.W callq [0-9a-f]+ <.*>
 #				-> R_X86_64_JUMP_SLOT	__tls_get_addr
  +108f:	[0-9a-f 	]+
  +1090:	90[ 	]+nop *
@@ -224,6 +224,162 @@ Disassembly of section .text:
  +11a5:	90[ 	]+nop *
  +11a6:	90[ 	]+nop *
  +11a7:	90[ 	]+nop *
- +11a8:	c9[ 	]+leaveq *
- +11a9:	c3[ 	]+retq *
- +11aa:	66 90[ 	]+xchg   %ax,%ax
+ +11a8:	49 bb ([0-9a-f]{2} ){5}[ 	]+movabs \$0x[0-9a-f]+,%r11
+ +11af:	([0-9a-f]{2} ){3}
+ +11b2:	53[ 	]+push   %rbx
+ +11b3:	53[ 	]+push   %rbx
+ +11b4:	48 8d 1d ed ff ff ff[ 	]+lea    -0x13\(%rip\),%rbx +# [0-9a-f]+ <fn1\+0x[0-9a-f]+>
+ +11bb:	4c 01 db[ 	]+add    %r11,%rbx
+ +11be:	90[ 	]+nop *
+ +11bf:	90[ 	]+nop *
+ +11c0:	90[ 	]+nop *
+ +11c1:	90[ 	]+nop *
+# -mcmodel=large sequences
+#
+#  -mcmodel=large GD
+ +11c2:	48 8d 3d ([0-9a-f]{2} ){4}[ 	]+lea    0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x180>
+#				-> R_X86_64_DTPMOD64	sg1
+ +11c9:	48 b8 ([0-9a-f]{2} ){5}[ 	]+movabs \$0x[0-9a-f]+,%rax
+#				-> R_X86_64_JUMP_SLOT	__tls_get_addr
+ +11d0:	([0-9a-f]{2} ){3}
+ +11d3:	48 01 d8[ 	]+add    %rbx,%rax
+ +11d6:	ff d0[ 	]+callq  \*%rax
+ +11d8:	90[ 	]+nop *
+ +11d9:	90[ 	]+nop *
+ +11da:	90[ 	]+nop *
+ +11db:	90[ 	]+nop *
+#  -mcmodel=large GD -> IE because variable is referenced through IE too
+#				-> R_X86_64_TPOFF64	sg2
+ +11dc:	64 48 8b 04 25 00 00[ 	]+mov    %fs:0x0,%rax
+ +11e3:	00 00 
+ +11e5:	48 03 05 ([0-9a-f]{2} ){4}[ 	]+add    0x[0-9a-f]+\(%rip\),%rax +# [0-9a-f]+ <_DYNAMIC\+0x1a0>
+#				-> R_X86_64_TPOFF64	sg2
+ +11ec:	66 0f 1f 44 00 00[ 	]+nopw   0x0\(%rax,%rax,1\)
+ +11f2:	90[ 	]+nop *
+ +11f3:	90[ 	]+nop *
+ +11f4:	90[ 	]+nop *
+ +11f5:	90[ 	]+nop *
+#  -mcmodel=large GD against local variable
+ +11f6:	48 8d 3d ([0-9a-f]{2} ){4}[ 	]+lea    0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x130>
+#				-> R_X86_64_DTPMOD64	[0 0x2000000000000000]
+ +11fd:	48 b8 ([0-9a-f]{2} ){5}[ 	]+movabs \$0x[0-9a-f]+,%rax
+#				-> R_X86_64_JUMP_SLOT	__tls_get_addr
+ +1204:	([0-9a-f]{2} ){3}
+ +1207:	48 01 d8[ 	]+add    %rbx,%rax
+ +120a:	ff d0[ 	]+callq  \*%rax
+ +120c:	90[ 	]+nop *
+ +120d:	90[ 	]+nop *
+ +120e:	90[ 	]+nop *
+ +120f:	90[ 	]+nop *
+#  -mcmodel=large GD -> IE against local variable referenced through IE too
+ +1210:	64 48 8b 04 25 00 00[ 	]+mov    %fs:0x0,%rax
+ +1217:	00 00 
+ +1219:	48 03 05 ([0-9a-f]{2} ){4}[ 	]+add    0x[0-9a-f]+\(%rip\),%rax +# [0-9a-f]+ <_DYNAMIC\+0x140>
+#				-> R_X86_64_TPOFF64	*ABS*+0x24
+ +1220:	66 0f 1f 44 00 00[ 	]+nopw   0x0\(%rax,%rax,1\)
+ +1226:	90[ 	]+nop *
+ +1227:	90[ 	]+nop *
+ +1228:	90[ 	]+nop *
+ +1229:	90[ 	]+nop *
+#  -mcmodel=large GD against hidden and local variable
+ +122a:	48 8d 3d ([0-9a-f]{2} ){4}[ 	]+lea    0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x1a8>
+#				-> R_X86_64_DTPMOD64	[0 0x4000000000000000]
+ +1231:	48 b8 ([0-9a-f]{2} ){5}[ 	]+movabs \$0x[0-9a-f]+,%rax
+#				-> R_X86_64_JUMP_SLOT	__tls_get_addr
+ +1238:	([0-9a-f]{2} ){3}
+ +123b:	48 01 d8[ 	]+add    %rbx,%rax
+ +123e:	ff d0[ 	]+callq  \*%rax
+ +1240:	90[ 	]+nop *
+ +1241:	90[ 	]+nop *
+ +1242:	90[ 	]+nop *
+ +1243:	90[ 	]+nop *
+#  -mcmodel=large GD -> IE against hidden and local variable referenced through IE too
+ +1244:	64 48 8b 04 25 00 00[ 	]+mov    %fs:0x0,%rax
+ +124b:	00 00 
+ +124d:	48 03 05 ([0-9a-f]{2} ){4}[ 	]+add    0x[0-9a-f]+\(%rip\),%rax +# [0-9a-f]+ <_DYNAMIC\+0x1b8>
+#				-> R_X86_64_TPOFF64	*ABS*+0x44
+ +1254:	66 0f 1f 44 00 00[ 	]+nopw   0x0\(%rax,%rax,1\)
+ +125a:	90[ 	]+nop *
+ +125b:	90[ 	]+nop *
+ +125c:	90[ 	]+nop *
+ +125d:	90[ 	]+nop *
+#  -mcmodel=large GD against hidden but not local variable
+ +125e:	48 8d 3d ([0-9a-f]{2} ){4}[ 	]+lea    0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x160>
+#				-> R_X86_64_DTPMOD64	[0 0x6000000000000000]
+ +1265:	48 b8 ([0-9a-f]{2} ){5}[ 	]+movabs \$0x[0-9a-f]+,%rax
+#				-> R_X86_64_JUMP_SLOT	__tls_get_addr
+ +126c:	([0-9a-f]{2} ){3}
+ +126f:	48 01 d8[ 	]+add    %rbx,%rax
+ +1272:	ff d0[ 	]+callq  \*%rax
+ +1274:	90[ 	]+nop *
+ +1275:	90[ 	]+nop *
+ +1276:	90[ 	]+nop *
+ +1277:	90[ 	]+nop *
+#  -mcmodel=large GD -> IE against hidden but not local variable referenced through IE too
+ +1278:	64 48 8b 04 25 00 00[ 	]+mov    %fs:0x0,%rax
+ +127f:	00 00 
+ +1281:	48 03 05 ([0-9a-f]{2} ){4}[ 	]+add    0x[0-9a-f]+\(%rip\),%rax +# [0-9a-f]+ <_DYNAMIC\+0x170>
+#				-> R_X86_64_TPOFF64	*ABS*+0x64
+ +1288:	66 0f 1f 44 00 00[ 	]+nopw   0x0\(%rax,%rax,1\)
+ +128e:	90[ 	]+nop *
+ +128f:	90[ 	]+nop *
+ +1290:	90[ 	]+nop *
+ +1291:	90[ 	]+nop *
+#  -mcmodel=large LD
+ +1292:	48 8d 3d ([0-9a-f]{2} ){4}[ 	]+lea    0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x150>
+#				-> R_X86_64_DTPMOD64	[0 0x000000000000000]
+ +1299:	48 b8 ([0-9a-f]{2} ){5}[ 	]+movabs \$0x[0-9a-f]+,%rax
+#				-> R_X86_64_JUMP_SLOT	__tls_get_addr
+ +12a0:	([0-9a-f]{2} ){3}
+ +12a3:	48 01 d8[ 	]+add    %rbx,%rax
+ +12a6:	ff d0[ 	]+callq  \*%rax
+ +12a8:	90[ 	]+nop *
+ +12a9:	90[ 	]+nop *
+ +12aa:	48 8d 90 20 00 00 00[ 	]+lea    0x20\(%rax\),%rdx
+ +12b1:	90[ 	]+nop *
+ +12b2:	90[ 	]+nop *
+ +12b3:	4c 8d 88 26 00 00 00[ 	]+lea    0x26\(%rax\),%r9
+ +12ba:	90[ 	]+nop *
+ +12bb:	90[ 	]+nop *
+ +12bc:	90[ 	]+nop *
+ +12bd:	90[ 	]+nop *
+#  -mcmodel=large LD against hidden and local variables
+ +12be:	48 8d 3d ([0-9a-f]{2} ){4}[ 	]+lea    0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x150>
+#				-> R_X86_64_DTPMOD64	[0 0x000000000000000]
+ +12c5:	48 b8 ([0-9a-f]{2} ){5}[ 	]+movabs \$0x[0-9a-f]+,%rax
+#				-> R_X86_64_JUMP_SLOT	__tls_get_addr
+ +12cc:	([0-9a-f]{2} ){3}
+ +12cf:	48 01 d8[ 	]+add    %rbx,%rax
+ +12d2:	ff d0[ 	]+callq  \*%rax
+ +12d4:	90[ 	]+nop *
+ +12d5:	90[ 	]+nop *
+ +12d6:	48 8d 90 40 00 00 00[ 	]+lea    0x40\(%rax\),%rdx
+ +12dd:	90[ 	]+nop *
+ +12de:	90[ 	]+nop *
+ +12df:	48 8d 88 47 00 00 00[ 	]+lea    0x47\(%rax\),%rcx
+ +12e6:	90[ 	]+nop *
+ +12e7:	90[ 	]+nop *
+ +12e8:	90[ 	]+nop *
+ +12e9:	90[ 	]+nop *
+#  -mcmodel=large LD against hidden but not local variables
+ +12ea:	48 8d 3d ([0-9a-f]{2} ){4}[ 	]+lea    0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x150>
+#				-> R_X86_64_DTPMOD64	[0 0x000000000000000]
+ +12f1:	48 b8 ([0-9a-f]{2} ){5}[ 	]+movabs \$0x[0-9a-f]+,%rax
+#				-> R_X86_64_JUMP_SLOT	__tls_get_addr
+ +12f8:	([0-9a-f]{2} ){3}
+ +12fb:	48 01 d8[ 	]+add    %rbx,%rax
+ +12fe:	ff d0[ 	]+callq  \*%rax
+ +1300:	90[ 	]+nop *
+ +1301:	90[ 	]+nop *
+ +1302:	4c 8d a0 60 00 00 00[ 	]+lea    0x60\(%rax\),%r12
+ +1309:	90[ 	]+nop *
+ +130a:	90[ 	]+nop *
+ +130b:	48 8d 88 65 00 00 00[ 	]+lea    0x65\(%rax\),%rcx
+ +1312:	90[ 	]+nop *
+ +1313:	90[ 	]+nop *
+ +1314:	90[ 	]+nop *
+ +1315:	90[ 	]+nop *
+ +1316:	5b[ 	]+pop    %rbx
+ +1317:	5b[ 	]+pop    %rbx
+ +1318:	c9[ 	]+leaveq 
+ +1319:	c3[ 	]+retq   

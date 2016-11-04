@@ -1,7 +1,5 @@
 /* BFD back-end for TMS320C30 a.out binaries.
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2009,
-   2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -701,7 +699,7 @@ MY_final_link_callback (bfd *abfd,
 
   *ptreloff = obj_datasec (abfd)->filepos + execp->a_data;
   *pdreloff = *ptreloff + execp->a_trsize;
-  *psymoff = *pdreloff + execp->a_drsize;;
+  *psymoff = *pdreloff + execp->a_drsize;
 }
 
 #endif
@@ -919,6 +917,10 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #ifndef MY_get_symbol_info
 #define MY_get_symbol_info NAME (aout, get_symbol_info)
 #endif
+#ifndef MY_get_symbol_version_string
+#define MY_get_symbol_version_string \
+  _bfd_nosymbols_get_symbol_version_string
+#endif
 #ifndef MY_get_lineno
 #define MY_get_lineno NAME (aout, get_lineno)
 #endif
@@ -927,6 +929,9 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #endif
 #ifndef MY_find_nearest_line
 #define MY_find_nearest_line NAME (aout, find_nearest_line)
+#endif
+#ifndef MY_find_line
+#define MY_find_line _bfd_nosymbols_find_line
 #endif
 #ifndef MY_find_inliner_info
 #define MY_find_inliner_info _bfd_nosymbols_find_inliner_info
@@ -980,9 +985,6 @@ tic30_aout_set_arch_mach (bfd *abfd,
 #endif
 #ifndef MY_bfd_link_hash_table_create
 #define MY_bfd_link_hash_table_create NAME (aout, link_hash_table_create)
-#endif
-#ifndef MY_bfd_link_hash_table_free
-#define MY_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #endif
 #ifndef MY_bfd_link_add_symbols
 #define MY_bfd_link_add_symbols NAME (aout, link_add_symbols)

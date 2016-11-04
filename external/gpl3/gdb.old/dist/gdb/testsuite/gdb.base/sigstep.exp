@@ -409,13 +409,19 @@ foreach cmd {"stepi" "nexti" "step" "next" "continue"} {
 
 # Try stepping when there's a signal pending, a pre-existing
 # breakpoint at the current instruction, and a breakpoint in the
-# handler.  Should advance to the signal handler.
+# handler.  Should advance to the signal handler.  DISPLACED indicates
+# whether to try with or without displaced stepping (to exercise the
+# different techniques of stepping over the breakpoint at the current
+# instruction).
 
-proc breakpoint_to_handler { cmd } {
+proc breakpoint_to_handler { displaced cmd } {
     global infinite_loop
 
-    with_test_prefix "$cmd on breakpoint, to handler" {
+    with_test_prefix "displaced=$displaced: $cmd on breakpoint, to handler" {
 	restart
+
+	gdb_test_no_output "set displaced-stepping $displaced"
+
 	# Use the real-time itimer, as otherwize the process never gets
 	# enough time to expire the timer.
 	gdb_test_no_output "set itimer = itimer_real"
@@ -430,11 +436,21 @@ proc breakpoint_to_handler { cmd } {
 	sleep 1
 
 	gdb_test "$cmd" " handler .*" "performing $cmd"
+
+	# Make sure we the displaced stepping scratch pad isn't in the
+	# backtrace.
+	gdb_test_sequence "bt" "backtrace" {
+	    "\[\r\n\]+.0 \[^\r\n\]* handler "
+	    "\[\r\n\]+.1  .signal handler called."
+	    "\[\r\n\]+.2 \[^\r\n\]* main "
+	}
     }
 }
 
-foreach cmd {"step" "next" "continue"} {
-    breakpoint_to_handler $cmd
+foreach displaced {"off" "on"} {
+    foreach cmd {"step" "next" "continue"} {
+	breakpoint_to_handler $displaced $cmd
+    }
 }
 
 # Try stepping when there's a signal pending, and a breakpoint at the
@@ -449,11 +465,17 @@ foreach cmd {"step" "next" "continue"} {
 # have been called by the trampoline code.  This test checks that it
 # is possible to stop the inferior, even at that first instruction.
 
-proc breakpoint_to_handler_entry { cmd } {
+# DISPLACED indicates whether to try with or without displaced
+# stepping (to exercise the different techniques of stepping over the
+# breakpoint at the current instruction).
+proc breakpoint_to_handler_entry { displaced cmd } {
     global infinite_loop
 
-    with_test_prefix "$cmd on breakpoint, to handler entry" {
+    with_test_prefix "displaced=$displaced: $cmd on breakpoint, to handler entry" {
 	restart
+
+	gdb_test_no_output "set displaced-stepping $displaced"
+
 	# Use the real-time itimer, as otherwize the process never gets
 	# enough time to expire the timer.
 	gdb_test_no_output "set itimer = itimer_real"
@@ -468,24 +490,37 @@ proc breakpoint_to_handler_entry { cmd } {
 	sleep 1
 
 	gdb_test "$cmd" " handler .*" "performing $cmd"
+
+	# Make sure we the displaced stepping scratch pad isn't in the
+	# backtrace.
+	gdb_test_sequence "bt" "backtrace" {
+	    "\[\r\n\]+.0 \[^\r\n\]* handler "
+	    "\[\r\n\]+.1  .signal handler called."
+	    "\[\r\n\]+.2 \[^\r\n\]* main "
+	}
     }
 }
 
-foreach cmd {"step" "next" "continue"} {
-    breakpoint_to_handler_entry $cmd
+foreach displaced {"off" "on"} {
+    foreach cmd {"step" "next" "continue"} {
+	breakpoint_to_handler_entry $displaced $cmd
+    }
 }
 
 # Try stepping when there's a signal pending, and a pre-existing
 # breakpoint at the current instruction, and no breakpoint in the
-# handler.  Should advance to the next line/instruction.  If SW_WATCH
-# is true, set a software watchpoint, which exercises stepping the
-# breakpoint instruction while delivering a signal at the same time.
-# If NO_HANDLER, arrange for the signal's handler be SIG_IGN, thus
-# when the software watchpoint is also set, testing stepping a
-# breakpoint instruction and immediately triggering the breakpoint
-# (exercises adjust_pc_after_break logic).
+# handler.  Should advance to the next line/instruction.  DISPLACED
+# indicates whether to try with or without displaced stepping (to
+# exercise the different techniques of stepping over the breakpoint at
+# the current instruction).  If SW_WATCH is true, set a software
+# watchpoint, which exercises stepping the breakpoint instruction
+# while delivering a signal at the same time.  If NO_HANDLER, arrange
+# for the signal's handler be SIG_IGN, thus when the software
+# watchpoint is also set, testing stepping a breakpoint instruction
+# and immediately triggering the breakpoint (exercises
+# adjust_pc_after_break logic).
 
-proc breakpoint_over_handler { cmd with_sw_watch no_handler } {
+proc breakpoint_over_handler { displaced cmd with_sw_watch no_handler } {
     global infinite_loop
     global clear_done
 
@@ -497,8 +532,11 @@ proc breakpoint_over_handler { cmd with_sw_watch no_handler } {
 	append prefix ", no handler"
     }
 
-    with_test_prefix "$prefix" {
+    with_test_prefix "displaced=$displaced: $prefix" {
 	restart
+
+	gdb_test_no_output "set displaced-stepping $displaced"
+
 	# Use the real-time itimer, as otherwize the process never gets
 	# enough time to expire the timer.
 	gdb_test_no_output "set itimer = itimer_real"
@@ -534,10 +572,12 @@ proc breakpoint_over_handler { cmd with_sw_watch no_handler } {
     }
 }
 
-foreach cmd {"stepi" "nexti" "step" "next" "continue"} {
-    foreach with_sw_watch {0 1} {
-	foreach no_handler {0 1} {
-	    breakpoint_over_handler $cmd $with_sw_watch $no_handler
+foreach displaced {"off" "on"} {
+    foreach cmd {"stepi" "nexti" "step" "next" "continue"} {
+	foreach with_sw_watch {0 1} {
+	    foreach no_handler {0 1} {
+		breakpoint_over_handler $displaced $cmd $with_sw_watch $no_handler
+	    }
 	}
     }
 }

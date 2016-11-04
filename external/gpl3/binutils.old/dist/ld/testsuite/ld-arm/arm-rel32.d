@@ -9,4 +9,4 @@ OFFSET +TYPE +VALUE
 
 
 Contents of section \.data:
- [^ ]+ 00000000 00010000  .*
+ [^ ]+ 00000000 (00010000|00000100)  .*

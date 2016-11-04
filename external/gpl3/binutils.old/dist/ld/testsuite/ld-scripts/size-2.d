@@ -1,7 +1,7 @@
 #source: size-2.s
 #ld: -T size-2.t
 #readelf: -l --wide
-#xfail: "hppa64-*-*" "v850-*-*"
+#xfail: "hppa64-*-*" "v850*-*-*"
 
 #...
 Program Headers:

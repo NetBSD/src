@@ -1,6 +1,6 @@
 /* Target-dependent code for DICOS running on x86-64's, for GDB.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,8 +25,6 @@
 static void
 amd64_dicos_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-
   amd64_init_abi (info, gdbarch);
 
   dicos_init_abi (gdbarch);

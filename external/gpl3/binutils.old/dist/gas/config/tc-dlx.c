@@ -1,6 +1,5 @@
 /* tc-dlx.c -- Assemble for the DLX
-   Copyright 2002, 2003, 2004, 2005, 2007, 2009, 2010, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -231,11 +230,10 @@ s_proc (int end_p)
 	  return;
 	}
 
-      name = input_line_pointer;
-      delim1 = get_symbol_end ();
+      delim1 = get_symbol_name (&name);
       name = xstrdup (name);
       *input_line_pointer = delim1;
-      SKIP_WHITESPACE ();
+      SKIP_WHITESPACE_AFTER_NAME ();
 
       if (*input_line_pointer != ',')
 	{
@@ -258,10 +256,9 @@ s_proc (int end_p)
 	{
 	  ++input_line_pointer;
 	  SKIP_WHITESPACE ();
-	  label = input_line_pointer;
-	  delim2 = get_symbol_end ();
+	  delim2 = get_symbol_name (&label);
 	  label = xstrdup (label);
-	  *input_line_pointer = delim2;
+	  (void) restore_line_pointer (delim2);
 	}
 
       current_name = name;
@@ -667,6 +664,9 @@ machine_ip (char *str)
   expressionS *operand = &the_operand;
   unsigned int reg, reg_shift = 0;
 
+  memset (&the_insn, '\0', sizeof (the_insn));
+  the_insn.reloc = NO_RELOC;
+
   /* Fixup the opcode string to all lower cases, and also
      allow numerical digits.  */
   s = str;
@@ -691,19 +691,12 @@ machine_ip (char *str)
       return;
     }
 
-  /* Hash the opcode, insn will have the string from opcode table.
-     also initialized the_insn struct.  */
+  /* Hash the opcode, insn will have the string from opcode table.  */
   if ((insn = (struct machine_opcode *) hash_find (op_hash, str)) == NULL)
     {
       /* Handle the ret and return macro here.  */
       if ((strcmp (str, "ret") == 0) || (strcmp (str, "return") == 0))
-	{
-	  memset (&the_insn, '\0', sizeof (the_insn));
-	  the_insn.reloc = NO_RELOC;
-	  the_insn.pcrel = 0;
-	  the_insn.opcode =
-	    (unsigned long)(JROP | 0x03e00000);    /* 0x03e00000 = r31 << 21 */
-	}
+	the_insn.opcode = JROP | 0x03e00000;    /* 0x03e00000 = r31 << 21 */
       else
 	as_bad (_("Unknown opcode `%s'."), str);
 
@@ -711,9 +704,6 @@ machine_ip (char *str)
     }
 
   opcode = insn->opcode;
-  memset (&the_insn, '\0', sizeof (the_insn));
-  the_insn.reloc = NO_RELOC;
-  the_insn.pcrel = 0;
 
   /* Set the sip reloc HI16 flag.  */
   if (!set_dlx_skip_hi16_flag (1))
@@ -811,7 +801,7 @@ machine_ip (char *str)
 	      continue;
 	    }
 
-	  the_insn.reloc        = (the_insn.HI) ? RELOC_DLX_HI16 
+	  the_insn.reloc        = (the_insn.HI) ? RELOC_DLX_HI16
 	    : (the_insn.LO ? RELOC_DLX_LO16 : RELOC_DLX_16);
 	  the_insn.reloc_offset = 2;
 	  the_insn.size         = 2;

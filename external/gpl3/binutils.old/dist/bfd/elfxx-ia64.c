@@ -1,6 +1,5 @@
 /* IA-64 support for 64-bit ELF
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011  Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -92,7 +91,7 @@ ia64_elf_reloc (bfd *abfd ATTRIBUTE_UNUSED, arelent *reloc,
    TYPE field.  */
 static reloc_howto_type ia64_howto_table[] =
   {
-    IA64_HOWTO (R_IA64_NONE,	    "NONE",	   0, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_NONE,	    "NONE",	   3, FALSE, TRUE),
 
     IA64_HOWTO (R_IA64_IMM14,	    "IMM14",	   0, FALSE, TRUE),
     IA64_HOWTO (R_IA64_IMM22,	    "IMM22",	   0, FALSE, TRUE),

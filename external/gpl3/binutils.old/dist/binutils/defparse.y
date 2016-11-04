@@ -1,20 +1,19 @@
 %{ /* defparse.y - parser for .def files */
 
-/* Copyright 1995, 1997, 1998, 1999, 2001, 2004, 2005, 2007
-   Free Software Foundation, Inc.
-   
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+
    This file is part of GNU Binutils.
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
@@ -50,10 +49,10 @@ start: start command
 	| command
 	;
 
-command: 
+command:
 		NAME opt_name opt_base { def_name ($2, $3); }
 	|	LIBRARY opt_name opt_base option_list { def_library ($2, $3); }
-	|	EXPORTS explist 
+	|	EXPORTS explist
 	|	DESCRIPTION ID { def_description ($2);}
 	|	STACKSIZE NUMBER opt_number { def_stacksize ($2, $3);}
 	|	HEAPSIZE NUMBER opt_number { def_heapsize ($2, $3);}
@@ -76,7 +75,7 @@ expline:
 		opt_import_name
 			{ def_exports ($1, $2, $3, $4, $5, $6, $7, $8);}
 	;
-implist:	
+implist:
 		implist impline
 	|	impline
 	;
@@ -116,12 +115,12 @@ attr_list:
 
 opt_comma:
 	','
-	| 
+	|
 	;
 opt_number: ',' NUMBER { $$=$2;}
 	|	   { $$=-1;}
 	;
-	
+
 attr:
 		READ { $$ = 1; }
 	|	WRITE { $$ = 2; }
@@ -191,19 +190,19 @@ opt_name2: ID { $$ = $1; }
 	    $$ = name;
 	  }
 	| '.' opt_name2
-	  { 
+	  {
 	    char *name = xmalloc (strlen ($2) + 2);
 	    sprintf (name, ".%s", $2);
 	    $$ = name;
 	  }
 	| keyword_as_name '.' opt_name2
-	  { 
+	  {
 	    char *name = xmalloc (strlen ($1) + 1 + strlen ($3) + 1);
 	    sprintf (name, "%s.%s", $1, $3);
 	    $$ = name;
 	  }
 	| ID '.' opt_name2
-	  { 
+	  {
 	    char *name = xmalloc (strlen ($1) + 1 + strlen ($3) + 1);
 	    sprintf (name, "%s.%s", $1, $3);
 	    $$ = name;
@@ -213,7 +212,7 @@ opt_name: opt_name2 { $$ =$1; }
 	|		{ $$=""; }
 	;
 
-opt_ordinal: 
+opt_ordinal:
 	  '@' NUMBER     { $$=$2;}
 	|                { $$=-1;}
 	;
@@ -225,7 +224,7 @@ opt_import_name:
 
 opt_equal_name:
           '=' opt_name2	{ $$ = $2; }
-        | 		{ $$ =  0; }			 
+        | 		{ $$ =  0; }
 	;
 
 opt_base: BASE	'=' NUMBER	{ $$= $3;}

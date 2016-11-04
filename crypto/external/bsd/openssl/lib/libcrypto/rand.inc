@@ -1,4 +1,4 @@
-#	$NetBSD: rand.inc,v 1.1 2009/07/19 23:30:44 christos Exp $
+#	$NetBSD: rand.inc,v 1.1.30.1 2016/11/04 14:42:36 pgoyette Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,7 +9,7 @@
 
 
 RAND_SRCS = md_rand.c randfile.c rand_lib.c rand_err.c rand_egd.c \
-	rand_win.c rand_unix.c rand_os2.c
+	rand_win.c rand_unix.c rand_os2.c rand_nw.c
 SRCS += ${RAND_SRCS}
 
 .for cryptosrc in ${RAND_SRCS}

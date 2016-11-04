@@ -1,5 +1,6 @@
 sinclude(../../config/acx.m4)
 sinclude(../../config/override.m4)
+sinclude(../transform.m4)
 
 # AM_CONDITIONAL                                            -*- Autoconf -*-
 

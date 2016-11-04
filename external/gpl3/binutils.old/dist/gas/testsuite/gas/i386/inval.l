@@ -1,5 +1,4 @@
 .*: Assembler messages:
-.*:3: Error: .*
 .*:4: Error: .*
 .*:5: Error: .*
 .*:6: Error: .*
@@ -53,14 +52,13 @@
 .*:54: Error: .*
 .*:55: Error: .*
 .*:56: Error: .*
-.*:58: Error: .*
+.*:57: Error: .*
 .*:59: Error: .*
+.*:60: Error: .*
 .*:62: Error: .*
 .*:63: Error: .*
 .*:64: Error: .*
 .*:65: Error: .*
-.*:66: Error: .*
-.*:67: Error: .*
 .*:68: Error: .*
 .*:69: Error: .*
 .*:70: Error: .*
@@ -71,98 +69,110 @@
 .*:75: Error: .*
 .*:76: Error: .*
 .*:77: Error: .*
+.*:78: Error: .*
 .*:79: Error: .*
 .*:80: Error: .*
 .*:81: Error: .*
 .*:82: Error: .*
-.*:84: Error: .*
+.*:83: Error: .*
+.*:85: Error: .*
+.*:86: Error: .*
+.*:87: Error: .*
+.*:88: Error: .*
+.*:90: Error: .*
 GAS LISTING .*
 
 
 [ 	]*1[ 	]+\.text
-[ 	]*2[ 	]+\# All the following should be illegal
-[ 	]*3[ 	]+mov	\(%dx\),%al
-[ 	]*4[ 	]+mov	\(%eax,%esp,2\),%al
-[ 	]*5[ 	]+setae	%eax
-[ 	]*6[ 	]+pushb	%ds
-[ 	]*7[ 	]+popb	%ds
-[ 	]*8[ 	]+pushb	%al
-[ 	]*9[ 	]+popb	%al
-[ 	]*10[ 	]+pushb	%ah
-[ 	]*11[ 	]+popb	%ah
-[ 	]*12[ 	]+pushb	%ax
-[ 	]*13[ 	]+popb	%ax
-[ 	]*14[ 	]+pushb	%eax
-[ 	]*15[ 	]+popb	%eax
-[ 	]*16[ 	]+movb	%ds,%ax
-[ 	]*17[ 	]+movb	%ds,%eax
-[ 	]*18[ 	]+movb	%ax,%ds
-[ 	]*19[ 	]+movb	%eax,%ds
-[ 	]*20[ 	]+movdb	%eax,%mm0
-[ 	]*21[ 	]+movqb	0,%mm0
-[ 	]*22[ 	]+ldsb	0,%eax
-[ 	]*23[ 	]+setnew	0
-[ 	]*24[ 	]+movdw	%eax,%mm0
-[ 	]*25[ 	]+movqw	0,%mm0
-[ 	]*26[ 	]+div	%cx,%al
-[ 	]*27[ 	]+div	%cl,%ax
-[ 	]*28[ 	]+div	%ecx,%al
-[ 	]*29[ 	]+imul	10,%bx,%ecx
-[ 	]*30[ 	]+imul	10,%bx,%al
-[ 	]*31[ 	]+popab
-[ 	]*32[ 	]+stil
-[ 	]*33[ 	]+aaab
-[ 	]*34[ 	]+cwdel
-[ 	]*35[ 	]+cwdw
-[ 	]*36[ 	]+callww	0
-[ 	]*37[ 	]+foo:	jaw	foo
-[ 	]*38[ 	]+jcxzw	foo
-[ 	]*39[ 	]+jecxzl	foo
-[ 	]*40[ 	]+loopb	foo
-[ 	]*41[ 	]+xlatw	%es:%bx
-[ 	]*42[ 	]+xlatl	%es:%bx
-[ 	]*43[ 	]+intl	2
-[ 	]*44[ 	]+int3b
-[ 	]*45[ 	]+hltb
-[ 	]*46[ 	]+fstb	%st\(0\)
-[ 	]*47[ 	]+fcompll	28\(%ebp\)
-[ 	]*48[ 	]+fldlw	\(%eax\)
-[ 	]*49[ 	]+movl	\$%ebx,%eax
-[ 	]*50[ 	]+insertq	\$4,\$2,%xmm2,%ebx
-[ 	]*51[ 	]+cvtsi2ssq \(%eax\),%xmm1
-[ 	]*52[ 	]+cvtsi2sdq \(%eax\),%xmm1
-[ 	]*53[ 	]+fnstsw %eax
-[ 	]*54[ 	]+fnstsw %al
-[ 	]*55[ 	]+fstsw %eax
-[ 	]*56[ 	]+fstsw %al
-[ 	]*57[ 	]+
+[ 	]*2[ 	]+\.allow_index_reg
+[ 	]*3[ 	]+\# All the following should be illegal
+[ 	]*4[ 	]+mov	\(%dx\),%al
+[ 	]*5[ 	]+mov	\(%eax,%esp,2\),%al
+[ 	]*6[ 	]+setae	%eax
+[ 	]*7[ 	]+pushb	%ds
+[ 	]*8[ 	]+popb	%ds
+[ 	]*9[ 	]+pushb	%al
+[ 	]*10[ 	]+popb	%al
+[ 	]*11[ 	]+pushb	%ah
+[ 	]*12[ 	]+popb	%ah
+[ 	]*13[ 	]+pushb	%ax
+[ 	]*14[ 	]+popb	%ax
+[ 	]*15[ 	]+pushb	%eax
+[ 	]*16[ 	]+popb	%eax
+[ 	]*17[ 	]+movb	%ds,%ax
+[ 	]*18[ 	]+movb	%ds,%eax
+[ 	]*19[ 	]+movb	%ax,%ds
+[ 	]*20[ 	]+movb	%eax,%ds
+[ 	]*21[ 	]+movdb	%eax,%mm0
+[ 	]*22[ 	]+movqb	0,%mm0
+[ 	]*23[ 	]+ldsb	0,%eax
+[ 	]*24[ 	]+setnew	0
+[ 	]*25[ 	]+movdw	%eax,%mm0
+[ 	]*26[ 	]+movqw	0,%mm0
+[ 	]*27[ 	]+div	%cx,%al
+[ 	]*28[ 	]+div	%cl,%ax
+[ 	]*29[ 	]+div	%ecx,%al
+[ 	]*30[ 	]+imul	10,%bx,%ecx
+[ 	]*31[ 	]+imul	10,%bx,%al
+[ 	]*32[ 	]+popab
+[ 	]*33[ 	]+stil
+[ 	]*34[ 	]+aaab
+[ 	]*35[ 	]+cwdel
+[ 	]*36[ 	]+cwdw
+[ 	]*37[ 	]+callww	0
+[ 	]*38[ 	]+foo:	jaw	foo
+[ 	]*39[ 	]+jcxzw	foo
+[ 	]*40[ 	]+jecxzl	foo
+[ 	]*41[ 	]+loopb	foo
+[ 	]*42[ 	]+xlatw	%es:%bx
+[ 	]*43[ 	]+xlatl	%es:%bx
+[ 	]*44[ 	]+intl	2
+[ 	]*45[ 	]+int3b
+[ 	]*46[ 	]+hltb
+[ 	]*47[ 	]+fstb	%st\(0\)
+[ 	]*48[ 	]+fcompll	28\(%ebp\)
+[ 	]*49[ 	]+fldlw	\(%eax\)
+[ 	]*50[ 	]+movl	\$%ebx,%eax
+[ 	]*51[ 	]+insertq	\$4,\$2,%xmm2,%ebx
+[ 	]*52[ 	]+cvtsi2ssq \(%eax\),%xmm1
+[ 	]*53[ 	]+cvtsi2sdq \(%eax\),%xmm1
+[ 	]*54[ 	]+fnstsw %eax
+[ 	]*55[ 	]+fnstsw %al
+[ 	]*56[ 	]+fstsw %eax
+[ 	]*57[ 	]+fstsw %al
 GAS LISTING .*
 
 
-[ 	]*58[ 	]+movnti %ax, \(%eax\)
-[ 	]*59[ 	]+movntiw %ax, \(%eax\)
-[ 	]*60[ 	]+
-[ 	]*61[ 	]+\.intel_syntax noprefix
-[ 	]*62[ 	]+cvtsi2ss xmm1,QWORD PTR \[eax\]
-[ 	]*63[ 	]+cvtsi2sd xmm1,QWORD PTR \[eax\]
-[ 	]*64[ 	]+cvtsi2ssq xmm1,QWORD PTR \[eax\]
-[ 	]*65[ 	]+cvtsi2sdq xmm1,QWORD PTR \[eax\]
-[ 	]*66[ 	]+movq xmm1, XMMWORD PTR \[esp\]
-[ 	]*67[ 	]+movq xmm1, DWORD PTR \[esp\]
-[ 	]*68[ 	]+movq xmm1, WORD PTR \[esp\]
-[ 	]*69[ 	]+movq xmm1, BYTE PTR \[esp\]
-[ 	]*70[ 	]+movq XMMWORD PTR \[esp\],xmm1
-[ 	]*71[ 	]+movq DWORD PTR \[esp\],xmm1
-[ 	]*72[ 	]+movq WORD PTR \[esp\],xmm1
-[ 	]*73[ 	]+movq BYTE PTR \[esp\],xmm1
-[ 	]*74[ 	]+fnstsw eax
-[ 	]*75[ 	]+fnstsw al
-[ 	]*76[ 	]+fstsw eax
-[ 	]*77[ 	]+fstsw al
-[ 	]*78[ 	]+
-[ 	]*79[ 	]+movsx ax, \[eax\]
-[ 	]*80[ 	]+movsx eax, \[eax\]
-[ 	]*81[ 	]+movzx ax, \[eax\]
-[ 	]*82[ 	]+movzx eax, \[eax\]
-[ 	]*83[ 	]+
-[ 	]*84[ 	]+movnti word ptr \[eax\], ax
+[ 	]*58[ 	]+
+[ 	]*59[ 	]+movnti %ax, \(%eax\)
+[ 	]*60[ 	]+movntiw %ax, \(%eax\)
+[ 	]*61[ 	]+
+[ 	]*62[ 	]+add \(%si,%esi\), %eax
+[ 	]*63[ 	]+add \(%esi,%si\), %eax
+[ 	]*64[ 	]+add \(%eiz\), %eax
+[ 	]*65[ 	]+add \(%eax\), %eiz
+[ 	]*66[ 	]+
+[ 	]*67[ 	]+\.intel_syntax noprefix
+[ 	]*68[ 	]+cvtsi2ss xmm1,QWORD PTR \[eax\]
+[ 	]*69[ 	]+cvtsi2sd xmm1,QWORD PTR \[eax\]
+[ 	]*70[ 	]+cvtsi2ssq xmm1,QWORD PTR \[eax\]
+[ 	]*71[ 	]+cvtsi2sdq xmm1,QWORD PTR \[eax\]
+[ 	]*72[ 	]+movq xmm1, XMMWORD PTR \[esp\]
+[ 	]*73[ 	]+movq xmm1, DWORD PTR \[esp\]
+[ 	]*74[ 	]+movq xmm1, WORD PTR \[esp\]
+[ 	]*75[ 	]+movq xmm1, BYTE PTR \[esp\]
+[ 	]*76[ 	]+movq XMMWORD PTR \[esp\],xmm1
+[ 	]*77[ 	]+movq DWORD PTR \[esp\],xmm1
+[ 	]*78[ 	]+movq WORD PTR \[esp\],xmm1
+[ 	]*79[ 	]+movq BYTE PTR \[esp\],xmm1
+[ 	]*80[ 	]+fnstsw eax
+[ 	]*81[ 	]+fnstsw al
+[ 	]*82[ 	]+fstsw eax
+[ 	]*83[ 	]+fstsw al
+[ 	]*84[ 	]+
+[ 	]*85[ 	]+movsx ax, \[eax\]
+[ 	]*86[ 	]+movsx eax, \[eax\]
+[ 	]*87[ 	]+movzx ax, \[eax\]
+[ 	]*88[ 	]+movzx eax, \[eax\]
+[ 	]*89[ 	]+
+[ 	]*90[ 	]+movnti word ptr \[eax\], ax

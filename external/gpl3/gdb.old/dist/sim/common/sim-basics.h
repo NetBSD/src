@@ -20,8 +20,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef _SIM_BASICS_H_
-#define _SIM_BASICS_H_
+#ifndef SIM_BASICS_H
+#define SIM_BASICS_H
 
 
 /* Basic configuration */
@@ -126,11 +126,6 @@ typedef enum {
 
 /* Basic definitions - ordered so that nothing calls what comes after it.  */
 
-/* FIXME: conditionalizing tconfig.h on HAVE_CONFIG_H seems wrong.  */
-#ifdef HAVE_CONFIG_H
-#include "tconfig.h"
-#endif
-
 #include "ansidecl.h"
 #include "gdb/callback.h"
 #include "gdb/remote-sim.h"
@@ -151,4 +146,4 @@ typedef enum {
    weight objects, such as core and events, are defined in the more
    serious sim-base.h header. */
 
-#endif /* _SIM_BASICS_H_ */
+#endif /* SIM_BASICS_H */

@@ -1,5 +1,5 @@
 # tls.exp -- Expect script to test thread-local storage
-# Copyright (C) 1992-2015 Free Software Foundation, Inc.
+# Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+load_lib gdb-python.exp
 
 standard_testfile tls.c tls2.c
 
@@ -69,6 +71,17 @@ proc check_thread_local {number} {
     gdb_test "p a_thread_local" \
 	    "= $expected_value" \
 	    "${number} thread local storage"
+
+    if {![skip_python_tests]} {
+	gdb_test_no_output \
+	    "python sym = gdb.lookup_symbol('a_thread_local')\[0\]" \
+	    "${number} look up a_thread_local symbol"
+	# We intentionally do not pass a frame to "value" here.  If a
+	# TLS variable requires a frame, this will fail.  However, if
+	# it does not require a frame, then it will succeed.
+	gdb_test "python print(sym.value())" "$expected_value" \
+	    "${number} get symbol value without frame"
+    }
 
     gdb_test "p K::another_thread_local" \
 	    "= $me_variable" \
@@ -139,6 +152,10 @@ proc check_thread_stack {number spin_threads spin_threads_level} {
 }
 
 clean_restart ${binfile}
+
+gdb_test "print a_thread_local" \
+    "Cannot read .a_thread_local. without registers"
+
 if ![runto_main] then {
    fail "Can't run to main"
    return 0
@@ -162,7 +179,7 @@ gdb_test "b [gdb_get_line_number "before exit"]" \
 
 send_gdb "continue\n"
 gdb_expect {
-    -re ".*Program received signal SIGSEGV.*a_thread_local = 0;.*$gdb_prompt $" {
+    -re ".* received signal SIGSEGV.*a_thread_local = 0;.*$gdb_prompt $" {
         # This is the first symptom if the gcc and binutils versions
         # in use support TLS, but the system glibc does not.
         unsupported "continue to first thread: system does not support TLS"
@@ -205,7 +222,7 @@ gdb_test "continue" ".*Breakpoint 3.*still alive.*" "continue to synch point"
 set no_of_threads 0
 send_gdb "info thread\n"
 gdb_expect {
-    -re "^info thread\[ \t\r\n\]+ *Id .*Frame\[ \t\r\n\]+(\[0-9\]+) *Thread.*$gdb_prompt $" {
+    -re "^info thread\[ \t\r\n\]+ *Id .*Frame\[ \t\r\n\]+.*(\[0-9\]+) *Thread\[^\r\n\]+\r\n$gdb_prompt $" {
 	   set no_of_threads $expect_out(1,string)
 	   pass "get number of threads"
         }

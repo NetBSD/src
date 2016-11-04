@@ -1,5 +1,5 @@
 #source: x86-64-arch-2.s
-#as: -march=bdver2+avx+vmx+smx+xsave+xsaveopt+aes+pclmul+movbe+ept+clflush+svme+padlock+prfchw
+#as: -march=bdver2+vmx+smx+xsaveopt+movbe+ept+padlock
 #objdump: -dw
 #name: x86-64 arch 2 (bdver2)
 
@@ -29,6 +29,7 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	c4 e3 49 44 d4 08    	vpclmulqdq \$0x8,%xmm4,%xmm6,%xmm2
 [ 	]*[a-f0-9]+:	c4 e2 c9 98 d4       	vfmadd132pd %xmm4,%xmm6,%xmm2
 [ 	]*[a-f0-9]+:	0f 38 f0 19          	movbe  \(%rcx\),%ebx
+[ 	]*[a-f0-9]+:	48 0f c7 0e          	cmpxchg16b \(%rsi\)
 [ 	]*[a-f0-9]+:	66 0f 38 80 19       	invept \(%rcx\),%rbx
 [ 	]*[a-f0-9]+:	0f 01 f9             	rdtscp 
 [ 	]*[a-f0-9]+:	0f 0d 0c 75 00 10 00 00 	prefetchw 0x1000\(,%rsi,2\)

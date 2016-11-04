@@ -2,7 +2,7 @@
 
 # undef_symbol.sh -- a test case for undefined symbols in shared libraries
 
-# Copyright 2007, 2008 Free Software Foundation, Inc.
+# Copyright (C) 2007-2015 Free Software Foundation, Inc.
 # Written by Ian Lance Taylor <iant@google.com>.
 
 # This file is part of gold.

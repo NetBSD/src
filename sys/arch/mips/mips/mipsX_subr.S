@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.71.2.2 2016/08/06 00:19:06 pgoyette Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.71.2.3 2016/11/04 14:49:02 pgoyette Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -386,11 +386,7 @@ VECTOR(MIPSX(tlb_miss), unknown)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#0d: k0=bad address (again)
 	PTR_L	k1, 0(k1)			#0e: k1=seg entry
 	b	MIPSX(tlb_miss_common)		#0f
-#ifdef MIPSNNR2
-	 _EXT	k0, k0, SEGSHIFT, SEGLENGTH	#0f: k0=seg index
-#else
-	 PTR_SRL k0, SEGSHIFT - PTR_SCALESHIFT	#0f: k0=seg offset (almost)
-#endif
+	 PTR_SRL k0, SEGSHIFT - PTR_SCALESHIFT	#10: k0=seg offset (almost)
 #endif /* LP64 */
 2: /* handle useg addresses */
 	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#11: k1=hi of seg0tab

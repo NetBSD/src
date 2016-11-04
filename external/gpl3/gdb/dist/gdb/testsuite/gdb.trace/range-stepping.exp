@@ -1,4 +1,4 @@
-# Copyright 2013-2015 Free Software Foundation, Inc.
+# Copyright 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,6 +34,11 @@ if ![gdb_target_supports_trace] {
     return -1
 }
 
+if ![gdb_range_stepping_enabled] {
+    unsupported "range stepping not supported by the target"
+    return -1
+}
+
 # Check that range stepping works well with tracepoints.
 
 proc range_stepping_with_tracepoint { type } {
@@ -47,8 +52,8 @@ proc range_stepping_with_tracepoint { type } {
 
 	# Step a line with a tracepoint in the middle.  The tracepoint
 	# itself shouldn't have any effect on range stepping.  We
-	# should see one vCont;r and no vCont;s's.
-	exec_cmd_expect_vCont_count "step" 0 1
+	# should see one vCont;r.
+	exec_cmd_expect_vCont_count "step" 1
 	gdb_test_no_output "tstop"
 	gdb_test "tfind" "Found trace frame .*" "first tfind"
 	gdb_test "tfind" \
@@ -62,7 +67,7 @@ proc range_stepping_with_tracepoint { type } {
 range_stepping_with_tracepoint "trace"
 
 set libipa [get_in_proc_agent]
-gdb_load_shlibs $libipa
+set remote_libipa [gdb_load_shlib $libipa]
 
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable [list debug nowarnings shlib=$libipa] ] != "" } {
@@ -78,7 +83,7 @@ if ![runto_main] {
 }
 
 gdb_reinitialize_dir $srcdir/$subdir
-if { [gdb_test "info sharedlibrary" ".*${libipa}.*" "IPA loaded"] != 0 } {
+if { [gdb_test "info sharedlibrary" ".*${remote_libipa}.*" "IPA loaded"] != 0 } {
     untested "Could not find IPA lib loaded"
 } else {
     range_stepping_with_tracepoint "ftrace"

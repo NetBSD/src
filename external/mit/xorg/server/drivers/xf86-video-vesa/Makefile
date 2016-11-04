@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/30 04:44:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.46.1 2016/11/04 14:48:49 pgoyette Exp $
 
 DRIVER=		xf86-video-vesa
 DRIVER_NAME=	vesa_drv

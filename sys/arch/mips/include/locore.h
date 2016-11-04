@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.100 2016/07/11 16:15:35 matt Exp $ */
+/* $NetBSD: locore.h,v 1.100.2.1 2016/11/04 14:49:02 pgoyette Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -32,6 +32,8 @@
 #include "opt_cputype.h"
 #endif
 
+#ifndef __ASSEMBLER__
+
 #include <sys/cpu.h>
 
 #include <mips/mutex.h>
@@ -45,6 +47,7 @@ typedef uint32_t pt_entry_t;
 #endif
 
 #include <uvm/pmap/tlb.h>
+#endif /* !__ASSEMBLER__ */
 
 #ifdef _KERNEL
 
@@ -90,6 +93,9 @@ typedef uint32_t pt_entry_t;
 #error MIPS1 does not support non-4KB page sizes.
 #endif
 
+/* XXX some .S files look for MIPS3_PLUS */
+#ifndef __ASSEMBLER__
+
 /* XXX simonb
  * Should the following be in a cpu_info type structure?
  * And how many of these are per-cpu vs. per-system?  (Ie,
@@ -121,6 +127,8 @@ struct mips_options {
 	uint32_t mips3_tlb_pg_mask;
 #endif
 };
+
+#endif /* !__ASSEMBLER__ */
 
 /*
  * Macros to find the CPU architecture we're on at run-time,
@@ -308,6 +316,8 @@ struct mips_options {
 #define	MIPS_HAS_CLOCK	(mips_options.mips_cpu_arch >= CPU_ARCH_MIPS3)
 
 #endif /* run-time test */
+
+#ifndef __ASSEMBLER__
 
 struct tlbmask;
 struct trapframe;
@@ -966,7 +976,7 @@ struct pridtab {
 # define MIPS_CIDFL_RMI_L2SZ(cidfl)					\
 		((256*1024) << (((cidfl) & MIPS_CIDFL_RMI_L2SZ_MASK)	\
 			>> MIPS_CIDFL_RMI_L2SZ_SHIFT))
-
+#endif /* !__ASSEMBLER__ */
 #endif	/* _KERNEL */
 
 #endif	/* _MIPS_LOCORE_H */

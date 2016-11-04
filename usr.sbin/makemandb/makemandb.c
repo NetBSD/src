@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.39.2.1 2016/07/26 03:24:24 pgoyette Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.39.2.2 2016/11/04 14:49:27 pgoyette Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.39.2.1 2016/07/26 03:24:24 pgoyette Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.39.2.2 2016/11/04 14:49:27 pgoyette Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -107,6 +107,7 @@ static void proff_node(const struct roff_node *, mandb_rec *, const proff_nf *);
 static void pmdoc_Nm(const struct roff_node *, mandb_rec *);
 static void pmdoc_Nd(const struct roff_node *, mandb_rec *);
 static void pmdoc_Sh(const struct roff_node *, mandb_rec *);
+static void mdoc_parse_Sh(const struct roff_node *, mandb_rec *);
 static void pmdoc_Xr(const struct roff_node *, mandb_rec *);
 static void pmdoc_Pp(const struct roff_node *, mandb_rec *);
 static void pmdoc_macro_handler(const struct roff_node *, mandb_rec *, int);
@@ -1080,13 +1081,42 @@ pmdoc_Pp(const struct roff_node *n, mandb_rec *rec)
 
 /*
  * pmdoc_Sh --
- *  Called when a .Sh macro is encountered and loops through its body, calling
+ *  Called when a .Sh macro is encountered and tries to parse its body
+ */
+static void
+pmdoc_Sh(const struct roff_node *n, mandb_rec *rec)
+{
+	if (n == NULL)
+		return;
+
+	switch (n->sec) {
+	case SEC_NAME:
+	case SEC_SYNOPSIS:
+	case SEC_EXAMPLES:
+	case SEC_STANDARDS:
+	case SEC_HISTORY:
+	case SEC_AUTHORS:
+	case SEC_BUGS:
+		/*
+		 * We don't care about text from these sections
+		 */
+		return;
+	default:
+		break;
+	}
+
+	if (n->type == ROFFT_BLOCK)
+		mdoc_parse_Sh(n->body, rec);
+}
+
+/*
+ *  Called from pmdoc_Sh to parse body of a .Sh macro. It calls
  *  mdoc_parse_section to append the data to the section specific buffer.
  *  Two special macros which may occur inside the body of Sh are .Nm and .Xr and
  *  they need special handling, thus the separate if branches for them.
  */
 static void
-pmdoc_Sh(const struct roff_node *n, mandb_rec *rec)
+mdoc_parse_Sh(const struct roff_node *n, mandb_rec *rec)
 {
 	if (n == NULL || (n->type != ROFFT_TEXT && n->tok == MDOC_MAX))
 		return;
@@ -1116,8 +1146,8 @@ pmdoc_Sh(const struct roff_node *n, mandb_rec *rec)
 	 * already been explored by pmdoc_macro_handler.
 	 */
 	if (xr_found == 0)
-		pmdoc_Sh(n->child, rec);
-	pmdoc_Sh(n->next, rec);
+		mdoc_parse_Sh(n->child, rec);
+	mdoc_parse_Sh(n->next, rec);
 }
 
 /*
@@ -1160,14 +1190,6 @@ mdoc_parse_section(enum roff_sec sec, const char *string, mandb_rec *rec)
 		break;
 	case SEC_ERRORS:
 		append(&rec->errors, string);
-		break;
-	case SEC_NAME:
-	case SEC_SYNOPSIS:
-	case SEC_EXAMPLES:
-	case SEC_STANDARDS:
-	case SEC_HISTORY:
-	case SEC_AUTHORS:
-	case SEC_BUGS:
 		break;
 	default:
 		append(&rec->desc, string);

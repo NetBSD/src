@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_gpio.c,v 1.3 2015/12/22 22:19:07 jmcneill Exp $ */
+/* $NetBSD: fdt_gpio.c,v 1.3.4.1 2016/11/04 14:49:08 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_gpio.c,v 1.3 2015/12/22 22:19:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_gpio.c,v 1.3.4.1 2016/11/04 14:49:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -111,6 +111,7 @@ fdtbus_gpio_acquire(int phandle, const char *prop, int flags)
 	gp->gp_priv = gc->gc_funcs->acquire(gc->gc_dev, data, len, flags);
 	if (gp->gp_priv == NULL) {
 		kmem_free(data, len);
+		kmem_free(gp, sizeof(*gp));
 		return NULL;
 	}
 

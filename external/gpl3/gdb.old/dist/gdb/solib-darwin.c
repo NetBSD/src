@@ -271,7 +271,7 @@ darwin_current_sos (void)
       char *file_path;
       int errcode;
       struct darwin_so_list *dnew;
-      struct so_list *new;
+      struct so_list *newobj;
       struct cleanup *old_chain;
 
       /* Read image info from inferior.  */
@@ -302,22 +302,22 @@ darwin_current_sos (void)
 
       /* Create and fill the new so_list element.  */
       dnew = XCNEW (struct darwin_so_list);
-      new = &dnew->sl;
+      newobj = &dnew->sl;
       old_chain = make_cleanup (xfree, dnew);
 
-      new->lm_info = &dnew->li;
+      newobj->lm_info = &dnew->li;
 
-      strncpy (new->so_name, file_path, SO_NAME_MAX_PATH_SIZE - 1);
-      new->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
-      strcpy (new->so_original_name, new->so_name);
+      strncpy (newobj->so_name, file_path, SO_NAME_MAX_PATH_SIZE - 1);
+      newobj->so_name[SO_NAME_MAX_PATH_SIZE - 1] = '\0';
+      strcpy (newobj->so_original_name, newobj->so_name);
       xfree (file_path);
-      new->lm_info->lm_addr = load_addr;
+      newobj->lm_info->lm_addr = load_addr;
 
       if (head == NULL)
-	head = new;
+	head = newobj;
       else
-	tail->next = new;
-      tail = new;
+	tail->next = newobj;
+      tail = newobj;
 
       discard_cleanups (old_chain);
     }

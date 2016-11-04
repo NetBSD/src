@@ -1,4 +1,4 @@
-# Copyright 2013-2015 Free Software Foundation, Inc.
+# Copyright 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,18 +51,6 @@ mi_gdb_test "-break-insert -a gdb_recursion_test" \
 mi_gdb_test "-trace-define-variable \$tsv 1" {.*\^done} \
     "-trace-define-variable"
 
-set pcreg ""
-if [is_amd64_regs_target] {
-    set pcreg "rip"
-} elseif [is_x86_like_target] {
-    set pcreg "eip"
-} else {
-    # Other ports that support tracepoints should set the name of pc
-    # register here.
-    fail "set the name of pc register"
-    return -1
-}
-
 mi_gdb_test "-break-commands 3 \"collect gdb_char_test\" \"collect gdb_union1_test\" \"collect gdb_struct1_test.l\" \"collect gdb_arr_test\[0\]\" \"collect $${pcreg}\" \"teval \$tsv += 1\" \"collect \$tsv\" \"end\" " \
     {\^done} "set action"
 
@@ -103,10 +91,33 @@ proc test_trace_frame_collected { data_source } {
 	    ".*\\^done,found=\"1\",tracepoint=\"${decimal}\",traceframe=\"0\",frame=\{.*" \
 	    "-trace-find frame-number 0"
 
+	set reg_pattern "\{number=\"$decimal\",value=\"$hex\"\}"
+
 	# Test MI command '-trace-frame-collected' dumps only
 	# collected registers.
+
+	# While the tracepoint has no explicit action that causes
+	# collection of registers other than the PC, some
+	# architectures manage to collect or guess more than that.
+	if { [istarget "s390*-*-*"] } {
+	    # On s390 PC is a pseudo-register - collecting it also
+	    # collects the underlying PSWA register.
+	    if { "$data_source" != "tfile" } {
+		set reg_pattern "$reg_pattern,$reg_pattern"
+	    } else {
+		# For tfile, PSWM and CC are also guessed.
+		set reg_pattern "$reg_pattern,$reg_pattern,$reg_pattern,$reg_pattern"
+	    }
+	} elseif {[is_amd64_regs_target] && [is_ilp32_target]} {
+	    # x32.  While on the 64-bit ABI gdb only exposes 64-bit
+	    # $pc/$rip, on x32, GDB exposes 32-bit $eip as well, as a
+	    # pseudo-register.  Thus, collecting $pc/$rip
+	    # automatically always collects $eip as well.
+	    set reg_pattern "$reg_pattern,$reg_pattern"
+	}
+
 	mi_gdb_test "-trace-frame-collected" \
-	    "\\^done,explicit-variables=\\\[\{name=\"gdb_char_test\",value=\".*\"\}\\\],computed-expressions=\\\[\\\],registers=\\\[\{number=\"$decimal\",value=\"$hex\"\}\\\],tvars=\\\[\\\],memory=\\\[\{address=\"$hex\",length=\"1\"\}\\\]"\
+	    "\\^done,explicit-variables=\\\[\{name=\"gdb_char_test\",value=\".*\"\}\\\],computed-expressions=\\\[\\\],registers=\\\[$reg_pattern\\\],tvars=\\\[\\\],memory=\\\[\{address=\"$hex\",length=\"1\"\}\\\]"\
 	    "-trace-frame-collected (register)"
 
 	mi_gdb_test "-trace-find frame-number 1" \

@@ -1,5 +1,5 @@
 /* aarch64-opc.c -- AArch64 opcode support.
-   Copyright 2009, 2010, 2011, 2012, 2013  Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -192,6 +192,7 @@ const aarch64_field fields[] =
     { 11,  1 },	/* index: in ld/st inst deciding the pre/post-index.  */
     { 24,  1 },	/* index2: in ld/st pair inst deciding the pre/post-index.  */
     { 31,  1 },	/* sf: in integer data processing instructions.  */
+    { 30,  1 },	/* lse_size: in LSE extension atomic instructions.  */
     { 11,  1 },	/* H: in advsimd scalar x indexed element instructions.  */
     { 21,  1 },	/* L: in advsimd scalar x indexed element instructions.  */
     { 20,  1 },	/* M: in advsimd scalar x indexed element instructions.  */
@@ -206,7 +207,7 @@ aarch64_get_operand_class (enum aarch64_opnd type)
   return aarch64_operands[type].op_class;
 }
 
-const char*
+const char *
 aarch64_get_operand_name (enum aarch64_opnd type)
 {
   return aarch64_operands[type].name;
@@ -214,7 +215,7 @@ aarch64_get_operand_name (enum aarch64_opnd type)
 
 /* Get operand description string.
    This is usually for the diagnosis purpose.  */
-const char*
+const char *
 aarch64_get_operand_desc (enum aarch64_opnd type)
 {
   return aarch64_operands[type].desc;
@@ -241,14 +242,14 @@ const aarch64_cond aarch64_conds[16] =
   {{"nv"}, 0xf},
 };
 
-const aarch64_cond*
+const aarch64_cond *
 get_cond_from_value (aarch64_insn value)
 {
   assert (value < 16);
   return &aarch64_conds[(unsigned int) value];
 }
 
-const aarch64_cond*
+const aarch64_cond *
 get_inverted_cond (const aarch64_cond *cond)
 {
   return &aarch64_conds[cond->value ^ 0x1];
@@ -332,6 +333,19 @@ const struct aarch64_name_value_pair aarch64_barrier_options[16] =
     { "ld",    0xd },
     { "st",    0xe },
     { "sy",    0xf },
+};
+
+/* Table describing the operands supported by the aliases of the HINT
+   instruction.
+
+   The name column is the operand that is accepted for the alias.  The value
+   column is the hint number of the alias.  The list of operands is terminated
+   by NULL in the name column.  */
+
+const struct aarch64_name_value_pair aarch64_hint_options[] =
+{
+  { "csync", 0x11 },    /* PSB CSYNC.  */
+  { NULL, 0x0 },
 };
 
 /* op -> op:       load = 0 instruction = 1 store = 2
@@ -564,6 +578,7 @@ struct operand_qualifier_data aarch64_opnd_qualifiers[] =
 
   {1, 8, 0x0, "8b", OQK_OPD_VARIANT},
   {1, 16, 0x1, "16b", OQK_OPD_VARIANT},
+  {2, 2, 0x0, "2h", OQK_OPD_VARIANT},
   {2, 4, 0x2, "4h", OQK_OPD_VARIANT},
   {2, 8, 0x3, "8h", OQK_OPD_VARIANT},
   {4, 2, 0x4, "2s", OQK_OPD_VARIANT},
@@ -1061,9 +1076,10 @@ aarch64_logical_immediate_p (uint64_t value, int is32, aarch64_insn *encoding)
   if (is32)
     {
       /* Allow all zeros or all ones in top 32-bits, so that
-	 constant expressions like ~1 are permitted. */
+	 constant expressions like ~1 are permitted.  */
       if (value >> 32 != 0 && value >> 32 != 0xffffffff)
-	return 0xffffffff;
+	return FALSE;
+
       /* Replicate the 32 lower bits to the 32 upper bits.  */
       value &= 0xffffffff;
       value |= value << 32;
@@ -1118,6 +1134,15 @@ set_error (aarch64_operand_error *mismatch_detail,
   mismatch_detail->kind = kind;
   mismatch_detail->index = idx;
   mismatch_detail->error = error;
+}
+
+static inline void
+set_syntax_error (aarch64_operand_error *mismatch_detail, int idx,
+		  const char* error)
+{
+  if (mismatch_detail == NULL)
+    return;
+  set_error (mismatch_detail, AARCH64_OPDE_SYNTAX_ERROR, idx, error);
 }
 
 static inline void
@@ -1244,17 +1269,38 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
   switch (aarch64_operands[type].op_class)
     {
     case AARCH64_OPND_CLASS_INT_REG:
+      /* Check pair reg constraints for cas* instructions.  */
+      if (type == AARCH64_OPND_PAIRREG)
+	{
+	  assert (idx == 1 || idx == 3);
+	  if (opnds[idx - 1].reg.regno % 2 != 0)
+	    {
+	      set_syntax_error (mismatch_detail, idx - 1,
+				_("reg pair must start from even reg"));
+	      return 0;
+	    }
+	  if (opnds[idx].reg.regno != opnds[idx - 1].reg.regno + 1)
+	    {
+	      set_syntax_error (mismatch_detail, idx,
+				_("reg pair must be contiguous"));
+	      return 0;
+	    }
+	  break;
+	}
+
       /* <Xt> may be optional in some IC and TLBI instructions.  */
       if (type == AARCH64_OPND_Rt_SYS)
 	{
 	  assert (idx == 1 && (aarch64_get_operand_class (opnds[0].type)
 			       == AARCH64_OPND_CLASS_SYSTEM));
-	  if (opnds[1].present && !opnds[0].sysins_op->has_xt)
+	  if (opnds[1].present
+	      && !aarch64_sys_ins_reg_has_xt (opnds[0].sysins_op))
 	    {
 	      set_other_error (mismatch_detail, idx, _("extraneous register"));
 	      return 0;
 	    }
-	  if (!opnds[1].present && opnds[0].sysins_op->has_xt)
+	  if (!opnds[1].present
+	      && aarch64_sys_ins_reg_has_xt (opnds[0].sysins_op))
 	    {
 	      set_other_error (mismatch_detail, idx, _("missing register"));
 	      return 0;
@@ -1276,6 +1322,15 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	}
       break;
 
+    case AARCH64_OPND_CLASS_COND:
+      if (type == AARCH64_OPND_COND1
+	  && (opnds[idx].cond->value & 0xe) == 0xe)
+	{
+	  /* Not allow AL or NV.  */
+	  set_syntax_error (mismatch_detail, idx, NULL);
+	}
+      break;
+
     case AARCH64_OPND_CLASS_ADDRESS:
       /* Check writeback.  */
       switch (opcode->iclass)
@@ -1287,8 +1342,8 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	case ldst_unpriv:
 	  if (opnd->addr.writeback == 1)
 	    {
-	      set_other_error (mismatch_detail, idx,
-			       _("unexpected address writeback"));
+	      set_syntax_error (mismatch_detail, idx,
+				_("unexpected address writeback"));
 	      return 0;
 	    }
 	  break;
@@ -1298,8 +1353,8 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	case asisdlsop:
 	  if (opnd->addr.writeback == 0)
 	    {
-	      set_other_error (mismatch_detail, idx,
-			       _("address writeback expected"));
+	      set_syntax_error (mismatch_detail, idx,
+				_("address writeback expected"));
 	      return 0;
 	    }
 	  break;
@@ -1578,7 +1633,7 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 		{
 		case OP_MOV_IMM_WIDEN:
 		  imm = ~imm;
-		  /* Fall through... */
+		  /* Fall through...  */
 		case OP_MOV_IMM_WIDE:
 		  if (!aarch64_wide_constant_p (imm, is32, NULL))
 		    {
@@ -1620,7 +1675,7 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	  break;
 
 	case AARCH64_OPND_WIDTH:
-	  assert (idx == 3 && opnds[idx-1].type == AARCH64_OPND_IMM
+	  assert (idx > 1 && opnds[idx-1].type == AARCH64_OPND_IMM
 		  && opnds[0].type == AARCH64_OPND_Rd);
 	  size = get_upper_bound (qualifier);
 	  if (opnd->imm.value + opnds[idx-1].imm.value > size)
@@ -1724,10 +1779,10 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	  assert (idx == 1);
 	  if (aarch64_get_qualifier_esize (opnds[0].qualifier) != 8)
 	    {
-	      /* uimm8 */
-	      if (!value_in_range_p (opnd->imm.value, 0, 255))
+	      /* uimm8 or simm8 */
+	      if (!value_in_range_p (opnd->imm.value, -128, 255))
 		{
-		  set_imm_out_of_range_error (mismatch_detail, idx, 0, 255);
+		  set_imm_out_of_range_error (mismatch_detail, idx, -128, 255);
 		  return 0;
 		}
 	    }
@@ -1745,15 +1800,15 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	    {
 	    case AARCH64_MOD_LSL:
 	      size = aarch64_get_qualifier_esize (opnds[0].qualifier);
+	      if (!value_in_range_p (opnd->shifter.amount, 0, (size - 1) * 8))
+		{
+		  set_sft_amount_out_of_range_error (mismatch_detail, idx, 0,
+						     (size - 1) * 8);
+		  return 0;
+		}
 	      if (!value_aligned_p (opnd->shifter.amount, 8))
 		{
 		  set_unaligned_error (mismatch_detail, idx, 8);
-		  return 0;
-		}
-	      if (!value_in_range_p (opnd->shifter.amount, 0, (size - 1) * 8))
-		{
-		  set_imm_out_of_range_error (mismatch_detail, idx, 0,
-					      (size - 1) * 8);
 		  return 0;
 		}
 	      break;
@@ -2125,14 +2180,22 @@ typedef union
   float    f;
 } single_conv_t;
 
+typedef union
+{
+  uint32_t i;
+  float    f;
+} half_conv_t;
+
 /* IMM8 is an 8-bit floating-point constant with sign, 3-bit exponent and
    normalized 4 bits of precision, encoded in "a:b:c:d:e:f:g:h" or FLD_imm8
    (depending on the type of the instruction).  IMM8 will be expanded to a
-   single-precision floating-point value (IS_DP == 0) or a double-precision
-   floating-point value (IS_DP == 1).  The expanded value is returned.  */
+   single-precision floating-point value (SIZE == 4) or a double-precision
+   floating-point value (SIZE == 8).  A half-precision floating-point value
+   (SIZE == 2) is expanded to a single-precision floating-point value.  The
+   expanded value is returned.  */
 
 static uint64_t
-expand_fp_imm (int is_dp, uint32_t imm8)
+expand_fp_imm (int size, uint32_t imm8)
 {
   uint64_t imm;
   uint32_t imm8_7, imm8_6_0, imm8_6, imm8_6_repl4;
@@ -2142,7 +2205,7 @@ expand_fp_imm (int is_dp, uint32_t imm8)
   imm8_6 = imm8_6_0 >> 6;	/* imm8<6>   */
   imm8_6_repl4 = (imm8_6 << 3) | (imm8_6 << 2)
     | (imm8_6 << 1) | imm8_6;	/* Replicate(imm8<6>,4) */
-  if (is_dp)
+  if (size == 8)
     {
       imm = (imm8_7 << (63-32))		/* imm8<7>  */
 	| ((imm8_6 ^ 1) << (62-32))	/* NOT(imm8<6)	*/
@@ -2151,12 +2214,17 @@ expand_fp_imm (int is_dp, uint32_t imm8)
 	| (imm8_6_0 << (48-32));	/* imm8<6>:imm8<5:0>    */
       imm <<= 32;
     }
-  else
+  else if (size == 4 || size == 2)
     {
       imm = (imm8_7 << 31)	/* imm8<7>              */
 	| ((imm8_6 ^ 1) << 30)	/* NOT(imm8<6>)         */
 	| (imm8_6_repl4 << 26)	/* Replicate(imm8<6>,4) */
 	| (imm8_6_0 << 19);	/* imm8<6>:imm8<5:0>    */
+    }
+  else
+    {
+      /* An unsupported size.  */
+      assert (0);
     }
 
   return imm;
@@ -2263,9 +2331,12 @@ print_register_offset_address (char *buf, size_t size,
   else
     tb[0] = '\0';
 
-  snprintf (buf, size, "[%s,%c%d%s]",
+  snprintf (buf, size, "[%s,%s%s]",
 	    get_64bit_int_reg_name (opnd->addr.base_regno, 1),
-	    wm_p ? 'w' : 'x', opnd->addr.offset.regno, tb);
+	    get_int_reg_name (opnd->addr.offset.regno,
+			      wm_p ? AARCH64_OPND_QLF_W : AARCH64_OPND_QLF_X,
+			      0 /* sp_reg_p */),
+	    tb);
 }
 
 /* Generate the string representation of the operand OPNDS[IDX] for OPCODE
@@ -2305,6 +2376,7 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
     case AARCH64_OPND_Rs:
     case AARCH64_OPND_Ra:
     case AARCH64_OPND_Rt_SYS:
+    case AARCH64_OPND_PAIRREG:
       /* The optional-ness of <Xt> in e.g. IC <ic_op>{, <Xt>} is determined by
 	 the <ic_op>, therefore we we use opnd->present to override the
 	 generic optional-ness information.  */
@@ -2482,17 +2554,24 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
     case AARCH64_OPND_SIMD_FPIMM:
       switch (aarch64_get_qualifier_esize (opnds[0].qualifier))
 	{
+	case 2:	/* e.g. FMOV <Hd>, #<imm>.  */
+	    {
+	      half_conv_t c;
+	      c.i = expand_fp_imm (2, opnd->imm.value);
+	      snprintf (buf, size,  "#%.18e", c.f);
+	    }
+	  break;
 	case 4:	/* e.g. FMOV <Vd>.4S, #<imm>.  */
 	    {
 	      single_conv_t c;
-	      c.i = expand_fp_imm (0, opnd->imm.value);
+	      c.i = expand_fp_imm (4, opnd->imm.value);
 	      snprintf (buf, size,  "#%.18e", c.f);
 	    }
 	  break;
 	case 8:	/* e.g. FMOV <Sd>, #<imm>.  */
 	    {
 	      double_conv_t c;
-	      c.i = expand_fp_imm (1, opnd->imm.value);
+	      c.i = expand_fp_imm (8, opnd->imm.value);
 	      snprintf (buf, size,  "#%.18e", c.d);
 	    }
 	  break;
@@ -2514,6 +2593,7 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
       break;
 
     case AARCH64_OPND_COND:
+    case AARCH64_OPND_COND1:
       snprintf (buf, size, "%s", opnd->cond->names[0]);
       break;
 
@@ -2596,7 +2676,8 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
 
     case AARCH64_OPND_SYSREG:
       for (i = 0; aarch64_sys_regs[i].name; ++i)
-	if (aarch64_sys_regs[i].value == opnd->sysreg)
+	if (aarch64_sys_regs[i].value == opnd->sysreg
+	    && ! aarch64_sys_reg_deprecated_p (&aarch64_sys_regs[i]))
 	  break;
       if (aarch64_sys_regs[i].name)
 	snprintf (buf, size, "%s", aarch64_sys_regs[i].name);
@@ -2622,7 +2703,7 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
     case AARCH64_OPND_SYSREG_DC:
     case AARCH64_OPND_SYSREG_IC:
     case AARCH64_OPND_SYSREG_TLBI:
-      snprintf (buf, size, "%s", opnd->sysins_op->template);
+      snprintf (buf, size, "%s", opnd->sysins_op->name);
       break;
 
     case AARCH64_OPND_BARRIER:
@@ -2642,6 +2723,10 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
 	snprintf (buf, size, "%s", opnd->prfop->name);
       else
 	snprintf (buf, size, "#0x%02x", opnd->prfop->value);
+      break;
+
+    case AARCH64_OPND_BARRIER_PSB:
+      snprintf (buf, size, "%s", opnd->hint_option->name);
       break;
 
     default:
@@ -2673,402 +2758,640 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
 #define C14 14
 #define C15 15
 
+#ifdef F_DEPRECATED
+#undef F_DEPRECATED
+#endif
+#define F_DEPRECATED	0x1	/* Deprecated system register.  */
+
+#ifdef F_ARCHEXT
+#undef F_ARCHEXT
+#endif
+#define F_ARCHEXT	0x2	/* Architecture dependent system register.  */
+
+#ifdef F_HASXT
+#undef F_HASXT
+#endif
+#define F_HASXT		0x4	/* System instruction register <Xt>
+				   operand.  */
+
+
 /* TODO there are two more issues need to be resolved
    1. handle read-only and write-only system registers
    2. handle cpu-implementation-defined system registers.  */
-const struct aarch64_name_value_pair aarch64_sys_regs [] =
+const aarch64_sys_reg aarch64_sys_regs [] =
 {
-  { "spsr_el1",         CPEN_(0,C0,0)  }, /* = spsr_svc */
-  { "elr_el1",          CPEN_(0,C0,1)  },
-  { "sp_el0",           CPEN_(0,C1,0)  },
-  { "spsel",            CPEN_(0,C2,0)  },
-  { "daif",             CPEN_(3,C2,1)  },
-  { "currentel",        CPEN_(0,C2,2)  }, /* RO */
-  { "nzcv",             CPEN_(3,C2,0)  },
-  { "fpcr",             CPEN_(3,C4,0)  },
-  { "fpsr",             CPEN_(3,C4,1)  },
-  { "dspsr_el0",        CPEN_(3,C5,0)  },
-  { "dlr_el0",          CPEN_(3,C5,1)  },
-  { "spsr_el2",         CPEN_(4,C0,0)  }, /* = spsr_hyp */
-  { "elr_el2",          CPEN_(4,C0,1)  },
-  { "sp_el1",           CPEN_(4,C1,0)  },
-  { "spsr_irq",         CPEN_(4,C3,0)  },
-  { "spsr_abt",         CPEN_(4,C3,1)  },
-  { "spsr_und",         CPEN_(4,C3,2)  },
-  { "spsr_fiq",         CPEN_(4,C3,3)  },
-  { "spsr_el3",         CPEN_(6,C0,0)  },
-  { "elr_el3",          CPEN_(6,C0,1)  },
-  { "sp_el2",           CPEN_(6,C1,0)  },
-  { "spsr_svc",         CPEN_(0,C0,0)  }, /* = spsr_el1 */
-  { "spsr_hyp",         CPEN_(4,C0,0)  }, /* = spsr_el2 */
-  { "midr_el1",         CPENC(3,0,C0,C0,0)  }, /* RO */
-  { "ctr_el0",          CPENC(3,3,C0,C0,1)  }, /* RO */
-  { "mpidr_el1",        CPENC(3,0,C0,C0,5)  }, /* RO */
-  { "revidr_el1",       CPENC(3,0,C0,C0,6)  }, /* RO */
-  { "aidr_el1",         CPENC(3,1,C0,C0,7)  }, /* RO */
-  { "dczid_el0",        CPENC(3,3,C0,C0,7)  }, /* RO */
-  { "id_dfr0_el1",      CPENC(3,0,C0,C1,2)  }, /* RO */
-  { "id_pfr0_el1",      CPENC(3,0,C0,C1,0)  }, /* RO */
-  { "id_pfr1_el1",      CPENC(3,0,C0,C1,1)  }, /* RO */
-  { "id_afr0_el1",      CPENC(3,0,C0,C1,3)  }, /* RO */
-  { "id_mmfr0_el1",     CPENC(3,0,C0,C1,4)  }, /* RO */
-  { "id_mmfr1_el1",     CPENC(3,0,C0,C1,5)  }, /* RO */
-  { "id_mmfr2_el1",     CPENC(3,0,C0,C1,6)  }, /* RO */
-  { "id_mmfr3_el1",     CPENC(3,0,C0,C1,7)  }, /* RO */
-  { "id_isar0_el1",     CPENC(3,0,C0,C2,0)  }, /* RO */
-  { "id_isar1_el1",     CPENC(3,0,C0,C2,1)  }, /* RO */
-  { "id_isar2_el1",     CPENC(3,0,C0,C2,2)  }, /* RO */
-  { "id_isar3_el1",     CPENC(3,0,C0,C2,3)  }, /* RO */
-  { "id_isar4_el1",     CPENC(3,0,C0,C2,4)  }, /* RO */
-  { "id_isar5_el1",     CPENC(3,0,C0,C2,5)  }, /* RO */
-  { "mvfr0_el1",        CPENC(3,0,C0,C3,0)  }, /* RO */
-  { "mvfr1_el1",        CPENC(3,0,C0,C3,1)  }, /* RO */
-  { "mvfr2_el1",        CPENC(3,0,C0,C3,2)  }, /* RO */
-  { "ccsidr_el1",       CPENC(3,1,C0,C0,0)  }, /* RO */
-  { "id_aa64pfr0_el1",  CPENC(3,0,C0,C4,0)  }, /* RO */
-  { "id_aa64pfr1_el1",  CPENC(3,0,C0,C4,1)  }, /* RO */
-  { "id_aa64dfr0_el1",  CPENC(3,0,C0,C5,0)  }, /* RO */
-  { "id_aa64dfr1_el1",  CPENC(3,0,C0,C5,1)  }, /* RO */
-  { "id_aa64isar0_el1", CPENC(3,0,C0,C6,0)  }, /* RO */
-  { "id_aa64isar1_el1", CPENC(3,0,C0,C6,1)  }, /* RO */
-  { "id_aa64mmfr0_el1", CPENC(3,0,C0,C7,0)  }, /* RO */
-  { "id_aa64mmfr1_el1", CPENC(3,0,C0,C7,1)  }, /* RO */
-  { "id_aa64afr0_el1",  CPENC(3,0,C0,C5,4)  }, /* RO */
-  { "id_aa64afr1_el1",  CPENC(3,0,C0,C5,5)  }, /* RO */
-  { "clidr_el1",        CPENC(3,1,C0,C0,1)  }, /* RO */
-  { "csselr_el1",       CPENC(3,2,C0,C0,0)  }, /* RO */
-  { "vpidr_el2",        CPENC(3,4,C0,C0,0)  },
-  { "vmpidr_el2",       CPENC(3,4,C0,C0,5)  },
-  { "sctlr_el1",        CPENC(3,0,C1,C0,0)  },
-  { "sctlr_el2",        CPENC(3,4,C1,C0,0)  },
-  { "sctlr_el3",        CPENC(3,6,C1,C0,0)  },
-  { "actlr_el1",        CPENC(3,0,C1,C0,1)  },
-  { "actlr_el2",        CPENC(3,4,C1,C0,1)  },
-  { "actlr_el3",        CPENC(3,6,C1,C0,1)  },
-  { "cpacr_el1",        CPENC(3,0,C1,C0,2)  },
-  { "cptr_el2",         CPENC(3,4,C1,C1,2)  },
-  { "cptr_el3",         CPENC(3,6,C1,C1,2)  },
-  { "scr_el3",          CPENC(3,6,C1,C1,0)  },
-  { "hcr_el2",          CPENC(3,4,C1,C1,0)  },
-  { "mdcr_el2",         CPENC(3,4,C1,C1,1)  },
-  { "mdcr_el3",         CPENC(3,6,C1,C3,1)  },
-  { "hstr_el2",         CPENC(3,4,C1,C1,3)  },
-  { "hacr_el2",         CPENC(3,4,C1,C1,7)  },
-  { "ttbr0_el1",        CPENC(3,0,C2,C0,0)  },
-  { "ttbr1_el1",        CPENC(3,0,C2,C0,1)  },
-  { "ttbr0_el2",        CPENC(3,4,C2,C0,0)  },
-  { "ttbr0_el3",        CPENC(3,6,C2,C0,0)  },
-  { "vttbr_el2",        CPENC(3,4,C2,C1,0)  },
-  { "tcr_el1",          CPENC(3,0,C2,C0,2)  },
-  { "tcr_el2",          CPENC(3,4,C2,C0,2)  },
-  { "tcr_el3",          CPENC(3,6,C2,C0,2)  },
-  { "vtcr_el2",         CPENC(3,4,C2,C1,2)  },
-  { "afsr0_el1",        CPENC(3,0,C5,C1,0)  },
-  { "afsr1_el1",        CPENC(3,0,C5,C1,1)  },
-  { "afsr0_el2",        CPENC(3,4,C5,C1,0)  },
-  { "afsr1_el2",        CPENC(3,4,C5,C1,1)  },
-  { "afsr0_el3",        CPENC(3,6,C5,C1,0)  },
-  { "afsr1_el3",        CPENC(3,6,C5,C1,1)  },
-  { "esr_el1",          CPENC(3,0,C5,C2,0)  },
-  { "esr_el2",          CPENC(3,4,C5,C2,0)  },
-  { "esr_el3",          CPENC(3,6,C5,C2,0)  },
-  { "fpexc32_el2",      CPENC(3,4,C5,C3,0)  },
-  { "far_el1",          CPENC(3,0,C6,C0,0)  },
-  { "far_el2",          CPENC(3,4,C6,C0,0)  },
-  { "far_el3",          CPENC(3,6,C6,C0,0)  },
-  { "hpfar_el2",        CPENC(3,4,C6,C0,4)  },
-  { "par_el1",          CPENC(3,0,C7,C4,0)  },
-  { "mair_el1",         CPENC(3,0,C10,C2,0) },
-  { "mair_el2",         CPENC(3,4,C10,C2,0) },
-  { "mair_el3",         CPENC(3,6,C10,C2,0) },
-  { "amair_el1",        CPENC(3,0,C10,C3,0) },
-  { "amair_el2",        CPENC(3,4,C10,C3,0) },
-  { "amair_el3",        CPENC(3,6,C10,C3,0) },
-  { "vbar_el1",         CPENC(3,0,C12,C0,0) },
-  { "vbar_el2",         CPENC(3,4,C12,C0,0) },
-  { "vbar_el3",         CPENC(3,6,C12,C0,0) },
-  { "rvbar_el1",        CPENC(3,0,C12,C0,1) }, /* RO */
-  { "rvbar_el2",        CPENC(3,4,C12,C0,1) }, /* RO */
-  { "rvbar_el3",        CPENC(3,6,C12,C0,1) }, /* RO */
-  { "rmr_el1",          CPENC(3,0,C12,C0,2) },
-  { "rmr_el2",          CPENC(3,4,C12,C0,2) },
-  { "rmr_el3",          CPENC(3,6,C12,C0,2) },
-  { "isr_el1",          CPENC(3,0,C12,C1,0) }, /* RO */
-  { "contextidr_el1",   CPENC(3,0,C13,C0,1) },
-  { "tpidr_el0",        CPENC(3,3,C13,C0,2) },
-  { "tpidrro_el0",      CPENC(3,3,C13,C0,3) }, /* RO */
-  { "tpidr_el1",        CPENC(3,0,C13,C0,4) },
-  { "tpidr_el2",        CPENC(3,4,C13,C0,2) },
-  { "tpidr_el3",        CPENC(3,6,C13,C0,2) },
-  { "teecr32_el1",      CPENC(2,2,C0, C0,0) }, /* See section 3.9.7.1 */
-  { "cntfrq_el0",       CPENC(3,3,C14,C0,0) }, /* RO */
-  { "cntpct_el0",       CPENC(3,3,C14,C0,1) }, /* RO */
-  { "cntvct_el0",       CPENC(3,3,C14,C0,2) }, /* RO */
-  { "cntvoff_el2",      CPENC(3,4,C14,C0,3) },
-  { "cntkctl_el1",      CPENC(3,0,C14,C1,0) },
-  { "cnthctl_el2",      CPENC(3,4,C14,C1,0) },
-  { "cntp_tval_el0",    CPENC(3,3,C14,C2,0) },
-  { "cntp_ctl_el0",     CPENC(3,3,C14,C2,1) },
-  { "cntp_cval_el0",    CPENC(3,3,C14,C2,2) },
-  { "cntv_tval_el0",    CPENC(3,3,C14,C3,0) },
-  { "cntv_ctl_el0",     CPENC(3,3,C14,C3,1) },
-  { "cntv_cval_el0",    CPENC(3,3,C14,C3,2) },
-  { "cnthp_tval_el2",   CPENC(3,4,C14,C2,0) },
-  { "cnthp_ctl_el2",    CPENC(3,4,C14,C2,1) },
-  { "cnthp_cval_el2",   CPENC(3,4,C14,C2,2) },
-  { "cntps_tval_el1",   CPENC(3,7,C14,C2,0) },
-  { "cntps_ctl_el1",    CPENC(3,7,C14,C2,1) },
-  { "cntps_cval_el1",   CPENC(3,7,C14,C2,2) },
-  { "dacr32_el2",       CPENC(3,4,C3,C0,0)  },
-  { "ifsr32_el2",       CPENC(3,4,C5,C0,1)  },
-  { "teehbr32_el1",     CPENC(2,2,C1,C0,0)  },
-  { "sder32_el3",       CPENC(3,6,C1,C1,1)  },
-  { "mdscr_el1",         CPENC(2,0,C0, C2, 2) },
-  { "mdccsr_el0",        CPENC(2,3,C0, C1, 0) },  /* r */
-  { "mdccint_el1",       CPENC(2,0,C0, C2, 0) },
-  { "dbgdtr_el0",        CPENC(2,3,C0, C4, 0) },
-  { "dbgdtrrx_el0",      CPENC(2,3,C0, C5, 0) },  /* r */
-  { "dbgdtrtx_el0",      CPENC(2,3,C0, C5, 0) },  /* w */
-  { "osdtrrx_el1",       CPENC(2,0,C0, C0, 2) },  /* r */
-  { "osdtrtx_el1",       CPENC(2,0,C0, C3, 2) },  /* w */
-  { "oseccr_el1",        CPENC(2,0,C0, C6, 2) },
-  { "dbgvcr32_el2",      CPENC(2,4,C0, C7, 0) },
-  { "dbgbvr0_el1",       CPENC(2,0,C0, C0, 4) },
-  { "dbgbvr1_el1",       CPENC(2,0,C0, C1, 4) },
-  { "dbgbvr2_el1",       CPENC(2,0,C0, C2, 4) },
-  { "dbgbvr3_el1",       CPENC(2,0,C0, C3, 4) },
-  { "dbgbvr4_el1",       CPENC(2,0,C0, C4, 4) },
-  { "dbgbvr5_el1",       CPENC(2,0,C0, C5, 4) },
-  { "dbgbvr6_el1",       CPENC(2,0,C0, C6, 4) },
-  { "dbgbvr7_el1",       CPENC(2,0,C0, C7, 4) },
-  { "dbgbvr8_el1",       CPENC(2,0,C0, C8, 4) },
-  { "dbgbvr9_el1",       CPENC(2,0,C0, C9, 4) },
-  { "dbgbvr10_el1",      CPENC(2,0,C0, C10,4) },
-  { "dbgbvr11_el1",      CPENC(2,0,C0, C11,4) },
-  { "dbgbvr12_el1",      CPENC(2,0,C0, C12,4) },
-  { "dbgbvr13_el1",      CPENC(2,0,C0, C13,4) },
-  { "dbgbvr14_el1",      CPENC(2,0,C0, C14,4) },
-  { "dbgbvr15_el1",      CPENC(2,0,C0, C15,4) },
-  { "dbgbcr0_el1",       CPENC(2,0,C0, C0, 5) },
-  { "dbgbcr1_el1",       CPENC(2,0,C0, C1, 5) },
-  { "dbgbcr2_el1",       CPENC(2,0,C0, C2, 5) },
-  { "dbgbcr3_el1",       CPENC(2,0,C0, C3, 5) },
-  { "dbgbcr4_el1",       CPENC(2,0,C0, C4, 5) },
-  { "dbgbcr5_el1",       CPENC(2,0,C0, C5, 5) },
-  { "dbgbcr6_el1",       CPENC(2,0,C0, C6, 5) },
-  { "dbgbcr7_el1",       CPENC(2,0,C0, C7, 5) },
-  { "dbgbcr8_el1",       CPENC(2,0,C0, C8, 5) },
-  { "dbgbcr9_el1",       CPENC(2,0,C0, C9, 5) },
-  { "dbgbcr10_el1",      CPENC(2,0,C0, C10,5) },
-  { "dbgbcr11_el1",      CPENC(2,0,C0, C11,5) },
-  { "dbgbcr12_el1",      CPENC(2,0,C0, C12,5) },
-  { "dbgbcr13_el1",      CPENC(2,0,C0, C13,5) },
-  { "dbgbcr14_el1",      CPENC(2,0,C0, C14,5) },
-  { "dbgbcr15_el1",      CPENC(2,0,C0, C15,5) },
-  { "dbgwvr0_el1",       CPENC(2,0,C0, C0, 6) },
-  { "dbgwvr1_el1",       CPENC(2,0,C0, C1, 6) },
-  { "dbgwvr2_el1",       CPENC(2,0,C0, C2, 6) },
-  { "dbgwvr3_el1",       CPENC(2,0,C0, C3, 6) },
-  { "dbgwvr4_el1",       CPENC(2,0,C0, C4, 6) },
-  { "dbgwvr5_el1",       CPENC(2,0,C0, C5, 6) },
-  { "dbgwvr6_el1",       CPENC(2,0,C0, C6, 6) },
-  { "dbgwvr7_el1",       CPENC(2,0,C0, C7, 6) },
-  { "dbgwvr8_el1",       CPENC(2,0,C0, C8, 6) },
-  { "dbgwvr9_el1",       CPENC(2,0,C0, C9, 6) },
-  { "dbgwvr10_el1",      CPENC(2,0,C0, C10,6) },
-  { "dbgwvr11_el1",      CPENC(2,0,C0, C11,6) },
-  { "dbgwvr12_el1",      CPENC(2,0,C0, C12,6) },
-  { "dbgwvr13_el1",      CPENC(2,0,C0, C13,6) },
-  { "dbgwvr14_el1",      CPENC(2,0,C0, C14,6) },
-  { "dbgwvr15_el1",      CPENC(2,0,C0, C15,6) },
-  { "dbgwcr0_el1",       CPENC(2,0,C0, C0, 7) },
-  { "dbgwcr1_el1",       CPENC(2,0,C0, C1, 7) },
-  { "dbgwcr2_el1",       CPENC(2,0,C0, C2, 7) },
-  { "dbgwcr3_el1",       CPENC(2,0,C0, C3, 7) },
-  { "dbgwcr4_el1",       CPENC(2,0,C0, C4, 7) },
-  { "dbgwcr5_el1",       CPENC(2,0,C0, C5, 7) },
-  { "dbgwcr6_el1",       CPENC(2,0,C0, C6, 7) },
-  { "dbgwcr7_el1",       CPENC(2,0,C0, C7, 7) },
-  { "dbgwcr8_el1",       CPENC(2,0,C0, C8, 7) },
-  { "dbgwcr9_el1",       CPENC(2,0,C0, C9, 7) },
-  { "dbgwcr10_el1",      CPENC(2,0,C0, C10,7) },
-  { "dbgwcr11_el1",      CPENC(2,0,C0, C11,7) },
-  { "dbgwcr12_el1",      CPENC(2,0,C0, C12,7) },
-  { "dbgwcr13_el1",      CPENC(2,0,C0, C13,7) },
-  { "dbgwcr14_el1",      CPENC(2,0,C0, C14,7) },
-  { "dbgwcr15_el1",      CPENC(2,0,C0, C15,7) },
-  { "mdrar_el1",         CPENC(2,0,C1, C0, 0) },  /* r */
-  { "oslar_el1",         CPENC(2,0,C1, C0, 4) },  /* w */
-  { "oslsr_el1",         CPENC(2,0,C1, C1, 4) },  /* r */
-  { "osdlr_el1",         CPENC(2,0,C1, C3, 4) },
-  { "dbgprcr_el1",       CPENC(2,0,C1, C4, 4) },
-  { "dbgclaimset_el1",   CPENC(2,0,C7, C8, 6) },
-  { "dbgclaimclr_el1",   CPENC(2,0,C7, C9, 6) },
-  { "dbgauthstatus_el1", CPENC(2,0,C7, C14,6) },  /* r */
-
-  { "pmcr_el0",          CPENC(3,3,C9,C12, 0) },
-  { "pmcntenset_el0",    CPENC(3,3,C9,C12, 1) },
-  { "pmcntenclr_el0",    CPENC(3,3,C9,C12, 2) },
-  { "pmovsclr_el0",      CPENC(3,3,C9,C12, 3) },
-  { "pmswinc_el0",       CPENC(3,3,C9,C12, 4) },  /* w */
-  { "pmselr_el0",        CPENC(3,3,C9,C12, 5) },
-  { "pmceid0_el0",       CPENC(3,3,C9,C12, 6) },  /* r */
-  { "pmceid1_el0",       CPENC(3,3,C9,C12, 7) },  /* r */
-  { "pmccntr_el0",       CPENC(3,3,C9,C13, 0) },
-  { "pmxevtyper_el0",    CPENC(3,3,C9,C13, 1) },
-  { "pmxevcntr_el0",     CPENC(3,3,C9,C13, 2) },
-  { "pmuserenr_el0",     CPENC(3,3,C9,C14, 0) },
-  { "pmintenset_el1",    CPENC(3,0,C9,C14, 1) },
-  { "pmintenclr_el1",    CPENC(3,0,C9,C14, 2) },
-  { "pmovsset_el0",      CPENC(3,3,C9,C14, 3) },
-  { "pmevcntr0_el0",     CPENC(3,3,C14,C8, 0) },
-  { "pmevcntr1_el0",     CPENC(3,3,C14,C8, 1) },
-  { "pmevcntr2_el0",     CPENC(3,3,C14,C8, 2) },
-  { "pmevcntr3_el0",     CPENC(3,3,C14,C8, 3) },
-  { "pmevcntr4_el0",     CPENC(3,3,C14,C8, 4) },
-  { "pmevcntr5_el0",     CPENC(3,3,C14,C8, 5) },
-  { "pmevcntr6_el0",     CPENC(3,3,C14,C8, 6) },
-  { "pmevcntr7_el0",     CPENC(3,3,C14,C8, 7) },
-  { "pmevcntr8_el0",     CPENC(3,3,C14,C9, 0) },
-  { "pmevcntr9_el0",     CPENC(3,3,C14,C9, 1) },
-  { "pmevcntr10_el0",    CPENC(3,3,C14,C9, 2) },
-  { "pmevcntr11_el0",    CPENC(3,3,C14,C9, 3) },
-  { "pmevcntr12_el0",    CPENC(3,3,C14,C9, 4) },
-  { "pmevcntr13_el0",    CPENC(3,3,C14,C9, 5) },
-  { "pmevcntr14_el0",    CPENC(3,3,C14,C9, 6) },
-  { "pmevcntr15_el0",    CPENC(3,3,C14,C9, 7) },
-  { "pmevcntr16_el0",    CPENC(3,3,C14,C10,0) },
-  { "pmevcntr17_el0",    CPENC(3,3,C14,C10,1) },
-  { "pmevcntr18_el0",    CPENC(3,3,C14,C10,2) },
-  { "pmevcntr19_el0",    CPENC(3,3,C14,C10,3) },
-  { "pmevcntr20_el0",    CPENC(3,3,C14,C10,4) },
-  { "pmevcntr21_el0",    CPENC(3,3,C14,C10,5) },
-  { "pmevcntr22_el0",    CPENC(3,3,C14,C10,6) },
-  { "pmevcntr23_el0",    CPENC(3,3,C14,C10,7) },
-  { "pmevcntr24_el0",    CPENC(3,3,C14,C11,0) },
-  { "pmevcntr25_el0",    CPENC(3,3,C14,C11,1) },
-  { "pmevcntr26_el0",    CPENC(3,3,C14,C11,2) },
-  { "pmevcntr27_el0",    CPENC(3,3,C14,C11,3) },
-  { "pmevcntr28_el0",    CPENC(3,3,C14,C11,4) },
-  { "pmevcntr29_el0",    CPENC(3,3,C14,C11,5) },
-  { "pmevcntr30_el0",    CPENC(3,3,C14,C11,6) },
-  { "pmevtyper0_el0",    CPENC(3,3,C14,C12,0) },
-  { "pmevtyper1_el0",    CPENC(3,3,C14,C12,1) },
-  { "pmevtyper2_el0",    CPENC(3,3,C14,C12,2) },
-  { "pmevtyper3_el0",    CPENC(3,3,C14,C12,3) },
-  { "pmevtyper4_el0",    CPENC(3,3,C14,C12,4) },
-  { "pmevtyper5_el0",    CPENC(3,3,C14,C12,5) },
-  { "pmevtyper6_el0",    CPENC(3,3,C14,C12,6) },
-  { "pmevtyper7_el0",    CPENC(3,3,C14,C12,7) },
-  { "pmevtyper8_el0",    CPENC(3,3,C14,C13,0) },
-  { "pmevtyper9_el0",    CPENC(3,3,C14,C13,1) },
-  { "pmevtyper10_el0",   CPENC(3,3,C14,C13,2) },
-  { "pmevtyper11_el0",   CPENC(3,3,C14,C13,3) },
-  { "pmevtyper12_el0",   CPENC(3,3,C14,C13,4) },
-  { "pmevtyper13_el0",   CPENC(3,3,C14,C13,5) },
-  { "pmevtyper14_el0",   CPENC(3,3,C14,C13,6) },
-  { "pmevtyper15_el0",   CPENC(3,3,C14,C13,7) },
-  { "pmevtyper16_el0",   CPENC(3,3,C14,C14,0) },
-  { "pmevtyper17_el0",   CPENC(3,3,C14,C14,1) },
-  { "pmevtyper18_el0",   CPENC(3,3,C14,C14,2) },
-  { "pmevtyper19_el0",   CPENC(3,3,C14,C14,3) },
-  { "pmevtyper20_el0",   CPENC(3,3,C14,C14,4) },
-  { "pmevtyper21_el0",   CPENC(3,3,C14,C14,5) },
-  { "pmevtyper22_el0",   CPENC(3,3,C14,C14,6) },
-  { "pmevtyper23_el0",   CPENC(3,3,C14,C14,7) },
-  { "pmevtyper24_el0",   CPENC(3,3,C14,C15,0) },
-  { "pmevtyper25_el0",   CPENC(3,3,C14,C15,1) },
-  { "pmevtyper26_el0",   CPENC(3,3,C14,C15,2) },
-  { "pmevtyper27_el0",   CPENC(3,3,C14,C15,3) },
-  { "pmevtyper28_el0",   CPENC(3,3,C14,C15,4) },
-  { "pmevtyper29_el0",   CPENC(3,3,C14,C15,5) },
-  { "pmevtyper30_el0",   CPENC(3,3,C14,C15,6) },
-  { "pmccfiltr_el0",     CPENC(3,3,C14,C15,7) },
-  { 0,          CPENC(0,0,0,0,0)  },
+  { "spsr_el1",         CPEN_(0,C0,0),	0 }, /* = spsr_svc */
+  { "spsr_el12",	CPEN_ (5, C0, 0), F_ARCHEXT },
+  { "elr_el1",          CPEN_(0,C0,1),	0 },
+  { "elr_el12",	CPEN_ (5, C0, 1), F_ARCHEXT },
+  { "sp_el0",           CPEN_(0,C1,0),	0 },
+  { "spsel",            CPEN_(0,C2,0),	0 },
+  { "daif",             CPEN_(3,C2,1),	0 },
+  { "currentel",        CPEN_(0,C2,2),	0 }, /* RO */
+  { "pan",		CPEN_(0,C2,3),	F_ARCHEXT },
+  { "uao",		CPEN_ (0, C2, 4), F_ARCHEXT },
+  { "nzcv",             CPEN_(3,C2,0),	0 },
+  { "fpcr",             CPEN_(3,C4,0),	0 },
+  { "fpsr",             CPEN_(3,C4,1),	0 },
+  { "dspsr_el0",        CPEN_(3,C5,0),	0 },
+  { "dlr_el0",          CPEN_(3,C5,1),	0 },
+  { "spsr_el2",         CPEN_(4,C0,0),	0 }, /* = spsr_hyp */
+  { "elr_el2",          CPEN_(4,C0,1),	0 },
+  { "sp_el1",           CPEN_(4,C1,0),	0 },
+  { "spsr_irq",         CPEN_(4,C3,0),	0 },
+  { "spsr_abt",         CPEN_(4,C3,1),	0 },
+  { "spsr_und",         CPEN_(4,C3,2),	0 },
+  { "spsr_fiq",         CPEN_(4,C3,3),	0 },
+  { "spsr_el3",         CPEN_(6,C0,0),	0 },
+  { "elr_el3",          CPEN_(6,C0,1),	0 },
+  { "sp_el2",           CPEN_(6,C1,0),	0 },
+  { "spsr_svc",         CPEN_(0,C0,0),	F_DEPRECATED }, /* = spsr_el1 */
+  { "spsr_hyp",         CPEN_(4,C0,0),	F_DEPRECATED }, /* = spsr_el2 */
+  { "midr_el1",         CPENC(3,0,C0,C0,0),	0 }, /* RO */
+  { "ctr_el0",          CPENC(3,3,C0,C0,1),	0 }, /* RO */
+  { "mpidr_el1",        CPENC(3,0,C0,C0,5),	0 }, /* RO */
+  { "revidr_el1",       CPENC(3,0,C0,C0,6),	0 }, /* RO */
+  { "aidr_el1",         CPENC(3,1,C0,C0,7),	0 }, /* RO */
+  { "dczid_el0",        CPENC(3,3,C0,C0,7),	0 }, /* RO */
+  { "id_dfr0_el1",      CPENC(3,0,C0,C1,2),	0 }, /* RO */
+  { "id_pfr0_el1",      CPENC(3,0,C0,C1,0),	0 }, /* RO */
+  { "id_pfr1_el1",      CPENC(3,0,C0,C1,1),	0 }, /* RO */
+  { "id_afr0_el1",      CPENC(3,0,C0,C1,3),	0 }, /* RO */
+  { "id_mmfr0_el1",     CPENC(3,0,C0,C1,4),	0 }, /* RO */
+  { "id_mmfr1_el1",     CPENC(3,0,C0,C1,5),	0 }, /* RO */
+  { "id_mmfr2_el1",     CPENC(3,0,C0,C1,6),	0 }, /* RO */
+  { "id_mmfr3_el1",     CPENC(3,0,C0,C1,7),	0 }, /* RO */
+  { "id_mmfr4_el1",     CPENC(3,0,C0,C2,6),	0 }, /* RO */
+  { "id_isar0_el1",     CPENC(3,0,C0,C2,0),	0 }, /* RO */
+  { "id_isar1_el1",     CPENC(3,0,C0,C2,1),	0 }, /* RO */
+  { "id_isar2_el1",     CPENC(3,0,C0,C2,2),	0 }, /* RO */
+  { "id_isar3_el1",     CPENC(3,0,C0,C2,3),	0 }, /* RO */
+  { "id_isar4_el1",     CPENC(3,0,C0,C2,4),	0 }, /* RO */
+  { "id_isar5_el1",     CPENC(3,0,C0,C2,5),	0 }, /* RO */
+  { "mvfr0_el1",        CPENC(3,0,C0,C3,0),	0 }, /* RO */
+  { "mvfr1_el1",        CPENC(3,0,C0,C3,1),	0 }, /* RO */
+  { "mvfr2_el1",        CPENC(3,0,C0,C3,2),	0 }, /* RO */
+  { "ccsidr_el1",       CPENC(3,1,C0,C0,0),	0 }, /* RO */
+  { "id_aa64pfr0_el1",  CPENC(3,0,C0,C4,0),	0 }, /* RO */
+  { "id_aa64pfr1_el1",  CPENC(3,0,C0,C4,1),	0 }, /* RO */
+  { "id_aa64dfr0_el1",  CPENC(3,0,C0,C5,0),	0 }, /* RO */
+  { "id_aa64dfr1_el1",  CPENC(3,0,C0,C5,1),	0 }, /* RO */
+  { "id_aa64isar0_el1", CPENC(3,0,C0,C6,0),	0 }, /* RO */
+  { "id_aa64isar1_el1", CPENC(3,0,C0,C6,1),	0 }, /* RO */
+  { "id_aa64mmfr0_el1", CPENC(3,0,C0,C7,0),	0 }, /* RO */
+  { "id_aa64mmfr1_el1", CPENC(3,0,C0,C7,1),	0 }, /* RO */
+  { "id_aa64mmfr2_el1", CPENC (3, 0, C0, C7, 2), F_ARCHEXT }, /* RO */
+  { "id_aa64afr0_el1",  CPENC(3,0,C0,C5,4),	0 }, /* RO */
+  { "id_aa64afr1_el1",  CPENC(3,0,C0,C5,5),	0 }, /* RO */
+  { "clidr_el1",        CPENC(3,1,C0,C0,1),	0 }, /* RO */
+  { "csselr_el1",       CPENC(3,2,C0,C0,0),	0 }, /* RO */
+  { "vpidr_el2",        CPENC(3,4,C0,C0,0),	0 },
+  { "vmpidr_el2",       CPENC(3,4,C0,C0,5),	0 },
+  { "sctlr_el1",        CPENC(3,0,C1,C0,0),	0 },
+  { "sctlr_el2",        CPENC(3,4,C1,C0,0),	0 },
+  { "sctlr_el3",        CPENC(3,6,C1,C0,0),	0 },
+  { "sctlr_el12",	CPENC (3, 5, C1, C0, 0), F_ARCHEXT },
+  { "actlr_el1",        CPENC(3,0,C1,C0,1),	0 },
+  { "actlr_el2",        CPENC(3,4,C1,C0,1),	0 },
+  { "actlr_el3",        CPENC(3,6,C1,C0,1),	0 },
+  { "cpacr_el1",        CPENC(3,0,C1,C0,2),	0 },
+  { "cpacr_el12",	CPENC (3, 5, C1, C0, 2), F_ARCHEXT },
+  { "cptr_el2",         CPENC(3,4,C1,C1,2),	0 },
+  { "cptr_el3",         CPENC(3,6,C1,C1,2),	0 },
+  { "scr_el3",          CPENC(3,6,C1,C1,0),	0 },
+  { "hcr_el2",          CPENC(3,4,C1,C1,0),	0 },
+  { "mdcr_el2",         CPENC(3,4,C1,C1,1),	0 },
+  { "mdcr_el3",         CPENC(3,6,C1,C3,1),	0 },
+  { "hstr_el2",         CPENC(3,4,C1,C1,3),	0 },
+  { "hacr_el2",         CPENC(3,4,C1,C1,7),	0 },
+  { "ttbr0_el1",        CPENC(3,0,C2,C0,0),	0 },
+  { "ttbr1_el1",        CPENC(3,0,C2,C0,1),	0 },
+  { "ttbr0_el2",        CPENC(3,4,C2,C0,0),	0 },
+  { "ttbr1_el2",	CPENC (3, 4, C2, C0, 1), F_ARCHEXT },
+  { "ttbr0_el3",        CPENC(3,6,C2,C0,0),	0 },
+  { "ttbr0_el12",	CPENC (3, 5, C2, C0, 0), F_ARCHEXT },
+  { "ttbr1_el12",	CPENC (3, 5, C2, C0, 1), F_ARCHEXT },
+  { "vttbr_el2",        CPENC(3,4,C2,C1,0),	0 },
+  { "tcr_el1",          CPENC(3,0,C2,C0,2),	0 },
+  { "tcr_el2",          CPENC(3,4,C2,C0,2),	0 },
+  { "tcr_el3",          CPENC(3,6,C2,C0,2),	0 },
+  { "tcr_el12",		CPENC (3, 5, C2, C0, 2), F_ARCHEXT },
+  { "vtcr_el2",         CPENC(3,4,C2,C1,2),	0 },
+  { "afsr0_el1",        CPENC(3,0,C5,C1,0),	0 },
+  { "afsr1_el1",        CPENC(3,0,C5,C1,1),	0 },
+  { "afsr0_el2",        CPENC(3,4,C5,C1,0),	0 },
+  { "afsr1_el2",        CPENC(3,4,C5,C1,1),	0 },
+  { "afsr0_el3",        CPENC(3,6,C5,C1,0),	0 },
+  { "afsr0_el12",	CPENC (3, 5, C5, C1, 0), F_ARCHEXT },
+  { "afsr1_el3",        CPENC(3,6,C5,C1,1),	0 },
+  { "afsr1_el12",	CPENC (3, 5, C5, C1, 1), F_ARCHEXT },
+  { "esr_el1",          CPENC(3,0,C5,C2,0),	0 },
+  { "esr_el2",          CPENC(3,4,C5,C2,0),	0 },
+  { "esr_el3",          CPENC(3,6,C5,C2,0),	0 },
+  { "esr_el12",		CPENC (3, 5, C5, C2, 0), F_ARCHEXT },
+  { "vsesr_el2",	CPENC (3, 4, C5, C2, 3), F_ARCHEXT }, /* RO */
+  { "fpexc32_el2",      CPENC(3,4,C5,C3,0),	0 },
+  { "erridr_el1",	CPENC (3, 0, C5, C3, 0), F_ARCHEXT }, /* RO */
+  { "errselr_el1",	CPENC (3, 0, C5, C3, 1), F_ARCHEXT },
+  { "erxfr_el1",	CPENC (3, 0, C5, C4, 0), F_ARCHEXT }, /* RO */
+  { "erxctlr_el1",	CPENC (3, 0, C5, C4, 1), F_ARCHEXT },
+  { "erxstatus_el1",	CPENC (3, 0, C5, C4, 2), F_ARCHEXT },
+  { "erxaddr_el1",	CPENC (3, 0, C5, C4, 3), F_ARCHEXT },
+  { "erxmisc0_el1",	CPENC (3, 0, C5, C5, 0), F_ARCHEXT },
+  { "erxmisc1_el1",	CPENC (3, 0, C5, C5, 1), F_ARCHEXT },
+  { "far_el1",          CPENC(3,0,C6,C0,0),	0 },
+  { "far_el2",          CPENC(3,4,C6,C0,0),	0 },
+  { "far_el3",          CPENC(3,6,C6,C0,0),	0 },
+  { "far_el12",		CPENC (3, 5, C6, C0, 0), F_ARCHEXT },
+  { "hpfar_el2",        CPENC(3,4,C6,C0,4),	0 },
+  { "par_el1",          CPENC(3,0,C7,C4,0),	0 },
+  { "mair_el1",         CPENC(3,0,C10,C2,0),	0 },
+  { "mair_el2",         CPENC(3,4,C10,C2,0),	0 },
+  { "mair_el3",         CPENC(3,6,C10,C2,0),	0 },
+  { "mair_el12",	CPENC (3, 5, C10, C2, 0), F_ARCHEXT },
+  { "amair_el1",        CPENC(3,0,C10,C3,0),	0 },
+  { "amair_el2",        CPENC(3,4,C10,C3,0),	0 },
+  { "amair_el3",        CPENC(3,6,C10,C3,0),	0 },
+  { "amair_el12",	CPENC (3, 5, C10, C3, 0), F_ARCHEXT },
+  { "vbar_el1",         CPENC(3,0,C12,C0,0),	0 },
+  { "vbar_el2",         CPENC(3,4,C12,C0,0),	0 },
+  { "vbar_el3",         CPENC(3,6,C12,C0,0),	0 },
+  { "vbar_el12",	CPENC (3, 5, C12, C0, 0), F_ARCHEXT },
+  { "rvbar_el1",        CPENC(3,0,C12,C0,1),	0 }, /* RO */
+  { "rvbar_el2",        CPENC(3,4,C12,C0,1),	0 }, /* RO */
+  { "rvbar_el3",        CPENC(3,6,C12,C0,1),	0 }, /* RO */
+  { "rmr_el1",          CPENC(3,0,C12,C0,2),	0 },
+  { "rmr_el2",          CPENC(3,4,C12,C0,2),	0 },
+  { "rmr_el3",          CPENC(3,6,C12,C0,2),	0 },
+  { "isr_el1",          CPENC(3,0,C12,C1,0),	0 }, /* RO */
+  { "disr_el1",		CPENC (3, 0, C12, C1, 1), F_ARCHEXT },
+  { "vdisr_el2",	CPENC (3, 4, C12, C1, 1), F_ARCHEXT },
+  { "contextidr_el1",   CPENC(3,0,C13,C0,1),	0 },
+  { "contextidr_el2",	CPENC (3, 4, C13, C0, 1), F_ARCHEXT },
+  { "contextidr_el12",	CPENC (3, 5, C13, C0, 1), F_ARCHEXT },
+  { "tpidr_el0",        CPENC(3,3,C13,C0,2),	0 },
+  { "tpidrro_el0",      CPENC(3,3,C13,C0,3),	0 }, /* RO */
+  { "tpidr_el1",        CPENC(3,0,C13,C0,4),	0 },
+  { "tpidr_el2",        CPENC(3,4,C13,C0,2),	0 },
+  { "tpidr_el3",        CPENC(3,6,C13,C0,2),	0 },
+  { "teecr32_el1",      CPENC(2,2,C0, C0,0),	0 }, /* See section 3.9.7.1 */
+  { "cntfrq_el0",       CPENC(3,3,C14,C0,0),	0 }, /* RO */
+  { "cntpct_el0",       CPENC(3,3,C14,C0,1),	0 }, /* RO */
+  { "cntvct_el0",       CPENC(3,3,C14,C0,2),	0 }, /* RO */
+  { "cntvoff_el2",      CPENC(3,4,C14,C0,3),	0 },
+  { "cntkctl_el1",      CPENC(3,0,C14,C1,0),	0 },
+  { "cntkctl_el12",	CPENC (3, 5, C14, C1, 0), F_ARCHEXT },
+  { "cnthctl_el2",      CPENC(3,4,C14,C1,0),	0 },
+  { "cntp_tval_el0",    CPENC(3,3,C14,C2,0),	0 },
+  { "cntp_tval_el02",	CPENC (3, 5, C14, C2, 0), F_ARCHEXT },
+  { "cntp_ctl_el0",     CPENC(3,3,C14,C2,1),	0 },
+  { "cntp_ctl_el02",	CPENC (3, 5, C14, C2, 1), F_ARCHEXT },
+  { "cntp_cval_el0",    CPENC(3,3,C14,C2,2),	0 },
+  { "cntp_cval_el02",	CPENC (3, 5, C14, C2, 2), F_ARCHEXT },
+  { "cntv_tval_el0",    CPENC(3,3,C14,C3,0),	0 },
+  { "cntv_tval_el02",	CPENC (3, 5, C14, C3, 0), F_ARCHEXT },
+  { "cntv_ctl_el0",     CPENC(3,3,C14,C3,1),	0 },
+  { "cntv_ctl_el02",	CPENC (3, 5, C14, C3, 1), F_ARCHEXT },
+  { "cntv_cval_el0",    CPENC(3,3,C14,C3,2),	0 },
+  { "cntv_cval_el02",	CPENC (3, 5, C14, C3, 2), F_ARCHEXT },
+  { "cnthp_tval_el2",   CPENC(3,4,C14,C2,0),	0 },
+  { "cnthp_ctl_el2",    CPENC(3,4,C14,C2,1),	0 },
+  { "cnthp_cval_el2",   CPENC(3,4,C14,C2,2),	0 },
+  { "cntps_tval_el1",   CPENC(3,7,C14,C2,0),	0 },
+  { "cntps_ctl_el1",    CPENC(3,7,C14,C2,1),	0 },
+  { "cntps_cval_el1",   CPENC(3,7,C14,C2,2),	0 },
+  { "cnthv_tval_el2",	CPENC (3, 4, C14, C3, 0), F_ARCHEXT },
+  { "cnthv_ctl_el2",	CPENC (3, 4, C14, C3, 1), F_ARCHEXT },
+  { "cnthv_cval_el2",	CPENC (3, 4, C14, C3, 2), F_ARCHEXT },
+  { "dacr32_el2",       CPENC(3,4,C3,C0,0),	0 },
+  { "ifsr32_el2",       CPENC(3,4,C5,C0,1),	0 },
+  { "teehbr32_el1",     CPENC(2,2,C1,C0,0),	0 },
+  { "sder32_el3",       CPENC(3,6,C1,C1,1),	0 },
+  { "mdscr_el1",         CPENC(2,0,C0, C2, 2),	0 },
+  { "mdccsr_el0",        CPENC(2,3,C0, C1, 0),	0 },  /* r */
+  { "mdccint_el1",       CPENC(2,0,C0, C2, 0),	0 },
+  { "dbgdtr_el0",        CPENC(2,3,C0, C4, 0),	0 },
+  { "dbgdtrrx_el0",      CPENC(2,3,C0, C5, 0),	0 },  /* r */
+  { "dbgdtrtx_el0",      CPENC(2,3,C0, C5, 0),	0 },  /* w */
+  { "osdtrrx_el1",       CPENC(2,0,C0, C0, 2),	0 },  /* r */
+  { "osdtrtx_el1",       CPENC(2,0,C0, C3, 2),	0 },  /* w */
+  { "oseccr_el1",        CPENC(2,0,C0, C6, 2),	0 },
+  { "dbgvcr32_el2",      CPENC(2,4,C0, C7, 0),	0 },
+  { "dbgbvr0_el1",       CPENC(2,0,C0, C0, 4),	0 },
+  { "dbgbvr1_el1",       CPENC(2,0,C0, C1, 4),	0 },
+  { "dbgbvr2_el1",       CPENC(2,0,C0, C2, 4),	0 },
+  { "dbgbvr3_el1",       CPENC(2,0,C0, C3, 4),	0 },
+  { "dbgbvr4_el1",       CPENC(2,0,C0, C4, 4),	0 },
+  { "dbgbvr5_el1",       CPENC(2,0,C0, C5, 4),	0 },
+  { "dbgbvr6_el1",       CPENC(2,0,C0, C6, 4),	0 },
+  { "dbgbvr7_el1",       CPENC(2,0,C0, C7, 4),	0 },
+  { "dbgbvr8_el1",       CPENC(2,0,C0, C8, 4),	0 },
+  { "dbgbvr9_el1",       CPENC(2,0,C0, C9, 4),	0 },
+  { "dbgbvr10_el1",      CPENC(2,0,C0, C10,4),	0 },
+  { "dbgbvr11_el1",      CPENC(2,0,C0, C11,4),	0 },
+  { "dbgbvr12_el1",      CPENC(2,0,C0, C12,4),	0 },
+  { "dbgbvr13_el1",      CPENC(2,0,C0, C13,4),	0 },
+  { "dbgbvr14_el1",      CPENC(2,0,C0, C14,4),	0 },
+  { "dbgbvr15_el1",      CPENC(2,0,C0, C15,4),	0 },
+  { "dbgbcr0_el1",       CPENC(2,0,C0, C0, 5),	0 },
+  { "dbgbcr1_el1",       CPENC(2,0,C0, C1, 5),	0 },
+  { "dbgbcr2_el1",       CPENC(2,0,C0, C2, 5),	0 },
+  { "dbgbcr3_el1",       CPENC(2,0,C0, C3, 5),	0 },
+  { "dbgbcr4_el1",       CPENC(2,0,C0, C4, 5),	0 },
+  { "dbgbcr5_el1",       CPENC(2,0,C0, C5, 5),	0 },
+  { "dbgbcr6_el1",       CPENC(2,0,C0, C6, 5),	0 },
+  { "dbgbcr7_el1",       CPENC(2,0,C0, C7, 5),	0 },
+  { "dbgbcr8_el1",       CPENC(2,0,C0, C8, 5),	0 },
+  { "dbgbcr9_el1",       CPENC(2,0,C0, C9, 5),	0 },
+  { "dbgbcr10_el1",      CPENC(2,0,C0, C10,5),	0 },
+  { "dbgbcr11_el1",      CPENC(2,0,C0, C11,5),	0 },
+  { "dbgbcr12_el1",      CPENC(2,0,C0, C12,5),	0 },
+  { "dbgbcr13_el1",      CPENC(2,0,C0, C13,5),	0 },
+  { "dbgbcr14_el1",      CPENC(2,0,C0, C14,5),	0 },
+  { "dbgbcr15_el1",      CPENC(2,0,C0, C15,5),	0 },
+  { "dbgwvr0_el1",       CPENC(2,0,C0, C0, 6),	0 },
+  { "dbgwvr1_el1",       CPENC(2,0,C0, C1, 6),	0 },
+  { "dbgwvr2_el1",       CPENC(2,0,C0, C2, 6),	0 },
+  { "dbgwvr3_el1",       CPENC(2,0,C0, C3, 6),	0 },
+  { "dbgwvr4_el1",       CPENC(2,0,C0, C4, 6),	0 },
+  { "dbgwvr5_el1",       CPENC(2,0,C0, C5, 6),	0 },
+  { "dbgwvr6_el1",       CPENC(2,0,C0, C6, 6),	0 },
+  { "dbgwvr7_el1",       CPENC(2,0,C0, C7, 6),	0 },
+  { "dbgwvr8_el1",       CPENC(2,0,C0, C8, 6),	0 },
+  { "dbgwvr9_el1",       CPENC(2,0,C0, C9, 6),	0 },
+  { "dbgwvr10_el1",      CPENC(2,0,C0, C10,6),	0 },
+  { "dbgwvr11_el1",      CPENC(2,0,C0, C11,6),	0 },
+  { "dbgwvr12_el1",      CPENC(2,0,C0, C12,6),	0 },
+  { "dbgwvr13_el1",      CPENC(2,0,C0, C13,6),	0 },
+  { "dbgwvr14_el1",      CPENC(2,0,C0, C14,6),	0 },
+  { "dbgwvr15_el1",      CPENC(2,0,C0, C15,6),	0 },
+  { "dbgwcr0_el1",       CPENC(2,0,C0, C0, 7),	0 },
+  { "dbgwcr1_el1",       CPENC(2,0,C0, C1, 7),	0 },
+  { "dbgwcr2_el1",       CPENC(2,0,C0, C2, 7),	0 },
+  { "dbgwcr3_el1",       CPENC(2,0,C0, C3, 7),	0 },
+  { "dbgwcr4_el1",       CPENC(2,0,C0, C4, 7),	0 },
+  { "dbgwcr5_el1",       CPENC(2,0,C0, C5, 7),	0 },
+  { "dbgwcr6_el1",       CPENC(2,0,C0, C6, 7),	0 },
+  { "dbgwcr7_el1",       CPENC(2,0,C0, C7, 7),	0 },
+  { "dbgwcr8_el1",       CPENC(2,0,C0, C8, 7),	0 },
+  { "dbgwcr9_el1",       CPENC(2,0,C0, C9, 7),	0 },
+  { "dbgwcr10_el1",      CPENC(2,0,C0, C10,7),	0 },
+  { "dbgwcr11_el1",      CPENC(2,0,C0, C11,7),	0 },
+  { "dbgwcr12_el1",      CPENC(2,0,C0, C12,7),	0 },
+  { "dbgwcr13_el1",      CPENC(2,0,C0, C13,7),	0 },
+  { "dbgwcr14_el1",      CPENC(2,0,C0, C14,7),	0 },
+  { "dbgwcr15_el1",      CPENC(2,0,C0, C15,7),	0 },
+  { "mdrar_el1",         CPENC(2,0,C1, C0, 0),	0 },  /* r */
+  { "oslar_el1",         CPENC(2,0,C1, C0, 4),	0 },  /* w */
+  { "oslsr_el1",         CPENC(2,0,C1, C1, 4),	0 },  /* r */
+  { "osdlr_el1",         CPENC(2,0,C1, C3, 4),	0 },
+  { "dbgprcr_el1",       CPENC(2,0,C1, C4, 4),	0 },
+  { "dbgclaimset_el1",   CPENC(2,0,C7, C8, 6),	0 },
+  { "dbgclaimclr_el1",   CPENC(2,0,C7, C9, 6),	0 },
+  { "dbgauthstatus_el1", CPENC(2,0,C7, C14,6),	0 },  /* r */
+  { "pmblimitr_el1",	 CPENC (3, 0, C9, C10, 0), F_ARCHEXT },  /* rw */
+  { "pmbptr_el1",	 CPENC (3, 0, C9, C10, 1), F_ARCHEXT },  /* rw */
+  { "pmbsr_el1",	 CPENC (3, 0, C9, C10, 3), F_ARCHEXT },  /* rw */
+  { "pmbidr_el1",	 CPENC (3, 0, C9, C10, 7), F_ARCHEXT },  /* ro */
+  { "pmscr_el1",	 CPENC (3, 0, C9, C9, 0),  F_ARCHEXT },  /* rw */
+  { "pmsicr_el1",	 CPENC (3, 0, C9, C9, 2),  F_ARCHEXT },  /* rw */
+  { "pmsirr_el1",	 CPENC (3, 0, C9, C9, 3),  F_ARCHEXT },  /* rw */
+  { "pmsfcr_el1",	 CPENC (3, 0, C9, C9, 4),  F_ARCHEXT },  /* rw */
+  { "pmsevfr_el1",	 CPENC (3, 0, C9, C9, 5),  F_ARCHEXT },  /* rw */
+  { "pmslatfr_el1",	 CPENC (3, 0, C9, C9, 6),  F_ARCHEXT },  /* rw */
+  { "pmsidr_el1",	 CPENC (3, 0, C9, C9, 7),  F_ARCHEXT },  /* ro */
+  { "pmscr_el2",	 CPENC (3, 4, C9, C9, 0),  F_ARCHEXT },  /* rw */
+  { "pmscr_el12",	 CPENC (3, 5, C9, C9, 0),  F_ARCHEXT },  /* rw */
+  { "pmcr_el0",          CPENC(3,3,C9,C12, 0),	0 },
+  { "pmcntenset_el0",    CPENC(3,3,C9,C12, 1),	0 },
+  { "pmcntenclr_el0",    CPENC(3,3,C9,C12, 2),	0 },
+  { "pmovsclr_el0",      CPENC(3,3,C9,C12, 3),	0 },
+  { "pmswinc_el0",       CPENC(3,3,C9,C12, 4),	0 },  /* w */
+  { "pmselr_el0",        CPENC(3,3,C9,C12, 5),	0 },
+  { "pmceid0_el0",       CPENC(3,3,C9,C12, 6),	0 },  /* r */
+  { "pmceid1_el0",       CPENC(3,3,C9,C12, 7),	0 },  /* r */
+  { "pmccntr_el0",       CPENC(3,3,C9,C13, 0),	0 },
+  { "pmxevtyper_el0",    CPENC(3,3,C9,C13, 1),	0 },
+  { "pmxevcntr_el0",     CPENC(3,3,C9,C13, 2),	0 },
+  { "pmuserenr_el0",     CPENC(3,3,C9,C14, 0),	0 },
+  { "pmintenset_el1",    CPENC(3,0,C9,C14, 1),	0 },
+  { "pmintenclr_el1",    CPENC(3,0,C9,C14, 2),	0 },
+  { "pmovsset_el0",      CPENC(3,3,C9,C14, 3),	0 },
+  { "pmevcntr0_el0",     CPENC(3,3,C14,C8, 0),	0 },
+  { "pmevcntr1_el0",     CPENC(3,3,C14,C8, 1),	0 },
+  { "pmevcntr2_el0",     CPENC(3,3,C14,C8, 2),	0 },
+  { "pmevcntr3_el0",     CPENC(3,3,C14,C8, 3),	0 },
+  { "pmevcntr4_el0",     CPENC(3,3,C14,C8, 4),	0 },
+  { "pmevcntr5_el0",     CPENC(3,3,C14,C8, 5),	0 },
+  { "pmevcntr6_el0",     CPENC(3,3,C14,C8, 6),	0 },
+  { "pmevcntr7_el0",     CPENC(3,3,C14,C8, 7),	0 },
+  { "pmevcntr8_el0",     CPENC(3,3,C14,C9, 0),	0 },
+  { "pmevcntr9_el0",     CPENC(3,3,C14,C9, 1),	0 },
+  { "pmevcntr10_el0",    CPENC(3,3,C14,C9, 2),	0 },
+  { "pmevcntr11_el0",    CPENC(3,3,C14,C9, 3),	0 },
+  { "pmevcntr12_el0",    CPENC(3,3,C14,C9, 4),	0 },
+  { "pmevcntr13_el0",    CPENC(3,3,C14,C9, 5),	0 },
+  { "pmevcntr14_el0",    CPENC(3,3,C14,C9, 6),	0 },
+  { "pmevcntr15_el0",    CPENC(3,3,C14,C9, 7),	0 },
+  { "pmevcntr16_el0",    CPENC(3,3,C14,C10,0),	0 },
+  { "pmevcntr17_el0",    CPENC(3,3,C14,C10,1),	0 },
+  { "pmevcntr18_el0",    CPENC(3,3,C14,C10,2),	0 },
+  { "pmevcntr19_el0",    CPENC(3,3,C14,C10,3),	0 },
+  { "pmevcntr20_el0",    CPENC(3,3,C14,C10,4),	0 },
+  { "pmevcntr21_el0",    CPENC(3,3,C14,C10,5),	0 },
+  { "pmevcntr22_el0",    CPENC(3,3,C14,C10,6),	0 },
+  { "pmevcntr23_el0",    CPENC(3,3,C14,C10,7),	0 },
+  { "pmevcntr24_el0",    CPENC(3,3,C14,C11,0),	0 },
+  { "pmevcntr25_el0",    CPENC(3,3,C14,C11,1),	0 },
+  { "pmevcntr26_el0",    CPENC(3,3,C14,C11,2),	0 },
+  { "pmevcntr27_el0",    CPENC(3,3,C14,C11,3),	0 },
+  { "pmevcntr28_el0",    CPENC(3,3,C14,C11,4),	0 },
+  { "pmevcntr29_el0",    CPENC(3,3,C14,C11,5),	0 },
+  { "pmevcntr30_el0",    CPENC(3,3,C14,C11,6),	0 },
+  { "pmevtyper0_el0",    CPENC(3,3,C14,C12,0),	0 },
+  { "pmevtyper1_el0",    CPENC(3,3,C14,C12,1),	0 },
+  { "pmevtyper2_el0",    CPENC(3,3,C14,C12,2),	0 },
+  { "pmevtyper3_el0",    CPENC(3,3,C14,C12,3),	0 },
+  { "pmevtyper4_el0",    CPENC(3,3,C14,C12,4),	0 },
+  { "pmevtyper5_el0",    CPENC(3,3,C14,C12,5),	0 },
+  { "pmevtyper6_el0",    CPENC(3,3,C14,C12,6),	0 },
+  { "pmevtyper7_el0",    CPENC(3,3,C14,C12,7),	0 },
+  { "pmevtyper8_el0",    CPENC(3,3,C14,C13,0),	0 },
+  { "pmevtyper9_el0",    CPENC(3,3,C14,C13,1),	0 },
+  { "pmevtyper10_el0",   CPENC(3,3,C14,C13,2),	0 },
+  { "pmevtyper11_el0",   CPENC(3,3,C14,C13,3),	0 },
+  { "pmevtyper12_el0",   CPENC(3,3,C14,C13,4),	0 },
+  { "pmevtyper13_el0",   CPENC(3,3,C14,C13,5),	0 },
+  { "pmevtyper14_el0",   CPENC(3,3,C14,C13,6),	0 },
+  { "pmevtyper15_el0",   CPENC(3,3,C14,C13,7),	0 },
+  { "pmevtyper16_el0",   CPENC(3,3,C14,C14,0),	0 },
+  { "pmevtyper17_el0",   CPENC(3,3,C14,C14,1),	0 },
+  { "pmevtyper18_el0",   CPENC(3,3,C14,C14,2),	0 },
+  { "pmevtyper19_el0",   CPENC(3,3,C14,C14,3),	0 },
+  { "pmevtyper20_el0",   CPENC(3,3,C14,C14,4),	0 },
+  { "pmevtyper21_el0",   CPENC(3,3,C14,C14,5),	0 },
+  { "pmevtyper22_el0",   CPENC(3,3,C14,C14,6),	0 },
+  { "pmevtyper23_el0",   CPENC(3,3,C14,C14,7),	0 },
+  { "pmevtyper24_el0",   CPENC(3,3,C14,C15,0),	0 },
+  { "pmevtyper25_el0",   CPENC(3,3,C14,C15,1),	0 },
+  { "pmevtyper26_el0",   CPENC(3,3,C14,C15,2),	0 },
+  { "pmevtyper27_el0",   CPENC(3,3,C14,C15,3),	0 },
+  { "pmevtyper28_el0",   CPENC(3,3,C14,C15,4),	0 },
+  { "pmevtyper29_el0",   CPENC(3,3,C14,C15,5),	0 },
+  { "pmevtyper30_el0",   CPENC(3,3,C14,C15,6),	0 },
+  { "pmccfiltr_el0",     CPENC(3,3,C14,C15,7),	0 },
+  { 0,          CPENC(0,0,0,0,0),	0 },
 };
 
-const struct aarch64_name_value_pair aarch64_pstatefields [] =
+bfd_boolean
+aarch64_sys_reg_deprecated_p (const aarch64_sys_reg *reg)
 {
-  { "spsel",            0x05  },
-  { "daifset",          0x1e  },
-  { "daifclr",          0x1f  },
-  { 0,          CPENC(0,0,0,0,0)  },
+  return (reg->flags & F_DEPRECATED) != 0;
+}
+
+bfd_boolean
+aarch64_sys_reg_supported_p (const aarch64_feature_set features,
+			     const aarch64_sys_reg *reg)
+{
+  if (!(reg->flags & F_ARCHEXT))
+    return TRUE;
+
+  /* PAN.  Values are from aarch64_sys_regs.  */
+  if (reg->value == CPEN_(0,C2,3)
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_PAN))
+    return FALSE;
+
+  /* Virtualization host extensions: system registers.  */
+  if ((reg->value == CPENC (3, 4, C2, C0, 1)
+       || reg->value == CPENC (3, 4, C13, C0, 1)
+       || reg->value == CPENC (3, 4, C14, C3, 0)
+       || reg->value == CPENC (3, 4, C14, C3, 1)
+       || reg->value == CPENC (3, 4, C14, C3, 2))
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_V8_1))
+      return FALSE;
+
+  /* Virtualization host extensions: *_el12 names of *_el1 registers.  */
+  if ((reg->value == CPEN_ (5, C0, 0)
+       || reg->value == CPEN_ (5, C0, 1)
+       || reg->value == CPENC (3, 5, C1, C0, 0)
+       || reg->value == CPENC (3, 5, C1, C0, 2)
+       || reg->value == CPENC (3, 5, C2, C0, 0)
+       || reg->value == CPENC (3, 5, C2, C0, 1)
+       || reg->value == CPENC (3, 5, C2, C0, 2)
+       || reg->value == CPENC (3, 5, C5, C1, 0)
+       || reg->value == CPENC (3, 5, C5, C1, 1)
+       || reg->value == CPENC (3, 5, C5, C2, 0)
+       || reg->value == CPENC (3, 5, C6, C0, 0)
+       || reg->value == CPENC (3, 5, C10, C2, 0)
+       || reg->value == CPENC (3, 5, C10, C3, 0)
+       || reg->value == CPENC (3, 5, C12, C0, 0)
+       || reg->value == CPENC (3, 5, C13, C0, 1)
+       || reg->value == CPENC (3, 5, C14, C1, 0))
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_V8_1))
+    return FALSE;
+
+  /* Virtualization host extensions: *_el02 names of *_el0 registers.  */
+  if ((reg->value == CPENC (3, 5, C14, C2, 0)
+       || reg->value == CPENC (3, 5, C14, C2, 1)
+       || reg->value == CPENC (3, 5, C14, C2, 2)
+       || reg->value == CPENC (3, 5, C14, C3, 0)
+       || reg->value == CPENC (3, 5, C14, C3, 1)
+       || reg->value == CPENC (3, 5, C14, C3, 2))
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_V8_1))
+    return FALSE;
+
+  /* ARMv8.2 features.  */
+
+  /* ID_AA64MMFR2_EL1.  */
+  if (reg->value == CPENC (3, 0, C0, C7, 2)
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_V8_2))
+    return FALSE;
+
+  /* PSTATE.UAO.  */
+  if (reg->value == CPEN_ (0, C2, 4)
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_V8_2))
+    return FALSE;
+
+  /* RAS extension.  */
+
+  /* ERRIDR_EL1 and ERRSELR_EL1.  */
+  if ((reg->value == CPENC (3, 0, C5, C3, 0)
+       || reg->value == CPENC (3, 0, C5, C3, 1))
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_RAS))
+    return FALSE;
+
+  /* ERXFR_EL1, ERXCTLR_EL1, ERXSTATUS_EL, ERXADDR_EL1, ERXMISC0_EL1 AND
+     ERXMISC1_EL1.  */
+  if ((reg->value == CPENC (3, 0, C5, C3, 0)
+       || reg->value == CPENC (3, 0, C5, C3 ,1)
+       || reg->value == CPENC (3, 0, C5, C3, 2)
+       || reg->value == CPENC (3, 0, C5, C3, 3)
+       || reg->value == CPENC (3, 0, C5, C5, 0)
+       || reg->value == CPENC (3, 0, C5, C5, 1))
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_RAS))
+    return FALSE;
+
+  /* VSESR_EL2, DISR_EL1 and VDISR_EL2.  */
+  if ((reg->value == CPENC (3, 4, C5, C2, 3)
+       || reg->value == CPENC (3, 0, C12, C1, 1)
+       || reg->value == CPENC (3, 4, C12, C1, 1))
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_RAS))
+    return FALSE;
+
+  /* Statistical Profiling extension.  */
+  if ((reg->value == CPENC (3, 0, C9, C10, 0)
+       || reg->value == CPENC (3, 0, C9, C10, 1)
+       || reg->value == CPENC (3, 0, C9, C10, 3)
+       || reg->value == CPENC (3, 0, C9, C10, 7)
+       || reg->value == CPENC (3, 0, C9, C9, 0)
+       || reg->value == CPENC (3, 0, C9, C9, 2)
+       || reg->value == CPENC (3, 0, C9, C9, 3)
+       || reg->value == CPENC (3, 0, C9, C9, 4)
+       || reg->value == CPENC (3, 0, C9, C9, 5)
+       || reg->value == CPENC (3, 0, C9, C9, 6)
+       || reg->value == CPENC (3, 0, C9, C9, 7)
+       || reg->value == CPENC (3, 4, C9, C9, 0)
+       || reg->value == CPENC (3, 5, C9, C9, 0))
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_PROFILE))
+    return FALSE;
+
+  return TRUE;
+}
+
+const aarch64_sys_reg aarch64_pstatefields [] =
+{
+  { "spsel",            0x05,	0 },
+  { "daifset",          0x1e,	0 },
+  { "daifclr",          0x1f,	0 },
+  { "pan",		0x04,	F_ARCHEXT },
+  { "uao",		0x03,	F_ARCHEXT },
+  { 0,          CPENC(0,0,0,0,0), 0 },
 };
+
+bfd_boolean
+aarch64_pstatefield_supported_p (const aarch64_feature_set features,
+				 const aarch64_sys_reg *reg)
+{
+  if (!(reg->flags & F_ARCHEXT))
+    return TRUE;
+
+  /* PAN.  Values are from aarch64_pstatefields.  */
+  if (reg->value == 0x04
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_PAN))
+    return FALSE;
+
+  /* UAO.  Values are from aarch64_pstatefields.  */
+  if (reg->value == 0x03
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_V8_2))
+    return FALSE;
+
+  return TRUE;
+}
 
 const aarch64_sys_ins_reg aarch64_sys_regs_ic[] =
 {
     { "ialluis", CPENS(0,C7,C1,0), 0 },
     { "iallu",   CPENS(0,C7,C5,0), 0 },
-    { "ivau",    CPENS(3,C7,C5,1), 1 },
+    { "ivau",    CPENS (3, C7, C5, 1), F_HASXT },
     { 0, CPENS(0,0,0,0), 0 }
 };
 
 const aarch64_sys_ins_reg aarch64_sys_regs_dc[] =
 {
-    { "zva",        CPENS(3,C7,C4,1),  1 },
-    { "ivac",       CPENS(0,C7,C6,1),  1 },
-    { "isw",        CPENS(0,C7,C6,2),  1 },
-    { "cvac",       CPENS(3,C7,C10,1), 1 },
-    { "csw",        CPENS(0,C7,C10,2), 1 },
-    { "cvau",       CPENS(3,C7,C11,1), 1 },
-    { "civac",      CPENS(3,C7,C14,1), 1 },
-    { "cisw",       CPENS(0,C7,C14,2), 1 },
+    { "zva",	    CPENS (3, C7, C4, 1),  F_HASXT },
+    { "ivac",       CPENS (0, C7, C6, 1),  F_HASXT },
+    { "isw",	    CPENS (0, C7, C6, 2),  F_HASXT },
+    { "cvac",       CPENS (3, C7, C10, 1), F_HASXT },
+    { "csw",	    CPENS (0, C7, C10, 2), F_HASXT },
+    { "cvau",       CPENS (3, C7, C11, 1), F_HASXT },
+    { "cvap",       CPENS (3, C7, C12, 1), F_HASXT | F_ARCHEXT },
+    { "civac",      CPENS (3, C7, C14, 1), F_HASXT },
+    { "cisw",       CPENS (0, C7, C14, 2), F_HASXT },
     { 0,       CPENS(0,0,0,0), 0 }
 };
 
 const aarch64_sys_ins_reg aarch64_sys_regs_at[] =
 {
-    { "s1e1r",      CPENS(0,C7,C8,0), 1 },
-    { "s1e1w",      CPENS(0,C7,C8,1), 1 },
-    { "s1e0r",      CPENS(0,C7,C8,2), 1 },
-    { "s1e0w",      CPENS(0,C7,C8,3), 1 },
-    { "s12e1r",     CPENS(4,C7,C8,4), 1 },
-    { "s12e1w",     CPENS(4,C7,C8,5), 1 },
-    { "s12e0r",     CPENS(4,C7,C8,6), 1 },
-    { "s12e0w",     CPENS(4,C7,C8,7), 1 },
-    { "s1e2r",      CPENS(4,C7,C8,0), 1 },
-    { "s1e2w",      CPENS(4,C7,C8,1), 1 },
-    { "s1e3r",      CPENS(6,C7,C8,0), 1 },
-    { "s1e3w",      CPENS(6,C7,C8,1), 1 },
+    { "s1e1r",      CPENS (0, C7, C8, 0), F_HASXT },
+    { "s1e1w",      CPENS (0, C7, C8, 1), F_HASXT },
+    { "s1e0r",      CPENS (0, C7, C8, 2), F_HASXT },
+    { "s1e0w",      CPENS (0, C7, C8, 3), F_HASXT },
+    { "s12e1r",     CPENS (4, C7, C8, 4), F_HASXT },
+    { "s12e1w",     CPENS (4, C7, C8, 5), F_HASXT },
+    { "s12e0r",     CPENS (4, C7, C8, 6), F_HASXT },
+    { "s12e0w",     CPENS (4, C7, C8, 7), F_HASXT },
+    { "s1e2r",      CPENS (4, C7, C8, 0), F_HASXT },
+    { "s1e2w",      CPENS (4, C7, C8, 1), F_HASXT },
+    { "s1e3r",      CPENS (6, C7, C8, 0), F_HASXT },
+    { "s1e3w",      CPENS (6, C7, C8, 1), F_HASXT },
+    { "s1e1rp",     CPENS (0, C7, C9, 0), F_HASXT | F_ARCHEXT },
+    { "s1e1wp",     CPENS (0, C7, C9, 1), F_HASXT | F_ARCHEXT },
     { 0,       CPENS(0,0,0,0), 0 }
 };
 
 const aarch64_sys_ins_reg aarch64_sys_regs_tlbi[] =
 {
     { "vmalle1",   CPENS(0,C8,C7,0), 0 },
-    { "vae1",      CPENS(0,C8,C7,1), 1 },
-    { "aside1",    CPENS(0,C8,C7,2), 1 },
-    { "vaae1",     CPENS(0,C8,C7,3), 1 },
+    { "vae1",      CPENS (0, C8, C7, 1), F_HASXT },
+    { "aside1",    CPENS (0, C8, C7, 2), F_HASXT },
+    { "vaae1",     CPENS (0, C8, C7, 3), F_HASXT },
     { "vmalle1is", CPENS(0,C8,C3,0), 0 },
-    { "vae1is",    CPENS(0,C8,C3,1), 1 },
-    { "aside1is",  CPENS(0,C8,C3,2), 1 },
-    { "vaae1is",   CPENS(0,C8,C3,3), 1 },
-    { "ipas2e1is", CPENS(4,C8,C0,1), 1 },
-    { "ipas2le1is",CPENS(4,C8,C0,5), 1 },
-    { "ipas2e1",   CPENS(4,C8,C4,1), 1 },
-    { "ipas2le1",  CPENS(4,C8,C4,5), 1 },
-    { "vae2",      CPENS(4,C8,C7,1), 1 },
-    { "vae2is",    CPENS(4,C8,C3,1), 1 },
+    { "vae1is",    CPENS (0, C8, C3, 1), F_HASXT },
+    { "aside1is",  CPENS (0, C8, C3, 2), F_HASXT },
+    { "vaae1is",   CPENS (0, C8, C3, 3), F_HASXT },
+    { "ipas2e1is", CPENS (4, C8, C0, 1), F_HASXT },
+    { "ipas2le1is",CPENS (4, C8, C0, 5), F_HASXT },
+    { "ipas2e1",   CPENS (4, C8, C4, 1), F_HASXT },
+    { "ipas2le1",  CPENS (4, C8, C4, 5), F_HASXT },
+    { "vae2",      CPENS (4, C8, C7, 1), F_HASXT },
+    { "vae2is",    CPENS (4, C8, C3, 1), F_HASXT },
     { "vmalls12e1",CPENS(4,C8,C7,6), 0 },
     { "vmalls12e1is",CPENS(4,C8,C3,6), 0 },
-    { "vae3",      CPENS(6,C8,C7,1), 1 },
-    { "vae3is",    CPENS(6,C8,C3,1), 1 },
+    { "vae3",      CPENS (6, C8, C7, 1), F_HASXT },
+    { "vae3is",    CPENS (6, C8, C3, 1), F_HASXT },
     { "alle2",     CPENS(4,C8,C7,0), 0 },
     { "alle2is",   CPENS(4,C8,C3,0), 0 },
     { "alle1",     CPENS(4,C8,C7,4), 0 },
     { "alle1is",   CPENS(4,C8,C3,4), 0 },
     { "alle3",     CPENS(6,C8,C7,0), 0 },
     { "alle3is",   CPENS(6,C8,C3,0), 0 },
-    { "vale1is",   CPENS(0,C8,C3,5), 1 },
-    { "vale2is",   CPENS(4,C8,C3,5), 1 },
-    { "vale3is",   CPENS(6,C8,C3,5), 1 },
-    { "vaale1is",  CPENS(0,C8,C3,7), 1 },
-    { "vale1",     CPENS(0,C8,C7,5), 1 },
-    { "vale2",     CPENS(4,C8,C7,5), 1 },
-    { "vale3",     CPENS(6,C8,C7,5), 1 },
-    { "vaale1",    CPENS(0,C8,C7,7), 1 },
+    { "vale1is",   CPENS (0, C8, C3, 5), F_HASXT },
+    { "vale2is",   CPENS (4, C8, C3, 5), F_HASXT },
+    { "vale3is",   CPENS (6, C8, C3, 5), F_HASXT },
+    { "vaale1is",  CPENS (0, C8, C3, 7), F_HASXT },
+    { "vale1",     CPENS (0, C8, C7, 5), F_HASXT },
+    { "vale2",     CPENS (4, C8, C7, 5), F_HASXT },
+    { "vale3",     CPENS (6, C8, C7, 5), F_HASXT },
+    { "vaale1",    CPENS (0, C8, C7, 7), F_HASXT },
     { 0,       CPENS(0,0,0,0), 0 }
 };
+
+bfd_boolean
+aarch64_sys_ins_reg_has_xt (const aarch64_sys_ins_reg *sys_ins_reg)
+{
+  return (sys_ins_reg->flags & F_HASXT) != 0;
+}
+
+extern bfd_boolean
+aarch64_sys_ins_reg_supported_p (const aarch64_feature_set features,
+				 const aarch64_sys_ins_reg *reg)
+{
+  if (!(reg->flags & F_ARCHEXT))
+    return TRUE;
+
+  /* DC CVAP.  Values are from aarch64_sys_regs_dc.  */
+  if (reg->value == CPENS (3, C7, C12, 1)
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_V8_2))
+    return FALSE;
+
+  /* AT S1E1RP, AT S1E1WP.  Values are from aarch64_sys_regs_at.  */
+  if ((reg->value == CPENS (0, C7, C9, 0)
+       || reg->value == CPENS (0, C7, C9, 1))
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_V8_2))
+    return FALSE;
+
+  return TRUE;
+}
 
 #undef C0
 #undef C1

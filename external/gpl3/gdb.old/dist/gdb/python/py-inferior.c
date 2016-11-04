@@ -50,7 +50,7 @@ typedef struct
   int nthreads;
 } inferior_object;
 
-static PyTypeObject inferior_object_type
+extern PyTypeObject inferior_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("inferior_object");
 
 static const struct inferior_data *infpy_inf_data_key;
@@ -64,7 +64,7 @@ typedef struct {
   CORE_ADDR length;
 } membuf_object;
 
-static PyTypeObject membuf_object_type
+extern PyTypeObject membuf_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("membuf_object");
 
 /* Require that INFERIOR be a valid inferior ID.  */
@@ -395,13 +395,18 @@ infpy_threads (PyObject *self, PyObject *args)
   struct threadlist_entry *entry;
   inferior_object *inf_obj = (inferior_object *) self;
   PyObject *tuple;
-  volatile struct gdb_exception except;
 
   INFPY_REQUIRE_VALID (inf_obj);
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
-    update_thread_list ();
-  GDB_PY_HANDLE_EXCEPTION (except);
+  TRY
+    {
+      update_thread_list ();
+    }
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDB_PY_HANDLE_EXCEPTION (except);
+    }
+  END_CATCH
 
   tuple = PyTuple_New (inf_obj->nthreads);
   if (!tuple)
@@ -503,7 +508,6 @@ infpy_read_memory (PyObject *self, PyObject *args, PyObject *kw)
   void *buffer = NULL;
   membuf_object *membuf_obj;
   PyObject *addr_obj, *length_obj, *result;
-  volatile struct gdb_exception except;
   static char *keywords[] = { "address", "length", NULL };
 
   if (! PyArg_ParseTupleAndKeywords (args, kw, "OO", keywords,
@@ -514,17 +518,18 @@ infpy_read_memory (PyObject *self, PyObject *args, PyObject *kw)
       || get_addr_from_python (length_obj, &length) < 0)
     return NULL;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       buffer = xmalloc (length);
 
       read_memory (addr, buffer, length);
     }
-  if (except.reason < 0)
+  CATCH (except, RETURN_MASK_ALL)
     {
       xfree (buffer);
       GDB_PY_HANDLE_EXCEPTION (except);
     }
+  END_CATCH
 
   membuf_obj = PyObject_New (membuf_object, &membuf_object_type);
   if (membuf_obj == NULL)
@@ -557,11 +562,11 @@ infpy_read_memory (PyObject *self, PyObject *args, PyObject *kw)
 static PyObject *
 infpy_write_memory (PyObject *self, PyObject *args, PyObject *kw)
 {
+  struct gdb_exception except = exception_none;
   Py_ssize_t buf_len;
   const char *buffer;
   CORE_ADDR addr, length;
   PyObject *addr_obj, *length_obj = NULL;
-  volatile struct gdb_exception except;
   static char *keywords[] = { "address", "buffer", "length", NULL };
 #ifdef IS_PY3K
   Py_buffer pybuf;
@@ -588,10 +593,16 @@ infpy_write_memory (PyObject *self, PyObject *args, PyObject *kw)
   else if (get_addr_from_python (length_obj, &length) < 0)
     goto fail;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       write_memory_with_notification (addr, (gdb_byte *) buffer, length);
     }
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      except = ex;
+    }
+  END_CATCH
+
 #ifdef IS_PY3K
   PyBuffer_Release (&pybuf);
 #endif
@@ -701,10 +712,10 @@ get_char_buffer (PyObject *self, Py_ssize_t segment, char **ptrptr)
 static PyObject *
 infpy_search_memory (PyObject *self, PyObject *args, PyObject *kw)
 {
+  struct gdb_exception except = exception_none;
   CORE_ADDR start_addr, length;
   static char *keywords[] = { "address", "length", "pattern", NULL };
   PyObject *start_addr_obj, *length_obj;
-  volatile struct gdb_exception except;
   Py_ssize_t pattern_size;
   const void *buffer;
   CORE_ADDR found_addr;
@@ -760,12 +771,18 @@ infpy_search_memory (PyObject *self, PyObject *args, PyObject *kw)
       goto fail;
     }
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       found = target_search_memory (start_addr, length,
 				    buffer, pattern_size,
 				    &found_addr);
     }
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      except = ex;
+    }
+  END_CATCH
+
 #ifdef IS_PY3K
   PyBuffer_Release (&pybuf);
 #endif
@@ -915,7 +932,7 @@ Return a long with the address of a match, or None." },
   { NULL }
 };
 
-static PyTypeObject inferior_object_type =
+PyTypeObject inferior_object_type =
 {
   PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.Inferior",		  /* tp_name */
@@ -982,7 +999,7 @@ static PyBufferProcs buffer_procs = {
 };
 #endif	/* IS_PY3K */
 
-static PyTypeObject membuf_object_type = {
+PyTypeObject membuf_object_type = {
   PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.Membuf",			  /*tp_name*/
   sizeof (membuf_object),	  /*tp_basicsize*/

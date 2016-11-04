@@ -29,19 +29,23 @@ Disassembly of section .text:
 
 0+40 <pentium4>:
 [ 	]*[a-f0-9]+:	0f be f0             	movsbl %al,%esi
-[ 	]*[a-f0-9]+:	66 66 66 66 2e 0f 1f 84 00 00 00 00 00 	data32 data32 data32 nopw %cs:0x0\(%eax,%eax,1\)
+[ 	]*[a-f0-9]+:	0f 1f 00             	nopl   \(%eax\)
+[ 	]*[a-f0-9]+:	66 2e 0f 1f 84 00 00 00 00 00 	nopw   %cs:0x0\(%eax,%eax,1\)
 
 0+50 <nocona>:
 [ 	]*[a-f0-9]+:	0f be f0             	movsbl %al,%esi
-[ 	]*[a-f0-9]+:	66 66 66 66 2e 0f 1f 84 00 00 00 00 00 	data32 data32 data32 nopw %cs:0x0\(%eax,%eax,1\)
+[ 	]*[a-f0-9]+:	0f 1f 00             	nopl   \(%eax\)
+[ 	]*[a-f0-9]+:	66 2e 0f 1f 84 00 00 00 00 00 	nopw   %cs:0x0\(%eax,%eax,1\)
 
 0+60 <core>:
 [ 	]*[a-f0-9]+:	0f be f0             	movsbl %al,%esi
-[ 	]*[a-f0-9]+:	66 66 66 66 2e 0f 1f 84 00 00 00 00 00 	data32 data32 data32 nopw %cs:0x0\(%eax,%eax,1\)
+[ 	]*[a-f0-9]+:	0f 1f 00             	nopl   \(%eax\)
+[ 	]*[a-f0-9]+:	66 2e 0f 1f 84 00 00 00 00 00 	nopw   %cs:0x0\(%eax,%eax,1\)
 
 0+70 <core2>:
 [ 	]*[a-f0-9]+:	0f be f0             	movsbl %al,%esi
-[ 	]*[a-f0-9]+:	66 66 66 66 2e 0f 1f 84 00 00 00 00 00 	data32 data32 data32 nopw %cs:0x0\(%eax,%eax,1\)
+[ 	]*[a-f0-9]+:	0f 1f 00             	nopl   \(%eax\)
+[ 	]*[a-f0-9]+:	66 2e 0f 1f 84 00 00 00 00 00 	nopw   %cs:0x0\(%eax,%eax,1\)
 
 0+80 <k6>:
 [ 	]*[a-f0-9]+:	0f be f0             	movsbl %al,%esi
@@ -50,13 +54,13 @@ Disassembly of section .text:
 
 0+90 <athlon>:
 [ 	]*[a-f0-9]+:	0f be f0             	movsbl %al,%esi
-[ 	]*[a-f0-9]+:	66 0f 1f 44 00 00    	nopw   0x0\(%eax,%eax,1\)
-[ 	]*[a-f0-9]+:	0f 1f 80 00 00 00 00 	nopl   0x0\(%eax\)
+[ 	]*[a-f0-9]+:	0f 1f 00             	nopl   \(%eax\)
+[ 	]*[a-f0-9]+:	66 2e 0f 1f 84 00 00 00 00 00 	nopw   %cs:0x0\(%eax,%eax,1\)
 
 0+a0 <k8>:
 [ 	]*[a-f0-9]+:	0f be f0             	movsbl %al,%esi
-[ 	]*[a-f0-9]+:	66 0f 1f 44 00 00    	nopw   0x0\(%eax,%eax,1\)
-[ 	]*[a-f0-9]+:	0f 1f 80 00 00 00 00 	nopl   0x0\(%eax\)
+[ 	]*[a-f0-9]+:	0f 1f 00             	nopl   \(%eax\)
+[ 	]*[a-f0-9]+:	66 2e 0f 1f 84 00 00 00 00 00 	nopw   %cs:0x0\(%eax,%eax,1\)
 
 0+b0 <generic32>:
 [ 	]*[a-f0-9]+:	0f be f0             	movsbl %al,%esi
@@ -65,10 +69,11 @@ Disassembly of section .text:
 
 0+c0 <generic64>:
 [ 	]*[a-f0-9]+:	0f be f0             	movsbl %al,%esi
-[ 	]*[a-f0-9]+:	66 66 66 66 2e 0f 1f 84 00 00 00 00 00 	data32 data32 data32 nopw %cs:0x0\(%eax,%eax,1\)
+[ 	]*[a-f0-9]+:	0f 1f 00             	nopl   \(%eax\)
+[ 	]*[a-f0-9]+:	66 2e 0f 1f 84 00 00 00 00 00 	nopw   %cs:0x0\(%eax,%eax,1\)
 
 0+d0 <amdfam10>:
 [ 	]*[a-f0-9]+:	0f be f0             	movsbl %al,%esi
-[ 	]*[a-f0-9]+:	66 0f 1f 44 00 00    	nopw   0x0\(%eax,%eax,1\)
-[ 	]*[a-f0-9]+:	0f 1f 80 00 00 00 00 	nopl   0x0\(%eax\)
+[ 	]*[a-f0-9]+:	0f 1f 00             	nopl   \(%eax\)
+[ 	]*[a-f0-9]+:	66 2e 0f 1f 84 00 00 00 00 00 	nopw   %cs:0x0\(%eax,%eax,1\)
 #pass

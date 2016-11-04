@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs.h,v 1.23 2007/04/12 21:39:24 matt Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.23.102.1 2016/11/04 14:49:15 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.20 2005/12/11 12:24:00 christos Exp
+ *	NetBSD: tcdevs,v 1.22 2016/08/11 09:05:42 christos Exp
  */
 
 /*
@@ -181,3 +181,6 @@
 
 #define	TC_DEVICE_T3PKT	"tt"
 #define	TC_DESCRIPTION_T3PKT	"DECWRL Turbochannel T3"
+
+#define	TC_DEVICE_TC_USB	"tcu"
+#define	TC_DESCRIPTION_TC_USB	"flxd TC-USB"

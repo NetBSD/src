@@ -1,5 +1,5 @@
 /* Disassemble from a buffer, for GNU.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -33,7 +33,7 @@ buffer_read_memory (bfd_vma memaddr,
 {
   unsigned int opb = info->octets_per_byte;
   unsigned int end_addr_offset = length / opb;
-  unsigned int max_addr_offset = info->buffer_length / opb; 
+  unsigned int max_addr_offset = info->buffer_length / opb;
   unsigned int octets = (memaddr - info->buffer_vma) * opb;
 
   if (memaddr < info->buffer_vma

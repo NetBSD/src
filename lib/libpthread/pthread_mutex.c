@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.60.2.1 2016/07/26 03:24:15 pgoyette Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.60.2.2 2016/11/04 14:48:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.60.2.1 2016/07/26 03:24:15 pgoyette Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.60.2.2 2016/11/04 14:48:54 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -298,7 +298,8 @@ again:
 	 * we see that the holder is running again.
 	 */
 	membar_sync();
-	pthread__mutex_spin(ptm, owner);
+	if (MUTEX_OWNER(owner) != (uintptr_t)self)
+		pthread__mutex_spin(ptm, owner);
 
 	if (membar_consumer(), !MUTEX_HAS_WAITERS(ptm->ptm_owner)) {
 		goto again;
@@ -338,7 +339,8 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 	serrno = errno;
 	for (;; owner = ptm->ptm_owner) {
 		/* Spin while the owner is running. */
-		owner = pthread__mutex_spin(ptm, owner);
+		if (MUTEX_OWNER(owner) != (uintptr_t)self)
+			owner = pthread__mutex_spin(ptm, owner);
 
 		/* If it has become free, try to acquire it again. */
 		if (MUTEX_OWNER(owner) == 0) {

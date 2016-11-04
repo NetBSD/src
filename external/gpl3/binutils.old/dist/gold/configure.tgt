@@ -1,6 +1,6 @@
 # configure.tgt -- target configuration for gold  -*- sh -*-
 
-# Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+# Copyright (C) 2006-2015 Free Software Foundation, Inc.
 # Written by Ian Lance Taylor <iant@google.com>.
 
 # This file is part of gold.
@@ -72,6 +72,14 @@ x86_64*)
     ;;
   esac
   ;;
+tilegx*)
+  targ_obj=tilegx
+  targ_machine=EM_TILEGX
+  targ_size=64
+  targ_extra_size=32
+  targ_big_endian=false
+  targ_extra_big_endian=true
+  ;;
 sparc-*)
   targ_obj=sparc
   targ_machine=EM_SPARC
@@ -96,6 +104,14 @@ powerpc-*)
   targ_big_endian=true
   targ_extra_big_endian=false
   ;;
+powerpcle-*)
+  targ_obj=powerpc
+  targ_machine=EM_PPC
+  targ_size=32
+  targ_extra_size=64
+  targ_big_endian=false
+  targ_extra_big_endian=true
+  ;;
 powerpc64-*)
   targ_obj=powerpc
   targ_machine=EM_PPC64
@@ -103,6 +119,14 @@ powerpc64-*)
   targ_extra_size=32
   targ_big_endian=true
   targ_extra_big_endian=false
+  ;;
+powerpc64le-*)
+  targ_obj=powerpc
+  targ_machine=EM_PPC64
+  targ_size=64
+  targ_extra_size=32
+  targ_big_endian=false
+  targ_extra_big_endian=true
   ;;
 armeb*-*-*|armbe*-*-*)
  targ_obj=arm
@@ -119,6 +143,43 @@ arm*-*-*)
  targ_size=32
  targ_big_endian=false
  targ_extra_big_endian=true
+ ;;
+aarch64*-*)
+ targ_obj=aarch64
+ targ_extra_obj=aarch64-reloc-property
+ targ_machine=EM_AARCH64
+ targ_size=64
+ targ_extra_size=32
+ targ_big_endian=false
+ targ_extra_big_endian=true
+ ;;
+mips*el*-*-*|mips*le*-*-*)
+ targ_obj=mips
+ targ_machine=EM_MIPS_RS3_LE
+ targ_size=32
+ targ_big_endian=false
+ targ_extra_big_endian=true
+ ;;
+mips*-*-*)
+ targ_obj=mips
+ targ_machine=EM_MIPS
+ targ_size=32
+ targ_big_endian=true
+ targ_extra_big_endian=false
+ ;;
+s390-*-*)
+ targ_obj=s390
+ targ_machine=EM_S390
+ targ_size=32
+ targ_big_endian=true
+ targ_extra_big_endian=false
+ ;;
+s390x-*-*)
+ targ_obj=s390
+ targ_machine=EM_S390
+ targ_size=64
+ targ_big_endian=true
+ targ_extra_big_endian=false
  ;;
 *)
   targ_obj=UNKNOWN

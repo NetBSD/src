@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.76.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.76.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.76.2.1 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.76.2.2 2016/11/04 14:49:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -394,7 +394,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 	struct ifqueue *inq = NULL;
 	struct llc *l;
 	struct token_header *trh;
-	int s, lan_hdr_len;
+	int lan_hdr_len;
 	int isr = 0;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -483,15 +483,16 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	s = splnet();
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
+		IFQ_UNLOCK(inq);
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(inq, m);
+		IFQ_UNLOCK(inq);
 		schednetisr(isr);
 	}
-	splx(s);
 }
 
 /*

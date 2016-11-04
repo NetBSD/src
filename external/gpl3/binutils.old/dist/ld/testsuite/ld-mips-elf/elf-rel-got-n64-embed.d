@@ -1,6 +1,7 @@
 #name: MIPS ELF got reloc n64
 #as: -march=from-abi -EB -64 -KPIC
-#source: ../../../gas/testsuite/gas/mips/elf-rel-got-n64.s
+#objcopy_objects: -R .MIPS.abiflags
+#source: ../../../gas/testsuite/gas/mips/elf-rel-got-n64.s RUN_OBJCOPY
 #ld:
 #objdump: -D --show-raw-insn
 

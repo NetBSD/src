@@ -178,18 +178,21 @@ make_a_section_from_file (bfd *abfd,
 		 abfd, name);
 	      return FALSE;
 	    }
-	  if (name[1] != 'z')
+	  if (return_section->compress_status == COMPRESS_SECTION_DONE)
 	    {
-	      unsigned int len = strlen (name);
+	      if (name[1] != 'z')
+		{
+		  unsigned int len = strlen (name);
 
-	      new_name = bfd_alloc (abfd, len + 2);
-	      if (new_name == NULL)
-		return FALSE;
-	      new_name[0] = '.';
-	      new_name[1] = 'z';
-	      memcpy (new_name + 2, name + 1, len);
+		  new_name = bfd_alloc (abfd, len + 2);
+		  if (new_name == NULL)
+		    return FALSE;
+		  new_name[0] = '.';
+		  new_name[1] = 'z';
+		  memcpy (new_name + 2, name + 1, len);
+		}
 	    }
-	  break;
+         break;
 	case decompress:
 	  if (!bfd_init_section_decompress_status (abfd, return_section))
 	    {
@@ -468,7 +471,10 @@ _bfd_coff_internal_syment_name (bfd *abfd,
 	  if (strings == NULL)
 	    return NULL;
 	}
-      if (sym->_n._n_n._n_offset >= obj_coff_strings_len (abfd))
+      /* PR 17910: Only check for string overflow if the length has been set.
+	 Some DLLs, eg those produced by Visual Studio, may not set the length field.  */
+      if (obj_coff_strings_len (abfd) > 0
+	  && sym->_n._n_n._n_offset >= obj_coff_strings_len (abfd))
 	return NULL;
       return strings + sym->_n._n_n._n_offset;
     }
@@ -1802,7 +1808,7 @@ coff_get_normalized_symtab (bfd *abfd)
       if (symbol_ptr->u.syment.n_sclass == C_FILE
 	  && symbol_ptr->u.syment.n_numaux > 0
 	  && raw_src + symesz + symbol_ptr->u.syment.n_numaux
-	  * sizeof (union internal_auxent) >= raw_end)
+	  * symesz > raw_end)
 	{
 	  bfd_release (abfd, internal);
 	  return NULL;
@@ -1821,7 +1827,6 @@ coff_get_normalized_symtab (bfd *abfd)
 	    }
 
 	  raw_src += symesz;
-
 	  bfd_coff_swap_aux_in (abfd, (void *) raw_src,
 				symbol_ptr->u.syment.n_type,
 				symbol_ptr->u.syment.n_sclass,
@@ -2242,6 +2247,26 @@ coff_find_nearest_line_with_names (bfd *abfd,
 				     &coff_data(abfd)->dwarf2_find_line_info))
     return TRUE;
 
+  /* If the DWARF lookup failed, but there is DWARF information available
+     then the problem might be that the file has been rebased.  This tool
+     changes the VMAs of all the sections, but it does not update the DWARF
+     information.  So try again, using a bias against the address sought.  */
+  if (coff_data (abfd)->dwarf2_find_line_info != NULL)
+    {
+      bfd_signed_vma bias;
+
+      bias = _bfd_dwarf2_find_symbol_bias (symbols,
+					   & coff_data (abfd)->dwarf2_find_line_info);
+      
+      if (bias
+	  && _bfd_dwarf2_find_nearest_line (abfd, symbols, NULL, section,
+					    offset + bias,
+					    filename_ptr, functionname_ptr,
+					    line_ptr, NULL, debug_sections, 0,
+					    &coff_data(abfd)->dwarf2_find_line_info))
+	return TRUE;
+    }
+
   *filename_ptr = 0;
   *functionname_ptr = 0;
   *line_ptr = 0;
@@ -2600,4 +2625,432 @@ _bfd_coff_section_already_linked (bfd *abfd,
   if (!bfd_section_already_linked_table_insert (already_linked_list, sec))
     info->callbacks->einfo (_("%F%P: already_linked_table: %E\n"));
   return FALSE;
+}
+
+/* Initialize COOKIE for input bfd ABFD. */
+
+static bfd_boolean
+init_reloc_cookie (struct coff_reloc_cookie *cookie,
+		   struct bfd_link_info *info ATTRIBUTE_UNUSED,
+		   bfd *abfd)
+{
+  /* Sometimes the symbol table does not yet have been loaded here.  */
+  bfd_coff_slurp_symbol_table (abfd);
+
+  cookie->abfd = abfd;
+  cookie->sym_hashes = obj_coff_sym_hashes (abfd);
+
+  cookie->symbols = obj_symbols (abfd);
+
+  return TRUE;
+}
+
+/* Free the memory allocated by init_reloc_cookie, if appropriate.  */
+
+static void
+fini_reloc_cookie (struct coff_reloc_cookie *cookie ATTRIBUTE_UNUSED,
+		   bfd *abfd ATTRIBUTE_UNUSED)
+{
+  /* Nothing to do.  */
+}
+
+/* Initialize the relocation information in COOKIE for input section SEC
+   of input bfd ABFD.  */
+
+static bfd_boolean
+init_reloc_cookie_rels (struct coff_reloc_cookie *cookie,
+			struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			bfd *abfd,
+			asection *sec)
+{
+  if (sec->reloc_count == 0)
+    {
+      cookie->rels = NULL;
+      cookie->relend = NULL;
+      cookie->rel = NULL;
+      return TRUE;
+    }
+
+  cookie->rels = _bfd_coff_read_internal_relocs (abfd, sec, FALSE, NULL, 0, NULL);
+
+  if (cookie->rels == NULL)
+    return FALSE;
+
+  cookie->rel = cookie->rels;
+  cookie->relend = (cookie->rels + sec->reloc_count);
+  return TRUE;
+}
+
+/* Free the memory allocated by init_reloc_cookie_rels,
+   if appropriate.  */
+
+static void
+fini_reloc_cookie_rels (struct coff_reloc_cookie *cookie,
+			asection *sec)
+{
+  if (cookie->rels && coff_section_data (NULL, sec)->relocs != cookie->rels)
+    free (cookie->rels);
+}
+
+/* Initialize the whole of COOKIE for input section SEC.  */
+
+static bfd_boolean
+init_reloc_cookie_for_section (struct coff_reloc_cookie *cookie,
+			       struct bfd_link_info *info,
+			       asection *sec)
+{
+  if (!init_reloc_cookie (cookie, info, sec->owner))
+    return FALSE;
+
+  if (!init_reloc_cookie_rels (cookie, info, sec->owner, sec))
+    {
+      fini_reloc_cookie (cookie, sec->owner);
+      return FALSE;
+    }
+  return TRUE;
+}
+
+/* Free the memory allocated by init_reloc_cookie_for_section,
+   if appropriate.  */
+
+static void
+fini_reloc_cookie_for_section (struct coff_reloc_cookie *cookie,
+			       asection *sec)
+{
+  fini_reloc_cookie_rels (cookie, sec);
+  fini_reloc_cookie (cookie, sec->owner);
+}
+
+static asection *
+_bfd_coff_gc_mark_hook (asection *sec,
+			struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			struct internal_reloc *rel ATTRIBUTE_UNUSED,
+			struct coff_link_hash_entry *h,
+			struct internal_syment *sym)
+{
+  if (h != NULL)
+    {
+      switch (h->root.type)
+        {
+        case bfd_link_hash_defined:
+        case bfd_link_hash_defweak:
+          return h->root.u.def.section;
+
+        case bfd_link_hash_common:
+          return h->root.u.c.p->section;
+
+	case bfd_link_hash_undefined:
+	case bfd_link_hash_undefweak:
+        default:
+          break;
+        }
+      return NULL;
+    }
+
+  return coff_section_from_bfd_index (sec->owner, sym->n_scnum);
+}
+
+/* COOKIE->rel describes a relocation against section SEC, which is
+   a section we've decided to keep.  Return the section that contains
+   the relocation symbol, or NULL if no section contains it.  */
+
+static asection *
+_bfd_coff_gc_mark_rsec (struct bfd_link_info *info, asection *sec,
+			coff_gc_mark_hook_fn gc_mark_hook,
+			struct coff_reloc_cookie *cookie)
+{
+  struct coff_link_hash_entry *h;
+
+  h = cookie->sym_hashes[cookie->rel->r_symndx];
+  if (h != NULL)
+    {
+      while (h->root.type == bfd_link_hash_indirect
+	     || h->root.type == bfd_link_hash_warning)
+	h = (struct coff_link_hash_entry *) h->root.u.i.link;
+
+      return (*gc_mark_hook) (sec, info, cookie->rel, h, NULL);
+    }
+
+  return (*gc_mark_hook) (sec, info, cookie->rel, NULL,
+			  &(cookie->symbols
+			    + obj_convert (sec->owner)[cookie->rel->r_symndx])->native->u.syment);
+}
+
+static bfd_boolean _bfd_coff_gc_mark
+  (struct bfd_link_info *, asection *, coff_gc_mark_hook_fn);
+
+/* COOKIE->rel describes a relocation against section SEC, which is
+   a section we've decided to keep.  Mark the section that contains
+   the relocation symbol.  */
+
+static bfd_boolean
+_bfd_coff_gc_mark_reloc (struct bfd_link_info *info,
+			 asection *sec,
+			 coff_gc_mark_hook_fn gc_mark_hook,
+			 struct coff_reloc_cookie *cookie)
+{
+  asection *rsec;
+
+  rsec = _bfd_coff_gc_mark_rsec (info, sec, gc_mark_hook, cookie);
+  if (rsec && !rsec->gc_mark)
+    {
+      if (bfd_get_flavour (rsec->owner) != bfd_target_coff_flavour)
+	rsec->gc_mark = 1;
+      else if (!_bfd_coff_gc_mark (info, rsec, gc_mark_hook))
+	return FALSE;
+    }
+  return TRUE;
+}
+
+/* The mark phase of garbage collection.  For a given section, mark
+   it and any sections in this section's group, and all the sections
+   which define symbols to which it refers.  */
+
+static bfd_boolean
+_bfd_coff_gc_mark (struct bfd_link_info *info,
+		   asection *sec,
+		   coff_gc_mark_hook_fn gc_mark_hook)
+{
+  bfd_boolean ret = TRUE;
+
+  sec->gc_mark = 1;
+
+  /* Look through the section relocs.  */
+  if ((sec->flags & SEC_RELOC) != 0
+      && sec->reloc_count > 0)
+    {
+      struct coff_reloc_cookie cookie;
+
+      if (!init_reloc_cookie_for_section (&cookie, info, sec))
+        ret = FALSE;
+      else
+        {
+          for (; cookie.rel < cookie.relend; cookie.rel++)
+            {
+	      if (!_bfd_coff_gc_mark_reloc (info, sec, gc_mark_hook, &cookie))
+		{
+		  ret = FALSE;
+		  break;
+		}
+	    }
+          fini_reloc_cookie_for_section (&cookie, sec);
+        }
+    }
+
+  return ret;
+}
+
+static bfd_boolean
+_bfd_coff_gc_mark_extra_sections (struct bfd_link_info *info,
+				  coff_gc_mark_hook_fn mark_hook ATTRIBUTE_UNUSED)
+{
+  bfd *ibfd;
+
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
+    {
+      asection *isec;
+      bfd_boolean some_kept;
+
+      if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
+	continue;
+
+      /* Ensure all linker created sections are kept, and see whether
+	 any other section is already marked.  */
+      some_kept = FALSE;
+      for (isec = ibfd->sections; isec != NULL; isec = isec->next)
+	{
+	  if ((isec->flags & SEC_LINKER_CREATED) != 0)
+	    isec->gc_mark = 1;
+	  else if (isec->gc_mark)
+	    some_kept = TRUE;
+	}
+
+      /* If no section in this file will be kept, then we can
+	 toss out debug sections.  */
+      if (!some_kept)
+	continue;
+
+      /* Keep debug and special sections like .comment when they are
+	 not part of a group, or when we have single-member groups.  */
+      for (isec = ibfd->sections; isec != NULL; isec = isec->next)
+	if ((isec->flags & SEC_DEBUGGING) != 0
+	    || (isec->flags & (SEC_ALLOC | SEC_LOAD | SEC_RELOC)) == 0)
+	  isec->gc_mark = 1;
+    }
+  return TRUE;
+}
+
+/* Sweep symbols in swept sections.  Called via coff_link_hash_traverse.  */
+
+static bfd_boolean
+coff_gc_sweep_symbol (struct coff_link_hash_entry *h,
+		      void *data ATTRIBUTE_UNUSED)
+{
+  if (h->root.type == bfd_link_hash_warning)
+    h = (struct coff_link_hash_entry *) h->root.u.i.link;
+
+  if ((h->root.type == bfd_link_hash_defined
+       || h->root.type == bfd_link_hash_defweak)
+      && !h->root.u.def.section->gc_mark
+      && !(h->root.u.def.section->owner->flags & DYNAMIC))
+    {
+      /* Do our best to hide the symbol.  */
+      h->root.u.def.section = bfd_und_section_ptr;
+      h->symbol_class = C_HIDDEN;
+    }
+
+  return TRUE;
+}
+
+/* The sweep phase of garbage collection.  Remove all garbage sections.  */
+
+typedef bfd_boolean (*gc_sweep_hook_fn)
+  (bfd *, struct bfd_link_info *, asection *, const struct internal_reloc *);
+
+static bfd_boolean
+coff_gc_sweep (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
+{
+  bfd *sub;
+
+  for (sub = info->input_bfds; sub != NULL; sub = sub->link.next)
+    {
+      asection *o;
+
+      if (bfd_get_flavour (sub) != bfd_target_coff_flavour)
+	continue;
+
+      for (o = sub->sections; o != NULL; o = o->next)
+	{
+	    /* Keep debug and special sections.  */
+          if ((o->flags & (SEC_DEBUGGING | SEC_LINKER_CREATED)) != 0
+	      || (o->flags & (SEC_ALLOC | SEC_LOAD | SEC_RELOC)) == 0)
+	    o->gc_mark = 1;
+          else if (CONST_STRNEQ (o->name, ".idata")
+		   || CONST_STRNEQ (o->name, ".pdata")
+		   || CONST_STRNEQ (o->name, ".xdata")
+		   || CONST_STRNEQ (o->name, ".rsrc"))
+	    o->gc_mark = 1;
+
+	  if (o->gc_mark)
+	    continue;
+
+	  /* Skip sweeping sections already excluded.  */
+	  if (o->flags & SEC_EXCLUDE)
+	    continue;
+
+	  /* Since this is early in the link process, it is simple
+	     to remove a section from the output.  */
+	  o->flags |= SEC_EXCLUDE;
+
+	  if (info->print_gc_sections && o->size != 0)
+            _bfd_error_handler (_("Removing unused section '%s' in file '%B'"), sub, o->name);
+
+#if 0
+	  /* But we also have to update some of the relocation
+	     info we collected before.  */
+	  if (gc_sweep_hook
+	      && (o->flags & SEC_RELOC) != 0
+	      && o->reloc_count > 0
+	      && !bfd_is_abs_section (o->output_section))
+	    {
+	      struct internal_reloc *internal_relocs;
+	      bfd_boolean r;
+
+	      internal_relocs
+		= _bfd_coff_link_read_relocs (o->owner, o, NULL, NULL,
+					     info->keep_memory);
+	      if (internal_relocs == NULL)
+		return FALSE;
+
+	      r = (*gc_sweep_hook) (o->owner, info, o, internal_relocs);
+
+	      if (coff_section_data (o)->relocs != internal_relocs)
+		free (internal_relocs);
+
+	      if (!r)
+		return FALSE;
+	    }
+#endif
+	}
+    }
+
+  /* Remove the symbols that were in the swept sections from the dynamic
+     symbol table.  */
+  coff_link_hash_traverse (coff_hash_table (info), coff_gc_sweep_symbol,
+			   NULL);
+
+  return TRUE;
+}
+
+/* Keep all sections containing symbols undefined on the command-line,
+   and the section containing the entry symbol.  */
+
+static void
+_bfd_coff_gc_keep (struct bfd_link_info *info)
+{
+  struct bfd_sym_chain *sym;
+
+  for (sym = info->gc_sym_list; sym != NULL; sym = sym->next)
+    {
+      struct coff_link_hash_entry *h;
+
+      h = coff_link_hash_lookup (coff_hash_table (info), sym->name,
+				FALSE, FALSE, FALSE);
+
+      if (h != NULL
+	  && (h->root.type == bfd_link_hash_defined
+	      || h->root.type == bfd_link_hash_defweak)
+	  && !bfd_is_abs_section (h->root.u.def.section))
+	h->root.u.def.section->flags |= SEC_KEEP;
+    }
+}
+
+/* Do mark and sweep of unused sections.  */
+
+bfd_boolean
+bfd_coff_gc_sections (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
+{
+  bfd *sub;
+
+  /* FIXME: Should we implement this? */
+#if 0
+  const bfd_coff_backend_data *bed = coff_backend_info (abfd);
+
+  if (!bed->can_gc_sections
+      || !is_coff_hash_table (info->hash))
+    {
+      (*_bfd_error_handler)(_("Warning: gc-sections option ignored"));
+      return TRUE;
+    }
+#endif
+
+  _bfd_coff_gc_keep (info);
+
+  /* Grovel through relocs to find out who stays ...  */
+  for (sub = info->input_bfds; sub != NULL; sub = sub->link.next)
+    {
+      asection *o;
+
+      if (bfd_get_flavour (sub) != bfd_target_coff_flavour)
+        continue;
+
+      for (o = sub->sections; o != NULL; o = o->next)
+        {
+	  if (((o->flags & (SEC_EXCLUDE | SEC_KEEP)) == SEC_KEEP
+	       || CONST_STRNEQ (o->name, ".vectors")
+	       || CONST_STRNEQ (o->name, ".ctors")
+	       || CONST_STRNEQ (o->name, ".dtors"))
+	      && !o->gc_mark)
+	    {
+	      if (!_bfd_coff_gc_mark (info, o, _bfd_coff_gc_mark_hook))
+		return FALSE;
+	    }
+        }
+    }
+
+  /* Allow the backend to mark additional target specific sections.  */
+  _bfd_coff_gc_mark_extra_sections (info, _bfd_coff_gc_mark_hook);
+
+  /* ... and mark SEC_EXCLUDE for those that go.  */
+  return coff_gc_sweep (abfd, info);
 }

@@ -1,4 +1,4 @@
 #name: Illegal Instructions
-#as:
+#as: -mno-verbose-error
 #source: illegal.s
 #error-output: illegal.l

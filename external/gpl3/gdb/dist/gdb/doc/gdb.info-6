@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 5.2 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.0 from gdb.texinfo.
 
-Copyright (C) 1988-2015 Free Software Foundation, Inc.
+Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.10.1.
+Source-Level Debugger' for GDB (GDB) Version 7.12.
 
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,564 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Commands For Killing,  Next: Numeric Arguments,  Prev: Commands For Text,  Up: Bindable Readline Commands
+
+32.4.4 Killing And Yanking
+--------------------------
+
+'kill-line (C-k)'
+     Kill the text from point to the end of the line.
+
+'backward-kill-line (C-x Rubout)'
+     Kill backward to the beginning of the line.
+
+'unix-line-discard (C-u)'
+     Kill backward from the cursor to the beginning of the current line.
+
+'kill-whole-line ()'
+     Kill all characters on the current line, no matter where point is.
+     By default, this is unbound.
+
+'kill-word (M-d)'
+     Kill from point to the end of the current word, or if between
+     words, to the end of the next word.  Word boundaries are the same
+     as 'forward-word'.
+
+'backward-kill-word (M-<DEL>)'
+     Kill the word behind point.  Word boundaries are the same as
+     'backward-word'.
+
+'unix-word-rubout (C-w)'
+     Kill the word behind point, using white space as a word boundary.
+     The killed text is saved on the kill-ring.
+
+'unix-filename-rubout ()'
+     Kill the word behind point, using white space and the slash
+     character as the word boundaries.  The killed text is saved on the
+     kill-ring.
+
+'delete-horizontal-space ()'
+     Delete all spaces and tabs around point.  By default, this is
+     unbound.
+
+'kill-region ()'
+     Kill the text in the current region.  By default, this command is
+     unbound.
+
+'copy-region-as-kill ()'
+     Copy the text in the region to the kill buffer, so it can be yanked
+     right away.  By default, this command is unbound.
+
+'copy-backward-word ()'
+     Copy the word before point to the kill buffer.  The word boundaries
+     are the same as 'backward-word'.  By default, this command is
+     unbound.
+
+'copy-forward-word ()'
+     Copy the word following point to the kill buffer.  The word
+     boundaries are the same as 'forward-word'.  By default, this
+     command is unbound.
+
+'yank (C-y)'
+     Yank the top of the kill ring into the buffer at point.
+
+'yank-pop (M-y)'
+     Rotate the kill-ring, and yank the new top.  You can only do this
+     if the prior command is 'yank' or 'yank-pop'.
+
+
+File: gdb.info,  Node: Numeric Arguments,  Next: Commands For Completion,  Prev: Commands For Killing,  Up: Bindable Readline Commands
+
+32.4.5 Specifying Numeric Arguments
+-----------------------------------
+
+'digit-argument (M-0, M-1, ... M--)'
+     Add this digit to the argument already accumulating, or start a new
+     argument.  'M--' starts a negative argument.
+
+'universal-argument ()'
+     This is another way to specify an argument.  If this command is
+     followed by one or more digits, optionally with a leading minus
+     sign, those digits define the argument.  If the command is followed
+     by digits, executing 'universal-argument' again ends the numeric
+     argument, but is otherwise ignored.  As a special case, if this
+     command is immediately followed by a character that is neither a
+     digit or minus sign, the argument count for the next command is
+     multiplied by four.  The argument count is initially one, so
+     executing this function the first time makes the argument count
+     four, a second time makes the argument count sixteen, and so on.
+     By default, this is not bound to a key.
+
+
+File: gdb.info,  Node: Commands For Completion,  Next: Keyboard Macros,  Prev: Numeric Arguments,  Up: Bindable Readline Commands
+
+32.4.6 Letting Readline Type For You
+------------------------------------
+
+'complete (<TAB>)'
+     Attempt to perform completion on the text before point.  The actual
+     completion performed is application-specific.  The default is
+     filename completion.
+
+'possible-completions (M-?)'
+     List the possible completions of the text before point.  When
+     displaying completions, Readline sets the number of columns used
+     for display to the value of 'completion-display-width', the value
+     of the environment variable 'COLUMNS', or the screen width, in that
+     order.
+
+'insert-completions (M-*)'
+     Insert all completions of the text before point that would have
+     been generated by 'possible-completions'.
+
+'menu-complete ()'
+     Similar to 'complete', but replaces the word to be completed with a
+     single match from the list of possible completions.  Repeated
+     execution of 'menu-complete' steps through the list of possible
+     completions, inserting each match in turn.  At the end of the list
+     of completions, the bell is rung (subject to the setting of
+     'bell-style') and the original text is restored.  An argument of N
+     moves N positions forward in the list of matches; a negative
+     argument may be used to move backward through the list.  This
+     command is intended to be bound to <TAB>, but is unbound by
+     default.
+
+'menu-complete-backward ()'
+     Identical to 'menu-complete', but moves backward through the list
+     of possible completions, as if 'menu-complete' had been given a
+     negative argument.
+
+'delete-char-or-list ()'
+     Deletes the character under the cursor if not at the beginning or
+     end of the line (like 'delete-char').  If at the end of the line,
+     behaves identically to 'possible-completions'.  This command is
+     unbound by default.
+
+
+File: gdb.info,  Node: Keyboard Macros,  Next: Miscellaneous Commands,  Prev: Commands For Completion,  Up: Bindable Readline Commands
+
+32.4.7 Keyboard Macros
+----------------------
+
+'start-kbd-macro (C-x ()'
+     Begin saving the characters typed into the current keyboard macro.
+
+'end-kbd-macro (C-x ))'
+     Stop saving the characters typed into the current keyboard macro
+     and save the definition.
+
+'call-last-kbd-macro (C-x e)'
+     Re-execute the last keyboard macro defined, by making the
+     characters in the macro appear as if typed at the keyboard.
+
+
+File: gdb.info,  Node: Miscellaneous Commands,  Prev: Keyboard Macros,  Up: Bindable Readline Commands
+
+32.4.8 Some Miscellaneous Commands
+----------------------------------
+
+'re-read-init-file (C-x C-r)'
+     Read in the contents of the INPUTRC file, and incorporate any
+     bindings or variable assignments found there.
+
+'abort (C-g)'
+     Abort the current editing command and ring the terminal's bell
+     (subject to the setting of 'bell-style').
+
+'do-uppercase-version (M-a, M-b, M-X, ...)'
+     If the metafied character X is lowercase, run the command that is
+     bound to the corresponding uppercase character.
+
+'prefix-meta (<ESC>)'
+     Metafy the next character typed.  This is for keyboards without a
+     meta key.  Typing '<ESC> f' is equivalent to typing 'M-f'.
+
+'undo (C-_ or C-x C-u)'
+     Incremental undo, separately remembered for each line.
+
+'revert-line (M-r)'
+     Undo all changes made to this line.  This is like executing the
+     'undo' command enough times to get back to the beginning.
+
+'tilde-expand (M-~)'
+     Perform tilde expansion on the current word.
+
+'set-mark (C-@)'
+     Set the mark to the point.  If a numeric argument is supplied, the
+     mark is set to that position.
+
+'exchange-point-and-mark (C-x C-x)'
+     Swap the point with the mark.  The current cursor position is set
+     to the saved position, and the old cursor position is saved as the
+     mark.
+
+'character-search (C-])'
+     A character is read and point is moved to the next occurrence of
+     that character.  A negative count searches for previous
+     occurrences.
+
+'character-search-backward (M-C-])'
+     A character is read and point is moved to the previous occurrence
+     of that character.  A negative count searches for subsequent
+     occurrences.
+
+'skip-csi-sequence ()'
+     Read enough characters to consume a multi-key sequence such as
+     those defined for keys like Home and End.  Such sequences begin
+     with a Control Sequence Indicator (CSI), usually ESC-[.  If this
+     sequence is bound to "\e[", keys producing such sequences will have
+     no effect unless explicitly bound to a readline command, instead of
+     inserting stray characters into the editing buffer.  This is
+     unbound by default, but usually bound to ESC-[.
+
+'insert-comment (M-#)'
+     Without a numeric argument, the value of the 'comment-begin'
+     variable is inserted at the beginning of the current line.  If a
+     numeric argument is supplied, this command acts as a toggle: if the
+     characters at the beginning of the line do not match the value of
+     'comment-begin', the value is inserted, otherwise the characters in
+     'comment-begin' are deleted from the beginning of the line.  In
+     either case, the line is accepted as if a newline had been typed.
+
+'dump-functions ()'
+     Print all of the functions and their key bindings to the Readline
+     output stream.  If a numeric argument is supplied, the output is
+     formatted in such a way that it can be made part of an INPUTRC
+     file.  This command is unbound by default.
+
+'dump-variables ()'
+     Print all of the settable variables and their values to the
+     Readline output stream.  If a numeric argument is supplied, the
+     output is formatted in such a way that it can be made part of an
+     INPUTRC file.  This command is unbound by default.
+
+'dump-macros ()'
+     Print all of the Readline key sequences bound to macros and the
+     strings they output.  If a numeric argument is supplied, the output
+     is formatted in such a way that it can be made part of an INPUTRC
+     file.  This command is unbound by default.
+
+'emacs-editing-mode (C-e)'
+     When in 'vi' command mode, this causes a switch to 'emacs' editing
+     mode.
+
+'vi-editing-mode (M-C-j)'
+     When in 'emacs' editing mode, this causes a switch to 'vi' editing
+     mode.
+
+
+File: gdb.info,  Node: Readline vi Mode,  Prev: Bindable Readline Commands,  Up: Command Line Editing
+
+32.5 Readline vi Mode
+=====================
+
+While the Readline library does not have a full set of 'vi' editing
+functions, it does contain enough to allow simple editing of the line.
+The Readline 'vi' mode behaves as specified in the POSIX standard.
+
+   In order to switch interactively between 'emacs' and 'vi' editing
+modes, use the command 'M-C-j' (bound to emacs-editing-mode when in 'vi'
+mode and to vi-editing-mode in 'emacs' mode).  The Readline default is
+'emacs' mode.
+
+   When you enter a line in 'vi' mode, you are already placed in
+'insertion' mode, as if you had typed an 'i'.  Pressing <ESC> switches
+you into 'command' mode, where you can edit the text of the line with
+the standard 'vi' movement keys, move to previous history lines with 'k'
+and subsequent lines with 'j', and so forth.
+
+
+File: gdb.info,  Node: Using History Interactively,  Next: In Memoriam,  Prev: Command Line Editing,  Up: Top
+
+33 Using History Interactively
+******************************
+
+This chapter describes how to use the GNU History Library interactively,
+from a user's standpoint.  It should be considered a user's guide.  For
+information on using the GNU History Library in your own programs, *note
+(history)Programming with GNU History::.
+
+* Menu:
+
+* History Interaction::		What it feels like using History as a user.
+
+
+File: gdb.info,  Node: History Interaction,  Up: Using History Interactively
+
+33.1 History Expansion
+======================
+
+The History library provides a history expansion feature that is similar
+to the history expansion provided by 'csh'.  This section describes the
+syntax used to manipulate the history information.
+
+   History expansions introduce words from the history list into the
+input stream, making it easy to repeat commands, insert the arguments to
+a previous command into the current input line, or fix errors in
+previous commands quickly.
+
+   History expansion takes place in two parts.  The first is to
+determine which line from the history list should be used during
+substitution.  The second is to select portions of that line for
+inclusion into the current one.  The line selected from the history is
+called the "event", and the portions of that line that are acted upon
+are called "words".  Various "modifiers" are available to manipulate the
+selected words.  The line is broken into words in the same fashion that
+Bash does, so that several words surrounded by quotes are considered one
+word.  History expansions are introduced by the appearance of the
+history expansion character, which is '!' by default.
+
+* Menu:
+
+* Event Designators::	How to specify which history line to use.
+* Word Designators::	Specifying which words are of interest.
+* Modifiers::		Modifying the results of substitution.
+
+
+File: gdb.info,  Node: Event Designators,  Next: Word Designators,  Up: History Interaction
+
+33.1.1 Event Designators
+------------------------
+
+An event designator is a reference to a command line entry in the
+history list.  Unless the reference is absolute, events are relative to
+the current position in the history list.
+
+'!'
+     Start a history substitution, except when followed by a space, tab,
+     the end of the line, or '='.
+
+'!N'
+     Refer to command line N.
+
+'!-N'
+     Refer to the command N lines back.
+
+'!!'
+     Refer to the previous command.  This is a synonym for '!-1'.
+
+'!STRING'
+     Refer to the most recent command preceding the current position in
+     the history list starting with STRING.
+
+'!?STRING[?]'
+     Refer to the most recent command preceding the current position in
+     the history list containing STRING.  The trailing '?' may be
+     omitted if the STRING is followed immediately by a newline.
+
+'^STRING1^STRING2^'
+     Quick Substitution.  Repeat the last command, replacing STRING1
+     with STRING2.  Equivalent to '!!:s/STRING1/STRING2/'.
+
+'!#'
+     The entire command line typed so far.
+
+
+File: gdb.info,  Node: Word Designators,  Next: Modifiers,  Prev: Event Designators,  Up: History Interaction
+
+33.1.2 Word Designators
+-----------------------
+
+Word designators are used to select desired words from the event.  A ':'
+separates the event specification from the word designator.  It may be
+omitted if the word designator begins with a '^', '$', '*', '-', or '%'.
+Words are numbered from the beginning of the line, with the first word
+being denoted by 0 (zero).  Words are inserted into the current line
+separated by single spaces.
+
+   For example,
+
+'!!'
+     designates the preceding command.  When you type this, the
+     preceding command is repeated in toto.
+
+'!!:$'
+     designates the last argument of the preceding command.  This may be
+     shortened to '!$'.
+
+'!fi:2'
+     designates the second argument of the most recent command starting
+     with the letters 'fi'.
+
+   Here are the word designators:
+
+'0 (zero)'
+     The '0'th word.  For many applications, this is the command word.
+
+'N'
+     The Nth word.
+
+'^'
+     The first argument; that is, word 1.
+
+'$'
+     The last argument.
+
+'%'
+     The word matched by the most recent '?STRING?' search.
+
+'X-Y'
+     A range of words; '-Y' abbreviates '0-Y'.
+
+'*'
+     All of the words, except the '0'th.  This is a synonym for '1-$'.
+     It is not an error to use '*' if there is just one word in the
+     event; the empty string is returned in that case.
+
+'X*'
+     Abbreviates 'X-$'
+
+'X-'
+     Abbreviates 'X-$' like 'X*', but omits the last word.
+
+   If a word designator is supplied without an event specification, the
+previous command is used as the event.
+
+
+File: gdb.info,  Node: Modifiers,  Prev: Word Designators,  Up: History Interaction
+
+33.1.3 Modifiers
+----------------
+
+After the optional word designator, you can add a sequence of one or
+more of the following modifiers, each preceded by a ':'.
+
+'h'
+     Remove a trailing pathname component, leaving only the head.
+
+'t'
+     Remove all leading pathname components, leaving the tail.
+
+'r'
+     Remove a trailing suffix of the form '.SUFFIX', leaving the
+     basename.
+
+'e'
+     Remove all but the trailing suffix.
+
+'p'
+     Print the new command but do not execute it.
+
+'s/OLD/NEW/'
+     Substitute NEW for the first occurrence of OLD in the event line.
+     Any delimiter may be used in place of '/'.  The delimiter may be
+     quoted in OLD and NEW with a single backslash.  If '&' appears in
+     NEW, it is replaced by OLD.  A single backslash will quote the '&'.
+     The final delimiter is optional if it is the last character on the
+     input line.
+
+'&'
+     Repeat the previous substitution.
+
+'g'
+'a'
+     Cause changes to be applied over the entire event line.  Used in
+     conjunction with 's', as in 'gs/OLD/NEW/', or with '&'.
+
+'G'
+     Apply the following 's' modifier once to each word in the event.
+
+
+File: gdb.info,  Node: In Memoriam,  Next: Formatting Documentation,  Prev: Using History Interactively,  Up: Top
+
+Appendix A In Memoriam
+**********************
+
+The GDB project mourns the loss of the following long-time contributors:
+
+'Fred Fish'
+     Fred was a long-standing contributor to GDB (1991-2006), and to
+     Free Software in general.  Outside of GDB, he was known in the
+     Amiga world for his series of Fish Disks, and the GeekGadget
+     project.
+
+'Michael Snyder'
+     Michael was one of the Global Maintainers of the GDB project, with
+     contributions recorded as early as 1996, until 2011.  In addition
+     to his day to day participation, he was a large driving force
+     behind adding Reverse Debugging to GDB.
+
+   Beyond their technical contributions to the project, they were also
+enjoyable members of the Free Software Community.  We will miss them.
+
+
+File: gdb.info,  Node: Formatting Documentation,  Next: Installing GDB,  Prev: In Memoriam,  Up: Top
+
+Appendix B Formatting Documentation
+***********************************
+
+The GDB 4 release includes an already-formatted reference card, ready
+for printing with PostScript or Ghostscript, in the 'gdb' subdirectory
+of the main source directory(1).  If you can use PostScript or
+Ghostscript with your printer, you can print the reference card
+immediately with 'refcard.ps'.
+
+   The release also includes the source for the reference card.  You can
+format it, using TeX, by typing:
+
+     make refcard.dvi
+
+   The GDB reference card is designed to print in "landscape" mode on US
+"letter" size paper; that is, on a sheet 11 inches wide by 8.5 inches
+high.  You will need to specify this form of printing as an option to
+your DVI output program.
+
+   All the documentation for GDB comes as part of the machine-readable
+distribution.  The documentation is written in Texinfo format, which is
+a documentation system that uses a single source file to produce both
+on-line information and a printed manual.  You can use one of the Info
+formatting commands to create the on-line version of the documentation
+and TeX (or 'texi2roff') to typeset the printed version.
+
+   GDB includes an already formatted copy of the on-line Info version of
+this manual in the 'gdb' subdirectory.  The main Info file is
+'gdb-7.12/gdb/gdb.info', and it refers to subordinate files matching
+'gdb.info*' in the same directory.  If necessary, you can print out
+these files, or read them with any editor; but they are easier to read
+using the 'info' subsystem in GNU Emacs or the standalone 'info'
+program, available as part of the GNU Texinfo distribution.
+
+   If you want to format these Info files yourself, you need one of the
+Info formatting programs, such as 'texinfo-format-buffer' or 'makeinfo'.
+
+   If you have 'makeinfo' installed, and are in the top level GDB source
+directory ('gdb-7.12', in the case of version 7.12), you can make the
+Info file by typing:
+
+     cd gdb
+     make gdb.info
+
+   If you want to typeset and print copies of this manual, you need TeX,
+a program to print its DVI output files, and 'texinfo.tex', the Texinfo
+definitions file.
+
+   TeX is a typesetting program; it does not print files directly, but
+produces output files called DVI files.  To print a typeset document,
+you need a program to print DVI files.  If your system has TeX
+installed, chances are it has such a program.  The precise command to
+use depends on your system; 'lpr -d' is common; another (for PostScript
+devices) is 'dvips'.  The DVI print command may require a file name
+without any extension or a '.dvi' extension.
+
+   TeX also requires a macro definitions file called 'texinfo.tex'.
+This file tells TeX how to typeset a document written in Texinfo format.
+On its own, TeX cannot either read or typeset a Texinfo file.
+'texinfo.tex' is distributed with GDB and is located in the
+'gdb-VERSION-NUMBER/texinfo' directory.
+
+   If you have TeX and a DVI printer program installed, you can typeset
+and print this manual.  First switch to the 'gdb' subdirectory of the
+main source directory (for example, to 'gdb-7.12/gdb') and type:
+
+     make gdb.dvi
+
+   Then give 'gdb.dvi' to your DVI printing program.
+
+   ---------- Footnotes ----------
+
+   (1) In 'gdb-7.12/gdb/refcard.ps' of the version 7.12 release.
 
 
 File: gdb.info,  Node: Installing GDB,  Next: Maintenance Commands,  Prev: Formatting Documentation,  Up: Top
@@ -138,39 +696,39 @@ preparing GDB for installation; you can then use 'make' to build the
 a single directory, whose name is usually composed by appending the
 version number to 'gdb'.
 
-   For example, the GDB version 7.10.1 distribution is in the
-'gdb-7.10.1' directory.  That directory contains:
+   For example, the GDB version 7.12 distribution is in the 'gdb-7.12'
+directory.  That directory contains:
 
-'gdb-7.10.1/configure (and supporting files)'
+'gdb-7.12/configure (and supporting files)'
      script for configuring GDB and all its supporting libraries
 
-'gdb-7.10.1/gdb'
+'gdb-7.12/gdb'
      the source specific to GDB itself
 
-'gdb-7.10.1/bfd'
+'gdb-7.12/bfd'
      source for the Binary File Descriptor library
 
-'gdb-7.10.1/include'
+'gdb-7.12/include'
      GNU include files
 
-'gdb-7.10.1/libiberty'
+'gdb-7.12/libiberty'
      source for the '-liberty' free software library
 
-'gdb-7.10.1/opcodes'
+'gdb-7.12/opcodes'
      source for the library of opcode tables and disassemblers
 
-'gdb-7.10.1/readline'
+'gdb-7.12/readline'
      source for the GNU command-line interface
 
-'gdb-7.10.1/glob'
+'gdb-7.12/glob'
      source for the GNU filename pattern-matching subroutine
 
-'gdb-7.10.1/mmalloc'
+'gdb-7.12/mmalloc'
      source for the GNU memory-mapped malloc package
 
    The simplest way to configure and build GDB is to run 'configure'
 from the 'gdb-VERSION-NUMBER' source directory, which in this example is
-the 'gdb-7.10.1' directory.
+the 'gdb-7.12' directory.
 
    First switch to the 'gdb-VERSION-NUMBER' source directory if you are
 not already in it; then run 'configure'.  Pass the identifier for the
@@ -178,7 +736,7 @@ platform on which GDB will run as an argument.
 
    For example:
 
-     cd gdb-7.10.1
+     cd gdb-7.12
      ./configure HOST
      make
 
@@ -199,8 +757,8 @@ need to run 'sh' on it explicitly:
      sh configure HOST
 
    If you run 'configure' from a directory that contains source
-directories for multiple libraries or programs, such as the 'gdb-7.10.1'
-source directory for version 7.10.1, 'configure' creates configuration
+directories for multiple libraries or programs, such as the 'gdb-7.12'
+source directory for version 7.12, 'configure' creates configuration
 files for every directory level underneath (unless you tell it not to,
 with the '--norecursion' option).
 
@@ -240,13 +798,13 @@ to specify a path to find 'configure' itself from your working
 directory.  If the path to 'configure' would be the same as the argument
 to '--srcdir', you can leave out the '--srcdir' option; it is assumed.)
 
-   For example, with version 7.10.1, you can build GDB in a separate
+   For example, with version 7.12, you can build GDB in a separate
 directory for a Sun 4 like this:
 
-     cd gdb-7.10.1
+     cd gdb-7.12
      mkdir ../gdb-sun4
      cd ../gdb-sun4
-     ../gdb-7.10.1/configure sun4
+     ../gdb-7.12/configure sun4
      make
 
    When 'configure' builds a configuration using a remote source
@@ -257,7 +815,7 @@ the example, you'd find the Sun 4 library 'libiberty.a' in the directory
 
    Make sure that your path to the 'configure' script has just one
 instance of 'gdb' in it.  If your path to 'configure' looks like
-'../gdb-7.10.1/gdb/configure', you are configuring only one subdirectory
+'../gdb-7.12/gdb/configure', you are configuring only one subdirectory
 of GDB, not the whole package.  This leads to build errors about missing
 include files such as 'bfd/bfd.h'.
 
@@ -273,9 +831,9 @@ a configured directory--whatever directory you were in when you called
 
    The 'Makefile' that 'configure' generates in each source directory
 also runs recursively.  If you type 'make' in a source directory such as
-'gdb-7.10.1' (or in a separate configured directory configured with
-'--srcdir=DIRNAME/gdb-7.10.1'), you will build all the required
-libraries, and then build GDB.
+'gdb-7.12' (or in a separate configured directory configured with
+'--srcdir=DIRNAME/gdb-7.12'), you will build all the required libraries,
+and then build GDB.
 
    When you have multiple hosts or targets configured in separate
 directories, you can run 'make' on them in parallel (for example, if
@@ -319,7 +877,7 @@ you can use it to test your guesses on abbreviations--for example:
      Invalid configuration `i986v': machine `i986v' not recognized
 
 'config.sub' is also distributed in the GDB source directory
-('gdb-7.10.1', for version 7.10.1).
+('gdb-7.12', for version 7.12).
 
 
 File: gdb.info,  Node: Configure Options,  Next: System-wide configuration,  Prev: Config Names,  Up: Installing GDB
@@ -520,10 +1078,6 @@ commands that turn on debugging messages, see *note Debugging Output::.)
      'shlib events'
           Shared library events.
 
-'maint info bfds'
-     This prints information about each 'bfd' object that is known to
-     GDB.  *Note BFD: (bfd)Top.
-
 'maint info btrace'
      Pint information about raw branch tracing data.
 
@@ -545,9 +1099,9 @@ commands that turn on debugging messages, see *note Debugging Output::.)
           Highest 'PC'
 
      'pt'
-          For the Intel(R) Processor Trace recording format, print a
-          list of Intel(R) Processor Trace packets.  For each packet,
-          the following information is printed:
+          For the Intel Processor Trace recording format, print a list
+          of Intel Processor Trace packets.  For each packet, the
+          following information is printed:
 
           Packet number
                Newer packets have higher numbers.  The oldest packet has
@@ -805,6 +1359,9 @@ commands that turn on debugging messages, see *note Debugging Output::.)
      command is a recursive definition of the data type as stored in
      GDB's data structures, including its flags and contained types.
 
+     Run any self tests that were compiled in to GDB.  This will print a
+     message showing how many tests were run, and how many failed.
+
 'maint set dwarf always-disassemble'
 'maint show dwarf always-disassemble'
      Control the behavior of 'info address' when using DWARF debugging
@@ -877,6 +1434,26 @@ commands that turn on debugging messages, see *note Debugging Output::.)
      default is asynchronous, if it is available; but this can be
      changed to more easily debug problems occurring only in synchronous
      mode.
+
+'maint set target-non-stop'
+'maint show target-non-stop'
+
+     This controls whether GDB targets always operate in non-stop mode
+     even if 'set non-stop' is 'off' (*note Non-Stop Mode::).  The
+     default is 'auto', meaning non-stop mode is enabled if supported by
+     the target.
+
+     'maint set target-non-stop auto'
+          This is the default mode.  GDB controls the target in non-stop
+          mode if the target supports it.
+
+     'maint set target-non-stop on'
+          GDB controls the target in non-stop mode even if the target
+          does not indicate support.
+
+     'maint set target-non-stop off'
+          GDB does not control the target in non-stop mode even if the
+          target supports it.
 
 'maint set per-command'
 'maint show per-command'
@@ -1523,6 +2100,20 @@ letter, other than those described here, are reserved for future use.
      ''
           The 'vCont' packet is not supported.
 
+'vCtrlC'
+     Interrupt remote target as if a control-C was pressed on the remote
+     terminal.  This is the equivalent to reacting to the '^C' ('\003',
+     the control-C character) character in all-stop mode while the
+     target is running, except this works in non-stop mode.  *Note
+     interrupting remote targets::, for more info on the all-stop
+     variant.
+
+     Reply:
+     'E NN'
+          for an error
+     'OK'
+          for success
+
 'vFile:OPERATION:PARAMETER...'
      Perform a file operation on the target system.  For details, see
      *note Host I/O Packets::.
@@ -1795,6 +2386,11 @@ components.
           The packet indicates a watchpoint hit, and R is the data
           address, in hex.
 
+     'syscall_entry'
+     'syscall_return'
+          The packet indicates a syscall entry or return, and R is the
+          syscall number, in hex.
+
      'library'
           The packet indicates that the loaded libraries have changed.
           GDB should use 'qXfer:libraries:read' to fetch a new list of
@@ -1871,6 +2467,25 @@ components.
           remote stub must also supply the appropriate 'qSupported'
           feature indicating support.
 
+     'exec'
+          The packet indicates that 'execve' was called, and R is the
+          absolute pathname of the file that was executed, in hex.  This
+          packet is only applicable to targets that support exec events.
+
+          This packet should not be sent by default; older GDB versions
+          did not support it.  GDB requests it, by supplying an
+          appropriate 'qSupported' feature (*note qSupported::).  The
+          remote stub must also supply the appropriate 'qSupported'
+          feature indicating support.
+
+     'create'
+          The packet indicates that the thread was just created.  The
+          new thread is stopped until GDB sets it running with a
+          resumption packet (*note vCont packet::).  This packet should
+          not be sent by default; GDB requests it with the *note
+          QThreadEvents:: packet.  See also the 'w' (*note thread exit
+          event::) remote reply below.
+
 'W AA'
 'W AA ; process:PID'
      The process exited, and AA is the exit status.  This is only
@@ -1889,6 +2504,28 @@ components.
      terminated process, can be used only when GDB has reported support
      for multiprocess protocol extensions; see *note multiprocess
      extensions::.  The PID is formatted as a big-endian hex string.
+
+'w AA ; TID'
+
+     The thread exited, and AA is the exit status.  This response should
+     not be sent by default; GDB requests it with the *note
+     QThreadEvents:: packet.  See also *note thread create event::
+     above.
+
+'N'
+     There are no resumed threads left in the target.  In other words,
+     even though the process is alive, the last resumed thread has
+     exited.  For example, say the target process has two threads:
+     thread 1 and thread 2.  The client leaves thread 1 stopped, and
+     resumes thread 2, which subsequently exits.  At this point, even
+     though the process is still alive, and thus no 'W' stop reply is
+     sent, no thread is actually executing either.  The 'N' stop reply
+     thus informs the client that it can stop waiting for stop replies.
+     This packet should not be sent by default; older GDB versions did
+     not support it.  GDB requests it, by supplying an appropriate
+     'qSupported' feature (*note qSupported::).  The remote stub must
+     also supply the appropriate 'qSupported' feature indicating
+     support.
 
 'O XX...'
      'XX...' is hex encoding of ASCII data, to be written as the
@@ -2189,6 +2826,46 @@ GDB packet uses spaces to separate its components.
      qSupported::).  Use of this packet is controlled by the 'set
      non-stop' command; *note Non-Stop Mode::.
 
+'QCatchSyscalls:1 [;SYSNO]...'
+'QCatchSyscalls:0'
+     Enable ('QCatchSyscalls:1') or disable ('QCatchSyscalls:0')
+     catching syscalls from the inferior process.
+
+     For 'QCatchSyscalls:1', each listed syscall SYSNO (encoded in hex)
+     should be reported to GDB.  If no syscall SYSNO is listed, every
+     system call should be reported.
+
+     Note that if a syscall not in the list is reported, GDB will still
+     filter the event according to its own list from all corresponding
+     'catch syscall' commands.  However, it is more efficient to only
+     report the requested syscalls.
+
+     Multiple 'QCatchSyscalls:1' packets do not combine; any earlier
+     'QCatchSyscalls:1' list is completely replaced by the new list.
+
+     If the inferior process execs, the state of 'QCatchSyscalls' is
+     kept for the new process too.  On targets where exec may affect
+     syscall numbers, for example with exec between 32 and 64-bit
+     processes, the client should send a new packet with the new syscall
+     list.
+
+     Reply:
+     'OK'
+          The request succeeded.
+
+     'E NN'
+          An error occurred.  NN are hex digits.
+
+     ''
+          An empty reply indicates that 'QCatchSyscalls' is not
+          supported by the stub.
+
+     Use of this packet is controlled by the 'set remote catch-syscalls'
+     command (*note set remote catch-syscalls: Remote Configuration.).
+     This packet is not probed by default; the remote stub must request
+     it, by supplying an appropriate 'qSupported' response (*note
+     qSupported::).
+
 'QPassSignals: SIGNAL [;SIGNAL]...'
      Each listed SIGNAL should be passed directly to the inferior
      process.  Signals are numbered identically to continue packets and
@@ -2256,6 +2933,34 @@ GDB packet uses spaces to separate its components.
      Configuration.).  This packet is not probed by default; the remote
      stub must request it, by supplying an appropriate 'qSupported'
      response (*note qSupported::).
+
+'QThreadEvents:1'
+'QThreadEvents:0'
+
+     Enable ('QThreadEvents:1') or disable ('QThreadEvents:0') reporting
+     of thread create and exit events.  *Note thread create event::, for
+     the reply specifications.  For example, this is used in non-stop
+     mode when GDB stops a set of threads and synchronously waits for
+     the their corresponding stop replies.  Without exit events, if one
+     of the threads exits, GDB would hang forever not knowing that it
+     should no longer expect a stop for that same thread.  GDB does not
+     enable this feature unless the stub reports that it supports it by
+     including 'QThreadEvents+' in its 'qSupported' reply.
+
+     Reply:
+     'OK'
+          The request succeeded.
+
+     'E NN'
+          An error occurred.  The error number NN is given as hex
+          digits.
+
+     ''
+          An empty reply indicates that 'QThreadEvents' is not supported
+          by the stub.
+
+     Use of this packet is controlled by the 'set remote thread-events'
+     command (*note set remote thread-events: Remote Configuration.).
 
 'qRcmd,COMMAND'
      COMMAND (hex encoded) is passed to the local interpreter for
@@ -2401,6 +3106,16 @@ GDB packet uses spaces to separate its components.
           extensions unless the stub also reports that it supports them
           by including 'vfork-events+' in its 'qSupported' reply.
 
+     'exec-events'
+          This feature indicates whether GDB supports exec event
+          extensions to the remote protocol.  GDB does not use such
+          extensions unless the stub also reports that it supports them
+          by including 'exec-events+' in its 'qSupported' reply.
+
+     'vContSupported'
+          This feature indicates whether GDB wants to know the supported
+          actions in the reply to 'vCont?' packet.
+
      Stubs should ignore any unknown values for GDBFEATURE.  Any GDB
      which sends a 'qSupported' packet supports receiving packets of
      unlimited length (earlier versions of GDB may reject overly long
@@ -2486,6 +3201,8 @@ GDB packet uses spaces to separate its components.
                                                         
      'QNonStop'                No             '-'       Yes
                                                         
+     'QCatchSyscalls'          No             '-'       Yes
+                                                        
      'QPassSignals'            No             '-'       Yes
                                                         
      'QStartNoAckMode'         No             '-'       Yes
@@ -2523,6 +3240,12 @@ GDB packet uses spaces to separate its components.
      'fork-events'             No             '-'       No
                                                         
      'vfork-events'            No             '-'       No
+                                                        
+     'exec-events'             No             '-'       No
+                                                        
+     'QThreadEvents'           No             '-'       No
+                                                        
+     'no-resumed'              No             '-'       No
                                                         
 
      These are the currently defined stub features, in more detail:
@@ -2614,6 +3337,10 @@ GDB packet uses spaces to separate its components.
      'QNonStop'
           The remote stub understands the 'QNonStop' packet (*note
           QNonStop::).
+
+     'QCatchSyscalls'
+          The remote stub understands the 'QCatchSyscalls' packet (*note
+          QCatchSyscalls::).
 
      'QPassSignals'
           The remote stub understands the 'QPassSignals' packet (*note
@@ -2730,6 +3457,20 @@ GDB packet uses spaces to separate its components.
           The remote stub reports the 'vfork' stop reason for vfork
           events and vforkdone events.
 
+     'exec-events'
+          The remote stub reports the 'exec' stop reason for exec
+          events.
+
+     'vContSupported'
+          The remote stub reports the supported actions in the reply to
+          'vCont?' packet.
+
+     'QThreadEvents'
+          The remote stub understands the 'QThreadEvents' packet.
+
+     'no-resumed'
+          The remote stub reports the 'N' stop reply.
+
 'qSymbol::'
      Notify the target that GDB is prepared to serve symbol lookup
      requests.  Accept requests from the target for the values of
@@ -2817,9 +3558,38 @@ GDB packet uses spaces to separate its components.
      specific to OBJECT; it can supply additional details about what
      data to access.
 
+     Reply:
+     'm DATA'
+          Data DATA (*note Binary Data::) has been read from the target.
+          There may be more data at a higher address (although it is
+          permitted to return 'm' even for the last valid block of data,
+          as long as at least one byte of data was read).  It is
+          possible for DATA to have fewer bytes than the LENGTH in the
+          request.
+
+     'l DATA'
+          Data DATA (*note Binary Data::) has been read from the target.
+          There is no more data to be read.  It is possible for DATA to
+          have fewer bytes than the LENGTH in the request.
+
+     'l'
+          The OFFSET in the request is at the end of the data.  There is
+          no more data to be read.
+
+     'E00'
+          The request was malformed, or ANNEX was invalid.
+
+     'E NN'
+          The offset was invalid, or there was an error encountered
+          reading the data.  The NN part is a hex-encoded 'errno' value.
+
+     ''
+          An empty reply indicates the OBJECT string was not recognized
+          by the stub, or that the object does not support reading.
+
      Here are the specific requests of this form defined so far.  All
-     'qXfer:OBJECT:read:...' requests use the same reply formats, listed
-     below.
+     the 'qXfer:OBJECT:read:...' requests use the same reply formats,
+     listed above.
 
      'qXfer:auxv:read::OFFSET,LENGTH'
           Access the target's "auxiliary vector".  *Note auxiliary
@@ -3017,35 +3787,6 @@ GDB packet uses spaces to separate its components.
           Access the target's "operating system information".  *Note
           Operating System Information::.
 
-     Reply:
-     'm DATA'
-          Data DATA (*note Binary Data::) has been read from the target.
-          There may be more data at a higher address (although it is
-          permitted to return 'm' even for the last valid block of data,
-          as long as at least one byte of data was read).  It is
-          possible for DATA to have fewer bytes than the LENGTH in the
-          request.
-
-     'l DATA'
-          Data DATA (*note Binary Data::) has been read from the target.
-          There is no more data to be read.  It is possible for DATA to
-          have fewer bytes than the LENGTH in the request.
-
-     'l'
-          The OFFSET in the request is at the end of the data.  There is
-          no more data to be read.
-
-     'E00'
-          The request was malformed, or ANNEX was invalid.
-
-     'E NN'
-          The offset was invalid, or there was an error encountered
-          reading the data.  The NN part is a hex-encoded 'errno' value.
-
-     ''
-          An empty reply indicates the OBJECT string was not recognized
-          by the stub, or that the object does not support reading.
-
 'qXfer:OBJECT:write:ANNEX:OFFSET:DATA...'
      Write uninterpreted bytes into the target's special data area
      identified by the keyword OBJECT, starting at OFFSET bytes into the
@@ -3054,9 +3795,25 @@ GDB packet uses spaces to separate its components.
      to OBJECT; it can supply additional details about what data to
      access.
 
+     Reply:
+     'NN'
+          NN (hex encoded) is the number of bytes written.  This may be
+          fewer bytes than supplied in the request.
+
+     'E00'
+          The request was malformed, or ANNEX was invalid.
+
+     'E NN'
+          The offset was invalid, or there was an error encountered
+          writing the data.  The NN part is a hex-encoded 'errno' value.
+
+     ''
+          An empty reply indicates the OBJECT string was not recognized
+          by the stub, or that the object does not support writing.
+
      Here are the specific requests of this form defined so far.  All
-     'qXfer:OBJECT:write:...' requests use the same reply formats,
-     listed below.
+     the 'qXfer:OBJECT:write:...' requests use the same reply formats,
+     listed above.
 
      'qXfer:siginfo:write::OFFSET:DATA...'
           Write DATA to the extra signal information on the target
@@ -3077,22 +3834,6 @@ GDB packet uses spaces to separate its components.
           This packet is not probed by default; the remote stub must
           request it, by supplying an appropriate 'qSupported' response
           (*note qSupported::).
-
-     Reply:
-     'NN'
-          NN (hex encoded) is the number of bytes written.  This may be
-          fewer bytes than supplied in the request.
-
-     'E00'
-          The request was malformed, or ANNEX was invalid.
-
-     'E NN'
-          The offset was invalid, or there was an error encountered
-          writing the data.  The NN part is a hex-encoded 'errno' value.
-
-     ''
-          An empty reply indicates the OBJECT string was not recognized
-          by the stub, or that the object does not support writing.
 
 'qXfer:OBJECT:OPERATION:...'
      Requests of this form may be added in the future.  When a stub does
@@ -3131,8 +3872,8 @@ GDB packet uses spaces to separate its components.
           A badly formed request or an error was encountered.
 
 'Qbtrace:pt'
-     Enable branch tracing for the current thread using Intel(R)
-     Processor Trace.
+     Enable branch tracing for the current thread using Intel Processor
+     Trace.
 
      Reply:
      'OK'
@@ -3841,9 +4582,10 @@ File: gdb.info,  Node: Interrupts,  Next: Notification Packets,  Prev: Host I/O 
 E.8 Interrupts
 ==============
 
-When a program on the remote target is running, GDB may attempt to
-interrupt it by sending a 'Ctrl-C', 'BREAK' or a 'BREAK' followed by
-'g', control of which is specified via GDB's 'interrupt-sequence'.
+In all-stop mode, when a program on the remote target is running, GDB
+may attempt to interrupt it by sending a 'Ctrl-C', 'BREAK' or a 'BREAK'
+followed by 'g', control of which is specified via GDB's
+'interrupt-sequence'.
 
    The precise meaning of 'BREAK' is defined by the transport mechanism
 and may, in fact, be undefined.  GDB does not currently define a 'BREAK'
@@ -3863,6 +4605,12 @@ packet.
 kernel receives this sequence from serial port, it stops execution and
 connects to gdb.
 
+   In non-stop mode, because packet resumptions are asynchronous (*note
+vCont packet::), GDB is always free to send a remote command to the
+remote stub, even when the target is running.  For that reason, GDB
+instead sends a regular packet (*note vCtrlC packet::) with the usual
+packet framing instead of the single byte '0x03'.
+
    Stubs are not required to recognize these interrupt mechanisms and
 the precise meaning associated with receipt of the interrupt is
 implementation defined.  If the target supports debugging of multiple
@@ -3872,7 +4620,8 @@ interrupting the running program, it should send one of the stop reply
 packets (*note Stop Reply Packets::) to GDB as a result of successfully
 stopping the program in all-stop mode, and a stop reply for each stopped
 thread in non-stop mode.  Interrupts received while the program is
-stopped are discarded.
+stopped are queued and the program will be interrupted when it is
+resumed next time.
 
 
 File: gdb.info,  Node: Notification Packets,  Next: Remote Non-Stop,  Prev: Interrupts,  Up: Remote Protocol
@@ -3979,12 +4728,12 @@ NotificationAck     Event                       Description
                                                 
 Stop      vStopped  REPLY.  The REPLY has the   Report an asynchronous
                     form of a stop reply, as    stop event in non-stop
-                    described in *note Stop     mode.
-                    Reply Packets::.  Refer     
-                    to *note Remote
-                    Non-Stop::, for
-                    information on how these
-                    notifications are
+                    described in                mode.
+                    *note Stop Reply Packets::. 
+                    Refer to
+                    *note Remote Non-Stop::,
+                    for information on how
+                    these notifications are
                     acknowledged by GDB.
 
 
@@ -5351,7 +6100,7 @@ obtains the XML document with the following structure:
 
      <?xml version="1.0"?>
      <threads>
-         <thread id="id" core="0">
+         <thread id="id" core="0" name="name">
          ... description ...
          </thread>
      </threads>
@@ -5359,8 +6108,9 @@ obtains the XML document with the following structure:
    Each 'thread' element must have the 'id' attribute that identifies
 the thread (*note thread-id syntax::).  The 'core' attribute, if
 present, specifies which processor core the thread was last executing
-on.  The content of the of 'thread' element is interpreted as
-human-readable auxilliary information.
+on.  The 'name' attribute, if present, specifies the human-readable name
+of the thread.  The content of the of 'thread' element is interpreted as
+human-readable auxiliary information.
 
 
 File: gdb.info,  Node: Traceframe Info Format,  Next: Branch Trace Format,  Prev: Thread List Format,  Up: Remote Protocol
@@ -5483,10 +6233,9 @@ settings for that format.  The following information is described:
      'size'
           The size of the BTS ring buffer in bytes.
 'pt'
-     This thread uses the "Intel(R) Processor Trace" (Intel(R) PT)
-     format.
+     This thread uses the "Intel Processor Trace" (Intel PT) format.
      'size'
-          The size of the Intel(R) PT ring buffer in bytes.
+          The size of the Intel PT ring buffer in bytes.
 
    GDB must be linked with the Expat library to support XML branch trace
 configuration discovery.  *Note Expat::.
@@ -5821,8 +6570,7 @@ describing them, to save time.
 
 'zero_ext' (0x2a) N: A => A, zero-extended from N bits
      Pop an unsigned value from the stack; zero all but the bottom N
-     bits.  This means that all bits to the left of bit N-1 (where the
-     least significant bit is bit 0) are set to the value of bit N-1.
+     bits.
 
      The number of source bits to preserve, N, is encoded as a single
      byte unsigned integer following the 'zero_ext' bytecode.
@@ -6253,6 +7001,7 @@ descriptions.  *Note Expat::.
 * Target Description Format::       The contents of a target description.
 * Predefined Target Types::         Standard types available for target
                                     descriptions.
+* Enum Target Types::               How to define enum target types.
 * Standard Target Features::        Features GDB knows about.
 
 
@@ -6372,8 +7121,8 @@ versions of GDB ignore it.
 
        <osabi>ABI-NAME</osabi>
 
-   ABI-NAME is an OS ABI name from the same selection accepted by 'set osabi'
-(*note Configuring the Current ABI: ABI.).
+   ABI-NAME is an OS ABI name from the same selection accepted by
+'set osabi' (*note Configuring the Current ABI: ABI.).
 
 G.2.4 Compatible Architecture
 -----------------------------
@@ -6423,7 +7172,7 @@ Any register's value is a collection of bits which GDB must interpret.
 The default interpretation is a two's complement integer, but other
 types can be requested by name in the register description.  Some
 predefined types are provided by GDB (*note Predefined Target Types::),
-and the description can define additional composite types.
+and the description can define additional composite and enum types.
 
    Each type element must have an 'id' attribute, which gives a unique
 (within the containing '<feature>') name to the type.  Types must be
@@ -6447,36 +7196,60 @@ NAME and a TYPE:
      </union>
 
    If a register's value is composed from several separate values,
-define it with a structure type.  There are two forms of the '<struct>'
-element; a '<struct>' element must either contain only bitfields or
-contain no bitfields.  If the structure contains only bitfields, its
-total size in bytes must be specified, each bitfield must have an
-explicit start and end, and bitfields are automatically assigned an
-integer type.  The field's START should be less than or equal to its
-END, and zero represents the least significant bit.
+define it with either a structure type or a flags type.  A flags type
+may only contain bitfields.  A structure type may either contain only
+bitfields or contain no bitfields.  If the value contains only
+bitfields, its total size in bytes must be specified.
 
-     <struct id="ID" size="SIZE">
-       <field name="NAME" start="START" end="END"/>
-       ...
-     </struct>
-
-   If the structure contains no bitfields, then each field has an
-explicit type, and no implicit padding is added.
+   Non-bitfield values have a NAME and TYPE.
 
      <struct id="ID">
        <field name="NAME" type="TYPE"/>
        ...
      </struct>
 
-   If a register's value is a series of single-bit flags, define it with
-a flags type.  The '<flags>' element has an explicit SIZE and contains
-one or more '<field>' elements.  Each field has a NAME, a START, and an
-END.  Only single-bit flags are supported.
+   Both NAME and TYPE values are required.  No implicit padding is
+added.
+
+   Bitfield values have a NAME, START, END and TYPE.
+
+     <struct id="ID" size="SIZE">
+       <field name="NAME" start="START" end="END" type="TYPE"/>
+       ...
+     </struct>
 
      <flags id="ID" size="SIZE">
-       <field name="NAME" start="START" end="END"/>
+       <field name="NAME" start="START" end="END" type="TYPE"/>
        ...
      </flags>
+
+   The NAME value is required.  Bitfield values may be named with the
+empty string, '""', in which case the field is "filler" and its value is
+not printed.  Not all bits need to be specified, so "filler" fields are
+optional.
+
+   The START and END values are required, and TYPE is optional.  The
+field's START must be less than or equal to its END, and zero represents
+the least significant bit.
+
+   The default value of TYPE is 'bool' for single bit fields, and an
+unsigned integer otherwise.
+
+   Which to choose?  Structures or flags?
+
+   Registers defined with 'flags' have these advantages over defining
+them with 'struct':
+
+   * Arithmetic may be performed on them as if they were integers.
+   * They are printed in a more readable fashion.
+
+   Registers defined with 'struct' have one advantage over defining them
+with 'flags':
+
+   * One can fetch individual fields like in 'C'.
+
+          (gdb) print $my_struct_reg.field3
+          $1 = 42
 
 G.2.7 Registers
 ---------------
@@ -6528,7 +7301,7 @@ GROUP
      GDB will not display the register in 'info registers'.
 
 
-File: gdb.info,  Node: Predefined Target Types,  Next: Standard Target Features,  Prev: Target Description Format,  Up: Target Descriptions
+File: gdb.info,  Node: Predefined Target Types,  Next: Enum Target Types,  Prev: Target Description Format,  Up: Target Descriptions
 
 G.3 Predefined Target Types
 ===========================
@@ -6537,6 +7310,9 @@ Type definitions in the self-description can build up composite types
 from basic building blocks, but can not define fundamental types.
 Instead, standard identifiers are provided by GDB for the fundamental
 types.  The currently supported types are:
+
+'bool'
+     Boolean type, occupying a single bit.
 
 'int8'
 'int16'
@@ -6579,9 +7355,43 @@ types.  The currently supported types are:
      32bit MXCSR register used by x86.
 
 
-File: gdb.info,  Node: Standard Target Features,  Prev: Predefined Target Types,  Up: Target Descriptions
+File: gdb.info,  Node: Enum Target Types,  Next: Standard Target Features,  Prev: Predefined Target Types,  Up: Target Descriptions
 
-G.4 Standard Target Features
+G.4 Enum Target Types
+=====================
+
+Enum target types are useful in 'struct' and 'flags' register
+descriptions.  *Note Target Description Format::.
+
+   Enum types have a name, size and a list of name/value pairs.
+
+     <enum id="ID" size="SIZE">
+       <evalue name="NAME" value="VALUE"/>
+       ...
+     </enum>
+
+   Enums must be defined before they are used.
+
+     <enum id="levels_type" size="4">
+       <evalue name="low" value="0"/>
+       <evalue name="high" value="1"/>
+     </enum>
+     <flags id="flags_type" size="4">
+       <field name="X" start="0"/>
+       <field name="LEVEL" start="1" end="1" type="levels_type"/>
+     </flags>
+     <reg name="flags" bitsize="32" type="flags_type"/>
+
+   Given that description, a value of 3 for the 'flags' register would
+be printed as:
+
+     (gdb) info register flags
+     flags 0x3 [ X LEVEL=high ]
+
+
+File: gdb.info,  Node: Standard Target Features,  Prev: Enum Target Types,  Up: Target Descriptions
+
+G.5 Standard Target Features
 ============================
 
 A target description must contain either no registers or all the
@@ -6620,6 +7430,7 @@ the capitalization used in the description.
 * MicroBlaze Features::
 * MIPS Features::
 * M68K Features::
+* NDS32 Features::
 * Nios II Features::
 * PowerPC Features::
 * S/390 and System z Features::
@@ -6628,7 +7439,7 @@ the capitalization used in the description.
 
 File: gdb.info,  Node: AArch64 Features,  Next: ARM Features,  Up: Standard Target Features
 
-G.4.1 AArch64 Features
+G.5.1 AArch64 Features
 ----------------------
 
 The 'org.gnu.gdb.aarch64.core' feature is required for AArch64 targets.
@@ -6640,7 +7451,7 @@ should contain registers 'v0' through 'v31', 'fpsr', and 'fpcr'.
 
 File: gdb.info,  Node: ARM Features,  Next: i386 Features,  Prev: AArch64 Features,  Up: Standard Target Features
 
-G.4.2 ARM Features
+G.5.2 ARM Features
 ------------------
 
 The 'org.gnu.gdb.arm.core' feature is required for non-M-profile ARM
@@ -6675,7 +7486,7 @@ double-precision registers.
 
 File: gdb.info,  Node: i386 Features,  Next: MicroBlaze Features,  Prev: ARM Features,  Up: Standard Target Features
 
-G.4.3 i386 Features
+G.5.3 i386 Features
 -------------------
 
 The 'org.gnu.gdb.i386.core' feature is required for i386/amd64 targets.
@@ -6704,9 +7515,9 @@ of YMM registers:
    - 'ymm0h' through 'ymm7h' for i386
    - 'ymm0h' through 'ymm15h' for amd64
 
-   The 'org.gnu.gdb.i386.mpx' is an optional feature representing
-Intel(R) Memory Protection Extension (MPX). It should describe the
-following registers:
+   The 'org.gnu.gdb.i386.mpx' is an optional feature representing Intel
+Memory Protection Extension (MPX). It should describe the following
+registers:
 
    - 'bnd0raw' through 'bnd3raw' for i386 and amd64.
    - 'bndcfgu' and 'bndstatus' for i386 and amd64.
@@ -6736,7 +7547,7 @@ registers:
 
 File: gdb.info,  Node: MicroBlaze Features,  Next: MIPS Features,  Prev: i386 Features,  Up: Standard Target Features
 
-G.4.4 MicroBlaze Features
+G.5.4 MicroBlaze Features
 -------------------------
 
 The 'org.gnu.gdb.microblaze.core' feature is required for MicroBlaze
@@ -6750,7 +7561,7 @@ present, it should contain registers 'rshr' and 'rslr'
 
 File: gdb.info,  Node: MIPS Features,  Next: M68K Features,  Prev: MicroBlaze Features,  Up: Standard Target Features
 
-G.4.5 MIPS Features
+G.5.5 MIPS Features
 -------------------
 
 The 'org.gnu.gdb.mips.cpu' feature is required for MIPS targets.  It
@@ -6776,9 +7587,9 @@ a single register, 'restart', which is used by the Linux kernel to
 control restartable syscalls.
 
 
-File: gdb.info,  Node: M68K Features,  Next: Nios II Features,  Prev: MIPS Features,  Up: Standard Target Features
+File: gdb.info,  Node: M68K Features,  Next: NDS32 Features,  Prev: MIPS Features,  Up: Standard Target Features
 
-G.4.6 M68K Features
+G.5.6 M68K Features
 -------------------
 
 ''org.gnu.gdb.m68k.core''
@@ -6794,9 +7605,32 @@ G.4.6 M68K Features
      'fp0' through 'fp7', 'fpcontrol', 'fpstatus' and 'fpiaddr'.
 
 
-File: gdb.info,  Node: Nios II Features,  Next: PowerPC Features,  Prev: M68K Features,  Up: Standard Target Features
+File: gdb.info,  Node: NDS32 Features,  Next: Nios II Features,  Prev: M68K Features,  Up: Standard Target Features
 
-G.4.7 Nios II Features
+G.5.7 NDS32 Features
+--------------------
+
+The 'org.gnu.gdb.nds32.core' feature is required for NDS32 targets.  It
+should contain at least registers 'r0' through 'r10', 'r15', 'fp', 'gp',
+'lp', 'sp', and 'pc'.
+
+   The 'org.gnu.gdb.nds32.fpu' feature is optional.  If present, it
+should contain 64-bit double-precision floating-point registers 'fd0'
+through _fdN_, which should be 'fd3', 'fd7', 'fd15', or 'fd31' based on
+the FPU configuration implemented.
+
+   _Note:_ The first sixteen 64-bit double-precision floating-point
+registers are overlapped with the thirty-two 32-bit single-precision
+floating-point registers.  The 32-bit single-precision registers, if not
+being listed explicitly, will be synthesized from halves of the
+overlapping 64-bit double-precision registers.  Listing 32-bit
+single-precision registers explicitly is deprecated, and the support to
+it could be totally removed some day.
+
+
+File: gdb.info,  Node: Nios II Features,  Next: PowerPC Features,  Prev: NDS32 Features,  Up: Standard Target Features
+
+G.5.8 Nios II Features
 ----------------------
 
 The 'org.gnu.gdb.nios2.cpu' feature is required for Nios II targets.  It
@@ -6807,7 +7641,7 @@ should contain the 32 core registers ('zero', 'at', 'r2' through 'r23',
 
 File: gdb.info,  Node: PowerPC Features,  Next: S/390 and System z Features,  Prev: Nios II Features,  Up: Standard Target Features
 
-G.4.8 PowerPC Features
+G.5.9 PowerPC Features
 ----------------------
 
 The 'org.gnu.gdb.power.core' feature is required for PowerPC targets.
@@ -6835,8 +7669,8 @@ present registers 'ev0' through 'ev31' to the user.
 
 File: gdb.info,  Node: S/390 and System z Features,  Next: TIC6x Features,  Prev: PowerPC Features,  Up: Standard Target Features
 
-G.4.9 S/390 and System z Features
----------------------------------
+G.5.10 S/390 and System z Features
+----------------------------------
 
 The 'org.gnu.gdb.s390.core' feature is required for S/390 and System z
 targets.  It should contain the PSW and the 16 general registers.  In
@@ -6869,1481 +7703,4 @@ GDB with the floating point registers 'f0' through 'f15' to present the
 128-bit wide vector registers 'v0' through 'v15'.  In addition, this
 feature should contain the 128-bit wide vector registers 'v16' through
 'v31'.
-
-
-File: gdb.info,  Node: TIC6x Features,  Prev: S/390 and System z Features,  Up: Standard Target Features
-
-G.4.10 TMS320C6x Features
--------------------------
-
-The 'org.gnu.gdb.tic6x.core' feature is required for TMS320C6x targets.
-It should contain registers 'A0' through 'A15', registers 'B0' through
-'B15', 'CSR' and 'PC'.
-
-   The 'org.gnu.gdb.tic6x.gp' feature is optional.  It should contain
-registers 'A16' through 'A31' and 'B16' through 'B31'.
-
-   The 'org.gnu.gdb.tic6x.c6xp' feature is optional.  It should contain
-registers 'TSR', 'ILC' and 'RILC'.
-
-
-File: gdb.info,  Node: Operating System Information,  Next: Trace File Format,  Prev: Target Descriptions,  Up: Top
-
-Appendix H Operating System Information
-***************************************
-
-* Menu:
-
-* Process list::
-
-Users of GDB often wish to obtain information about the state of the
-operating system running on the target--for example the list of
-processes, or the list of open files.  This section describes the
-mechanism that makes it possible.  This mechanism is similar to the
-target features mechanism (*note Target Descriptions::), but focuses on
-a different aspect of target.
-
-   Operating system information is retrived from the target via the
-remote protocol, using 'qXfer' requests (*note qXfer osdata read::).
-The object name in the request should be 'osdata', and the ANNEX
-identifies the data to be fetched.
-
-
-File: gdb.info,  Node: Process list,  Up: Operating System Information
-
-H.1 Process list
-================
-
-When requesting the process list, the ANNEX field in the 'qXfer' request
-should be 'processes'.  The returned data is an XML document.  The
-formal syntax of this document is defined in 'gdb/features/osdata.dtd'.
-
-   An example document is:
-
-     <?xml version="1.0"?>
-     <!DOCTYPE target SYSTEM "osdata.dtd">
-     <osdata type="processes">
-       <item>
-         <column name="pid">1</column>
-         <column name="user">root</column>
-         <column name="command">/sbin/init</column>
-         <column name="cores">1,2,3</column>
-       </item>
-     </osdata>
-
-   Each item should include a column whose name is 'pid'.  The value of
-that column should identify the process on the target.  The 'user' and
-'command' columns are optional, and will be displayed by GDB.  The
-'cores' column, if present, should contain a comma-separated list of
-cores that this process is running on.  Target may provide additional
-columns, which GDB currently ignores.
-
-
-File: gdb.info,  Node: Trace File Format,  Next: Index Section Format,  Prev: Operating System Information,  Up: Top
-
-Appendix I Trace File Format
-****************************
-
-The trace file comes in three parts: a header, a textual description
-section, and a trace frame section with binary data.
-
-   The header has the form '\x7fTRACE0\n'.  The first byte is '0x7f' so
-as to indicate that the file contains binary data, while the '0' is a
-version number that may have different values in the future.
-
-   The description section consists of multiple lines of ASCII text
-separated by newline characters ('0xa').  The lines may include a
-variety of optional descriptive or context-setting information, such as
-tracepoint definitions or register set size.  GDB will ignore any line
-that it does not recognize.  An empty line marks the end of this
-section.
-
-   The trace frame section consists of a number of consecutive frames.
-Each frame begins with a two-byte tracepoint number, followed by a
-four-byte size giving the amount of data in the frame.  The data in the
-frame consists of a number of blocks, each introduced by a character
-indicating its type (at least register, memory, and trace state
-variable).  The data in this section is raw binary, not a hexadecimal or
-other encoding; its endianness matches the target's endianness.
-
-'R BYTES'
-     Register block.  The number and ordering of bytes matches that of a
-     'g' packet in the remote protocol.  Note that these are the actual
-     bytes, in target order and GDB register order, not a hexadecimal
-     encoding.
-
-'M ADDRESS LENGTH BYTES...'
-     Memory block.  This is a contiguous block of memory, at the 8-byte
-     address ADDRESS, with a 2-byte length LENGTH, followed by LENGTH
-     bytes.
-
-'V NUMBER VALUE'
-     Trace state variable block.  This records the 8-byte signed value
-     VALUE of trace state variable numbered NUMBER.
-
-   Future enhancements of the trace file format may include additional
-types of blocks.
-
-
-File: gdb.info,  Node: Index Section Format,  Next: Man Pages,  Prev: Trace File Format,  Up: Top
-
-Appendix J '.gdb_index' section format
-**************************************
-
-This section documents the index section that is created by 'save
-gdb-index' (*note Index Files::).  The index section is DWARF-specific;
-some knowledge of DWARF is assumed in this description.
-
-   The mapped index file format is designed to be directly 'mmap'able on
-any architecture.  In most cases, a datum is represented using a
-little-endian 32-bit integer value, called an 'offset_type'.  Big endian
-machines must byte-swap the values before using them.  Exceptions to
-this rule are noted.  The data is laid out such that alignment is always
-respected.
-
-   A mapped index consists of several areas, laid out in order.
-
-  1. The file header.  This is a sequence of values, of 'offset_type'
-     unless otherwise noted:
-
-       1. The version number, currently 8.  Versions 1, 2 and 3 are
-          obsolete.  Version 4 uses a different hashing function from
-          versions 5 and 6.  Version 6 includes symbols for inlined
-          functions, whereas versions 4 and 5 do not.  Version 7 adds
-          attributes to the CU indices in the symbol table.  Version 8
-          specifies that symbols from DWARF type units
-          ('DW_TAG_type_unit') refer to the type unit's symbol table and
-          not the compilation unit ('DW_TAG_comp_unit') using the type.
-
-          GDB will only read version 4, 5, or 6 indices by specifying
-          'set use-deprecated-index-sections on'.  GDB has a workaround
-          for potentially broken version 7 indices so it is currently
-          not flagged as deprecated.
-
-       2. The offset, from the start of the file, of the CU list.
-
-       3. The offset, from the start of the file, of the types CU list.
-          Note that this area can be empty, in which case this offset
-          will be equal to the next offset.
-
-       4. The offset, from the start of the file, of the address area.
-
-       5. The offset, from the start of the file, of the symbol table.
-
-       6. The offset, from the start of the file, of the constant pool.
-
-  2. The CU list.  This is a sequence of pairs of 64-bit little-endian
-     values, sorted by the CU offset.  The first element in each pair is
-     the offset of a CU in the '.debug_info' section.  The second
-     element in each pair is the length of that CU. References to a CU
-     elsewhere in the map are done using a CU index, which is just the
-     0-based index into this table.  Note that if there are type CUs,
-     then conceptually CUs and type CUs form a single list for the
-     purposes of CU indices.
-
-  3. The types CU list.  This is a sequence of triplets of 64-bit
-     little-endian values.  In a triplet, the first value is the CU
-     offset, the second value is the type offset in the CU, and the
-     third value is the type signature.  The types CU list is not
-     sorted.
-
-  4. The address area.  The address area consists of a sequence of
-     address entries.  Each address entry has three elements:
-
-       1. The low address.  This is a 64-bit little-endian value.
-
-       2. The high address.  This is a 64-bit little-endian value.  Like
-          'DW_AT_high_pc', the value is one byte beyond the end.
-
-       3. The CU index.  This is an 'offset_type' value.
-
-  5. The symbol table.  This is an open-addressed hash table.  The size
-     of the hash table is always a power of 2.
-
-     Each slot in the hash table consists of a pair of 'offset_type'
-     values.  The first value is the offset of the symbol's name in the
-     constant pool.  The second value is the offset of the CU vector in
-     the constant pool.
-
-     If both values are 0, then this slot in the hash table is empty.
-     This is ok because while 0 is a valid constant pool index, it
-     cannot be a valid index for both a string and a CU vector.
-
-     The hash value for a table entry is computed by applying an
-     iterative hash function to the symbol's name.  Starting with an
-     initial value of 'r = 0', each (unsigned) character 'c' in the
-     string is incorporated into the hash using the formula depending on
-     the index version:
-
-     Version 4
-          The formula is 'r = r * 67 + c - 113'.
-
-     Versions 5 to 7
-          The formula is 'r = r * 67 + tolower (c) - 113'.
-
-     The terminating '\0' is not incorporated into the hash.
-
-     The step size used in the hash table is computed via '((hash * 17)
-     & (size - 1)) | 1', where 'hash' is the hash value, and 'size' is
-     the size of the hash table.  The step size is used to find the next
-     candidate slot when handling a hash collision.
-
-     The names of C++ symbols in the hash table are canonicalized.  We
-     don't currently have a simple description of the canonicalization
-     algorithm; if you intend to create new index sections, you must
-     read the code.
-
-  6. The constant pool.  This is simply a bunch of bytes.  It is
-     organized so that alignment is correct: CU vectors are stored
-     first, followed by strings.
-
-     A CU vector in the constant pool is a sequence of 'offset_type'
-     values.  The first value is the number of CU indices in the vector.
-     Each subsequent value is the index and symbol attributes of a CU in
-     the CU list.  This element in the hash table is used to indicate
-     which CUs define the symbol and how the symbol is used.  See below
-     for the format of each CU index+attributes entry.
-
-     A string in the constant pool is zero-terminated.
-
-   Attributes were added to CU index values in '.gdb_index' version 7.
-If a symbol has multiple uses within a CU then there is one CU
-index+attributes value for each use.
-
-   The format of each CU index+attributes entry is as follows (bit 0 =
-LSB):
-
-Bits 0-23
-     This is the index of the CU in the CU list.
-Bits 24-27
-     These bits are reserved for future purposes and must be zero.
-Bits 28-30
-     The kind of the symbol in the CU.
-
-     0
-          This value is reserved and should not be used.  By reserving
-          zero the full 'offset_type' value is backwards compatible with
-          previous versions of the index.
-     1
-          The symbol is a type.
-     2
-          The symbol is a variable or an enum value.
-     3
-          The symbol is a function.
-     4
-          Any other kind of symbol.
-     5,6,7
-          These values are reserved.
-
-Bit 31
-     This bit is zero if the value is global and one if it is static.
-
-     The determination of whether a symbol is global or static is
-     complicated.  The authorative reference is the file 'dwarf2read.c'
-     in GDB sources.
-
-   This pseudo-code describes the computation of a symbol's kind and
-global/static attributes in the index.
-
-     is_external = get_attribute (die, DW_AT_external);
-     language = get_attribute (cu_die, DW_AT_language);
-     switch (die->tag)
-       {
-       case DW_TAG_typedef:
-       case DW_TAG_base_type:
-       case DW_TAG_subrange_type:
-         kind = TYPE;
-         is_static = 1;
-         break;
-       case DW_TAG_enumerator:
-         kind = VARIABLE;
-         is_static = (language != CPLUS && language != JAVA);
-         break;
-       case DW_TAG_subprogram:
-         kind = FUNCTION;
-         is_static = ! (is_external || language == ADA);
-         break;
-       case DW_TAG_constant:
-         kind = VARIABLE;
-         is_static = ! is_external;
-         break;
-       case DW_TAG_variable:
-         kind = VARIABLE;
-         is_static = ! is_external;
-         break;
-       case DW_TAG_namespace:
-         kind = TYPE;
-         is_static = 0;
-         break;
-       case DW_TAG_class_type:
-       case DW_TAG_interface_type:
-       case DW_TAG_structure_type:
-       case DW_TAG_union_type:
-       case DW_TAG_enumeration_type:
-         kind = TYPE;
-         is_static = (language != CPLUS && language != JAVA);
-         break;
-       default:
-         assert (0);
-       }
-
-
-File: gdb.info,  Node: Man Pages,  Next: Copying,  Prev: Index Section Format,  Up: Top
-
-Appendix K Manual pages
-***********************
-
-* Menu:
-
-* gdb man::                     The GNU Debugger man page
-* gdbserver man::               Remote Server for the GNU Debugger man page
-* gcore man::                   Generate a core file of a running program
-* gdbinit man::                 gdbinit scripts
-
-
-File: gdb.info,  Node: gdb man,  Next: gdbserver man,  Up: Man Pages
-
-gdb man
-=======
-
-gdb ['-help'] ['-nh'] ['-nx'] ['-q'] ['-batch'] ['-cd='DIR] ['-f']
-['-b' BPS] ['-tty='DEV] ['-s' SYMFILE] ['-e' PROG] ['-se' PROG]
-['-c' CORE] ['-p' PROCID] ['-x' CMDS] ['-d' DIR] [PROG|PROG PROCID|PROG
-CORE]
-
-   The purpose of a debugger such as GDB is to allow you to see what is
-going on "inside" another program while it executes - or what another
-program was doing at the moment it crashed.
-
-   GDB can do four main kinds of things (plus other things in support of
-these) to help you catch bugs in the act:
-
-   * Start your program, specifying anything that might affect its
-     behavior.
-
-   * Make your program stop on specified conditions.
-
-   * Examine what has happened, when your program has stopped.
-
-   * Change things in your program, so you can experiment with
-     correcting the effects of one bug and go on to learn about another.
-
-   You can use GDB to debug programs written in C, C++, Fortran and
-Modula-2.
-
-   GDB is invoked with the shell command 'gdb'.  Once started, it reads
-commands from the terminal until you tell it to exit with the GDB
-command 'quit'.  You can get online help from GDB itself by using the
-command 'help'.
-
-   You can run 'gdb' with no arguments or options; but the most usual
-way to start GDB is with one argument or two, specifying an executable
-program as the argument:
-
-     gdb program
-
-   You can also start with both an executable program and a core file
-specified:
-
-     gdb program core
-
-   You can, instead, specify a process ID as a second argument, if you
-want to debug a running process:
-
-     gdb program 1234
-     gdb -p 1234
-
-would attach GDB to process '1234' (unless you also have a file named
-'1234'; GDB does check for a core file first).  With option '-p' you can
-omit the PROGRAM filename.
-
-   Here are some of the most frequently needed GDB commands:
-
-'break [FILE:]FUNCTIOP'
-     Set a breakpoint at FUNCTION (in FILE).
-
-'run [ARGLIST]'
-     Start your program (with ARGLIST, if specified).
-
-'bt'
-     Backtrace: display the program stack.
-
-'print EXPR'
-     Display the value of an expression.
-
-'c'
-     Continue running your program (after stopping, e.g.  at a
-     breakpoint).
-
-'next'
-     Execute next program line (after stopping); step _over_ any
-     function calls in the line.
-
-'edit [FILE:]FUNCTION'
-     look at the program line where it is presently stopped.
-
-'list [FILE:]FUNCTION'
-     type the text of the program in the vicinity of where it is
-     presently stopped.
-
-'step'
-     Execute next program line (after stopping); step _into_ any
-     function calls in the line.
-
-'help [NAME]'
-     Show information about GDB command NAME, or general information
-     about using GDB.
-
-'quit'
-     Exit from GDB.
-
-   Any arguments other than options specify an executable file and core
-file (or process ID); that is, the first argument encountered with no
-associated option flag is equivalent to a '-se' option, and the second,
-if any, is equivalent to a '-c' option if it's the name of a file.  Many
-options have both long and short forms; both are shown here.  The long
-forms are also recognized if you truncate them, so long as enough of the
-option is present to be unambiguous.  (If you prefer, you can flag
-option arguments with '+' rather than '-', though we illustrate the more
-usual convention.)
-
-   All the options and command line arguments you give are processed in
-sequential order.  The order makes a difference when the '-x' option is
-used.
-
-'-help'
-'-h'
-     List all options, with brief explanations.
-
-'-symbols=FILE'
-'-s FILE'
-     Read symbol table from file FILE.
-
-'-write'
-     Enable writing into executable and core files.
-
-'-exec=FILE'
-'-e FILE'
-     Use file FILE as the executable file to execute when appropriate,
-     and for examining pure data in conjunction with a core dump.
-
-'-se=FILE'
-     Read symbol table from file FILE and use it as the executable file.
-
-'-core=FILE'
-'-c FILE'
-     Use file FILE as a core dump to examine.
-
-'-command=FILE'
-'-x FILE'
-     Execute GDB commands from file FILE.
-
-'-ex COMMAND'
-     Execute given GDB COMMAND.
-
-'-directory=DIRECTORY'
-'-d DIRECTORY'
-     Add DIRECTORY to the path to search for source files.
-
-'-nh'
-     Do not execute commands from '~/.gdbinit'.
-
-'-nx'
-'-n'
-     Do not execute commands from any '.gdbinit' initialization files.
-
-'-quiet'
-'-q'
-     "Quiet".  Do not print the introductory and copyright messages.
-     These messages are also suppressed in batch mode.
-
-'-batch'
-     Run in batch mode.  Exit with status '0' after processing all the
-     command files specified with '-x' (and '.gdbinit', if not
-     inhibited).  Exit with nonzero status if an error occurs in
-     executing the GDB commands in the command files.
-
-     Batch mode may be useful for running GDB as a filter, for example
-     to download and run a program on another computer; in order to make
-     this more useful, the message
-
-          Program exited normally.
-
-     (which is ordinarily issued whenever a program running under GDB
-     control terminates) is not issued when running in batch mode.
-
-'-cd=DIRECTORY'
-     Run GDB using DIRECTORY as its working directory, instead of the
-     current directory.
-
-'-fullname'
-'-f'
-     Emacs sets this option when it runs GDB as a subprocess.  It tells
-     GDB to output the full file name and line number in a standard,
-     recognizable fashion each time a stack frame is displayed (which
-     includes each time the program stops).  This recognizable format
-     looks like two '\032' characters, followed by the file name, line
-     number and character position separated by colons, and a newline.
-     The Emacs-to-GDB interface program uses the two '\032' characters
-     as a signal to display the source code for the frame.
-
-'-b BPS'
-     Set the line speed (baud rate or bits per second) of any serial
-     interface used by GDB for remote debugging.
-
-'-tty=DEVICE'
-     Run using DEVICE for your program's standard input and output.
-
-
-File: gdb.info,  Node: gdbserver man,  Next: gcore man,  Prev: gdb man,  Up: Man Pages
-
-gdbserver man
-=============
-
-gdbserver COMM PROG [ARGS...]
-
-gdbserver -attach COMM PID
-
-gdbserver -multi COMM
-
-   'gdbserver' is a program that allows you to run GDB on a different
-machine than the one which is running the program being debugged.
-
-Usage (server (target) side)
-----------------------------
-
-First, you need to have a copy of the program you want to debug put onto
-the target system.  The program can be stripped to save space if needed,
-as 'gdbserver' doesn't care about symbols.  All symbol handling is taken
-care of by the GDB running on the host system.
-
-   To use the server, you log on to the target system, and run the
-'gdbserver' program.  You must tell it (a) how to communicate with GDB,
-(b) the name of your program, and (c) its arguments.  The general syntax
-is:
-
-     target> gdbserver COMM PROGRAM [ARGS ...]
-
-   For example, using a serial port, you might say:
-
-     target> gdbserver /dev/com1 emacs foo.txt
-
-   This tells 'gdbserver' to debug emacs with an argument of foo.txt,
-and to communicate with GDB via '/dev/com1'.  'gdbserver' now waits
-patiently for the host GDB to communicate with it.
-
-   To use a TCP connection, you could say:
-
-     target> gdbserver host:2345 emacs foo.txt
-
-   This says pretty much the same thing as the last example, except that
-we are going to communicate with the 'host' GDB via TCP. The 'host:2345'
-argument means that we are expecting to see a TCP connection from 'host'
-to local TCP port 2345.  (Currently, the 'host' part is ignored.)  You
-can choose any number you want for the port number as long as it does
-not conflict with any existing TCP ports on the target system.  This
-same port number must be used in the host GDBs 'target remote' command,
-which will be described shortly.  Note that if you chose a port number
-that conflicts with another service, 'gdbserver' will print an error
-message and exit.
-
-   'gdbserver' can also attach to running programs.  This is
-accomplished via the '--attach' argument.  The syntax is:
-
-     target> gdbserver --attach COMM PID
-
-   PID is the process ID of a currently running process.  It isn't
-necessary to point 'gdbserver' at a binary for the running process.
-
-   To start 'gdbserver' without supplying an initial command to run or
-process ID to attach, use the '--multi' command line option.  In such
-case you should connect using 'target extended-remote' to start the
-program you want to debug.
-
-     target> gdbserver --multi COMM
-
-Usage (host side)
------------------
-
-You need an unstripped copy of the target program on your host system,
-since GDB needs to examine it's symbol tables and such.  Start up GDB as
-you normally would, with the target program as the first argument.  (You
-may need to use the '--baud' option if the serial line is running at
-anything except 9600 baud.)  That is 'gdb TARGET-PROG', or 'gdb --baud
-BAUD TARGET-PROG'.  After that, the only new command you need to know
-about is 'target remote' (or 'target extended-remote').  Its argument is
-either a device name (usually a serial device, like '/dev/ttyb'), or a
-'HOST:PORT' descriptor.  For example:
-
-     (gdb) target remote /dev/ttyb
-
-communicates with the server via serial line '/dev/ttyb', and:
-
-     (gdb) target remote the-target:2345
-
-communicates via a TCP connection to port 2345 on host 'the-target',
-where you previously started up 'gdbserver' with the same port number.
-Note that for TCP connections, you must start up 'gdbserver' prior to
-using the 'target remote' command, otherwise you may get an error that
-looks something like 'Connection refused'.
-
-   'gdbserver' can also debug multiple inferiors at once, described in
-*note Inferiors and Programs::.  In such case use the 'extended-remote'
-GDB command variant:
-
-     (gdb) target extended-remote the-target:2345
-
-   The 'gdbserver' option '--multi' may or may not be used in such case.
-
-   There are three different modes for invoking 'gdbserver':
-
-   * Debug a specific program specified by its program name:
-
-          gdbserver COMM PROG [ARGS...]
-
-     The COMM parameter specifies how should the server communicate with
-     GDB; it is either a device name (to use a serial line), a TCP port
-     number (':1234'), or '-' or 'stdio' to use stdin/stdout of
-     'gdbserver'.  Specify the name of the program to debug in PROG.
-     Any remaining arguments will be passed to the program verbatim.
-     When the program exits, GDB will close the connection, and
-     'gdbserver' will exit.
-
-   * Debug a specific program by specifying the process ID of a running
-     program:
-
-          gdbserver --attach COMM PID
-
-     The COMM parameter is as described above.  Supply the process ID of
-     a running program in PID; GDB will do everything else.  Like with
-     the previous mode, when the process PID exits, GDB will close the
-     connection, and 'gdbserver' will exit.
-
-   * Multi-process mode - debug more than one program/process:
-
-          gdbserver --multi COMM
-
-     In this mode, GDB can instruct 'gdbserver' which command(s) to run.
-     Unlike the other 2 modes, GDB will not close the connection when a
-     process being debugged exits, so you can debug several processes in
-     the same session.
-
-   In each of the modes you may specify these options:
-
-'--help'
-     List all options, with brief explanations.
-
-'--version'
-     This option causes 'gdbserver' to print its version number and
-     exit.
-
-'--attach'
-     'gdbserver' will attach to a running program.  The syntax is:
-
-          target> gdbserver --attach COMM PID
-
-     PID is the process ID of a currently running process.  It isn't
-     necessary to point 'gdbserver' at a binary for the running process.
-
-'--multi'
-     To start 'gdbserver' without supplying an initial command to run or
-     process ID to attach, use this command line option.  Then you can
-     connect using 'target extended-remote' and start the program you
-     want to debug.  The syntax is:
-
-          target> gdbserver --multi COMM
-
-'--debug'
-     Instruct 'gdbserver' to display extra status information about the
-     debugging process.  This option is intended for 'gdbserver'
-     development and for bug reports to the developers.
-
-'--remote-debug'
-     Instruct 'gdbserver' to display remote protocol debug output.  This
-     option is intended for 'gdbserver' development and for bug reports
-     to the developers.
-
-'--debug-format=option1[,option2,...]'
-     Instruct 'gdbserver' to include extra information in each line of
-     debugging output.  *Note Other Command-Line Arguments for
-     gdbserver::.
-
-'--wrapper'
-     Specify a wrapper to launch programs for debugging.  The option
-     should be followed by the name of the wrapper, then any
-     command-line arguments to pass to the wrapper, then '--' indicating
-     the end of the wrapper arguments.
-
-'--once'
-     By default, 'gdbserver' keeps the listening TCP port open, so that
-     additional connections are possible.  However, if you start
-     'gdbserver' with the '--once' option, it will stop listening for
-     any further connection attempts after connecting to the first GDB
-     session.
-
-
-File: gdb.info,  Node: gcore man,  Next: gdbinit man,  Prev: gdbserver man,  Up: Man Pages
-
-gcore
-=====
-
-gcore [-o FILENAME] PID
-
-   Generate a core dump of a running program with process ID PID.
-Produced file is equivalent to a kernel produced core file as if the
-process crashed (and if 'ulimit -c' were used to set up an appropriate
-core dump limit).  Unlike after a crash, after 'gcore' the program
-remains running without any change.
-
-'-o FILENAME'
-     The optional argument FILENAME specifies the file name where to put
-     the core dump.  If not specified, the file name defaults to
-     'core.PID', where PID is the running program process ID.
-
-
-File: gdb.info,  Node: gdbinit man,  Prev: gcore man,  Up: Man Pages
-
-gdbinit
-=======
-
-
-~/.gdbinit
-
-./.gdbinit
-
-   These files contain GDB commands to automatically execute during GDB
-startup.  The lines of contents are canned sequences of commands,
-described in *note Sequences::.
-
-   Please read more in *note Startup::.
-
-'(not enabled with --with-system-gdbinit during compilation)'
-     System-wide initialization file.  It is executed unless user
-     specified GDB option '-nx' or '-n'.  See more in *note System-wide
-     configuration::.
-
-'~/.gdbinit'
-     User initialization file.  It is executed unless user specified GDB
-     options '-nx', '-n' or '-nh'.
-
-'./.gdbinit'
-     Initialization file for current directory.  It may need to be
-     enabled with GDB security command 'set auto-load local-gdbinit'.
-     See more in *note Init File in the Current Directory::.
-
-
-File: gdb.info,  Node: Copying,  Next: GNU Free Documentation License,  Prev: Man Pages,  Up: Top
-
-Appendix L GNU GENERAL PUBLIC LICENSE
-*************************************
-
-                        Version 3, 29 June 2007
-
-     Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
-
-     Everyone is permitted to copy and distribute verbatim copies of this
-     license document, but changing it is not allowed.
-
-Preamble
-========
-
-The GNU General Public License is a free, copyleft license for software
-and other kinds of works.
-
-   The licenses for most software and other practical works are designed
-to take away your freedom to share and change the works.  By contrast,
-the GNU General Public License is intended to guarantee your freedom to
-share and change all versions of a program--to make sure it remains free
-software for all its users.  We, the Free Software Foundation, use the
-GNU General Public License for most of our software; it applies also to
-any other work released this way by its authors.  You can apply it to
-your programs, too.
-
-   When we speak of free software, we are referring to freedom, not
-price.  Our General Public Licenses are designed to make sure that you
-have the freedom to distribute copies of free software (and charge for
-them if you wish), that you receive source code or can get it if you
-want it, that you can change the software or use pieces of it in new
-free programs, and that you know you can do these things.
-
-   To protect your rights, we need to prevent others from denying you
-these rights or asking you to surrender the rights.  Therefore, you have
-certain responsibilities if you distribute copies of the software, or if
-you modify it: responsibilities to respect the freedom of others.
-
-   For example, if you distribute copies of such a program, whether
-gratis or for a fee, you must pass on to the recipients the same
-freedoms that you received.  You must make sure that they, too, receive
-or can get the source code.  And you must show them these terms so they
-know their rights.
-
-   Developers that use the GNU GPL protect your rights with two steps:
-(1) assert copyright on the software, and (2) offer you this License
-giving you legal permission to copy, distribute and/or modify it.
-
-   For the developers' and authors' protection, the GPL clearly explains
-that there is no warranty for this free software.  For both users' and
-authors' sake, the GPL requires that modified versions be marked as
-changed, so that their problems will not be attributed erroneously to
-authors of previous versions.
-
-   Some devices are designed to deny users access to install or run
-modified versions of the software inside them, although the manufacturer
-can do so.  This is fundamentally incompatible with the aim of
-protecting users' freedom to change the software.  The systematic
-pattern of such abuse occurs in the area of products for individuals to
-use, which is precisely where it is most unacceptable.  Therefore, we
-have designed this version of the GPL to prohibit the practice for those
-products.  If such problems arise substantially in other domains, we
-stand ready to extend this provision to those domains in future versions
-of the GPL, as needed to protect the freedom of users.
-
-   Finally, every program is threatened constantly by software patents.
-States should not allow patents to restrict development and use of
-software on general-purpose computers, but in those that do, we wish to
-avoid the special danger that patents applied to a free program could
-make it effectively proprietary.  To prevent this, the GPL assures that
-patents cannot be used to render the program non-free.
-
-   The precise terms and conditions for copying, distribution and
-modification follow.
-
-TERMS AND CONDITIONS
-====================
-
-  0. Definitions.
-
-     "This License" refers to version 3 of the GNU General Public
-     License.
-
-     "Copyright" also means copyright-like laws that apply to other
-     kinds of works, such as semiconductor masks.
-
-     "The Program" refers to any copyrightable work licensed under this
-     License.  Each licensee is addressed as "you".  "Licensees" and
-     "recipients" may be individuals or organizations.
-
-     To "modify" a work means to copy from or adapt all or part of the
-     work in a fashion requiring copyright permission, other than the
-     making of an exact copy.  The resulting work is called a "modified
-     version" of the earlier work or a work "based on" the earlier work.
-
-     A "covered work" means either the unmodified Program or a work
-     based on the Program.
-
-     To "propagate" a work means to do anything with it that, without
-     permission, would make you directly or secondarily liable for
-     infringement under applicable copyright law, except executing it on
-     a computer or modifying a private copy.  Propagation includes
-     copying, distribution (with or without modification), making
-     available to the public, and in some countries other activities as
-     well.
-
-     To "convey" a work means any kind of propagation that enables other
-     parties to make or receive copies.  Mere interaction with a user
-     through a computer network, with no transfer of a copy, is not
-     conveying.
-
-     An interactive user interface displays "Appropriate Legal Notices"
-     to the extent that it includes a convenient and prominently visible
-     feature that (1) displays an appropriate copyright notice, and (2)
-     tells the user that there is no warranty for the work (except to
-     the extent that warranties are provided), that licensees may convey
-     the work under this License, and how to view a copy of this
-     License.  If the interface presents a list of user commands or
-     options, such as a menu, a prominent item in the list meets this
-     criterion.
-
-  1. Source Code.
-
-     The "source code" for a work means the preferred form of the work
-     for making modifications to it.  "Object code" means any non-source
-     form of a work.
-
-     A "Standard Interface" means an interface that either is an
-     official standard defined by a recognized standards body, or, in
-     the case of interfaces specified for a particular programming
-     language, one that is widely used among developers working in that
-     language.
-
-     The "System Libraries" of an executable work include anything,
-     other than the work as a whole, that (a) is included in the normal
-     form of packaging a Major Component, but which is not part of that
-     Major Component, and (b) serves only to enable use of the work with
-     that Major Component, or to implement a Standard Interface for
-     which an implementation is available to the public in source code
-     form.  A "Major Component", in this context, means a major
-     essential component (kernel, window system, and so on) of the
-     specific operating system (if any) on which the executable work
-     runs, or a compiler used to produce the work, or an object code
-     interpreter used to run it.
-
-     The "Corresponding Source" for a work in object code form means all
-     the source code needed to generate, install, and (for an executable
-     work) run the object code and to modify the work, including scripts
-     to control those activities.  However, it does not include the
-     work's System Libraries, or general-purpose tools or generally
-     available free programs which are used unmodified in performing
-     those activities but which are not part of the work.  For example,
-     Corresponding Source includes interface definition files associated
-     with source files for the work, and the source code for shared
-     libraries and dynamically linked subprograms that the work is
-     specifically designed to require, such as by intimate data
-     communication or control flow between those subprograms and other
-     parts of the work.
-
-     The Corresponding Source need not include anything that users can
-     regenerate automatically from other parts of the Corresponding
-     Source.
-
-     The Corresponding Source for a work in source code form is that
-     same work.
-
-  2. Basic Permissions.
-
-     All rights granted under this License are granted for the term of
-     copyright on the Program, and are irrevocable provided the stated
-     conditions are met.  This License explicitly affirms your unlimited
-     permission to run the unmodified Program.  The output from running
-     a covered work is covered by this License only if the output, given
-     its content, constitutes a covered work.  This License acknowledges
-     your rights of fair use or other equivalent, as provided by
-     copyright law.
-
-     You may make, run and propagate covered works that you do not
-     convey, without conditions so long as your license otherwise
-     remains in force.  You may convey covered works to others for the
-     sole purpose of having them make modifications exclusively for you,
-     or provide you with facilities for running those works, provided
-     that you comply with the terms of this License in conveying all
-     material for which you do not control copyright.  Those thus making
-     or running the covered works for you must do so exclusively on your
-     behalf, under your direction and control, on terms that prohibit
-     them from making any copies of your copyrighted material outside
-     their relationship with you.
-
-     Conveying under any other circumstances is permitted solely under
-     the conditions stated below.  Sublicensing is not allowed; section
-     10 makes it unnecessary.
-
-  3. Protecting Users' Legal Rights From Anti-Circumvention Law.
-
-     No covered work shall be deemed part of an effective technological
-     measure under any applicable law fulfilling obligations under
-     article 11 of the WIPO copyright treaty adopted on 20 December
-     1996, or similar laws prohibiting or restricting circumvention of
-     such measures.
-
-     When you convey a covered work, you waive any legal power to forbid
-     circumvention of technological measures to the extent such
-     circumvention is effected by exercising rights under this License
-     with respect to the covered work, and you disclaim any intention to
-     limit operation or modification of the work as a means of
-     enforcing, against the work's users, your or third parties' legal
-     rights to forbid circumvention of technological measures.
-
-  4. Conveying Verbatim Copies.
-
-     You may convey verbatim copies of the Program's source code as you
-     receive it, in any medium, provided that you conspicuously and
-     appropriately publish on each copy an appropriate copyright notice;
-     keep intact all notices stating that this License and any
-     non-permissive terms added in accord with section 7 apply to the
-     code; keep intact all notices of the absence of any warranty; and
-     give all recipients a copy of this License along with the Program.
-
-     You may charge any price or no price for each copy that you convey,
-     and you may offer support or warranty protection for a fee.
-
-  5. Conveying Modified Source Versions.
-
-     You may convey a work based on the Program, or the modifications to
-     produce it from the Program, in the form of source code under the
-     terms of section 4, provided that you also meet all of these
-     conditions:
-
-       a. The work must carry prominent notices stating that you
-          modified it, and giving a relevant date.
-
-       b. The work must carry prominent notices stating that it is
-          released under this License and any conditions added under
-          section 7.  This requirement modifies the requirement in
-          section 4 to "keep intact all notices".
-
-       c. You must license the entire work, as a whole, under this
-          License to anyone who comes into possession of a copy.  This
-          License will therefore apply, along with any applicable
-          section 7 additional terms, to the whole of the work, and all
-          its parts, regardless of how they are packaged.  This License
-          gives no permission to license the work in any other way, but
-          it does not invalidate such permission if you have separately
-          received it.
-
-       d. If the work has interactive user interfaces, each must display
-          Appropriate Legal Notices; however, if the Program has
-          interactive interfaces that do not display Appropriate Legal
-          Notices, your work need not make them do so.
-
-     A compilation of a covered work with other separate and independent
-     works, which are not by their nature extensions of the covered
-     work, and which are not combined with it such as to form a larger
-     program, in or on a volume of a storage or distribution medium, is
-     called an "aggregate" if the compilation and its resulting
-     copyright are not used to limit the access or legal rights of the
-     compilation's users beyond what the individual works permit.
-     Inclusion of a covered work in an aggregate does not cause this
-     License to apply to the other parts of the aggregate.
-
-  6. Conveying Non-Source Forms.
-
-     You may convey a covered work in object code form under the terms
-     of sections 4 and 5, provided that you also convey the
-     machine-readable Corresponding Source under the terms of this
-     License, in one of these ways:
-
-       a. Convey the object code in, or embodied in, a physical product
-          (including a physical distribution medium), accompanied by the
-          Corresponding Source fixed on a durable physical medium
-          customarily used for software interchange.
-
-       b. Convey the object code in, or embodied in, a physical product
-          (including a physical distribution medium), accompanied by a
-          written offer, valid for at least three years and valid for as
-          long as you offer spare parts or customer support for that
-          product model, to give anyone who possesses the object code
-          either (1) a copy of the Corresponding Source for all the
-          software in the product that is covered by this License, on a
-          durable physical medium customarily used for software
-          interchange, for a price no more than your reasonable cost of
-          physically performing this conveying of source, or (2) access
-          to copy the Corresponding Source from a network server at no
-          charge.
-
-       c. Convey individual copies of the object code with a copy of the
-          written offer to provide the Corresponding Source.  This
-          alternative is allowed only occasionally and noncommercially,
-          and only if you received the object code with such an offer,
-          in accord with subsection 6b.
-
-       d. Convey the object code by offering access from a designated
-          place (gratis or for a charge), and offer equivalent access to
-          the Corresponding Source in the same way through the same
-          place at no further charge.  You need not require recipients
-          to copy the Corresponding Source along with the object code.
-          If the place to copy the object code is a network server, the
-          Corresponding Source may be on a different server (operated by
-          you or a third party) that supports equivalent copying
-          facilities, provided you maintain clear directions next to the
-          object code saying where to find the Corresponding Source.
-          Regardless of what server hosts the Corresponding Source, you
-          remain obligated to ensure that it is available for as long as
-          needed to satisfy these requirements.
-
-       e. Convey the object code using peer-to-peer transmission,
-          provided you inform other peers where the object code and
-          Corresponding Source of the work are being offered to the
-          general public at no charge under subsection 6d.
-
-     A separable portion of the object code, whose source code is
-     excluded from the Corresponding Source as a System Library, need
-     not be included in conveying the object code work.
-
-     A "User Product" is either (1) a "consumer product", which means
-     any tangible personal property which is normally used for personal,
-     family, or household purposes, or (2) anything designed or sold for
-     incorporation into a dwelling.  In determining whether a product is
-     a consumer product, doubtful cases shall be resolved in favor of
-     coverage.  For a particular product received by a particular user,
-     "normally used" refers to a typical or common use of that class of
-     product, regardless of the status of the particular user or of the
-     way in which the particular user actually uses, or expects or is
-     expected to use, the product.  A product is a consumer product
-     regardless of whether the product has substantial commercial,
-     industrial or non-consumer uses, unless such uses represent the
-     only significant mode of use of the product.
-
-     "Installation Information" for a User Product means any methods,
-     procedures, authorization keys, or other information required to
-     install and execute modified versions of a covered work in that
-     User Product from a modified version of its Corresponding Source.
-     The information must suffice to ensure that the continued
-     functioning of the modified object code is in no case prevented or
-     interfered with solely because modification has been made.
-
-     If you convey an object code work under this section in, or with,
-     or specifically for use in, a User Product, and the conveying
-     occurs as part of a transaction in which the right of possession
-     and use of the User Product is transferred to the recipient in
-     perpetuity or for a fixed term (regardless of how the transaction
-     is characterized), the Corresponding Source conveyed under this
-     section must be accompanied by the Installation Information.  But
-     this requirement does not apply if neither you nor any third party
-     retains the ability to install modified object code on the User
-     Product (for example, the work has been installed in ROM).
-
-     The requirement to provide Installation Information does not
-     include a requirement to continue to provide support service,
-     warranty, or updates for a work that has been modified or installed
-     by the recipient, or for the User Product in which it has been
-     modified or installed.  Access to a network may be denied when the
-     modification itself materially and adversely affects the operation
-     of the network or violates the rules and protocols for
-     communication across the network.
-
-     Corresponding Source conveyed, and Installation Information
-     provided, in accord with this section must be in a format that is
-     publicly documented (and with an implementation available to the
-     public in source code form), and must require no special password
-     or key for unpacking, reading or copying.
-
-  7. Additional Terms.
-
-     "Additional permissions" are terms that supplement the terms of
-     this License by making exceptions from one or more of its
-     conditions.  Additional permissions that are applicable to the
-     entire Program shall be treated as though they were included in
-     this License, to the extent that they are valid under applicable
-     law.  If additional permissions apply only to part of the Program,
-     that part may be used separately under those permissions, but the
-     entire Program remains governed by this License without regard to
-     the additional permissions.
-
-     When you convey a copy of a covered work, you may at your option
-     remove any additional permissions from that copy, or from any part
-     of it.  (Additional permissions may be written to require their own
-     removal in certain cases when you modify the work.)  You may place
-     additional permissions on material, added by you to a covered work,
-     for which you have or can give appropriate copyright permission.
-
-     Notwithstanding any other provision of this License, for material
-     you add to a covered work, you may (if authorized by the copyright
-     holders of that material) supplement the terms of this License with
-     terms:
-
-       a. Disclaiming warranty or limiting liability differently from
-          the terms of sections 15 and 16 of this License; or
-
-       b. Requiring preservation of specified reasonable legal notices
-          or author attributions in that material or in the Appropriate
-          Legal Notices displayed by works containing it; or
-
-       c. Prohibiting misrepresentation of the origin of that material,
-          or requiring that modified versions of such material be marked
-          in reasonable ways as different from the original version; or
-
-       d. Limiting the use for publicity purposes of names of licensors
-          or authors of the material; or
-
-       e. Declining to grant rights under trademark law for use of some
-          trade names, trademarks, or service marks; or
-
-       f. Requiring indemnification of licensors and authors of that
-          material by anyone who conveys the material (or modified
-          versions of it) with contractual assumptions of liability to
-          the recipient, for any liability that these contractual
-          assumptions directly impose on those licensors and authors.
-
-     All other non-permissive additional terms are considered "further
-     restrictions" within the meaning of section 10.  If the Program as
-     you received it, or any part of it, contains a notice stating that
-     it is governed by this License along with a term that is a further
-     restriction, you may remove that term.  If a license document
-     contains a further restriction but permits relicensing or conveying
-     under this License, you may add to a covered work material governed
-     by the terms of that license document, provided that the further
-     restriction does not survive such relicensing or conveying.
-
-     If you add terms to a covered work in accord with this section, you
-     must place, in the relevant source files, a statement of the
-     additional terms that apply to those files, or a notice indicating
-     where to find the applicable terms.
-
-     Additional terms, permissive or non-permissive, may be stated in
-     the form of a separately written license, or stated as exceptions;
-     the above requirements apply either way.
-
-  8. Termination.
-
-     You may not propagate or modify a covered work except as expressly
-     provided under this License.  Any attempt otherwise to propagate or
-     modify it is void, and will automatically terminate your rights
-     under this License (including any patent licenses granted under the
-     third paragraph of section 11).
-
-     However, if you cease all violation of this License, then your
-     license from a particular copyright holder is reinstated (a)
-     provisionally, unless and until the copyright holder explicitly and
-     finally terminates your license, and (b) permanently, if the
-     copyright holder fails to notify you of the violation by some
-     reasonable means prior to 60 days after the cessation.
-
-     Moreover, your license from a particular copyright holder is
-     reinstated permanently if the copyright holder notifies you of the
-     violation by some reasonable means, this is the first time you have
-     received notice of violation of this License (for any work) from
-     that copyright holder, and you cure the violation prior to 30 days
-     after your receipt of the notice.
-
-     Termination of your rights under this section does not terminate
-     the licenses of parties who have received copies or rights from you
-     under this License.  If your rights have been terminated and not
-     permanently reinstated, you do not qualify to receive new licenses
-     for the same material under section 10.
-
-  9. Acceptance Not Required for Having Copies.
-
-     You are not required to accept this License in order to receive or
-     run a copy of the Program.  Ancillary propagation of a covered work
-     occurring solely as a consequence of using peer-to-peer
-     transmission to receive a copy likewise does not require
-     acceptance.  However, nothing other than this License grants you
-     permission to propagate or modify any covered work.  These actions
-     infringe copyright if you do not accept this License.  Therefore,
-     by modifying or propagating a covered work, you indicate your
-     acceptance of this License to do so.
-
-  10. Automatic Licensing of Downstream Recipients.
-
-     Each time you convey a covered work, the recipient automatically
-     receives a license from the original licensors, to run, modify and
-     propagate that work, subject to this License.  You are not
-     responsible for enforcing compliance by third parties with this
-     License.
-
-     An "entity transaction" is a transaction transferring control of an
-     organization, or substantially all assets of one, or subdividing an
-     organization, or merging organizations.  If propagation of a
-     covered work results from an entity transaction, each party to that
-     transaction who receives a copy of the work also receives whatever
-     licenses to the work the party's predecessor in interest had or
-     could give under the previous paragraph, plus a right to possession
-     of the Corresponding Source of the work from the predecessor in
-     interest, if the predecessor has it or can get it with reasonable
-     efforts.
-
-     You may not impose any further restrictions on the exercise of the
-     rights granted or affirmed under this License.  For example, you
-     may not impose a license fee, royalty, or other charge for exercise
-     of rights granted under this License, and you may not initiate
-     litigation (including a cross-claim or counterclaim in a lawsuit)
-     alleging that any patent claim is infringed by making, using,
-     selling, offering for sale, or importing the Program or any portion
-     of it.
-
-  11. Patents.
-
-     A "contributor" is a copyright holder who authorizes use under this
-     License of the Program or a work on which the Program is based.
-     The work thus licensed is called the contributor's "contributor
-     version".
-
-     A contributor's "essential patent claims" are all patent claims
-     owned or controlled by the contributor, whether already acquired or
-     hereafter acquired, that would be infringed by some manner,
-     permitted by this License, of making, using, or selling its
-     contributor version, but do not include claims that would be
-     infringed only as a consequence of further modification of the
-     contributor version.  For purposes of this definition, "control"
-     includes the right to grant patent sublicenses in a manner
-     consistent with the requirements of this License.
-
-     Each contributor grants you a non-exclusive, worldwide,
-     royalty-free patent license under the contributor's essential
-     patent claims, to make, use, sell, offer for sale, import and
-     otherwise run, modify and propagate the contents of its contributor
-     version.
-
-     In the following three paragraphs, a "patent license" is any
-     express agreement or commitment, however denominated, not to
-     enforce a patent (such as an express permission to practice a
-     patent or covenant not to sue for patent infringement).  To "grant"
-     such a patent license to a party means to make such an agreement or
-     commitment not to enforce a patent against the party.
-
-     If you convey a covered work, knowingly relying on a patent
-     license, and the Corresponding Source of the work is not available
-     for anyone to copy, free of charge and under the terms of this
-     License, through a publicly available network server or other
-     readily accessible means, then you must either (1) cause the
-     Corresponding Source to be so available, or (2) arrange to deprive
-     yourself of the benefit of the patent license for this particular
-     work, or (3) arrange, in a manner consistent with the requirements
-     of this License, to extend the patent license to downstream
-     recipients.  "Knowingly relying" means you have actual knowledge
-     that, but for the patent license, your conveying the covered work
-     in a country, or your recipient's use of the covered work in a
-     country, would infringe one or more identifiable patents in that
-     country that you have reason to believe are valid.
-
-     If, pursuant to or in connection with a single transaction or
-     arrangement, you convey, or propagate by procuring conveyance of, a
-     covered work, and grant a patent license to some of the parties
-     receiving the covered work authorizing them to use, propagate,
-     modify or convey a specific copy of the covered work, then the
-     patent license you grant is automatically extended to all
-     recipients of the covered work and works based on it.
-
-     A patent license is "discriminatory" if it does not include within
-     the scope of its coverage, prohibits the exercise of, or is
-     conditioned on the non-exercise of one or more of the rights that
-     are specifically granted under this License.  You may not convey a
-     covered work if you are a party to an arrangement with a third
-     party that is in the business of distributing software, under which
-     you make payment to the third party based on the extent of your
-     activity of conveying the work, and under which the third party
-     grants, to any of the parties who would receive the covered work
-     from you, a discriminatory patent license (a) in connection with
-     copies of the covered work conveyed by you (or copies made from
-     those copies), or (b) primarily for and in connection with specific
-     products or compilations that contain the covered work, unless you
-     entered into that arrangement, or that patent license was granted,
-     prior to 28 March 2007.
-
-     Nothing in this License shall be construed as excluding or limiting
-     any implied license or other defenses to infringement that may
-     otherwise be available to you under applicable patent law.
-
-  12. No Surrender of Others' Freedom.
-
-     If conditions are imposed on you (whether by court order, agreement
-     or otherwise) that contradict the conditions of this License, they
-     do not excuse you from the conditions of this License.  If you
-     cannot convey a covered work so as to satisfy simultaneously your
-     obligations under this License and any other pertinent obligations,
-     then as a consequence you may not convey it at all.  For example,
-     if you agree to terms that obligate you to collect a royalty for
-     further conveying from those to whom you convey the Program, the
-     only way you could satisfy both those terms and this License would
-     be to refrain entirely from conveying the Program.
-
-  13. Use with the GNU Affero General Public License.
-
-     Notwithstanding any other provision of this License, you have
-     permission to link or combine any covered work with a work licensed
-     under version 3 of the GNU Affero General Public License into a
-     single combined work, and to convey the resulting work.  The terms
-     of this License will continue to apply to the part which is the
-     covered work, but the special requirements of the GNU Affero
-     General Public License, section 13, concerning interaction through
-     a network will apply to the combination as such.
-
-  14. Revised Versions of this License.
-
-     The Free Software Foundation may publish revised and/or new
-     versions of the GNU General Public License from time to time.  Such
-     new versions will be similar in spirit to the present version, but
-     may differ in detail to address new problems or concerns.
-
-     Each version is given a distinguishing version number.  If the
-     Program specifies that a certain numbered version of the GNU
-     General Public License "or any later version" applies to it, you
-     have the option of following the terms and conditions either of
-     that numbered version or of any later version published by the Free
-     Software Foundation.  If the Program does not specify a version
-     number of the GNU General Public License, you may choose any
-     version ever published by the Free Software Foundation.
-
-     If the Program specifies that a proxy can decide which future
-     versions of the GNU General Public License can be used, that
-     proxy's public statement of acceptance of a version permanently
-     authorizes you to choose that version for the Program.
-
-     Later license versions may give you additional or different
-     permissions.  However, no additional obligations are imposed on any
-     author or copyright holder as a result of your choosing to follow a
-     later version.
-
-  15. Disclaimer of Warranty.
-
-     THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
-     APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE
-     COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS"
-     WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED,
-     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE
-     RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.
-     SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
-     NECESSARY SERVICING, REPAIR OR CORRECTION.
-
-  16. Limitation of Liability.
-
-     IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN
-     WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES
-     AND/OR CONVEYS THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR
-     DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR
-     CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
-     THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA
-     BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
-     PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER
-     PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF
-     THE POSSIBILITY OF SUCH DAMAGES.
-
-  17. Interpretation of Sections 15 and 16.
-
-     If the disclaimer of warranty and limitation of liability provided
-     above cannot be given local legal effect according to their terms,
-     reviewing courts shall apply local law that most closely
-     approximates an absolute waiver of all civil liability in
-     connection with the Program, unless a warranty or assumption of
-     liability accompanies a copy of the Program in return for a fee.
-
-END OF TERMS AND CONDITIONS
-===========================
-
-How to Apply These Terms to Your New Programs
-=============================================
-
-If you develop a new program, and you want it to be of the greatest
-possible use to the public, the best way to achieve this is to make it
-free software which everyone can redistribute and change under these
-terms.
-
-   To do so, attach the following notices to the program.  It is safest
-to attach them to the start of each source file to most effectively
-state the exclusion of warranty; and each file should have at least the
-"copyright" line and a pointer to where the full notice is found.
-
-     ONE LINE TO GIVE THE PROGRAM'S NAME AND A BRIEF IDEA OF WHAT IT DOES.
-     Copyright (C) YEAR NAME OF AUTHOR
-
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or (at
-     your option) any later version.
-
-     This program is distributed in the hope that it will be useful, but
-     WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-     General Public License for more details.
-
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-   Also add information on how to contact you by electronic and paper
-mail.
-
-   If the program does terminal interaction, make it output a short
-notice like this when it starts in an interactive mode:
-
-     PROGRAM Copyright (C) YEAR NAME OF AUTHOR
-     This program comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.
-     This is free software, and you are welcome to redistribute it
-     under certain conditions; type 'show c' for details.
-
-   The hypothetical commands 'show w' and 'show c' should show the
-appropriate parts of the General Public License.  Of course, your
-program's commands might be different; for a GUI interface, you would
-use an "about box".
-
-   You should also get your employer (if you work as a programmer) or
-school, if any, to sign a "copyright disclaimer" for the program, if
-necessary.  For more information on this, and how to apply and follow
-the GNU GPL, see <http://www.gnu.org/licenses/>.
-
-   The GNU General Public License does not permit incorporating your
-program into proprietary programs.  If your program is a subroutine
-library, you may consider it more useful to permit linking proprietary
-applications with the library.  If this is what you want to do, use the
-GNU Lesser General Public License instead of this License.  But first,
-please read <http://www.gnu.org/philosophy/why-not-lgpl.html>.
 

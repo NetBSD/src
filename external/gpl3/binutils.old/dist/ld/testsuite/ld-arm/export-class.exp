@@ -1,6 +1,6 @@
 # Expect script for symbol export classes, ARM variation.
 #
-# Copyright 2012 Free Software Foundation, Inc.
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -32,12 +32,18 @@ if { ![istarget arm*-*-linux*] } {
 
 set testname "ARM symbol export class test"
 
+if [istarget arm*-*-linux-*eabi*] {
+    set emul armelf_linux_eabi
+} else {
+    set emul armelf_linux
+}
+
 # Build an auxiliary shared object with conflicting versioned symbol
 # definitions.
 run_ld_link_tests [list \
     [list \
 	"$testname (auxiliary shared object)" \
-	"-marmelf_linux_eabi -shared -version-script ../ld-elf/export-class-lib.ver" \
+	"-m$emul -shared -version-script ../ld-elf/export-class-lib.ver" "" \
 	"-EL" \
 	{ ../ld-elf/export-class-lib.s } \
 	{} \
@@ -51,7 +57,7 @@ run_ld_link_tests [list \
 run_ld_link_tests [list \
     [list \
 	"$testname (initial static object)" \
-	"-marmelf_linux_eabi -r" \
+	"-m$emul -r" "" \
 	"-EL" \
 	{ ../ld-elf/export-class-ref.s } \
 	{} \
@@ -68,7 +74,7 @@ run_ld_link_tests [list \
 run_ld_link_tests [list \
     [list \
 	"$testname (final shared object)" \
-	"-marmelf_linux_eabi -shared -Tdata=0x12340000 tmpdir/arm-export-class-ref-r.o tmpdir/arm-export-class-lib.so" \
+	"-m$emul -shared -Tdata=0x12340000 tmpdir/arm-export-class-ref-r.o tmpdir/arm-export-class-lib.so" "" \
 	"-EL" \
 	{ ../ld-elf/export-class-dep.s ../ld-elf/export-class-def.s } \
 	{ \

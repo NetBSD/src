@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2012/06/05 00:38:45 christos Exp $
+#	$NetBSD: Makefile,v 1.2.16.1 2016/11/04 14:42:41 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -15,5 +15,7 @@ CPPFLAGS+= -I${DIST}/include
 .PATH: ${DIST}
 DPADD+=${LIBEDIT} ${LIBTERMINFO}
 LDADD+=-ledit -lterminfo
+
+nslookup.o: ${VERSIONFILE}
 
 .include <bsd.prog.mk>

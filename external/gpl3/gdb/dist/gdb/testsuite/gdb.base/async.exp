@@ -1,4 +1,4 @@
-#   Copyright 1999-2015 Free Software Foundation, Inc.
+#   Copyright 1999-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,17 +57,24 @@ proc test_background {command before_prompt after_prompt {message ""}} {
     gdb_expect {
 	-re "^$command\r\n${before_prompt}${gdb_prompt}${after_prompt}completed\.\r\n" {
 	    pass "$message"
+	    return 0
 	}
 	-re "$gdb_prompt.*completed\.\r\n" {
 	    fail "$message"
+	}
+	-re ".*Asynchronous execution not supported on this target\..*" {
+	    unsupported "Asynchronous execution not supported: $message"
 	}
 	timeout  {
 	    fail "$message (timeout)"
 	}
     }
+    return -1
 }
 
-test_background "next&" "" ".*z = 9.*"
+if {[test_background "next&" "" ".*z = 9.*"] < 0} {
+    return
+}
 
 test_background "step&" "" ".*y = foo \\(\\).*" "step& #1"
 

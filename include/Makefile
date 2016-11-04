@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.141 2015/07/29 00:10:26 christos Exp $
+#	$NetBSD: Makefile,v 1.141.2.1 2016/11/04 14:48:51 pgoyette Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -18,10 +18,11 @@ INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	ndbm.h netconfig.h netdb.h netgroup.h nlist.h nl_types.h nsswitch.h \
 	paths.h pwd.h quota.h randomid.h ranlib.h re_comp.h regex.h regexp.h \
 	resolv.h res_update.h rmt.h sched.h search.h semaphore.h setjmp.h \
-	string.h sgtty.h signal.h spawn.h stab.h stddef.h stdio.h \
-	stdlib.h strings.h stringlist.h struct.h sysexits.h tar.h time.h \
-	ttyent.h tzfile.h ucontext.h ulimit.h unistd.h util.h utime.h utmp.h \
-	utmpx.h uuid.h vis.h wchar.h wctype.h wordexp.h
+	string.h sgtty.h signal.h spawn.h stab.h stdalign.h stddef.h stdio.h \
+	stdlib.h stdnoreturn.h strings.h stringlist.h struct.h sysexits.h \
+	tar.h time.h ttyent.h tzfile.h \
+	ucontext.h ulimit.h unistd.h util.h utime.h utmp.h utmpx.h uuid.h \
+	vis.h wchar.h wctype.h wordexp.h
 INCS+=	arpa/ftp.h arpa/inet.h arpa/nameser.h arpa/nameser_compat.h \
 	arpa/telnet.h arpa/tftp.h
 INCS+=	protocols/dumprestore.h protocols/routed.h protocols/rwhod.h \

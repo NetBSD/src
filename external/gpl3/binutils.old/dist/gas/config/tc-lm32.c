@@ -1,5 +1,5 @@
 /* tc-lm32.c - Lattice Mico32 assembler.
-   Copyright 2008, 2012   Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Contributed by Jon Beniston <jon@beniston.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -278,7 +278,7 @@ valueT
 md_section_align (asection *seg, valueT addr)
 {
   int align = bfd_get_section_alignment (stdoutput, seg);
-  return ((addr + (1 << align) - 1) & (-1 << align));
+  return ((addr + (1 << align) - 1) & -(1 << align));
 }
 
 /* This function assembles the instructions. It emits the frags/bytes to the

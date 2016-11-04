@@ -1,4 +1,4 @@
-/*	$NetBSD: fileio.c,v 1.4 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: fileio.c,v 1.4.28.1 2016/11/04 14:48:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fileio.c,v 1.4 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: fileio.c,v 1.4.28.1 2016/11/04 14:48:53 pgoyette Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -143,7 +143,7 @@ __getnsp(nschar_t *nsp, FILE *fp)
 		return ERR;
 	onsp = nsp;
 	while (n != 0) {
-		tnsp = (nschar_t *)malloc(sizeof(nschar_t));
+		tnsp = malloc(sizeof(nschar_t));
 		if (tnsp == NULL) {
 			__cursesi_free_nsp(nsp);
 			return OK;
@@ -189,7 +189,7 @@ getwin(FILE *fp)
 		return NULL;
 
 	/* Window parameters */
-	wtmp = (WINDOW *)malloc(sizeof(WINDOW));
+	wtmp = malloc(sizeof(WINDOW));
 	if (wtmp == NULL)
 		return NULL;
 	if (fread(wtmp, sizeof(WINDOW), 1, fp) != 1)

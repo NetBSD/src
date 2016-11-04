@@ -24,20 +24,22 @@
 # Default hostio_last_error implementation
 srv_hostio_err_objs="hostio-errno.o"
 
-srv_i386_regobj="i386.o i386-avx.o i386-avx512.o i386-mpx.o i386-mmx.o"
-srv_i386_linux_regobj="i386-linux.o i386-avx-linux.o i386-avx512-linux.o i386-mpx-linux.o i386-mmx-linux.o"
-srv_amd64_regobj="amd64.o amd64-avx.o amd64-avx512.o amd64-mpx.o x32.o x32-avx.o x32-avx512.o"
-srv_amd64_linux_regobj="amd64-linux.o amd64-avx-linux.o amd64-avx512-linux.o amd64-mpx-linux.o x32-linux.o x32-avx-linux.o x32-avx512-linux.o"
+srv_i386_regobj="i386.o i386-avx.o i386-avx512.o i386-mpx.o i386-avx-mpx.o i386-mmx.o"
+srv_i386_linux_regobj="i386-linux.o i386-avx-linux.o i386-avx512-linux.o i386-mpx-linux.o i386-avx-mpx-linux.o i386-mmx-linux.o"
+srv_amd64_regobj="amd64.o amd64-avx.o amd64-avx512.o amd64-mpx.o amd64-avx-mpx.o x32.o x32-avx.o x32-avx512.o"
+srv_amd64_linux_regobj="amd64-linux.o amd64-avx-linux.o amd64-avx512-linux.o amd64-mpx-linux.o amd64-avx-mpx-linux.o x32-linux.o x32-avx-linux.o x32-avx512-linux.o"
 
-ipa_i386_linux_regobj=i386-linux-ipa.o
-ipa_amd64_linux_regobj=amd64-linux-ipa.o
+ipa_i386_linux_regobj="i386-linux-ipa.o i386-avx-linux-ipa.o  i386-avx-mpx-linux-ipa.o i386-avx512-linux-ipa.o i386-mpx-linux-ipa.o i386-mmx-linux-ipa.o"
+ipa_amd64_linux_regobj="amd64-linux-ipa.o amd64-avx-linux-ipa.o amd64-avx-mpx-linux-ipa.o amd64-avx512-linux-ipa.o amd64-mpx-linux-ipa.o"
+ipa_x32_linux_regobj="x32-linux-ipa.o x32-avx-linux-ipa.o x32-avx512-linux-ipa.o"
+ipa_ppc_linux_regobj="powerpc-32l-ipa.o powerpc-altivec32l-ipa.o powerpc-cell32l-ipa.o powerpc-vsx32l-ipa.o powerpc-isa205-32l-ipa.o powerpc-isa205-altivec32l-ipa.o powerpc-isa205-vsx32l-ipa.o powerpc-e500l-ipa.o powerpc-64l-ipa.o powerpc-altivec64l-ipa.o powerpc-cell64l-ipa.o powerpc-vsx64l-ipa.o powerpc-isa205-64l-ipa.o powerpc-isa205-altivec64l-ipa.o powerpc-isa205-vsx64l-ipa.o"
 
 srv_i386_32bit_xmlfiles="i386/32bit-core.xml i386/32bit-sse.xml i386/32bit-avx.xml i386/32bit-avx512.xml i386/32bit-mpx.xml"
 srv_i386_64bit_xmlfiles="i386/64bit-core.xml i386/64bit-sse.xml i386/64bit-avx.xml i386/64bit-avx512.xml i386/x32-core.xml i386/64bit-mpx.xml"
-srv_i386_xmlfiles="i386/i386.xml i386/i386-avx.xml i386/i386-avx512.xml i386/i386-mpx.xml i386/i386-mmx.xml $srv_i386_32bit_xmlfiles"
-srv_amd64_xmlfiles="i386/amd64.xml i386/amd64-avx.xml i386/amd64-avx512.xml i386/x32.xml i386/x32-avx.xml i386/x32-avx512.xml i386/amd64-mpx.xml $srv_i386_64bit_xmlfiles"
-srv_i386_linux_xmlfiles="i386/i386-linux.xml i386/i386-avx-linux.xml i386/i386-avx512-linux.xml i386/i386-mmx-linux.xml i386/32bit-linux.xml i386/i386-mpx-linux.xml $srv_i386_32bit_xmlfiles"
-srv_amd64_linux_xmlfiles="i386/amd64-linux.xml i386/amd64-avx-linux.xml i386/amd64-avx512-linux.xml i386/64bit-linux.xml i386/amd64-mpx-linux.xml i386/x32-linux.xml i386/x32-avx-linux.xml i386/x32-avx512-linux.xml $srv_i386_64bit_xmlfiles"
+srv_i386_xmlfiles="i386/i386.xml i386/i386-avx.xml i386/i386-avx512.xml i386/i386-mpx.xml i386/i386-avx-mpx.xml i386/i386-mmx.xml $srv_i386_32bit_xmlfiles"
+srv_amd64_xmlfiles="i386/amd64.xml i386/amd64-avx.xml i386/amd64-avx512.xml i386/x32.xml i386/x32-avx.xml i386/x32-avx512.xml i386/amd64-mpx.xml i386/amd64-avx-mpx.xml  $srv_i386_64bit_xmlfiles"
+srv_i386_linux_xmlfiles="i386/i386-linux.xml i386/i386-avx-linux.xml i386/i386-avx512-linux.xml i386/i386-mmx-linux.xml i386/32bit-linux.xml i386/i386-mpx-linux.xml i386/i386-avx-mpx-linux.xml $srv_i386_32bit_xmlfiles"
+srv_amd64_linux_xmlfiles="i386/amd64-linux.xml i386/amd64-avx-linux.xml i386/amd64-avx512-linux.xml i386/64bit-linux.xml i386/amd64-mpx-linux.xml i386/amd64-avx-mpx-linux.xml i386/x32-linux.xml i386/x32-avx-linux.xml i386/x32-avx512-linux.xml $srv_i386_64bit_xmlfiles"
 
 
 # Linux object files.  This is so we don't have to repeat
@@ -49,20 +51,31 @@ srv_linux_obj="linux-low.o linux-osdata.o linux-procfs.o linux-ptrace.o linux-wa
 case "${target}" in
   aarch64*-*-linux*)
 			srv_regobj="aarch64.o"
-			srv_tgtobj="linux-aarch64-low.o"
+			srv_regobj="${srv_regobj} arm-with-neon.o"
+			srv_tgtobj="linux-aarch64-low.o aarch64-linux-hw-point.o"
+			srv_tgtobj="$srv_tgtobj linux-aarch32-low.o"
+			srv_tgtobj="${srv_tgtobj} arm.o"
+			srv_tgtobj="$srv_tgtobj aarch64-linux.o"
+			srv_tgtobj="$srv_tgtobj aarch64-insn.o"
 			srv_tgtobj="${srv_tgtobj} $srv_linux_obj"
 			srv_xmlfiles="aarch64.xml"
 			srv_xmlfiles="${srv_xmlfiles} aarch64-core.xml"
 			srv_xmlfiles="${srv_xmlfiles} aarch64-fpu.xml"
-			srv_linux_usrregs=yes
+			srv_xmlfiles="${srv_xmlfiles} arm-core.xml arm-vfpv3.xml"
+			srv_xmlfiles="${srv_xmlfiles} arm-with-neon.xml"
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
+			ipa_obj="linux-aarch64-ipa.o aarch64-ipa.o"
 			;;
   arm*-*-linux*)	srv_regobj="reg-arm.o arm-with-iwmmxt.o"
 			srv_regobj="${srv_regobj} arm-with-vfpv2.o"
 			srv_regobj="${srv_regobj} arm-with-vfpv3.o"
 			srv_regobj="${srv_regobj} arm-with-neon.o"
 			srv_tgtobj="$srv_linux_obj linux-arm-low.o"
+			srv_tgtobj="$srv_tgtobj linux-aarch32-low.o"
+			srv_tgtobj="${srv_tgtobj} arm.o"
+			srv_tgtobj="${srv_tgtobj} arm-linux.o"
+			srv_tgtobj="${srv_tgtobj} arm-get-next-pcs.o"
 			srv_xmlfiles="arm-with-iwmmxt.xml"
 			srv_xmlfiles="${srv_xmlfiles} arm-with-vfpv2.xml"
 			srv_xmlfiles="${srv_xmlfiles} arm-with-vfpv3.xml"
@@ -107,8 +120,9 @@ case "${target}" in
 			if test "$gdb_cv_i386_is_x86_64" = yes ; then
 			    srv_regobj="$srv_regobj $srv_amd64_linux_regobj"
 			    srv_xmlfiles="${srv_xmlfiles} $srv_amd64_linux_xmlfiles"
+			    srv_tgtobj="amd64-linux-siginfo.o"
 			fi
-			srv_tgtobj="$srv_linux_obj linux-x86-low.o x86-low.o x86-dregs.o i387-fp.o"
+			srv_tgtobj="${srv_tgtobj} $srv_linux_obj linux-x86-low.o x86-low.o x86-dregs.o i387-fp.o"
 			srv_tgtobj="${srv_tgtobj} linux-btrace.o x86-linux.o"
 			srv_tgtobj="${srv_tgtobj} x86-linux-dregs.o"
 			srv_linux_usrregs=yes
@@ -246,6 +260,7 @@ case "${target}" in
 			srv_linux_usrregs=yes
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
+			ipa_obj="${ipa_ppc_linux_regobj} linux-ppc-ipa.o"
 			;;
   powerpc-*-lynxos*)	srv_regobj="powerpc-32.o"
 			srv_tgtobj="lynx-low.o lynx-ppc-low.o"
@@ -295,6 +310,22 @@ case "${target}" in
 			srv_linux_usrregs=yes
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
+			ipa_obj="linux-s390-ipa.o"
+			ipa_obj="${ipa_obj} s390-linux32-ipa.o"
+			ipa_obj="${ipa_obj} s390-linux32v1-ipa.o"
+			ipa_obj="${ipa_obj} s390-linux32v2-ipa.o"
+			ipa_obj="${ipa_obj} s390-linux64-ipa.o"
+			ipa_obj="${ipa_obj} s390-linux64v1-ipa.o"
+			ipa_obj="${ipa_obj} s390-linux64v2-ipa.o"
+			ipa_obj="${ipa_obj} s390-vx-linux64-ipa.o"
+			ipa_obj="${ipa_obj} s390-te-linux64-ipa.o"
+			ipa_obj="${ipa_obj} s390-tevx-linux64-ipa.o"
+			ipa_obj="${ipa_obj} s390x-linux64-ipa.o"
+			ipa_obj="${ipa_obj} s390x-linux64v1-ipa.o"
+			ipa_obj="${ipa_obj} s390x-linux64v2-ipa.o"
+			ipa_obj="${ipa_obj} s390x-vx-linux64-ipa.o"
+			ipa_obj="${ipa_obj} s390x-te-linux64-ipa.o"
+			ipa_obj="${ipa_obj} s390x-tevx-linux64-ipa.o"
 			;;
   sh*-*-linux*)		srv_regobj=reg-sh.o
 			srv_tgtobj="$srv_linux_obj linux-sh-low.o"
@@ -328,12 +359,18 @@ case "${target}" in
 			srv_tgtobj="$srv_linux_obj linux-x86-low.o x86-low.o x86-dregs.o i387-fp.o"
 			srv_tgtobj="${srv_tgtobj} linux-btrace.o x86-linux.o"
 			srv_tgtobj="${srv_tgtobj} x86-linux-dregs.o"
+			srv_tgtobj="${srv_tgtobj} amd64-linux-siginfo.o"
 			srv_xmlfiles="$srv_i386_linux_xmlfiles $srv_amd64_linux_xmlfiles"
 			srv_linux_usrregs=yes # This is for i386 progs.
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
 			srv_linux_btrace=yes
-			ipa_obj="${ipa_amd64_linux_regobj} linux-amd64-ipa.o"
+			if test "$gdb_cv_x86_is_x32" = yes ; then
+			    ipa_obj="${ipa_x32_linux_regobj}"
+			else
+			    ipa_obj="${ipa_amd64_linux_regobj}"
+			fi
+			ipa_obj="${ipa_obj} linux-amd64-ipa.o"
 			;;
   x86_64-*-mingw*)	srv_regobj="$srv_amd64_regobj"
 			srv_tgtobj="x86-low.o x86-dregs.o i387-fp.o win32-low.o win32-i386-low.o"
@@ -348,6 +385,7 @@ case "${target}" in
   xtensa*-*-linux*)	srv_regobj=reg-xtensa.o
 			srv_tgtobj="$srv_linux_obj linux-xtensa-low.o"
 			srv_linux_regsets=yes
+			srv_linux_thread_db=yes
 			;;
   tilegx-*-linux*)	srv_regobj=reg-tilegx.o
 			srv_regobj="${srv_regobj} reg-tilegx32.o"

@@ -15,7 +15,7 @@ Disassembly of section \.text:
 #...
 Disassembly of section \.data:
 
-00060000 <\.data>:
+00060000 .*:
    60000:	00068000 	.*
 #...
 Disassembly of section \.got:

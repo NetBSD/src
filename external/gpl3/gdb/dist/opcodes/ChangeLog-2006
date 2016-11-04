@@ -193,11 +193,11 @@
 
 2006-10-23  Dwarakanath Rajagopal  <dwarak.rajagopal@amd.com>
 
-	* i386-dis.c (dis386): Add support for the change in POPCNT opcode in 
+	* i386-dis.c (dis386): Add support for the change in POPCNT opcode in
 	amdfam10 architecture.
 	(PREGRP37): NEW.
 	(print_insn): Disallow REP prefix for POPCNT.
-	 
+
 2006-10-20  Andrew Stubbs  <andrew.stubbs@st.com>
 
 	* sh-dis.c (print_insn_sh): Remove 0x from output to prevent GDB
@@ -274,9 +274,9 @@
 	* i386-dis.c (MXC,EMC): Define.
 	(OP_MXC): New function to handle cvt* (convert instructions) between
 	%xmm and %mm register correctly.
-	(OP_EMC): ditto.	
-	(prefix_user_table): Modified cvtpi2pd,cvtpd2pi and cvttpd2pi 
-	instruction operands in PREGRP2,PREGRP3,PREGRP4 appropriately 
+	(OP_EMC): ditto.
+	(prefix_user_table): Modified cvtpi2pd,cvtpd2pi and cvttpd2pi
+	instruction operands in PREGRP2,PREGRP3,PREGRP4 appropriately
 	with EMC/MXC.
 
 2006-07-29  Richard Sandiford  <richard@codesourcery.com>
@@ -689,7 +689,7 @@
 	New cases '$' and '%' for read/write hyperprivileged register.
 	* sparc-opc.c (sparc_opcodes): Add new entries for UA2005
 	window handling and rdhpr/wrhpr instructions.
-	
+
 2006-02-24  DJ Delorie  <dj@redhat.com>
 
 	* m32c-desc.c: Regenerate with linker relaxation attributes.
@@ -742,13 +742,13 @@
 
 	* xc16x-desc.h: New file
 	* xc16x-desc.c: New file
-	* xc16x-opc.h: New file	
+	* xc16x-opc.h: New file
 	* xc16x-opc.c: New file
 	* xc16x-ibld.c: New file
 	* xc16x-asm.c: New file
 	* xc16x-dis.c: New file
-	* Makefile.am: Entries for xc16x 
-	* Makefile.in: Regenerate 
+	* Makefile.am: Entries for xc16x
+	* Makefile.in: Regenerate
 	* cofigure.in: Add xc16x target information.
 	* configure: Regenerate.
 	* disassemble.c: Add xc16x target information.
@@ -783,7 +783,7 @@
 
 	* z80-dis.c (struct buffer, prt_d, prt_d_n, arit_d, ld_r_d,
 	ld_d_r, pref_xd_cb): Use signed char to hold data to be
-	disassembled.	
+	disassembled.
 	* z80-dis.c (TXTSIZ): Increase buffer size to 24, this fixes
 	buffer overflows when disassembling instructions like
 	ld (ix+123),0x23

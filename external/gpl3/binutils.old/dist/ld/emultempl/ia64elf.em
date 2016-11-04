@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2003, 2005, 2006, 2007, 2009 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -31,12 +31,12 @@ fragment <<EOF
 static int itanium = 0;
 
 static void
-gld${EMULATION_NAME}_after_parse (void)
+ia64elf_after_parse (void)
 {
   link_info.relax_pass = 2;
   bfd_elf${ELFSIZE}_ia64_after_parse (itanium);
 
-  after_parse_default ();
+  gld${EMULATION_NAME}_after_parse ();
 }
 
 EOF
@@ -61,5 +61,5 @@ PARSE_AND_LIST_ARGS_CASES='
       break;
 '
 
-LDEMUL_AFTER_PARSE=gld${EMULATION_NAME}_after_parse
+LDEMUL_AFTER_PARSE=ia64elf_after_parse
 source_em ${srcdir}/emultempl/needrelax.em

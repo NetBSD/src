@@ -1,5 +1,5 @@
 /* Remote target callback routines.
-   Copyright 1995-2015 Free Software Foundation, Inc.
+   Copyright 1995-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.
@@ -21,9 +21,8 @@
    level.  */
 
 #ifdef HAVE_CONFIG_H
-#include "cconfig.h"
-#endif
 #include "config.h"
+#endif
 #include "ansidecl.h"
 #include <stdarg.h>
 #include <stdio.h>

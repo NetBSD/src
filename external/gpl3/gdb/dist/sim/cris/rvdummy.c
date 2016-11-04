@@ -1,7 +1,7 @@
 /* Test-driver for the remote-virtual-component simulator framework
    for GDB, the GNU Debugger.
 
-   Copyright 2006-2015 Free Software Foundation, Inc.
+   Copyright 2006-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,13 +30,12 @@ main (int argc, char *argv[])
 #else
 
 #ifdef HAVE_CONFIG_H
-#include "cconfig.h"
+#include "config.h"
 #endif
 
 #include "getopt.h"
 #include "libiberty.h"
 
-#define _GNU_SOURCE
 #include <stdio.h>
 
 #ifdef HAVE_UNISTD_H
@@ -104,7 +103,7 @@ static void handle_input_file (int, char *);
    connection.  Return a file descriptor for the connection or -1 on
    error.  */
 
-int setupsocket (void)
+static int setupsocket (void)
 {
   int s;
   socklen_t len;

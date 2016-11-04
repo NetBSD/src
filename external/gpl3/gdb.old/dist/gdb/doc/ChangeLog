@@ -1,12 +1,376 @@
-2015-05-12  Doug Evans  <dje@google.com>
+2015-09-15  Pedro Alves  <palves@redhat.com>
+
+	PR remote/18965
+	* gdb.texinfo (Stop Reply Packets): Revert previous change to
+	the vforkdone description.
+
+2015-09-15  Pedro Alves  <palves@redhat.com>
+
+	PR remote/18965
+	* gdb.texinfo (Stop Reply Packets): Explain that vforkdone's 'r'
+	part indicates the thread ID of the parent process.
+
+2015-07-20  Doug Evans  <dje@google.com>
+
+	* Makefile.in (STABS_DOC_BUILD_INCLUDES): Add gdb-cfg.texi, GDBvn.texi.
+
+2015-07-16  Doug Evans  <dje@google.com>
+
+	* stabs.texinfo: @include gdb-cfg.texi.
+
+2015-07-08  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.texinfo (Selection): Update documentation for 'frame'
+	command.
+
+2015-07-02  Markus Metzger  <markus.t.metzger@intel.com>
+
+        * gdb.texinfo (Maintenance Commands): Document "maint btrace"
+	commands.
+
+2015-07-02  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.texinfo (Process Record and Replay): Spell out that variables
+	and registers are not available during btrace replay.
+	Describe the new "record btrace pt" command.
+	Describe the new "set|show record btrace pt buffer-size" options.
+	(General Query Packets): Describe the new Qbtrace:pt and
+	Qbtrace-conf:pt:size packets.
+	Expand "bts" to "Branch Trace Store".
+	Update the branch trace DTD.
+
+2015-06-26  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* gdb.texinfo (Command History): Document the new option
+	"history remove-duplicates".
+
+2015-06-19  Doug Evans  <dje@google.com>
+
+	* stabs.texinfo (ELF Linker Relocation): Mention Sun stabs is no
+	longer supported.
+
+2015-06-17  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* gdb.texinfo (Command History): Mention that setting
+	GDBHISTSIZE to the empty string disables history truncation.
+
+2015-06-17  Patrick Palka  <patrick@parcs.ath.cx>
+
+	PR gdb/16999
+	* gdb.texinfo (Command History): Mention new GDBHISTSIZE
+	behavior.
+
+2015-06-17  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* gdb.texinfo (Command History): Replace occurrences of HISTSIZE
+	with GDBHISTSIZE.
+
+2015-06-15  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.texinfo (GDB/MI Data Manipulation): Clarify usage of
+	bytes and memory units for -data-{read,write}-memory-bytes.
+	(Packets): Same for m, M and X packets.
+	* python.texi (Inferiors In Python): Same for read_memory and
+	write_memory.
+
+2015-06-10  Jon Turney  <jon.turney@dronecode.org.uk>
+
+	* gdb.texinfo (Separate Debug Files): Document that PE is also
+	supported.
+
+2015-06-13  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.texinfo (TUI Commands): Bring all 'tui reg' commands into a
+	single table entry.
+
+2015-06-10  Walfred Tedeschi  <walfred.tedeschi@intel.com>
+
+	* gdb.textinfo (i386): Fix "@end table" end and "@table" placement.
+
+
+2015-06-10  Gary Benson <gbenson@redhat.com>
+
+	* gdb.texinfo (Remote Configuration): Document the
+	"set/show remote hostio-setfs-packet" command.
+	(Host I/O Packets): Document the vFile:setfs packet.
+
+2015-06-10  Gary Benson <gbenson@redhat.com>
+
+	* gdb.texinfo (Debugging Output): Document the "set/show debug
+	linux-namespaces" command.
+
+2015-06-10  Walfred Tedeschi  <walfred.tedeschi@intel.com>
+            Mircea Gherzan  <mircea.gherzan@intel.com>
+
+	* gdb.texinfo (i386): Add documentation about "show mpx bound"
+	and "set mpx bound".
+
+2015-05-27  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Debugging Output): Mention set/show debug dwarf-line.
+
+2015-05-26  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Debugging Output): Update for DWARF "set debug"
+	command renamings.
+	(Maintenance Commands): Update for DWARF "set debug" command renamings.
+
+2015-05-26  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.texinfo (TUI Commands): Add 'tui reg prev' details.
+
+2015-05-22  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.texinfo (TUI): Include 'tui enable' in the introduction.
+	(TUI Commands): Add 'tui enable' and 'tui disable' details.
+
+2015-05-16  Doug Evans  <xdje42@gmail.com>
+
+	* guile.texi (Memory Ports in Guile): Document support for unbuffered
+	memory ports.
+
+2015-05-16  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.texinfo (Compiling and Injecting Code): Add compile print.
+
+2015-05-12  Don Breazeal  <donb@codesourcery.com>
+
+	* gdb.texinfo (Forks): Note that fork debugging is
+	supported in extended mode.
+	(Remote Configuration): Add fork event features to table
+	of packet settings.
+	(Stop Reply Packets): Add fork events to list of stop reasons.
+	(General Query Packets): Add fork events to tables of
+	'gdbfeatures' and 'stub features' supported in the qSupported
+	packet, as well as to the list containing stub feature
+	details.
+
+2015-05-12  Gary Benson <gbenson@redhat.com>
+
+	* gdb.texinfo (General Query Packets): Document
+	qXfer:exec-file:read with empty annex.
+
+2015-05-09  Siva Chandra Reddy  <sivachandra@google.com>
+
+	* python.texi (Values From Inferior): Add descriptions of new
+	methods gdb.Value.reference_value and gdb.Value.const_value.
+
+2015-05-06  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Files): Add "info dll" documentation.
+	(Cygwin Native): Remove "info dll" documentation.
+
+2015-04-29  Doug Evans  <dje@google.com>
 
 	* python.texi (Xmethod API) <gdb.XMethodWorker.get_result_type>:
 	Document.
 	(Writing an Xmethod): Add get_result_type to example.
 
-2015-02-20  David Taylor  <dtaylor@emc.com>
+2015-04-28  Sasha Smundak  <asmundak@google.com>
+
+	* python.texi: New method documented.
+
+2015-04-24  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.texinfo (Dump/Restore Files): Add detail about verilog dump
+	format.
+
+2015-04-24  Doug Evans  <dje@google.com>
+
+	* python.texi (Xmethods In Python): Fix name of method to call the
+	xmethod.
+
+2015-04-17  Gary Benson <gbenson@redhat.com>
+
+	* gdb.texinfo (Connecting to a Remote Target): Mention that
+	GDB can access program files from remote targets that support
+	qXfer:exec-file:read and Host I/O packets.
+
+2015-04-17  Gary Benson <gbenson@redhat.com>
+
+	* gdb.texinfo (Remote Configuration): Document the "set/show
+	remote pid-to-exec-file-packet" command.
+	(General Query Packets): Document the qXfer:exec-file:read
+	qSupported features.  Document the qXfer:exec-file:read packet.
+
+2015-04-17  Gary Benson <gbenson@redhat.com>
+
+	* gdb.texinfo (set sysroot): Document that "set sysroot" also
+	applies to executable paths if supplied to GDB as absolute.
+
+2015-04-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.texinfo (Mode Options): Remove -xdb.
+
+2015-04-10  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Compiling and Injecting Code): Describe set debug 
+	compile, show debug compile.  New subsection Compilation options for 
+	the compile command.  New subsection Compiler search for the compile
+	command.
+
+2015-04-09  Andy Wingo  <wingo@igalia.com>
+
+	* guile.texi (Frames In Guile): Describe frame-read-register.
+
+2015-04-02  Gary Benson <gbenson@redhat.com>
+
+	* gdb.texinfo (set sysroot): Document "target:".
+
+2015-04-01  Sasha Smundak  <asmundak@google.com>
+
+	* doc/python.texi (Writing a Frame Unwinder in Python): Add
+	section.
+
+2015-03-31  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	PR corefiles/16092
+	* gdb.texinfo (gcore): Mention new command 'set
+	use-coredump-filter'.
+	(set use-coredump-filter): Document new command.
+
+2015-03-31  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+
+	* gdb.texinfo (Operating System Auxiliary Information): Add info os cpus
+	documentation, reorder the info os entries in alphabetical order.
+
+2015-03-26  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.texinfo (GDB/MI Data Manipulation): Fix copy-paste typo in
+	-data-write-memory-bytes.
+
+2015-03-24  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (test_step) <set scheduler-locking step>: No longer
+	mention that threads may sometimes run unlocked.
+
+2015-03-23  Yurij Grechishhev  <yurij.grechishhev@gmail.com>
+
+	* gdb.texinfo (Remote configuration): Document "set/show
+	serial parity" command.
+
+2015-03-18  Gary Benson <gbenson@redhat.com>
+
+	* gdb.texinfo (General Query Packets): Remove documentation
+	for now-removed vFile:fstat qSupported features.
+
+2015-03-11  Gary Benson <gbenson@redhat.com>
+
+	* gdb.texinfo (Remote Configuration): Document the
+	"set/show remote hostio-fstat-packet" command.
+	(General Query Packets): Document the vFile:fstat
+	qSupported features.
+	(Host I/O Packets): Document the vFile:fstat packet.
+
+2015-03-11  Andy Wingo  <wingo@igalia.com>
+
+	* guile.texi (Objfiles In Guile): Document objfile-progspace.
+
+2015-03-04  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Remote Configuration): Document the "set/show
+	remote swbreak-feature-packet" and "set/show remote
+	hwbreak-feature-packet" commands.
+	(Packets) <Z0>: Add cross link to the "swbreak" stop reason's
+	decription.
+	(Stop Reply Packets): Document the swbreak and hwbreak stop
+	reasons.
+	(General Query Packets): Document the swbreak and hwbreak
+	qSupported features.
+	(Remote Non-Stop): Explain that swbreak and hwbreak are required.
+
+2015-03-03  Philippe Proulx  <eeppeliteloop@gmail.com>
+
+	* gdb.texinfo (gdb/mi Async Records): Fix duplicate syscall-entry
+	under *stopped.
+
+2015-03-02  Doug Evans  <xdje42@gmail.com>
+
+	* gdb.texinfo (Specify Location): Fix syntax of filename:function.
+
+2015-03-02  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* gdb.texinfo (S/390 and System z Features): Describe new feature
+	"org.gnu.gdb.s390.vx".
+
+2015-02-23  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	PR gdb/18008
+	* gdb.texinfo (maint internal-error, maint internal-warning, maint
+	demangler-warning): Fix typo ("problam").
+
+2015-02-19  David Taylor  <dtaylor@emc.com>
 
 	* agentexpr.texi (Bytecode Descriptions): Fix summary line for setv.
+
+2015-02-17  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* gdb.texinfo (Static Probe Points): Add cindex `static probe
+	point, DTrace'.
+	(Static Probe Points): Modified to cover DTrace probes in addition
+	to SystemTap probes.  Also modified to cover the `enable probe'
+	and `disable probe' commands.
+
+2015-02-17  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* gdb.texinfo (Static Probe Points): Cover the `enable probe' and
+	`disable probe' commands.
+
+2015-02-12  David Taylor  <dtaylor@emc.com>
+
+	* gdb.texinfo (Tracepoint Packets): Document the builtin and name
+	fields of the QTDV packet.
+
+2015-02-09  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.texinfo (Branch Trace Configuration Format): Add size.
+	(Process Record and Replay): Describe new set|show commands.
+	(General Query Packets): Describe Qbtrace-conf:bts:size packet.
+
+2015-02-09  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.texinfo (Process Record and Replay): Describe the "record
+	btrace bts" command.
+	(General Query Packets): Describe qXfer:btrace-conf:read packet.
+	(Branch Trace Configuration Format): New.
+
+2015-01-31  Gary Benson <gbenson@redhat.com>
+	    Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Command Completion): Document new
+	"set/show max-completions" option.
+
+2015-01-31  Doug Evans  <xdje42@gmail.com>
+
+	* gdb.texinfo (Symbols): Document new commands
+	"maint print symbol-cache", "maint print symbol-cache-statistics",
+	"maint flush-symbol-cache".  Document new option
+	"maint set symbol-cache-size".
+
+2015-01-31  Doug Evans  <xdje42@gmail.com>
+
+	* gdb.texinfo (dotdebug_gdb_scripts section): Update docs to
+	distinguish script files vs inlined scripts.
+	* python.texi (Python Auto-loading): Ditto.
+
+2015-01-30  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Symbols) <info source>: Output now contains producer
+	string if present.
+
+2015-01-27  Doug Evans  <dje@google.com>
+
+	* python.texi (Objfiles In Python): Document Objfile.username.
+
+2015-01-27  Doug Evans  <dje@google.com>
+
+	* python.texi (Objfiles In Python) <Objfile.filename>: Improve docs.
+	* guile.texi (Objfiles In Guile) <objfile-filename>: Improve docs.
+
+2015-01-22  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.texinfo (Threads): Describe -ascending for thread apply all.
 
 2015-01-16  Eli Zaretskii  <eliz@gnu.org>
 

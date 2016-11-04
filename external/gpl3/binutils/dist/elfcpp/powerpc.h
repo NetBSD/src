@@ -1,6 +1,6 @@
 // powerpc.h -- ELF definitions specific to EM_PPC and EM_PPC64  -*- C++ -*-
 
-// Copyright (C) 2008-2015 Free Software Foundation, Inc.
+// Copyright (C) 2008-2016 Free Software Foundation, Inc.
 // Written by David S. Miller <davem@davemloft.net>.
 
 // This file is part of elfcpp.

@@ -1,6 +1,6 @@
 // gdb-index.h -- generate .gdb_index section for fast debug lookup  -*- C++ -*-
 
-// Copyright 2012 Free Software Foundation, Inc.
+// Copyright (C) 2012-2015 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.
@@ -42,6 +42,8 @@ class Sized_relobj;
 class Dwarf_range_list;
 template <typename T>
 class Gdb_hashtab;
+class Gdb_index_info_reader;
+class Dwarf_pubnames_table;
 
 // This class manages the .gdb_index section, which is a fast
 // lookup table for DWARF information used by the gdb debugger.
@@ -87,19 +89,40 @@ class Gdb_index : public Output_section_data
     this->ranges_.push_back(Per_cu_range_list(object, cu_index, ranges));
   }
 
-  // Add a symbol.
+  // Add a symbol.  FLAGS are the gdb_index version 7 flags to be stored in
+  // the high-byte of the cu_index field.
   void
-  add_symbol(int cu_index, const char* sym_name);
+  add_symbol(int cu_index, const char* sym_name, uint8_t flags);
 
-  // Return TRUE if we have already processed the pubnames set at
-  // OFFSET in section SHNDX
-  bool
-  pubnames_read(unsigned int shndx, off_t offset);
+  // Return the offset into the pubnames table for the cu at the given
+  // offset.
+  off_t
+  find_pubname_offset(off_t cu_offset);
 
-  // Return TRUE if we have already processed the pubtypes set at
-  // OFFSET in section SHNDX
+  // Return the offset into the pubtypes table for the cu at the
+  // given offset.
+  off_t
+  find_pubtype_offset(off_t cu_offset);
+
+  // Return TRUE if we have already processed the pubnames and types
+  // set for OBJECT of the CUs and TUS associated with the statement
+  // list at OFFSET.
   bool
-  pubtypes_read(unsigned int shndx, off_t offset);
+  pubnames_read(const Relobj* object, off_t offset);
+
+  // Record that we have already read the pubnames associated with
+  // OBJECT and OFFSET.
+  void
+  set_pubnames_read(const Relobj* object, off_t offset);
+
+  // Return a pointer to the given table.
+  Dwarf_pubnames_table*
+  pubnames_table()
+  { return pubnames_table_; }
+
+  Dwarf_pubnames_table*
+  pubtypes_table()
+  { return pubtypes_table_; }
 
   // Print usage statistics.
   static void
@@ -124,6 +147,21 @@ class Gdb_index : public Output_section_data
   void
   do_print_to_mapfile(Mapfile* mapfile) const
   { mapfile->print_output_data(this, _("** gdb_index")); }
+
+  // Create a map from dies to pubnames.
+  Dwarf_pubnames_table*
+  map_pubtable_to_dies(unsigned int attr,
+                       Gdb_index_info_reader* dwinfo,
+                       Relobj* object,
+                       const unsigned char* symbols,
+                       off_t symbols_size);
+
+  // Wrapper for map_pubtable_to_dies
+  void
+  map_pubnames_and_types_to_dies(Gdb_index_info_reader* dwinfo,
+                                 Relobj* object,
+                                 const unsigned char* symbols,
+                                 off_t symbols_size);
 
  private:
   // An entry in the compilation unit list.
@@ -176,7 +214,22 @@ class Gdb_index : public Output_section_data
     { return this->name_key == symbol->name_key; }
   };
 
-  typedef std::vector<int> Cu_vector;
+  typedef std::vector<std::pair<int, uint8_t> > Cu_vector;
+
+  typedef Unordered_map<off_t, off_t> Pubname_offset_map;
+  Pubname_offset_map cu_pubname_map_;
+  Pubname_offset_map cu_pubtype_map_;
+
+  // Scan the given pubtable and build a map of the various dies it
+  // refers to, so we can process the entries when we encounter the
+  // die.
+  void
+  map_pubtable_to_dies(Dwarf_pubnames_table* table,
+                       Pubname_offset_map* map);
+
+  // Tables to store the pubnames section of the current object.
+  Dwarf_pubnames_table* pubnames_table_;
+  Dwarf_pubnames_table* pubtypes_table_;
 
   // The .gdb_index section.
   Output_section* gdb_index_section_;
@@ -200,12 +253,10 @@ class Gdb_index : public Output_section_data
   off_t symtab_offset_;
   off_t cu_pool_offset_;
   off_t stringpool_offset_;
-  // Section index and offset of last read pubnames section.
-  unsigned int pubnames_shndx_;
-  off_t pubnames_offset_;
-  // Section index and offset of last read pubtypes section.
-  unsigned int pubtypes_shndx_;
-  off_t pubtypes_offset_;
+  // Object, stmt list offset of the CUs and TUs associated with the
+  // last read pubnames and pubtypes sections.
+  const Relobj* pubnames_object_;
+  off_t stmt_list_offset_;
 };
 
 } // End namespace gold.

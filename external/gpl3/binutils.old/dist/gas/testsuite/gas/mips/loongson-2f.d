@@ -28,16 +28,16 @@ Disassembly of section .text:
 [0-9a-f]+ <fpu_insns>:
 .*:	72020818 	madd.s	\$f0,\$f1,\$f2
 .*:	722520d8 	madd.d	\$f3,\$f4,\$f5
-.*:	71683998 	madd.ps	\$f6,\$f7,\$f8
+.*:	72c83998 	madd.ps	\$f6,\$f7,\$f8
 .*:	720b5259 	msub.s	\$f9,\$f10,\$f11
 .*:	722e6b19 	msub.d	\$f12,\$f13,\$f14
-.*:	717183d9 	msub.ps	\$f15,\$f16,\$f17
+.*:	72d183d9 	msub.ps	\$f15,\$f16,\$f17
 .*:	72149c9a 	nmadd.s	\$f18,\$f19,\$f20
 .*:	7237b55a 	nmadd.d	\$f21,\$f22,\$f23
-.*:	717ace1a 	nmadd.ps	\$f24,\$f25,\$f26
+.*:	72dace1a 	nmadd.ps	\$f24,\$f25,\$f26
 .*:	721de6db 	nmsub.s	\$f27,\$f28,\$f29
 .*:	7222081b 	nmsub.d	\$f0,\$f1,\$f2
-.*:	716520db 	nmsub.ps	\$f3,\$f4,\$f5
+.*:	72c520db 	nmsub.ps	\$f3,\$f4,\$f5
 
 [0-9a-f]+ <simd_insns>:
 .*:	4b420802 	packsshb	\$f0,\$f1,\$f2

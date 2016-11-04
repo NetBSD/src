@@ -1,5 +1,5 @@
 /* Freescale XGATE-specific support for 32-bit ELF
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Sean Keys(skeys@ipdatasys.com)
 
    This file is part of BFD, the Binary File Descriptor library.

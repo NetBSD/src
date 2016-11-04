@@ -20,13 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef SIM_MAIN_H
 #define SIM_MAIN_H
 
-/* This simulator doesn't cache the Current Instruction Address */
-/* #define SIM_ENGINE_HALT_HOOK(SD, LAST_CPU, CIA) */
-/* #define SIM_ENGINE_RESUME_HOOK(SD, LAST_CPU, CIA) */
-
-#define SIM_HAVE_BIENDIAN
-
-
 /* hobble some common features for moment */
 #define WITH_WATCHPOINTS 1
 #define WITH_MODULO_MEMORY 1
@@ -36,9 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 mips_core_signal ((SD), (CPU), (CIA), (MAP), (NR_BYTES), (ADDR), (TRANSFER), (ERROR))
 
 #include "sim-basics.h"
-
-typedef address_word sim_cia;
-
 #include "sim-base.h"
 #include "bfd.h"
 
@@ -258,8 +248,6 @@ struct _sim_cpu {
 
 
   /* The following are internal simulator state variables: */
-#define CIA_GET(CPU) ((CPU)->registers[PCIDX] + 0)
-#define CIA_SET(CPU,CIA) ((CPU)->registers[PCIDX] = (CIA))
   address_word dspc;  /* delay-slot PC */
 #define DSPC ((CPU)->dspc)
 
@@ -489,13 +477,7 @@ struct sim_state {
 
   struct swatch watch;
 
-  sim_cpu cpu[MAX_NR_PROCESSORS];
-#if (WITH_SMP)
-#define STATE_CPU(sd,n) (&(sd)->cpu[n])
-#else
-#define STATE_CPU(sd,n) (&(sd)->cpu[0])
-#endif
-
+  sim_cpu *cpu[MAX_NR_PROCESSORS];
 
   sim_state_base base;
 };
@@ -975,8 +957,12 @@ INLINE_SIM_MAIN (unsigned16) ifetch16 (SIM_DESC sd, sim_cpu *cpu, address_word c
 #define IMEM16(CIA) ifetch16 (SD, CPU, (CIA), ((CIA) & ~1))
 #define IMEM16_IMMED(CIA,NR) ifetch16 (SD, CPU, (CIA), ((CIA) & ~1) + 2 * (NR))
 
+#if WITH_TRACE_ANY_P
 void dotrace (SIM_DESC sd, sim_cpu *cpu, FILE *tracefh, int type, SIM_ADDR address, int width, char *comment, ...);
 extern FILE *tracefh;
+#else
+#define dotrace(sd, cpu, tracefh, type, address, width, comment, ...)
+#endif
 
 extern int DSPLO_REGNUM[4];
 extern int DSPHI_REGNUM[4];

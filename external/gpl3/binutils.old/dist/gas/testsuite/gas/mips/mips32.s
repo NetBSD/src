@@ -10,20 +10,25 @@ text_label:
 
       clo     $1, $2
       clz     $3, $4
+	.ifndef r6
       madd    $5, $6
       maddu   $7, $8
       msub    $9, $10
       msubu   $11, $12
+	.endif
       mul     $13, $14, $15
       pref    4, ($16)
+	.ifndef r6
       pref    4, 2047($17)
       pref    4, -2048($18)
+	.endif
       ssnop
 
 
       # privileged instructions
 
       cache   5, ($1)
+	.ifndef r6
       cache   5, 2047($2)
       cache   5, -2048($3)
       .set at
@@ -32,6 +37,7 @@ text_label:
       cache   5, 32768
       cache   5, -32769
       .set noat
+	.endif
       eret
       tlbp
       tlbr

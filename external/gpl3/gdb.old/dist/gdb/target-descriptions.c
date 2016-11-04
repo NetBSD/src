@@ -101,38 +101,40 @@ typedef struct tdesc_type_flag
 } tdesc_type_flag;
 DEF_VEC_O(tdesc_type_flag);
 
+enum tdesc_type_kind
+{
+  /* Predefined types.  */
+  TDESC_TYPE_INT8,
+  TDESC_TYPE_INT16,
+  TDESC_TYPE_INT32,
+  TDESC_TYPE_INT64,
+  TDESC_TYPE_INT128,
+  TDESC_TYPE_UINT8,
+  TDESC_TYPE_UINT16,
+  TDESC_TYPE_UINT32,
+  TDESC_TYPE_UINT64,
+  TDESC_TYPE_UINT128,
+  TDESC_TYPE_CODE_PTR,
+  TDESC_TYPE_DATA_PTR,
+  TDESC_TYPE_IEEE_SINGLE,
+  TDESC_TYPE_IEEE_DOUBLE,
+  TDESC_TYPE_ARM_FPA_EXT,
+  TDESC_TYPE_I387_EXT,
+
+  /* Types defined by a target feature.  */
+  TDESC_TYPE_VECTOR,
+  TDESC_TYPE_STRUCT,
+  TDESC_TYPE_UNION,
+  TDESC_TYPE_FLAGS
+};
+
 typedef struct tdesc_type
 {
   /* The name of this type.  */
   char *name;
 
   /* Identify the kind of this type.  */
-  enum
-  {
-    /* Predefined types.  */
-    TDESC_TYPE_INT8,
-    TDESC_TYPE_INT16,
-    TDESC_TYPE_INT32,
-    TDESC_TYPE_INT64,
-    TDESC_TYPE_INT128,
-    TDESC_TYPE_UINT8,
-    TDESC_TYPE_UINT16,
-    TDESC_TYPE_UINT32,
-    TDESC_TYPE_UINT64,
-    TDESC_TYPE_UINT128,
-    TDESC_TYPE_CODE_PTR,
-    TDESC_TYPE_DATA_PTR,
-    TDESC_TYPE_IEEE_SINGLE,
-    TDESC_TYPE_IEEE_DOUBLE,
-    TDESC_TYPE_ARM_FPA_EXT,
-    TDESC_TYPE_I387_EXT,
-
-    /* Types defined by a target feature.  */
-    TDESC_TYPE_VECTOR,
-    TDESC_TYPE_STRUCT,
-    TDESC_TYPE_UNION,
-    TDESC_TYPE_FLAGS
-  } kind;
+  enum tdesc_type_kind kind;
 
   /* Kind-specific data.  */
   union

@@ -1,4 +1,4 @@
-#   Copyright 1998-2015 Free Software Foundation, Inc.
+#   Copyright 1998-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -140,20 +140,9 @@ gdb_trace_setactions "8.6: setup TP to collect regs, args, and locals" \
 	"$tdp4" \
 	"collect \$regs, \$args, \$locs" "^$"
 
-if [is_amd64_regs_target] {
-    set fpreg "\$rbp"
-    set spreg "\$rsp"
-} elseif [is_x86_like_target] {
-    set fpreg "\$ebp"
-    set spreg "\$esp"
-} else {
-    set fpreg "\$fp"
-    set spreg "\$sp"
-}
-
 gdb_trace_setactions "8.6: setup TP to collect stack mem cast expr" \
        "$tdp6" \
-       "collect $fpreg, \(\*\(void \*\*\) \($spreg\)\) @ 64" "^$"
+       "collect \$$fpreg, \(\*\(void \*\*\) \(\$$spreg\)\) @ 128" "^$"
 
 gdb_test_no_output "tstart" ""
 

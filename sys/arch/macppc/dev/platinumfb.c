@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platinumfb.c,v 1.2 2016/07/06 13:28:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platinumfb.c,v 1.2.4.1 2016/11/04 14:49:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,13 @@ __KERNEL_RCSID(0, "$NetBSD: platinumfb.c,v 1.2 2016/07/06 13:28:34 macallan Exp 
  */
 #define PLATINUM_CONSOLE_DEPTH 8
 #define PLATINUM_FB_DEPTH      16
+
+/*
+ * XXX 16 bit console not working without this patch to rasops15.c,
+ * http://mail-index.netbsd.org/current-users/2016/09/14/msg030132.html
+ * see thread, but rasops may need separate flags for host byte order
+ * and video hw byte order
+ */
 
 /*
  * resolution, from one of platinumfb_setting vmode_name's.

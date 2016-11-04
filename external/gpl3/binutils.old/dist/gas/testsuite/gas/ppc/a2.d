@@ -117,12 +117,12 @@ Disassembly of section \.text:
  164:	(7c 0a 58 6c|6c 58 0a 7c) 	dcbst   r10,r11
  168:	(7c 0a 58 7e|7e 58 0a 7c) 	dcbstep r10,r11
  16c:	(7c 0a 5a 2c|2c 5a 0a 7c) 	dcbt    r10,r11
- 170:	(7c 2a 5a 2c|2c 5a 2a 7c) 	dcbt    r10,r11,1
+ 170:	(7c 2a 5a 2c|2c 5a 2a 7c) 	dcbt    1,r10,r11
  174:	(7d 4b 62 7e|7e 62 4b 7d) 	dcbtep  r10,r11,r12
  178:	(7c 0a 59 4c|4c 59 0a 7c) 	dcbtls  r10,r11
  17c:	(7c 2a 59 4c|4c 59 2a 7c) 	dcbtls  1,r10,r11
  180:	(7c 0a 59 ec|ec 59 0a 7c) 	dcbtst  r10,r11
- 184:	(7c 2a 59 ec|ec 59 2a 7c) 	dcbtst  r10,r11,1
+ 184:	(7c 2a 59 ec|ec 59 2a 7c) 	dcbtst  1,r10,r11
  188:	(7d 4b 61 fe|fe 61 4b 7d) 	dcbtstep r10,r11,r12
  18c:	(7c 0a 59 0c|0c 59 0a 7c) 	dcbtstls r10,r11
  190:	(7c 2a 59 0c|0c 59 2a 7c) 	dcbtstls 1,r10,r11
@@ -347,7 +347,7 @@ Disassembly of section \.text:
  4fc:	(7c 00 04 00|00 04 00 7c) 	mcrxr   cr0
  500:	(7d 80 04 00|00 04 80 7d) 	mcrxr   cr3
  504:	(7c 60 00 26|26 00 60 7c) 	mfcr    r3
- 508:	(7c 60 00 26|26 00 60 7c) 	mfcr    r3
+ 508:	(7c 70 20 26|26 20 70 7c) 	mfocrf  r3,2
  50c:	(7c 70 10 26|26 10 70 7c) 	mfocrf  r3,1
  510:	(7c 78 00 26|26 00 78 7c) 	mfocrf  r3,128
  514:	(7d 4a 3a 87|87 3a 4a 7d) 	mfdcr\.  r10,234
@@ -360,8 +360,8 @@ Disassembly of section \.text:
  530:	(7c 70 10 26|26 10 70 7c) 	mfocrf  r3,1
  534:	(7c 78 00 26|26 00 78 7c) 	mfocrf  r3,128
  538:	(7d 4a 3a a6|a6 3a 4a 7d) 	mfspr   r10,234
- 53c:	(7d 4c 42 e6|e6 42 4c 7d) 	mftbl   r10
- 540:	(7d 4d 42 e6|e6 42 4d 7d) 	mftbu   r10
+ 53c:	(7d 4c 42 a6|a6 42 4c 7d) 	mftb    r10
+ 540:	(7d 4d 42 a6|a6 42 4d 7d) 	mftbu   r10
  544:	(7c 00 51 dc|dc 51 00 7c) 	msgclr  r10
  548:	(7c 00 51 9c|9c 51 00 7c) 	msgsnd  r10
  54c:	(7c 60 01 20|20 01 60 7c) 	mtcrf   0,r3
@@ -544,9 +544,9 @@ Disassembly of section \.text:
  810:	(7e 95 01 90|90 01 95 7e) 	subfze  r20,r21
  814:	(7e 95 05 91|91 05 95 7e) 	subfzeo\. r20,r21
  818:	(7e 95 05 90|90 05 95 7e) 	subfzeo r20,r21
- 81c:	(7c 00 04 ac|ac 04 00 7c) 	sync    
- 820:	(7c 00 04 ac|ac 04 00 7c) 	sync    
- 824:	(7c 00 04 ac|ac 04 00 7c) 	sync    
+ 81c:	(7c 00 04 ac|ac 04 00 7c) 	hwsync
+ 820:	(7c 00 04 ac|ac 04 00 7c) 	hwsync
+ 824:	(7c 00 04 ac|ac 04 00 7c) 	hwsync
  828:	(7c 20 04 ac|ac 04 20 7c) 	lwsync
  82c:	(7c aa 58 88|88 58 aa 7c) 	tdlge   r10,r11
  830:	(08 aa 00 64|64 00 aa 08) 	tdlgei  r10,100

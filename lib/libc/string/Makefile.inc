@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.80 2014/09/24 18:16:37 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.80.2.1 2016/11/04 14:48:53 pgoyette Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -22,12 +22,12 @@ SRCS+=	strspn.c strstr.c swab.c strnstr.c
 SRCS+=	explicit_memset.c consttime_memequal.c
 
 SRCS+=	memccpy.c memcpy.c memmem.c memmove.c
-SRCS+=	strchr.c strrchr.c
+SRCS+=	strchr.c strrchr.c strchrnul.c
 SRCS+=	popcount32.c popcount64.c
 
 # wide char
 SRCS+=	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
-	wcslen.c wcsncat.c wcscasecmp.c wcsdup.c wcsncasecmp.c \
+	wcslen.c wcsncat.c wcsnlen.c wcscasecmp.c wcsdup.c wcsncasecmp.c \
 	wcsncmp.c wcsncpy.c wcspbrk.c wcsrchr.c wcsspn.c wcsstr.c wcstok.c \
 	wcswcs.c wmemchr.c wmemcmp.c wmemcpy.c wmemmove.c wmemset.c
 CPPFLAGS.wcscmp.c+=	-I${LIBCDIR}/locale
@@ -59,6 +59,7 @@ MLINKS+=strlcpy.3 strlcat.3
 MLINKS+=strlen.3 strnlen.3
 MLINKS+=strstr.3 strcasestr.3
 MLINKS+=strstr.3 strnstr.3
+MLINKS+=strchr.3 strchrnul.3
 MLINKS+=memchr.3 memrchr.3
 MLINKS+=strtok.3 strtok_r.3
 MLINKS+=strerror.3 strerror_r.3 strerror.3 perror.3 \
@@ -71,8 +72,9 @@ MLINKS+=wmemchr.3 wmemcmp.3 wmemchr.3 wmemcpy.3 \
 	wmemchr.3 wcscmp.3 wmemchr.3 wcscpy.3 \
 	wmemchr.3 wcscspn.3 wmemchr.3 wcslcat.3 \
 	wmemchr.3 wcslcpy.3 wmemchr.3 wcslen.3 \
-	wmemchr.3 wcsncat.3 wmemchr.3 wcsncmp.3 \
-	wmemchr.3 wcsncpy.3 wmemchr.3 wcspbrk.3 \
-	wmemchr.3 wcsrchr.3 wmemchr.3 wcsspn.3 \
-	wmemchr.3 wcsstr.3 wmemchr.3 wcswcs.3
+	wmemchr.3 wcsncat.3 wmemchr.3 wcsnlen.3 \
+	wmemchr.3 wcsncmp.3 wmemchr.3 wcsncpy.3 \
+	wmemchr.3 wcspbrk.3 wmemchr.3 wcsrchr.3 \
+	wmemchr.3 wcsspn.3 wmemchr.3 wcsstr.3 \
+	wmemchr.3 wcswcs.3
 MLINKS+=wcscasecmp.3 wcsncasecmp.3

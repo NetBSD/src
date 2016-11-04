@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.28.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.28.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.28.2.1 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.28.2.2 2016/11/04 14:49:21 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -482,9 +486,11 @@ ip6flow_slowtimo_work(struct work *wk, void *arg)
 	/* We can allow enqueuing another work at this point */
 	atomic_swap_uint(&ip6flow_work_enqueued, 0);
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
-	mutex_enter(&ip6flow_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
+	mutex_enter(&ip6flow_lock);
 
 	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
 		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
@@ -500,9 +506,11 @@ ip6flow_slowtimo_work(struct work *wk, void *arg)
 		}
 	}
 
-	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(&ip6flow_lock);
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 void
@@ -527,9 +535,12 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	struct ip6flow *ip6f;
 	size_t hash;
 
-	mutex_enter(&ip6flow_lock);
-
 	ip6 = mtod(m, const struct ip6_hdr *);
+
+#ifndef NET_MPSAFE
+	KERNEL_LOCK(1, NULL);
+#endif
+	mutex_enter(&ip6flow_lock);
 
 	/*
 	 * If IPv6 Fast Forward is disabled, don't create a flow.
@@ -537,12 +548,8 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	 *
 	 * Don't create a flow for ICMPv6 messages.
 	 */
-	if (ip6_maxflows == 0 || ip6->ip6_nxt == IPPROTO_IPV6_ICMP) {
-		mutex_exit(&ip6flow_lock);
-		return;
-	}
-
-	KERNEL_LOCK(1, NULL);
+	if (ip6_maxflows == 0 || ip6->ip6_nxt == IPPROTO_IPV6_ICMP)
+		goto out;
 
 	/*
 	 * See if an existing flow exists.  If so:
@@ -593,8 +600,10 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	IP6FLOW_INSERT(&ip6flowtable[hash], ip6f);
 
  out:
-	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(&ip6flow_lock);
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
+#endif
 }
 
 /*
@@ -637,13 +646,17 @@ sysctl_net_inet6_ip6_maxflows(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 
 	ip6flow_reap(0);
 
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 
 	return (0);
 }
@@ -665,13 +678,15 @@ sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
 		/*
 		 * Can only fail due to malloc()
 		 */
+#ifndef NET_MPSAFE
 		mutex_enter(softnet_lock);
 		KERNEL_LOCK(1, NULL);
-
+#endif
 		error = ip6flow_invalidate_all(tmp);
-
+#ifndef NET_MPSAFE
 		KERNEL_UNLOCK_ONE(NULL);
 		mutex_exit(softnet_lock);
+#endif
 	} else {
 		/*
 		 * EINVAL if not a power of 2

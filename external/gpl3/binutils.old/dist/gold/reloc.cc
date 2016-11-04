@@ -1,6 +1,6 @@
 // reloc.cc -- relocate input files for gold.
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -866,7 +866,9 @@ Sized_relobj_file<size, big_endian>::write_sections(const Layout* layout,
 	  // Read and decompress the section.
           section_size_type len;
 	  const unsigned char* p = this->section_contents(i, &len, false);
-	  if (!decompress_input_section(p, len, view, view_size))
+	  if (!decompress_input_section(p, len, view, view_size,
+					size, big_endian,
+					shdr.get_sh_flags()))
 	    this->error(_("could not decompress section %s"),
 			this->section_name(i).c_str());
         }
@@ -1014,9 +1016,14 @@ Sized_relobj_file<size, big_endian>::do_relocate_sections(
 				   output_offset == invalid_address,
 				   view, address, view_size, reloc_map);
 	  if (parameters->options().emit_relocs())
-	    this->emit_relocs(&relinfo, i, sh_type, prelocs, reloc_count,
-			      os, output_offset, view, address, view_size,
-			      (*pviews)[i].view, (*pviews)[i].view_size);
+	    {
+	      Relocatable_relocs* rr = this->relocatable_relocs(i);
+	      target->relocate_relocs(&relinfo, sh_type, prelocs, reloc_count,
+				      os, output_offset, rr,
+				      view, address, view_size,
+				      (*pviews)[i].view,
+				      (*pviews)[i].view_size);
+	    }
 	  if (parameters->incremental())
 	    this->incremental_relocs_write(&relinfo, sh_type, prelocs,
 					   reloc_count, os, output_offset, of);
@@ -1024,82 +1031,13 @@ Sized_relobj_file<size, big_endian>::do_relocate_sections(
       else
 	{
 	  Relocatable_relocs* rr = this->relocatable_relocs(i);
-	  target->relocate_for_relocatable(&relinfo, sh_type, prelocs,
-					   reloc_count, os, output_offset, rr,
-					   view, address, view_size,
-					   (*pviews)[i].view,
-					   (*pviews)[i].view_size);
+	  target->relocate_relocs(&relinfo, sh_type, prelocs, reloc_count,
+				  os, output_offset, rr,
+				  view, address, view_size,
+				  (*pviews)[i].view,
+				  (*pviews)[i].view_size);
 	}
     }
-}
-
-// Emit the relocs for --emit-relocs.
-
-template<int size, bool big_endian>
-void
-Sized_relobj_file<size, big_endian>::emit_relocs(
-    const Relocate_info<size, big_endian>* relinfo,
-    unsigned int i,
-    unsigned int sh_type,
-    const unsigned char* prelocs,
-    size_t reloc_count,
-    Output_section* output_section,
-    typename elfcpp::Elf_types<size>::Elf_Addr offset_in_output_section,
-    unsigned char* view,
-    typename elfcpp::Elf_types<size>::Elf_Addr address,
-    section_size_type view_size,
-    unsigned char* reloc_view,
-    section_size_type reloc_view_size)
-{
-  if (sh_type == elfcpp::SHT_REL)
-    this->emit_relocs_reltype<elfcpp::SHT_REL>(relinfo, i, prelocs,
-					       reloc_count, output_section,
-					       offset_in_output_section,
-					       view, address, view_size,
-					       reloc_view, reloc_view_size);
-  else
-    {
-      gold_assert(sh_type == elfcpp::SHT_RELA);
-      this->emit_relocs_reltype<elfcpp::SHT_RELA>(relinfo, i, prelocs,
-						  reloc_count, output_section,
-						  offset_in_output_section,
-						  view, address, view_size,
-						  reloc_view, reloc_view_size);
-    }
-}
-
-// Emit the relocs for --emit-relocs, templatized on the type of the
-// relocation section.
-
-template<int size, bool big_endian>
-template<int sh_type>
-void
-Sized_relobj_file<size, big_endian>::emit_relocs_reltype(
-    const Relocate_info<size, big_endian>* relinfo,
-    unsigned int i,
-    const unsigned char* prelocs,
-    size_t reloc_count,
-    Output_section* output_section,
-    typename elfcpp::Elf_types<size>::Elf_Addr offset_in_output_section,
-    unsigned char* view,
-    typename elfcpp::Elf_types<size>::Elf_Addr address,
-    section_size_type view_size,
-    unsigned char* reloc_view,
-    section_size_type reloc_view_size)
-{
-  const Relocatable_relocs* rr = this->relocatable_relocs(i);
-  relocate_for_relocatable<size, big_endian, sh_type>(
-    relinfo,
-    prelocs,
-    reloc_count,
-    output_section,
-    offset_in_output_section,
-    rr,
-    view,
-    address,
-    view_size,
-    reloc_view,
-    reloc_view_size);
 }
 
 // Write the incremental relocs.
@@ -1479,13 +1417,21 @@ Sized_relobj_file<size, big_endian>::find_functions(
 	continue;
 
       bool is_ordinary;
-      unsigned int sym_shndx = this->adjust_sym_shndx(i, isym.get_st_shndx(),
-						      &is_ordinary);
-      if (!is_ordinary || sym_shndx != shndx)
+      Symbol_location loc;
+      loc.shndx = this->adjust_sym_shndx(i, isym.get_st_shndx(),
+					 &is_ordinary);
+      if (!is_ordinary)
+	continue;
+
+      loc.object = this;
+      loc.offset = isym.get_st_value();
+      parameters->target().function_location(&loc);
+
+      if (loc.shndx != shndx)
 	continue;
 
       section_offset_type value =
-	convert_to_section_size_type(isym.get_st_value());
+	convert_to_section_size_type(loc.offset);
       section_size_type fnsize =
 	convert_to_section_size_type(isym.get_st_size());
 
@@ -1521,10 +1467,9 @@ Merged_symbol_value<size>::initialize_input_to_output_map(
     const Relobj* object,
     unsigned int input_shndx)
 {
-  Object_merge_map* map = object->merge_map();
-  map->initialize_input_to_output_map<size>(input_shndx,
-					    this->output_start_address_,
-					    &this->output_addresses_);
+  object->initialize_input_to_output_map<size>(input_shndx,
+					       this->output_start_address_,
+					       &this->output_addresses_);
 }
 
 // Get the output value corresponding to an input offset if we
@@ -1538,9 +1483,8 @@ Merged_symbol_value<size>::value_from_output_section(
     typename elfcpp::Elf_types<size>::Elf_Addr input_offset) const
 {
   section_offset_type output_offset;
-  bool found = object->merge_map()->get_output_offset(NULL, input_shndx,
-						      input_offset,
-						      &output_offset);
+  bool found = object->merge_output_offset(input_shndx, input_offset,
+					   &output_offset);
 
   // If this assertion fails, it means that some relocation was
   // against a portion of an input merge section which we didn't map

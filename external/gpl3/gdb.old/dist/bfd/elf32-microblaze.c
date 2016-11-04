@@ -44,11 +44,11 @@ static reloc_howto_type microblaze_elf_howto_raw[] =
    /* This reloc does nothing.  */
    HOWTO (R_MICROBLAZE_NONE,	/* Type.  */
           0,			/* Rightshift.  */
-          2,			/* Size (0 = byte, 1 = short, 2 = long).  */
-          32,			/* Bitsize.  */
+          3,			/* Size (0 = byte, 1 = short, 2 = long).  */
+          0,			/* Bitsize.  */
           FALSE,		/* PC_relative.  */
           0,			/* Bitpos.  */
-          complain_overflow_bitfield,  /* Complain on overflow.  */
+          complain_overflow_dont,  /* Complain on overflow.  */
           NULL,                  /* Special Function.  */
           "R_MICROBLAZE_NONE", 	/* Name.  */
           FALSE,		/* Partial Inplace.  */
@@ -179,11 +179,11 @@ static reloc_howto_type microblaze_elf_howto_raw[] =
    /* This reloc does nothing.  Used for relaxation.  */
    HOWTO (R_MICROBLAZE_64_NONE,	/* Type.  */
           0,			/* Rightshift.  */
-          2,			/* Size (0 = byte, 1 = short, 2 = long).  */
-          32,			/* Bitsize.  */
+          3,			/* Size (0 = byte, 1 = short, 2 = long).  */
+          0,			/* Bitsize.  */
           TRUE,			/* PC_relative.  */
           0,			/* Bitpos.  */
-          complain_overflow_bitfield,  /* Complain on overflow.  */
+          complain_overflow_dont, /* Complain on overflow.  */
           NULL,                  /* Special Function.  */
           "R_MICROBLAZE_64_NONE",/* Name.  */
           FALSE,		/* Partial Inplace.  */
@@ -643,13 +643,22 @@ microblaze_elf_info_to_howto (bfd * abfd ATTRIBUTE_UNUSED,
 			      arelent * cache_ptr,
 			      Elf_Internal_Rela * dst)
 {
+  unsigned int r_type;
+
   if (!microblaze_elf_howto_table [R_MICROBLAZE_32])
     /* Initialize howto table if needed.  */
     microblaze_elf_howto_init ();
 
-  BFD_ASSERT (ELF32_R_TYPE (dst->r_info) < (unsigned int) R_MICROBLAZE_max);
+  r_type = ELF32_R_TYPE (dst->r_info);
+  if (r_type >= R_MICROBLAZE_max)
+    {
+      (*_bfd_error_handler) (_("%B: unrecognised MicroBlaze reloc number: %d"),
+			     abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      r_type = R_MICROBLAZE_NONE;
+    }
 
-  cache_ptr->howto = microblaze_elf_howto_table [ELF32_R_TYPE (dst->r_info)];
+  cache_ptr->howto = microblaze_elf_howto_table [r_type];
 }
 
 /* Microblaze ELF local labels start with 'L.' or '$L', not '.L'.  */

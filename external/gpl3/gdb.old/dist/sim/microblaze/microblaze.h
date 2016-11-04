@@ -24,7 +24,7 @@
 #define GET_RA	((inst & RA_MASK) >> RA_LOW)
 #define GET_RB	((inst & RB_MASK) >> RB_LOW)
 
-#define CPU     microblaze_state.cpu[0].microblaze_cpu
+#define CPU     cpu->microblaze_cpu
 
 #define RD      CPU.regs[rd]
 #define RA      CPU.regs[ra]
@@ -52,18 +52,16 @@
 #define RETREG  CPU.regs[3]
 
 
-#define MEM(X)	memory[X]
-
-#define MEM_RD_BYTE(X)	rbat(X)
-#define MEM_RD_HALF(X)	rhat(X)
-#define MEM_RD_WORD(X)	rlat(X)
+#define MEM_RD_BYTE(X)	sim_core_read_1 (cpu, 0, read_map, X)
+#define MEM_RD_HALF(X)	sim_core_read_2 (cpu, 0, read_map, X)
+#define MEM_RD_WORD(X)	sim_core_read_4 (cpu, 0, read_map, X)
 #define MEM_RD_UBYTE(X) (ubyte) MEM_RD_BYTE(X)
 #define MEM_RD_UHALF(X) (uhalf) MEM_RD_HALF(X)
 #define MEM_RD_UWORD(X) (uword) MEM_RD_WORD(X)
 
-#define MEM_WR_BYTE(X, D) wbat(X, D)
-#define MEM_WR_HALF(X, D) what(X, D)
-#define MEM_WR_WORD(X, D) wlat(X, D)
+#define MEM_WR_BYTE(X, D) sim_core_write_1 (cpu, 0, write_map, X, D)
+#define MEM_WR_HALF(X, D) sim_core_write_2 (cpu, 0, write_map, X, D)
+#define MEM_WR_WORD(X, D) sim_core_write_4 (cpu, 0, write_map, X, D)
 
 
 #define MICROBLAZE_SEXT8(X)	((char) X)

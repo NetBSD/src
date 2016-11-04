@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.22 2016/04/05 10:53:16 bouyer Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.22.2.1 2016/11/04 14:49:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.22 2016/04/05 10:53:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.22.2.1 2016/11/04 14:49:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,14 +57,19 @@ struct dsrtc_model {
 	uint16_t dm_model;
 	uint8_t dm_ch_reg;
 	uint8_t dm_ch_value;
+	uint8_t dm_vbaten_reg;
+	uint8_t dm_vbaten_value;
 	uint8_t dm_rtc_start;
 	uint8_t dm_rtc_size;
 	uint8_t dm_nvram_start;
 	uint8_t dm_nvram_size;
 	uint8_t dm_flags;
-#define	DSRTC_FLAG_CLOCK_HOLD	1
-#define	DSRTC_FLAG_BCD		2	
-#define	DSRTC_FLAG_TEMP		4	
+#define	DSRTC_FLAG_CLOCK_HOLD		0x01
+#define	DSRTC_FLAG_BCD			0x02
+#define	DSRTC_FLAG_TEMP			0x04
+#define DSRTC_FLAG_VBATEN		0x08
+#define	DSRTC_FLAG_YEAR_START_2K	0x10
+#define	DSRTC_FLAG_CLOCK_HOLD_REVERSED	0x20
 };
 
 static const struct dsrtc_model dsrtc_models[] = {
@@ -81,6 +86,13 @@ static const struct dsrtc_model dsrtc_models[] = {
 		.dm_model = 1339,
 		.dm_rtc_start = DS1339_RTC_START,
 		.dm_rtc_size = DS1339_RTC_SIZE,
+		.dm_flags = DSRTC_FLAG_BCD,
+	}, {
+		.dm_model = 1340,
+		.dm_ch_reg = DSXXXX_SECONDS,
+		.dm_ch_value = DS1340_SECONDS_EOSC,
+		.dm_rtc_start = DS1340_RTC_START,
+		.dm_rtc_size = DS1340_RTC_SIZE,
 		.dm_flags = DSRTC_FLAG_BCD,
 	}, {
 		.dm_model = 1672,
@@ -106,6 +118,19 @@ static const struct dsrtc_model dsrtc_models[] = {
 		.dm_nvram_start = DS3232_NVRAM_START,
 		.dm_nvram_size = DS3232_NVRAM_SIZE,
 		.dm_flags = DSRTC_FLAG_BCD,
+	}, {
+		/* MCP7940 */
+		.dm_model = 7940,
+		.dm_rtc_start = DS1307_RTC_START,
+		.dm_rtc_size = DS1307_RTC_SIZE,
+		.dm_ch_reg = DSXXXX_SECONDS,
+		.dm_ch_value = DS1307_SECONDS_CH,
+		.dm_vbaten_reg = DSXXXX_DAY,
+		.dm_vbaten_value = MCP7940_TOD_DAY_VBATEN,
+		.dm_nvram_start = MCP7940_NVRAM_START,
+		.dm_nvram_size = MCP7940_NVRAM_SIZE,
+		.dm_flags = DSRTC_FLAG_BCD | DSRTC_FLAG_CLOCK_HOLD |
+			DSRTC_FLAG_VBATEN | DSRTC_FLAG_CLOCK_HOLD_REVERSED,
 	},
 };
 
@@ -186,7 +211,7 @@ dsrtc_match(device_t parent, cfdata_t cf, void *arg)
 			return 1;
 	} else {
 		/* indirect config - check typical address */
-		if (ia->ia_addr == DS1307_ADDR)
+		if (ia->ia_addr == DS1307_ADDR || ia->ia_addr == MCP7940_ADDR)
 			return dsrtc_model(cf->cf_flags & 0xffff) != NULL;
 	}
 	return 0;
@@ -450,9 +475,13 @@ dsrtc_clock_read_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	dt->dt_mon = bcdtobin(bcd[DSXXXX_MONTH] & DSXXXX_MONTH_MASK);
 
 	/* XXX: Should be an MD way to specify EPOCH used by BIOS/Firmware */
-	dt->dt_year = bcdtobin(bcd[DSXXXX_YEAR]) + POSIX_BASE_YEAR;
-	if (bcd[DSXXXX_MONTH] & DSXXXX_MONTH_CENTURY)
-		dt->dt_year += 100;
+	if (sc->sc_model.dm_flags & DSRTC_FLAG_YEAR_START_2K)
+		dt->dt_year = bcdtobin(bcd[DSXXXX_YEAR]) + 2000;
+	else {
+		dt->dt_year = bcdtobin(bcd[DSXXXX_YEAR]) + POSIX_BASE_YEAR;
+		if (bcd[DSXXXX_MONTH] & DSXXXX_MONTH_CENTURY)
+			dt->dt_year += 100;
+	}
 
 	return 1;
 }
@@ -499,7 +528,10 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 		return 0;
 	}
 
-	cmdbuf[1] |= dm->dm_ch_value;
+	if (sc->sc_model.dm_flags & DSRTC_FLAG_CLOCK_HOLD_REVERSED)
+		cmdbuf[1] &= ~dm->dm_ch_value;
+	else
+		cmdbuf[1] |= dm->dm_ch_value;
 
 	if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
 	    cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) != 0) {
@@ -517,8 +549,13 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	uint8_t op = I2C_OP_WRITE;
 	for (signed int i = dm->dm_rtc_size - 1; i >= 0; i--) {
 		cmdbuf[0] = dm->dm_rtc_start + i;
+		if ((dm->dm_flags & DSRTC_FLAG_VBATEN) &&
+				dm->dm_rtc_start + i == dm->dm_vbaten_reg)
+			bcd[i] |= dm->dm_vbaten_value;
 		if (dm->dm_rtc_start + i == dm->dm_ch_reg) {
 			op = I2C_OP_WRITE_WITH_STOP;
+			if (dm->dm_flags & DSRTC_FLAG_CLOCK_HOLD_REVERSED)
+				bcd[i] |= dm->dm_ch_value;
 		}
 		if ((error = iic_exec(sc->sc_tag, op, sc->sc_address,
 		    cmdbuf, 1, &bcd[i], 1, I2C_F_POLL)) != 0) {
@@ -536,7 +573,10 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	 */
 	if (op != I2C_OP_WRITE_WITH_STOP) {
 		cmdbuf[0] = dm->dm_ch_reg;
-		cmdbuf[1] &= ~dm->dm_ch_value;
+		if (dm->dm_flags & DSRTC_FLAG_CLOCK_HOLD_REVERSED)
+			cmdbuf[1] |= dm->dm_ch_value;
+		else
+			cmdbuf[1] &= ~dm->dm_ch_value;
 
 		if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 		    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 1,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.99.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.99.2.2 2016/11/04 14:49:20 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.99.2.1 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.99.2.2 2016/11/04 14:49:20 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -435,7 +435,6 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 #if defined(NETATALK)
 	struct ifqueue *inq = NULL;
 	int isr = 0;
-	int s;
 #endif
 
 	struct llc *l;
@@ -583,18 +582,20 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 	}
 #endif
 #if defined(NETATALK)
-	if (!inq) {
+	if (inq == NULL) {
 		m_freem(m);
+		return;
 	}
-	s = splnet();
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
+		IFQ_UNLOCK(inq);
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(inq, m);
+		IFQ_UNLOCK(inq);
 		schednetisr(isr);
 	}
-	splx(s);
 #endif
 }
 

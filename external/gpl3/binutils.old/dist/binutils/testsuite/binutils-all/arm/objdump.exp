@@ -1,5 +1,4 @@
-#   Copyright 2004, 2007, 2009
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -86,4 +85,26 @@ if [regexp $want $got] then {
     pass "multiple input files"
 } else {
     fail "multiple input files"
+}
+
+if {![binutils_assemble $srcdir/$subdir/rvct_symbol.s tmpdir/rvct_symbol.o]} then {
+    return
+}
+
+if [is_remote host] {
+    set objfile [remote_download host tmpdir/rvct_symbol.o]
+} else {
+    set objfile tmpdir/rvct_symbol.o
+}
+
+# Make sure multiple disassemblies come out the same
+
+set got [binutils_run $OBJDUMP "-D $objfile $objfile"]
+
+set want "foo.*global_a.*global_b"
+
+if [regexp $want $got] then {
+    pass "skip rvct symbol"
+} else {
+    fail "skip rvct symbol"
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: underscore.c,v 1.1.1.1 2016/01/26 17:27:00 christos Exp $	*/
+/*	$NetBSD: underscore.c,v 1.1.1.1.2.1 2016/11/04 14:44:59 pgoyette Exp $	*/
 
 #ifdef __ELF__
 int prepends_underscore = 0;

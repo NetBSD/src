@@ -1,0 +1,409 @@
+# Copyright 2012-2016 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Tests for explicit locations
+
+standard_testfile explicit.c explicit2.c 3explicit.c
+set exefile $testfile
+
+if {[prepare_for_testing $testfile $exefile \
+	 [list $srcfile $srcfile2 $srcfile3] {debug nowarnings}]} {
+    return -1
+}
+
+# Wrap the entire test in a namespace to avoid contaminating other tests.
+namespace eval $testfile {
+
+    # Test the given (explicit) LINESPEC which should cause gdb to break
+    # at LOCATION.
+    proc test_breakpoint {linespec location} {
+
+	set testname "set breakpoint at \"$linespec\""
+	# Delete all breakpoints, set a new breakpoint at LINESPEC,
+	# and attempt to run to it.
+	delete_breakpoints
+	if {[gdb_breakpoint $linespec]} {
+	    pass $testname
+	    send_log "\nexpecting locpattern \"$location\"\n"
+	    gdb_continue_to_breakpoint $linespec $location
+	} else {
+	    fail $testname
+	}
+    }
+
+    # Add the given LINESPEC to the array named in THEARRAY.  GDB is expected
+    # to stop at LOCATION.
+    proc add {thearray linespec location} {
+	upvar $thearray ar
+
+	lappend ar(linespecs) $linespec
+	lappend ar(locations) $location
+    }
+
+    # A list of all explicit linespec arguments.
+    variable all_arguments
+    set all_arguments {"source" "function" "label" "line"}
+
+    # Some locations used in this test
+    variable lineno
+    variable location
+    set lineno(normal) [gdb_get_line_number "myfunction location" $srcfile]
+    set lineno(top) [gdb_get_line_number "top location" $srcfile]
+    foreach v [array names lineno] {
+	set location($v) ".*[string_to_regexp "$srcfile:$lineno($v)"].*"
+    }
+
+    # A list of explicit locations and the corresponding location.
+    variable linespecs
+    set linespecs(linespecs) {}
+    set linespecs(location) {}
+
+    add linespecs "-source $srcfile -function myfunction" $location(normal)
+    add linespecs "-source $srcfile -function myfunction -label top" \
+	$location(top)
+
+    # This isn't implemented yet; -line is silently ignored.
+    add linespecs "-source $srcfile -function myfunction -label top -line 3" \
+	$location(top)
+    add linespecs "-source $srcfile -line $lineno(top)" $location(top)
+    add linespecs "-function myfunction" $location(normal)
+    add linespecs "-function myfunction -label top" $location(top)
+
+    # These are also not yet supported; -line is silently ignored.
+    add linespecs "-function myfunction -line 3" $location(normal)
+    add linespecs "-function myfunction -label top -line 3" $location(top)
+    add linespecs "-line 3" $location(normal)
+
+    # Fire up gdb.
+    if {![runto_main]} {
+	return -1
+    }
+
+    # Turn off queries
+    gdb_test_no_output "set confirm off"
+
+    # Simple error tests (many more are tested in ls-err.exp)
+    foreach arg $all_arguments {
+	# Test missing argument
+	gdb_test "break -$arg" \
+	    [string_to_regexp "missing argument for \"-$arg\""]
+
+	# Test abbreviations
+	set short [string range $arg 0 3]
+	gdb_test "break -$short" \
+	    [string_to_regexp "missing argument for \"-$short\""]
+    }
+
+    # Test invalid arguments
+    foreach arg {"-foo" "-foo bar" "-function myfunction -foo" \
+		     "-function -myfunction -foo bar"} {
+	gdb_test "break $arg" \
+	    [string_to_regexp "invalid explicit location argument, \"-foo\""]
+    }
+
+    # Test explicit locations, with and without conditions.
+    # For these tests, it is easiest to turn of pending breakpoint.
+    gdb_test_no_output "set breakpoint pending off" \
+	"turn off pending breakpoints"
+
+    foreach linespec $linespecs(linespecs) loc_pattern $linespecs(locations) {
+
+	# Test the linespec
+	test_breakpoint $linespec $loc_pattern
+
+	# Test with a valid condition
+	delete_breakpoints
+	set tst "set breakpoint at \"$linespec\" with valid condition"
+	if {[gdb_breakpoint "$linespec if arg == 0"]} {
+	    pass $tst
+
+	    gdb_test "info break" ".*stop only if arg == 0.*" \
+		"info break of conditional breakpoint at \"$linespec\""
+	} else {
+	    fail $tst
+	}
+
+	# Test with invalid condition
+	gdb_test "break $linespec if foofoofoo == 1" \
+	    ".*No symbol \"foofoofoo\" in current context.*" \
+	    "set breakpoint at \"$linespec\" with invalid condition"
+
+	# Test with thread
+	delete_breakpoints
+	gdb_test "break $linespec thread 123" "Unknown thread 123."
+    }
+
+    # Tests below are about tab-completion, which doesn't work if readline
+    # library isn't used.  Check it first.
+    if { [readline_is_used] } {
+
+	# Test the explicit location completer
+	foreach abbrev {"fun" "so" "lab" "li"}  full {"function" "source" "label" "line"} {
+	    set tst "complete 'break -$abbrev'"
+	    send_gdb "break -${abbrev}\t"
+	    gdb_test_multiple "" $tst {
+		"break -$full " {
+		    send_gdb "\n"
+		    gdb_test_multiple "" $tst {
+			-re "missing argument for \"-$full\".*$gdb_prompt " {
+			    pass $tst
+			}
+		    }
+		}
+	    }
+	    set tst "complete -$full with no value"
+	    send_gdb "break -$full \t"
+	    gdb_test_multiple "" $tst {
+		-re ".*break -$full " {
+		    send_gdb "\n"
+		    gdb_test_multiple "" $tst {
+			-re ".*Source filename requires function, label, or line offset\..*$gdb_prompt " {
+			    if {[string equal $full "source"]} {
+				pass $tst
+			    } else {
+				fail $tst
+			    }
+			}
+			-re "missing argument for \"-$full\".*$gdb_prompt " {
+			    pass $tst
+			}
+		    }
+		}
+	    }
+	}
+
+	set tst "complete unique function name"
+	send_gdb "break -function mai\t"
+	gdb_test_multiple "" $tst {
+	    "break -function mai\\\x07n" {
+		send_gdb "\n"
+		gdb_test "" ".*Breakpoint \[0-9\]+.*" $tst
+		gdb_test_no_output "delete \$bpnum" "delete $tst breakpoint"
+	    }
+	}
+
+	set tst "complete non-unique function name"
+	send_gdb "break -function myfunc\t"
+	gdb_test_multiple "" $tst {
+	    "break -function myfunc\\\x07tion" {
+		send_gdb "\t\t"
+		gdb_test_multiple "" $tst {
+		    -re "\\\x07\r\nmyfunction\[ \t\]+myfunction2\[ \t\]+myfunction3\[ \t\]+myfunction4\[ \t\]+\r\n$gdb_prompt " {
+			gdb_test "2" ".*Breakpoint \[0-9\]+.*" $tst
+			gdb_test_no_output "delete \$bpnum" "delete $tst breakpoint"
+		    }
+		}
+	    }
+	}
+
+	set tst "complete non-existant function name"
+	send_gdb "break -function foo\t"
+	gdb_test_multiple "" $tst {
+	    "break -function foo\\\x07" {
+		send_gdb "\t\t"
+		gdb_test_multiple "" $tst {
+		    -re "\\\x07\\\x07" {
+			send_gdb "\n"
+			gdb_test "" {Function "foo" not defined.} $tst
+		    }
+		}
+	    }
+	}
+
+	set tst "complete unique file name"
+	send_gdb "break -source 3ex\t"
+	gdb_test_multiple "" $tst {
+	    "break -source 3explicit.c " {
+		send_gdb "\n"
+		gdb_test "" \
+		    {Source filename requires function, label, or line offset.} $tst
+	    }
+	}
+
+	set tst "complete non-unique file name"
+	send_gdb "break -source exp\t"
+	gdb_test_multiple "" $tst {
+	    "break -source exp\\\x07licit" {
+		send_gdb "\t\t"
+		gdb_test_multiple "" $tst {
+		    -re "\\\x07\r\nexplicit.c\[ \t\]+explicit2.c\[ \t\]+\r\n$gdb_prompt" {
+			send_gdb "\n"
+			gdb_test "" \
+			    {Source filename requires function, label, or line offset.} \
+			    $tst
+		    }
+		}
+	    }
+
+	    "break -source exp\\\x07l" {
+		# This pattern may occur when glibc debuginfo is installed.
+		send_gdb "\t\t"
+		gdb_test_multiple "" $tst {
+		    -re "\\\x07\r\nexplicit.c\[ \t\]+explicit2.c\[ \t\]+expl.*\r\n$gdb_prompt" {
+			send_gdb "\n"
+			gdb_test "" \
+			    {Source filename requires function, label, or line offset.} \
+			    $tst
+		    }
+		}
+	    }
+	}
+
+	set tst "complete non-existant file name"
+	send_gdb "break -source foo\t"
+	gdb_test_multiple "" $tst {
+	    "break -source foo" {
+		send_gdb "\t\t"
+		gdb_test_multiple "" $tst {
+		    "\\\x07\\\x07" {
+			send_gdb "\n"
+			gdb_test "" \
+			    {Source filename requires function, label, or line offset.} \
+			    $tst
+		    }
+		}
+	    }
+	}
+
+	set tst "complete filename and unique function name"
+	send_gdb "break -source explicit.c -function ma\t"
+	gdb_test_multiple "" $tst {
+	    "break -source explicit.c -function main " {
+		send_gdb "\n"
+		gdb_test "" ".*Breakpoint .*" $tst
+		gdb_test_no_output "delete \$bpnum" "delete $tst breakpoint"
+	    }
+	}
+
+	set tst "complete filename and non-unique function name"
+	send_gdb "break -so 3explicit.c -func myfunc\t"
+	gdb_test_multiple "" $tst {
+	    "break -so 3explicit.c -func myfunc\\\x07tion" {
+		send_gdb "\t\t"
+		gdb_test_multiple "" $tst {
+		    -re "\\\x07\r\nmyfunction3\[ \t\]+myfunction4\[ \t\]+\r\n$gdb_prompt " {
+			gdb_test "3" ".*Breakpoint \[0-9\]+.*" $tst
+			gdb_test_no_output "delete \$bpnum" "delete $tst breakpoint"
+		    }
+		}
+	    }
+	}
+
+	set tst "complete filename and non-existant function name"
+	send_gdb "break -sou 3explicit.c -fun foo\t"
+	gdb_test_multiple "" $tst {
+	    "break -sou 3explicit.c -fun foo\\\x07" {
+		send_gdb "\t\t"
+		gdb_test_multiple "" $tst {
+		    "\\\x07\\\x07" {
+			send_gdb "\n"
+			gdb_test "" \
+			    {Function "foo" not defined in "3explicit.c".} $tst
+		    }
+		}
+	    }
+	}
+
+	set tst "complete filename and function reversed"
+	send_gdb "break -func myfunction4 -source 3ex\t"
+	gdb_test_multiple "" $tst {
+	    "break -func myfunction4 -source 3explicit.c " {
+		send_gdb "\n"
+		gdb_test "" "Breakpoint \[0-9\]+.*" $tst
+		gdb_test_no_output "delete \$bpnum" "delete $tst breakpoint"
+	    }
+	}
+
+	# NOTE: We don't bother testing more elaborate combinations of options,
+	# such as "-func main -sour 3ex\t" (main is defined in explicit.c).
+	# The completer cannot handle these yet.
+
+    }
+    # End of completion tests.
+
+    # Test pending explicit breakpoints
+    gdb_exit
+    gdb_start
+
+    set tst "pending invalid conditional explicit breakpoint"
+    if {![gdb_breakpoint "-func myfunction if foofoofoo == 1" \
+	      allow-pending]} {
+	fail "set $tst"
+    } else {
+	gdb_test "info break" ".*PENDING.*myfunction if foofoofoo == 1.*" $tst
+    }
+
+    gdb_exit
+    gdb_start
+
+    set tst "pending valid conditional explicit breakpoint"
+    if {![gdb_breakpoint "-func myfunction if arg == 0" \
+	      allow-pending]} {
+	fail "set $tst"
+    } else {
+	gdb_test "info break" ".*PENDING.*myfunction if arg == 0" $tst
+
+	gdb_load [standard_output_file $exefile]
+	gdb_test "info break" \
+	    ".*in myfunction at .*$srcfile:.*stop only if arg == 0.*" \
+	    "$tst resolved"
+    }
+
+    # Test interaction of condition command and explicit linespec conditons.
+    gdb_exit
+    gdb_start
+    gdb_load [standard_output_file $exefile]
+
+    set tst "condition_command overrides explicit linespec condition"
+    if {![runto main]} {
+	fail $tst
+    } else {
+	if {![gdb_breakpoint "-func myfunction if arg == 1"]} {
+	    fail "set breakpoint with condition 'arg == 1'"
+	} else {
+	    gdb_test_no_output "cond 2 arg == 0" \
+		"set new breakpoint condition for explicit linespec"
+
+	    gdb_continue_to_breakpoint $tst $location(normal)
+	}
+    }
+
+    gdb_test "cond 2" [string_to_regexp "Breakpoint 2 now unconditional."] \
+	"clear condition for explicit breakpoint"
+    set tst "info break of cleared condition of explicit breakpoint"
+    gdb_test_multiple "info break" $tst {
+	-re ".*in myfunction at .*$srcfile:.*stop only if arg == 0.*" {
+	    fail $tst
+	}
+	-re ".*in myfunction at .*$srcfile:.*$gdb_prompt $" {
+	    pass $tst
+	}
+    }
+
+    # Test explicit "ranges."  Make sure that using explicit
+    # locations doesn't alter the expected outcome.
+    gdb_test "list main" ".*" "list main 1"
+    set list_result [capture_command_output "list -,+" ""]
+    gdb_test "list main" ".*" "list main 2"
+    gdb_test "list -line -,-line +" [string_to_regexp $list_result]
+
+    # Ditto for the reverse (except that no output is expected).
+    gdb_test "list myfunction" ".*" "list myfunction 1"
+    gdb_test_no_output "list +,-"
+    gdb_test "list myfunction" ".*" "list myfunction 2"
+    gdb_test_no_output "list -line +, -line -"
+}
+
+namespace delete $testfile

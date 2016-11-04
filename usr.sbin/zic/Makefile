@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2015/04/28 17:00:42 christos Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2016/11/04 14:49:27 pgoyette Exp $
 
 .include "Makefile.inc"
 .include <bsd.own.mk>
@@ -8,9 +8,14 @@ COPTS.zic.c	+= -Wno-format-nonliteral
 PROG=	zic
 SRCS=	zic.c
 MAN=	zic.8
-TZVERSION!= ${TOOL_SED} -ne 's/VERSION=[ 	]*//p' ${NETBSDSRCDIR}/lib/libc/time/Makefile
+TZVERSION!= ${TOOL_CAT} ${NETBSDSRCDIR}/lib/libc/time/version
 CPPFLAGS+=-DPKGVERSION='"(tzcode) "' -DTZVERSION='"${TZVERSION}"'
 
 .PATH: ${NETBSDSRCDIR}/lib/libc/time
+
+.if !defined(HOSTPROG)
+LDADD+=-lutil
+DPADD+=${LIBUTIL}
+.endif
 
 .include <bsd.prog.mk>

@@ -19,7 +19,7 @@ if { [skip_ada_tests] } { return -1 }
 
 standard_ada_testfile foo
 
-if {[gdb_compile_ada "${srcfile}" "${binfile}" executable {debug}] != ""} {
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable {debug additional_flags=-gnat12}] != ""} {
     return -1
 }
 

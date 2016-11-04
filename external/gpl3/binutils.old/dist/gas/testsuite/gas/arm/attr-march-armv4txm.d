@@ -3,7 +3,7 @@
 # as: -march=armv4txm
 # readelf: -A
 # This test is only valid on EABI based ports.
-# target: *-*-*eabi *-*-nacl*
+# target: *-*-*eabi* *-*-nacl*
 
 Attribute Section: aeabi
 File Attributes

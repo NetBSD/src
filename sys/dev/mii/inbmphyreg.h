@@ -1,4 +1,4 @@
-/*	$NetBSD: inbmphyreg.h,v 1.3 2011/05/20 06:06:59 msaitoh Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.3.36.1 2016/11/04 14:49:09 pgoyette Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
 All rights reserved.
@@ -44,16 +44,15 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 #define BME1000_PAGE_SHIFT        5
 #define BME1000_REG(page, reg)    \
-        (((page) << BME1000_PAGE_SHIFT) | ((reg) & BME1000_MAX_REG_ADDRESS))
+        (((page) << BME1000_PAGE_SHIFT) | ((reg) & MII_ADDRMASK))
 
-#define BME1000_MAX_REG_ADDRESS        0x1f  /* 5 bit address bus (0-0x1f) */
 #define BME1000_MAX_MULTI_PAGE_REG     0xf   /* Registers equal on all pages */
 
 #define	BM_PHY_REG_PAGE(offset)			\
 	((uint16_t)(((offset) >> BME1000_PAGE_SHIFT) & 0xffff))
-#define	BM_PHY_REG_NUM(offset)			\
-	((uint16_t)((offset) & BME1000_MAX_REG_ADDRESS)		\
-	| (((offset) >> (21 - BME1000_PAGE_SHIFT)) & ~BME1000_MAX_REG_ADDRESS))
+#define	BM_PHY_REG_NUM(offset)				\
+	((uint16_t)((offset) & MII_ADDRMASK)		\
+	| (((offset) >> (21 - BME1000_PAGE_SHIFT)) & ~MII_ADDRMASK))
 
 /* BME1000 Specific Registers */
 #define BME1000_PHY_SPEC_CTRL	BME1000_REG(0, 16) /* PHY Specific Control */
@@ -84,6 +83,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #define	I82577_ADDR_REG		16
 #define	I82577_CFG_REG		22
 
+#define HV_INTC_FC_PAGE_START	768
+#define	BM_PORT_CTRL_PAGE	769
+
 #define HV_OEM_BITS		BME1000_REG(0, 25)
 #define HV_OEM_BITS_LPLU	(1 << 2)
 #define HV_OEM_BITS_A1KDIS	(1 << 6)
@@ -94,6 +96,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define	HV_KMRN_MODE_CTRL	BME1000_REG(BM_PORT_CTRL_PAGE, 16)
 #define	HV_KMRN_MDIO_SLOW	0x0400
+
+#define	BM_PORT_GEN_CFG		BME1000_REG(BM_PORT_CTRL_PAGE, 17)
 
 #define	IGP3_KMRN_DIAG		BME1000_REG(770, 19)
 #define	IGP3_KMRN_DIAG_PCS_LOCK_LOSS	(1 << 1)

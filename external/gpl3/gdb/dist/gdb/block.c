@@ -1,6 +1,6 @@
 /* Block-related functions for the GNU debugger, GDB.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -140,7 +140,7 @@ find_block_in_blockvector (const struct blockvector *bl, CORE_ADDR pc)
   /* If we have an addrmap mapping code addresses to blocks, then use
      that.  */
   if (BLOCKVECTOR_MAP (bl))
-    return addrmap_find (BLOCKVECTOR_MAP (bl), pc);
+    return (struct block *) addrmap_find (BLOCKVECTOR_MAP (bl), pc);
 
   /* Otherwise, use binary search to find the last block that starts
      before PC.
@@ -246,7 +246,7 @@ call_site_for_pc (struct gdbarch *gdbarch, CORE_ADDR pc)
 		    : MSYMBOL_PRINT_NAME (msym.minsym)));
     }
 
-  return *slot;
+  return (struct call_site *) *slot;
 }
 
 /* Return the blockvector immediately containing the innermost lexical block
@@ -351,8 +351,7 @@ block_initialize_namespace (struct block *block, struct obstack *obstack)
 {
   if (BLOCK_NAMESPACE (block) == NULL)
     {
-      BLOCK_NAMESPACE (block)
-	= obstack_alloc (obstack, sizeof (struct block_namespace_info));
+      BLOCK_NAMESPACE (block) = XOBNEW (obstack, struct block_namespace_info);
       BLOCK_NAMESPACE (block)->scope = NULL;
       BLOCK_NAMESPACE (block)->using_decl = NULL;
     }
@@ -426,6 +425,21 @@ set_block_compunit_symtab (struct block *block, struct compunit_symtab *cu)
   gb = (struct global_block *) block;
   gdb_assert (gb->compunit_symtab == NULL);
   gb->compunit_symtab = cu;
+}
+
+/* See block.h.  */
+
+struct dynamic_prop *
+block_static_link (const struct block *block)
+{
+  struct objfile *objfile = block_objfile (block);
+
+  /* Only objfile-owned blocks that materialize top function scopes can have
+     static links.  */
+  if (objfile == NULL || BLOCK_FUNCTION (block) == NULL)
+    return NULL;
+
+  return (struct dynamic_prop *) objfile_lookup_static_link (objfile, block);
 }
 
 /* Return the compunit of the global block.  */
@@ -856,7 +870,7 @@ block_find_non_opaque_type (struct symbol *sym, void *data)
 int
 block_find_non_opaque_type_preferred (struct symbol *sym, void *data)
 {
-  struct symbol **best = data;
+  struct symbol **best = (struct symbol **) data;
 
   if (!TYPE_IS_OPAQUE (SYMBOL_TYPE (sym)))
     return 1;

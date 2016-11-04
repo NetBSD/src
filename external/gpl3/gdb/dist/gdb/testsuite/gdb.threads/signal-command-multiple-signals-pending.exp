@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,9 +68,9 @@ proc test { schedlock } {
 	# signal.
 
 	gdb_test "thread 3" "Switching to thread 3.*"
-	gdb_test "continue" "Program received signal SIGUSR2.*" "stop with SIGUSR2"
+	gdb_test "continue" "Thread 3 .*received signal SIGUSR2.*" "stop with SIGUSR2"
 	gdb_test "thread 2" "Switching to thread 2.*"
-	gdb_test "continue" "Program received signal SIGUSR1.*" "stop with SIGUSR1"
+	gdb_test "continue" "Thread 2 .*received signal SIGUSR1.*" "stop with SIGUSR1"
 
 	gdb_test "break handler_sigusr1" "Breakpoint .* at .*$srcfile.*"
 	gdb_test "break handler_sigusr2" "Breakpoint .* at .*$srcfile.*"

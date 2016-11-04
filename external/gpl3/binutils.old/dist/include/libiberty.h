@@ -1,7 +1,6 @@
 /* Function declarations for libiberty.
 
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    
    Note - certain prototypes declared in this header file are for
    functions whoes implementation copyright does not belong to the
@@ -85,11 +84,11 @@ extern char **dupargv (char **) ATTRIBUTE_MALLOC;
 
 /* Expand "@file" arguments in argv.  */
 
-extern void expandargv PARAMS ((int *, char ***));
+extern void expandargv (int *, char ***);
 
 /* Write argv to an @-file, inserting necessary quoting.  */
 
-extern int writeargv PARAMS ((char **, FILE *));
+extern int writeargv (char **, FILE *);
 
 /* Return the number of elements in argv.  */
 
@@ -106,8 +105,11 @@ extern int countargv (char**);
    to find the declaration so provide a fully prototyped one.  If it
    is 1, we found it so don't provide any declaration at all.  */
 #if !HAVE_DECL_BASENAME
-#if defined (__GNU_LIBRARY__ ) || defined (__linux__) || defined (__FreeBSD__) || defined (__OpenBSD__) || defined(__NetBSD__) || defined (__CYGWIN__) || defined (__CYGWIN32__) || defined (__MINGW32__) || defined (HAVE_DECL_BASENAME)
-extern char *basename (const char *);
+#if defined (__GNU_LIBRARY__ ) || defined (__linux__) \
+ || defined (__FreeBSD__) || defined (__OpenBSD__) || defined (__NetBSD__) \
+ || defined (__CYGWIN__) || defined (__CYGWIN32__) || defined (__MINGW32__) \
+ || defined (__DragonFly__) || defined (HAVE_DECL_BASENAME) 
+extern char *basename (const char *) ATTRIBUTE_RETURNS_NONNULL ATTRIBUTE_NONNULL(1);
 #else
 /* Do not allow basename to be used if there is no prototype seen.  We
    either need to use the above prototype or have one from
@@ -118,18 +120,18 @@ extern char *basename (const char *);
 
 /* A well-defined basename () that is always compiled in.  */
 
-extern const char *lbasename (const char *);
+extern const char *lbasename (const char *) ATTRIBUTE_RETURNS_NONNULL ATTRIBUTE_NONNULL(1);
 
 /* Same, but assumes DOS semantics (drive name, backslash is also a
    dir separator) regardless of host.  */
 
-extern const char *dos_lbasename (const char *);
+extern const char *dos_lbasename (const char *) ATTRIBUTE_RETURNS_NONNULL ATTRIBUTE_NONNULL(1);
 
 /* Same, but assumes Unix semantics (absolute paths always start with
    a slash, only forward slash is accepted as dir separator)
    regardless of host.  */
 
-extern const char *unix_lbasename (const char *);
+extern const char *unix_lbasename (const char *) ATTRIBUTE_RETURNS_NONNULL ATTRIBUTE_NONNULL(1);
 
 /* A well-defined realpath () that is always compiled in.  */
 
@@ -139,7 +141,7 @@ extern char *lrealpath (const char *);
    the last argument of this function, to terminate the list of
    strings.  Allocates memory using xmalloc.  */
 
-extern char *concat (const char *, ...) ATTRIBUTE_MALLOC ATTRIBUTE_SENTINEL;
+extern char *concat (const char *, ...) ATTRIBUTE_MALLOC ATTRIBUTE_RETURNS_NONNULL ATTRIBUTE_SENTINEL;
 
 /* Concatenate an arbitrary number of strings.  You must pass NULL as
    the last argument of this function, to terminate the list of
@@ -148,7 +150,7 @@ extern char *concat (const char *, ...) ATTRIBUTE_MALLOC ATTRIBUTE_SENTINEL;
    pointer to be freed after the new string is created, similar to the
    way xrealloc works.  */
 
-extern char *reconcat (char *, const char *, ...) ATTRIBUTE_MALLOC ATTRIBUTE_SENTINEL;
+extern char *reconcat (char *, const char *, ...) ATTRIBUTE_MALLOC ATTRIBUTE_RETURNS_NONNULL ATTRIBUTE_SENTINEL;
 
 /* Determine the length of concatenating an arbitrary number of
    strings.  You must pass NULL as the last argument of this function,
@@ -161,14 +163,14 @@ extern unsigned long concat_length (const char *, ...) ATTRIBUTE_SENTINEL;
    to terminate the list of strings.  The supplied memory is assumed
    to be large enough.  */
 
-extern char *concat_copy (char *, const char *, ...) ATTRIBUTE_SENTINEL;
+extern char *concat_copy (char *, const char *, ...) ATTRIBUTE_RETURNS_NONNULL ATTRIBUTE_NONNULL(1) ATTRIBUTE_SENTINEL;
 
 /* Concatenate an arbitrary number of strings into a GLOBAL area of
    memory.  You must pass NULL as the last argument of this function,
    to terminate the list of strings.  The supplied memory is assumed
    to be large enough.  */
 
-extern char *concat_copy2 (const char *, ...) ATTRIBUTE_SENTINEL;
+extern char *concat_copy2 (const char *, ...) ATTRIBUTE_RETURNS_NONNULL ATTRIBUTE_SENTINEL;
 
 /* This is the global area used by concat_copy2.  */
 
@@ -224,9 +226,14 @@ extern char *make_relative_prefix (const char *, const char *,
 extern char *make_relative_prefix_ignore_links (const char *, const char *,
 						const char *) ATTRIBUTE_MALLOC;
 
+/* Returns a pointer to a directory path suitable for creating temporary
+   files in.  */
+
+extern const char *choose_tmpdir (void) ATTRIBUTE_RETURNS_NONNULL;
+
 /* Choose a temporary directory to use for scratch files.  */
 
-extern char *choose_temp_base (void) ATTRIBUTE_MALLOC;
+extern char *choose_temp_base (void) ATTRIBUTE_MALLOC ATTRIBUTE_RETURNS_NONNULL;
 
 /* Return a temporary file name or NULL if unable to create one.  */
 
@@ -256,7 +263,7 @@ extern int strtoerrno (const char *);
 
 /* ANSI's strerror(), but more robust.  */
 
-extern char *xstrerror (int);
+extern char *xstrerror (int) ATTRIBUTE_RETURNS_NONNULL;
 
 /* Return the maximum signal number for which strsignal will return a
    string.  */
@@ -298,30 +305,30 @@ extern void xmalloc_failed (size_t) ATTRIBUTE_NORETURN;
    message to stderr (using the name set by xmalloc_set_program_name,
    if any) and then call xexit.  */
 
-extern void *xmalloc (size_t) ATTRIBUTE_MALLOC;
+extern void *xmalloc (size_t) ATTRIBUTE_MALLOC ATTRIBUTE_RETURNS_NONNULL;
 
 /* Reallocate memory without fail.  This works like xmalloc.  Note,
    realloc type functions are not suitable for attribute malloc since
    they may return the same address across multiple calls. */
 
-extern void *xrealloc (void *, size_t);
+extern void *xrealloc (void *, size_t) ATTRIBUTE_RETURNS_NONNULL;
 
 /* Allocate memory without fail and set it to zero.  This works like
    xmalloc.  */
 
-extern void *xcalloc (size_t, size_t) ATTRIBUTE_MALLOC;
+extern void *xcalloc (size_t, size_t) ATTRIBUTE_MALLOC ATTRIBUTE_RETURNS_NONNULL;
 
 /* Copy a string into a memory buffer without fail.  */
 
-extern char *xstrdup (const char *) ATTRIBUTE_MALLOC;
+extern char *xstrdup (const char *) ATTRIBUTE_MALLOC ATTRIBUTE_RETURNS_NONNULL;
 
 /* Copy at most N characters from string into a buffer without fail.  */
 
-extern char *xstrndup (const char *, size_t) ATTRIBUTE_MALLOC;
+extern char *xstrndup (const char *, size_t) ATTRIBUTE_MALLOC ATTRIBUTE_RETURNS_NONNULL;
 
 /* Copy an existing memory buffer to a new memory buffer without fail.  */
 
-extern void *xmemdup (const void *, size_t, size_t) ATTRIBUTE_MALLOC;
+extern void *xmemdup (const void *, size_t, size_t) ATTRIBUTE_MALLOC ATTRIBUTE_RETURNS_NONNULL;
 
 /* Physical memory routines.  Return values are in BYTES.  */
 extern double physmem_total (void);
@@ -399,7 +406,7 @@ extern void hex_init (void);
    Returns NULL on error.  */
 
 extern struct pex_obj *pex_init (int flags, const char *pname,
-				 const char *tempbase);
+				 const char *tempbase) ATTRIBUTE_RETURNS_NONNULL;
 
 /* Flags for pex_run.  These are bits to be or'ed together.  */
 
@@ -442,6 +449,11 @@ extern struct pex_obj *pex_init (int flags, const char *pname,
    on Unix.  */
 #define PEX_BINARY_ERROR	0x80
 
+/* Append stdout to existing file instead of truncating it.  */
+#define PEX_STDOUT_APPEND	0x100
+
+/* Thes same as PEX_STDOUT_APPEND, but for STDERR.  */
+#define PEX_STDERR_APPEND	0x200
 
 /* Execute one program.  Returns NULL on success.  On error returns an
    error string (typically just the name of a system call); the error
@@ -609,12 +621,17 @@ extern int pexecute (const char *, char * const *, const char *,
 
 extern int pwait (int, int *, int);
 
-#if !HAVE_DECL_ASPRINTF
+#if defined(HAVE_DECL_ASPRINTF) && !HAVE_DECL_ASPRINTF
 /* Like sprintf but provides a pointer to malloc'd storage, which must
    be freed by the caller.  */
 
 extern int asprintf (char **, const char *, ...) ATTRIBUTE_PRINTF_2;
 #endif
+
+/* Like asprintf but allocates memory without fail. This works like
+   xmalloc.  */
+
+extern char *xasprintf (const char *, ...) ATTRIBUTE_MALLOC ATTRIBUTE_PRINTF_1;
 
 #if !HAVE_DECL_VASPRINTF
 /* Like vsprintf but provides a pointer to malloc'd storage, which
@@ -622,6 +639,11 @@ extern int asprintf (char **, const char *, ...) ATTRIBUTE_PRINTF_2;
 
 extern int vasprintf (char **, const char *, va_list) ATTRIBUTE_PRINTF(2,0);
 #endif
+
+/* Like vasprintf but allocates memory without fail. This works like
+   xmalloc.  */
+
+extern char *xvasprintf (const char *, va_list) ATTRIBUTE_MALLOC ATTRIBUTE_PRINTF(1,0);
 
 #if defined(HAVE_DECL_SNPRINTF) && !HAVE_DECL_SNPRINTF
 /* Like sprintf but prints at most N characters.  */
@@ -631,6 +653,37 @@ extern int snprintf (char *, size_t, const char *, ...) ATTRIBUTE_PRINTF_3;
 #if defined(HAVE_DECL_VSNPRINTF) && !HAVE_DECL_VSNPRINTF
 /* Like vsprintf but prints at most N characters.  */
 extern int vsnprintf (char *, size_t, const char *, va_list) ATTRIBUTE_PRINTF(3,0);
+#endif
+
+#if defined (HAVE_DECL_STRNLEN) && !HAVE_DECL_STRNLEN
+extern size_t strnlen (const char *, size_t);
+#endif
+
+#if defined(HAVE_DECL_STRVERSCMP) && !HAVE_DECL_STRVERSCMP
+/* Compare version strings.  */
+extern int strverscmp (const char *, const char *);
+#endif
+
+#if defined(HAVE_DECL_STRTOL) && !HAVE_DECL_STRTOL
+extern long int strtol (const char *nptr,
+                        char **endptr, int base);
+#endif
+
+#if defined(HAVE_DECL_STRTOUL) && !HAVE_DECL_STRTOUL
+extern unsigned long int strtoul (const char *nptr,
+                                  char **endptr, int base);
+#endif
+
+#if defined(HAVE_LONG_LONG) && defined(HAVE_DECL_STRTOLL) && !HAVE_DECL_STRTOLL
+__extension__
+extern long long int strtoll (const char *nptr,
+                              char **endptr, int base);
+#endif
+
+#if defined(HAVE_LONG_LONG) && defined(HAVE_DECL_STRTOULL) && !HAVE_DECL_STRTOULL
+__extension__
+extern unsigned long long int strtoull (const char *nptr,
+                                        char **endptr, int base);
 #endif
 
 #if defined(HAVE_DECL_STRVERSCMP) && !HAVE_DECL_STRVERSCMP

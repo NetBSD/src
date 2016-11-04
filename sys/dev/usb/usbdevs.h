@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.707 2016/06/01 04:51:33 pgoyette Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.707.2.1 2016/11/04 14:49:16 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.715 2016/06/01 04:47:02 pgoyette Exp
+ *	NetBSD: usbdevs,v 1.722 2016/10/31 04:15:22 nonaka Exp
  */
 
 /*
@@ -1259,6 +1259,9 @@
 #define	USB_PRODUCT_CSR_BLUETOOTH	0x0001		/* Bluetooth USB Adapter */
 #define	USB_PRODUCT_CSR_BLUETOOTH_NF	0xffff		/* Bluetooth USB Adapter */
 
+/* C-Media Electronics Inc. products */
+#define	USB_PRODUCT_CMEDIA_USBAUDIO	0x013c		/* USB Pnp Sound */
+
 /* CTX products */
 #define	USB_PRODUCT_CTX_EX1300	0x9999		/* Ex1300 hub */
 
@@ -1338,6 +1341,7 @@
 #define	USB_PRODUCT_DISPLAYLINK_VGA10	0x015a		/* CMP-USBVGA10 */
 #define	USB_PRODUCT_DISPLAYLINK_WSDVI	0x0198		/* WS Tech DVI */
 #define	USB_PRODUCT_DISPLAYLINK_EC008	0x019b		/* EasyCAP008 DVI */
+#define	USB_PRODUCT_DISPLAYLINK_FYDVI2	0x019e		/* DisplayLink FY-DVI2 */
 #define	USB_PRODUCT_DISPLAYLINK_GXDVIU2	0x01ac		/* BUFFALO GX-DVI/U2 */
 #define	USB_PRODUCT_DISPLAYLINK_LCD4300U	0x01ba		/* LCD-4300U */
 #define	USB_PRODUCT_DISPLAYLINK_LCD8000U	0x01bb		/* LCD-8000U */
@@ -1355,6 +1359,7 @@
 #define	USB_PRODUCT_DISPLAYLINK_LT1421WIDE	0x03e0		/* Lenovo ThinkVision LT1421 Wide */
 #define	USB_PRODUCT_DISPLAYLINK_SD_U2VDH	0x046d		/* AREA SD-U2VDH */
 #define	USB_PRODUCT_DISPLAYLINK_UM7X0	0x401a		/* nanovision MiMo */
+#define	USB_PRODUCT_DISPLAYLINK_FYDVI	0x8060		/* DisplayLink FY-DVI */
 
 /* D-Link products */
 /*product DLINK DSBS25		0x0100	DSB-S25 serial adapter*/
@@ -1369,6 +1374,7 @@
 #define	USB_PRODUCT_DLINK_RTL8192CU_3	0x330a		/* RTL8192CU */
 #define	USB_PRODUCT_DLINK_RTL8192CU_4	0x330b		/* RTL8192CU */
 #define	USB_PRODUCT_DLINK_DWA131B	0x330d		/* DWA-131 rev B */
+#define	USB_PRODUCT_DLINK_DWA125D1	0x330f		/* DWA-125 rev D1 */
 #define	USB_PRODUCT_DLINK_DWL122	0x3700		/* Wireless DWL122 */
 #define	USB_PRODUCT_DLINK_DWLG120	0x3701		/* DWL-G120 */
 #define	USB_PRODUCT_DLINK_DWL120F	0x3702		/* DWL-120 rev F */
@@ -1789,7 +1795,10 @@
 #define	USB_PRODUCT_HUAWEI_E1820	0x14ac		/* Huawei E1820 */
 #define	USB_PRODUCT_HUAWEI_E171INIT	0x14fe		/* Huawei E171 USB CD */
 #define	USB_PRODUCT_HUAWEI_E171	0x1506		/* Huawei E171 */
-#define	USB_PRODUCT_HUAWEI_E353	0x1507		/* Huawei E353 */
+#define	USB_PRODUCT_HUAWEI_E353_HiLink	0x1507		/* Huawei E353_HiLink */
+/* Accessing http://192.168.1.1/html/switchProjectMode.html on 
+   a Huawei HiLink device will switch it to u3g mode */
+#define	USB_PRODUCT_HUAWEI_E353	0x1442		/* Huawei E353 */
 #define	USB_PRODUCT_HUAWEI_K3765INIT	0x1520		/* Huawei K3765 USB CD */
 #define	USB_PRODUCT_HUAWEI_E353INIT	0x1f01		/* Huawei E353 USB CD */
 
@@ -2754,6 +2763,7 @@
 #define	USB_PRODUCT_REALTEK_RTL8187	0x8187		/* RTL8187 */
 #define	USB_PRODUCT_REALTEK_RTL8187B_0	0x8189		/* RTL8187B */
 #define	USB_PRODUCT_REALTEK_RTL8188CUS	0x818a		/* RTL8188CUS */
+#define	USB_PRODUCT_REALTEK_RTL8192EU	0x818b		/* RTL8192EU */
 #define	USB_PRODUCT_REALTEK_RTL8188CU_3	0x8191		/* RTL8188CU */
 #define	USB_PRODUCT_REALTEK_RTL8187B_1	0x8197		/* RTL8187B */
 #define	USB_PRODUCT_REALTEK_RTL8187B_2	0x8198		/* RTL8187B */

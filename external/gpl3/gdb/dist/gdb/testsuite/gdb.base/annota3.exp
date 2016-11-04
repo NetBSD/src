@@ -1,4 +1,4 @@
-# Copyright 2003-2015 Free Software Foundation, Inc.
+# Copyright 2003-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,12 +45,12 @@ clean_restart ${binfile}
 gdb_test_no_output "set height 0"
 
 #
-# break at main
+# break in main
 #
 
 set main_line [gdb_get_line_number "break main"]
 
-gdb_test "break main" \
+gdb_test "break ${srcfile}:${main_line}" \
     "Breakpoint.*at.* file .*$srcfile, line $main_line\\." \
     "breakpoint main"
 
@@ -258,11 +258,11 @@ gdb_expect_list "delete bp 3" "$gdb_prompt$" {
 }
 
 #
-# break at main, after value is initialized. This is in preparation
+# break in main, after value is initialized. This is in preparation
 # to test the annotate output for the display command.
 #
-send_gdb "break main\n"
-gdb_expect_list "break at main" "$gdb_prompt$" [concat {
+send_gdb "break ${srcfile}:${main_line}\n"
+gdb_expect_list "break in main" "$gdb_prompt$" [concat {
     "\r\n\032\032post-prompt\r\n" } [list \
     "Breakpoint 4 at 0x\[0-9a-z\]+: file .*annota3.c, line $main_line.\r\n"]]
 
@@ -362,22 +362,11 @@ gdb_test_multiple "info inferior 1" "$test" {
     }
 }
 
-#
 # Send a signal that is not handled
-#
-# SIGTRAP signals are dropped before they get to the inferior process
-# on hpux11.  In theory, this behaivor can be controlled by setting
-# TTEO_NORM_SIGTRAP in the inferior, but doing so did not cause
-# the signal to be properly delivered.
-#
-# It has been verified that other signals will be delivered.  However,
-# rather than twiddle the test, I choose to leave it as-is as it
-# exposes an interesting failure on hpux11.
 
 if [target_info exists gdb,nosignals] {
     unsupported "signal sent"
 } else {
-    setup_xfail hppa*-*-hpux11*
     send_gdb "signal SIGTRAP\n"
     gdb_expect_list "signal sent" "$gdb_prompt$" {
 	"\r\n\032\032post-prompt\r\n"

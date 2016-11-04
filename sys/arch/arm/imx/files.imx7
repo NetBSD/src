@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx7,v 1.1 2016/05/17 06:44:45 ryo Exp $
+#	$NetBSD: files.imx7,v 1.1.4.1 2016/11/04 14:48:58 pgoyette Exp $
 #
 # Configuration info for the Freescale i.MX7
 #
@@ -7,6 +7,7 @@ include "arch/arm/pic/files.pic"
 include "arch/arm/cortex/files.cortex"
 
 defparam opt_imx.h				MEMSIZE
+defparam opt_imx.h				MEMSIZE_RESERVED
 defflag opt_imx.h				IMX7
 
 file	arch/arm/arm32/arm32_boot.c

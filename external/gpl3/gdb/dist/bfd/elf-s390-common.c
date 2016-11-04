@@ -1,5 +1,5 @@
 /* IBM S/390-specific support for ELF 32 and 64 bit functions
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Andreas Krebbel.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -45,7 +45,7 @@ s390_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 
   flags = bed->dynamic_sec_flags;
 
-  if (info->shared)
+  if (bfd_link_pic (info))
     {
       s = bfd_make_section_with_flags (abfd, ".rela.ifunc",
 				       flags | SEC_READONLY);
@@ -87,12 +87,12 @@ s390_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 
 static bfd_boolean
 s390_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
-				    struct elf_link_hash_entry *h,
-				    struct elf_dyn_relocs **head)
+				    struct elf_link_hash_entry *h)
 {
   struct elf_dyn_relocs *p;
   struct elf_link_hash_table *htab;
   struct elf_s390_link_hash_entry *eh = (struct elf_s390_link_hash_entry*)h;
+  struct elf_dyn_relocs **head = &eh->dyn_relocs;
 
   htab = elf_hash_table (info);
   eh->ifunc_resolver_address = h->root.u.def.value;
@@ -105,7 +105,7 @@ s390_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
          where it is marked with regular reference, but not non-GOT
 	 reference.  It may happen if we didn't see STT_GNU_IFUNC
 	 symbol at the time when checking relocations.  */
-      if (info->shared
+      if (bfd_link_pic (info)
 	  && !h->non_got_ref
 	  && h->ref_regular)
 	for (p = *head; p != NULL; p = p->next)
@@ -151,7 +151,9 @@ keep:
      point to the IPLT slot.  That way the referencing shared lib will
      always get the PLT slot address when resolving the respective
      R_390_GLOB_DAT/R_390_64 relocs on that symbol.  */
-  if (info->executable && !info->shared && h->def_regular && h->ref_dynamic)
+  if (bfd_link_pde (info)
+      && h->def_regular
+      && h->ref_dynamic)
     {
       h->root.u.def.section = htab->iplt;
       h->root.u.def.value = h->plt.offset;
@@ -161,7 +163,7 @@ keep:
 
   /* We need dynamic relocation for STT_GNU_IFUNC symbol only when
      there is a non-GOT reference in a shared object.  */
-  if (!info->shared || !h->non_got_ref)
+  if (!bfd_link_pic (info) || !h->non_got_ref)
     *head = NULL;
 
   /* Finally, allocate space.  */
@@ -182,9 +184,9 @@ keep:
      avoided if the values in the GOT slots could differ for pointer
      equality reasons.  */
   if (h->got.refcount <= 0
-      || (info->shared
+      || (bfd_link_pic (info)
 	  && (h->dynindx == -1 || h->forced_local))
-      || (info->executable && info->shared)
+      || bfd_link_pie (info)
       || htab->sgot == NULL)
     {
       /* Use .got.iplt.  */
@@ -194,7 +196,7 @@ keep:
     {
       h->got.offset = htab->sgot->size;
       htab->sgot->size += GOT_ENTRY_SIZE;
-      if (info->shared)
+      if (bfd_link_pic (info))
 	htab->srelgot->size += RELA_ENTRY_SIZE;
     }
 
@@ -234,11 +236,10 @@ elf_s390_add_symbol_hook (bfd *abfd,
 			  asection **secp ATTRIBUTE_UNUSED,
 			  bfd_vma *valp ATTRIBUTE_UNUSED)
 {
-  if ((ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
-       || ELF_ST_BIND (sym->st_info) == STB_GNU_UNIQUE)
+  if (ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
       && (abfd->flags & DYNAMIC) == 0
       && bfd_get_flavour (info->output_bfd) == bfd_target_elf_flavour)
-    elf_tdata (info->output_bfd)->has_gnu_symbols = TRUE;
+    elf_tdata (info->output_bfd)->has_gnu_symbols |= elf_gnu_symbol_ifunc;
 
   return TRUE;
 }

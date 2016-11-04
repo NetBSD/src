@@ -1,5 +1,5 @@
 /* Demangler for the D programming language
-   Copyright 2014, 2015 Free Software Foundation, Inc.
+   Copyright 2014, 2015, 2016 Free Software Foundation, Inc.
    Written by Iain Buclaw (ibuclaw@gdcproject.org)
 
 This file is part of the libiberty library.
@@ -28,7 +28,7 @@ If not, see <http://www.gnu.org/licenses/>.  */
 
 /* This file exports one function; dlang_demangle.
 
-   This file imports strtol and strtod for decoding mangled literals.  */
+   This file imports strtol for decoding mangled literals.  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -44,7 +44,6 @@ If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdlib.h>
 #else
 extern long strtol (const char *nptr, char **endptr, int base);
-extern double strtod (const char *nptr, char **endptr);
 #endif
 
 #include <demangle.h>
@@ -224,6 +223,10 @@ dlang_call_convention (string *decl, const char *mangled)
       mangled++;
       string_append (decl, "extern(C++) ");
       break;
+    case 'Y': /* (Objective-C) */
+      mangled++;
+      string_append (decl, "extern(Objective-C) ");
+      break;
     default:
       return NULL;
     }
@@ -400,7 +403,9 @@ dlang_function_args (string *decl, const char *mangled)
 	  return mangled;
 	case 'Y': /* (variadic T t, ...) style.  */
 	  mangled++;
-	  string_append (decl, ", ...");
+	  if (n != 0)
+	    string_append (decl, ", ");
+	  string_append (decl, "...");
 	  return mangled;
 	case 'Z': /* Normal function.  */
 	  mangled++;
@@ -534,6 +539,15 @@ dlang_type (string *decl, const char *mangled)
     }
     case 'P': /* pointer (T*) */
       mangled++;
+      /* Function pointer types don't include the trailing asterisk.  */
+      switch (*mangled)
+	{
+	case 'F': case 'U': case 'W':
+	case 'V': case 'R': case 'Y':
+	  mangled = dlang_function_type (decl, mangled);
+	  string_append (decl, "function");
+	  return mangled;
+	}
       mangled = dlang_type (decl, mangled);
       string_append (decl, "*");
       return mangled;
@@ -564,13 +578,6 @@ dlang_type (string *decl, const char *mangled)
     case 'B': /* tuple T */
       mangled++;
       return dlang_parse_tuple (decl, mangled);
-
-    /* Function types */
-    case 'F': case 'U': case 'W':
-    case 'V': case 'R':
-      mangled = dlang_function_type (decl, mangled);
-      string_append (decl, "function");
-      return mangled;
 
     /* Basic types */
     case 'n':
@@ -970,8 +977,6 @@ dlang_parse_real (string *decl, const char *mangled)
 {
   char buffer[64];
   int len = 0;
-  double value;
-  char *endptr;
 
   /* Handle NAN and +-INF.  */
   if (strncmp (mangled, "NAN", 3) == 0)
@@ -1035,14 +1040,10 @@ dlang_parse_real (string *decl, const char *mangled)
       mangled++;
     }
 
-  /* Convert buffer from hexadecimal to floating-point.  */
+  /* Write out the demangled hexadecimal, rather than trying to
+     convert the buffer into a floating-point value.  */
   buffer[len] = '\0';
-  value = strtod (buffer, &endptr);
-
-  if (endptr == NULL || endptr != (buffer + len))
-    return NULL;
-
-  len = snprintf (buffer, sizeof(buffer), "%#g", value);
+  len = strlen (buffer);
   string_appendn (decl, buffer, len);
   return mangled;
 }
@@ -1341,7 +1342,7 @@ dlang_call_convention_p (const char *mangled)
   switch (*mangled)
     {
     case 'F': case 'U': case 'V':
-    case 'W': case 'R':
+    case 'W': case 'R': case 'Y':
       return 1;
 
     default:

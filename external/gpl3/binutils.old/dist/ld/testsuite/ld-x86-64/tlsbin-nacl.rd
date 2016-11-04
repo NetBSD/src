@@ -11,7 +11,7 @@ Section Headers:
  +\[Nr\] Name +Type +Address +Off +Size +ES Flg Lk Inf Al
  +\[[ 0-9]+\] +NULL +0+ 0+ 0+ 00 +0 +0 +0
  +\[[ 0-9]+\] .plt +.*
- +\[[ 0-9]+\] .text +PROGBITS +0+21000 [0-9a-f]+ 0+234 00 +AX +0 +0 +4096
+ +\[[ 0-9]+\] .text +PROGBITS +0+21000 [0-9a-f]+ 0+231 00 +AX +0 +0 +4096
  +\[[ 0-9]+\] .interp +.*
  +\[[ 0-9]+\] .hash +.*
  +\[[ 0-9]+\] .dynsym +.*
@@ -32,7 +32,7 @@ Key to Flags:
 .*
 
 Elf file type is EXEC \(Executable file\)
-Entry point 0x2113c
+Entry point 0x21139
 There are [0-9]+ program headers, starting at offset [0-9]+
 
 Program Headers:
@@ -40,7 +40,7 @@ Program Headers:
  +PHDR.*
  +INTERP.*
 .*Requesting program interpreter.*
- +LOAD +0x0+10000 0x0+20000 0x0+20000 0x0+1234 0x0+1234 R E +0x10000
+ +LOAD +0x0+10000 0x0+20000 0x0+20000 0x0+10000 0x0+10000 R E +0x10000
  +LOAD +0x0+ 0x0+10020000 0x0+10020000 0x0+3b0 0x0+3b0 R +0x10000
  +LOAD +0x0+3b0 0x0+100303b0 0x0+100303b0 0x0+1e0 0x0+1e0 RW +0x10000
  +DYNAMIC +0x0+410 0x0+10030410 0x0+10030410 0x0+140 0x0+140 RW +0x8
@@ -95,7 +95,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* SECTION +LOCAL +DEFAULT +11 *
 .* SECTION +LOCAL +DEFAULT +12 *
 .* SECTION +LOCAL +DEFAULT +13 *
-.* FILE +LOCAL +DEFAULT +ABS .*
+.* FILE +LOCAL +DEFAULT +ABS tmpdir/tlsbinpic.o
 .* TLS +LOCAL +DEFAULT +9 sl1
 .* TLS +LOCAL +DEFAULT +9 sl2
 .* TLS +LOCAL +DEFAULT +9 sl3
@@ -104,7 +104,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +LOCAL +DEFAULT +9 sl6
 .* TLS +LOCAL +DEFAULT +9 sl7
 .* TLS +LOCAL +DEFAULT +9 sl8
-.* FILE +LOCAL +DEFAULT +ABS .*
+.* FILE +LOCAL +DEFAULT +ABS tmpdir/tlsbin.o
 .* TLS +LOCAL +DEFAULT +10 bl1
 .* TLS +LOCAL +DEFAULT +10 bl2
 .* TLS +LOCAL +DEFAULT +10 bl3
@@ -113,7 +113,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +LOCAL +DEFAULT +10 bl6
 .* TLS +LOCAL +DEFAULT +10 bl7
 .* TLS +LOCAL +DEFAULT +10 bl8
-.* FILE +LOCAL +DEFAULT +ABS .*
+.* FILE +LOCAL +DEFAULT +ABS 
 .* OBJECT +LOCAL +DEFAULT +11 _DYNAMIC
 .* OBJECT +LOCAL +DEFAULT +13 _GLOBAL_OFFSET_TABLE_
 .* TLS +GLOBAL +DEFAULT +9 sg8

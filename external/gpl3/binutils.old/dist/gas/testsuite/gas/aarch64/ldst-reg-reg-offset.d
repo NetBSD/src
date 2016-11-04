@@ -85,3 +85,7 @@ Disassembly of section \.text:
  134:	fc67fbe7 	ldr	d7, \[sp,x7,sxtx #3\]
  138:	3ce7ebe7 	ldr	q7, \[sp,x7,sxtx\]
  13c:	3ce7fbe7 	ldr	q7, \[sp,x7,sxtx #4\]
+ 140:	f87ffbe1 	ldr	x1, \[sp,xzr,sxtx #3\]
+ 144:	f83ffbe1 	str	x1, \[sp,xzr,sxtx #3\]
+ 148:	b87fdbe1 	ldr	w1, \[sp,wzr,sxtw #2\]
+ 14c:	b83fdbe1 	str	w1, \[sp,wzr,sxtw #2\]

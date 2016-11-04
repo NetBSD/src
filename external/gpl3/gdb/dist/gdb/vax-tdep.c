@@ -1,6 +1,6 @@
 /* Target-dependent code for the VAX.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -71,7 +71,7 @@ static void
 vax_supply_gregset (const struct regset *regset, struct regcache *regcache,
 		    int regnum, const void *gregs, size_t len)
 {
-  const gdb_byte *regs = gregs;
+  const gdb_byte *regs = (const gdb_byte *) gregs;
   int i;
 
   for (i = 0; i < VAX_NUM_REGS; i++)
@@ -318,7 +318,7 @@ vax_frame_cache (struct frame_info *this_frame, void **this_cache)
   int regnum;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct vax_frame_cache *) *this_cache;
 
   /* Allocate a new cache.  */
   cache = FRAME_OBSTACK_ZALLOC (struct vax_frame_cache);

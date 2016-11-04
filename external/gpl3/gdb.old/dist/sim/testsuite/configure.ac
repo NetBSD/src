@@ -14,6 +14,9 @@ AC_CANONICAL_SYSTEM
 
 # Configure sub-directory for appropriate targets
 case ${target} in
+    d10v-*-elf )
+	AC_CONFIG_SUBDIRS(d10v-elf)
+	;;
     frv-*-elf )
 	AC_CONFIG_SUBDIRS(frv-elf)
 	;;

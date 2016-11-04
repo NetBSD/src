@@ -1,7 +1,7 @@
-/* $NetBSD: mdsetimage.c,v 1.20 2010/11/06 16:03:23 uebayasi Exp $ */
+/*	$NetBSD: mdsetimage.c,v 1.20.28.1 2016/11/04 14:49:27 pgoyette Exp $	*/
 
 /*
- * Copyright (c) 1996 Christopher G. Demetriou
+ * Copyright (c) 1996, 2002 Christopher G. Demetriou
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -29,14 +29,15 @@
  * <<Id: LICENSE_GC,v 1.1 2001/10/01 23:24:05 cgd Exp>>
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#ifndef lint
+#if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1996\
  Christopher G. Demetriou.  All rights reserved.");
-#endif /* not lint */
-
-#ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.20 2010/11/06 16:03:23 uebayasi Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.20.28.1 2016/11/04 14:49:27 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,70 +47,68 @@ __RCSID("$NetBSD: mdsetimage.c,v 1.20 2010/11/06 16:03:23 uebayasi Exp $");
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <nlist.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include <string.h>
 
-#include "extern.h"
+#include "bin.h"
 
-int		main __P((int, char *[]));
-static void	usage __P((void)) __dead;
-static int	find_md_root __P((const char *, const char *, size_t,
-		    const struct nlist *, size_t *, u_int32_t *));
+#define	CHUNKSIZE	(64 * 1024)
 
-#define	X_MD_ROOT_IMAGE		0
-#define	X_MD_ROOT_SIZE		1
+static void	usage(void) __attribute__((noreturn));
 
 int	verbose;
-#ifdef NLIST_AOUT
-/*
- * Since we can't get the text address from an a.out executable, we
- * need to be able to specify it.  Note: there's no way to test to
- * see if the user entered a valid address!
- */
-int	T_flag_specified;	/* the -T flag was specified */
-u_long	text_start;		/* Start of kernel text */
-#endif /* NLIST_AOUT */
+int	extract;
+int	setsize;
+
+static const char *progname;
+#undef setprogname
+#define	setprogname(x)	(void)(progname = (x))
+#undef getprogname
+#define	getprogname()	(progname)
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
+	int ch, kfd, fsfd, rv;
 	struct stat ksb, fssb;
-	size_t md_root_offset;
-	u_int32_t md_root_size;
+	size_t md_root_image_offset, md_root_size_offset;
+	u_int32_t md_root_size_value;
 	const char *kfile, *fsfile;
 	char *mappedkfile;
-	int ch, kfd, fsfd, rv;
-	struct nlist md_root_nlist[3];
-
-	(void)memset(md_root_nlist, 0, sizeof(md_root_nlist));
-	N_NAME(&md_root_nlist[X_MD_ROOT_IMAGE]) = "_md_root_image";
-	N_NAME(&md_root_nlist[X_MD_ROOT_SIZE]) = "_md_root_size";
+	char *bfdname = NULL;
+	void *bin;
+	ssize_t left_to_copy;
+	const char *md_root_image = "_md_root_image";
+	const char *md_root_size = "_md_root_size";
+	unsigned long text_start = ~0;
 
 	setprogname(argv[0]);
 
-	while ((ch = getopt(argc, argv, "I:S:T:v")) != -1)
+	while ((ch = getopt(argc, argv, "I:S:b:svx")) != -1)
 		switch (ch) {
+		case 'I':
+			md_root_image = optarg;
+			break;
+		case 'S':
+			md_root_size = optarg;
+			break;
+		case 'T':
+			text_start = strtoul(optarg, NULL, 0);
+			break;
+		case 'b':
+			bfdname = optarg;
+			break;
+		case 's':
+			setsize = 1;
+			break;
 		case 'v':
 			verbose = 1;
 			break;
-		case 'I':
-			N_NAME(&md_root_nlist[X_MD_ROOT_IMAGE]) = optarg;
+		case 'x':
+			extract = 1;
 			break;
-		case 'S':
-			N_NAME(&md_root_nlist[X_MD_ROOT_SIZE]) = optarg;
-			break;
-		case 'T':
-#ifdef NLIST_AOUT
-			T_flag_specified = 1;
-			text_start = strtoul(optarg, NULL, 0);
-			break;
-#endif /* NLIST_AOUT */
-			/* FALLTHROUGH */
 		case '?':
 		default:
 			usage();
@@ -122,151 +121,135 @@ main(argc, argv)
 	kfile = argv[0];
 	fsfile = argv[1];
 
-	if ((kfd = open(kfile, O_RDWR, 0))  == -1)
-		err(1, "open %s", kfile);
-
-	if ((rv = __fdnlist(kfd, md_root_nlist)) != 0)
-		errx(1, "could not find symbols in %s", kfile);
-	if (verbose)
-		fprintf(stderr, "got symbols from %s\n", kfile);
+	if (extract) {
+		if ((kfd = open(kfile, O_RDONLY, 0))  == -1)
+			err(1, "open %s", kfile);
+	} else {
+		if ((kfd = open(kfile, O_RDWR, 0))  == -1)
+			err(1, "open %s", kfile);
+	}
 
 	if (fstat(kfd, &ksb) == -1)
 		err(1, "fstat %s", kfile);
-	if (ksb.st_size != (size_t)ksb.st_size)
+	if ((uintmax_t)ksb.st_size != (size_t)ksb.st_size)
 		errx(1, "%s too big to map", kfile);
 
-	if ((mappedkfile = mmap(NULL, ksb.st_size, PROT_READ | PROT_WRITE,
-	    MAP_FILE | MAP_SHARED, kfd, 0)) == (caddr_t)-1)
+	if ((mappedkfile = mmap(NULL, ksb.st_size, PROT_READ,
+	    MAP_FILE | MAP_PRIVATE, kfd, 0)) == (caddr_t)-1)
 		err(1, "mmap %s", kfile);
 	if (verbose)
 		fprintf(stderr, "mapped %s\n", kfile);
 
-	if (find_md_root(kfile, mappedkfile, ksb.st_size, md_root_nlist,
-	    &md_root_offset, &md_root_size) != 0)
-		errx(1, "could not find md root buffer in %s", kfile);
+	bin = bin_open(kfd, kfile, bfdname);
 
-	if ((fsfd = open(fsfile, O_RDONLY, 0)) == -1)
-		err(1, "open %s", fsfile);
-	if (fstat(fsfd, &fssb) == -1)
-		err(1, "fstat %s", fsfile);
-	if (fssb.st_size != (size_t)fssb.st_size)
-		errx(1, "fs image is too big");
-	if (fssb.st_size > md_root_size)
-		errx(1, "fs image (%lld bytes) too big for buffer (%lu bytes)",
-		    (long long)fssb.st_size, (unsigned long)md_root_size);
+	if (bin_find_md_root(bin, mappedkfile, ksb.st_size, text_start,
+	    md_root_image, md_root_size, &md_root_image_offset,
+	    &md_root_size_offset, &md_root_size_value, verbose) != 0)
+		errx(1, "could not find symbols in %s", kfile);
+	if (verbose)
+		fprintf(stderr, "got symbols from %s\n", kfile);
 
 	if (verbose)
-		fprintf(stderr, "copying image from %s into %s\n", fsfile,
-		    kfile);
-	if ((rv = read(fsfd, mappedkfile + md_root_offset,
-	    fssb.st_size)) != fssb.st_size) {
-		if (rv == -1)
-			err(1, "read %s", fsfile);
-		else
-			errx(1, "unexpected EOF reading %s", fsfile);
+		fprintf(stderr, "root @ %#zx/%u\n",
+		    md_root_image_offset, md_root_size_value);
+
+	munmap(mappedkfile, ksb.st_size);
+
+	if (extract) {
+		if ((fsfd = open(fsfile, O_WRONLY|O_CREAT, 0777)) == -1)
+			err(1, "open %s", fsfile);
+		left_to_copy = md_root_size_value;
+	} else {
+		if ((fsfd = open(fsfile, O_RDONLY, 0)) == -1)
+			err(1, "open %s", fsfile);
+		if (fstat(fsfd, &fssb) == -1)
+			err(1, "fstat %s", fsfile);
+		if ((uintmax_t)fssb.st_size != (size_t)fssb.st_size)
+			errx(1, "fs image is too big");
+		if (fssb.st_size > md_root_size_value)
+			errx(1, "fs image (%jd bytes) too big for buffer"
+			    " (%u bytes)", (intmax_t) fssb.st_size,
+			    md_root_size_value);
+		left_to_copy = fssb.st_size;
+	}
+
+	if (verbose)
+		fprintf(stderr, "copying image %s %s %s (%zd bytes)\n", fsfile,
+		    (extract ? "from" : "into"), kfile, left_to_copy);
+
+	if (lseek(kfd, md_root_image_offset, SEEK_SET) !=
+	    (off_t)md_root_image_offset)
+		err(1, "seek %s", kfile);
+	while (left_to_copy > 0) {
+		char buf[CHUNKSIZE];
+		ssize_t todo;
+		int rfd;
+		int wfd;
+		const char *rfile;
+		const char *wfile;
+		if (extract) {
+			rfd = kfd;
+			rfile = kfile;
+			wfd = fsfd;
+			wfile = fsfile;
+		} else {
+			rfd = fsfd;
+			rfile = fsfile;
+			wfd = kfd;
+			wfile = kfile;
+		}
+
+		todo = (left_to_copy > CHUNKSIZE) ? CHUNKSIZE : left_to_copy;
+		if ((rv = read(rfd, buf, todo)) != todo) {
+			if (rv == -1)
+				err(1, "read %s", rfile);
+			else
+				errx(1, "unexpected EOF reading %s", rfile);
+		}
+		if ((rv = write(wfd, buf, todo)) != todo) {
+			if (rv == -1)
+				err(1, "write %s", wfile);
+			else
+				errx(1, "short write writing %s", wfile);
+		}
+		left_to_copy -= todo;
 	}
 	if (verbose)
 		fprintf(stderr, "done copying image\n");
-	
-	close(fsfd);
+	if (setsize && !extract) {
+		char buf[sizeof(uint32_t)];
 
-	munmap(mappedkfile, ksb.st_size);
+		if (verbose)
+			fprintf(stderr, "setting md_root_size to %jd\n",
+			    (intmax_t) fssb.st_size);
+		if (lseek(kfd, md_root_size_offset, SEEK_SET) !=
+		    (off_t)md_root_size_offset)
+			err(1, "seek %s", kfile);
+		bin_put_32(bin, fssb.st_size, buf);
+		if (write(kfd, buf, sizeof(buf)) != sizeof(buf))
+			err(1, "write %s", kfile);
+	}
+
+	close(fsfd);
 	close(kfd);
 
 	if (verbose)
 		fprintf(stderr, "exiting\n");
-	exit(0);
+
+	bin_close(bin);
+	return 0;
 }
 
 static void
-usage()
+usage(void)
 {
+	const char **list;
 
-	fprintf(stderr,
-	    "usage: %s kernel_file fsimage_file\n",
-	    getprogname());
+	fprintf(stderr, "Usage: %s [-svx] [-b bfdname] [-I image_symbol] "
+	    "[-S size_symbol] [-T address] kernel image\n", getprogname());
+	fprintf(stderr, "Supported targets:");
+	for (list = bin_supported_targets(); *list != NULL; list++)
+		fprintf(stderr, " %s", *list);
+	fprintf(stderr, "\n");
 	exit(1);
-}
-
-
-struct {
-	const char *name;
-	int	(*check) __P((const char *, size_t));
-	int	(*findoff) __P((const char *, size_t, u_long, size_t *));
-} exec_formats[] = {
-#ifdef NLIST_AOUT
-	{	"a.out",	check_aout,	findoff_aout,	},
-#endif
-#ifdef NLIST_ECOFF
-	{	"ECOFF",	check_ecoff,	findoff_ecoff,	},
-#endif
-#ifdef NLIST_ELF32
-	{	"ELF32",	check_elf32,	findoff_elf32,	},
-#endif
-#ifdef NLIST_ELF64
-	{	"ELF64",	check_elf64,	findoff_elf64,	},
-#endif
-#ifdef NLIST_COFF
-	{	"COFF",		check_coff,	findoff_coff,	},
-#endif
-};
-
-static int
-find_md_root(fname, mappedfile, mappedsize, nl, rootoffp, rootsizep)
-	const char *fname, *mappedfile;
-	size_t mappedsize;
-	const struct nlist *nl;
-	size_t *rootoffp;
-	u_int32_t *rootsizep;
-{
-	int i, n;
-	size_t rootsizeoff;
-
-	n = sizeof exec_formats / sizeof exec_formats[0];
-	for (i = 0; i < n; i++) {
-		if ((*exec_formats[i].check)(mappedfile, mappedsize) == 0)
-			break;
-	}
-	if (i == n) {
-		warnx("%s: unknown executable format", fname);
-		return (1);
-	}
-
-	if (verbose) {
-		fprintf(stderr, "%s is an %s binary\n", fname,
-		    exec_formats[i].name);
-#ifdef NLIST_AOUT
-		if (T_flag_specified)
-			fprintf(stderr, "kernel text loads at 0x%lx\n",
-			    text_start);
-#endif
-	}
-
-	if ((*exec_formats[i].findoff)(mappedfile, mappedsize,
-	    nl[X_MD_ROOT_SIZE].n_value, &rootsizeoff) != 0) {
-		warnx("couldn't find offset for %s in %s",
-		    nl[X_MD_ROOT_SIZE].n_name, fname);
-		return (1);
-	}
-	if (verbose)
-		fprintf(stderr, "%s is at offset %#lx in %s\n",
-			nl[X_MD_ROOT_SIZE].n_name,
-			(unsigned long)rootsizeoff, fname);
-	*rootsizep = *(const u_int32_t *)&mappedfile[rootsizeoff];
-	if (verbose)
-		fprintf(stderr, "%s has value %#x\n",
-		    nl[X_MD_ROOT_SIZE].n_name, *rootsizep);
-
-	if ((*exec_formats[i].findoff)(mappedfile, mappedsize,
-	    nl[X_MD_ROOT_IMAGE].n_value, rootoffp) != 0) {
-		warnx("couldn't find offset for %s in %s",
-		    nl[X_MD_ROOT_IMAGE].n_name, fname);
-		return (1);
-	}
-	if (verbose)
-		fprintf(stderr, "%s is at offset %#lx in %s\n",
-			nl[X_MD_ROOT_IMAGE].n_name,
-			(unsigned long)(*rootoffp), fname);
-
-	return (0);
 }

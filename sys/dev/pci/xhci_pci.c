@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.6 2016/05/03 13:14:44 skrll Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.6.2.1 2016/11/04 14:49:15 pgoyette Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.6 2016/05/03 13:14:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.6.2.1 2016/11/04 14:49:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,8 +181,8 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pc, psc->sc_pihp[0], intrbuf,
 	    sizeof(intrbuf));
-	psc->sc_ih = pci_intr_establish(pc, psc->sc_pihp[0], IPL_USB,
-	    xhci_intr, sc);
+	psc->sc_ih = pci_intr_establish_xname(pc, psc->sc_pihp[0], IPL_USB,
+	    xhci_intr, sc, device_xname(sc->sc_dev));
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)

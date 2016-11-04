@@ -1,4 +1,4 @@
-#	$NetBSD: t_tun.sh,v 1.2.2.2 2016/09/14 03:04:19 pgoyette Exp $
+#	$NetBSD: t_tun.sh,v 1.2.2.3 2016/11/04 14:49:24 pgoyette Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -110,8 +110,7 @@ tun_setup_body()
 	atf_check -s exit:0 rump.ifconfig tun0 create
 	atf_check -s exit:0 rump.ifconfig tun0 ${IP_LOCAL} ${IP_REMOTE} up
 	atf_check -s exit:0 \
-	    -o match:"inet ${IP_LOCAL} -> ${IP_REMOTE} netmask 0xff000000" \
-	    rump.ifconfig tun0
+	    -o match:"inet ${IP_LOCAL}/32 -> ${IP_REMOTE}" rump.ifconfig tun0
 	$DEBUG && rump.netstat -nr -f inet
 	check_route_entry ${IP_REMOTE} ${IP_LOCAL} UH tun0
 
@@ -119,8 +118,7 @@ tun_setup_body()
 	atf_check -s exit:0 rump.ifconfig tun0 create
 	atf_check -s exit:0 rump.ifconfig tun0 ${IP_REMOTE} ${IP_LOCAL} up
 	atf_check -s exit:0 \
-	    -o match:"inet ${IP_REMOTE} -> ${IP_LOCAL} netmask 0xff000000" \
-	    rump.ifconfig tun0
+	    -o match:"inet ${IP_REMOTE}/32 -> ${IP_LOCAL}" rump.ifconfig tun0
 	$DEBUG && rump.netstat -nr -f inet
 	check_route_entry ${IP_LOCAL} ${IP_REMOTE} UH tun0
 }

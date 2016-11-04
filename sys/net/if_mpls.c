@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.26 2016/07/07 06:55:43 msaitoh Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.26.2.1 2016/11/04 14:49:20 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.26 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.26.2.1 2016/11/04 14:49:20 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -176,13 +176,13 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 void
 mplsintr(void)
 {
-	struct mbuf *m;
-	int s;
 
-	while (!IF_IS_EMPTY(&mplsintrq)) {
-		s = splnet();
+	struct mbuf *m;
+
+	for (;;) {
+		IFQ_LOCK(&mplsintrq);
 		IF_DEQUEUE(&mplsintrq, m);
-		splx(s);
+		IFQ_UNLOCK(&mplsintrq);
 
 		if (!m)
 			return;

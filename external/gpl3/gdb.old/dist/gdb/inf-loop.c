@@ -50,13 +50,12 @@ inferior_event_handler (enum inferior_event_type event_type,
 	 error status.  If an error occurs while getting an event from
 	 the target, just cancel the current command.  */
       {
-	volatile struct gdb_exception ex;
 
-	TRY_CATCH (ex, RETURN_MASK_ALL)
+	TRY
 	  {
 	    fetch_inferior_event (client_data);
 	  }
-	if (ex.reason < 0)
+	CATCH (ex, RETURN_MASK_ALL)
 	  {
 	    bpstat_clear_actions ();
 	    do_all_intermediate_continuations (1);
@@ -64,6 +63,7 @@ inferior_event_handler (enum inferior_event_type event_type,
 
 	    throw_exception (ex);
 	  }
+	END_CATCH
       }
       break;
 
@@ -74,7 +74,7 @@ inferior_event_handler (enum inferior_event_type event_type,
 	     so that when the inferior is not running we don't get
 	     distracted by spurious inferior output.  */
 	  if (target_has_execution)
-	    target_async (NULL, 0);
+	    target_async (0);
 	}
 
       /* Do all continuations associated with the whole inferior (not
@@ -111,18 +111,21 @@ inferior_event_handler (enum inferior_event_type event_type,
 	 are only run when the command list is all done.  */
       if (interpreter_async)
 	{
-	  volatile struct gdb_exception e;
 
 	  check_frame_language_change ();
 
 	  /* Don't propagate breakpoint commands errors.  Either we're
 	     stopping or some command resumes the inferior.  The user will
 	     be informed.  */
-	  TRY_CATCH (e, RETURN_MASK_ALL)
+	  TRY
 	    {
 	      bpstat_do_actions ();
 	    }
-	  exception_print (gdb_stderr, e);
+	  CATCH (e, RETURN_MASK_ALL)
+	    {
+	      exception_print (gdb_stderr, e);
+	    }
+	  END_CATCH
 	}
       break;
 

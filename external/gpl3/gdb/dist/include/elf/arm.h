@@ -1,5 +1,5 @@
 /* ARM ELF support for BFD.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -82,6 +82,7 @@
 
 /* ARM-specific values for sh_flags.  */
 #define SHF_ENTRYSECT      0x10000000   /* Section contains an entry point.  */
+#define SHF_ARM_PURECODE   0x20000000   /* Section contains only code and no data.  */
 #define SHF_COMDEF         0x80000000   /* Section may be multiply defined in the input to a link step.  */
 
 /* ARM-specific program header flags.  */
@@ -105,7 +106,9 @@
 #define TAG_CPU_ARCH_V6S_M	12
 #define TAG_CPU_ARCH_V7E_M	13
 #define TAG_CPU_ARCH_V8		14
-#define MAX_TAG_CPU_ARCH	14
+#define TAG_CPU_ARCH_V8M_BASE	16
+#define TAG_CPU_ARCH_V8M_MAIN	17
+#define MAX_TAG_CPU_ARCH	TAG_CPU_ARCH_V8M_MAIN
 /* Pseudo-architecture to allow objects to be compatible with the subset of
    armv4t and armv6-m.  This value should never be stored in object files.  */
 #define TAG_CPU_ARCH_V4T_PLUS_V6_M (MAX_TAG_CPU_ARCH + 1)
@@ -230,6 +233,11 @@ START_RELOC_NUMBERS (elf_arm_reloc_type)
   RELOC_NUMBER (R_ARM_ME_TOO,	        128)   /* obsolete */
   RELOC_NUMBER (R_ARM_THM_TLS_DESCSEQ  ,129)
 
+  RELOC_NUMBER (R_ARM_THM_ALU_ABS_G0_NC,132)
+  RELOC_NUMBER (R_ARM_THM_ALU_ABS_G1_NC,133)
+  RELOC_NUMBER (R_ARM_THM_ALU_ABS_G2_NC,134)
+  RELOC_NUMBER (R_ARM_THM_ALU_ABS_G3_NC,135)
+
   RELOC_NUMBER (R_ARM_IRELATIVE,      	160)
 
   /* Extensions?  R=read-only?  */
@@ -303,6 +311,7 @@ enum
   Tag_MPextension_use,
   Tag_undefined_43,
   Tag_DIV_use,
+  Tag_DSP_extension = 46,
   Tag_nodefaults = 64,
   Tag_also_compatible_with,
   Tag_T2EE_use,
@@ -350,10 +359,29 @@ enum arm_st_branch_type {
   ST_BRANCH_TO_ARM,
   ST_BRANCH_TO_THUMB,
   ST_BRANCH_LONG,
-  ST_BRANCH_UNKNOWN
+  ST_BRANCH_UNKNOWN,
+  ST_BRANCH_ENUM_SIZE
 };
 
-#define ARM_SYM_BRANCH_TYPE(SYM) \
-  ((enum arm_st_branch_type) (SYM)->st_target_internal)
+#define NUM_ENUM_ARM_ST_BRANCH_TYPE_BITS 2
+#define ENUM_ARM_ST_BRANCH_TYPE_BITMASK	\
+  ((1 << NUM_ENUM_ARM_ST_BRANCH_TYPE_BITS) - 1)
+
+#define ARM_GET_SYM_BRANCH_TYPE(STI) \
+  ((enum arm_st_branch_type) ((STI) & ENUM_ARM_ST_BRANCH_TYPE_BITMASK))
+#ifdef BFD_ASSERT
+#define ARM_SET_SYM_BRANCH_TYPE(STI, TYPE)			\
+  do {								\
+    BFD_ASSERT (TYPE <= ST_BRANCH_ENUM_SIZE);			\
+    BFD_ASSERT ((1 << NUM_ENUM_ARM_ST_BRANCH_TYPE_BITS)		\
+		>= ST_BRANCH_ENUM_SIZE);			\
+    (STI) = (((STI) & ~ENUM_ARM_ST_BRANCH_TYPE_BITMASK)		\
+	     | ((TYPE) & ENUM_ARM_ST_BRANCH_TYPE_BITMASK));	\
+  } while (0)
+#else
+#define ARM_SET_SYM_BRANCH_TYPE(STI, TYPE)			\
+  (STI) = (((STI) & ~ENUM_ARM_ST_BRANCH_TYPE_BITMASK)		\
+	   | ((TYPE) & ENUM_ARM_ST_BRANCH_TYPE_BITMASK))
+#endif
 
 #endif /* _ELF_ARM_H */

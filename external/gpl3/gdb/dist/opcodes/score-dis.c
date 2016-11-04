@@ -1,5 +1,5 @@
 /* Instruction printing code for Score
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -35,7 +35,7 @@
 
 #ifdef BFD64
 /* s3_s7: opcodes and export prototypes.  */
-extern int 
+extern int
 s7_print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little);
 
 struct score_opcode
@@ -52,7 +52,7 @@ static struct score_opcode score_opcodes[] =
 {
   /* Score Instructions.  */
   {0x3800000a, 0x3e007fff, "abs\t\t%20-24r, %15-19r"},
-  {0x3800004b, 0x3e007fff, "abs.s\t\t%20-24r, %15-19r"},        
+  {0x3800004b, 0x3e007fff, "abs.s\t\t%20-24r, %15-19r"},
   {0x00000010, 0x3e0003ff, "add\t\t%20-24r, %15-19r, %10-14r"},
   {0x00000011, 0x3e0003ff, "add.c\t\t%20-24r, %15-19r, %10-14r"},
   {0x38000048, 0x3e0003ff, "add.s\t\t%20-24r, %15-19r, %10-14r"},
@@ -190,36 +190,36 @@ static struct score_opcode score_opcodes[] =
   {0x31e00000, 0x3ff00000, "cache\t\t%20-24d, [%15-19r, %0-14i]"},
   {0x31f00000, 0x3ff00000, "cache\t\t%20-24d, [%15-19r, %0-14i]"},
   {0x38000000, 0x3ff003ff, "mad\t\t%15-19r, %10-14r"},
-  {0x38000020, 0x3ff003ff, "madu\t\t%15-19r, %10-14r"},        
+  {0x38000020, 0x3ff003ff, "madu\t\t%15-19r, %10-14r"},
   {0x38000080, 0x3ff003ff, "mad.f\t\t%15-19r, %10-14r"},
-  {0x38000001, 0x3ff003ff, "msb\t\t%15-19r, %10-14r"},    
+  {0x38000001, 0x3ff003ff, "msb\t\t%15-19r, %10-14r"},
   {0x38000021, 0x3ff003ff, "msbu\t\t%15-19r, %10-14r"},
   {0x38000081, 0x3ff003ff, "msb.f\t\t%15-19r, %10-14r"},
-  {0x38000102, 0x3ff003ff, "mazl\t\t%15-19r, %10-14r"},        
-  {0x38000182, 0x3ff003ff, "mazl.f\t\t%15-19r, %10-14r"},        
-  {0x38000002, 0x3ff003ff, "madl\t\t%15-19r, %10-14r"},    
-  {0x380000c2, 0x3ff003ff, "madl.fs\t\t%15-19r, %10-14r"},        
-  {0x38000303, 0x3ff003ff, "mazh\t\t%15-19r, %10-14r"},    
-  {0x38000383, 0x3ff003ff, "mazh.f\t\t%15-19r, %10-14r"},    
-  {0x38000203, 0x3ff003ff, "madh\t\t%15-19r, %10-14r"},    
-  {0x380002c3, 0x3ff003ff, "madh.fs\t\t%15-19r, %10-14r"},    
-  {0x38000007, 0x3e0003ff, "max\t\t%20-24r, %15-19r, %10-14r"},    
+  {0x38000102, 0x3ff003ff, "mazl\t\t%15-19r, %10-14r"},
+  {0x38000182, 0x3ff003ff, "mazl.f\t\t%15-19r, %10-14r"},
+  {0x38000002, 0x3ff003ff, "madl\t\t%15-19r, %10-14r"},
+  {0x380000c2, 0x3ff003ff, "madl.fs\t\t%15-19r, %10-14r"},
+  {0x38000303, 0x3ff003ff, "mazh\t\t%15-19r, %10-14r"},
+  {0x38000383, 0x3ff003ff, "mazh.f\t\t%15-19r, %10-14r"},
+  {0x38000203, 0x3ff003ff, "madh\t\t%15-19r, %10-14r"},
+  {0x380002c3, 0x3ff003ff, "madh.fs\t\t%15-19r, %10-14r"},
+  {0x38000007, 0x3e0003ff, "max\t\t%20-24r, %15-19r, %10-14r"},
 
-  {0x00000064, 0x3e00007e, "mbitclr\t\t[%15-19r, %m], %10-14d"},    
-  {0x0000006c, 0x3e00007e, "mbitset\t\t[%15-19r, %m], %10-14d"},    
+  {0x00000064, 0x3e00007e, "mbitclr\t\t[%15-19r, %m], %10-14d"},
+  {0x0000006c, 0x3e00007e, "mbitset\t\t[%15-19r, %m], %10-14d"},
 
   {0x38000006, 0x3e0003ff, "min\t\t%20-24r, %15-19r, %10-14r"},
-  {0x38000104, 0x3ff003ff, "mszl\t\t%15-19r, %10-14r"},    
-  {0x38000184, 0x3ff003ff, "mszl.f\t\t%15-19r, %10-14r"},    
-  {0x38000004, 0x3ff003ff, "msbl\t\t%15-19r, %10-14r"},        
+  {0x38000104, 0x3ff003ff, "mszl\t\t%15-19r, %10-14r"},
+  {0x38000184, 0x3ff003ff, "mszl.f\t\t%15-19r, %10-14r"},
+  {0x38000004, 0x3ff003ff, "msbl\t\t%15-19r, %10-14r"},
   {0x380000c4, 0x3ff003ff, "msbl.fs\t\t%15-19r, %10-14r"},
-  {0x38000305, 0x3ff003ff, "mszh\t\t%15-19r, %10-14r"},        
-  {0x38000385, 0x3ff003ff, "mszh.f\t\t%15-19r, %10-14r"},    
-  {0x38000205, 0x3ff003ff, "msbh\t\t%15-19r, %10-14r"},        
-  {0x380002c5, 0x3ff003ff, "msbh.fs\t\t%15-19r, %10-14r"},        
-  {0x3800004e, 0x3e0003ff, "sll.s\t\t%20-24r, %15-19r, %10-14r"},                
-  {0x38000049, 0x3e0003ff, "sub.s\t\t%20-24r, %15-19r, %10-14r"},    
-  {0x0000001c, 0x3e007fff, "clz\t\t%20-24r, %15-19r"},    
+  {0x38000305, 0x3ff003ff, "mszh\t\t%15-19r, %10-14r"},
+  {0x38000385, 0x3ff003ff, "mszh.f\t\t%15-19r, %10-14r"},
+  {0x38000205, 0x3ff003ff, "msbh\t\t%15-19r, %10-14r"},
+  {0x380002c5, 0x3ff003ff, "msbh.fs\t\t%15-19r, %10-14r"},
+  {0x3800004e, 0x3e0003ff, "sll.s\t\t%20-24r, %15-19r, %10-14r"},
+  {0x38000049, 0x3e0003ff, "sub.s\t\t%20-24r, %15-19r, %10-14r"},
+  {0x0000001c, 0x3e007fff, "clz\t\t%20-24r, %15-19r"},
   {0x38000000, 0x3e000000, "ceinst\t\t%20-24d, %15-19r, %10-14r, %5-9d, %0-4d"},
   {0x00000019, 0x3ff003ff, "cmpteq.c\t\t%15-19r, %10-14r"},
   {0x00100019, 0x3ff003ff, "cmptmi.c\t\t%15-19r, %10-14r"},
@@ -285,15 +285,15 @@ static struct score_opcode score_opcodes[] =
   {0x0e000000, 0x3e000007, "lw\t\t%20-24r, [%15-19r]+, %3-14i"},
   {0x00001000, 0x00007000, "lw!\t\t%8-11r, [%5-7r,%0-4d2]"},
   {0x000000000002LL, 0x1c000000001fLL, "lw48\t\t%37-41r,[0x%7-36w]"},
-  {0x00007a00, 0x00007f00, "madl.fs!\t\t%4-7r, %0-3r"}, 
-  {0x00007500, 0x00007f00, "madu!\t\t%4-7r, %0-3r"}, 
+  {0x00007a00, 0x00007f00, "madl.fs!\t\t%4-7r, %0-3r"},
+  {0x00007500, 0x00007f00, "madu!\t\t%4-7r, %0-3r"},
   {0x00007400, 0x00007f00, "mad.f!\t\t%4-7r, %0-3r"},
-  {0x00007900, 0x00007f00, "mazh.f!\t\t%4-7r, %0-3r"}, 
+  {0x00007900, 0x00007f00, "mazh.f!\t\t%4-7r, %0-3r"},
   {0x00007800, 0x00007f00, "mazl.f!\t\t%4-7r, %0-3r"},
   {0x00000448, 0x3e007fff, "mfcel\t\t%20-24r"},
   {0x00007100, 0x00007ff0, "mfcel!\t\t%0-3r"},
-  {0x00000848, 0x3e007fff, "mfceh\t\t%20-24r"},  
-  {0x00007110, 0x00007ff0, "mfceh!\t\t%0-3r"}, 
+  {0x00000848, 0x3e007fff, "mfceh\t\t%20-24r"},
+  {0x00007110, 0x00007ff0, "mfceh!\t\t%0-3r"},
   {0x00000c48, 0x3e007fff, "mfcehl\t\t%20-24r, %15-19r"},
   {0x00000048, 0x3e0003ff, "mfce\t\t%20-24r, er%10-14d"},
   {0x00000050, 0x3e0003ff, "mfsr\t\t%20-24r, sr%10-14d"},
@@ -311,7 +311,7 @@ static struct score_opcode score_opcodes[] =
   {0x00006c00, 0x00007c00, "rpush!\t\t%5-9r, %0-4d"},
   {0x00007600, 0x00007f00, "msb.f!\t\t%4-7r, %0-3r"},
   {0x00007f00, 0x00007f00, "msbh.fs!\t\t%4-7r, %0-3r"},
-  {0x00007e00, 0x00007f00, "msbl.fs!\t\t%4-7r, %0-3r"}, 
+  {0x00007e00, 0x00007f00, "msbl.fs!\t\t%4-7r, %0-3r"},
   {0x00007700, 0x00007f00, "msbu!\t\t%4-7r, %0-3r"},
   {0x00007d00, 0x00007f00, "mszh.f!\t\t%4-7r, %0-3r"},
   {0x00007c00, 0x00007f00, "mszl.f!\t\t%4-7r, %0-3r"},
@@ -338,14 +338,14 @@ static struct score_opcode score_opcodes[] =
   {0x00000341, 0x3e0003ff, "mulr.f\t\t%20-24r,%15-19r, %10-14r"},
   {0x00000040, 0x3e0003ff, "maz\t\t%15-19r, %10-14r"},
   {0x00000041, 0x3e0003ff, "mul.f\t\t%15-19r, %10-14r"},
-  {0x00000041, 0x3e0003ff, "maz.f\t\t%15-19r, %10-14r"},    
+  {0x00000041, 0x3e0003ff, "maz.f\t\t%15-19r, %10-14r"},
   {0x00007200, 0x00007f00, "mul.f!\t\t%4-7r, %0-3r"},
   {0x00000042, 0x3e0003ff, "mulu\t\t%15-19r, %10-14r"},
   {0x00000142, 0x3e0003ff, "mulur.l\t\t%20-24r,%15-19r, %10-14r"},
   {0x00000242, 0x3e0003ff, "mulur.h\t\t%20-24r,%15-19r, %10-14r"},
   {0x00000342, 0x3e0003ff, "mulur\t\t%20-24r,%15-19r, %10-14r"},
   {0x00000042, 0x3e0003ff, "mazu\t\t%15-19r, %10-14r"},
-  {0x00007300, 0x00007f00, "mulu!\t\t%4-7r, %0-3r"},    
+  {0x00007300, 0x00007f00, "mulu!\t\t%4-7r, %0-3r"},
   {0x00000056, 0x3e007fff, "mvcs\t\t%20-24r, %15-19r"},
   {0x00000456, 0x3e007fff, "mvcc\t\t%20-24r, %15-19r"},
   {0x00000856, 0x3e007fff, "mvgtu\t\t%20-24r, %15-19r"},
@@ -370,8 +370,8 @@ static struct score_opcode score_opcodes[] =
   {0x00000000, 0x00007fff, "nop!"},
   {0x00000022, 0x3e0003ff, "or\t\t%20-24r, %15-19r, %10-14r"},
   {0x00000023, 0x3e0003ff, "or.c\t\t%20-24r, %15-19r, %10-14r"},
-  {0x020a0000, 0x3e0e0001, "ori\t\t%20-24r, 0x%1-16x"},    
-  {0x020a0001, 0x3e0e0001, "ori.c\t\t%20-24r, 0x%1-16x"},    
+  {0x020a0000, 0x3e0e0001, "ori\t\t%20-24r, 0x%1-16x"},
+  {0x020a0001, 0x3e0e0001, "ori.c\t\t%20-24r, 0x%1-16x"},
   {0x0a0a0000, 0x3e0e0001, "oris\t\t%20-24r, 0x%1-16x"},
   {0x0a0a0001, 0x3e0e0001, "oris.c\t\t%20-24r, 0x%1-16x"},
   {0x1a000000, 0x3e000001, "orri\t\t%20-24r, %15-19r, 0x%1-14x"},
@@ -589,7 +589,7 @@ print_insn_score48 (struct disassemble_info *info, bfd_vma given)
                                   reg &= (2 << (bitend - bitstart)) - 1;
                                   reg = ((reg ^ (1 << (bitend - bitstart))) -
                                         (1 << (bitend - bitstart)));
-                                  /* Fix bug: s3_testsuite 64-bit.  
+                                  /* Fix bug: s3_testsuite 64-bit.
                                      Remove high 32 bits.  */
                                   reg = (int) reg;
 
@@ -610,7 +610,7 @@ print_insn_score48 (struct disassemble_info *info, bfd_vma given)
 
                                   reg = given >> bitstart;
                                   reg &= (2 << (bitend - bitstart)) - 1;
-                                  /* Fix bug: s3_testsuite 64-bit.  
+                                  /* Fix bug: s3_testsuite 64-bit.
                                      Remove high 32 bits.  */
                                   reg = (int) reg;
 
@@ -626,7 +626,7 @@ print_insn_score48 (struct disassemble_info *info, bfd_vma given)
                                     func (stream, "%lx", reg);
                                 }
                                 break;
-                   
+
                               default:
                                 abort ();
                               }
@@ -662,7 +662,7 @@ print_insn_score48 (struct disassemble_info *info, bfd_vma given)
   func (stream, _("<illegal instruction>"));
   return 6;
 #endif
-  
+
   abort ();
 }
 
@@ -682,7 +682,7 @@ print_insn_score32 (bfd_vma pc, struct disassemble_info *info, long given)
         {
           /* check for bcmpeq / bcmpeqz / bcmpne / bcmpnez */
             /* given &0x7c00 is for to test if rb is zero  ,
-                 rb_equal_zero =1 : index to bcmpeqz 
+                 rb_equal_zero =1 : index to bcmpeqz
                  rb_equal_zero =0 , index to bcmpeq
                 this checking rule only for branch compare ( insn->mask ==0x3e00007e*/
             if (((given & 0x7c00) !=0)&&(rb_equal_zero ==1)&&(insn->mask == 0x3e00007e)
@@ -691,7 +691,7 @@ print_insn_score32 (bfd_vma pc, struct disassemble_info *info, long given)
                 rb_equal_zero =0;
                continue;
              }
-          
+
           char *c;
 
           for (c = insn->assembler; *c; c++)
@@ -743,9 +743,9 @@ print_insn_score32 (bfd_vma pc, struct disassemble_info *info, long given)
                                int target = (pc + SEXT10 (disp));
                                func (stream, "%s ,", score_regnames[reg] );
                                   (*info->print_address_func) (target, info);
-                               
+
                                }
- 
+
                       }
                       break;
                     case 'm':
@@ -1030,7 +1030,7 @@ print_insn_score16 (bfd_vma pc, struct disassemble_info *info, long given)
   func (stream, _("<illegal instruction>"));
   return 2;
 #endif
-  
+
   /* No match.  */
   abort ();
 }
@@ -1077,7 +1077,7 @@ s3_print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
   if ((given & 0x8000)==0)
     return  print_insn_score16 (pc, info, given);
 
-  else 
+  else
     {
       if (little)
         {
@@ -1120,7 +1120,7 @@ s3_print_insn (bfd_vma pc, struct disassemble_info *info, bfd_boolean little)
       given_l = ((bfd_vma)b[5]) | ((bfd_vma)b[4] << 8) | ((bfd_vma)b[3] << 16) | ((bfd_vma)b[2] << 24) ;
       given_h = ((bfd_vma)b[1] )|((bfd_vma)b[0] <<8);
       given = ((bfd_vma)given_h<<32) | (bfd_vma)given_l ;
-    
+
     }
 
     /* Set given_48.  */
@@ -1205,4 +1205,4 @@ print_insn_little_score (bfd_vma pc ATTRIBUTE_UNUSED,
 {
   abort ();
 }
-#endif 
+#endif

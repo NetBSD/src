@@ -202,7 +202,7 @@
 #define PACKAGE_NAME "binutils"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "binutils 2.26"
+#define PACKAGE_STRING "binutils 2.26.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "binutils"
@@ -211,7 +211,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.26"
+#define PACKAGE_VERSION "2.26.1"
 
 /* The size of `long', as computed by sizeof. */
 #define SIZEOF_LONG 8
@@ -265,11 +265,11 @@
 
 
 /* Version number of package */
-#define VERSION "2.26"
+#define VERSION "2.26.1"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
-/* #undef YYTEXT_POINTER */
+#define YYTEXT_POINTER 1
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

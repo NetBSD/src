@@ -1,6 +1,6 @@
 /* Definitions for expressions stored in reversed prefix form, for GDB.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -151,5 +151,18 @@ extern char *op_string (enum exp_opcode);
 extern void dump_raw_expression (struct expression *,
 				 struct ui_file *, char *);
 extern void dump_prefix_expression (struct expression *, struct ui_file *);
+
+/* In an OP_RANGE expression, either bound could be empty, indicating
+   that its value is by default that of the corresponding bound of the
+   array or string.  So we have four sorts of subrange.  This
+   enumeration type is to identify this.  */
+   
+enum range_type
+  {
+    BOTH_BOUND_DEFAULT,		/* "(:)"  */
+    LOW_BOUND_DEFAULT,		/* "(:high)"  */
+    HIGH_BOUND_DEFAULT,		/* "(low:)"  */
+    NONE_BOUND_DEFAULT		/* "(low:high)"  */
+  };
 
 #endif /* !defined (EXPRESSION_H) */

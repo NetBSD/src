@@ -1,4 +1,4 @@
-#	$NetBSD: dh.inc,v 1.2 2010/08/21 13:47:37 joerg Exp $
+#	$NetBSD: dh.inc,v 1.2.30.1 2016/11/04 14:42:36 pgoyette Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,7 +9,7 @@
 
 
 DH_SRCS = dh_asn1.c dh_gen.c dh_key.c dh_lib.c dh_check.c dh_err.c dh_depr.c \
-    dh_ameth.c dh_pmeth.c dh_prn.c
+    dh_ameth.c dh_pmeth.c dh_prn.c dh_rfc5114.c dh_kdf.c
 SRCS += ${DH_SRCS}
 
 .for cryptosrc in ${DH_SRCS}

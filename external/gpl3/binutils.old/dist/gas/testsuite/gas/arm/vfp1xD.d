@@ -280,10 +280,16 @@ Disassembly of section .text:
 0+438 <[^>]*> eee1ea10 	vmsr	fpscr, lr
 0+43c <[^>]*> eee01a10 	vmsr	fpsid, r1
 0+440 <[^>]*> eee82a10 	vmsr	fpexc, r2
-0+444 <[^>]*> eef03a10 	vmrs	r3, fpsid
-0+448 <[^>]*> eef64a10 	vmrs	r4, mvfr1
-0+44c <[^>]*> eef75a10 	vmrs	r5, mvfr0
-0+450 <[^>]*> eef86a10 	vmrs	r6, fpexc
-0+454 <[^>]*> e1a00000 	nop			; \(mov r0, r0\)
-0+458 <[^>]*> e1a00000 	nop			; \(mov r0, r0\)
-0+45c <[^>]*> e1a00000 	nop			; \(mov r0, r0\)
+0+444 <[^>]*> eee93a10 	vmsr	fpinst, r3	@ Impl def
+0+448 <[^>]*> eeea4a10 	vmsr	fpinst2, r4	@ Impl def
+0+44c <[^>]*> eeef5a10 	vmsr	(c15|<impl def 0xf>), r5
+0+450 <[^>]*> eef03a10 	vmrs	r3, fpsid
+0+454 <[^>]*> eef64a10 	vmrs	r4, mvfr1
+0+458 <[^>]*> eef75a10 	vmrs	r5, mvfr0
+0+45c <[^>]*> eef86a10 	vmrs	r6, fpexc
+0+460 <[^>]*> eef97a10 	vmrs	r7, fpinst	@ Impl def
+0+464 <[^>]*> eefa8a10 	vmrs	r8, fpinst2	@ Impl def
+0+468 <[^>]*> eeff9a10 	vmrs	r9, (c15|<impl def 0xf>)
+0+46c <[^>]*> e1a00000 	nop			; \(mov r0, r0\)
+0+470 <[^>]*> e1a00000 	nop			; \(mov r0, r0\)
+0+474 <[^>]*> e1a00000 	nop			; \(mov r0, r0\)

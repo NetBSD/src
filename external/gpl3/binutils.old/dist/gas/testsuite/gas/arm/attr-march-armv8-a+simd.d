@@ -3,7 +3,7 @@
 # as: -march=armv8-a+simd
 # readelf: -A
 # This test is only valid on EABI based ports.
-# target: *-*-*eabi *-*-nacl*
+# target: *-*-*eabi* *-*-nacl*
 
 Attribute Section: aeabi
 File Attributes

@@ -1,4 +1,4 @@
-#   Copyright 2003, 2005, 2007 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -132,39 +132,44 @@ proc regsize_conflict {arglist} {
 }
 
 abi_conflict { "-mabi=eabi -mgp32" "-mips4 -mabi=32" } EABI32 O32
-abi_conflict { "-mips4 -mabi=o64" "-mips3 -mabi=eabi" } O64 EABI64
+abi_conflict { "-mips4 -mabi=o64"  "-mips3 -mabi=eabi" } O64 EABI64
 
-isa_conflict { "-march=vr5500 -32" "-march=sb1 -32" } 5500 sb1
-isa_conflict { "-march=vr5400 -32" "-march=4120 -32" } 5400 4120
-isa_conflict { "-march=r3900 -32" "-march=r6000 -32" } 3900 6000
-isa_conflict { "-march=r4010 -32" "-march=r4650 -32" } 4010 4650
-isa_conflict { "-mips3 -mgp32 -32" "-mips32 -32" } 4000 isa32
+isa_conflict { "-march=vr5500 -32"     "-march=sb1 -32" } 5500 sb1
+isa_conflict { "-march=vr5400 -32"     "-march=4120 -32" } 5400 4120
+isa_conflict { "-march=r3900 -32"      "-march=r6000 -32" } 3900 6000
+isa_conflict { "-march=r4010 -32"      "-march=r4650 -32" } 4010 4650
+isa_conflict { "-mips3 -mgp32 -32"     "-mips32 -32" } 4000 isa32
 isa_conflict { "-march=sb1 -mgp32 -32" "-mips32r2 -32" } sb1 isa32r2
-isa_conflict { "-march=sb1 -32" "-mips64r2 -32" } sb1 isa64r2
+isa_conflict { "-march=sb1 -32"        "-mips64r2 -32" } sb1 isa64r2
 
-regsize_conflict { "-mips4 -mgp64 -mabi=o64" "-mips2 -32" }
-regsize_conflict { "-mips4 -mabi=o64" "-mips4 -mabi=32" }
-regsize_conflict { "-mips4 -mabi=eabi -mgp32" "-mips4 -mabi=eabi -mgp64" }
-regsize_conflict { "-march=vr5000 -mgp64 -mabi=o64" "-march=vr5000 -mgp32 -32" }
-regsize_conflict { "-mips32 -32" "-mips64 -mabi=o64" }
-regsize_conflict { "-mips32r2 -32" "-mips64 -mabi=o64" }
-regsize_conflict { "-mips32r2 -32" "-mips64r2 -mabi=o64" }
+isa_conflict { "-march=vr4100 -32"     "-march=r10000 -32" } 4100 8000
+isa_conflict { "-march=r5900 -32"      "-march=vr4111 -32" } 5900 4111
+isa_conflict { "-march=loongson2e -32" "-march=loongson2f -32" } loongson_2e loongson_2f
+isa_conflict { "-march=loongson3a -32" "-march=loongson2f -32" } loongson_3a loongson_2f
 
-good_combination { "-mips4 -mgp32 -32" "-mips2 -32" } { mips4 o32 }
-good_combination { "-mips4 -mabi=32" "-mips2 -32" } { mips4 o32 }
-good_combination { "-mips2 -32" "-mips4 -mabi=32" } { mips4 o32 }
-good_combination { "-mips2 -mabi=eabi" "-mips4 -mabi=eabi -mgp32" } { mips4 eabi32 }
-good_combination { "-mips2 -32" "-mips32 -32" "-mips32r2 -32" } { mips32r2 }
-good_combination { "-mips1 -32" "-mips32r2 -32" "-mips32 -32" } { mips32r2 }
+regsize_conflict { "-mips4 -mgp64 -mabi=o64"         "-mips2 -32" }
+regsize_conflict { "-mips4 -mabi=o64"                "-mips4 -mabi=32" }
+regsize_conflict { "-mips4 -mabi=eabi -mgp32"        "-mips4 -mabi=eabi -mgp64" }
+regsize_conflict { "-march=vr5000 -mgp64 -mabi=o64"  "-march=vr5000 -mgp32 -32" }
+regsize_conflict { "-mips32 -32"                     "-mips64 -mabi=o64" }
+regsize_conflict { "-mips32r2 -32"                   "-mips64 -mabi=o64" }
+regsize_conflict { "-mips32r2 -32"                   "-mips64r2 -mabi=o64" }
 
-good_combination { "-march=vr4100 -32" "-march=vr4120 -32" } { 4120 }
-good_combination { "-march=vr5400 -32" "-march=vr5500 -32" "-mips4 -32" } { 5500 }
-good_combination { "-mips3 -32" "-mips4 -32" "-march=sb1 -32" "-mips5 -32" } { sb1 }
-good_combination { "-mips1 -32" "-march=3900 -32" } { 3900 }
-good_combination { "-mips3 -32" "-mips64r2 -32" "-mips64 -32" } { mips64r2 }
+good_combination { "-mips4 -mgp32 -32"  "-mips2 -32" } { mips4 o32 }
+good_combination { "-mips4 -mabi=32"    "-mips2 -32" } { mips4 o32 }
+good_combination { "-mips2 -32"         "-mips4 -mabi=32" } { mips4 o32 }
+good_combination { "-mips2 -mabi=eabi"  "-mips4 -mabi=eabi -mgp32" } { mips4 eabi32 }
+good_combination { "-mips2 -32"         "-mips32 -32" "-mips32r2 -32" } { mips32r2 }
+good_combination { "-mips1 -32"         "-mips32r2 -32" "-mips32 -32" } { mips32r2 }
 
-good_combination { "-march=vr4120 -mabi=32" "-mips3 -mabi=32" } { 4120 o32 }
-good_combination { "-march=sb1 -mgp32 -32" "-march=4000 -mgp32 -32" } { sb1 o32 }
-good_combination { "-mips32 -mabi=32" "-march=sb1 -mabi=32" } { sb1 o32 }
-good_combination { "-mips64r2 -mabi=32" "-mips32 -mabi=32" } { mips64r2 o32 }
-good_combination { "-mips5 -mabi=o64" "-mips64r2 -mabi=o64" } { mips64r2 o64 }
+good_combination { "-march=vr4100 -32"  "-march=vr4120 -32" } { 4120 }
+good_combination { "-march=vr5400 -32"  "-march=vr5500 -32" "-mips4 -32" } { 5500 }
+good_combination { "-mips3 -32"         "-mips4 -32"        "-march=sb1 -32"  "-mips5 -32" } { sb1 }
+good_combination { "-mips1 -32"         "-march=3900 -32" } { 3900 }
+good_combination { "-mips3 -32"         "-mips64r2 -32" "   -mips64 -32" } { mips64r2 }
+
+good_combination { "-march=vr4120 -mabi=32"  "-mips3 -mabi=32" } { 4120 o32 }
+good_combination { "-march=sb1 -mgp32 -32"   "-march=4000 -mgp32 -32" } { sb1 o32 }
+good_combination { "-mips32 -mabi=32"        "-march=sb1 -mabi=32" } { sb1 o32 }
+good_combination { "-mips64r2 -mabi=32"      "-mips32 -mabi=32" } { mips64r2 o32 }
+good_combination { "-mips5 -mabi=o64"        "-mips64r2 -mabi=o64" } { mips64r2 o64 }

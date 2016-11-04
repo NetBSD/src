@@ -228,12 +228,16 @@ amd64nbsd_trapframe_sniffer (const struct frame_unwind *self,
   const char *name;
   volatile struct gdb_exception ex;
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       cs = get_frame_register_unsigned (this_frame, AMD64_CS_REGNUM);
     }
-  if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
-    throw_exception (ex);
+  CATCH (ex, RETURN_MASK_ERROR)
+    {
+      if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
+	throw_exception (ex);
+    }
+  END_CATCH
   if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
     return 0;
 

@@ -1,5 +1,5 @@
 /* itbl-lex.h
-   Copyright 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -8,7 +8,7 @@
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   GAS is distributed in the hope that it will be useful, 
+   GAS is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.

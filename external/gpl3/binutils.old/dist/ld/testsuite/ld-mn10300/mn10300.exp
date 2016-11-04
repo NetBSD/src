@@ -1,5 +1,5 @@
 # Expect script for ld-mn10300 tests
-#   Copyright (C) 2007 Free Software Foundation
+#   Copyright (C) 2007-2015 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ if {!([istarget "am3*-*-*"]) && !([istarget "mn10300*-*-*"]) } {
 set mn10300_tests {
     {
 	"am33 string merging"
-	"-relax -Ttext 0x8000074"
+	"-relax -Ttext 0x8000074" ""
 	""
 	{ "i36434.s" "i36434-2.s" }
 	{ {objdump -dz i36434.d} }
@@ -33,7 +33,7 @@ set mn10300_tests {
     }
     {
 	"difference of two same-section symbols"
-	"-Ttext 0"
+	"-Ttext 0" ""
 	""
 	{ "i112045-1.s" }
 	{ {objdump -d i112045-1.d} }
@@ -41,7 +41,7 @@ set mn10300_tests {
     }
     {
 	"difference of two same-section symbols where the difference is held in another section"
-	"-relax -Ttext 100"
+	"-relax -Ttext 100" ""
 	""
 	{ "i112045-3.s" }
 	{ {objdump -D i112045-3.d} }
@@ -49,7 +49,7 @@ set mn10300_tests {
     }
     {
 	"relaxation and alignment directives"
-	"-relax -Ttext 100 -Tbss 300"
+	"-relax -Ttext 100 -Tbss 300" ""
 	""
 	{ "i127740.s" }
 	{ {objdump -d i127740.d} }
@@ -57,7 +57,7 @@ set mn10300_tests {
     }
     {
 	"adjustment of symbols due to relaxation"
-	"-Tdata 1f -Ttext 0 -relax"
+	"-Tdata 1f -Ttext 0 -relax" ""
 	""
 	{ "i135409-1.s" }
 	{ {readelf --syms i135409-1.d} }
@@ -65,7 +65,7 @@ set mn10300_tests {
     }
     {
 	"adjustment of symbols due to relaxation (with alignment directives)"
-	"-Tdata 1f -Ttext 0 -relax"
+	"-Tdata 1f -Ttext 0 -relax" ""
 	""
 	{ "i135409-2.s" }
 	{ {readelf --syms i135409-2.d} }
@@ -73,7 +73,7 @@ set mn10300_tests {
     }
     {
 	"adjustment of symbols due to relaxation (with a symbol in the deleted region)"
-	"-Tdata 1f -Ttext 0 -relax"
+	"-Tdata 1f -Ttext 0 -relax" ""
 	""
 	{ "i135409-3.s" }
 	{ {objdump -d i135409-3.d} }
@@ -81,7 +81,7 @@ set mn10300_tests {
     }
     {
 	"adjusting a 16-bit forward branch"
-	"-Ti135409-4.t -relax"
+	"-Ti135409-4.t -relax" ""
 	""
 	{ "i135409-4.s" }
 	{ {objdump -d i135409-4.d} }
@@ -89,7 +89,7 @@ set mn10300_tests {
     }
     {
 	"adjusting a 16-bit backward branch"
-	"-Ti135409-5.t -relax"
+	"-Ti135409-5.t -relax" ""
 	""
 	{ "i135409-5.s" }
 	{ {objdump -d i135409-5.d} }
@@ -97,7 +97,7 @@ set mn10300_tests {
     }
     {
 	"relaxing offsets into a merged string section"
-	"-Ti143317.t -shared -relax"
+	"-Ti143317.t -shared -relax" ""
 	""
 	{ "i143317.s" }
 	{ {objdump -d i143317.d} }
@@ -114,7 +114,7 @@ if {!([istarget "am3*-*-*"])} {
 set am33_tests {
     {
 	"difference of two same-section symbols (in a shared library)"
-	"-shared"
+	"-shared" ""
 	""
 	{ "i112045-2.s" }
 	{ {objdump -R i112045-2.d} }

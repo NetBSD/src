@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.15 2016/05/17 21:03:36 christos Exp $
+$NetBSD: storage,v 1.15.2.1 2016/11/04 14:42:40 pgoyette Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -93,8 +93,8 @@ best option at this point is:
 disk early) has been examined by several people who know the code base
 and judged difficult. Also, some other problems have come to light
 more recently; e.g. PR 50725, PR 47146, and a problem where truncating
-large sparse files takes ~forever. Also see PR 45676. Still, it might
-be the best way forward.
+large sparse files takes ~forever in PR 49175. Also see PR 45676. Still,
+it might be the best way forward.
 
 + There is another journaling FFS; the Harvard one done by Margo
 Seltzer's group some years back. We have a copy of this, but as it was
@@ -121,9 +121,8 @@ forward. Given the general manpower shortage, it may be that the best
 way is whatever looks best to someone who wants to work on the
 problem.
 
- - As of November 2015 nobody is working on fixing WAPBL. There has
-   been some interest in the Harvard journaling FFS but no significant
-   progress. Nobody is known to be working on or particularly
+ - There has been some interest in the Harvard journaling FFS but no
+   significant progress. Nobody is known to be working on or particularly
    interested in porting softupdates-with-journaling. And, while
    dholland has been mumbling for some time about a plan for a
    specific new file system to solve this problem, there isn't any
@@ -133,6 +132,8 @@ problem.
  - There is no clear timeframe or release target; but given that WAPBL
    has been disabled by default for new installs in -7 this problem
    can reasonably be said to have become critical.
+ - jdolecek is working on fixing WAPBL, goal is to get WAPBL fixed
+   enough to be safe to re-enable as default for -8
  - Contact joerg or martin regarding WAPBL; contact dholland regarding
    the Harvard journaling FFS.
 
@@ -210,13 +211,12 @@ more drivers.
 ----------------
 
 nvme ("NVM Express") is a hardware interface standard for PCI-attached
-SSDs. NetBSD now has a driver for these; however, it was ported from
-OpenBSD and is not (yet) MPSAFE. This is, unfortunately, a fairly
-serious limitation given the point and nature of nvme devices.
+SSDs. NetBSD now has a driver for these.
 
-Relatedly, the I/O path needs to be restructured to avoid software
-bottlenecks on the way to an nvme device: they are fast enough that
-things like disksort() do not make sense.
+Driver is now MPSAFE and uses bufq fcfs (i.e. no disksort()) already,
+so the most obvious software bottlenecks were treated. It still needs
+more testing on real hardware, and it may be good to investigate some further
+optimizations, such as DragonFly pbuf(9) or something similar.
 
 Semi-relatedly, it is also time for scsipi to become MPSAFE.
 
@@ -225,6 +225,14 @@ Semi-relatedly, it is also time for scsipi to become MPSAFE.
  - The nvme driver is a backend to ld(4) which is MPSAFE, but we still
    need to attend to I/O path bottlenecks. Better instrumentation
    is needed.
+ - Flush cache commands via DIOCCACHESYNC currently doesn't wait for completion;
+   it must not poll since that corrupts command queue, but it should use
+   a condition variable to wait for the flush to actually finish
+ - NVMe controllers supports write cache administration via GET/SET FEATURE, but
+   driver doesn't currently implement the cache ioctls, leading to somewhat
+   ugly dkctl(1) output; it would be fairly simple to add this, but would
+   require ld(4) attachment code changed to support passing arbitrary ioctls
+   to attachments
  - There is no clear timeframe or release target for these points.
  - Contact msaitoh or agc for further information.
 
@@ -319,10 +327,15 @@ or less work than doing an implementation.
 Note however that implementing ext3 has already defeated several
 people; this is a harder project than it looks.
 
- - As of May 2016 there is a GSoC project to implement read-only ext4
-   support, but (it not being summer yet) no particular progress.
+ - GSoc 2016 brought support for extents, and also ro support for dir
+   hashes; jdolecek also implemented several frequently used ext4 features
+   so most contemporary ext filesystems should be possible to mount
+   read-write
+ - still need rw dir_nhash and xattr (semi-easy), and eventually journalling
+   (hard)
  - There is no clear timeframe or release target.
- - Contact ?? for further information.
+ - jdolecek is working on improving ext3/ext4 support (particularily
+   journalling) 
 
 
 14. Port hammer from Dragonfly

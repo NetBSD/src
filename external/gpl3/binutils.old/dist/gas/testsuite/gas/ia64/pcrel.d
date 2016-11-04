@@ -13,10 +13,10 @@ OFFSET[[:space:]]+TYPE[[:space:]]+VALUE[[:space:]]*
 
 RELOCATION RECORDS FOR \[\.movl\]:
 OFFSET[[:space:]]+TYPE[[:space:]]+VALUE[[:space:]]*
-0+12[[:space:]]+PCREL64I[[:space:]]+esym
-0+22[[:space:]]+PCREL64I[[:space:]]+esym\+0x0+20
-0+32[[:space:]]+PCREL64I[[:space:]]+esym
-0+42[[:space:]]+PCREL64I[[:space:]]+esym-0x0+20
+0+11[[:space:]]+PCREL64I[[:space:]]+esym
+0+21[[:space:]]+PCREL64I[[:space:]]+esym\+0x0+20
+0+31[[:space:]]+PCREL64I[[:space:]]+esym
+0+41[[:space:]]+PCREL64I[[:space:]]+esym-0x0+20
 
 RELOCATION RECORDS FOR \[\.data8\]:
 OFFSET[[:space:]]+TYPE[[:space:]]+VALUE[[:space:]]*

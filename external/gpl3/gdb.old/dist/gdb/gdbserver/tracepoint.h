@@ -25,7 +25,50 @@
 
 void initialize_tracepoint (void);
 
-extern int tracing;
+#if defined(__GNUC__)
+# define ATTR_USED __attribute__((used))
+# define ATTR_NOINLINE __attribute__((noinline))
+#else
+# define ATTR_USED
+# define ATTR_NOINLINE
+#endif
+
+/* How to make symbol public/exported.  */
+
+#if defined _WIN32 || defined __CYGWIN__
+# define EXPORTED_SYMBOL __declspec (dllexport)
+#else
+# if __GNUC__ >= 4
+#  define EXPORTED_SYMBOL __attribute__ ((visibility ("default")))
+# else
+#  define EXPORTED_SYMBOL
+# endif
+#endif
+
+/* Use these to make sure the functions and variables the IPA needs to
+   export (symbols GDBserver needs to query GDB about) are visible and
+   have C linkage.
+
+   Tag exported functions with IP_AGENT_EXPORT_FUNC, tag the
+   definitions of exported variables with IP_AGENT_EXPORT_VAR, and
+   variable declarations with IP_AGENT_EXPORT_VAR_DECL.  Variables
+   must also be exported with C linkage.  As we can't both use extern
+   "C" and initialize a variable in the same statement, variables that
+   don't have a separate declaration must use
+   EXTERN_C_PUSH/EXTERN_C_POP around their definition.  */
+
+#ifdef IN_PROCESS_AGENT
+# define IP_AGENT_EXPORT_FUNC EXTERN_C EXPORTED_SYMBOL ATTR_NOINLINE ATTR_USED
+# define IP_AGENT_EXPORT_VAR EXPORTED_SYMBOL ATTR_USED
+# define IP_AGENT_EXPORT_VAR_DECL EXTERN_C EXPORTED_SYMBOL
+#else
+# define IP_AGENT_EXPORT_FUNC
+# define IP_AGENT_EXPORT_VAR
+# define IP_AGENT_EXPORT_VAR_DECL extern
+#endif
+
+IP_AGENT_EXPORT_VAR_DECL int tracing;
+
 extern int disconnected_tracing;
 
 void tracepoint_look_up_symbols (void);
@@ -119,6 +162,11 @@ int agent_mem_read_string (struct eval_agent_expr_context *ctx,
 			   unsigned char *to,
 			   CORE_ADDR from,
 			   ULONGEST len);
+
+/* The prototype the get_raw_reg function in the IPA.  Each arch's
+   bytecode compiler emits calls to this function.  */
+IP_AGENT_EXPORT_FUNC ULONGEST gdb_agent_get_raw_reg
+  (const unsigned char *raw_regs, int regnum);
 
 /* Returns the address of the get_raw_reg function in the IPA.  */
 CORE_ADDR get_raw_reg_func_addr (void);

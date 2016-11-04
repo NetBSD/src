@@ -1,6 +1,6 @@
 /* test_plugin.c -- simple linker plugin test
 
-   Copyright 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Written by Cary Coutant <ccoutant@google.com>.
 
    This file is part of gold.
@@ -263,15 +263,35 @@ claim_file_hook (const struct ld_plugin_input_file* file, int* claimed)
   int vis;
   int is_comdat;
   int i;
+  int irfile_was_opened = 0;
+  char syms_name[80];
 
   (*message)(LDPL_INFO,
              "%s: claim file hook called (offset = %ld, size = %ld)",
              file->name, (long)file->offset, (long)file->filesize);
 
+  /* Look for matching syms file for an archive member.  */
+  if (file->offset == 0)
+    snprintf(syms_name, sizeof(syms_name), "%s.syms", file->name);
+  else
+    snprintf(syms_name, sizeof(syms_name), "%s-%d.syms",
+	     file->name, (int)file->offset);
+  irfile = fopen(syms_name, "r");
+  if (irfile != NULL)
+    {
+      irfile_was_opened = 1;
+      end_offset = 1 << 20;
+    }
+
+  /* Otherwise, see if the file itself is a syms file.  */
+  if (!irfile_was_opened)
+    {
+      irfile = fdopen(file->fd, "r");
+      (void)fseek(irfile, file->offset, SEEK_SET);
+      end_offset = file->offset + file->filesize;
+    }
+
   /* Look for the beginning of output from readelf -s.  */
-  irfile = fdopen(file->fd, "r");
-  (void)fseek(irfile, file->offset, SEEK_SET);
-  end_offset = file->offset + file->filesize;
   len = fread(buf, 1, 13, irfile);
   if (len < 13 || strncmp(buf, "\nSymbol table", 13) != 0)
     return LDPS_OK;
@@ -378,6 +398,8 @@ claim_file_hook (const struct ld_plugin_input_file* file, int* claimed)
     (*add_symbols)(file->handle, nsyms, syms);
 
   *claimed = 1;
+  if (irfile_was_opened)
+    fclose(irfile);
   return LDPS_OK;
 }
 
@@ -474,12 +496,31 @@ all_symbols_read_hook(void)
        claimed_file != NULL;
        claimed_file = claimed_file->next)
     {
+      int irfile_was_opened = 0;
+      char syms_name[80];
+
       (*get_input_file) (claimed_file->handle, &file);
 
+      if (file.offset == 0)
+	snprintf(syms_name, sizeof(syms_name), "%s.syms", file.name);
+      else
+	snprintf(syms_name, sizeof(syms_name), "%s-%d.syms",
+		 file.name, (int)file.offset);
+      irfile = fopen(syms_name, "r");
+      if (irfile != NULL)
+	{
+	  irfile_was_opened = 1;
+	  end_offset = 1 << 20;
+	}
+
+      if (!irfile_was_opened)
+	{
+	  irfile = fdopen(file.fd, "r");
+	  (void)fseek(irfile, file.offset, SEEK_SET);
+	  end_offset = file.offset + file.filesize;
+	}
+
       /* Look for the beginning of output from readelf -s.  */
-      irfile = fdopen(file.fd, "r");
-      (void)fseek(irfile, file.offset, SEEK_SET);
-      end_offset = file.offset + file.filesize;
       len = fread(buf, 1, 13, irfile);
       if (len < 13 || strncmp(buf, "\nSymbol table", 13) != 0)
         {
@@ -508,6 +549,9 @@ all_symbols_read_hook(void)
               break;
             }
         }
+
+      if (irfile_was_opened)
+	fclose(irfile);
 
       (*release_input_file) (claimed_file->handle);
 
@@ -583,6 +627,13 @@ parse_readelf_line(char* p, struct sym_info* info)
   info->vis = p;
   p += strcspn(p, " ");
   p += strspn(p, " ");
+
+  if (*p == '[')
+    {
+      /* Skip st_other.  */
+      p += strcspn(p, "]");
+      p += strspn(p, "] ");
+    }
 
   /* Section field.  */
   info->sect = p;

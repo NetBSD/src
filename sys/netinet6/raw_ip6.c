@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.146.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.146.2.3 2016/11/04 14:49:21 pgoyette Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.146.2.2 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.146.2.3 2016/11/04 14:49:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -386,7 +386,6 @@ rip6_output(struct mbuf *m, struct socket * const so,
 	struct ifnet *oifp = NULL;
 	int type, code;		/* for ICMPv6 output statistics only */
 	int scope_ambiguous = 0;
-	struct in6_addr *in6a;
 	int bound = curlwp_bind();
 	struct psref psref;
 
@@ -448,13 +447,10 @@ rip6_output(struct mbuf *m, struct socket * const so,
 	/*
 	 * Source address selection.
 	 */
-	if ((in6a = in6_selectsrc(dstsock, optp, in6p->in6p_moptions,
-	    &in6p->in6p_route, &in6p->in6p_laddr, &oifp, &psref, &error)) == 0) {
-		if (error == 0)
-			error = EADDRNOTAVAIL;
+	error = in6_selectsrc(dstsock, optp, in6p->in6p_moptions,
+	    &in6p->in6p_route, &in6p->in6p_laddr, &oifp, &psref, &ip6->ip6_src);
+	if (error != 0)
 		goto bad;
-	}
-	ip6->ip6_src = *in6a;
 
 	if (oifp && scope_ambiguous) {
 		/*
@@ -700,8 +696,7 @@ rip6_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		goto out;
 	}
 	if (ifa && (ifatoia6(ifa))->ia6_flags &
-	    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
-	     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED)) {
+	    (IN6_IFF_ANYCAST | IN6_IFF_DUPLICATED)) {
 		error = EADDRNOTAVAIL;
 		goto out;
 	}
@@ -726,7 +721,7 @@ rip6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
 	struct sockaddr_in6 *addr = (struct sockaddr_in6 *)nam;
-	struct in6_addr *in6a = NULL;
+	struct in6_addr in6a;
 	struct ifnet *ifp = NULL;
 	int scope_ambiguous = 0;
 	int error = 0;
@@ -757,20 +752,17 @@ rip6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 
 	bound = curlwp_bind();
 	/* Source address selection. XXX: need pcblookup? */
-	in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
+	error = in6_selectsrc(addr, in6p->in6p_outputopts,
 	    in6p->in6p_moptions, &in6p->in6p_route,
-	    &in6p->in6p_laddr, &ifp, &psref, &error);
-	if (in6a == NULL) {
-		if (error == 0)
-			error = EADDRNOTAVAIL;
+	    &in6p->in6p_laddr, &ifp, &psref, &in6a);
+	if (error != 0)
 		goto out;
-	}
 	/* XXX: see above */
 	if (ifp && scope_ambiguous &&
 	    (error = in6_setscope(&addr->sin6_addr, ifp, NULL)) != 0) {
 		goto out;
 	}
-	in6p->in6p_laddr = *in6a;
+	in6p->in6p_laddr = in6a;
 	in6p->in6p_faddr = addr->sin6_addr;
 	soisconnected(so);
 out:

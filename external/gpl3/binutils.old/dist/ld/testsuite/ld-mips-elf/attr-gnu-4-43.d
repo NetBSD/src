@@ -1,5 +1,6 @@
-#source: attr-gnu-4-4.s
+#source: attr-gnu-4-4.s -W
 #source: attr-gnu-4-3.s
 #ld: -r
-#warning: Warning: .* uses hard float, .* uses soft float
-#target: mips*-*-*
+#error: \A[^\n]*: Warning: .* uses -mhard-float \(set by .*\), .* uses -msoft-float\n
+#error:   [^\n]*: [^\n]* linking -mfp32 module with previous -mfp64 modules\n
+#error:   [^\n]*: failed to merge target specific data of file [^\n]*\.o\Z

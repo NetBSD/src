@@ -29,7 +29,6 @@ SYMBOL TABLE:
 0+80000 l    d  \.stack	0+ (|\.stack)
 0+ l    df \*ABS\*	0+ .*
 0+1150 l       \.text	0+ 0x04 part2
-0+ l    df \*ABS\*	0+ .*
 0+13f8 g       \.data	0+ dfoo_otherboth2
 0+1178 g       \.text	0+ 0x04 bar_otherwithout
 0+11b4 g       \.text	0+ 0x04 bazwithout

@@ -1100,7 +1100,7 @@ Disassembly of section \.text:
     9ffa:	eb01 0002 	add\.w	r0, r1, r2
     9ffe:	f000 e804 	blx	a008 <bl_insns\+0x108>
     a002:	4770      	bx	lr
-    a004:	f3af 8000 	nop\.w
+#...
     a008:	eaffffba 	b	9ef8 <arm_target>
     a00c:	d101      	bne\.n	a012 <bl_insns\+0x112>
     a00e:	f7fe bff8 	b\.w	9002 <_start\+0x102>

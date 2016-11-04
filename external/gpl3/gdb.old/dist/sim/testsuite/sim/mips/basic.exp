@@ -1,11 +1,5 @@
 # MIPS simulator instruction tests
 
-# As gross as it is, we unset the linker script specified by the target
-# board.  The MIPS libgloss linker scripts include libgcc (and possibly
-# other libraries), which the linker (used to link these tests rather
-# than the compiler) can't necessarily find.
-unset_currtarget_info ldscript
-
 # Do "run_sim_test TESTFILE MODELS" for each combination of the
 # mf{lo,hi} -> mult/div/mt{lo,hi} hazard described in mips.igen.
 # Insert NOPS nops after the mflo or mfhi.

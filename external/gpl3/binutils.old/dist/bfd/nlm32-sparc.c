@@ -1,6 +1,5 @@
 /* Support for 32-bit SPARC NLM (NetWare Loadable Module)
-   Copyright 1993, 1994, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -50,7 +49,7 @@ enum reloc_type
 
 static reloc_howto_type nlm32_sparc_howto_table[] =
 {
-  HOWTO (R_SPARC_NONE,    0,0, 0,FALSE,0,complain_overflow_dont,    0,"R_SPARC_NONE",    FALSE,0,0x00000000,TRUE),
+  HOWTO (R_SPARC_NONE,    0,3, 0,FALSE,0,complain_overflow_dont,    0,"R_SPARC_NONE",    FALSE,0,0x00000000,TRUE),
   HOWTO (R_SPARC_8,       0,0, 8,FALSE,0,complain_overflow_bitfield,0,"R_SPARC_8",       FALSE,0,0x000000ff,TRUE),
   HOWTO (R_SPARC_16,      0,1,16,FALSE,0,complain_overflow_bitfield,0,"R_SPARC_16",      FALSE,0,0x0000ffff,TRUE),
   HOWTO (R_SPARC_32,      0,2,32,FALSE,0,complain_overflow_bitfield,0,"R_SPARC_32",      FALSE,0,0xffffffff,TRUE),
@@ -373,7 +372,7 @@ static const struct nlm_backend_data nlm32_sparc_backend =
 };
 
 #define TARGET_BIG_NAME		"nlm32-sparc"
-#define TARGET_BIG_SYM		nlmNAME (sparc_vec)
+#define TARGET_BIG_SYM		sparc_nlm32_vec
 #define TARGET_BACKEND_DATA	& nlm32_sparc_backend
 
 #include "nlm-target.h"

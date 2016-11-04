@@ -1,5 +1,5 @@
 /* Alpha specific support for 64-bit ELF
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -4830,11 +4830,9 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		if (*name == '\0')
 		  name = bfd_section_name (input_bfd, sec);
 	      }
-	    if (! ((*info->callbacks->reloc_overflow)
-		   (info, (h ? &h->root.root : NULL), name, howto->name,
-		    (bfd_vma) 0, input_bfd, input_section,
-		    rel->r_offset)))
-	      ret_val = FALSE;
+	    (*info->callbacks->reloc_overflow)
+	      (info, (h ? &h->root.root : NULL), name, howto->name,
+	       (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	  }
 	  break;
 
@@ -5042,7 +5040,7 @@ elf64_alpha_finish_dynamic_sections (bfd *output_bfd,
       bfd_vma plt_vma, gotplt_vma;
 
       splt = bfd_get_linker_section (dynobj, ".plt");
-      srelaplt = bfd_get_linker_section (output_bfd, ".rela.plt");
+      srelaplt = bfd_get_linker_section (dynobj, ".rela.plt");
       BFD_ASSERT (splt != NULL && sdyn != NULL);
 
       plt_vma = splt->output_section->vma + splt->output_offset;
@@ -5074,7 +5072,8 @@ elf64_alpha_finish_dynamic_sections (bfd *output_bfd,
 	      dyn.d_un.d_val = srelaplt ? srelaplt->size : 0;
 	      break;
 	    case DT_JMPREL:
-	      dyn.d_un.d_ptr = srelaplt ? srelaplt->vma : 0;
+	      dyn.d_un.d_ptr = srelaplt ? (srelaplt->output_section->vma
+					   + srelaplt->output_offset) : 0;
 	      break;
 
 	    case DT_RELASZ:

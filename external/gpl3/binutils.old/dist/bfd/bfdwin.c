@@ -1,6 +1,5 @@
 /* Support for memory-mapped windows into a BFD.
-   Copyright 1995, 1996, 2001, 2002, 2003, 2005, 2007, 2008, 2009, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.

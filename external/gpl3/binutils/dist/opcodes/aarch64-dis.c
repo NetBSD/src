@@ -1,5 +1,5 @@
 /* aarch64-dis.c -- AArch64 disassembler.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -2047,6 +2047,7 @@ aarch64_opcode_decode (const aarch64_opcode *opcode, const aarch64_insn code,
     {
       const aarch64_operand *opnd;
       enum aarch64_opnd type;
+
       type = opcode->operands[i];
       if (type == AARCH64_OPND_NIL)
 	break;
@@ -2057,6 +2058,13 @@ aarch64_opcode_decode (const aarch64_opcode *opcode, const aarch64_insn code,
 	  DEBUG_TRACE ("operand decoder FAIL at operand %d", i);
 	  goto decode_fail;
 	}
+    }
+
+  /* If the opcode has a verifier, then check it now.  */
+  if (opcode->verifier && ! opcode->verifier (opcode, code))
+    {
+      DEBUG_TRACE ("operand verifier FAIL");
+      goto decode_fail;
     }
 
   /* Match the qualifiers.  */
@@ -2154,8 +2162,7 @@ print_operands (bfd_vma pc, const aarch64_opcode *opcode,
   int i, pcrel_p, num_printed;
   for (i = 0, num_printed = 0; i < AARCH64_MAX_OPND_NUM; ++i)
     {
-      const size_t size = 128;
-      char str[size];
+      char str[128];
       /* We regard the opcode operand info more, however we also look into
 	 the inst->operands to support the disassembling of the optional
 	 operand.
@@ -2166,7 +2173,7 @@ print_operands (bfd_vma pc, const aarch64_opcode *opcode,
 	break;
 
       /* Generate the operand string in STR.  */
-      aarch64_print_operand (str, size, pc, opcode, opnds, i, &pcrel_p,
+      aarch64_print_operand (str, sizeof (str), pc, opcode, opnds, i, &pcrel_p,
 			     &info->target);
 
       /* Print the delimiter (taking account of omitted operand(s)).  */

@@ -1,7 +1,6 @@
 # Expect script for complex PE tests that require a C compiler and the ability
 # to run target executables natively, in addition to the just-built binutils.
-#   Copyright 2006, 2007, 2009
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -85,7 +84,7 @@ proc test_direct2_link_dll {} {
 	} else {
 	    # Check linking directly to direct2_dll.dll.
 	    set msg "linking client (.dll) fastcall/stdcall"
-	    if [ld_simple_link "$CC -Wl,--enable-stdcall-fixup -Wl,--enable-auto-import" $tmpdir/direct2_client_dll.exe \
+	    if [ld_simple_link "$CC $CFLAGS -Wl,--enable-stdcall-fixup -Wl,--enable-auto-import" $tmpdir/direct2_client_dll.exe \
 	      "$tmpdir/direct2_client.o $tmpdir/direct2_dll.dll" ] {
 		pass $msg
 	    } else {
@@ -94,7 +93,7 @@ proc test_direct2_link_dll {} {
 
 	    # Check linking directly to direct2_dll.sl.
 	    set msg "linking client (.sl) fastcall/stdcall"
-	    if [ld_simple_link "$CC -Wl,--enable-stdcall-fixup -Wl,--enable-auto-import" $tmpdir/direct2_client_sl.exe \
+	    if [ld_simple_link "$CC $CFLAGS -Wl,--enable-stdcall-fixup -Wl,--enable-auto-import" $tmpdir/direct2_client_sl.exe \
 	      "$tmpdir/direct2_client.o $tmpdir/direct2_dll.sl" ] {
 		pass $msg
 	    } else {
@@ -105,7 +104,7 @@ proc test_direct2_link_dll {} {
 	    # Create symbolic link.
 	    catch "exec ln -fs direct2_dll.dll $tmpdir/libdirect2_dll.dll.a" ln_catch
 	    set msg "linking client (symlink -> .dll) fastcall/stdcall"
-	    if [ld_simple_link "$CC -Wl,--enable-stdcall-fixup -Wl,--enable-auto-import" $tmpdir/direct2_client_symlink_dll.exe \
+	    if [ld_simple_link "$CC $CFLAGS -Wl,--enable-stdcall-fixup -Wl,--enable-auto-import" $tmpdir/direct2_client_symlink_dll.exe \
 	      "$tmpdir/direct2_client.o $tmpdir/libdirect2_dll.dll.a" ] {
 	        pass $msg
 	    } else {
@@ -116,7 +115,7 @@ proc test_direct2_link_dll {} {
 	    # Create symbolic link.
 	    catch "exec ln -fs direct2_dll.sl $tmpdir/libdirect2_sl.dll.a" ln_catch
 	    set msg "linking client (symlink -> .sl) fastcall/stdcall"
-	    if [ld_simple_link "$CC -Wl,--enable-stdcall-fixup -Wl,--enable-auto-import" $tmpdir/direct2_client_symlink_sl.exe \
+	    if [ld_simple_link "$CC $CFLAGS -Wl,--enable-stdcall-fixup -Wl,--enable-auto-import" $tmpdir/direct2_client_symlink_sl.exe \
 	      "$tmpdir/direct2_client.o $tmpdir/libdirect2_sl.dll.a" ] {
 		pass $msg
 	    } else {

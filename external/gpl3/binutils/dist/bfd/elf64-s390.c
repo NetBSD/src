@@ -1,5 +1,5 @@
 /* IBM S/390-specific support for 64-bit ELF
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -337,10 +337,10 @@ elf_s390_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 	&& strcasecmp (elf_howto_table[i].name, r_name) == 0)
       return &elf_howto_table[i];
 
-    if (strcasecmp (elf64_s390_vtinherit_howto.name, r_name) == 0)
-      return &elf64_s390_vtinherit_howto;
-    if (strcasecmp (elf64_s390_vtentry_howto.name, r_name) == 0)
-      return &elf64_s390_vtentry_howto;
+  if (strcasecmp (elf64_s390_vtinherit_howto.name, r_name) == 0)
+    return &elf64_s390_vtinherit_howto;
+  if (strcasecmp (elf64_s390_vtentry_howto.name, r_name) == 0)
+    return &elf64_s390_vtentry_howto;
 
   return NULL;
 }
@@ -492,8 +492,8 @@ elf_s390_is_local_label_name (bfd *abfd, const char *name)
 
    The GOT holds the address in the PLT to be executed.
    The loader then gets:
-   24(15) =  Pointer to the structure describing the object.
-   28(15) =  Offset in symbol table
+   48(15) =  Pointer to the structure describing the object.
+   56(15) =  Offset in symbol table
    The loader  must  then find the module where the function is
    and insert the address in the GOT.
 
@@ -2479,7 +2479,7 @@ elf_s390_relocate_section (bfd *output_bfd,
 		    PLT_ENTRY_SIZE;
 
 		  /* Offset in GOT is PLT index plus GOT headers(3)
-		     times 4, addr & GOT addr.  */
+		     times 8, addr & GOT addr.  */
 		  relocation = (plt_index + 3) * GOT_ENTRY_SIZE;
 		  if (r_type == R_390_GOTPLTENT)
 		    relocation += htab->elf.sgot->output_section->vma;
@@ -3357,14 +3357,9 @@ elf_s390_relocate_section (bfd *output_bfd,
 	    }
 
 	  if (r == bfd_reloc_overflow)
-	    {
-
-	      if (! ((*info->callbacks->reloc_overflow)
-		     (info, (h ? &h->root : NULL), name, howto->name,
-		      (bfd_vma) 0, input_bfd, input_section,
-		      rel->r_offset)))
-		return FALSE;
-	    }
+	    (*info->callbacks->reloc_overflow)
+	      (info, (h ? &h->root : NULL), name, howto->name,
+	       (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	  else
 	    {
 	      (*_bfd_error_handler)
@@ -3749,16 +3744,17 @@ elf_s390_finish_dynamic_sections (bfd *output_bfd,
 	      continue;
 
 	    case DT_PLTGOT:
-	      dyn.d_un.d_ptr = htab->elf.sgot->output_section->vma;
+	      s = htab->elf.sgotplt;
+	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      break;
 
 	    case DT_JMPREL:
-	      dyn.d_un.d_ptr = htab->elf.srelplt->output_section->vma;
+	      s = htab->elf.srelplt;
+	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      break;
 
 	    case DT_PLTRELSZ:
-	      s = htab->elf.srelplt->output_section;
-	      dyn.d_un.d_val = s->size;
+	      dyn.d_un.d_val = htab->elf.srelplt->size + htab->elf.irelplt->size;
 	      break;
 
 	    case DT_RELASZ:
@@ -3769,8 +3765,7 @@ elf_s390_finish_dynamic_sections (bfd *output_bfd,
 		 linker script arranges for .rela.plt to follow all
 		 other relocation sections, we don't have to worry
 		 about changing the DT_RELA entry.  */
-	      s = htab->elf.srelplt->output_section;
-	      dyn.d_un.d_val -= s->size;
+	      dyn.d_un.d_val -= htab->elf.srelplt->size + htab->elf.irelplt->size;
 	      break;
 	    }
 
@@ -3785,9 +3780,10 @@ elf_s390_finish_dynamic_sections (bfd *output_bfd,
 		  PLT_FIRST_ENTRY_SIZE);
 	  /* Fixup relative address to start of GOT */
 	  bfd_put_32 (output_bfd,
-		      (htab->elf.sgotplt->output_section->vma +
-		       htab->elf.sgotplt->output_offset
-		       - htab->elf.splt->output_section->vma - 6)/2,
+		      (htab->elf.sgotplt->output_section->vma
+		       + htab->elf.sgotplt->output_offset
+		       - htab->elf.splt->output_section->vma
+		       - htab->elf.splt->output_offset - 6)/2,
 		      htab->elf.splt->contents + 8);
 	}
       if (elf_section_data (htab->elf.splt->output_section) != NULL)
@@ -3807,7 +3803,7 @@ elf_s390_finish_dynamic_sections (bfd *output_bfd,
 	  /* One entry for shared object struct ptr.  */
 	  bfd_put_64 (output_bfd, (bfd_vma) 0, htab->elf.sgotplt->contents + 8);
 	  /* One entry for _dl_runtime_resolve.  */
-	  bfd_put_64 (output_bfd, (bfd_vma) 0, htab->elf.sgotplt->contents + 12);
+	  bfd_put_64 (output_bfd, (bfd_vma) 0, htab->elf.sgotplt->contents + 16);
 	}
 
       elf_section_data (htab->elf.sgot->output_section)
@@ -3952,20 +3948,5 @@ const struct elf_size_info s390_elf64_size_info =
 
 #define bfd_elf64_mkobject		elf_s390_mkobject
 #define elf_backend_object_p		elf_s390_object_p
-
-/* Enable ELF64 archive functions.  */
-#define bfd_elf64_archive_functions
-extern bfd_boolean bfd_elf64_archive_slurp_armap (bfd *);
-extern bfd_boolean bfd_elf64_archive_write_armap (bfd *, unsigned int, struct orl *, unsigned int, int);
-
-#define bfd_elf64_archive_slurp_extended_name_table 	_bfd_archive_coff_slurp_extended_name_table
-#define bfd_elf64_archive_construct_extended_name_table _bfd_archive_coff_construct_extended_name_table
-#define bfd_elf64_archive_truncate_arname 		_bfd_archive_coff_truncate_arname
-#define bfd_elf64_archive_read_ar_hdr			_bfd_archive_coff_read_ar_hdr
-#define bfd_elf64_archive_write_ar_hdr			_bfd_archive_coff_write_ar_hdr
-#define bfd_elf64_archive_openr_next_archived_file 	_bfd_archive_coff_openr_next_archived_file
-#define bfd_elf64_archive_get_elt_at_index 		_bfd_archive_coff_get_elt_at_index
-#define bfd_elf64_archive_generic_stat_arch_elt 	_bfd_archive_coff_generic_stat_arch_elt
-#define bfd_elf64_archive_update_armap_timestamp 	_bfd_archive_coff_update_armap_timestamp
 
 #include "elf64-target.h"

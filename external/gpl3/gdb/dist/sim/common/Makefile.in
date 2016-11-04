@@ -1,5 +1,5 @@
 #    Makefile template for Configure for simulator common directory
-#    Copyright (C) 1996-2015 Free Software Foundation, Inc.
+#    Copyright (C) 1996-2016 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,7 +48,6 @@ INSTALL_DATA = @INSTALL_DATA@
 CC = @CC@
 CC_FOR_BUILD = @CC_FOR_BUILD@
 CFLAGS = @CFLAGS@
-SIM_CFLAGS = @sim_cflags@
 
 # These are used to rebuild nltvals.def.
 CPP_FOR_TARGET = @CPP_FOR_TARGET@
@@ -57,7 +56,7 @@ TARGET_SUBDIR = @TARGET_SUBDIR@
 HDEFINES = @HDEFINES@
 TDEFINES =
 
-CONFIG_CFLAGS = @DEFS@ $(SIM_CFLAGS) $(HDEFINES) $(TDEFINES)
+CONFIG_CFLAGS = @DEFS@ $(HDEFINES) $(TDEFINES)
 CSEARCH = -I. -I$(srcdir) -I$(srcroot)/include
 ALL_CFLAGS = $(CFLAGS) $(CONFIG_CFLAGS) $(CSEARCH)
 BUILD_CFLAGS = -g -O $(CSEARCH)
@@ -76,7 +75,7 @@ all:
 # This file is shipped with distributions so we build in the source dir.
 # Use `make headers' to rebuild.
 # Note: If gdb releases begin to contain target header files (not a good idea,
-# but if they did ...), targ-vals.def coud be generated at build time.
+# but if they did ...), nltvals.def coud be generated at build time.
 # An alternative is to slurp in the tables at runtime.
 .PHONY: headers
 headers:
@@ -110,7 +109,6 @@ clean:
 distclean mostlyclean maintainer-clean realclean: clean
 	rm -f TAGS
 	rm -f Makefile config.cache config.log config.status
-	rm -f cconfig.h config.h stamp-h
 
 # Dummy target to force execution of dependent targets.
 force:

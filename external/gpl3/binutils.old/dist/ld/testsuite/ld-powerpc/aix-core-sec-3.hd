@@ -8,4 +8,4 @@ Sections:
  * 2 * \.bss * 0+8 .*
  * ALLOC
  * 3 * \.loader .*
- * CONTENTS, ALLOC, LOAD
+ * CONTENTS, LOAD

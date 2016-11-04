@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.29 2015/10/23 18:53:26 christos Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.29.2.1 2016/11/04 14:49:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.29 2015/10/23 18:53:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.29.2.1 2016/11/04 14:49:06 pgoyette Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -327,7 +327,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 		new_len = max(new_len, NLDT * sizeof(union descriptor));
 		new_len = round_page(new_len);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
-		    new_len, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
+		    new_len, 0, UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_WAITVA);
 		mutex_enter(&cpu_lock);
 		if (pmap->pm_ldt_len <= new_len) {
 			break;
@@ -365,9 +365,11 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	}
 
 	/* All changes are now globally visible.  Swap in the new LDT. */
-	pmap->pm_ldt = new_ldt;
 	pmap->pm_ldt_len = new_len;
 	pmap->pm_ldt_sel = new_sel;
+	/* membar_store_store for pmap_fork() to read these unlocked safely */
+	membar_producer();
+	pmap->pm_ldt = new_ldt;
 
 	/* Switch existing users onto new LDT. */
 	pmap_ldt_sync(pmap);
@@ -375,10 +377,13 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	/* Free existing LDT (if any). */
 	if (old_ldt != NULL) {
 		ldt_free(old_sel);
+		/* exit the mutex before free */
+		mutex_exit(&cpu_lock);
 		uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len,
 		    UVM_KMF_WIRED);
+	} else {
+		mutex_exit(&cpu_lock);
 	}
-	mutex_exit(&cpu_lock);
 
 	return error;
 #endif

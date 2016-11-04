@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.50 2016/06/10 13:27:13 ozaki-r Exp $	*/
+/*	$NetBSD: lance.c,v 1.50.2.1 2016/11/04 14:49:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.50 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.50.2.1 2016/11/04 14:49:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,13 +343,13 @@ lance_put(struct lance_softc *sc, int boff, struct mbuf *m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		(*sc->sc_copytobuf)(sc, mtod(m, void *), boff, len);
 		boff += len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	if (tlen < LEMINSIZE) {
 		(*sc->sc_zerobuf)(sc, boff, LEMINSIZE - tlen);

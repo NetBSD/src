@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2015 Free Software Foundation, Inc.
+Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -1163,839 +1163,839 @@ const CGEN_OPERAND m32c_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", M32C_OPERAND_PC, HW_H_PC, 0, 0,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_NIL] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_NIL] } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src16RnQI: general register QI view */
   { "Src16RnQI", M32C_OPERAND_SRC16RNQI, HW_H_GR_QI, 10, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC16_RN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC16_RN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src16RnHI: general register QH view */
   { "Src16RnHI", M32C_OPERAND_SRC16RNHI, HW_H_GR_HI, 10, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC16_RN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC16_RN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32RnUnprefixedQI: general register QI view */
   { "Src32RnUnprefixedQI", M32C_OPERAND_SRC32RNUNPREFIXEDQI, HW_H_GR_QI, 10, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_RN_UNPREFIXED_QI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_RN_UNPREFIXED_QI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32RnUnprefixedHI: general register HI view */
   { "Src32RnUnprefixedHI", M32C_OPERAND_SRC32RNUNPREFIXEDHI, HW_H_GR_HI, 10, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_RN_UNPREFIXED_HI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_RN_UNPREFIXED_HI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32RnUnprefixedSI: general register SI view */
   { "Src32RnUnprefixedSI", M32C_OPERAND_SRC32RNUNPREFIXEDSI, HW_H_GR_SI, 10, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_RN_UNPREFIXED_SI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_RN_UNPREFIXED_SI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32RnPrefixedQI: general register QI view */
   { "Src32RnPrefixedQI", M32C_OPERAND_SRC32RNPREFIXEDQI, HW_H_GR_QI, 18, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_RN_PREFIXED_QI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_RN_PREFIXED_QI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32RnPrefixedHI: general register HI view */
   { "Src32RnPrefixedHI", M32C_OPERAND_SRC32RNPREFIXEDHI, HW_H_GR_HI, 18, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_RN_PREFIXED_HI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_RN_PREFIXED_HI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32RnPrefixedSI: general register SI view */
   { "Src32RnPrefixedSI", M32C_OPERAND_SRC32RNPREFIXEDSI, HW_H_GR_SI, 18, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_RN_PREFIXED_SI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_RN_PREFIXED_SI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src16An: address register */
   { "Src16An", M32C_OPERAND_SRC16AN, HW_H_AR, 11, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC16_AN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC16_AN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src16AnQI: address register QI view */
   { "Src16AnQI", M32C_OPERAND_SRC16ANQI, HW_H_AR_QI, 11, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC16_AN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC16_AN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src16AnHI: address register HI view */
   { "Src16AnHI", M32C_OPERAND_SRC16ANHI, HW_H_AR_HI, 11, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC16_AN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC16_AN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32AnUnprefixed: address register */
   { "Src32AnUnprefixed", M32C_OPERAND_SRC32ANUNPREFIXED, HW_H_AR, 11, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_UNPREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32AnUnprefixedQI: address register QI view */
   { "Src32AnUnprefixedQI", M32C_OPERAND_SRC32ANUNPREFIXEDQI, HW_H_AR_QI, 11, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_UNPREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32AnUnprefixedHI: address register HI view */
   { "Src32AnUnprefixedHI", M32C_OPERAND_SRC32ANUNPREFIXEDHI, HW_H_AR_HI, 11, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_UNPREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32AnUnprefixedSI: address register SI view */
   { "Src32AnUnprefixedSI", M32C_OPERAND_SRC32ANUNPREFIXEDSI, HW_H_AR, 11, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_UNPREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32AnPrefixed: address register */
   { "Src32AnPrefixed", M32C_OPERAND_SRC32ANPREFIXED, HW_H_AR, 19, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_PREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_PREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32AnPrefixedQI: address register QI view */
   { "Src32AnPrefixedQI", M32C_OPERAND_SRC32ANPREFIXEDQI, HW_H_AR_QI, 19, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_PREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_PREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32AnPrefixedHI: address register HI view */
   { "Src32AnPrefixedHI", M32C_OPERAND_SRC32ANPREFIXEDHI, HW_H_AR_HI, 19, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_PREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_PREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Src32AnPrefixedSI: address register SI view */
   { "Src32AnPrefixedSI", M32C_OPERAND_SRC32ANPREFIXEDSI, HW_H_AR, 19, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_PREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_SRC32_AN_PREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst16RnQI: general register QI view */
   { "Dst16RnQI", M32C_OPERAND_DST16RNQI, HW_H_GR_QI, 14, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst16RnHI: general register HI view */
   { "Dst16RnHI", M32C_OPERAND_DST16RNHI, HW_H_GR_HI, 14, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst16RnSI: general register SI view */
   { "Dst16RnSI", M32C_OPERAND_DST16RNSI, HW_H_GR_SI, 14, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst16RnExtQI: general register QI/HI view for 'ext' insns */
   { "Dst16RnExtQI", M32C_OPERAND_DST16RNEXTQI, HW_H_GR_EXT_QI, 14, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN_EXT] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN_EXT] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32R0QI-S: general register QI view */
   { "Dst32R0QI-S", M32C_OPERAND_DST32R0QI_S, HW_H_R0L, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32R0HI-S: general register HI view */
   { "Dst32R0HI-S", M32C_OPERAND_DST32R0HI_S, HW_H_R0, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32RnUnprefixedQI: general register QI view */
   { "Dst32RnUnprefixedQI", M32C_OPERAND_DST32RNUNPREFIXEDQI, HW_H_GR_QI, 8, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_UNPREFIXED_QI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_UNPREFIXED_QI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32RnUnprefixedHI: general register HI view */
   { "Dst32RnUnprefixedHI", M32C_OPERAND_DST32RNUNPREFIXEDHI, HW_H_GR_HI, 8, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_UNPREFIXED_HI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_UNPREFIXED_HI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32RnUnprefixedSI: general register SI view */
   { "Dst32RnUnprefixedSI", M32C_OPERAND_DST32RNUNPREFIXEDSI, HW_H_GR_SI, 8, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_UNPREFIXED_SI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_UNPREFIXED_SI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32RnExtUnprefixedQI: general register QI view */
   { "Dst32RnExtUnprefixedQI", M32C_OPERAND_DST32RNEXTUNPREFIXEDQI, HW_H_GR_EXT_QI, 9, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_EXT_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_EXT_UNPREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32RnExtUnprefixedHI: general register HI view */
   { "Dst32RnExtUnprefixedHI", M32C_OPERAND_DST32RNEXTUNPREFIXEDHI, HW_H_GR_EXT_HI, 9, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_EXT_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_EXT_UNPREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32RnPrefixedQI: general register QI view */
   { "Dst32RnPrefixedQI", M32C_OPERAND_DST32RNPREFIXEDQI, HW_H_GR_QI, 16, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_PREFIXED_QI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_PREFIXED_QI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32RnPrefixedHI: general register HI view */
   { "Dst32RnPrefixedHI", M32C_OPERAND_DST32RNPREFIXEDHI, HW_H_GR_HI, 16, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_PREFIXED_HI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_PREFIXED_HI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32RnPrefixedSI: general register SI view */
   { "Dst32RnPrefixedSI", M32C_OPERAND_DST32RNPREFIXEDSI, HW_H_GR_SI, 16, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_PREFIXED_SI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_PREFIXED_SI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst16RnQI-S: general register QI view */
   { "Dst16RnQI-S", M32C_OPERAND_DST16RNQI_S, HW_H_R0L_R0H, 5, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN_QI_S] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN_QI_S] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst16AnQI-S: address register QI view */
   { "Dst16AnQI-S", M32C_OPERAND_DST16ANQI_S, HW_H_AR_QI, 5, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN_QI_S] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN_QI_S] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Bit16Rn: general register bit view */
   { "Bit16Rn", M32C_OPERAND_BIT16RN, HW_H_GR_HI, 14, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_RN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Bit32RnPrefixed: general register bit view */
   { "Bit32RnPrefixed", M32C_OPERAND_BIT32RNPREFIXED, HW_H_GR_QI, 16, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_PREFIXED_QI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_PREFIXED_QI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Bit32RnUnprefixed: general register bit view */
   { "Bit32RnUnprefixed", M32C_OPERAND_BIT32RNUNPREFIXED, HW_H_GR_QI, 8, 2,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_UNPREFIXED_QI] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_RN_UNPREFIXED_QI] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* R0: r0 */
   { "R0", M32C_OPERAND_R0, HW_H_R0, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* R1: r1 */
   { "R1", M32C_OPERAND_R1, HW_H_R1, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* R2: r2 */
   { "R2", M32C_OPERAND_R2, HW_H_R2, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* R3: r3 */
   { "R3", M32C_OPERAND_R3, HW_H_R3, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* R0l: r0l */
   { "R0l", M32C_OPERAND_R0L, HW_H_R0L, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* R0h: r0h */
   { "R0h", M32C_OPERAND_R0H, HW_H_R0H, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* R2R0: r2r0 */
   { "R2R0", M32C_OPERAND_R2R0, HW_H_R2R0, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* R3R1: r3r1 */
   { "R3R1", M32C_OPERAND_R3R1, HW_H_R3R1, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* R1R2R0: r1r2r0 */
   { "R1R2R0", M32C_OPERAND_R1R2R0, HW_H_R1R2R0, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst16An: address register */
   { "Dst16An", M32C_OPERAND_DST16AN, HW_H_AR, 15, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_AN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_AN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst16AnQI: address register QI view */
   { "Dst16AnQI", M32C_OPERAND_DST16ANQI, HW_H_AR_QI, 15, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_AN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_AN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst16AnHI: address register HI view */
   { "Dst16AnHI", M32C_OPERAND_DST16ANHI, HW_H_AR_HI, 15, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_AN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_AN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst16AnSI: address register SI view */
   { "Dst16AnSI", M32C_OPERAND_DST16ANSI, HW_H_AR_SI, 15, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_AN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_AN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst16An-S: address register HI view */
   { "Dst16An-S", M32C_OPERAND_DST16AN_S, HW_H_AR_HI, 4, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_AN_S] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_AN_S] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32AnUnprefixed: address register */
   { "Dst32AnUnprefixed", M32C_OPERAND_DST32ANUNPREFIXED, HW_H_AR, 9, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_UNPREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32AnUnprefixedQI: address register QI view */
   { "Dst32AnUnprefixedQI", M32C_OPERAND_DST32ANUNPREFIXEDQI, HW_H_AR_QI, 9, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_UNPREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32AnUnprefixedHI: address register HI view */
   { "Dst32AnUnprefixedHI", M32C_OPERAND_DST32ANUNPREFIXEDHI, HW_H_AR_HI, 9, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_UNPREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32AnUnprefixedSI: address register SI view */
   { "Dst32AnUnprefixedSI", M32C_OPERAND_DST32ANUNPREFIXEDSI, HW_H_AR, 9, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_UNPREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32AnExtUnprefixed: address register */
   { "Dst32AnExtUnprefixed", M32C_OPERAND_DST32ANEXTUNPREFIXED, HW_H_AR, 9, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_UNPREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32AnPrefixed: address register */
   { "Dst32AnPrefixed", M32C_OPERAND_DST32ANPREFIXED, HW_H_AR, 17, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_PREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_PREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32AnPrefixedQI: address register QI view */
   { "Dst32AnPrefixedQI", M32C_OPERAND_DST32ANPREFIXEDQI, HW_H_AR_QI, 17, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_PREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_PREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32AnPrefixedHI: address register HI view */
   { "Dst32AnPrefixedHI", M32C_OPERAND_DST32ANPREFIXEDHI, HW_H_AR_HI, 17, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_PREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_PREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dst32AnPrefixedSI: address register SI view */
   { "Dst32AnPrefixedSI", M32C_OPERAND_DST32ANPREFIXEDSI, HW_H_AR, 17, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_PREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_PREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Bit16An: address register bit view */
   { "Bit16An", M32C_OPERAND_BIT16AN, HW_H_AR, 15, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_AN] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST16_AN] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Bit32AnPrefixed: address register bit */
   { "Bit32AnPrefixed", M32C_OPERAND_BIT32ANPREFIXED, HW_H_AR, 17, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_PREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_PREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Bit32AnUnprefixed: address register bit */
   { "Bit32AnUnprefixed", M32C_OPERAND_BIT32ANUNPREFIXED, HW_H_AR, 9, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DST32_AN_UNPREFIXED] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* A0: a0 */
   { "A0", M32C_OPERAND_A0, HW_H_A0, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* A1: a1 */
   { "A1", M32C_OPERAND_A1, HW_H_A1, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* sb: SB register */
   { "sb", M32C_OPERAND_SB, HW_H_SB, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* fb: FB register */
   { "fb", M32C_OPERAND_FB, HW_H_FB, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* sp: SP register */
   { "sp", M32C_OPERAND_SP, HW_H_SP, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* SrcDst16-r0l-r0h-S-normal: r0l/r0h pair */
   { "SrcDst16-r0l-r0h-S-normal", M32C_OPERAND_SRCDST16_R0L_R0H_S_NORMAL, HW_H_SINT, 5, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_5_1] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_5_1] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Regsetpop: popm regset */
   { "Regsetpop", M32C_OPERAND_REGSETPOP, HW_H_UINT, 8, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_8_8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_8_8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Regsetpush: pushm regset */
   { "Regsetpush", M32C_OPERAND_REGSETPUSH, HW_H_UINT, 8, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_8_8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_8_8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Rn16-push-S: r0[lh] */
   { "Rn16-push-S", M32C_OPERAND_RN16_PUSH_S, HW_H_GR_QI, 4, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_4_1] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_4_1] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* An16-push-S: a[01] */
   { "An16-push-S", M32C_OPERAND_AN16_PUSH_S, HW_H_AR_HI, 4, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_4_1] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_4_1] } },
     { 0, { { { (1<<MACH_M16C), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-8-u6: unsigned 6 bit displacement at offset 8 bits */
   { "Dsp-8-u6", M32C_OPERAND_DSP_8_U6, HW_H_UINT, 8, 6,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_U6] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_U6] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-8-u8: unsigned 8 bit displacement at offset 8 bits */
   { "Dsp-8-u8", M32C_OPERAND_DSP_8_U8, HW_H_UINT, 8, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-8-u16: unsigned 16 bit displacement at offset 8 bits */
   { "Dsp-8-u16", M32C_OPERAND_DSP_8_U16, HW_H_UINT, 8, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_U16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_U16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-8-s8: signed 8 bit displacement at offset 8 bits */
   { "Dsp-8-s8", M32C_OPERAND_DSP_8_S8, HW_H_SINT, 8, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-8-s24: signed 24 bit displacement at offset 8 bits */
   { "Dsp-8-s24", M32C_OPERAND_DSP_8_S24, HW_H_SINT, 8, 24,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_S24] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_S24] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-8-u24: unsigned 24 bit displacement at offset 8 bits */
   { "Dsp-8-u24", M32C_OPERAND_DSP_8_U24, HW_H_UINT, 8, 24,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_U24] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_U24] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-10-u6: unsigned 6 bit displacement at offset 10 bits */
   { "Dsp-10-u6", M32C_OPERAND_DSP_10_U6, HW_H_UINT, 10, 6,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_10_U6] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_10_U6] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-16-u8: unsigned 8 bit displacement at offset 16 bits */
   { "Dsp-16-u8", M32C_OPERAND_DSP_16_U8, HW_H_UINT, 16, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-16-u16: unsigned 16 bit displacement at offset 16 bits */
   { "Dsp-16-u16", M32C_OPERAND_DSP_16_U16, HW_H_UINT, 16, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-16-u20: unsigned 20 bit displacement at offset 16 bits */
   { "Dsp-16-u20", M32C_OPERAND_DSP_16_U20, HW_H_UINT, 0, 24,
-    { 2, { (const PTR) &M32C_F_DSP_16_U24_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_16_U24_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-16-u24: unsigned 24 bit displacement at offset 16 bits */
   { "Dsp-16-u24", M32C_OPERAND_DSP_16_U24, HW_H_UINT, 0, 24,
-    { 2, { (const PTR) &M32C_F_DSP_16_U24_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_16_U24_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-16-s8: signed 8 bit displacement at offset 16 bits */
   { "Dsp-16-s8", M32C_OPERAND_DSP_16_S8, HW_H_SINT, 16, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-16-s16: signed 16 bit displacement at offset 16 bits */
   { "Dsp-16-s16", M32C_OPERAND_DSP_16_S16, HW_H_SINT, 16, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_S16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_S16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-24-u8: unsigned 8 bit displacement at offset 24 bits */
   { "Dsp-24-u8", M32C_OPERAND_DSP_24_U8, HW_H_UINT, 24, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_24_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_24_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-24-u16: unsigned 16 bit displacement at offset 24 bits */
   { "Dsp-24-u16", M32C_OPERAND_DSP_24_U16, HW_H_UINT, 0, 16,
-    { 2, { (const PTR) &M32C_F_DSP_24_U16_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_24_U16_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-24-u20: unsigned 20 bit displacement at offset 24 bits */
   { "Dsp-24-u20", M32C_OPERAND_DSP_24_U20, HW_H_UINT, 0, 24,
-    { 2, { (const PTR) &M32C_F_DSP_24_U24_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_24_U24_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-24-u24: unsigned 24 bit displacement at offset 24 bits */
   { "Dsp-24-u24", M32C_OPERAND_DSP_24_U24, HW_H_UINT, 0, 24,
-    { 2, { (const PTR) &M32C_F_DSP_24_U24_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_24_U24_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-24-s8: signed 8 bit displacement at offset 24 bits */
   { "Dsp-24-s8", M32C_OPERAND_DSP_24_S8, HW_H_SINT, 24, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_24_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_24_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-24-s16: signed 16 bit displacement at offset 24 bits */
   { "Dsp-24-s16", M32C_OPERAND_DSP_24_S16, HW_H_SINT, 0, 16,
-    { 2, { (const PTR) &M32C_F_DSP_24_S16_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_24_S16_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-32-u8: unsigned 8 bit displacement at offset 32 bits */
   { "Dsp-32-u8", M32C_OPERAND_DSP_32_U8, HW_H_UINT, 0, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-32-u16: unsigned 16 bit displacement at offset 32 bits */
   { "Dsp-32-u16", M32C_OPERAND_DSP_32_U16, HW_H_UINT, 0, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_U16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_U16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-32-u24: unsigned 24 bit displacement at offset 32 bits */
   { "Dsp-32-u24", M32C_OPERAND_DSP_32_U24, HW_H_UINT, 0, 24,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_U24] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_U24] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-32-u20: unsigned 20 bit displacement at offset 32 bits */
   { "Dsp-32-u20", M32C_OPERAND_DSP_32_U20, HW_H_UINT, 0, 24,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_U24] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_U24] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-32-s8: signed 8 bit displacement at offset 32 bits */
   { "Dsp-32-s8", M32C_OPERAND_DSP_32_S8, HW_H_SINT, 0, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-32-s16: signed 16 bit displacement at offset 32 bits */
   { "Dsp-32-s16", M32C_OPERAND_DSP_32_S16, HW_H_SINT, 0, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_S16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_S16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-40-u8: unsigned 8 bit displacement at offset 40 bits */
   { "Dsp-40-u8", M32C_OPERAND_DSP_40_U8, HW_H_UINT, 8, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-40-s8: signed 8 bit displacement at offset 40 bits */
   { "Dsp-40-s8", M32C_OPERAND_DSP_40_S8, HW_H_SINT, 8, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-40-u16: unsigned 16 bit displacement at offset 40 bits */
   { "Dsp-40-u16", M32C_OPERAND_DSP_40_U16, HW_H_UINT, 8, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_U16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_U16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-40-s16: signed 16 bit displacement at offset 40 bits */
   { "Dsp-40-s16", M32C_OPERAND_DSP_40_S16, HW_H_SINT, 8, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_S16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_S16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-40-u20: unsigned 20 bit displacement at offset 40 bits */
   { "Dsp-40-u20", M32C_OPERAND_DSP_40_U20, HW_H_UINT, 8, 20,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_U20] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_U20] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-40-u24: unsigned 24 bit displacement at offset 40 bits */
   { "Dsp-40-u24", M32C_OPERAND_DSP_40_U24, HW_H_UINT, 8, 24,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_U24] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_U24] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-48-u8: unsigned 8 bit displacement at offset 48 bits */
   { "Dsp-48-u8", M32C_OPERAND_DSP_48_U8, HW_H_UINT, 16, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_48_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_48_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-48-s8: signed 8 bit displacement at offset 48 bits */
   { "Dsp-48-s8", M32C_OPERAND_DSP_48_S8, HW_H_SINT, 16, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_48_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_48_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-48-u16: unsigned 16 bit displacement at offset 48 bits */
   { "Dsp-48-u16", M32C_OPERAND_DSP_48_U16, HW_H_UINT, 16, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_48_U16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_48_U16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-48-s16: signed 16 bit displacement at offset 48 bits */
   { "Dsp-48-s16", M32C_OPERAND_DSP_48_S16, HW_H_SINT, 16, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_48_S16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_48_S16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-48-u20: unsigned 24 bit displacement at offset 40 bits */
   { "Dsp-48-u20", M32C_OPERAND_DSP_48_U20, HW_H_UINT, 0, 24,
-    { 2, { (const PTR) &M32C_F_DSP_48_U20_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_48_U20_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Dsp-48-u24: unsigned 24 bit displacement at offset 48 bits */
   { "Dsp-48-u24", M32C_OPERAND_DSP_48_U24, HW_H_UINT, 0, 24,
-    { 2, { (const PTR) &M32C_F_DSP_48_U24_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_48_U24_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-8-s4: signed 4 bit immediate at offset 8 bits */
   { "Imm-8-s4", M32C_OPERAND_IMM_8_S4, HW_H_SINT, 8, 4,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_8_S4] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_8_S4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-8-s4n: negated 4 bit immediate at offset 8 bits */
   { "Imm-8-s4n", M32C_OPERAND_IMM_8_S4N, HW_H_SINT, 8, 4,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_8_S4] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_8_S4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-sh-8-s4: signed 4 bit shift immediate at offset 8 bits */
   { "Imm-sh-8-s4", M32C_OPERAND_IMM_SH_8_S4, HW_H_SHIMM, 8, 4,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_8_S4] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_8_S4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-8-QI: signed 8 bit immediate at offset 8 bits */
   { "Imm-8-QI", M32C_OPERAND_IMM_8_QI, HW_H_SINT, 8, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-8-HI: signed 16 bit immediate at offset 8 bits */
   { "Imm-8-HI", M32C_OPERAND_IMM_8_HI, HW_H_SINT, 8, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_S16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_8_S16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-12-s4: signed 4 bit immediate at offset 12 bits */
   { "Imm-12-s4", M32C_OPERAND_IMM_12_S4, HW_H_SINT, 12, 4,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_12_S4] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_12_S4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-12-s4n: negated 4 bit immediate at offset 12 bits */
   { "Imm-12-s4n", M32C_OPERAND_IMM_12_S4N, HW_H_SINT, 12, 4,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_12_S4] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_12_S4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-sh-12-s4: signed 4 bit shift immediate at offset 12 bits */
   { "Imm-sh-12-s4", M32C_OPERAND_IMM_SH_12_S4, HW_H_SHIMM, 12, 4,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_12_S4] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_12_S4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-13-u3: signed 3 bit immediate at offset 13 bits */
   { "Imm-13-u3", M32C_OPERAND_IMM_13_U3, HW_H_SINT, 13, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_13_U3] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_13_U3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-20-s4: signed 4 bit immediate at offset 20 bits */
   { "Imm-20-s4", M32C_OPERAND_IMM_20_S4, HW_H_SINT, 20, 4,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_20_S4] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_20_S4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-sh-20-s4: signed 4 bit shift immediate at offset 12 bits */
   { "Imm-sh-20-s4", M32C_OPERAND_IMM_SH_20_S4, HW_H_SHIMM, 20, 4,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_20_S4] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM_20_S4] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-16-QI: signed 8 bit immediate at offset 16 bits */
   { "Imm-16-QI", M32C_OPERAND_IMM_16_QI, HW_H_SINT, 16, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-16-HI: signed 16 bit immediate at offset 16 bits */
   { "Imm-16-HI", M32C_OPERAND_IMM_16_HI, HW_H_SINT, 16, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_S16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_S16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-16-SI: signed 32 bit immediate at offset 16 bits */
   { "Imm-16-SI", M32C_OPERAND_IMM_16_SI, HW_H_SINT, 0, 32,
-    { 2, { (const PTR) &M32C_F_DSP_16_S32_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_16_S32_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-24-QI: signed 8 bit immediate at offset 24 bits */
   { "Imm-24-QI", M32C_OPERAND_IMM_24_QI, HW_H_SINT, 24, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_24_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_24_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-24-HI: signed 16 bit immediate at offset 24 bits */
   { "Imm-24-HI", M32C_OPERAND_IMM_24_HI, HW_H_SINT, 0, 16,
-    { 2, { (const PTR) &M32C_F_DSP_24_S16_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_24_S16_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-24-SI: signed 32 bit immediate at offset 24 bits */
   { "Imm-24-SI", M32C_OPERAND_IMM_24_SI, HW_H_SINT, 0, 32,
-    { 2, { (const PTR) &M32C_F_DSP_24_S32_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_24_S32_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-32-QI: signed 8 bit immediate at offset 32 bits */
   { "Imm-32-QI", M32C_OPERAND_IMM_32_QI, HW_H_SINT, 0, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-32-SI: signed 32 bit immediate at offset 32 bits */
   { "Imm-32-SI", M32C_OPERAND_IMM_32_SI, HW_H_SINT, 0, 32,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_S32] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_S32] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-32-HI: signed 16 bit immediate at offset 32 bits */
   { "Imm-32-HI", M32C_OPERAND_IMM_32_HI, HW_H_SINT, 0, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_S16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_S16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-40-QI: signed 8 bit immediate at offset 40 bits */
   { "Imm-40-QI", M32C_OPERAND_IMM_40_QI, HW_H_SINT, 8, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-40-HI: signed 16 bit immediate at offset 40 bits */
   { "Imm-40-HI", M32C_OPERAND_IMM_40_HI, HW_H_SINT, 8, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_S16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_S16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-40-SI: signed 32 bit immediate at offset 40 bits */
   { "Imm-40-SI", M32C_OPERAND_IMM_40_SI, HW_H_SINT, 0, 32,
-    { 2, { (const PTR) &M32C_F_DSP_40_S32_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_40_S32_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-48-QI: signed 8 bit immediate at offset 48 bits */
   { "Imm-48-QI", M32C_OPERAND_IMM_48_QI, HW_H_SINT, 16, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_48_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_48_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-48-HI: signed 16 bit immediate at offset 48 bits */
   { "Imm-48-HI", M32C_OPERAND_IMM_48_HI, HW_H_SINT, 16, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_48_S16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_48_S16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-48-SI: signed 32 bit immediate at offset 48 bits */
   { "Imm-48-SI", M32C_OPERAND_IMM_48_SI, HW_H_SINT, 0, 32,
-    { 2, { (const PTR) &M32C_F_DSP_48_S32_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_48_S32_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-56-QI: signed 8 bit immediate at offset 56 bits */
   { "Imm-56-QI", M32C_OPERAND_IMM_56_QI, HW_H_SINT, 24, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_56_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_56_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-56-HI: signed 16 bit immediate at offset 56 bits */
   { "Imm-56-HI", M32C_OPERAND_IMM_56_HI, HW_H_SINT, 0, 16,
-    { 2, { (const PTR) &M32C_F_DSP_56_S16_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_DSP_56_S16_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm-64-HI: signed 16 bit immediate at offset 64 bits */
   { "Imm-64-HI", M32C_OPERAND_IMM_64_HI, HW_H_SINT, 0, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_64_S16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_64_S16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm1-S: signed 1 bit immediate for short format binary insns */
   { "Imm1-S", M32C_OPERAND_IMM1_S, HW_H_SINT, 2, 1,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM1_S] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_IMM1_S] } },
     { 0, { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Imm3-S: signed 3 bit immediate for short format binary insns */
   { "Imm3-S", M32C_OPERAND_IMM3_S, HW_H_SINT, 2, 3,
-    { 2, { (const PTR) &M32C_F_IMM3_S_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_IMM3_S_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Bit3-S: 3 bit bit number */
   { "Bit3-S", M32C_OPERAND_BIT3_S, HW_H_SINT, 2, 3,
-    { 2, { (const PTR) &M32C_F_IMM3_S_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_IMM3_S_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Bitno16R: bit number for indexing registers */
   { "Bitno16R", M32C_OPERAND_BITNO16R, HW_H_UINT, 16, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Bitno32Prefixed: bit number for indexing objects */
   { "Bitno32Prefixed", M32C_OPERAND_BITNO32PREFIXED, HW_H_UINT, 21, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_BITNO32_PREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_BITNO32_PREFIXED] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Bitno32Unprefixed: bit number for indexing objects */
   { "Bitno32Unprefixed", M32C_OPERAND_BITNO32UNPREFIXED, HW_H_UINT, 13, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_BITNO32_UNPREFIXED] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_BITNO32_UNPREFIXED] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase16-16-u8: unsigned bit,base:8 at offset 16for m16c */
   { "BitBase16-16-u8", M32C_OPERAND_BITBASE16_16_U8, HW_H_UINT, 16, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase16-16-s8: signed bit,base:8 at offset 16for m16c */
   { "BitBase16-16-s8", M32C_OPERAND_BITBASE16_16_S8, HW_H_SINT, 16, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_S8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase16-16-u16: unsigned bit,base:16 at offset 16 for m16c */
   { "BitBase16-16-u16", M32C_OPERAND_BITBASE16_16_U16, HW_H_UINT, 16, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase16-8-u11-S: signed bit,base:11 at offset 16 for m16c */
   { "BitBase16-8-u11-S", M32C_OPERAND_BITBASE16_8_U11_S, HW_H_UINT, 5, 11,
-    { 2, { (const PTR) &M32C_F_BITBASE16_U11_S_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_BITBASE16_U11_S_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase32-16-u11-Unprefixed: unsigned bit,base:11 at offset 16 for m32c */
   { "BitBase32-16-u11-Unprefixed", M32C_OPERAND_BITBASE32_16_U11_UNPREFIXED, HW_H_UINT, 13, 11,
-    { 2, { (const PTR) &M32C_F_BITBASE32_16_U11_UNPREFIXED_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_BITBASE32_16_U11_UNPREFIXED_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase32-16-s11-Unprefixed: signed bit,base:11 at offset 16 for m32c */
   { "BitBase32-16-s11-Unprefixed", M32C_OPERAND_BITBASE32_16_S11_UNPREFIXED, HW_H_SINT, 13, 11,
-    { 2, { (const PTR) &M32C_F_BITBASE32_16_S11_UNPREFIXED_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_BITBASE32_16_S11_UNPREFIXED_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase32-16-u19-Unprefixed: unsigned bit,base:19 at offset 16 for m32c */
   { "BitBase32-16-u19-Unprefixed", M32C_OPERAND_BITBASE32_16_U19_UNPREFIXED, HW_H_UINT, 13, 19,
-    { 2, { (const PTR) &M32C_F_BITBASE32_16_U19_UNPREFIXED_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_BITBASE32_16_U19_UNPREFIXED_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase32-16-s19-Unprefixed: signed bit,base:19 at offset 16 for m32c */
   { "BitBase32-16-s19-Unprefixed", M32C_OPERAND_BITBASE32_16_S19_UNPREFIXED, HW_H_SINT, 13, 19,
-    { 2, { (const PTR) &M32C_F_BITBASE32_16_S19_UNPREFIXED_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_BITBASE32_16_S19_UNPREFIXED_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase32-16-u27-Unprefixed: unsigned bit,base:27 at offset 16 for m32c */
   { "BitBase32-16-u27-Unprefixed", M32C_OPERAND_BITBASE32_16_U27_UNPREFIXED, HW_H_UINT, 0, 27,
-    { 3, { (const PTR) &M32C_F_BITBASE32_16_U27_UNPREFIXED_MULTI_IFIELD[0] } }, 
+    { 3, { (const PTR) &M32C_F_BITBASE32_16_U27_UNPREFIXED_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase32-24-u11-Prefixed: unsigned bit,base:11 at offset 24 for m32c */
   { "BitBase32-24-u11-Prefixed", M32C_OPERAND_BITBASE32_24_U11_PREFIXED, HW_H_UINT, 21, 11,
-    { 2, { (const PTR) &M32C_F_BITBASE32_24_U11_PREFIXED_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_BITBASE32_24_U11_PREFIXED_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase32-24-s11-Prefixed: signed bit,base:11 at offset 24 for m32c */
   { "BitBase32-24-s11-Prefixed", M32C_OPERAND_BITBASE32_24_S11_PREFIXED, HW_H_SINT, 21, 11,
-    { 2, { (const PTR) &M32C_F_BITBASE32_24_S11_PREFIXED_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_BITBASE32_24_S11_PREFIXED_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase32-24-u19-Prefixed: unsigned bit,base:19 at offset 24 for m32c */
   { "BitBase32-24-u19-Prefixed", M32C_OPERAND_BITBASE32_24_U19_PREFIXED, HW_H_UINT, 0, 19,
-    { 3, { (const PTR) &M32C_F_BITBASE32_24_U19_PREFIXED_MULTI_IFIELD[0] } }, 
+    { 3, { (const PTR) &M32C_F_BITBASE32_24_U19_PREFIXED_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase32-24-s19-Prefixed: signed bit,base:19 at offset 24 for m32c */
   { "BitBase32-24-s19-Prefixed", M32C_OPERAND_BITBASE32_24_S19_PREFIXED, HW_H_SINT, 0, 19,
-    { 3, { (const PTR) &M32C_F_BITBASE32_24_S19_PREFIXED_MULTI_IFIELD[0] } }, 
+    { 3, { (const PTR) &M32C_F_BITBASE32_24_S19_PREFIXED_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitBase32-24-u27-Prefixed: unsigned bit,base:27 at offset 24 for m32c */
   { "BitBase32-24-u27-Prefixed", M32C_OPERAND_BITBASE32_24_U27_PREFIXED, HW_H_UINT, 0, 27,
-    { 3, { (const PTR) &M32C_F_BITBASE32_24_U27_PREFIXED_MULTI_IFIELD[0] } }, 
+    { 3, { (const PTR) &M32C_F_BITBASE32_24_U27_PREFIXED_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Lab-5-3: 3 bit label */
   { "Lab-5-3", M32C_OPERAND_LAB_5_3, HW_H_IADDR, 5, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_5_3] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_5_3] } },
     { 0|A(RELAX)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Lab32-jmp-s: 3 bit label */
   { "Lab32-jmp-s", M32C_OPERAND_LAB32_JMP_S, HW_H_IADDR, 2, 3,
-    { 2, { (const PTR) &M32C_F_LAB32_JMP_S_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_LAB32_JMP_S_MULTI_IFIELD[0] } },
     { 0|A(RELAX)|A(PCREL_ADDR)|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Lab-8-8: 8 bit label */
   { "Lab-8-8", M32C_OPERAND_LAB_8_8, HW_H_IADDR, 8, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_8_8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_8_8] } },
     { 0|A(RELAX)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Lab-8-16: 16 bit label */
   { "Lab-8-16", M32C_OPERAND_LAB_8_16, HW_H_IADDR, 8, 16,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_8_16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_8_16] } },
     { 0|A(RELAX)|A(SIGN_OPT)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Lab-8-24: 24 bit label */
   { "Lab-8-24", M32C_OPERAND_LAB_8_24, HW_H_IADDR, 8, 24,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_8_24] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_8_24] } },
     { 0|A(RELAX)|A(ABS_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Lab-16-8: 8 bit label */
   { "Lab-16-8", M32C_OPERAND_LAB_16_8, HW_H_IADDR, 16, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_16_8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_16_8] } },
     { 0|A(RELAX)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Lab-24-8: 8 bit label */
   { "Lab-24-8", M32C_OPERAND_LAB_24_8, HW_H_IADDR, 24, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_24_8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_24_8] } },
     { 0|A(RELAX)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Lab-32-8: 8 bit label */
   { "Lab-32-8", M32C_OPERAND_LAB_32_8, HW_H_IADDR, 0, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_32_8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_32_8] } },
     { 0|A(RELAX)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Lab-40-8: 8 bit label */
   { "Lab-40-8", M32C_OPERAND_LAB_40_8, HW_H_IADDR, 8, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_40_8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_LAB_40_8] } },
     { 0|A(RELAX)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* sbit: negative    bit */
   { "sbit", M32C_OPERAND_SBIT, HW_H_SBIT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* obit: overflow    bit */
   { "obit", M32C_OPERAND_OBIT, HW_H_OBIT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* zbit: zero        bit */
   { "zbit", M32C_OPERAND_ZBIT, HW_H_ZBIT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cbit: carry       bit */
   { "cbit", M32C_OPERAND_CBIT, HW_H_CBIT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* ubit: stack ptr select bit */
   { "ubit", M32C_OPERAND_UBIT, HW_H_UBIT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* ibit: interrupt enable bit */
   { "ibit", M32C_OPERAND_IBIT, HW_H_IBIT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* bbit: reg bank select bit */
   { "bbit", M32C_OPERAND_BBIT, HW_H_BBIT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* dbit: debug       bit */
   { "dbit", M32C_OPERAND_DBIT, HW_H_DBIT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cond16-16: condition */
   { "cond16-16", M32C_OPERAND_COND16_16, HW_H_COND16, 16, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cond16-24: condition */
   { "cond16-24", M32C_OPERAND_COND16_24, HW_H_COND16, 24, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_24_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_24_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cond16-32: condition */
   { "cond16-32", M32C_OPERAND_COND16_32, HW_H_COND16, 0, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cond32-16: condition */
   { "cond32-16", M32C_OPERAND_COND32_16, HW_H_COND32, 16, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_16_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cond32-24: condition */
   { "cond32-24", M32C_OPERAND_COND32_24, HW_H_COND32, 24, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_24_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_24_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cond32-32: condition */
   { "cond32-32", M32C_OPERAND_COND32_32, HW_H_COND32, 0, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_32_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cond32-40: condition */
   { "cond32-40", M32C_OPERAND_COND32_40, HW_H_COND32, 8, 8,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_U8] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_DSP_40_U8] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cond16c: condition */
   { "cond16c", M32C_OPERAND_COND16C, HW_H_COND16C, 12, 4,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_COND16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_COND16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cond16j: condition */
   { "cond16j", M32C_OPERAND_COND16J, HW_H_COND16J, 12, 4,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_COND16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_COND16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cond16j5: condition */
   { "cond16j5", M32C_OPERAND_COND16J5, HW_H_COND16J_5, 5, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_COND16J_5] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_COND16J_5] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cond32: condition */
   { "cond32", M32C_OPERAND_COND32, HW_H_COND32, 9, 4,
-    { 2, { (const PTR) &M32C_F_COND32_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_COND32_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cond32j: condition */
   { "cond32j", M32C_OPERAND_COND32J, HW_H_COND32, 1, 4,
-    { 2, { (const PTR) &M32C_F_COND32J_MULTI_IFIELD[0] } }, 
+    { 2, { (const PTR) &M32C_F_COND32J_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* sccond32: scCND condition */
   { "sccond32", M32C_OPERAND_SCCOND32, HW_H_COND32, 12, 4,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_COND16] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_COND16] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* flags16: flags */
   { "flags16", M32C_OPERAND_FLAGS16, HW_H_FLAGS, 9, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_9_3] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_9_3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* flags32: flags */
   { "flags32", M32C_OPERAND_FLAGS32, HW_H_FLAGS, 13, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_13_3] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_13_3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cr16: control */
   { "cr16", M32C_OPERAND_CR16, HW_H_CR_16, 9, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_9_3] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_9_3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x80" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cr1-Unprefixed-32: control */
   { "cr1-Unprefixed-32", M32C_OPERAND_CR1_UNPREFIXED_32, HW_H_CR1_32, 13, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_13_3] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_13_3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cr1-Prefixed-32: control */
   { "cr1-Prefixed-32", M32C_OPERAND_CR1_PREFIXED_32, HW_H_CR1_32, 21, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_21_3] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_21_3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cr2-32: control */
   { "cr2-32", M32C_OPERAND_CR2_32, HW_H_CR2_32, 13, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_13_3] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_13_3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cr3-Unprefixed-32: control */
   { "cr3-Unprefixed-32", M32C_OPERAND_CR3_UNPREFIXED_32, HW_H_CR3_32, 13, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_13_3] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_13_3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* cr3-Prefixed-32: control */
   { "cr3-Prefixed-32", M32C_OPERAND_CR3_PREFIXED_32, HW_H_CR3_32, 21, 3,
-    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_21_3] } }, 
+    { 0, { (const PTR) &m32c_cgen_ifld_table[M32C_F_21_3] } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Z: Suffix for zero format insns */
   { "Z", M32C_OPERAND_Z, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* S: Suffix for short format insns */
   { "S", M32C_OPERAND_S, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* Q: Suffix for quick format insns */
   { "Q", M32C_OPERAND_Q, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* G: Suffix for general format insns */
   { "G", M32C_OPERAND_G, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* X: Empty suffix */
   { "X", M32C_OPERAND_X, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* size: any size specifier */
   { "size", M32C_OPERAND_SIZE, HW_H_SINT, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0, { { { (1<<MACH_BASE), 0 } }, { { 1, "\xc0" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* BitIndex: Bit Index for the next insn */
   { "BitIndex", M32C_OPERAND_BITINDEX, HW_H_BIT_INDEX, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* SrcIndex: Source Index for the next insn */
   { "SrcIndex", M32C_OPERAND_SRCINDEX, HW_H_SRC_INDEX, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* DstIndex: Destination Index for the next insn */
   { "DstIndex", M32C_OPERAND_DSTINDEX, HW_H_DST_INDEX, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* NoRemainder: Place holder for when the remainder is not kept */
   { "NoRemainder", M32C_OPERAND_NOREMAINDER, HW_H_NONE, 0, 0,
-    { 0, { (const PTR) 0 } }, 
+    { 0, { (const PTR) 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_M32C), 0 } }, { { 1, "\x40" } }, { { RL_TYPE_NONE, 0 } } } }  },
 /* src16-Rn-direct-QI: m16c Rn direct source QI */
 /* src16-Rn-direct-HI: m16c Rn direct source HI */
@@ -63136,7 +63136,7 @@ m32c_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
 
   /* Default to not allowing signed overflow.  */
   cd->signed_overflow_ok_p = 0;
-  
+
   return (CGEN_CPU_DESC) cd;
 }
 
@@ -63176,7 +63176,7 @@ m32c_cgen_cpu_close (CGEN_CPU_DESC cd)
       for (i = 0; i < cd->insn_table.num_init_entries; ++i, ++insns)
 	if (CGEN_INSN_RX (insns))
 	  regfree (CGEN_INSN_RX (insns));
-    }  
+    }
 
   if (cd->macro_insn_table.init_entries)
     free ((CGEN_INSN *) cd->macro_insn_table.init_entries);

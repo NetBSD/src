@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.47 2016/04/04 07:37:08 ozaki-r Exp $	*/
+/*	$NetBSD: ndp.c,v 1.47.2.1 2016/11/04 14:49:27 pgoyette Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -507,7 +507,7 @@ delete:
 	return 0;
 }
 
-#define W_ADDR	36
+#define W_ADDR	(8 * 4 + 7)
 #define W_LL	17
 #define W_IF	6
 
@@ -528,14 +528,14 @@ dump(struct in6_addr *addr, int cflag)
 	int addrwidth;
 	int llwidth;
 	int ifwidth;
-	char flgbuf[8];
+	char flgbuf[8], *fl;
 	const char *ifname;
 
 	/* Print header */
 	if (!tflag && !cflag)
-		(void)printf("%-*.*s %-*.*s %*.*s %-9.9s %1s %5s\n",
+		(void)printf("%-*.*s %-*.*s %*.*s %-9.9s %1s %2s\n",
 		    W_ADDR, W_ADDR, "Neighbor", W_LL, W_LL, "Linklayer Address",
-		    W_IF, W_IF, "Netif", "Expire", "S", "Flags");
+		    W_IF, W_IF, "Netif", "Expire", "S", "Fl");
 
 again:;
 	mib[0] = CTL_NET;
@@ -676,25 +676,12 @@ again:;
 		/*
 		 * other flags. R: router, P: proxy, W: ??
 		 */
-		if ((rtm->rtm_addrs & RTA_NETMASK) == 0) {
-			(void)snprintf(flgbuf, sizeof(flgbuf), "%s%s",
-			    isrouter ? "R" : "",
-			    (rtm->rtm_flags & RTF_ANNOUNCE) ? "p" : "");
-		} else {
-			mysin = (struct sockaddr_in6 *)(void *)
-			    (sdl->sdl_len + (char *)(void *)sdl);
-#if 0	/* W and P are mystery even for us */
-			(void)snprintf(flgbuf, sizeof(flgbuf), "%s%s%s%s",
-			    isrouter ? "R" : "",
-			    !IN6_IS_ADDR_UNSPECIFIED(&sin->sin6_addr) ? "P" : "",
-			    (sin->sin6_len != sizeof(struct sockaddr_in6)) ? "W" : "",
-			    (rtm->rtm_flags & RTF_ANNOUNCE) ? "p" : "");
-#else
-			(void)snprintf(flgbuf, sizeof(flgbuf), "%s%s",
-			    isrouter ? "R" : "",
-			    (rtm->rtm_flags & RTF_ANNOUNCE) ? "p" : "");
-#endif
-		}
+		fl = flgbuf;
+		if (isrouter)
+			*fl++ = 'R';
+		if (rtm->rtm_flags & RTF_ANNOUNCE)
+			*fl++ = 'p';
+		*fl++ = '\0';
 		(void)printf(" %s", flgbuf);
 
 		if (prbs)

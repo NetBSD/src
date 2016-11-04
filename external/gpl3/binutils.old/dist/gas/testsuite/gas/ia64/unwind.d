@@ -1,7 +1,7 @@
 #readelf: -S
 #name: ia64 unwind section
 
-There are 9 section headers, starting at offset 0xa0:
+There are 9 section headers, starting at offset .*:
 
 Section Headers:
   \[Nr\] Name              Type             Address           Offset
@@ -18,11 +18,11 @@ Section Headers:
        0000000000000008  0000000000000000   A       0     0     8
   \[ 5\] \.IA_64\.unwind     IA_64_UNWIND     0000000000000000  00000048
        0000000000000008  0000000000000000  AL       1     1     8
-  \[ 6\] \.shstrtab         STRTAB           0000000000000000  00000050
+  \[ 6\] \.shstrtab         STRTAB           0000000000000000  [0-9a-f]+
        000000000000004d  0000000000000000           0     0     1
-  \[ 7\] \.symtab           SYMTAB           0000000000000000  000002e0
+  \[ 7\] \.symtab           SYMTAB           0000000000000000  .*
        0000000000000090  0000000000000018           8     6     8
-  \[ 8\] \.strtab           STRTAB           0000000000000000  00000370
+  \[ 8\] \.strtab           STRTAB           0000000000000000  .*
        0000000000000001  0000000000000000           0     0     1
 Key to Flags:
 #...

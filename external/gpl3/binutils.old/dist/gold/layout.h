@@ -1,7 +1,6 @@
 // layout.h -- lay out output file sections for gold  -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
-// Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -66,6 +65,10 @@ struct Timespec;
 // Return TRUE if SECNAME is the name of a compressed debug section.
 extern bool
 is_compressed_debug_section(const char* secname);
+
+// Return the name of the corresponding uncompressed debug section.
+extern std::string
+corresponding_uncompressed_section_name(std::string secname);
 
 // Maintain a list of free space within a section, segment, or file.
 // Used for incremental update links.
@@ -528,6 +531,39 @@ class Layout
   get_section_order_map()
   { return &this->section_order_map_; }
 
+  // Struct to store segment info when mapping some input sections to
+  // unique segments using linker plugins.  Mapping an input section to
+  // a unique segment is done by first placing such input sections in
+  // unique output sections and then mapping the output section to a
+  // unique segment.  NAME is the name of the output section.  FLAGS
+  // and ALIGN are the extra flags and alignment of the segment.
+  struct Unique_segment_info
+  {
+    // Identifier for the segment.  ELF segments dont have names.  This
+    // is used as the name of the output section mapped to the segment.
+    const char* name;
+    // Additional segment flags.
+    uint64_t flags;
+    // Segment alignment.
+    uint64_t align;
+  };
+
+  // Mapping from input section to segment.
+  typedef std::map<Const_section_id, Unique_segment_info*>
+  Section_segment_map;
+
+  // Maps section SECN to SEGMENT s.
+  void
+  insert_section_segment_map(Const_section_id secn, Unique_segment_info *s);
+
+  // Some input sections require special ordering, for compatibility
+  // with GNU ld.  Given the name of an input section, return -1 if it
+  // does not require special ordering.  Otherwise, return the index
+  // by which it should be ordered compared to other input sections
+  // that require special ordering.
+  static int
+  special_ordering_of_input_section(const char* name);
+
   bool
   is_section_ordering_specified()
   { return this->section_ordering_specified_; }
@@ -535,6 +571,14 @@ class Layout
   void
   set_section_ordering_specified()
   { this->section_ordering_specified_ = true; }
+
+  bool
+  is_unique_segment_for_sections_specified() const
+  { return this->unique_segment_for_sections_specified_; }
+
+  void
+  set_unique_segment_for_sections_specified()
+  { this->unique_segment_for_sections_specified_ = true; }
 
   // For incremental updates, allocate a block of memory from the
   // free list.  Find a block starting at or after MINOFF.
@@ -594,6 +638,12 @@ class Layout
 		  const elfcpp::Shdr<size, big_endian>& shdr,
 		  unsigned int reloc_shndx, unsigned int reloc_type,
 		  off_t* offset);
+
+  // After processing all input files, we call this to make sure that
+  // the optimized .eh_frame sections have been added to the output
+  // section.
+  void
+  finalize_eh_frame_section();
 
   // Add .eh_frame information for a PLT.  The FDE must start with a
   // 4-byte PC-relative reference to the start of the PLT, followed by
@@ -714,7 +764,8 @@ class Layout
 	    || strncmp(name, ".gnu.linkonce.wi.",
 		       sizeof(".gnu.linkonce.wi.") - 1) == 0
 	    || strncmp(name, ".line", sizeof(".line") - 1) == 0
-	    || strncmp(name, ".stab", sizeof(".stab") - 1) == 0);
+	    || strncmp(name, ".stab", sizeof(".stab") - 1) == 0
+	    || strncmp(name, ".pdr", sizeof(".pdr") - 1) == 0);
   }
 
   // Return true if RELOBJ is an input file whose base name matches
@@ -853,7 +904,7 @@ class Layout
 
   // Compute and write out the build ID if needed.
   void
-  write_build_id(Output_file*) const;
+  write_build_id(Output_file*, unsigned char*, size_t) const;
 
   // Rewrite output file in binary format.
   void
@@ -883,6 +934,10 @@ class Layout
   // by the linker script code.
   void
   get_allocated_sections(Section_list*) const;
+
+  // Store the executable sections into the section list.
+  void
+  get_executable_sections(Section_list*) const;
 
   // Make a section for a linker script to hold data.
   Output_section*
@@ -919,6 +974,21 @@ class Layout
   const Section_list&
   section_list() const
   { return this->section_list_; }
+
+  // Returns TRUE iff NAME (an input section from RELOBJ) will
+  // be mapped to an output section that should be KEPT.
+  bool
+  keep_input_section(const Relobj*, const char*);
+
+  // Add a special output object that will be recreated afresh
+  // if there is another relaxation iteration.
+  void
+  add_relax_output(Output_data* data)
+  { this->relax_output_list_.push_back(data); }
+
+  // Clear out (and free) everything added by add_relax_output.
+  void
+  reset_relax_output();
 
  private:
   Layout(const Layout&);
@@ -1065,6 +1135,11 @@ class Layout
 		     elfcpp::Elf_Word type, elfcpp::Elf_Xword flags,
 		     Output_section_order order, bool is_relro);
 
+  // Clear the input section flags that should not be copied to the
+  // output section.
+  elfcpp::Elf_Xword
+  get_output_section_flags (elfcpp::Elf_Xword input_section_flags);
+
   // Choose the output section for NAME in RELOBJ.
   Output_section*
   choose_output_section(const Relobj* relobj, const char* name,
@@ -1210,7 +1285,8 @@ class Layout
     // Check that sections and special data are in reset states.
     void
     check_output_data_for_reset_values(const Layout::Section_list&,
-				       const Layout::Data_list&);
+				       const Layout::Data_list& special_outputs,
+				       const Layout::Data_list& relax_outputs);
 
     // Record information of a section list.
     void
@@ -1262,6 +1338,9 @@ class Layout
   // The list of unattached Output_data objects which require special
   // handling because they are not Output_sections.
   Data_list special_output_list_;
+  // Like special_output_list_, but cleared and recreated on each
+  // iteration of relaxation.
+  Data_list relax_output_list_;
   // The section headers.
   Output_section_headers* section_headers_;
   // A pointer to the PT_TLS segment if there is one.
@@ -1331,6 +1410,9 @@ class Layout
   // True if the input sections in the output sections should be sorted
   // as specified in a section ordering file.
   bool section_ordering_specified_;
+  // True if some input sections need to be mapped to a unique segment,
+  // after being mapped to a unique Output_section.
+  bool unique_segment_for_sections_specified_;
   // In incremental build, holds information check the inputs and build the
   // .gnu_incremental_inputs section.
   Incremental_inputs* incremental_inputs_;
@@ -1345,6 +1427,11 @@ class Layout
   // Plugins specify section_ordering using this map.  This is set in
   // update_section_order in plugin.cc
   std::map<Section_id, unsigned int> section_order_map_;
+  // This maps an input section to a unique segment. This is done by first
+  // placing such input sections in unique output sections and then mapping
+  // the output section to a unique segment.  Unique_segment_info stores
+  // any additional flags and alignment of the new segment.
+  Section_segment_map section_segment_map_;
   // Hash a pattern to its position in the section ordering file.
   Unordered_map<std::string, unsigned int> input_section_position_;
   // Vector of glob only patterns in the section_ordering file.
@@ -1365,9 +1452,11 @@ class Write_sections_task : public Task
  public:
   Write_sections_task(const Layout* layout, Output_file* of,
 		      Task_token* output_sections_blocker,
+		      Task_token* input_sections_blocker,
 		      Task_token* final_blocker)
     : layout_(layout), of_(of),
       output_sections_blocker_(output_sections_blocker),
+      input_sections_blocker_(input_sections_blocker),
       final_blocker_(final_blocker)
   { }
 
@@ -1392,6 +1481,7 @@ class Write_sections_task : public Task
   const Layout* layout_;
   Output_file* of_;
   Task_token* output_sections_blocker_;
+  Task_token* input_sections_blocker_;
   Task_token* final_blocker_;
 };
 
@@ -1434,10 +1524,10 @@ class Write_symbols_task : public Task
 {
  public:
   Write_symbols_task(const Layout* layout, const Symbol_table* symtab,
-		     const Input_objects* input_objects,
+		     const Input_objects* /*input_objects*/,
 		     const Stringpool* sympool, const Stringpool* dynpool,
 		     Output_file* of, Task_token* final_blocker)
-    : layout_(layout), symtab_(symtab), input_objects_(input_objects),
+    : layout_(layout), symtab_(symtab),
       sympool_(sympool), dynpool_(dynpool), of_(of),
       final_blocker_(final_blocker)
   { }
@@ -1460,7 +1550,6 @@ class Write_symbols_task : public Task
  private:
   const Layout* layout_;
   const Symbol_table* symtab_;
-  const Input_objects* input_objects_;
   const Stringpool* sympool_;
   const Stringpool* dynpool_;
   Output_file* of_;
@@ -1505,13 +1594,17 @@ class Write_after_input_sections_task : public Task
   Task_token* final_blocker_;
 };
 
-// This task function handles closing the file.
+// This task function handles computation of the build id.
+// When using --build-id=tree, it schedules the tasks that
+// compute the hashes for each chunk of the file. This task
+// cannot run until we have finalized the size of the output
+// file, after the completion of Write_after_input_sections_task.
 
-class Close_task_runner : public Task_function_runner
+class Build_id_task_runner : public Task_function_runner
 {
  public:
-  Close_task_runner(const General_options* options, const Layout* layout,
-		    Output_file* of)
+  Build_id_task_runner(const General_options* options, const Layout* layout,
+		       Output_file* of)
     : options_(options), layout_(layout), of_(of)
   { }
 
@@ -1523,6 +1616,30 @@ class Close_task_runner : public Task_function_runner
   const General_options* options_;
   const Layout* layout_;
   Output_file* of_;
+};
+
+// This task function handles closing the file.
+
+class Close_task_runner : public Task_function_runner
+{
+ public:
+  Close_task_runner(const General_options* options, const Layout* layout,
+		    Output_file* of, unsigned char* array_of_hashes,
+		    size_t size_of_hashes)
+    : options_(options), layout_(layout), of_(of),
+      array_of_hashes_(array_of_hashes), size_of_hashes_(size_of_hashes)
+  { }
+
+  // Run the operation.
+  void
+  run(Workqueue*, const Task*);
+
+ private:
+  const General_options* options_;
+  const Layout* layout_;
+  Output_file* of_;
+  unsigned char* const array_of_hashes_;
+  const size_t size_of_hashes_;
 };
 
 // A small helper function to align an address.

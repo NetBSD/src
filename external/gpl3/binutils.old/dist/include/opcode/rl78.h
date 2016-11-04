@@ -1,6 +1,5 @@
 /* Opcode decoder for the Renesas RL78
-   Copyright 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Written by DJ Delorie <dj@redhat.com>
 
    This file is part of GDB, the GNU Debugger and GAS, the GNU Assembler.
@@ -26,6 +25,17 @@
 
 #ifndef RL78_OPCODES_H_INCLUDED
 #define RL78_OPCODES_H_INCLUDED
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+  RL78_ISA_DEFAULT,
+  RL78_ISA_G10,
+  RL78_ISA_G13,
+  RL78_ISA_G14,
+} RL78_Dis_Isa;
 
 /* For the purposes of these structures, the RL78 registers are as
    follows, despite most of these being memory-mapped and
@@ -163,6 +173,10 @@ typedef struct
   RL78_Opcode_Operand	op[2];
 } RL78_Opcode_Decoded;
 
-int rl78_decode_opcode (unsigned long, RL78_Opcode_Decoded *, int (*)(void *), void *);
+int rl78_decode_opcode (unsigned long, RL78_Opcode_Decoded *, int (*)(void *), void *, RL78_Dis_Isa);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

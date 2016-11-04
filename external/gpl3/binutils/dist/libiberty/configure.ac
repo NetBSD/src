@@ -727,7 +727,7 @@ AC_SUBST(docdir)
 AC_SUBST(htmldir)
 
 # We need multilib support, but only if configuring for the target.
-AC_CONFIG_FILES([Makefile testsuite/Makefile])
+AC_CONFIG_FILES([Makefile])
 AC_CONFIG_COMMANDS([default],
   [[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h
 if test -n "$CONFIG_FILES"; then

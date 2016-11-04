@@ -75,5 +75,5 @@ Disassembly of section \.text:
     9002:	eb01 0002 	add\.w	r0, r1, r2
     9006:	f7ff ef7c 	blx	8f00 <armfn>
     900a:	4770      	bx	lr
-    900c:	f3af 8000 	nop\.w
+#...
     9010:	eaffffba 	b	8f00 <armfn>

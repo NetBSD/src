@@ -1,13 +1,4 @@
-# $NetBSD: md.amiga,v 1.22 2015/11/04 17:06:23 phx Exp $
-./usr/X11R6/bin/X					-unknown-	x11
-./usr/X11R6/bin/Xamiga					-unknown-	x11
-./usr/X11R6/lib/modules/libafb.a			-obsolete-	obsolete
-./usr/X11R6/man/cat1/Xamiga.0				-unknown-	.cat,x11
-./usr/X11R6/man/cat1/Xamiga24.0				-unknown-	.cat,x11
-./usr/X11R6/man/html1/Xamiga.html			-unknown-	html,x11
-./usr/X11R6/man/html1/Xamiga24.html			-unknown-	html,x11
-./usr/X11R6/man/man1/Xamiga.1				-unknown-	.man,x11
-./usr/X11R6/man/man1/Xamiga24.1				-unknown-	.man,x11
+# $NetBSD: md.amiga,v 1.22.2.1 2016/11/04 14:42:40 pgoyette Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -22,8 +13,10 @@
 ./usr/X11R7/lib/modules/drivers/wsfb_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/wsfb_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdbe.a		-unknown-	xorg,obsolete
-./usr/X11R7/lib/modules/extensions/libdbe.so		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libdbe.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libdbe.so		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/extensions/libdbe.so		-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/lib/modules/extensions/libdbe.so.0		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/extensions/libdbe.so.0		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_pic.a		-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so		-unknown-	xorg
@@ -34,16 +27,20 @@
 ./usr/X11R7/lib/modules/extensions/libdri2_pic.a	-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/extensions/libextmod.a		-unknown-	xorg,obsolete
-./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/extensions/libextmod_pic.a	-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/extensions/libglx.a		-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libglx.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libglx.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libglx_pic.a		-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/extensions/librecord.a		-unknown-	xorg,obsolete
-./usr/X11R7/lib/modules/extensions/librecord.so		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/librecord.so.0	-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/librecord.so		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/extensions/librecord.so		-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/lib/modules/extensions/librecord.so.0	-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/extensions/librecord.so.0	-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/extensions/librecord_pic.a	-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/extensions/libshadow.a		-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libshadow.so		-unknown-	xorg
@@ -74,8 +71,10 @@
 ./usr/X11R7/lib/modules/libvgahw.so.0			-unknown-	xorg
 ./usr/X11R7/lib/modules/libvgahw_pic.a			-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/libxaa.a			-unknown-	xorg,obsolete
-./usr/X11R7/lib/modules/libxaa.so			-unknown-	xorg
-./usr/X11R7/lib/modules/libxaa.so.0			-unknown-	xorg
+./usr/X11R7/lib/modules/libxaa.so			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/libxaa.so			-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/lib/modules/libxaa.so.0			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/libxaa.so.0			-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/libxaa_pic.a			-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/libxf8_16bpp.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf8_16bpp.so			-unknown-	obsolete

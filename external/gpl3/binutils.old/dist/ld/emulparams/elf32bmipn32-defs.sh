@@ -14,9 +14,10 @@ LITTLE_OUTPUT_FORMAT="elf32-littlemips"
 TEMPLATE_NAME=elf32
 EXTRA_EM_FILE=mipself
 
-case "$EMULATION_NAME" in
-elf32*n32*) ELFSIZE=32 ;;
-elf64*) ELFSIZE=64 ;;
+case x"$EMULATION_NAME" in
+xelf32*n32*) ELFSIZE=32 ;;
+xelf64*) ELFSIZE=64 ;;
+x) ;;
 *) echo $0: unhandled emulation $EMULATION_NAME >&2; exit 1 ;;
 esac
 
@@ -45,7 +46,7 @@ ENTRY=__start
 OTHER_GOT_RELOC_SECTIONS="
   .rel.dyn      ${RELOCATING-0} : { *(.rel.dyn) }
 "
-# GOT-related settings.  
+# GOT-related settings.
 # If the output has a GOT section, there must be exactly 0x7ff0 bytes
 # between .got and _gp.  The ". = ." below stops the orphan code from
 # inserting other sections between the assignment to _gp and the start
@@ -89,6 +90,7 @@ if test -z "${CREATE_SHLIB}"; then
   INITIAL_READONLY_SECTIONS=".interp       ${RELOCATING-0} : { *(.interp) }"
 fi
 INITIAL_READONLY_SECTIONS="${INITIAL_READONLY_SECTIONS}
+  .MIPS.abiflags      ${RELOCATING-0} : { *(.MIPS.abiflags) }
   .reginfo      ${RELOCATING-0} : { *(.reginfo) }"
 # Discard any .MIPS.content* or .MIPS.events* sections.  The linker
 # doesn't know how to adjust them.

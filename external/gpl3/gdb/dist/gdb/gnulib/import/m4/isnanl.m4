@@ -1,5 +1,5 @@
-# isnanl.m4 serial 17
-dnl Copyright (C) 2007-2012 Free Software Foundation, Inc.
+# isnanl.m4 serial 19
+dnl Copyright (C) 2007-2015 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -108,11 +108,8 @@ AC_DEFUN([gl_HAVE_ISNANL_IN_LIBM],
     ])
 ])
 
-dnl Test whether isnanl() recognizes all numbers which are neither finite nor
-dnl infinite. This test fails e.g. on NetBSD/i386 and on glibc/ia64.
-dnl Also, the GCC >= 4.0 built-in __builtin_isnanl does not pass the tests
-dnl - for pseudo-denormals on i686 and x86_64,
-dnl - for pseudo-zeroes, unnormalized numbers, and pseudo-denormals on ia64.
+dnl Test whether isnanl() recognizes all canonical numbers which are neither
+dnl finite nor infinite.
 AC_DEFUN([gl_FUNC_ISNANL_WORKS],
 [
   AC_REQUIRE([AC_PROG_CC])
@@ -177,7 +174,7 @@ int main ()
 # ifdef WORDS_BIGENDIAN
 #  define LDBL80_WORDS(exponent,manthi,mantlo) \
      { ((unsigned int) (exponent) << 16) | ((unsigned int) (manthi) >> 16), \
-       ((unsigned int) (manthi) << 16) | (unsigned int) (mantlo) >> 16),    \
+       ((unsigned int) (manthi) << 16) | ((unsigned int) (mantlo) >> 16),   \
        (unsigned int) (mantlo) << 16                                        \
      }
 # else
@@ -197,41 +194,35 @@ int main ()
     if (!isnanl (x.value))
       result |= 2;
   }
-  /* The isnanl function should recognize Pseudo-NaNs, Pseudo-Infinities,
-     Pseudo-Zeroes, Unnormalized Numbers, and Pseudo-Denormals, as defined in
-       Intel IA-64 Architecture Software Developer's Manual, Volume 1:
-       Application Architecture.
-       Table 5-2 "Floating-Point Register Encodings"
-       Figure 5-6 "Memory to Floating-Point Register Data Translation"
-   */
+  /* isnanl should return something even for noncanonical values.  */
   { /* Pseudo-NaN.  */
     static memory_long_double x =
       { LDBL80_WORDS (0xFFFF, 0x40000001, 0x00000000) };
-    if (!isnanl (x.value))
+    if (isnanl (x.value) && !isnanl (x.value))
       result |= 4;
   }
   { /* Pseudo-Infinity.  */
     static memory_long_double x =
       { LDBL80_WORDS (0xFFFF, 0x00000000, 0x00000000) };
-    if (!isnanl (x.value))
+    if (isnanl (x.value) && !isnanl (x.value))
       result |= 8;
   }
   { /* Pseudo-Zero.  */
     static memory_long_double x =
       { LDBL80_WORDS (0x4004, 0x00000000, 0x00000000) };
-    if (!isnanl (x.value))
+    if (isnanl (x.value) && !isnanl (x.value))
       result |= 16;
   }
   { /* Unnormalized number.  */
     static memory_long_double x =
       { LDBL80_WORDS (0x4000, 0x63333333, 0x00000000) };
-    if (!isnanl (x.value))
+    if (isnanl (x.value) && !isnanl (x.value))
       result |= 32;
   }
   { /* Pseudo-Denormal.  */
     static memory_long_double x =
       { LDBL80_WORDS (0x0000, 0x83333333, 0x00000000) };
-    if (!isnanl (x.value))
+    if (isnanl (x.value) && !isnanl (x.value))
       result |= 64;
   }
 #endif
@@ -240,16 +231,6 @@ int main ()
 }]])],
         [gl_cv_func_isnanl_works=yes],
         [gl_cv_func_isnanl_works=no],
-        [case "$host_cpu" in
-                                 # Guess no on ia64, x86_64, i386.
-           ia64 | x86_64 | i*86) gl_cv_func_isnanl_works="guessing no";;
-           *)
-             case "$host_os" in
-               netbsd*) gl_cv_func_isnanl_works="guessing no";;
-               *)       gl_cv_func_isnanl_works="guessing yes";;
-             esac
-             ;;
-         esac
-        ])
+        [gl_cv_func_isnanl_works="guessing yes"])
     ])
 ])

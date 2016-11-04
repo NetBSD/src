@@ -686,7 +686,7 @@ f:
 	mpydp .D1 a1:a0,a1:a0,a1:a0
 	mpydp .M1 a1:a0,a1:a0
 	mpydp .M1 b1:b0,a1:a0,a3:a2
-	mpydp .M2X b1:b0,a1:a0,b1:b0
+
 	mpyh .S1 a1,a2,a3
 	mpyh .M1 a1,a2
 	mpyh .M1 b1,a2,a3

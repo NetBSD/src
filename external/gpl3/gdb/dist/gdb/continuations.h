@@ -1,6 +1,6 @@
 /* Continuations for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,6 @@
 #ifndef CONTINUATIONS_H
 #define CONTINUATIONS_H
 
-struct thread_info;
 struct inferior;
 
 /* To continue the execution commands when running gdb asynchronously.
@@ -44,24 +43,6 @@ typedef void (continuation_ftype) (void *arg, int err);
    passed to the continuation callback functions, either when the
    continuation is called, or discarded.  */
 typedef void (continuation_free_arg_ftype) (void *);
-
-/* Thread specific continuations.  */
-
-extern void add_continuation (struct thread_info *,
-			      continuation_ftype *, void *,
-			      continuation_free_arg_ftype *);
-extern void do_all_continuations (int err);
-extern void do_all_continuations_thread (struct thread_info *, int err);
-extern void discard_all_continuations (void);
-extern void discard_all_continuations_thread (struct thread_info *);
-
-extern void add_intermediate_continuation (struct thread_info *,
-					   continuation_ftype *, void *,
-					   continuation_free_arg_ftype *);
-extern void do_all_intermediate_continuations (int err);
-extern void do_all_intermediate_continuations_thread (struct thread_info *, int err);
-extern void discard_all_intermediate_continuations (void);
-extern void discard_all_intermediate_continuations_thread (struct thread_info *);
 
 /* Inferior specific (any thread) continuations.  */
 

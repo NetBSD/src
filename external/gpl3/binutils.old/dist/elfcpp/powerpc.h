@@ -1,6 +1,6 @@
 // powerpc.h -- ELF definitions specific to EM_PPC and EM_PPC64  -*- C++ -*-
 
-// Copyright 2008, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 // Written by David S. Miller <davem@davemloft.net>.
 
 // This file is part of elfcpp.
@@ -137,40 +137,74 @@ enum
   R_POWERPC_GOT_DTPREL16_LO = 92,
   R_POWERPC_GOT_DTPREL16_HI = 93,
   R_POWERPC_GOT_DTPREL16_HA = 94,
+  R_PPC_TLSGD = 95,
   R_PPC64_TPREL16_DS = 95,
+  R_PPC_TLSLD = 96,
   R_PPC64_TPREL16_LO_DS = 96,
   R_PPC64_TPREL16_HIGHER = 97,
   R_PPC64_TPREL16_HIGHERA = 98,
   R_PPC64_TPREL16_HIGHEST = 99,
   R_PPC64_TPREL16_HIGHESTA = 100,
-  R_PPC64_DTPREL16_DS = 101,
-  R_PPC64_DTPREL16_LO_DS = 102,
-  R_PPC64_DTPREL16_HIGHER = 103,
-  R_PPC64_DTPREL16_HIGHERA = 104,
-  R_PPC64_DTPREL16_HIGHEST = 105,
-  R_PPC64_DTPREL16_HIGHESTA = 106,
   R_PPC_EMB_NADDR32 = 101,
+  R_PPC64_DTPREL16_DS = 101,
   R_PPC_EMB_NADDR16 = 102,
+  R_PPC64_DTPREL16_LO_DS = 102,
   R_PPC_EMB_NADDR16_LO = 103,
+  R_PPC64_DTPREL16_HIGHER = 103,
   R_PPC_EMB_NADDR16_HI = 104,
+  R_PPC64_DTPREL16_HIGHERA = 104,
   R_PPC_EMB_NADDR16_HA = 105,
+  R_PPC64_DTPREL16_HIGHEST = 105,
   R_PPC_EMB_SDAI16 = 106,
+  R_PPC64_DTPREL16_HIGHESTA = 106,
   R_PPC_EMB_SDA2I16 = 107,
+  R_PPC64_TLSGD = 107,
   R_PPC_EMB_SDA2REL = 108,
+  R_PPC64_TLSLD = 108,
   R_PPC_EMB_SDA21 = 109,
+  R_PPC64_TOCSAVE = 109,
   R_PPC_EMB_MRKREF = 110,
+  R_PPC64_ADDR16_HIGH = 110,
   R_PPC_EMB_RELSEC16 = 111,
+  R_PPC64_ADDR16_HIGHA = 111,
   R_PPC_EMB_RELST_LO = 112,
+  R_PPC64_TPREL16_HIGH = 112,
   R_PPC_EMB_RELST_HI = 113,
+  R_PPC64_TPREL16_HIGHA = 113,
   R_PPC_EMB_RELST_HA = 114,
+  R_PPC64_DTPREL16_HIGH = 114,
   R_PPC_EMB_BIT_FLD = 115,
+  R_PPC64_DTPREL16_HIGHA = 115,
   R_PPC_EMB_RELSDA = 116,
+  R_PPC64_REL24_NOTOC = 116,
+  R_PPC64_ADDR64_LOCAL = 117,
+  R_PPC64_ENTRY = 118,
 
+  R_PPC_VLE_REL8 = 216,
+  R_PPC_VLE_REL15 = 217,
+  R_PPC_VLE_REL24 = 218,
+  R_PPC_VLE_LO16A = 219,
+  R_PPC_VLE_LO16D = 220,
+  R_PPC_VLE_HI16A = 221,
+  R_PPC_VLE_HI16D = 222,
+  R_PPC_VLE_HA16A = 223,
+  R_PPC_VLE_HA16D = 224,
+  R_PPC_VLE_SDA21 = 225,
+  R_PPC_VLE_SDA21_LO = 226,
+  R_PPC_VLE_SDAREL_LO16A = 227,
+  R_PPC_VLE_SDAREL_LO16D = 228,
+  R_PPC_VLE_SDAREL_HI16A = 229,
+  R_PPC_VLE_SDAREL_HI16D = 230,
+  R_PPC_VLE_SDAREL_HA16A = 231,
+  R_PPC_VLE_SDAREL_HA16D = 232,
+
+  R_POWERPC_REL16DX_HA = 246,
+  R_PPC64_JMP_IREL = 247,
   R_POWERPC_IRELATIVE = 248,
-  R_PPC_REL16 = 249,
-  R_PPC_REL16_LO = 250,
-  R_PPC_REL16_HI = 251,
-  R_PPC_REL16_HA = 252,
+  R_POWERPC_REL16 = 249,
+  R_POWERPC_REL16_LO = 250,
+  R_POWERPC_REL16_HI = 251,
+  R_POWERPC_REL16_HA = 252,
   R_POWERPC_GNU_VTINHERIT = 253,
   R_POWERPC_GNU_VTENTRY = 254,
   R_PPC_TOC16 = 255,
@@ -183,6 +217,59 @@ enum
   EF_PPC_RELOCATABLE = 0x00010000,     // PowerPC -mrelocatable flag.  */
   EF_PPC_RELOCATABLE_LIB = 0x00008000, // PowerPC -mrelocatable-lib flag.  */
 };
+
+// e_flags values defined for powerpc64
+enum
+{
+  // ABI version
+  // 1 for original function descriptor using ABI,
+  // 2 for revised ABI without function descriptors,
+  // 0 for unspecified or not using any features affected by the differences.
+  EF_PPC64_ABI = 3
+};
+
+enum
+{
+  // The ELFv2 ABI uses three bits in the symbol st_other field of a
+  // function definition to specify the number of instructions between a
+  // function's global entry point and local entry point.
+  // The global entry point is used when it is necessary to set up the
+  // toc pointer (r2) for the function.  Callers must enter the global
+  // entry point with r12 set to the global entry point address.  On
+  // return from the function, r2 may have a different value to that
+  // which it had on entry.
+  // The local entry point is used when r2 is known to already be valid
+  // for the function.  There is no requirement on r12 when using the
+  // local entry point, and on return r2 will contain the same value as
+  // at entry.
+  // A value of zero in these bits means that the function has a single
+  // entry point with no requirement on r12 or r2, and that on return r2
+  // will contain the same value as at entry.
+  // Values of one and seven are reserved.
+
+  STO_PPC64_LOCAL_BIT = 5,
+  STO_PPC64_LOCAL_MASK = 0xE0
+};
+
+// 3 bit other field to bytes.
+static inline unsigned int
+ppc64_decode_local_entry(unsigned int other)
+{
+  return ((1 << other) >> 2) << 2;
+}
+
+// bytes to field value.
+static inline unsigned int
+ppc64_encode_local_entry(unsigned int val)
+{
+  return (val >= 4 * 4
+	  ? (val >= 8 * 4
+	     ? (val >= 16 * 4 ? 6 : 5)
+	     : 4)
+	  : (val >= 2 * 4
+	     ? 3
+	     : (val >= 1 * 4 ? 2 : 0)));
+}
 
 } // End namespace elfcpp.
 

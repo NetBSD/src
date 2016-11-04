@@ -1,8 +1,7 @@
 # Test that the linker reports undefined symbol errors correctly.
 # By Ian Lance Taylor, Cygnus Support
 #
-#   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-#   2005, 2007, 2008, 2010, 2011  Free Software Foundation, Inc.
+#   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -128,6 +127,11 @@ setup_xfail mcore-*-elf
 setup_xfail mep-*-*
 setup_xfail mips-sgi-irix6*
 setup_xfail "sh64-*-*"
+# Fails for the MSP430 because it uses SYM_DIFF relocs but it does
+# not provide a special_function for handling them.  If optimization
+# is enabled then this test passes because function()'s prologue is
+# eliminated.
+setup_xfail "msp430-*-*"
 
 # The undefined test fails on 31 bit s/390 because the address of the 
 # function `this_function_is_not_defined' is stored in the literal pool of

@@ -1,6 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2006, 2007, 2008, 2009
-#   Free Software Foundation, Inc.
+#   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -29,6 +28,7 @@ fragment <<EOF
 
 #include "elf32-avr.h"
 #include "ldctor.h"
+#include "elf/avr.h"
 
 /* The fake file and it's corresponding section meant to hold
    the linker stubs if needed.  */
@@ -72,7 +72,7 @@ avr_elf_${EMULATION_NAME}_before_allocation (void)
   gld${EMULATION_NAME}_before_allocation ();
 
   /* We only need stubs for avr6, avrxmega6, and avrxmega7. */
-  if (strcmp ("${EMULATION_NAME}","avr6") 
+  if (strcmp ("${EMULATION_NAME}","avr6")
       && strcmp ("${EMULATION_NAME}","avrxmega6")
       && strcmp ("${EMULATION_NAME}","avrxmega7") )
     avr_no_stubs = TRUE;
@@ -81,7 +81,7 @@ avr_elf_${EMULATION_NAME}_before_allocation (void)
 
   /* If generating a relocatable output file, then
      we don't  have to generate the trampolines.  */
-  if (link_info.relocatable)
+  if (bfd_link_relocatable (&link_info))
     avr_no_stubs = TRUE;
 
   if (avr_no_stubs)
@@ -166,7 +166,51 @@ avr_elf_after_allocation (void)
     }
 }
 
+static void
+avr_elf_before_parse (void)
+{
+  /* Don't create a demand-paged executable, since this feature isn't
+     meaningful in AVR. */
+  config.magic_demand_paged = FALSE;
 
+  gld${EMULATION_NAME}_before_parse ();
+}
+
+static void
+avr_finish (void)
+{
+  bfd *abfd;
+  bfd_boolean avr_link_relax;
+
+  if (bfd_link_relocatable (&link_info))
+    {
+      avr_link_relax = TRUE;
+      for (abfd = link_info.input_bfds; abfd != NULL; abfd = abfd->link.next)
+        {
+          /* Don't let the linker stubs prevent the final object being
+             marked as link-relax ready.  */
+          if ((elf_elfheader (abfd)->e_flags
+               & EF_AVR_LINKRELAX_PREPARED) == 0
+              && abfd != stub_file->the_bfd)
+            {
+              avr_link_relax = FALSE;
+              break;
+            }
+        }
+    }
+  else
+    {
+      avr_link_relax = RELAXATION_ENABLED;
+    }
+
+  abfd = link_info.output_bfd;
+  if (avr_link_relax)
+    elf_elfheader (abfd)->e_flags |= EF_AVR_LINKRELAX_PREPARED;
+  else
+    elf_elfheader (abfd)->e_flags &= ~EF_AVR_LINKRELAX_PREPARED;
+
+  finish_default ();
+}
 EOF
 
 
@@ -262,6 +306,8 @@ PARSE_AND_LIST_ARGS_CASES='
 #
 # Put these extra avr-elf routines in ld_${EMULATION_NAME}_emulation
 #
+LDEMUL_BEFORE_PARSE=avr_elf_before_parse
 LDEMUL_BEFORE_ALLOCATION=avr_elf_${EMULATION_NAME}_before_allocation
 LDEMUL_AFTER_ALLOCATION=avr_elf_after_allocation
 LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=avr_elf_create_output_section_statements
+LDEMUL_FINISH=avr_finish

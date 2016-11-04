@@ -33,7 +33,9 @@
 #include "i386-linux-tdep.h"
 #include "x86-xstate.h"
 
+#include "linux-nat.h"
 #include "x86-linux-nat.h"
+#include "nat/linux-ptrace.h"
 
 /* The register sets used in GNU/Linux ELF core-dumps are identical to
    the register sets in `struct user' that is used for a.out
@@ -325,7 +327,7 @@ fetch_xstateregs (struct regcache *regcache, int tid)
   char xstateregs[X86_XSTATE_MAX_SIZE];
   struct iovec iov;
 
-  if (!have_ptrace_getregset)
+  if (have_ptrace_getregset != TRIBOOL_TRUE)
     return 0;
 
   iov.iov_base = xstateregs;
@@ -348,7 +350,7 @@ store_xstateregs (const struct regcache *regcache, int tid, int regno)
   char xstateregs[X86_XSTATE_MAX_SIZE];
   struct iovec iov;
 
-  if (!have_ptrace_getregset)
+  if (have_ptrace_getregset != TRIBOOL_TRUE)
     return 0;
   
   iov.iov_base = xstateregs;
@@ -648,8 +650,7 @@ static void
 i386_linux_resume (struct target_ops *ops,
 		   ptid_t ptid, int step, enum gdb_signal signal)
 {
-  int pid = ptid_get_pid (ptid);
-
+  int pid = ptid_get_lwp (ptid);
   int request;
 
   if (catch_syscall_enabled () > 0)
@@ -659,7 +660,7 @@ i386_linux_resume (struct target_ops *ops,
 
   if (step)
     {
-      struct regcache *regcache = get_thread_regcache (pid_to_ptid (pid));
+      struct regcache *regcache = get_thread_regcache (ptid);
       struct gdbarch *gdbarch = get_regcache_arch (regcache);
       enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
       ULONGEST pc;

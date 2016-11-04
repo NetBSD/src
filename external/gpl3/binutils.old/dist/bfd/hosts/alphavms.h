@@ -1,6 +1,5 @@
 /* alphavms.h -- BFD definitions for an openVMS host
-   Copyright 1996, 2000, 2001, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    Written by Klaus Kämpf (kkaempf@progis.de)
    of proGIS Softwareentwicklung, Aachen, Germany
 
@@ -21,6 +20,13 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#ifdef PACKAGE
+#error sysdep.h must be included in lieu of config.h
+#endif
+
+#include "config.h"
+#include "ansidecl.h"
+
 #include <stddef.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -34,32 +40,7 @@
 #include <unixio.h>
 #include <time.h>
 
-#include "bfd.h"
 #include "filenames.h"
-
-#ifndef BFD_HOST_64_BIT
-/* Make the basic types 64-bit quantities on the host.
-   Also provide the support macros BFD needs.  */
-# ifdef __GNUC__
-#  define	BFD_HOST_64_BIT	long long
-# else
-#  define	BFD_HOST_64_BIT	long
-# endif
-typedef unsigned BFD_HOST_64_BIT uint64_type;
-typedef BFD_HOST_64_BIT int64_type;
-
-# define sprintf_vma(s,x) sprintf (s, "%016lx", x) /* BFD_HOST_64_BIT */
-# define fprintf_vma(f,x) fprintf (f, "%016lx", x) /* BFD_HOST_64_BIT */
-
-# define BYTES_IN_PRINTF_INT 4
-
-/* These must have type unsigned long because they are used as
-   arguments in printf functions.  */
-# define uint64_typeLOW(x) ((unsigned long) (((x) & 0xffffffff))) /* BFD_HOST_64_BIT */
-# define uint64_typeHIGH(x) ((unsigned long) (((x) >> 32) & 0xffffffff)) /* BFD_HOST_64_BIT */
-
-#endif /* BFD_HOST_64_BIT */
-
 #include "fopen-vms.h"
 
 #define NO_FCNTL 1

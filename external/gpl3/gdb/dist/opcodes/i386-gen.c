@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -46,69 +46,69 @@ static initializer cpu_flag_init[] =
   { "CPU_GENERIC32_FLAGS",
     "Cpu186|Cpu286|Cpu386" },
   { "CPU_GENERIC64_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuClflush|Cpu387|Cpu687|CpuNop|CpuMMX|CpuSSE|CpuSSE2|CpuLM" },
+    "CPU_PENTIUMPRO_FLAGS|CpuClflush|CpuSYSCALL|CPU_MMX_FLAGS|CPU_SSE2_FLAGS|CpuLM" },
   { "CPU_NONE_FLAGS",
    "0" },
   { "CPU_I186_FLAGS",
     "Cpu186" },
   { "CPU_I286_FLAGS",
-    "Cpu186|Cpu286" },
+    "CPU_I186_FLAGS|Cpu286" },
   { "CPU_I386_FLAGS",
-    "Cpu186|Cpu286|Cpu386" },
+    "CPU_I286_FLAGS|Cpu386" },
   { "CPU_I486_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486" },
+    "CPU_I386_FLAGS|Cpu486" },
   { "CPU_I586_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu387" },
+    "CPU_I486_FLAGS|CPU_387_FLAGS|Cpu586" },
   { "CPU_I686_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|Cpu387|Cpu687" },
+    "CPU_I586_FLAGS|Cpu686|Cpu687" },
   { "CPU_PENTIUMPRO_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|Cpu387|Cpu687|CpuNop" },
+    "CPU_I686_FLAGS|CpuNop" },
   { "CPU_P2_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|Cpu387|Cpu687|CpuNop|CpuMMX" },
+    "CPU_PENTIUMPRO_FLAGS|CPU_MMX_FLAGS" },
   { "CPU_P3_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|Cpu387|Cpu687|CpuNop|CpuMMX|CpuSSE" },
+    "CPU_P2_FLAGS|CPU_SSE_FLAGS" },
   { "CPU_P4_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuClflush|Cpu387|Cpu687|CpuNop|CpuMMX|CpuSSE|CpuSSE2" },
+    "CPU_P3_FLAGS|CpuClflush|CPU_SSE2_FLAGS" },
   { "CPU_NOCONA_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuClflush|Cpu387|Cpu687|CpuFISTTP|CpuNop|CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuLM|CpuCX16" },
+    "CPU_GENERIC64_FLAGS|CpuFISTTP|CPU_SSE3_FLAGS|CpuCX16" },
   { "CPU_CORE_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuClflush|Cpu387|Cpu687|CpuFISTTP|CpuNop|CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuCX16" },
+    "CPU_P4_FLAGS|CpuFISTTP|CPU_SSE3_FLAGS|CpuCX16" },
   { "CPU_CORE2_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuClflush|Cpu387|Cpu687|CpuFISTTP|CpuNop|CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuLM|CpuCX16" },
+    "CPU_NOCONA_FLAGS|CPU_SSSE3_FLAGS" },
   { "CPU_COREI7_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuClflush|Cpu387|Cpu687|CpuFISTTP|CpuNop|CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuRdtscp|CpuLM|CpuCX16" },
+    "CPU_CORE2_FLAGS|CPU_SSE4_2_FLAGS|CpuRdtscp" },
   { "CPU_K6_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|CpuSYSCALL|Cpu387|CpuMMX" },
+    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|CpuSYSCALL|Cpu387|CPU_MMX_FLAGS" },
   { "CPU_K6_2_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|CpuSYSCALL|Cpu387|CpuMMX|Cpu3dnow" },
+    "CPU_K6_FLAGS|Cpu3dnow" },
   { "CPU_ATHLON_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuSYSCALL|Cpu387|Cpu687|CpuNop|CpuMMX|Cpu3dnow|Cpu3dnowA" },
+    "CPU_K6_2_FLAGS|Cpu686|Cpu687|CpuNop|Cpu3dnowA" },
   { "CPU_K8_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuSYSCALL|CpuRdtscp|Cpu387|Cpu687|CpuNop|CpuMMX|Cpu3dnow|Cpu3dnowA|CpuSSE|CpuSSE2|CpuLM" },
+    "CPU_ATHLON_FLAGS|CpuRdtscp|CPU_SSE2_FLAGS|CpuLM" },
   { "CPU_AMDFAM10_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuSYSCALL|CpuRdtscp|Cpu387|Cpu687|CpuFISTTP|CpuNop|CpuMMX|Cpu3dnow|Cpu3dnowA|CpuSSE|CpuSSE2|CpuSSE3|CpuSSE4a|CpuABM|CpuLM" },
+    "CPU_K8_FLAGS|CpuFISTTP|CPU_SSE4A_FLAGS|CpuABM" },
   { "CPU_BDVER1_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuSYSCALL|CpuRdtscp|Cpu387|Cpu687|CpuFISTTP|CpuNop|CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSE4a|CpuABM|CpuLM|CpuFMA4|CpuXOP|CpuLWP|CpuCX16|CpuClflush|CpuSSSE3|CpuSVME|CpuSSE4_1|CpuSSE4_2|CpuXsave|CpuAES|CpuAVX|CpuPCLMUL|CpuLZCNT|CpuPRFCHW" },
+    "CPU_GENERIC64_FLAGS|CpuFISTTP|CpuRdtscp|CpuCX16|CPU_SSE4_2_FLAGS|CpuSSE4A|CpuABM|CpuFMA4|CpuXOP|CpuLWP|CpuSVME|CpuXsave|CpuAES|CpuAVX|CpuPCLMUL|CpuLZCNT|CpuPRFCHW" },
   { "CPU_BDVER2_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuSYSCALL|CpuRdtscp|Cpu387|Cpu687|CpuFISTTP|CpuNop|CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSE4a|CpuABM|CpuLM|CpuFMA|CpuFMA4|CpuXOP|CpuLWP|CpuBMI|CpuTBM|CpuF16C|CpuCX16|CpuClflush|CpuSSSE3|CpuSVME|CpuSSE4_1|CpuSSE4_2|CpuXsave|CpuAES|CpuAVX|CpuPCLMUL|CpuLZCNT|CpuPRFCHW" },
+    "CPU_BDVER1_FLAGS|CpuFMA|CpuBMI|CpuTBM|CpuF16C" },
   { "CPU_BDVER3_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuSYSCALL|CpuRdtscp|Cpu387|Cpu687|CpuFISTTP|CpuNop|CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSE4a|CpuABM|CpuLM|CpuFMA|CpuFMA4|CpuXOP|CpuLWP|CpuBMI|CpuTBM|CpuF16C|CpuCX16|CpuClflush|CpuSSSE3|CpuSVME|CpuSSE4_1|CpuSSE4_2|CpuAES|CpuAVX|CpuPCLMUL|CpuLZCNT|CpuPRFCHW|CpuXsave|CpuXsaveopt|CpuFSGSBase" },
+    "CPU_BDVER2_FLAGS|CpuXsaveopt|CpuFSGSBase" },
   { "CPU_BDVER4_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuSYSCALL|CpuRdtscp|Cpu387|Cpu687|CpuFISTTP|CpuNop|CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSE4a|CpuABM|CpuLM|CpuFMA|CpuFMA4|CpuXOP|CpuLWP|CpuBMI|CpuTBM|CpuF16C|CpuCX16|CpuClflush|CpuSSSE3|CpuSVME|CpuSSE4_1|CpuSSE4_2|CpuAES|CpuAVX|CpuPCLMUL|CpuLZCNT|CpuPRFCHW|CpuXsave|CpuXsaveopt|CpuFSGSBase|CpuAVX2|CpuMovbe|CpuBMI2|CpuRdRnd|CpuMWAITX" },
+    "CPU_BDVER3_FLAGS|CpuAVX2|CpuMovbe|CpuBMI2|CpuRdRnd|CpuMWAITX" },
   { "CPU_ZNVER1_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuSYSCALL|CpuRdtscp|Cpu387|Cpu687|CpuFISTTP|CpuNop|CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSE4a|CpuABM|CpuLM|CpuFMA|CpuFMA4|CpuBMI|CpuF16C|CpuCX16|CpuClflush|CpuSSSE3|CpuSVME|CpuSSE4_1|CpuSSE4_2|CpuAES|CpuAVX|CpuPCLMUL|CpuLZCNT|CpuPRFCHW|CpuXsave|CpuXsaveopt|CpuFSGSBase|CpuAVX2|CpuMovbe|CpuBMI2|CpuRdRnd|CpuADX|CpuRdSeed|CpuSMAP|CpuSHA|CpuXSAVEC|CpuXSAVES|CpuClflushOpt|CpuCLZERO|CpuMWAITX" },
+    "CPU_GENERIC64_FLAGS|CpuFISTTP|CpuRdtscp|CpuCX16|CPU_SSE4_2_FLAGS|CpuSSE4A|CpuABM|CpuSVME|CpuXsave|CpuAES|CpuAVX|CpuPCLMUL|CpuLZCNT|CpuPRFCHW|CpuFMA|CpuBMI|CpuF16C|CpuXsaveopt|CpuFSGSBase|CpuAVX2|CpuMovbe|CpuBMI2|CpuRdRnd|CpuADX|CpuRdSeed|CpuSMAP|CpuSHA|CpuXSAVEC|CpuXSAVES|CpuClflushOpt|CpuCLZERO|CpuMWAITX" },
   { "CPU_BTVER1_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuSYSCALL|CpuRdtscp|Cpu387|Cpu687|CpuNop|CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4a|CpuABM|CpuLM|CpuPRFCHW|CpuCX16|CpuClflush|CpuFISTTP|CpuSVME|CpuLZCNT" },
+    "CPU_GENERIC64_FLAGS|CpuFISTTP|CpuCX16|CpuRdtscp|CPU_SSSE3_FLAGS|CpuSSE4A|CpuABM|CpuPRFCHW|CpuCX16|CpuClflush|CpuFISTTP|CpuSVME|CpuLZCNT" },
   { "CPU_BTVER2_FLAGS",
-    "Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuSYSCALL|CpuRdtscp|Cpu387|Cpu687|CpuNop|CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4a|CpuSSE4_1|CpuSSE4_2|CpuABM|CpuLM|CpuBMI|CpuF16C|CpuAES|CpuPCLMUL|CpuAVX|CpuMovbe|CpuXsave|CpuXsaveopt|CpuPRFCHW|CpuCX16|CpuClflush|CpuFISTTP|CpuSVME|CpuLZCNT" },
+    "CPU_BTVER1_FLAGS|CPU_SSE4_2_FLAGS|CpuBMI|CpuF16C|CpuAES|CpuPCLMUL|CpuAVX|CpuMovbe|CpuXsave|CpuXsaveopt|CpuPRFCHW" },
   { "CPU_8087_FLAGS",
     "Cpu8087" },
   { "CPU_287_FLAGS",
-    "Cpu287" },
+    "CPU_8087_FLAGS|Cpu287" },
   { "CPU_387_FLAGS",
-    "Cpu387" },
-  { "CPU_ANY87_FLAGS",
-    "Cpu8087|Cpu287|Cpu387|Cpu687|CpuFISTTP" },
+    "CPU_287_FLAGS|Cpu387" },
+  { "CPU_687_FLAGS",
+    "CPU_387_FLAGS|Cpu687" },
   { "CPU_CLFLUSH_FLAGS",
     "CpuClflush" },
   { "CPU_NOP_FLAGS",
@@ -116,21 +116,19 @@ static initializer cpu_flag_init[] =
   { "CPU_SYSCALL_FLAGS",
     "CpuSYSCALL" },
   { "CPU_MMX_FLAGS",
-    "CpuMMX" },
+    "CpuRegMMX|CpuMMX" },
   { "CPU_SSE_FLAGS",
-    "CpuMMX|CpuSSE" },
+    "CpuRegXMM|CpuSSE" },
   { "CPU_SSE2_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2" },
+    "CPU_SSE_FLAGS|CpuSSE2" },
   { "CPU_SSE3_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3" },
+    "CPU_SSE2_FLAGS|CpuSSE3" },
   { "CPU_SSSE3_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3" },
+    "CPU_SSE3_FLAGS|CpuSSSE3" },
   { "CPU_SSE4_1_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1" },
+    "CPU_SSSE3_FLAGS|CpuSSE4_1" },
   { "CPU_SSE4_2_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2" },
-  { "CPU_ANY_SSE_FLAGS",
-    "CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuSSE4a|CpuAVX|CpuAVX2|CpuAVX512F|CpuAVX512CD|CpuAVX512ER|CpuAVX512PF" },
+    "CPU_SSE4_1_FLAGS|CpuSSE4_2" },
   { "CPU_VMX_FLAGS",
     "CpuVMX" },
   { "CPU_SMX_FLAGS",
@@ -138,17 +136,17 @@ static initializer cpu_flag_init[] =
   { "CPU_XSAVE_FLAGS",
     "CpuXsave" },
   { "CPU_XSAVEOPT_FLAGS",
-    "CpuXsaveopt" },
+    "CPU_XSAVE_FLAGS|CpuXsaveopt" },
   { "CPU_AES_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAES" },
+    "CPU_SSE2_FLAGS|CpuAES" },
   { "CPU_PCLMUL_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuPCLMUL" },
+    "CPU_SSE2_FLAGS|CpuPCLMUL" },
   { "CPU_FMA_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX|CpuFMA" },
+    "CPU_AVX_FLAGS|CpuFMA" },
   { "CPU_FMA4_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX|CpuFMA4" },
+    "CPU_AVX_FLAGS|CpuFMA4" },
   { "CPU_XOP_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuSSE4a|CpuABM|CpuAVX|CpuFMA4|CpuXOP" },
+    "CPU_SSE4A_FLAGS|CPU_FMA4_FLAGS|CpuXOP" },
   { "CPU_LWP_FLAGS",
     "CpuLWP" },
   { "CPU_BMI_FLAGS",
@@ -168,7 +166,7 @@ static initializer cpu_flag_init[] =
   { "CPU_RDRND_FLAGS",
     "CpuRdRnd" },
   { "CPU_F16C_FLAGS",
-    "CpuF16C" },
+    "CPU_AVX_FLAGS|CpuF16C" },
   { "CPU_BMI2_FLAGS",
     "CpuBMI2" },
   { "CPU_LZCNT_FLAGS",
@@ -182,31 +180,43 @@ static initializer cpu_flag_init[] =
   { "CPU_VMFUNC_FLAGS",
     "CpuVMFUNC" },
   { "CPU_3DNOW_FLAGS",
-    "CpuMMX|Cpu3dnow" },
+    "CPU_MMX_FLAGS|Cpu3dnow" },
   { "CPU_3DNOWA_FLAGS",
-    "CpuMMX|Cpu3dnow|Cpu3dnowA" },
+    "CPU_3DNOW_FLAGS|Cpu3dnowA" },
   { "CPU_PADLOCK_FLAGS",
     "CpuPadLock" },
   { "CPU_SVME_FLAGS",
     "CpuSVME" },
   { "CPU_SSE4A_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSE4a" },
+    "CPU_SSE3_FLAGS|CpuSSE4a" },
   { "CPU_ABM_FLAGS",
     "CpuABM" },
   { "CPU_AVX_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX" },
+    "CPU_SSE4_2_FLAGS|CpuRegYMM|CpuAVX" },
   { "CPU_AVX2_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX|CpuAVX2" },
+    "CPU_AVX_FLAGS|CpuAVX2" },
+  /* Don't use CPU_AVX2_FLAGS on CPU_AVX512F_FLAGS since AVX512F doesn't
+     support YMM registers.  */
   { "CPU_AVX512F_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX|CpuAVX2|CpuAVX512F" },
+    "CpuVREX|CPU_SSE4_2_FLAGS|CpuRegZMM|CpuRegMask|CpuAVX|CpuAVX2|CpuAVX512F" },
   { "CPU_AVX512CD_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX|CpuAVX2|CpuAVX512F|CpuAVX512CD" },
+    "CPU_AVX512F_FLAGS|CpuAVX512CD" },
   { "CPU_AVX512ER_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX|CpuAVX2|CpuAVX512F|CpuAVX512ER" },
+    "CPU_AVX512F_FLAGS|CpuAVX512ER" },
   { "CPU_AVX512PF_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX|CpuAVX2|CpuAVX512F|CpuAVX512PF" },
-  { "CPU_ANY_AVX_FLAGS",
-    "CpuAVX|CpuAVX2|CpuAVX512F|CpuAVX512CD|CpuAVX512ER|CpuAVX512PF" },
+    "CPU_AVX512F_FLAGS|CpuAVX512PF" },
+  { "CPU_AVX512DQ_FLAGS",
+    "CPU_AVX512F_FLAGS|CpuAVX512DQ" },
+  { "CPU_AVX512BW_FLAGS",
+    "CPU_AVX512F_FLAGS|CpuAVX512BW" },
+  { "CPU_AVX512VL_FLAGS",
+  /* Use CPU_AVX2_FLAGS on CPU_AVX512VL_FLAGS since AVX512VL supports YMM
+     registers.  */
+    "CPU_AVX512F_FLAGS|CPU_AVX2_FLAGS|CpuAVX512VL" },
+  { "CPU_AVX512IFMA_FLAGS",
+    "CPU_AVX512F_FLAGS|CpuAVX512IFMA" },
+  { "CPU_AVX512VBMI_FLAGS",
+    "CPU_AVX512F_FLAGS|CpuAVX512VBMI" },
   { "CPU_L1OM_FLAGS",
     "unknown" },
   { "CPU_K1OM_FLAGS",
@@ -226,35 +236,73 @@ static initializer cpu_flag_init[] =
   { "CPU_MPX_FLAGS",
     "CpuMPX" },
   { "CPU_SHA_FLAGS",
-    "CpuSHA" },
+    "CPU_SSE2_FLAGS|CpuSHA" },
   { "CPU_CLFLUSHOPT_FLAGS",
     "CpuClflushOpt" },
   { "CPU_XSAVES_FLAGS",
-    "CpuXSAVES" },
+    "CPU_XSAVE_FLAGS|CpuXSAVES" },
   { "CPU_XSAVEC_FLAGS",
-    "CpuXSAVEC" },
+    "CPU_XSAVE_FLAGS|CpuXSAVEC" },
   { "CPU_PREFETCHWT1_FLAGS",
     "CpuPREFETCHWT1" },
   { "CPU_SE1_FLAGS",
     "CpuSE1" },
-  { "CPU_AVX512DQ_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX|CpuAVX2|CpuAVX512F|CpuAVX512DQ" },
-  { "CPU_AVX512BW_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX|CpuAVX2|CpuAVX512F|CpuAVX512BW" },
-  { "CPU_AVX512VL_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX|CpuAVX2|CpuAVX512F|CpuAVX512VL" },
   { "CPU_CLWB_FLAGS",
     "CpuCLWB" },
   { "CPU_PCOMMIT_FLAGS",
     "CpuPCOMMIT" },
-  { "CPU_AVX512IFMA_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX|CpuAVX2|CpuAVX512F|CpuAVX512IFMA" },
-  { "CPU_AVX512VBMI_FLAGS",
-    "CpuMMX|CpuSSE|CpuSSE2|CpuSSE3|CpuSSSE3|CpuSSE4_1|CpuSSE4_2|CpuAVX|CpuAVX2|CpuAVX512F|CpuAVX512VBMI" },
   { "CPU_CLZERO_FLAGS",
     "CpuCLZERO" },
   { "CPU_MWAITX_FLAGS",
     "CpuMWAITX" },
+  { "CPU_OSPKE_FLAGS",
+    "CpuOSPKE" },
+  { "CPU_RDPID_FLAGS",
+    "CpuRDPID" },
+  { "CPU_ANY_X87_FLAGS",
+    "CPU_ANY_287_FLAGS|Cpu8087" },
+  { "CPU_ANY_287_FLAGS",
+    "CPU_ANY_387_FLAGS|Cpu287" },
+  { "CPU_ANY_387_FLAGS",
+    "CPU_ANY_687_FLAGS|Cpu387" },
+  { "CPU_ANY_687_FLAGS",
+    "Cpu687|CpuFISTTP" },
+  { "CPU_ANY_MMX_FLAGS",
+    "CPU_3DNOWA_FLAGS" },
+  { "CPU_ANY_SSE_FLAGS",
+    "CPU_ANY_SSE2_FLAGS|CpuSSE|CpuSSE4a" },
+  { "CPU_ANY_SSE2_FLAGS",
+    "CPU_ANY_SSE3_FLAGS|CpuSSE2" },
+  { "CPU_ANY_SSE3_FLAGS",
+    "CPU_ANY_SSSE3_FLAGS|CpuSSE3" },
+  { "CPU_ANY_SSSE3_FLAGS",
+    "CPU_ANY_SSE4_1_FLAGS|CpuSSSE3" },
+  { "CPU_ANY_SSE4_1_FLAGS",
+    "CPU_ANY_SSE4_2_FLAGS|CpuSSE4_1" },
+  { "CPU_ANY_SSE4_2_FLAGS",
+    "CpuSSE4_2" },
+  { "CPU_ANY_AVX_FLAGS",
+    "CPU_ANY_AVX2_FLAGS|CpuF16C|CpuFMA|CpuFMA4|CpuXOP|CpuAVX" },
+  { "CPU_ANY_AVX2_FLAGS",
+    "CpuAVX2" },
+  { "CPU_ANY_AVX512F_FLAGS",
+    "CpuVREX|CpuRegZMM|CpuRegMask|CpuAVX512CD|CpuAVX512ER|CpuAVX512PF|CpuAVX512DQ|CpuAVX512BW|CpuAVX512VL|CpuAVX512IFMA|CpuAVX512VBMI|CpuAVX512F" },
+  { "CPU_ANY_AVX512CD_FLAGS",
+    "CpuAVX512CD" },
+  { "CPU_ANY_AVX512ER_FLAGS",
+    "CpuAVX512ER" },
+  { "CPU_ANY_AVX512PF_FLAGS",
+    "CpuAVX512PF" },
+  { "CPU_ANY_AVX512DQ_FLAGS",
+    "CpuAVX512DQ" },
+  { "CPU_ANY_AVX512BW_FLAGS",
+    "CpuAVX512BW" },
+  { "CPU_ANY_AVX512VL_FLAGS",
+    "CpuAVX512VL" },
+  { "CPU_ANY_AVX512IFMA_FLAGS",
+    "CpuAVX512IFMA" },
+  { "CPU_ANY_AVX512VBMI_FLAGS",
+    "CpuAVX512VBMI" },
 };
 
 static initializer operand_type_init[] =
@@ -461,8 +509,13 @@ static bitfield cpu_flags[] =
   BITFIELD (CpuAVX512VBMI),
   BITFIELD (CpuMWAITX),
   BITFIELD (CpuCLZERO),
-  BITFIELD (CpuAMD64),
-  BITFIELD (CpuIntel64),
+  BITFIELD (CpuOSPKE),
+  BITFIELD (CpuRDPID),
+  BITFIELD (CpuRegMMX),
+  BITFIELD (CpuRegXMM),
+  BITFIELD (CpuRegYMM),
+  BITFIELD (CpuRegZMM),
+  BITFIELD (CpuRegMask),
 #ifdef CpuUnused
   BITFIELD (CpuUnused),
 #endif
@@ -532,6 +585,8 @@ static bitfield opcode_modifiers[] =
   BITFIELD (ATTMnemonic),
   BITFIELD (ATTSyntax),
   BITFIELD (IntelSyntax),
+  BITFIELD (AMD64),
+  BITFIELD (Intel64),
 };
 
 static bitfield operand_types[] =
@@ -617,7 +672,7 @@ static void
 process_copyright (FILE *fp)
 {
   fprintf (fp, "/* This file is automatically generated by i386-gen.  Do not edit!  */\n\
-/* Copyright (C) 2007-2015 Free Software Foundation, Inc.\n\
+/* Copyright (C) 2007-2016 Free Software Foundation, Inc.\n\
 \n\
    This file is part of the GNU opcodes library.\n\
 \n\
@@ -690,8 +745,37 @@ next_field (char *str, char sep, char **next, char *last)
   return p;
 }
 
+static void set_bitfield (char *, bitfield *, int, unsigned int, int);
+
+static int
+set_bitfield_from_cpu_flag_init (char *f, bitfield *array,
+				 int value, unsigned int size,
+				 int lineno)
+{
+  char *str, *next, *last;
+  unsigned int i;
+
+  for (i = 0; i < ARRAY_SIZE (cpu_flag_init); i++)
+    if (strcmp (cpu_flag_init[i].name, f) == 0)
+      {
+	/* Turn on selective bits.  */
+	char *init = xstrdup (cpu_flag_init[i].init);
+	last = init + strlen (init);
+	for (next = init; next && next < last; )
+	  {
+	    str = next_field (next, '|', &next, last);
+	    if (str)
+	      set_bitfield (str, array, 1, size, lineno);
+	  }
+	free (init);
+	return 0;
+      }
+
+  return -1;
+}
+
 static void
-set_bitfield (const char *f, bitfield *array, int value,
+set_bitfield (char *f, bitfield *array, int value,
 	      unsigned int size, int lineno)
 {
   unsigned int i;
@@ -736,6 +820,10 @@ set_bitfield (const char *f, bitfield *array, int value,
 	      }
 	}
     }
+
+  /* Handle CPU_XXX_FLAGS.  */
+  if (!set_bitfield_from_cpu_flag_init (f, array, value, size, lineno))
+    return;
 
   if (lineno != -1)
     fail (_("%s: %d: Unknown bitfield: %s\n"), filename, lineno, f);
@@ -1336,6 +1424,7 @@ main (int argc, char **argv)
   extern int chdir (char *);
   char *srcdir = NULL;
   int c;
+  unsigned int i, cpumax;
   FILE *table;
 
   program_name = *argv;
@@ -1370,8 +1459,20 @@ main (int argc, char **argv)
       fail (_("unable to change directory to \"%s\", errno = %s\n"),
 	    srcdir, xstrerror (errno));
 
+  /* cpu_flags isn't sorted by position.  */
+  cpumax = 0;
+  for (i = 0; i < ARRAY_SIZE (cpu_flags); i++)
+    if (cpu_flags[i].position > cpumax)
+      cpumax = cpu_flags[i].position;
+
   /* Check the unused bitfield in i386_cpu_flags.  */
-#ifndef CpuUnused
+#ifdef CpuUnused
+  if ((cpumax - 1) != CpuMax)
+    fail (_("CpuMax != %d!\n"), cpumax);
+#else
+  if (cpumax != CpuMax)
+    fail (_("CpuMax != %d!\n"), cpumax);
+
   c = CpuNumOfBits - CpuMax - 1;
   if (c)
     fail (_("%d unused bits in i386_cpu_flags.\n"), c);

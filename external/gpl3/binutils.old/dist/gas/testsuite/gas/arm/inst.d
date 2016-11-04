@@ -95,22 +95,22 @@ Disassembly of section .text:
 0+14c <[^>]*> e1720004 ?	cmn	r2, r4
 0+150 <[^>]*> e1750287 ?	cmn	r5, r7, lsl #5
 0+154 <[^>]*> e1710113 ?	cmn	r1, r3, lsl r1
-0+158 <[^>]*> e330f00a ?	teq	r0, #10
-0+15c <[^>]*> e132f004 ?	teq	r2, r4
-0+160 <[^>]*> e135f287 ?	teq	r5, r7, lsl #5
-0+164 <[^>]*> e131f113 ?	teq	r1, r3, lsl r1
-0+168 <[^>]*> e370f00a ?	cmn	r0, #10
-0+16c <[^>]*> e172f004 ?	cmn	r2, r4
-0+170 <[^>]*> e175f287 ?	cmn	r5, r7, lsl #5
-0+174 <[^>]*> e171f113 ?	cmn	r1, r3, lsl r1
-0+178 <[^>]*> e350f00a ?	cmp	r0, #10
-0+17c <[^>]*> e152f004 ?	cmp	r2, r4
-0+180 <[^>]*> e155f287 ?	cmp	r5, r7, lsl #5
-0+184 <[^>]*> e151f113 ?	cmp	r1, r3, lsl r1
-0+188 <[^>]*> e310f00a ?	tst	r0, #10
-0+18c <[^>]*> e112f004 ?	tst	r2, r4
-0+190 <[^>]*> e115f287 ?	tst	r5, r7, lsl #5
-0+194 <[^>]*> e111f113 ?	tst	r1, r3, lsl r1
+0+158 <[^>]*> e330f00a ?	teq	r0, #10	; <UNPREDICTABLE>
+0+15c <[^>]*> e132f004 ?	teq	r2, r4	; <UNPREDICTABLE>
+0+160 <[^>]*> e135f287 ?	teq	r5, r7, lsl #5	; <UNPREDICTABLE>
+0+164 <[^>]*> e131f113 ?	teq	r1, r3, lsl r1	; <UNPREDICTABLE>
+0+168 <[^>]*> e370f00a ?	cmn	r0, #10	; <UNPREDICTABLE>
+0+16c <[^>]*> e172f004 ?	cmn	r2, r4	; <UNPREDICTABLE>
+0+170 <[^>]*> e175f287 ?	cmn	r5, r7, lsl #5	; <UNPREDICTABLE>
+0+174 <[^>]*> e171f113 ?	cmn	r1, r3, lsl r1	; <UNPREDICTABLE>
+0+178 <[^>]*> e350f00a ?	cmp	r0, #10	; <UNPREDICTABLE>
+0+17c <[^>]*> e152f004 ?	cmp	r2, r4	; <UNPREDICTABLE>
+0+180 <[^>]*> e155f287 ?	cmp	r5, r7, lsl #5	; <UNPREDICTABLE>
+0+184 <[^>]*> e151f113 ?	cmp	r1, r3, lsl r1	; <UNPREDICTABLE>
+0+188 <[^>]*> e310f00a ?	tst	r0, #10	; <UNPREDICTABLE>
+0+18c <[^>]*> e112f004 ?	tst	r2, r4	; <UNPREDICTABLE>
+0+190 <[^>]*> e115f287 ?	tst	r5, r7, lsl #5	; <UNPREDICTABLE>
+0+194 <[^>]*> e111f113 ?	tst	r1, r3, lsl r1	; <UNPREDICTABLE>
 0+198 <[^>]*> e0000291 ?	mul	r0, r1, r2
 0+19c <[^>]*> e0110392 ?	muls	r1, r2, r3
 0+1a0 <[^>]*> 10000091 ?	mulne	r0, r1, r0

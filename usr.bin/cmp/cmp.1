@@ -1,4 +1,4 @@
-.\"	$NetBSD: cmp.1,v 1.9 2003/08/07 11:13:21 agc Exp $
+.\"	$NetBSD: cmp.1,v 1.9.80.1 2016/11/04 14:49:25 pgoyette Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)cmp.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd October 30, 2016
 .Dt CMP 1
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Nd compare two files
 .Sh SYNOPSIS
 .Nm
+.Op Fl c
 .Op Fl l | Fl s
 .Ar file1 file2
 .Op Ar skip1 Op Ar skip2
@@ -55,6 +56,15 @@ Bytes and lines are numbered beginning with one.
 .Pp
 The following options are available:
 .Bl -tag -width flag
+.It Fl c
+Do the compare using
+.Xr getc 3
+rather than
+.Xr mmap 2 .
+Combined with the
+.Fl l
+flag, this can be helpful in locating an I/O error in the underlying
+device.
 .It Fl l
 Print the byte number (decimal) and the differing
 byte values (octal) for each difference.

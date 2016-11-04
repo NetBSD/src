@@ -15,9 +15,9 @@ Section Headers:
  +\[[ 0-9]+\] .dynsym +.*
  +\[[ 0-9]+\] .dynstr +.*
  +\[[ 0-9]+\] .rela.dyn +.*
- +\[[ 0-9]+\] .text +PROGBITS +0+401000 0+1000 0+200 00 +AX +0 +0 +4096
- +\[[ 0-9]+\] .tdata +PROGBITS +0+601200 0+1200 0+60 00 WAT +0 +0 +1
- +\[[ 0-9]+\] .tbss +NOBITS +0+601260 0+1260 0+40 00 WAT +0 +0 +1
+ +\[[ 0-9]+\] .text +PROGBITS +0+401000 0+1000 0+1fd 00 +AX +0 +0 +4096
+ +\[[ 0-9]+\] .tdata +PROGBITS +0+6011fd 0+11fd 0+60 00 WAT +0 +0 +1
+ +\[[ 0-9]+\] .tbss +NOBITS +0+60125d 0+125d 0+40 00 WAT +0 +0 +1
  +\[[ 0-9]+\] .dynamic +DYNAMIC +0+601260 0+1260 0+100 10 +WA +4 +0 +8
  +\[[ 0-9]+\] .got +PROGBITS +0+601360 0+1360 0+20 08 +WA +0 +0 +8
  +\[[ 0-9]+\] .got.plt +PROGBITS +0+601380 0+1380 0+18 08 +WA +0 +0 +8
@@ -30,7 +30,7 @@ Key to Flags:
 .*
 
 Elf file type is EXEC \(Executable file\)
-Entry point 0x401108
+Entry point 0x401105
 There are [0-9]+ program headers, starting at offset [0-9]+
 
 Program Headers:
@@ -38,10 +38,10 @@ Program Headers:
  +PHDR.*
  +INTERP.*
 .*Requesting program interpreter.*
- +LOAD +0x0+ 0x0+400000 0x0+400000 0x0+1200 0x0+1200 R E 0x200000
- +LOAD +0x0+1200 0x0+601200 0x0+601200 0x0+198 0x0+198 RW +0x200000
+ +LOAD +0x0+ 0x0+400000 0x0+400000 0x0+11fd 0x0+11fd R E 0x200000
+ +LOAD +0x0+11fd 0x0+6011fd 0x0+6011fd 0x0+19b 0x0+19b RW +0x200000
  +DYNAMIC +0x0+1260 0x0+601260 0x0+601260 0x0+100 0x0+100 RW +0x8
- +TLS +0x0+1200 0x0+601200 0x0+601200 0x0+60 0x0+a0 R +0x1
+ +TLS +0x0+11fd 0x0+6011fd 0x0+6011fd 0x0+60 0x0+a0 R +0x1
 
  Section to Segment mapping:
  +Segment Sections...
@@ -84,7 +84,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +9 *
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +10 *
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +11 *
-.* FILE +LOCAL +DEFAULT +ABS .*
+.* FILE +LOCAL +DEFAULT +ABS tmpdir/tlsbindesc.o
  +[0-9]+: 0+20 +0 +TLS +LOCAL +DEFAULT +7 sl1
  +[0-9]+: 0+24 +0 +TLS +LOCAL +DEFAULT +7 sl2
  +[0-9]+: 0+28 +0 +TLS +LOCAL +DEFAULT +7 sl3
@@ -93,7 +93,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 0+34 +0 +TLS +LOCAL +DEFAULT +7 sl6
  +[0-9]+: 0+38 +0 +TLS +LOCAL +DEFAULT +7 sl7
  +[0-9]+: 0+3c +0 +TLS +LOCAL +DEFAULT +7 sl8
-.* FILE +LOCAL +DEFAULT +ABS .*
+.* FILE +LOCAL +DEFAULT +ABS tmpdir/tlsbin.o
  +[0-9]+: 0+80 +0 +TLS +LOCAL +DEFAULT +8 bl1
  +[0-9]+: 0+84 +0 +TLS +LOCAL +DEFAULT +8 bl2
  +[0-9]+: 0+88 +0 +TLS +LOCAL +DEFAULT +8 bl3
@@ -102,7 +102,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 0+94 +0 +TLS +LOCAL +DEFAULT +8 bl6
  +[0-9]+: 0+98 +0 +TLS +LOCAL +DEFAULT +8 bl7
  +[0-9]+: 0+9c +0 +TLS +LOCAL +DEFAULT +8 bl8
-.* FILE +LOCAL +DEFAULT +ABS .*
+.* FILE +LOCAL +DEFAULT +ABS 
  +[0-9]+: 0+a0 +0 +TLS +LOCAL +DEFAULT +7 _TLS_MODULE_BASE_
  +[0-9]+: 0+601260 +0 +OBJECT +LOCAL +DEFAULT +9 _DYNAMIC
  +[0-9]+: 0+601380 +0 +OBJECT +LOCAL +DEFAULT +11 _GLOBAL_OFFSET_TABLE_
@@ -120,7 +120,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 0+58 +0 +TLS +GLOBAL +HIDDEN +7 sh7
  +[0-9]+: 0+5c +0 +TLS +GLOBAL +HIDDEN +7 sh8
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +7 sg1
- +[0-9]+: 0+401108 +0 +FUNC +GLOBAL +DEFAULT +6 _start
+ +[0-9]+: 0+401105 +0 +FUNC +GLOBAL +DEFAULT +6 _start
  +[0-9]+: 0+4c +0 +TLS +GLOBAL +HIDDEN +7 sh4
  +[0-9]+: 0+78 +0 +TLS +GLOBAL +DEFAULT +8 bg7
  +[0-9]+: 0+50 +0 +TLS +GLOBAL +HIDDEN +7 sh5

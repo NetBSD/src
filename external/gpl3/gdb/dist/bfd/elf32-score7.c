@@ -1,5 +1,5 @@
 /* 32-bit ELF support for S+core.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -1305,7 +1305,8 @@ score_elf_create_got_section (bfd *abfd,
   h->def_regular = 1;
   h->type = STT_OBJECT;
 
-  if (info->shared && ! bfd_elf_link_record_dynamic_symbol (info, h))
+  if (bfd_link_pic (info)
+      && ! bfd_elf_link_record_dynamic_symbol (info, h))
     return FALSE;
 
   amt = sizeof (struct score_got_info);
@@ -1852,7 +1853,7 @@ score_elf_final_link_relocate (reloc_howto_type *howto,
         elf_gp (output_bfd) = (bh->u.def.value
                                + bh->u.def.section->output_section->vma
                                + bh->u.def.section->output_offset);
-      else if (info->relocatable)
+      else if (bfd_link_relocatable (info))
         {
           bfd_vma lo = -1;
 
@@ -1965,7 +1966,7 @@ score_elf_final_link_relocate (reloc_howto_type *howto,
           g = score_elf_global_got_index (elf_hash_table (info)->dynobj,
                                           (struct elf_link_hash_entry *) h);
           if ((! elf_hash_table(info)->dynamic_sections_created
-               || (info->shared
+               || (bfd_link_pic (info)
                    && (info->symbolic || h->root.dynindx == -1)
                    && h->root.def_regular)))
             {
@@ -2017,7 +2018,7 @@ score_elf_final_link_relocate (reloc_howto_type *howto,
 
     case R_SCORE_ABS32:
     case R_SCORE_REL32:
-      if ((info->shared
+      if ((bfd_link_pic (info)
            || (elf_hash_table (info)->dynamic_sections_created
                && h != NULL
                && h->root.def_dynamic
@@ -2064,7 +2065,7 @@ score_elf_final_link_relocate (reloc_howto_type *howto,
       if ((offset & 0x1000000) != 0)
         offset |= 0xfe000000;
       value += offset;
-      abs_value = abs (value - rel_addr);
+      abs_value = value - rel_addr;
       if ((abs_value & 0xfe000000) != 0)
         return bfd_reloc_overflow;
       addend = (addend & ~howto->src_mask)
@@ -2094,7 +2095,7 @@ score_elf_final_link_relocate (reloc_howto_type *howto,
       if ((offset & 0x800) != 0)        /* Offset is negative.  */
         offset |= 0xfffff000;
       value += offset;
-      abs_value = abs (value - rel_addr);
+      abs_value = value - rel_addr;
       if ((abs_value & 0xfffff000) != 0)
         return bfd_reloc_overflow;
       addend = (addend & ~howto->src_mask) | (value & howto->src_mask);
@@ -2251,7 +2252,7 @@ s7_bfd_score_elf_relocate_section (bfd *output_bfd,
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       bfd_size_type dynsecsymcount = 0;
-      if (info->shared)
+      if (bfd_link_pic (info))
         {
           asection * p;
           const struct elf_backend_data *bed = get_elf_backend_data (output_bfd);
@@ -2300,7 +2301,7 @@ s7_bfd_score_elf_relocate_section (bfd *output_bfd,
           relocation = sec->output_section->vma + sec->output_offset;
           name = bfd_elf_sym_name (input_bfd, symtab_hdr, sym, sec);
 
-          if (!info->relocatable)
+          if (!bfd_link_relocatable (info))
             {
               if (ELF_ST_TYPE (sym->st_info) != STT_SECTION
                       || (sec->flags & SEC_MERGE))
@@ -2433,18 +2434,17 @@ s7_bfd_score_elf_relocate_section (bfd *output_bfd,
               /* If this is a dynamic link, we should have created a _DYNAMIC_LINK symbol
                  in s7_bfd_score_elf_create_dynamic_sections.  Otherwise, we should define
                  the symbol with a value of 0.  */
-              BFD_ASSERT (! info->shared);
+              BFD_ASSERT (! bfd_link_pic (info));
               BFD_ASSERT (bfd_get_section_by_name (output_bfd, ".dynamic") == NULL);
               relocation = 0;
             }
-          else if (!info->relocatable)
+          else if (!bfd_link_relocatable (info))
             {
-              if (! ((*info->callbacks->undefined_symbol)
-                     (info, h->root.root.root.string, input_bfd,
-                      input_section, rel->r_offset,
-                      (info->unresolved_syms_in_objects == RM_GENERATE_ERROR)
-                      || ELF_ST_VISIBILITY (h->root.other))))
-                return bfd_reloc_undefined;
+	      (*info->callbacks->undefined_symbol)
+		(info, h->root.root.root.string, input_bfd,
+		 input_section, rel->r_offset,
+		 (info->unresolved_syms_in_objects == RM_GENERATE_ERROR)
+		 || ELF_ST_VISIBILITY (h->root.other));
               relocation = 0;
             }
         }
@@ -2453,7 +2453,7 @@ s7_bfd_score_elf_relocate_section (bfd *output_bfd,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
         {
           /* This is a relocatable link.  We don't have to change
              anything, unless the reloc is against a section symbol,
@@ -2527,16 +2527,14 @@ s7_bfd_score_elf_relocate_section (bfd *output_bfd,
               /* If the overflowing reloc was to an undefined symbol,
                  we have already printed one error message and there
                  is no point complaining again.  */
-              if (((!h) || (h->root.root.type != bfd_link_hash_undefined))
-                  && (!((*info->callbacks->reloc_overflow)
-                        (info, NULL, name, howto->name, (bfd_vma) 0,
-                         input_bfd, input_section, rel->r_offset))))
-                return FALSE;
+              if (!h || h->root.root.type != bfd_link_hash_undefined)
+		(*info->callbacks->reloc_overflow)
+		  (info, NULL, name, howto->name, (bfd_vma) 0,
+		   input_bfd, input_section, rel->r_offset);
               break;
             case bfd_reloc_undefined:
-              if (!((*info->callbacks->undefined_symbol)
-                    (info, name, input_bfd, input_section, rel->r_offset, TRUE)))
-                return FALSE;
+	      (*info->callbacks->undefined_symbol)
+		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
               break;
 
             case bfd_reloc_outofrange:
@@ -2556,9 +2554,8 @@ s7_bfd_score_elf_relocate_section (bfd *output_bfd,
               /* fall through */
 
             common_error:
-              if (!((*info->callbacks->warning)
-                    (info, msg, name, input_bfd, input_section, rel->r_offset)))
-                return FALSE;
+	      (*info->callbacks->warning) (info, msg, name, input_bfd,
+					   input_section, rel->r_offset);
               break;
             }
         }
@@ -2588,7 +2585,7 @@ s7_bfd_score_elf_check_relocs (bfd *abfd,
   asection *sreloc;
   const struct elf_backend_data *bed;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -2669,7 +2666,9 @@ s7_bfd_score_elf_check_relocs (bfd *abfd,
               break;
             case R_SCORE_ABS32:
             case R_SCORE_REL32:
-              if (dynobj == NULL && (info->shared || h != NULL) && (sec->flags & SEC_ALLOC) != 0)
+              if (dynobj == NULL
+		  && (bfd_link_pic (info) || h != NULL)
+		  && (sec->flags & SEC_ALLOC) != 0)
                 elf_hash_table (info)->dynobj = dynobj = abfd;
               break;
             default:
@@ -2712,7 +2711,8 @@ s7_bfd_score_elf_check_relocs (bfd *abfd,
           break;
         case R_SCORE_ABS32:
         case R_SCORE_REL32:
-          if ((info->shared || h != NULL) && (sec->flags & SEC_ALLOC) != 0)
+          if ((bfd_link_pic (info) || h != NULL)
+	      && (sec->flags & SEC_ALLOC) != 0)
             {
               if (sreloc == NULL)
                 {
@@ -2721,7 +2721,7 @@ s7_bfd_score_elf_check_relocs (bfd *abfd,
                     return FALSE;
                 }
 #define SCORE_READONLY_SECTION (SEC_ALLOC | SEC_LOAD | SEC_READONLY)
-              if (info->shared)
+              if (bfd_link_pic (info))
                 {
                   /* When creating a shared object, we must copy these reloc types into
                      the output file as R_SCORE_REL32 relocs.  We make room for this reloc
@@ -2914,7 +2914,7 @@ s7_bfd_score_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
      any R_SCORE_ABS32 or R_SCORE_REL32 relocs against it into the output
      file.  */
   hscore = (struct score_elf_link_hash_entry *) h;
-  if (!info->relocatable
+  if (!bfd_link_relocatable (info)
       && hscore->possibly_dynamic_relocs != 0
       && (h->root.type == bfd_link_hash_defweak || !h->def_regular))
     {
@@ -3074,7 +3074,7 @@ s7_bfd_score_elf_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (!info->shared)
+      if (!bfd_link_pic (info) && !info->nointerp)
         {
           s = bfd_get_linker_section (dynobj, ".interp");
           BFD_ASSERT (s != NULL);
@@ -3259,7 +3259,7 @@ s7_bfd_score_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
         return FALSE;
     }
 
-  if (!info->shared)
+  if (!bfd_link_pic (info))
     {
       const char *name;
 
@@ -3425,21 +3425,19 @@ s7_bfd_score_elf_finish_dynamic_sections (bfd *output_bfd,
           switch (dyn.d_tag)
             {
             case DT_RELENT:
-              s = score_elf_rel_dyn_section (dynobj, FALSE);
-              BFD_ASSERT (s != NULL);
               dyn.d_un.d_val = SCORE_ELF_REL_SIZE (dynobj);
               break;
 
             case DT_STRSZ:
               /* Rewrite DT_STRSZ.  */
-              dyn.d_un.d_val = _bfd_elf_strtab_size (elf_hash_table (info)->dynstr);
-                    break;
+              dyn.d_un.d_val
+                = _bfd_elf_strtab_size (elf_hash_table (info)->dynstr);
+              break;
 
             case DT_PLTGOT:
               name = ".got";
-              s = bfd_get_section_by_name (output_bfd, name);
-              BFD_ASSERT (s != NULL);
-              dyn.d_un.d_ptr = s->vma;
+              s = bfd_get_linker_section (dynobj, name);
+              dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
               break;
 
             case DT_SCORE_BASE_ADDRESS:
@@ -3472,9 +3470,7 @@ s7_bfd_score_elf_finish_dynamic_sections (bfd *output_bfd,
             case DT_SCORE_SYMTABNO:
               name = ".dynsym";
               elemsize = SCORE_ELF_SYM_SIZE (output_bfd);
-              s = bfd_get_section_by_name (output_bfd, name);
-              BFD_ASSERT (s != NULL);
-
+              s = bfd_get_linker_section (dynobj, name);
               dyn.d_un.d_val = s->size / elemsize;
               break;
 

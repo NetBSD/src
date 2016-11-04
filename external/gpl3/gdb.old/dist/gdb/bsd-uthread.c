@@ -247,7 +247,7 @@ bsd_uthread_solib_loaded (struct so_list *so)
 
   for (names = bsd_uthread_solib_names; *names; names++)
     {
-      if (strncmp (so->so_original_name, *names, strlen (*names)) == 0)
+      if (startswith (so->so_original_name, *names))
 	{
 	  solib_read_symbols (so, 0);
 

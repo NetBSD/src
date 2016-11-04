@@ -1,6 +1,5 @@
 /* BFD back-end for Renesas H8/500 COFF binaries.
-   Copyright 1993, 1994, 1995, 1997, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2007, 2008, 2012  Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
@@ -96,7 +95,7 @@ rtype2howto (arelent * internal, struct internal_reloc *dst)
   switch (dst->r_type)
     {
     default:
-      abort ();
+      internal->howto = NULL;
       break;
     case R_H8500_IMM8:
       internal->howto = &r_imm8;
@@ -222,7 +221,7 @@ extra_case (bfd *in_abfd,
 	v = (v & 0x00ffffff) | (o & 0xff00000);
 	bfd_put_32 (in_abfd, (bfd_vma) v, data  + *dst_ptr -1);
 	(*dst_ptr) += 3;
-	(*src_ptr) += 3;;
+	(*src_ptr) += 3;
       }
       break;
     case R_H8500_IMM32:
@@ -230,7 +229,7 @@ extra_case (bfd *in_abfd,
 	int v = bfd_coff_reloc16_get_value (reloc, link_info, input_section);
 	bfd_put_32 (in_abfd, (bfd_vma) v, data  + *dst_ptr);
 	(*dst_ptr) += 4;
-	(*src_ptr) += 4;;
+	(*src_ptr) += 4;
       }
       break;
 
@@ -302,4 +301,4 @@ extra_case (bfd *in_abfd,
   bfd_coff_reloc16_get_relocated_section_contents
 #define coff_bfd_relax_section bfd_coff_reloc16_relax_section
 
-CREATE_BIG_COFF_TARGET_VEC (h8500coff_vec, "coff-h8500", 0, 0, '_', NULL, COFF_SWAP_TABLE)
+CREATE_BIG_COFF_TARGET_VEC (h8500_coff_vec, "coff-h8500", 0, 0, '_', NULL, COFF_SWAP_TABLE)

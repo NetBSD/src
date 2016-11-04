@@ -1,6 +1,6 @@
 /* script_test_10.t -- test section order for gold.
 
-   Copyright 2010 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Written by Viktor Kutuzov <vkutuzov@accesssoftek.com>.
 
    This file is part of gold.

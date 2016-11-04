@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.22 2015/03/26 11:59:38 justin Exp $
+ * $NetBSD: math_private.h,v 1.22.2.1 2016/11/04 14:48:54 pgoyette Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -222,6 +222,57 @@ typedef union {
 
 #define	REAL_PART(z)	((z).parts[0])
 #define	IMAG_PART(z)	((z).parts[1])
+
+/*
+ * Inline functions that can be used to construct complex values.
+ *
+ * The C99 standard intends x+I*y to be used for this, but x+I*y is
+ * currently unusable in general since gcc introduces many overflow,
+ * underflow, sign and efficiency bugs by rewriting I*y as
+ * (0.0+I)*(y+0.0*I) and laboriously computing the full complex product.
+ * In particular, I*Inf is corrupted to NaN+I*Inf, and I*-0 is corrupted
+ * to -0.0+I*0.0.
+ *
+ * The C11 standard introduced the macros CMPLX(), CMPLXF() and CMPLXL()
+ * to construct complex values.  Compilers that conform to the C99
+ * standard require the following functions to avoid the above issues.
+ */
+
+#ifndef CMPLXF
+static __inline float complex
+CMPLXF(float x, float y)
+{
+	float_complex z;
+
+	REAL_PART(z) = x;
+	IMAG_PART(z) = y;
+	return (z.z);
+}
+#endif
+
+#ifndef CMPLX
+static __inline double complex
+CMPLX(double x, double y)
+{
+	double_complex z;
+
+	REAL_PART(z) = x;
+	IMAG_PART(z) = y;
+	return (z.z);
+}
+#endif
+
+#ifndef CMPLXL
+static __inline long double complex
+CMPLXL(long double x, long double y)
+{
+	long_double_complex z;
+
+	REAL_PART(z) = x;
+	IMAG_PART(z) = y;
+	return (z.z);
+}
+#endif
 
 #endif	/* _COMPLEX_H */
 

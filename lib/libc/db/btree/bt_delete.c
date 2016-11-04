@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_delete.c,v 1.17 2009/01/29 02:02:36 lukem Exp $	*/
+/*	$NetBSD: bt_delete.c,v 1.17.30.1 2016/11/04 14:48:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_delete.c,v 1.17 2009/01/29 02:02:36 lukem Exp $");
+__RCSID("$NetBSD: bt_delete.c,v 1.17.30.1 2016/11/04 14:48:52 pgoyette Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: bt_delete.c,v 1.17 2009/01/29 02:02:36 lukem Exp $");
 static int __bt_bdelete(BTREE *, const DBT *);
 static int __bt_curdel(BTREE *, const DBT *, PAGE *, u_int);
 static int __bt_pdelete(BTREE *, PAGE *);
-static int __bt_relink(BTREE *, PAGE *);
 static int __bt_stkacq(BTREE *, PAGE **, CURSOR *);
 
 /*
@@ -621,7 +620,7 @@ dup2:				c->pg.pgno = e.page->pgno;
  *	t:	tree
  *	h:	page to be deleted
  */
-static int
+int
 __bt_relink(BTREE *t, PAGE *h)
 {
 	PAGE *pg;

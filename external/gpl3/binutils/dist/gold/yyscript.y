@@ -1,6 +1,6 @@
 /* yyscript.y -- linker script grammar for gold.  */
 
-/* Copyright (C) 2006-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2016 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <iant@google.com>.
 
    This file is part of gold.
@@ -175,6 +175,7 @@
 %token SIZEOF
 %token SIZEOF_HEADERS	/* SIZEOF_HEADERS, sizeof_headers */
 %token SORT_BY_ALIGNMENT
+%token SORT_BY_INIT_PRIORITY
 %token SORT_BY_NAME
 %token SPECIAL
 %token SQUAD
@@ -676,6 +677,11 @@ wildcard_section:
 		default:
 		  abort();
 		}
+	    }
+	| SORT_BY_INIT_PRIORITY '(' wildcard_name ')'
+	    {
+	      $$.name = $3;
+	      $$.sort = SORT_WILDCARD_BY_INIT_PRIORITY;
 	    }
 	;
 

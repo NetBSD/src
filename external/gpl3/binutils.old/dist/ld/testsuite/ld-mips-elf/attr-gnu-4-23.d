@@ -1,5 +1,4 @@
 #source: attr-gnu-4-2.s
 #source: attr-gnu-4-3.s
 #ld: -r
-#warning: Warning: .* uses hard float, .* uses soft float
-#target: mips*-*-*
+#warning: Warning: .* uses -mhard-float \(set by .*\), .* uses -msoft-float

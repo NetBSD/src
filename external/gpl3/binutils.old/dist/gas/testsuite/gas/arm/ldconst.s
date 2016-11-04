@@ -26,3 +26,14 @@ foo:
 	ldrmi	r11, =0xffffff00
 	ldrmi	r11, =0x0000fff0
 	.pool
+
+	# test symbol literal support.
+	.macro ldrs const
+	.irp regindex, 0, 3, 8, 11, 14
+		ldr r\regindex, \const
+	.endr
+	.endm
+
+	ldrs	"=ext_symbol"
+	ldrs	"=ext_symbol + 0x1000"
+	.pool

@@ -1,6 +1,6 @@
 /* Target waitstatus definitions and prototypes.
 
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -92,7 +92,13 @@ enum target_waitkind
   TARGET_WAITKIND_NO_HISTORY,
  
   /* There are no resumed children left in the program.  */
-  TARGET_WAITKIND_NO_RESUMED
+  TARGET_WAITKIND_NO_RESUMED,
+
+  /* The thread was created.  */
+  TARGET_WAITKIND_THREAD_CREATED,
+
+  /* The thread has exited.  The exit status is in value.integer.  */
+  TARGET_WAITKIND_THREAD_EXITED,
 };
 
 struct target_waitstatus

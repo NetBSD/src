@@ -21,6 +21,7 @@
 
 #include "server.h"
 #include "linux-low.h"
+#include "elf/common.h"
 #include <sys/ptrace.h>
 #include <endian.h>
 #include "gdb_proc_service.h"
@@ -32,7 +33,7 @@
 
 /* The following definition must agree with the number of registers
    defined in "struct user_regs" in GLIBC
-   (ports/sysdeps/unix/sysv/linux/nios2/sys/user.h), and also with
+   (sysdeps/unix/sysv/linux/nios2/sys/user.h), and also with
    NIOS2_NUM_REGS in GDB proper.  */
 
 #define nios2_num_regs 49
@@ -163,8 +164,6 @@ ps_get_thread_area (const struct ps_prochandle *ph,
   return PS_OK;
 }
 
-#ifdef HAVE_PTRACE_GETREGS
-
 /* Helper functions to collect/supply a single register REGNO.  */
 
 static void
@@ -205,14 +204,12 @@ nios2_store_gregset (struct regcache *regcache, const void *buf)
   for (i = 0; i < nios2_num_regs; i++)
     nios2_supply_register (regcache, i, regset + i);
 }
-#endif /* HAVE_PTRACE_GETREGS */
 
 static struct regset_info nios2_regsets[] =
 {
-#ifdef HAVE_PTRACE_GETREGS
-  { PTRACE_GETREGS, PTRACE_SETREGS, 0, nios2_num_regs * 4, GENERAL_REGS,
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PRSTATUS,
+    nios2_num_regs * 4, GENERAL_REGS,
     nios2_fill_gregset, nios2_store_gregset },
-#endif /* HAVE_PTRACE_GETREGS */
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 

@@ -42,6 +42,8 @@ vpclmulqdq $8,%xmm4,%xmm6,%xmm2
 vfmadd132pd %xmm4,%xmm6,%xmm2
 # MOVBE
 movbe   (%rcx),%ebx
+# CX16
+cmpxchg16b (%rsi)
 # EPT
 invept  (%rcx),%rbx
 # RDTSCP

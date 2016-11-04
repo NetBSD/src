@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.109 2015/11/26 13:15:34 martin Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.109.2.1 2016/11/04 14:49:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -187,6 +187,7 @@ typedef int32_t netbsd32_timer_t;
 typedef	int32_t netbsd32_time50_t;
 typedef	netbsd32_int64 netbsd32_time_t;
 typedef netbsd32_pointer_t netbsd32_timerp_t;
+typedef netbsd32_pointer_t netbsd32_clockidp_t;
 
 typedef netbsd32_pointer_t netbsd32_timespec50p_t;
 struct netbsd32_timespec50 {
@@ -275,11 +276,21 @@ struct netbsd32_export_args30 {
 	int	ex_addrlen;		/* and the net address length */
 	netbsd32_pointer_t ex_mask;	/* mask of valid bits in saddr */
 	int	ex_masklen;		/* and the smask length */
-	netbsd32_charp ex_indexfile;	/* index file for WebNFS URLs */ 
+	netbsd32_charp ex_indexfile;	/* index file for WebNFS URLs */
 };
 
 /* from <sys/poll.h> */
 typedef netbsd32_pointer_t netbsd32_pollfdp_t;
+
+/* from <sys/ptrace.h> */
+typedef netbsd32_pointer_t netbsd32_ptrace_io_descp_t;
+struct netbsd32_ptrace_io_desc {
+	int	piod_op;		/* I/O operation */
+	netbsd32_voidp piod_offs;	/* child offset */
+	netbsd32_voidp piod_addr;	/* parent offset */
+	netbsd32_size_t piod_len;	/* request length (in) /
+					   actual count (out) */
+};
 
 /* from <sys/quotactl.h> */
 typedef netbsd32_pointer_t netbsd32_quotactlargsp_t;
@@ -381,6 +392,12 @@ struct	netbsd32_rusage {
 	netbsd32_long	ru_nsignals;	/* signals received */
 	netbsd32_long	ru_nvcsw;	/* voluntary context switches */
 	netbsd32_long	ru_nivcsw;	/* involuntary " */
+};
+
+typedef netbsd32_pointer_t netbsd32_wrusagep_t;
+struct netbsd32_wrusage {
+	struct netbsd32_rusage	wru_self;
+	struct netbsd32_rusage	wru_children;
 };
 
 typedef netbsd32_pointer_t netbsd32_orlimitp_t;
@@ -1105,6 +1122,12 @@ void netbsd32_adjust_limits(struct proc *);
 
 void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
 void	netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32);
+
+#ifdef KTRACE
+void netbsd32_ktrpsig(int, sig_t, const sigset_t *, const ksiginfo_t *);
+#else
+#define netbsd32_ktrpsig NULL
+#endif
 
 
 void	startlwp32(void *);

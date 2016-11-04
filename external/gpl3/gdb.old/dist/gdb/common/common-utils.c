@@ -18,6 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "common-defs.h"
+#include "host-defs.h"
+#include <ctype.h>
 
 /* The xmalloc() (libiberty.h) family of memory management routines.
 
@@ -150,4 +152,139 @@ savestring (const char *ptr, size_t len)
   memcpy (p, ptr, len);
   p[len] = 0;
   return p;
+}
+
+/* The bit offset of the highest byte in a ULONGEST, for overflow
+   checking.  */
+
+#define HIGH_BYTE_POSN ((sizeof (ULONGEST) - 1) * HOST_CHAR_BIT)
+
+/* True (non-zero) iff DIGIT is a valid digit in radix BASE,
+   where 2 <= BASE <= 36.  */
+
+static int
+is_digit_in_base (unsigned char digit, int base)
+{
+  if (!isalnum (digit))
+    return 0;
+  if (base <= 10)
+    return (isdigit (digit) && digit < base + '0');
+  else
+    return (isdigit (digit) || tolower (digit) < base - 10 + 'a');
+}
+
+static int
+digit_to_int (unsigned char c)
+{
+  if (isdigit (c))
+    return c - '0';
+  else
+    return tolower (c) - 'a' + 10;
+}
+
+/* As for strtoul, but for ULONGEST results.  */
+
+ULONGEST
+strtoulst (const char *num, const char **trailer, int base)
+{
+  unsigned int high_part;
+  ULONGEST result;
+  int minus = 0;
+  int i = 0;
+
+  /* Skip leading whitespace.  */
+  while (isspace (num[i]))
+    i++;
+
+  /* Handle prefixes.  */
+  if (num[i] == '+')
+    i++;
+  else if (num[i] == '-')
+    {
+      minus = 1;
+      i++;
+    }
+
+  if (base == 0 || base == 16)
+    {
+      if (num[i] == '0' && (num[i + 1] == 'x' || num[i + 1] == 'X'))
+	{
+	  i += 2;
+	  if (base == 0)
+	    base = 16;
+	}
+    }
+
+  if (base == 0 && num[i] == '0')
+    base = 8;
+
+  if (base == 0)
+    base = 10;
+
+  if (base < 2 || base > 36)
+    {
+      errno = EINVAL;
+      return 0;
+    }
+
+  result = high_part = 0;
+  for (; is_digit_in_base (num[i], base); i += 1)
+    {
+      result = result * base + digit_to_int (num[i]);
+      high_part = high_part * base + (unsigned int) (result >> HIGH_BYTE_POSN);
+      result &= ((ULONGEST) 1 << HIGH_BYTE_POSN) - 1;
+      if (high_part > 0xff)
+	{
+	  errno = ERANGE;
+	  result = ~ (ULONGEST) 0;
+	  high_part = 0;
+	  minus = 0;
+	  break;
+	}
+    }
+
+  if (trailer != NULL)
+    *trailer = &num[i];
+
+  result = result + ((ULONGEST) high_part << HIGH_BYTE_POSN);
+  if (minus)
+    return -result;
+  else
+    return result;
+}
+
+/* See documentation in cli-utils.h.  */
+
+char *
+skip_spaces (char *chp)
+{
+  if (chp == NULL)
+    return NULL;
+  while (*chp && isspace (*chp))
+    chp++;
+  return chp;
+}
+
+/* A const-correct version of the above.  */
+
+const char *
+skip_spaces_const (const char *chp)
+{
+  if (chp == NULL)
+    return NULL;
+  while (*chp && isspace (*chp))
+    chp++;
+  return chp;
+}
+
+/* See documentation in cli-utils.h.  */
+
+const char *
+skip_to_space_const (const char *chp)
+{
+  if (chp == NULL)
+    return NULL;
+  while (*chp && !isspace (*chp))
+    chp++;
+  return chp;
 }

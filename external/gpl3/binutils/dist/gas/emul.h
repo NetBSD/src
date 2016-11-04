@@ -1,5 +1,5 @@
 /* emul.h.  File format emulation routines
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

@@ -1,3 +1,413 @@
+2015-06-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-trace.c (trace_one_insn): Delete.
+	* sim-trace.h (trace_one_insn): Delete.
+
+2015-06-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-trace.c (debug_printf): Rename to ...
+	(sim_debug_printf): ... this.
+	* sim-trace.h (debug_printf): Delete define.
+	(debug_printf): Rename to ...
+	(sim_debug_printf): ... this.
+
+2015-06-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-trace.c (OPTION_TRACE_REGISTER): New enum.
+	(trace_options): Add trace-register option.
+	(trace_option_handler): Handle OPTION_TRACE_REGISTER case.
+	(trace_idx_to_str): Handle TRACE_REGISTER_IDX case and re-indent.
+	* sim-trace.h (TRACE_REGISTER_IDX): New enum.
+	(TRACE_register, WITH_TRACE_REGISTER_P, STRACE_REGISTER_P,
+	TRACE_REGISTER_P, TRACE_REGISTER): Define.
+
+2015-06-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-trace.h (STRACE, STRACE_INSN, STRACE_DECODE, STRACE_EXTRACT,
+	STRACE_LINENUM, STRACE_MEMORY, STRACE_MODEL, STRACE_ALU, STRACE_CORE,
+	STRACE_EVENTS, STRACE_FPU, STRACE_VPU, STRACE_BRANCH, STRACE_SYSCALL,
+	STRACE_DEBUG): Define.
+
+2015-06-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-trace.c (trace_options): Update help text for trace-alu,
+	trace-fpu, trace-vpu, and trace-semantics.
+	* sim-trace.h (TRACE_ALU_IDX): Update comment text.
+	(TRACE_FPU_IDX, TRACE_VPU_IDX): Likewise.
+
+2015-06-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-assert.h (SIM_FILTER_PATH): Delete.
+	[!SIM_ASSERT, WITH_ASSERT]: Include libiberty.h.
+	(SIM_ASSERT): Replace SIM_FILTER_PATH with lbasename.
+	[!ASSERT, WITH_ASSERT]: Include libiberty.h.
+	(ASSERT): Replace SIM_FILTER_PATH with lbasename.
+	* sim-events.c: Include libiberty.h.
+	(ETRACE): Replace SIM_FILTER_PATH with lbasename.
+
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (AC_ARG_ENABLE(sim-bswap)): Call AS_HELP_STRING.
+	(AC_ARG_ENABLE(sim-cflags)): Likewise.
+	(AC_ARG_ENABLE(sim-debug)): Likewise.
+	(AC_ARG_ENABLE(sim-stdio)): Likewise.
+	(AC_ARG_ENABLE(sim-trace)): Likewise.
+	(AC_ARG_ENABLE(sim-profile)): Likewise.
+	(AC_ARG_ENABLE(sim-environment)): Likewise.
+	(AC_ARG_ENABLE(sim-alignment)): Likewise.
+	(AC_ARG_ENABLE(sim-assert)): Likewise.
+	(AC_ARG_ENABLE(sim-bitsize)): Likewise.
+	(AC_ARG_ENABLE(sim-endian)): Likewise.
+	(AC_ARG_ENABLE(sim-hostendian)): Likewise.
+	(AC_ARG_ENABLE(sim-float)): Likewise.
+	(AC_ARG_ENABLE(sim-scache)): Likewise.
+	(AC_ARG_ENABLE(sim-default-model)): Likewise.
+	(AC_ARG_ENABLE(sim-inline)): Likewise.
+	(AC_ARG_ENABLE(sim-packages)): Likewise.
+	(AC_ARG_ENABLE(sim-regparm)): Likewise.
+	(AC_ARG_ENABLE(sim-reserved-bits)): Likewise.
+	(AC_ARG_ENABLE(sim-smp)): Likewise.
+	(AC_ARG_ENABLE(sim-stdcall)): Likewise.
+	(AC_ARG_ENABLE(sim-xor-endian)): Likewise.
+	(AC_ARG_ENABLE(cgen-maint)): Likewise.
+	* configure: Regenerate.
+
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-config.h (WITH_TRACE): Define to ~TRACE_debug.
+
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* cgen-trace.c [!__STDC__]: Delete.
+	* sim-trace.h [!__STDC__]: Likewise.
+
+2015-06-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-model.c (sim_model_init): Assert model is not NULL.
+
+2015-06-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-types.h: Move SIM_TYPES_H define to top of file.  Include
+	stdint.h.  Replace all signed/unsigned typedefs with int#_t and
+	uint#_t.
+
+2015-06-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-alu.h (_SIM_ALU_H_): Rename to ...
+	(SIM_ALU_H): ... this.
+	* sim-assert.h (_SIM_ASSERT_H_): Rename to ...
+	(SIM_ASSERT_H): ... this.
+	* sim-basics.h (_SIM_BASICS_H_): Rename to ...
+	(SIM_BASICS_H): ... this.
+	* sim-bits.h (_SIM_BITS_H_): Rename to ...
+	(SIM_BITS_H): ... this.
+	* sim-endian.h (_SIM_ENDIAN_H_): Rename to ...
+	(SIM_ENDIAN_H): ... this.
+
+2015-06-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-syscall.c (sim_syscall_multi): Change unknown_syscall to a
+	constant string.
+
+2015-06-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* callback.c (cb_target_map_entry, cb_host_map_entry): Change map to
+	m for sentinel testing.
+
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-syscall.c: Include errno.h and targ-vals.h.
+	(sim_syscall_multi, sim_syscall): Define.
+	* sim-syscall.h (sim_syscall_multi, sim_syscall): Declare.
+	* syscall.c (cb_syscall): Extend comment.
+
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* Make-common.in (SIM_NEW_COMMON_OBJS): Add sim-syscall.o.
+	* sim-syscall.c: New file.
+	* sim-syscall.h: New file.
+
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* callback.c (cb_target_map_entry, cb_host_map_entry): Define.
+	(cb_target_to_host_syscall): Rewrite to use cb_target_map_entry.
+	(cb_host_to_target_errno): Rewrite to use cb_host_map_entry.
+	(cb_host_str_syscall, cb_host_str_errno, cb_host_str_signal,
+	cb_target_str_syscall, cb_target_str_errno, cb_target_str_signal):
+	Define.
+	* gentmap.c (gen_targ_map_c): Output name field.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4: Change configure.in to configure.ac.
+	* sim-config.h: Likewise.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (sim-trace): Delete -DTRACE flags.
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-trace.h (TRACE, TRACE_INSN, TRACE_DECODE, TRACE_EXTRACT,
+	TRACE_LINENUM, TRACE_MEMORY, TRACE_MODEL, TRACE_ALU, TRACE_CORE,
+	TRACE_EVENTS, TRACE_FPU, TRACE_VPU, TRACE_BRANCH, TRACE_SYSCALL,
+	TRACE_DEBUG): Define.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-module.c (modules): Change WITH_TRACE to WITH_TRACE_ANY_P.
+	* sim-trace.c (trace_option_handler): Likewise.
+	* sim-trace.h (WITH_TRACE_ANY_P): Define.
+	(STRACE_ANY_P): Use WITH_TRACE_ANY_P.
+	(TRACE_ANY_P): Likewise.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* cgen-run.c (sim_resume): Rename TRACE_INSN_FINI to
+	CGEN_TRACE_INSN_FINI.
+	* cgen-trace.c: Rename trace_insn to cgen_trace_insn,
+	trace_result to cgen_trace_result, trace_insn_fini to
+	cgen_trace_insn_fini, trace_insn_init to cgen_trace_insn_init,
+	and trace_extract to cgen_trace_extract.
+	* cgen-trace.h (trace_insn_init): Rename to ...
+	(cgen_trace_insn_init): ... this.
+	(trace_insn_fini): Rename to ...
+	(cgen_trace_insn_fini): ... this.
+	(trace_insn): Rename to ...
+	(cgen_trace_insn): ... this.
+	(trace_extract): Rename to ...
+	(cgen_trace_extract): ... this.
+	(trace_result): Rename to ...
+	(cgen_trace_result): ... this.
+	(TRACE_RESULT_P): Rename to ...
+	(CGEN_TRACE_RESULT_P): ... this.
+	(TRACE_INSN_INIT): Rename to ...
+	(CGEN_TRACE_INSN_INIT): ... this.  Change trace_insn_init to
+	cgen_trace_insn_init.
+	(TRACE_INSN_FINI): Rename to ...
+	(CGEN_TRACE_INSN_FINI): ... this.  Change trace_insn_fini to
+	cgen_trace_insn_fini.
+	(TRACE_PRINTF): Rename to ...
+	(CGEN_TRACE_PRINTF): ... this.
+	(TRACE_INSN): Rename to ...
+	(CGEN_TRACE_INSN): ... this.  Change trace_insn to cgen_trace_insn.
+	(TRACE_EXTRACT): Rename to ...
+	(CGEN_TRACE_EXTRACT): ... this.  Change trace_extract to
+	cgen_trace_extract.
+	(TRACE_RESULT): Rename to ...
+	(CGEN_TRACE_RESULT): ... this.  Change TRACE_RESULT_P to
+	CGEN_TRACE_RESULT_P and trace_result to cgen_trace_result.
+	* genmloop.sh (@prefix@_pbb_before): Change TRACE_INSN_FINI to
+	CGEN_TRACE_INSN_FINI, TRACE_INSN_INIT to CGEN_TRACE_INSN_INIT, and
+	TRACE_INSN to CGEN_TRACE_INSN.
+	(@prefix@_pbb_after): Change TRACE_INSN_FINI to CGEN_TRACE_INSN_FINI.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-events.c (ETRACE_P): Delete.
+	(ETRACE): Change ETRACE_P to STRACE_EVENTS_P(sd).
+	(update_time_from_event, sim_events_schedule_vtracef): Likewise.
+	* sim-events.h (struct _sim_events): Delete trace member.
+	* sim-trace.c (set_trace_option_mask): Delete trace_nr check and
+	always set STATE_TRACE_FLAGS(sd)[trace_nr] element.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-trace.h (STRACE_ANY_P, STRACE_INSN_P, STRACE_DECODE_P,
+	STRACE_EXTRACT_P, STRACE_LINENUM_P, STRACE_MEMORY_P, STRACE_MODEL_P,
+	STRACE_ALU_P, STRACE_CORE_P, STRACE_EVENTS_P, STRACE_FPU_P,
+	STRACE_VPU_P, STRACE_BRANCH_P, STRACE_SYSCALL_P): Define.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-trace.h (TRACE_USEFUL_MASK): Change to TRACE_xxx defines.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-trace.h (WITH_TRACE_P): New define.
+	(WITH_TRACE_INSN_P, WITH_TRACE_DECODE_P, WITH_TRACE_EXTRACT_P,
+	WITH_TRACE_LINENUM_P, WITH_TRACE_MEMORY_P, WITH_TRACE_MODEL_P,
+	WITH_TRACE_ALU_P, WITH_TRACE_CORE_P, WITH_TRACE_EVENTS_P,
+	WITH_TRACE_FPU_P, WITH_TRACE_VPU_P, WITH_TRACE_BRANCH_P,
+	WITH_TRACE_SYSCALL_P, WITH_TRACE_DEBUG_P, STRACE_P, TRACE_P):
+	Redefine to use WITH_TRACE_P.
+
+2015-06-09  Mike Stump  <mrs@mrs.kithrup.com>
+
+	* sim-events.c (sim_events_schedule_after_signal): Fix spelling
+	mistake in call to sim_engine_abort.
+
+2015-04-29  Nick Clifton  <nickc@redhat.com>
+
+	PR 18273
+	* sim-fpu.c (INLINE_SIM_FPU): Fix static analysis warning by
+	increasing parenthesis around casts to signed values.
+
+2015-04-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* gennltvals.sh: Add mcore support.
+	* nltvals.def: Regenerate.
+
+2015-04-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* cgen.sh: Add +x permissions.
+	* genmloop.sh: Likewise.
+	* gentvals.sh: Likewise.
+	* gennltvals.sh (newlibroot): New variable to hold the path to newlib.
+	Change all uses of srcroot for newlib to newlibroot.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-base.h (SIM_CPU): New typedef.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* cgen-engine.h (CIA_ADDR): Delete.
+	* sim-base.h: Update sim_cia example.
+	[!CIA_ADDR] (sim_cia): New typedef.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* cgen-utils.c (cgen_rtx_error): Change CIA_GET to CPU_PC_GET.
+	* sim-core.c (sim_core_read_buffer, sim_core_write_buffer): Likewise.
+	* sim-engine.h (SIM_ENGINE_HALT_HOOK): Change CIA_SET to CPU_PC_SET.
+	* sim-run.c (sim_engine_run): Change CIA_GET to CPU_PC_GET and
+	CIA_SET to CPU_PC_SET.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_NEW_COMMON_OBJS): Add sim-cpu.o.
+	* sim-main.h (STATE_CPU): Remove from comment and define.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (ACX_PKGVERSION): Change GDB to SIM.
+	* configure: Regenerate.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-options.c: Include version.h.
+	(OPTIONS_VERSION): New enum.
+	(standard_options): Add "version".
+	(standard_option_handler): Handle OPTIONS_VERSION.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (version.o): Change to using create-version.sh from gdb.
+	(create-version.sh): Delete.
+
+2015-04-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* Make-common.in (SIM_NEW_COMMON_OBJS): Add sim-engine.o and sim-hrw.o.
+
+2015-04-01  Mike Frysinger  <vapier@gentoo.org>
+
+	* run-sim.h, run.c: Delete.
+	* tconfig.h (SIM_HAVE_PROFILE, SIM_HAVE_BIENDIAN): Delete.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+	* Make-common.in (CSEARCH): Add $(ZLIBINC).
+	(ZLIB, ZLIBINC): Define.
+	(BFD_LIB): Add $(ZLIB).
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* cgen-mem.h (MEMOPS_INLINE): Change to EXTERN_INLINE.
+	* cgen-ops.h (SEMOPS_INLINE): Likewise.
+
+2015-03-29  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-arange.h (SIM_ARANGE_INLINE): Move above sim_addr_range_hit_p.
+	(sim_addr_range_hit_p): Change INLINE to SIM_ARANGE_INLINE.
+	* sim-inline.h (INLINE2): Define to gnu_inline when available.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-profile.c (profile_pc_event): Get pc via sim_pc_get.  Delete
+	usage of STATE_WATCHPOINTS.
+	(profile_pc_init): Delete STATE_WATCHPOINTS (sd)->pc check.  Change
+	STATE_WATCHPOINTS (sd)->sizeof_pc to sizeof (sim_cia).
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h: Note SIM_HAVE_PROFILE is deprecated.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h: Note SIM_HAVE_BIENDIAN is deprecated.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (SIM_AC_OPTION_HARDWARE): Move default option setting
+	of enable_sim_hardware to AC_ARG_ENABLE.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (SIM_AC_OPTION_HARDWARE): Delete SIM_DV_SOCKSER_O.
+	Add dv-sockser.o to sim_hw_objs.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-sockser.c: Include config.h.
+	* dv-sockser.h: Include sim-inline.h.
+	[HAVE_DV_SOCKSER]: Move all prototypes here.
+	[!HAVE_DV_SOCKSER] (dv_sockser_status, dv_sockser_write,
+	dv_sockser_write_buffer, dv_sockser_read): New stub functions.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* gentmap.c, run.c: Convert old style prototypes.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (SIM_AC_COMMON): Call AH_BOTTOM.  Delete logic for
+	symlinking tconfig.h to tconfig.in.
+	* config.in, configure: Regenerate.
+	* nrun.c, run.c, sim-basics.h: Delete tconfig.h include.
+	* tconfig.in: Rename file ...
+	* tconfig.h: ... here.
+
+2015-03-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-socker.h (dv_sockser_install): Declare.
+	* sim-module.c: Include config.h.
+	[HAVE_DV_SOCKSER]: Include dv-sockser.h.
+	(modules) [HAVE_DV_SOCKSER]: Add dv_sockser_install.
+	* sim-module.h: Include gdb/remote-sim.h.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Make-common.in (BUILT_SRC_FROM_COMMON): Delete.
+	(sim-inline.c): Delete rule.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Make-common.in (SIM_RUN_OBJS): Change to nrun.o.
+	* run.c [SIM_USE_DEPRECATED_RUN_FRONTEND]: Issue a warning.
+	[!SIM_USE_DEPRECATED_RUN_FRONTEND]: Throw an error.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-assert.h [!SIM_ASSERT, WITH_ASSERT]: Include sim-io.h.
+	[!ASSERT, WITH_ASSERT]: Likewise.
+	* sim-endian.c: Delete sim-io.h include.
+
+2015-02-19  Mike Frysinger  <vapier@gentoo.org>
+
+	* run-sim.h (sim_kill): Delete unused prototype.
+
+2015-02-13  Chen Gang  <gang.chen.5i5j@gmail.com>
+
+	* gentmap.c: Include "string.h".
+
+2015-02-02  Chen Gang  <gang.chen.5i5j@gmail.com>
+
+	* sim-options.c (sim_args_command): Call freeargv() when failure
+	occurs.
+
 2015-01-07  Joel Brobecker  <brobecker@adacore.com>
 
 	* aclocal.m4, configure: Regenerate using automake 1.11.1.

@@ -67,6 +67,7 @@ if ![runto_main] then {
 }
 
 set timeout 30
+gdb_test_no_output "set max-completions unlimited"
 
 gdb_test_no_output "complete print values\[0\].x." \
     "field completion with invalid field"
@@ -775,4 +776,205 @@ gdb_test_multiple "" "$test" {
     }
 }
 
-return 0
+#
+# Tests for the location completer
+#
+
+# Turn off pending breakpoint support so that we don't get queried
+# all the time.
+gdb_test_no_output "set breakpoint pending off"
+
+set subsrc [string range $srcfile 0 [expr {[string length $srcfile] - 3}]]
+set test "tab complete break $subsrc"
+send_gdb "break $subsrc\t\t"
+gdb_test_multiple "" $test {
+    -re "break\.c.*break1\.c.*$gdb_prompt " {
+	send_gdb "1\t\n"
+	gdb_test_multiple "" $test {
+	    -re ".*Function \"$srcfile2\" not defined\..*$gdb_prompt " {
+		pass $test
+	    }
+	    -re "$gdb_prompt p$" {
+		fail $test
+	    }
+	}
+    }
+
+    -re "$gdb_prompt p$" {
+	fail $test
+    }
+}
+
+gdb_test "complete break $subsrc" "break\.c.*break1\.c"
+
+set test "tab complete break need"
+send_gdb "break need\t"
+gdb_test_multiple "" $test {
+    -re "break need_malloc " {
+	send_gdb "\n"
+	gdb_test_multiple "" $test {
+	    -re ".*Breakpoint.*at .*/$srcfile, line .*$gdb_prompt " {
+		pass $test
+		gdb_test_no_output "delete breakpoint \$bpnum" \
+		    "delete breakpoint for $test"
+	    }
+	    -re "$gdb_prompt p$" {
+		fail $test
+	    }
+	}
+    }
+    -re "$gdb_prompt p$" {
+	fail $test
+    }
+}
+
+gdb_test "complete break need" "need_malloc"
+
+# gdb/17960
+# Enabling max-completions is necessary to trigger the bug.
+gdb_test_no_output "set max-completions 10"
+set test "tab complete break $srcfile:ma"
+send_gdb "break $srcfile:ma\t"
+gdb_test_multiple "" $test {
+    -re "break $srcfile:main " {
+	send_gdb "\n"
+	gdb_test_multiple "" $test {
+	    -re ".*Breakpoint.*at .*/$srcfile, line .*$gdb_prompt " {
+		pass $test
+		gdb_test_no_output "delete breakpoint \$bpnum" \
+		    "delete breakpoint for $test"
+	    }
+	    -re "$gdb_prompt p$" {
+		fail $test
+	    }
+	}
+    }
+    -re "$gdb_prompt p$" {
+	fail $test
+    }
+}
+
+gdb_test "complete break $srcfile:ma" "break\.c:main"
+
+# End of gdb/17960 testing.
+
+#
+# Completion limiting.
+#
+
+gdb_test_no_output "set max-completions 5"
+
+set test "command-name completion limiting using tab character"
+send_gdb "p\t"
+gdb_test_multiple "" "$test" {
+    -re "^p\\\x07$" {
+	send_gdb "\t"
+	gdb_test_multiple "" "$test" {
+	    -re "List may be truncated, max-completions reached.*\r\n$gdb_prompt p$" {
+		# Complete the command and ignore the output to resync
+		# gdb for the next test.
+		send_gdb "\n"
+		gdb_test_multiple "" "$test" {
+		    -re "$gdb_prompt $" {
+			pass "$test"
+		    }
+		}
+	    }
+	    -re "$gdb_prompt p$" {
+		# Complete the command and ignore the output to resync
+		# gdb for the next test.
+		send_gdb "\n"
+		gdb_test_multiple "" "$test" {
+		    -re "$gdb_prompt $" {
+			fail "$test"
+		    }
+		}
+	    }
+        }
+    }
+}
+
+set test "command-name completion limiting using complete command"
+send_gdb "complete p\n"
+gdb_test_multiple "" "$test" {
+    -re "List may be truncated, max-completions reached.*\r\n$gdb_prompt $" {
+	pass "$test"
+    }
+}
+
+gdb_test_no_output "set max-completions 3"
+
+set test "symbol-name completion limiting using tab character"
+send_gdb "p marker\t"
+gdb_test_multiple "" "$test" {
+    -re "^p marker\\\x07$" {
+	send_gdb "\t"
+	gdb_test_multiple "" "$test" {
+	    -re "List may be truncated, max-completions reached.*\r\n$gdb_prompt p marker$" {
+		# Complete the command and ignore the output to resync
+		# gdb for the next test.
+		send_gdb "\n"
+		gdb_test_multiple "" "$test" {
+		    -re "$gdb_prompt $" {
+			pass "$test"
+		    }
+		}
+	    }
+	    -re "$gdb_prompt p marker$" {
+		# Complete the command and ignore the output to resync
+		# gdb for the next test.
+		send_gdb "\n"
+		gdb_test_multiple "" "$test" {
+		    -re "$gdb_prompt $" {
+			fail "$test"
+		    }
+		}
+	    }
+        }
+    }
+}
+
+set test "symbol-name completion limiting using complete command"
+send_gdb "complete p mark\n"
+gdb_test_multiple "" "$test" {
+    -re "List may be truncated, max-completions reached.*\r\n$gdb_prompt $" {
+	pass "$test"
+    }
+}
+
+gdb_test_no_output "set max-completions unlimited"
+
+if {![skip_tui_tests]} {
+    set test "test completion of layout names"
+    send_gdb "layout\t\t\t"
+    gdb_test_multiple "" "$test" {
+	-re "asm *next *prev *regs *split *src *\r\n$gdb_prompt layout $" {
+	    pass "$test"
+	}
+    }
+    send_gdb "\003"
+    set test "quit command input after testing layout completion"
+    gdb_test_multiple "" "$test" {
+	-re "$gdb_prompt $" {
+	    pass "$test"
+	}
+    }
+}
+if {![skip_tui_tests]} {
+    with_test_prefix "focus command" {
+	set test "test completion"
+	send_gdb "focus \t\t"
+	gdb_test_multiple "" "$test" {
+	    -re "cmd *next *prev *src *\r\n$gdb_prompt focus $" {
+		pass "$test"
+	    }
+	}
+	send_gdb "\003"
+	set test "quit command input after testing completion"
+	gdb_test_multiple "" "$test" {
+	    -re "$gdb_prompt $" {
+		pass "$test"
+	    }
+	}
+    }
+}

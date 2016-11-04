@@ -1,6 +1,6 @@
 // ver_test_9.cc -- a test case for gold
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.

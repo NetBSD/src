@@ -1,23 +1,20 @@
-/*
- * This file is part of SIS.
- * 
- * SIS, SPARC instruction simulator V2.5 Copyright (C) 1995 Jiri Gaisler,
- * European Space Agency
- * 
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 3 of the License, or (at your option)
- * any later version.
- * 
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- * 
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, see <http://www.gnu.org/licenses/>.
- * 
- */
+/* This file is part of SIS (SPARC instruction simulator)
+
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Contributed by Jiri Gaisler, European Space Agency
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* The control space devices */
 
@@ -30,7 +27,6 @@
 #include <sys/file.h>
 #include <unistd.h>
 #include "sis.h"
-#include "end.h"
 #include "sim-config.h"
 
 extern int      ctrl_c;
@@ -54,11 +50,6 @@ int dumbio = 0; /* normal, smart, terminal oriented IO by default */
 #ifdef ERRINJ
 extern int errmec;
 #endif
-
-/* The target's byte order is big-endian by default until we load a
-   little-endian program.  */
-
-int	current_target_byte_order = BIG_ENDIAN;
 
 #define MEC_WS	0		/* Waitstates per MEC access (0 ws) */
 #define MOK	0
@@ -297,11 +288,8 @@ static void	gpt_reload_set (uint32 val);
 static void	timer_ctrl (uint32 val);
 static unsigned char *
 		get_mem_ptr (uint32 addr, uint32 size);
-
-static void	fetch_bytes (int asi, unsigned char *mem,
-			     uint32 *data, int sz);
-
-static void	store_bytes (unsigned char *mem, uint32 *data, int sz);
+static void	store_bytes (unsigned char *mem, uint32 waddr,
+			uint32 *data, int sz, int32 *ws);
 
 extern int	ext_irl;
 
@@ -733,7 +721,7 @@ mec_read(addr, asi, data)
     case MEC_UARTB:		/* 0xE4 */
 	if (asi != 0xb) {
 	    set_sfsr(MEC_ACC, addr, asi, 1);
-	    return (1);
+	    return 1;
 	}
 	*data = read_uart(addr);
 	break;
@@ -743,12 +731,20 @@ mec_read(addr, asi, data)
 	*data = read_uart(addr);
 	break;
 
+    case 0xF4:		/* simulator RAM size in bytes */
+	*data = 4096*1024;
+	break;
+
+    case 0xF8:		/* simulator ROM size in bytes */
+	*data = 1024*1024;
+	break;
+
     default:
 	set_sfsr(MEC_ACC, addr, asi, 1);
-	return (1);
+	return 1;
 	break;
     }
-    return (MOK);
+    return MOK;
 }
 
 static int
@@ -924,10 +920,10 @@ mec_write(addr, data)
 
     default:
 	set_sfsr(MEC_ACC, addr, 0xb, 0);
-	return (1);
+	return 1;
 	break;
     }
-    return (MOK);
+    return MOK;
 }
 
 
@@ -1079,7 +1075,7 @@ read_uart(addr)
 	return tmp;
 #endif
 #else
-	return(0);
+	return 0;
 #endif
 	break;
 
@@ -1111,7 +1107,7 @@ read_uart(addr)
 	return tmp;
 #endif
 #else
-	return(0);
+	return 0;
 #endif
 	break;
 
@@ -1146,12 +1142,12 @@ read_uart(addr)
 	}
 
 	Ucontrol |= 0x00060006;
-	return (Ucontrol);
+	return Ucontrol;
 #else
-	return (uart_stat_reg);
+	return uart_stat_reg;
 #endif
 #else
-	return(0x00060006);
+	return 0x00060006;
 #endif
 	break;
     default:
@@ -1159,7 +1155,7 @@ read_uart(addr)
 	    printf("Read from unimplemented MEC register (%x)\n", addr);
 
     }
-    return (0);
+    return 0;
 }
 
 static void
@@ -1421,7 +1417,7 @@ rtc_start()
 static uint32
 rtc_counter_read()
 {
-    return (rtc_counter);
+    return rtc_counter;
 }
 
 static void
@@ -1474,7 +1470,7 @@ gpt_start()
 static uint32
 gpt_counter_read()
 {
-    return (gpt_counter);
+    return gpt_counter;
 }
 
 static void
@@ -1517,128 +1513,68 @@ timer_ctrl(val)
 	gpt_start();
 }
 
-
-/* Retrieve data from target memory.  MEM points to location from which
-   to read the data; DATA points to words where retrieved data will be
-   stored in host byte order.  SZ contains log(2) of the number of bytes
-   to retrieve, and can be 0 (1 byte), 1 (one half-word), 2 (one word),
-   or 3 (two words). */
-
-static void
-fetch_bytes (asi, mem, data, sz)
-    int		    asi;
-    unsigned char  *mem;
-    uint32	   *data;
-    int		    sz;
-{
-    if (CURRENT_TARGET_BYTE_ORDER == BIG_ENDIAN
-	|| asi == 8 || asi == 9) {
-	switch (sz) {
-	case 3:
-	    data[1] =  (((uint32) mem[7]) & 0xff) |
-		      ((((uint32) mem[6]) & 0xff) <<  8) |
-		      ((((uint32) mem[5]) & 0xff) << 16) |
-		      ((((uint32) mem[4]) & 0xff) << 24);
-	    /* Fall through to 2 */
-	case 2:
-	    data[0] =  (((uint32) mem[3]) & 0xff) |
-		      ((((uint32) mem[2]) & 0xff) <<  8) |
-		      ((((uint32) mem[1]) & 0xff) << 16) |
-		      ((((uint32) mem[0]) & 0xff) << 24);
-	    break;
-	case 1:
-	    data[0] =  (((uint32) mem[1]) & 0xff) |
-		      ((((uint32) mem[0]) & 0xff) << 8);
-	    break;
-	case 0:
-	    data[0] = mem[0] & 0xff;
-	    break;
-	    
-	}
-    } else {
-	switch (sz) {
-	case 3:
-	    data[1] = ((((uint32) mem[7]) & 0xff) << 24) |
-		      ((((uint32) mem[6]) & 0xff) << 16) |
-		      ((((uint32) mem[5]) & 0xff) <<  8) |
-		       (((uint32) mem[4]) & 0xff);
-	    /* Fall through to 4 */
-	case 2:
-	    data[0] = ((((uint32) mem[3]) & 0xff) << 24) |
-		      ((((uint32) mem[2]) & 0xff) << 16) |
-		      ((((uint32) mem[1]) & 0xff) <<  8) |
-		       (((uint32) mem[0]) & 0xff);
-	    break;
-	case 1:
-	    data[0] = ((((uint32) mem[1]) & 0xff) <<  8) |
-		       (((uint32) mem[0]) & 0xff);
-	    break;
-	case 0:
-	    data[0] = mem[0] & 0xff;
-	    break;
-	}
-    }
-}
-
-
-/* Store data in target byte order.  MEM points to location to store data;
+/* Store data in host byte order.  MEM points to the beginning of the
+   emulated memory; WADDR contains the index the emulated memory,
    DATA points to words in host byte order to be stored.  SZ contains log(2)
    of the number of bytes to retrieve, and can be 0 (1 byte), 1 (one half-word),
-   2 (one word), or 3 (two words). */
+   2 (one word), or 3 (two words); WS should return the number of
+   wait-states.  */
 
 static void
-store_bytes (mem, data, sz)
-    unsigned char  *mem;
-    uint32	   *data;
-    int		    sz;
+store_bytes (unsigned char *mem, uint32 waddr, uint32 *data, int32 sz,
+	     int32 *ws)
 {
-    if (CURRENT_TARGET_BYTE_ORDER == LITTLE_ENDIAN) {
-	switch (sz) {
-	case 3:
-	    mem[7] = (data[1] >> 24) & 0xff;
-	    mem[6] = (data[1] >> 16) & 0xff;
-	    mem[5] = (data[1] >>  8) & 0xff;
-	    mem[4] = data[1] & 0xff;
-	    /* Fall through to 2 */
-	case 2:
-	    mem[3] = (data[0] >> 24) & 0xff;
-	    mem[2] = (data[0] >> 16) & 0xff;
-	    /* Fall through to 1 */
-	case 1:
-	    mem[1] = (data[0] >>  8) & 0xff;
-	    /* Fall through to 0 */
+    switch (sz) {
 	case 0:
-	    mem[0] = data[0] & 0xff;
-	    break;
-	}
-    } else {
-	switch (sz) {
-	case 3:
-	    mem[7] = data[1] & 0xff;
-	    mem[6] = (data[1] >>  8) & 0xff;
-	    mem[5] = (data[1] >> 16) & 0xff;
-	    mem[4] = (data[1] >> 24) & 0xff;
-	    /* Fall through to 2 */
-	case 2:
-	    mem[3] = data[0] & 0xff;
-	    mem[2] = (data[0] >>  8) & 0xff;
-	    mem[1] = (data[0] >> 16) & 0xff;
-	    mem[0] = (data[0] >> 24) & 0xff;
+	    waddr ^= EBT;
+	    mem[waddr] = *data & 0x0ff;
+	    *ws = mem_ramw_ws + 3;
 	    break;
 	case 1:
-	    mem[1] = data[0] & 0xff;
-	    mem[0] = (data[0] >> 8) & 0xff;
+#ifdef HOST_LITTLE_ENDIAN
+	    waddr ^= 2;
+#endif
+	    memcpy (&mem[waddr], data, 2);
+	    *ws = mem_ramw_ws + 3;
 	    break;
-	case 0:
-	    mem[0] = data[0] & 0xff;
+	case 2:
+	    memcpy (&mem[waddr], data, 4);
+	    *ws = mem_ramw_ws;
 	    break;
-	    
-	}
+	case 3:
+	    memcpy (&mem[waddr], data, 8);
+	    *ws = 2 * mem_ramw_ws + STD_WS;
+	    break;
     }
 }
 
 
 /* Memory emulation */
+
+int
+memory_iread (uint32 addr, uint32 *data, int32 *ws)
+{
+    uint32          asi;
+    if ((addr >= mem_ramstart) && (addr < (mem_ramstart + mem_ramsz))) {
+	memcpy (data, &ramb[addr & mem_rammask & ~3], 4);
+	*ws = mem_ramr_ws;
+	return 0;
+    } else if (addr < mem_romsz) {
+	memcpy (data, &romb[addr & ~3], 4);
+	*ws = mem_romr_ws;
+	return 0;
+    }
+
+    if (sis_verbose)
+	printf ("Memory exception at %x (illegal address)\n", addr);
+    if (sregs.psr & 0x080)
+        asi = 9;
+    else
+        asi = 8;
+    set_sfsr (UIMP_ACC, addr, asi, 1);
+    *ws = MEM_EX_WS;
+    return 1;
+}
 
 int
 memory_read(asi, addr, data, sz, ws)
@@ -1658,14 +1594,14 @@ memory_read(asi, addr, data, sz, ws)
 	if (errmec == 5) mecparerror();
 	if (errmec == 6) iucomperr();
 	errmec = 0;
-	return(1);
+	return 1;
     }
 #endif
 
     if ((addr >= mem_ramstart) && (addr < (mem_ramstart + mem_ramsz))) {
-	fetch_bytes (asi, &ramb[addr & mem_rammask], data, sz);
+	memcpy (data, &ramb[addr & mem_rammask & ~3], 4);
 	*ws = mem_ramr_ws;
-	return (0);
+	return 0;
     } else if ((addr >= MEC_START) && (addr < MEC_END)) {
 	mexc = mec_read(addr, asi, data);
 	if (mexc) {
@@ -1674,41 +1610,41 @@ memory_read(asi, addr, data, sz, ws)
 	} else {
 	    *ws = 0;
 	}
-	return (mexc);
+	return mexc;
 
 #ifdef ERA
 
     } else if (era) {
     	if ((addr < 0x100000) || 
 	    ((addr>= 0x80000000) && (addr < 0x80100000))) {
-	    fetch_bytes (asi, &romb[addr & ROM_MASK], data, sz);
+	    memcpy (data, &romb[addr & ROM_MASK & ~3], 4);
 	    *ws = 4;
-	    return (0);
+	    return 0;
 	} else if ((addr >= 0x10000000) && 
 		   (addr < (0x10000000 + (512 << (mec_iocr & 0x0f)))) &&
 		   (mec_iocr & 0x10))  {
 	    *data = erareg;
-	    return (0);
+	    return 0;
 	}
 	
     } else  if (addr < mem_romsz) {
-	    fetch_bytes (asi, &romb[addr], data, sz);
-	    *ws = mem_romr_ws;
-	    return (0);
-
+	memcpy (data, &romb[addr & ~3], 4);
+	*ws = mem_romr_ws;
+	return 0;
 #else
     } else if (addr < mem_romsz) {
-	fetch_bytes (asi, &romb[addr], data, sz);
+	memcpy (data, &romb[addr & ~3], 4);
 	*ws = mem_romr_ws;
-	return (0);
+	return 0;
 #endif
 
     }
 
-    printf("Memory exception at %x (illegal address)\n", addr);
+    if (sis_verbose)
+	printf ("Memory exception at %x (illegal address)\n", addr);
     set_sfsr(UIMP_ACC, addr, asi, 1);
     *ws = MEM_EX_WS;
-    return (1);
+    return 1;
 }
 
 int
@@ -1735,7 +1671,7 @@ memory_write(asi, addr, data, sz, ws)
 	if (errmec == 5) mecparerror();
 	if (errmec == 6) iucomperr();
 	errmec = 0;
-	return(1);
+	return 1;
     }
 #endif
 
@@ -1757,30 +1693,17 @@ memory_write(asi, addr, data, sz, ws)
 		    printf("Memory access protection error at 0x%08x\n", addr);
 		set_sfsr(PROT_EXC, addr, asi, 0);
 		*ws = MEM_EX_WS;
-		return (1);
+		return 1;
 	    }
 	}
-
-	store_bytes (&ramb[addr & mem_rammask], data, sz);
-
-	switch (sz) {
-	case 0:
-	case 1:
-	    *ws = mem_ramw_ws + 3;
-	    break;
-	case 2:
-	    *ws = mem_ramw_ws;
-	    break;
-	case 3:
-	    *ws = 2 * mem_ramw_ws + STD_WS;
-	    break;
-	}
-	return (0);
+	waddr = addr & mem_rammask;
+	store_bytes (ramb, waddr, data, sz, ws);
+	return 0;
     } else if ((addr >= MEC_START) && (addr < MEC_END)) {
 	if ((sz != 2) || (asi != 0xb)) {
 	    set_sfsr(MEC_ACC, addr, asi, 0);
 	    *ws = MEM_EX_WS;
-	    return (1);
+	    return 1;
 	}
 	mexc = mec_write(addr, *data);
 	if (mexc) {
@@ -1789,7 +1712,7 @@ memory_write(asi, addr, data, sz, ws)
 	} else {
 	    *ws = 0;
 	}
-	return (mexc);
+	return mexc;
 
 #ifdef ERA
 
@@ -1798,13 +1721,13 @@ memory_write(asi, addr, data, sz, ws)
 	((addr < 0x100000) || ((addr >= 0x80000000) && (addr < 0x80100000)))) {
 	    addr &= ROM_MASK;
 	    *ws = sz == 3 ? 8 : 4;
-	    store_bytes (&romb[addr], data, sz);
-            return (0);
+	    store_bytes (romb, addr, data, sz, ws);
+            return 0;
 	} else if ((addr >= 0x10000000) && 
 		   (addr < (0x10000000 + (512 << (mec_iocr & 0x0f)))) &&
 		   (mec_iocr & 0x10))  {
 	    erareg = *data & 0x0e;
-	    return (0);
+	    return 0;
 	}
 
     } else if ((addr < mem_romsz) && (mec_memcfg & 0x10000) && (wrp) &&
@@ -1814,8 +1737,8 @@ memory_write(asi, addr, data, sz, ws)
 	*ws = mem_romw_ws + 1;
 	if (sz == 3)
 	    *ws += mem_romw_ws + STD_WS;
-	store_bytes (&romb[addr], data, sz);
-        return (0);
+	store_bytes (romb, addr, data, sz, ws);
+        return 0;
 
 #else
     } else if ((addr < mem_romsz) && (mec_memcfg & 0x10000) && (wrp) &&
@@ -1825,8 +1748,8 @@ memory_write(asi, addr, data, sz, ws)
 	*ws = mem_romw_ws + 1;
 	if (sz == 3)
             *ws += mem_romw_ws + STD_WS;
-	store_bytes (&romb[addr], data, sz);
-        return (0);
+	store_bytes (romb, addr, data, sz, ws);
+        return 0;
 
 #endif
 
@@ -1834,7 +1757,7 @@ memory_write(asi, addr, data, sz, ws)
 	
     *ws = MEM_EX_WS;
     set_sfsr(UIMP_ACC, addr, asi, 0);
-    return (1);
+    return 1;
 }
 
 static unsigned char  *
@@ -1843,19 +1766,19 @@ get_mem_ptr(addr, size)
     uint32          size;
 {
     if ((addr + size) < ROM_SZ) {
-	return (&romb[addr]);
+	return &romb[addr];
     } else if ((addr >= mem_ramstart) && ((addr + size) < mem_ramend)) {
-	return (&ramb[addr & mem_rammask]);
+	return &ramb[addr & mem_rammask];
     }
 
 #ifdef ERA
       else if ((era) && ((addr <0x100000) || 
 	((addr >= (unsigned) 0x80000000) && ((addr + size) < (unsigned) 0x80100000)))) {
-	return (&romb[addr & ROM_MASK]);
+	return &romb[addr & ROM_MASK];
     }
 #endif
 
-    return ((char *) -1);
+    return (char *) -1;
 }
 
 int
@@ -1867,10 +1790,10 @@ sis_memory_write(addr, data, length)
     char           *mem;
 
     if ((mem = get_mem_ptr(addr, length)) == ((char *) -1))
-	return (0);
+	return 0;
 
     memcpy(mem, data, length);
-    return (length);
+    return length;
 }
 
 int
@@ -1882,8 +1805,24 @@ sis_memory_read(addr, data, length)
     char           *mem;
 
     if ((mem = get_mem_ptr(addr, length)) == ((char *) -1))
-	return (0);
+	return 0;
 
     memcpy(data, mem, length);
-    return (length);
+    return length;
+}
+
+extern struct pstate sregs;
+
+void
+boot_init (void)
+{
+    mec_write(MEC_WCR, 0);	/* zero waitstates */
+    mec_write(MEC_TRAPD, 0);	/* turn off watch-dog */
+    mec_write(MEC_RTC_SCALER, sregs.freq - 1); /* generate 1 MHz RTC tick */
+    mec_write(MEC_MEMCFG, (3 << 18) | (4 << 10)); /* 1 MB ROM, 4 MB RAM */
+    sregs.wim = 2;
+    sregs.psr = 0x110010e0;
+    sregs.r[30] = RAM_END;
+    sregs.r[14] = sregs.r[30] - 96 * 4;
+    mec_mcr |= 1;		/* power-down enabled */
 }

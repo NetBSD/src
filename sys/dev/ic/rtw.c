@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.123 2016/06/10 13:27:13 ozaki-r Exp $ */
+/* $NetBSD: rtw.c,v 1.123.2.1 2016/11/04 14:49:09 pgoyette Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.123 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.123.2.1 2016/11/04 14:49:09 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -683,7 +683,7 @@ out:
 	    RTW_DK0, rk->rk_words, __arraycount(rk->rk_words));
 
 	bus_space_barrier(regs->r_bt, regs->r_bh, RTW_DK0, sizeof(rk->rk_words),
-	    BUS_SPACE_BARRIER_SYNC);
+	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 
 	RTW_DPRINTF(RTW_DEBUG_KEY,
 	    ("%s.%d: scr %02" PRIx8 ", keylen %d\n", __func__, __LINE__, scr,

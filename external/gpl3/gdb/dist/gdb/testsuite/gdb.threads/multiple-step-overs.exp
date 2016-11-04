@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2015 Free Software Foundation, Inc.
+# Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ proc setup {} {
 
 	gdb_breakpoint [gdb_get_line_number "set wait-threads breakpoint here"]
 	gdb_continue_to_breakpoint "run to breakpoint"
-	gdb_test "info threads" "3 .* 2 .*\\\* 1.*" "info threads shows all threads"
+	gdb_test "info threads" "\\\* 1 .* 2 .* 3 .*" "info threads shows all threads"
 
 	gdb_test_no_output "set scheduler-locking on"
 

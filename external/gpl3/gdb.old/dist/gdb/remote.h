@@ -49,17 +49,6 @@ void remote_file_get (const char *remote_file, const char *local_file,
 		      int from_tty);
 void remote_file_delete (const char *remote_file, int from_tty);
 
-bfd *remote_bfd_open (const char *remote_file, const char *target);
-
-/* If a path starts with this sequence, GDB will retrieve the target
-   libraries from the remote system.  */
-
-#define REMOTE_SYSROOT_PREFIX "remote:"
-
-/* True if FILENAME starts with REMOTE_SYSROOT_PREFIX.  */
-
-int remote_filename_p (const char *filename);
-
 extern int remote_register_number_and_offset (struct gdbarch *gdbarch,
 					      int regnum, int *pnum,
 					      int *poffset);

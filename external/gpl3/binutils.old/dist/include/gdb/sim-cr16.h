@@ -1,6 +1,6 @@
 /* This file defines the interface between the cr16 simulator and gdb.
 
-   Copyright 2008-2012 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,29 +32,6 @@ enum
     SIM_CR16_MEMORY_DMAP    = 0x10000000,
     SIM_CR16_MEMORY_IMAP    = 0x10000000
   };
-
-extern unsigned long sim_cr16_translate_dmap_addr
-  (unsigned long offset,
-   int nr_bytes,
-   unsigned long *phys,
-   void *regcache,
-   unsigned long (*dmap_register) (void *regcache, int reg_nr));
-
-extern unsigned long sim_cr16_translate_imap_addr
-  (unsigned long offset,
-   int nr_bytes,
-   unsigned long *phys,
-   void *regcache,
-   unsigned long (*imap_register) (void *regcache, int reg_nr));
-
-extern unsigned long sim_cr16_translate_addr
-  (unsigned long vaddr,
-   int nr_bytes,
-   unsigned long *phys,
-   void *regcache,
-   unsigned long (*dmap_register) (void *regcache, int reg_nr),
-   unsigned long (*imap_register) (void *regcache, int reg_nr));
-
 
 /* The simulator makes use of the following register information. */
 

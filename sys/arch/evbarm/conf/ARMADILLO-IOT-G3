@@ -1,4 +1,4 @@
-# $NetBSD: ARMADILLO-IOT-G3,v 1.1 2016/05/17 06:44:46 ryo Exp $
+# $NetBSD: ARMADILLO-IOT-G3,v 1.1.4.1 2016/11/04 14:49:00 pgoyette Exp $
 #
 # ARMADILLO-IOT-G3 -- Atmark Techno, Armadillo-IoT G3
 #
@@ -22,6 +22,7 @@ options 	MULTIPROCESSOR
 options 	PMAPCOUNTERS
 
 options 	MEMSIZE=512
+options 	MEMSIZE_RESERVED=32	# only reserved 32M for Cortex-M4 core
 
 # Standard system options
 

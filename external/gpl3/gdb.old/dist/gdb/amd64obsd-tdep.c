@@ -372,7 +372,7 @@ amd64obsd_trapframe_cache (struct frame_info *this_frame, void **this_cache)
   sp = get_frame_register_unsigned (this_frame, AMD64_RSP_REGNUM);
 
   find_pc_partial_function (func, &name, NULL, NULL);
-  if (name && strncmp (name, "Xintr", 5) == 0)
+  if (name && startswith (name, "Xintr"))
     addr = sp + 8;		/* It's an interrupt frame.  */
   else
     addr = sp;
@@ -436,7 +436,7 @@ amd64obsd_trapframe_sniffer (const struct frame_unwind *self,
   return (name && ((strcmp (name, "calltrap") == 0)
 		   || (strcmp (name, "osyscall1") == 0)
 		   || (strcmp (name, "Xsyscall") == 0)
-		   || (strncmp (name, "Xintr", 5) == 0)));
+		   || (startswith (name, "Xintr"))));
 }
 
 static const struct frame_unwind amd64obsd_trapframe_unwind = {

@@ -434,11 +434,11 @@ gdbscm_symbol_constant_p (SCM self)
   symbol_smob *s_smob
     = syscm_get_valid_symbol_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   const struct symbol *symbol = s_smob->symbol;
-  enum address_class class;
+  enum address_class theclass;
 
-  class = SYMBOL_CLASS (symbol);
+  theclass = SYMBOL_CLASS (symbol);
 
-  return scm_from_bool (class == LOC_CONST || class == LOC_CONST_BYTES);
+  return scm_from_bool (theclass == LOC_CONST || theclass == LOC_CONST_BYTES);
 }
 
 /* (symbol-function? <gdb:symbol>) -> boolean */
@@ -449,11 +449,11 @@ gdbscm_symbol_function_p (SCM self)
   symbol_smob *s_smob
     = syscm_get_valid_symbol_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   const struct symbol *symbol = s_smob->symbol;
-  enum address_class class;
+  enum address_class theclass;
 
-  class = SYMBOL_CLASS (symbol);
+  theclass = SYMBOL_CLASS (symbol);
 
-  return scm_from_bool (class == LOC_BLOCK);
+  return scm_from_bool (theclass == LOC_BLOCK);
 }
 
 /* (symbol-variable? <gdb:symbol>) -> boolean */
@@ -464,14 +464,14 @@ gdbscm_symbol_variable_p (SCM self)
   symbol_smob *s_smob
     = syscm_get_valid_symbol_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   const struct symbol *symbol = s_smob->symbol;
-  enum address_class class;
+  enum address_class theclass;
 
-  class = SYMBOL_CLASS (symbol);
+  theclass = SYMBOL_CLASS (symbol);
 
   return scm_from_bool (!SYMBOL_IS_ARGUMENT (symbol)
-			&& (class == LOC_LOCAL || class == LOC_REGISTER
-			    || class == LOC_STATIC || class == LOC_COMPUTED
-			    || class == LOC_OPTIMIZED_OUT));
+			&& (theclass == LOC_LOCAL || theclass == LOC_REGISTER
+			    || theclass == LOC_STATIC || theclass == LOC_COMPUTED
+			    || theclass == LOC_OPTIMIZED_OUT));
 }
 
 /* (symbol-needs-frame? <gdb:symbol>) -> boolean
@@ -483,14 +483,17 @@ gdbscm_symbol_needs_frame_p (SCM self)
   symbol_smob *s_smob
     = syscm_get_valid_symbol_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   struct symbol *symbol = s_smob->symbol;
-  volatile struct gdb_exception except;
   int result = 0;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       result = symbol_read_needs_frame (symbol);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   return scm_from_bool (result);
 }
@@ -523,7 +526,6 @@ gdbscm_symbol_value (SCM self, SCM rest)
   frame_smob *f_smob = NULL;
   struct frame_info *frame_info = NULL;
   struct value *value = NULL;
-  volatile struct gdb_exception except;
 
   gdbscm_parse_function_args (FUNC_NAME, SCM_ARG2, keywords, "#O",
 			      rest, &frame_pos, &frame_scm);
@@ -536,7 +538,7 @@ gdbscm_symbol_value (SCM self, SCM rest)
 				 _("cannot get the value of a typedef"));
     }
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       if (f_smob != NULL)
 	{
@@ -550,7 +552,11 @@ gdbscm_symbol_value (SCM self, SCM rest)
 
       value = read_var_value (symbol, frame_info);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   return vlscm_scm_from_value (value);
 }
@@ -571,8 +577,8 @@ gdbscm_lookup_symbol (SCM name_scm, SCM rest)
   int block_arg_pos = -1, domain_arg_pos = -1;
   struct field_of_this_result is_a_field_of_this;
   struct symbol *symbol = NULL;
-  volatile struct gdb_exception except;
   struct cleanup *cleanups;
+  struct gdb_exception except = exception_none;
 
   gdbscm_parse_function_args (FUNC_NAME, SCM_ARG1, keywords, "s#Oi",
 			      name_scm, &name, rest,
@@ -597,18 +603,28 @@ gdbscm_lookup_symbol (SCM name_scm, SCM rest)
     {
       struct frame_info *selected_frame;
 
-      TRY_CATCH (except, RETURN_MASK_ALL)
+      TRY
 	{
 	  selected_frame = get_selected_frame (_("no frame selected"));
 	  block = get_frame_block (selected_frame, NULL);
 	}
-      GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS (except, cleanups);
+      CATCH (except, RETURN_MASK_ALL)
+	{
+	  GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS (except, cleanups);
+	}
+      END_CATCH
     }
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       symbol = lookup_symbol (name, block, domain, &is_a_field_of_this);
     }
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      except = ex;
+    }
+  END_CATCH
+
   do_cleanups (cleanups);
   GDBSCM_HANDLE_GDB_EXCEPTION (except);
 
@@ -630,8 +646,8 @@ gdbscm_lookup_global_symbol (SCM name_scm, SCM rest)
   int domain_arg_pos = -1;
   int domain = VAR_DOMAIN;
   struct symbol *symbol = NULL;
-  volatile struct gdb_exception except;
   struct cleanup *cleanups;
+  struct gdb_exception except = exception_none;
 
   gdbscm_parse_function_args (FUNC_NAME, SCM_ARG1, keywords, "s#i",
 			      name_scm, &name, rest,
@@ -639,10 +655,16 @@ gdbscm_lookup_global_symbol (SCM name_scm, SCM rest)
 
   cleanups = make_cleanup (xfree, name);
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       symbol = lookup_global_symbol (name, NULL, domain);
     }
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      except = ex;
+    }
+  END_CATCH
+
   do_cleanups (cleanups);
   GDBSCM_HANDLE_GDB_EXCEPTION (except);
 

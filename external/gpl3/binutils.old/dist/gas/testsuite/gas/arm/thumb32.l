@@ -1,17 +1,17 @@
 [^;]*: Assembler messages:
-[^;]*:451: Warning: s suffix on comparison instruction is deprecated
-[^;]*:451: Warning: s suffix on comparison instruction is deprecated
-[^;]*:451: Warning: s suffix on comparison instruction is deprecated
-[^;]*:451: Warning: s suffix on comparison instruction is deprecated
-[^;]*:452: Warning: s suffix on comparison instruction is deprecated
-[^;]*:452: Warning: s suffix on comparison instruction is deprecated
-[^;]*:452: Warning: s suffix on comparison instruction is deprecated
-[^;]*:452: Warning: s suffix on comparison instruction is deprecated
-[^;]*:453: Warning: s suffix on comparison instruction is deprecated
-[^;]*:453: Warning: s suffix on comparison instruction is deprecated
-[^;]*:453: Warning: s suffix on comparison instruction is deprecated
-[^;]*:453: Warning: s suffix on comparison instruction is deprecated
-[^;]*:454: Warning: s suffix on comparison instruction is deprecated
-[^;]*:454: Warning: s suffix on comparison instruction is deprecated
-[^;]*:454: Warning: s suffix on comparison instruction is deprecated
-[^;]*:454: Warning: s suffix on comparison instruction is deprecated
+[^;]*:450: s suffix on comparison instruction is deprecated
+[^;]*:450: s suffix on comparison instruction is deprecated
+[^;]*:450: s suffix on comparison instruction is deprecated
+[^;]*:450: s suffix on comparison instruction is deprecated
+[^;]*:451: s suffix on comparison instruction is deprecated
+[^;]*:451: s suffix on comparison instruction is deprecated
+[^;]*:451: s suffix on comparison instruction is deprecated
+[^;]*:451: s suffix on comparison instruction is deprecated
+[^;]*:452: s suffix on comparison instruction is deprecated
+[^;]*:452: s suffix on comparison instruction is deprecated
+[^;]*:452: s suffix on comparison instruction is deprecated
+[^;]*:452: s suffix on comparison instruction is deprecated
+[^;]*:453: s suffix on comparison instruction is deprecated
+[^;]*:453: s suffix on comparison instruction is deprecated
+[^;]*:453: s suffix on comparison instruction is deprecated
+[^;]*:453: s suffix on comparison instruction is deprecated

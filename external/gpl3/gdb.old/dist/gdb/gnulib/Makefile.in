@@ -242,6 +242,7 @@ aclocal_m4_deps = \
 	import/m4/stddef_h.m4 \
 	import/m4/stdint.m4 \
 	import/m4/string_h.m4 \
+	import/m4/strtok_r.m4 \
 	import/m4/sys_types_h.m4 \
 	import/m4/unistd_h.m4 \
 	import/m4/warn-on-use.m4 \

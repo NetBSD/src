@@ -1,5 +1,5 @@
 /* TILE-Gx-specific support for 64-bit ELF.
-   Copyright 2011 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -38,11 +38,11 @@ tilegx_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
     return FALSE;
 
   /* pr_cursig */
-  elf_tdata (abfd)->core_signal =
+  elf_tdata (abfd)->core->signal =
     bfd_get_16 (abfd, note->descdata + TILEGX_PRSTATUS_OFFSET_PR_CURSIG);
 
   /* pr_pid */
-  elf_tdata (abfd)->core_pid =
+  elf_tdata (abfd)->core->pid =
     bfd_get_32 (abfd, note->descdata + TILEGX_PRSTATUS_OFFSET_PR_PID);
 
   /* pr_reg */
@@ -60,9 +60,9 @@ tilegx_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
   if (note->descsz != TILEGX_PRPSINFO_SIZEOF)
     return FALSE;
 
-  elf_tdata (abfd)->core_program
+  elf_tdata (abfd)->core->program
     = _bfd_elfcore_strndup (abfd, note->descdata + TILEGX_PRPSINFO_OFFSET_PR_FNAME, 16);
-  elf_tdata (abfd)->core_command
+  elf_tdata (abfd)->core->command
     = _bfd_elfcore_strndup (abfd, note->descdata + TILEGX_PRPSINFO_OFFSET_PR_PSARGS, ELF_PR_PSARGS_SIZE);
 
 
@@ -70,7 +70,7 @@ tilegx_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
      onto the end of the args in some (at least one anyway)
      implementations, so strip it off if it exists.  */
   {
-    char *command = elf_tdata (abfd)->core_command;
+    char *command = elf_tdata (abfd)->core->command;
     int n = strlen (command);
 
     if (0 < n && command[n - 1] == ' ')
@@ -88,9 +88,9 @@ tilegx_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #define ELF_COMMONPAGESIZE	0x10000
 
 
-#define TARGET_BIG_SYM          bfd_elf64_tilegx_be_vec
+#define TARGET_BIG_SYM          tilegx_elf64_be_vec
 #define TARGET_BIG_NAME         "elf64-tilegx-be"
-#define TARGET_LITTLE_SYM       bfd_elf64_tilegx_le_vec
+#define TARGET_LITTLE_SYM       tilegx_elf64_le_vec
 #define TARGET_LITTLE_NAME      "elf64-tilegx-le"
 
 #define elf_backend_reloc_type_class	     tilegx_reloc_type_class

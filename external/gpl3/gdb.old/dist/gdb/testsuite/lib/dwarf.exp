@@ -146,9 +146,14 @@ proc function_range { func src } {
     }
 
     # Compute the size of the last instruction.
+    if { $func_length == 0 } then {
+	set func_pattern "$func"
+    } else {
+	set func_pattern "$func\\+$func_length"
+    }
     set test "x/2i $func+$func_length"
     gdb_test_multiple $test $test {
-	-re ".*($hex) <$func\\+$func_length>:\[^\r\n\]+\r\n\[ \]+($hex).*\.\r\n$gdb_prompt $" {
+	-re ".*($hex) <$func_pattern>:\[^\r\n\]+\r\n\[ \]+($hex).*\.\r\n$gdb_prompt $" {
 	    set start $expect_out(1,string)
 	    set end $expect_out(2,string)
 
@@ -292,6 +297,12 @@ namespace eval Dwarf {
     # value is the label for that string.
     variable _strings
 
+    # Current .debug_line unit count.
+    variable _line_count
+
+    # Whether a file_name entry was seen.
+    variable _line_saw_file
+
     proc _process_one_constant {name value} {
 	variable _constants
 	variable _AT
@@ -422,6 +433,11 @@ namespace eval Dwarf {
 		_op .${size}byte $value
 	    }
 
+	    DW_FORM_sec_offset {
+		variable _cu_offset_size
+		_op .${_cu_offset_size}byte $value
+	    }
+
 	    DW_FORM_ref1 -
 	    DW_FORM_flag -
 	    DW_FORM_data1 {
@@ -494,7 +510,6 @@ namespace eval Dwarf {
 
 	    DW_FORM_ref2 -
 	    DW_FORM_indirect -
-	    DW_FORM_sec_offset -
 	    DW_FORM_exprloc -
 
 	    DW_FORM_GNU_addr_index -
@@ -1094,6 +1109,133 @@ namespace eval Dwarf {
 	define_label $end_label
     }
 
+    # Emit a DWARF .debug_line unit.
+    # OPTIONS is a list with an even number of elements containing
+    # option-name and option-value pairs.
+    # Current options are:
+    # is_64 0|1    - boolean indicating if you want to emit 64-bit DWARF
+    #                default = 0 (32-bit)
+    # version n    - DWARF version number to emit
+    #                default = 4
+    # addr_size n  - the size of addresses, 32, 64, or default
+    #                default = default
+    #
+    # LABEL is the label of the current unit (which is probably
+    # referenced by a DW_AT_stmt_list), or "" if there is no such
+    # label.
+    #
+    # BODY is Tcl code that emits the parts which make up the body of
+    # the line unit.  It is evaluated in the caller's context.  The
+    # following commands are available for the BODY section:
+    #
+    #   include_dir "dirname" -- adds a new include directory
+    #
+    #   file_name "file.c" idx -- adds a new file name.  IDX is a
+    #   1-based index referencing an include directory or 0 for
+    #   current directory.
+
+    proc lines {options label body} {
+	variable _line_count
+	variable _line_saw_file
+
+	# Establish the defaults.
+	set is_64 0
+	set _unit_version 4
+	set _unit_addr_size default
+
+	foreach { name value } $options {
+	    switch -exact -- $name {
+		is_64 { set is_64 $value }
+		version { set _unit_version $value }
+		addr_size { set _unit_addr_size $value }
+		default { error "unknown option $name" }
+	    }
+	}
+	if {$_unit_addr_size == "default"} {
+	    if {[is_64_target]} {
+		set _unit_addr_size 8
+	    } else {
+		set _unit_addr_size 4
+	    }
+	}
+
+	set unit_num [incr _line_count]
+
+	set section ".debug_line"
+	_section $section
+
+	if { "$label" != "" } {
+	    # Define the user-provided label at this point.
+	    $label:
+	}
+
+	set unit_len_label [_compute_label "line${_line_count}_start"]
+	set unit_end_label [_compute_label "line${_line_count}_end"]
+	set header_len_label [_compute_label "line${_line_count}_header_start"]
+	set header_end_label [_compute_label "line${_line_count}_header_end"]
+
+	if {$is_64} {
+	    _op .4byte 0xffffffff
+	    _op .8byte "$unit_end_label - $unit_len_label" "unit_length"
+	} else {
+	    _op .4byte "$unit_end_label - $unit_len_label" "unit_length"
+	}
+
+	define_label $unit_len_label
+
+	_op .2byte $_unit_version version
+
+	if {$is_64} {
+	    _op .8byte "$header_end_label - $header_len_label" "header_length"
+	} else {
+	    _op .4byte "$header_end_label - $header_len_label" "header_length"
+	}
+
+	define_label $header_len_label
+
+	_op .byte 1 "minimum_instruction_length"
+	_op .byte 0 "default_is_stmt"
+	_op .byte 1 "line_base"
+	_op .byte 1 "line_range"
+	_op .byte 1 "opcode_base"
+	# Since we emit opcode_base==1, we skip
+	# standard_opcode_length table altogether.
+
+	proc include_dir {dirname} {
+	    _op .ascii [_quote $dirname]
+	}
+
+	proc file_name {filename diridx} {
+	    variable _line_saw_file
+	    if "! $_line_saw_file" {
+		# Terminate the dir list.
+		_op .byte 0 "Terminator."
+		set _line_saw_file 1
+	    }
+
+	    _op .ascii [_quote $filename]
+	    _op .sleb128 $diridx
+	    _op .sleb128 0 "mtime"
+	    _op .sleb128 0 "length"
+	}
+
+	uplevel $body
+
+	rename include_dir ""
+	rename file_name ""
+
+	# Terminate dir list if we saw no files.
+	if "! $_line_saw_file" {
+	    _op .byte 0 "Terminator."
+	}
+
+	# Terminate the file list.
+	_op .byte 0 "Terminator."
+
+	define_label $header_end_label
+	define_label $unit_end_label
+    }
+
     proc _empty_array {name} {
 	upvar $name the_array
 
@@ -1173,6 +1315,8 @@ namespace eval Dwarf {
 	variable _label_num
 	variable _strings
 	variable _cu_count
+	variable _line_count
+	variable _line_saw_file
 
 	if {!$_initialized} {
 	    _read_constants
@@ -1185,6 +1329,9 @@ namespace eval Dwarf {
 	set _defer ""
 	set _label_num 0
 	_empty_array _strings
+
+	set _line_count 0
+	set _line_saw_file 0
 
 	# Not "uplevel" here, because we want to evaluate in this
 	# namespace.  This is somewhat bad because it means we can't

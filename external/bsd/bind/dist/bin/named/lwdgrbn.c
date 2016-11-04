@@ -1,7 +1,7 @@
-/*	$NetBSD: lwdgrbn.c,v 1.7 2016/05/26 16:49:56 christos Exp $	*/
+/*	$NetBSD: lwdgrbn.c,v 1.7.2.1 2016/11/04 14:42:42 pgoyette Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -405,14 +405,18 @@ start_lookup(ns_lwdclient_t *client) {
 	INSIST(client->lookup == NULL);
 
 	dns_fixedname_init(&absname);
-	result = ns_lwsearchctx_current(&client->searchctx,
-					dns_fixedname_name(&absname));
+
 	/*
-	 * This will return failure if relative name + suffix is too long.
-	 * In this case, just go on to the next entry in the search path.
+	 * Perform search across all search domains until success
+	 * is returned. Return in case of failure.
 	 */
-	if (result != ISC_R_SUCCESS)
-		start_lookup(client);
+	while (ns_lwsearchctx_current(&client->searchctx,
+			dns_fixedname_name(&absname)) != ISC_R_SUCCESS) {
+		if (ns_lwsearchctx_next(&client->searchctx) != ISC_R_SUCCESS) {
+			ns_lwdclient_errorpktsend(client, LWRES_R_FAILURE);
+			return;
+		}
+	}
 
 	result = dns_lookup_create(cm->mctx,
 				   dns_fixedname_name(&absname),

@@ -60,7 +60,7 @@ Disassembly of section .text:
   c8:	a8240000 	swl	a0,0\(at\)
   cc:	b8240003 	swr	a0,3\(at\)
   d0:	3c043ff0 	lui	a0,0x3ff0
-  d4:	00002821 	move	a1,zero
+  d4:	00002825 	move	a1,zero
   d8:	3c010000 	lui	at,0x0
   dc:	8c240000 	lw	a0,0\(at\)
   e0:	8c250004 	lw	a1,4\(at\)
@@ -72,7 +72,7 @@ Disassembly of section .text:
   f8:	2c840001 	sltiu	a0,a0,1
   fc:	24a40064 	addiu	a0,a1,100
  100:	0004202b 	sltu	a0,zero,a0
- 104:	00a02021 	move	a0,a1
+ 104:	00a02025 	move	a0,a1
 
 0+0108 <[^>]*>:
 	...

@@ -1,11 +1,25 @@
 # Linker script for 386 COFF.  This works on SVR3.2 and SCO Unix 3.2.2.
 # Ian Taylor <ian@cygnus.com>.
+#
+# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# 
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.
+
 test -z "$ENTRY" && ENTRY=_start
 # These are substituted in as variables in order to get '}' in a shell
 # conditional expansion.
 INIT='.init : { *(.init) }'
 FINI='.fini : { *(.fini) }'
+
 cat <<EOF
+/* Copyright (C) 2014-2015 Free Software Foundation, Inc.
+
+   Copying and distribution of this script, with or without modification,
+   are permitted in any medium without royalty provided the copyright
+   notice and this notice are preserved.  */
+
 OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 ${LIB_SEARCH_DIRS}
 

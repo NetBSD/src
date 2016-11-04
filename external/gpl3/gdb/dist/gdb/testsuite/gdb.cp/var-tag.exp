@@ -1,4 +1,4 @@
-# Copyright 2014, 2015 Free Software Foundation, Inc.
+# Copyright 2014-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,13 +28,19 @@ if {[prepare_for_testing $testfile.exp $testfile \
 
 proc do_global_tests {lang} {
     set invalid_print "Attempt to use a type name as an expression"
-    set ptypefmt "type = (class|enum|union|struct) %s {.*}"
+
+    if {$lang == "c++"} {
+	set opt_underlying "(: unsigned (int|short|char) )?"
+    } else {
+	set opt_underlying ""
+    }
+    set ptypefmt "type = (class|enum|union|struct) %s $opt_underlying{.*}"
 
     with_test_prefix $lang {
     gdb_test_no_output "set language $lang"
     gdb_test "ptype C" "type = class C {.*}"
     gdb_test "print E" "= a"
-    gdb_test "ptype E" "type = enum E {.*}"
+    gdb_test "ptype E" "type = enum E $opt_underlying{.*}"
     gdb_test "print S" "= {<No data fields>}"
     gdb_test "ptype S" "type = struct S {.*}"
     gdb_test "print U" "= {.*}"
@@ -48,7 +54,7 @@ proc do_global_tests {lang} {
     gdb_test "print SS" [format $invalid_print "SS"]
     gdb_test "ptype SS" [format $ptypefmt "SS"]
     gdb_test "print ee" "= .*"
-    gdb_test "ptype ee" "type = enum EE {.*}"
+    gdb_test "ptype ee" "type = enum EE $opt_underlying{.*}"
     gdb_test "print EE" [format $invalid_print "EE"]
     gdb_test "ptype EE" [format $ptypefmt "EE"]
     gdb_test "print uu" "= {.*}"
@@ -60,7 +66,7 @@ proc do_global_tests {lang} {
     # Each of them is in a separate CU as once its CU is expanded,
     # we're no longer using the quick fns API.
     gdb_test "print E2" "= a2"
-    gdb_test "ptype E2" "type = enum E2 {.*}"
+    gdb_test "ptype E2" "type = enum E2 $opt_underlying{.*}"
     gdb_test "print S2" "= {<No data fields>}"
     gdb_test "ptype S2" "type = struct S2 {.*}"
     gdb_test "print U2" "= {.*}"

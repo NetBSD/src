@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.354.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.354.2.3 2016/11/04 14:49:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.354.2.2 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.354.2.3 2016/11/04 14:49:20 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -657,7 +657,7 @@ if_initialize(ifnet_t *ifp)
 	ifp->if_snd.altq_ifp  = ifp;
 #endif
 
-	ifp->if_snd.ifq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+	IFQ_LOCK_INIT(&ifp->if_snd);
 
 	ifp->if_pfil = pfil_head_create(PFIL_TYPE_IFNET, ifp);
 	(void)pfil_run_hooks(if_pfil,
@@ -1621,15 +1621,15 @@ ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
 	IFNET_LOCK();
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 	IFADDR_WRITER_REMOVE(ifa);
-	IFADDR_ENTRY_DESTROY(ifa);
-#if notyet
+#ifdef NET_MPSAFE
 	pserialize_perform(ifnet_psz);
 #endif
 	IFNET_UNLOCK();
 
-#if notyet
+#ifdef NET_MPSAFE
 	psref_target_destroy(&ifa->ifa_psref, ifa_psref_class);
 #endif
+	IFADDR_ENTRY_DESTROY(ifa);
 	ifafree(ifa);
 }
 

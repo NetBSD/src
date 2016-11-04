@@ -1,6 +1,6 @@
 /* Target-dependent code for the Renesas RX for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -200,11 +200,12 @@ struct rx_get_opcode_byte_handle
 static int
 rx_get_opcode_byte (void *handle)
 {
-  struct rx_get_opcode_byte_handle *opcdata = handle;
+  struct rx_get_opcode_byte_handle *opcdata
+    = (struct rx_get_opcode_byte_handle *) handle;
   int status;
   gdb_byte byte;
 
-  status = target_read_memory (opcdata->pc, &byte, 1);
+  status = target_read_code (opcdata->pc, &byte, 1);
   if (status == 0)
     {
       opcdata->pc += 1;
@@ -445,10 +446,10 @@ rx_analyze_frame_prologue (struct frame_info *this_frame,
 	stop_addr = func_start;
 
       rx_analyze_prologue (func_start, stop_addr, frame_type,
-                           *this_prologue_cache);
+			   (struct rx_prologue *) *this_prologue_cache);
     }
 
-  return *this_prologue_cache;
+  return (struct rx_prologue *) *this_prologue_cache;
 }
 
 /* Determine type of frame by scanning the function for a return
@@ -469,7 +470,7 @@ rx_frame_type (struct frame_info *this_frame, void **this_cache)
 
   if (*this_cache != NULL)
     {
-      struct rx_prologue *p = *this_cache;
+      struct rx_prologue *p = (struct rx_prologue *) *this_cache;
 
       return p->frame_type;
     }
@@ -643,7 +644,7 @@ rx_frame_sniffer_common (const struct frame_unwind *self,
     }
   else
     {
-      struct rx_prologue *p = *this_cache;
+      struct rx_prologue *p = (struct rx_prologue *) *this_cache;
 
       return sniff_p (p->frame_type);
     }
@@ -812,7 +813,8 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 						struct_addr);
 	    }
 	  else if (TYPE_CODE (arg_type) != TYPE_CODE_STRUCT
-		   && TYPE_CODE (arg_type) != TYPE_CODE_UNION)
+		   && TYPE_CODE (arg_type) != TYPE_CODE_UNION
+		   && arg_size <= 8)
 	    {
 	      /* Argument is a scalar.  */
 	      if (arg_size == 8)
@@ -1010,9 +1012,7 @@ rx_dwarf_reg_to_regnum (struct gdbarch *gdbarch, int reg)
   else if (reg == 17)
     return RX_PC_REGNUM;
   else
-    internal_error (__FILE__, __LINE__,
-                    _("Undefined dwarf2 register mapping of reg %d"),
-		    reg);
+    return -1;
 }
 
 /* Allocate and initialize a gdbarch object.  */
@@ -1045,7 +1045,7 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* None found, create a new architecture from the information
      provided.  */
-  tdep = (struct gdbarch_tdep *) xmalloc (sizeof (struct gdbarch_tdep));
+  tdep = XNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
   tdep->elf_flags = elf_flags;
 

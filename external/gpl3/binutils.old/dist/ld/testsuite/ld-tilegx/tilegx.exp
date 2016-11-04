@@ -1,5 +1,5 @@
 # Expect script for TILE-Gx linker tests.
-#   Copyright 2011 Free Software Foundation, Inc.
+#   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -26,14 +26,14 @@ if {!([istarget "tilegx-*-*"]) } {
 
 set tilegx_tests {
     {   "tilegx little-endian relocation resolution linker test"
-        "-EL"
+        "-EL" ""
         "-EL"
         { "reloc.s" "external.s" }
         { {objdump -ds reloc-le.d} }
         "reloc"
     }
     {   "tilegx big-endian relocation resolution linker test"
-        "-EB"
+        "-EB" ""
         "-EB"
         { "reloc.s" "external.s" }
         { {objdump -ds reloc-be.d} }

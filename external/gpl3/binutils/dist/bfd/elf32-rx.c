@@ -1,5 +1,5 @@
 /* Renesas RX specific support for 32-bit ELF.
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -317,7 +317,6 @@ rx_info_to_howto_rela (bfd *               abfd ATTRIBUTE_UNUSED,
 
 static bfd_vma
 get_symbol_value (const char *            name,
-		  bfd_reloc_status_type * status,
 		  struct bfd_link_info *  info,
 		  bfd *                   input_bfd,
 		  asection *              input_section,
@@ -331,7 +330,7 @@ get_symbol_value (const char *            name,
   if (h == NULL
       || (h->type != bfd_link_hash_defined
 	  && h->type != bfd_link_hash_defweak))
-    * status = info->callbacks->undefined_symbol
+    (*info->callbacks->undefined_symbol)
       (info, name, input_bfd, input_section, offset, TRUE);
   else
     value = (h->u.def.value
@@ -340,6 +339,7 @@ get_symbol_value (const char *            name,
 
   return value;
 }
+
 static bfd_vma
 get_symbol_value_maybe (const char *            name,
 			struct bfd_link_info *  info)
@@ -362,8 +362,7 @@ get_symbol_value_maybe (const char *            name,
 }
 
 static bfd_vma
-get_gp (bfd_reloc_status_type * status,
-	struct bfd_link_info *  info,
+get_gp (struct bfd_link_info *  info,
 	bfd *                   abfd,
 	asection *              sec,
 	int			offset)
@@ -373,15 +372,14 @@ get_gp (bfd_reloc_status_type * status,
 
   if (!cached)
     {
-      cached_value = get_symbol_value ("__gp", status, info, abfd, sec, offset);
+      cached_value = get_symbol_value ("__gp", info, abfd, sec, offset);
       cached = TRUE;
     }
   return cached_value;
 }
 
 static bfd_vma
-get_romstart (bfd_reloc_status_type * status,
-	      struct bfd_link_info *  info,
+get_romstart (struct bfd_link_info *  info,
 	      bfd *                   abfd,
 	      asection *              sec,
 	      int		      offset)
@@ -391,15 +389,14 @@ get_romstart (bfd_reloc_status_type * status,
 
   if (!cached)
     {
-      cached_value = get_symbol_value ("_start", status, info, abfd, sec, offset);
+      cached_value = get_symbol_value ("_start", info, abfd, sec, offset);
       cached = TRUE;
     }
   return cached_value;
 }
 
 static bfd_vma
-get_ramstart (bfd_reloc_status_type * status,
-	      struct bfd_link_info *  info,
+get_ramstart (struct bfd_link_info *  info,
 	      bfd *                   abfd,
 	      asection *              sec,
 	      int		      offset)
@@ -409,7 +406,7 @@ get_ramstart (bfd_reloc_status_type * status,
 
   if (!cached)
     {
-      cached_value = get_symbol_value ("__datastart", status, info, abfd, sec, offset);
+      cached_value = get_symbol_value ("__datastart", info, abfd, sec, offset);
       cached = TRUE;
     }
   return cached_value;
@@ -553,7 +550,6 @@ rx_elf_relocate_section
 	  bfd_vma entry_vma;
 	  int idx;
 	  char *buf;
-	  bfd_reloc_status_type tstat = 0;
 
 	  if (table_default_cache != name)
 	    {
@@ -571,18 +567,14 @@ rx_elf_relocate_section
 	      buf = (char *) malloc (13 + strlen (name + 20));
 
 	      sprintf (buf, "$tablestart$%s", name + 20);
-	      tstat = 0;
 	      table_start_cache = get_symbol_value (buf,
-						    &tstat,
 						    info,
 						    input_bfd,
 						    input_section,
 						    rel->r_offset);
 
 	      sprintf (buf, "$tableend$%s", name + 20);
-	      tstat = 0;
 	      table_end_cache = get_symbol_value (buf,
-						  &tstat,
 						  info,
 						  input_bfd,
 						  input_section,
@@ -956,7 +948,7 @@ rx_elf_relocate_section
 
 	case R_RX_RH_GPRELB:
 	  WARN_REDHAT ("RX_RH_GPRELB");
-	  relocation -= get_gp (&r, info, input_bfd, input_section, rel->r_offset);
+	  relocation -= get_gp (info, input_bfd, input_section, rel->r_offset);
 	  RANGE (0, 65535);
 #if RX_OPCODE_BIG_ENDIAN
 	  OP (1) = relocation;
@@ -969,7 +961,7 @@ rx_elf_relocate_section
 
 	case R_RX_RH_GPRELW:
 	  WARN_REDHAT ("RX_RH_GPRELW");
-	  relocation -= get_gp (&r, info, input_bfd, input_section, rel->r_offset);
+	  relocation -= get_gp (info, input_bfd, input_section, rel->r_offset);
 	  ALIGN (1);
 	  relocation >>= 1;
 	  RANGE (0, 65535);
@@ -984,7 +976,7 @@ rx_elf_relocate_section
 
 	case R_RX_RH_GPRELL:
 	  WARN_REDHAT ("RX_RH_GPRELL");
-	  relocation -= get_gp (&r, info, input_bfd, input_section, rel->r_offset);
+	  relocation -= get_gp (info, input_bfd, input_section, rel->r_offset);
 	  ALIGN (3);
 	  relocation >>= 2;
 	  RANGE (0, 65535);
@@ -1407,11 +1399,11 @@ rx_elf_relocate_section
 	  break;
 
 	case R_RX_OPromtop:
-	  RX_STACK_PUSH (get_romstart (&r, info, input_bfd, input_section, rel->r_offset));
+	  RX_STACK_PUSH (get_romstart (info, input_bfd, input_section, rel->r_offset));
 	  break;
 
 	case R_RX_OPramtop:
-	  RX_STACK_PUSH (get_ramstart (&r, info, input_bfd, input_section, rel->r_offset));
+	  RX_STACK_PUSH (get_ramstart (info, input_bfd, input_section, rel->r_offset));
 	  break;
 
 	default:
@@ -1431,15 +1423,14 @@ rx_elf_relocate_section
 	      if (r_type == R_RX_DIR24S_PCREL)
 		msg = _("%B(%A): error: call to undefined function '%s'");
 	      else
-		r = info->callbacks->reloc_overflow
+		(*info->callbacks->reloc_overflow)
 		  (info, (h ? &h->root : NULL), name, howto->name, (bfd_vma) 0,
 		   input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      r = info->callbacks->undefined_symbol
-		(info, name, input_bfd, input_section, rel->r_offset,
-		 TRUE);
+	      (*info->callbacks->undefined_symbol)
+		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
 
 	    case bfd_reloc_other:
@@ -1465,9 +1456,6 @@ rx_elf_relocate_section
 
 	  if (msg)
 	    _bfd_error_handler (msg, input_bfd, input_section, name);
-
-	  if (! r)
-	    return FALSE;
 	}
     }
 
@@ -1531,7 +1519,8 @@ next_smaller_reloc (int r)
 
 static bfd_boolean
 elf32_rx_relax_delete_bytes (bfd *abfd, asection *sec, bfd_vma addr, int count,
-			     Elf_Internal_Rela *alignment_rel, int force_snip)
+			     Elf_Internal_Rela *alignment_rel, int force_snip,
+			     Elf_Internal_Rela *irelstart)
 {
   Elf_Internal_Shdr * symtab_hdr;
   unsigned int        sec_shndx;
@@ -1558,20 +1547,7 @@ elf32_rx_relax_delete_bytes (bfd *abfd, asection *sec, bfd_vma addr, int count,
   if (alignment_rel)
     toaddr = alignment_rel->r_offset;
 
-  irel = elf_section_data (sec)->relocs;
-  irelend = irel + sec->reloc_count;
-
-  if (irel == NULL && sec->reloc_count > 0)
-    {
-      /* If the relocs have not been kept in the section data
-	 structure (because -no-keep-memory was used) then
-	 reread them now.  */
-      irel = (_bfd_elf_link_read_relocs
-	      (abfd, sec, NULL, (Elf_Internal_Rela *) NULL, FALSE));
-      if (irel == NULL)
-	/* FIXME: Return FALSE instead ?  */
-	irelend = irel;
-    }
+  BFD_ASSERT (toaddr > addr);  
 
   /* Actually delete the bytes.  */
   memmove (contents + addr, contents + addr + count,
@@ -1584,6 +1560,10 @@ elf32_rx_relax_delete_bytes (bfd *abfd, asection *sec, bfd_vma addr, int count,
     sec->size -= count;
   else
     memset (contents + toaddr - count, 0x03, count);
+
+  irel = irelstart;
+  BFD_ASSERT (irel != NULL || sec->reloc_count == 0);
+  irelend = irel + sec->reloc_count;
 
   /* Adjust all the relocs.  */
   for (; irel < irelend; irel++)
@@ -1910,11 +1890,11 @@ rx_offset_for_reloc (bfd *                    abfd,
 	  break;
 
 	case R_RX_OPromtop:
-	  RX_STACK_PUSH (get_romstart (&r, info, input_bfd, input_section, rel->r_offset));
+	  RX_STACK_PUSH (get_romstart (info, input_bfd, input_section, rel->r_offset));
 	  break;
 
 	case R_RX_OPramtop:
-	  RX_STACK_PUSH (get_ramstart (&r, info, input_bfd, input_section, rel->r_offset));
+	  RX_STACK_PUSH (get_ramstart (info, input_bfd, input_section, rel->r_offset));
 	  break;
 
 	case R_RX_DIR16UL:
@@ -1949,6 +1929,8 @@ rx_offset_for_reloc (bfd *                    abfd,
 
       rel ++;
     }
+  /* FIXME.  */
+  (void) r;
 }
 
 static void
@@ -1977,7 +1959,6 @@ elf32_rx_relax_section (bfd *                  abfd,
   Elf_Internal_Shdr * symtab_hdr;
   Elf_Internal_Shdr * shndx_hdr;
   Elf_Internal_Rela * internal_relocs;
-  Elf_Internal_Rela * free_relocs = NULL;
   Elf_Internal_Rela * irel;
   Elf_Internal_Rela * srel;
   Elf_Internal_Rela * irelend;
@@ -2054,13 +2035,15 @@ elf32_rx_relax_section (bfd *                  abfd,
     }
 
   /* Get a copy of the native relocations.  */
-  internal_relocs = (_bfd_elf_link_read_relocs
-		     (abfd, sec, NULL, (Elf_Internal_Rela *) NULL,
-		      link_info->keep_memory));
+  /* Note - we ignore the setting of link_info->keep_memory when reading
+     in these relocs.  We have to maintain a permanent copy of the relocs
+     because we are going to walk over them multiple times, adjusting them
+     as bytes are deleted from the section, and with this relaxation
+     function itself being called multiple times on the same section...  */
+  internal_relocs = _bfd_elf_link_read_relocs
+    (abfd, sec, NULL, (Elf_Internal_Rela *) NULL, TRUE);
   if (internal_relocs == NULL)
     goto error_return;
-  if (! link_info->keep_memory)
-    free_relocs = internal_relocs;
 
   /* The RL_ relocs must be just before the operand relocs they go
      with, so we must sort them to guarantee this.  We use bubblesort
@@ -2150,7 +2133,7 @@ elf32_rx_relax_section (bfd *                  abfd,
 	  nbytes *= alignment;
 
 	  elf32_rx_relax_delete_bytes (abfd, sec, erel->r_offset-nbytes, nbytes, next_alignment,
-				       erel->r_offset == sec->size);
+				       erel->r_offset == sec->size, internal_relocs);
 	  *again = TRUE;
 
 	  continue;
@@ -2189,7 +2172,7 @@ elf32_rx_relax_section (bfd *                  abfd,
       nrelocs --;
 
 #define SNIPNR(offset, nbytes) \
-	elf32_rx_relax_delete_bytes (abfd, sec, (insn - contents) + offset, nbytes, next_alignment, 0);
+      elf32_rx_relax_delete_bytes (abfd, sec, (insn - contents) + offset, nbytes, next_alignment, 0, internal_relocs);
 #define SNIP(offset, nbytes, newtype) \
         SNIPNR (offset, nbytes);						\
 	srel->r_info = ELF32_R_INFO (ELF32_R_SYM (srel->r_info), newtype)
@@ -3009,9 +2992,6 @@ elf32_rx_relax_section (bfd *                  abfd,
   return TRUE;
 
  error_return:
-  if (free_relocs != NULL)
-    free (free_relocs);
-
   if (free_contents != NULL)
     free (free_contents);
 
@@ -3239,6 +3219,8 @@ rx_elf_object_p (bfd * abfd)
 
 	  if (phdr[i].p_filesz
 	      && phdr[i].p_offset <= (bfd_vma) sec->sh_offset
+	      && sec->sh_size > 0
+	      && sec->sh_type != SHT_NOBITS
 	      && (bfd_vma)sec->sh_offset <= phdr[i].p_offset + (phdr[i].p_filesz - 1))
 	    {
 	      /* Found one!  The difference between the two addresses,
@@ -3556,7 +3538,7 @@ rx_set_section_contents (bfd *         abfd,
       if (! rv)
 	return rv;
 
-      location ++;
+      location = (bfd_byte *) location + 1;
       offset ++;
       count --;
       caddr ++;
@@ -3582,7 +3564,7 @@ rx_set_section_contents (bfd *         abfd,
     }
 
   count -= scount;
-  location += scount;
+  location = (bfd_byte *) location + scount;
   offset += scount;
 
   if (count > 0)
@@ -3601,7 +3583,7 @@ rx_set_section_contents (bfd *         abfd,
 	  if (! rv)
 	    return rv;
 
-	  location ++;
+	  location = (bfd_byte *) location + 1;
 	  offset ++;
 	  count --;
 	  caddr ++;

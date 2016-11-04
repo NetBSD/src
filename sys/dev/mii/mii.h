@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.19 2015/07/21 02:04:24 msaitoh Exp $	*/
+/*	$NetBSD: mii.h,v 1.19.2.1 2016/11/04 14:49:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -35,6 +35,8 @@
  */
 
 #define	MII_NPHY	32	/* max # of PHYs per MII */
+#define	MII_ADDRBITS	5	/* Register address bits (0x00..0x1f) */
+#define	MII_ADDRMASK	0x1f	/* Address mask */
 
 /*
  * MII commands, used if a device must drive the MII lines

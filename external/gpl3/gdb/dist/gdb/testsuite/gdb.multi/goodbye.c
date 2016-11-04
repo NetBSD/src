@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2015 Free Software Foundation, Inc.
+   Copyright 2009-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -39,6 +39,23 @@ int verylongfun()
   glob *= 9;
 }
 
+void
+mailand()
+{
+  glob = 46;
+}
+
+int
+foo(int x) {
+  return x + 92;
+}
+
+void
+goodbye() {
+  ++glob;
+}
+
+int
 main() {
   mailand();
   foo(glob);
@@ -46,17 +63,4 @@ main() {
   goodbye();
 }
 
-foo(int x) {
-  return x + 92;
-}
-
-mailand()
-{
-  glob = 46;
-}
-
 void commonfun() { mailand(); } /* from goodbye */
-
-goodbye() {
-  ++glob;
-}

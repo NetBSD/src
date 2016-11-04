@@ -3,7 +3,7 @@
 # executable or shared object.  See elf.sc for configuration variables
 # that apply; only BPABI-specific variables will be noted here.
 #
-# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# Copyright (C) 2014-2016 Free Software Foundation, Inc.
 # 
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -145,7 +145,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright

@@ -11,13 +11,13 @@
 #
 # The order of the TLS entries is:
 #
-#	foo0	(offset 0x20)
-#	foo2	(offset 0x24)
-#	foo3	(offset 0x28)
-#	foo1	(offset 0x2c)
+#	foo3	(offset 0x20)
+#	foo1	(offset 0x24)
+#	foo2	(offset 0x28)
+#	foo0	(offset 0x2c)
 #
 # Any order would be acceptable, but it must match the .d dump.
 #
 Contents of section \.got:
- 90000 00000000 80000000 00000000 0000abc0  .*
- 90010 0000abc8 0000abcc 0000abc4           .*
+ 90000 00000000 80000000 00000000 0000abcc  .*
+ 90010 0000abc4 0000abc8 0000abc0           .*

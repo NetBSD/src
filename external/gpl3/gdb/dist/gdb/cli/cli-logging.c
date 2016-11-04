@@ -1,6 +1,6 @@
 /* Command-line output logging for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -177,7 +177,9 @@ pop_output_files (void)
   saved_output.targ = NULL;
   saved_output.targerr = NULL;
 
-  ui_out_redirect (current_uiout, NULL);
+  /* Stay consistent with handle_redirections.  */
+  if (!ui_out_is_mi_like_p (current_uiout))
+    ui_out_redirect (current_uiout, NULL);
 }
 
 /* This is a helper for the `set logging' command.  */

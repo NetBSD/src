@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.337.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.337.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.337.2.1 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.337.2.2 2016/11/04 14:49:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.337.2.1 2016/08/06 00:19:10 pgoyette 
 #include "opt_mrouting.h"
 #include "opt_mbuftrace.h"
 #include "opt_inet_csum.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include "arp.h"
@@ -294,9 +295,13 @@ static struct in_ifaddr	*ip_match_our_address(struct ifnet *, struct ip *,
 static struct in_ifaddr	*ip_match_our_address_broadcast(struct ifnet *,
 			    struct ip *);
 
-/* XXX: Not yet enabled. */
+#ifdef NET_MPSAFE
+#define	SOFTNET_LOCK()		mutex_enter(softnet_lock)
+#define	SOFTNET_UNLOCK()	mutex_exit(softnet_lock)
+#else
 #define	SOFTNET_LOCK()		KASSERT(mutex_owned(softnet_lock))
 #define	SOFTNET_UNLOCK()	KASSERT(mutex_owned(softnet_lock))
+#endif
 
 /*
  * IP initialization: fill in IP protocol switch table.
@@ -432,11 +437,15 @@ ipintr(void *arg __unused)
 
 	KASSERT(cpu_softintr_p());
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
+#endif
 	while ((m = pktq_dequeue(ip_pktq)) != NULL) {
 		ip_input(m);
 	}
+#ifndef NET_MPSAFE
 	mutex_exit(softnet_lock);
+#endif
 }
 
 /*
@@ -609,10 +618,9 @@ ip_input(struct mbuf *m)
 		struct in_addr odst = ip->ip_dst;
 		bool freed;
 
-		SOFTNET_LOCK();
 		freed = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_IN) != 0;
-		SOFTNET_UNLOCK();
 		if (freed || m == NULL) {
+			m = NULL;
 			goto out;
 		}
 		ip = mtod(m, struct ip *);
@@ -642,6 +650,7 @@ ip_input(struct mbuf *m)
 		if ((*altq_input)(m, AF_INET) == 0) {
 			/* Packet dropped by traffic conditioner. */
 			SOFTNET_UNLOCK();
+			m = NULL;
 			goto out;
 		}
 		SOFTNET_UNLOCK();
@@ -655,8 +664,10 @@ ip_input(struct mbuf *m)
 	 * to be sent and the original packet to be freed).
 	 */
 	ip_nhops = 0;		/* for source routed packets */
-	if (hlen > sizeof (struct ip) && ip_dooptions(m))
+	if (hlen > sizeof (struct ip) && ip_dooptions(m)) {
+		m = NULL;
 		goto out;
+	}
 
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
@@ -824,7 +835,7 @@ ours:
 		 * is expensive, so explore ia here again.
 		 */
 		s = pserialize_read_enter();
-		_ia = in_get_ia(ip->ip_dst.s_addr);
+		_ia = in_get_ia(ip->ip_dst);
 		_ia->ia_ifa.ifa_data.ifad_inbytes += ntohs(ip->ip_len);
 		pserialize_read_exit(s);
 	}
@@ -1321,11 +1332,8 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 		return;
 	}
 
-	SOFTNET_LOCK();
-
 	if (ip->ip_ttl <= IPTTLDEC) {
 		icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, dest, 0);
-		SOFTNET_UNLOCK();
 		return;
 	}
 
@@ -1333,7 +1341,6 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 
 	if ((rt = rtcache_lookup(&ipforward_rt, &u.dst)) == NULL) {
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
-		SOFTNET_UNLOCK();
 		return;
 	}
 
@@ -1403,13 +1410,13 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 		m_freem(mcopy);
 	}
 
-	SOFTNET_UNLOCK();
+	percpu_putref(ipforward_rt_percpu);
 	return;
 
 redirect:
 error:
 	if (mcopy == NULL) {
-		SOFTNET_UNLOCK();
+		percpu_putref(ipforward_rt_percpu);
 		return;
 	}
 
@@ -1450,11 +1457,11 @@ error:
 		 */
 		if (mcopy)
 			m_freem(mcopy);
-		SOFTNET_UNLOCK();
+		percpu_putref(ipforward_rt_percpu);
 		return;
 	}
 	icmp_error(mcopy, type, code, dest, destmtu);
-	SOFTNET_UNLOCK();
+	percpu_putref(ipforward_rt_percpu);
 }
 
 void

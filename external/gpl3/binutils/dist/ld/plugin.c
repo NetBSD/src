@@ -1,5 +1,5 @@
 /* Plugin control for the GNU linker.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -674,7 +674,24 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms,
 					     syms[n].name, FALSE, FALSE, TRUE);
       if (!blhe)
 	{
-	  res = LDPR_UNKNOWN;
+	  /* The plugin is called to claim symbols in an archive element
+	     from plugin_object_p.  But those symbols aren't needed to
+	     create output.  They are defined and referenced only within
+	     IR.  */
+	  switch (syms[n].def)
+	    {
+	    default:
+	      abort ();
+	    case LDPK_UNDEF:
+	    case LDPK_WEAKUNDEF:
+	      res = LDPR_UNDEF;
+	      break;
+	    case LDPK_DEF:
+	    case LDPK_WEAKDEF:
+	    case LDPK_COMMON:
+	      res = LDPR_PREVAILING_DEF_IRONLY;
+	      break;
+	    }
 	  goto report_symbol;
 	}
 
@@ -825,21 +842,23 @@ message (int level, const char *format, ...)
       break;
     case LDPL_WARNING:
       {
-	char *newfmt = ACONCAT (("%P: warning: ", format, "\n",
-				 (const char *) NULL));
+	char *newfmt = concat ("%P: warning: ", format, "\n",
+			       (const char *) NULL);
 	vfinfo (stdout, newfmt, args, TRUE);
+	free (newfmt);
       }
       break;
     case LDPL_FATAL:
     case LDPL_ERROR:
     default:
       {
-	char *newfmt = ACONCAT ((level == LDPL_FATAL ? "%P%F" : "%P%X",
-				 ": error: ", format, "\n",
-				 (const char *) NULL));
+	char *newfmt = concat (level == LDPL_FATAL ? "%P%F" : "%P%X",
+			       ": error: ", format, "\n",
+			       (const char *) NULL);
 	fflush (stdout);
 	vfinfo (stderr, newfmt, args, TRUE);
 	fflush (stderr);
+	free (newfmt);
       }
       break;
     }
@@ -1014,8 +1033,6 @@ plugin_call_claim_file (const struct ld_plugin_input_file *file, int *claimed)
 {
   plugin_t *curplug = plugins_list;
   *claimed = FALSE;
-  if (no_more_claiming)
-    return 0;
   while (curplug && !*claimed)
     {
       if (curplug->claim_file_handler)
@@ -1064,7 +1081,7 @@ plugin_object_p (bfd *ibfd)
   if ((ibfd->flags & BFD_PLUGIN) != 0)
     return NULL;
 
-  if (ibfd->plugin_format != bfd_plugin_uknown)
+  if (ibfd->plugin_format != bfd_plugin_unknown)
     {
       if (ibfd->plugin_format == bfd_plugin_yes)
 	return ibfd->plugin_dummy_bfd->xvec;
@@ -1072,8 +1089,9 @@ plugin_object_p (bfd *ibfd)
 	return NULL;
     }
 
-  inarchive = bfd_my_archive (ibfd) != NULL;
-  name = inarchive ? bfd_my_archive (ibfd)->filename : ibfd->filename;
+  inarchive = (ibfd->my_archive != NULL
+	       && !bfd_is_thin_archive (ibfd->my_archive));
+  name = inarchive ? ibfd->my_archive->filename : ibfd->filename;
   fd = open (name, O_RDONLY | O_BINARY);
 
   if (fd < 0)
@@ -1184,8 +1202,10 @@ plugin_maybe_claim (lang_input_statement_type *entry)
 
       /* Discard the real file's BFD and substitute the dummy one.  */
 
-      /* BFD archive handling caches elements so we can't call
-	 bfd_close for archives.  */
+      /* We can't call bfd_close on archives.  BFD archive handling
+	 caches elements, and add_archive_element keeps pointers to
+	 the_bfd and the_bfd->filename in a lang_input_statement_type
+	 linker script statement.  */
       if (entry->the_bfd->my_archive == NULL)
 	bfd_close (entry->the_bfd);
       entry->the_bfd = abfd;
@@ -1305,20 +1325,30 @@ plugin_notice (struct bfd_link_info *info,
 	  h->non_ir_ref = TRUE;
 	}
 
-      /* Otherwise, it must be a new def.  Ensure any symbol defined
-	 in an IR dummy BFD takes on a new value from a real BFD.
-	 Weak symbols are not normally overridden by a new weak
-	 definition, and strong symbols will normally cause multiple
-	 definition errors.  Avoid this by making the symbol appear
-	 to be undefined.  */
-      else if (((h->type == bfd_link_hash_defweak
-		 || h->type == bfd_link_hash_defined)
-		&& is_ir_dummy_bfd (sym_bfd = h->u.def.section->owner))
-	       || (h->type == bfd_link_hash_common
-		   && is_ir_dummy_bfd (sym_bfd = h->u.c.p->section->owner)))
+      /* Otherwise, it must be a new def.  */
+      else
 	{
-	  h->type = bfd_link_hash_undefweak;
-	  h->u.undef.abfd = sym_bfd;
+	  /* A common symbol should be merged with other commons or
+	     defs with the same name.  In particular, a common ought
+	     to be overridden by a def in a -flto object.  In that
+	     sense a common is also a ref.  */
+	  if (bfd_is_com_section (section))
+	    h->non_ir_ref = TRUE;
+
+	  /* Ensure any symbol defined in an IR dummy BFD takes on a
+	     new value from a real BFD.  Weak symbols are not normally
+	     overridden by a new weak definition, and strong symbols
+	     will normally cause multiple definition errors.  Avoid
+	     this by making the symbol appear to be undefined.  */
+	  if (((h->type == bfd_link_hash_defweak
+		|| h->type == bfd_link_hash_defined)
+	       && is_ir_dummy_bfd (sym_bfd = h->u.def.section->owner))
+	      || (h->type == bfd_link_hash_common
+		  && is_ir_dummy_bfd (sym_bfd = h->u.c.p->section->owner)))
+	    {
+	      h->type = bfd_link_hash_undefweak;
+	      h->u.undef.abfd = sym_bfd;
+	    }
 	}
     }
 

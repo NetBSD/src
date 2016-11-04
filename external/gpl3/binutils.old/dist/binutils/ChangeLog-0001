@@ -734,7 +734,7 @@
 
 	* objcopy.c (strip_main): Revert the change made on 2001-05-30
 	by accident.
-	(copy_main): Apply the the change made to strip_main on
+	(copy_main): Apply the change made to strip_main on
 	2001-05-30 by accident.
 
 2001-06-23  Andreas Jaeger  <aj@suse.de>
@@ -2052,6 +2052,12 @@
 
 For older changes see ChangeLog-9899
 
+Copyright (C) 2000-2001 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

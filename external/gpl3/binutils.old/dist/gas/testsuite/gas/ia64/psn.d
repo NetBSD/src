@@ -2,7 +2,7 @@
 # objdump: -d
 # name: ia64 psn 
 
-.*: +file format elf64-ia64.*
+.*: +file format elf..-ia64.*
 
 Disassembly of section \.text:
 

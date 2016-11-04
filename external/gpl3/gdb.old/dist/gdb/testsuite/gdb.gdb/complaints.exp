@@ -43,9 +43,11 @@ proc test_initial_complaints { } {
     gdb_test "call complaint (&symfile_complaints, symfile_complaints->root->fmt)" \
 	    "During symbol reading, Register a complaint."
 
-    # Check that there is only one thing in the list
+    # Check that there is only one thing in the list.  How the boolean
+    # result is output depends on whether GDB is built as a C or C++
+    # program.
     gdb_test "print symfile_complaints->root->next == &complaint_sentinel" \
-	    ".\[0-9\]+ = 1" "list has one entry"
+	    ".\[0-9\]+ = \(1|true\)" "list has one entry"
 
     # Add a second complaint, expect it
     gdb_test "call complaint (&symfile_complaints, \"Testing! Testing! Testing!\")" \

@@ -1,4 +1,4 @@
-# Copyright 2010-2015 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -126,25 +126,25 @@ if {$first_offset == 0} {
 set test "start inferior"
 gdb_exit
 
-set res [remote_spawn host $binfile]
-if { $res < 0 || $res == "" } {
+set test_spawn_id [remote_spawn host $binfile]
+if { $test_spawn_id < 0 || $test_spawn_id == "" } {
     perror "Spawning $binfile failed."
     fail $test
     return
 }
-set pid [exp_pid -i $res]
+set testpid [spawn_id_get_pid $test_spawn_id]
 gdb_expect {
     -re "sleeping\r\n" {
 	pass $test
     }
     eof {
 	fail "$test (eof)"
-	remote_exec host "kill -9 $pid"
+	wait -i $test_spawn_id
 	return
     }
     timeout {
 	fail "$test (timeout)"
-	remote_exec host "kill -9 $pid"
+	kill_wait_spawned_process $test_spawn_id
 	return
     }
 }
@@ -176,8 +176,8 @@ foreach align_mult {1 2} { with_test_prefix "shift-by-$align_mult" {
     clean_restart $executable
 
     set test "attach"
-    gdb_test_multiple "attach $pid" $test {
-	-re "Attaching to program: .*, process $pid\r\n" {
+    gdb_test_multiple "attach $testpid" $test {
+	-re "Attaching to program: .*, process $testpid\r\n" {
 	    # Missing "$gdb_prompt $" is intentional.
 	    pass $test
 	}
@@ -196,4 +196,4 @@ foreach align_mult {1 2} { with_test_prefix "shift-by-$align_mult" {
     gdb_test "detach" "Detaching from program: .*"
 }}
 
-remote_exec host "kill -9 $pid"
+kill_wait_spawned_process $test_spawn_id

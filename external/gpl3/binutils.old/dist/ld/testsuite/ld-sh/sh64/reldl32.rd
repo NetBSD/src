@@ -12,10 +12,10 @@ Relocation section '\.rela\.text' at offset 0x[0-9a-f]+ contains 26 entries:
 00000028 +0+21f6 R_SH_IMM_LOW16 +00000000 +file1text5 +\+ 8
 0000002c +0+2df6 R_SH_IMM_LOW16 +0000000c +file1data2 +\+ 30
 00000030 +0+2df6 R_SH_IMM_LOW16 +0000000c +file1data2 +\+ 0
-0000003c +0+42f6 R_SH_IMM_LOW16 +00000000 +unresolved7 +\+ 0
-00000040 +0+27f6 R_SH_IMM_LOW16 +00000000 +unresolved1 +\+ 0
 00000034 +0+35f8 R_SH_IMM_MEDLOW16 +00000000 +file2data4 +\+ 10
 00000038 +0+35f6 R_SH_IMM_LOW16 +00000000 +file2data4 +\+ 10
+0000003c +0+42f6 R_SH_IMM_LOW16 +00000000 +unresolved7 +\+ 0
+00000040 +0+27f6 R_SH_IMM_LOW16 +00000000 +unresolved1 +\+ 0
 00000068 +0+08f6 R_SH_IMM_LOW16 +00000064 +file2text1 +\+ 0
 0000006c +0+24f6 R_SH_IMM_LOW16 +00000124 +file2data2 +\+ 0
 00000070 +0+23f6 R_SH_IMM_LOW16 +00000010 +file1text3 +\+ 0

@@ -30,7 +30,6 @@ SYMBOL TABLE:
 0+ l    df \*ABS\*	0+ .*
 0+10fc l       \.data	0+ foobar2
 0+1060 l       \.text	0+ 0x04 plugh
-0+ l    df \*ABS\*	0+ .*
 0+10f8 g       \.data	0+ foobar
 0+10e8 g       \.data	0+ baz
 0+10e8 g       .*	0+ ___dtors

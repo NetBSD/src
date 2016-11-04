@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2015 Free Software Foundation, Inc.
+   Copyright 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -44,7 +44,7 @@ INLINE_SIM_ENDIAN\
 (unsigned_N)
 endian_t2h_N(unsigned_N raw_in)
 {
-  if (CURRENT_TARGET_BYTE_ORDER == CURRENT_HOST_BYTE_ORDER) {
+  if (CURRENT_TARGET_BYTE_ORDER == HOST_BYTE_ORDER) {
     return raw_in;
   }
   else {
@@ -58,7 +58,7 @@ INLINE_SIM_ENDIAN\
 (unsigned_N)
 endian_h2t_N(unsigned_N raw_in)
 {
-  if (CURRENT_TARGET_BYTE_ORDER == CURRENT_HOST_BYTE_ORDER) {
+  if (CURRENT_TARGET_BYTE_ORDER == HOST_BYTE_ORDER) {
     return raw_in;
   }
   else {
@@ -81,7 +81,7 @@ INLINE_SIM_ENDIAN\
 (unsigned_N)
 endian_h2be_N(unsigned_N raw_in)
 {
-  if (CURRENT_HOST_BYTE_ORDER == BIG_ENDIAN) {
+  if (HOST_BYTE_ORDER == BFD_ENDIAN_BIG) {
     return raw_in;
   }
   else {
@@ -95,7 +95,7 @@ INLINE_SIM_ENDIAN\
 (unsigned_N)
 endian_be2h_N(unsigned_N raw_in)
 {
-  if (CURRENT_HOST_BYTE_ORDER == BIG_ENDIAN) {
+  if (HOST_BYTE_ORDER == BFD_ENDIAN_BIG) {
     return raw_in;
   }
   else {
@@ -109,7 +109,7 @@ INLINE_SIM_ENDIAN\
 (unsigned_N)
 endian_h2le_N(unsigned_N raw_in)
 {
-  if (CURRENT_HOST_BYTE_ORDER == LITTLE_ENDIAN) {
+  if (HOST_BYTE_ORDER == BFD_ENDIAN_LITTLE) {
     return raw_in;
   }
   else {
@@ -123,7 +123,7 @@ INLINE_SIM_ENDIAN\
 (unsigned_N)
 endian_le2h_N(unsigned_N raw_in)
 {
-  if (CURRENT_HOST_BYTE_ORDER == LITTLE_ENDIAN) {
+  if (HOST_BYTE_ORDER == BFD_ENDIAN_LITTLE) {
     return raw_in;
   }
   else {
@@ -145,7 +145,7 @@ offset_N (unsigned_N *x,
   ASSERT (offset + sizeof_word <= sizeof(unsigned_N));
   ASSERT (word < (sizeof (unsigned_N) / sizeof_word));
   ASSERT ((sizeof (unsigned_N) % sizeof_word) == 0);
-  if (WITH_HOST_BYTE_ORDER == LITTLE_ENDIAN)
+  if (HOST_BYTE_ORDER == BFD_ENDIAN_LITTLE)
     {
       out = in + sizeof (unsigned_N) - offset - sizeof_word;
     }

@@ -1,4 +1,4 @@
-# Copyright 2008-2015 Free Software Foundation, Inc.
+# Copyright 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -213,20 +213,25 @@ gdb_test_multiple "stepi" "$test_message" {
 
 # step backward into function (thru return)
 
-set test_message "reverse step into fn call"
-gdb_test_multiple "step" "$test_message" {
-    -re "RETURN FROM CALLEE.*$gdb_prompt $" {
-	send_gdb "step\n"
-	exp_continue
-    }
-    -re "ARRIVED IN CALLEE.*$gdb_prompt $" {
-	pass "$test_message"
-    }
-}
+gdb_test "step" "(RETURN FROM CALLEE|ARRIVED IN CALLEE).*" \
+    "reverse step into fn call"
 
 # step backward out of called function (thru call)
 
-gdb_test "step" ".*STEP INTO THIS CALL.*" "reverse step out of called fn"
+set test_message "reverse step out of called fn"
+gdb_test_multiple "step" "$test_message" {
+    -re "STEP INTO THIS CALL.*.*$gdb_prompt $" {
+	pass "$test_message"
+    }
+    -re "ARRIVED IN CALLEE.*$gdb_prompt $" {
+	send_gdb "step\n"
+	exp_continue
+    }
+    -re "ENTER CALLEE.*$gdb_prompt $" {
+	send_gdb "step\n"
+	exp_continue
+    }
+}
 
 # next backward over call
 

@@ -1,4 +1,4 @@
-#   Copyright 1993, 1994, 1995, 1997, 2007, 2009 Free Software Foundation, Inc.
+#   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -153,6 +153,57 @@ if [regexp $want $got] then {
     pass "nm -P"
 } else {
     fail "nm -P"
+}
+
+# Test nm --size-sort
+
+# The target exceptions here are intended for targets that have ELF as
+# an intermediate format or otherwise require the ELF-variant syntax
+# for proper size annotation.  It would be nice if is_elf_format found
+# all the ELF variants, but adding the patterns here to that proc then
+# introduces a whole slew of new regressions in the GAS and LD testsuites.
+if {   [is_elf_format]
+    || [istarget *-*-dragonfly*]
+    || [istarget *-*-*elf]
+    || [istarget *-*-freebsd*]
+    || [istarget *-*-lynxos*]
+    || [istarget "mmix-knuth-mmixware"]
+    || [istarget *-*-netware*]
+    || [istarget *-*-nto*]
+    || [istarget *-*-rdos*]
+    || [istarget *-*-tpf*]
+    || [istarget *-*-uclinux*]
+    || [istarget ia64-*-*vms*]
+    || [istarget *-*-vxworks*] } {
+    set nm_1_src "nm-elf-1.s"
+} else {
+    set nm_1_src "nm-1.s"
+}
+
+if {![binutils_assemble $srcdir/$subdir/$nm_1_src tmpdir/nm-1.o]} then {
+    return
+}
+
+if [is_remote host] {
+    set tempfile [remote_download host tmpdir/nm-1.o]
+} else {
+    set tempfile tmpdir/nm-1.o
+}
+
+# This test does not work correctly on ECOFF targets, because ECOFF
+# stores most symbols twice, which messes up the nm output.
+setup_xfail "alpha*-*-osf*" "alpha*-*-netware*"
+setup_xfail "mips*-*-ultrix*" "mips*-*-ecoff*" "mips*-*-irix4*"
+setup_xfail "mips*-*-riscos*" "mips*-*-sysv3*" "mips*-sony-bsd*"
+
+set got [binutils_run $NM "$NMFLAGS --size-sort $tempfile"]
+
+set want "0*4 T text_symbol3.*0*8 T text_symbol2.*0*c T text_symbol1"
+
+if [regexp $want $got] then {
+    pass "nm --size-sort"
+} else {
+    fail "nm --size-sort"
 }
 
 # There are certainly other tests that could be run.

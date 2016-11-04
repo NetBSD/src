@@ -1,6 +1,6 @@
 /* Fortran language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C definitions by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -25,7 +25,7 @@ struct parser_state;
 
 extern int f_parse (struct parser_state *);
 
-extern void f_error (char *);	/* Defined in f-exp.y */
+extern void f_yyerror (char *);	/* Defined in f-exp.y */
 
 extern void f_print_type (struct type *, const char *, struct ui_file *, int,
 			  int, const struct type_print_options *);
@@ -36,19 +36,6 @@ extern void f_val_print (struct type *, const gdb_byte *, int, CORE_ADDR,
 			 const struct value_print_options *);
 
 /* Language-specific data structures */
-
-/* In F90 subrange expression, either bound could be empty, indicating that
-   its value is by default that of the corresponding bound of the array or
-   string.  So we have four sorts of subrange in F90.  This enumeration type
-   is to identify this.  */
-   
-enum f90_range_type
-  {
-    BOTH_BOUND_DEFAULT,		/* "(:)"  */
-    LOW_BOUND_DEFAULT,		/* "(:high)"  */
-    HIGH_BOUND_DEFAULT,		/* "(low:)"  */
-    NONE_BOUND_DEFAULT		/* "(low:high)"  */
-  };
 
 /* A common block.  */
 

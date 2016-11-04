@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.129 2016/06/22 10:44:32 knakahara Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.129.2.1 2016/11/04 14:49:20 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.129 2016/06/22 10:44:32 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.129.2.1 2016/11/04 14:49:20 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -2557,13 +2557,13 @@ bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	switch (ether_type)
 	{
 	case ETHERTYPE_IP :
-		error = (dir == PFIL_IN) ? bridge_ip_checkbasic(mp) : 0;
+		error = bridge_ip_checkbasic(mp);
 		if (error == 0)
 			error = pfil_run_hooks(inet_pfil_hook, mp, ifp, dir);
 		break;
 # ifdef INET6
 	case ETHERTYPE_IPV6 :
-		error = (dir == PFIL_IN) ? bridge_ip6_checkbasic(mp) : 0;
+		error = bridge_ip6_checkbasic(mp);
 		if (error == 0)
 			error = pfil_run_hooks(inet6_pfil_hook, mp, ifp, dir);
 		break;

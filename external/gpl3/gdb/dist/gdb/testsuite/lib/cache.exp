@@ -1,4 +1,4 @@
-# Copyright 2012-2015 Free Software Foundation, Inc.
+# Copyright 2012-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ proc gdb_do_cache {name} {
     }
 
     if {[info exists GDB_PARALLEL]} {
-	set cache_filename [file join $objdir cache $cache_name]
+	set cache_filename [make_gdb_parallel_path cache $cache_name]
 	if {[file exists $cache_filename]} {
 	    set fd [open $cache_filename]
 	    set gdb_data_cache($cache_name) [read -nonewline $fd]

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.49 2015/08/23 18:33:15 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.49.2.1 2016/11/04 14:49:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.49 2015/08/23 18:33:15 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.49.2.1 2016/11/04 14:49:25 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ char	*nlistf = NULL;
 sig_t	sigtstpdfl;
 double avenrun[3];
 int     col;
-int	naptime = 5;
+double	naptime = 5;
 int     verbose = 1;                    /* to report kvm read errs */
 int     hz, stathz, maxslp;
 char    c;
@@ -113,7 +113,7 @@ main(int argc, char **argv)
 			nflag = !nflag;
 			break;
 		case 'w':
-			if ((naptime = atoi(optarg)) <= 0)
+			if ((naptime = strtod(optarg, NULL)) <= 0)
 				errx(1, "interval <= 0.");
 			break;
 		case 't':
@@ -133,7 +133,7 @@ main(int argc, char **argv)
 		int modefound = 0;
 
 		if (isdigit((unsigned char)argv[0][0])) {
-			naptime = atoi(argv[0]);
+			naptime = strtod(argv[0], NULL);
 			if (naptime <= 0)
 				naptime = 5;
 			continue;

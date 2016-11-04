@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.345.2.6 2016/07/26 05:54:39 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.345.2.7 2016/11/04 14:49:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.345.2.6 2016/07/26 05:54:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.345.2.7 2016/11/04 14:49:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1789,17 +1789,16 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	 * Add support for "regular" device ioctls here.
 	 */
 	
-	error = dk_ioctl(dksc, dev, cmd, data, flag, l);
-	if (error != EPASSTHROUGH)
-		return (error);
-
 	switch (cmd) {
 	case DIOCCACHESYNC:
-		return rf_sync_component_caches(raidPtr);
+		retcode = rf_sync_component_caches(raidPtr);
+		break;
 
 	default:
-		retcode = ENOTTY;
+		retcode = dk_ioctl(dksc, dev, cmd, data, flag, l);
+		break;
 	}
+
 	return (retcode);
 
 }

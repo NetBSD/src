@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.42 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.42.2.1 2016/11/04 14:49:09 pgoyette Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.41 2015/05/22 06:50:54 kettenis Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.42 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.42.2.1 2016/11/04 14:49:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -3939,7 +3939,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		flags |= IWM_TX_CMD_FLG_ACK;
 	}
 
-	if (type != IEEE80211_FC0_TYPE_DATA
+	if (type == IEEE80211_FC0_TYPE_DATA
 	    && (totlen + IEEE80211_CRC_LEN > ic->ic_rtsthreshold)
 	    && !IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		flags |= IWM_TX_CMD_FLG_PROT_REQUIRE;

@@ -4,7 +4,7 @@
 
 Contents of the .eh_frame section:
 
-00000000 00000014 00000000 CIE
+0+0000 0+0014 0+0000 CIE
   Version:               1
   Augmentation:          "zR"
   Code alignment factor: 4
@@ -17,8 +17,8 @@ Contents of the .eh_frame section:
   DW_CFA_nop
   DW_CFA_nop
 
-00000018 00000014 0000001c FDE cie=00000000 pc=00000000..00000030
-  DW_CFA_advance_loc: 4 to 00000004
+0+0018 0+0014 0+001c FDE cie=0+0000 pc=0+0000..0+0030
+  DW_CFA_advance_loc: 4 to 0+0004
   DW_CFA_def_cfa_register: r30
   DW_CFA_GNU_window_save
   DW_CFA_register: r15 in r31

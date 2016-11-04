@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.4 2014/05/28 10:12:43 tron Exp $	*/
+/*	$NetBSD: common.c,v 1.4.6.1 2016/11/04 14:42:45 pgoyette Exp $	*/
 
 /* common.c - common routines for the ldap client tools */
 /* $OpenLDAP$ */
@@ -2330,7 +2330,7 @@ void tool_print_ctrls(
 		/* known controls */
 		for ( j = 0; tool_ctrl_response[j].oid != NULL; j++ ) {
 			if ( strcmp( tool_ctrl_response[j].oid, ctrls[i]->ldctl_oid ) == 0 ) {
-				if ( !tool_ctrl_response[j].mask & tool_type ) {
+				if ( !(tool_ctrl_response[j].mask & tool_type) ) {
 					/* this control should not appear
 					 * with this tool; warning? */
 				}

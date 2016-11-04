@@ -1,6 +1,6 @@
 /* TUI window generic functions.
 
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -354,12 +354,14 @@ tui_set_var_cmd (char *null_args, int from_tty, struct cmd_list_element *c)
     tui_rehighlight_all ();
 }
 
-/* Complete possible window names to focus on.  TEXT is the complete text
-   entered so far, WORD is the word currently being completed.  */
+/* Generic window name completion function.  Complete window name pointed
+   to by TEXT and WORD.  If INCLUDE_NEXT_PREV_P is true then the special
+   window names 'next' and 'prev' will also be considered as possible
+   completions of the window name.  */
 
 static VEC (char_ptr) *
-focus_completer (struct cmd_list_element *ignore,
-		  const char *text, const char *word)
+window_name_completer (int include_next_prev_p,
+		       const char *text, const char *word)
 {
   VEC (const_char_ptr) *completion_name_vec = NULL;
   VEC (char_ptr) *matches_vec;
@@ -374,26 +376,9 @@ focus_completer (struct cmd_list_element *ignore,
 	  || !tui_win_list[win_type]->generic.is_visible)
 	continue;
 
-      switch (win_type)
-	{
-	case SRC_WIN:
-	  completion_name = "src";
-	  break;
-	case DISASSEM_WIN:
-	  completion_name = "asm";
-	  break;
-	case DATA_WIN:
-	  completion_name = "regs";
-	  break;
-	case CMD_WIN:
-	  completion_name = "cmd";
-	  break;
-	default:
-	  break;
-	}
-
-      if (completion_name != NULL)
-	VEC_safe_push (const_char_ptr, completion_name_vec, completion_name);
+      completion_name = tui_win_name (&tui_win_list [win_type]->generic);
+      gdb_assert (completion_name != NULL);
+      VEC_safe_push (const_char_ptr, completion_name_vec, completion_name);
     }
 
   /* If no windows are considered visible then the TUI has not yet been
@@ -402,14 +387,17 @@ focus_completer (struct cmd_list_element *ignore,
      default layout to SRC_COMMAND.  */
   if (VEC_length (const_char_ptr, completion_name_vec) == 0)
     {
-      VEC_safe_push (const_char_ptr, completion_name_vec, "src");
-      VEC_safe_push (const_char_ptr, completion_name_vec, "cmd");
+      VEC_safe_push (const_char_ptr, completion_name_vec, SRC_NAME);
+      VEC_safe_push (const_char_ptr, completion_name_vec, CMD_NAME);
     }
 
-  VEC_safe_push (const_char_ptr, completion_name_vec, "next");
-  VEC_safe_push (const_char_ptr, completion_name_vec, "prev");
-  VEC_safe_push (const_char_ptr, completion_name_vec, NULL);
+  if (include_next_prev_p)
+    {
+      VEC_safe_push (const_char_ptr, completion_name_vec, "next");
+      VEC_safe_push (const_char_ptr, completion_name_vec, "prev");
+    }
 
+  VEC_safe_push (const_char_ptr, completion_name_vec, NULL);
   matches_vec
     = complete_on_enum (VEC_address (const_char_ptr, completion_name_vec),
 			text, word);
@@ -417,6 +405,32 @@ focus_completer (struct cmd_list_element *ignore,
   VEC_free (const_char_ptr, completion_name_vec);
 
   return matches_vec;
+}
+
+/* Complete possible window names to focus on.  TEXT is the complete text
+   entered so far, WORD is the word currently being completed.  */
+
+static VEC (char_ptr) *
+focus_completer (struct cmd_list_element *ignore,
+		  const char *text, const char *word)
+{
+  return window_name_completer (1, text, word);
+}
+
+/* Complete possible window names for winheight command.  TEXT is the
+   complete text entered so far, WORD is the word currently being
+   completed.  */
+
+static VEC (char_ptr) *
+winheight_completer (struct cmd_list_element *ignore,
+		     const char *text, const char *word)
+{
+  /* The first word is the window name.  That we can complete.  Subsequent
+     words can't be completed.  */
+  if (word != text)
+    return NULL;
+
+  return window_name_completer (0, text, word);
 }
 
 /* Function to initialize gdb commands, for tui window
@@ -430,7 +444,7 @@ _initialize_tui_win (void)
 {
   static struct cmd_list_element *tui_setlist;
   static struct cmd_list_element *tui_showlist;
-  struct cmd_list_element *focus_cmd;
+  struct cmd_list_element *cmd;
 
   /* Define the classes of commands.
      They will appear in the help list in the reverse of this order.  */
@@ -448,8 +462,8 @@ _initialize_tui_win (void)
   add_com ("tabset", class_tui, tui_set_tab_width_command, _("\
 Set the width (in characters) of tab stops.\n\
 Usage: tabset <n>\n"));
-  add_com ("winheight", class_tui, tui_set_win_height_command, _("\
-Set the height of a specified window.\n\
+  cmd = add_com ("winheight", class_tui, tui_set_win_height_command, _("\
+Set or modify the height of a specified window.\n\
 Usage: winheight <win_name> [+ | -] <#lines>\n\
 Window names are:\n\
 src  : the source window\n\
@@ -457,9 +471,10 @@ cmd  : the command window\n\
 asm  : the disassembly window\n\
 regs : the register display\n"));
   add_com_alias ("wh", "winheight", class_tui, 0);
+  set_cmd_completer (cmd, winheight_completer);
   add_info ("win", tui_all_windows_info,
 	    _("List of all displayed windows.\n"));
-  focus_cmd = add_com ("focus", class_tui, tui_set_focus_command, _("\
+  cmd = add_com ("focus", class_tui, tui_set_focus_command, _("\
 Set focus to named window or next/prev window.\n\
 Usage: focus {<win> | next | prev}\n\
 Valid Window names are:\n\
@@ -468,7 +483,7 @@ asm  : the disassembly window\n\
 regs : the register display\n\
 cmd  : the command window\n"));
   add_com_alias ("fs", "focus", class_tui, 0);
-  set_cmd_completer (focus_cmd, focus_completer);
+  set_cmd_completer (cmd, focus_completer);
   add_com ("+", class_tui, tui_scroll_forward_command, _("\
 Scroll window forward.\n\
 Usage: + [win] [n]\n"));
@@ -885,7 +900,7 @@ tui_resize_all (void)
 	      && !tui_win_list[win_type]->generic.is_visible)
 	    {
 	      tui_free_window (tui_win_list[win_type]);
-	      tui_win_list[win_type] = (struct tui_win_info *) NULL;
+	      tui_win_list[win_type] = NULL;
 	    }
 	}
       /* Turn keypad back on, unless focus is in the command
@@ -1033,14 +1048,14 @@ tui_set_focus (char *arg, int from_tty)
     {
       char *buf_ptr = (char *) xstrdup (arg);
       int i;
-      struct tui_win_info *win_info = (struct tui_win_info *) NULL;
+      struct tui_win_info *win_info = NULL;
 
       for (i = 0; (i < strlen (buf_ptr)); i++)
-	buf_ptr[i] = toupper (arg[i]);
+	buf_ptr[i] = tolower (arg[i]);
 
-      if (subset_compare (buf_ptr, "NEXT"))
+      if (subset_compare (buf_ptr, "next"))
 	win_info = tui_next_win (tui_win_with_focus ());
-      else if (subset_compare (buf_ptr, "PREV"))
+      else if (subset_compare (buf_ptr, "prev"))
 	win_info = tui_prev_win (tui_win_with_focus ());
       else
 	win_info = tui_partial_win_by_name (buf_ptr);
@@ -1155,10 +1170,12 @@ tui_set_win_height (char *arg, int from_tty)
     {
       char *buf = xstrdup (arg);
       char *buf_ptr = buf;
-      char *wname = (char *) NULL;
+      char *wname = NULL;
       int new_height, i;
       struct tui_win_info *win_info;
+      struct cleanup *old_chain;
 
+      old_chain = make_cleanup (xfree, buf);
       wname = buf_ptr;
       buf_ptr = strchr (buf_ptr, ' ');
       if (buf_ptr != (char *) NULL)
@@ -1167,7 +1184,7 @@ tui_set_win_height (char *arg, int from_tty)
 
 	  /* Validate the window name.  */
 	  for (i = 0; i < strlen (wname); i++)
-	    wname[i] = toupper (wname[i]);
+	    wname[i] = tolower (wname[i]);
 	  win_info = tui_partial_win_by_name (wname);
 
 	  if (win_info == (struct tui_win_info *) NULL
@@ -1221,8 +1238,7 @@ The window name specified must be valid and visible.\n"));
       else
 	printf_filtered (WIN_HEIGHT_USAGE);
 
-      if (buf != (char *) NULL)
-	xfree (buf);
+      do_cleanups (old_chain);
     }
   else
     printf_filtered (WIN_HEIGHT_USAGE);
@@ -1441,7 +1457,7 @@ make_invisible_and_set_new_height (struct tui_win_info *win_info,
 	    &((struct tui_win_element *)
 	      win_info->generic.content[i])->which_element.data_window;
 	  tui_delete_win (gen_win_info->handle);
-	  gen_win_info->handle = (WINDOW *) NULL;
+	  gen_win_info->handle = NULL;
 	}
       break;
     default:
@@ -1509,8 +1525,6 @@ make_visible_with_new_height (struct tui_win_info *win_info)
       tui_display_all_data ();
       break;
     case CMD_WIN:
-      win_info->detail.command_info.cur_line = 0;
-      win_info->detail.command_info.curch = 0;
 #ifdef HAVE_WRESIZE
       wresize (TUI_CMD_WIN->generic.handle,
 	       TUI_CMD_WIN->generic.height,
@@ -1519,9 +1533,7 @@ make_visible_with_new_height (struct tui_win_info *win_info)
       mvwin (TUI_CMD_WIN->generic.handle,
 	     TUI_CMD_WIN->generic.origin.y,
 	     TUI_CMD_WIN->generic.origin.x);
-      wmove (win_info->generic.handle,
-	     win_info->detail.command_info.cur_line,
-	     win_info->detail.command_info.curch);
+      wmove (win_info->generic.handle, 0, 0);
       break;
     default:
       break;
@@ -1653,9 +1665,11 @@ parse_scrolling_args (char *arg,
   if (arg != (char *) NULL)
     {
       char *buf, *buf_ptr;
+      struct cleanup *old_chain;
 
       /* Process the number of lines to scroll.  */
       buf = buf_ptr = xstrdup (arg);
+      old_chain = make_cleanup (xfree, buf);
       if (isdigit (*buf_ptr))
 	{
 	  char *num_str;
@@ -1689,7 +1703,7 @@ parse_scrolling_args (char *arg,
 
 	      /* Validate the window name.  */
 	      for (i = 0; i < strlen (wname); i++)
-		wname[i] = toupper (wname[i]);
+		wname[i] = tolower (wname[i]);
 	    }
 	  else
 	    wname = "?";
@@ -1703,6 +1717,6 @@ The window name specified must be valid and visible.\n"));
 	  else if (*win_to_scroll == TUI_CMD_WIN)
 	    *win_to_scroll = (tui_source_windows ())->list[0];
 	}
-      xfree (buf);
+      do_cleanups (old_chain);
     }
 }

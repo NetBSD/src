@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.101.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.101.2.3 2016/11/04 14:49:21 pgoyette Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.101.2.2 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.101.2.3 2016/11/04 14:49:21 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -492,6 +492,7 @@ get_ifid(struct ifnet *ifp0, struct ifnet *altifp,
 			nd6log(LOG_DEBUG,
 			    "%s: borrow interface identifier from %s\n",
 			    if_name(ifp0), if_name(ifp));
+			pserialize_read_exit(s);
 			goto success;
 		}
 	}

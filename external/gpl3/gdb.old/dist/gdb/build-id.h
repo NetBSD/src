@@ -22,7 +22,7 @@
 
 /* Locate NT_GNU_BUILD_ID from ABFD and return its content.  */
 
-extern const struct elf_build_id *build_id_bfd_get (bfd *abfd);
+extern const struct bfd_build_id *build_id_bfd_get (bfd *abfd);
 
 /* Return true if ABFD has NT_GNU_BUILD_ID matching the CHECK value.
    Otherwise, issue a warning and return false.  */

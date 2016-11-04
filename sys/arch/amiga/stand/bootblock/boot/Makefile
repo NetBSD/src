@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.53 2016/01/15 08:27:04 mlelstv Exp $
+#	$NetBSD: Makefile,v 1.53.2.1 2016/11/04 14:48:57 pgoyette Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 .include <bsd.sys.mk>		# for HOST_SH
 
 ### what we need:

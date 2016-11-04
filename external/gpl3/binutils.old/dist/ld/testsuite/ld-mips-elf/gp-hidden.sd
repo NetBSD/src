@@ -5,5 +5,5 @@ Symbol table '.dynsym' contains [0-9]+ entries:
 Symbol table '.symtab' contains [0-9]+ entries:
  * Num: * Value * Size * Type * Bind * Vis * Ndx * Name
 #...
- * [0-9a-f]+: * [0-9a-f]+ * 0 * NOTYPE * LOCAL * DEFAULT * ABS * _gp
+ * [0-9a-f]+: * [0-9a-f]+ * 0 * NOTYPE * LOCAL * DEFAULT .* _gp
 #pass

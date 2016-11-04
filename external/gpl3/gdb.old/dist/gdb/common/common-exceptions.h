@@ -99,6 +99,12 @@ enum errors {
   /* Requested feature, method, mechanism, etc. is not supported.  */
   NOT_SUPPORTED_ERROR,
 
+  /* The number of candidates generated during line completion has
+     reached the user's specified limit.  This isn't an error, this exception
+     is used to halt searching for more completions, but for consistency
+     "_ERROR" is appended to the name.  */
+  MAX_COMPLETIONS_REACHED_ERROR,
+
   /* Add more errors here.  */
   NR_ERRORS
 };
@@ -112,14 +118,19 @@ struct gdb_exception
 
 /* Functions to drive the exceptions state machine.  Though declared
    here by necessity, these functions should be considered internal to
-   the exceptions subsystem and not used other than via the TRY_CATCH
-   macro defined below.  */
+   the exceptions subsystem and not used other than via the TRY/CATCH
+   macros defined below.  */
 
-extern SIGJMP_BUF *exceptions_state_mc_init (volatile struct
-					     gdb_exception *exception,
-					     return_mask mask);
+#ifndef __cplusplus
+extern SIGJMP_BUF *exceptions_state_mc_init (void);
 extern int exceptions_state_mc_action_iter (void);
 extern int exceptions_state_mc_action_iter_1 (void);
+extern int exceptions_state_mc_catch (struct gdb_exception *, int);
+#else
+extern void *exception_try_scope_entry (void);
+extern void exception_try_scope_exit (void *saved_state);
+extern void exception_rethrow (void);
+#endif
 
 /* Macro to wrap up standard try/catch behavior.
 
@@ -132,25 +143,97 @@ extern int exceptions_state_mc_action_iter_1 (void);
 
    *INDENT-OFF*
 
-   volatile struct gdb_exception e;
-   TRY_CATCH (e, RETURN_MASK_ERROR)
+   TRY
      {
      }
-   switch (e.reason)
+   CATCH (e, RETURN_MASK_ERROR)
      {
-     case RETURN_ERROR: ...
+       switch (e.reason)
+         {
+           case RETURN_ERROR: ...
+         }
      }
+   END_CATCH
 
   */
 
-#define TRY_CATCH(EXCEPTION,MASK) \
+#ifndef __cplusplus
+
+#define TRY \
      { \
        SIGJMP_BUF *buf = \
-	 exceptions_state_mc_init (&(EXCEPTION), (MASK)); \
+	 exceptions_state_mc_init (); \
        SIGSETJMP (*buf); \
      } \
      while (exceptions_state_mc_action_iter ()) \
        while (exceptions_state_mc_action_iter_1 ())
+
+#define CATCH(EXCEPTION, MASK)				\
+  {							\
+    struct gdb_exception EXCEPTION;				\
+    if (exceptions_state_mc_catch (&(EXCEPTION), MASK))
+
+#define END_CATCH				\
+  }
+
+#else
+
+/* Prevent error/quit during TRY from calling cleanups established
+   prior to here.  This pops out the scope in either case of normal
+   exit or exception exit.  */
+struct exception_try_scope
+{
+  exception_try_scope ()
+  {
+    saved_state = exception_try_scope_entry ();
+  }
+  ~exception_try_scope ()
+  {
+    exception_try_scope_exit (saved_state);
+  }
+
+  void *saved_state;
+};
+
+/* We still need to wrap TRY/CATCH in C++ so that cleanups and C++
+   exceptions can coexist.  The TRY blocked is wrapped in a
+   do/while(0) so that break/continue within the block works the same
+   as in C.  */
+#define TRY								\
+  try									\
+    {									\
+      exception_try_scope exception_try_scope_instance;			\
+      do								\
+	{
+
+#define CATCH(EXCEPTION, MASK)						\
+	} while (0);							\
+    }								        \
+  catch (struct gdb_exception ## _ ## MASK &EXCEPTION)
+
+#define END_CATCH				\
+  catch (...)					\
+  {						\
+    exception_rethrow ();			\
+  }
+
+/* The exception types client code may catch.  They're just shims
+   around gdb_exception that add nothing but type info.  Which is used
+   is selected depending on the MASK argument passed to CATCH.  */
+
+struct gdb_exception_RETURN_MASK_ALL : public gdb_exception
+{
+};
+
+struct gdb_exception_RETURN_MASK_ERROR : public gdb_exception_RETURN_MASK_ALL
+{
+};
+
+struct gdb_exception_RETURN_MASK_QUIT : public gdb_exception_RETURN_MASK_ALL
+{
+};
+
+#endif
 
 /* *INDENT-ON* */
 
@@ -181,5 +264,8 @@ extern void throw_error (enum errors error, const char *fmt, ...)
      ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 3);
 extern void throw_quit (const char *fmt, ...)
      ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (1, 2);
+
+/* A pre-defined non-exception.  */
+extern const struct gdb_exception exception_none;
 
 #endif /* COMMON_EXCEPTIONS_H */

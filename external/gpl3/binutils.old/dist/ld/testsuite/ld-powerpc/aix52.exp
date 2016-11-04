@@ -1,5 +1,5 @@
 # Expect script for AIX 5.2+ tests
-#   Copyright 2009 Free Software Foundation
+#   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -57,7 +57,7 @@ proc run_aix_test { size name ldopts asopts sources tools output } {
     }
     regsub -all {SIZE} $tools $size tools
     run_ld_link_tests [list [list "$name ($size-bit)" \
-				 $ldopts \
+				 $ldopts "" \
 				 "$asopts -a$size --defsym size=$size" \
 				 $sources \
 				 $tools \

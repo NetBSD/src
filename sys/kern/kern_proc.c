@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.196 2016/05/25 17:43:58 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.196.2.1 2016/11/04 14:49:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.196 2016/05/25 17:43:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.196.2.1 2016/11/04 14:49:17 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -480,7 +480,7 @@ proc0_init(void)
 	 * share proc0's vmspace, and thus, the kernel pmap.
 	 */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
-	    trunc_page(VM_MAX_ADDRESS),
+	    trunc_page(VM_MAXUSER_ADDRESS),
 #ifdef __USE_TOPDOWN_VM
 	    true
 #else
@@ -2052,12 +2052,6 @@ copy_procargs(struct proc *p, int oid, size_t *limit,
 		goto done;
 	}
 
-#ifdef COMPAT_NETBSD32
-	if (p->p_flag & PK_32)
-		entry_len = sizeof(netbsd32_charp);
-	else
-#endif
-		entry_len = sizeof(char *);
 
 	/*
 	 * Now copy each string.
@@ -2065,6 +2059,7 @@ copy_procargs(struct proc *p, int oid, size_t *limit,
 	len = 0; /* bytes written to user buffer */
 	loaded = 0; /* bytes from argv already processed */
 	i = 0; /* To make compiler happy */
+	entry_len = PROC_PTRSZ(p);
 
 	for (; argvlen; --argvlen) {
 		int finished = 0;

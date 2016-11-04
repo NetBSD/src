@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.48 2015/05/19 19:30:28 snj Exp $
+.\"$NetBSD: hardware,v 1.48.2.1 2016/11/04 14:42:38 pgoyette Exp $
 .
 Currently,
 .Nx*M
@@ -34,15 +34,6 @@ Open Firmware version 2.4 is slightly different with regards to booting.
 Open Firmware version 3 is altogether different, but easier to set up for 
 .Nx .
 .Pp
-At present,
-.Nx*M
-does not support the PPC 601 microprocessor, which means that the
-PowerMacintosh 7200 and 7500 models are not supported.
-The PowerMacintosh 7500 may be upgraded to a PPC 604, G3
-or G4 microprocessor via a daughtercard replacement, in which case
-.Nx
-will run on this system.
-.Pp
 The minimal configuration requires 16 MB of RAM and 160 MB of disk space.
 To install the entire system requires considerably more, plus space for the
 swap partition (usually the RAM size, unless you've got a lot of RAM).
@@ -58,7 +49,7 @@ version:
 .It Em "Open Firmware 1.0.5"
 .Pp
 .(bullet -compact
-Apple PowerMacintosh (7300, 7500 (with CPU upgrade), 7600, 8500, 8600, 9500,
+Apple PowerMacintosh (7200, 7300, 7500, 7600, 8500, 8600, 9500,
 and 9600)
 .It
 Apple Workgroup Server 8550
@@ -150,9 +141,6 @@ G5 models are supported as a 32-bit port in bridge mode only.
 .
 .Ss2 Unsupported models
 .(bullet -compact -offset indent
-Systems with Open Firmware, but using a PPC 601 microprocessor
-(PowerMacintosh 7200 and 7500 (without CPU upgrade))
-.It
 Systems with a PowerPC microprocessor, but lacking Open Firmware
 .(bullet -compact
 Apple PowerBook (1400, 2300, and 5300)
@@ -179,7 +167,8 @@ part of the upgrade)
 CPU upgrades
 .(bullet -compact
 Only one CPU in a multiprocessor system is supported with the GENERIC kernel.
-All CPUs are supported with the GENERIC.MP kernel.
+For the 601, only one CPU is supported with the GENERIC_601 kernel.
+All CPUs (except the 601) are supported with the GENERIC.MP kernel.
 .It
 Most CPU upgrades are supported.
 Some older models will not automatically enable the L2 and/or L3 caches on
@@ -355,9 +344,12 @@ systems is reported to have the same problem.
 PCI frame buffers which have Open Firmware support
 (ATI, IMS, Matrox, and NVIDIA have several models which work)
 .It
+Valkyrie and Platinum framebuffer drivers
+.Pq Em valkyriefb and Em platinumfb
+.It
 Full wscons capabilities, such as virtual terminals and color text are
 available.  (Note however that switching between virtual terminals
-while running an X session is not supported at present.)
+while running an X session may not be supported by all drivers.)
 .bullet)
 .It
 Audio

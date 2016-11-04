@@ -26,6 +26,7 @@ AC_CONFIG_HEADER(config.h:config.in)
 AM_MAINTAINER_MODE
 
 AC_PROG_CC
+AC_PROG_CXX
 AC_GNU_SOURCE
 AC_SYS_LARGEFILE
 
@@ -38,6 +39,9 @@ AC_PROG_RANLIB
 AC_ARG_PROGRAM
 
 AC_HEADER_STDC
+
+# See if we are building with C++, and substitute COMPILER.
+GDB_AC_BUILD_WITH_CXX
 
 # Set the 'development' global.
 . $srcdir/../../bfd/development.sh
@@ -90,7 +94,7 @@ AC_CHECK_HEADERS(sgtty.h termio.h termios.h sys/reg.h string.h dnl
 		 fcntl.h signal.h sys/file.h dnl
 		 sys/ioctl.h netinet/in.h sys/socket.h netdb.h dnl
 		 netinet/tcp.h arpa/inet.h)
-AC_CHECK_FUNCS(pread pwrite pread64)
+AC_CHECK_FUNCS(getauxval pread pwrite pread64 setns)
 
 GDB_AC_COMMON
 
@@ -150,8 +154,11 @@ AC_ARG_ENABLE(werror,
      *) AC_MSG_ERROR(bad value ${enableval} for --enable-werror) ;;
    esac])
 
-# Enable -Werror by default when using gcc.  Turn it off for releases.
-if test "${GCC}" = yes -a -z "${ERROR_ON_WARNING}" && $development; then
+# Enable -Werror by default when using gcc in C mode.  Leave it off
+# for C++ until we're warning clean.  Turn it off for releases.
+if test "${GCC}" = yes -a -z "${ERROR_ON_WARNING}" \
+   && test x"$enable_build_with_cxx" != x"yes" \
+   && $development; then
     ERROR_ON_WARNING=yes
 fi
 
@@ -160,8 +167,22 @@ if test "${ERROR_ON_WARNING}" = yes ; then
     WERROR_CFLAGS="-Werror"
 fi
 
-build_warnings="-Wall -Wdeclaration-after-statement -Wpointer-arith \
+build_warnings="-Wall -Wpointer-arith \
 -Wformat-nonliteral -Wno-char-subscripts -Wempty-body"
+
+# Now add in C and C++ specific options, depending on mode.
+if test "$enable_build_with_cxx" = "yes"; then
+   build_warnings="$build_warnings -Wno-sign-compare -Wno-write-strings \
+-Wno-narrowing"
+else
+   build_warnings="$build_warnings -Wdeclaration-after-statement"
+fi
+
+# The set of warnings supported by a C++ compiler is not the same as
+# of the C compiler.
+if test "$enable_build_with_cxx" = "yes"; then
+    AC_LANG_PUSH([C++])
+fi
 
 WARN_CFLAGS=""
 if test "x$GCC" = xyes
@@ -172,17 +193,25 @@ then
     for w in ${build_warnings}; do
 	case $w in
 	-Werr*) WERROR_CFLAGS=-Werror ;;
-	*) # Check that GCC accepts it
+	*)
+	    # Check whether GCC accepts it.
 	    saved_CFLAGS="$CFLAGS"
 	    CFLAGS="$CFLAGS $w"
+	    saved_CXXFLAGS="$CXXFLAGS"
+	    CXXFLAGS="$CXXFLAGS $w"
 	    AC_TRY_COMPILE([],[],WARN_CFLAGS="${WARN_CFLAGS} $w",)
 	    CFLAGS="$saved_CFLAGS"
+	    CXXFLAGS="$saved_CXXFLAGS"
 	esac
     done
     AC_MSG_RESULT(${WARN_CFLAGS} ${WERROR_CFLAGS})
 fi
 AC_SUBST(WARN_CFLAGS)
 AC_SUBST(WERROR_CFLAGS)
+
+if test "$enable_build_with_cxx" = "yes"; then
+   AC_LANG_POP([C++])
+fi
 
 dnl dladdr is glibc-specific.  It is used by thread-db.c but only for
 dnl debugging messages.  It lives in -ldl which is handled below so we don't
@@ -193,7 +222,11 @@ LIBS="$LIBS -ldl"
 AC_CHECK_FUNCS(dladdr)
 LIBS="$old_LIBS"
 
+libiberty_INIT
+
 AC_CHECK_DECLS([strerror, perror, vasprintf, vsnprintf])
+
+AC_CHECK_MEMBERS([struct stat.st_blocks, struct stat.st_blksize])
 
 AC_CHECK_TYPES(socklen_t, [], [],
 [#include <sys/types.h>
@@ -241,6 +274,10 @@ got it
 esac
 
 . ${srcdir}/configure.srv
+
+# Add in the common host objects.
+. ${srcdir}/../common/common.host
+srv_host_obs="$common_host_obs"
 
 if test "${srv_mingwce}" = "yes"; then
   LIBS="$LIBS -lws2"
@@ -306,6 +343,7 @@ if test "$ac_cv_header_sys_procfs_h" = yes; then
   BFD_HAVE_SYS_PROCFS_TYPE(lwpid_t)
   BFD_HAVE_SYS_PROCFS_TYPE(psaddr_t)
   BFD_HAVE_SYS_PROCFS_TYPE(prgregset_t)
+  BFD_HAVE_SYS_PROCFS_TYPE(prfpregset_t)
   BFD_HAVE_SYS_PROCFS_TYPE(elf_fpregset_t)
 fi
 
@@ -385,7 +423,7 @@ if test "$srv_xmlfiles" != ""; then
   done
 fi
 
-GDBSERVER_DEPFILES="$srv_regobj $srv_tgtobj $srv_hostio_err_objs $srv_thread_depfiles"
+GDBSERVER_DEPFILES="$srv_regobj $srv_tgtobj $srv_hostio_err_objs $srv_thread_depfiles $srv_host_obs"
 GDBSERVER_LIBS="$srv_libs"
 
 dnl Check whether the target supports __sync_*_compare_and_swap.

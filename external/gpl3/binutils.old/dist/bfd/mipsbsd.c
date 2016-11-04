@@ -1,6 +1,5 @@
 /* BFD backend for MIPS BSD (a.out) binaries.
-   Copyright 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2005, 2007, 2009, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Written by Ralph Campbell.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -399,9 +398,9 @@ static const struct aout_backend_data MY(backend_data) =
   0				/* finish_dynamic_link */
 };
 
-extern const bfd_target aout_mips_big_vec;
+extern const bfd_target mips_aout_be_vec;
 
-const bfd_target aout_mips_little_vec =
+const bfd_target mips_aout_le_vec =
 {
     "a.out-mips-little",		/* name */
     bfd_target_aout_flavour,
@@ -438,12 +437,12 @@ const bfd_target aout_mips_little_vec =
     BFD_JUMP_TABLE_LINK (MY),
     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-    & aout_mips_big_vec,
+    & mips_aout_be_vec,
 
     MY_backend_data
   };
 
-const bfd_target aout_mips_big_vec =
+const bfd_target mips_aout_be_vec =
   {
     "a.out-mips-big",		/* name */
     bfd_target_aout_flavour,
@@ -480,7 +479,7 @@ const bfd_target aout_mips_big_vec =
     BFD_JUMP_TABLE_LINK (MY),
     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-    & aout_mips_little_vec,
+    & mips_aout_le_vec,
 
     MY_backend_data
   };

@@ -1,5 +1,5 @@
 # bl test
-	
+
 text_label:
 
 	bl	text_label
@@ -32,9 +32,13 @@ text_label:
 	blpnz	text_label
 
 	bl.d	text_label
+	nop_s
 	bl.nd	text_label
-	bl.jd	text_label
+	nop_s
 
 	bleq.d	text_label
+	nop_s
 	blne.nd	text_label
-	blcc.jd	text_label
+	nop_s
+	blcc.d	text_label
+	nop_s

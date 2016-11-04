@@ -15,20 +15,19 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include <stdio.h>
-
-void pendfunc1 (int x)
+void
+pendfunc1 (int x)
 {
   int y = x + 4;
-  printf ("in pendfunc1, x is %d\n", x);
 }
 
-void pendfunc2 (int x)
+void
+pendfunc2 (int x)
 {
-  printf ("in pendfunc2, x is %d\n", x);
 }
 
-void pendfunc (int x)
+void
+pendfunc (int x)
 {
   pendfunc1 (x);
   pendfunc2 (x);

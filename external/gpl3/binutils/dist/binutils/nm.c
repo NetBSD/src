@@ -1,5 +1,5 @@
 /* nm.c -- Describe symbol table of a rel file.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -28,6 +28,13 @@
 #include "libiberty.h"
 #include "elf-bfd.h"
 #include "elf/common.h"
+#define DO_NOT_DEFINE_AOUTHDR
+#define DO_NOT_DEFINE_FILHDR
+#define DO_NOT_DEFINE_LINENO
+#define DO_NOT_DEFINE_SCNHDR
+#include "coff/external.h"
+#include "coff/internal.h"
+#include "libcoff.h"
 #include "bucomm.h"
 #include "plugin.h"
 
@@ -56,6 +63,7 @@ struct extended_symbol_info
   symbol_info *sinfo;
   bfd_vma ssize;
   elf_symbol_type *elfinfo;
+  coff_symbol_type *coffinfo;
   /* FIXME: We should add more fields for Type, Line, Section.  */
 };
 #define SYM_NAME(sym)        (sym->sinfo->name)
@@ -331,7 +339,7 @@ set_output_format (char *f)
 }
 
 static const char *
-get_symbol_type (unsigned int type)
+get_elf_symbol_type (unsigned int type)
 {
   static char buff [32];
 
@@ -353,6 +361,32 @@ get_symbol_type (unsigned int type)
 	sprintf (buff, _("<unknown>: %d"), type);
       return buff;
     }
+}
+
+static const char *
+get_coff_symbol_type (const struct internal_syment *sym)
+{
+  static char buff [32];
+
+  switch (sym->n_sclass)
+    {
+    case C_BLOCK: return "Block";
+    case C_FILE:  return "File";
+    case C_LINE:  return "Line";
+    }
+
+  if (!sym->n_type)
+    return "None";
+    
+  switch (DTYPE(sym->n_type))
+    {
+    case DT_FCN: return "Function";
+    case DT_PTR: return "Pointer";
+    case DT_ARY: return "Array";
+    }
+  
+  sprintf (buff, _("<unknown>: %d/%d"), sym->n_sclass, sym->n_type);
+  return buff;
 }
 
 /* Print symbol name NAME, read from ABFD, with printf format FORM,
@@ -823,8 +857,17 @@ print_symbol (bfd *        abfd,
 
   info.sinfo = &syminfo;
   info.ssize = ssize;
-  /* Synthetic symbols do not have a full elf_symbol_type set of data available.  */
-  info.elfinfo = is_synthetic ? NULL : elf_symbol_from (abfd, sym);
+  /* Synthetic symbols do not have a full symbol type set of data available.  */
+  if (is_synthetic)
+    {
+      info.elfinfo = NULL;
+      info.coffinfo = NULL;
+    }
+  else
+    {
+      info.elfinfo = elf_symbol_from (abfd, sym);
+      info.coffinfo = coff_symbol_from (sym);
+    }
 
   format->print_symbol_info (&info, abfd);
 
@@ -1514,7 +1557,10 @@ print_symbol_info_sysv (struct extended_symbol_info *info, bfd *abfd)
       /* Type, Size, Line, Section */
       if (info->elfinfo)
 	printf ("%18s|",
-		get_symbol_type (ELF_ST_TYPE (info->elfinfo->internal_elf_sym.st_info)));
+		get_elf_symbol_type (ELF_ST_TYPE (info->elfinfo->internal_elf_sym.st_info)));
+      else if (info->coffinfo)
+	printf ("%18s|",
+		get_coff_symbol_type (&info->coffinfo->native->u.syment));
       else
 	printf ("                  |");
 
@@ -1530,6 +1576,8 @@ print_symbol_info_sysv (struct extended_symbol_info *info, bfd *abfd)
 
       if (info->elfinfo)
 	printf("|     |%s", info->elfinfo->symbol.section->name);
+      else if (info->coffinfo)
+	printf("|     |%s", info->coffinfo->symbol.section->name);
       else
 	printf("|     |");
     }

@@ -1,6 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 1991, 1993, 1994, 1997, 1999, 2000, 2001, 2002, 2003, 2004,
-#   2005, 2006, 2007, 2008, 2009, 2012 Free Software Foundation, Inc.
+#   Copyright (C) 1991-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -51,7 +50,7 @@ static bfd_signed_vma group_size = 1;
 static void
 hppaelf_after_parse (void)
 {
-  if (link_info.relocatable)
+  if (bfd_link_relocatable (&link_info))
     lang_add_unique (".text");
 
   /* Enable this once we split millicode stuff from libgcc:
@@ -60,7 +59,7 @@ hppaelf_after_parse (void)
 			  NULL);
   */
 
-  after_parse_default ();
+  gld${EMULATION_NAME}_after_parse ();
 }
 
 /* This is called before the input files are opened.  We create a new
@@ -178,7 +177,6 @@ hppaelf_add_stub_section (const char *stub_sec_name, asection *input_section)
   asection *stub_sec;
   flagword flags;
   asection *output_section;
-  const char *secname;
   lang_output_section_statement_type *os;
   struct hook_stub_info info;
 
@@ -190,8 +188,7 @@ hppaelf_add_stub_section (const char *stub_sec_name, asection *input_section)
     goto err_ret;
 
   output_section = input_section->output_section;
-  secname = bfd_get_section_name (output_section->owner, output_section);
-  os = lang_output_section_find (secname);
+  os = lang_output_section_get (output_section);
 
   info.input_section = input_section;
   lang_list_init (&info.add);
@@ -245,20 +242,26 @@ build_section_lists (lang_statement_union_type *statement)
 static void
 gld${EMULATION_NAME}_after_allocation (void)
 {
+  int ret;
+
   /* bfd_elf_discard_info just plays with data and debugging sections,
      ie. doesn't affect code size, so we can delay resizing the
      sections.  It's likely we'll resize everything in the process of
      adding stubs.  */
-  if (bfd_elf_discard_info (link_info.output_bfd, &link_info))
+  ret = bfd_elf_discard_info (link_info.output_bfd, &link_info);
+  if (ret < 0)
+    {
+      einfo ("%X%P: .eh_frame/.stab edit: %E\n");
+      return;
+    }
+  else if (ret > 0)
     need_laying_out = 1;
 
   /* If generating a relocatable output file, then we don't
      have to examine the relocs.  */
-  if (stub_file != NULL && !link_info.relocatable)
+  if (stub_file != NULL && !bfd_link_relocatable (&link_info))
     {
-      int ret = elf32_hppa_setup_section_lists (link_info.output_bfd,
-						&link_info);
-
+      ret = elf32_hppa_setup_section_lists (link_info.output_bfd, &link_info);
       if (ret != 0)
 	{
 	  if (ret < 0)
@@ -287,7 +290,7 @@ gld${EMULATION_NAME}_after_allocation (void)
   if (need_laying_out != -1)
     gld${EMULATION_NAME}_map_segments (need_laying_out);
 
-  if (! link_info.relocatable)
+  if (!bfd_link_relocatable (&link_info))
     {
       /* Set the global data pointer.  */
       if (! elf32_hppa_set_gp (link_info.output_bfd, &link_info))

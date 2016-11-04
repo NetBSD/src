@@ -201,3 +201,13 @@ forwardonly:
 baz:
 	mov	r0, r1
 	nop
+
+	adr	r0, pr18541
+	adr	r0, pr18541
+	adr	r0, pr18541
+	nop
+	.align
+	.global pr18541
+pr18541:
+	.long	0
+	

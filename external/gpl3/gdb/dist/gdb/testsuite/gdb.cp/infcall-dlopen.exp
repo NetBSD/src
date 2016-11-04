@@ -1,4 +1,4 @@
-# Copyright 2010-2015 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ if { [gdb_compile_shlib ${srcdir}/${subdir}/${srcfile2} ${libfile} {debug c++}] 
     return -1
 }
 
-gdb_load_shlibs $libfile
+gdb_load_shlib $libfile
 
 if { ![runto_main] } {
     return -1

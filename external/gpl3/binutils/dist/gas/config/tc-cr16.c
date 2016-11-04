@@ -1,5 +1,5 @@
 /* tc-cr16.c -- Assembler code for the CR16 CPU core.
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
    Contributed by M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 
@@ -528,8 +528,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS * fixP)
 	   && (S_GET_SEGMENT (fixP->fx_subsy) == absolute_section)))
      return NULL;
 
-  reloc = xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr  = xmalloc (sizeof (asymbol *));
+  reloc = XNEW (arelent);
+  reloc->sym_ptr_ptr  = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   reloc->address = fixP->fx_frag->fr_address + fixP->fx_where;
   reloc->addend = fixP->fx_offset;
@@ -702,7 +702,7 @@ md_undefined_symbol (char *name)
    GAS does not understand.  */
 
 int
-md_parse_option (int c ATTRIBUTE_UNUSED, char *arg ATTRIBUTE_UNUSED)
+md_parse_option (int c ATTRIBUTE_UNUSED, const char *arg ATTRIBUTE_UNUSED)
 {
   return 0;
 }
@@ -715,7 +715,7 @@ md_show_usage (FILE *stream ATTRIBUTE_UNUSED)
   return;
 }
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, target_big_endian);
@@ -1993,7 +1993,7 @@ static op_err
 check_range (long *num, int bits, int unsigned flags, int update)
 {
   long min, max;
-  int retval = OP_LEGAL;
+  op_err retval = OP_LEGAL;
   long value = *num;
 
   if (bits == 0 && value > 0) return OP_OUT_OF_RANGE;
@@ -2002,7 +2002,7 @@ check_range (long *num, int bits, int unsigned flags, int update)
      bits of a 32-bit negative value read in by the parser are set,
      so that the correct comparisons are made.  */
   if (value & 0x80000000)
-    value |= (-1L << 31);
+    value |= (-1UL << 31);
 
 
   /* Verify operand value is even.  */
@@ -2195,7 +2195,7 @@ adjust_if_needed (ins *insn ATTRIBUTE_UNUSED)
    Returns 1 upon success, 0 upon failure.  */
 
 static int
-assemble_insn (char *mnemonic, ins *insn)
+assemble_insn (const char *mnemonic, ins *insn)
 {
   /* Type of each operand in the current template.  */
   argtype cur_type[MAX_OPERANDS];
@@ -2487,6 +2487,35 @@ print_insn (ins *insn)
     }
 }
 
+/* Actually assemble an instruction.  */
+
+static void
+cr16_assemble (const char *op, char *param)
+{
+  ins cr16_ins;
+
+  /* Find the instruction.  */
+  instruction = (const inst *) hash_find (cr16_inst_hash, op);
+  if (instruction == NULL)
+    {
+      as_bad (_("Unknown opcode: `%s'"), op);
+      return;
+    }
+
+  /* Tie dwarf2 debug info to the address at the start of the insn.  */
+  dwarf2_emit_insn (0);
+
+  /* Parse the instruction's operands.  */
+  parse_insn (&cr16_ins, param);
+
+  /* Assemble the instruction - return upon failure.  */
+  if (assemble_insn (op, &cr16_ins) == 0)
+    return;
+
+  /* Print the instruction.  */
+  print_insn (&cr16_ins);
+}
+
 /* This is the guts of the machine-dependent assembler.  OP points to a
    machine dependent instruction.  This function is supposed to emit
    the frags/bytes it assembles to.  */
@@ -2509,10 +2538,11 @@ md_assemble (char *op)
   if (is_bcc_insn (op))
     {
       strcpy (param1, get_b_cc (op));
-      op = "b";
       strcat (param1,",");
       strcat (param1, param);
       param = (char *) &param1;
+      cr16_assemble ("b", param);
+      return;
     }
 
   /* Checking the cinv options and adjust the mnemonic by removing the
@@ -2538,32 +2568,14 @@ md_assemble (char *op)
           && ((&cr16_ins)->arg[0].constant >= 0))
         {
            if (streq ("lshb", op))
-             op = "ashub";
+             cr16_assemble ("ashub", param);
            else if (streq ("lshd", op))
-             op = "ashud";
+             cr16_assemble ("ashud", param);
            else
-             op = "ashuw";
+             cr16_assemble ("ashuw", param);
+	   return;
         }
     }
 
-  /* Find the instruction.  */
-  instruction = (const inst *) hash_find (cr16_inst_hash, op);
-  if (instruction == NULL)
-    {
-      as_bad (_("Unknown opcode: `%s'"), op);
-      return;
-    }
-
-  /* Tie dwarf2 debug info to the address at the start of the insn.  */
-  dwarf2_emit_insn (0);
-
-  /* Parse the instruction's operands.  */
-  parse_insn (&cr16_ins, param);
-
-  /* Assemble the instruction - return upon failure.  */
-  if (assemble_insn (op, &cr16_ins) == 0)
-    return;
-
-  /* Print the instruction.  */
-  print_insn (&cr16_ins);
+  cr16_assemble (op, param);
 }

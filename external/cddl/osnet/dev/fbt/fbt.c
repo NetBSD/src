@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.18.2.5 2016/07/26 06:17:26 pgoyette Exp $	*/
+/*	$NetBSD: fbt.c,v 1.18.2.6 2016/11/04 14:42:45 pgoyette Exp $ */
 
 /*
  * CDDL HEADER START
@@ -2143,4 +2143,4 @@ fbt_open(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-MODULE(MODULE_CLASS_MISC, dtrace_fbt, "dtrace");
+MODULE(MODULE_CLASS_MISC, dtrace_fbt, "dtrace,zlib");

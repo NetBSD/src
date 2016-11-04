@@ -380,6 +380,23 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
     EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE));
 
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
+    if (s->msg_callback) {
+
+        int wh = which & SSL3_CC_WRITE ?
+            TLS1_RT_CRYPTO_WRITE : TLS1_RT_CRYPTO_READ;
+        s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_MAC,
+                        mac_secret, EVP_MD_size(m), s, s->msg_callback_arg);
+        if (c->key_len)
+            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
+                            key, c->key_len, s, s->msg_callback_arg);
+        if (k) {
+            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_IV,
+                            iv, k, s, s->msg_callback_arg);
+        }
+    }
+#endif
+
     OPENSSL_cleanse(&(exp_key[0]), sizeof(exp_key));
     OPENSSL_cleanse(&(exp_iv[0]), sizeof(exp_iv));
     EVP_MD_CTX_cleanup(&md);
@@ -590,6 +607,10 @@ int ssl3_digest_cached_records(SSL *s)
     ssl3_free_digest_list(s);
     s->s3->handshake_dgst =
         OPENSSL_malloc(SSL_MAX_DIGEST * sizeof(EVP_MD_CTX *));
+    if (s->s3->handshake_dgst == NULL) {
+        SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
     memset(s->s3->handshake_dgst, 0, SSL_MAX_DIGEST * sizeof(EVP_MD_CTX *));
     hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
     if (hdatalen <= 0) {
@@ -607,8 +628,12 @@ int ssl3_digest_cached_records(SSL *s)
                                      EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
             }
 #endif
-            EVP_DigestInit_ex(s->s3->handshake_dgst[i], md, NULL);
-            EVP_DigestUpdate(s->s3->handshake_dgst[i], hdata, hdatalen);
+            if (!EVP_DigestInit_ex(s->s3->handshake_dgst[i], md, NULL)
+                || !EVP_DigestUpdate(s->s3->handshake_dgst[i], hdata,
+                                     hdatalen)) {
+                SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
         } else {
             s->s3->handshake_dgst[i] = NULL;
         }
@@ -834,6 +859,9 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     EVP_MD_CTX ctx;
     int i, ret = 0;
     unsigned int n;
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
+    unsigned char *tmpout = out;
+#endif
 
     EVP_MD_CTX_init(&ctx);
     for (i = 0; i < 3; i++) {
@@ -859,6 +887,22 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
         ret += n;
     }
     EVP_MD_CTX_cleanup(&ctx);
+
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
+    if (ret > 0 && s->msg_callback) {
+        s->msg_callback(2, s->version, TLS1_RT_CRYPTO_PREMASTER,
+                        p, len, s, s->msg_callback_arg);
+        s->msg_callback(2, s->version, TLS1_RT_CRYPTO_CLIENT_RANDOM,
+                        s->s3->client_random, SSL3_RANDOM_SIZE,
+                        s, s->msg_callback_arg);
+        s->msg_callback(2, s->version, TLS1_RT_CRYPTO_SERVER_RANDOM,
+                        s->s3->server_random, SSL3_RANDOM_SIZE,
+                        s, s->msg_callback_arg);
+        s->msg_callback(2, s->version, TLS1_RT_CRYPTO_MASTER,
+                        tmpout, SSL3_MASTER_SECRET_SIZE,
+                        s, s->msg_callback_arg);
+    }
+#endif
     OPENSSL_cleanse(buf, sizeof buf);
     return (ret);
 }

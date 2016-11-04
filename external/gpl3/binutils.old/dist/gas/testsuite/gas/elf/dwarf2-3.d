@@ -30,9 +30,9 @@ Raw dump of debug contents of section \.z?debug_line:
 
  The Directory Table is empty.
 
- The File Name Table:
+ The File Name Table \(offset 0x.*\):
   Entry	Dir	Time	Size	Name
   1	0	0	0	/beginwarn.c
 
- Line Number Statements:
+ No Line Number Statements.
 

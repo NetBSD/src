@@ -1,6 +1,6 @@
 /* Target-dependent code for Xilinx MicroBlaze.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -437,11 +437,10 @@ microblaze_frame_cache (struct frame_info *next_frame, void **this_cache)
 {
   struct microblaze_frame_cache *cache;
   struct gdbarch *gdbarch = get_frame_arch (next_frame);
-  CORE_ADDR func;
   int rn;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct microblaze_frame_cache *) *this_cache;
 
   cache = microblaze_alloc_frame_cache ();
   *this_cache = cache;
@@ -451,7 +450,8 @@ microblaze_frame_cache (struct frame_info *next_frame, void **this_cache)
   for (rn = 0; rn < gdbarch_num_regs (gdbarch); rn++)
     cache->register_offsets[rn] = -1;
 
-  func = get_frame_func (next_frame);
+  /* Call for side effects.  */
+  get_frame_func (next_frame);
 
   cache->pc = get_frame_address_in_block (next_frame);
 
@@ -638,8 +638,9 @@ static int dwarf2_to_reg_map[78] =
 static int
 microblaze_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg)
 {
-  gdb_assert ((size_t) reg < sizeof (dwarf2_to_reg_map));
-  return dwarf2_to_reg_map[reg];
+  if (reg >= 0 && reg < sizeof (dwarf2_to_reg_map))
+    return dwarf2_to_reg_map[reg];
+  return -1;
 }
 
 static void

@@ -107,7 +107,7 @@ core_process_module_section (bfd *abfd, asection *sect, void *obj)
 
   gdb_byte *buf = NULL;
 
-  if (strncmp (sect->name, ".module", 7) != 0)
+  if (!startswith (sect->name, ".module"))
     return;
 
   buf = xmalloc (bfd_get_section_size (sect) + 1);

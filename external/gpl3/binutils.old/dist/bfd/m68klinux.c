@@ -1,7 +1,5 @@
 /* BFD back-end for linux flavored m68k a.out binaries.
-   Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -41,7 +39,7 @@
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
    the tokens.  */
-#define MY(OP) CONCAT2 (m68klinux_,OP)
+#define MY(OP) CONCAT2 (m68k_aout_linux_,OP)
 #define TARGETNAME "a.out-m68k-linux"
 
 extern const bfd_target MY(vec);
@@ -203,7 +201,7 @@ linux_link_hash_table_create (bfd *abfd)
   struct linux_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct linux_link_hash_table);
 
-  ret = (struct linux_link_hash_table *) bfd_malloc (amt);
+  ret = (struct linux_link_hash_table *) bfd_zmalloc (amt);
   if (ret == (struct linux_link_hash_table *) NULL)
     {
       bfd_set_error (bfd_error_no_memory);
@@ -216,11 +214,6 @@ linux_link_hash_table_create (bfd *abfd)
       free (ret);
       return (struct bfd_link_hash_table *) NULL;
     }
-
-  ret->dynobj = NULL;
-  ret->fixup_count = 0;
-  ret->local_builtins = 0;
-  ret->fixup_list = NULL;
 
   return &ret->root.root;
 }
@@ -327,7 +320,7 @@ linux_add_one_symbol (struct bfd_link_info *info,
 
   insert = FALSE;
 
-  if (! info->relocatable
+  if (! bfd_link_relocatable (info)
       && linux_hash_table (info)->dynobj == NULL
       && strcmp (name, SHARABLE_CONFLICTS) == 0
       && (flags & BSF_CONSTRUCTOR) != 0

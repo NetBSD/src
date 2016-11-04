@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.206 2014/12/24 20:01:22 dennis Exp $ */
+/* $NetBSD: vmstat.c,v 1.206.2.1 2016/11/04 14:49:26 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.206 2014/12/24 20:01:22 dennis Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.206.2.1 2016/11/04 14:49:26 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1644,7 +1644,7 @@ dopoolcache_sysctl(int verbose)
 	bool first = true;
 	int ovflw;
 	uint64_t tot;
-	float p;
+	double p;
 
 	data = asysctlbyname("kern.pool", &len);
 	if (data == NULL)

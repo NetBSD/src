@@ -1,5 +1,4 @@
-# Copyright (C) 1996, 2002, 2003, 2004, 2005, 2007
-# Free Software Foundation, Inc.
+# Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -381,22 +380,22 @@ proc do_simple_reloc_tests {} {
     set testname "reloc.s: Test for proper relocations (part 2)"
     set x 0
 
-    if [gas_test_old "reloc.s" "" "Test for proper relocation (part 1)"] then {
+    if [gas_test_old "reloc.s" "-mgcc-abi" "Test for proper relocation (part 1)"] then {
 	objdump_start_no_subdir "a.out" "-r"
 
 	while 1 {
 	    expect {
-		-re "^00000002\[^\n\]*R_V850_LO16\[^\n\]*\n"
+		-re "^00000002\[^\n\]*R_V8\[A-Z0-9_\]+\[^\n\]*\n"
 			{ set x [expr $x+1] }
-		-re "^00000006\[^\n\]*R_V850_HI16_S\[^\n\]*\n"
+		-re "^00000006\[^\n\]*R_V8\[A-Z0-9_\]+\[^\n\]*\n"
 			{ set x [expr $x+1] }
-		-re "^0000000a\[^\n\]*R_V850_HI16\[^\n\]*\n"
+		-re "^0000000a\[^\n\]*R_V8\[A-Z0-9_\]+\[^\n\]*\n"
 			{ set x [expr $x+1] }
-		-re "^0000000e\[^\n\]*R_V850_ZDA_16_16_OFFSET\[^\n\]*\n"
+		-re "^0000000e\[^\n\]*R_V8\[A-Z0-9_\]+\[^\n\]*\n"
 			{ set x [expr $x+1] }
-		-re "^00000012\[^\n\]*R_V850_TDA_16_16_OFFSET\[^\n\]*\n"
+		-re "^00000012\[^\n\]*R_V8\[A-Z0-9_\]+\[^\n\]*\n"
 			{ set x [expr $x+1] }
-		-re "^00000016\[^\n\]*R_V850_SDA_16_16_OFFSET\[^\n\]*\n"
+		-re "^00000016\[^\n\]*R_V8\[A-Z0-9_\]+\[^\n\]*\n"
 			{ set x [expr $x+1] }
 		-re "\[^\n\]*\n"				{ }
 		timeout			{ perror "timeout\n"; break }

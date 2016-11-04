@@ -423,11 +423,11 @@ static reloc_howto_type bfin_howto_table [] =
   /* This reloc does nothing. .  */
   HOWTO (R_BFIN_UNUSED0,	/* type.  */
 	 0,			/* rightshift.  */
-	 2,			/* size (0 = byte, 1 = short, 2 = long).  */
-	 32,			/* bitsize.  */
+	 3,			/* size (0 = byte, 1 = short, 2 = long).  */
+	 0,			/* bitsize.  */
 	 FALSE,			/* pc_relative.  */
 	 0,			/* bitpos.  */
-	 complain_overflow_bitfield, /* complain_on_overflow.  */
+	 complain_overflow_dont, /* complain_on_overflow.  */
 	 bfd_elf_generic_reloc,	/* special_function.  */
 	 "R_BFIN_UNUSED0",	/* name.  */
 	 FALSE,			/* partial_inplace.  */
@@ -451,11 +451,11 @@ static reloc_howto_type bfin_howto_table [] =
 
   HOWTO (R_BFIN_UNUSED1,	/* type.  */
 	 0,			/* rightshift.  */
-	 2,			/* size (0 = byte, 1 = short, 2 = long).  */
-	 32,			/* bitsize.  */
+	 3,			/* size (0 = byte, 1 = short, 2 = long).  */
+	 0,			/* bitsize.  */
 	 FALSE,			/* pc_relative.  */
 	 0,			/* bitpos.  */
-	 complain_overflow_bitfield, /* complain_on_overflow.  */
+	 complain_overflow_dont, /* complain_on_overflow.  */
 	 bfd_elf_generic_reloc,	/* special_function.  */
 	 "R_BFIN_UNUSED1",	/* name.  */
 	 FALSE,			/* partial_inplace.  */
@@ -581,8 +581,8 @@ static reloc_howto_type bfin_howto_table [] =
 
   HOWTO (R_BFIN_UNUSEDB,	/* type.  */
 	 0,			/* rightshift.  */
-	 2,			/* size (0 = byte, 1 = short, 2 = long).  */
-	 32,			/* bitsize.  */
+	 3,			/* size (0 = byte, 1 = short, 2 = long).  */
+	 0,			/* bitsize.  */
 	 FALSE,			/* pc_relative.  */
 	 0,			/* bitpos.  */
 	 complain_overflow_dont, /* complain_on_overflow.  */
@@ -595,8 +595,8 @@ static reloc_howto_type bfin_howto_table [] =
 
   HOWTO (R_BFIN_UNUSEDC,	/* type.  */
 	 0,			/* rightshift.  */
-	 2,			/* size (0 = byte, 1 = short, 2 = long).  */
-	 32,			/* bitsize.  */
+	 3,			/* size (0 = byte, 1 = short, 2 = long).  */
+	 0,			/* bitsize.  */
 	 FALSE,			/* pc_relative.  */
 	 0,			/* bitpos.  */
 	 complain_overflow_dont, /* complain_on_overflow.  */
@@ -1065,13 +1065,13 @@ bfin_bfd_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED,
 			    bfd_reloc_code_real_type code)
 {
   unsigned int i;
-  unsigned int r_type = BFIN_RELOC_MIN;
+  unsigned int r_type = (unsigned int) -1;
 
-  for (i = sizeof (bfin_reloc_map) / sizeof (bfin_reloc_map[0]); --i;)
+  for (i = sizeof (bfin_reloc_map) / sizeof (bfin_reloc_map[0]); i--;)
     if (bfin_reloc_map[i].bfd_reloc_val == code)
       r_type = bfin_reloc_map[i].bfin_reloc_val;
 
-  if (r_type <= BFIN_RELOC_MAX && r_type > BFIN_RELOC_MIN)
+  if (r_type <= BFIN_RELOC_MAX)
     return &bfin_howto_table [r_type];
 
   else if (r_type >= BFIN_GNUEXT_RELOC_MIN && r_type <= BFIN_GNUEXT_RELOC_MAX)

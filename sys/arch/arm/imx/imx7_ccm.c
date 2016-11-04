@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_ccm.c,v 1.1 2016/05/17 06:44:45 ryo Exp $	*/
+/*	$NetBSD: imx7_ccm.c,v 1.1.4.1 2016/11/04 14:48:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_ccm.c,v 1.1 2016/05/17 06:44:45 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_ccm.c,v 1.1.4.1 2016/11/04 14:48:58 pgoyette Exp $");
 
 #include "opt_imx.h"
 
@@ -1059,10 +1059,12 @@ imxccm_sysctl_freq_helper(SYSCTLFN_ARGS)
 
 	if (rnode->sysctl_num == sc->sc_sysctlnode_arm_pll)
 		return imx7_set_clock(IMX7CLK_ARM_PLL, value);
-	if (rnode->sysctl_num == sc->sc_sysctlnode_arm_a7_clk)
+	else if (rnode->sysctl_num == sc->sc_sysctlnode_arm_a7_clk)
 		return imx7_set_clock(IMX7CLK_ARM_A7_CLK_ROOT, value);
+	else if (rnode->sysctl_num == sc->sc_sysctlnode_arm_m4_clk)
+		return imx7_set_clock(IMX7CLK_ARM_M4_CLK_ROOT, value);
 
-	return 0;
+	return EOPNOTSUPP;
 }
 
 
@@ -1105,7 +1107,7 @@ imx7_ccm_analog_write(uint32_t reg, uint32_t val)
 }
 
 static uint64_t
-rootclk(int clk)
+rootclk(int clk, bool nodiv)
 {
 	uint32_t d, v;
 	uint64_t freq;
@@ -1125,6 +1127,9 @@ rootclk(int clk)
 		    imx7clkroottbl[clk].targetroot, v, d, freq);
 	}
 #endif
+
+	if (nodiv)
+		return freq;
 
 	/* eval TARGET_ROOT[PRE_PODF] */
 	if ((imx7clkroottbl[clk].type != CLKTYPE_CORE) &&
@@ -1449,7 +1454,7 @@ imx7_get_clock(enum imx7_clock clk)
 	case IMX7CLK_AUDIO_MCLK_CLK_ROOT:
 	case IMX7CLK_CCM_CLKO1:
 	case IMX7CLK_CCM_CLKO2:
-		freq = rootclk(clk);
+		freq = rootclk(clk, false);
 		break;
 
 	default:
@@ -1461,10 +1466,45 @@ imx7_get_clock(enum imx7_clock clk)
 	return freq;
 }
 
+/*
+ * resolve two clock divisors d3 and d6.
+ * freq = maxfreq / d3(3bit) / d6(6bit)
+ */
+static void
+getrootclkdiv(uint32_t maxfreq, uint32_t freq, uint32_t *d3p, uint32_t *d6p)
+{
+	uint32_t c_dif, c_d3, c_d6;
+	uint32_t dif, d3, d6;
+	uint32_t lim, base, f;
+
+	c_dif = 0xffffffff;
+	c_d3 = c_d6 = 0;
+	for (d3 = 0; d3 < 8; d3++) {
+		base = 0;
+		for (lim = 64; lim != 0; lim >>= 1) {
+			d6 = (lim >> 1) + base;
+			f = maxfreq / (d3 + 1) / (d6 + 1);
+			if (freq < f) {
+				base = d6 + 1;
+				lim--;
+			}
+			dif = (freq > f) ? freq - f : f - freq;
+			if (c_dif > dif) {
+				c_dif = dif;
+				c_d3 = d3;
+				c_d6 = d6;
+			}
+		}
+	}
+	*d3p = c_d3;
+	*d6p = c_d6;
+}
+
 int
 imx7_set_clock(enum imx7_clock clk, uint32_t freq)
 {
 	uint32_t v, x;
+	uint32_t d3, d6, maxfreq;
 
 	if (ccm_softc == NULL)
 		return 0;
@@ -1477,6 +1517,36 @@ imx7_set_clock(enum imx7_clock clk, uint32_t freq)
 		v |=  __SHIFTIN(x, CCM_ANALOG_PLL_ARM_DIV_SELECT);
 		imx7_ccm_analog_write(CCM_ANALOG_PLL_ARM, v);
 		break;
+
+	/* core type clock */
+	case IMX7CLK_ARM_A7_CLK_ROOT:
+		maxfreq = rootclk(clk, true);
+		getrootclkdiv(maxfreq, freq, &d3, &d6);
+		v = imx7_ccm_read(imx7clkroottbl[clk].targetroot);
+		/* core type clocks use AUTO_PODF and POST_PODF */
+		v &= ~CCM_TARGET_ROOT_AUTO_PODF;
+		v |= __SHIFTIN(d3, CCM_TARGET_ROOT_AUTO_PODF);
+		v |= CCM_TARGET_ROOT_AUTO_ENABLE;
+		v &= ~CCM_TARGET_ROOT_POST_PODF;
+		v |= __SHIFTIN(d6, CCM_TARGET_ROOT_POST_PODF);
+		imx7_ccm_write(imx7clkroottbl[clk].targetroot, v);
+		break;
+
+	/* bus type clocks */
+	case IMX7CLK_ARM_M4_CLK_ROOT:
+	case IMX7CLK_MAIN_AXI_CLK_ROOT:
+	case IMX7CLK_DISP_AXI_CLK_ROOT:
+		maxfreq = rootclk(clk, true);
+		getrootclkdiv(maxfreq, freq, &d3, &d6);
+		/* bus type clocks use PRE_PODF and POST_PODF */
+		v = imx7_ccm_read(imx7clkroottbl[clk].targetroot);
+		v &= ~CCM_TARGET_ROOT_PRE_PODF;
+		v |= __SHIFTIN(d3, CCM_TARGET_ROOT_PRE_PODF);
+		v &= ~CCM_TARGET_ROOT_POST_PODF;
+		v |= __SHIFTIN(d6, CCM_TARGET_ROOT_POST_PODF);
+		imx7_ccm_write(imx7clkroottbl[clk].targetroot, v);
+		break;
+
 	default:
 		aprint_error_dev(ccm_softc->sc_dev,
 		    "%s: clockid %d: not supported\n", __func__, clk);

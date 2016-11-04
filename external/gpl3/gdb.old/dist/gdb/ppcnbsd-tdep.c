@@ -92,7 +92,7 @@ ppcnbsd_return_value (struct gdbarch *gdbarch, struct value *function,
 
 /* Signal trampolines.  */
 
-static const struct tramp_frame ppcnbsd2_sigtramp;
+extern const struct tramp_frame ppcnbsd2_sigtramp;
 
 static void
 ppcnbsd_sigtramp_cache_init (const struct tramp_frame *self,
@@ -151,7 +151,7 @@ static const struct tramp_frame ppcnbsd_sigtramp =
 
 /* NetBSD 2.0 introduced a slightly different signal trampoline.  */
 
-static const struct tramp_frame ppcnbsd2_sigtramp =
+const struct tramp_frame ppcnbsd2_sigtramp =
 {
   SIGTRAMP_FRAME,
   4,

@@ -23,12 +23,7 @@
 #include <elf.h>
 #include <asm/ptrace.h>
 
-/* These are in <asm/cputable.h> in current kernels.  */
-#define PPC_FEATURE_HAS_VSX		0x00000080
-#define PPC_FEATURE_HAS_ALTIVEC         0x10000000
-#define PPC_FEATURE_HAS_SPE             0x00800000
-#define PPC_FEATURE_CELL                0x00010000
-#define PPC_FEATURE_HAS_DFP             0x00000400
+#include "nat/ppc-linux.h"
 
 static unsigned long ppc_hwcap;
 
@@ -94,14 +89,6 @@ void init_registers_powerpc_isa205_vsx64l (void);
 extern const struct target_desc *tdesc_powerpc_isa205_vsx64l;
 
 #define ppc_num_regs 73
-
-/* This sometimes isn't defined.  */
-#ifndef PT_ORIG_R3
-#define PT_ORIG_R3 34
-#endif
-#ifndef PT_TRAP
-#define PT_TRAP 40
-#endif
 
 #ifdef __powerpc64__
 /* We use a constant for FPSCR instead of PT_FPSCR, because
@@ -411,13 +398,11 @@ ppc_arch_setup (void)
   current_process ()->tdesc = tdesc;
   ppc_hwcap = 0;
 
-  /* Only if the high bit of the MSR is set, we actually have
-     a 64-bit inferior.  */
   regcache = new_register_cache (tdesc);
   fetch_inferior_registers (regcache, find_regno (tdesc, "msr"));
   collect_register_by_name (regcache, "msr", &msr);
   free_register_cache (regcache);
-  if (msr < 0)
+  if (ppc64_64bit_inferior_p (msr))
     {
       ppc_get_hwcap (&ppc_hwcap);
       if (ppc_hwcap & PPC_FEATURE_CELL)
@@ -544,11 +529,6 @@ static void ppc_fill_gregset (struct regcache *regcache, void *buf)
     ppc_collect_ptrace_register (regcache, i, (char *) buf + ppc_regmap[i]);
 }
 
-#ifndef PTRACE_GETVSXREGS
-#define PTRACE_GETVSXREGS 27
-#define PTRACE_SETVSXREGS 28
-#endif
-
 #define SIZEOF_VSXREGS 32*8
 
 static void
@@ -578,11 +558,6 @@ ppc_store_vsxregset (struct regcache *regcache, const void *buf)
   for (i = 0; i < 32; i++)
     supply_register (regcache, base + i, &regset[i * 8]);
 }
-
-#ifndef PTRACE_GETVRREGS
-#define PTRACE_GETVRREGS 18
-#define PTRACE_SETVRREGS 19
-#endif
 
 #define SIZEOF_VRREGS 33*16+4
 
@@ -619,11 +594,6 @@ ppc_store_vrregset (struct regcache *regcache, const void *buf)
   supply_register_by_name (regcache, "vscr", &regset[32 * 16 + 12]);
   supply_register_by_name (regcache, "vrsave", &regset[33 * 16]);
 }
-
-#ifndef PTRACE_GETEVRREGS
-#define PTRACE_GETEVRREGS	20
-#define PTRACE_SETEVRREGS	21
-#endif
 
 struct gdb_evrregset_t
 {

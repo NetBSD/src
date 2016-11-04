@@ -32,3 +32,9 @@ by GAS belong.  To run these tests you must have a functioning objdump.
 unsorted -- this is where everything else goes.  As groups of related tests
 end up in this directory, they should be broken out into a new class of
 tests.
+
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

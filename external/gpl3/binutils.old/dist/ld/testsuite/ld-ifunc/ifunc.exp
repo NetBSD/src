@@ -1,6 +1,6 @@
 # Expect script for linker support of IFUNC symbols and relocations.
 #
-#   Copyright 2009, 2010, 2012 Free Software Foundation, Inc.
+#   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 #   Contributed by Red Hat.
 #
 # This file is part of the GNU Binutils.
@@ -24,11 +24,13 @@
 
 
 # IFUNC support has only been implemented for the ix86, x86_64, powerpc,
-# and sparc so far.
+# aarch64, sparc, and S/390 so far.
 if {!(([istarget "i?86-*-*"]
        || [istarget "x86_64-*-*"]
        || [istarget "powerpc*-*-*"]
-       || [istarget "sparc*-*-*"])
+       || [istarget "aarch64*-*-*"]
+       || [istarget "sparc*-*-*"]
+       || [istarget "s390*-*-*"])
       && ([istarget "*-*-elf*"]
 	  || [istarget "*-*-nacl*"]
 	  || (([istarget "*-*-linux*"]
@@ -97,8 +99,9 @@ proc contains_ifunc_symbol { binary_file } {
 
     # Look for a line like this:
     #    58: 0000000000400600    30 IFUNC   GLOBAL DEFAULT   12 library_func2
+    # with perhaps some other info between the visibility and section
 
-    if { ![regexp ".*\[ \]*IFUNC\[ \]+GLOBAL\[ \]+DEFAULT\[ \]+\[UND0-9\]+\[ \]+library_func2\n" [file_contents readelf.out]] } {
+    if { ![regexp ".*\[ \]*IFUNC\[ \]+GLOBAL\[ \]+DEFAULT .* \[UND0-9\]+\[ \]+library_func2\n" [file_contents readelf.out]] } {
 	return 0
     }
 
@@ -347,6 +350,42 @@ if { $verbose < 1 } {
     remote_file host delete "tmpdir/static_nonifunc_prog"
 }
 
+run_cc_link_tests [list \
+    [list \
+	"Build libpr16467a.so" \
+	"-shared -Wl,--version-script=pr16467a.map" \
+	"-fPIC" \
+	{ pr16467a.c } \
+	{} \
+	"libpr16467a.so" \
+    ] \
+    [list \
+	"Build libpr16467b.a" \
+	"" \
+	"-fPIC" \
+	{ pr16467b.c } \
+	{} \
+	"libpr16467b.a" \
+    ] \
+    [list \
+	"Build libpr16467b.so" \
+	"-shared tmpdir/pr16467b.o tmpdir/libpr16467a.so \
+	 -Wl,--version-script=pr16467b.map" \
+	"-fPIC" \
+	{ dummy.c } \
+	{} \
+	"libpr16467b.so" \
+    ] \
+    [list \
+	"Build libpr16467c.a" \
+	"" \
+	"" \
+	{ pr16467c.c } \
+	{} \
+	"libpr16467c.a" \
+    ] \
+]
+
 run_ld_link_exec_tests [] [list \
     [list \
 	"Common symbol override ifunc test 1a" \
@@ -374,3 +413,107 @@ foreach t $test_list {
     verbose [file rootname $t]
     run_dump_test [file rootname $t]
 }
+
+# Run-time tests which require working IFUNC support.
+if { ![check_ifunc_available] } {
+    return
+}
+
+run_cc_link_tests [list \
+    [list \
+	"Build ifunc-lib.so" \
+	"-shared" \
+	"-fPIC" \
+	{ ifunc-lib.c } \
+	{} \
+	"libifunc-lib.so" \
+    ] \
+]
+
+run_ld_link_exec_tests [] [list \
+    [list \
+	"Run pr16467" \
+	"tmpdir/pr16467c.o tmpdir/libpr16467b.so tmpdir/libpr16467a.so" \
+	"" \
+	{ dummy.c } \
+	"pr16467" \
+	"pr16467.out" \
+	"" \
+    ] \
+    [list \
+	"Run ifunc-main" \
+	"tmpdir/libifunc-lib.so" \
+	"" \
+	{ ifunc-main.c } \
+	"ifunc-main" \
+	"ifunc-main.out" \
+    ] \
+    [list \
+	"Run ifunc-main with -fpic" \
+	"tmpdir/libifunc-lib.so" \
+	"" \
+	{ ifunc-main.c } \
+	"ifunc-main" \
+	"ifunc-main.out" \
+	"-fpic" \
+    ] \
+]
+
+# Run-time tests which require working ifunc attribute support.
+if { ![check_ifunc_attribute_available] } {
+    return
+}
+
+run_cc_link_tests [list \
+    [list \
+	"Build libpr18808.so" \
+	"-shared" \
+	"-fPIC -O2 -g" \
+	{ pr18808b.c } \
+	{} \
+	"libpr18808.so" \
+    ] \
+    [list \
+	"Build libpr18841b.so" \
+	"-shared" \
+	"-fPIC -O0 -g" \
+	{ pr18841b.c } \
+	{} \
+	"libpr18841b.so" \
+    ] \
+    [list \
+	"Build libpr18841c.so" \
+	"-shared" \
+	"-fPIC -O0 -g" \
+	{ pr18841c.c } \
+	{} \
+	"libpr18841c.so" \
+    ] \
+]
+
+run_ld_link_exec_tests [] [list \
+    [list \
+	"Run pr18808" \
+	"tmpdir/libpr18808.so" \
+	"" \
+	{ pr18808a.c } \
+	"pr18808" \
+	"pr18808.out" \
+    ] \
+    [list \
+	"Run pr18841 with libpr18841b.so" \
+	"tmpdir/libpr18841b.so" \
+	"" \
+	{ pr18841a.c } \
+	"pr18841b" \
+	"pr18841.out" \
+    ] \
+    [list \
+	"Run pr18841 with libpr18841c.so" \
+	"tmpdir/libpr18841c.so" \
+	"" \
+	{ pr18841a.c } \
+	"pr18841c" \
+	"pr18841.out" \
+    ] \
+]

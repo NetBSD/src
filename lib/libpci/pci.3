@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.3,v 1.12 2016/01/23 07:21:18 wiz Exp $
+.\"	$NetBSD: pci.3,v 1.12.2.1 2016/11/04 14:48:54 pgoyette Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 16, 2014
+.Dd September 23, 2016
 .Dt PCI 3
 .Os
 .Sh NAME
@@ -61,6 +61,8 @@
 .Fn pci_conf_print "int pcifd" "unsigned int bus" "unsigned int dev" "unsigned int func"
 .Ft int
 .Fn pci_drvname "int pcifd" "unsigned int dev" "unsigned int func" "char *drvname" "size_t len"
+.Ft int
+.Fn pci_drvnameonbus "int pcifd" "u_int bus" "u_int dev" "u_int func" "char *drvname" "size_t len"
 .Sh DESCRIPTION
 The
 .Nm
@@ -151,6 +153,10 @@ into
 using
 .Fa len
 as the buffer length.
+.It Fn pci_drvnameonbus
+Just like
+.Fn pci_drvname
+but also allows looking up via PCI bus number.
 .El
 .Sh RETURN VALUES
 The

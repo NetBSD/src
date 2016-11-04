@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6_lifetime.sh,v 1.1 2015/08/06 08:23:14 ozaki-r Exp $
+#	$NetBSD: t_ipv6_lifetime.sh,v 1.1.2.1 2016/11/04 14:49:24 pgoyette Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,6 +32,8 @@ SOCK=unix://sock
 BUS=./bus
 
 DEBUG=false
+
+deprecated="[Dd][Ee][Pp][Rr][Ee][Cc][Aa][Tt][Ee][Dd]"
 
 atf_test_case basic cleanup
 
@@ -69,7 +71,7 @@ basic_body()
 	atf_check -s exit:0 sleep $(($time + $bonus))
 	$DEBUG && rump.ifconfig -L shmif0
 	# Should remain but marked as deprecated
-	atf_check -s exit:0 -o match:'deprecated' rump.ifconfig -L shmif0
+	atf_check -s exit:0 -o match:"$ip.+$deprecated" rump.ifconfig -L shmif0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip delete
 
 	# Setting only a valid lifetime (invalid)
@@ -87,24 +89,31 @@ basic_body()
 	# Shouldn't remain anymore
 	atf_check -s exit:0 -o not-match:"$ip" rump.ifconfig -L shmif0
 
+	# Setting both preferred and valid lifetimes (pltime > vltime)
+	atf_check -s not-exit:0 -e match:'Invalid argument' rump.ifconfig \
+	    shmif0 inet6 $ip pltime $(($time * 2)) vltime $time
+
 	# Setting both preferred and valid lifetimes (pltime < vltime)
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip \
 	    pltime $time vltime $((time * 2))
 	$DEBUG && rump.ifconfig -L shmif0
 	atf_check -s exit:0 -o match:'pltime' rump.ifconfig -L shmif0
 	atf_check -s exit:0 -o match:'vltime' rump.ifconfig -L shmif0
+
+	if sysctl machdep.cpu_brand 2>/dev/null | grep QEMU >/dev/null 2>&1
+	then
+		atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip delete
+		atf_skip "unreliable under qemu, skip until PR kern/43997 fixed"
+	fi
+
 	atf_check -s exit:0 sleep $(($time + $bonus))
 	$DEBUG && rump.ifconfig -L shmif0
 	# Should remain but marked as deprecated
-	atf_check -s exit:0 -o match:'deprecated' rump.ifconfig -L shmif0
+	atf_check -s exit:0 -o match:"$ip.+$deprecated" rump.ifconfig -L shmif0
 	atf_check -s exit:0 sleep $(($time + $bonus))
 	$DEBUG && rump.ifconfig -L shmif0
 	# Shouldn't remain anymore
 	atf_check -s exit:0 -o not-match:"$ip" rump.ifconfig -L shmif0
-
-	# Setting both preferred and valid lifetimes (pltime > vltime)
-	atf_check -s not-exit:0 -e match:'Invalid argument' rump.ifconfig \
-	    shmif0 inet6 $ip pltime $(($time * 2)) vltime $time
 
 	return 0
 }

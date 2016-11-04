@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2015/08/16 17:48:24 macallan Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2016/11/04 14:48:48 pgoyette Exp $
 
 DRIVER=		xf86-video-sunffb
 DRIVER_NAME=	sunffb_drv
@@ -14,7 +14,8 @@ AFLAGS+= -x assembler-with-cpp -Wa,-Av9a
 
 .if ${MACHINE_ARCH} == "sparc"
 AFLAGS+= -x assembler-with-cpp -Wa,-Av8plusa
-COPTS= -mv8plus
+COPTS+=	${${ACTIVE_CC} == "gcc" :? -mv8plus :}
+COPTS+=	${${ACTIVE_CC} == "clang" :? -Wa,-Av8plusa :}
 .endif
 
 CPPFLAGS+=	${X11FLAGS.DRI} -DUSE_VIS
@@ -23,3 +24,12 @@ CPPFLAGS+=	-DHAVE_XAA_H
 MAN=		sunffb.4
 
 .include "../Makefile.xf86-driver"
+
+# XXX
+.if ${HAVE_GCC:U0} > 48
+COPTS.ffb_dac.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
+COPTS.ffb_dga.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
+.endif
+COPTS.ffb_dac.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer-types-discards-qualifiers :}
+COPTS.ffb_dga.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer-types-discards-qualifiers :}
+COPTS.ffb_exa.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=pointer-sign :}

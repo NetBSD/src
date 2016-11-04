@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.102 2016/05/31 05:44:19 pgoyette Exp $
+.\"	$NetBSD: sysctl.7,v 1.102.2.1 2016/11/04 14:48:56 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd May 31, 2016
+.Dd October 12, 2016
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1258,6 +1258,7 @@ The currently defined protocols and names are:
 .It ip	anonportmax	integer	yes
 .It ip	anonportmin	integer	yes
 .It ip	checkinterface	integer	yes
+.It ip	dad_count	integer	yes
 .It ip	directed-broadcast	integer	yes
 .It ip	do_loopback_cksum	integer	yes
 .It ip	forwarding	integer	yes
@@ -1375,6 +1376,11 @@ Currently, this must be disabled if ipnat is used to translate the
 destination address to another local interface, or if addresses
 are added to the loopback interface instead of the interface where
 the packets for those packets are received.
+.It Li ip.dad_count
+The number of
+.Xr arp 4
+probes sent for Address Conflict Detection.
+Set to 0 to disable this.
 .It Li ip.directed-broadcast
 If set to 1, enables directed broadcast behavior for the host.
 .It Li ip.do_loopback_cksum

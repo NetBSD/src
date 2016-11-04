@@ -1,3 +1,16 @@
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* asm/opterr1.ms: Update expected output.
+	* asm/opterr2.ms: Likewise.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* asm/io1.ms: Update expected output.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* hw/rv-n-cris/rvc.exp (rvdummy): Set up sane default.
+
 2012-03-24  Mike Frysinger  <vapier@gentoo.org>
 
 	* c/clone5.c: Update output to ignore decoded signal string.
@@ -123,7 +136,7 @@
 	write return-value; check only that pipemax bytes were
 	successfully written.  For error-case, emit strerror as well.
 	(main): Add a second read.
-	
+
 2006-04-08  Hans-Peter Nilsson  <hp@axis.com>
 
 	* hw/rv-n-cris/irq6.ms: New test.

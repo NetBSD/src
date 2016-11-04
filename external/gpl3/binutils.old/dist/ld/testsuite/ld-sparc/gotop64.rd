@@ -16,7 +16,7 @@ Section Headers:
  +\[[ 0-9]+\] .text +PROGBITS +0+1000 0+1000 0+1000 0+ +AX +0 +0 4096
  +\[[ 0-9]+\] .dynamic +DYNAMIC +0+102000 0+2000 0+e0 10 +WA +3 +0 +8
  +\[[ 0-9]+\] .got +PROGBITS +0+1020e0 0+20e0 0+10 08 +WA +0 +0 +8
- +\[[ 0-9]+\] .data +PROGBITS +0+103000 0+3000 0+1000 00 +WA +0 +0 4096
+ +\[[ 0-9]+\] .data +PROGBITS +0+103000 0+3000 0+8 00 +WA +0 +0 4096
  +\[[ 0-9]+\] .shstrtab +.*
  +\[[ 0-9]+\] .symtab +.*
  +\[[ 0-9]+\] .strtab +.*
@@ -29,7 +29,7 @@ There are [0-9]+ program headers, starting at offset [0-9]+
 Program Headers:
  +Type +Offset +VirtAddr +PhysAddr +FileSiz +MemSiz +Flg Align
  +LOAD +0x0+ 0x0+ 0x0+ 0x0+2000 0x0+2000 R E 0x100000
- +LOAD +0x0+2000 0x0+102000 0x0+102000 0x0+2000 0x0+2000 RW +0x100000
+ +LOAD +0x0+2000 0x0+102000 0x0+102000 0x0+1008 0x0+1008 RW +0x100000
  +DYNAMIC +0x0+2000 0x0+102000 0x0+102000 0x0+e0 0x0+e0 RW +0x8
 #...
 

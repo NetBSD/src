@@ -14,13 +14,12 @@ OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 OUTPUT_ARCH(${ARCH})
 ${LIB_SEARCH_DIRS}
 
-PROVIDE( __PMSIZE = 256K );
-PROVIDE( __RAMSIZE = 64K );
-
 MEMORY
 {
-  flash     (rx)   : ORIGIN = 0, LENGTH = __PMSIZE
-  ram       (rw!x) : ORIGIN = 0x800000, LENGTH = __RAMSIZE
+  /* Note - we cannot use "PROVIDE(len)" ... "LENGTH = len" as
+     PROVIDE statements are not evaluated inside MEMORY blocks.  */
+  flash     (rx)   : ORIGIN = 0, LENGTH = 256K
+  ram       (rw!x) : ORIGIN = 0x800000, LENGTH = 64K
 }
 SECTIONS
 {
@@ -35,14 +34,14 @@ SECTIONS
     . = ALIGN(4);
   } ${RELOCATING+ > flash}
   ${CONSTRUCTING+${TORS}}
-  .data	  : AT (ADDR (.text) + SIZEOF (.text))
+  .data	: ${RELOCATING+ AT (ADDR (.text) + SIZEOF (.text))}
   {
     *(.data)
     *(.rodata)
     *(.rodata*)
     ${RELOCATING+ _edata = . ; }
   } ${RELOCATING+ > ram}
-  .bss  SIZEOF(.data) + ADDR(.data) :
+  .bss  ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
   {
     ${RELOCATING+ _bss_start = . ; }
     *(.bss)
@@ -61,5 +60,10 @@ SECTIONS
   {
     *(.stabstr)
   }
+EOF
+
+. $srcdir/scripttempl/DWARF.sc
+
+cat <<EOF
 }
 EOF

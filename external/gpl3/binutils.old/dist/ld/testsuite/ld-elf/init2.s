@@ -1,4 +1,4 @@
-	.section .init
+	.section .init, "a"
 	.p2align 6
 	.type	foo2,%function
 foo2:

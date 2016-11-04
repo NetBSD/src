@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.232.2.1 2016/11/04 14:49:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.232.2.1 2016/11/04 14:49:22 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -472,6 +472,8 @@ ufs_setattr(void *v)
 		return (EINVAL);
 	}
 
+	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
+
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	if (vap->va_flags != VNOVAL) {
@@ -568,7 +570,7 @@ ufs_setattr(void *v)
 				error = EPERM;
 				goto out;
 			}
-			error = ufs_truncate(vp, vap->va_size, cred);
+			error = ufs_truncate_retry(vp, vap->va_size, cred);
 			if (error)
 				goto out;
 			break;
@@ -1156,7 +1158,7 @@ ufs_rmdir(void *v)
 	ip->i_nlink--;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_flag |= IN_CHANGE;
-	error = UFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
+	(void) UFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(vp);
 	/*
 	 * Unlock the log while we still have reference to unlinked

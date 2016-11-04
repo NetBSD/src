@@ -1,6 +1,6 @@
 /* Target-dependent code for FT32.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,6 +36,8 @@
 #include "trad-frame.h"
 #include "dis-asm.h"
 #include "record.h"
+
+#include "opcode/ft32.h"
 
 #include "ft32-tdep.h"
 #include "gdb/sim-ft32.h"
@@ -117,7 +119,7 @@ static struct type *
 ft32_register_type (struct gdbarch *gdbarch, int reg_nr)
 {
   if (reg_nr == FT32_PC_REGNUM)
-    return builtin_type (gdbarch)->builtin_func_ptr;
+    return gdbarch_tdep (gdbarch)->pc_type;
   else if (reg_nr == FT32_SP_REGNUM || reg_nr == FT32_FP_REGNUM)
     return builtin_type (gdbarch)->builtin_data_ptr;
   else
@@ -153,11 +155,6 @@ ft32_store_return_value (struct type *type, struct regcache *regcache,
 
    Returns the address of the first instruction after the prologue.  */
 
-#define IS_PUSH(inst)   (((inst) & 0xfff00000) == 0x84000000)
-#define PUSH_REG(inst)  (FT32_R0_REGNUM + (((inst) >> 15) & 0x1f))
-#define IS_LINK(inst)   (((inst) & 0xffff0000) == 0x95d00000)
-#define LINK_SIZE(inst) ((inst) & 0xffff)
-
 static CORE_ADDR
 ft32_analyze_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
 		       struct ft32_frame_cache *cache,
@@ -165,27 +162,68 @@ ft32_analyze_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR next_addr;
-  ULONGEST inst, inst2;
-  LONGEST offset;
-  int regnum;
+  ULONGEST inst;
+  int regnum, pushreg;
+  struct bound_minimal_symbol msymbol;
+  const int first_saved_reg = 13;	/* The first saved register.  */
+  /* PROLOGS are addresses of the subroutine prologs, PROLOGS[n]
+     is the address of __prolog_$rN.
+     __prolog_$rN pushes registers from 13 through n inclusive.
+     So for example CALL __prolog_$r15 is equivalent to:
+       PUSH $r13 
+       PUSH $r14 
+       PUSH $r15 
+     Note that PROLOGS[0] through PROLOGS[12] are unused.  */
+  CORE_ADDR prologs[32];
 
   cache->saved_regs[FT32_PC_REGNUM] = 0;
   cache->framesize = 0;
 
+  for (regnum = first_saved_reg; regnum < 32; regnum++)
+    {
+      char prolog_symbol[32];
+
+      snprintf (prolog_symbol, sizeof (prolog_symbol), "__prolog_$r%02d",
+		regnum);
+      msymbol = lookup_minimal_symbol (prolog_symbol, NULL, NULL);
+      if (msymbol.minsym)
+	prologs[regnum] = BMSYMBOL_VALUE_ADDRESS (msymbol);
+      else
+	prologs[regnum] = 0;
+    }
+
   if (start_addr >= end_addr)
-      return end_addr;
+    return end_addr;
 
   cache->established = 0;
-  for (next_addr = start_addr; next_addr < end_addr; )
+  for (next_addr = start_addr; next_addr < end_addr;)
     {
       inst = read_memory_unsigned_integer (next_addr, 4, byte_order);
 
-      if (IS_PUSH (inst))
+      if (FT32_IS_PUSH (inst))
 	{
-	  regnum = PUSH_REG (inst);
+	  pushreg = FT32_PUSH_REG (inst);
 	  cache->framesize += 4;
-	  cache->saved_regs[regnum] = cache->framesize;
+	  cache->saved_regs[FT32_R0_REGNUM + pushreg] = cache->framesize;
 	  next_addr += 4;
+	}
+      else if (FT32_IS_CALL (inst))
+	{
+	  for (regnum = first_saved_reg; regnum < 32; regnum++)
+	    {
+	      if ((4 * (inst & 0x3ffff)) == prologs[regnum])
+		{
+		  for (pushreg = first_saved_reg; pushreg <= regnum;
+		       pushreg++)
+		    {
+		      cache->framesize += 4;
+		      cache->saved_regs[FT32_R0_REGNUM + pushreg] =
+			cache->framesize;
+		    }
+		  next_addr += 4;
+		}
+	    }
+	  break;
 	}
       else
 	break;
@@ -193,7 +231,8 @@ ft32_analyze_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
   for (regnum = FT32_R0_REGNUM; regnum < FT32_PC_REGNUM; regnum++)
     {
       if (cache->saved_regs[regnum] != REG_UNAVAIL)
-	cache->saved_regs[regnum] = cache->framesize - cache->saved_regs[regnum];
+	cache->saved_regs[regnum] =
+	  cache->framesize - cache->saved_regs[regnum];
     }
   cache->saved_regs[FT32_PC_REGNUM] = cache->framesize;
 
@@ -201,7 +240,7 @@ ft32_analyze_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
   if (next_addr < end_addr)
     {
       inst = read_memory_unsigned_integer (next_addr, 4, byte_order);
-      if (IS_LINK (inst))
+      if (FT32_IS_LINK (inst))
 	{
 	  cache->established = 1;
 	  for (regnum = FT32_R0_REGNUM; regnum < FT32_PC_REGNUM; regnum++)
@@ -211,7 +250,7 @@ ft32_analyze_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
 	    }
 	  cache->saved_regs[FT32_PC_REGNUM] = cache->framesize + 4;
 	  cache->saved_regs[FT32_FP_REGNUM] = 0;
-	  cache->framesize += LINK_SIZE (inst);
+	  cache->framesize += FT32_LINK_SIZE (inst);
 	  next_addr += 4;
 	}
     }
@@ -250,7 +289,7 @@ ft32_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 	  plg_end = ft32_analyze_prologue (func_addr,
 					   func_end, &cache, gdbarch);
 	  /* Found a function.  */
-	  sym = lookup_symbol (func_name, NULL, VAR_DOMAIN, NULL);
+	  sym = lookup_symbol (func_name, NULL, VAR_DOMAIN, NULL).symbol;
 	  /* Don't use line number debug info for assembly source files.  */
 	  if ((sym != NULL) && SYMBOL_LANGUAGE (sym) != language_asm)
 	    {
@@ -269,6 +308,73 @@ ft32_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
   /* No function symbol -- just return the PC.  */
   return pc;
 }
+
+/* Implementation of `pointer_to_address' gdbarch method.
+
+   On FT32 address space zero is RAM, address space 1 is flash.
+   RAM appears at address RAM_BIAS, flash at address 0.  */
+
+static CORE_ADDR
+ft32_pointer_to_address (struct gdbarch *gdbarch,
+			 struct type *type, const gdb_byte *buf)
+{
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  CORE_ADDR addr
+    = extract_unsigned_integer (buf, TYPE_LENGTH (type), byte_order);
+
+  if (TYPE_ADDRESS_CLASS_1 (type))
+    return addr;
+  else
+    return addr | RAM_BIAS;
+}
+
+/* Implementation of `address_class_type_flags' gdbarch method.
+
+   This method maps DW_AT_address_class attributes to a
+   type_instance_flag_value.  */
+
+static int
+ft32_address_class_type_flags (int byte_size, int dwarf2_addr_class)
+{
+  /* The value 1 of the DW_AT_address_class attribute corresponds to the
+     __flash__ qualifier, meaning pointer to data in FT32 program memory.
+   */
+  if (dwarf2_addr_class == 1)
+    return TYPE_INSTANCE_FLAG_ADDRESS_CLASS_1;
+  return 0;
+}
+
+/* Implementation of `address_class_type_flags_to_name' gdbarch method.
+
+   Convert a type_instance_flag_value to an address space qualifier.  */
+
+static const char*
+ft32_address_class_type_flags_to_name (struct gdbarch *gdbarch, int type_flags)
+{
+  if (type_flags & TYPE_INSTANCE_FLAG_ADDRESS_CLASS_1)
+    return "flash";
+  else
+    return NULL;
+}
+
+/* Implementation of `address_class_name_to_type_flags' gdbarch method.
+
+   Convert an address space qualifier to a type_instance_flag_value.  */
+
+static int
+ft32_address_class_name_to_type_flags (struct gdbarch *gdbarch,
+				       const char* name,
+				       int *type_flags_ptr)
+{
+  if (strcmp (name, "flash") == 0)
+    {
+      *type_flags_ptr = TYPE_INSTANCE_FLAG_ADDRESS_CLASS_1;
+      return 1;
+    }
+  else
+    return 0;
+}
+
 
 /* Implement the "read_pc" gdbarch method.  */
 
@@ -369,7 +475,7 @@ ft32_frame_cache (struct frame_info *this_frame, void **this_cache)
   int i;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct ft32_frame_cache *) *this_cache;
 
   cache = ft32_alloc_frame_cache ();
   *this_cache = cache;
@@ -488,6 +594,8 @@ ft32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
   struct gdbarch_tdep *tdep;
+  struct type *void_type;
+  struct type *func_void_type;
 
   /* If there is already a candidate, use it.  */
   arches = gdbarch_list_lookup_by_info (arches, &info);
@@ -497,6 +605,15 @@ ft32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Allocate space for the new architecture.  */
   tdep = XNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
+
+  /* Create a type for PC.  We can't use builtin types here, as they may not
+     be defined.  */
+  void_type = arch_type (gdbarch, TYPE_CODE_VOID, 1, "void");
+  func_void_type = make_function_type (void_type, NULL);
+  tdep->pc_type = arch_type (gdbarch, TYPE_CODE_PTR, 4, NULL);
+  TYPE_TARGET_TYPE (tdep->pc_type) = func_void_type;
+  TYPE_UNSIGNED (tdep->pc_type) = 1;
+  TYPE_INSTANCE_FLAGS (tdep->pc_type) |= TYPE_INSTANCE_FLAG_ADDRESS_CLASS_1;
 
   set_gdbarch_read_pc (gdbarch, ft32_read_pc);
   set_gdbarch_write_pc (gdbarch, ft32_write_pc);
@@ -509,6 +626,8 @@ ft32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_register_type (gdbarch, ft32_register_type);
 
   set_gdbarch_return_value (gdbarch, ft32_return_value);
+
+  set_gdbarch_pointer_to_address (gdbarch, ft32_pointer_to_address);
 
   set_gdbarch_skip_prologue (gdbarch, ft32_skip_prologue);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
@@ -534,6 +653,12 @@ ft32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Support simple overlay manager.  */
   set_gdbarch_overlay_update (gdbarch, simple_overlay_update);
+
+  set_gdbarch_address_class_type_flags (gdbarch, ft32_address_class_type_flags);
+  set_gdbarch_address_class_name_to_type_flags
+    (gdbarch, ft32_address_class_name_to_type_flags);
+  set_gdbarch_address_class_type_flags_to_name
+    (gdbarch, ft32_address_class_type_flags_to_name);
 
   return gdbarch;
 }

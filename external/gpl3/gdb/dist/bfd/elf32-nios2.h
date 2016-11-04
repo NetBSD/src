@@ -1,5 +1,5 @@
 /* Nios II support for 32-bit ELF
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by Mentor Graphics
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -29,7 +29,7 @@ extern void nios2_elf32_next_input_section
   (struct bfd_link_info *, asection *);
 
 extern bfd_boolean nios2_elf32_size_stubs
-  (bfd *, bfd *, struct bfd_link_info *, 
+  (bfd *, bfd *, struct bfd_link_info *,
    asection * (*) (const char *, asection *, bfd_boolean), void (*) (void));
 
 extern bfd_boolean nios2_elf32_build_stubs

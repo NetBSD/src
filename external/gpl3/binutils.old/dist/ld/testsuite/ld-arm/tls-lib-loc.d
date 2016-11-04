@@ -1,6 +1,6 @@
 
 .*:     file format elf32-.*arm
-architecture: armv5t, flags 0x00000150:
+architecture: arm.*, flags 0x00000150:
 HAS_SYMS, DYNAMIC, D_PAGED
 start address 0x.*
 

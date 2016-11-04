@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.34.10.2 2016/07/26 07:44:21 pgoyette Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.34.10.3 2016/11/04 14:49:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.34.10.2 2016/07/26 07:44:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.34.10.3 2016/11/04 14:49:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -257,8 +257,14 @@ pckbc_acpi_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 			break;
 		}
 	}
-	if (i < pckbc_cd.cd_ndevs)
-		rv = isa_intr_establish(ic, irq, ist, IPL_TTY, pckbcintr, sc);
+	if (i < pckbc_cd.cd_ndevs) {
+		char intr_xname[64];
+		snprintf(intr_xname, sizeof(intr_xname), "%s %s",
+		    device_xname(psc->sc_pckbc.sc_dv), pckbc_slot_names[slot]);
+
+		rv = isa_intr_establish_xname(ic, irq, ist, IPL_TTY, pckbcintr,
+		    sc, intr_xname);
+	}
 	if (rv == NULL) {
 		aprint_error_dev(sc->sc_dv,
 		    "unable to establish interrupt for %s slot\n",

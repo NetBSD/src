@@ -1,6 +1,6 @@
 // gold-threads.h -- thread support for gold  -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -223,8 +223,10 @@ class Once
  private:
   // True if we have already run the function.
   bool was_run_;
+#if defined(ENABLE_THREADS) && defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4)
   // Internal compare-and-swap lock on was_run_;
   uint32_t was_run_lock_;
+#endif
   // The lock to run the function only once.
   Once_initialize* once_;
 };

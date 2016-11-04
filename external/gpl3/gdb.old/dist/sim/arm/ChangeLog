@@ -1,3 +1,193 @@
+2015-07-02  Nick Clifton  <nickc@redhat.com>
+
+	* Makefile.in (SIM_EXTRA_CFLAGS): Revert previous delta.
+	(SIM_EXTRA_LIBS): Add -lm.
+
+2015-06-28  Nick Clifton  <nickc@redhat.com>
+
+	* Makefile.in (SIM_EXTRA_CFLAGS): Add -lm.
+	* armdefs.h (ARMdval, ARMfval): New types.
+	(ARM_VFP_reg): New union.
+	(struct ARMul_State): Add VFP_Reg and FPSCR fields.
+	(VFP_fval, VFP_uword, VFP_sword, VFP_dval, VFP_dword): Accessor
+	macros for the new VFP_Reg field.
+	* armemu.c (handle_v6_insn): Add code to handle MOVW, MOVT,
+	QADD16, QASX, QSAX, QSUB16, QADD8, QSUB8, UADD16, USUB16, UADD8,
+	USUB8, SEL, REV, REV16, RBIT, BFC, BFI, SBFX and UBFX
+	instructions.
+	(handle_VFP_move): New function.
+	(ARMul_Emulate16): Add checks for newly supported v6
+	instructions.  Add support for VMRS, VMOV and MRC instructions.
+	(Multiply64): Allow nRdHi == nRm and/or nRdLo == nRm when
+	operating in v6 mode.
+	* armemu.h (t_resolved): Define.
+	* armsupp.c: Include math.h.
+	(handle_VFP_xfer): New function.  Handles VMOV, VSTM, VSTR, VPUSH,
+	VSTM, VLDM and VPOP instructions.
+	(ARMul_LDC): Test for co-processor 10 or 11 and pass call to the
+	new handle_VFP_xfer function.
+	(ARMul_STC): Likewise.
+	(handle_VFP_op): New function.  Handles VMLA, VMLS, VNMLA, VNMLS,
+	VNMUL, VMUL, VADD, VSUB, VDIV, VMOV, VABS, VNEG, VSQRT, VCMP,
+	VCMPE and VCVT instructions.
+	(ARMul_CDP): Test for co-processor 10 or 11 and pass call to the
+	new handle_VFP_op function.
+	* thumbemu.c (tBIT, tBITS, ntBIT, ntBITS): New macros.
+	(test_cond): New function.  Tests a condition and returns non-zero
+	if the condition has been met.
+	(handle_IT_block): New function.
+	(in_IT_block): New function.
+	(IT_block_allow): New function.
+	(ThumbExpandImm): New function.
+	(handle_T2_insn): New function.  Handles T2 thumb instructions.
+	(handle_v6_thumb_insn): Add next_instr and pc parameters.
+	(ARMul_ThumbDecode): Add support for IT blocks.  Add support for
+	v6 instructions.
+	* wrapper.c (sim_create_inferior): Detect a thumb address and call
+	SETT appropriately.
+
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* armdefs.h: Always include stdint.h.
+	[!__STDC__]: Delete.
+	[!HAVE_STDINT_H]: Delete.
+	* dbg_hif.h [!__STDC__]: Delete.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (SIM_CPU): Delete.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (sim_cia): Delete.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (CIA_GET, CIA_SET): Delete.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* wrapper.c (arm_pc_get, arm_pc_set): New functions.
+	(sim_open): Declare new local var i.  Call CPU_PC_FETCH &
+	CPU_PC_STORE for all cpus.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-cpu.o.
+	* sim-main.h (STATE_CPU): Delete.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Move wrapper.o to the start of the list.
+
+2015-04-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-engine.o.
+
+2015-04-01  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (armos.o, armcopro.o, maverick.o, iwmmxt.o, arminit.o,
+	armrdi.o, armsupp.o, thumbemu.o, bag.o, wrapper.o): Delete rules.
+	* tconfig.h: Delete file.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_RUN_OBJS): Delete.
+	(SIM_EXTRA_CFLAGS): Delete -DSIM_TARGET_SWITCHES and
+	-DSIM_USE_DEPRECATED_RUN_FRONTEND.
+	(SIM_OBJS): Change to $(SIM_NEW_COMMON_OBJS).
+	* sim-main.h: New file.
+	* wrapper.c: Delete armdefs.h, sim-utils.h, and run-sim.h includes.
+	Add sim-main.h and sim-options.h includes.
+	(sim_callback, mem_size, trace): Add TODO comments.
+	(state): Delete static and add TODO comment.
+	(sim_kind, myname, big_endian): Delete.
+	(init): Change big_endian to CURRENT_TARGET_BYTE_ORDER check.
+	(sim_size, sim_trace, sim_info, sim_target_display_usage, sim_load,
+	sim_do_command, sim_set_callbacks, sim_complete_command): Delete.
+	(sim_target_parse_command_line): Mark static.
+	(free_state): New function.
+	(sim_open): Rewrite to use new common logic.
+	(sim_close): Delete body.
+
+2015-03-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_EXTRA_CFLAGS): Delete -DNEED_UI_LOOP_HOOK.
+	* interp.c [NEED_UI_LOOP_HOOK] (UI_LOOP_POLL_INTERVAL,
+	ui_loop_hook_counter, deprecated_ui_loop_hook): Delete.
+	(sim_resume) [NEED_UI_LOOP_HOOK]: Delete ui code.
+
+2015-03-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* armemu.c [MODE32] (handle_v6_insn): Move definition.
+	(ARMul_Emulate26): Initialize do_int after label target.
+	* armemu.h (UNDEF_Test, UNDEF_Shift, UNDEF_MSRPC, UNDEF_MRSPC,
+	UNDEF_MULPCDest, UNDEF_MULDestEQOp1, UNDEF_LSRBPC,
+	UNDEF_LSRBaseEQOffWb, UNDEF_LSRBaseEQDestWb, UNDEF_LSRPCBaseWb,
+	UNDEF_LSRPCOffWb, UNDEF_LSMNoRegs, UNDEF_LSMPCBase,
+	UNDEF_LSMUserBankWb, UNDEF_LSMBaseInListWb, UNDEF_SWPPC,
+	UNDEF_CoProHS, UNDEF_MCRPC, UNDEF_LSCPCBaseWb,
+	UNDEF_UndefNotBounced, UNDEF_ShortInt, UNDEF_IllegalMode,
+	UNDEF_Prog32SigChange, UNDEF_Data32SigChange): Define to while(0).
+	* armsupp.c (ARMul_Align): Convert old style prototype.
+	* bag.c (addtolist, killwholelist): Mark static.
+	(BAG_newbag): Convert old style prototype.
+	* maverick.c (mv_compute_host_endianness): Delete.
+	* wrapper.c (verbosity, sim_set_verbose): Delete.
+	(init): Set state->verbose to 0.
+
+2015-03-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Call SIM_AC_OPTION_ENDIAN, SIM_AC_OPTION_ALIGNMENT,
+	SIM_AC_OPTION_HOSTENDIAN, SIM_AC_OPTION_ENVIRONMENT,
+	SIM_AC_OPTION_INLINE, and SIM_AC_OPTION_WARNINGS.
+	* config.in, configure: Regenerate.
+
+2015-03-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (COPRO): Delete.
+	(SIM_OBJS): Expand COPRO.
+	* configure.ac: Deletd stdint.h check.
+	(COPRO): Delete.
+	* configure: Regenerate.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+	* tconfig.in: Rename file ...
+	* tconfig.h: ... here.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_EXTRA_CFLAGS): Add
+	-DSIM_USE_DEPRECATED_RUN_FRONTEND.
+	(SIM_RUN_OBJS): Set to run.o.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (AC_CHECK_HEADERS): Delete unistd.h.
+	* aclocal.m4, configure: Regenerate.
+
 2014-08-19  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

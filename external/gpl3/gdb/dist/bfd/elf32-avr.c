@@ -1,5 +1,5 @@
 /* AVR-specific support for 32-bit ELF
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -89,7 +89,7 @@ struct elf32_avr_link_hash_table
 
   /* Assorted information used by elf32_avr_size_stubs.  */
   unsigned int        bfd_count;
-  int                 top_index;
+  unsigned int        top_index;
   asection **         input_list;
   Elf_Internal_Sym ** all_local_syms;
 
@@ -641,7 +641,22 @@ static reloc_howto_type elf_avr_howto_table[] =
 	 FALSE,			/* partial_inplace */
 	 0xffffff,		/* src_mask */
 	 0xffffff,		/* dst_mask */
-	 FALSE) 		/* pcrel_offset */
+	 FALSE), 		/* pcrel_offset */
+
+  /* A 32 bit PC relative relocation.  */
+  HOWTO (R_AVR_32_PCREL,	/* type */
+	 0,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 TRUE,			/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 bfd_elf_generic_reloc, /* special_function */
+	 "R_AVR_32_PCREL",	/* name */
+	 FALSE,			/* partial_inplace */
+	 0xffffffff,	/* src_mask */
+	 0xffffffff,	/* dst_mask */
+	 TRUE),			/* pcrel_offset */
 };
 
 /* Map BFD reloc types to AVR ELF reloc types.  */
@@ -689,7 +704,8 @@ static const struct avr_reloc_map avr_reloc_map[] =
   { BFD_RELOC_AVR_DIFF32,           R_AVR_DIFF32 },
   { BFD_RELOC_AVR_LDS_STS_16,       R_AVR_LDS_STS_16},
   { BFD_RELOC_AVR_PORT6,            R_AVR_PORT6},
-  { BFD_RELOC_AVR_PORT5,            R_AVR_PORT5}
+  { BFD_RELOC_AVR_PORT5,            R_AVR_PORT5},
+  { BFD_RELOC_32_PCREL,             R_AVR_32_PCREL}
 };
 
 /* Meant to be filled one day with the wrap around address for the
@@ -1458,7 +1474,7 @@ elf32_avr_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       r = avr_final_link_relocate (howto, input_bfd, input_section,
@@ -1471,14 +1487,13 @@ elf32_avr_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  switch (r)
 	    {
 	    case bfd_reloc_overflow:
-	      r = info->callbacks->reloc_overflow
-		(info, (h ? &h->root : NULL),
-		 name, howto->name, (bfd_vma) 0,
-		 input_bfd, input_section, rel->r_offset);
+	      (*info->callbacks->reloc_overflow)
+		(info, (h ? &h->root : NULL), name, howto->name,
+		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      r = info->callbacks->undefined_symbol
+	      (*info->callbacks->undefined_symbol)
 		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
 
@@ -1500,11 +1515,8 @@ elf32_avr_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    }
 
 	  if (msg)
-	    r = info->callbacks->warning
-	      (info, msg, name, input_bfd, input_section, rel->r_offset);
-
-	  if (! r)
-	    return FALSE;
+	    (*info->callbacks->warning) (info, msg, name, input_bfd,
+					 input_section, rel->r_offset);
 	}
     }
 
@@ -1810,12 +1822,13 @@ elf32_avr_relax_delete_bytes (bfd *abfd,
   Elf_Internal_Rela *irel, *irelend;
   Elf_Internal_Sym *isym;
   Elf_Internal_Sym *isymbuf = NULL;
-  bfd_vma toaddr;
+  bfd_vma toaddr, reloc_toaddr;
   struct elf_link_hash_entry **sym_hashes;
   struct elf_link_hash_entry **end_hashes;
   unsigned int symcount;
   struct avr_relax_info *relax_info;
   struct avr_property_record *prop_record = NULL;
+  bfd_boolean did_shrink = FALSE;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sec_shndx = _bfd_elf_section_from_bfd_section (abfd, sec);
@@ -1846,15 +1859,32 @@ elf32_avr_relax_delete_bytes (bfd *abfd,
         }
     }
 
+  /* We need to look at all relocs with offsets less than toaddr. prop
+     records handling adjusts toaddr downwards to avoid moving syms at the
+     address of the property record, but all relocs with offsets between addr
+     and the current value of toaddr need to have their offsets adjusted.
+     Assume addr = 0, toaddr = 4 and count = 2. After prop records handling,
+     toaddr becomes 2, but relocs with offsets 2 and 3 still need to be
+     adjusted (to 0 and 1 respectively), as the first 2 bytes are now gone.
+     So record the current value of toaddr here, and use it when adjusting
+     reloc offsets. */
+  reloc_toaddr = toaddr;
+
   irel = elf_section_data (sec)->relocs;
   irelend = irel + sec->reloc_count;
 
   /* Actually delete the bytes.  */
   if (toaddr - addr - count > 0)
-    memmove (contents + addr, contents + addr + count,
-             (size_t) (toaddr - addr - count));
+    {
+      memmove (contents + addr, contents + addr + count,
+               (size_t) (toaddr - addr - count));
+      did_shrink = TRUE;
+    }
   if (prop_record == NULL)
-    sec->size -= count;
+    {
+      sec->size -= count;
+      did_shrink = TRUE;
+    }
   else
     {
       /* Use the property record to fill in the bytes we've opened up.  */
@@ -1873,12 +1903,20 @@ elf32_avr_relax_delete_bytes (bfd *abfd,
           prop_record->data.align.preceding_deleted += count;
           break;
         };
+      /* If toaddr == (addr + count), then we didn't delete anything, yet
+         we fill count bytes backwards from toaddr. This is still ok - we
+         end up overwriting the bytes we would have deleted. We just need
+         to remember we didn't delete anything i.e. don't set did_shrink,
+         so that we don't corrupt reloc offsets or symbol values.*/
       memset (contents + toaddr - count, fill, count);
 
       /* Adjust the TOADDR to avoid moving symbols located at the address
          of the property record, which has not moved.  */
       toaddr -= count;
     }
+
+  if (!did_shrink)
+    return TRUE;
 
   /* Adjust all the reloc addresses.  */
   for (irel = elf_section_data (sec)->relocs; irel < irelend; irel++)
@@ -1890,7 +1928,7 @@ elf32_avr_relax_delete_bytes (bfd *abfd,
 
       /* Get the new reloc address.  */
       if ((irel->r_offset > addr
-           && irel->r_offset < toaddr))
+           && irel->r_offset < reloc_toaddr))
         {
           if (debug_relax)
             printf ("Relocation at address 0x%x needs to be moved.\n"
@@ -2359,7 +2397,7 @@ elf32_avr_relax_section (bfd *abfd,
       || !strcmp (sec->name,".jumptables"))
     shrinkable = FALSE;
 
-  if (link_info->relocatable)
+  if (bfd_link_relocatable (link_info))
     (*link_info->callbacks->einfo)
       (_("%P%F: --relax and -r may not be used together\n"));
 
@@ -2397,7 +2435,7 @@ elf32_avr_relax_section (bfd *abfd,
   /* We don't have to do anything for a relocatable link, if
      this section does not have relocs, or if this is not a
      code section.  */
-  if (link_info->relocatable
+  if (bfd_link_relocatable (link_info)
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
       || (sec->flags & SEC_CODE) == 0)
@@ -3349,7 +3387,7 @@ elf32_avr_setup_section_lists (bfd *output_bfd,
 {
   bfd *input_bfd;
   unsigned int bfd_count;
-  int top_id, top_index;
+  unsigned int top_id, top_index;
   asection *section;
   asection **input_list, **list;
   bfd_size_type amt;
@@ -3625,7 +3663,7 @@ elf32_avr_size_stubs (bfd *output_bfd,
                         }
                       else if (hh->root.type == bfd_link_hash_undefweak)
                         {
-                          if (! info->shared)
+                          if (! bfd_link_pic (info))
                             continue;
                         }
                       else if (hh->root.type == bfd_link_hash_undefined)
@@ -4052,11 +4090,13 @@ avr_elf32_load_records_from_section (bfd *abfd, asection *sec)
     }
 
   free (contents);
-  free (internal_relocs);
+  if (elf_section_data (sec)->relocs != internal_relocs)
+    free (internal_relocs);
   return r_list;
 
  load_failed:
-  free (internal_relocs);
+  if (elf_section_data (sec)->relocs != internal_relocs)
+    free (internal_relocs);
   free (contents);
   free (r_list);
   return NULL;

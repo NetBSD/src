@@ -62,7 +62,7 @@ Disassembly of section \.text:
   d0:	(7c 00 04 ac|ac 04 00 7c) 	sync    
   d4:	(7c 00 04 ac|ac 04 00 7c) 	sync    
   d8:	(7c 20 04 ac|ac 04 20 7c) 	lwsync
-  dc:	(7c 00 04 ac|ac 04 00 7c) 	sync    
+  dc:	(7c 21 04 ac|ac 04 21 7c) 	sync    1,1
   e0:	(7c 07 04 ac|ac 04 07 7c) 	sync    0,7
   e4:	(7c 28 04 ac|ac 04 28 7c) 	sync    1,8
   e8:	(7c 00 00 c3|c3 00 00 7c) 	dni     0,0
@@ -73,3 +73,20 @@ Disassembly of section \.text:
   fc:	(7c 43 09 8d|8d 09 43 7c) 	icblq.  2,r3,r1
  100:	(7c 10 02 dc|dc 02 10 7c) 	mftmr   r0,16
  104:	(7c 10 03 dc|dc 03 10 7c) 	mttmr   16,r0
+.*:	(7e 80 38 68|68 38 80 7e) 	lbarx   r20,0,r7
+.*:	(7e 81 38 68|68 38 81 7e) 	lbarx   r20,r1,r7
+.*:	(7e a0 40 e8|e8 40 a0 7e) 	lharx   r21,0,r8
+.*:	(7e a1 40 e8|e8 40 a1 7e) 	lharx   r21,r1,r8
+.*:	(7e c0 48 28|28 48 c0 7e) 	lwarx   r22,0,r9
+.*:	(7e c1 48 28|28 48 c1 7e) 	lwarx   r22,r1,r9
+.*:	(7e e0 50 a8|a8 50 e0 7e) 	ldarx   r23,0,r10
+.*:	(7e e1 50 a8|a8 50 e1 7e) 	ldarx   r23,r1,r10
+.*:	(7d 40 3d 6d|6d 3d 40 7d) 	stbcx\.  r10,0,r7
+.*:	(7d 41 3d 6d|6d 3d 41 7d) 	stbcx\.  r10,r1,r7
+.*:	(7d 60 45 ad|ad 45 60 7d) 	sthcx\.  r11,0,r8
+.*:	(7d 61 45 ad|ad 45 61 7d) 	sthcx\.  r11,r1,r8
+.*:	(7d 80 49 2d|2d 49 80 7d) 	stwcx\.  r12,0,r9
+.*:	(7d 81 49 2d|2d 49 81 7d) 	stwcx\.  r12,r1,r9
+.*:	(7d a0 51 ad|ad 51 a0 7d) 	stdcx\.  r13,0,r10
+.*:	(7d a1 51 ad|ad 51 a1 7d) 	stdcx\.  r13,r1,r10
+#pass

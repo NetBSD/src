@@ -343,7 +343,7 @@ macho_symtab_read (struct objfile *objfile,
 static int
 get_archive_prefix_len (const char *name)
 {
-  char *lparen;
+  const char *lparen;
   int name_len = strlen (name);
 
   if (name_len == 0 || name[name_len - 1] != ')')
@@ -1004,7 +1004,7 @@ macho_symfile_offsets (struct objfile *objfile,
       const char *bfd_sect_name = osect->the_bfd_section->name;
       int sect_index = osect - objfile->sections;;
 
-      if (strncmp (bfd_sect_name, "LC_SEGMENT.", 11) == 0)
+      if (startswith (bfd_sect_name, "LC_SEGMENT."))
 	bfd_sect_name += 11;
       if (strcmp (bfd_sect_name, "__TEXT") == 0
 	  || strcmp (bfd_sect_name, "__TEXT.__text") == 0)

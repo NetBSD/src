@@ -1,6 +1,6 @@
 // fileread.cc -- read files for gold
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -137,7 +137,7 @@ File_read::View::~View()
       break;
     case DATA_MMAPPED:
       if (::munmap(const_cast<unsigned char*>(this->data_), this->size_) != 0)
-        gold_warning(_("munmap failed: %s"), strerror(errno));
+	gold_warning(_("munmap failed: %s"), strerror(errno));
       if (!parameters->options_valid() || parameters->options().stats())
 	{
 	  file_counts_initialize_lock.initialize();
@@ -209,7 +209,7 @@ File_read::open(const Task* task, const std::string& name)
 		   this->name_.c_str(), strerror(errno));
       this->size_ = s.st_size;
       gold_debug(DEBUG_FILES, "Attempt to open %s succeeded",
-                 this->name_.c_str());
+		 this->name_.c_str());
       this->token_.add_writer(task);
     }
 
@@ -228,7 +228,7 @@ File_read::open(const Task* task, const std::string& name,
 	      && this->name_.empty());
   this->name_ = name;
   this->whole_file_view_ = new View(0, size, contents, 0, false,
-                                    View::DATA_NOT_OWNED);
+				    View::DATA_NOT_OWNED);
   this->add_view(this->whole_file_view_);
   this->size_ = size;
   this->token_.add_writer(task);
@@ -293,6 +293,7 @@ void
 File_read::lock(const Task* task)
 {
   gold_assert(this->released_);
+  gold_debug(DEBUG_FILES, "Locking file \"%s\"", this->name_.c_str());
   this->token_.add_writer(task);
   this->released_ = false;
 }
@@ -302,6 +303,7 @@ File_read::lock(const Task* task)
 void
 File_read::unlock(const Task* task)
 {
+  gold_debug(DEBUG_FILES, "Unlocking file \"%s\"", this->name_.c_str());
   this->release();
   this->token_.remove_writer(task);
 }
@@ -389,16 +391,26 @@ File_read::do_read(off_t start, section_size_type size, void* p)
   else
     {
       this->reopen_descriptor();
-      bytes = ::pread(this->descriptor_, p, size, start);
-      if (static_cast<section_size_type>(bytes) == size)
-	return;
 
-      if (bytes < 0)
+      char *read_ptr = static_cast<char *>(p);
+      off_t read_pos = start;
+      size_t to_read = size;
+      do
 	{
-	  gold_fatal(_("%s: pread failed: %s"),
-		     this->filename().c_str(), strerror(errno));
-	  return;
+	  bytes = ::pread(this->descriptor_, read_ptr, to_read, read_pos);
+	  if (bytes < 0)
+	    gold_fatal(_("%s: pread failed: %s"),
+		       this->filename().c_str(), strerror(errno));
+
+	  read_pos += bytes;
+	  read_ptr += bytes;
+	  to_read -= bytes;
+	  if (to_read == 0)
+	    return;
 	}
+      while (bytes > 0);
+
+      bytes = size - to_read;
     }
 
   gold_fatal(_("%s: file too short: read only %lld of %lld bytes at %lld"),
@@ -523,9 +535,9 @@ File_read::find_or_make_view(off_t offset, off_t start,
   // Check that start and end of the view are within the file.
   if (start > this->size_
       || (static_cast<unsigned long long>(size)
-          > static_cast<unsigned long long>(this->size_ - start)))
+	  > static_cast<unsigned long long>(this->size_ - start)))
     gold_fatal(_("%s: attempt to map %lld bytes at offset %lld exceeds "
-                 "size of file; the file may be corrupt"),
+		 "size of file; the file may be corrupt"),
 		   this->filename().c_str(),
 		   static_cast<long long>(size),
 		   static_cast<long long>(start));
@@ -583,7 +595,7 @@ File_read::find_or_make_view(off_t offset, off_t start,
       memcpy(pbytes + byteshift, v->data() + v->byteshift(), v->size());
 
       File_read::View* shifted_view =
-          new File_read::View(v->start(), v->size(), pbytes, byteshift,
+	  new File_read::View(v->start(), v->size(), pbytes, byteshift,
 			      cache, View::DATA_ALLOCATED_ARRAY);
 
       this->add_view(shifted_view);
@@ -735,10 +747,10 @@ File_read::read_multiple(off_t base, const Read_multiple& rm)
 		{
 		  const Read_multiple_entry& k_entry(rm[k]);
 		  gold_assert((convert_to_section_size_type(k_entry.file_offset
-                                                           - i_off)
-                               + k_entry.size)
+							   - i_off)
+			       + k_entry.size)
 			      <= convert_to_section_size_type(end_off
-                                                              - i_off));
+							      - i_off));
 		  memcpy(k_entry.buffer,
 			 v + (k_entry.file_offset - i_off),
 			 k_entry.size);
@@ -794,8 +806,8 @@ File_read::clear_views(Clear_views_mode mode)
 	       && keep_files_mapped)
 	should_delete = false;
       else if (this->object_count_ > 1
-      	       && p->second->accessed()
-      	       && mode != CLEAR_VIEWS_ARCHIVE)
+	       && p->second->accessed()
+	       && mode != CLEAR_VIEWS_ARCHIVE)
 	should_delete = false;
       else
 	should_delete = true;
@@ -856,6 +868,16 @@ File_view::~File_view()
 
 // Class Input_file.
 
+// Create a file given just the filename.
+
+Input_file::Input_file(const char* name)
+  : found_name_(), file_(), is_in_sysroot_(false), format_(FORMAT_NONE)
+{
+  this->input_argument_ =
+    new Input_file_argument(name, Input_file_argument::INPUT_FILE_TYPE_FILE,
+			    "", false, Position_dependent_options());
+}
+
 // Create a file for testing.
 
 Input_file::Input_file(const Task* task, const char* name,
@@ -864,7 +886,7 @@ Input_file::Input_file(const Task* task, const char* name,
 {
   this->input_argument_ =
     new Input_file_argument(name, Input_file_argument::INPUT_FILE_TYPE_FILE,
-                            "", false, Position_dependent_options());
+			    "", false, Position_dependent_options());
   bool ok = this->file_.open(task, name, contents, size);
   gold_assert(ok);
 }

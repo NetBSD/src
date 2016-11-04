@@ -1,6 +1,6 @@
 /* BFD library -- caching of file descriptors.
 
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    Hacked by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
@@ -241,7 +241,8 @@ bfd_cache_lookup_worker (bfd *abfd, enum cache_flag flag)
   if ((abfd->flags & BFD_IN_MEMORY) != 0)
     abort ();
 
-  while (abfd->my_archive)
+  while (abfd->my_archive != NULL
+	 && !bfd_is_thin_archive (abfd->my_archive))
     abfd = abfd->my_archive;
 
   if (abfd->iostream != NULL)
@@ -466,7 +467,8 @@ cache_bmmap (struct bfd *abfd ATTRIBUTE_UNUSED,
         pagesize_m1 = getpagesize () - 1;
 
       /* Handle archive members.  */
-      if (abfd->my_archive != NULL)
+      if (abfd->my_archive != NULL
+	  && !bfd_is_thin_archive (abfd->my_archive))
         offset += abfd->origin;
 
       /* Align.  */
@@ -566,7 +568,7 @@ RETURNS
 */
 
 bfd_boolean
-bfd_cache_close_all ()
+bfd_cache_close_all (void)
 {
   bfd_boolean ret = TRUE;
 

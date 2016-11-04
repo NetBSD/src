@@ -320,7 +320,7 @@ static int zz_uncompress(Bytef *dest, uLongf * destLen, const Bytef *source,
         return Z_BUF_ERROR;
 
     stream.zalloc = (alloc_func) 0;
-    stream.zfree = (free_func) 0;
+    stream.zfree = (freefunc) 0;
 
     err = inflateInit_(&stream, ZLIB_VERSION, sizeof(z_stream));
     if (err != Z_OK)

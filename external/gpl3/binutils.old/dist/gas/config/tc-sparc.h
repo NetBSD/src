@@ -1,7 +1,5 @@
 /* tc-sparc.h - Macros and type defines for the sparc.
-   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2008, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1989-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -33,7 +31,7 @@ struct frag;
 #define TARGET_ARCH bfd_arch_sparc
 
 #ifdef TE_FreeBSD
-#define ELF_TARGET_FORMAT	"elf32-sparc-freebsd"
+#define ELF_TARGET_FORMAT	"elf32-sparc"
 #define ELF64_TARGET_FORMAT	"elf64-sparc-freebsd"
 #endif
 
@@ -157,14 +155,17 @@ extern void sparc_md_end (void);
 
 #endif
 
+#define TC_PARSE_CONS_RETURN_TYPE const char *
+#define TC_PARSE_CONS_RETURN_NONE NULL
+
 #ifdef OBJ_ELF
 #define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) sparc_cons (EXP, NBYTES)
-extern void sparc_cons (expressionS *, int);
+extern const char *sparc_cons (expressionS *, int);
 #endif
 
 #define TC_CONS_FIX_NEW cons_fix_new_sparc
 extern void cons_fix_new_sparc
-  (struct frag *, int, unsigned int, struct expressionS *);
+(struct frag *, int, unsigned int, struct expressionS *, const char *);
 
 #define TC_FIX_TYPE	valueT
 

@@ -1,6 +1,6 @@
 // stringpool.h -- a string pool for gold    -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -180,7 +180,7 @@ class Stringpool_template
   typedef size_t Key;
 
   // Create a Stringpool.
-  Stringpool_template();
+  Stringpool_template(uint64_t addralign = 1);
 
   ~Stringpool_template();
 
@@ -409,6 +409,8 @@ class Stringpool_template
   bool optimize_;
   // offset of the next string.
   section_offset_type offset_;
+  // The alignment of strings in the stringpool.
+  uint64_t addralign_;
 };
 
 // The most common type of Stringpool.

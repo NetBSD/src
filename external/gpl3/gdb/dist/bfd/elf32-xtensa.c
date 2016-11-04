@@ -1,5 +1,5 @@
 /* Xtensa-specific support for 32-bit ELF.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -110,7 +110,6 @@ static bfd_boolean xtensa_is_proptable_section (asection *);
 static int internal_reloc_compare (const void *, const void *);
 static int internal_reloc_matches (const void *, const void *);
 static asection *xtensa_get_property_section (asection *, const char *);
-extern asection *xtensa_make_property_section (asection *, const char *);
 static flagword xtensa_get_property_predef_flags (asection *);
 
 /* Other functions called directly by the linker.  */
@@ -521,7 +520,9 @@ elf_xtensa_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
 
 static const bfd_byte elf_xtensa_be_plt_entry[PLT_ENTRY_SIZE] =
 {
+#if XSHAL_ABI == XTHAL_ABI_WINDOWED
   0x6c, 0x10, 0x04,	/* entry sp, 32 */
+#endif
   0x18, 0x00, 0x00,	/* l32r  a8, [got entry for rtld's resolver] */
   0x1a, 0x00, 0x00,	/* l32r  a10, [got entry for rtld's link map] */
   0x1b, 0x00, 0x00,	/* l32r  a11, [literal for reloc index] */
@@ -531,7 +532,9 @@ static const bfd_byte elf_xtensa_be_plt_entry[PLT_ENTRY_SIZE] =
 
 static const bfd_byte elf_xtensa_le_plt_entry[PLT_ENTRY_SIZE] =
 {
+#if XSHAL_ABI == XTHAL_ABI_WINDOWED
   0x36, 0x41, 0x00,	/* entry sp, 32 */
+#endif
   0x81, 0x00, 0x00,	/* l32r  a8, [got entry for rtld's resolver] */
   0xa1, 0x00, 0x00,	/* l32r  a10, [got entry for rtld's link map] */
   0xb1, 0x00, 0x00,	/* l32r  a11, [literal for reloc index] */
@@ -971,7 +974,7 @@ elf_xtensa_check_relocs (bfd *abfd,
   const Elf_Internal_Rela *rel;
   const Elf_Internal_Rela *rel_end;
 
-  if (info->relocatable || (sec->flags & SEC_ALLOC) == 0)
+  if (bfd_link_relocatable (info) || (sec->flags & SEC_ALLOC) == 0)
     return TRUE;
 
   BFD_ASSERT (is_xtensa_elf (abfd));
@@ -1021,7 +1024,7 @@ elf_xtensa_check_relocs (bfd *abfd,
       switch (r_type)
 	{
 	case R_XTENSA_TLSDESC_FN:
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    {
 	      tls_type = GOT_TLS_GD;
 	      is_got = TRUE;
@@ -1032,7 +1035,7 @@ elf_xtensa_check_relocs (bfd *abfd,
 	  break;
 
 	case R_XTENSA_TLSDESC_ARG:
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    {
 	      tls_type = GOT_TLS_GD;
 	      is_got = TRUE;
@@ -1046,7 +1049,7 @@ elf_xtensa_check_relocs (bfd *abfd,
 	  break;
 
 	case R_XTENSA_TLS_DTPOFF:
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    tls_type = GOT_TLS_GD;
 	  else
 	    tls_type = GOT_TLS_IE;
@@ -1054,9 +1057,9 @@ elf_xtensa_check_relocs (bfd *abfd,
 
 	case R_XTENSA_TLS_TPOFF:
 	  tls_type = GOT_TLS_IE;
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    info->flags |= DF_STATIC_TLS;
-	  if (info->shared || h)
+	  if (bfd_link_pic (info) || h)
 	    is_got = TRUE;
 	  break;
 
@@ -1201,7 +1204,7 @@ static void
 elf_xtensa_make_sym_local (struct bfd_link_info *info,
                            struct elf_link_hash_entry *h)
 {
-  if (info->shared)
+  if (bfd_link_pic (info))
     {
       if (h->plt.refcount > 0)
         {
@@ -1288,7 +1291,7 @@ elf_xtensa_gc_sweep_hook (bfd *abfd,
   if (htab == NULL)
     return FALSE;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   if ((sec->flags & SEC_ALLOC) == 0)
@@ -1322,7 +1325,7 @@ elf_xtensa_gc_sweep_hook (bfd *abfd,
       switch (r_type)
 	{
 	case R_XTENSA_TLSDESC_FN:
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    {
 	      is_got = TRUE;
 	      is_tlsfunc = TRUE;
@@ -1330,7 +1333,7 @@ elf_xtensa_gc_sweep_hook (bfd *abfd,
 	  break;
 
 	case R_XTENSA_TLSDESC_ARG:
-	  if (info->shared)
+	  if (bfd_link_pic (info))
 	    is_got = TRUE;
 	  else
 	    {
@@ -1340,7 +1343,7 @@ elf_xtensa_gc_sweep_hook (bfd *abfd,
 	  break;
 
 	case R_XTENSA_TLS_TPOFF:
-	  if (info->shared || h)
+	  if (bfd_link_pic (info) || h)
 	    is_got = TRUE;
 	  break;
 
@@ -1637,7 +1640,7 @@ elf_xtensa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 		  && htab->sgotloc != NULL);
 
       /* Set the contents of the .interp section to the interpreter.  */
-      if (info->executable)
+      if (bfd_link_executable (info) && !info->nointerp)
 	{
 	  s = bfd_get_linker_section (dynobj, ".interp");
 	  if (s == NULL)
@@ -1659,7 +1662,7 @@ elf_xtensa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       /* If we are generating a shared object, we also need space in
 	 ".rela.got" for R_XTENSA_RELATIVE relocs for literals that
 	 reference local symbols.  */
-      if (info->shared)
+      if (bfd_link_pic (info))
 	elf_xtensa_allocate_local_got_size (info);
 
       /* Allocate space in ".plt" to match the size of ".rela.plt".  For
@@ -1815,7 +1818,7 @@ elf_xtensa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 #define add_dynamic_entry(TAG, VAL) \
   _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
-      if (info->executable)
+      if (bfd_link_executable (info))
 	{
 	  if (!add_dynamic_entry (DT_DEBUG, 0))
 	    return FALSE;
@@ -2317,7 +2320,7 @@ elf_xtensa_create_plt_entry (struct bfd_link_info *info,
 {
   asection *splt, *sgotplt;
   bfd_vma plt_base, got_base;
-  bfd_vma code_offset, lit_offset;
+  bfd_vma code_offset, lit_offset, abi_offset;
   int chunk;
 
   chunk = reloc_index / PLT_ENTRIES_PER_CHUNK;
@@ -2342,15 +2345,16 @@ elf_xtensa_create_plt_entry (struct bfd_link_info *info,
 	   ? elf_xtensa_be_plt_entry
 	   : elf_xtensa_le_plt_entry),
 	  PLT_ENTRY_SIZE);
+  abi_offset = XSHAL_ABI == XTHAL_ABI_WINDOWED ? 3 : 0;
   bfd_put_16 (output_bfd, l32r_offset (got_base + 0,
-				       plt_base + code_offset + 3),
-	      splt->contents + code_offset + 4);
+				       plt_base + code_offset + abi_offset),
+	      splt->contents + code_offset + abi_offset + 1);
   bfd_put_16 (output_bfd, l32r_offset (got_base + 4,
-				       plt_base + code_offset + 6),
-	      splt->contents + code_offset + 7);
+				       plt_base + code_offset + abi_offset + 3),
+	      splt->contents + code_offset + abi_offset + 4);
   bfd_put_16 (output_bfd, l32r_offset (got_base + lit_offset,
-				       plt_base + code_offset + 9),
-	      splt->contents + code_offset + 10);
+				       plt_base + code_offset + abi_offset + 6),
+	      splt->contents + code_offset + abi_offset + 7);
 
   return plt_base + code_offset;
 }
@@ -2627,7 +2631,7 @@ elf_xtensa_relocate_section (bfd *output_bfd,
       unresolved_reloc = FALSE;
       warned = FALSE;
 
-      if (howto->partial_inplace && !info->relocatable)
+      if (howto->partial_inplace && !bfd_link_relocatable (info))
 	{
 	  /* Because R_XTENSA_32 was made partial_inplace to fix some
 	     problems with DWARF info in partial links, there may be
@@ -2665,7 +2669,7 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	{
 	  bfd_vma dest_addr;
 	  asection * sym_sec = get_elf_r_symndx_section (input_bfd, r_symndx);
@@ -2697,12 +2701,10 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	      r = contract_asm_expansion (contents, input_size, rel,
 					  &error_message);
 	      if (r != bfd_reloc_ok)
-		{
-		  if (!((*info->callbacks->reloc_dangerous)
-			(info, error_message, input_bfd, input_section,
-			 rel->r_offset)))
-		    return FALSE;
-		}
+		(*info->callbacks->reloc_dangerous)
+		  (info, error_message,
+		   input_bfd, input_section, rel->r_offset);
+
 	      r_type = ELF32_R_TYPE (rel->r_info);
 	    }
 
@@ -2754,12 +2756,9 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 		}
 	    }
 	  if (r != bfd_reloc_ok)
-	    {
-	      if (!((*info->callbacks->reloc_dangerous)
-		    (info, error_message, input_bfd, input_section,
-		     rel->r_offset)))
-		return FALSE;
-	    }
+	    (*info->callbacks->reloc_dangerous)
+	      (info, error_message,
+	       input_bfd, input_section, rel->r_offset);
 
 	  /* Done with work for relocatable link; continue with next reloc.  */
 	  continue;
@@ -2827,7 +2826,7 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	case R_XTENSA_PLT:
 	  if (elf_hash_table (info)->dynamic_sections_created
 	      && (input_section->flags & SEC_ALLOC) != 0
-	      && (dynamic_symbol || info->shared))
+	      && (dynamic_symbol || bfd_link_pic (info)))
 	    {
 	      Elf_Internal_Rela outrel;
 	      bfd_byte *loc;
@@ -2859,10 +2858,9 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 		    {
 		      error_message =
 			_("dynamic relocation in read-only section");
-		      if (!((*info->callbacks->reloc_dangerous)
-			    (info, error_message, input_bfd, input_section,
-			     rel->r_offset)))
-			return FALSE;
+		      (*info->callbacks->reloc_dangerous)
+			(info, error_message,
+			 input_bfd, input_section, rel->r_offset);
 		    }
 
 		  if (dynamic_symbol)
@@ -2915,7 +2913,7 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 
 	case R_XTENSA_TLS_TPOFF:
 	  /* Switch to LE model for local symbols in an executable.  */
-	  if (! info->shared && ! dynamic_symbol)
+	  if (! bfd_link_pic (info) && ! dynamic_symbol)
 	    {
 	      relocation = tpoff (info, relocation);
 	      break;
@@ -2927,12 +2925,12 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	  {
 	    if (r_type == R_XTENSA_TLSDESC_FN)
 	      {
-		if (! info->shared || (tls_type & GOT_TLS_IE) != 0)
+		if (! bfd_link_pic (info) || (tls_type & GOT_TLS_IE) != 0)
 		  r_type = R_XTENSA_NONE;
 	      }
 	    else if (r_type == R_XTENSA_TLSDESC_ARG)
 	      {
-		if (info->shared)
+		if (bfd_link_pic (info))
 		  {
 		    if ((tls_type & GOT_TLS_IE) != 0)
 		      r_type = R_XTENSA_TLS_TPOFF;
@@ -2956,10 +2954,9 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	      {
 		error_message =
 		  _("TLS relocation invalid without dynamic sections");
-		if (!((*info->callbacks->reloc_dangerous)
-		      (info, error_message, input_bfd, input_section,
-		       rel->r_offset)))
-		  return FALSE;
+		(*info->callbacks->reloc_dangerous)
+		  (info, error_message,
+		   input_bfd, input_section, rel->r_offset);
 	      }
 	    else
 	      {
@@ -2980,10 +2977,9 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 		  {
 		    error_message =
 		      _("dynamic relocation in read-only section");
-		    if (!((*info->callbacks->reloc_dangerous)
-			  (info, error_message, input_bfd, input_section,
-			   rel->r_offset)))
-		      return FALSE;
+		    (*info->callbacks->reloc_dangerous)
+		      (info, error_message,
+		       input_bfd, input_section, rel->r_offset);
 		  }
 
 		indx = h && h->dynindx != -1 ? h->dynindx : 0;
@@ -3008,7 +3004,7 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	  break;
 
 	case R_XTENSA_TLS_DTPOFF:
-	  if (! info->shared)
+	  if (! bfd_link_pic (info))
 	    /* Switch from LD model to LE model.  */
 	    relocation = tpoff (info, relocation);
 	  else
@@ -3025,12 +3021,9 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 		(h && elf_xtensa_hash_entry (h) == htab->tlsbase);
 	      if (! replace_tls_insn (rel, input_bfd, input_section, contents,
 				      is_ld_model, &error_message))
-		{
-		  if (!((*info->callbacks->reloc_dangerous)
-			(info, error_message, input_bfd, input_section,
-			 rel->r_offset)))
-		    return FALSE;
-		}
+		(*info->callbacks->reloc_dangerous)
+		  (info, error_message,
+		   input_bfd, input_section, rel->r_offset);
 
 	      if (r_type != R_XTENSA_TLS_ARG || is_ld_model)
 		{
@@ -3049,10 +3042,8 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	      error_message =
 		vsprint_msg ("invalid relocation for dynamic symbol", ": %s",
 			     strlen (name) + 2, name);
-	      if (!((*info->callbacks->reloc_dangerous)
-		    (info, error_message, input_bfd, input_section,
-		     rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->reloc_dangerous)
+		(info, error_message, input_bfd, input_section, rel->r_offset);
 	      continue;
 	    }
 	  break;
@@ -3100,10 +3091,8 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 					 strlen (name) + 22,
 					 name, (int) rel->r_addend);
 
-	  if (!((*info->callbacks->reloc_dangerous)
-		(info, error_message, input_bfd, input_section,
-		 rel->r_offset)))
-	    return FALSE;
+	  (*info->callbacks->reloc_dangerous)
+	    (info, error_message, input_bfd, input_section, rel->r_offset);
 	}
     }
 
@@ -3395,7 +3384,7 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
     }
 
   /* Combine adjacent literal table entries.  */
-  BFD_ASSERT (! info->relocatable);
+  BFD_ASSERT (! bfd_link_relocatable (info));
   sxtlit = bfd_get_section_by_name (output_bfd, ".xt.lit");
   sgotloc = htab->sgotloc;
   BFD_ASSERT (sgotloc);
@@ -3425,19 +3414,22 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
 	  break;
 
 	case DT_XTENSA_GOT_LOC_OFF:
-	  dyn.d_un.d_ptr = htab->sgotloc->output_section->vma;
+	  dyn.d_un.d_ptr = (htab->sgotloc->output_section->vma
+			    + htab->sgotloc->output_offset);
 	  break;
 
 	case DT_PLTGOT:
-	  dyn.d_un.d_ptr = htab->sgot->output_section->vma;
+	  dyn.d_un.d_ptr = (htab->sgot->output_section->vma
+			    + htab->sgot->output_offset);
 	  break;
 
 	case DT_JMPREL:
-	  dyn.d_un.d_ptr = htab->srelplt->output_section->vma;
+	  dyn.d_un.d_ptr = (htab->srelplt->output_section->vma
+			    + htab->srelplt->output_offset);
 	  break;
 
 	case DT_PLTRELSZ:
-	  dyn.d_un.d_val = htab->srelplt->output_section->size;
+	  dyn.d_un.d_val = htab->srelplt->size;
 	  break;
 
 	case DT_RELASZ:
@@ -3448,7 +3440,7 @@ elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
 	     for .rela.plt to follow all other relocation sections, we
 	     don't have to worry about changing the DT_RELA entry.  */
 	  if (htab->srelplt)
-	    dyn.d_un.d_val -= htab->srelplt->output_section->size;
+	    dyn.d_un.d_val -= htab->srelplt->size;
 	  break;
 	}
 
@@ -7348,7 +7340,7 @@ is_resolvable_asm_expansion (bfd *abfd,
   /* For relocatable sections, we can only simplify when the output
      section of the target is the same as the output section of the
      source.  */
-  if (link_info->relocatable
+  if (bfd_link_relocatable (link_info)
       && (target_sec->output_section != sec->output_section
 	  || is_reloc_sym_weak (abfd, irel)))
     return FALSE;
@@ -9004,7 +8996,7 @@ identify_literal_placement (bfd *abfd,
   sec_size = bfd_get_section_limit (abfd, sec);
 
   final_static_link =
-    (!link_info->relocatable
+    (!bfd_link_relocatable (link_info)
      && !elf_hash_table (link_info)->dynamic_sections_created);
 
   /* The placement algorithm first checks to see if the literal is
@@ -9043,7 +9035,7 @@ identify_literal_placement (bfd *abfd,
   /* For relocatable links, do not try to move literals.  To do it
      correctly might increase the number of relocations in an input
      section making the default relocatable linking fail.  */
-  if (!link_info->relocatable && !literal_placed
+  if (!bfd_link_relocatable (link_info) && !literal_placed
       && values->has_last_loc && !(*last_loc_is_prev_p))
     {
       asection *target_sec = r_reloc_get_section (&values->last_loc);
@@ -10119,7 +10111,7 @@ shrink_dynamic_reloc_sections (struct bfd_link_info *info,
 
   if ((r_type == R_XTENSA_32 || r_type == R_XTENSA_PLT)
       && (input_section->flags & SEC_ALLOC) != 0
-      && (dynamic_symbol || info->shared))
+      && (dynamic_symbol || bfd_link_pic (info)))
     {
       asection *srel;
       bfd_boolean is_plt = FALSE;
@@ -10225,7 +10217,7 @@ move_literal (bfd *abfd,
       bfd_put_32 (abfd, lit->value, contents + offset);
 
       /* Currently, we cannot move relocations during a relocatable link.  */
-      BFD_ASSERT (!link_info->relocatable);
+      BFD_ASSERT (!bfd_link_relocatable (link_info));
       fix = reloc_bfd_fix_init (sec, offset, r_type,
 				r_reloc_get_section (r_rel),
 				r_rel->target_offset + r_rel->virtual_offset,
@@ -10464,7 +10456,7 @@ relax_property_section (bfd *abfd,
      finish_dynamic_sections() but at that point it's too late to
      reclaim the space in the output section, so we do this twice.  */
 
-  if (internal_relocs && (!link_info->relocatable
+  if (internal_relocs && (!bfd_link_relocatable (link_info)
 			  || xtensa_is_littable_section (sec)))
     {
       Elf_Internal_Rela *last_irel = NULL;

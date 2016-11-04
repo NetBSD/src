@@ -1,5 +1,5 @@
 /* GNU/Linux/MIPS specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 #include "server.h"
 #include "linux-low.h"
 
-#include <sys/ptrace.h>
+#include "nat/gdb_ptrace.h"
 #include <endian.h>
 
 #include "nat/mips-linux-watch.h"
@@ -266,16 +266,13 @@ mips_set_pc (struct regcache *regcache, CORE_ADDR pc)
 static const unsigned int mips_breakpoint = 0x0005000d;
 #define mips_breakpoint_len 4
 
-/* We only place breakpoints in empty marker functions, and thread locking
-   is outside of the function.  So rather than importing software single-step,
-   we can just run until exit.  */
-static CORE_ADDR
-mips_reinsert_addr (void)
+/* Implementation of linux_target_ops method "sw_breakpoint_from_kind".  */
+
+static const gdb_byte *
+mips_sw_breakpoint_from_kind (int kind, int *size)
 {
-  struct regcache *regcache = get_thread_regcache (current_thread, 1);
-  union mips_register ra;
-  collect_register_by_name (regcache, "r31", ra.buf);
-  return register_size (regcache->tdesc, 0) == 4 ? ra.reg32 : ra.reg64;
+  *size = mips_breakpoint_len;
+  return (const gdb_byte *) &mips_breakpoint;
 }
 
 static int
@@ -325,7 +322,7 @@ update_watch_registers_callback (struct inferior_list_entry *entry,
 static struct arch_process_info *
 mips_linux_new_process (void)
 {
-  struct arch_process_info *info = xcalloc (1, sizeof (*info));
+  struct arch_process_info *info = XCNEW (struct arch_process_info);
 
   return info;
 }
@@ -337,7 +334,7 @@ mips_linux_new_process (void)
 static void
 mips_linux_new_thread (struct lwp_info *lwp)
 {
-  struct arch_lwp_info *info = xcalloc (1, sizeof (*info));
+  struct arch_lwp_info *info = XCNEW (struct arch_lwp_info);
 
   info->watch_registers_changed = 1;
 
@@ -347,19 +344,19 @@ mips_linux_new_thread (struct lwp_info *lwp)
 /* Create a new mips_watchpoint and add it to the list.  */
 
 static void
-mips_add_watchpoint (struct arch_process_info *private, CORE_ADDR addr,
-		     int len, int watch_type)
+mips_add_watchpoint (struct arch_process_info *priv, CORE_ADDR addr, int len,
+		     enum target_hw_bp_type watch_type)
 {
   struct mips_watchpoint *new_watch;
   struct mips_watchpoint **pw;
 
-  new_watch = xmalloc (sizeof (struct mips_watchpoint));
+  new_watch = XNEW (struct mips_watchpoint);
   new_watch->addr = addr;
   new_watch->len = len;
   new_watch->type = watch_type;
   new_watch->next = NULL;
 
-  pw = &private->current_watches;
+  pw = &priv->current_watches;
   while (*pw != NULL)
     pw = &(*pw)->next;
   *pw = new_watch;
@@ -427,7 +424,7 @@ mips_linux_prepare_to_resume (struct lwp_info *lwp)
 	  int tid = ptid_get_lwp (ptid);
 
 	  if (-1 == ptrace (PTRACE_SET_WATCH_REGS, tid,
-			    &priv->watch_mirror))
+			    &priv->watch_mirror, NULL))
 	    perror_with_name ("Couldn't write watch register");
 	}
 
@@ -640,7 +637,7 @@ mips_stopped_data_address (void)
 /* Fetch the thread-local storage pointer for libthread_db.  */
 
 ps_err_e
-ps_get_thread_area (const struct ps_prochandle *ph,
+ps_get_thread_area (struct ps_prochandle *ph,
 		    lwpid_t lwpid, int idx, void **base)
 {
   if (ptrace (PTRACE_GET_THREAD_AREA, lwpid, NULL, base) != 0)
@@ -715,7 +712,7 @@ mips_supply_register_32bit (struct regcache *regcache,
 static void
 mips_fill_gregset (struct regcache *regcache, void *buf)
 {
-  union mips_register *regset = buf;
+  union mips_register *regset = (union mips_register *) buf;
   int i, use_64bit;
   const struct target_desc *tdesc = regcache->tdesc;
 
@@ -744,7 +741,7 @@ mips_fill_gregset (struct regcache *regcache, void *buf)
 static void
 mips_store_gregset (struct regcache *regcache, const void *buf)
 {
-  const union mips_register *regset = buf;
+  const union mips_register *regset = (const union mips_register *) buf;
   int i, use_64bit;
 
   use_64bit = (register_size (regcache->tdesc, 0) == 8);
@@ -772,7 +769,7 @@ mips_store_gregset (struct regcache *regcache, const void *buf)
 static void
 mips_fill_fpregset (struct regcache *regcache, void *buf)
 {
-  union mips_register *regset = buf;
+  union mips_register *regset = (union mips_register *) buf;
   int i, use_64bit, first_fp, big_endian;
 
   use_64bit = (register_size (regcache->tdesc, 0) == 8);
@@ -797,7 +794,7 @@ mips_fill_fpregset (struct regcache *regcache, void *buf)
 static void
 mips_store_fpregset (struct regcache *regcache, const void *buf)
 {
-  const union mips_register *regset = buf;
+  const union mips_register *regset = (const union mips_register *) buf;
   int i, use_64bit, first_fp, big_endian;
 
   use_64bit = (register_size (regcache->tdesc, 0) == 8);
@@ -828,7 +825,7 @@ static struct regset_info mips_regsets[] = {
   { PTRACE_GETFPREGS, PTRACE_SETFPREGS, 0, 33 * 8, FP_REGS,
     mips_fill_fpregset, mips_store_fpregset },
 #endif /* HAVE_PTRACE_GETREGS */
-  { 0, 0, 0, -1, -1, NULL, NULL }
+  NULL_REGSET
 };
 
 static struct regsets_info mips_regsets_info =
@@ -881,9 +878,9 @@ struct linux_target_ops the_low_target = {
   NULL, /* fetch_register */
   mips_get_pc,
   mips_set_pc,
-  (const unsigned char *) &mips_breakpoint,
-  mips_breakpoint_len,
-  mips_reinsert_addr,
+  NULL, /* breakpoint_kind_from_pc */
+  mips_sw_breakpoint_from_kind,
+  NULL, /* get_next_pcs */
   0,
   mips_breakpoint_at,
   mips_supports_z_point_type,

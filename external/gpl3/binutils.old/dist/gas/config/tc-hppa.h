@@ -1,7 +1,5 @@
 /* tc-hppa.h -- Header file for the PA
-   Copyright 1989, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1989-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -92,8 +90,8 @@
 
 /* pa_define_label gets used outside of tc-hppa.c via tc_frob_label.  */
 extern void pa_define_label (symbolS *);
-extern void parse_cons_expression_hppa (expressionS *);
-extern void cons_fix_new_hppa (fragS *, int, int, expressionS *);
+extern int parse_cons_expression_hppa (expressionS *);
+extern void cons_fix_new_hppa (fragS *, int, int, expressionS *, int);
 extern int hppa_force_relocation (struct fix *);
 
 /* This gets called before writing the object file to make sure
@@ -114,6 +112,8 @@ extern const char	hppa_symbol_chars[];
 #define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) \
   parse_cons_expression_hppa (EXP)
 #define TC_CONS_FIX_NEW cons_fix_new_hppa
+#define TC_PARSE_CONS_RETURN_TYPE int
+#define TC_PARSE_CONS_RETURN_NONE e_fsel
 
 /* On the PA, an exclamation point can appear in an instruction.  It is
    used in FP comparison instructions and as an end of line marker.

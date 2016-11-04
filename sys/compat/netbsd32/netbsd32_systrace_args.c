@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.12 2015/12/03 10:39:50 pgoyette Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.12.2.1 2016/11/04 14:49:07 pgoyette Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -3441,6 +3441,27 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[2] = SCARG(p, pos); /* netbsd32_off_t */
 		iarg[3] = SCARG(p, len); /* netbsd32_off_t */
 		*n_args = 4;
+		break;
+	}
+	/* netbsd32_wait6 */
+	case 481: {
+		struct netbsd32_wait6_args *p = params;
+		iarg[0] = SCARG(p, idtype); /* idtype_t */
+		iarg[1] = SCARG(p, id); /* id_t */
+		uarg[2] = (intptr_t) SCARG(p, status).i32; /* netbsd32_intp */
+		iarg[3] = SCARG(p, options); /* int */
+		uarg[4] = (intptr_t) SCARG(p, wru).i32; /* netbsd32_wrusagep_t */
+		uarg[5] = (intptr_t) SCARG(p, info).i32; /* netbsd32_siginfop_t */
+		*n_args = 6;
+		break;
+	}
+	/* netbsd32_clock_getcpuclockid2 */
+	case 482: {
+		struct netbsd32_clock_getcpuclockid2_args *p = params;
+		iarg[0] = SCARG(p, idtype); /* idtype_t */
+		iarg[1] = SCARG(p, id); /* id_t */
+		uarg[2] = (intptr_t) SCARG(p, clock_id).i32; /* netbsd32_clockidp_t */
+		*n_args = 3;
 		break;
 	}
 	default:
@@ -9280,6 +9301,47 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* netbsd32_wait6 */
+	case 481:
+		switch(ndx) {
+		case 0:
+			p = "idtype_t";
+			break;
+		case 1:
+			p = "id_t";
+			break;
+		case 2:
+			p = "netbsd32_intp";
+			break;
+		case 3:
+			p = "int";
+			break;
+		case 4:
+			p = "netbsd32_wrusagep_t";
+			break;
+		case 5:
+			p = "netbsd32_siginfop_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_clock_getcpuclockid2 */
+	case 482:
+		switch(ndx) {
+		case 0:
+			p = "idtype_t";
+			break;
+		case 1:
+			p = "id_t";
+			break;
+		case 2:
+			p = "netbsd32_clockidp_t";
+			break;
+		default:
+			break;
+		};
+		break;
 	default:
 		break;
 	};
@@ -11229,6 +11291,16 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* netbsd32_fdiscard */
 	case 480:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_wait6 */
+	case 481:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_clock_getcpuclockid2 */
+	case 482:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

@@ -57,7 +57,11 @@ static int exit_requested;
 int run_once;
 
 int multi_process;
+int report_fork_events;
+int report_vfork_events;
 int non_stop;
+int swbreak_feature;
+int hwbreak_feature;
 
 /* Whether we should attempt to disable the operating system's address
    space randomization feature before starting an inferior.  */
@@ -121,6 +125,10 @@ struct vstop_notif
   /* Event info.  */
   struct target_waitstatus status;
 };
+
+/* The current btrace configuration.  This is gdbserver's mirror of GDB's
+   btrace configuration.  */
+static struct btrace_config current_btrace_conf;
 
 DEFINE_QUEUE_P (notif_event_p);
 
@@ -278,6 +286,8 @@ start_inferior (char **argv)
       current_thread->last_resume_kind = resume_stop;
       current_thread->last_status = last_status;
     }
+  else
+    mourn_inferior (find_process_pid (ptid_get_pid (last_ptid)));
 
   return signal_pid;
 }
@@ -377,19 +387,38 @@ write_qxfer_response (char *buf, const void *data, int len, int is_more)
   else
     buf[0] = 'l';
 
-  return remote_escape_output (data, len, (unsigned char *) buf + 1, &out_len,
-			       PBUFSIZ - 2) + 1;
+  return remote_escape_output (data, len, 1, (unsigned char *) buf + 1,
+			       &out_len, PBUFSIZ - 2) + 1;
 }
 
-/* Handle btrace enabling.  */
+/* Handle btrace enabling in BTS format.  */
 
 static const char *
-handle_btrace_enable (struct thread_info *thread)
+handle_btrace_enable_bts (struct thread_info *thread)
 {
   if (thread->btrace != NULL)
     return "E.Btrace already enabled.";
 
-  thread->btrace = target_enable_btrace (thread->entry.id);
+  current_btrace_conf.format = BTRACE_FORMAT_BTS;
+  thread->btrace = target_enable_btrace (thread->entry.id,
+					 &current_btrace_conf);
+  if (thread->btrace == NULL)
+    return "E.Could not enable btrace.";
+
+  return NULL;
+}
+
+/* Handle btrace enabling in Intel(R) Processor Trace format.  */
+
+static const char *
+handle_btrace_enable_pt (struct thread_info *thread)
+{
+  if (thread->btrace != NULL)
+    return "E.Btrace already enabled.";
+
+  current_btrace_conf.format = BTRACE_FORMAT_PT;
+  thread->btrace = target_enable_btrace (thread->entry.id,
+					 &current_btrace_conf);
   if (thread->btrace == NULL)
     return "E.Could not enable btrace.";
 
@@ -421,16 +450,10 @@ handle_btrace_general_set (char *own_buf)
   const char *err;
   char *op;
 
-  if (strncmp ("Qbtrace:", own_buf, strlen ("Qbtrace:")) != 0)
+  if (!startswith (own_buf, "Qbtrace:"))
     return 0;
 
   op = own_buf + strlen ("Qbtrace:");
-
-  if (!target_supports_btrace ())
-    {
-      strcpy (own_buf, "E.Target does not support branch tracing.");
-      return -1;
-    }
 
   if (ptid_equal (general_thread, null_ptid)
       || ptid_equal (general_thread, minus_one_ptid))
@@ -449,11 +472,13 @@ handle_btrace_general_set (char *own_buf)
   err = NULL;
 
   if (strcmp (op, "bts") == 0)
-    err = handle_btrace_enable (thread);
+    err = handle_btrace_enable_bts (thread);
+  else if (strcmp (op, "pt") == 0)
+    err = handle_btrace_enable_pt (thread);
   else if (strcmp (op, "off") == 0)
     err = handle_btrace_disable (thread);
   else
-    err = "E.Bad Qbtrace operation. Use bts or off.";
+    err = "E.Bad Qbtrace operation. Use bts, pt, or off.";
 
   if (err != 0)
     strcpy (own_buf, err);
@@ -463,12 +488,79 @@ handle_btrace_general_set (char *own_buf)
   return 1;
 }
 
+/* Handle the "Qbtrace-conf" packet.  */
+
+static int
+handle_btrace_conf_general_set (char *own_buf)
+{
+  struct thread_info *thread;
+  char *op;
+
+  if (!startswith (own_buf, "Qbtrace-conf:"))
+    return 0;
+
+  op = own_buf + strlen ("Qbtrace-conf:");
+
+  if (ptid_equal (general_thread, null_ptid)
+      || ptid_equal (general_thread, minus_one_ptid))
+    {
+      strcpy (own_buf, "E.Must select a single thread.");
+      return -1;
+    }
+
+  thread = find_thread_ptid (general_thread);
+  if (thread == NULL)
+    {
+      strcpy (own_buf, "E.No such thread.");
+      return -1;
+    }
+
+  if (startswith (op, "bts:size="))
+    {
+      unsigned long size;
+      char *endp = NULL;
+
+      errno = 0;
+      size = strtoul (op + strlen ("bts:size="), &endp, 16);
+      if (endp == NULL || *endp != 0 || errno != 0 || size > UINT_MAX)
+	{
+	  strcpy (own_buf, "E.Bad size value.");
+	  return -1;
+	}
+
+      current_btrace_conf.bts.size = (unsigned int) size;
+    }
+  else if (strncmp (op, "pt:size=", strlen ("pt:size=")) == 0)
+    {
+      unsigned long size;
+      char *endp = NULL;
+
+      errno = 0;
+      size = strtoul (op + strlen ("pt:size="), &endp, 16);
+      if (endp == NULL || *endp != 0 || errno != 0 || size > UINT_MAX)
+	{
+	  strcpy (own_buf, "E.Bad size value.");
+	  return -1;
+	}
+
+      current_btrace_conf.pt.size = (unsigned int) size;
+    }
+  else
+    {
+      strcpy (own_buf, "E.Bad Qbtrace configuration option.");
+      return -1;
+    }
+
+  write_ok (own_buf);
+  return 1;
+}
+
 /* Handle all of the extended 'Q' packets.  */
 
 static void
 handle_general_set (char *own_buf)
 {
-  if (strncmp ("QPassSignals:", own_buf, strlen ("QPassSignals:")) == 0)
+  if (startswith (own_buf, "QPassSignals:"))
     {
       int numsigs = (int) GDB_SIGNAL_LAST, i;
       const char *p = own_buf + strlen ("QPassSignals:");
@@ -493,7 +585,7 @@ handle_general_set (char *own_buf)
       return;
     }
 
-  if (strncmp ("QProgramSignals:", own_buf, strlen ("QProgramSignals:")) == 0)
+  if (startswith (own_buf, "QProgramSignals:"))
     {
       int numsigs = (int) GDB_SIGNAL_LAST, i;
       const char *p = own_buf + strlen ("QProgramSignals:");
@@ -533,11 +625,11 @@ handle_general_set (char *own_buf)
       return;
     }
 
-  if (strncmp (own_buf, "QNonStop:", 9) == 0)
+  if (startswith (own_buf, "QNonStop:"))
     {
       char *mode = own_buf + 9;
       int req = -1;
-      char *req_str;
+      const char *req_str;
 
       if (strcmp (mode, "0") == 0)
 	req = 0;
@@ -570,8 +662,7 @@ handle_general_set (char *own_buf)
       return;
     }
 
-  if (strncmp ("QDisableRandomization:", own_buf,
-	       strlen ("QDisableRandomization:")) == 0)
+  if (startswith (own_buf, "QDisableRandomization:"))
     {
       char *packet = own_buf + strlen ("QDisableRandomization:");
       ULONGEST setting;
@@ -595,7 +686,7 @@ handle_general_set (char *own_buf)
       && handle_tracepoint_general_set (own_buf))
     return;
 
-  if (strncmp ("QAgent:", own_buf, strlen ("QAgent:")) == 0)
+  if (startswith (own_buf, "QAgent:"))
     {
       char *mode = own_buf + strlen ("QAgent:");
       int req = 0;
@@ -620,6 +711,9 @@ handle_general_set (char *own_buf)
     }
 
   if (handle_btrace_general_set (own_buf))
+    return;
+
+  if (handle_btrace_conf_general_set (own_buf))
     return;
 
   /* Otherwise we didn't know what packet it was.  Say we didn't
@@ -1015,8 +1109,7 @@ handle_monitor_command (char *mon, char *own_buf)
       remote_debug = 0;
       monitor_output ("Protocol debug output disabled.\n");
     }
-  else if (strncmp (mon, "set debug-format ",
-		    sizeof ("set debug-format ") - 1) == 0)
+  else if (startswith (mon, "set debug-format "))
     {
       char *error_msg
 	= parse_debug_format_options (mon + sizeof ("set debug-format ") - 1,
@@ -1080,6 +1173,57 @@ handle_qxfer_auxv (const char *annex,
     return -1;
 
   return (*the_target->read_auxv) (offset, readbuf, len);
+}
+
+/* Handle qXfer:exec-file:read.  */
+
+static int
+handle_qxfer_exec_file (const char *const_annex,
+			gdb_byte *readbuf, const gdb_byte *writebuf,
+			ULONGEST offset, LONGEST len)
+{
+  char *file;
+  ULONGEST pid;
+  int total_len;
+
+  if (the_target->pid_to_exec_file == NULL || writebuf != NULL)
+    return -2;
+
+  if (const_annex[0] == '\0')
+    {
+      if (current_thread == NULL)
+	return -1;
+
+      pid = pid_of (current_thread);
+    }
+  else
+    {
+      char *annex = alloca (strlen (const_annex) + 1);
+
+      strcpy (annex, const_annex);
+      annex = unpack_varlen_hex (annex, &pid);
+
+      if (annex[0] != '\0')
+	return -1;
+    }
+
+  if (pid <= 0)
+    return -1;
+
+  file = (*the_target->pid_to_exec_file) (pid);
+  if (file == NULL)
+    return -1;
+
+  total_len = strlen (file);
+
+  if (offset > total_len)
+    return -1;
+
+  if (offset + len > total_len)
+    len = total_len - offset;
+
+  memcpy (readbuf, file + offset, len);
+  return len;
 }
 
 /* Handle qXfer:features:read.  */
@@ -1181,7 +1325,7 @@ handle_qxfer_libraries (const char *annex,
   if (document == NULL)
     return -1;
 
-  strcpy (document, "<library-list>\n");
+  strcpy (document, "<library-list version=\"1.0\">\n");
   p = document + strlen (document);
 
   for_each_inferior_with_data (&all_dlls, emit_dll_description, &p);
@@ -1516,10 +1660,74 @@ handle_qxfer_btrace (const char *annex,
   return len;
 }
 
+/* Handle qXfer:btrace-conf:read.  */
+
+static int
+handle_qxfer_btrace_conf (const char *annex,
+			  gdb_byte *readbuf, const gdb_byte *writebuf,
+			  ULONGEST offset, LONGEST len)
+{
+  static struct buffer cache;
+  struct thread_info *thread;
+  int result;
+
+  if (the_target->read_btrace_conf == NULL || writebuf != NULL)
+    return -2;
+
+  if (annex[0] != '\0' || !target_running ())
+    return -1;
+
+  if (ptid_equal (general_thread, null_ptid)
+      || ptid_equal (general_thread, minus_one_ptid))
+    {
+      strcpy (own_buf, "E.Must select a single thread.");
+      return -3;
+    }
+
+  thread = find_thread_ptid (general_thread);
+  if (thread == NULL)
+    {
+      strcpy (own_buf, "E.No such thread.");
+      return -3;
+    }
+
+  if (thread->btrace == NULL)
+    {
+      strcpy (own_buf, "E.Btrace not enabled.");
+      return -3;
+    }
+
+  if (offset == 0)
+    {
+      buffer_free (&cache);
+
+      result = target_read_btrace_conf (thread->btrace, &cache);
+      if (result != 0)
+	{
+	  memcpy (own_buf, cache.buffer, cache.used_size);
+	  return -3;
+	}
+    }
+  else if (offset > cache.used_size)
+    {
+      buffer_free (&cache);
+      return -3;
+    }
+
+  if (len > cache.used_size - offset)
+    len = cache.used_size - offset;
+
+  memcpy (readbuf, cache.buffer + offset, len);
+
+  return len;
+}
+
 static const struct qxfer qxfer_packets[] =
   {
     { "auxv", handle_qxfer_auxv },
     { "btrace", handle_qxfer_btrace },
+    { "btrace-conf", handle_qxfer_btrace_conf },
+    { "exec-file", handle_qxfer_exec_file},
     { "fdpic", handle_qxfer_fdpic},
     { "features", handle_qxfer_features },
     { "libraries", handle_qxfer_libraries },
@@ -1541,7 +1749,7 @@ handle_qxfer (char *own_buf, int packet_len, int *new_packet_len_p)
   char *annex;
   char *offset;
 
-  if (strncmp (own_buf, "qXfer:", 6) != 0)
+  if (!startswith (own_buf, "qXfer:"))
     return 0;
 
   /* Grab the object, r/w and annex.  */
@@ -1692,6 +1900,37 @@ crc32 (CORE_ADDR base, int len, unsigned int crc)
   return (unsigned long long) crc;
 }
 
+/* Add supported btrace packets to BUF.  */
+
+static void
+supported_btrace_packets (char *buf)
+{
+  int btrace_supported = 0;
+
+  if (target_supports_btrace (BTRACE_FORMAT_BTS))
+    {
+      strcat (buf, ";Qbtrace:bts+");
+      strcat (buf, ";Qbtrace-conf:bts:size+");
+
+      btrace_supported = 1;
+    }
+
+  if (target_supports_btrace (BTRACE_FORMAT_PT))
+    {
+      strcat (buf, ";Qbtrace:pt+");
+      strcat (buf, ";Qbtrace-conf:pt:size+");
+
+      btrace_supported = 1;
+    }
+
+  if (!btrace_supported)
+    return;
+
+  strcat (buf, ";Qbtrace:off+");
+  strcat (buf, ";qXfer:btrace:read+");
+  strcat (buf, ";qXfer:btrace-conf:read+");
+}
+
 /* Handle all of the extended 'q' packets.  */
 
 void
@@ -1797,7 +2036,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
     }
 
   /* Protocol features query.  */
-  if (strncmp ("qSupported", own_buf, 10) == 0
+  if (startswith (own_buf, "qSupported")
       && (own_buf[10] == ':' || own_buf[10] == '\0'))
     {
       char *p = &own_buf[10];
@@ -1840,6 +2079,33 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 		{
 		  /* GDB supports relocate instruction requests.  */
 		  gdb_supports_qRelocInsn = 1;
+		}
+	      else if (strcmp (p, "swbreak+") == 0)
+		{
+		  /* GDB wants us to report whether a trap is caused
+		     by a software breakpoint and for us to handle PC
+		     adjustment if necessary on this target.  */
+		  if (target_supports_stopped_by_sw_breakpoint ())
+		    swbreak_feature = 1;
+		}
+	      else if (strcmp (p, "hwbreak+") == 0)
+		{
+		  /* GDB wants us to report whether a trap is caused
+		     by a hardware breakpoint.  */
+		  if (target_supports_stopped_by_hw_breakpoint ())
+		    hwbreak_feature = 1;
+		}
+	      else if (strcmp (p, "fork-events+") == 0)
+		{
+		  /* GDB supports and wants fork events if possible.  */
+		  if (target_supports_fork_events ())
+		    report_fork_events = 1;
+		}
+	      else if (strcmp (p, "vfork-events+") == 0)
+		{
+		  /* GDB supports and wants vfork events if possible.  */
+		  if (target_supports_vfork_events ())
+		    report_vfork_events = 1;
 		}
 	      else
 		target_process_qsupported (p);
@@ -1891,6 +2157,12 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
       if (target_supports_multi_process ())
 	strcat (own_buf, ";multiprocess+");
 
+      if (target_supports_fork_events ())
+	strcat (own_buf, ";fork-events+");
+
+      if (target_supports_vfork_events ())
+	strcat (own_buf, ";vfork-events+");
+
       if (target_supports_non_stop ())
 	strcat (own_buf, ";QNonStop+");
 
@@ -1917,25 +2189,34 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 	}
 
       /* Support target-side breakpoint conditions and commands.  */
-      strcat (own_buf, ";ConditionalBreakpoints+");
+      if (target_supports_conditional_breakpoints ())
+	strcat (own_buf, ";ConditionalBreakpoints+");
       strcat (own_buf, ";BreakpointCommands+");
 
       if (target_supports_agent ())
 	strcat (own_buf, ";QAgent+");
 
-      if (target_supports_btrace ())
-	{
-	  strcat (own_buf, ";Qbtrace:bts+");
-	  strcat (own_buf, ";Qbtrace:off+");
-	  strcat (own_buf, ";qXfer:btrace:read+");
-	}
+      supported_btrace_packets (own_buf);
+
+      if (target_supports_stopped_by_sw_breakpoint ())
+	strcat (own_buf, ";swbreak+");
+
+      if (target_supports_stopped_by_hw_breakpoint ())
+	strcat (own_buf, ";hwbreak+");
+
+      if (the_target->pid_to_exec_file != NULL)
+	strcat (own_buf, ";qXfer:exec-file:read+");
+
+      /* Reinitialize components as needed for the new connection.  */
+      hostio_handle_new_gdb_connection ();
+      target_handle_new_gdb_connection ();
 
       return;
     }
 
   /* Thread-local storage support.  */
   if (the_target->get_tls_address != NULL
-      && strncmp ("qGetTLSAddr:", own_buf, 12) == 0)
+      && startswith (own_buf, "qGetTLSAddr:"))
     {
       char *p = own_buf + 12;
       CORE_ADDR parts[2], address = 0;
@@ -2000,7 +2281,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 
   /* Windows OS Thread Information Block address support.  */
   if (the_target->get_tib_address != NULL
-      && strncmp ("qGetTIBAddr:", own_buf, 12) == 0)
+      && startswith (own_buf, "qGetTIBAddr:"))
     {
       char *annex;
       int n;
@@ -2022,7 +2303,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
     }
 
   /* Handle "monitor" commands.  */
-  if (strncmp ("qRcmd,", own_buf, 6) == 0)
+  if (startswith (own_buf, "qRcmd,"))
     {
       char *mon = malloc (PBUFSIZ);
       int len = strlen (own_buf + 6);
@@ -2053,8 +2334,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
       return;
     }
 
-  if (strncmp ("qSearch:memory:", own_buf,
-	       sizeof ("qSearch:memory:") - 1) == 0)
+  if (startswith (own_buf, "qSearch:memory:"))
     {
       require_running (own_buf);
       handle_search_memory (own_buf, packet_len);
@@ -2062,7 +2342,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
     }
 
   if (strcmp (own_buf, "qAttached") == 0
-      || strncmp (own_buf, "qAttached:", sizeof ("qAttached:") - 1) == 0)
+      || startswith (own_buf, "qAttached:"))
     {
       struct process_info *process;
 
@@ -2088,7 +2368,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
       return;
     }
 
-  if (strncmp ("qCRC:", own_buf, 5) == 0)
+  if (startswith (own_buf, "qCRC:"))
     {
       /* CRC check (compare-section).  */
       char *comma;
@@ -2518,14 +2798,14 @@ handle_v_requests (char *own_buf, int packet_len, int *new_packet_len)
 {
   if (!disable_packet_vCont)
     {
-      if (strncmp (own_buf, "vCont;", 6) == 0)
+      if (startswith (own_buf, "vCont;"))
 	{
 	  require_running (own_buf);
 	  handle_v_cont (own_buf);
 	  return;
 	}
 
-      if (strncmp (own_buf, "vCont?", 6) == 0)
+      if (startswith (own_buf, "vCont?"))
 	{
 	  strcpy (own_buf, "vCont;c;C;s;S;t");
 	  if (target_supports_range_stepping ())
@@ -2537,11 +2817,11 @@ handle_v_requests (char *own_buf, int packet_len, int *new_packet_len)
 	}
     }
 
-  if (strncmp (own_buf, "vFile:", 6) == 0
+  if (startswith (own_buf, "vFile:")
       && handle_vFile (own_buf, packet_len, new_packet_len))
     return;
 
-  if (strncmp (own_buf, "vAttach;", 8) == 0)
+  if (startswith (own_buf, "vAttach;"))
     {
       if ((!extended_protocol || !multi_process) && target_running ())
 	{
@@ -2553,7 +2833,7 @@ handle_v_requests (char *own_buf, int packet_len, int *new_packet_len)
       return;
     }
 
-  if (strncmp (own_buf, "vRun;", 5) == 0)
+  if (startswith (own_buf, "vRun;"))
     {
       if ((!extended_protocol || !multi_process) && target_running ())
 	{
@@ -2565,7 +2845,7 @@ handle_v_requests (char *own_buf, int packet_len, int *new_packet_len)
       return;
     }
 
-  if (strncmp (own_buf, "vKill;", 6) == 0)
+  if (startswith (own_buf, "vKill;"))
     {
       if (!target_running ())
 	{
@@ -2845,10 +3125,32 @@ gdbserver_usage (FILE *stream)
 	   "\tgdbserver [OPTIONS] --attach COMM PID\n"
 	   "\tgdbserver [OPTIONS] --multi COMM\n"
 	   "\n"
-	   "COMM may either be a tty device (for serial debugging), or \n"
-	   "HOST:PORT to listen for a TCP connection.\n"
+	   "COMM may either be a tty device (for serial debugging),\n"
+	   "HOST:PORT to listen for a TCP connection, or '-' or 'stdio' to use \n"
+	   "stdin/stdout of gdbserver.\n"
+	   "PROG is the executable program.  ARGS are arguments passed to inferior.\n"
+	   "PID is the process ID to attach to, when --attach is specified.\n"
 	   "\n"
-	   "Options:\n"
+	   "Operating modes:\n"
+	   "\n"
+	   "  --attach              Attach to running process PID.\n"
+	   "  --multi               Start server without a specific program, and\n"
+	   "                        only quit when explicitly commanded.\n"
+	   "  --once                Exit after the first connection has closed.\n"
+	   "  --help                Print this message and then exit.\n"
+	   "  --version             Display version information and exit.\n"
+	   "\n"
+	   "Other options:\n"
+	   "\n"
+	   "  --wrapper WRAPPER --  Run WRAPPER to start new programs.\n"
+	   "  --disable-randomization\n"
+	   "                        Run PROG with address space randomization disabled.\n"
+	   "  --no-disable-randomization\n"
+	   "                        Don't disable address space randomization when\n"
+	   "                        starting PROG.\n"
+	   "\n"
+	   "Debug options:\n"
+	   "\n"
 	   "  --debug               Enable general debugging output.\n"
 	   "  --debug-format=opt1[,opt2,...]\n"
 	   "                        Specify extra content in debugging output.\n"
@@ -2857,10 +3159,14 @@ gdbserver_usage (FILE *stream)
 	   "                            none\n"
 	   "                            timestamp\n"
 	   "  --remote-debug        Enable remote protocol debugging output.\n"
-	   "  --version             Display version information and exit.\n"
-	   "  --wrapper WRAPPER --  Run WRAPPER to start new programs.\n"
-	   "  --once                Exit after the first connection has "
-								  "closed.\n");
+	   "  --disable-packet=opt1[,opt2,...]\n"
+	   "                        Disable support for RSP packets or features.\n"
+	   "                          Options:\n"
+	   "                            vCont, Tthread, qC, qfThreadInfo and \n"
+	   "                            threads (disable all threading packets).\n"
+	   "\n"
+	   "For more information, consult the GDB manual (available as on-line \n"
+	   "info or a printed manual).\n");
   if (REPORT_BUGS_TO[0] && stream == stdout)
     fprintf (stream, "Report bugs to \"%s\".\n", REPORT_BUGS_TO);
 }
@@ -2993,19 +3299,19 @@ static int exit_code;
 static void
 detach_or_kill_for_exit_cleanup (void *ignore)
 {
-  volatile struct gdb_exception exception;
 
-  TRY_CATCH (exception, RETURN_MASK_ALL)
+  TRY
     {
       detach_or_kill_for_exit ();
     }
 
-  if (exception.reason < 0)
+  CATCH (exception, RETURN_MASK_ALL)
     {
       fflush (stdout);
       fprintf (stderr, "Detach or kill failed: %s\n", exception.message);
       exit_code = 1;
     }
+  END_CATCH
 }
 
 /* Main function.  This is called by the real "main" function,
@@ -3057,9 +3363,7 @@ captured_main (int argc, char *argv[])
 	}
       else if (strcmp (*next_arg, "--debug") == 0)
 	debug_threads = 1;
-      else if (strncmp (*next_arg,
-			"--debug-format=",
-			sizeof ("--debug-format=") - 1) == 0)
+      else if (startswith (*next_arg, "--debug-format="))
 	{
 	  char *error_msg
 	    = parse_debug_format_options ((*next_arg)
@@ -3078,9 +3382,7 @@ captured_main (int argc, char *argv[])
 	  gdbserver_show_disableable (stdout);
 	  exit (0);
 	}
-      else if (strncmp (*next_arg,
-			"--disable-packet=",
-			sizeof ("--disable-packet=") - 1) == 0)
+      else if (startswith (*next_arg, "--disable-packet="))
 	{
 	  char *packets, *tok;
 
@@ -3238,17 +3540,20 @@ captured_main (int argc, char *argv[])
 
   while (1)
     {
-      volatile struct gdb_exception exception;
 
       noack_mode = 0;
       multi_process = 0;
+      report_fork_events = 0;
+      report_vfork_events = 0;
       /* Be sure we're out of tfind mode.  */
       current_traceframe = -1;
       cont_thread = null_ptid;
+      swbreak_feature = 0;
+      hwbreak_feature = 0;
 
       remote_open (port);
 
-      TRY_CATCH (exception, RETURN_MASK_ERROR)
+      TRY
 	{
 	  /* Wait for events.  This will return when all event sources
 	     are removed from the event loop.  */
@@ -3301,8 +3606,7 @@ captured_main (int argc, char *argv[])
 		}
 	    }
 	}
-
-      if (exception.reason == RETURN_ERROR)
+      CATCH (exception, RETURN_MASK_ERROR)
 	{
 	  if (response_needed)
 	    {
@@ -3310,6 +3614,7 @@ captured_main (int argc, char *argv[])
 	      putpkt (own_buf);
 	    }
 	}
+      END_CATCH
     }
 }
 
@@ -3318,25 +3623,26 @@ captured_main (int argc, char *argv[])
 int
 main (int argc, char *argv[])
 {
-  volatile struct gdb_exception exception;
 
-  TRY_CATCH (exception, RETURN_MASK_ALL)
+  TRY
     {
       captured_main (argc, argv);
     }
-
-  /* captured_main should never return.  */
-  gdb_assert (exception.reason < 0);
-
-  if (exception.reason == RETURN_ERROR)
+  CATCH (exception, RETURN_MASK_ALL)
     {
-      fflush (stdout);
-      fprintf (stderr, "%s\n", exception.message);
-      fprintf (stderr, "Exiting\n");
-      exit_code = 1;
-    }
+      if (exception.reason == RETURN_ERROR)
+	{
+	  fflush (stdout);
+	  fprintf (stderr, "%s\n", exception.message);
+	  fprintf (stderr, "Exiting\n");
+	  exit_code = 1;
+	}
 
-  exit (exit_code);
+      exit (exit_code);
+    }
+  END_CATCH
+
+  gdb_assert_not_reached ("captured_main should never return");
 }
 
 /* Skip PACKET until the next semi-colon (or end of string).  */
@@ -3377,7 +3683,7 @@ process_point_options (struct breakpoint *bp, char **packet)
 	  if (!add_breakpoint_condition (bp, &dataptr))
 	    skip_to_semicolon (&dataptr);
 	}
-      else if (strncmp (dataptr, "cmds:", strlen ("cmds:")) == 0)
+      else if (startswith (dataptr, "cmds:"))
 	{
 	  dataptr += strlen ("cmds:");
 	  if (debug_threads)

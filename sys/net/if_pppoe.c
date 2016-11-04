@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.111 2016/07/07 06:55:43 msaitoh Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.111.2.1 2016/11/04 14:49:20 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.111 2016/07/07 06:55:43 msaitoh Exp $");
-
-#include "pppoe.h"
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.111.2.1 2016/11/04 14:49:20 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pppoe.h"
@@ -215,6 +213,28 @@ pppoeattach(int count)
 
 	pppoe_softintr = softint_establish(SOFTINT_NET, pppoe_softintr_handler,
 	    NULL);
+	sysctl_net_pppoe_setup(&pppoe_sysctl_clog);
+
+	IFQ_LOCK_INIT(&ppoediscinq);
+	IFQ_LOCK_INIT(&ppoeinq);
+}
+
+static int
+pppoedetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&pppoe_softc_list))
+		error = EBUSY;
+
+	if (error == 0) {
+		if_clone_detach(&pppoe_cloner);
+		softint_disestablish(pppoe_softintr);
+		/* Remove our sysctl sub-tree */
+		sysctl_teardown(&pppoe_sysctl_clog);
+	}
+
+	return error;
 }
 
 static int
@@ -360,24 +380,24 @@ static void
 pppoeintr(void)
 {
 	struct mbuf *m;
-	int s, disc_done, data_done;
+	int disc_done, data_done;
 
 	do {
 		disc_done = 0;
 		data_done = 0;
 		for (;;) {
-			s = splnet();
+			IFQ_LOCK(&ppoediscinq);
 			IF_DEQUEUE(&ppoediscinq, m);
-			splx(s);
+			IFQ_UNLOCK(&ppoediscinq);
 			if (m == NULL) break;
 			disc_done = 1;
 			pppoe_disc_input(m);
 		}
 
 		for (;;) {
-			s = splnet();
+			IFQ_LOCK(&ppoeinq);
 			IF_DEQUEUE(&ppoeinq, m);
-			splx(s);
+			IFQ_UNLOCK(&ppoeinq);
 			if (m == NULL) break;
 			data_done = 1;
 			pppoe_data_input(m);
@@ -1599,11 +1619,14 @@ pppoe_enqueue(struct ifqueue *inq, struct mbuf *m)
 	}
 #endif
 
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
+		IFQ_UNLOCK(inq);
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(inq, m);
+		IFQ_UNLOCK(inq);
 		softint_schedule(pppoe_softintr);
 	}
 	return;
