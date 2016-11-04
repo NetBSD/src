@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.262 2016/11/04 18:12:06 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.263 2016/11/04 18:14:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.262 2016/11/04 18:12:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.263 2016/11/04 18:14:04 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -1202,6 +1202,33 @@ proc_free(struct proc *p, struct wrusage *wru)
 	rw_destroy(&p->p_reflock);
 
 	proc_free_mem(p);
+}
+
+/*
+ * Change the parent of a process for tracing purposes.
+ */
+void
+proc_changeparent(struct proc *t, struct proc *p)
+{
+	SET(t->p_slflag, PSL_TRACED);
+	t->p_opptr = t->p_pptr;
+	if (t->p_pptr == p)
+		return;
+	struct proc *parent = t->p_pptr;
+
+	if (parent->p_lock < t->p_lock) {
+		if (!mutex_tryenter(parent->p_lock)) {
+			mutex_exit(t->p_lock);
+			mutex_enter(parent->p_lock);
+			mutex_enter(t->p_lock);
+		}
+	} else if (parent->p_lock > t->p_lock) {
+		mutex_enter(parent->p_lock);
+	}
+	parent->p_slflag |= PSL_CHTRACED;
+	proc_reparent(t, p);
+	if (parent->p_lock != t->p_lock)
+		mutex_exit(parent->p_lock);
 }
 
 /*

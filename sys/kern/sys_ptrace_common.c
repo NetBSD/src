@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.1 2016/11/02 00:11:59 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.2 2016/11/04 18:14:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.1 2016/11/02 00:11:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.2 2016/11/04 18:14:04 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -813,25 +813,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		 *   proc gets to see all the action.
 		 * Stop the target.
 		 */
-		t->p_opptr = t->p_pptr;
-		if (t->p_pptr != p) {
-			struct proc *parent = t->p_pptr;
-
-			if (parent->p_lock < t->p_lock) {
-				if (!mutex_tryenter(parent->p_lock)) {
-					mutex_exit(t->p_lock);
-					mutex_enter(parent->p_lock);
-					mutex_enter(t->p_lock);
-				}
-			} else if (parent->p_lock > t->p_lock) {
-				mutex_enter(parent->p_lock);
-			}
-			parent->p_slflag |= PSL_CHTRACED;
-			proc_reparent(t, p);
-			if (parent->p_lock != t->p_lock)
-				mutex_exit(parent->p_lock);
-		}
-		SET(t->p_slflag, PSL_TRACED);
+		proc_changeparent(t, p);
 		signo = SIGSTOP;
 		goto sendsig;
 
