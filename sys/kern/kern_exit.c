@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.261 2016/11/03 20:58:25 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.262 2016/11/04 18:12:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.261 2016/11/03 20:58:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.262 2016/11/04 18:12:06 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -454,6 +454,10 @@ exit1(struct lwp *l, int exitcode, int signo)
 	if (__predict_false(p->p_slflag & PSL_CHTRACED)) {
 		struct proc *q;
 		PROCLIST_FOREACH(q, &allproc) {
+			if (q->p_opptr == p)
+				q->p_opptr = NULL;
+		}
+		PROCLIST_FOREACH(q, &zombproc) {
 			if (q->p_opptr == p)
 				q->p_opptr = NULL;
 		}
