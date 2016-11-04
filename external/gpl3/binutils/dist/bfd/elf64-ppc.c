@@ -14069,6 +14069,11 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 			  can_plt_call = TRUE;
 			}
 		    }
+		  else
+		    {
+		      /* Tail calls don't need to worry about restoring TOC. */
+		      can_plt_call = TRUE;
+		    }
 		}
 
 	      if (!can_plt_call && h != NULL)
