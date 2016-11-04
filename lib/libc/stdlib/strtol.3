@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.36 2016/11/04 20:14:31 riastradh Exp $
+.\"	$NetBSD: strtol.3,v 1.37 2016/11/04 20:16:18 riastradh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -229,8 +229,11 @@ if (ep == buf)
 	goto not_a_number;
 if (*ep != '\e0')
 	goto trailing_garbage;
-if (errno == ERANGE \*[Am]\*[Am] (lval == LONG_MAX || lval == LONG_MIN))
+if (errno) {
+	assert(errno == ERANGE);
+	assert(lval == LONG_MAX || lval == LONG_MIN);
 	goto out_of_range;
+}
 .Ed
 .Pp
 This example will accept
