@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.15 2016/08/15 08:29:34 maxv Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.16 2016/11/04 20:04:11 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -353,7 +353,8 @@ mmu_mapin_sun4u(vaddr_t rva, vsize_t len)
 					1,		/* cache */
 					1,		/* alias */
 					1,		/* valid */
-					0		/* endianness */
+					0,		/* endianness */
+					0		/* wc */
 					);
 			data |= SUN4U_TLB_L | SUN4U_TLB_CV; /* locked, virt.cache */
 
@@ -429,7 +430,8 @@ mmu_mapin_sun4v(vaddr_t rva, vsize_t len)
 			1,		/* cache */
 			1,		/* alias */
 			1,		/* valid */
-			0		/* endianness */
+			0,		/* endianness */
+			0		/* wc */
 			);
 		data |= SUN4V_TLB_CV; /* virt.cache */
 		
@@ -646,7 +648,8 @@ sparc64_finalize_tlb_sun4u(u_long data_va)
 				1,		/* cache */
 				1,		/* alias */
 				1,		/* valid */
-				0		/* endianness */
+				0,		/* endianness */
+				0		/* wc */
 				);
 		data |= SUN4U_TLB_L | SUN4U_TLB_CV; /* locked, virt.cache */
 		if (!writable_text)
@@ -696,7 +699,8 @@ sparc64_finalize_tlb_sun4v(u_long data_va)
 			1,		/* cache */
 			1,		/* alias */
 			1,		/* valid */
-			0		/* endianness */
+			0,		/* endianness */
+			0		/* wc */
 			);
 		data |= SUN4V_TLB_CV|SUN4V_TLB_X; /* virt.cache, executable */
 		if (!writable_text) {
