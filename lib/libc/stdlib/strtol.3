@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.37 2016/11/04 20:16:18 riastradh Exp $
+.\"	$NetBSD: strtol.3,v 1.38 2016/11/04 20:18:23 riastradh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -266,11 +266,15 @@ long lval;
 
 errno = 0;
 lval = strtol(buf, \*[Am]ep, 10);
-if (buf[0] == '\e0' || *ep != '\e0')
+if (ep == buf)
 	goto not_a_number;
-if ((errno == ERANGE \*[Am]\*[Am] (lval == LONG_MAX || lval == LONG_MIN)) ||
-    (lval \*[Gt] INT_MAX || lval \*[Lt] INT_MIN))
+if (*ep != '\e0')
+	goto trailing_garbage;
+if (errno == ERANGE || lval < INT_MIN || INT_MAX < lval)
 	goto out_of_range;
+assert(errno == 0);
+assert(INT_MIN <= lval);
+assert(lval <= INT_MAX);
 ival = lval;
 .Ed
 .Sh ERRORS
