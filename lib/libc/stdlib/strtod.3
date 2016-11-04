@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtod.3,v 1.22 2016/03/17 09:43:38 wiz Exp $
+.\"	$NetBSD: strtod.3,v 1.23 2016/11/04 18:46:15 riastradh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strtod.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 17, 2016
+.Dd November 4, 2016
 .Dt STRTOD 3
 .Os
 .Sh NAME
@@ -151,8 +151,9 @@ If no conversion is performed, zero is returned and the value of
 is stored in the location referenced by
 .Fa endptr .
 .Pp
-If the correct value is too large in magnitude to be represented, plus
-or minus
+If the correct value is too large in magnitude to be represented
+.Pq Sq overflow ,
+plus or minus
 .Dv HUGE_VAL ,
 .Dv HUGE_VALF ,
 or
@@ -161,8 +162,11 @@ is returned (according to the return type and sign of the value), and
 .Dv ERANGE
 is stored in
 .Va errno .
-If the correct value is nonzero but too small in magnitude to be
-represented as nonzero, zero is returned and
+.Pp
+If the correct value is too small in magnitude to be represented
+normally with full precision
+.Pq Sq underflow ,
+the closest subnormal value, or zero, is returned, and
 .Dv ERANGE
 is stored in
 .Va errno .
