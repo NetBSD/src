@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtod.3,v 1.23 2016/11/04 18:46:15 riastradh Exp $
+.\"	$NetBSD: strtod.3,v 1.24 2016/11/04 19:10:04 riastradh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -170,6 +170,44 @@ the closest subnormal value, or zero, is returned, and
 .Dv ERANGE
 is stored in
 .Va errno .
+.Sh EXAMPLES
+Since there is no out-of-band sentinel value to indicate an error,
+callers who wish to know whether there was overflow or underflow must
+set
+.Va errno
+to zero before calling
+.Fn strtod ,
+.Fn strtof ,
+or
+.Fn strtold ;
+in the case of no underflow or overflow, these functions preserve
+.Va errno .
+.Pp
+To check for syntax errors, callers must
+.Em also
+check whether
+.Fa endptr
+was updated to reflect the true end of the string in order to determine
+whether the full string was consumed or whether there were additional
+erroneous characters in it.
+.Bd -literal -offset abcd
+char *end;
+double d;
+
+\&...
+
+errno = 0;
+d = strtod(s, &end);
+if (s[0] == '\e0' || end[0] != '\e0')
+	errx(1, "invalid syntax");
+if (errno) {
+	assert(errno == ERANGE);
+	assert(d == HUGE_VAL || d == -HUGE_VAL || d == 0 ||
+	    fpclassify(d) == FP_SUBNORMAL);
+	warnx("%s", d == HUGE_VAL ? "overflow" : "underflow");
+}
+/* d is the best floating-point approximation to the number in s */
+.Ed
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er ERANGE
