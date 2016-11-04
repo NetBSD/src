@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.57 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: ffb.c,v 1.58 2016/11/04 16:35:32 macallan Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.57 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.58 2016/11/04 16:35:32 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -468,6 +468,8 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 				    (sc->sc_locked == 0)) {
 					ffb_ras_init(sc);
 					vcons_redraw_screen(ms);
+				} else {
+					ffb_ras_wait(sc);
 				}
 			}
 		}		
@@ -591,7 +593,7 @@ ffb_mmap(void *vsc, void *vs, off_t off, int prot)
 		if (off >= 0 && off < sc->sc_sizes[FFB_REG_DFB24])
 			return (bus_space_mmap(sc->sc_bt,
 			    sc->sc_addrs[FFB_REG_DFB24], off, prot,
-			    BUS_SPACE_MAP_LINEAR));
+			    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE));
 		break;
 #endif
 	}
@@ -914,24 +916,24 @@ ffbfb_mmap(dev_t dev, off_t off, int prot)
 	 * our copy of the firmware data as arguments for the real
 	 * mapping.
 	 */
-	static struct { unsigned long voff; int reg; } map[] = {
-		{ 0x00000000, FFB_REG_SFB8R },
-		{ 0x00400000, FFB_REG_SFB8G },
-		{ 0x00800000, FFB_REG_SFB8B },
-		{ 0x00c00000, FFB_REG_SFB8X },
-		{ 0x01000000, FFB_REG_SFB32 },
-		{ 0x02000000, FFB_REG_SFB64  },
-		{ 0x04000000, FFB_REG_FBC },
-		{ 0x04004000, FFB_REG_DFB8R },
-		{ 0x04404000, FFB_REG_DFB8G },
-		{ 0x04804000, FFB_REG_DFB8B },
-		{ 0x04c04000, FFB_REG_DFB8X },
-		{ 0x05004000, FFB_REG_DFB24 },
-		{ 0x06004000, FFB_REG_DFB32 },
-		{ 0x07004000, FFB_REG_DFB422A },
-		{ 0x0bc06000, FFB_REG_DAC },
-		{ 0x0bc08000, FFB_REG_PROM },
-		{ 0x0bc18000, 0 }
+	static struct { unsigned long voff; int reg; long flags; } map[] = {
+		{ 0x00000000, FFB_REG_SFB8R, BUS_SPACE_MAP_PREFETCHABLE },
+		{ 0x00400000, FFB_REG_SFB8G, BUS_SPACE_MAP_PREFETCHABLE },
+		{ 0x00800000, FFB_REG_SFB8B, BUS_SPACE_MAP_PREFETCHABLE },
+		{ 0x00c00000, FFB_REG_SFB8X, BUS_SPACE_MAP_PREFETCHABLE },
+		{ 0x01000000, FFB_REG_SFB32, BUS_SPACE_MAP_PREFETCHABLE },
+		{ 0x02000000, FFB_REG_SFB64, BUS_SPACE_MAP_PREFETCHABLE  },
+		{ 0x04000000, FFB_REG_FBC, 0 },
+		{ 0x04004000, FFB_REG_DFB8R, BUS_SPACE_MAP_PREFETCHABLE },
+		{ 0x04404000, FFB_REG_DFB8G, BUS_SPACE_MAP_PREFETCHABLE },
+		{ 0x04804000, FFB_REG_DFB8B, BUS_SPACE_MAP_PREFETCHABLE },
+		{ 0x04c04000, FFB_REG_DFB8X, BUS_SPACE_MAP_PREFETCHABLE },
+		{ 0x05004000, FFB_REG_DFB24, BUS_SPACE_MAP_PREFETCHABLE },
+		{ 0x06004000, FFB_REG_DFB32, BUS_SPACE_MAP_PREFETCHABLE },
+		{ 0x07004000, FFB_REG_DFB422A, BUS_SPACE_MAP_PREFETCHABLE },
+		{ 0x0bc06000, FFB_REG_DAC, 0 },
+		{ 0x0bc08000, FFB_REG_PROM, 0 },
+		{ 0x0bc18000, 0, 0 }
 	};
 
 	/* special value "FFB_EXP_VOFF" - not backed by any "reg" entry */
@@ -962,7 +964,7 @@ ffbfb_mmap(dev_t dev, off_t off, int prot)
 				o = off - map[i].voff;
 				return bus_space_mmap(sc->sc_bt, 
 				    sc->sc_addrs[reg], o, prot, 
-				    BUS_SPACE_MAP_LINEAR);
+				    BUS_SPACE_MAP_LINEAR | map[i].flags);
 			}
 		}
 	}
