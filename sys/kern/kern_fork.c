@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.195 2016/01/09 07:52:38 dholland Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.196 2016/11/04 18:14:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.195 2016/01/09 07:52:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.196 2016/11/04 18:14:04 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -477,26 +477,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	tracefork = (p1->p_slflag & (PSL_TRACEFORK|PSL_TRACED)) ==
 	    (PSL_TRACEFORK|PSL_TRACED) && (flags && FORK_PPWAIT) == 0;
 	if (tracefork) {
-		p2->p_slflag |= PSL_TRACED;
-		p2->p_opptr = p2->p_pptr;
-		if (p2->p_pptr != p1->p_pptr) {
-			struct proc *parent1 = p2->p_pptr;
-
-			if (parent1->p_lock < p2->p_lock) {
-				if (!mutex_tryenter(parent1->p_lock)) {
-					mutex_exit(p2->p_lock);
-					mutex_enter(parent1->p_lock);
-					mutex_enter(p2->p_lock);
-				}
-			} else if (parent1->p_lock > p2->p_lock) {
-				mutex_enter(parent1->p_lock);
-			}
-			parent1->p_slflag |= PSL_CHTRACED;
-			proc_reparent(p2, p1->p_pptr);
-			if (parent1->p_lock != p2->p_lock)
-				mutex_exit(parent1->p_lock);
-		}
-
+		proc_changeparent(p2, p1->p_pptr);
 		/*
 		 * Set ptrace status.
 		 */
