@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtod.3,v 1.24 2016/11/04 19:10:04 riastradh Exp $
+.\"	$NetBSD: strtod.3,v 1.25 2016/11/04 19:18:53 riastradh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -202,9 +202,9 @@ if (s[0] == '\e0' || end[0] != '\e0')
 	errx(1, "invalid syntax");
 if (errno) {
 	assert(errno == ERANGE);
-	assert(d == HUGE_VAL || d == -HUGE_VAL || d == 0 ||
+	assert(isinf(d) || d == 0 ||
 	    fpclassify(d) == FP_SUBNORMAL);
-	warnx("%s", d == HUGE_VAL ? "overflow" : "underflow");
+	warnx("%s", isinf(d) ? "overflow" : "underflow");
 }
 /* d is the best floating-point approximation to the number in s */
 .Ed
