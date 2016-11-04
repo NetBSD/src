@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.285 2016/07/07 06:55:38 msaitoh Exp $ */
+/*	$NetBSD: machdep.c,v 1.286 2016/11/04 05:41:01 macallan Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.285 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.286 2016/11/04 05:41:01 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2357,8 +2357,14 @@ paddr_t
 sparc_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
 	int flags)
 {
+	paddr_t pa;
 	/* Devices are un-cached... although the driver should do that */
-	return ((paddr+off)|PMAP_NC);
+	pa = (paddr + off) | PMAP_NC;
+	if (flags & BUS_SPACE_MAP_LITTLE)
+		pa |= PMAP_LITTLE;
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		pa |= PMAP_WC;	
+	return pa;
 }
 
 
