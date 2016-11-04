@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2009/12/14 01:12:05 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2016/11/04 19:18:50 flxd Exp $
 #
 #	etc.pmax/Makefile.inc -- pmax-specific etc Makefile targets
 #
@@ -8,13 +8,13 @@
 
 .if ${MACHINE_ARCH} == "mipsel"
 
-KERNEL_SETS=		GENERIC
+KERNEL_SETS=		GENERIC GENERIC_USB
 
 BUILD_KERNELS=		INSTALL RAMDISK
 
 .else
 
-KERNEL_SETS=		GENERIC64
+KERNEL_SETS=		GENERIC64 GENERIC64_USB
 
 BUILD_KERNELS=		INSTALL64 RAMDISK64
 

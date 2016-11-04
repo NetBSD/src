@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.116 2016/10/21 18:11:59 flxd Exp $
+#	$NetBSD: files.pmax,v 1.117 2016/11/04 19:18:50 flxd Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -177,5 +177,7 @@ file   dev/tc/xcfb.c                   xcfb needs-flag
 # Machine-independent USB device support
 #
 include "dev/usb/files.usb"
+
+include "dev/bluetooth/files.bluetooth"
 
 include "arch/pmax/conf/majors.pmax"
