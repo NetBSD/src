@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.27 2015/04/03 10:07:57 palle Exp $ */
+/*	$NetBSD: pte.h,v 1.28 2016/11/04 05:41:01 macallan Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -254,21 +254,21 @@ typedef struct sun4u_tte pte_t;
 #define SUN4V_TLB_W		0x0000000000000040LL
 #define SUN4V_TLB_G		0x0000000000000000LL
 
-#define SUN4U_TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie) \
+#define SUN4U_TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie,wc) \
 (((valid)?SUN4U_TLB_V:0LL)|SUN4U_TLB_SZ(sz)|(((uint64_t)(pa))&SUN4U_TLB_PA_MASK)|\
-((cache)?((aliased)?SUN4U_TLB_CP:SUN4U_TLB_CACHE_MASK):SUN4U_TLB_E)|\
+((cache)?((aliased)?SUN4U_TLB_CP:SUN4U_TLB_CACHE_MASK):((wc)?0LL:SUN4U_TLB_E))|\
 ((priv)?SUN4U_TLB_P:0LL)|((write)?SUN4U_TLB_W:0LL)|((g)?SUN4U_TLB_G:0LL)|((ie)?SUN4U_TLB_IE:0LL))
 
-#define SUN4V_TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie) \
+#define SUN4V_TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie,wc) \
 (((valid)?SUN4V_TLB_V:0LL)|SUN4V_TLB_SZ(sz)|\
 (((u_int64_t)(pa))&SUN4V_TLB_PA_MASK)|\
-((cache)?((aliased)?SUN4V_TLB_CP:SUN4V_TLB_CACHE_MASK):SUN4V_TLB_E)|\
+((cache)?((aliased)?SUN4V_TLB_CP:SUN4V_TLB_CACHE_MASK):((wc)?0LL:SUN4V_TLB_E))|\
 ((priv)?SUN4V_TLB_P:0LL)|((write)?SUN4V_TLB_W:0LL)|((g)?SUN4V_TLB_G:0LL)|\
 ((ie)?SUN4V_TLB_IE:0LL))
 
-#define TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie) \
-(CPU_ISSUN4V ? SUN4V_TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie) : \
-               SUN4U_TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie))
+#define TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie,wc) \
+(CPU_ISSUN4V ? SUN4V_TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie,wc) : \
+               SUN4U_TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie,wc))
 
 #define TLB_EXEC      (CPU_ISSUN4V ? SUN4V_TLB_EXEC      : SUN4U_TLB_EXEC)
 #define TLB_V         (CPU_ISSUN4V ? SUN4V_TLB_V         : SUN4U_TLB_V)
@@ -283,6 +283,7 @@ typedef struct sun4u_tte pte_t;
 #define TLB_EXEC_ONLY (CPU_ISSUN4V ? SUN4V_TLB_EXEC_ONLY : SUN4U_TLB_EXEC_ONLY)
 #define TLB_L         (CPU_ISSUN4V ? 0                   : SUN4U_TLB_L)
 #define TLB_CV        (CPU_ISSUN4V ? SUN4V_TLB_CV        : SUN4U_TLB_CV)
+#define TLB_IE        (CPU_ISSUN4V ? SUN4V_TLB_IE        : SUN4U_TLB_IE)
 
 #define MMU_CACHE_VIRT	0x3
 #define MMU_CACHE_PHYS	0x2

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.303 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.304 2016/11/04 05:41:01 macallan Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.303 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.304 2016/11/04 05:41:01 macallan Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -560,7 +560,8 @@ pmap_mp_init(void)
 				1, /* cache */
 				1, /* aliased */
 				1, /* valid */
-				0 /* ie */);
+				0, /* ie */
+				0  /* wc */);
 		tp[i].data |= TLB_L | TLB_CV;
 
 		if (i >= kernel_itlb_slots) {
@@ -1076,7 +1077,8 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 			1 /* Cacheable */,
 			FORCE_ALIAS /* ALIAS -- Disable D$ */,
 			1 /* valid */,
-			0 /* IE */);
+			0 /* IE */,
+			0 /* wc */);
 		pmap_enter_kpage(va, data);
 		va += PAGE_SIZE;
 		msgbufsiz -= PAGE_SIZE;
@@ -1137,7 +1139,8 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 				1 /* Cacheable */,
 				FORCE_ALIAS /* ALIAS -- Disable D$ */,
 				1 /* valid */,
-				0 /* IE */);
+				0 /* ei */,
+				0 /* WC */);
 			pmap_enter_kpage(vmmap, data1);
 			vmmap += PAGE_SIZE;
 		}
@@ -1179,7 +1182,8 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 				1 /* Cacheable */,
 				FORCE_ALIAS /* ALIAS -- Disable D$ */,
 				1 /* valid */,
-				0 /* IE */);
+				0 /* IE */,
+				0 /* wc */);
 			pmap_enter_kpage(vmmap, data1);
 			vmmap += PAGE_SIZE;
 			pa += PAGE_SIZE;
@@ -1366,7 +1370,8 @@ pmap_init(void)
 			1 /* Cacheable */,
 			FORCE_ALIAS /* ALIAS -- Disable D$ */,
 			1 /* valid */,
-			0 /* IE */);
+			0 /* IE */,
+			0 /* wc */);
 		pmap_enter_kpage(va, data);
 		va += PAGE_SIZE;
 	}
@@ -1656,7 +1661,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 	tte.data = TSB_DATA(0, PGSZ_8K, pa, 1 /* Privileged */,
 			    (VM_PROT_WRITE & prot),
-			    !(pa & PMAP_NC), pa & (PMAP_NVC), 1, 0);
+			    !(pa & PMAP_NC), pa & (PMAP_NVC), 1,
+			    pa & (PMAP_LITTLE), pa & PMAP_WC);
 	/* We don't track mod/ref here. */
 	if (prot & VM_PROT_WRITE)
 		tte.data |= TLB_REAL_W|TLB_W;
@@ -1879,7 +1885,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 	tte.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
 		flags & VM_PROT_WRITE, !(pa & PMAP_NC),
-		uncached, 1, pa & PMAP_LITTLE);
+		uncached, 1, pa & PMAP_LITTLE, pa & PMAP_WC);
 #ifdef HWREF
 	if (prot & VM_PROT_WRITE)
 		tte.data |= TLB_REAL_W;
@@ -3837,7 +3843,8 @@ pmap_setup_intstack_sun4v(paddr_t pa)
 	    1 /* Cacheable */,
 	    FORCE_ALIAS /* ALIAS -- Disable D$ */,
 	    1 /* valid */,
-	    0 /* IE */);
+	    0 /* IE */,
+	    0 /* wc */);
 	hv_rc = hv_mmu_map_perm_addr(INTSTACK, data, MAP_DTLB);
 	if ( hv_rc != H_EOK ) {
 		panic("hv_mmu_map_perm_addr() failed - rc = %" PRId64 "\n",
