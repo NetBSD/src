@@ -162,8 +162,7 @@ check_status_exception_catchpoint (struct bpstats *bs)
 {
   struct exception_catchpoint *self
     = (struct exception_catchpoint *) bs->breakpoint_at;
-  char *typename = NULL;
-  volatile struct gdb_exception e;
+  char *type_name = NULL;
 
   bkpt_breakpoint_ops.check_status (bs);
   if (bs->stop == 0)
@@ -172,28 +171,34 @@ check_status_exception_catchpoint (struct bpstats *bs)
   if (self->pattern == NULL)
     return;
 
-  TRY_CATCH (e, RETURN_MASK_ERROR)
+  TRY
     {
       struct value *typeinfo_arg;
       char *canon;
 
       fetch_probe_arguments (NULL, &typeinfo_arg);
-      typename = cplus_typename_from_type_info (typeinfo_arg);
+      type_name = cplus_typename_from_type_info (typeinfo_arg);
 
-      canon = cp_canonicalize_string (typename);
+      canon = cp_canonicalize_string (type_name);
       if (canon != NULL)
 	{
-	  xfree (typename);
-	  typename = canon;
+	  xfree (type_name);
+	  type_name = canon;
 	}
     }
+  CATCH (e, RETURN_MASK_ERROR)
+    {
+      exception_print (gdb_stderr, e);
+    }
+  END_CATCH
 
-  if (e.reason < 0)
-    exception_print (gdb_stderr, e);
-  else if (regexec (self->pattern, typename, 0, NULL, 0) != 0)
-    bs->stop = 0;
+  if (type_name != NULL)
+    {
+      if (regexec (self->pattern, type_name, 0, NULL, 0) != 0)
+	bs->stop = 0;
 
-  xfree (typename);
+      xfree (type_name);
+    }
 }
 
 /* Implement the 're_set' method.  */
@@ -203,36 +208,38 @@ re_set_exception_catchpoint (struct breakpoint *self)
 {
   struct symtabs_and_lines sals = {0};
   struct symtabs_and_lines sals_end = {0};
-  volatile struct gdb_exception e;
   struct cleanup *cleanup;
   enum exception_event_kind kind = classify_exception_breakpoint (self);
 
   /* We first try to use the probe interface.  */
-  TRY_CATCH (e, RETURN_MASK_ERROR)
+  TRY
     {
       char *spec = ASTRDUP (exception_functions[kind].probe);
 
       sals = parse_probes (&spec, NULL);
     }
 
-  if (e.reason < 0)
+  CATCH (e, RETURN_MASK_ERROR)
     {
-      volatile struct gdb_exception ex;
 
       /* Using the probe interface failed.  Let's fallback to the normal
 	 catchpoint mode.  */
-      TRY_CATCH (ex, RETURN_MASK_ERROR)
+      TRY
 	{
 	  char *spec = ASTRDUP (exception_functions[kind].function);
 
 	  self->ops->decode_linespec (self, &spec, &sals);
 	}
-
-      /* NOT_FOUND_ERROR just means the breakpoint will be pending, so
-	 let it through.  */
-      if (ex.reason < 0 && ex.error != NOT_FOUND_ERROR)
-	throw_exception (ex);
+      CATCH (ex, RETURN_MASK_ERROR)
+	{
+	  /* NOT_FOUND_ERROR just means the breakpoint will be
+	     pending, so let it through.  */
+	  if (ex.error != NOT_FOUND_ERROR)
+	    throw_exception (ex);
+	}
+      END_CATCH
     }
+  END_CATCH
 
   cleanup = make_cleanup (xfree, sals.sals);
   update_breakpoint_locations (self, sals, sals_end);

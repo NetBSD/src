@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2015 Free Software Foundation, Inc.
+   Copyright 2014-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -45,5 +45,6 @@ int main(int argc, char **argv)
     vla[i] = 5 + 2 * i;
 
   // vlas_filled
+  vla[0] = 2 * vla[0];
   return vla[2];
 }

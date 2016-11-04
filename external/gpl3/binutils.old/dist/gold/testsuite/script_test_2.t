@@ -1,6 +1,6 @@
 /* script_test_2.t -- linker script test 2 for gold
 
-   Copyright 2008 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <iant@google.com>.
 
    This file is part of gold.
@@ -32,6 +32,7 @@ SECTIONS
   . += 0x100000;
   . = ALIGN(0x100);
   .data : { *(.data) }
+  .got : { *(.got .toc) }
   .bss : { *(.bss) }
 
   /* Now the real test.  */

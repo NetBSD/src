@@ -1,4 +1,4 @@
-/* $NetBSD: compat_modf_ieee754.c,v 1.4 2010/04/23 19:04:54 drochner Exp $ */
+/* $NetBSD: compat_modf_ieee754.c,v 1.4.28.1 2016/11/04 14:48:52 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -93,7 +93,7 @@ modf(double val, double *iptr)
 	frac = ((u_int64_t)v.dblu_dbl.dbl_frach << 32) + v.dblu_dbl.dbl_fracl;
 	frac >>= DBL_FRACBITS - (u.dblu_dbl.dbl_exp - DBL_EXP_BIAS);
 	frac <<= DBL_FRACBITS - (u.dblu_dbl.dbl_exp - DBL_EXP_BIAS);
-	v.dblu_dbl.dbl_fracl = (unsigned int)frac & 0xffffffff;
+	v.dblu_dbl.dbl_fracl = (unsigned int)(frac & 0xffffffffULL);
 	v.dblu_dbl.dbl_frach = (unsigned int)(frac >> 32);
 	*iptr = v.dblu_d;
 

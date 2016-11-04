@@ -1,5 +1,5 @@
 /* MMIX-specific support for 64-bit ELF.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Contributed by Hans-Peter Nilsson <hp@bitrange.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1516,13 +1516,12 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       if (r != bfd_reloc_ok)
 	{
-	  bfd_boolean check_ok = TRUE;
 	  const char * msg = (const char *) NULL;
 
 	  switch (r)
 	    {
 	    case bfd_reloc_overflow:
-	      check_ok = info->callbacks->reloc_overflow
+	      info->callbacks->reloc_overflow
 		(info, (h ? &h->root : NULL), name, howto->name,
 		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
@@ -1530,9 +1529,8 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    case bfd_reloc_undefined:
 	      /* We may have sent this message above.  */
 	      if (! undefined_signalled)
-		check_ok = info->callbacks->undefined_symbol
-		  (info, name, input_bfd, input_section, rel->r_offset,
-		   TRUE);
+		info->callbacks->undefined_symbol
+		  (info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	      undefined_signalled = TRUE;
 	      break;
 
@@ -1554,11 +1552,8 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    }
 
 	  if (msg)
-	    check_ok = info->callbacks->warning
-	      (info, msg, name, input_bfd, input_section, rel->r_offset);
-
-	  if (! check_ok)
-	    return FALSE;
+	    (*info->callbacks->warning) (info, msg, name, input_bfd,
+					 input_section, rel->r_offset);
 	}
     }
 
@@ -2114,9 +2109,7 @@ static asymbol *mmix_elf_reg_section_symbol_ptr;
 /* Handle the special section numbers that a symbol may use.  */
 
 void
-mmix_elf_symbol_processing (abfd, asym)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     asymbol *asym;
+mmix_elf_symbol_processing (bfd *abfd ATTRIBUTE_UNUSED, asymbol *asym)
 {
   elf_symbol_type *elfsym;
 
@@ -2491,9 +2484,8 @@ bpo_reloc_request_sort_fn (const void * p1, const void * p2)
    from base-plus-offset relocs.  */
 
 void
-mmix_dump_bpo_gregs (link_info, pf)
-     struct bfd_link_info *link_info;
-     bfd_error_handler_type pf;
+mmix_dump_bpo_gregs (struct bfd_link_info *link_info,
+		     bfd_error_handler_type pf)
 {
   bfd *bpo_greg_owner;
   asection *bpo_gregs_section;

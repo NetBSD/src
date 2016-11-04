@@ -1,4 +1,4 @@
-/* $NetBSD: ncdcs.c,v 1.1.1.1 2016/01/26 17:27:00 christos Exp $ */
+/* $NetBSD: ncdcs.c,v 1.1.1.1.2.1 2016/11/04 14:45:11 pgoyette Exp $ */
 /*
 ** Program to prepare an ELF file for download to an IBM Network
 ** Station 300 or 1000 running the NCD firmware.

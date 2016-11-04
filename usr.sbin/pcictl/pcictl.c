@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.21 2014/09/01 07:11:19 manu Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.21.2.1 2016/11/04 14:49:27 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -446,7 +446,8 @@ scan_pci_list(u_int bus, u_int dev, u_int func)
 	}
 	if (print_names) {
 		char drvname[16];
-		if (pci_drvname(pcifd, dev, func, drvname, sizeof drvname) == 0)
+		if (pci_drvnameonbus(pcifd, bus, dev, func, drvname,
+				     sizeof drvname) == 0)
 			printf(" [%s]", drvname);
 	}
 	printf("\n");

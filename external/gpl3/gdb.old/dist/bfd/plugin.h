@@ -25,6 +25,9 @@
 
 void bfd_plugin_set_program_name (const char *);
 void bfd_plugin_set_plugin (const char *);
+bfd_boolean bfd_plugin_target_p (const bfd_target *);
+bfd_boolean bfd_plugin_specified_p (void);
+void register_ld_plugin_object_p (const bfd_target *(*object_p) (bfd *));
 
 typedef struct plugin_data_struct
 {

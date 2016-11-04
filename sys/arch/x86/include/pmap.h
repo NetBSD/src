@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.58.2.1 2016/07/26 03:24:19 pgoyette Exp $	*/
+/*	$NetBSD: pmap.h,v 1.58.2.2 2016/11/04 14:49:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -255,6 +255,7 @@ void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_load(void);
 paddr_t		pmap_init_tmp_pgtbl(paddr_t);
 void		pmap_remove_all(struct pmap *);
+void		pmap_ldt_cleanup(struct lwp *);
 void		pmap_ldt_sync(struct pmap *);
 void		pmap_kremove_local(vaddr_t, vsize_t);
 

@@ -1,5 +1,5 @@
 /* Definitions for SH opcodes.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -19,6 +19,10 @@
    MA 02110-1301, USA.  */
 
 #include "bfd.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum
   {
@@ -230,7 +234,7 @@ sh_dsp_reg_nums;
 #define arch_sh_no_co	   (1 << 28)  /* Neither FPU nor DSP co-processor.  */
 #define arch_sh_sp_fpu	   (1 << 29)  /* Single precision FPU.  */
 #define arch_sh_dp_fpu	   (1 << 30)  /* Double precision FPU.  */
-#define arch_sh_has_dsp	   (1 << 31)
+#define arch_sh_has_dsp	   (1u << 31)
 #define arch_sh_co_mask    MASK (28, 31)
 
 
@@ -371,7 +375,7 @@ SH4AL-dsp                                          SH4A
 
 typedef struct
 {
-  char *name;
+  const char *name;
   sh_arg_type arg[4];
   sh_nibble_type nibbles[9];
   unsigned int arch;
@@ -1196,5 +1200,9 @@ const sh_opcode_info sh_table[] =
 
 { 0, {0}, {0}, 0 }
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

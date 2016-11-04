@@ -47,7 +47,10 @@ gdb/; readline/; sim/; GDB's part of include/
 	See also gdb/MAINTAINERS and sim/MAINTAINERS.
 
 include/
-	See binutils/, gdb/, sid/, gcc/, libiberty/ etc.
+	The rule is that if the file exists in the gcc tree
+	then gcc owns it.  Thus you have to look at the gcc tree
+	to know whether any particular file is owned by gcc.
+	See also binutils/, gdb/, sid/, gcc/, libiberty/ etc.
 
 intl/; config.rhost; libiberty/; libiberty's part of include/;
 compile; depcomp; install-sh; missing; ylwrap; config/

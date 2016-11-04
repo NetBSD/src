@@ -1,7 +1,105 @@
-2014-07-01  Chen Gang <gang.chen.5i5j@gmail.com>
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
-	* sim/microblaze/interp.c: Use long int format instead of int
-	format to avoid compiling warnings.
+	* configure.ac (AC_ARG_ENABLE(sim)): Call AS_HELP_STRING.
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* README-HACKING: Change configure.in to configure.ac.
+
+2015-04-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* arm/configure: Regenerated.
+	* avr/configure: Likewise.
+	* bfin/configure: Likewise.
+	* common/configure: Likewise.
+	* cr16/configure: Likewise.
+	* cris/configure: Likewise.
+	* d10v/configure: Likewise.
+	* erc32/configure: Likewise.
+	* frv/configure: Likewise.
+	* ft32/configure: Likewise.
+	* h8300/configure: Likewise.
+	* igen/configure: Likewise.
+	* iq2000/configure: Likewise.
+	* lm32/configure: Likewise.
+	* m32c/configure: Likewise.
+	* m32r/configure: Likewise.
+	* m68hc11/configure: Likewise.
+	* mcore/configure: Likewise.
+	* microblaze/configure: Likewise.
+	* mips/configure: Likewise.
+	* mn10300/configure: Likewise.
+	* moxie/configure: Likewise.
+	* msp430/configure: Likewise.
+	* ppc/configure: Likewise.
+	* rl78/configure: Likewise.
+	* rx/configure: Likewise.
+	* sh/configure: Likewise.
+	* sh64/configure: Likewise.
+	* v850/configure: Likewise.
+
+2015-04-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common/Make-common.in (CSEARCH): Remove $(ZLIBINC).
+	(BFD_LIB): Remove $(ZLIB).
+	(CONFIG_LIBS): Add $(ZLIB).
+	* ppc/Makefile.in (ZLIBINC): Removed.
+	(INCLUDES): Remove $(ZLIBINC).
+	(BFD_LIB): Remove $(ZLIB).
+
+2015-04-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* arm/configure: Regenerated.
+	* avr/configure: Likewise.
+	* bfin/configure: Likewise.
+	* common/configure: Likewise.
+	* cr16/configure: Likewise.
+	* cris/configure: Likewise.
+	* d10v/configure: Likewise.
+	* erc32/configure: Likewise.
+	* frv/configure: Likewise.
+	* ft32/configure: Likewise.
+	* h8300/configure: Likewise.
+	* igen/configure: Likewise.
+	* iq2000/configure: Likewise.
+	* lm32/configure: Likewise.
+	* m32c/configure: Likewise.
+	* m32r/configure: Likewise.
+	* m68hc11/configure: Likewise.
+	* mcore/configure: Likewise.
+	* microblaze/configure: Likewise.
+	* mips/configure: Likewise.
+	* mn10300/configure: Likewise.
+	* moxie/configure: Likewise.
+	* msp430/configure: Likewise.
+	* ppc/configure: Likewise.
+	* rl78/configure: Likewise.
+	* rx/configure: Likewise.
+	* sh/configure: Likewise.
+	* sh64/configure: Likewise.
+	* v850/configure: Likewise.
+
+2015-03-29  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+	* configure.ac: Delete sim_testsuite check and config in testsuite.
+	* configure.tgt (sim_testsuite): Delete everywhere.
+
+2015-03-28  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+	* configure.tgt (avr*-*-*): Set sim_testsuite=yes.
+
+2015-03-28  James Bowman  <james.bowman@ftdichip.com>
+
+	* configure.tgt: Add FT32 entry.
+	* configure: Regenerate.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* .gitignore: Delete tconfig.h.
+	* README-HACKING: Change tconfig.in to tconfig.h.
 
 2014-03-12  Nick Clifton  <nickc@redhat.com>
 

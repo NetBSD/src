@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.h,v 1.14 2013/11/22 16:25:01 christos Exp $	*/
+/*	$NetBSD: mpool.h,v 1.14.8.1 2016/11/04 14:48:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -56,6 +56,7 @@ typedef struct _bkt {
 
 #define	MPOOL_DIRTY	0x01		/* page needs to be written */
 #define	MPOOL_PINNED	0x02		/* page is pinned into memory */
+#define	MPOOL_INUSE	0x04		/* page address is valid */
 	uint8_t flags;			/* flags */
 } BKT;
 
@@ -86,11 +87,21 @@ typedef struct MPOOL {
 #endif
 } MPOOL;
 
+/* flags for get/put */
+#define	MPOOL_IGNOREPIN		0x01	/* Ignore if the page is pinned. */
+/* flags for newf */
+#define	MPOOL_PAGE_REQUEST	0x01	/* Allocate a new page with a
+					   specific page number. */
+#define	MPOOL_PAGE_NEXT		0x02	/* Allocate a new page with the next
+					   page number. */
+
 __BEGIN_DECLS
 MPOOL	*mpool_open(void *, int, pgno_t, pgno_t);
 void	 mpool_filter(MPOOL *, void (*)(void *, pgno_t, void *),
 	    void (*)(void *, pgno_t, void *), void *);
 void	*mpool_new(MPOOL *, pgno_t *);
+void	*mpool_newf(MPOOL *, pgno_t *, unsigned int);
+int	 mpool_delete(MPOOL *, void *);
 void	*mpool_get(MPOOL *, pgno_t, unsigned int);
 int	 mpool_put(MPOOL *, void *, unsigned int);
 int	 mpool_sync(MPOOL *);

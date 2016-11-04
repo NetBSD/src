@@ -411,8 +411,7 @@ gdb.cp for C++ and gdb.java for Java.
 gdb.<platform>
 
 Non-portable tests.  The tests are specific to a specific
-configuration (host or target), such as HP-UX or eCos.  Example is
-gdb.hp, for HP-UX.
+configuration (host or target), such as eCos.
 
 gdb.arch
 

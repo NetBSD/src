@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_nand.c,v 1.5 2012/10/27 17:17:40 chs Exp $	*/
+/*	$NetBSD: omap2_nand.c,v 1.5.18.1 2016/11/04 14:48:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.5 2012/10/27 17:17:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.5.18.1 2016/11/04 14:48:59 pgoyette Exp $");
 
 #include "opt_omap.h"
 #include "opt_flash.h"
@@ -209,7 +209,6 @@ omap2_nand_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_cs = gpmc->gpmc_cs;
 
-//	cs_offset = GPMC_BASE + GPMC_CONFIG1_0 + sc->sc_cs * GPMC_CS_SIZE;
 	cs_offset = GPMC_CS_CONFIG_BASE(sc->sc_cs);
 
 	/* map i/o space */

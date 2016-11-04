@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "../lib/unbuffer_output.c"
+
 int find_max1(int, ...);
 int find_max2(int, int, ...);
 double find_max_double(int, double, ...);
@@ -45,7 +47,9 @@ long double _Complex ldc4 = 4.0L + 4.0Li;
 
 #endif
 
-int main() {
+int
+test (void)
+{
   c = -1;
   uc = 1;
   s = -2;
@@ -68,6 +72,13 @@ int main() {
   dmax_val = find_max_double(a, db, dc, dd);
   
   return 0;
+}
+
+int
+main (void)
+{
+  gdb_unbuffer_output ();
+  test ();
 }
 
 /* Integer varargs, 1 declared arg */

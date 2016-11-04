@@ -1,6 +1,6 @@
 /* Module support.
 
-   Copyright 1996-2015 Free Software Foundation, Inc.
+   Copyright 1996-2016 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -40,12 +40,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 static MODULE_INSTALL_FN * const modules[] = {
   standard_install,
   sim_events_install,
-#ifdef SIM_HAVE_MODEL
   sim_model_install,
-#endif
-#if WITH_ENGINE
   sim_engine_install,
-#endif
 #if WITH_TRACE_ANY_P
   trace_install,
 #endif
@@ -53,13 +49,8 @@ static MODULE_INSTALL_FN * const modules[] = {
   profile_install,
 #endif
   sim_core_install,
-#ifndef SIM_HAVE_FLATMEM
-  /* FIXME: should handle flatmem as well FLATMEM */
   sim_memopt_install,
-#endif
-#if WITH_WATCHPOINTS
   sim_watchpoint_install,
-#endif
 #if WITH_SCACHE
   scache_install,
 #endif
@@ -69,10 +60,6 @@ static MODULE_INSTALL_FN * const modules[] = {
 #ifdef HAVE_DV_SOCKSER
   /* TODO: Shouldn't have device models here.  */
   dv_sockser_install,
-#endif
-  /* Configured in [simulator specific] additional modules.  */
-#ifdef MODULE_LIST
-  MODULE_LIST
 #endif
   0
 };
@@ -87,9 +74,7 @@ sim_pre_argv_init (SIM_DESC sd, const char *myname)
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
   SIM_ASSERT (STATE_MODULES (sd) == NULL);
 
-  STATE_MY_NAME (sd) = myname + strlen (myname);
-  while (STATE_MY_NAME (sd) > myname && STATE_MY_NAME (sd)[-1] != '/')
-    --STATE_MY_NAME (sd);
+  STATE_MY_NAME (sd) = lbasename (myname);
 
   /* Set the cpu names to default values.  */
   {

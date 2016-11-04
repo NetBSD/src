@@ -46,7 +46,7 @@ SYSCALLS_DIR = syscalls
 SYSCALLS_INSTALL_DIR = $(DESTDIR)$(GDB_DATADIR)/$(SYSCALLS_DIR)
 SYSCALLS_FILES = \
 	gdb-syscalls.dtd \
-	arm-linux.xml \
+	arm-linux.xml aarch64-linux.xml \
 	ppc-linux.xml ppc64-linux.xml \
 	i386-linux.xml amd64-linux.xml \
 	sparc-linux.xml sparc64-linux.xml \
@@ -62,11 +62,13 @@ PYTHON_FILE_LIST = \
 	gdb/FrameDecorator.py \
 	gdb/types.py \
 	gdb/printing.py \
+	gdb/unwinder.py \
 	gdb/prompt.py \
 	gdb/xmethod.py \
 	gdb/command/__init__.py \
 	gdb/command/xmethods.py \
 	gdb/command/frame_filters.py \
+	gdb/command/unwinders.py \
 	gdb/command/type_printers.py \
 	gdb/command/pretty_printers.py \
 	gdb/command/prompt.py \

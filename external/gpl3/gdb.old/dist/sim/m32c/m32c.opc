@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #define tprintf if (trace) printf
 
 static unsigned char
-getbyte ()
+getbyte (void)
 {
   int tsave = trace;
   unsigned char b;
@@ -105,8 +105,8 @@ IMM(int bytes)
 
 /* Indicate which sorts of prefixes are allowed for the current
    opcode.  */
-void
-prefix (src_allowed, dest_allowed, index_bytewidth)
+static void
+prefix (int src_allowed, int dest_allowed, int index_bytewidth)
 {
   /* At the moment, we don't do anything with this information.  We
      just wanted to get the information entered in some
@@ -394,7 +394,7 @@ static int pcs[16];
 static int ipcs = 0;
 
 int
-decode_m32c()
+decode_m32c (void)
 {
   unsigned char op[40];
   int opi;

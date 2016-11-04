@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_srcreg.h,v 1.1 2016/05/17 06:44:45 ryo Exp $	*/
+/*	$NetBSD: imx7_srcreg.h,v 1.1.4.1 2016/11/04 14:48:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan, Inc.
@@ -45,6 +45,7 @@
 #define  SRC_M4RCR_ENABLE_M4			__BIT(3)
 #define  SRC_M4RCR_SW_M4P_RST			__BIT(2)
 #define  SRC_M4RCR_SW_M4C_RST			__BIT(1)
+#define  SRC_M4RCR_SW_M4C_NON_SCLR_RST		__BIT(0)
 #define SRC_ERCR				0x00000014
 #define SRC_HSICPHY_RCR				0x0000001c
 #define  SRC_HSICPHY_PORT_RST			__BIT(1)

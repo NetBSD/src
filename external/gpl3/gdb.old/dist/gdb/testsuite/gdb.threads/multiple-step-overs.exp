@@ -29,18 +29,20 @@ if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
     return -1
 }
 
-# Prepare environment for test.  PREFIX is used as prefix in test
-# messages.
+# Prepare environment for test.
 
-proc setup { prefix } {
+proc setup {} {
     global executable
+    global displaced
 
-    with_test_prefix $prefix {
+    with_test_prefix "setup" {
 	clean_restart $executable
 
 	if ![runto_main] {
 	    return -1
 	}
+
+	gdb_test_no_output "set displaced-stepping $displaced"
 
 	gdb_breakpoint [gdb_get_line_number "set wait-threads breakpoint here"]
 	gdb_continue_to_breakpoint "run to breakpoint"
@@ -59,8 +61,7 @@ proc setup { prefix } {
 	gdb_continue_to_breakpoint "run to breakpoint in thread 2"
 	gdb_test "p *myp = 0" " = 0" "unbreak loop in thread 2"
 
-	# Switch back to thread 1 and disable scheduler locking.
-	gdb_test "thread 1" "Switching.*"
+	# Disable scheduler locking.
 	gdb_test_no_output "set scheduler-locking off"
 
 	# Now all 3 threads are stopped for a breakpoint that needs to
@@ -68,13 +69,57 @@ proc setup { prefix } {
     }
 }
 
-setup "step"
-gdb_test "step" "in wait_threads .*"
+foreach displaced { "off" "on" } {
+    with_test_prefix "displaced=$displaced" {
+	with_test_prefix "step" {
+	    setup
+	    gdb_test "thread 1" "Switching.*"
+	    gdb_test "step" "in wait_threads .*"
+	}
 
-setup "next"
-gdb_test "set debug infrun 1" ".*"
-gdb_test "next" "pthread_join.*"
+	with_test_prefix "next" {
+	    setup
+	    gdb_test "thread 1" "Switching.*"
+	    gdb_test "next" "pthread_join.*"
+	}
 
-setup "continue"
-gdb_breakpoint [gdb_get_line_number "EXIT_SUCCESS"]
-gdb_test "continue" "EXIT_SUCCESS.*"
+	with_test_prefix "continue" {
+	    setup
+	    gdb_breakpoint [gdb_get_line_number "EXIT_SUCCESS"]
+	    gdb_test "thread 1" "Switching.*"
+	    gdb_test "continue" "EXIT_SUCCESS.*"
+	}
+
+	# Try continuing with a queued signal in each of the threads
+	# (one at a time).  Should stop at the signal handler, instead
+	# of re-trapping the breakpoint the threads were already
+	# stopped at.
+	foreach thread {1 2 3} {
+	    with_test_prefix "signal thr$thread" {
+		setup
+
+		# Queue a signal in THREAD.
+		gdb_test "thread $thread" "Switching.*"
+		gdb_test_no_output "queue-signal SIGUSR1"
+
+		# Switch back to thread 1, and continue.
+		gdb_test "thread 1" "Switching.*" "switch back to thread 1"
+		gdb_breakpoint "sigusr1_handler" "set break at sigusr1_handler"
+
+		set msg "continue to sigusr1_handler"
+		gdb_test_multiple "continue" $msg {
+		    -re "Breakpoint .* sigusr1_handler .*$gdb_prompt $" {
+			pass $msg
+		    }
+		    -re "Breakpoint .*$gdb_prompt $" {
+			if {![can_single_step_to_signal_handler]
+			    && $thread != 1 && $displaced == "off"} {
+			    setup_kfail "gdb/18214" "*-*-*"
+			}
+			fail $msg
+		    }
+		}
+	    }
+	}
+    }
+}

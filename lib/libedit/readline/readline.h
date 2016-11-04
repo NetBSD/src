@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.39 2016/02/17 19:47:49 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.39.2.1 2016/11/04 14:48:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ extern Function		*rl_startup_hook;
 extern char		*rl_terminal_name;
 extern int		rl_already_prompted;
 extern char		*rl_prompt;
+extern int		rl_done;
 /*
  * The following is not implemented
  */

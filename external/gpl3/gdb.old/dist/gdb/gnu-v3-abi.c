@@ -39,13 +39,13 @@ static struct gdbarch_data *std_type_info_gdbarch_data;
 static int
 gnuv3_is_vtable_name (const char *name)
 {
-  return strncmp (name, "_ZTV", 4) == 0;
+  return startswith (name, "_ZTV");
 }
 
 static int
 gnuv3_is_operator_name (const char *name)
 {
-  return strncmp (name, "operator", 8) == 0;
+  return startswith (name, "operator");
 }
 
 
@@ -202,6 +202,13 @@ gnuv3_dynamic_class (struct type *type)
 {
   int fieldnum, fieldelem;
 
+  CHECK_TYPEDEF (type);
+  gdb_assert (TYPE_CODE (type) == TYPE_CODE_STRUCT
+	      || TYPE_CODE (type) == TYPE_CODE_UNION);
+
+  if (TYPE_CODE (type) == TYPE_CODE_UNION)
+    return 0;
+
   if (TYPE_CPLUS_DYNAMIC (type))
     return TYPE_CPLUS_DYNAMIC (type) == 1;
 
@@ -246,9 +253,12 @@ gnuv3_get_vtable (struct gdbarch *gdbarch,
   struct value *vtable_pointer;
   CORE_ADDR vtable_address;
 
+  CHECK_TYPEDEF (container_type);
+  gdb_assert (TYPE_CODE (container_type) == TYPE_CODE_STRUCT);
+
   /* If this type does not have a virtual table, don't read the first
      field.  */
-  if (!gnuv3_dynamic_class (check_typedef (container_type)))
+  if (!gnuv3_dynamic_class (container_type))
     return NULL;
 
   /* We do not consult the debug information to find the virtual table.
@@ -301,7 +311,7 @@ gnuv3_rtti_type (struct value *value,
   if (using_enc_p)
     *using_enc_p = 0;
 
-  vtable = gnuv3_get_vtable (gdbarch, value_type (value),
+  vtable = gnuv3_get_vtable (gdbarch, values_type,
 			     value_as_address (value_addr (value)));
   if (vtable == NULL)
     return NULL;
@@ -320,7 +330,7 @@ gnuv3_rtti_type (struct value *value,
      should work just as well, and doesn't read target memory.  */
   vtable_symbol_name = MSYMBOL_DEMANGLED_NAME (vtable_symbol);
   if (vtable_symbol_name == NULL
-      || strncmp (vtable_symbol_name, "vtable for ", 11))
+      || !startswith (vtable_symbol_name, "vtable for "))
     {
       warning (_("can't find linker symbol for virtual table for `%s' value"),
 	       TYPE_SAFE_NAME (values_type));
@@ -575,8 +585,8 @@ gnuv3_print_method_ptr (const gdb_byte *contents,
 			struct type *type,
 			struct ui_file *stream)
 {
-  struct type *domain = TYPE_DOMAIN_TYPE (type);
-  struct gdbarch *gdbarch = get_type_arch (domain);
+  struct type *self_type = TYPE_SELF_TYPE (type);
+  struct gdbarch *gdbarch = get_type_arch (self_type);
   CORE_ADDR ptr_value;
   LONGEST adjustment;
   int vbit;
@@ -602,7 +612,7 @@ gnuv3_print_method_ptr (const gdb_byte *contents,
 	 to an index, as used in TYPE_FN_FIELD_VOFFSET.  */
       voffset = ptr_value / TYPE_LENGTH (vtable_ptrdiff_type (gdbarch));
 
-      physname = gnuv3_find_method_in (domain, voffset, adjustment);
+      physname = gnuv3_find_method_in (self_type, voffset, adjustment);
 
       /* If we found a method, print that.  We don't bother to disambiguate
 	 possible paths to the method based on the adjustment.  */
@@ -700,17 +710,17 @@ gnuv3_method_ptr_to_value (struct value **this_p, struct value *method_ptr)
   struct gdbarch *gdbarch;
   const gdb_byte *contents = value_contents (method_ptr);
   CORE_ADDR ptr_value;
-  struct type *domain_type, *final_type, *method_type;
+  struct type *self_type, *final_type, *method_type;
   LONGEST adjustment;
   int vbit;
 
-  domain_type = TYPE_DOMAIN_TYPE (check_typedef (value_type (method_ptr)));
-  final_type = lookup_pointer_type (domain_type);
+  self_type = TYPE_SELF_TYPE (check_typedef (value_type (method_ptr)));
+  final_type = lookup_pointer_type (self_type);
 
   method_type = TYPE_TARGET_TYPE (check_typedef (value_type (method_ptr)));
 
   /* Extract the pointer to member.  */
-  gdbarch = get_type_arch (domain_type);
+  gdbarch = get_type_arch (self_type);
   vbit = gnuv3_decode_method_ptr (gdbarch, contents, &ptr_value, &adjustment);
 
   /* First convert THIS to match the containing type of the pointer to
@@ -821,6 +831,8 @@ compute_vtable_size (htab_t offset_hash,
   void **slot;
   struct value_and_voffset search_vo, *current_vo;
 
+  gdb_assert (TYPE_CODE (type) == TYPE_CODE_STRUCT);
+
   /* If the object is not dynamic, then we are done; as it cannot have
      dynamic base types either.  */
   if (!gnuv3_dynamic_class (type))
@@ -892,8 +904,8 @@ print_one_vtable (struct gdbarch *gdbarch, struct value *value,
     {
       /* Initialize it just to avoid a GCC false warning.  */
       CORE_ADDR addr = 0;
+      int got_error = 0;
       struct value *vfn;
-      volatile struct gdb_exception ex;
 
       printf_filtered ("[%d]: ", i);
 
@@ -904,13 +916,18 @@ print_one_vtable (struct gdbarch *gdbarch, struct value *value,
       if (gdbarch_vtable_function_descriptors (gdbarch))
 	vfn = value_addr (vfn);
 
-      TRY_CATCH (ex, RETURN_MASK_ERROR)
+      TRY
 	{
 	  addr = value_as_address (vfn);
 	}
-      if (ex.reason < 0)
-	printf_filtered (_("<error: %s>"), ex.message);
-      else
+      CATCH (ex, RETURN_MASK_ERROR)
+	{
+	  printf_filtered (_("<error: %s>"), ex.message);
+	  got_error = 1;
+	}
+      END_CATCH
+
+      if (!got_error)
 	print_function_pointer_address (opts, gdbarch, addr, gdb_stdout);
       printf_filtered ("\n");
     }
@@ -949,8 +966,11 @@ gnuv3_print_vtable (struct value *value)
     }
 
   gdbarch = get_type_arch (type);
-  vtable = gnuv3_get_vtable (gdbarch, type,
-			     value_as_address (value_addr (value)));
+
+  vtable = NULL;
+  if (TYPE_CODE (type) == TYPE_CODE_STRUCT)
+    vtable = gnuv3_get_vtable (gdbarch, type,
+			       value_as_address (value_addr (value)));
 
   if (!vtable)
     {
@@ -1062,7 +1082,7 @@ gnuv3_get_typeid (struct value *value)
   struct gdbarch *gdbarch;
   struct cleanup *cleanup;
   struct value *result;
-  char *typename, *canonical;
+  char *type_name, *canonical;
 
   /* We have to handle values a bit trickily here, to allow this code
      to work properly with non_lvalue values that are really just
@@ -1081,20 +1101,20 @@ gnuv3_get_typeid (struct value *value)
   type = make_cv_type (0, 0, type, NULL);
   gdbarch = get_type_arch (type);
 
-  typename = type_to_string (type);
-  if (typename == NULL)
+  type_name = type_to_string (type);
+  if (type_name == NULL)
     error (_("cannot find typeinfo for unnamed type"));
-  cleanup = make_cleanup (xfree, typename);
+  cleanup = make_cleanup (xfree, type_name);
 
   /* We need to canonicalize the type name here, because we do lookups
      using the demangled name, and so we must match the format it
      uses.  E.g., GDB tends to use "const char *" as a type name, but
      the demangler uses "char const *".  */
-  canonical = cp_canonicalize_string (typename);
+  canonical = cp_canonicalize_string (type_name);
   if (canonical != NULL)
     {
       make_cleanup (xfree, canonical);
-      typename = canonical;
+      type_name = canonical;
     }
 
   typeinfo_type = gnuv3_get_typeid_type (gdbarch);
@@ -1110,7 +1130,7 @@ gnuv3_get_typeid (struct value *value)
 
       vtable = gnuv3_get_vtable (gdbarch, type, address);
       if (vtable == NULL)
-	error (_("cannot find typeinfo for object of type '%s'"), typename);
+	error (_("cannot find typeinfo for object of type '%s'"), type_name);
       typeinfo_value = value_field (vtable, vtable_field_type_info);
       result = value_ind (value_cast (make_pointer_type (typeinfo_type, NULL),
 				      typeinfo_value));
@@ -1120,12 +1140,12 @@ gnuv3_get_typeid (struct value *value)
       char *sym_name;
       struct bound_minimal_symbol minsym;
 
-      sym_name = concat ("typeinfo for ", typename, (char *) NULL);
+      sym_name = concat ("typeinfo for ", type_name, (char *) NULL);
       make_cleanup (xfree, sym_name);
       minsym = lookup_minimal_symbol (sym_name, NULL, NULL);
 
       if (minsym.minsym == NULL)
-	error (_("could not find typeinfo symbol for '%s'"), typename);
+	error (_("could not find typeinfo symbol for '%s'"), type_name);
 
       result = value_at_lazy (typeinfo_type, BMSYMBOL_VALUE_ADDRESS (minsym));
     }
@@ -1173,21 +1193,21 @@ gnuv3_get_typename_from_type_info (struct value *type_info_ptr)
 static struct type *
 gnuv3_get_type_from_type_info (struct value *type_info_ptr)
 {
-  char *typename;
+  char *type_name;
   struct cleanup *cleanup;
   struct value *type_val;
   struct expression *expr;
   struct type *result;
 
-  typename = gnuv3_get_typename_from_type_info (type_info_ptr);
-  cleanup = make_cleanup (xfree, typename);
+  type_name = gnuv3_get_typename_from_type_info (type_info_ptr);
+  cleanup = make_cleanup (xfree, type_name);
 
   /* We have to parse the type name, since in general there is not a
      symbol for a type.  This is somewhat bogus since there may be a
      mis-parse.  Another approach might be to re-use the demangler's
      internal form to reconstruct the type somehow.  */
 
-  expr = parse_expression (typename);
+  expr = parse_expression (type_name);
   make_cleanup (xfree, expr);
 
   type_val = evaluate_type (expr);

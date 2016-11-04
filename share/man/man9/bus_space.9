@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.48 2016/06/01 08:17:33 wiz Exp $
+.\" $NetBSD: bus_space.9,v 1.48.2.1 2016/11/04 14:48:56 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 1, 2016
+.Dd September 15, 2016
 .Dt BUS_SPACE 9
 .Os
 .Sh NAME
@@ -1360,22 +1360,17 @@ The
 .Fa flags
 argument controls what types of operations are to be ordered.
 Supported flags are:
-.Bl -tag -width BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE -offset indent
-.It Dv BUS_SPACE_BARRIER_READ_BEFORE_READ
-Force all reads before the barrier to complete before any reads
+.Bl -tag -width BUS_SPACE_BARRIER_WRITE -offset indent
+.It Dv BUS_SPACE_BARRIER_READ
+Force all
+.Nm
+operations before the barrier to complete before any reads
 after the barrier may be issued.
-.It Dv BUS_SPACE_BARRIER_READ_BEFORE_WRITE
-Force all reads before the barrier to complete before any writes
+.It Dv BUS_SPACE_BARRIER_WRITE
+Force all
+.Nm
+operations before the barrier to complete before any writes
 after the barrier may be issued.
-.It Dv BUS_SPACE_BARRIER_WRITE_BEFORE_READ
-Force all writes before the barrier to complete before any reads
-after the barrier may be issued.
-.It Dv BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE
-Force all writes before the barrier to complete before any writes
-after the barrier may be issued.
-.It Dv BUS_SPACE_BARRIER_SYNC
-Force all memory operations and any pending exceptions to be
-completed before any instructions after the barrier may be issued.
 .El
 .Pp
 Those flags can be combined (or-ed together) to enforce ordering on
@@ -1400,11 +1395,11 @@ those two data bytes back would be:
  * space.
  */
 bus_space_write_1(t, h, 0, data0);
-bus_space_barrier(t, h, 0, 1, BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE); /* 1 */
+bus_space_barrier(t, h, 0, 1, BUS_SPACE_BARRIER_WRITE); /* 1 */
 bus_space_write_1(t, h, 0, data1);
-bus_space_barrier(t, h, 0, 2, BUS_SPACE_BARRIER_WRITE_BEFORE_READ);  /* 2 */
+bus_space_barrier(t, h, 0, 2, BUS_SPACE_BARRIER_WRITE);  /* 2 */
 ndata1 = bus_space_read_1(t, h, 1);
-bus_space_barrier(t, h, 1, 1, BUS_SPACE_BARRIER_READ_BEFORE_READ);   /* 3 */
+bus_space_barrier(t, h, 1, 1, BUS_SPACE_BARRIER_READ);   /* 3 */
 ndata0 = bus_space_read_1(t, h, 1);
 /* data0 == ndata0, data1 == ndata1 */
 .Ed
@@ -1429,14 +1424,6 @@ minimum number of bus space locations.
 It is correct (and often easier) to make barrier operations cover the
 device's whole range of bus space, that is, to specify an offset of zero
 and the size of the whole region.
-.Pp
-The following barrier operations are obsolete and should be removed
-from existing code:
-.Bl -tag -width BUS_SPACE_BARRIER_WRITE -offset indent
-.It Dv BUS_SPACE_BARRIER_READ
-Synchronize read operations.
-.It Dv BUS_SPACE_BARRIER_WRITE
-Synchronize write operations.
 .El
 .El
 .Sh REGION OPERATIONS
@@ -1997,7 +1984,7 @@ developer
 community.
 Primary contributors and implementors were
 .An Chris Demetriou ,
-.An Jason Thorpe,
+.An Jason Thorpe ,
 and
 .An Charles Hannum ,
 but the rest of the

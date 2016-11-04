@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.22 2014/09/18 13:58:20 christos Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.22.2.1 2016/11/04 14:48:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -36,7 +36,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetconfig.c,v 1.22 2014/09/18 13:58:20 christos Exp $");
+__RCSID("$NetBSD: getnetconfig.c,v 1.22.2.1 2016/11/04 14:48:52 pgoyette Exp $");
 #endif
 #endif
 
@@ -174,7 +174,7 @@ __nc_error(void)
 		nc_addr = malloc(sizeof (int));
 		if (nc_addr == NULL)
 			return &nc_error;
-		if (thr_setspecific(nc_key, (void *) nc_addr) != 0) {
+		if (thr_setspecific(nc_key, nc_addr) != 0) {
 			if (nc_addr)
 				free(nc_addr);
 			return &nc_error;
@@ -213,7 +213,7 @@ setnetconfig(void)
 	struct netconfig_vars *nc_vars;
 
 	if ((nc_vars = malloc(sizeof(*nc_vars))) == NULL) {
-		return(NULL);
+		return NULL;
 	}
 
 	/*
@@ -225,12 +225,12 @@ setnetconfig(void)
 		nc_vars->valid = NC_VALID;
 		nc_vars->flag = 0;
 		nc_vars->nc_configs = ni.head;
-		return ((void *)nc_vars);
+		return nc_vars;
 	}
 	ni.ref--;
 	nc_error = NC_NONETCONFIG;
 	free(nc_vars);
-	return (NULL);
+	return NULL;
 }
 
 
@@ -245,7 +245,7 @@ setnetconfig(void)
 struct netconfig *
 getnetconfig(void *handlep)
 {
-	struct netconfig_vars *ncp = (struct netconfig_vars *)handlep;
+	struct netconfig_vars *ncp = handlep;
 	char *stringp;		/* tmp string pointer */
 	struct netconfig_list	*list;
 	struct netconfig *np;
@@ -255,7 +255,7 @@ getnetconfig(void *handlep)
 	 */
 	if (ncp == NULL || nc_file == NULL) {
 		nc_error = NC_NOTINIT;
-		return (NULL);
+		return NULL;
 	}
 
 	switch (ncp->valid) {
@@ -273,12 +273,12 @@ getnetconfig(void *handlep)
 			ncp->flag = 1;
 			ncp->nc_configs = ni.head;
 			if (ncp->nc_configs != NULL) /* entry already exist */
-				return(ncp->nc_configs->ncp);
+				return ncp->nc_configs->ncp;
 		}
 		else if (ncp->nc_configs != NULL &&
 		    ncp->nc_configs->next != NULL) {
 			ncp->nc_configs = ncp->nc_configs->next;
-			return(ncp->nc_configs->ncp);
+			return ncp->nc_configs->ncp;
 		}
 
 		/*
@@ -286,16 +286,16 @@ getnetconfig(void *handlep)
 		 * we give up.
 		 */
 		if (ni.eof == 1)
-			return(NULL);
+			return NULL;
 		break;
 	default:
 		nc_error = NC_NOTINIT;
-		return (NULL);
+		return NULL;
 	}
 
 	stringp = malloc(MAXNETCONFIGLINE);
 	if (stringp == NULL)
-		return (NULL);
+		return NULL;
 
 #ifdef MEM_CHK
 	if (malloc_verify() == 0) {
@@ -311,20 +311,20 @@ getnetconfig(void *handlep)
 		if (fgets(stringp, MAXNETCONFIGLINE, nc_file) == NULL) {
 			free(stringp);
 			ni.eof = 1;
-			return (NULL);
+			return NULL;
 		}
 	} while (*stringp == '#');
 
 	list = malloc(sizeof(*list));
 	if (list == NULL) {
 		free(stringp);
-		return(NULL);
+		return NULL;
 	}
 	np = malloc(sizeof(*np));
 	if (np == NULL) {
 		free(stringp);
 		free(list);
-		return(NULL);
+		return NULL;
 	}
 	list->ncp = np;
 	list->next = NULL;
@@ -334,7 +334,7 @@ getnetconfig(void *handlep)
 		free(stringp);
 		free(np);
 		free(list);
-		return (NULL);
+		return NULL;
 	} else {
 		/*
 		 * If this is the first entry that's been read, it is the
@@ -349,7 +349,7 @@ getnetconfig(void *handlep)
 			ni.tail = ni.tail->next;
 		}
 		ncp->nc_configs = ni.tail;
-		return(ni.tail->ncp);
+		return ni.tail->ncp;
 	}
 }
 
@@ -363,7 +363,7 @@ getnetconfig(void *handlep)
 int
 endnetconfig(void *handlep)
 {
-	struct netconfig_vars *nc_handlep = (struct netconfig_vars *)handlep;
+	struct netconfig_vars *nc_handlep = handlep;
 
 	struct netconfig_list *q, *p;
 
@@ -373,7 +373,7 @@ endnetconfig(void *handlep)
 	if (nc_handlep == NULL || (nc_handlep->valid != NC_VALID &&
 	    nc_handlep->valid != NC_STORAGE)) {
 		nc_error = NC_NOTINIT;
-		return (-1);
+		return -1;
 	}
 
 	/*
@@ -384,7 +384,7 @@ endnetconfig(void *handlep)
 	nc_handlep->nc_configs = NULL;
 	if (--ni.ref > 0) {
 		free(nc_handlep);
-		return(0);
+		return 0;
 	}
 
 	/*
@@ -408,7 +408,7 @@ endnetconfig(void *handlep)
 
 	fclose(nc_file);
 	nc_file = NULL;
-	return (0);
+	return 0;
 }
 
 /*
@@ -429,7 +429,7 @@ getnetconfigent(const char *netid)
 	struct netconfig_list *list;	/* pointer to cache list */
 
 	if (netid == NULL || strlen(netid) == 0)
-		return (NULL);
+		return NULL;
 
 	/*
 	 * Look up table if the entries have already been read and parsed in
@@ -443,21 +443,21 @@ getnetconfigent(const char *netid)
 	if (ni.head != NULL) {
 		for (list = ni.head; list; list = list->next) {
 			if (strcmp(list->ncp->nc_netid, netid) == 0)
-			    return(dup_ncp(list->ncp));
+				return dup_ncp(list->ncp);
 		}
 		if (ni.eof == 1)	/* that's all the entries */
-			return(NULL);
+			return NULL;
 	}
 
 	if ((file = fopen(NETCONFIG, "re")) == NULL)
-	    return (NULL);
+	    return NULL;
 
 	if ((linep = malloc(MAXNETCONFIGLINE)) == NULL) {
 		fclose(file);
-		return (NULL);
+		return NULL;
 	}
 	do {
-		ptrdiff_t len;
+		size_t len;
 		char *tmpp;	/* tmp string pointer */
 
 		do {
@@ -472,8 +472,9 @@ getnetconfigent(const char *netid)
 			nc_error = NC_BADFILE;
 			break;
 		}
-		if (strlen(netid) == (size_t) (len = tmpp - stringp) &&	/* a match */
-		    strncmp(stringp, netid, (size_t)len) == 0) {
+		if (strlen(netid) == (len = (size_t)(tmpp - stringp)) &&
+		    strncmp(stringp, netid, len) == 0) {
+		    /* a match */
 			if ((ncp = malloc(sizeof(*ncp))) == NULL)
 				break;
 			ncp->nc_lookups = NULL;
@@ -487,7 +488,7 @@ getnetconfigent(const char *netid)
 	if (ncp == NULL)
 		free(linep);
 	fclose(file);
-	return(ncp);
+	return ncp;
 }
 
 /*
@@ -535,11 +536,11 @@ parse_ncp(
 	stringp[strlen(stringp)-1] = '\0';	/* get rid of newline */
 	/* netid */
 	if ((ncp->nc_netid = strtok_r(stringp, "\t ", &lasts)) == NULL)
-		return (-1);
+		return -1;
 
 	/* semantics */
 	if ((tokenp = strtok_r(NULL, "\t ", &lasts)) == NULL)
-		return (-1);
+		return -1;
 	if (strcmp(tokenp, NC_TPI_COTS_ORD_S) == 0)
 		ncp->nc_semantics = NC_TPI_COTS_ORD;
 	else if (strcmp(tokenp, NC_TPI_COTS_S) == 0)
@@ -549,11 +550,11 @@ parse_ncp(
 	else if (strcmp(tokenp, NC_TPI_RAW_S) == 0)
 		ncp->nc_semantics = NC_TPI_RAW;
 	else
-		return (-1);
+		return -1;
 
 	/* flags */
 	if ((tokenp = strtok_r(NULL, "\t ", &lasts)) == NULL)
-		return (-1);
+		return -1;
 	for (ncp->nc_flag = NC_NOFLAG; *tokenp != '\0'; tokenp++) {
 		switch (*tokenp) {
 		case NC_NOFLAG_C:
@@ -565,20 +566,20 @@ parse_ncp(
 			ncp->nc_flag |= NC_BROADCAST;
 			break;
 		default:
-			return (-1);
+			return -1;
 		}
 	}
 	/* protocol family */
 	if ((ncp->nc_protofmly = strtok_r(NULL, "\t ", &lasts)) == NULL)
-		return (-1);
+		return -1;
 	/* protocol name */
 	if ((ncp->nc_proto = strtok_r(NULL, "\t ", &lasts)) == NULL)
-		return (-1);
+		return -1;
 	/* network device */
 	if ((ncp->nc_device = strtok_r(NULL, "\t ", &lasts)) == NULL)
-		return (-1);
+		return -1;
 	if ((tokenp = strtok_r(NULL, "\t ", &lasts)) == NULL)
-		return (-1);
+		return -1;
 	if (strcmp(tokenp, NC_NOLOOKUP) == 0) {
 		ncp->nc_nlookups = 0;
 		ncp->nc_lookups = NULL;
@@ -599,7 +600,7 @@ parse_ncp(
 						/* for next loop */
 		}
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -648,16 +649,16 @@ static struct netconfig *
 dup_ncp(struct netconfig *ncp)
 {
 	struct netconfig	*p;
-	char	*tmp;
+	char	*tmp, *tmp2;
 	u_int	i;
 
 	_DIAGASSERT(ncp != NULL);
 
-	if ((tmp = malloc(MAXNETCONFIGLINE)) == NULL)
-		return(NULL);
+	if ((tmp2 = tmp = malloc(MAXNETCONFIGLINE)) == NULL)
+		return NULL;
 	if ((p = malloc(sizeof(*p))) == NULL) {
 		free(tmp);
-		return(NULL);
+		return NULL;
 	}
 	/*
 	 * First we dup all the data from matched netconfig buffer.  Then we
@@ -669,22 +670,23 @@ dup_ncp(struct netconfig *ncp)
 	 * in the buffer.
 	 */
 	*p = *ncp;
-	p->nc_netid = (char *)strcpy(tmp,ncp->nc_netid);
+	p->nc_netid = strcpy(tmp, ncp->nc_netid);
 	tmp = strchr(tmp, '\0') + 1;
-	p->nc_protofmly = (char *)strcpy(tmp,ncp->nc_protofmly);
+	p->nc_protofmly = strcpy(tmp, ncp->nc_protofmly);
 	tmp = strchr(tmp, '\0') + 1;
-	p->nc_proto = (char *)strcpy(tmp,ncp->nc_proto);
+	p->nc_proto = strcpy(tmp, ncp->nc_proto);
 	tmp = strchr(tmp, '\0') + 1;
-	p->nc_device = (char *)strcpy(tmp,ncp->nc_device);
-	p->nc_lookups = malloc((size_t)(p->nc_nlookups+1) * sizeof(char *));
+	p->nc_device = strcpy(tmp, ncp->nc_device);
+	p->nc_lookups = calloc((size_t)(p->nc_nlookups + 1), sizeof(char *));
 	if (p->nc_lookups == NULL) {
+		free(tmp2);
 		free(p->nc_netid);
 		free(p);
-		return(NULL);
+		return NULL;
 	}
-	for (i=0; i < p->nc_nlookups; i++) {
+	for (i = 0; i < p->nc_nlookups; i++) {
 		tmp = strchr(tmp, '\0') + 1;
-		p->nc_lookups[i] = strcpy(tmp,ncp->nc_lookups[i]);
+		p->nc_lookups[i] = strcpy(tmp, ncp->nc_lookups[i]);
 	}
-	return(p);
+	return p;
 }

@@ -5,6 +5,11 @@
 
 	start
 
+	ldk	  $r0,__PMSIZE
+	EXPECT    $r0,0x00040000
+	ldk       $r0,__RAMSIZE
+	EXPECT    $r0,0x00010000
+
 	ldk     $r4,10
 	add     $r4,$r4,23
 	EXPECT  $r4,33
@@ -783,6 +788,38 @@ tmp:    .long     0
 	EXPECT    $r0,0xabcdef01
 	pop.l     $r0
 	EXPECT    $r0,0x12345678
+
+# PM write port
+	.equ    PM_UNLOCK,      0x1fc80
+	.equ    PM_ADDR,        0x1fc84
+	.equ    PM_DATA,        0x1fc88
+
+	lpm.l     $r0,k_12345678
+	lpm.l     $r1,k_abcdef01
+	EXPECT    $r0,0x12345678
+	EXPECT    $r1,0xabcdef01
+	ldk.l     $r3,(0x1337f7d1 >> 10)
+	ldl.l     $r3,$r3,(0x1337f7d1 & 0x3ff)
+	EXPECT    $r3,0x1337f7d1
+	ldk	  $r4,k_12345678
+	sta.l     PM_ADDR,$r4
+
+	# write while locked does nothing
+	sta.l	  PM_DATA,$r1
+	sta.l	  PM_DATA,$r0
+	lpm.l     $r0,k_12345678
+	lpm.l     $r1,k_abcdef01
+	EXPECT    $r0,0x12345678
+	EXPECT    $r1,0xabcdef01
+
+	# write while unlocked modifies program memory
+	sta.l	  PM_UNLOCK,$r3
+	sta.l	  PM_DATA,$r1
+	sta.l	  PM_DATA,$r0
+	lpm.l     $r0,k_12345678
+	lpm.l     $r1,k_abcdef01
+	EXPECT    $r0,0xabcdef01
+	EXPECT    $r1,0x12345678
 
 # final stack check
 	EXPECT    $sp,0x00000000

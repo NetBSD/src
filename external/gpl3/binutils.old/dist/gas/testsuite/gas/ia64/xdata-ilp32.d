@@ -16,7 +16,7 @@ Section Headers:
   \[ 6\] ,xdata3           PROGBITS        00000000 [[:xdigit:]]+ 000008 00   A  0   0  4
   \[ 7\] \.xdata,4          PROGBITS        00000000 [[:xdigit:]]+ 000010 00   A  0   0  8
   \[ 8\] "\.xdata5"         PROGBITS        00000000 [[:xdigit:]]+ 000020 00   A  0   0 16
-  \[ 9\] \.rela"\.xdata5"    RELA            00000000 [[:xdigit:]]+ 000018 0c     17   8  4
+  \[ 9\] \.rela"\.xdata5"    RELA            00000000 [[:xdigit:]]+ 000018 0c   I 17   8  4
   \[10\] \.xreal\\1          PROGBITS        00000000 [[:xdigit:]]+ 000008 00   A  0   0  4
   \[11\] \.xreal\+2          PROGBITS        00000000 [[:xdigit:]]+ 000010 00   A  0   0  8
   \[12\] \.xreal\(3\)         PROGBITS        00000000 [[:xdigit:]]+ 000014 00   A  0   0 16

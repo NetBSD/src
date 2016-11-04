@@ -1,4 +1,4 @@
-#   Copyright 1997-2015 Free Software Foundation, Inc.
+#   Copyright 1997-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,13 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [is_remote target] || ![isnative] } then {
-    continue
-}
+# This is a test of gdb's ability to follow a process through a
+# Unix exec() system call.
 
 # Until "catch exec" is implemented on other targets...
 #
-if {![istarget "hppa*-hp-hpux*"] && ![istarget "*-linux*"]} then {
+if { ![istarget "*-linux*"] } then {
     continue
 }
 
@@ -30,8 +29,6 @@ set srcfile2 ${testfile2}.c
 set binfile2 [standard_output_file ${testfile2}]
 
 set compile_options debug
-set dirname [relative_filename [pwd] [file dirname $binfile]]
-lappend compile_options "additional_flags=-DBASEDIR=\"$dirname\""
 
 # build the first test case
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable $compile_options] != "" } {
@@ -44,44 +41,14 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $com
      return -1
 }
 
-proc zap_session {} {
-   global gdb_prompt
-   global binfile
-
-   send_gdb "kill\n"
-   gdb_expect {
-     -re ".*Kill the program being debugged.*y or n. $" {
-       gdb_test_no_output "y" ""
-       send_gdb "file $binfile\n"
-       gdb_expect {
-         -re ".*Load new symbol table from.*y or n. $" {
-           send_gdb "y\n"
-           gdb_expect {
-             -re "Reading symbols from.*$gdb_prompt $" {}
-             timeout { fail "loading symbols (timeout)"; return }
-           }
-         }
-         -re ".*gdb_prompt $" {}
-         timeout { fail "loading symbols (timeout)"; return }
-       }
-    }
-    -re ".*$gdb_prompt $" {}
-    timeout { fail "killing inferior (timeout)" ; return }
-   }
-}
-
 proc do_exec_tests {} {
+   global binfile srcfile srcfile2 testfile testfile2
    global gdb_prompt
-   global binfile
-   global srcfile
-   global srcfile2
-   global testfile
-   global testfile2
 
    # Start the program running, and stop at main.
    #
    if ![runto_main] then {
-     perror "Couldn't run ${testfile}"
+     fail "Couldn't run ${testfile}"
      return
    }
 
@@ -103,27 +70,25 @@ proc do_exec_tests {} {
      return
    }
 
-   zap_session
+   clean_restart $binfile
 
    # Start the program running, and stop at main.
    #
    if ![runto_main] then {
-     perror "Couldn't run ${testfile}"
+     fail "Couldn't run ${testfile}"
      return
    }
+   # Execute the code setting up variable PROG.
+   set tbreak_line [gdb_get_line_number " tbreak-execlp " $srcfile]
+   gdb_test "tbreak ${tbreak_line}"
+   gdb_continue_to_breakpoint "line tbreak-execlp" ".*execlp \\(.*"
 
    # Verify that we can see various global and local variables
    # in this program, and that they have expected values.  Some
    # of these variables are also declared in the program we'll
    # exec in a moment.
    #
-   send_gdb "next 3\n"
-   gdb_expect {
-     -re "execlp \\(.*$gdb_prompt $"\
-                     {pass "step to exec call"}
-     -re "$gdb_prompt $" {fail "step to exec call"}
-     timeout         {fail "(timeout) step to exec call"}
-   }
+
    send_gdb "print global_i\n"
    gdb_expect {
      -re ".* = 100.*$gdb_prompt $"\
@@ -192,12 +157,12 @@ proc do_exec_tests {} {
 
    # Explicitly kill this program, or a subsequent rerun actually runs
    # the exec'd program, not the original program...
-   zap_session
+   clean_restart $binfile
 
    # Start the program running, and stop at main.
    #
    if ![runto_main] then {
-     perror "Couldn't run ${testfile} (2nd try)"
+     fail "Couldn't run ${testfile} (2nd try)"
      return
    }
 
@@ -224,10 +189,6 @@ proc do_exec_tests {} {
        }
    }
 
-   # DTS CLLbs16760
-   # PA64 doesn't know about $START$ in dld.sl at this point.  It should.
-   # - Michael Coulter
-   setup_xfail hppa2.0w-hp-hpux* CLLbs16760
    send_gdb "continue\n"
    gdb_expect {
      -re ".*xecuting new program:.*${testfile2}.*Catchpoint .*(exec\'d .*${testfile2}).*in .*$gdb_prompt $"\
@@ -265,19 +226,23 @@ proc do_exec_tests {} {
 
    # Explicitly kill this program, or a subsequent rerun actually runs
    # the exec'd program, not the original program...
-   zap_session
+   clean_restart $binfile
 
    # Start the program running, and stop at main.
    #
    if ![runto_main] then {
-     perror "Couldn't run ${testfile} (3rd try)"
+     fail "Couldn't run ${testfile} (3rd try)"
      return
    }
+   # Execute the code setting up variable PROG.
+   set tbreak_line [gdb_get_line_number " tbreak-execlp " $srcfile]
+   gdb_test "tbreak ${tbreak_line}"
+   gdb_continue_to_breakpoint "line tbreak-execlp" ".*execlp \\(.*"
 
    # Verify that we can follow through follow an execl()
    # call.  (We must jump around earlier exec* calls.)
    #
-   set tbreak_line [gdb_get_line_number "tbreak-execl" $srcfile]
+   set tbreak_line [gdb_get_line_number " tbreak-execl " $srcfile]
    send_gdb "tbreak ${tbreak_line}\n"
    gdb_expect {
      -re "Temporary breakpoint .*file .*${srcfile}, line ${tbreak_line}.*$gdb_prompt $"\
@@ -326,14 +291,18 @@ proc do_exec_tests {} {
 
    # Explicitly kill this program, or a subsequent rerun actually runs
    # the exec'd program, not the original program...
-   zap_session
+   clean_restart $binfile
 
    # Start the program running, and stop at main.
    #
    if ![runto_main] then {
-     perror "Couldn't run ${testfile} (4th try)"
+     fail "Couldn't run ${testfile} (4th try)"
      return
    }
+   # Execute the code setting up variable PROG.
+   set tbreak_line [gdb_get_line_number " tbreak-execlp " $srcfile]
+   gdb_test "tbreak ${tbreak_line}"
+   gdb_continue_to_breakpoint "line tbreak-execlp" ".*execlp \\(.*"
 
    # Verify that we can follow through follow an execv()
    # call.  (We must jump around earlier exec* calls.)
@@ -381,12 +350,12 @@ proc do_exec_tests {} {
 
    # Explicitly kill this program, or a subsequent rerun actually runs
    # the exec'd program, not the original program...
-   zap_session
+   clean_restart $binfile
 
    # Start the program running, and stop at main.
    #
    if ![runto_main] then {
-     perror "Couldn't run ${testfile} (5th try)"
+     fail "Couldn't run ${testfile} (5th try)"
      return
    }
 
@@ -406,14 +375,8 @@ proc do_exec_tests {} {
 # Start with a fresh gdb
 
 gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $binfile
 
-
-# This is a test of gdb's ability to follow a process through a
-# Unix exec() system call.
-#
 do_exec_tests
 
 return 0

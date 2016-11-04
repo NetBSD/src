@@ -84,6 +84,10 @@ struct compile_c_instance
 #define COMPILE_I_SIMPLE_REGISTER_STRUCT_TAG "__gdb_regs"
 #define COMPILE_I_SIMPLE_REGISTER_ARG_NAME "__regs"
 #define COMPILE_I_SIMPLE_REGISTER_DUMMY "_dummy"
+#define COMPILE_I_PRINT_OUT_ARG_TYPE "void *"
+#define COMPILE_I_PRINT_OUT_ARG "__gdb_out_param"
+#define COMPILE_I_EXPR_VAL "__gdb_expr_val"
+#define COMPILE_I_EXPR_PTR_TYPE "__gdb_expr_ptr_type"
 
 /* Call gdbarch_register_name (GDBARCH, REGNUM) and convert its result
    to a form suitable for the compiler source.  The register names

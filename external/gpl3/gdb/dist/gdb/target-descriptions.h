@@ -1,6 +1,6 @@
 /* Target description support for GDB.
 
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -229,18 +229,26 @@ struct tdesc_type *tdesc_create_vector (struct tdesc_feature *feature,
 					int count);
 struct tdesc_type *tdesc_create_struct (struct tdesc_feature *feature,
 					const char *name);
-void tdesc_set_struct_size (struct tdesc_type *type, LONGEST size);
+void tdesc_set_struct_size (struct tdesc_type *type, int size);
 struct tdesc_type *tdesc_create_union (struct tdesc_feature *feature,
 				       const char *name);
 struct tdesc_type *tdesc_create_flags (struct tdesc_feature *feature,
 				       const char *name,
-				       LONGEST size);
+				       int size);
+struct tdesc_type *tdesc_create_enum (struct tdesc_feature *feature,
+				      const char *name,
+				      int size);
 void tdesc_add_field (struct tdesc_type *type, const char *field_name,
 		      struct tdesc_type *field_type);
+void tdesc_add_typed_bitfield (struct tdesc_type *type, const char *field_name,
+			       int start, int end,
+			       struct tdesc_type *field_type);
 void tdesc_add_bitfield (struct tdesc_type *type, const char *field_name,
 			 int start, int end);
 void tdesc_add_flag (struct tdesc_type *type, int start,
 		     const char *flag_name);
+void tdesc_add_enum_value (struct tdesc_type *type, int value,
+			   const char *name);
 void tdesc_create_reg (struct tdesc_feature *feature, const char *name,
 		       int regnum, int save_restore, const char *group,
 		       int bitsize, const char *type);

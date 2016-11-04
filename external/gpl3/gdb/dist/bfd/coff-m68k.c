@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola 68000 COFF binaries.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -446,7 +446,7 @@ bfd_m68k_coff_create_embedded_relocs (bfd *abfd,
   bfd_byte *p;
   bfd_size_type amt;
 
-  BFD_ASSERT (! info->relocatable);
+  BFD_ASSERT (! bfd_link_relocatable (info));
 
   *errmsg = NULL;
 

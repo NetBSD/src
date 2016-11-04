@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2051.2.5 2016/09/14 03:04:04 pgoyette Exp $
+#	$NetBSD: mi,v 1.2051.2.6 2016/11/04 14:42:38 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9,6 +9,7 @@
 ./usr/bin/atf-compile				comp-obsolete		obsolete
 ./usr/bin/c++					comp-cxx-bin		gcccmds
 ./usr/bin/c++filt				comp-cxx-bin		binutils
+./usr/bin/c11					comp-c-bin
 ./usr/bin/c89					comp-c-bin
 ./usr/bin/c99					comp-c-bin
 ./usr/bin/cc					comp-c-bin		gcccmds
@@ -2739,12 +2740,14 @@
 ./usr/include/ssp/strings.h			comp-c-include
 ./usr/include/ssp/unistd.h			comp-c-include
 ./usr/include/stab.h				comp-c-include
+./usr/include/stdalign.h			comp-c-include
 ./usr/include/stdarg.h				comp-c-include
 ./usr/include/stdbool.h				comp-c-include
 ./usr/include/stddef.h				comp-c-include
 ./usr/include/stdint.h				comp-c-include
 ./usr/include/stdio.h				comp-c-include
 ./usr/include/stdlib.h				comp-c-include
+./usr/include/stdnoreturn.h			comp-c-include
 ./usr/include/string.h				comp-c-include
 ./usr/include/stringlist.h			comp-c-include
 ./usr/include/strings.h				comp-c-include
@@ -3619,6 +3622,8 @@
 ./usr/lib/libukfs_p.a				comp-c-proflib		compatfile,rump,profile
 ./usr/lib/libumem.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libumem_p.a				comp-zfs-proflib	compatfile,zfs,profile
+./usr/lib/libunbound.a				comp-c-lib		compatfile,crypto,unbound
+./usr/lib/libunbound_p.a			comp-c-lib		compatfile,profile,crypto,unbound
 ./usr/lib/libusb.a				comp-obsolete		obsolete,compatfile
 ./usr/lib/libusb_p.a				comp-obsolete		obsolete,compatfile
 ./usr/lib/libusbhid.a				comp-c-lib		compatfile
@@ -3925,6 +3930,7 @@
 ./usr/share/man/cat1/asa.0			comp-fortran-catman	.cat
 ./usr/share/man/cat1/c++.0			comp-cxx-catman		gcccmds,.cat
 ./usr/share/man/cat1/c++filt.0			comp-cxx-catman		binutils,.cat
+./usr/share/man/cat1/c11.0			comp-c-catman		.cat
 ./usr/share/man/cat1/c89.0			comp-c-catman		.cat
 ./usr/share/man/cat1/c99.0			comp-c-catman		.cat
 ./usr/share/man/cat1/cc.0			comp-c-catman		gcccmds,.cat
@@ -4321,6 +4327,7 @@
 ./usr/share/man/cat3/BIO_f_ssl.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_find_type.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_new.0			comp-c-catman		crypto,.cat
+./usr/share/man/cat3/BIO_new_CMS.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_new_bio_pair.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/BIO_push.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BIO_read.0			comp-c-catman		crypto,.cat
@@ -4375,6 +4382,22 @@
 ./usr/share/man/cat3/CMSG_LEN.0			comp-c-catman		.cat
 ./usr/share/man/cat3/CMSG_NXTHDR.0		comp-c-catman		.cat
 ./usr/share/man/cat3/CMSG_SPACE.0		comp-c-catman		.cat
+./usr/share/man/cat3/CMS_add0_cert.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_add1_recipient_cert.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_add1_signer.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_compress.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_decrypt.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_encrypt.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_final.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_get0_RecipientInfos.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_get0_SignerInfos.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_get0_type.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_get1_ReceiptRequest.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_sign.0			comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_sign_receipt.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_uncompress.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_verify.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/CMS_verify_receipt.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/CONF_modules_free.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/CONF_modules_load_file.0	comp-c-man		crypto,.cat
 ./usr/share/man/cat3/CRYPTO_set_ex_data.0	comp-c-catman		crypto,.cat
@@ -4407,11 +4430,24 @@
 ./usr/share/man/cat3/ERR_set_mark.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_BytesToKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_DigestInit.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_DigestSignInit.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_DigestVerifyInit.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_EncodeInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_EncryptInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_OpenInit.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_CTX_ctrl.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_CTX_new.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_cmp.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_decrypt.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_derive.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_encrypt.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_get_default_digest.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_keygen.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_PKEY_new.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_print_private.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_PKEY_set1_RSA.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_sign.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_PKEY_verify.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_PKEY_verify_recover.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_SealInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_SignInit.0		comp-c-catman		crypto,.cat
@@ -4517,11 +4553,14 @@
 ./usr/share/man/cat3/OPENSSL_ia32cap.0		comp-c-man		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_load_builtin_modules.0	comp-c-man		crypto,.cat
 ./usr/share/man/cat3/OpenSSL_add_all_algorithms.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/PEM_write_bio_CMS_stream.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/PEM_write_bio_PKCS7_stream.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS12_create.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS12_parse.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS7_decrypt.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS7_encrypt.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS7_sign.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/PKCS7_sign_add_signer.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS7_verify.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/RAND_add.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/RAND_bytes.0		comp-c-catman		crypto,.cat
@@ -4651,7 +4690,9 @@
 ./usr/share/man/cat3/SLIST_REMOVE.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SLIST_REMOVE_AFTER.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SLIST_REMOVE_HEAD.0	comp-c-catman		.cat
+./usr/share/man/cat3/SMIME_read_CMS.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SMIME_read_PKCS7.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SMIME_write_CMS.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SMIME_write_PKCS7.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SPLAY_EMPTY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SPLAY_ENTRY.0		comp-c-catman		.cat
@@ -4729,7 +4770,9 @@
 ./usr/share/man/cat3/SSL_CTX_set_mode.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_msg_callback.0 comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_options.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SSL_CTX_set_psk_client_callback.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_quiet_shutdown.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SSL_CTX_set_read_ahead.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_session_cache_mode.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_session_id_context.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_ssl_version.0	comp-c-catman		crypto,.cat
@@ -4740,6 +4783,7 @@
 ./usr/share/man/cat3/SSL_CTX_set_tmp_rsa_callback.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_verify.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_use_certificate.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SSL_CTX_use_psk_identity_hint.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_SESSION_free.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_SESSION_get_ex_new_index.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_SESSION_get_time.0	comp-c-catman		crypto,.cat
@@ -4760,6 +4804,7 @@
 ./usr/share/man/cat3/SSL_get_fd.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_get_peer_cert_chain.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_get_peer_certificate.0 comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SSL_get_psk_identity.0 	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_get_rbio.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_get_session.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_get_verify_result.0	comp-c-catman		crypto,.cat
@@ -5685,8 +5730,10 @@
 ./usr/share/man/cat3/curses_window.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cuserid.0			comp-c-catman		.cat
 ./usr/share/man/cat3/d2i_ASN1_OBJECT.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/d2i_CMS_ContentInfo.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_DHparams.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_DSAPublicKey.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/d2i_ECPrivateKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_PKCS8PrivateKey.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_RSAPublicKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_SSL_SESSION.0		comp-c-catman		crypto,.cat
@@ -6723,6 +6770,8 @@
 ./usr/share/man/cat3/humanize_number.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hypot.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hypotf.0			comp-c-catman		.cat
+./usr/share/man/cat3/i2d_CMS_bio_stream.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/i2d_PKCS7_bio_stream.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/iconv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/iconv_close.0		comp-c-catman		.cat
 ./usr/share/man/cat3/iconv_open.0		comp-c-catman		.cat
@@ -9133,6 +9182,7 @@
 ./usr/share/man/cat3/strcasestr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcat.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strchr.0			comp-c-catman		.cat
+./usr/share/man/cat3/strchrnul.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strcoll.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strcpy.0			comp-c-catman		.cat
@@ -9342,6 +9392,7 @@
 ./usr/share/man/cat3/timersub.0			comp-c-catman		.cat
 ./usr/share/man/cat3/times.0			comp-c-catman		.cat
 ./usr/share/man/cat3/timespec.0			comp-c-catman		.cat
+./usr/share/man/cat3/timespec_get.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timespecadd.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timespecclear.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timespeccmp.0		comp-c-catman		.cat
@@ -9524,6 +9575,7 @@
 ./usr/share/man/cat3/wcsncat.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcsncmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcsncpy.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcsnlen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcspbrk.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcsrchr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcsrtombs.0		comp-c-catman		.cat
@@ -11302,6 +11354,7 @@
 ./usr/share/man/html1/asa.html			comp-fortran-htmlman	html
 ./usr/share/man/html1/c++.html			comp-cxx-htmlman	gcccmds,html
 ./usr/share/man/html1/c++filt.html		comp-cxx-htmlman	binutils,html
+./usr/share/man/html1/c11.html			comp-c-htmlman		html
 ./usr/share/man/html1/c89.html			comp-c-htmlman		html
 ./usr/share/man/html1/c99.html			comp-c-htmlman		html
 ./usr/share/man/html1/cc.html			comp-c-htmlman		gcccmds,html
@@ -11668,6 +11721,7 @@
 ./usr/share/man/html3/BIO_f_ssl.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/BIO_find_type.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/BIO_new.html		comp-c-htmlman		crypto,html
+./usr/share/man/html3/BIO_new_CMS.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/BIO_push.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/BIO_read.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/BIO_s_accept.html		comp-c-htmlman		crypto,html
@@ -11721,47 +11775,76 @@
 ./usr/share/man/html3/CMSG_LEN.html		comp-c-htmlman		html
 ./usr/share/man/html3/CMSG_NXTHDR.html		comp-c-htmlman		html
 ./usr/share/man/html3/CMSG_SPACE.html		comp-c-htmlman		html
-./usr/share/man/html3/CONF_modules_free.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/CONF_modules_load_file.html	comp-c-man		crypto,html
-./usr/share/man/html3/CRYPTO_set_ex_data.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/DH_generate_key.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/DH_generate_parameters.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/DH_get_ex_new_index.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/DH_new.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/DH_set_method.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/DH_size.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/DSA_SIG_new.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/DSA_do_sign.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/DSA_dup_DH.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/DSA_generate_key.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/DSA_generate_parameters.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/DSA_get_ex_new_index.html comp-c-htmlman		crypto,html
-./usr/share/man/html3/DSA_new.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/DSA_set_method.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/DSA_sign.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/DSA_size.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/DTTOIF.html		comp-c-htmlman		html
-./usr/share/man/html3/ERR_GET_LIB.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/ERR_clear_error.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/ERR_error_string.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/ERR_get_error.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/ERR_load_crypto_strings.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/ERR_load_strings.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/ERR_print_errors.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/ERR_put_error.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/ERR_remove_state.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/ERR_set_mark.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/EVP_BytesToKey.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/EVP_DigestInit.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/EVP_EncodeInit.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/EVP_EncryptInit.html	comp-c-htmlman		crypto,html
-./usr/share/man/html3/EVP_OpenInit.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/EVP_PKEY_new.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/EVP_PKEY_set1_RSA.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/CMS_add0_cert.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_add1_recipient_cert.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_add1_signer.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_compress.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_decrypt.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_encrypt.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_final.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_get0_RecipientInfos.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_get0_SignerInfos.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_get0_type.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_get1_ReceiptRequest.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_sign.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_sign_receipt.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_uncompress.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_verify.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/CMS_verify_receipt.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/CONF_modules_free.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/CONF_modules_load_file.html	comp-c-man	crypto,html
+./usr/share/man/html3/CRYPTO_set_ex_data.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/DH_generate_key.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/DH_generate_parameters.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/DH_get_ex_new_index.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/DH_new.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/DH_set_method.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/DH_size.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/DSA_SIG_new.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/DSA_do_sign.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/DSA_dup_DH.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/DSA_generate_key.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/DSA_generate_parameters.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/DSA_get_ex_new_index.html comp-c-htmlman	crypto,html
+./usr/share/man/html3/DSA_new.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/DSA_set_method.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/DSA_sign.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/DSA_size.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/DTTOIF.html		comp-c-htmlman	html
+./usr/share/man/html3/ERR_GET_LIB.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/ERR_clear_error.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/ERR_error_string.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/ERR_get_error.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/ERR_load_crypto_strings.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/ERR_load_strings.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/ERR_print_errors.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/ERR_put_error.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/ERR_remove_state.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/ERR_set_mark.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_BytesToKey.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_DigestInit.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_DigestSignInit.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_DigestVerifyInit.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_EncodeInit.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_EncryptInit.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_OpenInit.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_CTX_ctrl.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_CTX_new.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_cmp.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_decrypt.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_derive.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_encrypt.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_get_default_digest.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_keygen.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_new.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_print_private.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_set1_RSA.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_sign.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_PKEY_verify.html	comp-c-htmlman	crypto,html
 ./usr/share/man/html3/EVP_PKEY_verify_recover.html	comp-c-htmlman	crypto,html
-./usr/share/man/html3/EVP_SealInit.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/EVP_SignInit.html		comp-c-htmlman		crypto,html
-./usr/share/man/html3/EVP_VerifyInit.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/EVP_SealInit.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_SignInit.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/EVP_VerifyInit.html	comp-c-htmlman	crypto,html
 ./usr/share/man/html3/GCQ_DEQUEUED_FIRST.html	comp-sys-htmlman	html
 ./usr/share/man/html3/GCQ_DEQUEUED_FIRST_COND.html	comp-sys-htmlman	html
 ./usr/share/man/html3/GCQ_DEQUEUED_FIRST_COND_TYPED.html	comp-sys-htmlman	html
@@ -11862,11 +11945,14 @@
 ./usr/share/man/html3/OPENSSL_ia32cap.html	comp-c-man		crypto,html
 ./usr/share/man/html3/OPENSSL_load_builtin_modules.html comp-c-man		crypto,html
 ./usr/share/man/html3/OpenSSL_add_all_algorithms.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/PEM_write_bio_CMS_stream.html	comp-c-htmlman	crypto,html
+./usr/share/man/html3/PEM_write_bio_PKCS7_stream.html	comp-c-htmlman	crypto,html
 ./usr/share/man/html3/PKCS12_create.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/PKCS12_parse.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/PKCS7_decrypt.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/PKCS7_encrypt.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/PKCS7_sign.html		comp-c-htmlman		crypto,html
+./usr/share/man/html3/PKCS7_sign_add_signer.html	comp-c-htmlman	crypto,html
 ./usr/share/man/html3/PKCS7_verify.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/RAND_add.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/RAND_bytes.html		comp-c-htmlman		crypto,html
@@ -11995,7 +12081,9 @@
 ./usr/share/man/html3/SLIST_REMOVE.html		comp-c-htmlman		html
 ./usr/share/man/html3/SLIST_REMOVE_AFTER.html	comp-c-htmlman		html
 ./usr/share/man/html3/SLIST_REMOVE_HEAD.html	comp-c-htmlman		html
+./usr/share/man/html3/SMIME_read_CMS.html		comp-c-htmlman	crypto,html
 ./usr/share/man/html3/SMIME_read_PKCS7.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/SMIME_write_CMS.html		comp-c-htmlman	crypto,html
 ./usr/share/man/html3/SMIME_write_PKCS7.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SPLAY_EMPTY.html		comp-c-htmlman		html
 ./usr/share/man/html3/SPLAY_ENTRY.html		comp-c-htmlman		html
@@ -12073,7 +12161,9 @@
 ./usr/share/man/html3/SSL_CTX_set_mode.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_msg_callback.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_options.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/SSL_CTX_set_psk_client_callback.html	comp-c-htmlman	crypto,html
 ./usr/share/man/html3/SSL_CTX_set_quiet_shutdown.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/SSL_CTX_set_read_ahead.html	comp-c-htmlman	crypto,html
 ./usr/share/man/html3/SSL_CTX_set_session_cache_mode.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_session_id_context.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_ssl_version.html	comp-c-htmlman		crypto,html
@@ -12084,6 +12174,7 @@
 ./usr/share/man/html3/SSL_CTX_set_tmp_rsa_callback.html comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_verify.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_use_certificate.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/SSL_CTX_use_psk_identity_hint.html	comp-c-htmlman	crypto,html
 ./usr/share/man/html3/SSL_SESSION_free.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_SESSION_get_ex_new_index.html comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_SESSION_get_time.html comp-c-htmlman		crypto,html
@@ -12104,6 +12195,7 @@
 ./usr/share/man/html3/SSL_get_fd.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_get_peer_cert_chain.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_get_peer_certificate.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/SSL_get_psk_identity.html		comp-c-htmlman	crypto,html
 ./usr/share/man/html3/SSL_get_rbio.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_get_session.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_get_verify_result.html	comp-c-htmlman		crypto,html
@@ -12976,8 +13068,10 @@
 ./usr/share/man/html3/curses_window.html	comp-c-htmlman		html
 ./usr/share/man/html3/cuserid.html		comp-c-htmlman		html
 ./usr/share/man/html3/d2i_ASN1_OBJECT.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/d2i_CMS_ContentInfo.html		comp-c-htmlman	crypto,html
 ./usr/share/man/html3/d2i_DHparams.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_DSAPublicKey.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/d2i_ECPrivateKey.html		comp-c-htmlman	crypto,html
 ./usr/share/man/html3/d2i_PKCS8PrivateKey.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_RSAPublicKey.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_SSL_SESSION.html	comp-c-htmlman		crypto,html
@@ -14009,6 +14103,8 @@
 ./usr/share/man/html3/humanize_number.html	comp-c-htmlman		html
 ./usr/share/man/html3/hypot.html		comp-c-htmlman		html
 ./usr/share/man/html3/hypotf.html		comp-c-htmlman		html
+./usr/share/man/html3/i2d_CMS_bio_stream.html		comp-c-htmlman	crypto,html
+./usr/share/man/html3/i2d_PKCS7_bio_stream.html		comp-c-htmlman	crypto,html
 ./usr/share/man/html3/iconv.html		comp-c-htmlman		html
 ./usr/share/man/html3/iconv_close.html		comp-c-htmlman		html
 ./usr/share/man/html3/iconv_open.html		comp-c-htmlman		html
@@ -16360,6 +16456,7 @@
 ./usr/share/man/html3/strcasestr.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcat.html		comp-c-htmlman		html
 ./usr/share/man/html3/strchr.html		comp-c-htmlman		html
+./usr/share/man/html3/strchrnul.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcoll.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcpy.html		comp-c-htmlman		html
@@ -16553,6 +16650,7 @@
 ./usr/share/man/html3/timersub.html		comp-c-htmlman		html
 ./usr/share/man/html3/times.html		comp-c-htmlman		html
 ./usr/share/man/html3/timespec.html		comp-c-htmlman		html
+./usr/share/man/html3/timespec_get.html		comp-c-htmlman		html
 ./usr/share/man/html3/timespecadd.html		comp-c-htmlman		html
 ./usr/share/man/html3/timespecclear.html	comp-c-htmlman		html
 ./usr/share/man/html3/timespeccmp.html		comp-c-htmlman		html
@@ -16731,6 +16829,7 @@
 ./usr/share/man/html3/wcsncat.html		comp-c-htmlman		html
 ./usr/share/man/html3/wcsncmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/wcsncpy.html		comp-c-htmlman		html
+./usr/share/man/html3/wcsnlen.html		comp-c-htmlman		html
 ./usr/share/man/html3/wcspbrk.html		comp-c-htmlman		html
 ./usr/share/man/html3/wcsrchr.html		comp-c-htmlman		html
 ./usr/share/man/html3/wcsrtombs.html		comp-c-htmlman		html
@@ -18418,6 +18517,7 @@
 ./usr/share/man/man1/asa.1			comp-fortran-man	.man
 ./usr/share/man/man1/c++.1			comp-cxx-man		gcccmds,.man
 ./usr/share/man/man1/c++filt.1			comp-cxx-man		binutils,.man
+./usr/share/man/man1/c11.1			comp-c-man		.man
 ./usr/share/man/man1/c89.1			comp-c-man		.man
 ./usr/share/man/man1/c99.1			comp-c-man		.man
 ./usr/share/man/man1/cc.1			comp-c-man		gcccmds,.man
@@ -18810,6 +18910,7 @@
 ./usr/share/man/man3/BIO_f_ssl.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/BIO_find_type.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/BIO_new.3			comp-c-man		crypto,.man
+./usr/share/man/man3/BIO_new_CMS.3			comp-c-man	crypto,.man
 ./usr/share/man/man3/BIO_new_bio_pair.3		comp-obsolete		obsolete
 ./usr/share/man/man3/BIO_push.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/BIO_read.3			comp-c-man		crypto,.man
@@ -18864,6 +18965,22 @@
 ./usr/share/man/man3/CMSG_LEN.3			comp-c-man		.man
 ./usr/share/man/man3/CMSG_NXTHDR.3		comp-c-man		.man
 ./usr/share/man/man3/CMSG_SPACE.3		comp-c-man		.man
+./usr/share/man/man3/CMS_add0_cert.3			comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_add1_recipient_cert.3		comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_add1_signer.3			comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_compress.3			comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_decrypt.3			comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_encrypt.3			comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_final.3			comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_get0_RecipientInfos.3		comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_get0_SignerInfos.3		comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_get0_type.3			comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_get1_ReceiptRequest.3		comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_sign.3				comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_sign_receipt.3			comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_uncompress.3			comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_verify.3			comp-c-man	crypto,.man
+./usr/share/man/man3/CMS_verify_receipt.3		comp-c-man	crypto,.man
 ./usr/share/man/man3/CONF_modules_free.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/CONF_modules_load_file.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/CRYPTO_set_ex_data.3	comp-c-man		crypto,.man
@@ -18896,11 +19013,24 @@
 ./usr/share/man/man3/ERR_set_mark.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_BytesToKey.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_DigestInit.3		comp-c-man		crypto,.man
+./usr/share/man/man3/EVP_DigestSignInit.3		comp-c-man	crypto,.man
+./usr/share/man/man3/EVP_DigestVerifyInit.3		comp-c-man	crypto,.man
 ./usr/share/man/man3/EVP_EncodeInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_EncryptInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_OpenInit.3		comp-c-man		crypto,.man
+./usr/share/man/man3/EVP_PKEY_CTX_ctrl.3		comp-c-man	crypto,.man
+./usr/share/man/man3/EVP_PKEY_CTX_new.3			comp-c-man	crypto,.man
+./usr/share/man/man3/EVP_PKEY_cmp.3			comp-c-man	crypto,.man
+./usr/share/man/man3/EVP_PKEY_decrypt.3			comp-c-man	crypto,.man
+./usr/share/man/man3/EVP_PKEY_derive.3			comp-c-man	crypto,.man
+./usr/share/man/man3/EVP_PKEY_encrypt.3			comp-c-man	crypto,.man
+./usr/share/man/man3/EVP_PKEY_get_default_digest.3	comp-c-man	crypto,.man
+./usr/share/man/man3/EVP_PKEY_keygen.3			comp-c-man	crypto,.man
 ./usr/share/man/man3/EVP_PKEY_new.3		comp-c-man		crypto,.man
+./usr/share/man/man3/EVP_PKEY_print_private.3		comp-c-man	crypto,.man
 ./usr/share/man/man3/EVP_PKEY_set1_RSA.3	comp-c-man		crypto,.man
+./usr/share/man/man3/EVP_PKEY_sign.3			comp-c-man	crypto,.man
+./usr/share/man/man3/EVP_PKEY_verify.3			comp-c-man	crypto,.man
 ./usr/share/man/man3/EVP_PKEY_verify_recover.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_SealInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_SignInit.3		comp-c-man		crypto,.man
@@ -19006,11 +19136,14 @@
 ./usr/share/man/man3/OPENSSL_ia32cap.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/OPENSSL_load_builtin_modules.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/OpenSSL_add_all_algorithms.3	comp-c-man		crypto,.man
+./usr/share/man/man3/PEM_write_bio_CMS_stream.3		comp-c-man	crypto,.man
+./usr/share/man/man3/PEM_write_bio_PKCS7_stream.3	comp-c-man	crypto,.man
 ./usr/share/man/man3/PKCS12_create.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/PKCS12_parse.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/PKCS7_decrypt.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/PKCS7_encrypt.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/PKCS7_sign.3		comp-c-man		crypto,.man
+./usr/share/man/man3/PKCS7_sign_add_signer.3		comp-c-man	crypto,.man
 ./usr/share/man/man3/PKCS7_verify.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/RAND_add.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/RAND_bytes.3		comp-c-man		crypto,.man
@@ -19140,7 +19273,9 @@
 ./usr/share/man/man3/SLIST_REMOVE.3		comp-c-man		.man
 ./usr/share/man/man3/SLIST_REMOVE_AFTER.3	comp-c-man		.man
 ./usr/share/man/man3/SLIST_REMOVE_HEAD.3	comp-c-man		.man
+./usr/share/man/man3/SMIME_read_CMS.3			comp-c-man	crypto,.man
 ./usr/share/man/man3/SMIME_read_PKCS7.3		comp-c-man		crypto,.man
+./usr/share/man/man3/SMIME_write_CMS.3			comp-c-man	crypto,.man
 ./usr/share/man/man3/SMIME_write_PKCS7.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SPLAY_EMPTY.3		comp-c-man		.man
 ./usr/share/man/man3/SPLAY_ENTRY.3		comp-c-man		.man
@@ -19218,7 +19353,9 @@
 ./usr/share/man/man3/SSL_CTX_set_mode.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_msg_callback.3 comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_options.3	comp-c-man		crypto,.man
+./usr/share/man/man3/SSL_CTX_set_psk_client_callback.3	comp-c-man	crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_quiet_shutdown.3	comp-c-man		crypto,.man
+./usr/share/man/man3/SSL_CTX_set_read_ahead.3		comp-c-man	crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_session_cache_mode.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_session_id_context.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_ssl_version.3	comp-c-man		crypto,.man
@@ -19229,6 +19366,7 @@
 ./usr/share/man/man3/SSL_CTX_set_tmp_rsa_callback.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_verify.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_use_certificate.3	comp-c-man		crypto,.man
+./usr/share/man/man3/SSL_CTX_use_psk_identity_hint.3	comp-c-man	crypto,.man
 ./usr/share/man/man3/SSL_SESSION_free.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_SESSION_get_ex_new_index.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_SESSION_get_time.3	comp-c-man		crypto,.man
@@ -19249,6 +19387,7 @@
 ./usr/share/man/man3/SSL_get_fd.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_get_peer_cert_chain.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_get_peer_certificate.3 comp-c-man		crypto,.man
+./usr/share/man/man3/SSL_get_psk_identity.3		comp-c-man	crypto,.man
 ./usr/share/man/man3/SSL_get_rbio.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_get_session.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_get_verify_result.3	comp-c-man		crypto,.man
@@ -20174,8 +20313,10 @@
 ./usr/share/man/man3/curses_window.3		comp-c-man		.man
 ./usr/share/man/man3/cuserid.3			comp-c-man		.man
 ./usr/share/man/man3/d2i_ASN1_OBJECT.3		comp-c-man		crypto,.man
+./usr/share/man/man3/d2i_CMS_ContentInfo.3		comp-c-man	crypto,.man
 ./usr/share/man/man3/d2i_DHparams.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_DSAPublicKey.3		comp-c-man		crypto,.man
+./usr/share/man/man3/d2i_ECPrivateKey.3			comp-c-man	crypto,.man
 ./usr/share/man/man3/d2i_PKCS8PrivateKey.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_RSAPublicKey.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_SSL_SESSION.3		comp-c-man		crypto,.man
@@ -21212,6 +21353,8 @@
 ./usr/share/man/man3/humanize_number.3		comp-c-man		.man
 ./usr/share/man/man3/hypot.3			comp-c-man		.man
 ./usr/share/man/man3/hypotf.3			comp-c-man		.man
+./usr/share/man/man3/i2d_CMS_bio_stream.3		comp-c-man	crypto,.man
+./usr/share/man/man3/i2d_PKCS7_bio_stream.3		comp-c-man	crypto,.man
 ./usr/share/man/man3/iconv.3			comp-c-man		.man
 ./usr/share/man/man3/iconv_close.3		comp-c-man		.man
 ./usr/share/man/man3/iconv_open.3		comp-c-man		.man
@@ -23618,6 +23761,7 @@
 ./usr/share/man/man3/strcasestr.3		comp-c-man		.man
 ./usr/share/man/man3/strcat.3			comp-c-man		.man
 ./usr/share/man/man3/strchr.3			comp-c-man		.man
+./usr/share/man/man3/strchrnul.3		comp-c-man		.man
 ./usr/share/man/man3/strcmp.3			comp-c-man		.man
 ./usr/share/man/man3/strcoll.3			comp-c-man		.man
 ./usr/share/man/man3/strcpy.3			comp-c-man		.man
@@ -23827,6 +23971,7 @@
 ./usr/share/man/man3/timersub.3			comp-c-man		.man
 ./usr/share/man/man3/times.3			comp-c-man		.man
 ./usr/share/man/man3/timespec.3			comp-c-man		.man
+./usr/share/man/man3/timespec_get.3		comp-c-man		.man
 ./usr/share/man/man3/timespecadd.3		comp-c-man		.man
 ./usr/share/man/man3/timespecclear.3		comp-c-man		.man
 ./usr/share/man/man3/timespeccmp.3		comp-c-man		.man
@@ -24009,6 +24154,7 @@
 ./usr/share/man/man3/wcsncat.3			comp-c-man		.man
 ./usr/share/man/man3/wcsncmp.3			comp-c-man		.man
 ./usr/share/man/man3/wcsncpy.3			comp-c-man		.man
+./usr/share/man/man3/wcsnlen.3			comp-c-man		.man
 ./usr/share/man/man3/wcspbrk.3			comp-c-man		.man
 ./usr/share/man/man3/wcsrchr.3			comp-c-man		.man
 ./usr/share/man/man3/wcsrtombs.3		comp-c-man		.man

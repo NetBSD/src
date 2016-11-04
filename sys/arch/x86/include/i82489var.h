@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.14 2011/06/12 03:35:50 rmind Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.14.34.1 2016/11/04 14:49:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@ static __inline void i82489_writereg(int, uint32_t);
 
 #ifdef _KERNEL
 extern volatile uint32_t local_apic[];
-extern volatile uint32_t lapic_tpr;
 #endif
 
 static __inline uint32_t

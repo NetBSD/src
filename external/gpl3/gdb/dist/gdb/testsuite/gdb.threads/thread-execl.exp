@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2015 Free Software Foundation, Inc.
+# Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,11 +15,6 @@
 
 # Test that GDB doesn't get stuck when stepping over an exec call done
 # by a thread other than the main thread.
-
-# There's no support for exec events in the remote protocol.
-if { [is_remote target] } {
-    return 0
-}
 
 standard_testfile
 

@@ -1,4 +1,4 @@
-#   Copyright 2006-2015 Free Software Foundation, Inc.
+#   Copyright 2006-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -94,7 +94,8 @@ proc do_test { lib1opts lib2opts lib1first } {
     gdb_start
     gdb_reinitialize_dir $srcdir/$subdir
     gdb_load ${binfile}
-    gdb_load_shlibs $lib1 $lib2
+    gdb_load_shlib $lib1
+    gdb_load_shlib $lib2
 
     runto_main
 

@@ -1,3 +1,18 @@
+2016-01-06  Joel Brobecker  <brobecker@adacore.com>
+
+	* hilo-hazard-4.s: Change copyright ownder to FSF.
+
+2015-09-25  Andrew Bennett  <andrew.bennett@imgtec.com>
+	    Ali Lown  <ali.lown@imgtec.com>
+
+	* basic.exp (run_micromips_test, run_sim_tests): New functions
+	Add support for micromips tests.
+	* hilo-hazard-4.s: New file.
+	* testutils.inc (_dowrite): Changed reserved instruction encoding.
+	(writemsg): Moved the la and li instructions before the data they are
+	assigned to, which prevents a bug where MIPS32 relocations are used
+	instead of micromips relocations when building for micromips.
+
 2015-04-13  Hans-Peter Nilsson  <hp@axis.com>
 
 	* basic.exp: Don't unset target ldscript here.
@@ -22,7 +37,7 @@
 	* utils-mdmx.inc: Change license to GPL version 3.
 
 2007-02-20  Thiemo Seufer  <ths@mips.com>
-            Chao-Ying Fu  <fu@mips.com>
+	    Chao-Ying Fu  <fu@mips.com>
 	* basic.exp: Run the dsp2 test.
 	* utils-dsp.inc (dspckacc_astio, dspck_tsimm): New macro.
 	* mips32-dsp2.s: New test.

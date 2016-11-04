@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.85 2014/02/19 21:23:01 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.85.10.1 2016/11/04 14:49:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.85 2014/02/19 21:23:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.85.10.1 2016/11/04 14:49:01 pgoyette Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -129,7 +129,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 	return 0;
 }
 
-#ifdef PTRACE
+#ifdef PTRACE_HOOKS
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
@@ -336,4 +336,4 @@ process_machdep_validxmmregs(struct proc *p)
 	return (i386_use_fxsave);
 }
 #endif /* __HAVE_PTRACE_MACHDEP */
-#endif /* PTRACE */
+#endif /* PTRACE_HOOKS */

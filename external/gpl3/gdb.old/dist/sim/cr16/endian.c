@@ -28,22 +28,19 @@
 #endif
 
 ENDIAN_INLINE uint16
-get_word (x)
-      uint8 *x;
+get_word (uint8 *x)
 {
   return *(uint16 *)x;
 }
 
 ENDIAN_INLINE uint32
-get_longword (x)
-      uint8 *x;
+get_longword (uint8 *x)
 {
   return (((uint32) *(uint16 *)x) << 16) | ((uint32) *(uint16 *)(x+2));
 }
 
 ENDIAN_INLINE int64
-get_longlong (x)
-      uint8 *x;
+get_longlong (uint8 *x)
 {
   uint32 top = get_longword (x);
   uint32 bottom = get_longword (x+4);
@@ -51,9 +48,7 @@ get_longlong (x)
 }
 
 ENDIAN_INLINE void
-write_word (addr, data)
-     uint8 *addr;
-     uint16 data;
+write_word (uint8 *addr, uint16 data)
 {
   addr[1] = (data >> 8) & 0xff;
   addr[0] = data & 0xff;
@@ -61,18 +56,14 @@ write_word (addr, data)
 }
 
 ENDIAN_INLINE void
-write_longword (addr, data)
-     uint8 *addr;
-     uint32 data;
+write_longword (uint8 *addr, uint32 data)
 {
   *(uint16 *)(addr + 2) = (uint16)(data >> 16);
   *(uint16 *)(addr) = (uint16)data;
 }
 
 ENDIAN_INLINE void
-write_longlong (addr, data)
-     uint8 *addr;
-     int64 data;
+write_longlong (uint8 *addr, int64 data)
 {
   write_longword (addr+4, (uint32)(data >> 32));
   write_longword (addr, (uint32)data);

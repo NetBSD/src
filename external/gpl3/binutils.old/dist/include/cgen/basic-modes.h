@@ -1,5 +1,5 @@
 /* Basic CGEN modes.
-   Copyright 2005, 2007, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of the GNU opcodes library.

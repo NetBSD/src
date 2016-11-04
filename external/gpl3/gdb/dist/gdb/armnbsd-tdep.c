@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/arm.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #include "osabi.h"
 #include "objfiles.h"
 
+#include "arch/arm.h"
 #include "arm-tdep.h"
 #include "solib-svr4.h"
 
@@ -81,10 +82,14 @@ arm_netbsd_init_abi_common (struct gdbarch_info info,
 
   /* Single stepping.  */
   set_gdbarch_software_single_step (gdbarch, arm_software_single_step);
+  /* Core support */
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, armbsd_iterate_over_regset_sections);
+
 }
-  
+
 static void
-arm_netbsd_aout_init_abi (struct gdbarch_info info, 
+arm_netbsd_aout_init_abi (struct gdbarch_info info,
 			  struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);

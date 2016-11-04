@@ -1,6 +1,6 @@
 /* Disassemble support for GDB.
 
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,10 +24,24 @@
 #include "disasm.h"
 #include "gdbcore.h"
 #include "dis-asm.h"
+#include "source.h"
 
 /* Disassemble functions.
    FIXME: We should get rid of all the duplicate code in gdb that does
    the same thing: disassemble_command() and the gdbtk variation.  */
+
+/* This structure is used to store line number information for the
+   deprecated /m option.
+   We need a different sort of line table from the normal one cuz we can't
+   depend upon implicit line-end pc's for lines to do the
+   reordering in this function.  */
+
+struct deprecated_dis_line_entry
+{
+  int line;
+  CORE_ADDR start_pc;
+  CORE_ADDR end_pc;
+};
 
 /* This Structure is used to store line number information.
    We need a different sort of line table from the normal one cuz we can't
@@ -36,10 +50,73 @@
 
 struct dis_line_entry
 {
+  struct symtab *symtab;
   int line;
-  CORE_ADDR start_pc;
-  CORE_ADDR end_pc;
 };
+
+/* Hash function for dis_line_entry.  */
+
+static hashval_t
+hash_dis_line_entry (const void *item)
+{
+  const struct dis_line_entry *dle = (const struct dis_line_entry *) item;
+
+  return htab_hash_pointer (dle->symtab) + dle->line;
+}
+
+/* Equal function for dis_line_entry.  */
+
+static int
+eq_dis_line_entry (const void *item_lhs, const void *item_rhs)
+{
+  const struct dis_line_entry *lhs = (const struct dis_line_entry *) item_lhs;
+  const struct dis_line_entry *rhs = (const struct dis_line_entry *) item_rhs;
+
+  return (lhs->symtab == rhs->symtab
+	  && lhs->line == rhs->line);
+}
+
+/* Create the table to manage lines for mixed source/disassembly.  */
+
+static htab_t
+allocate_dis_line_table (void)
+{
+  return htab_create_alloc (41,
+			    hash_dis_line_entry, eq_dis_line_entry,
+			    xfree, xcalloc, xfree);
+}
+
+/* Add a new dis_line_entry containing SYMTAB and LINE to TABLE.  */
+
+static void
+add_dis_line_entry (htab_t table, struct symtab *symtab, int line)
+{
+  void **slot;
+  struct dis_line_entry dle, *dlep;
+
+  dle.symtab = symtab;
+  dle.line = line;
+  slot = htab_find_slot (table, &dle, INSERT);
+  if (*slot == NULL)
+    {
+      dlep = XNEW (struct dis_line_entry);
+      dlep->symtab = symtab;
+      dlep->line = line;
+      *slot = dlep;
+    }
+}
+
+/* Return non-zero if SYMTAB, LINE are in TABLE.  */
+
+static int
+line_has_code_p (htab_t table, struct symtab *symtab, int line)
+{
+  struct dis_line_entry dle;
+
+  dle.symtab = symtab;
+  dle.line = line;
+  return htab_find (table, &dle) != NULL;
+}
 
 /* Like target_read_memory, but slightly different parameters.  */
 static int
@@ -51,29 +128,29 @@ dis_asm_read_memory (bfd_vma memaddr, gdb_byte *myaddr, unsigned int len,
 
 /* Like memory_error with slightly different parameters.  */
 static void
-dis_asm_memory_error (int status, bfd_vma memaddr,
+dis_asm_memory_error (int err, bfd_vma memaddr,
 		      struct disassemble_info *info)
 {
-  memory_error (status, memaddr);
+  memory_error (TARGET_XFER_E_IO, memaddr);
 }
 
 /* Like print_address with slightly different parameters.  */
 static void
 dis_asm_print_address (bfd_vma addr, struct disassemble_info *info)
 {
-  struct gdbarch *gdbarch = info->application_data;
+  struct gdbarch *gdbarch = (struct gdbarch *) info->application_data;
 
-  print_address (gdbarch, addr, info->stream);
+  print_address (gdbarch, addr, (struct ui_file *) info->stream);
 }
 
 static int
 compare_lines (const void *mle1p, const void *mle2p)
 {
-  struct dis_line_entry *mle1, *mle2;
+  struct deprecated_dis_line_entry *mle1, *mle2;
   int val;
 
-  mle1 = (struct dis_line_entry *) mle1p;
-  mle2 = (struct dis_line_entry *) mle2p;
+  mle1 = (struct deprecated_dis_line_entry *) mle1p;
+  mle2 = (struct deprecated_dis_line_entry *) mle2p;
 
   /* End of sequence markers have a line number of 0 but don't want to
      be sorted to the head of the list, instead sort by PC.  */
@@ -92,129 +169,191 @@ compare_lines (const void *mle1p, const void *mle2p)
   return val;
 }
 
-static int
-dump_insns (struct gdbarch *gdbarch, struct ui_out *uiout,
-	    struct disassemble_info * di,
-	    CORE_ADDR low, CORE_ADDR high,
-	    int how_many, int flags, struct ui_file *stb)
-{
-  int num_displayed = 0;
-  CORE_ADDR pc;
+/* See disasm.h.  */
 
+int
+gdb_pretty_print_insn (struct gdbarch *gdbarch, struct ui_out *uiout,
+		       struct disassemble_info * di,
+		       const struct disasm_insn *insn, int flags,
+		       struct ui_file *stb)
+{
   /* parts of the symbolic representation of the address */
   int unmapped;
   int offset;
   int line;
+  int size;
   struct cleanup *ui_out_chain;
+  char *filename = NULL;
+  char *name = NULL;
+  CORE_ADDR pc;
 
-  for (pc = low; pc < high;)
+  ui_out_chain = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
+  pc = insn->addr;
+
+  if (insn->number != 0)
     {
-      char *filename = NULL;
-      char *name = NULL;
-
-      QUIT;
-      if (how_many >= 0)
-	{
-	  if (num_displayed >= how_many)
-	    break;
-	  else
-	    num_displayed++;
-	}
-      ui_out_chain = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
-
-      if ((flags & DISASSEMBLY_OMIT_PC) == 0)
-	ui_out_text (uiout, pc_prefix (pc));
-      ui_out_field_core_addr (uiout, "address", gdbarch, pc);
-
-      if (!build_address_symbolic (gdbarch, pc, 0, &name, &offset, &filename,
-				   &line, &unmapped))
-	{
-	  /* We don't care now about line, filename and
-	     unmapped. But we might in the future.  */
-	  ui_out_text (uiout, " <");
-	  if ((flags & DISASSEMBLY_OMIT_FNAME) == 0)
-	    ui_out_field_string (uiout, "func-name", name);
-	  ui_out_text (uiout, "+");
-	  ui_out_field_int (uiout, "offset", offset);
-	  ui_out_text (uiout, ">:\t");
-	}
-      else
-	ui_out_text (uiout, ":\t");
-
-      if (filename != NULL)
-	xfree (filename);
-      if (name != NULL)
-	xfree (name);
-
-      ui_file_rewind (stb);
-      if (flags & DISASSEMBLY_RAW_INSN)
-        {
-          CORE_ADDR old_pc = pc;
-          bfd_byte data;
-          int status;
-          const char *spacer = "";
-
-          /* Build the opcodes using a temporary stream so we can
-             write them out in a single go for the MI.  */
-          struct ui_file *opcode_stream = mem_fileopen ();
-          struct cleanup *cleanups =
-            make_cleanup_ui_file_delete (opcode_stream);
-
-          pc += gdbarch_print_insn (gdbarch, pc, di);
-          for (;old_pc < pc; old_pc++)
-            {
-              status = (*di->read_memory_func) (old_pc, &data, 1, di);
-              if (status != 0)
-                (*di->memory_error_func) (status, old_pc, di);
-              fprintf_filtered (opcode_stream, "%s%02x",
-                                spacer, (unsigned) data);
-              spacer = " ";
-            }
-          ui_out_field_stream (uiout, "opcodes", opcode_stream);
-          ui_out_text (uiout, "\t");
-
-          do_cleanups (cleanups);
-        }
-      else
-        pc += gdbarch_print_insn (gdbarch, pc, di);
-      ui_out_field_stream (uiout, "inst", stb);
-      ui_file_rewind (stb);
-      do_cleanups (ui_out_chain);
-      ui_out_text (uiout, "\n");
+      ui_out_field_fmt (uiout, "insn-number", "%u", insn->number);
+      ui_out_text (uiout, "\t");
     }
+
+  if ((flags & DISASSEMBLY_SPECULATIVE) != 0)
+    {
+      if (insn->is_speculative)
+	{
+	  ui_out_field_string (uiout, "is-speculative", "?");
+
+	  /* The speculative execution indication overwrites the first
+	     character of the PC prefix.
+	     We assume a PC prefix length of 3 characters.  */
+	  if ((flags & DISASSEMBLY_OMIT_PC) == 0)
+	    ui_out_text (uiout, pc_prefix (pc) + 1);
+	  else
+	    ui_out_text (uiout, "  ");
+	}
+      else if ((flags & DISASSEMBLY_OMIT_PC) == 0)
+	ui_out_text (uiout, pc_prefix (pc));
+      else
+	ui_out_text (uiout, "   ");
+    }
+  else if ((flags & DISASSEMBLY_OMIT_PC) == 0)
+    ui_out_text (uiout, pc_prefix (pc));
+  ui_out_field_core_addr (uiout, "address", gdbarch, pc);
+
+  if (!build_address_symbolic (gdbarch, pc, 0, &name, &offset, &filename,
+			       &line, &unmapped))
+    {
+      /* We don't care now about line, filename and unmapped.  But we might in
+	 the future.  */
+      ui_out_text (uiout, " <");
+      if ((flags & DISASSEMBLY_OMIT_FNAME) == 0)
+	ui_out_field_string (uiout, "func-name", name);
+      ui_out_text (uiout, "+");
+      ui_out_field_int (uiout, "offset", offset);
+      ui_out_text (uiout, ">:\t");
+    }
+  else
+    ui_out_text (uiout, ":\t");
+
+  if (filename != NULL)
+    xfree (filename);
+  if (name != NULL)
+    xfree (name);
+
+  ui_file_rewind (stb);
+  if (flags & DISASSEMBLY_RAW_INSN)
+    {
+      CORE_ADDR end_pc;
+      bfd_byte data;
+      int err;
+      const char *spacer = "";
+
+      /* Build the opcodes using a temporary stream so we can
+	 write them out in a single go for the MI.  */
+      struct ui_file *opcode_stream = mem_fileopen ();
+      struct cleanup *cleanups =
+	make_cleanup_ui_file_delete (opcode_stream);
+
+      size = gdbarch_print_insn (gdbarch, pc, di);
+      end_pc = pc + size;
+
+      for (;pc < end_pc; ++pc)
+	{
+	  err = (*di->read_memory_func) (pc, &data, 1, di);
+	  if (err != 0)
+	    (*di->memory_error_func) (err, pc, di);
+	  fprintf_filtered (opcode_stream, "%s%02x",
+			    spacer, (unsigned) data);
+	  spacer = " ";
+	}
+
+      ui_out_field_stream (uiout, "opcodes", opcode_stream);
+      ui_out_text (uiout, "\t");
+
+      do_cleanups (cleanups);
+    }
+  else
+    size = gdbarch_print_insn (gdbarch, pc, di);
+
+  ui_out_field_stream (uiout, "inst", stb);
+  ui_file_rewind (stb);
+  do_cleanups (ui_out_chain);
+  ui_out_text (uiout, "\n");
+
+  return size;
+}
+
+static int
+dump_insns (struct gdbarch *gdbarch, struct ui_out *uiout,
+	    struct disassemble_info * di,
+	    CORE_ADDR low, CORE_ADDR high,
+	    int how_many, int flags, struct ui_file *stb,
+	    CORE_ADDR *end_pc)
+{
+  struct disasm_insn insn;
+  int num_displayed = 0;
+
+  memset (&insn, 0, sizeof (insn));
+  insn.addr = low;
+
+  while (insn.addr < high && (how_many < 0 || num_displayed < how_many))
+    {
+      int size;
+
+      size = gdb_pretty_print_insn (gdbarch, uiout, di, &insn, flags, stb);
+      if (size <= 0)
+	break;
+
+      ++num_displayed;
+      insn.addr += size;
+
+      /* Allow user to bail out with ^C.  */
+      QUIT;
+    }
+
+  if (end_pc != NULL)
+    *end_pc = insn.addr;
+
   return num_displayed;
 }
 
 /* The idea here is to present a source-O-centric view of a
    function to the user.  This means that things are presented
    in source order, with (possibly) out of order assembly
-   immediately following.  */
+   immediately following.
+
+   N.B. This view is deprecated.  */
 
 static void
-do_mixed_source_and_assembly (struct gdbarch *gdbarch, struct ui_out *uiout,
-			      struct disassemble_info *di, int nlines,
-			      struct linetable_entry *le,
-			      CORE_ADDR low, CORE_ADDR high,
-			      struct symtab *symtab,
-			      int how_many, int flags, struct ui_file *stb)
+do_mixed_source_and_assembly_deprecated
+  (struct gdbarch *gdbarch, struct ui_out *uiout,
+   struct disassemble_info *di, struct symtab *symtab,
+   CORE_ADDR low, CORE_ADDR high,
+   int how_many, int flags, struct ui_file *stb)
 {
   int newlines = 0;
-  struct dis_line_entry *mle;
+  int nlines;
+  struct linetable_entry *le;
+  struct deprecated_dis_line_entry *mle;
   struct symtab_and_line sal;
   int i;
   int out_of_order = 0;
   int next_line = 0;
   int num_displayed = 0;
-  enum print_source_lines_flags psl_flags = 0;
+  print_source_lines_flags psl_flags = 0;
   struct cleanup *ui_out_chain;
   struct cleanup *ui_out_tuple_chain = make_cleanup (null_cleanup, 0);
   struct cleanup *ui_out_list_chain = make_cleanup (null_cleanup, 0);
 
+  gdb_assert (symtab != NULL && SYMTAB_LINETABLE (symtab) != NULL);
+
+  nlines = SYMTAB_LINETABLE (symtab)->nitems;
+  le = SYMTAB_LINETABLE (symtab)->item;
+
   if (flags & DISASSEMBLY_FILENAME)
     psl_flags |= PRINT_SOURCE_LINES_FILENAME;
 
-  mle = (struct dis_line_entry *) alloca (nlines
-					  * sizeof (struct dis_line_entry));
+  mle = (struct deprecated_dis_line_entry *)
+    alloca (nlines * sizeof (struct deprecated_dis_line_entry));
 
   /* Copy linetable entries for this function into our data
      structure, creating end_pc's and setting out_of_order as
@@ -255,11 +394,11 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch, struct ui_out *uiout,
       newlines++;
     }
 
-  /* Now, sort mle by line #s (and, then by addresses within
-     lines).  */
+  /* Now, sort mle by line #s (and, then by addresses within lines).  */
 
   if (out_of_order)
-    qsort (mle, newlines, sizeof (struct dis_line_entry), compare_lines);
+    qsort (mle, newlines, sizeof (struct deprecated_dis_line_entry),
+	   compare_lines);
 
   /* Now, for each line entry, emit the specified lines (unless
      they have been emitted before), followed by the assembly code
@@ -324,7 +463,7 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch, struct ui_out *uiout,
 
       num_displayed += dump_insns (gdbarch, uiout, di,
 				   mle[i].start_pc, mle[i].end_pc,
-				   how_many, flags, stb);
+				   how_many, flags, stb, NULL);
 
       /* When we've reached the end of the mle array, or we've seen the last
          assembly range for this source line, close out the list/tuple.  */
@@ -342,6 +481,255 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch, struct ui_out *uiout,
   do_cleanups (ui_out_chain);
 }
 
+/* The idea here is to present a source-O-centric view of a
+   function to the user.  This means that things are presented
+   in source order, with (possibly) out of order assembly
+   immediately following.  */
+
+static void
+do_mixed_source_and_assembly (struct gdbarch *gdbarch, struct ui_out *uiout,
+			      struct disassemble_info *di,
+			      struct symtab *main_symtab,
+			      CORE_ADDR low, CORE_ADDR high,
+			      int how_many, int flags, struct ui_file *stb)
+{
+  const struct linetable_entry *le, *first_le;
+  int i, nlines;
+  int num_displayed = 0;
+  print_source_lines_flags psl_flags = 0;
+  struct cleanup *cleanups;
+  struct cleanup *ui_out_chain;
+  struct cleanup *ui_out_tuple_chain;
+  struct cleanup *ui_out_list_chain;
+  CORE_ADDR pc;
+  struct symtab *last_symtab;
+  int last_line;
+  htab_t dis_line_table;
+
+  gdb_assert (main_symtab != NULL && SYMTAB_LINETABLE (main_symtab) != NULL);
+
+  /* First pass: collect the list of all source files and lines.
+     We do this so that we can only print lines containing code once.
+     We try to print the source text leading up to the next instruction,
+     but if that text is for code that will be disassembled later, then
+     we'll want to defer printing it until later with its associated code.  */
+
+  dis_line_table = allocate_dis_line_table ();
+  cleanups = make_cleanup_htab_delete (dis_line_table);
+
+  pc = low;
+
+  /* The prologue may be empty, but there may still be a line number entry
+     for the opening brace which is distinct from the first line of code.
+     If the prologue has been eliminated find_pc_line may return the source
+     line after the opening brace.  We still want to print this opening brace.
+     first_le is used to implement this.  */
+
+  nlines = SYMTAB_LINETABLE (main_symtab)->nitems;
+  le = SYMTAB_LINETABLE (main_symtab)->item;
+  first_le = NULL;
+
+  /* Skip all the preceding functions.  */
+  for (i = 0; i < nlines && le[i].pc < low; i++)
+    continue;
+
+  if (i < nlines && le[i].pc < high)
+    first_le = &le[i];
+
+  /* Add lines for every pc value.  */
+  while (pc < high)
+    {
+      struct symtab_and_line sal;
+      int length;
+
+      sal = find_pc_line (pc, 0);
+      length = gdb_insn_length (gdbarch, pc);
+      pc += length;
+
+      if (sal.symtab != NULL)
+	add_dis_line_entry (dis_line_table, sal.symtab, sal.line);
+    }
+
+  /* Second pass: print the disassembly.
+
+     Output format, from an MI perspective:
+       The result is a ui_out list, field name "asm_insns", where elements have
+       name "src_and_asm_line".
+       Each element is a tuple of source line specs (field names line, file,
+       fullname), and field "line_asm_insn" which contains the disassembly.
+       Field "line_asm_insn" is a list of tuples: address, func-name, offset,
+       opcodes, inst.
+
+     CLI output works on top of this because MI ignores ui_out_text output,
+     which is where we put file name and source line contents output.
+
+     Cleanup usage:
+     cleanups:
+       For things created at the beginning of this function and need to be
+       kept until the end of this function.
+     ui_out_chain
+       Handles the outer "asm_insns" list.
+     ui_out_tuple_chain
+       The tuples for each group of consecutive disassemblies.
+     ui_out_list_chain
+       List of consecutive source lines or disassembled insns.  */
+
+  if (flags & DISASSEMBLY_FILENAME)
+    psl_flags |= PRINT_SOURCE_LINES_FILENAME;
+
+  ui_out_chain = make_cleanup_ui_out_list_begin_end (uiout, "asm_insns");
+
+  ui_out_tuple_chain = NULL;
+  ui_out_list_chain = NULL;
+
+  last_symtab = NULL;
+  last_line = 0;
+  pc = low;
+
+  while (pc < high)
+    {
+      struct symtab_and_line sal;
+      CORE_ADDR end_pc;
+      int start_preceding_line_to_display = 0;
+      int end_preceding_line_to_display = 0;
+      int new_source_line = 0;
+
+      sal = find_pc_line (pc, 0);
+
+      if (sal.symtab != last_symtab)
+	{
+	  /* New source file.  */
+	  new_source_line = 1;
+
+	  /* If this is the first line of output, check for any preceding
+	     lines.  */
+	  if (last_line == 0
+	      && first_le != NULL
+	      && first_le->line < sal.line)
+	    {
+	      start_preceding_line_to_display = first_le->line;
+	      end_preceding_line_to_display = sal.line;
+	    }
+	}
+      else
+	{
+	  /* Same source file as last time.  */
+	  if (sal.symtab != NULL)
+	    {
+	      if (sal.line > last_line + 1 && last_line != 0)
+		{
+		  int l;
+
+		  /* Several preceding source lines.  Print the trailing ones
+		     not associated with code that we'll print later.  */
+		  for (l = sal.line - 1; l > last_line; --l)
+		    {
+		      if (line_has_code_p (dis_line_table, sal.symtab, l))
+			break;
+		    }
+		  if (l < sal.line - 1)
+		    {
+		      start_preceding_line_to_display = l + 1;
+		      end_preceding_line_to_display = sal.line;
+		    }
+		}
+	      if (sal.line != last_line)
+		new_source_line = 1;
+	      else
+		{
+		  /* Same source line as last time.  This can happen, depending
+		     on the debug info.  */
+		}
+	    }
+	}
+
+      if (new_source_line)
+	{
+	  /* Skip the newline if this is the first instruction.  */
+	  if (pc > low)
+	    ui_out_text (uiout, "\n");
+	  if (ui_out_tuple_chain != NULL)
+	    {
+	      gdb_assert (ui_out_list_chain != NULL);
+	      do_cleanups (ui_out_list_chain);
+	      do_cleanups (ui_out_tuple_chain);
+	    }
+	  if (sal.symtab != last_symtab
+	      && !(flags & DISASSEMBLY_FILENAME))
+	    {
+	      /* Remember MI ignores ui_out_text.
+		 We don't have to do anything here for MI because MI
+		 output includes the source specs for each line.  */
+	      if (sal.symtab != NULL)
+		{
+		  ui_out_text (uiout,
+			       symtab_to_filename_for_display (sal.symtab));
+		}
+	      else
+		ui_out_text (uiout, "unknown");
+	      ui_out_text (uiout, ":\n");
+	    }
+	  if (start_preceding_line_to_display > 0)
+	    {
+	      /* Several source lines w/o asm instructions associated.
+		 We need to preserve the structure of the output, so output
+		 a bunch of line tuples with no asm entries.  */
+	      int l;
+	      struct cleanup *ui_out_list_chain_line;
+	      struct cleanup *ui_out_tuple_chain_line;
+
+	      gdb_assert (sal.symtab != NULL);
+	      for (l = start_preceding_line_to_display;
+		   l < end_preceding_line_to_display;
+		   ++l)
+		{
+		  ui_out_tuple_chain_line
+		    = make_cleanup_ui_out_tuple_begin_end (uiout,
+							   "src_and_asm_line");
+		  print_source_lines (sal.symtab, l, l + 1, psl_flags);
+		  ui_out_list_chain_line
+		    = make_cleanup_ui_out_list_begin_end (uiout,
+							  "line_asm_insn");
+		  do_cleanups (ui_out_list_chain_line);
+		  do_cleanups (ui_out_tuple_chain_line);
+		}
+	    }
+	  ui_out_tuple_chain
+	    = make_cleanup_ui_out_tuple_begin_end (uiout, "src_and_asm_line");
+	  if (sal.symtab != NULL)
+	    print_source_lines (sal.symtab, sal.line, sal.line + 1, psl_flags);
+	  else
+	    ui_out_text (uiout, _("--- no source info for this pc ---\n"));
+	  ui_out_list_chain
+	    = make_cleanup_ui_out_list_begin_end (uiout, "line_asm_insn");
+	}
+      else
+	{
+	  /* Here we're appending instructions to an existing line.
+	     By construction the very first insn will have a symtab
+	     and follow the new_source_line path above.  */
+	  gdb_assert (ui_out_tuple_chain != NULL);
+	  gdb_assert (ui_out_list_chain != NULL);
+	}
+
+      if (sal.end != 0)
+	end_pc = min (sal.end, high);
+      else
+	end_pc = pc + 1;
+      num_displayed += dump_insns (gdbarch, uiout, di, pc, end_pc,
+				   how_many, flags, stb, &end_pc);
+      pc = end_pc;
+
+      if (how_many >= 0 && num_displayed >= how_many)
+	break;
+
+      last_symtab = sal.symtab;
+      last_line = sal.line;
+    }
+
+  do_cleanups (ui_out_chain);
+  do_cleanups (cleanups);
+}
 
 static void
 do_assembly_only (struct gdbarch *gdbarch, struct ui_out *uiout,
@@ -349,13 +737,11 @@ do_assembly_only (struct gdbarch *gdbarch, struct ui_out *uiout,
 		  CORE_ADDR low, CORE_ADDR high,
 		  int how_many, int flags, struct ui_file *stb)
 {
-  int num_displayed = 0;
   struct cleanup *ui_out_chain;
 
   ui_out_chain = make_cleanup_ui_out_list_begin_end (uiout, "asm_insns");
 
-  num_displayed = dump_insns (gdbarch, uiout, di, low, high, how_many,
-                              flags, stb);
+  dump_insns (gdbarch, uiout, di, low, high, how_many, flags, stb, NULL);
 
   do_cleanups (ui_out_chain);
 }
@@ -369,7 +755,7 @@ fprintf_disasm (void *stream, const char *format, ...)
   va_list args;
 
   va_start (args, format);
-  vfprintf_filtered (stream, format, args);
+  vfprintf_filtered ((struct ui_file *) stream, format, args);
   va_end (args);
   /* Something non -ve.  */
   return 0;
@@ -411,26 +797,25 @@ gdb_disassembly (struct gdbarch *gdbarch, struct ui_out *uiout,
   struct cleanup *cleanups = make_cleanup_ui_file_delete (stb);
   struct disassemble_info di = gdb_disassemble_info (gdbarch, stb);
   struct symtab *symtab;
-  struct linetable_entry *le = NULL;
   int nlines = -1;
 
   /* Assume symtab is valid for whole PC range.  */
   symtab = find_pc_line_symtab (low);
 
   if (symtab != NULL && SYMTAB_LINETABLE (symtab) != NULL)
-    {
-      /* Convert the linetable to a bunch of my_line_entry's.  */
-      le = SYMTAB_LINETABLE (symtab)->item;
-      nlines = SYMTAB_LINETABLE (symtab)->nitems;
-    }
+    nlines = SYMTAB_LINETABLE (symtab)->nitems;
 
-  if (!(flags & DISASSEMBLY_SOURCE) || nlines <= 0
-      || symtab == NULL || SYMTAB_LINETABLE (symtab) == NULL)
+  if (!(flags & (DISASSEMBLY_SOURCE_DEPRECATED | DISASSEMBLY_SOURCE))
+      || nlines <= 0)
     do_assembly_only (gdbarch, uiout, &di, low, high, how_many, flags, stb);
 
   else if (flags & DISASSEMBLY_SOURCE)
-    do_mixed_source_and_assembly (gdbarch, uiout, &di, nlines, le, low,
-				  high, symtab, how_many, flags, stb);
+    do_mixed_source_and_assembly (gdbarch, uiout, &di, symtab, low, high,
+				  how_many, flags, stb);
+
+  else if (flags & DISASSEMBLY_SOURCE_DEPRECATED)
+    do_mixed_source_and_assembly_deprecated (gdbarch, uiout, &di, symtab,
+					     low, high, how_many, flags, stb);
 
   do_cleanups (cleanups);
   gdb_flush (gdb_stdout);
@@ -462,7 +847,7 @@ gdb_print_insn (struct gdbarch *gdbarch, CORE_ADDR memaddr,
 static void
 do_ui_file_delete (void *arg)
 {
-  ui_file_delete (arg);
+  ui_file_delete ((struct ui_file *) arg);
 }
 
 /* Return the length in bytes of the instruction at address MEMADDR in

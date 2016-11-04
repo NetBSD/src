@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.482.2.1 2016/07/17 21:39:17 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.482.2.2 2016/11/04 14:49:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.482.2.1 2016/07/17 21:39:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.482.2.2 2016/11/04 14:49:17 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -190,9 +190,6 @@ extern void *_binary_splash_image_end;
 #endif
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
-#ifdef PTRACE
-#include <sys/ptrace.h>
-#endif /* PTRACE */
 #include <sys/cprng.h>
 
 #include <sys/syscall.h>
@@ -566,11 +563,6 @@ main(void)
 	ktrinit();
 #endif
 
-#ifdef PTRACE
-	/* Initialize ptrace. */
-	ptrace_init();
-#endif /* PTRACE */
-
 	machdep_init();
 
 	procinit_sysctl();
@@ -934,10 +926,10 @@ start_init(void *arg)
 	 */
 	addr = (vaddr_t)STACK_ALLOC(USRSTACK, PAGE_SIZE);
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE,
-                    NULL, UVM_UNKNOWN_OFFSET, 0,
-                    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
-		    UVM_ADV_NORMAL,
-                    UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)) != 0)
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_COPY,
+	    UVM_ADV_NORMAL,
+	    UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)) != 0)
 		panic("init: couldn't allocate argument space");
 	p->p_vmspace->vm_maxsaddr = (void *)STACK_MAX(addr, PAGE_SIZE);
 

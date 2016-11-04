@@ -1,5 +1,5 @@
 /* SPU target-dependent code for GDB, the GNU debugger.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
    Based on a port by Sid Manning <sid@us.ibm.com>.
@@ -45,7 +45,7 @@
 #include "dwarf2-frame.h"
 #include "ax.h"
 #include "spu-tdep.h"
-
+#include "location.h"
 
 /* The list of available "set spu " and "show spu " commands.  */
 static struct cmd_list_element *setspucmdlist = NULL;
@@ -363,7 +363,7 @@ spu_value_from_register (struct gdbarch *gdbarch, struct type *type,
 {
   struct value *value = default_value_from_register (gdbarch, type,
 						     regnum, frame_id);
-  int len = TYPE_LENGTH (type);
+  LONGEST len = TYPE_LENGTH (type);
 
   if (regnum < SPU_NUM_GPRS && len < 16)
     {
@@ -1000,7 +1000,7 @@ spu_frame_unwind_cache (struct frame_info *this_frame,
   gdb_byte buf[16];
 
   if (*this_prologue_cache)
-    return *this_prologue_cache;
+    return (struct spu_unwind_cache *) *this_prologue_cache;
 
   info = FRAME_OBSTACK_ZALLOC (struct spu_unwind_cache);
   *this_prologue_cache = info;
@@ -1208,7 +1208,7 @@ struct spu2ppu_cache
 static struct gdbarch *
 spu2ppu_prev_arch (struct frame_info *this_frame, void **this_cache)
 {
-  struct spu2ppu_cache *cache = *this_cache;
+  struct spu2ppu_cache *cache = (struct spu2ppu_cache *) *this_cache;
   return get_regcache_arch (cache->regcache);
 }
 
@@ -1216,7 +1216,7 @@ static void
 spu2ppu_this_id (struct frame_info *this_frame,
 		 void **this_cache, struct frame_id *this_id)
 {
-  struct spu2ppu_cache *cache = *this_cache;
+  struct spu2ppu_cache *cache = (struct spu2ppu_cache *) *this_cache;
   *this_id = cache->frame_id;
 }
 
@@ -1224,11 +1224,11 @@ static struct value *
 spu2ppu_prev_register (struct frame_info *this_frame,
 		       void **this_cache, int regnum)
 {
-  struct spu2ppu_cache *cache = *this_cache;
+  struct spu2ppu_cache *cache = (struct spu2ppu_cache *) *this_cache;
   struct gdbarch *gdbarch = get_regcache_arch (cache->regcache);
   gdb_byte *buf;
 
-  buf = alloca (register_size (gdbarch, regnum));
+  buf = (gdb_byte *) alloca (register_size (gdbarch, regnum));
   regcache_cooked_read (cache->regcache, regnum, buf);
   return frame_unwind_got_bytes (this_frame, regnum, buf);
 }
@@ -1286,7 +1286,7 @@ spu2ppu_sniffer (const struct frame_unwind *self,
 static void
 spu2ppu_dealloc_cache (struct frame_info *self, void *this_cache)
 {
-  struct spu2ppu_cache *cache = this_cache;
+  struct spu2ppu_cache *cache = (struct spu2ppu_cache *) this_cache;
   regcache_xfree (cache->regcache);
 }
 
@@ -1632,7 +1632,9 @@ spu_software_single_step (struct frame_info *frame)
   pc = get_frame_pc (frame);
 
   if (target_read_memory (pc, buf, 4))
-    return 1;
+    throw_error (MEMORY_ERROR, _("Could not read instruction at %s."),
+		 paddress (gdbarch, pc));
+
   insn = extract_unsigned_integer (buf, 4, byte_order);
 
   /* Get local store limit.  */
@@ -1725,8 +1727,10 @@ struct spu_dis_asm_data
 static void
 spu_dis_asm_print_address (bfd_vma addr, struct disassemble_info *info)
 {
-  struct spu_dis_asm_data *data = info->application_data;
-  print_address (data->gdbarch, SPUADDR (data->id, addr), info->stream);
+  struct spu_dis_asm_data *data
+    = (struct spu_dis_asm_data *) info->application_data;
+  print_address (data->gdbarch, SPUADDR (data->id, addr),
+		 (struct ui_file *) info->stream);
 }
 
 static int
@@ -1737,7 +1741,7 @@ gdb_print_insn_spu (bfd_vma memaddr, struct disassemble_info *info)
      call print_address.  */
   struct disassemble_info spu_info = *info;
   struct spu_dis_asm_data data;
-  data.gdbarch = info->application_data;
+  data.gdbarch = (struct gdbarch *) info->application_data;
   data.id = SPUADDR_SPU (memaddr);
 
   spu_info.application_data = &data;
@@ -1808,7 +1812,7 @@ spu_get_overlay_table (struct objfile *objfile)
   gdb_byte *ovly_table;
   int i;
 
-  tbl = objfile_data (objfile, spu_overlay_data);
+  tbl = (struct spu_overlay_table *) objfile_data (objfile, spu_overlay_data);
   if (tbl)
     return tbl;
 
@@ -1827,7 +1831,7 @@ spu_get_overlay_table (struct objfile *objfile)
   ovly_buf_table_base = BMSYMBOL_VALUE_ADDRESS (ovly_buf_table_msym);
   ovly_buf_table_size = MSYMBOL_SIZE (ovly_buf_table_msym.minsym);
 
-  ovly_table = xmalloc (ovly_table_size);
+  ovly_table = (gdb_byte *) xmalloc (ovly_table_size);
   read_memory (ovly_table_base, ovly_table, ovly_table_size);
 
   tbl = OBSTACK_CALLOC (&objfile->objfile_obstack,
@@ -1954,7 +1958,8 @@ spu_catch_start (struct objfile *objfile)
   struct bound_minimal_symbol minsym;
   struct compunit_symtab *cust;
   CORE_ADDR pc;
-  char buf[32];
+  struct event_location *location;
+  struct cleanup *back_to;
 
   /* Do this only if requested by "set spu stop-on-load on".  */
   if (!spu_stop_on_load_p)
@@ -1998,8 +2003,9 @@ spu_catch_start (struct objfile *objfile)
 
   /* Use a numerical address for the set_breakpoint command to avoid having
      the breakpoint re-set incorrectly.  */
-  xsnprintf (buf, sizeof buf, "*%s", core_addr_to_string (pc));
-  create_breakpoint (get_objfile_arch (objfile), buf /* arg */,
+  location = new_address_location (pc, NULL, 0);
+  back_to = make_cleanup_delete_event_location (location);
+  create_breakpoint (get_objfile_arch (objfile), location,
 		     NULL /* cond_string */, -1 /* thread */,
 		     NULL /* extra_string */,
 		     0 /* parse_condition_and_thread */, 1 /* tempflag */,
@@ -2008,6 +2014,7 @@ spu_catch_start (struct objfile *objfile)
 		     AUTO_BOOLEAN_FALSE /* pending_break_support */,
 		     &bkpt_breakpoint_ops /* ops */, 0 /* from_tty */,
 		     1 /* enabled */, 0 /* internal  */, 0);
+  do_cleanups (back_to);
 }
 
 
@@ -2353,7 +2360,7 @@ info_spu_dma_cmdlist (gdb_byte *buf, int nr, enum bfd_endian byte_order)
              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     };
 
-  int *seq = alloca (nr * sizeof (int));
+  int *seq = XALLOCAVEC (int, nr);
   int done = 0;
   struct cleanup *chain;
   int i, j;
@@ -2418,7 +2425,7 @@ info_spu_dma_cmdlist (gdb_byte *buf, int nr, enum bfd_endian byte_order)
       int mfc_cmd_opcode, mfc_cmd_tag, rclass_id, tclass_id;
       int list_lsa, list_size, mfc_lsa, mfc_size;
       ULONGEST mfc_ea;
-      int list_valid_p, noop_valid_p, qw_valid_p, ea_valid_p, cmd_error_p;
+      int list_valid_p, qw_valid_p, ea_valid_p, cmd_error_p;
 
       /* Decode contents of MFC Command Queue Context Save/Restore Registers.
 	 See "Cell Broadband Engine Registers V1.3", section 3.3.2.1.  */
@@ -2443,7 +2450,6 @@ info_spu_dma_cmdlist (gdb_byte *buf, int nr, enum bfd_endian byte_order)
 
       mfc_lsa = spu_mfc_get_bitfield (mfc_cq_dw2, 0, 13);
       mfc_size = spu_mfc_get_bitfield (mfc_cq_dw2, 14, 24);
-      noop_valid_p = spu_mfc_get_bitfield (mfc_cq_dw2, 37, 37);
       qw_valid_p = spu_mfc_get_bitfield (mfc_cq_dw2, 38, 38);
       ea_valid_p = spu_mfc_get_bitfield (mfc_cq_dw2, 39, 39);
       cmd_error_p = spu_mfc_get_bitfield (mfc_cq_dw2, 40, 40);

@@ -1,0 +1,23 @@
+#! /bin/sh
+# $NetBSD: test-simple,v 1.2.2.2 2016/11/04 14:48:55 pgoyette Exp $
+
+test="$1"
+bozohttpd="$2"
+datadir="$3"
+verbose="$4"
+
+if [ "yes" = "$verbose" ]; then
+	echo "Running test $test"
+else
+	exec 2>tmp.$test.err
+fi
+
+bozotestport=11111
+
+${bozohttpd} ${datadir} < $test.in > tmp.$test.out
+if ./html_cmp $test.out tmp.$test.out; then
+	exit 0
+else
+	[ "yes" = "$verbose" ] || echo "Failed test $test: `cat tmp.$test.err; echo; cat $test.out`"
+	exit 1
+fi

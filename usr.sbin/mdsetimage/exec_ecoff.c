@@ -1,4 +1,4 @@
-/* $NetBSD: exec_ecoff.c,v 1.6 2009/07/30 15:16:37 tsutsui Exp $ */
+/* $NetBSD: exec_ecoff.c,v 1.6.30.1 2016/11/04 14:49:27 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_ecoff.c,v 1.6 2009/07/30 15:16:37 tsutsui Exp $");
+__RCSID("$NetBSD: exec_ecoff.c,v 1.6.30.1 2016/11/04 14:49:27 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,9 +46,7 @@ __RCSID("$NetBSD: exec_ecoff.c,v 1.6 2009/07/30 15:16:37 tsutsui Exp $");
 #define	BAD			do { rv = -1; goto out; } while (0)
 
 int
-check_ecoff(mappedfile, mappedsize)
-	const char *mappedfile;
-	size_t mappedsize;
+check_ecoff(const char *mappedfile, size_t mappedsize)
 {
 	const struct ecoff_exechdr *exechdrp;
 	int rv;
@@ -67,10 +65,8 @@ out:
 }
 
 int
-findoff_ecoff(mappedfile, mappedsize, vmaddr, fileoffp)
-	const char *mappedfile;
-	size_t mappedsize, *fileoffp;
-	u_long vmaddr;
+findoff_ecoff(const char *mappedfile, size_t mappedsize, u_long vmaddr,
+    size_t *fileoffp, u_long text_address)
 {
 	const struct ecoff_exechdr *exechdrp;
 	int rv;

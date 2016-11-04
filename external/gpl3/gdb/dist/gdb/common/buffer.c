@@ -1,6 +1,6 @@
 /* A simple growing buffer for GDB.
   
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,7 +37,7 @@ buffer_grow (struct buffer *buffer, const char *data, size_t size)
 
   while (buffer->used_size + size > new_buffer_size)
     new_buffer_size *= 2;
-  new_buffer = xrealloc (buffer->buffer, new_buffer_size);
+  new_buffer = (char *) xrealloc (buffer->buffer, new_buffer_size);
   memcpy (new_buffer + buffer->used_size, data, size);
   buffer->buffer = new_buffer;
   buffer->buffer_size = new_buffer_size;

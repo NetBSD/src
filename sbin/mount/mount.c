@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.100 2015/01/04 22:05:37 pooka Exp $	*/
+/*	$NetBSD: mount.c,v 1.100.2.1 2016/11/04 14:48:55 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.100 2015/01/04 22:05:37 pooka Exp $");
+__RCSID("$NetBSD: mount.c,v 1.100.2.1 2016/11/04 14:48:55 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -503,7 +503,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		} while (*++edir != NULL);
 
 		if (errno == ENOENT)
-			warnx("%s not found for %s", execbase, name);
+			warn("exec %s for %s: %s", execbase, name, execbase);
 		_exit(1);
 		/* NOTREACHED */
 

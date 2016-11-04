@@ -1,6 +1,6 @@
 // output.h -- manage the output file for gold   -*- C++ -*-
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -23,6 +23,7 @@
 #ifndef GOLD_OUTPUT_H
 #define GOLD_OUTPUT_H
 
+#include <algorithm>
 #include <list>
 #include <vector>
 
@@ -37,7 +38,6 @@ namespace gold
 class General_options;
 class Object;
 class Symbol;
-class Output_file;
 class Output_merge_base;
 class Output_section;
 class Relocatable_relocs;
@@ -48,6 +48,131 @@ template<int size, bool big_endian>
 class Sized_relobj;
 template<int size, bool big_endian>
 class Sized_relobj_file;
+
+// This class represents the output file.
+
+class Output_file
+{
+ public:
+  Output_file(const char* name);
+
+  // Indicate that this is a temporary file which should not be
+  // output.
+  void
+  set_is_temporary()
+  { this->is_temporary_ = true; }
+
+  // Try to open an existing file. Returns false if the file doesn't
+  // exist, has a size of 0 or can't be mmaped.  This method is
+  // thread-unsafe.  If BASE_NAME is not NULL, use the contents of
+  // that file as the base for incremental linking.
+  bool
+  open_base_file(const char* base_name, bool writable);
+
+  // Open the output file.  FILE_SIZE is the final size of the file.
+  // If the file already exists, it is deleted/truncated.  This method
+  // is thread-unsafe.
+  void
+  open(off_t file_size);
+
+  // Resize the output file.  This method is thread-unsafe.
+  void
+  resize(off_t file_size);
+
+  // Close the output file (flushing all buffered data) and make sure
+  // there are no errors.  This method is thread-unsafe.
+  void
+  close();
+
+  // Return the size of this file.
+  off_t
+  filesize()
+  { return this->file_size_; }
+
+  // Return the name of this file.
+  const char*
+  filename()
+  { return this->name_; }
+
+  // We currently always use mmap which makes the view handling quite
+  // simple.  In the future we may support other approaches.
+
+  // Write data to the output file.
+  void
+  write(off_t offset, const void* data, size_t len)
+  { memcpy(this->base_ + offset, data, len); }
+
+  // Get a buffer to use to write to the file, given the offset into
+  // the file and the size.
+  unsigned char*
+  get_output_view(off_t start, size_t size)
+  {
+    gold_assert(start >= 0
+		&& start + static_cast<off_t>(size) <= this->file_size_);
+    return this->base_ + start;
+  }
+
+  // VIEW must have been returned by get_output_view.  Write the
+  // buffer to the file, passing in the offset and the size.
+  void
+  write_output_view(off_t, size_t, unsigned char*)
+  { }
+
+  // Get a read/write buffer.  This is used when we want to write part
+  // of the file, read it in, and write it again.
+  unsigned char*
+  get_input_output_view(off_t start, size_t size)
+  { return this->get_output_view(start, size); }
+
+  // Write a read/write buffer back to the file.
+  void
+  write_input_output_view(off_t, size_t, unsigned char*)
+  { }
+
+  // Get a read buffer.  This is used when we just want to read part
+  // of the file back it in.
+  const unsigned char*
+  get_input_view(off_t start, size_t size)
+  { return this->get_output_view(start, size); }
+
+  // Release a read bfufer.
+  void
+  free_input_view(off_t, size_t, const unsigned char*)
+  { }
+
+ private:
+  // Map the file into memory or, if that fails, allocate anonymous
+  // memory.
+  void
+  map();
+
+  // Allocate anonymous memory for the file.
+  bool
+  map_anonymous();
+
+  // Map the file into memory.
+  bool
+  map_no_anonymous(bool);
+
+  // Unmap the file from memory (and flush to disk buffers).
+  void
+  unmap();
+
+  // File name.
+  const char* name_;
+  // File descriptor.
+  int o_;
+  // File size.
+  off_t file_size_;
+  // Base of file mapped into memory.
+  unsigned char* base_;
+  // True iff base_ points to a memory buffer rather than an output file.
+  bool map_is_anonymous_;
+  // True if base_ was allocated using new rather than mmap.
+  bool map_is_allocated_;
+  // True if this is a temporary file which should not be output.
+  bool is_temporary_;
+};
 
 // An abtract class for data which has to go into the output file.
 
@@ -1150,11 +1275,6 @@ class Output_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
 	      r2) const
   { return this->compare(r2) < 0; }
 
- private:
-  // Record that we need a dynamic symbol index.
-  void
-  set_needs_dynsym_index();
-
   // Return the symbol index.
   unsigned int
   get_symbol_index() const;
@@ -1162,6 +1282,11 @@ class Output_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>
   // Return the output address.
   Address
   get_address() const;
+
+ private:
+  // Record that we need a dynamic symbol index.
+  void
+  set_needs_dynsym_index();
 
   // Codes for local_sym_index_.
   enum
@@ -1486,6 +1611,40 @@ class Output_data_reloc_base : public Output_data_reloc_generic
   // Write out the data.
   void
   do_write(Output_file*);
+
+  // Generic implementation of do_write, allowing a customized
+  // class for writing the output relocation (e.g., for MIPS-64).
+  template<class Output_reloc_writer>
+  void
+  do_write_generic(Output_file* of)
+  {
+    const off_t off = this->offset();
+    const off_t oview_size = this->data_size();
+    unsigned char* const oview = of->get_output_view(off, oview_size);
+
+    if (this->sort_relocs())
+      {
+	gold_assert(dynamic);
+	std::sort(this->relocs_.begin(), this->relocs_.end(),
+		  Sort_relocs_comparison());
+      }
+
+    unsigned char* pov = oview;
+    for (typename Relocs::const_iterator p = this->relocs_.begin();
+	 p != this->relocs_.end();
+	 ++p)
+      {
+	Output_reloc_writer::write(p, pov);
+	pov += reloc_size;
+      }
+
+    gold_assert(pov - oview == oview_size);
+
+    of->write_output_view(off, oview_size, oview);
+
+    // We no longer need the relocation entries.
+    this->relocs_.clear();
+  }
 
   // Set the entry size and the link.
   void
@@ -2335,6 +2494,13 @@ class Output_data_got : public Output_data_got_base
   bool
   add_local(Relobj* object, unsigned int sym_index, unsigned int got_type);
 
+  // Add an entry for a local symbol plus ADDEND to the GOT.  This returns
+  // true if this is a new GOT entry, false if the symbol already has a GOT
+  // entry.
+  bool
+  add_local(Relobj* object, unsigned int sym_index, unsigned int got_type,
+            uint64_t addend);
+
   // Like add_local, but use the PLT offset of the local symbol if it
   // has one.
   bool
@@ -2353,6 +2519,13 @@ class Output_data_got : public Output_data_got_base
 		     unsigned int got_type, Output_data_reloc_generic* rel_dyn,
 		     unsigned int r_type);
 
+  // Add an entry for a local symbol plus ADDEND to the GOT, and add a dynamic
+  // relocation of type R_TYPE for the GOT entry.
+  void
+  add_local_with_rel(Relobj* object, unsigned int sym_index,
+		     unsigned int got_type, Output_data_reloc_generic* rel_dyn,
+		     unsigned int r_type, uint64_t addend);
+
   // Add a pair of entries for a local symbol to the GOT, and add
   // a dynamic relocation of type R_TYPE using the section symbol of
   // the output section to which input section SHNDX maps, on the first.
@@ -2363,6 +2536,17 @@ class Output_data_got : public Output_data_got_base
 			  unsigned int shndx, unsigned int got_type,
 			  Output_data_reloc_generic* rel_dyn,
 			  unsigned int r_type);
+
+  // Add a pair of entries for a local symbol plus ADDEND to the GOT, and add
+  // a dynamic relocation of type R_TYPE using the section symbol of
+  // the output section to which input section SHNDX maps, on the first.
+  // The first got entry will have a value of zero, the second the
+  // value of the local symbol.
+  void
+  add_local_pair_with_rel(Relobj* object, unsigned int sym_index,
+			  unsigned int shndx, unsigned int got_type,
+			  Output_data_reloc_generic* rel_dyn,
+			  unsigned int r_type, uint64_t addend);
 
   // Add a pair of entries for a local symbol to the GOT, and add
   // a dynamic relocation of type R_TYPE using STN_UNDEF on the first.
@@ -2434,25 +2618,39 @@ class Output_data_got : public Output_data_got_base
    public:
     // Create a zero entry.
     Got_entry()
-      : local_sym_index_(RESERVED_CODE), use_plt_or_tls_offset_(false)
+      : local_sym_index_(RESERVED_CODE), use_plt_or_tls_offset_(false),
+	addend_(0)
     { this->u_.constant = 0; }
 
     // Create a global symbol entry.
     Got_entry(Symbol* gsym, bool use_plt_or_tls_offset)
       : local_sym_index_(GSYM_CODE),
-	use_plt_or_tls_offset_(use_plt_or_tls_offset)
+	use_plt_or_tls_offset_(use_plt_or_tls_offset), addend_(0)
     { this->u_.gsym = gsym; }
 
     // Create a local symbol entry.
     Got_entry(Relobj* object, unsigned int local_sym_index,
 	      bool use_plt_or_tls_offset)
       : local_sym_index_(local_sym_index),
-	use_plt_or_tls_offset_(use_plt_or_tls_offset)
+	use_plt_or_tls_offset_(use_plt_or_tls_offset), addend_(0)
     {
       gold_assert(local_sym_index != GSYM_CODE
 		  && local_sym_index != CONSTANT_CODE
 		  && local_sym_index != RESERVED_CODE
 		  && local_sym_index == this->local_sym_index_);
+      this->u_.object = object;
+    }
+
+    // Create a local symbol entry plus addend.
+    Got_entry(Relobj* object, unsigned int local_sym_index,
+        bool use_plt_or_tls_offset, uint64_t addend)
+      : local_sym_index_(local_sym_index),
+	use_plt_or_tls_offset_(use_plt_or_tls_offset), addend_(addend)
+    {
+      gold_assert(local_sym_index != GSYM_CODE
+      && local_sym_index != CONSTANT_CODE
+      && local_sym_index != RESERVED_CODE
+      && local_sym_index == this->local_sym_index_);
       this->u_.object = object;
     }
 
@@ -2489,6 +2687,8 @@ class Output_data_got : public Output_data_got_base
     // Whether to use the PLT offset of the symbol if it has one.
     // For TLS symbols, whether to offset the symbol value.
     bool use_plt_or_tls_offset_ : 1;
+    // The addend.
+    uint64_t addend_;
   };
 
   typedef std::vector<Got_entry> Got_entries;
@@ -2580,6 +2780,10 @@ class Output_data_dynamic : public Output_section_data
   void
   add_custom(elfcpp::DT tag)
   { this->add_entry(Dynamic_entry(tag)); }
+
+  // Get a dynamic entry offset.
+  unsigned int
+  get_entry_offset(elfcpp::DT tag) const;
 
  protected:
   // Adjust the output section to set the entry size.
@@ -4713,131 +4917,6 @@ class Output_segment
   bool is_large_data_segment_ : 1;
   // Whether this was marked as a unique segment via a linker plugin.
   bool is_unique_segment_ : 1;
-};
-
-// This class represents the output file.
-
-class Output_file
-{
- public:
-  Output_file(const char* name);
-
-  // Indicate that this is a temporary file which should not be
-  // output.
-  void
-  set_is_temporary()
-  { this->is_temporary_ = true; }
-
-  // Try to open an existing file. Returns false if the file doesn't
-  // exist, has a size of 0 or can't be mmaped.  This method is
-  // thread-unsafe.  If BASE_NAME is not NULL, use the contents of
-  // that file as the base for incremental linking.
-  bool
-  open_base_file(const char* base_name, bool writable);
-
-  // Open the output file.  FILE_SIZE is the final size of the file.
-  // If the file already exists, it is deleted/truncated.  This method
-  // is thread-unsafe.
-  void
-  open(off_t file_size);
-
-  // Resize the output file.  This method is thread-unsafe.
-  void
-  resize(off_t file_size);
-
-  // Close the output file (flushing all buffered data) and make sure
-  // there are no errors.  This method is thread-unsafe.
-  void
-  close();
-
-  // Return the size of this file.
-  off_t
-  filesize()
-  { return this->file_size_; }
-
-  // Return the name of this file.
-  const char*
-  filename()
-  { return this->name_; }
-
-  // We currently always use mmap which makes the view handling quite
-  // simple.  In the future we may support other approaches.
-
-  // Write data to the output file.
-  void
-  write(off_t offset, const void* data, size_t len)
-  { memcpy(this->base_ + offset, data, len); }
-
-  // Get a buffer to use to write to the file, given the offset into
-  // the file and the size.
-  unsigned char*
-  get_output_view(off_t start, size_t size)
-  {
-    gold_assert(start >= 0
-		&& start + static_cast<off_t>(size) <= this->file_size_);
-    return this->base_ + start;
-  }
-
-  // VIEW must have been returned by get_output_view.  Write the
-  // buffer to the file, passing in the offset and the size.
-  void
-  write_output_view(off_t, size_t, unsigned char*)
-  { }
-
-  // Get a read/write buffer.  This is used when we want to write part
-  // of the file, read it in, and write it again.
-  unsigned char*
-  get_input_output_view(off_t start, size_t size)
-  { return this->get_output_view(start, size); }
-
-  // Write a read/write buffer back to the file.
-  void
-  write_input_output_view(off_t, size_t, unsigned char*)
-  { }
-
-  // Get a read buffer.  This is used when we just want to read part
-  // of the file back it in.
-  const unsigned char*
-  get_input_view(off_t start, size_t size)
-  { return this->get_output_view(start, size); }
-
-  // Release a read bfufer.
-  void
-  free_input_view(off_t, size_t, const unsigned char*)
-  { }
-
- private:
-  // Map the file into memory or, if that fails, allocate anonymous
-  // memory.
-  void
-  map();
-
-  // Allocate anonymous memory for the file.
-  bool
-  map_anonymous();
-
-  // Map the file into memory.
-  bool
-  map_no_anonymous(bool);
-
-  // Unmap the file from memory (and flush to disk buffers).
-  void
-  unmap();
-
-  // File name.
-  const char* name_;
-  // File descriptor.
-  int o_;
-  // File size.
-  off_t file_size_;
-  // Base of file mapped into memory.
-  unsigned char* base_;
-  // True iff base_ points to a memory buffer rather than an output file.
-  bool map_is_anonymous_;
-  // True if base_ was allocated using new rather than mmap.
-  bool map_is_allocated_;
-  // True if this is a temporary file which should not be output.
-  bool is_temporary_;
 };
 
 } // End namespace gold.

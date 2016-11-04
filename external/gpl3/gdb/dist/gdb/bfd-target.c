@@ -1,6 +1,6 @@
 /* Very simple "bfd" target, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,7 +48,7 @@ target_bfd_xfer_partial (struct target_ops *ops,
     {
     case TARGET_OBJECT_MEMORY:
       {
-	struct target_bfd_data *data = ops->to_data;
+	struct target_bfd_data *data = (struct target_bfd_data *) ops->to_data;
 	return section_table_xfer_memory_partial (readbuf, writebuf,
 						  offset, len, xfered_len,
 						  data->table.sections,
@@ -63,14 +63,14 @@ target_bfd_xfer_partial (struct target_ops *ops,
 static struct target_section_table *
 target_bfd_get_section_table (struct target_ops *ops)
 {
-  struct target_bfd_data *data = ops->to_data;
+  struct target_bfd_data *data = (struct target_bfd_data *) ops->to_data;
   return &data->table;
 }
 
 static void
 target_bfd_xclose (struct target_ops *t)
 {
-  struct target_bfd_data *data = t->to_data;
+  struct target_bfd_data *data = (struct target_bfd_data *) t->to_data;
 
   gdb_bfd_unref (data->bfd);
   xfree (data->table.sections);

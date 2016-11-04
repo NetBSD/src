@@ -414,8 +414,8 @@ struct nds32_opcode nds32_opcodes[] =
   {"mfsr", "=rt,%sr",		MISC (MFSR), 4, ATTR_ALL, 0, NULL, 0, NULL},
   {"iret", "",			MISC (IRET), 4, ATTR_ALL, 0, NULL, 0, NULL},
   {"trap", "%swid",		MISC (TRAP), 4, ATTR_V3MEX_V1, 0, NULL, 0, NULL},
-  {"teqz", "%rt{,%swid}",		MISC (TEQZ), 4, ATTR_V3MEX_V1, 0, NULL, 0, NULL},
-  {"tnez", "%rt{,%swid}",		MISC (TNEZ), 4, ATTR_V3MEX_V1, 0, NULL, 0, NULL},
+  {"teqz", "%rt{,%swid}",	MISC (TEQZ), 4, ATTR_V3MEX_V1, 0, NULL, 0, NULL},
+  {"tnez", "%rt{,%swid}",	MISC (TNEZ), 4, ATTR_V3MEX_V1, 0, NULL, 0, NULL},
   {"dsb", "",			MISC (DSB), 4, ATTR_ALL, 0, NULL, 0, NULL},
   {"isb", "",			MISC (ISB), 4, ATTR_ALL, 0, NULL, 0, NULL},
   {"break", "%swid",		MISC (BREAK), 4, ATTR_ALL, 0, NULL, 0, NULL},
@@ -1024,6 +1024,7 @@ const keyword_t keyword_sr[] =
   {"dcm_cfg", SRIDX (0, 2, 0), 0},	{"cr2", SRIDX (0, 2, 0), 0},
   {"mmu_cfg", SRIDX (0, 3, 0), 0},	{"cr3", SRIDX (0, 3, 0), 0},
   {"msc_cfg", SRIDX (0, 4, 0), 0},	{"cr4", SRIDX (0, 4, 0), 0},
+  {"msc_cfg2", SRIDX (0, 4, 1), 0},	{"cr7", SRIDX (0, 4, 1), 0},
   {"core_id", SRIDX (0, 0, 1), 0},	{"cr5", SRIDX (0, 0, 1), 0},
   {"fucop_exist", SRIDX (0, 5, 0), 0},	{"cr6", SRIDX (0, 5, 0), 0},
 
@@ -1076,6 +1077,9 @@ const keyword_t keyword_sr[] =
   {"pfmc1", SRIDX (4, 0, 1), 0},	{"pfr1", SRIDX (4, 0, 1), 0},
   {"pfmc2", SRIDX (4, 0, 2), 0},	{"pfr2", SRIDX (4, 0, 2), 0},
   {"pfm_ctl", SRIDX (4, 1, 0), 0},	{"pfr3", SRIDX (4, 1, 0), 0},
+  {"hsp_ctl", SRIDX (4, 6, 0), 0},	{"hspr0", SRIDX (4, 6, 0), 0},
+  {"sp_bound", SRIDX (4, 6, 1), 0},	{"hspr1", SRIDX (4, 6, 1), 0},
+  {"sp_bound_priv", SRIDX (4, 6, 2), 0},{"hspr2", SRIDX (4, 6, 2), 0},
 
   {"dma_cfg", SRIDX (5, 0, 0), 0},	{"dmar0", SRIDX (5, 0, 0), 0},
   {"dma_gcsw", SRIDX (5, 1, 0), 0},	{"dmar1", SRIDX (5, 1, 0), 0},
@@ -1094,8 +1098,12 @@ const keyword_t keyword_sr[] =
   {"sdz_ctl", SRIDX (2, 15, 0), 0},	{"idr0", SRIDX (2, 15, 0), 0},
   {"misc_ctl", SRIDX (2, 15, 1), 0},	{"n12misc_ctl", SRIDX (2, 15, 1), 0},
   {"idr1", SRIDX (2, 15, 1), 0},
+  {"ecc_misc", SRIDX (2, 15, 2), 0},	{"idr2", SRIDX (2, 15, 2), 0},
 
   {"secur0", SRIDX (6, 0, 0), 0},	{"sfcr", SRIDX (6, 0, 0), 0},
+  {"secur1", SRIDX (6, 1, 0), 0},	{"sign", SRIDX (6, 1, 0), 0},
+  {"secur2", SRIDX (6, 1, 1), 0},      {"isign", SRIDX (6, 1, 1), 0},
+  {"secur3", SRIDX (6, 1, 2), 0},      {"p_isign", SRIDX (6, 1, 2), 0},
 
   {"prusr_acc_ctl", SRIDX (4, 4, 0), 0},
   {"fucpr", SRIDX (4, 5, 0), 0},	{"fucop_ctl", SRIDX (4, 5, 0), 0},
@@ -2262,7 +2270,8 @@ retry_dot:
   pinsn->opcode = opc;
   if (opc == NULL)
     {
-      pdesc->result = NASM_ERR_SYNTAX;
+      if (pdesc->result == NASM_OK)
+	pdesc->result = NASM_ERR_SYNTAX;
       goto out;
     }
 

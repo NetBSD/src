@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2016/01/26 19:38:12 christos Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2016/11/04 14:45:11 pgoyette Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
+
+MDSETIMAGE=${NETBSDSRCDIR}/usr.sbin/mdsetimage
+.PATH: ${MDSETIMAGE}
 
 .if (defined(HOSTPROG) && \
      (${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN))) || \
@@ -8,9 +11,10 @@
 BFDSUBDIR=	lib
 
 PROG=		mdsetimage
+SRCS=		mdsetimage.c bin_bfd.c
 MAN=		mdsetimage.8
 
-CPPFLAGS+=	-I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include
+CPPFLAGS+=	-I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include -I${MDSETIMAGE}
 
 .if !defined(HOSTPROG)
 PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd

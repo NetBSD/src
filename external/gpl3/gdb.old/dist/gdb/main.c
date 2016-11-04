@@ -50,9 +50,6 @@
    do_setshow_command will free it.  */
 char *interpreter_p;
 
-/* Whether xdb commands will be handled.  */
-int xdb_commands = 0;
-
 /* Whether dbx commands will be handled.  */
 int dbx_commands = 0;
 
@@ -339,7 +336,7 @@ captured_command_loop (void *data)
    catch_command_errors/catch_command_errors_const.  */
 
 static int
-handle_command_errors (volatile struct gdb_exception e)
+handle_command_errors (struct gdb_exception e)
 {
   if (e.reason < 0)
     {
@@ -362,11 +359,9 @@ typedef void (catch_command_errors_ftype) (char *, int);
 
 static int
 catch_command_errors (catch_command_errors_ftype *command,
-		      char *arg, int from_tty, return_mask mask)
+		      char *arg, int from_tty)
 {
-  volatile struct gdb_exception e;
-
-  TRY_CATCH (e, mask)
+  TRY
     {
       int was_sync = sync_execution;
 
@@ -374,7 +369,13 @@ catch_command_errors (catch_command_errors_ftype *command,
 
       maybe_wait_sync_command_done (was_sync);
     }
-  return handle_command_errors (e);
+  CATCH (e, RETURN_MASK_ALL)
+    {
+      return handle_command_errors (e);
+    }
+  END_CATCH
+
+  return 1;
 }
 
 /* Type of the command callback passed to catch_command_errors_const.  */
@@ -385,11 +386,9 @@ typedef void (catch_command_errors_const_ftype) (const char *, int);
 
 static int
 catch_command_errors_const (catch_command_errors_const_ftype *command,
-			    const char *arg, int from_tty, return_mask mask)
+			    const char *arg, int from_tty)
 {
-  volatile struct gdb_exception e;
-
-  TRY_CATCH (e, mask)
+  TRY
     {
       int was_sync = sync_execution;
 
@@ -397,25 +396,35 @@ catch_command_errors_const (catch_command_errors_const_ftype *command,
 
       maybe_wait_sync_command_done (was_sync);
     }
-  return handle_command_errors (e);
+  CATCH (e, RETURN_MASK_ALL)
+    {
+      return handle_command_errors (e);
+    }
+  END_CATCH
+
+  return 1;
 }
+
+/* Type of this option.  */
+enum cmdarg_kind
+{
+  /* Option type -x.  */
+  CMDARG_FILE,
+
+  /* Option type -ex.  */
+  CMDARG_COMMAND,
+
+  /* Option type -ix.  */
+  CMDARG_INIT_FILE,
+    
+  /* Option type -iex.  */
+  CMDARG_INIT_COMMAND
+};
 
 /* Arguments of --command option and its counterpart.  */
 typedef struct cmdarg {
   /* Type of this option.  */
-  enum {
-    /* Option type -x.  */
-    CMDARG_FILE,
-
-    /* Option type -ex.  */
-    CMDARG_COMMAND,
-
-    /* Option type -ix.  */
-    CMDARG_INIT_FILE,
-    
-    /* Option type -iex.  */
-    CMDARG_INIT_COMMAND
-  } type;
+  enum cmdarg_kind type;
 
   /* Value of this option - filename or the GDB command itself.  String memory
      is not owned by this structure despite it is 'const'.  */
@@ -536,6 +545,12 @@ captured_main (void *data)
   gdb_sysroot = relocate_gdb_directory (TARGET_SYSTEM_ROOT,
 					TARGET_SYSTEM_ROOT_RELOCATABLE);
 
+  if (gdb_sysroot == NULL || *gdb_sysroot == '\0')
+    {
+      xfree (gdb_sysroot);
+      gdb_sysroot = xstrdup (TARGET_SYSROOT_PREFIX);
+    }
+
   debug_file_directory = relocate_gdb_directory (DEBUGDIR,
 						 DEBUGDIR_RELOCATABLE);
 
@@ -584,7 +599,6 @@ captured_main (void *data)
     static struct option long_options[] =
     {
       {"tui", no_argument, 0, OPT_TUI},
-      {"xdb", no_argument, &xdb_commands, 1},
       {"dbx", no_argument, &dbx_commands, 1},
       {"readnow", no_argument, &readnow_symbol_files, 1},
       {"r", no_argument, &readnow_symbol_files, 1},
@@ -845,8 +859,7 @@ captured_main (void *data)
   /* Try to set up an alternate signal stack for SIGSEGV handlers.  */
   setup_alternate_signal_stack ();
 
-  /* Initialize all files.  Give the interpreter a chance to take
-     control of the console via the deprecated_init_ui_hook ().  */
+  /* Initialize all files.  */
   gdb_init (gdb_program_name);
 
   /* Now that gdb_init has created the initial inferior, we're in
@@ -988,8 +1001,7 @@ captured_main (void *data)
      processed; it sets global parameters, which are independent of
      what file you are debugging or what directory you are in.  */
   if (system_gdbinit && !inhibit_gdbinit)
-    catch_command_errors_const (source_script, system_gdbinit,
-				0, RETURN_MASK_ALL);
+    catch_command_errors_const (source_script, system_gdbinit, 0);
 
   /* Read and execute $HOME/.gdbinit file, if it exists.  This is done
      *before* all the command line arguments are processed; it sets
@@ -997,8 +1009,7 @@ captured_main (void *data)
      debugging or what directory you are in.  */
 
   if (home_gdbinit && !inhibit_gdbinit && !inhibit_home_gdbinit)
-    catch_command_errors_const (source_script,
-				home_gdbinit, 0, RETURN_MASK_ALL);
+    catch_command_errors_const (source_script, home_gdbinit, 0);
 
   /* Process '-ix' and '-iex' options early.  */
   for (i = 0; VEC_iterate (cmdarg_s, cmdarg_vec, i, cmdarg_p); i++)
@@ -1006,22 +1017,22 @@ captured_main (void *data)
     {
       case CMDARG_INIT_FILE:
         catch_command_errors_const (source_script, cmdarg_p->string,
-				    !batch_flag, RETURN_MASK_ALL);
+				    !batch_flag);
 	break;
       case CMDARG_INIT_COMMAND:
         catch_command_errors (execute_command, cmdarg_p->string,
-			      !batch_flag, RETURN_MASK_ALL);
+			      !batch_flag);
 	break;
     }
 
   /* Now perform all the actions indicated by the arguments.  */
   if (cdarg != NULL)
     {
-      catch_command_errors (cd_command, cdarg, 0, RETURN_MASK_ALL);
+      catch_command_errors (cd_command, cdarg, 0);
     }
 
   for (i = 0; i < ndir; i++)
-    catch_command_errors (directory_switch, dirarg[i], 0, RETURN_MASK_ALL);
+    catch_command_errors (directory_switch, dirarg[i], 0);
   xfree (dirarg);
 
   /* Skip auto-loading section-specified scripts until we've sourced
@@ -1038,18 +1049,18 @@ captured_main (void *data)
          open it, better only print one error message.
          catch_command_errors returns non-zero on success!  */
       if (catch_command_errors_const (exec_file_attach, execarg,
-				      !batch_flag, RETURN_MASK_ALL))
+				      !batch_flag))
 	catch_command_errors_const (symbol_file_add_main, symarg,
-				    !batch_flag, RETURN_MASK_ALL);
+				    !batch_flag);
     }
   else
     {
       if (execarg != NULL)
 	catch_command_errors_const (exec_file_attach, execarg,
-				    !batch_flag, RETURN_MASK_ALL);
+				    !batch_flag);
       if (symarg != NULL)
 	catch_command_errors_const (symbol_file_add_main, symarg,
-				    !batch_flag, RETURN_MASK_ALL);
+				    !batch_flag);
     }
 
   if (corearg && pidarg)
@@ -1057,11 +1068,9 @@ captured_main (void *data)
 	     "a core file at the same time."));
 
   if (corearg != NULL)
-    catch_command_errors (core_file_command, corearg,
-			  !batch_flag, RETURN_MASK_ALL);
+    catch_command_errors (core_file_command, corearg, !batch_flag);
   else if (pidarg != NULL)
-    catch_command_errors (attach_command, pidarg,
-			  !batch_flag, RETURN_MASK_ALL);
+    catch_command_errors (attach_command, pidarg, !batch_flag);
   else if (pid_or_core_arg)
     {
       /* The user specified 'gdb program pid' or gdb program core'.
@@ -1071,13 +1080,13 @@ captured_main (void *data)
       if (isdigit (pid_or_core_arg[0]))
 	{
 	  if (catch_command_errors (attach_command, pid_or_core_arg,
-				    !batch_flag, RETURN_MASK_ALL) == 0)
+				    !batch_flag) == 0)
 	    catch_command_errors (core_file_command, pid_or_core_arg,
-				  !batch_flag, RETURN_MASK_ALL);
+				  !batch_flag);
 	}
       else /* Can't be a pid, better be a corefile.  */
 	catch_command_errors (core_file_command, pid_or_core_arg,
-			      !batch_flag, RETURN_MASK_ALL);
+			      !batch_flag);
     }
 
   if (ttyarg != NULL)
@@ -1100,8 +1109,7 @@ captured_main (void *data)
 	{
 	  auto_load_local_gdbinit_loaded = 1;
 
-	  catch_command_errors_const (source_script, local_gdbinit, 0,
-				      RETURN_MASK_ALL);
+	  catch_command_errors_const (source_script, local_gdbinit, 0);
 	}
     }
 
@@ -1119,11 +1127,11 @@ captured_main (void *data)
     {
       case CMDARG_FILE:
         catch_command_errors_const (source_script, cmdarg_p->string,
-				    !batch_flag, RETURN_MASK_ALL);
+				    !batch_flag);
 	break;
       case CMDARG_COMMAND:
         catch_command_errors (execute_command, cmdarg_p->string,
-			      !batch_flag, RETURN_MASK_ALL);
+			      !batch_flag);
 	break;
     }
 
@@ -1224,7 +1232,6 @@ Output and user interface control:\n\n\
 #endif
   fputs_unfiltered (_("\
   --dbx              DBX compatibility mode.\n\
-  --xdb              XDB compatibility mode.\n\
   -q, --quiet, --silent\n\
                      Do not print version number on startup.\n\n\
 "), stream);

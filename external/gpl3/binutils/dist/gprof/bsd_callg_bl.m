@@ -106,7 +106,7 @@ index     the index of this child in the call graph listing,
           the members of the cycle, and their contributions
           to the time and call counts of the cycle.
 
-Copyright (C) 2012-2015 Free Software Foundation, Inc.
+Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

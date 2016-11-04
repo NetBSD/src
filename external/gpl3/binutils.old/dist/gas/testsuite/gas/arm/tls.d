@@ -47,3 +47,21 @@ Disassembly of section .text:
 			3c: R_ARM_TLS_LE32	td
   40:	00000017 	.word	0x00000017
 			40: R_ARM_TLS_GOTDESC	te
+0+44 <foo>:
+  44:	fffffff4 	.word	0xfffffff4
+			44: R_ARM_TLS_LE32	tbase
+  48:	fffffff8 	.word	0xfffffff8
+			48: R_ARM_TLS_LE32	tbase
+  4c:	fffffffc 	.word	0xfffffffc
+			4c: R_ARM_TLS_LE32	tbase
+  50:	00000000 	.word	0x00000000
+			50: R_ARM_TLS_LE32	tbase
+  54:	00000004 	.word	0x00000004
+			54: R_ARM_TLS_LE32	tbase
+  58:	00000008 	.word	0x00000008
+			58: R_ARM_TLS_LE32	tbase
+  5c:	0000000c 	.word	0x0000000c
+			5c: R_ARM_TLS_LE32	tbase
+  60:	00000000 	.word	0x00000000
+			60: R_ARM_TLS_LE32	tbase
+#pass

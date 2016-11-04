@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.20 2015/12/21 16:49:37 christos Exp $
+# $NetBSD: md.evbmips,v 1.20.2.1 2016/11/04 14:42:38 pgoyette Exp $
 ./usr/include/evbmips				comp-c-include
 ./usr/include/evbmips/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbmips/ansi.h			comp-c-include

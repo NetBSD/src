@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2015 Free Software Foundation, Inc.
+Copyright 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -32,18 +32,18 @@ This file is part of the GNU simulators.
 #include "decode.h"
 #endif
 
-extern const MACH sh2_mach;
-extern const MACH sh2e_mach;
-extern const MACH sh2a_fpu_mach;
-extern const MACH sh2a_nofpu_mach;
-extern const MACH sh3_mach;
-extern const MACH sh3e_mach;
-extern const MACH sh4_nofpu_mach;
-extern const MACH sh4_mach;
-extern const MACH sh4a_nofpu_mach;
-extern const MACH sh4a_mach;
-extern const MACH sh4al_mach;
-extern const MACH sh5_mach;
+extern const SIM_MACH sh2_mach;
+extern const SIM_MACH sh2e_mach;
+extern const SIM_MACH sh2a_fpu_mach;
+extern const SIM_MACH sh2a_nofpu_mach;
+extern const SIM_MACH sh3_mach;
+extern const SIM_MACH sh3e_mach;
+extern const SIM_MACH sh4_nofpu_mach;
+extern const SIM_MACH sh4_mach;
+extern const SIM_MACH sh4a_nofpu_mach;
+extern const SIM_MACH sh4a_mach;
+extern const SIM_MACH sh4al_mach;
+extern const SIM_MACH sh5_mach;
 
 #ifndef WANT_CPU
 /* The ARGBUF struct.  */

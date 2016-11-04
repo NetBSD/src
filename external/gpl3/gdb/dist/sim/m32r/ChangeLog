@@ -1,3 +1,162 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENVIRONMENT): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_INLINE): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Update sim_parse_args comment.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* TODO: Delete file.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HOSTENDIAN): Delete.
+	* configure: Regenerate.
+	* traps-linux.c (conv_endian): Change CURRENT_HOST_BYTE_ORDER
+	to HOST_BYTE_ORDER.
+	(conv_endian16): Likewise.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* arch.h (TARGET_BIG_ENDIAN): Delete.
+	* configure.ac (SIM_AC_OPTION_ENDIAN): Change BIG_ENDIAN to BIG.
+	* configure: Regenerate.
+	* traps-linux.c (conv_endian): Change LITTLE_ENDIAN to
+	BFD_ENDIAN_LITTLE.
+	(conv_endian16): Likewise.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Delete #if 0 sim_add_option_table call.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (current_state): Delete.
+	(sim_open): Delete current_state assignment.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-hload.o.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_create_inferior): Replace old #if 0 code with dupargv.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HARDWARE): Add m32r_cache & m32r_uart.
+	* configure: Regenerate.
+	* devices.c: Delete file.
+	* dv-m32r_cache.c, dv-m32r_cache.h: New cache model with logic from
+	devices.c.
+	* dv-m32r_uart.c, dv-m32r_uart.h: New uart model with logic from
+	devices.c.
+	* m32r-sim.h: Move cache defines to dv-m32r_cache.h and uart defines
+	to dv-m32r_uart.h.
+	* Makefile.in (SIM_OBJS): Delete devices.o.
+	* sim-if.c: Include dv-m32r_uart.h.
+	(sim_open): Replace sim_core_attach call with sim_hw_parse calls.
+	* tconfig.h: Delete file.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-model.o.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* arch.c: Rename MACH to SIM_MACH.
+	* cpuall.h: Likewise.
+	* model.c: Rename MACH to SIM_MACH, MACH_IMP_PROPERTIES to
+	SIM_MACH_IMP_PROPERTIES, and MODEL to SIM_MODEL.
+	* model2.c, modelx.c: Likewise.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (WITH_SCACHE_PBB): Move from ...
+	* tconfig.h (WITH_SCACHE_PBB): ... here.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* devices.c (device_error): Delete.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (SIM_HANDLES_LMA): Delete.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (SIM_HAVE_BREAKPOINTS, SIM_BREAKPOINT,
+	SIM_BREAKPOINT_SIZE): Delete.
+	* traps-linux.c [SIM_HAVE_BREAKPOINTS] (m32r_trap): Delete sim
+	breakpoint code.
+	* traps.c [SIM_HAVE_BREAKPOINTS] (m32r_trap): Likewise.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (WITH_WATCHPOINTS): Delete.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (SIM_HAVE_MEM_SIZE): Delete.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-reason.o, sim-reg.o, and
+	sim-stop.o.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_close): Delete.
+
 2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.
@@ -281,8 +440,8 @@
 	* config.in: Ditto.
 
 2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
-            Daniel Jacobowitz  <dan@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
 
 	* configure: Regenerate.
 
@@ -361,15 +520,15 @@
 
 2003-12-19  Kazuhiro Inaoka  <inaoka.kazuhiro@renesas.com>
 
-        * configure.in: Changed for dummy simulator of m32r-linux.
+	* configure.in: Changed for dummy simulator of m32r-linux.
 	* configure: Regenerate.
-        * Makefile.in: Added traps-linux.o for dummy simulator of m32r-linux.
-        * traps-linux.c: Added for dummy simulator of m32r-linux.
-        * syscall.h: Ditto.
-        * sim-if.c (sim_create_inferior): Changed to setup SP for dummy
-        simulator for m32r-linux.
-        * sim-main.h (M32R_DEFAULT_MEM_SIZE): Changed for dummy simulator of
-        m32r-linux.
+	* Makefile.in: Added traps-linux.o for dummy simulator of m32r-linux.
+	* traps-linux.c: Added for dummy simulator of m32r-linux.
+	* syscall.h: Ditto.
+	* sim-if.c (sim_create_inferior): Changed to setup SP for dummy
+	simulator for m32r-linux.
+	* sim-main.h (M32R_DEFAULT_MEM_SIZE): Changed for dummy simulator of
+	m32r-linux.
 
 2003-12-11  Kazuhiro Inaoka  <inaoka.kazuhiro@renesas.com>
 
@@ -555,7 +714,7 @@ Thu Sep  2 18:15:53 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 1999-05-08  Felix Lee  <flee@cygnus.com>
 
 	* configure: Regenerated to track ../common/aclocal.m4 changes.
-	
+
 Fri Apr 16 16:47:43 1999  Doug Evans  <devans@charmed.cygnus.com>
 
 	* devices.c (device_io_read_buffer): New arg `sd'.
@@ -1025,7 +1184,7 @@ Wed May  6 14:51:39 1998  Doug Evans  <devans@seba.cygnus.com>
 
 Tue Apr 28 18:33:31 1998  Geoffrey Noer  <noer@cygnus.com>
 
-        * configure: Regenerated to track ../common/aclocal.m4 changes.
+	* configure: Regenerated to track ../common/aclocal.m4 changes.
 
 Tue Apr 28 18:05:53 1998  Nick Clifton  <nickc@cygnus.com>
 
@@ -1376,7 +1535,7 @@ Tue Sep 23 10:19:51 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* Makefile.in (SIM_ENDIAN, SIM_HOSTENDIAN, SIM_SCACHE,
  	SIM_DEFAULT_MODEL): Delete, moved to common.
 	(SIM_EXTRA_CFLAGS): Update.
-	
+
 Mon Sep 22 11:46:20 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* configure.in (sim_link_links): Configure non-strict memory
@@ -1497,7 +1656,7 @@ Sat Apr 12 12:57:33 1997  Felix Lee  <flee@yin.cygnus.com>
 
 	* Makefile.in, seman-cache.c: new file, for wingdb build.
 	* sim-alloca.h: fixed for wingdb.
-	
+
 Mon Apr  7 13:33:29 1997  Doug Evans  <dje@seba.cygnus.com>
 
 	* decode.c (*): m32r_cgen_insn_table renamed to ..._entries.

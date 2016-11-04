@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.93 2016/06/10 13:27:13 ozaki-r Exp $	*/
+/*	$NetBSD: hme.c,v 1.93.2.1 2016/11/04 14:49:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.93 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.93.2.1 2016/11/04 14:49:08 pgoyette Exp $");
 
 /* #define HMEDEBUG */
 
@@ -665,13 +665,13 @@ hme_put(struct hme_softc *sc, int ri, struct mbuf *m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		memcpy(bp, mtod(m, void *), len);
 		bp += len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	return (tlen);
 }

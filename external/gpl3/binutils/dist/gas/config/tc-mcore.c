@@ -1,5 +1,5 @@
 /* tc-mcore.c -- Assemble code for M*Core
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -141,7 +141,7 @@ static struct hash_control * opcode_hash_control;	/* Opcode mnemonics.  */
 #define POOL_START_LABEL ".LS"
 
 static void
-make_name (char * s, char * p, int n)
+make_name (char * s, const char * p, int n)
 {
   static const char hex[] = "0123456789ABCDEF";
 
@@ -454,18 +454,18 @@ const pseudo_typeS md_pseudo_table[] =
 void
 md_begin (void)
 {
-  const mcore_opcode_info * opcode;
-  char * prev_name = "";
+  const char * prev_name = "";
+  unsigned int i;
 
   opcode_hash_control = hash_new ();
 
   /* Insert unique names into hash table.  */
-  for (opcode = mcore_table; opcode->name; opcode ++)
+  for (i = 0; i < ARRAY_SIZE (mcore_table); i++)
     {
-      if (! streq (prev_name, opcode->name))
+      if (! streq (prev_name, mcore_table[i].name))
 	{
-	  prev_name = opcode->name;
-	  hash_insert (opcode_hash_control, opcode->name, (char *) opcode);
+	  prev_name = mcore_table[i].name;
+	  hash_insert (opcode_hash_control, mcore_table[i].name, (char *) &mcore_table[i]);
 	}
     }
 }
@@ -523,7 +523,7 @@ parse_reg (char * s, unsigned * reg)
 
 static struct Cregs
 {
-  char * name;
+  const char * name;
   unsigned int crnum;
 }
 cregs[] =
@@ -611,7 +611,7 @@ parse_psrmod (char * s, unsigned * reg)
   char buf[10];
   static struct psrmods
   {
-    char *       name;
+    const char *       name;
     unsigned int value;
   }
   psrmods[] =
@@ -1598,6 +1598,9 @@ md_assemble (char * str)
   output[0] = INST_BYTE0 (inst);
   output[1] = INST_BYTE1 (inst);
 
+#ifdef OBJ_ELF
+  dwarf2_emit_insn (2);
+#endif
   check_literals (opcode->transfer, isize);
 }
 
@@ -1616,7 +1619,7 @@ md_mcore_end (void)
 
 /* Various routines to kill one day.  */
 
-char *
+const char *
 md_atof (int type, char * litP, int * sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, target_big_endian);
@@ -1650,7 +1653,7 @@ struct option md_longopts[] =
 size_t md_longopts_size = sizeof (md_longopts);
 
 int
-md_parse_option (int c, char * arg)
+md_parse_option (int c, const char * arg)
 {
   switch (c)
     {
@@ -1917,7 +1920,7 @@ md_apply_fix (fixS *   fixP,
 	       segT     segment ATTRIBUTE_UNUSED)
 {
   char *       buf  = fixP->fx_where + fixP->fx_frag->fr_literal;
-  char *       file = fixP->fx_file ? fixP->fx_file : _("unknown");
+  const char *       file = fixP->fx_file ? fixP->fx_file : _("unknown");
   const char * symname;
   /* Note: use offsetT because it is signed, valueT is unsigned.  */
   offsetT      val  = *valP;
@@ -2183,8 +2186,8 @@ tc_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
       break;
   }
 
-  rel = xmalloc (sizeof (arelent));
-  rel->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  rel = XNEW (arelent);
+  rel->sym_ptr_ptr = XNEW (asymbol *);
   *rel->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   rel->address = fixp->fx_frag->fr_address + fixp->fx_where;
   /* Always pass the addend along!  */

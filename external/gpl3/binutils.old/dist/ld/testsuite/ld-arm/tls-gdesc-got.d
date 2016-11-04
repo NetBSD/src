@@ -1,6 +1,6 @@
 
 .*/tls-lib2-got.so:     file format elf32-.*arm.*
-architecture: armv4, flags 0x00000150:
+architecture: arm.*, flags 0x00000150:
 HAS_SYMS, DYNAMIC, D_PAGED
 start address 0x000082.0
 

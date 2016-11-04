@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.28 2015/04/28 15:14:57 christos Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.28.2.1 2016/11/04 14:48:55 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.28 2015/04/28 15:14:57 christos Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.28.2.1 2016/11/04 14:48:55 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -765,14 +765,36 @@ scan_and_wait(prop_dictionary_t env)
 	prog_close(sroute);
 }
 
+static int
+calc_len(const u_int8_t *cp, int len)
+{
+	int maxlen = 0, curlen;
+	const struct ieee80211req_scan_result *sr;
+	char buf[IEEE80211_NWID_LEN];
+
+	while (len >= (int)sizeof(*sr)) {
+		sr = (const struct ieee80211req_scan_result *)cp;
+		cp += sr->isr_len;
+		len -= sr->isr_len;
+		curlen = copy_essid(buf, sizeof(buf),
+		    (const u_int8_t *)(sr + 1), sr->isr_ssid_len);
+		if (curlen >= IEEE80211_NWID_LEN)
+			return IEEE80211_NWID_LEN;
+		if (curlen > maxlen)
+			maxlen = curlen;
+	}
+	return maxlen;
+}
+
 static void
 list_scan(prop_dictionary_t env)
 {
-	u_int8_t buf[24*1024];
+	u_int8_t buf[64*1024 - 1];
 	struct ieee80211req ireq;
 	char ssid[IEEE80211_NWID_LEN+1];
 	const u_int8_t *cp;
 	int len, ssidmax;
+	const struct ieee80211req_scan_result *sr;
 
 	memset(&ireq, 0, sizeof(ireq));
 	ireq.i_type = IEEE80211_IOC_SCAN_RESULTS;
@@ -781,10 +803,11 @@ list_scan(prop_dictionary_t env)
 	if (direct_ioctl(env, SIOCG80211, &ireq) < 0)
 		errx(EXIT_FAILURE, "unable to get scan results");
 	len = ireq.i_len;
-	if (len < (int)sizeof(struct ieee80211req_scan_result))
+	if (len < (int)sizeof(*sr))
 		return;
 
-	ssidmax = IEEE80211_NWID_LEN;
+	ssidmax = calc_len(buf, len);
+
 	printf("%-*.*s  %-17.17s  %4s %4s  %-7s %3s %4s\n"
 		, ssidmax, ssidmax, "SSID"
 		, "BSSID"
@@ -795,16 +818,14 @@ list_scan(prop_dictionary_t env)
 		, "CAPS"
 	);
 	cp = buf;
-	do {
-		const struct ieee80211req_scan_result *sr;
+	while (len >= (int)sizeof(*sr)) {
 		const uint8_t *vp;
 
 		sr = (const struct ieee80211req_scan_result *) cp;
 		vp = (const u_int8_t *)(sr+1);
+		(void)copy_essid(ssid, sizeof(ssid), vp, sr->isr_ssid_len);
 		printf("%-*.*s  %s  %3d  %3dM %3d:%-3d  %3d %-4.4s"
-			, ssidmax
-			  , copy_essid(ssid, ssidmax, vp, sr->isr_ssid_len)
-			  , ssid
+			, ssidmax, ssidmax, ssid
 			, ether_ntoa((const struct ether_addr *) sr->isr_bssid)
 			, ieee80211_mhz2ieee(sr->isr_freq, sr->isr_flags)
 			, getmaxrate(sr->isr_rates, sr->isr_nrates)
@@ -815,7 +836,7 @@ list_scan(prop_dictionary_t env)
 		printies(vp + sr->isr_ssid_len, sr->isr_ie_len, 24);
 		printf("\n");
 		cp += sr->isr_len, len -= sr->isr_len;
-	} while (len >= (int)sizeof(struct ieee80211req_scan_result));
+	}
 }
 /*
  * Convert MHz frequency to IEEE channel number.
@@ -1144,18 +1165,22 @@ static int
 copy_essid(char buf[], size_t bufsize, const u_int8_t *essid, size_t essid_len)
 {
 	const u_int8_t *p;
+	int printable;
 	size_t maxlen, i;
 
-	if (essid_len > bufsize)
+	if (essid_len + 1 > bufsize)
 		maxlen = bufsize;
 	else
-		maxlen = essid_len;
+		maxlen = essid_len + 1;
 	/* determine printable or not */
-	for (i = 0, p = essid; i < maxlen; i++, p++) {
-		if (*p < ' ' || *p > 0x7e)
+	printable = 1;
+	for (i = 0, p = essid; i < essid_len; i++, p++) {
+		if (*p < ' ' || *p > 0x7e) {
+			printable = 0;
 			break;
+		}
 	}
-	if (i != maxlen) {		/* not printable, print as hex */
+	if (!printable) {		/* not printable, print as hex */
 		if (bufsize < 3)
 			return 0;
 		strlcpy(buf, "0x", bufsize);
@@ -1165,14 +1190,14 @@ copy_essid(char buf[], size_t bufsize, const u_int8_t *essid, size_t essid_len)
 			sprintf(&buf[2+2*i], "%02x", p[i]);
 			bufsize -= 2;
 		}
-		if (i != essid_len)
-			memcpy(&buf[2+2*i-3], "...", 3);
-	} else {			/* printable, truncate as needed */
-		memcpy(buf, essid, maxlen);
-		if (maxlen != essid_len)
-			memcpy(&buf[maxlen-3], "...", 3);
+		maxlen = i;
+	} else{
+		/* printable, truncate as needed */
+		strlcpy(buf, (const char *)essid, maxlen);
 	}
-	return maxlen;
+	if (maxlen != essid_len + 1)
+		memcpy(&buf[maxlen - 4], "...", 4);
+	return (int)strlen(buf);
 }
 
 static void

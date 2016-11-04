@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.97 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.97.2.1 2016/11/04 14:49:09 pgoyette Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.97 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.97.2.1 2016/11/04 14:49:09 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -774,7 +774,7 @@ iystart(struct ifnet *ifp)
 #endif
 			}
 
-			MFREE(m, m0);
+			m0 = m_free(m);
 		}
 
 		if (residual)

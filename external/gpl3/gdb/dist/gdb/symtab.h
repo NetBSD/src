@@ -1,6 +1,6 @@
 /* Symbol table definitions for GDB.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 #include "vec.h"
 #include "gdb_vecs.h"
 #include "gdbtypes.h"
+#include "common/enum-flags.h"
 
 /* Opaque declarations.  */
 struct ui_file;
@@ -38,6 +39,8 @@ struct program_space;
 struct language_defn;
 struct probe;
 struct common_block;
+struct obj_section;
+struct cmd_list_element;
 
 /* Some of the structures in this file are space critical.
    The space-critical structures are:
@@ -135,11 +138,7 @@ struct general_symbol_info
 
     /* This is used by languages which wish to store a demangled name.
        currently used by Ada, C++, Java, and Objective C.  */
-    struct mangled_lang
-    {
-      const char *demangled_name;
-    }
-    mangled_lang;
+    const char *demangled_name;
   }
   language_specific;
 
@@ -147,9 +146,9 @@ struct general_symbol_info
      This is used to select one of the fields from the language specific
      union above.  */
 
-  ENUM_BITFIELD(language) language : 8;
+  ENUM_BITFIELD(language) language : LANGUAGE_BITS;
 
-  /* This is only used by Ada.  If set, then the 'mangled_lang' field
+  /* This is only used by Ada.  If set, then the 'demangled_name' field
      of language_specific is valid.  Otherwise, the 'obstack' field is
      valid.  */
   unsigned int ada_mangled : 1;
@@ -307,8 +306,14 @@ enum minimal_symbol_type
      within a given .o file.  */
   mst_file_text,		/* Static version of mst_text */
   mst_file_data,		/* Static version of mst_data */
-  mst_file_bss			/* Static version of mst_bss */
+  mst_file_bss,			/* Static version of mst_bss */
+  nr_minsym_types
 };
+
+/* The number of enum minimal_symbol_type values, with some padding for
+   reasonable growth.  */
+#define MINSYM_TYPE_BITS 4
+gdb_static_assert (nr_minsym_types <= (1 << MINSYM_TYPE_BITS));
 
 /* Define a simple structure used to hold some very basic information about
    all defined global symbols (text, data, bss, abs, etc).  The only required
@@ -332,7 +337,7 @@ struct minimal_symbol
 
   struct general_symbol_info mginfo;
 
-  /* Size of this symbol.  end_psymtab in dbxread.c uses this
+  /* Size of this symbol.  dbx_end_psymtab in dbxread.c uses this
      information to calculate the end of the partial symtab based on the
      address of the last symbol plus the size of the last symbol.  */
 
@@ -343,7 +348,7 @@ struct minimal_symbol
 
   /* Classification type for this minimal symbol.  */
 
-  ENUM_BITFIELD(minimal_symbol_type) type : 8;
+  ENUM_BITFIELD(minimal_symbol_type) type : MINSYM_TYPE_BITS;
 
   /* Non-zero if this symbol was created by gdb.
      Such symbols do not appear in the output of "info var|fun".  */
@@ -458,12 +463,16 @@ typedef enum domain_enum_tag
 
   /* Fortran common blocks.  Their naming must be separate from VAR_DOMAIN.
      They also always use LOC_COMMON_BLOCK.  */
-  COMMON_BLOCK_DOMAIN
+  COMMON_BLOCK_DOMAIN,
+
+  /* This must remain last.  */
+  NR_DOMAINS
 } domain_enum;
 
 /* The number of bits in a symbol used to represent the domain.  */
 
-#define SYMBOL_DOMAIN_BITS 4
+#define SYMBOL_DOMAIN_BITS 3
+gdb_static_assert (NR_DOMAINS <= (1 << SYMBOL_DOMAIN_BITS));
 
 extern const char *domain_name (domain_enum);
 
@@ -572,7 +581,13 @@ enum address_class
      not find it in the full symbol table.  But a reference to an external
      symbol in a local block shadowing other definition requires full symbol
      without possibly having its address available for LOC_STATIC.  Testcase
-     is provided as `gdb.dwarf2/dw2-unresolved.exp'.  */
+     is provided as `gdb.dwarf2/dw2-unresolved.exp'.
+
+     This is also used for thread local storage (TLS) variables.  In this case,
+     the address of the TLS variable must be determined when the variable is
+     referenced, from the MSYMBOL_VALUE_RAW_ADDRESS, which is the offset
+     of the TLS variable in the thread local storage of the shared
+     library/object.  */
 
   LOC_UNRESOLVED,
 
@@ -593,6 +608,15 @@ enum address_class
   LOC_FINAL_VALUE
 };
 
+/* The number of bits needed for values in enum address_class, with some
+   padding for reasonable growth, and room for run-time registered address
+   classes. See symtab.c:MAX_SYMBOL_IMPLS.
+   This is a #define so that we can have a assertion elsewhere to
+   verify that we have reserved enough space for synthetic address
+   classes.  */
+#define SYMBOL_ACLASS_BITS 5
+gdb_static_assert (LOC_FINAL_VALUE <= (1 << SYMBOL_ACLASS_BITS));
+
 /* The methods needed to implement LOC_COMPUTED.  These methods can
    use the symbol's .aux_value for additional per-symbol information.
 
@@ -605,7 +629,8 @@ struct symbol_computed_ops
      frame FRAME.  If the variable has been optimized out, return
      zero.
 
-     Iff `read_needs_frame (SYMBOL)' is zero, then FRAME may be zero.  */
+     Iff `read_needs_frame (SYMBOL)' is not SYMBOL_NEEDS_FRAME, then
+     FRAME may be zero.  */
 
   struct value *(*read_variable) (struct symbol * symbol,
 				  struct frame_info * frame);
@@ -616,8 +641,11 @@ struct symbol_computed_ops
   struct value *(*read_variable_at_entry) (struct symbol *symbol,
 					   struct frame_info *frame);
 
-  /* Return non-zero if we need a frame to find the value of the SYMBOL.  */
-  int (*read_needs_frame) (struct symbol * symbol);
+  /* Find the "symbol_needs_kind" value for the given symbol.  This
+     value determines whether reading the symbol needs memory (e.g., a
+     global variable), just registers (a thread-local), or a frame (a
+     local variable).  */
+  enum symbol_needs_kind (*get_symbol_read_needs) (struct symbol * symbol);
 
   /* Write to STREAM a natural-language description of the location of
      SYMBOL, in the context of ADDR.  */
@@ -665,6 +693,25 @@ struct symbol_block_ops
      uninitialized in such case.  */
   void (*find_frame_base_location) (struct symbol *framefunc, CORE_ADDR pc,
 				    const gdb_byte **start, size_t *length);
+
+  /* Return the frame base address.  FRAME is the frame for which we want to
+     compute the base address while FRAMEFUNC is the symbol for the
+     corresponding function.  Return 0 on failure (FRAMEFUNC may not hold the
+     information we need).
+
+     This method is designed to work with static links (nested functions
+     handling).  Static links are function properties whose evaluation returns
+     the frame base address for the enclosing frame.  However, there are
+     multiple definitions for "frame base": the content of the frame base
+     register, the CFA as defined by DWARF unwinding information, ...
+
+     So this specific method is supposed to compute the frame base address such
+     as for nested fuctions, the static link computes the same address.  For
+     instance, considering DWARF debugging information, the static link is
+     computed with DW_AT_static_link and this method must be used to compute
+     the corresponding DW_AT_frame_base attribute.  */
+  CORE_ADDR (*get_frame_base) (struct symbol *framefunc,
+			       struct frame_info *frame);
 };
 
 /* Functions used with LOC_REGISTER and LOC_REGPARM_ADDR.  */
@@ -690,13 +737,6 @@ struct symbol_impl
   /* Used with LOC_REGISTER and LOC_REGPARM_ADDR.  */
   const struct symbol_register_ops *ops_register;
 };
-
-/* The number of bits we reserve in a symbol for the aclass index.
-   This is a #define so that we can have a assertion elsewhere to
-   verify that we have reserved enough space for synthetic address
-   classes.  */
-
-#define SYMBOL_ACLASS_BITS 6
 
 /* This structure is space critical.  See space comments at the top.  */
 
@@ -767,11 +807,10 @@ struct symbol
   /* An arbitrary data pointer, allowing symbol readers to record
      additional information on a per-symbol basis.  Note that this data
      must be allocated using the same obstack as the symbol itself.  */
-  /* So far it is only used by LOC_COMPUTED to
-     find the location information.  For a LOC_BLOCK symbol
-     for a function in a compilation unit compiled with DWARF 2
-     information, this is information used internally by the DWARF 2
-     code --- specifically, the location expression for the frame
+  /* So far it is only used by:
+     LOC_COMPUTED: to find the location information
+     LOC_BLOCK (DWARF2 function): information used internally by the
+     DWARF 2 code --- specifically, the location expression for the frame
      base for this function.  */
   /* FIXME drow/2003-02-21: For the LOC_BLOCK case, it might be better
      to add a magic symbol to the block containing this information,
@@ -782,7 +821,24 @@ struct symbol
   struct symbol *hash_next;
 };
 
+/* Several lookup functions return both a symbol and the block in which the
+   symbol is found.  This structure is used in these cases.  */
+
+struct block_symbol
+{
+  /* The symbol that was found, or NULL if no symbol was found.  */
+  struct symbol *symbol;
+
+  /* If SYMBOL is not NULL, then this is the block in which the symbol is
+     defined.  */
+  const struct block *block;
+};
+
 extern const struct symbol_impl *symbol_impls;
+
+/* For convenience.  All fields are NULL.  This means "there is no
+   symbol".  */
+extern const struct block_symbol null_block_symbol;
 
 /* Note: There is no accessor macro for symbol.owner because it is
    "private".  */
@@ -1141,10 +1197,6 @@ DEF_VEC_P (compunit_symtab_ptr);
 
 extern int currently_reading_symtab;
 
-/* The block in which the most recently looked up symbol was found.  */
-
-extern const struct block *block_found;
-
 /* symtab.c lookup functions */
 
 extern const char multiple_symbols_ask[];
@@ -1190,27 +1242,27 @@ struct field_of_this_result
    C++: if IS_A_FIELD_OF_THIS is non-NULL on entry, check to see if
    NAME is a field of the current implied argument `this'.  If so fill in the
    fields of IS_A_FIELD_OF_THIS, otherwise the fields are set to NULL.
-   BLOCK_FOUND is set to the block in which NAME is found (in the case of
-   a field of `this', value_of_this sets BLOCK_FOUND to the proper value).
    The symbol's section is fixed up if necessary.  */
 
-extern struct symbol *lookup_symbol_in_language (const char *,
-						 const struct block *,
-						 const domain_enum,
-						 enum language,
-						 struct field_of_this_result *);
+extern struct block_symbol
+  lookup_symbol_in_language (const char *,
+			     const struct block *,
+			     const domain_enum,
+			     enum language,
+			     struct field_of_this_result *);
 
 /* Same as lookup_symbol_in_language, but using the current language.  */
 
-extern struct symbol *lookup_symbol (const char *, const struct block *,
-				     const domain_enum,
-				     struct field_of_this_result *);
+extern struct block_symbol lookup_symbol (const char *,
+					  const struct block *,
+					  const domain_enum,
+					  struct field_of_this_result *);
 
 /* A default version of lookup_symbol_nonlocal for use by languages
    that can't think of anything better to do.
    This implements the C lookup rules.  */
 
-extern struct symbol *
+extern struct block_symbol
   basic_lookup_symbol_nonlocal (const struct language_defn *langdef,
 				const char *,
 				const struct block *,
@@ -1221,19 +1273,18 @@ extern struct symbol *
 
 /* Lookup a symbol in the static block associated to BLOCK, if there
    is one; do nothing if BLOCK is NULL or a global block.
-   Upon success sets BLOCK_FOUND and fixes up the symbol's section
-   if necessary.  */
+   Upon success fixes up the symbol's section if necessary.  */
 
-extern struct symbol *lookup_symbol_in_static_block (const char *name,
-						     const struct block *block,
-						     const domain_enum domain);
+extern struct block_symbol
+  lookup_symbol_in_static_block (const char *name,
+				 const struct block *block,
+				 const domain_enum domain);
 
 /* Search all static file-level symbols for NAME from DOMAIN.
-   Upon success sets BLOCK_FOUND and fixes up the symbol's section
-   if necessary.  */
+   Upon success fixes up the symbol's section if necessary.  */
 
-extern struct symbol *lookup_static_symbol (const char *name,
-					    const domain_enum domain);
+extern struct block_symbol lookup_static_symbol (const char *name,
+						 const domain_enum domain);
 
 /* Lookup a symbol in all files' global blocks.
 
@@ -1244,26 +1295,27 @@ extern struct symbol *lookup_static_symbol (const char *name,
       if the target requires it.
       See gdbarch_iterate_over_objfiles_in_search_order.
 
-   Upon success sets BLOCK_FOUND and fixes up the symbol's section
-   if necessary.  */
+   Upon success fixes up the symbol's section if necessary.  */
 
-extern struct symbol *lookup_global_symbol (const char *name,
-					    const struct block *block,
-					    const domain_enum domain);
+extern struct block_symbol
+  lookup_global_symbol (const char *name,
+			const struct block *block,
+			const domain_enum domain);
 
 /* Lookup a symbol in block BLOCK.
-   Upon success sets BLOCK_FOUND and fixes up the symbol's section
-   if necessary.  */
+   Upon success fixes up the symbol's section if necessary.  */
 
-extern struct symbol *lookup_symbol_in_block (const char *name,
-					      const struct block *block,
-					      const domain_enum domain);
+extern struct symbol *
+  lookup_symbol_in_block (const char *name,
+			  const struct block *block,
+			  const domain_enum domain);
 
 /* Look up the `this' symbol for LANG in BLOCK.  Return the symbol if
    found, or NULL if not found.  */
 
-extern struct symbol *lookup_language_this (const struct language_defn *lang,
-					    const struct block *block);
+extern struct block_symbol
+  lookup_language_this (const struct language_defn *lang,
+			const struct block *block);
 
 /* Lookup a [struct, union, enum] by name, within a specified block.  */
 
@@ -1427,7 +1479,7 @@ extern int identify_source_line (struct symtab *, int, int, CORE_ADDR);
 
 /* Flags passed as 4th argument to print_source_lines.  */
 
-enum print_source_lines_flags
+enum print_source_lines_flag
   {
     /* Do not print an error message.  */
     PRINT_SOURCE_LINES_NOERROR = (1 << 0),
@@ -1435,9 +1487,10 @@ enum print_source_lines_flags
     /* Print the filename in front of the source lines.  */
     PRINT_SOURCE_LINES_FILENAME = (1 << 1)
   };
+DEF_ENUM_FLAGS_TYPE (enum print_source_lines_flag, print_source_lines_flags);
 
 extern void print_source_lines (struct symtab *, int, int,
-				enum print_source_lines_flags);
+				print_source_lines_flags);
 
 extern void forget_cached_source_info_for_objfile (struct objfile *);
 extern void forget_cached_source_info (void);
@@ -1524,10 +1577,9 @@ extern enum language main_language (void);
 /* Lookup symbol NAME from DOMAIN in MAIN_OBJFILE's global blocks.
    This searches MAIN_OBJFILE as well as any associated separate debug info
    objfiles of MAIN_OBJFILE.
-   Upon success sets BLOCK_FOUND and fixes up the symbol's section
-   if necessary.  */
+   Upon success fixes up the symbol's section if necessary.  */
 
-extern struct symbol *
+extern struct block_symbol
   lookup_global_symbol_from_objfile (struct objfile *main_objfile,
 				     const char *name,
 				     const domain_enum domain);
@@ -1552,6 +1604,9 @@ extern int basenames_may_differ;
 int compare_filenames_for_search (const char *filename,
 				  const char *search_name);
 
+int compare_glob_filenames_for_search (const char *filename,
+				       const char *search_name);
+
 int iterate_over_some_symtabs (const char *name,
 			       const char *real_path,
 			       int (*callback) (struct symtab *symtab,
@@ -1564,8 +1619,6 @@ void iterate_over_symtabs (const char *name,
 			   int (*callback) (struct symtab *symtab,
 					    void *data),
 			   void *data);
-
-DEF_VEC_I (CORE_ADDR);
 
 VEC (CORE_ADDR) *find_pcs_for_symtab_line (struct symtab *symtab, int line,
 					   struct linetable_entry **best_entry);

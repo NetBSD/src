@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Copyright (C) 2007-2015 Free Software Foundation, Inc.
+<!-- Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -10,6 +10,7 @@
 
 <!DOCTYPE target SYSTEM "gdb-target.dtd">
 <target>
+<architecture>arm</architecture>
 <feature name="org.gnu.gdb.arm.m-profile">
   <reg name="r0" bitsize="32"/>
   <reg name="r1" bitsize="32"/>

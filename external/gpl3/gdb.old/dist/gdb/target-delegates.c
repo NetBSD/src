@@ -293,6 +293,114 @@ debug_remove_breakpoint (struct target_ops *self, struct gdbarch *arg1, struct b
 }
 
 static int
+delegate_stopped_by_sw_breakpoint (struct target_ops *self)
+{
+  self = self->beneath;
+  return self->to_stopped_by_sw_breakpoint (self);
+}
+
+static int
+tdefault_stopped_by_sw_breakpoint (struct target_ops *self)
+{
+  return 0;
+}
+
+static int
+debug_stopped_by_sw_breakpoint (struct target_ops *self)
+{
+  int result;
+  fprintf_unfiltered (gdb_stdlog, "-> %s->to_stopped_by_sw_breakpoint (...)\n", debug_target.to_shortname);
+  result = debug_target.to_stopped_by_sw_breakpoint (&debug_target);
+  fprintf_unfiltered (gdb_stdlog, "<- %s->to_stopped_by_sw_breakpoint (", debug_target.to_shortname);
+  target_debug_print_struct_target_ops_p (&debug_target);
+  fputs_unfiltered (") = ", gdb_stdlog);
+  target_debug_print_int (result);
+  fputs_unfiltered ("\n", gdb_stdlog);
+  return result;
+}
+
+static int
+delegate_supports_stopped_by_sw_breakpoint (struct target_ops *self)
+{
+  self = self->beneath;
+  return self->to_supports_stopped_by_sw_breakpoint (self);
+}
+
+static int
+tdefault_supports_stopped_by_sw_breakpoint (struct target_ops *self)
+{
+  return 0;
+}
+
+static int
+debug_supports_stopped_by_sw_breakpoint (struct target_ops *self)
+{
+  int result;
+  fprintf_unfiltered (gdb_stdlog, "-> %s->to_supports_stopped_by_sw_breakpoint (...)\n", debug_target.to_shortname);
+  result = debug_target.to_supports_stopped_by_sw_breakpoint (&debug_target);
+  fprintf_unfiltered (gdb_stdlog, "<- %s->to_supports_stopped_by_sw_breakpoint (", debug_target.to_shortname);
+  target_debug_print_struct_target_ops_p (&debug_target);
+  fputs_unfiltered (") = ", gdb_stdlog);
+  target_debug_print_int (result);
+  fputs_unfiltered ("\n", gdb_stdlog);
+  return result;
+}
+
+static int
+delegate_stopped_by_hw_breakpoint (struct target_ops *self)
+{
+  self = self->beneath;
+  return self->to_stopped_by_hw_breakpoint (self);
+}
+
+static int
+tdefault_stopped_by_hw_breakpoint (struct target_ops *self)
+{
+  return 0;
+}
+
+static int
+debug_stopped_by_hw_breakpoint (struct target_ops *self)
+{
+  int result;
+  fprintf_unfiltered (gdb_stdlog, "-> %s->to_stopped_by_hw_breakpoint (...)\n", debug_target.to_shortname);
+  result = debug_target.to_stopped_by_hw_breakpoint (&debug_target);
+  fprintf_unfiltered (gdb_stdlog, "<- %s->to_stopped_by_hw_breakpoint (", debug_target.to_shortname);
+  target_debug_print_struct_target_ops_p (&debug_target);
+  fputs_unfiltered (") = ", gdb_stdlog);
+  target_debug_print_int (result);
+  fputs_unfiltered ("\n", gdb_stdlog);
+  return result;
+}
+
+static int
+delegate_supports_stopped_by_hw_breakpoint (struct target_ops *self)
+{
+  self = self->beneath;
+  return self->to_supports_stopped_by_hw_breakpoint (self);
+}
+
+static int
+tdefault_supports_stopped_by_hw_breakpoint (struct target_ops *self)
+{
+  return 0;
+}
+
+static int
+debug_supports_stopped_by_hw_breakpoint (struct target_ops *self)
+{
+  int result;
+  fprintf_unfiltered (gdb_stdlog, "-> %s->to_supports_stopped_by_hw_breakpoint (...)\n", debug_target.to_shortname);
+  result = debug_target.to_supports_stopped_by_hw_breakpoint (&debug_target);
+  fprintf_unfiltered (gdb_stdlog, "<- %s->to_supports_stopped_by_hw_breakpoint (", debug_target.to_shortname);
+  target_debug_print_struct_target_ops_p (&debug_target);
+  fputs_unfiltered (") = ", gdb_stdlog);
+  target_debug_print_int (result);
+  fputs_unfiltered ("\n", gdb_stdlog);
+  return result;
+}
+
+static int
 delegate_can_use_hw_breakpoint (struct target_ops *self, int arg1, int arg2, int arg3)
 {
   self = self->beneath;
@@ -1429,6 +1537,28 @@ debug_stop (struct target_ops *self, ptid_t arg1)
 }
 
 static void
+delegate_check_pending_interrupt (struct target_ops *self)
+{
+  self = self->beneath;
+  self->to_check_pending_interrupt (self);
+}
+
+static void
+tdefault_check_pending_interrupt (struct target_ops *self)
+{
+}
+
+static void
+debug_check_pending_interrupt (struct target_ops *self)
+{
+  fprintf_unfiltered (gdb_stdlog, "-> %s->to_check_pending_interrupt (...)\n", debug_target.to_shortname);
+  debug_target.to_check_pending_interrupt (&debug_target);
+  fprintf_unfiltered (gdb_stdlog, "<- %s->to_check_pending_interrupt (", debug_target.to_shortname);
+  target_debug_print_struct_target_ops_p (&debug_target);
+  fputs_unfiltered (")\n", gdb_stdlog);
+}
+
+static void
 delegate_rcmd (struct target_ops *self, const char *arg1, struct ui_file *arg2)
 {
   self = self->beneath;
@@ -1584,29 +1714,27 @@ debug_is_async_p (struct target_ops *self)
 }
 
 static void
-delegate_async (struct target_ops *self, async_callback_ftype *arg1, void *arg2)
+delegate_async (struct target_ops *self, int arg1)
 {
   self = self->beneath;
-  self->to_async (self, arg1, arg2);
+  self->to_async (self, arg1);
 }
 
 static void
-tdefault_async (struct target_ops *self, async_callback_ftype *arg1, void *arg2)
+tdefault_async (struct target_ops *self, int arg1)
 {
   tcomplain ();
 }
 
 static void
-debug_async (struct target_ops *self, async_callback_ftype *arg1, void *arg2)
+debug_async (struct target_ops *self, int arg1)
 {
   fprintf_unfiltered (gdb_stdlog, "-> %s->to_async (...)\n", debug_target.to_shortname);
-  debug_target.to_async (&debug_target, arg1, arg2);
+  debug_target.to_async (&debug_target, arg1);
   fprintf_unfiltered (gdb_stdlog, "<- %s->to_async (", debug_target.to_shortname);
   target_debug_print_struct_target_ops_p (&debug_target);
   fputs_unfiltered (", ", gdb_stdlog);
-  target_debug_print_async_callback_ftype_p (arg1);
-  fputs_unfiltered (", ", gdb_stdlog);
-  target_debug_print_void_p (arg2);
+  target_debug_print_int (arg1);
   fputs_unfiltered (")\n", gdb_stdlog);
 }
 
@@ -2233,6 +2361,33 @@ debug_thread_address_space (struct target_ops *self, ptid_t arg1)
   target_debug_print_ptid_t (arg1);
   fputs_unfiltered (") = ", gdb_stdlog);
   target_debug_print_struct_address_space_p (result);
+  fputs_unfiltered ("\n", gdb_stdlog);
+  return result;
+}
+
+static int
+delegate_filesystem_is_local (struct target_ops *self)
+{
+  self = self->beneath;
+  return self->to_filesystem_is_local (self);
+}
+
+static int
+tdefault_filesystem_is_local (struct target_ops *self)
+{
+  return 1;
+}
+
+static int
+debug_filesystem_is_local (struct target_ops *self)
+{
+  int result;
+  fprintf_unfiltered (gdb_stdlog, "-> %s->to_filesystem_is_local (...)\n", debug_target.to_shortname);
+  result = debug_target.to_filesystem_is_local (&debug_target);
+  fprintf_unfiltered (gdb_stdlog, "<- %s->to_filesystem_is_local (", debug_target.to_shortname);
+  target_debug_print_struct_target_ops_p (&debug_target);
+  fputs_unfiltered (") = ", gdb_stdlog);
+  target_debug_print_int (result);
   fputs_unfiltered ("\n", gdb_stdlog);
   return result;
 }
@@ -3085,26 +3240,28 @@ debug_can_use_agent (struct target_ops *self)
 }
 
 static int
-delegate_supports_btrace (struct target_ops *self)
+delegate_supports_btrace (struct target_ops *self, enum btrace_format arg1)
 {
   self = self->beneath;
-  return self->to_supports_btrace (self);
+  return self->to_supports_btrace (self, arg1);
 }
 
 static int
-tdefault_supports_btrace (struct target_ops *self)
+tdefault_supports_btrace (struct target_ops *self, enum btrace_format arg1)
 {
   return 0;
 }
 
 static int
-debug_supports_btrace (struct target_ops *self)
+debug_supports_btrace (struct target_ops *self, enum btrace_format arg1)
 {
   int result;
   fprintf_unfiltered (gdb_stdlog, "-> %s->to_supports_btrace (...)\n", debug_target.to_shortname);
-  result = debug_target.to_supports_btrace (&debug_target);
+  result = debug_target.to_supports_btrace (&debug_target, arg1);
   fprintf_unfiltered (gdb_stdlog, "<- %s->to_supports_btrace (", debug_target.to_shortname);
   target_debug_print_struct_target_ops_p (&debug_target);
+  fputs_unfiltered (", ", gdb_stdlog);
+  target_debug_print_enum_btrace_format (arg1);
   fputs_unfiltered (") = ", gdb_stdlog);
   target_debug_print_int (result);
   fputs_unfiltered ("\n", gdb_stdlog);
@@ -3112,28 +3269,30 @@ debug_supports_btrace (struct target_ops *self)
 }
 
 static struct btrace_target_info *
-delegate_enable_btrace (struct target_ops *self, ptid_t arg1)
+delegate_enable_btrace (struct target_ops *self, ptid_t arg1, const struct btrace_config *arg2)
 {
   self = self->beneath;
-  return self->to_enable_btrace (self, arg1);
+  return self->to_enable_btrace (self, arg1, arg2);
 }
 
 static struct btrace_target_info *
-tdefault_enable_btrace (struct target_ops *self, ptid_t arg1)
+tdefault_enable_btrace (struct target_ops *self, ptid_t arg1, const struct btrace_config *arg2)
 {
   tcomplain ();
 }
 
 static struct btrace_target_info *
-debug_enable_btrace (struct target_ops *self, ptid_t arg1)
+debug_enable_btrace (struct target_ops *self, ptid_t arg1, const struct btrace_config *arg2)
 {
   struct btrace_target_info * result;
   fprintf_unfiltered (gdb_stdlog, "-> %s->to_enable_btrace (...)\n", debug_target.to_shortname);
-  result = debug_target.to_enable_btrace (&debug_target, arg1);
+  result = debug_target.to_enable_btrace (&debug_target, arg1, arg2);
   fprintf_unfiltered (gdb_stdlog, "<- %s->to_enable_btrace (", debug_target.to_shortname);
   target_debug_print_struct_target_ops_p (&debug_target);
   fputs_unfiltered (", ", gdb_stdlog);
   target_debug_print_ptid_t (arg1);
+  fputs_unfiltered (", ", gdb_stdlog);
+  target_debug_print_const_struct_btrace_config_p (arg2);
   fputs_unfiltered (") = ", gdb_stdlog);
   target_debug_print_struct_btrace_target_info_p (result);
   fputs_unfiltered ("\n", gdb_stdlog);
@@ -3191,20 +3350,20 @@ debug_teardown_btrace (struct target_ops *self, struct btrace_target_info *arg1)
 }
 
 static enum btrace_error
-delegate_read_btrace (struct target_ops *self, VEC (btrace_block_s) **arg1, struct btrace_target_info *arg2, enum btrace_read_type arg3)
+delegate_read_btrace (struct target_ops *self, struct btrace_data *arg1, struct btrace_target_info *arg2, enum btrace_read_type arg3)
 {
   self = self->beneath;
   return self->to_read_btrace (self, arg1, arg2, arg3);
 }
 
 static enum btrace_error
-tdefault_read_btrace (struct target_ops *self, VEC (btrace_block_s) **arg1, struct btrace_target_info *arg2, enum btrace_read_type arg3)
+tdefault_read_btrace (struct target_ops *self, struct btrace_data *arg1, struct btrace_target_info *arg2, enum btrace_read_type arg3)
 {
   tcomplain ();
 }
 
 static enum btrace_error
-debug_read_btrace (struct target_ops *self, VEC (btrace_block_s) **arg1, struct btrace_target_info *arg2, enum btrace_read_type arg3)
+debug_read_btrace (struct target_ops *self, struct btrace_data *arg1, struct btrace_target_info *arg2, enum btrace_read_type arg3)
 {
   enum btrace_error result;
   fprintf_unfiltered (gdb_stdlog, "-> %s->to_read_btrace (...)\n", debug_target.to_shortname);
@@ -3212,13 +3371,42 @@ debug_read_btrace (struct target_ops *self, VEC (btrace_block_s) **arg1, struct 
   fprintf_unfiltered (gdb_stdlog, "<- %s->to_read_btrace (", debug_target.to_shortname);
   target_debug_print_struct_target_ops_p (&debug_target);
   fputs_unfiltered (", ", gdb_stdlog);
-  target_debug_print_VEC__btrace_block_s__pp (arg1);
+  target_debug_print_struct_btrace_data_p (arg1);
   fputs_unfiltered (", ", gdb_stdlog);
   target_debug_print_struct_btrace_target_info_p (arg2);
   fputs_unfiltered (", ", gdb_stdlog);
   target_debug_print_enum_btrace_read_type (arg3);
   fputs_unfiltered (") = ", gdb_stdlog);
   target_debug_print_enum_btrace_error (result);
+  fputs_unfiltered ("\n", gdb_stdlog);
+  return result;
+}
+
+static const struct btrace_config *
+delegate_btrace_conf (struct target_ops *self, const struct btrace_target_info *arg1)
+{
+  self = self->beneath;
+  return self->to_btrace_conf (self, arg1);
+}
+
+static const struct btrace_config *
+tdefault_btrace_conf (struct target_ops *self, const struct btrace_target_info *arg1)
+{
+  return NULL;
+}
+
+static const struct btrace_config *
+debug_btrace_conf (struct target_ops *self, const struct btrace_target_info *arg1)
+{
+  const struct btrace_config * result;
+  fprintf_unfiltered (gdb_stdlog, "-> %s->to_btrace_conf (...)\n", debug_target.to_shortname);
+  result = debug_target.to_btrace_conf (&debug_target, arg1);
+  fprintf_unfiltered (gdb_stdlog, "<- %s->to_btrace_conf (", debug_target.to_shortname);
+  target_debug_print_struct_target_ops_p (&debug_target);
+  fputs_unfiltered (", ", gdb_stdlog);
+  target_debug_print_const_struct_btrace_target_info_p (arg1);
+  fputs_unfiltered (") = ", gdb_stdlog);
+  target_debug_print_const_struct_btrace_config_p (result);
   fputs_unfiltered ("\n", gdb_stdlog);
   return result;
 }
@@ -3664,29 +3852,6 @@ debug_get_tailcall_unwinder (struct target_ops *self)
   return result;
 }
 
-static CORE_ADDR
-delegate_decr_pc_after_break (struct target_ops *self, struct gdbarch *arg1)
-{
-  self = self->beneath;
-  return self->to_decr_pc_after_break (self, arg1);
-}
-
-static CORE_ADDR
-debug_decr_pc_after_break (struct target_ops *self, struct gdbarch *arg1)
-{
-  CORE_ADDR result;
-  fprintf_unfiltered (gdb_stdlog, "-> %s->to_decr_pc_after_break (...)\n", debug_target.to_shortname);
-  result = debug_target.to_decr_pc_after_break (&debug_target, arg1);
-  fprintf_unfiltered (gdb_stdlog, "<- %s->to_decr_pc_after_break (", debug_target.to_shortname);
-  target_debug_print_struct_target_ops_p (&debug_target);
-  fputs_unfiltered (", ", gdb_stdlog);
-  target_debug_print_struct_gdbarch_p (arg1);
-  fputs_unfiltered (") = ", gdb_stdlog);
-  target_debug_print_CORE_ADDR (result);
-  fputs_unfiltered ("\n", gdb_stdlog);
-  return result;
-}
-
 static void
 delegate_prepare_to_generate_core (struct target_ops *self)
 {
@@ -3756,6 +3921,14 @@ install_delegators (struct target_ops *ops)
     ops->to_insert_breakpoint = delegate_insert_breakpoint;
   if (ops->to_remove_breakpoint == NULL)
     ops->to_remove_breakpoint = delegate_remove_breakpoint;
+  if (ops->to_stopped_by_sw_breakpoint == NULL)
+    ops->to_stopped_by_sw_breakpoint = delegate_stopped_by_sw_breakpoint;
+  if (ops->to_supports_stopped_by_sw_breakpoint == NULL)
+    ops->to_supports_stopped_by_sw_breakpoint = delegate_supports_stopped_by_sw_breakpoint;
+  if (ops->to_stopped_by_hw_breakpoint == NULL)
+    ops->to_stopped_by_hw_breakpoint = delegate_stopped_by_hw_breakpoint;
+  if (ops->to_supports_stopped_by_hw_breakpoint == NULL)
+    ops->to_supports_stopped_by_hw_breakpoint = delegate_supports_stopped_by_hw_breakpoint;
   if (ops->to_can_use_hw_breakpoint == NULL)
     ops->to_can_use_hw_breakpoint = delegate_can_use_hw_breakpoint;
   if (ops->to_ranged_break_num_registers == NULL)
@@ -3838,6 +4011,8 @@ install_delegators (struct target_ops *ops)
     ops->to_thread_name = delegate_thread_name;
   if (ops->to_stop == NULL)
     ops->to_stop = delegate_stop;
+  if (ops->to_check_pending_interrupt == NULL)
+    ops->to_check_pending_interrupt = delegate_check_pending_interrupt;
   if (ops->to_rcmd == NULL)
     ops->to_rcmd = delegate_rcmd;
   if (ops->to_pid_to_exec_file == NULL)
@@ -3898,6 +4073,8 @@ install_delegators (struct target_ops *ops)
     ops->to_thread_architecture = delegate_thread_architecture;
   if (ops->to_thread_address_space == NULL)
     ops->to_thread_address_space = delegate_thread_address_space;
+  if (ops->to_filesystem_is_local == NULL)
+    ops->to_filesystem_is_local = delegate_filesystem_is_local;
   if (ops->to_trace_init == NULL)
     ops->to_trace_init = delegate_trace_init;
   if (ops->to_download_tracepoint == NULL)
@@ -3970,6 +4147,8 @@ install_delegators (struct target_ops *ops)
     ops->to_teardown_btrace = delegate_teardown_btrace;
   if (ops->to_read_btrace == NULL)
     ops->to_read_btrace = delegate_read_btrace;
+  if (ops->to_btrace_conf == NULL)
+    ops->to_btrace_conf = delegate_btrace_conf;
   if (ops->to_stop_recording == NULL)
     ops->to_stop_recording = delegate_stop_recording;
   if (ops->to_info_record == NULL)
@@ -4004,8 +4183,6 @@ install_delegators (struct target_ops *ops)
     ops->to_get_unwinder = delegate_get_unwinder;
   if (ops->to_get_tailcall_unwinder == NULL)
     ops->to_get_tailcall_unwinder = delegate_get_tailcall_unwinder;
-  if (ops->to_decr_pc_after_break == NULL)
-    ops->to_decr_pc_after_break = delegate_decr_pc_after_break;
   if (ops->to_prepare_to_generate_core == NULL)
     ops->to_prepare_to_generate_core = delegate_prepare_to_generate_core;
   if (ops->to_done_generating_core == NULL)
@@ -4026,6 +4203,10 @@ install_dummy_methods (struct target_ops *ops)
   ops->to_files_info = tdefault_files_info;
   ops->to_insert_breakpoint = memory_insert_breakpoint;
   ops->to_remove_breakpoint = memory_remove_breakpoint;
+  ops->to_stopped_by_sw_breakpoint = tdefault_stopped_by_sw_breakpoint;
+  ops->to_supports_stopped_by_sw_breakpoint = tdefault_supports_stopped_by_sw_breakpoint;
+  ops->to_stopped_by_hw_breakpoint = tdefault_stopped_by_hw_breakpoint;
+  ops->to_supports_stopped_by_hw_breakpoint = tdefault_supports_stopped_by_hw_breakpoint;
   ops->to_can_use_hw_breakpoint = tdefault_can_use_hw_breakpoint;
   ops->to_ranged_break_num_registers = tdefault_ranged_break_num_registers;
   ops->to_insert_hw_breakpoint = tdefault_insert_hw_breakpoint;
@@ -4067,6 +4248,7 @@ install_dummy_methods (struct target_ops *ops)
   ops->to_extra_thread_info = tdefault_extra_thread_info;
   ops->to_thread_name = tdefault_thread_name;
   ops->to_stop = tdefault_stop;
+  ops->to_check_pending_interrupt = tdefault_check_pending_interrupt;
   ops->to_rcmd = default_rcmd;
   ops->to_pid_to_exec_file = tdefault_pid_to_exec_file;
   ops->to_log_command = tdefault_log_command;
@@ -4097,6 +4279,7 @@ install_dummy_methods (struct target_ops *ops)
   ops->to_can_run_breakpoint_commands = tdefault_can_run_breakpoint_commands;
   ops->to_thread_architecture = default_thread_architecture;
   ops->to_thread_address_space = default_thread_address_space;
+  ops->to_filesystem_is_local = tdefault_filesystem_is_local;
   ops->to_trace_init = tdefault_trace_init;
   ops->to_download_tracepoint = tdefault_download_tracepoint;
   ops->to_can_download_tracepoint = tdefault_can_download_tracepoint;
@@ -4133,6 +4316,7 @@ install_dummy_methods (struct target_ops *ops)
   ops->to_disable_btrace = tdefault_disable_btrace;
   ops->to_teardown_btrace = tdefault_teardown_btrace;
   ops->to_read_btrace = tdefault_read_btrace;
+  ops->to_btrace_conf = tdefault_btrace_conf;
   ops->to_stop_recording = tdefault_stop_recording;
   ops->to_info_record = tdefault_info_record;
   ops->to_save_record = tdefault_save_record;
@@ -4150,7 +4334,6 @@ install_dummy_methods (struct target_ops *ops)
   ops->to_augmented_libraries_svr4_read = tdefault_augmented_libraries_svr4_read;
   ops->to_get_unwinder = tdefault_get_unwinder;
   ops->to_get_tailcall_unwinder = tdefault_get_tailcall_unwinder;
-  ops->to_decr_pc_after_break = default_target_decr_pc_after_break;
   ops->to_prepare_to_generate_core = tdefault_prepare_to_generate_core;
   ops->to_done_generating_core = tdefault_done_generating_core;
 }
@@ -4169,6 +4352,10 @@ init_debug_target (struct target_ops *ops)
   ops->to_files_info = debug_files_info;
   ops->to_insert_breakpoint = debug_insert_breakpoint;
   ops->to_remove_breakpoint = debug_remove_breakpoint;
+  ops->to_stopped_by_sw_breakpoint = debug_stopped_by_sw_breakpoint;
+  ops->to_supports_stopped_by_sw_breakpoint = debug_supports_stopped_by_sw_breakpoint;
+  ops->to_stopped_by_hw_breakpoint = debug_stopped_by_hw_breakpoint;
+  ops->to_supports_stopped_by_hw_breakpoint = debug_supports_stopped_by_hw_breakpoint;
   ops->to_can_use_hw_breakpoint = debug_can_use_hw_breakpoint;
   ops->to_ranged_break_num_registers = debug_ranged_break_num_registers;
   ops->to_insert_hw_breakpoint = debug_insert_hw_breakpoint;
@@ -4210,6 +4397,7 @@ init_debug_target (struct target_ops *ops)
   ops->to_extra_thread_info = debug_extra_thread_info;
   ops->to_thread_name = debug_thread_name;
   ops->to_stop = debug_stop;
+  ops->to_check_pending_interrupt = debug_check_pending_interrupt;
   ops->to_rcmd = debug_rcmd;
   ops->to_pid_to_exec_file = debug_pid_to_exec_file;
   ops->to_log_command = debug_log_command;
@@ -4240,6 +4428,7 @@ init_debug_target (struct target_ops *ops)
   ops->to_can_run_breakpoint_commands = debug_can_run_breakpoint_commands;
   ops->to_thread_architecture = debug_thread_architecture;
   ops->to_thread_address_space = debug_thread_address_space;
+  ops->to_filesystem_is_local = debug_filesystem_is_local;
   ops->to_trace_init = debug_trace_init;
   ops->to_download_tracepoint = debug_download_tracepoint;
   ops->to_can_download_tracepoint = debug_can_download_tracepoint;
@@ -4276,6 +4465,7 @@ init_debug_target (struct target_ops *ops)
   ops->to_disable_btrace = debug_disable_btrace;
   ops->to_teardown_btrace = debug_teardown_btrace;
   ops->to_read_btrace = debug_read_btrace;
+  ops->to_btrace_conf = debug_btrace_conf;
   ops->to_stop_recording = debug_stop_recording;
   ops->to_info_record = debug_info_record;
   ops->to_save_record = debug_save_record;
@@ -4293,7 +4483,6 @@ init_debug_target (struct target_ops *ops)
   ops->to_augmented_libraries_svr4_read = debug_augmented_libraries_svr4_read;
   ops->to_get_unwinder = debug_get_unwinder;
   ops->to_get_tailcall_unwinder = debug_get_tailcall_unwinder;
-  ops->to_decr_pc_after_break = debug_decr_pc_after_break;
   ops->to_prepare_to_generate_core = debug_prepare_to_generate_core;
   ops->to_done_generating_core = debug_done_generating_core;
 }

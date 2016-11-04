@@ -1,5 +1,4 @@
-# Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001, 2003, 2004, 2006, 2007,
-# 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+# Copyright (C) 1993-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -37,13 +36,19 @@ proc is_elf_format {} {
 	 && ![istarget tic6x*-*-uclinux*]
 	 && ![istarget *-*-irix5*]
 	 && ![istarget *-*-irix6*]
+	 && ![istarget *-*-freebsd*]
 	 && ![istarget *-*-netbsd*]
 	 && ![istarget *-*-openbsd*]
 	 && ![istarget *-*-solaris2*] } {
 	return 0
     }
 
+    if { [istarget i?86-*-freebsd\[12\].*] } {
+        return 0
+    }
+
     if { [istarget *-*-linux*aout*]
+	 || [istarget *-*-linux*ecoff*]
 	 || [istarget *-*-linux*oldld*]
 	 || [istarget h8500-*-rtems*]
 	 || [istarget i960-*-rtems*]
@@ -92,7 +97,7 @@ proc is_aout_format {} {
 	 || [istarget arm-*-netbsd*]
 	 || [istarget arm-*-openbsd*]
 	 || [istarget arm-*-riscix*]
-	 || [istarget i?86-*-freebsd\[12\]*]
+	 || [istarget i?86-*-freebsd\[12\].*]
 	 || [istarget i?86-*-netbsd*]
 	 || [istarget i?86-*-openbsd\[0-2\]*]
 	 || [istarget i?86-*-openbsd3.\[0-2\]*]
@@ -150,31 +155,6 @@ proc is_elf64 { binary_file } {
     }
 
     return 0
-}
-
-# True if the build supports zlib compression.
-proc is_zlib_supported {} {
-
-    # This replicates the AS selection logic of dejagnu's target_assemble.
-    global AS_FOR_TARGET
-    if [info exists AS_FOR_TARGET] {
-	set AS $AS_FOR_TARGET
-    } else {
-	if {![board_info target exists assembler]} {
-	    set AS [find_gas]
-	} else {
-	    set AS [board_info target assembler]
-	}
-    }
-
-    set as_output [remote_exec host "$AS --help"]
-
-    set have_zlib 0
-    if {[string first "--compress-debug-sections" $as_output] >= 0} {
-	set have_zlib 1
-    }
-
-    return $have_zlib
 }
 
 # Compare two files line-by-line.  FILE_1 is the actual output and FILE_2

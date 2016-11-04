@@ -1,6 +1,6 @@
 /* gdb commands implemented in Python
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -452,7 +452,7 @@ gdbpy_parse_command_name (const char *name,
 		   || name[i - 1] == '_');
        --i)
     ;
-  result = xmalloc (lastchar - i + 2);
+  result = (char *) xmalloc (lastchar - i + 2);
   memcpy (result, &name[i], lastchar - i + 1);
   result[lastchar - i + 1] = '\0';
 
@@ -465,7 +465,7 @@ gdbpy_parse_command_name (const char *name,
       return result;
     }
 
-  prefix_text = xmalloc (i + 2);
+  prefix_text = (char *) xmalloc (i + 2);
   memcpy (prefix_text, name, i + 1);
   prefix_text[i + 1] = '\0';
 
@@ -574,7 +574,7 @@ cmdpy_init (PyObject *self, PyObject *args, PyObject *kw)
 	  int i, out;
 	
 	  /* Make a normalized form of the command name.  */
-	  pfx_name = xmalloc (strlen (name) + 2);
+	  pfx_name = (char *) xmalloc (strlen (name) + 2);
 	
 	  i = 0;
 	  out = 0;

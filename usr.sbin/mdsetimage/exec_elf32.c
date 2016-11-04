@@ -1,4 +1,4 @@
-/* $NetBSD: exec_elf32.c,v 1.12 2010/08/28 21:30:03 joerg Exp $ */
+/* $NetBSD: exec_elf32.c,v 1.12.30.1 2016/11/04 14:49:27 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_elf32.c,v 1.12 2010/08/28 21:30:03 joerg Exp $");
+__RCSID("$NetBSD: exec_elf32.c,v 1.12.30.1 2016/11/04 14:49:27 pgoyette Exp $");
 #endif /* not lint */
 
 #ifndef ELFSIZE
@@ -54,9 +54,7 @@ __RCSID("$NetBSD: exec_elf32.c,v 1.12 2010/08/28 21:30:03 joerg Exp $");
 #define	BAD			do { rv = -1; goto out; } while (0)
 
 int
-ELFNAMEEND(check)(mappedfile, mappedsize)
-	const char *mappedfile;
-	size_t mappedsize;
+ELFNAMEEND(check)(const char *mappedfile, size_t mappedsize)
 {
 	const Elf_Ehdr *ehdrp;
 	int rv;
@@ -83,10 +81,8 @@ out:
 }
 
 int
-ELFNAMEEND(findoff)(mappedfile, mappedsize, vmaddr, fileoffp)
-	const char *mappedfile;
-	size_t mappedsize, *fileoffp;
-	u_long vmaddr;
+ELFNAMEEND(findoff)(const char *mappedfile, size_t mappedsize, u_long vmaddr,
+    size_t *fileoffp, u_long text_addr)
 {
 	const Elf_Ehdr *ehdrp;
 	const Elf_Phdr *phdrp;

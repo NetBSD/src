@@ -50,7 +50,7 @@ gdb_continue_to_breakpoint "cont to $bp_location" ".*$srcfile2:$bp_location.*"
 set traced {}
 set testname "determine number of recorded instructions"
 gdb_test_multiple "info record" $testname {
-    -re "Active record target: record-btrace\r\nRecorded \(\[0-9\]*\) instructions in \(\[0-9\]*\) functions for thread 1 .*\\.\r\n$gdb_prompt $" {
+    -re "Active record target: record-btrace\r\n.*\r\nRecorded \(\[0-9\]*\) instructions in \(\[0-9\]*\) functions \\\(0 gaps\\\) for thread 1 .*\\.\r\n$gdb_prompt $" {
         set traced $expect_out(1,string)
         pass $testname
     }
@@ -65,37 +65,37 @@ if { $traced != 11 } {
 }
 
 # test that we see the expected instructions
-gdb_test "record instruction-history 3,7" [join [list \
+gdb_test "record instruction-history 3,7" [multi_line \
   "3\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
   "4\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tdec    %eax" \
   "5\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
   "6\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax" \
   "7\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r" \
-  ] "\r\n"]
+  ]
 
-gdb_test "record instruction-history /f 3,+5" [join [list \
+gdb_test "record instruction-history /f 3,+5" [multi_line \
   "3\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
   "4\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tdec    %eax" \
   "5\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
   "6\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax" \
   "7\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r" \
-  ] "\r\n"]
+  ]
 
-gdb_test "record instruction-history /p 7,-5" [join [list \
+gdb_test "record instruction-history /p 7,-5" [multi_line \
   "3\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
   "4\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tdec    %eax" \
   "5\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
   "6\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax" \
   "7\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r" \
-  ] "\r\n"]
+  ]
 
-gdb_test "record instruction-history /pf 3,7" [join [list \
+gdb_test "record instruction-history /pf 3,7" [multi_line \
   "3\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
   "4\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tdec    %eax" \
   "5\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
   "6\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax" \
   "7\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r" \
-  ] "\r\n"]
+  ]
 
 gdb_test "record instruction-history 3,3" "3\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r"
 

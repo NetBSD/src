@@ -386,7 +386,7 @@ Disassembly of section .text:
 0+0370 <[^>]*> sw	a1,4\(zero\)
 0+0374 <[^>]*> sh	a0,0\(zero\)
 0+0378 <[^>]*> sw	a0,0\(zero\)
-0+037c <[^>]*> swc0	\$4,0\(zero\)
+0+037c <[^>]*> swc0	c0_context,0\(zero\)
 0+0380 <[^>]*> swc1	\$f4,0\(zero\)
 0+0384 <[^>]*> swc2	\$4,0\(zero\)
 0+0388 <[^>]*> swc3	\$4,0\(zero\)

@@ -1,6 +1,25 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* common/bits-gen.c (main): Change BIG_ENDIAN to BFD_ENDIAN_BIG and
+	LITTLE_ENDIAN and BFD_ENDIAN_LITTLE.
+
+2015-11-24  Nick Clifton  <nickc@redhat.com>
+
+	* configure: Regenerate.
+	* sim/aarch64: New directory.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* lib/sim-defs.exp (slurp_options): Pull in global subdir/srcdir.
+	Replace $srcdir and $subdir in the read option.
+
 2015-04-13  Hans-Peter Nilsson  <hp@axis.com>
 
-	* sim-defs.exp (sim_init): Unset target ldscript here.
+	* lib/sim-defs.exp (sim_init): Unset target ldscript here.
 
 2015-03-30  Mike Frysinger  <vapier@gentoo.org>
 
@@ -91,7 +110,7 @@
 
 	* configure.in: Pass literal subdirectories to AC_CONFIG_SUBDIRS.
 	* configure: Re-generate.
-	
+
 	* fr30-elf, d30v-elf: Delete directory.
 
 2004-11-16  Hans-Peter Nilsson  <hp@axis.com>
@@ -125,11 +144,11 @@
 	test passes.
 
 2003-08-20  Michael Snyder  <msnyder@redhat.com>
-            On behalf of Dave Brolley
-  
+	    On behalf of Dave Brolley
+
 	* sim/frv: New testsuite.
 	* frv-elf: New testsuite.
-  
+
 2003-07-09  Michael Snyder  <msnyder@redhat.com>
 
 	* sim/sh: New directory.  Tests for Renesas sh family.
@@ -196,7 +215,7 @@ Wed Nov 18 10:50:19 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* common/bits-gen.c (main): Add BYTE_ORDER so that it matches
  	recent sim/common/sim-basics.h changes.
 	* common/Makefile.in: Update.
-	
+
 Fri Oct 30 00:37:31 1998  Felix Lee  <flee@cygnus.com>
 
 	* lib/sim-defs.exp (sim_run): download target program to remote
@@ -227,8 +246,8 @@ Mon Jun  1 18:54:22 1998  Frank Ch. Eigler  <fche@cygnus.com>
 
 Thu May 28 14:59:46 1998 Jillian Ye <jillian@cygnus.com>
 
-        * Makefile.in: Take RUNTEST out of FLAG_TO_PASS
-                       so that make check can be invoked recursively.
+	* Makefile.in: Take RUNTEST out of FLAG_TO_PASS
+	               so that make check can be invoked recursively.
 
 Thu May 14 11:48:35 1998  Doug Evans  <devans@canuck.cygnus.com>
 
@@ -240,8 +259,8 @@ Thu May 14 11:48:35 1998  Doug Evans  <devans@canuck.cygnus.com>
 Fri May  8 18:10:28 1998  Jillian Ye <jillian@cygnus.com>
 
 	* Makefile.in: Made "check" the target of two
-          dependencies (test1, test2) so that test2 get a chance to 
-          run even when test1 failed if "make -k check" is used.
+	  dependencies (test1, test2) so that test2 get a chance to
+	  run even when test1 failed if "make -k check" is used.
 
 Fri May  8 14:41:28 1998  Doug Evans  <devans@canuck.cygnus.com>
 

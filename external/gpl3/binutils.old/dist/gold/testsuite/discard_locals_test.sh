@@ -2,7 +2,7 @@
 
 # discard_locals_test.sh -- test that local symbols are discarded.
 
-# Copyright 2009 Free Software Foundation, Inc.
+# Copyright (C) 2009-2015 Free Software Foundation, Inc.
 # Written by Doug Kwan <dougkwan@google.com>
 
 # This file is part of gold.

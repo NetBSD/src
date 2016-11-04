@@ -471,6 +471,26 @@ struct bp_location
   struct symtab *symtab;
 };
 
+/* The possible return values for print_bpstat, print_it_normal,
+   print_it_done, print_it_noop.  */
+enum print_stop_action
+{
+  /* We printed nothing or we need to do some more analysis.  */
+  PRINT_UNKNOWN = -1,
+
+  /* We printed something, and we *do* desire that something to be
+     followed by a location.  */
+  PRINT_SRC_AND_LOC,
+
+  /* We printed something, and we do *not* desire that something to be
+     followed by a location.  */
+  PRINT_SRC_ONLY,
+
+  /* We already printed all we needed to print, don't print anything
+     else.  */
+  PRINT_NOTHING
+};
+
 /* This structure is a collection of function pointers that, if available,
    will be called instead of the performing the default action for this
    bptype.  */
@@ -805,6 +825,20 @@ struct watchpoint
   CORE_ADDR hw_wp_mask;
 };
 
+/* Given a function FUNC (struct breakpoint *B, void *DATA) and
+   USER_DATA, call FUNC for every known breakpoint passing USER_DATA
+   as argument.
+
+   If FUNC returns 1, the loop stops and the current
+   'struct breakpoint' being processed is returned.  If FUNC returns
+   zero, the loop continues.
+
+   This function returns either a 'struct breakpoint' pointer or NULL.
+   It was based on BFD's bfd_sections_find_if function.  */
+
+extern struct breakpoint *breakpoint_find_if
+  (int (*func) (struct breakpoint *b, void *d), void *user_data);
+
 /* Return true if BPT is either a software breakpoint or a hardware
    breakpoint.  */
 
@@ -966,26 +1000,6 @@ struct bpstat_what
     int is_longjmp;
   };
 
-/* The possible return values for print_bpstat, print_it_normal,
-   print_it_done, print_it_noop.  */
-enum print_stop_action
-  {
-    /* We printed nothing or we need to do some more analysis.  */
-    PRINT_UNKNOWN = -1,
-
-    /* We printed something, and we *do* desire that something to be
-       followed by a location.  */
-    PRINT_SRC_AND_LOC,
-
-    /* We printed something, and we do *not* desire that something to
-       be followed by a location.  */
-    PRINT_SRC_ONLY,
-
-    /* We already printed all we needed to print, don't print anything
-       else.  */
-    PRINT_NOTHING
-  };
-
 /* Tell what to do about this bpstat.  */
 struct bpstat_what bpstat_what (bpstat);
 
@@ -1116,6 +1130,11 @@ enum breakpoint_here
 
 
 /* Prototypes for breakpoint-related functions.  */
+
+/* Return 1 if there's a program/permanent breakpoint planted in
+   memory at ADDRESS, return 0 otherwise.  */
+
+extern int program_breakpoint_here_p (struct gdbarch *gdbarch, CORE_ADDR address);
 
 extern enum breakpoint_here breakpoint_here_p (struct address_space *, 
 					       CORE_ADDR);
@@ -1423,8 +1442,6 @@ extern void breakpoint_set_task (struct breakpoint *b, int task);
 /* Clear the "inserted" flag in all breakpoints.  */
 extern void mark_breakpoints_out (void);
 
-extern void make_breakpoint_permanent (struct breakpoint *);
-
 extern struct breakpoint *create_jit_event_breakpoint (struct gdbarch *,
                                                        CORE_ADDR);
 
@@ -1506,7 +1523,7 @@ extern int breakpoints_should_be_inserted_now (void);
 extern void breakpoint_retire_moribund (void);
 
 /* Set break condition of breakpoint B to EXP.  */
-extern void set_breakpoint_condition (struct breakpoint *b, char *exp,
+extern void set_breakpoint_condition (struct breakpoint *b, const char *exp,
 				      int from_tty);
 
 /* Checks if we are catching syscalls or not.

@@ -3,7 +3,7 @@
 	* Makefile.am: Add LM32 object files and dependencies.
 	* Makefile.in: Regenate.
 	* NEWS: Record that support for LM32 has been added.
-	* configure.tgt: Add LM32 targets.	 
+	* configure.tgt: Add LM32 targets.
 	* emulparams/elf32lm32.sh: New file.
 	* emulparams/elf32lm32fd.sh: New file.
 
@@ -95,7 +95,7 @@
 	(OPTION_DLL_ENABLE_RUNTIME_PSEUDO_RELOC_V1): New option.
 	(OPTION_DLL_ENABLE_RUNTIME_PSEUDO_RELOC_V2): New option.
 	(make_import_fixup): Use relocation size to read addend.
-	* emultempl/pe.em (..._before_parse): initialize 
+	* emultempl/pe.em (..._before_parse): initialize
 	pei386_runtime_pseudo_reloc by version 1.
 	(OPTION_DLL_ENABLE_RUNTIME_PSEUDO_RELOC_V1): New option.
 	(OPTION_DLL_ENABLE_RUNTIME_PSEUDO_RELOC_V2): New option.
@@ -105,7 +105,7 @@
 	(pe_create_import_fixup): Change addend to type bfd_vma.
 	Modify for the two pseudo_relocation variants.
 	(runtime_pseudp_reloc_v2_init): New static variable.
-	* pe-dll.h (pe_create_import_fixup): Change addend argument type 
+	* pe-dll.h (pe_create_import_fixup): Change addend argument type
 	to bfd_vma.
 	* pep-dll.h (pep_create_import_fixup): Likewise.
 	* NEWS: Add comment.
@@ -146,7 +146,7 @@
 
 2008-10-22  Alan Modra  <amodra@bigpond.net.au>
 
-	* scripttempl/elf.sc (NO_REL_RELOCS, NO_RELA_RELOCS, NON_ALLOC_DYN): 
+	* scripttempl/elf.sc (NO_REL_RELOCS, NO_RELA_RELOCS, NON_ALLOC_DYN):
 	Handle these defines.
 	* emulparams/criself.sh, * emulparams/crislinux.sh,
 	* emulparams/elf32am33lin.sh, * emulparams/elf32fr30.sh,
@@ -1091,6 +1091,12 @@
 
 For older changes see ChangeLog-2007
 
+Copyright (C) 2008 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

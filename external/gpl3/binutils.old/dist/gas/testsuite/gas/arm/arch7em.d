@@ -1,6 +1,7 @@
 # name: 32-bit Thumb DSP instructions
 # as: -march=armv7e-m
 # objdump: -dr --prefix-addresses --show-raw-insn
+#not-target: *-*-*coff *-*-pe *-*-wince *-*-*aout* *-*-netbsd *-*-riscix*
 
 .*: +file format .*arm.*
 
@@ -114,10 +115,10 @@ Disassembly of section .text:
 0[0-9a-f]+ <[^>]+> fb40 f000 	smusd	r0, r0, r0
 0[0-9a-f]+ <[^>]+> fb40 f010 	smusdx	r0, r0, r0
 0[0-9a-f]+ <[^>]+> fb70 f000 	usad8	r0, r0, r0
-0[0-9a-f]+ <[^>]+> f320 0000 	ssat16	r0, #0, r0
-0[0-9a-f]+ <[^>]+> f320 0900 	ssat16	r9, #0, r0
-0[0-9a-f]+ <[^>]+> f320 0009 	ssat16	r0, #9, r0
-0[0-9a-f]+ <[^>]+> f329 0000 	ssat16	r0, #0, r9
+0[0-9a-f]+ <[^>]+> f320 0000 	ssat16	r0, #1, r0
+0[0-9a-f]+ <[^>]+> f320 0900 	ssat16	r9, #1, r0
+0[0-9a-f]+ <[^>]+> f320 0009 	ssat16	r0, #10, r0
+0[0-9a-f]+ <[^>]+> f329 0000 	ssat16	r0, #1, r9
 0[0-9a-f]+ <[^>]+> f3a0 0000 	usat16	r0, #0, r0
 0[0-9a-f]+ <[^>]+> f3a0 0900 	usat16	r9, #0, r0
 0[0-9a-f]+ <[^>]+> f3a0 0009 	usat16	r0, #9, r0

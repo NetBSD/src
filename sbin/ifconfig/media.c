@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: media.c,v 1.6 2011/08/29 14:35:00 joerg Exp $");
+__RCSID("$NetBSD: media.c,v 1.6.24.1 2016/11/04 14:48:55 pgoyette Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -371,27 +371,27 @@ media_status(prop_dictionary_t env, prop_dictionary_t oenv)
 		return;
 	}
 
-	if (ifmr.ifm_count == 0) {
-		warnx("%s: no media types?", ifname);
-		return;
-	}
+	/* Interface link status is queried through SIOCGIFMEDIA.
+	 * Not all interfaces have actual media. */
+	if (ifmr.ifm_count != 0) {
+		media_list = (int *)malloc(ifmr.ifm_count * sizeof(int));
+		if (media_list == NULL)
+			err(EXIT_FAILURE, "malloc");
+		ifmr.ifm_ulist = media_list;
 
-	media_list = (int *)malloc(ifmr.ifm_count * sizeof(int));
-	if (media_list == NULL)
-		err(EXIT_FAILURE, "malloc");
-	ifmr.ifm_ulist = media_list;
+		if (prog_ioctl(s, SIOCGIFMEDIA, &ifmr) == -1)
+			err(EXIT_FAILURE, "SIOCGIFMEDIA");
 
-	if (prog_ioctl(s, SIOCGIFMEDIA, &ifmr) == -1)
-		err(EXIT_FAILURE, "SIOCGIFMEDIA");
-
-	printf("\tmedia: %s ", get_media_type_string(ifmr.ifm_current));
-	print_media_word(ifmr.ifm_current, " ");
-	if (ifmr.ifm_active != ifmr.ifm_current) {
-		printf(" (");
-		print_media_word(ifmr.ifm_active, " ");
-		printf(")");
-	}
-	printf("\n");
+		printf("\tmedia: %s ", get_media_type_string(ifmr.ifm_current));
+		print_media_word(ifmr.ifm_current, " ");
+		if (ifmr.ifm_active != ifmr.ifm_current) {
+			printf(" (");
+			print_media_word(ifmr.ifm_active, " ");
+			printf(")");
+		}
+		printf("\n");
+	} else
+		media_list = NULL;
 
 	if (ifmr.ifm_status & IFM_STATUS_VALID) {
 		const struct ifmedia_status_description *ifms;

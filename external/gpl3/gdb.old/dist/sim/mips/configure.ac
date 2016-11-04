@@ -221,7 +221,7 @@ if test ${sim_gen} = MULTI; then
 
   # Simple sanity check.
   if test -z "${sim_multi_configs}" || test -z "${sim_multi_default}"; then
-    AC_MSG_ERROR(Error in configure.in: MULTI simulator not set up correctly)
+    AC_MSG_ERROR(Error in configure.ac: MULTI simulator not set up correctly)
   fi
 
   # Start in a known state.
@@ -346,7 +346,7 @@ __EOF__
 
   # Check whether we added a 'default:' label.
   if test ${sim_seen_default} = no; then
-    AC_MSG_ERROR(Error in configure.in: \${sim_multi_configs} doesn't have an entry for \${sim_multi_default})
+    AC_MSG_ERROR(Error in configure.ac: \${sim_multi_configs} doesn't have an entry for \${sim_multi_default})
   fi
 
   cat << __EOF__ >> multi-run.c
@@ -390,7 +390,7 @@ else
   sim_multi_src=doesnt-exist.c
 
   if test x"${sim_mach_default}" = x""; then
-    AC_MSG_ERROR(Error in configure.in: \${sim_mach_default} not defined)
+    AC_MSG_ERROR(Error in configure.ac: \${sim_mach_default} not defined)
   fi
   SIM_SUBTARGET="$SIM_SUBTARGET -DMIPS_MACH_DEFAULT=bfd_mach_${sim_mach_default}"
 fi
@@ -419,17 +419,6 @@ case "${target}" in
 	;;
 esac
 SIM_AC_OPTION_HARDWARE($hw_enabled,$hw_devices,$hw_extra_devices)
-mips_extra_objs="$SIM_DV_SOCKSER_O"
-AC_SUBST(mips_extra_objs)
-
-if test "$sim_hw_p" = yes -a -z "$SIM_DV_SOCKSER_O"; then
-	case " $sim_hw " in
-	*" tx3904sio "*)
-		AC_MSG_ERROR([Sorry, but tx3904sio hardware support is
-unavailable for your target.  Please use --disable-sim-hardware, or pass a
-list of devices to enable that does not include that.])
-	esac
-fi
 
 
 # Choose simulator engine
@@ -444,7 +433,6 @@ AC_PATH_X
 mips_extra_libs=""
 AC_SUBST(mips_extra_libs)
 
-AC_CHECK_HEADERS(string.h strings.h stdlib.h stdlib.h)
 AC_CHECK_LIB(m, fabs)
 AC_CHECK_FUNCS(aint anint sqrt)
 

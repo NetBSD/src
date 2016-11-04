@@ -1,6 +1,6 @@
 /* Target-dependent header for the MIPS architecture, for GDB, the GNU Debugger.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -152,9 +152,6 @@ enum
   MIPS_PRID_REGNUM = 89,	/* Processor ID.  */
   MIPS_LAST_EMBED_REGNUM = 89	/* Last one.  */
 };
-
-/* Defined in mips-tdep.c and used in remote-mips.c.  */
-extern void deprecated_mips_set_processor_regs_hack (void);
 
 /* Instruction sizes and other useful constants.  */
 enum

@@ -1,6 +1,6 @@
 /* Generic static probe support for GDB.
 
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,6 +33,7 @@
 #include "value.h"
 #include "ax.h"
 #include "ax-gdb.h"
+#include "location.h"
 #include <ctype.h>
 
 typedef struct bound_probe bound_probe_s;
@@ -40,26 +41,87 @@ DEF_VEC_O (bound_probe_s);
 
 
 
+/* A helper for parse_probes that decodes a probe specification in
+   SEARCH_PSPACE.  It appends matching SALs to RESULT.  */
+
+static void
+parse_probes_in_pspace (const struct probe_ops *probe_ops,
+			struct program_space *search_pspace,
+			const char *objfile_namestr,
+			const char *provider,
+			const char *name,
+			struct symtabs_and_lines *result)
+{
+  struct objfile *objfile;
+
+  ALL_PSPACE_OBJFILES (search_pspace, objfile)
+    {
+      VEC (probe_p) *probes;
+      struct probe *probe;
+      int ix;
+
+      if (!objfile->sf || !objfile->sf->sym_probe_fns)
+	continue;
+
+      if (objfile_namestr
+	  && FILENAME_CMP (objfile_name (objfile), objfile_namestr) != 0
+	  && FILENAME_CMP (lbasename (objfile_name (objfile)),
+			   objfile_namestr) != 0)
+	continue;
+
+      probes = objfile->sf->sym_probe_fns->sym_get_probes (objfile);
+
+      for (ix = 0; VEC_iterate (probe_p, probes, ix, probe); ix++)
+	{
+	  struct symtab_and_line *sal;
+
+	  if (probe_ops != &probe_ops_any && probe->pops != probe_ops)
+	    continue;
+
+	  if (provider && strcmp (probe->provider, provider) != 0)
+	    continue;
+
+	  if (strcmp (probe->name, name) != 0)
+	    continue;
+
+	  ++result->nelts;
+	  result->sals = XRESIZEVEC (struct symtab_and_line, result->sals,
+				     result->nelts);
+	  sal = &result->sals[result->nelts - 1];
+
+	  init_sal (sal);
+
+	  sal->pc = get_probe_address (probe, objfile);
+	  sal->explicit_pc = 1;
+	  sal->section = find_pc_overlay (sal->pc);
+	  sal->pspace = search_pspace;
+	  sal->probe = probe;
+	  sal->objfile = objfile;
+	}
+    }
+}
+
 /* See definition in probe.h.  */
 
 struct symtabs_and_lines
-parse_probes (char **argptr, struct linespec_result *canonical)
+parse_probes (const struct event_location *location,
+	      struct program_space *search_pspace,
+	      struct linespec_result *canonical)
 {
-  char *arg_start, *arg_end, *arg;
+  char *arg_end, *arg;
   char *objfile_namestr = NULL, *provider = NULL, *name, *p;
   struct cleanup *cleanup;
   struct symtabs_and_lines result;
-  struct objfile *objfile;
-  struct program_space *pspace;
   const struct probe_ops *probe_ops;
-  const char *cs;
+  const char *arg_start, *cs;
 
   result.sals = NULL;
   result.nelts = 0;
 
-  arg_start = *argptr;
+  gdb_assert (event_location_type (location) == PROBE_LOCATION);
+  arg_start = get_probe_location (location);
 
-  cs = *argptr;
+  cs = arg_start;
   probe_ops = probe_linespec_to_ops (&cs);
   if (probe_ops == NULL)
     error (_("'%s' is not a probe linespec"), arg_start);
@@ -111,53 +173,19 @@ parse_probes (char **argptr, struct linespec_result *canonical)
   if (objfile_namestr && *objfile_namestr == '\0')
     error (_("invalid objfile name"));
 
-  ALL_PSPACES (pspace)
-    ALL_PSPACE_OBJFILES (pspace, objfile)
-      {
-	VEC (probe_p) *probes;
-	struct probe *probe;
-	int ix;
+  if (search_pspace != NULL)
+    {
+      parse_probes_in_pspace (probe_ops, search_pspace, objfile_namestr,
+			      provider, name, &result);
+    }
+  else
+    {
+      struct program_space *pspace;
 
-	if (!objfile->sf || !objfile->sf->sym_probe_fns)
-	  continue;
-
-	if (objfile_namestr
-	    && FILENAME_CMP (objfile_name (objfile), objfile_namestr) != 0
-	    && FILENAME_CMP (lbasename (objfile_name (objfile)),
-			     objfile_namestr) != 0)
-	  continue;
-
-	probes = objfile->sf->sym_probe_fns->sym_get_probes (objfile);
-
-	for (ix = 0; VEC_iterate (probe_p, probes, ix, probe); ix++)
-	  {
-	    struct symtab_and_line *sal;
-
-	    if (probe_ops != &probe_ops_any && probe->pops != probe_ops)
-	      continue;
-
-	    if (provider && strcmp (probe->provider, provider) != 0)
-	      continue;
-
-	    if (strcmp (probe->name, name) != 0)
-	      continue;
-
-	    ++result.nelts;
-	    result.sals = xrealloc (result.sals,
-				    result.nelts
-				    * sizeof (struct symtab_and_line));
-	    sal = &result.sals[result.nelts - 1];
-
-	    init_sal (sal);
-
-	    sal->pc = get_probe_address (probe, objfile);
-	    sal->explicit_pc = 1;
-	    sal->section = find_pc_overlay (sal->pc);
-	    sal->pspace = pspace;
-	    sal->probe = probe;
-	    sal->objfile = objfile;
-	  }
-      }
+      ALL_PSPACES (pspace)
+	parse_probes_in_pspace (probe_ops, pspace, objfile_namestr,
+				provider, name, &result);
+    }
 
   if (result.nelts == 0)
     {
@@ -170,12 +198,15 @@ parse_probes (char **argptr, struct linespec_result *canonical)
 
   if (canonical)
     {
+      char *canon;
+
+      canon = savestring (arg_start, arg_end - arg_start);
+      make_cleanup (xfree, canon);
       canonical->special_display = 1;
       canonical->pre_expanded = 1;
-      canonical->addr_string = savestring (*argptr, arg_end - *argptr);
+      canonical->location = new_probe_location (canon);
     }
 
-  *argptr = arg_end;
   do_cleanups (cleanup);
 
   return result;

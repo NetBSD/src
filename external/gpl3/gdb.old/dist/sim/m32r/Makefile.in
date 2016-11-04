@@ -26,13 +26,11 @@ TRAPS_OBJ = @traps_obj@
 
 SIM_OBJS = \
 	$(SIM_NEW_COMMON_OBJS) \
-	sim-cpu.o \
 	sim-hload.o \
-	sim-hrw.o \
 	sim-model.o \
 	sim-reg.o \
 	cgen-utils.o cgen-trace.o cgen-scache.o \
-	cgen-run.o sim-reason.o sim-engine.o sim-stop.o \
+	cgen-run.o sim-reason.o sim-stop.o \
 	sim-if.o arch.o \
 	$(M32R_OBJS) \
 	$(M32RX_OBJS) \
@@ -47,7 +45,6 @@ SIM_EXTRA_DEPS = \
 
 SIM_EXTRA_CFLAGS = @sim_extra_cflags@
 
-SIM_RUN_OBJS = nrun.o
 SIM_EXTRA_CLEAN = m32r-clean
 
 # This selects the m32r newlib/libgloss syscall definitions.

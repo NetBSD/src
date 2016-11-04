@@ -1,5 +1,5 @@
 /* tc-h8300.c -- Assemble code for the Renesas H8/300
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -152,7 +152,7 @@ h8300_elf_section (int push)
   static const char * known_data_sections [] = { ".rodata", ".tdata", ".tbss" };
   static const char * known_data_prefixes [] = { ".debug", ".zdebug", ".gnu.warning" };
   char * saved_ilp = input_line_pointer;
-  char * name;
+  const char * name;
 
   name = obj_elf_section_name ();
   if (name == NULL)
@@ -252,8 +252,7 @@ md_begin (void)
 
   nopcodes = sizeof (h8_opcodes) / sizeof (struct h8_opcode);
 
-  h8_instructions = (struct h8_instruction *)
-    xmalloc (nopcodes * sizeof (struct h8_instruction));
+  h8_instructions = XNEWVEC (struct h8_instruction, nopcodes);
 
   pi = h8_instructions;
   p1 = h8_opcodes;
@@ -266,14 +265,14 @@ md_begin (void)
     {
       struct h8_opcode *first_skipped = 0;
       int len, cmplen = 0;
-      char *src = p1->name;
+      const char *src = p1->name;
       char *dst, *buffer;
 
       if (p1->name == 0)
 	break;
       /* Strip off any . part when inserting the opcode and only enter
 	 unique codes into the hash table.  */
-      dst = buffer = malloc (strlen (src) + 1);
+      dst = buffer = XNEWVEC (char, strlen (src) + 1);
       while (*src)
 	{
 	  if (*src == '.')
@@ -355,7 +354,7 @@ static void clever_message (const struct h8_instruction *, struct h8_op *);
 static void fix_operand_size (struct h8_op *, int);
 static void build_bytes (const struct h8_instruction *, struct h8_op *);
 static void do_a_fix_imm (int, int, struct h8_op *, int, const struct h8_instruction *);
-static void check_operand (struct h8_op *, unsigned int, char *);
+static void check_operand (struct h8_op *, unsigned int, const char *);
 static const struct h8_instruction * get_specific (const struct h8_instruction *, struct h8_op *, int) ;
 static char *get_operands (unsigned, char *, struct h8_op *);
 static void get_operand (char **, struct h8_op *, int);
@@ -826,7 +825,7 @@ get_operand (char **ptr, struct h8_op *op, int direction)
 	    op->mode |= DISP | direction;
 	  src = skip_colonthing (src, &op->mode);
 
-	  if (*src != ')' && '(')
+	  if (*src != ')')
 	    {
 	      as_bad (_("expected @(exp, reg16)"));
 	      return;
@@ -1286,7 +1285,7 @@ get_specific (const struct h8_instruction *instruction,
 }
 
 static void
-check_operand (struct h8_op *operand, unsigned int width, char *string)
+check_operand (struct h8_op *operand, unsigned int width, const char *string)
 {
   if (operand->exp.X_add_symbol == 0
       && operand->exp.X_op_symbol == 0)
@@ -1340,7 +1339,7 @@ do_a_fix_imm (int offset, int nibble, struct h8_op *operand, int relaxmode, cons
   int where;
   char *bytes = frag_now->fr_literal + offset;
 
-  char *t = ((operand->mode & MODE) == IMM) ? "#" : "@";
+  const char *t = ((operand->mode & MODE) == IMM) ? "#" : "@";
 
   if (operand->exp.X_add_symbol == 0)
     {
@@ -2101,7 +2100,7 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 
 /* Various routines to kill one day.  */
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   return ieee_md_atof (type, litP, sizeP, TRUE);
@@ -2197,7 +2196,7 @@ const struct mach_func mach_table[] =
 };
 
 int
-md_parse_option (int c ATTRIBUTE_UNUSED, char *arg ATTRIBUTE_UNUSED)
+md_parse_option (int c ATTRIBUTE_UNUSED, const char *arg ATTRIBUTE_UNUSED)
 {
   unsigned int i;
   switch (c)
@@ -2335,8 +2334,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 	}
     }
 
-  rel = xmalloc (sizeof (arelent));
-  rel->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  rel = XNEW (arelent);
+  rel->sym_ptr_ptr = XNEW (asymbol *);
   *rel->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   rel->address = fixp->fx_frag->fr_address + fixp->fx_where;
   rel->addend = fixp->fx_offset;

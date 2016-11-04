@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.101.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: route.h,v 1.101.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -219,8 +219,8 @@ struct rt_msghdr {
 #define RTM_OLDADD	0x9	/* caused by SIOCADDRT */
 #define RTM_OLDDEL	0xa	/* caused by SIOCDELRT */
 // #define RTM_RESOLVE	0xb	/* req to resolve dst to LL addr */
-#define RTM_NEWADDR	0xc	/* address being added to iface */
-#define RTM_DELADDR	0xd	/* address being removed from iface */
+#define RTM_ONEWADDR	0xc	/* Old (pre-8.0) RTM_NEWADDR message */
+#define RTM_ODELADDR	0xd	/* Old (pre-8.0) RTM_DELADDR message */
 #define RTM_OOIFINFO	0xe	/* Old (pre-1.5) RTM_IFINFO message */
 #define RTM_OIFINFO	0xf	/* Old (pre-64bit time) RTM_IFINFO message */
 #define	RTM_IFANNOUNCE	0x10	/* iface arrival/departure */
@@ -232,7 +232,10 @@ struct rt_msghdr {
 				 * address has changed
 				 */
 #define RTM_IFINFO	0x14	/* iface/link going up/down etc. */
-#define RTM_CHGADDR	0x15	/* address properties changed */
+#define RTM_OCHGADDR	0x15	/* Old (pre-8.0) RTM_CHGADDR message */
+#define RTM_NEWADDR	0x16	/* address being added to iface */
+#define RTM_DELADDR	0x17	/* address being removed from iface */
+#define RTM_CHGADDR	0x18	/* address properties changed */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
@@ -368,14 +371,10 @@ int	rt_timer_add(struct rtentry *,
 	    struct rttimer_queue *);
 unsigned long
 	rt_timer_count(struct rttimer_queue *);
-void	rt_timer_init(void);
 void	rt_timer_queue_change(struct rttimer_queue *, long);
 struct rttimer_queue *
 	rt_timer_queue_create(u_int);
-void	rt_timer_queue_destroy(struct rttimer_queue *, int);
-void	rt_timer_queue_remove_all(struct rttimer_queue *, int);
-void	rt_timer_remove_all(struct rtentry *, int);
-void	rt_timer_timer(void *);
+void	rt_timer_queue_destroy(struct rttimer_queue *);
 
 void	rt_newmsg(const int, const struct rtentry *);
 struct rtentry *
@@ -444,12 +443,6 @@ rtcache_lookup1(struct route *ro, const struct sockaddr *dst, int clone)
 	int hit;
 
 	return rtcache_lookup2(ro, dst, clone, &hit);
-}
-
-static inline struct rtentry *
-rtcache_lookup_noclone(struct route *ro, const struct sockaddr *dst)
-{
-	return rtcache_lookup1(ro, dst, 0);
 }
 
 static inline struct rtentry *

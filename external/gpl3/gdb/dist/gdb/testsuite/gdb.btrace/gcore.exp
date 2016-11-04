@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2014-2015 Free Software Foundation, Inc.
+# Copyright 2014-2016 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -38,4 +38,5 @@ gdb_test "next" ".*main\.3.*"
 gdb_test "record goto begin" ".*main\.2.*"
 
 # generate a core file - this used to assert
-gdb_test "generate-core-file core" "Saved corefile core"
+set corefile [standard_output_file core]
+gdb_test "generate-core-file $corefile" "Saved corefile $corefile"

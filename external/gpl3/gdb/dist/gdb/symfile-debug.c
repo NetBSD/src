@@ -1,6 +1,6 @@
 /* Debug logging for the symbol file functions for the GNU debugger, GDB.
 
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -72,8 +72,9 @@ debug_symtab_name (struct symtab *symtab)
 static int
 debug_qf_has_symbols (struct objfile *objfile)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
   int retval;
 
   retval = debug_data->real_sf->qf->has_symbols (objfile);
@@ -87,8 +88,9 @@ debug_qf_has_symbols (struct objfile *objfile)
 static struct symtab *
 debug_qf_find_last_source_symtab (struct objfile *objfile)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
   struct symtab *retval;
 
   fprintf_filtered (gdb_stdlog, "qf->find_last_source_symtab (%s)\n",
@@ -105,8 +107,9 @@ debug_qf_find_last_source_symtab (struct objfile *objfile)
 static void
 debug_qf_forget_cached_source_info (struct objfile *objfile)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog, "qf->forget_cached_source_info (%s)\n",
 		    objfile_debug_name (objfile));
@@ -122,8 +125,9 @@ debug_qf_map_symtabs_matching_filename (struct objfile *objfile,
 							 void *),
 					void *data)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
   int retval;
 
   fprintf_filtered (gdb_stdlog,
@@ -147,8 +151,9 @@ static struct compunit_symtab *
 debug_qf_lookup_symbol (struct objfile *objfile, int kind, const char *name,
 			domain_enum domain)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
   struct compunit_symtab *retval;
 
   fprintf_filtered (gdb_stdlog,
@@ -170,8 +175,9 @@ debug_qf_lookup_symbol (struct objfile *objfile, int kind, const char *name,
 static void
 debug_qf_print_stats (struct objfile *objfile)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog, "qf->print_stats (%s)\n",
 		    objfile_debug_name (objfile));
@@ -182,8 +188,9 @@ debug_qf_print_stats (struct objfile *objfile)
 static void
 debug_qf_dump (struct objfile *objfile)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog, "qf->dump (%s)\n",
 		    objfile_debug_name (objfile));
@@ -196,8 +203,9 @@ debug_qf_relocate (struct objfile *objfile,
 		   const struct section_offsets *new_offsets,
 		   const struct section_offsets *delta)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog, "qf->relocate (%s, %s, %s)\n",
 		    objfile_debug_name (objfile),
@@ -211,8 +219,9 @@ static void
 debug_qf_expand_symtabs_for_function (struct objfile *objfile,
 				      const char *func_name)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog,
 		    "qf->expand_symtabs_for_function (%s, \"%s\")\n",
@@ -224,8 +233,9 @@ debug_qf_expand_symtabs_for_function (struct objfile *objfile,
 static void
 debug_qf_expand_all_symtabs (struct objfile *objfile)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog, "qf->expand_all_symtabs (%s)\n",
 		    objfile_debug_name (objfile));
@@ -237,8 +247,9 @@ static void
 debug_qf_expand_symtabs_with_fullname (struct objfile *objfile,
 				       const char *fullname)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog,
 		    "qf->expand_symtabs_with_fullname (%s, \"%s\")\n",
@@ -257,8 +268,9 @@ debug_qf_map_matching_symbols (struct objfile *objfile,
 			       symbol_compare_ftype *match,
 			       symbol_compare_ftype *ordered_compare)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog,
 		    "qf->map_matching_symbols (%s, \"%s\", %s, %d, %s, %s, %s, %s)\n",
@@ -284,8 +296,9 @@ debug_qf_expand_symtabs_matching
    expand_symtabs_exp_notify_ftype *expansion_notify,
    enum search_domain kind, void *data)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog,
 		    "qf->expand_symtabs_matching (%s, %s, %s, %s, %s, %s)\n",
@@ -310,8 +323,9 @@ debug_qf_find_pc_sect_compunit_symtab (struct objfile *objfile,
 				       struct obj_section *section,
 				       int warn_if_readin)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
   struct compunit_symtab *retval;
 
   fprintf_filtered (gdb_stdlog,
@@ -341,8 +355,9 @@ debug_qf_map_symbol_filenames (struct objfile *objfile,
 			       symbol_filename_ftype *fun, void *data,
 			       int need_fullname)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
   fprintf_filtered (gdb_stdlog,
 		    "qf->map_symbol_filenames (%s, %s, %s, %d)\n",
 		    objfile_debug_name (objfile),
@@ -378,8 +393,9 @@ static const struct quick_symbol_functions debug_sym_quick_functions =
 static VEC (probe_p) *
 debug_sym_get_probes (struct objfile *objfile)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
   VEC (probe_p) *retval;
 
   retval = debug_data->real_sf->sym_probe_fns->sym_get_probes (objfile);
@@ -402,8 +418,9 @@ static const struct sym_probe_fns debug_sym_probe_fns =
 static void
 debug_sym_new_init (struct objfile *objfile)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog, "sf->sym_new_init (%s)\n",
 		    objfile_debug_name (objfile));
@@ -414,8 +431,9 @@ debug_sym_new_init (struct objfile *objfile)
 static void
 debug_sym_init (struct objfile *objfile)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog, "sf->sym_init (%s)\n",
 		    objfile_debug_name (objfile));
@@ -426,8 +444,9 @@ debug_sym_init (struct objfile *objfile)
 static void
 debug_sym_read (struct objfile *objfile, int symfile_flags)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog, "sf->sym_read (%s, 0x%x)\n",
 		    objfile_debug_name (objfile), symfile_flags);
@@ -438,8 +457,9 @@ debug_sym_read (struct objfile *objfile, int symfile_flags)
 static void
 debug_sym_read_psymbols (struct objfile *objfile)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog, "sf->sym_read_psymbols (%s)\n",
 		    objfile_debug_name (objfile));
@@ -450,8 +470,9 @@ debug_sym_read_psymbols (struct objfile *objfile)
 static void
 debug_sym_finish (struct objfile *objfile)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog, "sf->sym_finish (%s)\n",
 		    objfile_debug_name (objfile));
@@ -463,8 +484,9 @@ static void
 debug_sym_offsets (struct objfile *objfile,
 		   const struct section_addr_info *info)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog, "sf->sym_offsets (%s, %s)\n",
 		    objfile_debug_name (objfile),
@@ -485,8 +507,9 @@ debug_sym_segments (bfd *abfd)
 static void
 debug_sym_read_linetable (struct objfile *objfile)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
 
   fprintf_filtered (gdb_stdlog, "sf->sym_read_linetable (%s)\n",
 		    objfile_debug_name (objfile));
@@ -497,8 +520,9 @@ debug_sym_read_linetable (struct objfile *objfile)
 static bfd_byte *
 debug_sym_relocate (struct objfile *objfile, asection *sectp, bfd_byte *buf)
 {
-  const struct debug_sym_fns_data *debug_data =
-    objfile_data (objfile, symfile_debug_objfile_data_key);
+  const struct debug_sym_fns_data *debug_data
+    = ((const struct debug_sym_fns_data *)
+       objfile_data (objfile, symfile_debug_objfile_data_key));
   bfd_byte *retval;
 
   retval = debug_data->real_sf->sym_relocate (objfile, sectp, buf);
@@ -597,7 +621,8 @@ uninstall_symfile_debug_logging (struct objfile *objfile)
   /* The debug versions should be currently installed.  */
   gdb_assert (symfile_debug_installed (objfile));
 
-  debug_data = objfile_data (objfile, symfile_debug_objfile_data_key);
+  debug_data = ((struct debug_sym_fns_data *)
+		objfile_data (objfile, symfile_debug_objfile_data_key));
 
   objfile->sf = debug_data->real_sf;
   xfree (debug_data);

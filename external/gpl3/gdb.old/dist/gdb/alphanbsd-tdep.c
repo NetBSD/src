@@ -148,7 +148,9 @@ alphanbsd_supply_gregset (const struct regset *regset,
 static const struct regset alphanbsd_gregset =
 {
   NULL,
-  alphanbsd_supply_gregset
+  alphanbsd_supply_gregset,
+  NULL,
+  REGSET_VARIABLE_SIZE
 };
 
 static const struct regset alphanbsd_fpregset =

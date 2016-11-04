@@ -167,6 +167,8 @@ maintainer-clean: distclean
 	@echo "it deletes files that may require special tools to rebuild."
 	-rm -f $(srcdir)/configure $(srcdir)/aclocal.m4
 
+TAGS:
+
 check:
 installcheck:
 dvi:

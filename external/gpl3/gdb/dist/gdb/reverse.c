@@ -1,6 +1,6 @@
 /* Reverse execution and reverse debugging.
 
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -142,7 +142,7 @@ save_bookmark_command (char *args, int from_tty)
     error (_("target_get_bookmark failed."));
 
   /* Set up a bookmark struct.  */
-  b = xcalloc (1, sizeof (struct bookmark));
+  b = XCNEW (struct bookmark);
   b->number = ++bookmark_count;
   init_sal (&b->sal);
   b->pc = regcache_read_pc (get_current_regcache ());

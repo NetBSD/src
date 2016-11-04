@@ -1,5 +1,4 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 1998, 2004, 2011
-@c Free Software Foundation, Inc.
+@c Copyright (C) 1991-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @page
@@ -25,12 +24,12 @@ compilers.
 
 The format of the debugging sections has changed since the original
 @code{@value{AS}} port (version 1.3X) was released; therefore,
-you must rebuild all HPPA objects and libraries with the new 
+you must rebuild all HPPA objects and libraries with the new
 assembler so that you can debug the final executable.
 
 The HPPA @code{@value{AS}} port generates a small subset of the relocations
 available in the SOM and ELF object file formats.  Additional relocation
-support will be added as it becomes necessary.  
+support will be added as it becomes necessary.
 
 @node HPPA Options
 @section Options
@@ -89,7 +88,7 @@ described in the HP manual:
 @example
 .endm           .liston
 .enter          .locct
-.leave          .macro  
+.leave          .macro
 .listoff
 @end example
 
@@ -107,7 +106,7 @@ These are the additional directives in @code{@value{AS}} for the HPPA:
 @itemx .blockz @var{n}
 Reserve @var{n} bytes of storage, and initialize them to zero.
 
-@item .call 
+@item .call
 Mark the beginning of a procedure call.  Only the special case with @emph{no
 arguments} is allowed.
 
@@ -297,5 +296,5 @@ Write @var{str} as version identifier in object code.
 @node HPPA Opcodes
 @section Opcodes
 For detailed information on the HPPA machine instruction set, see
-@cite{PA-RISC Architecture and Instruction Set Reference Manual} 
+@cite{PA-RISC Architecture and Instruction Set Reference Manual}
 (HP 09740-90039).

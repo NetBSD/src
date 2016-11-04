@@ -1,6 +1,6 @@
 // justsyms_exec.c -- test --just-symbols for gold
 
-// Copyright 2011 Free Software Foundation, Inc.
+// Copyright (C) 2011-2015 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.
@@ -47,7 +47,10 @@ check(void *sym, long v, const char *name)
 int
 main(void)
 {
+#ifndef __powerpc64__
+  /* PowerPC64 uses function descriptors.  */
   check(exported_func, 0x1000200, "exported_func");
+#endif
   check(&exported_data, 0x2000000, "exported_data");
   return errs;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_verbose.c,v 1.2 2016/02/03 05:29:43 christos Exp $	*/
+/*	$NetBSD: dev_verbose.c,v 1.2.2.1 2016/11/04 14:49:08 pgoyette Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dev_verbose.c,v 1.2 2016/02/03 05:29:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dev_verbose.c,v 1.2.2.1 2016/11/04 14:49:08 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -41,10 +41,14 @@ dev_untokenstring(const char *words, const uint16_t *token, char *buf,
     size_t len)
 {
 	char *cp = buf;
+	size_t newlen;
 
 	buf[0] = '\0';
 	for (; *token != 0; token++) {
-		cp = buf + strlcat(buf, words + *token, len - 2);
+		newlen = strlcat(buf, words + *token, len - 2);
+		if (newlen > len - 2)
+			newlen = len - 2;
+		cp = buf + newlen;
 		cp[0] = ' ';
 		cp[1] = '\0';
 	}

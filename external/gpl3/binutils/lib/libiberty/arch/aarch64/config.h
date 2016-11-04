@@ -116,7 +116,7 @@
 #define HAVE_DUP3 1
 
 /* Define to 1 if you have the <fcntl.h> header file. */
-/* #undef HAVE_FCNTL_H */
+#define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the `ffs' function. */
 #define HAVE_FFS 1
@@ -155,7 +155,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the <limits.h> header file. */
-/* #undef HAVE_LIMITS_H */
+#define HAVE_LIMITS_H 1
 
 /* Define if you have the `long long' type. */
 #define HAVE_LONG_LONG 1
@@ -164,7 +164,7 @@
 /* #undef HAVE_MACHINE_HAL_SYSINFO_H */
 
 /* Define to 1 if you have the <malloc.h> header file. */
-/* #undef HAVE_MALLOC_H */
+#define HAVE_MALLOC_H 1
 
 /* Define to 1 if you have the `memchr' function. */
 #define HAVE_MEMCHR 1
@@ -329,16 +329,16 @@
 #define HAVE_SYS_ERRLIST 1
 
 /* Define to 1 if you have the <sys/file.h> header file. */
-/* #undef HAVE_SYS_FILE_H */
+#define HAVE_SYS_FILE_H 1
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
-/* #undef HAVE_SYS_MMAN_H */
+#define HAVE_SYS_MMAN_H 1
 
 /* Define if you have the sys_nerr variable. */
 #define HAVE_SYS_NERR 1
 
 /* Define to 1 if you have the <sys/param.h> header file. */
-/* #undef HAVE_SYS_PARAM_H */
+#define HAVE_SYS_PARAM_H 1
 
 /* Define to 1 if you have the <sys/prctl.h> header file. */
 /* #undef HAVE_SYS_PRCTL_H */
@@ -347,7 +347,7 @@
 /* #undef HAVE_SYS_PSTAT_H */
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
-/* #undef HAVE_SYS_RESOURCE_H */
+#define HAVE_SYS_RESOURCE_H 1
 
 /* Define if you have the sys_siglist variable. */
 #define HAVE_SYS_SIGLIST 1
@@ -356,7 +356,7 @@
 #define HAVE_SYS_STAT_H 1
 
 /* Define to 1 if you have the <sys/sysctl.h> header file. */
-/* #undef HAVE_SYS_SYSCTL_H */
+#define HAVE_SYS_SYSCTL_H 1
 
 /* Define to 1 if you have the <sys/sysinfo.h> header file. */
 /* #undef HAVE_SYS_SYSINFO_H */
@@ -371,7 +371,7 @@
 /* #undef HAVE_SYS_TABLE_H */
 
 /* Define to 1 if you have the <sys/time.h> header file. */
-/* #undef HAVE_SYS_TIME_H */
+#define HAVE_SYS_TIME_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
@@ -386,7 +386,7 @@
 #define HAVE_TIMES 1
 
 /* Define to 1 if you have the <time.h> header file. */
-/* #undef HAVE_TIME_H */
+#define HAVE_TIME_H 1
 
 /* Define to 1 if you have the `tmpnam' function. */
 #define HAVE_TMPNAM 1

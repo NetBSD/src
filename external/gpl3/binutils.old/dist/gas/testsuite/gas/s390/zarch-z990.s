@@ -122,3 +122,7 @@ foo:
 	xg	%r6,-524288(%r5,%r10)
 	xiy	-524288(%r5),255
 	xy	%r6,-524288(%r5,%r10)
+	epair	%r6
+	esair	%r6
+	pti	%r6,%r5
+	ssair	%r6

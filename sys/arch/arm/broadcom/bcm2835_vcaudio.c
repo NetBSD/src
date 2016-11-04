@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.10 2015/07/28 21:24:43 skrll Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.10.2.1 2016/11/04 14:48:58 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.10 2015/07/28 21:24:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.10.2.1 2016/11/04 14:48:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -436,7 +436,7 @@ vcaudio_service_callback(void *priv, const VCHI_CALLBACK_REASON_T reason,
 				sched = true;
 			}
 
-			if (sched) {
+			if (sched && sc->sc_pint) {
 				intr(intrarg);
 				sc->sc_abytes += sc->sc_pblksize;
 				cv_signal(&sc->sc_datacv);

@@ -1,4 +1,4 @@
-# Copyright 2009-2015 Free Software Foundation, Inc.
+# Copyright 2009-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ if { [is_remote target] || ![isnative] } then {
 
 # Until "catch exec" is implemented on other targets...
 #
-if {![istarget "hppa*-hp-hpux*"] && ![istarget "*-linux*"]} then {
+if {![istarget "*-linux*"]} then {
     continue
 }
 
@@ -33,9 +33,7 @@ set exec2 "crashme"
 set srcfile2 ${exec2}.c
 set binfile2 [standard_output_file ${exec2}]
 
-set compile_options {debug nowarnings}
-set dirname [relative_filename [pwd] [file dirname $binfile1]]
-lappend compile_options "additional_flags=-DBASEDIR=\"$dirname\""
+set compile_options {debug}
 
 if { [build_executable ${testfile}.exp ${exec1} "${srcfile1}" $compile_options] == -1 } {
     return -1

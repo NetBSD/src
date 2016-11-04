@@ -1,6 +1,6 @@
 /* XML target description support for GDB.
 
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -31,3 +31,9 @@ const struct target_desc *file_read_description_xml (const char *filename);
    parsed description.  */
 
 const struct target_desc *target_read_description_xml (struct target_ops *);
+
+/* Fetches an XML target description using OPS,  processing
+   includes, but not parsing it.  Used to dump whole tdesc
+   as a single XML file.  */
+
+char *target_fetch_description_xml (struct target_ops *ops);

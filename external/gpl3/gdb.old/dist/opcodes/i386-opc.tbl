@@ -319,7 +319,8 @@ shrd, 2, 0xfad, None, 2, Cpu386, Modrm|CheckRegSize|No_bSuf|No_sSuf|No_ldSuf, { 
 
 // Control transfer instructions.
 call, 1, 0xe8, None, 1, CpuNo64, JumpDword|DefaultSize|No_bSuf|No_sSuf|No_qSuf|No_ldSuf|BNDPrefixOk, { Disp16|Disp32 }
-call, 1, 0xe8, None, 1, Cpu64, JumpDword|DefaultSize|No_bSuf|No_lSuf|No_sSuf|No_ldSuf|NoRex64|BNDPrefixOk, { Disp16|Disp32|Disp32S }
+call, 1, 0xe8, None, 1, Cpu64|CpuAMD64, JumpDword|DefaultSize|No_bSuf|No_lSuf|No_sSuf|No_ldSuf|NoRex64|BNDPrefixOk, { Disp16|Disp32S }
+call, 1, 0xe8, None, 1, Cpu64|CpuIntel64, JumpDword|DefaultSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf|NoRex64|BNDPrefixOk, { Disp32S }
 call, 1, 0xff, 0x2, 1, CpuNo64, Modrm|DefaultSize|No_bSuf|No_sSuf|No_qSuf|No_ldSuf|BNDPrefixOk, { Reg16|Reg32|Word|Dword|Unspecified|BaseIndex|Disp8|Disp16|Disp32|JumpAbsolute }
 call, 1, 0xff, 0x2, 1, Cpu64, Modrm|DefaultSize|No_bSuf|No_lSuf|No_sSuf|No_ldSuf|NoRex64|BNDPrefixOk, { Reg16|Reg64|Word|Qword|Unspecified|BaseIndex|Disp8|Disp32|Disp32S|JumpAbsolute }
 // Intel Syntax
@@ -329,7 +330,9 @@ call, 1, 0xff, 0x3, 1, 0, Modrm|DefaultSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_q
 lcall, 2, 0x9a, None, 1, CpuNo64, JumpInterSegment|DefaultSize|No_bSuf|No_sSuf|No_qSuf|No_ldSuf, { Imm16, Imm16|Imm32 }
 lcall, 1, 0xff, 0x3, 1, 0, Modrm|DefaultSize|No_bSuf|No_sSuf|No_qSuf|No_ldSuf, { Unspecified|BaseIndex|Disp8|Disp16|Disp32|Disp32S|JumpAbsolute }
 
-jmp, 1, 0xeb, None, 1, 0, Jump|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|BNDPrefixOk, { Disp8|Disp16|Disp32|Disp32S }
+jmp, 1, 0xeb, None, 1, CpuNo64, Jump|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|BNDPrefixOk, { Disp8|Disp16|Disp32|Disp32S }
+jmp, 1, 0xeb, None, 1, Cpu64|CpuAMD64, Jump|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|BNDPrefixOk, { Disp8|Disp16|Disp32S }
+jmp, 1, 0xeb, None, 1, Cpu64|CpuIntel64, Jump|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|BNDPrefixOk, { Disp8|Disp32S }
 jmp, 1, 0xff, 0x4, 1, CpuNo64, Modrm|No_bSuf|No_sSuf|No_qSuf|No_ldSuf|BNDPrefixOk, { Reg16|Reg32|Word|Dword|Unspecified|BaseIndex|Disp8|Disp16|Disp32|JumpAbsolute }
 jmp, 1, 0xff, 0x4, 1, Cpu64, Modrm|No_bSuf|No_lSuf|No_sSuf|No_ldSuf|NoRex64|BNDPrefixOk, { Reg16|Reg64|Word|Qword|Unspecified|BaseIndex|Disp8|Disp32|Disp32S|JumpAbsolute }
 // Intel Syntax.
@@ -3648,18 +3651,24 @@ vcvtsd2ss, 4, 0xF25A, None, 1, CpuAVX512F, Modrm|EVex=4|Masking=3|VexOpcode=0|Ve
 vcvtsi2sd, 3, 0xF22A, None, 1, CpuAVX512F, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=1|Disp8MemShift=2|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_ldSuf, { Reg32|Dword|Unspecified|BaseIndex|Disp8|Disp16|Disp32|Disp32S|Vec_Disp8, RegXMM, RegXMM }
 vcvtsi2sd, 3, 0xF22A, None, 1, CpuAVX512F|Cpu64, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=2|VecESize=1|Disp8MemShift=3|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf, { Reg64|Qword|Unspecified|BaseIndex|Disp8|Disp16|Disp32|Disp32S|Vec_Disp8, RegXMM, RegXMM }
 vcvtsi2sd, 4, 0xF22A, None, 1, CpuAVX512F|Cpu64, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=2|VecESize=1|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf|StaticRounding|SAE, { Reg64, Imm8, RegXMM, RegXMM }
+vcvtsi2sd, 4, 0xF22A, None, 1, CpuAVX512F|Cpu64, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=2|VecESize=1|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf|StaticRounding|SAE|IntelSyntax, { Imm8, Reg64, RegXMM, RegXMM }
 vcvtusi2sd, 3, 0xF27B, None, 1, CpuAVX512F, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=1|Disp8MemShift=2|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_ldSuf, { Reg32|Dword|Unspecified|BaseIndex|Disp8|Disp16|Disp32|Disp32S|Vec_Disp8, RegXMM, RegXMM }
 vcvtusi2sd, 3, 0xF27B, None, 1, CpuAVX512F|Cpu64, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=2|VecESize=1|Disp8MemShift=3|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf, { Reg64|Qword|Unspecified|BaseIndex|Disp8|Disp16|Disp32|Disp32S|Vec_Disp8, RegXMM, RegXMM }
 vcvtusi2sd, 4, 0xF27B, None, 1, CpuAVX512F|Cpu64, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=2|VecESize=1|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf|StaticRounding|SAE, { Reg64, Imm8, RegXMM, RegXMM }
+vcvtusi2sd, 4, 0xF27B, None, 1, CpuAVX512F|Cpu64, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=2|VecESize=1|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf|StaticRounding|SAE|IntelSyntax, { Imm8, Reg64, RegXMM, RegXMM }
 
 vcvtsi2ss, 3, 0xF32A, None, 1, CpuAVX512F, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=1|Disp8MemShift=2|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_ldSuf, { Reg32|Dword|Unspecified|BaseIndex|Disp8|Disp16|Disp32|Disp32S|Vec_Disp8, RegXMM, RegXMM }
 vcvtsi2ss, 4, 0xF32A, None, 1, CpuAVX512F, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=1|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_ldSuf|StaticRounding|SAE, { Reg32, Imm8, RegXMM, RegXMM }
+vcvtsi2ss, 4, 0xF32A, None, 1, CpuAVX512F, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=1|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_ldSuf|StaticRounding|SAE|IntelSyntax, { Imm8, Reg32, RegXMM, RegXMM }
 vcvtsi2ss, 3, 0xF32A, None, 1, CpuAVX512F|Cpu64, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=2|VecESize=1|Disp8MemShift=3|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf, { Reg64|Qword|Unspecified|BaseIndex|Disp8|Disp16|Disp32|Disp32S|Vec_Disp8, RegXMM, RegXMM }
 vcvtsi2ss, 4, 0xF32A, None, 1, CpuAVX512F|Cpu64, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=2|VecESize=1|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf|StaticRounding|SAE, { Reg64, Imm8, RegXMM, RegXMM }
+vcvtsi2ss, 4, 0xF32A, None, 1, CpuAVX512F|Cpu64, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=2|VecESize=1|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf|StaticRounding|SAE|IntelSyntax, { Imm8, Reg64, RegXMM, RegXMM }
 vcvtusi2ss, 3, 0xF37B, None, 1, CpuAVX512F, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=1|Disp8MemShift=2|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_ldSuf, { Reg32|Dword|Unspecified|BaseIndex|Disp8|Disp16|Disp32|Disp32S|Vec_Disp8, RegXMM, RegXMM }
 vcvtusi2ss, 4, 0xF37B, None, 1, CpuAVX512F, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=1|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_ldSuf|StaticRounding|SAE, { Reg32, Imm8, RegXMM, RegXMM }
+vcvtusi2ss, 4, 0xF37B, None, 1, CpuAVX512F, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=1|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_ldSuf|StaticRounding|SAE|IntelSyntax, { Imm8, Reg32, RegXMM, RegXMM }
 vcvtusi2ss, 3, 0xF37B, None, 1, CpuAVX512F|Cpu64, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=2|VecESize=1|Disp8MemShift=3|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf, { Reg64|Qword|Unspecified|BaseIndex|Disp8|Disp16|Disp32|Disp32S|Vec_Disp8, RegXMM, RegXMM }
 vcvtusi2ss, 4, 0xF37B, None, 1, CpuAVX512F|Cpu64, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=2|VecESize=1|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf|StaticRounding|SAE, { Reg64, Imm8, RegXMM, RegXMM }
+vcvtusi2ss, 4, 0xF37B, None, 1, CpuAVX512F|Cpu64, Modrm|EVex=4|VexOpcode=0|VexVVVV=1|VexW=2|VecESize=1|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_ldSuf|StaticRounding|SAE|IntelSyntax, { Imm8, Reg64, RegXMM, RegXMM }
 
 vcvtss2sd, 3, 0xF35A, None, 1, CpuAVX512F, Modrm|EVex=4|Masking=3|VexOpcode=0|VexVVVV=1|VexW=1|Disp8MemShift=2|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf, { RegXMM|Dword|Unspecified|BaseIndex|Disp8|Disp16|Disp32|Disp32S|Vec_Disp8, RegXMM, RegXMM }
 vcvtss2sd, 4, 0xF35A, None, 1, CpuAVX512F, Modrm|EVex=4|Masking=3|VexOpcode=0|VexVVVV=1|VexW=1|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|SAE, { Imm8, RegXMM, RegXMM, RegXMM }
@@ -5922,3 +5931,23 @@ vpermt2b, 3, 0x667D, None, 1, CpuAVX512VBMI|CpuAVX512VL, Modrm|EVex=2|Masking=3|
 vpermt2b, 3, 0x667D, None, 1, CpuAVX512VBMI|CpuAVX512VL, Modrm|EVex=3|Masking=3|VexOpcode=1|VexVVVV=1|VexW=1|Disp8MemShift=5|IgnoreSize|No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf, { RegYMM|YMMword|Unspecified|BaseIndex|Disp8|Disp16|Disp32|Disp32S|Vec_Disp8, RegYMM, RegYMM }
 
 // AVX512VBMI instructions end
+
+// CLZERO instructions
+
+clzero, 0, 0xf01fc, None, 3, CpuCLZERO, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf, { 0 }
+
+// CLZERO instructions end
+
+// MONITORX/MWAITX instructions
+monitorx, 0, 0xf01, 0xfa, 2, CpuMWAITX, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|ImmExt, { 0 }
+// Need to ensure only "monitorx %eax/%ax,%ecx,%edx" is accepted.
+monitorx, 3, 0xf01, 0xfa, 2, CpuMWAITX|CpuNo64, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|ImmExt|AddrPrefixOp0, { Reg16|Reg32, Reg32, Reg32 }
+// Need to ensure only "monitorx %rax/%eax,%rcx,%rdx" is accepted.
+monitorx, 3, 0xf01, 0xfa, 2, CpuMWAITX|Cpu64,   No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|ImmExt|AddrPrefixOp0|NoRex64, { Reg32|Reg64, Reg64, Reg64 }
+
+mwaitx, 0, 0xf01, 0xfb, 2, CpuMWAITX, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|ImmExt, { 0 }
+// Need to ensure only "mwaitx %eax,%ecx,%ebx" is accepted.
+mwaitx, 3, 0xf01, 0xfb, 2, CpuMWAITX|CpuNo64, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|ImmExt|NoAVX, { Reg32, Reg32, Reg32 }
+// Need to ensure only "mwaitx %rax,%rcx,%rbx" is accepted.
+mwaitx, 3, 0xf01, 0xfb, 2, CpuMWAITX|Cpu64, No_bSuf|No_wSuf|No_lSuf|No_sSuf|No_qSuf|No_ldSuf|ImmExt|NoRex64|NoAVX, { Reg64, Reg64, Reg64 }
+// MONITORX/MWAITX instructions end

@@ -1,4 +1,4 @@
-# Copyright 1992-2015 Free Software Foundation, Inc.
+# Copyright 1992-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -894,19 +894,15 @@ proc recursive_structs_by_value {} {
     gdb_run_cmd
     gdb_test "" "Breakpoint $decimal, hitbottom .*" "run to hitbottom"
 
-    if ![istarget sparclet-*-*] {
-	gdb_test_sequence "backtrace 100" "recursive passing of structs by value" {
-	    "\[\r\n\]#0 .* hitbottom \\(\\) "
-	    "\[\r\n\]#1 .* recurse \\(a=\{s = 0, i = 0, l = 0\}, depth=0\\) "
-	    "\[\r\n\]#2 .* recurse \\(a=\{s = 1, i = 1, l = 1\}, depth=1\\) "
-	    "\[\r\n\]#3 .* recurse \\(a=\{s = 2, i = 2, l = 2\}, depth=2\\) "
-	    "\[\r\n\]#4 .* recurse \\(a=\{s = 3, i = 3, l = 3\}, depth=3\\) "
-	    "\[\r\n\]#5 .* recurse \\(a=\{s = 4, i = 4, l = 4\}, depth=4\\) "
-	    "\[\r\n\]#6 .* test_struct_args \\(\\) "
-	    "\[\r\n\]#7 .* main \\(.*\\) at "
-	}
-    } else {
-	fail "recursive passing of structs by value (sparclet)"
+    gdb_test_sequence "backtrace 100" "recursive passing of structs by value" {
+	"\[\r\n\]#0 .* hitbottom \\(\\) "
+	"\[\r\n\]#1 .* recurse \\(a=\{s = 0, i = 0, l = 0\}, depth=0\\) "
+	"\[\r\n\]#2 .* recurse \\(a=\{s = 1, i = 1, l = 1\}, depth=1\\) "
+	"\[\r\n\]#3 .* recurse \\(a=\{s = 2, i = 2, l = 2\}, depth=2\\) "
+	"\[\r\n\]#4 .* recurse \\(a=\{s = 3, i = 3, l = 3\}, depth=3\\) "
+	"\[\r\n\]#5 .* recurse \\(a=\{s = 4, i = 4, l = 4\}, depth=4\\) "
+	"\[\r\n\]#6 .* test_struct_args \\(\\) "
+	"\[\r\n\]#7 .* main \\(.*\\) at "
     }
     gdb_stop_suppressing_tests
 }
@@ -1018,9 +1014,9 @@ proc localvars_in_indirect_call { } {
 
     gdb_test_multiple "finish" "finish from indirectly called function" {
 	-re "\\(\\*pointer_to_call0a\\) \\(c, s, i, l\\);.*First.*$gdb_prompt $" {
-	    #On hppa2.0w-hp-hpux11.00, gdb finishes at one line earlier than 
-	    #hppa1.1-hp-hpux11.00. Therefore, an extra "step" is necessary 
-	    #to continue the test.
+	    # If the branch instruction is not the last instruction in the
+	    # function call line, we'll stop at that line, and need an extra
+	    # "step" to continue the test.
 	    send_gdb "step\n"
 	    exp_continue
 	}

@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2015 Free Software Foundation, Inc.
+# Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,12 @@
 #
 # This test covers the various forms of "set scheduler-locking".
 
+# This test requires sending ^C to interrupt the running target.
+
+if [target_info exists gdb,nointerrupts] {
+    verbose "Skipping schedlock.exp because of nointerrupts."
+    return
+}
 
 standard_testfile
 
@@ -63,7 +69,7 @@ proc stop_process { description } {
   # message first, or GDB's signal handler may not be in place.
   after 1000 {send_gdb "\003"}
   gdb_expect {
-    -re "Program received signal SIGINT.*$gdb_prompt $"
+    -re "Thread .* received signal SIGINT.*$gdb_prompt $"
       {
 	pass $description
       }

@@ -678,18 +678,21 @@ gdbscm_lookup_block (SCM pc_scm)
   CORE_ADDR pc;
   const struct block *block = NULL;
   struct compunit_symtab *cust = NULL;
-  volatile struct gdb_exception except;
 
   gdbscm_parse_function_args (FUNC_NAME, SCM_ARG1, NULL, "U", pc_scm, &pc);
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       cust = find_pc_compunit_symtab (pc);
 
       if (cust != NULL && COMPUNIT_OBJFILE (cust) != NULL)
 	block = block_for_pc (pc);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   if (cust == NULL || COMPUNIT_OBJFILE (cust) == NULL)
     {

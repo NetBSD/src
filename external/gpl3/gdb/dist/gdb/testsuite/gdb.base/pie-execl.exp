@@ -1,4 +1,4 @@
-# Copyright 2010-2015 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,14 +16,19 @@
 # The problem was due to amd64_skip_prologue attempting to access inferior
 # memory before the PIE (Position Independent Executable) gets relocated.
 
+global inferior_spawn_id
+global gdb_spawn_id
+
 if ![istarget *-linux*] {
     continue
 }
 
-# Remote protocol does not support follow-exec notifications.
-
-if [is_remote target] {
-    continue
+# In remote mode we cannot use the 'set args' command, and this
+# test requires it.
+if { [target_info exists gdb_protocol] } then {
+    if { [target_info gdb_protocol] == "remote" } then {
+	continue
+    }
 }
 
 standard_testfile .c
@@ -37,8 +42,8 @@ set binfile2_test_msg OBJDIR/${subdir}/${executable2}
 # file name of the breakpoint.
 
 set opts [list debug additional_flags=-fPIE ldflags=-pie]
-if {[build_executable ${testfile}.exp $executable1 $srcfile [concat $opts {additional_flags=-DBIN=1}]] == ""
-    || [build_executable ${testfile}.exp $executable2 $srcfile [concat $opts {additional_flags=-DBIN=2}]] == ""} {
+if {[build_executable ${testfile}.exp $executable1 $srcfile [concat $opts {additional_flags=-DBIN=1}]] == -1
+    || [build_executable ${testfile}.exp $executable2 $srcfile [concat $opts {additional_flags=-DBIN=2}]] == -1} {
     return -1
 }
 
@@ -67,6 +72,7 @@ gdb_test_multiple "p/x &pie_execl_marker" $test {
 verbose -log "addr1 is $addr1"
 
 set test "continue"
+set matches_found 0
 gdb_test_multiple $test $test {
     -re "Error in re-setting breakpoint" {
 	fail $test
@@ -74,8 +80,24 @@ gdb_test_multiple $test $test {
     -re "Cannot access memory" {
 	fail $test
     }
-    -re "pie-execl: re-exec.*executing new program.*\r\nBreakpoint \[0-9\]+,\[^\r\n\]* pie_execl_marker .*\r\n$gdb_prompt $" {
-	pass $test
+    -i "$inferior_spawn_id" -re "pie-execl: re-exec" {
+	# output from inferior
+        incr matches_found
+	if { $matches_found == 2 } {
+	    pass $test
+	} else {
+	    exp_continue
+	}
+    }
+    -i "$gdb_spawn_id"
+    -re "executing new program.*\r\nBreakpoint \[0-9\]+,\[^\r\n\]* pie_execl_marker .*\r\n$gdb_prompt $" {
+	# output from gdb
+        incr matches_found
+	if { $matches_found == 2 } {
+	    pass $test
+	} else {
+	    exp_continue
+	}
     }
 }
 

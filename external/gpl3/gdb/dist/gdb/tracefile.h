@@ -84,6 +84,9 @@ struct trace_file_write_ops
   void (*write_uploaded_tp) (struct trace_file_writer *self,
 			     struct uploaded_tp *tp);
 
+  /* Write target description.  */
+  void (*write_tdesc) (struct trace_file_writer *self);
+
   /* Write to mark the end of the definition part.  */
   void (*write_definition_end) (struct trace_file_writer *self);
 

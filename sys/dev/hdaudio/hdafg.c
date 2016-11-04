@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.9 2015/11/15 23:03:50 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.9.2.1 2016/11/04 14:49:08 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.9 2015/11/15 23:03:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.9.2.1 2016/11/04 14:49:08 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3663,7 +3663,7 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 	struct hdafg_softc *sc = device_private(self);
 	audio_params_t defparams;
 	prop_dictionary_t args = opaque;
-	char vendor[16], product[16];
+	char vendor[MAX_AUDIO_DEV_LEN], product[MAX_AUDIO_DEV_LEN];
 	uint64_t fgptr = 0;
 	uint32_t astype = 0;
 	uint8_t nid = 0;

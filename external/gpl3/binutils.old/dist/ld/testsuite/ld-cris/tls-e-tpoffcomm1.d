@@ -27,7 +27,6 @@ SYMBOL TABLE:
 0+82084 l    d  \.tbss	0+ \.tbss
 0+ l    df \*ABS\*	0+ .*
 0+80078 l     F \.text	0+c do_test
-0+ l    df \*ABS\*	0+ .*
 0+80074 g       \.text	0+ _start
 0+82084 g       \.text	0+ __bss_start
 0+ g       \.tbss	0+4 foo

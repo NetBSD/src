@@ -591,6 +591,10 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+NM_TRANSFORM_NAME
+GAS_TRANSFORM_NAME
+READELF_TRANSFORM_NAME
+STRIP_TRANSFORM_NAME
 EXTRA_RULES
 EGREP
 GREP
@@ -1271,6 +1275,11 @@ Fine tuning of the installation directories:
 _ACEOF
 
   cat <<\_ACEOF
+
+Program names:
+  --program-prefix=PREFIX            prepend PREFIX to installed program names
+  --program-suffix=SUFFIX            append SUFFIX to installed program names
+  --program-transform-name=PROGRAM   run sed PROGRAM on installed program names
 
 System types:
   --build=BUILD     configure for building on BUILD [guessed]
@@ -3458,7 +3467,54 @@ if test "${build}" = "${host}" -a "${host}" = "${target}"; then
 fi
 
 
-ac_config_files="$ac_config_files Makefile gdb.ada/Makefile gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile gdb.btrace/Makefile gdb.cell/Makefile gdb.compile/Makefile gdb.cp/Makefile gdb.disasm/Makefile gdb.dwarf2/Makefile gdb.dlang/Makefile gdb.fortran/Makefile gdb.gdb/Makefile gdb.go/Makefile gdb.server/Makefile gdb.java/Makefile gdb.hp/Makefile gdb.hp/gdb.objdbg/Makefile gdb.hp/gdb.base-hp/Makefile gdb.hp/gdb.aCC/Makefile gdb.hp/gdb.compat/Makefile gdb.hp/gdb.defects/Makefile gdb.guile/Makefile gdb.linespec/Makefile gdb.mi/Makefile gdb.modula2/Makefile gdb.multi/Makefile gdb.objc/Makefile gdb.opencl/Makefile gdb.opt/Makefile gdb.pascal/Makefile gdb.perf/Makefile gdb.python/Makefile gdb.reverse/Makefile gdb.stabs/Makefile gdb.threads/Makefile gdb.trace/Makefile gdb.xml/Makefile"
+# Transform the name of some programs and generate the lib/pdtrace
+# test tool.
+test "$program_prefix" != NONE &&
+  program_transform_name="s&^&$program_prefix&;$program_transform_name"
+# Use a double $ so make ignores it.
+test "$program_suffix" != NONE &&
+  program_transform_name="s&\$&$program_suffix&;$program_transform_name"
+# Double any \ or $.
+# By default was `s,x,x', remove it if useless.
+ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
+program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
+
+
+  gdb_ac_transform=`echo "$program_transform_name" | sed -e 's/\\$\\$/\\$/g'`
+  STRIP_TRANSFORM_NAME=`echo strip | sed -e "$gdb_ac_transform"`
+  if test "x$STRIP_TRANSFORM_NAME" = x; then
+     STRIP_TRANSFORM_NAME=strip
+  fi
+
+
+
+  gdb_ac_transform=`echo "$program_transform_name" | sed -e 's/\\$\\$/\\$/g'`
+  READELF_TRANSFORM_NAME=`echo readelf | sed -e "$gdb_ac_transform"`
+  if test "x$READELF_TRANSFORM_NAME" = x; then
+     READELF_TRANSFORM_NAME=readelf
+  fi
+
+
+
+  gdb_ac_transform=`echo "$program_transform_name" | sed -e 's/\\$\\$/\\$/g'`
+  GAS_TRANSFORM_NAME=`echo as | sed -e "$gdb_ac_transform"`
+  if test "x$GAS_TRANSFORM_NAME" = x; then
+     GAS_TRANSFORM_NAME=as
+  fi
+
+
+
+  gdb_ac_transform=`echo "$program_transform_name" | sed -e 's/\\$\\$/\\$/g'`
+  NM_TRANSFORM_NAME=`echo nm | sed -e "$gdb_ac_transform"`
+  if test "x$NM_TRANSFORM_NAME" = x; then
+     NM_TRANSFORM_NAME=nm
+  fi
+
+
+ac_config_files="$ac_config_files lib/pdtrace"
+
+
+ac_config_files="$ac_config_files Makefile gdb.ada/Makefile gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile gdb.btrace/Makefile gdb.cell/Makefile gdb.compile/Makefile gdb.cp/Makefile gdb.disasm/Makefile gdb.dwarf2/Makefile gdb.dlang/Makefile gdb.fortran/Makefile gdb.gdb/Makefile gdb.go/Makefile gdb.server/Makefile gdb.java/Makefile gdb.guile/Makefile gdb.linespec/Makefile gdb.mi/Makefile gdb.modula2/Makefile gdb.multi/Makefile gdb.objc/Makefile gdb.opencl/Makefile gdb.opt/Makefile gdb.pascal/Makefile gdb.perf/Makefile gdb.python/Makefile gdb.reverse/Makefile gdb.stabs/Makefile gdb.threads/Makefile gdb.trace/Makefile gdb.xml/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4158,6 +4214,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
+    "lib/pdtrace") CONFIG_FILES="$CONFIG_FILES lib/pdtrace" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "gdb.ada/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.ada/Makefile" ;;
     "gdb.arch/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.arch/Makefile" ;;
@@ -4175,12 +4232,6 @@ do
     "gdb.go/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.go/Makefile" ;;
     "gdb.server/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.server/Makefile" ;;
     "gdb.java/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.java/Makefile" ;;
-    "gdb.hp/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.hp/Makefile" ;;
-    "gdb.hp/gdb.objdbg/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.hp/gdb.objdbg/Makefile" ;;
-    "gdb.hp/gdb.base-hp/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.hp/gdb.base-hp/Makefile" ;;
-    "gdb.hp/gdb.aCC/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.hp/gdb.aCC/Makefile" ;;
-    "gdb.hp/gdb.compat/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.hp/gdb.compat/Makefile" ;;
-    "gdb.hp/gdb.defects/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.hp/gdb.defects/Makefile" ;;
     "gdb.guile/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.guile/Makefile" ;;
     "gdb.linespec/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.linespec/Makefile" ;;
     "gdb.mi/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.mi/Makefile" ;;
@@ -4599,6 +4650,11 @@ which seems to be undefined.  Please make sure it is defined." >&2;}
 
   esac
 
+
+  case $ac_file$ac_mode in
+    "lib/pdtrace":F) chmod +x lib/pdtrace ;;
+
+  esac
 done # for ac_tag
 
 

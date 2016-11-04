@@ -86,14 +86,6 @@ sim_open (kind, callback, abfd, argv)
       return 0;
     }
 
-#ifdef HAVE_DV_SOCKSER /* FIXME: was done differently before */
-  if (dv_sockser_install (sd) != SIM_RC_OK)
-    {
-      free_state (sd);
-      return 0;
-    }
-#endif
-
 #if 0 /* FIXME: 'twould be nice if we could do this */
   /* These options override any module options.
      Obviously ambiguity should be avoided, however the caller may wish to

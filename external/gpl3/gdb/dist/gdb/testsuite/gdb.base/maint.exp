@@ -1,4 +1,4 @@
-# Copyright 1998-2015 Free Software Foundation, Inc.
+# Copyright 1998-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -213,12 +213,13 @@ gdb_test "maint print psymbols" \
 
 if { ! $have_gdb_index } {
     set psymbols_output [standard_output_file psymbols_output]
+    set psymbols_output_re [string_to_regexp $psymbols_output]
     send_gdb "maint print psymbols $psymbols_output ${srcdir}/${subdir}/${srcfile}\n"
     gdb_expect  {
-	-re "^maint print psymbols $psymbols_output \[^\n\]*\r\n$gdb_prompt $" {
+	-re "^maint print psymbols $psymbols_output_re \[^\n\]*\r\n$gdb_prompt $" {
 	    send_gdb "shell ls $psymbols_output\n"
 	    gdb_expect {
-		-re "$psymbols_output\r\n$gdb_prompt $" {
+		-re "$psymbols_output_re\r\n$gdb_prompt $" {
 		    # We want this grep to be as specific as possible,
 		    # so it's less likely to match symbol file names in
 		    # psymbols_output.  Yes, this actually happened;
@@ -253,12 +254,13 @@ gdb_test "maint print msymbols" \
 
 
 set msymbols_output [standard_output_file msymbols_output]
+set msymbols_output_re [string_to_regexp $msymbols_output]
 send_gdb "maint print msymbols $msymbols_output ${binfile}\n"
 gdb_expect  {
-    -re "^maint print msymbols $msymbols_output \[^\n\]*\r\n$gdb_prompt $" {
+    -re "^maint print msymbols $msymbols_output_re \[^\n\]*\r\n$gdb_prompt $" {
 	send_gdb "shell ls $msymbols_output\n"
 	gdb_expect {
-	    -re "$msymbols_output\r\n$gdb_prompt $" {
+	    -re "$msymbols_output_re\r\n$gdb_prompt $" {
 		send_gdb "shell grep factorial $msymbols_output\n"
 		gdb_expect {
 		    -re "\\\[ *$decimal\\\] \[tT\]\[ \t\]+$hex \\.?factorial.*$gdb_prompt $" {
@@ -331,12 +333,13 @@ gdb_test "maint print symbols" \
 # for GNU libc.
 
 set symbols_output [standard_output_file symbols_output]
+set symbols_output_re [string_to_regexp $symbols_output]
 send_gdb "maint print symbols $symbols_output ${srcdir}/${subdir}/${srcfile}\n"
 gdb_expect  {
-    -re "^maint print symbols $symbols_output \[^\n\]*\r\n$gdb_prompt $" {
+    -re "^maint print symbols $symbols_output_re \[^\n\]*\r\n$gdb_prompt $" {
 	send_gdb "shell ls $symbols_output\n"
 	gdb_expect {
-	    -re "$symbols_output\r\n$gdb_prompt $" {
+	    -re "$symbols_output_re\r\n$gdb_prompt $" {
 		# See comments for `maint print psymbols'.
 		send_gdb "shell grep 'main(.*block' $symbols_output\n"
 		gdb_expect {
@@ -470,6 +473,26 @@ gdb_test "maint info" \
 gdb_test "maint" \
     "\"maintenance\" must be followed by the name of a maintenance command\\.\r\nList.*unambiguous\\..*" \
     "maint w/o args"
+
+gdb_test "maint info line-table" \
+    "symtab: \[^\n\r\]+${srcfile}.*\\(\\(struct symtab \\*\\) $hex\\)\r\nlinetable: \\(\\(struct linetable \\*\\) $hex\\):\r\nINDEX.*LINE.*ADDRESS.*" \
+    "maint info line-table w/o a file name"
+
+gdb_test "maint info line-table ${srcfile}" \
+    "symtab: \[^\n\r\]+${srcfile}.*INDEX.*LINE.*ADDRESS.*" \
+    "maint info line-table with filename of current symtab"
+
+gdb_test_no_output "maint info line-table ${srcfile2}" \
+    "maint info line-table with filename of symtab that is not currently expanded"
+
+gdb_test_no_output "maint expand-symtabs"
+
+gdb_test "maint info line-table ${srcfile2}" \
+    "symtab: \[^\n\r\]+${srcfile2}.*INDEX.*LINE.*ADDRESS.*" \
+    "maint info line-table with filename of symtab that is not current"
+
+gdb_test_no_output "maint info line-table xxx.c" \
+    "maint info line-table with invalid filename"
 
 set timeout $oldtimeout
 

@@ -1,6 +1,6 @@
 /* Base/prototype target for default child (native) targets.
 
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -352,7 +352,7 @@ inf_child_fileio_readlink (struct target_ops *self,
       return NULL;
     }
 
-  ret = xmalloc (len + 1);
+  ret = (char *) xmalloc (len + 1);
   memcpy (ret, buf, len);
   ret[len] = '\0';
   return ret;

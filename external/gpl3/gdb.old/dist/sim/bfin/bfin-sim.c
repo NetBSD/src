@@ -1741,7 +1741,7 @@ hwloop_get_next_pc (SIM_CPU *cpu, bu32 pc, bu32 insn_len)
   for (i = 1; i >= 0; --i)
     if (LCREG (i) > 1 && pc == LBREG (i))
       {
-	TRACE_BRANCH (cpu, pc, LTREG (i), i, "Hardware loop %i", i);
+	BFIN_TRACE_BRANCH (cpu, pc, LTREG (i), i, "Hardware loop %i", i);
 	return LTREG (i);
       }
 
@@ -1773,7 +1773,7 @@ decode_ProgCtrl_0 (SIM_CPU *cpu, bu16 iw0, bu32 pc)
       IFETCH_CHECK (newpc);
       if (PARALLEL_GROUP != BFIN_PARALLEL_NONE)
 	illegal_instruction_combination (cpu);
-      TRACE_BRANCH (cpu, pc, newpc, -1, "RTS");
+      BFIN_TRACE_BRANCH (cpu, pc, newpc, -1, "RTS");
       SET_PCREG (newpc);
       BFIN_CPU_STATE.did_jump = true;
       CYCLE_DELAY = 5;
@@ -1893,7 +1893,7 @@ decode_ProgCtrl_0 (SIM_CPU *cpu, bu16 iw0, bu32 pc)
       IFETCH_CHECK (newpc);
       if (PARALLEL_GROUP != BFIN_PARALLEL_NONE)
 	illegal_instruction_combination (cpu);
-      TRACE_BRANCH (cpu, pc, newpc, -1, "JUMP (Preg)");
+      BFIN_TRACE_BRANCH (cpu, pc, newpc, -1, "JUMP (Preg)");
       SET_PCREG (newpc);
       BFIN_CPU_STATE.did_jump = true;
       PROFILE_BRANCH_TAKEN (cpu);
@@ -1907,7 +1907,7 @@ decode_ProgCtrl_0 (SIM_CPU *cpu, bu16 iw0, bu32 pc)
       IFETCH_CHECK (newpc);
       if (PARALLEL_GROUP != BFIN_PARALLEL_NONE)
 	illegal_instruction_combination (cpu);
-      TRACE_BRANCH (cpu, pc, newpc, -1, "CALL (Preg)");
+      BFIN_TRACE_BRANCH (cpu, pc, newpc, -1, "CALL (Preg)");
       /* If we're at the end of a hardware loop, RETS is going to be
          the top of the loop rather than the next instruction.  */
       SET_RETSREG (hwloop_get_next_pc (cpu, pc, 2));
@@ -1924,7 +1924,7 @@ decode_ProgCtrl_0 (SIM_CPU *cpu, bu16 iw0, bu32 pc)
       IFETCH_CHECK (newpc);
       if (PARALLEL_GROUP != BFIN_PARALLEL_NONE)
 	illegal_instruction_combination (cpu);
-      TRACE_BRANCH (cpu, pc, newpc, -1, "CALL (PC + Preg)");
+      BFIN_TRACE_BRANCH (cpu, pc, newpc, -1, "CALL (PC + Preg)");
       SET_RETSREG (hwloop_get_next_pc (cpu, pc, 2));
       SET_PCREG (newpc);
       BFIN_CPU_STATE.did_jump = true;
@@ -1939,7 +1939,7 @@ decode_ProgCtrl_0 (SIM_CPU *cpu, bu16 iw0, bu32 pc)
       IFETCH_CHECK (newpc);
       if (PARALLEL_GROUP != BFIN_PARALLEL_NONE)
 	illegal_instruction_combination (cpu);
-      TRACE_BRANCH (cpu, pc, newpc, -1, "JUMP (PC + Preg)");
+      BFIN_TRACE_BRANCH (cpu, pc, newpc, -1, "JUMP (PC + Preg)");
       SET_PCREG (newpc);
       BFIN_CPU_STATE.did_jump = true;
       PROFILE_BRANCH_TAKEN (cpu);
@@ -2444,7 +2444,7 @@ decode_BRCC_0 (SIM_CPU *cpu, bu16 iw0, bu32 pc)
   if (cond)
     {
       bu32 newpc = pc + pcrel;
-      TRACE_BRANCH (cpu, pc, newpc, -1, "Conditional JUMP");
+      BFIN_TRACE_BRANCH (cpu, pc, newpc, -1, "Conditional JUMP");
       SET_PCREG (newpc);
       BFIN_CPU_STATE.did_jump = true;
       PROFILE_BRANCH_TAKEN (cpu);
@@ -2477,7 +2477,7 @@ decode_UJUMP_0 (SIM_CPU *cpu, bu16 iw0, bu32 pc)
   if (PARALLEL_GROUP != BFIN_PARALLEL_NONE)
     illegal_instruction_combination (cpu);
 
-  TRACE_BRANCH (cpu, pc, newpc, -1, "JUMP.S");
+  BFIN_TRACE_BRANCH (cpu, pc, newpc, -1, "JUMP.S");
 
   SET_PCREG (newpc);
   BFIN_CPU_STATE.did_jump = true;
@@ -3619,11 +3619,11 @@ decode_CALLa_0 (SIM_CPU *cpu, bu16 iw0, bu16 iw1, bu32 pc)
 
   if (S == 1)
     {
-      TRACE_BRANCH (cpu, pc, newpc, -1, "CALL");
+      BFIN_TRACE_BRANCH (cpu, pc, newpc, -1, "CALL");
       SET_RETSREG (hwloop_get_next_pc (cpu, pc, 4));
     }
   else
-    TRACE_BRANCH (cpu, pc, newpc, -1, "JUMP.L");
+    BFIN_TRACE_BRANCH (cpu, pc, newpc, -1, "JUMP.L");
 
   SET_PCREG (newpc);
   BFIN_CPU_STATE.did_jump = true;
@@ -4318,7 +4318,7 @@ decode_dsp32alu_0 (SIM_CPU *cpu, bu16 iw0, bu16 iw1)
       SET_AREG (1, 0);
     }
   else if ((aop == 0 || aop == 1 || aop == 2) && s == 1 && aopcde == 8
-	   && x == 0 && s == 1 && HL == 0)
+	   && x == 0 && HL == 0)
     {
       bs40 acc0 = get_extended_acc (cpu, 0);
       bs40 acc1 = get_extended_acc (cpu, 1);
@@ -4537,7 +4537,7 @@ decode_dsp32alu_0 (SIM_CPU *cpu, bu16 iw0, bu16 iw1)
   else if ((aop == 0 || aop == 1) && aopcde == 14 && x == 0 && s == 0)
     {
       bs40 src_acc = get_extended_acc (cpu, aop);
-      int v = 0;
+      bu32 v = 0;
 
       TRACE_INSN (cpu, "A%i = - A%i;", HL, aop);
 

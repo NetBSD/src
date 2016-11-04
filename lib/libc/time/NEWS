@@ -1,6 +1,315 @@
 News for the tz database
 
+Release 2016h - 2016-10-19 23:17:57 -0700
+
+  Changes to future time stamps
+
+    Asia/Gaza and Asia/Hebron end DST on 2016-10-29 at 01:00, not
+    2016-10-21 at 00:00.  (Thanks to Sharef Mustafa.)  Predict that
+    future fall transitions will be on the last Saturday of October
+    at 01:00, which is consistent with predicted spring transitions
+    on the last Saturday of March.  (Thanks to Tim Parenti.)
+
+  Changes to past time stamps
+
+    In Turkey, transitions in 1986-1990 were at 01:00 standard time
+    not at 02:00, and the spring 1994 transition was on March 20, not
+    March 27.  (Thanks to Kıvanç Yazan.)
+
+  Changes to past and future time zone abbreviations
+
+    Asia/Colombo now uses numeric time zone abbreviations like "+0530"
+    instead of alphabetic ones like "IST" and "LKT".  Various
+    English-language sources use "IST", "LKT" and "SLST", with no
+    working consensus.  (Usage of "SLST" mentioned by Sadika
+    Sumanapala.)
+
+  Changes to code
+
+    zic no longer mishandles relativizing file names when creating
+    symbolic links like /etc/localtime, when these symbolic links
+    are outside the usual directory hierarchy.  This fixes a bug
+    introduced in 2016g.  (Problem reported by Andreas Stieger.)
+
+  Changes to build procedure
+
+    New rules 'traditional_tarballs' and 'traditional_signatures' for
+    building just the traditional-format distribution.  (Requested by
+    Deborah Goldsmith.)
+
+    The file 'version' is now put into the tzdata tarball too.
+    (Requested by Howard Hinnant.)
+
+  Changes to documentation and commentary
+
+    The 'Theory' file now has a section on interface stability.
+    (Requested by Paul Koning.)  It also mentions features like
+    tm_zone and localtime_rz that have long been supported by the
+    reference code.
+
+    tz-link.htm has improved coverage of time zone boundaries suitable
+    for geolocation.  (Thanks to heads-ups from Evan Siroky and Matt
+    Johnson.)
+
+    The US commentary now mentions Allen and the "day of two noons".
+
+    The Fiji commentary mentions the government's 2016-10-03 press
+    release.  (Thanks to Raymond Kumar.)
+
+
+Release 2016g - 2016-09-13 08:56:38 -0700
+
+  Changes to future time stamps
+
+    Turkey switched from EET/EEST (+02/+03) to permanent +03,
+    effective 2016-09-07.  (Thanks to Burak AYDIN.)  Use "+03" rather
+    than an invented abbreviation for the new time.
+
+    New leap second 2016-12-31 23:59:60 UTC as per IERS Bulletin C 52.
+    (Thanks to Tim Parenti.)
+
+  Changes to past time stamps
+
+    For America/Los_Angeles, spring-forward transition times have been
+    corrected from 02:00 to 02:01 in 1948, and from 02:00 to 01:00 in
+    1950-1966.
+
+    For zones using Soviet time on 1919-07-01, transitions to UT-based
+    time were at 00:00 UT, not at 02:00 local time.  The affected
+    zones are Europe/Kirov, Europe/Moscow, Europe/Samara, and
+    Europe/Ulyanovsk.  (Thanks to Alexander Belopolsky.)
+
+  Changes to past and future time zone abbreviations
+
+    The Factory zone now uses the time zone abbreviation -00 instead
+    of a long English-language string, as -00 is now the normal way to
+    represent an undefined time zone.
+
+    Several zones in Antarctica and the former Soviet Union, along
+    with zones intended for ships at sea that cannot use POSIX TZ
+    strings, now use numeric time zone abbreviations instead of
+    invented or obsolete alphanumeric abbreviations.  The affected
+    zones are Antarctica/Casey, Antarctica/Davis,
+    Antarctica/DumontDUrville, Antarctica/Mawson, Antarctica/Rothera,
+    Antarctica/Syowa, Antarctica/Troll, Antarctica/Vostok,
+    Asia/Anadyr, Asia/Ashgabat, Asia/Baku, Asia/Bishkek, Asia/Chita,
+    Asia/Dushanbe, Asia/Irkutsk, Asia/Kamchatka, Asia/Khandyga,
+    Asia/Krasnoyarsk, Asia/Magadan, Asia/Omsk, Asia/Sakhalin,
+    Asia/Samarkand, Asia/Srednekolymsk, Asia/Tashkent, Asia/Tbilisi,
+    Asia/Ust-Nera, Asia/Vladivostok, Asia/Yakutsk, Asia/Yekaterinburg,
+    Asia/Yerevan, Etc/GMT-14, Etc/GMT-13, Etc/GMT-12, Etc/GMT-11,
+    Etc/GMT-10, Etc/GMT-9, Etc/GMT-8, Etc/GMT-7, Etc/GMT-6, Etc/GMT-5,
+    Etc/GMT-4, Etc/GMT-3, Etc/GMT-2, Etc/GMT-1, Etc/GMT+1, Etc/GMT+2,
+    Etc/GMT+3, Etc/GMT+4, Etc/GMT+5, Etc/GMT+6, Etc/GMT+7, Etc/GMT+8,
+    Etc/GMT+9, Etc/GMT+10, Etc/GMT+11, Etc/GMT+12, Europe/Kaliningrad,
+    Europe/Minsk, Europe/Samara, Europe/Volgograd, and
+    Indian/Kerguelen.  For Europe/Moscow the invented abbreviation MSM
+    was replaced by +05, whereas MSK and MSD were kept as they are not
+    our invention and are widely used.
+
+  Changes to zone names
+
+    Rename Asia/Rangoon to Asia/Yangon, with a backward compatibility link.
+    (Thanks to David Massoud.)
+
+  Changes to code
+
+    zic no longer generates binary files containing POSIX TZ-like
+    strings that disagree with the local time type after the last
+    explicit transition in the data.  This fixes a bug with
+    Africa/Casablanca and Africa/El_Aaiun in some year-2037 time
+    stamps on the reference platform.  (Thanks to Alexander Belopolsky
+    for reporting the bug and suggesting a way forward.)
+
+    If the installed localtime and/or posixrules files are symbolic
+    links, zic now keeps them symbolic links when updating them, for
+    compatibility with platforms like OpenSUSE where other programs
+    configure these files as symlinks.
+
+    zic now avoids hard linking to symbolic links, avoids some
+    unnecessary mkdir and stat system calls, and uses shorter file
+    names internally.
+
+    zdump has a new -i option to generate transitions in a
+    more-compact but still human-readable format.  This option is
+    experimental, and the output format may change in future versions.
+    (Thanks to Jon Skeet for suggesting that an option was needed,
+    and thanks to Tim Parenti and Chris Rovick for further comments.)
+
+  Changes to build procedure
+
+    An experimental distribution format is available, in addition
+    to the traditional format which will continue to be distributed.
+    The new format is a tarball tzdb-VERSION.tar.lz with signature
+    file tzdb-VERSION.tar.lz.asc.  It unpacks to a top-level directory
+    tzdb-VERSION containing the code and data of the traditional
+    two-tarball format, along with extra data that may be useful.
+    (Thanks to Antonio Diaz Diaz, Oscar van Vlijmen, and many others
+    for comments about the experimental format.)
+
+    The release version number is now more accurate in the usual case
+    where releases are built from a Git repository.  For example, if
+    23 commits and some working-file changes have been made since
+    release 2016g, the version number is now something like
+    '2016g-23-g50556e3-dirty' instead of the misleading '2016g'.
+    Official releases uses the same version number format as before,
+    e.g., '2016g'.  To support the more-accurate version number, its
+    specification has moved from a line in the Makefile to a new
+    source file 'version'.
+
+    The experimental distribution contains a file to2050.tzs that
+    contains what should be the output of 'zdump -i -c 2050' on
+    primary zones.  If this file is available, 'make check' now checks
+    that zdump generates this output.
+
+    'make check_web' now works on Fedora-like distributions.
+
+  Changes to documentation and commentary
+
+    tzfile.5 now documents the new restriction on POSIX TZ-like
+    strings that is now implemented by zic.
+
+    Comments now cite URLs for some 1917-1921 Russian DST decrees.
+    (Thanks to Alexander Belopolsky.)
+
+    tz-link.htm mentions JuliaTime (thanks to Curtis Vogt) and Time4J
+    (thanks to Meno Hochschild) and ThreeTen-Extra, and its
+    description of Java 8 has been brought up to date (thanks to
+    Stephen Colebourne).  Its description of local time on Mars has
+    been updated to match current practice, and URLs have been updated
+    and some obsolete ones removed.
+
+
+Release 2016f - 2016-07-05 16:26:51 +0200
+
+  Changes affecting future time stamps
+
+    The Egyptian government changed its mind on short notice, and
+    Africa/Cairo will not introduce DST starting 2016-07-07 after all.
+    (Thanks to Mina Samuel.)
+
+    Asia/Novosibirsk switches from +06 to +07 on 2016-07-24 at 02:00.
+    (Thanks to Stepan Golosunov.)
+
+  Changes to past and future time stamps
+
+    Asia/Novokuznetsk and Asia/Novosibirsk now use numeric time zone
+    abbreviations instead of invented ones.
+
+  Changes affecting past time stamps
+
+    Europe/Minsk's 1992-03-29 spring-forward transition was at 02:00 not 00:00.
+    (Thanks to Stepan Golosunov.)
+
+
+Release 2016e - 2016-06-14 08:46:16 -0700
+
+  Changes affecting future time stamps
+
+    Africa/Cairo observes DST in 2016 from July 7 to the end of October.
+    Guess October 27 and 24:00 transitions.  (Thanks to Steffen Thorsen.)
+    For future years, guess April's last Thursday to October's last
+    Thursday except for Ramadan.
+
+  Changes affecting past time stamps
+
+    Locations while uninhabited now use '-00', not 'zzz', as a
+    placeholder time zone abbreviation.  This is inspired by Internet
+    RFC 3339 and is more consistent with numeric time zone
+    abbreviations already used elsewhere.  The change affects several
+    arctic and antarctic locations, e.g., America/Cambridge_Bay before
+    1920 and Antarctica/Troll before 2005.
+
+    Asia/Baku's 1992-09-27 transition from +04 (DST) to +04 (non-DST) was
+    at 03:00, not 23:00 the previous day.  (Thanks to Michael Deckers.)
+
+  Changes to code
+
+    zic now outputs a dummy transition at time 2**31 - 1 in zones
+    whose POSIX-style TZ strings contain a '<'.  This mostly works
+    around Qt bug 53071 <https://bugreports.qt.io/browse/QTBUG-53071>.
+    (Thanks to Zhanibek Adilbekov for reporting the Qt bug.)
+
+  Changes affecting documentation and commentary
+
+    tz-link.htm says why governments should give plenty of notice for
+    time zone or DST changes, and refers to Matt Johnson's blog post.
+
+    tz-link.htm mentions Tzdata for Elixir.  (Thanks to Matt Johnson.)
+
+
+Release 2016d - 2016-04-17 22:50:29 -0700
+
+  Changes affecting future time stamps
+
+    America/Caracas switches from -0430 to -04 on 2016-05-01 at 02:30.
+    (Thanks to Alexander Krivenyshev for the heads-up.)
+
+    Asia/Magadan switches from +10 to +11 on 2016-04-24 at 02:00.
+    (Thanks to Alexander Krivenyshev and Matt Johnson.)
+
+    New zone Asia/Tomsk, split off from Asia/Novosibirsk.  It covers
+    Tomsk Oblast, Russia, which switches from +06 to +07 on 2016-05-29
+    at 02:00.  (Thanks to Stepan Golosunov.)
+
+  Changes affecting past time stamps
+
+    New zone Europe/Kirov, split off from Europe/Volgograd.  It covers
+    Kirov Oblast, Russia, which switched from +04/+05 to +03/+04 on
+    1989-03-26 at 02:00, roughly a year after Europe/Volgograd made
+    the same change.  (Thanks to Stepan Golosunov.)
+
+    Russia and nearby locations had daylight-saving transitions on
+    1992-03-29 at 02:00 and 1992-09-27 at 03:00, instead of on
+    1992-03-28 at 23:00 and 1992-09-26 at 23:00.  (Thanks to Stepan
+    Golosunov.)
+
+    Many corrections to historical time in Kazakhstan from 1991
+    through 2005.  (Thanks to Stepan Golosunov.)  Replace Kazakhstan's
+    invented time zone abbreviations with numeric abbreviations.
+
+  Changes to commentary
+
+    Mention Internet RFCs 7808 (TZDIST) and 7809 (CalDAV time zone references).
+
+
+Release 2016c - 2016-03-23 00:51:27 -0700
+
+  Changes affecting future time stamps
+
+    Azerbaijan no longer observes DST.  (Thanks to Steffen Thorsen.)
+
+    Chile reverts from permanent to seasonal DST.  (Thanks to Juan
+    Correa for the heads-up, and to Tim Parenti for corrections.)
+    Guess that future transitions are August's and May's second
+    Saturdays at 24:00 mainland time.  Also, call the period from
+    2014-09-07 through 2016-05-14 daylight saving time instead of
+    standard time, as that seems more appropriate now.
+
+  Changes affecting past time stamps
+
+    Europe/Kaliningrad and Europe/Vilnius changed from +03/+04 to
+    +02/+03 on 1989-03-26, not 1991-03-31.  Europe/Volgograd changed
+    from +04/+05 to +03/+04 on 1988-03-27, not 1989-03-26.
+    (Thanks to Stepan Golosunov.)
+
+  Changes to commentary
+
+    Several updates and URLs for historical and proposed Russian changes.
+    (Thanks to Stepan Golosunov, Matt Johnson, and Alexander Krivenyshev.)
+
+
 Release 2016b - 2016-03-12 17:30:14 -0800
+
+  Compatibility note
+
+    Starting with release 2016b, some data entries cause zic implementations
+    derived from tz releases 2005j through 2015e to issue warnings like
+    "time zone abbreviation differs from POSIX standard (+03)".
+    These warnings should not otherwise affect zic's output and can safely be
+    ignored on today's platforms, as the warnings refer to a restriction in
+    POSIX.1-1988 that was removed in POSIX.1-2001.  One way to suppress the
+    warnings is to upgrade to zic derived from tz releases 2015f and later.
 
   Changes affecting future time stamps
 
@@ -264,7 +573,7 @@ Release 2015d - 2015-04-24 08:09:46 -0700
 
   Changes affecting past time stamps
 
-    America/Whitehorse switched from UTC-9 to UTC-8 on 1967-05-28, not
+    America/Whitehorse switched from UT -09 to -08 on 1967-05-28, not
     1966-07-01.  Also, Yukon's time zone history is documented better.
     (Thanks to Brian Inglis and Dennis Ferguson.)
 
@@ -298,12 +607,12 @@ Release 2015c - 2015-04-11 08:55:55 -0700
 
       The 1918 transition was September 10, not September 1.
 
-      The UTC-4 time observed from 1932 to 1942 is now considered to be
-      standard time, not year-round DST.
+      The UT -04 time observed from 1932 to 1942 is now considered to
+      be standard time, not year-round DST.
 
-      Santiago observed DST (UTC-3) from 1946-07-15 through 1946-08-31,
-      then reverted to standard time, then switched its time zone to
-      UTC-5 on 1947-04-01.
+      Santiago observed DST (UT -03) from 1946-07-15 through
+      1946-08-31, then reverted to standard time, then switched to -05
+      on 1947-04-01.
 
       Assume transitions before 1968 were at 00:00, since we have no data
       saying otherwise.
@@ -432,7 +741,7 @@ Release 2014j - 2014-11-10 17:37:11 -0800
 
   Changes affecting current and future time stamps
 
-    Turks & Caicos' switch from US eastern time to UTC-4 year-round
+    Turks & Caicos' switch from US eastern time to UT -04 year-round
     did not occur on 2014-11-02 at 02:00.  It's currently scheduled
     for 2015-11-01 at 02:00.  (Thanks to Chris Walton.)
 
@@ -468,7 +777,7 @@ Release 2014i - 2014-10-21 22:04:57 -0700
     years will use a similar pattern.
 
     A new Zone Pacific/Bougainville, for the part of Papua New Guinea
-    that plans to switch from UTC+10 to UTC+11 on 2014-12-28 at 02:00.
+    that plans to switch from UT +10 to +11 on 2014-12-28 at 02:00.
     (Thanks to Kiley Walbom for the heads-up.)
 
   Changes affecting time zone abbreviations
@@ -478,8 +787,8 @@ Release 2014i - 2014-10-21 22:04:57 -0700
     to its more-traditional value MSK on 2014-10-26 at 01:00.
     (Thanks to Alexander Bokovoy for the heads-up about Belarus.)
 
-    The new abbreviation IDT stands for the pre-1976 use of UT+8 in
-    Indochina, to distinguish it better from ICT (UT+7).
+    The new abbreviation IDT stands for the pre-1976 use of UT +08 in
+    Indochina, to distinguish it better from ICT (+07).
 
   Changes affecting past time stamps
 
@@ -557,7 +866,7 @@ Release 2014h - 2014-09-25 18:59:03 -0700
     zdump -c no longer mishandles transitions near year boundaries.
     (Thanks to Tim Parenti for reporting the problem.)
 
-    An access to uninitalized data has been fixed.
+    An access to uninitialized data has been fixed.
     (Thanks to Jörg Richter for reporting the problem.)
 
     When THREAD_SAFE is defined, the code ports to the C11 memory model.
@@ -590,8 +899,8 @@ Release 2014g - 2014-08-28 12:31:23 -0700
 
   Changes affecting future time stamps
 
-    Turks & Caicos is switching from US eastern time to UTC-4 year-round,
-    modeled as a switch from EST/EDT to AST on 2014-11-02 at 02:00.
+    Turks & Caicos is switching from US eastern time to UT -04
+    year-round, modeled as a switch on 2014-11-02 at 02:00.
     [As noted in 2014j, this switch was later delayed.]
 
   Changes affecting past time stamps
@@ -774,7 +1083,7 @@ Release 2014f - 2014-08-05 17:42:36 -0700
     This change does not affect UTC offsets, only time zone abbreviations.
     (Thanks to Rich Tibbett and many others.)
 
-    Asia/Novokuznetsk shifts from NOVT to KRAT (remaining on UTC+7)
+    Asia/Novokuznetsk shifts from NOVT to KRAT (remaining on UT +07)
     effective 2014-10-26 at 02:00 local time.
 
     The time zone abbreviation for Xinjiang Time (observed in Ürümqi)
@@ -803,8 +1112,8 @@ Release 2014f - 2014-08-05 17:42:36 -0700
     zones Asia/Harbin, Asia/Chongqing, and Asia/Kashgar have been
     removed; backwards-compatibility links still work, albeit with
     different behaviors for time stamps before May 1980.  Asia/Urumqi's
-    1980 transition to UTC+8 has been removed, so that it is now at
-    UTC+6 and not UTC+8.  (Thanks to Luther Ma and to Alois Treindl;
+    1980 transition to UT +08 has been removed, so that it is now at
+    +06 and not +08.  (Thanks to Luther Ma and to Alois Treindl;
     Treindl sent helpful translations of two papers by Guo Qingsheng.)
 
     Some zones have been turned into links, when they differed from existing
@@ -834,8 +1143,8 @@ Release 2014f - 2014-08-05 17:42:36 -0700
     Europe/Helsinki's 1942 fall-back transition was 10-04 at 01:00, not
     10-03 at 00:00.  (Thanks to Konstantin Hyppönen.)
 
-    Pacific/Pago_Pago has been changed from UTC-11:30 to UTC-11 for the period
-    from 1911 to 1950.
+    Pacific/Pago_Pago has been changed from UT -11:30 to -11 for the
+    period from 1911 to 1950.
 
     Pacific/Chatham has been changed to New Zealand standard time plus
     45 minutes for the period before 1957, reflecting a 1956 remark in
@@ -1162,15 +1471,15 @@ Release 2013h - 2013-10-25 15:32:32 -0700
 
   Changes affecting current and future time stamps:
 
-    Libya has switched its time zone back to UTC+2 without DST,
-    instead of UTC+1 with DST.  (Thanks to Even Scharning.)
+    Libya has switched its UT offset back to +02 without DST, instead
+    of +01 with DST.  (Thanks to Even Scharning.)
 
     Western Sahara (Africa/El_Aaiun) uses Morocco's DST rules.
     (Thanks to Gwillim Law.)
 
   Changes affecting future time stamps:
 
-    Acre and (we guess) western Amazonas will switch from UTC-4 to UTC-5
+    Acre and (we guess) western Amazonas will switch from UT -04 to -05
     on 2013-11-10.  This affects America/Rio_Branco and America/Eirunepe.
     (Thanks to Steffen Thorsen.)
 
@@ -1257,7 +1566,7 @@ Release 2013f - 2013-09-24 23:37:36 -0700
     Tocantins will very likely not observe DST starting this spring.
     (Thanks to Steffen Thorsen.)
 
-    Jordan will likely stay at UTC+3 indefinitely, and will not fall
+    Jordan will likely stay at UT +03 indefinitely, and will not fall
     back this fall.
 
     Palestine will fall back at 00:00, not 01:00.  (Thanks to Steffen Thorsen.)
@@ -1314,7 +1623,7 @@ Release 2013e - 2013-09-19 23:50:04 -0700
     Benny Lin.)  This affects Asia/Dili, Asia/Jakarta, Asia/Jayapura,
     Asia/Makassar, and Asia/Pontianak.
 
-    Use ART (UTC-3, standard time), rather than WARST (also UTC-3, but
+    Use ART (UT -03, standard time), rather than WARST (also -03, but
     daylight saving time) for San Luis, Argentina since 2009.
 
   Changes affecting Godthåb time stamps after 2037 if version mismatch
@@ -1771,7 +2080,7 @@ Release 2012f - 2012-09-12 23:17:03 -0700
 
 Release 2012e - 2012-08-02 20:44:55 -0700
 
-  * australasia (Pacific/Fakaofo): Tokelau is UTC+13, not UTC+14.
+  * australasia (Pacific/Fakaofo): Tokelau is UT +13, not +14.
     (Thanks to Steffen Thorsen.)
 
   * Use a single version number for both code and data.
@@ -3390,14 +3699,15 @@ This file contains copies of the part of each release announcement
 that talks about the changes in that release.  The text has been
 adapted and reformatted for the purposes of this file.
 
-Typically a release R consists of a pair of tarball files,
+Traditionally a release R consists of a pair of tarball files,
 tzcodeR.tar.gz and tzdataR.tar.gz.  However, some releases (e.g.,
 code2010a, data2012c) consist of just one or the other tarball, and a
 few (e.g., code2012c-data2012d) have tarballs with mixed version
-numbers.
+numbers.  Recent releases also come in an experimental format
+consisting of a single tarball tzdb-R.tar.lz with extra data.
 
 Release time stamps are taken from the release's commit (for newer,
-git releases), from the newest file in the tarball (for older
+Git-based releases), from the newest file in the tarball (for older
 releases, where this info is available) or from the email announcing
 the release (if all else fails; these are marked with a time zone of
 -0000 and an "is missing!" comment).

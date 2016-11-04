@@ -1,7 +1,7 @@
 /*  This file is part of the program psim.
 
     Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
-    Copyright (C) 1997-2015 Free Software Foundation, Inc.
+    Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,10 +22,6 @@
 #ifndef SIM_MAIN_H
 #define SIM_MAIN_H
 
-#define WITH_CORE
-#define WITH_WATCHPOINTS 1
-#define SIM_HANDLES_LMA 1
-
 #define SIM_ENGINE_HALT_HOOK(SD,LAST_CPU,CIA) 0 /* disable this hook */
 
 #include "sim-basics.h"
@@ -41,8 +37,6 @@
 /* These are generated files.  */
 #include "itable.h"
 #include "idecode.h"
-
-#define WITH_WATCHPOINTS 1
 
 #define SIM_CORE_SIGNAL(SD,CPU,CIA,MAP,NR_BYTES,ADDR,TRANSFER,ERROR)  \
 mn10300_core_signal ((SD), (CPU), (CIA), (MAP), (NR_BYTES), (ADDR), (TRANSFER), (ERROR))

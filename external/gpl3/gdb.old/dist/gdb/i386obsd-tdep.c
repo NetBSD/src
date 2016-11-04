@@ -357,7 +357,7 @@ i386obsd_trapframe_cache (struct frame_info *this_frame, void **this_cache)
   sp = get_frame_register_unsigned (this_frame, I386_ESP_REGNUM);
 
   find_pc_partial_function (func, &name, NULL, NULL);
-  if (name && strncmp (name, "Xintr", 5) == 0)
+  if (name && startswith (name, "Xintr"))
     addr = sp + 8;		/* It's an interrupt frame.  */
   else
     addr = sp;
@@ -420,8 +420,8 @@ i386obsd_trapframe_sniffer (const struct frame_unwind *self,
   find_pc_partial_function (get_frame_pc (this_frame), &name, NULL, NULL);
   return (name && (strcmp (name, "calltrap") == 0
 		   || strcmp (name, "syscall1") == 0
-		   || strncmp (name, "Xintr", 5) == 0
-		   || strncmp (name, "Xsoft", 5) == 0));
+		   || startswith (name, "Xintr")
+		   || startswith (name, "Xsoft")));
 }
 
 static const struct frame_unwind i386obsd_trapframe_unwind = {

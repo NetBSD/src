@@ -1,3 +1,17 @@
+2016-03-03  Alan Modra  <amodra@gmail.com>
+
+	* fr30.cpu (f-m4): Replace bogus comment with a better guess
+	at what is really going on.
+
+2016-03-02  Alan Modra  <amodra@gmail.com>
+
+	* fr30.cpu (f-m4): Replace -1 << 4 with -16.
+
+2016-02-02  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* epiphany.opc (epiphany_print_insn): Set info->bytes_per_line to
+	a constant to better align disassembler output.
+
 2014-07-20  Stefan Kristiansson  <stefan.kristiansson@saunalahti.fi>
 
 	* or1korbis.cpu (l-msync, l-psync, l-csync): New instructions.
@@ -261,7 +275,7 @@
 	(dst32-16-16sa-Unprefixed-*): New
 	(jsri): Fix operands.
 	(setzx): Fix encoding.
-	
+
 2007-03-08  Alan Modra  <amodra@bigpond.net.au>
 
 	* m32r.opc: Formatting.
@@ -283,7 +297,7 @@
 	(parse_signed_bitbase8): Likewise.
 	(parse_signed_bitbase11): Likewise.
 	(parse_signed_bitbase19): Likewise.
-	
+
 2006-03-13  DJ Delorie  <dj@redhat.com>
 
 	* m32c.cpu (Bit3-S): New.
@@ -320,10 +334,10 @@
 	attribute.
 	(jsri16, jsri32): Add 1ADDR attribute.
 	(jsr32.w, jsr32.a): Add JUMP attribute.
-	
+
 2006-02-17  Shrirang Khisti  <shrirangk@kpitcummins.com>
-            Anil Paranjape   <anilp1@kpitcummins.com>
-            Shilin Shakti    <shilins@kpitcummins.com>
+	    Anil Paranjape   <anilp1@kpitcummins.com>
+	    Shilin Shakti    <shilins@kpitcummins.com>
 
 	* xc16x.cpu: New file containing complete CGEN specific XC16X CPU
 	description.
@@ -424,7 +438,7 @@
 	stzx16-imm8-imm8-abs16): Fix operand typos.
 	* m32c.opc (m32c_asm_hash): Support bnCND.
 	(parse_signed4n, print_signed4n): New.
-	
+
 2005-10-26  DJ Delorie  <dj@redhat.com>
 
 	* m32c.cpu (f-dsp-8-s24, Dsp-8-s24): New.
@@ -498,7 +512,7 @@
 	Fix compile time warnings about signedness mismatches.
 	Remove dead code.
 	(parse_lab_5_3): New parser function.
-	
+
 2005-07-16  Jim Blandy  <jimb@redhat.com>
 
 	* m32c.opc (m32c_cgen_insn_supported): Use int, not CGEN_BITSET,

@@ -1,7 +1,5 @@
 /* BFD back-end for IBM RS/6000 "XCOFF" files.
-   Copyright 1990-1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Metin G. Ozisik, Mimi Phuong-Thao Vo, and John Gilmore.
    Archive support from Damon A. Permezel.
    Contributed by IBM Corporation and Cygnus Support.
@@ -24,6 +22,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
+#include "libiberty.h"
 #include "bfd.h"
 #include "bfdlink.h"
 #include "libbfd.h"
@@ -76,10 +75,7 @@ void xcoff_rtype2howto (arelent *, struct internal_reloc *);
 #define NO_COFF_SYMBOLS
 #define RTYPE2HOWTO(cache_ptr, dst) xcoff_rtype2howto (cache_ptr, dst)
 #define coff_mkobject _bfd_xcoff_mkobject
-#define coff_bfd_copy_private_bfd_data _bfd_xcoff_copy_private_bfd_data
 #define coff_bfd_is_local_label_name _bfd_xcoff_is_local_label_name
-#define coff_bfd_reloc_type_lookup _bfd_xcoff_reloc_type_lookup
-#define coff_bfd_reloc_name_lookup _bfd_xcoff_reloc_name_lookup
 #ifdef AIX_CORE
 extern const bfd_target * rs6000coff_core_p (bfd *abfd);
 extern bfd_boolean rs6000coff_core_file_matches_executable_p
@@ -118,6 +114,7 @@ extern int rs6000coff_core_file_failing_signal (bfd *abfd);
 #define bfd_pe_print_pdata	NULL
 #endif
 
+#include <stdint.h>
 #include "coffcode.h"
 
 /* The main body of code is in coffcode.h.  */
@@ -405,50 +402,6 @@ _bfd_xcoff_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
 {
   return FALSE;
 }
-
-static const struct dwarf_debug_section xcoff_debug_sections[] =
-{
-  { ".dwabrev",		NULL },
-  { ".dwarnge",		NULL },
-  { NULL,	NULL }, /* .debug_frame */
-  { ".dwinfo",		NULL },
-  { ".dwline",		NULL },
-  { NULL,	NULL }, /* .debug_loc */
-  { NULL,	NULL }, /* .debug_macinfo */
-  { NULL,	NULL }, /* .debug_macro */
-  { ".dwpbnms",		NULL },
-  { ".dwpbtyp",		NULL },
-  { ".dwrnges",		NULL },
-  { NULL,	NULL }, /* .debug_static_func */
-  { NULL,	NULL }, /* .debug_static_vars */
-  { ".dwstr",	NULL },
-  { NULL,	NULL }, /* .debug_types */
-  /* GNU DWARF 1 extensions */
-  { NULL,	NULL }, /* .debug_sfnames */
-  { NULL,	NULL }, /* .debug_srcinfo */
-  /* SGI/MIPS DWARF 2 extensions */
-  { NULL,	NULL }, /* .debug_funcnames */
-  { NULL,	NULL }, /* .debug_typenames */
-  { NULL,	NULL }, /* .debug_varnames */
-  { NULL,	NULL }, /* .debug_weaknames */
-  { NULL,	NULL },
-};
-
-static bfd_boolean
-xcoff_find_nearest_line (bfd *abfd,
-                         asection *section,
-                         asymbol **symbols,
-                         bfd_vma offset,
-                         const char **filename_ptr,
-                         const char **functionname_ptr,
-                         unsigned int *line_ptr)
-{
-  return coff_find_nearest_line_with_names (abfd, xcoff_debug_sections,
-                                            section, symbols, offset,
-                                            filename_ptr, functionname_ptr,
-                                            line_ptr);
-}
-
 
 void
 _bfd_xcoff_swap_sym_in (bfd *abfd, void * ext1, void * in1)
@@ -713,7 +666,7 @@ end:
 
 reloc_howto_type xcoff_howto_table[] =
 {
-  /* Standard 32 bit relocation.  */
+  /* 0x00: Standard 32 bit relocation.  */
   HOWTO (R_POS,			/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -728,7 +681,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* 32 bit relocation, but store negative value.  */
+  /* 0x01: 32 bit relocation, but store negative value.  */
   HOWTO (R_NEG,			/* type */
 	 0,			/* rightshift */
 	 -2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -743,7 +696,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* 32 bit PC relative relocation.  */
+  /* 0x02: 32 bit PC relative relocation.  */
   HOWTO (R_REL,			/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -758,7 +711,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* 16 bit TOC relative relocation.  */
+  /* 0x03: 16 bit TOC relative relocation.  */
   HOWTO (R_TOC,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -773,7 +726,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* I don't really know what this is.  */
+  /* 0x04: I don't really know what this is.  */
   HOWTO (R_RTB,			/* type */
 	 1,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -788,7 +741,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* External TOC relative symbol.  */
+  /* 0x05: External TOC relative symbol.  */
   HOWTO (R_GL,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -803,7 +756,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Local TOC relative symbol.	 */
+  /* 0x06: Local TOC relative symbol.	 */
   HOWTO (R_TCL,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -820,7 +773,7 @@ reloc_howto_type xcoff_howto_table[] =
 
   EMPTY_HOWTO (7),
 
-  /* Non modifiable absolute branch.  */
+  /* 0x08: Non modifiable absolute branch.  */
   HOWTO (R_BA,			/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -837,7 +790,7 @@ reloc_howto_type xcoff_howto_table[] =
 
   EMPTY_HOWTO (9),
 
-  /* Non modifiable relative branch.  */
+  /* 0x0a: Non modifiable relative branch.  */
   HOWTO (R_BR,			/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -854,7 +807,7 @@ reloc_howto_type xcoff_howto_table[] =
 
   EMPTY_HOWTO (0xb),
 
-  /* Indirect load.  */
+  /* 0x0c: Indirect load.  */
   HOWTO (R_RL,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -869,7 +822,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Load address.  */
+  /* 0x0d: Load address.  */
   HOWTO (R_RLA,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -886,7 +839,7 @@ reloc_howto_type xcoff_howto_table[] =
 
   EMPTY_HOWTO (0xe),
 
-  /* Non-relocating reference.  Bitsize is 1 so that r_rsize is 0.  */
+  /* 0x0f: Non-relocating reference.  Bitsize is 1 so that r_rsize is 0.  */
   HOWTO (R_REF,			/* type */
 	 0,			/* rightshift */
 	 0,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -904,7 +857,7 @@ reloc_howto_type xcoff_howto_table[] =
   EMPTY_HOWTO (0x10),
   EMPTY_HOWTO (0x11),
 
-  /* TOC relative indirect load.  */
+  /* 0x12: TOC relative indirect load.  */
   HOWTO (R_TRL,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -919,7 +872,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* TOC relative load address.  */
+  /* 0x13: TOC relative load address.  */
   HOWTO (R_TRLA,		/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -934,7 +887,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable relative branch.  */
+  /* 0x14: Modifiable relative branch.  */
   HOWTO (R_RRTBI,		 /* type */
 	 1,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -949,7 +902,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable absolute branch.  */
+  /* 0x15: Modifiable absolute branch.  */
   HOWTO (R_RRTBA,		 /* type */
 	 1,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -964,7 +917,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable call absolute indirect.  */
+  /* 0x16: Modifiable call absolute indirect.  */
   HOWTO (R_CAI,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -979,7 +932,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable call relative.  */
+  /* 0x17: Modifiable call relative.  */
   HOWTO (R_CREL,		/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -994,7 +947,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable branch absolute.  */
+  /* 0x18: Modifiable branch absolute.  */
   HOWTO (R_RBA,			/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -1009,7 +962,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0x03fffffc,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable branch absolute.  */
+  /* 0x19: Modifiable branch absolute.  */
   HOWTO (R_RBAC,		/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -1024,7 +977,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable branch relative.  */
+  /* 0x1a: Modifiable branch relative.  */
   HOWTO (R_RBR,			/* type */
 	 0,			/* rightshift */
 	 2,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -1039,7 +992,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0x03fffffc,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable branch absolute.  */
+  /* 0x1b: Modifiable branch absolute.  */
   HOWTO (R_RBRC,		/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -1054,7 +1007,7 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* 16 bit Non modifiable absolute branch.  */
+  /* 0x1c: 16 bit Non modifiable absolute branch.  */
   HOWTO (R_BA,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -1069,22 +1022,22 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xfffc,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable branch relative.  */
+  /* 0x1d: Modifiable branch relative.  */
   HOWTO (R_RBR,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
 	 16,			/* bitsize */
-	 FALSE,			/* pc_relative */
+	 TRUE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 0,			/* special_function */
 	 "R_RBR_16",		/* name */
 	 TRUE,			/* partial_inplace */
-	 0xffff,		/* src_mask */
-	 0xffff,		/* dst_mask */
+	 0xfffc,		/* src_mask */
+	 0xfffc,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
-  /* Modifiable branch relative.  */
+  /* 0x1e: Modifiable branch relative.  */
   HOWTO (R_RBA,			/* type */
 	 0,			/* rightshift */
 	 1,			/* size (0 = byte, 1 = short, 2 = long) */
@@ -1098,7 +1051,6 @@ reloc_howto_type xcoff_howto_table[] =
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
-
 };
 
 void
@@ -1146,6 +1098,11 @@ _bfd_xcoff_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
       return &xcoff_howto_table[8];
     case BFD_RELOC_PPC_TOC16:
       return &xcoff_howto_table[3];
+    case BFD_RELOC_16:
+      /* Note that this relocation is only internally used by gas.  */
+      return &xcoff_howto_table[0xc];
+    case BFD_RELOC_PPC_B16:
+      return &xcoff_howto_table[0x1d];
     case BFD_RELOC_32:
     case BFD_RELOC_CTOR:
       return &xcoff_howto_table[0];
@@ -1496,7 +1453,7 @@ _bfd_xcoff_read_ar_hdr (bfd *abfd)
   struct areltdata *ret;
   bfd_size_type amt = sizeof (struct areltdata);
 
-  ret = (struct areltdata *) bfd_alloc (abfd, amt);
+  ret = (struct areltdata *) bfd_zmalloc (amt);
   if (ret == NULL)
     return NULL;
 
@@ -2113,7 +2070,7 @@ xcoff_write_archive_contents_old (bfd *abfd)
       total_namlen += strlen (normalize_filename (sub)) + 1;
       if (sub->arelt_data == NULL)
 	{
-	  sub->arelt_data = bfd_zalloc (sub, sizeof (struct areltdata));
+	  sub->arelt_data = bfd_zmalloc (sizeof (struct areltdata));
 	  if (sub->arelt_data == NULL)
 	    return FALSE;
 	}
@@ -2329,7 +2286,7 @@ xcoff_write_archive_contents_big (bfd *abfd)
       if (current_bfd->arelt_data == NULL)
 	{
 	  size = sizeof (struct areltdata);
-	  current_bfd->arelt_data = bfd_zalloc (current_bfd, size);
+	  current_bfd->arelt_data = bfd_zmalloc (size);
 	  if (current_bfd->arelt_data == NULL)
 	    return FALSE;
 	}
@@ -2385,7 +2342,10 @@ xcoff_write_archive_contents_big (bfd *abfd)
       PRINT20 (ahdrp->nextoff, iterator.next.offset);
 
       if (!do_pad (abfd, iterator.current.leading_padding))
-	return FALSE;
+	{
+	  free (offsets);
+	  return FALSE;
+	}
 
       BFD_ASSERT (iterator.current.offset == bfd_tell (abfd));
       namlen = iterator.current.padded_namlen;
@@ -2395,7 +2355,10 @@ xcoff_write_archive_contents_big (bfd *abfd)
 	  || bfd_seek (iterator.current.member, 0, SEEK_SET) != 0
 	  || !do_copy (abfd, iterator.current.member)
 	  || !do_pad (abfd, iterator.current.trailing_padding))
-	return FALSE;
+	{
+	  free (offsets);
+	  return FALSE;
+	}
 
       offsets[i] = iterator.current.offset;
       prevoff = iterator.current.offset;
@@ -2440,7 +2403,10 @@ xcoff_write_archive_contents_big (bfd *abfd)
   member_table_size += member_table_size & 1;
   member_table = bfd_zmalloc (member_table_size);
   if (member_table == NULL)
-    return FALSE;
+    {
+      free (offsets);
+      return FALSE;
+    }
 
   hdr = (struct xcoff_ar_hdr_big *) member_table;
 
@@ -2548,6 +2514,60 @@ _bfd_xcoff_sizeof_headers (bfd *abfd,
   else
     size += SMALL_AOUTSZ;
   size += abfd->section_count * SCNHSZ;
+
+  if (info->strip != strip_all)
+    {
+      /* There can be additional sections just for dealing with overflow in
+	 reloc and lineno counts. But the numbers of relocs and lineno aren't
+	 known when bfd_sizeof_headers is called, so we compute them by
+	 summing the numbers from input sections.  */
+      struct nbr_reloc_lineno
+      {
+	unsigned int reloc_count;
+	unsigned int lineno_count;
+      };
+      struct nbr_reloc_lineno *n_rl;
+      bfd *sub;
+      unsigned int max_index;
+      asection *s;
+
+      /* Although the number of sections is known, the maximum value of
+	 section->index isn't (because some sections may have been removed).
+	 Don't try to renumber sections, just compute the upper bound.  */
+      max_index = 0;
+      for (s = abfd->sections; s != NULL; s = s->next)
+	if (s->index > max_index)
+	  max_index = s->index;
+
+      /* Allocate the per section counters. It could be possible to use a
+	 preallocated array as the number of sections is limited on XCOFF,
+	 but this creates a maintainance issue.  */
+      n_rl = bfd_zmalloc ((max_index + 1) * sizeof (*n_rl));
+      if (n_rl == NULL)
+	return -1;
+
+      /* Sum.  */
+      for (sub = info->input_bfds; sub != NULL; sub = sub->link.next)
+	for (s = sub->sections; s != NULL; s = s->next)
+	  {
+	    struct nbr_reloc_lineno *e = &n_rl[s->output_section->index];
+	    e->reloc_count += s->reloc_count;
+	    e->lineno_count += s->lineno_count;
+	  }
+
+      /* Add the size of a section for each section with an overflow.  */
+      for (s = abfd->sections; s != NULL; s = s->next)
+	{
+	  struct nbr_reloc_lineno *e = &n_rl[s->index];
+
+	  if (e->reloc_count >= 0xffff
+	      || (e->lineno_count >= 0xffff && info->strip != strip_debugger))
+	    size += SCNHSZ;
+	}
+
+      free (n_rl);
+    }
+
   return size;
 }
 
@@ -3373,7 +3393,7 @@ xcoff_ppc_relocate_section (bfd *output_bfd,
 		}
 	      else
 		{
-		  BFD_ASSERT (info->relocatable
+		  BFD_ASSERT (bfd_link_relocatable (info)
 			      || (info->static_link
 				  && (h->flags & XCOFF_WAS_UNDEFINED) != 0)
 			      || (h->flags & XCOFF_DEF_DYNAMIC) != 0
@@ -3537,14 +3557,14 @@ xcoff_create_csect_from_smclas (bfd *abfd,
 
   /* .sv64 = x_smclas == 17
      This is an invalid csect for 32 bit apps.  */
-  static const char *names[19] =
-  {
-    ".pr", ".ro", ".db", ".tc", ".ua", ".rw", ".gl", ".xo",
-    ".sv", ".bs", ".ds", ".uc", ".ti", ".tb", NULL, ".tc0",
-    ".td", NULL, ".sv3264"
-  };
+  static const char * const names[] =
+    {
+      ".pr", ".ro", ".db", ".tc", ".ua", ".rw", ".gl", ".xo", /* 0 - 7 */
+      ".sv", ".bs", ".ds", ".uc", ".ti", ".tb", NULL, ".tc0", /* 8 - 15 */
+      ".td", NULL, ".sv3264", NULL, ".tl", ".ul", ".te"
+    };
 
-  if ((19 >= aux->x_csect.x_smclas)
+  if ((aux->x_csect.x_smclas < ARRAY_SIZE (names))
       && (NULL != names[aux->x_csect.x_smclas]))
     {
       return_value = bfd_make_section_anyway
@@ -3919,6 +3939,86 @@ const struct xcoff_dwsect_name xcoff_dwsect_names[] = {
   { SSUBTYP_DWRNGES, ".dwrnges",  TRUE }
 };
 
+/* For generic entry points.  */
+#define _bfd_xcoff_close_and_cleanup _bfd_archive_close_and_cleanup
+#define _bfd_xcoff_bfd_free_cached_info bfd_true
+#define _bfd_xcoff_new_section_hook coff_new_section_hook
+#define _bfd_xcoff_get_section_contents _bfd_generic_get_section_contents
+#define _bfd_xcoff_get_section_contents_in_window \
+  _bfd_generic_get_section_contents_in_window
+
+/* For copy private data entry points.  */
+#define _bfd_xcoff_bfd_copy_private_bfd_data \
+  _bfd_xcoff_copy_private_bfd_data
+#define _bfd_xcoff_bfd_merge_private_bfd_data \
+  _bfd_generic_bfd_merge_private_bfd_data
+#define _bfd_xcoff_bfd_copy_private_section_data \
+  _bfd_generic_bfd_copy_private_section_data
+#define _bfd_xcoff_bfd_copy_private_symbol_data \
+   _bfd_generic_bfd_copy_private_symbol_data
+#define _bfd_xcoff_bfd_copy_private_header_data \
+   _bfd_generic_bfd_copy_private_header_data
+#define _bfd_xcoff_bfd_set_private_flags \
+   _bfd_generic_bfd_set_private_flags
+#define _bfd_xcoff_bfd_print_private_bfd_data \
+   _bfd_generic_bfd_print_private_bfd_data
+
+/* For archive entry points.  */
+#define _bfd_xcoff_slurp_extended_name_table \
+   _bfd_noarchive_slurp_extended_name_table
+#define _bfd_xcoff_construct_extended_name_table \
+   _bfd_noarchive_construct_extended_name_table
+#define _bfd_xcoff_truncate_arname bfd_dont_truncate_arname
+#define _bfd_xcoff_write_ar_hdr _bfd_generic_write_ar_hdr
+#define _bfd_xcoff_get_elt_at_index _bfd_generic_get_elt_at_index
+#define _bfd_xcoff_generic_stat_arch_elt _bfd_xcoff_stat_arch_elt
+#define _bfd_xcoff_update_armap_timestamp bfd_true
+
+/* For symbols entry points.  */
+#define _bfd_xcoff_get_symtab_upper_bound coff_get_symtab_upper_bound
+#define _bfd_xcoff_canonicalize_symtab coff_canonicalize_symtab
+#define _bfd_xcoff_make_empty_symbol coff_make_empty_symbol
+#define _bfd_xcoff_print_symbol coff_print_symbol
+#define _bfd_xcoff_get_symbol_info coff_get_symbol_info
+#define _bfd_xcoff_get_symbol_version_string \
+  _bfd_nosymbols_get_symbol_version_string
+#define _bfd_xcoff_bfd_is_local_label_name _bfd_xcoff_is_local_label_name
+#define _bfd_xcoff_bfd_is_target_special_symbol \
+  coff_bfd_is_target_special_symbol
+#define _bfd_xcoff_get_lineno coff_get_lineno
+#define _bfd_xcoff_find_nearest_line coff_find_nearest_line
+#define _bfd_xcoff_find_line coff_find_line
+#define _bfd_xcoff_find_inliner_info coff_find_inliner_info
+#define _bfd_xcoff_bfd_make_debug_symbol coff_bfd_make_debug_symbol
+#define _bfd_xcoff_read_minisymbols _bfd_generic_read_minisymbols
+#define _bfd_xcoff_minisymbol_to_symbol _bfd_generic_minisymbol_to_symbol
+
+/* For reloc entry points.  */
+#define _bfd_xcoff_get_reloc_upper_bound coff_get_reloc_upper_bound
+#define _bfd_xcoff_canonicalize_reloc coff_canonicalize_reloc
+#define _bfd_xcoff_bfd_reloc_type_lookup _bfd_xcoff_reloc_type_lookup
+#define _bfd_xcoff_bfd_reloc_name_lookup _bfd_xcoff_reloc_name_lookup
+
+/* For link entry points.  */
+#define _bfd_xcoff_bfd_get_relocated_section_contents \
+  bfd_generic_get_relocated_section_contents
+#define _bfd_xcoff_bfd_relax_section bfd_generic_relax_section
+#define _bfd_xcoff_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
+#define _bfd_xcoff_bfd_link_just_syms _bfd_generic_link_just_syms
+#define _bfd_xcoff_bfd_copy_link_hash_symbol_type \
+  _bfd_generic_copy_link_hash_symbol_type
+#define _bfd_xcoff_bfd_link_split_section _bfd_generic_link_split_section
+#define _bfd_xcoff_bfd_gc_sections bfd_generic_gc_sections
+#define _bfd_xcoff_bfd_lookup_section_flags bfd_generic_lookup_section_flags
+#define _bfd_xcoff_bfd_merge_sections bfd_generic_merge_sections
+#define _bfd_xcoff_bfd_is_group_section bfd_generic_is_group_section
+#define _bfd_xcoff_bfd_discard_group bfd_generic_discard_group
+#define _bfd_xcoff_section_already_linked _bfd_generic_section_already_linked
+#define _bfd_xcoff_bfd_define_common_symbol _bfd_xcoff_define_common_symbol
+
+/* For dynamic symbols and relocs entry points.  */
+#define _bfd_xcoff_get_synthetic_symtab _bfd_nodynamic_get_synthetic_symtab
+
 static const struct xcoff_backend_data_rec bfd_xcoff_backend_data =
   {
     { /* COFF backend, defined in libcoff.h.  */
@@ -3945,6 +4045,7 @@ static const struct xcoff_backend_data_rec bfd_xcoff_backend_data =
       3,			/* _bfd_coff_default_section_alignment_power */
       FALSE,			/* _bfd_coff_force_symnames_in_strings */
       2,			/* _bfd_coff_debug_string_prefix_length */
+      32768,			/* _bfd_coff_max_nscns */
       coff_swap_filehdr_in,
       coff_swap_aouthdr_in,
       coff_swap_scnhdr_in,
@@ -4016,7 +4117,7 @@ static const struct xcoff_backend_data_rec bfd_xcoff_backend_data =
   };
 
 /* The transfer vector that leads the outside world to all of the above.  */
-const bfd_target rs6000coff_vec =
+const bfd_target rs6000_xcoff_vec =
   {
     "aixcoff-rs6000",
     bfd_target_xcoff_flavour,
@@ -4075,91 +4176,15 @@ const bfd_target rs6000coff_vec =
       bfd_false
     },
 
-    /* Generic */
-    bfd_true,
-    bfd_true,
-    coff_new_section_hook,
-    _bfd_generic_get_section_contents,
-    _bfd_generic_get_section_contents_in_window,
-
-    /* Copy */
-    _bfd_xcoff_copy_private_bfd_data,
-    _bfd_generic_bfd_merge_private_bfd_data,
-    _bfd_generic_init_private_section_data,
-    _bfd_generic_bfd_copy_private_section_data,
-    _bfd_generic_bfd_copy_private_symbol_data,
-    _bfd_generic_bfd_copy_private_header_data,
-    _bfd_generic_bfd_set_private_flags,
-    _bfd_generic_bfd_print_private_bfd_data,
-
-    /* Core */
+    BFD_JUMP_TABLE_GENERIC (_bfd_xcoff),
+    BFD_JUMP_TABLE_COPY (_bfd_xcoff),
     BFD_JUMP_TABLE_CORE (coff),
-
-    /* Archive */
-    _bfd_xcoff_slurp_armap,
-    _bfd_noarchive_slurp_extended_name_table,
-    _bfd_noarchive_construct_extended_name_table,
-    bfd_dont_truncate_arname,
-    _bfd_xcoff_write_armap,
-    _bfd_xcoff_read_ar_hdr,
-    _bfd_generic_write_ar_hdr,
-    _bfd_xcoff_openr_next_archived_file,
-    _bfd_generic_get_elt_at_index,
-    _bfd_xcoff_stat_arch_elt,
-    bfd_true,
-
-    /* Symbols */
-    coff_get_symtab_upper_bound,
-    coff_canonicalize_symtab,
-    coff_make_empty_symbol,
-    coff_print_symbol,
-    coff_get_symbol_info,
-    _bfd_xcoff_is_local_label_name,
-    coff_bfd_is_target_special_symbol,
-    coff_get_lineno,
-    xcoff_find_nearest_line,
-    _bfd_generic_find_nearest_line_discriminator,
-    _bfd_generic_find_line,
-    coff_find_inliner_info,
-    coff_bfd_make_debug_symbol,
-    _bfd_generic_read_minisymbols,
-    _bfd_generic_minisymbol_to_symbol,
-
-    /* Reloc */
-    coff_get_reloc_upper_bound,
-    coff_canonicalize_reloc,
-    _bfd_xcoff_reloc_type_lookup,
-    _bfd_xcoff_reloc_name_lookup,
-
-    /* Write */
-    coff_set_arch_mach,
-    coff_set_section_contents,
-
-    /* Link */
-    _bfd_xcoff_sizeof_headers,
-    bfd_generic_get_relocated_section_contents,
-    bfd_generic_relax_section,
-    _bfd_xcoff_bfd_link_hash_table_create,
-    _bfd_generic_link_hash_table_free,
-    _bfd_xcoff_bfd_link_add_symbols,
-    _bfd_generic_link_just_syms,
-    _bfd_generic_copy_link_hash_symbol_type,
-    _bfd_xcoff_bfd_final_link,
-    _bfd_generic_link_split_section,
-    bfd_generic_gc_sections,
-    bfd_generic_lookup_section_flags,
-    bfd_generic_merge_sections,
-    bfd_generic_is_group_section,
-    bfd_generic_discard_group,
-    _bfd_generic_section_already_linked,
-    _bfd_xcoff_define_common_symbol,
-
-    /* Dynamic */
-    _bfd_xcoff_get_dynamic_symtab_upper_bound,
-    _bfd_xcoff_canonicalize_dynamic_symtab,
-    _bfd_nodynamic_get_synthetic_symtab,
-    _bfd_xcoff_get_dynamic_reloc_upper_bound,
-    _bfd_xcoff_canonicalize_dynamic_reloc,
+    BFD_JUMP_TABLE_ARCHIVE (_bfd_xcoff),
+    BFD_JUMP_TABLE_SYMBOLS (_bfd_xcoff),
+    BFD_JUMP_TABLE_RELOCS (_bfd_xcoff),
+    BFD_JUMP_TABLE_WRITE (coff),
+    BFD_JUMP_TABLE_LINK (_bfd_xcoff),
+    BFD_JUMP_TABLE_DYNAMIC (_bfd_xcoff),
 
     /* Opposite endian version, none exists */
     NULL,
@@ -4201,6 +4226,7 @@ static const struct xcoff_backend_data_rec bfd_pmac_xcoff_backend_data =
       3,			/* _bfd_coff_default_section_alignment_power */
       FALSE,			/* _bfd_coff_force_symnames_in_strings */
       2,			/* _bfd_coff_debug_string_prefix_length */
+      32768,			/* _bfd_coff_max_nscns */
       coff_swap_filehdr_in,
       coff_swap_aouthdr_in,
       coff_swap_scnhdr_in,
@@ -4272,7 +4298,7 @@ static const struct xcoff_backend_data_rec bfd_pmac_xcoff_backend_data =
   };
 
 /* The transfer vector that leads the outside world to all of the above.  */
-const bfd_target pmac_xcoff_vec =
+const bfd_target powerpc_xcoff_vec =
   {
     "xcoff-powermac",
     bfd_target_xcoff_flavour,
@@ -4331,91 +4357,15 @@ const bfd_target pmac_xcoff_vec =
       bfd_false
     },
 
-    /* Generic */
-    bfd_true,
-    bfd_true,
-    coff_new_section_hook,
-    _bfd_generic_get_section_contents,
-    _bfd_generic_get_section_contents_in_window,
-
-    /* Copy */
-    _bfd_xcoff_copy_private_bfd_data,
-    _bfd_generic_bfd_merge_private_bfd_data,
-    _bfd_generic_init_private_section_data,
-    _bfd_generic_bfd_copy_private_section_data,
-    _bfd_generic_bfd_copy_private_symbol_data,
-    _bfd_generic_bfd_copy_private_header_data,
-    _bfd_generic_bfd_set_private_flags,
-    _bfd_generic_bfd_print_private_bfd_data,
-
-    /* Core */
+    BFD_JUMP_TABLE_GENERIC (_bfd_xcoff),
+    BFD_JUMP_TABLE_COPY (_bfd_xcoff),
     BFD_JUMP_TABLE_CORE (coff),
-
-    /* Archive */
-    _bfd_xcoff_slurp_armap,
-    _bfd_noarchive_slurp_extended_name_table,
-    _bfd_noarchive_construct_extended_name_table,
-    bfd_dont_truncate_arname,
-    _bfd_xcoff_write_armap,
-    _bfd_xcoff_read_ar_hdr,
-    _bfd_generic_write_ar_hdr,
-    _bfd_xcoff_openr_next_archived_file,
-    _bfd_generic_get_elt_at_index,
-    _bfd_xcoff_stat_arch_elt,
-    bfd_true,
-
-    /* Symbols */
-    coff_get_symtab_upper_bound,
-    coff_canonicalize_symtab,
-    coff_make_empty_symbol,
-    coff_print_symbol,
-    coff_get_symbol_info,
-    _bfd_xcoff_is_local_label_name,
-    coff_bfd_is_target_special_symbol,
-    coff_get_lineno,
-    xcoff_find_nearest_line,
-    _bfd_generic_find_nearest_line_discriminator,
-    _bfd_generic_find_line,
-    coff_find_inliner_info,
-    coff_bfd_make_debug_symbol,
-    _bfd_generic_read_minisymbols,
-    _bfd_generic_minisymbol_to_symbol,
-
-    /* Reloc */
-    coff_get_reloc_upper_bound,
-    coff_canonicalize_reloc,
-    _bfd_xcoff_reloc_type_lookup,
-    _bfd_xcoff_reloc_name_lookup,
-
-    /* Write */
-    coff_set_arch_mach,
-    coff_set_section_contents,
-
-    /* Link */
-    _bfd_xcoff_sizeof_headers,
-    bfd_generic_get_relocated_section_contents,
-    bfd_generic_relax_section,
-    _bfd_xcoff_bfd_link_hash_table_create,
-    _bfd_generic_link_hash_table_free,
-    _bfd_xcoff_bfd_link_add_symbols,
-    _bfd_generic_link_just_syms,
-    _bfd_generic_copy_link_hash_symbol_type,
-    _bfd_xcoff_bfd_final_link,
-    _bfd_generic_link_split_section,
-    bfd_generic_gc_sections,
-    bfd_generic_lookup_section_flags,
-    bfd_generic_merge_sections,
-    bfd_generic_is_group_section,
-    bfd_generic_discard_group,
-    _bfd_generic_section_already_linked,
-    _bfd_xcoff_define_common_symbol,
-
-    /* Dynamic */
-    _bfd_xcoff_get_dynamic_symtab_upper_bound,
-    _bfd_xcoff_canonicalize_dynamic_symtab,
-    _bfd_nodynamic_get_synthetic_symtab,
-    _bfd_xcoff_get_dynamic_reloc_upper_bound,
-    _bfd_xcoff_canonicalize_dynamic_reloc,
+    BFD_JUMP_TABLE_ARCHIVE (_bfd_xcoff),
+    BFD_JUMP_TABLE_SYMBOLS (_bfd_xcoff),
+    BFD_JUMP_TABLE_RELOCS (_bfd_xcoff),
+    BFD_JUMP_TABLE_WRITE (coff),
+    BFD_JUMP_TABLE_LINK (_bfd_xcoff),
+    BFD_JUMP_TABLE_DYNAMIC (_bfd_xcoff),
 
     /* Opposite endian version, none exists */
     NULL,

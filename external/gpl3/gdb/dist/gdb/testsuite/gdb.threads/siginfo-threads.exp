@@ -1,4 +1,4 @@
-# Copyright 2010-2015 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ for {set sigcount 0} {$sigcount < 4} {incr sigcount} {
     set test "catch signal $sigcount"
     set sigusr ""
     gdb_test_multiple "continue" $test {
-	-re "Program received signal SIGUSR(\[12\]), User defined signal \[12\]\\.\r\n.*\r\n$gdb_prompt $" {
+	-re "Thread .* received signal SIGUSR(\[12\]), User defined signal \[12\]\\.\r\n.*\r\n$gdb_prompt $" {
 	    set sigusr $expect_out(1,string)
 	    pass $test
 	}

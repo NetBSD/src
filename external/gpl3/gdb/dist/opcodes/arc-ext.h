@@ -1,5 +1,5 @@
-/* ARC target-dependent stuff. Extension data structures.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* ARC target-dependent stuff.  Extension data structures.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -18,46 +18,125 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#ifndef ARCEXT_H
-#define ARCEXT_H
+/*This header file defines a table of extensions to the ARC processor
+  architecture.  These extensions are read from the '.arcextmap' or
+  '.gnu.linkonce.arcextmap.<type>.<N>' sections in the ELF file which
+  is identified by the bfd parameter to the build_ARC_extmap function.
 
-enum {EXT_INSTRUCTION   = 0,
-      EXT_CORE_REGISTER = 1,
-      EXT_AUX_REGISTER  = 2,
-      EXT_COND_CODE     = 3};
+  These extensions may include:
+	 core registers
+	 auxiliary registers
+	 instructions
+	 condition codes
 
-enum {NUM_EXT_INST = (0x1f-0x10+1) + (0x3f-0x09+1)};
-enum {NUM_EXT_CORE = 59-32+1};
-enum {NUM_EXT_COND = 0x1f-0x10+1};
+  Once the table has been constructed, accessor functions may be used
+  to retrieve information from it.
 
-struct ExtInstruction 
-{
-  char flags;
-  char *name;
-}; 
+  The build_ARC_extmap constructor function build_ARC_extmap may be
+  called as many times as required; it will re-initialize the table
+  each time.  */
 
-struct ExtAuxRegister 
-{
-  long address;
-  char *name;
-  struct ExtAuxRegister *next; 
-};
+#ifndef ARC_EXTENSIONS_H
+#define ARC_EXTENSIONS_H
 
-struct arcExtMap 
-{
-  struct ExtAuxRegister *auxRegisters;
-  struct ExtInstruction *instructions[NUM_EXT_INST];
-  char *coreRegisters[NUM_EXT_CORE];
-  char *condCodes[NUM_EXT_COND];
-};
+#include "opcode/arc.h"
 
-extern int arcExtMap_add(void*, unsigned long);
-extern const char *arcExtMap_coreRegName(int);
-extern const char *arcExtMap_auxRegName(long);
-extern const char *arcExtMap_condCodeName(int);
-extern const char *arcExtMap_instName(int, int, int*);
-extern void build_ARC_extmap(bfd *);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define IGNORE_FIRST_OPD 1
 
+/* Define this if we do not want to encode instructions based on the
+   ARCompact Programmer's Reference.  */
+#define UNMANGLED
+
+/* This defines the kinds of extensions which may be read from the
+   ections in the executable files.  */
+enum ExtOperType
+{
+  EXT_INSTRUCTION	     = 0,
+  EXT_CORE_REGISTER	     = 1,
+  EXT_AUX_REGISTER	     = 2,
+  EXT_COND_CODE		     = 3,
+  EXT_INSTRUCTION32	     = 4,
+  EXT_AC_INSTRUCTION	     = 4,
+  EXT_REMOVE_CORE_REG	     = 5,
+  EXT_LONG_CORE_REGISTER     = 6,
+  EXT_AUX_REGISTER_EXTENDED  = 7,
+  EXT_INSTRUCTION32_EXTENDED = 8,
+  EXT_CORE_REGISTER_CLASS    = 9
+};
+
+enum ExtReadWrite
+{
+  REG_INVALID,
+  REG_READ,
+  REG_WRITE,
+  REG_READWRITE
+};
+
+/* Macro used when generating the patterns for an extension
+   instruction.  */
+#define INSERT_XOP(OP, NAME, CODE, MASK, CPU, ARG, FLG)	\
+  do {							\
+    (OP)->name   = NAME;				\
+    (OP)->opcode = CODE;				\
+    (OP)->mask   = MASK;				\
+    (OP)->cpu    = CPU;					\
+    (OP)->insn_class  = ARITH;				\
+    (OP)->subclass = NONE;				\
+    memcpy ((OP)->operands, (ARG), MAX_INSN_ARGS);	\
+    memcpy ((OP)->flags, (FLG), MAX_INSN_FLGS);		\
+    (OP++);						\
+  } while (0)
+
+/* Typedef to hold the extension instruction definition.  */
+typedef struct ExtInstruction
+{
+  /* Name.  */
+  char *name;
+
+  /* Major opcode.  */
+  char major;
+
+  /* Minor(sub) opcode.  */
+  char minor;
+
+  /* Flags, holds the syntax class and modifiers.  */
+  char flags;
+
+  /* Syntax class.  Use by assembler.  */
+  unsigned char syntax;
+
+  /* Syntax class modifier.  Used by assembler.  */
+  unsigned char modsyn;
+
+  /* Suffix class.  Used by assembler.  */
+  unsigned char suffix;
+
+  /* Pointer to the next extension instruction.  */
+  struct ExtInstruction* next;
+} extInstruction_t;
+
+/* Constructor function.  */
+extern void build_ARC_extmap (bfd *);
+
+/* Accessor functions.  */
+extern enum ExtReadWrite arcExtMap_coreReadWrite (int);
+extern const char * arcExtMap_coreRegName (int);
+extern const char * arcExtMap_auxRegName (long);
+extern const char * arcExtMap_condCodeName (int);
+extern const extInstruction_t *arcExtMap_insn (int, int);
+extern struct arc_opcode *arcExtMap_genOpcode (const extInstruction_t *,
+					       unsigned arc_target,
+					       const char **errmsg);
+
+/* Dump function (for debugging).  */
+extern void dump_ARC_extmap (void);
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* ARC_EXTENSIONS_H */

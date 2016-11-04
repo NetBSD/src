@@ -1,4 +1,4 @@
-! Copyright 2006-2015 Free Software Foundation, Inc.
+! Copyright 2006-2016 Free Software Foundation, Inc.
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -29,12 +29,17 @@ program main
   end type foo
   type(foo) :: q
   type(bar) :: p
+  type(foo) :: this
 
   p = bar(1, 2.375)
   q%a = 3.125
   q%b = "abcdefg"
   q%x%c = 1
   q%x%d = 2.375
-  print *,p,q 
+  this%a = 3.125
+  this%b = "abcdefg"
+  this%x%c = 1
+  this%x%d = 2.375
+  print *,p,q,this
 
 end program main

@@ -22,9 +22,6 @@
 
 #include "ui-out.h"
 
-/* A pre-defined non-exception.  */
-extern const struct gdb_exception exception_none;
-
 /* If E is an exception, print it's error message on the specified
    stream.  For _fprintf, prefix the message with PREFIX...  */
 extern void exception_print (struct ui_file *file, struct gdb_exception e);

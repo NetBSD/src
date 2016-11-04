@@ -1,6 +1,6 @@
 /* Internal header for GDB/Scheme code.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -50,6 +50,50 @@ typedef struct
 
 #define END_VARIABLES { NULL, SCM_BOOL_F, NULL }
 
+#ifdef __cplusplus
+
+/* Although scm_t_subr is meant to hold a function pointer, at least
+   in some versions of guile, it is actually a typedef to "void *".
+   That means that in C++, an explicit cast is necessary to convert
+   function pointer to scm_t_subr.  But a cast also makes it possible
+   to pass function pointers with the wrong type by mistake.  So
+   instead of adding such casts throughout, we use 'as_a_scm_t_subr'
+   to do the conversion, which (only) has overloads for function
+   pointer types that are valid.
+
+   See https://lists.gnu.org/archive/html/guile-devel/2013-03/msg00001.html.
+*/
+
+static inline scm_t_subr
+as_a_scm_t_subr (SCM (*func) (void))
+{
+  return (scm_t_subr) func;
+}
+
+static inline scm_t_subr
+as_a_scm_t_subr (SCM (*func) (SCM))
+{
+  return (scm_t_subr) func;
+}
+
+static inline scm_t_subr
+as_a_scm_t_subr (SCM (*func) (SCM, SCM))
+{
+  return (scm_t_subr) func;
+}
+
+static inline scm_t_subr
+as_a_scm_t_subr (SCM (*func) (SCM, SCM, SCM))
+{
+  return (scm_t_subr) func;
+}
+
+#else
+
+/* In C, just do an implicit conversion.  */
+#define as_a_scm_t_subr(func) func
+
+#endif
 /* Scheme functions to define during initialization.  */
 
 typedef struct
@@ -340,7 +384,7 @@ extern void gdbscm_memory_error (const char *subr, const char *msg, SCM args)
 
 /* scm-safe-call.c */
 
-extern void *gdbscm_with_guile (void *(*func) (void *), void *data);
+extern const char *gdbscm_with_guile (const char *(*func) (void *), void *data);
 
 extern SCM gdbscm_call_guile (SCM (*func) (void *), void *data,
 			      excp_matcher_func *ok_excps);
@@ -562,7 +606,7 @@ extern void gdbscm_preserve_values
 extern enum ext_lang_rc gdbscm_apply_val_pretty_printer
   (const struct extension_language_defn *,
    struct type *type, const gdb_byte *valaddr,
-   int embedded_offset, CORE_ADDR address,
+   LONGEST embedded_offset, CORE_ADDR address,
    struct ui_file *stream, int recurse,
    const struct value *val,
    const struct value_print_options *options,

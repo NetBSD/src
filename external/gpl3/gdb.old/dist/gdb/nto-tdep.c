@@ -84,7 +84,8 @@ nto_map_arch_to_cputype (const char *arch)
 int
 nto_find_and_open_solib (char *solib, unsigned o_flags, char **temp_pathname)
 {
-  char *buf, *arch_path, *nto_root, *endian;
+  char *buf, *arch_path, *nto_root;
+  const char *endian;
   const char *base;
   const char *arch;
   int arch_len, len, ret;
@@ -147,7 +148,8 @@ void
 nto_init_solib_absolute_prefix (void)
 {
   char buf[PATH_MAX * 2], arch_path[PATH_MAX];
-  char *nto_root, *endian;
+  char *nto_root;
+  const char *endian;
   const char *arch;
 
   nto_root = nto_target ();
@@ -364,9 +366,9 @@ static const char *nto_thread_state_str[] =
 char *
 nto_extra_thread_info (struct target_ops *self, struct thread_info *ti)
 {
-  if (ti && ti->private
-      && ti->private->state < ARRAY_SIZE (nto_thread_state_str))
-    return (char *)nto_thread_state_str [ti->private->state];
+  if (ti && ti->priv
+      && ti->priv->state < ARRAY_SIZE (nto_thread_state_str))
+    return (char *)nto_thread_state_str [ti->priv->state];
   return "";
 }
 

@@ -1,5 +1,5 @@
 /* FLEX lexer for Ada expressions, for GDB.
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -205,7 +205,7 @@ false		{ return FALSEKEYWORD; }
 
         /* ATTRIBUTES */
 
-{TICK}[a-zA-Z][a-zA-Z]+ { return processAttribute (yytext+1); }
+{TICK}[a-zA-Z][a-zA-Z]+ { BEGIN INITIAL; return processAttribute (yytext+1); }
 
 	/* PUNCTUATION */
 
@@ -428,7 +428,7 @@ processReal (struct parser_state *par_state, const char *num0)
 static struct stoken
 processId (const char *name0, int len)
 {
-  char *name = obstack_alloc (&temp_parse_space, len + 11);
+  char *name = (char *) obstack_alloc (&temp_parse_space, len + 11);
   int i0, i;
   struct stoken result;
 
@@ -499,7 +499,7 @@ processString (const char *text, int len)
   const char *lim = text + len;
   struct stoken result;
 
-  q = obstack_alloc (&temp_parse_space, len);
+  q = (char *) obstack_alloc (&temp_parse_space, len);
   result.ptr = q;
   p = text;
   while (p < lim)

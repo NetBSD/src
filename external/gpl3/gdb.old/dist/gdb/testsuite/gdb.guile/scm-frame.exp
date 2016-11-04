@@ -120,3 +120,23 @@ gdb_test "guile (print (format #f \"= ~A\" (frame-read-var f0 \"a\")))" \
 
 gdb_test "guile (print (format #f \"= ~A\" (eq? (selected-frame) f1)))" \
     "= #t" "test selected-frame"
+
+# Can read SP register.
+gdb_test "guile (print (equal? (frame-read-register (selected-frame) \"sp\") (parse-and-eval \"\$sp\")))" \
+  "= #t" "test frame-read-register of sp"
+
+# PC value obtained via read_register is as expected.
+gdb_test "guile (print (equal? (value->integer (frame-read-register f0 \"pc\")) (frame-pc f0)))" \
+  "= #t" "test frame-read-register of pc"
+
+# Test arch-specific register name.
+set pc ""
+if {[is_amd64_regs_target]} {
+    set pc "rip"
+} elseif {[is_x86_like_target]} {
+    set pc "eip"
+}
+if { $pc != "" } {
+    gdb_test "guile (print (equal? (frame-read-register f0 \"pc\") (frame-read-register f0 \"$pc\")))" \
+	"= #t" "test frame-read-register of $pc"
+}

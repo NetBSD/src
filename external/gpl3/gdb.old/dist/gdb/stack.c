@@ -52,8 +52,6 @@
 #include "symfile.h"
 #include "extension.h"
 
-void (*deprecated_selected_frame_level_changed_hook) (int);
-
 /* The possible choices of "set print frame-arguments", and the value
    of this setting.  */
 
@@ -154,19 +152,22 @@ print_stack_frame (struct frame_info *frame, int print_level,
 		   enum print_what print_what,
 		   int set_current_sal)
 {
-  volatile struct gdb_exception e;
 
   /* For mi, alway print location and address.  */
   if (ui_out_is_mi_like_p (current_uiout))
     print_what = LOC_AND_ADDRESS;
 
-  TRY_CATCH (e, RETURN_MASK_ERROR)
+  TRY
     {
       print_frame_info (frame, print_level, print_what, 1 /* print_args */,
 			set_current_sal);
       if (set_current_sal)
 	set_current_sal_from_frame (frame);
     }
+  CATCH (e, RETURN_MASK_ERROR)
+    {
+    }
+  END_CATCH
 }
 
 /* Print nameless arguments of frame FRAME on STREAM, where START is
@@ -210,9 +211,9 @@ static void
 print_frame_arg (const struct frame_arg *arg)
 {
   struct ui_out *uiout = current_uiout;
-  volatile struct gdb_exception except;
   struct cleanup *old_chain;
   struct ui_file *stb;
+  const char *error_message = NULL;
 
   stb = mem_fileopen ();
   old_chain = make_cleanup_ui_file_delete (stb);
@@ -250,12 +251,10 @@ print_frame_arg (const struct frame_arg *arg)
   else
     {
       if (arg->error)
-	except.message = arg->error;
+	error_message = arg->error;
       else
 	{
-	  /* TRY_CATCH has two statements, wrap it in a block.  */
-
-	  TRY_CATCH (except, RETURN_MASK_ERROR)
+	  TRY
 	    {
 	      const struct language_defn *language;
 	      struct value_print_options opts;
@@ -284,10 +283,15 @@ print_frame_arg (const struct frame_arg *arg)
 
 	      common_val_print (arg->val, stb, 2, &opts, language);
 	    }
+	  CATCH (except, RETURN_MASK_ERROR)
+	    {
+	      error_message = except.message;
+	    }
+	  END_CATCH
 	}
-      if (except.message)
+      if (error_message != NULL)
 	fprintf_filtered (stb, _("<error reading variable: %s>"),
-			  except.message);
+			  error_message);
     }
 
   ui_out_field_stream (uiout, "value", stb);
@@ -306,17 +310,21 @@ void
 read_frame_local (struct symbol *sym, struct frame_info *frame,
 		  struct frame_arg *argp)
 {
-  volatile struct gdb_exception except;
   struct value *val = NULL;
 
-  TRY_CATCH (except, RETURN_MASK_ERROR)
-    {
-      val = read_var_value (sym, frame);
-    }
-
-  argp->error = (val == NULL) ? xstrdup (except.message) : NULL;
   argp->sym = sym;
-  argp->val = val;
+  argp->val = NULL;
+  argp->error = NULL;
+
+  TRY
+    {
+      argp->val = read_var_value (sym, frame);
+    }
+  CATCH (except, RETURN_MASK_ERROR)
+    {
+      argp->error = xstrdup (except.message);
+    }
+  END_CATCH
 }
 
 /* Read in inferior function parameter SYM at FRAME into ARGP.  Caller is
@@ -330,20 +338,20 @@ read_frame_arg (struct symbol *sym, struct frame_info *frame,
   struct value *val = NULL, *entryval = NULL;
   char *val_error = NULL, *entryval_error = NULL;
   int val_equal = 0;
-  volatile struct gdb_exception except;
 
   if (print_entry_values != print_entry_values_only
       && print_entry_values != print_entry_values_preferred)
     {
-      TRY_CATCH (except, RETURN_MASK_ERROR)
+      TRY
 	{
 	  val = read_var_value (sym, frame);
 	}
-      if (!val)
+      CATCH (except, RETURN_MASK_ERROR)
 	{
 	  val_error = alloca (strlen (except.message) + 1);
 	  strcpy (val_error, except.message);
 	}
+      END_CATCH
     }
 
   if (SYMBOL_COMPUTED_OPS (sym) != NULL
@@ -352,25 +360,25 @@ read_frame_arg (struct symbol *sym, struct frame_info *frame,
       && (print_entry_values != print_entry_values_if_needed
 	  || !val || value_optimized_out (val)))
     {
-      TRY_CATCH (except, RETURN_MASK_ERROR)
+      TRY
 	{
 	  const struct symbol_computed_ops *ops;
 
 	  ops = SYMBOL_COMPUTED_OPS (sym);
 	  entryval = ops->read_variable_at_entry (sym, frame);
 	}
-      if (!entryval)
+      CATCH (except, RETURN_MASK_ERROR)
 	{
-	  entryval_error = alloca (strlen (except.message) + 1);
-	  strcpy (entryval_error, except.message);
+	  if (except.error != NO_ENTRY_VALUE_ERROR)
+	    {
+	      entryval_error = (char *) alloca (strlen (except.message) + 1);
+	      strcpy (entryval_error, except.message);
+	    }
 	}
+      END_CATCH
 
-      if (except.error == NO_ENTRY_VALUE_ERROR
-	  || (entryval && value_optimized_out (entryval)))
-	{
-	  entryval = NULL;
-	  entryval_error = NULL;
-	}
+      if (entryval != NULL && value_optimized_out (entryval))
+	entryval = NULL;
 
       if (print_entry_values == print_entry_values_compact
 	  || print_entry_values == print_entry_values_default)
@@ -396,7 +404,7 @@ read_frame_arg (struct symbol *sym, struct frame_info *frame,
 		     dereferenced DW_AT_GNU_call_site_data_value does not
 		     differ.  */
 
-		  TRY_CATCH (except, RETURN_MASK_ERROR)
+		  TRY
 		    {
 		      struct type *type_deref;
 
@@ -417,19 +425,23 @@ read_frame_arg (struct symbol *sym, struct frame_info *frame,
 						TYPE_LENGTH (type_deref)))
 			val_equal = 1;
 		    }
+		  CATCH (except, RETURN_MASK_ERROR)
+		    {
+		      /* If the dereferenced content could not be
+			 fetched do not display anything.  */
+		      if (except.error == NO_ENTRY_VALUE_ERROR)
+			val_equal = 1;
+		      else if (except.message != NULL)
+			{
+			  entryval_error = (char *) alloca (strlen (except.message) + 1);
+			  strcpy (entryval_error, except.message);
+			}
+		    }
+		  END_CATCH
 
 		  /* Value was not a reference; and its content matches.  */
 		  if (val == val_deref)
 		    val_equal = 1;
-		  /* If the dereferenced content could not be fetched do not
-		     display anything.  */
-		  else if (except.error == NO_ENTRY_VALUE_ERROR)
-		    val_equal = 1;
-		  else if (except.message)
-		    {
-		      entryval_error = alloca (strlen (except.message) + 1);
-		      strcpy (entryval_error, except.message);
-		    }
 
 		  if (val_equal)
 		    entryval = NULL;
@@ -455,15 +467,18 @@ read_frame_arg (struct symbol *sym, struct frame_info *frame,
     {
       if (print_entry_values == print_entry_values_preferred)
 	{
-	  TRY_CATCH (except, RETURN_MASK_ERROR)
+	  gdb_assert (val == NULL);
+
+	  TRY
 	    {
 	      val = read_var_value (sym, frame);
 	    }
-	  if (!val)
+	  CATCH (except, RETURN_MASK_ERROR)
 	    {
 	      val_error = alloca (strlen (except.message) + 1);
 	      strcpy (val_error, except.message);
 	    }
+	  END_CATCH
 	}
       if (print_entry_values == print_entry_values_only
 	  || print_entry_values == print_entry_values_both
@@ -748,20 +763,20 @@ static void
 do_gdb_disassembly (struct gdbarch *gdbarch,
 		    int how_many, CORE_ADDR low, CORE_ADDR high)
 {
-  volatile struct gdb_exception exception;
 
-  TRY_CATCH (exception, RETURN_MASK_ERROR)
+  TRY
     {
       gdb_disassembly (gdbarch, current_uiout, 0,
 		       DISASSEMBLY_RAW_INSN, how_many,
 		       low, high);
     }
-  if (exception.reason < 0)
+  CATCH (exception, RETURN_MASK_ERROR)
     {
       /* If an exception was thrown while doing the disassembly, print
 	 the error message, to give the user a clue of what happened.  */
       exception_print (gdb_stderr, exception);
     }
+  END_CATCH
 }
 
 /* Print information about frame FRAME.  The output is format according
@@ -1188,7 +1203,6 @@ print_frame (struct frame_info *frame, int print_level,
       struct gdbarch *gdbarch = get_frame_arch (frame);
       int numargs;
       struct cleanup *args_list_chain;
-      volatile struct gdb_exception e;
 
       if (gdbarch_frame_num_args_p (gdbarch))
 	{
@@ -1199,10 +1213,15 @@ print_frame (struct frame_info *frame, int print_level,
 	numargs = -1;
     
       args_list_chain = make_cleanup_ui_out_list_begin_end (uiout, "args");
-      TRY_CATCH (e, RETURN_MASK_ERROR)
+      TRY
 	{
 	  print_frame_args (func, frame, numargs, gdb_stdout);
 	}
+      CATCH (e, RETURN_MASK_ERROR)
+	{
+	}
+      END_CATCH
+
       /* FIXME: ARGS must be a list.  If one argument is a string it
 	  will have " that will not be properly escaped.  */
       /* Invoke ui_out_tuple_end.  */
@@ -1410,7 +1429,7 @@ frame_info (char *addr_exp, int from_tty)
   int frame_pc_p;
   /* Initialize it to avoid "may be used uninitialized" warning.  */
   CORE_ADDR caller_pc = 0;
-  volatile struct gdb_exception ex;
+  int caller_pc_p = 0;
 
   fi = parse_frame_specification_1 (addr_exp, "No stack.", &selected_frame_p);
   gdbarch = get_frame_arch (fi);
@@ -1498,11 +1517,12 @@ frame_info (char *addr_exp, int from_tty)
   wrap_here ("    ");
   printf_filtered ("saved %s = ", pc_regname);
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       caller_pc = frame_unwind_caller_pc (fi);
+      caller_pc_p = 1;
     }
-  if (ex.reason < 0)
+  CATCH (ex, RETURN_MASK_ERROR)
     {
       switch (ex.error)
 	{
@@ -1517,7 +1537,9 @@ frame_info (char *addr_exp, int from_tty)
 	  break;
 	}
     }
-  else
+  END_CATCH
+
+  if (caller_pc_p)
     fputs_filtered (paddress (gdbarch, caller_pc), gdb_stdout);
   printf_filtered ("\n");
 
@@ -1916,13 +1938,6 @@ backtrace_command (char *arg, int from_tty)
   do_cleanups (old_chain);
 }
 
-static void
-backtrace_full_command (char *arg, int from_tty)
-{
-  backtrace_command_1 (arg, 1 /* show_locals */, 0, from_tty);
-}
-
-
 /* Iterate over the local variables of a block B, calling CB with
    CB_DATA.  */
 
@@ -2194,15 +2209,6 @@ args_info (char *ignore, int from_tty)
 			gdb_stdout);
 }
 
-
-static void
-args_plus_locals_info (char *ignore, int from_tty)
-{
-  args_info (ignore, from_tty);
-  locals_info (ignore, from_tty);
-}
-
-
 /* Select frame FRAME.  Also print the stack frame and show the source
    if this is the tui version.  */
 static void
@@ -2289,14 +2295,6 @@ frame_command (char *level_exp, int from_tty)
 {
   select_frame_command (level_exp, from_tty);
   print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
-}
-
-/* The XDB Compatibility command to print the current frame.  */
-
-static void
-current_frame_command (char *level_exp, int from_tty)
-{
-  print_stack_frame (get_selected_frame (_("No stack.")), 1, SRC_AND_LOC, 1);
 }
 
 /* Select the frame up one or COUNT_EXP stack levels from the
@@ -2462,8 +2460,12 @@ return_command (char *retval_exp, int from_tty)
 	confirmed = query (_("%sMake selected stack frame return now? "),
 			   query_prefix);
       else
-	confirmed = query (_("%sMake %s return now? "), query_prefix,
-			   SYMBOL_PRINT_NAME (thisfun));
+	{
+	  if (TYPE_NO_RETURN (thisfun->type))
+	    warning (_("Function does not return normally to caller."));
+	  confirmed = query (_("%sMake %s return now? "), query_prefix,
+			     SYMBOL_PRINT_NAME (thisfun));
+	}
       if (!confirmed)
 	error (_("Not confirmed"));
     }
@@ -2567,8 +2569,8 @@ get_frame_language (void)
 
   if (frame)
     {
-      volatile struct gdb_exception ex;
       CORE_ADDR pc = 0;
+      int pc_p = 0;
 
       /* We determine the current frame language by looking up its
          associated symtab.  To retrieve this symtab, we use the frame
@@ -2579,16 +2581,19 @@ get_frame_language (void)
          a PC that is guaranteed to be inside the frame's code
          block.  */
 
-      TRY_CATCH (ex, RETURN_MASK_ERROR)
+      TRY
 	{
 	  pc = get_frame_address_in_block (frame);
+	  pc_p = 1;
 	}
-      if (ex.reason < 0)
+      CATCH (ex, RETURN_MASK_ERROR)
 	{
 	  if (ex.error != NOT_AVAILABLE_ERROR)
 	    throw_exception (ex);
 	}
-      else
+      END_CATCH
+
+      if (pc_p)
 	{
 	  struct compunit_symtab *cust = find_pc_compunit_symtab (pc);
 
@@ -2639,12 +2644,6 @@ a command file or a user-defined command."));
 
   add_com_alias ("f", "frame", class_stack, 1);
 
-  if (xdb_commands)
-    {
-      add_com ("L", class_stack, current_frame_command,
-	       _("Print the current stack frame.\n"));
-      add_com_alias ("V", "frame", class_stack, 1);
-    }
   add_com ("select-frame", class_stack, select_frame_command, _("\
 Select a stack frame without printing anything.\n\
 An argument specifies the frame to select.\n\
@@ -2657,15 +2656,6 @@ With a negative argument, print outermost -COUNT frames.\nUse of the \
 Use of the 'no-filters' qualifier prohibits frame filters from executing\n\
 on this backtrace.\n"));
   add_com_alias ("bt", "backtrace", class_stack, 0);
-  if (xdb_commands)
-    {
-      add_com_alias ("t", "backtrace", class_stack, 0);
-      add_com ("T", class_stack, backtrace_full_command, _("\
-Print backtrace of all stack frames, or innermost COUNT frames\n\
-and the values of the local variables.\n\
-With a negative argument, print outermost -COUNT frames.\n\
-Usage: T <count>\n"));
-    }
 
   add_com_alias ("where", "backtrace", class_alias, 0);
   add_info ("stack", backtrace_command,
@@ -2678,9 +2668,6 @@ Usage: T <count>\n"));
 	    _("Local variables of current stack frame."));
   add_info ("args", args_info,
 	    _("Argument variables of current stack frame."));
-  if (xdb_commands)
-    add_com ("l", class_info, args_plus_locals_info,
-	     _("Argument and local variables of current stack frame."));
 
   if (dbx_commands)
     add_com ("func", class_stack, func_command, _("\

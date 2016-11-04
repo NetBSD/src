@@ -1,5 +1,5 @@
 /* sim-main.h -- Simulator for Motorola 68HC11 & 68HC12
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, the GNU debugger.
@@ -19,10 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SIM_MAIN_H
 #define _SIM_MAIN_H
-
-#define WITH_MODULO_MEMORY 1
-#define WITH_WATCHPOINTS 1
-#define SIM_HANDLES_LMA 1
 
 #include "sim-basics.h"
 #include "sim-signal.h"
@@ -571,7 +567,6 @@ extern void m68hc11cpu_set_port (struct hw *me, sim_cpu *cpu,
 
 struct sim_state {
   sim_cpu        *cpu[MAX_NR_PROCESSORS];
-  device         *devices;
   sim_state_base base;
 };
 

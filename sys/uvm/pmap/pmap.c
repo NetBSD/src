@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18.2.1 2016/08/06 00:19:11 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18.2.2 2016/11/04 14:49:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18.2.1 2016/08/06 00:19:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18.2.2 2016/11/04 14:49:23 pgoyette Exp $");
 
 /*
  *	Manages physical address maps.
@@ -713,6 +713,15 @@ pmap_page_remove(struct vm_page *pg)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 
+	UVMHIST_LOG(pmapexechist, "pg %p (pa %#"PRIxPADDR")%s: %s",
+	    pg, VM_PAGE_TO_PHYS(pg), " [page removed]", "execpage cleared");
+#ifdef PMAP_VIRTUAL_CACHE_ALIASES
+	pmap_page_clear_attributes(mdpg, VM_PAGEMD_EXECPAGE|VM_PAGEMD_UNCACHED);
+#else
+	pmap_page_clear_attributes(mdpg, VM_PAGEMD_EXECPAGE);
+#endif
+	PMAP_COUNT(exec_uncached_remove);
+
 	pv_entry_t pv = &mdpg->mdpg_first;
 	if (pv->pv_pmap == NULL) {
 		VM_PAGEMD_PVLIST_UNLOCK(mdpg);
@@ -800,9 +809,6 @@ pmap_page_remove(struct vm_page *pg)
 		}
 	}
 
-#ifdef PMAP_VIRTUAL_CACHE_ALIASES
-	pmap_page_clear_attributes(mdpg, VM_PAGEMD_UNCACHED);
-#endif
 	pmap_pvlist_check(mdpg);
 	VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 	kpreempt_enable();
@@ -1248,6 +1254,25 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		return ENOMEM;
 	}
 	const pt_entry_t opte = *ptep;
+	const bool resident = pte_valid_p(opte);
+	bool remap = false;
+	if (resident) {
+		if (pte_to_paddr(opte) != pa) {
+			KASSERT(!is_kernel_pmap_p);
+		    	const pt_entry_t rpte = pte_nv_entry(false);
+
+			pmap_addr_range_check(pmap, va, va + NBPG, __func__);
+			pmap_pte_process(pmap, va, va + NBPG, pmap_pte_remove,
+			    rpte);
+			PMAP_COUNT(user_mappings_changed);
+			remap = true;
+		}
+		update_flags |= PMAP_TLB_NEED_IPI;
+	}
+
+	if (!resident || remap) {
+		pmap->pm_stats.resident_count++;
+	}
 
 	/* Done after case that may sleep/return. */
 	if (pg)
@@ -1266,18 +1291,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	UVMHIST_LOG(*histp, "new pte %#"PRIxPTE" (pa %#"PRIxPADDR")",
 	    pte_value(npte), pa, 0, 0);
 
-	if (pte_valid_p(opte) && pte_to_paddr(opte) != pa) {
-		pmap_remove(pmap, va, va + NBPG);
-		PMAP_COUNT(user_mappings_changed);
-	}
-
 	KASSERT(pte_valid_p(npte));
-	const bool resident = pte_valid_p(opte);
-	if (resident) {
-		update_flags |= PMAP_TLB_NEED_IPI;
-	} else {
-		pmap->pm_stats.resident_count++;
-	}
 
 	pmap_md_tlb_miss_lock_enter();
 	*ptep = npte;

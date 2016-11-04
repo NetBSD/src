@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.180 2016/04/03 00:19:42 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.180.2.1 2016/11/04 14:48:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -490,6 +490,7 @@
 #define mpool_filter		_mpool_filter
 #define mpool_get		_mpool_get
 #define mpool_new		_mpool_new
+#define mpool_newf		_mpool_newf
 #define mpool_open		_mpool_open
 #define mpool_put		_mpool_put
 #define mpool_sync		_mpool_sync

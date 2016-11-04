@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.112 2015/12/03 10:38:21 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.112.2.1 2016/11/04 14:49:07 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -99,7 +99,8 @@
 23	STD		{ int|netbsd32||setuid(uid_t uid); }
 24	NOARGS 		{ uid_t|sys||getuid(void); }
 25	NOARGS		{ uid_t|sys||geteuid(void); }
-26	STD		{ int|netbsd32||ptrace(int req, pid_t pid, \
+26	STD MODULAR compat_netbsd32_ptrace \
+			{ int|netbsd32||ptrace(int req, pid_t pid, \
 			    netbsd32_voidp addr, int data); }
 27	STD		{ netbsd32_ssize_t|netbsd32||recvmsg(int s, \
 			    netbsd32_msghdrp_t msg, int flags); }
@@ -1053,4 +1054,9 @@
 			    netbsd32_off_t pos, netbsd32_off_t len); }
 480	STD		{ int|netbsd32||fdiscard(int fd, int PAD, \
 			    netbsd32_off_t pos, netbsd32_off_t len); }
+481	STD 		{ int|netbsd32||wait6(idtype_t idtype, id_t id, \
+			    netbsd32_intp status, int options, \
+			    netbsd32_wrusagep_t wru, netbsd32_siginfop_t info); }
+482	STD		{ int|netbsd32||clock_getcpuclockid2(idtype_t idtype, \
+			    id_t id, netbsd32_clockidp_t clock_id); }
 

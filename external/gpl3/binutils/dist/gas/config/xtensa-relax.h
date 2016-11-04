@@ -1,5 +1,5 @@
 /* Table of relaxations for Xtensa assembly.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -91,10 +91,7 @@ struct req_or_option_list
 
 /* Operand types and constraints on operands:  */
 
-typedef enum op_type OpType;
-typedef enum cmp_op CmpOp;
-
-enum op_type
+typedef enum op_type
 {
   OP_CONSTANT,
   OP_OPERAND,
@@ -107,13 +104,13 @@ enum op_type
   OP_LITERAL,
   OP_FREEREG,
   OP_LABEL
-};
+} OpType;
 
-enum cmp_op
+typedef enum cmp_op
 {
   OP_EQUAL,
   OP_NOTEQUAL,
-};
+} CmpOp;
 
 struct precondition
 {
@@ -143,14 +140,13 @@ struct build_op
 };
 
 typedef struct build_instr BuildInstr;
-typedef enum instr_type InstrType;
 
-enum instr_type
+typedef enum instr_type
 {
   INSTR_INSTR,
   INSTR_LITERAL_DEF,
   INSTR_LABEL_DEF
-};
+} InstrType;
 
 struct build_instr
 {

@@ -1,3 +1,110 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENVIRONMENT): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_INLINE): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_open): Update sim_parse_args comment.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HOSTENDIAN): Delete.
+	* configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENDIAN): Change LITTLE_ENDIAN to
+	LITTLE.
+	* configure: Regenerate.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-hload.o.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-12-15  Dominik Vogt  <vogt@linux.vnet.ibm.com>
+
+	* interp.c (sign_ext): Fix left shift of negative value.
+
+2015-11-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (pc, cycles, avr_pc22): Delete.
+	(do_call): Add cpu to arguments.  Declare sd.  Change pc to cpu->pc,
+	avr_pc22 to sd->avr_pc22, and cycles to cpu->cycles.
+	(gen_mul): Add cpu to arguments.  Change cycles to cpu->cycles.
+	(step_once): Change pc to cpu->pc, avr_pc22 to sd->avr_pc22, and
+	cycles to cpu->cycles.  Pass cpu to do_call and gen_mul calls.
+	(avr_reg_store, avr_reg_fetch, avr_pc_get, avr_pc_set): Change pc
+	to cpu->pc.
+	(sim_open): Likewise.  Declare cpu.
+	(sim_create_inferior): Declare cpu and addr.  Change pc to addr and
+	call sim_pc_set.  Change avr_pc22 to sd->avr_pc22.
+	* sim-main.h (pc): Delete.
+	(struct _sim_cpu): Add pc and cycles.
+	(struct sim_state): Add avr_pc22.
+
+2015-11-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_store_register): Rename to ...
+	(avr_reg_store): ... this.  Adjust signature.
+	(sim_fetch_register): Rename to ...
+	(avr_reg_fetch): ... this.  Adjust signature.
+	(sim_open): Call CPU_REG_FETCH and CPU_REG_STORE.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-reason.o and sim-stop.o.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_close): Delete.
+
 2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.

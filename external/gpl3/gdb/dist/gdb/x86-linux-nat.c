@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #include "inferior.h"
 #include "elf/common.h"
 #include "gdb_proc_service.h"
-#include <sys/ptrace.h>
+#include "nat/gdb_ptrace.h"
 #include <sys/user.h>
 #include <sys/procfs.h>
 #include <sys/uio.h>
@@ -215,6 +215,11 @@ x86_linux_read_description (struct target_ops *ops)
 	    return tdesc_x32_avx_linux; /* No MPX on x32 using AVX.  */
 	  else
 	    return tdesc_amd64_mpx_linux;
+	case X86_XSTATE_AVX_MPX_MASK:
+	  if (is_x32)
+	    return tdesc_x32_avx_linux; /* No MPX on x32 using AVX.  */
+	  else
+	    return tdesc_amd64_avx_mpx_linux;
 	case X86_XSTATE_AVX_MASK:
 	  if (is_x32)
 	    return tdesc_x32_avx_linux;
@@ -237,6 +242,8 @@ x86_linux_read_description (struct target_ops *ops)
 	  return tdesc_i386_avx512_linux;
 	case X86_XSTATE_MPX_MASK:
 	  return tdesc_i386_mpx_linux;
+	case X86_XSTATE_AVX_MPX_MASK:
+	  return tdesc_i386_avx_mpx_linux;
 	case X86_XSTATE_AVX_MASK:
 	  return tdesc_i386_avx_linux;
 	default:
@@ -255,7 +262,6 @@ x86_linux_enable_btrace (struct target_ops *self, ptid_t ptid,
 			 const struct btrace_config *conf)
 {
   struct btrace_target_info *tinfo;
-  struct gdbarch *gdbarch;
 
   errno = 0;
   tinfo = linux_enable_btrace (ptid, conf);
@@ -264,12 +270,6 @@ x86_linux_enable_btrace (struct target_ops *self, ptid_t ptid,
     error (_("Could not enable branch tracing for %s: %s."),
 	   target_pid_to_str (ptid), safe_strerror (errno));
 
-  /* Fill in the size of a pointer in bits.  */
-  if (tinfo->ptr_bits == 0)
-    {
-      gdbarch = target_thread_architecture (ptid);
-      tinfo->ptr_bits = gdbarch_ptr_bit (gdbarch);
-    }
   return tinfo;
 }
 

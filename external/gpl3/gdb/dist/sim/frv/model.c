@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2015 Free Software Foundation, Inc.
+Copyright 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -107352,43 +107352,43 @@ simple_model_init (SIM_CPU *cpu)
 #define TIMING_DATA(td) 0
 #endif
 
-static const MODEL frv_models[] =
+static const SIM_MODEL frv_models[] =
 {
   { "frv", & frv_mach, MODEL_FRV, TIMING_DATA (& frv_timing[0]), frv_model_init },
   { 0 }
 };
 
-static const MODEL fr550_models[] =
+static const SIM_MODEL fr550_models[] =
 {
   { "fr550", & fr550_mach, MODEL_FR550, TIMING_DATA (& fr550_timing[0]), fr550_model_init },
   { 0 }
 };
 
-static const MODEL fr500_models[] =
+static const SIM_MODEL fr500_models[] =
 {
   { "fr500", & fr500_mach, MODEL_FR500, TIMING_DATA (& fr500_timing[0]), fr500_model_init },
   { 0 }
 };
 
-static const MODEL tomcat_models[] =
+static const SIM_MODEL tomcat_models[] =
 {
   { "tomcat", & tomcat_mach, MODEL_TOMCAT, TIMING_DATA (& tomcat_timing[0]), tomcat_model_init },
   { 0 }
 };
 
-static const MODEL fr400_models[] =
+static const SIM_MODEL fr400_models[] =
 {
   { "fr400", & fr400_mach, MODEL_FR400, TIMING_DATA (& fr400_timing[0]), fr400_model_init },
   { 0 }
 };
 
-static const MODEL fr450_models[] =
+static const SIM_MODEL fr450_models[] =
 {
   { "fr450", & fr450_mach, MODEL_FR450, TIMING_DATA (& fr450_timing[0]), fr450_model_init },
   { 0 }
 };
 
-static const MODEL simple_models[] =
+static const SIM_MODEL simple_models[] =
 {
   { "simple", & simple_mach, MODEL_SIMPLE, TIMING_DATA (& simple_timing[0]), simple_model_init },
   { 0 }
@@ -107396,7 +107396,7 @@ static const MODEL simple_models[] =
 
 /* The properties of this cpu's implementation.  */
 
-static const MACH_IMP_PROPERTIES frvbf_imp_properties =
+static const SIM_MACH_IMP_PROPERTIES frvbf_imp_properties =
 {
   sizeof (SIM_CPU),
 #if WITH_SCACHE
@@ -107438,7 +107438,7 @@ frv_init_cpu (SIM_CPU *cpu)
 #endif
 }
 
-const MACH frv_mach =
+const SIM_MACH frv_mach =
 {
   "frv", "frv", MACH_FRV,
   32, 32, & frv_models[0], & frvbf_imp_properties,
@@ -107464,7 +107464,7 @@ fr550_init_cpu (SIM_CPU *cpu)
 #endif
 }
 
-const MACH fr550_mach =
+const SIM_MACH fr550_mach =
 {
   "fr550", "fr550", MACH_FR550,
   32, 32, & fr550_models[0], & frvbf_imp_properties,
@@ -107490,7 +107490,7 @@ fr500_init_cpu (SIM_CPU *cpu)
 #endif
 }
 
-const MACH fr500_mach =
+const SIM_MACH fr500_mach =
 {
   "fr500", "fr500", MACH_FR500,
   32, 32, & fr500_models[0], & frvbf_imp_properties,
@@ -107516,7 +107516,7 @@ tomcat_init_cpu (SIM_CPU *cpu)
 #endif
 }
 
-const MACH tomcat_mach =
+const SIM_MACH tomcat_mach =
 {
   "tomcat", "tomcat", MACH_TOMCAT,
   32, 32, & tomcat_models[0], & frvbf_imp_properties,
@@ -107542,7 +107542,7 @@ fr400_init_cpu (SIM_CPU *cpu)
 #endif
 }
 
-const MACH fr400_mach =
+const SIM_MACH fr400_mach =
 {
   "fr400", "fr400", MACH_FR400,
   32, 32, & fr400_models[0], & frvbf_imp_properties,
@@ -107568,7 +107568,7 @@ fr450_init_cpu (SIM_CPU *cpu)
 #endif
 }
 
-const MACH fr450_mach =
+const SIM_MACH fr450_mach =
 {
   "fr450", "fr450", MACH_FR450,
   32, 32, & fr450_models[0], & frvbf_imp_properties,
@@ -107594,7 +107594,7 @@ simple_init_cpu (SIM_CPU *cpu)
 #endif
 }
 
-const MACH simple_mach =
+const SIM_MACH simple_mach =
 {
   "simple", "simple", MACH_SIMPLE,
   32, 32, & simple_models[0], & frvbf_imp_properties,

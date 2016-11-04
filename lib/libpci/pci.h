@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.8 2016/01/23 01:26:14 dholland Exp $	*/
+/*	$NetBSD: pci.h,v 1.8.2.1 2016/11/04 14:48:54 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -59,6 +59,8 @@ int	pcidev_conf_write(int, unsigned int, pcireg_t);
 
 /* pci_drvname.c */
 int	pci_drvname(int, unsigned int, unsigned int, char *, size_t);
+int	pci_drvnameonbus(int, unsigned int, unsigned int, unsigned int, char *,
+		size_t);
 
 /* pci_subr.c */
 void	pci_devinfo(pcireg_t, pcireg_t, int, char *, size_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.26 2013/12/01 00:23:11 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.26.8.1 2016/11/04 14:48:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -68,6 +68,23 @@ typedef struct {
 #define	R_PREV		9		/* seq (BTREE, RECNO) */
 #define	R_SETCURSOR	10		/* put (RECNO) */
 #define	R_RECNOSYNC	11		/* sync (RECNO) */
+
+/*
+ * Recursive sequential scan.
+ *
+ * This avoids using sibling pointers, permitting (possibly partial)
+ * recovery from some kinds of btree corruption.  Start a sequential
+ * scan as usual, but use R_RNEXT or R_RPREV to move forward or
+ * backward.
+ *
+ * This probably doesn't work with btrees that allow duplicate keys.
+ * Database modifications during the scan can also modify the parent
+ * page stack needed for correct functioning.  Intermixing
+ * non-recursive traversal by using R_NEXT or R_PREV can also make the
+ * page stack inconsistent with the cursor and cause problems.
+ */
+#define R_RNEXT		128		/* seq (BTREE, RECNO) */
+#define R_RPREV		129		/* seq (BTREE, RECNO) */
 
 typedef enum { DB_BTREE, DB_HASH, DB_RECNO } DBTYPE;
 

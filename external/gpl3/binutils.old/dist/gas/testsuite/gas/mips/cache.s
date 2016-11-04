@@ -15,6 +15,10 @@
 	.text
 text_label:
 
+	.ifdef r6
+	cache	5, 255($2)
+	cache	5, -256($3)
+	.else
 	cache	5, 2047($2)
 	cache	5, -2048($3)
 
@@ -35,6 +39,7 @@ text_label:
 	cache	5, -32769($9)
 	cache	5, 36864($10)
 	cache	5, -36865($11)
+	.endif
 
 # Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
 	.align	2

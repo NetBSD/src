@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARDXM,v 1.21 2016/06/24 12:22:09 skrll Exp $
+#	$NetBSD: BEAGLEBOARDXM,v 1.21.2.1 2016/11/04 14:49:00 pgoyette Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -176,11 +176,11 @@ obio2		at mainbus? base 0x49000000 size 0x1000000	# L4 PERIPHERAL
 gpmc0		at mainbus? base 0x6e000000
 
 # SDHC controllers
-sdhc0		at obio0 addr 0x4809C000 size 0x0400 intr 83
+#sdhc0		at obio0 addr 0x4809C000 size 0x0400 intr 83
 #sdhc1		at obio0 addr 0x480B4000 size 0x0400 intr 86
 #sdhc2		at obio0 addr 0x480AD000 size 0x0400 intr 94
-sdmmc*		at sdhc?		# SD/MMC bus
-ld*		at sdmmc?
+#sdmmc*		at sdhc?		# SD/MMC bus
+#ld*		at sdmmc?
 
 # Interrupt Controller
 omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0

@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.69 2015/11/16 21:25:34 phx Exp $
+# $NetBSD: WSCONS,v 1.69.2.1 2016/11/04 14:48:57 pgoyette Exp $
 
 # GENERIC with wscons(4)
 #
@@ -45,6 +45,9 @@ no ite5		at grf5
 no ite6		at grf6
 no ite7		at grf7
 
+mntva*          at zbus?                # MNTMN VA2000
+#options         MNTVA_CONSOLE
+
 # PCI framebuffers
 #genfb*		at pci?			# CyberVisionPPC/BlizzardVisionPPC only
 voodoofb*	at pci?			# 3Dfx Voodoo 3 in G-REX 
@@ -59,3 +62,4 @@ wsdisplay*	at wsemuldisplaydev? console ?
 
 pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 pseudo-device	wsmux			# mouse & keyboard multiplexor
+

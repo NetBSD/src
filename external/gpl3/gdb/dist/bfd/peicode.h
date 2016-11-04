@@ -1,5 +1,5 @@
 /* Support for the generic parts of PE/PEI, for BFD.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -631,6 +631,20 @@ pe_ILF_make_a_section (pe_ILF_vars * vars,
   if (size & 1)
     vars->data --;
 
+# if (GCC_VERSION >= 3000)
+  /* PR 18758: See note in pe_ILF_buid_a_bfd.  We must make sure that we
+     preserve host alignment requirements.  We test 'size' rather than
+     vars.data as we cannot perform binary arithmetic on pointers.  We assume
+     that vars.data was sufficiently aligned upon entry to this function.
+     The BFD_ASSERTs in this functions will warn us if we run out of room,
+     but we should already have enough padding built in to ILF_DATA_SIZE.  */
+  {
+    unsigned int alignment = __alignof__ (struct coff_section_tdata);
+
+    if (size & (alignment - 1))
+      vars->data += alignment - (size & (alignment - 1));
+  }
+#endif
   /* Create a coff_section_tdata structure for our use.  */
   sec->used_by_bfd = (struct coff_section_tdata *) vars->data;
   vars->data += sizeof (struct coff_section_tdata);
@@ -836,6 +850,24 @@ pe_ILF_build_a_bfd (bfd *           abfd,
 
   /* The remaining space in bim->buffer is used
      by the pe_ILF_make_a_section() function.  */
+# if (GCC_VERSION >= 3000)
+  /* PR 18758: Make sure that the data area is sufficiently aligned for
+     pointers on the host.  __alignof__ is a gcc extension, hence the test
+     above.  For other compilers we will have to assume that the alignment is
+     unimportant, or else extra code can be added here and in
+     pe_ILF_make_a_section.
+
+     Note - we cannot test 'ptr' directly as it is illegal to perform binary
+     arithmetic on pointers, but we know that the strings section is the only
+     one that might end on an unaligned boundary.  */
+  {
+    unsigned int alignment = __alignof__ (char *);
+
+    if (SIZEOF_ILF_STRINGS & (alignment - 1))
+      ptr += alignment - (SIZEOF_ILF_STRINGS & (alignment - 1));
+  }
+#endif
+
   vars.data = ptr;
   vars.abfd = abfd;
   vars.sec_index = 0;
@@ -927,13 +959,19 @@ pe_ILF_build_a_bfd (bfd *           abfd,
       pe_ILF_save_relocs (&vars, id5);
     }
 
+  /* Create an import symbol.  */
+  pe_ILF_make_a_symbol (& vars, "__imp_", symbol_name, id5, 0);
+  imp_sym   = vars.sym_ptr_ptr - 1;
+  imp_index = vars.sym_index - 1;
+
   /* Create extra sections depending upon the type of import we are dealing with.  */
   switch (import_type)
     {
       int i;
 
     case IMPORT_CODE:
-      /* Create a .text section.
+      /* CODE functions are special, in that they get a trampoline that
+         jumps to the main import symbol.  Create a .text section to hold it.
 	 First we need to look up its contents in the jump table.  */
       for (i = NUM_ENTRIES (jtab); i--;)
 	{
@@ -953,11 +991,6 @@ pe_ILF_build_a_bfd (bfd *           abfd,
 
       /* Copy in the jump code.  */
       memcpy (text->contents, jtab[i].data, jtab[i].size);
-
-      /* Create an import symbol.  */
-      pe_ILF_make_a_symbol (& vars, "__imp_", symbol_name, id5, 0);
-      imp_sym   = vars.sym_ptr_ptr - 1;
-      imp_index = vars.sym_index - 1;
 
       /* Create a reloc for the data in the text section.  */
 #ifdef MIPS_ARCH_MAGIC_WINCE
@@ -1036,14 +1069,6 @@ pe_ILF_build_a_bfd (bfd *           abfd,
       pe_ILF_make_a_symbol (& vars, "", symbol_name, text,
 			    BSF_NOT_AT_END | BSF_FUNCTION);
 
-      /* Create an import symbol for the DLL, without the
-       .dll suffix.  */
-      ptr = (bfd_byte *) strrchr (source_dll, '.');
-      if (ptr)
-	* ptr = 0;
-      pe_ILF_make_a_symbol (& vars, "__IMPORT_DESCRIPTOR_", source_dll, NULL, 0);
-      if (ptr)
-	* ptr = '.';
       break;
 
     case IMPORT_DATA:
@@ -1054,6 +1079,14 @@ pe_ILF_build_a_bfd (bfd *           abfd,
       /* XXX code not yet written.  */
       abort ();
     }
+
+  /* Create an import symbol for the DLL, without the .dll suffix.  */
+  ptr = (bfd_byte *) strrchr (source_dll, '.');
+  if (ptr)
+    * ptr = 0;
+  pe_ILF_make_a_symbol (& vars, "__IMPORT_DESCRIPTOR_", source_dll, NULL, 0);
+  if (ptr)
+    * ptr = '.';
 
   /* Point the bfd at the symbol table.  */
   obj_symbols (abfd) = vars.sym_cache;

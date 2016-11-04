@@ -1,7 +1,6 @@
 /* tc-tic4x.h -- Assemble for the Texas TMS320C[34]X.
-   Copyright (C) 1997, 2002, 2003, 2005, 2007, 2008
-   Free Software Foundation. Inc.
-   
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
    This file is part of GAS, the GNU Assembler.

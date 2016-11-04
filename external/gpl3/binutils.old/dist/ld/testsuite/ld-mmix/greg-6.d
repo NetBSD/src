@@ -290,7 +290,6 @@ SYMBOL TABLE:
 0+fc l       \*REG\*	0+ lsym
 0+ l    df \*ABS\*	0+ .*
 0+fd l       \*REG\*	0+ lsym
-0+ l    df \*ABS\*	0+ .*
 0+14 g       \.text	0+ _start
 0+fe g       \*REG\*	0+ areg
 2000000000000000 g       \.text	0+ __bss_start

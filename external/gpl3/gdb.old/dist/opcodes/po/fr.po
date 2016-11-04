@@ -1,62 +1,245 @@
-# Messages français pour opcodes.
+# Messages franÃ§ais pour opcodes.
 # Copyright (C) 2008 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
+#
 # Michel Robitaille <robitail@IRO.UMontreal.CA>, traducteur depuis/since 1996.
-# Nicolas Provost <nprovost@quadriv.com>, 2009.
+# Nicolas Provost <nprovost@quadriv.com>, 2009-2010.
+# StÃ©phane Aulery <lkppo@free.fr>, 2015.
+#
+# RÃ©encodage ISO-8859-1 => UTF-8 et typos, S. Aulery, 2015.
+# Relecture complÃ¨te, S. Aulery, 2015.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: opcodes 2.20.90\n"
+"Project-Id-Version: opcodes 2.24.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2010-11-05 11:32+0100\n"
-"PO-Revision-Date: 2010-11-23 12:01+0100\n"
-"Last-Translator: Nicolas Provost <nprovost@quadriv.com>\n"
+"POT-Creation-Date: 2014-02-10 09:42+1030\n"
+"PO-Revision-Date: 2015-04-25 14:45+0200\n"
+"Last-Translator: StÃ©phane Aulery <lkppo@free.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
+#. Invalid option.
+#. XXX - should break 'option' at following delimiter.
+#: aarch64-dis.c:81 arm-dis.c:4606
+#, c-format
+msgid "Unrecognised disassembler option: %s\n"
+msgstr "Option du dÃ©sassembleur inconnueÂ : %s\n"
+
+#: aarch64-dis.c:2395
+#, c-format
+msgid ""
+"\n"
+"The following AARCH64 specific disassembler options are supported for use\n"
+"with the -M switch (multiple options should be separated by commas):\n"
+msgstr ""
+"\n"
+"Les options spÃ©cifiques AARCH64 du dÃ©sassembleur sont prises en charge\n"
+"avec lâ€™utilisation de lâ€™option -M (les options multiples doivent Ãªtre\n"
+"sÃ©parÃ©es par des virgules)Â :\n"
+
+#: aarch64-dis.c:2399
+#, c-format
+msgid ""
+"\n"
+"  no-aliases         Don't print instruction aliases.\n"
+msgstr ""
+"\n"
+"  no-aliases         Ne pas afficher les alias des instructions.\n"
+
+#: aarch64-dis.c:2402
+#, c-format
+msgid ""
+"\n"
+"  aliases            Do print instruction aliases.\n"
+msgstr ""
+"\n"
+"  aliases            Afficher les alias des instructions.\n"
+
+#: aarch64-dis.c:2406
+#, c-format
+msgid ""
+"\n"
+"  debug_dump         Temp switch for debug trace.\n"
+msgstr ""
+"\n"
+"  debug_dump         Interrupteur temporaire pour la trace de dÃ©bogage.\n"
+
+#: aarch64-dis.c:2410 mips-dis.c:2231 mips-dis.c:2239 mips-dis.c:2241
+#, c-format
+msgid "\n"
+msgstr "\n"
+
+#: aarch64-opc.c:1152
+msgid "immediate value"
+msgstr "valeur immÃ©diate"
+
+#: aarch64-opc.c:1162
+msgid "immediate offset"
+msgstr "dÃ©calage immÃ©diat"
+
+#: aarch64-opc.c:1172
+msgid "register number"
+msgstr "numÃ©ro de registre"
+
+#: aarch64-opc.c:1182
+msgid "register element index"
+msgstr "index dâ€™Ã©lÃ©ment de registre"
+
+#: aarch64-opc.c:1192
+msgid "shift amount"
+msgstr "longueur du dÃ©calage"
+
+#: aarch64-opc.c:1264
+msgid "extraneous register"
+msgstr "registre externe"
+
+#: aarch64-opc.c:1269
+msgid "missing register"
+msgstr "registre manquant"
+
+#: aarch64-opc.c:1280
+msgid "stack pointer register expected"
+msgstr "registre de pointeur de pile attendu"
+
+#: aarch64-opc.c:1310
+msgid "unexpected address writeback"
+msgstr "cache writeback dâ€™adresses inattendu"
+
+#: aarch64-opc.c:1321
+msgid "address writeback expected"
+msgstr "cache writeback d'adresses attendu"
+
+#: aarch64-opc.c:1367
+msgid "negative or unaligned offset expected"
+msgstr "dÃ©calage nÃ©gatif ou non alignÃ© attendu"
+
+#: aarch64-opc.c:1380
+msgid "invalid register offset"
+msgstr "dÃ©calage de registre invalide"
+
+#: aarch64-opc.c:1402
+msgid "invalid post-increment amount"
+msgstr "longueur de post-incrÃ©ment invalide"
+
+#: aarch64-opc.c:1418 aarch64-opc.c:1685
+msgid "invalid shift amount"
+msgstr "longueur de dÃ©calage invalide"
+
+#: aarch64-opc.c:1431
+msgid "invalid extend/shift operator"
+msgstr "opÃ©rateur Ã©tendu ou de dÃ©calage invalide"
+
+#: aarch64-opc.c:1477 aarch64-opc.c:1551 aarch64-opc.c:1586 aarch64-opc.c:1605
+#: aarch64-opc.c:1613 aarch64-opc.c:1663 aarch64-opc.c:1814
+msgid "immediate out of range"
+msgstr "valeur immÃ©diate hors intervalle"
+
+#: aarch64-opc.c:1539 aarch64-opc.c:1561 aarch64-opc.c:1718 aarch64-opc.c:1726
+#: aarch64-opc.c:1792 aarch64-opc.c:1820
+msgid "invalid shift operator"
+msgstr "opÃ©rateur de dÃ©calage invalide"
+
+#: aarch64-opc.c:1545
+msgid "shift amount expected to be 0 or 12"
+msgstr "longueur de dÃ©calage attenduÂ : 0 ou 12"
+
+#: aarch64-opc.c:1568
+msgid "shift amount should be a multiple of 16"
+msgstr "la longueur de dÃ©calage devrait Ãªtre un multiple de 16"
+
+#: aarch64-opc.c:1580
+msgid "negative immediate value not allowed"
+msgstr "valeur immÃ©diate nÃ©gative interdite"
+
+#: aarch64-opc.c:1674
+msgid "immediate zero expected"
+msgstr "valeur immÃ©diate Ã©gale Ã  zÃ©ro attendue"
+
+#: aarch64-opc.c:1734
+msgid "shift is not permitted"
+msgstr "dÃ©calage interdit"
+
+#: aarch64-opc.c:1759
+msgid "invalid value for immediate"
+msgstr "valeur immÃ©diate invalide"
+
+#: aarch64-opc.c:1784
+msgid "shift amount expected to be 0 or 16"
+msgstr "longueur de dÃ©calage attendueÂ : 0 ou 16"
+
+#: aarch64-opc.c:1804
+msgid "floating-point immediate expected"
+msgstr "valeur immÃ©diate en virgule flottante attendue"
+
+#: aarch64-opc.c:1895
+msgid "extend operator expected"
+msgstr "opÃ©rateur Ã©tendu attendu"
+
+#: aarch64-opc.c:1908
+msgid "missing extend operator"
+msgstr "opÃ©rateur Ã©tendu manquant"
+
+#: aarch64-opc.c:1914
+msgid "'LSL' operator not allowed"
+msgstr "opÃ©rateur LSL interdit"
+
+#: aarch64-opc.c:1935
+msgid "W register expected"
+msgstr "registre W attendu"
+
+#: aarch64-opc.c:1946
+msgid "shift operator expected"
+msgstr "opÃ©rateur de dÃ©calage attendu"
+
+#: aarch64-opc.c:1953
+msgid "'ROR' operator not allowed"
+msgstr "opÃ©rateur ROR interdit"
+
 #: alpha-opc.c:155
 msgid "branch operand unaligned"
-msgstr "opérande de branchement non aligné"
+msgstr "opÃ©rande de branchement non alignÃ©"
 
 #: alpha-opc.c:171 alpha-opc.c:187
 msgid "jump hint unaligned"
-msgstr "saut indicé non aligné"
+msgstr "saut indicÃ© non alignÃ©"
 
-#: arc-dis.c:77
+#: arc-dis.c:75
 msgid "Illegal limm reference in last instruction!\n"
-msgstr "Référence limm illégale dans la dernière instruction!\n"
+msgstr "RÃ©fÃ©rence limm illÃ©gale dans la derniÃ¨re instructionÂ !\n"
 
 #: arc-opc.c:386
 msgid "unable to fit different valued constants into instruction"
-msgstr "impossible de méler différentes constantes dans l'instruction"
+msgstr "impossible de mÃ©langer diffÃ©rentes constantes dans lâ€™instruction"
 
 #: arc-opc.c:395
 msgid "auxiliary register not allowed here"
-msgstr "registre auxiliaire non autorisé ici"
+msgstr "registre auxiliaire non autorisÃ© ici"
 
 #: arc-opc.c:401 arc-opc.c:418
 msgid "attempt to set readonly register"
-msgstr "tentative d'écriture sur un registre en lecture seule"
+msgstr "tentative dâ€™Ã©criture dâ€™un registre en lecture seule"
 
 #: arc-opc.c:406 arc-opc.c:423
 msgid "attempt to read writeonly register"
-msgstr "tentative de lire un registre en écriture seule"
+msgstr "tentative de lecture dâ€™un registre en Ã©criture seule"
 
 #: arc-opc.c:428
 #, c-format
 msgid "invalid register number `%d'"
-msgstr "numéro de registre non valide \"%d\""
+msgstr "Â«Â %dÂ Â» nâ€™est pas un registre valide"
 
 #: arc-opc.c:594 arc-opc.c:645 arc-opc.c:673
 msgid "too many long constants"
-msgstr "trop de longues constantes"
+msgstr "trop de constantes entier long"
 
 #: arc-opc.c:668
 msgid "too many shimms in load"
-msgstr "trop de bits shimm à charger"
+msgstr "trop de shimms chargÃ©s"
 
 #. Do we have a limm already?
 #: arc-opc.c:781
@@ -65,23 +248,23 @@ msgstr "stockage impossible"
 
 #: arc-opc.c:814
 msgid "st operand error"
-msgstr "Erreur d'opérande st"
+msgstr "Erreur dâ€™opÃ©rande st"
 
 #: arc-opc.c:818 arc-opc.c:860
 msgid "address writeback not allowed"
-msgstr "cache \"writeback\" d'adresses interdit"
+msgstr "cache writeback dâ€™adresses interdit"
 
 #: arc-opc.c:822
 msgid "store value must be zero"
-msgstr "la valeur de stockage doit être 0"
+msgstr "la valeur de stockage doit Ãªtre 0"
 
 #: arc-opc.c:847
 msgid "invalid load/shimm insn"
-msgstr "load/shimm non valide dans l'instruction"
+msgstr "instruction load/shimm invalide"
 
 #: arc-opc.c:856
 msgid "ld operand error"
-msgstr "Erreur d'opérande ld"
+msgstr "Erreur dâ€™opÃ©rande ld"
 
 #: arc-opc.c:943
 msgid "jump flags, but no .f seen"
@@ -89,11 +272,11 @@ msgstr "drapeaux de saut, mais pas de .f"
 
 #: arc-opc.c:946
 msgid "jump flags, but no limm addr"
-msgstr "drapeaux de saut, mais pas d'adresse limm"
+msgstr "drapeaux de saut, mais pas dâ€™adresse limm"
 
 #: arc-opc.c:949
 msgid "flag bits of jump address limm lost"
-msgstr "perte de drapeaux pour l'adresse de saut"
+msgstr "perte de drapeaux pour lâ€™adresse de saut"
 
 #: arc-opc.c:952
 msgid "attempt to set HR bits"
@@ -105,29 +288,23 @@ msgstr "mauvais drapeaux de saut"
 
 #: arc-opc.c:988
 msgid "branch address not on 4 byte boundary"
-msgstr "adresse de branchement non multiple de 16"
+msgstr "adresse de branchement non alignÃ©e sur 4 octets"
 
 #: arc-opc.c:1024
 msgid "must specify .jd or no nullify suffix"
 msgstr "suffixe .jd ou validant attendu"
 
-#: arm-dis.c:1990
+#: arm-dis.c:2145
 msgid "<illegal precision>"
-msgstr "<précision illégale>"
+msgstr "<prÃ©cision illÃ©gale>"
 
 #. XXX - should break 'option' at following delimiter.
-#: arm-dis.c:4357
+#: arm-dis.c:4598
 #, c-format
 msgid "Unrecognised register name set: %s\n"
-msgstr "Nom de jeu de registres inconnu : %s\n"
+msgstr "Nom de jeu de registres inconnuÂ : %s\n"
 
-#. XXX - should break 'option' at following delimiter.
-#: arm-dis.c:4365
-#, c-format
-msgid "Unrecognised disassembler option: %s\n"
-msgstr "Option du désassembleur non reconnue : %s\n"
-
-#: arm-dis.c:4950
+#: arm-dis.c:5208
 #, c-format
 msgid ""
 "\n"
@@ -135,83 +312,105 @@ msgid ""
 "the -M switch:\n"
 msgstr ""
 "\n"
-"Les options spécifiques ARM suivantes sont supportées avec l'utilisation de\n"
-"l'option -M:\n"
+"Les options suivantes spÃ©cifiques au dÃ©sassemblage ARM sont prises en\n"
+"charge avec lâ€™utilisation de lâ€™option -MÂ :\n"
 
-#: avr-dis.c:115 avr-dis.c:125
+#: avr-dis.c:115 avr-dis.c:136
 #, c-format
 msgid "undefined"
-msgstr "non défini(e)"
+msgstr "indÃ©fini(e)"
 
-#: avr-dis.c:187
+#: avr-dis.c:198
 #, c-format
 msgid "Internal disassembler error"
-msgstr "Erreur interne du désassembleur"
+msgstr "Erreur interne du dÃ©sassembleur"
 
-#: avr-dis.c:236
+#: avr-dis.c:251
 #, c-format
 msgid "unknown constraint `%c'"
-msgstr "contrainte inconnue « %c »"
+msgstr "contrainte Â«Â %cÂ Â» inconnue"
 
-#: cgen-asm.c:336 fr30-ibld.c:201 frv-ibld.c:201 ip2k-ibld.c:201
-#: iq2000-ibld.c:201 lm32-ibld.c:201 m32c-ibld.c:201 m32r-ibld.c:201
-#: mep-ibld.c:201 mt-ibld.c:201 openrisc-ibld.c:201 xc16x-ibld.c:201
-#: xstormy16-ibld.c:201
+#: cgen-asm.c:352 epiphany-ibld.c:201 fr30-ibld.c:201 frv-ibld.c:201
+#: ip2k-ibld.c:201 iq2000-ibld.c:201 lm32-ibld.c:201 m32c-ibld.c:201
+#: m32r-ibld.c:201 mep-ibld.c:201 mt-ibld.c:201 openrisc-ibld.c:201
+#: xc16x-ibld.c:201 xstormy16-ibld.c:201
 #, c-format
 msgid "operand out of range (%ld not between %ld and %ld)"
-msgstr "opérande hors limites (%ld n'est pas entre %ld et %ld)"
+msgstr "opÃ©rande hors intervalle (%ld nâ€™est pas entre %ld et %ld)"
 
-#: cgen-asm.c:358
+#: cgen-asm.c:374
 #, c-format
 msgid "operand out of range (%lu not between %lu and %lu)"
-msgstr "opérande hors limites (%lu n'est pas entre %lu et %lu)"
+msgstr "opÃ©rande hors intervalle (%lu nâ€™est pas entre %lu et %lu)"
 
 #: d30v-dis.c:255
 #, c-format
 msgid "<unknown register %d>"
-msgstr "<registre inconnu %d>"
+msgstr "<registre %d inconnu>"
 
 #. Can't happen.
 #: dis-buf.c:60
 #, c-format
 msgid "Unknown error %d\n"
-msgstr "Erreur inconnue %d\n"
+msgstr "Erreur %d inconnue\n"
 
 #: dis-buf.c:69
 #, c-format
 msgid "Address 0x%s is out of bounds.\n"
-msgstr "Adresse 0x%s hors limites.\n"
+msgstr "Adresse 0x%s hors intervalle.\n"
 
-#: fr30-asm.c:93 m32c-asm.c:872 m32c-asm.c:879
-msgid "Register number is not valid"
-msgstr "Numéro de registre non valide"
+#: epiphany-asm.c:68
+msgid "register unavailable for short instructions"
+msgstr "registre indisponible pour les instructions courtes"
 
-#: fr30-asm.c:95
-msgid "Register must be between r0 and r7"
-msgstr "Le numéro de registre doit être entre r0 et r7"
+#: epiphany-asm.c:115
+msgid "register name used as immediate value"
+msgstr "nom de registre utilisÃ© comme valeur immÃ©diate"
 
-#: fr30-asm.c:97
-msgid "Register must be between r8 and r15"
-msgstr "Le numéro de registre doit être entre r8 et r15"
+#. Don't treat "mov ip,ip" as a move-immediate.
+#: epiphany-asm.c:178 epiphany-asm.c:234
+msgid "register source in immediate move"
+msgstr "registre source dÃ©placÃ© dans une valeur immÃ©diate"
 
-#: fr30-asm.c:116 m32c-asm.c:910
-msgid "Register list is not valid"
-msgstr "Liste de registres non valide"
+#: epiphany-asm.c:187
+msgid "byte relocation unsupported"
+msgstr "repositionnement dâ€™octet indisponible"
 
-#: fr30-asm.c:310 frv-asm.c:1263 ip2k-asm.c:511 iq2000-asm.c:459
-#: lm32-asm.c:349 m32c-asm.c:1584 m32r-asm.c:328 mep-asm.c:1286 mt-asm.c:595
-#: openrisc-asm.c:241 xc16x-asm.c:376 xstormy16-asm.c:276
+#. -- assembler routines inserted here.
+#. -- asm.c
+#: epiphany-asm.c:193 frv-asm.c:972 iq2000-asm.c:56 lm32-asm.c:95
+#: lm32-asm.c:127 lm32-asm.c:157 lm32-asm.c:187 lm32-asm.c:217 lm32-asm.c:247
+#: m32c-asm.c:140 m32c-asm.c:235 m32c-asm.c:276 m32c-asm.c:334 m32c-asm.c:355
+#: m32r-asm.c:53 mep-asm.c:241 mep-asm.c:259 mep-asm.c:274 mep-asm.c:289
+#: mep-asm.c:301 openrisc-asm.c:54
+msgid "missing `)'"
+msgstr "Â«Â )Â Â» manquante"
+
+#: epiphany-asm.c:270
+msgid "ABORT: unknown operand"
+msgstr "ABANDONNERÂ : opÃ©rande inconnu"
+
+#: epiphany-asm.c:296
+msgid "Not a pc-relative address."
+msgstr "Nâ€™est pas une adresse de type PC."
+
+#: epiphany-asm.c:455 fr30-asm.c:310 frv-asm.c:1263 ip2k-asm.c:511
+#: iq2000-asm.c:459 lm32-asm.c:349 m32c-asm.c:1584 m32r-asm.c:328
+#: mep-asm.c:1286 mt-asm.c:595 openrisc-asm.c:241 xc16x-asm.c:376
+#: xstormy16-asm.c:276
 #, c-format
 msgid "Unrecognized field %d while parsing.\n"
-msgstr "Champ non reconnu %d lors de l'analyse.\n"
+msgstr "Champ %d inconnu lors de lâ€™analyse.\n"
 
-#: fr30-asm.c:361 frv-asm.c:1314 ip2k-asm.c:562 iq2000-asm.c:510
-#: lm32-asm.c:400 m32c-asm.c:1635 m32r-asm.c:379 mep-asm.c:1337 mt-asm.c:646
-#: openrisc-asm.c:292 xc16x-asm.c:427 xstormy16-asm.c:327
+#: epiphany-asm.c:506 fr30-asm.c:361 frv-asm.c:1314 ip2k-asm.c:562
+#: iq2000-asm.c:510 lm32-asm.c:400 m32c-asm.c:1635 m32r-asm.c:379
+#: mep-asm.c:1337 mt-asm.c:646 openrisc-asm.c:292 xc16x-asm.c:427
+#: xstormy16-asm.c:327
 msgid "missing mnemonic in syntax string"
-msgstr "mnémonique manquante dans la syntaxe de la chaîne"
+msgstr "mnÃ©monique manquante dans la chaÃ®ne de syntaxe"
 
 #. We couldn't parse it.
+#: epiphany-asm.c:641 epiphany-asm.c:645 epiphany-asm.c:734 epiphany-asm.c:841
 #: fr30-asm.c:496 fr30-asm.c:500 fr30-asm.c:589 fr30-asm.c:696 frv-asm.c:1449
 #: frv-asm.c:1453 frv-asm.c:1542 frv-asm.c:1649 ip2k-asm.c:697 ip2k-asm.c:701
 #: ip2k-asm.c:790 ip2k-asm.c:897 iq2000-asm.c:645 iq2000-asm.c:649
@@ -225,142 +424,165 @@ msgstr "mnémonique manquante dans la syntaxe de la chaîne"
 #: xstormy16-asm.c:462 xstormy16-asm.c:466 xstormy16-asm.c:555
 #: xstormy16-asm.c:662
 msgid "unrecognized instruction"
-msgstr "instruction non reconnue"
+msgstr "instruction inconnue"
 
-#: fr30-asm.c:543 frv-asm.c:1496 ip2k-asm.c:744 iq2000-asm.c:692
-#: lm32-asm.c:582 m32c-asm.c:1817 m32r-asm.c:561 mep-asm.c:1519 mt-asm.c:828
-#: openrisc-asm.c:474 xc16x-asm.c:609 xstormy16-asm.c:509
+#: epiphany-asm.c:688 fr30-asm.c:543 frv-asm.c:1496 ip2k-asm.c:744
+#: iq2000-asm.c:692 lm32-asm.c:582 m32c-asm.c:1817 m32r-asm.c:561
+#: mep-asm.c:1519 mt-asm.c:828 openrisc-asm.c:474 xc16x-asm.c:609
+#: xstormy16-asm.c:509
 #, c-format
 msgid "syntax error (expected char `%c', found `%c')"
-msgstr "erreur de syntaxe (caractère « %c » attendu,  « %c » obtenu)"
+msgstr "erreur de syntaxe (caractÃ¨re Â«Â %cÂ Â» attendu, Â«Â %cÂ Â» trouvÃ©)"
 
-#: fr30-asm.c:553 frv-asm.c:1506 ip2k-asm.c:754 iq2000-asm.c:702
-#: lm32-asm.c:592 m32c-asm.c:1827 m32r-asm.c:571 mep-asm.c:1529 mt-asm.c:838
-#: openrisc-asm.c:484 xc16x-asm.c:619 xstormy16-asm.c:519
+#: epiphany-asm.c:698 fr30-asm.c:553 frv-asm.c:1506 ip2k-asm.c:754
+#: iq2000-asm.c:702 lm32-asm.c:592 m32c-asm.c:1827 m32r-asm.c:571
+#: mep-asm.c:1529 mt-asm.c:838 openrisc-asm.c:484 xc16x-asm.c:619
+#: xstormy16-asm.c:519
 #, c-format
 msgid "syntax error (expected char `%c', found end of instruction)"
-msgstr "erreur de syntaxe (caractère « %c » attendu, fin de l'instruction trouvée)"
+msgstr "erreur de syntaxe (caractÃ¨re Â«Â %cÂ Â» attendu, fin de lâ€™instruction trouvÃ©e)"
 
-#: fr30-asm.c:583 frv-asm.c:1536 ip2k-asm.c:784 iq2000-asm.c:732
-#: lm32-asm.c:622 m32c-asm.c:1857 m32r-asm.c:601 mep-asm.c:1559 mt-asm.c:868
-#: openrisc-asm.c:514 xc16x-asm.c:649 xstormy16-asm.c:549
+#: epiphany-asm.c:728 fr30-asm.c:583 frv-asm.c:1536 ip2k-asm.c:784
+#: iq2000-asm.c:732 lm32-asm.c:622 m32c-asm.c:1857 m32r-asm.c:601
+#: mep-asm.c:1559 mt-asm.c:868 openrisc-asm.c:514 xc16x-asm.c:649
+#: xstormy16-asm.c:549
 msgid "junk at end of line"
-msgstr "rebut à la fin de la ligne"
+msgstr "rebut en fin de ligne"
 
-#: fr30-asm.c:695 frv-asm.c:1648 ip2k-asm.c:896 iq2000-asm.c:844
-#: lm32-asm.c:734 m32c-asm.c:1969 m32r-asm.c:713 mep-asm.c:1671 mt-asm.c:980
-#: openrisc-asm.c:626 xc16x-asm.c:761 xstormy16-asm.c:661
+#: epiphany-asm.c:840 fr30-asm.c:695 frv-asm.c:1648 ip2k-asm.c:896
+#: iq2000-asm.c:844 lm32-asm.c:734 m32c-asm.c:1969 m32r-asm.c:713
+#: mep-asm.c:1671 mt-asm.c:980 openrisc-asm.c:626 xc16x-asm.c:761
+#: xstormy16-asm.c:661
 msgid "unrecognized form of instruction"
-msgstr "forme d'instruction non reconnue"
+msgstr "forme dâ€™instruction inconnue"
 
-#: fr30-asm.c:709 frv-asm.c:1662 ip2k-asm.c:910 iq2000-asm.c:858
-#: lm32-asm.c:748 m32c-asm.c:1983 m32r-asm.c:727 mep-asm.c:1685 mt-asm.c:994
-#: openrisc-asm.c:640 xc16x-asm.c:775 xstormy16-asm.c:675
+#: epiphany-asm.c:854 fr30-asm.c:709 frv-asm.c:1662 ip2k-asm.c:910
+#: iq2000-asm.c:858 lm32-asm.c:748 m32c-asm.c:1983 m32r-asm.c:727
+#: mep-asm.c:1685 mt-asm.c:994 openrisc-asm.c:640 xc16x-asm.c:775
+#: xstormy16-asm.c:675
 #, c-format
 msgid "bad instruction `%.50s...'"
-msgstr "instruction erronée « %.50s... »"
+msgstr "instruction Â«Â %.50sâ€¦Â Â» erronÃ©e"
 
-#: fr30-asm.c:712 frv-asm.c:1665 ip2k-asm.c:913 iq2000-asm.c:861
-#: lm32-asm.c:751 m32c-asm.c:1986 m32r-asm.c:730 mep-asm.c:1688 mt-asm.c:997
-#: openrisc-asm.c:643 xc16x-asm.c:778 xstormy16-asm.c:678
+#: epiphany-asm.c:857 fr30-asm.c:712 frv-asm.c:1665 ip2k-asm.c:913
+#: iq2000-asm.c:861 lm32-asm.c:751 m32c-asm.c:1986 m32r-asm.c:730
+#: mep-asm.c:1688 mt-asm.c:997 openrisc-asm.c:643 xc16x-asm.c:778
+#: xstormy16-asm.c:678
 #, c-format
 msgid "bad instruction `%.50s'"
-msgstr "instruction erronée « %.50s »"
+msgstr "instruction Â«Â %.50sÂ Â» erronÃ©e"
 
 #. Default text to print if an instruction isn't recognized.
-#: fr30-dis.c:41 frv-dis.c:41 ip2k-dis.c:41 iq2000-dis.c:41 lm32-dis.c:41
-#: m32c-dis.c:41 m32r-dis.c:41 mep-dis.c:41 mmix-dis.c:277 mt-dis.c:41
-#: openrisc-dis.c:41 xc16x-dis.c:41 xstormy16-dis.c:41
+#: epiphany-dis.c:41 fr30-dis.c:41 frv-dis.c:41 ip2k-dis.c:41 iq2000-dis.c:41
+#: lm32-dis.c:41 m32c-dis.c:41 m32r-dis.c:41 mep-dis.c:41 mmix-dis.c:276
+#: mt-dis.c:41 nds32-dis.c:56 openrisc-dis.c:41 xc16x-dis.c:41
+#: xstormy16-dis.c:41
 msgid "*unknown*"
-msgstr "*inconnu*"
+msgstr "*inconnu(e)*"
 
-#: fr30-dis.c:299 frv-dis.c:396 ip2k-dis.c:288 iq2000-dis.c:189 lm32-dis.c:147
-#: m32c-dis.c:891 m32r-dis.c:279 mep-dis.c:1187 mt-dis.c:290
-#: openrisc-dis.c:135 xc16x-dis.c:420 xstormy16-dis.c:168
+#: epiphany-dis.c:277 fr30-dis.c:299 frv-dis.c:396 ip2k-dis.c:288
+#: iq2000-dis.c:189 lm32-dis.c:147 m32c-dis.c:891 m32r-dis.c:279
+#: mep-dis.c:1187 mt-dis.c:290 openrisc-dis.c:135 xc16x-dis.c:420
+#: xstormy16-dis.c:168
 #, c-format
 msgid "Unrecognized field %d while printing insn.\n"
-msgstr "Champ non reconnu %d lors de l'affichage d'instructions.\n"
+msgstr "Champ %d inconnu lors de lâ€™affichage dâ€™instruction.\n"
 
-#: fr30-ibld.c:164 frv-ibld.c:164 ip2k-ibld.c:164 iq2000-ibld.c:164
-#: lm32-ibld.c:164 m32c-ibld.c:164 m32r-ibld.c:164 mep-ibld.c:164
-#: mt-ibld.c:164 openrisc-ibld.c:164 xc16x-ibld.c:164 xstormy16-ibld.c:164
+#: epiphany-ibld.c:164 fr30-ibld.c:164 frv-ibld.c:164 ip2k-ibld.c:164
+#: iq2000-ibld.c:164 lm32-ibld.c:164 m32c-ibld.c:164 m32r-ibld.c:164
+#: mep-ibld.c:164 mt-ibld.c:164 openrisc-ibld.c:164 xc16x-ibld.c:164
+#: xstormy16-ibld.c:164
 #, c-format
 msgid "operand out of range (%ld not between %ld and %lu)"
-msgstr "opérande hors limites (%ld n'est pas entre %ld et %lu)"
+msgstr "opÃ©rande hors intervalle (%ld nâ€™est pas entre %ld et %lu)"
 
-#: fr30-ibld.c:185 frv-ibld.c:185 ip2k-ibld.c:185 iq2000-ibld.c:185
-#: lm32-ibld.c:185 m32c-ibld.c:185 m32r-ibld.c:185 mep-ibld.c:185
-#: mt-ibld.c:185 openrisc-ibld.c:185 xc16x-ibld.c:185 xstormy16-ibld.c:185
+#: epiphany-ibld.c:185 fr30-ibld.c:185 frv-ibld.c:185 ip2k-ibld.c:185
+#: iq2000-ibld.c:185 lm32-ibld.c:185 m32c-ibld.c:185 m32r-ibld.c:185
+#: mep-ibld.c:185 mt-ibld.c:185 openrisc-ibld.c:185 xc16x-ibld.c:185
+#: xstormy16-ibld.c:185
 #, c-format
 msgid "operand out of range (0x%lx not between 0 and 0x%lx)"
-msgstr "opérande hors limite (0x%lx n'est pas entre 0 et 0x%lx)"
+msgstr "opÃ©rande hors intervalle (0x%lx nâ€™est pas entre 0 et 0x%lx)"
 
-#: fr30-ibld.c:727 frv-ibld.c:853 ip2k-ibld.c:604 iq2000-ibld.c:710
-#: lm32-ibld.c:631 m32c-ibld.c:1728 m32r-ibld.c:662 mep-ibld.c:1205
-#: mt-ibld.c:746 openrisc-ibld.c:630 xc16x-ibld.c:749 xstormy16-ibld.c:675
+#: epiphany-ibld.c:872 fr30-ibld.c:727 frv-ibld.c:853 ip2k-ibld.c:604
+#: iq2000-ibld.c:710 lm32-ibld.c:631 m32c-ibld.c:1728 m32r-ibld.c:662
+#: mep-ibld.c:1205 mt-ibld.c:746 openrisc-ibld.c:630 xc16x-ibld.c:749
+#: xstormy16-ibld.c:675
 #, c-format
 msgid "Unrecognized field %d while building insn.\n"
-msgstr "Champ non reconnu %d lors de la construction d'instruction.\n"
+msgstr "Champ %d inconnu lors de la construction dâ€™instruction.\n"
 
-#: fr30-ibld.c:932 frv-ibld.c:1170 ip2k-ibld.c:679 iq2000-ibld.c:885
-#: lm32-ibld.c:735 m32c-ibld.c:2889 m32r-ibld.c:799 mep-ibld.c:1804
-#: mt-ibld.c:966 openrisc-ibld.c:730 xc16x-ibld.c:969 xstormy16-ibld.c:821
+#: epiphany-ibld.c:1166 fr30-ibld.c:932 frv-ibld.c:1170 ip2k-ibld.c:679
+#: iq2000-ibld.c:885 lm32-ibld.c:735 m32c-ibld.c:2889 m32r-ibld.c:799
+#: mep-ibld.c:1804 mt-ibld.c:966 openrisc-ibld.c:730 xc16x-ibld.c:969
+#: xstormy16-ibld.c:821
 #, c-format
 msgid "Unrecognized field %d while decoding insn.\n"
-msgstr "Champ non reconnu %d lors du décodage d'instructions.\n"
+msgstr "Champ %d inconnu lors du dÃ©codage dâ€™instruction.\n"
 
-#: fr30-ibld.c:1078 frv-ibld.c:1448 ip2k-ibld.c:753 iq2000-ibld.c:1016
-#: lm32-ibld.c:824 m32c-ibld.c:3506 m32r-ibld.c:912 mep-ibld.c:2274
-#: mt-ibld.c:1166 openrisc-ibld.c:807 xc16x-ibld.c:1190 xstormy16-ibld.c:931
+#: epiphany-ibld.c:1309 fr30-ibld.c:1078 frv-ibld.c:1448 ip2k-ibld.c:753
+#: iq2000-ibld.c:1016 lm32-ibld.c:824 m32c-ibld.c:3506 m32r-ibld.c:912
+#: mep-ibld.c:2274 mt-ibld.c:1166 openrisc-ibld.c:807 xc16x-ibld.c:1190
+#: xstormy16-ibld.c:931
 #, c-format
 msgid "Unrecognized field %d while getting int operand.\n"
-msgstr "Champ non reconnu %d lors de l'obtention d'un opérande int.\n"
+msgstr "Champ %d inconnu lors de lâ€™obtention dâ€™un opÃ©rande int.\n"
 
-#: fr30-ibld.c:1206 frv-ibld.c:1708 ip2k-ibld.c:809 iq2000-ibld.c:1129
-#: lm32-ibld.c:895 m32c-ibld.c:4105 m32r-ibld.c:1007 mep-ibld.c:2726
-#: mt-ibld.c:1348 openrisc-ibld.c:866 xc16x-ibld.c:1393 xstormy16-ibld.c:1023
+#: epiphany-ibld.c:1434 fr30-ibld.c:1206 frv-ibld.c:1708 ip2k-ibld.c:809
+#: iq2000-ibld.c:1129 lm32-ibld.c:895 m32c-ibld.c:4105 m32r-ibld.c:1007
+#: mep-ibld.c:2726 mt-ibld.c:1348 openrisc-ibld.c:866 xc16x-ibld.c:1393
+#: xstormy16-ibld.c:1023
 #, c-format
 msgid "Unrecognized field %d while getting vma operand.\n"
-msgstr "Champ non reconnu %d lors de l'obtention d'un opérande vma.\n"
+msgstr "Champ %d inconnu lors de lâ€™obtention dâ€™un opÃ©rande vma.\n"
 
-#: fr30-ibld.c:1337 frv-ibld.c:1975 ip2k-ibld.c:868 iq2000-ibld.c:1249
-#: lm32-ibld.c:973 m32c-ibld.c:4692 m32r-ibld.c:1108 mep-ibld.c:3139
-#: mt-ibld.c:1537 openrisc-ibld.c:932 xc16x-ibld.c:1597 xstormy16-ibld.c:1122
+#: epiphany-ibld.c:1566 fr30-ibld.c:1337 frv-ibld.c:1975 ip2k-ibld.c:868
+#: iq2000-ibld.c:1249 lm32-ibld.c:973 m32c-ibld.c:4692 m32r-ibld.c:1108
+#: mep-ibld.c:3139 mt-ibld.c:1537 openrisc-ibld.c:932 xc16x-ibld.c:1597
+#: xstormy16-ibld.c:1122
 #, c-format
 msgid "Unrecognized field %d while setting int operand.\n"
-msgstr "Champ non reconnu %d lors de l'initialisation d'un opérande int.\n"
+msgstr "Champ %d inconnu lors de lâ€™initialisation dâ€™un opÃ©rande int.\n"
 
-#: fr30-ibld.c:1458 frv-ibld.c:2232 ip2k-ibld.c:917 iq2000-ibld.c:1359
-#: lm32-ibld.c:1041 m32c-ibld.c:5269 m32r-ibld.c:1199 mep-ibld.c:3542
-#: mt-ibld.c:1716 openrisc-ibld.c:988 xc16x-ibld.c:1791 xstormy16-ibld.c:1211
+#: epiphany-ibld.c:1688 fr30-ibld.c:1458 frv-ibld.c:2232 ip2k-ibld.c:917
+#: iq2000-ibld.c:1359 lm32-ibld.c:1041 m32c-ibld.c:5269 m32r-ibld.c:1199
+#: mep-ibld.c:3542 mt-ibld.c:1716 openrisc-ibld.c:988 xc16x-ibld.c:1791
+#: xstormy16-ibld.c:1211
 #, c-format
 msgid "Unrecognized field %d while setting vma operand.\n"
-msgstr "Champ non reconnu %d lors de l'initialisation d'un opérande vma.\n"
+msgstr "Champ %d inconnu lors de lâ€™initialisation dâ€™un opÃ©rande vma.\n"
+
+#: fr30-asm.c:93 m32c-asm.c:872 m32c-asm.c:879
+msgid "Register number is not valid"
+msgstr "NumÃ©ro de registre invalide"
+
+#: fr30-asm.c:95
+msgid "Register must be between r0 and r7"
+msgstr "Le numÃ©ro de registre doit Ãªtre compris entre r0 et r7"
+
+#: fr30-asm.c:97
+msgid "Register must be between r8 and r15"
+msgstr "Le numÃ©ro de registre doit Ãªtre compris entre r8 et r15"
+
+#: fr30-asm.c:116 m32c-asm.c:910
+msgid "Register list is not valid"
+msgstr "Liste de registres invalide"
 
 #: frv-asm.c:608
 msgid "missing `]'"
-msgstr "\"]\"' manquant"
+msgstr "Â«Â ]Â Â» manquant"
 
 #: frv-asm.c:611 frv-asm.c:621
 msgid "Special purpose register number is out of range"
-msgstr "Numéro de registre spécial hors des limites"
+msgstr "NumÃ©ro de registre spÃ©cial hors intervalle"
 
 #: frv-asm.c:908
 msgid "Value of A operand must be 0 or 1"
-msgstr "La valeur de l'opérande A doit être 0 ou 1"
+msgstr "La valeur de lâ€™opÃ©rande A doit Ãªtre 0 ou 1"
 
 #: frv-asm.c:944
 msgid "register number must be even"
-msgstr "Le numéro de registre doit être pair"
-
-#. -- assembler routines inserted here.
-#. -- asm.c
-#: frv-asm.c:972 iq2000-asm.c:56 lm32-asm.c:95 lm32-asm.c:127 lm32-asm.c:157
-#: lm32-asm.c:187 lm32-asm.c:217 lm32-asm.c:247 m32c-asm.c:140 m32c-asm.c:235
-#: m32c-asm.c:276 m32c-asm.c:334 m32c-asm.c:355 m32r-asm.c:53 mep-asm.c:241
-#: mep-asm.c:259 mep-asm.c:274 mep-asm.c:289 mep-asm.c:301 openrisc-asm.c:54
-msgid "missing `)'"
-msgstr "\")\" manquante"
+msgstr "Le numÃ©ro de registre doit Ãªtre pair"
 
 # h8300-dis.c:380Internal error: bad sparc-opcode.h: \"%s\" == \"%s\"\n"
 #: h8300-dis.c:314
@@ -371,24 +593,24 @@ msgstr "Hummmm 0x%x"
 #: h8300-dis.c:695
 #, c-format
 msgid "Don't understand 0x%x \n"
-msgstr "Incompréhensible : 0x%x \n"
+msgstr "IncomprÃ©hensibleÂ : 0x%x \n"
 
 #: h8500-dis.c:124
 #, c-format
 msgid "can't cope with insert %d\n"
-msgstr "Impossible de gérer l'insertion %d\n"
+msgstr "Impossible de gÃ©rer lâ€™insertion %d\n"
 
 #. Couldn't understand anything.
 #: h8500-dis.c:324
 #, c-format
 msgid "%02x\t\t*unknown*"
-msgstr "%02x\t\t*inconnu*"
+msgstr "%02x\t\t*inconnu(e)*"
 
-#: i386-dis.c:10671
+#: i386-dis.c:11550
 msgid "<internal disassembler error>"
-msgstr "<erreur interne du désassembleur>"
+msgstr "<erreur interne du dÃ©sassembleur>"
 
-#: i386-dis.c:10968
+#: i386-dis.c:11859
 #, c-format
 msgid ""
 "\n"
@@ -396,146 +618,147 @@ msgid ""
 "with the -M switch (multiple options should be separated by commas):\n"
 msgstr ""
 "\n"
-"Les options spécifiques i386/x86-64 du désassembleur sont supportées avec l'utilisation\n"
-"de l'option -M (les options multiples doivent être séparées par des virgules):\n"
+"Les options spÃ©cifiques i386/x86-64 du dÃ©sassembleur sont prises en charge\n"
+"avec lâ€™utilisation de lâ€™option -M (les options multiples doivent Ãªtre\n"
+"sÃ©parÃ©es par des virgules)Â :\n"
 
-#: i386-dis.c:10972
+#: i386-dis.c:11863
 #, c-format
 msgid "  x86-64      Disassemble in 64bit mode\n"
-msgstr "  x86-64      Désassembler en mode 64 bits\n"
+msgstr "  x86-64      DÃ©sassembleur en mode 64 bits\n"
 
-#: i386-dis.c:10973
+#: i386-dis.c:11864
 #, c-format
 msgid "  i386        Disassemble in 32bit mode\n"
-msgstr "  i386        Désassembler en mode 32 bits\n"
+msgstr "  i386        DÃ©sassembleur en mode 32 bits\n"
 
-#: i386-dis.c:10974
+#: i386-dis.c:11865
 #, c-format
 msgid "  i8086       Disassemble in 16bit mode\n"
-msgstr "  i8086       Désassembler en mode 16 bits\n"
+msgstr "  i8086       DÃ©sassembleur en mode 16 bits\n"
 
-#: i386-dis.c:10975
+#: i386-dis.c:11866
 #, c-format
 msgid "  att         Display instruction in AT&T syntax\n"
 msgstr "  att         Afficher les instructions en syntaxe AT&T\n"
 
-#: i386-dis.c:10976
+#: i386-dis.c:11867
 #, c-format
 msgid "  intel       Display instruction in Intel syntax\n"
 msgstr "  intel       Afficher les instructions en syntaxe Intel\n"
 
-#: i386-dis.c:10977
+#: i386-dis.c:11868
 #, c-format
 msgid ""
 "  att-mnemonic\n"
 "              Display instruction in AT&T mnemonic\n"
 msgstr ""
 "  att-mnemonic\n"
-"              Afficher les instructions mnémoniques AT&T\n"
+"              Afficher les instructions avec les mnÃ©moniques AT&T\n"
 
-#: i386-dis.c:10979
+#: i386-dis.c:11870
 #, c-format
 msgid ""
 "  intel-mnemonic\n"
 "              Display instruction in Intel mnemonic\n"
 msgstr ""
 "  intel-mnemonic\n"
-"              Afficher les instructions mnémoniques Intel\n"
+"              Afficher les instructions avec les mnÃ©moniques Intel\n"
 
-#: i386-dis.c:10981
+#: i386-dis.c:11872
 #, c-format
 msgid "  addr64      Assume 64bit address size\n"
-msgstr "  addr64      Taille des adresses : 64 bits\n"
+msgstr "  addr64      Supposer un adressage 64 bits\n"
 
-#: i386-dis.c:10982
+#: i386-dis.c:11873
 #, c-format
 msgid "  addr32      Assume 32bit address size\n"
-msgstr "  addr32      Taille des adresses : 32 bits\n"
+msgstr "  addr32      Supposer un adressage 32 bits\n"
 
-#: i386-dis.c:10983
+#: i386-dis.c:11874
 #, c-format
 msgid "  addr16      Assume 16bit address size\n"
-msgstr "  addr16      Taille des adresses : 16 bits\n"
+msgstr "  addr16      Supposer un adressage 16 bits\n"
 
-#: i386-dis.c:10984
+#: i386-dis.c:11875
 #, c-format
 msgid "  data32      Assume 32bit data size\n"
-msgstr "  data32       Taille de données : 32 bits\n"
+msgstr "  data32       Supposer une taille de donnÃ©es 32 bits\n"
 
-#: i386-dis.c:10985
+#: i386-dis.c:11876
 #, c-format
 msgid "  data16      Assume 16bit data size\n"
-msgstr "  data16      Taille de données : 16 bits\n"
+msgstr "  data16      Supposer une taille de donnÃ©es 16 bits\n"
 
-#: i386-dis.c:10986
+#: i386-dis.c:11877
 #, c-format
 msgid "  suffix      Always display instruction suffix in AT&T syntax\n"
-msgstr "  suffix      Toujours afficher les suffixes d'instruction en syntaxe AT&T\n"
+msgstr "  suffix      Toujours afficher les suffixes dâ€™instruction en syntaxe AT&T\n"
 
-#: i386-gen.c:459 ia64-gen.c:307
+#: i386-gen.c:560 ia64-gen.c:307
 #, c-format
 msgid "%s: Error: "
-msgstr "%s : ERREUR : "
+msgstr "%sÂ : ErreurÂ : "
 
-#: i386-gen.c:591
+#: i386-gen.c:692
 #, c-format
 msgid "%s: %d: Unknown bitfield: %s\n"
-msgstr "%s: %d: champ de bits inconnu : %s\n"
+msgstr "%sÂ : %dÂ : champ de bits inconnuÂ : %s\n"
 
-#: i386-gen.c:593
+#: i386-gen.c:694
 #, c-format
 msgid "Unknown bitfield: %s\n"
-msgstr "Champ de bits inconnu : %s\n"
+msgstr "Champ de bits inconnuÂ : %s\n"
 
-#: i386-gen.c:649
+#: i386-gen.c:750
 #, c-format
 msgid "%s: %d: Missing `)' in bitfield: %s\n"
-msgstr "%s : %d : `)' manquante dans le champ de bits : %s\n"
+msgstr "%sÂ : %dÂ : Â«Â )Â Â» manquante dans le champ de bitsÂ : %s\n"
 
-#: i386-gen.c:914
+#: i386-gen.c:1015
 #, c-format
 msgid "can't find i386-opc.tbl for reading, errno = %s\n"
-msgstr "impossible de lire i386-opc.tbl, errno = %s\n"
+msgstr "impossible de lire i386-opc.tbl, errnoÂ = %s\n"
 
-#: i386-gen.c:1045
+#: i386-gen.c:1146
 #, c-format
 msgid "can't find i386-reg.tbl for reading, errno = %s\n"
 msgstr "impossible de lire i386-reg.tbl, errno = %s\n"
 
-#: i386-gen.c:1122
+#: i386-gen.c:1223
 #, c-format
 msgid "can't create i386-init.h, errno = %s\n"
-msgstr "impossible de créer i386-init.h, errno = %s\n"
+msgstr "impossible de crÃ©er i386-init.h, errno = %s\n"
 
-#: i386-gen.c:1211 ia64-gen.c:2820
+#: i386-gen.c:1312 ia64-gen.c:2830
 #, c-format
 msgid "unable to change directory to \"%s\", errno = %s\n"
-msgstr "incapable de changer de répertoire vers \"%s\", errno = %s\n"
+msgstr "impossible de modifier le rÃ©pertoire vers Â«Â %sÂ Â», errno = %s\n"
 
-#: i386-gen.c:1218
+#: i386-gen.c:1319
 #, c-format
 msgid "%d unused bits in i386_cpu_flags.\n"
-msgstr "%d bits inutilisés dans i386_cpu_flags.\n"
+msgstr "%d bits inutilisÃ©s dans i386_cpu_flags.\n"
 
-#: i386-gen.c:1225
+#: i386-gen.c:1326
 #, c-format
 msgid "%d unused bits in i386_operand_type.\n"
-msgstr "%d bits inutilisés dans i386_operand_type.\n"
+msgstr "%d bits inutilisÃ©s dans i386_operand_type.\n"
 
-#: i386-gen.c:1239
+#: i386-gen.c:1340
 #, c-format
 msgid "can't create i386-tbl.h, errno = %s\n"
-msgstr "impossible de créer i386-tbl.h, errno = %s\n"
+msgstr "impossible de crÃ©er i386-tbl.h, errno = %s\n"
 
 #: ia64-gen.c:320
 #, c-format
 msgid "%s: Warning: "
-msgstr "%s : AVERTISSEMENT : "
+msgstr "%sÂ : AvertissementÂ : "
 
 #: ia64-gen.c:506 ia64-gen.c:737
 #, c-format
 msgid "multiple note %s not handled\n"
-msgstr "note multiple %s non gérée\n"
+msgstr "note multiple %s non gÃ©rÃ©e\n"
 
 #: ia64-gen.c:617
 msgid "can't find ia64-ic.tbl for reading\n"
@@ -546,171 +769,171 @@ msgstr "impossible de trouver ia64-ic.tbl pour la lecture\n"
 msgid "can't find %s for reading\n"
 msgstr "impossible de trouver %s pour la lecture\n"
 
-#: ia64-gen.c:1043
+#: ia64-gen.c:1051
 #, c-format
 msgid ""
 "most recent format '%s'\n"
 "appears more restrictive than '%s'\n"
 msgstr ""
-"le plus récent format '%s'\n"
-"apparaît plus restrictif que '%s'\n"
+"le format le plus rÃ©cent Â«Â %sÂ Â»\n"
+"apparaÃ®t plus restrictif que Â«Â %sÂ Â»\n"
 
-#: ia64-gen.c:1054
+#: ia64-gen.c:1062
 #, c-format
 msgid "overlapping field %s->%s\n"
-msgstr "chevauchement de champ %s->%s\n"
+msgstr "Ã©crasement du champ %s->%s\n"
 
-#: ia64-gen.c:1251
+#: ia64-gen.c:1259
 #, c-format
 msgid "overwriting note %d with note %d (IC:%s)\n"
-msgstr "écrasement de la note %d par la note %d (IC :%s)\n"
+msgstr "Ã©crasement de la note %d par la note %d (UCÂ : %s)\n"
 
-#: ia64-gen.c:1456
+#: ia64-gen.c:1466
 #, c-format
 msgid "don't know how to specify %% dependency %s\n"
-msgstr "Comment spécifier %% pour la dépendance %s ?\n"
+msgstr "Comment spÃ©cifier %% pour la dÃ©pendance %sÂ ?\n"
 
-#: ia64-gen.c:1478
+#: ia64-gen.c:1488
 #, c-format
 msgid "Don't know how to specify # dependency %s\n"
-msgstr "Impossible de spécifier le n° de dépendance %s\n"
+msgstr "Impossible de spÃ©cifier le numÃ©ro de dÃ©pendance %s\n"
 
-#: ia64-gen.c:1517
+#: ia64-gen.c:1527
 #, c-format
 msgid "IC:%s [%s] has no terminals or sub-classes\n"
-msgstr "IC :%s [%s] n'a pas de terminal ou de sous-classe\n"
+msgstr "UCÂ : %s [%s] nâ€™a pas de terminal ou de sous-classe\n"
 
-#: ia64-gen.c:1520
+#: ia64-gen.c:1530
 #, c-format
 msgid "IC:%s has no terminals or sub-classes\n"
-msgstr "IC :%s n'a pas de terminal ou de sous-classe\n"
+msgstr "UCÂ : %s nâ€™a pas de terminal ou de sous-classe\n"
 
-#: ia64-gen.c:1529
+#: ia64-gen.c:1539
 #, c-format
 msgid "no insns mapped directly to terminal IC %s [%s]"
-msgstr "aucun instruction mappée directement à l'UC %s [%s]"
+msgstr "aucun instruction mappÃ©e directement Ã  lâ€™UC %s [%s]"
 
-#: ia64-gen.c:1532
+#: ia64-gen.c:1542
 #, c-format
 msgid "no insns mapped directly to terminal IC %s\n"
-msgstr "aucun instruction mappée directement à l'UC %s\n"
+msgstr "aucun instruction mappÃ©e directement Ã  l'UC %s\n"
 
-#: ia64-gen.c:1543
+#: ia64-gen.c:1553
 #, c-format
 msgid "class %s is defined but not used\n"
-msgstr "classe %s définie mais non utilisée\n"
+msgstr "classe %s dÃ©finie mais inutilisÃ©e\n"
 
-#: ia64-gen.c:1556
+#: ia64-gen.c:1566
 #, c-format
 msgid "Warning: rsrc %s (%s) has no chks\n"
-msgstr "Attention : reg. source %s (%s) sans sélecteur \"chks\"\n"
+msgstr "AttentionÂ : registre source %s (%s) sans sÃ©lecteur Â«Â chksÂ Â»\n"
 
-#: ia64-gen.c:1559
+#: ia64-gen.c:1569
 #, c-format
 msgid "Warning: rsrc %s (%s) has no chks or regs\n"
-msgstr "Attention : reg. source %s (%s) sans sélecteur \"chks\" ou \"regs\"\n"
+msgstr "AttentionÂ : registre source %s (%s) sans sÃ©lecteur Â«Â chksÂ Â» ou registres\n"
 
-#: ia64-gen.c:1563
+#: ia64-gen.c:1573
 #, c-format
 msgid "rsrc %s (%s) has no regs\n"
-msgstr "rsrc %s (%s) n'a pas de registres\n"
+msgstr "registre source %s (%s) nâ€™a pas de registres\n"
 
-#: ia64-gen.c:2455
+#: ia64-gen.c:2465
 #, c-format
 msgid "IC note %d in opcode %s (IC:%s) conflicts with resource %s note %d\n"
-msgstr "note IC %d dans l'opcode %s (IC : %s) entrant en conflit avec la ressource %s note %d\n"
+msgstr "note UC %d dans lâ€™opcode %s (UCÂ : %s) entrant en conflit avec la ressource %s note %d\n"
 
-#: ia64-gen.c:2483
+#: ia64-gen.c:2493
 #, c-format
 msgid "IC note %d for opcode %s (IC:%s) conflicts with resource %s note %d\n"
-msgstr "note IC %d pour l'opcode %s (IC : %s) entrant en conflit avec la ressource %s note %d\n"
+msgstr "note UC %d pour lâ€™opcode %s (UCÂ : %s) entrant en conflit avec la ressource %s note %d\n"
 
-#: ia64-gen.c:2497
+#: ia64-gen.c:2507
 #, c-format
 msgid "opcode %s has no class (ops %d %d %d)\n"
-msgstr "L'opcode %s n'a pas de classe (ops %d %d %d)\n"
+msgstr "Lâ€™opcode %s nâ€™a pas de classe (ops %d %d %d)\n"
 
 #. We've been passed a w.  Return with an error message so that
 #. cgen will try the next parsing option.
 #: ip2k-asm.c:81
 msgid "W keyword invalid in FR operand slot."
-msgstr "mot clé W non valide dans le slot de l'opérande FR."
+msgstr "mot clef W invalide dans le slot de lâ€™opÃ©rande FR."
 
 #. Invalid offset present.
 #: ip2k-asm.c:106
 msgid "offset(IP) is not a valid form"
-msgstr "décalage(IP) de format non valide"
+msgstr "format de dÃ©calage (IP) invalide"
 
 #. Found something there in front of (DP) but it's out
 #. of range.
 #: ip2k-asm.c:154
 msgid "(DP) offset out of range."
-msgstr "décalage (DP) est hors limites."
+msgstr "dÃ©calage (DP) hors intervalle."
 
 #. Found something there in front of (SP) but it's out
 #. of range.
 #: ip2k-asm.c:195
 msgid "(SP) offset out of range."
-msgstr "décalage (SP) est hors limites."
+msgstr "dÃ©calage (SP) hors intervalle."
 
 #: ip2k-asm.c:211
 msgid "illegal use of parentheses"
-msgstr "usage illégal des parenthèses"
+msgstr "usage illÃ©gal des parenthÃ¨ses"
 
 #: ip2k-asm.c:218
 msgid "operand out of range (not between 1 and 255)"
-msgstr "opérande hors limites (pas entre 1 et 255)"
+msgstr "opÃ©rande hors intervalle (pas entre 1 et 255)"
 
 #. Something is very wrong. opindex has to be one of the above.
 #: ip2k-asm.c:242
 msgid "parse_addr16: invalid opindex."
-msgstr "parse_addr16 : opindex non valide."
+msgstr "parse_addr16 : opindex invalide."
 
 #: ip2k-asm.c:296
 msgid "Byte address required. - must be even."
-msgstr "Adresse d'octet requise - doit être paire."
+msgstr "Adresse dâ€™octet requise - doit Ãªtre paire."
 
 #: ip2k-asm.c:305
 msgid "cgen_parse_address returned a symbol. Literal required."
-msgstr "cgen_parse_address a retourné un symbole. Littéral requis."
+msgstr "cgen_parse_address a retournÃ© un symbole. Symbole requis."
 
 #: ip2k-asm.c:360
 msgid "percent-operator operand is not a symbol"
-msgstr "L'opérande de l'opérateur % n'est pas un symbole"
+msgstr "Lâ€™opÃ©rande de lâ€™opÃ©rateur % nâ€™est pas un symbole"
 
 #: ip2k-asm.c:413
 msgid "Attempt to find bit index of 0"
-msgstr "Tentative de repérage d'un index de bit de 0"
+msgstr "Tentative de repÃ©rage dâ€™un index de bit de 0"
 
 #: iq2000-asm.c:112 iq2000-asm.c:142
 msgid "immediate value cannot be register"
-msgstr "La valeur immédiate ne doit pas être un registre"
+msgstr "La valeur immÃ©diate ne doit pas Ãªtre un registre"
 
 #: iq2000-asm.c:123 iq2000-asm.c:153 lm32-asm.c:70
 msgid "immediate value out of range"
-msgstr "valeur immédiate hors limites"
+msgstr "valeur immÃ©diate hors intervalle"
 
 #: iq2000-asm.c:182
 msgid "21-bit offset out of range"
-msgstr "décalage de 21 bits hors limites"
+msgstr "dÃ©calage de 21 bits hors intervalle"
 
 #: lm32-asm.c:166
 msgid "expecting gp relative address: gp(symbol)"
-msgstr "adresse relative GP attendue : gp(symbole)"
+msgstr "adresse relative GP attendueÂ : gp(symbole)"
 
 #: lm32-asm.c:196
 msgid "expecting got relative address: got(symbol)"
-msgstr "adresse relative GOT attendue : got(symbole)"
+msgstr "adresse relative GOT attendueÂ : got(symbole)"
 
 #: lm32-asm.c:226
 msgid "expecting got relative address: gotoffhi16(symbol)"
-msgstr "adresse relative GOT attendue : gotoffhi16(symbole)"
+msgstr "adresse relative GOT attendueÂ : gotoffhi16(symbole)"
 
 #: lm32-asm.c:256
 msgid "expecting got relative address: gotofflo16(symbol)"
-msgstr "adresse relative GOT attendue : gotofflo16(symbole)"
+msgstr "adresse relative GOT attendueÂ : gotofflo16(symbole)"
 
-#: m10200-dis.c:158 m10300-dis.c:582
+#: m10200-dis.c:158 m10300-dis.c:581
 #, c-format
 msgid "unknown\t0x%04lx"
 msgstr "inconnu\t0x%04lx"
@@ -722,7 +945,7 @@ msgstr "inconnu\t0x%02lx"
 
 #: m32c-asm.c:117
 msgid "imm:6 immediate is out of range"
-msgstr "valeur immédiate imm:6 hors limites"
+msgstr "valeur immÃ©diate imm:6 hors intervalle"
 
 #: m32c-asm.c:145
 #, c-format
@@ -731,15 +954,15 @@ msgstr "%dsp8() prend une adresse symbolique, pas un nombre"
 
 #: m32c-asm.c:159 m32c-asm.c:163 m32c-asm.c:253
 msgid "dsp:8 immediate is out of range"
-msgstr "valeur immédiate dsp:8 hors limites"
+msgstr "valeur immÃ©diate dsp:8 hors intervalle"
 
 #: m32c-asm.c:184 m32c-asm.c:188
 msgid "Immediate is out of range -8 to 7"
-msgstr "Valeur immédiate hors limistes (-8 à 7)"
+msgstr "Valeur immÃ©diate hors intervalle (-8 Ã  7)"
 
 #: m32c-asm.c:209 m32c-asm.c:213
 msgid "Immediate is out of range -7 to 8"
-msgstr "Valeur immédiate hors limites (-7 à 8)"
+msgstr "Valeur immÃ©diate hors intervalle (-7 Ã  8)"
 
 #: m32c-asm.c:281
 #, c-format
@@ -748,51 +971,51 @@ msgstr "%dsp16() prend une adresse symbolique, pas un nombre"
 
 #: m32c-asm.c:305 m32c-asm.c:312 m32c-asm.c:373
 msgid "dsp:16 immediate is out of range"
-msgstr "valeur immédiate dsp:16 hors limites"
+msgstr "valeur immÃ©diate dsp:16 hors intervalle"
 
 #: m32c-asm.c:399
 msgid "dsp:20 immediate is out of range"
-msgstr "valeur immédiate dsp:20 hors limites"
+msgstr "valeur immÃ©diate dsp:20 hors intervalle"
 
 #: m32c-asm.c:425 m32c-asm.c:445
 msgid "dsp:24 immediate is out of range"
-msgstr "valeur immédiate dsp:24 hors limites"
+msgstr "valeur immÃ©diate dsp:24 hors intervalle"
 
 #: m32c-asm.c:478
 msgid "immediate is out of range 1-2"
-msgstr "valeur immédiate hors limites 1-2"
+msgstr "valeur immÃ©diate hors de lâ€™intervalle 1-2"
 
 #: m32c-asm.c:496
 msgid "immediate is out of range 1-8"
-msgstr "valeur immédiate hors limites 1-8"
+msgstr "valeur immÃ©diate hors de lâ€™intervalle 1-8"
 
 #: m32c-asm.c:514
 msgid "immediate is out of range 0-7"
-msgstr "valeur immédiate hors limites 0-7"
+msgstr "valeur immÃ©diate hors de lâ€™intervalle 0-7"
 
 #: m32c-asm.c:550
 msgid "immediate is out of range 2-9"
-msgstr "valeur immédiate hors limites 2-9"
+msgstr "valeur immÃ©diate hors de lâ€™intervalle 2-9"
 
 #: m32c-asm.c:568
 msgid "Bit number for indexing general register is out of range 0-15"
-msgstr "Bits pour indexer les registres généraux hors limites (0-15)"
+msgstr "Bits pour indexer les registres gÃ©nÃ©raux hors intervalle (0-15)"
 
 #: m32c-asm.c:606 m32c-asm.c:662
 msgid "bit,base is out of range"
-msgstr "bit,base hors des limites"
+msgstr "bit,base hors intervalle"
 
 #: m32c-asm.c:613 m32c-asm.c:618 m32c-asm.c:666
 msgid "bit,base out of range for symbol"
-msgstr "bit,base hors des limites pour un symbole"
+msgstr "bit,base hors intervalle pour un symbole"
 
 #: m32c-asm.c:802
 msgid "not a valid r0l/r0h pair"
-msgstr "couple r0l/r0h non valide"
+msgstr "couple r0l/r0h invalide"
 
 #: m32c-asm.c:832
 msgid "Invalid size specifier"
-msgstr "Spécifieur de taille non valide"
+msgstr "Indicateur de taille invalide"
 
 #: m68k-dis.c:1281
 #, c-format
@@ -802,66 +1025,52 @@ msgstr "<code de fonction %d>"
 #: m68k-dis.c:1440
 #, c-format
 msgid "<internal error in opcode table: %s %s>\n"
-msgstr "<erreur interne dans la table des opcodes : %s %s>\n"
+msgstr "<erreur interne dans la table des opcodesÂ : %s %s>\n"
 
 #: m88k-dis.c:679
 #, c-format
 msgid "# <dis error: %08lx>"
-msgstr "# <erreur désassemblage : %08lx>"
+msgstr "# <erreur dÃ©sassemblageÂ : %08lx>"
 
 #: mep-asm.c:129
 msgid "Only $tp or $13 allowed for this opcode"
-msgstr "Seuls $tp ou $13 sont autorisés avec cet opcode"
+msgstr "Seuls $tp ou $13 sont autorisÃ©s avec cet opcode"
 
 #: mep-asm.c:143
 msgid "Only $sp or $15 allowed for this opcode"
-msgstr "Seuls $sp ou $15 sont autorisés avec cet opcode"
+msgstr "Seuls $sp ou $15 sont autorisÃ©s avec cet opcode"
 
 #: mep-asm.c:308 mep-asm.c:504
 #, c-format
 msgid "invalid %function() here"
-msgstr "%function() non valide ici"
+msgstr "%function() invalide Ã  cette position"
 
 #: mep-asm.c:336
 msgid "Immediate is out of range -32768 to 32767"
-msgstr "Valeur immédiate hors limites (-32768 à 32767)"
+msgstr "Valeur immÃ©diate hors intervalle (-32768 Ã  32767)"
 
 #: mep-asm.c:356
 msgid "Immediate is out of range 0 to 65535"
-msgstr "Valeur immédiate hors limites (0 à 65535)"
+msgstr "Valeur immÃ©diate hors intervalle (0 Ã  65535)"
 
 #: mep-asm.c:549 mep-asm.c:562
 msgid "Immediate is out of range -512 to 511"
-msgstr "Valeur immédiate hors limites (-512 à 511)"
+msgstr "Valeur immÃ©diate hors intervalle (-512 Ã  511)"
 
 #: mep-asm.c:554 mep-asm.c:563
 msgid "Immediate is out of range -128 to 127"
-msgstr "Valeur immédiate hors limites (-128 à 127)"
+msgstr "Valeur immÃ©diate hors intervalle (-128 Ã  127)"
 
 #: mep-asm.c:558
 msgid "Value is not aligned enough"
-msgstr "Valeur mal alignée"
+msgstr "Valeur mal alignÃ©e"
 
-#: mips-dis.c:841
-msgid "# internal error, incomplete extension sequence (+)"
-msgstr "# erreur interne, séquence d'extension incomplète (+)"
-
-#: mips-dis.c:975
+#: mips-dis.c:1392 mips-dis.c:1580
 #, c-format
-msgid "# internal error, undefined extension sequence (+%c)"
-msgstr "# erreur interne, séquence d'extension indéfinie (+%c)"
+msgid "# internal error, undefined operand in `%s %s'"
+msgstr "# erreur interne, opÃ©rande Â«Â %s %sÂ Â» indÃ©fini"
 
-#: mips-dis.c:1335
-#, c-format
-msgid "# internal error, undefined modifier (%c)"
-msgstr "# erreur interne, modificateur non défini (%c)"
-
-#: mips-dis.c:1939
-#, c-format
-msgid "# internal disassembler error, unrecognised modifier (%c)"
-msgstr "# erreur interne du désassembleur, modificateur non reconnu (%c)"
-
-#: mips-dis.c:2177
+#: mips-dis.c:2190
 #, c-format
 msgid ""
 "\n"
@@ -869,10 +1078,29 @@ msgid ""
 "with the -M switch (multiple options should be separated by commas):\n"
 msgstr ""
 "\n"
-"Les options spécifiques MIPS du désassembleur sont supportées avec l'utilisation de\n"
-"l'option -M (les options multiples doivent être séparées par des virgules):\n"
+"Les options spÃ©cifiques MIPS du dÃ©sassembleur sont prises en charge avec\n"
+"lâ€™utilisation de lâ€™option -M (les options multiples doivent Ãªtre sÃ©parÃ©es\n"
+"par des virgules)Â :\n"
 
-#: mips-dis.c:2181
+#: mips-dis.c:2194
+#, c-format
+msgid ""
+"\n"
+"  msa             Recognize MSA instructions.\n"
+msgstr ""
+"\n"
+"  msa             Reconnaissance des instructions MSA.\n"
+
+#: mips-dis.c:2197
+#, c-format
+msgid ""
+"\n"
+"  virt            Recognize the virtualization ASE instructions.\n"
+msgstr ""
+"\n"
+"  virt            Reconnaissance des instructions ASE.\n"
+
+#: mips-dis.c:2200
 #, c-format
 msgid ""
 "\n"
@@ -880,10 +1108,10 @@ msgid ""
 "                           Default: based on binary being disassembled.\n"
 msgstr ""
 "\n"
-"  gpr-names=ABI            Afficher les noms GPR selon l'ABI spécifié.\n"
-"                           Par défaut : basé sur le binaire désassemblé.\n"
+"  gpr-names=ABI            Afficher les noms GPR selon lâ€™ABI spÃ©cifiÃ©.\n"
+"                           Par dÃ©fautÂ : Ã  partir du binaire dÃ©sassemblÃ©.\n"
 
-#: mips-dis.c:2185
+#: mips-dis.c:2204
 #, c-format
 msgid ""
 "\n"
@@ -891,10 +1119,10 @@ msgid ""
 "                           Default: numeric.\n"
 msgstr ""
 "\n"
-"  fpr-names=ABI            Afficher les noms FPR selon l'ABI spécifié.\n"
-"                           Par défaut : numérique.\n"
+"  fpr-names=ABI            Afficher les noms FPR selon lâ€™ABI spÃ©cifiÃ©.\n"
+"                           Par dÃ©fautÂ : numÃ©rique.\n"
 
-#: mips-dis.c:2189
+#: mips-dis.c:2208
 #, c-format
 msgid ""
 "\n"
@@ -904,10 +1132,10 @@ msgid ""
 msgstr ""
 "\n"
 "  cp0-names=ARCH           Afficher les noms des registres CP0 selon\n"
-"                           l'architecture spécifiée.\n"
-"                           Par défaut : basé sur le binaire désassemblé.\n"
+"                           lâ€™architecture spÃ©cifiÃ©e.\n"
+"                           Par dÃ©fautÂ : Ã  partir du binaire dÃ©sassemblÃ©.\n"
 
-#: mips-dis.c:2194
+#: mips-dis.c:2213
 #, c-format
 msgid ""
 "\n"
@@ -916,11 +1144,11 @@ msgid ""
 "                           Default: based on binary being disassembled.\n"
 msgstr ""
 "\n"
-"  hwr-names=ARCH           Afficher les noms HWR selon  \n"
-"\t\t\t   l'architecture spécifiée.\n"
-"                           Par défaut : basé sur le binaire désassemblé.\n"
+"  hwr-names=ARCH           Afficher les noms HWR selon \n"
+"\t\t\t   lâ€™architecture spÃ©cifiÃ©e.\n"
+"                           Par dÃ©fautÂ : Ã  partir du binaire dÃ©sassemblÃ©.\n"
 
-#: mips-dis.c:2199
+#: mips-dis.c:2218
 #, c-format
 msgid ""
 "\n"
@@ -928,10 +1156,10 @@ msgid ""
 "                           specified ABI.\n"
 msgstr ""
 "\n"
-"  reg-names=ABI            Afficher les noms GPR et FPR selon l'ABI\n"
-"                           spécifié.\n"
+"  reg-names=ABI            Afficher les noms GPR et FPR selon lâ€™ABI\n"
+"                           spÃ©cifiÃ©.\n"
 
-#: mips-dis.c:2203
+#: mips-dis.c:2222
 #, c-format
 msgid ""
 "\n"
@@ -940,9 +1168,9 @@ msgid ""
 msgstr ""
 "\n"
 "  reg-names=ARCH           Afficher les noms des registres CP0 et HWR selon\n"
-"                           l'architecture spécifiée.\n"
+"                           lâ€™architecture spÃ©cifiÃ©e.\n"
 
-#: mips-dis.c:2207
+#: mips-dis.c:2226
 #, c-format
 msgid ""
 "\n"
@@ -950,15 +1178,10 @@ msgid ""
 "   "
 msgstr ""
 "\n"
-"  Pour les options ci-dessus, les valeurs suivantes sont supportées pour l'\"ABI\":\n"
+"  Pour les options ci-dessus, les valeurs suivantes sont prises en charge pour lâ€™ABIÂ :\n"
 "   "
 
-#: mips-dis.c:2212 mips-dis.c:2220 mips-dis.c:2222
-#, c-format
-msgid "\n"
-msgstr "\n"
-
-#: mips-dis.c:2214
+#: mips-dis.c:2233
 #, c-format
 msgid ""
 "\n"
@@ -966,52 +1189,61 @@ msgid ""
 "   "
 msgstr ""
 "\n"
-"  Pour les options ci-dessus, les valeurs suivantes sont supportées pour \"ARCH\":\n"
+"  Pour les options ci-dessus, les valeurs suivantes sont supportÃ©es pour ARCHÂ :\n"
 "   "
 
-#: mmix-dis.c:35
+#: mmix-dis.c:34
 #, c-format
 msgid "Bad case %d (%s) in %s:%d\n"
-msgstr "Cas erroné %d (%s) dans %s:%d\n"
+msgstr "Cas erronÃ© %d (%s) dans %sÂ : %d\n"
 
-#: mmix-dis.c:45
+#: mmix-dis.c:44
 #, c-format
 msgid "Internal: Non-debugged code (test-case missing): %s:%d"
-msgstr "Interne : code non débogué (test manquant) : %s : %d"
+msgstr "InterneÂ : code non dÃ©boguÃ© (test manquant)Â : %sÂ : %d"
 
-#: mmix-dis.c:54
+#: mmix-dis.c:53
 msgid "(unknown)"
-msgstr "(inconnu)"
+msgstr "(inconnu(e))"
 
-#: mmix-dis.c:512
+#: mmix-dis.c:511
 #, c-format
 msgid "*unknown operands type: %d*"
-msgstr "*type d'opérande inconnu : %d*"
+msgstr "*type dâ€™opÃ©rande inconnuÂ : %d*"
 
-#: msp430-dis.c:328
+#: msp430-dis.c:412
 msgid "Illegal as emulation instr"
-msgstr "Non valable comme instr. d'émulation"
+msgstr "Non valable comme instruction dâ€™Ã©mulation"
 
 #. R2/R3 are illegal as dest: may be data section.
-#: msp430-dis.c:379
+#: msp430-dis.c:487
 msgid "Illegal as 2-op instr"
-msgstr "Non valable comme instr. 2-op"
+msgstr "Non valable comme instruction Ã  2 opÃ©randes"
+
+#: msp430-dis.c:839
+msgid "unrecognised CALLA addressing mode"
+msgstr "mode dâ€™adressage CALLA inconnu"
+
+#: msp430-dis.c:1110 msp430-dis.c:1127 msp430-dis.c:1148
+#, c-format
+msgid "Reserved use of A/L and B/W bits detected"
+msgstr "DÃ©tection dâ€™utilisation rÃ©servÃ©e de bits A/L et B/W"
 
 #: mt-asm.c:110 mt-asm.c:190
 msgid "Operand out of range. Must be between -32768 and 32767."
-msgstr "Opérande hors limite. Doit être entre -32768 et 32767."
+msgstr "OpÃ©rande hors intervalle. Doit Ãªtre compris entre -32768 et 32767."
 
 #: mt-asm.c:149
 msgid "Biiiig Trouble in parse_imm16!"
-msgstr "GROS problème dans parse_imm16 !"
+msgstr "GROS problÃ¨me dans parse_imm16Â !"
 
 #: mt-asm.c:157
 msgid "The percent-operator's operand is not a symbol"
-msgstr "L'opérande de l'opérateur % n'est pas un symbole"
+msgstr "Lâ€™opÃ©rande de lâ€™opÃ©rateur % nâ€™est pas un symbole"
 
 #: mt-asm.c:395
 msgid "invalid operand.  type may have values 0,1,2 only."
-msgstr "opérande non valide. type doit valoir 0,1 ou 2 seulement."
+msgstr "opÃ©rande invalide. Type doit Ãªtre 0, 1 ou 2 seulement."
 
 #. I and Z are output operands and can`t be immediate
 #. A is an address and we can`t have the address of
@@ -1021,14 +1253,14 @@ msgstr "opérande non valide. type doit valoir 0,1 ou 2 seulement."
 #: ns32k-dis.c:533
 #, c-format
 msgid "$<undefined>"
-msgstr "$<non défini>"
+msgstr "$<non dÃ©fini>"
 
-#: ppc-dis.c:234
+#: ppc-dis.c:320
 #, c-format
 msgid "warning: ignoring unknown -M%s option\n"
-msgstr "avertissement : option -M%s inconnue ignorée\n"
+msgstr "avertissementÂ : option -M%s inconnue ignorÃ©e\n"
 
-#: ppc-dis.c:523
+#: ppc-dis.c:745
 #, c-format
 msgid ""
 "\n"
@@ -1036,50 +1268,66 @@ msgid ""
 "the -M switch:\n"
 msgstr ""
 "\n"
-"Les options spécifiques PPC suivantes sont supportées avec l'utilisation de\n"
-"l'option -M :\n"
+"Les options spÃ©cifiques PPC suivantes sont prises en charge avec lâ€™utilisation\n"
+"de lâ€™option -MÂ :\n"
 
-#: ppc-opc.c:878 ppc-opc.c:906
+#: ppc-opc.c:887 ppc-opc.c:910 ppc-opc.c:935 ppc-opc.c:964
+msgid "invalid register"
+msgstr "registre invalide"
+
+#: ppc-opc.c:1212 ppc-opc.c:1242
 msgid "invalid conditional option"
-msgstr "option conditionnelle non valide"
+msgstr "option conditionnelle invalide"
 
-#: ppc-opc.c:908
+#: ppc-opc.c:1214 ppc-opc.c:1244
+msgid "invalid counter access"
+msgstr "accÃ¨s compteur invalide"
+
+#: ppc-opc.c:1246
 msgid "attempt to set y bit when using + or - modifier"
-msgstr "tentative d'initialisation du bit y lors de l'utilisation du modificateur + ou -"
+msgstr "tentative dâ€™initialisation du bit y lors de lâ€™utilisation du modificateur + ou -"
 
-#: ppc-opc.c:940
+#: ppc-opc.c:1278
 msgid "invalid mask field"
-msgstr "masque non valide"
+msgstr "champ de masque invalide"
 
-#: ppc-opc.c:966
+#: ppc-opc.c:1304
 msgid "ignoring invalid mfcr mask"
-msgstr "masque mfcr non valide et ignoré"
+msgstr "ignore le masque mfcr invalide"
 
-#: ppc-opc.c:1016 ppc-opc.c:1051
+#: ppc-opc.c:1403 ppc-opc.c:1438
 msgid "illegal bitmask"
-msgstr "masque de bits illégal"
+msgstr "masque de bits illÃ©gal"
 
-#: ppc-opc.c:1171
+#: ppc-opc.c:1525
+msgid "address register in load range"
+msgstr "registre dâ€™adresse dans la plage de chargement"
+
+#: ppc-opc.c:1578
 msgid "index register in load range"
-msgstr "Le registre index n'est pas dans la plage de chargement"
+msgstr "registre dâ€™index dans la plage de chargement"
 
-#: ppc-opc.c:1187
+#: ppc-opc.c:1594 ppc-opc.c:1650
 msgid "source and target register operands must be different"
-msgstr "les opérandes des registres source et cible doivent être différents"
+msgstr "les opÃ©randes des registres source et cible doivent Ãªtre diffÃ©rents"
 
-#: ppc-opc.c:1202
+#: ppc-opc.c:1609
 msgid "invalid register operand when updating"
-msgstr "opérande registre invalide lors de la mise à jour"
+msgstr "opÃ©rande de registre invalide lors de la mise Ã  jour"
 
-#: ppc-opc.c:1281
+#: ppc-opc.c:1700
+msgid "illegal immediate value"
+msgstr "valeur immÃ©diate illÃ©gale"
+
+#: ppc-opc.c:1839
 msgid "invalid sprg number"
-msgstr "n° de registre spécial non valide"
+msgstr "numÃ©ro de registre spÃ©cial invalide"
 
-#: ppc-opc.c:1451
+#: ppc-opc.c:2009
 msgid "invalid constant"
-msgstr "constante non valide"
+msgstr "constante invalide"
 
-#: s390-dis.c:301
+#: s390-dis.c:291
 #, c-format
 msgid ""
 "\n"
@@ -1087,209 +1335,184 @@ msgid ""
 "with the -M switch (multiple options should be separated by commas):\n"
 msgstr ""
 "\n"
-"Les options spécifiques S/390 du désassembleur sont supportées avec l'utilisation de\n"
-"l'option -M (les options multiples doivent être séparées par des virgules):\n"
+"Les options spÃ©cifiques S/390 du dÃ©sassembleur sont prises en charge avec\n"
+"lâ€™utilisation de lâ€™option -M (les options multiples doivent Ãªtre sÃ©parÃ©es\n"
+"par des virgules)Â :\n"
 
-#: s390-dis.c:305
+#: s390-dis.c:295
 #, c-format
 msgid "  esa         Disassemble in ESA architecture mode\n"
-msgstr "  esa         Désassemble en mode architecture ESA\n"
+msgstr "  esa         DÃ©sassemble en mode architecture ESA\n"
 
-#: s390-dis.c:306
+#: s390-dis.c:296
 #, c-format
 msgid "  zarch       Disassemble in z/Architecture mode\n"
-msgstr "  zarch       Désassemble en mode z/Architecture\n"
+msgstr "  zarch       DÃ©sassemble en mode z/Architecture\n"
 
 #: score-dis.c:662 score-dis.c:869 score-dis.c:1030 score-dis.c:1144
 #: score-dis.c:1151 score-dis.c:1158 score7-dis.c:694 score7-dis.c:857
 msgid "<illegal instruction>"
-msgstr "<instruction illégale>"
+msgstr "<instruction illÃ©gale>"
 
-#: sparc-dis.c:283
+#: sparc-dis.c:286
 #, c-format
 msgid "Internal error:  bad sparc-opcode.h: \"%s\", %#.8lx, %#.8lx\n"
-msgstr "Erreur interne :  sparc-opcode.h erroné : « %s », %#.8lx, %#.8lx\n"
+msgstr "Erreur interneÂ :  sparc-opcode.h erronÃ©Â : Â«Â %sÂ Â», %#.8lx, %#.8lx\n"
 
-#: sparc-dis.c:294
+#: sparc-dis.c:297
 #, c-format
 msgid "Internal error: bad sparc-opcode.h: \"%s\", %#.8lx, %#.8lx\n"
-msgstr "Erreur interne : sparc-opcode.h erroné : « %s », %#.8lx, %#.8lx\n"
+msgstr "Erreur interneÂ : sparc-opcode.h erronÃ©Â : Â«Â %sÂ Â», %#.8lx, %#.8lx\n"
 
-#: sparc-dis.c:344
+#: sparc-dis.c:356
 #, c-format
 msgid "Internal error: bad sparc-opcode.h: \"%s\" == \"%s\"\n"
-msgstr "Erreur interne : sparc-opcode.h erroné : « %s » == « %s »\n"
+msgstr "Erreur interneÂ : sparc-opcode.h erronÃ©Â : Â«Â %sÂ Â» == Â«Â %sÂ Â»\n"
 
 #. Mark as non-valid instruction.
-#: sparc-dis.c:1015
+#: sparc-dis.c:1047
 msgid "unknown"
-msgstr "inconnu"
+msgstr "inconnu(e)"
 
-#: v850-dis.c:365
+#: v850-dis.c:453
 #, c-format
 msgid "unknown operand shift: %x\n"
-msgstr "décalage d'opérande inconnu : %x\n"
+msgstr "dÃ©calage dâ€™opÃ©rande inconnuÂ : %x\n"
 
-#: v850-dis.c:377
+#: v850-dis.c:465
 #, c-format
 msgid "unknown reg: %d\n"
-msgstr "registre inconnu : %d\n"
+msgstr "registre inconnuÂ : %d\n"
 
 #. The functions used to insert and extract complicated operands.
 #. Note: There is a conspiracy between these functions and
 #. v850_insert_operand() in gas/config/tc-v850.c.  Error messages
 #. containing the string 'out of range' will be ignored unless a
 #. specific command line option is given to GAS.
-#: v850-opc.c:55
+#: v850-opc.c:53
 msgid "displacement value is not in range and is not aligned"
-msgstr "La valeur de déplacement hors limite et non alignée"
+msgstr "La valeur de dÃ©placement hors intervalle et non alignÃ©e"
 
-#: v850-opc.c:56
+#: v850-opc.c:54
 msgid "displacement value is out of range"
-msgstr "valeur de déplacement hors limite"
+msgstr "valeur de dÃ©placement hors intervalle"
+
+#: v850-opc.c:55
+msgid "displacement value is not aligned"
+msgstr "valeur de dÃ©placement non alignÃ©e"
 
 #: v850-opc.c:57
-msgid "displacement value is not aligned"
-msgstr "valeur de déplacement non alignée"
+msgid "immediate value is out of range"
+msgstr "valeur immÃ©diate hors intervalle"
+
+#: v850-opc.c:58
+msgid "branch value out of range"
+msgstr "valeur de branchement hors intervalle"
 
 #: v850-opc.c:59
-msgid "immediate value is out of range"
-msgstr "valeur immédiate hors limite"
+msgid "branch value not in range and to odd offset"
+msgstr "valeur de branchement hors intervalle et avec un dÃ©calage impair"
 
 #: v850-opc.c:60
-msgid "branch value out of range"
-msgstr "valeur de branchement hors limite"
+msgid "branch to odd offset"
+msgstr "branchement avec un dÃ©calage impair"
 
 #: v850-opc.c:61
-msgid "branch value not in range and to odd offset"
-msgstr "valeur de branchement hors limite et avec un décalage impair"
+msgid "position value is out of range"
+msgstr "valeur de position hors intervalle"
 
 #: v850-opc.c:62
-msgid "branch to odd offset"
-msgstr "branchement avec un décalage impair"
+msgid "width value is out of range"
+msgstr "valeur de largeur hors intervalle"
 
-#: v850-opc.c:497
+#: v850-opc.c:63
+msgid "SelID is out of range"
+msgstr "SelID hors intervalle"
+
+#: v850-opc.c:64
+msgid "vector8 is out of range"
+msgstr "vector8 hors intervalle"
+
+#: v850-opc.c:65
+msgid "vector5 is out of range"
+msgstr "vector5 hors intervalle"
+
+#: v850-opc.c:66
+msgid "imm10 is out of range"
+msgstr "imm10 hors intervalle"
+
+#: v850-opc.c:67
+msgid "SR/SelID is out of range"
+msgstr " SR/SelID hors intervalle"
+
+#: v850-opc.c:512
 msgid "invalid register for stack adjustment"
-msgstr "registre non valide pour l'ajustement de la pile"
+msgstr "registre invalide pour lâ€™ajustement de la pile"
 
-#: v850-opc.c:518
+#: v850-opc.c:532
 msgid "invalid register name"
-msgstr "nom de registre non valide"
+msgstr "nom de registre invalide"
 
 #: xc16x-asm.c:66
 msgid "Missing '#' prefix"
-msgstr "Préfixe manquant \"#\""
+msgstr "PrÃ©fixe Â«Â #Â Â» manquant"
 
 #: xc16x-asm.c:82
 msgid "Missing '.' prefix"
-msgstr "Préfixe manquant \".\""
+msgstr "PrÃ©fixe Â«Â .Â Â» manquant"
 
 #: xc16x-asm.c:98
 msgid "Missing 'pof:' prefix"
-msgstr "Préfixe \"pof:\" manquant"
+msgstr "PrÃ©fixe Â«Â pof:Â Â» manquant"
 
 #: xc16x-asm.c:114
 msgid "Missing 'pag:' prefix"
-msgstr "Préfixe \"pag:\" manquant"
+msgstr "PrÃ©fixe Â«Â pag:Â Â» manquant"
 
 #: xc16x-asm.c:130
 msgid "Missing 'sof:' prefix"
-msgstr "Préfixe \"sof:\" manquant"
+msgstr "PrÃ©fixe Â«Â sof:Â Â» manquant"
 
 #: xc16x-asm.c:146
 msgid "Missing 'seg:' prefix"
-msgstr "Préfixe \"seg:\" manquant"
+msgstr "PrÃ©fixe Â«Â seg:Â Â» manquant"
 
 #: xstormy16-asm.c:71
 msgid "Bad register in preincrement"
-msgstr "Registre erroné dans un préincrément"
+msgstr "Registre erronÃ© dans un prÃ©-incrÃ©ment"
 
 #: xstormy16-asm.c:76
 msgid "Bad register in postincrement"
-msgstr "Registre erroné dans un postincrément"
+msgstr "Registre erronÃ© dans un post-incrÃ©ment"
 
 #: xstormy16-asm.c:78
 msgid "Bad register name"
-msgstr "Nom erroné de registre"
+msgstr "Nom de registre Ã©rronÃ©"
 
 #: xstormy16-asm.c:82
 msgid "Label conflicts with register name"
-msgstr "Conflits d'étiquette avec le nom de registre"
+msgstr "Conflits dâ€™Ã©tiquette avec le nom de registre"
 
 #: xstormy16-asm.c:86
 msgid "Label conflicts with `Rx'"
-msgstr "Conflit d'étiquette avec « Rx »"
+msgstr "Conflit dâ€™Ã©tiquette avec Â«Â RxÂ Â»"
 
 #: xstormy16-asm.c:88
 msgid "Bad immediate expression"
-msgstr "Expression immédiate erronée"
+msgstr "Expression immÃ©diate erronÃ©e"
 
 #: xstormy16-asm.c:109
 msgid "No relocation for small immediate"
-msgstr "Aucune relocalisation pour une petite valeur immédiate"
+msgstr "Aucune de repositionnement pour une petite valeur immÃ©diate"
 
 #: xstormy16-asm.c:119
 msgid "Small operand was not an immediate number"
-msgstr "Le petit opérande n'était pas un nombre immédiat"
+msgstr "Le petit opÃ©rande nâ€™Ã©tait pas un nombre immÃ©diat"
 
 #: xstormy16-asm.c:157
 msgid "Operand is not a symbol"
-msgstr "L'opérande n'est pas un symbol"
+msgstr "Lâ€™opÃ©rande nâ€™est pas un symbole"
 
 #: xstormy16-asm.c:165
 msgid "Syntax error: No trailing ')'"
-msgstr "Erreur de syntaxe : pas de ')' en suffixe"
-
-#~ msgid "branch value not in range and to an odd offset"
-#~ msgstr "valeur de branchement hors limite et avec un décalage impair"
-
-#~ msgid "immediate value not in range and not even"
-#~ msgstr "La valeur immédiate est hors limite et non paire"
-
-#~ msgid "immediate value must be even"
-#~ msgstr "La valeur immédiate doit être paire"
-
-#~ msgid "unknown\t0x%04x"
-#~ msgstr "inconnu\t0x%04x"
-
-#~ msgid "offset not a multiple of 16"
-#~ msgstr "décalage n'est pas un multiple de 16"
-
-#~ msgid "offset not a multiple of 2"
-#~ msgstr "décalage n'est pas un multiple de 2"
-
-#~ msgid "offset greater than 62"
-#~ msgstr "décalage plus grand que 62"
-
-#~ msgid "offset not a multiple of 4"
-#~ msgstr "décalage n'est pas un multiple de 4"
-
-#~ msgid "offset greater than 124"
-#~ msgstr "décalage plus grand que 124"
-
-#~ msgid "offset not a multiple of 8"
-#~ msgstr "décalage n'est pas un multiple de 8"
-
-#~ msgid "offset greater than 248"
-#~ msgstr "décalage plus grand que 248"
-
-#~ msgid "offset not between -2048 and 2047"
-#~ msgstr "décalage n'est pas entre -2048 et 2047"
-
-#~ msgid "offset not between -8192 and 8191"
-#~ msgstr "décalage n'est pas entre -8192 et 8191"
-
-#~ msgid "ignoring least significant bits in branch offset"
-#~ msgstr "Les derniers bits les moins significatifs sont ignorés dans le décalage de branchement"
-
-#~ msgid "value out of range"
-#~ msgstr "valeur hors limite"
-
-#~ msgid "target register operand must be even"
-#~ msgstr "opérande du registre cible doit être pair"
-
-#~ msgid "source register operand must be even"
-#~ msgstr "opérande du registre source doit être pair"
-
-#~ msgid "unrecognized keyword/register name"
-#~ msgstr "nom de mot clé ou de registre non reconnu"
+msgstr "Erreur de syntaxeÂ : pas de Â«Â )Â Â» en suffixe"

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2007-2015 Free Software Foundation, Inc.
+   Copyright 2007-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,15 +15,24 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#define CONCAT1(a, b) CONCAT2(a, b)
+#define CONCAT2(a, b) a ## b
+
+#ifdef SYMBOL_PREFIX
+# define SYMBOL(str)     CONCAT1(SYMBOL_PREFIX, str)
+#else
+# define SYMBOL(str)     str
+#endif
+
 	.data
 
 /* VAR1 is wrong here, in the real inferior it is located on stack.  As both
    places are never modified and they are initialized to the same value it
    makes no difference.  Ensure the name clash for "var".  */
-var1:	.byte	1
+SYMBOL(var1):	.byte	1
 
-	.globl	var
-var:	.byte	2
+	.globl	SYMBOL(var)
+SYMBOL(var):	.byte	2
 
 /* Debug information */
 
@@ -64,12 +73,12 @@ var:	.byte	2
 	.byte		2f - 1f			/* DW_AT_location */
 1:	.byte		3			/*   DW_OP_addr */
 /* See VAR1 definition why this DIE is not correct.  */
-	.4byte		var1			/*   <addr> */
+	.4byte		SYMBOL(var1)			/*   <addr> */
 2:	.4byte		.Ltype_uchar-.Lcu1_begin	/* DW_AT_type */
 
 	.uleb128	6			/* Abbrev: DW_TAG_lexical_block */
-	.4byte		extern_block_start	/* DW_AT_low_pc */
-	.4byte		extern_block_end	/* DW_AT_high_pc */
+	.4byte		SYMBOL(extern_block_start)	/* DW_AT_low_pc */
+	.4byte		SYMBOL(extern_block_end)	/* DW_AT_high_pc */
 
 	.uleb128	5			/* Abbrev: DW_TAG_variable (extern) */
 	.ascii		"var\0"			/* DW_AT_name */

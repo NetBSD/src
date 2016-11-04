@@ -1,6 +1,7 @@
 /* Opcode table for the ARC.
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
-   Contributed by Doug Evans (dje@cygnus.com).
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+
+   Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
    This file is part of libopcodes.
 
@@ -20,1743 +21,2624 @@
 
 #include "sysdep.h"
 #include <stdio.h>
-#include "ansidecl.h"
 #include "bfd.h"
 #include "opcode/arc.h"
 #include "opintl.h"
+#include "libiberty.h"
 
-enum operand {OP_NONE,OP_REG,OP_SHIMM,OP_LIMM};
+/* ARC NPS400 Support: The ARC NPS400 core is an ARC700 with some custom
+   instructions. All NPS400 features are built into all ARC target builds as
+   this reduces the chances that regressions might creep in.  */
 
-#define OPERANDS 3
-
-enum operand ls_operand[OPERANDS];
-
-struct arc_opcode *arc_ext_opcodes;
-struct arc_ext_operand_value *arc_ext_operands;
-
-#define LS_VALUE  0
-#define LS_DEST   0
-#define LS_BASE   1
-#define LS_OFFSET 2
-
-/* Given a format letter, yields the index into `arc_operands'.
-   eg: arc_operand_map['a'] = REGA.  */
-unsigned char arc_operand_map[256];
-
-/* Nonzero if we've seen an 'f' suffix (in certain insns).  */
-static int flag_p;
-
-/* Nonzero if we've finished processing the 'f' suffix.  */
-static int flagshimm_handled_p;
-
-/* Nonzero if we've seen a 'a' suffix (address writeback).  */
-static int addrwb_p;
-
-/* Nonzero if we've seen a 'q' suffix (condition code).  */
-static int cond_p;
-
-/* Nonzero if we've inserted a nullify condition.  */
-static int nullify_p;
-
-/* The value of the a nullify condition we inserted.  */
-static int nullify;
-
-/* Nonzero if we've inserted jumpflags.  */
-static int jumpflags_p;
-
-/* Nonzero if we've inserted a shimm.  */
-static int shimm_p;
-
-/* The value of the shimm we inserted (each insn only gets one but it can
-   appear multiple times).  */
-static int shimm;
-
-/* Nonzero if we've inserted a limm (during assembly) or seen a limm
-   (during disassembly).  */
-static int limm_p;
-
-/* The value of the limm we inserted.  Each insn only gets one but it can
-   appear multiple times.  */
-static long limm;
-
-#define INSERT_FN(fn) \
-static arc_insn fn (arc_insn, const struct arc_operand *, \
-		    int, const struct arc_operand_value *, long, \
-		    const char **)
-
-#define EXTRACT_FN(fn) \
-static long fn (arc_insn *, const struct arc_operand *, \
-		int, const struct arc_operand_value **, int *)
-
-INSERT_FN (insert_reg);
-INSERT_FN (insert_shimmfinish);
-INSERT_FN (insert_limmfinish);
-INSERT_FN (insert_offset);
-INSERT_FN (insert_base);
-INSERT_FN (insert_st_syntax);
-INSERT_FN (insert_ld_syntax);
-INSERT_FN (insert_addr_wb);
-INSERT_FN (insert_flag);
-INSERT_FN (insert_nullify);
-INSERT_FN (insert_flagfinish);
-INSERT_FN (insert_cond);
-INSERT_FN (insert_forcelimm);
-INSERT_FN (insert_reladdr);
-INSERT_FN (insert_absaddr);
-INSERT_FN (insert_jumpflags);
-INSERT_FN (insert_unopmacro);
-
-EXTRACT_FN (extract_reg);
-EXTRACT_FN (extract_ld_offset);
-EXTRACT_FN (extract_ld_syntax);
-EXTRACT_FN (extract_st_offset);
-EXTRACT_FN (extract_st_syntax);
-EXTRACT_FN (extract_flag);
-EXTRACT_FN (extract_cond);
-EXTRACT_FN (extract_reladdr);
-EXTRACT_FN (extract_jumpflags);
-EXTRACT_FN (extract_unopmacro);
-
-/* Various types of ARC operands, including insn suffixes.  */
-
-/* Insn format values:
-
-   'a'	REGA		register A field
-   'b'	REGB		register B field
-   'c'	REGC		register C field
-   'S'	SHIMMFINISH	finish inserting a shimm value
-   'L'	LIMMFINISH	finish inserting a limm value
-   'o'	OFFSET		offset in st insns
-   'O'	OFFSET		offset in ld insns
-   '0'	SYNTAX_ST_NE	enforce store insn syntax, no errors
-   '1'	SYNTAX_LD_NE	enforce load insn syntax, no errors
-   '2'  SYNTAX_ST       enforce store insn syntax, errors, last pattern only
-   '3'  SYNTAX_LD       enforce load insn syntax, errors, last pattern only
-   's'  BASE            base in st insn
-   'f'	FLAG		F flag
-   'F'	FLAGFINISH	finish inserting the F flag
-   'G'	FLAGINSN	insert F flag in "flag" insn
-   'n'	DELAY		N field (nullify field)
-   'q'	COND		condition code field
-   'Q'	FORCELIMM	set `cond_p' to 1 to ensure a constant is a limm
-   'B'	BRANCH		branch address (22 bit pc relative)
-   'J'	JUMP		jump address (26 bit absolute)
-   'j'  JUMPFLAGS       optional high order bits of 'J'
-   'z'	SIZE1		size field in ld a,[b,c]
-   'Z'	SIZE10		size field in ld a,[b,shimm]
-   'y'	SIZE22		size field in st c,[b,shimm]
-   'x'	SIGN0		sign extend field ld a,[b,c]
-   'X'	SIGN9		sign extend field ld a,[b,shimm]
-   'w'	ADDRESS3	write-back field in ld a,[b,c]
-   'W'	ADDRESS12	write-back field in ld a,[b,shimm]
-   'v'	ADDRESS24	write-back field in st c,[b,shimm]
-   'e'	CACHEBYPASS5	cache bypass in ld a,[b,c]
-   'E'	CACHEBYPASS14	cache bypass in ld a,[b,shimm]
-   'D'	CACHEBYPASS26	cache bypass in st c,[b,shimm]
-   'U'	UNOPMACRO	fake operand to copy REGB to REGC for unop macros
-
-   The following modifiers may appear between the % and char (eg: %.f):
-
-   '.'	MODDOT		'.' prefix must be present
-   'r'	REG		generic register value, for register table
-   'A'	AUXREG		auxiliary register in lr a,[b], sr c,[b]
-
-   Fields are:
-
-   CHAR BITS SHIFT FLAGS INSERT_FN EXTRACT_FN  */
-
-const struct arc_operand arc_operands[] =
+/* Insert RB register into a 32-bit opcode.  */
+static unsigned
+insert_rb (unsigned insn,
+	   int value,
+	   const char **errmsg ATTRIBUTE_UNUSED)
 {
-/* Place holder (??? not sure if needed).  */
-#define UNUSED 0
-  { 0, 0, 0, 0, 0, 0 },
-
-/* Register A or shimm/limm indicator.  */
-#define REGA (UNUSED + 1)
-  { 'a', 6, ARC_SHIFT_REGA, ARC_OPERAND_SIGNED | ARC_OPERAND_ERROR, insert_reg, extract_reg },
-
-/* Register B or shimm/limm indicator.  */
-#define REGB (REGA + 1)
-  { 'b', 6, ARC_SHIFT_REGB, ARC_OPERAND_SIGNED | ARC_OPERAND_ERROR, insert_reg, extract_reg },
-
-/* Register C or shimm/limm indicator.  */
-#define REGC (REGB + 1)
-  { 'c', 6, ARC_SHIFT_REGC, ARC_OPERAND_SIGNED | ARC_OPERAND_ERROR, insert_reg, extract_reg },
-
-/* Fake operand used to insert shimm value into most instructions.  */
-#define SHIMMFINISH (REGC + 1)
-  { 'S', 9, 0, ARC_OPERAND_SIGNED + ARC_OPERAND_FAKE, insert_shimmfinish, 0 },
-
-/* Fake operand used to insert limm value into most instructions.  */
-#define LIMMFINISH (SHIMMFINISH + 1)
-  { 'L', 32, 32, ARC_OPERAND_ADDRESS + ARC_OPERAND_LIMM + ARC_OPERAND_FAKE, insert_limmfinish, 0 },
-
-/* Shimm operand when there is no reg indicator (st).  */
-#define ST_OFFSET (LIMMFINISH + 1)
-  { 'o', 9, 0, ARC_OPERAND_LIMM | ARC_OPERAND_SIGNED | ARC_OPERAND_STORE, insert_offset, extract_st_offset },
-
-/* Shimm operand when there is no reg indicator (ld).  */
-#define LD_OFFSET (ST_OFFSET + 1)
-  { 'O', 9, 0,ARC_OPERAND_LIMM | ARC_OPERAND_SIGNED | ARC_OPERAND_LOAD, insert_offset, extract_ld_offset },
-
-/* Operand for base.  */
-#define BASE (LD_OFFSET + 1)
-  { 's', 6, ARC_SHIFT_REGB, ARC_OPERAND_LIMM | ARC_OPERAND_SIGNED, insert_base, extract_reg},
-
-/* 0 enforce syntax for st insns.  */
-#define SYNTAX_ST_NE (BASE + 1)
-  { '0', 9, 0, ARC_OPERAND_FAKE, insert_st_syntax, extract_st_syntax },
-
-/* 1 enforce syntax for ld insns.  */
-#define SYNTAX_LD_NE (SYNTAX_ST_NE + 1)
-  { '1', 9, 0, ARC_OPERAND_FAKE, insert_ld_syntax, extract_ld_syntax },
-
-/* 0 enforce syntax for st insns.  */
-#define SYNTAX_ST (SYNTAX_LD_NE + 1)
-  { '2', 9, 0, ARC_OPERAND_FAKE | ARC_OPERAND_ERROR, insert_st_syntax, extract_st_syntax },
-
-/* 0 enforce syntax for ld insns.  */
-#define SYNTAX_LD (SYNTAX_ST + 1)
-  { '3', 9, 0, ARC_OPERAND_FAKE | ARC_OPERAND_ERROR, insert_ld_syntax, extract_ld_syntax },
-
-/* Flag update bit (insertion is defered until we know how).  */
-#define FLAG (SYNTAX_LD + 1)
-  { 'f', 1, 8, ARC_OPERAND_SUFFIX, insert_flag, extract_flag },
-
-/* Fake utility operand to finish 'f' suffix handling.  */
-#define FLAGFINISH (FLAG + 1)
-  { 'F', 1, 8, ARC_OPERAND_FAKE, insert_flagfinish, 0 },
-
-/* Fake utility operand to set the 'f' flag for the "flag" insn.  */
-#define FLAGINSN (FLAGFINISH + 1)
-  { 'G', 1, 8, ARC_OPERAND_FAKE, insert_flag, 0 },
-
-/* Branch delay types.  */
-#define DELAY (FLAGINSN + 1)
-  { 'n', 2, 5, ARC_OPERAND_SUFFIX , insert_nullify, 0 },
-
-/* Conditions.  */
-#define COND (DELAY + 1)
-  { 'q', 5, 0, ARC_OPERAND_SUFFIX, insert_cond, extract_cond },
-
-/* Set `cond_p' to 1 to ensure a constant is treated as a limm.  */
-#define FORCELIMM (COND + 1)
-  { 'Q', 0, 0, ARC_OPERAND_FAKE, insert_forcelimm, 0 },
-
-/* Branch address; b, bl, and lp insns.  */
-#define BRANCH (FORCELIMM + 1)
-  { 'B', 20, 7, (ARC_OPERAND_RELATIVE_BRANCH + ARC_OPERAND_SIGNED) | ARC_OPERAND_ERROR, insert_reladdr, extract_reladdr },
-
-/* Jump address; j insn (this is basically the same as 'L' except that the
-   value is right shifted by 2).  */
-#define JUMP (BRANCH + 1)
-  { 'J', 24, 32, ARC_OPERAND_ERROR | (ARC_OPERAND_ABSOLUTE_BRANCH + ARC_OPERAND_LIMM + ARC_OPERAND_FAKE), insert_absaddr, 0 },
-
-/* Jump flags; j{,l} insn value or'ed into 'J' addr for flag values.  */
-#define JUMPFLAGS (JUMP + 1)
-  { 'j', 6, 26, ARC_OPERAND_JUMPFLAGS | ARC_OPERAND_ERROR, insert_jumpflags, extract_jumpflags },
-
-/* Size field, stored in bit 1,2.  */
-#define SIZE1 (JUMPFLAGS + 1)
-  { 'z', 2, 1, ARC_OPERAND_SUFFIX, 0, 0 },
-
-/* Size field, stored in bit 10,11.  */
-#define SIZE10 (SIZE1 + 1)
-  { 'Z', 2, 10, ARC_OPERAND_SUFFIX, 0, 0 },
-
-/* Size field, stored in bit 22,23.  */
-#define SIZE22 (SIZE10 + 1)
-  { 'y', 2, 22, ARC_OPERAND_SUFFIX, 0, 0 },
-
-/* Sign extend field, stored in bit 0.  */
-#define SIGN0 (SIZE22 + 1)
-  { 'x', 1, 0, ARC_OPERAND_SUFFIX, 0, 0 },
-
-/* Sign extend field, stored in bit 9.  */
-#define SIGN9 (SIGN0 + 1)
-  { 'X', 1, 9, ARC_OPERAND_SUFFIX, 0, 0 },
-
-/* Address write back, stored in bit 3.  */
-#define ADDRESS3 (SIGN9 + 1)
-  { 'w', 1, 3, ARC_OPERAND_SUFFIX, insert_addr_wb, 0},
-
-/* Address write back, stored in bit 12.  */
-#define ADDRESS12 (ADDRESS3 + 1)
-  { 'W', 1, 12, ARC_OPERAND_SUFFIX, insert_addr_wb, 0},
-
-/* Address write back, stored in bit 24.  */
-#define ADDRESS24 (ADDRESS12 + 1)
-  { 'v', 1, 24, ARC_OPERAND_SUFFIX, insert_addr_wb, 0},
-
-/* Cache bypass, stored in bit 5.  */
-#define CACHEBYPASS5 (ADDRESS24 + 1)
-  { 'e', 1, 5, ARC_OPERAND_SUFFIX, 0, 0 },
-
-/* Cache bypass, stored in bit 14.  */
-#define CACHEBYPASS14 (CACHEBYPASS5 + 1)
-  { 'E', 1, 14, ARC_OPERAND_SUFFIX, 0, 0 },
-
-/* Cache bypass, stored in bit 26.  */
-#define CACHEBYPASS26 (CACHEBYPASS14 + 1)
-  { 'D', 1, 26, ARC_OPERAND_SUFFIX, 0, 0 },
-
-/* Unop macro, used to copy REGB to REGC.  */
-#define UNOPMACRO (CACHEBYPASS26 + 1)
-  { 'U', 6, ARC_SHIFT_REGC, ARC_OPERAND_FAKE, insert_unopmacro, extract_unopmacro },
-
-/* '.' modifier ('.' required).  */
-#define MODDOT (UNOPMACRO + 1)
-  { '.', 1, 0, ARC_MOD_DOT, 0, 0 },
-
-/* Dummy 'r' modifier for the register table.
-   It's called a "dummy" because there's no point in inserting an 'r' into all
-   the %a/%b/%c occurrences in the insn table.  */
-#define REG (MODDOT + 1)
-  { 'r', 6, 0, ARC_MOD_REG, 0, 0 },
-
-/* Known auxiliary register modifier (stored in shimm field).  */
-#define AUXREG (REG + 1)
-  { 'A', 9, 0, ARC_MOD_AUXREG, 0, 0 },
-
-/* End of list place holder.  */
-  { 0, 0, 0, 0, 0, 0 }
-};
-
-/* Insert a value into a register field.
-   If REG is NULL, then this is actually a constant.
-
-   We must also handle auxiliary registers for lr/sr insns.  */
-
-static arc_insn
-insert_reg (arc_insn insn,
-	    const struct arc_operand *operand,
-	    int mods,
-	    const struct arc_operand_value *reg,
-	    long value,
-	    const char **errmsg)
-{
-  static char buf[100];
-  enum operand op_type = OP_NONE;
-
-  if (reg == NULL)
-    {
-      /* We have a constant that also requires a value stored in a register
-	 field.  Handle these by updating the register field and saving the
-	 value for later handling by either %S (shimm) or %L (limm).  */
-
-      /* Try to use a shimm value before a limm one.  */
-      if (ARC_SHIMM_CONST_P (value)
-	  /* If we've seen a conditional suffix we have to use a limm.  */
-	  && !cond_p
-	  /* If we already have a shimm value that is different than ours
-	     we have to use a limm.  */
-	  && (!shimm_p || shimm == value))
-	{
-	  int marker;
-
-	  op_type = OP_SHIMM;
-	  /* Forget about shimm as dest mlm.  */
-
-	  if ('a' != operand->fmt)
-	    {
-	      shimm_p = 1;
-	      shimm = value;
-	      flagshimm_handled_p = 1;
-	      marker = flag_p ? ARC_REG_SHIMM_UPDATE : ARC_REG_SHIMM;
-	    }
-	  else
-	    {
-	      /* Don't request flag setting on shimm as dest.  */
-	      marker = ARC_REG_SHIMM;
-	    }
-	  insn |= marker << operand->shift;
-	  /* insn |= value & 511; - done later.  */
-	}
-      /* We have to use a limm.  If we've already seen one they must match.  */
-      else if (!limm_p || limm == value)
-	{
-	  op_type = OP_LIMM;
-	  limm_p = 1;
-	  limm = value;
-	  insn |= ARC_REG_LIMM << operand->shift;
-	  /* The constant is stored later.  */
-	}
-      else
-	*errmsg = _("unable to fit different valued constants into instruction");
-    }
-  else
-    {
-      /* We have to handle both normal and auxiliary registers.  */
-
-      if (reg->type == AUXREG)
-	{
-	  if (!(mods & ARC_MOD_AUXREG))
-	    *errmsg = _("auxiliary register not allowed here");
-	  else
-	    {
-	      if ((insn & I(-1)) == I(2)) /* Check for use validity.  */
-		{
-		  if (reg->flags & ARC_REGISTER_READONLY)
-		    *errmsg = _("attempt to set readonly register");
-		}
-	      else
-		{
-		  if (reg->flags & ARC_REGISTER_WRITEONLY)
-		    *errmsg = _("attempt to read writeonly register");
-		}
-	      insn |= ARC_REG_SHIMM << operand->shift;
-	      insn |= reg->value << arc_operands[reg->type].shift;
-	    }
-	}
-      else
-	{
-	  /* check for use validity.  */
-	  if ('a' == operand->fmt || ((insn & I(-1)) < I(2)))
-	    {
-	      if (reg->flags & ARC_REGISTER_READONLY)
-		*errmsg = _("attempt to set readonly register");
-	    }
-	  if ('a' != operand->fmt)
-	    {
-	      if (reg->flags & ARC_REGISTER_WRITEONLY)
-		*errmsg = _("attempt to read writeonly register");
-	    }
-	  /* We should never get an invalid register number here.  */
-	  if ((unsigned int) reg->value > 60)
-	    {
-	      sprintf (buf, _("invalid register number `%d'"), reg->value);
-	      *errmsg = buf;
-	    }
-	  insn |= reg->value << operand->shift;
-	  op_type = OP_REG;
-	}
-    }
-
-  switch (operand->fmt)
-    {
-    case 'a':
-      ls_operand[LS_DEST] = op_type;
-      break;
-    case 's':
-      ls_operand[LS_BASE] = op_type;
-      break;
-    case 'c':
-      if ((insn & I(-1)) == I(2))
-	ls_operand[LS_VALUE] = op_type;
-      else
-	ls_operand[LS_OFFSET] = op_type;
-      break;
-    case 'o': case 'O':
-      ls_operand[LS_OFFSET] = op_type;
-      break;
-    }
-
-  return insn;
+  return insn | ((value & 0x07) << 24) | (((value >> 3) & 0x07) << 12);
 }
 
-/* Called when we see an 'f' flag.  */
-
-static arc_insn
-insert_flag (arc_insn insn,
-	     const struct arc_operand *operand ATTRIBUTE_UNUSED,
-	     int mods ATTRIBUTE_UNUSED,
-	     const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-	     long value ATTRIBUTE_UNUSED,
-	     const char **errmsg ATTRIBUTE_UNUSED)
+static int
+extract_rb (unsigned insn ATTRIBUTE_UNUSED,
+	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
-  /* We can't store anything in the insn until we've parsed the registers.
-     Just record the fact that we've got this flag.  `insert_reg' will use it
-     to store the correct value (ARC_REG_SHIMM_UPDATE or bit 0x100).  */
-  flag_p = 1;
-  return insn;
-}
-
-/* Called when we see an nullify condition.  */
-
-static arc_insn
-insert_nullify (arc_insn insn,
-		const struct arc_operand *operand,
-		int mods ATTRIBUTE_UNUSED,
-		const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-		long value,
-		const char **errmsg ATTRIBUTE_UNUSED)
-{
-  nullify_p = 1;
-  insn |= (value & ((1 << operand->bits) - 1)) << operand->shift;
-  nullify = value;
-  return insn;
-}
-
-/* Called after completely building an insn to ensure the 'f' flag gets set
-   properly.  This is needed because we don't know how to set this flag until
-   we've parsed the registers.  */
-
-static arc_insn
-insert_flagfinish (arc_insn insn,
-		   const struct arc_operand *operand,
-		   int mods ATTRIBUTE_UNUSED,
-		   const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-		   long value ATTRIBUTE_UNUSED,
-		   const char **errmsg ATTRIBUTE_UNUSED)
-{
-  if (flag_p && !flagshimm_handled_p)
-    {
-      if (shimm_p)
-	abort ();
-      flagshimm_handled_p = 1;
-      insn |= (1 << operand->shift);
-    }
-  return insn;
-}
-
-/* Called when we see a conditional flag (eg: .eq).  */
-
-static arc_insn
-insert_cond (arc_insn insn,
-	     const struct arc_operand *operand,
-	     int mods ATTRIBUTE_UNUSED,
-	     const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-	     long value,
-	     const char **errmsg ATTRIBUTE_UNUSED)
-{
-  cond_p = 1;
-  insn |= (value & ((1 << operand->bits) - 1)) << operand->shift;
-  return insn;
-}
-
-/* Used in the "j" instruction to prevent constants from being interpreted as
-   shimm values (which the jump insn doesn't accept).  This can also be used
-   to force the use of limm values in other situations (eg: ld r0,[foo] uses
-   this).
-   ??? The mechanism is sound.  Access to it is a bit klunky right now.  */
-
-static arc_insn
-insert_forcelimm (arc_insn insn,
-		  const struct arc_operand *operand ATTRIBUTE_UNUSED,
-		  int mods ATTRIBUTE_UNUSED,
-		  const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-		  long value ATTRIBUTE_UNUSED,
-		  const char **errmsg ATTRIBUTE_UNUSED)
-{
-  cond_p = 1;
-  return insn;
-}
-
-static arc_insn
-insert_addr_wb (arc_insn insn,
-		const struct arc_operand *operand,
-		int mods ATTRIBUTE_UNUSED,
-		const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-		long value ATTRIBUTE_UNUSED,
-		const char **errmsg ATTRIBUTE_UNUSED)
-{
-  addrwb_p = 1 << operand->shift;
-  return insn;
-}
-
-static arc_insn
-insert_base (arc_insn insn,
-	     const struct arc_operand *operand,
-	     int mods,
-	     const struct arc_operand_value *reg,
-	     long value,
-	     const char **errmsg)
-{
-  if (reg != NULL)
-    {
-      arc_insn myinsn;
-      myinsn = insert_reg (0, operand,mods, reg, value, errmsg) >> operand->shift;
-      insn |= B(myinsn);
-      ls_operand[LS_BASE] = OP_REG;
-    }
-  else if (ARC_SHIMM_CONST_P (value) && !cond_p)
-    {
-      if (shimm_p && value != shimm)
-	{
-	  /* Convert the previous shimm operand to a limm.  */
-	  limm_p = 1;
-	  limm = shimm;
-	  insn &= ~C(-1); /* We know where the value is in insn.  */
-	  insn |= C(ARC_REG_LIMM);
-	  ls_operand[LS_VALUE] = OP_LIMM;
-	}
-      insn |= ARC_REG_SHIMM << operand->shift;
-      shimm_p = 1;
-      shimm = value;
-      ls_operand[LS_BASE] = OP_SHIMM;
-      ls_operand[LS_OFFSET] = OP_SHIMM;
-    }
-  else
-    {
-      if (limm_p && value != limm)
-	{
-	  *errmsg = _("too many long constants");
-	  return insn;
-	}
-      limm_p = 1;
-      limm = value;
-      insn |= B(ARC_REG_LIMM);
-      ls_operand[LS_BASE] = OP_LIMM;
-    }
-
-  return insn;
-}
-
-/* Used in ld/st insns to handle the offset field. We don't try to
-   match operand syntax here. we catch bad combinations later.  */
-
-static arc_insn
-insert_offset (arc_insn insn,
-	       const struct arc_operand *operand,
-	       int mods,
-	       const struct arc_operand_value *reg,
-	       long value,
-	       const char **errmsg)
-{
-  long minval, maxval;
-
-  if (reg != NULL)
-    {
-      arc_insn myinsn;
-      myinsn = insert_reg (0,operand,mods,reg,value,errmsg) >> operand->shift;
-      ls_operand[LS_OFFSET] = OP_REG;
-      if (operand->flags & ARC_OPERAND_LOAD) /* Not if store, catch it later.  */
-	if ((insn & I(-1)) != I(1)) /* Not if opcode == 1, catch it later.  */
-	  insn |= C (myinsn);
-    }
-  else
-    {
-      /* This is *way* more general than necessary, but maybe some day it'll
-	 be useful.  */
-      if (operand->flags & ARC_OPERAND_SIGNED)
-	{
-	  minval = -(1 << (operand->bits - 1));
-	  maxval = (1 << (operand->bits - 1)) - 1;
-	}
-      else
-	{
-	  minval = 0;
-	  maxval = (1 << operand->bits) - 1;
-	}
-      if ((cond_p && !limm_p) || (value < minval || value > maxval))
-	{
-	  if (limm_p && value != limm)
-	    *errmsg = _("too many long constants");
-
-	  else
-	    {
-	      limm_p = 1;
-	      limm = value;
-	      if (operand->flags & ARC_OPERAND_STORE)
-		insn |= B(ARC_REG_LIMM);
-	      if (operand->flags & ARC_OPERAND_LOAD)
-		insn |= C(ARC_REG_LIMM);
-	      ls_operand[LS_OFFSET] = OP_LIMM;
-	    }
-	}
-      else
-	{
-	  if ((value < minval || value > maxval))
-	    *errmsg = "need too many limms";
-	  else if (shimm_p && value != shimm)
-	    {
-	      /* Check for bad operand combinations
-		 before we lose info about them.  */
-	      if ((insn & I(-1)) == I(1))
-		{
-		  *errmsg = _("too many shimms in load");
-		  goto out;
-		}
-	      if (limm_p && operand->flags & ARC_OPERAND_LOAD)
-		{
-		  *errmsg = _("too many long constants");
-		  goto out;
-		}
-	      /* Convert what we thought was a shimm to a limm.  */
-	      limm_p = 1;
-	      limm = shimm;
-	      if (ls_operand[LS_VALUE] == OP_SHIMM
-		  && operand->flags & ARC_OPERAND_STORE)
-		{
-		  insn &= ~C(-1);
-		  insn |= C(ARC_REG_LIMM);
-		  ls_operand[LS_VALUE] = OP_LIMM;
-		}
-	      if (ls_operand[LS_BASE] == OP_SHIMM
-		  && operand->flags & ARC_OPERAND_STORE)
-		{
-		  insn &= ~B(-1);
-		  insn |= B(ARC_REG_LIMM);
-		  ls_operand[LS_BASE] = OP_LIMM;
-		}
-	    }
-	  shimm = value;
-	  shimm_p = 1;
-	  ls_operand[LS_OFFSET] = OP_SHIMM;
-	}
-    }
- out:
-  return insn;
-}
-
-/* Used in st insns to do final disasemble syntax check.  */
-
-static long
-extract_st_syntax (arc_insn *insn,
-		   const struct arc_operand *operand ATTRIBUTE_UNUSED,
-		   int mods ATTRIBUTE_UNUSED,
-		   const struct arc_operand_value **opval ATTRIBUTE_UNUSED,
-		   int *invalid)
-{
-#define ST_SYNTAX(V,B,O) \
-((ls_operand[LS_VALUE]  == (V) && \
-  ls_operand[LS_BASE]   == (B) && \
-  ls_operand[LS_OFFSET] == (O)))
-
-  if (!((ST_SYNTAX(OP_REG,OP_REG,OP_NONE) && (insn[0] & 511) == 0)
-	|| ST_SYNTAX(OP_REG,OP_LIMM,OP_NONE)
-	|| (ST_SYNTAX(OP_SHIMM,OP_REG,OP_NONE) && (insn[0] & 511) == 0)
-	|| (ST_SYNTAX(OP_SHIMM,OP_SHIMM,OP_NONE) && (insn[0] & 511) == 0)
-	|| ST_SYNTAX(OP_SHIMM,OP_LIMM,OP_NONE)
-	|| ST_SYNTAX(OP_SHIMM,OP_LIMM,OP_SHIMM)
-	|| ST_SYNTAX(OP_SHIMM,OP_SHIMM,OP_SHIMM)
-	|| (ST_SYNTAX(OP_LIMM,OP_REG,OP_NONE) && (insn[0] & 511) == 0)
-	|| ST_SYNTAX(OP_REG,OP_REG,OP_SHIMM)
-	|| ST_SYNTAX(OP_REG,OP_SHIMM,OP_SHIMM)
-	|| ST_SYNTAX(OP_SHIMM,OP_REG,OP_SHIMM)
-	|| ST_SYNTAX(OP_LIMM,OP_SHIMM,OP_SHIMM)
-	|| ST_SYNTAX(OP_LIMM,OP_SHIMM,OP_NONE)
-	|| ST_SYNTAX(OP_LIMM,OP_REG,OP_SHIMM)))
-    *invalid = 1;
-  return 0;
-}
-
-int
-arc_limm_fixup_adjust (arc_insn insn)
-{
-  int retval = 0;
-
-  /* Check for st shimm,[limm].  */
-  if ((insn & (I(-1) | C(-1) | B(-1))) ==
-      (I(2) | C(ARC_REG_SHIMM) | B(ARC_REG_LIMM)))
-    {
-      retval = insn & 0x1ff;
-      if (retval & 0x100) /* Sign extend 9 bit offset.  */
-	retval |= ~0x1ff;
-    }
-  return -retval; /* Negate offset for return.  */
-}
-
-/* Used in st insns to do final syntax check.  */
-
-static arc_insn
-insert_st_syntax (arc_insn insn,
-		  const struct arc_operand *operand ATTRIBUTE_UNUSED,
-		  int mods ATTRIBUTE_UNUSED,
-		  const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-		  long value ATTRIBUTE_UNUSED,
-		  const char **errmsg)
-{
-  if (ST_SYNTAX (OP_SHIMM,OP_REG,OP_NONE) && shimm != 0)
-    {
-      /* Change an illegal insn into a legal one, it's easier to
-	 do it here than to try to handle it during operand scan.  */
-      limm_p = 1;
-      limm = shimm;
-      shimm_p = 0;
-      shimm = 0;
-      insn = insn & ~(C(-1) | 511);
-      insn |= ARC_REG_LIMM << ARC_SHIFT_REGC;
-      ls_operand[LS_VALUE] = OP_LIMM;
-    }
-
-  if (ST_SYNTAX (OP_REG, OP_SHIMM, OP_NONE)
-      || ST_SYNTAX (OP_LIMM, OP_SHIMM, OP_NONE))
-    {
-      /* Try to salvage this syntax.  */
-      if (shimm & 0x1) /* Odd shimms won't work.  */
-	{
-	  if (limm_p) /* Do we have a limm already?  */
-	    *errmsg = _("impossible store");
-
-	  limm_p = 1;
-	  limm = shimm;
-	  shimm = 0;
-	  shimm_p = 0;
-	  insn = insn & ~(B(-1) | 511);
-	  insn |= B(ARC_REG_LIMM);
-	  ls_operand[LS_BASE] = OP_LIMM;
-	}
-      else
-	{
-	  shimm >>= 1;
-	  insn = insn & ~511;
-	  insn |= shimm;
-	  ls_operand[LS_OFFSET] = OP_SHIMM;
-	}
-    }
-  if (ST_SYNTAX(OP_SHIMM,OP_LIMM,OP_NONE))
-    limm += arc_limm_fixup_adjust(insn);
-
-  if (!   (ST_SYNTAX (OP_REG,OP_REG,OP_NONE)
-	|| ST_SYNTAX (OP_REG,OP_LIMM,OP_NONE)
-	|| ST_SYNTAX (OP_REG,OP_REG,OP_SHIMM)
-	|| ST_SYNTAX (OP_REG,OP_SHIMM,OP_SHIMM)
-	|| (ST_SYNTAX (OP_SHIMM,OP_SHIMM,OP_NONE) && (shimm == 0))
-	|| ST_SYNTAX (OP_SHIMM,OP_LIMM,OP_NONE)
-	|| ST_SYNTAX (OP_SHIMM,OP_REG,OP_NONE)
-	|| ST_SYNTAX (OP_SHIMM,OP_REG,OP_SHIMM)
-	|| ST_SYNTAX (OP_SHIMM,OP_SHIMM,OP_SHIMM)
-	|| ST_SYNTAX (OP_LIMM,OP_SHIMM,OP_SHIMM)
-	|| ST_SYNTAX (OP_LIMM,OP_REG,OP_NONE)
-	|| ST_SYNTAX (OP_LIMM,OP_REG,OP_SHIMM)))
-    *errmsg = _("st operand error");
-  if (addrwb_p)
-    {
-      if (ls_operand[LS_BASE] != OP_REG)
-	*errmsg = _("address writeback not allowed");
-      insn |= addrwb_p;
-    }
-  if (ST_SYNTAX(OP_SHIMM,OP_REG,OP_NONE) && shimm)
-    *errmsg = _("store value must be zero");
-  return insn;
-}
-
-/* Used in ld insns to do final syntax check.  */
-
-static arc_insn
-insert_ld_syntax (arc_insn insn,
-		  const struct arc_operand *operand ATTRIBUTE_UNUSED,
-		  int mods ATTRIBUTE_UNUSED,
-		  const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-		  long value ATTRIBUTE_UNUSED,
-		  const char **errmsg)
-{
-#define LD_SYNTAX(D, B, O) \
-  (   (ls_operand[LS_DEST]   == (D) \
-    && ls_operand[LS_BASE]   == (B) \
-    && ls_operand[LS_OFFSET] == (O)))
-
-  int test = insn & I (-1);
-
-  if (!(test == I (1)))
-    {
-      if ((ls_operand[LS_DEST] == OP_SHIMM || ls_operand[LS_BASE] == OP_SHIMM
-	   || ls_operand[LS_OFFSET] == OP_SHIMM))
-	*errmsg = _("invalid load/shimm insn");
-    }
-  if (!(LD_SYNTAX(OP_REG,OP_REG,OP_NONE)
-	|| LD_SYNTAX(OP_REG,OP_REG,OP_REG)
-	|| LD_SYNTAX(OP_REG,OP_REG,OP_SHIMM)
-	|| (LD_SYNTAX(OP_REG,OP_LIMM,OP_REG) && !(test == I(1)))
-	|| (LD_SYNTAX(OP_REG,OP_REG,OP_LIMM) && !(test == I(1)))
-	|| LD_SYNTAX(OP_REG,OP_SHIMM,OP_SHIMM)
-	|| (LD_SYNTAX(OP_REG,OP_LIMM,OP_NONE) && (test == I(1)))))
-    *errmsg = _("ld operand error");
-  if (addrwb_p)
-    {
-      if (ls_operand[LS_BASE] != OP_REG)
-	*errmsg = _("address writeback not allowed");
-      insn |= addrwb_p;
-    }
-  return insn;
-}
-
-/* Used in ld insns to do final syntax check.  */
-
-static long
-extract_ld_syntax (arc_insn *insn,
-		   const struct arc_operand *operand ATTRIBUTE_UNUSED,
-		   int mods ATTRIBUTE_UNUSED,
-		   const struct arc_operand_value **opval ATTRIBUTE_UNUSED,
-		   int *invalid)
-{
-  int test = insn[0] & I(-1);
-
-  if (!(test == I(1)))
-    {
-      if ((ls_operand[LS_DEST] == OP_SHIMM || ls_operand[LS_BASE] == OP_SHIMM
-	   || ls_operand[LS_OFFSET] == OP_SHIMM))
-	*invalid = 1;
-    }
-  if (!(   (LD_SYNTAX (OP_REG, OP_REG, OP_NONE) && (test == I(1)))
-	||  LD_SYNTAX (OP_REG, OP_REG, OP_REG)
-	||  LD_SYNTAX (OP_REG, OP_REG, OP_SHIMM)
-	|| (LD_SYNTAX (OP_REG, OP_REG, OP_LIMM) && !(test == I(1)))
-	|| (LD_SYNTAX (OP_REG, OP_LIMM, OP_REG) && !(test == I(1)))
-	|| (LD_SYNTAX (OP_REG, OP_SHIMM, OP_NONE) && (shimm == 0))
-	||  LD_SYNTAX (OP_REG, OP_SHIMM, OP_SHIMM)
-	|| (LD_SYNTAX (OP_REG, OP_LIMM, OP_NONE) && (test == I(1)))))
-    *invalid = 1;
-  return 0;
-}
-
-/* Called at the end of processing normal insns (eg: add) to insert a shimm
-   value (if present) into the insn.  */
-
-static arc_insn
-insert_shimmfinish (arc_insn insn,
-		    const struct arc_operand *operand,
-		    int mods ATTRIBUTE_UNUSED,
-		    const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-		    long value ATTRIBUTE_UNUSED,
-		    const char **errmsg ATTRIBUTE_UNUSED)
-{
-  if (shimm_p)
-    insn |= (shimm & ((1 << operand->bits) - 1)) << operand->shift;
-  return insn;
-}
-
-/* Called at the end of processing normal insns (eg: add) to insert a limm
-   value (if present) into the insn.
-
-   Note that this function is only intended to handle instructions (with 4 byte
-   immediate operands).  It is not intended to handle data.  */
-
-/* ??? Actually, there's nothing for us to do as we can't call frag_more, the
-   caller must do that.  The extract fns take a pointer to two words.  The
-   insert fns could be converted and then we could do something useful, but
-   then the reloc handlers would have to know to work on the second word of
-   a 2 word quantity.  That's too much so we don't handle them.  */
-
-static arc_insn
-insert_limmfinish (arc_insn insn,
-		   const struct arc_operand *operand ATTRIBUTE_UNUSED,
-		   int mods ATTRIBUTE_UNUSED,
-		   const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-		   long value ATTRIBUTE_UNUSED,
-		   const char **errmsg ATTRIBUTE_UNUSED)
-{
-  return insn;
-}
-
-static arc_insn
-insert_jumpflags (arc_insn insn,
-		  const struct arc_operand *operand,
-		  int mods ATTRIBUTE_UNUSED,
-		  const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-		  long value,
-		  const char **errmsg)
-{
-  if (!flag_p)
-    *errmsg = _("jump flags, but no .f seen");
-
-  else if (!limm_p)
-    *errmsg = _("jump flags, but no limm addr");
-
-  else if (limm & 0xfc000000)
-    *errmsg = _("flag bits of jump address limm lost");
-
-  else if (limm & 0x03000000)
-    *errmsg = _("attempt to set HR bits");
-
-  else if ((value & ((1 << operand->bits) - 1)) != value)
-    *errmsg = _("bad jump flags value");
-
-  jumpflags_p = 1;
-  limm = ((limm & ((1 << operand->shift) - 1))
-	  | ((value & ((1 << operand->bits) - 1)) << operand->shift));
-  return insn;
-}
-
-/* Called at the end of unary operand macros to copy the B field to C.  */
-
-static arc_insn
-insert_unopmacro (arc_insn insn,
-		  const struct arc_operand *operand,
-		  int mods ATTRIBUTE_UNUSED,
-		  const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-		  long value ATTRIBUTE_UNUSED,
-		  const char **errmsg ATTRIBUTE_UNUSED)
-{
-  insn |= ((insn >> ARC_SHIFT_REGB) & ARC_MASK_REG) << operand->shift;
-  return insn;
-}
-
-/* Insert a relative address for a branch insn (b, bl, or lp).  */
-
-static arc_insn
-insert_reladdr (arc_insn insn,
-		const struct arc_operand *operand,
-		int mods ATTRIBUTE_UNUSED,
-		const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-		long value,
-		const char **errmsg)
-{
-  if (value & 3)
-    *errmsg = _("branch address not on 4 byte boundary");
-  insn |= ((value >> 2) & ((1 << operand->bits) - 1)) << operand->shift;
-  return insn;
-}
-
-/* Insert a limm value as a 26 bit address right shifted 2 into the insn.
-
-   Note that this function is only intended to handle instructions (with 4 byte
-   immediate operands).  It is not intended to handle data.  */
-
-/* ??? Actually, there's little for us to do as we can't call frag_more, the
-   caller must do that.  The extract fns take a pointer to two words.  The
-   insert fns could be converted and then we could do something useful, but
-   then the reloc handlers would have to know to work on the second word of
-   a 2 word quantity.  That's too much so we don't handle them.
-
-   We do check for correct usage of the nullify suffix, or we
-   set the default correctly, though.  */
-
-static arc_insn
-insert_absaddr (arc_insn insn,
-		const struct arc_operand *operand ATTRIBUTE_UNUSED,
-		int mods ATTRIBUTE_UNUSED,
-		const struct arc_operand_value *reg ATTRIBUTE_UNUSED,
-		long value ATTRIBUTE_UNUSED,
-		const char **errmsg)
-{
-  if (limm_p)
-    {
-      /* If it is a jump and link, .jd must be specified.  */
-      if (insn & R (-1, 9, 1))
-	{
-	  if (!nullify_p)
-	    insn |=  0x02 << 5;  /* Default nullify to .jd.  */
-
-	  else if (nullify != 0x02)
-	    *errmsg = _("must specify .jd or no nullify suffix");
-	}
-    }
-  return insn;
-}
-
-/* Extraction functions.
-
-   The suffix extraction functions' return value is redundant since it can be
-   obtained from (*OPVAL)->value.  However, the boolean suffixes don't have
-   a suffix table entry for the "false" case, so values of zero must be
-   obtained from the return value (*OPVAL == NULL).  */
-
-/* Called by the disassembler before printing an instruction.  */
-
-void
-arc_opcode_init_extract (void)
-{
-  arc_opcode_init_insert ();
-}
-
-static const struct arc_operand_value *
-lookup_register (int type, long regno)
-{
-  const struct arc_operand_value *r,*end;
-  struct arc_ext_operand_value *ext_oper = arc_ext_operands;
-
-  while (ext_oper)
-    {
-      if (ext_oper->operand.type == type && ext_oper->operand.value == regno)
-	return (&ext_oper->operand);
-      ext_oper = ext_oper->next;
-    }
-
-  if (type == REG)
-    return &arc_reg_names[regno];
-
-  /* ??? This is a little slow and can be speeded up.  */
-  for (r = arc_reg_names, end = arc_reg_names + arc_reg_names_count;
-       r < end; ++r)
-    if (type == r->type	&& regno == r->value)
-      return r;
-  return 0;
-}
-
-/* As we're extracting registers, keep an eye out for the 'f' indicator
-   (ARC_REG_SHIMM_UPDATE).  If we find a register (not a constant marker,
-   like ARC_REG_SHIMM), set OPVAL so our caller will know this is a register.
-
-   We must also handle auxiliary registers for lr/sr insns.  They are just
-   constants with special names.  */
-
-static long
-extract_reg (arc_insn *insn,
-	     const struct arc_operand *operand,
-	     int mods,
-	     const struct arc_operand_value **opval,
-	     int *invalid ATTRIBUTE_UNUSED)
-{
-  int regno;
-  long value;
-  enum operand op_type;
-
-  /* Get the register number.  */
-  regno = (*insn >> operand->shift) & ((1 << operand->bits) - 1);
-
-  /* Is it a constant marker?  */
-  if (regno == ARC_REG_SHIMM)
-    {
-      op_type = OP_SHIMM;
-      /* Always return zero if dest is a shimm  mlm.  */
-
-      if ('a' != operand->fmt)
-	{
-	  value = *insn & 511;
-	  if ((operand->flags & ARC_OPERAND_SIGNED)
-	      && (value & 256))
-	    value -= 512;
-	  if (!flagshimm_handled_p)
-	    flag_p = 0;
-	  flagshimm_handled_p = 1;
-	}
-      else
-	value = 0;
-    }
-  else if (regno == ARC_REG_SHIMM_UPDATE)
-    {
-      op_type = OP_SHIMM;
-
-      /* Always return zero if dest is a shimm  mlm.  */
-      if ('a' != operand->fmt)
-	{
-	  value = *insn & 511;
-	  if ((operand->flags & ARC_OPERAND_SIGNED) && (value & 256))
-	    value -= 512;
-	}
-      else
-	value = 0;
-
-      flag_p = 1;
-      flagshimm_handled_p = 1;
-    }
-  else if (regno == ARC_REG_LIMM)
-    {
-      op_type = OP_LIMM;
-      value = insn[1];
-      limm_p = 1;
-
-      /* If this is a jump instruction (j,jl), show new pc correctly.  */
-      if (0x07 == ((*insn & I(-1)) >> 27))
-	value = (value & 0xffffff);
-    }
-
-  /* It's a register, set OPVAL (that's the only way we distinguish registers
-     from constants here).  */
-  else
-    {
-      const struct arc_operand_value *reg = lookup_register (REG, regno);
-
-      op_type = OP_REG;
-
-      if (reg == NULL)
-	abort ();
-      if (opval != NULL)
-	*opval = reg;
-      value = regno;
-    }
-
-  /* If this field takes an auxiliary register, see if it's a known one.  */
-  if ((mods & ARC_MOD_AUXREG)
-      && ARC_REG_CONSTANT_P (regno))
-    {
-      const struct arc_operand_value *reg = lookup_register (AUXREG, value);
-
-      /* This is really a constant, but tell the caller it has a special
-	 name.  */
-      if (reg != NULL && opval != NULL)
-	*opval = reg;
-    }
-
-  switch(operand->fmt)
-    {
-    case 'a':
-      ls_operand[LS_DEST] = op_type;
-      break;
-    case 's':
-      ls_operand[LS_BASE] = op_type;
-      break;
-    case 'c':
-      if ((insn[0]& I(-1)) == I(2))
-	ls_operand[LS_VALUE] = op_type;
-      else
-	ls_operand[LS_OFFSET] = op_type;
-      break;
-    case 'o': case 'O':
-      ls_operand[LS_OFFSET] = op_type;
-      break;
-    }
+  int value = (((insn >> 12) & 0x07) << 3) | ((insn >> 24) & 0x07);
+
+  if (value == 0x3e && invalid)
+    *invalid = TRUE; /* A limm operand, it should be extracted in a
+			different way.  */
 
   return value;
 }
 
-/* Return the value of the "flag update" field for shimm insns.
-   This value is actually stored in the register field.  */
-
-static long
-extract_flag (arc_insn *insn,
-	      const struct arc_operand *operand,
-	      int mods ATTRIBUTE_UNUSED,
-	      const struct arc_operand_value **opval,
-	      int *invalid ATTRIBUTE_UNUSED)
+static unsigned
+insert_rad (unsigned insn,
+	    int value,
+	    const char **errmsg ATTRIBUTE_UNUSED)
 {
-  int f;
-  const struct arc_operand_value *val;
+  if (value & 0x01)
+    *errmsg = _("Improper register value.");
 
-  if (flagshimm_handled_p)
-    f = flag_p != 0;
+  return insn | (value & 0x3F);
+}
+
+static unsigned
+insert_rcd (unsigned insn,
+	    int value,
+	    const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value & 0x01)
+    *errmsg = _("Improper register value.");
+
+  return insn | ((value & 0x3F) << 6);
+}
+
+/* Dummy insert ZERO operand function.  */
+
+static unsigned
+insert_za (unsigned insn,
+	   int value,
+	   const char **errmsg)
+{
+  if (value)
+    *errmsg = _("operand is not zero");
+  return insn;
+}
+
+/* Insert Y-bit in bbit/br instructions.  This function is called only
+   when solving fixups.  */
+
+static unsigned
+insert_Ybit (unsigned insn,
+	     int value,
+	     const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value > 0)
+    insn |= 0x08;
+
+  return insn;
+}
+
+/* Insert Y-bit in bbit/br instructions.  This function is called only
+   when solving fixups.  */
+
+static unsigned
+insert_NYbit (unsigned insn,
+	      int value,
+	      const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value < 0)
+    insn |= 0x08;
+
+  return insn;
+}
+
+/* Insert H register into a 16-bit opcode.  */
+
+static unsigned
+insert_rhv1 (unsigned insn,
+	     int value,
+	     const char **errmsg ATTRIBUTE_UNUSED)
+{
+  return insn |= ((value & 0x07) << 5) | ((value >> 3) & 0x07);
+}
+
+static int
+extract_rhv1 (unsigned insn ATTRIBUTE_UNUSED,
+	      bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  int value = ((insn & 0x7) << 3) | ((insn >> 5) & 0x7);
+
+  return value;
+}
+
+/* Insert H register into a 16-bit opcode.  */
+
+static unsigned
+insert_rhv2 (unsigned insn,
+	     int value,
+	     const char **errmsg)
+{
+  if (value == 0x1E)
+    *errmsg =
+      _("Register R30 is a limm indicator for this type of instruction.");
+  return insn |= ((value & 0x07) << 5) | ((value >> 3) & 0x03);
+}
+
+static int
+extract_rhv2 (unsigned insn ATTRIBUTE_UNUSED,
+	      bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  int value = ((insn >> 5) & 0x07) | ((insn & 0x03) << 3);
+
+  return value;
+}
+
+static unsigned
+insert_r0 (unsigned insn,
+	   int value,
+	   const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 0)
+    *errmsg = _("Register must be R0.");
+  return insn;
+}
+
+static int
+extract_r0 (unsigned insn ATTRIBUTE_UNUSED,
+	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return 0;
+}
+
+
+static unsigned
+insert_r1 (unsigned insn,
+	   int value,
+	   const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 1)
+    *errmsg = _("Register must be R1.");
+  return insn;
+}
+
+static int
+extract_r1 (unsigned insn ATTRIBUTE_UNUSED,
+	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return 1;
+}
+
+static unsigned
+insert_r2 (unsigned insn,
+	   int value,
+	   const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 2)
+    *errmsg = _("Register must be R2.");
+  return insn;
+}
+
+static int
+extract_r2 (unsigned insn ATTRIBUTE_UNUSED,
+	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return 2;
+}
+
+static unsigned
+insert_r3 (unsigned insn,
+	   int value,
+	   const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 3)
+    *errmsg = _("Register must be R3.");
+  return insn;
+}
+
+static int
+extract_r3 (unsigned insn ATTRIBUTE_UNUSED,
+	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return 3;
+}
+
+static unsigned
+insert_sp (unsigned insn,
+	   int value,
+	   const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 28)
+    *errmsg = _("Register must be SP.");
+  return insn;
+}
+
+static int
+extract_sp (unsigned insn ATTRIBUTE_UNUSED,
+	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return 28;
+}
+
+static unsigned
+insert_gp (unsigned insn,
+	   int value,
+	   const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 26)
+    *errmsg = _("Register must be GP.");
+  return insn;
+}
+
+static int
+extract_gp (unsigned insn ATTRIBUTE_UNUSED,
+	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return 26;
+}
+
+static unsigned
+insert_pcl (unsigned insn,
+	    int value,
+	    const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 63)
+    *errmsg = _("Register must be PCL.");
+  return insn;
+}
+
+static int
+extract_pcl (unsigned insn ATTRIBUTE_UNUSED,
+	     bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return 63;
+}
+
+static unsigned
+insert_blink (unsigned insn,
+	      int value,
+	      const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 31)
+    *errmsg = _("Register must be BLINK.");
+  return insn;
+}
+
+static int
+extract_blink (unsigned insn ATTRIBUTE_UNUSED,
+	       bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return 31;
+}
+
+static unsigned
+insert_ilink1 (unsigned insn,
+	       int value,
+	       const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 29)
+    *errmsg = _("Register must be ILINK1.");
+  return insn;
+}
+
+static int
+extract_ilink1 (unsigned insn ATTRIBUTE_UNUSED,
+		bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return 29;
+}
+
+static unsigned
+insert_ilink2 (unsigned insn,
+	       int value,
+	       const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 30)
+    *errmsg = _("Register must be ILINK2.");
+  return insn;
+}
+
+static int
+extract_ilink2 (unsigned insn ATTRIBUTE_UNUSED,
+		bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return 30;
+}
+
+static unsigned
+insert_ras (unsigned insn,
+	    int value,
+	    const char **errmsg ATTRIBUTE_UNUSED)
+{
+  switch (value)
+    {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      insn |= value;
+      break;
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+      insn |= (value - 8);
+      break;
+    default:
+      *errmsg = _("Register must be either r0-r3 or r12-r15.");
+      break;
+    }
+  return insn;
+}
+
+static int
+extract_ras (unsigned insn ATTRIBUTE_UNUSED,
+	     bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  int value = insn & 0x07;
+  if (value > 3)
+    return (value + 8);
   else
-    f = (*insn & (1 << operand->shift)) != 0;
-
-  /* There is no text for zero values.  */
-  if (f == 0)
-    return 0;
-  flag_p = 1;
-  val = arc_opcode_lookup_suffix (operand, 1);
-  if (opval != NULL && val != NULL)
-    *opval = val;
-  return val->value;
+    return value;
 }
 
-/* Extract the condition code (if it exists).
-   If we've seen a shimm value in this insn (meaning that the insn can't have
-   a condition code field), then we don't store anything in OPVAL and return
-   zero.  */
-
-static long
-extract_cond (arc_insn *insn,
-	      const struct arc_operand *operand,
-	      int mods ATTRIBUTE_UNUSED,
-	      const struct arc_operand_value **opval,
-	      int *invalid ATTRIBUTE_UNUSED)
+static unsigned
+insert_rbs (unsigned insn,
+	    int value,
+	    const char **errmsg ATTRIBUTE_UNUSED)
 {
-  long cond;
-  const struct arc_operand_value *val;
-
-  if (flagshimm_handled_p)
-    return 0;
-
-  cond = (*insn >> operand->shift) & ((1 << operand->bits) - 1);
-  val = arc_opcode_lookup_suffix (operand, cond);
-
-  /* Ignore NULL values of `val'.  Several condition code values are
-     reserved for extensions.  */
-  if (opval != NULL && val != NULL)
-    *opval = val;
-  return cond;
+  switch (value)
+    {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      insn |= value << 8;
+      break;
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+      insn |= ((value - 8)) << 8;
+      break;
+    default:
+      *errmsg = _("Register must be either r0-r3 or r12-r15.");
+      break;
+    }
+  return insn;
 }
 
-/* Extract a branch address.
-   We return the value as a real address (not right shifted by 2).  */
-
-static long
-extract_reladdr (arc_insn *insn,
-		 const struct arc_operand *operand,
-		 int mods ATTRIBUTE_UNUSED,
-		 const struct arc_operand_value **opval ATTRIBUTE_UNUSED,
-		 int *invalid ATTRIBUTE_UNUSED)
+static int
+extract_rbs (unsigned insn ATTRIBUTE_UNUSED,
+	     bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
-  long addr;
-
-  addr = (*insn >> operand->shift) & ((1 << operand->bits) - 1);
-  if ((operand->flags & ARC_OPERAND_SIGNED)
-      && (addr & (1 << (operand->bits - 1))))
-    addr -= 1 << operand->bits;
-  return addr << 2;
+  int value = (insn >> 8) & 0x07;
+  if (value > 3)
+    return (value + 8);
+  else
+    return value;
 }
 
-/* Extract the flags bits from a j or jl long immediate.  */
-
-static long
-extract_jumpflags (arc_insn *insn,
-		   const struct arc_operand *operand,
-		   int mods ATTRIBUTE_UNUSED,
-		   const struct arc_operand_value **opval ATTRIBUTE_UNUSED,
-		   int *invalid)
+static unsigned
+insert_rcs (unsigned insn,
+	    int value,
+	    const char **errmsg ATTRIBUTE_UNUSED)
 {
-  if (!flag_p || !limm_p)
-    *invalid = 1;
-  return ((flag_p && limm_p)
-	  ? (insn[1] >> operand->shift) & ((1 << operand->bits) -1): 0);
+  switch (value)
+    {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      insn |= value << 5;
+      break;
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+      insn |= ((value - 8)) << 5;
+      break;
+    default:
+      *errmsg = _("Register must be either r0-r3 or r12-r15.");
+      break;
+    }
+  return insn;
 }
 
-/* Extract st insn's offset.  */
+static int
+extract_rcs (unsigned insn ATTRIBUTE_UNUSED,
+	     bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  int value = (insn >> 5) & 0x07;
+  if (value > 3)
+    return (value + 8);
+  else
+    return value;
+}
 
-static long
-extract_st_offset (arc_insn *insn,
-		   const struct arc_operand *operand,
-		   int mods ATTRIBUTE_UNUSED,
-		   const struct arc_operand_value **opval ATTRIBUTE_UNUSED,
-		   int *invalid)
+static unsigned
+insert_simm3s (unsigned insn,
+	       int value,
+	       const char **errmsg ATTRIBUTE_UNUSED)
+{
+  int tmp = 0;
+  switch (value)
+    {
+    case -1:
+      tmp = 0x07;
+      break;
+    case 0:
+      tmp = 0x00;
+      break;
+    case 1:
+      tmp = 0x01;
+      break;
+    case 2:
+      tmp = 0x02;
+      break;
+    case 3:
+      tmp = 0x03;
+      break;
+    case 4:
+      tmp = 0x04;
+      break;
+    case 5:
+      tmp = 0x05;
+      break;
+    case 6:
+      tmp = 0x06;
+      break;
+    default:
+      *errmsg = _("Accepted values are from -1 to 6.");
+      break;
+    }
+
+  insn |= tmp << 8;
+  return insn;
+}
+
+static int
+extract_simm3s (unsigned insn ATTRIBUTE_UNUSED,
+		bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  int value = (insn >> 8) & 0x07;
+  if (value == 7)
+    return -1;
+  else
+    return value;
+}
+
+static unsigned
+insert_rrange (unsigned insn,
+	       int value,
+	       const char **errmsg ATTRIBUTE_UNUSED)
+{
+  int reg1 = (value >> 16) & 0xFFFF;
+  int reg2 = value & 0xFFFF;
+  if (reg1 != 13)
+    {
+      *errmsg = _("First register of the range should be r13.");
+      return insn;
+    }
+  if (reg2 < 13 || reg2 > 26)
+    {
+      *errmsg = _("Last register of the range doesn't fit.");
+      return insn;
+    }
+  insn |= ((reg2 - 12) & 0x0F) << 1;
+  return insn;
+}
+
+static int
+extract_rrange (unsigned insn  ATTRIBUTE_UNUSED,
+		bfd_boolean * invalid  ATTRIBUTE_UNUSED)
+{
+  return (insn >> 1) & 0x0F;
+}
+
+static unsigned
+insert_fpel (unsigned insn,
+	     int value,
+	     const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 27)
+    {
+      *errmsg = _("Invalid register number, should be fp.");
+      return insn;
+    }
+
+  insn |= 0x0100;
+  return insn;
+}
+
+static int
+extract_fpel (unsigned insn  ATTRIBUTE_UNUSED,
+	      bfd_boolean * invalid  ATTRIBUTE_UNUSED)
+{
+  return (insn & 0x0100) ? 27 : -1;
+}
+
+static unsigned
+insert_blinkel (unsigned insn,
+		int value,
+		const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 31)
+    {
+      *errmsg = _("Invalid register number, should be blink.");
+      return insn;
+    }
+
+  insn |= 0x0200;
+  return insn;
+}
+
+static int
+extract_blinkel (unsigned insn  ATTRIBUTE_UNUSED,
+		 bfd_boolean * invalid  ATTRIBUTE_UNUSED)
+{
+  return (insn & 0x0200) ? 31 : -1;
+}
+
+static unsigned
+insert_pclel (unsigned insn,
+	      int value,
+	      const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value != 63)
+    {
+      *errmsg = _("Invalid register number, should be pcl.");
+      return insn;
+    }
+
+  insn |= 0x0400;
+  return insn;
+}
+
+static int
+extract_pclel (unsigned insn  ATTRIBUTE_UNUSED,
+	       bfd_boolean * invalid  ATTRIBUTE_UNUSED)
+{
+  return (insn & 0x0400) ? 63 : -1;
+}
+
+#define INSERT_W6
+/* mask = 00000000000000000000111111000000
+   insn = 00011bbb000000000BBBwwwwwwDaaZZ1.  */
+static unsigned
+insert_w6 (unsigned insn ATTRIBUTE_UNUSED,
+	   int value ATTRIBUTE_UNUSED,
+	   const char **errmsg ATTRIBUTE_UNUSED)
+{
+  insn |= ((value >> 0) & 0x003f) << 6;
+
+  return insn;
+}
+
+#define EXTRACT_W6
+/* mask = 00000000000000000000111111000000.  */
+static int
+extract_w6 (unsigned insn ATTRIBUTE_UNUSED,
+	    bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  unsigned value = 0;
+
+  value |= ((insn >> 6) & 0x003f) << 0;
+
+  return value;
+}
+
+#define INSERT_G_S
+/* mask = 0000011100022000
+   insn = 01000ggghhhGG0HH.  */
+static unsigned
+insert_g_s (unsigned insn ATTRIBUTE_UNUSED,
+	    int value ATTRIBUTE_UNUSED,
+	    const char **errmsg ATTRIBUTE_UNUSED)
+{
+  insn |= ((value >> 0) & 0x0007) << 8;
+  insn |= ((value >> 3) & 0x0003) << 3;
+
+  return insn;
+}
+
+#define EXTRACT_G_S
+/* mask = 0000011100022000.  */
+static int
+extract_g_s (unsigned insn ATTRIBUTE_UNUSED,
+	     bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
   int value = 0;
 
-  if (ls_operand[LS_VALUE] != OP_SHIMM || ls_operand[LS_BASE] != OP_LIMM)
-    {
-      value = insn[0] & 511;
-      if ((operand->flags & ARC_OPERAND_SIGNED) && (value & 256))
-	value -= 512;
-      if (value)
-	ls_operand[LS_OFFSET] = OP_SHIMM;
-    }
-  else
-    *invalid = 1;
+  value |= ((insn >> 8) & 0x0007) << 0;
+  value |= ((insn >> 3) & 0x0003) << 3;
+
+  /* Extend the sign.  */
+  int signbit = 1 << (6 - 1);
+  value = (value ^ signbit) - signbit;
 
   return value;
 }
 
-/* Extract ld insn's offset.  */
-
-static long
-extract_ld_offset (arc_insn *insn,
-		   const struct arc_operand *operand,
-		   int mods,
-		   const struct arc_operand_value **opval,
-		   int *invalid)
+/* ARC NPS400 Support: See comment near head of file.  */
+static unsigned
+insert_nps_3bit_dst (unsigned insn ATTRIBUTE_UNUSED,
+                     int value ATTRIBUTE_UNUSED,
+                     const char **errmsg ATTRIBUTE_UNUSED)
 {
-  int test = insn[0] & I(-1);
-  int value;
-
-  if (test)
-    {
-      value = insn[0] & 511;
-      if ((operand->flags & ARC_OPERAND_SIGNED) && (value & 256))
-	value -= 512;
-      if (value)
-	ls_operand[LS_OFFSET] = OP_SHIMM;
-
-      return value;
-    }
-  /* If it isn't in the insn, it's concealed behind reg 'c'.  */
-  return extract_reg (insn, &arc_operands[arc_operand_map['c']],
-		      mods, opval, invalid);
-}
-
-/* The only thing this does is set the `invalid' flag if B != C.
-   This is needed because the "mov" macro appears before it's real insn "and"
-   and we don't want the disassembler to confuse them.  */
-
-static long
-extract_unopmacro (arc_insn *insn,
-		   const struct arc_operand *operand ATTRIBUTE_UNUSED,
-		   int mods ATTRIBUTE_UNUSED,
-		   const struct arc_operand_value **opval ATTRIBUTE_UNUSED,
-		   int *invalid)
-{
-  /* This misses the case where B == ARC_REG_SHIMM_UPDATE &&
-     C == ARC_REG_SHIMM (or vice versa).  No big deal.  Those insns will get
-     printed as "and"s.  */
-  if (((*insn >> ARC_SHIFT_REGB) & ARC_MASK_REG)
-      != ((*insn >> ARC_SHIFT_REGC) & ARC_MASK_REG))
-    if (invalid != NULL)
-      *invalid = 1;
-  return 0;
-}
-
-/* ARC instructions.
-
-   Longer versions of insns must appear before shorter ones (if gas sees
-   "lsr r2,r3,1" when it's parsing "lsr %a,%b" it will think the ",1" is
-   junk).  This isn't necessary for `ld' because of the trailing ']'.
-
-   Instructions that are really macros based on other insns must appear
-   before the real insn so they're chosen when disassembling.  Eg: The `mov'
-   insn is really the `and' insn.  */
-
-struct arc_opcode arc_opcodes[] =
-{
-  /* Base case instruction set (core versions 5-8).  */
-
-  /* "mov" is really an "and".  */
-  { "mov%.q%.f %a,%b%F%S%L%U", I(-1), I(12), ARC_MACH_5, 0, 0 },
-  /* "asl" is really an "add".  */
-  { "asl%.q%.f %a,%b%F%S%L%U", I(-1), I(8), ARC_MACH_5, 0, 0 },
-  /* "lsl" is really an "add".  */
-  { "lsl%.q%.f %a,%b%F%S%L%U", I(-1), I(8), ARC_MACH_5, 0, 0 },
-  /* "nop" is really an "xor".  */
-  { "nop", 0x7fffffff, 0x7fffffff, ARC_MACH_5, 0, 0 },
-  /* "rlc" is really an "adc".  */
-  { "rlc%.q%.f %a,%b%F%S%L%U", I(-1), I(9), ARC_MACH_5, 0, 0 },
-  { "adc%.q%.f %a,%b,%c%F%S%L", I(-1), I(9), ARC_MACH_5, 0, 0 },
-  { "add%.q%.f %a,%b,%c%F%S%L", I(-1), I(8), ARC_MACH_5, 0, 0 },
-  { "and%.q%.f %a,%b,%c%F%S%L", I(-1), I(12), ARC_MACH_5, 0, 0 },
-  { "asr%.q%.f %a,%b%F%S%L", I(-1)|C(-1), I(3)|C(1), ARC_MACH_5, 0, 0 },
-  { "bic%.q%.f %a,%b,%c%F%S%L",	I(-1), I(14), ARC_MACH_5, 0, 0 },
-  { "b%q%.n %B", I(-1), I(4), ARC_MACH_5 | ARC_OPCODE_COND_BRANCH, 0, 0 },
-  { "bl%q%.n %B", I(-1), I(5), ARC_MACH_5 | ARC_OPCODE_COND_BRANCH, 0, 0 },
-  { "extb%.q%.f %a,%b%F%S%L", I(-1)|C(-1), I(3)|C(7), ARC_MACH_5, 0, 0 },
-  { "extw%.q%.f %a,%b%F%S%L", I(-1)|C(-1), I(3)|C(8), ARC_MACH_5, 0, 0 },
-  { "flag%.q %b%G%S%L", I(-1)|A(-1)|C(-1), I(3)|A(ARC_REG_SHIMM_UPDATE)|C(0), ARC_MACH_5, 0, 0 },
-  { "brk", 0x1ffffe00, 0x1ffffe00, ARC_MACH_7, 0, 0 },
-  { "sleep", 0x1ffffe01, 0x1ffffe01, ARC_MACH_7, 0, 0 },
-  { "swi", 0x1ffffe02, 0x1ffffe02, ARC_MACH_8, 0, 0 },
-  /* %Q: force cond_p=1 -> no shimm values. This insn allows an
-     optional flags spec.  */
-  { "j%q%Q%.n%.f %b%F%J,%j", I(-1)|A(-1)|C(-1)|R(-1,7,1), I(7)|A(0)|C(0)|R(0,7,1), ARC_MACH_5 | ARC_OPCODE_COND_BRANCH, 0, 0 },
-  { "j%q%Q%.n%.f %b%F%J", I(-1)|A(-1)|C(-1)|R(-1,7,1), I(7)|A(0)|C(0)|R(0,7,1), ARC_MACH_5 | ARC_OPCODE_COND_BRANCH, 0, 0 },
-  /* This insn allows an optional flags spec.  */
-  { "jl%q%Q%.n%.f %b%F%J,%j", I(-1)|A(-1)|C(-1)|R(-1,7,1)|R(-1,9,1), I(7)|A(0)|C(0)|R(0,7,1)|R(1,9,1), ARC_MACH_6 | ARC_OPCODE_COND_BRANCH, 0, 0 },
-  { "jl%q%Q%.n%.f %b%F%J", I(-1)|A(-1)|C(-1)|R(-1,7,1)|R(-1,9,1), I(7)|A(0)|C(0)|R(0,7,1)|R(1,9,1), ARC_MACH_6 | ARC_OPCODE_COND_BRANCH, 0, 0 },
-  /* Put opcode 1 ld insns first so shimm gets prefered over limm.
-     "[%b]" is before "[%b,%o]" so 0 offsets don't get printed.  */
-  { "ld%Z%.X%.W%.E %a,[%s]%S%L%1", I(-1)|R(-1,13,1)|R(-1,0,511), I(1)|R(0,13,1)|R(0,0,511), ARC_MACH_5, 0, 0 },
-  { "ld%z%.x%.w%.e %a,[%s]%S%L%1", I(-1)|R(-1,4,1)|R(-1,6,7), I(0)|R(0,4,1)|R(0,6,7), ARC_MACH_5, 0, 0 },
-  { "ld%z%.x%.w%.e %a,[%s,%O]%S%L%1", I(-1)|R(-1,4,1)|R(-1,6,7), I(0)|R(0,4,1)|R(0,6,7), ARC_MACH_5, 0, 0 },
-  { "ld%Z%.X%.W%.E %a,[%s,%O]%S%L%3", I(-1)|R(-1,13,1),	I(1)|R(0,13,1), ARC_MACH_5, 0, 0 },
-  { "lp%q%.n %B", I(-1), I(6), ARC_MACH_5, 0, 0 },
-  { "lr %a,[%Ab]%S%L", I(-1)|C(-1), I(1)|C(0x10), ARC_MACH_5, 0, 0 },
-  { "lsr%.q%.f %a,%b%F%S%L", I(-1)|C(-1), I(3)|C(2), ARC_MACH_5, 0, 0 },
-  { "or%.q%.f %a,%b,%c%F%S%L", I(-1), I(13), ARC_MACH_5, 0, 0 },
-  { "ror%.q%.f %a,%b%F%S%L", I(-1)|C(-1), I(3)|C(3), ARC_MACH_5, 0, 0 },
-  { "rrc%.q%.f %a,%b%F%S%L", I(-1)|C(-1), I(3)|C(4), ARC_MACH_5, 0, 0 },
-  { "sbc%.q%.f %a,%b,%c%F%S%L",	I(-1), I(11), ARC_MACH_5, 0, 0 },
-  { "sexb%.q%.f %a,%b%F%S%L", I(-1)|C(-1), I(3)|C(5), ARC_MACH_5, 0, 0 },
-  { "sexw%.q%.f %a,%b%F%S%L", I(-1)|C(-1), I(3)|C(6), ARC_MACH_5, 0, 0 },
-  { "sr %c,[%Ab]%S%L", I(-1)|A(-1), I(2)|A(0x10), ARC_MACH_5, 0, 0 },
-  /* "[%b]" is before "[%b,%o]" so 0 offsets don't get printed.  */
-  { "st%y%.v%.D %c,[%s]%L%S%0", I(-1)|R(-1,25,1)|R(-1,21,1), I(2)|R(0,25,1)|R(0,21,1), ARC_MACH_5, 0, 0 },
-  { "st%y%.v%.D %c,[%s,%o]%S%L%2", I(-1)|R(-1,25,1)|R(-1,21,1), I(2)|R(0,25,1)|R(0,21,1), ARC_MACH_5, 0, 0 },
-  { "sub%.q%.f %a,%b,%c%F%S%L",	I(-1), I(10), ARC_MACH_5, 0, 0 },
-  { "xor%.q%.f %a,%b,%c%F%S%L",	I(-1), I(15), ARC_MACH_5, 0, 0 }
-};
-
-const int arc_opcodes_count = sizeof (arc_opcodes) / sizeof (arc_opcodes[0]);
-
-const struct arc_operand_value arc_reg_names[] =
-{
-  /* Core register set r0-r63.  */
-
-  /* r0-r28 - general purpose registers.  */
-  { "r0", 0, REG, 0 }, { "r1", 1, REG, 0 }, { "r2", 2, REG, 0 },
-  { "r3", 3, REG, 0 }, { "r4", 4, REG, 0 }, { "r5", 5, REG, 0 },
-  { "r6", 6, REG, 0 }, { "r7", 7, REG, 0 }, { "r8", 8, REG, 0 },
-  { "r9", 9, REG, 0 }, { "r10", 10, REG, 0 }, { "r11", 11, REG, 0 },
-  { "r12", 12, REG, 0 }, { "r13", 13, REG, 0 }, { "r14", 14, REG, 0 },
-  { "r15", 15, REG, 0 }, { "r16", 16, REG, 0 }, { "r17", 17, REG, 0 },
-  { "r18", 18, REG, 0 }, { "r19", 19, REG, 0 }, { "r20", 20, REG, 0 },
-  { "r21", 21, REG, 0 }, { "r22", 22, REG, 0 }, { "r23", 23, REG, 0 },
-  { "r24", 24, REG, 0 }, { "r25", 25, REG, 0 }, { "r26", 26, REG, 0 },
-  { "r27", 27, REG, 0 }, { "r28", 28, REG, 0 },
-  /* Maskable interrupt link register.  */
-  { "ilink1", 29, REG, 0 },
-  /* Maskable interrupt link register.  */
-  { "ilink2", 30, REG, 0 },
-  /* Branch-link register.  */
-  { "blink", 31, REG, 0 },
-
-  /* r32-r59 reserved for extensions.  */
-  { "r32", 32, REG, 0 }, { "r33", 33, REG, 0 }, { "r34", 34, REG, 0 },
-  { "r35", 35, REG, 0 }, { "r36", 36, REG, 0 }, { "r37", 37, REG, 0 },
-  { "r38", 38, REG, 0 }, { "r39", 39, REG, 0 }, { "r40", 40, REG, 0 },
-  { "r41", 41, REG, 0 }, { "r42", 42, REG, 0 }, { "r43", 43, REG, 0 },
-  { "r44", 44, REG, 0 }, { "r45", 45, REG, 0 }, { "r46", 46, REG, 0 },
-  { "r47", 47, REG, 0 }, { "r48", 48, REG, 0 }, { "r49", 49, REG, 0 },
-  { "r50", 50, REG, 0 }, { "r51", 51, REG, 0 }, { "r52", 52, REG, 0 },
-  { "r53", 53, REG, 0 }, { "r54", 54, REG, 0 }, { "r55", 55, REG, 0 },
-  { "r56", 56, REG, 0 }, { "r57", 57, REG, 0 }, { "r58", 58, REG, 0 },
-  { "r59", 59, REG, 0 },
-
-  /* Loop count register (24 bits).  */
-  { "lp_count", 60, REG, 0 },
-  /* Short immediate data indicator setting flags.  */
-  { "r61", 61, REG, ARC_REGISTER_READONLY },
-  /* Long immediate data indicator setting flags.  */
-  { "r62", 62, REG, ARC_REGISTER_READONLY },
-  /* Short immediate data indicator not setting flags.  */
-  { "r63", 63, REG, ARC_REGISTER_READONLY },
-
-  /* Small-data base register.  */
-  { "gp", 26, REG, 0 },
-  /* Frame pointer.  */
-  { "fp", 27, REG, 0 },
-  /* Stack pointer.  */
-  { "sp", 28, REG, 0 },
-
-  { "r29", 29, REG, 0 },
-  { "r30", 30, REG, 0 },
-  { "r31", 31, REG, 0 },
-  { "r60", 60, REG, 0 },
-
-  /* Auxiliary register set.  */
-
-  /* Auxiliary register address map:
-     0xffffffff-0xffffff00 (-1..-256) - customer shimm allocation
-     0xfffffeff-0x80000000 - customer limm allocation
-     0x7fffffff-0x00000100 - ARC limm allocation
-     0x000000ff-0x00000000 - ARC shimm allocation  */
-
-  /* Base case auxiliary registers (shimm address).  */
-  { "status",         0x00, AUXREG, 0 },
-  { "semaphore",      0x01, AUXREG, 0 },
-  { "lp_start",       0x02, AUXREG, 0 },
-  { "lp_end",         0x03, AUXREG, 0 },
-  { "identity",       0x04, AUXREG, ARC_REGISTER_READONLY },
-  { "debug",          0x05, AUXREG, 0 },
-};
-
-const int arc_reg_names_count =
-  sizeof (arc_reg_names) / sizeof (arc_reg_names[0]);
-
-/* The suffix table.
-   Operands with the same name must be stored together.  */
-
-const struct arc_operand_value arc_suffixes[] =
-{
-  /* Entry 0 is special, default values aren't printed by the disassembler.  */
-  { "", 0, -1, 0 },
-
-  /* Base case condition codes.  */
-  { "al", 0, COND, 0 },
-  { "ra", 0, COND, 0 },
-  { "eq", 1, COND, 0 },
-  { "z", 1, COND, 0 },
-  { "ne", 2, COND, 0 },
-  { "nz", 2, COND, 0 },
-  { "pl", 3, COND, 0 },
-  { "p", 3, COND, 0 },
-  { "mi", 4, COND, 0 },
-  { "n", 4, COND, 0 },
-  { "cs", 5, COND, 0 },
-  { "c", 5, COND, 0 },
-  { "lo", 5, COND, 0 },
-  { "cc", 6, COND, 0 },
-  { "nc", 6, COND, 0 },
-  { "hs", 6, COND, 0 },
-  { "vs", 7, COND, 0 },
-  { "v", 7, COND, 0 },
-  { "vc", 8, COND, 0 },
-  { "nv", 8, COND, 0 },
-  { "gt", 9, COND, 0 },
-  { "ge", 10, COND, 0 },
-  { "lt", 11, COND, 0 },
-  { "le", 12, COND, 0 },
-  { "hi", 13, COND, 0 },
-  { "ls", 14, COND, 0 },
-  { "pnz", 15, COND, 0 },
-
-  /* Condition codes 16-31 reserved for extensions.  */
-
-  { "f", 1, FLAG, 0 },
-
-  { "nd", ARC_DELAY_NONE, DELAY, 0 },
-  { "d", ARC_DELAY_NORMAL, DELAY, 0 },
-  { "jd", ARC_DELAY_JUMP, DELAY, 0 },
-
-  { "b", 1, SIZE1, 0 },
-  { "b", 1, SIZE10, 0 },
-  { "b", 1, SIZE22, 0 },
-  { "w", 2, SIZE1, 0 },
-  { "w", 2, SIZE10, 0 },
-  { "w", 2, SIZE22, 0 },
-  { "x", 1, SIGN0, 0 },
-  { "x", 1, SIGN9, 0 },
-  { "a", 1, ADDRESS3, 0 },
-  { "a", 1, ADDRESS12, 0 },
-  { "a", 1, ADDRESS24, 0 },
-
-  { "di", 1, CACHEBYPASS5, 0 },
-  { "di", 1, CACHEBYPASS14, 0 },
-  { "di", 1, CACHEBYPASS26, 0 },
-};
-
-const int arc_suffixes_count =
-  sizeof (arc_suffixes) / sizeof (arc_suffixes[0]);
-
-/* Indexed by first letter of opcode.  Points to chain of opcodes with same
-   first letter.  */
-static struct arc_opcode *opcode_map[26 + 1];
-
-/* Indexed by insn code.  Points to chain of opcodes with same insn code.  */
-static struct arc_opcode *icode_map[32];
-
-/* Configuration flags.  */
-
-/* Various ARC_HAVE_XXX bits.  */
-static int cpu_type;
-
-/* Translate a bfd_mach_arc_xxx value to a ARC_MACH_XXX value.  */
-
-int
-arc_get_opcode_mach (int bfd_mach, int big_p)
-{
-  static int mach_type_map[] =
-  {
-    ARC_MACH_5,
-    ARC_MACH_6,
-    ARC_MACH_7,
-    ARC_MACH_8
-  };
-  return mach_type_map[bfd_mach - bfd_mach_arc_5] | (big_p ? ARC_MACH_BIG : 0);
-}
-
-/* Initialize any tables that need it.
-   Must be called once at start up (or when first needed).
-
-   FLAGS is a set of bits that say what version of the cpu we have,
-   and in particular at least (one of) ARC_MACH_XXX.  */
-
-void
-arc_opcode_init_tables (int flags)
-{
-  static int init_p = 0;
-
-  cpu_type = flags;
-
-  /* We may be intentionally called more than once (for example gdb will call
-     us each time the user switches cpu).  These tables only need to be init'd
-     once though.  */
-  if (!init_p)
-    {
-      int i,n;
-
-      memset (arc_operand_map, 0, sizeof (arc_operand_map));
-      n = sizeof (arc_operands) / sizeof (arc_operands[0]);
-      for (i = 0; i < n; ++i)
-	arc_operand_map[arc_operands[i].fmt] = i;
-
-      memset (opcode_map, 0, sizeof (opcode_map));
-      memset (icode_map, 0, sizeof (icode_map));
-      /* Scan the table backwards so macros appear at the front.  */
-      for (i = arc_opcodes_count - 1; i >= 0; --i)
-	{
-	  int opcode_hash = ARC_HASH_OPCODE (arc_opcodes[i].syntax);
-	  int icode_hash = ARC_HASH_ICODE (arc_opcodes[i].value);
-
-	  arc_opcodes[i].next_asm = opcode_map[opcode_hash];
-	  opcode_map[opcode_hash] = &arc_opcodes[i];
-
-	  arc_opcodes[i].next_dis = icode_map[icode_hash];
-	  icode_map[icode_hash] = &arc_opcodes[i];
-	}
-
-      init_p = 1;
-    }
-}
-
-/* Return non-zero if OPCODE is supported on the specified cpu.
-   Cpu selection is made when calling `arc_opcode_init_tables'.  */
-
-int
-arc_opcode_supported (const struct arc_opcode *opcode)
-{
-  if (ARC_OPCODE_CPU (opcode->flags) <= cpu_type)
-    return 1;
-  return 0;
-}
-
-/* Return the first insn in the chain for assembling INSN.  */
-
-const struct arc_opcode *
-arc_opcode_lookup_asm (const char *insn)
-{
-  return opcode_map[ARC_HASH_OPCODE (insn)];
-}
-
-/* Return the first insn in the chain for disassembling INSN.  */
-
-const struct arc_opcode *
-arc_opcode_lookup_dis (unsigned int insn)
-{
-  return icode_map[ARC_HASH_ICODE (insn)];
-}
-
-/* Called by the assembler before parsing an instruction.  */
-
-void
-arc_opcode_init_insert (void)
-{
-  int i;
-
-  for(i = 0; i < OPERANDS; i++)
-    ls_operand[i] = OP_NONE;
-
-  flag_p = 0;
-  flagshimm_handled_p = 0;
-  cond_p = 0;
-  addrwb_p = 0;
-  shimm_p = 0;
-  limm_p = 0;
-  jumpflags_p = 0;
-  nullify_p = 0;
-  nullify = 0; /* The default is important.  */
-}
-
-/* Called by the assembler to see if the insn has a limm operand.
-   Also called by the disassembler to see if the insn contains a limm.  */
-
-int
-arc_opcode_limm_p (long *limmp)
-{
-  if (limmp)
-    *limmp = limm;
-  return limm_p;
-}
-
-/* Utility for the extraction functions to return the index into
-   `arc_suffixes'.  */
-
-const struct arc_operand_value *
-arc_opcode_lookup_suffix (const struct arc_operand *type, int value)
-{
-  const struct arc_operand_value *v,*end;
-  struct arc_ext_operand_value *ext_oper = arc_ext_operands;
-
-  while (ext_oper)
-    {
-      if (type == &arc_operands[ext_oper->operand.type]
-	  && value == ext_oper->operand.value)
-	return (&ext_oper->operand);
-      ext_oper = ext_oper->next;
-    }
-
-  /* ??? This is a little slow and can be speeded up.  */
-  for (v = arc_suffixes, end = arc_suffixes + arc_suffixes_count; v < end; ++v)
-    if (type == &arc_operands[v->type]
-	&& value == v->value)
-      return v;
-  return 0;
-}
-
-int
-arc_insn_is_j (arc_insn insn)
-{
-  return (insn & (I(-1))) == I(0x7);
-}
-
-int
-arc_insn_not_jl (arc_insn insn)
-{
-  return ((insn & (I(-1)|A(-1)|C(-1)|R(-1,7,1)|R(-1,9,1)))
-	  != (I(0x7) | R(-1,9,1)));
-}
-
-int
-arc_operand_type (int opertype)
-{
-  switch (opertype)
+  switch (value)
     {
     case 0:
-      return COND;
-      break;
     case 1:
-      return REG;
+    case 2:
+    case 3:
+      insn |= value << 24;
+      break;
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+      insn |= (value - 8) << 24;
+      break;
+    default:
+      *errmsg = _("Register must be either r0-r3 or r12-r15.");
+      break;
+    }
+  return insn;
+}
+
+static int
+extract_nps_3bit_dst (unsigned insn ATTRIBUTE_UNUSED,
+                      bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  int value = (insn >> 24) & 0x07;
+  if (value > 3)
+    return (value + 8);
+  else
+    return value;
+}
+
+static unsigned
+insert_nps_3bit_dst_short (unsigned insn ATTRIBUTE_UNUSED,
+                           int value ATTRIBUTE_UNUSED,
+                           const char **errmsg ATTRIBUTE_UNUSED)
+{
+  switch (value)
+    {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      insn |= value << 8;
+      break;
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+      insn |= (value - 8) << 8;
+      break;
+    default:
+      *errmsg = _("Register must be either r0-r3 or r12-r15.");
+      break;
+    }
+  return insn;
+}
+
+static int
+extract_nps_3bit_dst_short (unsigned insn ATTRIBUTE_UNUSED,
+                            bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  int value = (insn >> 8) & 0x07;
+  if (value > 3)
+    return (value + 8);
+  else
+    return value;
+}
+
+static unsigned
+insert_nps_3bit_src2 (unsigned insn ATTRIBUTE_UNUSED,
+                      int value ATTRIBUTE_UNUSED,
+                      const char **errmsg ATTRIBUTE_UNUSED)
+{
+  switch (value)
+    {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      insn |= value << 21;
+      break;
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+      insn |= (value - 8) << 21;
+      break;
+    default:
+      *errmsg = _("Register must be either r0-r3 or r12-r15.");
+      break;
+    }
+  return insn;
+}
+
+static int
+extract_nps_3bit_src2 (unsigned insn ATTRIBUTE_UNUSED,
+                       bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  int value = (insn >> 21) & 0x07;
+  if (value > 3)
+    return (value + 8);
+  else
+    return value;
+}
+
+static unsigned
+insert_nps_3bit_src2_short (unsigned insn ATTRIBUTE_UNUSED,
+                            int value ATTRIBUTE_UNUSED,
+                            const char **errmsg ATTRIBUTE_UNUSED)
+{
+  switch (value)
+    {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      insn |= value << 5;
+      break;
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+      insn |= (value - 8) << 5;
+      break;
+    default:
+      *errmsg = _("Register must be either r0-r3 or r12-r15.");
+      break;
+    }
+  return insn;
+}
+
+static int
+extract_nps_3bit_src2_short (unsigned insn ATTRIBUTE_UNUSED,
+                             bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  int value = (insn >> 5) & 0x07;
+  if (value > 3)
+    return (value + 8);
+  else
+    return value;
+}
+
+static unsigned
+insert_nps_bitop_size_2b (unsigned insn ATTRIBUTE_UNUSED,
+                          int value ATTRIBUTE_UNUSED,
+                          const char **errmsg ATTRIBUTE_UNUSED)
+{
+  switch (value)
+    {
+    case 1:
+      value = 0;
       break;
     case 2:
-      return AUXREG;
+      value = 1;
+      break;
+    case 4:
+      value = 2;
+      break;
+    case 8:
+      value = 3;
+      break;
+    default:
+      value = 0;
+      *errmsg = _("Invalid size, should be 1, 2, 4, or 8.");
       break;
     }
-  return -1;
+
+  insn |= value << 10;
+  return insn;
 }
 
-struct arc_operand_value *
-get_ext_suffix (char *s)
+static int
+extract_nps_bitop_size_2b (unsigned insn ATTRIBUTE_UNUSED,
+                           bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
-  struct arc_ext_operand_value *suffix = arc_ext_operands;
+  return  1 << ((insn >> 10) & 0x3);
+}
 
-  while (suffix)
+static unsigned
+insert_nps_bitop_uimm8 (unsigned insn ATTRIBUTE_UNUSED,
+                        int value ATTRIBUTE_UNUSED,
+                        const char **errmsg ATTRIBUTE_UNUSED)
+{
+  insn |= ((value >> 5) & 7) << 12;
+  insn |= (value & 0x1f);
+  return insn;
+}
+
+static int
+extract_nps_bitop_uimm8 (unsigned insn ATTRIBUTE_UNUSED,
+                         bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return (((insn >> 12) & 0x7) << 5) | (insn & 0x1f);
+}
+
+static unsigned
+insert_nps_rflt_uimm6 (unsigned insn ATTRIBUTE_UNUSED,
+                       int value ATTRIBUTE_UNUSED,
+                       const char **errmsg ATTRIBUTE_UNUSED)
+{
+  switch (value)
     {
-      if ((COND == suffix->operand.type)
-	  && !strcmp(s,suffix->operand.name))
-	return(&suffix->operand);
-      suffix = suffix->next;
+    case 1:
+    case 2:
+    case 4:
+      break;
+
+    default:
+      *errmsg = _("invalid immediate, must be 1, 2, or 4");
+      value = 0;
     }
-  return NULL;
+
+  insn |= (value << 6);
+  return insn;
 }
 
-int
-arc_get_noshortcut_flag (void)
+static int
+extract_nps_rflt_uimm6 (unsigned insn ATTRIBUTE_UNUSED,
+                         bfd_boolean * invalid ATTRIBUTE_UNUSED)
 {
-  return ARC_REGISTER_NOSHORT_CUT;
+  return (insn >> 6) & 0x3f;
 }
+
+static unsigned
+insert_nps_dst_pos_and_size (unsigned insn ATTRIBUTE_UNUSED,
+                             int value ATTRIBUTE_UNUSED,
+                             const char **errmsg ATTRIBUTE_UNUSED)
+{
+  insn |= ((value & 0x1f) | (((32 - value - 1) & 0x1f) << 10));
+  return insn;
+}
+
+static int
+extract_nps_dst_pos_and_size (unsigned insn ATTRIBUTE_UNUSED,
+                              bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return (insn & 0x1f);
+}
+
+static unsigned
+insert_nps_cmem_uimm16 (unsigned insn ATTRIBUTE_UNUSED,
+                        int value ATTRIBUTE_UNUSED,
+                        const char **errmsg ATTRIBUTE_UNUSED)
+{
+  int top = (value >> 16) & 0xffff;
+  if (top != 0x0 && top != NPS_CMEM_HIGH_VALUE)
+    *errmsg = _("invalid value for CMEM ld/st immediate");
+  insn |= (value & 0xffff);
+  return insn;
+}
+
+static int
+extract_nps_cmem_uimm16 (unsigned insn ATTRIBUTE_UNUSED,
+                         bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return (NPS_CMEM_HIGH_VALUE << 16) | (insn & 0xffff);
+}
+
+#define MAKE_SRC_POS_INSERT_EXTRACT_FUNCS(NAME,SHIFT)         \
+static unsigned                                               \
+insert_nps_##NAME##_pos (unsigned insn ATTRIBUTE_UNUSED,      \
+                        int value ATTRIBUTE_UNUSED,           \
+                        const char **errmsg ATTRIBUTE_UNUSED) \
+{                                                             \
+ switch (value)                                               \
+   {                                                          \
+   case 0:                                                    \
+   case 8:                                                    \
+   case 16:                                                   \
+   case 24:                                                   \
+     value = value / 8;                                       \
+     break;                                                   \
+   default:                                                   \
+     *errmsg = _("Invalid position, should be 0, 8, 16, or 24.");       \
+     value = 0;                                               \
+  }                                                           \
+  insn |= (value << SHIFT);                                    \
+  return insn;                                                \
+}                                                             \
+                                                              \
+static int                                                    \
+extract_nps_##NAME##_pos (unsigned insn ATTRIBUTE_UNUSED,     \
+                          bfd_boolean * invalid ATTRIBUTE_UNUSED)     \
+{                                                                     \
+  return ((insn >> SHIFT) & 0x3) * 8;                                 \
+}
+
+MAKE_SRC_POS_INSERT_EXTRACT_FUNCS (src2, 12)
+MAKE_SRC_POS_INSERT_EXTRACT_FUNCS (src1, 10)
+
+#define MAKE_BIAS_INSERT_EXTRACT_FUNCS(NAME,LOWER,UPPER,BITS,BIAS,SHIFT)\
+static unsigned                                                         \
+insert_nps_##NAME (unsigned insn ATTRIBUTE_UNUSED,                      \
+                   int value ATTRIBUTE_UNUSED,                          \
+                   const char **errmsg ATTRIBUTE_UNUSED)                \
+  {                                                                     \
+    if (value < LOWER || value > UPPER)                                 \
+      {                                                                 \
+        *errmsg = _("Invalid size, value must be "                      \
+                    #LOWER " to " #UPPER ".");                          \
+        return insn;                                                    \
+      }                                                                 \
+    value -= BIAS;                                                      \
+    insn |= (value << SHIFT);                                           \
+    return insn;                                                        \
+  }                                                                     \
+                                                                        \
+static int                                                              \
+extract_nps_##NAME (unsigned insn ATTRIBUTE_UNUSED,                     \
+                    bfd_boolean * invalid ATTRIBUTE_UNUSED)             \
+{                                                                       \
+  return ((insn >> SHIFT) & ((1 << BITS) - 1)) + BIAS;                  \
+}
+
+MAKE_BIAS_INSERT_EXTRACT_FUNCS (addb_size,2,32,5,1,5)
+MAKE_BIAS_INSERT_EXTRACT_FUNCS (andb_size,1,32,5,1,5)
+MAKE_BIAS_INSERT_EXTRACT_FUNCS (fxorb_size,8,32,5,8,5)
+MAKE_BIAS_INSERT_EXTRACT_FUNCS (wxorb_size,16,32,5,16,5)
+MAKE_BIAS_INSERT_EXTRACT_FUNCS (bitop_size,1,32,5,1,10)
+MAKE_BIAS_INSERT_EXTRACT_FUNCS (qcmp_size,1,8,3,1,9)
+MAKE_BIAS_INSERT_EXTRACT_FUNCS (bitop1_size,1,32,5,1,20)
+MAKE_BIAS_INSERT_EXTRACT_FUNCS (bitop2_size,1,32,5,1,25)
+MAKE_BIAS_INSERT_EXTRACT_FUNCS (hash_width,1,32,5,1,6)
+MAKE_BIAS_INSERT_EXTRACT_FUNCS (hash_len,1,8,3,1,2)
+MAKE_BIAS_INSERT_EXTRACT_FUNCS (index3,4,7,2,4,0)
+
+static int
+extract_nps_qcmp_m3 (unsigned insn ATTRIBUTE_UNUSED,
+                     bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  int m3 = (insn >> 5) & 0xf;
+  if (m3 == 0xf)
+    *invalid = TRUE;
+  return m3;
+}
+
+static int
+extract_nps_qcmp_m2 (unsigned insn ATTRIBUTE_UNUSED,
+                     bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  bfd_boolean tmp_invalid = FALSE;
+  int m2 = (insn >> 15) & 0x1;
+  int m3 = extract_nps_qcmp_m3 (insn, &tmp_invalid);
+
+  if (m2 == 0 && m3 == 0xf)
+    *invalid = TRUE;
+  return m2;
+}
+
+static int
+extract_nps_qcmp_m1 (unsigned insn ATTRIBUTE_UNUSED,
+                     bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  bfd_boolean tmp_invalid = FALSE;
+  int m1 = (insn >> 14) & 0x1;
+  int m2 = extract_nps_qcmp_m2 (insn, &tmp_invalid);
+  int m3 = extract_nps_qcmp_m3 (insn, &tmp_invalid);
+
+  if (m1 == 0 && m2 == 0 && m3 == 0xf)
+    *invalid = TRUE;
+  return m1;
+}
+
+static unsigned
+insert_nps_calc_entry_size (unsigned insn ATTRIBUTE_UNUSED,
+                            int value ATTRIBUTE_UNUSED,
+                            const char **errmsg ATTRIBUTE_UNUSED)
+{
+  unsigned pwr;
+
+  if (value < 1 || value > 256)
+    {
+      *errmsg = _("value out of range 1 - 256");
+      return 0;
+    }
+
+  for (pwr = 0; (value & 1) == 0; value >>= 1)
+    ++pwr;
+
+  if (value != 1)
+    {
+      *errmsg = _("value must be power of 2");
+      return 0;
+    }
+
+  return insn | (pwr << 8);
+}
+
+static int
+extract_nps_calc_entry_size (unsigned insn ATTRIBUTE_UNUSED,
+                             bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  unsigned entry_size = (insn >> 8) & 0xf;
+  return 1 << entry_size;
+}
+
+static unsigned
+insert_nps_bitop_mod4_msb (unsigned insn ATTRIBUTE_UNUSED,
+                           int value ATTRIBUTE_UNUSED,
+                           const char **errmsg ATTRIBUTE_UNUSED)
+{
+  return insn | ((value & 0x2) << 30);
+}
+
+static int
+extract_nps_bitop_mod4_msb (unsigned insn ATTRIBUTE_UNUSED,
+                            bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return (insn >> 30) & 0x2;
+}
+
+static unsigned
+insert_nps_bitop_mod4_lsb (unsigned insn ATTRIBUTE_UNUSED,
+                           int value ATTRIBUTE_UNUSED,
+                           const char **errmsg ATTRIBUTE_UNUSED)
+{
+  return insn | ((value & 0x1) << 15);
+}
+
+static int
+extract_nps_bitop_mod4_lsb (unsigned insn ATTRIBUTE_UNUSED,
+                            bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  return (insn >> 15) & 0x1;
+}
+
+static unsigned
+insert_nps_bitop_dst_pos3_pos4 (unsigned insn ATTRIBUTE_UNUSED,
+                                int value ATTRIBUTE_UNUSED,
+                                const char **errmsg ATTRIBUTE_UNUSED)
+{
+  return insn | (value << 10) | (value << 5);
+}
+
+static int
+extract_nps_bitop_dst_pos3_pos4 (unsigned insn ATTRIBUTE_UNUSED,
+                                 bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  if (((insn >> 10) & 0x1f) != ((insn >> 5) & 0x1f))
+    *invalid = TRUE;
+  return ((insn >> 5) & 0x1f);
+}
+
+static unsigned
+insert_nps_bitop_ins_ext (unsigned insn ATTRIBUTE_UNUSED,
+                          int value ATTRIBUTE_UNUSED,
+                          const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value < 0 || value > 28)
+    *errmsg = _("Value must be in the range 0 to 28");
+  return insn | (value << 20);
+}
+
+static int
+extract_nps_bitop_ins_ext (unsigned insn ATTRIBUTE_UNUSED,
+                           bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  int value = (insn >> 20) & 0x1f;
+  if (value > 28)
+    *invalid = TRUE;
+  return value;
+}
+
+#define MAKE_1BASED_INSERT_EXTRACT_FUNCS(NAME,SHIFT,UPPER,BITS)         \
+static unsigned                                                         \
+insert_nps_##NAME (unsigned insn ATTRIBUTE_UNUSED,                      \
+                   int value ATTRIBUTE_UNUSED,                          \
+                   const char **errmsg ATTRIBUTE_UNUSED)                \
+{                                                                       \
+  if (value < 1 || value > UPPER)                                       \
+    *errmsg = _("Value must be in the range 1 to " #UPPER);             \
+  if (value == UPPER)                                                   \
+    value = 0;                                                          \
+  return insn | (value << SHIFT);                                       \
+}                                                                       \
+                                                                        \
+static int                                                              \
+extract_nps_##NAME (unsigned insn ATTRIBUTE_UNUSED,                     \
+                    bfd_boolean * invalid ATTRIBUTE_UNUSED)             \
+{                                                                       \
+  int value = (insn >> SHIFT) & ((1 << BITS) - 1);                      \
+  if (value == 0)                                                       \
+    value = UPPER;                                                      \
+  return value;                                                         \
+}
+
+MAKE_1BASED_INSERT_EXTRACT_FUNCS (field_size, 6, 8, 3)
+MAKE_1BASED_INSERT_EXTRACT_FUNCS (shift_factor, 9, 8, 3)
+MAKE_1BASED_INSERT_EXTRACT_FUNCS (bits_to_scramble, 12, 8, 3)
+MAKE_1BASED_INSERT_EXTRACT_FUNCS (bdlen_max_len, 5, 256, 8)
+MAKE_1BASED_INSERT_EXTRACT_FUNCS (bd_num_buff, 6, 8, 3)
+MAKE_1BASED_INSERT_EXTRACT_FUNCS (pmu_num_job, 6, 4, 2)
+
+static unsigned
+insert_nps_min_hofs (unsigned insn ATTRIBUTE_UNUSED,
+                     int value ATTRIBUTE_UNUSED,
+                     const char **errmsg ATTRIBUTE_UNUSED)
+{
+  if (value < 0 || value > 240)
+    *errmsg = _("Value must be in the range 0 to 240");
+  if ((value % 16) != 0)
+    *errmsg = _("Value must be a multiple of 16");
+  value = value / 16;
+  return insn | (value << 6);
+}
+
+static int
+extract_nps_min_hofs (unsigned insn ATTRIBUTE_UNUSED,
+                      bfd_boolean * invalid ATTRIBUTE_UNUSED)
+{
+  int value = (insn >> 6) & 0xF;
+  return value * 16;
+}
+
+#define MAKE_INSERT_NPS_ADDRTYPE(NAME,VALUE)                           \
+static unsigned                                                        \
+insert_nps_##NAME (unsigned insn ATTRIBUTE_UNUSED,                     \
+                   int value ATTRIBUTE_UNUSED,                         \
+                   const char **errmsg ATTRIBUTE_UNUSED)               \
+{                                                                      \
+  if (value != ARC_NPS400_ADDRTYPE_##VALUE)                            \
+    *errmsg = _("Invalid address type for operand");                   \
+  return insn;                                                         \
+}                                                                      \
+                                                                       \
+static int                                                             \
+extract_nps_##NAME (unsigned insn ATTRIBUTE_UNUSED,                    \
+                    bfd_boolean * invalid ATTRIBUTE_UNUSED)            \
+{                                                                      \
+  return ARC_NPS400_ADDRTYPE_##VALUE;                                  \
+}
+
+MAKE_INSERT_NPS_ADDRTYPE (bd, BD)
+MAKE_INSERT_NPS_ADDRTYPE (jid, JID)
+MAKE_INSERT_NPS_ADDRTYPE (lbd, LBD)
+MAKE_INSERT_NPS_ADDRTYPE (mbd, MBD)
+MAKE_INSERT_NPS_ADDRTYPE (sd, SD)
+MAKE_INSERT_NPS_ADDRTYPE (sm, SM)
+MAKE_INSERT_NPS_ADDRTYPE (xa, XA)
+MAKE_INSERT_NPS_ADDRTYPE (xd, XD)
+MAKE_INSERT_NPS_ADDRTYPE (cd, CD)
+MAKE_INSERT_NPS_ADDRTYPE (cbd, CBD)
+MAKE_INSERT_NPS_ADDRTYPE (cjid, CJID)
+MAKE_INSERT_NPS_ADDRTYPE (clbd, CLBD)
+MAKE_INSERT_NPS_ADDRTYPE (cm, CM)
+MAKE_INSERT_NPS_ADDRTYPE (csd, CSD)
+MAKE_INSERT_NPS_ADDRTYPE (cxa, CXA)
+MAKE_INSERT_NPS_ADDRTYPE (cxd, CXD)
+
+
+/* Include the generic extract/insert functions.  Order is important
+   as some of the functions present in the .h may be disabled via
+   defines.  */
+#include "arc-fxi.h"
+
+/* The flag operands table.
+
+   The format of the table is
+   NAME CODE BITS SHIFT FAVAIL.  */
+const struct arc_flag_operand arc_flag_operands[] =
+{
+#define F_NULL	0
+  { 0, 0, 0, 0, 0},
+#define F_ALWAYS    (F_NULL + 1)
+  { "al", 0, 0, 0, 0 },
+#define F_RA	    (F_ALWAYS + 1)
+  { "ra", 0, 0, 0, 0 },
+#define F_EQUAL	    (F_RA + 1)
+  { "eq", 1, 5, 0, 1 },
+#define F_ZERO	    (F_EQUAL + 1)
+  { "z",  1, 5, 0, 0 },
+#define F_NOTEQUAL  (F_ZERO + 1)
+  { "ne", 2, 5, 0, 1 },
+#define F_NOTZERO   (F_NOTEQUAL + 1)
+  { "nz", 2, 5, 0, 0 },
+#define F_POZITIVE  (F_NOTZERO + 1)
+  { "p",  3, 5, 0, 1 },
+#define F_PL	    (F_POZITIVE + 1)
+  { "pl", 3, 5, 0, 0 },
+#define F_NEGATIVE  (F_PL + 1)
+  { "n",  4, 5, 0, 1 },
+#define F_MINUS	    (F_NEGATIVE + 1)
+  { "mi", 4, 5, 0, 0 },
+#define F_CARRY	    (F_MINUS + 1)
+  { "c",  5, 5, 0, 1 },
+#define F_CARRYSET  (F_CARRY + 1)
+  { "cs", 5, 5, 0, 0 },
+#define F_LOWER	    (F_CARRYSET + 1)
+  { "lo", 5, 5, 0, 0 },
+#define F_CARRYCLR  (F_LOWER + 1)
+  { "cc", 6, 5, 0, 0 },
+#define F_NOTCARRY (F_CARRYCLR + 1)
+  { "nc", 6, 5, 0, 1 },
+#define F_HIGHER   (F_NOTCARRY + 1)
+  { "hs", 6, 5, 0, 0 },
+#define F_OVERFLOWSET (F_HIGHER + 1)
+  { "vs", 7, 5, 0, 0 },
+#define F_OVERFLOW (F_OVERFLOWSET + 1)
+  { "v",  7, 5, 0, 1 },
+#define F_NOTOVERFLOW (F_OVERFLOW + 1)
+  { "nv", 8, 5, 0, 1 },
+#define F_OVERFLOWCLR (F_NOTOVERFLOW + 1)
+  { "vc", 8, 5, 0, 0 },
+#define F_GT	   (F_OVERFLOWCLR + 1)
+  { "gt", 9, 5, 0, 1 },
+#define F_GE	   (F_GT + 1)
+  { "ge", 10, 5, 0, 1 },
+#define F_LT	   (F_GE + 1)
+  { "lt", 11, 5, 0, 1 },
+#define F_LE	   (F_LT + 1)
+  { "le", 12, 5, 0, 1 },
+#define F_HI	   (F_LE + 1)
+  { "hi", 13, 5, 0, 1 },
+#define F_LS	   (F_HI + 1)
+  { "ls", 14, 5, 0, 1 },
+#define F_PNZ	   (F_LS + 1)
+  { "pnz", 15, 5, 0, 1 },
+
+  /* FLAG.  */
+#define F_FLAG     (F_PNZ + 1)
+  { "f",  1, 1, 15, 1 },
+#define F_FFAKE     (F_FLAG + 1)
+  { "f",  0, 0, 0, 1 },
+
+  /* Delay slot.  */
+#define F_ND	   (F_FFAKE + 1)
+  { "nd", 0, 1, 5, 0 },
+#define F_D	   (F_ND + 1)
+  { "d",  1, 1, 5, 1 },
+#define F_DFAKE	   (F_D + 1)
+  { "d",  0, 0, 0, 1 },
+
+  /* Data size.  */
+#define F_SIZEB1   (F_DFAKE + 1)
+  { "b", 1, 2, 1, 1 },
+#define F_SIZEB7   (F_SIZEB1 + 1)
+  { "b", 1, 2, 7, 1 },
+#define F_SIZEB17  (F_SIZEB7 + 1)
+  { "b", 1, 2, 17, 1 },
+#define F_SIZEW1   (F_SIZEB17 + 1)
+  { "w", 2, 2, 1, 0 },
+#define F_SIZEW7   (F_SIZEW1 + 1)
+  { "w", 2, 2, 7, 0 },
+#define F_SIZEW17  (F_SIZEW7 + 1)
+  { "w", 2, 2, 17, 0 },
+
+  /* Sign extension.  */
+#define F_SIGN6   (F_SIZEW17 + 1)
+  { "x", 1, 1, 6, 1 },
+#define F_SIGN16  (F_SIGN6 + 1)
+  { "x", 1, 1, 16, 1 },
+#define F_SIGNX   (F_SIGN16 + 1)
+  { "x", 0, 0, 0, 1 },
+
+  /* Address write-back modes.  */
+#define F_A3       (F_SIGNX + 1)
+  { "a", 1, 2, 3, 0 },
+#define F_A9       (F_A3 + 1)
+  { "a", 1, 2, 9, 0 },
+#define F_A22      (F_A9 + 1)
+  { "a", 1, 2, 22, 0 },
+#define F_AW3      (F_A22 + 1)
+  { "aw", 1, 2, 3, 1 },
+#define F_AW9      (F_AW3 + 1)
+  { "aw", 1, 2, 9, 1 },
+#define F_AW22     (F_AW9 + 1)
+  { "aw", 1, 2, 22, 1 },
+#define F_AB3      (F_AW22 + 1)
+  { "ab", 2, 2, 3, 1 },
+#define F_AB9      (F_AB3 + 1)
+  { "ab", 2, 2, 9, 1 },
+#define F_AB22     (F_AB9 + 1)
+  { "ab", 2, 2, 22, 1 },
+#define F_AS3      (F_AB22 + 1)
+  { "as", 3, 2, 3, 1 },
+#define F_AS9      (F_AS3 + 1)
+  { "as", 3, 2, 9, 1 },
+#define F_AS22     (F_AS9 + 1)
+  { "as", 3, 2, 22, 1 },
+#define F_ASFAKE   (F_AS22 + 1)
+  { "as", 0, 0, 0, 1 },
+
+  /* Cache bypass.  */
+#define F_DI5     (F_ASFAKE + 1)
+  { "di", 1, 1, 5, 1 },
+#define F_DI11    (F_DI5 + 1)
+  { "di", 1, 1, 11, 1 },
+#define F_DI15    (F_DI11 + 1)
+  { "di", 1, 1, 15, 1 },
+
+  /* ARCv2 specific.  */
+#define F_NT     (F_DI15 + 1)
+  { "nt", 0, 1, 3, 1},
+#define F_T      (F_NT + 1)
+  { "t", 1, 1, 3, 1},
+#define F_H1     (F_T + 1)
+  { "h", 2, 2, 1, 1 },
+#define F_H7     (F_H1 + 1)
+  { "h", 2, 2, 7, 1 },
+#define F_H17    (F_H7 + 1)
+  { "h", 2, 2, 17, 1 },
+
+  /* Fake Flags.  */
+#define F_NE   (F_H17 + 1)
+  { "ne", 0, 0, 0, 1 },
+
+  /* ARC NPS400 Support: See comment near head of file.  */
+#define F_NPS_CL (F_NE + 1)
+  { "cl", 0, 0, 0, 1 },
+
+#define F_NPS_FLAG (F_NPS_CL + 1)
+  { "f", 1, 1, 20, 1 },
+
+#define F_NPS_R     (F_NPS_FLAG + 1)
+  { "r",  1, 1, 15, 1 },
+
+#define F_NPS_RW     (F_NPS_R + 1)
+  { "rw", 0, 1, 7, 1 },
+
+#define F_NPS_RD     (F_NPS_RW + 1)
+  { "rd", 1, 1, 7, 1 },
+
+#define F_NPS_WFT     (F_NPS_RD + 1)
+  { "wft", 0, 0, 0, 1 },
+
+#define F_NPS_IE1     (F_NPS_WFT + 1)
+  { "ie1", 1, 2, 8, 1 },
+
+#define F_NPS_IE2     (F_NPS_IE1 + 1)
+  { "ie2", 2, 2, 8, 1 },
+
+#define F_NPS_IE12     (F_NPS_IE2 + 1)
+  { "ie12", 3, 2, 8, 1 },
+
+#define F_NPS_SYNC_RD     (F_NPS_IE12 + 1)
+  { "rd", 0, 1, 6, 1 },
+
+#define F_NPS_SYNC_WR     (F_NPS_SYNC_RD + 1)
+  { "wr", 1, 1, 6, 1 },
+
+#define F_NPS_HWS_OFF     (F_NPS_SYNC_WR + 1)
+  { "off", 0, 0, 0, 1 },
+
+#define F_NPS_HWS_RESTORE     (F_NPS_HWS_OFF + 1)
+  { "restore", 0, 0, 0, 1 },
+
+#define F_NPS_SX     (F_NPS_HWS_RESTORE + 1)
+  { "sx",  1, 1, 14, 1 },
+
+#define F_NPS_AR     (F_NPS_SX + 1)
+  { "ar",  0, 1, 0, 1 },
+
+#define F_NPS_AL     (F_NPS_AR + 1)
+  { "al",  1, 1, 0, 1 },
+
+#define F_NPS_S      (F_NPS_AL + 1)
+  { "s",   0, 0, 0, 1 },
+
+#define F_NPS_ZNCV_RD      (F_NPS_S + 1)
+  { "rd",  0, 1, 15, 1 },
+
+#define F_NPS_ZNCV_WR      (F_NPS_ZNCV_RD + 1)
+  { "wr",  1, 1, 15, 1 },
+
+#define F_NPS_P0      (F_NPS_ZNCV_WR + 1)
+  { "p0", 0, 0, 0, 1 },
+
+#define F_NPS_P1      (F_NPS_P0 + 1)
+  { "p1", 0, 0, 0, 1 },
+
+#define F_NPS_P2      (F_NPS_P1 + 1)
+  { "p2", 0, 0, 0, 1 },
+
+#define F_NPS_P3      (F_NPS_P2 + 1)
+  { "p3", 0, 0, 0, 1 },
+
+#define F_NPS_LDBIT_DI      (F_NPS_P3 + 1)
+  { "di", 0, 0, 0, 1 },
+
+#define F_NPS_LDBIT_CL1      (F_NPS_LDBIT_DI + 1)
+  { "cl", 1, 1, 6, 1 },
+
+#define F_NPS_LDBIT_CL2      (F_NPS_LDBIT_CL1 + 1)
+  { "cl", 1, 1, 16, 1 },
+
+#define F_NPS_LDBIT_X2_1      (F_NPS_LDBIT_CL2 + 1)
+  { "x2", 1, 2, 9, 1 },
+
+#define F_NPS_LDBIT_X2_2      (F_NPS_LDBIT_X2_1 + 1)
+  { "x2", 1, 2, 22, 1 },
+
+#define F_NPS_LDBIT_X4_1      (F_NPS_LDBIT_X2_2 + 1)
+  { "x4", 2, 2, 9, 1 },
+
+#define F_NPS_LDBIT_X4_2      (F_NPS_LDBIT_X4_1 + 1)
+  { "x4", 2, 2, 22, 1 },
+};
+
+const unsigned arc_num_flag_operands = ARRAY_SIZE (arc_flag_operands);
+
+/* Table of the flag classes.
+
+   The format of the table is
+   CLASS {FLAG_CODE}.  */
+const struct arc_flag_class arc_flag_classes[] =
+{
+#define C_EMPTY     0
+  { F_CLASS_NONE, { F_NULL } },
+
+#define C_CC	    (C_EMPTY + 1)
+  { F_CLASS_OPTIONAL | F_CLASS_EXTEND | F_CLASS_COND,
+    { F_ALWAYS, F_RA, F_EQUAL, F_ZERO, F_NOTEQUAL,
+      F_NOTZERO, F_POZITIVE, F_PL, F_NEGATIVE, F_MINUS,
+      F_CARRY, F_CARRYSET, F_LOWER, F_CARRYCLR,
+      F_NOTCARRY, F_HIGHER, F_OVERFLOWSET, F_OVERFLOW,
+      F_NOTOVERFLOW, F_OVERFLOWCLR, F_GT, F_GE, F_LT,
+      F_LE, F_HI, F_LS, F_PNZ, F_NULL } },
+
+#define C_AA_ADDR3  (C_CC + 1)
+#define C_AA27	    (C_CC + 1)
+  { F_CLASS_OPTIONAL, { F_A3, F_AW3, F_AB3, F_AS3, F_NULL } },
+#define C_AA_ADDR9  (C_AA_ADDR3 + 1)
+#define C_AA21	     (C_AA_ADDR3 + 1)
+  { F_CLASS_OPTIONAL, { F_A9, F_AW9, F_AB9, F_AS9, F_NULL } },
+#define C_AA_ADDR22 (C_AA_ADDR9 + 1)
+#define C_AA8	   (C_AA_ADDR9 + 1)
+  { F_CLASS_OPTIONAL, { F_A22, F_AW22, F_AB22, F_AS22, F_NULL } },
+
+#define C_F	    (C_AA_ADDR22 + 1)
+  { F_CLASS_OPTIONAL, { F_FLAG, F_NULL } },
+#define C_FHARD	    (C_F + 1)
+  { F_CLASS_OPTIONAL, { F_FFAKE, F_NULL } },
+
+#define C_T	    (C_FHARD + 1)
+  { F_CLASS_OPTIONAL, { F_NT, F_T, F_NULL } },
+#define C_D	    (C_T + 1)
+  { F_CLASS_OPTIONAL, { F_ND, F_D, F_NULL } },
+
+#define C_DHARD	    (C_D + 1)
+  { F_CLASS_OPTIONAL, { F_DFAKE, F_NULL } },
+
+#define C_DI20	    (C_DHARD + 1)
+  { F_CLASS_OPTIONAL, { F_DI11, F_NULL }},
+#define C_DI16	    (C_DI20 + 1)
+  { F_CLASS_OPTIONAL, { F_DI15, F_NULL }},
+#define C_DI26	    (C_DI16 + 1)
+  { F_CLASS_OPTIONAL, { F_DI5, F_NULL }},
+
+#define C_X25	    (C_DI26 + 1)
+  { F_CLASS_OPTIONAL, { F_SIGN6, F_NULL }},
+#define C_X15	   (C_X25 + 1)
+  { F_CLASS_OPTIONAL, { F_SIGN16, F_NULL }},
+#define C_XHARD	   (C_X15 + 1)
+#define C_X	   (C_X15 + 1)
+  { F_CLASS_OPTIONAL, { F_SIGNX, F_NULL }},
+
+#define C_ZZ13	      (C_X + 1)
+  { F_CLASS_OPTIONAL, { F_SIZEB17, F_SIZEW17, F_H17, F_NULL}},
+#define C_ZZ23	      (C_ZZ13 + 1)
+  { F_CLASS_OPTIONAL, { F_SIZEB7, F_SIZEW7, F_H7, F_NULL}},
+#define C_ZZ29	      (C_ZZ23 + 1)
+  { F_CLASS_OPTIONAL, { F_SIZEB1, F_SIZEW1, F_H1, F_NULL}},
+
+#define C_AS	    (C_ZZ29 + 1)
+  { F_CLASS_OPTIONAL, { F_ASFAKE, F_NULL}},
+
+#define C_NE	    (C_AS + 1)
+  { F_CLASS_OPTIONAL, { F_NE, F_NULL}},
+
+  /* ARC NPS400 Support: See comment near head of file.  */
+#define C_NPS_CL     (C_NE + 1)
+  { F_CLASS_REQUIRED, { F_NPS_CL, F_NULL}},
+
+#define C_NPS_F     (C_NPS_CL + 1)
+  { F_CLASS_OPTIONAL, { F_NPS_FLAG, F_NULL}},
+
+#define C_NPS_R     (C_NPS_F + 1)
+  { F_CLASS_OPTIONAL, { F_NPS_R, F_NULL}},
+
+#define C_NPS_SCHD_RW     (C_NPS_R + 1)
+  { F_CLASS_REQUIRED, { F_NPS_RW, F_NPS_RD, F_NULL}},
+
+#define C_NPS_SCHD_TRIG     (C_NPS_SCHD_RW + 1)
+  { F_CLASS_REQUIRED, { F_NPS_WFT, F_NULL}},
+
+#define C_NPS_SCHD_IE     (C_NPS_SCHD_TRIG + 1)
+  { F_CLASS_OPTIONAL, { F_NPS_IE1, F_NPS_IE2, F_NPS_IE12, F_NULL}},
+
+#define C_NPS_SYNC     (C_NPS_SCHD_IE + 1)
+  { F_CLASS_REQUIRED, { F_NPS_SYNC_RD, F_NPS_SYNC_WR, F_NULL}},
+
+#define C_NPS_HWS_OFF     (C_NPS_SYNC + 1)
+  { F_CLASS_REQUIRED, { F_NPS_HWS_OFF, F_NULL}},
+
+#define C_NPS_HWS_RESTORE     (C_NPS_HWS_OFF + 1)
+  { F_CLASS_REQUIRED, { F_NPS_HWS_RESTORE, F_NULL}},
+
+#define C_NPS_SX     (C_NPS_HWS_RESTORE + 1)
+  { F_CLASS_OPTIONAL, { F_NPS_SX, F_NULL}},
+
+#define C_NPS_AR_AL     (C_NPS_SX + 1)
+  { F_CLASS_REQUIRED, { F_NPS_AR, F_NPS_AL, F_NULL}},
+
+#define C_NPS_S    (C_NPS_AR_AL + 1)
+  { F_CLASS_REQUIRED, { F_NPS_S, F_NULL}},
+
+#define C_NPS_ZNCV    (C_NPS_S + 1)
+  { F_CLASS_REQUIRED, { F_NPS_ZNCV_RD, F_NPS_ZNCV_WR, F_NULL}},
+
+#define C_NPS_P0    (C_NPS_ZNCV + 1)
+  { F_CLASS_REQUIRED, { F_NPS_P0, F_NULL }},
+
+#define C_NPS_P1    (C_NPS_P0 + 1)
+  { F_CLASS_REQUIRED, { F_NPS_P1, F_NULL }},
+
+#define C_NPS_P2    (C_NPS_P1 + 1)
+  { F_CLASS_REQUIRED, { F_NPS_P2, F_NULL }},
+
+#define C_NPS_P3    (C_NPS_P2 + 1)
+  { F_CLASS_REQUIRED, { F_NPS_P3, F_NULL }},
+
+#define C_NPS_LDBIT_DI    (C_NPS_P3 + 1)
+  { F_CLASS_REQUIRED, { F_NPS_LDBIT_DI, F_NULL }},
+
+#define C_NPS_LDBIT_CL1    (C_NPS_LDBIT_DI + 1)
+  { F_CLASS_OPTIONAL, { F_NPS_LDBIT_CL1, F_NULL }},
+
+#define C_NPS_LDBIT_CL2    (C_NPS_LDBIT_CL1 + 1)
+  { F_CLASS_OPTIONAL, { F_NPS_LDBIT_CL2, F_NULL }},
+
+#define C_NPS_LDBIT_X_1    (C_NPS_LDBIT_CL2 + 1)
+  { F_CLASS_OPTIONAL, { F_NPS_LDBIT_X2_1, F_NPS_LDBIT_X4_1, F_NULL }},
+
+#define C_NPS_LDBIT_X_2    (C_NPS_LDBIT_X_1 + 1)
+  { F_CLASS_OPTIONAL, { F_NPS_LDBIT_X2_2, F_NPS_LDBIT_X4_2, F_NULL }},
+};
+
+const unsigned char flags_none[] = { 0 };
+const unsigned char flags_f[]    = { C_F };
+const unsigned char flags_cc[]   = { C_CC };
+const unsigned char flags_ccf[]  = { C_CC, C_F };
+
+/* The operands table.
+
+   The format of the operands table is:
+
+   BITS SHIFT DEFAULT_RELOC FLAGS INSERT_FUN EXTRACT_FUN.  */
+const struct arc_operand arc_operands[] =
+{
+  /* The fields are bits, shift, insert, extract, flags.  The zero
+     index is used to indicate end-of-list.  */
+#define UNUSED		0
+  { 0, 0, 0, 0, 0, 0 },
+
+#define IGNORED		(UNUSED + 1)
+  { 0, 0, 0, ARC_OPERAND_IGNORE | ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, 0, 0 },
+
+  /* The plain integer register fields.  Used by 32 bit
+     instructions.  */
+#define RA		(IGNORED + 1)
+  { 6, 0, 0, ARC_OPERAND_IR, 0, 0 },
+#define RB		(RA + 1)
+  { 6, 12, 0, ARC_OPERAND_IR, insert_rb, extract_rb },
+#define RC		(RB + 1)
+  { 6, 6, 0, ARC_OPERAND_IR, 0, 0 },
+#define RBdup		(RC + 1)
+  { 6, 12, 0, ARC_OPERAND_IR | ARC_OPERAND_DUPLICATE, insert_rb, extract_rb },
+
+#define RAD		(RBdup + 1)
+  { 6, 0, 0, ARC_OPERAND_IR | ARC_OPERAND_TRUNCATE, insert_rad, 0 },
+#define RCD		(RAD + 1)
+  { 6, 6, 0, ARC_OPERAND_IR | ARC_OPERAND_TRUNCATE, insert_rcd, 0 },
+
+  /* The plain integer register fields.  Used by short
+     instructions.  */
+#define RA16		(RCD + 1)
+#define RA_S		(RCD + 1)
+  { 4, 0, 0, ARC_OPERAND_IR, insert_ras, extract_ras },
+#define RB16		(RA16 + 1)
+#define RB_S		(RA16 + 1)
+  { 4, 8, 0, ARC_OPERAND_IR, insert_rbs, extract_rbs },
+#define RB16dup		(RB16 + 1)
+#define RB_Sdup		(RB16 + 1)
+  { 4, 8, 0, ARC_OPERAND_IR | ARC_OPERAND_DUPLICATE, insert_rbs, extract_rbs },
+#define RC16		(RB16dup + 1)
+#define RC_S		(RB16dup + 1)
+  { 4, 5, 0, ARC_OPERAND_IR, insert_rcs, extract_rcs },
+#define R6H		(RC16 + 1)   /* 6bit register field 'h' used
+					by V1 cpus.  */
+  { 6, 5, 0, ARC_OPERAND_IR, insert_rhv1, extract_rhv1 },
+#define R5H		(R6H + 1)    /* 5bit register field 'h' used
+					by V2 cpus.  */
+#define RH_S		(R6H + 1)    /* 5bit register field 'h' used
+					by V2 cpus.  */
+  { 5, 5, 0, ARC_OPERAND_IR, insert_rhv2, extract_rhv2 },
+#define R5Hdup		(R5H + 1)
+#define RH_Sdup		(R5H + 1)
+  { 5, 5, 0, ARC_OPERAND_IR | ARC_OPERAND_DUPLICATE,
+    insert_rhv2, extract_rhv2 },
+
+#define RG		(R5Hdup + 1)
+#define G_S		(R5Hdup + 1)
+  { 5, 5, 0, ARC_OPERAND_IR, insert_g_s, extract_g_s },
+
+  /* Fix registers.  */
+#define R0		(RG + 1)
+#define R0_S		(RG + 1)
+  { 0, 0, 0, ARC_OPERAND_IR, insert_r0, extract_r0 },
+#define R1		(R0 + 1)
+#define R1_S		(R0 + 1)
+  { 1, 0, 0, ARC_OPERAND_IR, insert_r1, extract_r1 },
+#define R2		(R1 + 1)
+#define R2_S		(R1 + 1)
+  { 2, 0, 0, ARC_OPERAND_IR, insert_r2, extract_r2 },
+#define R3		(R2 + 1)
+#define R3_S		(R2 + 1)
+  { 2, 0, 0, ARC_OPERAND_IR, insert_r3, extract_r3 },
+#define RSP		(R3 + 1)
+#define SP_S		(R3 + 1)
+  { 5, 0, 0, ARC_OPERAND_IR, insert_sp, extract_sp },
+#define SPdup		(RSP + 1)
+#define SP_Sdup		(RSP + 1)
+  { 5, 0, 0, ARC_OPERAND_IR | ARC_OPERAND_DUPLICATE, insert_sp, extract_sp },
+#define GP		(SPdup + 1)
+#define GP_S		(SPdup + 1)
+  { 5, 0, 0, ARC_OPERAND_IR, insert_gp, extract_gp },
+
+#define PCL_S		(GP + 1)
+  { 1, 0, 0, ARC_OPERAND_IR | ARC_OPERAND_NCHK, insert_pcl, extract_pcl },
+
+#define BLINK		(PCL_S + 1)
+#define BLINK_S		(PCL_S + 1)
+  { 5, 0, 0, ARC_OPERAND_IR, insert_blink, extract_blink },
+
+#define ILINK1		(BLINK + 1)
+  { 5, 0, 0, ARC_OPERAND_IR, insert_ilink1, extract_ilink1 },
+#define ILINK2		(ILINK1 + 1)
+  { 5, 0, 0, ARC_OPERAND_IR, insert_ilink2, extract_ilink2 },
+
+  /* Long immediate.  */
+#define LIMM		(ILINK2 + 1)
+#define LIMM_S		(ILINK2 + 1)
+  { 32, 0, BFD_RELOC_ARC_32_ME, ARC_OPERAND_LIMM, insert_limm, 0 },
+#define LIMMdup		(LIMM + 1)
+  { 32, 0, 0, ARC_OPERAND_LIMM | ARC_OPERAND_DUPLICATE, insert_limm, 0 },
+
+  /* Special operands.  */
+#define ZA		(LIMMdup + 1)
+#define ZB		(LIMMdup + 1)
+#define ZA_S		(LIMMdup + 1)
+#define ZB_S		(LIMMdup + 1)
+#define ZC_S		(LIMMdup + 1)
+  { 0, 0, 0, ARC_OPERAND_UNSIGNED, insert_za, 0 },
+
+#define RRANGE_EL	(ZA + 1)
+  { 4, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK | ARC_OPERAND_TRUNCATE,
+    insert_rrange, extract_rrange},
+#define FP_EL		(RRANGE_EL + 1)
+  { 1, 0, 0, ARC_OPERAND_IR | ARC_OPERAND_IGNORE | ARC_OPERAND_NCHK,
+    insert_fpel, extract_fpel },
+#define BLINK_EL	(FP_EL + 1)
+  { 1, 0, 0, ARC_OPERAND_IR | ARC_OPERAND_IGNORE | ARC_OPERAND_NCHK,
+    insert_blinkel, extract_blinkel },
+#define PCL_EL		(BLINK_EL + 1)
+  { 1, 0, 0, ARC_OPERAND_IR | ARC_OPERAND_IGNORE | ARC_OPERAND_NCHK,
+    insert_pclel, extract_pclel },
+
+  /* Fake operand to handle the T flag.  */
+#define BRAKET		(PCL_EL + 1)
+#define BRAKETdup	(PCL_EL + 1)
+  { 0, 0, 0, ARC_OPERAND_FAKE | ARC_OPERAND_BRAKET, 0, 0 },
+
+  /* Fake operand to handle the T flag.  */
+#define FKT_T		(BRAKET + 1)
+  { 1, 3, 0, ARC_OPERAND_FAKE, insert_Ybit, 0 },
+  /* Fake operand to handle the T flag.  */
+#define FKT_NT		(FKT_T + 1)
+  { 1, 3, 0, ARC_OPERAND_FAKE, insert_NYbit, 0 },
+
+  /* UIMM6_20 mask = 00000000000000000000111111000000.  */
+#define UIMM6_20       (FKT_NT + 1)
+  {6, 0, 0, ARC_OPERAND_UNSIGNED, insert_uimm6_20, extract_uimm6_20},
+
+  /* SIMM12_20 mask = 00000000000000000000111111222222.  */
+#define SIMM12_20	(UIMM6_20 + 1)
+  {12, 0, 0, ARC_OPERAND_SIGNED, insert_simm12_20, extract_simm12_20},
+
+  /* SIMM3_5_S mask = 0000011100000000.  */
+#define SIMM3_5_S	(SIMM12_20 + 1)
+  {3, 0, 0, ARC_OPERAND_SIGNED | ARC_OPERAND_NCHK,
+   insert_simm3s, extract_simm3s},
+
+  /* UIMM7_A32_11_S mask = 0000000000011111.  */
+#define UIMM7_A32_11_S	     (SIMM3_5_S + 1)
+  {7, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_ALIGNED32
+   | ARC_OPERAND_TRUNCATE | ARC_OPERAND_IGNORE, insert_uimm7_a32_11_s,
+   extract_uimm7_a32_11_s},
+
+  /* UIMM7_9_S mask = 0000000001111111.  */
+#define UIMM7_9_S	(UIMM7_A32_11_S + 1)
+  {7, 0, 0, ARC_OPERAND_UNSIGNED, insert_uimm7_9_s, extract_uimm7_9_s},
+
+  /* UIMM3_13_S mask = 0000000000000111.  */
+#define UIMM3_13_S	 (UIMM7_9_S + 1)
+  {3, 0, 0, ARC_OPERAND_UNSIGNED, insert_uimm3_13_s, extract_uimm3_13_s},
+
+  /* SIMM11_A32_7_S mask = 0000000111111111.  */
+#define SIMM11_A32_7_S	     (UIMM3_13_S + 1)
+  {11, 0, BFD_RELOC_ARC_SDA16_LD2, ARC_OPERAND_SIGNED | ARC_OPERAND_ALIGNED32
+   | ARC_OPERAND_TRUNCATE, insert_simm11_a32_7_s, extract_simm11_a32_7_s},
+
+  /* UIMM6_13_S mask = 0000000002220111.  */
+#define UIMM6_13_S	 (SIMM11_A32_7_S + 1)
+  {6, 0, 0, ARC_OPERAND_UNSIGNED, insert_uimm6_13_s, extract_uimm6_13_s},
+  /* UIMM5_11_S mask = 0000000000011111.  */
+#define UIMM5_11_S	 (UIMM6_13_S + 1)
+  {5, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_IGNORE, insert_uimm5_11_s,
+   extract_uimm5_11_s},
+
+  /* SIMM9_A16_8 mask = 00000000111111102000000000000000.  */
+#define SIMM9_A16_8	  (UIMM5_11_S + 1)
+  {9, 0, -SIMM9_A16_8, ARC_OPERAND_SIGNED | ARC_OPERAND_ALIGNED16
+   | ARC_OPERAND_PCREL | ARC_OPERAND_TRUNCATE, insert_simm9_a16_8,
+   extract_simm9_a16_8},
+
+  /* UIMM6_8 mask = 00000000000000000000111111000000.	 */
+#define UIMM6_8	      (SIMM9_A16_8 + 1)
+  {6, 0, 0, ARC_OPERAND_UNSIGNED, insert_uimm6_8, extract_uimm6_8},
+
+  /* SIMM21_A16_5 mask = 00000111111111102222222222000000.  */
+#define SIMM21_A16_5	   (UIMM6_8 + 1)
+  {21, 0, BFD_RELOC_ARC_S21H_PCREL, ARC_OPERAND_SIGNED
+   | ARC_OPERAND_ALIGNED16 | ARC_OPERAND_TRUNCATE,
+   insert_simm21_a16_5, extract_simm21_a16_5},
+
+  /* SIMM25_A16_5 mask = 00000111111111102222222222003333.  */
+#define SIMM25_A16_5	   (SIMM21_A16_5 + 1)
+  {25, 0, BFD_RELOC_ARC_S25H_PCREL, ARC_OPERAND_SIGNED
+   | ARC_OPERAND_ALIGNED16 | ARC_OPERAND_TRUNCATE | ARC_OPERAND_PCREL,
+   insert_simm25_a16_5, extract_simm25_a16_5},
+
+  /* SIMM10_A16_7_S mask = 0000000111111111.  */
+#define SIMM10_A16_7_S	     (SIMM25_A16_5 + 1)
+  {10, 0, -SIMM10_A16_7_S, ARC_OPERAND_SIGNED | ARC_OPERAND_ALIGNED16
+   | ARC_OPERAND_TRUNCATE | ARC_OPERAND_PCREL, insert_simm10_a16_7_s,
+   extract_simm10_a16_7_s},
+
+#define SIMM10_A16_7_Sbis    (SIMM10_A16_7_S + 1)
+  {10, 0, -SIMM10_A16_7_Sbis, ARC_OPERAND_SIGNED | ARC_OPERAND_ALIGNED16
+   | ARC_OPERAND_TRUNCATE, insert_simm10_a16_7_s, extract_simm10_a16_7_s},
+
+  /* SIMM7_A16_10_S mask = 0000000000111111.  */
+#define SIMM7_A16_10_S	     (SIMM10_A16_7_Sbis + 1)
+  {7, 0, -SIMM7_A16_10_S, ARC_OPERAND_SIGNED | ARC_OPERAND_ALIGNED16
+   | ARC_OPERAND_TRUNCATE | ARC_OPERAND_PCREL, insert_simm7_a16_10_s,
+   extract_simm7_a16_10_s},
+
+  /* SIMM21_A32_5 mask = 00000111111111002222222222000000.  */
+#define SIMM21_A32_5	   (SIMM7_A16_10_S + 1)
+  {21, 0, BFD_RELOC_ARC_S21W_PCREL, ARC_OPERAND_SIGNED | ARC_OPERAND_ALIGNED32
+   | ARC_OPERAND_TRUNCATE | ARC_OPERAND_PCREL, insert_simm21_a32_5,
+   extract_simm21_a32_5},
+
+  /* SIMM25_A32_5 mask = 00000111111111002222222222003333.  */
+#define SIMM25_A32_5	   (SIMM21_A32_5 + 1)
+  {25, 0, BFD_RELOC_ARC_S25W_PCREL, ARC_OPERAND_SIGNED | ARC_OPERAND_ALIGNED32
+   | ARC_OPERAND_TRUNCATE | ARC_OPERAND_PCREL, insert_simm25_a32_5,
+   extract_simm25_a32_5},
+
+  /* SIMM13_A32_5_S mask = 0000011111111111.  */
+#define SIMM13_A32_5_S	     (SIMM25_A32_5 + 1)
+  {13, 0, BFD_RELOC_ARC_S13_PCREL, ARC_OPERAND_SIGNED | ARC_OPERAND_ALIGNED32
+   | ARC_OPERAND_TRUNCATE | ARC_OPERAND_PCREL, insert_simm13_a32_5_s,
+   extract_simm13_a32_5_s},
+
+  /* SIMM8_A16_9_S mask = 0000000001111111.  */
+#define SIMM8_A16_9_S	    (SIMM13_A32_5_S + 1)
+  {8, 0, -SIMM8_A16_9_S, ARC_OPERAND_SIGNED | ARC_OPERAND_ALIGNED16
+   | ARC_OPERAND_TRUNCATE | ARC_OPERAND_PCREL, insert_simm8_a16_9_s,
+   extract_simm8_a16_9_s},
+
+  /* UIMM3_23 mask = 00000000000000000000000111000000.  */
+#define UIMM3_23       (SIMM8_A16_9_S + 1)
+  {3, 0, 0, ARC_OPERAND_UNSIGNED, insert_uimm3_23, extract_uimm3_23},
+
+  /* UIMM10_6_S mask = 0000001111111111.  */
+#define UIMM10_6_S	 (UIMM3_23 + 1)
+  {10, 0, 0, ARC_OPERAND_UNSIGNED, insert_uimm10_6_s, extract_uimm10_6_s},
+
+  /* UIMM6_11_S mask = 0000002200011110.  */
+#define UIMM6_11_S	 (UIMM10_6_S + 1)
+  {6, 0, 0, ARC_OPERAND_UNSIGNED, insert_uimm6_11_s, extract_uimm6_11_s},
+
+  /* SIMM9_8 mask = 00000000111111112000000000000000.	 */
+#define SIMM9_8	      (UIMM6_11_S + 1)
+  {9, 0, BFD_RELOC_ARC_SDA_LDST, ARC_OPERAND_SIGNED | ARC_OPERAND_IGNORE,
+   insert_simm9_8, extract_simm9_8},
+
+  /* UIMM10_A32_8_S mask = 0000000011111111.  */
+#define UIMM10_A32_8_S	     (SIMM9_8 + 1)
+  {10, 0, -UIMM10_A32_8_S, ARC_OPERAND_UNSIGNED | ARC_OPERAND_ALIGNED32
+   | ARC_OPERAND_TRUNCATE | ARC_OPERAND_PCREL, insert_uimm10_a32_8_s,
+   extract_uimm10_a32_8_s},
+
+  /* SIMM9_7_S mask = 0000000111111111.  */
+#define SIMM9_7_S	(UIMM10_A32_8_S + 1)
+  {9, 0, BFD_RELOC_ARC_SDA16_LD, ARC_OPERAND_SIGNED, insert_simm9_7_s,
+   extract_simm9_7_s},
+
+  /* UIMM6_A16_11_S mask = 0000000000011111.  */
+#define UIMM6_A16_11_S	     (SIMM9_7_S + 1)
+  {6, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_ALIGNED16
+   | ARC_OPERAND_TRUNCATE  | ARC_OPERAND_IGNORE, insert_uimm6_a16_11_s,
+   extract_uimm6_a16_11_s},
+
+  /* UIMM5_A32_11_S mask = 0000020000011000.  */
+#define UIMM5_A32_11_S	     (UIMM6_A16_11_S + 1)
+  {5, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_ALIGNED32
+   | ARC_OPERAND_TRUNCATE | ARC_OPERAND_IGNORE, insert_uimm5_a32_11_s,
+   extract_uimm5_a32_11_s},
+
+  /* SIMM11_A32_13_S mask = 0000022222200111.	 */
+#define SIMM11_A32_13_S	      (UIMM5_A32_11_S + 1)
+  {11, 0, BFD_RELOC_ARC_SDA16_ST2, ARC_OPERAND_SIGNED | ARC_OPERAND_ALIGNED32
+   | ARC_OPERAND_TRUNCATE, insert_simm11_a32_13_s, extract_simm11_a32_13_s},
+
+  /* UIMM7_13_S mask = 0000000022220111.  */
+#define UIMM7_13_S	 (SIMM11_A32_13_S + 1)
+  {7, 0, 0, ARC_OPERAND_UNSIGNED, insert_uimm7_13_s, extract_uimm7_13_s},
+
+  /* UIMM6_A16_21 mask = 00000000000000000000011111000000.  */
+#define UIMM6_A16_21	   (UIMM7_13_S + 1)
+  {6, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_ALIGNED16
+   | ARC_OPERAND_TRUNCATE, insert_uimm6_a16_21, extract_uimm6_a16_21},
+
+  /* UIMM7_11_S mask = 0000022200011110.  */
+#define UIMM7_11_S	 (UIMM6_A16_21 + 1)
+  {7, 0, 0, ARC_OPERAND_UNSIGNED, insert_uimm7_11_s, extract_uimm7_11_s},
+
+  /* UIMM7_A16_20 mask = 00000000000000000000111111000000.  */
+#define UIMM7_A16_20	   (UIMM7_11_S + 1)
+  {7, 0, -UIMM7_A16_20, ARC_OPERAND_UNSIGNED | ARC_OPERAND_ALIGNED16
+   | ARC_OPERAND_TRUNCATE | ARC_OPERAND_PCREL, insert_uimm7_a16_20,
+   extract_uimm7_a16_20},
+
+  /* SIMM13_A16_20 mask = 00000000000000000000111111222222.  */
+#define SIMM13_A16_20	    (UIMM7_A16_20 + 1)
+  {13, 0, -SIMM13_A16_20, ARC_OPERAND_SIGNED | ARC_OPERAND_ALIGNED16
+   | ARC_OPERAND_TRUNCATE | ARC_OPERAND_PCREL, insert_simm13_a16_20,
+   extract_simm13_a16_20},
+
+  /* UIMM8_8_S mask = 0000000011111111.  */
+#define UIMM8_8_S	(SIMM13_A16_20 + 1)
+  {8, 0, 0, ARC_OPERAND_UNSIGNED, insert_uimm8_8_s, extract_uimm8_8_s},
+
+  /* W6 mask = 00000000000000000000111111000000.  */
+#define W6	 (UIMM8_8_S + 1)
+  {6, 0, 0, ARC_OPERAND_SIGNED, insert_w6, extract_w6},
+
+  /* UIMM6_5_S mask = 0000011111100000.  */
+#define UIMM6_5_S	(W6 + 1)
+  {6, 0, 0, ARC_OPERAND_UNSIGNED, insert_uimm6_5_s, extract_uimm6_5_s},
+
+  /* ARC NPS400 Support: See comment near head of file.  */
+#define NPS_R_DST_3B	(UIMM6_5_S + 1)
+  { 3, 24, 0, ARC_OPERAND_IR | ARC_OPERAND_NCHK, insert_nps_3bit_dst, extract_nps_3bit_dst },
+
+#define NPS_R_SRC1_3B	(NPS_R_DST_3B + 1)
+  { 3, 24, 0, ARC_OPERAND_IR | ARC_OPERAND_DUPLICATE | ARC_OPERAND_NCHK, insert_nps_3bit_dst, extract_nps_3bit_dst },
+
+#define NPS_R_SRC2_3B	(NPS_R_SRC1_3B + 1)
+  { 3, 21, 0, ARC_OPERAND_IR | ARC_OPERAND_NCHK, insert_nps_3bit_src2, extract_nps_3bit_src2 },
+
+#define NPS_R_DST	(NPS_R_SRC2_3B + 1)
+  { 6, 21, 0, ARC_OPERAND_IR, NULL, NULL },
+
+#define NPS_R_SRC1	(NPS_R_DST + 1)
+  { 6, 21, 0, ARC_OPERAND_IR | ARC_OPERAND_DUPLICATE, NULL, NULL },
+
+#define NPS_BITOP_DST_POS	(NPS_R_SRC1 + 1)
+  { 5, 5, 0, ARC_OPERAND_UNSIGNED, 0, 0 },
+
+#define NPS_BITOP_SRC_POS	(NPS_BITOP_DST_POS + 1)
+  { 5, 0, 0, ARC_OPERAND_UNSIGNED, 0, 0 },
+
+#define NPS_BITOP_SIZE		(NPS_BITOP_SRC_POS + 1)
+  { 5, 10, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_bitop_size, extract_nps_bitop_size },
+
+#define NPS_BITOP_DST_POS_SZ    (NPS_BITOP_SIZE + 1)
+  { 5, 0, 0, ARC_OPERAND_UNSIGNED, insert_nps_dst_pos_and_size, extract_nps_dst_pos_and_size },
+
+#define NPS_BITOP_SIZE_2B	(NPS_BITOP_DST_POS_SZ + 1)
+  { 0, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_bitop_size_2b, extract_nps_bitop_size_2b },
+
+#define NPS_BITOP_UIMM8		(NPS_BITOP_SIZE_2B + 1)
+  { 8, 0, 0, ARC_OPERAND_UNSIGNED, insert_nps_bitop_uimm8, extract_nps_bitop_uimm8 },
+
+#define NPS_UIMM16		(NPS_BITOP_UIMM8 + 1)
+  { 16, 0, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_SIMM16              (NPS_UIMM16 + 1)
+  { 16, 0, 0, ARC_OPERAND_SIGNED, NULL, NULL },
+
+#define NPS_RFLT_UIMM6		(NPS_SIMM16 + 1)
+  { 6, 6, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_rflt_uimm6, extract_nps_rflt_uimm6 },
+
+#define NPS_XLDST_UIMM16	(NPS_RFLT_UIMM6 + 1)
+  { 16, 0, BFD_RELOC_ARC_NPS_CMEM16, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_cmem_uimm16, extract_nps_cmem_uimm16 },
+
+#define NPS_SRC2_POS           (NPS_XLDST_UIMM16 + 1)
+  { 0, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_src2_pos, extract_nps_src2_pos },
+
+#define NPS_SRC1_POS           (NPS_SRC2_POS + 1)
+  { 0, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_src1_pos, extract_nps_src1_pos },
+
+#define NPS_ADDB_SIZE          (NPS_SRC1_POS + 1)
+  { 0, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_addb_size, extract_nps_addb_size },
+
+#define NPS_ANDB_SIZE          (NPS_ADDB_SIZE + 1)
+  { 0, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_andb_size, extract_nps_andb_size },
+
+#define NPS_FXORB_SIZE         (NPS_ANDB_SIZE + 1)
+  { 0, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_fxorb_size, extract_nps_fxorb_size },
+
+#define NPS_WXORB_SIZE         (NPS_FXORB_SIZE + 1)
+  { 0, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_wxorb_size, extract_nps_wxorb_size },
+
+#define NPS_R_XLDST    (NPS_WXORB_SIZE + 1)
+  { 6, 5, 0, ARC_OPERAND_IR, NULL, NULL },
+
+#define NPS_DIV_UIMM4    (NPS_R_XLDST + 1)
+  { 4, 5, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_QCMP_SIZE         (NPS_DIV_UIMM4 + 1)
+  { 0, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_qcmp_size, extract_nps_qcmp_size },
+
+#define NPS_QCMP_M1         (NPS_QCMP_SIZE + 1)
+  { 1, 14, 0, ARC_OPERAND_UNSIGNED, NULL, extract_nps_qcmp_m1 },
+
+#define NPS_QCMP_M2         (NPS_QCMP_M1 + 1)
+  { 1, 15, 0, ARC_OPERAND_UNSIGNED, NULL, extract_nps_qcmp_m2 },
+
+#define NPS_QCMP_M3         (NPS_QCMP_M2 + 1)
+  { 4, 5, 0, ARC_OPERAND_UNSIGNED, NULL, extract_nps_qcmp_m3 },
+
+#define NPS_CALC_ENTRY_SIZE	(NPS_QCMP_M3 + 1)
+  { 0, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_calc_entry_size, extract_nps_calc_entry_size },
+
+#define NPS_R_DST_3B_SHORT	(NPS_CALC_ENTRY_SIZE + 1)
+  { 3, 8, 0, ARC_OPERAND_IR | ARC_OPERAND_NCHK, insert_nps_3bit_dst_short, extract_nps_3bit_dst_short },
+
+#define NPS_R_SRC1_3B_SHORT	(NPS_R_DST_3B_SHORT + 1)
+  { 3, 8, 0, ARC_OPERAND_IR | ARC_OPERAND_DUPLICATE | ARC_OPERAND_NCHK, insert_nps_3bit_dst_short, extract_nps_3bit_dst_short },
+
+#define NPS_R_SRC2_3B_SHORT	(NPS_R_SRC1_3B_SHORT + 1)
+  { 3, 5, 0, ARC_OPERAND_IR | ARC_OPERAND_NCHK, insert_nps_3bit_src2_short, extract_nps_3bit_src2_short },
+
+#define NPS_BITOP_SIZE2		(NPS_R_SRC2_3B_SHORT + 1)
+  { 5, 25, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_bitop2_size, extract_nps_bitop2_size },
+
+#define NPS_BITOP_SIZE1		(NPS_BITOP_SIZE2 + 1)
+  { 5, 20, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_bitop1_size, extract_nps_bitop1_size },
+
+#define NPS_BITOP_DST_POS3_POS4		(NPS_BITOP_SIZE1 + 1)
+  { 5, 0, 0, ARC_OPERAND_UNSIGNED, insert_nps_bitop_dst_pos3_pos4, extract_nps_bitop_dst_pos3_pos4 },
+
+#define NPS_BITOP_DST_POS4		(NPS_BITOP_DST_POS3_POS4 + 1)
+  { 5, 10, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BITOP_DST_POS3		(NPS_BITOP_DST_POS4 + 1)
+  { 5, 5, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BITOP_DST_POS2		(NPS_BITOP_DST_POS3 + 1)
+  { 5, 15, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BITOP_DST_POS1		(NPS_BITOP_DST_POS2 + 1)
+  { 5, 10, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BITOP_SRC_POS4		(NPS_BITOP_DST_POS1 + 1)
+  { 5, 0, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BITOP_SRC_POS3		(NPS_BITOP_SRC_POS4 + 1)
+  { 5, 20, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BITOP_SRC_POS2		(NPS_BITOP_SRC_POS3 + 1)
+  { 5, 5, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BITOP_SRC_POS1		(NPS_BITOP_SRC_POS2 + 1)
+  { 5, 0, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BITOP_MOD4_MSB		(NPS_BITOP_SRC_POS1 + 1)
+  { 2, 0, 0, ARC_OPERAND_UNSIGNED, insert_nps_bitop_mod4_msb, extract_nps_bitop_mod4_msb },
+
+#define NPS_BITOP_MOD4_LSB		(NPS_BITOP_MOD4_MSB + 1)
+  { 2, 0, 0, ARC_OPERAND_UNSIGNED, insert_nps_bitop_mod4_lsb, extract_nps_bitop_mod4_lsb },
+
+#define NPS_BITOP_MOD3		(NPS_BITOP_MOD4_LSB + 1)
+  { 2, 29, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BITOP_MOD2		(NPS_BITOP_MOD3 + 1)
+  { 2, 27, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BITOP_MOD1		(NPS_BITOP_MOD2 + 1)
+  { 2, 25, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BITOP_INS_EXT	(NPS_BITOP_MOD1 + 1)
+  { 5, 20, 0, ARC_OPERAND_UNSIGNED, insert_nps_bitop_ins_ext, extract_nps_bitop_ins_ext },
+
+#define NPS_FIELD_START_POS     (NPS_BITOP_INS_EXT + 1)
+  { 3, 3, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_FIELD_SIZE          (NPS_FIELD_START_POS + 1)
+  { 3, 6, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_field_size, extract_nps_field_size },
+
+#define NPS_SHIFT_FACTOR        (NPS_FIELD_SIZE + 1)
+  { 3, 9, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_shift_factor, extract_nps_shift_factor },
+
+#define NPS_BITS_TO_SCRAMBLE    (NPS_SHIFT_FACTOR + 1)
+  { 3, 12, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_bits_to_scramble, extract_nps_bits_to_scramble },
+
+#define NPS_SRC2_POS_5B         (NPS_BITS_TO_SCRAMBLE + 1)
+  { 5, 5, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BDLEN_MAX_LEN       (NPS_SRC2_POS_5B + 1)
+  { 8, 5, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_bdlen_max_len, extract_nps_bdlen_max_len },
+
+#define NPS_MIN_HOFS       (NPS_BDLEN_MAX_LEN + 1)
+  { 4, 6, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_min_hofs, extract_nps_min_hofs },
+
+#define NPS_PSBC       (NPS_MIN_HOFS + 1)
+  { 1, 11, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_DPI_DST       (NPS_PSBC + 1)
+  { 5, 11, 0, ARC_OPERAND_IR, NULL, NULL },
+
+  /* NPS_DPI_SRC1_3B is similar to NPS_R_SRC1_3B but doesn't duplicate an operand */
+#define NPS_DPI_SRC1_3B    (NPS_DPI_DST + 1)
+  { 3, 24, 0, ARC_OPERAND_IR | ARC_OPERAND_NCHK, insert_nps_3bit_dst, extract_nps_3bit_dst },
+
+#define NPS_HASH_WIDTH       (NPS_DPI_SRC1_3B + 1)
+  { 5, 6, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_hash_width, extract_nps_hash_width },
+
+#define NPS_HASH_PERM       (NPS_HASH_WIDTH + 1)
+  { 3, 2, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_HASH_NONLINEAR       (NPS_HASH_PERM + 1)
+  { 1, 5, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_HASH_BASEMAT       (NPS_HASH_NONLINEAR + 1)
+  { 2, 0, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_HASH_LEN       (NPS_HASH_BASEMAT + 1)
+  { 3, 2, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_hash_len, extract_nps_hash_len },
+
+#define NPS_HASH_OFS       (NPS_HASH_LEN + 1)
+  { 2, 0, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_HASH_BASEMAT2       (NPS_HASH_OFS + 1)
+  { 1, 5, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_E4BY_INDEX0       (NPS_HASH_BASEMAT2 + 1)
+  { 3, 8, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_E4BY_INDEX1       (NPS_E4BY_INDEX0 + 1)
+  { 3, 5, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_E4BY_INDEX2       (NPS_E4BY_INDEX1 + 1)
+  { 3, 2, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_E4BY_INDEX3       (NPS_E4BY_INDEX2 + 1)
+  { 2, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_index3, extract_nps_index3 },
+
+#define COLON      (NPS_E4BY_INDEX3 + 1)
+  { 0, 0, 0, ARC_OPERAND_COLON | ARC_OPERAND_FAKE, NULL, NULL },
+
+#define NPS_BD      (COLON + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_bd, extract_nps_bd },
+
+#define NPS_JID      (NPS_BD + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_jid, extract_nps_jid },
+
+#define NPS_LBD      (NPS_JID + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_lbd, extract_nps_lbd },
+
+#define NPS_MBD      (NPS_LBD + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_mbd, extract_nps_mbd },
+
+#define NPS_SD      (NPS_MBD + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_sd, extract_nps_sd },
+
+#define NPS_SM      (NPS_SD + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_sm, extract_nps_sm },
+
+#define NPS_XA      (NPS_SM + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_xa, extract_nps_xa },
+
+#define NPS_XD      (NPS_XA + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_xd, extract_nps_xd },
+
+#define NPS_CD      (NPS_XD + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_cd, extract_nps_cd },
+
+#define NPS_CBD      (NPS_CD + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_cbd, extract_nps_cbd },
+
+#define NPS_CJID      (NPS_CBD + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_cjid, extract_nps_cjid },
+
+#define NPS_CLBD      (NPS_CJID + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_clbd, extract_nps_clbd },
+
+#define NPS_CM      (NPS_CLBD + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_cm, extract_nps_cm },
+
+#define NPS_CSD      (NPS_CM + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_csd, extract_nps_csd },
+
+#define NPS_CXA      (NPS_CSD + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_cxa, extract_nps_cxa },
+
+#define NPS_CXD      (NPS_CXA + 1)
+  { 0, 0, 0, ARC_OPERAND_ADDRTYPE | ARC_OPERAND_NCHK, insert_nps_cxd, extract_nps_cxd },
+
+#define NPS_BD_TYPE     (NPS_CXD + 1)
+  { 1, 10, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_BMU_NUM     (NPS_BD_TYPE + 1)
+  { 3, 0, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_bd_num_buff, extract_nps_bd_num_buff },
+
+#define NPS_PMU_NXT_DST     (NPS_BMU_NUM + 1)
+  { 4, 6, 0, ARC_OPERAND_UNSIGNED, NULL, NULL },
+
+#define NPS_PMU_NUM_JOB     (NPS_PMU_NXT_DST + 1)
+  { 2, 6, 0, ARC_OPERAND_UNSIGNED | ARC_OPERAND_NCHK, insert_nps_pmu_num_job, extract_nps_pmu_num_job },
+};
+
+const unsigned arc_num_operands = ARRAY_SIZE (arc_operands);
+
+const unsigned arc_Toperand = FKT_T;
+const unsigned arc_NToperand = FKT_NT;
+
+const unsigned char arg_none[]		 = { 0 };
+const unsigned char arg_32bit_rarbrc[]	 = { RA, RB, RC };
+const unsigned char arg_32bit_zarbrc[]	 = { ZA, RB, RC };
+const unsigned char arg_32bit_rbrbrc[]	 = { RB, RBdup, RC };
+const unsigned char arg_32bit_rarbu6[]	 = { RA, RB, UIMM6_20 };
+const unsigned char arg_32bit_zarbu6[]	 = { ZA, RB, UIMM6_20 };
+const unsigned char arg_32bit_rbrbu6[]	 = { RB, RBdup, UIMM6_20 };
+const unsigned char arg_32bit_rbrbs12[]	 = { RB, RBdup, SIMM12_20 };
+const unsigned char arg_32bit_ralimmrc[] = { RA, LIMM, RC };
+const unsigned char arg_32bit_rarblimm[] = { RA, RB, LIMM };
+const unsigned char arg_32bit_zalimmrc[] = { ZA, LIMM, RC };
+const unsigned char arg_32bit_zarblimm[] = { ZA, RB, LIMM };
+
+const unsigned char arg_32bit_rbrblimm[] = { RB, RBdup, LIMM };
+const unsigned char arg_32bit_ralimmu6[] = { RA, LIMM, UIMM6_20 };
+const unsigned char arg_32bit_zalimmu6[] = { ZA, LIMM, UIMM6_20 };
+
+const unsigned char arg_32bit_zalimms12[]  = { ZA, LIMM, SIMM12_20 };
+const unsigned char arg_32bit_ralimmlimm[] = { RA, LIMM, LIMMdup };
+const unsigned char arg_32bit_zalimmlimm[] = { ZA, LIMM, LIMMdup };
+
+const unsigned char arg_32bit_rbrc[]   = { RB, RC };
+const unsigned char arg_32bit_zarc[]   = { ZA, RC };
+const unsigned char arg_32bit_rbu6[]   = { RB, UIMM6_20 };
+const unsigned char arg_32bit_zau6[]   = { ZA, UIMM6_20 };
+const unsigned char arg_32bit_rblimm[] = { RB, LIMM };
+const unsigned char arg_32bit_zalimm[] = { ZA, LIMM };
+
+const unsigned char arg_32bit_limmrc[]   = { LIMM, RC };
+const unsigned char arg_32bit_limmu6[]   = { LIMM, UIMM6_20 };
+const unsigned char arg_32bit_limms12[]  = { LIMM, SIMM12_20 };
+const unsigned char arg_32bit_limmlimm[] = { LIMM, LIMMdup };
+
+const unsigned char arg_32bit_rc[]   = { RC };
+const unsigned char arg_32bit_u6[]   = { UIMM6_20 };
+const unsigned char arg_32bit_limm[] = { LIMM };
+
+/* The opcode table.
+
+   The format of the opcode table is:
+
+   NAME OPCODE MASK CPU CLASS SUBCLASS { OPERANDS } { FLAGS }.
+
+   The table is organised such that, where possible, all instructions with
+   the same mnemonic are together in a block.  When the assembler searches
+   for a suitable instruction the entries are checked in table order, so
+   more specific, or specialised cases should appear earlier in the table.
+
+   As an example, consider two instructions 'add a,b,u6' and 'add
+   a,b,limm'.  The first takes a 6-bit immediate that is encoded within the
+   32-bit instruction, while the second takes a 32-bit immediate that is
+   encoded in a follow-on 32-bit, making the total instruction length
+   64-bits.  In this case the u6 variant must appear first in the table, as
+   all u6 immediates could also be encoded using the 'limm' extension,
+   however, we want to use the shorter instruction wherever possible.
+
+   It is possible though to split instructions with the same mnemonic into
+   multiple groups.  However, the instructions are still checked in table
+   order, even across groups.  The only time that instructions with the
+   same mnemonic should be split into different groups is when different
+   variants of the instruction appear in different architectures, in which
+   case, grouping all instructions from a particular architecture together
+   might be preferable to merging the instruction into the main instruction
+   table.
+
+   An example of this split instruction groups can be found with the 'sync'
+   instruction.  The core arc architecture provides a 'sync' instruction,
+   while the nps instruction set extension provides 'sync.rd' and
+   'sync.wr'.  The rd/wr flags are instruction flags, not part of the
+   mnemonic, so we end up with two groups for the sync instruction, the
+   first within the core arc instruction table, and the second within the
+   nps extension instructions.  */
+const struct arc_opcode arc_opcodes[] =
+{
+#include "arc-tbl.h"
+#include "arc-nps400-tbl.h"
+#include "arc-ext-tbl.h"
+
+  { NULL, 0, 0, 0, 0, 0, { 0 }, { 0 } }
+};
+
+/* List with special cases instructions and the applicable flags.  */
+const struct arc_flag_special arc_flag_special_cases[] =
+{
+  { "b", { F_ALWAYS, F_RA, F_EQUAL, F_ZERO, F_NOTEQUAL, F_NOTZERO, F_POZITIVE,
+	   F_PL, F_NEGATIVE, F_MINUS, F_CARRY, F_CARRYSET, F_LOWER, F_CARRYCLR,
+	   F_NOTCARRY, F_HIGHER, F_OVERFLOWSET, F_OVERFLOW, F_NOTOVERFLOW,
+	   F_OVERFLOWCLR, F_GT, F_GE, F_LT, F_LE, F_HI, F_LS, F_PNZ, F_NULL } },
+  { "bl", { F_ALWAYS, F_RA, F_EQUAL, F_ZERO, F_NOTEQUAL, F_NOTZERO, F_POZITIVE,
+	    F_PL, F_NEGATIVE, F_MINUS, F_CARRY, F_CARRYSET, F_LOWER, F_CARRYCLR,
+	    F_NOTCARRY, F_HIGHER, F_OVERFLOWSET, F_OVERFLOW, F_NOTOVERFLOW,
+	    F_OVERFLOWCLR, F_GT, F_GE, F_LT, F_LE, F_HI, F_LS, F_PNZ, F_NULL } },
+  { "br", { F_ALWAYS, F_RA, F_EQUAL, F_ZERO, F_NOTEQUAL, F_NOTZERO, F_POZITIVE,
+	    F_PL, F_NEGATIVE, F_MINUS, F_CARRY, F_CARRYSET, F_LOWER, F_CARRYCLR,
+	    F_NOTCARRY, F_HIGHER, F_OVERFLOWSET, F_OVERFLOW, F_NOTOVERFLOW,
+	    F_OVERFLOWCLR, F_GT, F_GE, F_LT, F_LE, F_HI, F_LS, F_PNZ, F_NULL } },
+  { "j", { F_ALWAYS, F_RA, F_EQUAL, F_ZERO, F_NOTEQUAL, F_NOTZERO, F_POZITIVE,
+	   F_PL, F_NEGATIVE, F_MINUS, F_CARRY, F_CARRYSET, F_LOWER, F_CARRYCLR,
+	   F_NOTCARRY, F_HIGHER, F_OVERFLOWSET, F_OVERFLOW, F_NOTOVERFLOW,
+	   F_OVERFLOWCLR, F_GT, F_GE, F_LT, F_LE, F_HI, F_LS, F_PNZ, F_NULL } },
+  { "jl", { F_ALWAYS, F_RA, F_EQUAL, F_ZERO, F_NOTEQUAL, F_NOTZERO, F_POZITIVE,
+	    F_PL, F_NEGATIVE, F_MINUS, F_CARRY, F_CARRYSET, F_LOWER, F_CARRYCLR,
+	    F_NOTCARRY, F_HIGHER, F_OVERFLOWSET, F_OVERFLOW, F_NOTOVERFLOW,
+	    F_OVERFLOWCLR, F_GT, F_GE, F_LT, F_LE, F_HI, F_LS, F_PNZ, F_NULL } },
+  { "lp", { F_ALWAYS, F_RA, F_EQUAL, F_ZERO, F_NOTEQUAL, F_NOTZERO, F_POZITIVE,
+	    F_PL, F_NEGATIVE, F_MINUS, F_CARRY, F_CARRYSET, F_LOWER, F_CARRYCLR,
+	    F_NOTCARRY, F_HIGHER, F_OVERFLOWSET, F_OVERFLOW, F_NOTOVERFLOW,
+	    F_OVERFLOWCLR, F_GT, F_GE, F_LT, F_LE, F_HI, F_LS, F_PNZ, F_NULL } },
+  { "set", { F_ALWAYS, F_RA, F_EQUAL, F_ZERO, F_NOTEQUAL, F_NOTZERO, F_POZITIVE,
+	     F_PL, F_NEGATIVE, F_MINUS, F_CARRY, F_CARRYSET, F_LOWER, F_CARRYCLR,
+	     F_NOTCARRY, F_HIGHER, F_OVERFLOWSET, F_OVERFLOW, F_NOTOVERFLOW,
+	     F_OVERFLOWCLR, F_GT, F_GE, F_LT, F_LE, F_HI, F_LS, F_PNZ, F_NULL } },
+  { "ld", { F_SIZEB17, F_SIZEW17, F_H17, F_NULL } },
+  { "st", { F_SIZEB1, F_SIZEW1, F_H1, F_NULL } }
+};
+
+const unsigned arc_num_flag_special = ARRAY_SIZE (arc_flag_special_cases);
+
+/* Relocations.  */
+const struct arc_reloc_equiv_tab arc_reloc_equiv[] =
+{
+  { "sda", "ld", { F_ASFAKE, F_H1, F_NULL },
+    BFD_RELOC_ARC_SDA_LDST, BFD_RELOC_ARC_SDA_LDST1 },
+  { "sda", "st", { F_ASFAKE, F_H1, F_NULL },
+    BFD_RELOC_ARC_SDA_LDST, BFD_RELOC_ARC_SDA_LDST1 },
+  { "sda", "ld", { F_ASFAKE, F_SIZEW7, F_NULL },
+    BFD_RELOC_ARC_SDA_LDST, BFD_RELOC_ARC_SDA_LDST1 },
+  { "sda", "st", { F_ASFAKE, F_SIZEW7, F_NULL },
+    BFD_RELOC_ARC_SDA_LDST, BFD_RELOC_ARC_SDA_LDST1 },
+
+  /* Next two entries will cover the undefined behavior ldb/stb with
+     address scaling.  */
+  { "sda", "ld", { F_ASFAKE, F_SIZEB7, F_NULL },
+    BFD_RELOC_ARC_SDA_LDST, BFD_RELOC_ARC_SDA_LDST },
+  { "sda", "st", { F_ASFAKE, F_SIZEB7, F_NULL },
+    BFD_RELOC_ARC_SDA_LDST, BFD_RELOC_ARC_SDA_LDST},
+
+  { "sda", "ld", { F_ASFAKE, F_NULL },
+    BFD_RELOC_ARC_SDA_LDST, BFD_RELOC_ARC_SDA_LDST2 },
+  { "sda", "st", { F_ASFAKE, F_NULL },
+    BFD_RELOC_ARC_SDA_LDST, BFD_RELOC_ARC_SDA_LDST2},
+  { "sda", "ldd", { F_ASFAKE, F_NULL },
+    BFD_RELOC_ARC_SDA_LDST, BFD_RELOC_ARC_SDA_LDST2 },
+  { "sda", "std", { F_ASFAKE, F_NULL },
+    BFD_RELOC_ARC_SDA_LDST, BFD_RELOC_ARC_SDA_LDST2},
+
+  /* Short instructions.  */
+  { "sda", 0, { F_NULL }, BFD_RELOC_ARC_SDA16_LD, BFD_RELOC_ARC_SDA16_LD },
+  { "sda", 0, { F_NULL }, -SIMM10_A16_7_Sbis, BFD_RELOC_ARC_SDA16_LD1 },
+  { "sda", 0, { F_NULL }, BFD_RELOC_ARC_SDA16_LD2, BFD_RELOC_ARC_SDA16_LD2 },
+  { "sda", 0, { F_NULL }, BFD_RELOC_ARC_SDA16_ST2, BFD_RELOC_ARC_SDA16_ST2 },
+
+  { "sda", 0, { F_NULL }, BFD_RELOC_ARC_32_ME, BFD_RELOC_ARC_SDA32_ME },
+  { "sda", 0, { F_NULL }, BFD_RELOC_ARC_SDA_LDST, BFD_RELOC_ARC_SDA_LDST },
+
+  { "plt", 0, { F_NULL }, BFD_RELOC_ARC_S25H_PCREL,
+    BFD_RELOC_ARC_S25H_PCREL_PLT },
+  { "plt", 0, { F_NULL }, BFD_RELOC_ARC_S21H_PCREL,
+    BFD_RELOC_ARC_S21H_PCREL_PLT },
+  { "plt", 0, { F_NULL }, BFD_RELOC_ARC_S25W_PCREL,
+    BFD_RELOC_ARC_S25W_PCREL_PLT },
+  { "plt", 0, { F_NULL }, BFD_RELOC_ARC_S21W_PCREL,
+    BFD_RELOC_ARC_S21W_PCREL_PLT },
+
+  { "plt", 0, { F_NULL }, BFD_RELOC_ARC_32_ME, BFD_RELOC_ARC_PLT32 }
+};
+
+const unsigned arc_num_equiv_tab = ARRAY_SIZE (arc_reloc_equiv);
+
+const struct arc_pseudo_insn arc_pseudo_insns[] =
+{
+  { "push", "st", ".aw", 5, { { RC, 0, 0, 0 }, { BRAKET, 1, 0, 1 },
+			      { RB, 1, 28, 2 }, { SIMM9_8, 1, -4, 3 },
+			      { BRAKETdup, 1, 0, 4} } },
+  { "pop", "ld", ".ab", 5, { { RA, 0, 0, 0 }, { BRAKET, 1, 0, 1 },
+			     { RB, 1, 28, 2 }, { SIMM9_8, 1, 4, 3 },
+			     { BRAKETdup, 1, 0, 4} } },
+
+  { "brgt", "brlt", NULL, 3, { { RB, 0, 0, 1 }, { RC, 0, 0, 0 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brgt", "brge", NULL, 3, { { RB, 0, 0, 0 }, { UIMM6_8, 0, 1, 1 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brgt", "brlt", NULL, 3, { { RB, 0, 0, 1 }, { LIMM, 0, 0, 0 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brgt", "brlt", NULL, 3, { { LIMM, 0, 0, 1 }, { RC, 0, 0, 0 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brgt", "brge", NULL, 3, { { LIMM, 0, 0, 0 }, { UIMM6_8, 0, 1, 1 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+
+  { "brhi", "brlo", NULL, 3, { { RB, 0, 0, 1 }, { RC, 0, 0, 0 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brhi", "brhs", NULL, 3, { { RB, 0, 0, 0 }, { UIMM6_8, 0, 1, 1 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brhi", "brlo", NULL, 3, { { RB, 0, 0, 1 }, { LIMM, 0, 0, 0 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brhi", "brlo", NULL, 3, { { LIMM, 0, 0, 1 }, { RC, 0, 0, 0 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brhi", "brhs", NULL, 3, { { LIMM, 0, 0, 0 }, { UIMM6_8, 0, 1, 1 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+
+  { "brle", "brge", NULL, 3, { { RB, 0, 0, 1 }, { RC, 0, 0, 0 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brle", "brlt", NULL, 3, { { RB, 0, 0, 0 }, { UIMM6_8, 0, 1, 1 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brle", "brge", NULL, 3, { { RB, 0, 0, 1 }, { LIMM, 0, 0, 0 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brle", "brge", NULL, 3, { { LIMM, 0, 0, 1 }, { RC, 0, 0, 0 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brle", "brlt", NULL, 3, { { LIMM, 0, 0, 0 }, { UIMM6_8, 0, 1, 1 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+
+  { "brls", "brhs", NULL, 3, { { RB, 0, 0, 1 }, { RC, 0, 0, 0 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brls", "brlo", NULL, 3, { { RB, 0, 0, 0 }, { UIMM6_8, 0, 1, 1 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brls", "brhs", NULL, 3, { { RB, 0, 0, 1 }, { LIMM, 0, 0, 0 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brls", "brhs", NULL, 3, { { LIMM, 0, 0, 1 }, { RC, 0, 0, 0 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+  { "brls", "brlo", NULL, 3, { { LIMM, 0, 0, 0 }, { UIMM6_8, 0, 1, 1 },
+			       { SIMM9_A16_8, 0, 0, 2 } } },
+};
+
+const unsigned arc_num_pseudo_insn =
+  sizeof (arc_pseudo_insns) / sizeof (*arc_pseudo_insns);
+
+const struct arc_aux_reg arc_aux_regs[] =
+{
+#undef DEF
+#define DEF(ADDR, CPU, SUBCLASS, NAME)		\
+  { ADDR, CPU, SUBCLASS, #NAME, sizeof (#NAME)-1 },
+
+#include "arc-regs.h"
+
+#undef DEF
+};
+
+const unsigned arc_num_aux_regs = ARRAY_SIZE (arc_aux_regs);
+
+/* NOTE: The order of this array MUST be consistent with 'enum
+   arc_rlx_types' located in tc-arc.h!  */
+const struct arc_opcode arc_relax_opcodes[] =
+{
+  { NULL, 0x0, 0x0, 0x0, ARITH, NONE, { UNUSED }, { 0 } },
+
+  /* bl_s s13 11111sssssssssss.  */
+  { "bl_s", 0x0000F800, 0x0000F800, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, BRANCH, NONE,
+    { SIMM13_A32_5_S }, { 0 }},
+
+  /* bl<.d> s25 00001sssssssss10SSSSSSSSSSNRtttt.  */
+  { "bl", 0x08020000, 0xF8030000, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, BRANCH, NONE,
+    { SIMM25_A32_5 }, { C_D }},
+
+  /* b_s s10 1111000sssssssss.  */
+  { "b_s", 0x0000F000, 0x0000FE00, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, BRANCH, NONE,
+    { SIMM10_A16_7_S }, { 0 }},
+
+  /* b<.d> s25 00000ssssssssss1SSSSSSSSSSNRtttt.  */
+  { "b", 0x00010000, 0xF8010000, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, BRANCH, NONE,
+    { SIMM25_A16_5 }, { C_D }},
+
+  /* add_s c,b,u3 01101bbbccc00uuu.  Wants UIMM3_13_S_PCREL.  */
+  { "add_s", 0x00006800, 0x0000F818, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, ARITH, NONE,
+    { RC_S, RB_S, UIMM3_13_S }, { 0 }},
+
+  /* add<.f> a,b,u6 00100bbb01000000FBBBuuuuuuAAAAAA.  Wants
+     UIMM6_20_PCREL.  */
+  { "add", 0x20400000, 0xF8FF0000, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, ARITH, NONE,
+    { RA, RB, UIMM6_20 }, { C_F }},
+
+  /* add<.f> a,b,limm 00100bbb00000000FBBB111110AAAAAA.  */
+  { "add", 0x20000F80, 0xF8FF0FC0, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, ARITH, NONE,
+    { RA, RB, LIMM }, { C_F }},
+
+  /* ld_s c,b,u7 10000bbbcccuuuuu.  Wants UIMM7_A32_11_S_PCREL.  */
+  { "ld_s", 0x00008000, 0x0000F800, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, MEMORY, NONE,
+    { RC_S, BRAKET, RB_S, UIMM7_A32_11_S, BRAKETdup }, { 0 }},
+
+  /* ld<.di><.aa><.x><zz> a,b,s9
+     00010bbbssssssssSBBBDaaZZXAAAAAA.  Wants SIMM9_8_PCREL.  */
+  { "ld", 0x10000000, 0xF8000000, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, MEMORY, NONE,
+    { RA, BRAKET, RB, SIMM9_8, BRAKETdup },
+    { C_ZZ23, C_DI20, C_AA21, C_X25 }},
+
+  /* ld<.di><.aa><.x><zz> a,b,limm 00100bbbaa110ZZXDBBB111110AAAAAA.  */
+  { "ld", 0x20300F80, 0xF8380FC0, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, MEMORY, NONE,
+    { RA, BRAKET, RB, LIMM, BRAKETdup },
+    { C_ZZ13, C_DI16, C_AA8, C_X15 }},
+
+  /* mov_s b,u8 11011bbbuuuuuuuu.  Wants UIMM8_8_S_PCREL.  */
+  { "mov_s", 0x0000D800, 0x0000F800, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, MEMORY, NONE,
+    { RB_S, UIMM8_8_S }, { 0 }},
+
+  /* mov<.f> b,s12 00100bbb10001010FBBBssssssSSSSSS.  Wants
+     SIMM12_20_PCREL.  */
+  { "mov", 0x208A0000, 0xF8FF0000, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, MEMORY, NONE,
+    { RB, SIMM12_20 }, { C_F }},
+
+  /* mov<.f> b,limm 00100bbb00001010FBBB111110RRRRRR.  */
+  { "mov", 0x200A0F80, 0xF8FF0FC0, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, MEMORY, NONE,
+    { RB, LIMM }, { C_F }},
+
+  /* sub_s c,b,u3 01101bbbccc01uuu.  UIMM3_13_S_PCREL.  */
+  { "sub_s", 0x00006808, 0x0000F818, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, ARITH, NONE,
+    { RC_S, RB_S, UIMM3_13_S }, { 0 }},
+
+  /* sub<.f> a,b,u6 00100bbb01000010FBBBuuuuuuAAAAAA.
+     UIMM6_20_PCREL.  */
+  { "sub", 0x20420000, 0xF8FF0000, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, ARITH, NONE,
+    { RA, RB, UIMM6_20 }, { C_F }},
+
+  /* sub<.f> a,b,limm 00100bbb00000010FBBB111110AAAAAA.  */
+  { "sub", 0x20020F80, 0xF8FF0FC0, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, ARITH, NONE,
+    { RA, RB, LIMM }, { C_F }},
+
+  /* mpy<.f> a,b,u6 00100bbb01011010FBBBuuuuuuAAAAAA.
+     UIMM6_20_PCREL.  */
+  { "mpy", 0x205A0000, 0xF8FF0000, ARC_OPCODE_ARC700 | ARC_OPCODE_ARCv2EM
+    | ARC_OPCODE_ARCv2HS, ARITH, MPY6E, { RA, RB, UIMM6_20 }, { C_F }},
+
+  /* mpy<.f> a,b,limm 00100bbb00011010FBBB111110AAAAAA.  */
+  { "mpy", 0x201A0F80, 0xF8FF0FC0, ARC_OPCODE_ARC700 | ARC_OPCODE_ARCv2EM
+    | ARC_OPCODE_ARCv2HS, ARITH, MPY6E, { RA, RB, LIMM }, { C_F }},
+
+  /* mov<.f><.cc> b,u6 00100bbb11001010FBBBuuuuuu1QQQQQ.
+     UIMM6_20_PCREL.  */
+  { "mov", 0x20CA0020, 0xF8FF0020, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, MEMORY, NONE,
+    { RB, UIMM6_20 }, { C_F, C_CC }},
+
+  /* mov<.f><.cc> b,limm 00100bbb11001010FBBB1111100QQQQQ.  */
+  { "mov", 0x20CA0F80, 0xF8FF0FE0, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, MEMORY, NONE,
+    { RB, LIMM }, { C_F, C_CC }},
+
+  /* add<.f><.cc> b,b,u6 00100bbb11000000FBBBuuuuuu1QQQQQ.
+     UIMM6_20_PCREL.  */
+  { "add", 0x20C00020, 0xF8FF0020, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, ARITH, NONE,
+    { RB, RBdup, UIMM6_20 }, { C_F, C_CC }},
+
+  /* add<.f><.cc> b,b,limm 00100bbb11000000FBBB1111100QQQQQ.  */
+  { "add", 0x20C00F80, 0xF8FF0FE0, ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700
+    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS, ARITH, NONE,
+    { RB, RBdup, LIMM }, { C_F, C_CC }}
+};
+
+const unsigned arc_num_relax_opcodes = ARRAY_SIZE (arc_relax_opcodes);
+
+/* The following instructions are all either 48 or 64 bits long, and
+   require special handling in the assembler and disassembler.
+
+   The first part of each ARC_LONG_OPCODE is the base ARC_OPCODE, this is
+   either the 16 or 32 bit base instruction, and its opcode list will
+   always end in a LIMM.
+
+   The rest of the ARC_LONG_OPCODE describes how to build the LIMM from the
+   instruction operands.  There are therefore two lists of operands for
+   each ARC_LONG_OPCODE, the second list contains operands that are merged
+   into the limm template, in the same way that a standard 32-bit
+   instruction is built.  This generated limm is then added to the list of
+   tokens that is passed to the standard instruction encoder, along with
+   the first list of operands (from the base arc_opcode).
+
+   The first list of operands then, describes how to build the base
+   instruction, and includes the 32-bit limm that was previously generated
+   as the last operand.
+
+   In most cases operands are either encoded into the base instruction or
+   into the limm.  When this happens the operand slot will be filled with
+   an operand identifier in one list, and will be IGNORED in the other
+   list, this special operand value causes the operand to be ignored,
+   without being encoded at this point.
+
+   However, in some cases, an operand is split between the base instruction
+   and the 32-bit limm, in this case the operand slot will be filled in
+   both operand lists (see mov4b for one example of this).   */
+const struct arc_long_opcode arc_long_opcodes[] =
+  {
+    /* mrgb - (48 bit instruction).  */
+    { { "mrgb", 0x5803, 0xf81f, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B_SHORT, NPS_R_SRC1_3B_SHORT, NPS_R_SRC2_3B_SHORT, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, LIMM }, { 0 }},
+      0x00000000, 0x80000000, { IGNORED, IGNORED, IGNORED, NPS_BITOP_DST_POS1, NPS_BITOP_SRC_POS1, NPS_BITOP_SIZE1, NPS_BITOP_DST_POS2, NPS_BITOP_SRC_POS2, NPS_BITOP_SIZE2 }},
+
+    /* mrgb.cl - (48 bit instruction).  */
+    { { "mrgb", 0x5803, 0xf81f, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B_SHORT, NPS_R_SRC1_3B_SHORT, NPS_R_SRC2_3B_SHORT, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, LIMM }, { C_NPS_CL }},
+      0x80000000, 0x80000000, { IGNORED, IGNORED, IGNORED, NPS_BITOP_DST_POS1, NPS_BITOP_SRC_POS1, NPS_BITOP_SIZE1, NPS_BITOP_DST_POS2, NPS_BITOP_SRC_POS2, NPS_BITOP_SIZE2 }},
+
+    /* mov2b - (48 bit instruction).  */
+    { { "mov2b", 0x5800, 0xf81f, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B_SHORT, NPS_R_SRC1_3B_SHORT, NPS_R_SRC2_3B_SHORT,  IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, LIMM }, { 0 }},
+      0x00000000, 0x80000000, { IGNORED, IGNORED, IGNORED, NPS_BITOP_DST_POS1, NPS_BITOP_MOD1, NPS_BITOP_SRC_POS1, NPS_BITOP_DST_POS2, NPS_BITOP_MOD2, NPS_BITOP_SRC_POS2 }},
+
+    /* mov2b.cl - (48 bit instruction).  */
+    { { "mov2b", 0x5800, 0xf81f, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B_SHORT, NPS_R_SRC2_3B_SHORT,  IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, LIMM }, { C_NPS_CL }},
+      0x80000000, 0x80000000, { IGNORED, IGNORED, NPS_BITOP_DST_POS1, NPS_BITOP_MOD1, NPS_BITOP_SRC_POS1, NPS_BITOP_DST_POS2, NPS_BITOP_MOD2, NPS_BITOP_SRC_POS2 }},
+
+    /* ext4 - (48 bit instruction).  */
+    { { "ext4b", 0x5801, 0xf81f, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B_SHORT, NPS_R_SRC1_3B_SHORT, NPS_R_SRC2_3B_SHORT,  IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, LIMM }, { 0 }},
+      0x00000000, 0x80000000, { IGNORED, IGNORED, IGNORED, NPS_BITOP_INS_EXT, NPS_BITOP_SRC_POS1, NPS_BITOP_SRC_POS2, NPS_BITOP_DST_POS1, NPS_BITOP_DST_POS2 }},
+
+    /* ext4.cl - (48 bit instruction).  */
+    { { "ext4b", 0x5801, 0xf81f, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B_SHORT, NPS_R_SRC2_3B_SHORT,  IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, LIMM }, { C_NPS_CL }},
+      0x80000000, 0x80000000, { IGNORED, IGNORED, NPS_BITOP_INS_EXT, NPS_BITOP_SRC_POS1, NPS_BITOP_SRC_POS2, NPS_BITOP_DST_POS1, NPS_BITOP_DST_POS2 }},
+
+    /* ins4 - (48 bit instruction).  */
+    { { "ins4b", 0x5802, 0xf81f, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B_SHORT, NPS_R_SRC1_3B_SHORT, NPS_R_SRC2_3B_SHORT,  IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, LIMM }, { 0 }},
+      0x00000000, 0x80000000, { IGNORED, IGNORED, IGNORED, NPS_BITOP_SRC_POS1, NPS_BITOP_SRC_POS2, NPS_BITOP_DST_POS1, NPS_BITOP_DST_POS2, NPS_BITOP_INS_EXT }},
+
+    /* ins4.cl - (48 bit instruction).  */
+    { { "ins4b", 0x5802, 0xf81f, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B_SHORT, NPS_R_SRC2_3B_SHORT,  IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, LIMM }, { C_NPS_CL }},
+      0x80000000, 0x80000000, { IGNORED, IGNORED, NPS_BITOP_SRC_POS1, NPS_BITOP_SRC_POS2, NPS_BITOP_DST_POS1, NPS_BITOP_DST_POS2, NPS_BITOP_INS_EXT }},
+
+    /* mov3b - (64 bit instruction).  */
+    { { "mov3b", 0x58100000, 0xf81f801f, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B, NPS_R_SRC1_3B, NPS_R_SRC2_3B, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, NPS_BITOP_DST_POS3_POS4, IGNORED, IGNORED, LIMM }, { 0 }},
+      0x80000000, 0x80000000, { IGNORED, IGNORED, IGNORED, NPS_BITOP_DST_POS1, NPS_BITOP_MOD1, NPS_BITOP_SRC_POS1, NPS_BITOP_DST_POS2, NPS_BITOP_MOD2, NPS_BITOP_SRC_POS2, IGNORED, NPS_BITOP_MOD3, NPS_BITOP_SRC_POS3 }},
+
+    /* mov4b - (64 bit instruction).  */
+    { { "mov4b", 0x58100000, 0xf81f0000, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B, NPS_R_SRC1_3B, NPS_R_SRC2_3B, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, NPS_BITOP_DST_POS3, IGNORED, IGNORED, NPS_BITOP_DST_POS4, NPS_BITOP_MOD4_LSB, NPS_BITOP_SRC_POS4, LIMM }, { 0 }},
+      0x00000000, 0x00000000, { IGNORED, IGNORED, IGNORED, NPS_BITOP_DST_POS1, NPS_BITOP_MOD1, NPS_BITOP_SRC_POS1, NPS_BITOP_DST_POS2, NPS_BITOP_MOD2, NPS_BITOP_SRC_POS2, IGNORED, NPS_BITOP_MOD3, NPS_BITOP_SRC_POS3, IGNORED, NPS_BITOP_MOD4_MSB, IGNORED}},
+
+    /* mov3bcl - (64 bit instruction).  */
+    { { "mov3bcl", 0x58110000, 0xf81f801f, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B, NPS_R_SRC2_3B, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, NPS_BITOP_DST_POS3_POS4, IGNORED, IGNORED, LIMM }, { 0 }},
+      0x80000000, 0x80000000, { IGNORED, IGNORED, NPS_BITOP_DST_POS1, NPS_BITOP_MOD1, NPS_BITOP_SRC_POS1, NPS_BITOP_DST_POS2, NPS_BITOP_MOD2, NPS_BITOP_SRC_POS2, IGNORED, NPS_BITOP_MOD3, NPS_BITOP_SRC_POS3 }},
+
+    /* mov4bcl - (64 bit instruction).  */
+    { { "mov4bcl", 0x58110000, 0xf81f0000, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B, NPS_R_SRC2_3B, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, NPS_BITOP_DST_POS3, IGNORED, IGNORED, NPS_BITOP_DST_POS4, NPS_BITOP_MOD4_LSB, NPS_BITOP_SRC_POS4, LIMM }, { 0 }},
+      0x00000000, 0x00000000, { IGNORED, IGNORED, NPS_BITOP_DST_POS1, NPS_BITOP_MOD1, NPS_BITOP_SRC_POS1, NPS_BITOP_DST_POS2, NPS_BITOP_MOD2, NPS_BITOP_SRC_POS2, IGNORED, NPS_BITOP_MOD3, NPS_BITOP_SRC_POS3, IGNORED, NPS_BITOP_MOD4_MSB, IGNORED}},
+
+    /* mov3b.cl - (64 bit instruction).  */
+    { { "mov3b", 0x58110000, 0xf81f801f, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B, NPS_R_SRC2_3B, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, NPS_BITOP_DST_POS3_POS4, IGNORED, IGNORED, LIMM }, { C_NPS_CL }},
+      0x80000000, 0x80000000, { IGNORED, IGNORED, NPS_BITOP_DST_POS1, NPS_BITOP_MOD1, NPS_BITOP_SRC_POS1, NPS_BITOP_DST_POS2, NPS_BITOP_MOD2, NPS_BITOP_SRC_POS2, IGNORED, NPS_BITOP_MOD3, NPS_BITOP_SRC_POS3 }},
+
+    /* mov4b.cl - (64 bit instruction).  */
+    { { "mov4b", 0x58110000, 0xf81f0000, ARC_OPCODE_ARC700, BITOP, NPS400, { NPS_R_DST_3B, NPS_R_SRC2_3B, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, IGNORED, NPS_BITOP_DST_POS3, IGNORED, IGNORED, NPS_BITOP_DST_POS4, NPS_BITOP_MOD4_LSB, NPS_BITOP_SRC_POS4, LIMM }, { C_NPS_CL }},
+      0x00000000, 0x00000000, { IGNORED, IGNORED, NPS_BITOP_DST_POS1, NPS_BITOP_MOD1, NPS_BITOP_SRC_POS1, NPS_BITOP_DST_POS2, NPS_BITOP_MOD2, NPS_BITOP_SRC_POS2, IGNORED, NPS_BITOP_MOD3, NPS_BITOP_SRC_POS3, IGNORED, NPS_BITOP_MOD4_MSB, IGNORED}},
+};
+
+const unsigned arc_num_long_opcodes = ARRAY_SIZE (arc_long_opcodes);

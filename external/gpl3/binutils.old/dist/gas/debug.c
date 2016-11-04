@@ -1,6 +1,5 @@
 /* This file is debug.c
-   Copyright 1987, 1988, 1989, 1990, 1991, 1992, 2000, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

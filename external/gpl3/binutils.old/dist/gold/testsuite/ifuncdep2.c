@@ -2,7 +2,7 @@
 
 #include "ifunc-sel.h"
 
-int global __attribute__ ((visibility ("protected"))) = -1;
+int global __attribute__ ((visibility ("hidden"))) = -1;
 
 static int
 one (void)

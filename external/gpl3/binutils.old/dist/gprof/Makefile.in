@@ -15,6 +15,24 @@
 
 @SET_MAKE@
 
+#
+#   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+#
+
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -56,7 +74,8 @@ am__aclocal_m4_deps = $(top_srcdir)/../bfd/warning.m4 \
 	$(top_srcdir)/../config/progtest.m4 \
 	$(top_srcdir)/../libtool.m4 $(top_srcdir)/../ltoptions.m4 \
 	$(top_srcdir)/../ltsugar.m4 $(top_srcdir)/../ltversion.m4 \
-	$(top_srcdir)/../lt~obsolete.m4 $(top_srcdir)/configure.in
+	$(top_srcdir)/../lt~obsolete.m4 \
+	$(top_srcdir)/../bfd/version.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -74,7 +93,8 @@ am__objects_1 = basic_blocks.$(OBJEXT) call_graph.$(OBJEXT) \
 	hertz.$(OBJEXT) hist.$(OBJEXT) source.$(OBJEXT) \
 	search_list.$(OBJEXT) symtab.$(OBJEXT) sym_ids.$(OBJEXT) \
 	utils.$(OBJEXT) i386.$(OBJEXT) alpha.$(OBJEXT) vax.$(OBJEXT) \
-	tahoe.$(OBJEXT) sparc.$(OBJEXT) mips.$(OBJEXT)
+	tahoe.$(OBJEXT) sparc.$(OBJEXT) mips.$(OBJEXT) \
+	aarch64.$(OBJEXT)
 am_gprof_OBJECTS = $(am__objects_1) flat_bl.$(OBJEXT) \
 	bsd_callg_bl.$(OBJEXT) fsf_callg_bl.$(OBJEXT)
 gprof_OBJECTS = $(am_gprof_OBJECTS)
@@ -291,7 +311,7 @@ AM_CPPFLAGS = -DDEBUG -I../bfd -I$(srcdir)/../include \
 sources = basic_blocks.c call_graph.c cg_arcs.c cg_dfn.c \
 	cg_print.c corefile.c gmon_io.c gprof.c hertz.c hist.c source.c \
 	search_list.c symtab.c sym_ids.c utils.c \
-	i386.c alpha.c vax.c tahoe.c sparc.c mips.c
+	i386.c alpha.c vax.c tahoe.c sparc.c mips.c aarch64.c
 
 gprof_SOURCES = $(sources) flat_bl.c bsd_callg_bl.c fsf_callg_bl.c
 gprof_DEPENDENCIES = ../bfd/libbfd.la ../libiberty/libiberty.a $(LIBINTL_DEP)
@@ -304,9 +324,8 @@ noinst_HEADERS = \
 BUILT_SOURCES = flat_bl.c bsd_callg_bl.c fsf_callg_bl.c
 EXTRA_DIST = $(BUILT_SOURCES) bbconv.pl $(man_MANS)
 
-# We extract version from bfd/configure.in, make sure to rerun configure
-# when BFD's version changes.
-CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/configure.in
+# development.sh is used to determine -Werror default.
+CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/development.sh
 POTFILES = $(sources) $(noinst_HEADERS)
 MANCONF = -Dman
 TEXI2POD = perl $(srcdir)/../etc/texi2pod.pl $(AM_MAKEINFOFLAGS)
@@ -433,6 +452,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/aarch64.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alpha.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/basic_blocks.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bsd_callg_bl.Po@am__quote@
@@ -1022,9 +1042,9 @@ diststuff: $(BUILT_SOURCES) info $(man_MANS)
 %.o:%.m
 
 .m.c:
-	awk -f $(srcdir)/gen-c-prog.awk > ./$*.c \
+	awk -f $(srcdir)/gen-c-prog.awk > $@ \
 	    FUNCTION=`(echo $*|sed -e 's,.*/,,g' -e 's/_bl//')`_blurb \
-	    FILE=$*.m $(srcdir)/$*.m
+	    FILE=$*.m $<
 po/POTFILES.in: @MAINT@ Makefile
 	for f in $(POTFILES); do echo $$f; done | LC_ALL=C sort > tmp \
 	  && mv tmp $(srcdir)/po/POTFILES.in

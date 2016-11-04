@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.339.2.3 2016/08/06 00:19:11 pgoyette Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.339.2.4 2016/11/04 14:49:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.339.2.3 2016/08/06 00:19:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.339.2.4 2016/11/04 14:49:22 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2356,6 +2356,8 @@ ffs_cgupdate(struct ufsmount *mp, int waitfor)
 	int blks;
 	void *space;
 	int i, size, error = 0, allerror = 0;
+
+	UFS_WAPBL_JLOCK_ASSERT(mp);
 
 	allerror = ffs_sbupdate(mp, waitfor);
 	blks = howmany(fs->fs_cssize, fs->fs_fsize);

@@ -1,4 +1,4 @@
-# Copyright 2011-2015 Free Software Foundation, Inc.
+# Copyright 2011-2016 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -45,8 +45,8 @@ if { [gdb_compile_shlib $libsrc1 $lib_sl1 $lib_opts] != ""
 
 clean_restart $executable
 
-gdb_load_shlibs $lib_sl1
-gdb_load_shlibs $lib_sl2
+gdb_load_shlib $lib_sl1
+gdb_load_shlib $lib_sl2
 
 if ![runto_main] {
     fail "Can't run to main to check for trace support"
@@ -56,14 +56,6 @@ if ![runto_main] {
 if { ![gdb_target_supports_trace] } then {
     unsupported "Current target does not support trace"
     return -1
-}
-
-if [is_amd64_regs_target] {
-    set pcreg "rip"
-} elseif [is_x86_like_target] {
-    set pcreg "eip"
-} else {
-    set pcreg "pc"
 }
 
 
@@ -160,8 +152,14 @@ proc tracepoint_change_loc_1 { trace_type } {
 	gdb_test "info trace" \
 	    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+\(|fast \)tracepoint\[ \]+keep y.*\<MULTIPLE\>.*
-4\.1.* in func4.*\tinstalled on target\r\n(4\.2.* in func4.*\tinstalled on target\r\n4\.3.* \<PENDING\>\[\t \]+set_tracepoint|4\.2.* \<PENDING\>\[\t \]+set_tracepoint.*4\.3.* in func4.*\tinstalled on target).*" \
-	    "tracepoint with two locations (unload)"
+(4\.\[1-3].* in func4.*\tinstalled on target.*){2}" \
+	    "tracepoint with two locations - installed (unload)"
+
+	gdb_test "info trace" \
+	    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+\(|fast \)tracepoint\[ \]+keep y.*\<MULTIPLE\>.*
+4\.\[1-3].* \<PENDING\>\[\t \]+set_tracepoint.*" \
+	    "tracepoint with two locations - pending (unload)"
 
 	gdb_test_no_output "tstop"
 
@@ -270,8 +268,14 @@ proc tracepoint_change_loc_2 { trace_type } {
 	gdb_test "info trace" \
 	    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+\(|fast \)tracepoint\[ \]+keep y.*\<MULTIPLE\>.*
-1\.1.* in func4.*\tinstalled on target\r\n(1\.2.* in func4.*\tinstalled on target\r\n1\.3.* \<PENDING\>\[\t \]+set_tracepoint|1\.2.* \<PENDING\>\[\t \]+set_tracepoint\r\n1\.3.* in func4.*\tinstalled on target).*" \
-	    "tracepoint with two locations (unload)"
+(1\.\[1-3].* in func4.*\tinstalled on target.*){2}" \
+	    "tracepoint with two locations - installed (unload)"
+
+	gdb_test "info trace" \
+	    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+\(|fast \)tracepoint\[ \]+keep y.*\<MULTIPLE\>.*
+1\.\[1-3].* \<PENDING\>\[\t \]+set_tracepoint.*" \
+	    "tracepoint with two locations - pending (unload)"
 
 	gdb_test_no_output "tstop"
 
@@ -350,7 +354,7 @@ tracepoint_install_in_trace_disabled "trace"
 
 # Re-compile test case with IPA.
 set libipa [get_in_proc_agent]
-gdb_load_shlibs $libipa
+gdb_load_shlib $libipa
 
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable \
 	  [list debug nowarnings shlib=$libipa shlib=$lib_sl1 shlib_load] ] != "" } {

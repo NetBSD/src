@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2013-2015 Free Software Foundation, Inc.
+   Copyright 2013-2016 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <christian.himpel@intel.com>
 
@@ -16,6 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+extern void loop (void);
 
 int
 main (void)

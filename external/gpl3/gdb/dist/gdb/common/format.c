@@ -1,6 +1,6 @@
 /* Parse a printf-style format string.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -99,12 +99,11 @@ parse_format_string (const char **arg)
 
   /* Need extra space for the '\0's.  Doubling the size is sufficient.  */
 
-  current_substring = xmalloc (strlen (string) * 2 + 1000);
+  current_substring = (char *) xmalloc (strlen (string) * 2 + 1000);
 
   max_pieces = strlen (string) + 2;
 
-  pieces = (struct format_piece *)
-    xmalloc (max_pieces * sizeof (struct format_piece));
+  pieces = XNEWVEC (struct format_piece, max_pieces);
 
   next_frag = 0;
 
@@ -382,7 +381,7 @@ free_format_pieces (struct format_piece *pieces)
 void
 free_format_pieces_cleanup (void *ptr)
 {
-  void **location = ptr;
+  struct format_piece **location = (struct format_piece **) ptr;
 
   if (location == NULL)
     return;

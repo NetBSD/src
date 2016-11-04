@@ -24,6 +24,26 @@
 #include "bfd.h"
 #include "libbfd.h"
 
+static const bfd_arch_info_type *
+nios2_compatible (const bfd_arch_info_type *a,
+		  const bfd_arch_info_type *b)
+{
+  if (a->arch != b->arch)
+    return NULL;
+
+  if (a->bits_per_word != b->bits_per_word)
+    return NULL;
+
+  if (a->mach == bfd_mach_nios2)
+    return a;
+  else if (b->mach == bfd_mach_nios2)
+    return b;
+  else if (a->mach != b->mach)
+    return NULL;
+
+  return a;
+}
+
 #define N(BITS_WORD, BITS_ADDR, NUMBER, PRINT, DEFAULT, NEXT)		\
   {							\
     BITS_WORD, /*  bits in a word */			\
@@ -35,10 +55,20 @@
     PRINT,						\
     3,							\
     DEFAULT,						\
-    bfd_default_compatible,				\
+    nios2_compatible,					\
     bfd_default_scan,					\
     bfd_arch_default_fill,			       	\
     NEXT						\
   }
 
-const bfd_arch_info_type bfd_nios2_arch = N (32, 32, 0, "nios2", TRUE, NULL);
+#define NIOS2R1_NEXT &arch_info_struct[0]
+#define NIOS2R2_NEXT &arch_info_struct[1]
+
+static const bfd_arch_info_type arch_info_struct[] =
+{
+  N (32, 32, bfd_mach_nios2r1, "nios2:r1", FALSE, NIOS2R2_NEXT),
+  N (32, 32, bfd_mach_nios2r2, "nios2:r2", FALSE, NULL),
+};
+
+const bfd_arch_info_type bfd_nios2_arch = 
+  N (32, 32, 0, "nios2", TRUE, NIOS2R1_NEXT);

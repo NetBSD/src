@@ -1,6 +1,5 @@
 /* d30v.h -- Header file for D30V opcode table
-   Copyright 1997, 1998, 1999, 2000, 2001, 2003, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    Written by Martin Hunt (hunt@cygnus.com), Cygnus Solutions
 
    This file is part of GDB, GAS, and the GNU binutils.

@@ -37,6 +37,9 @@ gdb_test_no_output "set scheduler-locking on" \
     "enable scheduler-locking, for thread 2"
 
 # Continue.  Thread 2 exits, and the main thread was already stopped.
+if [is_remote target] {
+    setup_kfail "gdb/14618" "*-*-*"
+}
 gdb_test "continue" \
     "No unwaited-for children left." \
     "continue stops when thread 2 exits"
@@ -58,6 +61,9 @@ gdb_continue_to_breakpoint "break-here-2" ".* break-here-2 .*"
 gdb_test_no_output "set scheduler-locking on" \
     "enable scheduler-locking, for main thread"
 # The main thread exits, and thread 3 was already stopped.
+if [is_remote target] {
+    setup_kfail "gdb/14618" "*-*-*"
+}
 gdb_test "continue" \
     "No unwaited-for children left." \
     "continue stops when the main thread exits"
@@ -65,3 +71,7 @@ gdb_test "continue" \
 gdb_test "info threads" \
 	 "\r\n\[ \t\]*Id\[ \t\]+Target\[ \t\]+Id\[ \t\]+Frame\[ \t\]*\r\n *3 *Thread \[^\r\n\]* \[^\r\n\]*.*The current thread <Thread ID 1> has terminated.*" \
 	 "only thread 3 left, main thread terminated"
+
+# Make sure thread apply all works when we have exited threads in the
+# list.
+gdb_test "thread apply all print 999" " = 999" "thread apply all with exited thread"

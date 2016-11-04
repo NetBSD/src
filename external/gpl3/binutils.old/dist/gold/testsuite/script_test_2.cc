@@ -1,6 +1,6 @@
 // script_test_2.cc -- linker script test 2 for gold  -*- C++ -*-
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -28,15 +28,15 @@
 #include <cstring>
 #include <stdint.h>
 
-extern char start_test_area[];
-extern char start_test_area_1[];
-extern char start_data[];
-extern char end_data[];
-extern char start_fill[];
-extern char end_fill[];
-extern char end_test_area[];
-extern char test_addr[];
-extern char test_addr_alias[];
+extern char start_test_area[] __attribute__((__aligned__(1)));
+extern char start_test_area_1[] __attribute__((__aligned__(1)));
+extern char start_data[] __attribute__((__aligned__(1)));
+extern char end_data[] __attribute__((__aligned__(1)));
+extern char start_fill[] __attribute__((__aligned__(1)));
+extern char end_fill[] __attribute__((__aligned__(1)));
+extern char end_test_area[] __attribute__((__aligned__(1)));
+extern char test_addr[] __attribute__((__aligned__(1)));
+extern char test_addr_alias[] __attribute__((__aligned__(1)));
 
 int
 main(int, char**)

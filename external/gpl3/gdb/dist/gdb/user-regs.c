@@ -1,6 +1,6 @@
 /* User visible, per-frame registers, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -112,13 +112,14 @@ void
 user_reg_add (struct gdbarch *gdbarch, const char *name,
 	      user_reg_read_ftype *xread, const void *baton)
 {
-  struct gdb_user_regs *regs = gdbarch_data (gdbarch, user_regs_data);
+  struct gdb_user_regs *regs
+    = (struct gdb_user_regs *) gdbarch_data (gdbarch, user_regs_data);
 
   if (regs == NULL)
     {
       /* ULGH, called during architecture initialization.  Patch
          things up.  */
-      regs = user_regs_init (gdbarch);
+      regs = (struct gdb_user_regs *) user_regs_init (gdbarch);
       deprecated_set_gdbarch_data (gdbarch, user_regs_data, regs);
     }
   append_user_reg (regs, name, xread, baton,
@@ -154,7 +155,8 @@ user_reg_map_name_to_regnum (struct gdbarch *gdbarch, const char *name,
 
   /* Search the user name space.  */
   {
-    struct gdb_user_regs *regs = gdbarch_data (gdbarch, user_regs_data);
+    struct gdb_user_regs *regs
+      = (struct gdb_user_regs *) gdbarch_data (gdbarch, user_regs_data);
     struct user_reg *reg;
     int nr;
 
@@ -174,7 +176,8 @@ user_reg_map_name_to_regnum (struct gdbarch *gdbarch, const char *name,
 static struct user_reg *
 usernum_to_user_reg (struct gdbarch *gdbarch, int usernum)
 {
-  struct gdb_user_regs *regs = gdbarch_data (gdbarch, user_regs_data);
+  struct gdb_user_regs *regs
+    = (struct gdb_user_regs *) gdbarch_data (gdbarch, user_regs_data);
   struct user_reg *reg;
 
   for (reg = regs->first; reg != NULL; reg = reg->next)
@@ -226,7 +229,7 @@ maintenance_print_user_registers (char *args, int from_tty)
   struct user_reg *reg;
   int regnum;
 
-  regs = gdbarch_data (gdbarch, user_regs_data);
+  regs = (struct gdb_user_regs *) gdbarch_data (gdbarch, user_regs_data);
   regnum = gdbarch_num_regs (gdbarch) + gdbarch_num_pseudo_regs (gdbarch);
 
   fprintf_unfiltered (gdb_stdout, " %-11s %3s\n", "Name", "Nr");

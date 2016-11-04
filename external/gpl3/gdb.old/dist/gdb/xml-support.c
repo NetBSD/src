@@ -313,22 +313,22 @@ gdb_xml_start_element_wrapper (void *data, const XML_Char *name,
 			       const XML_Char **attrs)
 {
   struct gdb_xml_parser *parser = data;
-  volatile struct gdb_exception ex;
 
   if (parser->error.reason < 0)
     return;
 
-  TRY_CATCH (ex, RETURN_MASK_ALL)
+  TRY
     {
       gdb_xml_start_element (data, name, attrs);
     }
-  if (ex.reason < 0)
+  CATCH (ex, RETURN_MASK_ALL)
     {
       parser->error = ex;
 #ifdef HAVE_XML_STOPPARSER
       XML_StopParser (parser->expat_parser, XML_FALSE);
 #endif
     }
+  END_CATCH
 }
 
 /* Handle the end of an element.  DATA is our local XML parser, and
@@ -396,22 +396,22 @@ static void
 gdb_xml_end_element_wrapper (void *data, const XML_Char *name)
 {
   struct gdb_xml_parser *parser = data;
-  volatile struct gdb_exception ex;
 
   if (parser->error.reason < 0)
     return;
 
-  TRY_CATCH (ex, RETURN_MASK_ALL)
+  TRY
     {
       gdb_xml_end_element (data, name);
     }
-  if (ex.reason < 0)
+  CATCH (ex, RETURN_MASK_ALL)
     {
       parser->error = ex;
 #ifdef HAVE_XML_STOPPARSER
       XML_StopParser (parser->expat_parser, XML_FALSE);
 #endif
     }
+  END_CATCH
 }
 
 /* Free a parser and all its associated state.  */

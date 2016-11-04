@@ -529,11 +529,10 @@ ppscm_pretty_print_one_value (SCM printer, struct value **out_value,
 			      struct gdbarch *gdbarch,
 			      const struct language_defn *language)
 {
-  volatile struct gdb_exception except;
   SCM result = SCM_BOOL_F;
 
   *out_value = NULL;
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       int rc;
       pretty_printer_worker_smob *w_smob
@@ -568,6 +567,10 @@ ppscm_pretty_print_one_value (SCM printer, struct value **out_value,
 	    (_("invalid result from pretty-printer to-string"), result);
 	}
     }
+  CATCH (except, RETURN_MASK_ALL)
+    {
+    }
+  END_CATCH
 
   return result;
 }

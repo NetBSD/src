@@ -1,6 +1,6 @@
 // i386.cc -- i386 target support for gold.
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -429,6 +429,21 @@ class Target_i386 : public Sized_target<32, false>
 			  const unsigned char* plocal_symbols,
 			  Relocatable_relocs*);
 
+  // Scan the relocs for --emit-relocs.
+  void
+  emit_relocs_scan(Symbol_table* symtab,
+		   Layout* layout,
+		   Sized_relobj_file<32, false>* object,
+		   unsigned int data_shndx,
+		   unsigned int sh_type,
+		   const unsigned char* prelocs,
+		   size_t reloc_count,
+		   Output_section* output_section,
+		   bool needs_special_offset_handling,
+		   size_t local_symbol_count,
+		   const unsigned char* plocal_syms,
+		   Relocatable_relocs* rr);
+
   // Emit relocations for a section.
   void
   relocate_relocs(const Relocate_info<32, false>*,
@@ -437,7 +452,6 @@ class Target_i386 : public Sized_target<32, false>
 		  size_t reloc_count,
 		  Output_section* output_section,
 		  elfcpp::Elf_types<32>::Elf_Off offset_in_output_section,
-		  const Relocatable_relocs*,
 		  unsigned char* view,
 		  elfcpp::Elf_types<32>::Elf_Addr view_address,
 		  section_size_type view_size,
@@ -486,12 +500,14 @@ class Target_i386 : public Sized_target<32, false>
 
   // Return whether SYM is call to a non-split function.
   bool
-  do_is_call_to_non_split(const Symbol* sym, unsigned int) const;
+  do_is_call_to_non_split(const Symbol* sym, const unsigned char*,
+			  const unsigned char*, section_size_type) const;
 
   // Adjust -fsplit-stack code which calls non-split-stack code.
   void
   do_calls_non_split(Relobj* object, unsigned int shndx,
 		     section_offset_type fnoffset, section_size_type fnsize,
+		     const unsigned char* prelocs, size_t reloc_count,
 		     unsigned char* view, section_size_type view_size,
 		     std::string* from, std::string* to) const;
 
@@ -634,10 +650,9 @@ class Target_i386 : public Sized_target<32, false>
     // Do a relocation.  Return false if the caller should not issue
     // any warnings about this relocation.
     inline bool
-    relocate(const Relocate_info<32, false>*, Target_i386*, Output_section*,
-	     size_t relnum, const elfcpp::Rel<32, false>&,
-	     unsigned int r_type, const Sized_symbol<32>*,
-	     const Symbol_value<32>*,
+    relocate(const Relocate_info<32, false>*, unsigned int,
+	     Target_i386*, Output_section*, size_t, const unsigned char*,
+	     const Sized_symbol<32>*, const Symbol_value<32>*,
 	     unsigned char*, elfcpp::Elf_types<32>::Elf_Addr,
 	     section_size_type);
 
@@ -654,7 +669,6 @@ class Target_i386 : public Sized_target<32, false>
     // Do a TLS General-Dynamic to Initial-Exec transition.
     inline void
     tls_gd_to_ie(const Relocate_info<32, false>*, size_t relnum,
-		 Output_segment* tls_segment,
 		 const elfcpp::Rel<32, false>&, unsigned int r_type,
 		 elfcpp::Elf_types<32>::Elf_Addr value,
 		 unsigned char* view,
@@ -673,7 +687,6 @@ class Target_i386 : public Sized_target<32, false>
     // transition.
     inline void
     tls_desc_gd_to_ie(const Relocate_info<32, false>*, size_t relnum,
-		      Output_segment* tls_segment,
 		      const elfcpp::Rel<32, false>&, unsigned int r_type,
 		      elfcpp::Elf_types<32>::Elf_Addr value,
 		      unsigned char* view,
@@ -724,12 +737,22 @@ class Target_i386 : public Sized_target<32, false>
     Local_dynamic_type local_dynamic_type_;
   };
 
-  // A class which returns the size required for a relocation type,
-  // used while scanning relocs during a relocatable link.
-  class Relocatable_size_for_reloc
+  // A class for inquiring about properties of a relocation,
+  // used while scanning relocs during a relocatable link and
+  // garbage collection.
+  class Classify_reloc :
+      public gold::Default_classify_reloc<elfcpp::SHT_REL, 32, false>
   {
    public:
-    unsigned int
+    typedef Reloc_types<elfcpp::SHT_REL, 32, false>::Reloc Reltype;
+
+    // Return the explicit addend of the relocation (return 0 for SHT_REL).
+    static elfcpp::Elf_types<32>::Elf_Swxword
+    get_r_addend(const Reltype*)
+    { return 0; }
+
+    // Return the size of the addend of the relocation (only used for SHT_REL).
+    static unsigned int
     get_size_for_reloc(unsigned int, Relobj*);
   };
 
@@ -1542,6 +1565,8 @@ Target_i386::plt_entry_count() const
 unsigned int
 Target_i386::first_plt_entry_offset() const
 {
+  if (this->plt_ == NULL)
+    return 0;
   return this->plt_->first_plt_entry_offset();
 }
 
@@ -1550,6 +1575,8 @@ Target_i386::first_plt_entry_offset() const
 unsigned int
 Target_i386::plt_entry_size() const
 {
+  if (this->plt_ == NULL)
+    return 0;
   return this->plt_->get_plt_entry_size();
 }
 
@@ -2371,6 +2398,23 @@ Target_i386::Scan::global(Symbol_table* symtab,
       break;
 
     case elfcpp::R_386_GOTOFF:
+      // A GOT-relative reference must resolve locally.
+      if (!gsym->is_defined())
+        gold_error(_("%s: relocation R_386_GOTOFF against undefined symbol %s"
+		     " cannot be used when making a shared object"),
+		   object->name().c_str(), gsym->name());
+      else if (gsym->is_from_dynobj())
+        gold_error(_("%s: relocation R_386_GOTOFF against external symbol %s"
+		     " cannot be used when making a shared object"),
+		   object->name().c_str(), gsym->name());
+      else if (gsym->is_preemptible())
+        gold_error(_("%s: relocation R_386_GOTOFF against preemptible symbol %s"
+		     " cannot be used when making a shared object"),
+		   object->name().c_str(), gsym->name());
+      // We need a GOT section.
+      target->got_section(symtab, layout);
+      break;
+
     case elfcpp::R_386_GOTPC:
       // We need a GOT section.
       target->got_section(symtab, layout);
@@ -2565,9 +2609,7 @@ Target_i386::gc_process_relocs(Symbol_table* symtab,
 				      size_t local_symbol_count,
 				      const unsigned char* plocal_symbols)
 {
-  gold::gc_process_relocs<32, false, Target_i386, elfcpp::SHT_REL,
-			  Target_i386::Scan,
-			  Target_i386::Relocatable_size_for_reloc>(
+  gold::gc_process_relocs<32, false, Target_i386, Scan, Classify_reloc>(
     symtab,
     layout,
     this,
@@ -2603,8 +2645,7 @@ Target_i386::scan_relocs(Symbol_table* symtab,
       return;
     }
 
-  gold::scan_relocs<32, false, Target_i386, elfcpp::SHT_REL,
-		    Target_i386::Scan>(
+  gold::scan_relocs<32, false, Target_i386, Scan, Classify_reloc>(
     symtab,
     layout,
     this,
@@ -2732,20 +2773,24 @@ Target_i386::Relocate::should_apply_static_reloc(const Sized_symbol<32>* gsym,
 
 inline bool
 Target_i386::Relocate::relocate(const Relocate_info<32, false>* relinfo,
-				       Target_i386* target,
-				       Output_section* output_section,
-				       size_t relnum,
-				       const elfcpp::Rel<32, false>& rel,
-				       unsigned int r_type,
-				       const Sized_symbol<32>* gsym,
-				       const Symbol_value<32>* psymval,
-				       unsigned char* view,
-				       elfcpp::Elf_types<32>::Elf_Addr address,
-				       section_size_type view_size)
+				unsigned int,
+				Target_i386* target,
+				Output_section* output_section,
+				size_t relnum,
+				const unsigned char* preloc,
+				const Sized_symbol<32>* gsym,
+				const Symbol_value<32>* psymval,
+				unsigned char* view,
+				elfcpp::Elf_types<32>::Elf_Addr address,
+				section_size_type view_size)
 {
+  const elfcpp::Rel<32, false> rel(preloc);
+  unsigned int r_type = elfcpp::elf_r_type<32>(rel.get_r_info());
+
   if (this->skip_call_tls_get_addr_)
     {
       if ((r_type != elfcpp::R_386_PLT32
+	   && r_type != elfcpp::R_386_GOT32X
 	   && r_type != elfcpp::R_386_PC32)
 	  || gsym == NULL
 	  || strcmp(gsym->name(), "___tls_get_addr") != 0)
@@ -3037,7 +3082,7 @@ Target_i386::Relocate::relocate_tls(const Relocate_info<32, false>* relinfo,
 	    }
 	  if (optimized_type == tls::TLSOPT_TO_IE)
 	    {
-	      this->tls_gd_to_ie(relinfo, relnum, tls_segment, rel, r_type,
+	      this->tls_gd_to_ie(relinfo, relnum, rel, r_type,
 				 got_offset, view, view_size);
 	      break;
 	    }
@@ -3099,13 +3144,7 @@ Target_i386::Relocate::relocate_tls(const Relocate_info<32, false>* relinfo,
 	    }
 	  if (optimized_type == tls::TLSOPT_TO_IE)
 	    {
-	      if (tls_segment == NULL)
-		{
-		  gold_assert(parameters->errors()->error_count() > 0
-			      || issue_undefined_symbol_error(gsym));
-		  return;
-		}
-	      this->tls_desc_gd_to_ie(relinfo, relnum, tls_segment, rel, r_type,
+	      this->tls_desc_gd_to_ie(relinfo, relnum, rel, r_type,
 				      got_offset, view, view_size);
 	      break;
 	    }
@@ -3280,9 +3319,11 @@ Target_i386::Relocate::tls_gd_to_le(const Relocate_info<32, false>* relinfo,
 				    unsigned char* view,
 				    section_size_type view_size)
 {
-  // leal foo(,%reg,1),%eax; call ___tls_get_addr
+  // leal foo(,%ebx,1),%eax; call ___tls_get_addr@PLT
   //  ==> movl %gs:0,%eax; subl $foo@tpoff,%eax
-  // leal foo(%reg),%eax; call ___tls_get_addr
+  // leal foo(%ebx),%eax; call ___tls_get_addr@PLT
+  //  ==> movl %gs:0,%eax; subl $foo@tpoff,%eax
+  // leal foo(%reg),%eax; call *___tls_get_addr@GOT(%reg)
   //  ==> movl %gs:0,%eax; subl $foo@tpoff,%eax
 
   tls::check_range(relinfo, relnum, rel.get_r_offset(), view_size, -2);
@@ -3290,10 +3331,12 @@ Target_i386::Relocate::tls_gd_to_le(const Relocate_info<32, false>* relinfo,
 
   unsigned char op1 = view[-1];
   unsigned char op2 = view[-2];
+  unsigned char op3 = view[4];
 
   tls::check_tls(relinfo, relnum, rel.get_r_offset(),
 		 op2 == 0x8d || op2 == 0x04);
-  tls::check_tls(relinfo, relnum, rel.get_r_offset(), view[4] == 0xe8);
+  tls::check_tls(relinfo, relnum, rel.get_r_offset(),
+		 op3 == 0xe8 || op3 == 0xff);
 
   int roff = 5;
 
@@ -3307,12 +3350,18 @@ Target_i386::Relocate::tls_gd_to_le(const Relocate_info<32, false>* relinfo,
     }
   else
     {
+      unsigned char reg = op1 & 7;
       tls::check_tls(relinfo, relnum, rel.get_r_offset(),
-		     (op1 & 0xf8) == 0x80 && (op1 & 7) != 4);
-      if (rel.get_r_offset() + 9 < view_size
-	  && view[9] == 0x90)
+		     ((op1 & 0xf8) == 0x80
+		      && reg != 4
+		      && reg != 0
+		      && (op3 == 0xe8 || (view[5] & 0x7) == reg)));
+      if (op3 == 0xff
+	  || (rel.get_r_offset() + 9 < view_size
+	      && view[9] == 0x90))
 	{
-	  // There is a trailing nop.  Use the size byte subl.
+	  // There is an indirect call or a trailing nop.  Use the size
+	  // byte subl.
 	  memcpy(view - 2, "\x65\xa1\0\0\0\0\x81\xe8\0\0\0", 12);
 	  roff = 6;
 	}
@@ -3337,27 +3386,30 @@ Target_i386::Relocate::tls_gd_to_le(const Relocate_info<32, false>* relinfo,
 inline void
 Target_i386::Relocate::tls_gd_to_ie(const Relocate_info<32, false>* relinfo,
 				    size_t relnum,
-				    Output_segment*,
 				    const elfcpp::Rel<32, false>& rel,
 				    unsigned int,
 				    elfcpp::Elf_types<32>::Elf_Addr value,
 				    unsigned char* view,
 				    section_size_type view_size)
 {
-  // leal foo(,%ebx,1),%eax; call ___tls_get_addr
+  // leal foo(,%ebx,1),%eax; call ___tls_get_addr@PLT
   //  ==> movl %gs:0,%eax; addl foo@gotntpoff(%ebx),%eax
-  // leal foo(%ebx),%eax; call ___tls_get_addr; nop
+  // leal foo(%ebx),%eax; call ___tls_get_addr@PLT; nop
   //  ==> movl %gs:0,%eax; addl foo@gotntpoff(%ebx),%eax
+  // leal foo(%reg),%eax; call *___tls_get_addr@GOT(%reg)
+  //  ==> movl %gs:0,%eax; addl foo@gotntpoff(%reg),%eax
 
   tls::check_range(relinfo, relnum, rel.get_r_offset(), view_size, -2);
   tls::check_range(relinfo, relnum, rel.get_r_offset(), view_size, 9);
 
   unsigned char op1 = view[-1];
   unsigned char op2 = view[-2];
+  unsigned char op3 = view[4];
 
   tls::check_tls(relinfo, relnum, rel.get_r_offset(),
 		 op2 == 0x8d || op2 == 0x04);
-  tls::check_tls(relinfo, relnum, rel.get_r_offset(), view[4] == 0xe8);
+  tls::check_tls(relinfo, relnum, rel.get_r_offset(),
+		 op3 == 0xe8 || op3 == 0xff);
 
   int roff;
 
@@ -3371,10 +3423,14 @@ Target_i386::Relocate::tls_gd_to_ie(const Relocate_info<32, false>* relinfo,
     }
   else
     {
+      unsigned char reg = op1 & 7;
       tls::check_range(relinfo, relnum, rel.get_r_offset(), view_size, 10);
       tls::check_tls(relinfo, relnum, rel.get_r_offset(),
-		     (op1 & 0xf8) == 0x80 && (op1 & 7) != 4);
-      tls::check_tls(relinfo, relnum, rel.get_r_offset(), view[9] == 0x90);
+		     ((op1 & 0xf8) == 0x80
+		      && reg != 4
+		      && reg != 0
+		      && ((op3 == 0xe8 && view[9] == 0x90)
+			   || (view[5] & 0x7) == reg)));
       roff = 6;
     }
 
@@ -3432,7 +3488,6 @@ inline void
 Target_i386::Relocate::tls_desc_gd_to_ie(
     const Relocate_info<32, false>* relinfo,
     size_t relnum,
-    Output_segment*,
     const elfcpp::Rel<32, false>& rel,
     unsigned int r_type,
     elfcpp::Elf_types<32>::Elf_Addr value,
@@ -3476,19 +3531,36 @@ Target_i386::Relocate::tls_ld_to_le(const Relocate_info<32, false>* relinfo,
 				    unsigned char* view,
 				    section_size_type view_size)
 {
-  // leal foo(%reg), %eax; call ___tls_get_addr
+  // leal foo(%ebx), %eax; call ___tls_get_addr@PLT
   // ==> movl %gs:0,%eax; nop; leal 0(%esi,1),%esi
+  // leal foo(%reg), %eax; call call *___tls_get_addr@GOT(%reg)
+  // ==> movl %gs:0,%eax; leal (%esi),%esi
 
   tls::check_range(relinfo, relnum, rel.get_r_offset(), view_size, -2);
-  tls::check_range(relinfo, relnum, rel.get_r_offset(), view_size, 9);
+
+  unsigned char op1 = view[-1];
+  unsigned char op2 = view[-2];
+  unsigned char op3 = view[4];
+
+  tls::check_tls(relinfo, relnum, rel.get_r_offset(),
+		 op3 == 0xe8 || op3 == 0xff);
+  tls::check_range(relinfo, relnum, rel.get_r_offset(), view_size,
+		   op3 == 0xe8 ? 9 : 10);
 
   // FIXME: Does this test really always pass?
+  tls::check_tls(relinfo, relnum, rel.get_r_offset(), op2 == 0x8d);
+
+  unsigned char reg = op1 & 7;
   tls::check_tls(relinfo, relnum, rel.get_r_offset(),
-		 view[-2] == 0x8d && view[-1] == 0x83);
+		 ((op1 & 0xf8) == 0x80
+		  && reg != 4
+		  && reg != 0
+		  && (op3 == 0xe8 || (view[5] & 0x7) == reg)));
 
-  tls::check_tls(relinfo, relnum, rel.get_r_offset(), view[4] == 0xe8);
-
-  memcpy(view - 2, "\x65\xa1\0\0\0\0\x90\x8d\x74\x26\0", 11);
+  if (op3 == 0xe8)
+    memcpy(view - 2, "\x65\xa1\0\0\0\0\x90\x8d\x74\x26\0", 11);
+  else
+    memcpy(view - 2, "\x65\xa1\0\0\0\0\x8d\xb6\0\0\0\0", 12);
 
   // The next reloc should be a PLT32 reloc against __tls_get_addr.
   // We can skip it.
@@ -3607,8 +3679,8 @@ Target_i386::relocate_section(const Relocate_info<32, false>* relinfo,
 {
   gold_assert(sh_type == elfcpp::SHT_REL);
 
-  gold::relocate_section<32, false, Target_i386, elfcpp::SHT_REL,
-			 Target_i386::Relocate, gold::Default_comdat_behavior>(
+  gold::relocate_section<32, false, Target_i386, Relocate,
+			 gold::Default_comdat_behavior, Classify_reloc>(
     relinfo,
     this,
     prelocs,
@@ -3625,7 +3697,7 @@ Target_i386::relocate_section(const Relocate_info<32, false>* relinfo,
 // link.
 
 unsigned int
-Target_i386::Relocatable_size_for_reloc::get_size_for_reloc(
+Target_i386::Classify_reloc::get_size_for_reloc(
     unsigned int r_type,
     Relobj* object)
 {
@@ -3710,13 +3782,12 @@ Target_i386::scan_relocatable_relocs(Symbol_table* symtab,
 				     const unsigned char* plocal_symbols,
 				     Relocatable_relocs* rr)
 {
+  typedef gold::Default_scan_relocatable_relocs<Classify_reloc>
+      Scan_relocatable_relocs;
+
   gold_assert(sh_type == elfcpp::SHT_REL);
 
-  typedef gold::Default_scan_relocatable_relocs<elfcpp::SHT_REL,
-    Relocatable_size_for_reloc> Scan_relocatable_relocs;
-
-  gold::scan_relocatable_relocs<32, false, elfcpp::SHT_REL,
-      Scan_relocatable_relocs>(
+  gold::scan_relocatable_relocs<32, false, Scan_relocatable_relocs>(
     symtab,
     layout,
     object,
@@ -3730,6 +3801,43 @@ Target_i386::scan_relocatable_relocs(Symbol_table* symtab,
     rr);
 }
 
+// Scan the relocs for --emit-relocs.
+
+void
+Target_i386::emit_relocs_scan(Symbol_table* symtab,
+			      Layout* layout,
+			      Sized_relobj_file<32, false>* object,
+			      unsigned int data_shndx,
+			      unsigned int sh_type,
+			      const unsigned char* prelocs,
+			      size_t reloc_count,
+			      Output_section* output_section,
+			      bool needs_special_offset_handling,
+			      size_t local_symbol_count,
+			      const unsigned char* plocal_syms,
+			      Relocatable_relocs* rr)
+{
+  typedef gold::Default_classify_reloc<elfcpp::SHT_REL, 32, false>
+      Classify_reloc;
+  typedef gold::Default_emit_relocs_strategy<Classify_reloc>
+      Emit_relocs_strategy;
+
+  gold_assert(sh_type == elfcpp::SHT_REL);
+
+  gold::scan_relocatable_relocs<32, false, Emit_relocs_strategy>(
+    symtab,
+    layout,
+    object,
+    data_shndx,
+    prelocs,
+    reloc_count,
+    output_section,
+    needs_special_offset_handling,
+    local_symbol_count,
+    plocal_syms,
+    rr);
+}
+
 // Emit relocations for a section.
 
 void
@@ -3740,7 +3848,6 @@ Target_i386::relocate_relocs(
     size_t reloc_count,
     Output_section* output_section,
     elfcpp::Elf_types<32>::Elf_Off offset_in_output_section,
-    const Relocatable_relocs* rr,
     unsigned char* view,
     elfcpp::Elf_types<32>::Elf_Addr view_address,
     section_size_type view_size,
@@ -3749,13 +3856,12 @@ Target_i386::relocate_relocs(
 {
   gold_assert(sh_type == elfcpp::SHT_REL);
 
-  gold::relocate_relocs<32, false, elfcpp::SHT_REL>(
+  gold::relocate_relocs<32, false, Classify_reloc>(
     relinfo,
     prelocs,
     reloc_count,
     output_section,
     offset_in_output_section,
-    rr,
     view,
     view_address,
     view_size,
@@ -3867,7 +3973,10 @@ Target_i386::do_ehframe_datarel_base() const
 // get_pc_thunk function.
 
 bool
-Target_i386::do_is_call_to_non_split(const Symbol* sym, unsigned int) const
+Target_i386::do_is_call_to_non_split(const Symbol* sym,
+				     const unsigned char*,
+				     const unsigned char*,
+				     section_size_type) const
 {
   return (sym->type() == elfcpp::STT_FUNC
 	  && !is_prefix_of("__i686.get_pc_thunk.", sym->name()));
@@ -3882,6 +3991,8 @@ void
 Target_i386::do_calls_non_split(Relobj* object, unsigned int shndx,
 				       section_offset_type fnoffset,
 				       section_size_type fnsize,
+				       const unsigned char*,
+				       size_t,
 				       unsigned char* view,
 				       section_size_type view_size,
 				       std::string* from,

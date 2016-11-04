@@ -1,6 +1,6 @@
 /* Simulator for Analog Devices Blackfin processors.
 
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -3292,7 +3292,7 @@ decode_LDST_0 (SIM_CPU *cpu, bu16 iw0)
   int aop = ((iw0 >> LDST_aop_bits) & LDST_aop_mask);
   int reg = ((iw0 >> LDST_reg_bits) & LDST_reg_mask);
   int ptr = ((iw0 >> LDST_ptr_bits) & LDST_ptr_mask);
-  const char * const posts[] = { "++", "--", "" };
+  const char * const posts[] = { "++", "--", "", "<INV>" };
   const char *post = posts[aop];
   const char *ptr_name = get_preg_name (ptr);
 
@@ -5716,7 +5716,7 @@ decode_dsp32shift_0 (SIM_CPU *cpu, bu16 iw0, bu16 iw1)
       bu32 fg = DREG (src0);
       bu32 bg = DREG (src1);
       bu32 len = fg & 0x1f;
-      bu32 mask = (1 << MIN (16, len)) - 1;
+      bu32 mask = (1 << min (16, len)) - 1;
       bu32 fgnd = (fg >> 16) & mask;
       int shft = ((fg >> 8) & 0x1f);
 
@@ -6083,7 +6083,11 @@ decode_dsp32shiftimm_0 (SIM_CPU *cpu, bu16 iw0, bu16 iw1)
       int count = imm6 (immag);
 
       TRACE_INSN (cpu, "R%i = R%i << %i (S);", dst0, src1, count);
-      STORE (DREG (dst0), lshift (cpu, DREG (src1), count, 32, 1, 1));
+
+      if (count < 0)
+	STORE (DREG (dst0), ashiftrt (cpu, DREG (src1), -count, 32));
+      else
+	STORE (DREG (dst0), lshift (cpu, DREG (src1), count, 32, 1, 1));
     }
   else if (sop == 2 && sopcde == 2)
     {

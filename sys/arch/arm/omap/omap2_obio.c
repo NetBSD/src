@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.23 2016/04/25 13:17:16 kiyohara Exp $	*/
+/*	$Id: omap2_obio.c,v 1.23.2.1 2016/11/04 14:48:59 pgoyette Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.23 2016/04/25 13:17:16 kiyohara Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.23.2.1 2016/11/04 14:48:59 pgoyette Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.23 2016/04/25 13:17:16 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.23.2.1 2016/11/04 14:48:59 pgoyette Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -378,6 +378,9 @@ static const struct {
 #if defined(OMAP_3530)
 	{ .name = "avic",    .addr = INTC_BASE_3530, .required = true },
 #endif
+#if defined(TI_AM335X)
+	{ .name = "omapicu", .addr = 0x48200000, .required = true },
+#endif
 	{ .name = "gpio1", .addr = GPIO1_BASE, .required = false },
 	{ .name = "gpio2", .addr = GPIO2_BASE, .required = false },
 	{ .name = "gpio3", .addr = GPIO3_BASE, .required = false },
@@ -400,7 +403,6 @@ static const struct {
 	{ .name = "dmac", .addr = DMAC_BASE, .required = true },
 #endif
 #if defined(TI_AM335X)
-	{ .name = "omapicu", .addr = 0x48200000, .required = true },
 	{ .name = "prcm", .addr = 0x44e00000, .required = true },
 	{ .name = "sitaracm", .addr = 0x44e10000, .required = true },
 	{ .name = "edma", .addr = 0x49000000, .required = false },

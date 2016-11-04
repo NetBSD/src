@@ -1,6 +1,6 @@
 // gold-threads.cc -- thread support for gold
 
-// Copyright (C) 2006-2015 Free Software Foundation, Inc.
+// Copyright (C) 2006-2016 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -100,11 +100,11 @@ Lock_impl_threads::Lock_impl_threads()
   pthread_mutexattr_t attr;
   int err = pthread_mutexattr_init(&attr);
   if (err != 0)
-    gold_fatal(_("pthead_mutextattr_init failed: %s"), strerror(err));
+    gold_fatal(_("pthead_mutexattr_init failed: %s"), strerror(err));
 #ifdef PTHREAD_MUTEX_ADAPTIVE_NP
-  err = pthread_mutextattr_settype(&attr, PTHREAD_MUTEX_ADAPTIVE_NP);
+  err = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ADAPTIVE_NP);
   if (err != 0)
-    gold_fatal(_("pthread_mutextattr_settype failed: %s"), strerror(err));
+    gold_fatal(_("pthread_mutexattr_settype failed: %s"), strerror(err));
 #endif
 
   err = pthread_mutex_init(&this->mutex_, &attr);

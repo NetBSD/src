@@ -1,5 +1,5 @@
 /* Generic symbol-table support for the BFD library.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -219,8 +219,7 @@ CODE_FRAGMENT
 .#define BSF_EXPORT	BSF_GLOBAL {* No real difference.  *}
 .
 .  {* A normal C symbol would be one of:
-.     <<BSF_LOCAL>>, <<BSF_COMMON>>,  <<BSF_UNDEFINED>> or
-.     <<BSF_GLOBAL>>.  *}
+.     <<BSF_LOCAL>>, <<BSF_UNDEFINED>> or <<BSF_GLOBAL>>.  *}
 .
 .  {* The symbol is a debugging record. The value has an arbitrary
 .     meaning, unless BSF_DEBUGGING_RELOC is also set.  *}
@@ -232,7 +231,9 @@ CODE_FRAGMENT
 .
 .  {* Used by the linker.  *}
 .#define BSF_KEEP		(1 << 5)
-.#define BSF_KEEP_G		(1 << 6)
+.
+.  {* An ELF common symbol.  *}
+.#define BSF_ELF_COMMON		(1 << 6)
 .
 .  {* A weak global symbol, overridable without warnings by
 .     a regular global symbol of the same name.  *}
@@ -1082,11 +1083,13 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 		  return FALSE;
 		}
 
-	      val = bfd_get_32 (abfd, info->stabs + r->address);
+	      val = bfd_get_32 (abfd, info->stabs
+				+ r->address * bfd_octets_per_byte (abfd));
 	      val &= r->howto->src_mask;
 	      sym = *r->sym_ptr_ptr;
 	      val += sym->value + sym->section->vma + r->addend;
-	      bfd_put_32 (abfd, (bfd_vma) val, info->stabs + r->address);
+	      bfd_put_32 (abfd, (bfd_vma) val, info->stabs
+			  + r->address * bfd_octets_per_byte (abfd));
 	    }
 	}
 

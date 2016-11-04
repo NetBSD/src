@@ -890,6 +890,9 @@ Relocation against a MIPS literal section.
 @deffnx {} BFD_RELOC_MICROMIPS_16_PCREL_S1
 microMIPS PC-relative relocations.
 @end deffn
+@deffn {} BFD_RELOC_MIPS16_16_PCREL_S1
+MIPS16 PC-relative relocation.
+@end deffn
 @deffn {} BFD_RELOC_MIPS_21_PCREL_S2
 @deffnx {} BFD_RELOC_MIPS_26_PCREL_S2
 @deffnx {} BFD_RELOC_MIPS_18_PCREL_S3
@@ -1417,6 +1420,12 @@ Annotation of BX instructions.
 @deffn {} BFD_RELOC_ARM_IRELATIVE
 ARM support for STT_GNU_IFUNC.
 @end deffn
+@deffn {} BFD_RELOC_ARM_THUMB_ALU_ABS_G0_NC
+@deffnx {} BFD_RELOC_ARM_THUMB_ALU_ABS_G1_NC
+@deffnx {} BFD_RELOC_ARM_THUMB_ALU_ABS_G2_NC
+@deffnx {} BFD_RELOC_ARM_THUMB_ALU_ABS_G3_NC
+Thumb1 relocations to support execute-only code.
+@end deffn
 @deffn {} BFD_RELOC_ARM_IMMEDIATE
 @deffnx {} BFD_RELOC_ARM_ADRL_IMMEDIATE
 @deffnx {} BFD_RELOC_ARM_T32_IMMEDIATE
@@ -1611,6 +1620,7 @@ Renesas / SuperH SH relocs.  Not all of these appear in object files.
 @deffnx {} BFD_RELOC_ARC_TLS_LE_32
 @deffnx {} BFD_RELOC_ARC_S25W_PCREL_PLT
 @deffnx {} BFD_RELOC_ARC_S21H_PCREL_PLT
+@deffnx {} BFD_RELOC_ARC_NPS_CMEM16
 ARC relocs.
 @end deffn
 @deffn {} BFD_RELOC_BFIN_16_IMM
@@ -3475,6 +3485,12 @@ Like BFD_RELOC_MACH_O_SECTDIFF but with a local symbol.
 @deffn {} BFD_RELOC_MACH_O_PAIR
 Pair of relocation.  Contains the first symbol.
 @end deffn
+@deffn {} BFD_RELOC_MACH_O_SUBTRACTOR32
+Symbol will be substracted.  Must be followed by a BFD_RELOC_32.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_SUBTRACTOR64
+Symbol will be substracted.  Must be followed by a BFD_RELOC_64.
+@end deffn
 @deffn {} BFD_RELOC_MACH_O_X86_64_BRANCH32
 @deffnx {} BFD_RELOC_MACH_O_X86_64_BRANCH8
 PCREL relocations.  They are marked as branch to create PLT entry if
@@ -3487,12 +3503,6 @@ Used when referencing a GOT entry.
 Used when loading a GOT entry with movq.  It is specially marked so that
 the linker could optimize the movq to a leaq if possible.
 @end deffn
-@deffn {} BFD_RELOC_MACH_O_X86_64_SUBTRACTOR32
-Symbol will be substracted.  Must be followed by a BFD_RELOC_64.
-@end deffn
-@deffn {} BFD_RELOC_MACH_O_X86_64_SUBTRACTOR64
-Symbol will be substracted.  Must be followed by a BFD_RELOC_64.
-@end deffn
 @deffn {} BFD_RELOC_MACH_O_X86_64_PCREL32_1
 Same as BFD_RELOC_32_PCREL but with an implicit -1 addend.
 @end deffn
@@ -3501,6 +3511,18 @@ Same as BFD_RELOC_32_PCREL but with an implicit -2 addend.
 @end deffn
 @deffn {} BFD_RELOC_MACH_O_X86_64_PCREL32_4
 Same as BFD_RELOC_32_PCREL but with an implicit -4 addend.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_ARM64_ADDEND
+Addend for PAGE or PAGEOFF.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_ARM64_GOT_LOAD_PAGE21
+Relative offset to page of GOT slot.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_ARM64_GOT_LOAD_PAGEOFF12
+Relative offset within page of GOT slot.
+@end deffn
+@deffn {} BFD_RELOC_MACH_O_ARM64_POINTER_TO_GOT
+Address of a GOT entry.
 @end deffn
 @deffn {} BFD_RELOC_MICROBLAZE_32_LO
 This is a 32 bit reloc for the microblaze that stores the
@@ -3591,6 +3613,9 @@ AArch64 pseudo relocation code to mark the start of the AArch64
 relocation enumerators.  N.B. the order of the enumerators is
 important as several tables in the AArch64 bfd backend are indexed
 by these enumerators; make sure they are all synced.
+@end deffn
+@deffn {} BFD_RELOC_AARCH64_NULL
+Deprecated AArch64 null relocation code.
 @end deffn
 @deffn {} BFD_RELOC_AARCH64_NONE
 AArch64 null relocation code.

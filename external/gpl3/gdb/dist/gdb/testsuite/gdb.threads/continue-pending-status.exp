@@ -1,4 +1,4 @@
-# Copyright (C) 2015 Free Software Foundation, Inc.
+# Copyright (C) 2015-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,11 @@
 # This test exercises the case of stopping for a breakpoint hit of one
 # thread, then switching to a thread that has a status pending and
 # continuing.
+
+if [target_info exists gdb,nointerrupts] {
+    verbose "Skipping continue-pending-status.exp because of nointerrupts."
+    return
+}
 
 standard_testfile
 
@@ -111,7 +116,7 @@ for {set i 0} {$i < $attempts} {incr i} {
 
 	set msg "caught interrupt"
 	gdb_test_multiple "" $msg {
-	    -re "Program received signal SIGINT.*$gdb_prompt $" {
+	    -re "Thread .* received signal SIGINT.*$gdb_prompt $" {
 		pass $msg
 	    }
 	}

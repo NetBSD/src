@@ -531,7 +531,7 @@ sim_core_read_buffer (SIM_DESC sd,
     if (mapping->device != NULL)
       {
 	int nr_bytes = len - count;
-	sim_cia cia = cpu ? CIA_GET (cpu) : NULL_CIA;
+	sim_cia cia = cpu ? CPU_PC_GET (cpu) : NULL_CIA;
 	if (raddr + nr_bytes - 1> mapping->bound)
 	  nr_bytes = mapping->bound - raddr + 1;
 	if (device_io_read_buffer (mapping->device,
@@ -598,7 +598,7 @@ sim_core_write_buffer (SIM_DESC sd,
 	  && mapping->device != NULL)
 	{
 	  int nr_bytes = len - count;
-	  sim_cia cia = cpu ? CIA_GET (cpu) : NULL_CIA;
+	  sim_cia cia = cpu ? CPU_PC_GET (cpu) : NULL_CIA;
 	  if (raddr + nr_bytes - 1 > mapping->bound)
 	    nr_bytes = mapping->bound - raddr + 1;
 	  if (device_io_write_buffer (mapping->device,

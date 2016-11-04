@@ -1,0 +1,10 @@
+#       $NetBSD: if_vioif.ioconf,v 1.1.4.2 2016/11/04 14:49:18 pgoyette Exp $
+
+ioconf if_vioif
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root virtio*
+
+if_vioif* at virtio?

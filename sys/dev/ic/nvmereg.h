@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.3 2016/06/04 16:29:35 nonaka Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.3.2.1 2016/11/04 14:49:09 pgoyette Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -81,8 +81,10 @@
 #define NVME_AQA	0x0024	/* Admin Queue Attributes */
 				/* Admin Completion Queue Size */
 #define  NVME_AQA_ACQS(_v)	(((_v) - 1) << 16)
+#define  NVME_AQA_ACQS_R(_v)	((_v >> 16) & ((1 << 12) - 1))
 				/* Admin Submission Queue Size */
 #define  NVME_AQA_ASQS(_v)	(((_v) - 1) << 0)
+#define  NVME_AQA_ASQS_R(_v)	(_v & ((1 << 12) - 1))
 #define NVME_ASQ	0x0028	/* Admin Submission Queue Base Address */
 #define NVME_ACQ	0x0030	/* Admin Completion Queue Base Address */
 
@@ -186,8 +188,27 @@ struct nvme_sqe_io {
 
 	uint16_t	nlb;	/* Number of Logical Blocks */
 	uint16_t	ioflags;
+#define NVM_SQE_IO_LR	__BIT(15)	/* Limited Retry */
+#define NVM_SQE_IO_FUA	__BIT(14)	/* Force Unit Access (bypass cache) */
 
 	uint8_t		dsm;	/* Dataset Management */
+#define NVM_SQE_IO_INCOMP	__BIT(7)	/* Incompressible */
+#define NVM_SQE_IO_SEQ		__BIT(6)	/* Sequential request */
+#define NVM_SQE_IO_LAT_MASK	__BITS(4, 5)	/* Access Latency */
+#define  NVM_SQE_IO_LAT_NONE	0		/* Latency: none */
+#define  NVM_SQE_IO_LAT_IDLE	__BIT(4)	/* Latency: idle */
+#define  NVM_SQE_IO_LAT_NORMAL	__BIT(5)	/* Latency: normal */
+#define  NVM_SQE_IO_LAT_LOW	__BITS(4, 5)	/* Latency: low */
+#define NVM_SQE_IO_FREQ_MASK	__BITS(0, 3)	/* Access Frequency */
+#define  NVM_SQE_IO_FREQ_TYPICAL	0x1	/* Typical */
+#define  NVM_SQE_IO_FREQ_INFR_INFW	0x2	/* Infrequent read and writes */
+#define  NVM_SQE_IO_FREQ_FRR_INFW	0x3	/* Frequent read, inf. writes */
+#define  NVM_SQE_IO_FREQ_INFR_FRW	0x4	/* Inf. read, freq. writes */
+#define  NVM_SQE_IO_FREQ_FRR_FRW	0x5	/* Freq. read and writes */
+#define  NVM_SQE_IO_FREQ_ONCE		0x6	/* One time i/o operation */
+/* Extra Access Frequency bits for read operations */
+#define  NVM_SQE_IO_FREQ_SPEC		0x7	/* Speculative read - prefech */
+#define  NVM_SQE_IO_FREQ_OVERWRITE	0x8	/* Will be overwritten soon */
 	uint8_t		_reserved2[3];
 
 	uint32_t	eilbrt;	/* Expected Initial Logical Block

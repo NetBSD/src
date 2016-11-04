@@ -259,7 +259,7 @@ remote_open (char *name)
 }
 
 static int
-tohex (int ch)
+fromhex (int ch)
 {
   if (ch >= '0' && ch <= '9')
     {
@@ -322,11 +322,11 @@ logchar (FILE *fp)
 	  ch2 = fgetc (fp);
 	  fputc (ch2, stdout);
 	  fflush (stdout);
-	  ch = tohex (ch2) << 4;
+	  ch = fromhex (ch2) << 4;
 	  ch2 = fgetc (fp);
 	  fputc (ch2, stdout);
 	  fflush (stdout);
-	  ch |= tohex (ch2);
+	  ch |= fromhex (ch2);
 	  break;
 	default:
 	  /* Treat any other char as just itself */

@@ -1,4 +1,4 @@
-; Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -22,3 +22,5 @@ example. NS ns2.example.
 ns2.example. A 10.53.0.2
 example. NS ns4.example.
 ns4.example. A 10.53.0.4
+tld. NS ns2.tld.
+ns2.tld. A 10.53.0.2

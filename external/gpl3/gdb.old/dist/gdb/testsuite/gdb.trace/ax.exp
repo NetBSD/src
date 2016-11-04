@@ -80,6 +80,8 @@ gdb_test "maint agent &gdb_long_test == &gdb_short_test" "" "maint agent &gdb_lo
 
 gdb_test "maint agent &gdb_long_test < &gdb_short_test" "" "maint agent &gdb_long_test < &gdb_short_test"
 
+gdb_test "maint agent (unsigned char)1L" ".*ext 8.*" "maint agent (unsigned char)1L"
+
 # Now test eval version of agent expressions.
 
 gdb_test "maint agent-eval 12" ".*const8 12.*end.*" "maint agent-eval 12"

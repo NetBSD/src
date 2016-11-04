@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.202 2016/01/30 23:45:37 christos Exp $
+# $NetBSD: postinstall,v 1.202.2.1 2016/11/04 14:49:27 pgoyette Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1481,6 +1481,20 @@ sdpd sdpd_username
 sysctl defcorename
 "
 
+update_rc()
+{
+	local op=$1
+	local dir=$2
+	local name=$3
+	local rcdir=$4
+	if ! find_file_in_dirlist "${name}" "${name}" \
+	    "${rcdir}" "${SRC_DIR}/etc/rc.d"; then
+		return 1
+	fi
+	populate_dir "${op}" false "${dir}" "${DEST_DIR}/etc/rc.d" 555 "${name}"
+	return $?
+}
+
 additem rc "/etc/rc* and /etc/rc.d/ being up to date"
 do_rc()
 {
@@ -1507,15 +1521,13 @@ do_rc()
 		${extra_scripts}
 	failed=$(( ${failed} + $? ))
 
-	if ! find_file_in_dirlist blacklistd "blacklistd" \
-	    "${SRC_DIR}/external/bsd/blacklist/etc/rc.d" \
-	    "${SRC_DIR}/etc/rc.d"; then
-	    failed=1
-	else
-	    populate_dir "$op" true "${dir}" "${DEST_DIR}/etc/rc.d" 555 \
-		blacklistd
-	    failed=$(( ${failed} + $? ))
-	fi
+	update_rc "${op}" "${dir}" blacklistd \
+	    "${SRC_DIR}/external/bsd/blacklist/etc/rc.d"
+	failed=$(( ${failed} + $? ))
+
+	update_rc "${op}" "${dir}" unbound \
+	    "${SRC_DIR}/external/bsd/unbound/etc/rc.d"
+	failed=$(( ${failed} + $? ))
 
 	if $SOURCEMODE && [ -n "${generated_scripts}" ]; then
 		# generate scripts

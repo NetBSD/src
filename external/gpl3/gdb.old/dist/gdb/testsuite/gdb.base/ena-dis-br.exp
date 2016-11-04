@@ -151,6 +151,14 @@ set bp [break_at $bp_location7 "line $bp_location7"]
 
 set bp2 [break_at marker1 " line $bp_location15"]
 
+gdb_test "enable count" \
+    "Argument required \\(hit count\\)\\." \
+    "enable count missing arguments"
+
+gdb_test "enable count 2" \
+    "Argument required \\(one or more breakpoint numbers\\)\\." \
+    "enable count missing breakpoint number"
+
 gdb_test_no_output "enable count 2 $bp" "disable break with count"
 
 gdb_test "continue" \

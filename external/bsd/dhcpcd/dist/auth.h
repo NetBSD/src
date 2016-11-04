@@ -1,4 +1,4 @@
-/* $NetBSD: auth.h,v 1.9 2015/05/16 23:31:32 roy Exp $ */
+/* $NetBSD: auth.h,v 1.9.2.1 2016/11/04 14:42:45 pgoyette Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -65,12 +65,14 @@ TAILQ_HEAD(token_head, token);
 
 struct auth {
 	int options;
+#ifdef AUTH
 	uint8_t protocol;
 	uint8_t algorithm;
 	uint8_t rdm;
 	uint64_t last_replay;
 	uint8_t last_replay_set;
 	struct token_head tokens;
+#endif
 };
 
 struct authstate {

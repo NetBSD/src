@@ -1,4 +1,4 @@
-#	$NetBSD: t_gif.sh,v 1.4 2015/12/16 03:24:29 knakahara Exp $
+#	$NetBSD: t_gif.sh,v 1.4.2.1 2016/11/04 14:49:24 pgoyette Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -739,7 +739,7 @@ add_test()
 	inner=$3
 	outer=$4
 
-	name="${category}${inner}over${outer}"
+	name="gif_${category}_${inner}over${outer}"
 	fulldesc="Does ${inner} over ${outer} if_gif ${desc}"
 
 	atf_test_case ${name} cleanup

@@ -83,7 +83,6 @@ vlscm_unop (enum valscm_unary_opcode opcode, SCM x, const char *func_name)
   struct value *res_val = NULL;
   SCM except_scm;
   struct cleanup *cleanups;
-  volatile struct gdb_exception except;
 
   cleanups = make_cleanup_value_free_to_mark (value_mark ());
 
@@ -95,7 +94,7 @@ vlscm_unop (enum valscm_unary_opcode opcode, SCM x, const char *func_name)
       gdbscm_throw (except_scm);
     }
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       switch (opcode)
 	{
@@ -128,7 +127,11 @@ vlscm_unop (enum valscm_unary_opcode opcode, SCM x, const char *func_name)
 	  gdb_assert_not_reached ("unsupported operation");
 	}
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS (except, cleanups);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS (except, cleanups);
+    }
+  END_CATCH
 
   gdb_assert (res_val != NULL);
   result = vlscm_scm_from_value (res_val);
@@ -156,7 +159,6 @@ vlscm_binop (enum valscm_binary_opcode opcode, SCM x, SCM y,
   struct value *res_val = NULL;
   SCM except_scm;
   struct cleanup *cleanups;
-  volatile struct gdb_exception except;
 
   cleanups = make_cleanup_value_free_to_mark (value_mark ());
 
@@ -175,7 +177,7 @@ vlscm_binop (enum valscm_binary_opcode opcode, SCM x, SCM y,
       gdbscm_throw (except_scm);
     }
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       switch (opcode)
 	{
@@ -264,7 +266,11 @@ vlscm_binop (enum valscm_binary_opcode opcode, SCM x, SCM y,
 	  gdb_assert_not_reached ("unsupported operation");
 	}
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS (except, cleanups);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS (except, cleanups);
+    }
+  END_CATCH
 
   gdb_assert (res_val != NULL);
   result = vlscm_scm_from_value (res_val);
@@ -441,7 +447,7 @@ vlscm_rich_compare (int op, SCM x, SCM y, const char *func_name)
   int result = 0;
   SCM except_scm;
   struct cleanup *cleanups;
-  volatile struct gdb_exception except;
+  struct gdb_exception except = exception_none;
 
   cleanups = make_cleanup_value_free_to_mark (value_mark ());
 
@@ -460,7 +466,7 @@ vlscm_rich_compare (int op, SCM x, SCM y, const char *func_name)
       gdbscm_throw (except_scm);
     }
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       switch (op)
 	{
@@ -487,6 +493,12 @@ vlscm_rich_compare (int op, SCM x, SCM y, const char *func_name)
 	  gdb_assert_not_reached ("invalid <gdb:value> comparison");
       }
     }
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      except = ex;
+    }
+  END_CATCH
+
   do_cleanups (cleanups);
   GDBSCM_HANDLE_GDB_EXCEPTION (except);
 
@@ -742,7 +754,6 @@ vlscm_convert_typed_value_from_scheme (const char *func_name,
 {
   struct value *value = NULL;
   SCM except_scm = SCM_BOOL_F;
-  volatile struct gdb_exception except;
 
   if (type == NULL)
     {
@@ -752,7 +763,7 @@ vlscm_convert_typed_value_from_scheme (const char *func_name,
 
   *except_scmp = SCM_BOOL_F;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       if (vlscm_is_value (obj))
 	{
@@ -859,8 +870,11 @@ vlscm_convert_typed_value_from_scheme (const char *func_name,
 	  value = NULL;
 	}
     }
-  if (except.reason < 0)
-    except_scm = gdbscm_scm_from_gdb_exception (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      except_scm = gdbscm_scm_from_gdb_exception (except);
+    }
+  END_CATCH
 
   if (gdbscm_is_true (except_scm))
     {

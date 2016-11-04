@@ -32,7 +32,8 @@ if { [skip_python_tests] } { continue }
 
 proc test_lookup_type { lang type_name } {
     gdb_test_no_output "set language ${lang}"
-    gdb_test_no_output "python gdb.lookup_type('${type_name}')" \
+    gdb_test "python print(gdb.lookup_type('${type_name}').name)" \
+        "${type_name}" \
         "lookup type ${type_name} using language ${lang}"
 }
 

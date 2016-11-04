@@ -4,8 +4,8 @@
 #...
  +10000:	a9bf7bfd 	stp	x29, x30, \[sp,#-16\]!
  +10004:	910003fd 	mov	x29, sp
- +10008:	90000080 	adrp	x0, 20000 <ie_var\+0x1fff0>
- +1000c:	f9400000 	ldr	x0, \[x0\]
+ +10008:	90000080 	adrp	x0, 20000 <_GLOBAL_OFFSET_TABLE_>
+ +1000c:	f9400400 	ldr	x0, \[x0,#8\]
  +10010:	d503201f 	nop
  +10014:	d503201f 	nop
  +10018:	d53bd041 	mrs	x1, tpidr_el0
@@ -19,8 +19,8 @@
  +10038:	8b000040 	add	x0, x2, x0
  +1003c:	b9400000 	ldr	w0, \[x0\]
  +10040:	0b000021 	add	w1, w1, w0
- +10044:	90000080 	adrp	x0, 20000 <ie_var\+0x1fff0>
- +10048:	f9400400 	ldr	x0, \[x0,#8\]
+ +10044:	90000080 	adrp	x0, 20000 <_GLOBAL_OFFSET_TABLE_>
+ +10048:	f9400800 	ldr	x0, \[x0,#16\]
  +1004c:	d53bd041 	mrs	x1, tpidr_el0
  +10050:	8b000020 	add	x0, x1, x0
  +10054:	b9400000 	ldr	w0, \[x0\]

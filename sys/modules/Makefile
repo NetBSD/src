@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.167.2.1 2016/08/06 00:19:10 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.167.2.2 2016/11/04 14:49:17 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -82,6 +82,8 @@ SUBDIR+=	pf
 SUBDIR+=	ppp_bsdcomp
 SUBDIR+=	ppp_deflate
 SUBDIR+=	procfs
+SUBDIR+=	ptrace
+SUBDIR+=	ptrace_common
 SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
@@ -219,16 +221,18 @@ SUBDIR+=	wmimsi
 .if ${MACHINE_CPU} == "arm" \
     || (!empty(MACHINE_ARCH:Mmips64*) && !defined(BSD_MK_COMPAT_FILE))
 SUBDIR+=	compat_netbsd32
-SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_mqueue
+SUBDIR+=	compat_netbsd32_nfssrv
+SUBDIR+=	compat_netbsd32_ptrace
 SUBDIR+=	compat_netbsd32_sysvipc
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
-SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_mqueue
+SUBDIR+=	compat_netbsd32_nfssrv
+SUBDIR+=	compat_netbsd32_ptrace
 SUBDIR+=	compat_netbsd32_sysvipc
 .endif
 
@@ -347,6 +351,40 @@ SUBDIR+=	spkr
 
 .if (${MKISCSI} != "no")
 SUBDIR+=	iscsi
+.endif
+
+# For now, all of these are disabled, pending resolution of how to deal
+# with attachment-specific modules and bus-specific modules (as opposed
+# to machine- or architecture-specific modules)
+
+.if 0
+SUBDIR+=	aac
+SUBDIR+=	amr
+SUBDIR+=	ataraid
+SUBDIR+=	cac
+SUBDIR+=	cac_eisa
+SUBDIR+=	cac_pci
+SUBDIR+=	if_vioif
+SUBDIR+=	ld
+SUBDIR+=	ld_aac
+SUBDIR+=	ld_amr
+SUBDIR+=	ld_ataraid
+SUBDIR+=	ld_cac
+SUBDIR+=	ld_icp
+SUBDIR+=	ld_mlx
+SUBDIR+=	ld_sdmmc
+SUBDIR+=	ld_twa
+SUBDIR+=	ld_twe
+SUBDIR+=	ld_virtio
+SUBDIR+=	mlx
+SUBDIR+=	mlx_eisa
+SUBDIR+=	mlx_pci
+SUBDIR+=	ld_nvme
+SUBDIR+=	nvme
+SUBDIR+=	twa
+SUBDIR+=	twe
+SUBDIR+=	viomb
+SUBDIR+=	virtio
 .endif
 
 SUBDIR+=	examples	# build these regularly to avoid bit-rot

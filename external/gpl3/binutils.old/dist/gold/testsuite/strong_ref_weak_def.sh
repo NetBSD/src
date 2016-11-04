@@ -3,7 +3,7 @@
 # strong_ref_weak_def.sh -- test non-weak reference to a weak symbol defined
 # in a DSO.
 
-# Copyright 2010 Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 # Written by Doug Kwan <dougkwan@google.com>.
 
 # This file is part of gold.

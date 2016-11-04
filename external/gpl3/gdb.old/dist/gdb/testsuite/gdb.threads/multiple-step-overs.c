@@ -26,6 +26,11 @@ pthread_barrier_t barrier;
 pthread_t child_thread_2, child_thread_3;
 
 void
+sigusr1_handler (int signo)
+{
+}
+
+void
 callme (void)
 {
 }
@@ -75,6 +80,8 @@ main ()
 {
   int res;
   long i;
+
+  signal (SIGUSR1, sigusr1_handler);
 
   /* Call these early so that PLTs for these are resolved soon,
      instead of in the threads.  RTLD_NOW should work as well.  */

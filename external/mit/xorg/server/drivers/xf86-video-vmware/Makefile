@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/06/05 08:42:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.9.10.1 2016/11/04 14:48:49 pgoyette Exp $
 
 DRIVER=		xf86-video-vmware
 DRIVER_NAME=	vmware_drv

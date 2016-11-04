@@ -1,7 +1,5 @@
 /* strings -- print the strings of printable characters in files
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,7 +21,10 @@
    Options:
    --all
    -a
-   -		Do not scan only the initialized data section of object files.
+   -		Scan each file in its entirety.
+
+   --data
+   -d		Scan only the initialized data section(s) of object files.
 
    --print-file-name
    -f		Print the name of the file before each string.
@@ -37,6 +38,10 @@
    -t {o,x,d}	Print the offset within the file before each string,
 		in octal/hex/decimal.
 
+  --include-all-whitespace
+  -w		By default tab and space are the only whitepace included in graphic
+		char sequences.  This option considers all of isspace() valid.
+
    -o		Like -to.  (Some other implementations have -o like -to,
 		others like -td.  We chose one arbitrarily.)
 
@@ -49,6 +54,10 @@
    --target=BFDNAME
    -T {bfdname}
 		Specify a non-default object file format.
+
+  --output-separator=sep_string
+  -s sep_string	String used to separate parsed strings in output.
+		Default is newline.
 
    --help
    -h		Print the usage message on the standard output.
@@ -70,7 +79,9 @@
 #define STRING_ISGRAPHIC(c) \
       (   (c) >= 0 \
        && (c) <= 255 \
-       && ((c) == '\t' || ISPRINT (c) || (encoding == 'S' && (c) > 127)))
+       && ((c) == '\t' || ISPRINT (c) || (encoding == 'S' && (c) > 127) \
+           || (include_all_whitespace == TRUE && ISSPACE (c))) \
+      )
 
 #ifndef errno
 extern int errno;
@@ -84,6 +95,9 @@ static int address_radix;
 
 /* Minimum length of sequence of graphic chars to trigger output.  */
 static int string_min;
+
+/* Whether or not we include all whitespace as a graphic char.   */
+static bfd_boolean include_all_whitespace;
 
 /* TRUE means print address within file for each string.  */
 static bfd_boolean print_addresses;
@@ -104,14 +118,20 @@ static char *target;
 static char encoding;
 static int encoding_bytes;
 
+/* Output string used to separate parsed strings  */
+static char *output_separator;
+
 static struct option long_options[] =
 {
   {"all", no_argument, NULL, 'a'},
+  {"data", no_argument, NULL, 'd'},
   {"print-file-name", no_argument, NULL, 'f'},
   {"bytes", required_argument, NULL, 'n'},
   {"radix", required_argument, NULL, 't'},
+  {"include-all-whitespace", required_argument, NULL, 'w'},
   {"encoding", required_argument, NULL, 'e'},
   {"target", required_argument, NULL, 'T'},
+  {"output-separator", required_argument, NULL, 's'},
   {"help", no_argument, NULL, 'h'},
   {"version", no_argument, NULL, 'v'},
   {NULL, 0, NULL, 0}
@@ -128,7 +148,7 @@ typedef struct
 
 static void strings_a_section (bfd *, asection *, void *);
 static bfd_boolean strings_object_file (const char *);
-static bfd_boolean strings_file (char *file);
+static bfd_boolean strings_file (char *);
 static void print_strings (const char *, FILE *, file_ptr, int, int, char *);
 static void usage (FILE *, int);
 static long get_char (FILE *, file_ptr *, int *, char **);
@@ -152,23 +172,33 @@ main (int argc, char **argv)
 
   program_name = argv[0];
   xmalloc_set_program_name (program_name);
+  bfd_set_error_program_name (program_name);
 
   expandargv (&argc, &argv);
 
   string_min = 4;
+  include_all_whitespace = FALSE;
   print_addresses = FALSE;
   print_filenames = FALSE;
-  datasection_only = TRUE;
+  if (DEFAULT_STRINGS_ALL)
+    datasection_only = FALSE;
+  else
+    datasection_only = TRUE;
   target = NULL;
   encoding = 's';
+  output_separator = NULL;
 
-  while ((optc = getopt_long (argc, argv, "afhHn:ot:e:T:Vv0123456789",
+  while ((optc = getopt_long (argc, argv, "adfhHn:wot:e:T:s:Vv0123456789",
 			      long_options, (int *) 0)) != EOF)
     {
       switch (optc)
 	{
 	case 'a':
 	  datasection_only = FALSE;
+	  break;
+
+	case 'd':
+	  datasection_only = TRUE;
 	  break;
 
 	case 'f':
@@ -183,6 +213,10 @@ main (int argc, char **argv)
 	  string_min = (int) strtoul (optarg, &s, 0);
 	  if (s != NULL && *s != 0)
 	    fatal (_("invalid integer argument %s"), optarg);
+	  break;
+
+	case 'w':
+	  include_all_whitespace = TRUE;
 	  break;
 
 	case 'o':
@@ -222,6 +256,10 @@ main (int argc, char **argv)
 	    usage (stderr, 1);
 	  encoding = optarg[0];
 	  break;
+
+	case 's':
+	  output_separator = optarg;
+          break;
 
 	case 'V':
 	case 'v':
@@ -309,12 +347,12 @@ strings_a_section (bfd *abfd, asection *sect, void *arg)
   bfd_size_type *filesizep;
   bfd_size_type sectsize;
   void *mem;
-     
+
   if ((sect->flags & DATA_FLAGS) != DATA_FLAGS)
     return;
 
   sectsize = bfd_get_section_size (sect);
-     
+
   if (sectsize <= 0)
     return;
 
@@ -325,7 +363,7 @@ strings_a_section (bfd *abfd, asection *sect, void *arg)
   if (*filesizep == 0)
     {
       struct stat st;
-      
+
       if (bfd_stat (abfd, &st))
 	return;
 
@@ -455,8 +493,7 @@ static long
 get_char (FILE *stream, file_ptr *address, int *magiccount, char **magic)
 {
   int c, i;
-  long r = EOF;
-  unsigned char buf[4];
+  long r = 0;
 
   for (i = 0; i < encoding_bytes; i++)
     {
@@ -484,33 +521,21 @@ get_char (FILE *stream, file_ptr *address, int *magiccount, char **magic)
 	}
 
       (*address)++;
-      buf[i] = c;
+      r = (r << 8) | (c & 0xff);
     }
 
   switch (encoding)
     {
-    case 'S':
-    case 's':
-      r = buf[0];
-      break;
-    case 'b':
-      r = (buf[0] << 8) | buf[1];
+    default:
       break;
     case 'l':
-      r = buf[0] | (buf[1] << 8);
-      break;
-    case 'B':
-      r = ((long) buf[0] << 24) | ((long) buf[1] << 16) |
-	((long) buf[2] << 8) | buf[3];
+      r = ((r & 0xff) << 8) | ((r & 0xff00) >> 8);
       break;
     case 'L':
-      r = buf[0] | ((long) buf[1] << 8) | ((long) buf[2] << 16) |
-	((long) buf[3] << 24);
+      r = (((r & 0xff) << 24) | ((r & 0xff00) << 8)
+	   | ((r & 0xff0000) >> 8) | ((r & 0xff000000) >> 24));
       break;
     }
-
-  if (r == EOF)
-    return 0;
 
   return r;
 }
@@ -567,14 +592,14 @@ print_strings (const char *filename, FILE *stream, file_ptr address,
 	switch (address_radix)
 	  {
 	  case 8:
-#if __STDC_VERSION__ >= 199901L || (defined(__GNUC__) && __GNUC__ >= 2)
+#ifdef HAVE_LONG_LONG
 	    if (sizeof (start) > sizeof (long))
 	      {
-#ifndef __MSVCRT__
+# ifndef __MSVCRT__
 	        printf ("%7llo ", (unsigned long long) start);
-#else
+# else
 	        printf ("%7I64o ", (unsigned long long) start);
-#endif
+# endif
 	      }
 	    else
 #elif !BFD_HOST_64BIT_LONG
@@ -586,14 +611,14 @@ print_strings (const char *filename, FILE *stream, file_ptr address,
 	    break;
 
 	  case 10:
-#if __STDC_VERSION__ >= 199901L || (defined(__GNUC__) && __GNUC__ >= 2)
+#ifdef HAVE_LONG_LONG
 	    if (sizeof (start) > sizeof (long))
 	      {
-#ifndef __MSVCRT__
+# ifndef __MSVCRT__
 	        printf ("%7lld ", (unsigned long long) start);
-#else
+# else
 	        printf ("%7I64d ", (unsigned long long) start);
-#endif
+# endif
 	      }
 	    else
 #elif !BFD_HOST_64BIT_LONG
@@ -605,14 +630,14 @@ print_strings (const char *filename, FILE *stream, file_ptr address,
 	    break;
 
 	  case 16:
-#if __STDC_VERSION__ >= 199901L || (defined(__GNUC__) && __GNUC__ >= 2)
+#ifdef HAVE_LONG_LONG
 	    if (sizeof (start) > sizeof (long))
 	      {
-#ifndef __MSVCRT__
+# ifndef __MSVCRT__
 	        printf ("%7llx ", (unsigned long long) start);
-#else
+# else
 	        printf ("%7I64x ", (unsigned long long) start);
-#endif
+# endif
 	      }
 	    else
 #elif !BFD_HOST_64BIT_LONG
@@ -638,7 +663,10 @@ print_strings (const char *filename, FILE *stream, file_ptr address,
 	  putchar (c);
 	}
 
-      putchar ('\n');
+      if (output_separator)
+        fputs (output_separator, stdout);
+      else
+        putchar ('\n');
     }
   free (buf);
 }
@@ -648,16 +676,28 @@ usage (FILE *stream, int status)
 {
   fprintf (stream, _("Usage: %s [option(s)] [file(s)]\n"), program_name);
   fprintf (stream, _(" Display printable strings in [file(s)] (stdin by default)\n"));
-  fprintf (stream, _(" The options are:\n\
+  fprintf (stream, _(" The options are:\n"));
+
+  if (DEFAULT_STRINGS_ALL)
+    fprintf (stream, _("\
+  -a - --all                Scan the entire file, not just the data section [default]\n\
+  -d --data                 Only scan the data sections in the file\n"));
+  else
+    fprintf (stream, _("\
   -a - --all                Scan the entire file, not just the data section\n\
+  -d --data                 Only scan the data sections in the file [default]\n"));
+
+  fprintf (stream, _("\
   -f --print-file-name      Print the name of the file before each string\n\
   -n --bytes=[number]       Locate & print any NUL-terminated sequence of at\n\
   -<number>                   least [number] characters (default 4).\n\
   -t --radix={o,d,x}        Print the location of the string in base 8, 10 or 16\n\
+  -w --include-all-whitespace Include all whitespace as valid string characters\n\
   -o                        An alias for --radix=o\n\
   -T --target=<BFDNAME>     Specify the binary file format\n\
   -e --encoding={s,S,b,l,B,L} Select character size and endianness:\n\
                             s = 7-bit, S = 8-bit, {b,l} = 16-bit, {B,L} = 32-bit\n\
+  -s --output-separator=<string> String used to separate strings in output.\n\
   @<file>                   Read options from <file>\n\
   -h --help                 Display this information\n\
   -v -V --version           Print the program's version number\n"));

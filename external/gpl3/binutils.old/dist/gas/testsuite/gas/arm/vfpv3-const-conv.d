@@ -5,10 +5,10 @@
 .*: +file format .*arm.*
 
 Disassembly of section \.text:
-0[0-9a-f]+ <[^>]+> eef08a04 	(vmov\.f32|fconsts)	s17, #4
+0[0-9a-f]+ <[^>]+> eef08a04 	(vmov\.f32|fconsts)	s17, #4.*
 0[0-9a-f]+ <[^>]+> eeba9a05 	(vmov\.f32|fconsts)	s18, #165.*
 0[0-9a-f]+ <[^>]+> eef49a00 	(vmov\.f32|fconsts)	s19, #64.*
-0[0-9a-f]+ <[^>]+> eef01b04 	(vmov\.f64|fconstd)	d17, #4
+0[0-9a-f]+ <[^>]+> eef01b04 	(vmov\.f64|fconstd)	d17, #4.*
 0[0-9a-f]+ <[^>]+> eefa2b05 	(vmov\.f64|fconstd)	d18, #165.*
 0[0-9a-f]+ <[^>]+> eef43b00 	(vmov\.f64|fconstd)	d19, #64.*
 0[0-9a-f]+ <[^>]+> eefa8a63 	(vcvt\.f32\.s16	s17, s17, #9|fshtos	s17, #9)

@@ -1,6 +1,6 @@
 /* Scheme interface to objfiles.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -116,7 +116,7 @@ ofscm_release_objfile (objfile_smob *o_smob)
 static void
 ofscm_handle_objfile_deleted (struct objfile *objfile, void *datum)
 {
-  objfile_smob *o_smob = datum;
+  objfile_smob *o_smob = (objfile_smob *) datum;
 
   gdb_assert (o_smob->objfile == objfile);
 
@@ -148,7 +148,7 @@ ofscm_objfile_smob_from_objfile (struct objfile *objfile)
 {
   objfile_smob *o_smob;
 
-  o_smob = objfile_data (objfile, ofscm_objfile_data_key);
+  o_smob = (objfile_smob *) objfile_data (objfile, ofscm_objfile_data_key);
   if (o_smob == NULL)
     {
       SCM o_scm = ofscm_make_objfile_smob ();
@@ -389,36 +389,37 @@ gdbscm_objfiles (void)
 
 static const scheme_function objfile_functions[] =
 {
-  { "objfile?", 1, 0, 0, gdbscm_objfile_p,
+  { "objfile?", 1, 0, 0, as_a_scm_t_subr (gdbscm_objfile_p),
     "\
 Return #t if the object is a <gdb:objfile> object." },
 
-  { "objfile-valid?", 1, 0, 0, gdbscm_objfile_valid_p,
+  { "objfile-valid?", 1, 0, 0, as_a_scm_t_subr (gdbscm_objfile_valid_p),
     "\
 Return #t if the objfile is valid (hasn't been deleted from gdb)." },
 
-  { "objfile-filename", 1, 0, 0, gdbscm_objfile_filename,
+  { "objfile-filename", 1, 0, 0, as_a_scm_t_subr (gdbscm_objfile_filename),
     "\
 Return the file name of the objfile." },
 
-  { "objfile-progspace", 1, 0, 0, gdbscm_objfile_progspace,
+  { "objfile-progspace", 1, 0, 0, as_a_scm_t_subr (gdbscm_objfile_progspace),
     "\
 Return the progspace that the objfile lives in." },
 
-  { "objfile-pretty-printers", 1, 0, 0, gdbscm_objfile_pretty_printers,
+  { "objfile-pretty-printers", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_objfile_pretty_printers),
     "\
 Return a list of pretty-printers of the objfile." },
 
   { "set-objfile-pretty-printers!", 2, 0, 0,
-    gdbscm_set_objfile_pretty_printers_x,
+    as_a_scm_t_subr (gdbscm_set_objfile_pretty_printers_x),
     "\
 Set the list of pretty-printers of the objfile." },
 
-  { "current-objfile", 0, 0, 0, gdbscm_get_current_objfile,
+  { "current-objfile", 0, 0, 0, as_a_scm_t_subr (gdbscm_get_current_objfile),
     "\
 Return the current objfile if there is one or #f if there isn't one." },
 
-  { "objfiles", 0, 0, 0, gdbscm_objfiles,
+  { "objfiles", 0, 0, 0, as_a_scm_t_subr (gdbscm_objfiles),
     "\
 Return a list of all objfiles in the current program space." },
 

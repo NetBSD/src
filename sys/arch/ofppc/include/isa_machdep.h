@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.7 2009/08/19 15:01:46 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.7.44.1 2016/11/04 14:49:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@ void isa_outb(uint32_t, uint8_t);
 #define isa_intr_evcnt(ic, irq)						\
 	genppc_isa_intr_evcnt(ic, irq)
 #define isa_intr_establish(ic, irq, type, level, fun, arg)		\
+	genppc_isa_intr_establish(ic, irq, type, level, fun, arg)
+#define isa_intr_establish_xname(ic, irq, type, level, fun, arg, xname)	\
 	genppc_isa_intr_establish(ic, irq, type, level, fun, arg)
 #define isa_intr_disestablish(ic, arg)					\
 	genppc_isa_intr_disestablish(ic, arg)

@@ -38,7 +38,7 @@ gdb_breakpoint $bp_location
 gdb_continue_to_breakpoint "cont to $bp_location" ".*$testfile.c:$bp_location.*"
 
 proc rec_fun_all {} {
-  gdb_test "record function-call-history 1" [join [list \
+  gdb_test "record function-call-history 1" [multi_line \
     "1\tmain" \
     "2\tinc" \
     "3\tmain" \
@@ -59,7 +59,7 @@ proc rec_fun_all {} {
     "18\tinc" \
     "19\tmain" \
     "20\tinc" \
-    "21\tmain"] "\r\n"]
+    "21\tmain"]
 }
 
 # show function call history with unlimited size, we expect to see all 21 entries
@@ -72,7 +72,7 @@ with_test_prefix "size 21" rec_fun_all
 
 # show first 15 entries
 gdb_test_no_output "set record function-call-history-size 15"
-gdb_test "record function-call-history 1" [join [list \
+gdb_test "record function-call-history 1" [multi_line \
   "1\tmain" \
   "2\tinc" \
   "3\tmain" \
@@ -87,16 +87,16 @@ gdb_test "record function-call-history 1" [join [list \
   "12\tinc" \
   "13\tmain" \
   "14\tinc" \
-  "15\tmain"] "\r\n"] "forward - 1"
+  "15\tmain"] "forward - 1"
 
 # show last 6 entries
-gdb_test "record function-call-history +" [join [list \
+gdb_test "record function-call-history +" [multi_line \
   "16\tinc" \
   "17\tmain" \
   "18\tinc" \
   "19\tmain" \
   "20\tinc" \
-  "21\tmain"] "\r\n"] "forward - 2"
+  "21\tmain"] "forward - 2"
 
 # moving further should not work
 gdb_test "record function-call-history +" "At the end of the branch trace record\\." "forward - 3"
@@ -105,7 +105,7 @@ gdb_test "record function-call-history +" "At the end of the branch trace record
 gdb_test "record function-call-history +" "At the end of the branch trace record\\." "forward - 4"
 
 # moving back showing the latest 15 function calls
-gdb_test "record function-call-history -" [join [list \
+gdb_test "record function-call-history -" [multi_line \
   "7\tmain" \
   "8\tinc" \
   "9\tmain" \
@@ -120,16 +120,16 @@ gdb_test "record function-call-history -" [join [list \
   "18\tinc" \
   "19\tmain" \
   "20\tinc" \
-  "21\tmain"] "\r\n"] "backward - 1"
+  "21\tmain"] "backward - 1"
 
 # moving further back shows the 6 first function calls
-gdb_test "record function-call-history -" [join [list \
+gdb_test "record function-call-history -" [multi_line \
   "1\tmain" \
   "2\tinc" \
   "3\tmain" \
   "4\tinc" \
   "5\tmain" \
-  "6\tinc"] "\r\n"] "backward - 2"
+  "6\tinc"] "backward - 2"
 
 # moving further back shouldn't work
 gdb_test "record function-call-history -" "At the start of the branch trace record\\." "backward - 3"
@@ -141,7 +141,7 @@ gdb_test "record function-call-history -" "At the start of the branch trace reco
 gdb_test_no_output "set filename-display basename"
 
 # moving forward again, but this time with file and line number, expected to see the first 15 entries
-gdb_test "record function-call-history /l +" [join [list \
+gdb_test "record function-call-history /l +" [multi_line \
   "\[0-9\]*\tmain\tat $srcfile:40,41" \
   "\[0-9\]*\tinc\tat $srcfile:22,24" \
   "\[0-9\]*\tmain\tat $srcfile:40,41" \
@@ -157,30 +157,30 @@ gdb_test "record function-call-history /l +" [join [list \
   "\[0-9\]*\tmain\tat $srcfile:40,41" \
   "\[0-9\]*\tinc\tat $srcfile:22,24" \
   "\[0-9\]*\tmain\tat $srcfile:40,41" \
-  ] "\r\n"] "forward /l - 1"
+  ] "forward /l - 1"
 
 # moving forward and expect to see the latest 6 entries
-gdb_test "record function-call-history /l +" [join [list \
+gdb_test "record function-call-history /l +" [multi_line \
   "\[0-9\]*\tinc\tat $srcfile:22,24" \
   "\[0-9\]*\tmain\tat $srcfile:40,41" \
   "\[0-9\]*\tinc\tat $srcfile:22,24" \
   "\[0-9\]*\tmain\tat $srcfile:40,41" \
   "\[0-9\]*\tinc\tat $srcfile:22,24" \
   "\[0-9\]*\tmain\tat $srcfile:40,43" \
-  ] "\r\n"] "forward /l - 2"
+  ] "forward /l - 2"
 
 # moving further forward shouldn't work
 gdb_test "record function-call-history /l +" "At the end of the branch trace record\\." "forward /l - 3"
 gdb_test "record function-call-history /l" "At the end of the branch trace record\\." "forward /l - 4"
 
-set expected_range [join [list \
+set expected_range [multi_line \
   "4\tinc" \
   "5\tmain" \
   "6\tinc" \
   "7\tmain" \
   "8\tinc" \
   "9\tmain" \
-  "10\tinc"] "\r\n"]
+  "10\tinc"]
 
 # show functions in instruction range
 gdb_test "record function-call-history 4,10" $expected_range
@@ -196,7 +196,7 @@ gdb_continue_to_breakpoint "cont to $bp_location" ".*$testfile.c:$bp_location.*"
 # at this point we expect to have main, fib, ..., fib, main, where fib occurs 9 times,
 # so we limit the output to only show the latest 11 function calls
 gdb_test_no_output "set record function-call-history-size 11"
-gdb_test "record function-call-history" [join [list \
+gdb_test "record function-call-history" [multi_line \
   "21\tmain" \
   "22\tfib" \
   "23\tfib" \
@@ -207,10 +207,10 @@ gdb_test "record function-call-history" [join [list \
   "28\tfib" \
   "29\tfib" \
   "30\tfib" \
-  "31\tmain"] "\r\n"] "recursive"
+  "31\tmain"] "recursive"
 
 # show indented function call history for fib
-gdb_test "record function-call-history /c 21, +11" [join [list \
+gdb_test "record function-call-history /c 21, +11" [multi_line \
   "21\tmain" \
   "22\t  fib" \
   "23\t    fib" \
@@ -222,7 +222,7 @@ gdb_test "record function-call-history /c 21, +11" [join [list \
   "29\t    fib" \
   "30\t  fib" \
   "31\tmain" \
-  ] "\r\n"] "indented"
+  ] "indented"
 
 # make sure we can handle incomplete trace with respect to indentation
 if ![runto_main] {
@@ -245,11 +245,11 @@ gdb_breakpoint $bp_location
 gdb_continue_to_breakpoint "cont to bp.2" ".*$testfile.c:$bp_location\r\n.*"
 
 # let's look at the trace. we expect to see the tail of the above listing.
-gdb_test "record function-call-history /c" [join [list \
+gdb_test "record function-call-history /c" [multi_line \
   "1\t      fib" \
   "2\t    fib" \
   "3\t      fib" \
   "4\t    fib" \
   "5\t  fib" \
   "6\tmain" \
-  ] "\r\n"] "indented tail"
+  ] "indented tail"

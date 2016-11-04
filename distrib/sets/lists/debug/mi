@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.160.2.2 2016/08/06 00:18:40 pgoyette Exp $
+# $NetBSD: mi,v 1.160.2.3 2016/11/04 14:42:39 pgoyette Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -77,7 +77,7 @@
 ./usr/lib/libheimbase_g.a			comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libheimntlm_g.a			comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libhx509_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
-./usr/lib/libiberty_g.a				comp-c-debuglib		debuglib,compatfile,binutils
+./usr/lib/libiberty_g.a				comp-c-obsolete		obsolete,compatfile,binutils
 ./usr/lib/libintl_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libipsec_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libirs_g.a				comp-c-debuglib		debuglib,compatfile
@@ -1682,6 +1682,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_poll3w.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_pollts.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_posix_fadvise.debug		tests-obsolete		obsolete,compattestfile
+./usr/libdata/debug/usr/tests/kernel/t_ptrace.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_pty.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_sigaction.debug			tests-obsolete		obsolete,compattestfile
@@ -2149,6 +2150,7 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_sleep.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_status.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_swapcontext.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_timedmutex.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/librt/t_sched.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/librt/t_sem.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/librumpclient/h_exec.debug			tests-lib-debug		debug,atf,rump

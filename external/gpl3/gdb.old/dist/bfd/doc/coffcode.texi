@@ -345,6 +345,10 @@ enum coff_symbol_classification
   COFF_SYMBOL_PE_SECTION
 @};
 
+typedef asection * (*coff_gc_mark_hook_fn)
+  (asection *, struct bfd_link_info *, struct internal_reloc *,
+   struct coff_link_hash_entry *, struct internal_syment *);
+
 @end example
 Special entry points for gdb to swap in coff symbol table parts:
 @example

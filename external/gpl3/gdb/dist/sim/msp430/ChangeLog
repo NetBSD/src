@@ -1,3 +1,112 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_INLINE): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* msp430-sim.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* msp430-sim.c (loader_write_mem): Delete.
+	(lookup_symbol): Return -1 when abfd is NULL.
+	(sim_open): Delete prog_bfd variable.  Delete call to sim_load_file.
+	Delete prog_bfd check.
+
+2016-01-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete trace.o.
+	* msp430-sim.c: Delete dis-asm.h and trace.h includes.
+	(sim_open): Delete msp430_trace_init call.
+	(msp430_dis_read): Delete function.
+	(msp430_step_once): Replace disassembly logic with a call
+	to TRACE_DISASM.
+	* trace.c, trace.h: Delete files.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENDIAN): Change LITTLE_ENDIAN to
+	LITTLE.
+	* configure: Regenerate.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* msp430-sim.c (sim_dis_read): Change private_data to application_data.
+	(msp430_step_once): Likewise.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-hload.o.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-12-15  Dominik Vogt  <vogt@linux.vnet.ibm.com>
+
+	* msp430-sim.c (get_op, put_op): Fix left shift of negative value.
+
+2015-12-07  Nick Clifton  <nickc@redhat.com>
+
+	* msp430-sim.c (sim_open): Check for needed memory at address
+	0x500 not 0x200.
+	(get_op): Add support for F5 hardware multiply addresses.
+	(put_op): Likewise.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-reason.o, sim-reg.o, and
+	sim-stop.o.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_close): Rename to ...
+	(msp430_sim_close): ... this.  Delete call to sim_state_free.
+	* sim-main.h (msp430_sim_close): Declare.
+	(SIM_CLOSE_HOOK): Define.
+
 2015-06-24  Mike Frysinger  <vapier@gentoo.org>
 
 	* msp430-sim.c (trace_reg_put): Change TRACE_VPU to TRACE_REGISTER.

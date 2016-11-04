@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.33 2015/04/14 22:36:54 jmcneill Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.33.2.1 2016/11/04 14:49:03 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.33 2015/04/14 22:36:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.33.2.1 2016/11/04 14:49:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.33 2015/04/14 22:36:54 jmcneill Exp 
 #include <sys/xcall.h>
 #include <sys/ipi.h>
 #include <sys/bitops.h>
+#include <sys/interrupt.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -88,11 +89,14 @@ struct intr_source {
 	uint8_t is_refcnt;
 	bus_size_t is_vpr;
 	bus_size_t is_dr;
+	char is_source[INTRIDBUF];
+	char is_xname[INTRDEVNAMEBUF];
 };
 
 #define	INTR_SOURCE_INITIALIZER \
 	{ .is_func = e500_intr_spurious, .is_arg = NULL, \
-	.is_irq = -1, .is_ipl = IPL_NONE, .is_ist = IST_NONE, }
+	.is_irq = -1, .is_ipl = IPL_NONE, .is_ist = IST_NONE, \
+	.is_source = "", .is_xname = "", }
 
 struct e500_intr_name {
 	uint8_t in_irq;
@@ -403,7 +407,8 @@ static const char ist_names[][12] = {
 static struct intr_source *e500_intr_sources;
 static const struct intr_source *e500_intr_last_source;
 
-static void 	*e500_intr_establish(int, int, int, int (*)(void *), void *);
+static void 	*e500_intr_establish(int, int, int, int (*)(void *), void *,
+		    const char *);
 static void 	e500_intr_disestablish(void *);
 static void 	e500_intr_cpu_attach(struct cpu_info *ci);
 static void 	e500_intr_cpu_hatch(struct cpu_info *ci);
@@ -420,6 +425,7 @@ static void 	e500_wdogintr(struct trapframe *tf);
 static void	e500_spl0(void);
 static int 	e500_splraise(int);
 static void 	e500_splx(int);
+static const char *e500_intr_all_name_lookup(int, int);
 
 const struct intrsw e500_intrsw = {
 	.intrsw_establish = e500_intr_establish,
@@ -724,7 +730,7 @@ e500_intr_typename(int ist)
 
 static void *
 e500_intr_cpu_establish(struct cpu_info *ci, int irq, int ipl, int ist,
-	int (*handler)(void *), void *arg)
+	int (*handler)(void *), void *arg, const char *xname)
 {
 	struct cpu_softc * const cpu = ci->ci_softc;
 	struct e500_intr_irq_info ii;
@@ -736,6 +742,12 @@ e500_intr_cpu_establish(struct cpu_info *ci, int irq, int ipl, int ist,
 		printf("%s: e500_intr_irq_info_get(%p,%u,%u,%u,%p) failed\n",
 		    __func__, ci, irq, ipl, ist, &ii);
 		return NULL;
+	}
+
+	if (xname == NULL) {
+		xname = e500_intr_all_name_lookup(irq, ist);
+		if (xname == NULL)
+			xname = "unknown";
 	}
 
 	struct intr_source * const is = &e500_intr_sources[ii.irq_vector];
@@ -761,6 +773,34 @@ e500_intr_cpu_establish(struct cpu_info *ci, int irq, int ipl, int ist,
 	is->is_refcnt++;
 	is->is_vpr = ii.irq_vpr;
 	is->is_dr = ii.irq_dr;
+	switch (ist) {
+	case IST_EDGE:
+	case IST_LEVEL_LOW:
+	case IST_LEVEL_HIGH:
+		snprintf(is->is_source, sizeof(is->is_source), "extirq %d",
+		    irq);
+		break;
+	case IST_ONCHIP:
+		snprintf(is->is_source, sizeof(is->is_source), "irq %d", irq);
+		break;
+	case IST_MSIGROUP:
+		snprintf(is->is_source, sizeof(is->is_source), "msigroup %d",
+		    irq);
+		break;
+	case IST_TIMER:
+		snprintf(is->is_source, sizeof(is->is_source), "timer %d", irq);
+		break;
+	case IST_IPI:
+		snprintf(is->is_source, sizeof(is->is_source), "ipi %d", irq);
+		break;
+	case IST_MI:
+		snprintf(is->is_source, sizeof(is->is_source), "mi %d", irq);
+		break;
+	case IST_PULSE:
+	default:
+		panic("%s: invalid ist (%d)\n", __func__, ist);
+	}
+	strlcpy(is->is_xname, xname, sizeof(is->is_xname));
 
 	uint32_t vpr = VPR_PRIORITY_MAKE(IPL2CTPR(ipl))
 	    | VPR_VECTOR_MAKE(((ii.irq_vector + 1) << 4) | ipl)
@@ -801,10 +841,11 @@ e500_intr_cpu_establish(struct cpu_info *ci, int irq, int ipl, int ist,
 }
 
 static void *
-e500_intr_establish(int irq, int ipl, int ist,
-	int (*handler)(void *), void *arg)
+e500_intr_establish(int irq, int ipl, int ist, int (*handler)(void *),
+    void *arg, const char *xname)
 {
-	return e500_intr_cpu_establish(curcpu(), irq, ipl, ist, handler, arg);
+	return e500_intr_cpu_establish(curcpu(), irq, ipl, ist, handler, arg,
+	    xname);
 }
 
 static void
@@ -1329,6 +1370,7 @@ e500_ipi_intr(void *v)
 static void
 e500_intr_cpu_hatch(struct cpu_info *ci)
 {
+	char iname[INTRIDBUF];
 
 	/* Initialize percpu interupts. */
 	e500_intr_init_precpu();
@@ -1336,15 +1378,16 @@ e500_intr_cpu_hatch(struct cpu_info *ci)
 	/*
 	 * Establish clock interrupt for this CPU.
 	 */
+	snprintf(iname, sizeof(iname), "%s clock", device_xname(ci->ci_dev));
 	if (e500_intr_cpu_establish(ci, E500_CLOCK_TIMER, IPL_CLOCK, IST_TIMER,
-	    e500_clock_intr, NULL) == NULL)
+	    e500_clock_intr, NULL, iname) == NULL)
 		panic("%s: failed to establish clock interrupt!", __func__);
 
 	/*
 	 * Establish the IPI interrupts for this CPU.
 	 */
 	if (e500_intr_cpu_establish(ci, 0, IPL_VM, IST_IPI, e500_ipi_intr,
-	    NULL) == NULL)
+	    NULL, "ipi") == NULL)
 		panic("%s: failed to establish ipi interrupt!", __func__);
 
 	/*
@@ -1353,4 +1396,353 @@ e500_intr_cpu_hatch(struct cpu_info *ci)
 	uint32_t tcr = mfspr(SPR_TCR);
 	tcr |= TCR_WIE;
 	mtspr(SPR_TCR, tcr);
+}
+
+static const char *
+e500_intr_all_name_lookup(int irq, int ist)
+{
+	const struct e500_intr_info * const info = &e500_intr_info;
+
+	switch (ist) {
+	default:
+		if (irq < info->ii_external_sources &&
+		    (ist == IST_EDGE ||
+		     ist == IST_LEVEL_LOW ||
+		     ist == IST_LEVEL_HIGH))
+			return e500_intr_name_lookup(
+			    info->ii_external_intr_names, irq);
+		break;
+
+	case IST_PULSE:
+		break;
+
+	case IST_ONCHIP:
+		if (irq < info->ii_onchip_sources)
+			return e500_intr_onchip_name_lookup(irq);
+		break;
+
+	case IST_MSIGROUP:
+		if (irq < info->ii_msigroup_sources)
+			return e500_intr_name_lookup(e500_msigroup_intr_names,
+			    irq);
+		break;
+
+	case IST_TIMER:
+		if (irq < info->ii_timer_sources)
+			return e500_intr_name_lookup(e500_timer_intr_names,
+			    irq);
+		break;
+
+	case IST_IPI:
+		if (irq < info->ii_ipi_sources)
+			return e500_intr_name_lookup(e500_ipi_intr_names, irq);
+		break;
+
+	case IST_MI:
+		if (irq < info->ii_mi_sources)
+			return e500_intr_name_lookup(e500_mi_intr_names, irq);
+		break;
+	}
+
+	return NULL;
+}
+
+static void
+e500_intr_get_affinity(struct intr_source *is, kcpuset_t *cpuset)
+{
+	struct cpu_info * const ci = curcpu();
+	struct cpu_softc * const cpu = ci->ci_softc;
+	struct e500_intr_irq_info ii;
+
+	kcpuset_zero(cpuset);
+
+	if (is->is_ipl != IPL_NONE && !IST_PERCPU_P(is->is_ist)) {
+		if (e500_intr_irq_info_get(ci, is->is_irq, is->is_ipl,
+		    is->is_ist, &ii)) {
+			uint32_t dr = openpic_read(cpu, ii.irq_dr);
+			while (dr != 0) {
+				u_int n = ffs(dr);
+				if (n-- == 0)
+					break;
+				dr &= ~(1 << n);
+				kcpuset_set(cpuset, n);
+			}
+		}
+	}
+}
+
+static int
+e500_intr_set_affinity(struct intr_source *is, const kcpuset_t *cpuset)
+{
+	struct cpu_info * const ci = curcpu();
+	struct cpu_softc * const cpu = ci->ci_softc;
+	struct e500_intr_irq_info ii;
+	uint32_t ecpuset, tcpuset;
+
+	KASSERT(mutex_owned(&cpu_lock));
+	KASSERT(mutex_owned(&e500_intr_lock));
+	KASSERT(!kcpuset_iszero(cpuset));
+
+	kcpuset_export_u32(cpuset, &ecpuset, sizeof(ecpuset));
+	tcpuset = ecpuset;
+	while (tcpuset != 0) {
+		u_int cpu_idx = ffs(tcpuset);
+		if (cpu_idx-- == 0)
+			break;
+
+		tcpuset &= ~(1 << cpu_idx);
+		struct cpu_info * const newci = cpu_lookup(cpu_idx);
+		if (newci == NULL)
+			return EINVAL;
+		if ((newci->ci_schedstate.spc_flags & SPCF_NOINTR) != 0)
+			return EINVAL;
+	}
+
+	if (!e500_intr_irq_info_get(ci, is->is_irq, is->is_ipl, is->is_ist,
+	    &ii))
+		return ENXIO;
+
+	/*
+	 * Update the vector/priority and destination registers keeping the
+	 * interrupt masked.
+	 */
+	const register_t msr = wrtee(0);	/* disable interrupts */
+
+	uint32_t vpr = openpic_read(cpu, ii.irq_vpr);
+	openpic_write(cpu, ii.irq_vpr, vpr | VPR_MSK);
+
+	/*
+	 * Wait for the Activity (A) bit for the source to be cleared.
+	 */
+	while (openpic_read(cpu, ii.irq_vpr) & VPR_A)
+		continue;
+
+	/*
+	 * Update destination register
+	 */
+	openpic_write(cpu, ii.irq_dr, ecpuset);
+
+	/*
+	 * Now unmask the interrupt.
+	 */
+	openpic_write(cpu, ii.irq_vpr, vpr);
+
+	wrtee(msr);				/* re-enable interrupts */
+
+	return 0;
+}
+
+static bool
+e500_intr_is_affinity_intrsource(struct intr_source *is,
+    const kcpuset_t *cpuset)
+{
+	struct cpu_info * const ci = curcpu();
+	struct cpu_softc * const cpu = ci->ci_softc;
+	struct e500_intr_irq_info ii;
+	bool result = false;
+
+	if (is->is_ipl != IPL_NONE && !IST_PERCPU_P(is->is_ist)) {
+		if (e500_intr_irq_info_get(ci, is->is_irq, is->is_ipl,
+		    is->is_ist, &ii)) {
+			uint32_t dr = openpic_read(cpu, ii.irq_dr);
+			while (dr != 0 && !result) {
+				u_int n = ffs(dr);
+				if (n-- == 0)
+					break;
+				dr &= ~(1 << n);
+				result = kcpuset_isset(cpuset, n);
+			}
+		}
+	}
+	return result;
+}
+
+static struct intr_source *
+e500_intr_get_source(const char *intrid)
+{
+	struct intr_source *is;
+
+	mutex_enter(&e500_intr_lock);
+	for (is = e500_intr_sources; is < e500_intr_last_source; ++is) {
+		if (is->is_source[0] == '\0')
+			continue;
+
+		if (!strncmp(intrid, is->is_source, sizeof(is->is_source) - 1))
+			break;
+	}
+	if (is == e500_intr_last_source)
+		is = NULL;
+	mutex_exit(&e500_intr_lock);
+	return is;
+}
+
+uint64_t
+interrupt_get_count(const char *intrid, u_int cpu_idx)
+{
+	struct cpu_info * const ci = cpu_lookup(cpu_idx);
+	struct cpu_softc * const cpu = ci->ci_softc;
+	struct intr_source *is;
+	struct e500_intr_irq_info ii;
+
+	is = e500_intr_get_source(intrid);
+	if (is == NULL)
+		return 0;
+
+	if (e500_intr_irq_info_get(ci, is->is_irq, is->is_ipl, is->is_ist, &ii))
+		return cpu->cpu_evcnt_intrs[ii.irq_vector].ev_count;
+	return 0;
+}
+
+void
+interrupt_get_assigned(const char *intrid, kcpuset_t *cpuset)
+{
+	struct intr_source *is;
+
+	kcpuset_zero(cpuset);
+
+	is = e500_intr_get_source(intrid);
+	if (is == NULL)
+		return;
+
+	mutex_enter(&e500_intr_lock);
+	e500_intr_get_affinity(is, cpuset);
+	mutex_exit(&e500_intr_lock);
+}
+
+void
+interrupt_get_available(kcpuset_t *cpuset)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	kcpuset_zero(cpuset);
+
+	mutex_enter(&cpu_lock);
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if ((ci->ci_schedstate.spc_flags & SPCF_NOINTR) == 0)
+			kcpuset_set(cpuset, cpu_index(ci));
+	}
+	mutex_exit(&cpu_lock);
+}
+
+void
+interrupt_get_devname(const char *intrid, char *buf, size_t len)
+{
+	struct intr_source *is;
+
+	if (len == 0)
+		return;
+
+	buf[0] = '\0';
+
+	is = e500_intr_get_source(intrid);
+	if (is != NULL)
+		strlcpy(buf, is->is_xname, len);
+}
+
+struct intrids_handler *
+interrupt_construct_intrids(const kcpuset_t *cpuset)
+{
+	struct intr_source *is;
+	struct intrids_handler *ii_handler;
+	intrid_t *ids;
+	int i, n;
+
+	if (kcpuset_iszero(cpuset))
+		return NULL;
+
+	n = 0;
+	mutex_enter(&e500_intr_lock);
+	for (is = e500_intr_sources; is < e500_intr_last_source; ++is) {
+		if (e500_intr_is_affinity_intrsource(is, cpuset))
+			++n;
+	}
+	mutex_exit(&e500_intr_lock);
+
+	const size_t alloc_size = sizeof(int) + sizeof(intrid_t) * n;
+	ii_handler = kmem_zalloc(alloc_size, KM_SLEEP);
+	if (ii_handler == NULL)
+		return NULL;
+	ii_handler->iih_nids = n;
+	if (n == 0)
+		return ii_handler;
+
+	ids = ii_handler->iih_intrids;
+	mutex_enter(&e500_intr_lock);
+	for (i = 0, is = e500_intr_sources;
+	     i < n && is < e500_intr_last_source;
+	     ++is) {
+		if (!e500_intr_is_affinity_intrsource(is, cpuset))
+			continue;
+
+		if (is->is_source[0] != '\0') {
+			strlcpy(ids[i], is->is_source, sizeof(ids[0]));
+			++i;
+		}
+	}
+	mutex_exit(&e500_intr_lock);
+
+	return ii_handler;
+}
+
+void
+interrupt_destruct_intrids(struct intrids_handler *ii_handler)
+{
+	size_t iih_size;
+
+	if (ii_handler == NULL)
+		return;
+
+	iih_size = sizeof(int) + sizeof(intrid_t) * ii_handler->iih_nids;
+	kmem_free(ii_handler, iih_size);
+}
+
+static int
+interrupt_distribute_locked(struct intr_source *is, const kcpuset_t *newset,
+    kcpuset_t *oldset)
+{
+	int error;
+
+	KASSERT(mutex_owned(&cpu_lock));
+
+	if (is->is_ipl == IPL_NONE || IST_PERCPU_P(is->is_ist))
+		return EINVAL;
+
+	mutex_enter(&e500_intr_lock);
+	if (oldset != NULL)
+		e500_intr_get_affinity(is, oldset);
+	error = e500_intr_set_affinity(is, newset);
+	mutex_exit(&e500_intr_lock);
+
+	return error;
+}
+
+int
+interrupt_distribute(void *ich, const kcpuset_t *newset, kcpuset_t *oldset)
+{
+	int error;
+
+	mutex_enter(&cpu_lock);
+	error = interrupt_distribute_locked(ich, newset, oldset);
+	mutex_exit(&cpu_lock);
+
+	return error;
+}
+
+int
+interrupt_distribute_handler(const char *intrid, const kcpuset_t *newset,
+    kcpuset_t *oldset)
+{
+	struct intr_source *is;
+	int error;
+
+	is = e500_intr_get_source(intrid);
+	if (is != NULL) {
+		mutex_enter(&cpu_lock);
+		error = interrupt_distribute_locked(is, newset, oldset);
+		mutex_exit(&cpu_lock);
+	} else
+		error = ENOENT;
+
+	return error;
 }

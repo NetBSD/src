@@ -1,4 +1,4 @@
-# Copyright 2002-2015 Free Software Foundation, Inc.
+# Copyright 2002-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -156,6 +156,24 @@ if {[regexp "A + B" "$output"]} {
 mi_expect_stop "end-stepping-range" "callee4" "" ".*basics.c" $line_callee4_next_step \
     "" "check *stopped from CLI command 2"
 
+# Test that CLI's "finish" command prints the function's return value
+# to both the CLI and MI streams, and that the same result variable is
+# printed to both streams.
+with_test_prefix "CLI finish" {
+    mi_send_resuming_command "interpreter-exec console finish" "send CLI command"
+
+    set output [mi_gdb_expect_cli_output "\\*stopped" "collect CLI output"]
+    gdb_assert {[regexp \
+		     "callee3 .* at .*basics.c:.*.*Value returned is .1 = 0\\\\n" \
+		     $output]} \
+	"check CLI output"
+
+    mi_expect_stop "function-finished" "callee3" ".*" \
+	".*basics.c" ".*" \
+	",gdb-result-var=\".1\",return-value=\"0\"" \
+	"check MI output"
+}
+
 mi_gdb_test "600-break-insert -t basics.c:$line_main_hello" \
 	{600\^done,bkpt=.number="3",type="breakpoint".*\}} \
 	"-break-insert -t basics.c:\$line_main_hello"
@@ -166,7 +184,7 @@ mi_send_resuming_command "exec-continue" "-exec-continue to line \$line_main_hel
 
 set output [mi_gdb_expect_cli_output "\\*stopped" "collect CLI output for breakpoint hit"]
 set test "breakpoint hit produces CLI output"
-set pattern "\\\\nTemporary breakpoint 3, main \\(\\) at \[^\n\]+basics.c:$line_main_hello\\\\n\[^\n\]+Hello"
+set pattern "\\\\nTemporary breakpoint 3, main \\(\\) at \[^\n\]*basics.c:$line_main_hello\\\\n\[^\n\]+Hello"
 
 if {[regexp $pattern $output]} {
     pass $test

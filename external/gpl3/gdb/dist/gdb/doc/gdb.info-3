@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 5.2 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.0 from gdb.texinfo.
 
-Copyright (C) 1988-2015 Free Software Foundation, Inc.
+Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.10.1.
+Source-Level Debugger' for GDB (GDB) Version 7.12.
 
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,160 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Altering,  Next: GDB Files,  Prev: Symbols,  Up: Top
+
+17 Altering Execution
+*********************
+
+Once you think you have found an error in your program, you might want
+to find out for certain whether correcting the apparent error would lead
+to correct results in the rest of the run.  You can find the answer by
+experiment, using the GDB features for altering execution of the
+program.
+
+   For example, you can store new values into variables or memory
+locations, give your program a signal, restart it at a different
+address, or even return prematurely from a function.
+
+* Menu:
+
+* Assignment::                  Assignment to variables
+* Jumping::                     Continuing at a different address
+* Signaling::                   Giving your program a signal
+* Returning::                   Returning from a function
+* Calling::                     Calling your program's functions
+* Patching::                    Patching your program
+* Compiling and Injecting Code:: Compiling and injecting code in GDB
+
+
+File: gdb.info,  Node: Assignment,  Next: Jumping,  Up: Altering
+
+17.1 Assignment to Variables
+============================
+
+To alter the value of a variable, evaluate an assignment expression.
+*Note Expressions: Expressions.  For example,
+
+     print x=4
+
+stores the value 4 into the variable 'x', and then prints the value of
+the assignment expression (which is 4).  *Note Using GDB with Different
+Languages: Languages, for more information on operators in supported
+languages.
+
+   If you are not interested in seeing the value of the assignment, use
+the 'set' command instead of the 'print' command.  'set' is really the
+same as 'print' except that the expression's value is not printed and is
+not put in the value history (*note Value History: Value History.).  The
+expression is evaluated only for its effects.
+
+   If the beginning of the argument string of the 'set' command appears
+identical to a 'set' subcommand, use the 'set variable' command instead
+of just 'set'.  This command is identical to 'set' except for its lack
+of subcommands.  For example, if your program has a variable 'width',
+you get an error if you try to set a new value with just 'set width=13',
+because GDB has the command 'set width':
+
+     (gdb) whatis width
+     type = double
+     (gdb) p width
+     $4 = 13
+     (gdb) set width=47
+     Invalid syntax in expression.
+
+The invalid expression, of course, is '=47'.  In order to actually set
+the program's variable 'width', use
+
+     (gdb) set var width=47
+
+   Because the 'set' command has many subcommands that can conflict with
+the names of program variables, it is a good idea to use the 'set
+variable' command instead of just 'set'.  For example, if your program
+has a variable 'g', you run into problems if you try to set a new value
+with just 'set g=4', because GDB has the command 'set gnutarget',
+abbreviated 'set g':
+
+     (gdb) whatis g
+     type = double
+     (gdb) p g
+     $1 = 1
+     (gdb) set g=4
+     (gdb) p g
+     $2 = 1
+     (gdb) r
+     The program being debugged has been started already.
+     Start it from the beginning? (y or n) y
+     Starting program: /home/smith/cc_progs/a.out
+     "/home/smith/cc_progs/a.out": can't open to read symbols:
+                                      Invalid bfd target.
+     (gdb) show g
+     The current BFD target is "=4".
+
+The program variable 'g' did not change, and you silently set the
+'gnutarget' to an invalid value.  In order to set the variable 'g', use
+
+     (gdb) set var g=4
+
+   GDB allows more implicit conversions in assignments than C; you can
+freely store an integer value into a pointer variable or vice versa, and
+you can convert any structure to any other structure that is the same
+length or shorter.
+
+   To store values into arbitrary places in memory, use the '{...}'
+construct to generate a value of specified type at a specified address
+(*note Expressions: Expressions.).  For example, '{int}0x83040' refers
+to memory location '0x83040' as an integer (which implies a certain size
+and representation in memory), and
+
+     set {int}0x83040 = 4
+
+stores the value 4 into that memory location.
+
+
+File: gdb.info,  Node: Jumping,  Next: Signaling,  Prev: Assignment,  Up: Altering
+
+17.2 Continuing at a Different Address
+======================================
+
+Ordinarily, when you continue your program, you do so at the place where
+it stopped, with the 'continue' command.  You can instead continue at an
+address of your own choosing, with the following commands:
+
+'jump LOCATION'
+'j LOCATION'
+     Resume execution at LOCATION.  Execution stops again immediately if
+     there is a breakpoint there.  *Note Specify Location::, for a
+     description of the different forms of LOCATION.  It is common
+     practice to use the 'tbreak' command in conjunction with 'jump'.
+     *Note Setting Breakpoints: Set Breaks.
+
+     The 'jump' command does not change the current stack frame, or the
+     stack pointer, or the contents of any memory location or any
+     register other than the program counter.  If LOCATION is in a
+     different function from the one currently executing, the results
+     may be bizarre if the two functions expect different patterns of
+     arguments or of local variables.  For this reason, the 'jump'
+     command requests confirmation if the specified line is not in the
+     function currently executing.  However, even bizarre results are
+     predictable if you are well acquainted with the machine-language
+     code of your program.
+
+   On many systems, you can get much the same effect as the 'jump'
+command by storing a new value into the register '$pc'.  The difference
+is that this does not start your program running; it only changes the
+address of where it _will_ run when you continue.  For example,
+
+     set $pc = 0x485
+
+makes the next 'continue' command or stepping command execute at address
+'0x485', rather than at the address where your program stopped.  *Note
+Continuing and Stepping: Continuing and Stepping.
+
+   The most common occasion to use the 'jump' command is to back
+up--perhaps with more breakpoints set--over a portion of a program that
+has already executed, in order to examine its execution in more detail.
 
 
 File: gdb.info,  Node: Signaling,  Next: Returning,  Prev: Jumping,  Up: Altering
@@ -557,6 +711,7 @@ the core dump file.
 * Menu:
 
 * Files::                       Commands to specify files
+* File Caching::                Information about GDB's file caching
 * Separate Debug Files::        Debugging information in separate files
 * MiniDebugInfo::               Debugging information in a special section
 * Index Files::                 Index files speed up GDB
@@ -564,7 +719,7 @@ the core dump file.
 * Data Files::                  GDB data files
 
 
-File: gdb.info,  Node: Files,  Next: Separate Debug Files,  Up: GDB Files
+File: gdb.info,  Node: Files,  Next: File Caching,  Up: GDB Files
 
 18.1 Commands to Specify Files
 ==============================
@@ -836,8 +991,9 @@ files are useful.
 names as arguments.  GDB always converts the file name to an absolute
 file name and remembers it that way.
 
-   GDB supports GNU/Linux, MS-Windows, HP-UX, SunOS, SVr4, Irix, and IBM
-RS/6000 AIX shared libraries.
+   GDB supports GNU/Linux, MS-Windows, SunOS, Darwin/Mach-O, SVr4, IBM
+RS/6000 AIX, QNX Neutrino, FDPIC (FR-V), and DSBT (TIC6X) shared
+libraries.
 
    On MS-Windows GDB must be linked with the Expat library to support
 shared libraries.  *Note Expat::.
@@ -847,9 +1003,6 @@ you use the 'run' command, or when you examine a core file.  (Before you
 issue the 'run' command, GDB does not understand references to a
 function in a shared library, however--unless you are debugging a core
 file).
-
-   On HP-UX, if the program loads a library explicitly, GDB
-automatically loads the symbols at the time of the 'shl_load' call.
 
    There are times, however, when you may wish to not automatically load
 symbol definitions from shared libraries, such as when they are
@@ -1098,9 +1251,39 @@ of a significant slowdown.
 remote system was provided by prefixing PATH with 'remote:'
 
 
-File: gdb.info,  Node: Separate Debug Files,  Next: MiniDebugInfo,  Prev: Files,  Up: GDB Files
+File: gdb.info,  Node: File Caching,  Next: Separate Debug Files,  Prev: Files,  Up: GDB Files
 
-18.2 Debugging Information in Separate Files
+18.2 File Caching
+=================
+
+To speed up file loading, and reduce memory usage, GDB will reuse the
+'bfd' objects used to track open files.  *Note BFD: (bfd)Top.  The
+following commands allow visibility and control of the caching behavior.
+
+'maint info bfds'
+     This prints information about each 'bfd' object that is known to
+     GDB.
+
+'maint set bfd-sharing'
+'maint show bfd-sharing'
+     Control whether 'bfd' objects can be shared.  When sharing is
+     enabled GDB reuses already open 'bfd' objects rather than reopening
+     the same file.  Turning sharing off does not cause already shared
+     'bfd' objects to be unshared, but all future files that are opened
+     will create a new 'bfd' object.  Similarly, re-enabling sharing
+     does not cause multiple existing 'bfd' objects to be collapsed into
+     a single shared 'bfd' object.
+
+'set debug bfd-cache LEVEL'
+     Turns on debugging of the bfd cache, setting the level to LEVEL.
+
+'show debug bfd-cache'
+     Show the current debugging level of the bfd cache.
+
+
+File: gdb.info,  Node: Separate Debug Files,  Next: MiniDebugInfo,  Prev: File Caching,  Up: GDB Files
+
+18.3 Debugging Information in Separate Files
 ============================================
 
 GDB allows you to put a program's debugging information in a file
@@ -1328,7 +1511,7 @@ This computation does not apply to the "build ID" method.
 
 File: gdb.info,  Node: MiniDebugInfo,  Next: Index Files,  Prev: Separate Debug Files,  Up: GDB Files
 
-18.3 Debugging information in a special section
+18.4 Debugging information in a special section
 ===============================================
 
 Some systems ship pre-built executables and libraries that have a
@@ -1385,7 +1568,7 @@ utilities:
 
 File: gdb.info,  Node: Index Files,  Next: Symbol Errors,  Prev: MiniDebugInfo,  Up: GDB Files
 
-18.4 Index Files Speed Up GDB
+18.5 Index Files Speed Up GDB
 =============================
 
 When GDB finds a symbol file, it scans the symbols in the file in order
@@ -1435,7 +1618,7 @@ work for programs using Ada.
 
 File: gdb.info,  Node: Symbol Errors,  Next: Data Files,  Prev: Index Files,  Up: GDB Files
 
-18.5 Errors Reading Symbol Files
+18.6 Errors Reading Symbol Files
 ================================
 
 While reading a symbol file, GDB occasionally encounters problems, such
@@ -1522,7 +1705,7 @@ Optional Warnings and Messages: Messages/Warnings.).
 
 File: gdb.info,  Node: Data Files,  Prev: Symbol Errors,  Up: GDB Files
 
-18.6 GDB Data Files
+18.7 GDB Data Files
 ===================
 
 GDB will sometimes read an auxiliary data file.  These files are kept in
@@ -1810,22 +1993,129 @@ File: gdb.info,  Node: Connecting,  Next: File Transfer,  Up: Remote Debugging
 20.1 Connecting to a Remote Target
 ==================================
 
-GDB needs an unstripped copy of your program to access symbol and
-debugging information.  Some remote targets (*note qXfer executable
-filename read::, and *note Host I/O Packets::) allow GDB to access
-program files over the same connection used to communicate with GDB.
-With such a target, if the remote program is unstripped, the only
-command you need is 'target remote'.  Otherwise, start up GDB using the
-name of the local unstripped copy of your program as the first argument,
-or use the 'file' command.
+This section describes how to connect to a remote target, including the
+types of connections and their differences, how to set up executable and
+symbol files on the host and target, and the commands used for
+connecting to and disconnecting from the remote target.
 
-   GDB can communicate with the target over a serial line, or over an IP
+20.1.1 Types of Remote Connections
+----------------------------------
+
+GDB supports two types of remote connections, 'target remote' mode and
+'target extended-remote' mode.  Note that many remote targets support
+only 'target remote' mode.  There are several major differences between
+the two types of connections, enumerated here:
+
+Result of detach or program exit
+     *With target remote mode:* When the debugged program exits or you
+     detach from it, GDB disconnects from the target.  When using
+     'gdbserver', 'gdbserver' will exit.
+
+     *With target extended-remote mode:* When the debugged program exits
+     or you detach from it, GDB remains connected to the target, even
+     though no program is running.  You can rerun the program, attach to
+     a running program, or use 'monitor' commands specific to the
+     target.
+
+     When using 'gdbserver' in this case, it does not exit unless it was
+     invoked using the '--once' option.  If the '--once' option was not
+     used, you can ask 'gdbserver' to exit using the 'monitor exit'
+     command (*note Monitor Commands for gdbserver::).
+
+Specifying the program to debug
+     For both connection types you use the 'file' command to specify the
+     program on the host system.  If you are using 'gdbserver' there are
+     some differences in how to specify the location of the program on
+     the target.
+
+     *With target remote mode:* You must either specify the program to
+     debug on the 'gdbserver' command line or use the '--attach' option
+     (*note Attaching to a Running Program: Attaching to a program.).
+
+     *With target extended-remote mode:* You may specify the program to
+     debug on the 'gdbserver' command line, or you can load the program
+     or attach to it using GDB commands after connecting to 'gdbserver'.
+
+     You can start 'gdbserver' without supplying an initial command to
+     run or process ID to attach.  To do this, use the '--multi' command
+     line option.  Then you can connect using 'target extended-remote'
+     and start the program you want to debug (see below for details on
+     using the 'run' command in this scenario).  Note that the
+     conditions under which 'gdbserver' terminates depend on how GDB
+     connects to it ('target remote' or 'target extended-remote').  The
+     '--multi' option to 'gdbserver' has no influence on that.
+
+The 'run' command
+     *With target remote mode:* The 'run' command is not supported.
+     Once a connection has been established, you can use all the usual
+     GDB commands to examine and change data.  The remote program is
+     already running, so you can use commands like 'step' and
+     'continue'.
+
+     *With target extended-remote mode:* The 'run' command is supported.
+     The 'run' command uses the value set by 'set remote exec-file'
+     (*note set remote exec-file::) to select the program to run.
+     Command line arguments are supported, except for wildcard expansion
+     and I/O redirection (*note Arguments::).
+
+     If you specify the program to debug on the command line, then the
+     'run' command is not required to start execution, and you can
+     resume using commands like 'step' and 'continue' as with 'target
+     remote' mode.
+
+Attaching
+     *With target remote mode:* The GDB command 'attach' is not
+     supported.  To attach to a running program using 'gdbserver', you
+     must use the '--attach' option (*note Running gdbserver::).
+
+     *With target extended-remote mode:* To attach to a running program,
+     you may use the 'attach' command after the connection has been
+     established.  If you are using 'gdbserver', you may also invoke
+     'gdbserver' using the '--attach' option (*note Running
+     gdbserver::).
+
+20.1.2 Host and Target Files
+----------------------------
+
+GDB, running on the host, needs access to symbol and debugging
+information for your program running on the target.  This requires
+access to an unstripped copy of your program, and possibly any
+associated symbol files.  Note that this section applies equally to both
+'target remote' mode and 'target extended-remote' mode.
+
+   Some remote targets (*note qXfer executable filename read::, and
+*note Host I/O Packets::) allow GDB to access program files over the
+same connection used to communicate with GDB.  With such a target, if
+the remote program is unstripped, the only command you need is 'target
+remote' (or 'target extended-remote').
+
+   If the remote program is stripped, or the target does not support
+remote program file access, start up GDB using the name of the local
+unstripped copy of your program as the first argument, or use the 'file'
+command.  Use 'set sysroot' to specify the location (on the host) of
+target libraries (unless your GDB was compiled with the correct sysroot
+using '--with-sysroot').  Alternatively, you may use 'set
+solib-search-path' to specify how GDB locates target libraries.
+
+   The symbol file and target libraries must exactly match the
+executable and libraries on the target, with one exception: the files on
+the host system should not be stripped, even if the files on the target
+system are.  Mismatched or missing files will lead to confusing results
+during debugging.  On GNU/Linux targets, mismatched or missing files may
+also prevent 'gdbserver' from debugging multi-threaded programs.
+
+20.1.3 Remote Connection Commands
+---------------------------------
+
+GDB can communicate with the target over a serial line, or over an IP
 network using TCP or UDP.  In each case, GDB uses the same protocol for
 debugging your program; only the medium carrying the debugging packets
-varies.  The 'target remote' command establishes a connection to the
-target.  Its arguments indicate which medium to use:
+varies.  The 'target remote' and 'target extended-remote' commands
+establish a connection to the target.  Both commands accept the same
+arguments, which indicate the medium to use:
 
 'target remote SERIAL-DEVICE'
+'target extended-remote SERIAL-DEVICE'
      Use SERIAL-DEVICE to communicate with the target.  For example, to
      use a serial line connected to the device named '/dev/ttyb':
 
@@ -1837,6 +2127,8 @@ target.  Its arguments indicate which medium to use:
 
 'target remote HOST:PORT'
 'target remote tcp:HOST:PORT'
+'target extended-remote HOST:PORT'
+'target extended-remote tcp:HOST:PORT'
      Debug using a TCP connection to PORT on HOST.  The HOST may be
      either a host name or a numeric IP address; PORT must be a decimal
      number.  The HOST could be the target machine itself, if it is
@@ -1858,6 +2150,7 @@ target.  Its arguments indicate which medium to use:
      Note that the colon is still required here.
 
 'target remote udp:HOST:PORT'
+'target extended-remote udp:HOST:PORT'
      Debug using UDP packets to PORT on HOST.  For example, to connect
      to UDP port 2828 on a terminal server named 'manyfarms':
 
@@ -1869,6 +2162,7 @@ target.  Its arguments indicate which medium to use:
      with your debugging session.
 
 'target remote | COMMAND'
+'target extended-remote | COMMAND'
      Run COMMAND in the background and communicate with it using a pipe.
      The COMMAND is a shell command, to be parsed and expanded by the
      system's command shell, '/bin/sh'; it should expect remote protocol
@@ -1881,11 +2175,6 @@ target.  Its arguments indicate which medium to use:
      will try to send it a 'SIGTERM' signal.  (If the program has
      already exited, this will have no effect.)
 
-   Once the connection has been established, you can use all the usual
-commands to examine and change data.  The remote program is already
-running; you can use 'step' and 'continue', and you do not need to use
-'run'.
-
    Whenever GDB is waiting for the remote program, if you type the
 interrupt character (often 'Ctrl-c'), GDB attempts to stop the program.
 This may or may not succeed, depending in part on the hardware and the
@@ -1895,20 +2184,26 @@ character once again, GDB displays this prompt:
      Interrupted while waiting for the program.
      Give up (and stop debugging it)?  (y or n)
 
-   If you type 'y', GDB abandons the remote debugging session.  (If you
-decide you want to try again later, you can use 'target remote' again to
-connect once more.)  If you type 'n', GDB goes back to waiting.
+   In 'target remote' mode, if you type 'y', GDB abandons the remote
+debugging session.  (If you decide you want to try again later, you can
+use 'target remote' again to connect once more.)  If you type 'n', GDB
+goes back to waiting.
+
+   In 'target extended-remote' mode, typing 'n' will leave GDB connected
+to the target.
 
 'detach'
      When you have finished debugging the remote program, you can use
      the 'detach' command to release it from GDB control.  Detaching
      from the target normally resumes its execution, but the results
      will depend on your particular remote stub.  After the 'detach'
-     command, GDB is free to connect to another target.
+     command in 'target remote' mode, GDB is free to connect to another
+     target.  In 'target extended-remote' mode, GDB is still connected
+     to the target.
 
 'disconnect'
-     The 'disconnect' command behaves like 'detach', except that the
-     target is generally not resumed.  It will wait for GDB (this
+     The 'disconnect' command closes the connection to the target, and
+     the target is generally not resumed.  It will wait for GDB (this
      instance or another one) to connect and continue debugging.  After
      the 'disconnect' command, GDB is again free to connect to another
      target.
@@ -1953,8 +2248,8 @@ File: gdb.info,  Node: Server,  Next: Remote Configuration,  Prev: File Transfer
 ==================================
 
 'gdbserver' is a control program for Unix-like systems, which allows you
-to connect your program with a remote GDB via 'target remote'--but
-without linking in the usual debugging stub.
+to connect your program with a remote GDB via 'target remote' or 'target
+extended-remote'--but without linking in the usual debugging stub.
 
    'gdbserver' is not a complete replacement for the debugging stubs,
 because it requires essentially the same operating-system facilities
@@ -2040,6 +2335,9 @@ is accomplished via the '--attach' argument.  The syntax is:
    PID is the process ID of a currently running process.  It isn't
 necessary to point 'gdbserver' at a binary for the running process.
 
+   In 'target extended-remote' mode, you can also attach using the GDB
+attach command (*note Attaching in Types of Remote Connections::).
+
    You can debug processes by name instead of process ID if your target
 has the 'pidof' utility:
 
@@ -2049,35 +2347,7 @@ has the 'pidof' utility:
 multiple threads, most versions of 'pidof' support the '-s' option to
 only return the first process ID.
 
-20.3.1.2 Multi-Process Mode for 'gdbserver'
-...........................................
-
-When you connect to 'gdbserver' using 'target remote', 'gdbserver'
-debugs the specified program only once.  When the program exits, or you
-detach from it, GDB closes the connection and 'gdbserver' exits.
-
-   If you connect using 'target extended-remote', 'gdbserver' enters
-multi-process mode.  When the debugged program exits, or you detach from
-it, GDB stays connected to 'gdbserver' even though no program is
-running.  The 'run' and 'attach' commands instruct 'gdbserver' to run or
-attach to a new program.  The 'run' command uses 'set remote exec-file'
-(*note set remote exec-file::) to select the program to run.  Command
-line arguments are supported, except for wildcard expansion and I/O
-redirection (*note Arguments::).
-
-   To start 'gdbserver' without supplying an initial command to run or
-process ID to attach, use the '--multi' command line option.  Then you
-can connect using 'target extended-remote' and start the program you
-want to debug.
-
-   In multi-process mode 'gdbserver' does not automatically exit unless
-you use the option '--once'.  You can terminate it by using 'monitor
-exit' (*note Monitor Commands for gdbserver::).  Note that the
-conditions under which 'gdbserver' terminates depend on how GDB connects
-to it ('target remote' or 'target extended-remote').  The '--multi'
-option to 'gdbserver' has no influence on that.
-
-20.3.1.3 TCP port allocation lifecycle of 'gdbserver'
+20.3.1.2 TCP port allocation lifecycle of 'gdbserver'
 .....................................................
 
 This section applies only when 'gdbserver' is run to listen on a TCP
@@ -2109,10 +2379,15 @@ option allows reusing the same port number for connecting to multiple
 instances of 'gdbserver' running on the same host, since each instance
 closes its port after the first connection.
 
-20.3.1.4 Other Command-Line Arguments for 'gdbserver'
+20.3.1.3 Other Command-Line Arguments for 'gdbserver'
 .....................................................
 
-The '--debug' option tells 'gdbserver' to display extra status
+You can use the '--multi' option to start 'gdbserver' without specifying
+a program to debug or a process to attach to.  Then you can attach in
+'target extended-remote' mode and run or attach to a program.  For more
+information, *note --multi Option in Types of Remote Connnections::.
+
+   The '--debug' option tells 'gdbserver' to display extra status
 information about the debugging process.  The '--remote-debug' option
 tells 'gdbserver' to display remote protocol debug output.  These
 options are intended for 'gdbserver' development and for bug reports to
@@ -2155,26 +2430,23 @@ environment:
 20.3.2 Connecting to 'gdbserver'
 --------------------------------
 
-Run GDB on the host system.
+The basic procedure for connecting to the remote target is:
 
-   First make sure you have the necessary symbol files.  Load symbols
-for your application using the 'file' command before you connect.  Use
-'set sysroot' to locate target libraries (unless your GDB was compiled
-with the correct sysroot using '--with-sysroot').
+   * Run GDB on the host system.
 
-   The symbol file and target libraries must exactly match the
-executable and libraries on the target, with one exception: the files on
-the host system should not be stripped, even if the files on the target
-system are.  Mismatched or missing files will lead to confusing results
-during debugging.  On GNU/Linux targets, mismatched or missing files may
-also prevent 'gdbserver' from debugging multi-threaded programs.
+   * Make sure you have the necessary symbol files (*note Host and
+     target files::).  Load symbols for your application using the
+     'file' command before you connect.  Use 'set sysroot' to locate
+     target libraries (unless your GDB was compiled with the correct
+     sysroot using '--with-sysroot').
 
-   Connect to your target (*note Connecting to a Remote Target:
-Connecting.).  For TCP connections, you must start up 'gdbserver' prior
-to using the 'target remote' command.  Otherwise you may get an error
-whose text depends on the host system, but which usually looks something
-like 'Connection refused'.  Don't use the 'load' command in GDB when
-using 'gdbserver', since the program is already on the target.
+   * Connect to your target (*note Connecting to a Remote Target:
+     Connecting.).  For TCP connections, you must start up 'gdbserver'
+     prior to using the 'target' command.  Otherwise you may get an
+     error whose text depends on the host system, but which usually
+     looks something like 'Connection refused'.  Don't use the 'load'
+     command in GDB when using 'target remote' mode, since the program
+     is already on the target.
 
 20.3.3 Monitor Commands for 'gdbserver'
 ---------------------------------------
@@ -2542,6 +2814,8 @@ storage-address'                             '__thread'
                                              communications
                                              parameters
                                              
+'catch-syscalls'     'QCatchSyscalls'        'catch syscall'
+                                             
 'pass-signals'       'QPassSignals'          'handle SIGNAL'
                                              
 'program-signals'    'QProgramSignals'       'handle SIGNAL'
@@ -2595,6 +2869,11 @@ storage-address'                             '__thread'
                                              condition
                                              evaluation'
                                              
+'multiprocess-extensions''multiprocess       Debug multiple
+                     extensions'             processes and
+                                             remote process
+                                             PID awareness
+                                             
 'swbreak-feature'    'swbreak stop reason'   'break'
                                              
 'hwbreak-feature'    'hwbreak stop reason'   'hbreak'
@@ -2602,6 +2881,14 @@ storage-address'                             '__thread'
 'fork-event-feature' 'fork stop reason'      'fork'
                                              
 'vfork-event-feature''vfork stop reason'     'vfork'
+                                             
+'exec-event-feature' 'exec stop reason'      'exec'
+                                             
+'thread-events'      'QThreadEvents'         Tracking thread
+                                             lifetime.
+                                             
+'no-resumed-stop-reply''no resumed thread    Tracking thread
+                     left stop reply'        lifetime.
                                              
 
 
@@ -2894,7 +3181,6 @@ configurations.
 
 * Menu:
 
-* HP-UX::                       HP-UX
 * BSD libkvm Interface::	Debugging BSD kernel memory images
 * SVR4 Process Information::    SVR4 process information
 * DJGPP Native::                Features specific to the DJGPP port
@@ -2903,19 +3189,9 @@ configurations.
 * Darwin::			Features specific to Darwin
 
 
-File: gdb.info,  Node: HP-UX,  Next: BSD libkvm Interface,  Up: Native
+File: gdb.info,  Node: BSD libkvm Interface,  Next: SVR4 Process Information,  Up: Native
 
-21.1.1 HP-UX
-------------
-
-On HP-UX systems, if you refer to a function or variable name that
-begins with a dollar sign, GDB searches for a user or system name first,
-before it searches for a convenience variable.
-
-
-File: gdb.info,  Node: BSD libkvm Interface,  Next: SVR4 Process Information,  Prev: HP-UX,  Up: Native
-
-21.1.2 BSD libkvm Interface
+21.1.1 BSD libkvm Interface
 ---------------------------
 
 BSD-derived systems (FreeBSD/NetBSD/OpenBSD) have a kernel memory
@@ -2946,7 +3222,7 @@ available:
 
 File: gdb.info,  Node: SVR4 Process Information,  Next: DJGPP Native,  Prev: BSD libkvm Interface,  Up: Native
 
-21.1.3 SVR4 Process Information
+21.1.2 SVR4 Process Information
 -------------------------------
 
 Many versions of SVR4 and compatible systems provide a facility called
@@ -2956,8 +3232,7 @@ file-system subroutines.
    If GDB is configured for an operating system with this facility, the
 command 'info proc' is available to report information about the process
 running your program, or about any process running on your system.  This
-includes, as of this writing, GNU/Linux and Solaris, but not HP-UX, for
-example.
+includes, as of this writing, GNU/Linux and Solaris, for example.
 
    This command may also work on core files that were created on a
 system that has the '/proc' facility.
@@ -3042,7 +3317,7 @@ system that has the '/proc' facility.
 
 File: gdb.info,  Node: DJGPP Native,  Next: Cygwin Native,  Prev: SVR4 Process Information,  Up: Native
 
-21.1.4 Features for Debugging DJGPP Programs
+21.1.3 Features for Debugging DJGPP Programs
 --------------------------------------------
 
 DJGPP is a port of the GNU development tools to MS-DOS and MS-Windows.
@@ -3186,7 +3461,7 @@ to remote serial debugging in the DJGPP port of GDB.
 
 File: gdb.info,  Node: Cygwin Native,  Next: Hurd Native,  Prev: DJGPP Native,  Up: Native
 
-21.1.5 Features for Debugging MS Windows PE Executables
+21.1.4 Features for Debugging MS Windows PE Executables
 -------------------------------------------------------
 
 GDB supports native debugging of MS Windows programs, including DLLs
@@ -3217,6 +3492,31 @@ described in *note Non-debug DLL Symbols::.
      This command displays thread specific information stored in the
      Thread Information Block (readable on the X86 CPU family using
      '$fs' selector for 32-bit programs and '$gs' for 64-bit programs).
+
+'signal-event ID'
+     This command signals an event with user-provided ID.  Used to
+     resume crashing process when attached to it using MS-Windows JIT
+     debugging (AeDebug).
+
+     To use it, create or edit the following keys in
+     'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug' and/or
+     'HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows
+     NT\CurrentVersion\AeDebug' (for x86_64 versions):
+
+        - 'Debugger' (REG_SZ) -- a command to launch the debugger.
+          Suggested command is: 'FULLY-QUALIFIED-PATH-TO-GDB.EXE -ex
+          "attach %ld" -ex "signal-event %ld" -ex "continue"'.
+
+          The first '%ld' will be replaced by the process ID of the
+          crashing process, the second '%ld' will be replaced by the ID
+          of the event that blocks the crashing process, waiting for GDB
+          to attach.
+
+        - 'Auto' (REG_SZ) -- either '1' or '0'.  '1' will make the
+          system run debugger specified by the Debugger key
+          automatically, '0' will cause a dialog box with "OK" and
+          "Cancel" buttons to appear, which allows the user to either
+          terminate the crashing process (OK) or debug it (Cancel).
 
 'set cygwin-exceptions MODE'
      If MODE is 'on', GDB will break on exceptions that happen inside
@@ -3280,7 +3580,7 @@ described in *note Non-debug DLL Symbols::.
 
 File: gdb.info,  Node: Non-debug DLL Symbols,  Up: Cygwin Native
 
-21.1.5.1 Support for DLLs without Debugging Symbols
+21.1.4.1 Support for DLLs without Debugging Symbols
 ...................................................
 
 Very often on windows, some of the DLLs that your program relies on do
@@ -3295,7 +3595,7 @@ will have been loaded.  The easiest way around this problem is simply to
 start the program -- either by setting a breakpoint or letting the
 program run once to completion.
 
-21.1.5.2 DLL Name Prefixes
+21.1.4.2 DLL Name Prefixes
 ..........................
 
 In keeping with the naming conventions used by the Microsoft debugging
@@ -3330,7 +3630,7 @@ even 'maint print msymbols' (*note Symbols::).  Here's an example:
      0x61004240  cygwin1!dll_crt0(per_process *)
      [etc...]
 
-21.1.5.3 Working with Minimal Symbols
+21.1.4.3 Working with Minimal Symbols
 .....................................
 
 Symbols extracted from a DLL's export table do not contain very much
@@ -3381,7 +3681,7 @@ safe.
 
 File: gdb.info,  Node: Hurd Native,  Next: Darwin,  Prev: Cygwin Native,  Up: Native
 
-21.1.6 Commands Specific to GNU Hurd Systems
+21.1.5 Commands Specific to GNU Hurd Systems
 --------------------------------------------
 
 This subsection describes GDB commands specific to the GNU Hurd native
@@ -3518,7 +3818,7 @@ debugging.
 
 File: gdb.info,  Node: Darwin,  Prev: Hurd Native,  Up: Native
 
-21.1.7 Darwin
+21.1.6 Darwin
 -------------
 
 GDB provides the following commands specific to the Darwin target:
@@ -3583,35 +3883,22 @@ send an arbitrary command to the simulator.
 
 * Menu:
 
-* ARM::                         ARM RDI
-* M32R/D::                      Renesas M32R/D
+* ARM::                         ARM
 * M68K::                        Motorola M68K
 * MicroBlaze::			Xilinx MicroBlaze
 * MIPS Embedded::               MIPS Embedded
 * PowerPC Embedded::            PowerPC Embedded
-* PA::                          HP PA Embedded
-* Sparclet::                    Tsqware Sparclet
-* Sparclite::                   Fujitsu Sparclite
-* Z8000::                       Zilog Z8000
 * AVR::                         Atmel AVR
 * CRIS::                        CRIS
 * Super-H::                     Renesas Super-H
 
 
-File: gdb.info,  Node: ARM,  Next: M32R/D,  Up: Embedded Processors
+File: gdb.info,  Node: ARM,  Next: M68K,  Up: Embedded Processors
 
 21.3.1 ARM
 ----------
 
-'target rdi DEV'
-     ARM Angel monitor, via RDI library interface to ADP protocol.  You
-     may use this target to communicate with both boards running the
-     Angel monitor, or with the EmbeddedICE JTAG debug device.
-
-'target rdp DEV'
-     ARM Demon monitor.
-
-   GDB provides the following ARM-specific commands:
+GDB provides the following ARM-specific commands:
 
 'set arm disassembler'
      This commands selects from a list of disassembly styles.  The
@@ -3677,40 +3964,6 @@ File: gdb.info,  Node: ARM,  Next: M32R/D,  Up: Embedded Processors
 'show debug arm'
      Show whether ARM-specific debugging messages are enabled.
 
-   The following commands are available when an ARM target is debugged
-using the RDI interface:
-
-'rdilogfile [FILE]'
-     Set the filename for the ADP (Angel Debugger Protocol) packet log.
-     With an argument, sets the log file to the specified FILE.  With no
-     argument, show the current log file name.  The default log file is
-     'rdi.log'.
-
-'rdilogenable [ARG]'
-     Control logging of ADP packets.  With an argument of 1 or '"yes"'
-     enables logging, with an argument 0 or '"no"' disables it.  With no
-     arguments displays the current setting.  When logging is enabled,
-     ADP packets exchanged between GDB and the RDI target device are
-     logged to a file.
-
-'set rdiromatzero'
-     Tell GDB whether the target has ROM at address 0.  If on, vector
-     catching is disabled, so that zero address can be used.  If off
-     (the default), vector catching is enabled.  For this command to
-     take effect, it needs to be invoked prior to the 'target rdi'
-     command.
-
-'show rdiromatzero'
-     Show the current setting of ROM at zero address.
-
-'set rdiheartbeat'
-     Enable or disable RDI heartbeat packets.  It is not recommended to
-     turn on this option, since it confuses ARM and EPI JTAG interface,
-     as well as the Angel monitor.
-
-'show rdiheartbeat'
-     Show the setting of RDI heartbeat packets.
-
 'target sim [SIMARGS] ...'
      The GDB ARM simulator accepts the following optional arguments.
 
@@ -3726,87 +3979,17 @@ using the RDI interface:
           'all'
 
 
-File: gdb.info,  Node: M32R/D,  Next: M68K,  Prev: ARM,  Up: Embedded Processors
+File: gdb.info,  Node: M68K,  Next: MicroBlaze,  Prev: ARM,  Up: Embedded Processors
 
-21.3.2 Renesas M32R/D and M32R/SDI
-----------------------------------
-
-'target m32r DEV'
-     Renesas M32R/D ROM monitor.
-
-'target m32rsdi DEV'
-     Renesas M32R SDI server, connected via parallel port to the board.
-
-   The following GDB commands are specific to the M32R monitor:
-
-'set download-path PATH'
-     Set the default path for finding downloadable SREC files.
-
-'show download-path'
-     Show the default path for downloadable SREC files.
-
-'set board-address ADDR'
-     Set the IP address for the M32R-EVA target board.
-
-'show board-address'
-     Show the current IP address of the target board.
-
-'set server-address ADDR'
-     Set the IP address for the download server, which is the GDB's host
-     machine.
-
-'show server-address'
-     Display the IP address of the download server.
-
-'upload [FILE]'
-     Upload the specified SREC FILE via the monitor's Ethernet upload
-     capability.  If no FILE argument is given, the current executable
-     file is uploaded.
-
-'tload [FILE]'
-     Test the 'upload' command.
-
-   The following commands are available for M32R/SDI:
-
-'sdireset'
-     This command resets the SDI connection.
-
-'sdistatus'
-     This command shows the SDI connection status.
-
-'debug_chaos'
-     Instructs the remote that M32R/Chaos debugging is to be used.
-
-'use_debug_dma'
-     Instructs the remote to use the DEBUG_DMA method of accessing
-     memory.
-
-'use_mon_code'
-     Instructs the remote to use the MON_CODE method of accessing
-     memory.
-
-'use_ib_break'
-     Instructs the remote to set breakpoints by IB break.
-
-'use_dbt_break'
-     Instructs the remote to set breakpoints by DBT.
-
-
-File: gdb.info,  Node: M68K,  Next: MicroBlaze,  Prev: M32R/D,  Up: Embedded Processors
-
-21.3.3 M68k
+21.3.2 M68k
 -----------
 
-The Motorola m68k configuration includes ColdFire support, and a target
-command for the following ROM monitor.
-
-'target dbug DEV'
-     dBUG ROM monitor for Motorola ColdFire.
+The Motorola m68k configuration includes ColdFire support.
 
 
 File: gdb.info,  Node: MicroBlaze,  Next: MIPS Embedded,  Prev: M68K,  Up: Embedded Processors
 
-21.3.4 MicroBlaze
+21.3.3 MicroBlaze
 -----------------
 
 The MicroBlaze is a soft-core processor supported on various Xilinx
@@ -3843,55 +4026,10 @@ need to do this.)
 
 File: gdb.info,  Node: MIPS Embedded,  Next: PowerPC Embedded,  Prev: MicroBlaze,  Up: Embedded Processors
 
-21.3.5 MIPS Embedded
+21.3.4 MIPS Embedded
 --------------------
 
-GDB can use the MIPS remote debugging protocol to talk to a MIPS board
-attached to a serial line.  This is available when you configure GDB
-with '--target=mips-elf'.
-
-   Use these GDB commands to specify the connection to your target
-board:
-
-'target mips PORT'
-     To run a program on the board, start up 'gdb' with the name of your
-     program as the argument.  To connect to the board, use the command
-     'target mips PORT', where PORT is the name of the serial port
-     connected to the board.  If the program has not already been
-     downloaded to the board, you may use the 'load' command to download
-     it.  You can then use all the usual GDB commands.
-
-     For example, this sequence connects to the target board through a
-     serial port, and loads and runs a program called PROG through the
-     debugger:
-
-          host$ gdb PROG
-          GDB is free software and ...
-          (gdb) target mips /dev/ttyb
-          (gdb) load PROG
-          (gdb) run
-
-'target mips HOSTNAME:PORTNUMBER'
-     On some GDB host configurations, you can specify a TCP connection
-     (for instance, to a serial line managed by a terminal concentrator)
-     instead of a serial port, using the syntax 'HOSTNAME:PORTNUMBER'.
-
-'target pmon PORT'
-     PMON ROM monitor.
-
-'target ddb PORT'
-     NEC's DDB variant of PMON for Vr4300.
-
-'target lsi PORT'
-     LSI variant of PMON.
-
-'target r3900 DEV'
-     Densan DVE-R3900 ROM monitor for Toshiba R3900 Mips.
-
-'target array DEV'
-     Array Tech LSI33K RAID controller board.
-
-GDB also supports these special commands for MIPS targets:
+GDB supports these special commands for MIPS targets:
 
 'set mipsfpu double'
 'set mipsfpu single'
@@ -3917,64 +4055,10 @@ GDB also supports these special commands for MIPS targets:
      As usual, you can inquire about the 'mipsfpu' variable with 'show
      mipsfpu'.
 
-'set timeout SECONDS'
-'set retransmit-timeout SECONDS'
-'show timeout'
-'show retransmit-timeout'
-     You can control the timeout used while waiting for a packet, in the
-     MIPS remote protocol, with the 'set timeout SECONDS' command.  The
-     default is 5 seconds.  Similarly, you can control the timeout used
-     while waiting for an acknowledgment of a packet with the 'set
-     retransmit-timeout SECONDS' command.  The default is 3 seconds.
-     You can inspect both values with 'show timeout' and 'show
-     retransmit-timeout'.  (These commands are _only_ available when GDB
-     is configured for '--target=mips-elf'.)
-
-     The timeout set by 'set timeout' does not apply when GDB is waiting
-     for your program to stop.  In that case, GDB waits forever because
-     it has no way of knowing how long the program is going to run
-     before stopping.
-
-'set syn-garbage-limit NUM'
-     Limit the maximum number of characters GDB should ignore when it
-     tries to synchronize with the remote target.  The default is 10
-     characters.  Setting the limit to -1 means there's no limit.
-
-'show syn-garbage-limit'
-     Show the current limit on the number of characters to ignore when
-     trying to synchronize with the remote system.
-
-'set monitor-prompt PROMPT'
-     Tell GDB to expect the specified PROMPT string from the remote
-     monitor.  The default depends on the target:
-     pmon target
-          'PMON'
-     ddb target
-          'NEC010'
-     lsi target
-          'PMON>'
-
-'show monitor-prompt'
-     Show the current strings GDB expects as the prompt from the remote
-     monitor.
-
-'set monitor-warnings'
-     Enable or disable monitor warnings about hardware breakpoints.
-     This has effect only for the 'lsi' target.  When on, GDB will
-     display warning messages whose codes are returned by the 'lsi' PMON
-     monitor for breakpoint commands.
-
-'show monitor-warnings'
-     Show the current setting of printing monitor warnings.
-
-'pmon COMMAND'
-     This command allows sending an arbitrary COMMAND string to the
-     monitor.  The monitor must be in debug mode for this to work.
-
 
-File: gdb.info,  Node: PowerPC Embedded,  Next: PA,  Prev: MIPS Embedded,  Up: Embedded Processors
+File: gdb.info,  Node: PowerPC Embedded,  Next: AVR,  Prev: MIPS Embedded,  Up: Embedded Processors
 
-21.3.6 PowerPC Embedded
+21.3.5 PowerPC Embedded
 -----------------------
 
 GDB supports using the DVC (Data Value Compare) register to implement in
@@ -4043,224 +4127,11 @@ command.
      of scalar type, thus assuming that the variable is accessed through
      the address of its first byte.
 
-'target dink32 DEV'
-     DINK32 ROM monitor.
-
-'target ppcbug DEV'
-'target ppcbug1 DEV'
-     PPCBUG ROM monitor for PowerPC.
-
-'target sds DEV'
-     SDS monitor, running on a PowerPC board (such as Motorola's ADS).
-
-   The following commands specific to the SDS protocol are supported by
-GDB:
-
-'set sdstimeout NSEC'
-     Set the timeout for SDS protocol reads to be NSEC seconds.  The
-     default is 2 seconds.
-
-'show sdstimeout'
-     Show the current value of the SDS timeout.
-
-'sds COMMAND'
-     Send the specified COMMAND string to the SDS monitor.
-
 
-File: gdb.info,  Node: PA,  Next: Sparclet,  Prev: PowerPC Embedded,  Up: Embedded Processors
+File: gdb.info,  Node: AVR,  Next: CRIS,  Prev: PowerPC Embedded,  Up: Embedded Processors
 
-21.3.7 HP PA Embedded
----------------------
-
-'target op50n DEV'
-     OP50N monitor, running on an OKI HPPA board.
-
-'target w89k DEV'
-     W89K monitor, running on a Winbond HPPA board.
-
-
-File: gdb.info,  Node: Sparclet,  Next: Sparclite,  Prev: PA,  Up: Embedded Processors
-
-21.3.8 Tsqware Sparclet
------------------------
-
-GDB enables developers to debug tasks running on Sparclet targets from a
-Unix host.  GDB uses code that runs on both the Unix host and on the
-Sparclet target.  The program 'gdb' is installed and executed on the
-Unix host.
-
-'remotetimeout ARGS'
-     GDB supports the option 'remotetimeout'.  This option is set by the
-     user, and ARGS represents the number of seconds GDB waits for
-     responses.
-
-   When compiling for debugging, include the options '-g' to get debug
-information and '-Ttext' to relocate the program to where you wish to
-load it on the target.  You may also want to add the options '-n' or
-'-N' in order to reduce the size of the sections.  Example:
-
-     sparclet-aout-gcc prog.c -Ttext 0x12010000 -g -o prog -N
-
-   You can use 'objdump' to verify that the addresses are what you
-intended:
-
-     sparclet-aout-objdump --headers --syms prog
-
-   Once you have set your Unix execution search path to find GDB, you
-are ready to run GDB.  From your Unix host, run 'gdb' (or
-'sparclet-aout-gdb', depending on your installation).
-
-   GDB comes up showing the prompt:
-
-     (gdbslet)
-
-* Menu:
-
-* Sparclet File::                Setting the file to debug
-* Sparclet Connection::          Connecting to Sparclet
-* Sparclet Download::            Sparclet download
-* Sparclet Execution::           Running and debugging
-
-
-File: gdb.info,  Node: Sparclet File,  Next: Sparclet Connection,  Up: Sparclet
-
-21.3.8.1 Setting File to Debug
-..............................
-
-The GDB command 'file' lets you choose with program to debug.
-
-     (gdbslet) file prog
-
-   GDB then attempts to read the symbol table of 'prog'.  GDB locates
-the file by searching the directories listed in the command search path.
-If the file was compiled with debug information (option '-g'), source
-files will be searched as well.  GDB locates the source files by
-searching the directories listed in the directory search path (*note
-Your Program's Environment: Environment.).  If it fails to find a file,
-it displays a message such as:
-
-     prog: No such file or directory.
-
-   When this happens, add the appropriate directories to the search
-paths with the GDB commands 'path' and 'dir', and execute the 'target'
-command again.
-
-
-File: gdb.info,  Node: Sparclet Connection,  Next: Sparclet Download,  Prev: Sparclet File,  Up: Sparclet
-
-21.3.8.2 Connecting to Sparclet
-...............................
-
-The GDB command 'target' lets you connect to a Sparclet target.  To
-connect to a target on serial port "'ttya'", type:
-
-     (gdbslet) target sparclet /dev/ttya
-     Remote target sparclet connected to /dev/ttya
-     main () at ../prog.c:3
-
-   GDB displays messages like these:
-
-     Connected to ttya.
-
-
-File: gdb.info,  Node: Sparclet Download,  Next: Sparclet Execution,  Prev: Sparclet Connection,  Up: Sparclet
-
-21.3.8.3 Sparclet Download
-..........................
-
-Once connected to the Sparclet target, you can use the GDB 'load'
-command to download the file from the host to the target.  The file name
-and load offset should be given as arguments to the 'load' command.
-Since the file format is aout, the program must be loaded to the
-starting address.  You can use 'objdump' to find out what this value is.
-The load offset is an offset which is added to the VMA (virtual memory
-address) of each of the file's sections.  For instance, if the program
-'prog' was linked to text address 0x1201000, with data at 0x12010160 and
-bss at 0x12010170, in GDB, type:
-
-     (gdbslet) load prog 0x12010000
-     Loading section .text, size 0xdb0 vma 0x12010000
-
-   If the code is loaded at a different address then what the program
-was linked to, you may need to use the 'section' and 'add-symbol-file'
-commands to tell GDB where to map the symbol table.
-
-
-File: gdb.info,  Node: Sparclet Execution,  Prev: Sparclet Download,  Up: Sparclet
-
-21.3.8.4 Running and Debugging
-..............................
-
-You can now begin debugging the task using GDB's execution control
-commands, 'b', 'step', 'run', etc.  See the GDB manual for the list of
-commands.
-
-     (gdbslet) b main
-     Breakpoint 1 at 0x12010000: file prog.c, line 3.
-     (gdbslet) run
-     Starting program: prog
-     Breakpoint 1, main (argc=1, argv=0xeffff21c) at prog.c:3
-     3        char *symarg = 0;
-     (gdbslet) step
-     4        char *execarg = "hello!";
-     (gdbslet)
-
-
-File: gdb.info,  Node: Sparclite,  Next: Z8000,  Prev: Sparclet,  Up: Embedded Processors
-
-21.3.9 Fujitsu Sparclite
-------------------------
-
-'target sparclite DEV'
-     Fujitsu sparclite boards, used only for the purpose of loading.
-     You must use an additional command to debug the program.  For
-     example: target remote DEV using GDB standard remote protocol.
-
-
-File: gdb.info,  Node: Z8000,  Next: AVR,  Prev: Sparclite,  Up: Embedded Processors
-
-21.3.10 Zilog Z8000
--------------------
-
-When configured for debugging Zilog Z8000 targets, GDB includes a Z8000
-simulator.
-
-   For the Z8000 family, 'target sim' simulates either the Z8002 (the
-unsegmented variant of the Z8000 architecture) or the Z8001 (the
-segmented variant).  The simulator recognizes which architecture is
-appropriate by inspecting the object code.
-
-'target sim ARGS'
-     Debug programs on a simulated CPU. If the simulator supports setup
-     options, specify them via ARGS.
-
-After specifying this target, you can debug programs for the simulated
-CPU in the same style as programs for your host computer; use the 'file'
-command to load a new program image, the 'run' command to run your
-program, and so on.
-
-   As well as making available all the usual machine registers (*note
-Registers: Registers.), the Z8000 simulator provides three additional
-items of information as specially named registers:
-
-'cycles'
-     Counts clock-ticks in the simulator.
-
-'insts'
-     Counts instructions run in the simulator.
-
-'time'
-     Execution time in 60ths of a second.
-
-   You can refer to these values in GDB expressions with the usual
-conventions; for example, 'b fputc if $cycles>5000' sets a conditional
-breakpoint that suspends only after at least 5000 simulated clock ticks.
-
-
-File: gdb.info,  Node: AVR,  Next: CRIS,  Prev: Z8000,  Up: Embedded Processors
-
-21.3.11 Atmel AVR
------------------
+21.3.6 Atmel AVR
+----------------
 
 When configured for debugging the Atmel AVR, GDB supports the following
 AVR-specific commands:
@@ -4272,8 +4143,8 @@ AVR-specific commands:
 
 File: gdb.info,  Node: CRIS,  Next: Super-H,  Prev: AVR,  Up: Embedded Processors
 
-21.3.12 CRIS
-------------
+21.3.7 CRIS
+-----------
 
 When configured for debugging CRIS, GDB provides the following
 CRIS-specific commands:
@@ -4305,8 +4176,8 @@ CRIS-specific commands:
 
 File: gdb.info,  Node: Super-H,  Prev: CRIS,  Up: Embedded Processors
 
-21.3.13 Renesas Super-H
------------------------
+21.3.8 Renesas Super-H
+----------------------
 
 For the Renesas Super-H processor, GDB provides these commands:
 
@@ -4380,8 +4251,8 @@ File: gdb.info,  Node: i386,  Next: Alpha,  Prev: AArch64,  Up: Architectures
      Show the current setting of the convention to return 'struct's from
      functions.
 
-21.4.2.1 Intel(R) "Memory Protection Extensions" (MPX).
-.......................................................
+21.4.2.1 Intel "Memory Protection Extensions" (MPX).
+....................................................
 
 Memory Protection Extension (MPX) adds the bound registers 'BND0' (1)
 through 'BND3'.  Bound registers store a pair of 64-bit values which are
@@ -5111,40 +4982,34 @@ control when to auto-load files and which files should be auto-loaded.
                                      files.
 *Note info auto-load::.              Show state of all kinds of files.
 *Note set auto-load gdb-scripts::.   Control for GDB command scripts.
-*Note show auto-load                 Show setting of GDB command
-gdb-scripts::.                       scripts.
-*Note info auto-load                 Show state of GDB command scripts.
-gdb-scripts::.
-*Note set auto-load                  Control for GDB Python scripts.
-python-scripts::.
-*Note show auto-load                 Show setting of GDB Python
-python-scripts::.                    scripts.
-*Note info auto-load                 Show state of GDB Python scripts.
-python-scripts::.
-*Note set auto-load                  Control for GDB Guile scripts.
-guile-scripts::.
-*Note show auto-load                 Show setting of GDB Guile scripts.
-guile-scripts::.
-*Note info auto-load                 Show state of GDB Guile scripts.
-guile-scripts::.
-*Note set auto-load                  Control for GDB auto-loaded
-scripts-directory::.                 scripts location.
-*Note show auto-load                 Show GDB auto-loaded scripts
-scripts-directory::.                 location.
-*Note                                Add directory for auto-loaded
-add-auto-load-scripts-directory::.   scripts location list.
-*Note set auto-load                  Control for init file in the
-local-gdbinit::.                     current directory.
-*Note show auto-load                 Show setting of init file in the
-local-gdbinit::.                     current directory.
-*Note info auto-load                 Show state of init file in the
-local-gdbinit::.                     current directory.
-*Note set auto-load                  Control for thread debugging
-libthread-db::.                      library.
-*Note show auto-load                 Show setting of thread debugging
-libthread-db::.                      library.
-*Note info auto-load                 Show state of thread debugging
-libthread-db::.                      library.
+*Note show auto-load gdb-scripts::.  Show setting of GDB command
+                                     scripts.
+*Note info auto-load gdb-scripts::.  Show state of GDB command scripts.
+*Note set auto-load python-scripts::.Control for GDB Python scripts.
+*Note show auto-load python-scripts::.Show setting of GDB Python
+                                     scripts.
+*Note info auto-load python-scripts::.Show state of GDB Python scripts.
+*Note set auto-load guile-scripts::. Control for GDB Guile scripts.
+*Note show auto-load guile-scripts::.Show setting of GDB Guile scripts.
+*Note info auto-load guile-scripts::.Show state of GDB Guile scripts.
+*Note set auto-load scripts-directory::.Control for GDB auto-loaded
+                                     scripts location.
+*Note show auto-load scripts-directory::.Show GDB auto-loaded scripts
+                                     location.
+*Note add-auto-load-scripts-directory::.Add directory for auto-loaded
+                                     scripts location list.
+*Note set auto-load local-gdbinit::. Control for init file in the
+                                     current directory.
+*Note show auto-load local-gdbinit::.Show setting of init file in the
+                                     current directory.
+*Note info auto-load local-gdbinit::.Show state of init file in the
+                                     current directory.
+*Note set auto-load libthread-db::.  Control for thread debugging
+                                     library.
+*Note show auto-load libthread-db::. Show setting of thread debugging
+                                     library.
+*Note info auto-load libthread-db::. Show state of thread debugging
+                                     library.
 *Note set auto-load safe-path::.     Control directories trusted for
                                      automatic loading.
 *Note show auto-load safe-path::.    Show directories trusted for
@@ -5521,13 +5386,18 @@ commands.
 'show debug expression'
      Displays the current state of displaying debugging info about GDB
      expression parsing.
+'set debug fbsd-lwp'
+     Turns on or off debugging messages from the FreeBSD LWP debug
+     support.
+'show debug fbsd-lwp'
+     Show the current state of FreeBSD LWP debugging messages.
 'set debug frame'
      Turns on or off display of GDB frame debugging info.  The default
      is off.
 'show debug frame'
      Displays the current state of displaying GDB frame debugging info.
 'set debug gnu-nat'
-     Turns on or off debugging messages from the GNU/Hurd debug support.
+     Turn on or off debugging messages from the GNU/Hurd debug support.
 'show debug gnu-nat'
      Show the current state of GNU/Hurd debugging messages.
 'set debug infrun'
@@ -5538,16 +5408,15 @@ commands.
 'show debug infrun'
      Displays the current state of GDB inferior debugging.
 'set debug jit'
-     Turns on or off debugging messages from JIT debug support.
+     Turn on or off debugging messages from JIT debug support.
 'show debug jit'
      Displays the current state of GDB JIT debugging.
 'set debug lin-lwp'
-     Turns on or off debugging messages from the Linux LWP debug
-     support.
+     Turn on or off debugging messages from the Linux LWP debug support.
 'show debug lin-lwp'
      Show the current state of Linux LWP debugging messages.
 'set debug linux-namespaces'
-     Turns on or off debugging messages from the Linux namespaces debug
+     Turn on or off debugging messages from the Linux namespaces debug
      support.
 'show debug linux-namespaces'
      Show the current state of Linux namespaces debugging messages.
@@ -5558,7 +5427,7 @@ commands.
      Displays the current state of displaying debugging messages related
      to reading of COFF/PE exported symbols.
 'set debug notification'
-     Turns on or off debugging messages about remote async notification.
+     Turn on or off debugging messages about remote async notification.
      The default is off.
 'show debug notification'
      Displays the current state of remote async notification debugging
@@ -5594,7 +5463,7 @@ commands.
 'show debug serial'
      Displays the current state of displaying GDB serial debugging info.
 'set debug solib-frv'
-     Turns on or off debugging messages for FR-V shared-library code.
+     Turn on or off debugging messages for FR-V shared-library code.
 'show debug solib-frv'
      Display the current state of FR-V shared-library code debugging
      messages.
@@ -5638,7 +5507,7 @@ commands.
      Displays the current state of displaying GDB variable object
      debugging info.
 'set debug xml'
-     Turns on or off debugging messages for built-in XML parsers.
+     Turn on or off debugging messages for built-in XML parsers.
 'show debug xml'
      Displays the current state of XML debugging messages.
 
@@ -6357,7 +6226,10 @@ classes added by GDB are placed in this module.  GDB automatically
 
  -- Function: gdb.breakpoints ()
      Return a sequence holding all of GDB's breakpoints.  *Note
-     Breakpoints In Python::, for more information.
+     Breakpoints In Python::, for more information.  In GDB version 7.11
+     and earlier, this function returned 'None' if there were no
+     breakpoints.  This peculiarity was subsequently fixed, and now
+     'gdb.breakpoints' returns an empty sequence in this case.
 
  -- Function: gdb.parameter (parameter)
      Return the value of a GDB PARAMETER given by its name, a string;
@@ -6881,367 +6753,4 @@ function, call it like so:
      effect.
 
      This method does not return a value.
-
-
-File: gdb.info,  Node: Types In Python,  Next: Pretty Printing API,  Prev: Values From Inferior,  Up: Python API
-
-23.2.2.4 Types In Python
-........................
-
-GDB represents types from the inferior using the class 'gdb.Type'.
-
-   The following type-related functions are available in the 'gdb'
-module:
-
- -- Function: gdb.lookup_type (name [, block])
-     This function looks up a type by its NAME, which must be a string.
-
-     If BLOCK is given, then NAME is looked up in that scope.
-     Otherwise, it is searched for globally.
-
-     Ordinarily, this function will return an instance of 'gdb.Type'.
-     If the named type cannot be found, it will throw an exception.
-
-   If the type is a structure or class type, or an enum type, the fields
-of that type can be accessed using the Python "dictionary syntax".  For
-example, if 'some_type' is a 'gdb.Type' instance holding a structure
-type, you can access its 'foo' field with:
-
-     bar = some_type['foo']
-
-   'bar' will be a 'gdb.Field' object; see below under the description
-of the 'Type.fields' method for a description of the 'gdb.Field' class.
-
-   An instance of 'Type' has the following attributes:
-
- -- Variable: Type.code
-     The type code for this type.  The type code will be one of the
-     'TYPE_CODE_' constants defined below.
-
- -- Variable: Type.name
-     The name of this type.  If this type has no name, then 'None' is
-     returned.
-
- -- Variable: Type.sizeof
-     The size of this type, in target 'char' units.  Usually, a target's
-     'char' type will be an 8-bit byte.  However, on some unusual
-     platforms, this type may have a different size.
-
- -- Variable: Type.tag
-     The tag name for this type.  The tag name is the name after
-     'struct', 'union', or 'enum' in C and C++; not all languages have
-     this concept.  If this type has no tag name, then 'None' is
-     returned.
-
-   The following methods are provided:
-
- -- Function: Type.fields ()
-     For structure and union types, this method returns the fields.
-     Range types have two fields, the minimum and maximum values.  Enum
-     types have one field per enum constant.  Function and method types
-     have one field per parameter.  The base types of C++ classes are
-     also represented as fields.  If the type has no fields, or does not
-     fit into one of these categories, an empty sequence will be
-     returned.
-
-     Each field is a 'gdb.Field' object, with some pre-defined
-     attributes:
-     'bitpos'
-          This attribute is not available for 'enum' or 'static' (as in
-          C++ or Java) fields.  The value is the position, counting in
-          bits, from the start of the containing type.
-
-     'enumval'
-          This attribute is only available for 'enum' fields, and its
-          value is the enumeration member's integer representation.
-
-     'name'
-          The name of the field, or 'None' for anonymous fields.
-
-     'artificial'
-          This is 'True' if the field is artificial, usually meaning
-          that it was provided by the compiler and not the user.  This
-          attribute is always provided, and is 'False' if the field is
-          not artificial.
-
-     'is_base_class'
-          This is 'True' if the field represents a base class of a C++
-          structure.  This attribute is always provided, and is 'False'
-          if the field is not a base class of the type that is the
-          argument of 'fields', or if that type was not a C++ class.
-
-     'bitsize'
-          If the field is packed, or is a bitfield, then this will have
-          a non-zero value, which is the size of the field in bits.
-          Otherwise, this will be zero; in this case the field's size is
-          given by its type.
-
-     'type'
-          The type of the field.  This is usually an instance of 'Type',
-          but it can be 'None' in some situations.
-
-     'parent_type'
-          The type which contains this field.  This is an instance of
-          'gdb.Type'.
-
- -- Function: Type.array (N1 [, N2])
-     Return a new 'gdb.Type' object which represents an array of this
-     type.  If one argument is given, it is the inclusive upper bound of
-     the array; in this case the lower bound is zero.  If two arguments
-     are given, the first argument is the lower bound of the array, and
-     the second argument is the upper bound of the array.  An array's
-     length must not be negative, but the bounds can be.
-
- -- Function: Type.vector (N1 [, N2])
-     Return a new 'gdb.Type' object which represents a vector of this
-     type.  If one argument is given, it is the inclusive upper bound of
-     the vector; in this case the lower bound is zero.  If two arguments
-     are given, the first argument is the lower bound of the vector, and
-     the second argument is the upper bound of the vector.  A vector's
-     length must not be negative, but the bounds can be.
-
-     The difference between an 'array' and a 'vector' is that arrays
-     behave like in C: when used in expressions they decay to a pointer
-     to the first element whereas vectors are treated as first class
-     values.
-
- -- Function: Type.const ()
-     Return a new 'gdb.Type' object which represents a 'const'-qualified
-     variant of this type.
-
- -- Function: Type.volatile ()
-     Return a new 'gdb.Type' object which represents a
-     'volatile'-qualified variant of this type.
-
- -- Function: Type.unqualified ()
-     Return a new 'gdb.Type' object which represents an unqualified
-     variant of this type.  That is, the result is neither 'const' nor
-     'volatile'.
-
- -- Function: Type.range ()
-     Return a Python 'Tuple' object that contains two elements: the low
-     bound of the argument type and the high bound of that type.  If the
-     type does not have a range, GDB will raise a 'gdb.error' exception
-     (*note Exception Handling::).
-
- -- Function: Type.reference ()
-     Return a new 'gdb.Type' object which represents a reference to this
-     type.
-
- -- Function: Type.pointer ()
-     Return a new 'gdb.Type' object which represents a pointer to this
-     type.
-
- -- Function: Type.strip_typedefs ()
-     Return a new 'gdb.Type' that represents the real type, after
-     removing all layers of typedefs.
-
- -- Function: Type.target ()
-     Return a new 'gdb.Type' object which represents the target type of
-     this type.
-
-     For a pointer type, the target type is the type of the pointed-to
-     object.  For an array type (meaning C-like arrays), the target type
-     is the type of the elements of the array.  For a function or method
-     type, the target type is the type of the return value.  For a
-     complex type, the target type is the type of the elements.  For a
-     typedef, the target type is the aliased type.
-
-     If the type does not have a target, this method will throw an
-     exception.
-
- -- Function: Type.template_argument (n [, block])
-     If this 'gdb.Type' is an instantiation of a template, this will
-     return a new 'gdb.Value' or 'gdb.Type' which represents the value
-     of the Nth template argument (indexed starting at 0).
-
-     If this 'gdb.Type' is not a template type, or if the type has fewer
-     than N template arguments, this will throw an exception.
-     Ordinarily, only C++ code will have template types.
-
-     If BLOCK is given, then NAME is looked up in that scope.
-     Otherwise, it is searched for globally.
-
- -- Function: Type.optimized_out ()
-     Return 'gdb.Value' instance of this type whose value is optimized
-     out.  This allows a frame decorator to indicate that the value of
-     an argument or a local variable is not known.
-
-   Each type has a code, which indicates what category this type falls
-into.  The available type categories are represented by constants
-defined in the 'gdb' module:
-
-'gdb.TYPE_CODE_PTR'
-     The type is a pointer.
-
-'gdb.TYPE_CODE_ARRAY'
-     The type is an array.
-
-'gdb.TYPE_CODE_STRUCT'
-     The type is a structure.
-
-'gdb.TYPE_CODE_UNION'
-     The type is a union.
-
-'gdb.TYPE_CODE_ENUM'
-     The type is an enum.
-
-'gdb.TYPE_CODE_FLAGS'
-     A bit flags type, used for things such as status registers.
-
-'gdb.TYPE_CODE_FUNC'
-     The type is a function.
-
-'gdb.TYPE_CODE_INT'
-     The type is an integer type.
-
-'gdb.TYPE_CODE_FLT'
-     A floating point type.
-
-'gdb.TYPE_CODE_VOID'
-     The special type 'void'.
-
-'gdb.TYPE_CODE_SET'
-     A Pascal set type.
-
-'gdb.TYPE_CODE_RANGE'
-     A range type, that is, an integer type with bounds.
-
-'gdb.TYPE_CODE_STRING'
-     A string type.  Note that this is only used for certain languages
-     with language-defined string types; C strings are not represented
-     this way.
-
-'gdb.TYPE_CODE_BITSTRING'
-     A string of bits.  It is deprecated.
-
-'gdb.TYPE_CODE_ERROR'
-     An unknown or erroneous type.
-
-'gdb.TYPE_CODE_METHOD'
-     A method type, as found in C++ or Java.
-
-'gdb.TYPE_CODE_METHODPTR'
-     A pointer-to-member-function.
-
-'gdb.TYPE_CODE_MEMBERPTR'
-     A pointer-to-member.
-
-'gdb.TYPE_CODE_REF'
-     A reference type.
-
-'gdb.TYPE_CODE_CHAR'
-     A character type.
-
-'gdb.TYPE_CODE_BOOL'
-     A boolean type.
-
-'gdb.TYPE_CODE_COMPLEX'
-     A complex float type.
-
-'gdb.TYPE_CODE_TYPEDEF'
-     A typedef to some other type.
-
-'gdb.TYPE_CODE_NAMESPACE'
-     A C++ namespace.
-
-'gdb.TYPE_CODE_DECFLOAT'
-     A decimal floating point type.
-
-'gdb.TYPE_CODE_INTERNAL_FUNCTION'
-     A function internal to GDB.  This is the type used to represent
-     convenience functions.
-
-   Further support for types is provided in the 'gdb.types' Python
-module (*note gdb.types::).
-
-
-File: gdb.info,  Node: Pretty Printing API,  Next: Selecting Pretty-Printers,  Prev: Types In Python,  Up: Python API
-
-23.2.2.5 Pretty Printing API
-............................
-
-An example output is provided (*note Pretty Printing::).
-
-   A pretty-printer is just an object that holds a value and implements
-a specific interface, defined here.
-
- -- Function: pretty_printer.children (self)
-     GDB will call this method on a pretty-printer to compute the
-     children of the pretty-printer's value.
-
-     This method must return an object conforming to the Python iterator
-     protocol.  Each item returned by the iterator must be a tuple
-     holding two elements.  The first element is the "name" of the
-     child; the second element is the child's value.  The value can be
-     any Python object which is convertible to a GDB value.
-
-     This method is optional.  If it does not exist, GDB will act as
-     though the value has no children.
-
- -- Function: pretty_printer.display_hint (self)
-     The CLI may call this method and use its result to change the
-     formatting of a value.  The result will also be supplied to an MI
-     consumer as a 'displayhint' attribute of the variable being
-     printed.
-
-     This method is optional.  If it does exist, this method must return
-     a string.
-
-     Some display hints are predefined by GDB:
-
-     'array'
-          Indicate that the object being printed is "array-like".  The
-          CLI uses this to respect parameters such as 'set print
-          elements' and 'set print array'.
-
-     'map'
-          Indicate that the object being printed is "map-like", and that
-          the children of this value can be assumed to alternate between
-          keys and values.
-
-     'string'
-          Indicate that the object being printed is "string-like".  If
-          the printer's 'to_string' method returns a Python string of
-          some kind, then GDB will call its internal language-specific
-          string-printing function to format the string.  For the CLI
-          this means adding quotation marks, possibly escaping some
-          characters, respecting 'set print elements', and the like.
-
- -- Function: pretty_printer.to_string (self)
-     GDB will call this method to display the string representation of
-     the value passed to the object's constructor.
-
-     When printing from the CLI, if the 'to_string' method exists, then
-     GDB will prepend its result to the values returned by 'children'.
-     Exactly how this formatting is done is dependent on the display
-     hint, and may change as more hints are added.  Also, depending on
-     the print settings (*note Print Settings::), the CLI may print just
-     the result of 'to_string' in a stack trace, omitting the result of
-     'children'.
-
-     If this method returns a string, it is printed verbatim.
-
-     Otherwise, if this method returns an instance of 'gdb.Value', then
-     GDB prints this value.  This may result in a call to another
-     pretty-printer.
-
-     If instead the method returns a Python value which is convertible
-     to a 'gdb.Value', then GDB performs the conversion and prints the
-     resulting value.  Again, this may result in a call to another
-     pretty-printer.  Python scalars (integers, floats, and booleans)
-     and strings are convertible to 'gdb.Value'; other types are not.
-
-     Finally, if this method returns 'None' then no further operations
-     are peformed in this method and nothing is printed.
-
-     If the result is not one of these types, an exception is raised.
-
-   GDB provides a function which can be used to look up the default
-pretty-printer for a 'gdb.Value':
-
- -- Function: gdb.default_visualizer (value)
-     This function takes a 'gdb.Value' object as an argument.  If a
-     pretty-printer for this value exists, then it is returned.  If no
-     such printer exists, then this returns 'None'.
 

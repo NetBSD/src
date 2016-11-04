@@ -1,6 +1,4 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2002, 2008,
-@c 2011
-@c Free Software Foundation, Inc.
+@c Copyright (C) 1991-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -54,6 +52,7 @@ is explicitly requested.  SPARC v9 is always incompatible with sparclite.
 @kindex -Av6
 @kindex -Av7
 @kindex -Av8
+@kindex -Aleon
 @kindex -Asparclet
 @kindex -Asparclite
 @kindex -Av9
@@ -61,7 +60,9 @@ is explicitly requested.  SPARC v9 is always incompatible with sparclite.
 @kindex -Av9b
 @kindex -Av9c
 @kindex -Av9d
+@kindex -Av9e
 @kindex -Av9v
+@kindex -Av9m
 @kindex -Asparc
 @kindex -Asparcvis
 @kindex -Asparcvis2
@@ -69,9 +70,9 @@ is explicitly requested.  SPARC v9 is always incompatible with sparclite.
 @kindex -Asparcima
 @kindex -Asparcvis3
 @kindex -Asparcvis3r
-@item -Av6 | -Av7 | -Av8 | -Asparclet | -Asparclite
+@item -Av6 | -Av7 | -Av8 | -Aleon | -Asparclet | -Asparclite
 @itemx -Av8plus | -Av8plusa | -Av8plusb | -Av8plusc | -Av8plusd | -Av8plusv
-@itemx -Av9 | -Av9a | -Av9b | -Av9c | -Av9d | -Av9v
+@itemx -Av9 | -Av9a | -Av9b | -Av9c | -Av9d | -Av9e | -Av9v | -Av9m
 @itemx -Asparc | -Asparcvis | -Asparcvis2 | -Asparcfmaf | -Asparcima
 @itemx -Asparcvis3 | -Asparcvis3r
 Use one of the @samp{-A} options to select one of the SPARC
@@ -82,9 +83,10 @@ or feature requiring an incompatible or higher level.
 @samp{-Av8plus}, @samp{-Av8plusa}, @samp{-Av8plusb}, @samp{-Av8plusc},
 @samp{-Av8plusd}, and @samp{-Av8plusv} select a 32 bit environment.
 
-@samp{-Av9}, @samp{-Av9a}, @samp{-Av9b}, @samp{-Av9c}, @samp{-Av9d}, and
-@samp{-Av9v} select a 64 bit environment and are not available unless GAS
-is explicitly configured with 64 bit environment support.
+@samp{-Av9}, @samp{-Av9a}, @samp{-Av9b}, @samp{-Av9c}, @samp{-Av9d},
+@samp{-Av9e}, @samp{-Av9v} and @samp{-Av9m} select a 64 bit
+environment and are not available unless GAS is explicitly configured
+with 64 bit environment support.
 
 @samp{-Av8plusa} and @samp{-Av9a} enable the SPARC V9 instruction set with
 UltraSPARC VIS 1.0 extensions.
@@ -99,10 +101,17 @@ as well as the instructions enabled by @samp{-Av8plusb} and @samp{-Av9b}.
 multiply-add, VIS 3.0, and HPC extension instructions, as well as the
 instructions enabled by @samp{-Av8plusc} and @samp{-Av9c}.
 
-@samp{-Av8plusv} and @samp{-Av9v} enable the 'random', transactional
-memory, floating point unfused multiply-add, integer multiply-add, and
-cache sparing store instructions, as well as the instructions enabled
-by @samp{-Av8plusd} and @samp{-Av9d}.
+@samp{-Av8pluse} and @samp{-Av9e} enable the cryptographic
+instructions, as well as the instructions enabled by @samp{-Av8plusd}
+and @samp{-Av9d}.
+
+@samp{-Av8plusv} and @samp{-Av9v} enable floating point unfused
+multiply-add, and integer multiply-add, as well as the instructions
+enabled by @samp{-Av8pluse} and @samp{-Av9e}.
+
+@samp{-Av8plusm} and @samp{-Av9m} enable the VIS 4.0, subtract extended,
+xmpmul, xmontmul and xmontsqr instructions, as well as the instructions
+enabled by @samp{-Av8plusv} and @samp{-Av9v}.
 
 @samp{-Asparc} specifies a v9 environment.  It is equivalent to
 @samp{-Av9} if the word size is 64-bit, and @samp{-Av8plus} otherwise.
@@ -122,21 +131,22 @@ multiply-add instructions enabled.
 @samp{-Asparcvis3} specifies a v9b environment with the VIS 3.0,
 HPC , and floating point fused multiply-add instructions enabled.
 
-@samp{-Asparcvis3r} specifies a v9b environment with the VIS 3.0,
-HPC, transactional memory, random, and floating point unfused multiply-add
-instructions enabled.
+@samp{-Asparcvis3r} specifies a v9b environment with the VIS 3.0, HPC,
+and floating point unfused multiply-add instructions enabled.
+
+@samp{-Asparc5} is equivalent to @samp{-Av9m}.
 
 @item -xarch=v8plus | -xarch=v8plusa | -xarch=v8plusb | -xarch=v8plusc
 @itemx -xarch=v8plusd | -xarch=v8plusv | -xarch=v9 | -xarch=v9a
-@itemx -xarch=v9b | -xarch=v9c | -xarch=v9d | -xarch=v9v
+@itemx -xarch=v9b | -xarch=v9c | -xarch=v9d | -xarch=v9e | -xarch=v9v | -xarch=v9m
 @itemx -xarch=sparc | -xarch=sparcvis | -xarch=sparcvis2
 @itemx -xarch=sparcfmaf | -xarch=sparcima | -xarch=sparcvis3
-@itemx -xarch=sparcvis3r
+@itemx -xarch=sparcvis3r | -xarch=sparc5
 For compatibility with the SunOS v9 assembler.  These options are
 equivalent to -Av8plus, -Av8plusa, -Av8plusb, -Av8plusc, -Av8plusd,
--Av8plusv, -Av9, -Av9a, -Av9b, -Av9c, -Av9d, -Av9v, -Asparc, -Asparcvis,
--Asparcvis2, -Asparcfmaf, -Asparcima, -Asparcvis3, and -Asparcvis3r,
-respectively.
+-Av8plusv, -Av9, -Av9a, -Av9b, -Av9c, -Av9d, -Av9e, -Av9v, -Av9m,
+-Asparc, -Asparcvis, -Asparcvis2, -Asparcfmaf, -Asparcima,
+-Asparcvis3, and -Asparcvis3r, respectively.
 
 @item -bump
 Warn whenever it is necessary to switch to another level.
@@ -293,6 +303,10 @@ Various V9 branch and conditional move instructions allow
 specification of which set of integer condition codes to
 test.  These are referred to as @samp{%xcc} and @samp{%icc}.
 
+Additionally, GAS supports the so-called ``natural'' condition codes;
+these are referred to as @samp{%ncc} and reference to @samp{%icc} if
+the word size is 32, @samp{%xcc} if the word size is 64.
+
 In V9, there are 4 sets of floating point condition codes
 which are referred to as @samp{%fcc@var{n}}.
 
@@ -408,9 +422,17 @@ The hyperprivileged implementation version register is referred
 to as @samp{%hver}.
 
 @item
+The hyperprivileged system tick offset register is referred to as
+@samp{%hstick_offset}.  Note that there is no @samp{%hstick} register,
+the normal @samp{%stick} is used.
+
+@item
+The hyperprivileged system tick enable register is referred to as
+@samp{%hstick_enable}.
+
+@item
 The hyperprivileged system tick compare register is referred
-to as @samp{%hstick_cmpr}.  Note that there is no @samp{%hstick}
-register, the normal @samp{%stick} is used.
+to as @samp{%hstick_cmpr}.
 @end itemize
 
 @node Sparc-Constants

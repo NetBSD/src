@@ -28,7 +28,7 @@
 #include "expression.h"
 #include "language.h"
 
-static PyTypeObject fnpy_object_type
+extern PyTypeObject fnpy_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("PyObject");
 
 
@@ -212,7 +212,7 @@ gdbpy_initialize_functions (void)
 
 
 
-static PyTypeObject fnpy_object_type =
+PyTypeObject fnpy_object_type =
 {
   PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.Function",		  /*tp_name*/

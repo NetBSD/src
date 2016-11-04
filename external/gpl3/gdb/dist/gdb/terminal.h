@@ -1,5 +1,5 @@
 /* Terminal interface definitions for GDB, the GNU Debugger.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -99,10 +99,10 @@ extern int gdb_setpgid (void);
 /* Set up a serial structure describing standard input.  In inflow.c.  */
 extern void initialize_stdin_serial (void);
 
-extern int gdb_has_a_terminal (void);
-
 extern void gdb_save_tty_state (void);
 
+/* Take a snapshot of our initial tty state before readline/ncurses
+   have had a chance to alter it.  */
 extern void set_initial_gdb_ttystate (void);
 
 /* Set the process group of the caller to its own pid, or do nothing

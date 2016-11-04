@@ -97,3 +97,13 @@ Disassembly of section \.text:
  160:	2f20a448 	ushll	v8.2d, v2.2s, #0
  164:	6f20a448 	ushll2	v8.2d, v2.4s, #0
  168:	6f20a448 	ushll2	v8.2d, v2.4s, #0
+ 16c:	1a81f420 	csinc	w0, w1, w1, nv
+ 170:	1a81e420 	csinc	w0, w1, w1, al
+ 174:	1a9ff7e0 	csinc	w0, wzr, wzr, nv
+ 178:	1a9fe7e0 	csinc	w0, wzr, wzr, al
+ 17c:	5a81f020 	csinv	w0, w1, w1, nv
+ 180:	5a81e020 	csinv	w0, w1, w1, al
+ 184:	5a9ff3e0 	csinv	w0, wzr, wzr, nv
+ 188:	5a9fe3e0 	csinv	w0, wzr, wzr, al
+ 18c:	5a81f420 	csneg	w0, w1, w1, nv
+ 190:	5a81e420 	csneg	w0, w1, w1, al

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2015/11/18 18:35:35 christos Exp $
+# $NetBSD: Makefile,v 1.3.2.1 2016/11/04 14:49:23 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ MKMAN=		no
 
 PROGS+=		h_db
 PROGS+=		h_lfsr
+CPPFLAGS.h_db.c +=	-I${NETBSDSRCDIR}/lib/libc/db/btree
 
 FILESDIR=	${TESTSDIR}
 

@@ -1,3 +1,23 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
 2015-06-12  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.
@@ -141,7 +161,7 @@
 	* gen.c, gen.h, igen.c, igen.h, ld-cache.c, ld-cache.h: Ditto.
 	* ld-decode.c, ld-decode.h, ld-insn.c, ld-insn.h, lf.c: Ditto.
 	* lf.h, misc.c, misc.h, table.c, table.h: Ditto.
-	
+
 2002-11-21  Andrew Cagney  <ac131313@redhat.com>
 
 	* Makefile.in: Update copyright.  IGEN contributed to the FSF.
@@ -225,7 +245,7 @@ Thu Sep  2 18:15:53 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 1999-05-08  Felix Lee  <flee@cygnus.com>
 
 	* configure: Regenerated to track ../common/aclocal.m4 changes.
-	
+
 Fri Dec  4 15:14:09 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* igen.c (main): Fix -Pitable=.
@@ -263,7 +283,7 @@ Tue Jul 28 11:19:43 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	(insn_list_insert): Add sort key of instructions where
  	their operand fields have different conditionals.
 	(insn_field_cmp): New function.
-	
+
 Sun Apr 26 15:31:55 1998  Tom Tromey  <tromey@creche>
 
 	* configure: Regenerated to track ../common/aclocal.m4 changes.
@@ -287,7 +307,7 @@ Fri Apr 24 19:45:00 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gen-icache.c (print_icache_extraction): Do not type cast
  	pointers.
-	
+
 	* ld-insn.c (load_insn_table): Terminate error with NL.
 
 	* gen.c (insns_bit_useless): Perform unsigned bit comparisons.
@@ -335,7 +355,7 @@ Tue Apr 14 08:44:53 1998  Andrew Cagney  <cagney@b1.cygnus.com>
  	selected for expansion.
 	(gen_entry_expand_opcode): Trace each expanded instruction as it
  	is inserted into the table.
-	
+
 Mon Apr 13 19:21:47 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* ld-insn.c (parse_insn_word): Parse conditional operators.
@@ -367,7 +387,7 @@ Fri Apr  3 18:08:16 1998  Andrew Cagney  <cagney@b1.cygnus.com>
  	print_includes): New functions.  Generate include list.  For for
  	semantics et.al. generate CPP code to inline when
  	C_REVEALS_MODULE_P.
-	
+
 	* igen.c (gen_semantics_c): Call print_includes.
 	* gen-engine.c (gen_engine_c): Ditto.
 
@@ -376,7 +396,7 @@ Sat Apr  4 21:09:11 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* igen.h: (struct _igen_name_option): Replace with struct
  	igen_module_option. Contains both module prefix and suffix.
 	(INIT_OPTIONS): Initialize.
-	
+
 	* igen.c (main): Update -P option to fill in full module info.
 	(gen-engine.c, gen-icache.c, gen-itable.c, gen-semantics.c,
  	gen-support.c): Update.
@@ -428,7 +448,7 @@ Fri Feb 20 16:22:10 1998  Andrew Cagney  <cagney@b1.cygnus.com>
  	instruction style function model records
 
 	* ld-insn.h (nr_function_model_fields): Define.
-	
+
 Tue Feb 17 16:36:27 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* igen.c (print_itrace_prefix): Generate call to trace_prefix
@@ -452,12 +472,12 @@ Tue Feb  3 14:00:32 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* igen.h: Add flag for warning about invalid instruction widths.
 	* igen.c: Parse -Wwidth option.
-	
+
 	* gen-support.c (gen_support_h): Map instruction_word onto
  	<PREFIX>_instruction_word when needed.
 	(print_support_function_name): Use support prefix.
 	(gen_support_h): Ditto for <PREFIX>_idecode_issue.
-	
+
 Sun Feb  1 11:08:48 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gen-support.c (gen_support_h): Generate new macro CPU_.
@@ -471,7 +491,7 @@ Sat Jan 31 14:50:27 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gen-engine.c (print_run_body): Use CIA_GET & CIA_SET instead of
  	CPU_CIA.  Parameterize with CPU argument.
-	
+
 Fri Jan 30 09:09:39 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gen.h (struct _gen_list): Replace processor with model.
@@ -587,13 +607,13 @@ Mon Oct 27 15:14:26 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* igen.c (main): Change -I option to -I<directory>.  Add optional
  	size to -Ggen-icache option.  Add -Gno-... support.
-	
+
 	* igen.h (struct _igen_options): Add include field.
-	
+
 	* ld-insn.c (enum insn_record_type, insn_type_map): Add
  	include_record.
 	(load_insn_table): Call table_push when include record.
-	
+
 	* table.c (struct _open table, struct table): Make table object an
  	indirect ptr to the current table file.
 	(current_line, new_table_entry, next_line): Make file arg type
@@ -657,7 +677,7 @@ Mon Sep 22 18:49:07 1997  Felix Lee  <flee@cygnus.com>
 	* configure.in: i386-windows is a cross, so don't expect
  	libiberty to be there.
 	* configure: updated.
-	
+
 Fri Sep 19 10:36:30 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* igen.c (print_function_name): Put the format name after the
@@ -681,7 +701,7 @@ Thu Sep 11 10:27:39 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* gen-semantics.c (print_semantic_body): Trace the instruction
  	after it has been validated.
 	(print_semantic_body): Count the instruction using sim-profile.
-	
+
 Wed Sep 10 13:35:37 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gen-itable.c (gen_itable_h): Collect summary info on instruction
@@ -696,7 +716,7 @@ Tue Sep  9 03:30:26 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gen-engine.c, gen-idecode.c: Add multi-sim support - generate
  	one engine per model.
-	
+
 	* gen-semantics.c, gen-icache.c gen-support.c:
  	Update.
 
@@ -711,10 +731,10 @@ Tue Sep  9 03:30:26 1997  Andrew Cagney  <cagney@b1.cygnus.com>
  	filter_is_common, filter_is_member, filter_next): New filter
  	operations.
 	(dump_filter): Ditto.
-	
+
 	* gen.h, gen.c: New file.  Takes the insn table and turns it into
  	a set of decode tables and semantic functions.
-	
+
 	* ld-insn.c: Copy generator code from here.
 	* gen.c: To here.
 
@@ -727,10 +747,10 @@ Fri Aug  8 11:43:45 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(table_read): Parse '{' ... '}' as a code block.
 	(table_print_code): New function, print out a code block to file.
 	(main): Add suport for standalone testing.
-	
+
 	* ld-insn.h, ld-insn.c:
-	
-	
+
+
 Mon Sep  1 11:41:12 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* gen-idecode.c (error_leaf_contains_multiple_insn): Make static.
@@ -751,18 +771,18 @@ Wed Aug  6 12:31:17 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* configure.in: Include simulator common/aclocal.m4.
 	* configure.in: Add --enable-sim-warnings option.
 	* configure: Re-generate.
-	
+
 	* Makefile.in: Use.
 
 	* Makefile.in (tmp-filter): New rule.
 	(igen.o, tmp-table, tmp-ld-decode, tmp-ld-cache, tmp-ld-insn,
  	ld-decode.o, ld-cache.o, ld-insn.o): Fix dependencies.
-	
+
 	* gen.h, gen.c: New files.
-  	
+
 	* Makefile.in (gen.o, tmp-gen): New rules, update all
  	dependencies.
-	
+
 Tue Jun 24 11:46:45 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* ld-insn.c (load_insn_table): Accept %s as a function type.
@@ -787,14 +807,14 @@ Fri May 30 11:27:37 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	table.h (table_line_entry): New structure.  Exactly specifies a
  	source file/line-nr.
 	(table_*_entry): Add this to all.
-	
+
 	table.c (table_entry_print_cpp_line_nr): Change to use values from
  	a table_line_entry struct.
 	(table_entry_read): Save table_line_entry in all structures read.
 
 	gen-icache.c, gen-support.c, gen-idecode.c, gen-semantics.c,
  	gen-model.c: Update all references.
-	
+
 Thu May 29 10:29:57 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* igen.c (print_my_defines): Define MY_NAME - a string.  For
@@ -811,7 +831,7 @@ Thu May 29 10:29:57 1997  Andrew Cagney  <cagney@b1.cygnus.com>
  	print_one_insn.
 	(print_itrace_format): New function, print fmt argument for
  	print_one_insn.
-	
+
 	* table.c (table_entry_read): Save any assembler lines instead of
  	discarding them.
 
@@ -953,7 +973,7 @@ Tue Apr 22 21:46:28 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* igen.c (print_itrace): For delayed branch case, print just the
  	current instruction.
-	
+
 Thu Apr 17 07:02:33 1997  Doug Evans  <dje@canuck.cygnus.com>
 
 	* igen.c (print_itrace): Use TRACE_FOO_P and trace_printf.
@@ -1004,7 +1024,7 @@ Tue Mar 18 15:52:24 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 
 	* gen-support.c (gen_support_c): Update for renaming of engine to
  	sim-state.
-	
+
 	* igen.c: Ditto.
 	* gen-idecode.c (gen_idecode_c): Ditto.
 
@@ -1046,7 +1066,7 @@ Fri Mar  7 18:07:45 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 	* gen-idecode.c (print_idecode_validate): Wrap each of the checks
  	- reserved bits, floating point and slot validation - with a
  	#ifdef so that they are optional.
-	
+
 Fri Mar  7 16:35:13 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 
 	* gen-idecode.c (error_leaf_contains_multiple_insn): New function
@@ -1066,7 +1086,7 @@ Fri Mar  7 16:35:13 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 
 	* gen-idecode.c (print_idecode_validate): New check, generate code
  	to verify that the instruction slot is correct.
-	
+
 	* igen.c (main): Simplify options.
 
 Wed Mar  5 09:55:55 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
@@ -1091,7 +1111,7 @@ Mon Mar  3 17:11:21 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 	* ld-insn.c (parse_insn_format): Make the width field optional.
   	If missing assume that the number of characters in the value
  	determines the number of bits in the field.
-	
+
 Thu Feb 27 11:27:48 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 
 	* ld-insn.c (insn_table_expand_opcode): Replace assertion with
@@ -1115,7 +1135,7 @@ Wed Feb 19 12:30:28 1997  Andrew Cagney  <cagney@critters.cygnus.com>
 	* Makefile.in: Create using ../ppc/Makefile.in as a starting
  	point.
 	* configure.in: Ditto vis ../ppc/configure.in
-	
+
 Mon Feb 17 10:44:18 1997  Andrew Cagney  <cagney@critters.cygnus.com>
 
 	* gen-support.c (gen_support_c): Always include engine.h instead
@@ -1125,10 +1145,10 @@ Mon Feb 17 10:44:18 1997  Andrew Cagney  <cagney@critters.cygnus.com>
 	* words.h (instruction_word): Remove instruction_word - now
  	generated by igen.
 	(address_word): New.  Used by igen.
-	
+
 	* lf.c (lf_print_function_type_function): New, pass a function to
  	print out the type instead of a constant string.
-	
+
 	* igen.h, igen.c (print_semantic_function_formal,
  	SEMANTIC_FUNCTION_FORMAL): Relace macro with function.
 	(print_semantic_function_actual, SEMANTIC_FUNCTION_ACTUAL): Ditto.
@@ -1161,10 +1181,10 @@ Mon Feb 17 10:44:18 1997  Andrew Cagney  <cagney@critters.cygnus.com>
 	* gen-engine.h, gen-engine.c: Copies of gen-idecode.*.  Will need
  	to clean these up so that that call upon the updated gen-idecode
 	code.
-	
+
 	* gen-idecode.h, gen-idecode.c: Prune out any code not relevant to
  	generating a decode table.
-	
+
 	* Makefile.in (igen): Add dependencies for new gen-engine.* files.
 
 	* igen.h, igen.c (main): New option -M - Control what is returned
@@ -1172,7 +1192,7 @@ Mon Feb 17 10:44:18 1997  Andrew Cagney  <cagney@critters.cygnus.com>
  	generate_semantic_returning_modified_nia_only to igen_code enum.
 	* gen-semantics.c (print_semantic_body): As an alternative, make
  	NIA == -1 instead of CIA+insn_size by default.
-	
+
 	* igen.h, igen.c (main, global_name_prefix, global_uname_prefix):
  	New option -P <prefix> - Prepend all generated functions with the
  	specified prefix.

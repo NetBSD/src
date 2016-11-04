@@ -10,7 +10,7 @@ start address 0x0+
 
 Sections:
 Idx Name +Size +VMA +LMA +File off +Algn
- +0 \.text +0+c8 +0+ +0+ +.*
+ +0 \.text +0+108 +0+ +0+ +.*
  +CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
  +1 \.data +0+20 +0+ +0+ +.*
  +CONTENTS, ALLOC, LOAD, DATA
@@ -98,3 +98,20 @@ Disassembly of section \.text:
 .*:	(f8 40 00 12|12 00 40 f8) 	stq     r2,16\(0\)
 .*:	(f8 05 00 12|12 00 05 f8) 	stq     r0,16\(r5\)
 .*:	(f8 45 00 12|12 00 45 f8) 	stq     r2,16\(r5\)
+.*:	(7c 00 03 e4|e4 03 00 7c) 	slbia
+.*:	(7c 00 04 ac|ac 04 00 7c) 	hwsync
+.*:	(7c 00 04 ac|ac 04 00 7c) 	hwsync
+.*:	(7c 00 04 ac|ac 04 00 7c) 	hwsync
+.*:	(7c 20 04 ac|ac 04 20 7c) 	lwsync
+.*:	(7c 20 04 ac|ac 04 20 7c) 	lwsync
+.*:	(7c 40 04 ac|ac 04 40 7c) 	ptesync
+.*:	(7c 40 04 ac|ac 04 40 7c) 	ptesync
+.*:	(7e 80 30 28|28 30 80 7e) 	lwarx   r20,0,r6
+.*:	(7e 81 30 28|28 30 81 7e) 	lwarx   r20,r1,r6
+.*:	(7e a0 38 a8|a8 38 a0 7e) 	ldarx   r21,0,r7
+.*:	(7e a1 38 a8|a8 38 a1 7e) 	ldarx   r21,r1,r7
+.*:	(7e c0 41 2d|2d 41 c0 7e) 	stwcx\.  r22,0,r8
+.*:	(7e c1 41 2d|2d 41 c1 7e) 	stwcx\.  r22,r1,r8
+.*:	(7e e0 49 ad|ad 49 e0 7e) 	stdcx\.  r23,0,r9
+.*:	(7e e1 49 ad|ad 49 e1 7e) 	stdcx\.  r23,r1,r9
+#pass

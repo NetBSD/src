@@ -212,7 +212,7 @@ mips_sde_elf_osabi_sniff_abi_tag_sections (bfd *abfd, asection *sect,
 
   /* The presence of a section with a ".sde" prefix is indicative
      of an SDE binary.  */
-  if (strncmp (name, ".sde", 4) == 0)
+  if (startswith (name, ".sde"))
     *os_ident_ptr = GDB_OSABI_SDE;
 }
 

@@ -1,6 +1,298 @@
 		What has changed in GDB?
 	     (Organized release by release)
 
+*** Changes in GDB 7.10
+
+* Support for process record-replay and reverse debugging on aarch64*-linux*
+  targets has been added.  GDB now supports recording of A64 instruction set
+  including advance SIMD instructions.
+
+* Support for Sun's version of the "stabs" debug file format has been removed.
+
+* GDB now honors the content of the file /proc/PID/coredump_filter
+  (PID is the process ID) on GNU/Linux systems.  This file can be used
+  to specify the types of memory mappings that will be included in a
+  corefile.  For more information, please refer to the manual page of
+  "core(5)".  GDB also has a new command: "set use-coredump-filter
+  on|off".  It allows to set whether GDB will read the content of the
+  /proc/PID/coredump_filter file when generating a corefile.
+
+* The "info os" command on GNU/Linux can now display information on
+  cpu information :
+    "info os cpus" Listing of all cpus/cores on the system
+
+* GDB has two new commands: "set serial parity odd|even|none" and
+  "show serial parity".  These allows to set or show parity for the
+  remote serial I/O.
+
+* The "info source" command now displays the producer string if it was
+  present in the debug info.  This typically includes the compiler version
+  and may include things like its command line arguments.
+
+* The "info dll", an alias of the "info sharedlibrary" command,
+  is now available on all platforms.
+
+* Directory names supplied to the "set sysroot" commands may be
+  prefixed with "target:" to tell GDB to access shared libraries from
+  the target system, be it local or remote.  This replaces the prefix
+  "remote:".  The default sysroot has been changed from "" to
+  "target:".  "remote:" is automatically converted to "target:" for
+  backward compatibility.
+
+* The system root specified by "set sysroot" will be prepended to the
+  filename of the main executable (if reported to GDB as absolute by
+  the operating system) when starting processes remotely, and when
+  attaching to already-running local or remote processes.
+
+* GDB now supports automatic location and retrieval of executable
+  files from remote targets.  Remote debugging can now be initiated
+  using only a "target remote" or "target extended-remote" command
+  (no "set sysroot" or "file" commands are required).  See "New remote
+  packets" below.
+
+* The "dump" command now supports verilog hex format.
+
+* GDB now supports the vector ABI on S/390 GNU/Linux targets.
+
+* On GNU/Linux, GDB and gdbserver are now able to access executable
+  and shared library files without a "set sysroot" command when
+  attaching to processes running in different mount namespaces from
+  the debugger.  This makes it possible to attach to processes in
+  containers as simply as "gdb -p PID" or "gdbserver --attach PID".
+  See "New remote packets" below.
+
+* The "tui reg" command now provides completion for all of the
+  available register groups, including target specific groups.
+
+* The HISTSIZE environment variable is no longer read when determining
+  the size of GDB's command history.  GDB now instead reads the dedicated
+  GDBHISTSIZE environment variable.  Setting GDBHISTSIZE to "-1" or to "" now
+  disables truncation of command history.  Non-numeric values of GDBHISTSIZE
+  are ignored.
+
+* Guile Scripting
+
+  ** Memory ports can now be unbuffered.
+
+* Python Scripting
+
+  ** gdb.Objfile objects have a new attribute "username",
+     which is the name of the objfile as specified by the user,
+     without, for example, resolving symlinks.
+  ** You can now write frame unwinders in Python.
+  ** gdb.Type objects have a new method "optimized_out",
+     returning optimized out gdb.Value instance of this type.
+  ** gdb.Value objects have new methods "reference_value" and
+     "const_value" which return a reference to the value and a
+     "const" version of the value respectively.
+
+* New commands
+
+maint print symbol-cache
+  Print the contents of the symbol cache.
+
+maint print symbol-cache-statistics
+  Print statistics of symbol cache usage.
+
+maint flush-symbol-cache
+  Flush the contents of the symbol cache.
+
+record btrace bts
+record bts
+  Start branch trace recording using Branch Trace Store (BTS) format.
+
+compile print
+  Evaluate expression by using the compiler and print result.
+
+tui enable
+tui disable
+  Explicit commands for enabling and disabling tui mode.
+
+show mpx bound
+set mpx bound on i386 and amd64
+   Support for bound table investigation on Intel(R) MPX enabled applications.
+
+record btrace pt
+record pt
+  Start branch trace recording using Intel(R) Processor Trace format.
+
+maint info btrace
+  Print information about branch tracing internals.
+
+maint btrace packet-history
+  Print the raw branch tracing data.
+
+maint btrace clear-packet-history
+  Discard the stored raw branch tracing data.
+
+maint btrace clear
+  Discard all branch tracing data.  It will be fetched and processed
+  anew by the next "record" command.
+
+* New options
+
+set debug dwarf-die
+  Renamed from "set debug dwarf2-die".
+show debug dwarf-die
+  Renamed from "show debug dwarf2-die".
+
+set debug dwarf-read
+  Renamed from "set debug dwarf2-read".
+show debug dwarf-read
+  Renamed from "show debug dwarf2-read".
+
+maint set dwarf always-disassemble
+  Renamed from "maint set dwarf2 always-disassemble".
+maint show dwarf always-disassemble
+  Renamed from "maint show dwarf2 always-disassemble".
+
+maint set dwarf max-cache-age
+  Renamed from "maint set dwarf2 max-cache-age".
+maint show dwarf max-cache-age
+  Renamed from "maint show dwarf2 max-cache-age".
+
+set debug dwarf-line
+show debug dwarf-line
+  Control display of debugging info regarding DWARF line processing.
+
+set max-completions
+show max-completions
+  Set the maximum number of candidates to be considered during
+  completion.  The default value is 200.  This limit allows GDB
+  to avoid generating large completion lists, the computation of
+  which can cause the debugger to become temporarily unresponsive.
+
+set history remove-duplicates
+show history remove-duplicates
+  Control the removal of duplicate history entries.
+
+maint set symbol-cache-size
+maint show symbol-cache-size
+  Control the size of the symbol cache.
+
+set|show record btrace bts buffer-size
+  Set and show the size of the ring buffer used for branch tracing in
+  BTS format.
+  The obtained size may differ from the requested size.  Use "info
+  record" to see the obtained buffer size.
+
+set debug linux-namespaces
+show debug linux-namespaces
+  Control display of debugging info regarding Linux namespaces.
+
+set|show record btrace pt buffer-size
+  Set and show the size of the ring buffer used for branch tracing in
+  Intel(R) Processor Trace format.
+  The obtained size may differ from the requested size.  Use "info
+  record" to see the obtained buffer size.
+
+maint set|show btrace pt skip-pad
+  Set and show whether PAD packets are skipped when computing the
+  packet history.
+
+* The command 'thread apply all' can now support new option '-ascending'
+  to call its specified command for all threads in ascending order.
+
+* Python/Guile scripting
+
+  ** GDB now supports auto-loading of Python/Guile scripts contained in the
+     special section named `.debug_gdb_scripts'.
+
+* New remote packets
+
+qXfer:btrace-conf:read
+  Return the branch trace configuration for the current thread.
+
+Qbtrace-conf:bts:size
+  Set the requested ring buffer size for branch tracing in BTS format.
+
+Qbtrace:pt
+  Enable Intel(R) Procesor Trace-based branch tracing for the current
+  process.  The remote stub reports support for this packet to GDB's
+  qSupported query.
+
+Qbtrace-conf:pt:size
+  Set the requested ring buffer size for branch tracing in Intel(R) Processor
+  Trace format.
+
+swbreak stop reason
+  Indicates a memory breakpoint instruction was executed, irrespective
+  of whether it was GDB that planted the breakpoint or the breakpoint
+  is hardcoded in the program.  This is required for correct non-stop
+  mode operation.
+
+hwbreak stop reason
+  Indicates the target stopped for a hardware breakpoint.  This is
+  required for correct non-stop mode operation.
+
+vFile:fstat:
+  Return information about files on the remote system.
+
+qXfer:exec-file:read
+  Return the full absolute name of the file that was executed to
+  create a process running on the remote system.
+
+vFile:setfs:
+  Select the filesystem on which vFile: operations with filename
+  arguments will operate.  This is required for GDB to be able to
+  access files on remote targets where the remote stub does not
+  share a common filesystem with the inferior(s).
+
+fork stop reason
+  Indicates that a fork system call was executed.
+
+vfork stop reason
+  Indicates that a vfork system call was executed.
+
+vforkdone stop reason
+  Indicates that a vfork child of the specified process has executed
+  an exec or exit, allowing the vfork parent to resume execution.
+
+fork-events and vfork-events features in qSupported
+  The qSupported packet allows GDB to request support for fork and 
+  vfork events using new 'gdbfeatures' fork-events and vfork-events,
+  and the qSupported response can contain the corresponding
+  'stubfeatures'.  Set and show commands can be used to display
+  whether these features are enabled.
+
+* Extended-remote fork events
+
+  ** GDB now has support for fork events on extended-remote Linux
+     targets.  For targets with Linux kernels 2.5.60 and later, this
+     enables follow-fork-mode and detach-on-fork for both fork and
+     vfork, as well as fork and vfork catchpoints.
+
+* The info record command now shows the recording format and the
+  branch tracing configuration for the current thread when using
+  the btrace record target.
+  For the BTS format, it shows the ring buffer size.
+
+* GDB now has support for DTrace USDT (Userland Static Defined
+  Tracing) probes.  The supported targets are x86_64-*-linux-gnu.
+
+* GDB now supports access to vector registers on S/390 GNU/Linux
+  targets.
+
+* Removed command line options
+
+-xdb  HP-UX XDB compatibility mode.
+
+* Removed targets and native configurations
+
+HP/PA running HP-UX           hppa*-*-hpux*
+Itanium running HP-UX         ia64-*-hpux*
+
+* New configure options
+
+--with-intel-pt
+  This configure option allows the user to build GDB with support for
+  Intel(R) Processor Trace (default: auto).  This requires libipt.
+
+--with-libipt-prefix=PATH
+  Specify the path to the version of libipt that GDB should use.
+  $PATH/include should contain the intel-pt.h header and
+  $PATH/lib should contain the libipt.so library.
+
 *** Changes in GDB 7.9.1
 
 * Python Scripting

@@ -1,7 +1,5 @@
 /* tc-i960.h - Basic 80960 instruction formats.
-   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1989-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -147,12 +145,6 @@ extern int reloc_callj (struct fix *);
 /* We store the bal information in the sy_tc field.  */
 #define TC_SYMFIELD_TYPE symbolS *
 
-#define TC_ADJUST_RELOC_COUNT(FIX,COUNT) \
-  { fixS *tcfixp = (FIX); \
-    for (;tcfixp;tcfixp=tcfixp->fx_next) \
-      if (tcfixp->fx_tcbit && tcfixp->fx_addsy != 0) \
-	++(COUNT); \
-  }
 #endif
 
 extern int i960_validate_fix (struct fix *, segT);

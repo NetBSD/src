@@ -1,4 +1,4 @@
-# Copyright 2008-2015 Free Software Foundation, Inc.
+# Copyright 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,10 +67,10 @@ mi_delete_breakpoints
 # Here we create a response string.  Note we don't want \r\n at the end,
 # since mi_gdb_test will append this itself.
 set running_re ""
-for {set i 6} {$i > 1} {incr i -1} {
+for {set i 1} {$i < 6} {incr i} {
     set running_re "$running_re\\*running,thread-id=\"$i\"\r\n"
 }
-set running_re "$running_re\\*running,thread-id=\"1\""
+set running_re "$running_re\\*running,thread-id=\"6\""
 
 mi_gdb_test "-exec-continue --all" "\[^\n\]*\r\n$running_re" \
     "resume all, no breakpoint"

@@ -1,6 +1,6 @@
 /* addrmap.c --- implementation of address map data structure.
 
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -244,7 +244,7 @@ struct addrmap_mutable
 static splay_tree_key
 allocate_key (struct addrmap_mutable *map, CORE_ADDR addr)
 {
-  CORE_ADDR *key = obstack_alloc (map->obstack, sizeof (*key));
+  CORE_ADDR *key = XOBNEW (map->obstack, CORE_ADDR);
 
   *key = addr;
   return (splay_tree_key) key;
@@ -427,6 +427,7 @@ addrmap_mutable_create_fixed (struct addrmap *self, struct obstack *obstack)
   struct addrmap_mutable *mutable_obj = (struct addrmap_mutable *) self;
   struct addrmap_fixed *fixed;
   size_t num_transitions;
+  size_t alloc_len;
 
   /* Count the number of transitions in the tree.  */
   num_transitions = 0;
@@ -436,10 +437,9 @@ addrmap_mutable_create_fixed (struct addrmap *self, struct obstack *obstack)
      maps have, but mutable maps do not.)  */
   num_transitions++;
 
-  fixed = obstack_alloc (obstack,
-                         (sizeof (*fixed)
-                          + (num_transitions
-                             * sizeof (fixed->transitions[0]))));
+  alloc_len = sizeof (*fixed)
+	      + (num_transitions * sizeof (fixed->transitions[0]));
+  fixed = (struct addrmap_fixed *) obstack_alloc (obstack, alloc_len);
   fixed->addrmap.funcs = &addrmap_fixed_funcs;
   fixed->num_transitions = 1;
   fixed->transitions[0].addr = 0;
@@ -479,7 +479,8 @@ struct mutable_foreach_data
 static int
 addrmap_mutable_foreach_worker (splay_tree_node node, void *data)
 {
-  struct mutable_foreach_data *foreach_data = data;
+  struct mutable_foreach_data *foreach_data
+    = (struct mutable_foreach_data *) data;
 
   return foreach_data->fn (foreach_data->data,
 			   addrmap_node_key (node),
@@ -514,7 +515,7 @@ static const struct addrmap_funcs addrmap_mutable_funcs =
 static void *
 splay_obstack_alloc (int size, void *closure)
 {
-  struct addrmap_mutable *map = closure;
+  struct addrmap_mutable *map = (struct addrmap_mutable *) closure;
   splay_tree_node n;
 
   /* We should only be asked to allocate nodes and larger things.
@@ -536,8 +537,8 @@ splay_obstack_alloc (int size, void *closure)
 static void
 splay_obstack_free (void *obj, void *closure)
 {
-  struct addrmap_mutable *map = closure;
-  splay_tree_node n = obj;
+  struct addrmap_mutable *map = (struct addrmap_mutable *) closure;
+  splay_tree_node n = (splay_tree_node) obj;
 
   /* We've asserted in the allocation function that we only allocate
      nodes or larger things, so it should be safe to put whatever
@@ -567,7 +568,7 @@ splay_compare_CORE_ADDR_ptr (splay_tree_key ak, splay_tree_key bk)
 struct addrmap *
 addrmap_create_mutable (struct obstack *obstack)
 {
-  struct addrmap_mutable *map = obstack_alloc (obstack, sizeof (*map));
+  struct addrmap_mutable *map = XOBNEW (obstack, struct addrmap_mutable);
 
   map->addrmap.funcs = &addrmap_mutable_funcs;
   map->obstack = obstack;

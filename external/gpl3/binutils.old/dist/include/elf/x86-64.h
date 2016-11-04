@@ -1,6 +1,5 @@
 /* x86_64 ELF support for BFD.
-   Copyright (C) 2000, 2001, 2002, 2004, 2005, 2006, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Jan Hubicka <jh@suse.cz>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -59,11 +58,11 @@ START_RELOC_NUMBERS (elf_x86_64_reloc_type)
      						 offset to GOT entry */
      RELOC_NUMBER (R_X86_64_GOTPC64,  29)     /* 64 bit signed pc relative
      						 offset to GOT */
-     RELOC_NUMBER (R_X86_64_GOTPLT64, 30)     /* like GOT64, but indicates
-     						 that PLT entry is needed */
+     RELOC_NUMBER (R_X86_64_GOTPLT64, 30)     /* Obsolete. The same as GOT64. */
      RELOC_NUMBER (R_X86_64_PLTOFF64, 31)     /* 64 bit GOT relative offset
      						 to PLT entry */
-     /* 32 .. 33 */
+     RELOC_NUMBER (R_X86_64_SIZE32,   32)     /* 32-bit symbol size */
+     RELOC_NUMBER (R_X86_64_SIZE64,   33)     /* 64-bit symbol size */
      RELOC_NUMBER (R_X86_64_GOTPC32_TLSDESC, 34)
 					      /* 32 bit signed pc relative
 						 offset to TLS descriptor
@@ -73,6 +72,16 @@ START_RELOC_NUMBERS (elf_x86_64_reloc_type)
      RELOC_NUMBER (R_X86_64_TLSDESC, 36)      /* 2x64-bit TLS descriptor.  */
      RELOC_NUMBER (R_X86_64_IRELATIVE, 37)    /* Adjust indirectly by program base */
      RELOC_NUMBER (R_X86_64_RELATIVE64, 38)   /* 64bit adjust by program base */
+     RELOC_NUMBER (R_X86_64_PC32_BND, 39)     /* PC relative 32 bit
+						 signed with BND prefix  */
+     RELOC_NUMBER (R_X86_64_PLT32_BND, 40)    /* 32 bit PLT address with
+						 BND prefix */
+     /* Load from 32 bit signed pc relative offset to GOT entry without
+	REX prefix, relaxable.  */
+     RELOC_NUMBER (R_X86_64_GOTPCRELX, 41)
+     /* Load from 32 bit signed pc relative offset to GOT entry with
+	REX prefix, relaxable.  */
+     RELOC_NUMBER (R_X86_64_REX_GOTPCRELX, 42)
      RELOC_NUMBER (R_X86_64_GNU_VTINHERIT, 250)       /* GNU C++ hack  */
      RELOC_NUMBER (R_X86_64_GNU_VTENTRY, 251)         /* GNU C++ hack  */
 END_RELOC_NUMBERS (R_X86_64_max)

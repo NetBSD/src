@@ -1,6 +1,6 @@
 /* Ada Ravenscar thread support.
 
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -167,7 +167,7 @@ get_running_thread_id (void)
   object_addr = BMSYMBOL_VALUE_ADDRESS (object_msym);
   object_size = TYPE_LENGTH (builtin_type_void_data_ptr);
   buf_size = object_size;
-  buf = alloca (buf_size);
+  buf = (gdb_byte *) alloca (buf_size);
   read_memory (object_addr, buf, buf_size);
   return extract_typed_address (buf, builtin_type_void_data_ptr);
 }
@@ -338,10 +338,9 @@ ravenscar_mourn_inferior (struct target_ops *ops)
 static void
 ravenscar_inferior_created (struct target_ops *target, int from_tty)
 {
-  struct ravenscar_arch_ops *ops;
 
   if (!ravenscar_task_support
-      || gdbarch_ravenscar_ops (current_inferior ()->gdbarch) == NULL
+      || gdbarch_ravenscar_ops (target_gdbarch ()) == NULL
       || !has_ravenscar_runtime ())
     return;
 

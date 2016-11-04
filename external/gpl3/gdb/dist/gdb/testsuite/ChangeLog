@@ -1,31 +1,3173 @@
-2015-12-02  Yao Qi  <yao.qi@linaro.org>
+2016-10-06  Maciej W. Rozycki  <macro@imgtec.com>
 
-	* gdb.arch/thumb-singlestep.exp: Do one more single step.
+	* gdb.arch/mips-fcr.exp: New test.
+	* gdb.arch/mips-fcr.c: Source for the new test.
+
+2016-10-06  Maciej W. Rozycki  <macro@imgtec.com>
+
+	* gdb.base/solib-disc.exp: Use `standard_output_file'
+	throughout.
+
+2016-10-06  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/jit-simple-dl.c: New file.
+	* gdb.base/jit-simple-jit.c: New file, factored out from ...
+	* gdb.base/jit-simple.c: ... this.
+	* gdb.base/jit-simple.exp (jit_run): Delete.
+	(build_jit): New proc.
+	(jit_test_reread): Recompile either the main program or the shared
+	library, depending on what is being tested.  Skip changing address
+	if caller wants to.  Compare before/after addresses.  If testing
+	standalone, explicitly load the binary.  Test "maint info
+	breakpoints".
+	(top level): Add "standalone vs shared lib" and "change address"
+	vs "same address" axes.
+
+2016-10-06  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/jit-simple.exp (top level) Delete get_compiler_info
+	call.
+	(jit_run): Delete.
+	(jit_test_reread): Use with_test_prefix.  Reload the main binary
+	explicitly.  Compare the before/after addresses of the JIT
+	descriptor.
+
+2016-10-03  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+2016-10-03  Simon Marchi  <simon.marchi@ericsson.com>
+
+	PR gdb/20487
+	* gdb.mi/user-selected-context-sync.exp: New file.
+	* gdb.mi/user-selected-context-sync.c: New file.
+
+2016-10-03  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+2016-10-03  Simon Marchi  <simon.marchi@ericsson.com>
+
+	PR gdb/20487
+	* gdb.mi/mi-pthreads.exp (check_mi_thread_command_set): Adapt
+	=thread-select-event check.
+
+2016-09-29  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	PR gdb/20609 - attach of JIT-debug-enabled inf 7.11.1 regression
+	* gdb.base/jit-attach-pie.c: New file.
+	* gdb.base/jit-attach-pie.exp: New file.
+
+2016-09-28  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/infcall-input.c: New file.
+	* gdb.base/infcall-input.exp: New file.
+
+2016-09-06  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/new-ui-pending-input.c: New file.
+	* gdb.base/new-ui-pending-input.exp: New file.
+	* gdb.exp (clear_gdb_spawn_id): New procedure.
+	(with_spawn_id): Check whether gdb_spawn_id exists before
+	referencing it.  If gdb_spawn_id didn't exist on entry, clear it
+	on exit.
+
+2016-08-30  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* gdb.multi/tids.exp: Test "thread apply all".
+
+2016-08-29  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.base/default.exp (tty): Remove.
+
+2016-08-24  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.base/set-inferior-tty.exp: New file.
+	* gdb.base/set-inferior-tty.c: New file.
+
+2016-08-23  Pedro Alves  <palves@redhat.com>
+
+	* gdb.trace/mi-trace-frame-collected.exp
+	(test_trace_frame_collected): On x32, expect two registers.
+
+2016-08-23  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/20494
+	* gdb.base/new-ui-echo.c: New file.
+	* gdb.base/new-ui-echo.exp: New file.
+
+2016-08-23  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/signals-state-child.exp: Set variables gdb_txt and
+	standalone_txt.  Delete gdb_txt and standalone_txt on host
+	and target.  Spawn the binary on target.  Copy files from
+	target to host.
+
+2016-08-22  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/20505
+	* gdb.base/vdso-warning.exp: Test core dumps too.  Use
+	with_test_prefix.  Factor out bits to ...
+	(test_no_vdso): ... this new procedure.
+
+2016-08-15  Doug Evans  <dje@google.com>
+
+	* gdb.xml/extra-regs.xml: Update, end field now required, default type
+	for single bitfields is bool.
+	* gdb.xml/tdesc-regs.exp: Ditto.
+
+2016-08-12  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/signals-state-child.c (main): Remove "i" from fprintf's
+	argument list.
+
+2016-08-10  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/19187
+	* gdb.reverse/waitpid-reverse.exp: Add comment and remove
+	setup_kfails.
+
+2016-08-09  Pedro Alves  <palves@redhat.com>
+	    Simon Marchi  <simon.marchi@ericsson.com>
+
+	PR gdb/20418
+	* gdb.mi/new-ui-mi-sync.c, gdb.mi/new-ui-mi-sync.exp: New files.
+	* lib/mi-support.exp (mi_expect_interrupt): Remove anchors.
+
+2016-08-09  Pedro Alves  <palves@redhat.com>
+
+	PR mi/20431
+	* gdb.mi/mi-cmd-error.exp: New file.
+
+2016-08-09  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/18653
+	* gdb.base/signals-state-child.c: New file.
+	* gdb.base/signals-state-child.exp: New file.
+	* gdb.gdb/selftest.exp (do_steps_and_nexts): Add new pattern.
+
+2016-08-09  Pedro Alves  <palves@redhat.com>
+
+	* gdb.dwarf2/bitfield-parent-optimized-out.exp: New file.
+
+2016-08-03  Tom Tromey  <tom@tromey.com>
+
+	PR python/18565:
+	* gdb.python/py-frame-inline.exp: Add Frame.function test.
+
+2016-08-01  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.threads/process-dies-while-detaching.exp (do_test): Set
+	variable mode to "multi-process" if $multi_process is 1, otherwise
+	set it to "single-process".
+
+2016-08-01  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.cp/anon-struct.exp: Check is_aarch32_target.
+	* gdb.cp/cpexprs.exp: Likewise.
+	* gdb.cp/m-static.exp: Likewise.
+
+2016-07-26  Tom Tromey  <tom@tromey.com>
+
+	PR python/20190:
+	* gdb.threads/tls.exp (check_thread_local): Add python symbol
+	test.
+
+2016-07-26  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.btrace/record_goto.exp: se is_amd64_regs_target for
+	selecting assembly source files.
+	* gdb.btrace/stepi.exp: se is_amd64_regs_target for selecting
+	assembly source files.
+	* gdb.btrace/tailcall.exp: se is_amd64_regs_target for selecting
+	assembly source files.
+	* gdb.btrace/tailcall-only.exp: se is_amd64_regs_target for
+	selecting assembly source files.
+
+2016-07-25  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.base/new-ui.exp (do_test_invalid_args): New
+	procedure.
+
+2016-07-25  Tim Wiederhake  <tim.wiederhake@intel.com>
+
+	* gdb.btrace/reconnect.c: New file.
+	* gdb.btrace/reconnect.exp: New file.
+
+2016-07-23  Gabriel Krisman Bertazi  <gabriel@krisman.be>
+
+	* gdb.base/catch-syscall.exp (do_syscall_tests): Add call
+	to test_catch_syscall_group.
+	(test_catch_syscall_group): New.
+
+2016-07-21  Tom Tromey  <tom@tromey.com>
+
+	* gdb.rust/simple.rs (main): Use empty struct expression.
+	* gdb.rust/simple.exp: Add tests for empty struct expression.
+
+2016-07-21  Yao Qi  <yao.qi@linaro.org>
+
+	* lib/gdbserver-support.exp (skip_gdbserver_tests): Return 1
+	if gdb_skip_xml_test is true on some targets.
+
+2016-07-21  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.server/solib-list.exp: Unset last_loaded_file.
+
+2016-07-20  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.gdb/selftest.exp (do_steps_and_nexts): Add "next over TRY" and
+	"step into captured_main (args)".
+
+2016-07-20  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.btrace/tailcall-only.exp: Use is_lp64_target check.
+
+2016-07-20  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.python/py-unwind.exp: Test also ![is_lp64_target].
+
+2016-07-19  Pedro Alves  <palves@redhat.com>
+
+	* gdb.opt/inline-break.exp: Remove optimize=-O2.
+	* gdb.opt/inline-bt.exp: Likewise.
+	* gdb.opt/inline-cmds.exp: Remove optimize=-O2 and add
+	additional_flags=-Winline.
+	* gdb.opt/inline-locals.exp: Likewise.
+	* gdb.opt/inline-markers.c (ATTR): Define.
+	(inlined_fn): Use it.
+
+2016-07-19  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.gdb/selftest.exp: Remove checks on is_remote and isnative.
+	(test_with_self): Remove some code.  Remove argument executable.
+	(top-level): Use do_self_tests.
+
+2016-07-15  Zachary Welch  <zwelch@codesourcery.com>
+	    Don Breazeal <donb@codesourcery.com>
+
+	* gdb.base/maint.exp: Escape paths used in regular expressions.
+	* gdb.stabs/weird.exp: Likewise.
+
+2016-07-13  Tom Tromey  <tom@tromey.com>
+
+	PR python/15620, PR python/18620:
+	* gdb.python/py-breakpoint.exp (connect_event, check_last_event)
+	(test_bkpt_events): New procs.
+
+2016-07-13  Tom Tromey  <tom@tromey.com>
+
+	PR python/17698:
+	* gdb.python/py-breakpoint.exp (test_bkpt_basic): Add "pending"
+	test.
+	(test_watchpoints): Likewise.
+	(test_bkpt_pending): New proc.
+
+2016-07-13  Tom Tromey  <tom@tromey.com>
+
+	PR cli/18053:
+	* gdb.base/jit-so.exp (one_jit_test): Add jit-reader-load
+	completion test.
+
+2016-07-13  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.dwarf2/atomic-type.exp: Use function_range for low_pc and high_pc.
+	* gdb.dwarf2/atomic.c (f): Rename f_end_lbl to f_label.
+	* gdb.dwarf2/dw2-bad-mips-linkage-name.c (f): Rename f_end_lbl to
+	f_label.
+	(g): Rename g_end_lbl to g_label.
+	* gdb.dwarf2/dw2-bad-mips-linkage-name.exp: Use function_range for
+	low_pc and high_pc.
+	* gdb.dwarf2/dw2-lexical-block-bare.exp: Likewise.
+
+2016-07-12  Tom Tromey  <tom@tromey.com>
+
+	PR python/19293:
+	* gdb.python/py-unwind-maint.exp: Update tests.
+
+2016-07-12  Yao Qi  <yao.qi@linaro.org>
+
+	* lib/selftest-support.exp (selftest_setup): Match the output
+	when captured_main is inlined.
+
+2016-07-07  Walfred Tedeschi  <walfred.tedeschi@intel.com>
+
+	* gdb.fortran/derived-types.exp (result_line, result_line_2):
+	New variables.
+	(print this%a, print this%b, print this): New tests.
+	* gdb.fortran/derived-types.f90 (this): New object and
+	initialization.
+
+2016-07-06  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.ada/arraydim.exp: Remove extra directory level in build
+	directory.
+
+2016-07-06  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* lib/ada.exp: Remove extra directory level in build directory.
+	* gdb.ada/cond_lang.exp: Likewise.
+	* gdb.ada/exec_changed.exp: Likewise.
+	* gdb.ada/lang_switch.exp: Likewise.
+
+2016-07-06  Manish Goregaokar  <manish@mozilla.com>
+
+	* simple.rs: Add test for raw pointer subscripting
+	* simple.exp: Add test expectations
+
+2016-07-05  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.mi/mi-reverse.exp: Match =record-started output.
+
+2016-07-01  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/jit-reader.exp (info_registers_current_frame): New
+	procedure.
+	(jit_reader_test): Test the jit reader's unwinder.
+	* gdb.base/jithost.c (jit_function_00_code): New global.
+	(main): Use memcpy to fill in the mmapped code, instead of poking
+	bytes manually here.
+	* gdb.base/jitreader.c (enum register_mapping) <AMD64_RBP>: New
+	value.
+	(read_debug_info): Save the function's range.
+	(read_sp): New function.
+	(unwind_frame): Use it.  Also unwind RBP.
+	(get_frame_id): Use read_sp.
+	(gdb_init_reader): Use calloc instead of malloc.
+	* lib/gdb.exp (get_hexadecimal_valueof): Add optional 'test'
+	parameter.  Use gdb_test_multiple.
+
+2016-07-01  Pedro Alves  <palves@redhat.com>
+	    Antoine Tremblay  <antoine.tremblay@ericsson.com>
+
+	* gdb.threads/process-dies-while-detaching.c: New file.
+	* gdb.threads/process-dies-while-detaching.exp: New file.
+
+2016-07-01  Pedro Alves  <palves@redhat.com>
+
+	* gdb.multi/watchpoint-multi-exit.c: New file.
+	* gdb.multi/watchpoint-multi-exit.exp: New file.
+
+2016-06-30  Pedro Alves  <palves@redhat.com>
+
+	* lib/gdbserver-support.exp (close_gdbserver, gdb_exit): Don't
+	unset inferior_spawn_id.
+
+2016-06-30  Pedro Alves  <palves@redhat.com>
+
+	* lib/mi-support.exp (default_mi_gdb_start): Declare global
+	FORCE_SEPARATE_MI_TTY, not SEPARATE_MI_TTY.
+
+2016-06-29  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/return.c: Add copyright header.
+
+2016-06-29  Tom Tromey  <tom@tromey.com>
+
+	PR python/20129:
+	* gdb.python/py-framefilter.exp: Add tests for setting priority
+	and disabling of non-existent frame filter.
+
+2016-06-29  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/catch-syscall.c [__arm__]: Set unknown_syscall to
+	0x0f07ff.
+
+2016-06-28  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/catch-syscall.exp: Remove check on isnative and target
+	triplets.  Start gdb, execute catch syscall, and continue.  Check
+	gdb's output to determine catch syscall is supported.
+
+2016-06-27  Manish Goregaokar  <manish@mozilla.com>
+
+	* gdb.rust/simple.rs: Add test for returning unit in a function.
+	* gdb.rust/simple.exp: Add expectation for functions returning
+	unit.
+
+2016-06-27  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gdb.python/py-breakpoint-create-fail.c,
+	gdb.python/py-breakpoint-create-fail.exp,
+	gdb.python/py-breakpoint-create-fail.py: New testcase.
+
+2016-06-25  Manish Goregaokar  <manish@mozilla.com>
+
+	PR gdb/20239
+	* gdb.rust/simple.rs: Add more tests for printing NonZero enums.
+	* gdb.rust/simple.exp: Add test expectations for new NonZero
+	tests.
+
+2016-06-24  David Taylor  <dtaylor@emc.com>
+
+	* gdb.base/offsets.exp: New file.
+	* gdb.base/offsets.c: New file.
+
+2016-06-23  Tom Tromey  <tom@tromey.com>
+
+	PR gdb/16483:
+	* gdb.python/py-framefilter.exp: Add "info frame-filter" test
+	before any filters are loaded.
+
+2016-06-21  Walfred Tedeschi  <walfred.tedeschi@intel.com>
+
+	* gdb.fortran/derived-type.exp (print q): Add fields to the output.
+	* gdb.fortran/vla-type.exp (print twov): Fix vla tests with
+	structs.
+	* gdb.fortran/derived-type-function.exp: New file.
+	* gdb.fortran/derived-type-function.f90: New file.
+
+
+2016-06-21  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/new-ui.exp: New file.
+	* lib/mi-support.exp (switch_gdb_spawn_id): Move to ...
+	* lib/gdb.exp (switch_gdb_spawn_id): ... here.
+	(with_spawn_id): New procedure.
+
+2016-06-21  Pedro Alves  <palves@redhat.com>
+
+	* gdb.mi/mi-exec-run.exp: New file.
+
+2016-06-21  Pedro Alves  <palves@redhat.com>
+
+	* gdb.mi/mi-break.exp (test_breakpoint_commands): Always expect
+	breakpoint command's output on the main UI.
+	(test_break): New procedure, factored out from calls in the top
+	level.
+	(top level): Use foreach_with_prefix to test MI as main UI and as
+	separate UI.
+
+2016-06-21  Pedro Alves  <palves@redhat.com>
+
+	* gdb.mi/mi-watch.exp (test_watchpoint_creation_and_listing)
+	(test_awatch_creation_and_listing)
+	(test_rwatch_creation_and_listing, test_watchpoint_triggering):
+	Remove 'type' parameter.
+	(test_watchpoint_all): New parameter mi_mode.  Remove
+	with_test_prefix.
+	(top level): Use foreach_with_prefix, and add main/separate UI MI
+	testing axis.
+
+2016-06-21  Pedro Alves  <palves@redhat.com>
+
+	* README (Testsuite Parameters): Document FORCE_SEPARATE_MI_TTY.
+	* lib/gdb.exp (default_gdb_exit): Clear inferior_spawn_id.
+	* lib/mi-support.exp (mi_uncatched_gdb_exit): Unset
+	gdb_main_spawn_id, mi_spawn_id, unset inferior_spawn_id.
+	(gdb_main_spawn_id, mi_spawn_id): Declare and
+	comment.
+	(mi_create_inferior_pty): New procedure,
+	factored out from default_mi_gdb_start.
+	(switch_gdb_spawn_id, mi_gdb_start_separate_mi_tty): New
+	procedures.
+	(default_mi_gdb_start): Call mi_gdb_start_separate_mi_tty if the
+	separate-mi-tty option is specified, or SEPARATE_MI_TTY is set.
+	Use mi_create_inferior_pty.
+	(mi_gdb_start): Use eval to pass down args list.
+
+2016-06-21  Pedro Alves  <palves@redhat.com>
+
+	* gdb.opt/inline-cmds.c: Add "set mi break here" marker.
+	* gdb.opt/inline-cmds.exp: Add MI tests.
+
+2016-06-21  Pedro Alves  <palves@redhat.com>
+
+	* gdb.gdb/selftest.exp (do_steps_and_nexts): Add new regexp.
+
+2016-06-21  Pedro Alves  <palves@redhat.com>
+
+	* gdb.ada/mi_catch_ex.exp (continue_to_exception): New procedure.
+	(top level): Use it instead of mi_execute_to.
+
+2016-06-21  Pedro Alves  <palves@redhat.com>
+
+	* gdb.python/py-mi-events-gdb.py (stop_handler_str)
+	(cont_handler_str): New.
+	(signal_stop_handler): Set stop_handler_str instead of printing to
+	stdout.
+	(continue_handler): Set cont_handler_str instead of printing to
+	stdout.
+	* gdb.python/py-mi-events.exp: Ues mi_execute_to instead of
+	mi_send_resuming_command.  Print stop_handler_str and
+	cont_handler_str instead of expecting the python events print
+	directly.
+
+2016-06-17  Sanjoy Das  <sanjoy@playingwithpointers.com>
+
+	* gdb.base/jit-reader.exp: New file.
+	* gdb.base/jithost.c: New file.
+	* gdb.base/jithost.h: New file.
+	* gdb.base/jitreader.c : New file.
+	* gdb.base/jit-protocol.h: New file.
+
+2016-06-17  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/step-over-syscall.exp (break_cond_on_syscall): New
+	parameters follow_fork and detach_on_fork.  Set follow-fork-mode
+	and detach-on-fork.  Adjust tests.
+	(top level): Invoke break_cond_on_syscall with combinations of
+	syscall, follow-fork-mode and detach-on-fork.
+
+2016-06-17  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/step-over-exit.c: New.
+	* gdb.base/step-over-exit.exp: New.
+
+2016-06-17  Yan-Ting Lin  <currygt52@gmail.com>
+
+	* gdb.base/float.exp: Add target check for nds32*-*-*.
+	* gdb.xml/tdesc-regs.exp: Set core-regs for nds32*-*-*.
+
+2016-06-13  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.base/call-ar-st.exp: Report unsupported rather than xfail
+	for unsupported target features.
+	* gdb.base/call-rt-st.exp: Likewise.
+	* gdb.base/call-sc.exp: Likewise.
+	* gdb.base/call-signal-resume.exp: Likewise.
+	* gdb.base/call-strs.exp: Likewise.
+	* gdb.base/callexit.exp: Likewise.
+	* gdb.base/callfuncs.exp: Likewise.
+	* gdb.base/nodebug.exp: Likewise.
+	* gdb.base/printcmds.exp: Likewise.
+	* gdb.base/ptype.exp: Likewise.
+	* gdb.base/structs.exp: Likewise.
+	* gdb.base/unwindonsignal.exp: Likewise.
+	* gdb.cp/gdb2495.exp: Likewise.
+	* gdb.cp/templates.exp: Likewise.
+	* gdb.cp/virtfunc.exp: Likewise.
+	* gdb.threads/hand-call-in-threads.exp: Likewise.
+	* gdb.threads/interrupted-hand-call.exp: Likewise.
+	* gdb.threads/thread-unwindonsignal.exp: Likewise.
+
+2016-06-10  Tom Tromey  <tom@tromey.com>
+
+	PR rust/20110:
+	* gdb.rust/expr.exp: Add test for integer constant larger than
+	i32.
+
+2016-06-10  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.fortran/nested-funcs.exp: New.
+	* gdb.fortran/nested-funcs.f90: New.
+
+2016-06-09  Toshihito Kikuchi  <k.toshihito@yahoo.de>
+
+	* gdb.base/examine-backward.c: New file.
+	* gdb.base/examine-backward.exp: New file.
+
+2016-06-06  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.mi/mi-record-changed.exp: Adjust =record-started output
+	matching.
+
+2016-06-02  Tom Tromey  <tom@tromey.com>
+
+	PR python/18984:
+	* gdb.python/py-shared.exp: Add solib_name test.
+
+2016-06-02  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.mi/mi-memory-changed.exp: Fix filename passed to untested.
+
+2016-05-31  Martin Galvan  <martin.galvan@tallertechnologies.com>
+
+	PR c++/19893
+	* gdb.dwarf2/implref.exp: Rename to...
+	* gdb.dwarf2/implref-const.exp: ...this.  Also add more test statements.
+	* gdb.dwarf2/implref-array.c: New file.
+	* gdb.dwarf2/implref-array.exp: Likewise.
+	* gdb.dwarf2/implref-global.c: Likewise.
+	* gdb.dwarf2/implref-global.exp: Likewise.
+	* gdb.dwarf2/implref-struct.c: Likewise.
+	* gdb.dwarf2/implref-struct.exp: Likewise.
+
+2016-05-30  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+
+	* gdb.trace/trace-condition.exp: Add 64bit tests.
+
+2016-05-30  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+
+	* gdb.trace/trace-condition.c (marker): Adapt signature to 8 to 64
+	bits types.
+	(main): Adapt to 8 to 64 bits types.
+	* gdb.trace/trace-condition.exp: Add new tests.
+
+2016-05-30  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+
+	* gdb.trace/trace-condition.exp: Add emit_less_unsigned test.
+
+2016-05-30  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+
+	* gdb.trace/ftrace.exp (test_ftrace_condition): Remove.
+	Move condition tests...
+	* gdb.trace/trace-condition.exp: Here.
+
+2016-05-30  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+
+	* gdb.trace/trace-condition.exp: Add counter-case tests.
+
+2016-05-30  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	PR c++/15231
+	* gdb.ada/out_of_line_in_inlined.exp: Remove xfails.
+	* gdb.dwarf2/dw2-lexical-block-bare.exp: New file.
+
+2016-05-27  Pedro Alves  <palves@redhat.com>
+
+	* gdb.threads/attach-many-short-lived-threads.exp (bad_dejagnu):
+	New procedure.
+	(top level): Call it, and bail out of DejaGnu is known to be bad.
+
+2016-05-27  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.base/whatis.c: Extend the test case.
+	* gdb.base/whatis.exp: Add additional tests.
+
+2016-05-25  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+* gdb.fortran/type.f90: Add pointer variable.
+* gdb.fortran/whatis_type.exp: Add whatis/ptype of pointers.
+
+2016-05-25  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.fortran/vla-type.exp: Fix testcase name.
+
+2016-05-25  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.fortran/vla-type.exp: Access elements in nested structs.
+
+2016-05-25  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.fortran/type.f90: Add nested structures.
+	* gdb.fortran/whatis-type.exp: Whatis/ptype nested structures.
+	* gdb.fortran/derived-type.exp: Adapt expected output.
+	* gdb.fortran/vla-type.exp: Adapt expected output.
+
+2016-05-25  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.fortran/whatis_type.exp: Adapt expected output.
+
+2016-05-25  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.fortran/print_type.exp: Fix expected output.
+	* gdb.fortran/whatis_type.exp: Fix expected output.
+
+2016-05-25  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.fortran/whatis_type.exp: Use multi_line.
+
+2016-05-24  Tom Tromey  <tom@tromey.com>
+
+	PR python/17386:
+	* gdb.python/py-value.exp (test_value_numeric_ops): Add tests that
+	use value as an index.
+
+2016-05-23  Tom Tromey  <tom@tromey.com>
+
+	PR python/17981:
+	* gdb.python/py-breakpoint.exp (test_bkpt_basic): Add test for
+	no-breakpoint case.
+
+2016-05-24  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/19828
+	* gdb.threads/clone-attach-detach.c: New file.
+	* gdb.threads/clone-attach-detach.exp: New file.
+
+2016-05-24  Francis Ricci  <francisjricci@gmail.com>  (tiny patch)
+
+	* gdb.base/annota-input-while-running.exp: Fix syntax error.
+
+2016-05-23  Tom Tromey  <tom@tromey.com>
+
+	PR python/19438, PR python/18393:
+	* gdb.python/py-progspace.exp: Add "dir" test.
+	* gdb.python/py-objfile.exp: Add "dir" test.
+
+2016-05-23  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.arch/thumb-prologue.exp: Use standard_testfile.
+	* gdb.arch/thumb2-it.exp: Likewise.
+
+2016-05-18  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.mi/mi-threads-interrupt.c: New file.
+	* gdb.mi/mi-threads-interrupt.exp: New file.
+
+2016-05-17  Simon Marchi  <simon.marchi@ericsson.com>
+
+	PR gdb/18077
+	* gdb.mi/mi-async-run.exp: New file.
+	* gdb.mi/mi-async-run.c: New file.
+
+2016-05-17  Tom Tromey  <tom@tromey.com>
+	    Manish Goregaokar <manishsmail@gmail.com>
+
+	* lib/rust-support.exp: New file.
+	* lib/gdb.exp (skip_rust_tests): New proc.
+	(build_executable_from_specs): Handle rust.
+	* lib/future.exp (gdb_find_rustc): New proc.
+	(gdb_default_target_compile): Handle rust.
+	* gdb.rust/expr.exp: New file.
+	* gdb.rust/generics.exp: New file.
+	* gdb.rust/generics.rs: New file.
+	* gdb.rust/methods.exp: New file.
+	* gdb.rust/methods.rs: New file.
+	* gdb.rust/modules.exp: New file.
+	* gdb.rust/modules.rs: New file.
+	* gdb.rust/simple.exp: New file.
+	* gdb.rust/simple.rs: New file.
+
+2016-05-17  Tom Tromey  <tom@tromey.com>
+
+	* gdb.base/default.exp (set language): Add rust.
+
+2016-05-17  Tom Tromey  <tom@tromey.com>
+
+	* gdb.gdb/unittest.exp: New file.
+
+2016-05-16  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/batch-preserve-term-settings.exp: Remove variable
+	shell_prompt.  Update shell_prompt_re.
+
+2016-05-12  Doug Evans  <dje@google.com>
+
+	PR symtab/19999
+	* lib/dwarf.exp (build_executable_from_fission_assembler): Pass
+	$options when building executable.
+	* gdb.dwarf2/fission-loclists-pie.S: New file.
+	* gdb.dwarf2/fission-loclists-pie.exp: New file.
+
+2016-05-04  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.base/solib-display.exp: Check for [use_gdb_stub] instead
+	of [is_remote target],
+
+2016-05-04  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* lib/gdb.exp (use_gdb_stub): New procedure.
+
+2016-05-03  Yunlian Jiang <yunlian@google.com>
+	    Doug Evans  <dje@google.com>
+
+	PR symtab/19914
+	* gdb.dwarf2/dwp-sepdebug.c: New file.
+	* gdb.dwarf2/dwp-sepdebug.exp: New file.
+
+2016-05-02  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.base/detach.exp: Remove is_remote check.
+
+2016-05-02  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.base/annota-input-while-running.exp: Don't check for
+	[is_remote target].  Enable annotations after running to main.
+	Remove unused "set test..." line.
+
+2016-04-28  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.trace/trace-enable-disable.exp: New file.
+	* gdb.trace/trace-enable-disable.c: New file.
+
+2016-04-28  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.arch/ftrace-insn-reloc.exp: Save gdb_load_shlib result,
+	use it in info sharedlibrary test.
+	* gdb.trace/ftrace-lock.exp: Likewise.
+	* gdb.trace/ftrace.exp: Likewise.
+	* gdb.trace/range-stepping.exp: Likewise.
+	* gdb.trace/trace-break.exp: Likewise.
+	* gdb.trace/trace-condition.exp: Likewise.
+	* gdb.trace/trace-mt.exp: Likewise.
+
+2016-04-27  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* lib/gdb.exp (gdb_load_shlibs): Rename to...
+	(gdb_load_shlib): ... this.
+	* gdb.arch/ftrace-insn-reloc.exp: Adjust gdb_load_shlibs ->
+	gdb_load_shlib.
+	* gdb.base/catch-load.exp (one_catch_load_test): Likewise.
+	* gdb.base/ctxobj.exp: Likewise.
+	* gdb.base/dprintf-pending.exp: Likewise.
+	* gdb.base/dso2dso.exp: Likewise.
+	* gdb.base/fixsection.exp: Likewise.
+	* gdb.base/gcore-relro.exp: Likewise.
+	* gdb.base/gdb1555.exp: Likewise.
+	* gdb.base/global-var-nested-by-dso.exp: Likewise.
+	* gdb.base/gnu-ifunc.exp: Likewise.
+	* gdb.base/hbreak-in-shr-unsupported.exp: Likewise.
+	* gdb.base/jit-so.exp (one_jit_test): Likewise.
+	* gdb.base/pending.exp: Likewise.
+	* gdb.base/print-file-var.exp: Likewise.
+	* gdb.base/print-symbol-loading.exp: Likewise.
+	* gdb.base/shlib-call.exp: Likewise.
+	* gdb.base/shreloc.exp: Likewise.
+	* gdb.base/so-impl-ld.exp: Likewise.
+	* gdb.base/solib-disc.exp: Likewise.
+	* gdb.base/solib-nodir.exp: Likewise.
+	* gdb.base/solib-overlap.exp: Likewise.
+	* gdb.base/solib-symbol.exp: Likewise.
+	* gdb.base/solib-weak.exp (do_test): Likewise.
+	* gdb.base/sym-file.exp: Likewise.
+	* gdb.base/symtab-search-order.exp: Likewise.
+	* gdb.base/type-opaque.exp: Likewise.
+	* gdb.base/unload.exp: Likewise.
+	* gdb.base/watchpoint-solib.exp: Likewise.
+	* gdb.compile/compile.exp: Likewise.
+	* gdb.cp/gdb2384.exp: Likewise.
+	* gdb.cp/infcall-dlopen.exp: Likewise.
+	* gdb.cp/re-set-overloaded.exp: Likewise.
+	* gdb.fortran/library-module.exp: Likewise.
+	* gdb.opt/solib-intra-step.exp: Likewise.
+	* gdb.python/py-finish-breakpoint.exp: Likewise.
+	* gdb.python/py-shared.exp: Likewise.
+	* gdb.reverse/solib-precsave.exp: Likewise.
+	* gdb.reverse/solib-reverse.exp: Likewise.
+	* gdb.server/solib-list.exp: Likewise.
+	* gdb.threads/dlopen-libpthread.exp: Likewise.
+	* gdb.threads/tls-shared.exp: Likewise.
+	* gdb.threads/tls-so_extern.exp: Likewise.
+	* gdb.trace/change-loc.exp: Likewise.
+	* gdb.trace/ftrace-lock.exp: Likewise.
+	* gdb.trace/ftrace.exp: Likewise.
+	* gdb.trace/mi-tracepoint-changed.exp (test_reconnect): Likewise.
+	* gdb.trace/pending.exp: Likewise.
+	* gdb.trace/range-stepping.exp: Likewise.
+	* gdb.trace/strace.exp (strace_remove_socket): Likewise.
+	(strace_info_marker): Likewise.
+	(strace_probe_marker): Likewise.
+	(strace_trace_on_same_addr): Likewise.
+	(strace_trace_on_diff_addr): Likewise.
+	* gdb.trace/trace-break.exp: Likewise.
+	* gdb.trace/trace-condition.exp: Likewise.
+	* gdb.trace/trace-mt.exp: Likewise.
+
+2016-04-27  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* lib/gdb.exp (gdb_load_shlibs):  Accept a single argument.  Return
+	result of gdb_remote_download.
+	* gdb.base/ctxobj.exp: Split gdb_load_shlibs call.
+	* gdb.base/dso2dso.exp: Likewise.
+	* gdb.base/global-var-nested-by-dso.exp: Likewise.
+	* gdb.base/print-file-var.exp: Likewise.
+	* gdb.base/shlib-call.exp: Likewise.
+	* gdb.base/shreloc.exp: Likewise.
+	* gdb.base/solib-overlap.exp: Likewise.
+	* gdb.base/solib-weak.exp (do_test): Likewise.
+	* gdb.base/unload.exp: Likewise.
+
+2016-04-27  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/branch-to-self.exp: Skip it if gdb,nosignals
+	exists.
+
+2016-04-26  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* vla-type.exp: Print structure from toplevel.
+
+2016-04-26  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.fortran/vla-type.f90: Add test for static and dynamic arrays
+	of dynamic types.
+	* gdb.fortran/vla-type.exp: Add test for static and dynamic arrays
+	of dynamic types.
+
+2016-04-26  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.fortran/vla-type.f90: New file.
+	* gdb.fortran/vla-type.exp: New file.
+
+2016-04-25  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/branch-to-self.c: New file.
+	* gdb.base/branch-to-self.exp: New file.
+
+2016-04-22  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.trace/unavailable.exp (gdb_collect_globals_test_1): Match
+	more after $hex.
+
+2016-04-22  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/annota1.exp: Set breakpoint on line $main_line.
+	* gdb.base/annota3.exp: Likewise.
+
+2016-04-22  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.reverse/step-precsave.exp: Do one step and test program
+	stops in "callee" and do multiple steps until program goes out
+	of "callee".
+	* gdb.reverse/step-reverse.exp: Likewise.
+
+2016-04-22  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.trace/signal.exp: Also pass if
+	$tracepoint_hits($i) > $iterations.
+
+2016-04-22  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.trace/signal.c: New file.
+	* gdb.trace/signal.exp: New file.
+
+2016-04-19  Doug Evans  <xdje42@gmail.com>
+
+	* gdb.base/bad-file.exp: New file.
+
+2016-04-18  Martin Galvan  <martin.galvan@tallertechnologies.com>
+
+	* gdb.dwarf2/implref.exp: New file.
+
+2016-04-18  Bernhard Heckel <bernhard.heckel@intel.com>
+
+	* gdb.fortran/common-block.exp: Use type naming defined in lib fortran.
+	* gdb.fortran/derived-type.exp: Use type naming defined in lib fortran.
+	* gdb.fortran/multi-dim.exp: Use type naming defined in lib fortran.
+	* gdb.fortran/vla-datatypes.exp: Use type naming defined in lib fortran.
+	* gdb.fortran/vla-ptype-sub.exp: Use type naming defined in lib fortran.
+	* gdb.fortran/vla-ptype.exp: Use type naming defined in lib fortran.
+	* gdb.fortran/whatis_type.exp: Use type naming defined in lib fortran.
+	* lib/fortran.exp (fortran_int4): New procedure.
+	(fortran_real4, fortran_real8, fortran_complex4): Likewise.
+	(fortran_logical4): Likewise.
+
+2016-04-18  Benrhard Heckel <bernhard.heckel@intel.com>
+
+	* lib/gdb.exp (gdb_compile_shlib): Add flag for ICC compiler.
+
+2016-04-18  Bernhard Heckel <bernhard.heckel@intel.com>
+
+	* lib/compiler.c: Add Intel specific preprocessor macros.
+	* lib/compiler.cc: Likewise.
+
+2016-04-13  Luis Machado  <lgustavo@codesourcery.com>
+
+	* gdb.server/connect-with-no-symbol-file.c: New file.
+	* gdb.server/connect-with-no-symbol-file.exp: New file.
+
+2016-04-13  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* lib/gdb.exp (gdb_remote_download): Fix and extend comment.
+
+2016-04-13  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* boards/gdbserver-base.exp (${board}_download): Copy source file to
+	standard output directory.
+
+2016-04-13  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+
+	* gdb.trace/trace-condition.exp (foreach): Fix emit_sub testcase.
+
+2016-04-13  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.btrace/instruction_history.c (loop): Add declaration.
+
+2016-04-12  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+
+	* gdb.trace/ftrace.exp (proc): Change test prefix from "ond" to "cond".
+
+2016-04-09  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdb.python/py-mi-events-gdb.py (signal_stop_handler): Add
+	parentheses to print.
+	(continue_handler): Likewise.
+
+2016-04-08  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.server/solib-list.exp: Remove is_remote check.
+	Pass shlib= to gdb_compile.  Don't link shared library with
+	-soname.  Call gdb_remote_download instead of gdb_load_shlibs.
+	Run binary filename through "readlink -f" on the target.
+
+2016-04-08  Pedro Alves  <palves@redhat.com>
+
+	* gdb.server/solib-list.exp: Don't use gdb_load.  Instead pass the
+	interpreter filename as argument to gdbserver_spawn.
+	* lib/gdbserver-support.exp (gdbserver_download_current_prog):
+	Return empty if $last_loaded_file does not exist.
+
+2016-04-08  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Fix compatibility with gcc-4.8.5-4.el7.x86_64.
+	* gdb.base/jit-main.c: Use exit after usage.
+
+2016-04-07  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.base/gdbhistsize-history.exp: Save and unset GDBHISTFILE and
+	GDBHISTSIZE prior to the tests.
+	* gdb.base/gdbinit-history.exp: Likewise.
+
+2016-04-07  Pedro Alves  <palves@redhat.com>
+
+	* gdb.compile/compile.exp: Use gdb_compile with "shlib=" option
+	instead of build_executable.  Use gdb_load_shlibs.
+
+2016-04-07  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.reverse/finish-reverse-bkpt.exp: Use temporary breakpoint.
+	Execute "si" command.
+
+2016-04-07  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.reverse/next-reverse-bkpt-over-sr.exp: Match the breakpoint
+	number instead of the comments on some line.
+
+2016-04-06  Don Breazeal  <donb@codesourcery.com>
+
+	* gdb.dwarf2/dw2-opt-structptr.c: New test program.
+	* gdb.dwarf2/dw2-opt-structptr.exp: New test script.
+
+2016-04-06  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.threads/dlopen-libpthread.exp: Set binfile_lib using
+	standard_output_file.  Remove unused binfile variable.
+
+2016-04-05  Catalin Udma  <catalin.udma@freescale.com>
+
+	* gdb.python/py-mi-objfile-gdb.py: Use "list main" command.
+	* gdb.python/py-mi-objfile.exp: Match "list main" output
+	in console format.
+
+2016-04-05  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdb.arch/ftrace-insn-reloc.exp: Check for IPA basename instead of
+	absolute.
+
+2016-04-05  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.trace/ftrace-lock.exp: Check for IPA basename instead of
+	absolute.
+	* gdb.trace/ftrace.exp: Likewise.
+	* lib/gdb.exp (gdb_compile): Set rpath $ORIGIN for non-remote
+	targets as well.
+	(gdb_compile_shlib): Set SONAME for non-remote targets as well.
+	(gdb_load_shlibs): Copy libraries to test directory when testing
+	natively.  Only set solib-search-path if testing remotely.
+	* lib/mi-support.exp (mi_load_shlibs): Likewise.
+
+2016-04-05  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.base/jit-so.exp: Use gdb_remote_download instead of
+	gdb_download.  Use it even if the target is not remote.
+	* gdb.base/jit.exp (compile_jit_test): Likewise.
+	* lib/gdb.exp (gdb_remote_download): Copy files to the standard
+	output directory if the destination board is local, otherwise use
+	the standard remote_download from DejaGnu.
+	(gdb_download): Remove.
+	(gdb_load_shlibs): Use gdb_remote_download instead of
+	gdb_download.
+	* lib/gdbserver-support.exp (gdbserver_download_current_prog):
+	Use gdb_remote_download instead of gdb_download.  Use it even if
+	the target is not remote.
+	* lib/mi-support.exp (mi_load_shlibs): Use gdb_remote_download
+	instead of gdb_download.
+
+2016-04-04  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdb.mi/mi-breakpoint-changed.exp: Add some with_test_prefix.
+	(test_insert_delete_modify): Call mi_load_shlibs before trying to
+	run.
+
+2016-04-01  Artemiy Volkov  <artemiyv@acm.org>
+
+	PR gdb/19820
+	* gdb.base/printcmds.exp: Add artificial arrays tests.
+
+2016-03-31  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/19858
+	* gdb.base/jit-main.c: Include unistd.h.
+	(ATTACH): Define to 0 if not already defined.
+	(wait_for_gdb, mypid): New globals.
+	(WAIT_FOR_GDB): New macro.
+	(MAIN): Set an alarm.  Store the process's pid.  Wait for GDB at
+	some breakpoint locations.
+	* gdb.base/jit.exp (clean_reattach, continue_to_test_location):
+	New procedures.
+	(one_jit_test): Add REATTACH parameter, and handle it.  Use
+	continue_to_test_location.
+	(top level): Test attach, and adjusts calls to one_jit_test.
+
+2016-03-31  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/19858
+	* gdb.base/jit.exp (compile_jit_test): Add intro comment.  Add
+	BINSUFFIX parameter, and handle it.
+	(top level): Adjust calls compile_jit_test.
+
+2016-03-31  Catalin Udma  <catalin.udma@freescale.com>
+
+	PR python/19743
+	* gdb.python/py-mi-events-gdb.py: New file.
+	* gdb.python/py-mi-events.c: New file.
+	* gdb.python/py-mi-events.exp: New file.
+
+2016-03-30  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.reverse/until-precsave.exp: Match function name only.
+	* gdb.reverse/until-reverse.c (main): Don't call fprintf nor printf.
+	Move malloc to a condition block.
+	* gdb.reverse/until-reverse.exp: Match function name only.
+
+2016-03-29  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/ftrace.exp: Set arg0exp for s390.
+	* gdb.trace/mi-trace-frame-collected.exp: Expect 4 registers on s390.
+	* gdb.trace/mi-trace-unavailable.exp: Set pcnum for s390, add gpr0num
+	variable for GPR 0 instead of assuming it is register 0.
+	* gdb.trace/trace-common.h: Add s390 fast tracepoint placeholder.
+	* lib/trace-support.exp: Add s390 registers.
+
+2016-03-29  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.arch/arm-neon.exp: Pass debug to prepare_for_testing.
+
+2016-03-24  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.reverse/break-reverse.exp: Add quotation mark in the
+	test message.
+
+2016-03-17  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* gdb.arch/s390-multiarch.exp: Use standard_testfile instead of
+	maintaining separate logic for constructing the output path.
+
+2016-03-16  Don Breazeal  <donb@codesourcery.com>
+
+	* gdb.threads/forking-threads-plus-breakpoint.c (thread_forks):
+	Retry fork and waitpid on interrupted system call errors.
+	* gdb.threads/forking-threads-plus-breakpoint.exp (do_test):
+	Use with_timeout_factor to increase timeout by factor of 10.
+
+2016-03-15  Don Breazeal  <donb@codesourcery.com>
+
+	* gdb.cp/scope-err.cc: New test program.
+	* gdb.cp/scope-err.exp: New test script.
+	* gdb.linespec/ls-errs.c (myfunction): Expanded to have multiple
+	lines and "set breakpoint here" comment.
+	* gdb.linespec/ls-errs.exp: Added C++ testing and new test case.
+	Fixed some whitespace and format issues.
+	* gdb.mi/mi-linespec-err-cp.cc: New test program.
+	* gdb.mi/mi-linespec-err-cp.exp: New test script.
+
+2016-03-15  Doug Evans  <dje@google.com>
+
+	* gdb.xml/extra-regs.xml: Add enum, mixed_flags values.
+	* gdb.xml/tdesc-regs.exp (load_description): New arg xml_file.
+	All callers updated.  Add tests for enums, mixed flags register.
+
+2016-03-15  Doug Evans  <dje@google.com>
+
+	* gdb.base/skip.c (main): Call test_skip_file_and_function.
+	* gdb.base/skip.exp: Remove hand calling test_skip_file_and_function.
+
+2016-03-14  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.base/default.exp: Add $_as_string to the list of expected
+	convenience functions.
+
+2016-03-11  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.base/maint.exp: New tests for 'maint info line-table'.
+
+2016-03-10  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdb.python/py-as-string.exp: New file.
+	* gdb.python/py-as-string.c: New file.
+
+2016-03-09  Pedro Alves  <palves@redhat.com>
+
+	* gdb.threads/attach-into-signal.exp: Adjust to "Program received
+	signal" -> "Thread NN received signal" output change.
+	* gdb.threads/ia64-sigill.exp: Likewise.
+	* gdb.threads/linux-dp.exp: Likewise.
+	* gdb.threads/manythreads.exp: Likewise.
+	* gdb.threads/pending-step.exp: Likewise.
+	* gdb.threads/print-threads.exp: Likewise.
+	* gdb.threads/sigstep-threads.exp: Likewise.
+	* gdb.threads/staticthreads.exp: Likewise.
+	* gdb.threads/tls.exp: Likewise.
+
+2016-03-09  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/command-line-input.exp: New file.
+
+2016-03-09  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/ftrace.exp: Set arg0exp for ppc.
+	* gdb.trace/mi-trace-unavailable.exp: Set pcnum for ppc.
+	* gdb.trace/pending.exp: Accept leading dot before function name.
+	* gdb.trace/trace-common.h: Add fast tracepoint dummy insn for ppc.
+	* lib/trace-support.exp: Set registers for ppc.
+
+2016-03-09  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/entry-values.exp: Link ${binfile}1.o to ${binfile}1 and
+	use it for disassembly; accept .main in addition to main in backtrace.
+
+2016-03-09  Wei-cheng Wang  <cole945@gmail.com>
+	    Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/actions.c (gdb_recursion_test_fp): New typedef.
+	(gdb_recursion_test_ptr): New global variable.
+	(gdb_recursion_test): Call gdb_recursion_test_ptr instead of
+	gdb_recursion_test.
+	(gdb_c_test): Ditto.
+
+2016-03-09  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/change-loc.exp: Don't depend on tracepoint location
+	ordering.
+
+2016-03-09  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/unavailable-dwarf-piece.c (foo): Add foo_start_lbl label.
+	(bar): Add bar_start_lbl label.
+	* gdb.trace/unavailable-dwarf-piece.exp: Use foo/bar_start_lbl instead
+	of foo/bar for emitting DWARF and tracing.
+
+2016-03-06  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* analyze-racy-logs.py: Set executable bit.
+
+2016-03-05  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* Makefile.in (DEFAULT_RACY_ITER): New variable.
+	(CHECK_TARGET_TMP): Likewise.
+	(check-single-racy): New rule.
+	(check-parallel-racy): Likewise.
+	(TEST_TARGETS): Adjust rule to account for RACY_ITER.
+	(do-check-parallel-racy): New rule.
+	(check-racy/%.exp): Likewise.
+	* README (Racy testcases): New section.
+	* analyze-racy-logs.py: New file.
+
+2016-03-03  Doug Evans  <dje@google.com>
+
+	* gdb.base/skip.exp: Use with_test_prefix.
+
+2016-03-03  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/step-over-syscall.exp (step_over_syscall): Kfail.
+	Invoke step_over_syscall "clone" and break_cond_on_syscall
+	"clone".
+	* gdb.base/step-over-clone.c: New file.
+
+2016-03-03  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/step-over-syscall.exp (disp_step_cross_syscall): Fix
+	code format.
+
+2016-03-03  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/disp-step-fork.c: Rename to ...
+	* gdb.base/step-over-fork.c: ... it.  New file.
+	* gdb.base/disp-step-vfork.c: Rename to ...
+	* gdb.base/step-over-vfork.c: ... it.  New file.
+	* gdb.base/disp-step-syscall.exp: Rename to ...
+	* gdb.base/step-over-syscall.exp: ... it.  New file.
+	(disp_step_cross_syscall): Rename to ...
+	(step_over_syscall): ... it.
+
+2016-03-03  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/disp-step-syscall.exp (break_cond_on_syscall): New.
+	If target supports condition evaluation on target, invoke
+	break_cond_on_syscall for fork and vfork.
+
+2016-03-03  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/disp-step-syscall.exp: Don't invoke
+	support_displaced_stepping.
+	(disp_step_cross_syscall): Test with displaced stepping off and
+	on if supported.
+
+2016-03-03  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/disp-step-syscall.exp (check_pc_after_cross_syscall): New
+	proc.
+	(setup): New proc.
+	(disp_step_cross_syscall): Move code to check_pc_after_cross_syscall
+	and setup.
+
+2016-03-02  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.fortran/vla-history.exp: Remove breakpoint.
+
+2016-03-02  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.fortran/vla-history.exp: Lookup array elements and printing
+	exceeds timeout.
+
+2016-03-02  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.cp/vla-cxx.cc: Insert dummy assignment as anchor for an
+	breakpoint.
+
+2016-03-02  Bernhard Heckel  <bernhard.heckel@intel.com>
+
+	* gdb.mi/vla.f90: Nullify pointer after declaration.
+
+2016-03-01  Pedro Alves  <palves@redhat.com>
+
+	* gdb.trace/ftrace-lock.c: Include <unistd.h>.
+
+2016-03-01  Pedro Alves  <palves@redhat.com>
+
+	* gdb.threads/watchpoint-fork-child.c: Include "watchpoint-fork.h"
+	before anything else.
+	* gdb.threads/watchpoint-fork-mt.c: Likewise.  Don't define
+	_GNU_SOURCE here.
+	* gdb.threads/watchpoint-fork-st.c: Include "watchpoint-fork.h"
+	before anything else.
+	* gdb.threads/watchpoint-fork.h: Define _GNU_SOURCE.
+
+2016-03-01  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/catch-fork-kill.c: Include <sys/wait.h>.
+
+2016-03-01  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.arch/arm-disp-step.exp: Use standard_testfile and
+	prepare_for_testing.
+
+2016-03-01  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.arch/arm-neon.exp: Pass quiet to prepare_for_testing.
+
+2016-03-01  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* gdb.arch/s390-tdbregs.exp: Use prepare_for_testing instead of
+	manually constructing the output path.
+
+2016-03-01  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* gdb.arch/s390-stackless.S: New.
+	* gdb.arch/s390-stackless.exp: New.
+
+2016-02-28  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* gdb.dlang/circular.c: New file.
+	* gdb.dlang/circular.exp: New file.
+
+2016-02-26  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.reverse/insn-reverse.c [__arm__] (ext_reg_load): New.
+	[__arm__] (ext_reg_mov, ext_reg_push_pop): New.
+	(testcases): Update.
+
+2016-02-26  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.reverse/aarch64.c: Rename to ...
+	* gdb.reverse/insn-reverse.c: ... it.
+	* gdb.reverse/aarch64.exp: Rename to ...
+	* gdb.reverse/insn-reverse.exp: ... it.
+
+2016-02-26  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.reverse/aarch64.c: [__aarch64__] Include arm_neon.h.
+	(testcase_ftype): New.
+	(testcases): New array.
+	(n_testcases): New.
+	(main): Call each element in testcases.
+	* gdb.reverse/aarch64.exp: Remove is_aarch64_target check.
+	(read_testcase): New.
+	Do the tests in a loop.
+
+2016-02-25  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/branches.c: Remove.
+
+2016-02-25  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	PR gdb/13808
+	* gdb.trace/ftrace.exp (test_fast_tracepoints): Remove kfail.
+
+2016-02-25  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/ftrace.exp: Remove unnecessary target check.
+
+2016-02-25  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/entry-values.exp: Surround $call_insn with '\y',
+	change x86_64 call_insn to 'callq'.
+
+2016-02-24  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+
+	* gdb.trace/tfile-avx.c: Move to...
+	* gdb.trace/tracefile-pseudo-reg.c: Here.
+	* gdb.trace/tfile-avx.exp: Move to...
+	* gdb.trace/tracefile-pseudo-reg.exp: Here.
+
+2016-02-24  Gary Benson <gbenson@redhat.com>
+
+	* gdb.base/attach-pie-noexec.exp: Do not expect an error
+	message on attach.
+
+2016-02-23  Doug Evans  <dje@google.com>
+
+	* gdb.base/skip.c (test_skip): New function.
+	(end_test_skip_file_and_function): New function.
+	(test_skip_file_and_function): New function.
+	* gdb.base/skip1.c (test_skip): New function.
+	(skip1_test_skip_file_and_function): New function.
+	* gdb.base/skip.exp: Add tests for new skip options.
+	* gdb.base/skip-solib.exp: Update expected output.
+	* gdb.perf/skip-command.cc: New file.
+	* gdb.perf/skip-command.exp: New file.
+	* gdb.perf/skip-command.py: New file.
+
+2016-02-22  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/unavailable.exp (gdb_unavailable_registers_test_1): Fix
+	info registers pattern.
+
+2016-02-18  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* lib/future.exp: Add D support.
+	(gdb_find_gdc): New proc.
+	(gdb_default_target_compile): Add D support.
+
+2016-02-18  Wei-cheng Wang  <cole945@gmail.com>
+
+	* gdb.trace/tspeed.c (myclock): Return wallclock instead of
+	user+system time.
+	(trace_speed_test): Determine the iteration count for a time
+	between 15..30 seconds.
+
+2016-02-18  Walfred Tedeschi  <walfred.tedeschi@intel.com>
+
+	* gdb.arch/i386-mpx-sigsegv.c: New file.
+	* gdb.arch/i386-mpx-sigsegv.exp: New file.
+	* gdb.arch/i386-mpx-simple_segv.c: New file.
+	* gdb.arch/i386-mpx-simple_segv.exp: New file.
+
+2016-02-18  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/disp-step-syscall.exp (disp_step_cross_syscall):
+	Don't call setup_kfail.
+
+2016-02-18  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.threads/forking-threads-plus-breakpoint.exp (do_test):
+	Set "set breakpoint condition-evaluation" per $cond_bp_target.
+
+2016-02-16  Doug Evans  <dje@google.com>
+
+	* gdb.base/skip.c: Add copyright.  Whitespace cleanup.
+	* gdb.base/skip1.c: Ditto.
+	* gdb.base/skip.exp: Whitespace cleanup.
+
+2016-02-16  Don Breazeal  <donb@codesourcery.com>
+
+	PR remote/19496
+	* gdb.threads/forking-threads-plus-breakpoint.exp (do_test):
+	Remove kfail for PR remote/19496.
+
+2016-02-16  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* lib/gdb.exp (standard_temp_file): Return a path specific to
+	the runtest invocation.
+
+2016-02-16  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.trace/save-trace.exp: Change relative path to be in the
+	standard output directory.
+
+2016-02-15  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.arch/i386-prologue.c: Add missing prototypes.
+
+2016-02-15  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.arch/i386-gnu-cfi.exp: Use standard_output_file.
+	* gdb.arch/i386-prologue.exp: Likewise.
+	* gdb.arch/i386-size.exp: Likewise.
+
+2016-02-15  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.base/wrong_frame_bt_full.exp: Use standard_output_file to
+	define object file path.
+	* gdb.btrace/gcore.exp: Use standard_output_file to define core
+	file path.
+	* lib/opencl.exp (gdb_compile_opencl_hostapp): Use
+	standard_output_file to define binfile.
+
+2016-02-14  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Fix compatibility with recent gfortran-5.3.1.
+	* gdb.fortran/vla-history.exp (print vla1 allocated)
+	(print vla2 allocated, print $2, print $3): Remove
+	(print $4): Rename to ...
+	(print $2): ... here.
+	(print $9): Rename to ...
+	(print $5): ... here.
+	(print $10): Rename to ...
+	(print $6): ... here.
+	* gdb.fortran/vla.f90: Add pvla initialization.
+
+2016-02-14  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.fortran/vla-value-sub-finish.exp (set max-value-size 1024*1024):
+	New test.
+	* gdb.fortran/vla-value-sub.exp: Likewise.
+
+2016-02-12  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/tfile-avx.c (main): Change ymm15 to xmm15.
+
+2016-02-12  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* i386-biarch-core.exp: Define corefile using
+	standard_output_file.
+
+2016-02-12  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.arch/arm-single-step-kernel-helper.c: New.
+	* gdb.arch/arm-single-step-kernel-helper.exp: New.
+
+2016-02-12  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.btrace/tailcall-only.exp: New.
+	* gdb.btrace/tailcall-only.c: New.
+	* gdb.btrace/x86_64-tailcall-only.S: New.
+	* gdb.btrace/i686-tailcall-only.S: New.
+
+2016-02-11  Pedro Alves  <palves@redhat.com>
+
+	* README (Parallel testing): Add missing double quotes.
+
+2016-02-11  Pedro Alves  <palves@redhat.com>
+
+	* README (Parallel testing): New section.
+	(GDB_PARALLEL): Rewrite.
+	(FORCE_PARALLEL): Document.
+
+2016-02-11  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/tfile-avx.c: New test.
+	* gdb.trace/tfile-avx.exp: New test.
+
+2016-02-09  Keith Seitz  <keiths@redhat.com>
+
+	PR breakpoints/19546
+	* gdb.base/infcall-exec.c: New file.
+	* gdb.base/infcall-exec2.c: New file.
+	* gdb.base/infcall-exec.exp: New file.
+
+2016-02-09  Keith Seitz  <keiths@redhat.com>
+
+	* gdb.guile/scm-breakpoint.exp (test_bkpt_address): New procedure.
+	(toplevel): Call test_bkpt_address.
+
+2016-02-09  Keith Seitz  <keiths@redhat.com>
+
+	PR python/19506
+	* gdb.python/py-breakpoint.exp (test_bkpt_address): New procedure.
+	(toplevel): Call test_bkpt_address.
+
+2016-02-09  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* configure.ac: Use AC_CONFIG_FILES instead of passing arguments
+	to AC_OUTPUT.
+	* configure: Regenerate.
+
+2016-02-09  Pedro Alves  <palves@redhat.com>
+
+	PR breakpoints/19548
+	* gdb.base/execl-update-breakpoints.c (some_function): New
+	function.
+	(main): Call it.
+	* gdb.base/execl-update-breakpoints.exp: Add a second breakpoint.
+	Tighten expected GDB output.
+
+2016-02-08  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* Makefile.in (ALL_SUBDIRS): Remove.
+	(clean mostlyclean): Do not recurse in ALL_SUBDIRS.
+	(distclean maintainer-clean realclean): Likewise.
+	* configure.ac (AC_OUTPUT): Remove gdb.*/Makefile.
+	* configure: Regenerate.
+	* gdb.ada/Makefile.in: Delete.
+	* gdb.arch/Makefile.in: Likewise.
+	* gdb.asm/Makefile.in: Likewise.
+	* gdb.base/Makefile.in: Likewise.
+	* gdb.btrace/Makefile.in: Likewise.
+	* gdb.cell/Makefile.in: Likewise.
+	* gdb.compile/Makefile.in: Likewise.
+	* gdb.cp/Makefile.in: Likewise.
+	* gdb.disasm/Makefile.in: Likewise.
+	* gdb.dlang/Makefile.in: Likewise.
+	* gdb.dwarf2/Makefile.in: Likewise.
+	* gdb.fortran/Makefile.in: Likewise.
+	* gdb.gdb/Makefile.in: Likewise.
+	* gdb.go/Makefile.in: Likewise.
+	* gdb.guile/Makefile.in: Likewise.
+	* gdb.java/Makefile.in: Likewise.
+	* gdb.linespec/Makefile.in: Likewise.
+	* gdb.mi/Makefile.in: Likewise.
+	* gdb.modula2/Makefile.in: Likewise.
+	* gdb.multi/Makefile.in: Likewise.
+	* gdb.objc/Makefile.in: Likewise.
+	* gdb.opencl/Makefile.in: Likewise.
+	* gdb.opt/Makefile.in: Likewise.
+	* gdb.pascal/Makefile.in: Likewise.
+	* gdb.perf/Makefile.in: Likewise.
+	* gdb.python/Makefile.in: Likewise.
+	* gdb.reverse/Makefile.in: Likewise.
+	* gdb.server/Makefile.in: Likewise.
+	* gdb.stabs/Makefile.in: Likewise.
+	* gdb.threads/Makefile.in: Likewise.
+	* gdb.trace/Makefile.in: Likewise.
+	* gdb.xml/Makefile.in: Likewise.
+	* lib/gdb.exp (make_gdb_parallel_path): Add check for
+	GDB_PARALLEL.
+	(standard_output_file): Remove check for GDB_PARALLEL, always
+	return path in outputs/$subdir/$testname.
+
+2016-02-08  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* Makefile.in (abs_srcdir): Assign @abs_srcdir@.
+	(site.exp): Assign abs_srcdir to tcl's srcdir.
+
+2016-02-04  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/foll-exec-mode.c: Include limits.h.
+	(main): Add parameters argc and argv.  Get directory from
+	argv[0].
+	* gdb.base/foll-exec-mode.exp: Don't pass -DBASEDIR in
+	compilation.
+	* gdb.base/foll-exec.c: Include limits.h.
+	(main): Add parameters argc and argv.
+	Get directory from argv[0].
+	* gdb.base/foll-exec.exp: Don't pass -DBASEDIR in compilation.
+	Adjust tests on the number of lines as source code changed.
+	* gdb.base/foll-vfork-exit.c: Include limits.h.
+	(main): Add one line of statement before vfork.
+	* gdb.base/foll-vfork.c: Include limits.h and string.h.
+	(main): Add parameters argc and argv.  Get directory from
+	argv[0].
+	* gdb.base/foll-vfork.exp: Don't pass -DBASEDIR in compilation.
+	(setup_gdb): Set tbreak to skip some source lines.
+	* gdb.multi/bkpt-multi-exec.c: Include limits.h.
+	(main): Add parameters argc and argv.  Get directory from
+	argv[0].
+	* gdb.multi/bkpt-multi-exec.exp: Don't pass -DBASEDIR in
+	compilation.
+	* gdb.multi/multi-arch-exec.c: Include limits.h and string.h.
+	(main): Add parameters argc and argv.  Get directory from
+	argv[0].
+	* gdb.multi/multi-arch-exec.exp: Don't pass -DBASEDIR in
+	compilation.
+
+2016-02-01  Doug Evans  <dje@google.com>
+
+	* gdb.base/skip.exp: Clean up multiple references to same test name.
+
+2016-02-01  Pedro Alves  <palves@redhat.com>
+
+	PR remote/19496
+	* gdb.threads/forking-threads-plus-breakpoint.exp
+	(displaced_stepping_supported): New global.
+	(probe_displaced_stepping_support): New procedure.
+	(do_test): Add 'displaced' parameter, and use it.
+	(top level): Check for displaced stepping support.  Add displaced
+	stepping on/off testing axis.
+
+2016-02-01  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.mi/mi-vla-fortran.exp: Add XFAIL for accessing unassociated
+	pointer.  Don't perform further tests on the unassociated pointer
+	if the first test fails.
+
+2016-02-01  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.base/max-value-size.c: New file.
+	* gdb.base/max-value-size.exp: New file.
+	* gdb.base/huge.exp: Disable max-value-size for this test.
+
+2016-01-28  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* gdb.dlang/demangle.exp: Sync tests from libiberty testsuite.
+
+2016-01-28  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.fortran/vla-value.exp: Wrap test with with_timeout_factor.
+
+2016-01-25  Pedro Alves  <palves@redhat.com>
+
+	PR threads/19461
+	* gdb.base/fork-running-state.c: New file.
+	* gdb.base/fork-running-state.exp: New file.
+
+2016-01-25  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/19494
+	* gdb.base/catch-fork-kill.c: New file.
+	* gdb.base/catch-fork-kill.exp: New file.
+
+2016-01-25  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/step-sw-breakpoint-adjust-pc.exp (foreach_with_prefix):
+	Delete, moved to lib/gdb.exp.
+	* gdb.threads/forking-threads-plus-breakpoint.exp
+	(foreach_with_prefix): Likewise.
+	* gdb.threads/process-dies-while-handling-bp.exp
+	(foreach_with_prefix): Likewise.
+	* lib/gdb.exp (foreach_with_prefix): New procedure.
+
+2016-01-25  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/backtrace.exp: Bump stack collection fudge factor.
+	* gdb.trace/entry-values.exp: Bump stack collection fudge factor.
+
+2016-01-23  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/unavailable-dwarf-piece.exp: Fix bitfield handling on big
+	endian targets.
+
+2016-01-22  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Pedro Alves  <palves@redhat.com>
+
+	Fix testsuite compatibility with Guile.
+	* gdb.gdb/selftest.exp (send ^C to child process): Drop expected Thread
+	number.
+
+2016-01-22  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Fix testsuite compatibility with Guile.
+	* gdb.gdb/selftest.exp (send ^C to child process): Accept also Thread.
+	(thread 1): New test for backtrace through signal handler.
+
+2016-01-22  Yao Qi  <yao.qi@linaro.org>
+
+	PR testsuite/19491
+	* gdb.base/multi-forks.c: Include
+	../lib/unbuffer_output.c
+	(main): Call gdb_unbuffer_output.
+
+2016-01-21  Doug Evans  <dje@google.com>
+
+	* lib/ada.exp (gdb_compile_ada): Fix typo.
+
+2016-01-21  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.base/break-fun-addr.exp: New file.
+	* gdb.base/break-fun-addr1.c: New file.
+	* gdb.base/break-fun-addr2.c: New file.
+
+2016-01-20  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdb.python/py-pp-maint.exp: Change/add enum flag tests.
+	* gdb.python/py-pp-maint.c (enum flag_enum): Use more complex
+	enum flag values.
+
+2016-01-20  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* gdb.base/gnu_vector.exp: Re-establish handling for should_kfail
+	when GDB can not set the vector return value.  Add more comments
+	for clarification.
+
+2016-01-20  Antoine Tremblay  <antoine.tremblay@ericsson.com>
+
+	* gdb.trace/tspeed.exp:  Use shlib instead of libs in gdb_compile
+	command.
+
+2016-01-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* Makefile.in (DO_RUNTEST): Add --status and update usages.
+
+2016-01-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* Makefile.in (check-single): Pass --status to runtest.
+	(check/%.exp): Likewise.
+
+2016-01-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* Makefile.in (check-parallel): Propagate return code from make
+	do-check-parallel.
+
+2016-01-19  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/ftrace.exp: Fix expected message on continue.
+	* gdb.trace/pending.exp: Fix expected message on continue.
+	* gdb.trace/trace-break.exp: Fix expected message on continue.
+
+2016-01-18  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* lib/gdb.exp (gdb_test): Remove unused global references.
+
+2016-01-18  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/async-shell.exp: Adjust expected output.
+	* gdb.base/dprintf-non-stop.exp: Adjust expected output.
+	* gdb.base/siginfo-thread.exp: Adjust expected output.
+	* gdb.base/watchpoint-hw-hit-once.exp: Adjust expected output.
+	* gdb.java/jnpe.exp: Adjust expected output.
+	* gdb.threads/clone-new-thread-event.exp: Adjust expected output.
+	* gdb.threads/continue-pending-status.exp: Adjust expected output.
+	* gdb.threads/leader-exit.exp: Adjust expected output.
+	* gdb.threads/manythreads.exp: Adjust expected output.
+	* gdb.threads/pthreads.exp: Adjust expected output.
+	* gdb.threads/schedlock.exp: Adjust expected output.
+	* gdb.threads/siginfo-threads.exp: Adjust expected output.
+	* gdb.threads/signal-command-multiple-signals-pending.exp: Adjust
+	expected output.
+	* gdb.threads/signal-delivered-right-thread.exp: Adjust expected
+	output.
+	* gdb.threads/sigthread.exp: Adjust expected output.
+	* gdb.threads/watchpoint-fork.exp: Adjust expected output.
+
+2016-01-18  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.guile/scm-section-script.c: Replace @progbits with
+	%progbits.
+	* gdb.python/py-section-script.c: Likewise.
+
+2016-01-15  Pedro Alves  <palves@redhat.com>
+
+	* gdb.multi/tids.exp: Test star wildcard ranges.
+
+2016-01-15  Pedro Alves  <palves@redhat.com>
+
+	* gdb.multi/tids.exp (thr_apply_info_thr_error): Remove "p 1234"
+	command from "thread apply" invocation.
+	(thr_apply_info_thr_invalid): Default the expected output to the
+	input tid list.
+	(top level): Add tests that use convenience variables.  Add tests
+	for "thread apply" with a valid TID list, but missing the command.
+
+2016-01-13  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/default.exp: Expect $_gthread as well.
+	* gdb.multi/tids.exp: Test $_gthread.
+	* gdb.threads/thread-specific.exp: Test $_gthread.
+
+2016-01-13  Pedro Alves  <palves@redhat.com>
+
+	* gdb.multi/tids.exp: Test "info threads -gid".
+
+2016-01-13  Pedro Alves  <palves@redhat.com>
+
+	* gdb.multi/tids.exp: Test InferiorThread.global_num and
+	Breakpoint.thread.
+	* gdb.python/py-infthread.exp: Test InferiorThread.global_num.
+
+2016-01-07  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/break.exp: Adjust to output changes.
+	* gdb.base/hbreak2.exp: Likewise.
+	* gdb.base/sepdebug.exp: Likewise.
+	* gdb.base/watch_thread_num.exp: Likewise.
+	* gdb.linespec/keywords.exp: Likewise.
+	* gdb.multi/info-threads.exp: Likewise.
+	* gdb.threads/thread-find.exp: Likewise.
+	* gdb.multi/tids.c: New file.
+	* gdb.multi/tids.exp: New file.
+
+2016-01-13  Pedro Alves  <palves@redhat.com>
+
+	* gdb.python/py-infthread.exp: Test InferiorThread.inferior.
+
+2016-01-13  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/default.exp: Expect $_inferior as well.
+	* gdb.multi/base.exp: Test $_inferior.
+
+2016-01-13  Pedro Alves  <palves@redhat.com>
+
+	PR breakpoints/19388
+	* gdb.base/catch-signal-siginfo-cond.c: New file.
+	* gdb.base/catch-signal-siginfo-cond.exp: New file.
+
+2016-01-12  Josh Stone  <jistone@redhat.com>
+	    Philippe Waroquiers  <philippe.waroquiers@skynet.be>
+
+	* gdb.base/catch-syscall.c (do_execve): New variable.
+	(main): Conditionally trigger an execve.
+	* gdb.base/catch-syscall.exp: Enable testing for remote targets.
+	(test_catch_syscall_execve): New, check entry/return across execve.
+	(do_syscall_tests): Call test_catch_syscall_execve.
+
+2016-01-12  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/random-signal.exp (do_test): New procedure, with body
+	of testcase moved in.
+
+2016-01-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/funcargs.exp (finish from indirectly called function):
+	Reintroduce the case for 'First'.
+
+2016-01-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/foll-vfork.exp (tcatch_vfork_then_parent_follow)
+	(tcatch_vfork_then_child_follow_exec)
+	(tcatch_vfork_then_child_follow_exit): Revert back DWARF vfork
+	identification.
+
+2016-01-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.guile/scm-value.exp (test_value_in_inferior): Set print elements
+	and repeats to unlimited.
+	* gdb.python/py-value.exp: Likewise.
+	* lib/gdb.exp (gdb_has_argv0): Save and temporarily set print elements
+	and repeats to unlimited.
+
+2016-01-08  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.multi/goodbye.c: Fix compilation warnings by adding return types
+	and reordering the functions.
+	* gdb.multi/hangout.c: Likewise.
+	* gdb.multi/hello.c: Likewise.
+
+2016-01-08  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.perf/lib/perftest/perftest.py: Change relative imports to
+	absolute.
+	(SingleStatisticTestResult.report): Use dict.keys instead of
+	dict.iterkeys.
+
+2016-01-06  Pedro Alves  <palves@redhat.com>
+
+	* gdb.python/py-infthread.exp: Fix typo.  Expect t0.num to be 1.
+
+2016-01-04  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.btrace/dlopen.exp: New.
+	* gdb.btrace/dlopen.c: New.
+	* gdb.btrace/dlopen-dso.c: New.
+
+2015-12-25  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* lib/gdb.exp (gdb_test): Update comments to clarify that the
+	PATTERN argument is optional.
+
+2015-12-24  Joel Brobecker  <brobecker@adacore.com>
+
+	* lib/ada.exp (target_compile_ada_from_dir): New function.
+	(gdb_compile_ada): Reimplement avoiding the use of project files.
+	* gdb.ada/gnat_ada.gpr: Delete.
+	* gdb.ada/cond_lang.exp: Adjust test to make path before
+	filename optional.
+	* gdb.ada/small_reg_param.exp: Likewise.
+
+2015-12-22  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.base/foll-vork.exp: Remove HP-UX special case.
+
+2015-12-22  Thomas Preud'homme  <thomas.preudhomme@arm.com>
+
+	* lib/mi-support.exp (mi_run_cmd_full): Add an expect for the CLI jump
+	case.
+
+2015-12-21  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.base/break.exp: Remove dead code.
+	* gdb.base/sepdebug.exp: Likewise.
+
+2015-12-21  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdb.asm/asm-source.exp: Remove HP-UX references.
+	* gdb.base/annota1.exp: Likewise.
+	* gdb.base/annota3.exp: Likewise.
+	* gdb.base/attach.exp: Likewise.
+	* gdb.base/bigcore.exp: Likewise.
+	* gdb.base/break.exp: Likewise.
+	* gdb.base/call-ar-st.exp: Likewise.
+	* gdb.base/callfuncs.exp: Likewise.
+	* gdb.base/catch-fork-static.exp: Likewise.
+	* gdb.base/display.exp: Likewise.
+	* gdb.base/foll-exec-mode.exp: Likewise.
+	* gdb.base/foll-exec.exp: Likewise.
+	* gdb.base/foll-fork.exp: Likewise.
+	* gdb.base/foll-vfork.exp: Likewise.
+	* gdb.base/funcargs.exp: Likewise.
+	* gdb.base/hbreak2.exp: Likewise.
+	* gdb.base/inferior-died.exp: Likewise.
+	* gdb.base/interrupt.exp: Likewise.
+	* gdb.base/multi-forks.exp: Likewise.
+	* gdb.base/nodebug.exp: Likewise.
+	* gdb.base/sepdebug.exp: Likewise.
+	* gdb.base/solib1.c: Likewise.
+	* gdb.base/step-test.exp: Likewise.
+	* gdb.mi/non-stop.c: Likewise.
+	* gdb.mi/pthreads.c: Likewise.
+	* gdb.multi/bkpt-multi-exec.ex: Likewise.
+	* gdb.threads/pthreads.c: Likewise.
+	* gdb.threads/staticthreads.exp: Likewise.
+	* lib/future.exp: Likewise.
+	* lib/gdb.exp: Likewise.
+	* gdb.base/so-indr-cl.c: Remove.
+	* gdb.base/so-indr-cl.exp: Likewise.
+	* gdb.base/solib.c: Likewise.
+	* gdb.base/solib.exp: Likewise.
+	* gdb.base/solib2.c: Likewise.
+
+2015-12-21  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* gdb.base/break.exp: Remove references to HP CC/aCC compilers.
+	* gdb.base/call-ar-st.exp: Likewise.
+	* gdb.base/callfuncs.exp: Likewise.
+	* gdb.base/condbreak.exp: Likewise.
+	* gdb.base/constvars.exp: Likewise.
+	* gdb.base/hbreak2.exp: Likewise.
+	* gdb.base/langs.exp: Likewise.
+	* gdb.base/list.exp: Likewise.
+	* gdb.base/long_long.exp: Likewise.
+	* gdb.base/ptype.exp: Likewise.
+	* gdb.base/scope.exp: Likewise.
+	* gdb.base/signals.exp: Likewise.
+	* gdb.base/so-impl-ld.exp: Likewise.
+	* gdb.base/varargs.exp: Likewise.
+	* gdb.base/volatile.exp: Likewise.
+	* gdb.base/whatis.exp: Likewise.
+	* gdb.cp/cplusfuncs.exp: Likewise.
+	* gdb.cp/inherit.exp: Likewise.
+	* gdb.cp/local.exp: Likewise.
+	* gdb.cp/member-ptr.exp: Likewise.
+	* gdb.cp/method.exp: Likewise.
+	* gdb.cp/overload.exp: Likewise.
+	* gdb.cp/templates.exp: Likewise.
+	* gdb.stabs/weird.exp: Likewise.
+	* lib/compiler.c: Likewise.
+	* lib/compiler.cc: Likewise.
+	* lib/cp-support.exp: Likewise.
+	* lib/gdb.exp: Likewise.
+
+2015-12-20  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* configure.ac: Remove HP-UX case.
+	* configure: Regenerate.
+
+2015-12-18  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* lib/gdb.exp (gdb_compile): Add function doc.
+
+2015-12-17  Pedro Alves  <palves@redhat.com>
+
+	PR threads/19354
+	* gdb.multi/info-threads.exp: New file.
+
+2015-12-15  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.trace/ftrace.exp: Set arg0exp to "$x0" if target
+	is aarch64*-*-*.
+
+2015-12-14  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.base/history-duplicates.exp: Skip if no readline support.
+
+2015-12-14  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.base/gdbinit-history.exp: Skip for remote-host testing.
+
+2015-12-14  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.base/gdbhistsize-history.exp: Skip for remote-host testing.
+
+2015-12-14  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.base/completion.exp: Skip tests that interrupt GDB with
+	ctrl-C if nointerrupts target property is set.
+	* gdb.base/double-prompt-target-event-error.exp: Likewise.
+	* gdb.base/paginate-after-ctrl-c-running.exp: Likewise.
+	* gdb.base/paginate-bg-execution.exp: Likewise.
+	* gdb.base/paginate-execution-startup.exp: Likewise.
+	* gdb.base/random-signal.exp: Likewise.
+	* gdb.base/range-stepping.exp: Likewise.
+	* gdb.cp/annota2.exp: Likewise.
+	* gdb.cp/annota3.exp: Likewise.
+	* gdb.gdb/selftest.exp: Likewise.
+	* gdb.threads/continue-pending-status.exp: Likewise.
+	* gdb.threads/leader-exit.exp: Likewise.
+	* gdb.threads/manythreads.exp: Likewise.
+	* gdb.threads/pthreads.exp: Likewise.
+	* gdb.threads/schedlock.exp: Likewise.
+	* gdb.threads/sigthread.exp: Likewise.
+
+2015-12-11  Don Breazeal  <donb@codesourcery.com>
+
+	* gdb.base/execl-update-breakpoints.exp (main): Enable for target
+	remote.
+	* gdb.base/foll-exec-mode.exp (main): Disable for target remote.
+	* gdb.base/foll-exec.exp (main): Enable for target remote.
+	* gdb.base/foll-fork.exp (main): Likewise.
+	* gdb.base/foll-vfork.exp (main): Likewise.
+	* gdb.base/multi-forks.exp (main): Likewise, and use clean_restart.
+	(proc continue_to_exit_bp_loc): Use clean_restart.
+	* gdb.base/pie-execl.exp (main): Disable for target remote.
+	* gdb.base/watch-vfork.exp (main): Enable for target remote.
+	* gdb.mi/mi-nsthrexec.exp (main): Likewise.
+	* gdb.threads/execl.exp (main): Likewise.
+	* gdb.threads/fork-child-threads.exp (main): Likewise.
+	* gdb.threads/fork-plus-threads.exp (main): Disable for target
+	remote.
+	* gdb.threads/fork-thread-pending.exp (main): Enable for target
+	remote.
+	* gdb.threads/linux-dp.exp (check_philosopher_stack): Allow
+	pid.tid style ptids, instead of just tid.
+	* gdb.threads/thread-execl.exp (main): Enable for target remote.
+	* gdb.threads/watchpoint-fork.exp (main): Likewise.
+	* gdb.trace/report.exp (use_collected_data): Allow pid.tid style
+	ptids, instead of just tid.
+
+2015-12-11  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.base/list.exp (test_list_forward): Add end of file error
+	test.
+	(test_repeat_list_command): Add end of file error test.
+	(test_list_backwards): Add beginning of file error test.
+
+2015-12-11  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.base/list.exp (test_list_invalid_args): New function,
+	defined, and called.
+
+2015-12-11  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.base/list.exp (test_list): Make test names unique.
+
+2015-12-11  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/coremaker2.c: Remove.
+
+2015-12-10  Pedro Alves  <palves@redhat.com>
+
+	* gdb.multi/base.exp: Remove stale "spaces" references.
+
+2015-12-10  Pedro Alves  <palves@redhat.com>
+
+	* gdb.multi/base.exp: Don't use nowarnings.
+	* gdb.multi/bkpt-multi-exec.exp: Don't use nowarnings.
+	* gdb.multi/hangout.c: Include stdio.h.
+	* gdb.multi/hello.c: Include stdlib.h.
+	* gdb.multi/multi-arch-exec.c: Include stdlib.h.
+	* gdb.multi/multi-arch-exec.exp: Don't use nowarnings.
+	* gdb.multi/multi-arch.exp: Don't use nowarnings.
+
+2015-12-10  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.dwarf2/dw2-ranges-base.c: New file.
+	* gdb.dwarf2/dw2-ranges-base.exp: New file.
+	* lib/dwarf.exp (namespace eval Dwarf): Add new variables to
+	support additional line table, and debug ranges generation.
+	(Dwarf::ranges): New function, generate .debug_ranges.
+	(Dwarf::lines): Support generating simple line table programs.
+	(Dwarf::assemble): Initialise new namespace variables.
+
+2015-12-09  Kevin Buettner  <kevinb@redhat.com>
+
+	* gdb.base/async.exp (proc test_background): Add case for
+	asynchronous execution not supported.
+
+2015-12-09  Luis Machado  <lgustavo@codesourcery.com>
+
+	* gdb.mi/mi-var-display.exp: Add new checks for the zero-hexadecimal
+	  format and change test names to make them unique.
+
+2015-12-09  Ruslan Kabatsayev  <b7.10110111@gmail.com>
+	    Pedro Alves  <pedro@redhat.com>
+
+	PR gdb/18702
+	Add checking of floatformats setup on x86_64 hosts.
+	* gdb.arch/i386-float.S (main): Load bigval and smallval.
+	(smallval, bigval): New labels/constants.
+	* gdb.arch/i386-float.exp: Use with_test_prefix and test "info
+	float" after loading bigval and smallval.
+
+2015-12-07  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gdb.ada/fun_overload_menu.exp: New testcase.
+	* gdb.ada/fun_overload_menu/foo.adb: New testcase.
+
+2015-12-04  Josh Stone  <jistone@redhat.com>
+
+	* gdb.base/catch-fork-static.exp: New.
+
+2015-12-03  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/sizeof.c: Don't include stdio.h and
+	../lib/unbuffer_output.c.
+	(main): New variable 'size' and 'value'.  Remove printf and
+	gdb_unbuffer_output.  Assign return value to size and value.
+	* gdb.base/sizeof.exp: Remove the checking to gdb,noinferiorio
+	at the beginning.
+	(check_sizeof): Check the result by printing variable 'size'.
+	(check_valueof): Check the result by printing variable 'value'.
+
+2015-12-01  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/disp-step-syscall.exp: Define syscall instruction
+	for aarch64*-*-linux* target.
+
+2015-11-30  Pedro Alves  <palves@redhat.com>
+
+	* gdb.threads/no-unwaited-for-left.exp: Remove setup_kfail calls.
+
+2015-11-30  Pedro Alves  <palves@redhat.com>
+
+	* lib/range-stepping-support.exp (exec_cmd_expect_vCont_count):
+	Handle non-stop mode vCont replies.
+
+2015-11-30  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/dprintf-non-stop.exp: Use build_executable instead of
+	prepare_for_testing.  Start gdb with "set non-stop on" appended to
+	GDBFLAGS.  Lax expected stop output.
+
+2015-11-27  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.arch/arm-neon.exp: New.
+	* gdb.arch/arm-neon.c: New.
+
+2015-11-27  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.cp/annota2.exp: Rewrite the pattern using multi_line.
+
+2015-11-27  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.cp/annota2.exp: Allow multiple occurrences of the
+	frames-invalid annotation.
+
+2015-11-27  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.cp/annota2.exp: Use ${frames_invalid}.
+
+2015-11-26  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.threads/names.exp: New file.
+	* gdb.threads/names.c: New file.
+	* README: Mention gdb,no_thread_names.
+
+2015-11-26  Markus Metzger  <markus.t.metzger@intel.com>
+
+	PR 19297
+	* lib/gdb.exp (skip_btrace_pt_tests): Check for a "GDB does not
+	support" error.
+
+2015-11-24  Pedro Alves  <palves@redhat.com>
+
+	PR 17539
+	* gdb.base/display.exp: Expect displays to be sorted in ascending
+	order.  Use multi_line.
+	* gdb.base/solib-display.exp: Likewise.
+
+2015-11-24  Pedro Alves  <palves@redhat.com>
+
+	PR 17539
+	* gdb.base/display.exp: Expect displays to be sorted in ascending
+	order.  Use multi_line.
+	* gdb.base/solib-display.exp: Likewise.
+
+2015-11-24  Pedro Alves  <palves@redhat.com>
+
+	PR 17539
+	* gdb.base/foll-exec-mode.exp: Adjust to GDB listing inferiors and
+	threads in ascending order.
+	* gdb.base/foll-fork.exp: Likewise.
+	* gdb.base/foll-vfork.exp: Likewise.
+	* gdb.base/multi-forks.exp: Likewise.
+	* gdb.mi/mi-nonstop.exp: Likewise.
+	* gdb.mi/mi-nsintrall.exp: Likewise.
+	* gdb.multi/base.exp: Likewise.
+	* gdb.multi/multi-arch.exp: Likewise.
+	* gdb.python/py-inferior.exp: Likewise.
+	* gdb.threads/break-while-running.exp: Likewise.
+	* gdb.threads/execl.exp: Likewise.
+	* gdb.threads/gcore-thread.exp: Likewise.
+	* gdb.threads/info-threads-cur-sal.exp: Likewise.
+	* gdb.threads/kill.exp: Likewise.
+	* gdb.threads/linux-dp.exp: Likewise.
+	* gdb.threads/multiple-step-overs.exp: Likewise.
+	* gdb.threads/next-bp-other-thread.exp: Likewise.
+	* gdb.threads/step-bg-decr-pc-switch-thread.exp: Likewise.
+	* gdb.threads/step-over-lands-on-breakpoint.exp: Likewise.
+	* gdb.threads/step-over-trips-on-watchpoint.exp: Likewise.
+	* gdb.threads/thread-find.exp: Likewise.
+	* gdb.threads/tls.exp: Likewise.
+	* lib/mi-support.exp (mi_reverse_list): Delete.
+	(mi_check_thread_states): No longer reverse list.
+
+2015-11-24  Pedro Alves  <palves@redhat.com>
+
+	* gdb.python/py-inferior.exp: Use with_test_prefix.  Consistently
+	use lowercase.
+
+2015-11-23  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.trace/actions.c: Include trace-common.h.
+	(main): Add a location for a fast tracepoint.
+	* gdb.trace/save-trace.exp: Set a fast tracepoint in addition to
+	the normal tracepoints.
+	(gdb_verify_tracepoints): Adjust number of expected tracepoints.
+
+2015-11-23  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* save-trace.exp: Factor out code to these...
+	(gdb_save_tracepoints): New.
+	(gdb_load_tracepoints): New.
+	(do_save_load_test): New.
+
+2015-11-23  Kevin Buettner  <kevinb@redhat.com>
+
+	* gdb.base/asmlabel.exp: New test.
+	* gdb.base/asmlabel.c: New test case.
+
+2015-11-23  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.base/wrong_frame_bt_full-main.c: New file.
+	* gdb.base/wrong_frame_bt_full-opaque.c: New file.
+	* gdb.base/wrong_frame_bt_full.exp: New file.
+
+2015-11-23  Joel Brobecker  <brobecker@adacore.com>
+
+	* testsuite/gdb.ada/var_rec_arr.exp: Add "ptype a1(1)" test.
+
+2015-11-20  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* gdb.base/callfuncs.exp (fetch_all_registers): Filter out the
+	pstate register when comparing registers values in
+	sparc64-*-linux-gnu targets to avoid spurious differences.
+
+2015-11-20  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* gdb.arch/sparc-sysstep.c: Include unistd.h for getpid.
+
+2015-11-19  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.base/nested-subp1.exp: Pass executable, not executable name,
+	as type argument to gdb_compile.
+	* gdb.base/nested-subp2.exp: Likewise.
+	* gdb.base/nested-subp3.exp: Likewise.
+
+2015-11-17  Dominik Vogt  <vogt@linux.vnet.ibm.com>
+
+	* lib/dwarf.exp (_note): Fix left shift of negative value.
+	* gdb.trace/trace-condition.exp: Likewise.
+
+2015-11-13  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/call-sc.exp (test_scalar_returns): Remove the
+	comments about d10v.
+	(test_scalar_returns): Likewise.
+	* gdb.base/d10v.ld: Remove.
+	* gdb.base/overlays.exp: Remove the target triplet checking for
+	d10v-*-*.
+	* gdb.base/structs.exp (test_struct_returns): Remove the
+	comments about d10v.
+	(test_struct_calls): Likewise.
+
+2015-11-13  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/gnu_vector.exp: Check the return value by "p res".
+	* gdb.base/gnu_vector.c: Don't include stdio.h.
+	(main): Don't print res and call add_some_intvecs.
+
+2015-11-11  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/change-loc.h: include "trace-common.h", remove SYMBOL
+	macro.
+	(func5): Removed.
+	(func4): Use FAST_TRACEPOINT_LABEL.
+	* gdb.trace/ftrace-lock.c: include "trace-common.h", remove SYMBOL
+	macro.
+	(func): Removed.
+	(thread_function): Use FAST_TRACEPOINT_LABEL.
+	* gdb.trace/ftrace.c: include "trace-common.h", remove SYMBOL macro.
+	(func): Remove.
+	(marker): Use FAST_TRACEPOINT_LABEL.
+	* gdb.trace/pendshr1.c: include "trace-common.h", remove SYMBOL macro.
+	(pendfunc1): Remove.
+	(pendfunc): Use FAST_TRACEPOINT_LABEL.
+	* gdb.trace/pendshr2.c: include "trace-common.h", remove SYMBOL macro.
+	(foo): Remove.
+	(pendfunc2): Use FAST_TRACEPOINT_LABEL.
+	* gdb.trace/trace-break.c: include "trace-common.h", remove SYMBOL
+	macro.
+	(func): Remove.
+	(marker): Use FAST_TRACEPOINT_LABEL.
+	* gdb.trace/trace-common.h: New header.
+	* gdb.trace/trace-condition.c: include "trace-common.h", remove SYMBOL
+	macro.
+	(func): Remove.
+	(marker): Use FAST_TRACEPOINT_LABEL.
+	* gdb.trace/trace-mt.c: include "trace-common.h", remove SYMBOL macro.
+	(func): Remove.
+	(thread_function): Use FAST_TRACEPOINT_LABEL.
+
+2015-11-10  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.trace/backtrace.exp: Use global fpreg/spreg definition, add $
+	in front.
+	* gdb.trace/change-loc.exp: Use global pcreg definition.
+	* gdb.trace/collection.exp: Use global pcreg/fpreg/spreg definition.
+	* gdb.trace/entry-values.exp: Use global spreg definition, add $
+	in front.
+	* gdb.trace/mi-trace-frame-collected.exp: Use global pcreg definition.
+	* gdb.trace/pending.exp: Likewise.
+	* gdb.trace/report.exp: Use global pcreg/fpreg/spreg definition.
+	* gdb.trace/trace-break.exp: Likewise.
+	* gdb.trace/trace-condition.exp: Use global pcreg definition, add $
+	in front.
+	* gdb.trace/unavailable.exp: Use global pcreg/fpreg/spreg definition.
+	* gdb.trace/while-dyn.exp: Use global fpreg definition, add $
+	in front.
+	* lib/trace-support.exp: Define fpreg, spreg, pcreg variables.
+
+2015-11-09  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.ada/fin_fun_out: New testcase.
+
+2015-11-07  Kevin Buettner  <kevinb@redhat.com>
+
+	* gdb.dwarf2/data-loc.exp (Dwarf::assemble): Don't hardcode
+	value associated with DW_AT_byte_size.
+	* gdb.dwarf2/dynarr-ptr.exp (Dwarf::assemble): Don't hardcode
+	constants for DW_AT_byte_size, DW_AT_lower_bound, and
+	DW_AT_upper_bound.
+
+2015-11-07  Kevin Buettner  <kevinb@redhat.com>
+
+	* lib/gdb (gdb_target_symbol_prefix_flags_asm): New proc.
+	(gdb_target_symbol_prefix_flags): Define in terms of _asm
+	version.
+	* gdb.arch/i386-float.exp, gdb.arch/i386-permbkpt.exp,
+	gdb.dwarf2/dw2-canonicalize-type.exp,
+	gdb.dwarf2/dw2-compdir-oldgcc.exp, gdb.dwarf2/dw2-minsym-in-cu.exp,
+	gdb.dwarf2/dw2-op-stack-value.exp, gdb.dwarf2/dw2-unresolved.exp,
+	gdb.dwarf2/fission-reread.exp, gdb.dwarf2/pr13961.exp: Use flags
+	provided by gdb_target_symbol_prefix_flags_asm.
+	* gdb.dwarf2/dw2-canonicalize-type.S, gdb.dwarf2/dw2-compdir-oldgcc.S,
+	testsuite/gdb.dwarf2/dw2-minsym-in-cu.S,
+	testsuite/gdb.dwarf2/dw2-unresolved-main.c,
+	testsuite/gdb.dwarf2/dw2-unresolved.S, gdb.dwarf2/fission-reread.S,
+	gdb.dwarf2/pr13961.S: Define and use SYMBOL macro (and supporting
+	macros where needed).  Use this macro for symbols which require
+	the prefix provided by SYMBOL_PREFIX.
+
+2015-11-05  Kevin Buettner  <kevinb@redhat.com>
+
+	* lib/gdb.exp (gdb_target_symbol_prefix, gdb_target_symbol):
+	New procs.
+	* lib/dwarf.exp (_handle_DW_TAG): Handle attribute values,
+	representing expressions, of more than one list element.
+	* gdb.dwarf2/atomic-type.exp (Dwarf::assemble): Use gdb_target_symbol
+	to prepend linker symbol prefix to f.
+	* gdb.dwarf2/data-loc.exp (Dwarf::assemble): Likewise, for
+	table_1 and table_2.
+	* gdb.dwarf2/dw2-bad-mips-linkage-name.exp (Dwarf::assemble):
+	Likewise, for f and g.
+	* gdb.dwarf2/dw2-ifort-parameter.exp (Dwarf::assemble): Likewise,
+	for ptr.
+	* gdb.dwarf2/dw2-regno-invalid.exp (Dwarf::assemble): Likewise,
+	for main.
+	* gdb.dwarf2/dynarr-ptr.exp (Dwarf::assemble): Likewise, for
+	table_1_ptr and table_2_ptr.
+
+2015-11-03  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.mi/mi-vla-fortran.exp (evaluate allocated vla): Permit any data.
+
+2015-11-04  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.reverse/s390-mvcle.c: New test.
+	* gdb.reverse/s390-mvcle.exp: New file.
+	* lib/gdb.exp: Enable reverse tests on s390*-linux.
+
+2015-11-02  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.reverse/readv-reverse.exp: Obvious typo fixed.
+
+2015-11-02  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.reverse/fstatat-reverse.exp: Set breakpoint on marker1 after
+	reaching marker2.
+	* gdb.reverse/getresuid-reverse.exp: Likewise.
+	* gdb.reverse/pipe-reverse.exp: Likewise.
+	* gdb.reverse/readv-reverse.exp: Likewise.
+	* gdb.reverse/recvmsg-reverse.exp: Likewise.
+	* gdb.reverse/time-reverse.exp: Likewise.
+	* gdb.reverse/waitpid-reverse.exp: Likewise and add KFAILs.
+
+2015-10-30  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.threads/wp-replication.c (watch_count_done): Remove.
+	(empty_cycle): Remove.
+	(main): Don't call empty_cycle.  Don't use watch_count_done.
+	* gdb.threads/wp-replication.exp: Don't set breakpoint on
+	empty_cycle.  Rewrite the code counting HW watchpoints.
+
+2015-10-30  Marcin Kościelnicki  <koriakin@0x04.net>
+
+	* gdb.reverse/fstatat-reverse.c: New test.
+	* gdb.reverse/fstatat-reverse.exp: New file.
+	* gdb.reverse/getresuid-reverse.c: New test.
+	* gdb.reverse/getresuid-reverse.exp: New file.
+	* gdb.reverse/pipe-reverse.c: New test.
+	* gdb.reverse/pipe-reverse.exp: New file.
+	* gdb.reverse/readv-reverse.c: New test.
+	* gdb.reverse/readv-reverse.exp: New file.
+	* gdb.reverse/recvmsg-reverse.c: New test.
+	* gdb.reverse/recvmsg-reverse.exp: New file.
+	* gdb.reverse/time-reverse.c: New test.
+	* gdb.reverse/time-reverse.exp: New file.
+	* gdb.reverse/waitpid-reverse.c: New test.
+	* gdb.reverse/waitpid-reverse.exp: New file.
+
+2015-10-27  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.ada/access_to_packed_array.exp: Fix typos erroring the testfile.
+
+2015-10-26  Doug Evans  <dje@google.com>
+
+	PR symtab/17391
+	* lib/dwarf.exp (_location): Add support for DW_OP_regx.
+	* gdb.dwarf2/bad-regnum.c: New file.
+	* gdb.dwarf2/bad-regnum.exp: New file.
+
+2015-10-26  Doug Evans  <dje@google.com>
+
+	PR python/18938
+	* gdb.python/python.exp: Add test for symlink from .py file to .notpy
+	file.
+
+2015-10-25  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.compile/compile.exp (compile code globalvar): Update expectation
+	for a change by "Mention language in compile error message".
+
+2015-10-21  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	PR python/18073
+	* gdb.python/py-type.c (C::a_method): New.
+	(C::a_const_method): New.
+	(C::a_static_method): New.
+	(a_function): New.
+	* gdb.python/py-type.exp (test_fields): Test getting fields
+	from function and method.
+
+2015-10-21  Keven Boell  <keven.boell@intel.com>
+
+	* gdb.fortran/vla-alloc-assoc.exp: New file.
+	* gdb.fortran/vla-datatypes.exp: New file.
+	* gdb.fortran/vla-datatypes.f90: New file.
+	* gdb.fortran/vla-history.exp: New file.
+	* gdb.fortran/vla-ptype-sub.exp: New file.
+	* gdb.fortran/vla-ptype.exp: New file.
+	* gdb.fortran/vla-sizeof.exp: New file.
+	* gdb.fortran/vla-sub.f90: New file.
+	* gdb.fortran/vla-value-sub-arbitrary.exp: New file.
+	* gdb.fortran/vla-value-sub-finish.exp: New file.
+	* gdb.fortran/vla-value-sub.exp: New file.
+	* gdb.fortran/vla-value.exp: New file.
+	* gdb.fortran/vla-ptr-info.exp: New file.
+	* gdb.mi/mi-vla-fortran.exp: New file.
+	* gdb.mi/vla.f90: New file.
+
+2015-10-21  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.base/freebpcmd.exp: Use with_timeout_factor instead
+	of hardwired timeout value.
+
+2015-10-20  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Pedro Alves  <palves@redhat.com>
+
+	* gdb.dwarf2/dw2-regno-invalid.exp: New file.
+	* lib/dwarf.exp (Dwarf): Add DW_OP_bregx.
+
+2015-10-19  Josh Stone  <jistone@redhat.com>
+
+	* gdb.base/catch-syscall.c: Include <sched.h>.
+	(unknown_syscall): New variable.
+	(main): Trigger a vfork and an unknown syscall.
+	* gdb.base/catch-syscall.exp (vfork_syscalls): New variable.
+	(unknown_syscall_number): Likewise.
+	(check_call_to_syscall): Accept an optional syscall pattern.
+	(check_return_from_syscall): Likewise.
+	(check_continue): Likewise.
+	(test_catch_syscall_without_args): Check for vfork and ENOSYS.
+	(test_catch_syscall_skipping_return): New test toggling off 'catch
+	syscall' to step over the syscall return, then toggling back on.
+	(test_catch_syscall_mid_vfork): New test turning on 'catch syscall'
+	during a PTRACE_EVENT_VFORK stop, in the middle of a vfork syscall.
+	(do_syscall_tests): Call test_catch_syscall_without_args and
+	test_catch_syscall_mid_vfork.
+	(test_catch_syscall_without_args_noxml): Check for vfork and ENOSYS.
+	(fill_all_syscalls_numbers): Initialize unknown_syscall_number.
+
+2015-10-19  Andrew Stubbs  <ams@codesourcery.com>
+
+	* gdb.cp/inherit.exp (print g_vB, print g_vC, print g_vD,
+	print g_vE): Add new pass patterns.
+	* gdb.cp/virtbase.exp (print *this, print *(D *) e): Allow GDB to
+	print various symbol names for vptr fields.
+
+2015-10-12  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* gdb.base/dbx.exp (test_func): Remove xfails, update expected
+	results.
+
+2015-10-12  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.arch/disp-step-insn-reloc.exp: New test case.
+
+2015-10-12  Yao Qi  <yao.qi@linaro.org>
+
+	* lib/gdb.exp (support_displaced_stepping): Return 1 if target
+	is aarch64*-*-linux*.
+
+2015-10-12  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.arch/insn-reloc.c (can_relocate_bcond): Rename to ...
+	(can_relocate_bcond_true): ... it.
+	(can_relocate_bcond_false): New function.
+	(foo): Likewise.
+	(can_relocate_bl): Likewise.
+	(testcases) [__aarch64__]: Add can_relocate_bcond_false and
+	can_relocate_bl.
+
+2015-10-12  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gdb.base/nested-addr.c: New file.
+	* gdb.base/nested-addr.exp: New testcase.
+
+2015-10-09  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.btrace/vdso.c (main): Remove breakpoint markers.
+	* gdb.btrace/vdso.exp: Change stepping command to "next" and ignore
+	its output.  Ignore the output of "record goto begin" and instead
+	check that GDB is replaying.
+
+2015-10-09  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/a2-run.exp (maybe_exp_continue): New procedure.
+	(top level): Use it in the run with no args test.
+
+2015-10-08  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* gdb.dlang/properties.exp: New file.
+
+2015-10-02  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.dwarf2/staticvirtual.exp: Generalize regexp so it can match
+	whether or not address 0x1000 is mapped on the target.
+
+2015-09-30  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.python/py-type.exp: Do not run tests if binaries fail to
+	build.
+
+2015-09-30  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.btrace/tsx.exp: Consider multiple correct outputs in the record
+	instruction-history test.
+
+2015-09-28  Doug Evans  <dje@google.com>
+
+	* gdb.base/gcore.c (array_func): Add reference to static_array.
+
+2015-09-25  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.gdb/selftest.exp (do_steps_and_nexts): Adjust expected
+	source line.
+
+2015-09-24 Sandra Loosemore <sandra@codesourcery.com>
+
+	* gdb.cp/classes.exp (test_enums): Generalize regexp to allow
+	short or char as base type.
+
+2015-09-23 Sandra Loosemore <sandra@codesourcery.com>
+
+	* gdb.cp/var-tag.exp (do_global_tests): Generalize opt_underlying
+	to allow any size enum.
+
+2015-09-23  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gdb.ada/array_ptr_renaming.exp: New testcase.
+	* gdb.ada/array_ptr_renaming/foo.adb: New file.
+	* gdb.ada/array_ptr_renaming/pack.ads: New file.
+
+2015-09-21  Pierre Langlois  <pierre.langlois@arm.com>
+
+	* gdb.trace/ftrace-lock.c: New file.
+	* gdb.trace/ftrace-lock.exp: New file.
+
+2015-09-21  Pierre Langlois  <pierre.langlois@arm.com>
+
+	* gdb.arch/insn-reloc.c: New file.
+	* gdb.arch/ftrace-insn-reloc.exp: New file.
+
+2015-09-21  Pierre Langlois  <pierre.langlois@arm.com>
+
+	* gdb.trace/change-loc.h (func4) [__aarch64__]: Add a nop
+	instruction.
+	* gdb.trace/pendshr1.c (pendfunc): Likewise.
+	* gdb.trace/pendshr2.c (pendfunc2): Likewise.
+	* gdb.trace/range-stepping.c: Likewise.
+	* gdb.trace/trace-break.c: Likewise.
+	* gdb.trace/trace-mt.c (thread_function): Likewise.
+	* gdb.trace/ftrace.c (marker): Likewise.
+	* gdb.trace/trace-condition.c (marker): Likewise.
+	* gdb.trace/ftrace.exp: Enable ftrace test if is_aarch64_target.
+	* gdb.trace/trace-condition.exp: Set pcreg to "\$pc" if
+	is_aarch64_target.
+
+2015-09-18  Doug Evans  <xdje42@gmail.com>
+
+	* gdb.dwarf2/dw2-bad-unresolved.c: New file.
+	* gdb.dwarf2/dw2-bad-unresolved.exp: New file.
+
+2015-09-18  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.base/dso2dso.exp: Don't use directory prefix when setting
+	the breakpoint.
+
+2015-09-18  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.mi/mi-pending.exp: Don't use directory prefix when setting
+	the pending breakpoint.  Remove timeout override for "Run till
+	MI pending breakpoint on pendfunc3 on thread 2" test.
+
+2015-09-18  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.mi/mi-cli.exp: Don't require directory prefix in breakpoint
+	filename pattern.
+
+2015-09-18  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.mi/mi-dprintf-pending.exp: Don't require directory prefix
+	in breakpoint filename pattern.
+
+2015-09-18  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.base/global-var-nested-by-dso.exp: Call gdb_load_shlibs.
+
+2015-09-18  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.linespec/explicit.exp: Check for readline support for
+	tab-completion tests.  Fix obvious typo.
+
+2015-09-18  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.btrace/multi-thread-step.exp: Test scheduler-locking on, step,
+	and replay.
+
+2015-09-18  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.btrace/non-stop.c: New.
+	* gdb.btrace/non-stop.exp: New.
+
+2015-09-17  Pierre Langlois  <pierre.langlois@arm.com>
+	    Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.trace/trace-condition.c: New file.
+	* gdb.trace/trace-condition.exp: New file.
+
+2015-09-16  Wei-cheng Wang  <cole945@gmail.com>
+
+	* gdb.trace/ftrace.exp: (test_ftrace_condition) New function
+	for testing bytecode compilation.
+
+2015-09-16  Pedro Alves  <palves@redhat.com>
+	    Sandra Loosemore <sandra@codesourcery.com>
+
+	* gdb.threads/non-stop-fair-events.c (timeout): New global.
+	(SECONDS): Redefine.
+	(main): Call pthread_kill and alarm early.
+	* gdb.threads/non-stop-fair-events.exp: Probe displaced stepping
+	support.
+	(test): If the target can't hardware step and doesn't support
+	displaced stepping, increase the timeout.
+
+2015-09-16  Pedro Alves  <palves@redhat.com>
+
+	* gdb.threads/non-stop-fair-events.exp (gdb_test_no_anchor)
+	(enable_debug): New procedures.
+	(test): Use them.  Bail out if waiting for threads fails.
+	(top level): Bail out if a test fails.
+
+2015-09-16  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.asm/asm-source.exp: Set asm-arch for
+	aarch64*-*-* target.
+	* gdb.asm/aarch64.inc: New file.
+
+2015-09-15  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gdb.ada/array_of_variable_length.exp: New testcase.
+	* gdb.ada/array_of_variable_length/foo.adb: New file.
+	* gdb.ada/array_of_variable_length/pck.adb: New file.
+	* gdb.ada/array_of_variable_length/pck.ads: New file.
+
+2015-09-15  Doug Evans  <dje@google.com>
+
+	* gdb.base/callfuncs.exp (do_function_calls): Handle clang naming
+	of function static local variable.
+
+2015-09-15  Philippe Waroquiers  <philippe.waroquiers@skynet.be>
+
+	* gdb.threads/tls-so_extern.exp: New test file.
+	* gdb.threads/tls-so_extern.c: New test file.
+	* gdb.threads/tls-so_extern_main.c: New test file.
+
+2015-09-15  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.opt/solib-intra-step-lib.c: New file.
+	* gdb.opt/solib-intra-step-main.c: New file.
+	* gdb.opt/solib-intra-step.exp: New file.
+
+2015-09-15  Pedro Alves  <palves@redhat.com>
+
+	* gdb.threads/non-ldr-exc-3.exp (do_test): Use
+	gdb_continue_to_breakpoint instead of gdb_test_multiple.
+
+2015-09-14  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/hook-stop-continue.c: Delete.
+	* gdb.base/hook-stop-continue.exp: Delete.
+	* gdb.base/hook-stop-frame.c: Delete.
+	* gdb.base/hook-stop-frame.exp: Delete.
+	* gdb.base/hook-stop.c: New file.
+	* gdb.base/hook-stop.exp: New file.
+
+2015-09-14  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gdb.ada/access_to_packed_array.exp: New testcase.
+	* gdb.ada/access_to_packed_array/foo.adb: New file.
+	* gdb.ada/access_to_packed_array/pack.adb: New file.
+	* gdb.ada/access_to_packed_array/pack.ads: New file.
+
+2015-09-14  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.btrace/buffer-size.exp: Remove recording with unlimited BTS
+	buffer size test.
+
+2015-09-11  Don Breazeal  <donb@codesourcery.com>
+
+	* gdb.base/foll-exec.c: Add copyright header.  Fix
+	formatting issues.
+	* gdb.base/foll-exec.exp (zap_session): Delete proc.
+	(do_exec_tests): Use clean_restart in place of zap_session,
+	and for test initialization.  Fix formatting issues.  Use
+	fail in place of perror.
+	* gdb.base/pie-execl.exp (main): Use 'inferior_spawn_id' in
+	an expect statement to match an expression with output from
+	the program under debug.
+	* gdb.threads/non-ldr-exc-1.exp (do_test, main): Add
+	non-stop tests and use save_vars to enable non-stop in GDBFLAGS.
+	* gdb.threads/non-ldr-exc-2.exp: Likewise.
+	* gdb.threads/non-ldr-exc-3.exp: Likewise.
+	* gdb.threads/non-ldr-exc-4.exp: Likewise.
+
+2015-09-09  Doug Evans  <dje@google.com>
+
+	* gdb.python/py-prettyprint.exp: Check result of run_lang_tests.
+
+2015-09-09  Doug Evans  <dje@google.com>
+
+	* gdb.base/pie-execl.exp: Fix result test of build_executable.
+
+2015-09-09  Doug Evans  <dje@google.com>
+
+	* gdb.base/savedregs.exp: Fix typo.
+
+2015-09-09  Pedro Alves  <palves@redhat.com>
+
+	* gdb.mi/mi-cli.exp: Add CLI finish tests.
+
+2015-09-08  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.threads/hand-call-in-threads.exp: Make sure the thread
+	command actually switches threads.  Give up on remaining
+	tests if target fails to stop at breakpoint.
+
+2015-09-03  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gdb.ada/funcall_char.exp: New testcase.
+	* gdb.ada/funcall_char/foo.adb: New file.
+
+2015-09-01  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gdb.ada/complete.exp: Add "pck.ambiguous_func" to the relevant
+	expected outputs.  Add two testcases for completing ambiguous
+	functions.
+	* gdb.ada/complete/aux_pck.adb: New file.
+	* gdb.ada/complete/aux_pck.ads: New file.
+	* gdb.ada/complete/foo.adb: Pull Aux_Pck and call the two
+	Ambiguous_Func functions.
+	* gdb.ada/complete/pck.ads: Add an Ambiguous_Func function.
+	* gdb.ada/complete/pck.adb: Likewise.
+
+2015-08-27  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* lib/cell.exp (skip_cell_tests): Report UNRESOLVED on unexpected
+	failures to run the test program under GDB.
+
+2015-08-26  Luis Machado  <lgustavo@codesourcery.com>
+
+	* gdb.compile/compile-ifunc.exp (with_test_prefix): Force language
+	to C.
+
+2015-08-26  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* gdb.base/run-after-attach.exp: New test file.
+	* gdb.base/run-after-attach.c: New test file.
+
+2015-08-26  Don Breazeal  <donb@codesourcery.com>
+
+	* gdb.base/foll-exec-2.c: New test program.
+	* gdb.base/foll-exec-2.exp: New test.
+
+2015-08-25  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gdb.base/nested-subp1.exp: New file.
+	* gdb.base/nested-subp1.c: New file.
+	* gdb.base/nested-subp2.exp: New file.
+	* gdb.base/nested-subp2.c: New file.
+	* gdb.base/nested-subp3.exp: New file.
+	* gdb.base/nested-subp3.c: New file.
+
+2015-08-24  Pedro Alves  <palves@redhat.com>
+
+	* gdb.server/connect-without-multi-process.c: New file.
+	* gdb.server/connect-without-multi-process.exp: New file.
+
+2015-08-24  Luis Machado  <lgustavo@codesourcery.com>
+
+	* gdb.opt/inline-markers.c: Make z int.
+
+2015-08-24  Luis Machado  <lgustavo@codesourcery.com>
+
+	* gdb.opt/inline-markers.c: Make z volatile.
+
+2015-08-24  Luis Machado  <lgustavo@codesourcery.com>
+
+	* gdb.opt/inline-bt.c: New volatile global z.
+	* gdb.opt/inline-cmds.c: Likewise.
+	* gdb.opt/inline-locals.c: Likewise.
+	* gdb.opt/inline-markers.c: New extern global z.
+	(marker): Use z.
+	(inline_fn): Likewise.
+
+2015-08-24  Pedro Alves  <palves@redhat.com>
+
+	* config/m32r-stub.exp: Remove file.
+	* gdb.base/call-ar-st.exp: Remove reference to sparclet.
+	* gdb.base/call-rt-st.exp: Likewise.
+	* gdb.base/call-strs.exp: Likewise.
+	* gdb.base/default.exp: Remove references to h8300-*-hms and
+	*-*-udi*.
+	* gdb.base/funcargs.exp: Remove reference to sparclet-*-*.
+
+2015-08-24  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* gdb.base/gnu_vector.exp: Try compilation with "-mcpu=native
+	-Wno-psabi" if "-mcpu=native" fails.  For the tests with "finish"
+	and "return" use KFAIL when GDB can not read/write the vector
+	return value.
 
 2015-08-21  Gary Benson <gbenson@redhat.com>
 
 	* gdb.trace/pending.exp: Cope with remote transfer warnings.
 
+2015-08-20  Pedro Alves  <palves@redhat.com>
+
+	* gdb.server/solib-list.exp: No longer expect an interior stop in
+	non-stop mode.
+
+2015-08-20  Pedro Alves  <palves@redhat.com>
+
+	* gdb.server/connect-stopped-target.c: New file.
+	* gdb.server/connect-stopped-target.exp: New file.
+
+2015-08-20  Pedro Alves  <palves@redhat.com>
+
+	* gdb.dwarf2/comp-unit-lang.exp: New file.
+	* gdb.dwarf2/comp-unit-lang.c: New file.
+
+2015-08-20  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gdb.ada/attr_ref_and_charlit.exp: New testcase.
+	* gdb.ada/attr_ref_and_charlit/foo.adb: New file.
+
+2015-08-19  Kevin Buettner  <kevinb@redhat.com>
+
+	* gdb.dwarf2/dw2-bad-mips-linkage-name.c: New file.
+	* gdb.dwarf2/dw2-bad-mips-linkage-name.exp: New file.
+
+2015-08-18  Doug Evans  <dje@google.com>
+	    Adrian Sendroiu <adrian.sendroiu@freescale.com>
+
+	* lib/gdb.exp (skip_python_tests_prompt): Renamed from
+	skip_python_tests.  New arg prompt_regexp.
+	(skip_python_tests): New function.
+	* lib/mi-support.exp (mi_skip_python_tests): New function.
+	* gdb.python/py-mi-objfile-gdb.py: New file.
+	* gdb.python/py-mi-objfile.c: New file.
+	* gdb.python/py-mi-objfile.exp: New file.
+
+2015-08-17  Keith Seitz  <keiths@redhat.com>
+
+	* gdb.linespec/explicit.exp: Move strace test from here ...
+	* gdb.trace/strace.exp: ... to here.
+
+2015-08-15  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* gdb.base/kill-detach-inferiors-cmd.exp: New test file.
+	* gdb.base/kill-detach-inferiors-cmd.c: New test file.
+
+2015-08-14  Doug Evans  <xdje42@gmail.com>
+
+	* gdb.perf/lib/perftest/utils.py (select_file): Kill any existing
+	inferior before selecting a new file.
+
+2015-08-14  Doug Evans  <xdje42@gmail.com>
+
+	* gdb.mi/mi-disassemble.exp: Update.
+	* gdb.base/disasm-optim.S: New file.
+	* gdb.base/disasm-optim.c: New file.
+	* gdb.base/disasm-optim.h: New file.
+	* gdb.base/disasm-optim.exp: New file.
+
+2015-08-14  Keith Seitz  <keiths@redhat.com>
+
+	* lib/mi-support.exp (mi_make_breakpoint): Add option/handling for
+	"evaluated-by".
+
 2015-08-13  Joel Brobecker  <brobecker@adacore.com>
 
 	* gdb.base/dso2dso.exp: Improve the testcase's documentation.
 
-2015-08-13  Keith Seitz  <keiths@redhat.com>
+2015-08-13  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gdb.ada/fun_renaming.exp: New testcase.
+	* gdb.ada/fun_renaming/fun_renaming.adb: New file.
+	* gdb.ada/fun_renaming/pack.adb: New file.
+	* gdb.ada/fun_renaming/pack.ads: New file.
+
+2015-08-12  Keith Seitz  <keiths@redhat.com>
 
 	* gdb.base/dso2dso.exp: Pass basename of source file in call to
 	gdb_get_line_number.
 
-2015-08-13  Joel Brobecker  <brobecker@adacore.com>
+2015-08-12  Joel Brobecker  <brobecker@adacore.com>
 
 	* gdb.base/dso2dso-dso2.c, gdb.base/dso2dso-dso2.h,
 	gdb.base/dso2dso-dso1.c, gdb.base/dso2dso-dso1.h, gdb.base/dso2dso.c,
 	gdb.base/dso2dso.exp: New files.
+
+2015-08-12  Sergio Durigan Junior  <sergiodj@redhat.com>
+	    Pedro Alves  <palves@redhat.com>
+	    Keith Seitz  <keiths@redhat.com>
+
+	* gdb.base/checkpoint-ns.exp: Use save_vars to save and restore
+	GDBFLAGS.
+
+2015-08-12  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* gdb.base/gdbhistsize-history.exp
+	(test_histsize_history_setting): Use save_vars.
+	* gdb.base/gdbinit-history.exp (test_gdbinit_history_setting):
+	Use save_vars.
+	(test_no_truncation_of_unlimited_history_file): Use save_vars.
+	* gdb.base/readline.exp: Use save_vars.
+
+2015-08-12  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* lib/gdb.exp (save_vars): New proc.
+
+2015-08-11  Keith Seitz  <keiths@redhat.com>
+
+	* gdb.base/help.exp: Update help_breakpoint_text.
+
+2015-08-11  Keith Seitz  <keiths@redhat.com>
+
+	* gdb.mi/mi-break.exp (test_explicit_breakpoints): New proc.
+	(at toplevel): Call test_explicit_breakpoints.
+	* gdb.mi/mi-dprintf.exp: Add tests for explicit dprintf
+	breakpoints.
+	* lib/mi-support.exp (mi_make_breakpoint): Add support for
+	breakpoint conditions, "-cond".
+
+2015-08-11  Keith Seitz  <keiths@redhat.com>
+
+	* gdb.linespec/3explicit.c: New file.
+	* gdb.linespec/cpexplicit.cc: New file.
+	* gdb.linespec/cpexplicit.exp: New file.
+	* gdb.linespec/explicit.c: New file.
+	* gdb.linespec/explicit.exp: New file.
+	* gdb.linespec/explicit2.c: New file.
+	* gdb.linespec/ls-errs.exp: Add explicit location tests.
+	* lib/gdb.exp (capture_command_output): Regexp-escape `command'
+	before using in the matching pattern.
+	Clarify that `prefix' is a regular expression.
+
+2015-08-11  Keith Seitz  <keiths@redhat.com>
+
+	* gdb.base/dprintf-pending.exp: Update dprintf "without format"
+	test.
+	Add tests for missing ",FMT" and ",".
 
 2015-08-10  Doug Evans  <dje@google.com>
 	    Keith Seitz  <keiths@redhat.com>
 
 	PR gdb/17960
 	* gdb.base/completion.exp: Add location completer tests.
+
+2015-08-07  Pedro Alves  <palves@redhat.com>
+
+	* gdb.arch/ppc64-atomic-inst.exp (do_test): New procedure, move
+	tests here.
+	(top level): Run do_test with and without displaced stepping.
+
+2015-08-07  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/valgrind-disp-step.c: New file.
+	* gdb.base/valgrind-disp-step.exp: New file.
+
+2015-08-07  Pedro Alves  <palves@redhat.com>
+
+	* gdb.threads/step-over-lands-on-breakpoint.c (wait_threads):
+	Delete function.
+	(main): Add alarm.  Run an infinite loop instead of calling
+	wait_threads.
+	* gdb.threads/step-over-lands-on-breakpoint.exp (do_test): Change
+	comment.
+	* gdb.threads/step-over-trips-on-watchpoint.c (wait_threads):
+	Delete function.
+	(main): Add alarm.  Run an infinite loop instead of calling
+	wait_threads.
+	* gdb.threads/step-over-trips-on-watchpoint.exp (do_test): Change
+	comment.
+
+2015-08-07  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/checkpoint-ns.exp: New file.
+	* gdb.base/checkpoint.exp: Pass explicit "checkpoint.c" to
+	standard_testfile.
+
+2015-08-07  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* lib/gdb.exp (skip_tsx_tests, skip_btrace_pt_tests): New.
+	* gdb.btrace/instruction_history.exp: Update.
+	* gdb.btrace/tsx.exp: New.
+	* gdb.btrace/tsx.c: New.
+
+2015-08-06  Pedro Alves <palves@redhat.com>
+
+	* gdb.reverse/step-precsave.exp: Use with_timeout_factor to
+	increase timeout.
+	* gdb.reverse/until-precsave.exp: Bump timeouts.
+
+2015-08-06  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/valgrind-infcall.exp: Issue a "disconnect".
+
+2015-08-06  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/18749
+	* gdb.threads/process-dies-while-handling-bp.c: New file.
+	* gdb.threads/process-dies-while-handling-bp.exp: New file.
 
 2015-08-06  Pedro Alves  <palves@redhat.com>
 
@@ -36,6 +3178,96 @@
 
 	* gdb.threads/next-while-other-thread-longjmps.c: New file.
 	* gdb.threads/next-while-other-thread-longjmps.exp: New file.
+
+2015-08-03  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.base/bp-permanent.exp: Report test as unsupported if
+	the target cannot stop at the permanent breakpoint.
+
+2015-08-03  Doug Evans  <dje@google.com>
+
+	* gdb.perf/single-step.exp (SINGLE_STEP_COUNT): Change to 1000 from
+	10000.
+
+2015-08-03  Doug Evans  <dje@google.com>
+
+	* Makefile.in (workers/%.worker, build-perf): New rule.
+	(GDB_PERFTEST_MODE): New variable.
+	(check-perf): Use it.
+	(clean): Clean up gdb.perf parallel build subdirs.
+	* lib/build-piece.exp: New file.
+	* lib/gdb.exp (make_gdb_parallel_path): New function
+	(standard_output_file, standard_temp_file): Call it.
+	(GDB_PARALLEL handling): Make outputs,temp,cache directories as subdirs
+	of $GDB_PARALLEL.
+	* lib/cache.exp (gdb_do_cache): Call make_gdb_parallel_path.
+
+2015-08-03  Doug Evans  <dje@google.com>
+
+	* gdb.perf/lib/perftest/reporter.py (SUM_FILE_NAME): New global.
+	(LOG_FILE_NAME): New global.
+	(TextReporter.__init__): Initialize self.txt_sum.
+	(TextReporter.report): Add support for multiple data-points.
+	Move report to perftest.sum, put raw data in perftest.log.
+	(TextReporter.start): Open sum and log files.
+	(TextReporter.end): Close sum and log files.
+	* gdb.perf/lib/perftest/testresult.py
+	(SingleStatisticTestResult.record): Handle multiple data-points.
+
+2015-07-31  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/attach-pie-misread.exp: Rename $res to $test_spawn_id.
+	Use spawn_id_get_pid.  Wait for spawn id after eof.  Use
+	kill_wait_spawned_process instead of explicit "kill -9".
+	* gdb.base/attach-pie-noexec.exp: Adjust to spawn_wait_for_attach
+	returning a spawn id instead of a pid.  Use spawn_id_get_pid and
+	kill_wait_spawned_process.
+	* gdb.base/attach-twice.exp: Likewise.
+	* gdb.base/attach.exp: Likewise.
+	(do_command_attach_tests): Use gdb_spawn_with_cmdline_opts and
+	gdb_test_multiple.
+	* gdb.base/solib-overlap.exp: Adjust to spawn_wait_for_attach
+	returning a spawn id instead of a pid.  Use spawn_id_get_pid and
+	kill_wait_spawned_process.
+	* gdb.base/valgrind-infcall.exp: Likewise.
+	* gdb.multi/multi-attach.exp: Likewise.
+	* gdb.python/py-prompt.exp: Likewise.
+	* gdb.python/py-sync-interp.exp: Likewise.
+	* gdb.server/ext-attach.exp: Likewise.
+	* gdb.threads/attach-into-signal.exp (corefunc): Use
+	spawn_wait_for_attach, spawn_id_get_pid and
+	kill_wait_spawned_process.
+	* gdb.threads/attach-many-short-lived-threads.exp: Adjust to
+	spawn_wait_for_attach returning a spawn id instead of a pid.  Use
+	spawn_id_get_pid and kill_wait_spawned_process.
+	* gdb.threads/attach-stopped.exp (corefunc): Use
+	spawn_wait_for_attach, spawn_id_get_pid and
+	kill_wait_spawned_process.
+	* gdb.base/break-interp.exp: Rename $res to $test_spawn_id.
+	Use spawn_id_get_pid.  Wait for spawn id after eof.  Use
+	kill_wait_spawned_process instead of explicit "kill -9".
+	* lib/gdb.exp (can_spawn_for_attach): Adjust comment.
+	(kill_wait_spawned_process, spawn_id_get_pid): New procedures.
+	(spawn_wait_for_attach): Use spawn instead of exec to spawn
+	processes.  Don't map cygwin/windows pids here.  Now returns a
+	spawn id list.
+
+2015-07-30  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.cp/var-tag.exp (do_global_tests): Revert broken commit
+	4bc4d42859e3b42c79c89295ef39944bdb3e6753 and apply the
+	correct patch.
+
+2015-07-30  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.arch/ppc64-symtab-cordic.exp: Restrict to ppc64 targets.
+
+2015-07-30  Sandra Loosemore  <sandra@codesourcery.com>
+
+	Reapply:
+	2014-05-21  Mark Wielaard  <mjw@redhat.com>
+
+	* gdb.cp/var-tag.exp (do_global_tests): Handle underlying type.
 
 2015-07-30  Pedro Alves  <palves@redhat.com>
 
@@ -55,15 +3287,429 @@
 	* gdb.threads/fork-plus-threads.c: New file.
 	* gdb.threads/fork-plus-threads.exp: New file.
 
-2015-07-10  Markus Metzger  <markus.t.metzger@intel.com>
+2015-07-29  Patrick Palka  <patrick@parcs.ath.cx>
 
-	* gdb.btrace/record_goto-step.exp: New.
+	* gdb.base/batch-preserve-term-settings.exp
+	(test_terminal_settings_preserved_after_cli_exit): Use
+	send_quit_command.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+	    Don Breazeal  <donb@codesourcery.com>
+
+	* gdb.base/multi-forks.exp (continue_to_exit_bp_loc): Expect
+	output from both inferior_spawn_id and gdb_spawn_id.
+
+2015-07-29  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* gdb.threads/attach-into-signal.exp (corefunc): Use
+	with_test_prefix on nested loops, uniquefying the test messages.
+
+2015-07-29  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* gdb.python/py-objfile.exp: Fix typo that snuck in from my last
+	commit.
+
+2015-07-29  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* gdb.base/batch-preserve-term-settings.exp (send_quit_command):
+	New proc.
+	(test_terminal_settings_preserved_after_sigterm): New test.
+
+2015-07-29  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* gdb.base/batch-preserve-term-settings.exp
+	(test_terminal_settings_preserved_after_cli_exit): New test.
+
+2015-07-29  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* gdb.base/batch-preserve-term-settings.exp: Remove top-level
+	manipulation of saved_gdbflags.
+	(test_terminal_settings_preserved): Remove global declaration of
+	the unused variable pagination_prompt.  Remove manipulation of
+	saved_gdbflags.  Use a local variable EXTRA_GDBFLAGS instead of
+	GDBFLAGS.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* boards/gdbserver-base.exp: Don't set gdb,noinferiorio.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/interrupt.exp: Revert back to checking gdb,noinferiorio
+	at the top.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/call-ar-st.c: Include "../lib/unbuffer_output.c".
+	(main): Call gdb_unbuffer_output.
+	* gdb.base/call-rt-st.c: Include "../lib/unbuffer_output.c".
+	(main): Call gdb_unbuffer_output.
+	* gdb.base/call-strs.c: Include "../lib/unbuffer_output.c".
+	(main): Call gdb_unbuffer_output.
+	* gdb.base/call-strs.exp: Adjust to step over the
+	gdb_unbuffer_output call.
+	* gdb.base/catch-gdb-caused-signals.c: Include
+	"../lib/unbuffer_output.c".
+	(main): Call gdb_unbuffer_output.
+	* gdb.base/dprintf.c: Include "../lib/unbuffer_output.c".
+	(main): Call gdb_unbuffer_output.
+	* gdb.base/ending-run.c: Include "../lib/unbuffer_output.c".
+	(main): Call gdb_unbuffer_output.
+	* gdb.base/run.c: Include "../lib/unbuffer_output.c".
+	(main): Call gdb_unbuffer_output.
+	* gdb.base/shlib-call.exp: Adjust to step over the
+	gdb_unbuffer_output call.
+	* gdb.base/shmain.c: Include "../lib/unbuffer_output.c".
+	(main): Call gdb_unbuffer_output.
+	* gdb.base/sizeof.c: Include "../lib/unbuffer_output.c".
+	(main): Call gdb_unbuffer_output.
+	* gdb.base/varargs.c: Include "../lib/unbuffer_output.c".
+	(main): Rename to ...
+	(test): ... this.
+	(main): Reimplement.
+	* gdb.base/varargs.exp: Run to test instead of to main.
+	* gdb.mi/mi-dprintf.c: Include "../lib/unbuffer_output.c".
+	(main): Call gdb_unbuffer_output.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.mi/mi-dprintf.exp (mi_expect_dprintf): New procedure,
+	factore out from mi_continue_dprintf.  For call-style dprintfs,
+	expect dprintf output out of $inferior_spawn_id.
+	(mi_continue_dprintf): Use mi_expect_dprintf.
+	* gdb.mi/mi-dprintf.c: Include "../lib/unbuffer_output.c".
+	(main): Call gdb_unbuffer_output.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* lib/mi-support.exp (mi_inferior_spawn_id): Delete.
+	(default_mi_gdb_start): Set inferior_spawn_id instead of
+	mi_inferior_spawn_id.  If $inferior_spawn_id is not set, set it to
+	gdb_spawn_id.
+	(mi_gdb_test): Always expect inferior output from both
+	$inferior_spawn_id and $gdb_spawn_id.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.gdb/selftest.exp (test_with_self): Update comment.  Use
+	send_inferior and $inferior_spawn_id.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.gdb/complaints.exp (test_initial_complaints)
+	(test_serial_complaints, test_short_complaints): Use
+	gdb_test_stdio.
+	(test_empty_complaint): Handle $inferior_spawn_id !=
+	$gdb_spawn_id.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/varargs.exp: Use gdb_test_stdio.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/shlib-call.exp: Use gdb_test_stdio.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/ending-run.exp: Use gdb_test_stdio.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/call-rt-st.exp (print_struct_call): Split "result"
+	parameter into two new parameters, "inf_result" and "gdb_result".
+	Expect inferior output and gdb output from $inferior_spawn_id and
+	$gdb_spawn_id, respectively.  Adjust all callers.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/call-ar-st.exp: Use gdb_test_stdio+multi_line instead
+	of gdb_test_sequence.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/a2-run.exp (saw_usage, saw_exit_wrapper)
+	(saw_spurious_output): Expect inferior output from
+	$inferior_spawn_id.  Use gdb_test_stdio.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/dprintf.exp: Use standard_testfile.  Change
+	prepare_for_testing call.
+	(srcfile): Don't set.
+	(restart): New procedure.
+	(test_dprintf): New procecure, use to continue over dprintfs.
+	(test_call, test_agent): New procedures, tests moved here.
+	Restart gdb and recreate dprintfs.  Adjust expected output.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/catch-gdb-caused-signals.exp: Use gdb_test_stdio.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/call-strs.exp: Use gdb_test_stdio instead of gdb_test.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/sizeof.exp (check_sizeof, check_valueof): Use
+	gdb_test_stdio.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* lib/gdb.exp (gdb_test_stdio): New procedure.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/restore.exp (restore_tests): Use gdb_continue_to_end.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/call-signal-resume.exp: Remove check for
+	gdb,noinferiorio.  Don't expect "no signal".  Use gdb_test.
+	* gdb.base/unwindonsignal.exp: Likewise.
+	* gdb.base/call-signals.c (gen_signal): Remove printf call.
+	* gdb.base/unwindonsignal.c (gen_signal): Likewise.
+
+2015-07-29  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/siginfo-addr.c (pass): New function.
+	(handler): Call it iff si_addr is correct.
+	* gdb.base/siginfo-addr.exp: Remove gdb_skip_stdio_test check.
+	Set a breakpoint at "pass" and continue to it.
+
+2015-07-28  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* gdb.python/py-objfile.exp: Make some tests have unique names.
+	* gdb.python/py-pp-registration.exp: Likewise.
+
+2015-07-28  Pedro Alves  <palves@redhat.com>
+
+	* gdb.server/server-exec-info.exp: Issue a "disconnect".
+
+2015-07-27  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.mi/mi-pending.c (thread_func): Replace return with return NULL.
+
+2015-07-27  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.mi/mi-watch.exp (test_watchpoint_triggering): Remove xfail.
+
+2015-07-27  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* gdb.base/gdb-sigterm-2.exp: New test.
+
+2015-07-25  Doug Evans  <xdje42@gmail.com>
+
+	Revert:
+	* Makefile.in (check/%.exp): Pass directory for GDB_PARALLEL.
+	(workers/%.worker, build-perf): New rule.
+	(GDB_PERFTEST_MODE): New variable.
+	(check-perf): Use it.
+	(clean): Clean up gdb.perf parallel build subdirs.
+	* lib/build-piece.exp: New file.
+	* lib/cache.exp (gdb_do_cache): Include $GDB_PARALLEL in path name.
+	* lib/gdb.exp (standard_output_file): Include $GDB_PARALLEL in path
+	name.
+	(standard_temp_file): Ditto.
+	(GDB_PARALLEL handling): Make outputs,temp,cache directories as subdirs
+	of $GDB_PARALLEL.
+
+2015-07-24  Doug Evans  <dje@google.com>
+
+	* gdb.perf/lib/perftest/utils.py: New file.
+	* gdb.perf/gm-hello.cc: New file.
+	* gdb.perf/gm-pervasive-typedef.cc: New file.
+	* gdb.perf/gm-pervasive-typedef.h: New file.
+	* gdb.perf/gm-std.cc: New file.
+	* gdb.perf/gm-std.h: New file.
+	* gdb.perf/gm-use-cerr.cc: New file.
+	* gdb.perf/gm-utils.h: New file.
+	* gdb.perf/gmonster-null-lookup.py: New file.
+	* gdb.perf/gmonster-pervasive-typedef.py: New file.
+	* gdb.perf/gmonster-print-cerr.py: New file.
+	* gdb.perf/gmonster-ptype-string.py: New file.
+	* gdb.perf/gmonster-runto-main.py: New file.
+	* gdb.perf/gmonster-select-file.py: New file.
+	* gdb.perf/gmonster1-null-lookup.exp: New file.
+	* gdb.perf/gmonster1-pervasive-typedef.exp: New file.
+	* gdb.perf/gmonster1-print-cerr.exp: New file.
+	* gdb.perf/gmonster1-ptype-string.exp: New file.
+	* gdb.perf/gmonster1-runto-main.exp: New file.
+	* gdb.perf/gmonster1-select-file.exp: New file.
+	* gdb.perf/gmonster1.cc: New file.
+	* gdb.perf/gmonster1.exp: New file.
+	* gdb.perf/gmonster2-null-lookup.exp: New file.
+	* gdb.perf/gmonster2-pervasive-typedef.exp: New file.
+	* gdb.perf/gmonster2-print-cerr.exp: New file.
+	* gdb.perf/gmonster2-ptype-string.exp: New file.
+	* gdb.perf/gmonster2-runto-main.exp: New file.
+	* gdb.perf/gmonster2-select-file.exp: New file.
+	* gdb.perf/gmonster2.cc: New file.
+	* gdb.perf/gmonster2.exp: New file.
+
+2015-07-24  Doug Evans  <dje@google.com>
+
+	* gdb.perf/README: New file.
+	* lib/perftest.exp (tcl_string_list_to_python_list): New function.
+	* lib/gen-perf-test.exp: New file.
+
+2015-07-24  Doug Evans  <dje@google.com>
+
+	* lib/perftest.exp (PerfTest::compile): Unconditionally call body.
+	(PerfTest::startup): New function.
+	(PerfTest::run): Return result of calling body.
+	(PerfTest::assemble): Rewrite.
+	* gdb.perf/backtrace.exp (PerfTest::assemble): Update function result.
+	* gdb.perf/disassemble.exp (PerfTest::assemble): Ditto.
+	* gdb.perf/single-step.exp (PerfTest::assemble): Ditto.
+	* gdb.perf/skip-prologue.exp (PerfTest::assemble): Ditto.
+	* gdb.perf/solib.exp (PerfTest::assemble): Ditto.
+
+2015-07-24  Doug Evans  <dje@google.com>
+
+	* lib/gdb.exp (clean_restart): Make executable optional.
+
+2015-07-24  Doug Evans  <dje@google.com>
+
+	* gdb.base/watchpoint.exp (test_complex_watchpoint): Remove
+	compiler_info references.
+	* gdb.cp/temargs.exp: Ditto.
+	* lib/gdb.exp: Unset compiler_info instead of setting to "unknown".
+	(get_compiler_info): Early exit if already computed.  Set compiler_info
+	to "unknown" if there was a problem.
+	(test_compiler_info): Add function comment.  Call get_compiler_info.
+
+2015-07-24  Doug Evans  <dje@google.com>
+
+	* Makefile.in (check/%.exp): Pass directory for GDB_PARALLEL.
+	(workers/%.worker, build-perf): New rule.
+	(GDB_PERFTEST_MODE): New variable.
+	(check-perf): Use it.
+	(clean): Clean up gdb.perf parallel build subdirs.
+	* lib/build-piece.exp: New file.
+	* lib/cache.exp (gdb_do_cache): Include $GDB_PARALLEL in path name.
+	* lib/gdb.exp (standard_output_file): Include $GDB_PARALLEL in path
+	name.
+	(standard_temp_file): Ditto.
+	(GDB_PARALLEL handling): Make outputs,temp,cache directories as subdirs
+	of $GDB_PARALLEL.
+
+2015-07-24  Doug Evans  <dje@google.com>
+
+	* lib/future.exp (gdb_default_target_compile): New option
+	"early_flags".
+	* lib/gdb.exp (gdb_compile): Undo debian's change in default of
+	--as-needed.
+
+2015-07-24  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* gdb.base/catch-syscall.exp: Call gdb_exit before
+	gdb_skip_xml_test.
+
+2015-07-24  Pedro Alves  <palves@redhat.com>
+
+	* gdb.python/py-events.exp: Accept output between the stop event
+	and the prompt.
+	* gdb.python/py-evsignal.exp: Likewise.
+	* gdb.python/py-evthreads.exp: Likewise.
+
+2015-07-24  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/18717
+	* gdb.threads/non-ldr-exit.c: New file.
+	* gdb.threads/non-ldr-exit.exp: New file.
+
+2015-07-24  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.server/ext-wrapper.exp: Test --wrapper option when
+	restarting process.
+
+2015-07-24  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.server/ext-restart.exp: New file.
+
+2015-07-24  Yao Qi  <yao.qi@linaro.org>
+
+	* lib/gdbserver-support.exp (gdbserver_start_extended): Add
+	argument options.
+	* gdb.server/ext-wrapper.exp: New file.
+
+2015-07-23  Doug Evans  <dje@google.com>
+
+	* gdb.dwarf2/dw2-dummy-cu.S: New file.
+	* gdb.dwarf2/dw2-dummy-cu.exp: New file.
+
+2015-07-23  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	* gdb.ada/var_arr_typedef.exp: New testcase.
+	* gdb.ada/var_arr_typedef/pack.adb: New file.
+	* gdb.ada/var_arr_typedef/pack.ads: New file.
+	* gdb.ada/var_arr_typedef/var_arr_typedef.adb: New file.
+
+2015-07-20  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.ada/info_exc.exp: Adjust "info exceptions" expected output.
+
+2015-07-16  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.arch/i386-biarch-core.exp: Replace istarget
+	by "complete set gnutarget". Remove expectation for the "core-file"
+	command.
+
+2015-07-15  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Revert the previous commit:
+	Tests for validate symbol file using build-id.
+
+2015-07-15  Aleksandar Ristovski  <aristovski@qnx.com
+
+	Tests for validate symbol file using build-id.
+	* gdb.base/solib-mismatch-lib.c: New file.
+	* gdb.base/solib-mismatch-libmod.c: New file.
+	* gdb.base/solib-mismatch.c: New file.
+	* gdb.base/solib-mismatch.exp: New file.
+
+2015-07-15  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* gdb.base/sigaltstack.exp (finish_test): Add kfail for
+	nios2-*-linux*.
+	* gdb.base/sigbpt.exp (stepi_out): Likewise.
+	* gdb.base/siginfo.exp: Likewise.
+	* gdb.base/sigstep.exp (advance, advancei): Likewise.
+
+2015-07-15  Pierre Langlois  <pierre.langlois@arm.com>
+
+	* gdb.base/range-stepping.exp (gdb_range_stepping_enabled):
+	Move it to ...
+	* lib/range-stepping-support.exp (gdb_range_stepping_enabled):
+	... here.
+	* gdb.trace/range-stepping.exp: Check that the target supports
+	range stepping.
+
+2015-07-14  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.arch/i386-biarch-core.exp: Fix comment typo.
+
+2015-07-14  Pedro Alves  <palves@redhat.com>
+
+	* gdb.base/killed-outside.exp: New file.
+	* gdb.base/killed-outside.c: New file.
 
 2015-07-10  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	* gdb.asm/asm-source.exp (f at main): Stop at gdbasm_enter.
 	(n at main): New.
 	* gdb.asm/asmsrc1.s: Add comment "mark: main enter".
+
+2015-07-10  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* gdb.base/gnu_vector.exp: On x86 and x86_64 targets, skip the
+	infcall tests instead of setting up for KFAIL.
+
+2015-07-10  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.btrace/record_goto-step.exp: New.
 
 2015-07-08  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
@@ -78,6 +3724,48 @@
 
 	PR exp/18617
 	* gdb.trace/ax.exp: Add test.
+
+2015-07-07  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.arch/aarch64-atomic-inst.exp: Check is_aarch64_target
+	instead of istarget "aarch64*-*-*".
+	* gdb.arch/aarch64-fp.exp: Likewise.
+	* gdb.base/float.exp: Likewise.
+	* gdb.reverse/aarch64.exp: Likewise.
+	* lib/gdb.exp (is_aarch64_target): New proc.
+
+2015-07-07  Yao Qi  <yao.qi@linaro.org>
+
+	* lib/gdb.exp (is_aarch32_target): New proc.
+	* gdb.arch/arm-bl-branch-dest.exp: Check is_aarch32_target
+	instead of "istarget "arm*-*-*"".
+	* gdb.arch/arm-disp-step.exp: Likewise.
+	* gdb.arch/thumb-bx-pc.exp: Likewise.
+	* gdb.arch/thumb-prologue.exp: Likewise.
+	* gdb.arch/thumb-singlestep.exp: Likewise.
+	* gdb.base/disp-step-syscall.exp: Likewise.
+	* gdb.base/float.exp: Likewise.
+
+2015-07-07  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.base/catch-syscall.exp (test_catch_syscall_multi_arch):
+	Set arch1, arch2, syscall1_name, syscall2_name and syscall_number.
+
+2015-07-07  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.multi/multi-arch-exec.exp: Set march1 and march2 to "" if target
+	is aarch64.  If target is aarch64, set compiler=${ARM_CC_FOR_TARGET}
+	if it exists.
+	* gdb.multi/multi-arch.exp: Likewise.
+
+2015-07-07  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.python/py-lazy-string.exp: Add missing parentheses to
+	print.
+
+2015-07-07  Yao Qi  <yao.qi@linaro.org>
+
+	* gdb.arch/thumb-singlestep.exp: Do one more single step.
 
 2015-06-30  Martin Galvan  <martin.galvan@tallertechnologies.com>
 
@@ -206,7 +3894,7 @@
 	* gdb.mi/mi-dprintf-pendshr.c: New file.
 
 2015-06-10  Walfred Tedeschi  <walfred.tedeschi@intel.com>
-            Mircea Gherzan  <mircea.gherzan@intel.com>
+	    Mircea Gherzan  <mircea.gherzan@intel.com>
 
 	* gdb.arch/i386-mpx-map.c: New file.
 	* gdb.arch/i386-mpx-map.exp: New File.
@@ -296,7 +3984,8 @@
 
 2015-05-26  Omair Javaid  <omair.javaid@linaro.org>
 
-	* lib/gdb.exp (supports_process_record): Return true for aarch64*-linux*.
+	* lib/gdb.exp (supports_process_record): Return true for
+	aarch64*-linux*.
 	(supports_reverse): Likewise.
 
 2015-05-22  Patrick Palka  <patrick@parcs.ath.cx>
@@ -725,7 +4414,7 @@
 
 2015-04-07  Pedro Alves  <palves@redhat.com>
 
-        * lib/gdb.exp (gdb_test_multiple): When processing an argument,
+	* lib/gdb.exp (gdb_test_multiple): When processing an argument,
 	append the substituted item, not the original item.
 
 2015-04-07  Pedro Alves  <palves@redhat.com>
@@ -3510,7 +7199,7 @@
 	(explicit_fork_child_follow): Deleted procedure.
 	(test_follow_fork): New procedure.
 	(do_fork_tests): Replace calls to deleted procedures with
-	calls to test_follow_fork and reset GDB for subsequent 
+	calls to test_follow_fork and reset GDB for subsequent
 	procedure calls.
 
 2014-06-17  Yao Qi  <yao@codesourcery.com>
@@ -5275,7 +8964,7 @@
 	    Pedro Alves  <palves@redhat.com>
 
 	* gdb.mi/mi-info-os.exp: Connect to the target with
-        mi_gdb_target_load.
+	mi_gdb_target_load.
 
 2014-01-08  Pedro Alves  <palves@redhat.com>
 
@@ -5311,6 +9000,6 @@ For older changes see ChangeLog-1993-2013.
 ;; version-control: never
 ;; End:
 
-    Copyright 2014-2015 Free Software Foundation, Inc.
+    Copyright 2014-2016 Free Software Foundation, Inc.
   Copying and distribution of this file, with or without modification,
   are permitted provided the copyright notice and this notice are preserved.

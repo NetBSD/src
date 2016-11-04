@@ -221,7 +221,7 @@ proc pending_tracepoint_resolved_during_trace { trace_type } \
 		fail $test
 	    }
 	}
-	-re "Continuing.\r\n\r\nBreakpoint.*marker.*at.*$srcfile.*$gdb_prompt $" {
+	-re "Continuing.\r\n(Reading .* from remote target...\r\n)?\r\nBreakpoint.*marker.*at.*$srcfile.*$gdb_prompt $" {
 	    pass $test
 	}
     }
@@ -294,7 +294,7 @@ proc pending_tracepoint_installed_during_trace { trace_type } \
 		fail $test
 	    }
 	}
-	-re "Continuing.\r\n\r\nBreakpoint.*marker.*at.*$srcfile.*$gdb_prompt $" {
+	-re "Continuing.\r\n(Reading .* from remote target...\r\n)?\r\nBreakpoint.*marker.*at.*$srcfile.*$gdb_prompt $" {
            pass $test
        }
     }
@@ -391,7 +391,7 @@ proc pending_tracepoint_disconnect_after_resolved { trace_type } \
 
     gdb_test "continue" "Continuing.\r\n\r\nBreakpoint.*marker.*at.*pending.c.*" \
 	"continue to marker 1"
-    gdb_test "continue" "Continuing.\r\n\r\nBreakpoint.*marker.*at.*pending.c.*" \
+    gdb_test "continue" "Continuing.\r\n(Reading .* from remote target...\r\n)?\r\nBreakpoint.*marker.*at.*pending.c.*" \
 	"continue to marker 2"
 
     # There should be no pending tracepoint, so no warning should be emitted.
@@ -473,7 +473,7 @@ proc pending_tracepoint_with_action_resolved { trace_type } \
 		fail $test
             }
 	}
-	-re "Continuing.\r\n\r\nBreakpoint.*marker.*at.*$srcfile.*$gdb_prompt $" {
+	-re "Continuing.\r\n(Reading .* from remote target...\r\n)?\r\nBreakpoint.*marker.*at.*$srcfile.*$gdb_prompt $" {
 	    pass "continue to marker 2"
 	}
 

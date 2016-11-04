@@ -252,7 +252,7 @@ tui_make_all_invisible (void)
 void
 tui_refresh_all (struct tui_win_info **list)
 {
-  enum tui_win_type type;
+  int type;
   struct tui_gen_win_info *locator = tui_locator_win_info_ptr ();
 
   for (type = SRC_WIN; (type < MAX_MAJOR_WINDOWS); type++)

@@ -154,13 +154,6 @@ INLINE_PSIM_ENDIAN(unsigned_8) endian_le2h_8(unsigned_8 x);
 # endif
 #endif
 
-#if (defined (__i486__) || defined (__i586__) || defined (__i686__)) && defined(__GNUC__) && WITH_BSWAP
-#undef  htonl
-#undef  ntohl
-#define htonl(IN) __extension__ ({ int _out; __asm__ ("bswap %0" : "=r" (_out) : "0" (IN)); _out; })
-#define ntohl(IN) __extension__ ({ int _out; __asm__ ("bswap %0" : "=r" (_out) : "0" (IN)); _out; })
-#endif
-
 /* Power or PowerPC running AIX  */
 #if defined(_POWER) && defined(_AIX)
 # if (WITH_HOST_BYTE_ORDER == 0)

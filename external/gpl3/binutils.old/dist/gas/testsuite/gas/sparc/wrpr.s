@@ -16,3 +16,4 @@
 	wrpr %o6,%otherwin
 	wrpr %o7,%wstate
 	wrpr %l0,%gl
+	wrpr %l3,%pmcdper

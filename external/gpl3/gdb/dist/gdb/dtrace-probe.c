@@ -1,6 +1,6 @@
 /* DTrace probe support for GDB.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    Contributed by Oracle, Inc.
 
@@ -386,8 +386,8 @@ dtrace_process_dof_probe (struct objfile *objfile,
     {
       uint32_t probe_offset
 	= ((uint32_t *) offtab)[DOF_UINT (dof, probe->dofpr_offidx) + i];
-      struct dtrace_probe *ret
-	= obstack_alloc (&objfile->per_bfd->storage_obstack, sizeof (*ret));
+      struct dtrace_probe *ret =
+	XOBNEW (&objfile->per_bfd->storage_obstack, struct dtrace_probe);
 
       ret->p.pops = &dtrace_probe_ops;
       ret->p.arch = gdbarch;
@@ -464,8 +464,6 @@ static void
 dtrace_process_dof (asection *sect, struct objfile *objfile,
 		    VEC (probe_p) **probesp, struct dtrace_dof_hdr *dof)
 {
-  bfd *abfd = objfile->obfd;
-  int size = bfd_get_arch_size (abfd) / 8;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   struct dtrace_dof_sect *section;
   int i;
@@ -519,6 +517,14 @@ dtrace_process_dof (asection *sect, struct objfile *objfile,
 	char *argtab  = DTRACE_DOF_PTR (dof, DOF_UINT (dof, args_s->dofs_offset));
 	unsigned int entsize = DOF_UINT (dof, probes_s->dofs_entsize);
 	int num_probes;
+
+	if (DOF_UINT (dof, section->dofs_size)
+	    < sizeof (struct dtrace_dof_provider))
+	  {
+	    /* The section is smaller than expected, so do not use it.
+	       This has been observed on x86-solaris 10.  */
+	    goto invalid_dof_data;
+	  }
 
 	/* Very, unlikely, but could crash gdb if not handled
 	   properly.  */

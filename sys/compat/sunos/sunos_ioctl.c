@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.67 2015/12/12 17:48:18 nakayama Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.67.2.1 2016/11/04 14:49:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.67 2015/12/12 17:48:18 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.67.2.1 2016/11/04 14:49:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -443,7 +443,7 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap, register_
 	    {
 		int x;	/* unused */
 
-		error = copyin((void *)&x, SCARG(uap, data), sizeof x);
+		error = copyin(SCARG(uap, data), (void *)&x, sizeof x);
 		break;
 	    }
 	case _IOR('t', 100, int):	/* sun SUNOS_TIOCSSOFTCAR */

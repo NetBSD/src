@@ -539,7 +539,6 @@ enable_break2 (void)
       CORE_ADDR addr, interp_loadmap_addr;
       gdb_byte addr_buf[FRV_PTR_SIZE];
       struct int_elf32_fdpic_loadmap *ldm;
-      volatile struct gdb_exception ex;
 
       /* Read the contents of the .interp section into a local buffer;
          the contents specify the dynamic linker this program uses.  */
@@ -557,10 +556,15 @@ enable_break2 (void)
          be trivial on GNU/Linux).  Therefore, we have to try an alternate
          mechanism to find the dynamic linker's base address.  */
 
-      TRY_CATCH (ex, RETURN_MASK_ALL)
+      TRY
         {
           tmp_bfd = solib_bfd_open (buf);
         }
+      CATCH (ex, RETURN_MASK_ALL)
+	{
+	}
+      END_CATCH
+
       if (tmp_bfd == NULL)
 	{
 	  enable_break_failure_warning ();

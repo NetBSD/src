@@ -1,5 +1,5 @@
 /* ia64-opc-x.c -- IA-64 `X' opcode table.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Contributed by Timothy Wall <twall@cygnus.com>
 
    This file is part of the GNU opcodes library.

@@ -1,5 +1,5 @@
 # Expect script for ld --entry tests
-#   Copyright (C) 2009 Free Software Foundation
+#   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -21,7 +21,7 @@
 
 set build_tests {
   {"Build libentry.a"
-   "" ""
+   "" "" ""
    {entry.s} {} "libentry.a"}
 }
 

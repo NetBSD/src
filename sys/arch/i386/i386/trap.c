@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.276 2015/12/16 18:54:03 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.276.2.1 2016/11/04 14:49:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.276 2015/12/16 18:54:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.276.2.1 2016/11/04 14:49:01 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

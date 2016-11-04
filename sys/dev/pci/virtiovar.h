@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.5 2015/10/26 01:44:48 ozaki-r Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.5.2.1 2016/11/04 14:49:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -149,6 +149,7 @@ struct virtio_softc {
 					 /* set by child */
 	int			(*sc_intrhand)(struct virtio_softc*);
 					 /* set by child */
+	struct pci_attach_args	sc_pa;	/* need for rescan to set interrupts */
 };
 
 #define VIRTIO_F_PCI_INTR_MPSAFE	(1 << 0)

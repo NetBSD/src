@@ -1,5 +1,5 @@
 /* Main header for the CRIS simulator, based on the m32r header.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -23,6 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifndef SIM_MAIN_H
 #define SIM_MAIN_H
+
+/* This is a global setting.  Different cpu families can't mix-n-match -scache
+   and -pbb.  However some cpu families may use -simple while others use
+   one of -scache/-pbb.  */
+#define WITH_SCACHE_PBB 1
 
 #include "symcat.h"
 #include "sim-basics.h"
@@ -220,7 +225,5 @@ cris_core_signal ((SD), (CPU), (CIA), (MAP), (NR_BYTES), (ADDR), \
 
 /* Default memory size.  */
 #define CRIS_DEFAULT_MEM_SIZE 0x800000 /* 8M */
-
-extern device cris_devices;
 
 #endif /* SIM_MAIN_H */

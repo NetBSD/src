@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2015 Free Software Foundation, Inc.
+   Copyright 2010-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,12 +21,12 @@
 /* Put the path to the pretty-printer script in .debug_gdb_scripts so
    gdb will automagically loaded it.
    Normally "MS" would appear here, as in
-   .pushsection ".debug_gdb_scripts", "MS",@progbits,1
+   .pushsection ".debug_gdb_scripts", "MS",%progbits,1
    but we remove it to test files appearing twice in the section.  */
 
 #define DEFINE_GDB_SCRIPT_FILE(script_name) \
   asm("\
-.pushsection \".debug_gdb_scripts\", \"S\",@progbits\n\
+.pushsection \".debug_gdb_scripts\", \"S\",%progbits\n\
 .byte " XSTRING (SECTION_SCRIPT_ID_PYTHON_FILE) "\n\
 .asciz \"" script_name "\"\n\
 .popsection\n\
@@ -43,12 +43,12 @@ DEFINE_GDB_SCRIPT_FILE (SCRIPT_FILE)
 /* Inlined scripts are harder to create in the same way as
    DEFINE_GDB_SCRIPT_FILE.  Keep things simple and just define it here.
    Normally "MS" would appear here, as in
-   .pushsection ".debug_gdb_scripts", "MS",@progbits,1
+   .pushsection ".debug_gdb_scripts", "MS",%progbits,1
    but we remove it to test scripts appearing twice in the section.  */
 
 #define DEFINE_GDB_SCRIPT_TEXT \
 asm( \
-".pushsection \".debug_gdb_scripts\", \"S\",@progbits\n" \
+".pushsection \".debug_gdb_scripts\", \"S\",%progbits\n" \
 ".byte " XSTRING (SECTION_SCRIPT_ID_PYTHON_TEXT) "\n" \
 ".ascii \"gdb.inlined-script\\n\"\n" \
 ".ascii \"class test_cmd (gdb.Command):\\n\"\n" \

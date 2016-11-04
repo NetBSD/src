@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.78 2016/05/19 18:32:29 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.78.2.1 2016/11/04 14:49:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.78 2016/05/19 18:32:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.78.2.1 2016/11/04 14:49:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -202,10 +202,13 @@ struct wapbl {
 	size_t wl_unsynced_bufbytes; /* Byte count of unsynced buffers */
 #endif
 
-	daddr_t *wl_deallocblks;/* lm:	address of block */
-	int *wl_dealloclens;	/* lm:	size of block */
-	int wl_dealloccnt;	/* lm:	total count */
-	int wl_dealloclim;	/* l:	max count */
+#if _KERNEL
+	int wl_brperjblock;	/* r Block records per journal block */
+#endif
+
+	SIMPLEQ_HEAD(, wapbl_dealloc) wl_dealloclist;	/* lm:	list head */
+	int wl_dealloccnt;				/* lm:	total count */
+	int wl_dealloclim;				/* r:	max count */
 
 	/* hashtable of inode numbers for allocated but unlinked inodes */
 	/* synch ??? */
@@ -246,6 +249,7 @@ static inline size_t wapbl_space_used(size_t avail, off_t head,
 #ifdef _KERNEL
 
 static struct pool wapbl_entry_pool;
+static struct pool wapbl_dealloc_pool;
 
 #define	WAPBL_INODETRK_SIZE 83
 static int wapbl_ino_pool_refcount;
@@ -326,6 +330,8 @@ wapbl_init(void)
 
 	pool_init(&wapbl_entry_pool, sizeof(struct wapbl_entry), 0, 0, 0,
 	    "wapblentrypl", &pool_allocator_kmem, IPL_VM);
+	pool_init(&wapbl_dealloc_pool, sizeof(struct wapbl_dealloc), 0, 0, 0,
+	    "wapbldealloc", &pool_allocator_nointr, IPL_NONE);
 
 	wapbl_sysctl_init();
 }
@@ -337,6 +343,7 @@ wapbl_fini(void)
 	if (wapbl_sysctl != NULL)
 		 sysctl_teardown(&wapbl_sysctl);
 
+	pool_destroy(&wapbl_dealloc_pool);
 	pool_destroy(&wapbl_entry_pool);
 
 	return 0;
@@ -498,14 +505,15 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	/* XXX fix actual number of buffers reserved per filesystem. */
 	wl->wl_bufcount_max = (nbuf / 2) * 1024;
 
+	wl->wl_brperjblock = ((1<<wl->wl_log_dev_bshift)
+	    - offsetof(struct wapbl_wc_blocklist, wc_blocks)) /
+	    sizeof(((struct wapbl_wc_blocklist *)0)->wc_blocks[0]);
+	KASSERT(wl->wl_brperjblock > 0);
+
 	/* XXX tie this into resource estimation */
 	wl->wl_dealloclim = wl->wl_bufbytes_max / mp->mnt_stat.f_bsize / 2;
+	SIMPLEQ_INIT(&wl->wl_dealloclist);
 	
-	wl->wl_deallocblks = wapbl_alloc(sizeof(*wl->wl_deallocblks) *
-	    wl->wl_dealloclim);
-	wl->wl_dealloclens = wapbl_alloc(sizeof(*wl->wl_dealloclens) *
-	    wl->wl_dealloclim);
-
 	wl->wl_buffer = wapbl_alloc(MAXPHYS);
 	wl->wl_buffer_used = 0;
 
@@ -553,10 +561,6 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	wapbl_discard(wl);
 	wapbl_free(wl->wl_wc_scratch, wl->wl_wc_header->wc_len);
 	wapbl_free(wl->wl_wc_header, wl->wl_wc_header->wc_len);
-	wapbl_free(wl->wl_deallocblks,
-	    sizeof(*wl->wl_deallocblks) * wl->wl_dealloclim);
-	wapbl_free(wl->wl_dealloclens,
-	    sizeof(*wl->wl_dealloclens) * wl->wl_dealloclim);
 	wapbl_free(wl->wl_buffer, MAXPHYS);
 	wapbl_inodetrk_free(wl);
 	wapbl_free(wl, sizeof(*wl));
@@ -573,6 +577,7 @@ void
 wapbl_discard(struct wapbl *wl)
 {
 	struct wapbl_entry *we;
+	struct wapbl_dealloc *wd;
 	struct buf *bp;
 	int i;
 
@@ -581,8 +586,7 @@ wapbl_discard(struct wapbl *wl)
 	 * if we want to call flush from inside a transaction
 	 */
 	rw_enter(&wl->wl_rwlock, RW_WRITER);
-	wl->wl_flush(wl->wl_mount, wl->wl_deallocblks, wl->wl_dealloclens,
-	    wl->wl_dealloccnt);
+	wl->wl_flush(wl->wl_mount, SIMPLEQ_FIRST(&wl->wl_dealloclist));
 
 #ifdef WAPBL_DEBUG_PRINT
 	{
@@ -684,7 +688,12 @@ wapbl_discard(struct wapbl *wl)
 	}
 
 	/* Discard list of deallocs */
-	wl->wl_dealloccnt = 0;
+	while ((wd = SIMPLEQ_FIRST(&wl->wl_dealloclist)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&wl->wl_dealloclist, wd_entries);
+		pool_put(&wapbl_dealloc_pool, wd);
+		wl->wl_dealloccnt--;
+	}
+
 	/* XXX should we clear wl_reserved_bytes? */
 
 	KASSERT(wl->wl_bufbytes == 0);
@@ -693,6 +702,8 @@ wapbl_discard(struct wapbl *wl)
 	KASSERT(LIST_EMPTY(&wl->wl_bufs));
 	KASSERT(SIMPLEQ_EMPTY(&wl->wl_entries));
 	KASSERT(wl->wl_inohashcnt == 0);
+	KASSERT(SIMPLEQ_EMPTY(&wl->wl_dealloclist));
+	KASSERT(wl->wl_dealloccnt == 0);
 
 	rw_exit(&wl->wl_rwlock);
 }
@@ -727,13 +738,11 @@ wapbl_stop(struct wapbl *wl, int force)
 	KASSERT(wl->wl_dealloccnt == 0);
 	KASSERT(SIMPLEQ_EMPTY(&wl->wl_entries));
 	KASSERT(wl->wl_inohashcnt == 0);
+	KASSERT(SIMPLEQ_EMPTY(&wl->wl_dealloclist));
+	KASSERT(wl->wl_dealloccnt == 0);
 
 	wapbl_free(wl->wl_wc_scratch, wl->wl_wc_header->wc_len);
 	wapbl_free(wl->wl_wc_header, wl->wl_wc_header->wc_len);
-	wapbl_free(wl->wl_deallocblks,
-	    sizeof(*wl->wl_deallocblks) * wl->wl_dealloclim);
-	wapbl_free(wl->wl_dealloclens,
-	    sizeof(*wl->wl_dealloclens) * wl->wl_dealloclim);
 	wapbl_free(wl->wl_buffer, MAXPHYS);
 	wapbl_inodetrk_free(wl);
 
@@ -1552,8 +1561,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	 * if we want to call flush from inside a transaction
 	 */
 	rw_enter(&wl->wl_rwlock, RW_WRITER);
-	wl->wl_flush(wl->wl_mount, wl->wl_deallocblks, wl->wl_dealloclens,
-	    wl->wl_dealloccnt);
+	wl->wl_flush(wl->wl_mount, SIMPLEQ_FIRST(&wl->wl_dealloclist));
 
 	/*
 	 * Now that we are exclusively locked and the file system has
@@ -1674,7 +1682,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	wl->wl_tail = tail;
 	KASSERT(wl->wl_reclaimable_bytes >= delta);
 	wl->wl_reclaimable_bytes -= delta;
-	wl->wl_dealloccnt = 0;
+	KDASSERT(wl->wl_dealloccnt == 0);
 #ifdef WAPBL_DEBUG_BUFBYTES
 	wl->wl_unsynced_bufbytes += wl->wl_bufbytes;
 #endif
@@ -1730,8 +1738,8 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 
  out:
 	if (error) {
-		wl->wl_flush_abort(wl->wl_mount, wl->wl_deallocblks,
-		    wl->wl_dealloclens, wl->wl_dealloccnt);
+		wl->wl_flush_abort(wl->wl_mount,
+		    SIMPLEQ_FIRST(&wl->wl_dealloclist));
 	}
 
 #ifdef WAPBL_DEBUG_PRINT
@@ -1868,12 +1876,12 @@ wapbl_print(struct wapbl *wl,
 
 		(*pr)("dealloced blks = ");
 		{
-			int i;
+			struct wapbl_dealloc *wd;
 			cnt = 0;
-			for (i = 0; i < wl->wl_dealloccnt; i++) {
+			SIMPLEQ_FOREACH(wd, &wl->wl_dealloclist, wd_entries) {
 				(*pr)(" %"PRId64":%d,",
-				      wl->wl_deallocblks[i],
-				      wl->wl_dealloclens[i]);
+				      wd->wd_blkno,
+				      wd->wd_len);
 				if ((++cnt % 4) == 0) {
 					(*pr)("\n\t");
 				}
@@ -1921,28 +1929,54 @@ wapbl_dump(struct wapbl *wl)
 
 /****************************************************************/
 
-void
-wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
+int
+wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len, bool force)
 {
+	struct wapbl_dealloc *wd;
+	int error = 0;
 
 	wapbl_jlock_assert(wl);
 
 	mutex_enter(&wl->wl_mtx);
-	/* XXX should eventually instead tie this into resource estimation */
-	/*
-	 * XXX this panic needs locking/mutex analysis and the
-	 * ability to cope with the failure.
-	 */
-	/* XXX this XXX doesn't have enough XXX */
-	if (__predict_false(wl->wl_dealloccnt >= wl->wl_dealloclim))
-		panic("wapbl_register_deallocation: out of resources");
 
-	wl->wl_deallocblks[wl->wl_dealloccnt] = blk;
-	wl->wl_dealloclens[wl->wl_dealloccnt] = len;
+	if (__predict_false(wl->wl_dealloccnt >= wl->wl_dealloclim)) {
+		if (!force) {
+			error = EAGAIN;
+			goto out;
+		}
+
+		/*
+		 * Forced registration can only be used when:
+		 * 1) the caller can't cope with failure
+		 * 2) the path can be triggered only bounded, small
+		 *    times per transaction
+		 * If this is not fullfilled, and the path would be triggered
+		 * many times, this could overflow maximum transaction size
+		 * and panic later.
+		 */
+		printf("%s: forced dealloc registration over limit: %d >= %d\n",
+			wl->wl_mount->mnt_stat.f_mntonname,
+			wl->wl_dealloccnt, wl->wl_dealloclim);
+	}
+
 	wl->wl_dealloccnt++;
-	WAPBL_PRINTF(WAPBL_PRINT_ALLOC,
-	    ("wapbl_register_deallocation: blk=%"PRId64" len=%d\n", blk, len));
 	mutex_exit(&wl->wl_mtx);
+
+	wd = pool_get(&wapbl_dealloc_pool, PR_WAITOK);
+	wd->wd_blkno = blk;
+	wd->wd_len = len;
+
+	mutex_enter(&wl->wl_mtx);
+	SIMPLEQ_INSERT_TAIL(&wl->wl_dealloclist, wd, wd_entries);
+
+ out:
+	mutex_exit(&wl->wl_mtx);
+
+	WAPBL_PRINTF(WAPBL_PRINT_ALLOC,
+	    ("wapbl_register_deallocation: blk=%"PRId64" len=%d error=%d\n",
+	    blk, len, error));
+
+	return error;
 }
 
 /****************************************************************/
@@ -2065,17 +2099,11 @@ wapbl_transaction_len(struct wapbl *wl)
 {
 	int blocklen = 1<<wl->wl_log_dev_bshift;
 	size_t len;
-	int bph;
 
 	/* Calculate number of blocks described in a blocklist header */
-	bph = (blocklen - offsetof(struct wapbl_wc_blocklist, wc_blocks)) /
-	    sizeof(((struct wapbl_wc_blocklist *)0)->wc_blocks[0]);
-
-	KASSERT(bph > 0);
-
 	len = wl->wl_bcount;
-	len += howmany(wl->wl_bufcount, bph) * blocklen;
-	len += howmany(wl->wl_dealloccnt, bph) * blocklen;
+	len += howmany(wl->wl_bufcount, wl->wl_brperjblock) * blocklen;
+	len += howmany(wl->wl_dealloccnt, wl->wl_brperjblock) * blocklen;
 	len += wapbl_transaction_inodes_len(wl);
 
 	return len;
@@ -2228,16 +2256,12 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 	struct wapbl_wc_blocklist *wc =
 	    (struct wapbl_wc_blocklist *)wl->wl_wc_scratch;
 	int blocklen = 1<<wl->wl_log_dev_bshift;
-	int bph;
 	struct buf *bp;
 	off_t off = *offp;
 	int error;
 	size_t padding;
 
 	KASSERT(rw_write_held(&wl->wl_rwlock));
-
-	bph = (blocklen - offsetof(struct wapbl_wc_blocklist, wc_blocks)) /
-	    sizeof(((struct wapbl_wc_blocklist *)0)->wc_blocks[0]);
 
 	bp = LIST_FIRST(&wl->wl_bufs);
 
@@ -2250,7 +2274,7 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 		wc->wc_type = WAPBL_WC_BLOCKS;
 		wc->wc_len = blocklen;
 		wc->wc_blkcount = 0;
-		while (bp && (wc->wc_blkcount < bph)) {
+		while (bp && (wc->wc_blkcount < wl->wl_brperjblock)) {
 			/*
 			 * Make sure all the physical block numbers are up to
 			 * date.  If this is not always true on a given
@@ -2289,7 +2313,7 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 			return error;
 		bp = obp;
 		cnt = 0;
-		while (bp && (cnt++ < bph)) {
+		while (bp && (cnt++ < wl->wl_brperjblock)) {
 			error = wapbl_circ_write(wl, bp->b_data,
 			    bp->b_bcount, &off);
 			if (error)
@@ -2324,30 +2348,26 @@ wapbl_write_revocations(struct wapbl *wl, off_t *offp)
 {
 	struct wapbl_wc_blocklist *wc =
 	    (struct wapbl_wc_blocklist *)wl->wl_wc_scratch;
-	int i;
+	struct wapbl_dealloc *wd, *lwd;
 	int blocklen = 1<<wl->wl_log_dev_bshift;
-	int bph;
 	off_t off = *offp;
 	int error;
 
 	if (wl->wl_dealloccnt == 0)
 		return 0;
 
-	bph = (blocklen - offsetof(struct wapbl_wc_blocklist, wc_blocks)) /
-	    sizeof(((struct wapbl_wc_blocklist *)0)->wc_blocks[0]);
-
-	i = 0;
-	while (i < wl->wl_dealloccnt) {
+	while ((wd = SIMPLEQ_FIRST(&wl->wl_dealloclist)) != NULL) {
 		wc->wc_type = WAPBL_WC_REVOCATIONS;
 		wc->wc_len = blocklen;
 		wc->wc_blkcount = 0;
-		while ((i < wl->wl_dealloccnt) && (wc->wc_blkcount < bph)) {
+		while (wd && (wc->wc_blkcount < wl->wl_brperjblock)) {
 			wc->wc_blocks[wc->wc_blkcount].wc_daddr =
-			    wl->wl_deallocblks[i];
+			    wd->wd_blkno;
 			wc->wc_blocks[wc->wc_blkcount].wc_dlen =
-			    wl->wl_dealloclens[i];
+			    wd->wd_len;
 			wc->wc_blkcount++;
-			i++;
+
+			wd = SIMPLEQ_NEXT(wd, wd_entries);
 		}
 		WAPBL_PRINTF(WAPBL_PRINT_WRITE,
 		    ("wapbl_write_revocations: len = %u off = %"PRIdMAX"\n",
@@ -2355,6 +2375,16 @@ wapbl_write_revocations(struct wapbl *wl, off_t *offp)
 		error = wapbl_circ_write(wl, wc, blocklen, &off);
 		if (error)
 			return error;
+
+		/* free all successfully written deallocs */
+		lwd = wd;
+		while ((wd = SIMPLEQ_FIRST(&wl->wl_dealloclist)) != NULL) {
+			if (wd == lwd)
+				break;
+			SIMPLEQ_REMOVE_HEAD(&wl->wl_dealloclist, wd_entries);
+			pool_put(&wapbl_dealloc_pool, wd);
+			wl->wl_dealloccnt--;
+		}
 	}
 	*offp = off;
 	return 0;

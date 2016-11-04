@@ -21,18 +21,12 @@ MN10300_OBJS = \
 	itable.o semantics.o idecode.o icache.o engine.o irun.o support.o \
 	$(SIM_NEW_COMMON_OBJS) \
 	op_utils.o \
-	sim-engine.o \
 	sim-hload.o \
-	sim-hrw.o \
 	sim-resume.o \
 	sim-reason.o \
-	sim-stop.o \
-	dv-sockser.o
+	sim-stop.o
 
 SIM_OBJS = $(MN10300_OBJS) interp.o
-
-# List of main object files for `run'.
-SIM_RUN_OBJS = nrun.o
 
 SIM_EXTRA_CLEAN = clean-igen
 # Extra dependencies for "sim-main.h"

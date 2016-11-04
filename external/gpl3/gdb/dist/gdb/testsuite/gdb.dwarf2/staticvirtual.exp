@@ -1,4 +1,4 @@
-# Copyright 2015 Free Software Foundation, Inc.
+# Copyright 2015-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,4 +51,9 @@ if { [prepare_for_testing ${testfile}.exp ${testfile} \
 }
 
 # gdb/18021: The test below would cause GDB to crash.
-gdb_test "p S::~S" "0x1000"
+# Depending on whether the target maps memory at address 0x1000,
+# on success this may either print something like
+#   $1 = {void (void)} 0x1000 <.*>
+# or
+#   Cannot access memory at address 0x1000
+gdb_test "p S::~S" "0x1000.*"

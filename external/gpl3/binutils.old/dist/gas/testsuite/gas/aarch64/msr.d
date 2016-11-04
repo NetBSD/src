@@ -13,3 +13,5 @@ Disassembly of section \.text:
   14:	d5034fff 	msr	daifclr, #0xf
   18:	d51b4220 	msr	daif, x0
   1c:	d53b4220 	mrs	x0, daif
+  20:	d50040bf 	msr	spsel, #0x0
+  24:	d50041bf 	msr	spsel, #0x1

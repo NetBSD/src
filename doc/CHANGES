@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2173.2.2 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2173.2.3 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -325,10 +325,14 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		there [christos 20160527]
 	zoneinfo: Import tzdata2016d. [agc 20160531]
 	ntp: Import ntp 4.2.8p8. [christos 20160603]
+	ext2fs: Add ext4 extent support from FreeBSD, ported and contributed by
+		Hrishikesh Goyal (GSoc 2016) [christos 20160603]
 	sys_info: Import a script to return version information for system
 		libraries and utilities [agc 20160604]
 	nvmectl(8): Added NVM Express control utility. [nonaka 20160604]
 	dhcpcd(8): Import dhcpcd-6.11.1. [roy 20160617]
+	ext2fs: Add ext4 htree index support from FreeBSD, ported and
+		contributed by Hrishikesh Goyal (GSoc 2016). [christos 20160624]
 	mdocml: Import 1.13.4. [christos 20160715]
 	acpi(4): Updated ACPICA to 20160527. [christos 20160718]
 	sdtemp(4): Add support for Atmel AT30TS00, AT30TSE004, Giantec
@@ -337,3 +341,49 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		CAT34TS04. [msaitoh 20160726]
 	sdtemp(4): Add JEDEC TSE2004av support. [msaitoh 20160728]
 	OpenSSH: Imported 7.3. [christos 20160802]
+	xen: Map the kernel image segments independently with fine-grained
+		permissions (W^X). [maxv 20160802]
+	ext2fs: Add ext4 extra_inode support. [jdolecek 20160603]
+	kernel: Provide an efficient way to prevent NULL from being mappable
+		in userland processes. [maxv 20160806]
+	ext2fs: Actually fill file type for readdir(4) and friends.
+		[jdolecek 20160615]
+	zoneinfo: Import tzdata2016f. [kre 20160807]
+	tcu(4): Add support for flxd TC-USB TURBOchannel USB and GPIO option.
+		[flxd 20160811]
+	ext2fs: Add read-only ext4 extended attribute support.
+		[jdolecek 20160612]
+	dhcpcd(8): Import dhcpcd-6.11.3. [roy 20160815]
+	ext2fs: Add ext4 dir_nlink support, supporting up to 64000 file hard
+		links, and unlimited directory links. [jdolecek 20160615]
+	unbound: Import 1.5.9. [christos 20160820]
+	ext2fs: Add ext4 gdt_csum/uninit_bg support. [jdolecek 20160615]
+	tmux(1): Import of tmux 2.2 [christos 20160831]
+	lua: updated to 5.3.3 and applied all three patches from 
+		http://lua.org/bugs.html [salazar 20160908]
+	libc: Update to tzcode2016f. [christos 20160916]
+	nvme(4): NVMe driver is now MPSAFE. [jdolecek 20160918]
+	zoneinfo: Import tzdata2016g.  [kre 20160929]
+	libc: Add <stdalign.h> and <stdnoreturn.h>. [kamil 20161002]
+	c11: Import cc(1) wrapper for C11. [kamil 20161003]
+	libc: Add the C11 static_assert macro in <assert.h>. [kamil 20161003]
+	mntva(4): Add driver for MNTMN VA2000 FPGA-based graphics card for
+		Amiga computers with Zorro slot. Supports accelerated wsdisplay
+		console and wsfb-based X11. [rkujawa 20161003]
+	libc: Add the timespec_get function and TIME_UTC definition in the
+		<time.h> header. Enable unconditionally the timespec struct
+		definition in <time.h>. Changes conform to the C11 standard.
+		[kamil 20161004]
+	bind: Import version 9.10.4-P3. [christos 20161004]
+	mips: Add support for MediaTek MT7628 SoC [ryo 20161006]
+	libc: Update to tzcode2016g. [christos 20161007]
+	dhcpcd(8): Import dhcpcd-6.11.4 [roy 20161009]
+	urtwn(4): Add support for Realtek 8192EU [nat 20161012]
+	gdb(1): Updated to 7.12.  [christos 20161012]
+	libc: Add the wcsnlen(3) function in <wchar.h>. [kamil 20161015]
+	libc: Update to tzcode2016h. [christos 20161020]
+	zoneinfo: Import tzdata2016h.  [kre 20161020]
+	binutils: Updated to FSF binutils 2.27.  [christos 20161026]
+	wapbl(4): Improved truncate performance, and stability [jdolecek 20161028]
+	bind: Import version 9.10.4-P4. [christos 20161101]
+	zoneinfo: Import tzdata2016i.  [kre 20161103]

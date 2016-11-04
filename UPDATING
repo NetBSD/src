@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.272 2016/05/30 03:11:48 dholland Exp $
+$NetBSD: UPDATING,v 1.272.2.1 2016/11/04 14:42:22 pgoyette Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,21 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20161014:
+	a new version of OpenSSL has been imported.
+	Remove the files from obj (crypto/external/bsd/openssl) 
+	if you build.sh -u
+
+20161009:
+	a new version of dhcpcd has been imported with slightly changed
+	build infrastructure. When doing a build.sh -u this requires
+	pruning the external/bsd/dhcpcd objdir.
+
+20160914:
+	i386, amd64, shark, ofppc and macppc have joined shark and x68k
+	ports in using xorg-server 1.18. This requires a clean destdir
+	and a clean objdir.
 
 20160527:
 	i386 needs a full cleandir or objdir deletion because PIE has

@@ -91,19 +91,6 @@ proc check_thread_specific_breakpoint {mode} {
 	    "Breakpoint .* end .* at .*" \
 	    "continue to end"
 
-	# Force GDB to update the thread list.  Otherwise, depending
-	# on target, GDB may not realize that the start thread has
-	# exited and thus not remove the thread specific breakpoint.
-	set test "thread start is gone"
-	gdb_test_multiple "info threads" $test {
-	    -re "\[0-9\]+.*start.*$gdb_prompt $" {
-		fail $test
-	    }
-	    -re "$gdb_prompt $" {
-		pass $test
-	    }
-	}
-
 	set test "thread-specific breakpoint was deleted"
 	gdb_test_multiple "info breakpoint" $test {
 	    -re "thread $start_thre\n$gdb_prompt $" {

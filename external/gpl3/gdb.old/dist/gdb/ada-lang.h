@@ -244,7 +244,7 @@ extern struct symbol *ada_lookup_symbol (const char *, const struct block *,
                                          domain_enum, int *);
 
 extern void ada_lookup_encoded_symbol
-  (const char *name, const struct block *block, domain_enum namespace,
+  (const char *name, const struct block *block, domain_enum domain,
    struct ada_symbol_info *symbol_info);
 
 extern struct bound_minimal_symbol ada_lookup_simple_minsym (const char *);

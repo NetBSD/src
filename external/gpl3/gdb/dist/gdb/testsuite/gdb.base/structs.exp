@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1996-2015 Free Software Foundation, Inc.
+# Copyright 1996-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 # test.
 
 if [target_info exists gdb,cannot_call_functions] {
-    setup_xfail "*-*-*"
-    fail "This target can not call functions"
+    unsupported "This target can not call functions"
     continue
 }
 
@@ -485,9 +484,6 @@ proc test_struct_returns { n } {
 
 # NetBSD/PPC returns "unnatural" (3, 5, 6, 7) sized structs in memory.
 
-# d10v is weird. 5/6 byte structs go in memory.  2 or more char
-# structs go in memory.  Everything else is in a register!
-
 # Test every single char struct from 1..17 in size.  This is what the
 # original "structs" test was doing.
 
@@ -531,9 +527,7 @@ test_struct_returns 8
 
 # The approx size of each structure it is computed assumed that tc=1,
 # ts=2, ti=4, tl=4, tll=8, tf=4, td=8, tld=16, and that all fields are
-# naturally aligned.  Padding being added where needed.  Note that
-# these numbers are just approx, the d10v has ti=2, a 64-bit has has
-# tl=8.
+# naturally aligned.  Padding being added where needed.
 
 # Approx size: 2, 4, ...
 start_structs_test { ts }
@@ -683,13 +677,11 @@ test_struct_calls 2
 # Some float combinations
 
 # Approx size: 8+4=12, 16, ...
-# d10v: 4+4=8, 12, ...
 start_structs_test { td tf }
 test_struct_calls 2
 test_struct_returns 2
 
 # Approx size: (4+4)+8=16, 32, ...
-# d10v: 4+4=8, 12, ...
 start_structs_test { tf td }
 test_struct_calls 2
 test_struct_returns 2

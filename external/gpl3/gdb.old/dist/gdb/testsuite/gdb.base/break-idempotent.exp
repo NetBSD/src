@@ -174,7 +174,8 @@ foreach always_inserted { "off" "on" } {
 	test_break $always_inserted "watch"
     }
 
-    if {![skip_hw_watchpoint_access_tests]} {
+    if {![skip_hw_watchpoint_access_tests]
+	&& ![skip_hw_watchpoint_multi_tests]} {
 	test_break $always_inserted "rwatch"
 	test_break $always_inserted "awatch"
     }

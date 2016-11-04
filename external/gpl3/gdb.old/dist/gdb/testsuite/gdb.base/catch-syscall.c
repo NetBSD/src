@@ -21,7 +21,11 @@ int chroot_syscall = SYS_chroot;
    restart_syscall, which can't be called from userspace.  However,
    the "read" syscall is zero on x86_64.  */
 int read_syscall = SYS_read;
+#ifdef SYS_pipe
 int pipe_syscall = SYS_pipe;
+#else
+int pipe2_syscall = SYS_pipe2;
+#endif
 int write_syscall = SYS_write;
 int exit_group_syscall = SYS_exit_group;
 

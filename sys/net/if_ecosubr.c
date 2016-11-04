@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.48 2016/06/20 08:30:58 knakahara Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.48.2.1 2016/11/04 14:49:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.48 2016/06/20 08:30:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.48.2.1 2016/11/04 14:49:20 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -326,7 +326,6 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 	struct ifqueue *inq;
 	struct eco_header ehdr, *eh;
 	int isr = 0;
-	int s;
 #ifdef INET
 	int i;
 	struct arphdr *ah;
@@ -449,15 +448,15 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	s = splnet();
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
-		IF_DROP(inq);
+		IFQ_UNLOCK(inq);
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(inq, m);
+		IFQ_UNLOCK(inq);
 		schednetisr(isr);
 	}
-	splx(s);
 }
 
 static void

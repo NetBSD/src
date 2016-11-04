@@ -1,6 +1,6 @@
 /* Manages interpreters for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    Written by Jim Ingham <jingham@apple.com> of Apple Computer, Inc.
 
@@ -24,6 +24,16 @@
 
 struct ui_out;
 struct interp;
+struct ui;
+
+typedef struct interp *(*interp_factory_func) (const char *name);
+
+/* Each interpreter kind (CLI, MI, etc.) registers itself with a call
+   to this function, passing along its name, and a pointer to a
+   function that creates a new instance of an interpreter with that
+   name.  */
+extern void interp_factory_register (const char *name,
+				     interp_factory_func func);
 
 extern int interp_resume (struct interp *interp);
 extern int interp_suspend (struct interp *interp);
@@ -36,12 +46,14 @@ typedef int (interp_resume_ftype) (void *data);
 typedef int (interp_suspend_ftype) (void *data);
 typedef struct gdb_exception (interp_exec_ftype) (void *data,
 						  const char *command);
-typedef void (interp_command_loop_ftype) (void *data);
+typedef void (interp_pre_command_loop_ftype) (struct interp *self);
 typedef struct ui_out *(interp_ui_out_ftype) (struct interp *self);
 
 typedef int (interp_set_logging_ftype) (struct interp *self, int start_log,
 					struct ui_file *out,
 					struct ui_file *logfile);
+
+typedef int (interp_supports_command_editing_ftype) (struct interp *self);
 
 struct interp_procs
 {
@@ -61,21 +73,39 @@ struct interp_procs
      disabled.  */
   interp_set_logging_ftype *set_logging_proc;
 
-  interp_command_loop_ftype *command_loop_proc;
+  /* Called before starting an event loop, to give the interpreter a
+     chance to e.g., print a prompt.  */
+  interp_pre_command_loop_ftype *pre_command_loop_proc;
+
+  /* Returns true if this interpreter supports using the readline
+     library; false if it uses GDB's own simplified readline
+     emulation.  */
+  interp_supports_command_editing_ftype *supports_command_editing_proc;
 };
 
-extern struct interp *interp_new (const char *name, const struct interp_procs *procs);
-extern void interp_add (struct interp *interp);
+extern struct interp *interp_new (const char *name,
+				  const struct interp_procs *procs,
+				  void *data);
+extern void interp_add (struct ui *ui, struct interp *interp);
 extern int interp_set (struct interp *interp, int top_level);
-extern struct interp *interp_lookup (const char *name);
+
+/* Look up the interpreter for NAME, creating one if none exists yet.
+   If NAME is not a interpreter type previously registered with
+   interp_factory_register, return NULL; otherwise return a pointer to
+   the interpreter.  */
+extern struct interp *interp_lookup (struct ui *ui, const char *name);
+
+/* Set the current UI's top level interpreter to the interpreter named
+   NAME.  Throws an error if NAME is not a known interpreter or the
+   interpreter fails to initialize.  */
+extern void set_top_level_interpreter (const char *name);
+
 extern struct ui_out *interp_ui_out (struct interp *interp);
 extern void *interp_data (struct interp *interp);
 extern const char *interp_name (struct interp *interp);
 extern struct interp *interp_set_temp (const char *name);
 
 extern int current_interp_named_p (const char *name);
-
-extern void current_interp_command_loop (void);
 
 /* Call this function to give the current interpreter an opportunity
    to do any special handling of streams when logging is enabled or
@@ -91,18 +121,26 @@ extern int current_interp_set_logging (int start_log, struct ui_file *out,
 extern void *top_level_interpreter_data (void);
 extern struct interp *top_level_interpreter (void);
 
+/* Return the current UI's current interpreter.  */
+extern struct interp *current_interpreter (void);
+
 extern struct interp *command_interp (void);
 
-/* True if the current interpreter is in async mode, false if in sync
-   mode.  If in sync mode, running a synchronous execution command
-   (with execute_command, e.g, "next") will not return until the
-   command is finished.  If in async mode, then running a synchronous
-   command returns right after resuming the target.  Waiting for the
-   command's completion is later done on the top event loop (using
-   continuations).  */
-extern int interpreter_async;
-
 extern void clear_interpreter_hooks (void);
+
+/* Returns true if INTERP supports using the readline library; false
+   if it uses GDB's own simplified form of readline.  */
+extern int interp_supports_command_editing (struct interp *interp);
+
+/* Called before starting an event loop, to give the interpreter a
+   chance to e.g., print a prompt.  */
+extern void interp_pre_command_loop (struct interp *interp);
+
+/* List the possible interpreters which could complete the given
+   text.  */
+extern VEC (char_ptr) *interpreter_completer (struct cmd_list_element *ignore,
+					      const char *text,
+					      const char *word);
 
 /* well-known interpreters */
 #define INTERP_CONSOLE		"console"

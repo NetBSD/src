@@ -1,6 +1,5 @@
 /* BFD back-end for VERSAdos-E objects.
-   Copyright 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    Versados is a Motorola trademark.
@@ -58,6 +57,7 @@ struct esdid
 {
   asection *section;		/* Ptr to bfd version.  */
   unsigned char *contents;	/* Used to build image.  */
+  bfd_size_type content_size;	/* The size of the contents buffer.  */
   int pc;
   int relocs;			/* Reloc count, valid end of pass 1.  */
   int donerel;			/* Have relocs been translated.  */
@@ -86,8 +86,8 @@ typedef struct versados_data_struct
 tdata_type;
 
 #define VDATA(abfd)       (abfd->tdata.versados_data)
-#define EDATA(abfd, n)    (abfd->tdata.versados_data->e[n])
-#define RDATA(abfd, n)    (abfd->tdata.versados_data->rest[n])
+#define EDATA(abfd, n)    (abfd->tdata.versados_data->e[(n) < 16 ? (n) : 0])
+#define RDATA(abfd, n)    (abfd->tdata.versados_data->rest[(n) < 240 ? (n) : 0])
 
 struct ext_otr
 {
@@ -182,14 +182,22 @@ versados_new_symbol (bfd *abfd,
   return n;
 }
 
-static int
+static bfd_boolean
 get_record (bfd *abfd, union ext_any *ptr)
 {
   if (bfd_bread (&ptr->size, (bfd_size_type) 1, abfd) != 1
       || (bfd_bread ((char *) ptr + 1, (bfd_size_type) ptr->size, abfd)
 	  != ptr->size))
-    return 0;
-  return 1;
+    return FALSE;
+
+  {
+    bfd_size_type amt = ptr->size + 1;
+
+    if (amt < sizeof (* ptr))
+      memset ((char *) ptr + amt, 0, sizeof (* ptr) - amt);
+  }
+
+  return TRUE;
 }
 
 static int
@@ -365,10 +373,18 @@ process_otr (bfd *abfd, struct ext_otr *otr, int pass)
   | (otr->map[2] << 8)
   | (otr->map[3] << 0);
 
-  struct esdid *esdid = &EDATA (abfd, otr->esdid - 1);
-  unsigned char *contents = esdid->contents;
-  int need_contents = 0;
-  unsigned int dst_idx = esdid->pc;
+  struct esdid *esdid;
+  unsigned char *contents;
+  bfd_boolean need_contents = FALSE;
+  unsigned int dst_idx;
+
+  /* PR 17512: file: ac7da425.  */
+  if (otr->esdid == 0)
+    return;
+
+  esdid = &EDATA (abfd, otr->esdid - 1);
+  contents = esdid->contents;
+  dst_idx = esdid->pc;
 
   for (shift = ((unsigned long) 1 << 31); shift && srcp < endp; shift >>= 1)
     {
@@ -391,8 +407,8 @@ process_otr (bfd *abfd, struct ext_otr *otr, int pass)
 	      int val = get_offset (offsetlen, srcp + esdids);
 
 	      if (pass == 1)
-		need_contents = 1;
-	      else
+		need_contents = TRUE;
+	      else if (contents && dst_idx < esdid->content_size - sizeinwords * 2)
 		for (j = 0; j < sizeinwords * 2; j++)
 		  {
 		    contents[dst_idx + (sizeinwords * 2) - j - 1] = val;
@@ -414,10 +430,13 @@ process_otr (bfd *abfd, struct ext_otr *otr, int pass)
 			}
 		      else
 			{
-			  arelent *n =
-			  EDATA (abfd, otr->esdid - 1).section->relocation + rn;
-			  n->address = dst_idx;
+			  arelent *n;
 
+			  /* PR 17512: file: 54f733e0.  */
+			  if (EDATA (abfd, otr->esdid - 1).section == NULL)
+			    continue;
+			  n = EDATA (abfd, otr->esdid - 1).section->relocation + rn;
+			  n->address = dst_idx;
 			  n->sym_ptr_ptr = (asymbol **) (size_t) id;
 			  n->addend = 0;
 			  n->howto = versados_howto_table + ((j & 1) * 2) + (sizeinwords - 1);
@@ -430,31 +449,42 @@ process_otr (bfd *abfd, struct ext_otr *otr, int pass)
 	}
       else
 	{
-	  need_contents = 1;
-	  if (dst_idx < esdid->section->size)
+	  need_contents = TRUE;
+
+	  if (esdid->section && contents && dst_idx < esdid->content_size - 1)
 	    if (pass == 2)
 	      {
 		/* Absolute code, comes in 16 bit lumps.  */
 		contents[dst_idx] = srcp[0];
 		contents[dst_idx + 1] = srcp[1];
 	      }
+
 	  dst_idx += 2;
 	  srcp += 2;
 	}
     }
+
   EDATA (abfd, otr->esdid - 1).pc = dst_idx;
 
   if (!contents && need_contents)
     {
-      bfd_size_type size = esdid->section->size;
-      esdid->contents = bfd_alloc (abfd, size);
+      if (esdid->section)
+	{
+	  bfd_size_type size;
+
+	  size = esdid->section->size;
+	  esdid->contents = bfd_alloc (abfd, size);
+	  esdid->content_size = size;
+	}
+      else
+	esdid->contents = NULL;
     }
 }
 
 static bfd_boolean
 versados_scan (bfd *abfd)
 {
-  int loop = 1;
+  bfd_boolean loop = TRUE;
   int i;
   int j;
   int nsecs = 0;
@@ -472,13 +502,13 @@ versados_scan (bfd *abfd)
       union ext_any any;
 
       if (!get_record (abfd, &any))
-	return TRUE;
+	return FALSE;
       switch (any.header.type)
 	{
 	case VHEADER:
 	  break;
 	case VEND:
-	  loop = 0;
+	  loop = FALSE;
 	  break;
 	case VESTDEF:
 	  process_esd (abfd, &any.esd, 1);
@@ -505,7 +535,6 @@ versados_scan (bfd *abfd)
 	{
 	  amt = (bfd_size_type) esdid->relocs * sizeof (arelent);
 	  esdid->section->relocation = bfd_alloc (abfd, amt);
-
 	  esdid->pc = 0;
 
 	  if (esdid->contents)
@@ -564,7 +593,7 @@ versados_scan (bfd *abfd)
 
   VDATA (abfd)->ref_idx = 0;
 
-  return 1;
+  return TRUE;
 }
 
 /* Check whether an existing file is a versados  file.  */
@@ -583,6 +612,13 @@ versados_object_p (bfd *abfd)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
+      return NULL;
+    }
+
+  /* PR 17512: file: 726-2128-0.004.  */
+  if (len < 13)
+    {
+      bfd_set_error (bfd_error_wrong_format);
       return NULL;
     }
 
@@ -653,12 +689,20 @@ versados_get_section_contents (bfd *abfd,
 			       file_ptr offset,
 			       bfd_size_type count)
 {
+  struct esdid *esdid;
+
   if (!versados_pass_2 (abfd))
     return FALSE;
 
-  memcpy (location,
-	  EDATA (abfd, section->target_index).contents + offset,
-	  (size_t) count);
+  esdid = &EDATA (abfd, section->target_index);
+
+  if (esdid->contents == NULL
+      || offset < 0
+      || (bfd_size_type) offset > esdid->content_size
+      || offset + count > esdid->content_size)
+    return FALSE;
+
+  memcpy (location, esdid->contents + offset, (size_t) count);
 
   return TRUE;
 }
@@ -759,6 +803,7 @@ versados_canonicalize_reloc (bfd *abfd,
 
   versados_pass_2 (abfd);
   src = section->relocation;
+
   if (!EDATA (abfd, section->target_index).donerel)
     {
       EDATA (abfd, section->target_index).donerel = 1;
@@ -774,8 +819,15 @@ versados_canonicalize_reloc (bfd *abfd,
 	      /* Section relative thing.  */
 	      struct esdid *e = &EDATA (abfd, esdid - 1);
 
-	      src[count].sym_ptr_ptr = e->section->symbol_ptr_ptr;
+	      /* PR 17512: file:cd92277c.  */
+	      if (e->section)
+		src[count].sym_ptr_ptr = e->section->symbol_ptr_ptr;
+	      else
+		src[count].sym_ptr_ptr = bfd_und_section_ptr->symbol_ptr_ptr;
 	    }
+	  /* PR 17512: file:3757-2936-0.004.  */
+	  else if ((unsigned) (esdid - ES_BASE) >= bfd_get_symcount (abfd))
+	    src[count].sym_ptr_ptr = bfd_und_section_ptr->symbol_ptr_ptr;
 	  else
 	    src[count].sym_ptr_ptr = symbols + esdid - ES_BASE;
 	}
@@ -795,7 +847,9 @@ versados_canonicalize_reloc (bfd *abfd,
 #define versados_bfd_is_local_label_name              bfd_generic_is_local_label_name
 #define versados_get_lineno                           _bfd_nosymbols_get_lineno
 #define versados_find_nearest_line                    _bfd_nosymbols_find_nearest_line
+#define versados_find_line                            _bfd_nosymbols_find_line
 #define versados_find_inliner_info                    _bfd_nosymbols_find_inliner_info
+#define versados_get_symbol_version_string	      _bfd_nosymbols_get_symbol_version_string
 #define versados_make_empty_symbol                    _bfd_generic_make_empty_symbol
 #define versados_bfd_make_debug_symbol                _bfd_nosymbols_bfd_make_debug_symbol
 #define versados_read_minisymbols                     _bfd_generic_read_minisymbols
@@ -813,7 +867,6 @@ versados_canonicalize_reloc (bfd *abfd,
 #define versados_section_already_linked               _bfd_generic_section_already_linked
 #define versados_bfd_define_common_symbol             bfd_generic_define_common_symbol
 #define versados_bfd_link_hash_table_create           _bfd_generic_link_hash_table_create
-#define versados_bfd_link_hash_table_free             _bfd_generic_link_hash_table_free
 #define versados_bfd_link_add_symbols                 _bfd_generic_link_add_symbols
 #define versados_bfd_link_just_syms                   _bfd_generic_link_just_syms
 #define versados_bfd_copy_link_hash_symbol_type \
@@ -821,7 +874,7 @@ versados_canonicalize_reloc (bfd *abfd,
 #define versados_bfd_final_link                       _bfd_generic_final_link
 #define versados_bfd_link_split_section               _bfd_generic_link_split_section
 
-const bfd_target versados_vec =
+const bfd_target m68k_versados_vec =
 {
   "versados",			/* Name.  */
   bfd_target_versados_flavour,

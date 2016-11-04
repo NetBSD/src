@@ -1,6 +1,6 @@
 /* Blackfin Direct Memory Access (DMA) Channel model.
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -255,7 +255,7 @@ bfin_dma_hw_event_callback (struct hw *me, void *data)
     /* XXX: This sucks performance wise.  */
     nr_bytes = dma->ele_size;
   else
-    nr_bytes = MIN (sizeof (buf), dma->curr_x_count * dma->ele_size);
+    nr_bytes = min (sizeof (buf), dma->curr_x_count * dma->ele_size);
 
   /* Pumping a chunk!  */
   bfin_peer->dma_master = me;
@@ -317,6 +317,10 @@ bfin_dma_io_write_buffer (struct hw *me, const void *source, int space,
   bu16 *value16p;
   bu32 *value32p;
   void *valuep;
+
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_16_32 (me, addr, nr_bytes, true))
+    return 0;
 
   if (nr_bytes == 4)
     value = dv_load_4 (source);
@@ -401,7 +405,7 @@ bfin_dma_io_write_buffer (struct hw *me, const void *source, int space,
     default:
       /* XXX: The HW lets the pad regions be read/written ...  */
       dv_bfin_mmr_invalid (me, addr, nr_bytes, true);
-      break;
+      return 0;
     }
 
   return nr_bytes;
@@ -416,6 +420,10 @@ bfin_dma_io_read_buffer (struct hw *me, void *dest, int space,
   bu16 *value16p;
   bu32 *value32p;
   void *valuep;
+
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_16_32 (me, addr, nr_bytes, false))
+    return 0;
 
   mmr_off = addr % dma->base;
   valuep = (void *)((unsigned long)dma + mmr_base() + mmr_off);

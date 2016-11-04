@@ -22,26 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-/* Taken from opcodes/s390.h */
-enum s390_opcode_mode_val
-  {
-    S390_OPCODE_ESA = 0,
-    S390_OPCODE_ZARCH
-  };
-
-enum s390_opcode_cpu_val
-  {
-    S390_OPCODE_G5 = 0,
-    S390_OPCODE_G6,
-    S390_OPCODE_Z900,
-    S390_OPCODE_Z990,
-    S390_OPCODE_Z9_109,
-    S390_OPCODE_Z9_EC,
-    S390_OPCODE_Z10,
-    S390_OPCODE_Z196,
-    S390_OPCODE_ZEC12
-  };
+#include "opcode/s390.h"
 
 struct op_struct
   {
@@ -50,6 +31,7 @@ struct op_struct
     char  format[16];
     int   mode_bits;
     int   min_cpu;
+    int   flags;
 
     unsigned long long sort_value;
     int   no_nibbles;
@@ -71,7 +53,7 @@ createTable (void)
 
 static void
 insertOpcode (char *opcode, char *mnemonic, char *format,
-	      int min_cpu, int mode_bits)
+	      int min_cpu, int mode_bits, int flags)
 {
   char *str;
   unsigned long long sort_value;
@@ -115,6 +97,7 @@ insertOpcode (char *opcode, char *mnemonic, char *format,
   op_array[ix].no_nibbles = no_nibbles;
   op_array[ix].min_cpu = min_cpu;
   op_array[ix].mode_bits = mode_bits;
+  op_array[ix].flags = flags;
   no_ops++;
 }
 
@@ -176,7 +159,7 @@ const struct s390_cond_ext_format s390_crb_extensions[NUM_CRB_EXTENSIONS] =
 
 static void
 insertExpandedMnemonic (char *opcode, char *mnemonic, char *format,
-			int min_cpu, int mode_bits)
+			int min_cpu, int mode_bits, int flags)
 {
   char *tag;
   char prefix[15];
@@ -189,7 +172,7 @@ insertExpandedMnemonic (char *opcode, char *mnemonic, char *format,
 
   if (!(tag = strpbrk (mnemonic, "*$")))
     {
-      insertOpcode (opcode, mnemonic, format, min_cpu, mode_bits);
+      insertOpcode (opcode, mnemonic, format, min_cpu, mode_bits, flags);
       return;
     }
 
@@ -268,7 +251,7 @@ insertExpandedMnemonic (char *opcode, char *mnemonic, char *format,
       opcode[mask_start] = ext_table[i].nibble;
       strcat (new_mnemonic, ext_table[i].extension);
       strcat (new_mnemonic, suffix);
-      insertOpcode (opcode, new_mnemonic, format, min_cpu, mode_bits);
+      insertOpcode (opcode, new_mnemonic, format, min_cpu, mode_bits, flags);
     }
   return;
 
@@ -286,7 +269,10 @@ static const char file_header[] =
   "     which bits in the actual opcode must match OPCODE.\n"
   "   OPERANDS is the list of operands.\n\n"
   "   The disassembler reads the table in order and prints the first\n"
-  "   instruction which matches.  */\n\n"
+  "   instruction which matches.\n"
+  "   MODE_BITS - zarch or esa\n"
+  "   MIN_CPU - number of the min cpu level required\n"
+  "   FLAGS - instruction flags.  */\n\n"
   "const struct s390_opcode s390_opcodes[] =\n  {\n";
 
 /* `dumpTable': write opcode table.  */
@@ -311,7 +297,8 @@ dumpTable (void)
       printf ("MASK_%s, INSTR_%s, ",
 	      op_array[ix].format, op_array[ix].format);
       printf ("%i, ", op_array[ix].mode_bits);
-      printf ("%i}", op_array[ix].min_cpu);
+      printf ("%i, ", op_array[ix].min_cpu);
+      printf ("%i}", op_array[ix].flags);
       if (ix < no_ops-1)
 	printf (",\n");
       else
@@ -339,67 +326,91 @@ main (void)
       char  description[80];
       char  cpu_string[16];
       char  modes_string[16];
+      char  flags_string[80];
       int   min_cpu;
       int   mode_bits;
+      int   flag_bits;
+      int   num_matched;
       char  *str;
 
       if (currentLine[0] == '#' || currentLine[0] == '\n')
         continue;
       memset (opcode, 0, 8);
-      if (sscanf (currentLine, "%15s %15s %15s \"%79[^\"]\" %15s %15s",
-		  opcode, mnemonic, format, description,
-		  cpu_string, modes_string) == 6)
+      num_matched =
+	sscanf (currentLine, "%15s %15s %15s \"%79[^\"]\" %15s %15s %79[^\n]",
+		opcode, mnemonic, format, description,
+		cpu_string, modes_string, flags_string);
+      if (num_matched != 6 && num_matched != 7)
 	{
-	  if (strcmp (cpu_string, "g5") == 0)
-	    min_cpu = S390_OPCODE_G5;
-	  else if (strcmp (cpu_string, "g6") == 0)
-	    min_cpu = S390_OPCODE_G6;
-	  else if (strcmp (cpu_string, "z900") == 0)
-	    min_cpu = S390_OPCODE_Z900;
-	  else if (strcmp (cpu_string, "z990") == 0)
-	    min_cpu = S390_OPCODE_Z990;
-	  else if (strcmp (cpu_string, "z9-109") == 0)
-	    min_cpu = S390_OPCODE_Z9_109;
-	  else if (strcmp (cpu_string, "z9-ec") == 0)
-	    min_cpu = S390_OPCODE_Z9_EC;
-	  else if (strcmp (cpu_string, "z10") == 0)
-	    min_cpu = S390_OPCODE_Z10;
-	  else if (strcmp (cpu_string, "z196") == 0)
-	    min_cpu = S390_OPCODE_Z196;
-	  else if (strcmp (cpu_string, "zEC12") == 0)
-	    min_cpu = S390_OPCODE_ZEC12;
-	  else {
-	    fprintf (stderr, "Couldn't parse cpu string %s\n", cpu_string);
-	    exit (1);
-	  }
+	  fprintf (stderr, "Couldn't scan line %s\n", currentLine);
+	  exit (1);
+	}
 
-	  str = modes_string;
-	  mode_bits = 0;
+      if (strcmp (cpu_string, "g5") == 0)
+	min_cpu = S390_OPCODE_G5;
+      else if (strcmp (cpu_string, "g6") == 0)
+	min_cpu = S390_OPCODE_G6;
+      else if (strcmp (cpu_string, "z900") == 0)
+	min_cpu = S390_OPCODE_Z900;
+      else if (strcmp (cpu_string, "z990") == 0)
+	min_cpu = S390_OPCODE_Z990;
+      else if (strcmp (cpu_string, "z9-109") == 0)
+	min_cpu = S390_OPCODE_Z9_109;
+      else if (strcmp (cpu_string, "z9-ec") == 0)
+	min_cpu = S390_OPCODE_Z9_EC;
+      else if (strcmp (cpu_string, "z10") == 0)
+	min_cpu = S390_OPCODE_Z10;
+      else if (strcmp (cpu_string, "z196") == 0)
+	min_cpu = S390_OPCODE_Z196;
+      else if (strcmp (cpu_string, "zEC12") == 0)
+	min_cpu = S390_OPCODE_ZEC12;
+      else if (strcmp (cpu_string, "z13") == 0)
+	min_cpu = S390_OPCODE_Z13;
+      else {
+	fprintf (stderr, "Couldn't parse cpu string %s\n", cpu_string);
+	exit (1);
+      }
+
+      str = modes_string;
+      mode_bits = 0;
+      do {
+	if (strncmp (str, "esa", 3) == 0
+	    && (str[3] == 0 || str[3] == ',')) {
+	  mode_bits |= 1 << S390_OPCODE_ESA;
+	  str += 3;
+	} else if (strncmp (str, "zarch", 5) == 0
+		   && (str[5] == 0 || str[5] == ',')) {
+	  mode_bits |= 1 << S390_OPCODE_ZARCH;
+	  str += 5;
+	} else {
+	  fprintf (stderr, "Couldn't parse modes string %s\n",
+		   modes_string);
+	  exit (1);
+	}
+	if (*str == ',')
+	  str++;
+      } while (*str != 0);
+
+      flag_bits = 0;
+
+      if (num_matched == 7)
+	{
+	  str = flags_string;
 	  do {
-	    if (strncmp (str, "esa", 3) == 0
-		&& (str[3] == 0 || str[3] == ',')) {
-	      mode_bits |= 1 << S390_OPCODE_ESA;
-	      str += 3;
-	    } else if (strncmp (str, "zarch", 5) == 0
-		       && (str[5] == 0 || str[5] == ',')) {
-	      mode_bits |= 1 << S390_OPCODE_ZARCH;
-	      str += 5;
+	    if (strncmp (str, "optparm", 7) == 0
+		&& (str[7] == 0 || str[7] == ',')) {
+	      flag_bits |= S390_INSTR_FLAG_OPTPARM;
+	      str += 7;
 	    } else {
-	      fprintf (stderr, "Couldn't parse modes string %s\n",
-		       modes_string);
+	      fprintf (stderr, "Couldn't parse flags string %s\n",
+		       flags_string);
 	      exit (1);
 	    }
 	    if (*str == ',')
 	      str++;
 	  } while (*str != 0);
-
-	  insertExpandedMnemonic (opcode, mnemonic, format, min_cpu, mode_bits);
 	}
-      else
-	{
-	  fprintf (stderr, "Couldn't scan line %s\n", currentLine);
-	  exit (1);
-	}
+      insertExpandedMnemonic (opcode, mnemonic, format, min_cpu, mode_bits, flag_bits);
     }
 
   dumpTable ();

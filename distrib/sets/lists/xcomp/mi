@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.177 2016/05/16 22:20:10 christos Exp $
+#	 $NetBSD: mi,v 1.177.2.1 2016/11/04 14:42:40 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5876,7 +5876,8 @@
 ./usr/X11R7/include/xorg/atKeynames.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/bstore.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/bstorestr.h			-unknown-	obsolete
-./usr/X11R7/include/xorg/bt829.h			-unknown-	xorg
+./usr/X11R7/include/xorg/bt829.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/bt829.h			-unknown-	xorg,obsolete,xorg_server_ver=118
 ./usr/X11R7/include/xorg/callback.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/cfb.h				-unknown-	obsolete
 ./usr/X11R7/include/xorg/cfb16.h			-unknown-	obsolete
@@ -5924,7 +5925,8 @@
 ./usr/X11R7/include/xorg/fbpict.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/fbpseudocolor.h		-unknown-	obsolete
 ./usr/X11R7/include/xorg/fbrop.h			-unknown-	xorg
-./usr/X11R7/include/xorg/fi1236.h			-unknown-	xorg
+./usr/X11R7/include/xorg/fi1236.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/fi1236.h			-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/include/xorg/fourcc.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/gc.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/gcstruct.h			-unknown-	xorg
@@ -5942,11 +5944,14 @@
 ./usr/X11R7/include/xorg/mfbunmap.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/mi.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/mibank.h			-unknown-	obsolete
-./usr/X11R7/include/xorg/mibstore.h			-unknown-	xorg
+./usr/X11R7/include/xorg/mibstore.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/mibstore.h			-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/include/xorg/micmap.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/micoord.h			-unknown-	xorg
-./usr/X11R7/include/xorg/mifillarc.h			-unknown-	xorg
-./usr/X11R7/include/xorg/mifpoly.h			-unknown-	xorg
+./usr/X11R7/include/xorg/mifillarc.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/mifillarc.h			-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/include/xorg/mifpoly.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/mifpoly.h			-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/include/xorg/migc.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/miline.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/mipict.h			-unknown-	xorg
@@ -5954,11 +5959,19 @@
 ./usr/X11R7/include/xorg/mipointrst.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/misc.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/miscstruct.h			-unknown-	xorg
-./usr/X11R7/include/xorg/mispans.h			-unknown-	xorg
+./usr/X11R7/include/xorg/mispans.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/mispans.h			-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/include/xorg/mistruct.h			-unknown-	xorg
-./usr/X11R7/include/xorg/miwideline.h			-unknown-	xorg
+./usr/X11R7/include/xorg/misync.h			-unknown-	xorg,xorg_server_ver=118
+./usr/X11R7/include/xorg/misyncfd.h			-unknown-	xorg,xorg_server_ver=118
+./usr/X11R7/include/xorg/misyncshm.h			-unknown-	xorg,xorg_server_ver=118
+./usr/X11R7/include/xorg/misyncstr.h			-unknown-	xorg,xorg_server_ver=118
+./usr/X11R7/include/xorg/miwideline.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/miwideline.h			-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/include/xorg/mizerarc.h			-unknown-	xorg
-./usr/X11R7/include/xorg/msp3430.h			-unknown-	xorg
+./usr/X11R7/include/xorg/msp3430.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/msp3430.h			-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/include/xorg/nonsdk_extinit.h		-unknown-	xorg,xorg_server_ver=118
 ./usr/X11R7/include/xorg/opaque.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/os.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/picture.h			-unknown-	xorg
@@ -5988,12 +6001,18 @@
 ./usr/X11R7/include/xorg/shadowfb.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/shmint.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/site.h				-unknown-	xorg
-./usr/X11R7/include/xorg/swaprep.h			-unknown-	xorg
-./usr/X11R7/include/xorg/swapreq.h			-unknown-	xorg
-./usr/X11R7/include/xorg/tda8425.h			-unknown-	xorg
-./usr/X11R7/include/xorg/tda9850.h			-unknown-	xorg
-./usr/X11R7/include/xorg/tda9885.h			-unknown-	xorg
-./usr/X11R7/include/xorg/uda1380.h			-unknown-	xorg
+./usr/X11R7/include/xorg/swaprep.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/swaprep.h			-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/include/xorg/swapreq.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/swapreq.h			-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/include/xorg/tda8425.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/tda8425.h			-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/include/xorg/tda9850.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/tda9850.h			-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/include/xorg/tda9885.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/tda9885.h			-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/include/xorg/uda1380.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/uda1380.h			-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/include/xorg/validate.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/vbe.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/vbeModes.h			-unknown-	xorg
@@ -6001,9 +6020,11 @@
 ./usr/X11R7/include/xorg/vgaHW.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/window.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/windowstr.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xaa.h				-unknown-	xorg
+./usr/X11R7/include/xorg/xaa.h				-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/xaa.h				-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/include/xorg/xaaWrapper.h			-unknown-	obsolete
-./usr/X11R7/include/xorg/xaalocal.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xaalocal.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/xaalocal.h			-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/include/xorg/xaarop.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf1bpp.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf4bpp.h			-unknown-	obsolete
@@ -6025,7 +6046,8 @@
 ./usr/X11R7/include/xorg/xf86RAC.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf86RamDac.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86RandR12.h			-unknown-	xorg
-./usr/X11R7/include/xorg/xf86Rename.h			-unknown-	xorg
+./usr/X11R7/include/xorg/xf86Rename.h			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/include/xorg/xf86Rename.h			-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/include/xorg/xf86Resources.h		-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf86Version.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf86Xinput.h			-unknown-	xorg

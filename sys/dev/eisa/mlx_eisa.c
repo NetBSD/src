@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.25 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.25.2.1 2016/11/04 14:49:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,12 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.25 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.25.2.1 2016/11/04 14:49:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
+#include <sys/module.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
 
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.25 2016/07/14 10:19:06 msaitoh Exp $"
 #include <dev/ic/mlxreg.h>
 #include <dev/ic/mlxio.h>
 #include <dev/ic/mlxvar.h>
+
+#include "ioconf.h"
 
 #define	MLX_EISA_SLOT_OFFSET		0x0c80
 #define	MLX_EISA_IOSIZE			(0x0ce0 - MLX_EISA_SLOT_OFFSET)
@@ -65,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.25 2016/07/14 10:19:06 msaitoh Exp $"
 
 static void	mlx_eisa_attach(device_t, device_t, void *);
 static int	mlx_eisa_match(device_t, cfdata_t, void *);
+static int	mlx_eisa_rescan(device_t, const char *, const int *);
 
 static int	mlx_v1_submit(struct mlx_softc *, struct mlx_ccb *);
 static int	mlx_v1_findcomplete(struct mlx_softc *, u_int *, u_int *);
@@ -74,8 +77,8 @@ static int	mlx_v1_fw_handshake(struct mlx_softc *, int *, int *, int *);
 static int	mlx_v1_reset(struct mlx_softc *);
 #endif
 
-CFATTACH_DECL_NEW(mlx_eisa, sizeof(struct mlx_softc),
-    mlx_eisa_match, mlx_eisa_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(mlx_eisa, sizeof(struct mlx_softc),
+    mlx_eisa_match, mlx_eisa_attach, NULL, NULL, mlx_eisa_rescan, NULL, 0);
 
 static struct mlx_eisa_prod {
 	const char	*mp_idstr;
@@ -193,6 +196,13 @@ mlx_eisa_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": Mylex RAID\n");
 	mlx_init(mlx, intrstr);
+}
+
+static int
+mlx_eisa_rescan(device_t self, const char *attr, const int *flag)
+{
+
+	return mlx_configure(device_private(self), 1);
 }
 
 /*
@@ -353,3 +363,44 @@ mlx_v1_reset(struct mlx_softc *mlx)
 	return (0);
 }
 #endif	/* MLX_RESET */
+
+MODULE(MODULE_CLASS_DRIVER, mlx_eisa, "mlx");   /* No eisa module yet! */
+            
+#ifdef _MODULE
+/*              
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver cac_cd"
+ * XXX it will be defined in the common-code module
+ */
+#undef  CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif 
+
+static int
+mlx_eisa_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		/*
+		 * We skip over the first entry in cfdriver[] array
+		 * since the cfdriver is attached by the common
+		 * (non-attachment-specific) code.
+		 */
+		error = config_init_component(&cfdriver_ioconf_mlx_eisa[1],
+		    cfattach_ioconf_mlx_eisa, cfdata_ioconf_mlx_eisa);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(&cfdriver_ioconf_mlx_eisa[1],
+		    cfattach_ioconf_mlx_eisa, cfdata_ioconf_mlx_eisa);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
+}

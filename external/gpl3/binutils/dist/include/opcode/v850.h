@@ -1,5 +1,5 @@
 /* v850.h -- Header file for NEC V850 opcode table
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    Written by J.T. Conklin, Cygnus Support
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -21,6 +21,10 @@
 
 #ifndef V850_H
 #define V850_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* The opcode table is an array of struct v850_opcode.  */
 
@@ -236,5 +240,9 @@ extern const struct v850_operand v850_operands[];
 #define V850_INVERSE_PCREL	0x1000000
 
 extern int v850_msg_is_out_of_range (const char *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* V850_H */

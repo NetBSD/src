@@ -2,8 +2,20 @@
 # AIX always uses shared libraries.  The section VMA appears to be
 # unimportant.  The native linker aligns the sections on boundaries
 # specified by the -H option.
+#
+# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# 
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.
 
 cat <<EOF
+/* Copyright (C) 2014-2015 Free Software Foundation, Inc.
+
+   Copying and distribution of this script, with or without modification,
+   are permitted in any medium without royalty provided the copyright
+   notice and this notice are preserved.  */
+
 OUTPUT_ARCH(${ARCH})
 ${RELOCATING+${LIB_SEARCH_DIRS}}
 ${RELOCATING+ENTRY (__start)}

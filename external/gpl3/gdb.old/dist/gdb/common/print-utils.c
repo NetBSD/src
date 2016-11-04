@@ -19,8 +19,6 @@
 
 #include "common-defs.h"
 #include "print-utils.h"
-#include <stdint.h>
-
 /* Temporary storage using circular buffer.  */
 
 #define NUMCELLS 16

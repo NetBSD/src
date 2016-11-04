@@ -1,5 +1,5 @@
 /* Opcode table for m680[012346]0/m6888[12]/m68851/mcf5200.
-   Copyright (C) 1989-2015 Free Software Foundation, Inc.
+   Copyright (C) 1989-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -292,7 +292,7 @@ const struct m68k_opcode m68k_opcodes[] =
 {"cmpl", 6,	one(0006200),	one(0177700), "#lDs", mcfisa_a },
 {"cmpl", 2,	one(0130610),	one(0170770), "+s+d", m68000up },
 {"cmpl", 2,	one(0130200),	one(0170700), "*lDd", m68000up | mcfisa_a },
-  
+
 {"cp0bcbusy",2, one (0176300), one (01777770), "BW", mcfisa_a},
 {"cp1bcbusy",2, one (0177300), one (01777770), "BW", mcfisa_a},
 {"cp0nop",   4, two (0176000,0), two (01777477,0170777), "jE", mcfisa_a},
@@ -316,7 +316,7 @@ const struct m68k_opcode m68k_opcodes[] =
 {"cp1stl",   6, one (0177600), one (01777700), ".R1pwjEK3", mcfisa_a},
 {"cp0st",    6, one (0176600), one (01777700), ".R1pwjEK3", mcfisa_a},
 {"cp1st",    6, one (0177600), one (01777700), ".R1pwjEK3", mcfisa_a},
-  
+
 {"dbcc", 2,	one(0052310),	one(0177770), "DsBw", m68000up },
 {"dbcs", 2,	one(0052710),	one(0177770), "DsBw", m68000up },
 {"dbeq", 2,	one(0053710),	one(0177770), "DsBw", m68000up },
@@ -376,7 +376,7 @@ const struct m68k_opcode m68k_opcodes[] =
 {"eor", 4,	one(0005174),	one(0177777), "#wSs", m68000up },
 {"eor", 4,	one(0005100),	one(0177700), "#w$s", m68000up },
 {"eor", 2,	one(0130500),	one(0170700), "Dd$s", m68000up },
-		
+
 {"exg", 2,	one(0140500),	one(0170770), "DdDs", m68000up },
 {"exg", 2,	one(0140510),	one(0170770), "AdAs", m68000up },
 {"exg", 2,	one(0140610),	one(0170770), "DdAs", m68000up },
@@ -1575,13 +1575,13 @@ const struct m68k_opcode m68k_opcodes[] =
 {"moveb", 2,	one(0010200),	one(0170700), "obad", mcfisa_a },
 {"moveb", 2,	one(0010300),	one(0170700), "ob+d", mcfisa_a },
 {"moveb", 2,	one(0010400),	one(0170700), "ob-d", mcfisa_a },
-{"moveb", 2,	one(0010000),	one(0170000), "obnd", mcfisa_b | mcfisa_c },
+{"moveb", 2,	one(0010074),	one(0170077), "#bpd", mcfisa_b | mcfisa_c },
 
 {"movew", 2,	one(0030000),	one(0170000), "*w%d", m68000up },
 {"movew", 2,	one(0030000),	one(0170000), "ms%d", mcfisa_a },
 {"movew", 2,	one(0030000),	one(0170000), "nspd", mcfisa_a },
 {"movew", 2,	one(0030000),	one(0170000), "owmd", mcfisa_a },
-{"movew", 2,	one(0030000),	one(0170000), "ownd", mcfisa_b | mcfisa_c },
+{"movew", 2,	one(0030074),	one(0170077), "#wpd", mcfisa_b | mcfisa_c },
 {"movew", 2,	one(0040300),	one(0177700), "Ss$s", m68000up },
 {"movew", 2,	one(0040300),	one(0177770), "SsDs", mcfisa_a },
 {"movew", 2,	one(0041300),	one(0177700), "Cs$s", m68010up },
@@ -1630,7 +1630,7 @@ const struct m68k_opcode m68k_opcodes[] =
 {"move", 2,	one(0030000),	one(0170000), "ms%d", mcfisa_a },
 {"move", 2,	one(0030000),	one(0170000), "nspd", mcfisa_a },
 {"move", 2,	one(0030000),	one(0170000), "owmd", mcfisa_a },
-{"move", 2,	one(0030000),	one(0170000), "ownd", mcfisa_b | mcfisa_c },
+{"move", 2,	one(0030074),	one(0170077), "#wpd", mcfisa_b | mcfisa_c },
 {"move", 2,	one(0040300),	one(0177700), "Ss$s", m68000up },
 {"move", 2,	one(0040300),	one(0177770), "SsDs", mcfisa_a },
 {"move", 2,	one(0041300),	one(0177700), "Cs$s", m68010up },
@@ -2005,22 +2005,22 @@ const struct m68k_opcode m68k_opcodes[] =
 {"roxrl", 2,	one(0160260),		one(0170770), "DdDs", m68000up },
 
 {"rtd", 4,	one(0047164),		one(0177777), "#w", m68010up },
-		
+
 {"rte", 2,	one(0047163),		one(0177777), "",   m68000up | mcfisa_a },
-		
+
 {"rtm", 2,	one(0003300),		one(0177760), "Rs", m68020 },
-		
+
 {"rtr", 2,	one(0047167),		one(0177777), "",   m68000up },
-		
+
 {"rts", 2,	one(0047165),		one(0177777), "",   m68000up | mcfisa_a },
 
 {"satsl", 2,	one(0046200),		one(0177770), "Ds", mcfisa_b | mcfisa_c },
 
 {"sbcd", 2,	one(0100400),		one(0170770), "DsDd", m68000up },
 {"sbcd", 2,	one(0100410),		one(0170770), "-s-d", m68000up },
-  
+
 {"stldsr", 6,   two(0x40e7, 0x46fc),    two(0xffff, 0xffff), "#w", mcfisa_aa | mcfisa_c },
-  
+
   /* Traps have to come before conditional sets, as they have a more
      specific opcode.  */
 {"trapcc", 2,	one(0052374),	one(0177777), "", m68020up | cpu32 | fido_a },

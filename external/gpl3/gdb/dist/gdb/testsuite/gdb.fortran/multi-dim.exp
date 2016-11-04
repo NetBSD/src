@@ -1,4 +1,4 @@
-# Copyright 2011-2015 Free Software Foundation, Inc.
+# Copyright 2011-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 if { [skip_fortran_tests] } { return -1 }
 
 standard_testfile .f90
+load_lib "fortran.exp"
 
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug f90}] } {
     return -1
@@ -29,10 +30,8 @@ if ![runto MAIN__] {
     continue
 }
 
-# Depending on the compiler version being used, the name of the 4-byte integer
-# and real types can be printed differently.  For instance, gfortran-4.1 uses
-# "int4" whereas gfortran-4.3 uses "int(kind=4)".
-set int4 "(int4|integer\\(kind=4\\))"
+# Depending on the compiler being used, the type names can be printed differently.
+set int [fortran_int4]
 
 gdb_breakpoint [gdb_get_line_number "break-static"]
 gdb_continue_to_breakpoint "break-static" ".*break-static.*"
@@ -69,7 +68,7 @@ gdb_test "print varbound(4)" \
     "print valid variable bound array element"
 
 gdb_test "ptype unbound" \
-    "type = $int4 \\(\\*\\)" \
+    "type = $int \\(\\*\\)" \
     "print type of unbound array"
 
 gdb_test "print unbound(4)" \

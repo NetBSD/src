@@ -428,7 +428,7 @@ proc test_struct_returns { n } {
 	-re "Value returned is .*${gdb_prompt} $" {
 	    pass "${test}"
 	}
-	-re "Cannot determine contents.*${gdb_prompt} $" {
+	-re "Value returned has type: struct struct$n. Cannot determine contents.*${gdb_prompt} $" {
 	    # Expected bad value.  For the moment this is ok.
 	    set finish_value_known 0
 	    pass "${test}"

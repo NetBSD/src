@@ -222,9 +222,6 @@ NOT_FSF_LIST = (
     "sim/arm/arminit.c",
     "sim/common/cgen-fpu.c", "sim/common/cgen-fpu.h",
     "sim/common/cgen-accfp.c",
-    "sim/erc32/sis.h", "sim/erc32/erc32.c", "sim/erc32/func.c",
-    "sim/erc32/float.c", "sim/erc32/interf.c", "sim/erc32/sis.c",
-    "sim/erc32/exec.c",
     "sim/mips/m16run.c", "sim/mips/sim-main.c",
     "sim/moxie/moxie-gdb.dts",
     # Not a single file in sim/ppc/ appears to be copyright FSF :-(.

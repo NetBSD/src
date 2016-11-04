@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.19.2.1 2016/08/06 00:18:41 pgoyette Exp $ */
+/* $NetBSD: ipv6.h,v 1.19.2.2 2016/11/04 14:42:45 pgoyette Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -262,17 +262,14 @@ struct ipv6_state {
 #define IP6BUFLEN	(CMSG_SPACE(sizeof(struct in6_pktinfo)) + \
 			CMSG_SPACE(sizeof(int)))
 
-
 #ifdef INET6
 struct ipv6_ctx {
+	unsigned char ctlbuf[IP6BUFLEN];
 	struct sockaddr_in6 from;
 	struct msghdr sndhdr;
-	struct iovec sndiov[2];
+	struct iovec sndiov[1];
 	unsigned char sndbuf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
 	struct msghdr rcvhdr;
-	struct iovec rcviov[2];
-	unsigned char rcvbuf[IP6BUFLEN];
-	unsigned char ansbuf[1500];
 	char ntopbuf[INET6_ADDRSTRLEN];
 	const char *sfrom;
 
@@ -302,7 +299,7 @@ ssize_t ipv6_addaddrs(struct ipv6_addrhead *addrs);
 void ipv6_freedrop_addrs(struct ipv6_addrhead *, int,
     const struct interface *);
 void ipv6_handleifa(struct dhcpcd_ctx *ctx, int, struct if_head *,
-    const char *, const struct in6_addr *, uint8_t);
+    const char *, const struct in6_addr *, uint8_t, int);
 int ipv6_handleifa_addrs(int, struct ipv6_addrhead *, const struct ipv6_addr *);
 struct ipv6_addr *ipv6_iffindaddr(struct interface *,
     const struct in6_addr *, int);

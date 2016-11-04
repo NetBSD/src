@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.28.74.1 2016/08/06 00:19:12 pgoyette Exp $	*/
+/*	$NetBSD: cmds.c,v 1.28.74.2 2016/11/04 14:49:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.28.74.1 2016/08/06 00:19:12 pgoyette Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.28.74.2 2016/11/04 14:49:25 pgoyette Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -150,7 +150,7 @@ switch_mode(struct mode *p)
 void
 status(void)
 {
-	error("Showing %s, refresh every %d seconds.", curmode->c_name, naptime);
+	error("Showing %s, refresh every %g seconds.", curmode->c_name, naptime);
 }
 
 int

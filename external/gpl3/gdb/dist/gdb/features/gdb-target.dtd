@@ -1,4 +1,4 @@
-<!-- Copyright (C) 2007-2015 Free Software Foundation, Inc.
+<!-- Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -45,6 +45,11 @@
 	id		CDATA	#REQUIRED
 	size		CDATA	#REQUIRED>
 
+<!ELEMENT enum		(evalue+)>
+<!ATTLIST enum
+	id		CDATA	#REQUIRED
+	size		CDATA	#REQUIRED>
+
 <!ELEMENT struct	(field+)>
 <!ATTLIST struct
 	id		CDATA	#REQUIRED
@@ -60,6 +65,11 @@
 	type		CDATA	#IMPLIED
 	start		CDATA	#IMPLIED
 	end		CDATA	#IMPLIED>
+
+<!ELEMENT evalue	EMPTY>
+<!ATTLIST evalue
+	name		CDATA	#REQUIRED
+	value		CDATA	#REQUIRED>
 
 <!ENTITY % xinclude SYSTEM "xinclude.dtd">
 %xinclude;

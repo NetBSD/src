@@ -1,5 +1,5 @@
 /* Test plugin for the GNU linker.
-   Copyright 2010 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -87,6 +87,7 @@ static const tag_name_t tag_names[] =
   ADDENTRY(LDPT_ADD_INPUT_FILE),
   ADDENTRY(LDPT_MESSAGE),
   ADDENTRY(LDPT_GET_INPUT_FILE),
+  ADDENTRY(LDPT_GET_VIEW),
   ADDENTRY(LDPT_RELEASE_INPUT_FILE),
   ADDENTRY(LDPT_ADD_INPUT_LIBRARY),
   ADDENTRY(LDPT_OUTPUT_NAME),
@@ -104,6 +105,7 @@ static ld_plugin_get_symbols tv_get_symbols_v2 = 0;
 static ld_plugin_add_input_file tv_add_input_file = 0;
 static ld_plugin_message tv_message = 0;
 static ld_plugin_get_input_file tv_get_input_file = 0;
+static ld_plugin_get_view tv_get_view = 0;
 static ld_plugin_release_input_file tv_release_input_file = 0;
 static ld_plugin_add_input_library tv_add_input_library = 0;
 static ld_plugin_set_extra_library_path tv_set_extra_library_path = 0;
@@ -168,7 +170,7 @@ record_add_file (const char *file, addfile_enum_t type)
     return LDPS_ERR;
   newfile->next = NULL;
   newfile->name = file;
-  newfile->type = type;;
+  newfile->type = type;
   /* Chain it on the end of the list.  */
   *addfiles_tail_chain_ptr = newfile;
   addfiles_tail_chain_ptr = &newfile->next;
@@ -367,6 +369,7 @@ dump_tv_tag (size_t n, struct ld_plugin_tv *tv)
       case LDPT_ADD_INPUT_FILE:
       case LDPT_MESSAGE:
       case LDPT_GET_INPUT_FILE:
+      case LDPT_GET_VIEW:
       case LDPT_RELEASE_INPUT_FILE:
       case LDPT_ADD_INPUT_LIBRARY:
       case LDPT_SET_EXTRA_LIBRARY_PATH:
@@ -432,6 +435,9 @@ parse_tv_tag (struct ld_plugin_tv *tv)
 	break;
       case LDPT_GET_INPUT_FILE:
 	SETVAR(tv_get_input_file);
+	break;
+      case LDPT_GET_VIEW:
+	SETVAR(tv_get_view);
 	break;
       case LDPT_RELEASE_INPUT_FILE:
 	SETVAR(tv_release_input_file);

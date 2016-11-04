@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_gpcreg.h,v 1.1 2016/05/17 06:44:45 ryo Exp $	*/
+/*	$NetBSD: imx7_gpcreg.h,v 1.1.4.1 2016/11/04 14:48:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan, Inc.
@@ -59,6 +59,8 @@
 #define  GPC_PGC_ACK_SEL_A7_A7_PGC_PUP_ACK		__BIT(31)
 #define  GPC_PGC_ACK_SEL_A7_A7_PGC_PDN_ACK		__BIT(15)
 #define GPC_PGC_ACK_SEL_M4				0x00000028
+#define  GPC_PGC_ACK_SEL_M4_M4_DUMMY_PGC_PUP_ACK	__BIT(31)
+#define  GPC_PGC_ACK_SEL_M4_M4_DUMMY_PGC_PDN_ACK	__BIT(15)
 #define GPC_MISC					0x0000002c
 #define GPC_IMR1_CORE0_A7				0x00000030
 #define GPC_IMR2_CORE0_A7				0x00000034
@@ -92,6 +94,7 @@
 #define GPC_SLT9_CFG					0x000000d4
 #define GPC_PGC_CPU_MAPPING				0x000000ec
 #define  GPC_PGC_CPU_MAPPING_FASTMEGA_A7_DOMAIN		__BIT(0)
+#define  GPC_PGC_CPU_MAPPING_FASTMEGA_M4_DOMAIN		__BIT(8)
 #define GPC_CPU_PGC_SW_PUP_REQ				0x000000f0
 #define GPC_PU_PGC_SW_PUP_REQ				0x000000f8
 #define GPC_CPU_PGC_SW_PDN_REQ				0x000000fc

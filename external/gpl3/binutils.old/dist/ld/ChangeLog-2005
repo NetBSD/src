@@ -39,7 +39,7 @@
 	* ld/emulparms/h8300sxelf.sh: Likewise.
 	* ld/scripttempl/elf.sc: Add TINY_READONLY_SECTION,
 	TINY_DATA_SECTION, TINY_BSS_SECTION.
- 
+
 2005-12-19  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/2065
@@ -1834,6 +1834,12 @@
 
 For older changes see ChangeLog-2004
 
+Copyright (C) 2005 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

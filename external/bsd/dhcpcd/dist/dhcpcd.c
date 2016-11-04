@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.35.2.1 2016/08/06 00:18:41 pgoyette Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.35.2.2 2016/11/04 14:42:45 pgoyette Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -382,9 +382,6 @@ stop_interface(struct interface *ifp)
 	struct dhcpcd_ctx *ctx;
 
 	ctx = ifp->ctx;
-	if (!ifp->active)
-		goto stop;
-
 	logger(ctx, LOG_INFO, "%s: removing interface", ifp->name);
 	ifp->options->options |= DHCPCD_STOPPING;
 
@@ -403,7 +400,6 @@ stop_interface(struct interface *ifp)
 	/* Set the link state to unknown as we're no longer tracking it. */
 	ifp->carrier = LINK_UNKNOWN;
 
-stop:
 	if (!(ctx->options & (DHCPCD_MASTER | DHCPCD_TEST)))
 		eloop_exit(ctx->eloop, EXIT_FAILURE);
 }
@@ -603,8 +599,11 @@ configure_interface(struct interface *ifp, int argc, char **argv,
 
 	old = ifp->options ? ifp->options->mtime : 0;
 	dhcpcd_selectprofile(ifp, NULL);
-	if (ifp->options == NULL)
+	if (ifp->options == NULL) {
+		/* dhcpcd cannot continue with this interface. */
+		ifp->active = IF_INACTIVE;
 		return;
+	}
 	add_options(ifp->ctx, ifp->name, ifp->options, argc, argv);
 	ifp->options->options |= options;
 	configure_interface1(ifp);
@@ -661,15 +660,6 @@ dhcpcd_initstate2(struct interface *ifp, unsigned long long options)
 		logger(ifp->ctx, LOG_ERR, "ipv6_init: %m");
 		ifo->options &= ~DHCPCD_IPV6RS;
 	}
-
-	/* Add our link-local address before upping the interface
-	 * so our RFC7217 address beats the hwaddr based one.
-	 * This needs to happen before PREINIT incase a hook script
-	 * inadvertently ups the interface. */
-	if (ifo->options & DHCPCD_IPV6 && ipv6_start(ifp) == -1) {
-		logger(ifp->ctx, LOG_ERR, "%s: ipv6_start: %m", ifp->name);
-		ifo->options &= ~DHCPCD_IPV6;
-	}
 }
 
 static void
@@ -678,7 +668,8 @@ dhcpcd_initstate1(struct interface *ifp, int argc, char **argv,
 {
 
 	configure_interface(ifp, argc, argv, options);
-	dhcpcd_initstate2(ifp, 0);
+	if (ifp->active)
+		dhcpcd_initstate2(ifp, 0);
 }
 
 static void
@@ -812,20 +803,6 @@ warn_iaid_conflict(struct interface *ifp, uint8_t *iaid)
 		    ifp->name, ifn->name);
 }
 
-static void
-pre_start(struct interface *ifp)
-{
-
-	/* Add our link-local address before upping the interface
-	 * so our RFC7217 address beats the hwaddr based one.
-	 * This is also a safety check incase it was ripped out
-	 * from under us. */
-	if (ifp->options->options & DHCPCD_IPV6 && ipv6_start(ifp) == -1) {
-		logger(ifp->ctx, LOG_ERR, "%s: ipv6_start: %m", ifp->name);
-		ifp->options->options &= ~DHCPCD_IPV6;
-	}
-}
-
 void
 dhcpcd_startinterface(void *arg)
 {
@@ -890,6 +867,10 @@ dhcpcd_startinterface(void *arg)
 		}
 	}
 
+	if (ifo->options & DHCPCD_IPV6 && ipv6_start(ifp) == -1) {
+		logger(ifp->ctx, LOG_ERR, "%s: ipv6_start: %m", ifp->name);
+		ifo->options &= ~DHCPCD_IPV6;
+	}
 	if (ifo->options & DHCPCD_IPV6) {
 		ipv6_startstatic(ifp);
 
@@ -944,7 +925,6 @@ dhcpcd_prestartinterface(void *arg)
 {
 	struct interface *ifp = arg;
 
-	pre_start(ifp);
 	if ((!(ifp->ctx->options & DHCPCD_MASTER) ||
 	    ifp->options->options & DHCPCD_IF_UP) &&
 	    if_up(ifp) == -1)
@@ -972,7 +952,6 @@ static void
 run_preinit(struct interface *ifp)
 {
 
-	pre_start(ifp);
 	if (ifp->ctx->options & DHCPCD_TEST)
 		return;
 
@@ -990,9 +969,13 @@ dhcpcd_activateinterface(struct interface *ifp, unsigned long long options)
 	if (!ifp->active) {
 		ifp->active = IF_ACTIVE;
 		dhcpcd_initstate2(ifp, options);
-		configure_interface1(ifp);
-		run_preinit(ifp);
-		dhcpcd_prestartinterface(ifp);
+		/* It's possible we might not have been able to load
+		 * a config. */
+		if (ifp->active) {
+			configure_interface1(ifp);
+			run_preinit(ifp);
+			dhcpcd_prestartinterface(ifp);
+		}
 	}
 }
 
@@ -1142,7 +1125,8 @@ reload_config(struct dhcpcd_ctx *ctx)
 	struct if_options *ifo;
 
 	free_globals(ctx);
-	ifo = read_config(ctx, NULL, NULL, NULL);
+	if ((ifo = read_config(ctx, NULL, NULL, NULL)) == NULL)
+		return;
 	add_options(ctx, NULL, ifo, ctx->argc, ctx->argv);
 	/* We need to preserve these two options. */
 	if (ctx->options & DHCPCD_MASTER)
@@ -1188,13 +1172,13 @@ stop_all_interfaces(struct dhcpcd_ctx *ctx, unsigned long long opts)
 	ctx->options |= DHCPCD_EXITING;
 	/* Drop the last interface first */
 	TAILQ_FOREACH_REVERSE(ifp, ctx->ifaces, if_head, next) {
-		if (ifp->options) {
+		if (ifp->active) {
 			ifp->options->options |= opts;
 			if (ifp->options->options & DHCPCD_RELEASE)
 				ifp->options->options &= ~DHCPCD_PERSISTENT;
 			ifp->options->options |= DHCPCD_EXITING;
+			stop_interface(ifp);
 		}
-		stop_interface(ifp);
 	}
 }
 
@@ -1407,6 +1391,8 @@ dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
 		for (oi = optind; oi < argc; oi++) {
 			if ((ifp = if_find(ctx->ifaces, argv[oi])) == NULL)
 				continue;
+			if (!ifp->active)
+				continue;
 			ifp->options->options |= opts;
 			if (opts & DHCPCD_RELEASE)
 				ifp->options->options &= ~DHCPCD_PERSISTENT;
@@ -1459,6 +1445,23 @@ main(int argc, char **argv)
 			return EXIT_SUCCESS;
 		} else if (strcmp(argv[1], "--version") == 0) {
 			printf(""PACKAGE" "VERSION"\n%s\n", dhcpcd_copyright);
+			printf("Compiled in features:"
+#ifdef INET
+			" INET"
+#endif
+#ifdef IPV4LL
+			" IPv4LL"
+#endif
+#ifdef INET6
+			" INET6"
+#endif
+#ifdef DHCP6
+			" DHCPv6"
+#endif
+#ifdef AUTH
+			" AUTH"
+#endif
+			"\n");
 			return EXIT_SUCCESS;
 		}
 	}
@@ -1974,6 +1977,7 @@ exit1:
 	if (control_stop(&ctx) == -1)
 		logger(&ctx, LOG_ERR, "control_stop: %m:");
 	eloop_free(ctx.eloop);
+	free(ctx.iov[0].iov_base);
 
 	if (ctx.options & DHCPCD_STARTED && !(ctx.options & DHCPCD_FORKED))
 		logger(&ctx, LOG_INFO, PACKAGE " exited");

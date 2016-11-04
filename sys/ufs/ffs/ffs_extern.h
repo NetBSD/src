@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.82 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.82.2.1 2016/11/04 14:49:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -168,8 +168,8 @@ int	ffs_wapbl_stop(struct mount *, int);
 int	ffs_wapbl_replay_start(struct mount *, struct fs *, struct vnode *);
 void	ffs_wapbl_blkalloc(struct fs *, struct vnode *, daddr_t, int);
 
-void	ffs_wapbl_sync_metadata(struct mount *, daddr_t *, int *, int);
-void	ffs_wapbl_abort_sync_metadata(struct mount *, daddr_t *, int *, int);
+void	ffs_wapbl_sync_metadata(struct mount *, struct wapbl_dealloc *);
+void	ffs_wapbl_abort_sync_metadata(struct mount *, struct wapbl_dealloc *);
 
 extern int (**ffs_vnodeop_p)(void *);
 extern int (**ffs_specop_p)(void *);

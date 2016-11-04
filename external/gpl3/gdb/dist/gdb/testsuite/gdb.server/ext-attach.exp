@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2007-2015 Free Software Foundation, Inc.
+# Copyright 2007-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,8 @@ gdbserver_start_extended
 
 gdb_test_no_output "set remote exec-file $target_exec" "set remote exec-file"
 
-set testpid [spawn_wait_for_attach $binfile]
+set test_spawn_id [spawn_wait_for_attach $binfile]
+set testpid [spawn_id_get_pid $test_spawn_id]
 
 gdb_test "attach $testpid" \
     "Attaching to program: .*, process $testpid.*(in|at).*" \
@@ -69,3 +70,5 @@ gdb_test "backtrace" ".*main.*" "backtrace 2"
 
 gdb_test "kill" "" "kill" "Kill the program being debugged.*" "y"
 gdb_test_no_output "monitor exit"
+
+kill_wait_spawned_process $test_spawn_id

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2008/09/26 11:41:06 tsutsui Exp $	*/
+/*	$NetBSD: extern.h,v 1.12.44.1 2016/11/04 14:48:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -48,6 +48,7 @@ void	 __bt_pgin(void *, pgno_t, void *);
 void	 __bt_pgout(void *, pgno_t, void *);
 int	 __bt_push(BTREE *, pgno_t, int);
 int	 __bt_put(const DB *dbp, DBT *, const DBT *, unsigned int);
+int	 __bt_relink(BTREE *, PAGE *);
 int	 __bt_ret(BTREE *, EPG *, DBT *, DBT *, DBT *, DBT *, int);
 EPG	*__bt_search(BTREE *, const DBT *, int *);
 int	 __bt_seq(const DB *, DBT *, DBT *, unsigned int);

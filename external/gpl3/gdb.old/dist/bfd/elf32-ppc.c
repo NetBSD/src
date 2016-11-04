@@ -187,8 +187,8 @@ static reloc_howto_type ppc_elf_howto_raw[] = {
   /* This reloc does nothing.  */
   HOWTO (R_PPC_NONE,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
@@ -2019,19 +2019,28 @@ ppc_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 		       arelent *cache_ptr,
 		       Elf_Internal_Rela *dst)
 {
+  unsigned int r_type;
+
   /* Initialize howto table if not already done.  */
   if (!ppc_elf_howto_table[R_PPC_ADDR32])
     ppc_elf_howto_init ();
 
-  BFD_ASSERT (ELF32_R_TYPE (dst->r_info) < (unsigned int) R_PPC_max);
-  cache_ptr->howto = ppc_elf_howto_table[ELF32_R_TYPE (dst->r_info)];
+  r_type = ELF32_R_TYPE (dst->r_info);
+  if (r_type >= R_PPC_max)
+    {
+      (*_bfd_error_handler) (_("%B: unrecognised PPC reloc number: %d"),
+			     abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      r_type = R_PPC_NONE;
+    }
+  cache_ptr->howto = ppc_elf_howto_table[r_type];
 
   /* Just because the above assert didn't trigger doesn't mean that
      ELF32_R_TYPE (dst->r_info) is necessarily a valid relocation.  */
   if (!cache_ptr->howto)
     {
       (*_bfd_error_handler) (_("%B: invalid relocation type %d"),
-                             abfd, ELF32_R_TYPE (dst->r_info));
+                             abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
 
       cache_ptr->howto = ppc_elf_howto_table[R_PPC_NONE];
@@ -2056,9 +2065,6 @@ ppc_elf_addr16_ha_reloc (bfd *abfd ATTRIBUTE_UNUSED,
       reloc_entry->address += input_section->output_offset;
       return bfd_reloc_ok;
     }
-
-  if (reloc_entry->address > bfd_get_section_limit (abfd, input_section))
-    return bfd_reloc_outofrange;
 
   if (bfd_is_com_section (symbol->section))
     relocation = 0;
@@ -2919,7 +2925,6 @@ ppc_elf_get_synthetic_symtab (bfd *abfd, long symcount, asymbol **syms,
     }
 
   count = relplt->size / sizeof (Elf32_External_Rela);
-  stub_vma = glink_vma - (bfd_vma) count * 16;
   /* If the stubs are those for -shared/-pie then we might have
      multiple stubs for each plt entry.  If that is the case then
      there is no way to associate stubs with their plt entries short
@@ -2950,9 +2955,10 @@ ppc_elf_get_synthetic_symtab (bfd *abfd, long symcount, asymbol **syms,
   if (s == NULL)
     return -1;
 
+  stub_vma = glink_vma;
   names = (char *) (s + count + 1 + (resolv_vma != 0));
-  p = relplt->relocation;
-  for (i = 0; i < count; i++, p++)
+  p = relplt->relocation + count - 1;
+  for (i = 0; i < count; i++)
     {
       size_t len;
 
@@ -2963,6 +2969,9 @@ ppc_elf_get_synthetic_symtab (bfd *abfd, long symcount, asymbol **syms,
 	s->flags |= BSF_GLOBAL;
       s->flags |= BSF_SYNTHETIC;
       s->section = glink;
+      stub_vma -= 16;
+      if (strcmp ((*p->sym_ptr_ptr)->name, "__tls_get_addr_opt") == 0)
+	stub_vma -= 32;
       s->value = stub_vma - glink->vma;
       s->name = names;
       s->udata.p = NULL;
@@ -2979,7 +2988,7 @@ ppc_elf_get_synthetic_symtab (bfd *abfd, long symcount, asymbol **syms,
       memcpy (names, "@plt", sizeof ("@plt"));
       names += sizeof ("@plt");
       ++s;
-      stub_vma += 16;
+      --p;
     }
 
   /* Add a symbol at the start of the glink branch table.  */
@@ -3126,7 +3135,11 @@ struct ppc_elf_link_hash_entry
 
   /* Nonzero if we have seen a small data relocation referring to this
      symbol.  */
-  unsigned char has_sda_refs;
+  unsigned char has_sda_refs : 1;
+
+  /* Flag use of given relocations.  */
+  unsigned char has_addr16_ha : 1;
+  unsigned char has_addr16_lo : 1;
 };
 
 #define ppc_elf_hash_entry(ent) ((struct ppc_elf_link_hash_entry *) (ent))
@@ -3250,7 +3263,7 @@ static struct bfd_link_hash_table *
 ppc_elf_link_hash_table_create (bfd *abfd)
 {
   struct ppc_elf_link_hash_table *ret;
-  static struct ppc_elf_params default_params = { PLT_OLD, 0, 1, 0, 0, 12 };
+  static struct ppc_elf_params default_params = { PLT_OLD, 0, 1, 0, 0, 12, 0 };
 
   ret = bfd_zmalloc (sizeof (struct ppc_elf_link_hash_table));
   if (ret == NULL)
@@ -4367,6 +4380,10 @@ ppc_elf_check_relocs (bfd *abfd,
 	      /* We may need a copy reloc too.  */
 	      h->non_got_ref = 1;
 	      h->pointer_equality_needed = 1;
+	      if (r_type == R_PPC_ADDR16_HA)
+		ppc_elf_hash_entry (h)->has_addr16_ha = 1;
+	      if (r_type == R_PPC_ADDR16_LO)
+		ppc_elf_hash_entry (h)->has_addr16_lo = 1;
 	    }
 	  goto dodyn;
 
@@ -5087,6 +5104,9 @@ ppc_elf_tls_setup (bfd *obfd, struct bfd_link_info *info)
   htab = ppc_elf_hash_table (info);
   htab->tls_get_addr = elf_link_hash_lookup (&htab->elf, "__tls_get_addr",
 					     FALSE, FALSE, TRUE);
+  if (htab->plt_type != PLT_NEW)
+    htab->params->no_tls_get_addr_opt = TRUE;
+
   if (!htab->params->no_tls_get_addr_opt)
     {
       struct elf_link_hash_entry *opt, *tga;
@@ -5542,6 +5562,7 @@ ppc_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 		   && !readonly_dynrelocs (h))
 	    h->non_got_ref = 0;
 	}
+      h->protected_def = 0;
       return TRUE;
     }
   else
@@ -5569,12 +5590,41 @@ ppc_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
   if (info->shared)
-    return TRUE;
+    {
+      h->protected_def = 0;
+      return TRUE;
+    }
 
   /* If there are no references to this symbol that do not use the
      GOT, we don't need to generate a copy reloc.  */
   if (!h->non_got_ref)
-    return TRUE;
+    {
+      h->protected_def = 0;
+      return TRUE;
+    }
+
+  /* Protected variables do not work with .dynbss.  The copy in
+     .dynbss won't be used by the shared library with the protected
+     definition for the variable.  Editing to PIC, or text relocations
+     are preferable to an incorrect program.  */
+  if (h->protected_def)
+    {
+      if (ELIMINATE_COPY_RELOCS
+	  && ppc_elf_hash_entry (h)->has_addr16_ha
+	  && ppc_elf_hash_entry (h)->has_addr16_lo
+	  && htab->params->pic_fixup == 0
+	  && info->disable_target_specific_optimizations <= 1)
+	htab->params->pic_fixup = 1;
+      h->non_got_ref = 0;
+      return TRUE;
+    }
+
+  /* If -z nocopyreloc was given, we won't generate them either.  */
+  if (info->nocopyreloc)
+    {
+      h->non_got_ref = 0;
+      return TRUE;
+    }
 
    /* If we didn't find any dynamic relocs in read-only sections, then
       we'll be keeping the dynamic relocs and avoiding the copy reloc.
@@ -5679,6 +5729,7 @@ add_stub_sym (struct plt_entry *ent,
       sh->ref_regular_nonweak = 1;
       sh->forced_local = 1;
       sh->non_elf = 0;
+      sh->root.linker_def = 1;
     }
   return TRUE;
 }
@@ -5899,7 +5950,13 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
     }
 
   eh = (struct ppc_elf_link_hash_entry *) h;
-  if (eh->elf.got.refcount > 0)
+  if (eh->elf.got.refcount > 0
+      || (ELIMINATE_COPY_RELOCS
+	  && !eh->elf.def_regular
+	  && eh->elf.protected_def
+	  && eh->has_addr16_ha
+	  && eh->has_addr16_lo
+	  && htab->params->pic_fixup > 0))
     {
       bfd_boolean dyn;
       unsigned int need;
@@ -6042,7 +6099,11 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	 dynamic.  */
 
       if (!h->non_got_ref
-	  && !h->def_regular)
+	  && !h->def_regular
+	  && !(h->protected_def
+	       && eh->has_addr16_ha
+	       && eh->has_addr16_lo
+	       && htab->params->pic_fixup > 0))
 	{
 	  /* Make sure this symbol is output as a dynamic symbol.
 	     Undefined weak syms won't yet be marked as dynamic.  */
@@ -6360,6 +6421,7 @@ ppc_elf_size_dynamic_sections (bfd *output_bfd,
 	      sh->ref_regular_nonweak = 1;
 	      sh->forced_local = 1;
 	      sh->non_elf = 0;
+	      sh->root.linker_def = 1;
 	    }
 	  sh = elf_link_hash_lookup (&htab->elf, "__glink_PLTresolve",
 				     TRUE, FALSE, FALSE);
@@ -6375,6 +6437,7 @@ ppc_elf_size_dynamic_sections (bfd *output_bfd,
 	      sh->ref_regular_nonweak = 1;
 	      sh->forced_local = 1;
 	      sh->non_elf = 0;
+	      sh->root.linker_def = 1;
 	    }
 	}
     }
@@ -6681,6 +6744,7 @@ static const int stub_entry[] =
 struct ppc_elf_relax_info
 {
   unsigned int workaround_size;
+  unsigned int picfixup_size;
 };
 
 /* This function implements long branch trampolines, and the ppc476
@@ -6694,9 +6758,9 @@ ppc_elf_relax_section (bfd *abfd,
 		       struct bfd_link_info *link_info,
 		       bfd_boolean *again)
 {
-  struct one_fixup
+  struct one_branch_fixup
   {
-    struct one_fixup *next;
+    struct one_branch_fixup *next;
     asection *tsec;
     /* Final link, can use the symbol offset.  For a
        relocatable link we use the symbol's index.  */
@@ -6709,12 +6773,12 @@ ppc_elf_relax_section (bfd *abfd,
   Elf_Internal_Sym *isymbuf = NULL;
   Elf_Internal_Rela *internal_relocs = NULL;
   Elf_Internal_Rela *irel, *irelend = NULL;
-  struct one_fixup *fixups = NULL;
+  struct one_branch_fixup *branch_fixups = NULL;
   struct ppc_elf_relax_info *relax_info = NULL;
   unsigned changes = 0;
   bfd_boolean workaround_change;
   struct ppc_elf_link_hash_table *htab;
-  bfd_size_type trampbase, trampoff, newsize;
+  bfd_size_type trampbase, trampoff, newsize, picfixup_size;
   asection *got2;
   bfd_boolean maybe_pasted;
 
@@ -6746,7 +6810,8 @@ ppc_elf_relax_section (bfd *abfd,
 	      || isec->sec_info_type == SEC_INFO_TYPE_TARGET);
   isec->sec_info_type = SEC_INFO_TYPE_TARGET;
 
-  if (htab->params->ppc476_workaround)
+  if (htab->params->ppc476_workaround
+      || htab->params->pic_fixup > 0)
     {
       if (elf_section_data (isec)->sec_info == NULL)
 	{
@@ -6767,8 +6832,9 @@ ppc_elf_relax_section (bfd *abfd,
     trampoff += 4;
 
   symtab_hdr = &elf_symtab_hdr (abfd);
-
-  if (htab->params->branch_trampolines)
+  picfixup_size = 0;
+  if (htab->params->branch_trampolines
+      || htab->params->pic_fixup > 0)
     {
       /* Get a copy of the native relocations.  */
       if (isec->reloc_count != 0)
@@ -6787,9 +6853,9 @@ ppc_elf_relax_section (bfd *abfd,
 	  unsigned long r_type = ELF32_R_TYPE (irel->r_info);
 	  bfd_vma toff, roff;
 	  asection *tsec;
-	  struct one_fixup *f;
+	  struct one_branch_fixup *f;
 	  size_t insn_offset = 0;
-	  bfd_vma max_branch_offset, val;
+	  bfd_vma max_branch_offset = 0, val;
 	  bfd_byte *hit_addr;
 	  unsigned long t0;
 	  struct elf_link_hash_entry *h;
@@ -6809,6 +6875,11 @@ ppc_elf_relax_section (bfd *abfd,
 	    case R_PPC_REL14_BRNTAKEN:
 	      max_branch_offset = 1 << 15;
 	      break;
+
+	    case R_PPC_ADDR16_HA:
+	      if (htab->params->pic_fixup > 0)
+		break;
+	      continue;
 
 	    default:
 	      continue;
@@ -6931,6 +7002,17 @@ ppc_elf_relax_section (bfd *abfd,
 	      sym_type = h->type;
 	    }
 
+	  if (r_type == R_PPC_ADDR16_HA)
+	    {
+	      if (h != NULL
+		  && !h->def_regular
+		  && h->protected_def
+		  && ppc_elf_hash_entry (h)->has_addr16_ha
+		  && ppc_elf_hash_entry (h)->has_addr16_lo)
+		picfixup_size += 12;
+	      continue;
+	    }
+
 	  /* The condition here under which we call find_plt_ent must
 	     match that in relocate_section.  If we call find_plt_ent here
 	     but not in relocate_section, or vice versa, then the branch
@@ -7048,7 +7130,7 @@ ppc_elf_relax_section (bfd *abfd,
 	    }
 
 	  /* Look for an existing fixup to this address.  */
-	  for (f = fixups; f ; f = f->next)
+	  for (f = branch_fixups; f ; f = f->next)
 	    if (f->tsec == tsec && f->toff == toff)
 	      break;
 
@@ -7093,11 +7175,11 @@ ppc_elf_relax_section (bfd *abfd,
 
 	      /* Record the fixup so we don't do it again this section.  */
 	      f = bfd_malloc (sizeof (*f));
-	      f->next = fixups;
+	      f->next = branch_fixups;
 	      f->tsec = tsec;
 	      f->toff = toff;
 	      f->trampoff = trampoff;
-	      fixups = f;
+	      branch_fixups = f;
 
 	      trampoff += size;
 	      changes++;
@@ -7147,10 +7229,10 @@ ppc_elf_relax_section (bfd *abfd,
 	    }
 	}
 
-      while (fixups != NULL)
+      while (branch_fixups != NULL)
 	{
-	  struct one_fixup *f = fixups;
-	  fixups = fixups->next;
+	  struct one_branch_fixup *f = branch_fixups;
+	  branch_fixups = branch_fixups->next;
 	  free (f);
 	}
     }
@@ -7187,7 +7269,15 @@ ppc_elf_relax_section (bfd *abfd,
       newsize = trampoff + relax_info->workaround_size;
     }
 
-  if (changes || workaround_change)
+  if (htab->params->pic_fixup > 0)
+    {
+      picfixup_size -= relax_info->picfixup_size;
+      if (picfixup_size != 0)
+	relax_info->picfixup_size += picfixup_size;
+      newsize += relax_info->picfixup_size;
+    }
+
+  if (changes != 0 || picfixup_size != 0 || workaround_change)
     isec->size = newsize;
 
   if (isymbuf != NULL
@@ -7214,6 +7304,7 @@ ppc_elf_relax_section (bfd *abfd,
 	}
     }
 
+  changes += picfixup_size;
   if (changes != 0)
     {
       /* Append sufficient NOP relocs so we can write out relocation
@@ -7248,10 +7339,10 @@ ppc_elf_relax_section (bfd *abfd,
   return TRUE;
 
  error_return:
-  while (fixups != NULL)
+  while (branch_fixups != NULL)
     {
-      struct one_fixup *f = fixups;
-      fixups = fixups->next;
+      struct one_branch_fixup *f = branch_fixups;
+      branch_fixups = branch_fixups->next;
       free (f);
     }
   if (isymbuf != NULL && (unsigned char *) isymbuf != symtab_hdr->contents)
@@ -7567,6 +7658,8 @@ ppc_elf_relocate_section (bfd *output_bfd,
   bfd_boolean ret = TRUE;
   bfd_vma d_offset = (bfd_big_endian (output_bfd) ? 2 : 0);
   bfd_boolean is_vxworks_tls;
+  unsigned int picfixup_size = 0;
+  struct ppc_elf_relax_info *relax_info = NULL;
 
 #ifdef DEBUG
   _bfd_error_handler ("ppc_elf_relocate_section called for %B section %A, "
@@ -7591,6 +7684,8 @@ ppc_elf_relocate_section (bfd *output_bfd,
   is_vxworks_tls = (htab->is_vxworks && info->shared
 		    && !strcmp (input_section->output_section->name,
 				".tls_vars"));
+  if (input_section->sec_info_type == SEC_INFO_TYPE_TARGET)
+    relax_info = elf_section_data (input_section)->sec_info;
   rel = relocs;
   relend = relocs + input_section->reloc_count;
   for (; rel < relend; rel++)
@@ -7754,8 +7849,8 @@ ppc_elf_relocate_section (bfd *output_bfd,
 			  + R_PPC_GOT_TPREL16);
 	      else
 		{
-		  bfd_put_32 (output_bfd, NOP, contents + rel->r_offset);
 		  rel->r_offset -= d_offset;
+		  bfd_put_32 (output_bfd, NOP, contents + rel->r_offset);
 		  r_type = R_PPC_NONE;
 		}
 	      rel->r_info = ELF32_R_INFO (r_symndx, r_type);
@@ -7788,12 +7883,16 @@ ppc_elf_relocate_section (bfd *output_bfd,
 		  && branch_reloc_hash_match (input_bfd, rel + 1,
 					      htab->tls_get_addr))
 		offset = rel[1].r_offset;
+	      /* We read the low GOT_TLS insn because we need to keep
+		 the destination reg.  It may be something other than
+		 the usual r3, and moved to r3 before the call by
+		 intervening code.  */
+	      insn1 = bfd_get_32 (output_bfd,
+				  contents + rel->r_offset - d_offset);
 	      if ((tls_mask & tls_gd) != 0)
 		{
 		  /* IE */
-		  insn1 = bfd_get_32 (output_bfd,
-				      contents + rel->r_offset - d_offset);
-		  insn1 &= (1 << 26) - 1;
+		  insn1 &= (0x1f << 21) | (0x1f << 16);
 		  insn1 |= 32 << 26;	/* lwz */
 		  if (offset != (bfd_vma) -1)
 		    {
@@ -7808,7 +7907,8 @@ ppc_elf_relocate_section (bfd *output_bfd,
 	      else
 		{
 		  /* LE */
-		  insn1 = 0x3c620000;	/* addis 3,2,0 */
+		  insn1 &= 0x1f << 21;
+		  insn1 |= 0x3c020000;	/* addis r,2,0 */
 		  if (tls_gd == 0)
 		    {
 		      /* Was an LD reloc.  */
@@ -7941,6 +8041,114 @@ ppc_elf_relocate_section (bfd *output_bfd,
 	    bfd_put_32 (output_bfd, insn, contents + rel->r_offset);
 	    break;
 	  }
+	}
+
+      if (ELIMINATE_COPY_RELOCS
+	  && h != NULL
+	  && !h->def_regular
+	  && h->protected_def
+	  && ppc_elf_hash_entry (h)->has_addr16_ha
+	  && ppc_elf_hash_entry (h)->has_addr16_lo
+	  && htab->params->pic_fixup > 0)
+	{
+	  /* Convert lis;addi or lis;load/store accessing a protected
+	     variable defined in a shared library to PIC.  */
+	  unsigned int insn;
+
+	  if (r_type == R_PPC_ADDR16_HA)
+	    {
+	      insn = bfd_get_32 (output_bfd,
+				 contents + rel->r_offset - d_offset);
+	      if ((insn & (0x3f << 26)) == (15u << 26)
+		  && (insn & (0x1f << 16)) == 0 /* lis */)
+		{
+		  bfd_byte *p;
+		  bfd_vma off;
+		  bfd_vma got_addr;
+
+		  p = (contents + input_section->size
+		       - relax_info->workaround_size
+		       - relax_info->picfixup_size
+		       + picfixup_size);
+		  off = (p - contents) - (rel->r_offset - d_offset);
+		  if (off > 0x1fffffc || (off & 3) != 0)
+		    info->callbacks->einfo
+		      (_("%P: %H: fixup branch overflow\n"),
+		       input_bfd, input_section, rel->r_offset);
+
+		  bfd_put_32 (output_bfd, B | off,
+			      contents + rel->r_offset - d_offset);
+		  got_addr = (htab->got->output_section->vma
+			      + htab->got->output_offset
+			      + (h->got.offset & ~1));
+		  rel->r_info = ELF32_R_INFO (0, R_PPC_ADDR16_HA);
+		  rel->r_addend = got_addr;
+		  rel->r_offset = (p - contents) + d_offset;
+		  insn &= ~0xffff;
+		  insn |= ((unsigned int )(got_addr + 0x8000) >> 16) & 0xffff;
+		  bfd_put_32 (output_bfd, insn, p);
+
+		  /* Convert lis to lwz, loading address from GOT.  */
+		  insn &= ~0xffff;
+		  insn ^= (32u ^ 15u) << 26;
+		  insn |= (insn & (0x1f << 21)) >> 5;
+		  insn |= got_addr & 0xffff;
+		  bfd_put_32 (output_bfd, insn, p + 4);
+
+		  bfd_put_32 (output_bfd, B | ((-4 - off) & 0x3ffffff), p + 8);
+		  picfixup_size += 12;
+
+		  /* Use one of the spare relocs, so --emit-relocs
+		     output is reasonable.  */
+		  memmove (rel + 1, rel, (relend - rel - 1) * sizeof (*rel));
+		  rel++;
+		  rel->r_info = ELF32_R_INFO (0, R_PPC_ADDR16_LO);
+		  rel->r_offset += 4;
+
+		  /* Continue on as if we had a got reloc, to output
+		     dynamic reloc.  */
+		  r_type = R_PPC_GOT16_LO;
+		}
+	      else
+		info->callbacks->einfo
+		  (_("%P: %H: error: %s with unexpected instruction %x\n"),
+		   input_bfd, input_section, rel->r_offset,
+		   "R_PPC_ADDR16_HA", insn);
+	    }
+	  else if (r_type == R_PPC_ADDR16_LO)
+	    {
+	      insn = bfd_get_32 (output_bfd,
+				 contents + rel->r_offset - d_offset);
+	      if ((insn & (0x3f << 26)) == 14u << 26    /* addi */
+		  || (insn & (0x3f << 26)) == 32u << 26 /* lwz */
+		  || (insn & (0x3f << 26)) == 34u << 26 /* lbz */
+		  || (insn & (0x3f << 26)) == 36u << 26 /* stw */
+		  || (insn & (0x3f << 26)) == 38u << 26 /* stb */
+		  || (insn & (0x3f << 26)) == 40u << 26 /* lhz */
+		  || (insn & (0x3f << 26)) == 42u << 26 /* lha */
+		  || (insn & (0x3f << 26)) == 44u << 26 /* sth */
+		  || (insn & (0x3f << 26)) == 46u << 26 /* lmw */
+		  || (insn & (0x3f << 26)) == 47u << 26 /* stmw */
+		  || (insn & (0x3f << 26)) == 48u << 26 /* lfs */
+		  || (insn & (0x3f << 26)) == 50u << 26 /* lfd */
+		  || (insn & (0x3f << 26)) == 52u << 26 /* stfs */
+		  || (insn & (0x3f << 26)) == 54u << 26 /* stfd */
+		  || ((insn & (0x3f << 26)) == 58u << 26 /* lwa,ld,lmd */
+		      && (insn & 3) != 1)
+		  || ((insn & (0x3f << 26)) == 62u << 26 /* std, stmd */
+		      && ((insn & 3) == 0 || (insn & 3) == 3)))
+		{
+		  /* Arrange to apply the reloc addend, if any.  */
+		  relocation = 0;
+		  unresolved_reloc = FALSE;
+		  rel->r_info = ELF32_R_INFO (0, r_type);
+		}
+	      else
+		info->callbacks->einfo
+		  (_("%P: %H: error: %s with unexpected instruction %x\n"),
+		   input_bfd, input_section, rel->r_offset,
+		   "R_PPC_ADDR16_LO", insn);
+	    }
 	}
 
       ifunc = NULL;
@@ -8210,7 +8418,12 @@ ppc_elf_relocate_section (bfd *output_bfd,
 			  {
 			    outrel.r_addend += relocation;
 			    if (tls_ty & (TLS_GD | TLS_DTPREL | TLS_TPREL))
-			      outrel.r_addend -= htab->elf.tls_sec->vma;
+			      {
+				if (htab->elf.tls_sec == NULL)
+				  outrel.r_addend = 0;
+				else
+				  outrel.r_addend -= htab->elf.tls_sec->vma;
+			      }
 			  }
 			loc = rsec->contents;
 			loc += (rsec->reloc_count++
@@ -8228,9 +8441,14 @@ ppc_elf_relocate_section (bfd *output_bfd,
 			  value = 1;
 			else if (tls_ty != 0)
 			  {
-			    value -= htab->elf.tls_sec->vma + DTP_OFFSET;
-			    if (tls_ty == (TLS_TLS | TLS_TPREL))
-			      value += DTP_OFFSET - TP_OFFSET;
+			    if (htab->elf.tls_sec == NULL)
+			      value = 0;
+			    else
+			      {
+				value -= htab->elf.tls_sec->vma + DTP_OFFSET;
+				if (tls_ty == (TLS_TLS | TLS_TPREL))
+				  value += DTP_OFFSET - TP_OFFSET;
+			      }
 
 			    if (tls_ty == (TLS_TLS | TLS_GD))
 			      {
@@ -8277,6 +8495,10 @@ ppc_elf_relocate_section (bfd *output_bfd,
 		  }
 	      }
 
+	    /* If here for a picfixup, we're done.  */
+	    if (r_type != ELF32_R_TYPE (rel->r_info))
+	      continue;
+
 	    relocation = (htab->got->output_section->vma
 			  + htab->got->output_offset
 			  + off
@@ -8316,7 +8538,8 @@ ppc_elf_relocate_section (bfd *output_bfd,
 	case R_PPC_DTPREL16_LO:
 	case R_PPC_DTPREL16_HI:
 	case R_PPC_DTPREL16_HA:
-	  addend -= htab->elf.tls_sec->vma + DTP_OFFSET;
+	  if (htab->elf.tls_sec != NULL)
+	    addend -= htab->elf.tls_sec->vma + DTP_OFFSET;
 	  break;
 
 	  /* Relocations that may need to be propagated if this is a shared
@@ -8340,18 +8563,21 @@ ppc_elf_relocate_section (bfd *output_bfd,
 		bfd_put_32 (output_bfd, insn, p);
 	      break;
 	    }
-	  addend -= htab->elf.tls_sec->vma + TP_OFFSET;
+	  if (htab->elf.tls_sec != NULL)
+	    addend -= htab->elf.tls_sec->vma + TP_OFFSET;
 	  /* The TPREL16 relocs shouldn't really be used in shared
 	     libs as they will result in DT_TEXTREL being set, but
 	     support them anyway.  */
 	  goto dodyn;
 
 	case R_PPC_TPREL32:
-	  addend -= htab->elf.tls_sec->vma + TP_OFFSET;
+	  if (htab->elf.tls_sec != NULL)
+	    addend -= htab->elf.tls_sec->vma + TP_OFFSET;
 	  goto dodyn;
 
 	case R_PPC_DTPREL32:
-	  addend -= htab->elf.tls_sec->vma + DTP_OFFSET;
+	  if (htab->elf.tls_sec != NULL)
+	    addend -= htab->elf.tls_sec->vma + DTP_OFFSET;
 	  goto dodyn;
 
 	case R_PPC_DTPMOD32:
@@ -8420,7 +8646,11 @@ ppc_elf_relocate_section (bfd *output_bfd,
 		  && h != NULL
 		  && h->dynindx != -1
 		  && !h->non_got_ref
-		  && !h->def_regular))
+		  && !h->def_regular
+		  && !(h->protected_def
+		       && ppc_elf_hash_entry (h)->has_addr16_ha
+		       && ppc_elf_hash_entry (h)->has_addr16_lo
+		       && htab->params->pic_fixup > 0)))
 	    {
 	      int skip;
 	      bfd_byte *loc;
@@ -9199,30 +9429,20 @@ ppc_elf_relocate_section (bfd *output_bfd,
 	  if (r == bfd_reloc_overflow)
 	    {
 	    overflow:
-	      if (warned)
-		continue;
-	      if (h != NULL
-		  && h->root.type == bfd_link_hash_undefweak
-		  && howto->pc_relative)
+	      /* On code like "if (foo) foo();" don't report overflow
+		 on a branch to zero when foo is undefined.  */
+	      if (!warned
+		  && !(h != NULL
+		       && (h->root.type == bfd_link_hash_undefweak
+			   || h->root.type == bfd_link_hash_undefined)
+		       && is_branch_reloc (r_type)))
 		{
-		  /* Assume this is a call protected by other code that
-		     detect the symbol is undefined.  If this is the case,
-		     we can safely ignore the overflow.  If not, the
-		     program is hosed anyway, and a little warning isn't
-		     going to help.  */
-
-		  continue;
+		  if (!((*info->callbacks->reloc_overflow)
+			(info, (h ? &h->root : NULL), sym_name,
+			 howto->name, rel->r_addend,
+			 input_bfd, input_section, rel->r_offset)))
+		    return FALSE;
 		}
-
-	      if (! (*info->callbacks->reloc_overflow) (info,
-							(h ? &h->root : NULL),
-							sym_name,
-							howto->name,
-							rel->r_addend,
-							input_bfd,
-							input_section,
-							rel->r_offset))
-		return FALSE;
 	    }
 	  else
 	    {
@@ -9255,11 +9475,9 @@ ppc_elf_relocate_section (bfd *output_bfd,
 	  || (input_section->output_section->alignment_power
 	      >= htab->params->pagesize_p2)))
     {
-      struct ppc_elf_relax_info *relax_info;
       bfd_vma start_addr, end_addr, addr;
       bfd_vma pagesize = (bfd_vma) 1 << htab->params->pagesize_p2;
 
-      relax_info = elf_section_data (input_section)->sec_info;
       if (relax_info->workaround_size != 0)
 	{
 	  bfd_byte *p;
@@ -9390,6 +9608,8 @@ ppc_elf_relocate_section (bfd *output_bfd,
 	      && rel->r_offset >= offset
 	      && rel->r_offset < offset + 4)
 	    {
+	      asection *sreloc;
+
 	      /* If the insn we are patching had a reloc, adjust the
 		 reloc r_offset so that the reloc applies to the moved
 		 location.  This matters for -r and --emit-relocs.  */
@@ -9402,6 +9622,57 @@ ppc_elf_relocate_section (bfd *output_bfd,
 		  relend[-1] = tmp;
 		}
 	      relend[-1].r_offset += patch_off - offset;
+
+	      /* Adjust REL16 addends too.  */
+	      switch (ELF32_R_TYPE (relend[-1].r_info))
+		{
+		case R_PPC_REL16:
+		case R_PPC_REL16_LO:
+		case R_PPC_REL16_HI:
+		case R_PPC_REL16_HA:
+		  relend[-1].r_addend += patch_off - offset;
+		  break;
+		default:
+		  break;
+		}
+
+	      /* If we are building a PIE or shared library with
+		 non-PIC objects, perhaps we had a dynamic reloc too?
+		 If so, the dynamic reloc must move with the insn.  */
+	      sreloc = elf_section_data (input_section)->sreloc;
+	      if (sreloc != NULL)
+		{
+		  Elf32_External_Rela *slo, *shi, *srelend;
+		  bfd_vma soffset;
+
+		  slo = (Elf32_External_Rela *) sreloc->contents;
+		  shi = srelend = slo + sreloc->reloc_count;
+		  soffset = (offset + input_section->output_section->vma
+			     + input_section->output_offset);
+		  while (slo < shi)
+		    {
+		      Elf32_External_Rela *srel = slo + (shi - slo) / 2;
+		      bfd_elf32_swap_reloca_in (output_bfd, (bfd_byte *) srel,
+						&outrel);
+		      if (outrel.r_offset < soffset)
+			slo = srel + 1;
+		      else if (outrel.r_offset > soffset + 3)
+			shi = srel;
+		      else
+			{
+			  if (srel + 1 != srelend)
+			    {
+			      memmove (srel, srel + 1,
+				       (srelend - (srel + 1)) * sizeof (*srel));
+			      srel = srelend - 1;
+			    }
+			  outrel.r_offset += patch_off - offset;
+			  bfd_elf32_swap_reloca_out (output_bfd, &outrel,
+						     (bfd_byte *) srel);
+			  break;
+			}
+		    }
+		}
 	    }
 	  else
 	    rel = NULL;

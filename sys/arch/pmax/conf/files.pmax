@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.115 2014/07/20 10:22:54 alnsn Exp $
+#	$NetBSD: files.pmax,v 1.115.8.1 2016/11/04 14:49:03 pgoyette Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -95,6 +95,12 @@ file	arch/mips/mips/mips_mcclock_loop.S	mcclock # CPU speed via mcclock
 
 include "dev/scsipi/files.scsipi"
 
+#
+# Machine-independent ATA drivers
+#
+include "dev/ata/files.ata"
+
+
 # Memory Disk
 file	dev/md_root.c			memory_disk_hooks
 
@@ -165,5 +171,11 @@ file   arch/pmax/tc/dtms.c             dtms needs-flag
 device xcfb: wsemuldisplaydev, rasops8
 attach xcfb at tc
 file   dev/tc/xcfb.c                   xcfb needs-flag
+
+# this wants to be probed as late as possible.
+#
+# Machine-independent USB device support
+#
+include "dev/usb/files.usb"
 
 include "arch/pmax/conf/majors.pmax"

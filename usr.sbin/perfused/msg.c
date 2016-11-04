@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.22 2014/08/16 16:32:04 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.22.2.1 2016/11/04 14:49:27 pgoyette Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -80,15 +80,13 @@ perfused_open_sock(void)
 	/*
 	 * Set a buffer lentgh large enough so that a few FUSE packets
 	 * will fit. 
-	 * XXX We will have to find how many packets we need
 	 */
-	opt = 4 * FUSE_BUFSIZE;
+	opt = perfuse_bufvar_from_env("PERFUSE_BUFSIZE", 16 * FUSE_BUFSIZE);
 	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) != 0)
-		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
+		DWARN("%s: setsockopt SO_SNDBUF = %d failed", __func__, opt);
 
-	opt = 4 * FUSE_BUFSIZE;
 	if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) != 0)
-		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
+		DWARN("%s: setsockopt SO_RCVBUF = %d failed", __func__, opt);
 
 	/*
 	 * Request peer credentials

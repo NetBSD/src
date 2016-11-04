@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.146 2016/07/07 09:32:02 ozaki-r Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.146.2.1 2016/11/04 14:49:20 pgoyette Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.146 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.146.2.1 2016/11/04 14:49:20 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -456,7 +456,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	pktqueue_t *pktq = NULL;
 	struct ifqueue *inq = NULL;
 	uint16_t protocol;
-	int s;
 	struct sppp *sp = (struct sppp *)ifp;
 	int debug = ifp->if_flags & IFF_DEBUG;
 	int isr = 0;
@@ -620,19 +619,19 @@ queue_pkt:
 		return;
 	}
 
-	s = splnet();
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
 		/* Queue overflow. */
 		IF_DROP(inq);
-		splx(s);
+		IFQ_UNLOCK(inq);
 		if (debug)
 			log(LOG_DEBUG, "%s: protocol queue overflow\n",
 				ifp->if_xname);
 		goto drop;
 	}
 	IF_ENQUEUE(inq, m);
+	IFQ_UNLOCK(inq);
 	schednetisr(isr);
-	splx(s);
 }
 
 /*
@@ -839,6 +838,31 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	return error;
 }
 
+static int
+sppp_mediachange(struct ifnet *ifp)
+{
+
+	return (0);
+}
+
+static void
+sppp_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
+{
+
+	switch (ifp->if_link_state) {
+	case LINK_STATE_UP:
+		imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
+		break;
+	case LINK_STATE_DOWN:
+		imr->ifm_status = IFM_AVALID;
+		break;
+	default:
+		/* Should be impossible as we set link state down in attach. */
+		imr->ifm_status = 0;
+		break;
+	}
+}
+
 void
 sppp_attach(struct ifnet *ifp)
 {
@@ -874,6 +898,11 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_down = lcp.Down;
 
 	if_alloc_sadl(ifp);
+
+	/* Lets not beat about the bush, we know we're down. */
+	ifp->if_link_state = LINK_STATE_DOWN;
+	/* There is no media for PPP, but it's needed to report link status. */
+	ifmedia_init(&sp->pp_im, 0, sppp_mediachange, sppp_mediastatus);
 
 	memset(&sp->myauth, 0, sizeof sp->myauth);
 	memset(&sp->hisauth, 0, sizeof sp->hisauth);
@@ -915,6 +944,9 @@ sppp_detach(struct ifnet *ifp)
 	if (sp->myauth.secret) free(sp->myauth.secret, M_DEVBUF);
 	if (sp->hisauth.name) free(sp->hisauth.name, M_DEVBUF);
 	if (sp->hisauth.secret) free(sp->hisauth.secret, M_DEVBUF);
+
+	/* Safety - shouldn't be needed as there is no media to set. */
+	ifmedia_delete_instance(&sp->pp_im, IFM_INST_ANY);
 }
 
 /*
@@ -1077,6 +1109,10 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case __SPPPGETKEEPALIVE50:
 #endif /* COMPAT_50 || MODULAR */
 		error = sppp_params(sp, cmd, data);
+		break;
+
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sp->pp_im, cmd);
 		break;
 
 	default:
@@ -3177,7 +3213,7 @@ sppp_ipcp_tlf(struct sppp *sp)
 static void
 sppp_ipcp_scr(struct sppp *sp)
 {
-	char opt[6 /* compression */ + 6 /* address */ + 12 /* dns addresses */];
+	uint8_t opt[6 /* compression */ + 6 /* address */ + 12 /* dns addresses */];
 #ifdef INET
 	uint32_t ouraddr;
 #endif
@@ -4872,36 +4908,22 @@ sppp_set_ip_addrs(struct sppp *sp, uint32_t myaddr, uint32_t hisaddr)
 
 found:
 	{
-		int error, hostIsNew;
+		int error;
 		struct sockaddr_in new_sin = *si;
 		struct sockaddr_in new_dst = *dest;
 
-		/*
-		 * Scrub old routes now instead of calling in_ifinit with
-		 * scrub=1, because we may change the dstaddr
-		 * before the call to in_ifinit.
-		 */
-		in_ifscrub(ifp, ifatoia(ifa));
-
-		hostIsNew = 0;
-		if (myaddr != 0) {
-			if (new_sin.sin_addr.s_addr != htonl(myaddr)) {
-				new_sin.sin_addr.s_addr = htonl(myaddr);
-				hostIsNew = 1;
-			}
-		}
+		if (myaddr != 0)
+			new_sin.sin_addr.s_addr = htonl(myaddr);
 		if (hisaddr != 0) {
 			new_dst.sin_addr.s_addr = htonl(hisaddr);
-			if (new_dst.sin_addr.s_addr != dest->sin_addr.s_addr) {
+			if (new_dst.sin_addr.s_addr != dest->sin_addr.s_addr)
 				sp->ipcp.saved_hisaddr = dest->sin_addr.s_addr;
-				*dest = new_dst; /* fix dstaddr in place */
-			}
 		}
 
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
 
-		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, hostIsNew);
+		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, &new_dst, 0);
 
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
@@ -4909,8 +4931,8 @@ found:
 
 		if (debug && error)
 		{
-			log(LOG_DEBUG, "%s: sppp_set_ip_addrs: in_ifinit "
-			" failed, error=%d\n", ifp->if_xname, error);
+			log(LOG_DEBUG, "%s: %s: in_ifinit failed, error=%d\n",
+			    ifp->if_xname, __func__, error);
 		}
 		if (!error) {
 			(void)pfil_run_hooks(if_pfil,
@@ -4925,7 +4947,7 @@ found:
 static void
 sppp_clear_ip_addrs(struct sppp *sp)
 {
-	struct ifnet *ifp = &sp->pp_if;
+	STDDCL;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
 
@@ -4952,25 +4974,32 @@ sppp_clear_ip_addrs(struct sppp *sp)
 found:
 	{
 		struct sockaddr_in new_sin = *si;
+		struct sockaddr_in new_dst = *dest;
+		int error;
 
-		in_ifscrub(ifp, ifatoia(ifa));
 		if (sp->ipcp.flags & IPCP_MYADDR_DYN)
 			new_sin.sin_addr.s_addr = 0;
 		if (sp->ipcp.flags & IPCP_HISADDR_DYN)
-			/* replace peer addr in place */
-			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
+			new_dst.sin_addr.s_addr = sp->ipcp.saved_hisaddr;
 
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
 
-		in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, 0);
+		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, &new_dst, 0);
 
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
 
-		(void)pfil_run_hooks(if_pfil,
-		    (struct mbuf **)SIOCDIFADDR, ifp, PFIL_IFADDR);
+		if (debug && error)
+		{
+			log(LOG_DEBUG, "%s: %s: in_ifinit failed, error=%d\n",
+			    ifp->if_xname, __func__, error);
+		}
+		if (!error) {
+			(void)pfil_run_hooks(if_pfil,
+			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
+		}
 	}
 }
 #endif
@@ -5068,8 +5097,8 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 		error = in6_ifinit(ifp, ifatoia6(ifa), &new_sin6, 1);
 		if (debug && error)
 		{
-			log(LOG_DEBUG, "%s: sppp_set_ip6_addr: in6_ifinit "
-			" failed, error=%d\n", ifp->if_xname, error);
+			log(LOG_DEBUG, "%s: %s: in6_ifinit failed, error=%d\n",
+			    ifp->if_xname, __func__, error);
 		}
 		if (!error) {
 			(void)pfil_run_hooks(if_pfil,

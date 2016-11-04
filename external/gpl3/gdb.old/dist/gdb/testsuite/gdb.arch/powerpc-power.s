@@ -147,7 +147,7 @@ func:
 	.long	0x7c0007dd	/* <+504>: trechkpt.                 */
 	.long	0x7c0005dd	/* <+508>: tsuspend.                 */
 	.long	0x7c2005dd	/* <+512>: tresume.                  */
-	.long	0x4c000124	/* <+516>: rfebb                     */
+	.long	0x4c000124	/* <+516>: rfebb   0                 */
 	.long	0x4c000924	/* <+520>: rfebb   1                 */
 	.long	0x4d950460	/* <+524>: bctar-  12,4*cr5+gt       */
 	.long	0x4c870461	/* <+528>: bctarl- 4,4*cr1+so        */
