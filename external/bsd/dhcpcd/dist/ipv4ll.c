@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4ll.c,v 1.17.2.1 2016/08/06 00:18:41 pgoyette Exp $");
+ __RCSID("$NetBSD: ipv4ll.c,v 1.17.2.2 2016/11/04 14:42:45 pgoyette Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -48,6 +48,7 @@
 #include "ipv4ll.h"
 #include "script.h"
 
+#ifdef IPV4LL
 static const struct in_addr inaddr_llmask = {
 	.s_addr = HTONL(LINKLOCAL_MASK)
 };
@@ -492,4 +493,5 @@ ipv4ll_handlert(struct dhcpcd_ctx *ctx, __unused int cmd, const struct rt *rt)
 
 	return 0;
 }
+#endif
 #endif

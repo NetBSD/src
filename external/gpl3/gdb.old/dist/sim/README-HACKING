@@ -7,7 +7,7 @@ Contents
 - Common Makefile Support
 - TAGS support
 - Generating "configure" files
-- tconfig.in
+- tconfig.h
 - C Language Assumptions
 - "dump" commands under gdb
 
@@ -31,11 +31,11 @@ Common Makefile Support
 
 A common configuration framework is available for simulators that want
 to use it.  The common framework exists to remove a lot of duplication
-in configure.in and Makefile.in, and it also provides a foundation for
+in configure.ac and Makefile.in, and it also provides a foundation for
 enhancing the simulators uniformly (e.g. the more they share in common
 the easier a feature added to one is added to all).
 
-The configure.in of a simulator using the common framework should look like:
+The configure.ac of a simulator using the common framework should look like:
 
 --- snip ---
 dnl Process this file with autoconf to produce a configure script.
@@ -159,12 +159,12 @@ To add the entries to an alternative ChangeLog file, use:
 	$  make ChangeLog=MyChangeLog ....
 
 
-tconfig.in
+tconfig.h
 ==========
 
-File tconfig.in defines one or more target configuration macros
+File tconfig.h defines one or more target configuration macros
 (e.g. a tm.h file).  There are very few that need defining.
-For a list of all of them, see common/tconfig.in.
+For a list of all of them, see common/tconfig.h.
 It contains them all, commented out.
 The intent is that a new port can just copy this file and
 define the ones it needs.

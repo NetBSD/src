@@ -3256,15 +3256,6 @@
 	* dg-extract-results.sh: Redirect grep output to /dev/null instead
 	of grep -q.
 
-2012-01-17  Sanjoy Das <sanjoy@playingwithpointers.com>
-
-	* gdb.base/jit-reader.exp: New file. Test case for the jit-reader
-	interface.
-	* gdb.base/jithost.c: New file.
-	* gdb.base/jithost.h: New file.
-	* gdb.base/jitreader.c : New file.
-	* gdb.base/jit-protocol.h: New file.
-
 2013-01-16  Tom Tromey  <tromey@redhat.com>
 
 	* gdb.base/catch-signal.c: New file.
@@ -33658,6 +33649,6 @@ Sun Feb 21 10:55:55 1993  Mike Werner  (mtw@poseidon.cygnus.com)
 ;; version-control: never
 ;; End:
 
-    Copyright 1993-2015 Free Software Foundation, Inc.
+    Copyright 1993-2016 Free Software Foundation, Inc.
   Copying and distribution of this file, with or without modification,
   are permitted provided the copyright notice and this notice are preserved.

@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.21 2015/11/14 07:31:13 pgoyette Exp $
+# $NetBSD: std,v 1.21.2.1 2016/11/04 14:49:07 pgoyette Exp $
 #
 # standard MI 'options'
 #
@@ -27,7 +27,8 @@ options	VMSWAP		# Swap device/file support
 options	BUFQ_FCFS	# First-come First-serve strategy
 options	BUFQ_DISKSORT	# Traditional min seek sort strategy
 options	RFC2292		# Previous version of Adv. Sockets API for IPv6 
-options	PTRACE		# Include ptrace(2)
+options	PTRACE		# Include ptrace(2) syscall
+options	PTRACE_HOOKS	# Include ptrace hooks
 options	COREDUMP	# allow processes to coredump.
 options	AIO		# POSIX asynchronous I/O
 options	MQUEUE		# POSIX message queues

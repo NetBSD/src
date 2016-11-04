@@ -1,6 +1,6 @@
 /* C language support for compilation.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -124,7 +124,7 @@ print_one_macro (const char *name, const struct macro_definition *macro,
 		 struct macro_source_file *source, int line,
 		 void *user_data)
 {
-  struct ui_file *file = user_data;
+  struct ui_file *file = (struct ui_file *) user_data;
 
   /* Don't print command-line defines.  They will be supplied another
      way.  */

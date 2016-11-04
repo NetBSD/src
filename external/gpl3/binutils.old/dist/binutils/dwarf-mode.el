@@ -1,6 +1,8 @@
 ;;; dwarf-mode.el --- Browser for DWARF information.
 
-;; Version: 1.1
+;; Version: 1.2
+
+;; Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 ;; This file is not part of GNU Emacs, but is distributed under the
 ;; same terms:
@@ -96,7 +98,7 @@ A prefix argument means expand all children."
   'action #'dwarf-die-button-action)
 
 ;; Helper regexp to match a DIE reference.
-(defconst dwarf-die-reference ": \\(<0x\\([0-9a-f]+\\)>\\)\\s *$")
+(defconst dwarf-die-reference "\\(<0x\\([0-9a-f]+\\)>\\)")
 
 ;; Helper regexp to match a `...' indicating that there are hidden
 ;; children.
@@ -139,7 +141,6 @@ A prefix argument means expand all children."
 		    (expand-file-name dwarf-file)))
     (set-buffer-modified-p nil)))
 
-;;;###autoload
 (define-derived-mode dwarf-mode special-mode "DWARF"
   "Major mode for browsing DWARF output.
 

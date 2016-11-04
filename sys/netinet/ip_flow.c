@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.73.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.73.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.73.2.1 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.73.2.2 2016/11/04 14:49:21 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -471,9 +475,11 @@ ipflow_slowtimo_work(struct work *wk, void *arg)
 	/* We can allow enqueuing another work at this point */
 	atomic_swap_uint(&ipflow_work_enqueued, 0);
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
-	mutex_enter(&ipflow_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
+	mutex_enter(&ipflow_lock);
 	for (ipf = TAILQ_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = TAILQ_NEXT(ipf, ipf_list);
 		if (PRT_SLOW_ISEXPIRED(ipf->ipf_timer) ||
@@ -490,9 +496,11 @@ ipflow_slowtimo_work(struct work *wk, void *arg)
 			ipf->ipf_uses = 0;
 		}
 	}
-	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(&ipflow_lock);
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 void
@@ -513,17 +521,16 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	struct ipflow *ipf;
 	size_t hash;
 
+#ifndef NET_MPSAFE
+	KERNEL_LOCK(1, NULL);
+#endif
 	mutex_enter(&ipflow_lock);
 
 	/*
 	 * Don't create cache entries for ICMP messages.
 	 */
-	if (ip_maxflows == 0 || ip->ip_p == IPPROTO_ICMP) {
-		mutex_exit(&ipflow_lock);
-		return;
-	}
-
-	KERNEL_LOCK(1, NULL);
+	if (ip_maxflows == 0 || ip->ip_p == IPPROTO_ICMP)
+		goto out;
 
 	/*
 	 * See if an existing flow struct exists.  If so remove it from its
@@ -566,8 +573,10 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	IPFLOW_INSERT(hash, ipf);
 
  out:
-	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(&ipflow_lock);
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
+#endif
 }
 
 int
@@ -605,15 +614,19 @@ sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
-	mutex_enter(&ipflow_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
+	mutex_enter(&ipflow_lock);
 
 	ipflow_reap(false);
 
-	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(&ipflow_lock);
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 
 	return (0);
 }
@@ -635,14 +648,15 @@ sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
 		/*
 		 * Can only fail due to malloc()
 		 */
+#ifndef NET_MPSAFE
 		mutex_enter(softnet_lock);
 		KERNEL_LOCK(1, NULL);
-
+#endif
 		error = ipflow_invalidate_all(tmp);
-
+#ifndef NET_MPSAFE
 		KERNEL_UNLOCK_ONE(NULL);
 		mutex_exit(softnet_lock);
-
+#endif
 	} else {
 		/*
 		 * EINVAL if not a power of 2

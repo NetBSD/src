@@ -1,6 +1,6 @@
 #line 1 "msp430-decode.opc"
 /* -*- c -*- */
-/* Copyright (C) 2013-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 

@@ -37,6 +37,7 @@
 #define ARCH_epiphany
 #define ARCH_fr30
 #define ARCH_frv
+#define ARCH_ft32
 #define ARCH_h8300
 #define ARCH_h8500
 #define ARCH_hppa
@@ -210,6 +211,7 @@ disassembler (abfd)
 #endif
 #ifdef ARCH_i386
     case bfd_arch_i386:
+    case bfd_arch_iamcu:
     case bfd_arch_l1om:
     case bfd_arch_k1om:
       disassemble = print_insn_i386;
@@ -384,7 +386,7 @@ disassembler (abfd)
 #endif
 #ifdef ARCH_rl78
     case bfd_arch_rl78:
-      disassemble = print_insn_rl78;
+      disassemble = rl78_get_disassembler (abfd);
       break;
 #endif
 #ifdef ARCH_rx
@@ -443,6 +445,11 @@ disassembler (abfd)
 #ifdef ARCH_tic80
     case bfd_arch_tic80:
       disassemble = print_insn_tic80;
+      break;
+#endif
+#ifdef ARCH_ft32
+    case bfd_arch_ft32:
+      disassemble = print_insn_ft32;
       break;
 #endif
 #ifdef ARCH_v850

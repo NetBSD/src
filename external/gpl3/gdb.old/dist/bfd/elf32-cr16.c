@@ -115,8 +115,8 @@ static reloc_howto_type cr16_elf_howto_table[] =
 {
   HOWTO (R_CR16_NONE,              /* type */
          0,                        /* rightshift */
-         2,                        /* size */
-         32,                       /* bitsize */
+         3,                        /* size */
+         0,                        /* bitsize */
          FALSE,                    /* pc_relative */
          0,                        /* bitpos */
          complain_overflow_dont,   /* complain_on_overflow */
@@ -673,7 +673,13 @@ elf_cr16_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
 {
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
 
-  BFD_ASSERT (r_type < (unsigned int) R_CR16_MAX);
+  if (r_type >= R_CR16_MAX)
+    {
+      (*_bfd_error_handler) (_("%B: unrecognised CR16 reloc number: %d"),
+			     abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      r_type = R_CR16_NONE;
+    }
   cache_ptr->howto = cr16_elf_howto_table + r_type;
 }
 

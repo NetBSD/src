@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.27 2016/06/17 19:42:32 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.27.2.1 2016/11/04 14:42:45 pgoyette Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -239,7 +239,9 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 #ifdef INET
 	int dhcp, ipv4ll;
 	const struct dhcp_state *state;
+#ifdef IPV4LL
 	const struct ipv4ll_state *istate;
+#endif
 #endif
 #ifdef INET6
 	const struct dhcp6_state *d6_state;
@@ -249,7 +251,9 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 #ifdef INET
 	dhcp = ipv4ll = 0;
 	state = D_STATE(ifp);
+#ifdef IPV4LL
 	istate = IPV4LL_CSTATE(ifp);
+#endif
 #endif
 #ifdef INET6
 	static6 = dhcp6 = ra = 0;
@@ -264,8 +268,10 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 			ra = 1;
 #endif
 #ifdef INET
+#ifdef IPV4LL
 		else if (istate && istate->addr != NULL)
 			ipv4ll = 1;
+#endif
 		else
 			dhcp = 1;
 #endif
@@ -288,8 +294,10 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 		/* This space left intentionally blank */
 	}
 #ifdef INET
+#ifdef IPV4LL
 	else if (strcmp(reason, "IPV4LL") == 0)
 		ipv4ll = 1;
+#endif
 	else
 		dhcp = 1;
 #endif
@@ -362,7 +370,9 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	} else if (1 == 2 /* appease ifdefs */
 #ifdef INET
 	    || (dhcp && state && state->new)
+#ifdef IPV4LL
 	    || (ipv4ll && IPV4LL_STATE_RUNNING(ifp))
+#endif
 #endif
 #ifdef INET6
 	    || (static6 && IPV6_STATE_RUNNING(ifp))
@@ -465,6 +475,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 
 dumplease:
 #ifdef INET
+#ifdef IPV4LL
 	if (ipv4ll) {
 		n = ipv4ll_env(NULL, NULL, ifp);
 		if (n > 0) {
@@ -479,6 +490,7 @@ dumplease:
 			elen += (size_t)n;
 		}
 	}
+#endif
 	if (dhcp && state && state->new) {
 		n = dhcp_env(NULL, NULL, state->new, state->new_len, ifp);
 		if (n > 0) {
@@ -634,10 +646,12 @@ send_interface(struct fd_list *fd, const struct interface *ifp)
 		if (send_interface1(fd, ifp, d->reason) == -1)
 			retval = -1;
 	}
+#ifdef IPV4LL
 	if (IPV4LL_STATE_RUNNING(ifp)) {
 		if (send_interface1(fd, ifp, "IPV4LL") == -1)
 			retval = -1;
 	}
+#endif
 #endif
 
 #ifdef INET6

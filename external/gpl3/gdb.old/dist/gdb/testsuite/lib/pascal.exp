@@ -68,9 +68,11 @@ proc pascal_init {} {
     set pascal_init_done 1
 }   
 
-proc gpc_compile {source dest type options} {
+proc gpc_compile {source destfile type options} {
     global gpc_compiler
     set add_flags ""
+    set dest [target_info name]
+
     if {$type == "object"} {
 	append add_flags " -c"
     }
@@ -100,13 +102,15 @@ proc gpc_compile {source dest type options} {
 	}
     }
 
-    set result [remote_exec host $gpc_compiler "-o $dest --automake $add_flags $source"]
+    set result [remote_exec host $gpc_compiler "-o $destfile --automake $add_flags $source"]
     return $result
 }
 
-proc fpc_compile {source dest type options} {
+proc fpc_compile {source destfile type options} {
     global fpc_compiler
     set add_flags ""
+    set dest [target_info name]
+
     if {$type == "object"} {
 	append add_flags " -Cn"
     }
@@ -136,11 +140,11 @@ proc fpc_compile {source dest type options} {
 	}
     }
 
-    set result [remote_exec host $fpc_compiler "-o$dest $add_flags $source"]
+    set result [remote_exec host $fpc_compiler "-o$destfile $add_flags $source"]
     return $result
 }
 
-proc gdb_compile_pascal {source dest type options} {
+proc gdb_compile_pascal {source destfile type options} {
     global pascal_init_done
     global pascal_compiler_is_gpc
     global pascal_compiler_is_fpc
@@ -150,15 +154,15 @@ proc gdb_compile_pascal {source dest type options} {
     }
 
     if { $pascal_compiler_is_fpc == 1 } {
-        set result [fpc_compile $source $dest $type $options]
+        set result [fpc_compile $source $destfile $type $options]
     } elseif { $pascal_compiler_is_gpc == 1 } {
-        set result [gpc_compile $source $dest $type $options]
+        set result [gpc_compile $source $destfile $type $options]
     } else {
 	unsupported "No pascal compiler found"
 	return "No pascal compiler. Compilation failed."
     }
 
-    if ![file exists $dest] {
+    if ![file exists $destfile] {
         unsupported "Pascal compilation failed: $result"
         return "Pascal compilation failed."
     }

@@ -743,7 +743,7 @@ arm_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
   cb (".reg", ARM_LINUX_SIZEOF_GREGSET, &arm_linux_gregset, NULL, cb_data);
 
-  if (tdep->have_vfp_registers)
+  if (tdep->vfp_register_count > 0)
     cb (".reg-arm-vfp", ARM_LINUX_SIZEOF_VFP, &arm_linux_vfpregset,
 	"VFP floating-point", cb_data);
   else if (tdep->have_fpa_registers)
@@ -939,7 +939,6 @@ arm_linux_cleanup_svc (struct gdbarch *gdbarch,
 		       struct regcache *regs,
 		       struct displaced_step_closure *dsc)
 {
-  CORE_ADDR from = dsc->insn_addr;
   ULONGEST apparent_pc;
   int within_scratch;
 
@@ -960,7 +959,8 @@ arm_linux_cleanup_svc (struct gdbarch *gdbarch,
     }
 
   if (within_scratch)
-    displaced_write_reg (regs, dsc, ARM_PC_REGNUM, from + 4, BRANCH_WRITE_PC);
+    displaced_write_reg (regs, dsc, ARM_PC_REGNUM,
+			 dsc->insn_addr + dsc->insn_size, BRANCH_WRITE_PC);
 }
 
 static int
@@ -980,54 +980,54 @@ arm_linux_copy_svc (struct gdbarch *gdbarch, struct regcache *regs,
 						 &return_to, &is_thumb);
   if (is_sigreturn)
     {
-	  struct symtab_and_line sal;
+      struct symtab_and_line sal;
 
-	  if (debug_displaced)
-	    fprintf_unfiltered (gdb_stdlog, "displaced: found "
-	      "sigreturn/rt_sigreturn SVC call.  PC in frame = %lx\n",
-	      (unsigned long) get_frame_pc (frame));
+      if (debug_displaced)
+	fprintf_unfiltered (gdb_stdlog, "displaced: found "
+			    "sigreturn/rt_sigreturn SVC call.  PC in "
+			    "frame = %lx\n",
+			    (unsigned long) get_frame_pc (frame));
 
-	  if (debug_displaced)
-	    fprintf_unfiltered (gdb_stdlog, "displaced: unwind pc = %lx.  "
-	      "Setting momentary breakpoint.\n", (unsigned long) return_to);
+      if (debug_displaced)
+	fprintf_unfiltered (gdb_stdlog, "displaced: unwind pc = %lx.  "
+			    "Setting momentary breakpoint.\n",
+			    (unsigned long) return_to);
 
-	  gdb_assert (inferior_thread ()->control.step_resume_breakpoint
-		      == NULL);
+      gdb_assert (inferior_thread ()->control.step_resume_breakpoint
+		  == NULL);
 
-	  sal = find_pc_line (return_to, 0);
-	  sal.pc = return_to;
-	  sal.section = find_pc_overlay (return_to);
-	  sal.explicit_pc = 1;
+      sal = find_pc_line (return_to, 0);
+      sal.pc = return_to;
+      sal.section = find_pc_overlay (return_to);
+      sal.explicit_pc = 1;
 
-	  frame = get_prev_frame (frame);
+      frame = get_prev_frame (frame);
 
-	  if (frame)
-	    {
-	      inferior_thread ()->control.step_resume_breakpoint
-        	= set_momentary_breakpoint (gdbarch, sal, get_frame_id (frame),
-					    bp_step_resume);
+      if (frame)
+	{
+	  inferior_thread ()->control.step_resume_breakpoint
+	    = set_momentary_breakpoint (gdbarch, sal, get_frame_id (frame),
+					bp_step_resume);
 
-	      /* set_momentary_breakpoint invalidates FRAME.  */
-	      frame = NULL;
+	  /* set_momentary_breakpoint invalidates FRAME.  */
+	  frame = NULL;
 
-	      /* We need to make sure we actually insert the momentary
-	         breakpoint set above.  */
-	      insert_breakpoints ();
-	    }
-	  else if (debug_displaced)
-	    fprintf_unfiltered (gdb_stderr, "displaced: couldn't find previous "
-				"frame to set momentary breakpoint for "
-				"sigreturn/rt_sigreturn\n");
+	  /* We need to make sure we actually insert the momentary
+	     breakpoint set above.  */
+	  insert_breakpoints ();
 	}
       else if (debug_displaced)
-	fprintf_unfiltered (gdb_stdlog, "displaced: sigreturn/rt_sigreturn "
-			    "SVC call not in signal trampoline frame\n");
-    
+	fprintf_unfiltered (gdb_stderr, "displaced: couldn't find previous "
+			    "frame to set momentary breakpoint for "
+			    "sigreturn/rt_sigreturn\n");
+    }
+  else if (debug_displaced)
+    fprintf_unfiltered (gdb_stdlog, "displaced: found SVC call\n");
 
   /* Preparation: If we detect sigreturn, set momentary breakpoint at resume
 		  location, else nothing.
      Insn: unmodified svc.
-     Cleanup: if pc lands in scratch space, pc <- insn_addr + 4
+     Cleanup: if pc lands in scratch space, pc <- insn_addr + insn_size
               else leave pc alone.  */
 
 
@@ -1440,15 +1440,13 @@ arm_linux_init_abi (struct gdbarch_info info,
     (gdbarch, arm_linux_iterate_over_regset_sections);
   set_gdbarch_core_read_description (gdbarch, arm_linux_core_read_description);
 
-  set_gdbarch_get_siginfo_type (gdbarch, linux_get_siginfo_type);
-
   /* Displaced stepping.  */
   set_gdbarch_displaced_step_copy_insn (gdbarch,
 					arm_linux_displaced_step_copy_insn);
   set_gdbarch_displaced_step_fixup (gdbarch, arm_displaced_step_fixup);
   set_gdbarch_displaced_step_free_closure (gdbarch,
 					   simple_displaced_step_free_closure);
-  set_gdbarch_displaced_step_location (gdbarch, displaced_step_at_entry_point);
+  set_gdbarch_displaced_step_location (gdbarch, linux_displaced_step_location);
 
   /* Reversible debugging, process record.  */
   set_gdbarch_process_record (gdbarch, arm_process_record);

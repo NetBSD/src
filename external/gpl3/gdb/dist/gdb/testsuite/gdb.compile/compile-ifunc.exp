@@ -1,4 +1,4 @@
-# Copyright 2015 Free Software Foundation, Inc.
+# Copyright 2015-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,12 @@ with_test_prefix "nodebug" {
     if ![runto_main] {
 	return -1
     }
+
+    # This binary has no debug information, so force the language to C in case
+    # GDB happened to see real asm code when it stopped at the entry point
+    # when talking to a remote target, like gdbserver.  This guarantees the
+    # feature check below will work.
+    gdb_test_no_output "set language c" ""
 
     if {[skip_compile_feature_tests]} {
 	untested "compile command not supported (could not find libcc1 shared library?)"

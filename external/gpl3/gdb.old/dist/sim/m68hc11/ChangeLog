@@ -1,3 +1,114 @@
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (interrupt_names): Delete.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Add sim-resume.o
+	* interp.c (has_stepped, sim_resume): Delete.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (INLINE): Delete define.
+
+2015-04-29  Nick Clifton  <nickc@redhat.com>
+
+	PR 18273
+	* gencode.c (gen_fetch_operands): Remove unreachable code.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (SIM_CPU): Delete.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (sim_cia): Delete.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (CIA_GET, CIA_SET): Delete.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-cpu.o.
+	* sim-main.h (STATE_CPU): Delete.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Add sim-cpu.o.
+	* interp.c (m68hc11_pc_get, m68hc11_pc_set): New functions.
+	(sim_open): Declare new local var i.  Call sim_cpu_alloc_all.
+	Call CPU_PC_FETCH & CPU_PC_STORE for all cpus.
+	(sim_pc_get): Delete.
+	* sim-main.h (SIM_CPU): Define.
+	(STATE_CPU): Drop &.
+	(struct sim_state): Change cpu to an array of pointers.
+
+2015-04-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-engine.o and sim-hrw.o.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* m68hc11_sim.c (cpu_get_indexed_operand_addr,
+	cpu_get_indexed_operand8, cpu_get_indexed_operand16): Rename restrict
+	variable to restricted.
+	* sim-main.h (cpu_get_indexed_operand_addr): Likewise.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_pc_get): New function.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (sim_set_profile, sim_set_profile_size, sim_set_callbacks,
+	sim_size, sim_trace): Delete.
+	* sim-main.h (sim_set_profile, sim_set_profile_size): Delete.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+	* configure.ac (m68hc11_extra_objs): Delete.
+	* Makefile.in (SIM_OBJS): Delete SIM_EXTRA_OBJS.
+	(SIM_EXTRA_OBJS): Delete.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_RUN_OBJS): Delete.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (AC_CHECK_HEADERS): Delete.
+	* aclocal.m4, configure: Regenerate.
+
 2014-08-19  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

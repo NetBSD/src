@@ -64,7 +64,7 @@
 
 2006-12-15  Mark Kettenis  <kettenis@gnu.org>
 
-	* config.bfd: (sh*-*-openbsd*): Add target. 
+	* config.bfd: (sh*-*-openbsd*): Add target.
 	* configure.in (sh*-*-openbsd*): Set COREFILE to netbsd-core.lo.
 	* configure: Regenerate.
 

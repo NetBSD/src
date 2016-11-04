@@ -9,6 +9,8 @@ TLSv1_1_method, TLSv1_1_server_method, TLSv1_1_client_method,
 TLSv1_method, TLSv1_server_method, TLSv1_client_method,
 SSLv3_method, SSLv3_server_method, SSLv3_client_method,
 SSLv2_method, SSLv2_server_method, SSLv2_client_method,
+DTLS_method, DTLS_server_method, DTLS_client_method,
+DTLSv1_2_method, DTLSv1_2_server_method, DTLSv1_2_client_method,
 DTLSv1_method, DTLSv1_server_method, DTLSv1_client_method -
 create a new SSL_CTX object as framework for TLS/SSL enabled functions
 
@@ -40,6 +42,12 @@ create a new SSL_CTX object as framework for TLS/SSL enabled functions
  const SSL_METHOD *SSLv2_client_method(void);
  #endif
 
+ const SSL_METHOD *DTLS_method(void);
+ const SSL_METHOD *DTLS_server_method(void);
+ const SSL_METHOD *DTLS_client_method(void);
+ const SSL_METHOD *DTLSv1_2_method(void);
+ const SSL_METHOD *DTLSv1_2_server_method(void);
+ const SSL_METHOD *DTLSv1_2_client_method(void);
  const SSL_METHOD *DTLSv1_method(void);
  const SSL_METHOD *DTLSv1_server_method(void);
  const SSL_METHOD *DTLSv1_client_method(void);
@@ -120,8 +128,16 @@ SSLv2 protocol.  A client will send out SSLv2 client hello messages and will
 also indicate that it only understand SSLv2.  A server will only understand
 SSLv2 client hello messages.  The SSLv2 protocol offers little to no security
 and should not be used.
-As of OpenSSL 1.0.1s, EXPORT ciphers and 56-bit DES are no longer available
+As of OpenSSL 1.0.2g, EXPORT ciphers and 56-bit DES are no longer available
 with SSLv2.
+
+=item DTLS_method(), DTLS_server_method(), DTLS_client_method()
+
+These are the version-flexible DTLS methods.
+
+=item DTLSv1_2_method(), DTLSv1_2_server_method(), DTLSv1_2_client_method()
+
+These are the version-specific methods for DTLSv1.2.
 
 =item DTLSv1_method(), DTLSv1_server_method(), DTLSv1_client_method()
 

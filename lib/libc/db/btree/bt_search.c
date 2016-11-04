@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_search.c,v 1.17 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: bt_search.c,v 1.17.44.1 2016/11/04 14:48:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_search.c,v 1.17 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: bt_search.c,v 1.17.44.1 2016/11/04 14:48:52 pgoyette Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -150,23 +150,65 @@ next:		BT_PUSH(t, h->pgno, idx);
 static int
 __bt_snext(BTREE *t, PAGE *h, const DBT *key, int *exactp)
 {
+	BINTERNAL *bi;
 	EPG e;
+	EPGNO *parent;
+	indx_t idx = 0;
+	pgno_t pgno;
+	int level;
 
 	/*
 	 * Get the next page.  The key is either an exact
 	 * match, or not as good as the one we already have.
 	 */
 	if ((e.page = mpool_get(t->bt_mp, h->nextpg, 0)) == NULL)
-		return (0);
+		return 0;
 	e.index = 0;
-	if (__bt_cmp(t, key, &e) == 0) {
-		mpool_put(t->bt_mp, h, 0);
-		t->bt_cur = e;
-		*exactp = 1;
-		return (1);
+	if (__bt_cmp(t, key, &e) != 0) {
+		mpool_put(t->bt_mp, e.page, 0);
+		return 0;
 	}
-	mpool_put(t->bt_mp, e.page, 0);
-	return (0);
+	mpool_put(t->bt_mp, h, 0);
+	t->bt_cur = e;
+	*exactp = 1;
+
+	/*
+	 * Adjust the stack for the movement.
+	 *
+	 * Move up the stack.
+	 */
+	for (level = 0; (parent = BT_POP(t)) != NULL; ++level) {
+		/* Get the parent page. */
+		if ((h = mpool_get(t->bt_mp, parent->pgno, 0)) == NULL)
+			return 0;
+
+		/* Move to the next index. */
+		if (parent->index != NEXTINDEX(h) - 1) {
+			idx = parent->index + 1;
+			BT_PUSH(t, h->pgno, idx);
+			break;
+		}
+
+		mpool_put(t->bt_mp, h, 0);
+	}
+
+	/* Restore the stack. */
+	while (level--) {
+		/* Push the next level down onto the stack. */
+		bi = GETBINTERNAL(h, idx);
+		pgno = bi->pgno;
+		BT_PUSH(t, pgno, 0);
+
+		/* Lose the currently pinned page. */
+		mpool_put(t->bt_mp, h, 0);
+
+		/* Get the next level down. */
+		if ((h = mpool_get(t->bt_mp, pgno, 0)) == NULL)
+			return 0;
+		idx = 0;
+	}
+	mpool_put(t->bt_mp, h, 0);
+	return 1;
 }
 
 /*
@@ -185,21 +227,64 @@ __bt_snext(BTREE *t, PAGE *h, const DBT *key, int *exactp)
 static int
 __bt_sprev(BTREE *t, PAGE *h, const DBT *key, int *exactp)
 {
+	BINTERNAL *bi;
 	EPG e;
+	EPGNO *parent;
+	indx_t idx = 0;
+	pgno_t pgno;
+	int level;
 
 	/*
 	 * Get the previous page.  The key is either an exact
 	 * match, or not as good as the one we already have.
 	 */
 	if ((e.page = mpool_get(t->bt_mp, h->prevpg, 0)) == NULL)
-		return (0);
+		return 0;
 	e.index = NEXTINDEX(e.page) - 1;
-	if (__bt_cmp(t, key, &e) == 0) {
-		mpool_put(t->bt_mp, h, 0);
-		t->bt_cur = e;
-		*exactp = 1;
-		return (1);
+	if (__bt_cmp(t, key, &e) != 0) {
+		mpool_put(t->bt_mp, e.page, 0);
+		return 0;
 	}
-	mpool_put(t->bt_mp, e.page, 0);
-	return (0);
+
+	mpool_put(t->bt_mp, h, 0);
+	t->bt_cur = e;
+	*exactp = 1;
+
+	/*
+	 * Adjust the stack for the movement.
+	 *
+	 * Move up the stack.
+	 */
+	for (level = 0; (parent = BT_POP(t)) != NULL; ++level) {
+		/* Get the parent page. */
+		if ((h = mpool_get(t->bt_mp, parent->pgno, 0)) == NULL)
+			return 1;
+
+		/* Move to the next index. */
+		if (parent->index != 0) {
+			idx = parent->index - 1;
+			BT_PUSH(t, h->pgno, idx);
+			break;
+		}
+		mpool_put(t->bt_mp, h, 0);
+	}
+
+	/* Restore the stack. */
+	while (level--) {
+		/* Push the next level down onto the stack. */
+		bi = GETBINTERNAL(h, idx);
+		pgno = bi->pgno;
+
+		/* Lose the currently pinned page. */
+		mpool_put(t->bt_mp, h, 0);
+
+		/* Get the next level down. */
+		if ((h = mpool_get(t->bt_mp, pgno, 0)) == NULL)
+			return 1;
+
+		idx = NEXTINDEX(h) - 1;
+		BT_PUSH(t, pgno, idx);
+	}
+	mpool_put(t->bt_mp, h, 0);
+	return 1;
 }

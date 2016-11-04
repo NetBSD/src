@@ -1,6 +1,6 @@
 /* GDB-specific functions for operating on agent expressions.
 
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,6 +40,7 @@
 #include "arch-utils.h"
 #include "cli/cli-utils.h"
 #include "linespec.h"
+#include "location.h"
 #include "objfiles.h"
 
 #include "valprint.h"
@@ -322,7 +323,7 @@ gen_trace_static_fields (struct gdbarch *gdbarch,
   int i, nbases = TYPE_N_BASECLASSES (type);
   struct axs_value value;
 
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
 
   for (i = TYPE_NFIELDS (type) - 1; i >= nbases; i--)
     {
@@ -393,25 +394,24 @@ gen_traced_pop (struct gdbarch *gdbarch,
 
       case axs_lvalue_memory:
 	{
-	  if (string_trace)
-	    ax_simple (ax, aop_dup);
-
 	  /* Initialize the TYPE_LENGTH if it is a typedef.  */
 	  check_typedef (value->type);
 
-	  /* There's no point in trying to use a trace_quick bytecode
-	     here, since "trace_quick SIZE pop" is three bytes, whereas
-	     "const8 SIZE trace" is also three bytes, does the same
-	     thing, and the simplest code which generates that will also
-	     work correctly for objects with large sizes.  */
-	  ax_const_l (ax, TYPE_LENGTH (value->type));
-	  ax_simple (ax, aop_trace);
-
 	  if (string_trace)
 	    {
-	      ax_simple (ax, aop_ref32);
+	      gen_fetch (ax, value->type);
 	      ax_const_l (ax, ax->trace_string);
 	      ax_simple (ax, aop_tracenz);
+	    }
+	  else
+	    {
+	      /* There's no point in trying to use a trace_quick bytecode
+	         here, since "trace_quick SIZE pop" is three bytes, whereas
+	         "const8 SIZE trace" is also three bytes, does the same
+	         thing, and the simplest code which generates that will also
+	         work correctly for objects with large sizes.  */
+	      ax_const_l (ax, TYPE_LENGTH (value->type));
+	      ax_simple (ax, aop_trace);
 	    }
 	}
 	break;
@@ -1438,7 +1438,7 @@ gen_struct_ref_recursive (struct expression *exp, struct agent_expr *ax,
   int i, rslt;
   int nbases = TYPE_N_BASECLASSES (type);
 
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
 
   for (i = TYPE_NFIELDS (type) - 1; i >= nbases; i--)
     {
@@ -1556,7 +1556,7 @@ gen_static_field (struct gdbarch *gdbarch,
   else
     {
       const char *phys_name = TYPE_FIELD_STATIC_PHYSNAME (type, fieldno);
-      struct symbol *sym = lookup_symbol (phys_name, 0, VAR_DOMAIN, 0);
+      struct symbol *sym = lookup_symbol (phys_name, 0, VAR_DOMAIN, 0).symbol;
 
       if (sym)
 	{
@@ -1647,20 +1647,20 @@ gen_maybe_namespace_elt (struct expression *exp,
 			 const struct type *curtype, char *name)
 {
   const char *namespace_name = TYPE_TAG_NAME (curtype);
-  struct symbol *sym;
+  struct block_symbol sym;
 
   sym = cp_lookup_symbol_namespace (namespace_name, name,
 				    block_for_pc (ax->scope),
 				    VAR_DOMAIN);
 
-  if (sym == NULL)
+  if (sym.symbol == NULL)
     return 0;
 
-  gen_var_ref (exp->gdbarch, ax, value, sym);
+  gen_var_ref (exp->gdbarch, ax, value, sym.symbol);
 
   if (value->optimized_out)
     error (_("`%s' has been optimized out, cannot use"),
-	   SYMBOL_PRINT_NAME (sym));
+	   SYMBOL_PRINT_NAME (sym.symbol));
 
   return 1;
 }
@@ -2194,7 +2194,7 @@ gen_expr (struct expression *exp, union exp_element **pc,
 	func = block_linkage_function (b);
 	lang = language_def (SYMBOL_LANGUAGE (func));
 
-	sym = lookup_language_this (lang, b);
+	sym = lookup_language_this (lang, b).symbol;
 	if (!sym)
 	  error (_("no `%s' found"), lang->la_name_of_this);
 
@@ -2563,7 +2563,7 @@ gen_printf (CORE_ADDR scope, struct gdbarch *gdbarch,
 
   /* Issue the printf bytecode proper.  */
   ax_simple (ax, aop_printf);
-  ax_simple (ax, nargs);
+  ax_raw_byte (ax, nargs);
   ax_string (ax, format, fmtlen);
 
   /* And terminate.  */
@@ -2642,13 +2642,16 @@ agent_command_1 (char *exp, int eval)
       int ix;
       struct linespec_sals *iter;
       struct cleanup *old_chain;
+      struct event_location *location;
 
       exp = skip_spaces (exp);
       init_linespec_result (&canonical);
-      decode_line_full (&exp, DECODE_LINE_FUNFIRSTLINE,
+      location = new_linespec_location (&exp);
+      old_chain = make_cleanup_delete_event_location (location);
+      decode_line_full (location, DECODE_LINE_FUNFIRSTLINE, NULL,
 			(struct symtab *) NULL, 0, &canonical,
 			NULL, NULL);
-      old_chain = make_cleanup_destroy_linespec_result (&canonical);
+      make_cleanup_destroy_linespec_result (&canonical);
       exp = skip_spaces (exp);
       if (exp[0] == ',')
         {

@@ -66,6 +66,10 @@ if { $using_probes } {
 	}
     }
 
+    # GDB strips "target:" from the start of filenames
+    # when operating on the local filesystem
+    regsub "^target:" "$sysroot" "(target:)?" sysroot
+
     # Run til it loads our library
     set test "run til our library loads"
     set not_loaded_library 1

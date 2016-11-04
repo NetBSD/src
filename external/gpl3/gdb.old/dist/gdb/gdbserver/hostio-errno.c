@@ -22,64 +22,12 @@
    on top of errno.  */
 
 #include "server.h"
-#include "gdb/fileio.h"
-
-static int
-errno_to_fileio_error (int error)
-{
-  switch (error)
-    {
-    case EPERM:
-      return FILEIO_EPERM;
-    case ENOENT:
-      return FILEIO_ENOENT;
-    case EINTR:
-      return FILEIO_EINTR;
-    case EIO:
-      return FILEIO_EIO;
-    case EBADF:
-      return FILEIO_EBADF;
-    case EACCES:
-      return FILEIO_EACCES;
-    case EFAULT:
-      return FILEIO_EFAULT;
-    case EBUSY:
-      return FILEIO_EBUSY;
-    case EEXIST:
-      return FILEIO_EEXIST;
-    case ENODEV:
-      return FILEIO_ENODEV;
-    case ENOTDIR:
-      return FILEIO_ENOTDIR;
-    case EISDIR:
-      return FILEIO_EISDIR;
-    case EINVAL:
-      return FILEIO_EINVAL;
-    case ENFILE:
-      return FILEIO_ENFILE;
-    case EMFILE:
-      return FILEIO_EMFILE;
-    case EFBIG:
-      return FILEIO_EFBIG;
-    case ENOSPC:
-      return FILEIO_ENOSPC;
-    case ESPIPE:
-      return FILEIO_ESPIPE;
-    case EROFS:
-      return FILEIO_EROFS;
-    case ENOSYS:
-      return FILEIO_ENOSYS;
-    case ENAMETOOLONG:
-      return FILEIO_ENAMETOOLONG;
-    }
-
-  return FILEIO_EUNKNOWN;
-}
+#include "fileio.h"
 
 void
 hostio_last_error_from_errno (char *buf)
 {
   int error = errno;
-  int fileio_error = errno_to_fileio_error (error);
+  int fileio_error = host_to_fileio_error (error);
   sprintf (buf, "F-1,%x", fileio_error);
 }

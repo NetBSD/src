@@ -2,7 +2,7 @@
    convert to internal format, for GDB. Used as a last resort if no
    debugging symbols recognized.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -125,7 +125,7 @@ struct pe_sections_info
 static void
 get_section_vmas (bfd *abfd, asection *sectp, void *context)
 {
-  struct pe_sections_info *data = context;
+  struct pe_sections_info *data = (struct pe_sections_info *) context;
   struct read_pe_section_data *sections = data->sections;
   int sectix = get_pe_section_index (sectp->name, sections,
 				     data->nb_sections);
@@ -211,7 +211,7 @@ add_pe_forwarded_sym (const char *sym_name, const char *forward_dll_name,
   int forward_dll_name_len = strlen (forward_dll_name);
   int forward_func_name_len = strlen (forward_func_name);
   int forward_len = forward_dll_name_len + forward_func_name_len + 2;
-  char *forward_qualified_name = alloca (forward_len);
+  char *forward_qualified_name = (char *) alloca (forward_len);
   short section;
 
   xsnprintf (forward_qualified_name, forward_len, "%s!%s", forward_dll_name,
@@ -313,7 +313,7 @@ pe_get32 (bfd *abfd, int where)
 static unsigned int
 pe_as16 (void *ptr)
 {
-  unsigned char *b = ptr;
+  unsigned char *b = (unsigned char *) ptr;
 
   return b[0] + (b[1] << 8);
 }
@@ -321,7 +321,7 @@ pe_as16 (void *ptr)
 static unsigned int
 pe_as32 (void *ptr)
 {
-  unsigned char *b = ptr;
+  unsigned char *b = (unsigned char *) ptr;
 
   return b[0] + (b[1] << 8) + (b[2] << 16) + (b[3] << 24);
 }
@@ -356,8 +356,7 @@ read_pe_exported_syms (struct objfile *objfile)
 
   char const *target = bfd_get_target (objfile->obfd);
 
-  section_data = xzalloc (PE_SECTION_TABLE_SIZE
-			 * sizeof (struct read_pe_section_data));
+  section_data = XCNEWVEC (struct read_pe_section_data, PE_SECTION_TABLE_SIZE);
 
   make_cleanup (free_current_contents, &section_data);
 
@@ -493,8 +492,8 @@ read_pe_exported_syms (struct objfile *objfile)
 	{
 	  char *name;
 
-	  section_data = xrealloc (section_data, (otherix + 1)
-				   * sizeof (struct read_pe_section_data));
+	  section_data = XRESIZEVEC (struct read_pe_section_data, section_data,
+				     otherix + 1);
 	  name = xstrdup (sec_name);
 	  section_data[otherix].section_name = name;
 	  make_cleanup (xfree, name);
@@ -576,7 +575,7 @@ read_pe_exported_syms (struct objfile *objfile)
 	    {
 	      int len = (int) (sep - forward_name);
 
-	      forward_dll_name = alloca (len + 1);
+	      forward_dll_name = (char *) alloca (len + 1);
 	      strncpy (forward_dll_name, forward_name, len);
 	      forward_dll_name[len] = '\0';
 	      forward_func_name = ++sep;

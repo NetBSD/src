@@ -1,6 +1,6 @@
 /* Native-dependent code for modern VAX BSD's.
 
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,7 +47,7 @@ typedef struct fpreg fpregset_t;
 static void
 vaxbsd_supply_gregset (struct regcache *regcache, const void *gregs)
 {
-  const gdb_byte *regs = gregs;
+  const gdb_byte *regs = (const gdb_byte *)gregs;
   int regnum;
 
   for (regnum = 0; regnum < VAX_NUM_REGS; regnum++)
@@ -61,7 +61,7 @@ static void
 vaxbsd_collect_gregset (const struct regcache *regcache,
 			void *gregs, int regnum)
 {
-  gdb_byte *regs = gregs;
+  gdb_byte *regs = (gdb_byte *)gregs;
   int i;
 
   for (i = 0; i <= VAX_NUM_REGS; i++)

@@ -1,5 +1,5 @@
 /* Target-dependent code for GNU/Linux on Alpha.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -163,7 +163,7 @@ alpha_linux_supply_gregset (const struct regset *regset,
 			    struct regcache *regcache,
 			    int regnum, const void *gregs, size_t len)
 {
-  const gdb_byte *regs = gregs;
+  const gdb_byte *regs = (const gdb_byte *) gregs;
 
   gdb_assert (len >= 32 * 8);
   alpha_supply_int_regs (regcache, regnum, regs, regs + 31 * 8,
@@ -180,7 +180,7 @@ alpha_linux_collect_gregset (const struct regset *regset,
 			     const struct regcache *regcache,
 			     int regnum, void *gregs, size_t len)
 {
-  gdb_byte *regs = gregs;
+  gdb_byte *regs = (gdb_byte *) gregs;
 
   gdb_assert (len >= 32 * 8);
   alpha_fill_int_regs (regcache, regnum, regs, regs + 31 * 8,
@@ -196,7 +196,7 @@ alpha_linux_supply_fpregset (const struct regset *regset,
 			     struct regcache *regcache,
 			     int regnum, const void *fpregs, size_t len)
 {
-  const gdb_byte *regs = fpregs;
+  const gdb_byte *regs = (const gdb_byte *) fpregs;
 
   gdb_assert (len >= 32 * 8);
   alpha_supply_fp_regs (regcache, regnum, regs, regs + 31 * 8);
@@ -212,7 +212,7 @@ alpha_linux_collect_fpregset (const struct regset *regset,
 			      const struct regcache *regcache,
 			      int regnum, void *fpregs, size_t len)
 {
-  gdb_byte *regs = fpregs;
+  gdb_byte *regs = (gdb_byte *) fpregs;
 
   gdb_assert (len >= 32 * 8);
   alpha_fill_fp_regs (regcache, regnum, regs, regs + 31 * 8);

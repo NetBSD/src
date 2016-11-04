@@ -1,3 +1,78 @@
+2016-01-18  Alan Modra  <amodra@gmail.com>
+
+	PR binutils/19481
+	* override.m4 (AC_PROG_LEX): Define.
+
+2015-10-21  Maxim Ostapenko  <m.ostapenko@partner.samsung.com>
+
+	* bootstrap-asan.mk: Replace ASAN_OPTIONS=detect_leaks with
+	LSAN_OPTIONS=detect_leaks.
+
+2015-08-24  Yaakov Selkowitz  <yselkowi@redhat.com>
+
+	* iconv.m4 (AM_ICONV_LINK): Use in-tree libiconv when present.
+
+2015-07-27  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2015-07-24  Micahel Darling  <darlingm@gmail.com>
+
+	PR other/66259
+	* gettext.m4: Reflects renaming of configure.in to configure.ac
+	* po.m4: Likewise
+	* stdint.m4: Likewise
+	* tcl.m4: Likewise
+
+2015-07-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2015-05-13  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* sjlj.m4: New file.
+
+	2015-05-04  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* bitfields.m4: Change int to long long, and use bitfields of
+	width 1 instead of 0.
+
+	2015-05-01  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* bitfields.m4: New file.
+
+	2015-04-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bootstrap-mpx.mk: New file.
+
+	2015-03-25  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR bootstrap/65537
+	* bootstrap-lto-noplugin.mk: New build configuration.
+
+	2014-11-13  Kirill Yukhin  <kirill.yukhin@intel.com>
+
+	* target-posix: New file.
+
+	2014-10-27  Tom Tromey  <tromey@redhat.com>
+
+	* gcc-plugin.m4: New file.
+
+2015-07-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2015-05-27  Jason Merrill  <jason@redhat.com>
+
+	PR bootstrap/66304
+	* warnings.m4 (ACX_PROG_CXX_WARNING_OPTS)
+	(ACX_PROG_CXX_WARNINGS_ARE_ERRORS)
+	(ACX_PROG_CXX_WARNING_ALMOST_PEDANTIC): New.
+	(ACX_PROG_CC_WARNING_OPTS, ACX_PROG_CC_WARNING_ALMOST_PEDANTIC)
+	(ACX_PROG_CC_WARNINGS_ARE_ERRORS): Push into C language context.
+
+2015-07-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	* mh-alpha-linux: Restored.
+
 2015-06-30  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* dfp.m4 (enable_decimal_float): Also set to yes for
@@ -201,7 +276,7 @@
 2012-07-02  Richard Guenther  <rguenther@suse.de>
 
 	* isl.m4 (_ISL_CHECK_CT_PROG): Omit main function header/footer.
-	Fix version test. 
+	Fix version test.
 
 2012-07-02  Richard Guenther  <rguenther@suse.de>
 	Michael Matz  <matz@suse.de>
@@ -243,7 +318,7 @@
 
 	* config/mh-interix: Remove as unneeded.
 	* config/picflag.m4 (i[[34567]]86-*-interix3*):
-        Change triplet to i[[34567]]86-*-interix[[3-9]]*.
+	Change triplet to i[[34567]]86-*-interix[[3-9]]*.
 
 2012-01-04  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 

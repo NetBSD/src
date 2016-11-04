@@ -1,6 +1,6 @@
 /* DWARF 2 Expression Evaluator.
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    Contributed by Daniel Berlin (dan@dberlin.org)
 
@@ -26,6 +26,7 @@
 #include "gdbcore.h"
 #include "dwarf2.h"
 #include "dwarf2expr.h"
+#include "dwarf2loc.h"
 
 /* Local prototypes.  */
 
@@ -64,8 +65,9 @@ dwarf_gdbarch_types_init (struct gdbarch *gdbarch)
 static struct type *
 dwarf_expr_address_type (struct dwarf_expr_context *ctx)
 {
-  struct dwarf_gdbarch_types *types = gdbarch_data (ctx->gdbarch,
-						    dwarf_arch_cookie);
+  struct dwarf_gdbarch_types *types
+    = (struct dwarf_gdbarch_types *) gdbarch_data (ctx->gdbarch,
+						   dwarf_arch_cookie);
   int ndx;
 
   if (ctx->addr_size == 2)
@@ -94,11 +96,10 @@ new_dwarf_expr_context (void)
 {
   struct dwarf_expr_context *retval;
 
-  retval = xcalloc (1, sizeof (struct dwarf_expr_context));
+  retval = XCNEW (struct dwarf_expr_context);
   retval->stack_len = 0;
   retval->stack_allocated = 10;
-  retval->stack = xmalloc (retval->stack_allocated
-			   * sizeof (struct dwarf_stack_value));
+  retval->stack = XNEWVEC (struct dwarf_stack_value, retval->stack_allocated);
   retval->num_pieces = 0;
   retval->pieces = 0;
   retval->max_recursion_depth = 0x100;
@@ -120,7 +121,7 @@ free_dwarf_expr_context (struct dwarf_expr_context *ctx)
 static void
 free_dwarf_expr_context_cleanup (void *arg)
 {
-  free_dwarf_expr_context (arg);
+  free_dwarf_expr_context ((struct dwarf_expr_context *) arg);
 }
 
 /* Return a cleanup that calls free_dwarf_expr_context.  */
@@ -141,8 +142,7 @@ dwarf_expr_grow_stack (struct dwarf_expr_context *ctx, size_t need)
     {
       size_t newlen = ctx->stack_len + need + 10;
 
-      ctx->stack = xrealloc (ctx->stack,
-			     newlen * sizeof (struct dwarf_stack_value));
+      ctx->stack = XRESIZEVEC (struct dwarf_stack_value, ctx->stack, newlen);
       ctx->stack_allocated = newlen;
     }
 }
@@ -271,7 +271,7 @@ dwarf_expr_fetch_address (struct dwarf_expr_context *ctx, int n)
      for those architectures which require it.  */
   if (gdbarch_integer_to_address_p (ctx->gdbarch))
     {
-      gdb_byte *buf = alloca (ctx->addr_size);
+      gdb_byte *buf = (gdb_byte *) alloca (ctx->addr_size);
       struct type *int_type = get_unsigned_type (ctx->gdbarch,
 						 value_type (result_val));
 
@@ -310,9 +310,8 @@ add_piece (struct dwarf_expr_context *ctx, ULONGEST size, ULONGEST offset)
 
   ctx->num_pieces++;
 
-  ctx->pieces = xrealloc (ctx->pieces,
-			  (ctx->num_pieces
-			   * sizeof (struct dwarf_expr_piece)));
+  ctx->pieces
+    = XRESIZEVEC (struct dwarf_expr_piece, ctx->pieces, ctx->num_pieces);
 
   p = &ctx->pieces[ctx->num_pieces - 1];
   p->location = ctx->location;
@@ -613,7 +612,7 @@ dwarf_block_to_sp_offset (struct gdbarch *gdbarch, const gdb_byte *buf,
 	return 0;
     }
 
-  if (gdbarch_dwarf2_reg_to_regnum (gdbarch, dwarf_reg)
+  if (dwarf_reg_to_regnum (gdbarch, dwarf_reg)
       != gdbarch_sp_regnum (gdbarch))
     return 0;
 
@@ -654,7 +653,7 @@ execute_stack_op (struct dwarf_expr_context *ctx,
 
   while (op_ptr < op_end)
     {
-      enum dwarf_location_atom op = *op_ptr++;
+      enum dwarf_location_atom op = (enum dwarf_location_atom) *op_ptr++;
       ULONGEST result;
       /* Assume the value is not in stack memory.
 	 Code that knows otherwise sets this to 1.
@@ -1026,7 +1025,7 @@ execute_stack_op (struct dwarf_expr_context *ctx,
 	case DW_OP_GNU_deref_type:
 	  {
 	    int addr_size = (op == DW_OP_deref ? ctx->addr_size : *op_ptr++);
-	    gdb_byte *buf = alloca (addr_size);
+	    gdb_byte *buf = (gdb_byte *) alloca (addr_size);
 	    CORE_ADDR addr = dwarf_expr_fetch_address (ctx, 0);
 	    struct type *type;
 
@@ -1052,7 +1051,7 @@ execute_stack_op (struct dwarf_expr_context *ctx,
 		ULONGEST result =
 		  extract_unsigned_integer (buf, addr_size, byte_order);
 
-		buf = alloca (TYPE_LENGTH (type));
+		buf = (gdb_byte *) alloca (TYPE_LENGTH (type));
 		store_unsigned_integer (buf, TYPE_LENGTH (type),
 					byte_order, result);
 	      }

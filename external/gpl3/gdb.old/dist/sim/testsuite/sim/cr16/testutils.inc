@@ -9,6 +9,8 @@ passmsg:
 	.text
 	.global _START
 _START:
+	.global _start
+_start:
 	.endm
 
 	.macro exit rc

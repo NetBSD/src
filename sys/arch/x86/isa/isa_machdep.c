@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.33 2015/04/27 06:51:40 knakahara Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.33.2.1 2016/11/04 14:49:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.33 2015/04/27 06:51:40 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.33.2.1 2016/11/04 14:49:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,14 @@ void *
 isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
     int (*ih_fun)(void *), void *ih_arg)
 {
+	return isa_intr_establish_xname(ic, irq, type, level,
+	    ih_fun, ih_arg, "unknown");
+}
+
+void *
+isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type, int level,
+    int (*ih_fun)(void *), void *ih_arg, const char *xname)
+{
 	struct pic *pic;
 	int pin;
 #if NIOAPIC > 0
@@ -229,8 +237,8 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 			printf("isa_intr_establish: no MP mapping found\n");
 	}
 #endif
-	return intr_establish(irq, pic, pin, type, level, ih_fun, ih_arg,
-	    false);
+	return intr_establish_xname(irq, pic, pin, type, level, ih_fun, ih_arg,
+	    false, xname);
 }
 
 /* Deregister an interrupt handler. */

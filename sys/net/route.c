@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.171.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: route.c,v 1.171.2.3 2016/11/04 14:49:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,10 +93,11 @@
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_route.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.171.2.2 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.171.2.3 2016/11/04 14:49:21 pgoyette Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -137,8 +138,13 @@ static struct pool	rtentry_pool;
 static struct pool	rttimer_pool;
 
 static struct callout	rt_timer_ch; /* callout for rt_timer_timer() */
-struct workqueue	*rt_timer_wq;
-struct work		rt_timer_wk;
+static struct workqueue	*rt_timer_wq;
+static struct work	rt_timer_wk;
+
+static void	rt_timer_init(void);
+static void	rt_timer_queue_remove_all(struct rttimer_queue *);
+static void	rt_timer_remove_all(struct rtentry *);
+static void	rt_timer_timer(void *);
 
 #ifdef RTFLUSH_DEBUG
 static int _rtcache_debug = 0;
@@ -431,7 +437,7 @@ miss:
 	return NULL;
 }
 
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(NET_MPSAFE)
 /*
  * Check the following constraint for each rtcache:
  *   if a rtcache holds a rtentry, the rtentry's refcnt is more than zero,
@@ -460,14 +466,13 @@ rtfree(struct rtentry *rt)
 	KASSERT(rt->rt_refcnt > 0);
 
 	rt->rt_refcnt--;
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(NET_MPSAFE)
 	if (rt_getkey(rt) != NULL)
 		rtcache_check_rtrefcnt(rt_getkey(rt)->sa_family);
 #endif
 	if (rt->rt_refcnt == 0 && (rt->rt_flags & RTF_UP) == 0) {
 		rt_assert_inactive(rt);
 		rttrash--;
-		rt_timer_remove_all(rt, 0);
 		ifa = rt->rt_ifa;
 		rt->rt_ifa = NULL;
 		ifafree(ifa);
@@ -600,6 +605,7 @@ rtdeletemsg(struct rtentry *rt)
 {
 	int error;
 	struct rt_addrinfo info;
+	struct rtentry *retrt;
 
 	/*
 	 * Request the new route so that the entry is not actually
@@ -611,10 +617,12 @@ rtdeletemsg(struct rtentry *rt)
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_flags = rt->rt_flags;
-	error = rtrequest1(RTM_DELETE, &info, NULL);
+	error = rtrequest1(RTM_DELETE, &info, &retrt);
 
 	rt_missmsg(RTM_DELETE, &info, info.rti_flags, error);
 
+	if (error == 0)
+		rtfree(retrt);
 	return error;
 }
 
@@ -847,6 +855,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			ifa = NULL;
 		}
 		rttrash++;
+		rt_timer_remove_all(rt);
 		if (ret_nrt) {
 			*ret_nrt = rt;
 			rt->rt_refcnt++;
@@ -961,16 +970,20 @@ bad:
 int
 rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 {
+	struct sockaddr *new, *old;
 
 	KASSERT(rt->_rt_key != NULL);
 	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 
-	if (rt->rt_gateway != NULL)
-		sockaddr_free(rt->rt_gateway);
-	KASSERT(rt->_rt_key != NULL);
-	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-	if ((rt->rt_gateway = sockaddr_dup(gate, M_ZERO | M_NOWAIT)) == NULL)
+	new = sockaddr_dup(gate, M_ZERO | M_NOWAIT);
+	if (new == NULL)
 		return ENOMEM;
+
+	old = rt->rt_gateway;
+	rt->rt_gateway = new;
+	if (old != NULL)
+		sockaddr_free(old);
+
 	KASSERT(rt->_rt_key != NULL);
 	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 
@@ -1231,7 +1244,7 @@ static int rt_init_done = 0;
 
 static void rt_timer_work(struct work *, void *);
 
-void
+static void
 rt_timer_init(void)
 {
 	int error;
@@ -1275,16 +1288,15 @@ rt_timer_queue_change(struct rttimer_queue *rtq, long timeout)
 	rtq->rtq_timeout = timeout;
 }
 
-void
-rt_timer_queue_remove_all(struct rttimer_queue *rtq, int destroy)
+static void
+rt_timer_queue_remove_all(struct rttimer_queue *rtq)
 {
 	struct rttimer *r;
 
 	while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL) {
 		LIST_REMOVE(r, rtt_link);
 		TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
-		if (destroy)
-			(*r->rtt_func)(r->rtt_rt, r);
+		(*r->rtt_func)(r->rtt_rt, r);
 		rtfree(r->rtt_rt);
 		pool_put(&rttimer_pool, r);
 		if (rtq->rtq_count > 0)
@@ -1296,10 +1308,10 @@ rt_timer_queue_remove_all(struct rttimer_queue *rtq, int destroy)
 }
 
 void
-rt_timer_queue_destroy(struct rttimer_queue *rtq, int destroy)
+rt_timer_queue_destroy(struct rttimer_queue *rtq)
 {
 
-	rt_timer_queue_remove_all(rtq, destroy);
+	rt_timer_queue_remove_all(rtq);
 
 	LIST_REMOVE(rtq, rtq_link);
 
@@ -1314,22 +1326,20 @@ rt_timer_count(struct rttimer_queue *rtq)
 	return rtq->rtq_count;
 }
 
-void
-rt_timer_remove_all(struct rtentry *rt, int destroy)
+static void
+rt_timer_remove_all(struct rtentry *rt)
 {
 	struct rttimer *r;
 
 	while ((r = LIST_FIRST(&rt->rt_timer)) != NULL) {
 		LIST_REMOVE(r, rtt_link);
 		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
-		if (destroy)
-			(*r->rtt_func)(r->rtt_rt, r);
 		if (r->rtt_queue->rtq_count > 0)
 			r->rtt_queue->rtq_count--;
 		else
 			printf("rt_timer_remove_all: rtq_count reached 0\n");
-		rtfree(r->rtt_rt);
 		pool_put(&rttimer_pool, r);
+		rt->rt_refcnt--; /* XXX */
 	}
 }
 
@@ -1404,7 +1414,7 @@ rt_timer_work(struct work *wk, void *arg)
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
 }
 
-void
+static void
 rt_timer_timer(void *arg)
 {
 

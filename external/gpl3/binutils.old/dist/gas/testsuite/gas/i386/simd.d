@@ -195,4 +195,5 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	f2 0f 2a 08          	cvtsi2sdl \(%eax\),%xmm1
 [ 	]*[a-f0-9]+:	f3 0f 2a 08          	cvtsi2ssl \(%eax\),%xmm1
 [ 	]*[a-f0-9]+:	f2 0f 2a 08          	cvtsi2sdl \(%eax\),%xmm1
+[ 	]*[a-f0-9]+:	0f 2c 00             	cvttps2pi \(%eax\),%mm0
 #pass

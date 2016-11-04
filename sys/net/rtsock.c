@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.191.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.191.2.3 2016/11/04 14:49:21 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.191.2.2 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.191.2.3 2016/11/04 14:49:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -98,12 +98,15 @@ extern void sctp_add_ip_address(struct ifaddr *);
 extern void sctp_delete_ip_address(struct ifaddr *);
 #endif
 
-#if defined(COMPAT_14) || defined(COMPAT_50)
+#if defined(COMPAT_14) || defined(COMPAT_50) || defined(COMPAT_70)
 #include <compat/net/if.h>
 #include <compat/net/route.h>
 #endif
 #ifdef COMPAT_RTSOCK
 #define	RTM_XVERSION	RTM_OVERSION
+#define	RTM_XNEWADDR	RTM_ONEWADDR
+#define	RTM_XDELADDR	RTM_ODELADDR
+#define	RTM_XCHGADDR	RTM_OCHGADDR
 #define	RT_XADVANCE(a,b) RT_OADVANCE(a,b)
 #define	RT_XROUNDUP(n)	RT_OROUNDUP(n)
 #define	PF_XROUTE	PF_OROUTE
@@ -115,8 +118,12 @@ extern void sctp_delete_ip_address(struct ifaddr *);
 #define	DOMAINNAME	"oroute"
 CTASSERT(sizeof(struct ifa_xmsghdr) == 20);
 DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
+#undef COMPAT_70
 #else /* COMPAT_RTSOCK */
 #define	RTM_XVERSION	RTM_VERSION
+#define	RTM_XNEWADDR	RTM_NEWADDR
+#define	RTM_XDELADDR	RTM_DELADDR
+#define	RTM_XCHGADDR	RTM_CHGADDR
 #define	RT_XADVANCE(a,b) RT_ADVANCE(a,b)
 #define	RT_XROUNDUP(n)	RT_ROUNDUP(n)
 #define	PF_XROUTE	PF_ROUTE
@@ -126,7 +133,7 @@ DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
 #define	if_xannouncemsghdr	if_announcemsghdr
 #define	COMPATNAME(x)	x
 #define	DOMAINNAME	"route"
-CTASSERT(sizeof(struct ifa_xmsghdr) == 24);
+CTASSERT(sizeof(struct ifa_xmsghdr) == 32);
 #ifdef COMPAT_50
 #define	COMPATCALL(name, args)	compat_50_ ## name args
 #endif
@@ -586,6 +593,73 @@ out:
 	return ifa;
 }
 
+static int
+route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
+    struct rt_xmsghdr *rtm)
+{
+	int error = 0;
+	struct ifnet *ifp, *new_ifp;
+	struct ifaddr *ifa, *new_ifa;
+	struct psref psref_ifa, psref_new_ifa, psref_ifp;
+
+	/*
+	 * new gateway could require new ifaddr, ifp;
+	 * flags may also be different; ifp may be specified
+	 * by ll sockaddr when protocol address is ambiguous
+	 */
+	ifp = rt_getifp(info, &psref_ifp);
+	ifa = rt_getifa(info, &psref_ifa);
+	if (ifa == NULL) {
+		error = ENETUNREACH;
+		goto out;
+	}
+	if (info->rti_info[RTAX_GATEWAY]) {
+		error = rt_setgate(rt, info->rti_info[RTAX_GATEWAY]);
+		if (error != 0)
+			goto out;
+	}
+	if (info->rti_info[RTAX_TAG]) {
+		const struct sockaddr *tag;
+		tag = rt_settag(rt, info->rti_info[RTAX_TAG]);
+		if (tag == NULL) {
+			error = ENOBUFS;
+			goto out;
+		}
+	}
+	/* new gateway could require new ifaddr, ifp;
+	   flags may also be different; ifp may be specified
+	   by ll sockaddr when protocol address is ambiguous */
+	new_ifa = route_output_get_ifa(*info, rt, &new_ifp, &psref_new_ifa);
+	if (new_ifa != NULL) {
+		ifa_release(ifa, &psref_ifa);
+		ifa = new_ifa;
+	}
+	if (ifa) {
+		struct ifaddr *oifa = rt->rt_ifa;
+		if (oifa != ifa) {
+			if (oifa && oifa->ifa_rtrequest)
+				oifa->ifa_rtrequest(RTM_DELETE, rt, info);
+			rt_replace_ifa(rt, ifa);
+			rt->rt_ifp = new_ifp;
+		}
+		if (new_ifa == NULL)
+			ifa_release(ifa, &psref_ifa);
+	}
+	ifa_release(new_ifa, &psref_new_ifa);
+	if (new_ifp && rt->rt_ifp != new_ifp)
+		rt->rt_ifp = new_ifp;
+	rt_setmetrics(rtm->rtm_inits, rtm, rt);
+	if (rt->rt_flags != info->rti_flags)
+		rt->rt_flags = (info->rti_flags & ~PRESERVED_RTF)
+		    | (rt->rt_flags & PRESERVED_RTF);
+	if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
+		rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, info);
+out:
+	if_put(ifp, &psref_ifp);
+
+	return error;
+}
+
 /*ARGSUSED*/
 int
 COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
@@ -597,11 +671,8 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 	struct rtentry *saved_nrt = NULL;
 	struct rt_addrinfo info;
 	int len, error = 0;
-	struct ifnet *ifp = NULL;
-	struct ifaddr *ifa = NULL;
 	sa_family_t family;
 	struct sockaddr_dl sdl;
-	struct psref psref;
 	int bound = curlwp_bind();
 
 #define senderr(e) do { error = e; goto flush;} while (/*CONSTCOND*/ 0)
@@ -811,70 +882,11 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			}
 			break;
 
-		case RTM_CHANGE: {
-			struct ifnet *_ifp;
-			struct ifaddr *_ifa;
-			struct psref _psref, psref_ifp;
-			/*
-			 * new gateway could require new ifaddr, ifp;
-			 * flags may also be different; ifp may be specified
-			 * by ll sockaddr when protocol address is ambiguous
-			 */
-			_ifp = rt_getifp(&info, &psref_ifp);
-			ifa = rt_getifa(&info, &psref);
-			if (ifa == NULL) {
-				if_put(_ifp, &psref_ifp);
-				senderr(ENETUNREACH);
-			}
-			if (info.rti_info[RTAX_GATEWAY]) {
-				error = rt_setgate(rt,
-				    info.rti_info[RTAX_GATEWAY]);
-				if (error != 0) {
-					if_put(_ifp, &psref_ifp);
-					senderr(error);
-				}
-			}
-			if (info.rti_info[RTAX_TAG]) {
-				const struct sockaddr *tag;
-				tag = rt_settag(rt, info.rti_info[RTAX_TAG]);
-				if (tag == NULL) {
-					if_put(_ifp, &psref_ifp);
-					senderr(ENOBUFS);
-				}
-			}
-			/* new gateway could require new ifaddr, ifp;
-			   flags may also be different; ifp may be specified
-			   by ll sockaddr when protocol address is ambiguous */
-			_ifa = route_output_get_ifa(info, rt, &ifp, &_psref);
-			if (_ifa != NULL) {
-				ifa_release(ifa, &psref);
-				ifa = _ifa;
-			}
-			if (ifa) {
-				struct ifaddr *oifa = rt->rt_ifa;
-				if (oifa != ifa) {
-					if (oifa && oifa->ifa_rtrequest) {
-						oifa->ifa_rtrequest(RTM_DELETE,
-						    rt, &info);
-					}
-					rt_replace_ifa(rt, ifa);
-					rt->rt_ifp = ifp;
-				}
-				if (_ifa == NULL)
-					ifa_release(ifa, &psref);
-			}
-			ifa_release(_ifa, &_psref);
-			if (ifp && rt->rt_ifp != ifp)
-				rt->rt_ifp = ifp;
-			rt_setmetrics(rtm->rtm_inits, rtm, rt);
-			if (rt->rt_flags != info.rti_flags)
-				rt->rt_flags = (info.rti_flags & ~PRESERVED_RTF)
-				    | (rt->rt_flags & PRESERVED_RTF);
-			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
-				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, &info);
-			if_put(_ifp, &psref_ifp);
+		case RTM_CHANGE:
+			error = route_output_change(rt, &info, rtm);
+			if (error != 0)
+				goto flush;
 			/*FALLTHROUGH*/
-		    }
 		case RTM_LOCK:
 			rt->rt_rmx.rmx_locks &= ~(rtm->rtm_inits);
 			rt->rt_rmx.rmx_locks |=
@@ -1028,6 +1040,17 @@ rt_getlen(int type)
 #endif
 
 	switch (type) {
+	case RTM_ODELADDR:
+	case RTM_ONEWADDR:
+	case RTM_OCHGADDR:
+#ifdef COMPAT_70
+		return sizeof(struct ifa_msghdr70);
+#else
+#ifdef DIAGNOSTIC
+		printf("RTM_ONEWADDR\n");
+#endif
+		return -1;
+#endif
 	case RTM_DELADDR:
 	case RTM_NEWADDR:
 	case RTM_CHGADDR:
@@ -1278,6 +1301,25 @@ COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
 #endif
 }
 
+#ifndef COMPAT_RTSOCK
+static int
+if_addrflags(struct ifaddr *ifa)
+{
+
+	switch (ifa->ifa_addr->sa_family) {
+#ifdef INET
+	case AF_INET:
+		return ((struct in_ifaddr *)ifa)->ia4_flags;
+#endif
+#ifdef INET6
+	case AF_INET6:
+		return ((struct in6_ifaddr *)ifa)->ia6_flags;
+#endif
+	default:
+		return 0;
+	}
+}
+#endif
 
 /*
  * This is called to generate messages from the routing socket
@@ -1302,6 +1344,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 	int ncmd;
 
 	KASSERT(ifa != NULL);
+	KASSERT(ifa->ifa_addr != NULL);
 	ifp = ifa->ifa_ifp;
 #ifdef SCTP
 	if (cmd == RTM_ADD) {
@@ -1325,17 +1368,29 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 		case cmdpass(RTM_CHGADDR, 1):
 			switch (cmd) {
 			case RTM_ADD:
-				ncmd = RTM_NEWADDR;
+				ncmd = RTM_XNEWADDR;
 				break;
 			case RTM_DELETE:
-				ncmd = RTM_DELADDR;
+				ncmd = RTM_XDELADDR;
 				break;
 			case RTM_CHANGE:
-				ncmd = RTM_CHGADDR;
+				ncmd = RTM_XCHGADDR;
+				break;
+			case RTM_NEWADDR:
+				ncmd = RTM_XNEWADDR;
+				break;
+			case RTM_DELADDR:
+				ncmd = RTM_XDELADDR;
+				break;
+			case RTM_CHGADDR:
+				ncmd = RTM_XCHGADDR;
 				break;
 			default:
-				ncmd = cmd;
+				panic("%s: unknown command %d", __func__, cmd);
 			}
+#ifdef COMPAT_70
+			compat_70_rt_newaddrmsg1(ncmd, ifa);
+#endif
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
 			KASSERT(ifp->if_dl != NULL);
 			info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
@@ -1345,6 +1400,10 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 			ifam.ifam_index = ifp->if_index;
 			ifam.ifam_metric = ifa->ifa_metric;
 			ifam.ifam_flags = ifa->ifa_flags;
+#ifndef COMPAT_RTSOCK
+			ifam.ifam_pid = curproc->p_pid;
+			ifam.ifam_addrflags = if_addrflags(ifa);
+#endif
 			m = COMPATNAME(rt_msg1)(ncmd, &info, &ifam, sizeof(ifam));
 			if (m == NULL)
 				continue;
@@ -1379,6 +1438,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 		COMPATNAME(route_enqueue)(m, sa ? sa->sa_family : 0);
 	}
 #undef cmdpass
+
 }
 
 static struct mbuf *
@@ -1508,15 +1568,96 @@ sysctl_dumpentry(struct rtentry *rt, void *v)
 }
 
 static int
+sysctl_iflist_if(struct ifnet *ifp, struct rt_walkarg *w,
+    struct rt_addrinfo *info, size_t len)
+{
+	struct if_xmsghdr *ifm;
+	int error;
+
+	ifm = (struct if_xmsghdr *)w->w_tmem;
+	ifm->ifm_index = ifp->if_index;
+	ifm->ifm_flags = ifp->if_flags;
+	ifm->ifm_data = ifp->if_data;
+	ifm->ifm_addrs = info->rti_addrs;
+	if ((error = copyout(ifm, w->w_where, len)) == 0)
+		w->w_where = (char *)w->w_where + len;
+	return error;
+}
+
+static int
+sysctl_iflist_addr(struct rt_walkarg *w, struct ifaddr *ifa,
+     struct rt_addrinfo *info)
+{
+	int len, error;
+
+	if ((error = rt_msg2(RTM_XNEWADDR, info, 0, w, &len)))
+		return error;
+	if (w->w_where && w->w_tmem && w->w_needed <= 0) {
+		struct ifa_xmsghdr *ifam;
+
+		ifam = (struct ifa_xmsghdr *)w->w_tmem;
+		ifam->ifam_index = ifa->ifa_ifp->if_index;
+		ifam->ifam_flags = ifa->ifa_flags;
+		ifam->ifam_metric = ifa->ifa_metric;
+		ifam->ifam_addrs = info->rti_addrs;
+#ifndef COMPAT_RTSOCK
+		ifam->ifam_pid = 0;
+		ifam->ifam_addrflags = if_addrflags(ifa);
+#endif
+		if ((error = copyout(w->w_tmem, w->w_where, len)) == 0)
+			w->w_where = (char *)w->w_where + len;
+	}
+	return error;
+}
+
+static int
 sysctl_iflist(int af, struct rt_walkarg *w, int type)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 	struct	rt_addrinfo info;
-	int	len, error = 0;
+	int	cmd, len, error = 0;
+	int	(*iflist_if)(struct ifnet *, struct rt_walkarg *,
+			     struct rt_addrinfo *, size_t);
+	int	(*iflist_addr)(struct rt_walkarg *, struct ifaddr *,
+			       struct rt_addrinfo *);
 	int s;
 	struct psref psref;
 	int bound = curlwp_bind();
+
+	switch (type) {
+	case NET_RT_IFLIST:
+		cmd = RTM_IFINFO;
+		iflist_if = sysctl_iflist_if;
+		iflist_addr = sysctl_iflist_addr;
+		break;
+#ifdef COMPAT_14
+	case NET_RT_OOOIFLIST:
+		cmd = RTM_OOIFINFO;
+		iflist_if = compat_14_iflist;
+		iflist_addr = compat_70_iflist_addr;
+		break;
+#endif
+#ifdef COMPAT_50
+	case NET_RT_OOIFLIST:
+		cmd = RTM_OIFINFO;
+		iflist_if = compat_50_iflist;
+		iflist_addr = compat_70_iflist_addr;
+		break;
+#endif
+#ifdef COMPAT_70
+	case NET_RT_OIFLIST:
+		cmd = RTM_IFINFO;
+		iflist_if = sysctl_iflist_if;
+		iflist_addr = compat_70_iflist_addr;
+		break;
+#endif
+	default:
+#ifdef DIAGNOSTIC
+		printf("sysctl_iflist\n");
+#endif
+		return EINVAL;
+	}
 
 	memset(&info, 0, sizeof(info));
 
@@ -1592,7 +1733,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
-			if ((error = rt_msg2(RTM_NEWADDR, &info, 0, w, &len)))
+			if ((error = iflist_addr(w, ifa, &info)) != 0)
 				goto release_exit;
 			if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 				struct ifa_xmsghdr *ifam;
@@ -1685,11 +1826,16 @@ again:
 		break;
 
 #ifdef COMPAT_14
-	case NET_RT_OOIFLIST:
+	case NET_RT_OOOIFLIST:
 		error = sysctl_iflist(af, &w, w.w_op);
 		break;
 #endif
 #ifdef COMPAT_50
+	case NET_RT_OOIFLIST:
+		error = sysctl_iflist(af, &w, w.w_op);
+		break;
+#endif
+#ifdef COMPAT_70
 	case NET_RT_OIFLIST:
 		error = sysctl_iflist(af, &w, w.w_op);
 		break;
@@ -1726,14 +1872,13 @@ COMPATNAME(route_intr)(void *cookie)
 	struct sockproto proto = { .sp_family = PF_XROUTE, };
 	struct route_info * const ri = &COMPATNAME(route_info);
 	struct mbuf *m;
-	int s;
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
-	while (!IF_IS_EMPTY(&ri->ri_intrq)) {
-		s = splnet();
+	for (;;) {
+		IFQ_LOCK(&ri->ri_intrq);
 		IF_DEQUEUE(&ri->ri_intrq, m);
-		splx(s);
+		IFQ_UNLOCK(&ri->ri_intrq);
 		if (m == NULL)
 			break;
 		proto.sp_protocol = M_GETCTX(m, uintptr_t);
@@ -1750,20 +1895,24 @@ void
 COMPATNAME(route_enqueue)(struct mbuf *m, int family)
 {
 	struct route_info * const ri = &COMPATNAME(route_info);
-	int s, wasempty;
+	int wasempty;
 
-	s = splnet();
+	IFQ_LOCK(&ri->ri_intrq);
 	if (IF_QFULL(&ri->ri_intrq)) {
 		IF_DROP(&ri->ri_intrq);
+		IFQ_UNLOCK(&ri->ri_intrq);
 		m_freem(m);
 	} else {
 		wasempty = IF_IS_EMPTY(&ri->ri_intrq);
 		M_SETCTX(m, (uintptr_t)family);
 		IF_ENQUEUE(&ri->ri_intrq, m);
-		if (wasempty)
+		IFQ_UNLOCK(&ri->ri_intrq);
+		if (wasempty) {
+			kpreempt_disable();
 			softint_schedule(ri->ri_sih);
+			kpreempt_enable();
+		}
 	}
-	splx(s);
 }
 
 static void
@@ -1779,6 +1928,7 @@ COMPATNAME(route_init)(void)
 	ri->ri_intrq.ifq_maxlen = ri->ri_maxqlen;
 	ri->ri_sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    COMPATNAME(route_intr), NULL);
+	IFQ_LOCK_INIT(&ri->ri_intrq);
 }
 
 /*

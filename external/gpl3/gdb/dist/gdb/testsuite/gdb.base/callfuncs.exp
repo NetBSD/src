@@ -1,4 +1,4 @@
-# Copyright 1992-2015 Free Software Foundation, Inc.
+# Copyright 1992-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,8 +26,7 @@ if [support_complex_tests] {
 # Some targets can't do function calls, so don't even bother with this
 # test.
 if [target_info exists gdb,cannot_call_functions] {
-    setup_xfail "*-*-*" 2416
-    fail "This target can not call functions"
+    unsupported "This target can not call functions"
     continue
 }
 
@@ -165,15 +164,12 @@ proc do_function_calls {} {
     # and attempting a jump through that (a totally random address).
     setup_kfail gdb/1457 "rs6000*-*-aix*"
     setup_kfail gdb/1457 "powerpc*-*-aix*"
-    setup_kfail gdb/1457 hppa*-*-hpux*
     gdb_test "p t_func_values(add,func_val2)" " = 1"
     setup_kfail gdb/1457 "rs6000*-*-aix*"
     setup_kfail gdb/1457 "powerpc*-*-aix*"
-    setup_kfail gdb/1457 hppa*-*-hpux*
     gdb_test "p t_func_values(func_val1,doubleit)" " = 1"
     setup_kfail gdb/1457 "rs6000*-*-aix*"
     setup_kfail gdb/1457 "powerpc*-*-aix*"
-    setup_kfail gdb/1457 hppa*-*-hpux*
     gdb_test "p t_call_add(add,3,4)" " = 7"
     gdb_test "p t_call_add(func_val1,3,4)" " = 7"
 
@@ -222,7 +218,7 @@ proc do_function_calls {} {
 	    "call inferior func with struct - returns long double _Complex"
     }
 
-    gdb_test "p t_structs_a(struct_val1)" "= (.unsigned char .. )?<buf.*> \"foo\"" \
+    gdb_test "p t_structs_a(struct_val1)" "= (.unsigned char .. )?<.*buf.*> \"foo\"" \
     	"call inferior func with struct - returns char *"
 
     # Restore default value.
@@ -249,6 +245,16 @@ proc fetch_all_registers {test} {
 	    if [istarget "ia64-*-*"] {
 		# Filter out bspstore which is specially tied to bsp,
 		# giving spurious differences.
+	    } else {
+		lappend all_registers_lines $expect_out(0,string)
+	    }
+	    exp_continue
+	}
+	-re  "^pstate\[ \t\]+\[^\r\n\]+\r\n" {
+	    if [istarget "sparc64-*-linux-gnu"] {
+		# Filter out the pstate register, since in sparc64
+		# targets the Linux kernel disables pstate.PEF when
+		# returning from traps, giving spurious differences.
 	    } else {
 		lappend all_registers_lines $expect_out(0,string)
 	    }
@@ -291,22 +297,11 @@ proc fetch_all_registers {test} {
 }
 
 proc rerun_and_prepare {} {
-    global hp_aCC_compiler
-
     if { ![runto_main] } {
 	gdb_suppress_tests
     }
-    if { $hp_aCC_compiler } {
-	# Do not set language explicitly to 'C'.  This will cause aCC
-	# tests to fail because promotion rules are different.  Just let
-	# the language be set to the default.
-	# However, turn off overload-resolution for aCC.  Having it on causes
-	# a lot of failures.
 
-	gdb_test_no_output "set overload-resolution 0"
-    } else {
-	gdb_test_no_output "set language c"
-    }
+    gdb_test_no_output "set language c"
 
     get_debug_format
 

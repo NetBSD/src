@@ -1,5 +1,5 @@
-.\"	$NetBSD: zdump.8,v 1.14 2014/10/23 18:45:58 christos Exp $
-.Dd October 23, 2014
+.\"	$NetBSD: zdump.8,v 1.14.2.1 2016/11/04 14:48:53 pgoyette Exp $
+.Dd October 6, 2016
 .Dt ZDUMP 8
 .Os
 .Sh NAME
@@ -26,7 +26,18 @@ These options are available:
 .Bl -tag -width XXXXXXXXX -compact
 .It Fl \-version
 Output version information and exit.
+.It Fl i
+.Em This option is experimental: its behavior may change in future versions.
+Output a description of time intervals.
+For each
+.Ar zonename
+on the command line, output an interval-format description of the
+zone.
+See
+.Sx "INTERVAL FORMAT"
+below.
 .It Fl v
+Output a verbose description of time intervals.
 For each
 .Ar zonename
 on the command line,
@@ -37,30 +48,30 @@ each detected time discontinuity,
 the time at one day less than the highest possible time value,
 and the time at the highest possible time value.
 Each line is followed by
-.Dl isdst= D
+.Em isdst=D
 where
-.Dl D
+.Em D
 is positive, zero, or negative depending on whether
 the given time is daylight saving time, standard time,
 or an unknown time type, respectively.
 Each line is also followed by
-.Dl gmtoff= N
+.Em gmtoff=N
 if the given local time is known to be
-.D N
+.Em N
 seconds east of Greenwich.
 .It Fl c Ar [loyear,]highyear
-Cut off verbose output at the given year(s).
+Cut off interval output at the given year(s).
 Cutoff times are computed using the proleptic Gregorian calendar with year 0
 and with Universal Time (UT) ignoring leap seconds.
 The lower bound is exclusive and the upper is inclusive; for example, a
-.Dl loyear
+.Em loyear
 of 1970 excludes a transition occurring at 1970-01-01 00:00:00 UTC but a
-.Dl hiyear
+.Em hiyear
 of 1970 includes the transition.
 The default cutoff is
-.Dl \*-500,2500 .
+.Em \&-500,2500 .
 .It Fl t Ar [lotime,]hightime
-Cut off verbose output at the given time(s),
+Cut off interval output at the given time(s),
 given in decimal seconds since 1970-01-01 00:00:00
 Coordinated Universal Time (UTC).
 The
@@ -76,13 +87,116 @@ except omit the times relative to the extreme time values.
 This generates output that is easier to compare to that of
 implementations with different time representations.
 .El
+.Sh "INTERVAL FORMAT"
+.Em This format is experimental: it may change in future versions.
+.Pp
+The interval format is a compact text representation that is intended
+to be both human- and machine-readable.
+It consists of an empty line, then a line
+.Dq TZ=string
+where
+.Dv string
+is a double-quoted string giving the zone name, a second line
+.Dq \&- \&- interval
+describing the time interval before the first transition if any, and
+zero or more following lines
+.Dq date time interval
+one line for each transition time and following interval.
+Fields are separated by single tabs.
+.Pp
+Dates are in
+.Dv yyyy-mm-dd
+format and times are in 24-hour
+.Dv hh:mm:ss
+format where
+.Dv hh \*[Lt] 24 .
+Times are in local time immediately after the transition.
+A time interval description consists of a UT offset in signed
+.Dv \&+- hh : mm : ss
+format, a time zone abbreviation, and an isdst flag.
+An abbreviation that equals the UT offset is omitted; other abbreviations are
+double-quoted strings unless they consist of one or more alphabetic
+characters.
+An isdst flag is omitted for standard time, and otherwise
+is a decimal integer that is unsigned and positive (typically 1) for
+daylight saving time and negative for unknown.
+.Pp
+In times and UT offsets, the seconds are omitted if they are zero, and
+the minutes are also omitted if they are also zero.
+Positive UT offsets are east of Greenwich.  The UT offset \&-00 denotes a UT
+placeholder in areas where the actual offset is unspecified; by
+convention, this occurs when the UT offset is zero and the time zone
+abbreviation begins with
+.Dq \&-
+or is
+.Dq zzz .
+.Pp
+In double-quoted strings, escape sequences represent unusual
+characters.  The escape sequences are \es for space, and \e", \e\e,
+\ef, \en, \er, \et, and \ev with their usual meaning in the C
+programming language.
+E.g., the double-quoted string
+.Sq "CET\es\e"\e\e"
+represents the character sequence
+.Sq CET
+.Pp
+Here is an example of the output, with the leading empty line omitted.
+(This example is shown with tab stops set far enough apart so that the
+tabbed columns line up.)
+.Bd -literal
+TZ="Pacific/Honolulu"
+.Ed
+.Bl -column "XXXX-XX-XX" "HH:MM:SS" "-HH:MM:SS" "TZT" "X" -compact
+.It - Ta - Ta -10:31:26 Ta LMT Ta
+.It 1896-01-13 Ta 12:01:26 Ta -10:30 Ta HST Ta
+.It 1933-04-30 Ta 03 Ta -09:30 Ta HDT Ta 1
+.It 1933-05-21 Ta 11 Ta -10:30 Ta HST Ta
+.It 1942-02-09 Ta 03 Ta -09:30 Ta HDT Ta 1
+.It 1945-09-30 Ta 01 Ta -10:30 Ta HST Ta
+.It 1947-06-08 Ta 02:30 Ta -10 Ta HST Ta
+.El
+.Pp
+Here, local time begins 10 hours, 31 minutes and 26 seconds west of
+UT, and is a standard time abbreviated LMT.  Immediately after the
+first transition, the date is 1896-01-13 and the time is 12:01:26, and
+the following time interval is 10.5 hours west of UT, a standard time
+abbreviated HST.
+Immediately after the second transition, the date is
+1933-04-30 and the time is 03:00:00 and the following time interval is
+9.5 hours west of UT, is abbreviated HDT, and is daylight saving time.
+Immediately after the last transition the date is 1947-06-08 and the
+time is 02:30:00, and the following time interval is 10 hours west of
+UT, a standard time abbreviated HST.
+.Pp
+Here are excerpts from another example:
+.Bd -literal
+TZ="Europe/Astrakhan"
+.Ed
+.Bl -column "XXXX-XX-XX" "HH:MM:SS" "-HH:MM:SS" "TZT" "X" -compact
+.It - Ta - Ta +03:12:12 Ta LMT Ta
+.It 1924-04-30 Ta 23:47:48 Ta +03 Ta Ta
+.It 1930-06-21 Ta 01 Ta +04 Ta Ta
+.It 1981-04-01 Ta 01 Ta +05 Ta Ta 1
+.It 1981-09-30 Ta 23 Ta +04 Ta Ta
+.It \&... Ta Ta Ta Ta
+.It 2014-10-26 Ta 01 Ta +03 Ta Ta
+.It 2016-03-27 Ta 03 Ta +04 Ta Ta
+.El
+.Pp
+This time zone is east of UT, so its UT offsets are positive.  Also,
+many of its time zone abbreviations are omitted since they duplicate
+the text of the UT offset.
 .Sh LIMITATIONS
 Time discontinuities are found by sampling the results returned by localtime
 at twelve-hour intervals.
 This works in all real-world cases;
 one can construct artificial time zones for which this fails.
 .Pp
-In the output, 
+In the
+.Fl v
+and
+.Fl V
+output,
 .Dq UT
 denotes the value returned by
 .Xr gmtime 3 ,
@@ -92,8 +206,8 @@ No attempt is currently made to have the output use
 .Dq UTC
 for newer and
 .Dq UT
-for older time stamps,
-partly because the exact date of the introduction of UTC is problematic.
+for older time stamps, partly because the exact date of the
+introduction of UTC is problematic.
 .Sh SEE ALSO
 .Xr ctime 3 ,
 .Xr tzfile 5 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.55 2016/05/27 16:35:16 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.55.2.1 2016/11/04 14:49:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.55 2016/05/27 16:35:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.55.2.1 2016/11/04 14:49:17 pgoyette Exp $");
 
 #include "opt_pax.h"
 
@@ -111,6 +111,19 @@ int pax_aslr_global = PAX_ASLR;
 #endif
 #define PAX_ASLR_MAX_STACK_WASTE	8
 
+#ifdef PAX_ASLR_DEBUG
+int pax_aslr_debug;
+/* flag set means disable */
+int pax_aslr_flags;
+uint32_t pax_aslr_rand;
+#define PAX_ASLR_STACK		0x01
+#define PAX_ASLR_STACK_GAP	0x02
+#define PAX_ASLR_MMAP		0x04
+#define PAX_ASLR_EXEC_OFFSET	0x08
+#define PAX_ASLR_RTLD_OFFSET	0x10
+#define PAX_ASLR_FIXED		0x20
+#endif
+
 static bool pax_aslr_elf_flags_active(uint32_t);
 #endif /* PAX_ASLR */
 
@@ -135,18 +148,6 @@ int pax_mprotect_debug;
 #define	PAX_SEGVGUARD_MAXCRASHES	5
 #endif
 
-#ifdef PAX_ASLR_DEBUG
-int pax_aslr_debug;
-/* flag set means disable */
-int pax_aslr_flags;
-uint32_t pax_aslr_rand;
-#define PAX_ASLR_STACK		0x01
-#define PAX_ASLR_STACK_GAP	0x02
-#define PAX_ASLR_MMAP		0x04
-#define PAX_ASLR_EXEC_OFFSET	0x08
-#define PAX_ASLR_RTLD_OFFSET	0x10
-#define PAX_ASLR_FIXED		0x20
-#endif
 
 static int pax_segvguard_enabled = 1;
 static int pax_segvguard_global = PAX_SEGVGUARD;

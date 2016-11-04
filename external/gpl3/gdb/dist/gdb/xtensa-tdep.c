@@ -1,6 +1,6 @@
 /* Target-dependent code for the Xtensa port of GDB, the GNU debugger.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +28,7 @@
 #include "value.h"
 #include "dis-asm.h"
 #include "inferior.h"
+#include "osabi.h"
 #include "floatformat.h"
 #include "regcache.h"
 #include "reggroups.h"
@@ -316,7 +317,8 @@ xtensa_register_type (struct gdbarch *gdbarch, int regnum)
 	      if (tp == NULL)
 		{
 		  char *name = xstrprintf ("int%d", size * 8);
-		  tp = xmalloc (sizeof (struct ctype_cache));
+
+		  tp = XNEW (struct ctype_cache);
 		  tp->next = tdep->type_entries;
 		  tdep->type_entries = tp;
 		  tp->size = size;
@@ -354,9 +356,7 @@ xtensa_reg_to_regnum (struct gdbarch *gdbarch, int regnum)
     if (regnum == gdbarch_tdep (gdbarch)->regmap[i].target_number)
       return i;
 
-  internal_error (__FILE__, __LINE__,
-		  _("invalid dwarf/stabs register number %d"), regnum);
-  return 0;
+  return -1;
 }
 
 
@@ -849,7 +849,7 @@ xtensa_supply_gregset (const struct regset *regset,
 		       const void *gregs,
 		       size_t len)
 {
-  const xtensa_elf_gregset_t *regs = gregs;
+  const xtensa_elf_gregset_t *regs = (const xtensa_elf_gregset_t *) gregs;
   struct gdbarch *gdbarch = get_regcache_arch (rc);
   int i;
 
@@ -1270,7 +1270,7 @@ xtensa_frame_cache (struct frame_info *this_frame, void **this_cache)
   int  windowed, ps_regnum;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct xtensa_frame_cache *) *this_cache;
 
   pc = get_frame_register_unsigned (this_frame, gdbarch_pc_regnum (gdbarch));
   ps_regnum = gdbarch_ps_regnum (gdbarch);
@@ -1285,7 +1285,7 @@ xtensa_frame_cache (struct frame_info *this_frame, void **this_cache)
 
   if (windowed)
     {
-      char op1;
+      LONGEST op1;
 
       /* Get WINDOWBASE, WINDOWSTART, and PS registers.  */
       wb = get_frame_register_unsigned (this_frame, 
@@ -1293,8 +1293,8 @@ xtensa_frame_cache (struct frame_info *this_frame, void **this_cache)
       ws = get_frame_register_unsigned (this_frame,
 					gdbarch_tdep (gdbarch)->ws_regnum);
 
-      op1 = read_memory_integer (pc, 1, byte_order);
-      if (XTENSA_IS_ENTRY (gdbarch, op1))
+      if (safe_read_memory_integer (pc, 1, byte_order, &op1)
+	  && XTENSA_IS_ENTRY (gdbarch, op1))
 	{
 	  int callinc = CALLINC (ps);
 	  ra = get_frame_register_unsigned
@@ -1450,7 +1450,7 @@ xtensa_frame_prev_register (struct frame_info *this_frame,
 
   if (*this_cache == NULL)
     *this_cache = xtensa_frame_cache (this_frame, this_cache);
-  cache = *this_cache;
+  cache = (struct xtensa_frame_cache *) *this_cache;
 
   if (regnum ==gdbarch_pc_regnum (gdbarch))
     saved_reg = cache->ra;
@@ -1564,7 +1564,7 @@ xtensa_extract_return_value (struct type *type,
 			     void *dst)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  bfd_byte *valbuf = dst;
+  bfd_byte *valbuf = (bfd_byte *) dst;
   int len = TYPE_LENGTH (type);
   ULONGEST pc, wb;
   int callsize, areg;
@@ -1620,7 +1620,7 @@ xtensa_store_return_value (struct type *type,
 			   const void *dst)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  const bfd_byte *valbuf = dst;
+  const bfd_byte *valbuf = (const bfd_byte *) dst;
   unsigned int areg;
   ULONGEST pc, wb;
   int callsize;
@@ -2796,7 +2796,6 @@ execute_code (struct gdbarch *gdbarch, CORE_ADDR current_pc, CORE_ADDR wb)
   int ilen, islots, is;
   xtensa_opcode opc;
   int insn_num = 0;
-  int fail = 0;
   void (*func) (struct gdbarch *, int, int, int, CORE_ADDR);
 
   uint32_t at, as, offset;
@@ -3192,7 +3191,6 @@ xtensa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch_tdep *tdep;
   struct gdbarch *gdbarch;
-  struct xtensa_abi_handler *abi_handler;
 
   DEBUGTRACE ("gdbarch_init()\n");
 
@@ -3273,6 +3271,9 @@ xtensa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 
+  /* Hook in the ABI-specific overrides, if they have been registered.  */
+  gdbarch_init_osabi (info, gdbarch);
+
   return gdbarch;
 }
 
@@ -3288,8 +3289,6 @@ extern initialize_file_ftype _initialize_xtensa_tdep;
 void
 _initialize_xtensa_tdep (void)
 {
-  struct cmd_list_element *c;
-
   gdbarch_register (bfd_arch_xtensa, xtensa_gdbarch_init, xtensa_dump_tdep);
   xtensa_init_reggroups ();
 

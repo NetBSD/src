@@ -1,4 +1,4 @@
-# Copyright 1992-2015 Free Software Foundation, Inc.
+# Copyright 1992-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -420,9 +420,6 @@ proc test_print_mi_classes { } {
 # incapable of printing the member of an anonymous union.
 # We test the printing of the member first, and perform the other tests
 # only if the test succeeds, to avoid the infinite loop.
-#
-# GDB HEAD 2004-01-27 with hp aCC A.03.45 crashes on the first test.
-# -- chastain 2004-01-27
 
 proc test_print_anon_union {} {
     global gdb_prompt
@@ -524,6 +521,12 @@ proc test_print_svi_classes { } {
 	    # gcc HEAD 2004-07-31 -gstabs+
 	    pass $name
 	}
+	-re "$vhn = \{<vA> = \{va = 3, vx = 4\}, $re_vbptr_3 = ${hex}( <\[^>]*>)?, vb = 5, vx = 6\}$nl$gdb_prompt $" {
+	    # gcc HEAD 2015?+
+	    # the vptr is set to the address *after* the vtable,
+	    # so the # symbol shown is unpredictable.
+	    pass "$name (symbols ignored)"
+	}
     }
 
     # Print all members of g_vC.
@@ -551,6 +554,12 @@ proc test_print_svi_classes { } {
 	-re "$vhn = \{<vA> = \{va = 7, vx = 8\}, $re_vbptr_3 = $hex <typeinfo for vC>, vc = 9, vx = 10\}$nl$gdb_prompt $" {
 	    # gcc HEAD 2004-07-31 -gstabs+
 	    pass $name
+	}
+	-re "$vhn = \{<vA> = \{va = 7, vx = 8\}, $re_vbptr_3 = ${hex}( <\[^>]*>)?, vc = 9, vx = 10\}$nl$gdb_prompt $" {
+	    # gcc HEAD 2015?+
+	    # the vptr is set to the address *after* the vtable,
+	    # so the symbol shown is unpredictable.
+	    pass "$name (symbols ignored)"
 	}
     }
 }
@@ -623,6 +632,12 @@ proc test_print_mvi_classes { } {
 	    # gcc 3.3.2 -gstabs+
 	    pass "$name"
 	}
+	-re "$vhn = \{<vB> = \{<vA> = \{va = 19, vx = 20\}, $re_vbptr_3_vB = ${hex}( <\[^>]*>)?, vb = 21, vx = 22\}, <vC> = \{$re_vbptr_3_vC = ${hex}( <\[^>]*>)?, vc = 23, vx = 24\}, $re_vbptr_3_vD = ${hex}( <\[^>]*>)?, vd = 25, vx = 26\}$nl$gdb_prompt $" {
+	    # gcc HEAD 2015?+
+	    # the vptr is set to the address *after* the vtable,
+	    # so the symbol shown is unpredictable.
+	    pass "$name (symbols ignored)"
+	}
     }
 
     # Print all members of g_vE.
@@ -649,6 +664,12 @@ proc test_print_mvi_classes { } {
 	-re "$vhn = \{<vD> = \{<vB> = \{<vA> = \{va = 0, vx = 0\}, $re_vbptr_3_vB = $hex, vb = 0, vx = 0\}, <vC> = \{$re_vbptr_3_vC = $hex <typeinfo for vE>, vc = 0, vx = 0\}, $re_vbptr_3_vD = $hex, vd = 0, vx = 0\}, $re_vbptr_3_vE = $hex, ve = 27, vx = 28\}$nl$gdb_prompt $" {
 	    # gcc HEAD 2004-07-31 -gstabs+
 	    pass $name
+	}
+	-re "$vhn = \{<vD> = \{<vB> = \{<vA> = \{va = 0, vx = 0\}, $re_vbptr_3_vB = ${hex}( <\[^>]*>)?, vb = 0, vx = 0\}, <vC> = \{$re_vbptr_3_vC = ${hex}( <\[^>]*>)?, vc = 0, vx = 0\}, $re_vbptr_3_vD = ${hex}( <\[^>]*>)?, vd = 0, vx = 0\}, $re_vbptr_3_vE = ${hex}( <\[^>]*>)?, ve = 27, vx = 28\}$nl$gdb_prompt $" {
+	    # gcc HEAD 2015?+
+	    # the vptr is set to the address *after* the vtable,
+	    # so the symbol shown is unpredictable.
+	    pass "$name (symbols ignored)"
 	}
     }
 }

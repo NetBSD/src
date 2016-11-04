@@ -1,7 +1,5 @@
 /* BFD back-end for ALPHA Extended-Coff files.
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Modified from coff-mips.c by Steve Chamberlain <sac@cygnus.com> and
    Ian Lance Taylor <ian@cygnus.com>.
 
@@ -1230,7 +1228,7 @@ alpha_convert_external_reloc (bfd *output_bfd ATTRIBUTE_UNUSED,
   unsigned long r_symndx;
   bfd_vma relocation;
 
-  BFD_ASSERT (info->relocatable);
+  BFD_ASSERT (bfd_link_relocatable (info));
 
   if (h->root.type == bfd_link_hash_defined
       || h->root.type == bfd_link_hash_defweak)
@@ -1409,7 +1407,7 @@ alpha_relocate_section (bfd *output_bfd,
 
   lita_sec = symndx_to_section[RELOC_SECTION_LITA];
   gp = _bfd_get_gp_value (output_bfd);
-  if (! info->relocatable && lita_sec != NULL)
+  if (! bfd_link_relocatable (info) && lita_sec != NULL)
     {
       struct ecoff_section_tdata *lita_sec_data;
 
@@ -1512,14 +1510,14 @@ alpha_relocate_section (bfd *output_bfd,
 	     input_bfd);
 	  bfd_set_error (bfd_error_bad_value);
 	  continue;
-	  
+
 	case ALPHA_R_GPRELLOW:
 	  (*_bfd_error_handler)
 	    (_("%B: unsupported relocation: ALPHA_R_GPRELLOW"),
 	     input_bfd);
 	  bfd_set_error (bfd_error_bad_value);
 	  continue;
-	  
+
 	default:
 	  (*_bfd_error_handler)
 	    (_("%B: unknown relocation type %d"),
@@ -1534,7 +1532,7 @@ alpha_relocate_section (bfd *output_bfd,
 	     not otherwise used for anything.  For some reason, the
 	     address of the relocation does not appear to include the
 	     section VMA, unlike the other relocation types.  */
-	  if (info->relocatable)
+	  if (bfd_link_relocatable (info))
 	    H_PUT_64 (input_bfd, input_section->output_offset + r_vaddr,
 		      ext_rel->r_vaddr);
 	  adjust_addrp = FALSE;
@@ -1687,7 +1685,7 @@ alpha_relocate_section (bfd *output_bfd,
 	      if (h == (struct ecoff_link_hash_entry *) NULL)
 		abort ();
 
-	      if (! info->relocatable)
+	      if (! bfd_link_relocatable (info))
 		{
 		  if (h->root.type == bfd_link_hash_defined
 		      || h->root.type == bfd_link_hash_defweak)
@@ -1730,7 +1728,7 @@ alpha_relocate_section (bfd *output_bfd,
 
 	  addend += r_vaddr;
 
-	  if (info->relocatable)
+	  if (bfd_link_relocatable (info))
 	    {
 	      /* Adjust r_vaddr by the addend.  */
 	      H_PUT_64 (input_bfd, addend, ext_rel->r_vaddr);
@@ -1766,7 +1764,7 @@ alpha_relocate_section (bfd *output_bfd,
 	  /* Store a value from the reloc stack into a bitfield.  If
 	     we are generating relocatable output, all we do is
 	     adjust the address of the reloc.  */
-	  if (! info->relocatable)
+	  if (! bfd_link_relocatable (info))
 	    {
 	      bfd_vma mask;
 	      bfd_vma val;
@@ -1832,7 +1830,7 @@ alpha_relocate_section (bfd *output_bfd,
 		abort ();
 	    }
 
-	  if (info->relocatable)
+	  if (bfd_link_relocatable (info))
 	    {
 	      /* We are generating relocatable output, and must
 		 convert the existing reloc.  */
@@ -1958,7 +1956,7 @@ alpha_relocate_section (bfd *output_bfd,
 	    }
 	}
 
-      if (info->relocatable && adjust_addrp)
+      if (bfd_link_relocatable (info) && adjust_addrp)
 	{
 	  /* Change the address of the relocation.  */
 	  H_PUT_64 (input_bfd,
@@ -2191,7 +2189,7 @@ alpha_ecoff_get_elt_at_filepos (bfd *archive, file_ptr filepos)
 static bfd *
 alpha_ecoff_openr_next_archived_file (bfd *archive, bfd *last_file)
 {
-  file_ptr filestart;
+  ufile_ptr filestart;
 
   if (last_file == NULL)
     filestart = bfd_ardata (archive)->first_file_filepos;
@@ -2212,6 +2210,12 @@ alpha_ecoff_openr_next_archived_file (bfd *archive, bfd *last_file)
 	 BSD-4.4-style element with a long odd size.  */
       filestart = last_file->proxy_origin + size;
       filestart += filestart % 2;
+      if (filestart < last_file->proxy_origin)
+	{
+	  /* Prevent looping.  See PR19256.  */
+	  bfd_set_error (bfd_error_malformed_archive);
+	  return NULL;
+	}
     }
 
   return alpha_ecoff_get_elt_at_filepos (archive, filestart);
@@ -2244,8 +2248,8 @@ static const struct ecoff_backend_data alpha_ecoff_backend_data =
     (unsigned (*) (bfd *,void *,void *)) bfd_void, /* reloc_out */
     alpha_ecoff_swap_filehdr_out, alpha_ecoff_swap_aouthdr_out,
     alpha_ecoff_swap_scnhdr_out,
-    FILHSZ, AOUTSZ, SCNHSZ, 0, 0, 0, 0, FILNMLEN, TRUE, 
-    ECOFF_NO_LONG_SECTION_NAMES, 4, FALSE, 2,
+    FILHSZ, AOUTSZ, SCNHSZ, 0, 0, 0, 0, FILNMLEN, TRUE,
+    ECOFF_NO_LONG_SECTION_NAMES, 4, FALSE, 2, 32768,
     alpha_ecoff_swap_filehdr_in, alpha_ecoff_swap_aouthdr_in,
     alpha_ecoff_swap_scnhdr_in, NULL,
     alpha_ecoff_bad_format_hook, _bfd_ecoff_set_arch_mach_hook,
@@ -2350,7 +2354,7 @@ static const struct ecoff_backend_data alpha_ecoff_backend_data =
   _bfd_coff_section_already_linked
 #define _bfd_ecoff_bfd_define_common_symbol bfd_generic_define_common_symbol
 
-const bfd_target ecoffalpha_little_vec =
+const bfd_target alpha_ecoff_le_vec =
 {
   "ecoff-littlealpha",		/* name */
   bfd_target_ecoff_flavour,

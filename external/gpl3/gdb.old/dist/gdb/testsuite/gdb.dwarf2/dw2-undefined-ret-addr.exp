@@ -46,7 +46,7 @@ gdb_test "up" \
 
 # "info frame" unwinds the PC for "saved ... = ".  Make sure that
 # doesn't cause an error, and shows "<not saved>".
-gdb_test "info frame" [join [list \
+gdb_test "info frame" [multi_line \
     "Stack level 0, frame at $hex\:" \
     " rip = $hex in stop_frame \\(dw2-undefined-ret-addr\\.c:22\\); saved rip = <not saved>" \
     " Outermost frame: outermost" \
@@ -55,4 +55,4 @@ gdb_test "info frame" [join [list \
     " Locals at $hex, Previous frame's sp is $hex" \
     " Saved registers\:" \
     "  rbp at $hex.*" \
-] "\r\n"]
+]

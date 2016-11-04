@@ -1,4 +1,4 @@
-# Copyright 2015 Free Software Foundation, Inc.
+# Copyright 2015-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,37 +18,42 @@
 # Test the setting of "history size" via the GDBHISTSIZE environment variable
 
 
+# We cannot expect remote hosts to see environment variables set on the
+# local machine.
+
+if { [is_remote host] } {
+    unsupported "can't set environment variables on remote host"
+    return -1
+}
+
 # Check that the history size is properly set to SIZE when the environment
 # variable ENV_VAR is set to GDBHISTSIZE.
 
 proc test_histsize_history_setting { histsize size { env_var "GDBHISTSIZE" } } {
     global env
 
-    set have_old_gdbhistsize 0
-    if [info exists env($env_var)] {
-        set have_old_gdbhistsize 1
-        set old_gdbhistsize $env($env_var)
-    }
-    set env($env_var) $histsize
+    save_vars { env(GDBHISTFILE) env(GDBHISTSIZE) env($env_var) } {
+	# These environment variables take precedence over whatever
+	# history size is set in .gdbinit.  Make sure the former is not
+	# set.
+	unset -nocomplain env(GDBHISTFILE)
+	unset -nocomplain env(GDBHISTSIZE)
 
-    with_test_prefix "histsize=$histsize" {
-	gdb_exit
-	gdb_start
+	set env($env_var) $histsize
 
-	gdb_test "show history size" "The size of the command history is $size."
+	with_test_prefix "histsize=$histsize" {
+	    gdb_exit
+	    gdb_start
 
-	if { $size == "0" } {
-	    gdb_test_no_output "show commands"
-	} elseif { $size != "1" } {
-	    gdb_test "show commands" \
-		     "    .  show history size\r\n    .  show commands"
-	}
+	    gdb_test "show history size" "The size of the command history is $size."
 
-	if { $have_old_gdbhistsize } {
-	    set env($env_var) $old_gdbhistsize
-	} else {
-	    unset env($env_var)
-	}
+	    if { $size == "0" } {
+		gdb_test_no_output "show commands"
+	    } elseif { $size != "1" } {
+		gdb_test "show commands" \
+		         "    .  show history size\r\n    .  show commands"
+	    }
+        }
     }
 }
 

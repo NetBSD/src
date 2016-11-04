@@ -29,7 +29,7 @@ void mem_put_si (int address, unsigned long value);
 
 void mem_put_blk (int address, const void *bufptr, int nbytes);
 
-unsigned char mem_get_pc ();
+unsigned char mem_get_pc (void);
 
 unsigned char mem_get_qi (int address);
 unsigned short mem_get_hi (int address);
@@ -40,6 +40,6 @@ void mem_get_blk (int address, void *bufptr, int nbytes);
 
 int sign_ext (int v, int bits);
 
-void m32c_sim_restore_console ();
+void m32c_sim_restore_console (void);
 
 extern int m32c_use_raw_console;

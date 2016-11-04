@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.18 2016/08/06 00:19:07 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.19 2016/11/04 14:49:08 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.18 2016/08/06 00:19:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.19 2016/11/04 14:49:08 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -360,14 +360,16 @@ cgdstrategy(struct buf *bp)
 	DPRINTF_FOLLOW(("cgdstrategy(%p): b_bcount = %ld\n", bp,
 	    (long)bp->b_bcount));
 
+	cs = getcgd_softc(bp->b_dev);
+	if (!cs) {
+		bp->b_error = ENXIO;
+		goto bail;
+	}
+
 	/*
-	 * Reject unaligned writes.  We can encrypt and decrypt only
-	 * complete disk sectors, and we let the ciphers require their
-	 * buffers to be aligned to 32-bit boundaries.
+	 * Reject unaligned writes.
 	 */
-	if (bp->b_blkno < 0 ||
-	    (bp->b_bcount % dg->dg_secsize) != 0 ||
-	    ((uintptr_t)bp->b_data & 3) != 0) {
+	if (((uintptr_t)bp->b_data & 3) != 0) {
 		bp->b_error = EINVAL;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
@@ -375,9 +377,13 @@ cgdstrategy(struct buf *bp)
 		return;
 	}
 
-	/* XXXrcd: Should we test for (cs != NULL)? */
 	dk_strategy(&cs->sc_dksc, bp);
 	device_release(self);
+	return;
+
+bail:
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 	return;
 }
 

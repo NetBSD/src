@@ -1,4 +1,4 @@
-# Copyright 2004-2015 Free Software Foundation, Inc.
+# Copyright 2004-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +13,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Call target_compile with SOURCE DEST TYPE and OPTIONS as argument,
+# after having temporarily changed the current working directory to
+# BUILDDIR.
+
+proc target_compile_ada_from_dir {builddir source dest type options} {
+    set saved_cwd [pwd]
+    catch {
+        cd $builddir
+        return [target_compile $source $dest $type $options]
+    } result options
+    cd $saved_cwd
+    return -options $options $result
+}
+
 # Compile some Ada code.
 
 proc gdb_compile_ada {source dest type options} {
@@ -21,12 +35,17 @@ proc gdb_compile_ada {source dest type options} {
     set gprdir [file dirname $srcdir]
     set objdir [file dirname $dest]
 
+    # Although strictly not necessary, we force the recompilation
+    # of all units (additional_flags=-f).  This is what is done
+    # when using GCC to build programs in the other languages,
+    # and it avoids using a stray objfile file from a long-past
+    # run, for instance.
     append options " ada"
-    append options " additional_flags=-P$gprdir/gnat_ada"
-    append options " additional_flags=-XSRC=[file tail $srcdir]"
-    append options " additional_flags=-XOBJ=$objdir"
+    append options " additional_flags=-f"
+    append options " additional_flags=-I$srcdir"
 
-    set result [target_compile [file tail $source] $dest $type $options]
+    set result [target_compile_ada_from_dir \
+                    $objdir [file tail $source] $dest $type $options]
 
     # The Ada build always produces some output, even when the build
     # succeeds. Thus, we can not use the output the same way we do in
@@ -54,9 +73,8 @@ proc standard_ada_testfile {base_file {dir ""}} {
     } else {
 	set testdir $dir
     }
-    set testfile $testdir/$base_file
-    set srcfile $srcdir/$subdir/$testfile.adb
-    set binfile [standard_output_file $testfile]
 
-    file mkdir [standard_output_file $testdir]
+    set testfile $base_file
+    set srcfile $srcdir/$subdir/$testdir/$testfile.adb
+    set binfile [standard_output_file $testfile]
 }

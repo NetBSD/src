@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2016/01/26 19:38:09 christos Exp $
+# $NetBSD: Makefile.inc,v 1.1.2.1 2016/11/04 14:43:47 pgoyette Exp $
 .include <bsd.own.mk>
-TOP=	${NETBSDSRCDIR}/external/gpl3/${EXTERNAL_BINUTILS_SUBDIR}
-DIST=	${TOP}/dist
+TOP:=	${.PARSEDIR}
+DIST:=	${TOP}/dist

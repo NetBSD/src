@@ -1,6 +1,6 @@
 /* Private partial symbol table definitions.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +28,7 @@ struct psymbol_allocation_list;
    symbols whose types we have not parsed yet.  For functions, it also
    contains their memory address, so we can find them from a PC value.
    Each partial_symbol sits in a partial_symtab, all of which are chained
-   on a  partial symtab list and which points to the corresponding 
+   on a  partial symtab list and which points to the corresponding
    normal symtab once the partial_symtab has been referenced.  */
 
 /* This structure is space critical.  See space comments at the top of
@@ -36,21 +36,19 @@ struct psymbol_allocation_list;
 
 struct partial_symbol
 {
-
   /* The general symbol info required for all types of symbols.  */
 
   struct general_symbol_info ginfo;
 
   /* Name space code.  */
 
-  ENUM_BITFIELD(domain_enum_tag) domain : 6;
+  ENUM_BITFIELD(domain_enum_tag) domain : SYMBOL_DOMAIN_BITS;
 
   /* Address class (for info_symbols).  Note that we don't allow
      synthetic "aclass" values here at present, simply because there's
      no need.  */
 
-  ENUM_BITFIELD(address_class) aclass : 6;
-
+  ENUM_BITFIELD(address_class) aclass : SYMBOL_ACLASS_BITS;
 };
 
 #define PSYMBOL_DOMAIN(psymbol)	(psymbol)->domain
@@ -79,7 +77,6 @@ enum psymtab_search_status
 
 struct partial_symtab
 {
-
   /* Chain of all existing partial symtabs.  */
 
   struct partial_symtab *next;
@@ -126,7 +123,7 @@ struct partial_symtab
      In DWARF terms, a shared psymtab is a DW_TAG_partial_unit; but
      of course using a name based on that would be too confusing, so
      "shared" was chosen instead.
-     
+
      Only a single user is needed because, when expanding a shared
      psymtab, we only need to expand its "canonical" non-shared user.
      The choice of which one should be canonical is left to the
@@ -204,15 +201,13 @@ struct partial_symtab
   void *read_symtab_private;
 };
 
-extern void sort_pst_symbols (struct objfile *, struct partial_symtab *);
-
 /* Add any kind of symbol to a psymbol_allocation_list.  */
 
 extern void add_psymbol_to_list (const char *, int,
 				 int, domain_enum,
 				 enum address_class,
 				 struct psymbol_allocation_list *,
-				 long, CORE_ADDR,
+				 CORE_ADDR,
 				 enum language, struct objfile *);
 
 extern void init_psymbol_list (struct objfile *, int);
@@ -221,6 +216,8 @@ extern struct partial_symtab *start_psymtab_common (struct objfile *,
 						    const char *, CORE_ADDR,
 						    struct partial_symbol **,
 						    struct partial_symbol **);
+
+extern void end_psymtab_common (struct objfile *, struct partial_symtab *);
 
 extern struct partial_symtab *allocate_psymtab (const char *,
 						struct objfile *)

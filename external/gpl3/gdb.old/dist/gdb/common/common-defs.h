@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include <errno.h>
 #ifdef HAVE_ALLOCA_H
@@ -42,13 +43,23 @@
 #include "gdb/signals.h"
 #include "gdb_locale.h"
 #include "ptid.h"
+#include "common-types.h"
 #include "common-utils.h"
 #include "gdb_assert.h"
 #include "errors.h"
-#include "common-types.h"
 #include "print-utils.h"
 #include "common-debug.h"
 #include "cleanups.h"
 #include "common-exceptions.h"
+
+#ifdef __cplusplus
+# define EXTERN_C extern "C"
+# define EXTERN_C_PUSH extern "C" {
+# define EXTERN_C_POP }
+#else
+# define EXTERN_C extern
+# define EXTERN_C_PUSH
+# define EXTERN_C_POP
+#endif
 
 #endif /* COMMON_DEFS_H */

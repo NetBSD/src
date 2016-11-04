@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.48 2016/04/25 20:15:46 bouyer Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.48.2.1 2016/11/04 14:49:00 pgoyette Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.48 2016/04/25 20:15:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.48.2.1 2016/11/04 14:49:00 pgoyette Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -651,7 +651,7 @@ awin_device_register(device_t self, void *aux)
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
 		 * addresses by 2.  The simpliest remedy is to replace with our
-		 * bus space used for the armcore regisers (which armperiph uses). 
+		 * bus space used for the armcore registers (which armperiph uses). 
 		 */
 		struct mainbus_attach_args * const mb = aux;
 		mb->mb_iot = &armv7_generic_bs_tag;

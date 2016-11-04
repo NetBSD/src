@@ -1,4 +1,4 @@
-# Copyright 2014-2015 Free Software Foundation, Inc.
+# Copyright 2014-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -324,7 +324,7 @@ gdb_test "compile code -z" "Unknown argument.*"
 
 gdb_test "set lang java" \
     "Warning: the current language does not match this frame."
-gdb_test "compile code globalvar" "No compiler support for this language\."
+gdb_test "compile code globalvar" "No compiler support for language java\\."
 gdb_test_no_output "set lang auto"
 
 gdb_test_no_output "compile code union union_type newdecl_u"
@@ -362,13 +362,17 @@ if {[skip_shlib_tests]} {
 }
 
 set libbin [standard_output_file ${testfile}-shlib.so]
+set binfile [standard_output_file ${testfile}-shlib]
+
 if { [gdb_compile_shlib ${srcdir}/${subdir}/${srcfile2} $libbin {debug}] != ""
-     || [build_executable $testfile ${testfile}-shlib $srcfile \
-	     [list debug ldflags=$libbin]] == -1 } {
+     || [gdb_compile ${srcdir}/${subdir}/${srcfile} $binfile executable \
+	     [list debug shlib=$libbin]] == -1 } {
     return -1
 }
 
-clean_restart ${testfile}-shlib
+clean_restart $binfile
+gdb_load_shlib $libbin
+
 if ![runto_main] {
     return -1
 }

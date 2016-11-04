@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.83.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.83.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -497,6 +497,11 @@ struct	in6_rrenumreq {
 					 */
 #define IN6_IFF_AUTOCONF	0x40	/* autoconfigurable address. */
 #define IN6_IFF_TEMPORARY	0x80	/* temporary (anonymous) address. */
+
+#define IN6_IFFBITS \
+    "\020\1ANYCAST\2TENTATIVE\3DUPLICATED\4DETACHED\5DEPRECATED\6NODAD" \
+    "\7AUTOCONF\10TEMPORARY"
+
 
 /* do not input/output */
 #define IN6_IFF_NOTREADY (IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED)

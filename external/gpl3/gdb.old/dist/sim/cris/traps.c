@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "sim-main.h"
+#include "sim-syscall.h"
 #include "sim-options.h"
 #include "bfd.h"
 /* FIXME: get rid of targ-vals.h usage everywhere else.  */
@@ -263,21 +264,21 @@ static const char stat_map[] =
 
 static const CB_TARGET_DEFS_MAP syscall_map[] =
 {
-  { CB_SYS_open, TARGET_SYS_open },
-  { CB_SYS_close, TARGET_SYS_close },
-  { CB_SYS_read, TARGET_SYS_read },
-  { CB_SYS_write, TARGET_SYS_write },
-  { CB_SYS_lseek, TARGET_SYS_lseek },
-  { CB_SYS_unlink, TARGET_SYS_unlink },
-  { CB_SYS_getpid, TARGET_SYS_getpid },
-  { CB_SYS_fstat, TARGET_SYS_fstat64 },
-  { CB_SYS_lstat, TARGET_SYS_lstat64 },
-  { CB_SYS_stat, TARGET_SYS_stat64 },
-  { CB_SYS_pipe, TARGET_SYS_pipe },
-  { CB_SYS_rename, TARGET_SYS_rename },
-  { CB_SYS_truncate, TARGET_SYS_truncate },
-  { CB_SYS_ftruncate, TARGET_SYS_ftruncate },
-  { 0, -1 }
+  { "open", CB_SYS_open, TARGET_SYS_open },
+  { "close", CB_SYS_close, TARGET_SYS_close },
+  { "read", CB_SYS_read, TARGET_SYS_read },
+  { "write", CB_SYS_write, TARGET_SYS_write },
+  { "lseek", CB_SYS_lseek, TARGET_SYS_lseek },
+  { "unlink", CB_SYS_unlink, TARGET_SYS_unlink },
+  { "getpid", CB_SYS_getpid, TARGET_SYS_getpid },
+  { "fstat", CB_SYS_fstat, TARGET_SYS_fstat64 },
+  { "lstat", CB_SYS_lstat, TARGET_SYS_lstat64 },
+  { "stat", CB_SYS_stat, TARGET_SYS_stat64 },
+  { "pipe", CB_SYS_pipe, TARGET_SYS_pipe },
+  { "rename", CB_SYS_rename, TARGET_SYS_rename },
+  { "truncate", CB_SYS_truncate, TARGET_SYS_truncate },
+  { "ftruncate", CB_SYS_ftruncate, TARGET_SYS_ftruncate },
+  { 0, -1, -1 }
 };
 
 /* An older, 32-bit-only stat mapping.  */
@@ -290,9 +291,9 @@ static const char stat32_map[] =
    newlib Linux mapping.  */
 static const CB_TARGET_DEFS_MAP syscall_stat32_map[] =
 {
-  { CB_SYS_fstat, TARGET_SYS_fstat },
-  { CB_SYS_stat, TARGET_SYS_stat },
-  { 0, -1 }
+  { "fstat", CB_SYS_fstat, TARGET_SYS_fstat },
+  { "stat", CB_SYS_stat, TARGET_SYS_stat },
+  { 0, -1, -1 }
 };
 
 /* Giving the true value for the running sim process will lead to
@@ -311,378 +312,378 @@ static const CB_TARGET_DEFS_MAP syscall_stat32_map[] =
 static const CB_TARGET_DEFS_MAP errno_map[] =
 {
 #ifdef EPERM
-  { EPERM, 1 },
+  { "EPERM", EPERM, 1 },
 #endif
 #ifdef ENOENT
-  { ENOENT, 2 },
+  { "ENOENT", ENOENT, 2 },
 #endif
 #ifdef ESRCH
-  { ESRCH, 3 },
+  { "ESRCH", ESRCH, 3 },
 #endif
 #ifdef EINTR
-  { EINTR, 4 },
+  { "EINTR", EINTR, 4 },
 #endif
 #ifdef EIO
-  { EIO, 5 },
+  { "EIO", EIO, 5 },
 #endif
 #ifdef ENXIO
-  { ENXIO, 6 },
+  { "ENXIO", ENXIO, 6 },
 #endif
 #ifdef E2BIG
-  { E2BIG, 7 },
+  { "E2BIG", E2BIG, 7 },
 #endif
 #ifdef ENOEXEC
-  { ENOEXEC, 8 },
+  { "ENOEXEC", ENOEXEC, 8 },
 #endif
 #ifdef EBADF
-  { EBADF, 9 },
+  { "EBADF", EBADF, 9 },
 #endif
 #ifdef ECHILD
-  { ECHILD, 10 },
+  { "ECHILD", ECHILD, 10 },
 #endif
 #ifdef EAGAIN
-  { EAGAIN, 11 },
+  { "EAGAIN", EAGAIN, 11 },
 #endif
 #ifdef ENOMEM
-  { ENOMEM, 12 },
+  { "ENOMEM", ENOMEM, 12 },
 #endif
 #ifdef EACCES
-  { EACCES, 13 },
+  { "EACCES", EACCES, 13 },
 #endif
 #ifdef EFAULT
-  { EFAULT, 14 },
+  { "EFAULT", EFAULT, 14 },
 #endif
 #ifdef ENOTBLK
-  { ENOTBLK, 15 },
+  { "ENOTBLK", ENOTBLK, 15 },
 #endif
 #ifdef EBUSY
-  { EBUSY, 16 },
+  { "EBUSY", EBUSY, 16 },
 #endif
 #ifdef EEXIST
-  { EEXIST, 17 },
+  { "EEXIST", EEXIST, 17 },
 #endif
 #ifdef EXDEV
-  { EXDEV, 18 },
+  { "EXDEV", EXDEV, 18 },
 #endif
 #ifdef ENODEV
-  { ENODEV, 19 },
+  { "ENODEV", ENODEV, 19 },
 #endif
 #ifdef ENOTDIR
-  { ENOTDIR, 20 },
+  { "ENOTDIR", ENOTDIR, 20 },
 #endif
 #ifdef EISDIR
-  { EISDIR, 21 },
+  { "EISDIR", EISDIR, 21 },
 #endif
 #ifdef EINVAL
-  { EINVAL, 22 },
+  { "EINVAL", EINVAL, 22 },
 #endif
 #ifdef ENFILE
-  { ENFILE, 23 },
+  { "ENFILE", ENFILE, 23 },
 #endif
 #ifdef EMFILE
-  { EMFILE, 24 },
+  { "EMFILE", EMFILE, 24 },
 #endif
 #ifdef ENOTTY
-  { ENOTTY, 25 },
+  { "ENOTTY", ENOTTY, 25 },
 #endif
 #ifdef ETXTBSY
-  { ETXTBSY, 26 },
+  { "ETXTBSY", ETXTBSY, 26 },
 #endif
 #ifdef EFBIG
-  { EFBIG, 27 },
+  { "EFBIG", EFBIG, 27 },
 #endif
 #ifdef ENOSPC
-  { ENOSPC, 28 },
+  { "ENOSPC", ENOSPC, 28 },
 #endif
 #ifdef ESPIPE
-  { ESPIPE, 29 },
+  { "ESPIPE", ESPIPE, 29 },
 #endif
 #ifdef EROFS
-  { EROFS, 30 },
+  { "EROFS", EROFS, 30 },
 #endif
 #ifdef EMLINK
-  { EMLINK, 31 },
+  { "EMLINK", EMLINK, 31 },
 #endif
 #ifdef EPIPE
-  { EPIPE, 32 },
+  { "EPIPE", EPIPE, 32 },
 #endif
 #ifdef EDOM
-  { EDOM, 33 },
+  { "EDOM", EDOM, 33 },
 #endif
 #ifdef ERANGE
-  { ERANGE, 34 },
+  { "ERANGE", ERANGE, 34 },
 #endif
 #ifdef EDEADLK
-  { EDEADLK, 35 },
+  { "EDEADLK", EDEADLK, 35 },
 #endif
 #ifdef ENAMETOOLONG
-  { ENAMETOOLONG, 36 },
+  { "ENAMETOOLONG", ENAMETOOLONG, 36 },
 #endif
 #ifdef ENOLCK
-  { ENOLCK, 37 },
+  { "ENOLCK", ENOLCK, 37 },
 #endif
 #ifdef ENOSYS
-  { ENOSYS, 38 },
+  { "ENOSYS", ENOSYS, 38 },
 #endif
 #ifdef ENOTEMPTY
-  { ENOTEMPTY, 39 },
+  { "ENOTEMPTY", ENOTEMPTY, 39 },
 #endif
 #ifdef ELOOP
-  { ELOOP, 40 },
+  { "ELOOP", ELOOP, 40 },
 #endif
 #ifdef EWOULDBLOCK
-  { EWOULDBLOCK, 11 },
+  { "EWOULDBLOCK", EWOULDBLOCK, 11 },
 #endif
 #ifdef ENOMSG
-  { ENOMSG, 42 },
+  { "ENOMSG", ENOMSG, 42 },
 #endif
 #ifdef EIDRM
-  { EIDRM, 43 },
+  { "EIDRM", EIDRM, 43 },
 #endif
 #ifdef ECHRNG
-  { ECHRNG, 44 },
+  { "ECHRNG", ECHRNG, 44 },
 #endif
 #ifdef EL2NSYNC
-  { EL2NSYNC, 45 },
+  { "EL2NSYNC", EL2NSYNC, 45 },
 #endif
 #ifdef EL3HLT
-  { EL3HLT, 46 },
+  { "EL3HLT", EL3HLT, 46 },
 #endif
 #ifdef EL3RST
-  { EL3RST, 47 },
+  { "EL3RST", EL3RST, 47 },
 #endif
 #ifdef ELNRNG
-  { ELNRNG, 48 },
+  { "ELNRNG", ELNRNG, 48 },
 #endif
 #ifdef EUNATCH
-  { EUNATCH, 49 },
+  { "EUNATCH", EUNATCH, 49 },
 #endif
 #ifdef ENOCSI
-  { ENOCSI, 50 },
+  { "ENOCSI", ENOCSI, 50 },
 #endif
 #ifdef EL2HLT
-  { EL2HLT, 51 },
+  { "EL2HLT", EL2HLT, 51 },
 #endif
 #ifdef EBADE
-  { EBADE, 52 },
+  { "EBADE", EBADE, 52 },
 #endif
 #ifdef EBADR
-  { EBADR, 53 },
+  { "EBADR", EBADR, 53 },
 #endif
 #ifdef EXFULL
-  { EXFULL, 54 },
+  { "EXFULL", EXFULL, 54 },
 #endif
 #ifdef ENOANO
-  { ENOANO, 55 },
+  { "ENOANO", ENOANO, 55 },
 #endif
 #ifdef EBADRQC
-  { EBADRQC, 56 },
+  { "EBADRQC", EBADRQC, 56 },
 #endif
 #ifdef EBADSLT
-  { EBADSLT, 57 },
+  { "EBADSLT", EBADSLT, 57 },
 #endif
 #ifdef EDEADLOCK
-  { EDEADLOCK, 35 },
+  { "EDEADLOCK", EDEADLOCK, 35 },
 #endif
 #ifdef EBFONT
-  { EBFONT, 59 },
+  { "EBFONT", EBFONT, 59 },
 #endif
 #ifdef ENOSTR
-  { ENOSTR, 60 },
+  { "ENOSTR", ENOSTR, 60 },
 #endif
 #ifdef ENODATA
-  { ENODATA, 61 },
+  { "ENODATA", ENODATA, 61 },
 #endif
 #ifdef ETIME
-  { ETIME, 62 },
+  { "ETIME", ETIME, 62 },
 #endif
 #ifdef ENOSR
-  { ENOSR, 63 },
+  { "ENOSR", ENOSR, 63 },
 #endif
 #ifdef ENONET
-  { ENONET, 64 },
+  { "ENONET", ENONET, 64 },
 #endif
 #ifdef ENOPKG
-  { ENOPKG, 65 },
+  { "ENOPKG", ENOPKG, 65 },
 #endif
 #ifdef EREMOTE
-  { EREMOTE, 66 },
+  { "EREMOTE", EREMOTE, 66 },
 #endif
 #ifdef ENOLINK
-  { ENOLINK, 67 },
+  { "ENOLINK", ENOLINK, 67 },
 #endif
 #ifdef EADV
-  { EADV, 68 },
+  { "EADV", EADV, 68 },
 #endif
 #ifdef ESRMNT
-  { ESRMNT, 69 },
+  { "ESRMNT", ESRMNT, 69 },
 #endif
 #ifdef ECOMM
-  { ECOMM, 70 },
+  { "ECOMM", ECOMM, 70 },
 #endif
 #ifdef EPROTO
-  { EPROTO, 71 },
+  { "EPROTO", EPROTO, 71 },
 #endif
 #ifdef EMULTIHOP
-  { EMULTIHOP, 72 },
+  { "EMULTIHOP", EMULTIHOP, 72 },
 #endif
 #ifdef EDOTDOT
-  { EDOTDOT, 73 },
+  { "EDOTDOT", EDOTDOT, 73 },
 #endif
 #ifdef EBADMSG
-  { EBADMSG, 74 },
+  { "EBADMSG", EBADMSG, 74 },
 #endif
 #ifdef EOVERFLOW
-  { EOVERFLOW, 75 },
+  { "EOVERFLOW", EOVERFLOW, 75 },
 #endif
 #ifdef ENOTUNIQ
-  { ENOTUNIQ, 76 },
+  { "ENOTUNIQ", ENOTUNIQ, 76 },
 #endif
 #ifdef EBADFD
-  { EBADFD, 77 },
+  { "EBADFD", EBADFD, 77 },
 #endif
 #ifdef EREMCHG
-  { EREMCHG, 78 },
+  { "EREMCHG", EREMCHG, 78 },
 #endif
 #ifdef ELIBACC
-  { ELIBACC, 79 },
+  { "ELIBACC", ELIBACC, 79 },
 #endif
 #ifdef ELIBBAD
-  { ELIBBAD, 80 },
+  { "ELIBBAD", ELIBBAD, 80 },
 #endif
 #ifdef ELIBSCN
-  { ELIBSCN, 81 },
+  { "ELIBSCN", ELIBSCN, 81 },
 #endif
 #ifdef ELIBMAX
-  { ELIBMAX, 82 },
+  { "ELIBMAX", ELIBMAX, 82 },
 #endif
 #ifdef ELIBEXEC
-  { ELIBEXEC, 83 },
+  { "ELIBEXEC", ELIBEXEC, 83 },
 #endif
 #ifdef EILSEQ
-  { EILSEQ, 84 },
+  { "EILSEQ", EILSEQ, 84 },
 #endif
 #ifdef ERESTART
-  { ERESTART, 85 },
+  { "ERESTART", ERESTART, 85 },
 #endif
 #ifdef ESTRPIPE
-  { ESTRPIPE, 86 },
+  { "ESTRPIPE", ESTRPIPE, 86 },
 #endif
 #ifdef EUSERS
-  { EUSERS, 87 },
+  { "EUSERS", EUSERS, 87 },
 #endif
 #ifdef ENOTSOCK
-  { ENOTSOCK, 88 },
+  { "ENOTSOCK", ENOTSOCK, 88 },
 #endif
 #ifdef EDESTADDRREQ
-  { EDESTADDRREQ, 89 },
+  { "EDESTADDRREQ", EDESTADDRREQ, 89 },
 #endif
 #ifdef EMSGSIZE
-  { EMSGSIZE, 90 },
+  { "EMSGSIZE", EMSGSIZE, 90 },
 #endif
 #ifdef EPROTOTYPE
-  { EPROTOTYPE, 91 },
+  { "EPROTOTYPE", EPROTOTYPE, 91 },
 #endif
 #ifdef ENOPROTOOPT
-  { ENOPROTOOPT, 92 },
+  { "ENOPROTOOPT", ENOPROTOOPT, 92 },
 #endif
 #ifdef EPROTONOSUPPORT
-  { EPROTONOSUPPORT, 93 },
+  { "EPROTONOSUPPORT", EPROTONOSUPPORT, 93 },
 #endif
 #ifdef ESOCKTNOSUPPORT
-  { ESOCKTNOSUPPORT, 94 },
+  { "ESOCKTNOSUPPORT", ESOCKTNOSUPPORT, 94 },
 #endif
 #ifdef EOPNOTSUPP
-  { EOPNOTSUPP, 95 },
+  { "EOPNOTSUPP", EOPNOTSUPP, 95 },
 #endif
 #ifdef EPFNOSUPPORT
-  { EPFNOSUPPORT, 96 },
+  { "EPFNOSUPPORT", EPFNOSUPPORT, 96 },
 #endif
 #ifdef EAFNOSUPPORT
-  { EAFNOSUPPORT, 97 },
+  { "EAFNOSUPPORT", EAFNOSUPPORT, 97 },
 #endif
 #ifdef EADDRINUSE
-  { EADDRINUSE, 98 },
+  { "EADDRINUSE", EADDRINUSE, 98 },
 #endif
 #ifdef EADDRNOTAVAIL
-  { EADDRNOTAVAIL, 99 },
+  { "EADDRNOTAVAIL", EADDRNOTAVAIL, 99 },
 #endif
 #ifdef ENETDOWN
-  { ENETDOWN, 100 },
+  { "ENETDOWN", ENETDOWN, 100 },
 #endif
 #ifdef ENETUNREACH
-  { ENETUNREACH, 101 },
+  { "ENETUNREACH", ENETUNREACH, 101 },
 #endif
 #ifdef ENETRESET
-  { ENETRESET, 102 },
+  { "ENETRESET", ENETRESET, 102 },
 #endif
 #ifdef ECONNABORTED
-  { ECONNABORTED, 103 },
+  { "ECONNABORTED", ECONNABORTED, 103 },
 #endif
 #ifdef ECONNRESET
-  { ECONNRESET, 104 },
+  { "ECONNRESET", ECONNRESET, 104 },
 #endif
 #ifdef ENOBUFS
-  { ENOBUFS, 105 },
+  { "ENOBUFS", ENOBUFS, 105 },
 #endif
 #ifdef EISCONN
-  { EISCONN, 106 },
+  { "EISCONN", EISCONN, 106 },
 #endif
 #ifdef ENOTCONN
-  { ENOTCONN, 107 },
+  { "ENOTCONN", ENOTCONN, 107 },
 #endif
 #ifdef ESHUTDOWN
-  { ESHUTDOWN, 108 },
+  { "ESHUTDOWN", ESHUTDOWN, 108 },
 #endif
 #ifdef ETOOMANYREFS
-  { ETOOMANYREFS, 109 },
+  { "ETOOMANYREFS", ETOOMANYREFS, 109 },
 #endif
 #ifdef ETIMEDOUT
-  { ETIMEDOUT, 110 },
+  { "ETIMEDOUT", ETIMEDOUT, 110 },
 #endif
 #ifdef ECONNREFUSED
-  { ECONNREFUSED, 111 },
+  { "ECONNREFUSED", ECONNREFUSED, 111 },
 #endif
 #ifdef EHOSTDOWN
-  { EHOSTDOWN, 112 },
+  { "EHOSTDOWN", EHOSTDOWN, 112 },
 #endif
 #ifdef EHOSTUNREACH
-  { EHOSTUNREACH, 113 },
+  { "EHOSTUNREACH", EHOSTUNREACH, 113 },
 #endif
 #ifdef EALREADY
-  { EALREADY, 114 },
+  { "EALREADY", EALREADY, 114 },
 #endif
 #ifdef EINPROGRESS
-  { EINPROGRESS, 115 },
+  { "EINPROGRESS", EINPROGRESS, 115 },
 #endif
 #ifdef ESTALE
-  { ESTALE, 116 },
+  { "ESTALE", ESTALE, 116 },
 #endif
 #ifdef EUCLEAN
-  { EUCLEAN, 117 },
+  { "EUCLEAN", EUCLEAN, 117 },
 #endif
 #ifdef ENOTNAM
-  { ENOTNAM, 118 },
+  { "ENOTNAM", ENOTNAM, 118 },
 #endif
 #ifdef ENAVAIL
-  { ENAVAIL, 119 },
+  { "ENAVAIL", ENAVAIL, 119 },
 #endif
 #ifdef EISNAM
-  { EISNAM, 120 },
+  { "EISNAM", EISNAM, 120 },
 #endif
 #ifdef EREMOTEIO
-  { EREMOTEIO, 121 },
+  { "EREMOTEIO", EREMOTEIO, 121 },
 #endif
 #ifdef EDQUOT
-  { EDQUOT, 122 },
+  { "EDQUOT", EDQUOT, 122 },
 #endif
 #ifdef ENOMEDIUM
-  { ENOMEDIUM, 123 },
+  { "ENOMEDIUM", ENOMEDIUM, 123 },
 #endif
 #ifdef EMEDIUMTYPE
-  { EMEDIUMTYPE, 124 },
+  { "EMEDIUMTYPE", EMEDIUMTYPE, 124 },
 #endif
-  { 0, -1 }
+  { 0, 0, 0 }
 };
 
 /* Extracted by applying
@@ -702,57 +703,57 @@ static const CB_TARGET_DEFS_MAP errno_map[] =
 
 static const CB_TARGET_DEFS_MAP open_map[] = {
 #ifdef O_ACCMODE
-  { O_ACCMODE, TARGET_O_ACCMODE },
+  { "O_ACCMODE", O_ACCMODE, TARGET_O_ACCMODE },
 #endif
 #ifdef O_RDONLY
-  { O_RDONLY, TARGET_O_RDONLY },
+  { "O_RDONLY", O_RDONLY, TARGET_O_RDONLY },
 #endif
 #ifdef O_WRONLY
-  { O_WRONLY, TARGET_O_WRONLY },
+  { "O_WRONLY", O_WRONLY, TARGET_O_WRONLY },
 #endif
 #ifdef O_RDWR
-  { O_RDWR, 0x2 },
+  { "O_RDWR", O_RDWR, 0x2 },
 #endif
 #ifdef O_CREAT
-  { O_CREAT, 0x40 },
+  { "O_CREAT", O_CREAT, 0x40 },
 #endif
 #ifdef O_EXCL
-  { O_EXCL, 0x80 },
+  { "O_EXCL", O_EXCL, 0x80 },
 #endif
 #ifdef O_NOCTTY
-  { O_NOCTTY, 0x100 },
+  { "O_NOCTTY", O_NOCTTY, 0x100 },
 #endif
 #ifdef O_TRUNC
-  { O_TRUNC, 0x200 },
+  { "O_TRUNC", O_TRUNC, 0x200 },
 #endif
 #ifdef O_APPEND
-  { O_APPEND, 0x400 },
+  { "O_APPEND", O_APPEND, 0x400 },
 #endif
 #ifdef O_NONBLOCK
-  { O_NONBLOCK, 0x800 },
+  { "O_NONBLOCK", O_NONBLOCK, 0x800 },
 #endif
 #ifdef O_NDELAY
-  { O_NDELAY, 0x0 },
+  { "O_NDELAY", O_NDELAY, 0x0 },
 #endif
 #ifdef O_SYNC
-  { O_SYNC, 0x1000 },
+  { "O_SYNC", O_SYNC, 0x1000 },
 #endif
 #ifdef FASYNC
-  { FASYNC, 0x2000 },
+  { "FASYNC", FASYNC, 0x2000 },
 #endif
 #ifdef O_DIRECT
-  { O_DIRECT, 0x4000 },
+  { "O_DIRECT", O_DIRECT, 0x4000 },
 #endif
 #ifdef O_LARGEFILE
-  { O_LARGEFILE, 0x8000 },
+  { "O_LARGEFILE", O_LARGEFILE, 0x8000 },
 #endif
 #ifdef O_DIRECTORY
-  { O_DIRECTORY, 0x10000 },
+  { "O_DIRECTORY", O_DIRECTORY, 0x10000 },
 #endif
 #ifdef O_NOFOLLOW
-  { O_NOFOLLOW, 0x20000 },
+  { "O_NOFOLLOW", O_NOFOLLOW, 0x20000 },
 #endif
-  { -1, -1 }
+  { 0, -1, -1 }
 };
 
 /* Let's be less drastic and more traceable.  FIXME: mark as noreturn.  */
@@ -763,10 +764,6 @@ static const CB_TARGET_DEFS_MAP open_map[] = {
 /* Needed for the cris_pipe_nonempty and cris_pipe_empty syscalls.  */
 static SIM_CPU *current_cpu_for_cb_callback;
 
-static int syscall_read_mem (host_callback *, struct cb_syscall *,
-			     unsigned long, char *, int);
-static int syscall_write_mem (host_callback *, struct cb_syscall *,
-			      unsigned long, const char *, int);
 static USI create_map (SIM_DESC, struct cris_sim_mmapped_page **,
 		       USI addr, USI len);
 static USI unmap_pages (SIM_DESC, struct cris_sim_mmapped_page **,
@@ -775,30 +772,6 @@ static USI is_mapped (SIM_DESC, struct cris_sim_mmapped_page **,
 		       USI addr, USI len);
 static void dump_statistics (SIM_CPU *current_cpu);
 static void make_first_thread (SIM_CPU *current_cpu);
-
-/* Read/write functions for system call interface.  */
-
-static int
-syscall_read_mem (host_callback *cb ATTRIBUTE_UNUSED,
-		  struct cb_syscall *sc,
-		  unsigned long taddr, char *buf, int bytes)
-{
-  SIM_DESC sd = (SIM_DESC) sc->p1;
-  SIM_CPU *cpu = (SIM_CPU *) sc->p2;
-
-  return sim_core_read_buffer (sd, cpu, read_map, buf, taddr, bytes);
-}
-
-static int
-syscall_write_mem (host_callback *cb ATTRIBUTE_UNUSED,
-		   struct cb_syscall *sc,
-		   unsigned long taddr, const char *buf, int bytes)
-{
-  SIM_DESC sd = (SIM_DESC) sc->p1;
-  SIM_CPU *cpu = (SIM_CPU *) sc->p2;
-
-  return sim_core_write_buffer (sd, cpu, write_map, buf, taddr, bytes);
-}
 
 /* When we risk running self-modified code (as in trampolines), this is
    called from special-case insns.  The silicon CRIS CPU:s have enough
@@ -1496,8 +1469,8 @@ cris_break_13_handler (SIM_CPU *current_cpu, USI callnum, USI arg1,
 
   s.p1 = (PTR) sd;
   s.p2 = (PTR) current_cpu;
-  s.read_mem = syscall_read_mem;
-  s.write_mem = syscall_write_mem;
+  s.read_mem = sim_syscall_read_mem;
+  s.write_mem = sim_syscall_write_mem;
 
   current_cpu_for_cb_callback = current_cpu;
 

@@ -1,6 +1,5 @@
 /* BFD back-end for HP/Intel IA-64 COFF files.
-   Copyright 1999, 2000, 2001, 2002, 2005, 2007, 2008, 2009, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    Contributed by David Mosberger <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -48,7 +47,7 @@ static reloc_howto_type howto_table[] =
 #endif
 
 #define RTYPE2HOWTO(cache_ptr, dst) \
-	    (cache_ptr)->howto = howto_table + (dst)->r_type;
+  (cache_ptr)->howto = howto_table;
 
 #ifdef COFF_WITH_PE
 /* Return TRUE if this relocation should

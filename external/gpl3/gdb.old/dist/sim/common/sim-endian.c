@@ -25,7 +25,6 @@
 
 #include "sim-basics.h"
 #include "sim-assert.h"
-#include "sim-io.h"
 
 
 #if !defined(_SWAP_1)

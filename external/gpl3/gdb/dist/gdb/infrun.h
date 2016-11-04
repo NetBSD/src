@@ -1,4 +1,4 @@
-/* Copyright (C) 1986-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 struct target_waitstatus;
 struct frame_info;
 struct address_space;
+struct return_value_info;
 
 /* True if we are debugging run control.  */
 extern unsigned int debug_infrun;
@@ -33,11 +34,6 @@ extern int debug_displaced;
 /* Nonzero if we want to give control to the user when we're notified
    of shared library events by the dynamic linker.  */
 extern int stop_on_solib_events;
-
-/* Are we simulating synchronous execution? This is used in async gdb
-   to implement the 'run', 'continue' etc commands, which will not
-   redisplay the prompt until the execution is actually over.  */
-extern int sync_execution;
 
 /* True if execution commands resume all threads of all processes by
    default; otherwise, resume only threads of the current inferior
@@ -61,6 +57,11 @@ extern int non_stop;
    starting an inferior.  */
 extern int disable_randomization;
 
+/* Returns a unique identifier for the current stop.  This can be used
+   to tell whether a command has proceeded the inferior past the
+   current location.  */
+extern ULONGEST get_stop_id (void);
+
 /* Reverse execution.  */
 enum exec_direction_kind
   {
@@ -68,10 +69,8 @@ enum exec_direction_kind
     EXEC_REVERSE
   };
 
-/* The current execution direction.  This should only be set to enum
-   exec_direction_kind values.  It is only an int to make it
-   compatible with make_cleanup_restore_integer.  */
-extern int execution_direction;
+/* The current execution direction.  */
+extern enum exec_direction_kind execution_direction;
 
 extern void start_remote (int from_tty);
 
@@ -99,10 +98,20 @@ extern ptid_t user_visible_resume_ptid (int step);
 
 extern void wait_for_inferior (void);
 
-extern void normal_stop (void);
+/* Return control to GDB when the inferior stops for real.  Print
+   appropriate messages, remove breakpoints, give terminal our modes,
+   and run the stop hook.  Returns true if the stop hook proceeded the
+   target, false otherwise.  */
+extern int normal_stop (void);
 
 extern void get_last_target_status (ptid_t *ptid,
 				    struct target_waitstatus *status);
+
+extern void set_last_target_status (ptid_t ptid,
+				    struct target_waitstatus status);
+
+/* Stop all threads.  Only returns after everything is halted.  */
+extern void stop_all_threads (void);
 
 extern void prepare_for_detach (void);
 
@@ -118,6 +127,10 @@ extern void insert_step_resume_breakpoint_at_sal (struct gdbarch *,
    ADDRESS in ASPACE.  */
 extern int stepping_past_instruction_at (struct address_space *aspace,
 					 CORE_ADDR address);
+
+/* Returns true if thread whose thread number is THREAD is stepping
+   over a breakpoint.  */
+extern int thread_is_stepping_over_breakpoint (int thread);
 
 /* Returns true if we're trying to step past an instruction that
    triggers a non-steppable watchpoint.  */
@@ -148,7 +161,23 @@ extern void print_exited_reason (struct ui_out *uiout, int exitstatus);
    inferior has stopped.  */
 extern void print_no_history_reason (struct ui_out *uiout);
 
-extern void print_stop_event (struct target_waitstatus *ws);
+/* Print the result of a function at the end of a 'finish' command.
+   RV points at an object representing the captured return value/type
+   and its position in the value history.  */
+
+extern void print_return_value (struct ui_out *uiout,
+				struct return_value_info *rv);
+
+/* Print current location without a level number, if we have changed
+   functions or hit a breakpoint.  Print source line if we have one.
+   If the execution command captured a return value, print it.  */
+
+extern void print_stop_event (struct ui_out *uiout);
+
+/* Pretty print the results of target_wait, for debugging purposes.  */
+
+extern void print_target_wait_results (ptid_t waiton_ptid, ptid_t result_ptid,
+				       const struct target_waitstatus *ws);
 
 extern int signal_stop_state (int);
 
@@ -188,5 +217,30 @@ extern void signal_catch_update (const unsigned int *);
    and allow 1-15 which should match host signal numbers on most
    systems.  Use of symbolic signal names is strongly encouraged.  */
 enum gdb_signal gdb_signal_from_command (int num);
+
+/* Enables/disables infrun's async event source in the event loop.  */
+extern void infrun_async (int enable);
+
+/* Call infrun's event handler the next time through the event
+   loop.  */
+extern void mark_infrun_async_event_handler (void);
+
+/* The global queue of threads that need to do a step-over operation
+   to get past e.g., a breakpoint.  */
+extern struct thread_info *step_over_queue_head;
+
+/* Remove breakpoints if possible (usually that means, if everything
+   is stopped).  On failure, print a message.  */
+extern void maybe_remove_breakpoints (void);
+
+/* If a UI was in sync execution mode, and now isn't, restore its
+   prompt (a synchronous execution command has finished, and we're
+   ready for input).  */
+extern void all_uis_check_sync_execution_done (void);
+
+/* If a UI was in sync execution mode, and hasn't displayed the prompt
+   yet, re-disable its prompt (a synchronous execution command was
+   started or re-started).  */
+extern void all_uis_on_sync_execution_starting (void);
 
 #endif /* INFRUN_H */

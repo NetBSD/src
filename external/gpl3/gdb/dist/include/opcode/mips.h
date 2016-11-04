@@ -1,5 +1,5 @@
 /* mips.h.  Mips opcode list for GDB, the GNU debugger.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    Contributed by Ralph Campbell and OSF
    Commented and modified by Ian Lance Taylor, Cygnus Support
 
@@ -24,6 +24,10 @@
 #define _MIPS_H_
 
 #include "bfd.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* These are bit masks and shift counts to use to access the various
    fields of an instruction.  To retrieve the X field of an
@@ -1256,6 +1260,7 @@ static const unsigned int mips_isa_table[] = {
 #define ASE_MSA64		0x00001000
 /* eXtended Physical Address (XPA) Extension.  */
 #define ASE_XPA			0x00002000
+#define ASE_DSPR3		0x00004000
 
 /* MIPS ISA defines, use instead of hardcoding ISA level.  */
 
@@ -1825,6 +1830,12 @@ extern int bfd_mips_num_opcodes;
    "E" 5 bit PC relative address * 4 (MIPS16OP_*_IMM5)
    "m" 7 bit register list for save instruction (18 bit extended)
    "M" 7 bit register list for restore instruction (18 bit extended)
+
+   Characters used so far, for quick reference when adding more:
+   "   456 8 0"
+   "[]<>"
+   "ABCDE  HI KLM  P RS UVWXYZ"
+   "a   e   ijklm  pq    vwxyz"
   */
 
 /* Save/restore encoding for the args field when all 4 registers are
@@ -2276,5 +2287,9 @@ extern const int bfd_micromips_num_opcodes;
 /* A NOP insn impemented as "or at,at,zero".
    Used to implement -mfix-loongson2f.  */
 #define LOONGSON2F_NOP_INSN	0x00200825
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MIPS_H_ */

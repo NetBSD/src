@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.3 2016/08/06 10:45:22 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.4 2016/11/04 14:49:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.3 2016/08/06 10:45:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.4 2016/11/04 14:49:06 pgoyette Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2445,30 +2445,49 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 		return;
 	}
 
+	/*
+	 * Copy the LDT into the new process.
+	 *
+	 * Read pmap1's ldt pointer and length unlocked; if it changes
+	 * behind our back we'll retry. This will starve if there's a
+	 * stream of LDT changes in another thread but that should not
+	 * happen.
+	 */
+
  retry:
 	if (pmap1->pm_ldt != NULL) {
 		len = pmap1->pm_ldt_len;
+		/* Allocate space for the new process's LDT */
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len, 0,
 		    UVM_KMF_WIRED);
+		if (new_ldt == NULL) {
+			printf("WARNING: pmap_fork: "
+			       "unable to allocate LDT space\n");
+			return;
+		}
 		mutex_enter(&cpu_lock);
+		/* Get a GDT slot for it */
 		sel = ldt_alloc(new_ldt, len);
 		if (sel == -1) {
 			mutex_exit(&cpu_lock);
 			uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
 			    UVM_KMF_WIRED);
-			printf("WARNING: pmap_fork: unable to allocate LDT\n");
+			printf("WARNING: pmap_fork: "
+			       "unable to allocate LDT selector\n");
 			return;
 		}
 	} else {
+		/* Wasn't anything there after all. */
 		len = -1;
 		new_ldt = NULL;
 		sel = -1;
 		mutex_enter(&cpu_lock);
 	}
 
- 	/* Copy the LDT, if necessary. */
+ 	/* If there's still something there now that we have cpu_lock... */
  	if (pmap1->pm_ldt != NULL) {
 		if (len != pmap1->pm_ldt_len) {
+			/* Oops, it changed. Drop what we did and try again */
 			if (len != -1) {
 				ldt_free(sel);
 				uvm_km_free(kernel_map, (vaddr_t)new_ldt,
@@ -2478,6 +2497,7 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 			goto retry;
 		}
 
+		/* Copy the LDT data and install it in pmap2 */
 		memcpy(new_ldt, pmap1->pm_ldt, len);
 		pmap2->pm_ldt = new_ldt;
 		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
@@ -2486,11 +2506,14 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 	}
 
 	if (len != -1) {
+		/* There wasn't still something there, so mop up */
 		ldt_free(sel);
+		mutex_exit(&cpu_lock);
 		uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
 		    UVM_KMF_WIRED);
+	} else {
+		mutex_exit(&cpu_lock);
 	}
-	mutex_exit(&cpu_lock);
 #endif /* USER_LDT */
 }
 #endif /* PMAP_FORK */

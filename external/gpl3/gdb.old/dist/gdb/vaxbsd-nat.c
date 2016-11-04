@@ -17,6 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef _KERNTYPES
+#define _KERNTYPES
+#endif
 #include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
@@ -33,6 +36,11 @@
 #ifndef HAVE_GREGSET_T
 typedef struct reg gregset_t;
 #endif
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+
+#include "gregset.h"
 
 /* Supply the general-purpose registers stored in GREGS to REGCACHE.  */
 

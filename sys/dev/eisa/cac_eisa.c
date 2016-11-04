@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.24 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.24.2.1 2016/11/04 14:49:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,12 +61,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.24 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.24.2.1 2016/11/04 14:49:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
+#include <sys/module.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
 
@@ -75,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.24 2016/07/14 10:19:06 msaitoh Exp $"
 
 #include <dev/ic/cacreg.h>
 #include <dev/ic/cacvar.h>
+
+#include "ioconf.h"
 
 #define CAC_EISA_SLOT_OFFSET		0x0c88
 #define CAC_EISA_IOSIZE			0x0017
@@ -89,8 +91,8 @@ static void	cac_eisa_l0_intr_enable(struct cac_softc *, int);
 static int	cac_eisa_l0_intr_pending(struct cac_softc *);
 static void	cac_eisa_l0_submit(struct cac_softc *, struct cac_ccb *);
 
-CFATTACH_DECL_NEW(cac_eisa, sizeof(struct cac_softc),
-    cac_eisa_match, cac_eisa_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(cac_eisa, sizeof(struct cac_softc),
+    cac_eisa_match, cac_eisa_attach, NULL, NULL, cac_rescan, NULL, 0);
 
 static const struct cac_linkage cac_eisa_l0 = {
 	cac_eisa_l0_completed,
@@ -292,4 +294,45 @@ cac_eisa_l0_intr_enable(struct cac_softc *sc, int state)
 		cac_outb(sc, CAC_EISAREG_SYSTEM_MASK, CAC_INTR_ENABLE);
 	} else
 		cac_outb(sc, CAC_EISAREG_SYSTEM_MASK, CAC_INTR_DISABLE);
+}
+
+MODULE(MODULE_CLASS_DRIVER, cac_eisa, "cac");	/* No eisa module yet! */
+
+#ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver cac_cd"
+ * XXX it will be defined in the common-code module
+ */
+#undef  CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif
+ 
+static int
+cac_eisa_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+ 
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		/* 
+		 * We skip over the first entry in cfdriver[] array
+		 * since the cfdriver is attached by the common
+		 * (non-attachment-specific) code.
+		 */
+		error = config_init_component(&cfdriver_ioconf_cac_eisa[1],
+		    cfattach_ioconf_cac_eisa, cfdata_ioconf_cac_eisa);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(&cfdriver_ioconf_cac_eisa[1],  
+		    cfattach_ioconf_cac_eisa, cfdata_ioconf_cac_eisa);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

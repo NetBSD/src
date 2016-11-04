@@ -129,13 +129,11 @@ val_print_packed_array_elements (struct type *type, const gdb_byte *valaddr,
   unsigned int things_printed = 0;
   unsigned len;
   struct type *elttype, *index_type;
-  unsigned eltlen;
   unsigned long bitsize = TYPE_FIELD_BITSIZE (type, 0);
   struct value *mark = value_mark ();
   LONGEST low = 0;
 
   elttype = TYPE_TARGET_TYPE (type);
-  eltlen = TYPE_LENGTH (check_typedef (elttype));
   index_type = TYPE_INDEX_TYPE (type);
 
   {
@@ -184,9 +182,12 @@ val_print_packed_array_elements (struct type *type, const gdb_byte *valaddr,
 					       (i * bitsize) / HOST_CHAR_BIT,
 					       (i * bitsize) % HOST_CHAR_BIT,
 					       bitsize, elttype);
+	  if (TYPE_LENGTH (check_typedef (value_type (v0)))
+	      != TYPE_LENGTH (check_typedef (value_type (v1))))
+	    break;
 	  if (!value_contents_eq (v0, value_embedded_offset (v0),
 				  v1, value_embedded_offset (v1),
-				  eltlen))
+				  TYPE_LENGTH (check_typedef (value_type (v0)))))
 	    break;
 	}
 
@@ -1095,6 +1096,8 @@ ada_val_print_1 (struct type *type, const gdb_byte *valaddr,
 
   offset_aligned = offset + ada_aligned_value_addr (type, valaddr) - valaddr;
   type = printable_val_type (type, valaddr + offset_aligned);
+  type = resolve_dynamic_type (type, valaddr + offset_aligned,
+			       address + offset_aligned);
 
   switch (TYPE_CODE (type))
     {
@@ -1159,15 +1162,18 @@ ada_val_print (struct type *type, const gdb_byte *valaddr,
 	       const struct value *val,
 	       const struct value_print_options *options)
 {
-  volatile struct gdb_exception except;
 
   /* XXX: this catches QUIT/ctrl-c as well.  Isn't that busted?  */
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       ada_val_print_1 (type, valaddr, embedded_offset, address,
 		       stream, recurse, val, options,
 		       current_language);
     }
+  CATCH (except, RETURN_MASK_ALL)
+    {
+    }
+  END_CATCH
 }
 
 void

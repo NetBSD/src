@@ -204,6 +204,7 @@ sim_model_init (SIM_DESC sd)
     {
       /* Set the default model.  */
       const MODEL *model = sim_model_lookup (WITH_DEFAULT_MODEL);
+      SIM_ASSERT (model != NULL);
       sim_model_set (sd, NULL, model);
     }
 

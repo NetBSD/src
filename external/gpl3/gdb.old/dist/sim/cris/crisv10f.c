@@ -86,7 +86,7 @@ MY (deliver_interrupt) (SIM_CPU *current_cpu,
 			    GET_H_SR (H_SR_PRE_V32_IBR) + vec * 4, 4) == 0)
     {
       /* Nothing to do actually; either abort or send a signal.  */
-      sim_core_signal (sd, current_cpu, CIA_GET (current_cpu), 0, 4,
+      sim_core_signal (sd, current_cpu, CPU_PC_GET (current_cpu), 0, 4,
 		       GET_H_SR (H_SR_PRE_V32_IBR) + vec * 4,
 		       read_transfer, sim_core_unmapped_signal);
       return 0;

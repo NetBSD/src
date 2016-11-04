@@ -1,3 +1,68 @@
+2015-01-06  Alan Modra  <amodra@gmail.com>
+
+	PR binutils/17754
+	* internal.h (internal_auxent): Increase size of x_fname field to
+	20 to allow for PE format's longer file names.
+
+2015-01-01  Alan Modra  <amodra@gmail.com>
+
+	Update year range in copyright notice of all files.
+
+2014-08-20  Daniel Micay  <danielmicay@gmail.com>
+
+	* pe.h: Add HIGH_ENTROPY_VA flag
+
+2014-04-22  Christian Svensson  <blue@cmd.nu>
+
+	* or32.h: Delete.
+
+2014-04-08  Jon TURNEY  <jon.turney@dronecode.org.uk>
+
+	* pe.h (external_IMAGE_DEBUG_DIRECTORY, _CV_INFO_PDB70)
+	(_CV_INFO_PDB20): Add structures and constants for debug directory
+	and codeview records.
+	* internal.h (internal_IMAGE_DEBUG_DIRECTORY, CODEVIEW_INFO):
+	Add structures and constants for internal representation of debug
+	directory and codeview records.
+
+2014-03-13  Tristan Gingold  <gingold@adacore.com>
+
+	* pe.h (struct external_ANON_OBJECT_HEADER_BIGOBJ): Declare.
+	(FILHSZ_BIGOBJ): Define.
+	(struct external_SYMBOL_EX): Declare.
+	(SYMENT_BIGOBJ, SYMESZ_BIGOBJ): Define.
+	(union external_AUX_SYMBOL_EX): Declare.
+	(AUXENT_BIGOBJ, AUXESZ_BIGOBJ): Define.
+	* internal.h (struct internal_filehdr): Change type
+	of f_nscns.
+
+2014-03-05  Alan Modra  <amodra@gmail.com>
+
+	Update copyright years.
+
+2013-12-06  Tristan Gingold  <gingold@adacore.com>
+
+	* pe.h (UWOP_EPILOG, UWOP_PARE): Define.
+
+2013-07-10  Tristan Gingold  <gingold@adacore.com>
+
+	* rs6000.h (external_core_dumpx): New structure.
+	(external_ld_info32): Ditto.
+
+2013-07-02  Tristan Gingold  <gingold@adacore.com>
+
+	* internal.h (C_STTLS, C_GTLS): Define.
+	* xcoff.h (XMC_TL, XMC_TU, XMC_TE): Define.
+
+2013-02-04  Alan Modra  <amodra@gmail.com>
+
+	* ti.h (SWAP_OUT_RELOC_EXTRA): Define.
+
+2013-01-02  Martin Storsjo <martin@martin.st>
+
+	* arm.h (ARMV7PEMAGIC): Define.
+	(ARMBADMAG): Update.
+
 2011-06-02  Nick Clifton  <nickc@redhat.com>
 
 	* i860.h: Fix spelling mistake in comment.
@@ -340,6 +405,12 @@
 
 For older changes see ChangeLog-9103
 
+Copyright (C) 2004-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

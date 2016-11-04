@@ -5738,7 +5738,7 @@ xcoff_reloc_link_order (bfd *output_bfd,
 
       size = bfd_get_reloc_size (howto);
       buf = bfd_zmalloc (size);
-      if (buf == NULL)
+      if (buf == NULL && size != 0)
 	return FALSE;
 
       rstat = _bfd_relocate_contents (howto, output_bfd, addend, buf);

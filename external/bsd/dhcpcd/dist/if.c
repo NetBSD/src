@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.22.2.1 2016/08/06 00:18:41 pgoyette Exp $");
+ __RCSID("$NetBSD: if.c,v 1.22.2.2 2016/11/04 14:42:45 pgoyette Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -201,12 +201,16 @@ static void if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 #ifdef INET6
 	struct sockaddr_in6 *sin6, *net6;
 #endif
+	int addrflags;
 
 	for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr == NULL)
 			continue;
 		if ((ifp = if_find(ifs, ifa->ifa_name)) == NULL)
 			continue;
+#ifdef HAVE_IFADDRS_ADDRFLAGS
+		addrflags = (int)ifa->ifa_addrflags;
+#endif
 		switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -216,9 +220,21 @@ static void if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 				brd = (void *)ifa->ifa_dstaddr;
 			else
 				brd = (void *)ifa->ifa_broadaddr;
+#ifndef HAVE_IFADDRS_ADDRFLAGS
+			addrflags = if_addrflags(ifp, &addr->sin_addr,
+			    ifa->ifa_name);
+			if (addrflags == -1) {
+				if (errno != EEXIST)
+					logger(ctx, LOG_ERR,
+					    "%s: if_addrflags: %s: %m",
+					    __func__,
+					    inet_ntoa(addr->sin_addr));
+				continue;
+			}
+#endif
 			ipv4_handleifa(ctx, RTM_NEWADDR, ifs, ifa->ifa_name,
 				&addr->sin_addr, &net->sin_addr,
-				brd ? &brd->sin_addr : NULL);
+				brd ? &brd->sin_addr : NULL, addrflags);
 			break;
 #endif
 #ifdef INET6
@@ -231,9 +247,19 @@ static void if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 				sin6->sin6_addr.s6_addr[2] =
 				    sin6->sin6_addr.s6_addr[3] = '\0';
 #endif
+#ifndef HAVE_IFADDRS_ADDRFLAGS
+			addrflags = if_addrflags6(ifp, &sin6->sin6_addr,
+			    ifa->ifa_name);
+			if (addrflags == -1) {
+				if (errno != EEXIST)
+					logger(ctx, LOG_ERR,
+					    "%s: if_addrflags6:  %m", __func__);
+				continue;
+			}
+#endif
 			ipv6_handleifa(ctx, RTM_NEWADDR, ifs,
 			    ifa->ifa_name, &sin6->sin6_addr,
-			    ipv6_prefixlen(&net6->sin6_addr));
+			    ipv6_prefixlen(&net6->sin6_addr), addrflags);
 			break;
 #endif
 		}

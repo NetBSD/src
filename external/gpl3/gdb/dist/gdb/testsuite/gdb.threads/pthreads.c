@@ -1,5 +1,5 @@
 /* Pthreads test program.
-   Copyright 1996-2015 Free Software Foundation, Inc.
+   Copyright 1996-2016 Free Software Foundation, Inc.
 
    Written by Fred Fish of Cygnus Support
    Contributed by Cygnus Support
@@ -23,19 +23,6 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
-
-/* Under HPUX 10, the second arg of pthread_create
-   is prototyped to be just a "pthread_attr_t", while under Solaris it
-   is a "pthread_attr_t *".  Arg! */
-
-#if defined (__hpux__)
-#define PTHREAD_CREATE_ARG2(arg) arg
-#define PTHREAD_CREATE_NULL_ARG2 null_attr
-static pthread_attr_t null_attr;
-#else
-#define PTHREAD_CREATE_ARG2(arg) &arg
-#define PTHREAD_CREATE_NULL_ARG2 NULL
-#endif
 
 static int verbose = 0;
 
@@ -140,7 +127,7 @@ main(argc, argv)
     }
 #endif
 
-  if (pthread_create (&tid1, PTHREAD_CREATE_ARG2(attr), thread1, (void *) 0xfeedface))
+  if (pthread_create (&tid1, &attr, thread1, (void *) 0xfeedface))
     {
       perror ("pthread_create 1");
       exit (1);
@@ -148,7 +135,7 @@ main(argc, argv)
   if (verbose) printf ("Made thread %ld\n", (long) tid1);
   sleep (1);
 
-  if (pthread_create (&tid2, PTHREAD_CREATE_NULL_ARG2, thread2, (void *) 0xdeadbeef))
+  if (pthread_create (&tid2, NULL, thread2, (void *) 0xdeadbeef))
     {
       perror ("pthread_create 2");
       exit (1);

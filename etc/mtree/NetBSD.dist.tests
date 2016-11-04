@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.127.2.2 2016/08/06 00:18:40 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.127.2.3 2016/11/04 14:42:41 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -400,6 +400,7 @@
 ./usr/tests/usr.bin/tmux
 ./usr/tests/usr.bin/tr
 ./usr/tests/usr.bin/unifdef
+./usr/tests/usr.bin/uniq
 ./usr/tests/usr.bin/vmstat
 ./usr/tests/usr.bin/xlint
 ./usr/tests/usr.bin/xlint/lint1

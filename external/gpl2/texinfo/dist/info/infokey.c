@@ -1,4 +1,4 @@
-/*	$NetBSD: infokey.c,v 1.2 2016/01/14 00:34:52 christos Exp $	*/
+/*	$NetBSD: infokey.c,v 1.2.2.1 2016/11/04 14:42:45 pgoyette Exp $	*/
 
 /* infokey.c -- compile ~/.infokey to ~/.info.
    Id: infokey.c,v 1.9 2004/12/14 00:15:36 karl Exp 
@@ -446,7 +446,7 @@ compile (FILE *fp, const char *filename, struct sect *sections)
 #define	To_seq(c) \
 		  do { \
 		    if (slen < sizeof seq) \
-		      seq[slen++] = meta ? Meta(c) : (c); \
+		      seq[slen++] = meta ? (char)Meta(c) : (c); \
 		    else \
 		      { \
 			syntax_error(filename, lnum, _("key sequence too long"), \

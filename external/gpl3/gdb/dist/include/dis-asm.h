@@ -1,6 +1,6 @@
 /* Interface between the opcode library and its callers.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -319,7 +319,7 @@ extern int print_insn_rl78_g10		(bfd_vma, disassemble_info *);
 extern int print_insn_rl78_g13		(bfd_vma, disassemble_info *);
 extern int print_insn_rl78_g14		(bfd_vma, disassemble_info *);
 
-extern disassembler_ftype arc_get_disassembler (void *);
+extern disassembler_ftype arc_get_disassembler (bfd *);
 extern disassembler_ftype cris_get_disassembler (bfd *);
 extern disassembler_ftype rl78_get_disassembler (bfd *);
 
@@ -328,6 +328,7 @@ extern void print_i386_disassembler_options (FILE *);
 extern void print_mips_disassembler_options (FILE *);
 extern void print_ppc_disassembler_options (FILE *);
 extern void print_arm_disassembler_options (FILE *);
+extern void print_arc_disassembler_options (FILE *);
 extern void parse_arm_disassembler_option (char *);
 extern void print_s390_disassembler_options (FILE *);
 extern int  get_arm_regname_num_options (void);

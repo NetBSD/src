@@ -49,22 +49,17 @@ gdb_test "break $end_of_main" \
     "BP at end of main"
 
 # This can take awhile.
-set savedtimeout $timeout
-if { [target_info exists gdb,timeout]
-     && $timeout < [target_info gdb,timeout] } {
-    set oldtimeout [target_info gdb,timeout]
-} else {
-    set oldtimeout $timeout
+with_timeout_factor 15 {
+    gdb_test "continue" "Breakpoint .* set breakpoint 10a here .*" "run to end of main"
 }
-set timeout [expr $oldtimeout * 15]
-gdb_test "continue" "Breakpoint .* set breakpoint 10a here .*" "run to end of main"
 
 # So can this, against gdbserver, for example.
-set timeout [expr $oldtimeout * 3]
-gdb_test "record save $precsave" \
-    "Saved core file $precsave with execution log\."  \
-    "save process recfile"
-set timeout $savedtimeout
+
+with_timeout_factor 3 {
+    gdb_test "record save $precsave" \
+	"Saved core file $precsave with execution log\."  \
+	"save process recfile"
+}
 
 gdb_test "kill" "" "Kill process, prepare to debug log file" \
     "Kill the program being debugged\\? \\(y or n\\) " "y"

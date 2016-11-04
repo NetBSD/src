@@ -66,6 +66,19 @@ proc do_attach_tests {} {
     global subdir
     global timeout
     
+    # Figure out a regular expression that will match the sysroot,
+    # noting that the default sysroot is "target:", and also noting
+    # that GDB will strip "target:" from the start of filenames when
+    # operating on the local filesystem
+    set sysroot ""
+    set test "show sysroot"
+    gdb_test_multiple $test $test {
+	-re "The current system root is \"(.*)\"\..*${gdb_prompt} $" {
+	    set sysroot $expect_out(1,string)
+	}
+    }
+    regsub "^target:" "$sysroot" "(target:)?" sysroot
+
     # Start the program running and then wait for a bit, to be sure
     # that it can be attached to.
 
@@ -219,17 +232,17 @@ proc do_attach_tests {} {
     set test "attach2, with no file"
     set found_exec_file 0
     gdb_test_multiple "attach $testpid" "$test" {
-	-re "Attaching to process $testpid.*Load new symbol table from \"$escapedbinfile\.exe\".*y or n. $" {
+	-re "Attaching to process $testpid.*Load new symbol table from \"$sysroot$escapedbinfile\.exe\".*y or n. $" {
 	    # On Cygwin, the DLL's symbol tables are loaded prior to the
 	    # executable's symbol table.  This in turn always results in
 	    # asking the user for actually loading the symbol table of the
 	    # executable.
-	    gdb_test "y" "Reading symbols from $escapedbinfile\.\.\.*done." \
+	    gdb_test "y" "Reading symbols from $sysroot$escapedbinfile\.\.\.*done." \
 		"$test (reset file)"
 
 	    set found_exec_file 1
 	}
-	-re "Attaching to process $testpid.*Reading symbols from $escapedbinfile.*main.*at .*$gdb_prompt $" {
+	-re "Attaching to process $testpid.*Reading symbols from $sysroot$escapedbinfile.*main.*at .*$gdb_prompt $" {
 	    pass "$test"
 	    set found_exec_file 1
 	}
@@ -298,7 +311,7 @@ proc do_attach_tests {} {
 	"before attach3, flush exec"
 
     gdb_test "attach $testpid" \
-	"Attaching to process $testpid.*Reading symbols from $escapedbinfile.*main.*at .*" \
+	"Attaching to process $testpid.*Reading symbols from $sysroot$escapedbinfile.*main.*at .*" \
 	"attach when process' a.out not in cwd"
 
     set test "after attach3, exit"

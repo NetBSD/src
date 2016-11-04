@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -35,33 +35,31 @@ gld${EMULATION_NAME}_map_segments (bfd_boolean need_layout)
       need_layout = FALSE;
 
       if (link_info.output_bfd->xvec->flavour == bfd_target_elf_flavour
-	  && !link_info.relocatable)
+	  && !bfd_link_relocatable (&link_info))
 	{
 	  bfd_size_type phdr_size;
 
-	  phdr_size = elf_tdata (link_info.output_bfd)->program_header_size;
+	  phdr_size = elf_program_header_size (link_info.output_bfd);
 	  /* If we don't have user supplied phdrs, throw away any
 	     previous linker generated program headers.  */
 	  if (lang_phdr_list == NULL)
-	    elf_tdata (link_info.output_bfd)->segment_map = NULL;
+	    elf_seg_map (link_info.output_bfd) = NULL;
 	  if (!_bfd_elf_map_sections_to_segments (link_info.output_bfd,
 						  &link_info))
 	    einfo ("%F%P: map sections to segments failed: %E\n");
 
-	  if (phdr_size
-	      != elf_tdata (link_info.output_bfd)->program_header_size)
+	  if (phdr_size != elf_program_header_size (link_info.output_bfd))
 	    {
 	      if (tries > 6)
 		/* The first few times we allow any change to
 		   phdr_size .  */
 		need_layout = TRUE;
 	      else if (phdr_size
-		       < elf_tdata (link_info.output_bfd)->program_header_size)
+		       < elf_program_header_size (link_info.output_bfd))
 		/* After that we only allow the size to grow.  */
 		need_layout = TRUE;
 	      else
-		elf_tdata (link_info.output_bfd)->program_header_size
-		  = phdr_size;
+		elf_program_header_size (link_info.output_bfd) = phdr_size;
 	    }
 	}
     }

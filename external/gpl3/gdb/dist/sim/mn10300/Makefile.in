@@ -1,5 +1,5 @@
 #    Makefile template for Configure for the mn10300 sim library.
-#    Copyright (C) 1996-2015 Free Software Foundation, Inc.
+#    Copyright (C) 1996-2016 Free Software Foundation, Inc.
 #    Written by Cygnus Support.
 # 
 # This program is free software; you can redistribute it and/or modify
@@ -21,10 +21,7 @@ MN10300_OBJS = \
 	itable.o semantics.o idecode.o icache.o engine.o irun.o support.o \
 	$(SIM_NEW_COMMON_OBJS) \
 	op_utils.o \
-	sim-hload.o \
-	sim-resume.o \
-	sim-reason.o \
-	sim-stop.o
+	sim-resume.o
 
 SIM_OBJS = $(MN10300_OBJS) interp.o
 

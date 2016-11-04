@@ -1,5 +1,5 @@
 /* BFD back-end for Renesas H8/300 ELF binaries.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -480,7 +480,7 @@ elf32_h8_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       r = elf32_h8_final_link_relocate (r_type, input_bfd, output_bfd,
@@ -507,18 +507,14 @@ elf32_h8_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  switch (r)
 	    {
 	    case bfd_reloc_overflow:
-	      if (! ((*info->callbacks->reloc_overflow)
-		     (info, (h ? &h->root : NULL), name, howto->name,
-		      (bfd_vma) 0, input_bfd, input_section,
-		      rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->reloc_overflow)
+		(info, (h ? &h->root : NULL), name, howto->name,
+		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      if (! ((*info->callbacks->undefined_symbol)
-		     (info, name, input_bfd, input_section,
-		      rel->r_offset, TRUE)))
-		return FALSE;
+	      (*info->callbacks->undefined_symbol)
+		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -538,10 +534,8 @@ elf32_h8_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	      /* fall through */
 
 	    common_error:
-	      if (!((*info->callbacks->warning)
-		    (info, msg, name, input_bfd, input_section,
-		     rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->warning) (info, msg, name, input_bfd,
+					   input_section, rel->r_offset);
 	      break;
 	    }
 	}
@@ -707,7 +701,7 @@ elf32_h8_relax_section (bfd *abfd, asection *sec,
   /* We don't have to do anything for a relocatable link, if
      this section does not have relocs, or if this is not a
      code section.  */
-  if (link_info->relocatable
+  if (bfd_link_relocatable (link_info)
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
       || (sec->flags & SEC_CODE) == 0)
@@ -742,7 +736,7 @@ elf32_h8_relax_section (bfd *abfd, asection *sec,
 	 some long jumps created by the compiler.  */
       if (irel != internal_relocs)
 	last_reloc = irel - 1;
-      
+
       switch(ELF32_R_TYPE (irel->r_info))
 	{
 	case R_H8_DIR24R8:

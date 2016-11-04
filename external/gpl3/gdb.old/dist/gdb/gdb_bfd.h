@@ -24,11 +24,32 @@
 
 DECLARE_REGISTRY (bfd);
 
+/* If supplied a path starting with this sequence, gdb_bfd_open will
+   open BFDs using target fileio operations.  */
+
+#define TARGET_SYSROOT_PREFIX "target:"
+
+/* Returns nonzero if NAME starts with TARGET_SYSROOT_PREFIX, zero
+   otherwise.  */
+
+int is_target_filename (const char *name);
+
+/* Returns nonzero if the filename associated with ABFD starts with
+   TARGET_SYSROOT_PREFIX, zero otherwise.  */
+
+int gdb_bfd_has_target_filename (struct bfd *abfd);
+
 /* Open a read-only (FOPEN_RB) BFD given arguments like bfd_fopen.
-   Returns NULL on error.  On success, returns a new reference to the
-   BFD, which must be freed with gdb_bfd_unref.  BFDs returned by this
-   call are shared among all callers opening the same file.  If FD is
-   not -1, then after this call it is owned by BFD.  */
+   If NAME starts with TARGET_SYSROOT_PREFIX then the BFD will be
+   opened using target fileio operations if necessary.  Returns NULL
+   on error.  On success, returns a new reference to the BFD, which
+   must be freed with gdb_bfd_unref.  BFDs returned by this call are
+   shared among all callers opening the same file.  If FD is not -1,
+   then after this call it is owned by BFD.  If the BFD was not
+   accessed using target fileio operations then the filename
+   associated with the BFD and accessible with bfd_get_filename will
+   not be exactly NAME but rather NAME with TARGET_SYSROOT_PREFIX
+   stripped.  */
 
 struct bfd *gdb_bfd_open (const char *name, const char *target, int fd);
 

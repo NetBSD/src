@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.27 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.27.2.1 2016/11/04 14:49:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.27 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.27.2.1 2016/11/04 14:49:02 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -284,6 +284,10 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 	 * Initialize IPI framework for this cpu instance
 	 */
 	ipi_init(ci);
+
+	kcpuset_create(&ci->ci_multicastcpus, true);
+	kcpuset_create(&ci->ci_watchcpus, true);
+	kcpuset_create(&ci->ci_ddbcpus, true);
 #endif
 }
 
@@ -658,18 +662,17 @@ void
 cpu_multicast_ipi(const kcpuset_t *kcp, int tag)
 {
 	struct cpu_info * const ci = curcpu();
-	kcpuset_t *kcp2;
+	kcpuset_t *kcp2 = ci->ci_multicastcpus;
 
 	if (kcpuset_match(cpus_running, ci->ci_data.cpu_kcpuset))
 		return;
 
-	kcpuset_clone(&kcp2, kcp);
+	kcpuset_copy(kcp2, kcp);
 	kcpuset_remove(kcp2, ci->ci_data.cpu_kcpuset);
 	for (cpuid_t cii; (cii = kcpuset_ffs(kcp2)) != 0; ) {
 		kcpuset_clear(kcp2, --cii);
 		(void)cpu_send_ipi(cpu_lookup(cii), tag);
 	}
-	kcpuset_destroy(kcp2);
 }
 
 int
@@ -683,9 +686,9 @@ static void
 cpu_ipi_wait(const char *s, const kcpuset_t *watchset, const kcpuset_t *wanted)
 {
 	bool done = false;
-	kcpuset_t *kcp;
-	kcpuset_create(&kcp, false);
-	
+	struct cpu_info * const ci = curcpu();
+	kcpuset_t *kcp = ci->ci_watchcpus;
+
 	/* some finite amount of time */
 
 	for (u_long limit = curcpu()->ci_cpu_freq/10; !done && limit--; ) {
@@ -707,8 +710,6 @@ cpu_ipi_wait(const char *s, const kcpuset_t *watchset, const kcpuset_t *wanted)
 			printf("\n");
 		}
 	}
-
-	kcpuset_destroy(kcp);
 }
 
 /*
@@ -796,19 +797,17 @@ void
 cpu_pause_others(void)
 {
 	struct cpu_info * const ci = curcpu();
-	kcpuset_t *kcp;
-
 	if (cold || kcpuset_match(cpus_running, ci->ci_data.cpu_kcpuset))
 		return;
 
-	kcpuset_clone(&kcp, cpus_running);
+	kcpuset_t *kcp = ci->ci_ddbcpus;
+
+	kcpuset_copy(kcp, cpus_running);
 	kcpuset_remove(kcp, ci->ci_data.cpu_kcpuset);
 	kcpuset_remove(kcp, cpus_paused);
 
 	cpu_broadcast_ipi(IPI_SUSPEND);
 	cpu_ipi_wait("pause", cpus_paused, kcp);
-
-	kcpuset_destroy(kcp);
 }
 
 /*
@@ -817,19 +816,17 @@ cpu_pause_others(void)
 void
 cpu_resume(cpuid_t cii)
 {
-	kcpuset_t *kcp;
-
 	if (__predict_false(cold))
 		return;
 
-	kcpuset_create(&kcp, true);
+	struct cpu_info * const ci = curcpu();
+	kcpuset_t *kcp = ci->ci_ddbcpus;
+
 	kcpuset_set(kcp, cii);
 	kcpuset_atomicly_remove(cpus_resumed, cpus_resumed);
 	kcpuset_atomic_clear(cpus_paused, cii);
 
 	cpu_ipi_wait("resume", cpus_resumed, kcp);
-
-	kcpuset_destroy(kcp);
 }
 
 /*
@@ -838,19 +835,18 @@ cpu_resume(cpuid_t cii)
 void
 cpu_resume_others(void)
 {
-	kcpuset_t *kcp;
-
 	if (__predict_false(cold))
 		return;
 
+	struct cpu_info * const ci = curcpu();
+	kcpuset_t *kcp = ci->ci_ddbcpus;
+
 	kcpuset_atomicly_remove(cpus_resumed, cpus_resumed);
-	kcpuset_clone(&kcp, cpus_paused);
+	kcpuset_copy(kcp, cpus_paused);
 	kcpuset_atomicly_remove(cpus_paused, cpus_paused);
 
 	/* CPUs awake on cpus_paused clear */
 	cpu_ipi_wait("resume", cpus_resumed, kcp);
-
-	kcpuset_destroy(kcp);
 }
 
 bool

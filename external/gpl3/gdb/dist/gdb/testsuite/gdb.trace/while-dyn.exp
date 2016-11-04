@@ -1,4 +1,4 @@
-#   Copyright 1998-2015 Free Software Foundation, Inc.
+#   Copyright 1998-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,14 +43,6 @@ if { ![gdb_target_supports_trace] } then {
 # test while-stepping dynamically (live target)
 #
 
-if [is_amd64_regs_target] {
-    set fpreg "\$rbp"
-} elseif [is_x86_like_target] {
-    set fpreg "\$ebp"
-} else {
-    set fpreg "\$fp"
-}
-
 proc test_while_stepping { while_stepping } {
     global fpreg
     global decimal
@@ -72,7 +64,7 @@ proc test_while_stepping { while_stepping } {
 
     gdb_trace_setactions "5.12: define $while_stepping <stepcount>" \
 	"" \
-	"collect $fpreg" "^$" \
+	"collect \$$fpreg" "^$" \
 	"$while_stepping 5" "^$" \
 	"collect p" "^$" \
 	"end" "^$" \

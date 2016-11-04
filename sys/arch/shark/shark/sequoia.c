@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.13 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.13.2.1 2016/11/04 14:49:05 pgoyette Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,7 +40,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.13 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.13.2.1 2016/11/04 14:49:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.13 2016/07/07 06:55:38 msaitoh Exp $")
 **
 */
 
-/* define regisers on sequoia used by pins  */
+/* define registers on sequoia used by pins  */
 #define SEQUOIA_1GPIO       PMC_GPCR_REG         /* reg 0x007 gpio 0-3 */      
 #define SEQUOIA_2GPIO       SEQ2_OGPIOCR_REG     /* reg 0x304 gpio 4.8 */
 

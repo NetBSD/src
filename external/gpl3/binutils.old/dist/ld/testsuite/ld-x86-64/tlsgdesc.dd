@@ -1,7 +1,7 @@
 #source: tlsgdesc.s
 #as: --64
 #ld: -shared -melf_x86_64 --no-ld-generated-unwind-info
-#objdump: -drj.text
+#objdump: -drj.text -Mintel64
 #target: x86_64-*-*
 
 .*: +file format elf64-x86-64.*
@@ -38,10 +38,10 @@ Disassembly of section .text:
  +[0-9a-f]+:	90[ 	]+nop *
  +[0-9a-f]+:	90[ 	]+nop *
 # GD, gd first
- +[0-9a-f]+:	66 48 8d 3d ([0-9a-f]{2} ){3}[ 	]+data32 lea 0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x180>
+ +[0-9a-f]+:	66 48 8d 3d ([0-9a-f]{2} ){3}[ 	]+data16 lea 0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x180>
  +[0-9a-f]+:	[0-9a-f]{2} *
 #				-> R_X86_64_DTPMOD64	sG1
- +[0-9a-f]+:	66 66 48 e8 ([0-9a-f]{2} ){3}[ 	]+data32 data32 callq [0-9a-f]+ <__tls_get_addr@plt>
+ +[0-9a-f]+:	66 66 48 e8 ([0-9a-f]{2} ){3}[ 	]+data16 data16 rex.W callq [0-9a-f]+ <__tls_get_addr@plt>
  +[0-9a-f]+:	[0-9a-f]{2} *
 #				-> R_X86_64_JUMP_SLOT	__tls_get_addr
  +[0-9a-f]+:	90[ 	]+nop *
@@ -63,10 +63,10 @@ Disassembly of section .text:
  +[0-9a-f]+:	90[ 	]+nop *
  +[0-9a-f]+:	90[ 	]+nop *
  +[0-9a-f]+:	90[ 	]+nop *
- +[0-9a-f]+:	66 48 8d 3d ([0-9a-f]{2} ){3}[ 	]+data32 lea 0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x160>
+ +[0-9a-f]+:	66 48 8d 3d ([0-9a-f]{2} ){3}[ 	]+data16 lea 0x[0-9a-f]+\(%rip\),%rdi +# [0-9a-f]+ <_DYNAMIC\+0x160>
  +[0-9a-f]+:	[0-9a-f]{2} *
 #				-> R_X86_64_DTPMOD64	sG2
- +[0-9a-f]+:	66 66 48 e8 ([0-9a-f]{2} ){3}[ 	]+data32 data32 callq [0-9a-f]+ <__tls_get_addr@plt>
+ +[0-9a-f]+:	66 66 48 e8 ([0-9a-f]{2} ){3}[ 	]+data16 data16 rex.W callq [0-9a-f]+ <__tls_get_addr@plt>
  +[0-9a-f]+:	[0-9a-f]{2} *
 #				-> R_X86_64_JUMP_SLOT	__tls_get_addr
  +[0-9a-f]+:	90[ 	]+nop *

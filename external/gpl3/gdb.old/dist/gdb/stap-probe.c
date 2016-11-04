@@ -47,7 +47,7 @@
 
 /* Forward declaration. */
 
-static const struct probe_ops stap_probe_ops;
+extern const struct probe_ops stap_probe_ops;
 
 /* Should we display debug information for the probe's argument expression
    parsing?  */
@@ -1365,79 +1365,6 @@ stap_probe_destroy (struct probe *probe_generic)
 
 
 
-/* This is called to compute the value of one of the $_probe_arg*
-   convenience variables.  */
-
-static struct value *
-compute_probe_arg (struct gdbarch *arch, struct internalvar *ivar,
-		   void *data)
-{
-  struct frame_info *frame = get_selected_frame (_("No frame selected"));
-  CORE_ADDR pc = get_frame_pc (frame);
-  int sel = (int) (uintptr_t) data;
-  struct bound_probe pc_probe;
-  const struct sym_probe_fns *pc_probe_fns;
-  unsigned n_args;
-
-  /* SEL == -1 means "_probe_argc".  */
-  gdb_assert (sel >= -1);
-
-  pc_probe = find_probe_by_pc (pc);
-  if (pc_probe.probe == NULL)
-    error (_("No SystemTap probe at PC %s"), core_addr_to_string (pc));
-
-  n_args = get_probe_argument_count (pc_probe.probe, frame);
-  if (sel == -1)
-    return value_from_longest (builtin_type (arch)->builtin_int, n_args);
-
-  if (sel >= n_args)
-    error (_("Invalid probe argument %d -- probe has %u arguments available"),
-	   sel, n_args);
-
-  return evaluate_probe_argument (pc_probe.probe, sel, frame);
-}
-
-/* This is called to compile one of the $_probe_arg* convenience
-   variables into an agent expression.  */
-
-static void
-compile_probe_arg (struct internalvar *ivar, struct agent_expr *expr,
-		   struct axs_value *value, void *data)
-{
-  CORE_ADDR pc = expr->scope;
-  int sel = (int) (uintptr_t) data;
-  struct bound_probe pc_probe;
-  const struct sym_probe_fns *pc_probe_fns;
-  int n_args;
-  struct frame_info *frame = get_selected_frame (NULL);
-
-  /* SEL == -1 means "_probe_argc".  */
-  gdb_assert (sel >= -1);
-
-  pc_probe = find_probe_by_pc (pc);
-  if (pc_probe.probe == NULL)
-    error (_("No SystemTap probe at PC %s"), core_addr_to_string (pc));
-
-  n_args = get_probe_argument_count (pc_probe.probe, frame);
-
-  if (sel == -1)
-    {
-      value->kind = axs_rvalue;
-      value->type = builtin_type (expr->gdbarch)->builtin_int;
-      ax_const_l (expr, n_args);
-      return;
-    }
-
-  gdb_assert (sel >= 0);
-  if (sel >= n_args)
-    error (_("Invalid probe argument %d -- probe has %d arguments available"),
-	   sel, n_args);
-
-  pc_probe.probe->pops->compile_to_ax (pc_probe.probe, expr, value, sel);
-}
-
-
-
 /* Set or clear a SystemTap semaphore.  ADDRESS is the semaphore's
    address.  SET is zero if the semaphore should be cleared, or one
    if it should be set.  This is a helper function for `stap_semaphore_down'
@@ -1513,15 +1440,6 @@ stap_clear_semaphore (struct probe *probe_generic, struct objfile *objfile,
 	  + ANOFFSET (objfile->section_offsets, SECT_OFF_DATA (objfile)));
   stap_modify_semaphore (addr, 0, gdbarch);
 }
-
-/* Implementation of `$_probe_arg*' set of variables.  */
-
-static const struct internalvar_funcs probe_funcs =
-{
-  compute_probe_arg,
-  compile_probe_arg,
-  NULL
-};
 
 /* Helper function that parses the information contained in a
    SystemTap's probe.  Basically, the information consists in:
@@ -1703,6 +1621,15 @@ stap_get_probes (VEC (probe_p) **probesp, struct objfile *objfile)
     }
 }
 
+/* Implementation of the type_name method.  */
+
+static const char *
+stap_type_name (struct probe *probe)
+{
+  gdb_assert (probe->pops == &stap_probe_ops);
+  return "stap";
+}
+
 static int
 stap_probe_is_linespec (const char **linespecp)
 {
@@ -1742,7 +1669,7 @@ stap_gen_info_probes_table_values (struct probe *probe_generic,
 
 /* SystemTap probe_ops.  */
 
-static const struct probe_ops stap_probe_ops =
+const struct probe_ops stap_probe_ops =
 {
   stap_probe_is_linespec,
   stap_get_probes,
@@ -1754,8 +1681,11 @@ static const struct probe_ops stap_probe_ops =
   stap_set_semaphore,
   stap_clear_semaphore,
   stap_probe_destroy,
+  stap_type_name,
   stap_gen_info_probes_table_header,
   stap_gen_info_probes_table_values,
+  NULL,  /* enable_probe  */
+  NULL   /* disable_probe  */
 };
 
 /* Implementation of the `info probes stap' command.  */
@@ -1782,33 +1712,6 @@ _initialize_stap_probe (void)
 			     NULL,
 			     show_stapexpressiondebug,
 			     &setdebuglist, &showdebuglist);
-
-  create_internalvar_type_lazy ("_probe_argc", &probe_funcs,
-				(void *) (uintptr_t) -1);
-  create_internalvar_type_lazy ("_probe_arg0", &probe_funcs,
-				(void *) (uintptr_t) 0);
-  create_internalvar_type_lazy ("_probe_arg1", &probe_funcs,
-				(void *) (uintptr_t) 1);
-  create_internalvar_type_lazy ("_probe_arg2", &probe_funcs,
-				(void *) (uintptr_t) 2);
-  create_internalvar_type_lazy ("_probe_arg3", &probe_funcs,
-				(void *) (uintptr_t) 3);
-  create_internalvar_type_lazy ("_probe_arg4", &probe_funcs,
-				(void *) (uintptr_t) 4);
-  create_internalvar_type_lazy ("_probe_arg5", &probe_funcs,
-				(void *) (uintptr_t) 5);
-  create_internalvar_type_lazy ("_probe_arg6", &probe_funcs,
-				(void *) (uintptr_t) 6);
-  create_internalvar_type_lazy ("_probe_arg7", &probe_funcs,
-				(void *) (uintptr_t) 7);
-  create_internalvar_type_lazy ("_probe_arg8", &probe_funcs,
-				(void *) (uintptr_t) 8);
-  create_internalvar_type_lazy ("_probe_arg9", &probe_funcs,
-				(void *) (uintptr_t) 9);
-  create_internalvar_type_lazy ("_probe_arg10", &probe_funcs,
-				(void *) (uintptr_t) 10);
-  create_internalvar_type_lazy ("_probe_arg11", &probe_funcs,
-				(void *) (uintptr_t) 11);
 
   add_cmd ("stap", class_info, info_probes_stap_command,
 	   _("\

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.3 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.3.2.1 2016/11/04 14:49:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -171,6 +171,7 @@ struct sparc_bus_space_tag {
 #define	BUS_SPACE_MAP_BUS2		0x0200
 #define	BUS_SPACE_MAP_BUS3		0x0400
 #define	BUS_SPACE_MAP_BUS4		0x0800
+#define BUS_SPACE_MAP_LITTLE		0x1000
 /* sparc uses this, it's not supposed to do anything on sparc64 */
 #define BUS_SPACE_MAP_LARGE		0
 

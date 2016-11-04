@@ -186,6 +186,14 @@ extern int serial_setbaudrate (struct serial *scb, int rate);
 
 extern int serial_setstopbits (struct serial *scb, int num);
 
+#define GDBPARITY_NONE     0
+#define GDBPARITY_ODD      1
+#define GDBPARITY_EVEN     2
+
+/* Set parity for serial port. Returns 0 for success, -1 for failure.  */
+
+extern int serial_setparity (struct serial *scb, int parity);
+
 /* Asynchronous serial interface: */
 
 /* Can the serial device support asynchronous mode?  */
@@ -271,6 +279,9 @@ struct serial_ops
 				  serial_ttystate);
     int (*setbaudrate) (struct serial *, int rate);
     int (*setstopbits) (struct serial *, int num);
+    /* Set the value PARITY as parity setting for serial object.
+       Return 0 in the case of success.  */
+    int (*setparity) (struct serial *, int parity);
     /* Wait for output to drain.  */
     int (*drain_output) (struct serial *);
     /* Change the serial device into/out of asynchronous mode, call

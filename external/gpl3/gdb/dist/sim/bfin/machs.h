@@ -1,6 +1,6 @@
 /* Simulator for Analog Devices Blackfin processors.
 
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -21,19 +21,6 @@
 #ifndef _BFIN_MACHS_H_
 #define _BFIN_MACHS_H_
 
-typedef enum model_type {
-#define P(n) MODEL_BF##n,
-#include "proc_list.def"
-#undef P
-  MODEL_MAX
-} MODEL_TYPE;
-
-typedef enum mach_attr {
-  MACH_BASE,
-  MACH_BFIN,
-  MACH_MAX
-} MACH_ATTR;
-
 #define CPU_MODEL_NUM(cpu) MODEL_NUM (CPU_MODEL (cpu))
 
 /* XXX: Some of this probably belongs in CPU_MODEL.  */
@@ -45,13 +32,6 @@ struct bfin_board_data {
 void bfin_model_cpu_init (SIM_DESC, SIM_CPU *);
 bu32 bfin_model_get_chipid (SIM_DESC);
 bu32 bfin_model_get_dspid (SIM_DESC);
-
-enum {
-#define I(insn) BFIN_INSN_##insn,
-#include "insn_list.def"
-#undef I
-  BFIN_INSN_MAX
-};
 
 #define BFIN_COREMMR_CEC_BASE		0xFFE02100
 #define BFIN_COREMMR_CEC_SIZE		(4 * 5)

@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2015 Free Software Foundation, Inc.
+# Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ if { ![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"] } then {
 standard_testfile .S
 
 # some targets have leading underscores on assembly symbols.
-set additional_flags [gdb_target_symbol_prefix_flags]
+set additional_flags [gdb_target_symbol_prefix_flags_asm]
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug $additional_flags]] != "" } {
     untested i386-permbkpt.exp

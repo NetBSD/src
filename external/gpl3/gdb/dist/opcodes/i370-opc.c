@@ -1,5 +1,5 @@
 /* i370-opc.c -- Instruction 370 (ESA/390) architecture opcode list
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    PowerPC version written by Ian Lance Taylor, Cygnus Support
    Rewritten for i370 ESA/390 support by Linas Vepstas <linas@linas.org> 1998, 1999
 
@@ -257,7 +257,7 @@ const struct i370_operand i370_operands[] =
 #define SS_D2 (SS_B2 + 1)
 #define SS_D2_MASK (0xfff)
   { 12, 0, insert_ss_d2, extract_ss_d2, I370_OPERAND_RELATIVE, "SS D2" },
-  
+
 };
 
 

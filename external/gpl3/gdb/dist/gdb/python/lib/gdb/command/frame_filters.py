@@ -1,5 +1,5 @@
 # Frame-filter commands.
-# Copyright (C) 2013-2015 Free Software Foundation, Inc.
+# Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,52 +56,44 @@ class InfoFrameFilter(gdb.Command):
         else:
             return "No"
 
-    def list_frame_filters(self, frame_filters):
-        """ Internal worker function to list and print frame filters
-        in a dictionary.
-
-        Arguments:
-           frame_filters: The name of the dictionary, as
-           specified by GDB user commands.
-        """
-
+    def print_list(self, title, frame_filters, blank_line):
         sorted_frame_filters = sorted(frame_filters.items(),
                                       key=lambda i: gdb.frames.get_priority(i[1]),
                                       reverse=True)
 
         if len(sorted_frame_filters) == 0:
-            print("  No frame filters registered.")
-        else:
-            print("  Priority  Enabled  Name")
-            for frame_filter in sorted_frame_filters:
-                name = frame_filter[0]
-                try:
-                    priority = '{:<8}'.format(
-                        str(gdb.frames.get_priority(frame_filter[1])))
-                    enabled = '{:<7}'.format(
-                        self.enabled_string(gdb.frames.get_enabled(frame_filter[1])))
-                except Exception:
-                    e = sys.exc_info()[1]
-                    print("  Error printing filter '"+name+"': "+str(e))
-                else:
-                    print("  %s  %s  %s" % (priority, enabled, name))
+            return 0
 
-    def print_list(self, title, filter_list, blank_line):
         print(title)
-        self.list_frame_filters(filter_list)
+        print("  Priority  Enabled  Name")
+        for frame_filter in sorted_frame_filters:
+            name = frame_filter[0]
+            try:
+                priority = '{:<8}'.format(
+                    str(gdb.frames.get_priority(frame_filter[1])))
+                enabled = '{:<7}'.format(
+                    self.enabled_string(gdb.frames.get_enabled(frame_filter[1])))
+                print("  %s  %s  %s" % (priority, enabled, name))
+            except Exception:
+                e = sys.exc_info()[1]
+                print("  Error printing filter '"+name+"': "+str(e))
         if blank_line:
             print("")
+        return 1
 
     def invoke(self, arg, from_tty):
-        self.print_list("global frame-filters:", gdb.frame_filters, True)
+        any_printed = self.print_list("global frame-filters:", gdb.frame_filters, True)
 
         cp = gdb.current_progspace()
-        self.print_list("progspace %s frame-filters:" % cp.filename,
-                        cp.frame_filters, True)
+        any_printed += self.print_list("progspace %s frame-filters:" % cp.filename,
+                                       cp.frame_filters, True)
 
         for objfile in gdb.objfiles():
-            self.print_list("objfile %s frame-filters:" % objfile.filename,
-                            objfile.frame_filters, False)
+            any_printed += self.print_list("objfile %s frame-filters:" % objfile.filename,
+                                           objfile.frame_filters, False)
+
+        if any_printed == 0:
+            print ("No frame filters.")
 
 # Internal enable/disable functions.
 
@@ -150,7 +142,7 @@ def _do_enable_frame_filter(command_tuple, flag):
         try:
             ff = op_list[frame_filter]
         except KeyError:
-            msg = "frame-filter '" + str(name) + "' not found."
+            msg = "frame-filter '" + str(frame_filter) + "' not found."
             raise gdb.GdbError(msg)
 
         gdb.frames.set_enabled(ff, flag)
@@ -347,7 +339,7 @@ class SetFrameFilterPriority(gdb.Command):
         try:
             ff = op_list[frame_filter]
         except KeyError:
-            msg = "frame-filter '" + str(name) + "' not found."
+            msg = "frame-filter '" + str(frame_filter) + "' not found."
             raise gdb.GdbError(msg)
 
         gdb.frames.set_priority(ff, priority)

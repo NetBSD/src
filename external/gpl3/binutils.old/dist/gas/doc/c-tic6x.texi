@@ -1,4 +1,4 @@
-@c Copyright 2010, 2011 Free Software Foundation, Inc.
+@c Copyright (C) 2010-2015 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -179,7 +179,7 @@ section.
 
 @cindex @code{.personalityindex} directive, TIC6X
 @item .personalityindex @var{index}
-Sets the personality routine for the current function to the ABI specified 
+Sets the personality routine for the current function to the ABI specified
 compact routine number @var{index}
 
 @cindex @code{.personality} directive, TIC6X

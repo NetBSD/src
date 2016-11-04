@@ -2,7 +2,7 @@
 
 # retain_symbols_file_test.sh -- a test case for -retain-symbols-file
 
-# Copyright 2009 Free Software Foundation, Inc.
+# Copyright (C) 2009-2015 Free Software Foundation, Inc.
 # Written by Craig Silverstein <csilvers@google.com>.
 
 # This file is part of gold.

@@ -1,4 +1,4 @@
-# Copyright 2002-2015 Free Software Foundation, Inc.
+# Copyright 2002-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,15 +24,41 @@ if [target_info exists gdb,noinferiorio] {
     return
 }
 
-proc test_initial_complaints { } {
+# Similar to gdb_test_stdio, except no \r\n is expected before
+# $gdb_prompt in the $gdb_spawn_id.
 
+proc test_complaint {test inferior_io_re msg} {
+    global inferior_spawn_id gdb_spawn_id
     global gdb_prompt
 
+    set inferior_matched 0
+    set gdb_matched 0
+
+    gdb_test_multiple $test $msg {
+	-i $inferior_spawn_id -re "$inferior_io_re" {
+	    set inferior_matched 1
+	    if {!$gdb_matched} {
+		exp_continue
+	    }
+	}
+	-i $gdb_spawn_id -re "$gdb_prompt $" {
+	    set gdb_matched 1
+	    if {!$inferior_matched} {
+		exp_continue
+	    }
+	}
+    }
+
+    verbose -log "inferior_matched=$inferior_matched, gdb_matched=$gdb_matched"
+    gdb_assert {$inferior_matched && $gdb_matched} $msg
+}
+
+proc test_initial_complaints { } {
     # Unsupress complaints
     gdb_test "set stop_whining = 2"
 
     # Prime the system
-    gdb_test "call complaint (&symfile_complaints, \"Register a complaint\")" \
+    gdb_test_stdio "call complaint (&symfile_complaints, \"Register a complaint\")" \
 	    "During symbol reading, Register a complaint."
 
     # Check that the complaint was inserted and where
@@ -40,7 +66,7 @@ proc test_initial_complaints { } {
 	    ".\[0-9\]+ =.*\"Register a complaint\""
 
     # Re-issue the first message #1
-    gdb_test "call complaint (&symfile_complaints, symfile_complaints->root->fmt)" \
+    gdb_test_stdio "call complaint (&symfile_complaints, symfile_complaints->root->fmt)" \
 	    "During symbol reading, Register a complaint."
 
     # Check that there is only one thing in the list.  How the boolean
@@ -50,37 +76,29 @@ proc test_initial_complaints { } {
 	    ".\[0-9\]+ = \(1|true\)" "list has one entry"
 
     # Add a second complaint, expect it
-    gdb_test "call complaint (&symfile_complaints, \"Testing! Testing! Testing!\")" \
+    gdb_test_stdio "call complaint (&symfile_complaints, \"Testing! Testing! Testing!\")" \
 	    "During symbol reading, Testing. Testing. Testing.."
 
     return 0
 }
 
 proc test_serial_complaints { } {
-
-    global gdb_prompt
-
     gdb_test_exact "call clear_complaints (&symfile_complaints, 1, 0)" "" "serial start"
 
     # Prime the system
-    gdb_test_multiple "call complaint (&symfile_complaints, \"serial line  1\")" "serial line 1" {
-	-re "During symbol reading...serial line  1...$gdb_prompt $" {
-	    pass "serial line 1"
-	}
-    }
+    test_complaint "call complaint (&symfile_complaints, \"serial line 1\")" \
+	"During symbol reading...serial line 1..." \
+	"serial line 1"
 
     # Add a second complaint, expect it
-    gdb_test_multiple "call complaint (&symfile_complaints, \"serial line 2\")" "serial line 2" {
-	-re "serial line 2...$gdb_prompt " {
-	    pass "serial line 2"
-	}
-    }
+    test_complaint "call complaint (&symfile_complaints, \"serial line 2\")" \
+	"serial line 2..." \
+	"serial line 2"
 
-    gdb_test_multiple "call clear_complaints (&symfile_complaints, 1, 0)" "serial end" {
-	-re "\r\n\r\n$gdb_prompt " {
-	    pass "serial end"
-	}
-    }
+    gdb_test_stdio "call clear_complaints (&symfile_complaints, 1, 0)" \
+	"\r\n" \
+	"" \
+	"serial end"
 
     return 0
 }
@@ -88,30 +106,22 @@ proc test_serial_complaints { } {
 # For short complaints, all are the same
 
 proc test_short_complaints { } {
-
-    global gdb_prompt
-
     gdb_test_exact "call clear_complaints (&symfile_complaints, 1, 1)" "" "short start"
 
     # Prime the system
-    gdb_test_multiple "call complaint (&symfile_complaints, \"short line 1\")" "short line 1" {
-	-re "short line 1...$gdb_prompt " {
-	    pass "short line 1"
-	}
-    }
+    test_complaint "call complaint (&symfile_complaints, \"short line 1\")" \
+	"short line 1..." \
+	"short line 1"
 
     # Add a second complaint, expect it
-    gdb_test_multiple "call complaint (&symfile_complaints, \"short line 2\")" "short line 2" {
-	-re "short line 2...$gdb_prompt " {
-	    pass "short line 2"
-	}
-    }
+    test_complaint "call complaint (&symfile_complaints, \"short line 2\")" \
+	"short line 2..." \
+	"short line 2"
 
-    gdb_test_multiple "call clear_complaints (&symfile_complaints, 1, 0)" "short end" {
-	-re "\r\n\r\n$gdb_prompt " {
-	    pass "short end"
-	}
-    }
+    gdb_test_stdio "call clear_complaints (&symfile_complaints, 1, 0)" \
+	"\r\n" \
+	"" \
+	"short end"
 
     return 0
 }
@@ -122,12 +132,20 @@ proc test_short_complaints { } {
 
 proc test_empty_complaint { cmd msg } {
     global gdb_prompt
-    gdb_test_multiple $cmd $msg {
-	-re "\r\n\r\n$gdb_prompt $" {
-	    fail $msg
-	}
-	"\r\n$gdb_prompt $" {
-	    pass $msg
+    global inferior_spawn_id gdb_spawn_id
+
+    if {$gdb_spawn_id == $inferior_spawn_id} {
+	gdb_test_no_output $cmd $msg
+    } else {
+	set seen_output 0
+	gdb_test_multiple $cmd $msg {
+	    -i $inferior_spawn_id -re "." {
+		set seen_output 1
+		exp_continue
+	    }
+	    -i $gdb_spawn_id "$gdb_prompt $" {
+		gdb_assert !$seen_output $msg
+	    }
 	}
     }
 }

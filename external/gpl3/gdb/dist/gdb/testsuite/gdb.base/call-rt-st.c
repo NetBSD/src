@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../lib/unbuffer_output.c"
+
 /**************************************************************************
  * TESTS :
  * function returning large structures, which go on the stack
@@ -562,6 +564,7 @@ int main ()  {
    struct one_double_t      *d1;
    struct two_floats_t      *f3;
 
+  gdb_unbuffer_output ();
 
   /* Allocate space for large structures 
    */

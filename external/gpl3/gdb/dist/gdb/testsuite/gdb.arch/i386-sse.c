@@ -1,6 +1,6 @@
 /* Test program for SSE registers.
 
-   Copyright 2004-2015 Free Software Foundation, Inc.
+   Copyright 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

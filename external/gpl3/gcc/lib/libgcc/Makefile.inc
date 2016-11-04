@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.33 2016/03/22 08:18:27 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.33.2.1 2016/11/04 14:45:11 pgoyette Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
@@ -22,7 +22,11 @@ CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
 CPPFLAGS+=	${GCPPFLAGS:M-m*} ${GCPPFLAGS:M-f*}
 CPPFLAGS+=	${G_EXTRA_HEADERS:M/*:H:u:S/^/-I/g}
 CPPFLAGS+=	-I${DIST}/libgcc -I${DIST}/libgcc/config
-CPPFLAGS+=	-I${DIST}/libgcc/config/${MACHINE_CPU}
+.if ${LIBGCC_MACHINE_ARCH} == "x86_64"
+CPPFLAGS+=	-I${DIST}/libgcc/config/i386
+.else
+CPPFLAGS+=	-I${DIST}/libgcc/config/${LIBGCC_MACHINE_ARCH}
+.endif
 CPPFLAGS+=	-I${DIST}/gcc -I${DIST}/include -I.
 
 .if ${LIBGCC_MACHINE_ARCH} == "powerpc" || \

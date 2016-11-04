@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.7.2.1 2016/07/26 03:24:24 pgoyette Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.7.2.2 2016/11/04 14:49:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.7.2.1 2016/07/26 03:24:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.7.2.2 2016/11/04 14:49:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -244,8 +244,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 {
 	int by_list;
 	struct vm_page *curpg = NULL; /* XXX: gcc */
-	struct vm_page *pgs[MAXBSIZE /
-	    (__builtin_constant_p(PAGE_SIZE) ? PAGE_SIZE : 1024)], *pg;
+	struct vm_page *pgs[MAXBSIZE / MIN_PAGE_SIZE], *pg;
 	off_t soff = 0; /* XXX: gcc */
 	voff_t off;
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.63 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.63.2.1 2016/11/04 14:49:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.63 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.63.2.1 2016/11/04 14:49:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,8 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	 * Allocate IRQ
 	 */
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ehci_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_USB, ehci_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)

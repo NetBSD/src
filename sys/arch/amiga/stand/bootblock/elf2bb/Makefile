@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2005/12/11 12:16:36 christos Exp $
+#	$NetBSD: Makefile,v 1.3.146.1 2016/11/04 14:48:57 pgoyette Exp $
 #
+
+.include <bsd.init.mk>
+
 CPPFLAGS+= -I.
 PROG=	elf2bb
 MKMAN=	no

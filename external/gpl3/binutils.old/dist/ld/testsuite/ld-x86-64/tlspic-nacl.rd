@@ -11,7 +11,7 @@ Section Headers:
  +\[Nr\] Name +Type +Address +Off +Size +ES Flg Lk Inf Al
  +\[[ 0-9]+\] +NULL +0+ 0+ 0+ 00 +0 +0 +0
  +\[[ 0-9]+\] .plt +.*
- +\[[ 0-9]+\] .text +PROGBITS +0+1000 [0-9a-f]+ 0+1ac 00 +AX +0 +0 4096
+ +\[[ 0-9]+\] .text +PROGBITS +0+1000 [0-9a-f]+ 0+31a 00 +AX +0 +0 4096
  +\[[ 0-9]+\] .hash +.*
  +\[[ 0-9]+\] .dynsym +.*
  +\[[ 0-9]+\] .dynstr +.*
@@ -105,7 +105,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* SECTION +LOCAL +DEFAULT +10 *
 .* SECTION +LOCAL +DEFAULT +11 *
 .* SECTION +LOCAL +DEFAULT +12 *
-.* FILE +LOCAL +DEFAULT +ABS .*
+.* FILE +LOCAL +DEFAULT +ABS tmpdir/tlspic1.o
 .* TLS +LOCAL +DEFAULT +8 sl1
 .* TLS +LOCAL +DEFAULT +8 sl2
 .* TLS +LOCAL +DEFAULT +8 sl3
@@ -114,7 +114,9 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +LOCAL +DEFAULT +8 sl6
 .* TLS +LOCAL +DEFAULT +8 sl7
 .* TLS +LOCAL +DEFAULT +8 sl8
+.* FILE +LOCAL +DEFAULT +ABS 
 .* TLS +LOCAL +DEFAULT +9 sH1
+.* OBJECT +LOCAL +DEFAULT +10 _DYNAMIC
 .* TLS +LOCAL +DEFAULT +8 sh3
 .* TLS +LOCAL +DEFAULT +9 sH2
 .* TLS +LOCAL +DEFAULT +9 sH7
@@ -128,11 +130,9 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +LOCAL +DEFAULT +9 sH6
 .* TLS +LOCAL +DEFAULT +9 sH8
 .* TLS +LOCAL +DEFAULT +8 sh1
+.* OBJECT +LOCAL +DEFAULT +12 _GLOBAL_OFFSET_TABLE_
 .* TLS +LOCAL +DEFAULT +8 sh2
 .* TLS +LOCAL +DEFAULT +8 sh6
-.* FILE +LOCAL +DEFAULT +ABS .*
-.* OBJECT +LOCAL +DEFAULT +10 _DYNAMIC
-.* OBJECT +LOCAL +DEFAULT +12 _GLOBAL_OFFSET_TABLE_
 .* TLS +GLOBAL +DEFAULT +8 sg8
 .* TLS +GLOBAL +DEFAULT +8 sg3
 .* TLS +GLOBAL +DEFAULT +8 sg4

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307reg.h,v 1.6 2016/04/05 10:53:16 bouyer Exp $	*/
+/*	$NetBSD: ds1307reg.h,v 1.6.2.1 2016/11/04 14:49:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -43,6 +43,7 @@
  */
 
 #define	DS1307_ADDR		0x68	/* Fixed I2C Slave Address */
+#define	MCP7940_ADDR		0x6f
 
 #define DSXXXX_SECONDS		0x00
 #define DSXXXX_MINUTES		0x01
@@ -64,6 +65,10 @@
 #define	DS1339_RTC_SIZE		DSXXXX_RTC_SIZE
 #define	DS1339_NVRAM_START	0
 #define	DS1339_NVRAM_SIZE	0
+
+#define	DS1340_RTC_START	0
+#define	DS1340_RTC_SIZE		DSXXXX_RTC_SIZE
+#define	DS1340_SECONDS_EOSC		(1 << 7) /* Clock Hold */
 
 #define DS1672_CNTR1		0x00
 #define DS1672_CNTR2		0x01
@@ -87,6 +92,8 @@
 #define	DS3232_NVRAM_START	0x14
 #define	DS3232_NVRAM_SIZE	0xec
 
+#define	MCP7940_NVRAM_START	0x20
+#define	MCP7940_NVRAM_SIZE	0x40
 
 /*
  * Bit definitions.
@@ -111,5 +118,7 @@
 #define	DS1307_CONTROL_32768HZ	3
 
 #define	DSXXXX_CONTROL_DOSC	(1u << 7)	/* Disable Oscillator */
+
+#define	MCP7940_TOD_DAY_VBATEN	(1u << 3)	/* Enable battery backup */
 
 #endif /* _DEV_I2C_DS1307REG_H_ */

@@ -1,7 +1,5 @@
 /* BFD back-end for Renesas Super-H COFF binaries.
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
    Relaxing code written by Ian Lance Taylor, <ian@cygnus.com>.
@@ -532,22 +530,22 @@ sh_coff_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* This is the same as the macro in coffcode.h, except that it copies
    r_offset into reloc_entry->addend for some relocs.  */
-#define CALC_ADDEND(abfd, ptr, reloc, cache_ptr)                \
-  {                                                             \
-    coff_symbol_type *coffsym = (coff_symbol_type *) NULL;      \
-    if (ptr && bfd_asymbol_bfd (ptr) != abfd)                   \
-      coffsym = (obj_symbols (abfd)                             \
-                 + (cache_ptr->sym_ptr_ptr - symbols));         \
-    else if (ptr)                                               \
-      coffsym = coff_symbol_from (abfd, ptr);                   \
-    if (coffsym != (coff_symbol_type *) NULL                    \
-        && coffsym->native->u.syment.n_scnum == 0)              \
-      cache_ptr->addend = 0;                                    \
-    else if (ptr && bfd_asymbol_bfd (ptr) == abfd               \
-             && ptr->section != (asection *) NULL)              \
-      cache_ptr->addend = - (ptr->section->vma + ptr->value);   \
-    else                                                        \
-      cache_ptr->addend = 0;                                    \
+#define CALC_ADDEND(abfd, ptr, reloc, cache_ptr)		\
+  {								\
+    coff_symbol_type *coffsym = (coff_symbol_type *) NULL;	\
+    if (ptr && bfd_asymbol_bfd (ptr) != abfd)			\
+      coffsym = (obj_symbols (abfd)				\
+		 + (cache_ptr->sym_ptr_ptr - symbols));		\
+    else if (ptr)						\
+      coffsym = coff_symbol_from (ptr);				\
+    if (coffsym != (coff_symbol_type *) NULL			\
+	&& coffsym->native->u.syment.n_scnum == 0)		\
+      cache_ptr->addend = 0;					\
+    else if (ptr && bfd_asymbol_bfd (ptr) == abfd		\
+	     && ptr->section != (asection *) NULL)		\
+      cache_ptr->addend = - (ptr->section->vma + ptr->value);	\
+    else							\
+      cache_ptr->addend = 0;					\
     if ((reloc).r_type == R_SH_SWITCH8				\
 	|| (reloc).r_type == R_SH_SWITCH16			\
 	|| (reloc).r_type == R_SH_SWITCH32			\
@@ -715,7 +713,7 @@ sh_relax_section (bfd *abfd,
 
   *again = FALSE;
 
-  if (link_info->relocatable
+  if (bfd_link_relocatable (link_info)
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0)
     return TRUE;
@@ -2329,7 +2327,7 @@ _bfd_sh_align_load_span (bfd *abfd,
   if (dsp)
     {
       sh_opcodes[0xf].minor_opcodes = sh_dsp_opcodef;
-      sh_opcodes[0xf].count = sizeof sh_dsp_opcodef / sizeof sh_dsp_opcodef;
+      sh_opcodes[0xf].count = sizeof sh_dsp_opcodef / sizeof sh_dsp_opcodef [0];
     }
 
   /* Instructions should be aligned on 2 byte boundaries.  */
@@ -2838,7 +2836,7 @@ sh_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		     + sec->output_section->vma
 		     + sec->output_offset);
 	    }
-	  else if (! info->relocatable)
+	  else if (! bfd_link_relocatable (info))
 	    {
 	      if (! ((*info->callbacks->undefined_symbol)
 		     (info, h->root.root.string, input_bfd, input_section,
@@ -3000,13 +2998,13 @@ sh_coff_get_relocated_section_contents (bfd *output_bfd,
 /* The target vectors.  */
 
 #ifndef TARGET_SHL_SYM
-CREATE_BIG_COFF_TARGET_VEC (shcoff_vec, "coff-sh", BFD_IS_RELAXABLE, 0, '_', NULL, COFF_SWAP_TABLE)
+CREATE_BIG_COFF_TARGET_VEC (sh_coff_vec, "coff-sh", BFD_IS_RELAXABLE, 0, '_', NULL, COFF_SWAP_TABLE)
 #endif
 
 #ifdef TARGET_SHL_SYM
 #define TARGET_SYM TARGET_SHL_SYM
 #else
-#define TARGET_SYM shlcoff_vec
+#define TARGET_SYM sh_coff_le_vec
 #endif
 
 #ifndef TARGET_SHL_NAME
@@ -3092,6 +3090,7 @@ static bfd_coff_backend_data bfd_coff_small_swap_table =
 #else
   2,
 #endif
+  32768,
   coff_swap_filehdr_in, coff_swap_aouthdr_in, coff_swap_scnhdr_in,
   coff_swap_reloc_in, coff_bad_format_hook, coff_set_arch_mach_hook,
   coff_mkobject_hook, styp_to_sec_flags, coff_set_alignment_hook,
@@ -3113,9 +3112,9 @@ static bfd_coff_backend_data bfd_coff_small_swap_table =
 #define coff_small_get_section_contents_in_window \
   coff_get_section_contents_in_window
 
-extern const bfd_target shlcoff_small_vec;
+extern const bfd_target sh_coff_small_le_vec;
 
-const bfd_target shcoff_small_vec =
+const bfd_target sh_coff_small_vec =
 {
   "coff-sh-small",		/* name */
   bfd_target_coff_flavour,
@@ -3155,12 +3154,12 @@ const bfd_target shcoff_small_vec =
   BFD_JUMP_TABLE_LINK (coff),
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-  & shlcoff_small_vec,
+  & sh_coff_small_le_vec,
 
   & bfd_coff_small_swap_table
 };
 
-const bfd_target shlcoff_small_vec =
+const bfd_target sh_coff_small_le_vec =
 {
   "coff-shl-small",		/* name */
   bfd_target_coff_flavour,
@@ -3200,7 +3199,7 @@ const bfd_target shlcoff_small_vec =
   BFD_JUMP_TABLE_LINK (coff),
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-  & shcoff_small_vec,
+  & sh_coff_small_vec,
 
   & bfd_coff_small_swap_table
 };

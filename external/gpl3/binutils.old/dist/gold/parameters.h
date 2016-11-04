@@ -1,6 +1,6 @@
 // parameters.h -- general parameters for a link using gold  -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -182,6 +182,9 @@ class Parameters
 
   void
   check_target_endianness();
+
+  void
+  check_rodata_segment();
 
   friend class Set_parameters_target_once;
 

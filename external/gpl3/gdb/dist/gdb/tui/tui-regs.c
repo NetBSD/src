@@ -1,6 +1,6 @@
 /* TUI display registers in window.
 
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -244,7 +244,7 @@ tui_show_register_group (struct reggroup *group,
     {
       if (!refresh_values_only || allocated_here)
 	{
-	  TUI_DATA_WIN->generic.content = (void*) NULL;
+	  TUI_DATA_WIN->generic.content = NULL;
 	  TUI_DATA_WIN->generic.content_size = 0;
 	  tui_add_content_elements (&TUI_DATA_WIN->generic, nr_regs);
 	  display_info->regs_content

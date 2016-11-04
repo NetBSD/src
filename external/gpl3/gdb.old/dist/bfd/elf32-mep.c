@@ -30,19 +30,16 @@
 /* Private relocation functions.  */
 
 #define MEPREL(type, size, bits, right, left, pcrel, overflow, mask) \
-  {(unsigned)type, right, size, bits, pcrel, left, overflow, mep_reloc, #type, FALSE, 0, mask, 0 }
+  {(unsigned)type, right, size, bits, pcrel, left, overflow, bfd_elf_generic_reloc, #type, FALSE, 0, mask, 0 }
 
 #define N complain_overflow_dont
 #define S complain_overflow_signed
 #define U complain_overflow_unsigned
 
-static bfd_reloc_status_type mep_reloc (bfd *, arelent *, struct bfd_symbol *,
-					void *, asection *, bfd *, char **);
-
 static reloc_howto_type mep_elf_howto_table [] =
 {
   /* type, size, bits, leftshift, rightshift, pcrel, OD/OS/OU, mask.  */
-  MEPREL (R_MEP_NONE,     0,  0, 0, 0, 0, N, 0),
+  MEPREL (R_MEP_NONE,     3,  0, 0, 0, 0, N, 0),
   MEPREL (R_RELC,         0,  0, 0, 0, 0, N, 0),
   /* MEPRELOC:HOWTO */
     /* This section generated from bfd/mep-relocs.pl from include/elf/mep.h.  */
@@ -75,20 +72,6 @@ static reloc_howto_type mep_elf_howto_table [] =
 #undef N
 #undef S
 #undef U
-
-static bfd_reloc_status_type
-mep_reloc
-    (bfd *               abfd ATTRIBUTE_UNUSED,
-     arelent *           reloc_entry ATTRIBUTE_UNUSED,
-     struct bfd_symbol * symbol ATTRIBUTE_UNUSED,
-     void *              data ATTRIBUTE_UNUSED,
-     asection *          input_section ATTRIBUTE_UNUSED,
-     bfd *               output_bfd ATTRIBUTE_UNUSED,
-     char **             error_message ATTRIBUTE_UNUSED)
-{
-  return bfd_reloc_ok;
-}
-
 
 
 #define BFD_RELOC_MEP_NONE BFD_RELOC_NONE
@@ -402,7 +385,7 @@ mep_info_to_howto_rela
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= R_MEP_max)
     {
-      _bfd_error_handler (_("%A: invalid MEP reloc number: %d"), abfd, r_type);
+      _bfd_error_handler (_("%B: invalid MEP reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
   cache_ptr->howto = & mep_elf_howto_table [r_type];

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.28 2015/11/18 18:22:42 christos Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.28.2.1 2016/11/04 14:48:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash_page.c,v 1.28 2015/11/18 18:22:42 christos Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.28.2.1 2016/11/04 14:48:52 pgoyette Exp $");
 
 /*
  * PACKAGE:  hashing
@@ -593,6 +593,7 @@ __put_page(HTAB *hashp, char *p, uint32_t bucket, int is_bucket, int is_bitmap)
 {
 	int fd, page, size;
 	ssize_t wsize;
+	char pbuf[MAX_BSIZE];
 
 	size = HASH_BSIZE(hashp);
 	if ((hashp->fp == -1) && (hashp->fp = __dbtemp("_hash", NULL)) == -1)
@@ -603,15 +604,18 @@ __put_page(HTAB *hashp, char *p, uint32_t bucket, int is_bucket, int is_bitmap)
 		int i;
 		int max;
 
+		memcpy(pbuf, p, size);
 		if (is_bitmap) {
 			max = (uint32_t)hashp->BSIZE >> 2;	/* divide by 4 */
 			for (i = 0; i < max; i++)
-				M_32_SWAP(((int *)(void *)p)[i]);
+				M_32_SWAP(((int *)(void *)pbuf)[i]);
 		} else {
-			max = ((uint16_t *)(void *)p)[0] + 2;
+			uint16_t *bp = (uint16_t *)(void *)pbuf;
+			max = bp[0] + 2;
 			for (i = 0; i <= max; i++)
-				M_16_SWAP(((uint16_t *)(void *)p)[i]);
+				M_16_SWAP(bp[i]);
 		}
+		p = pbuf;
 	}
 	if (is_bucket)
 		page = BUCKET_TO_PAGE(bucket);

@@ -1,11 +1,11 @@
 // -*- C -*-
 
 // Simulator definition for the MIPS DSP REV 2 ASE.
-// Copyright (C) 2007-2015 Free Software Foundation, Inc.
+// Copyright (C) 2007-2016 Free Software Foundation, Inc.
 // Contributed by MIPS Technologies, Inc.
 // Written by Chao-ying Fu (fu@mips.com).
 //
-// This file is part of GDB, the GNU debugger.
+// This file is part of the MIPS sim
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -353,23 +353,7 @@
 "absq_s.qb r<RD>, r<RT>"
 *dsp2:
 {
-  int i;
-  signed8 q0;
-  unsigned32 v1 = GPR[RT];
-  unsigned32 result = 0;
-  for (i = 0; i < 32; i += 8, v1 >>= 8)
-    {
-      q0 = (signed8)(v1 & 0xff);
-      if (q0 == (signed8)0x80)
-        {
-          DSPCR |= DSPCR_OUFLAG4;
-          q0 = 0x7f;
-        }
-      else if (q0 & 0x80)
-        q0 = -q0;
-      result |= ((unsigned32)((unsigned8)q0) << i);
-    }
-  GPR[RD] = EXTEND32 (result);
+  do_qb_s_absq (SD_, RD, RT);
 }
 
 011111,5.RS,5.RT,5.RD,01000,010000:SPECIAL3:32::ADDU.PH
@@ -404,26 +388,14 @@
 "append r<RT>, r<RS>, <SA>"
 *dsp2:
 {
-  unsigned32 v0 = GPR[RS];
-  unsigned32 v1 = GPR[RT];
-  unsigned32 result;
-  unsigned32 mask = (1 << SA) - 1;
-  result = (v1 << SA) | (v0 & mask);
-  GPR[RT] = EXTEND32 (result);
+  do_append (SD_, RT, RS, SA);
 }
 
 011111,5.RS,5.RT,000,2.BP,10000,110001:SPECIAL3:32::BALIGN
 "balign r<RT>, r<RS>, <BP>"
 *dsp2:
 {
-  unsigned32 v0 = GPR[RS];
-  unsigned32 v1 = GPR[RT];
-  unsigned32 result;
-  if (BP == 0)
-    result = v1;
-  else
-    result = (v1 << 8 * BP) | (v0 >> 8 * (4 - BP));
-  GPR[RT] = EXTEND32 (result);
+  do_balign (SD_, RT, RS, BP);
 }
 
 011111,5.RS,5.RT,5.RD,11000,010001:SPECIAL3:32::CMPGDU.EQ.QB
@@ -500,40 +472,14 @@
 "mulsa.w.ph ac<AC>, r<RS>, r<RT>"
 *dsp2:
 {
-  int i;
-  unsigned32 v1 = GPR[RS];
-  unsigned32 v2 = GPR[RT];
-  signed16 h1, h2;
-  signed32 result;
-  unsigned32 lo = DSPLO(AC);
-  unsigned32 hi = DSPHI(AC);
-  signed64 prod = (signed64)((((unsigned64)hi) << 32) + (unsigned64)lo);
-  for (i = 0; i < 32; i += 16, v1 >>= 16, v2 >>= 16)
-    {
-      h1 = (signed16)(v1 & 0xffff);
-      h2 = (signed16)(v2 & 0xffff);
-      result = (signed32)h1 * (signed32)h2;
-
-      if (i == 0)
-        prod -= (signed64) result;
-      else
-        prod += (signed64) result;
-    }
-  DSPLO(AC) = EXTEND32 (prod);
-  DSPHI(AC) = EXTEND32 (prod >> 32);
+  do_ph_w_mulsa (SD_, AC, RS, RT);
 }
 
 011111,5.RS,5.RT,5.RD,01101,010001:SPECIAL3:32::PRECR.QB.PH
 "precr.qb.ph r<RD>, r<RS>, r<RT>"
 *dsp2:
 {
-  unsigned32 v1 = GPR[RS];
-  unsigned32 v2 = GPR[RT];
-  unsigned32 tempu = (v1 & 0xff0000) >> 16;
-  unsigned32 tempv = (v1 & 0xff);
-  unsigned32 tempw = (v2 & 0xff0000) >> 16;
-  unsigned32 tempx = (v2 & 0xff);
-  GPR[RD] = EXTEND32 ((tempu << 24) | (tempv << 16) | (tempw << 8) | tempx);
+  do_ph_qb_precr (SD_, RD, RS, RT);
 }
 
 011111,5.RS,5.RT,5.SA,11110,010001:SPECIAL3:32::PRECR_SRA.PH.W
@@ -554,14 +500,7 @@
 "prepend r<RT>, r<RS>, <SA>"
 *dsp2:
 {
-  unsigned32 v0 = GPR[RS];
-  unsigned32 v1 = GPR[RT];
-  unsigned32 result;
-  if (SA == 0)
-    result = v1;
-  else
-    result = (v0 << (32 - SA)) | (v1 >> SA);
-  GPR[RT] = EXTEND32 (result);
+  do_prepend (SD_, RT, RS, SA);
 }
 
 011111,00,3.SHIFT3,5.RT,5.RD,00100,010011:SPECIAL3:32::SHRA.QB
@@ -582,16 +521,14 @@
 "shrav.qb r<RD>, r<RT>, r<RS>"
 *dsp2:
 {
-  unsigned32 shift = GPR[RS] & 0x7;
-  do_qb_shra (SD_, RD, RT, shift, 0);
+  do_qb_shrav (SD_, RD, RT, RS, 0);
 }
 
 011111,5.RS,5.RT,5.RD,00111,010011:SPECIAL3:32::SHRAV_R.QB
 "shrav_r.qb r<RD>, r<RT>, r<RS>"
 *dsp2:
 {
-  unsigned32 shift = GPR[RS] & 0x7;
-  do_qb_shra (SD_, RD, RT, shift, 1);
+  do_qb_shrav (SD_, RD, RT, RS, 1);
 }
 
 011111,0,4.SHIFT4,5.RT,5.RD,11001,010011:SPECIAL3:32::SHRL.PH
@@ -605,8 +542,7 @@
 "shrlv.ph r<RD>, r<RT>, r<RS>"
 *dsp2:
 {
-  unsigned32 shift = GPR[RS] & 0xf;
-  do_ph_shrl (SD_, RD, RT, shift);
+  do_ph_shrlv (SD_, RD, RT, RS);
 }
 
 011111,5.RS,5.RT,5.RD,01001,010000:SPECIAL3:32::SUBU.PH

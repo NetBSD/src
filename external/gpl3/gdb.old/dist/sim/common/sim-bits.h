@@ -20,8 +20,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef _SIM_BITS_H_
-#define _SIM_BITS_H_
+#ifndef SIM_BITS_H
+#define SIM_BITS_H
 
 
 /* Bit manipulation routines:
@@ -605,4 +605,4 @@ INLINE_SIM_BITS(unsigned_word) MSSEXT (signed_word val, int sign_bit);
 #include "sim-bits.c"
 #endif
 
-#endif /* _SIM_BITS_H_ */
+#endif /* SIM_BITS_H */

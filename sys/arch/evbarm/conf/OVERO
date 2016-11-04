@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.43.2.1 2016/08/06 00:19:04 pgoyette Exp $
+#	$NetBSD: OVERO,v 1.43.2.2 2016/11/04 14:49:00 pgoyette Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo COMS platforms kernel
 #
@@ -205,6 +205,7 @@ tps65950pm3	at iic0 addr 0x4b
 com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
 options         CONSADDR=0x49020000, CONSPEED=115200
 #com1		at obio0 addr 0x4806c000 intr 73 mult 4	# UART2 (bluetooth)
+com2		at obio0 addr 0x4806a000 intr 72 mult 4	# UART1 (Gallop's GPS)
 
 # Operating System Timer
 omapmputmr0	at obio2 addr 0x49032000 intr 38		# GP Timer 2
@@ -226,10 +227,26 @@ prcm*		at obio1 addr 0x48306000 size 0x2000		# PRM Module
 
 # SDHC controllers
 sdhc0		at obio0 addr 0x4809c000 size 0x1000 intr 83
-#sdhc1		at obio0 addr 0x480b4000 size 0x1000 intr 86 # Wifi
+sdhc1		at obio0 addr 0x480b4000 size 0x1000 intr 86 # Wifi
 
 sdmmc*		at sdhc?					# SD/MMC bus
 ld*		at sdmmc?
+
+# NAND controller
+omapnand0	at gpmc? cs 0
+
+# NAND layer
+nand0		at nandbus?
+
+# use the bad block table
+options NAND_BBT
+
+# Define flash partitions for board
+flash0		at nand0 offset 0x000000 size 0x080000 readonly 1 # SPL
+flash1		at nand0 offset 0x080000 size 0x1c0000 readonly 1 # U-Boot
+flash2		at nand0 offset 0x240000 size 0x040000 readonly 1 # Environment
+flash3		at nand0 offset 0x280000 size 0x800000		# Kernel
+flash4		at nand0 offset 0xa80000 size 0			# Filesystem
 
 # Hardware clocking and power management
 
@@ -240,8 +257,8 @@ options		OMAP_CK_REF_SPEED=12000000
 # overo expansion boards
 
 # SMSC LAN9221
-smsh0		at gpmc? addr 0x01000000 intr 272	# Tobi, Chestnut43
-smsh1		at gpmc? addr 0x02000000 intr 161	# Tobi-Duo
+smsh0		at gpmc? cs 5 intr 272			# Tobi, Chestnut43
+smsh1		at gpmc? cs 4 intr 161			# Tobi-Duo
 
 # MII/PHY support
 ukphy*		at mii? phy ?				# smsh(4) internal PHY
@@ -336,7 +353,7 @@ options 	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	btuart			# Bluetooth HCI UART (H4)
-					# connect CSR module
+					# CSR or WiLink 8 module
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.

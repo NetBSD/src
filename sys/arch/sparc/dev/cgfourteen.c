@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.81 2016/06/02 21:19:24 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.81.2.1 2016/11/04 14:49:05 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -418,9 +418,13 @@ cgfourteenclose(dev_t dev, int flags, int mode, struct lwp *l)
 	/*
 	 * Restore video state to make the PROM happy, on last close.
 	 */
-	if (opens == 0)
+	if (opens == 0) {
 		cg14_reset(sc);
-
+#if NSX > 0
+		if (sc->sc_sx)
+			glyphcache_wipe(&sc->sc_gc);
+#endif
+	}
 	return (0);
 }
 
@@ -918,6 +922,10 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 						cg14_set_depth(sc, 8);
 						cg14_init_cmap(sc);
+#if NSX > 0
+						if (sc->sc_sx)
+							glyphcache_wipe(&sc->sc_gc);
+#endif
 						vcons_redraw_screen(ms);
 					} else {
 

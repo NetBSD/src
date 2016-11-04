@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.30 2013/09/20 19:06:54 christos Exp $
+.\"	$NetBSD: strftime.3,v 1.30.8.1 2016/11/04 14:48:53 pgoyette Exp $
 .\"
-.Dd April 14, 2011
+.Dd September 22, 2016
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -68,14 +68,14 @@ and one other character.
 .Pp
 No more than
 .Fa maxsize
-characters will be placed into the array.
+characters will be placed into the buffer.
 If the total number of resulting characters, including the terminating
 null character, is not more than
 .Fa maxsize ,
 .Fn strftime
-returns the number of characters in the array, not counting the
+returns the number of characters in the buffer, not counting the
 terminating null.
-Otherwise, zero is returned and the contents of the array are undefined.
+Otherwise, zero is returned and the contents of the buffer are undefined.
 .Pp
 Each conversion specification is replaced by the characters as
 follows which are then copied into the buffer.

@@ -1,5 +1,5 @@
 /* literal.c - GAS literal pool management.
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    Written by Ken Raeburn (raeburn@cygnus.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -43,11 +43,7 @@
 #ifdef NEED_LITERAL_POOL
 
 valueT
-add_to_literal_pool (sym, addend, sec, size)
-     symbolS *sym;
-     valueT addend;
-     segT sec;
-     int size;
+add_to_literal_pool (symbolS *sym, valueT addend, segT sec, int size)
 {
   segT current_section = now_seg;
   int current_subsec = now_subseg;

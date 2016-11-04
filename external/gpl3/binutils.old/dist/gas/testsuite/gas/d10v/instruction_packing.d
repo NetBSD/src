@@ -1,5 +1,5 @@
 #objdump: -Dr
-#name: D10V intruction packing
+#name: D10V instruction packing
 #as: -W
 
 .*: +file format elf32-d10v

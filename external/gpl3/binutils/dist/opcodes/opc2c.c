@@ -1,6 +1,6 @@
 /* opc2c.c --- generate C opcode decoder code from from .opc file
 
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of the GNU opcode library.

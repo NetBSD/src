@@ -40,7 +40,7 @@ Hashentry;
 Hashentry *lookupbyfirst[HASH_TABLE_SIZE];
 Hashentry *lookupbysecond[HASH_TABLE_SIZE];
 
-void
+static void
 addtolist (Hashentry ** add, long first, long second)
 {
   while (*add)
@@ -52,7 +52,7 @@ addtolist (Hashentry ** add, long first, long second)
   (*add)->second = second;
 }
 
-void
+static void
 killwholelist (Hashentry * p)
 {
   Hashentry *q;
@@ -152,7 +152,7 @@ BAG_killpair_bysecond (long second)
 }
 
 void
-BAG_newbag ()
+BAG_newbag (void)
 {
   int i;
 

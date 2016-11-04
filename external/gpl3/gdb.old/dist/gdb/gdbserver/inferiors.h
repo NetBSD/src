@@ -69,7 +69,7 @@ struct process_info
   const struct target_desc *tdesc;
 
   /* Private target data.  */
-  struct process_info_private *private;
+  struct process_info_private *priv;
 };
 
 #define ptid_of(inf) ((inf)->entry.id)

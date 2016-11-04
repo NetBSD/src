@@ -22,32 +22,9 @@
 #define WANT_CPU_LM32BF
 
 #include "sim-main.h"
+#include "sim-syscall.h"
 #include "lm32-sim.h"
 #include "targ-vals.h"
-
-/* Read memory function for system call interface.  */
-
-static int
-syscall_read_mem (host_callback * cb, struct cb_syscall *sc,
-		  unsigned long taddr, char *buf, int bytes)
-{
-  SIM_DESC sd = (SIM_DESC) sc->p1;
-  SIM_CPU *cpu = (SIM_CPU *) sc->p2;
-
-  return sim_core_read_buffer (sd, cpu, read_map, buf, taddr, bytes);
-}
-
-/* Write memory function for system call interface.  */
-
-static int
-syscall_write_mem (host_callback * cb, struct cb_syscall *sc,
-		   unsigned long taddr, const char *buf, int bytes)
-{
-  SIM_DESC sd = (SIM_DESC) sc->p1;
-  SIM_CPU *cpu = (SIM_CPU *) sc->p2;
-
-  return sim_core_write_buffer (sd, cpu, write_map, buf, taddr, bytes);
-}
 
 /* Handle invalid instructions.  */
 
@@ -155,26 +132,18 @@ lm32bf_scall_insn (SIM_CPU * current_cpu, IADDR pc)
       || (GET_H_GR (8) == TARGET_SYS_exit))
     {
       /* Delegate system call to host O/S.  */
-      CB_SYSCALL s;
-      CB_SYSCALL_INIT (&s);
-      s.p1 = (PTR) sd;
-      s.p2 = (PTR) current_cpu;
-      s.read_mem = syscall_read_mem;
-      s.write_mem = syscall_write_mem;
-      /* Extract parameters.  */
-      s.func = GET_H_GR (8);
-      s.arg1 = GET_H_GR (1);
-      s.arg2 = GET_H_GR (2);
-      s.arg3 = GET_H_GR (3);
-      /* Halt the simulator if the requested system call is _exit.  */
-      if (s.func == TARGET_SYS_exit)
-	sim_engine_halt (sd, current_cpu, NULL, pc, sim_exited, s.arg1);
+      long result, result2;
+      int errcode;
+
       /* Perform the system call.  */
-      cb_syscall (cb, &s);
+      sim_syscall_multi (current_cpu, GET_H_GR (8), GET_H_GR (1), GET_H_GR (2),
+			 GET_H_GR (3), GET_H_GR (4), &result, &result2,
+			 &errcode);
       /* Store the return value in the CPU's registers.  */
-      SET_H_GR (1, s.result);
-      SET_H_GR (2, s.result2);
-      SET_H_GR (3, s.errcode);
+      SET_H_GR (1, result);
+      SET_H_GR (2, result2);
+      SET_H_GR (3, errcode);
+
       /* Skip over scall instruction.  */
       return pc + 4;
     }
@@ -245,7 +214,7 @@ lm32_core_signal (SIM_DESC sd,
       SET_H_GR (30, ip);
       /* Save and clear interrupt enable.  */
       SET_H_CSR (LM32_CSR_IE, (GET_H_CSR (LM32_CSR_IE) & 1) << 1);
-      CIA_SET (cpu, GET_H_CSR (LM32_CSR_EBA) + LM32_EID_DATA_BUS_ERROR * 32);
+      CPU_PC_SET (cpu, GET_H_CSR (LM32_CSR_EBA) + LM32_EID_DATA_BUS_ERROR * 32);
       sim_engine_halt (sd, cpu, NULL, LM32_EID_DATA_BUS_ERROR * 32,
 		       sim_stopped, SIM_SIGSEGV);
       break;
@@ -257,7 +226,7 @@ lm32_core_signal (SIM_DESC sd,
       SET_H_GR (30, ip);
       /* Save and clear interrupt enable.  */
       SET_H_CSR (LM32_CSR_IE, (GET_H_CSR (LM32_CSR_IE) & 1) << 1);
-      CIA_SET (cpu, GET_H_CSR (LM32_CSR_EBA) + LM32_EID_DATA_BUS_ERROR * 32);
+      CPU_PC_SET (cpu, GET_H_CSR (LM32_CSR_EBA) + LM32_EID_DATA_BUS_ERROR * 32);
       sim_engine_halt (sd, cpu, NULL, LM32_EID_DATA_BUS_ERROR * 32,
 		       sim_stopped, SIM_SIGBUS);
       break;

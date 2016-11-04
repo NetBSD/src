@@ -1,10 +1,10 @@
 /* tc-score.h -- Score specific file for assembler
-   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
-   Contributed by: 
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
    Pei-Lin Tsai (pltsai@sunplus.com)
- 
+
    This file is part of GAS, the GNU Assembler.
 
    GAS is free software; you can redistribute it and/or modify

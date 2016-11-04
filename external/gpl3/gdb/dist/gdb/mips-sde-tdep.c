@@ -1,6 +1,6 @@
 /* Target-dependent code for SDE on MIPS processors.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,7 +48,7 @@ mips_sde_frame_cache (struct frame_info *this_frame, void **this_cache)
   int i;
 
   if (*this_cache != NULL)
-    return *this_cache;
+    return (struct trad_frame_cache *) *this_cache;
   cache = trad_frame_cache_zalloc (this_frame);
   *this_cache = cache;
 
@@ -205,7 +205,7 @@ static void
 mips_sde_elf_osabi_sniff_abi_tag_sections (bfd *abfd, asection *sect,
 					   void *obj)
 {
-  enum gdb_osabi *os_ident_ptr = obj;
+  enum gdb_osabi *os_ident_ptr = (enum gdb_osabi *) obj;
   const char *name;
 
   name = bfd_get_section_name (abfd, sect);

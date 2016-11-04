@@ -1,6 +1,5 @@
 /* SuperH SH64-specific support for 32-bit ELF
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -199,7 +198,8 @@ sh64_elf_copy_private_data (bfd * ibfd, bfd * obfd)
 		  == elf_elfheader (ibfd)->e_flags));
 
   elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
-  return TRUE;
+
+  return _bfd_elf_copy_private_bfd_data (ibfd, obfd);
 }
 
 static bfd_boolean
@@ -397,7 +397,7 @@ sh64_elf_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 	 right, and tweak the name when it's output.  Otherwise, we make
 	 an indirect symbol of it.  */
       flagword flags
-	= info->relocatable || info->emitrelocations
+	= bfd_link_relocatable (info) || info->emitrelocations
 	? BSF_GLOBAL : BSF_GLOBAL | BSF_INDIRECT;
 
       char *dl_name
@@ -441,9 +441,9 @@ sh64_elf_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 	free (dl_name);
 
       if (h->type != STT_DATALABEL
-	  || ((info->relocatable || info->emitrelocations)
+	  || ((bfd_link_relocatable (info) || info->emitrelocations)
 	      && h->root.type != bfd_link_hash_undefined)
-	  || (! info->relocatable && !info->emitrelocations
+	  || (! bfd_link_relocatable (info) && !info->emitrelocations
 	      && h->root.type != bfd_link_hash_indirect))
 	{
 	  /* Make sure we don't get confused on invalid input.  */
@@ -487,7 +487,7 @@ sh64_elf_link_output_symbol_hook (struct bfd_link_info *info,
 {
   char *name = (char *) cname;
 
-  if (info->relocatable || info->emitrelocations)
+  if (bfd_link_relocatable (info) || info->emitrelocations)
     {
       if (ELF_ST_TYPE (sym->st_info) == STT_DATALABEL)
 	name[strlen (name) - strlen (DATALABEL_SUFFIX)] = 0;
@@ -766,11 +766,11 @@ static const struct bfd_elf_special_section sh64_elf_special_sections[] =
 };
 
 #undef	TARGET_BIG_SYM
-#define	TARGET_BIG_SYM		bfd_elf32_sh64_vec
+#define	TARGET_BIG_SYM		sh64_elf32_vec
 #undef	TARGET_BIG_NAME
 #define	TARGET_BIG_NAME		"elf32-sh64"
 #undef	TARGET_LITTLE_SYM
-#define	TARGET_LITTLE_SYM	bfd_elf32_sh64l_vec
+#define	TARGET_LITTLE_SYM	sh64_elf32_le_vec
 #undef	TARGET_LITTLE_NAME
 #define	TARGET_LITTLE_NAME	"elf32-sh64l"
 
@@ -778,11 +778,11 @@ static const struct bfd_elf_special_section sh64_elf_special_sections[] =
 
 /* NetBSD support.  */
 #undef	TARGET_BIG_SYM
-#define	TARGET_BIG_SYM		bfd_elf32_sh64nbsd_vec
+#define	TARGET_BIG_SYM		sh64_elf32_nbsd_vec
 #undef	TARGET_BIG_NAME
 #define	TARGET_BIG_NAME		"elf32-sh64-nbsd"
 #undef	TARGET_LITTLE_SYM
-#define	TARGET_LITTLE_SYM	bfd_elf32_sh64lnbsd_vec
+#define	TARGET_LITTLE_SYM	sh64_elf32_nbsd_le_vec
 #undef	TARGET_LITTLE_NAME
 #define	TARGET_LITTLE_NAME	"elf32-sh64l-nbsd"
 #undef	ELF_MAXPAGESIZE
@@ -797,11 +797,11 @@ static const struct bfd_elf_special_section sh64_elf_special_sections[] =
 
 /* Linux support.  */
 #undef	TARGET_BIG_SYM
-#define	TARGET_BIG_SYM		bfd_elf32_sh64blin_vec
+#define	TARGET_BIG_SYM		sh64_elf32_linux_be_vec
 #undef	TARGET_BIG_NAME
 #define	TARGET_BIG_NAME		"elf32-sh64big-linux"
 #undef	TARGET_LITTLE_SYM
-#define	TARGET_LITTLE_SYM	bfd_elf32_sh64lin_vec
+#define	TARGET_LITTLE_SYM	sh64_elf32_linux_vec
 #undef	TARGET_LITTLE_NAME
 #define	TARGET_LITTLE_NAME	"elf32-sh64-linux"
 #undef	elf32_bed

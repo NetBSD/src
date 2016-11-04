@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2015 Free Software Foundation, Inc.
+# Copyright 2013-2016 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <christian.himpel@intel.com>
 #
@@ -82,19 +82,19 @@ gdb_test "record instruction-history /f 3,+5" [multi_line \
   ]
 
 gdb_test "record instruction-history /p 7,-5" [multi_line \
-  "3\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
-  "4\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tdec    %eax" \
-  "5\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
-  "6\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax" \
-  "7\t0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r" \
+  "3\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
+  "4\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tdec    %eax" \
+  "5\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
+  "6\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax" \
+  "7\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r" \
   ]
 
 gdb_test "record instruction-history /pf 3,7" [multi_line \
-  "3\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
-  "4\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tdec    %eax" \
-  "5\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
-  "6\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax" \
-  "7\t0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r" \
+  "3\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
+  "4\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tdec    %eax" \
+  "5\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tjmp    0x\[0-9a-f\]+ <loop\\+\[0-9\]+>" \
+  "6\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tcmp    \\\$0x0,%eax" \
+  "7\t   0x\[0-9a-f\]+ <\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r" \
   ]
 
 gdb_test "record instruction-history 3,3" "3\t   0x\[0-9a-f\]+ <loop\\+\[0-9\]+>:\tje     0x\[0-9a-f\]+ <loop\\+\[0-9\]+>\r"

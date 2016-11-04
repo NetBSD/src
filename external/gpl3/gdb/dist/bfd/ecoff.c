@@ -1,5 +1,5 @@
 /* Generic ECOFF (Extended-COFF) routines.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -876,7 +876,7 @@ _bfd_ecoff_slurp_symbol_table (bfd *abfd)
     return TRUE;
 
   internal = (ecoff_symbol_type *) bfd_alloc2 (abfd, bfd_get_symcount (abfd),
-					       sizeof (ecoff_symbol_type)); 
+					       sizeof (ecoff_symbol_type));
   if (internal == NULL)
     return FALSE;
 
@@ -3544,9 +3544,9 @@ ecoff_link_check_archive_element (bfd *abfd,
   if (h->type != bfd_link_hash_undefined)
     return TRUE;
 
-  /* Include this element.  */
+  /* Include this element?  */
   if (!(*info->callbacks->add_archive_element) (info, abfd, name, &abfd))
-    return FALSE;
+    return TRUE;
   *pneeded = TRUE;
 
   return ecoff_link_add_object_symbols (abfd, info);
@@ -3896,7 +3896,7 @@ ecoff_indirect_link_order (bfd *output_bfd,
      modified, and we write them out now.  We use the reloc_count
      field of output_section to keep track of the number of relocs we
      have output so far.  */
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     {
       file_ptr pos = (output_section->rel_filepos
 		      + output_section->reloc_count * external_reloc_size);
@@ -4015,17 +4015,12 @@ ecoff_reloc_link_order (bfd *output_bfd,
 	case bfd_reloc_outofrange:
 	  abort ();
 	case bfd_reloc_overflow:
-	  if (! ((*info->callbacks->reloc_overflow)
-		 (info, NULL,
-		  (link_order->type == bfd_section_reloc_link_order
-		   ? bfd_section_name (output_bfd, section)
-		   : link_order->u.reloc.p->u.name),
-		  rel.howto->name, addend, NULL,
-		  NULL, (bfd_vma) 0)))
-	    {
-	      free (buf);
-	      return FALSE;
-	    }
+	  (*info->callbacks->reloc_overflow)
+	    (info, NULL,
+	     (link_order->type == bfd_section_reloc_link_order
+	      ? bfd_section_name (output_bfd, section)
+	      : link_order->u.reloc.p->u.name),
+	     rel.howto->name, addend, NULL, NULL, (bfd_vma) 0);
 	  break;
 	}
       ok = bfd_set_section_contents (output_bfd, output_section, (void *) buf,
@@ -4055,10 +4050,8 @@ ecoff_reloc_link_order (bfd *output_bfd,
 	in.r_symndx = h->indx;
       else
 	{
-	  if (! ((*info->callbacks->unattached_reloc)
-		 (info, link_order->u.reloc.p->u.name, NULL,
-		  NULL, (bfd_vma) 0)))
-	    return FALSE;
+	  (*info->callbacks->unattached_reloc)
+	    (info, link_order->u.reloc.p->u.name, NULL, NULL, (bfd_vma) 0);
 	  in.r_symndx = 0;
 	}
       in.r_extern = 1;
@@ -4370,7 +4363,7 @@ _bfd_ecoff_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
   einfo.info = info;
   bfd_hash_traverse (&info->hash->table, ecoff_link_write_external, &einfo);
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     {
       /* We need to make a pass over the link_orders to count up the
 	 number of relocations we will need to output, so that we know
@@ -4400,7 +4393,7 @@ _bfd_ecoff_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 
   bfd_ecoff_debug_free (handle, abfd, debug, &backend->debug_swap, info);
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     {
       /* Now reset the reloc_count field of the sections in the output
 	 BFD to 0, so that we can use them to keep track of how many
@@ -4420,7 +4413,7 @@ _bfd_ecoff_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 	ecoff_data (abfd)->gp = (h->u.def.value
 				 + h->u.def.section->output_section->vma
 				 + h->u.def.section->output_offset);
-      else if (info->relocatable)
+      else if (bfd_link_relocatable (info))
 	{
 	  bfd_vma lo;
 

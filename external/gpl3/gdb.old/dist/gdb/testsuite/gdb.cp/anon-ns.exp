@@ -64,5 +64,9 @@ foreach test $methods {
     }
 }
 
+# PR c++/17976
+gdb_test "ptype '(anonymous namespace)'" \
+    "type = namespace \\\(anonymous namespace\\\)"
+
 gdb_exit
 return 0

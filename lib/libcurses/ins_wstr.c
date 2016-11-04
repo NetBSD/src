@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.7 2013/10/16 19:59:29 roy Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.7.8.1 2016/11/04 14:48:53 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.7 2013/10/16 19:59:29 roy Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.7.8.1 2016/11/04 14:48:53 pgoyette Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -301,7 +301,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 			}
 		} else {
 			/* non-spacing character */
-			np = (nschar_t *)malloc(sizeof(nschar_t));
+			np = malloc(sizeof(nschar_t));
 			if (!np)
 				return ERR;
 			np->ch = *scp;

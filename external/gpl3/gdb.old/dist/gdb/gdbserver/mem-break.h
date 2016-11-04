@@ -253,4 +253,10 @@ int insert_memory_breakpoint (struct raw_breakpoint *bp);
 
 int remove_memory_breakpoint (struct raw_breakpoint *bp);
 
+/* Create a new breakpoint list NEW_BKPT_LIST that is a copy of SRC.  */
+
+void clone_all_breakpoints (struct breakpoint **new_bkpt_list,
+			    struct raw_breakpoint **new_raw_bkpt_list,
+			    const struct breakpoint *src);
+
 #endif /* MEM_BREAK_H */

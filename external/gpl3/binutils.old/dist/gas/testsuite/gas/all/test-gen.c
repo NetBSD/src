@@ -1,7 +1,7 @@
 #ifndef TEST_GEN_C
 #define TEST_GEN_C 1
 
-/* Copyright (C) 2000, 2003, 2005, 2007 Free Software Foundation
+/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva <aoliva@cygnus.com>
 
    This file is free software; you can redistribute it and/or modify it
@@ -404,12 +404,12 @@ int random_order_16s[] =
        generated often enough.  */
     -32768,
     32767,
-    (-1 << 15) | (64 << 8) | 32,
+    (-(1 << 15)) | (64 << 8) | 32,
     (64 << 8) | 32,
     0x1234,
-    (-1 << 15) | 0x8765,
+    (-(1 << 15)) | 0x8765,
     0x0180,
-    (-1 << 15) | 0x8001
+    (-(1 << 15)) | 0x8001
 };
 
 /* Use `24s' to generate 24-bit signed values.  Good for selecting
@@ -420,14 +420,14 @@ int random_order_24s[] =
        intermediate values selected by chance.  Keep the number of
        intermediate values low, to ensure that the limit values are
        generated often enough.  */
-    -1 << 23,
+    -(1 << 23),
     1 << 23 -1,
-    (-1 << 23) | (((64 << 8) | 32) << 8) | 16,
+    (-(1 << 23)) | (((64 << 8) | 32) << 8) | 16,
     (((64 << 8) | 32) << 8) | 16,
     0x123456,
-    (-1 << 23) | 0x876543,
+    (-(1 << 23)) | 0x876543,
     0x01ff80,
-    (-1 << 23) | 0x80ff01
+    (-(1 << 23)) | 0x80ff01
 };
 
 /* Use `32s' to generate 32-bit signed values.  Good for selecting
@@ -438,14 +438,14 @@ int random_order_32s[] =
        intermediate values selected by chance.  Keep the number of
        intermediate values low, to ensure that the limit values are
        generated often enough.  */
-    -1 << 31,
+    -(1 << 31),
     1 << 31 - 1,
-    (-1 << 31) | (((((64 << 8) | 32) << 8) | 16) << 8) | 8,
+    (-(1 << 31)) | (((((64 << 8) | 32) << 8) | 16) << 8) | 8,
     (((((64 << 8) | 32) << 8) | 16) << 8) | 8,
     0x12345678,
-    (-1 << 31) | 0x87654321,
+    (-(1 << 31)) | 0x87654321,
     0x01ffff80,
-    (-1 << 31) | 0x80ffff01
+    (-(1 << 31)) | 0x80ffff01
   };
 
 /* This function computes the number of digits needed to represent a

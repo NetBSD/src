@@ -1,5 +1,5 @@
 /* ppc.h -- Header file for PowerPC opcode table
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -23,6 +23,10 @@
 #define PPC_H
 
 #include "bfd_stdint.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef uint64_t ppc_cpu_t;
 
@@ -204,6 +208,12 @@ extern const int vle_num_opcodes;
 /* Opcode is supported by ppc821/850/860.  */
 #define PPC_OPCODE_860	      0x10000000000ull
 
+/* Opcode is only supported by Power9 architecture.  */
+#define PPC_OPCODE_POWER9     0x20000000000ull
+
+/* Opcode is supported by Vector-Scalar (VSX) Unit from ISA 2.08.  */
+#define PPC_OPCODE_VSX3       0x40000000000ull
+
 /* A macro to extract the major opcode from an instruction.  */
 #define PPC_OP(i) (((i) >> 26) & 0x3f)
 
@@ -286,7 +296,7 @@ extern const unsigned int num_powerpc_operands;
 /* Use with the shift field of a struct powerpc_operand to indicate
      that BITM and SHIFT cannot be used to determine where the operand
      goes in the insn.  */
-#define PPC_OPSHIFT_INV (-0x80000000)
+#define PPC_OPSHIFT_INV (-1U << 31)
 
 /* Values defined for the flags field of a struct powerpc_operand.  */
 
@@ -430,5 +440,9 @@ ppc_optional_operand_value (const struct powerpc_operand *operand)
     return (operand+1)->shift;
   return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PPC_H */

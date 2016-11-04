@@ -830,7 +830,7 @@ parse_number (struct parser_state *par_state,
 
 struct token
 {
-  char *operator;
+  char *oper;
   int token;
   enum exp_opcode opcode;
 };
@@ -1006,11 +1006,11 @@ yylex (void)
   
   /* See if it is a special .foo. operator.  */
   
-  for (i = 0; dot_ops[i].operator != NULL; i++)
-    if (strncmp (tokstart, dot_ops[i].operator,
-		 strlen (dot_ops[i].operator)) == 0)
+  for (i = 0; dot_ops[i].oper != NULL; i++)
+    if (strncmp (tokstart, dot_ops[i].oper,
+		 strlen (dot_ops[i].oper)) == 0)
       {
-	lexptr += strlen (dot_ops[i].operator);
+	lexptr += strlen (dot_ops[i].oper);
 	yylval.opcode = dot_ops[i].opcode;
 	return dot_ops[i].token;
       }
@@ -1175,9 +1175,9 @@ yylex (void)
   
   /* Catch specific keywords.  */
   
-  for (i = 0; f77_keywords[i].operator != NULL; i++)
-    if (strlen (f77_keywords[i].operator) == namelen
-	&& strncmp (tokstart, f77_keywords[i].operator, namelen) == 0)
+  for (i = 0; f77_keywords[i].oper != NULL; i++)
+    if (strlen (f77_keywords[i].oper) == namelen
+	&& strncmp (tokstart, f77_keywords[i].oper, namelen) == 0)
       {
 	/* 	lexptr += strlen(f77_keywords[i].operator); */ 
 	yylval.opcode = f77_keywords[i].opcode;

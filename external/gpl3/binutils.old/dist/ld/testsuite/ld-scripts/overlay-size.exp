@@ -1,5 +1,5 @@
 # Test the OVERLAY statement.
-# Copyright 2002, 2005, 2007 Free Software Foundation, Inc.
+# Copyright (C) 2002-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -23,12 +23,3 @@ if ![is_elf_format] {
 }
 
 run_dump_test overlay-size
-
-set testname "overlay size (map check)"
-
-if [regexp_diff "tmpdir/overlay-size.map" \
-	        "$srcdir/$subdir/overlay-size-map.d"] {
-    fail $testname
-} else {
-    pass $testname
-}

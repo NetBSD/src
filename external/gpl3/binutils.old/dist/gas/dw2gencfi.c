@@ -1,6 +1,5 @@
 /* dw2gencfi.c - Support for generating Dwarf2 CFI information.
-   Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
    Contributed by Michal Ludvig <mludvig@suse.cz>
 
    This file is part of GAS, the GNU Assembler.
@@ -76,6 +75,8 @@
 # define tc_cfi_endproc(fde) ((void) (fde))
 #endif
 
+#define EH_FRAME_LINKONCE (SUPPORT_FRAME_LINKONCE || compact_eh)
+
 #ifndef DWARF2_FORMAT
 #define DWARF2_FORMAT(SEC) dwarf2_format_32bit
 #endif
@@ -84,9 +85,9 @@
 #define DWARF2_ADDR_SIZE(bfd) (bfd_arch_bits_per_address (bfd) / 8)
 #endif
 
-#if SUPPORT_FRAME_LINKONCE
+#if MULTIPLE_FRAME_SECTIONS
 #define CUR_SEG(structp) structp->cur_seg
-#define SET_CUR_SEG(structp, seg) structp->cur_seg = seg 
+#define SET_CUR_SEG(structp, seg) structp->cur_seg = seg
 #define HANDLED(structp) structp->handled
 #define SET_HANDLED(structp, val) structp->handled = val
 #else
@@ -94,6 +95,10 @@
 #define SET_CUR_SEG(structp, seg) (void) (0 && seg)
 #define HANDLED(structp) 0
 #define SET_HANDLED(structp, val) (void) (0 && val)
+#endif
+
+#ifndef tc_cfi_reloc_for_encoding
+#define tc_cfi_reloc_for_encoding(e) BFD_RELOC_NONE
 #endif
 
 /* Private segment collection list.  */
@@ -104,10 +109,115 @@ struct dwcfi_seg_list
   char * seg_name;
 };
 
-#define FRAME_NAME ".eh_frame"
+#ifdef SUPPORT_COMPACT_EH
+static bfd_boolean compact_eh;
+#else
+#define compact_eh 0
+#endif
 
 static struct hash_control *dwcfi_hash;
+
+/* Emit a single byte into the current segment.  */
 
+static inline void
+out_one (int byte)
+{
+  FRAG_APPEND_1_CHAR (byte);
+}
+
+/* Emit a two-byte word into the current segment.  */
+
+static inline void
+out_two (int data)
+{
+  md_number_to_chars (frag_more (2), data, 2);
+}
+
+/* Emit a four byte word into the current segment.  */
+
+static inline void
+out_four (int data)
+{
+  md_number_to_chars (frag_more (4), data, 4);
+}
+
+/* Emit an unsigned "little-endian base 128" number.  */
+
+static void
+out_uleb128 (addressT value)
+{
+  output_leb128 (frag_more (sizeof_leb128 (value, 0)), value, 0);
+}
+
+/* Emit an unsigned "little-endian base 128" number.  */
+
+static void
+out_sleb128 (offsetT value)
+{
+  output_leb128 (frag_more (sizeof_leb128 (value, 1)), value, 1);
+}
+
+static offsetT
+encoding_size (unsigned char encoding)
+{
+  if (encoding == DW_EH_PE_omit)
+    return 0;
+  switch (encoding & 0x7)
+    {
+    case 0:
+      return bfd_get_arch_size (stdoutput) == 64 ? 8 : 4;
+    case DW_EH_PE_udata2:
+      return 2;
+    case DW_EH_PE_udata4:
+      return 4;
+    case DW_EH_PE_udata8:
+      return 8;
+    default:
+      abort ();
+    }
+}
+
+/* Emit expression EXP in ENCODING.  If EMIT_ENCODING is true, first
+   emit a byte containing ENCODING.  */
+
+static void
+emit_expr_encoded (expressionS *exp, int encoding, bfd_boolean emit_encoding)
+{
+  offsetT size = encoding_size (encoding);
+  bfd_reloc_code_real_type code;
+
+  if (encoding == DW_EH_PE_omit)
+    return;
+
+  if (emit_encoding)
+    out_one (encoding);
+
+  code = tc_cfi_reloc_for_encoding (encoding);
+  if (code != BFD_RELOC_NONE)
+    {
+      reloc_howto_type *howto = bfd_reloc_type_lookup (stdoutput, code);
+      char *p = frag_more (size);
+      md_number_to_chars (p, 0, size);
+      fix_new (frag_now, p - frag_now->fr_literal, size, exp->X_add_symbol,
+	       exp->X_add_number, howto->pc_relative, code);
+    }
+  else if ((encoding & 0x70) == DW_EH_PE_pcrel)
+    {
+#if CFI_DIFF_EXPR_OK
+      expressionS tmp = *exp;
+      tmp.X_op = O_subtract;
+      tmp.X_op_symbol = symbol_temp_new_now ();
+      emit_expr (&tmp, size);
+#elif defined (tc_cfi_emit_pcrel_expr)
+      tc_cfi_emit_pcrel_expr (exp, size);
+#else
+      abort ();
+#endif
+    }
+  else
+    emit_expr (exp, size);
+}
+
 /* Build based on segment the derived .debug_...
    segment name containing origin segment's postfix name part.  */
 
@@ -129,7 +239,13 @@ get_debugseg_name (segT seg, const char *base_name)
       dot = strchr (name + 1, '.');
 
       if (!dollar && !dot)
-	name = "";
+	{
+	  if (!strcmp (base_name, ".eh_frame_entry")
+	      && strcmp (name, ".text") != 0)
+	    return concat (base_name, ".", name, NULL);
+
+	  name = "";
+	}
       else if (!dollar)
 	name = dot;
       else if (!dot)
@@ -161,6 +277,9 @@ alloc_debugseg_item (segT seg, int subseg, char *name)
 static segT
 is_now_linkonce_segment (void)
 {
+  if (compact_eh)
+    return now_seg;
+
   if ((bfd_get_section_flags (stdoutput, now_seg)
        & (SEC_LINK_ONCE | SEC_LINK_DUPLICATES_DISCARD
 	  | SEC_LINK_DUPLICATES_ONE_ONLY | SEC_LINK_DUPLICATES_SAME_SIZE
@@ -188,8 +307,8 @@ make_debug_seg (segT cseg, char *name, int sflags)
   else
     flags = bfd_get_section_flags (stdoutput, cseg)
       & (SEC_LINK_ONCE | SEC_LINK_DUPLICATES_DISCARD
-         | SEC_LINK_DUPLICATES_ONE_ONLY | SEC_LINK_DUPLICATES_SAME_SIZE
-         | SEC_LINK_DUPLICATES_SAME_CONTENTS);
+	 | SEC_LINK_DUPLICATES_ONE_ONLY | SEC_LINK_DUPLICATES_SAME_SIZE
+	 | SEC_LINK_DUPLICATES_SAME_CONTENTS);
 
   /* Add standard section flags.  */
   flags |= sflags;
@@ -273,12 +392,13 @@ struct cfi_escape_data
 struct cie_entry
 {
   struct cie_entry *next;
-#if SUPPORT_FRAME_LINKONCE
+#if MULTIPLE_FRAME_SECTIONS
   segT cur_seg;
 #endif
   symbolS *start_address;
   unsigned int return_column;
   unsigned int signal_frame;
+  unsigned char fde_encoding;
   unsigned char per_encoding;
   unsigned char lsda_encoding;
   expressionS personality;
@@ -328,6 +448,7 @@ alloc_fde_entry (void)
   fde->return_column = DWARF2_DEFAULT_RETURN_COLUMN;
   fde->per_encoding = DW_EH_PE_omit;
   fde->lsda_encoding = DW_EH_PE_omit;
+  fde->eh_header_type = EH_COMPACT_UNKNOWN;
 
   return fde;
 }
@@ -337,6 +458,11 @@ alloc_fde_entry (void)
 
 /* Construct a new INSN structure and add it to the end of the insn list
    for the currently active FDE.  */
+
+static bfd_boolean cfi_sections_set = FALSE;
+static int cfi_sections = CFI_EMIT_eh_frame;
+int all_cfi_sections = 0;
+static struct fde_entry *last_fde;
 
 static struct cfi_insn_data *
 alloc_cfi_insn_data (void)
@@ -377,6 +503,12 @@ void
 cfi_set_return_column (unsigned regno)
 {
   frchain_now->frch_cfi_data->cur_fde_data->return_column = regno;
+}
+
+void
+cfi_set_sections (void)
+{
+  frchain_now->frch_cfi_data->cur_fde_data->sections = all_cfi_sections;
 }
 
 /* Universal functions to store new instructions.  */
@@ -439,6 +571,19 @@ cfi_add_advance_loc (symbolS *label)
   insn->u.ll.lab2 = label;
 
   frchain_now->frch_cfi_data->last_address = label;
+}
+
+/* Add a CFI insn to label the current position in the CFI segment.  */
+
+void
+cfi_add_label (const char *name)
+{
+  unsigned int len = strlen (name) + 1;
+  struct cfi_insn_data *insn = alloc_cfi_insn_data ();
+
+  insn->insn = CFI_label;
+  obstack_grow (&notes, name, len);
+  insn->u.sym_name = (char *) obstack_finish (&notes);
 }
 
 /* Add a DW_CFA_offset record to the CFI data.  */
@@ -548,15 +693,20 @@ static void dot_cfi_escape (int);
 static void dot_cfi_sections (int);
 static void dot_cfi_startproc (int);
 static void dot_cfi_endproc (int);
+static void dot_cfi_fde_data (int);
 static void dot_cfi_personality (int);
+static void dot_cfi_personality_id (int);
 static void dot_cfi_lsda (int);
 static void dot_cfi_val_encoded_addr (int);
+static void dot_cfi_inline_lsda (int);
+static void dot_cfi_label (int);
 
 const pseudo_typeS cfi_pseudo_table[] =
   {
     { "cfi_sections", dot_cfi_sections, 0 },
     { "cfi_startproc", dot_cfi_startproc, 0 },
     { "cfi_endproc", dot_cfi_endproc, 0 },
+    { "cfi_fde_data", dot_cfi_fde_data, 0 },
     { "cfi_def_cfa", dot_cfi, DW_CFA_def_cfa },
     { "cfi_def_cfa_register", dot_cfi, DW_CFA_def_cfa_register },
     { "cfi_def_cfa_offset", dot_cfi, DW_CFA_def_cfa_offset },
@@ -574,8 +724,11 @@ const pseudo_typeS cfi_pseudo_table[] =
     { "cfi_escape", dot_cfi_escape, 0 },
     { "cfi_signal_frame", dot_cfi, CFI_signal_frame },
     { "cfi_personality", dot_cfi_personality, 0 },
+    { "cfi_personality_id", dot_cfi_personality_id, 0 },
     { "cfi_lsda", dot_cfi_lsda, 0 },
     { "cfi_val_encoded_addr", dot_cfi_val_encoded_addr, 0 },
+    { "cfi_inline_lsda", dot_cfi_inline_lsda, 0 },
+    { "cfi_label", dot_cfi_label, 0 },
     { NULL, NULL, 0 }
   };
 
@@ -601,13 +754,12 @@ tc_parse_to_dw2regnum (expressionS *exp)
     {
       char *name, c;
 
-      name = input_line_pointer;
-      c = get_symbol_end ();
+      c = get_symbol_name (& name);
 
       exp->X_op = O_constant;
       exp->X_add_number = tc_regname_to_dw2regnum (name);
 
-      *input_line_pointer = c;
+      restore_line_pointer (c);
     }
   else
 # endif
@@ -833,14 +985,15 @@ dot_cfi_personality (int ignored ATTRIBUTE_UNUSED)
     }
 
   if ((encoding & 0xff) != encoding
-      || ((encoding & 0x70) != 0
+      || ((((encoding & 0x70) != 0
 #if CFI_DIFF_EXPR_OK || defined tc_cfi_emit_pcrel_expr
-	  && (encoding & 0x70) != DW_EH_PE_pcrel
+	   && (encoding & 0x70) != DW_EH_PE_pcrel
 #endif
 	  )
 	 /* leb128 can be handled, but does something actually need it?  */
-      || (encoding & 7) == DW_EH_PE_uleb128
-      || (encoding & 7) > DW_EH_PE_udata8)
+	   || (encoding & 7) == DW_EH_PE_uleb128
+	   || (encoding & 7) > DW_EH_PE_udata8)
+	&& tc_cfi_reloc_for_encoding (encoding) == BFD_RELOC_NONE))
     {
       as_bad (_("invalid or unsupported encoding in .cfi_personality"));
       ignore_rest_of_line ();
@@ -903,14 +1056,15 @@ dot_cfi_lsda (int ignored ATTRIBUTE_UNUSED)
     }
 
   if ((encoding & 0xff) != encoding
-      || ((encoding & 0x70) != 0
+      || ((((encoding & 0x70) != 0
 #if CFI_DIFF_LSDA_OK || defined tc_cfi_emit_pcrel_expr
-	  && (encoding & 0x70) != DW_EH_PE_pcrel
+	    && (encoding & 0x70) != DW_EH_PE_pcrel
 #endif
-	  )
+	   )
 	 /* leb128 can be handled, but does something actually need it?  */
-      || (encoding & 7) == DW_EH_PE_uleb128
-      || (encoding & 7) > DW_EH_PE_udata8)
+	   || (encoding & 7) == DW_EH_PE_uleb128
+	   || (encoding & 7) > DW_EH_PE_udata8)
+	  && tc_cfi_reloc_for_encoding (encoding) == BFD_RELOC_NONE))
     {
       as_bad (_("invalid or unsupported encoding in .cfi_lsda"));
       ignore_rest_of_line ();
@@ -1000,7 +1154,7 @@ dot_cfi_val_encoded_addr (int ignored ATTRIBUTE_UNUSED)
       break;
     case O_constant:
       if ((encoding & 0x70) != DW_EH_PE_pcrel)
-        break;
+	break;
     default:
       encoding = DW_EH_PE_omit;
       break;
@@ -1017,11 +1171,24 @@ dot_cfi_val_encoded_addr (int ignored ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 }
 
-/* By default emit .eh_frame only, not .debug_frame.  */
-#define CFI_EMIT_eh_frame	(1 << 0)
-#define CFI_EMIT_debug_frame	(1 << 1)
-#define CFI_EMIT_target		(1 << 2)
-static int cfi_sections = CFI_EMIT_eh_frame;
+static void
+dot_cfi_label (int ignored ATTRIBUTE_UNUSED)
+{
+  char *name = read_symbol_name ();
+
+  if (name == NULL)
+    return;
+
+  /* If the last address was not at the current PC, advance to current.  */
+  if (symbol_get_frag (frchain_now->frch_cfi_data->last_address) != frag_now
+      || S_GET_VALUE (frchain_now->frch_cfi_data->last_address)
+	 != frag_now_fix ())
+    cfi_add_advance_loc (symbol_temp_new_now ());
+
+  cfi_add_label (name);
+
+  demand_empty_rest_of_line ();
+}
 
 static void
 dot_cfi_sections (int ignored ATTRIBUTE_UNUSED)
@@ -1029,19 +1196,27 @@ dot_cfi_sections (int ignored ATTRIBUTE_UNUSED)
   int sections = 0;
 
   SKIP_WHITESPACE ();
-  if (is_name_beginner (*input_line_pointer))
+  if (is_name_beginner (*input_line_pointer) || *input_line_pointer == '"')
     while (1)
       {
+	char * saved_ilp;
 	char *name, c;
 
-	name = input_line_pointer;
-	c = get_symbol_end ();
+	saved_ilp = input_line_pointer;
+	c = get_symbol_name (& name);
 
 	if (strncmp (name, ".eh_frame", sizeof ".eh_frame") == 0
 	    && name[9] != '_')
 	  sections |= CFI_EMIT_eh_frame;
 	else if (strncmp (name, ".debug_frame", sizeof ".debug_frame") == 0)
 	  sections |= CFI_EMIT_debug_frame;
+#if SUPPORT_COMPACT_EH
+	else if (strncmp (name, ".eh_frame_entry", sizeof ".eh_frame_entry") == 0)
+	  {
+	    compact_eh = TRUE;
+	    sections |= CFI_EMIT_eh_frame_compact;
+	  }
+#endif
 #ifdef tc_cfi_section_name
 	else if (strcmp (name, tc_cfi_section_name) == 0)
 	  sections |= CFI_EMIT_target;
@@ -1049,27 +1224,30 @@ dot_cfi_sections (int ignored ATTRIBUTE_UNUSED)
 	else
 	  {
 	    *input_line_pointer = c;
-	    input_line_pointer = name;
+	    input_line_pointer = saved_ilp;
 	    break;
 	  }
 
 	*input_line_pointer = c;
-	SKIP_WHITESPACE ();
+	SKIP_WHITESPACE_AFTER_NAME ();
 	if (*input_line_pointer == ',')
 	  {
 	    name = input_line_pointer++;
 	    SKIP_WHITESPACE ();
-	    if (!is_name_beginner (*input_line_pointer))
+	    if (!is_name_beginner (*input_line_pointer) && *input_line_pointer != '"')
 	      {
 		input_line_pointer = name;
 		break;
 	      }
 	  }
-	else if (is_name_beginner (*input_line_pointer))
+	else if (is_name_beginner (*input_line_pointer) || *input_line_pointer == '"')
 	  break;
       }
 
   demand_empty_rest_of_line ();
+  if (cfi_sections_set && cfi_sections != sections)
+    as_bad (_("inconsistent uses of .cfi_sections"));
+  cfi_sections_set = TRUE;
   cfi_sections = sections;
 }
 
@@ -1088,23 +1266,25 @@ dot_cfi_startproc (int ignored ATTRIBUTE_UNUSED)
   cfi_new_fde (symbol_temp_new_now ());
 
   SKIP_WHITESPACE ();
-  if (is_name_beginner (*input_line_pointer))
+  if (is_name_beginner (*input_line_pointer) || *input_line_pointer == '"')
     {
+      char * saved_ilp = input_line_pointer;
       char *name, c;
 
-      name = input_line_pointer;
-      c = get_symbol_end ();
+      c = get_symbol_name (& name);
 
       if (strcmp (name, "simple") == 0)
 	{
 	  simple = 1;
-	  *input_line_pointer = c;
+	  restore_line_pointer (c);
 	}
       else
-	input_line_pointer = name;
+	input_line_pointer = saved_ilp;
     }
   demand_empty_rest_of_line ();
 
+  all_cfi_sections |= cfi_sections;
+  cfi_set_sections ();
   frchain_now->frch_cfi_data->cur_cfa_offset = 0;
   if (!simple)
     tc_cfi_frame_initial_instructions ();
@@ -1116,8 +1296,6 @@ dot_cfi_startproc (int ignored ATTRIBUTE_UNUSED)
 static void
 dot_cfi_endproc (int ignored ATTRIBUTE_UNUSED)
 {
-  struct fde_entry *fde;
-
   if (frchain_now->frch_cfi_data == NULL)
     {
       as_bad (_(".cfi_endproc without corresponding .cfi_startproc"));
@@ -1125,57 +1303,252 @@ dot_cfi_endproc (int ignored ATTRIBUTE_UNUSED)
       return;
     }
 
-  fde = frchain_now->frch_cfi_data->cur_fde_data;
+  last_fde = frchain_now->frch_cfi_data->cur_fde_data;
 
   cfi_end_fde (symbol_temp_new_now ());
 
   demand_empty_rest_of_line ();
 
   if ((cfi_sections & CFI_EMIT_target) != 0)
-    tc_cfi_endproc (fde);
+    tc_cfi_endproc (last_fde);
 }
 
+static segT
+get_cfi_seg (segT cseg, const char *base, flagword flags, int align)
+{
+  /* Exclude .debug_frame sections for Compact EH.  */
+  if (SUPPORT_FRAME_LINKONCE || ((flags & SEC_DEBUGGING) == 0 && compact_eh))
+    {
+      struct dwcfi_seg_list *l;
+
+      l = dwcfi_hash_find_or_make (cseg, base, flags);
+
+      cseg = l->seg;
+      subseg_set (cseg, l->subseg);
+    }
+  else
+    {
+      cseg = subseg_new (base, 0);
+      bfd_set_section_flags (stdoutput, cseg, flags);
+    }
+  record_alignment (cseg, align);
+  return cseg;
+}
+
+#if SUPPORT_COMPACT_EH
+static void
+dot_cfi_personality_id (int ignored ATTRIBUTE_UNUSED)
+{
+  struct fde_entry *fde;
+
+  if (frchain_now->frch_cfi_data == NULL)
+    {
+      as_bad (_("CFI instruction used without previous .cfi_startproc"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  fde = frchain_now->frch_cfi_data->cur_fde_data;
+  fde->personality_id = cfi_parse_const ();
+  demand_empty_rest_of_line ();
+
+  if (fde->personality_id == 0 || fde->personality_id > 3)
+    {
+      as_bad (_("wrong argument to .cfi_personality_id"));
+      return;
+    }
+}
+
+static void
+dot_cfi_fde_data (int ignored ATTRIBUTE_UNUSED)
+{
+  if (frchain_now->frch_cfi_data == NULL)
+    {
+      as_bad (_(".cfi_fde_data without corresponding .cfi_startproc"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  last_fde = frchain_now->frch_cfi_data->cur_fde_data;
+
+  if ((cfi_sections & CFI_EMIT_target) != 0
+      || (cfi_sections & CFI_EMIT_eh_frame_compact) != 0)
+    {
+      struct cfi_escape_data *head, **tail, *e;
+      int num_ops = 0;
+
+      tail = &head;
+      if (!is_it_end_of_statement ())
+	{
+	  num_ops = 0;
+	  do
+	    {
+	      e = (struct cfi_escape_data *) xmalloc (sizeof (*e));
+	      do_parse_cons_expression (&e->exp, 1);
+	      *tail = e;
+	      tail = &e->next;
+	      num_ops++;
+	    }
+	  while (*input_line_pointer++ == ',');
+	  --input_line_pointer;
+	}
+      *tail = NULL;
+
+      if (last_fde->lsda_encoding != DW_EH_PE_omit)
+	last_fde->eh_header_type = EH_COMPACT_HAS_LSDA;
+      else if (num_ops <= 3 && last_fde->per_encoding == DW_EH_PE_omit)
+	last_fde->eh_header_type = EH_COMPACT_INLINE;
+      else
+	last_fde->eh_header_type = EH_COMPACT_OUTLINE;
+
+      if (last_fde->eh_header_type == EH_COMPACT_INLINE)
+	num_ops = 3;
+
+      last_fde->eh_data_size = num_ops;
+      last_fde->eh_data = (bfd_byte *) xmalloc (num_ops);
+      num_ops = 0;
+      while (head)
+	{
+	  e = head;
+	  head = e->next;
+	  last_fde->eh_data[num_ops++] = e->exp.X_add_number;
+	  free (e);
+	}
+      if (last_fde->eh_header_type == EH_COMPACT_INLINE)
+	while (num_ops < 3)
+	  last_fde->eh_data[num_ops++] = tc_compact_eh_opcode_stop;
+    }
+
+  demand_empty_rest_of_line ();
+}
+
+/* Function to emit the compact unwinding opcodes stored in the
+   fde's eh_data field.  The end of the opcode data will be
+   padded to the value in align.  */
+
+static void
+output_compact_unwind_data (struct fde_entry *fde, int align)
+{
+  int data_size = fde->eh_data_size + 2;
+  int align_padding;
+  int amask;
+  char *p;
+
+  fde->eh_loc = symbol_temp_new_now ();
+
+  p = frag_more (1);
+  if (fde->personality_id != 0)
+    *p = fde->personality_id;
+  else if (fde->per_encoding != DW_EH_PE_omit)
+    {
+      *p = 0;
+      emit_expr_encoded (&fde->personality, fde->per_encoding, FALSE);
+      data_size += encoding_size (fde->per_encoding);
+    }
+  else
+    *p = 1;
+
+  amask = (1 << align) - 1;
+  align_padding = ((data_size + amask) & ~amask) - data_size;
+
+  p = frag_more (fde->eh_data_size + 1 + align_padding);
+  memcpy (p, fde->eh_data, fde->eh_data_size);
+  p += fde->eh_data_size;
+
+  while (align_padding-- > 0)
+    *(p++) = tc_compact_eh_opcode_pad;
+
+  *(p++) = tc_compact_eh_opcode_stop;
+  fde->eh_header_type = EH_COMPACT_OUTLINE_DONE;
+}
+
+/* Handle the .cfi_inline_lsda directive.  */
+static void
+dot_cfi_inline_lsda (int ignored ATTRIBUTE_UNUSED)
+{
+  segT ccseg;
+  int align;
+  long max_alignment = 28;
+
+  if (!last_fde)
+    {
+      as_bad (_("unexpected .cfi_inline_lsda"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  if ((last_fde->sections & CFI_EMIT_eh_frame_compact) == 0)
+    {
+      as_bad (_(".cfi_inline_lsda not valid for this frame"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  if (last_fde->eh_header_type != EH_COMPACT_UNKNOWN
+      && last_fde->eh_header_type != EH_COMPACT_HAS_LSDA)
+    {
+      as_bad (_(".cfi_inline_lsda seen for frame without .cfi_lsda"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+#ifdef md_flush_pending_output
+  md_flush_pending_output ();
+#endif
+
+  align = get_absolute_expression ();
+  if (align > max_alignment)
+    {
+      align = max_alignment;
+      as_bad (_("Alignment too large: %d. assumed."), align);
+    }
+  else if (align < 0)
+    {
+      as_warn (_("Alignment negative: 0 assumed."));
+      align = 0;
+    }
+
+  demand_empty_rest_of_line ();
+  ccseg = CUR_SEG (last_fde);
+
+  /* Open .gnu_extab section.  */
+  get_cfi_seg (ccseg, ".gnu_extab",
+	       (SEC_ALLOC | SEC_LOAD | SEC_DATA
+		| DWARF2_EH_FRAME_READ_ONLY),
+	       1);
+
+  frag_align (align, 0, 0);
+  record_alignment (now_seg, align);
+  if (last_fde->eh_header_type == EH_COMPACT_HAS_LSDA)
+    output_compact_unwind_data (last_fde, align);
+
+  last_fde = NULL;
+
+  return;
+}
+#else /* !SUPPORT_COMPACT_EH */
+static void
+dot_cfi_inline_lsda (int ignored ATTRIBUTE_UNUSED)
+{
+  as_bad (_(".cfi_inline_lsda is not supported for this target"));
+  ignore_rest_of_line ();
+}
+
+static void
+dot_cfi_fde_data (int ignored ATTRIBUTE_UNUSED)
+{
+  as_bad (_(".cfi_fde_data is not supported for this target"));
+  ignore_rest_of_line ();
+}
+
+static void
+dot_cfi_personality_id (int ignored ATTRIBUTE_UNUSED)
+{
+  as_bad (_(".cfi_personality_id is not supported for this target"));
+  ignore_rest_of_line ();
+}
+#endif
 
-/* Emit a single byte into the current segment.  */
-
-static inline void
-out_one (int byte)
-{
-  FRAG_APPEND_1_CHAR (byte);
-}
-
-/* Emit a two-byte word into the current segment.  */
-
-static inline void
-out_two (int data)
-{
-  md_number_to_chars (frag_more (2), data, 2);
-}
-
-/* Emit a four byte word into the current segment.  */
-
-static inline void
-out_four (int data)
-{
-  md_number_to_chars (frag_more (4), data, 4);
-}
-
-/* Emit an unsigned "little-endian base 128" number.  */
-
-static void
-out_uleb128 (addressT value)
-{
-  output_leb128 (frag_more (sizeof_leb128 (value, 0)), value, 0);
-}
-
-/* Emit an unsigned "little-endian base 128" number.  */
-
-static void
-out_sleb128 (offsetT value)
-{
-  output_leb128 (frag_more (sizeof_leb128 (value, 1)), value, 1);
-}
-
 static void
 output_cfi_insn (struct cfi_insn_data *insn)
 {
@@ -1331,27 +1704,27 @@ output_cfi_insn (struct cfi_insn_data *insn)
 
     case CFI_val_encoded_addr:
       {
-        unsigned encoding = insn->u.ea.encoding;
-        offsetT encoding_size;
+	unsigned encoding = insn->u.ea.encoding;
+	offsetT enc_size;
 
 	if (encoding == DW_EH_PE_omit)
 	  break;
 	out_one (DW_CFA_val_expression);
 	out_uleb128 (insn->u.ea.reg);
 
-        switch (encoding & 0x7)
+	switch (encoding & 0x7)
 	  {
 	  case DW_EH_PE_absptr:
-	    encoding_size = DWARF2_ADDR_SIZE (stdoutput);
+	    enc_size = DWARF2_ADDR_SIZE (stdoutput);
 	    break;
 	  case DW_EH_PE_udata2:
-	    encoding_size = 2;
+	    enc_size = 2;
 	    break;
 	  case DW_EH_PE_udata4:
-	    encoding_size = 4;
+	    enc_size = 4;
 	    break;
 	  case DW_EH_PE_udata8:
-	    encoding_size = 8;
+	    enc_size = 8;
 	    break;
 	  default:
 	    abort ();
@@ -1361,12 +1734,12 @@ output_cfi_insn (struct cfi_insn_data *insn)
 	   then use the smaller DW_OP_addr encoding.  */
 	if (insn->u.ea.encoding == DW_EH_PE_absptr)
 	  {
-	    out_uleb128 (1 + encoding_size);
+	    out_uleb128 (1 + enc_size);
 	    out_one (DW_OP_addr);
 	  }
 	else
 	  {
-	    out_uleb128 (1 + 1 + encoding_size);
+	    out_uleb128 (1 + 1 + enc_size);
 	    out_one (DW_OP_GNU_encoded_addr);
 	    out_one (encoding);
 
@@ -1376,37 +1749,21 @@ output_cfi_insn (struct cfi_insn_data *insn)
 		insn->u.ea.exp.X_op = O_subtract;
 		insn->u.ea.exp.X_op_symbol = symbol_temp_new_now ();
 #elif defined (tc_cfi_emit_pcrel_expr)
-		tc_cfi_emit_pcrel_expr (&insn->u.ea.exp, encoding_size);
+		tc_cfi_emit_pcrel_expr (&insn->u.ea.exp, enc_size);
 		break;
 #else
 		abort ();
 #endif
 	      }
 	  }
-	emit_expr (&insn->u.ea.exp, encoding_size);
+	emit_expr (&insn->u.ea.exp, enc_size);
       }
       break;
 
-    default:
-      abort ();
-    }
-}
+    case CFI_label:
+      colon (insn->u.sym_name);
+      break;
 
-static offsetT
-encoding_size (unsigned char encoding)
-{
-  if (encoding == DW_EH_PE_omit)
-    return 0;
-  switch (encoding & 0x7)
-    {
-    case 0:
-      return bfd_get_arch_size (stdoutput) == 64 ? 8 : 4;
-    case DW_EH_PE_udata2:
-      return 2;
-    case DW_EH_PE_udata4:
-      return 4;
-    case DW_EH_PE_udata8:
-      return 8;
     default:
       abort ();
     }
@@ -1474,26 +1831,7 @@ output_cie (struct cie_entry *cie, bfd_boolean eh_frame, int align)
 	augmentation_size += 1 + encoding_size (cie->per_encoding);
       out_uleb128 (augmentation_size);		/* Augmentation size.  */
 
-      if (cie->per_encoding != DW_EH_PE_omit)
-	{
-	  offsetT size = encoding_size (cie->per_encoding);
-	  out_one (cie->per_encoding);
-	  exp = cie->personality;
-	  if ((cie->per_encoding & 0x70) == DW_EH_PE_pcrel)
-	    {
-#if CFI_DIFF_EXPR_OK
-	      exp.X_op = O_subtract;
-	      exp.X_op_symbol = symbol_temp_new_now ();
-	      emit_expr (&exp, size);
-#elif defined (tc_cfi_emit_pcrel_expr)
-	      tc_cfi_emit_pcrel_expr (&exp, size);
-#else
-	      abort ();
-#endif
-	    }
-	  else
-	    emit_expr (&exp, size);
-	}
+      emit_expr_encoded (&cie->personality, cie->per_encoding, TRUE);
 
       if (cie->lsda_encoding != DW_EH_PE_omit)
 	out_one (cie->lsda_encoding);
@@ -1516,13 +1854,18 @@ output_cie (struct cie_entry *cie, bfd_boolean eh_frame, int align)
 #if CFI_DIFF_EXPR_OK || defined tc_cfi_emit_pcrel_expr
   enc |= DW_EH_PE_pcrel;
 #endif
+#ifdef DWARF2_FDE_RELOC_ENCODING
+  /* Allow target to override encoding.  */
+  enc = DWARF2_FDE_RELOC_ENCODING (enc);
+#endif
+  cie->fde_encoding = enc;
   if (eh_frame)
     out_one (enc);
 
   if (cie->first)
     {
       for (i = cie->first; i != cie->last; i = i->next)
-        {
+	{
 	  if (CUR_SEG (i) != CUR_SEG (cie))
 	    continue;
 	  output_cfi_insn (i);
@@ -1576,30 +1919,44 @@ output_fde (struct fde_entry *fde, struct cie_entry *cie,
       TC_DWARF2_EMIT_OFFSET (cie->start_address, offset_size);
     }
 
+  exp.X_op = O_symbol;
   if (eh_frame)
     {
-      exp.X_op = O_subtract;
-      exp.X_add_number = 0;
+      bfd_reloc_code_real_type code
+	= tc_cfi_reloc_for_encoding (cie->fde_encoding);
+      if (code != BFD_RELOC_NONE)
+	{
+	  reloc_howto_type *howto = bfd_reloc_type_lookup (stdoutput, code);
+	  char *p = frag_more (4);
+	  md_number_to_chars (p, 0, 4);
+	  fix_new (frag_now, p - frag_now->fr_literal, 4, fde->start_address,
+		   0, howto->pc_relative, code);
+	}
+      else
+	{
+	  exp.X_op = O_subtract;
+	  exp.X_add_number = 0;
 #if CFI_DIFF_EXPR_OK
-      exp.X_add_symbol = fde->start_address;
-      exp.X_op_symbol = symbol_temp_new_now ();
-      emit_expr (&exp, DWARF2_FDE_RELOC_SIZE);	/* Code offset.  */
+	  exp.X_add_symbol = fde->start_address;
+	  exp.X_op_symbol = symbol_temp_new_now ();
+	  emit_expr (&exp, DWARF2_FDE_RELOC_SIZE);	/* Code offset.  */
 #else
-      exp.X_op = O_symbol;
-      exp.X_add_symbol = fde->start_address;
-#ifdef tc_cfi_emit_pcrel_expr
-      tc_cfi_emit_pcrel_expr (&exp, DWARF2_FDE_RELOC_SIZE);	 /* Code offset.  */
+	  exp.X_op = O_symbol;
+	  exp.X_add_symbol = fde->start_address;
+
+#if defined(tc_cfi_emit_pcrel_expr)
+	  tc_cfi_emit_pcrel_expr (&exp, DWARF2_FDE_RELOC_SIZE);	 /* Code offset.  */
 #else
-      emit_expr (&exp, DWARF2_FDE_RELOC_SIZE);	/* Code offset.  */
+	  emit_expr (&exp, DWARF2_FDE_RELOC_SIZE);	/* Code offset.  */
 #endif
 #endif
+	}
       addr_size = DWARF2_FDE_RELOC_SIZE;
     }
   else
     {
-      exp.X_op = O_symbol;
-      exp.X_add_symbol = fde->start_address;
       exp.X_add_number = 0;
+      exp.X_add_symbol = fde->start_address;
       addr_size = DWARF2_ADDR_SIZE (stdoutput);
       emit_expr (&exp, addr_size);
     }
@@ -1614,24 +1971,7 @@ output_fde (struct fde_entry *fde, struct cie_entry *cie,
   if (eh_frame)
     out_uleb128 (augmentation_size);		/* Augmentation size.  */
 
-  if (fde->lsda_encoding != DW_EH_PE_omit)
-    {
-      exp = fde->lsda;
-      if ((fde->lsda_encoding & 0x70) == DW_EH_PE_pcrel)
-	{
-#if CFI_DIFF_LSDA_OK
-	  exp.X_op = O_subtract;
-	  exp.X_op_symbol = symbol_temp_new_now ();
-	  emit_expr (&exp, augmentation_size);
-#elif defined (tc_cfi_emit_pcrel_expr)
-	  tc_cfi_emit_pcrel_expr (&exp, augmentation_size);
-#else
-	  abort ();
-#endif
-	}
-      else
-	emit_expr (&exp, augmentation_size);
-    }
+  emit_expr_encoded (&fde->lsda, cie->lsda_encoding, FALSE);
 
   for (; first; first = first->next)
     if (CUR_SEG (first) == CUR_SEG (fde))
@@ -1722,6 +2062,7 @@ select_cie_for_fde (struct fde_entry *fde, bfd_boolean eh_frame,
 
 	    case CFI_escape:
 	    case CFI_val_encoded_addr:
+	    case CFI_label:
 	      /* Don't bother matching these for now.  */
 	      goto fail;
 
@@ -1738,7 +2079,8 @@ select_cie_for_fde (struct fde_entry *fde, bfd_boolean eh_frame,
 	      || j->insn == DW_CFA_advance_loc
 	      || j->insn == DW_CFA_remember_state
 	      || j->insn == CFI_escape
-	      || j->insn == CFI_val_encoded_addr))
+	      || j->insn == CFI_val_encoded_addr
+	      || j->insn == CFI_label))
 	{
 	  *pfirst = j;
 	  return cie;
@@ -1762,7 +2104,8 @@ select_cie_for_fde (struct fde_entry *fde, bfd_boolean eh_frame,
     if (i->insn == DW_CFA_advance_loc
 	|| i->insn == DW_CFA_remember_state
 	|| i->insn == CFI_escape
-	|| i->insn == CFI_val_encoded_addr)
+	|| i->insn == CFI_val_encoded_addr
+	|| i->insn == CFI_label)
       break;
 
   cie->last = i;
@@ -1780,7 +2123,7 @@ cfi_change_reg_numbers (struct cfi_insn_data *insn, segT ccseg)
   for (; insn; insn = insn->next)
     {
       if (CUR_SEG (insn) != ccseg)
-        continue;
+	continue;
       switch (insn->insn)
 	{
 	case DW_CFA_advance_loc:
@@ -1789,6 +2132,7 @@ cfi_change_reg_numbers (struct cfi_insn_data *insn, segT ccseg)
 	case DW_CFA_restore_state:
 	case DW_CFA_GNU_window_save:
 	case CFI_escape:
+	case CFI_label:
 	  break;
 
 	case DW_CFA_def_cfa:
@@ -1821,26 +2165,50 @@ cfi_change_reg_numbers (struct cfi_insn_data *insn, segT ccseg)
 #define cfi_change_reg_numbers(insn, cseg) do { } while (0)
 #endif
 
-static segT
-get_cfi_seg (segT cseg, const char *base, flagword flags, int align)
+#if SUPPORT_COMPACT_EH
+static void
+cfi_emit_eh_header (symbolS *sym, bfd_vma addend)
 {
-  if (SUPPORT_FRAME_LINKONCE)
+  expressionS exp;
+
+  exp.X_add_number = addend;
+  exp.X_add_symbol = sym;
+  emit_expr_encoded (&exp, DW_EH_PE_sdata4 | DW_EH_PE_pcrel, FALSE);
+}
+
+static void
+output_eh_header (struct fde_entry *fde)
+{
+  char *p;
+  bfd_vma addend;
+
+  if (fde->eh_header_type == EH_COMPACT_INLINE)
+    addend = 0;
+  else
+    addend = 1;
+
+  cfi_emit_eh_header (fde->start_address, addend);
+
+  if (fde->eh_header_type == EH_COMPACT_INLINE)
     {
-      struct dwcfi_seg_list *l;
-
-      l = dwcfi_hash_find_or_make (cseg, base, flags);
-
-      cseg = l->seg;
-      subseg_set (cseg, l->subseg);
+      p = frag_more (4);
+      /* Inline entries always use PR1.  */
+      *(p++) = 1;
+      memcpy(p, fde->eh_data, 3);
     }
   else
     {
-      cseg = subseg_new (base, 0);
-      bfd_set_section_flags (stdoutput, cseg, flags);
+      if (fde->eh_header_type == EH_COMPACT_LEGACY)
+	addend = 1;
+      else if (fde->eh_header_type == EH_COMPACT_OUTLINE
+	       || fde->eh_header_type == EH_COMPACT_OUTLINE_DONE)
+	addend = 0;
+      else
+	abort ();
+      cfi_emit_eh_header (fde->eh_loc, addend);
     }
-  record_alignment (cseg, align);
-  return cseg;
 }
+#endif
 
 void
 cfi_finish (void)
@@ -1854,13 +2222,14 @@ cfi_finish (void)
   if (all_fde_data == 0)
     return;
 
-  if ((cfi_sections & CFI_EMIT_eh_frame) != 0)
+  if ((all_cfi_sections & CFI_EMIT_eh_frame) != 0
+      || (all_cfi_sections & CFI_EMIT_eh_frame_compact) != 0)
     {
       /* Make sure check_eh_frame doesn't do anything with our output.  */
       save_flag_traditional_format = flag_traditional_format;
       flag_traditional_format = 1;
 
-      if (!SUPPORT_FRAME_LINKONCE)
+      if (!EH_FRAME_LINKONCE)
 	{
 	  /* Open .eh_frame section.  */
 	  cfi_seg = get_cfi_seg (NULL, ".eh_frame",
@@ -1875,7 +2244,7 @@ cfi_finish (void)
 	}
 
       do
-        {
+	{
 	  ccseg = NULL;
 	  seek_next_seg = 0;
 
@@ -1888,7 +2257,22 @@ cfi_finish (void)
 
 	  for (fde = all_fde_data; fde ; fde = fde->next)
 	    {
-	      if (SUPPORT_FRAME_LINKONCE)
+	      if ((fde->sections & CFI_EMIT_eh_frame) == 0
+		  && (fde->sections & CFI_EMIT_eh_frame_compact) == 0)
+		continue;
+
+#if SUPPORT_COMPACT_EH
+	      /* Emit a LEGACY format header if we have processed all
+	         of the .cfi directives without encountering either inline or
+		 out-of-line compact unwinding opcodes.  */
+	      if (fde->eh_header_type == EH_COMPACT_HAS_LSDA
+		  || fde->eh_header_type == EH_COMPACT_UNKNOWN)
+		fde->eh_header_type = EH_COMPACT_LEGACY;
+
+	      if (fde->eh_header_type != EH_COMPACT_LEGACY)
+		continue;
+#endif
+	      if (EH_FRAME_LINKONCE)
 		{
 		  if (HANDLED (fde))
 		    continue;
@@ -1922,20 +2306,108 @@ cfi_finish (void)
 		}
 
 	      cie = select_cie_for_fde (fde, TRUE, &first, 2);
+	      fde->eh_loc = symbol_temp_new_now ();
 	      output_fde (fde, cie, TRUE, first,
 			  fde->next == NULL ? EH_FRAME_ALIGNMENT : 2);
 	    }
 	}
-      while (SUPPORT_FRAME_LINKONCE && seek_next_seg == 2);
+      while (EH_FRAME_LINKONCE && seek_next_seg == 2);
 
-      if (SUPPORT_FRAME_LINKONCE)
+      if (EH_FRAME_LINKONCE)
 	for (fde = all_fde_data; fde ; fde = fde->next)
 	  SET_HANDLED (fde, 0);
+
+#if SUPPORT_COMPACT_EH
+      if (compact_eh)
+	{
+	  /* Create remaining out of line table entries.  */
+	  do
+	    {
+	      ccseg = NULL;
+	      seek_next_seg = 0;
+
+	      for (fde = all_fde_data; fde ; fde = fde->next)
+		{
+		  if ((fde->sections & CFI_EMIT_eh_frame) == 0
+		      && (fde->sections & CFI_EMIT_eh_frame_compact) == 0)
+		    continue;
+
+		  if (fde->eh_header_type != EH_COMPACT_OUTLINE)
+		    continue;
+		  if (HANDLED (fde))
+		    continue;
+		  if (seek_next_seg && CUR_SEG (fde) != ccseg)
+		    {
+		      seek_next_seg = 2;
+		      continue;
+		    }
+		  if (!seek_next_seg)
+		    {
+		      ccseg = CUR_SEG (fde);
+		      /* Open .gnu_extab section.  */
+		      get_cfi_seg (ccseg, ".gnu_extab",
+				   (SEC_ALLOC | SEC_LOAD | SEC_DATA
+				    | DWARF2_EH_FRAME_READ_ONLY),
+				   1);
+		      seek_next_seg = 1;
+		    }
+		  SET_HANDLED (fde, 1);
+
+		  frag_align (1, 0, 0);
+		  record_alignment (now_seg, 1);
+		  output_compact_unwind_data (fde, 1);
+		}
+	    }
+	  while (EH_FRAME_LINKONCE && seek_next_seg == 2);
+
+	  for (fde = all_fde_data; fde ; fde = fde->next)
+	    SET_HANDLED (fde, 0);
+
+	  /* Create index table fragments.  */
+	  do
+	    {
+	      ccseg = NULL;
+	      seek_next_seg = 0;
+
+	      for (fde = all_fde_data; fde ; fde = fde->next)
+		{
+		  if ((fde->sections & CFI_EMIT_eh_frame) == 0
+		      && (fde->sections & CFI_EMIT_eh_frame_compact) == 0)
+		    continue;
+
+		  if (HANDLED (fde))
+		    continue;
+		  if (seek_next_seg && CUR_SEG (fde) != ccseg)
+		    {
+		      seek_next_seg = 2;
+		      continue;
+		    }
+		  if (!seek_next_seg)
+		    {
+		      ccseg = CUR_SEG (fde);
+		      /* Open .eh_frame_entry section.  */
+		      cfi_seg = get_cfi_seg (ccseg, ".eh_frame_entry",
+					     (SEC_ALLOC | SEC_LOAD | SEC_DATA
+					      | DWARF2_EH_FRAME_READ_ONLY),
+					     2);
+		      seek_next_seg = 1;
+		    }
+		  SET_HANDLED (fde, 1);
+
+		  output_eh_header (fde);
+		}
+	    }
+	  while (seek_next_seg == 2);
+
+	  for (fde = all_fde_data; fde ; fde = fde->next)
+	    SET_HANDLED (fde, 0);
+	}
+#endif /* SUPPORT_COMPACT_EH */
 
       flag_traditional_format = save_flag_traditional_format;
     }
 
-  if ((cfi_sections & CFI_EMIT_debug_frame) != 0)
+  if ((all_cfi_sections & CFI_EMIT_debug_frame) != 0)
     {
       int alignment = ffs (DWARF2_ADDR_SIZE (stdoutput)) - 1;
 
@@ -1945,7 +2417,7 @@ cfi_finish (void)
 		     alignment);
 
       do
-        {
+	{
 	  ccseg = NULL;
 	  seek_next_seg = 0;
 
@@ -1958,6 +2430,9 @@ cfi_finish (void)
 
 	  for (fde = all_fde_data; fde ; fde = fde->next)
 	    {
+	      if ((fde->sections & CFI_EMIT_debug_frame) == 0)
+		continue;
+
 	      if (SUPPORT_FRAME_LINKONCE)
 		{
 		  if (HANDLED (fde))
@@ -2015,6 +2490,7 @@ const pseudo_typeS cfi_pseudo_table[] =
     { "cfi_sections", dot_cfi_dummy, 0 },
     { "cfi_startproc", dot_cfi_dummy, 0 },
     { "cfi_endproc", dot_cfi_dummy, 0 },
+    { "cfi_fde_data", dot_cfi_dummy, 0 },
     { "cfi_def_cfa", dot_cfi_dummy, 0 },
     { "cfi_def_cfa_register", dot_cfi_dummy, 0 },
     { "cfi_def_cfa_offset", dot_cfi_dummy, 0 },
@@ -2032,8 +2508,11 @@ const pseudo_typeS cfi_pseudo_table[] =
     { "cfi_escape", dot_cfi_dummy, 0 },
     { "cfi_signal_frame", dot_cfi_dummy, 0 },
     { "cfi_personality", dot_cfi_dummy, 0 },
+    { "cfi_personality_id", dot_cfi_dummy, 0 },
     { "cfi_lsda", dot_cfi_dummy, 0 },
     { "cfi_val_encoded_addr", dot_cfi_dummy, 0 },
+    { "cfi_label", dot_cfi_dummy, 0 },
+    { "cfi_inline_lsda", dot_cfi_dummy, 0 },
     { NULL, NULL, 0 }
   };
 

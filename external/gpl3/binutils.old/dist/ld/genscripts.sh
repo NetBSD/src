@@ -1,6 +1,6 @@
 #!/bin/sh
 # genscripts.sh - generate the ld-emulation-target specific files
-# Copyright 2004, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+# Copyright (C) 2004-2015 Free Software Foundation, Inc.
 #
 # This file is part of the Gnu Linker.
 #
@@ -33,8 +33,7 @@
 #          enable_initfini_array \
 #          this_emulation \
 # optional:
-#          tool_dir \
-#          customizer_script
+#          tool_dir
 #
 # Sample usage:
 #
@@ -93,21 +92,9 @@ use_sysroot=$1
 ENABLE_INITFINI_ARRAY=$2
 EMULATION_NAME=$3
 TOOL_LIB=$4
-CUSTOMIZER_SCRIPT=$5
-
-# Can't use ${TOOL_LIB:-$target_alias} here due to an Ultrix shell bug.
-if [ "x${TOOL_LIB}" = "x" ] ; then
-  tool_lib=${exec_prefix}/${target_alias}/lib
-else
-  tool_lib=${exec_prefix}/${TOOL_LIB}/lib
-fi
-
-if [ "x${CUSTOMIZER_SCRIPT}" = "x" ] ; then
-  CUSTOMIZER_SCRIPT=${EMULATION_NAME}
-fi
-CUSTOMIZER_SCRIPT="${srcdir}/emulparams/${CUSTOMIZER_SCRIPT}.sh"
 
 # Include the emulation-specific parameters:
+CUSTOMIZER_SCRIPT="${srcdir}/emulparams/${EMULATION_NAME}.sh"
 . ${CUSTOMIZER_SCRIPT}
 
 if test -d ldscripts; then
@@ -150,96 +137,97 @@ fi
 # If the emulparams file set LIBPATH_SUFFIX, prepend an extra copy of
 # the library path with the suffix applied.
 
-if [ "x${LIB_PATH}" = "x" ] && [ "x${USE_LIBPATH}" = xyes ] ; then
-  LIB_PATH2=
+# Paths with LIBPATH_SUFFIX
+lib_path1=
+# Paths without LIBPATH_SUFFIX
+lib_path2=
+if [ "${LIB_PATH}" != ":" ] ; then
+  lib_path2=${LIB_PATH}
+fi
 
+# Add args to lib_path1 and lib_path2, discarding any duplicates
+append_to_lib_path()
+{
+  if [ $# != 0 ]; then
+    for lib in "$@"; do
+      # The "=" is harmless if we aren't using a sysroot, but also needless.
+      if [ "x${use_sysroot}" = "xyes" ] ; then
+	lib="=${lib}"
+      fi
+      skip_lib=no
+      if test -n "${LIBPATH_SUFFIX}"; then
+	case "${lib}" in
+	  *${LIBPATH_SUFFIX})
+	    case :${lib_path1}: in
+	      *:${lib}:*) ;;
+	      ::) lib_path1=${lib} ;;
+	      *) lib_path1=${lib_path1}:${lib} ;;
+	    esac ;;
+	  *)
+	    if test -n "${LIBPATH_SUFFIX_SKIP}"; then
+	      case "${lib}" in
+		*${LIBPATH_SUFFIX_SKIP}) skip_lib=yes ;;
+	      esac
+	    fi
+	    if test "${skip_lib}" = "no"; then
+	      case :${lib_path1}: in
+		*:${lib}${LIBPATH_SUFFIX}:*) ;;
+		::) lib_path1=${lib}${LIBPATH_SUFFIX} ;;
+	        *) lib_path1=${lib_path1}:${lib}${LIBPATH_SUFFIX} ;;
+	      esac
+	    fi ;;
+	esac
+      fi
+      if test "${skip_lib}" = "no"; then
+	case :${lib_path1}:${lib_path2}: in
+	  *:${lib}:*) ;;
+	  *::) lib_path2=${lib} ;;
+	  *) lib_path2=${lib_path2}:${lib} ;;
+	esac
+      fi
+    done
+  fi
+}
+
+# Always search $(tooldir)/lib, aka /usr/local/TARGET/lib when native
+# except when LIBPATH=":".
+if [ "${LIB_PATH}" != ":" ] ; then
+  libs=
+  if [ "x${TOOL_LIB}" = "x" ] ; then
+    if [ "x${NATIVE}" = "xyes" ] ; then
+      libs="${exec_prefix}/${target_alias}/lib"
+    fi
+  else
+    # For multilib'ed targets, ensure both ${target_alias}/lib${LIBPATH_SUFFIX}
+    # and ${TOOL_LIB}/lib${LIBPATH_SUFFIX} are in the default search path,
+    # because 64bit libraries may be in both places, depending on
+    # cross-development setup method (e.g.: /usr/s390x-linux/lib64
+    # vs. /usr/s390-linux/lib64)
+    case "${NATIVE}:${LIBPATH_SUFFIX}:${TOOL_LIB}" in
+      :* | *::* | *:*:*${LIBPATH_SUFFIX}) ;;
+      *) libs="${exec_prefix}/${target_alias}/lib${LIBPATH_SUFFIX}" ;;
+    esac
+    libs="${exec_prefix}/${TOOL_LIB}/lib ${libs}"
+  fi
+  #NetBSD: don't spam linker scripts like this.
+  #append_to_lib_path ${libs}
+fi
+
+if [ "x${LIB_PATH}" = "x" ] && [ "x${USE_LIBPATH}" = xyes ] ; then
   libs=${NATIVE_LIB_DIRS}
-  if [ "x${use_sysroot}" != "xyes" ] ; then
+  if [ "x${NATIVE}" = "xyes" ] ; then
     case " ${libs} " in
       *" ${libdir} "*) ;;
       *) libs="${libdir} ${libs}" ;;
     esac
-    case " ${libs} " in
-      *" ${tool_lib} "*) ;;
-      *) libs="${tool_lib} ${libs}" ;;
-    esac
   fi
-
-  for lib in ${libs}; do
-    # The "=" is harmless if we aren't using a sysroot, but also needless.
-    if [ "x${use_sysroot}" = "xyes" ] ; then
-      lib="=${lib}"
-    fi
-    addsuffix=
-    case "${LIBPATH_SUFFIX}:${lib}" in
-      :*) ;;
-      *:*${LIBPATH_SUFFIX}) ;;
-      *) addsuffix=yes ;;
-    esac
-    if test -n "$addsuffix"; then
-      case :${LIB_PATH}: in
-	*:${lib}${LIBPATH_SUFFIX}:*) ;;
-	::) LIB_PATH=${lib}${LIBPATH_SUFFIX} ;;
-	*) LIB_PATH=${LIB_PATH}:${lib}${LIBPATH_SUFFIX} ;;
-      esac
-      case :${LIB_PATH}:${LIB_PATH2}: in
-	*:${lib}:*) ;;
-	*::) LIB_PATH2=${lib} ;;
-	*) LIB_PATH2=${LIB_PATH2}:${lib} ;;
-      esac
-    else
-      case :${LIB_PATH2}: in
-	*:${lib}:*) ;;
-	::) LIB_PATH2=${lib} ;;
-	*) LIB_PATH2=${LIB_PATH2}:${lib} ;;
-      esac
-    fi
-  done
-
-  case :${LIB_PATH}:${LIB_PATH2}: in
-    *:: | ::*) LIB_PATH=${LIB_PATH}${LIB_PATH2} ;;
-    *) LIB_PATH=${LIB_PATH}:${LIB_PATH2} ;;
-  esac
-
-  # For multilib'ed targets, ensure both ${target_alias}/lib${LIBPATH_SUFFIX}
-  # and ${TOOL_LIB}/lib${LIBPATH_SUFFIX} are in the default search path, because
-  # 64bit libraries may be in both places, depending on cross-development
-  # setup method (e.g.: /usr/s390x-linux/lib64 vs /usr/s390-linux/lib64)
-  case "${LIBPATH_SUFFIX}:${tool_lib}" in
-    :*) ;;
-    *:*${LIBPATH_SUFFIX}) ;;
-    *)
-      paths="${exec_prefix}/${target_alias}/lib${LIBPATH_SUFFIX}"
-      if [ x"${TOOL_LIB}" != x ]; then
-        paths="${paths} ${exec_prefix}/${TOOL_LIB}/lib${LIBPATH_SUFFIX}"
-      fi
-      for path in $paths; do
-        case :${LIB_PATH}: in
-          ::: | *:${path}:*) ;;
-          *) LIB_PATH=${path}:${LIB_PATH} ;;
-        esac
-      done
-    ;;
-  esac
+  append_to_lib_path ${libs}
 fi
 
-# Always search $(tooldir)/lib, aka /usr/local/TARGET/lib, except for
-# sysrooted configurations and when LIBPATH=":".
-if [ "x${use_sysroot}" != "xyes" ] ; then
-  case :${LIB_PATH}: in
-  ::: | *:${tool_lib}:*) ;;
-  ::) LIB_PATH=${tool_lib} ;;
-  *) LIB_PATH=${tool_lib}:${LIB_PATH} ;;
-  esac
-  # For multilib targets, search both $tool_lib dirs
-  if [ "x${LIBPATH_SUFFIX}" != "x" ] ; then
-    case :${LIB_PATH}: in
-      ::: | *:${tool_lib}${LIBPATH_SUFFIX}:*) ;;
-      ::) LIB_PATH=${tool_lib}${LIBPATH_SUFFIX} ;;
-      *) LIB_PATH=${tool_lib}${LIBPATH_SUFFIX}:${LIB_PATH} ;;
-    esac
-  fi
-fi
+case :${lib_path1}:${lib_path2}: in
+  *:: | ::*) LIB_PATH=${lib_path1}${lib_path2} ;;
+  *) LIB_PATH=${lib_path1}:${lib_path2} ;;
+esac
 
 LIB_SEARCH_DIRS=`echo ${LIB_PATH} | sed -e 's/:/ /g' -e 's/\([^ ][^ ]*\)/SEARCH_DIR(\\"\1\\");/g'`
 
@@ -420,8 +408,8 @@ if test -n "$GENERATE_AUTO_IMPORT_SCRIPT"; then
   ) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xa
 fi
 
-case " $EMULATION_LIBPATH " in
-    *" ${EMULATION_NAME} "*) COMPILE_IN=true;;
+case "$COMPILE_IN: $EMULATION_LIBPATH " in
+    :*" ${EMULATION_NAME} "*) COMPILE_IN=yes;;
 esac
 
 # PR ld/5652:

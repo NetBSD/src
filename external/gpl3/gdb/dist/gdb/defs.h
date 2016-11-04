@@ -1,7 +1,7 @@
 /* *INDENT-OFF* */ /* ATTRIBUTE_PRINTF confuses indent, avoid running it
 		      for now.  */
 /* Basic, host-specific, and target-specific definitions for GDB.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,6 +53,7 @@
 #include "ui-file.h"
 
 #include "host-defs.h"
+#include "common/enum-flags.h"
 
 /* Scope types enumerator.  List the types of scopes the compiler will
    accept.  */
@@ -125,27 +126,55 @@ extern char *python_libdir;
 /* * Search path for separate debug files.  */
 extern char *debug_file_directory;
 
-/* GDB has two methods for handling SIGINT.  When immediate_quit is
-   nonzero, a SIGINT results in an immediate longjmp out of the signal
-   handler.  Otherwise, SIGINT simply sets a flag; code that might
-   take a long time, and which ought to be interruptible, checks this
-   flag using the QUIT macro.
+/* GDB's SIGINT handler basically sets a flag; code that might take a
+   long time before it gets back to the event loop, and which ought to
+   be interruptible, checks this flag using the QUIT macro, which, if
+   GDB has the terminal, throws a quit exception.
+
+   In addition to setting a flag, the SIGINT handler also marks a
+   select/poll-able file descriptor as read-ready.  That is used by
+   interruptible_select in order to support interrupting blocking I/O
+   in a race-free manner.
 
    These functions use the extension_language_ops API to allow extension
    language(s) and GDB SIGINT handling to coexist seamlessly.  */
 
-/* * Clear the quit flag.  */
-extern void clear_quit_flag (void);
 /* * Evaluate to non-zero if the quit flag is set, zero otherwise.  This
    will clear the quit flag as a side effect.  */
 extern int check_quit_flag (void);
 /* * Set the quit flag.  */
 extern void set_quit_flag (void);
 
+/* The current quit handler (and its type).  This is called from the
+   QUIT macro.  See default_quit_handler below for default behavior.
+   Parts of GDB temporarily override this to e.g., completely suppress
+   Ctrl-C because it would not be safe to throw.  E.g., normally, you
+   wouldn't want to quit between a RSP command and its response, as
+   that would break the communication with the target, but you may
+   still want to intercept the Ctrl-C and offer to disconnect if the
+   user presses Ctrl-C multiple times while the target is stuck
+   waiting for the wedged remote stub.  */
+typedef void (quit_handler_ftype) (void);
+extern quit_handler_ftype *quit_handler;
+
+/* Override the current quit handler.  Sets NEW_QUIT_HANDLER as
+   current quit handler, and installs a cleanup that when run restores
+   the previous quit handler.  */
+struct cleanup *
+  make_cleanup_override_quit_handler (quit_handler_ftype *new_quit_handler);
+
+/* The default quit handler.  Checks whether Ctrl-C was pressed, and
+   if so:
+
+     - If GDB owns the terminal, throws a quit exception.
+
+     - If GDB does not own the terminal, forwards the Ctrl-C to the
+       target.
+*/
+extern void default_quit_handler (void);
+
 /* Flag that function quit should call quit_force.  */
 extern volatile int sync_quit_force_run;
-
-extern int immediate_quit;
 
 extern void quit (void);
 
@@ -153,36 +182,56 @@ extern void quit (void);
 
 extern void maybe_quit (void);
 
-/* Check whether a Ctrl-C was typed, and if so, call quit.  The target
-   is given a chance to process the Ctrl-C.  E.g., it may detect that
-   repeated Ctrl-C requests were issued, and choose to close the
-   connection.  */
+/* Check whether a Ctrl-C was typed, and if so, call the current quit
+   handler.  */
 #define QUIT maybe_quit ()
+
+/* Set the serial event associated with the quit flag.  */
+extern void quit_serial_event_set (void);
+
+/* Clear the serial event associated with the quit flag.  */
+extern void quit_serial_event_clear (void);
 
 /* * Languages represented in the symbol table and elsewhere.
    This should probably be in language.h, but since enum's can't
    be forward declared to satisfy opaque references before their
-   actual definition, needs to be here.  */
+   actual definition, needs to be here.
+
+   The constants here are in priority order.  In particular,
+   demangling is attempted according to this order.
+
+   Note that there's ambiguity between the mangling schemes of some of
+   these languages, so some symbols could be successfully demangled by
+   several languages.  For that reason, the constants here are sorted
+   in the order we'll attempt demangling them.  For example: Java and
+   Rust use C++ mangling, so must come after C++; Ada must come last
+   (see ada_sniff_from_mangled_name).  */
 
 enum language
   {
     language_unknown,		/* Language not known */
     language_auto,		/* Placeholder for automatic setting */
     language_c,			/* C */
+    language_objc,		/* Objective-C */
     language_cplus,		/* C++ */
+    language_java,		/* Java */
     language_d,			/* D */
     language_go,		/* Go */
-    language_objc,		/* Objective-C */
-    language_java,		/* Java */
     language_fortran,		/* Fortran */
     language_m2,		/* Modula-2 */
     language_asm,		/* Assembly language */
     language_pascal,		/* Pascal */
-    language_ada,		/* Ada */
     language_opencl,		/* OpenCL */
+    language_rust,		/* Rust */
     language_minimal,		/* All other languages, minimal support only */
+    language_ada,		/* Ada */
     nr_languages
   };
+
+/* The number of bits needed to represent all languages, with enough
+   padding to allow for reasonable growth.  */
+#define LANGUAGE_BITS 5
+gdb_static_assert (nr_languages <= (1 << LANGUAGE_BITS));
 
 enum precision_type
   {
@@ -280,15 +329,15 @@ extern void print_transfer_performance (struct ui_file *stream,
 
 typedef void initialize_file_ftype (void);
 
-extern char *gdb_readline (const char *);
-
 extern char *gdb_readline_wrapper (const char *);
 
 extern char *command_line_input (const char *, int, char *);
 
 extern void print_prompt (void);
 
-extern int input_from_terminal_p (void);
+struct ui;
+
+extern int input_interactive_p (struct ui *);
 
 extern int info_verbose;
 
@@ -581,6 +630,25 @@ enum gdb_osabi
 extern double atof (const char *);	/* X3.159-1989  4.10.1.1 */
 #endif
 
+/* Enumerate the requirements a symbol has in order to be evaluated.
+   These are listed in order of "strength" -- a later entry subsumes
+   earlier ones.  This fine-grained distinction is important because
+   it allows for the evaluation of a TLS symbol during unwinding --
+   when unwinding one has access to registers, but not the frame
+   itself, because that is being constructed.  */
+
+enum symbol_needs_kind
+{
+  /* No special requirements -- just memory.  */
+  SYMBOL_NEEDS_NONE,
+
+  /* The symbol needs registers.  */
+  SYMBOL_NEEDS_REGISTERS,
+
+  /* The symbol needs a frame.  */
+  SYMBOL_NEEDS_FRAME
+};
+
 /* Dynamic target-system-dependent parameters for GDB.  */
 #include "gdbarch.h"
 
@@ -647,7 +715,6 @@ extern void (*deprecated_readline_begin_hook) (char *, ...)
      ATTRIBUTE_FPTR_PRINTF_1;
 extern char *(*deprecated_readline_hook) (const char *);
 extern void (*deprecated_readline_end_hook) (void);
-extern void (*deprecated_register_changed_hook) (int regno);
 extern void (*deprecated_context_hook) (int);
 extern ptid_t (*deprecated_target_wait_hook) (ptid_t ptid,
 					      struct target_waitstatus *status,
@@ -683,6 +750,21 @@ enum block_enum
   STATIC_BLOCK = 1,
   FIRST_LOCAL_BLOCK = 2
 };
+
+/* User selection used in observer.h and multiple print functions.  */
+
+enum user_selected_what_flag
+  {
+    /* Inferior selected.  */
+    USER_SELECTED_INFERIOR = 1 << 1,
+
+    /* Thread selected.  */
+    USER_SELECTED_THREAD = 1 << 2,
+
+    /* Frame selected.  */
+    USER_SELECTED_FRAME = 1 << 3
+  };
+DEF_ENUM_FLAGS_TYPE (enum user_selected_what_flag, user_selected_what);
 
 #include "utils.h"
 

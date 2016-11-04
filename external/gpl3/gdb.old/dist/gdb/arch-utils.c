@@ -127,7 +127,7 @@ generic_in_solib_return_trampoline (struct gdbarch *gdbarch,
 }
 
 int
-generic_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+generic_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   return 0;
 }
@@ -661,7 +661,7 @@ initialize_current_architecture (void)
       chp = strchr (target_name, '-');
       if (chp != NULL
 	  && chp - 2 >= target_name
-	  && strncmp (chp - 2, "el", 2) == 0)
+	  && startswith (chp - 2, "el"))
 	default_byte_order = BFD_ENDIAN_LITTLE;
     }
   if (default_byte_order == BFD_ENDIAN_UNKNOWN)
@@ -864,6 +864,12 @@ default_infcall_mmap (CORE_ADDR size, unsigned prot)
   error (_("This target does not support inferior memory allocation by mmap."));
 }
 
+void
+default_infcall_munmap (CORE_ADDR addr, CORE_ADDR size)
+{
+  /* Memory reserved by inferior mmap is kept leaked.  */
+}
+
 /* -mcmodel=large is used so that no GOT (Global Offset Table) is needed to be
    created in inferior memory by GDB (normally it is set by ld.so).  */
 
@@ -880,6 +886,15 @@ const char *
 default_gnu_triplet_regexp (struct gdbarch *gdbarch)
 {
   return gdbarch_bfd_arch_info (gdbarch)->arch_name;
+}
+
+/* Default method for gdbarch_addressable_memory_unit_size.  By default, a memory byte has
+   a size of 1 octet.  */
+
+int
+default_addressable_memory_unit_size (struct gdbarch *gdbarch)
+{
+  return 1;
 }
 
 /* -Wmissing-prototypes */

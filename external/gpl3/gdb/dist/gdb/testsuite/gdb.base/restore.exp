@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1998-2015 Free Software Foundation, Inc.
+# Copyright 1998-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,20 +79,7 @@ proc restore_tests { } {
         }
     }
 
-    if ![gdb_skip_stdio_test "run to completion"] {
-	send_gdb "continue\n"
-
-	gdb_expect {
-	    -re "exiting" {
-		pass "run to completion"
-	    }
-	    timeout { 
-		fail "(timeout) run to completion"
-	    }
-	}
-    } else {
-	gdb_test "continue" ".*" ""
-    }
+    gdb_continue_to_end "" continue 1
 }
 
 set prev_timeout $timeout

@@ -1,3 +1,105 @@
+2015-07-03  Alan Modra  <amodra@gmail.com>
+
+	* ppc.h (PPC_OPCODE_750, PPC_OPCODE_7450, PPC_OPCODE_860): Define.
+
+2015-07-01  Sandra Loosemore  <sandra@codesourcery.com>
+	    Cesar Philippidis  <cesar@codesourcery.com>
+
+	* nios2.h (enum iw_format_type): Add R2 formats.
+	(enum overflow_type): Add signed_immed12_overflow and
+	enumeration_overflow for R2.
+	(struct nios2_opcode): Document new argument letters for R2.
+	(REG_3BIT, REG_LDWM, REG_POP): Define.
+	(includes): Include nios2r2.h.
+	(nios2_r2_opcodes, nios2_num_r2_opcodes): Declare.
+	(nios2_r2_asi_n_mappings, nios2_num_r2_asi_n_mappings): Declare.
+	(nios2_r2_shi_n_mappings, nios2_num_r2_shi_n_mappings): Declare.
+	(nios2_r2_andi_n_mappings, nios2_num_r2_andi_n_mappings): Declare.
+	(nios2_r2_reg3_mappings, nios2_num_r2_reg3_mappings): Declare.
+	(nios2_r2_reg_range_mappings, nios2_num_r2_reg_range_mappings):
+	Declare.
+	* nios2r2.h: New file.
+
+2015-06-19  Peter Bergner <bergner@vnet.ibm.com>
+
+	* ppc.h (PPC_OPERAND_OPTIONAL_VALUE): New.
+	(ppc_optional_operand_value): New inline function.
+
+2015-06-04  Matthew Wahab  <matthew.wahab@arm.com>
+
+	* aarch64.h (AARCH64_V8_1): New.
+
+2015-06-03  Matthew Wahab  <matthew.wahab@arm.com>
+
+	* arm.h (FPU_ARCH_CRYPTO_NEON_VFP_ARMV8_1): New.
+	(ARM_ARCH_V8_1A): New.
+	(ARM_ARCH_V8_1A_FP): New.
+	(ARM_ARCH_V8_1A_SIMD): New.
+	(ARM_ARCH_V8_1A_CRYPTOV1): New.
+	(ARM_FEATURE_CORE): New.
+
+2015-06-02  Matthew Wahab  <matthew.wahab@arm.com>
+
+	* arm.h (ARM_EXT2_PAN): New.
+	(ARM_FEATURE_CORE_HIGH): New.
+
+2015-06-02  Matthew Wahab  <matthew.wahab@arm.com>
+
+	* arm.h (ARM_FEATURE_ALL): New.
+
+2015-06-02  Matthew Wahab  <matthew.wahab@arm.com>
+
+	* aarch64.h (AARCH64_FEATURE_RDMA): New.
+
+2015-06-02  Matthew Wahab  <matthew.wahab@arm.com>
+
+	* aarch64.h (AARCH64_FEATURE_LOR): New.
+
+2015-06-01  Matthew Wahab  <matthew.wahab@arm.com>
+
+	* aarch64.h (AARCH64_FEATURE_PAN): New.
+	(aarch64_sys_reg_supported_p): Declare.
+	(aarch64_pstatefield_supported_p): Declare.
+
+2015-04-30  DJ Delorie  <dj@redhat.com>
+
+	* rl78.h (RL78_Dis_Isa): New.
+	(rl78_decode_opcode): Add ISA parameter.
+
+2015-03-24  Terry Guo  <terry.guo@arm.com>
+
+	* arm.h (arm_feature_set): Extended to provide more available bits.
+	(ARM_ANY): Updated to follow above new definition.
+	(ARM_CPU_HAS_FEATURE): Likewise.
+	(ARM_CPU_IS_ANY): Likewise.
+	(ARM_MERGE_FEATURE_SETS): Likewise.
+	(ARM_CLEAR_FEATURE): Likewise.
+	(ARM_FEATURE): Likewise.
+	(ARM_FEATURE_COPY): New macro.
+	(ARM_FEATURE_EQUAL): Likewise.
+	(ARM_FEATURE_ZERO): Likewise.
+	(ARM_FEATURE_CORE_EQUAL): Likewise.
+	(ARM_FEATURE_LOW): Likewise.
+	(ARM_FEATURE_CORE_LOW): Likewise.
+	(ARM_FEATURE_CORE_COPROC): Likewise.
+
+2015-02-19  Pedro Alves  <palves@redhat.com>
+
+	* cgen.h [__cplusplus]: Wrap in extern "C".
+	* msp430-decode.h [__cplusplus]: Likewise.
+	* nios2.h [__cplusplus]: Likewise.
+	* rl78.h [__cplusplus]: Likewise.
+	* rx.h [__cplusplus]: Likewise.
+	* tilegx.h [__cplusplus]: Likewise.
+
+2015-01-28  James Bowman  <james.bowman@ftdichip.com>
+
+	* ft32.h: New file.
+
+2015-01-16  Andreas Krebbel  <krebbel@linux.vnet.ibm.com>
+
+	* s390.h (s390_opcode_cpu_val): Add S390_OPCODE_Z13.
+
 2015-01-01  Alan Modra  <amodra@gmail.com>
 
 	Update year range in copyright notice of all files.

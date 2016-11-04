@@ -1,4 +1,4 @@
-#   Copyright 1998-2015 Free Software Foundation, Inc.
+#   Copyright 1998-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -63,12 +63,12 @@ foreach x { 1 2 3 4 5 6 } {
     set trcpt$x $trcpt
     gdb_test "passcount $x" \
 	     "Setting tracepoint $trcpt.* to $x" \
-	     "10.x: set passcount for tracepoint $trcpt"
+	     "set passcount for tracepoint $trcpt"
 
     gdb_test_no_output "condition $trcpt $x - 1 == $x / 2" \
-	     "10.x: set condition for tracepoint $trcpt"
+	     "set condition for tracepoint $trcpt"
 
-    gdb_trace_setactions "10.x: set actions for tracepoint $x" \
+    gdb_trace_setactions "set actions for tracepoint $x" \
 	    "" \
 	    "collect q$x" "^$" \
 	    "while-stepping $x" "^$" \
@@ -76,8 +76,33 @@ foreach x { 1 2 3 4 5 6 } {
 	    "end" "^$"
 }
 
+gdb_test "ftrace fast_tracepoint_loc" \
+	 "Fast tracepoint $decimal at $hex: file .*$srcfile, line $decimal.*" \
+	 "set a fast tracepoint"
+
 gdb_test_no_output "set default-collect gdb_char_test, gdb_long_test - 100" \
-    "10: set default-collect"
+    "set default-collect"
+
+# Save tracepoint definitions to a file, at path SAVE_PATH.
+proc gdb_save_tracepoints { save_path } {
+    set save_path_regexp [string_to_regexp $save_path]
+    remote_file host delete $save_path
+    gdb_test "save tracepoints $save_path" \
+	     "Saved to file '$save_path_regexp'." \
+	     "save tracepoint definitions"
+}
+
+# Load tracepoint definitions from a file, from path SAVE_PATH.
+proc gdb_load_tracepoints { save_path } {
+    # Cleanup existing tracepoints/collections
+    gdb_delete_tracepoints
+    gdb_test_no_output "set default-collect" "clear default-collect"
+
+    gdb_test "info tracepoints" "No tracepoints." "delete tracepoints"
+
+    gdb_test "source $save_path" "Tracepoint \[0-9\]+ at .*" \
+	     "read back saved tracepoints"
+}
 
 proc gdb_verify_tracepoints { testname } {
     global gdb_prompt
@@ -95,7 +120,7 @@ proc gdb_verify_tracepoints { testname } {
 	    exp_continue
 	}
 	-re "$gdb_prompt $" {
-	    if { $ourstate >= 6 } {
+	    if { $ourstate >= 7 } {
 		set result "pass"
 	    } else {
 		set result "fail"
@@ -109,55 +134,49 @@ proc gdb_verify_tracepoints { testname } {
 
     gdb_test "show default-collect" \
 	"The list of expressions to collect by default is \"gdb_char_test, gdb_long_test - 100\"..*" \
-	"10: show default-collect"
+	"verify default-collect"
 }
 
-gdb_verify_tracepoints "10.x: verify trace setup"
+proc do_save_load_test { save_path } {
+    # Save current tracepoint definitions to a file
+    gdb_save_tracepoints $save_path
 
-# 10.1 Save current tracepoint definitions to a file
+    # Clear existing tracepoints and reload from file
+    gdb_load_tracepoints $save_path
 
-remote_file host delete savetrace.tr
-gdb_test "save-tracepoints savetrace.tr" \
-	"Saved to file 'savetrace.tr'." \
-	"10.1: save tracepoint definitions"
+    # Check if they match the expected tracepoints
+    gdb_verify_tracepoints "verify recovered tracepoints"
+}
 
-# 10.2 Read back tracepoint definitions
+gdb_verify_tracepoints "verify trace setup"
 
-gdb_delete_tracepoints
-gdb_test_no_output "set default-collect" "10.2: clear default-collect"
-gdb_test "info tracepoints" "No tracepoints." "10.2: delete tracepoints"
-gdb_test "source savetrace.tr" \
-	"Tracepoint \[0-9\]+ at .*" \
-	"10.2: read back saved tracepoints"
-gdb_verify_tracepoints "10.2: verify recovered tracepoints"
-remote_file host delete savetrace.tr
+with_test_prefix "relative" {
+    set filepath [standard_output_file "savetrace-relative.tr"]
 
-# 10.3 repeat with a path to the file
+    # This only works because the pwd is a prefix of the standard output
+    # directory.  If this assumption becomes false, then this test needs to be
+    # changed (the relative path from [pwd] to the standard output directory
+    # will become a bit more complicated to compute).
+    if {[string first [pwd] $filepath] != 0} {
+	error "[pwd] is not a prefix of $filepath."
+    }
 
-set trace_file_name [standard_output_file savetrace.tr]
-set escapedfilename [string_to_regexp $trace_file_name]
-remote_file host delete $trace_file_name
-gdb_test "save-tracepoints $trace_file_name" \
-	"Saved to file '${escapedfilename}'." \
-	"10.3: save tracepoint definitions, full path"
+    set filepath [string map "[pwd] ." $filepath]
+    do_save_load_test "$filepath"
+}
 
-gdb_delete_tracepoints
-gdb_test_no_output "set default-collect" "10.3: clear default-collect"
-gdb_test "info tracepoints" "No tracepoints." "10.3: delete tracepoints"
-gdb_test "source $trace_file_name" \
-	"Tracepoint \[0-9\]+ at .*" \
-	"10.4: read saved tracepoints, full path"
-gdb_verify_tracepoints "10.3: verify recovered tracepoints, full path"
-remote_file host delete $trace_file_name
+with_test_prefix "absolute" {
+    do_save_load_test [standard_output_file "savetrace-absolute.tr"]
+}
 
-# 10.5 invalid filename
+#      invalid filename
 #      [deferred -- not sure what a good invalid filename would be]
 
-# 10.6 save-trace (file already exists)
+#      save-trace (file already exists)
 #      [expect it to clobber the old one]
 
-# 10.7 help save-tracepoints
+# help save tracepoints
 
-gdb_test "help save-tracepoints" \
+gdb_test "help save tracepoints" \
 	"Save current tracepoint definitions as a script.*" \
-	"10.7: help save-tracepoints"
+	"verify help save tracepoints"

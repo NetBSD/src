@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_ehci.c,v 1.11 2016/04/23 10:15:28 skrll Exp $ */
+/* $NetBSD: omap3_ehci.c,v 1.11.2.1 2016/11/04 14:48:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010-2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.11 2016/04/23 10:15:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.11.2.1 2016/11/04 14:48:59 pgoyette Exp $");
 
 #include "locators.h"
 
@@ -196,6 +196,7 @@ struct omap3_ehci_softc {
 		enum omap3_ehci_port_mode mode;
 		int gpio;
 		bool value;
+		bool extclk;
 	} sc_portconfig[3];
 	struct {
 		uint16_t m, n, m2;
@@ -405,15 +406,24 @@ omap3_ehci_parse_properties(struct omap3_ehci_softc *sc, prop_dictionary_t prop)
 	sc->sc_portconfig[0].mode = omap3_ehci_get_port_mode(prop, "port0-mode");
 	sc->sc_portconfig[0].gpio = omap3_ehci_get_port_gpio(prop, "port0-gpio");
 	prop_dictionary_get_bool(prop, "port0-gpioval", &sc->sc_portconfig[0].value);
+#if defined(OMAP4) || defined(OMAP5)
+	prop_dictionary_get_bool(prop, "port0-extclk", &sc->sc_portconfig[0].extclk);
+#endif
 	if (sc->sc_nports > 1) {
 		sc->sc_portconfig[1].mode = omap3_ehci_get_port_mode(prop, "port1-mode");
 		sc->sc_portconfig[1].gpio = omap3_ehci_get_port_gpio(prop, "port1-gpio");
 		prop_dictionary_get_bool(prop, "port1-gpioval", &sc->sc_portconfig[1].value);
+#if defined(OMAP4) || defined(OMAP5)
+		prop_dictionary_get_bool(prop, "port1-extclk", &sc->sc_portconfig[1].extclk);
+#endif
 	}
 	if (sc->sc_nports > 2) {
 		sc->sc_portconfig[2].mode = omap3_ehci_get_port_mode(prop, "port2-mode");
 		sc->sc_portconfig[2].gpio = omap3_ehci_get_port_gpio(prop, "port2-gpio");
 		prop_dictionary_get_bool(prop, "port2-gpioval", &sc->sc_portconfig[2].value);
+#if defined(OMAP4) || defined(OMAP5)
+		prop_dictionary_get_bool(prop, "port2-extclk", &sc->sc_portconfig[2].extclk);
+#endif
 	}
 
 #ifdef OMAP_3XXX
@@ -670,17 +680,43 @@ omap4_usbhost_init(struct omap3_ehci_softc *sc, int enable)
 	KASSERT(err == 0);
 
 	val = bus_space_read_4(iot, ioh, OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL);
-	val |= OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC60M_P3_CLK
-	    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC60M_P2_CLK
-	    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC480M_P3_CLK
-	    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC480M_P2_CLK
-	    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_UTMI_P3_CLK
-	    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_UTMI_P2_CLK;
+	if (sc->sc_portconfig[0].mode != OMAP3_EHCI_PORT_MODE_NONE) {
+		if (sc->sc_portconfig[0].extclk)
+			val |= OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_CLKSEL_UTMI_P1;
+		else
+			val |= OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_UTMI_P1_CLK;
+		if (sc->sc_portconfig[0].mode == OMAP3_EHCI_PORT_MODE_HSIC)
+			val |= OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC60M_P1_CLK
+			    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC480M_P1_CLK;
+	}
+	if (sc->sc_nports > 1
+	    && sc->sc_portconfig[1].mode != OMAP3_EHCI_PORT_MODE_NONE) {
+		if (sc->sc_portconfig[1].extclk)
+			val |= OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_CLKSEL_UTMI_P2;
+		else
+			val |= OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_UTMI_P2_CLK;
+		if (sc->sc_portconfig[1].mode == OMAP3_EHCI_PORT_MODE_HSIC)
+			val |= OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC60M_P2_CLK
+			    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC480M_P2_CLK;
+	}
+	if (sc->sc_nports > 2
+	    && sc->sc_portconfig[2].mode != OMAP3_EHCI_PORT_MODE_NONE) {
+		val |= OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_UTMI_P3_CLK;
+		if (sc->sc_portconfig[2].mode == OMAP3_EHCI_PORT_MODE_HSIC)
+			val |= OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC60M_P3_CLK
+			    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC480M_P3_CLK;
+	}
 	bus_space_write_4(iot, ioh, OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL, val);
 
 	val = bus_space_read_4(iot, ioh, OMAP4_CM_L3INIT_USB_TLL_HS_CLKCTRL);
-	val |= OMAP4_CM_L3INIT_USB_TLL_HS_CLKCTRL_USB_CH2_CLK
-	    |  OMAP4_CM_L3INIT_USB_TLL_HS_CLKCTRL_USB_CH1_CLK;
+	if (sc->sc_portconfig[0].mode != OMAP3_EHCI_PORT_MODE_NONE)
+		val |= OMAP4_CM_L3INIT_USB_TLL_HS_CLKCTRL_USB_CH0_CLK;
+	if (sc->sc_nports > 1
+	    && sc->sc_portconfig[1].mode != OMAP3_EHCI_PORT_MODE_NONE)
+		val |= OMAP4_CM_L3INIT_USB_TLL_HS_CLKCTRL_USB_CH1_CLK;
+	if (sc->sc_nports > 2
+	    && sc->sc_portconfig[2].mode != OMAP3_EHCI_PORT_MODE_NONE)
+		val |= OMAP4_CM_L3INIT_USB_TLL_HS_CLKCTRL_USB_CH2_CLK;
 	bus_space_write_4(iot, ioh, OMAP4_CM_L3INIT_USB_TLL_HS_CLKCTRL, val);
 
 	bus_space_unmap(iot, ioh, 0x100);

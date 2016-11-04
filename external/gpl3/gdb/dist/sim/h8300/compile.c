@@ -42,11 +42,6 @@
 
 int debug;
 
-host_callback *sim_callback;
-
-static SIM_OPEN_KIND sim_kind;
-static char *myname;
-
 /* FIXME: Needs to live in header file.
    This header should also include the things in remote-sim.h.
    One could move this to remote-sim.h but this function isn't needed
@@ -62,32 +57,6 @@ static void set_simcache_size (SIM_DESC, int);
 #include "opcode/h8300.h"
 
 /* CPU data object: */
-
-static int
-sim_state_initialize (SIM_DESC sd, sim_cpu *cpu)
-{
-  /* FIXME: not really necessary, since sim_cpu_alloc calls zalloc.  */
-
-  memset (&cpu->regs, 0, sizeof(cpu->regs));
-  cpu->regs[SBR_REGNUM] = 0xFFFFFF00;
-  cpu->pc = 0;
-  cpu->delayed_branch = 0;
-  cpu->memory = NULL;
-  cpu->eightbit = NULL;
-  cpu->mask = 0;
-
-  /* Initialize local simulator state.  */
-  sd->sim_cache = NULL;
-  sd->sim_cache_size = 0;
-  sd->cache_idx = NULL;
-  sd->cache_top = 0;
-  sd->memory_size = 0;
-  sd->compiles = 0;
-#ifdef ADEBUG
-  memset (&cpu->stats, 0, sizeof (cpu->stats));
-#endif
-  return 0;
-}
 
 static unsigned int
 h8_get_pc (SIM_DESC sd)
@@ -554,6 +523,8 @@ bitfrom (int x)
 static unsigned int
 lvalue (SIM_DESC sd, int x, int rn, unsigned int *val)
 {
+  SIM_CPU *cpu = STATE_CPU (sd, 0);
+
   if (val == NULL)	/* Paranoia.  */
     return -1;
 
@@ -569,7 +540,7 @@ lvalue (SIM_DESC sd, int x, int rn, unsigned int *val)
       *val = X (OP_MEM, SP);
       break;
     default:
-      sim_engine_set_run_state (sd, sim_stopped, SIGSEGV);
+      sim_engine_halt (sd, cpu, NULL, NULL_CIA, sim_stopped, SIM_SIGSEGV);
       return -1;
     }
   return 0;
@@ -1256,7 +1227,6 @@ compile (SIM_DESC sd, int pc)
 
 static unsigned char  *breg[32];
 static unsigned short *wreg[16];
-static unsigned int   *lreg[18];
 
 #define GET_B_REG(X)     *(breg[X])
 #define SET_B_REG(X, Y) (*(breg[X])) = (Y)
@@ -1312,6 +1282,7 @@ static unsigned int   *lreg[18];
 static int
 fetch_1 (SIM_DESC sd, ea_type *arg, int *val, int twice)
 {
+  SIM_CPU *cpu = STATE_CPU (sd, 0);
   int rn = arg->reg;
   int abs = arg->literal;
   int r;
@@ -1517,7 +1488,7 @@ fetch_1 (SIM_DESC sd, ea_type *arg, int *val, int twice)
 
     case X (OP_MEM, SB):	/* Why isn't this implemented?  */
     default:
-      sim_engine_set_run_state (sd, sim_stopped, SIGSEGV);
+      sim_engine_halt (sd, cpu, NULL, NULL_CIA, sim_stopped, SIM_SIGSEGV);
       return -1;
     }
   return 0;	/* Success.  */
@@ -1548,6 +1519,7 @@ fetch2 (SIM_DESC sd, ea_type *arg, int *val)
 static int
 store_1 (SIM_DESC sd, ea_type *arg, int n, int twice)
 {
+  SIM_CPU *cpu = STATE_CPU (sd, 0);
   int rn = arg->reg;
   int abs = arg->literal;
   int t;
@@ -1726,7 +1698,7 @@ store_1 (SIM_DESC sd, ea_type *arg, int n, int twice)
     case X (OP_MEM, SW):	/* Why isn't this implemented?  */
     case X (OP_MEM, SL):	/* Why isn't this implemented?  */
     default:
-      sim_engine_set_run_state (sd, sim_stopped, SIGSEGV);
+      sim_engine_halt (sd, cpu, NULL, NULL_CIA, sim_stopped, SIM_SIGSEGV);
       return -1;
     }
   return 0;
@@ -1750,17 +1722,6 @@ store2 (SIM_DESC sd, ea_type *arg, int n)
   return store_1 (sd, arg, n, 1);
 }
 
-static union
-{
-  short int i;
-  struct
-    {
-      char low;
-      char high;
-    }
-  u;
-} littleendian;
-
 /* Flag to be set whenever a new SIM_DESC object is created.  */
 static int init_pointers_needed = 1;
 
@@ -1771,8 +1732,6 @@ init_pointers (SIM_DESC sd)
     {
       int i;
 
-      littleendian.i = 1;
-
       if (h8300smode && !h8300_normal_mode)
 	memory_size = H8300S_MSIZE;
       else if (h8300hmode && !h8300_normal_mode)
@@ -1782,8 +1741,8 @@ init_pointers (SIM_DESC sd)
       /* `msize' must be a power of two.  */
       if ((memory_size & (memory_size - 1)) != 0)
 	{
-	  (*sim_callback->printf_filtered) 
-	    (sim_callback,
+	  sim_io_printf
+	    (sd,
 	     "init_pointers: bad memory size %d, defaulting to %d.\n", 
 	     memory_size, memory_size = H8300S_MSIZE);
 	}
@@ -1843,29 +1802,17 @@ init_pointers (SIM_DESC sd)
 	    }
 
 	  if (wreg[i] == 0 || wreg[i + 8] == 0)
-	    (*sim_callback->printf_filtered) (sim_callback, 
-					      "init_pointers: internal error.\n");
+	    sim_io_printf (sd, "init_pointers: internal error.\n");
 
 	  h8_set_reg (sd, i, 0);
-	  lreg[i] = h8_get_reg_buf (sd) + i;
 	}
 
-      /* Note: sim uses pseudo-register ZERO as a zero register.  */
-      lreg[ZERO_REGNUM] = h8_get_reg_buf (sd) + ZERO_REGNUM;
       init_pointers_needed = 0;
 
       /* Initialize the seg registers.  */
       if (!sd->sim_cache)
 	set_simcache_size (sd, CSIZE);
     }
-}
-
-int
-sim_stop (SIM_DESC sd)
-{
-  /* FIXME: use a real signal value.  */
-  sim_engine_set_run_state (sd, sim_stopped, SIGINT);
-  return 1;
 }
 
 #define OBITOP(name, f, s, op) 			\
@@ -1886,14 +1833,12 @@ case O (name, SB):				\
   goto next;					\
 }
 
-void
-sim_resume (SIM_DESC sd, int step, int siggnal)
+static void
+step_once (SIM_DESC sd, SIM_CPU *cpu)
 {
-  static int init1;
   int cycles = 0;
   int insts = 0;
   int tick_start = get_now ();
-  int poll_count = 0;
   int res;
   int tmp;
   int rd;
@@ -1903,26 +1848,16 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
   int c, nz, v, n, u, h, ui, intMaskBit;
   int trace, intMask;
   int oldmask;
-  enum sim_stop reason;
-  int sigrc;
+  host_callback *sim_callback = STATE_CALLBACK (sd);
 
   init_pointers (sd);
-
-  if (step)
-    {
-      sim_engine_set_run_state (sd, sim_stopped, SIGTRAP);
-    }
-  else
-    {
-      sim_engine_set_run_state (sd, sim_running, 0);
-    }
 
   pc = h8_get_pc (sd);
 
   /* The PC should never be odd.  */
   if (pc & 0x1)
     {
-      sim_engine_set_run_state (sd, sim_stopped, SIGBUS);
+      sim_engine_halt (sd, cpu, NULL, NULL_CIA, sim_stopped, SIM_SIGBUS);
       return;
     }
 
@@ -3612,7 +3547,7 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
 	  goto end;
 
 	case O (O_ILL, SB):		/* illegal */
-	  sim_engine_set_run_state (sd, sim_stopped, SIGILL);
+	  sim_engine_halt (sd, cpu, NULL, pc, sim_stopped, SIM_SIGILL);
 	  goto end;
 
 	case O (O_SLEEP, SN):		/* sleep */
@@ -3622,8 +3557,8 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
 	      SIM_WIFEXITED (h8_get_reg (sd, 0)))
 	    {
 	      /* This trap comes from _exit, not from gdb.  */
-	      sim_engine_set_run_state (sd, sim_exited, 
-					SIM_WEXITSTATUS (h8_get_reg (sd, 0)));
+	      sim_engine_halt (sd, cpu, NULL, pc, sim_exited,
+			       SIM_WEXITSTATUS (h8_get_reg (sd, 0)));
 	    }
 #if 0
 	  /* Unfortunately this won't really work, because
@@ -3632,14 +3567,14 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
 	  else if (SIM_WIFSTOPPED (h8_get_reg (sd, 0)))
 	    {
 	      /* Pass the stop signal up to gdb.  */
-	      sim_engine_set_run_state (sd, sim_stopped, 
-					SIM_WSTOPSIG (h8_get_reg (sd, 0)));
+	      sim_engine_halt (sd, cpu, NULL, pc, sim_stopped,
+			       SIM_WSTOPSIG (h8_get_reg (sd, 0)));
 	    }
 #endif
 	  else
 	    {
 	      /* Treat it as a sigtrap.  */
-	      sim_engine_set_run_state (sd, sim_stopped, SIGTRAP);
+	      sim_engine_halt (sd, cpu, NULL, pc, sim_stopped, SIM_SIGTRAP);
 	    }
 	  goto end;
 
@@ -3680,7 +3615,7 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
 	  goto end;
 
 	case O (O_BPT, SN):
-	  sim_engine_set_run_state (sd, sim_stopped, SIGTRAP);
+	  sim_engine_halt (sd, cpu, NULL, pc, sim_stopped, SIM_SIGTRAP);
 	  goto end;
 
 	case O (O_BSETEQ, SB):
@@ -4353,14 +4288,13 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
 
 	default:
 	illegal:
-	  sim_engine_set_run_state (sd, sim_stopped, SIGILL);
+	  sim_engine_halt (sd, cpu, NULL, pc, sim_stopped, SIM_SIGILL);
 	  goto end;
 
 	}
 
-      (*sim_callback->printf_filtered) (sim_callback,
-					"sim_resume: internal error.\n");
-      sim_engine_set_run_state (sd, sim_stopped, SIGILL);
+      sim_io_printf (sd, "sim_resume: internal error.\n");
+      sim_engine_halt (sd, cpu, NULL, pc, sim_stopped, SIM_SIGILL);
       goto end;
 
     setc:
@@ -4571,18 +4505,9 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
       else
 	pc = code->next_pc;
 
-    end:
-      
-      if (--poll_count < 0)
-	{
-	  poll_count = POLL_QUIT_INTERVAL;
-	  if ((*sim_callback->poll_quit) != NULL
-	      && (*sim_callback->poll_quit) (sim_callback))
-	    sim_engine_set_run_state (sd, sim_stopped, SIGINT);
-	}
-      sim_engine_get_run_state (sd, &reason, &sigrc);
-    } while (reason == sim_running);
+    } while (0);
 
+ end:
   h8_set_ticks (sd, h8_get_ticks (sd) + get_now () - tick_start);
   h8_set_cycles (sd, h8_get_cycles (sd) + cycles);
   h8_set_insts (sd, h8_get_insts (sd) + insts);
@@ -4593,6 +4518,26 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
     h8_set_exr (sd, (trace<<7) | intMask);
 
   h8_set_mask (sd, oldmask);
+}
+
+void
+sim_engine_run (SIM_DESC sd,
+		int next_cpu_nr,  /* ignore  */
+		int nr_cpus,      /* ignore  */
+		int siggnal)
+{
+  sim_cpu *cpu;
+
+  SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
+
+  cpu = STATE_CPU (sd, 0);
+
+  while (1)
+    {
+      step_once (sd, cpu);
+      if (sim_events_tick (sd))
+	sim_events_process (sd);
+    }
 }
 
 int
@@ -4631,9 +4576,8 @@ sim_read (SIM_DESC sd, SIM_ADDR addr, unsigned char *buffer, int size)
   return size;
 }
 
-
-int
-sim_store_register (SIM_DESC sd, int rn, unsigned char *value, int length)
+static int
+h8300_reg_store (SIM_CPU *cpu, int rn, unsigned char *value, int length)
 {
   int longval;
   int shortval;
@@ -4642,19 +4586,17 @@ sim_store_register (SIM_DESC sd, int rn, unsigned char *value, int length)
   shortval = (value[0] << 8) | (value[1]);
   intval = h8300hmode ? longval : shortval;
 
-  init_pointers (sd);
+  init_pointers (CPU_STATE (cpu));
   switch (rn)
     {
     case PC_REGNUM:
       if(h8300_normal_mode)
-        h8_set_pc (sd, shortval); /* PC for Normal mode is 2 bytes */
+        cpu->pc = shortval; /* PC for Normal mode is 2 bytes */
       else
-        h8_set_pc (sd, intval);
+        cpu->pc = intval;
       break;
     default:
-      (*sim_callback->printf_filtered) (sim_callback, 
-					"sim_store_register: bad regnum %d.\n",
-					rn);
+      return -1;
     case R0_REGNUM:
     case R1_REGNUM:
     case R2_REGNUM:
@@ -4663,80 +4605,46 @@ sim_store_register (SIM_DESC sd, int rn, unsigned char *value, int length)
     case R5_REGNUM:
     case R6_REGNUM:
     case R7_REGNUM:
-      h8_set_reg (sd, rn, intval);
-      break;
     case CCR_REGNUM:
-      h8_set_ccr (sd, intval);
-      break;
     case EXR_REGNUM:
-      h8_set_exr (sd, intval);
-      break;
     case SBR_REGNUM:
-      h8_set_sbr (sd, intval);
-      break;
     case VBR_REGNUM:
-      h8_set_vbr (sd, intval);
-      break;
     case MACH_REGNUM:
-      h8_set_mach (sd, intval);
-      break;
     case MACL_REGNUM:
-      h8_set_macl (sd, intval);
+      cpu->regs[rn] = intval;
       break;
     case CYCLE_REGNUM:
-      h8_set_cycles (sd, longval);
-      break;
-
     case INST_REGNUM:
-      h8_set_insts (sd, longval);
-      break;
-
     case TICK_REGNUM:
-      h8_set_ticks (sd, longval);
+      cpu->regs[rn] = longval;
       break;
     }
   return length;
 }
 
-int
-sim_fetch_register (SIM_DESC sd, int rn, unsigned char *buf, int length)
+static int
+h8300_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *buf, int length)
 {
   int v;
   int longreg = 0;
 
-  init_pointers (sd);
+  init_pointers (CPU_STATE (cpu));
 
   if (!h8300smode && rn >= EXR_REGNUM)
     rn++;
   switch (rn)
     {
     default:
-      (*sim_callback->printf_filtered) (sim_callback, 
-					"sim_fetch_register: bad regnum %d.\n",
-					rn);
-      v = 0;
+      return -1;
+    case PC_REGNUM:
+      v = cpu->pc;
       break;
     case CCR_REGNUM:
-      v = h8_get_ccr (sd);
-      break;
     case EXR_REGNUM:
-      v = h8_get_exr (sd);
-      break;
-    case PC_REGNUM:
-      v = h8_get_pc (sd);
-      break;
     case SBR_REGNUM:
-      v = h8_get_sbr (sd);
-      break;
     case VBR_REGNUM:
-      v = h8_get_vbr (sd);
-      break;
     case MACH_REGNUM:
-      v = h8_get_mach (sd);
-      break;
     case MACL_REGNUM:
-      v = h8_get_macl (sd);
-      break;
     case R0_REGNUM:
     case R1_REGNUM:
     case R2_REGNUM:
@@ -4745,19 +4653,16 @@ sim_fetch_register (SIM_DESC sd, int rn, unsigned char *buf, int length)
     case R5_REGNUM:
     case R6_REGNUM:
     case R7_REGNUM:
-      v = h8_get_reg (sd, rn);
+      v = cpu->regs[rn];
       break;
     case CYCLE_REGNUM:
-      v = h8_get_cycles (sd);
-      longreg = 1;
-      break;
     case TICK_REGNUM:
-      v = h8_get_ticks (sd);
+    case INST_REGNUM:
+      v = cpu->regs[rn];
       longreg = 1;
       break;
-    case INST_REGNUM:
-      v = h8_get_insts (sd);
-      longreg = 1;
+    case ZERO_REGNUM:
+      v = 0;
       break;
     }
   /* In Normal mode PC is 2 byte, but other registers are 4 byte */
@@ -4767,19 +4672,14 @@ sim_fetch_register (SIM_DESC sd, int rn, unsigned char *buf, int length)
       buf[1] = v >> 16;
       buf[2] = v >> 8;
       buf[3] = v >> 0;
+      return 4;
     }
   else
     {
       buf[0] = v >> 8;
       buf[1] = v;
+      return 2;
     }
-  return -1;
-}
-
-void
-sim_stop_reason (SIM_DESC sd, enum sim_stop *reason, int *sigrc)
-{
-  sim_engine_get_run_state (sd, reason, sigrc);
 }
 
 static void
@@ -4801,28 +4701,14 @@ sim_info (SIM_DESC sd, int verbose)
   double timetaken = (double) h8_get_ticks (sd) / (double) now_persec ();
   double virttime = h8_get_cycles (sd) / 10.0e6;
 
-  (*sim_callback->printf_filtered) (sim_callback,
-				    "\n\n#instructions executed  %10d\n",
-				    h8_get_insts (sd));
-  (*sim_callback->printf_filtered) (sim_callback,
-				    "#cycles (v approximate) %10d\n",
-				    h8_get_cycles (sd));
-  (*sim_callback->printf_filtered) (sim_callback,
-				    "#real time taken        %10.4f\n",
-				    timetaken);
-  (*sim_callback->printf_filtered) (sim_callback,
-				    "#virtual time taken     %10.4f\n",
-				    virttime);
+  sim_io_printf (sd, "\n\n#instructions executed  %10d\n", h8_get_insts (sd));
+  sim_io_printf (sd, "#cycles (v approximate) %10d\n", h8_get_cycles (sd));
+  sim_io_printf (sd, "#real time taken        %10.4f\n", timetaken);
+  sim_io_printf (sd, "#virtual time taken     %10.4f\n", virttime);
   if (timetaken != 0.0)
-    (*sim_callback->printf_filtered) (sim_callback,
-				      "#simulation ratio       %10.4f\n",
-				      virttime / timetaken);
-  (*sim_callback->printf_filtered) (sim_callback,
-				    "#compiles               %10d\n",
-				    h8_get_compiles (sd));
-  (*sim_callback->printf_filtered) (sim_callback,
-				    "#cache size             %10d\n",
-				    sd->sim_cache_size);
+    sim_io_printf (sd, "#simulation ratio       %10.4f\n", virttime / timetaken);
+  sim_io_printf (sd, "#compiles               %10d\n", h8_get_compiles (sd));
+  sim_io_printf (sd, "#cache size             %10d\n", sd->sim_cache_size);
 
 #ifdef ADEBUG
   /* This to be conditional on `what' (aka `verbose'),
@@ -4833,8 +4719,7 @@ sim_info (SIM_DESC sd, int verbose)
       for (i = 0; i < O_LAST; i++)
 	{
 	  if (h8_get_stats (sd, i))
-	    (*sim_callback->printf_filtered) (sim_callback, "%d: %d\n", 
-					      i, h8_get_stats (sd, i));
+	    sim_io_printf (sd, "%d: %d\n", i, h8_get_stats (sd, i));
 	}
     }
 #endif
@@ -4865,6 +4750,54 @@ set_h8300h (unsigned long machine)
     h8300_normal_mode = 1;
 }
 
+/* H8300-specific options.
+   TODO: These really should be merged into the common model modules.  */
+typedef enum {
+  OPTION_H8300H,
+  OPTION_H8300S,
+  OPTION_H8300SX
+} H8300_OPTIONS;
+
+static SIM_RC
+h8300_option_handler (SIM_DESC sd, sim_cpu *cpu ATTRIBUTE_UNUSED, int opt,
+		      char *arg, int is_command ATTRIBUTE_UNUSED)
+{
+  switch ((H8300_OPTIONS) opt)
+    {
+    case OPTION_H8300H:
+      set_h8300h (bfd_mach_h8300h);
+      break;
+    case OPTION_H8300S:
+      set_h8300h (bfd_mach_h8300s);
+      break;
+    case OPTION_H8300SX:
+      set_h8300h (bfd_mach_h8300sx);
+      break;
+
+      default:
+	/* We'll actually never get here; the caller handles the error
+	   case.  */
+	sim_io_eprintf (sd, "Unknown option `%s'\n", arg);
+	return SIM_RC_FAIL;
+    }
+
+  return SIM_RC_OK;
+}
+
+static const OPTION h8300_options[] =
+{
+  { {"h8300h", no_argument, NULL, OPTION_H8300H},
+      'h', NULL, "Indicate the CPU is H8/300H",
+      h8300_option_handler },
+  { {"h8300s", no_argument, NULL, OPTION_H8300S},
+      'S', NULL, "Indicate the CPU is H8S",
+      h8300_option_handler },
+  { {"h8300sx", no_argument, NULL, OPTION_H8300SX},
+      'x', NULL, "Indicate the CPU is H8SX",
+      h8300_option_handler },
+  { {NULL, no_argument, NULL, 0}, '\0', NULL, NULL, NULL, NULL }
+};
+
 static sim_cia
 h8300_pc_get (sim_cpu *cpu)
 {
@@ -4893,7 +4826,7 @@ SIM_DESC
 sim_open (SIM_OPEN_KIND kind, 
 	  struct host_callback_struct *callback, 
 	  struct bfd *abfd, 
-	  char **argv)
+	  char * const *argv)
 {
   int i;
   SIM_DESC sd;
@@ -4910,13 +4843,9 @@ sim_open (SIM_OPEN_KIND kind,
 
   cpu = STATE_CPU (sd, 0);
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
-  sim_state_initialize (sd, cpu);
+  cpu->regs[SBR_REGNUM] = 0xFFFFFF00;
   /* sim_cpu object is new, so some initialization is needed.  */
   init_pointers_needed = 1;
-
-  /* For compatibility (FIXME: is this right?).  */
-  current_alignment = NONSTRICT_ALIGNMENT;
-  current_target_byte_order = BIG_ENDIAN;
 
   if (sim_pre_argv_init (sd, argv[0]) != SIM_RC_OK)
     {
@@ -4924,9 +4853,13 @@ sim_open (SIM_OPEN_KIND kind,
       return 0;
     }
 
-    /* getopt will print the error message so we just have to exit if
-       this fails.  FIXME: Hmmm...  in the case of gdb we need getopt
-       to call print_filtered.  */
+  if (sim_add_option_table (sd, NULL, h8300_options) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
+
+  /* The parser will print an error message for us, so we silently return.  */
   if (sim_parse_args (sd, argv) != SIM_RC_OK)
     {
       /* Uninstall the modules to avoid memory leaks,
@@ -4965,6 +4898,8 @@ sim_open (SIM_OPEN_KIND kind,
     {
       SIM_CPU *cpu = STATE_CPU (sd, i);
 
+      CPU_REG_FETCH (cpu) = h8300_reg_fetch;
+      CPU_REG_STORE (cpu) = h8300_reg_store;
       CPU_PC_FETCH (cpu) = h8300_pc_get;
       CPU_PC_STORE (cpu) = h8300_pc_set;
     }
@@ -4973,16 +4908,7 @@ sim_open (SIM_OPEN_KIND kind,
 
   /* FIXME: Much of the code in sim_load can be moved here.  */
 
-  sim_kind = kind;
-  myname = argv[0];
-  sim_callback = callback;
   return sd;
-}
-
-void
-sim_close (SIM_DESC sd, int quitting)
-{
-  /* Nothing to do.  */
 }
 
 /* Called by gdb to load a program into memory.  */
@@ -5051,14 +4977,13 @@ sim_load (SIM_DESC sd, const char *prog, bfd *abfd, int from_tty)
   /* `msize' must be a power of two.  */
   if ((memory_size & (memory_size - 1)) != 0)
     {
-      (*sim_callback->printf_filtered) (sim_callback, 
-					"sim_load: bad memory size.\n");
+      sim_io_printf (sd, "sim_load: bad memory size.\n");
       return SIM_RC_FAIL;
     }
   h8_set_mask (sd, memory_size - 1);
 
-  if (sim_load_file (sd, myname, sim_callback, prog, prog_bfd,
-		     sim_kind == SIM_OPEN_DEBUG,
+  if (sim_load_file (sd, STATE_MY_NAME (sd), STATE_CALLBACK (sd), prog,
+		     prog_bfd, STATE_OPEN_KIND (sd) == SIM_OPEN_DEBUG,
 		     0, sim_write)
       == NULL)
     {
@@ -5075,7 +5000,8 @@ sim_load (SIM_DESC sd, const char *prog, bfd *abfd, int from_tty)
 }
 
 SIM_RC
-sim_create_inferior (SIM_DESC sd, struct bfd *abfd, char **argv, char **env)
+sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
+		     char * const *argv, char * const *env)
 {
   int i = 0;
   int len_arg = 0;

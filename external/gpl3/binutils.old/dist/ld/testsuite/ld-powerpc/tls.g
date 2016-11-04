@@ -1,12 +1,12 @@
 #source: tls.s
 #source: tlslib.s
 #as: -a64
-#ld: 
+#ld:
 #objdump: -sj.got
 #target: powerpc64*-*-*
 
 .*
 
 Contents of section \.got:
- 100101e0 (00000000|e0810110) (100181e0|00000000) (ffffffff|1880ffff) (ffff8018|ffffffff)  .*
- 100101f0 (ffffffff|5880ffff) (ffff8058|ffffffff)                    .*
+ 10010200 (00000000|00820110) (10018200|00000000) (ffffffff|1880ffff) (ffff8018|ffffffff)  .*
+.* (ffffffff|5880ffff) (ffff8058|ffffffff)                    .*

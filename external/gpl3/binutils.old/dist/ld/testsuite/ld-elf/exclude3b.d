@@ -1,9 +1,9 @@
 #source: exclude3.s
 #ld: --shared
 #readelf: -S --wide
-#target: x86_64-*-* i?86-*-*
+#target: *-*-linux* *-*-gnu*
 
+#failif
 #...
-[ 	]*\[.*\][ 	]+\.dynamic[ 	]+DYNAMIC.*
-[ 	]*\[.*\][ 	]+.*STRTAB.*
-#pass
+[ 	]*\[.*\][ 	]+\.foo1[ 	]+.*
+#...

@@ -654,12 +654,15 @@ static void
 source_info (char *ignore, int from_tty)
 {
   struct symtab *s = current_source_symtab;
+  struct compunit_symtab *cust;
 
   if (!s)
     {
       printf_filtered (_("No current source file.\n"));
       return;
     }
+
+  cust = SYMTAB_COMPUNIT (s);
   printf_filtered (_("Current source file is %s\n"), s->filename);
   if (SYMTAB_DIRNAME (s) != NULL)
     printf_filtered (_("Compilation directory is %s\n"), SYMTAB_DIRNAME (s));
@@ -670,10 +673,13 @@ source_info (char *ignore, int from_tty)
 		     s->nlines == 1 ? "" : "s");
 
   printf_filtered (_("Source language is %s.\n"), language_str (s->language));
+  printf_filtered (_("Producer is %s.\n"),
+		   COMPUNIT_PRODUCER (cust) != NULL
+		   ? COMPUNIT_PRODUCER (cust) : _("unknown"));
   printf_filtered (_("Compiled with %s debugging format.\n"),
-		   COMPUNIT_DEBUGFORMAT (SYMTAB_COMPUNIT (s)));
+		   COMPUNIT_DEBUGFORMAT (cust));
   printf_filtered (_("%s preprocessor macro info.\n"),
-		   COMPUNIT_MACRO_TABLE (SYMTAB_COMPUNIT (s)) != NULL
+		   COMPUNIT_MACRO_TABLE (cust) != NULL
 		   ? "Includes" : "Does not include");
 }
 
@@ -2041,16 +2047,6 @@ Setting the value to an empty string sets it to $cdir:$cwd, the default."),
 			    show_directories_command,
 			    &setlist, &showlist);
 
-  if (xdb_commands)
-    {
-      add_com_alias ("D", "directory", class_files, 0);
-      add_cmd ("ld", no_class, show_directories_1, _("\
-Current search path for finding source files.\n\
-$cwd in the path means the current working directory.\n\
-$cdir in the path means the compilation directory of the source file."),
-	       &cmdlist);
-    }
-
   add_info ("source", source_info,
 	    _("Information about the current source file."));
 
@@ -2076,12 +2072,6 @@ The matching line number is also stored as the value of \"$_\"."));
 Search backward for regular expression (see regex(3)) from last line listed.\n\
 The matching line number is also stored as the value of \"$_\"."));
   add_com_alias ("rev", "reverse-search", class_files, 1);
-
-  if (xdb_commands)
-    {
-      add_com_alias ("/", "forward-search", class_files, 0);
-      add_com_alias ("?", "reverse-search", class_files, 0);
-    }
 
   add_setshow_integer_cmd ("listsize", class_support, &lines_to_list, _("\
 Set number of source lines gdb will list by default."), _("\

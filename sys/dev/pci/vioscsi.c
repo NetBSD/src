@@ -1,3 +1,4 @@
+/*	$NetBSD: vioscsi.c,v 1.6.4.1 2016/11/04 14:49:15 pgoyette Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -17,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.6 2015/11/01 08:55:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.6.4.1 2016/11/04 14:49:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +219,19 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 
 	DPRINTF(("%s: enter\n", __func__));
 
-	if (request != ADAPTER_REQ_RUN_XFER) {
+	switch (request) {
+	case ADAPTER_REQ_RUN_XFER:
+		break;
+	case ADAPTER_REQ_SET_XFER_MODE:
+	{
+		struct scsipi_xfer_mode *xm = arg;
+		xm->xm_mode = PERIPH_CAP_TQING;
+		xm->xm_period = 0;
+		xm->xm_offset = 0;
+		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
+		return;
+	}
+	default:
 		DPRINTF(("%s: unhandled %d\n", __func__, request));
 		return;
 	}
@@ -227,16 +240,15 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	periph = xs->xs_periph;
 
 	vr = vioscsi_req_get(sc);
-#ifdef DIAGNOSTIC
 	/*
-	 * This should never happen as we track the resources
-	 * in the mid-layer.
+	 * This can happen when we run out of queue slots.
 	 */
 	if (vr == NULL) {
-		scsipi_printaddr(xs->xs_periph);
-		panic("%s: unable to allocate request\n", __func__);
+		xs->error = XS_RESOURCE_SHORTAGE;
+		scsipi_done(xs);
+		return;
 	}
-#endif
+
 	req = &vr->vr_req;
 	slot = vr - sc->sc_reqs;
 
@@ -259,6 +271,29 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	memset(req->lun + 4, 0, 4);
 	DPRINTF(("%s: command for %u:%u at slot %d\n", __func__,
 	    periph->periph_target - 1, periph->periph_lun, slot));
+
+	/* tag */
+	switch (XS_CTL_TAGTYPE(xs)) {
+	case XS_CTL_HEAD_TAG:
+		req->task_attr = VIRTIO_SCSI_S_HEAD;
+		break;
+
+#if 0	/* XXX */
+	case XS_CTL_ACA_TAG:
+		req->task_attr = VIRTIO_SCSI_S_ACA;
+		break;
+#endif
+
+	case XS_CTL_ORDERED_TAG:
+		req->task_attr = VIRTIO_SCSI_S_ORDERED;
+		break;
+
+	case XS_CTL_SIMPLE_TAG:
+	default:
+		req->task_attr = VIRTIO_SCSI_S_SIMPLE;
+		break;
+	}
+	req->id = (intptr_t)vr;
 
 	if ((size_t)xs->cmdlen > sizeof(req->cdb)) {
 		DPRINTF(("%s: bad cmdlen %zu > %zu\n", __func__,
@@ -284,7 +319,7 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	stuffup:
 		xs->error = XS_DRIVER_STUFFUP;
 nomore:
-		// XXX: free req?
+		vioscsi_req_put(sc, vr);
 		scsipi_done(xs);
 		return;
 	}

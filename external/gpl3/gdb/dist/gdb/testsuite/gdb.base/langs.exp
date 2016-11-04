@@ -1,4 +1,4 @@
-#   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+#   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,37 +48,18 @@ gdb_test_multiple "b langs0" "break on nonexistent function in langs.exp" {
 	}
 }
 
-if {$hp_aCC_compiler} {
-    set isfixed 1
-    set lang c\\+\\+
-    set ext cxx
-    set foo_func foo__Fi__Fi
-    set do_func do::langs0
-} else {
-    if {$hp_cc_compiler} {
-        set isfixed 1
-        set lang c
-        set ext c
-    } else {
-        set isfixed 0
-    }
-    set foo_func foo__Fi
-    set do_func langs0__2do
-}
+# TODO: Since there variables are now constants, we can cleanup the test,
+# remove some dead code.
+set isfixed 0
+set foo_func foo__Fi
+set do_func langs0__2do
 
 if [runto csub] then {
 
     if { !$isfixed } { set lang c }
     gdb_test "show language" "currently $lang\".*" \
 	"show language at csub in langs.exp"
-    # On some machines, foo doesn't get demangled because the N_SOL for
-    # langs2.cxx is seen only after the function stab for foo.  So
-    # the following regexps are kludged to accept foo__Fi as well as foo,
-    # even though only the latter is correct.  I haven't tried to xfail it
-    # because it depends on details of the compiler.
-    
-    # Take out xfail. This test has been passing for some time now.
-    #if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
+
     gdb_test "bt" "#0.*csub.*#1.*(foo|$foo_func) \\(.*#2.*cppsub_ .*#3.*fsub.*#4.*$do_func \\(.*#5  \[0-9a-fx\]* in main.*" "backtrace in langs.exp"
 
     if { !$isfixed } { set lang c\\+\\+; set ext cxx }
@@ -101,8 +82,6 @@ if [runto csub] then {
     gdb_test "show language" "currently $lang.*" \
 	"show language at fsub in langs.exp"
 
-    # Take out xfail. This test has been passing for sometime now.
-    #if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
     if { !$isfixed } { set lang c }
     gdb_test "up" ".* in $do_func .* at .*langs0\\.c.*return fsub.*" \
 	"up to langs0__2do in langs.exp"

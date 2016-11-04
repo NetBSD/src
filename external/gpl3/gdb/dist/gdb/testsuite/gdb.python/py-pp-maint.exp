@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2015 Free Software Foundation, Inc.
+# Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -119,14 +119,23 @@ gdb_test "print flt" " = x=<42> y=<43>" \
 gdb_test "print ss" " = a=<a=<1> b=<$hex>> b=<a=<2> b=<$hex>>" \
     "print ss re-enabled"
 
-gdb_test "print (enum flag_enum) (FLAG_1)" \
-    " = 0x1 .FLAG_1." \
-    "print FLAG_1"
+gdb_test_exact "print (enum flag_enum) (FOO_1)" \
+    { = 0x1 [FOO_1]}
 
-gdb_test "print (enum flag_enum) (FLAG_1 | FLAG_3)" \
-    " = 0x5 .FLAG_1 | FLAG_3." \
-    "print FLAG_1 | FLAG_3"
+gdb_test_exact "print (enum flag_enum) (BAR_3)" \
+    { = 0x40 [BAR_3]}
 
-gdb_test "print (enum flag_enum) (4 + 8)" \
-    " = 0xc .FLAG_1 | <unknown: 0x8>." \
-    "print FLAG_1 | 8"
+gdb_test_exact "print (enum flag_enum) (BAR_2 | FOO_2)" \
+    { = 0x22 [FOO_2 | BAR_2]}
+
+gdb_test_exact "print (enum flag_enum) (FOO_1 | FOO_2 | FOO_3)" \
+    { = 0x7 [FOO_1 | FOO_2 | FOO_3]}
+
+gdb_test_exact "print (enum flag_enum) (FOO_MASK)" \
+    { = 0x7 [FOO_1 | FOO_2 | FOO_3]}
+
+gdb_test_exact "print (enum flag_enum) (FOO_MASK | (BAR_MASK & ~BAR_2))" \
+    { = 0x57 [FOO_1 | FOO_2 | FOO_3 | BAR_1 | BAR_3]}
+
+gdb_test_exact "print (enum flag_enum) (0x4 + 0x8)" \
+    { = 0xc [FOO_3 | <unknown: 0x8>]}

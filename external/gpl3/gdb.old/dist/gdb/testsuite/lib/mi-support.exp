@@ -191,7 +191,7 @@ proc default_mi_gdb_start { args } {
 	    return -1
 	}
     }
-    set gdb_spawn_id -1
+    set gdb_spawn_id $res
 
     # FIXME: mi output does not go through pagers, so these can be removed.
     # force the height to "unlimited", so no pagers get used
@@ -1195,8 +1195,9 @@ proc mi_expect_interrupt { test } {
 	set prompt_re "$mi_gdb_prompt$"
     }
 
-    set r "reason=\"signal-received\",signal-name=\"0\",signal-meaning=\"Signal 0\""
-
+    set r_nonstop "reason=\"signal-received\",signal-name=\"0\",signal-meaning=\"Signal 0\""
+    set r_allstop "reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\""
+    set r "(${r_nonstop}|${r_allstop})"
     set any "\[^\n\]*"
 
     # A signal can land anywhere, just ignore the location

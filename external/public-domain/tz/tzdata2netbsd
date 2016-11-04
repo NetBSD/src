@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.10 2016/06/16 15:17:56 agc Exp $
+# $NetBSD: tzdata2netbsd,v 1.10.2.1 2016/11/04 14:48:51 pgoyette Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -15,8 +15,8 @@
 #    redo non-trivial work done by earlier runs.
 #
 
-OLDVER=2016b
-NEWVER=2016d
+OLDVER=2016h
+NEWVER=2016i
 
 # Uppercase variants of OLDVER and NEWVER
 OLDVER_UC="$( echo "${OLDVER}" | tr '[a-z]' '[A-Z]' )"
@@ -153,14 +153,13 @@ checksig()
 	# The output should contain lines that match all the following regexps
 	#
 	while read line; do
-		if ! grep -q -e "^${line}\$" "${PGPVERIFYLOG}"; then
+		if ! grep -E -q -e "^${line}\$" "${PGPVERIFYLOG}"; then
 			echo >&2 "Failed to verify signature: ${line}"
 			return 1
 		fi
 	done <<'EOF'
-gpg: Signature made .* using RSA key ID 62AA7E34
+gpg: Signature made .* using RSA key ID (62AA7E34|44AD418C)
 gpg: Good signature from "Paul Eggert <eggert@cs.ucla.edu>"
-Primary key fingerprint: 7E37 92A9 D8AC F7D6 33BC  1588 ED97 E90E 62AA 7E34
 gpg exit status 0
 EOF
 }
@@ -352,7 +351,7 @@ extra()
 Also do the following:
  * Edit src/doc/3RDPARTY
  * Edit src/doc/CHANGES
- * Edit src/distrib/sets/base/mi if the set of installed files has changed.
+ * Edit src/distrib/sets/lists/base/mi if the set of installed files altered.
  * Submit pullup requests for all active release branches.
  * rm -rf ${WORKDIR}
 EOF

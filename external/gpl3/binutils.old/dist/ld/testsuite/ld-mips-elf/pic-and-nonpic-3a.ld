@@ -20,4 +20,6 @@ SECTIONS
   . = ALIGN (0x400);
   HIDDEN (_gp = . + 0x7ff0);
   .got : { *(.got) }
+
+  /DISCARD/ : { *(.MIPS.abiflags) }
 }

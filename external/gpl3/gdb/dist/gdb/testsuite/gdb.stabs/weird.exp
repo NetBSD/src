@@ -1,4 +1,4 @@
-# Copyright 1997-2015 Free Software Foundation, Inc.
+# Copyright 1997-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,16 +23,6 @@ set binfile [standard_output_file weirdx.o]
 
 if { [ get_compiler_info ] } {
     return -1
-}
-
-if { $hp_cc_compiler || $hp_aCC_compiler } {
-    # The native hp-ux assembler does not support stabs at all.
-    # If the compiler is native hp-ux, of course the assembler is too.
-    # But if someone builds gcc with the native assembler (not recommended)
-    # rather than the gnu assembler, then this logic will not suppress it.
-    # -- chastain 2004-01-07
-    unsupported "stabs with hp-ux assembler"
-    continue
 }
 
 proc do_tests {} {
@@ -294,6 +284,7 @@ gdb_reinitialize_dir $srcdir/$subdir
 
 set binfile [gdb_remote_download host ${binfile} \
 		 [standard_output_file object.o]]
+set binfile_re [string_to_regexp $binfile]
 send_gdb "file $binfile\n"
 # If $binfile is very long, a \r (but not a \n) will echo in the
 # middle of the echo of the command.  So to match the echo, we
@@ -310,7 +301,7 @@ gdb_expect 60 {
 	send_gdb "y\n"
 	exp_continue
     }
-    -re "^Reading symbols from .*$binfile\\.\\.\\.done\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)\r\n$gdb_prompt $" {
+    -re "^Reading symbols from .*$binfile_re\\.\\.\\.done\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)\r\n$gdb_prompt $" {
 	pass "weirdx.o read without error"
     }
     -re ".*$gdb_prompt $" {

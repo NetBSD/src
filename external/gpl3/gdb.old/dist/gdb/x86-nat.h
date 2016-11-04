@@ -44,11 +44,6 @@ extern void x86_set_debug_register_length (int len);
 
 extern void x86_cleanup_dregs (void);
 
-/* Return a pointer to the local mirror of the debug registers of
-   process PID.  */
-
-extern struct x86_debug_reg_state *x86_debug_reg_state (pid_t pid);
-
 /* Called whenever GDB is no longer debugging process PID.  It deletes
    data structures that keep track of debug register state.  */
 

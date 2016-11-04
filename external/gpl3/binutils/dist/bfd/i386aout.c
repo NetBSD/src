@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -28,7 +28,7 @@
 #define N_HEADER_IN_TEXT(x)	0
 #define N_TXTOFF(x)   		0x20
 #define N_TXTADDR(x) 		(N_MAGIC (x) == ZMAGIC ? 0x1020 : 0)
-#define N_TXTSIZE(x) 		((x).a_text)
+#define N_TXTSIZE(x) 		((x)->a_text)
 #define TARGET_PAGE_SIZE 	4096
 #define SEGMENT_SIZE 		0x400000
 #define DEFAULT_ARCH 		bfd_arch_i386
@@ -54,7 +54,7 @@ i386aout_write_object_contents (bfd *abfd)
   struct external_exec exec_bytes;
   struct internal_exec *execp = exec_hdr (abfd);
 
-  N_SET_MACHTYPE (*execp, M_386);
+  N_SET_MACHTYPE (execp, M_386);
 
   obj_reloc_entry_size (abfd) = RELOC_STD_SIZE;
 

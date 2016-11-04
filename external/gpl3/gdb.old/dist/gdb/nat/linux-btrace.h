@@ -24,34 +24,81 @@
 
 #include "btrace-common.h"
 #include "vec.h"
-#include <stdint.h>
-
 #if HAVE_LINUX_PERF_EVENT_H
 #  include <linux/perf_event.h>
 #endif
 
 struct target_ops;
 
-/* Branch trace target information per thread.  */
-struct btrace_target_info
-{
 #if HAVE_LINUX_PERF_EVENT_H
+/* A Linux perf event buffer.  */
+struct perf_event_buffer
+{
+  /* The mapped memory.  */
+  const uint8_t *mem;
+
+  /* The size of the mapped memory in bytes.  */
+  unsigned long long size;
+
+  /* A pointer to the data_head field for this buffer. */
+  volatile unsigned long long *data_head;
+
+  /* The data_head value from the last read.  */
+  unsigned long long last_head;
+};
+
+/* Branch trace target information for BTS tracing.  */
+struct btrace_tinfo_bts
+{
   /* The Linux perf_event configuration for collecting the branch trace.  */
   struct perf_event_attr attr;
 
+  /* The perf event file.  */
+  int file;
+
+  /* The perf event configuration page. */
+  volatile struct perf_event_mmap_page *header;
+
+  /* The BTS perf event buffer.  */
+  struct perf_event_buffer bts;
+};
+
+/* Branch trace target information for Intel(R) Processor Trace.  */
+struct btrace_tinfo_pt
+{
+  /* The Linux perf_event configuration for collecting the branch trace.  */
+  struct perf_event_attr attr;
+
+  /* The perf event file.  */
+  int file;
+
+  /* The perf event configuration page. */
+  volatile struct perf_event_mmap_page *header;
+
+  /* The trace perf event buffer.  */
+  struct perf_event_buffer pt;
+};
+#endif /* HAVE_LINUX_PERF_EVENT_H */
+
+/* Branch trace target information per thread.  */
+struct btrace_target_info
+{
   /* The ptid of this thread.  */
   ptid_t ptid;
 
-  /* The mmap configuration mapping the branch trace perf_event buffer.
+  /* The obtained branch trace configuration.  */
+  struct btrace_config conf;
 
-     file      .. the file descriptor
-     buffer    .. the mmapped memory buffer
-     size      .. the buffer's size in pages without the configuration page
-     data_head .. the data head from the last read  */
-  int file;
-  void *buffer;
-  size_t size;
-  unsigned long data_head;
+#if HAVE_LINUX_PERF_EVENT_H
+  /* The branch tracing format specific information.  */
+  union
+  {
+    /* CONF.FORMAT == BTRACE_FORMAT_BTS.  */
+    struct btrace_tinfo_bts bts;
+
+    /* CONF.FORMAT == BTRACE_FORMAT_PT.  */
+    struct btrace_tinfo_pt pt;
+  } variant;
 #endif /* HAVE_LINUX_PERF_EVENT_H */
 
   /* The size of a pointer in bits for this thread.
@@ -61,17 +108,22 @@ struct btrace_target_info
 };
 
 /* See to_supports_btrace in target.h.  */
-extern int linux_supports_btrace (struct target_ops *);
+extern int linux_supports_btrace (struct target_ops *, enum btrace_format);
 
 /* See to_enable_btrace in target.h.  */
-extern struct btrace_target_info *linux_enable_btrace (ptid_t ptid);
+extern struct btrace_target_info *
+  linux_enable_btrace (ptid_t ptid, const struct btrace_config *conf);
 
 /* See to_disable_btrace in target.h.  */
 extern enum btrace_error linux_disable_btrace (struct btrace_target_info *ti);
 
 /* See to_read_btrace in target.h.  */
-extern enum btrace_error linux_read_btrace (VEC (btrace_block_s) **btrace,
+extern enum btrace_error linux_read_btrace (struct btrace_data *btrace,
 					    struct btrace_target_info *btinfo,
 					    enum btrace_read_type type);
+
+/* See to_btrace_conf in target.h.  */
+extern const struct btrace_config *
+  linux_btrace_conf (const struct btrace_target_info *);
 
 #endif /* LINUX_BTRACE_H */

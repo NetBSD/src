@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include <ctype.h>
 #include "auto-load.h"
 #include "progspace.h"
 #include "gdb_regex.h"
@@ -48,14 +49,15 @@
    followed by the path of a python script to load.  */
 #define AUTO_SECTION_NAME ".debug_gdb_scripts"
 
-static int maybe_add_script (struct auto_load_pspace_info *pspace_info,
-			     int loaded, const char *name,
-			     const char *full_path,
-			     const struct extension_language_defn *language);
+static void maybe_print_unsupported_script_warning
+  (struct auto_load_pspace_info *, struct objfile *objfile,
+   const struct extension_language_defn *language,
+   const char *section_name, unsigned offset);
 
-static int unsupported_script_warning_print (struct auto_load_pspace_info *);
-
-static int script_not_found_warning_print (struct auto_load_pspace_info *);
+static void maybe_print_script_not_found_warning
+  (struct auto_load_pspace_info *, struct objfile *objfile,
+   const struct extension_language_defn *language,
+   const char *section_name, unsigned offset);
 
 /* Value of the 'set debug auto-load' configuration variable.  */
 static int debug_auto_load = 0;
@@ -541,8 +543,10 @@ For more information about this security protection see the\n\
 
 struct auto_load_pspace_info
 {
-  /* For each program space we keep track of loaded scripts.  */
-  struct htab *loaded_scripts;
+  /* For each program space we keep track of loaded scripts, both when
+     specified as file names and as scripts to be executed directly.  */
+  struct htab *loaded_script_files;
+  struct htab *loaded_script_texts;
 
   /* Non-zero if we've issued the warning about an auto-load script not being
      supported.  We only want to issue this warning once.  */
@@ -553,7 +557,7 @@ struct auto_load_pspace_info
   int script_not_found_warning_printed;
 };
 
-/* Objects of this type are stored in the loaded script hash table.  */
+/* Objects of this type are stored in the loaded_script hash table.  */
 
 struct loaded_script
 {
@@ -561,7 +565,7 @@ struct loaded_script
   const char *name;
 
   /* Full path name or NULL if script wasn't found (or was otherwise
-     inaccessible).  */
+     inaccessible), or NULL for loaded_script_texts.  */
   const char *full_path;
 
   /* Non-zero if this script has been loaded.  */
@@ -578,8 +582,10 @@ auto_load_pspace_data_cleanup (struct program_space *pspace, void *arg)
 {
   struct auto_load_pspace_info *info = arg;
 
-  if (info->loaded_scripts)
-    htab_delete (info->loaded_scripts);
+  if (info->loaded_script_files)
+    htab_delete (info->loaded_script_files);
+  if (info->loaded_script_texts)
+    htab_delete (info->loaded_script_texts);
   xfree (info);
 }
 
@@ -632,10 +638,14 @@ init_loaded_scripts_info (struct auto_load_pspace_info *pspace_info)
      Space for each entry is obtained with one malloc so we can free them
      easily.  */
 
-  pspace_info->loaded_scripts = htab_create (31,
-					     hash_loaded_script_entry,
-					     eq_loaded_script_entry,
-					     xfree);
+  pspace_info->loaded_script_files = htab_create (31,
+						  hash_loaded_script_entry,
+						  eq_loaded_script_entry,
+						  xfree);
+  pspace_info->loaded_script_texts = htab_create (31,
+						  hash_loaded_script_entry,
+						  eq_loaded_script_entry,
+						  xfree);
 
   pspace_info->unsupported_script_warning_printed = FALSE;
   pspace_info->script_not_found_warning_printed = FALSE;
@@ -650,23 +660,24 @@ get_auto_load_pspace_data_for_loading (struct program_space *pspace)
   struct auto_load_pspace_info *info;
 
   info = get_auto_load_pspace_data (pspace);
-  if (info->loaded_scripts == NULL)
+  if (info->loaded_script_files == NULL)
     init_loaded_scripts_info (info);
 
   return info;
 }
 
-/* Add script NAME in LANGUAGE to hash table of PSPACE_INFO.  LOADED 1 if the
-   script has been (is going to) be loaded, 0 otherwise (such as if it has not
-   been found).  FULL_PATH is NULL if the script wasn't found.  The result is
-   true if the script was already in the hash table.  */
+/* Add script file NAME in LANGUAGE to hash table of PSPACE_INFO.
+   LOADED 1 if the script has been (is going to) be loaded, 0 otherwise
+   (such as if it has not been found).
+   FULL_PATH is NULL if the script wasn't found.
+   The result is true if the script was already in the hash table.  */
 
 static int
-maybe_add_script (struct auto_load_pspace_info *pspace_info, int loaded,
-		  const char *name, const char *full_path,
-		  const struct extension_language_defn *language)
+maybe_add_script_file (struct auto_load_pspace_info *pspace_info, int loaded,
+		       const char *name, const char *full_path,
+		       const struct extension_language_defn *language)
 {
-  struct htab *htab = pspace_info->loaded_scripts;
+  struct htab *htab = pspace_info->loaded_script_files;
   struct loaded_script **slot, entry;
   int in_hash_table;
 
@@ -677,7 +688,7 @@ maybe_add_script (struct auto_load_pspace_info *pspace_info, int loaded,
 
   /* If this script is not in the hash table, add it.  */
 
-  if (! in_hash_table)
+  if (!in_hash_table)
     {
       char *p;
 
@@ -703,6 +714,44 @@ maybe_add_script (struct auto_load_pspace_info *pspace_info, int loaded,
   return in_hash_table;
 }
 
+/* Add script contents NAME in LANGUAGE to hash table of PSPACE_INFO.
+   LOADED 1 if the script has been (is going to) be loaded, 0 otherwise
+   (such as if it has not been found).
+   The result is true if the script was already in the hash table.  */
+
+static int
+maybe_add_script_text (struct auto_load_pspace_info *pspace_info,
+		       int loaded, const char *name,
+		       const struct extension_language_defn *language)
+{
+  struct htab *htab = pspace_info->loaded_script_texts;
+  struct loaded_script **slot, entry;
+  int in_hash_table;
+
+  entry.name = name;
+  entry.language = language;
+  slot = (struct loaded_script **) htab_find_slot (htab, &entry, INSERT);
+  in_hash_table = *slot != NULL;
+
+  /* If this script is not in the hash table, add it.  */
+
+  if (!in_hash_table)
+    {
+      char *p;
+
+      /* Allocate all space in one chunk so it's easier to free.  */
+      *slot = xmalloc (sizeof (**slot) + strlen (name) + 1);
+      p = ((char*) *slot) + sizeof (**slot);
+      strcpy (p, name);
+      (*slot)->name = p;
+      (*slot)->full_path = NULL;
+      (*slot)->loaded = loaded;
+      (*slot)->language = language;
+    }
+
+  return in_hash_table;
+}
+
 /* Clear the table of loaded section scripts.  */
 
 static void
@@ -712,10 +761,12 @@ clear_section_scripts (void)
   struct auto_load_pspace_info *info;
 
   info = program_space_data (pspace, auto_load_pspace_data);
-  if (info != NULL && info->loaded_scripts != NULL)
+  if (info != NULL && info->loaded_script_files != NULL)
     {
-      htab_delete (info->loaded_scripts);
-      info->loaded_scripts = NULL;
+      htab_delete (info->loaded_script_files);
+      htab_delete (info->loaded_script_texts);
+      info->loaded_script_files = NULL;
+      info->loaded_script_texts = NULL;
       info->unsupported_script_warning_printed = FALSE;
       info->script_not_found_warning_printed = FALSE;
     }
@@ -803,7 +854,8 @@ auto_load_objfile_script_1 (struct objfile *objfile, const char *realname,
 	 "info auto-load ${lang}-scripts" can print it.  */
       pspace_info
 	= get_auto_load_pspace_data_for_loading (current_program_space);
-      maybe_add_script (pspace_info, is_safe, debugfile, debugfile, language);
+      maybe_add_script_file (pspace_info, is_safe, debugfile, debugfile,
+			     language);
 
       /* To preserve existing behaviour we don't check for whether the
 	 script was already in the table, and always load it.
@@ -864,17 +916,183 @@ auto_load_objfile_script (struct objfile *objfile,
   do_cleanups (cleanups);
 }
 
+/* Subroutine of source_section_scripts to simplify it.
+   Load FILE as a script in extension language LANGUAGE.
+   The script is from section SECTION_NAME in OBJFILE at offset OFFSET.  */
+
+static void
+source_script_file (struct auto_load_pspace_info *pspace_info,
+		    struct objfile *objfile,
+		    const struct extension_language_defn *language,
+		    const char *section_name, unsigned int offset,
+		    const char *file)
+{
+  FILE *stream;
+  char *full_path;
+  int opened, in_hash_table;
+  struct cleanup *cleanups;
+  objfile_script_sourcer_func *sourcer;
+
+  /* Skip this script if support is not compiled in.  */
+  sourcer = ext_lang_objfile_script_sourcer (language);
+  if (sourcer == NULL)
+    {
+      /* We don't throw an error, the program is still debuggable.  */
+      maybe_print_unsupported_script_warning (pspace_info, objfile, language,
+					      section_name, offset);
+      /* We *could* still try to open it, but there's no point.  */
+      maybe_add_script_file (pspace_info, 0, file, NULL, language);
+      return;
+    }
+
+  /* Skip this script if auto-loading it has been disabled.  */
+  if (!ext_lang_auto_load_enabled (language))
+    {
+      /* No message is printed, just skip it.  */
+      return;
+    }
+
+  opened = find_and_open_script (file, 1 /*search_path*/,
+				 &stream, &full_path);
+
+  cleanups = make_cleanup (null_cleanup, NULL);
+  if (opened)
+    {
+      make_cleanup_fclose (stream);
+      make_cleanup (xfree, full_path);
+
+      if (!file_is_auto_load_safe (full_path,
+				   _("auto-load: Loading %s script "
+				     "\"%s\" from section \"%s\" of "
+				     "objfile \"%s\".\n"),
+				   ext_lang_name (language), full_path,
+				   section_name, objfile_name (objfile)))
+	opened = 0;
+    }
+  else
+    {
+      full_path = NULL;
+
+      /* If one script isn't found it's not uncommon for more to not be
+	 found either.  We don't want to print a message for each script,
+	 too much noise.  Instead, we print the warning once and tell the
+	 user how to find the list of scripts that weren't loaded.
+	 We don't throw an error, the program is still debuggable.
+
+	 IWBN if complaints.c were more general-purpose.  */
+
+      maybe_print_script_not_found_warning (pspace_info, objfile, language,
+					    section_name, offset);
+    }
+
+  in_hash_table = maybe_add_script_file (pspace_info, opened, file, full_path,
+					 language);
+
+  /* If this file is not currently loaded, load it.  */
+  if (opened && !in_hash_table)
+    sourcer (language, objfile, stream, full_path);
+
+  do_cleanups (cleanups);
+}
+
+/* Subroutine of source_section_scripts to simplify it.
+   Execute SCRIPT as a script in extension language LANG.
+   The script is from section SECTION_NAME in OBJFILE at offset OFFSET.  */
+
+static void
+execute_script_contents (struct auto_load_pspace_info *pspace_info,
+			 struct objfile *objfile,
+			 const struct extension_language_defn *language,
+			 const char *section_name, unsigned int offset,
+			 const char *script)
+{
+  objfile_script_executor_func *executor;
+  const char *newline, *script_text;
+  char *name, *end;
+  int is_safe, in_hash_table;
+  struct cleanup *cleanups;
+
+  cleanups = make_cleanup (null_cleanup, NULL);
+
+  /* The first line of the script is the name of the script.
+     It must not contain any kind of space character.  */
+  name = NULL;
+  newline = strchr (script, '\n');
+  if (newline != NULL)
+    {
+      char *buf, *p;
+
+      /* Put the name in a buffer and validate it.  */
+      buf = xstrndup (script, newline - script);
+      make_cleanup (xfree, buf);
+      for (p = buf; *p != '\0'; ++p)
+	{
+	  if (isspace (*p))
+	    break;
+	}
+      /* We don't allow nameless scripts, they're not helpful to the user.  */
+      if (p != buf && *p == '\0')
+	name = buf;
+    }
+  if (name == NULL)
+    {
+      /* We don't throw an error, the program is still debuggable.  */
+      warning (_("\
+Missing/bad script name in entry at offset %u in section %s\n\
+of file %s."),
+	       offset, section_name, objfile_name (objfile));
+      do_cleanups (cleanups);
+      return;
+    }
+  script_text = newline + 1;
+
+  /* Skip this script if support is not compiled in.  */
+  executor = ext_lang_objfile_script_executor (language);
+  if (executor == NULL)
+    {
+      /* We don't throw an error, the program is still debuggable.  */
+      maybe_print_unsupported_script_warning (pspace_info, objfile, language,
+					      section_name, offset);
+      maybe_add_script_text (pspace_info, 0, name, language);
+      do_cleanups (cleanups);
+      return;
+    }
+
+  /* Skip this script if auto-loading it has been disabled.  */
+  if (!ext_lang_auto_load_enabled (language))
+    {
+      /* No message is printed, just skip it.  */
+      do_cleanups (cleanups);
+      return;
+    }
+
+  is_safe = file_is_auto_load_safe (objfile_name (objfile),
+				    _("auto-load: Loading %s script "
+				      "\"%s\" from section \"%s\" of "
+				      "objfile \"%s\".\n"),
+				    ext_lang_name (language), name,
+				    section_name, objfile_name (objfile));
+
+  in_hash_table = maybe_add_script_text (pspace_info, is_safe, name, language);
+
+  /* If this file is not currently loaded, load it.  */
+  if (is_safe && !in_hash_table)
+    executor (language, objfile, name, script_text);
+
+  do_cleanups (cleanups);
+}
+
 /* Load scripts specified in OBJFILE.
    START,END delimit a buffer containing a list of nul-terminated
    file names.
    SECTION_NAME is used in error messages.
 
-   Scripts are found per normal "source -s" command processing.
-   First the script is looked for in $cwd.  If not found there the
-   source search path is used.
+   Scripts specified as file names are found per normal "source -s" command
+   processing.  First the script is looked for in $cwd.  If not found there
+   the source search path is used.
 
-   The section contains a list of path names of script files to load.
-   Each path is null-terminated.  */
+   The section contains a list of path names of script files to load or
+   actual script contents.  Each entry is nul-terminated.  */
 
 static void
 source_section_scripts (struct objfile *objfile, const char *section_name,
@@ -887,20 +1105,19 @@ source_section_scripts (struct objfile *objfile, const char *section_name,
 
   for (p = start; p < end; ++p)
     {
-      const char *file;
-      FILE *stream;
-      char *full_path;
-      int opened, in_hash_table;
-      struct cleanup *back_to;
+      const char *entry;
       const struct extension_language_defn *language;
-      objfile_script_sourcer_func *sourcer;
+      unsigned int offset = p - start;
+      int code = *p;
 
-      switch (*p)
+      switch (code)
 	{
 	case SECTION_SCRIPT_ID_PYTHON_FILE:
+	case SECTION_SCRIPT_ID_PYTHON_TEXT:
 	  language = get_ext_lang_defn (EXT_LANG_PYTHON);
 	  break;
 	case SECTION_SCRIPT_ID_SCHEME_FILE:
+	case SECTION_SCRIPT_ID_SCHEME_TEXT:
 	  language = get_ext_lang_defn (EXT_LANG_GUILE);
 	  break;
 	default:
@@ -909,105 +1126,37 @@ source_section_scripts (struct objfile *objfile, const char *section_name,
 	     but it's safer to just punt.  */
 	  return;
 	}
-      file = ++p;
+      entry = ++p;
 
       while (p < end && *p != '\0')
 	++p;
       if (p == end)
 	{
-	  char *buf = alloca (p - file + 1);
-
-	  memcpy (buf, file, p - file);
-	  buf[p - file] = '\0';
-	  warning (_("Non-null-terminated path in %s: %s"),
-		   section_name, buf);
-	  /* Don't load it.  */
+	  warning (_("Non-nul-terminated entry in %s at offset %u"),
+		   section_name, offset);
+	  /* Don't load/execute it.  */
 	  break;
 	}
-      if (p == file)
-	{
-	  warning (_("Empty path in %s"), section_name);
-	  continue;
-	}
 
-      /* Until we support more types of records in .debug_gdb_scripts we do
-	 all the processing here.  The expectation is to add a new
-	 extension_language_script_ops "method" that handles all the records
-	 for the language.  For now we can just use
-	 extension_language_script_ops.objfile_script_sourcer.  */
-
-      /* Skip this script if support is not compiled in.  */
-      sourcer = ext_lang_objfile_script_sourcer (language);
-      if (sourcer == NULL)
+      switch (code)
 	{
-	  /* We don't throw an error, the program is still debuggable.  */
-	  if (!unsupported_script_warning_print (pspace_info))
+	case SECTION_SCRIPT_ID_PYTHON_FILE:
+	case SECTION_SCRIPT_ID_SCHEME_FILE:
+	  if (p == entry)
 	    {
-	      warning (_("Unsupported auto-load scripts referenced in"
-			 " %s section\n"
-			 "of file %s.\n"
-			 "Use `info auto-load %s-scripts [REGEXP]'"
-			 " to list them."),
-		       section_name, objfile_name (objfile),
-		       ext_lang_name (language));
+	      warning (_("Empty entry in %s at offset %u"),
+		       section_name, offset);
+	      continue;
 	    }
-	  /* We *could* still try to open it, but there's no point.  */
-	  maybe_add_script (pspace_info, 0, file, NULL, language);
-	  continue;
+	  source_script_file (pspace_info, objfile, language,
+			      section_name, offset, entry);
+	  break;
+	case SECTION_SCRIPT_ID_PYTHON_TEXT:
+	case SECTION_SCRIPT_ID_SCHEME_TEXT:
+	  execute_script_contents (pspace_info, objfile, language,
+				   section_name, offset, entry);
+	  break;
 	}
-
-      /* Skip this script if auto-loading it has been disabled.  */
-      if (!ext_lang_auto_load_enabled (language))
-	{
-	  /* No message is printed, just skip it.  */
-	  continue;
-	}
-
-      opened = find_and_open_script (file, 1 /*search_path*/,
-				     &stream, &full_path);
-
-      back_to = make_cleanup (null_cleanup, NULL);
-      if (opened)
-	{
-	  make_cleanup_fclose (stream);
-	  make_cleanup (xfree, full_path);
-
-	  if (!file_is_auto_load_safe (full_path,
-				       _("auto-load: Loading %s script "
-					 "\"%s\" from section \"%s\" of "
-					 "objfile \"%s\".\n"),
-				       ext_lang_name (language), full_path,
-				       section_name, objfile_name (objfile)))
-	    opened = 0;
-	}
-      else
-	{
-	  full_path = NULL;
-
-	  /* If one script isn't found it's not uncommon for more to not be
-	     found either.  We don't want to print a message for each script,
-	     too much noise.  Instead, we print the warning once and tell the
-	     user how to find the list of scripts that weren't loaded.
-	     We don't throw an error, the program is still debuggable.
-
-	     IWBN if complaints.c were more general-purpose.  */
-
-	  if (script_not_found_warning_print (pspace_info))
-	    warning (_("Missing auto-load scripts referenced in section %s\n\
-of file %s\n\
-Use `info auto-load %s-scripts [REGEXP]' to list them."),
-		     section_name, objfile_name (objfile),
-		     ext_lang_name (language));
-	}
-
-      in_hash_table = maybe_add_script (pspace_info, opened, file, full_path,
-					language);
-
-      /* If this file is not currently loaded, load it.  */
-      if (opened && !in_hash_table)
-	sourcer (language, objfile, stream, full_path);
-
-      do_cleanups (back_to);
     }
 }
 
@@ -1046,8 +1195,11 @@ load_auto_scripts_for_objfile (struct objfile *objfile)
 {
   /* Return immediately if auto-loading has been globally disabled.
      This is to handle sequencing of operations during gdb startup.
-     Also return immediately if OBJFILE is not actually a file.  */
-  if (!global_auto_load || (objfile->flags & OBJF_NOT_FILENAME) != 0)
+     Also return immediately if OBJFILE was not created from a file
+     on the local filesystem.  */
+  if (!global_auto_load
+      || (objfile->flags & OBJF_NOT_FILENAME) != 0
+      || is_target_filename (objfile->original_name))
     return;
 
   /* Load any extension language scripts for this objfile.
@@ -1146,6 +1298,23 @@ sort_scripts_by_name (const void *ap, const void *bp)
    "info auto-load" invocation.  Extra newline will be printed if needed.  */
 char auto_load_info_scripts_pattern_nl[] = "";
 
+/* Subroutine of auto_load_info_scripts to simplify it.
+   Print SCRIPTS.  */
+
+static void
+print_scripts (VEC (loaded_script_ptr) *scripts)
+{
+  struct ui_out *uiout = current_uiout;
+  int i;
+  loaded_script_ptr script;
+
+  qsort (VEC_address (loaded_script_ptr, scripts),
+	 VEC_length (loaded_script_ptr, scripts),
+	 sizeof (loaded_script_ptr), sort_scripts_by_name);
+  for (i = 0; VEC_iterate (loaded_script_ptr, scripts, i, script); ++i)
+    print_script (script);
+}
+
 /* Implementation for "info auto-load gdb-scripts"
    (and "info auto-load python-scripts").  List scripts in LANGUAGE matching
    PATTERN.  FROM_TTY is the usual GDB boolean for user interactivity.  */
@@ -1157,7 +1326,7 @@ auto_load_info_scripts (char *pattern, int from_tty,
   struct ui_out *uiout = current_uiout;
   struct auto_load_pspace_info *pspace_info;
   struct cleanup *script_chain;
-  VEC (loaded_script_ptr) *scripts;
+  VEC (loaded_script_ptr) *script_files, *script_texts;
   int nr_scripts;
 
   dont_repeat ();
@@ -1180,25 +1349,38 @@ auto_load_info_scripts (char *pattern, int from_tty,
      Plus we want to sort the scripts by name.
      So first traverse the hash table collecting the matching scripts.  */
 
-  scripts = VEC_alloc (loaded_script_ptr, 10);
-  script_chain = make_cleanup (VEC_cleanup (loaded_script_ptr), &scripts);
+  script_files = VEC_alloc (loaded_script_ptr, 10);
+  script_texts = VEC_alloc (loaded_script_ptr, 10);
+  script_chain = make_cleanup (VEC_cleanup (loaded_script_ptr), &script_files);
+  make_cleanup (VEC_cleanup (loaded_script_ptr), &script_texts);
 
-  if (pspace_info != NULL && pspace_info->loaded_scripts != NULL)
+  if (pspace_info != NULL && pspace_info->loaded_script_files != NULL)
     {
-      struct collect_matching_scripts_data data = { &scripts, language };
+      struct collect_matching_scripts_data data = { &script_files, language };
 
       /* Pass a pointer to scripts as VEC_safe_push can realloc space.  */
-      htab_traverse_noresize (pspace_info->loaded_scripts,
+      htab_traverse_noresize (pspace_info->loaded_script_files,
 			      collect_matching_scripts, &data);
     }
 
-  nr_scripts = VEC_length (loaded_script_ptr, scripts);
+  if (pspace_info != NULL && pspace_info->loaded_script_texts != NULL)
+    {
+      struct collect_matching_scripts_data data = { &script_texts, language };
+
+      /* Pass a pointer to scripts as VEC_safe_push can realloc space.  */
+      htab_traverse_noresize (pspace_info->loaded_script_texts,
+			      collect_matching_scripts, &data);
+    }
+
+  nr_scripts = (VEC_length (loaded_script_ptr, script_files)
+		+ VEC_length (loaded_script_ptr, script_texts));
 
   /* Table header shifted right by preceding "gdb-scripts:  " would not match
      its columns.  */
   if (nr_scripts > 0 && pattern == auto_load_info_scripts_pattern_nl)
     ui_out_text (uiout, "\n");
 
+  /* Note: This creates a cleanup to output the table end marker.  */
   make_cleanup_ui_out_table_begin_end (uiout, 2, nr_scripts,
 				       "AutoLoadedScriptsTable");
 
@@ -1206,18 +1388,10 @@ auto_load_info_scripts (char *pattern, int from_tty,
   ui_out_table_header (uiout, 70, ui_left, "script", "Script");
   ui_out_table_body (uiout);
 
-  if (nr_scripts > 0)
-    {
-      int i;
-      loaded_script_ptr script;
+  print_scripts (script_files);
+  print_scripts (script_texts);
 
-      qsort (VEC_address (loaded_script_ptr, scripts),
-	     VEC_length (loaded_script_ptr, scripts),
-	     sizeof (loaded_script_ptr), sort_scripts_by_name);
-      for (i = 0; VEC_iterate (loaded_script_ptr, scripts, i, script); ++i)
-	print_script (script);
-    }
-
+  /* Finish up the table before checking for no matching scripts.  */
   do_cleanups (script_chain);
 
   if (nr_scripts == 0)
@@ -1253,32 +1427,48 @@ info_auto_load_local_gdbinit (char *args, int from_tty)
 		     auto_load_local_gdbinit_pathname);
 }
 
-/* Return non-zero if UNSUPPORTED_SCRIPT_WARNING_PRINTED of PSPACE_INFO was
-   unset before calling this function.  Always set
-   UNSUPPORTED_SCRIPT_WARNING_PRINTED of PSPACE_INFO.  */
+/* Print an "unsupported script" warning if it has not already been printed.
+   The script is in language LANGUAGE at offset OFFSET in section SECTION_NAME
+   of OBJFILE.  */
 
-static int
-unsupported_script_warning_print (struct auto_load_pspace_info *pspace_info)
+static void
+maybe_print_unsupported_script_warning
+  (struct auto_load_pspace_info *pspace_info,
+   struct objfile *objfile, const struct extension_language_defn *language,
+   const char *section_name, unsigned offset)
 {
-  int retval = !pspace_info->unsupported_script_warning_printed;
-
-  pspace_info->unsupported_script_warning_printed = 1;
-
-  return retval;
+  if (!pspace_info->unsupported_script_warning_printed)
+    {
+      warning (_("\
+Unsupported auto-load script at offset %u in section %s\n\
+of file %s.\n\
+Use `info auto-load %s-scripts [REGEXP]' to list them."),
+	       offset, section_name, objfile_name (objfile),
+	       ext_lang_name (language));
+      pspace_info->unsupported_script_warning_printed = 1;
+    }
 }
 
 /* Return non-zero if SCRIPT_NOT_FOUND_WARNING_PRINTED of PSPACE_INFO was unset
    before calling this function.  Always set SCRIPT_NOT_FOUND_WARNING_PRINTED
    of PSPACE_INFO.  */
 
-static int
-script_not_found_warning_print (struct auto_load_pspace_info *pspace_info)
+static void
+maybe_print_script_not_found_warning
+  (struct auto_load_pspace_info *pspace_info,
+   struct objfile *objfile, const struct extension_language_defn *language,
+   const char *section_name, unsigned offset)
 {
-  int retval = !pspace_info->script_not_found_warning_printed;
-
-  pspace_info->script_not_found_warning_printed = 1;
-
-  return retval;
+  if (!pspace_info->script_not_found_warning_printed)
+    {
+      warning (_("\
+Missing auto-load script at offset %u in section %s\n\
+of file %s.\n\
+Use `info auto-load %s-scripts [REGEXP]' to list them."),
+	       offset, section_name, objfile_name (objfile),
+	       ext_lang_name (language));
+      pspace_info->script_not_found_warning_printed = 1;
+    }
 }
 
 /* The only valid "set auto-load" argument is off|0|no|disable.  */

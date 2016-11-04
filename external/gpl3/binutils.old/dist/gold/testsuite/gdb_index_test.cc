@@ -1,6 +1,6 @@
 // gdb_index_test.cc -- a test case for the --gdb-index option.
 
-// Copyright 2012 Free Software Foundation, Inc.
+// Copyright (C) 2012-2015 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.
@@ -123,6 +123,16 @@ struct anonymous_union_container {
 
 anonymous_union_container anonymous_union_var;
 
+#ifdef __GNUC__
+#define ALWAYS_INLINE __attribute__((always_inline))
+#else
+#define ALWAYS_INLINE
+#endif
+
+static inline ALWAYS_INLINE int
+inline_func_1(int i)
+{ return i * 17; }
+
 int
 main()
 {
@@ -134,5 +144,6 @@ main()
   check(&two::c2v1);
   check(&two::c2v2);
   check(&two::c2v3);
+  anonymous_union_var.u.b = inline_func_1(3) - 51;
   return anonymous_union_var.u.b;
 }

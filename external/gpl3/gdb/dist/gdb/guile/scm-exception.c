@@ -1,6 +1,6 @@
 /* GDB/Scheme exception support.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -635,22 +635,22 @@ gdbscm_percent_exception_count (void)
 
 static const scheme_function exception_functions[] =
 {
-  { "make-exception", 2, 0, 0, gdbscm_make_exception,
+  { "make-exception", 2, 0, 0, as_a_scm_t_subr (gdbscm_make_exception),
     "\
 Create a <gdb:exception> object.\n\
 \n\
   Arguments: key args\n\
     These are the standard key,args arguments of \"throw\"." },
 
-  { "exception?", 1, 0, 0, gdbscm_exception_p,
+  { "exception?", 1, 0, 0, as_a_scm_t_subr (gdbscm_exception_p),
     "\
 Return #t if the object is a <gdb:exception> object." },
 
-  { "exception-key", 1, 0, 0, gdbscm_exception_key,
+  { "exception-key", 1, 0, 0, as_a_scm_t_subr (gdbscm_exception_key),
     "\
 Return the exception's key." },
 
-  { "exception-args", 1, 0, 0, gdbscm_exception_args,
+  { "exception-args", 1, 0, 0, as_a_scm_t_subr (gdbscm_exception_args),
     "\
 Return the exception's arg list." },
 
@@ -659,11 +659,13 @@ Return the exception's arg list." },
 
 static const scheme_function private_exception_functions[] =
 {
-  { "%exception-print-style", 0, 0, 0, gdbscm_percent_exception_print_style,
+  { "%exception-print-style", 0, 0, 0,
+    as_a_scm_t_subr (gdbscm_percent_exception_print_style),
     "\
 Return the value of the \"guile print-stack\" option." },
 
-  { "%exception-count", 0, 0, 0, gdbscm_percent_exception_count,
+  { "%exception-count", 0, 0, 0,
+    as_a_scm_t_subr (gdbscm_percent_exception_count),
     "\
 Return a count of the number of <gdb:exception> objects created.\n\
 This is for debugging purposes." },

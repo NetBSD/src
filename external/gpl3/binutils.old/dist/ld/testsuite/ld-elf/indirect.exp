@@ -1,5 +1,5 @@
 # Expect script for various indirect symbol tests.
-#   Copyright 2012 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,8 +26,19 @@ if ![is_elf_format] {
     return
 }
 
+# Skip target where -shared is not supported
+
+if ![check_shared_lib_support] {
+    return
+}
+
 # Check if compiler works
 if { [which $CC] == 0 } {
+    return
+}
+
+# Some bare-metal targets don't support shared libs or PIC.
+if { ![run_host_cmd_yesno $CC "-shared -fPIC $srcdir/$subdir/dummy.c -o tmpdir/t.so"] } {
     return
 }
 
@@ -53,7 +64,13 @@ if { ![ld_compile $CC $srcdir/$subdir/indirect1a.c tmpdir/indirect1a.o]
      || ![ld_compile $CC $srcdir/$subdir/indirect3a.c tmpdir/indirect3a.o]
      || ![ld_compile $CC $srcdir/$subdir/indirect3b.c tmpdir/indirect3b.o]
      || ![ld_compile $CC $srcdir/$subdir/indirect4a.c tmpdir/indirect4a.o]
-     || ![ld_compile $CC $srcdir/$subdir/indirect4b.c tmpdir/indirect4b.o] } {
+     || ![ld_compile $CC $srcdir/$subdir/indirect4b.c tmpdir/indirect4b.o]
+     || ![ld_compile "$CC -O2 -fPIC -I../bfd" $srcdir/$subdir/pr18720a.c tmpdir/pr18720a.o]
+     || ![ld_compile $CC $srcdir/$subdir/pr18720b.c tmpdir/pr18720b.o]
+     || ![ld_compile "$CC -fPIC" $srcdir/$subdir/pr19553d.c tmpdir/pr19553d.o]
+     || ![ld_compile "$CC -fPIC" $srcdir/$subdir/pr19553c.c tmpdir/pr19553c.o]
+     || ![ld_compile "$CC -fPIC" $srcdir/$subdir/pr19553b.c tmpdir/pr19553b.o]
+     || ![ld_compile $CC $srcdir/$subdir/pr19553a.c tmpdir/pr19553a.o] } {
     unresolved "Indirect symbol tests"
     return
 }
@@ -68,6 +85,21 @@ set build_tests {
   {"Build libindirect4c.so"
    "-shared" "-fPIC"
    {indirect4c.c} {} "libindirect4c.so"}
+  {"Build libpr18720c.so"
+   "-shared" "-fPIC"
+   {pr18720c.c} {} "libpr18720c.so"}
+  {"Build pr18720b1.o"
+   "-r -nostdlib tmpdir/pr18720b.o" ""
+   {dummy.c} {} "pr18720b1.o"}
+  {"Build libpr19553b.so"
+   "-shared -Wl,--version-script=pr19553.map" "-fPIC"
+   {pr19553b.c} {} "libpr19553b.so"}
+  {"Build libpr19553c.so"
+   "-shared -Wl,--version-script=pr19553.map" "-fPIC"
+   {pr19553c.c} {} "libpr19553c.so"}
+  {"Build libpr19553d.so"
+   "-shared tmpdir/libpr19553c.so" "-fPIC"
+   {pr19553d.c} {} "libpr19553d.so"}
 }
 
 run_cc_link_tests $build_tests
@@ -121,6 +153,30 @@ set run_tests {
     {"Run with libindirect4c.so 4"
      "tmpdir/libindirect4c.so tmpdir/indirect4b.o tmpdir/indirect4a.o" ""
      {dummy.c} "indirect4d" "indirect4.out"}
+    {"Run with libpr18720c.so 1"
+     "tmpdir/pr18720a.o tmpdir/pr18720b.o tmpdir/libpr18720c.so" ""
+     {check-ptr-eq.c} "pr18720a" "pr18720.out"}
+    {"Run with libpr18720c.so 2"
+     "tmpdir/pr18720a.o tmpdir/libpr18720c.so tmpdir/pr18720b.o" ""
+     {check-ptr-eq.c} "pr18720b" "pr18720.out"}
+    {"Run with libpr18720c.so 3"
+     "tmpdir/pr18720b.o tmpdir/libpr18720c.so tmpdir/pr18720a.o" ""
+     {check-ptr-eq.c} "pr18720c" "pr18720.out"}
+    {"Run with libpr18720c.so 4"
+     "tmpdir/libpr18720c.so tmpdir/pr18720b.o tmpdir/pr18720a.o" ""
+     {check-ptr-eq.c} "pr18720d" "pr18720.out"}
+    {"Run with libpr18720c.so 5"
+     "tmpdir/libpr18720c.so tmpdir/pr18720b1.o tmpdir/pr18720a.o" ""
+     {check-ptr-eq.c} "pr18720d" "pr18720.out"}
+    {"Run with libpr19553b.so"
+     "tmpdir/libpr19553b.so tmpdir/libpr19553d.so -rpath-link ." ""
+     {pr19553a.c} "pr19553b" "pr19553b.out"}
+    {"Run with libpr19553c.so"
+     "tmpdir/libpr19553c.so tmpdir/libpr19553b.so tmpdir/libpr19553d.so" ""
+     {pr19553a.c} "pr19553c" "pr19553c.out"}
+    {"Run with libpr19553d.so"
+     "tmpdir/libpr19553d.so tmpdir/libpr19553b.so -rpath-link ." ""
+     {pr19553a.c} "pr19553d" "pr19553d.out"}
 }
 
 run_ld_link_exec_tests [] $run_tests

@@ -21,7 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 /* See the 'sample2.x' target in Makefile.in.  */
 void exit (int);
 
-start ()
+void
+start (void)
 {
   foo (1, 2, 3, 4);
   exit (5);

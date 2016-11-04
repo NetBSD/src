@@ -1,37 +1,26 @@
-/* Simple program using the JIT API.  */
+/* This testcase is part of GDB, the GNU debugger.
 
-#include <stdint.h>
+   Copyright 2016 Free Software Foundation, Inc.
 
-struct jit_code_entry
-{
-  struct jit_code_entry *next_entry;
-  struct jit_code_entry *prev_entry;
-  const char *symfile_addr;
-  uint64_t symfile_size;
-};
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
 
-struct jit_descriptor
-{
-  uint32_t version;
-  /* This type should be jit_actions_t, but we use uint32_t
-     to be explicit about the bitwidth.  */
-  uint32_t action_flag;
-  struct jit_code_entry *relevant_entry;
-  struct jit_code_entry *first_entry;
-};
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-#ifdef SPACER
-/* This exists to change the address of __jit_debug_descriptor.  */
-int spacer = 4;
-#endif
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-struct jit_descriptor __jit_debug_descriptor = { 1, 0, 0, 0 };
+/* Simple standalone program using the JIT API.  */
 
-void __jit_debug_register_code()
-{
-}
+#include "jit-simple-jit.c"
 
-int main()
+int
+main (void)
 {
   return 0;
 }

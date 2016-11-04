@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.22 2016/06/09 19:04:43 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.22.2.1 2016/11/04 14:48:55 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -128,7 +128,7 @@ cmd_create(gpt_t gpt, int argc, char *argv[])
 	int active = 0;
 	int force = 0;
 	int primary_only = 0;
-	u_int parts = 128;
+	u_int parts = 0;
 
 	while ((ch = getopt(argc, argv, "AfPp:")) != -1) {
 		switch(ch) {
@@ -149,6 +149,8 @@ cmd_create(gpt_t gpt, int argc, char *argv[])
 			return usage();
 		}
 	}
+	if (parts == 0)
+		parts = 128;
 
 	if (argc != optind)
 		return usage();

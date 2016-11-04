@@ -1,6 +1,6 @@
 /* Definitions for reading symbol files into GDB.
 
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -439,6 +439,11 @@ extern void add_symtab_fns (enum bfd_flavour flavour, const struct sym_fns *);
 extern void clear_symtab_users (int add_flags);
 
 extern enum language deduce_language_from_filename (const char *);
+
+/* Map the filename extension EXT to the language LANG.  Any previous
+   association of EXT will be removed.  EXT will be copied by this
+   function.  */
+extern void add_filename_language (const char *ext, enum language lang);
 
 /* This enum encodes bit-flags passed as ADD_FLAGS parameter to
    symbol_file_add, etc.  */

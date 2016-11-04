@@ -2,9 +2,13 @@
 # source: rgn-over8.s
 # ld: -T rgn-over8.t
 # objdump: -w -h
-# xfail: rx-*-*
+# xfail: rx-*-* *-*-nacl*
 #   FAILS on the RX because the linker has to set LMA == VMA for the
 #   Renesas loader.
+#   FAILs on NaCl targets because the linker extends the first segment
+#   to fill out the page, making its p_vaddr+p_memsz cover the sh_addr
+#   of .bss too, which makes BFD compute its LMA from the p_paddr of the
+#   text segment.
 
 .*:     file format .*
 

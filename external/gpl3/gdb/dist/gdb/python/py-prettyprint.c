@@ -1,6 +1,6 @@
 /* Python pretty-printing
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -393,7 +393,7 @@ print_string_repr (PyObject *printer, const char *hint,
 static void
 py_restore_tstate (void *p)
 {
-  PyFrameObject *frame = p;
+  PyFrameObject *frame = (PyFrameObject *) p;
   PyThreadState *tstate = PyThreadState_GET ();
 
   tstate->frame = frame;
@@ -703,7 +703,7 @@ print_children (PyObject *printer, const char *hint,
 enum ext_lang_rc
 gdbpy_apply_val_pretty_printer (const struct extension_language_defn *extlang,
 				struct type *type, const gdb_byte *valaddr,
-				int embedded_offset, CORE_ADDR address,
+				LONGEST embedded_offset, CORE_ADDR address,
 				struct ui_file *stream, int recurse,
 				const struct value *val,
 				const struct value_print_options *options,

@@ -108,9 +108,8 @@ static char *
 tyscm_type_name (struct type *type, SCM *excp)
 {
   char *name = NULL;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       struct cleanup *old_chain;
       struct ui_file *stb;
@@ -123,11 +122,12 @@ tyscm_type_name (struct type *type, SCM *excp)
       name = ui_file_xstrdup (stb, NULL);
       do_cleanups (old_chain);
     }
-  if (except.reason < 0)
+  CATCH (except, RETURN_MASK_ALL)
     {
       *excp = gdbscm_scm_from_gdb_exception (except);
       return NULL;
     }
+  END_CATCH
 
   return name;
 }
@@ -239,7 +239,6 @@ tyscm_equal_p_type_smob (SCM type1_scm, SCM type2_scm)
   type_smob *type1_smob, *type2_smob;
   struct type *type1, *type2;
   int result = 0;
-  volatile struct gdb_exception except;
 
   SCM_ASSERT_TYPE (tyscm_is_type (type1_scm), type1_scm, SCM_ARG1, FUNC_NAME,
 		   type_smob_name);
@@ -250,11 +249,15 @@ tyscm_equal_p_type_smob (SCM type1_scm, SCM type2_scm)
   type1 = type1_smob->type;
   type2 = type2_smob->type;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       result = types_deeply_equal (type1, type2);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   return scm_from_bool (result);
 }
@@ -628,12 +631,16 @@ gdbscm_type_sizeof (SCM self)
   type_smob *t_smob
     = tyscm_get_type_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   struct type *type = t_smob->type;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       check_typedef (type);
     }
+  CATCH (except, RETURN_MASK_ALL)
+    {
+    }
+  END_CATCH
+
   /* Ignore exceptions.  */
 
   return scm_from_long (TYPE_LENGTH (type));
@@ -648,13 +655,16 @@ gdbscm_type_strip_typedefs (SCM self)
   type_smob *t_smob
     = tyscm_get_type_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   struct type *type = t_smob->type;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       type = check_typedef (type);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   return tyscm_scm_from_type (type);
 }
@@ -665,15 +675,18 @@ gdbscm_type_strip_typedefs (SCM self)
 static struct type *
 tyscm_get_composite (struct type *type)
 {
-  volatile struct gdb_exception except;
 
   for (;;)
     {
-      TRY_CATCH (except, RETURN_MASK_ALL)
+      TRY
 	{
 	  type = check_typedef (type);
 	}
-      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+      CATCH (except, RETURN_MASK_ALL)
+	{
+	  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+	}
+      END_CATCH
 
       if (TYPE_CODE (type) != TYPE_CODE_PTR
 	  && TYPE_CODE (type) != TYPE_CODE_REF)
@@ -702,7 +715,6 @@ tyscm_array_1 (SCM self, SCM n1_scm, SCM n2_scm, int is_vector,
   struct type *type = t_smob->type;
   long n1, n2 = 0;
   struct type *array = NULL;
-  volatile struct gdb_exception except;
 
   gdbscm_parse_function_args (func_name, SCM_ARG2, NULL, "l|l",
 			      n1_scm, &n1, n2_scm, &n2);
@@ -721,13 +733,17 @@ tyscm_array_1 (SCM self, SCM n1_scm, SCM n2_scm, int is_vector,
 				 _("Array length must not be negative"));
     }
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       array = lookup_array_range_type (type, n1, n2);
       if (is_vector)
 	make_vector_type (array);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   return tyscm_scm_from_type (array);
 }
@@ -773,13 +789,16 @@ gdbscm_type_pointer (SCM self)
   type_smob *t_smob
     = tyscm_get_type_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   struct type *type = t_smob->type;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       type = lookup_pointer_type (type);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   return tyscm_scm_from_type (type);
 }
@@ -832,13 +851,16 @@ gdbscm_type_reference (SCM self)
   type_smob *t_smob
     = tyscm_get_type_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   struct type *type = t_smob->type;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       type = lookup_reference_type (type);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   return tyscm_scm_from_type (type);
 }
@@ -867,13 +889,16 @@ gdbscm_type_const (SCM self)
   type_smob *t_smob
     = tyscm_get_type_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   struct type *type = t_smob->type;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       type = make_cv_type (1, 0, type, NULL);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   return tyscm_scm_from_type (type);
 }
@@ -887,13 +912,16 @@ gdbscm_type_volatile (SCM self)
   type_smob *t_smob
     = tyscm_get_type_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   struct type *type = t_smob->type;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       type = make_cv_type (0, 1, type, NULL);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   return tyscm_scm_from_type (type);
 }
@@ -907,13 +935,16 @@ gdbscm_type_unqualified (SCM self)
   type_smob *t_smob
     = tyscm_get_type_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   struct type *type = t_smob->type;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       type = make_cv_type (0, 0, type, NULL);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   return tyscm_scm_from_type (type);
 }
@@ -1212,22 +1243,24 @@ static struct type *
 tyscm_lookup_typename (const char *type_name, const struct block *block)
 {
   struct type *type = NULL;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
-      if (!strncmp (type_name, "struct ", 7))
+      if (startswith (type_name, "struct "))
 	type = lookup_struct (type_name + 7, NULL);
-      else if (!strncmp (type_name, "union ", 6))
+      else if (startswith (type_name, "union "))
 	type = lookup_union (type_name + 6, NULL);
-      else if (!strncmp (type_name, "enum ", 5))
+      else if (startswith (type_name, "enum "))
 	type = lookup_enum (type_name + 5, NULL);
       else
 	type = lookup_typename (current_language, get_current_arch (),
 				type_name, block, 0);
     }
-  if (except.reason < 0)
-    return NULL;
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      return NULL;
+    }
+  END_CATCH
 
   return type;
 }

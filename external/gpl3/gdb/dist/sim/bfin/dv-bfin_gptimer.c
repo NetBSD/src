@@ -1,6 +1,6 @@
 /* Blackfin General Purpose Timers (GPtimer) model
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -61,6 +61,10 @@ bfin_gptimer_io_write_buffer (struct hw *me, const void *source, int space,
   bu32 *value32p;
   void *valuep;
 
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_16_32 (me, addr, nr_bytes, true))
+    return 0;
+
   if (nr_bytes == 4)
     value = dv_load_4 (source);
   else
@@ -76,18 +80,20 @@ bfin_gptimer_io_write_buffer (struct hw *me, const void *source, int space,
   switch (mmr_off)
     {
     case mmr_offset(config):
-      dv_bfin_mmr_require_16 (me, addr, nr_bytes, true);
+      if (!dv_bfin_mmr_require_16 (me, addr, nr_bytes, true))
+	return 0;
       *value16p = value;
       break;
     case mmr_offset(counter):
     case mmr_offset(period):
     case mmr_offset(width):
-      dv_bfin_mmr_require_32 (me, addr, nr_bytes, true);
+      if (!dv_bfin_mmr_require_32 (me, addr, nr_bytes, true))
+	return 0;
       *value32p = value;
       break;
     default:
       dv_bfin_mmr_invalid (me, addr, nr_bytes, true);
-      break;
+      return 0;
     }
 
   return nr_bytes;
@@ -103,6 +109,10 @@ bfin_gptimer_io_read_buffer (struct hw *me, void *dest, int space,
   bu32 *value32p;
   void *valuep;
 
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_16_32 (me, addr, nr_bytes, false))
+    return 0;
+
   mmr_off = addr - gptimer->base;
   valuep = (void *)((unsigned long)gptimer + mmr_base() + mmr_off);
   value16p = valuep;
@@ -113,18 +123,20 @@ bfin_gptimer_io_read_buffer (struct hw *me, void *dest, int space,
   switch (mmr_off)
     {
     case mmr_offset(config):
-      dv_bfin_mmr_require_16 (me, addr, nr_bytes, false);
+      if (!dv_bfin_mmr_require_16 (me, addr, nr_bytes, false))
+	return 0;
       dv_store_2 (dest, *value16p);
       break;
     case mmr_offset(counter):
     case mmr_offset(period):
     case mmr_offset(width):
-      dv_bfin_mmr_require_32 (me, addr, nr_bytes, false);
+      if (!dv_bfin_mmr_require_32 (me, addr, nr_bytes, false))
+	return 0;
       dv_store_4 (dest, *value32p);
       break;
     default:
       dv_bfin_mmr_invalid (me, addr, nr_bytes, false);
-      break;
+      return 0;
     }
 
   return nr_bytes;

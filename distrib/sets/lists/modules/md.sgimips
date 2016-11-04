@@ -1,0 +1,5 @@
+# $NetBSD: md.sgimips,v 1.2.2.2 2016/11/04 14:42:39 pgoyette Exp $
+./@MODULEDIR@/cac_eisa				base-obsolete		obsolete
+./@MODULEDIR@/cac_eisa/cac_eisa.kmod		base-obsolete		obsolete
+./@MODULEDIR@/mlx_eisa				base-obsolete		obsolete
+./@MODULEDIR@/mlx_eisa/mlx_eisa.kmod		base-obsolete		obsolete

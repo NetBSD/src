@@ -2723,6 +2723,12 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
 #endif
 #define F_DEPRECATED	0x1	/* Deprecated system register.  */
 
+#ifdef F_ARCHEXT
+#undef F_ARCHEXT
+#endif
+#define F_ARCHEXT	0x2	/* Architecture dependent system register.  */
+
+
 /* TODO there are two more issues need to be resolved
    1. handle read-only and write-only system registers
    2. handle cpu-implementation-defined system registers.  */
@@ -2734,6 +2740,7 @@ const aarch64_sys_reg aarch64_sys_regs [] =
   { "spsel",            CPEN_(0,C2,0),	0 },
   { "daif",             CPEN_(3,C2,1),	0 },
   { "currentel",        CPEN_(0,C2,2),	0 }, /* RO */
+  { "pan",		CPEN_(0,C2,3),	F_ARCHEXT },
   { "nzcv",             CPEN_(3,C2,0),	0 },
   { "fpcr",             CPEN_(3,C4,0),	0 },
   { "fpsr",             CPEN_(3,C4,1),	0 },
@@ -2765,6 +2772,7 @@ const aarch64_sys_reg aarch64_sys_regs [] =
   { "id_mmfr1_el1",     CPENC(3,0,C0,C1,5),	0 }, /* RO */
   { "id_mmfr2_el1",     CPENC(3,0,C0,C1,6),	0 }, /* RO */
   { "id_mmfr3_el1",     CPENC(3,0,C0,C1,7),	0 }, /* RO */
+  { "id_mmfr4_el1",     CPENC(3,0,C0,C2,6),	0 }, /* RO */
   { "id_isar0_el1",     CPENC(3,0,C0,C2,0),	0 }, /* RO */
   { "id_isar1_el1",     CPENC(3,0,C0,C2,1),	0 }, /* RO */
   { "id_isar2_el1",     CPENC(3,0,C0,C2,2),	0 }, /* RO */
@@ -3043,13 +3051,44 @@ aarch64_sys_reg_deprecated_p (const aarch64_sys_reg *reg)
   return (reg->flags & F_DEPRECATED) != 0;
 }
 
+bfd_boolean
+aarch64_sys_reg_supported_p (const aarch64_feature_set features,
+			     const aarch64_sys_reg *reg)
+{
+  if (!(reg->flags & F_ARCHEXT))
+    return TRUE;
+
+  /* PAN.  Values are from aarch64_sys_regs.  */
+  if (reg->value == CPEN_(0,C2,3)
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_PAN))
+    return FALSE;
+
+  return TRUE;
+}
+
 const aarch64_sys_reg aarch64_pstatefields [] =
 {
   { "spsel",            0x05,	0 },
   { "daifset",          0x1e,	0 },
   { "daifclr",          0x1f,	0 },
+  { "pan",		0x04,	F_ARCHEXT },
   { 0,          CPENC(0,0,0,0,0), 0 },
 };
+
+bfd_boolean
+aarch64_pstatefield_supported_p (const aarch64_feature_set features,
+				 const aarch64_sys_reg *reg)
+{
+  if (!(reg->flags & F_ARCHEXT))
+    return TRUE;
+
+  /* PAN.  Values are from aarch64_pstatefields.  */
+  if (reg->value == 0x04
+      && !AARCH64_CPU_HAS_FEATURE (features, AARCH64_FEATURE_PAN))
+    return FALSE;
+
+  return TRUE;
+}
 
 const aarch64_sys_ins_reg aarch64_sys_regs_ic[] =
 {

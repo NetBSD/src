@@ -1,6 +1,6 @@
 // options.c -- handle command line options for gold
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright (C) 2006-2015 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -101,11 +101,11 @@ One_option::print() const
     {
       len += printf("-%c", this->shortname);
       if (this->helparg)
-        {
-          // -z takes long-names only.
-          gold_assert(this->dashes != DASH_Z);
-          len += printf(" %s", gettext(this->helparg));
-        }
+	{
+	  // -z takes long-names only.
+	  gold_assert(this->dashes != DASH_Z);
+	  len += printf(" %s", gettext(this->helparg));
+	}
       comma = true;
     }
   if (!this->longname.empty()
@@ -113,29 +113,29 @@ One_option::print() const
 	   && this->longname[1] == '\0'))
     {
       if (comma)
-        len += printf(", ");
+	len += printf(", ");
       switch (this->dashes)
-        {
-        case options::ONE_DASH: case options::EXACTLY_ONE_DASH:
-          len += printf("-");
-          break;
-        case options::TWO_DASHES: case options::EXACTLY_TWO_DASHES:
-          len += printf("--");
-          break;
-        case options::DASH_Z:
-          len += printf("-z ");
-          break;
-        default:
-          gold_unreachable();
-        }
+	{
+	case options::ONE_DASH: case options::EXACTLY_ONE_DASH:
+	  len += printf("-");
+	  break;
+	case options::TWO_DASHES: case options::EXACTLY_TWO_DASHES:
+	  len += printf("--");
+	  break;
+	case options::DASH_Z:
+	  len += printf("-z ");
+	  break;
+	default:
+	  gold_unreachable();
+	}
       len += printf("%s", this->longname.c_str());
       if (this->helparg)
-        {
-          // For most options, we print "--frob FOO".  But for -z
-          // we print "-z frob=FOO".
-          len += printf("%c%s", this->dashes == options::DASH_Z ? '=' : ' ',
-                        gettext(this->helparg));
-        }
+	{
+	  // For most options, we print "--frob FOO".  But for -z
+	  // we print "-z frob=FOO".
+	  len += printf("%c%s", this->dashes == options::DASH_Z ? '=' : ' ',
+			gettext(this->helparg));
+	}
     }
 
   if (len >= 30)
@@ -200,7 +200,7 @@ parse_uint(const char* option_name, const char* arg, int* retval)
   *retval = strtol(arg, &endptr, 0);
   if (*endptr != '\0' || *retval < 0)
     gold_fatal(_("%s: invalid option value (expected an integer): %s"),
-               option_name, arg);
+	       option_name, arg);
 }
 
 void
@@ -210,7 +210,7 @@ parse_int(const char* option_name, const char* arg, int* retval)
   *retval = strtol(arg, &endptr, 0);
   if (*endptr != '\0')
     gold_fatal(_("%s: invalid option value (expected an integer): %s"),
-               option_name, arg);
+	       option_name, arg);
 }
 
 void
@@ -220,7 +220,7 @@ parse_uint64(const char* option_name, const char* arg, uint64_t* retval)
   *retval = strtoull(arg, &endptr, 0);
   if (*endptr != '\0')
     gold_fatal(_("%s: invalid option value (expected an integer): %s"),
-               option_name, arg);
+	       option_name, arg);
 }
 
 void
@@ -273,13 +273,13 @@ parse_set(const char*, const char* arg, String_set* retval)
 
 void
 parse_choices(const char* option_name, const char* arg, const char** retval,
-              const char* choices[], int num_choices)
+	      const char* choices[], int num_choices)
 {
   for (int i = 0; i < num_choices; i++)
     if (strcmp(choices[i], arg) == 0)
       {
-        *retval = arg;
-        return;
+	*retval = arg;
+	return;
       }
 
   // If we get here, the user did not enter a valid choice, so we die.
@@ -288,10 +288,10 @@ parse_choices(const char* option_name, const char* arg, const char** retval,
     {
       choices_list += choices[i];
       if (i != num_choices - 1)
-        choices_list += ", ";
+	choices_list += ", ";
     }
   gold_fatal(_("%s: must take one of the following arguments: %s"),
-             option_name, choices_list.c_str());
+	     option_name, choices_list.c_str());
 }
 
 } // End namespace options.
@@ -340,21 +340,42 @@ General_options::parse_V(const char*, const char*, Command_line*)
 
 void
 General_options::parse_defsym(const char*, const char* arg,
-                              Command_line* cmdline)
+			      Command_line* cmdline)
 {
   cmdline->script_options().define_symbol(arg);
 }
 
 void
+General_options::parse_discard_all(const char*, const char*,
+				   Command_line*)
+{
+  this->discard_locals_ = DISCARD_ALL;
+}
+
+void
+General_options::parse_discard_locals(const char*, const char*,
+				      Command_line*)
+{
+  this->discard_locals_ = DISCARD_LOCALS;
+}
+
+void
+General_options::parse_discard_none(const char*, const char*,
+				    Command_line*)
+{
+  this->discard_locals_ = DISCARD_NONE;
+}
+
+void
 General_options::parse_incremental(const char*, const char*,
-                                   Command_line*)
+				   Command_line*)
 {
   this->incremental_mode_ = INCREMENTAL_AUTO;
 }
 
 void
 General_options::parse_no_incremental(const char*, const char*,
-                                      Command_line*)
+				      Command_line*)
 {
   this->incremental_mode_ = INCREMENTAL_OFF;
 }
@@ -375,7 +396,7 @@ General_options::parse_incremental_update(const char*, const char*,
 
 void
 General_options::parse_incremental_changed(const char*, const char*,
-                                           Command_line*)
+					   Command_line*)
 {
   this->implicit_incremental_ = true;
   this->incremental_disposition_ = INCREMENTAL_CHANGED;
@@ -383,7 +404,7 @@ General_options::parse_incremental_changed(const char*, const char*,
 
 void
 General_options::parse_incremental_unchanged(const char*, const char*,
-                                             Command_line*)
+					     Command_line*)
 {
   this->implicit_incremental_ = true;
   this->incremental_disposition_ = INCREMENTAL_UNCHANGED;
@@ -391,7 +412,7 @@ General_options::parse_incremental_unchanged(const char*, const char*,
 
 void
 General_options::parse_incremental_unknown(const char*, const char*,
-                                           Command_line*)
+					   Command_line*)
 {
   this->implicit_incremental_ = true;
   this->incremental_disposition_ = INCREMENTAL_CHECK;
@@ -407,7 +428,7 @@ General_options::parse_incremental_startup_unchanged(const char*, const char*,
 
 void
 General_options::parse_library(const char*, const char* arg,
-                               Command_line* cmdline)
+			       Command_line* cmdline)
 {
   Input_file_argument::Input_file_type type;
   const char* name;
@@ -428,7 +449,7 @@ General_options::parse_library(const char*, const char* arg,
 #ifdef ENABLE_PLUGINS
 void
 General_options::parse_plugin(const char*, const char* arg,
-                              Command_line*)
+			      Command_line*)
 {
   this->add_plugin(arg);
 }
@@ -437,7 +458,7 @@ General_options::parse_plugin(const char*, const char* arg,
 
 void
 General_options::parse_plugin_opt(const char*, const char* arg,
-                                  Command_line*)
+				  Command_line*)
 {
   this->add_plugin_option(arg);
 }
@@ -445,7 +466,7 @@ General_options::parse_plugin_opt(const char*, const char* arg,
 
 void
 General_options::parse_R(const char* option, const char* arg,
-                         Command_line* cmdline)
+			 Command_line* cmdline)
 {
   struct stat s;
   if (::stat(arg, &s) != 0 || S_ISDIR(s.st_mode))
@@ -456,7 +477,7 @@ General_options::parse_R(const char* option, const char* arg,
 
 void
 General_options::parse_just_symbols(const char*, const char* arg,
-                                    Command_line* cmdline)
+				    Command_line* cmdline)
 {
   Input_file_argument file(arg, Input_file_argument::INPUT_FILE_TYPE_FILE,
 			   "", true, *this);
@@ -528,7 +549,7 @@ General_options::parse_static(const char*, const char*, Command_line*)
 
 void
 General_options::parse_script(const char*, const char* arg,
-                              Command_line* cmdline)
+			      Command_line* cmdline)
 {
   if (!read_commandline_script(arg, cmdline))
     gold::gold_fatal(_("unable to parse script file %s"), arg);
@@ -536,7 +557,7 @@ General_options::parse_script(const char*, const char* arg,
 
 void
 General_options::parse_version_script(const char*, const char* arg,
-                                      Command_line* cmdline)
+				      Command_line* cmdline)
 {
   if (!read_version_script(arg, cmdline))
     gold::gold_fatal(_("unable to parse version script file %s"), arg);
@@ -544,36 +565,37 @@ General_options::parse_version_script(const char*, const char* arg,
 
 void
 General_options::parse_dynamic_list(const char*, const char* arg,
-                                    Command_line* cmdline)
+				    Command_line* cmdline)
 {
   if (!read_dynamic_list(arg, cmdline, &this->dynamic_list_))
     gold::gold_fatal(_("unable to parse dynamic-list script file %s"), arg);
+  this->have_dynamic_list_ = true;
 }
 
 void
 General_options::parse_start_group(const char*, const char*,
-                                   Command_line* cmdline)
+				   Command_line* cmdline)
 {
   cmdline->inputs().start_group();
 }
 
 void
 General_options::parse_end_group(const char*, const char*,
-                                 Command_line* cmdline)
+				 Command_line* cmdline)
 {
   cmdline->inputs().end_group();
 }
 
 void
 General_options::parse_start_lib(const char*, const char*,
-                                 Command_line* cmdline)
+				 Command_line* cmdline)
 {
   cmdline->inputs().start_lib(cmdline->position_dependent_options());
 }
 
 void
 General_options::parse_end_lib(const char*, const char*,
-                               Command_line* cmdline)
+			       Command_line* cmdline)
 {
   cmdline->inputs().end_lib();
 }
@@ -585,7 +607,7 @@ General_options::parse_end_lib(const char*, const char*,
 
 void
 General_options::parse_exclude_libs(const char*, const char* arg,
-                                    Command_line*)
+				    Command_line*)
 {
   const char* p = arg;
 
@@ -652,22 +674,22 @@ General_options::check_excluded_libs(const std::string &name) const
 General_options::Object_format
 General_options::string_to_object_format(const char* arg)
 {
-  if (strncmp(arg, "elf", 3) == 0)
+  if (strncmp(arg, "elf", 3) == 0 || strcmp(arg, "default") == 0)
     return gold::General_options::OBJECT_FORMAT_ELF;
   else if (strcmp(arg, "binary") == 0)
     return gold::General_options::OBJECT_FORMAT_BINARY;
   else
     {
       gold::gold_error(_("format '%s' not supported; treating as elf "
-                         "(supported formats: elf, binary)"),
-                       arg);
+			 "(supported formats: elf, binary)"),
+		       arg);
       return gold::General_options::OBJECT_FORMAT_ELF;
     }
 }
 
 void
 General_options::parse_fix_v4bx(const char*, const char*,
-                                Command_line*)
+				Command_line*)
 {
   this->fix_v4bx_ = FIX_V4BX_REPLACE;
 }
@@ -700,8 +722,8 @@ void
 usage()
 {
   fprintf(stderr,
-          _("%s: use the --help option for usage information\n"),
-          gold::program_name);
+	  _("%s: use the --help option for usage information\n"),
+	  gold::program_name);
   ::exit(EXIT_FAILURE);
 }
 
@@ -709,8 +731,8 @@ void
 usage(const char* msg, const char* opt)
 {
   fprintf(stderr,
-          _("%s: %s: %s\n"),
-          gold::program_name, opt, msg);
+	  _("%s: %s: %s\n"),
+	  gold::program_name, opt, msg);
   usage();
 }
 
@@ -721,12 +743,12 @@ static char*
 get_relative_sysroot(const char* from)
 {
   char* path = make_relative_prefix(gold::program_name, from,
-                                    TARGET_SYSTEM_ROOT);
+				    TARGET_SYSTEM_ROOT);
   if (path != NULL)
     {
       struct stat s;
       if (::stat(path, &s) == 0 && S_ISDIR(s.st_mode))
-        return path;
+	return path;
       free(path);
     }
 
@@ -749,9 +771,9 @@ get_default_sysroot()
     {
       char* path = get_relative_sysroot(BINDIR);
       if (path == NULL)
-        path = get_relative_sysroot(TOOLBINDIR);
+	path = get_relative_sysroot(TOOLBINDIR);
       if (path != NULL)
-        return path;
+	return path;
     }
 
   return sysroot;
@@ -768,14 +790,14 @@ get_default_sysroot()
 // NOTE: it is safe for argv and arg to point to the same place.
 gold::options::One_option*
 parse_long_option(int argc, const char** argv, bool equals_only,
-                  const char** arg, int* i)
+		  const char** arg, int* i)
 {
   const char* const this_argv = argv[*i];
 
   const char* equals = strchr(this_argv, '=');
   const char* option_start = this_argv + strspn(this_argv, "-");
   std::string option(option_start,
-                     equals ? equals - option_start : strlen(option_start));
+		     equals ? equals - option_start : strlen(option_start));
 
   gold::options::Option_map::iterator it
       = gold::options::long_options->find(option);
@@ -788,21 +810,21 @@ parse_long_option(int argc, const char** argv, bool equals_only,
   if (this_argv[0] != '-')  // no dashes at all: had better be "-z <longopt>"
     {
       if (retval->dashes != gold::options::DASH_Z)
-        return NULL;
+	return NULL;
     }
   else if (this_argv[1] != '-')   // one dash
     {
       if (retval->dashes != gold::options::ONE_DASH
-          && retval->dashes != gold::options::EXACTLY_ONE_DASH
-          && retval->dashes != gold::options::TWO_DASHES)
-        return NULL;
+	  && retval->dashes != gold::options::EXACTLY_ONE_DASH
+	  && retval->dashes != gold::options::TWO_DASHES)
+	return NULL;
     }
   else                            // two dashes (or more!)
     {
       if (retval->dashes != gold::options::TWO_DASHES
-          && retval->dashes != gold::options::EXACTLY_TWO_DASHES
-          && retval->dashes != gold::options::ONE_DASH)
-        return NULL;
+	  && retval->dashes != gold::options::EXACTLY_TWO_DASHES
+	  && retval->dashes != gold::options::ONE_DASH)
+	return NULL;
     }
 
   // Now that we know the option is good (or else bad in a way that
@@ -813,20 +835,20 @@ parse_long_option(int argc, const char** argv, bool equals_only,
   if (!retval->takes_argument())
     {
       if (equals)
-        usage(_("unexpected argument"), this_argv);
+	usage(_("unexpected argument"), this_argv);
       else
-        *arg = NULL;
+	*arg = NULL;
     }
   else
     {
       if (equals)
-        *arg = equals + 1;
+	*arg = equals + 1;
       else if (retval->takes_optional_argument())
 	*arg = retval->default_value;
       else if (*i < argc && !equals_only)
-        *arg = argv[(*i)++];
+	*arg = argv[(*i)++];
       else
-        usage(_("missing argument"), this_argv);
+	usage(_("missing argument"), this_argv);
     }
 
   return retval;
@@ -844,7 +866,7 @@ parse_long_option(int argc, const char** argv, bool equals_only,
 // another short option in the same word.
 gold::options::One_option*
 parse_short_option(int argc, const char** argv, int pos_in_argv_i,
-                   const char** arg, int* i)
+		   const char** arg, int* i)
 {
   const char* const this_argv = argv[*i];
 
@@ -853,7 +875,7 @@ parse_short_option(int argc, const char** argv, int pos_in_argv_i,
 
   // We handle -z as a special case.
   static gold::options::One_option dash_z("", gold::options::DASH_Z,
-                                          'z', "", NULL, "Z-OPTION", false,
+					  'z', "", NULL, "Z-OPTION", false,
 					  NULL);
   gold::options::One_option* retval = NULL;
   if (this_argv[pos_in_argv_i] == 'z')
@@ -862,7 +884,7 @@ parse_short_option(int argc, const char** argv, int pos_in_argv_i,
     {
       const int char_as_int = static_cast<int>(this_argv[pos_in_argv_i]);
       if (char_as_int > 0 && char_as_int < 128)
-        retval = gold::options::short_options[char_as_int];
+	retval = gold::options::short_options[char_as_int];
     }
 
   if (retval == NULL)
@@ -874,20 +896,20 @@ parse_short_option(int argc, const char** argv, int pos_in_argv_i,
       *arg = NULL;
       // We only advance past this argument if it's the only one in argv.
       if (this_argv[pos_in_argv_i + 1] == '\0')
-        ++(*i);
+	++(*i);
     }
   else
     {
       // If we take an argument, we'll eat up this entire argv entry.
       ++(*i);
       if (this_argv[pos_in_argv_i + 1] != '\0')
-        *arg = this_argv + pos_in_argv_i + 1;
+	*arg = this_argv + pos_in_argv_i + 1;
       else if (retval->takes_optional_argument())
 	*arg = retval->default_value;
       else if (*i < argc)
-        *arg = argv[(*i)++];
+	*arg = argv[(*i)++];
       else
-        usage(_("missing argument"), this_argv);
+	usage(_("missing argument"), this_argv);
     }
 
   // If we're a -z option, we need to parse our argument as a
@@ -898,7 +920,7 @@ parse_short_option(int argc, const char** argv, int pos_in_argv_i,
       const char* dash_z_arg = *arg;
       retval = parse_long_option(1, arg, true, arg, &dummy_i);
       if (retval == NULL)
-        usage(_("unknown -z option"), dash_z_arg);
+	usage(_("unknown -z option"), dash_z_arg);
     }
 
   return retval;
@@ -917,6 +939,7 @@ General_options::General_options()
     do_demangle_(false),
     plugins_(NULL),
     dynamic_list_(),
+    have_dynamic_list_(false),
     incremental_mode_(INCREMENTAL_OFF),
     incremental_disposition_(INCREMENTAL_STARTUP),
     incremental_startup_disposition_(INCREMENTAL_CHECK),
@@ -925,7 +948,8 @@ General_options::General_options()
     symbols_to_retain_(),
     section_starts_(),
     fix_v4bx_(FIX_V4BX_NONE),
-    endianness_(ENDIANNESS_NOT_SET)
+    endianness_(ENDIANNESS_NOT_SET),
+    discard_locals_(DISCARD_SEC_MERGE)
 {
   // Turn off option registration once construction is complete.
   gold::options::ready_to_register = false;
@@ -952,7 +976,7 @@ General_options::add_sysroot()
     {
       this->set_sysroot(get_default_sysroot());
       if (this->sysroot() == NULL || this->sysroot()[0] == '\0')
-        return;
+	return;
     }
 
   char* canonical_sysroot = lrealpath(this->sysroot());
@@ -1117,8 +1141,8 @@ General_options::finalize()
   if (this->thread_count() > 0 || this->thread_count_initial() > 0
       || this->thread_count_middle() > 0 || this->thread_count_final() > 0)
     gold_warning(_("ignoring --thread-count: "
-                   "%s was compiled without thread support"),
-                 program_name);
+		   "%s was compiled without thread support"),
+		 program_name);
 #endif
 
   std::string libpath;
@@ -1170,17 +1194,17 @@ General_options::finalize()
       std::ifstream in;
       in.open(this->retain_symbols_file());
       if (!in)
-        gold_fatal(_("unable to open -retain-symbols-file file %s: %s"),
-                   this->retain_symbols_file(), strerror(errno));
+	gold_fatal(_("unable to open -retain-symbols-file file %s: %s"),
+		   this->retain_symbols_file(), strerror(errno));
       std::string line;
       std::getline(in, line);   // this chops off the trailing \n, if any
       while (in)
-        {
-          if (!line.empty() && line[line.length() - 1] == '\r')   // Windows
-            line.resize(line.length() - 1);
-          this->symbols_to_retain_.insert(line);
-          std::getline(in, line);
-        }
+	{
+	  if (!line.empty() && line[line.length() - 1] == '\r')   // Windows
+	    line.resize(line.length() - 1);
+	  this->symbols_to_retain_.insert(line);
+	  std::getline(in, line);
+	}
     }
 
   // -Bgroup implies --unresolved-symbols=report-all.
@@ -1239,7 +1263,7 @@ General_options::finalize()
 
   if (this->implicit_incremental_ && this->incremental_mode_ == INCREMENTAL_OFF)
     gold_fatal(_("Options --incremental-changed, --incremental-unchanged, "
-                 "--incremental-unknown require the use of --incremental"));
+		 "--incremental-unknown require the use of --incremental"));
 
   // Check for options that are not compatible with incremental linking.
   // Where an option can be disabled without seriously changing the semantics
@@ -1254,6 +1278,8 @@ General_options::finalize()
 		     "--emit-relocs"));
       if (this->has_plugins())
 	gold_fatal(_("incremental linking is not compatible with --plugin"));
+      if (this->relro())
+	gold_fatal(_("incremental linking is not compatible with -z relro"));
       if (this->gc_sections())
 	{
 	  gold_warning(_("ignoring --gc-sections for an incremental link"));
@@ -1272,6 +1298,10 @@ General_options::finalize()
 	}
     }
 
+  // --rosegment-gap implies --rosegment.
+  if (this->user_set_rosegment_gap())
+    this->set_rosegment(true);
+
   // FIXME: we can/should be doing a lot more sanity checking here.
 }
 
@@ -1282,14 +1312,14 @@ General_options::finalize()
 
 void
 Search_directory::add_sysroot(const char* sysroot,
-                              const char* canonical_sysroot)
+			      const char* canonical_sysroot)
 {
   gold_assert(*sysroot != '\0');
   if (this->put_in_sysroot_)
     {
       if (!IS_DIR_SEPARATOR(this->name_[0])
-          && !IS_DIR_SEPARATOR(sysroot[strlen(sysroot) - 1]))
-        this->name_ = '/' + this->name_;
+	  && !IS_DIR_SEPARATOR(sysroot[strlen(sysroot) - 1]))
+	this->name_ = '/' + this->name_;
       this->name_ = sysroot + this->name_;
       this->is_in_sysroot_ = true;
     }
@@ -1302,12 +1332,12 @@ Search_directory::add_sysroot(const char* sysroot,
       int canonical_name_len = strlen(canonical_name);
       int canonical_sysroot_len = strlen(canonical_sysroot);
       if (canonical_name_len > canonical_sysroot_len
-          && IS_DIR_SEPARATOR(canonical_name[canonical_sysroot_len]))
-        {
-          canonical_name[canonical_sysroot_len] = '\0';
-          if (FILENAME_CMP(canonical_name, canonical_sysroot) == 0)
-            this->is_in_sysroot_ = true;
-        }
+	  && IS_DIR_SEPARATOR(canonical_name[canonical_sysroot_len]))
+	{
+	  canonical_name[canonical_sysroot_len] = '\0';
+	  if (FILENAME_CMP(canonical_name, canonical_sysroot) == 0)
+	    this->is_in_sysroot_ = true;
+	}
       free(canonical_name);
     }
 }
@@ -1406,7 +1436,7 @@ Command_line::Pre_options::Pre_options()
 
 int
 Command_line::process_one_option(int argc, const char** argv, int i,
-                                 bool* no_more_options)
+				 bool* no_more_options)
 {
   gold_assert(argv[i][0] == '-' && !(*no_more_options));
 
@@ -1437,7 +1467,7 @@ Command_line::process_one_option(int argc, const char** argv, int i,
     {
       option = parse_short_option(argc, argv, pos_in_argv_i, &arg, &new_i);
       if (!option)
-        break;
+	break;
       option->reader->parse_to_value(argv[i], arg, this, &this->options_);
       ++pos_in_argv_i;
     }
@@ -1459,15 +1489,15 @@ Command_line::process(int argc, const char** argv)
     {
       this->position_options_.copy_from_options(this->options());
       if (no_more_options || argv[i][0] != '-')
-        {
+	{
 	  Input_file_argument file(argv[i],
 				   Input_file_argument::INPUT_FILE_TYPE_FILE,
 				   "", false, this->position_options_);
-          this->inputs_.add_file(file);
-          ++i;
-        }
+	  this->inputs_.add_file(file);
+	  ++i;
+	}
       else
-        i = process_one_option(argc, argv, i, &no_more_options);
+	i = process_one_option(argc, argv, i, &no_more_options);
     }
 
   if (this->inputs_.in_group())

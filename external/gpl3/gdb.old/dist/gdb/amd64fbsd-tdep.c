@@ -23,6 +23,9 @@
 #include "gdbcore.h"
 #include "regcache.h"
 #include "osabi.h"
+#include "regset.h"
+#include "i386fbsd-tdep.h"
+#include "x86-xstate.h"
 
 #include "amd64-tdep.h"
 #include "bsd-uthread.h"
@@ -31,18 +34,49 @@
 
 /* Support for signal handlers.  */
 
+/* Return whether THIS_FRAME corresponds to a FreeBSD sigtramp
+   routine.  */
+
+static const gdb_byte amd64fbsd_sigtramp_code[] =
+{
+  0x48, 0x8d, 0x7c, 0x24, 0x10, /* lea     SIGF_UC(%rsp),%rdi */
+  0x6a, 0x00,			/* pushq   $0 */
+  0x48, 0xc7, 0xc0, 0xa1, 0x01, 0x00, 0x00,
+				/* movq    $SYS_sigreturn,%rax */
+  0x0f, 0x05                    /* syscall */
+};
+
+static int
+amd64fbsd_sigtramp_p (struct frame_info *this_frame)
+{
+  CORE_ADDR pc = get_frame_pc (this_frame);
+  gdb_byte buf[sizeof amd64fbsd_sigtramp_code];
+
+  if (!safe_frame_unwind_memory (this_frame, pc, buf, sizeof buf))
+    return 0;
+  if (memcmp (buf, amd64fbsd_sigtramp_code, sizeof amd64fbsd_sigtramp_code)
+      != 0)
+    return 0;
+
+  return 1;
+}
+
 /* Assuming THIS_FRAME is for a BSD sigtramp routine, return the
    address of the associated sigcontext structure.  */
 
 static CORE_ADDR
 amd64fbsd_sigcontext_addr (struct frame_info *this_frame)
 {
+  struct gdbarch *gdbarch = get_frame_arch (this_frame);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR sp;
+  gdb_byte buf[8];
 
   /* The `struct sigcontext' (which really is an `ucontext_t' on
      FreeBSD/amd64) lives at a fixed offset in the signal frame.  See
      <machine/sigframe.h>.  */
-  sp = frame_unwind_register_unsigned (this_frame, AMD64_RSP_REGNUM);
+  get_frame_register (this_frame, AMD64_RSP_REGNUM, buf);
+  sp = extract_unsigned_integer (buf, 8, byte_order);
   return sp + 16;
 }
 
@@ -84,8 +118,8 @@ static int amd64fbsd_r_reg_offset[] =
 };
 
 /* Location of the signal trampoline.  */
-CORE_ADDR amd64fbsd_sigtramp_start_addr = 0x7fffffffffc0ULL;
-CORE_ADDR amd64fbsd_sigtramp_end_addr = 0x7fffffffffe0ULL;
+CORE_ADDR amd64fbsd_sigtramp_start_addr;
+CORE_ADDR amd64fbsd_sigtramp_end_addr;
 
 /* From <machine/signal.h>.  */
 int amd64fbsd_sc_reg_offset[] =
@@ -137,6 +171,59 @@ static int amd64fbsd_jmp_buf_reg_offset[] =
   7 * 8,			/* ... %r15 */
   0 * 8				/* %rip */
 };
+
+/* Implement the core_read_description gdbarch method.  */
+
+static const struct target_desc *
+amd64fbsd_core_read_description (struct gdbarch *gdbarch,
+				 struct target_ops *target,
+				 bfd *abfd)
+{
+  return amd64_target_description (i386fbsd_core_read_xcr0 (abfd));
+}
+
+/* Similar to amd64_supply_fpregset, but use XSAVE extended state.  */
+
+static void
+amd64fbsd_supply_xstateregset (const struct regset *regset,
+			       struct regcache *regcache, int regnum,
+			       const void *xstateregs, size_t len)
+{
+  amd64_supply_xsave (regcache, regnum, xstateregs);
+}
+
+/* Similar to amd64_collect_fpregset, but use XSAVE extended state.  */
+
+static void
+amd64fbsd_collect_xstateregset (const struct regset *regset,
+				const struct regcache *regcache,
+				int regnum, void *xstateregs, size_t len)
+{
+  amd64_collect_xsave (regcache, regnum, xstateregs, 1);
+}
+
+static const struct regset amd64fbsd_xstateregset =
+  {
+    NULL,
+    amd64fbsd_supply_xstateregset,
+    amd64fbsd_collect_xstateregset
+  };
+
+/* Iterate over core file register note sections.  */
+
+static void
+amd64fbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					iterate_over_regset_sections_cb *cb,
+					void *cb_data,
+					const struct regcache *regcache)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  cb (".reg", tdep->sizeof_gregset, &i386_gregset, NULL, cb_data);
+  cb (".reg2", tdep->sizeof_fpregset, &amd64_fpregset, NULL, cb_data);
+  cb (".reg-xstate", X86_XSTATE_SIZE(tdep->xcr0),
+      &amd64fbsd_xstateregset, "XSAVE extended state", cb_data);
+}
 
 static void
 amd64fbsd_supply_uthread (struct regcache *regcache,
@@ -195,11 +282,21 @@ amd64fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   amd64_init_abi (info, gdbarch);
 
+  tdep->sigtramp_p = amd64fbsd_sigtramp_p;
   tdep->sigtramp_start = amd64fbsd_sigtramp_start_addr;
   tdep->sigtramp_end = amd64fbsd_sigtramp_end_addr;
   tdep->sigcontext_addr = amd64fbsd_sigcontext_addr;
   tdep->sc_reg_offset = amd64fbsd_sc_reg_offset;
   tdep->sc_num_regs = ARRAY_SIZE (amd64fbsd_sc_reg_offset);
+
+  tdep->xsave_xcr0_offset = I386_FBSD_XSAVE_XCR0_OFFSET;
+
+  /* Iterate over core file register note sections.  */
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, amd64fbsd_iterate_over_regset_sections);
+
+  set_gdbarch_core_read_description (gdbarch,
+				     amd64fbsd_core_read_description);
 
   /* FreeBSD provides a user-level threads implementation.  */
   bsd_uthread_set_supply_uthread (gdbarch, amd64fbsd_supply_uthread);

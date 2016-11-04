@@ -7,12 +7,6 @@ NO_REL_RELOCS=yes
 TEMPLATE_NAME=elf32
 EXTRA_EM_FILE=riscvelf
 
-case "$EMULATION_NAME" in
-elf32*) ELFSIZE=32; LIBPATH_SUFFIX=32 ;;
-elf64*) ELFSIZE=64; LIBPATH_SUFFIX=   ;;
-*) echo $0: unhandled emulation $EMULATION_NAME >&2; exit 1 ;;
-esac
-
 if test `echo "$host" | sed -e s/64//` = `echo "$target" | sed -e s/64//`; then
   case " $EMULATION_LIBPATH " in
     *" ${EMULATION_NAME} "*)

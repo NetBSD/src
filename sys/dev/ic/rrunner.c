@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.81 2016/06/10 13:27:13 ozaki-r Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.81.2.1 2016/11/04 14:49:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.81 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.81.2.1 2016/11/04 14:49:09 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -2222,7 +2222,7 @@ esh_adjust_mbufs(struct esh_softc *sc, struct mbuf *m)
 
 	for (n0 = n = m; n; n = n->m_next) {
 		while (n && n->m_len == 0) {
-			MFREE(n, m0);
+			m0 = m_free(n);
 			if (n == m)
 				n = n0 = m = m0;
 			else
@@ -2243,7 +2243,7 @@ esh_adjust_mbufs(struct esh_softc *sc, struct mbuf *m)
 
 			MCLGET(o, M_DONTWAIT);
 			if (!(o->m_flags & M_EXT)) {
-				MFREE(o, m0);
+				m0 = m_free(o);
 				goto bogosity;
 			}
 

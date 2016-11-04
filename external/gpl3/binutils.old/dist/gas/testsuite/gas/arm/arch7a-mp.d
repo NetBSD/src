@@ -2,6 +2,7 @@
 #as: -march=armv7-a+mp
 #objdump: -dr --prefix-addresses --show-raw-insn
 #source: arch7ar-mp.s
+#not-target: *-*-*coff *-*-pe *-*-wince *-*-*aout* *-*-netbsd *-*-riscix*
 
 .*: +file format .*arm.*
 
@@ -10,7 +11,7 @@ Disassembly of section .text:
 0[0-9a-f]+ <[^>]+> f59ef000 	pldw	\[lr\]
 0[0-9a-f]+ <[^>]+> f591f000 	pldw	\[r1\]
 0[0-9a-f]+ <[^>]+> f590ffff 	pldw	\[r0, #4095\]	; 0xfff
-0[0-9a-f]+ <[^>]+> f510ffff 	pldw	\[r0, #-4095\]	; 0xfff
+0[0-9a-f]+ <[^>]+> f510ffff 	pldw	\[r0, #-4095\]	; 0xfffff001
 0[0-9a-f]+ <[^>]+> f790f000 	pldw	\[r0, r0\]
 0[0-9a-f]+ <[^>]+> f791f000 	pldw	\[r1, r0\]
 0[0-9a-f]+ <[^>]+> f79ef000 	pldw	\[lr, r0\]

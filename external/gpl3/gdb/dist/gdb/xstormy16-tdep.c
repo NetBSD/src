@@ -1,6 +1,6 @@
 /* Target-dependent code for the Sanyo Xstormy16a (LC590000) processor.
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -282,7 +282,7 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
 
       typelen = TYPE_LENGTH (value_enclosing_type (args[j]));
       slacklen = typelen & 1;
-      val = xmalloc (typelen + slacklen);
+      val = (gdb_byte *) xmalloc (typelen + slacklen);
       back_to = make_cleanup (xfree, val);
       memcpy (val, bytes, typelen);
       memset (val + typelen, 0, slacklen);
@@ -433,7 +433,7 @@ xstormy16_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
         return plg_end;
 
       /* Found a function.  */
-      sym = lookup_symbol (func_name, NULL, VAR_DOMAIN, NULL);
+      sym = lookup_symbol (func_name, NULL, VAR_DOMAIN, NULL).symbol;
       /* Don't use line number debug info for assembly source files.  */
       if (sym && SYMBOL_LANGUAGE (sym) != language_asm)
 	{
@@ -678,7 +678,7 @@ xstormy16_frame_cache (struct frame_info *this_frame, void **this_cache)
   int i;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct xstormy16_frame_cache *) *this_cache;
 
   cache = xstormy16_alloc_frame_cache ();
   *this_cache = cache;

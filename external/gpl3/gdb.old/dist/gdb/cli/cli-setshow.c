@@ -37,8 +37,8 @@ notify_command_param_changed_p (int param_changed, struct cmd_list_element *c)
   if (param_changed == 0)
     return 0;
 
-  if (c->class == class_maintenance || c->class == class_deprecated
-      || c->class == class_obscure)
+  if (c->theclass == class_maintenance || c->theclass == class_deprecated
+      || c->theclass == class_obscure)
     return 0;
 
   return 1;
@@ -158,16 +158,16 @@ do_set_command (const char *arg, int from_tty, struct cmd_list_element *c)
     {
     case var_string:
       {
-	char *new;
+	char *newobj;
 	const char *p;
 	char *q;
 	int ch;
 
 	if (arg == NULL)
 	  arg = "";
-	new = (char *) xmalloc (strlen (arg) + 2);
+	newobj = (char *) xmalloc (strlen (arg) + 2);
 	p = arg;
-	q = new;
+	q = newobj;
 	while ((ch = *p++) != '\000')
 	  {
 	    if (ch == '\\')
@@ -195,18 +195,18 @@ do_set_command (const char *arg, int from_tty, struct cmd_list_element *c)
 	  *q++ = ' ';
 #endif
 	*q++ = '\0';
-	new = (char *) xrealloc (new, q - new);
+	newobj = (char *) xrealloc (newobj, q - newobj);
 
 	if (*(char **) c->var == NULL
-	    || strcmp (*(char **) c->var, new) != 0)
+	    || strcmp (*(char **) c->var, newobj) != 0)
 	  {
 	    xfree (*(char **) c->var);
-	    *(char **) c->var = new;
+	    *(char **) c->var = newobj;
 
 	    option_changed = 1;
 	  }
 	else
-	  xfree (new);
+	  xfree (newobj);
       }
       break;
     case var_string_noescape:
@@ -693,7 +693,7 @@ cmd_show_list (struct cmd_list_element *list, int from_tty, const char *prefix)
 	}
       else
 	{
-	  if (list->class != no_set_class)
+	  if (list->theclass != no_set_class)
 	    {
 	      struct cleanup *option_chain
 		= make_cleanup_ui_out_tuple_begin_end (uiout, "option");

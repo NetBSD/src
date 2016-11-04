@@ -1,4 +1,4 @@
-# Copyright 2011-2015 Free Software Foundation, Inc.
+# Copyright 2011-2016 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -37,20 +37,6 @@ if ![gdb_target_supports_trace] {
     return -1
 }
 
-set fpreg "fp"
-set spreg "sp"
-set pcreg "pc"
-
-if [is_amd64_regs_target] {
-    set fpreg "rbp"
-    set spreg "rsp"
-    set pcreg "rip"
-} elseif [is_x86_like_target] {
-    set fpreg "ebp"
-    set spreg "esp"
-    set pcreg "eip"
-}
-
 # Set breakpoint and tracepoint at the same address.
 
 proc break_trace_same_addr_1 { trace_type option } \
@@ -75,9 +61,11 @@ proc break_trace_same_addr_1 { trace_type option } \
 
     gdb_test_no_output "tstart"
 
-    gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to set_point"
+    gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
+	"continue to set_point"
 
-    gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to end"
+    gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
+	"continue to end"
     gdb_test_no_output "tstop"
 
     gdb_test "tfind" "Found trace frame 0, tracepoint .*" "tfind frame 0"
@@ -112,7 +100,8 @@ proc break_trace_same_addr_2 { trace_type1 trace_type2 option } \
 	"${trace_type2} set_point (2)"
 
     gdb_test_no_output "tstart"
-    gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to end"
+    gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
+	"continue to end"
 
     gdb_test_no_output "tstop"
 
@@ -146,10 +135,12 @@ proc break_trace_same_addr_3 { trace_type option } \
 
     gdb_test_no_output "tstart"
 
-    gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to marker"
+    gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
+	"continue to marker"
     gdb_test "delete break 4"
 
-    gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to end"
+    gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
+	"continue to end"
     gdb_test_no_output "tstop"
 
     gdb_test "tfind" "Found trace frame 0, tracepoint .*" "tfind frame 0"
@@ -180,14 +171,17 @@ proc break_trace_same_addr_4 { trace_type option } \
     gdb_test "break set_point" "Breakpoint \[0-9\] at $hex: file.*"
     gdb_test "${trace_type} set_point" "\(Fast t|T\)racepoint \[0-9\] at $hex: file.*"
 
-    gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to marker"
+    gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
+	"continue to marker"
     # Delete tracepoint set on set_point.
     gdb_test "delete trace 5"
 
     gdb_test "tstart" "No tracepoints defined, not starting trace.*"
 
-    gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to set_point"
-    gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to end"
+    gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
+	"continue to set_point"
+    gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
+	"continue to end"
     gdb_test "tstop" "Trace is not running.*"
 
     gdb_test "tfind" "Target failed to find requested trace frame\\..*"
@@ -230,7 +224,8 @@ proc break_trace_same_addr_5 { trace1 trace2 trace3 trace3_at_first_loc } \
 
     gdb_test_no_output "tstart"
 
-    gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to marker"
+    gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
+	"continue to marker"
 
     if [string equal $trace3_at_first_loc "1"] {
 	gdb_test "${trace3} set_point" "\(Fast t|T\)racepoint \[0-9\] at $hex: file.*" \
@@ -243,7 +238,8 @@ proc break_trace_same_addr_5 { trace1 trace2 trace3 trace3_at_first_loc } \
     gdb_trace_setactions "set action for tracepoint 3" "" \
 	"collect \$$fpreg" "^$"
 
-    gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to end"
+    gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
+	"continue to end"
     gdb_test_no_output "tstop"
 
     gdb_test "tfind tracepoint 4" "Found trace frame \[0-9\], tracepoint .*" \
@@ -289,7 +285,8 @@ proc break_trace_same_addr_6 { trace1 enable1 trace2 enable2 } \
     gdb_test "break marker" "Breakpoint \[0-9\] at $hex: file.*"
     gdb_test "break end" "Breakpoint \[0-9\] at $hex: file.*"
 
-    gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to marker"
+    gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
+	"continue to marker"
 
     gdb_test "${trace1} set_point" "\(Fast t|T\)racepoint \[0-9\] at $hex: file.*" \
 	"${trace1} set_point 1"
@@ -304,7 +301,8 @@ proc break_trace_same_addr_6 { trace1 enable1 trace2 enable2 } \
     gdb_test_no_output "$enable2 5"
 
     gdb_test_no_output "tstart"
-    gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*" "continue to end"
+    gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
+	"continue to end"
     gdb_test_no_output "tstop"
 
 
@@ -351,7 +349,7 @@ break_trace_same_addr_6 "trace" "enable" "trace" "disable"
 break_trace_same_addr_6 "trace" "disable" "trace" "enable"
 
 set libipa [get_in_proc_agent]
-gdb_load_shlibs $libipa
+set remote_libipa [gdb_load_shlib $libipa]
 
 # Can't use prepare_for_testing, because that splits compiling into
 # building objects and then linking, and we'd fail with "linker input
@@ -370,7 +368,7 @@ if ![runto_main] {
 }
 
 gdb_reinitialize_dir $srcdir/$subdir
-if { [gdb_test "info sharedlibrary" ".*${libipa}.*" "IPA loaded"] != 0 } {
+if { [gdb_test "info sharedlibrary" ".*${remote_libipa}.*" "IPA loaded"] != 0 } {
     untested "Could not find IPA lib loaded"
 } else {
     foreach break_always_inserted { "on" "off" } {

@@ -1,5 +1,5 @@
 /* Support routines for building symbol tables in GDB's internal format.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -232,7 +232,7 @@ add_symbol_to_list (struct symbol *symbol, struct pending **listhead)
 	}
       else
 	{
-	  link = (struct pending *) xmalloc (sizeof (struct pending));
+	  link = XNEW (struct pending);
 	}
 
       link->next = *listhead;
@@ -331,8 +331,10 @@ free_pending_blocks (void)
    file).  Put the block on the list of pending blocks.  */
 
 static struct block *
-finish_block_internal (struct symbol *symbol, struct pending **listhead,
+finish_block_internal (struct symbol *symbol,
+		       struct pending **listhead,
 		       struct pending_block *old_blocks,
+		       const struct dynamic_prop *static_link,
 		       CORE_ADDR start, CORE_ADDR end,
 		       int is_global, int expandable)
 {
@@ -422,6 +424,9 @@ finish_block_internal (struct symbol *symbol, struct pending **listhead,
       BLOCK_FUNCTION (block) = NULL;
     }
 
+  if (static_link != NULL)
+    objfile_register_static_link (objfile, block, static_link);
+
   /* Now "free" the links of the list, and empty the list.  */
 
   for (next = *listhead; next; next = next1)
@@ -503,8 +508,15 @@ finish_block_internal (struct symbol *symbol, struct pending **listhead,
       opblock = pblock;
     }
 
-  block_set_using (block, using_directives, &objfile->objfile_obstack);
-  using_directives = NULL;
+  block_set_using (block,
+		   (is_global
+		    ? global_using_directives
+		    : local_using_directives),
+		   &objfile->objfile_obstack);
+  if (is_global)
+    global_using_directives = NULL;
+  else
+    local_using_directives = NULL;
 
   record_pending_block (objfile, block, opblock);
 
@@ -512,11 +524,13 @@ finish_block_internal (struct symbol *symbol, struct pending **listhead,
 }
 
 struct block *
-finish_block (struct symbol *symbol, struct pending **listhead,
+finish_block (struct symbol *symbol,
+	      struct pending **listhead,
 	      struct pending_block *old_blocks,
+	      const struct dynamic_prop *static_link,
 	      CORE_ADDR start, CORE_ADDR end)
 {
-  return finish_block_internal (symbol, listhead, old_blocks,
+  return finish_block_internal (symbol, listhead, old_blocks, static_link,
 				start, end, 0, 0);
 }
 
@@ -536,8 +550,7 @@ record_pending_block (struct objfile *objfile, struct block *block,
   if (pending_blocks == NULL)
     obstack_init (&pending_block_obstack);
 
-  pblock = (struct pending_block *)
-    obstack_alloc (&pending_block_obstack, sizeof (struct pending_block));
+  pblock = XOBNEW (&pending_block_obstack, struct pending_block);
   pblock->block = block;
   if (opblock)
     {
@@ -691,7 +704,7 @@ start_subfile (const char *name)
 
   /* This subfile is not known.  Add an entry for it.  */
 
-  subfile = (struct subfile *) xmalloc (sizeof (struct subfile));
+  subfile = XNEW (struct subfile);
   memset (subfile, 0, sizeof (struct subfile));
   subfile->buildsym_compunit = buildsym_compunit;
 
@@ -759,8 +772,7 @@ start_buildsym_compunit (struct objfile *objfile, const char *comp_dir)
 {
   struct buildsym_compunit *bscu;
 
-  bscu = (struct buildsym_compunit *)
-    xmalloc (sizeof (struct buildsym_compunit));
+  bscu = XNEW (struct buildsym_compunit);
   memset (bscu, 0, sizeof (struct buildsym_compunit));
 
   bscu->objfile = objfile;
@@ -852,8 +864,7 @@ patch_subfile_names (struct subfile *subfile, char *name)
 void
 push_subfile (void)
 {
-  struct subfile_stack *tem
-    = (struct subfile_stack *) xmalloc (sizeof (struct subfile_stack));
+  struct subfile_stack *tem = XNEW (struct subfile_stack);
 
   tem->next = subfile_stack;
   subfile_stack = tem;
@@ -1009,6 +1020,7 @@ prepare_for_building (const char *name, CORE_ADDR start_addr)
   last_source_start_addr = start_addr;
 
   local_symbols = NULL;
+  local_using_directives = NULL;
   within_function = 0;
   have_line_numbers = 0;
 
@@ -1018,6 +1030,7 @@ prepare_for_building (const char *name, CORE_ADDR start_addr)
      a symtab, or by the really_free_pendings cleanup.  */
   gdb_assert (file_symbols == NULL);
   gdb_assert (global_symbols == NULL);
+  gdb_assert (global_using_directives == NULL);
   gdb_assert (pending_macros == NULL);
   gdb_assert (pending_addrmap == NULL);
   gdb_assert (current_subfile == NULL);
@@ -1177,8 +1190,10 @@ reset_symtab_globals (void)
   set_last_source_file (NULL);
 
   local_symbols = NULL;
+  local_using_directives = NULL;
   file_symbols = NULL;
   global_symbols = NULL;
+  global_using_directives = NULL;
 
   /* We don't free pending_macros here because if the symtab was successfully
      built then ownership was transferred to the symtab.  */
@@ -1218,7 +1233,7 @@ end_symtab_get_static_block (CORE_ADDR end_addr, int expandable, int required)
       struct context_stack *cstk = pop_context ();
 
       /* Make a block for the local symbols within.  */
-      finish_block (cstk->name, &local_symbols, cstk->old_blocks,
+      finish_block (cstk->name, &local_symbols, cstk->old_blocks, NULL,
 		    cstk->start_addr, end_addr);
 
       if (context_stack_depth > 0)
@@ -1247,7 +1262,7 @@ end_symtab_get_static_block (CORE_ADDR end_addr, int expandable, int required)
       for (pb = pending_blocks; pb != NULL; pb = pb->next)
 	count++;
 
-      barray = xmalloc (sizeof (*barray) * count);
+      barray = XNEWVEC (struct block *, count);
       back_to = make_cleanup (xfree, barray);
 
       bp = barray;
@@ -1281,7 +1296,8 @@ end_symtab_get_static_block (CORE_ADDR end_addr, int expandable, int required)
       && file_symbols == NULL
       && global_symbols == NULL
       && have_line_numbers == 0
-      && pending_macros == NULL)
+      && pending_macros == NULL
+      && global_using_directives == NULL)
     {
       /* Ignore symtabs that have no functions with real debugging info.  */
       return NULL;
@@ -1289,7 +1305,7 @@ end_symtab_get_static_block (CORE_ADDR end_addr, int expandable, int required)
   else
     {
       /* Define the STATIC_BLOCK.  */
-      return finish_block_internal (NULL, &file_symbols, NULL,
+      return finish_block_internal (NULL, &file_symbols, NULL, NULL,
 				    last_source_start_addr, end_addr,
 				    0, expandable);
     }
@@ -1317,7 +1333,7 @@ end_symtab_with_blockvector (struct block *static_block,
   end_addr = BLOCK_END (static_block);
 
   /* Create the GLOBAL_BLOCK and build the blockvector.  */
-  finish_block_internal (NULL, &global_symbols, NULL,
+  finish_block_internal (NULL, &global_symbols, NULL, NULL,
 			 last_source_start_addr, end_addr,
 			 1, expandable);
   blockvector = make_blockvector ();
@@ -1413,9 +1429,9 @@ end_symtab_with_blockvector (struct block *static_block,
     {
       /* Reallocate the dirname on the symbol obstack.  */
       COMPUNIT_DIRNAME (cu)
-	= obstack_copy0 (&objfile->objfile_obstack,
-			 buildsym_compunit->comp_dir,
-			 strlen (buildsym_compunit->comp_dir));
+	= (const char *) obstack_copy0 (&objfile->objfile_obstack,
+					buildsym_compunit->comp_dir,
+					strlen (buildsym_compunit->comp_dir));
     }
 
   /* Save the debug format string (if any) in the symtab.  */
@@ -1637,11 +1653,11 @@ push_context (int desc, CORE_ADDR valu)
   newobj->locals = local_symbols;
   newobj->old_blocks = pending_blocks;
   newobj->start_addr = valu;
-  newobj->using_directives = using_directives;
+  newobj->local_using_directives = local_using_directives;
   newobj->name = NULL;
 
   local_symbols = NULL;
-  using_directives = NULL;
+  local_using_directives = NULL;
 
   return newobj;
 }
@@ -1740,7 +1756,6 @@ get_last_source_file (void)
 void
 buildsym_init (void)
 {
-  using_directives = NULL;
   subfile_stack = NULL;
 
   pending_addrmap_interesting = 0;
@@ -1750,8 +1765,7 @@ buildsym_init (void)
   if (context_stack == NULL)
     {
       context_stack_size = INITIAL_CONTEXT_STACK_SIZE;
-      context_stack = (struct context_stack *)
-	xmalloc (context_stack_size * sizeof (struct context_stack));
+      context_stack = XNEWVEC (struct context_stack, context_stack_size);
     }
 
   /* Ensure the really_free_pendings cleanup was called after
@@ -1760,6 +1774,7 @@ buildsym_init (void)
   gdb_assert (pending_blocks == NULL);
   gdb_assert (file_symbols == NULL);
   gdb_assert (global_symbols == NULL);
+  gdb_assert (global_using_directives == NULL);
   gdb_assert (pending_macros == NULL);
   gdb_assert (pending_addrmap == NULL);
   gdb_assert (buildsym_compunit == NULL);

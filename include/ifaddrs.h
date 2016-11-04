@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrs.h,v 1.7 2016/01/23 01:26:14 dholland Exp $	*/
+/*	$NetBSD: ifaddrs.h,v 1.7.2.1 2016/11/04 14:48:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -36,6 +36,7 @@ struct ifaddrs {
 	struct sockaddr	*ifa_netmask;
 	struct sockaddr	*ifa_dstaddr;
 	void		*ifa_data;
+	unsigned int	 ifa_addrflags;
 };
 
 /*

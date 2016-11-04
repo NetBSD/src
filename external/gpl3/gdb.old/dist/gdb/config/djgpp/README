@@ -181,8 +181,8 @@ the size of your environment), etc.
 
 Note that djcheck.sh only recurses into those of the subdirectories of
 the test suite which test features supported by the DJGPP port of GDB.
-For example, the tests in the gdb.gdbtk, gdb.threads, and gdb.hp
-directories are not run.
+For example, the tests in the gdb.gdbtk, and gdb.threads directories
+are not run.
 
 
 Enjoy,

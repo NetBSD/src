@@ -13,6 +13,11 @@
 #ifndef SANITIZER_PLATFORM_LIMITS_POSIX_H
 #define SANITIZER_PLATFORM_LIMITS_POSIX_H
 
+#if SANITIZER_NETBSD
+#define _SYS_SIGNAL_H_
+#include <sys/param.h>
+#undef _SYS_SIGNAL_H_
+#endif
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_platform.h"
 
@@ -338,6 +343,11 @@ namespace __sanitizer {
 # endif
     void *ifa_dstaddr; // (struct sockaddr *)
     void *ifa_data;
+# if SANITIZER_NETBSD
+#  if __NetBSD_Prereq__(7, 99, 39)
+    unsigned int ifa_addrflags;
+#  endif
+# endif
   };
 #endif  // !SANITIZER_ANDROID
 

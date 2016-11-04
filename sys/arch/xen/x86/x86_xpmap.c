@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.54.2.1 2016/08/06 00:19:06 pgoyette Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.54.2.2 2016/11/04 14:49:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.54.2.1 2016/08/06 00:19:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.54.2.2 2016/11/04 14:49:07 pgoyette Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -949,8 +949,8 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
 				continue;
 #endif /* i386 */
 			} else {
-				/* map page RW */
-				pte[pl1_pi(page)] |= PG_RW;
+				/* Map the page RW. */
+				pte[pl1_pi(page)] |= PG_RW | pg_nx;
 			}
 				
 			if ((page  >= old_pgd && page < old_pgd + (old_count * PAGE_SIZE))
@@ -993,7 +993,8 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
 	 */
 	addr = (u_long)pde - KERNBASE;
 	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
-		pde[PDIR_SLOT_PTE + i] = xpmap_ptom_masked(addr) | PG_k | PG_V;
+		pde[PDIR_SLOT_PTE + i] = xpmap_ptom_masked(addr) | PG_k | PG_V |
+		    pg_nx;
 		__PRINTK(("pde[%d] va %#" PRIxVADDR " pa %#" PRIxPADDR
 		    " entry %#" PRIxPADDR "\n",
 		    (int)(PDIR_SLOT_PTE + i), pde + PAGE_SIZE * i,

@@ -1,6 +1,6 @@
 /* GDB commands implemented in Scheme.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -506,7 +506,7 @@ gdbscm_parse_command_name (const char *name,
 		   || name[i - 1] == '_');
        --i)
     ;
-  result = xmalloc (lastchar - i + 2);
+  result = (char *) xmalloc (lastchar - i + 2);
   memcpy (result, &name[i], lastchar - i + 1);
   result[lastchar - i + 1] = '\0';
 
@@ -519,7 +519,7 @@ gdbscm_parse_command_name (const char *name,
       return result;
     }
 
-  prefix_text = xmalloc (i + 2);
+  prefix_text = (char *) xmalloc (i + 2);
   memcpy (prefix_text, name, i + 1);
   prefix_text[i + 1] = '\0';
 
@@ -530,7 +530,7 @@ gdbscm_parse_command_name (const char *name,
       msg = xstrprintf (_("could not find command prefix '%s'"), prefix_text);
       xfree (prefix_text);
       xfree (result);
-      scm_dynwind_begin (0);
+      scm_dynwind_begin ((scm_t_dynwind_flags) 0);
       gdbscm_dynwind_xfree (msg);
       gdbscm_out_of_range_error (func_name, arg_pos,
 				 gdbscm_scm_from_c_string (name), msg);
@@ -546,7 +546,7 @@ gdbscm_parse_command_name (const char *name,
   msg = xstrprintf (_("'%s' is not a prefix command"), prefix_text);
   xfree (prefix_text);
   xfree (result);
-  scm_dynwind_begin (0);
+  scm_dynwind_begin ((scm_t_dynwind_flags) 0);
   gdbscm_dynwind_xfree (msg);
   gdbscm_out_of_range_error (func_name, arg_pos,
 			     gdbscm_scm_from_c_string (name), msg);
@@ -601,7 +601,8 @@ char *
 gdbscm_canonicalize_command_name (const char *name, int want_trailing_space)
 {
   int i, out, seen_word;
-  char *result = scm_gc_malloc_pointerless (strlen (name) + 2, FUNC_NAME);
+  char *result
+    = (char *) scm_gc_malloc_pointerless (strlen (name) + 2, FUNC_NAME);
 
   i = out = seen_word = 0;
   while (name[i])
@@ -673,7 +674,7 @@ gdbscm_make_command (SCM name_scm, SCM rest)
   int doc_arg_pos = -1;
   char *s;
   char *name;
-  int command_class = no_class;
+  enum command_class command_class = no_class;
   SCM completer_class = SCM_BOOL_F;
   int is_prefix = 0;
   char *doc = NULL;
@@ -819,7 +820,7 @@ gdbscm_register_command_x (SCM self)
 
 static const scheme_function command_functions[] =
 {
-  { "make-command", 1, 0, 1, gdbscm_make_command,
+  { "make-command", 1, 0, 1, as_a_scm_t_subr (gdbscm_make_command),
     "\
 Make a GDB command object.\n\
 \n\
@@ -840,19 +841,19 @@ Make a GDB command object.\n\
     doc: The \"doc string\" of the command.\n\
   Returns: <gdb:command> object" },
 
-  { "register-command!", 1, 0, 0, gdbscm_register_command_x,
+  { "register-command!", 1, 0, 0, as_a_scm_t_subr (gdbscm_register_command_x),
     "\
 Register a <gdb:command> object with GDB." },
 
-  { "command?", 1, 0, 0, gdbscm_command_p,
+  { "command?", 1, 0, 0, as_a_scm_t_subr (gdbscm_command_p),
     "\
 Return #t if the object is a <gdb:command> object." },
 
-  { "command-valid?", 1, 0, 0, gdbscm_command_valid_p,
+  { "command-valid?", 1, 0, 0, as_a_scm_t_subr (gdbscm_command_valid_p),
     "\
 Return #t if the <gdb:command> object is valid." },
 
-  { "dont-repeat", 1, 0, 0, gdbscm_dont_repeat,
+  { "dont-repeat", 1, 0, 0, as_a_scm_t_subr (gdbscm_dont_repeat),
     "\
 Prevent command repetition when user enters an empty line.\n\
 \n\

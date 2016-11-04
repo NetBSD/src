@@ -808,7 +808,6 @@ mi_breakpoint_created (struct breakpoint *b)
 {
   struct mi_interp *mi = top_level_interpreter_data ();
   struct ui_out *mi_uiout = interp_ui_out (top_level_interpreter ());
-  volatile struct gdb_exception e;
 
   if (mi_suppress_notification.breakpoint)
     return;
@@ -827,8 +826,15 @@ mi_breakpoint_created (struct breakpoint *b)
      breakpoint_created notifications.  So, we use
      ui_out_redirect.  */
   ui_out_redirect (mi_uiout, mi->event_channel);
-  TRY_CATCH (e, RETURN_MASK_ERROR)
-    gdb_breakpoint_query (mi_uiout, b->number, NULL);
+  TRY
+    {
+      gdb_breakpoint_query (mi_uiout, b->number, NULL);
+    }
+  CATCH (e, RETURN_MASK_ERROR)
+    {
+    }
+  END_CATCH
+
   ui_out_redirect (mi_uiout, NULL);
 
   gdb_flush (mi->event_channel);
@@ -862,7 +868,6 @@ mi_breakpoint_modified (struct breakpoint *b)
 {
   struct mi_interp *mi = top_level_interpreter_data ();
   struct ui_out *mi_uiout = interp_ui_out (top_level_interpreter ());
-  volatile struct gdb_exception e;
 
   if (mi_suppress_notification.breakpoint)
     return;
@@ -881,8 +886,15 @@ mi_breakpoint_modified (struct breakpoint *b)
      breakpoint_created notifications.  So, we use
      ui_out_redirect.  */
   ui_out_redirect (mi_uiout, mi->event_channel);
-  TRY_CATCH (e, RETURN_MASK_ERROR)
-    gdb_breakpoint_query (mi_uiout, b->number, NULL);
+  TRY
+    {
+      gdb_breakpoint_query (mi_uiout, b->number, NULL);
+    }
+  CATCH (e, RETURN_MASK_ERROR)
+    {
+    }
+  END_CATCH
+
   ui_out_redirect (mi_uiout, NULL);
 
   gdb_flush (mi->event_channel);

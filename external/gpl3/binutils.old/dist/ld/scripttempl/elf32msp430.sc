@@ -1,4 +1,8 @@
-#!/bin/sh
+# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# 
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.
 
 HEAP_SECTION_MSP430=" "
 HEAP_MEMORY_MSP430=" "
@@ -19,6 +23,12 @@ fi
 
 
 cat <<EOF
+/* Copyright (C) 2014-2015 Free Software Foundation, Inc.
+
+   Copying and distribution of this script, with or without modification,
+   are permitted in any medium without royalty provided the copyright
+   notice and this notice are preserved.  */
+
 OUTPUT_FORMAT("${OUTPUT_FORMAT}","${OUTPUT_FORMAT}","${OUTPUT_FORMAT}")
 OUTPUT_ARCH(${ARCH})
 
@@ -35,6 +45,31 @@ MEMORY
 
 SECTIONS
 {
+  /* Bootloader.  */
+  .bootloader ${RELOCATING-0} :
+  {
+    ${RELOCATING+ PROVIDE (__boot_start = .) ; }
+    *(.bootloader)
+    ${RELOCATING+. = ALIGN(2);}
+    *(.bootloader.*)
+  } ${RELOCATING+ > bootloader}
+  
+  /* Information memory.  */
+  .infomem ${RELOCATING-0} :
+  {
+    *(.infomem)
+    ${RELOCATING+. = ALIGN(2);}
+    *(.infomem.*)
+  } ${RELOCATING+ > infomem}
+
+  /* Information memory (not loaded into MPU).  */
+  .infomemnobits ${RELOCATING-0} :
+  {
+    *(.infomemnobits)
+    ${RELOCATING+. = ALIGN(2);}
+    *(.infomemnobits.*)
+  } ${RELOCATING+ > infomemnobits}
+
   /* Read-only sections, merged into text segment.  */
   ${TEXT_DYNAMIC+${DYNAMIC}}
   .hash        ${RELOCATING-0} : { *(.hash)             }
@@ -119,9 +154,16 @@ SECTIONS
     ${CONSTRUCTING+ __dtors_end = . ; }
 
     ${RELOCATING+. = ALIGN(2);}
+    *(.lower.text.* .lower.text)
+
+    ${RELOCATING+. = ALIGN(2);}
     *(.text)
     ${RELOCATING+. = ALIGN(2);}
     *(.text.*)
+    ${RELOCATING+. = ALIGN(2);}
+    *(.text:*)
+
+    *(.either.text.* .either.text)
 
     ${RELOCATING+. = ALIGN(2);}
     *(SORT_NONE(.fini9))
@@ -139,59 +181,58 @@ SECTIONS
     _etext = .;
   } ${RELOCATING+ > text}
 
-  .data ${RELOCATING-0} : ${RELOCATING+AT (ADDR (.text) + SIZEOF (.text))}
-  {  
-    ${RELOCATING+ PROVIDE (__data_start = .) ; }
-    ${RELOCATING+. = ALIGN(2);}
-    *(.data)
-    ${RELOCATING+. = ALIGN(2);}
-    *(.gnu.linkonce.d*)
-    ${RELOCATING+. = ALIGN(2);}
-    ${RELOCATING+ _edata = . ; }
-  } ${RELOCATING+ > data}
-  
-  /* Bootloader.  */
-  .bootloader ${RELOCATING-0} :
+  .rodata :
   {
-    ${RELOCATING+ PROVIDE (__boot_start = .) ; }
-    *(.bootloader)
     ${RELOCATING+. = ALIGN(2);}
-    *(.bootloader.*)
-  } ${RELOCATING+ > bootloader}
-  
-  /* Information memory.  */
-  .infomem ${RELOCATING-0} :
-  {
-    *(.infomem)
-    ${RELOCATING+. = ALIGN(2);}
-    *(.infomem.*)
-  } ${RELOCATING+ > infomem}
+    *(.lower.rodata.* .lower.rodata)
 
-  /* Information memory (not loaded into MPU).  */
-  .infomemnobits ${RELOCATING-0} :
-  {
-    *(.infomemnobits)
-    ${RELOCATING+. = ALIGN(2);}
-    *(.infomemnobits.*)
-  } ${RELOCATING+ > infomemnobits}
+    . = ALIGN(2);
+    *(.plt)
+    *(.rodata .rodata.* .gnu.linkonce.r.* .const .const:*)
+    *(.rodata1)
 
-  .bss ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
-  {
-    ${RELOCATING+ PROVIDE (__bss_start = .) ; }
-    *(.bss)
-    *(COMMON)
-    ${RELOCATING+ PROVIDE (__bss_end = .) ; }
-    ${RELOCATING+ _end = . ;  }
-  } ${RELOCATING+ > data}
+    *(.either.rodata.*) *(.either.rodata)
+    *(.eh_frame_hdr)
+    KEEP (*(.eh_frame))
 
-  .noinit ${RELOCATING+ SIZEOF(.bss) + ADDR(.bss)} :
-  {
-    ${RELOCATING+ PROVIDE (__noinit_start = .) ; }
-    *(.noinit)
-    *(COMMON)
-    ${RELOCATING+ PROVIDE (__noinit_end = .) ; }
-    ${RELOCATING+ _end = . ;  }
-  } ${RELOCATING+ > data}
+    KEEP (*(.gcc_except_table)) *(.gcc_except_table.*)
+
+    PROVIDE (__preinit_array_start = .);
+    KEEP (*(.preinit_array))
+    PROVIDE (__preinit_array_end = .);
+
+    PROVIDE (__init_array_start = .);
+    KEEP (*(SORT(.init_array.*)))
+    KEEP (*(.init_array))
+    PROVIDE (__init_array_end = .);
+
+    PROVIDE (__fini_array_start = .);
+    KEEP (*(.fini_array))
+    KEEP (*(SORT(.fini_array.*)))
+    PROVIDE (__fini_array_end = .);
+    LONG(0); /* Sentinel.  */
+
+    /* gcc uses crtbegin.o to find the start of the constructors, so
+       we make sure it is first.  Because this is a wildcard, it
+       doesn't matter if the user does not actually link against
+       crtbegin.o; the linker won't look for a file to match a
+       wildcard.  The wildcard also means that it doesn't matter which
+       directory crtbegin.o is in.  */
+    KEEP (*crtbegin*.o(.ctors))
+
+    /* We don't want to include the .ctor section from from the
+       crtend.o file until after the sorted ctors.  The .ctor section
+       from the crtend file contains the end of ctors marker and it
+       must be last */
+    KEEP (*(EXCLUDE_FILE (*crtend*.o ) .ctors))
+    KEEP (*(SORT(.ctors.*)))
+    KEEP (*(.ctors))
+
+    KEEP (*crtbegin*.o(.dtors))
+    KEEP (*(EXCLUDE_FILE (*crtend*.o ) .dtors))
+    KEEP (*(SORT(.dtors.*)))
+    KEEP (*(.dtors))
+  } ${RELOCATING+ > text}
 
   .vectors ${RELOCATING-0}:
   {
@@ -200,6 +241,61 @@ SECTIONS
     ${RELOCATING+ _vectors_end = . ; }
   } ${RELOCATING+ > vectors}
 
+  .data ${RELOCATING-0} :
+  {
+    ${RELOCATING+ PROVIDE (__data_start = .) ; }
+    ${RELOCATING+ PROVIDE (__datastart = .) ; }
+    ${RELOCATING+. = ALIGN(2);}
+
+    KEEP (*(.jcr))
+    *(.data.rel.ro.local) *(.data.rel.ro*)
+    *(.dynamic)
+
+    ${RELOCATING+. = ALIGN(2);}
+    *(.lower.data.* .lower.data)
+
+    *(.data)
+    *(.data.*)
+    *(.gnu.linkonce.d*)
+    KEEP (*(.gnu.linkonce.d.*personality*))
+    *(.data1)
+
+    *(.either.data.* .either.data)
+
+    *(.got.plt) *(.got)
+    ${RELOCATING+. = ALIGN(2);}
+    *(.sdata .sdata.* .gnu.linkonce.s.*)
+    ${RELOCATING+. = ALIGN(2);}
+    ${RELOCATING+ _edata = . ; }
+  } ${RELOCATING+ > data ${RELOCATING+AT> text}}
+
+  .bss ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
+  {
+    ${RELOCATING+. = ALIGN(2);}
+    ${RELOCATING+ PROVIDE (__bss_start = .) ; }
+    *(.lower.bss.* .lower.bss)
+    ${RELOCATING+. = ALIGN(2);}
+    *(.bss)
+    *(.either.bss.* .either.bss)
+    *(COMMON)
+    ${RELOCATING+ PROVIDE (__bss_end = .) ; }
+  } ${RELOCATING+ > data}
+
+  .noinit ${RELOCATING+ SIZEOF(.bss) + ADDR(.bss)} :
+  {
+    ${RELOCATING+ PROVIDE (__noinit_start = .) ; }
+    *(.noinit)
+    ${RELOCATING+ PROVIDE (__noinit_end = .) ; }
+  } ${RELOCATING+ > data}
+
+  .persistent ${RELOCATING+ SIZEOF(.noinit) + ADDR(.noinit)} :
+  {
+    ${RELOCATING+ PROVIDE (__persistent_start = .) ; }
+    *(.persistent)
+    ${RELOCATING+ PROVIDE (__persistent_end = .) ; }
+  } ${RELOCATING+ > data}
+
+  ${RELOCATING+ _end = . ;  }
   ${HEAP_SECTION_MSP430}
 
   /* Stabs for profiling information*/
@@ -213,38 +309,17 @@ SECTIONS
   .stab.index 0 : { *(.stab.index) }
   .stab.indexstr 0 : { *(.stab.indexstr) }
   .comment 0 : { *(.comment) }
- 
-  /* DWARF debug sections.
-     Symbols in the DWARF debugging sections are relative to the beginning
-     of the section so we begin them at 0.  */
+EOF
 
-  /* DWARF 1 */
-  .debug          0 : { *(.debug) }
-  .line           0 : { *(.line) }
+source $srcdir/scripttempl/DWARF.sc
 
-  /* GNU DWARF 1 extensions */
-  .debug_srcinfo  0 : { *(.debug_srcinfo) }
-  .debug_sfnames  0 : { *(.debug_sfnames) }
-
-  /* DWARF 1.1 and DWARF 2 */
-  .debug_aranges  0 : { *(.debug_aranges) }
-  .debug_pubnames 0 : { *(.debug_pubnames) }
-
-  /* DWARF 2 */
-  .debug_info     0 : { *(.debug_info) *(.gnu.linkonce.wi.*) }
-  .debug_abbrev   0 : { *(.debug_abbrev) }
-  .debug_line     0 : { *(.debug_line) }
-  .debug_frame    0 : { *(.debug_frame) }
-  .debug_str      0 : { *(.debug_str) }
-  .debug_loc      0 : { *(.debug_loc) }
-  .debug_macinfo  0 : { *(.debug_macinfo) }
-
-  /* DWARF 3 */
-  .debug_pubtypes 0 : { *(.debug_pubtypes) }
-  .debug_ranges   0 : { *(.debug_ranges) }
-
-  /* DWARF Extension.  */
-  .debug_macro    0 : { *(.debug_macro) } 
+cat <<EOF
+  .MP430.attributes 0 :
+  {
+    KEEP (*(.MSP430.attributes))
+    KEEP (*(.gnu.attributes))
+    KEEP (*(__TI_build_attributes))
+  }
 
   PROVIDE (__stack = ${STACK}) ;
   PROVIDE (__data_start_rom = _etext) ;

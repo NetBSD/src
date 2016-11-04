@@ -1,6 +1,6 @@
 /* BSD user-level threads support.
 
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -68,7 +68,9 @@ bsd_uthread_set_supply_uthread (struct gdbarch *gdbarch,
 				void (*supply_uthread) (struct regcache *,
 							int, CORE_ADDR))
 {
-  struct bsd_uthread_ops *ops = gdbarch_data (gdbarch, bsd_uthread_data);
+  struct bsd_uthread_ops *ops
+    = (struct bsd_uthread_ops *) gdbarch_data (gdbarch, bsd_uthread_data);
+
   ops->supply_uthread = supply_uthread;
 }
 
@@ -80,7 +82,9 @@ bsd_uthread_set_collect_uthread (struct gdbarch *gdbarch,
 			 void (*collect_uthread) (const struct regcache *,
 						  int, CORE_ADDR))
 {
-  struct bsd_uthread_ops *ops = gdbarch_data (gdbarch, bsd_uthread_data);
+  struct bsd_uthread_ops *ops
+    = (struct bsd_uthread_ops *) gdbarch_data (gdbarch, bsd_uthread_data);
+
   ops->collect_uthread = collect_uthread;
 }
 
@@ -161,7 +165,8 @@ static int
 bsd_uthread_activate (struct objfile *objfile)
 {
   struct gdbarch *gdbarch = target_gdbarch ();
-  struct bsd_uthread_ops *ops = gdbarch_data (gdbarch, bsd_uthread_data);
+  struct bsd_uthread_ops *ops
+    = (struct bsd_uthread_ops *) gdbarch_data (gdbarch, bsd_uthread_data);
 
   /* Skip if the thread stratum has already been activated.  */
   if (bsd_uthread_active)
@@ -283,7 +288,8 @@ bsd_uthread_fetch_registers (struct target_ops *ops,
 			     struct regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  struct bsd_uthread_ops *uthread_ops = gdbarch_data (gdbarch, bsd_uthread_data);
+  struct bsd_uthread_ops *uthread_ops
+    = (struct bsd_uthread_ops *) gdbarch_data (gdbarch, bsd_uthread_data);
   CORE_ADDR addr = ptid_get_tid (inferior_ptid);
   struct target_ops *beneath = find_target_beneath (ops);
   CORE_ADDR active_addr;
@@ -310,7 +316,8 @@ bsd_uthread_store_registers (struct target_ops *ops,
 			     struct regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  struct bsd_uthread_ops *uthread_ops = gdbarch_data (gdbarch, bsd_uthread_data);
+  struct bsd_uthread_ops *uthread_ops
+    = (struct bsd_uthread_ops *) gdbarch_data (gdbarch, bsd_uthread_data);
   struct target_ops *beneath = find_target_beneath (ops);
   CORE_ADDR addr = ptid_get_tid (inferior_ptid);
   CORE_ADDR active_addr;

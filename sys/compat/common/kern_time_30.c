@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_30.c,v 1.4 2011/01/19 10:21:16 tsutsui Exp $	*/
+/*	$NetBSD: kern_time_30.c,v 1.4.38.1 2016/11/04 14:49:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,9 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_30.c,v 1.4 2011/01/19 10:21:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_30.c,v 1.4.38.1 2016/11/04 14:49:07 pgoyette Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ntp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

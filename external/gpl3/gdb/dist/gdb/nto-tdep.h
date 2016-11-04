@@ -1,6 +1,6 @@
 /* nto-tdep.h - QNX Neutrino target header.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -142,6 +142,16 @@ struct private_thread_info
   char name[1];
 };
 
+/* Per-inferior data, common for both procfs and remote.  */
+struct nto_inferior_data
+{
+  /* Last stopped flags result from wait function */
+  unsigned int stopped_flags;
+
+  /* Last known stopped PC */
+  CORE_ADDR stopped_pc;
+};
+
 /* Generic functions in nto-tdep.c.  */
 
 void nto_init_solib_absolute_prefix (void);
@@ -167,5 +177,11 @@ void nto_dummy_supply_regset (struct regcache *regcache, char *regs);
 int nto_in_dynsym_resolve_code (CORE_ADDR pc);
 
 char *nto_extra_thread_info (struct target_ops *self, struct thread_info *);
+
+LONGEST nto_read_auxv_from_initial_stack (CORE_ADDR inital_stack,
+					  gdb_byte *readbuf,
+					  LONGEST len, size_t sizeof_auxv_t);
+
+struct nto_inferior_data *nto_inferior_data (struct inferior *inf);
 
 #endif

@@ -1,5 +1,5 @@
 /* BFD back-end for IBM RS/6000 "XCOFF" files.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Metin G. Ozisik, Mimi Phuong-Thao Vo, and John Gilmore.
    Archive support from Damon A. Permezel.
    Contributed by IBM Corporation and Cygnus Support.
@@ -402,34 +402,6 @@ _bfd_xcoff_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
 {
   return FALSE;
 }
-
-static const struct dwarf_debug_section xcoff_debug_sections[] =
-{
-  { ".dwabrev",		NULL },
-  { ".dwarnge",		NULL },
-  { NULL,	NULL }, /* .debug_frame */
-  { ".dwinfo",		NULL },
-  { ".dwline",		NULL },
-  { NULL,	NULL }, /* .debug_loc */
-  { NULL,	NULL }, /* .debug_macinfo */
-  { NULL,	NULL }, /* .debug_macro */
-  { ".dwpbnms",		NULL },
-  { ".dwpbtyp",		NULL },
-  { ".dwrnges",		NULL },
-  { NULL,	NULL }, /* .debug_static_func */
-  { NULL,	NULL }, /* .debug_static_vars */
-  { ".dwstr",	NULL },
-  { NULL,	NULL }, /* .debug_types */
-  /* GNU DWARF 1 extensions */
-  { NULL,	NULL }, /* .debug_sfnames */
-  { NULL,	NULL }, /* .debug_srcinfo */
-  /* SGI/MIPS DWARF 2 extensions */
-  { NULL,	NULL }, /* .debug_funcnames */
-  { NULL,	NULL }, /* .debug_typenames */
-  { NULL,	NULL }, /* .debug_varnames */
-  { NULL,	NULL }, /* .debug_weaknames */
-  { NULL,	NULL },
-};
 
 void
 _bfd_xcoff_swap_sym_in (bfd *abfd, void * ext1, void * in1)
@@ -448,7 +420,7 @@ _bfd_xcoff_swap_sym_in (bfd *abfd, void * ext1, void * in1)
     }
 
   in->n_value = H_GET_32 (abfd, ext->e_value);
-  in->n_scnum = H_GET_16 (abfd, ext->e_scnum);
+  in->n_scnum = (short) H_GET_16 (abfd, ext->e_scnum);
   in->n_type = H_GET_16 (abfd, ext->e_type);
   in->n_sclass = H_GET_8 (abfd, ext->e_sclass);
   in->n_numaux = H_GET_8 (abfd, ext->e_numaux);
@@ -2556,7 +2528,7 @@ _bfd_xcoff_sizeof_headers (bfd *abfd,
       };
       struct nbr_reloc_lineno *n_rl;
       bfd *sub;
-      int max_index;
+      unsigned int max_index;
       asection *s;
 
       /* Although the number of sections is known, the maximum value of
@@ -3395,15 +3367,12 @@ xcoff_ppc_relocate_section (bfd *output_bfd,
 	    {
 	      if (info->unresolved_syms_in_objects != RM_IGNORE
 		  && (h->flags & XCOFF_WAS_UNDEFINED) != 0)
-		{
-		  if (! ((*info->callbacks->undefined_symbol)
-			 (info, h->root.root.string,
-			  input_bfd, input_section,
-			  rel->r_vaddr - input_section->vma,
-			  (info->unresolved_syms_in_objects
-			   == RM_GENERATE_ERROR))))
-		    return FALSE;
-		}
+		(*info->callbacks->undefined_symbol)
+		  (info, h->root.root.string,
+		   input_bfd, input_section,
+		   rel->r_vaddr - input_section->vma,
+		   info->unresolved_syms_in_objects == RM_GENERATE_ERROR);
+
 	      if (h->root.type == bfd_link_hash_defined
 		  || h->root.type == bfd_link_hash_defweak)
 		{
@@ -3421,7 +3390,7 @@ xcoff_ppc_relocate_section (bfd *output_bfd,
 		}
 	      else
 		{
-		  BFD_ASSERT (info->relocatable
+		  BFD_ASSERT (bfd_link_relocatable (info)
 			      || (info->static_link
 				  && (h->flags & XCOFF_WAS_UNDEFINED) != 0)
 			      || (h->flags & XCOFF_DEF_DYNAMIC) != 0
@@ -3483,11 +3452,10 @@ xcoff_ppc_relocate_section (bfd *output_bfd,
 	    }
 	  sprintf (reloc_type_name, "0x%02x", rel->r_type);
 
-	  if (! ((*info->callbacks->reloc_overflow)
-		 (info, (h ? &h->root : NULL), name, reloc_type_name,
-		  (bfd_vma) 0, input_bfd, input_section,
-		  rel->r_vaddr - input_section->vma)))
-	    return FALSE;
+	  (*info->callbacks->reloc_overflow)
+	    (info, (h ? &h->root : NULL), name, reloc_type_name,
+	     (bfd_vma) 0, input_bfd, input_section,
+	     rel->r_vaddr - input_section->vma);
 	}
 
       /* Add RELOCATION to the right bits of VALUE_TO_RELOCATE.  */
@@ -3551,7 +3519,8 @@ _bfd_xcoff_put_ldsymbol_name (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 static bfd_boolean
-_bfd_xcoff_put_symbol_name (bfd *abfd, struct bfd_strtab_hash *strtab,
+_bfd_xcoff_put_symbol_name (struct bfd_link_info *info,
+			    struct bfd_strtab_hash *strtab,
 			    struct internal_syment *sym,
 			    const char *name)
 {
@@ -3564,9 +3533,7 @@ _bfd_xcoff_put_symbol_name (bfd *abfd, struct bfd_strtab_hash *strtab,
       bfd_boolean hash;
       bfd_size_type indx;
 
-      hash = TRUE;
-      if ((abfd->flags & BFD_TRADITIONAL_FORMAT) != 0)
-	hash = FALSE;
+      hash = !info->traditional_format;
       indx = _bfd_stringtab_add (strtab, name, hash, FALSE);
       if (indx == (bfd_size_type) -1)
 	return FALSE;
@@ -3591,7 +3558,7 @@ xcoff_create_csect_from_smclas (bfd *abfd,
       ".sv", ".bs", ".ds", ".uc", ".ti", ".tb", NULL, ".tc0", /* 8 - 15 */
       ".td", NULL, ".sv3264", NULL, ".tl", ".ul", ".te"
     };
-  
+
   if ((aux->x_csect.x_smclas < ARRAY_SIZE (names))
       && (NULL != names[aux->x_csect.x_smclas]))
     {
@@ -4043,6 +4010,7 @@ const struct xcoff_dwsect_name xcoff_dwsect_names[] = {
 #define _bfd_xcoff_bfd_discard_group bfd_generic_discard_group
 #define _bfd_xcoff_section_already_linked _bfd_generic_section_already_linked
 #define _bfd_xcoff_bfd_define_common_symbol _bfd_xcoff_define_common_symbol
+#define _bfd_xcoff_bfd_link_check_relocs    _bfd_generic_link_check_relocs
 
 /* For dynamic symbols and relocs entry points.  */
 #define _bfd_xcoff_get_synthetic_symtab _bfd_nodynamic_get_synthetic_symtab

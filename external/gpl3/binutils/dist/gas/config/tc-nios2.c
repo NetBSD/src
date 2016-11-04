@@ -1,5 +1,5 @@
 /* Altera Nios II assembler.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -98,7 +98,7 @@ typedef enum
 } relax_optionT;
 
 /* Struct contains all assembler options set with .set.  */
-struct
+static struct
 {
   /* .set noat -> noat = 1 allows assembly code to use at without warning
      and macro expansions generate a warning.
@@ -264,7 +264,7 @@ md_number_to_chars (char *buf, valueT val, int n)
    of type TYPE, and store the appropriate bytes in *LITP.  The number
    of LITTLENUMS emitted is stored in *SIZEP.  An error message is
    returned, or NULL on OK.  */
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   int prec;
@@ -1128,7 +1128,7 @@ nios2_check_overflow (valueT fixup, reloc_howto_type *howto)
       if ((fixup & 0x80000000) > 0)
 	{
 	  /* Check for negative overflow.  */
-	  if ((signed) fixup < ((signed) ~0 << (howto->bitsize-1)))
+	  if ((signed) fixup < (signed) (~0U << (howto->bitsize - 1)))
 	    return TRUE;
 	}
       else
@@ -1482,7 +1482,7 @@ static nios2_insn_relocS *
 nios2_insn_reloc_new (bfd_reloc_code_real_type reloc_type, unsigned int pcrel)
 {
   nios2_insn_relocS *retval;
-  retval = (nios2_insn_relocS *) malloc (sizeof (nios2_insn_relocS));
+  retval = XNEW (nios2_insn_relocS);
   if (retval == NULL)
     {
       as_bad (_("can't create relocation"));
@@ -3159,10 +3159,7 @@ nios2_modify_arg (char **parsed_args, const char *modifier,
 {
   char *tmp = parsed_args[ndx];
 
-  parsed_args[ndx]
-    = (char *) malloc (strlen (parsed_args[ndx]) + strlen (modifier) + 1);
-  strcpy (parsed_args[ndx], tmp);
-  strcat (parsed_args[ndx], modifier);
+  parsed_args[ndx] = concat (tmp, modifier, (char *) NULL);
 }
 
 /* Modify parsed_args[ndx] by negating that argument.  */
@@ -3172,13 +3169,7 @@ nios2_negate_arg (char **parsed_args, const char *modifier ATTRIBUTE_UNUSED,
 {
   char *tmp = parsed_args[ndx];
 
-  parsed_args[ndx]
-    = (char *) malloc (strlen ("~(") + strlen (parsed_args[ndx]) +
-		       strlen (")+1") + 1);
-
-  strcpy (parsed_args[ndx], "~(");
-  strcat (parsed_args[ndx], tmp);
-  strcat (parsed_args[ndx], ")+1");
+  parsed_args[ndx] = concat ("~(", tmp, ")+1", (char *) NULL);
 }
 
 /* The function nios2_swap_args swaps the pointers at indices index_1 and
@@ -3471,7 +3462,7 @@ output_movia (nios2_insn_infoS *insn)
      and puts it in the current frag.  */
   char *f = frag_more (8);
   nios2_insn_relocS *reloc = insn->insn_reloc;
-  unsigned long reg, code;
+  unsigned long reg, code = 0;
   const struct nios2_opcode *op = insn->insn_nios2_opcode;
 
   /* If the reloc is NULL, there was an error assembling the movia.  */
@@ -3540,7 +3531,7 @@ nios2_use_arch (const char *arch)
 /* The following functions are called by machine-independent parts of
    the assembler. */
 int
-md_parse_option (int c, char *arg ATTRIBUTE_UNUSED)
+md_parse_option (int c, const char *arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
@@ -3863,8 +3854,8 @@ nios2_frob_symbol (symbolS *symp)
 arelent *
 tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 {
-  arelent *reloc = (arelent *) xmalloc (sizeof (arelent));
-  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  arelent *reloc = XNEW (arelent);
+  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
 
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
@@ -3910,7 +3901,7 @@ md_pcrel_from (fixS *fixP ATTRIBUTE_UNUSED)
 
 /* Called just before the assembler exits.  */
 void
-md_end ()
+md_end (void)
 {
   /* FIXME - not yet implemented */
 }
@@ -3980,7 +3971,7 @@ nios2_cons_align (int size)
 /* Map 's' to SHF_NIOS2_GPREL.  */
 /* This is from the Alpha code tc-alpha.c.  */
 int
-nios2_elf_section_letter (int letter, char **ptr_msg)
+nios2_elf_section_letter (int letter, const char **ptr_msg)
 {
   if (letter == 's')
     return SHF_NIOS2_GPREL;

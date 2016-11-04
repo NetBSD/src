@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.15 2013/10/18 19:53:34 christos Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.15.8.1 2016/11/04 14:42:22 pgoyette Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_sh.c,v 1.15 2013/10/18 19:53:34 christos Exp $");
+__RCSID("$NetBSD: c_sh.c,v 1.15.8.1 2016/11/04 14:42:22 pgoyette Exp $");
 #endif
 
 
@@ -691,8 +691,6 @@ c_unset(wp)
 		if (unset_var) {	/* unset variable */
 			struct tbl *vp = global(id);
 
-			if (!(vp->flag & ISSET))
-			    ret = 1;
 			if ((vp->flag&RDONLY)) {
 				bi_errorf("%s is read only", vp->name);
 				return 1;

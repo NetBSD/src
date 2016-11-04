@@ -1,5 +1,5 @@
 # MIPS simulator testsuite utility functions.
-# Copyright (C) 2004-2015 Free Software Foundation, Inc.
+# Copyright (C) 2004-2016 Free Software Foundation, Inc.
 # Contributed by Chris Demetriou of Broadcom Corporation.
 #
 # This file is part of the GNU simulators.
@@ -21,12 +21,12 @@
 # $1, $4, $5, %6, are used as temps by the macros defined here.
 
 	.macro writemsg msg
+	la	$5, 901f
+	li	$6, 902f - 901f
 	.data
 901:	.ascii	"\msg\n"
 902:
 	.previous
-	la	$5, 901b
-	li	$6, 902b - 901b
 	.set push
 	.set noreorder
 	jal	_dowrite
@@ -81,7 +81,7 @@ _pass:
 _dowrite:
 	# Write opcode (reserved instruction).  See sim_monitor and its
 	# callers in sim/mips/interp.c.
-	.word	0x00000005 | ((8 << 1) << 6)
+	.word	0x00000039 | ((8 << 1) << 6)
 	.end _dowrite
 
 	.endm	# setup

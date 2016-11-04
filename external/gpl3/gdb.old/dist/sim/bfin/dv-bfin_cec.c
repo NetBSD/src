@@ -599,7 +599,7 @@ _cec_raise (SIM_CPU *cpu, struct bfin_cec *cec, int ivg)
       else
 	SET_PCREG (cec_get_evt (cpu, ivg));
 
-      TRACE_BRANCH (cpu, oldpc, PCREG, -1, "CEC changed PC (to EVT%i):", ivg);
+      BFIN_TRACE_BRANCH (cpu, oldpc, PCREG, -1, "CEC changed PC (to EVT%i):", ivg);
       BFIN_CPU_STATE.did_jump = true;
 
       /* Enable the global interrupt mask upon interrupt entry.  */
@@ -648,7 +648,7 @@ cec_latch (SIM_CPU *cpu, int ivg)
     {
       bu32 oldpc = PCREG;
       SET_PCREG (cec_read_ret_reg (cpu, ivg));
-      TRACE_BRANCH (cpu, oldpc, PCREG, -1, "CEC changed PC");
+      BFIN_TRACE_BRANCH (cpu, oldpc, PCREG, -1, "CEC changed PC");
       return;
     }
 
@@ -679,7 +679,7 @@ cec_return (SIM_CPU *cpu, int ivg)
   if (STATE_ENVIRONMENT (sd) != OPERATING_ENVIRONMENT)
     {
       SET_PCREG (cec_read_ret_reg (cpu, ivg));
-      TRACE_BRANCH (cpu, oldpc, PCREG, -1, "CEC changed PC");
+      BFIN_TRACE_BRANCH (cpu, oldpc, PCREG, -1, "CEC changed PC");
       return;
     }
 
@@ -744,9 +744,9 @@ cec_return (SIM_CPU *cpu, int ivg)
   /* XXX: Delayed clear shows bad PCREG register trace above ?  */
   SET_PCREG (newpc & ~1);
 
-  TRACE_BRANCH (cpu, oldpc, PCREG, -1, "CEC changed PC (from EVT%i)", ivg);
+  BFIN_TRACE_BRANCH (cpu, oldpc, PCREG, -1, "CEC changed PC (from EVT%i)", ivg);
 
-  /* Update ipend after the TRACE_BRANCH so dv-bfin_trace
+  /* Update ipend after the BFIN_TRACE_BRANCH so dv-bfin_trace
      knows current CEC state wrt overflow.  */
   if (!snen)
     cec->ipend &= ~(1 << ivg);

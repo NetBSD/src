@@ -1,5 +1,5 @@
 # Pretty-printer utilities.
-# Copyright (C) 2010-2015 Free Software Foundation, Inc.
+# Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -239,7 +239,7 @@ class _EnumInstance:
         if not any_found or v != 0:
             # Leftover value.
             flag_list.append('<unknown: 0x%x>' % v)
-        return "0x%x [%s]" % (self.val, " | ".join(flag_list))
+        return "0x%x [%s]" % (int(self.val), " | ".join(flag_list))
 
 class FlagEnumerationPrinter(PrettyPrinter):
     """A pretty-printer which can be used to print a flag-style enumeration.
@@ -263,7 +263,7 @@ class FlagEnumerationPrinter(PrettyPrinter):
                 self.enumerators.append((field.name, field.enumval))
             # Sorting the enumerators by value usually does the right
             # thing.
-            self.enumerators.sort(key = lambda x: x.enumval)
+            self.enumerators.sort(key = lambda x: x[1])
 
         if self.enabled:
             return _EnumInstance(self.enumerators, val)

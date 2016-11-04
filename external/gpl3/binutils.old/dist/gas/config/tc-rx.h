@@ -1,6 +1,5 @@
 /* tc-rx.h - header file for Renesas RX
-   Copyright 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -69,9 +68,10 @@ extern long md_pcrel_from_section (struct fix *, segT);
   rx_validate_fix_sub (FIX)
 extern int rx_validate_fix_sub (struct fix *);
 
-#define TC_CONS_FIX_NEW(FRAG, WHERE, NBYTES, EXP) \
-  rx_cons_fix_new (FRAG, WHERE, NBYTES, EXP)
-extern void rx_cons_fix_new (fragS *, int, int, expressionS *);
+#define TC_CONS_FIX_NEW(FRAG, WHERE, NBYTES, EXP, RELOC)	\
+  rx_cons_fix_new (FRAG, WHERE, NBYTES, EXP, RELOC)
+extern void rx_cons_fix_new (fragS *, int, int, expressionS *,
+			     bfd_reloc_code_real_type);
 
 #define tc_fix_adjustable(x) 0
 

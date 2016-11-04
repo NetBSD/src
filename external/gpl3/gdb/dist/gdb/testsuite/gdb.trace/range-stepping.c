@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2013-2015 Free Software Foundation, Inc.
+   Copyright 2013-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,6 +26,8 @@
    tracepoint jump.  */
 #if (defined __x86_64__ || defined __i386__)
 #  define NOP "   .byte 0xe9,0x00,0x00,0x00,0x00\n" /* jmp $+5 (5-byte nop) */
+#elif (defined __aarch64__)
+#  define NOP "    nop\n"
 #else
 #  define NOP "" /* port me */
 #endif

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.715 2016/06/01 04:47:02 pgoyette Exp $
+$NetBSD: usbdevs,v 1.715.2.1 2016/11/04 14:49:16 pgoyette Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1252,6 +1252,9 @@ product CREATIVE3 OPTICAL_MOUSE 0x0001	Notebook Optical Mouse
 product CSR BLUETOOTH		0x0001	Bluetooth USB Adapter
 product CSR BLUETOOTH_NF	0xffff	Bluetooth USB Adapter
 
+/* C-Media Electronics Inc. products */
+product CMEDIA USBAUDIO		0x013c	USB Pnp Sound
+
 /* CTX products */
 product CTX EX1300		0x9999	Ex1300 hub
 
@@ -1331,6 +1334,7 @@ product DISPLAYLINK LCDUSB10X	0x0156	IO-DATA LCD-USB10XB-T
 product DISPLAYLINK VGA10	0x015a	CMP-USBVGA10
 product DISPLAYLINK WSDVI	0x0198	WS Tech DVI
 product DISPLAYLINK EC008	0x019b	EasyCAP008 DVI
+product DISPLAYLINK FYDVI2	0x019e	DisplayLink FY-DVI2
 product DISPLAYLINK GXDVIU2	0x01ac	BUFFALO GX-DVI/U2
 product DISPLAYLINK LCD4300U	0x01ba	LCD-4300U
 product DISPLAYLINK LCD8000U	0x01bb	LCD-8000U
@@ -1348,6 +1352,7 @@ product DISPLAYLINK PLUGABLE	0x0377	Plugable docking station
 product DISPLAYLINK LT1421WIDE	0x03e0	Lenovo ThinkVision LT1421 Wide
 product DISPLAYLINK SD_U2VDH	0x046d	AREA SD-U2VDH
 product DISPLAYLINK UM7X0	0x401a	nanovision MiMo
+product DISPLAYLINK FYDVI	0x8060	DisplayLink FY-DVI
 
 /* D-Link products */
 /*product DLINK DSBS25		0x0100	DSB-S25 serial adapter*/
@@ -1362,6 +1367,7 @@ product DLINK RTL8192CU_2	0x3309	RTL8192CU
 product DLINK RTL8192CU_3	0x330a	RTL8192CU
 product DLINK RTL8192CU_4	0x330b	RTL8192CU
 product DLINK DWA131B		0x330d	DWA-131 rev B
+product	DLINK DWA125D1		0x330f  DWA-125 rev D1
 product DLINK DWL122		0x3700	Wireless DWL122
 product DLINK DWLG120		0x3701	DWL-G120
 product DLINK DWL120F		0x3702	DWL-120 rev F
@@ -1782,7 +1788,10 @@ product HUAWEI K3765		0x1465	Huawei K3765
 product HUAWEI E1820		0x14ac	Huawei E1820
 product HUAWEI E171INIT		0x14fe	Huawei E171 USB CD
 product HUAWEI E171		0x1506	Huawei E171
-product HUAWEI E353		0x1507	Huawei E353
+product HUAWEI E353_HiLink	0x1507	Huawei E353_HiLink
+/* Accessing http://192.168.1.1/html/switchProjectMode.html on 
+   a Huawei HiLink device will switch it to u3g mode */
+product HUAWEI E353             0x1442  Huawei E353
 product HUAWEI K3765INIT	0x1520	Huawei K3765 USB CD
 product HUAWEI E353INIT		0x1f01	Huawei E353 USB CD
 
@@ -2747,6 +2756,7 @@ product REALTEK RTL8188RU_3	0x817f	RTL8188RU
 product REALTEK RTL8187		0x8187	RTL8187
 product REALTEK RTL8187B_0	0x8189	RTL8187B
 product REALTEK RTL8188CUS	0x818a	RTL8188CUS
+product REALTEK RTL8192EU	0x818b	RTL8192EU
 product REALTEK RTL8188CU_3	0x8191	RTL8188CU
 product REALTEK RTL8187B_1	0x8197	RTL8187B
 product REALTEK RTL8187B_2	0x8198	RTL8187B

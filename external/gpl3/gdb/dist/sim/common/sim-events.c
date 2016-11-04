@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2015 Free Software Foundation, Inc.
+   Copyright 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -635,7 +635,7 @@ sim_events_watch_sim (SIM_DESC sd,
   /* type */
   switch (byte_order)
     {
-    case 0:
+    case BFD_ENDIAN_UNKNOWN:
       switch (nr_bytes)
 	{
 	case 1: new_event->watching = watch_sim_host_1; break;
@@ -645,7 +645,7 @@ sim_events_watch_sim (SIM_DESC sd,
 	default: sim_io_error (sd, "sim_events_watch_sim - invalid nr bytes");
 	}
       break;
-    case BIG_ENDIAN:
+    case BFD_ENDIAN_BIG:
       switch (nr_bytes)
 	{
 	case 1: new_event->watching = watch_sim_be_1; break;
@@ -655,7 +655,7 @@ sim_events_watch_sim (SIM_DESC sd,
 	default: sim_io_error (sd, "sim_events_watch_sim - invalid nr bytes");
 	}
       break;
-    case LITTLE_ENDIAN:
+    case BFD_ENDIAN_LITTLE:
       switch (nr_bytes)
 	{
 	case 1: new_event->watching = watch_sim_le_1; break;
@@ -714,7 +714,7 @@ sim_events_watch_core (SIM_DESC sd,
   /* type */
   switch (byte_order)
     {
-    case 0:
+    case BFD_ENDIAN_UNKNOWN:
       switch (nr_bytes)
 	{
 	case 1: new_event->watching = watch_core_targ_1; break;
@@ -724,7 +724,7 @@ sim_events_watch_core (SIM_DESC sd,
 	default: sim_io_error (sd, "sim_events_watch_core - invalid nr bytes");
 	}
       break;
-    case BIG_ENDIAN:
+    case BFD_ENDIAN_BIG:
       switch (nr_bytes)
 	{
 	case 1: new_event->watching = watch_core_be_1; break;
@@ -734,7 +734,7 @@ sim_events_watch_core (SIM_DESC sd,
 	default: sim_io_error (sd, "sim_events_watch_core - invalid nr bytes");
 	}
       break;
-    case LITTLE_ENDIAN:
+    case BFD_ENDIAN_LITTLE:
       switch (nr_bytes)
 	{
 	case 1: new_event->watching = watch_core_le_1; break;

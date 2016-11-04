@@ -1,6 +1,6 @@
 // gdb_index_test.c -- a test case for the --gdb-index option.
 
-// Copyright 2012 Free Software Foundation, Inc.
+// Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 // This file is part of gold.
 

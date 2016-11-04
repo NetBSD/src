@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.158.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.158.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.158.2.1 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.158.2.2 2016/11/04 14:49:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -581,9 +581,7 @@ rip_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		error = EADDRNOTAVAIL;
 		goto release;
 	}
-        if (ifa && (ifatoia(ifa))->ia4_flags &
-	            (IN6_IFF_NOTREADY | IN_IFF_DETACHED))
-	{
+        if (ifa && (ifatoia(ifa))->ia4_flags & IN6_IFF_DUPLICATED) {
 		pserialize_read_exit(ss);
 		error = EADDRNOTAVAIL;
 		goto release;

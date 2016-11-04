@@ -249,7 +249,7 @@ debug_qf_expand_symtabs_with_fullname (struct objfile *objfile,
 
 static void
 debug_qf_map_matching_symbols (struct objfile *objfile,
-			       const char *name, domain_enum namespace,
+			       const char *name, domain_enum domain,
 			       int global,
 			       int (*callback) (struct block *,
 						struct symbol *, void *),
@@ -263,14 +263,14 @@ debug_qf_map_matching_symbols (struct objfile *objfile,
   fprintf_filtered (gdb_stdlog,
 		    "qf->map_matching_symbols (%s, \"%s\", %s, %d, %s, %s, %s, %s)\n",
 		    objfile_debug_name (objfile), name,
-		    domain_name (namespace), global,
+		    domain_name (domain), global,
 		    host_address_to_string (callback),
 		    host_address_to_string (data),
 		    host_address_to_string (match),
 		    host_address_to_string (ordered_compare));
 
   debug_data->real_sf->qf->map_matching_symbols (objfile, name,
-						 namespace, global,
+						 domain, global,
 						 callback, data,
 						 match,
 						 ordered_compare);
@@ -281,22 +281,25 @@ debug_qf_expand_symtabs_matching
   (struct objfile *objfile,
    expand_symtabs_file_matcher_ftype *file_matcher,
    expand_symtabs_symbol_matcher_ftype *symbol_matcher,
+   expand_symtabs_exp_notify_ftype *expansion_notify,
    enum search_domain kind, void *data)
 {
   const struct debug_sym_fns_data *debug_data =
     objfile_data (objfile, symfile_debug_objfile_data_key);
 
   fprintf_filtered (gdb_stdlog,
-		    "qf->expand_symtabs_matching (%s, %s, %s, %s, %s)\n",
+		    "qf->expand_symtabs_matching (%s, %s, %s, %s, %s, %s)\n",
 		    objfile_debug_name (objfile),
 		    host_address_to_string (file_matcher),
 		    host_address_to_string (symbol_matcher),
+		    host_address_to_string (expansion_notify),
 		    search_domain_name (kind),
 		    host_address_to_string (data));
 
   debug_data->real_sf->qf->expand_symtabs_matching (objfile,
 						    file_matcher,
 						    symbol_matcher,
+						    expansion_notify,
 						    kind, data);
 }
 

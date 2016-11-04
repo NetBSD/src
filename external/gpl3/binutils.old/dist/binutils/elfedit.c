@@ -1,6 +1,5 @@
 /* elfedit.c -- Update the ELF header of an ELF format file
-   Copyright 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -55,7 +54,37 @@ static int input_elf_type = -1;
 static int output_elf_type = -1;
 static int input_elf_osabi = -1;
 static int output_elf_osabi = -1;
-static int input_elf_class = -1;
+enum elfclass
+  {
+    ELF_CLASS_UNKNOWN = -1,
+    ELF_CLASS_NONE = ELFCLASSNONE,
+    ELF_CLASS_32 = ELFCLASS32,
+    ELF_CLASS_64 = ELFCLASS64,
+    ELF_CLASS_BOTH
+  };
+static enum elfclass input_elf_class = ELF_CLASS_UNKNOWN;
+static enum elfclass output_elf_class = ELF_CLASS_BOTH;
+
+/* Return ELF class for a machine type, MACH.  */
+
+static enum elfclass
+elf_class (int mach)
+{
+  switch (mach)
+    {
+    case EM_386:
+    case EM_IAMCU:
+      return ELF_CLASS_32;
+    case EM_L1OM:
+    case EM_K1OM:
+      return ELF_CLASS_64;
+    case EM_X86_64:
+    case EM_NONE:
+      return ELF_CLASS_BOTH;
+    default:
+      return ELF_CLASS_BOTH;
+    }
+}
 
 static int
 update_elf_header (const char *file_name, FILE *file)
@@ -87,17 +116,29 @@ update_elf_header (const char *file_name, FILE *file)
     return 1;
 
   class = elf_header.e_ident[EI_CLASS];
+  machine = elf_header.e_machine;
 
   /* Skip if class doesn't match. */
-  if (input_elf_class != -1 && class != input_elf_class)
+  if (input_elf_class == ELF_CLASS_UNKNOWN)
+    input_elf_class = elf_class (machine);
+
+  if (input_elf_class != ELF_CLASS_BOTH
+      && (int) input_elf_class != class)
     {
       error
-	(_("%s: Unmatched EI_CLASS: %d is not %d\n"),
+	(_("%s: Unmatched input EI_CLASS: %d is not %d\n"),
 	 file_name, class, input_elf_class);
       return 0;
     }
 
-  machine = elf_header.e_machine;
+  if (output_elf_class != ELF_CLASS_BOTH
+      && (int) output_elf_class != class)
+    {
+      error
+	(_("%s: Unmatched output EI_CLASS: %d is not %d\n"),
+	 file_name, class, output_elf_class);
+      return 0;
+    }
 
   /* Skip if e_machine doesn't match. */
   if (input_elf_machine != -1 && machine != input_elf_machine)
@@ -552,6 +593,10 @@ elf_osabi (const char *osabi)
 static int
 elf_machine (const char *mach)
 {
+  if (strcasecmp (mach, "i386") == 0)
+    return EM_386;
+  if (strcasecmp (mach, "iamcu") == 0)
+    return EM_IAMCU;
   if (strcasecmp (mach, "l1om") == 0)
     return EM_L1OM;
   if (strcasecmp (mach, "k1om") == 0)
@@ -566,25 +611,6 @@ elf_machine (const char *mach)
   error (_("Unknown machine type: %s\n"), mach);
 
   return -1;
-}
-
-/* Return ELF class for a machine type, MACH.  */
-
-static int
-elf_class (int mach)
-{
-  switch (mach)
-    {
-    case EM_L1OM:
-    case EM_K1OM:
-    case EM_X86_64:
-      return ELFCLASS64;
-    case EM_NONE:
-      return ELFCLASSNONE;
-    default:
-      error (_("Unknown machine type: %d\n"), mach);
-      return -1;
-    }
 }
 
 /* Return ET_XXX for a type string, TYPE.  */
@@ -678,13 +704,16 @@ main (int argc, char ** argv)
 	  if (input_elf_machine < 0)
 	    return 1;
 	  input_elf_class = elf_class (input_elf_machine);
-	  if (input_elf_class < 0)
+	  if (input_elf_class == ELF_CLASS_UNKNOWN)
 	    return 1;
 	  break;
 
 	case OPTION_OUTPUT_MACH:
 	  output_elf_machine = elf_machine (optarg);
 	  if (output_elf_machine < 0)
+	    return 1;
+	  output_elf_class = elf_class (output_elf_machine);
+	  if (output_elf_class == ELF_CLASS_UNKNOWN)
 	    return 1;
 	  break;
 

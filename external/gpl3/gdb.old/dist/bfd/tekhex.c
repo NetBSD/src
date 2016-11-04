@@ -397,7 +397,7 @@ first_phase (bfd *abfd, int type, char *src, char * src_end)
 	    return FALSE;
 	}
       alt_section = NULL;
-      while (*src)
+      while (src < src_end && *src)
 	{
 	  switch (*src)
 	    {
@@ -407,7 +407,13 @@ first_phase (bfd *abfd, int type, char *src, char * src_end)
 		return FALSE;
 	      if (!getvalue (&src, &val, src_end))
 		return FALSE;
+	      if (val < section->vma)
+		val = section->vma;
 	      section->size = val - section->vma;
+	      /* PR 17512: file: objdump-s-endless-loop.tekhex.
+	         Check for overlarge section sizes.  */
+	      if (section->size & 0x80000000)
+		return FALSE;
 	      section->flags = SEC_HAS_CONTENTS | SEC_LOAD | SEC_ALLOC;
 	      break;
 	    case '0':

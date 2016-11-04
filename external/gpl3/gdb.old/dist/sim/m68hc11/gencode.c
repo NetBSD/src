@@ -1466,6 +1466,8 @@ gen_fetch_operands (FILE *fp, int col,
 		     vars[cur_var], operand_size, operand_size);
 	      operands += 1;
 	    }
+#if 0 /* This code is never executed (see strncmp above), but it has not been
+	 removed because it may be that there is a typo in strncmp test below.  */
 	  else if (strncmp (operands, "]", 1) == 0)
 	    {
 	      current_insn_size += 1;
@@ -1473,6 +1475,7 @@ gen_fetch_operands (FILE *fp, int col,
 		     vars[cur_var], operand_size, operand_size);
 	      operands += 1;
 	    }
+#endif
 	  else
 	    {
 	      fatal_error (opcode, "Unknown operand");

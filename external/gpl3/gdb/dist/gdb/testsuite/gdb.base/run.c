@@ -6,11 +6,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../lib/unbuffer_output.c"
+
 int factorial (int);
 
 int
 main (int argc, char **argv, char **envp)
 {
+  gdb_unbuffer_output ();
+
 #ifdef FAKEARGV
     printf ("%d\n", factorial (1)); /* commands.exp: hw local_var out of scope */
 #else    

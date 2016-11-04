@@ -97,6 +97,9 @@ struct expression
 
 extern struct expression *parse_expression (const char *);
 
+extern struct expression *parse_expression_with_language (const char *string,
+							  enum language lang);
+
 extern struct type *parse_expression_for_completion (const char *, char **,
 						     enum type_code *);
 

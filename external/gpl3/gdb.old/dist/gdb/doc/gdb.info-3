@@ -21,7 +21,7 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.9.1.
+Source-Level Debugger' for GDB (GDB) Version 7.10.1.
 
    Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
@@ -35,6 +35,203 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Signaling,  Next: Returning,  Prev: Jumping,  Up: Altering
+
+17.3 Giving your Program a Signal
+=================================
+
+'signal SIGNAL'
+     Resume execution where your program is stopped, but immediately
+     give it the signal SIGNAL.  The SIGNAL can be the name or the
+     number of a signal.  For example, on many systems 'signal 2' and
+     'signal SIGINT' are both ways of sending an interrupt signal.
+
+     Alternatively, if SIGNAL is zero, continue execution without giving
+     a signal.  This is useful when your program stopped on account of a
+     signal and would ordinarily see the signal when resumed with the
+     'continue' command; 'signal 0' causes it to resume without a
+     signal.
+
+     _Note:_ When resuming a multi-threaded program, SIGNAL is delivered
+     to the currently selected thread, not the thread that last reported
+     a stop.  This includes the situation where a thread was stopped due
+     to a signal.  So if you want to continue execution suppressing the
+     signal that stopped a thread, you should select that same thread
+     before issuing the 'signal 0' command.  If you issue the 'signal 0'
+     command with another thread as the selected one, GDB detects that
+     and asks for confirmation.
+
+     Invoking the 'signal' command is not the same as invoking the
+     'kill' utility from the shell.  Sending a signal with 'kill' causes
+     GDB to decide what to do with the signal depending on the signal
+     handling tables (*note Signals::).  The 'signal' command passes the
+     signal directly to your program.
+
+     'signal' does not repeat when you press <RET> a second time after
+     executing the command.
+
+'queue-signal SIGNAL'
+     Queue SIGNAL to be delivered immediately to the current thread when
+     execution of the thread resumes.  The SIGNAL can be the name or the
+     number of a signal.  For example, on many systems 'signal 2' and
+     'signal SIGINT' are both ways of sending an interrupt signal.  The
+     handling of the signal must be set to pass the signal to the
+     program, otherwise GDB will report an error.  You can control the
+     handling of signals from GDB with the 'handle' command (*note
+     Signals::).
+
+     Alternatively, if SIGNAL is zero, any currently queued signal for
+     the current thread is discarded and when execution resumes no
+     signal will be delivered.  This is useful when your program stopped
+     on account of a signal and would ordinarily see the signal when
+     resumed with the 'continue' command.
+
+     This command differs from the 'signal' command in that the signal
+     is just queued, execution is not resumed.  And 'queue-signal'
+     cannot be used to pass a signal whose handling state has been set
+     to 'nopass' (*note Signals::).
+
+   *Note stepping into signal handlers::, for information on how
+stepping commands behave when the thread has a signal queued.
+
+
+File: gdb.info,  Node: Returning,  Next: Calling,  Prev: Signaling,  Up: Altering
+
+17.4 Returning from a Function
+==============================
+
+'return'
+'return EXPRESSION'
+     You can cancel execution of a function call with the 'return'
+     command.  If you give an EXPRESSION argument, its value is used as
+     the function's return value.
+
+   When you use 'return', GDB discards the selected stack frame (and all
+frames within it).  You can think of this as making the discarded frame
+return prematurely.  If you wish to specify a value to be returned, give
+that value as the argument to 'return'.
+
+   This pops the selected stack frame (*note Selecting a Frame:
+Selection.), and any other frames inside of it, leaving its caller as
+the innermost remaining frame.  That frame becomes selected.  The
+specified value is stored in the registers used for returning values of
+functions.
+
+   The 'return' command does not resume execution; it leaves the program
+stopped in the state that would exist if the function had just returned.
+In contrast, the 'finish' command (*note Continuing and Stepping:
+Continuing and Stepping.) resumes execution until the selected stack
+frame returns naturally.
+
+   GDB needs to know how the EXPRESSION argument should be set for the
+inferior.  The concrete registers assignment depends on the OS ABI and
+the type being returned by the selected stack frame.  For example it is
+common for OS ABI to return floating point values in FPU registers while
+integer values in CPU registers.  Still some ABIs return even floating
+point values in CPU registers.  Larger integer widths (such as 'long
+long int') also have specific placement rules.  GDB already knows the OS
+ABI from its current target so it needs to find out also the type being
+returned to make the assignment into the right register(s).
+
+   Normally, the selected stack frame has debug info.  GDB will always
+use the debug info instead of the implicit type of EXPRESSION when the
+debug info is available.  For example, if you type 'return -1', and the
+function in the current stack frame is declared to return a 'long long
+int', GDB transparently converts the implicit 'int' value of -1 into a
+'long long int':
+
+     Breakpoint 1, func () at gdb.base/return-nodebug.c:29
+     29        return 31;
+     (gdb) return -1
+     Make func return now? (y or n) y
+     #0  0x004004f6 in main () at gdb.base/return-nodebug.c:43
+     43        printf ("result=%lld\n", func ());
+     (gdb)
+
+   However, if the selected stack frame does not have a debug info,
+e.g., if the function was compiled without debug info, GDB has to find
+out the type to return from user.  Specifying a different type by
+mistake may set the value in different inferior registers than the
+caller code expects.  For example, typing 'return -1' with its implicit
+type 'int' would set only a part of a 'long long int' result for a debug
+info less function (on 32-bit architectures).  Therefore the user is
+required to specify the return type by an appropriate cast explicitly:
+
+     Breakpoint 2, 0x0040050b in func ()
+     (gdb) return -1
+     Return value type not available for selected stack frame.
+     Please use an explicit cast of the value to return.
+     (gdb) return (long long int) -1
+     Make selected stack frame return now? (y or n) y
+     #0  0x00400526 in main ()
+     (gdb)
+
+
+File: gdb.info,  Node: Calling,  Next: Patching,  Prev: Returning,  Up: Altering
+
+17.5 Calling Program Functions
+==============================
+
+'print EXPR'
+     Evaluate the expression EXPR and display the resulting value.  The
+     expression may include calls to functions in the program being
+     debugged.
+
+'call EXPR'
+     Evaluate the expression EXPR without displaying 'void' returned
+     values.
+
+     You can use this variant of the 'print' command if you want to
+     execute a function from your program that does not return anything
+     (a.k.a. "a void function"), but without cluttering the output with
+     'void' returned values that GDB will otherwise print.  If the
+     result is not void, it is printed and saved in the value history.
+
+   It is possible for the function you call via the 'print' or 'call'
+command to generate a signal (e.g., if there's a bug in the function, or
+if you passed it incorrect arguments).  What happens in that case is
+controlled by the 'set unwindonsignal' command.
+
+   Similarly, with a C++ program it is possible for the function you
+call via the 'print' or 'call' command to generate an exception that is
+not handled due to the constraints of the dummy frame.  In this case,
+any exception that is raised in the frame, but has an out-of-frame
+exception handler will not be found.  GDB builds a dummy-frame for the
+inferior function call, and the unwinder cannot seek for exception
+handlers outside of this dummy-frame.  What happens in that case is
+controlled by the 'set unwind-on-terminating-exception' command.
+
+'set unwindonsignal'
+     Set unwinding of the stack if a signal is received while in a
+     function that GDB called in the program being debugged.  If set to
+     on, GDB unwinds the stack it created for the call and restores the
+     context to what it was before the call.  If set to off (the
+     default), GDB stops in the frame where the signal was received.
+
+'show unwindonsignal'
+     Show the current setting of stack unwinding in the functions called
+     by GDB.
+
+'set unwind-on-terminating-exception'
+     Set unwinding of the stack if a C++ exception is raised, but left
+     unhandled while in a function that GDB called in the program being
+     debugged.  If set to on (the default), GDB unwinds the stack it
+     created for the call and restores the context to what it was before
+     the call.  If set to off, GDB the exception is delivered to the
+     default C++ exception handler and the inferior terminated.
+
+'show unwind-on-terminating-exception'
+     Show the current setting of stack unwinding in the functions called
+     by GDB.
+
+   Sometimes, a function you wish to call is actually a "weak alias" for
+another function.  In such case, GDB might not pick up the type
+information, including the types of the function arguments, which causes
+GDB to call the inferior function incorrectly.  As a result, the called
+function will function erroneously and may even crash.  A solution to
+that is to use the name of the aliased function instead.
 
 
 File: gdb.info,  Node: Patching,  Next: Compiling and Injecting Code,  Prev: Calling,  Up: Altering
@@ -127,7 +324,71 @@ implemented with the following commands.
 
           compile file /home/user/example.c
 
-17.7.1 Caveats when using the 'compile' command
+'compile print EXPR'
+'compile print /F EXPR'
+     Compile and execute EXPR with the compiler language found as the
+     current language in GDB (*note Languages::).  By default the value
+     of EXPR is printed in a format appropriate to its data type; you
+     can choose a different format by specifying '/F', where F is a
+     letter specifying the format; see *note Output Formats: Output
+     Formats.
+
+'compile print'
+'compile print /F'
+     Alternatively you can enter the expression (source code producing
+     it) as multiple lines of text.  To enter this mode, invoke the
+     'compile print' command without any text following the command.
+     This will start the multiple-line editor.
+
+The process of compiling and injecting the code can be inspected using:
+
+'set debug compile'
+     Turns on or off display of GDB process of compiling and injecting
+     the code.  The default is off.
+
+'show debug compile'
+     Displays the current state of displaying GDB process of compiling
+     and injecting the code.
+
+17.7.1 Compilation options for the 'compile' command
+----------------------------------------------------
+
+GDB needs to specify the right compilation options for the code to be
+injected, in part to make its ABI compatible with the inferior and in
+part to make the injected code compatible with GDB's injecting process.
+
+The options used, in increasing precedence:
+
+target architecture and OS options ('gdbarch')
+     These options depend on target processor type and target operating
+     system, usually they specify at least 32-bit ('-m32') or 64-bit
+     ('-m64') compilation option.
+
+compilation options recorded in the target
+     GCC (since version 4.7) stores the options used for compilation
+     into 'DW_AT_producer' part of DWARF debugging information according
+     to the GCC option '-grecord-gcc-switches'.  One has to explicitly
+     specify '-g' during inferior compilation otherwise GCC produces no
+     DWARF. This feature is only relevant for platforms where '-g'
+     produces DWARF by default, otherwise one may try to enforce DWARF
+     by using '-gdwarf-4'.
+
+compilation options set by 'set compile-args'
+
+You can override compilation options using the following command:
+
+'set compile-args'
+     Set compilation options used for compiling and injecting code with
+     the 'compile' commands.  These options override any conflicting
+     ones from the target architecture and/or options stored during
+     inferior compilation.
+
+'show compile-args'
+     Displays the current state of compilation options override.  This
+     does not show all the options actually used during compilation, use
+     *note set debug compile:: for that.
+
+17.7.2 Caveats when using the 'compile' command
 -----------------------------------------------
 
 There are a few caveats to keep in mind when using the 'compile'
@@ -264,6 +525,23 @@ C code examples and caveats
      accessible to the code submitted to the 'compile' command.  Access
      to those variables will generate a compiler error which GDB will
      print to the console.
+
+17.7.3 Compiler search for the 'compile' command
+------------------------------------------------
+
+GDB needs to find GCC for the inferior being debugged which may not be
+obvious for remote targets of different architecture than where GDB is
+running.  Environment variable 'PATH' ('PATH' from shell that executed
+GDB, not the one set by GDB command 'set environment').  *Note
+Environment::.  'PATH' on GDB host is searched for GCC binary matching
+the target architecture and operating system.
+
+   Specifically 'PATH' is searched for binaries matching regular
+expression 'ARCH(-[^-]*)?-OS-gcc' according to the inferior target being
+debugged.  ARCH is processor name -- multiarch is supported, so for
+example both 'i386' and 'x86_64' targets look for pattern
+'(x86_64|i.86)' and both 's390' and 's390x' targets look for pattern
+'s390x?'.  OS is currently supported only for pattern 'linux(-gnu)?'.
 
 
 File: gdb.info,  Node: GDB Files,  Next: Targets,  Prev: Altering,  Up: Top
@@ -609,6 +887,9 @@ command:
      that match REGEX.  If REGEX is omitted then print all shared
      libraries that are loaded.
 
+'info dll REGEX'
+     This is an alias of 'info sharedlibrary'.
+
 'sharedlibrary REGEX'
 'share REGEX'
      Load shared object library symbols for files matching a Unix
@@ -660,17 +941,25 @@ directories for target libraries.
      Use PATH as the system root for the program being debugged.  Any
      absolute shared library paths will be prefixed with PATH; many
      runtime loaders store the absolute paths to the shared library in
-     the target program's memory.  If you use 'set sysroot' to find
-     shared libraries, they need to be laid out in the same way that
-     they are on the target, with e.g. a '/lib' and '/usr/lib' hierarchy
-     under PATH.
+     the target program's memory.  When starting processes remotely, and
+     when attaching to already-running processes (local or remote),
+     their executable filenames will be prefixed with PATH if reported
+     to GDB as absolute by the operating system.  If you use 'set
+     sysroot' to find executables and shared libraries, they need to be
+     laid out in the same way that they are on the target, with e.g. a
+     '/bin', '/lib' and '/usr/lib' hierarchy under PATH.
 
-     If PATH starts with the sequence 'remote:', GDB will retrieve the
-     target libraries from the remote system.  This is only supported
-     when using a remote target that supports the 'remote get' command
-     (*note Sending files to a remote system: File Transfer.).  The part
-     of PATH following the initial 'remote:' (if present) is used as
-     system root prefix on the remote file system.  (1)
+     If PATH starts with the sequence 'target:' and the target system is
+     remote then GDB will retrieve the target binaries from the remote
+     system.  This is only supported when using a remote target that
+     supports the 'remote get' command (*note Sending files to a remote
+     system: File Transfer.).  The part of PATH following the initial
+     'target:' (if present) is used as system root prefix on the remote
+     file system.  If PATH starts with the sequence 'remote:' this is
+     converted to the sequence 'target:' by 'set sysroot'(1).  If you
+     want to specify a local system root using a directory that happens
+     to be named 'target:' or 'remote:', you need to use some equivalent
+     variant of the name like './target:'.
 
      For targets with an MS-DOS based filesystem, such as MS-Windows and
      SymbianOS, GDB tries prefixing a few variants of the target
@@ -685,10 +974,9 @@ directories for target libraries.
 
             c:/foo/bar.dll => /path/to/sysroot/c:/foo/bar.dll
 
-     If that does not find the shared library, GDB tries removing the
-     ':' character from the drive spec, both for convenience, and, for
-     the case of the host file system not supporting file names with
-     colons:
+     If that does not find the binary, GDB tries removing the ':'
+     character from the drive spec, both for convenience, and, for the
+     case of the host file system not supporting file names with colons:
 
             c:/foo/bar.dll => /path/to/sysroot/c/foo/bar.dll
 
@@ -705,8 +993,8 @@ directories for target libraries.
      find the correct copies of both 'c:\sys\bin\foo.dll', and
      'z:\sys\bin\bar.dll'.
 
-     If that still does not find the shared library, GDB tries removing
-     the whole drive spec from the target file name:
+     If that still does not find the binary, GDB tries removing the
+     whole drive spec from the target file name:
 
             c:/foo/bar.dll => /path/to/sysroot/foo/bar.dll
 
@@ -723,7 +1011,7 @@ directories for target libraries.
      installed GDB is moved to a new location.
 
 'show sysroot'
-     Display the current shared library prefix.
+     Display the current executable and shared library prefix.
 
 'set solib-search-path PATH'
      If this variable is set, PATH is a colon-separated list of
@@ -806,9 +1094,8 @@ of a significant slowdown.
 
    ---------- Footnotes ----------
 
-   (1) If you want to specify a local system root using a directory that
-happens to be named 'remote:', you need to use some equivalent variant
-of the name like './remote:'.
+   (1) Historically the functionality to retrieve binaries from the
+remote system was provided by prefixing PATH with 'remote:'
 
 
 File: gdb.info,  Node: Separate Debug Files,  Next: MiniDebugInfo,  Prev: Files,  Up: GDB Files
@@ -837,8 +1124,8 @@ need to debug a problem.
 
    * The executable contains a "build ID", a unique bit string that is
      also present in the corresponding debug info file.  (This is
-     supported only on some operating systems, notably those which use
-     the ELF format for binary files and the GNU Binutils.)  For more
+     supported only on some operating systems, when using the ELF or PE
+     file formats for binary files and the GNU Binutils.)  For more
      details about this feature, see the description of the '--build-id'
      command-line option in *note Command Line Options:
      (ld.info)Options.  The debug info file's name is not specified
@@ -1523,10 +1810,14 @@ File: gdb.info,  Node: Connecting,  Next: File Transfer,  Up: Remote Debugging
 20.1 Connecting to a Remote Target
 ==================================
 
-On the GDB host machine, you will need an unstripped copy of your
-program, since GDB needs symbol and debugging information.  Start up GDB
-as usual, using the name of the local copy of your program as the first
-argument.
+GDB needs an unstripped copy of your program to access symbol and
+debugging information.  Some remote targets (*note qXfer executable
+filename read::, and *note Host I/O Packets::) allow GDB to access
+program files over the same connection used to communicate with GDB.
+With such a target, if the remote program is unstripped, the only
+command you need is 'target remote'.  Otherwise, start up GDB using the
+name of the local unstripped copy of your program as the first argument,
+or use the 'file' command.
 
    GDB can communicate with the target over a serial line, or over an IP
 network using TCP or UDP.  In each case, GDB uses the same protocol for
@@ -2042,6 +2333,13 @@ system.
 'show serial baud'
      Show the current speed of the remote connection.
 
+'set serial parity PARITY'
+     Set the parity for the remote serial I/O. Supported values of
+     PARITY are: 'even', 'none', and 'odd'.  The default is 'none'.
+
+'show serial parity'
+     Show the current parity of the serial port.
+
 'set remotebreak'
      If set to on, GDB sends a 'BREAK' signal to the remote when you
      type 'Ctrl-c' to interrupt the program running on the remote.  If
@@ -2205,6 +2503,8 @@ Command Name         Remote Packet           Related Features
                                              
 'access-watchpoint'  'Z4'                    'awatch'
                                              
+'pid-to-exec-file'   'qXfer:exec-file:read'  'attach', 'run'
+                                             
 'target-features'    'qXfer:features:read'   'set
                                              architecture'
                                              
@@ -2262,6 +2562,10 @@ storage-address'                             '__thread'
                                              
 'hostio-readlink-packet''vFile:readlink'     Host I/O
                                              
+'hostio-fstat-packet''vFile:fstat'           Host I/O
+                                             
+'hostio-setfs-packet''vFile:setfs'           Host I/O
+                                             
 'noack-packet'       'QStartNoAckMode'       Packet
                                              acknowledgment
                                              
@@ -2290,6 +2594,15 @@ storage-address'                             '__thread'
                                              breakpoint
                                              condition
                                              evaluation'
+                                             
+'swbreak-feature'    'swbreak stop reason'   'break'
+                                             
+'hwbreak-feature'    'hwbreak stop reason'   'hbreak'
+                                             
+'fork-event-feature' 'fork stop reason'      'fork'
+                                             
+'vfork-event-feature''vfork stop reason'     'vfork'
+                                             
 
 
 File: gdb.info,  Node: Remote Stub,  Prev: Remote Configuration,  Up: Remote Debugging
@@ -2904,9 +3217,6 @@ described in *note Non-debug DLL Symbols::.
      This command displays thread specific information stored in the
      Thread Information Block (readable on the X86 CPU family using
      '$fs' selector for 32-bit programs and '$gs' for 64-bit programs).
-
-'info dll'
-     This is a Cygwin-specific alias of 'info shared'.
 
 'set cygwin-exceptions MODE'
      If MODE is 'on', GDB will break on exceptions that happen inside
@@ -4101,6 +4411,22 @@ counterpart.  When the bnd0...bnd3 registers are displayed via Python,
 the display includes the memory size, in bits, accessible to the
 pointer.
 
+   Bounds can also be stored in bounds tables, which are stored in
+application memory.  These tables store bounds for pointers by
+specifying the bounds pointer's value along with its bounds.  Evaluating
+and changing bounds located in bound tables is therefore interesting
+while investigating bugs on MPX context.  GDB provides commands for this
+purpose:
+
+'show mpx bound POINTER'
+     Display bounds of the given POINTER.
+
+'set mpx bound POINTER, LBOUND, UBOUND'
+     Set the bounds of a pointer in the bound table.  This command takes
+     three parameters: POINTER is the pointers whose bounds are to be
+     changed, LBOUND and UBOUND are new values for lower and upper
+     bounds respectively.
+
    ---------- Footnotes ----------
 
    (1) The register named with capital letters represent the
@@ -4475,9 +4801,24 @@ history, use the 'output' command instead of the 'print' command.
 'set history size SIZE'
 'set history size unlimited'
      Set the number of commands which GDB keeps in its history list.
-     This defaults to the value of the environment variable 'HISTSIZE',
-     or to 256 if this variable is not set.  If SIZE is 'unlimited', the
-     number of commands GDB keeps in the history list is unlimited.
+     This defaults to the value of the environment variable
+     'GDBHISTSIZE', or to 256 if this variable is not set.  Non-numeric
+     values of 'GDBHISTSIZE' are ignored.  If SIZE is 'unlimited' or if
+     'GDBHISTSIZE' is either a negative number or the empty string, then
+     the number of commands GDB keeps in the history list is unlimited.
+
+'set history remove-duplicates COUNT'
+'set history remove-duplicates unlimited'
+     Control the removal of duplicate history entries in the command
+     history list.  If COUNT is non-zero, GDB will look back at the last
+     COUNT history entries and remove the first entry that is a
+     duplicate of the current entry being added to the command history
+     list.  If COUNT is 'unlimited' then this lookbehind is unbounded.
+     If COUNT is 0, then removal of duplicate history entries is
+     disabled.
+
+     Only history entries added during the current session are
+     considered for removal.  This option is set to 0 by default.
 
    History expansion assigns special meaning to the character '!'.
 *Note Event Designators::, for more details.
@@ -5144,18 +5485,25 @@ commands.
 'show debug coff-pe-read'
      Displays the current state of displaying debugging messages related
      to reading of COFF/PE exported symbols.
-'set debug dwarf2-die'
-     Dump DWARF2 DIEs after they are read in.  The value is the number
-     of nesting levels to print.  A value of zero turns off the display.
-'show debug dwarf2-die'
-     Show the current state of DWARF2 DIE debugging.
-'set debug dwarf2-read'
+'set debug dwarf-die'
+     Dump DWARF DIEs after they are read in.  The value is the number of
+     nesting levels to print.  A value of zero turns off the display.
+'show debug dwarf-die'
+     Show the current state of DWARF DIE debugging.
+'set debug dwarf-line'
+     Turns on or off display of debugging messages related to reading
+     DWARF line tables.  The default is 0 (off).  A value of 1 provides
+     basic information.  A value greater than 1 provides more verbose
+     information.
+'show debug dwarf-line'
+     Show the current state of DWARF line table debugging.
+'set debug dwarf-read'
      Turns on or off display of debugging messages related to reading
      DWARF debug info.  The default is 0 (off).  A value of 1 provides
      basic information.  A value greater than 1 provides more verbose
      information.
-'show debug dwarf2-read'
-     Show the current state of DWARF2 reader debugging.
+'show debug dwarf-read'
+     Show the current state of DWARF reader debugging.
 'set debug displaced'
      Turns on or off display of GDB debugging info for the displaced
      stepping support.  The default is off.
@@ -5198,6 +5546,11 @@ commands.
      support.
 'show debug lin-lwp'
      Show the current state of Linux LWP debugging messages.
+'set debug linux-namespaces'
+     Turns on or off debugging messages from the Linux namespaces debug
+     support.
+'show debug linux-namespaces'
+     Show the current state of Linux namespaces debugging messages.
 'set debug mach-o'
      Control display of debugging messages related to Mach-O symbols
      processing.  The default is off.
@@ -5924,6 +6277,7 @@ optional arguments while skipping others.  Example:
 * Frame Filter API::            Filtering Frames.
 * Frame Decorator API::         Decorating Frames.
 * Writing a Frame Filter::      Writing a Frame Filter.
+* Unwinding Frames in Python::  Writing frame unwinder.
 * Xmethods In Python::          Adding and replacing methods of C++ classes.
 * Xmethod API::                 Xmethod types.
 * Writing an Xmethod::          Writing an xmethod.
@@ -6447,6 +6801,14 @@ function, call it like so:
      The 'gdb.Value' object 'py_val' is identical to that corresponding
      to 'val'.
 
+ -- Function: Value.reference_value ()
+     Return a 'gdb.Value' object which is a reference to the value
+     encapsulated by this instance.
+
+ -- Function: Value.const_value ()
+     Return a 'gdb.Value' object which is a 'const' version of the value
+     encapsulated by this instance.
+
  -- Function: Value.dynamic_cast (type)
      Like 'Value.cast', but works as if the C++ 'dynamic_cast' operator
      were used.  Consult a C++ reference for details.
@@ -6700,6 +7062,11 @@ of the 'Type.fields' method for a description of the 'gdb.Field' class.
      If BLOCK is given, then NAME is looked up in that scope.
      Otherwise, it is searched for globally.
 
+ -- Function: Type.optimized_out ()
+     Return 'gdb.Value' instance of this type whose value is optimized
+     out.  This allows a frame decorator to indicate that the value of
+     an argument or a local variable is not known.
+
    Each type has a code, which indicates what category this type falls
 into.  The available type categories are represented by constants
 defined in the 'gdb' module:
@@ -6877,399 +7244,4 @@ pretty-printer for a 'gdb.Value':
      This function takes a 'gdb.Value' object as an argument.  If a
      pretty-printer for this value exists, then it is returned.  If no
      such printer exists, then this returns 'None'.
-
-
-File: gdb.info,  Node: Selecting Pretty-Printers,  Next: Writing a Pretty-Printer,  Prev: Pretty Printing API,  Up: Python API
-
-23.2.2.6 Selecting Pretty-Printers
-..................................
-
-The Python list 'gdb.pretty_printers' contains an array of functions or
-callable objects that have been registered via addition as a
-pretty-printer.  Printers in this list are called 'global' printers,
-they're available when debugging all inferiors.  Each 'gdb.Progspace'
-contains a 'pretty_printers' attribute.  Each 'gdb.Objfile' also
-contains a 'pretty_printers' attribute.
-
-   Each function on these lists is passed a single 'gdb.Value' argument
-and should return a pretty-printer object conforming to the interface
-definition above (*note Pretty Printing API::).  If a function cannot
-create a pretty-printer for the value, it should return 'None'.
-
-   GDB first checks the 'pretty_printers' attribute of each
-'gdb.Objfile' in the current program space and iteratively calls each
-enabled lookup routine in the list for that 'gdb.Objfile' until it
-receives a pretty-printer object.  If no pretty-printer is found in the
-objfile lists, GDB then searches the pretty-printer list of the current
-program space, calling each enabled function until an object is
-returned.  After these lists have been exhausted, it tries the global
-'gdb.pretty_printers' list, again calling each enabled function until an
-object is returned.
-
-   The order in which the objfiles are searched is not specified.  For a
-given list, functions are always invoked from the head of the list, and
-iterated over sequentially until the end of the list, or a printer
-object is returned.
-
-   For various reasons a pretty-printer may not work.  For example, the
-underlying data structure may have changed and the pretty-printer is out
-of date.
-
-   The consequences of a broken pretty-printer are severe enough that
-GDB provides support for enabling and disabling individual printers.
-For example, if 'print frame-arguments' is on, a backtrace can become
-highly illegible if any argument is printed with a broken printer.
-
-   Pretty-printers are enabled and disabled by attaching an 'enabled'
-attribute to the registered function or callable object.  If this
-attribute is present and its value is 'False', the printer is disabled,
-otherwise the printer is enabled.
-
-
-File: gdb.info,  Node: Writing a Pretty-Printer,  Next: Type Printing API,  Prev: Selecting Pretty-Printers,  Up: Python API
-
-23.2.2.7 Writing a Pretty-Printer
-.................................
-
-A pretty-printer consists of two parts: a lookup function to detect if
-the type is supported, and the printer itself.
-
-   Here is an example showing how a 'std::string' printer might be
-written.  *Note Pretty Printing API::, for details on the API this class
-must provide.
-
-     class StdStringPrinter(object):
-         "Print a std::string"
-
-         def __init__(self, val):
-             self.val = val
-
-         def to_string(self):
-             return self.val['_M_dataplus']['_M_p']
-
-         def display_hint(self):
-             return 'string'
-
-   And here is an example showing how a lookup function for the printer
-example above might be written.
-
-     def str_lookup_function(val):
-         lookup_tag = val.type.tag
-         if lookup_tag == None:
-             return None
-         regex = re.compile("^std::basic_string<char,.*>$")
-         if regex.match(lookup_tag):
-             return StdStringPrinter(val)
-         return None
-
-   The example lookup function extracts the value's type, and attempts
-to match it to a type that it can pretty-print.  If it is a type the
-printer can pretty-print, it will return a printer object.  If not, it
-returns 'None'.
-
-   We recommend that you put your core pretty-printers into a Python
-package.  If your pretty-printers are for use with a library, we further
-recommend embedding a version number into the package name.  This
-practice will enable GDB to load multiple versions of your
-pretty-printers at the same time, because they will have different
-names.
-
-   You should write auto-loaded code (*note Python Auto-loading::) such
-that it can be evaluated multiple times without changing its meaning.
-An ideal auto-load file will consist solely of 'import's of your printer
-modules, followed by a call to a register pretty-printers with the
-current objfile.
-
-   Taken as a whole, this approach will scale nicely to multiple
-inferiors, each potentially using a different library version.
-Embedding a version number in the Python package name will ensure that
-GDB is able to load both sets of printers simultaneously.  Then, because
-the search for pretty-printers is done by objfile, and because your
-auto-loaded code took care to register your library's printers with a
-specific objfile, GDB will find the correct printers for the specific
-version of the library used by each inferior.
-
-   To continue the 'std::string' example (*note Pretty Printing API::),
-this code might appear in 'gdb.libstdcxx.v6':
-
-     def register_printers(objfile):
-         objfile.pretty_printers.append(str_lookup_function)
-
-And then the corresponding contents of the auto-load file would be:
-
-     import gdb.libstdcxx.v6
-     gdb.libstdcxx.v6.register_printers(gdb.current_objfile())
-
-   The previous example illustrates a basic pretty-printer.  There are a
-few things that can be improved on.  The printer doesn't have a name,
-making it hard to identify in a list of installed printers.  The lookup
-function has a name, but lookup functions can have arbitrary, even
-identical, names.
-
-   Second, the printer only handles one type, whereas a library
-typically has several types.  One could install a lookup function for
-each desired type in the library, but one could also have a single
-lookup function recognize several types.  The latter is the conventional
-way this is handled.  If a pretty-printer can handle multiple data
-types, then its "subprinters" are the printers for the individual data
-types.
-
-   The 'gdb.printing' module provides a formal way of solving these
-problems (*note gdb.printing::).  Here is another example that handles
-multiple types.
-
-   These are the types we are going to pretty-print:
-
-     struct foo { int a, b; };
-     struct bar { struct foo x, y; };
-
-   Here are the printers:
-
-     class fooPrinter:
-         """Print a foo object."""
-
-         def __init__(self, val):
-             self.val = val
-
-         def to_string(self):
-             return ("a=<" + str(self.val["a"]) +
-                     "> b=<" + str(self.val["b"]) + ">")
-
-     class barPrinter:
-         """Print a bar object."""
-
-         def __init__(self, val):
-             self.val = val
-
-         def to_string(self):
-             return ("x=<" + str(self.val["x"]) +
-                     "> y=<" + str(self.val["y"]) + ">")
-
-   This example doesn't need a lookup function, that is handled by the
-'gdb.printing' module.  Instead a function is provided to build up the
-object that handles the lookup.
-
-     import gdb.printing
-
-     def build_pretty_printer():
-         pp = gdb.printing.RegexpCollectionPrettyPrinter(
-             "my_library")
-         pp.add_printer('foo', '^foo$', fooPrinter)
-         pp.add_printer('bar', '^bar$', barPrinter)
-         return pp
-
-   And here is the autoload support:
-
-     import gdb.printing
-     import my_library
-     gdb.printing.register_pretty_printer(
-         gdb.current_objfile(),
-         my_library.build_pretty_printer())
-
-   Finally, when this printer is loaded into GDB, here is the
-corresponding output of 'info pretty-printer':
-
-     (gdb) info pretty-printer
-     my_library.so:
-       my_library
-         foo
-         bar
-
-
-File: gdb.info,  Node: Type Printing API,  Next: Frame Filter API,  Prev: Writing a Pretty-Printer,  Up: Python API
-
-23.2.2.8 Type Printing API
-..........................
-
-GDB provides a way for Python code to customize type display.  This is
-mainly useful for substituting canonical typedef names for types.
-
-   A "type printer" is just a Python object conforming to a certain
-protocol.  A simple base class implementing the protocol is provided;
-see *note gdb.types::.  A type printer must supply at least:
-
- -- Instance Variable of type_printer: enabled
-     A boolean which is True if the printer is enabled, and False
-     otherwise.  This is manipulated by the 'enable type-printer' and
-     'disable type-printer' commands.
-
- -- Instance Variable of type_printer: name
-     The name of the type printer.  This must be a string.  This is used
-     by the 'enable type-printer' and 'disable type-printer' commands.
-
- -- Method on type_printer: instantiate (self)
-     This is called by GDB at the start of type-printing.  It is only
-     called if the type printer is enabled.  This method must return a
-     new object that supplies a 'recognize' method, as described below.
-
-   When displaying a type, say via the 'ptype' command, GDB will compute
-a list of type recognizers.  This is done by iterating first over the
-per-objfile type printers (*note Objfiles In Python::), followed by the
-per-progspace type printers (*note Progspaces In Python::), and finally
-the global type printers.
-
-   GDB will call the 'instantiate' method of each enabled type printer.
-If this method returns 'None', then the result is ignored; otherwise, it
-is appended to the list of recognizers.
-
-   Then, when GDB is going to display a type name, it iterates over the
-list of recognizers.  For each one, it calls the recognition function,
-stopping if the function returns a non-'None' value.  The recognition
-function is defined as:
-
- -- Method on type_recognizer: recognize (self, type)
-     If TYPE is not recognized, return 'None'.  Otherwise, return a
-     string which is to be printed as the name of TYPE.  The TYPE
-     argument will be an instance of 'gdb.Type' (*note Types In
-     Python::).
-
-   GDB uses this two-pass approach so that type printers can efficiently
-cache information without holding on to it too long.  For example, it
-can be convenient to look up type information in a type printer and hold
-it for a recognizer's lifetime; if a single pass were done then type
-printers would have to make use of the event system in order to avoid
-holding information that could become stale as the inferior changed.
-
-
-File: gdb.info,  Node: Frame Filter API,  Next: Frame Decorator API,  Prev: Type Printing API,  Up: Python API
-
-23.2.2.9 Filtering Frames.
-..........................
-
-Frame filters are Python objects that manipulate the visibility of a
-frame or frames when a backtrace (*note Backtrace::) is printed by GDB.
-
-   Only commands that print a backtrace, or, in the case of GDB/MI
-commands (*note GDB/MI::), those that return a collection of frames are
-affected.  The commands that work with frame filters are:
-
-   'backtrace' (*note The backtrace command: backtrace-command.),
-'-stack-list-frames' (*note The -stack-list-frames command:
--stack-list-frames.), '-stack-list-variables' (*note The
--stack-list-variables command: -stack-list-variables.),
-'-stack-list-arguments' *note The -stack-list-arguments command:
--stack-list-arguments.) and '-stack-list-locals' (*note The
--stack-list-locals command: -stack-list-locals.).
-
-   A frame filter works by taking an iterator as an argument, applying
-actions to the contents of that iterator, and returning another iterator
-(or, possibly, the same iterator it was provided in the case where the
-filter does not perform any operations).  Typically, frame filters
-utilize tools such as the Python's 'itertools' module to work with and
-create new iterators from the source iterator.  Regardless of how a
-filter chooses to apply actions, it must not alter the underlying GDB
-frame or frames, or attempt to alter the call-stack within GDB.  This
-preserves data integrity within GDB.  Frame filters are executed on a
-priority basis and care should be taken that some frame filters may have
-been executed before, and that some frame filters will be executed
-after.
-
-   An important consideration when designing frame filters, and well
-worth reflecting upon, is that frame filters should avoid unwinding the
-call stack if possible.  Some stacks can run very deep, into the tens of
-thousands in some cases.  To search every frame when a frame filter
-executes may be too expensive at that step.  The frame filter cannot
-know how many frames it has to iterate over, and it may have to iterate
-through them all.  This ends up duplicating effort as GDB performs this
-iteration when it prints the frames.  If the filter can defer unwinding
-frames until frame decorators are executed, after the last filter has
-executed, it should.  *Note Frame Decorator API::, for more information
-on decorators.  Also, there are examples for both frame decorators and
-filters in later chapters.  *Note Writing a Frame Filter::, for more
-information.
-
-   The Python dictionary 'gdb.frame_filters' contains key/object
-pairings that comprise a frame filter.  Frame filters in this dictionary
-are called 'global' frame filters, and they are available when debugging
-all inferiors.  These frame filters must register with the dictionary
-directly.  In addition to the 'global' dictionary, there are other
-dictionaries that are loaded with different inferiors via auto-loading
-(*note Python Auto-loading::).  The two other areas where frame filter
-dictionaries can be found are: 'gdb.Progspace' which contains a
-'frame_filters' dictionary attribute, and each 'gdb.Objfile' object
-which also contains a 'frame_filters' dictionary attribute.
-
-   When a command is executed from GDB that is compatible with frame
-filters, GDB combines the 'global', 'gdb.Progspace' and all
-'gdb.Objfile' dictionaries currently loaded.  All of the 'gdb.Objfile'
-dictionaries are combined, as several frames, and thus several object
-files, might be in use.  GDB then prunes any frame filter whose
-'enabled' attribute is 'False'.  This pruned list is then sorted
-according to the 'priority' attribute in each filter.
-
-   Once the dictionaries are combined, pruned and sorted, GDB creates an
-iterator which wraps each frame in the call stack in a 'FrameDecorator'
-object, and calls each filter in order.  The output from the previous
-filter will always be the input to the next filter, and so on.
-
-   Frame filters have a mandatory interface which each frame filter must
-implement, defined here:
-
- -- Function: FrameFilter.filter (iterator)
-     GDB will call this method on a frame filter when it has reached the
-     order in the priority list for that filter.
-
-     For example, if there are four frame filters:
-
-          Name         Priority
-
-          Filter1      5
-          Filter2      10
-          Filter3      100
-          Filter4      1
-
-     The order that the frame filters will be called is:
-
-          Filter3 -> Filter2 -> Filter1 -> Filter4
-
-     Note that the output from 'Filter3' is passed to the input of
-     'Filter2', and so on.
-
-     This 'filter' method is passed a Python iterator.  This iterator
-     contains a sequence of frame decorators that wrap each 'gdb.Frame',
-     or a frame decorator that wraps another frame decorator.  The first
-     filter that is executed in the sequence of frame filters will
-     receive an iterator entirely comprised of default 'FrameDecorator'
-     objects.  However, after each frame filter is executed, the
-     previous frame filter may have wrapped some or all of the frame
-     decorators with their own frame decorator.  As frame decorators
-     must also conform to a mandatory interface, these decorators can be
-     assumed to act in a uniform manner (*note Frame Decorator API::).
-
-     This method must return an object conforming to the Python iterator
-     protocol.  Each item in the iterator must be an object conforming
-     to the frame decorator interface.  If a frame filter does not wish
-     to perform any operations on this iterator, it should return that
-     iterator untouched.
-
-     This method is not optional.  If it does not exist, GDB will raise
-     and print an error.
-
- -- Variable: FrameFilter.name
-     The 'name' attribute must be Python string which contains the name
-     of the filter displayed by GDB (*note Frame Filter Management::).
-     This attribute may contain any combination of letters or numbers.
-     Care should be taken to ensure that it is unique.  This attribute
-     is mandatory.
-
- -- Variable: FrameFilter.enabled
-     The 'enabled' attribute must be Python boolean.  This attribute
-     indicates to GDB whether the frame filter is enabled, and should be
-     considered when frame filters are executed.  If 'enabled' is
-     'True', then the frame filter will be executed when any of the
-     backtrace commands detailed earlier in this chapter are executed.
-     If 'enabled' is 'False', then the frame filter will not be
-     executed.  This attribute is mandatory.
-
- -- Variable: FrameFilter.priority
-     The 'priority' attribute must be Python integer.  This attribute
-     controls the order of execution in relation to other frame filters.
-     There are no imposed limits on the range of 'priority' other than
-     it must be a valid integer.  The higher the 'priority' attribute,
-     the sooner the frame filter will be executed in relation to other
-     frame filters.  Although 'priority' can be negative, it is
-     recommended practice to assume zero is the lowest priority that a
-     frame filter can be assigned.  Frame filters that have the same
-     priority are executed in unsorted order in that priority slot.
-     This attribute is mandatory.
 

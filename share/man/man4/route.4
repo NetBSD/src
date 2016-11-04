@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.27 2016/04/04 13:29:12 wiz Exp $
+.\"	$NetBSD: route.4,v 1.27.2.1 2016/11/04 14:48:56 pgoyette Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd March 30, 2016
+.Dd September 15, 2016
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -196,13 +196,16 @@ The messages are:
 #define	RTM_LOSING	0x5    /* Kernel Suspects Partitioning */
 #define	RTM_REDIRECT	0x6    /* Told to use different route */
 #define	RTM_MISS	0x7    /* Lookup failed on this address */
-#define	RTM_NEWADDR	0xc    /* address being added to iface */
-#define	RTM_DELADDR	0xd    /* address being removed from iface */
+#define	RTM_ONEWADDR	0xc    /* Old (pre-8.0) RTM_NEWADDR message */
+#define	RTM_ODELADDR	0xd    /* Old (pre-8.0) RTM_DELADDR message */
 #define	RTM_OOIFINFO	0xe    /* Old (pre-1.5) RTM_IFINFO message */
 #define	RTM_OIFINFO	0xf    /* Old (pre-6.0) RTM_IFINFO message */
 #define	RTM_IFANNOUNCE	0x10   /* iface arrival/departure */
 #define	RTM_IFINFO	0x14   /* iface/link going up/down etc. */
-#define	RTM_CHGADDR	0x15   /* address has changed on iface */
+#define	RTM_OCHGADDR	0x15   /* Old (pre-8.0) RTM_CHGADDR message */
+#define	RTM_NEWADDR	0x16   /* address being added to iface */
+#define	RTM_DELADDR	0x17   /* address being removed from iface */
+#define	RTM_CHGADDR	0x18   /* address properties changed */
 .Ed
 .Pp
 A message header consists of one of the following:
@@ -236,9 +239,11 @@ struct ifa_msghdr {
     u_short ifam_msglen;       /* to skip over non-understood messages */
     u_char  ifam_version;      /* future binary compatibility */
     u_char  ifam_type;         /* message type */
-    int     ifam_addrs;        /* like rtm_addrs */
-    int     ifam_flags;        /* value of ifa_flags */
     u_short ifam_index;        /* index for associated ifp */
+    int     ifam_flags;        /* value of ifa_flags */
+    int     ifam_addrs;        /* like rtm_addrs */
+    pid_t   ifam_pid;          /* identify sender */
+    int     ifam_addrflags;    /* family specific address flags */
     int     ifam_metric;       /* value of ifa_metric */
 };
 
@@ -366,4 +371,8 @@ were obsolete.
 and
 .Cm RTF_LLDATA
 appeared in
+.Nx 8.0 .
+.Pp
+.Vt ifa_msghdr
+gained the fields ifam_pid and ifam_addrflags in
 .Nx 8.0 .

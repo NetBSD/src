@@ -1,5 +1,5 @@
 /* Simulation code for the CR16 processor.
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
    Contributed by M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
 
    This file is part of GDB, the GNU debugger.
@@ -53,8 +53,9 @@ write_header (void)
 
   /* Loop over instruction table until a full match is found.  */
   for ( ; i < NUMOPCODES; i++)
-    printf("void OP_%lX_%X (void);\t\t/* %s */\n", cr16_instruction[i].match,
-	   (32 - cr16_instruction[i].match_bits), cr16_instruction[i].mnemonic);
+    printf("void OP_%lX_%X (SIM_DESC, SIM_CPU *);\t\t/* %s */\n",
+	   cr16_instruction[i].match, (32 - cr16_instruction[i].match_bits),
+	   cr16_instruction[i].mnemonic);
 }
 
 
@@ -66,15 +67,16 @@ write_template (void)
 {
   int i = 0,j, k, flags;
 
-  printf ("#include \"cr16_sim.h\"\n");
+  printf ("#include \"sim-main.h\"\n");
   printf ("#include \"simops.h\"\n\n");
 
   for ( ; i < NUMOPCODES; i++)
     {
       if (cr16_instruction[i].size != 0)
 {
-  printf("/* %s */\nvoid\nOP_%lX_%X ()\n{\n", cr16_instruction[i].mnemonic,
-	 cr16_instruction[i].match, (32 - cr16_instruction[i].match_bits));
+  printf ("/* %s */\nvoid\nOP_%lX_%X (SIM_DESC sd, SIM_CPU *cpu)\n{\n",
+	  cr16_instruction[i].mnemonic, cr16_instruction[i].match,
+	  (32 - cr16_instruction[i].match_bits));
   
   /* count operands.  */
   j = 0;
@@ -129,7 +131,7 @@ write_opcodes (void)
   int i = 0, j = 0, k;
   
   /* write out opcode table.  */
-  printf ("#include \"cr16_sim.h\"\n");
+  printf ("#include \"sim-main.h\"\n");
   printf ("#include \"simops.h\"\n\n");
   printf ("struct simops Simops[] = {\n");
   

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.6 2009/08/19 15:01:30 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.6.44.1 2016/11/04 14:49:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@ extern struct pic_ops *isa_pic;
 #define isa_intr_evcnt(ic, irq)						\
 	genppc_isa_intr_evcnt(ic, irq)
 #define isa_intr_establish(ic, irq, type, level, fun, arg)		\
+	genppc_isa_intr_establish(ic, irq, type, level, fun, arg)
+#define isa_intr_establish_xname(ic, irq, type, level, fun, arg, xname)	\
 	genppc_isa_intr_establish(ic, irq, type, level, fun, arg)
 #define isa_intr_disestablish(ic, arg)					\
 	genppc_isa_intr_disestablish(ic, arg)

@@ -4846,7 +4846,35 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_PWCACHE_GROUPDB $ac_have_decl
 _ACEOF
 
-ac_fn_c_check_decl "$LINENO" "strndup" "ac_cv_have_decl_strndup" "#include <string.h>
+ac_fn_c_check_decl "$LINENO" "strlcpy" "ac_cv_have_decl_strlcpy" "
+#include <string.h>
+
+"
+if test "x$ac_cv_have_decl_strlcpy" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRLCPY $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "strlcat" "ac_cv_have_decl_strlcat" "
+#include <string.h>
+
+"
+if test "x$ac_cv_have_decl_strlcat" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRLCAT $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "strndup" "ac_cv_have_decl_strndup" "
+#include <string.h>
+
 "
 if test "x$ac_cv_have_decl_strndup" = xyes; then :
   ac_have_decl=1
@@ -4857,7 +4885,9 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_STRNDUP $ac_have_decl
 _ACEOF
-ac_fn_c_check_decl "$LINENO" "strnlen" "ac_cv_have_decl_strnlen" "#include <string.h>
+ac_fn_c_check_decl "$LINENO" "strnlen" "ac_cv_have_decl_strnlen" "
+#include <string.h>
+
 "
 if test "x$ac_cv_have_decl_strnlen" = xyes; then :
   ac_have_decl=1
@@ -4879,6 +4909,17 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_STRSUFTOLL $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "mi_vector_hash" "ac_cv_have_decl_mi_vector_hash" "#include <stdlib.h>
+"
+if test "x$ac_cv_have_decl_mi_vector_hash" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_MI_VECTOR_HASH $ac_have_decl
 _ACEOF
 
 ac_fn_c_check_decl "$LINENO" "lchflags" "ac_cv_have_decl_lchflags" "
@@ -4925,6 +4966,21 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+ac_fn_c_check_decl "$LINENO" "err" "ac_cv_have_decl_err" "
+#ifdef HAVE_ERR_H
+#include <err.h>
+#endif
+
+"
+if test "x$ac_cv_have_decl_err" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_ERR $ac_have_decl
+_ACEOF
 ac_fn_c_check_decl "$LINENO" "errc" "ac_cv_have_decl_errc" "
 #ifdef HAVE_ERR_H
 #include <err.h>
@@ -4939,6 +4995,21 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_ERRC $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "errx" "ac_cv_have_decl_errx" "
+#ifdef HAVE_ERR_H
+#include <err.h>
+#endif
+
+"
+if test "x$ac_cv_have_decl_errx" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_ERRX $ac_have_decl
 _ACEOF
 ac_fn_c_check_decl "$LINENO" "verrc" "ac_cv_have_decl_verrc" "
 #ifdef HAVE_ERR_H
@@ -4955,6 +5026,36 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_VERRC $ac_have_decl
 _ACEOF
+ac_fn_c_check_decl "$LINENO" "verrx" "ac_cv_have_decl_verrx" "
+#ifdef HAVE_ERR_H
+#include <err.h>
+#endif
+
+"
+if test "x$ac_cv_have_decl_verrx" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_VERRX $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "warn" "ac_cv_have_decl_warn" "
+#ifdef HAVE_ERR_H
+#include <err.h>
+#endif
+
+"
+if test "x$ac_cv_have_decl_warn" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_WARN $ac_have_decl
+_ACEOF
 ac_fn_c_check_decl "$LINENO" "warnc" "ac_cv_have_decl_warnc" "
 #ifdef HAVE_ERR_H
 #include <err.h>
@@ -4970,6 +5071,21 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_WARNC $ac_have_decl
 _ACEOF
+ac_fn_c_check_decl "$LINENO" "warnx" "ac_cv_have_decl_warnx" "
+#ifdef HAVE_ERR_H
+#include <err.h>
+#endif
+
+"
+if test "x$ac_cv_have_decl_warnx" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_WARNX $ac_have_decl
+_ACEOF
 ac_fn_c_check_decl "$LINENO" "vwarnc" "ac_cv_have_decl_vwarnc" "
 #ifdef HAVE_ERR_H
 #include <err.h>
@@ -4984,6 +5100,21 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_VWARNC $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "vwarnx" "ac_cv_have_decl_vwarnx" "
+#ifdef HAVE_ERR_H
+#include <err.h>
+#endif
+
+"
+if test "x$ac_cv_have_decl_vwarnx" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_VWARNX $ac_have_decl
 _ACEOF
 
 

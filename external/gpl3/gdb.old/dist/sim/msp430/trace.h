@@ -23,6 +23,6 @@
 
 extern void  msp430_trace_init (bfd *);
 extern void  msp430_trace_one (int pc);
-extern int   msp430_get_current_source_location (const char **, const char **, unsigned int *);
+extern int   msp430_get_current_source_location (int, const char **, const char **, unsigned int *);
 
 #endif

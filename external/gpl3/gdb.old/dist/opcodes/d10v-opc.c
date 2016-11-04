@@ -90,7 +90,7 @@ const struct pd_reg d10v_predefined_registers[] =
 };
 
 int 
-d10v_reg_name_cnt()
+d10v_reg_name_cnt (void)
 {
   return (sizeof(d10v_predefined_registers) / sizeof(struct pd_reg));
 }

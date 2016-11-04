@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.113 2016/05/11 05:12:57 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.113.2.1 2016/11/04 14:49:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -637,6 +637,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MSI_PENDING		0x14	/* Vector Pending register */
 
 #define	PCI_MSI_CTL_MASK	__BITS(31, 16)
+#define	PCI_MSI_CTL_EXTMDATA_EN	__SHIFTIN(__BIT(10), PCI_MSI_CTL_MASK)
+#define	PCI_MSI_CTL_EXTMDATA_CAP __SHIFTIN(__BIT(9), PCI_MSI_CTL_MASK)
 #define	PCI_MSI_CTL_PERVEC_MASK	__SHIFTIN(__BIT(8), PCI_MSI_CTL_MASK)
 #define	PCI_MSI_CTL_64BIT_ADDR	__SHIFTIN(__BIT(7), PCI_MSI_CTL_MASK)
 #define	PCI_MSI_CTL_MME_MASK	__SHIFTIN(__BITS(6, 4), PCI_MSI_CTL_MASK)
@@ -920,6 +922,7 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_DCSR_URD		__BIT(3 + 16)  /* Unsupported Req. Detected */
 #define PCIE_DCSR_AUX_PWR	__BIT(4 + 16)  /* Aux Power Detected */
 #define PCIE_DCSR_TRANSACTION_PND __BIT(5 + 16) /* Transaction Pending */
+#define PCIE_DCSR_EMGPWRREDD	__BIT(6 + 16)  /* Emg. Pwr. Reduct. Detected */
 #define PCIE_LCAP	0x0c	/* Link Capabilities Register */
 #define PCIE_LCAP_MAX_SPEED	__BITS(3, 0)   /* Max Link Speed */
 #define PCIE_LCAP_MAX_WIDTH	__BITS(9, 4)   /* Maximum Link Width */
@@ -1015,6 +1018,8 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_DCAP2_EXTFMT_FLD	__BIT(20)      /* Extended Fmt Field Support */
 #define PCIE_DCAP2_EETLP_PREF	__BIT(21)      /* End-End TLP Prefix Support */
 #define PCIE_DCAP2_MAX_EETLP	__BITS(23, 22) /* Max End-End TLP Prefix Sup */
+#define PCIE_DCAP2_EMGPWRRED	__BITS(25, 24) /* Emergency Power Reduc. Sup */
+#define PCIE_DCAP2_EMGPWRRED_INI __BIT(26)     /* Emrg. Pwr. Reduc. Ini. Req */
 #define PCIE_DCAP2_FRS		__BIT(31)      /* FRS Supported */
 #define PCIE_DCSR2	0x28	/* Device Control & Status 2 Register */
 #define PCIE_DCSR2_COMPT_VAL	__BITS(3, 0)   /* Completion Timeout Value */
@@ -1025,7 +1030,8 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_DCSR2_IDO_REQ	__BIT(8)       /* IDO Request Enable */
 #define PCIE_DCSR2_IDO_COMP	__BIT(9)       /* IDO Completion Enable */
 #define PCIE_DCSR2_LTR_MEC	__BIT(10)      /* LTR Mechanism Enable */
-#define PCIE_DCSR2_OBFF_EN	__BITS(14, 13) /* OBPF Enable */
+#define PCIE_DCSR2_EMGPWRRED_REQ __BIT(11)     /* Emergency Power Reduc. Req */
+#define PCIE_DCSR2_OBFF_EN	__BITS(14, 13) /* OBFF Enable */
 #define PCIE_DCSR2_EETLP	__BIT(15)      /* End-End TLP Prefix Blcking */
 #define PCIE_LCAP2	0x2c	/* Link Capabilities 2 Register */
 #define PCIE_LCAP2_SUP_LNKSV	__BITS(7, 1)   /* Supported Link Speeds Vect */
@@ -1390,7 +1396,7 @@ struct pci_rom {
 #define	PCI_EXTCAP_MCAST	0x0012	/* Multicast */
 #define	PCI_EXTCAP_PAGE_REQ	0x0013	/* Page Request */
 #define	PCI_EXTCAP_AMD		0x0014	/* Reserved for AMD */
-#define	PCI_EXTCAP_RESIZ_BAR	0x0015	/* Resizable BAR */
+#define	PCI_EXTCAP_RESIZBAR	0x0015	/* Resizable BAR */
 #define	PCI_EXTCAP_DPA		0x0016	/* Dynamic Power Allocation */
 #define	PCI_EXTCAP_TPH_REQ	0x0017	/* TPH Requester */
 #define	PCI_EXTCAP_LTR		0x0018	/* Latency Tolerance Reporting */
@@ -1405,6 +1411,7 @@ struct pci_rom {
 #define	PCI_EXTCAP_FRSQ		0x0021	/* Function Reading Status Queueing */
 #define	PCI_EXTCAP_RTR		0x0022	/* Readiness Time Reporting */
 #define	PCI_EXTCAP_DESIGVNDSP	0x0023	/* Designated Vendor-Specific */
+#define	PCI_EXTCAP_VF_RESIZBAR	0x0024	/* VF Resizable BAR */
 
 /*
  * Extended capability ID: 0x0001
@@ -1779,6 +1786,14 @@ struct pci_rom {
  * Extended capability ID: 0x0015
  * Resizable BAR
  */
+#define	PCI_RESIZBAR_CAP0	0x04	/* Capability Register(0) */
+#define	PCI_RESIZBAR_CAP(x)	(PCI_RESIZBAR_CAP0 + ((x) * 8))
+#define	PCI_RESIZBAR_CAP_SIZEMASK __BITS(23, 4)	/* BAR size bitmask */
+#define	PCI_RESIZBAR_CTL0	0x08	/* Control Register(0) */
+#define	PCI_RESIZBAR_CTL(x)	(PCI_RESIZBAR_CTL0 + ((x) * 8))
+#define	PCI_RESIZBAR_CTL_BARIDX __BITS(2, 0)
+#define	PCI_RESIZBAR_CTL_NUMBAR	__BITS(7, 5)
+#define	PCI_RESIZBAR_CTL_BARSIZ	__BITS(12, 8)
 
 /*
  * Extended capability ID: 0x0016
@@ -1922,6 +1937,11 @@ struct pci_rom {
 /*
  * Extended capability ID: 0x0023
  * Designated Vendor-Specific
+ */
+
+/*
+ * Extended capability ID: 0x0024
+ * VF Resizable BAR
  */
 
 #endif /* _DEV_PCI_PCIREG_H_ */

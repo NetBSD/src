@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_memman.h,v 1.2 2009/01/18 09:46:59 lukem Exp $	*/
+/*	$NetBSD: aml_memman.h,v 1.2.30.1 2016/11/04 14:49:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -48,7 +48,7 @@ struct	memman_block {
 	unsigned int	available;	/* number of available chunks */
 	unsigned int	allocated_mem;	/* block + misc (in bytes) */
 
-}__attribute__((packed));
+};
 
 LIST_HEAD(memman_block_list, memman_block);
 
@@ -57,7 +57,7 @@ struct	memman_node {
 	LIST_ENTRY(memman_node)	links;
 	void	*node;
 	struct	memman_block *memblock;
-}__attribute__((packed));
+};
 
 LIST_HEAD(memman_node_list, memman_node);
 
@@ -88,7 +88,7 @@ struct	memman_flexmem_info {
 	LIST_ENTRY(memman_flexmem_info) links;
 	void	*addr;
 	size_t	mem_size;
-}__attribute__((packed));
+};
 
 LIST_HEAD(memman_flexmem_info_list, memman_flexmem_info);
 

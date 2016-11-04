@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.17 2015/08/21 09:18:17 christos Exp $
+# 	$NetBSD: RAMDISK,v 1.17.2.1 2016/11/04 14:49:01 pgoyette Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -11,7 +11,7 @@ makeoptions	COPTS="-Os -mmemcpy"	# optimize for space
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=6144	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=6144	# size of memory disk, in blocks (12)
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	PIPE_SOCKETPAIR

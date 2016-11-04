@@ -49,11 +49,14 @@ extern void reggroup_add (struct gdbarch *gdbarch, struct reggroup *group);
 extern const char *reggroup_name (struct reggroup *reggroup);
 extern enum reggroup_type reggroup_type (struct reggroup *reggroup);
 
-/* Interator for the architecture's register groups.  Pass in NULL,
-   returns the first group.  Pass in a group, returns the next group,
-   or NULL when the last group is reached.  */
+/* Iterators for the architecture's register groups.  Pass in NULL, returns
+   the first (for next), or last (for prev) group.  Pass in a group,
+   returns the next or previous group, or NULL when either the end or the
+   beginning of the group list is reached.  */
 extern struct reggroup *reggroup_next (struct gdbarch *gdbarch,
 				       struct reggroup *last);
+extern struct reggroup *reggroup_prev (struct gdbarch *gdbarch,
+				       struct reggroup *curr);
 
 /* Is REGNUM a member of REGGROUP?  */
 extern int default_register_reggroup_p (struct gdbarch *gdbarch, int regnum,

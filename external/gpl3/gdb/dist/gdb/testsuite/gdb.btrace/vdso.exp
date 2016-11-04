@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2014-2015 Free Software Foundation, Inc.
+# Copyright 2014-2016 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -37,11 +37,14 @@ set live_gettimeofday [capture_command_output "disassemble gettimeofday" ""]
 
 # trace the test code
 gdb_test_no_output "record btrace"
-gdb_test "next" "main\.2.*"
+gdb_test "stepi" ".*"
 
 with_test_prefix "replay" {
+	# start replaying
+	gdb_test "record goto begin" ".*"
+	gdb_test "info record" "Replay in progress\.\[^\\\r\\\n\]*"
+
 	# capture the disassembly of gettimeofday while replaying
-	gdb_test "record goto begin" "main\.1.*"
 	set replay_gettimeofday [capture_command_output "disassemble gettimeofday" ""]
 
 	# the two disassemblies must be identical

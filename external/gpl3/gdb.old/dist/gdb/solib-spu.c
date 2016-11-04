@@ -110,8 +110,7 @@ append_ocl_sos (struct so_list **link_ptr)
         {
 	  enum bfd_endian byte_order = bfd_big_endian (objfile->obfd)?
 					 BFD_ENDIAN_BIG : BFD_ENDIAN_LITTLE;
-	  volatile struct gdb_exception ex;
-	  TRY_CATCH (ex, RETURN_MASK_ALL)
+	  TRY
 	    {
 	      CORE_ADDR data =
 		read_memory_unsigned_integer (*ocl_program_addr_base,
@@ -119,22 +118,22 @@ append_ocl_sos (struct so_list **link_ptr)
 					      byte_order);
 	      if (data != 0x0)
 		{
-		  struct so_list *new;
+		  struct so_list *newobj;
 
 		  /* Allocate so_list structure.  */
-		  new = XCNEW (struct so_list);
+		  newobj = XCNEW (struct so_list);
 
 		  /* Encode FD and object ID in path name.  */
-		  xsnprintf (new->so_name, sizeof new->so_name, "@%s <%d>",
+		  xsnprintf (newobj->so_name, sizeof newobj->so_name, "@%s <%d>",
 			     hex_string (data),
 			     SPUADDR_SPU (*ocl_program_addr_base));
-		  strcpy (new->so_original_name, new->so_name);
+		  strcpy (newobj->so_original_name, newobj->so_name);
 
-		  *link_ptr = new;
-		  link_ptr = &new->next;
+		  *link_ptr = newobj;
+		  link_ptr = &newobj->next;
 		}
 	    }
-	  if (ex.reason < 0)
+	  CATCH (ex, RETURN_MASK_ALL)
 	    {
 	      /* Ignore memory errors.  */
 	      switch (ex.error)
@@ -146,6 +145,7 @@ append_ocl_sos (struct so_list **link_ptr)
 		  break;
 		}
 	    }
+	  END_CATCH
 	}
     }
 }
@@ -195,7 +195,7 @@ spu_current_sos (void)
   for (i = 0; i < size; i += 4)
     {
       int fd = extract_unsigned_integer (buf + i, 4, byte_order);
-      struct so_list *new;
+      struct so_list *newobj;
 
       unsigned long long addr;
       char annex[32], id[100];
@@ -214,16 +214,16 @@ spu_current_sos (void)
 	continue;
 
       /* Allocate so_list structure.  */
-      new = XCNEW (struct so_list);
+      newobj = XCNEW (struct so_list);
 
       /* Encode FD and object ID in path name.  Choose the name so as not
 	 to conflict with any (normal) SVR4 library path name.  */
-      xsnprintf (new->so_name, sizeof new->so_name, "@%s <%d>",
+      xsnprintf (newobj->so_name, sizeof newobj->so_name, "@%s <%d>",
 		 hex_string (addr), fd);
-      strcpy (new->so_original_name, new->so_name);
+      strcpy (newobj->so_original_name, newobj->so_name);
 
-      *link_ptr = new;
-      link_ptr = &new->next;
+      *link_ptr = newobj;
+      link_ptr = &newobj->next;
     }
 
   /* Append OpenCL sos.  */
@@ -313,6 +313,7 @@ spu_bfd_iovec_stat (bfd *abfd, void *stream, struct stat *sb)
      table to find the extent of the last section but that seems
      pointless when the size is needed only for checks of other
      parsed values in dbxread.c.  */
+  memset (sb, 0, sizeof (struct stat));
   sb->st_size = INT_MAX;
   return 0;
 }

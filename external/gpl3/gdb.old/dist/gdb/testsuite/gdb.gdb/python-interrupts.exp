@@ -25,7 +25,7 @@ proc test_python_interrupts {} {
     }
 
     gdb_breakpoint set_active_ext_lang temporary
-    gdb_test "call catch_command_errors(execute_command, \"python print(5)\", 0, RETURN_MASK_ALL)" \
+    gdb_test "call catch_command_errors(execute_command, \"python print(5)\", 0)" \
 	"Temporary breakpoint.*silently stop."
     gdb_test "signal SIGINT" \
 	"KeyboardInterrupt.*Error while executing Python code."

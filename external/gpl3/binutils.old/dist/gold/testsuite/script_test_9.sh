@@ -3,7 +3,7 @@
 # script_test_9.sh -- Check that the script_test_9.t script has placed
 # .init and .text in the same segment.
 
-# Copyright 2010 Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 # Written by Rafael Avila de Espindola <espindola@google.com>.
 
 # This file is part of gold.

@@ -1,6 +1,6 @@
 /* YACC parser for Go expressions, for GDB.
 
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -67,59 +67,10 @@
 
 #define parse_type(ps) builtin_type (parse_gdbarch (ps))
 
-/* Remap normal yacc parser interface names (yyparse, yylex, yyerror, etc),
-   as well as gratuitiously global symbol names, so we can have multiple
-   yacc generated parsers in gdb.  Note that these are only the variables
-   produced by yacc.  If other parser generators (bison, byacc, etc) produce
-   additional global names that conflict at link time, then those parser
-   generators need to be fixed instead of adding those names to this list.  */
-
-#define	yymaxdepth go_maxdepth
-#define	yyparse	go_parse_internal
-#define	yylex	go_lex
-#define	yyerror	go_error
-#define	yylval	go_lval
-#define	yychar	go_char
-#define	yydebug	go_debug
-#define	yypact	go_pact
-#define	yyr1	go_r1
-#define	yyr2	go_r2
-#define	yydef	go_def
-#define	yychk	go_chk
-#define	yypgo	go_pgo
-#define	yyact	go_act
-#define	yyexca	go_exca
-#define yyerrflag go_errflag
-#define yynerrs	go_nerrs
-#define	yyps	go_ps
-#define	yypv	go_pv
-#define	yys	go_s
-#define	yy_yys	go_yys
-#define	yystate	go_state
-#define	yytmp	go_tmp
-#define	yyv	go_v
-#define	yy_yyv	go_yyv
-#define	yyval	go_val
-#define	yylloc	go_lloc
-#define yyreds	go_reds		/* With YYDEBUG defined */
-#define yytoks	go_toks		/* With YYDEBUG defined */
-#define yyname	go_name		/* With YYDEBUG defined */
-#define yyrule	go_rule		/* With YYDEBUG defined */
-#define yylhs	go_yylhs
-#define yylen	go_yylen
-#define yydefred go_yydefred
-#define yydgoto	go_yydgoto
-#define yysindex go_yysindex
-#define yyrindex go_yyrindex
-#define yygindex go_yygindex
-#define yytable	 go_yytable
-#define yycheck	 go_yycheck
-
-#ifndef YYDEBUG
-#define	YYDEBUG 1		/* Default to yydebug support */
-#endif
-
-#define YYFPRINTF parser_fprintf
+/* Remap normal yacc parser interface names (yyparse, yylex, yyerror,
+   etc).  */
+#define GDB_YY_REMAP_PREFIX go_
+#include "yy-remap.h"
 
 /* The state of the parser, used internally when we are parsing the
    expression.  */
@@ -508,7 +459,7 @@ exp	:	SIZEOF_KEYWORD '(' type ')'  %prec UNARY
 			  write_exp_elt_type
 			    (pstate,
 			     parse_type (pstate)->builtin_unsigned_int);
-			  CHECK_TYPEDEF ($3);
+			  $3 = check_typedef ($3);
 			  write_exp_elt_longcst (pstate,
 						 (LONGEST) TYPE_LENGTH ($3));
 			  write_exp_elt_opcode (pstate, OP_LONG);
@@ -535,7 +486,7 @@ string_exp:
 
 			  vec->type = $1.type;
 			  vec->length = $1.length;
-			  vec->ptr = malloc ($1.length + 1);
+			  vec->ptr = (char *) malloc ($1.length + 1);
 			  memcpy (vec->ptr, $1.ptr, $1.length + 1);
 			}
 
@@ -545,10 +496,10 @@ string_exp:
 			     for convenience.  */
 			  char *p;
 			  ++$$.len;
-			  $$.tokens = realloc ($$.tokens,
-					       $$.len * sizeof (struct typed_stoken));
+			  $$.tokens = XRESIZEVEC (struct typed_stoken,
+						  $$.tokens, $$.len);
 
-			  p = malloc ($3.length + 1);
+			  p = (char *) malloc ($3.length + 1);
 			  memcpy (p, $3.ptr, $3.length + 1);
 
 			  $$.tokens[$$.len - 1].type = $3.type;
@@ -582,7 +533,7 @@ exp	:	FALSE_KEYWORD
 	;
 
 variable:	name_not_typename ENTRY
-			{ struct symbol *sym = $1.sym;
+			{ struct symbol *sym = $1.sym.symbol;
 
 			  if (sym == NULL
 			      || !SYMBOL_IS_ARGUMENT (sym)
@@ -598,24 +549,21 @@ variable:	name_not_typename ENTRY
 	;
 
 variable:	name_not_typename
-			{ struct symbol *sym = $1.sym;
+			{ struct block_symbol sym = $1.sym;
 
-			  if (sym)
+			  if (sym.symbol)
 			    {
-			      if (symbol_read_needs_frame (sym))
+			      if (symbol_read_needs_frame (sym.symbol))
 				{
 				  if (innermost_block == 0
-				      || contained_in (block_found,
+				      || contained_in (sym.block,
 						       innermost_block))
-				    innermost_block = block_found;
+				    innermost_block = sym.block;
 				}
 
 			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
-			      /* We want to use the selected frame, not
-				 another more inner frame which happens to
-				 be in the same block.  */
-			      write_exp_elt_block (pstate, NULL);
-			      write_exp_elt_sym (pstate, sym);
+			      write_exp_elt_block (pstate, sym.block);
+			      write_exp_elt_sym (pstate, sym.symbol);
 			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			    }
 			  else if ($1.is_a_field_of_this)
@@ -978,7 +926,7 @@ parse_string_or_char (const char *tokptr, const char **outptr,
   ++tokptr;
 
   value->type = C_STRING | (quote == '\'' ? C_CHAR : 0); /*FIXME*/
-  value->ptr = obstack_base (&tempbuf);
+  value->ptr = (char *) obstack_base (&tempbuf);
   value->length = obstack_object_size (&tempbuf);
 
   *outptr = tokptr;
@@ -1366,7 +1314,7 @@ build_packaged_name (const char *package, int package_len,
   obstack_grow_str (&name_obstack, ".");
   obstack_grow (&name_obstack, name, name_len);
   obstack_grow (&name_obstack, "", 1);
-  result.ptr = obstack_base (&name_obstack);
+  result.ptr = (char *) obstack_base (&name_obstack);
   result.length = obstack_object_size (&name_obstack) - 1;
 
   return result;
@@ -1382,7 +1330,7 @@ package_name_p (const char *name, const struct block *block)
   struct symbol *sym;
   struct field_of_this_result is_a_field_of_this;
 
-  sym = lookup_symbol (name, block, STRUCT_DOMAIN, &is_a_field_of_this);
+  sym = lookup_symbol (name, block, STRUCT_DOMAIN, &is_a_field_of_this).symbol;
 
   if (sym
       && SYMBOL_CLASS (sym) == LOC_TYPEDEF
@@ -1420,14 +1368,14 @@ static int
 classify_packaged_name (const struct block *block)
 {
   char *copy;
-  struct symbol *sym;
+  struct block_symbol sym;
   struct field_of_this_result is_a_field_of_this;
 
   copy = copy_name (yylval.sval);
 
   sym = lookup_symbol (copy, block, VAR_DOMAIN, &is_a_field_of_this);
 
-  if (sym)
+  if (sym.symbol)
     {
       yylval.ssym.sym = sym;
       yylval.ssym.is_a_field_of_this = is_a_field_of_this.type != NULL;
@@ -1448,7 +1396,7 @@ static int
 classify_name (struct parser_state *par_state, const struct block *block)
 {
   struct type *type;
-  struct symbol *sym;
+  struct block_symbol sym;
   char *copy;
   struct field_of_this_result is_a_field_of_this;
 
@@ -1471,7 +1419,7 @@ classify_name (struct parser_state *par_state, const struct block *block)
 
   sym = lookup_symbol (copy, block, VAR_DOMAIN, &is_a_field_of_this);
 
-  if (sym)
+  if (sym.symbol)
     {
       yylval.ssym.sym = sym;
       yylval.ssym.is_a_field_of_this = is_a_field_of_this.type != NULL;
@@ -1496,7 +1444,7 @@ classify_name (struct parser_state *par_state, const struct block *block)
 	xfree (current_package_name);
 	sym = lookup_symbol (sval.ptr, block, VAR_DOMAIN,
 			     &is_a_field_of_this);
-	if (sym)
+	if (sym.symbol)
 	  {
 	    yylval.ssym.stoken = sval;
 	    yylval.ssym.sym = sym;
@@ -1517,13 +1465,15 @@ classify_name (struct parser_state *par_state, const struct block *block)
 				  0, &newlval);
       if (hextype == INT)
 	{
-	  yylval.ssym.sym = NULL;
+	  yylval.ssym.sym.symbol = NULL;
+	  yylval.ssym.sym.block = NULL;
 	  yylval.ssym.is_a_field_of_this = 0;
 	  return NAME_OR_INT;
 	}
     }
 
-  yylval.ssym.sym = NULL;
+  yylval.ssym.sym.symbol = NULL;
+  yylval.ssym.sym.block = NULL;
   yylval.ssym.is_a_field_of_this = 0;
   return NAME;
 }

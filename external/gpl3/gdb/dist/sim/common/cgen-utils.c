@@ -1,5 +1,5 @@
 /* Support code for various pieces of CGEN simulators.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -27,9 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define SEMOPS_DEFINE_INLINE
 #include "cgen-ops.h"
-
-#undef min
-#define min(a,b) ((a) < (b) ? (a) : (b))
 
 const char *mode_names[] = {
   "VOID",

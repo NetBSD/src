@@ -54,16 +54,20 @@ extern void dummy_frame_discard (struct frame_id dummy_id, ptid_t ptid);
 
 extern const struct frame_unwind dummy_frame_unwind;
 
+/* Destructor for dummy_frame.  DATA is supplied by registrant.
+   REGISTERS_VALID is 1 for dummy_frame_pop, 0 for dummy_frame_discard.  */
+typedef void (dummy_frame_dtor_ftype) (void *data, int registers_valid);
+
 /* Call DTOR with DTOR_DATA when DUMMY_ID frame of thread PTID gets discarded.
-   Dummy frame with DUMMY_ID must exist.  There must be no other call of
-   register_dummy_frame_dtor for that dummy frame.  */
-typedef void (dummy_frame_dtor_ftype) (void *data);
+   Dummy frame with DUMMY_ID must exist.  Multiple destructors may be
+   registered, they will be called in the reverse order of registrations
+   (LIFO).  */
 extern void register_dummy_frame_dtor (struct frame_id dummy_id, ptid_t ptid,
 				       dummy_frame_dtor_ftype *dtor,
 				       void *dtor_data);
 
-/* Return 1 if there exists dummy frame with registered DTOR and DTOR_DATA.
-   Return 0 otherwise.  */
+/* Return 1 if there exists any dummy frame with any of its registered
+   destructors equal to both DTOR and DTOR_DATA.  Return 0 otherwise.  */
 extern int find_dummy_frame_dtor (dummy_frame_dtor_ftype *dtor,
 				  void *dtor_data);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.435 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.435.2.1 2016/11/04 14:49:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.435 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.435.2.1 2016/11/04 14:49:17 pgoyette Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -652,6 +652,19 @@ out:
 	return 0;
 }
 
+vaddr_t
+exec_vm_minaddr(vaddr_t va_min)
+{
+	/*
+	 * Increase va_min if we don't want NULL to be mappable by the
+	 * process.
+	 */
+#define VM_MIN_GUARD	PAGE_SIZE
+	if (user_va0_disable && (va_min < VM_MIN_GUARD))
+		return VM_MIN_GUARD;
+	return va_min;
+}
+
 static int
 execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	char * const *envs, execve_fetch_element_t fetch_element,
@@ -1199,7 +1212,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	if (__predict_false(ktrace_on))
 		fd_ktrexecfd();
 
-	execsigs(p);		/* reset catched signals */
+	execsigs(p);		/* reset caught signals */
 
 	mutex_enter(p->p_lock);
 	l->l_ctxlink = NULL;	/* reset ucontext link */

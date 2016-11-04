@@ -93,4 +93,6 @@ Disassembly of section .text:
 0[0-9a-f]+ <[^>]+> f3954556 	vsli\.16	q2, q3, #5
 0[0-9a-f]+ <[^>]+> f3bff6b7 	vqshlu\.s64	d15, d23, #63.*
 0[0-9a-f]+ <[^>]+> f2b25386 	vext\.8	d5, d18, d6, #3
+0[0-9a-f]+ <[^>]+> ee000b10 	vmov(\.32)?	d0\[0\], r0
+0[0-9a-f]+ <[^>]+> ee100b10 	vmov(\.32)?	r0, d0\[0\]
 0[0-9a-f]+ <[^>]+> f3020d54 	vmul\.f32	q0, q1, q2

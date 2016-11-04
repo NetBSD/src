@@ -1,4 +1,4 @@
-#   Copyright 1988-2015 Free Software Foundation, Inc.
+#   Copyright 1988-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -117,11 +117,6 @@ gdb_test "delete display" \
 #test detach
 gdb_test "detach" ".*" "detach"
 
-if [istarget "h8300-*-hms"] then {
-    gdb_exit
-    gdb_start
-}
-
 #test directory
 # FIXME -- need to dump full output to detailed log
 
@@ -209,7 +204,7 @@ gdb_test "f" "No stack." "frame \"f\" abbreviation"
 gdb_test "frame" "No stack." "frame"
 #test fg
 gdb_test "fg" "The program is not being run." "fg"
-# FIXME: fg kills the udi connection
+
 #test file
 send_gdb "file\n"
 gdb_expect {
@@ -516,7 +511,7 @@ gdb_test "set history size" "Argument required .integer to set it to.*" "set his
 #test set history
 gdb_test "set history" "\"set history\" must be followed by the name of a history subcommand.(\[^\r\n\]*\[\r\n\])+List of set history subcommands:(\[^\r\n\]*\[\r\n\])+set history expansion -- Set history expansion on command input(\[^\r\n\]*\[\r\n\])+set history filename -- Set the filename in which to record the command history(\[^\r\n\]*\[\r\n\])+set history save -- Set saving of the history record on exit(\[^\r\n\]*\[\r\n\])+set history size -- Set the size of the command history(\[^\r\n\]*\[\r\n\])+Type \"help set history\" followed by set history subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "set history"
 #test set language
-gdb_test "set language" "Requires an argument. Valid arguments are auto, local, unknown, ada, c, c.., asm, minimal, d, fortran, objective-c, go, java, modula-2, opencl, pascal." "set language"
+gdb_test "set language" "Requires an argument. Valid arguments are auto, local, unknown, ada, c, c.., asm, minimal, d, fortran, objective-c, go, java, modula-2, opencl, pascal, rust." "set language"
 #test set listsize
 gdb_test "set listsize" "Argument required .integer to set it to.*" "set listsize"
 #test set print "p" abbreviation
@@ -592,6 +587,8 @@ set show_conv_list \
 	{$_sdata = void} \
 	{$_siginfo = void} \
 	{$_thread = 0} \
+	{$_gthread = 0} \
+	{$_inferior = 1} \
 	{$_exception = <error: No frame selected>} \
 	{$_probe_argc = <error: No frame selected>} \
 	{$_probe_arg0 = <error: No frame selected>} \
@@ -615,6 +612,7 @@ if ![skip_python_tests] {
 	    {$_regex = <internal function _regex>} \
 	    {$_streq = <internal function _streq>} \
 	    {$_strlen = <internal function _strlen>} \
+	    {$_as_string = <internal function _as_string>} \
 	    {$_caller_is = <internal function _caller_is>} \
 	    {$_caller_matches = <internal function _caller_matches>} \
 	    {$_any_caller_is = <internal function _any_caller_is>} \
@@ -773,22 +771,20 @@ gdb_expect {
 	}
 
 #test target remote
-if ![istarget "*-*-udi*"] then {
-    send_gdb "target remote\n"
-    gdb_expect {
-	-re "To open a remote debug connection, you need to specify what.*serial.*device is attached to the remote system.*.e.g. .*$gdb_prompt $"\
-			{ pass "target remote" }
-	-re ".*A program is being debugged already.  Kill it. .y or n.*$" {
-	    send_gdb "n\n"
-	    if $verbose>1 then {
-		send_user "\t\tDidn't kill program being debugged\n"
-	    }
-	    gdb_expect -re "$gdb_prompt $" { }
-	    pass "target remote"
+send_gdb "target remote\n"
+gdb_expect {
+    -re "To open a remote debug connection, you need to specify what.*serial.*device is attached to the remote system.*.e.g. .*$gdb_prompt $"\
+	{ pass "target remote" }
+    -re ".*A program is being debugged already.  Kill it. .y or n.*$" {
+	send_gdb "n\n"
+	if $verbose>1 then {
+	    send_user "\t\tDidn't kill program being debugged\n"
 	}
-	-re ".*$gdb_prompt $"	{ fail "target remote" }
-	timeout		{ fail "(timeout) target remote" }
+	gdb_expect -re "$gdb_prompt $" { }
+	pass "target remote"
     }
+    -re ".*$gdb_prompt $"	{ fail "target remote" }
+    timeout		{ fail "(timeout) target remote" }
 }
 
 #test target
@@ -803,8 +799,6 @@ gdb_test "thread apply" "Please specify a thread ID list" "thread apply"
 gdb_test "thread find" "Command requires an argument." "thread find"
 #test thread name
 gdb_test "thread name" "No thread selected" "thread name"
-#test tty
-gdb_test "tty" "Argument required .filename to set it to\..*" "tty"
 #test until "u" abbreviation
 gdb_test "u" "The program is not being run." "until \"u\" abbreviation"
 #test until

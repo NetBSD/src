@@ -1,5 +1,5 @@
 /* tc-moxie.c -- Assemble code for moxie
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -540,6 +540,7 @@ md_assemble (char *str)
     }
 
   md_number_to_chars (p, iword, 2);
+  dwarf2_emit_insn (2);
 
   while (ISSPACE (*op_end))
     op_end++;
@@ -556,7 +557,7 @@ md_assemble (char *str)
    of LITTLENUMS emitted is stored in *SIZEP .  An error message is
    returned, or NULL on OK.  */
 
-char *
+const char *
 md_atof (int type, char *litP, int *sizeP)
 {
   int prec;
@@ -612,7 +613,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 const char *md_shortopts = "";
 
 int
-md_parse_option (int c ATTRIBUTE_UNUSED, char *arg ATTRIBUTE_UNUSED)
+md_parse_option (int c ATTRIBUTE_UNUSED, const char *arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
@@ -771,9 +772,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixP)
       return 0;
     }
 
-  relP = xmalloc (sizeof (arelent));
-  gas_assert (relP != 0);
-  relP->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  relP = XNEW (arelent);
+  relP->sym_ptr_ptr = XNEW (asymbol *);
   *relP->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   relP->address = fixP->fx_frag->fr_address + fixP->fx_where;
 

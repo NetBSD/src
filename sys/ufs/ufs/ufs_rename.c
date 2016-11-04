@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.12 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.12.2.1 2016/11/04 14:49:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.12 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.12.2.1 2016/11/04 14:49:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -469,9 +469,7 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 				    "hard-linked directory");
 			VTOI(tvp)->i_nlink = 0;
 			DIP_ASSIGN(VTOI(tvp), nlink, 0);
-			error = UFS_TRUNCATE(tvp, (off_t)0, IO_SYNC, cred);
-			if (error)
-				goto whymustithurtsomuch;
+			(void) UFS_TRUNCATE(tvp, (off_t)0, IO_SYNC, cred);
 		}
 	}
 

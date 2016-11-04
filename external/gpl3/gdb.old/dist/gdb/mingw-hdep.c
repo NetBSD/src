@@ -35,50 +35,6 @@ static HANDLE sigint_event;
    function.  */
 struct async_signal_handler *sigint_handler;
 
-/* The strerror() function can return NULL for errno values that are
-   out of range.  Provide a "safe" version that always returns a
-   printable string.
-
-   The Windows runtime implementation of strerror never returns NULL,
-   but does return a useless string for anything above sys_nerr;
-   unfortunately this includes all socket-related error codes.
-   This replacement tries to find a system-provided error message.  */
-
-char *
-safe_strerror (int errnum)
-{
-  static char *buffer;
-  int len;
-
-  if (errnum >= 0 && errnum < sys_nerr)
-    return strerror (errnum);
-
-  if (buffer)
-    {
-      LocalFree (buffer);
-      buffer = NULL;
-    }
-
-  if (FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER
-		     | FORMAT_MESSAGE_FROM_SYSTEM,
-		     NULL, errnum,
-		     MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
-		     (LPTSTR) &buffer, 0, NULL) == 0)
-    {
-      static char buf[32];
-      xsnprintf (buf, sizeof buf, "(undocumented errno %d)", errnum);
-      return buf;
-    }
-
-  /* Windows error messages end with a period and a CR-LF; strip that
-     out.  */
-  len = strlen (buffer);
-  if (len > 3 && strcmp (buffer + len - 3, ".\r\n") == 0)
-    buffer[len - 3] = '\0';
-
-  return buffer;
-}
-
 /* Return an absolute file name of the running GDB, if possible, or
    ARGV0 if not.  The return value is in malloc'ed storage.  */
 

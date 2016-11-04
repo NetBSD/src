@@ -13,3 +13,6 @@ _start:
 	bx	r0
 	bx	r15
 	.size	_start, .-_start
+
+# Align this to 256-byte boundary for easier address matching.
+	.align	8

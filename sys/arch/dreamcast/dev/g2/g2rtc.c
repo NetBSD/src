@@ -1,4 +1,4 @@
-/* $NetBSD: g2rtc.c,v 1.7 2014/11/17 02:15:48 christos Exp $ */
+/* $NetBSD: g2rtc.c,v 1.7.4.1 2016/11/04 14:48:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.7 2014/11/17 02:15:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.7.4.1 2016/11/04 14:48:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +99,8 @@ g2rtc_attach(device_t parent, device_t self, void *aux)
 
 	tch = &sc->sc_tch;
 	tch->cookie = sc;
-	tch->todr_gettime = g2rtc_todr_gettime,
-	tch->todr_settime = g2rtc_todr_settime,
+	tch->todr_gettime = g2rtc_todr_gettime;
+	tch->todr_settime = g2rtc_todr_settime;
 	todr_attach(tch);
 }
 

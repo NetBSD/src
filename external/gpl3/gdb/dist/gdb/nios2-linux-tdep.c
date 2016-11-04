@@ -1,5 +1,5 @@
 /* Target-dependent code for GNU/Linux on Nios II.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Mentor Graphics, Inc.
 
    This file is part of GDB.
@@ -61,7 +61,7 @@ nios2_supply_gregset (const struct regset *regset,
 		      struct regcache *regcache,
 		      int regnum, const void *gregs_buf, size_t len)
 {
-  const gdb_byte *gregs = gregs_buf;
+  const gdb_byte *gregs = (const gdb_byte *) gregs_buf;
   int regno;
   static const gdb_byte zero_buf[4] = {0, 0, 0, 0};
 
@@ -83,7 +83,7 @@ nios2_collect_gregset (const struct regset *regset,
 		       const struct regcache *regcache,
 		       int regnum, void *gregs_buf, size_t len)
 {
-  gdb_byte *gregs = gregs_buf;
+  gdb_byte *gregs = (gdb_byte *) gregs_buf;
   int regno;
 
   for (regno = NIOS2_Z_REGNUM; regno <= NIOS2_MPUACC_REGNUM; regno++)
@@ -156,13 +156,30 @@ nios2_linux_rt_sigreturn_init (const struct tramp_frame *self,
   trad_frame_set_id (this_cache, frame_id_build (base, func));
 }
 
-static struct tramp_frame nios2_linux_rt_sigreturn_tramp_frame =
+/* Trampoline for sigreturn.  This has the form
+     movi r2, __NR_rt_sigreturn
+     trap 0
+   appropriately encoded for R1 or R2.  */
+
+static struct tramp_frame nios2_r1_linux_rt_sigreturn_tramp_frame =
 {
   SIGTRAMP_FRAME,
   4,
   {
-    { 0x00800004 | (139 << 6), -1 },  /* movi r2,__NR_rt_sigreturn */
-    { 0x003b683a, -1 },               /* trap */
+    { MATCH_R1_MOVI | SET_IW_I_B (2) | SET_IW_I_IMM16 (139), -1 },
+    { MATCH_R1_TRAP | SET_IW_R_IMM5 (0), -1},
+    { TRAMP_SENTINEL_INSN }
+  },
+  nios2_linux_rt_sigreturn_init
+};
+
+static struct tramp_frame nios2_r2_linux_rt_sigreturn_tramp_frame =
+{
+  SIGTRAMP_FRAME,
+  4,
+  {
+    { MATCH_R2_MOVI | SET_IW_F2I16_B (2) | SET_IW_F2I16_IMM16 (139), -1 },
+    { MATCH_R2_TRAP | SET_IW_X2L5_IMM5 (0), -1},
     { TRAMP_SENTINEL_INSN }
   },
   nios2_linux_rt_sigreturn_init
@@ -172,7 +189,8 @@ static struct tramp_frame nios2_linux_rt_sigreturn_tramp_frame =
    instruction to be executed.  */
 
 static CORE_ADDR
-nios2_linux_syscall_next_pc (struct frame_info *frame)
+nios2_linux_syscall_next_pc (struct frame_info *frame,
+			     const struct nios2_opcode *op)
 {
   CORE_ADDR pc = get_frame_pc (frame);
   ULONGEST syscall_nr = get_frame_register_unsigned (frame, NIOS2_R2_REGNUM);
@@ -182,7 +200,7 @@ nios2_linux_syscall_next_pc (struct frame_info *frame)
   if (syscall_nr == 139 /* rt_sigreturn */)
     return frame_unwind_caller_pc (frame);
 
-  return pc + NIOS2_OPCODE_SIZE;
+  return pc + op->size;
 }
 
 /* Hook function for gdbarch_register_osabi.  */
@@ -207,8 +225,12 @@ nios2_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, nios2_iterate_over_regset_sections);
   /* Linux signal frame unwinders.  */
-  tramp_frame_prepend_unwinder (gdbarch,
-                                &nios2_linux_rt_sigreturn_tramp_frame);
+  if (gdbarch_bfd_arch_info (gdbarch)->mach == bfd_mach_nios2r2)
+    tramp_frame_prepend_unwinder (gdbarch,
+				  &nios2_r2_linux_rt_sigreturn_tramp_frame);
+  else
+    tramp_frame_prepend_unwinder (gdbarch,
+				  &nios2_r1_linux_rt_sigreturn_tramp_frame);
 
   tdep->syscall_next_pc = nios2_linux_syscall_next_pc;
 
@@ -223,8 +245,14 @@ extern initialize_file_ftype _initialize_nios2_linux_tdep;
 void
 _initialize_nios2_linux_tdep (void)
 {
-  gdbarch_register_osabi (bfd_arch_nios2, 0, GDB_OSABI_LINUX,
-                          nios2_linux_init_abi);
+
+  const struct bfd_arch_info *arch_info;
+
+  for (arch_info = bfd_lookup_arch (bfd_arch_nios2, 0);
+       arch_info != NULL;
+       arch_info = arch_info->next)
+    gdbarch_register_osabi (bfd_arch_nios2, arch_info->mach,
+			    GDB_OSABI_LINUX, nios2_linux_init_abi);
 
   initialize_tdesc_nios2_linux ();
 }

@@ -37,18 +37,18 @@ gdbpy_readline_wrapper (FILE *sys_stdin, FILE *sys_stdout,
 {
   int n;
   char *p = NULL, *q;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
-    p = command_line_input (prompt, 0, "python");
-
-  /* Detect user interrupt (Ctrl-C).  */
-  if (except.reason == RETURN_QUIT)
-    return NULL;
-
-  /* Handle errors by raising Python exceptions.  */
-  if (except.reason < 0)
+  TRY
     {
+      p = command_line_input (prompt, 0, "python");
+    }
+  /* Handle errors by raising Python exceptions.  */
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      /* Detect user interrupt (Ctrl-C).  */
+      if (except.reason == RETURN_QUIT)
+	return NULL;
+
       /* The thread state is nulled during gdbpy_readline_wrapper,
 	 with the original value saved in the following undocumented
 	 variable (see Python's Parser/myreadline.c and
@@ -58,6 +58,7 @@ gdbpy_readline_wrapper (FILE *sys_stdin, FILE *sys_stdout,
       PyEval_SaveThread ();
       return NULL;
     }
+  END_CATCH
 
   /* Detect EOF (Ctrl-D).  */
   if (p == NULL)

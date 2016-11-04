@@ -491,7 +491,7 @@ Tue Oct 24 14:50:38 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
 	(fixup_segment): Use MD_PCREL_FROM_SECTION instead of
 	md_pcrel_from, and TC_FORCE_RELOCATION_SECTION instead of
 	TC_FORCE_RELOCATION.
-	
+
 Mon Oct 23 16:20:04 1995  Ken Raeburn  <raeburn@cygnus.com>
 
 	* input-scrub.c (as_where): Set name to null pointer if we don't
@@ -509,7 +509,7 @@ Mon Oct 23 11:15:44 1995  James G. Smith  <jsmith@pasanda.cygnus.co.uk>
 	accepting the 4100 as a MIPS architecture variant (md_begin,
 	macro_build, mips_ip, md_parse_option). Adding suitable
 	command-line OPTIONs, and updating the help text (md_show_usage).
-	
+
 Wed Oct 18 13:20:32 1995  Ken Raeburn  <raeburn@cygnus.com>
 
 	* subsegs.c (subseg_begin): Only set absolute_frchain.fix_* when
@@ -774,7 +774,7 @@ Thu Sep 28 19:25:04 1995  Stan Shebs  <shebs@andros.cygnus.com>
 
 Thu Sep 28 15:43:15 1995  Kim Knuttila  <krk@nellie>
 
-	* config/tc-ppc.c (md_apply_fix3): Removed some TE_PE specific 
+	* config/tc-ppc.c (md_apply_fix3): Removed some TE_PE specific
 	manipulations, since I can't prove they're needed.
 	(md_begin): Removed init_regtable, insert_reg, and the call points.
 	(register_name): New function. Parses a register name, if appropriate.
@@ -843,7 +843,7 @@ Wed Sep 27 10:29:13 1995  Kim Knuttila  <krk@nellie>
 	Added support for more predefined sections
 	(ppc_frob_section): Removed some xcoff specific processing from TE_PE
 	(ppc_fix_adjustable): Removed from TE_PE mainline
-	(md_apply_fix3): For TE_PE toc entries, we don't need to mess 
+	(md_apply_fix3): For TE_PE toc entries, we don't need to mess
 	with fx_addnumber. Removed for the time being.
 	(lots): Put back missing assignments to ppc_current_csect.
 
@@ -871,7 +871,7 @@ Mon Sep 25 16:08:43 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
 	(md_assemble): Be more robust in terms of relocations.
 	(md_apply_fix3): Allow 14 bit relocs to be emitted for external
 	symbols in addition to 26 bit relocs.  Properly insert 26/14 bit
-	reloc value fields into the instruction stream.	
+	reloc value fields into the instruction stream.
 
 Mon Sep 25 00:23:16 1995  Ian Lance Taylor  <ian@cygnus.com>
 
@@ -1618,7 +1618,7 @@ Thu Aug 10 00:38:11 1995  Ian Lance Taylor  <ian@cygnus.com>
 	(build_Mytes, md_atof): Likewise.
 	(md_convert_frag, md_apply_fix): Likewise.
 	(md_number_to_chars): Likewise.
-	
+
 Wed Aug  9 10:51:48 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 	* config/tc-m68k.c (m68k_abspcadd): New static variable.
@@ -1946,7 +1946,7 @@ Mon Jul 31 18:19:26 1995  steve chamberlain  <sac@slash.cygnus.com>
 
 	* gasp.c (main): Parse -I option.
 	(do_include): Look through include list.
-	* gasp.c (change_base): Don't modify numbers in strings. 
+	* gasp.c (change_base): Don't modify numbers in strings.
 
 Mon Jul 31 12:16:21 1995  Ian Lance Taylor  <ian@cygnus.com>
 
@@ -2253,7 +2253,7 @@ Fri Jul  7 11:17:27 1995  Ian Lance Taylor  <ian@cygnus.com>
 	Add SPARC ELF PIC support.
 	* write.c (fixup_segment): Pass fixP to TC_RELOC_RTSYM_LOC_FIXUP,
 	not fixP->fx_r_type.
-	* config/tc-sparc.c (sparc_pic_code): New global variable. 
+	* config/tc-sparc.c (sparc_pic_code): New global variable.
 	(md_apply_fix): If generating PIC, adjust fx_addnumber for any non
 	PC relative reloc.
 	(tc_gen_reloc): If generating PIC, adjust various reloc types.
@@ -2392,7 +2392,7 @@ Wed Jul  5 12:01:49 1995  Ian Lance Taylor  <ian@cygnus.com>
 	(s_stringer, s_mips_space): Remove unneeded declarations.
 	(md_parse_option): In case 'g', set mips_debug to debugging level.
 	(mips_local_label): New function.
-	* config/tc-mips.h (LOCAL_LABEL): Call mips_local_label. 
+	* config/tc-mips.h (LOCAL_LABEL): Call mips_local_label.
 	(mips_local_label): Declare.
 
 Wed Jul  5 00:59:22 1995  Fred Fish  (fnf@cygnus.com)
@@ -12364,7 +12364,7 @@ Tue Nov 10 09:49:24 1992  Ian Lance Taylor  (ian@cygnus.com)
 	* config/atof-ieee.c, config/atof-ns32k.c, config/tc-*.c: made
 	EXP_CHARS, FLT_CHARS, comment_chars, line_comment_chars and
 	line_seperator_chars consistently const, and always
-	initialized them.  Included read.h. 
+	initialized them.  Included read.h.
 
 Thu Nov  5 17:55:41 1992  Jim Wilson  (wilson@sphagnum.cygnus.com)
 
@@ -12452,7 +12452,7 @@ Tue Sep 29 10:51:55 1992  Ian Lance Taylor  (ian@cygnus.com)
 
 	* config/tc-i960.h, config/tc-i960.c: avoid the ANSI
 	preprocessor addition #elif, since it is not supported by old
-	compilers. 
+	compilers.
 	config/ho-rs6000.h, config/tc-m68k.c: the native RS/6000
 	compiler miscompiles a couple of expressions in tc-m68k.c.
 
@@ -12561,7 +12561,7 @@ Wed Sep  9 11:06:25 1992  Ian Lance Taylor  (ian@cygnus.com)
 	 file.
 	* config/tc-m68kmote.c, config/tc-m68kmote.h: removed now
 	 superfluous files.
-	 
+
 	From Steve Chamberlain:
 	* config/m68kcoff.mt: for m68k COFF.
 	* config/obj-coffbfd.c: (fixup_mdeps) added
@@ -13116,6 +13116,12 @@ Mon Feb 17 07:51:06 1992  K. Richard Pixley  (rich at cygnus.com)
 	  ChangeLog's prior to this are sketchy at best.  I have logs.
 	  They just aren't ChangeLogs.
 
+Copyright (C) 1992-1995 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 960 b.out binaries.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -137,8 +137,8 @@ b_out_callback (bfd *abfd)
 		     );
 
   /* The positions of the string table and symbol table.  */
-  obj_str_filepos (abfd) = N_STROFF (*execp);
-  obj_sym_filepos (abfd) = N_SYMOFF (*execp);
+  obj_str_filepos (abfd) = N_STROFF (execp);
+  obj_sym_filepos (abfd) = N_SYMOFF (execp);
 
   /* The alignments of the sections.  */
   obj_textsec (abfd)->alignment_power = execp->a_talign;
@@ -161,12 +161,12 @@ b_out_callback (bfd *abfd)
   obj_bsssec (abfd)->lma = obj_bsssec (abfd)->vma;
 
   /* The file positions of the sections.  */
-  obj_textsec (abfd)->filepos = N_TXTOFF (*execp);
-  obj_datasec (abfd)->filepos = N_DATOFF (*execp);
+  obj_textsec (abfd)->filepos = N_TXTOFF (execp);
+  obj_datasec (abfd)->filepos = N_DATOFF (execp);
 
   /* The file positions of the relocation info.  */
-  obj_textsec (abfd)->rel_filepos = N_TROFF (*execp);
-  obj_datasec (abfd)->rel_filepos =  N_DROFF (*execp);
+  obj_textsec (abfd)->rel_filepos = N_TROFF (execp);
+  obj_datasec (abfd)->rel_filepos =  N_DROFF (execp);
 
   adata (abfd).page_size = 1;	/* Not applicable.  */
   adata (abfd).segment_size = 1; /* Not applicable.  */
@@ -193,7 +193,7 @@ b_out_object_p (bfd *abfd)
 
   anexec.a_info = H_GET_32 (abfd, exec_bytes.e_info);
 
-  if (N_BADMAG (anexec))
+  if (N_BADMAG (&anexec))
     {
       bfd_set_error (bfd_error_wrong_format);
       return 0;
@@ -450,20 +450,20 @@ b_out_write_object_contents (bfd *abfd)
 	       b_out_symbol_cmp);
 
       /* Back to your regularly scheduled program.  */
-      if (bfd_seek (abfd, (file_ptr) (N_SYMOFF (*exec_hdr (abfd))), SEEK_SET)
+      if (bfd_seek (abfd, (file_ptr) (N_SYMOFF (exec_hdr (abfd))), SEEK_SET)
 	  != 0)
 	return FALSE;
 
       if (! aout_32_write_syms (abfd))
 	return FALSE;
 
-      if (bfd_seek (abfd, (file_ptr) (N_TROFF (*exec_hdr (abfd))), SEEK_SET)
+      if (bfd_seek (abfd, (file_ptr) (N_TROFF (exec_hdr (abfd))), SEEK_SET)
 	  != 0)
 	return FALSE;
 
       if (!b_out_squirt_out_relocs (abfd, obj_textsec (abfd)))
 	return FALSE;
-      if (bfd_seek (abfd, (file_ptr) (N_DROFF (*exec_hdr (abfd))), SEEK_SET)
+      if (bfd_seek (abfd, (file_ptr) (N_DROFF (exec_hdr (abfd))), SEEK_SET)
 	  != 0)
 	return FALSE;
 
@@ -517,11 +517,9 @@ get_value (arelent *reloc,
 	value = h->u.c.size;
       else
 	{
-	  if (! ((*link_info->callbacks->undefined_symbol)
-		 (link_info, bfd_asymbol_name (symbol),
-		  input_section->owner, input_section, reloc->address,
-		  TRUE)))
-	    abort ();
+	  (*link_info->callbacks->undefined_symbol)
+	    (link_info, bfd_asymbol_name (symbol),
+	     input_section->owner, input_section, reloc->address, TRUE);
 	  value = 0;
 	}
     }
@@ -1393,6 +1391,7 @@ b_out_bfd_get_relocated_section_contents (bfd *output_bfd,
 #define b_out_section_already_linked           _bfd_generic_section_already_linked
 #define b_out_bfd_define_common_symbol         bfd_generic_define_common_symbol
 #define aout_32_get_section_contents_in_window _bfd_generic_get_section_contents_in_window
+#define b_out_bfd_link_check_relocs            _bfd_generic_link_check_relocs
 
 extern const bfd_target bout_le_vec;
 

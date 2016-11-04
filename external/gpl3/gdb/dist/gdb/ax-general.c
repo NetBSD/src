@@ -1,5 +1,5 @@
 /* Functions for manipulating expressions designed to be executed on the agent
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,20 +41,19 @@ static void generic_ext (struct agent_expr *x, enum agent_op op, int n);
 struct agent_expr *
 new_agent_expr (struct gdbarch *gdbarch, CORE_ADDR scope)
 {
-  struct agent_expr *x = xmalloc (sizeof (*x));
+  struct agent_expr *x = XNEW (struct agent_expr);
 
   x->len = 0;
   x->size = 1;			/* Change this to a larger value once
 				   reallocation code is tested.  */
-  x->buf = xmalloc (x->size);
+  x->buf = (unsigned char *) xmalloc (x->size);
 
   x->gdbarch = gdbarch;
   x->scope = scope;
 
   /* Bit vector for registers used.  */
   x->reg_mask_len = 1;
-  x->reg_mask = xmalloc (x->reg_mask_len * sizeof (x->reg_mask[0]));
-  memset (x->reg_mask, 0, x->reg_mask_len * sizeof (x->reg_mask[0]));
+  x->reg_mask = XCNEWVEC (unsigned char, x->reg_mask_len);
 
   x->tracing = 0;
   x->trace_string = 0;
@@ -74,7 +73,7 @@ free_agent_expr (struct agent_expr *x)
 static void
 do_free_agent_expr_cleanup (void *x)
 {
-  free_agent_expr (x);
+  free_agent_expr ((struct agent_expr *) x);
 }
 
 struct cleanup *
@@ -94,7 +93,7 @@ grow_expr (struct agent_expr *x, int n)
       x->size *= 2;
       if (x->size < x->len + n)
 	x->size = x->len + n + 10;
-      x->buf = xrealloc (x->buf, x->size);
+      x->buf = (unsigned char *) xrealloc (x->buf, x->size);
     }
 }
 
@@ -134,13 +133,20 @@ read_const (struct agent_expr *x, int o, int n)
   return accum;
 }
 
+/* See ax.h.  */
+
+void
+ax_raw_byte (struct agent_expr *x, gdb_byte byte)
+{
+  grow_expr (x, 1);
+  x->buf[x->len++] = byte;
+}
 
 /* Append a simple operator OP to EXPR.  */
 void
 ax_simple (struct agent_expr *x, enum agent_op op)
 {
-  grow_expr (x, 1);
-  x->buf[x->len++] = op;
+  ax_raw_byte (x, op);
 }
 
 /* Append a pick operator to EXPR.  DEPTH is the stack item to pick,
@@ -302,6 +308,9 @@ ax_reg (struct agent_expr *x, int reg)
     }
   else
     {
+      /* Get the remote register number.  */
+      reg = gdbarch_remote_register_number (x->gdbarch, reg);
+
       /* Make sure the register number is in range.  */
       if (reg < 0 || reg > 0xffff)
         error (_("GDB bug: ax-general.c (ax_reg): "
@@ -391,7 +400,7 @@ ax_print (struct ui_file *f, struct agent_expr *x)
 
   for (i = 0; i < x->len;)
     {
-      enum agent_op op = x->buf[i];
+      enum agent_op op = (enum agent_op) x->buf[i];
 
       if (op >= (sizeof (aop_map) / sizeof (aop_map[0]))
 	  || !aop_map[op].name)
@@ -450,7 +459,11 @@ ax_reg_mask (struct agent_expr *ax, int reg)
     }
   else
     {
-      int byte = reg / 8;
+      int byte;
+
+      /* Get the remote register number.  */
+      reg = gdbarch_remote_register_number (ax->gdbarch, reg);
+      byte = reg / 8;
 
       /* Grow the bit mask if necessary.  */
       if (byte >= ax->reg_mask_len)
@@ -458,9 +471,9 @@ ax_reg_mask (struct agent_expr *ax, int reg)
           /* It's not appropriate to double here.  This isn't a
 	     string buffer.  */
           int new_len = byte + 1;
-          unsigned char *new_reg_mask = xrealloc (ax->reg_mask,
-					          new_len
-					          * sizeof (ax->reg_mask[0]));
+          unsigned char *new_reg_mask
+	    = XRESIZEVEC (unsigned char, ax->reg_mask, new_len);
+
           memset (new_reg_mask + ax->reg_mask_len, 0,
 	          (new_len - ax->reg_mask_len) * sizeof (ax->reg_mask[0]));
           ax->reg_mask_len = new_len;

@@ -1,6 +1,6 @@
 # Expect script for common symbol override, MIPS variation.
 #
-#   Copyright 2011  Free Software Foundation, Inc.
+#   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -24,9 +24,10 @@
 # Written by Maciej W. Rozycki <macro@codesourcery.com>
 #
 
-# Exclude non-Linux targets; feel free to include your favorite one
-# if you like.
-if ![istarget mips*-*-linux*] {
+# This test is for MIPS shared-library targets.
+if { ![istarget mips*-*-*]
+     || ![is_elf_format]
+     || ![check_shared_lib_support] } {
     return
 }
 
@@ -43,7 +44,7 @@ proc mips_comm_data_test { abi flag emul reloc } {
     run_ld_link_tests [list \
 	[list \
 	    "$testname (auxiliary shared object build)" \
-	    "$LDFLAGS -shared" \
+	    "$LDFLAGS -shared" "" \
 	    "$AFLAGS -call_shared" \
 	    { ../ld-elf/comm-data1.s } \
 	    { \
@@ -64,7 +65,7 @@ proc mips_comm_data_test { abi flag emul reloc } {
     run_ld_link_tests [list \
 	[list \
 	    "$testname" \
-	    "$LDFLAGS $ZFLAG -Ltmpdir -lmips-$abi-$reloc-comm-data" \
+	    "$LDFLAGS $ZFLAG -T ../ld-elf/comm-data2.ld -Ltmpdir -lmips-$abi-$reloc-comm-data" "" \
 	    "$AFLAGS -call_nonpic" \
 	    { ../ld-elf/comm-data2.s } \
 	    { \

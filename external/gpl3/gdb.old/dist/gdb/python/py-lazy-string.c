@@ -45,7 +45,7 @@ typedef struct {
   struct type *type;
 } lazy_string_object;
 
-static PyTypeObject lazy_string_object_type
+extern PyTypeObject lazy_string_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("lazy_string_object");
 
 static PyObject *
@@ -96,20 +96,23 @@ stpy_convert_to_value  (PyObject *self, PyObject *args)
 {
   lazy_string_object *self_string = (lazy_string_object *) self;
   struct value *val = NULL;
-  volatile struct gdb_exception except;
 
   if (self_string->address == 0)
     {
-      PyErr_SetString (PyExc_MemoryError,
+      PyErr_SetString (gdbpy_gdb_memory_error,
 		       _("Cannot create a value from NULL."));
       return NULL;
     }
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       val = value_at_lazy (self_string->type, self_string->address);
     }
-  GDB_PY_HANDLE_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDB_PY_HANDLE_EXCEPTION (except);
+    }
+  END_CATCH
 
   return value_to_value_object (val);
 }
@@ -130,7 +133,7 @@ gdbpy_create_lazy_string_object (CORE_ADDR address, long length,
 
   if (address == 0 && length != 0)
     {
-      PyErr_SetString (PyExc_MemoryError,
+      PyErr_SetString (gdbpy_gdb_memory_error,
 		       _("Cannot create a lazy string with address 0x0, " \
 			 "and a non-zero length."));
       return NULL;
@@ -215,7 +218,7 @@ static PyGetSetDef lazy_string_object_getset[] = {
   { NULL }  /* Sentinel */
 };
 
-static PyTypeObject lazy_string_object_type = {
+PyTypeObject lazy_string_object_type = {
   PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.LazyString",	          /*tp_name*/
   sizeof (lazy_string_object),	  /*tp_basicsize*/

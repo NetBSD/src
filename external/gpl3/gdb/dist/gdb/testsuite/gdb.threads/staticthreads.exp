@@ -1,6 +1,6 @@
 # static.exp -- test script, for GDB, the GNU debugger.
 
-# Copyright 2004-2015 Free Software Foundation, Inc.
+# Copyright 2004-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ gdb_test_multiple "continue" "$test" {
     -re "Breakpoint .*, .*sem_post .*$gdb_prompt " {
 	pass "$test"
     }
-    -re "Program received signal .*$gdb_prompt " {
+    -re " received signal .*$gdb_prompt " {
 	kfail gdb/1328 "$test"
     }
 }
@@ -58,7 +58,7 @@ gdb_test_multiple "continue" "$test" {
 
 set sig "SIG32"
 
-# SIGRTMIN is 37 on hppa-linux and hpux
+# SIGRTMIN is 37 on hppa-linux
 if [istarget hppa*-*-*] {
   set sig "SIG37"
 }

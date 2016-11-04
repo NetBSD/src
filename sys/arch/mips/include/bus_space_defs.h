@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_defs.h,v 1.2 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: bus_space_defs.h,v 1.2.2.1 2016/11/04 14:49:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -332,15 +332,6 @@ struct mips_bus_space_translation {
 
 #define	BUS_SPACE_BARRIER_READ	0x01
 #define	BUS_SPACE_BARRIER_WRITE	0x02
-
-/*
- * New style.
- */
-#define	BUS_SPACE_BARRIER_SYNC		0x03
-#define	BUS_SPACE_BARRIER_READ_BEFORE_READ	BUS_SPACE_BARRIER_READ
-#define	BUS_SPACE_BARRIER_READ_BEFORE_WRITE	BUS_SPACE_BARRIER_READ
-#define	BUS_SPACE_BARRIER_WRITE_BEFORE_READ	BUS_SPACE_BARRIER_WRITE
-#define	BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE	BUS_SPACE_BARRIER_WRITE
 
 #endif /* _KERNEL */
 

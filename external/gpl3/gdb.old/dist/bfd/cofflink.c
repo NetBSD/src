@@ -2789,7 +2789,7 @@ _bfd_coff_reloc_link_order (bfd *output_bfd,
 
       size = bfd_get_reloc_size (howto);
       buf = (bfd_byte *) bfd_zmalloc (size);
-      if (buf == NULL)
+      if (buf == NULL && size != 0)
 	return FALSE;
 
       rstat = _bfd_relocate_contents (howto, output_bfd,
@@ -2915,6 +2915,7 @@ _bfd_coff_generic_relocate_section (bfd *output_bfd,
       struct internal_syment *sym;
       bfd_vma addend;
       bfd_vma val;
+      asection *sec;
       reloc_howto_type *howto;
       bfd_reloc_status_type rstat;
 
@@ -2965,11 +2966,9 @@ _bfd_coff_generic_relocate_section (bfd *output_bfd,
 	}
 
       val = 0;
-
+      sec = NULL;
       if (h == NULL)
 	{
-	  asection *sec;
-
 	  if (symndx == -1)
 	    {
 	      sec = bfd_abs_section_ptr;
@@ -2978,11 +2977,6 @@ _bfd_coff_generic_relocate_section (bfd *output_bfd,
 	  else
 	    {
 	      sec = sections[symndx];
-
-	      /* If the output section has been discarded then ignore this reloc.  */
-	      if (sec->output_section->vma == 0)
-		continue;
-
               val = (sec->output_section->vma
 		     + sec->output_offset
 		     + sym->n_value);
@@ -2996,8 +2990,6 @@ _bfd_coff_generic_relocate_section (bfd *output_bfd,
 	      || h->root.type == bfd_link_hash_defweak)
 	    {
 	      /* Defined weak symbols are a GNU extension. */
-	      asection *sec;
-
 	      sec = h->root.u.def.section;
 	      val = (h->root.u.def.value
 		     + sec->output_section->vma
@@ -3018,7 +3010,6 @@ _bfd_coff_generic_relocate_section (bfd *output_bfd,
 		     will resolve a weak external only if a normal
 		     external causes the library member to be linked.
 		     See also linker.c: generic_link_check_archive_element. */
-		  asection *sec;
 		  struct coff_link_hash_entry *h2 =
 		    h->auxbfd->tdata.coff_obj_data->sym_hashes[
 		    h->aux->x_sym.x_tagndx.l];
@@ -3047,6 +3038,15 @@ _bfd_coff_generic_relocate_section (bfd *output_bfd,
 		      rel->r_vaddr - input_section->vma, TRUE)))
 		return FALSE;
 	    }
+	}
+
+      /* If the input section defining the symbol has been discarded
+	 then zero this reloc field.  */
+      if (sec != NULL && discarded_section (sec))
+	{
+	  _bfd_clear_contents (howto, input_bfd, input_section,
+			       contents + (rel->r_vaddr - input_section->vma));
+	  continue;
 	}
 
       if (info->base_file)

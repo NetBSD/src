@@ -42,6 +42,9 @@ gdb_py_test_silent_cmd "python objfile = sym\[0\].symtab.objfile" \
 gdb_test "python print (objfile.filename)" "${testfile}" \
   "Get objfile file name"
 
+gdb_test "python print (objfile.username)" "${testfile}" \
+  "Get objfile user name"
+
 gdb_test "python print (gdb.lookup_objfile (\"${testfile}\").filename)" \
     "${testfile}"
 gdb_test "python print (gdb.lookup_objfile (\"junk\"))" \
@@ -78,6 +81,18 @@ gdb_py_test_silent_cmd "python objfile.random_attribute = 42" \
 gdb_test "python print (objfile.random_attribute)" "42" \
     "Verify set of random attribute in objfile"
 
+# Verify invalid objfile handling.
+
+if { [gdb_unload] < 0 } {
+    fail "unload all files"
+    return -1
+}
+
+gdb_test "python print(objfile.filename)" "None" \
+    "objfile.filename after objfile is unloaded"
+gdb_test "python print(objfile.username)" "None" \
+    "objfile.username after objfile is unloaded"
+
 # Now build another copy of the testcase, this time without debug info.
 
 if { [prepare_for_testing ${testfile}.exp ${testfile}2 ${srcfile} {nodebug ldflags=-Wl,--strip-debug}] } {
@@ -107,6 +122,9 @@ gdb_py_test_silent_cmd "python sep_objfile = gdb.objfiles()\[0\]" \
 gdb_test "python print (sep_objfile.owner.filename)" "${testfile}2" \
     "Test owner of separate debug file"
 
+gdb_test "python print (sep_objfile.owner.username)" "${testfile}2" \
+    "Test user-name of owner of separate debug file"
+
 gdb_test "p main" "= {int \\(\\)} $hex <main>" \
     "print main with debug info"
 
@@ -114,4 +132,15 @@ gdb_test "p main" "= {int \\(\\)} $hex <main>" \
 if { [get_python_valueof "sep_objfile.build_id" "None"] != "None" } {
     gdb_test "python print (gdb.lookup_objfile (sep_objfile.build_id, by_build_id=True))" \
 	"Objfile not found\\.\r\n${python_error_text}"
+}
+
+# An objfile that was a symlink to a differently named file is still
+# findable with its original name.
+set symlink_binary [standard_output_file "symlink-binary"]
+remote_exec host "rm -f ${symlink_binary}"
+remote_exec host "ln -sf ${testfile} ${symlink_binary}"
+if [remote_file host exists "${symlink_binary}"] {
+    clean_restart "${symlink_binary}"
+    gdb_test "python print (gdb.lookup_objfile (\"${symlink_binary}\").filename)" \
+	"${testfile}" "gdb.lookup_objfile of symlinked binary"
 }

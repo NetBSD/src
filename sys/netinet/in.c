@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.175.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: in.c,v 1.175.2.3 2016/11/04 14:49:21 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.175.2.2 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.175.2.3 2016/11/04 14:49:21 pgoyette Exp $");
 
 #include "arp.h"
 
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.175.2.2 2016/08/06 00:19:10 pgoyette Exp $"
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
 #include "opt_mrouting.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -149,6 +150,7 @@ static int	in_lifaddr_ioctl(struct socket *, u_long, void *,
 	struct ifnet *);
 
 static int	in_addprefix(struct in_ifaddr *, int);
+static void	in_scrubaddr(struct in_ifaddr *);
 static int	in_scrubprefix(struct in_ifaddr *);
 static void	in_sysctl_init(struct sysctllog **);
 
@@ -380,7 +382,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct in_ifaddr *ia = NULL;
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
-	struct sockaddr_in oldaddr;
+	struct sockaddr_in oldaddr, *new_dstaddr;
 	int error, hostIsNew, maskIsNew;
 	int newifaddr = 0;
 	bool run_hook = false;
@@ -601,13 +603,13 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			need_reinsert = true;
 		}
 		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),
-		    1, hostIsNew);
+		    NULL, 1);
 
 		run_hook = true;
 		break;
 
 	case SIOCSIFNETMASK:
-		in_ifscrub(ifp, ia);
+		in_scrubprefix(ia);
 		ia->ia_sockmask = *satocsin(ifreq_getaddr(cmd, ifr));
 		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
 		if (!newifaddr) {
@@ -617,29 +619,23 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			mutex_exit(&in_ifaddr_lock);
 			need_reinsert = true;
 		}
-		error = in_ifinit(ifp, ia, NULL, 0, 0);
+		error = in_ifinit(ifp, ia, NULL, NULL, 0);
 		break;
 
 	case SIOCAIFADDR:
 		maskIsNew = 0;
 		if (ifra->ifra_mask.sin_len) {
-			/* Only scrub if we control the prefix route,
-			 * otherwise userland gets a bogus message */
-			if ((ia->ia_flags & IFA_ROUTE))
-				in_ifscrub(ifp, ia);
+			in_scrubprefix(ia);
 			ia->ia_sockmask = ifra->ifra_mask;
 			ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
 			maskIsNew = 1;
 		}
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
 		    (ifra->ifra_dstaddr.sin_family == AF_INET)) {
-			/* Only scrub if we control the prefix route,
-			 * otherwise userland gets a bogus message */
-			if ((ia->ia_flags & IFA_ROUTE))
-				in_ifscrub(ifp, ia);
-			ia->ia_dstaddr = ifra->ifra_dstaddr;
+			new_dstaddr = &ifra->ifra_dstaddr;
 			maskIsNew  = 1; /* We lie; but the effect's the same */
-		}
+		} else
+			new_dstaddr = NULL;
 		if (ifra->ifra_addr.sin_family == AF_INET &&
 		    (hostIsNew || maskIsNew)) {
 			if (!newifaddr) {
@@ -649,8 +645,8 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 				mutex_exit(&in_ifaddr_lock);
 				need_reinsert = true;
 			}
-			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0,
-			    hostIsNew);
+			error = in_ifinit(ifp, ia, &ifra->ifra_addr,
+			    new_dstaddr, 0);
 		}
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
@@ -739,9 +735,13 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 {
 	int error;
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
+#endif
 	error = in_control0(so, cmd, data, ifp);
+#ifndef NET_MPSAFE
 	mutex_exit(softnet_lock);
+#endif
 
 	return error;
 }
@@ -801,6 +801,23 @@ out:
 	curlwp_bindx(bound);
 }
 
+static void
+in_scrubaddr(struct in_ifaddr *ia)
+{
+
+	/* stop DAD processing */
+	if (ia->ia_dad_stop != NULL)
+		ia->ia_dad_stop(&ia->ia_ifa);
+
+	in_scrubprefix(ia);
+	in_ifremlocal(&ia->ia_ifa);
+
+	if (ia->ia_allhosts != NULL) {
+		in_delmulti(ia->ia_allhosts);
+		ia->ia_allhosts = NULL;
+	}
+}
+
 /*
  * Depends on it isn't called in concurrent. It should be guaranteed
  * by ifa->ifa_ifp's ioctl lock. The possible callers are in_control
@@ -811,19 +828,12 @@ out:
 void
 in_purgeaddr(struct ifaddr *ifa)
 {
-	struct ifnet *ifp = ifa->ifa_ifp;
 	struct in_ifaddr *ia = (void *) ifa;
+	struct ifnet *ifp = ifa->ifa_ifp;
 
 	KASSERT(!ifa_held(ifa));
 
-	/* stop DAD processing */
-	if (ia->ia_dad_stop != NULL)
-		ia->ia_dad_stop(ifa);
-
-	in_ifscrub(ifp, ia);
-	in_ifremlocal(ifa);
-	if (ia->ia_allhosts != NULL)
-		in_delmulti(ia->ia_allhosts);
+	in_scrubaddr(ia);
 
 	mutex_enter(&in_ifaddr_lock);
 	LIST_REMOVE(ia, ia_hash);
@@ -1031,67 +1041,90 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 }
 
 /*
- * Delete any existing route for an interface.
- */
-void
-in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
-{
-
-	in_scrubprefix(ia);
-}
-
-/*
  * Initialize an interface's internet address
  * and routing table entry.
  */
 int
 in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
-    const struct sockaddr_in *sin, int scrub, int hostIsNew)
+    const struct sockaddr_in *sin, const struct sockaddr_in *dst, int scrub)
 {
 	u_int32_t i;
-	struct sockaddr_in oldaddr;
-	int s = splnet(), flags = RTF_UP, error;
+	struct sockaddr_in oldaddr, olddst;
+	int s, oldflags, flags = RTF_UP, error, hostIsNew;
 
 	if (sin == NULL)
 		sin = &ia->ia_addr;
+	if (dst == NULL)
+		dst = &ia->ia_dstaddr;
 
 	/*
 	 * Set up new addresses.
 	 */
 	oldaddr = ia->ia_addr;
+	olddst = ia->ia_dstaddr;
+	oldflags = ia->ia4_flags;
 	ia->ia_addr = *sin;
+	ia->ia_dstaddr = *dst;
+	hostIsNew = oldaddr.sin_family != AF_INET ||
+	    !in_hosteq(ia->ia_addr.sin_addr, oldaddr.sin_addr);
+	if (!scrub)
+		scrub = oldaddr.sin_family != ia->ia_dstaddr.sin_family ||
+		    !in_hosteq(ia->ia_dstaddr.sin_addr, olddst.sin_addr);
 
-	/* Set IN_IFF flags early for if_addr_init() */
-	if (hostIsNew && if_do_dad(ifp) && !in_nullhost(ia->ia_addr.sin_addr)) {
-		if (ifp->if_link_state == LINK_STATE_DOWN)
-			ia->ia4_flags |= IN_IFF_DETACHED;
-		else
-			/* State the intent to try DAD if possible */
-			ia->ia4_flags |= IN_IFF_TRYTENTATIVE;
+	/*
+	 * Configure address flags.
+	 * We need to do this early because they maybe adjusted
+	 * by if_addr_init depending on the address.
+	 */
+	if (ia->ia4_flags & IN_IFF_DUPLICATED) {
+		ia->ia4_flags &= ~IN_IFF_DUPLICATED;
+		hostIsNew = 1;
 	}
+	if (ifp->if_link_state == LINK_STATE_DOWN) {
+		ia->ia4_flags |= IN_IFF_DETACHED;
+		ia->ia4_flags &= ~IN_IFF_TENTATIVE;
+	} else if (hostIsNew && if_do_dad(ifp))
+		ia->ia4_flags |= IN_IFF_TRYTENTATIVE;
 
 	/*
 	 * Give the interface a chance to initialize
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	if ((error = if_addr_init(ifp, &ia->ia_ifa, true)) != 0)
-		goto bad;
+	s = splnet();
+	error = if_addr_init(ifp, &ia->ia_ifa, true);
+	splx(s);
 	/* Now clear the try tentative flag, it's job is done. */
 	ia->ia4_flags &= ~IN_IFF_TRYTENTATIVE;
-	splx(s);
+	if (error != 0) {
+		ia->ia_addr = oldaddr;
+		ia->ia_dstaddr = olddst;
+		ia->ia4_flags = oldflags;
+		return error;
+	}
 
-	if (scrub) {
+	if (scrub || hostIsNew) {
+		int newflags = ia->ia4_flags;
+
 		ia->ia_ifa.ifa_addr = sintosa(&oldaddr);
-		in_ifscrub(ifp, ia);
+		ia->ia_ifa.ifa_dstaddr = sintosa(&olddst);
+		ia->ia4_flags = oldflags;
+		if (hostIsNew)
+			in_scrubaddr(ia);
+		else if (scrub)
+			in_scrubprefix(ia);
 		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
+		ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
+		ia->ia4_flags = newflags;
 	}
 
 	/* Add the local route to the address */
 	in_ifaddlocal(&ia->ia_ifa);
 
 	i = ia->ia_addr.sin_addr.s_addr;
-	if (IN_CLASSA(i))
+	if (ifp->if_flags & IFF_POINTOPOINT)
+		ia->ia_netmask = INADDR_BROADCAST;	/* default to /32 */
+	else if (IN_CLASSA(i))
 		ia->ia_netmask = IN_CLASSA_NET;
 	else if (IN_CLASSB(i))
 		ia->ia_netmask = IN_CLASSB_NET;
@@ -1142,16 +1175,12 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
 
-	if (hostIsNew && if_do_dad(ifp) &&
-	    !in_nullhost(ia->ia_addr.sin_addr) &&
-	    ia->ia4_flags & IN_IFF_TENTATIVE)
+	if (hostIsNew &&
+	    ia->ia4_flags & IN_IFF_TENTATIVE &&
+	    if_do_dad(ifp))
 		ia->ia_dad_start((struct ifaddr *)ia);
 
-	return (error);
-bad:
-	splx(s);
-	ia->ia_addr = oldaddr;
-	return (error);
+	return error;
 }
 
 #define rtinitflags(x) \
@@ -1231,7 +1260,7 @@ in_scrubprefix(struct in_ifaddr *target)
 	int error;
 	int s;
 
-	/* If we don't have IFA_ROUTE we should still inform userland */
+	/* If we don't have IFA_ROUTE we have nothing to do */
 	if ((target->ia_flags & IFA_ROUTE) == 0)
 		return 0;
 

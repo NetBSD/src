@@ -2,7 +2,7 @@
 
 # icf_test.sh -- test --icf
 
-# Copyright 2009 Free Software Foundation, Inc.
+# Copyright (C) 2009-2015 Free Software Foundation, Inc.
 # Written by Sriraman Tallam <tmsriram@google.com>.
 
 # This file is part of gold.
@@ -28,13 +28,19 @@
 
 check()
 {
-    func_addr_1=`grep $2 $1 | awk '{print $1}'`
-    func_addr_2=`grep $3 $1 | awk '{print $1}'`
-    if [ $func_addr_1 != $func_addr_2 ]
-    then
-        echo "Identical Code Folding failed to fold" $2 "and" $3
-	exit 1
-    fi
+    awk "
+BEGIN { discard = 0; }
+/^Discarded input/ { discard = 1; }
+/^Memory map/ { discard = 0; }
+/.*\\.text\\..*($2|$3).*/ { act[discard] = act[discard] \" \" \$0; }
+END {
+      # printf \"kept\" act[0] \"\\nfolded\" act[1] \"\\n\";
+      if (length(act[0]) == 0 || length(act[1]) == 0)
+	{
+	  printf \"Identical Code Folding did not fold $2 and $3\\n\"
+	  exit 1;
+	}
+    }" $1
 }
 
-check icf_test.stdout "folded_func" "kept_func"
+check icf_test.map "folded_func" "kept_func"

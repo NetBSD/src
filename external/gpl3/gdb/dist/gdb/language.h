@@ -1,6 +1,6 @@
 /* Source-language-related definitions for GDB.
 
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    Contributed by the Department of Computer Science at the State University
    of New York at Buffalo.
@@ -164,6 +164,13 @@ struct language_defn
     /* Style of macro expansion, if any, supported by this language.  */
     enum macro_expansion la_macro_expansion;
 
+    /* A NULL-terminated array of file extensions for this language.
+       The extension must include the ".", like ".c".  If this
+       language doesn't need to provide any filename extensions, this
+       may be NULL.  */
+
+    const char *const *la_filename_extensions;
+
     /* Definitions related to expression printing, prefixifying, and
        dumping.  */
 
@@ -241,13 +248,19 @@ struct language_defn
     void (*la_value_print) (struct value *, struct ui_file *,
 			    const struct value_print_options *);
 
-    /* Given a symbol VAR, and a stack frame id FRAME, read the value
-       of the variable an return (pointer to a) struct value containing
-       the value.
+    /* Given a symbol VAR, the corresponding block VAR_BLOCK (if any) and a
+       stack frame id FRAME, read the value of the variable and return (pointer
+       to a) struct value containing the value.
+
+       VAR_BLOCK is needed if there's a possibility for VAR to be outside
+       FRAME.  This is what happens if FRAME correspond to a nested function
+       and VAR is defined in the outer function.  If callers know that VAR is
+       located in FRAME or is global/static, NULL can be passed as VAR_BLOCK.
 
        Throw an error if the variable cannot be found.  */
 
     struct value *(*la_read_var_value) (struct symbol *var,
+					const struct block *var_block,
 					struct frame_info *frame);
 
     /* PC is possibly an unknown languages trampoline.
@@ -267,16 +280,33 @@ struct language_defn
        the part of symbol lookup where C looks up static and global
        variables.  */
 
-    struct symbol *(*la_lookup_symbol_nonlocal) (const struct language_defn *,
-						 const char *,
-						 const struct block *,
-						 const domain_enum);
+    struct block_symbol (*la_lookup_symbol_nonlocal)
+      (const struct language_defn *,
+       const char *,
+       const struct block *,
+       const domain_enum);
 
     /* Find the definition of the type with the given name.  */
     struct type *(*la_lookup_transparent_type) (const char *);
 
     /* Return demangled language symbol, or NULL.  */
     char *(*la_demangle) (const char *mangled, int options);
+
+    /* Demangle a symbol according to this language's rules.  Unlike
+       la_demangle, this does not take any options.
+
+       *DEMANGLED will be set by this function.
+       
+       If this function returns 0, then *DEMANGLED must always be set
+       to NULL.
+
+       If this function returns 1, the implementation may set this to
+       a xmalloc'd string holding the demangled form.  However, it is
+       not required to.  The string, if any, is owned by the caller.
+
+       The resulting string should be of the form that will be
+       installed into a symbol.  */
+    int (*la_sniff_from_mangled_name) (const char *mangled, char **demangled);
 
     /* Return class name of a mangled method name or NULL.  */
     char *(*la_class_name_from_physname) (const char *physname);
@@ -543,8 +573,6 @@ extern const char *language_str (enum language);
 
 extern void add_language (const struct language_defn *);
 
-extern enum language get_frame_language (void);	/* In stack.c */
-
 /* Check for a language-specific trampoline.  */
 
 extern CORE_ADDR skip_language_trampoline (struct frame_info *, CORE_ADDR pc);
@@ -552,6 +580,13 @@ extern CORE_ADDR skip_language_trampoline (struct frame_info *, CORE_ADDR pc);
 /* Return demangled language symbol, or NULL.  */
 extern char *language_demangle (const struct language_defn *current_language, 
 				const char *mangled, int options);
+
+/* A wrapper for la_sniff_from_mangled_name.  The arguments and result
+   are as for the method.  */
+
+extern int language_sniff_from_mangled_name (const struct language_defn *lang,
+					     const char *mangled,
+					     char **demangled);
 
 /* Return class name from physname, or NULL.  */
 extern char *language_class_name_from_physname (const struct language_defn *,

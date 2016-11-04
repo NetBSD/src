@@ -3,7 +3,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN: Cpu tools GENerator.
    - the resultant file is machine generated, cgen-ibld.in isn't
 
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -207,12 +207,19 @@ insert_normal (CGEN_CPU_DESC cd,
 #if CGEN_INT_INSN_P
 
   {
-    int shift;
+    int shift_within_word, shift_to_word, shift;
 
+    /* How to shift the value to BIT0 of the word.  */
+    shift_to_word = total_length - (word_offset + word_length);
+
+    /* How to shift the value to the field within the word.  */
     if (CGEN_INSN_LSB0_P)
-      shift = (word_offset + start + 1) - length;
+      shift_within_word = start + 1 - length;
     else
-      shift = total_length - (word_offset + start + length);
+      shift_within_word = word_length - start - length;
+
+    /* The total SHIFT, then mask in the value.  */
+    shift = shift_to_word + shift_within_word;
     *buffer = (*buffer & ~(mask << shift)) | ((value & mask) << shift);
   }
 

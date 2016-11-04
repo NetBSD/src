@@ -1,5 +1,5 @@
 /* d10v-opc.c -- D10V opcode list
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    Written by Martin Hunt, Cygnus Support
 
    This file is part of the GNU opcodes library.

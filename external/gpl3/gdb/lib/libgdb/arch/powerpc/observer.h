@@ -4,7 +4,7 @@
 
 /* GDB Notifications to Observers.
 
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -126,11 +126,11 @@ extern void observer_notify_inferior_created (struct target_ops *objfile, int fr
 
 /* record_changed notifications.  */
 
-typedef void (observer_record_changed_ftype) (struct inferior *inferior, int started);
+typedef void (observer_record_changed_ftype) (struct inferior *inferior, int started, const char *method, const char *format);
 
 extern struct observer *observer_attach_record_changed (observer_record_changed_ftype *f);
 extern void observer_detach_record_changed (struct observer *observer);
-extern void observer_notify_record_changed (struct inferior *inferior, int started);
+extern void observer_notify_record_changed (struct inferior *inferior, int started, const char *method, const char *format);
 
 /* solib_loaded notifications.  */
 
@@ -371,5 +371,13 @@ typedef void (observer_test_notification_ftype) (int somearg);
 extern struct observer *observer_attach_test_notification (observer_test_notification_ftype *f);
 extern void observer_detach_test_notification (struct observer *observer);
 extern void observer_notify_test_notification (int somearg);
+
+/* user_selected_context_changed notifications.  */
+
+typedef void (observer_user_selected_context_changed_ftype) (user_selected_what selection);
+
+extern struct observer *observer_attach_user_selected_context_changed (observer_user_selected_context_changed_ftype *f);
+extern void observer_detach_user_selected_context_changed (struct observer *observer);
+extern void observer_notify_user_selected_context_changed (user_selected_what selection);
 
 #endif /* OBSERVER_H */

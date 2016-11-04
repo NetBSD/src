@@ -1,4 +1,4 @@
-.\" $NetBSD: urtwn.4,v 1.14 2014/07/25 15:07:03 nonaka Exp $
+.\" $NetBSD: urtwn.4,v 1.14.6.1 2016/11/04 14:48:56 pgoyette Exp $
 .\" $OpenBSD: urtwn.4,v 1.15 2011/11/26 06:39:33 ckuethe Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -20,14 +20,15 @@
 .Os
 .Sh NAME
 .Nm urtwn
-.Nd Realtek RTL8188CU/RTL8188EU/RTL8192CU USB IEEE 802.11b/g/n wireless network device
+.Nd Realtek RTL8188CU/RTL8188EU/RTL8192CU/RTL8192EU USB IEEE 802.11b/g/n wireless network device
 .Sh SYNOPSIS
 .Cd "urtwn* at uhub? port ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver supports USB 2.0 wireless network devices based on Realtek
-RTL8188CUS, RTL8188CE-VAU, RTL8188EUS, RTL8188RU, and RTL8192CU chipsets.
+RTL8188CUS, RTL8188CE-VAU, RTL8188EUS, RTL8188RU, RTL8192CU and RTL8192EU
+chipsets.
 .Pp
 The RTL8188CUS and RTL8188EUS are highly integrated 802.11n adapters that
 combine a MAC, a 1T1R capable baseband and an RF in a single chip.
@@ -36,8 +37,8 @@ The RTL8188RU is a high-power variant of the RTL8188CUS.
 The RTL8188CE-VAU is a PCI Express Mini Card adapter that attaches
 to the USB interface.
 .Pp
-The RTL8192CU is a highly integrated multiple-in, multiple-out (MIMO)
-802.11n adapter that combines a MAC, a 2T2R capable baseband and an
+The RTL8192CU and RTL8192EU are highly integrated multiple-in, multiple-out
+(MIMO) 802.11n adapters that combine a MAC, a 2T2R capable baseband and an
 RF in a single chip.
 It operates in the 2GHz spectrum only.
 .Pp
@@ -96,6 +97,7 @@ which are loaded when an interface is attached:
 .It /libdata/firmware/if_urtwn/rtl8188eufw.bin
 .It /libdata/firmware/if_urtwn/rtl8192cfw.bin
 .It /libdata/firmware/if_urtwn/rtl8192cfwU.bin
+.It /libdata/firmware/if_urtwn/rtl8192efw.bin
 .El
 .Sh HARDWARE
 The following adapters should work:

@@ -108,7 +108,7 @@ arm_netbsd_elf_init_abi (struct gdbarch_info info,
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 
-  /* for single stepping */
+  /* for single stepping; see PR/50773 */
   set_gdbarch_skip_solib_resolver (gdbarch, armnbsd_skip_solib_resolver);
 }
 

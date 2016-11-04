@@ -1,4 +1,4 @@
-# Copyright 1998-2015 Free Software Foundation, Inc.
+# Copyright 1998-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -293,15 +293,11 @@ proc test_func { } {
     global srcfile2
     gdb_test "cont" ".*" "cont 1"
     gdb_test "step" ".*"
-    # This always fails, but it's not clear why. -sts 1999-08-17
-    setup_xfail "*-*-*"
     gdb_test "func sum" "'sum' not within current stack frame\."
     set stop_line [gdb_get_line_number "stop-in-sum" $srcfile2]
     gdb_test "stop in sum" "Breakpoint.*at.*: file.*sum\.c, line $stop_line\."
     gdb_test "cont" ".*" "cont 2"
-    # This always fails, but it's not clear why. -sts 1999-08-17
-    setup_xfail "*-*-*"
-    gdb_test "func print_average" ".*in print_average.*\\(list=.*, low=0, high=6\\).*at.*average\.c:${decimal}\r\n\${decimal}\[ \t\]+total = sum\\(list, low, high\\);"
+    gdb_test "func print_average" ".*in print_average.*\\(list=.*, low=0, high=6\\).*at.*average\.c:${decimal}\r\n${decimal}\[ \t\]+total = sum\\(list, low, high\\);"
 }
 
 # Start with a fresh gdb.

@@ -21,6 +21,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include "gdb_bfd.h"
 #include "inferior.h"
 #include "infrun.h"
 #include "value.h"
@@ -669,7 +670,12 @@ gdbsim_open (const char *args, int from_tty)
   int len;
   char *arg_buf;
   struct sim_inferior_data *sim_data;
+  const char *sysroot;
   SIM_DESC gdbsim_desc;
+
+  sysroot = gdb_sysroot;
+  if (is_target_filename (sysroot))
+    sysroot += strlen (TARGET_SYSROOT_PREFIX);
 
   if (remote_debug)
     fprintf_unfiltered (gdb_stdlog,
@@ -688,7 +694,7 @@ gdbsim_open (const char *args, int from_tty)
   len = (7 + 1			/* gdbsim */
 	 + strlen (" -E little")
 	 + strlen (" --architecture=xxxxxxxxxx")
-	 + strlen (" --sysroot=") + strlen (gdb_sysroot) +
+	 + strlen (" --sysroot=") + strlen (sysroot) +
 	 + (args ? strlen (args) : 0)
 	 + 50) /* slack */ ;
   arg_buf = (char *) alloca (len);
@@ -715,7 +721,7 @@ gdbsim_open (const char *args, int from_tty)
     }
   /* Pass along gdb's concept of the sysroot.  */
   strcat (arg_buf, " --sysroot=");
-  strcat (arg_buf, gdb_sysroot);
+  strcat (arg_buf, sysroot);
   /* finally, any explicit args */
   if (args)
     {

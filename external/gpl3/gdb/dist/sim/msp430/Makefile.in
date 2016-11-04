@@ -1,5 +1,5 @@
 #    Makefile template for Configure for the MSP430 sim library.
-#    Copyright 2012-2015 Free Software Foundation, Inc.
+#    Copyright 2012-2016 Free Software Foundation, Inc.
 #    Written by Red Hat Inc.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -27,12 +27,7 @@
 SIM_OBJS = \
 	$(SIM_NEW_COMMON_OBJS) \
 	msp430-sim.o \
-	trace.o \
-	sim-hload.o \
-	sim-reason.o \
-	sim-reg.o \
-	sim-resume.o \
-	sim-stop.o \
+	sim-resume.o
 
 # List of extra dependencies.
 # Generally this consists of simulator specific files included by sim-main.h.

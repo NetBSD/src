@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.18 2012/08/26 14:14:16 wiz Exp $	*/
+/*	$NetBSD: uniq.c,v 1.18.14.1 2016/11/04 14:49:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: uniq.c,v 1.18 2012/08/26 14:14:16 wiz Exp $");
+__RCSID("$NetBSD: uniq.c,v 1.18.14.1 2016/11/04 14:49:26 pgoyette Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -58,18 +58,19 @@ static int numchars, numfields, repeats;
 
 static FILE *file(const char *, const char *);
 static void show(FILE *, const char *);
-static const char *skip(const char *);
+static const char *skip(const char *, size_t *);
 static void obsolete(char *[]);
 static void usage(void) __dead;
 
 int
 main (int argc, char *argv[])
 {
-	const char *t1, *t2;
+	const char *prevp, *thisp;
 	FILE *ifp, *ofp;
 	int ch;
 	char *prevline, *thisline, *p;
 	size_t prevlinesize, thislinesize, psize;
+	size_t prevlen, thislen;
 
 	setprogname(argv[0]);
 	ifp = ofp = NULL;
@@ -126,11 +127,16 @@ done:	argc -= optind;
 
 	if ((p = fgetln(ifp, &psize)) == NULL)
 		return 0;
-	prevlinesize = psize;
+	prevlinesize = prevlen = psize;
 	if ((prevline = malloc(prevlinesize + 1)) == NULL)
 		err(1, "malloc");
 	(void)memcpy(prevline, p, prevlinesize);
 	prevline[prevlinesize] = '\0';
+	
+	if (numfields || numchars)
+		prevp = skip(prevline, &prevlen);
+	else
+		prevp = prevline;
 
 	thislinesize = psize;
 	if ((thisline = malloc(thislinesize + 1)) == NULL)
@@ -142,20 +148,19 @@ done:	argc -= optind;
 				err(1, "realloc");
 			thislinesize = psize;
 		}
+		thislen = psize;
 		(void)memcpy(thisline, p, psize);
 		thisline[psize] = '\0';
 
 		/* If requested get the chosen fields + character offsets. */
 		if (numfields || numchars) {
-			t1 = skip(thisline);
-			t2 = skip(prevline);
+			thisp = skip(thisline, &thislen);
 		} else {
-			t1 = thisline;
-			t2 = prevline;
+			thisp = thisline;
 		}
 
 		/* If different, print; set previous to new value. */
-		if (strcmp(t1, t2)) {
+		if (thislen != prevlen || strcmp(thisp, prevp)) {
 			char *t;
 			size_t ts;
 
@@ -166,6 +171,8 @@ done:	argc -= optind;
 			ts = prevlinesize;
 			prevlinesize = thislinesize;
 			thislinesize = ts;
+			prevp = thisp;
+			prevlen = thislen;
 			repeats = 0;
 		} else
 			++repeats;
@@ -195,11 +202,12 @@ show(FILE *ofp, const char *str)
 }
 
 static const char *
-skip(const char *str)
+skip(const char *str, size_t *linesize)
 {
 	int infield, nchars, nfields;
+	size_t ls = *linesize;
 
-	for (nfields = numfields, infield = 0; nfields && *str; ++str)
+	for (nfields = numfields, infield = 0; nfields && *str; ++str, --ls)
 		if (isspace((unsigned char)*str)) {
 			if (infield) {
 				infield = 0;
@@ -207,8 +215,9 @@ skip(const char *str)
 			}
 		} else if (!infield)
 			infield = 1;
-	for (nchars = numchars; nchars-- && *str; ++str)
+	for (nchars = numchars; nchars-- && *str; ++str, --ls)
 		continue;
+	*linesize = ls;
 	return str;
 }
 

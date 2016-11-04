@@ -20,6 +20,9 @@
 #ifndef AMD64BSD_NAT_H
 #define AMD64BSD_NAT_H
 
+/* Low level amd64 XSAVE info.  */
+extern size_t amd64bsd_xsave_len;
+
 /* Low level amd64 debug register functions.  */
 
 extern void amd64bsd_dr_set_control (unsigned long control);

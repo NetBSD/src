@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (C) 2011-2015 Free Software Foundation, Inc.
+# Copyright (C) 2011-2016 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -42,8 +42,11 @@ IMPORTED_GNULIB_MODULES="\
     memchr \
     memmem \
     pathmax \
+    rawmemchr \
     readlink \
     rename \
+    signal-h \
+    strchrnul \
     strstr \
     strtok_r \
     sys_stat \
@@ -54,7 +57,7 @@ IMPORTED_GNULIB_MODULES="\
 "
 
 # The gnulib commit ID to use for the update.
-GNULIB_COMMIT_SHA1="8d5bd1402003bd0153984b138735adf537d960b0"
+GNULIB_COMMIT_SHA1="1029a8112290f6eee9d7878a391c49db42c999bd"
 
 # The expected version number for the various auto tools we will
 # use after the import.

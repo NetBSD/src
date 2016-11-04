@@ -56,7 +56,7 @@ static bfd_boolean elf32_vax_print_private_bfd_data (bfd *, void *);
 static reloc_howto_type howto_table[] = {
   HOWTO (R_VAX_NONE,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
 	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
@@ -280,11 +280,19 @@ static reloc_howto_type howto_table[] = {
 };
 
 static void
-rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
-		Elf_Internal_Rela *dst)
+rtype_to_howto (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
-  BFD_ASSERT (ELF32_R_TYPE(dst->r_info) < (unsigned int) R_VAX_max);
-  cache_ptr->howto = &howto_table[ELF32_R_TYPE(dst->r_info)];
+  unsigned int r_type;
+
+  r_type = ELF32_R_TYPE (dst->r_info);
+  if (r_type >= R_VAX_max)
+    {
+      (*_bfd_error_handler) (_("%B: unrecognised VAX reloc number: %d"),
+			     abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      r_type = R_VAX_NONE;
+    }
+  cache_ptr->howto = &howto_table[r_type];
 }
 
 #define elf_info_to_howto rtype_to_howto

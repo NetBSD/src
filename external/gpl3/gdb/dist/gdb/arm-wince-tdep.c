@@ -1,7 +1,7 @@
 /* Target-dependent code for Windows CE running on ARM processors,
    for GDB.
 
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 #include "target.h"
 #include "frame.h"
 
+#include "arch/arm.h"
 #include "arm-tdep.h"
 #include "windows-tdep.h"
 
