@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.9 2016/11/05 01:49:53 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.10 2016/11/05 15:52:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.9 2016/11/05 01:49:53 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.10 2016/11/05 15:52:35 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -512,12 +512,6 @@ ATF_TC_BODY(attach1, tc)
 	const int exitval_tracer = 10;
 	pid_t tracee, tracer, wpid;
 	uint8_t msg = 0xde; /* dummy message for IPC based on pipe(2) */
-
-	/* XXX: Linux&FreeBSD and NetBSD have different behavior here.
-	 * Tracer on NetBSD isn't promoted to observe - before child's parent -
-	 * that tracee exited (and became zombie).
-	 */
-	atf_tc_expect_fail("PR kern/51600");
 
 	printf("Spawn tracee\n");
 	ATF_REQUIRE(pipe(fds_totracee) == 0);
