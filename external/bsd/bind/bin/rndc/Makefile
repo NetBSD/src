@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/12 03:46:06 christos Exp $
+#	$NetBSD: Makefile,v 1.1.28.1 2016/11/05 17:54:06 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ CPPFLAGS+= -I${DIST}/include \
         -DRNDC_CONFFILE=\"${SYSCONFDIR}/rndc.conf\" \
 	-DRNDC_KEYFILE=\"${SYSCONFDIR}/rndc.key\" \
 
+rndc.o: ${VERSIONFILE}
 
 .PATH: ${DIST}
 
