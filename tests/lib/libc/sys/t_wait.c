@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait.c,v 1.4 2016/04/27 21:14:24 christos Exp $ */
+/* $NetBSD: t_wait.c,v 1.5 2016/11/05 21:49:28 kamil Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait.c,v 1.4 2016/04/27 21:14:24 christos Exp $");
+__RCSID("$NetBSD: t_wait.c,v 1.5 2016/11/05 21:49:28 kamil Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -92,12 +92,12 @@ ATF_TC_BODY(wait6_exited, tc)
 
 	switch (pid = fork()) {
 	case -1:
-		ATF_REQUIRE(pid > 0); 
+		ATF_REQUIRE(pid > 0);
 	case 0:
 		exit(0x5a5a5a5a);
 		/*NOTREACHED*/
 	default:
-		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid); 
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid);
 		ATF_REQUIRE(WIFEXITED(st) && WEXITSTATUS(st) == 0x5a);
 		ATF_REQUIRE(si.si_status = 0x5a5a5a5a);
 		ATF_REQUIRE(si.si_pid == pid);
@@ -128,10 +128,10 @@ ATF_TC_BODY(wait6_terminated, tc)
 		sleep(100);
 		/*FALLTHROUGH*/
 	case -1:
-		ATF_REQUIRE(pid > 0); 
+		ATF_REQUIRE(pid > 0);
 	default:
 		ATF_REQUIRE(kill(pid, SIGTERM) == 0);
-		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid); 
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid);
 		ATF_REQUIRE(WIFSIGNALED(st) && WTERMSIG(st) == SIGTERM);
 		ATF_REQUIRE(si.si_status == SIGTERM);
 		ATF_REQUIRE(si.si_pid == pid);
@@ -164,9 +164,9 @@ ATF_TC_BODY(wait6_coredumped, tc)
 		*(char *)8 = 0;
 		/*FALLTHROUGH*/
 	case -1:
-		ATF_REQUIRE(pid > 0); 
+		ATF_REQUIRE(pid > 0);
 	default:
-		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid); 
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid);
 		ATF_REQUIRE(WIFSIGNALED(st) && WTERMSIG(st) == SIGSEGV
 		    && WCOREDUMP(st));
 		ATF_REQUIRE(si.si_status == SIGSEGV);
@@ -194,17 +194,26 @@ ATF_TC_BODY(wait6_stop_and_go, tc)
 	pid_t pid;
 	static const struct rlimit rl = { 0, 0 };
 
+	/*
+	 * WIFCONTINUED()==true always implies WIFSTOPPED()==true in the
+	 * current implementation
+	 */
+	atf_tc_expect_fail("PR standards/51603");
+
 	ATF_REQUIRE(setrlimit(RLIMIT_CORE, &rl) == 0);
 	switch (pid = fork()) {
 	case 0:
 		sleep(100);
 		/*FALLTHROUGH*/
 	case -1:
-		ATF_REQUIRE(pid > 0); 
+		ATF_REQUIRE(pid > 0);
 	default:
 		ATF_REQUIRE(kill(pid, SIGSTOP) == 0);
-		ATF_REQUIRE(wait6(P_PID, pid, &st, WSTOPPED, &wru, &si) == pid); 
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WSTOPPED, &wru, &si) == pid);
+		ATF_REQUIRE(!WIFEXITED(st));
+		ATF_REQUIRE(!WIFSIGNALED(st));
 		ATF_REQUIRE(WIFSTOPPED(st) && WSTOPSIG(st) == SIGSTOP);
+		ATF_REQUIRE(!WIFCONTINUED(st));
 		ATF_REQUIRE(si.si_status == SIGSTOP);
 		ATF_REQUIRE(si.si_pid == pid);
 		ATF_REQUIRE(si.si_uid == getuid());
@@ -213,8 +222,11 @@ ATF_TC_BODY(wait6_stop_and_go, tc)
 		    (uintmax_t)si.si_utime);
 
 		ATF_REQUIRE(kill(pid, SIGCONT) == 0);
-		ATF_REQUIRE(wait6(P_PID, pid, &st, WCONTINUED, &wru, &si) == pid); 
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WCONTINUED, &wru, &si) == pid);
+		ATF_REQUIRE(!WIFEXITED(st));
+		ATF_REQUIRE(!WIFSIGNALED(st));
 		ATF_REQUIRE(WIFCONTINUED(st));
+		ATF_REQUIRE(!WIFSTOPPED(st));
 		ATF_REQUIRE(si.si_status == SIGCONT);
 		ATF_REQUIRE(si.si_pid == pid);
 		ATF_REQUIRE(si.si_uid == getuid());
@@ -223,8 +235,11 @@ ATF_TC_BODY(wait6_stop_and_go, tc)
 		    (uintmax_t)si.si_utime);
 
 		ATF_REQUIRE(kill(pid, SIGQUIT) == 0);
-		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid); 
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid);
+		ATF_REQUIRE(!WIFEXITED(st));
 		ATF_REQUIRE(WIFSIGNALED(st) && WTERMSIG(st) == SIGQUIT);
+		ATF_REQUIRE(!WIFSTOPPED(st));
+		ATF_REQUIRE(!WIFCONTINUED(st));
 		ATF_REQUIRE(si.si_status == SIGQUIT);
 		ATF_REQUIRE(si.si_pid == pid);
 		ATF_REQUIRE(si.si_uid == getuid());
@@ -233,6 +248,75 @@ ATF_TC_BODY(wait6_stop_and_go, tc)
 		    (uintmax_t)si.si_utime);
 		break;
 	}
+}
+
+ATF_TC(wait6_stopgo_loop);
+ATF_TC_HEAD(wait6_stopgo_loop, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test that wait6(2) handled stopped/continued process loop");
+}
+
+ATF_TC_BODY(wait6_stopgo_loop, tc)
+{
+	siginfo_t si;
+	struct wrusage wru;
+	int st;
+	pid_t pid;
+	static const struct rlimit rl = { 0, 0 };
+	size_t N = 100;
+
+	/*
+	 * WIFCONTINUED()==true always implies WIFSTOPPED()==true in the
+	 * current implementation
+	 */
+	atf_tc_expect_fail("PR standards/51603");
+
+	ATF_REQUIRE(setrlimit(RLIMIT_CORE, &rl) == 0);
+	switch (pid = fork()) {
+	case 0:
+		sleep(100);
+		/*FALLTHROUGH*/
+	case -1:
+		ATF_REQUIRE(pid > 0);
+	}
+
+	printf("Before loop of SIGSTOP/SIGCONT sequence %zu times\n", N);
+	while (N --> 0) {
+		ATF_REQUIRE(kill(pid, SIGSTOP) == 0);
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WSTOPPED, &wru, &si) == pid);
+		ATF_REQUIRE(!WIFEXITED(st));
+		ATF_REQUIRE(!WIFSIGNALED(st));
+		ATF_REQUIRE(WIFSTOPPED(st) && WSTOPSIG(st) == SIGSTOP);
+		ATF_REQUIRE(!WIFCONTINUED(st));
+		ATF_REQUIRE(si.si_status == SIGSTOP);
+		ATF_REQUIRE(si.si_pid == pid);
+		ATF_REQUIRE(si.si_uid == getuid());
+		ATF_REQUIRE(si.si_code == CLD_STOPPED);
+
+		ATF_REQUIRE(kill(pid, SIGCONT) == 0);
+		ATF_REQUIRE(wait6(P_PID, pid, &st, WCONTINUED, &wru, &si) == pid);
+		ATF_REQUIRE(!WIFEXITED(st));
+		ATF_REQUIRE(!WIFSIGNALED(st));
+		ATF_REQUIRE(WIFCONTINUED(st));
+		ATF_REQUIRE(!WIFSTOPPED(st));
+		ATF_REQUIRE(si.si_status == SIGCONT);
+		ATF_REQUIRE(si.si_pid == pid);
+		ATF_REQUIRE(si.si_uid == getuid());
+		ATF_REQUIRE(si.si_code == CLD_CONTINUED);
+	}
+	ATF_REQUIRE(kill(pid, SIGQUIT) == 0);
+	ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid);
+	ATF_REQUIRE(!WIFEXITED(st));
+	ATF_REQUIRE(WIFSIGNALED(st) && WTERMSIG(st) == SIGQUIT);
+	ATF_REQUIRE(!WIFSTOPPED(st));
+	ATF_REQUIRE(!WIFCONTINUED(st));
+	ATF_REQUIRE(si.si_status == SIGQUIT);
+	ATF_REQUIRE(si.si_pid == pid);
+	ATF_REQUIRE(si.si_uid == getuid());
+	ATF_REQUIRE(si.si_code == CLD_KILLED);
+	printf("user: %ju system: %ju\n", (uintmax_t)si.si_utime,
+	    (uintmax_t)si.si_utime);
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -244,6 +328,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, wait6_terminated);
 	ATF_TP_ADD_TC(tp, wait6_coredumped);
 	ATF_TP_ADD_TC(tp, wait6_stop_and_go);
+	ATF_TP_ADD_TC(tp, wait6_stopgo_loop);
 
 	return atf_no_error();
 }
