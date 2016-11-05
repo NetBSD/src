@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtoul.3,v 1.35 2016/05/01 21:28:21 joerg Exp $
+.\"	$NetBSD: strtoul.3,v 1.36 2016/11/05 20:57:31 riastradh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -227,10 +227,15 @@ unsigned long ulval;
 
 errno = 0;
 ulval = strtoul(buf, \*[Am]ep, 10);
-if (buf[0] == '\e0' || *ep != '\e0')
+if (ep == buf)
 	goto not_a_number;
-if (errno == ERANGE \*[Am]\*[Am] ulval == ULONG_MAX)
+if (*ep != '\e0')
+	goto trailing_garbage;
+if (errno) {
+	assert(errno == ERANGE);
+	assert(ulval == ULONG_MAX);
 	goto out_of_range;
+}
 .Ed
 .Pp
 This example will accept
