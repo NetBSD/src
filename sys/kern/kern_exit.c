@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.263 2016/11/04 18:14:04 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.264 2016/11/05 02:59:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.263 2016/11/04 18:14:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.264 2016/11/05 02:59:22 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -940,7 +940,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
     struct proc **child_p, struct wrusage *wru, siginfo_t *si)
 {
 	struct proc *child, *dead;
-	int error;
+	int error, nohang;
 
 	KASSERT(mutex_owned(proc_lock));
 
@@ -969,6 +969,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 		idtype = P_PGID;
 	}
 
+	nohang = (options & WNOHANG) != 0;
 	for (;;) {
 		error = ECHILD;
 		dead = NULL;
@@ -1052,10 +1053,9 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 			}
 		}
 
-		if (child != NULL || error != 0 ||
-		    ((options & WNOHANG) != 0 && dead == NULL)) {
+		if (child != NULL || error != 0 || (nohang && dead == NULL)) {
 			*child_p = child;
-			return error;
+			return (nohang && error == ECHILD) ? 0 : error;
 		}
 
 		/*
