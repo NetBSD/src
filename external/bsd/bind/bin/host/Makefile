@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/12 03:46:06 christos Exp $
+#	$NetBSD: Makefile,v 1.1.30.1 2016/11/05 17:47:30 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,8 @@ BINDIR=	/usr/bin
 
 DIST=${IDIST}/bin/dig
 CPPFLAGS+= -I${DIST}/include
+
+host.o: ${VERSIONFILE}
 
 .PATH: ${DIST}
 
