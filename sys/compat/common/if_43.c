@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.12 2016/07/25 08:30:19 ozaki-r Exp $	*/
+/*	$NetBSD: if_43.c,v 1.13 2016/11/05 23:30:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.12 2016/07/25 08:30:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.13 2016/11/05 23:30:22 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.12 2016/07/25 08:30:19 ozaki-r Exp $");
 #include <compat/sys/sockio.h>
 
 #include <compat/common/compat_util.h>
-
+#include <compat/common/if_43.h>
 #include <uvm/uvm_extern.h>
 
 u_long 
@@ -280,3 +280,31 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 
 	return error;
 }
+
+#if defined(COMPAT_43)
+static u_long (*orig_compat_cvtcmd)(u_long);
+static int (*orig_compat_ifioctl)(struct socket *, u_long, u_long,
+    void *, struct lwp *);
+
+void
+if_43_init(void)
+{
+	extern u_long (*vec_compat_cvtcmd)(u_long);
+	extern int (*vec_compat_ifioctl)(struct socket *, u_long, u_long,
+	    void *, struct lwp *);
+
+	orig_compat_cvtcmd = vec_compat_cvtcmd;
+	vec_compat_cvtcmd = compat_cvtcmd;
+
+	orig_compat_ifioctl = vec_compat_ifioctl;
+	vec_compat_ifioctl =  compat_ifioctl;
+}
+
+void
+if_43_fini(void)
+{
+
+	vec_compat_cvtcmd = orig_compat_cvtcmd;
+	vec_compat_ifioctl = orig_compat_ifioctl;
+}
+#endif /* defined(COMPAT_43) */

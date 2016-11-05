@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.360 2016/10/28 05:52:05 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.361 2016/11/05 23:30:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.360 2016/10/28 05:52:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.361 2016/11/05 23:30:22 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -226,6 +226,25 @@ static void sysctl_percpuq_setup(struct sysctllog **, const char *,
 #if defined(INET) || defined(INET6)
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
 #endif
+
+/*
+ * Pointer to stub or real compat_cvtcmd() depending on presence of
+ * the compat module
+ */
+u_long stub_compat_cvtcmd(u_long);
+u_long (*vec_compat_cvtcmd)(u_long) = stub_compat_cvtcmd;
+
+/* Similarly, pointer to compat_ifioctl() if it is present */
+
+int (*vec_compat_ifioctl)(struct socket *, u_long, u_long, void *,
+	struct lwp *) = NULL;
+
+/* The stub version of compat_cvtcmd() */
+u_long stub_compat_cvtcmd(u_long cmd)
+{
+
+	return cmd;
+}
 
 static int
 if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -2769,7 +2788,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 
 #ifdef COMPAT_OIFREQ
-	cmd = compat_cvtcmd(cmd);
+	cmd = (*vec_compat_cvtcmd)(cmd);
 	if (cmd != ocmd) {
 		oifr = data;
 		data = ifr = &ifrb;
@@ -2866,11 +2885,12 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		error = EOPNOTSUPP;
 	else {
 #ifdef COMPAT_OSOCK
-		error = compat_ifioctl(so, ocmd, cmd, data, l);
-#else
-		error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
-		    cmd, data, ifp);
+		if (vec_compat_ifioctl != NULL)
+			error = (*vec_compat_ifioctl)(so, ocmd, cmd, data, l);
+		else
 #endif
+			error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
+			    cmd, data, ifp);
 	}
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
@@ -3015,7 +3035,7 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 	struct ifreq ifrb;
 	struct oifreq *oifr = NULL;
 	u_long ocmd = cmd;
-	cmd = compat_cvtcmd(cmd);
+	cmd = (*vec_compat_cvtcmd)(cmd);
 	if (cmd != ocmd) {
 		oifr = (struct oifreq *)(void *)ifr;
 		ifr = &ifrb;
