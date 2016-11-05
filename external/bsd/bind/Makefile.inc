@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21.2.1.2.1 2016/10/14 11:42:26 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.21.2.1.2.2 2016/11/05 17:47:30 martin Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -29,7 +29,8 @@ IDIST=		${NETBSDSRCDIR}/external/bsd/bind/dist
 BIND_SRCDIR=	${NETBSDSRCDIR}/external/bsd/bind
 BIND_HTMLDIR=	/usr/share/doc/reference/ref8/bind9
 
-.include "${IDIST}/version"
+VERSIONFILE=${IDIST}/version
+.include "${VERSIONFILE}"
 
 VERSION=${MAJORVER}.${MINORVER}.${PATCHVER}${RELEASETYPE}${RELEASEVER}
 SYSCONFDIR=/etc
