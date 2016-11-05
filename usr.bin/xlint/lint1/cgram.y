@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.80 2016/08/19 10:58:15 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.81 2016/11/05 01:09:30 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.80 2016/08/19 10:58:15 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.81 2016/11/05 01:09:30 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -163,6 +163,7 @@ anonymize(sym_t *s)
 %token			T_ELLIPSE
 %token			T_REAL
 %token			T_IMAG
+%token			T_GENERIC
 
 /* storage classes (extern, static, auto, register and typedef) */
 %token	<y_scl>		T_SCLASS
@@ -289,6 +290,7 @@ anonymize(sym_t *s)
 %type	<y_tnode>	expr_stmnt_val
 %type	<y_tnode>	expr_stmnt_list
 %type	<y_tnode>	term
+%type	<y_tnode>	generic_expr
 %type	<y_tnode>	func_arg_list
 %type	<y_op>		point_or_arrow
 %type	<y_type>	type_name
@@ -1539,6 +1541,22 @@ switch_expr:
 	  }
 	;
 
+association:
+	  type_name T_COLON expr
+	| T_DEFAULT T_COLON expr 
+	;
+
+association_list:
+	  association
+	| association_list T_COMMA association
+	;
+
+generic_expr:
+	  T_GENERIC T_LPARN expr T_COMMA association_list T_RPARN {
+		$$ = $3;
+	  }
+	;
+
 do_stmnt:
 	  do stmnt {
 		CLRWFLGS(__FILE__, __LINE__);
@@ -1728,6 +1746,9 @@ expr:
 		$$ = build(COMMA, $1, $3);
 	  }
 	| term {
+		$$ = $1;
+	  }
+	| generic_expr {
 		$$ = $1;
 	  }
 	;
