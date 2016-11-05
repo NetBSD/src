@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.2 2016/11/01 20:43:39 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.3 2016/11/05 17:48:23 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -33,4 +33,74 @@ sys/arch/alpha/stand/common/prom.c		1.15
 	Match the two prom_getenv() and fix buffer overflow causing
 	wrong host controller SCSI ID for DEC 3000.
 	[flxd, ticket #1269]
+
+doc/3RDPARTY					1.1374 via patch
+external/bsd/bind/Makefile.inc                  up to 1.24 via patch
+external/bsd/bind/bin/delv/Makefile             up to 1.3
+external/bsd/bind/bin/dig/Makefile              up to 1.2
+external/bsd/bind/bin/dnssec/Makefile.inc       up to 1.2
+external/bsd/bind/bin/host/Makefile             up to 1.2
+external/bsd/bind/bin/named/Makefile            up to 1.10
+external/bsd/bind/bin/nslookup/Makefile         up to 1.3
+external/bsd/bind/bin/nsupdate/Makefile         up to 1.3
+external/bsd/bind/bin/rndc/Makefile             up to 1.2
+external/bsd/bind/bin/tools/Makefile.inc        up to 1.2
+external/bsd/bind/dist/CHANGES                  up to 1.23
+external/bsd/bind/dist/README                   up to 1.11
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch01.html up to 1.1.1.21
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch02.html up to 1.1.1.18
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch03.html up to 1.1.1.23
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch04.html up to 1.11
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch05.html up to 1.1.1.24
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch06.html up to 1.11
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch07.html up to 1.11
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch08.html up to 1.11
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch09.html up to 1.11
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch10.html up to 1.1.1.20
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch11.html up to 1.1.1.9
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch12.html up to 1.1.1.9
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch13.html up to 1.1.1.9
+external/bsd/bind/dist/doc/arm/Bv9ARM.html      up to 1.11
+external/bsd/bind/dist/doc/arm/Bv9ARM.pdf       up to 1.17
+external/bsd/bind/dist/doc/arm/man.arpaname.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.ddns-confgen.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.delv.html    up to 1.11
+external/bsd/bind/dist/doc/arm/man.dig.html     up to 1.11
+external/bsd/bind/dist/doc/arm/man.dnssec-checkds.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.dnssec-coverage.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.dnssec-dsfromkey.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.dnssec-importkey.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.dnssec-keyfromlabel.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.dnssec-keygen.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.dnssec-revoke.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.dnssec-settime.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.dnssec-signzone.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.dnssec-verify.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.genrandom.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.host.html    up to 1.11
+external/bsd/bind/dist/doc/arm/man.isc-hmac-fixup.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.lwresd.html  up to 1.1.1.3
+external/bsd/bind/dist/doc/arm/man.named-checkconf.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.named-checkzone.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.named-journalprint.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.named-rrchecker.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.named.conf.html up to 1.1.1.3
+external/bsd/bind/dist/doc/arm/man.named.html   up to 1.11
+external/bsd/bind/dist/doc/arm/man.nsec3hash.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.nsupdate.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.rndc-confgen.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.rndc.conf.html up to 1.11
+external/bsd/bind/dist/doc/arm/man.rndc.html    up to 1.11
+external/bsd/bind/dist/doc/arm/notes.html       up to 1.1.1.9
+external/bsd/bind/dist/doc/arm/notes.pdf        up to 1.1.1.9
+external/bsd/bind/dist/doc/arm/notes.xml        up to 1.1.1.9
+external/bsd/bind/dist/lib/dns/api              up to 1.11
+external/bsd/bind/dist/lib/dns/resolver.c       up to 1.27
+external/bsd/bind/dist/srcid                    up to 1.17
+external/bsd/bind/dist/version                  up to 1.21
+external/bsd/bind/include/isc/platform.h        up to 1.22 via patch
+external/bsd/bind/lib/libbind9/Makefile         up to 1.3
+
+	Update BIND to 9.10.4-P4.  Fixes CVE-2016-8864.
+	[snj, ticket #1271]
 
