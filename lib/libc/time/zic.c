@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.65 2016/11/04 19:41:53 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.66 2016/11/05 22:21:48 kre Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.65 2016/11/04 19:41:53 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.66 2016/11/05 22:21:48 kre Exp $");
 #endif /* !defined lint */
 
 #include "private.h"
@@ -453,9 +453,13 @@ growalloc(void *ptr, size_t itemsize, ptrdiff_t nitems, ptrdiff_t *nitems_alloc)
 		return ptr;
 	else {
 #define IMAX (INT_MAX < SIZE_MAX ? INT_MAX : (int)SIZE_MAX)
+#if 0
 		ptrdiff_t nitems_max = PTRDIFF_MAX - WORK_AROUND_QTBUG_53071;
 		ptrdiff_t amax = nitems_max < (ptrdiff_t)SIZE_MAX ?
 		    nitems_max : (ptrdiff_t)SIZE_MAX;
+#endif
+		int nitems_max = IMAX - WORK_AROUND_QTBUG_53071;
+		int amax = nitems_max < IMAX ? nitems_max : IMAX;
 		if ((amax - 1) / 3 * 2 < *nitems_alloc)
 			memory_exhausted(_("integer overflow"));
 		*nitems_alloc += (*nitems_alloc >> 1) + 1;
