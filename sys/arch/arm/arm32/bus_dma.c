@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.95 2016/06/18 16:51:44 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.96 2016/11/05 14:26:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.95 2016/06/18 16:51:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.96 2016/11/05 14:26:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1086,9 +1086,13 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #else
 	const int post_ops = 0;
 #endif
-	if (!bouncing && pre_ops == 0 && post_ops == BUS_DMASYNC_POSTWRITE) {
-		STAT_INCR(sync_postwrite);
-		return;
+	if (!bouncing) {
+		if (pre_ops == 0 && post_ops == BUS_DMASYNC_POSTWRITE) {
+			STAT_INCR(sync_postwrite);
+			return;
+		} else if (pre_ops == 0 && post_ops == 0) {
+			return;
+		}
 	}
 	KASSERTMSG(bouncing || pre_ops != 0 || (post_ops & BUS_DMASYNC_POSTREAD),
 	    "pre_ops %#x post_ops %#x", pre_ops, post_ops);
