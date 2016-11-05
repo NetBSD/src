@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.48 2016/11/04 19:41:53 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.49 2016/11/05 01:08:58 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -541,7 +541,7 @@ time_t time2posix_z(timezone_t __restrict, time_t) ATTRIBUTE_PURE;
 /* The minimum and maximum finite time values.  This implementation
    assumes no padding if time_t is signed and either the compiler is
    pre-C11 or time_t is not one of the standard signed integer types.  */
-#if (201112 <= __STDC_VERSION__) && !defined(__lint__)
+#if 201112 <= __STDC_VERSION__
 static time_t const time_t_min
   = (TYPE_SIGNED(time_t)
      ? _Generic((time_t) 0,
