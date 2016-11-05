@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59 2016/11/03 22:23:03 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.60 2016/11/05 23:30:22 pgoyette Exp $
 
 LIB=		compat
 NOPIC=		# defined
@@ -10,9 +10,6 @@ CPPFLAGS=	${COMPATCPPFLAGS} ${SKIP_AUTODEP::=}
 
 # Common compatibility code, used by all emulations
 SRCS=	compat_exec.c compat_util.c
-
-# Compatability code for 4.3BSD 
-SRCS+=	if_43.c
 
 # Include compatability code common to libcompat and the compat module
 
