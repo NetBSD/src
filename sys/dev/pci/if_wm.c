@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.437 2016/11/02 10:14:04 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.438 2016/11/06 02:38:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.437 2016/11/02 10:14:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.438 2016/11/06 02:38:25 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1133,16 +1133,16 @@ static const struct wm_product {
 	  "Intel i82801H LAN Controller",
 	  WM_T_ICH8,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_IFE_LAN,
-	  "Intel i82801H (IFE) LAN Controller",
+	  "Intel i82801H (IFE) 10/100 LAN Controller",
 	  WM_T_ICH8,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_M_LAN,
 	  "Intel i82801H (M) LAN Controller",
 	  WM_T_ICH8,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_IFE_GT,
-	  "Intel i82801H IFE (GT) LAN Controller",
+	  "Intel i82801H IFE (GT) 10/100 LAN Controller",
 	  WM_T_ICH8,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_IFE_G,
-	  "Intel i82801H IFE (G) LAN Controller",
+	  "Intel i82801H IFE (G) 10/100 LAN Controller",
 	  WM_T_ICH8,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_82567V_3,
 	  "82567V-3 LAN Controller",
@@ -1151,13 +1151,13 @@ static const struct wm_product {
 	  "82801I (AMT) LAN Controller",
 	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IFE,
-	  "82801I LAN Controller",
+	  "82801I 10/100 LAN Controller",
 	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IFE_G,
-	  "82801I (G) LAN Controller",
+	  "82801I (G) 10/100 LAN Controller",
 	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IFE_GT,
-	  "82801I (GT) LAN Controller",
+	  "82801I (GT) 10/100 LAN Controller",
 	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_C,
 	  "82801I (C) LAN Controller",
