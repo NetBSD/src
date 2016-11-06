@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.51 2016/06/10 13:27:14 ozaki-r Exp $ */
+/* $NetBSD: if_msk.c,v 1.52 2016/11/06 21:51:31 christos Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.51 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.52 2016/11/06 21:51:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,7 +624,7 @@ out:
 		}
 	}
 
-	return (error);
+	return error;
 }
 
 /*
@@ -688,29 +688,53 @@ msk_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 int
 msk_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct sk_if_softc *sc_if = ifp->if_softc;
-	int s, error = 0;
+	struct sk_if_softc *sc = ifp->if_softc;
+	int s, error;
 
 	s = splnet();
 
 	DPRINTFN(2, ("msk_ioctl ETHER\n"));
-	error = ether_ioctl(ifp, cmd, data);
+	switch (cmd) {
+	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 
-	if (error == ENETRESET) {
-		error = 0;
-		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
-			;
-		else if (ifp->if_flags & IFF_RUNNING) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
-			 */
-			msk_setmulti(sc_if);
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
+		case IFF_RUNNING:
+			msk_stop(ifp, 1);
+			break;
+		case IFF_UP:
+			msk_init(ifp);
+			break;
+		case IFF_UP | IFF_RUNNING:
+			if ((ifp->if_flags ^ sc->sk_if_flags) == IFF_PROMISC) {
+				msk_setpromisc(sc);
+				msk_setmulti(sc);
+			} else
+				msk_init(ifp);
+			break;
 		}
+		sc->sk_if_flags = ifp->if_flags;
+		break;
+	default:
+		error = ether_ioctl(ifp, cmd, data);
+		if (error == ENETRESET) {
+			error = 0;
+			if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+				;
+			else if (ifp->if_flags & IFF_RUNNING) {
+				/*
+				 * Multicast list has changed; set the hardware
+				 * filter accordingly.
+				 */
+				msk_setmulti(sc);
+			}
+		}
+		break;
 	}
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 void
