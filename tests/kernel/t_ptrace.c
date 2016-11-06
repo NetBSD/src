@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.11 2016/11/06 16:24:16 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.12 2016/11/06 21:47:53 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.11 2016/11/06 16:24:16 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.12 2016/11/06 21:47:53 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -641,13 +641,12 @@ ATF_TC_HEAD(attach_pid1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Assert that a debugger cannot attach to PID 1 (as non-root)");
+
+	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
 
 ATF_TC_BODY(attach_pid1, tc)
 {
-	if (getuid() == 0)
-		atf_tc_skip("Test must be run as non-root");
-
 	errno = 0;
 	ATF_REQUIRE(ptrace(PT_ATTACH, 1, NULL, 0) == -1);
 	ATF_REQUIRE(errno == EPERM);
