@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.10 2016/11/05 15:52:35 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.11 2016/11/06 16:24:16 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.10 2016/11/05 15:52:35 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.11 2016/11/06 16:24:16 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -622,6 +622,37 @@ ATF_TC_BODY(attach1, tc)
 	ATF_REQUIRE(close(fds_totracer[1]) == 0);
 }
 
+ATF_TC(attach_pid0);
+ATF_TC_HEAD(attach_pid0, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that a debugger cannot attach to PID 0");
+}
+
+ATF_TC_BODY(attach_pid0, tc)
+{
+	errno = 0;
+	ATF_REQUIRE(ptrace(PT_ATTACH, 0, NULL, 0) == -1);
+	ATF_REQUIRE(errno == EPERM);
+}
+
+ATF_TC(attach_pid1);
+ATF_TC_HEAD(attach_pid1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that a debugger cannot attach to PID 1 (as non-root)");
+}
+
+ATF_TC_BODY(attach_pid1, tc)
+{
+	if (getuid() == 0)
+		atf_tc_skip("Test must be run as non-root");
+
+	errno = 0;
+	ATF_REQUIRE(ptrace(PT_ATTACH, 1, NULL, 0) == -1);
+	ATF_REQUIRE(errno == EPERM);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, traceme1);
@@ -629,6 +660,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, traceme3);
 	ATF_TP_ADD_TC(tp, traceme4);
 	ATF_TP_ADD_TC(tp, attach1);
+	ATF_TP_ADD_TC(tp, attach_pid0);
+	ATF_TP_ADD_TC(tp, attach_pid1);
 
 	return atf_no_error();
 }
