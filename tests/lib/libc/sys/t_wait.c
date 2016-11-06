@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait.c,v 1.6 2016/11/06 02:28:57 kamil Exp $ */
+/* $NetBSD: t_wait.c,v 1.7 2016/11/06 15:04:14 kamil Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait.c,v 1.6 2016/11/06 02:28:57 kamil Exp $");
+__RCSID("$NetBSD: t_wait.c,v 1.7 2016/11/06 15:04:14 kamil Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -58,22 +58,6 @@ ATF_TC_BODY(wait6_invalid, tc)
 	int st;
 	ATF_REQUIRE(wait6(P_ALL, 0, &st, 0, &wru, &si) == -1
 	    && errno == EINVAL);
-}
-
-ATF_TC(wait6_noproc);
-ATF_TC_HEAD(wait6_noproc, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Test that wait6(2) returns ECHILD with for no processes");
-}
-
-ATF_TC_BODY(wait6_noproc, tc)
-{
-	siginfo_t si;
-	struct wrusage wru;
-	int st;
-	ATF_REQUIRE(wait6(P_ALL, 0, &st, WEXITED, &wru, &si) == -1
-	    && errno == ECHILD);
 }
 
 ATF_TC(wait6_exited);
@@ -311,7 +295,6 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, wait6_invalid);
-	ATF_TP_ADD_TC(tp, wait6_noproc);
 	ATF_TP_ADD_TC(tp, wait6_exited);
 	ATF_TP_ADD_TC(tp, wait6_terminated);
 	ATF_TP_ADD_TC(tp, wait6_coredumped);
