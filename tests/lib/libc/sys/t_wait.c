@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait.c,v 1.5 2016/11/05 21:49:28 kamil Exp $ */
+/* $NetBSD: t_wait.c,v 1.6 2016/11/06 02:28:57 kamil Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait.c,v 1.5 2016/11/05 21:49:28 kamil Exp $");
+__RCSID("$NetBSD: t_wait.c,v 1.6 2016/11/06 02:28:57 kamil Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -194,12 +194,6 @@ ATF_TC_BODY(wait6_stop_and_go, tc)
 	pid_t pid;
 	static const struct rlimit rl = { 0, 0 };
 
-	/*
-	 * WIFCONTINUED()==true always implies WIFSTOPPED()==true in the
-	 * current implementation
-	 */
-	atf_tc_expect_fail("PR standards/51603");
-
 	ATF_REQUIRE(setrlimit(RLIMIT_CORE, &rl) == 0);
 	switch (pid = fork()) {
 	case 0:
@@ -265,12 +259,6 @@ ATF_TC_BODY(wait6_stopgo_loop, tc)
 	pid_t pid;
 	static const struct rlimit rl = { 0, 0 };
 	size_t N = 100;
-
-	/*
-	 * WIFCONTINUED()==true always implies WIFSTOPPED()==true in the
-	 * current implementation
-	 */
-	atf_tc_expect_fail("PR standards/51603");
 
 	ATF_REQUIRE(setrlimit(RLIMIT_CORE, &rl) == 0);
 	switch (pid = fork()) {
