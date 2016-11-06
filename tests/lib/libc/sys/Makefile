@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.43 2016/07/30 11:03:54 njoly Exp $
+# $NetBSD: Makefile,v 1.44 2016/11/06 15:04:14 kamil Exp $
 
 MKMAN=	no
 
@@ -67,6 +67,8 @@ TESTS_C+=		t_ucontext
 TESTS_C+=		t_umask
 TESTS_C+=		t_unlink
 TESTS_C+=		t_wait
+TESTS_C+=		t_wait_noproc
+TESTS_C+=		t_wait_noproc_wnohang
 TESTS_C+=		t_write
 
 SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT}
