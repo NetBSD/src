@@ -1,4 +1,4 @@
-/*	$NetBSD: t_compat.c,v 1.2 2016/11/07 02:59:29 pgoyette Exp $	*/
+/*	$NetBSD: t_compat.c,v 1.3 2016/11/07 21:46:21 pgoyette Exp $	*/
 
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -65,7 +65,7 @@ ATF_TC_BODY(OOSIOCGIFBRDADDR, tc)
 	sprintf(ifreq.ifr_name, "shmif%d", ifnum);
 	netcfg_rump_if(ifreq.ifr_name, "1.7.64.10", "255.255.0.0");
 
-	atf_tc_expect_fail("rump does not include COMPAT_43");
+	atf_tc_expect_fail("PR kern/51610: rump does not include COMPAT_43\n");
 
 	/* query kernel for iface bcast */
         RL(fd = rump_sys_socket(AF_INET, SOCK_DGRAM, 0));
