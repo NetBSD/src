@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6_lifetime.sh,v 1.4 2016/10/02 15:27:32 kre Exp $
+#	$NetBSD: t_ipv6_lifetime.sh,v 1.5 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,7 +31,7 @@ INET6SERVER="$INET6SERVER -lrumpnet_netinet6 -lrumpnet_shmif"
 SOCK=unix://sock
 BUS=./bus
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 deprecated="[Dd][Ee][Pp][Rr][Ee][Cc][Aa][Tt][Ee][Dd]"
 
