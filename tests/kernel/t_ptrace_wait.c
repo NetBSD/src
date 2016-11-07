@@ -1,0 +1,694 @@
+/*	$NetBSD: t_ptrace_wait.c,v 1.1 2016/11/07 21:09:03 kamil Exp $	*/
+
+/*-
+ * Copyright (c) 2016 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.1 2016/11/07 21:09:03 kamil Exp $");
+
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/ptrace.h>
+#include <sys/resource.h>
+#include <sys/sysctl.h>
+#include <sys/wait.h>
+#include <err.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
+#include <unistd.h>
+
+#include <atf-c.h>
+
+#include "../h_macros.h"
+
+/* Detect plain wait(2) use-case */
+#if !defined(TWAIT_WAITPID) && \
+    !defined(TWAIT_WAITID) && \
+    !defined(TWAIT_WAIT3) && \
+    !defined(TWAIT_WAIT4) && \
+    !defined(TWAIT_WAIT6)
+#define TWAIT_WAIT
+#endif
+
+/*
+ * There are two classes of wait(2)-like functions:
+ * - wait4(2)-like accepting pid_t, optional options parameter, struct rusage*
+ * - wait6(2)-like accepting idtype_t, id_t, struct wrusage, mandatory options
+ *
+ * The TWAIT_FNAME value is to be used for convenience in debug messages.
+ *
+ * The TWAIT_GENERIC() macro is designed to reuse the same unmodified
+ * code with as many wait(2)-like functions as possible.
+ *
+ * In a common use-case wait4(2) and wait6(2)-like function can work the almost
+ * the same way, however there are few important differences:
+ * wait6(2) must specify P_PID for idtype to match wpid from wait4(2).
+ * To behave like wait4(2), wait6(2) the 'options' to wait must include
+ * WEXITED|WTRUNCATED.
+ *
+ * There are two helper macros (they purpose it to mach more than one
+ * wait(2)-like function):
+ * The TWAIT_HAVE_STATUS - specifies whether a function can retrieve
+ *                         status (as integer value).
+ * The TWAIT_HAVE_PID    - specifies whether a function can request
+ *                         exact process identifier
+ * The TWAIT_HAVE_RUSAGE - specifies whether a function can request
+ *                         the struct rusage value
+ * 
+ */
+
+#if defined(TWAIT_WAIT)
+#	define TWAIT_FNAME			"wait"
+#	define TWAIT_WAIT4TYPE(a,b,c,d)		wait((b))
+#	define TWAIT_GENERIC(a,b,c)		wait((b))
+#	define TWAIT_HAVE_STATUS		1
+#elif defined(TWAIT_WAITPID)
+#	define TWAIT_FNAME			"waitpid"
+#	define TWAIT_WAIT4TYPE(a,b,c,d)		waitpid((a),(b),(c))
+#	define TWAIT_GENERIC(a,b,c)		waitpid((a),(b),(c))
+#	define TWAIT_HAVE_PID			1
+#	define TWAIT_HAVE_STATUS		1
+#elif defined(TWAIT_WAITID)
+#	define TWAIT_FNAME			"waitid"
+#	define TWAIT_GENERIC(a,b,c)		\
+		waitid(P_PID,(a),NULL,(c)|WEXITED|WTRAPPED)
+#	define TWAIT_WAIT6TYPE(a,b,c,d,e,f)	waitid((a),(b),(f),(d))
+#	define TWAIT_HAVE_PID			1
+#elif defined(TWAIT_WAIT3)
+#	define TWAIT_FNAME			"wait3"
+#	define TWAIT_WAIT4TYPE(a,b,c,d)		wait3((b),(c),(d))
+#	define TWAIT_GENERIC(a,b,c)		wait3((b),(c),NULL)
+#	define TWAIT_HAVE_STATUS		1
+#	define TWAIT_HAVE_RUSAGE		1
+#elif defined(TWAIT_WAIT4)
+#	define TWAIT_FNAME			"wait4"
+#	define TWAIT_WAIT4TYPE(a,b,c,d)		wait4((a),(b),(c),(d))
+#	define TWAIT_GENERIC(a,b,c)		wait4((a),(b),(c),NULL)
+#	define TWAIT_HAVE_PID			1
+#	define TWAIT_HAVE_STATUS		1
+#	define TWAIT_HAVE_RUSAGE		1
+#elif defined(TWAIT_WAIT6)
+#	define TWAIT_FNAME			"wait6"
+#	define TWAIT_WAIT6TYPE(a,b,c,d,e,f)	wait6((a),(b),(c),(d),(e),(f))
+#	define TWAIT_GENERIC(a,b,c)		\
+		wait6(P_PID,(a),(b),(c)|WEXITED|WTRAPPED,NULL,NULL)
+#	define TWAIT_HAVE_PID			1
+#	define TWAIT_HAVE_STATUS		1
+#endif
+
+/*
+ * There are 3 groups of tests:
+ * - TWAIT_GENERIC()	(wait, wait2, waitpid, wait3, wait4, wait6)
+ * - TWAIT_WAIT4TYPE()	(wait2, waitpid, wait3, wait4)
+ * - TWAIT_WAIT6TYPE()	(waitid, wait6)
+ *
+ * Tests only in the above categories are allowed. However some tests are not
+ * possible in the context requested functionality to be verified, therefore
+ * there are helper macros:
+ * - TWAIT_HAVE_PID	(wait2, waitpid, waitid, wait4, wait6)
+ * - TWAIT_HAVE_STATUS	(wait, wait2, waitpid, wait3, wait4, wait6)
+ * - TWAIT_HAVE_RUSAGE	(wait3, wait4)
+ * - TWAIT_HAVE_RETPID	(wait, wait2, waitpid, wait3, wait4, wait6)
+ *
+ * If there is an intention to test e.g. wait6(2) specific features in the
+ * ptrace(2) context, find the most matching group and with #ifdefs reduce
+ * functionality of less featured than wait6(2) interface (TWAIT_WAIT6TYPE).
+ *
+ * For clarity never use negative preprocessor checks, like:
+ *     #if !defined(TWAIT_WAIT4)
+ * always refer to checks for positive values.
+ */
+
+/*
+ * A child process cannot call atf functions and expect them to magically
+ * work like in the parent.
+ * The printf(3) messaging from a child will not work out of the box as well
+ * without estabilishing a communication protocol with its parent. To not
+ * overcomplicate the tests - do not log from a child and use err(3)/errx(3)
+ * wrapped with FORKEE_ASSERT()/FORKEE_ASSERTX() as that is guaranteed to work.
+ */
+#define FORKEE_ASSERTX(x)							\
+do {										\
+	int ret = (x);								\
+	if (!ret)								\
+		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",	\
+		     __FILE__, __LINE__, __func__, #x);				\
+} while (0)
+
+#define FORKEE_ASSERT(x)							\
+do {										\
+	int ret = (x);								\
+	if (!ret)								\
+		err(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",	\
+		     __FILE__, __LINE__, __func__, #x);				\
+} while (0)
+
+/*
+ * If waitid(2) returns because one or more processes have a state change to
+ * report, 0 is returned.  If an error is detected, a value of -1 is returned
+ * and errno is set to indicate the error. If WNOHANG is specified and there
+ * are no stopped, continued or exited children, 0 is returned.
+ */
+#if defined(TWAIT_WAITID)
+#define TWAIT_REQUIRE_SUCCESS(a,b)	ATF_REQUIRE((a) == 0)
+#define TWAIT_REQUIRE_FAILURE(a,b)	ATF_REQUIRE_ERRNO((a),(b) == -1)
+#define FORKEE_REQUIRE_SUCCESS(a,b)	FORKEE_ASSERTX((a) == 0)
+#define FORKEE_REQUIRE_FAILURE(a,b)	\
+	FORKEE_ASSERTX(((a) == errno) && ((b) == -1))
+#else
+#define TWAIT_REQUIRE_SUCCESS(a,b)	ATF_REQUIRE((a) == (b))
+#define TWAIT_REQUIRE_FAILURE(a,b)	ATF_REQUIRE_ERRNO((a),(b) == -1)
+#define FORKEE_REQUIRE_SUCCESS(a,b)	FORKEE_ASSERTX((a) == (b))
+#define FORKEE_REQUIRE_FAILURE(a,b)	\
+	FORKEE_ASSERTX(((a) == errno) && ((b) == -1))
+#endif
+
+/*
+ * Helper tools to verify whether status reports exited value
+ */
+#if TWAIT_HAVE_STATUS
+static void __used
+validate_status_exited(int status, int expected)
+{
+        ATF_REQUIRE_MSG(WIFEXITED(status), "Reported exited process");
+        ATF_REQUIRE_MSG(!WIFCONTINUED(status), "Reported continued process");
+        ATF_REQUIRE_MSG(!WIFSIGNALED(status), "Reported signaled process");
+        ATF_REQUIRE_MSG(!WIFSTOPPED(status), "Reported stopped process");
+
+	ATF_REQUIRE_EQ_MSG(WEXITSTATUS(status), expected,
+	    "The process has exited with invalid value");
+}
+
+static void __used
+forkee_status_exited(int status, int expected)
+{
+	FORKEE_ASSERTX(WIFEXITED(status));
+	FORKEE_ASSERTX(!WIFCONTINUED(status));
+	FORKEE_ASSERTX(!WIFSIGNALED(status));
+	FORKEE_ASSERTX(!WIFSTOPPED(status));
+
+	FORKEE_ASSERTX(WEXITSTATUS(status) == expected);
+}
+
+static void __used
+validate_status_continued(int status)
+{
+	ATF_REQUIRE_MSG(!WIFEXITED(status), "Reported exited process");
+	ATF_REQUIRE_MSG(WIFCONTINUED(status), "Reported continued process");
+	ATF_REQUIRE_MSG(!WIFSIGNALED(status), "Reported signaled process");
+	ATF_REQUIRE_MSG(!WIFSTOPPED(status), "Reported stopped process");
+}
+
+static void __used
+forkee_status_continued(int status)
+{
+	FORKEE_ASSERTX(!WIFEXITED(status));
+	FORKEE_ASSERTX(WIFCONTINUED(status));
+	FORKEE_ASSERTX(!WIFSIGNALED(status));
+	FORKEE_ASSERTX(!WIFSTOPPED(status));
+}
+
+static void __used
+validate_status_signaled(int status, int expected_termsig, int expected_core)
+{
+	ATF_REQUIRE_MSG(!WIFEXITED(status), "Reported exited process");
+	ATF_REQUIRE_MSG(!WIFCONTINUED(status), "Reported continued process");
+	ATF_REQUIRE_MSG(WIFSIGNALED(status), "Reported signaled process");
+	ATF_REQUIRE_MSG(!WIFSTOPPED(status), "Reported stopped process");
+
+	ATF_REQUIRE_EQ_MSG(WTERMSIG(status), expected_termsig,
+	    "Unexpected signal received");
+
+	ATF_REQUIRE_EQ_MSG(WCOREDUMP(status), expected_core,
+	    "Unexpectedly core file %s generated", expected_core ? "not" : "");
+}
+
+static void __used
+forkee_status_signaled(int status, int expected_termsig, int expected_core)
+{
+	FORKEE_ASSERTX(!WIFEXITED(status));
+	FORKEE_ASSERTX(!WIFCONTINUED(status));
+	FORKEE_ASSERTX(WIFSIGNALED(status));
+	FORKEE_ASSERTX(!WIFSTOPPED(status));
+
+	FORKEE_ASSERTX(WTERMSIG(status) == expected_termsig);
+	FORKEE_ASSERTX(WCOREDUMP(status) == expected_core);
+}
+
+static void __used
+validate_status_stopped(int status, int expected)
+{
+	ATF_REQUIRE_MSG(!WIFEXITED(status), "Reported exited process");
+	ATF_REQUIRE_MSG(!WIFCONTINUED(status), "Reported continued process");
+	ATF_REQUIRE_MSG(!WIFSIGNALED(status), "Reported signaled process");
+	ATF_REQUIRE_MSG(WIFSTOPPED(status), "Reported stopped process");
+
+	ATF_REQUIRE_EQ_MSG(WSTOPSIG(status), expected,
+	    "Unexpected stop signal received");
+}
+
+static void __used
+forkee_status_stopped(int status, int expected)
+{
+	FORKEE_ASSERTX(!WIFEXITED(status));
+	FORKEE_ASSERTX(!WIFCONTINUED(status));
+	FORKEE_ASSERTX(!WIFSIGNALED(status));
+	FORKEE_ASSERTX(WIFSTOPPED(status));
+
+	FORKEE_ASSERTX(WSTOPSIG(status) == expected);
+}
+#else
+#define validate_status_exited(a,b)
+#define forkee_status_exited(a,b)
+#define validate_status_continued(a,b)
+#define forkee_status_continued(a,b)
+#define validate_status_signaled(a,b,c)
+#define forkee_status_signaled(a,b,c)
+#define validate_status_stopped(a,b)
+#define forkee_status_stopped(a,b)
+#endif
+
+#if defined(TWAIT_HAVE_PID)
+/* This function is currently designed to be run in the main/parent process */
+static void
+await_zombie(pid_t process)
+{
+	struct kinfo_proc2 p;
+	size_t len = sizeof(p);
+
+	const int name[] = {
+		[0] = CTL_KERN,
+		[1] = KERN_PROC2,
+		[2] = KERN_PROC_PID,
+		[3] = process,
+		[4] = sizeof(p),
+		[5] = 1
+	};
+
+	const size_t namelen = __arraycount(name);
+
+	/* Await the process becoming a zombie */
+	while(1) {
+		ATF_REQUIRE(sysctl(name, namelen, &p, &len, NULL, 0) == 0);
+
+		if (p.p_stat == LSZOMB)
+			break;
+
+		ATF_REQUIRE(usleep(1000) == 0);
+	}
+}
+#endif
+
+ATF_TC(traceme1);
+ATF_TC_HEAD(traceme1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify SIGSTOP followed by _exit(2) in a child");
+}
+
+ATF_TC_BODY(traceme1, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());fflush(stdout);
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));fflush(stdout);
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");fflush(stdout);
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+ATF_TC(traceme2);
+ATF_TC_HEAD(traceme2, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify SIGSTOP followed by _exit(2) in a child");
+}
+
+static int traceme2_caught = 0;
+
+static void
+traceme2_sighandler(int sig)
+{
+	FORKEE_ASSERTX(sig == SIGINT);
+
+	++traceme2_caught;
+}
+
+ATF_TC_BODY(traceme2, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP, sigsent = SIGINT;
+	pid_t child, wpid;
+	struct sigaction sa;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		sa.sa_handler = traceme2_sighandler;
+		sa.sa_flags = SA_SIGINFO;
+		sigemptyset(&sa.sa_mask);
+
+		FORKEE_ASSERT(sigaction(sigsent, &sa, NULL) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		FORKEE_ASSERTX(traceme2_caught == 1);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Before resuming the child process where it left off and with "
+	    "signal %s to be sent\n", strsignal(sigsent));
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the exited child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+ATF_TC(traceme3);
+ATF_TC_HEAD(traceme3, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify SIGSTOP followed by termination by a signal in a child");
+}
+
+ATF_TC_BODY(traceme3, tc)
+{
+	const int sigval = SIGSTOP, sigsent = SIGINT /* Without core-dump */;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		/* NOTREACHED */
+		FORKEE_ASSERTX(0 &&
+		    "Child should be terminated by a signal from its parent");
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Before resuming the child process where it left off and with "
+	    "signal %s to be sent\n", strsignal(sigsent));
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_signaled(status, sigsent, 0);
+
+	printf("Before calling %s() for the exited child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+ATF_TC(traceme4);
+ATF_TC_HEAD(traceme4, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify SIGSTOP followed by SIGCONT and _exit(2) in a child");
+}
+
+ATF_TC_BODY(traceme4, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP, sigsent = SIGCONT;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before raising %s from child\n", strsignal(sigsent));
+		FORKEE_ASSERT(raise(sigsent) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(),child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigsent);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the exited child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(attach1);
+ATF_TC_HEAD(attach1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that tracer sees process termination before the parent");
+}
+
+ATF_TC_BODY(attach1, tc)
+{
+	int fds_totracee[2], fds_totracer[2], fds_fromtracer[2];
+	int rv;
+	const int exitval_tracee = 5;
+	const int exitval_tracer = 10;
+	pid_t tracee, tracer, wpid;
+	uint8_t msg = 0xde; /* dummy message for IPC based on pipe(2) */
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	printf("Spawn tracee\n");
+	ATF_REQUIRE(pipe(fds_totracee) == 0);
+	tracee = atf_utils_fork();
+	if (tracee == 0) {
+		FORKEE_ASSERT(close(fds_totracee[1]) == 0);
+
+		/* Wait for message from the parent */
+		rv = read(fds_totracee[0], &msg, sizeof(msg));
+		FORKEE_ASSERT(rv == sizeof(msg));
+
+		_exit(exitval_tracee);
+	}
+	ATF_REQUIRE(close(fds_totracee[0]) == 0);
+
+	printf("Spawn debugger\n");
+	ATF_REQUIRE(pipe(fds_totracer) == 0);
+	ATF_REQUIRE(pipe(fds_fromtracer) == 0);
+	tracer = atf_utils_fork();
+	if (tracer == 0) {
+		/* No IPC to communicate with the child */
+		FORKEE_ASSERT(close(fds_totracee[1]) == 0);
+
+		FORKEE_ASSERT(close(fds_totracer[1]) == 0);
+		FORKEE_ASSERT(close(fds_fromtracer[0]) == 0);
+
+		printf("Before calling PT_ATTACH from tracee %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
+
+		/* Wait for tracee and assert that it was stopped w/ SIGSTOP */
+		FORKEE_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
+
+		forkee_status_stopped(status, SIGSTOP);
+
+		/* Resume tracee with PT_CONTINUE */
+		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
+
+		/* Inform parent that tracer has attached to tracee */
+		rv = write(fds_fromtracer[1], &msg, sizeof(msg));
+		FORKEE_ASSERT(rv == sizeof(msg));
+
+		/* Wait for parent */
+		rv = read(fds_totracer[0], &msg, sizeof(msg));
+		FORKEE_ASSERT(rv == sizeof(msg));
+
+		/* Wait for tracee and assert that it exited */
+		FORKEE_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
+
+		forkee_status_exited(status, exitval_tracee);
+
+		printf("Before exiting of the tracer process\n");
+		_exit(exitval_tracer);
+	}
+	ATF_REQUIRE(close(fds_totracer[0]) == 0);
+	ATF_REQUIRE(close(fds_fromtracer[1]) == 0);
+
+	printf("Wait for the tracer to attach to the tracee\n");
+	rv = read(fds_fromtracer[0], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == sizeof(msg));
+
+	printf("Resume the tracee and let it exit\n");
+	rv = write(fds_totracee[1], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == sizeof(msg));
+
+	printf("fds_totracee is no longer needed - close it\n");
+	ATF_REQUIRE(close(fds_totracee[1]) == 0);
+
+	printf("Detect that tracee is zombie\n");
+	await_zombie(tracee);
+
+	printf("Assert that there is no status about tracee - "
+	    "Tracer must detect zombie first - calling %s()\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(
+	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
+
+	printf("Resume the tracer and let it detect exited tracee\n");
+	rv = write(fds_totracer[1], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == sizeof(msg));
+
+	printf("Wait for tracer to finish its job and exit - calling %s()\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracer, &status, 0),
+	    tracer);
+
+	validate_status_exited(status, exitval_tracer);
+
+	printf("Wait for tracee to finish its job and exit - calling %s()\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
+	    tracee);
+
+	validate_status_exited(status, exitval_tracee);
+
+	printf("fds_fromtracer is no longer needed - close it\n");
+	ATF_REQUIRE(close(fds_fromtracer[0]) == 0);
+
+	printf("fds_totracer is no longer needed - close it\n");
+	ATF_REQUIRE(close(fds_totracer[1]) == 0);
+}
+#endif
+
+ATF_TP_ADD_TCS(tp)
+{
+	ATF_TP_ADD_TC(tp, traceme1);
+	ATF_TP_ADD_TC(tp, traceme2);
+	ATF_TP_ADD_TC(tp, traceme3);
+	ATF_TP_ADD_TC(tp, traceme4);
+
+#if defined(TWAIT_HAVE_PID)
+	ATF_TP_ADD_TC(tp, attach1);
+#endif
+
+#if defined(TWAIT_WAIT4TYPE)
+	/* TODO */
+#endif
+
+#if defined(TWAIT_WAIT6TYPE)
+	/* TODO */
+#endif
+
+	return atf_no_error();
+}
