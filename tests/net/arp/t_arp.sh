@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.17 2016/08/23 16:03:45 christos Exp $
+#	$NetBSD: t_arp.sh,v 1.18 2016/11/07 05:25:36 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,7 +36,7 @@ IP4DST=10.0.1.2
 IP4DST_PROXYARP1=10.0.1.3
 IP4DST_PROXYARP2=10.0.1.4
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 TIMEOUT=1
 
 atf_test_case arp_cache_expiration_5s cleanup

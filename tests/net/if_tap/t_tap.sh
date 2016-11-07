@@ -1,4 +1,4 @@
-#	$NetBSD: t_tap.sh,v 1.3 2016/08/10 22:42:21 kre Exp $
+#	$NetBSD: t_tap.sh,v 1.4 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -39,7 +39,7 @@ IP6_LOCAL=fc00::1
 IP6_TAP=fc00::2
 IP6_REMOTE=fc00::3
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 TIMEOUT=1
 
 atf_test_case tap_create_destroy cleanup

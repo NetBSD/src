@@ -1,4 +1,4 @@
-#	$NetBSD: t_route.sh,v 1.7 2016/08/10 23:00:39 roy Exp $
+#	$NetBSD: t_route.sh,v 1.8 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -49,7 +49,7 @@ IP6DST=fc00:0:0:2::2
 BUS_SRCGW=bus1
 BUS_DSTGW=bus2
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 TIMEOUT=1
 PING_OPTS="-n -c 1 -w $TIMEOUT"
 
