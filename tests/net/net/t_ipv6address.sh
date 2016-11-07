@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6address.sh,v 1.9 2016/10/03 17:59:27 kre Exp $
+#	$NetBSD: t_ipv6address.sh,v 1.10 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@ BUS2=bus2
 BUSSRC=bus_src
 BUSDST=bus_dst
 
-DEBUG=true
+DEBUG=${DEBUG:-true}
 TIMEOUT=3
 
 atf_test_case linklocal cleanup

@@ -1,4 +1,4 @@
-#	$NetBSD: t_icmp_redirect.sh,v 1.3 2016/08/10 22:17:44 kre Exp $
+#	$NetBSD: t_icmp_redirect.sh,v 1.4 2016/11/07 05:25:36 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,7 +36,7 @@ BUS=bus1
 BUS2=bus2
 REDIRECT_TIMEOUT=5
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 atf_test_case icmp_redirect_timeout cleanup
 

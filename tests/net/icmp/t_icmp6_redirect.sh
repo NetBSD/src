@@ -1,4 +1,4 @@
-#	$NetBSD: t_icmp6_redirect.sh,v 1.4 2016/10/20 09:51:15 ozaki-r Exp $
+#	$NetBSD: t_icmp6_redirect.sh,v 1.5 2016/11/07 05:25:36 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -44,7 +44,7 @@ IP6IF0_GW2=fc00:1::3
 
 REDIRECT_TIMEOUT=5
 
-DEBUG=true
+DEBUG=${DEBUG:-true}
 
 get_lladdr()
 {

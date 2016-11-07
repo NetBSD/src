@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.8 2016/10/04 03:41:33 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.9 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@ HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
 SOCKLOCAL=unix://commsock1
 SOCKPEER=unix://commsock2
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 duplicated="[Dd][Uu][Pp][Ll][Ii][Cc][Aa][Tt][Ee][Dd]"
 

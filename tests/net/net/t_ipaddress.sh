@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipaddress.sh,v 1.4 2016/10/04 03:43:15 ozaki-r Exp $
+#	$NetBSD: t_ipaddress.sh,v 1.5 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@ SERVER6="$SERVER -lrumpnet_netinet6"
 SOCK_LOCAL=unix://commsock1
 BUS=bus
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 check_entry()
 {

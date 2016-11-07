@@ -1,4 +1,4 @@
-#	$NetBSD: t_ping6_opts.sh,v 1.2 2016/11/07 04:43:14 ozaki-r Exp $
+#	$NetBSD: t_ping6_opts.sh,v 1.3 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@ BUS_DSTGW=bus2
 IP6SRC2=fc00:0:0:1::3
 IP6SRCGW2=fc00:0:0:1::254
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 TIMEOUT=1
 
 #

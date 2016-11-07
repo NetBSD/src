@@ -1,4 +1,4 @@
-#	$NetBSD: t_tun.sh,v 1.3 2016/10/01 20:18:06 kre Exp $
+#	$NetBSD: t_tun.sh,v 1.4 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -34,7 +34,7 @@ SOCK_REMOTE=unix://commsock2
 IP_LOCAL=10.0.0.1
 IP_REMOTE=10.0.0.2
 
-DEBUG=true
+DEBUG=${DEBUG:-true}
 
 atf_test_case tun_create_destroy cleanup
 tun_create_destroy_head()
