@@ -1,4 +1,4 @@
-#	$NetBSD: t_mtudisc.sh,v 1.2 2016/10/06 02:44:48 kre Exp $
+#	$NetBSD: t_mtudisc.sh,v 1.3 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -36,7 +36,7 @@ SOCKREMOTE=unix://commsock3
 HTTPD_PID=httpd.pid
 HTML_FILE=index.html
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 atf_test_case mtudisc_basic cleanup
 

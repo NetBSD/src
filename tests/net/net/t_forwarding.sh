@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.15 2016/08/10 21:33:52 kre Exp $
+#	$NetBSD: t_forwarding.sh,v 1.16 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,7 +43,7 @@ IP6DST=fc00:0:0:2::2
 HTTPD_PID=httpd.pid
 HTML_FILE=index.html
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 TIMEOUT=5
 
 atf_test_case ipforwarding_v4 cleanup
