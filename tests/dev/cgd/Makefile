@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2016/11/06 21:29:54 alnsn Exp $
+#	$NetBSD: Makefile,v 1.5 2016/11/07 16:33:37 scole Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ FILESDIR=	${TESTSDIR}
 
 TESTS_SH=	t_cgd
 
-.if ${MKCRYPTO} != "no"
+.if ${MKCRYPTO} == "yes" && ${MKRUMP} == "yes"
 TESTS_C=	t_cgd_aes
 
 WARNS=	4
