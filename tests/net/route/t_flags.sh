@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.11 2016/08/10 23:00:39 roy Exp $
+#	$NetBSD: t_flags.sh,v 1.12 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,7 @@ SOCK_GW=unix://commsock3
 BUS=bus1
 BUS2=bus2
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 setup_local()
 {
