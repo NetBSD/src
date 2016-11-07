@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags6.sh,v 1.8 2016/08/16 10:34:12 roy Exp $
+#	$NetBSD: t_flags6.sh,v 1.9 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@ BUS2=bus2
 IP6_LOCAL=fc00::2
 IP6_PEER=fc00::1
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 setup_local()
 {

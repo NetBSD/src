@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.9 2016/10/27 09:59:17 knakahara Exp $
+#	$NetBSD: t_pppoe.sh,v 1.10 2016/11/07 05:25:36 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -42,7 +42,7 @@ SECRET=oink
 BUS=bus0
 TIMEOUT=3
 WAITTIME=5
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 setup()
 {

@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.8 2016/09/14 16:00:10 christos Exp $
+#	$NetBSD: t_dad.sh,v 1.9 2016/11/07 05:25:36 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,7 +32,7 @@ HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
 SOCKLOCAL=unix://commsock1
 SOCKPEER=unix://commsock2
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 atf_test_case dad_basic cleanup
 atf_test_case dad_duplicated cleanup

@@ -1,4 +1,4 @@
-#	$NetBSD: t_mcast.sh,v 1.2 2016/08/10 22:45:39 kre Exp $
+#	$NetBSD: t_mcast.sh,v 1.3 2016/11/07 05:25:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@ netserver="$netserver -lrumpnet_netinet -lrumpnet_netinet6 -lrumpnet_shmif"
 netserver="$netserver -lrumpdev"
 export RUMP_SERVER=unix://commsock
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 run_test()
 {
