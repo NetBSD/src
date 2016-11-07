@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cgd_aes.c,v 1.1 2016/11/06 10:54:42 alnsn Exp $	*/
+/*	$NetBSD: t_cgd_aes.c,v 1.2 2016/11/07 18:11:45 alnsn Exp $	*/
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * Copyright (c) 2007 The Institute of Electrical and Electronics Engineers, Inc
@@ -1232,7 +1232,7 @@ open_disk(const char *devpath, const char *imgpath, size_t size)
 {
 	int fd;
 
-	fd = open(imgpath, O_CREAT | O_RDWR | O_EXCL, 0600);
+	fd = open(imgpath, O_CREAT | O_RDWR | O_TRUNC, 0600);
 	if (fd < 0)
 		return -1;
 
@@ -1352,7 +1352,7 @@ ATF_TC_HEAD(cgd_aes_xts_256, tc)
 
 ATF_TC_BODY(cgd_aes_xts_256, tc)
 {
-	char imgpath[] = "aes-xts-256.XXXXXX";
+	const char imgpath[] = "aes-xts-256.img";
 	const char *dkpath = "/dev/dk";
 	const size_t dksize = 256 * SECSIZE; /* Last blkno is 0xff. */
 	int dkfd, cgdfd;
@@ -1361,7 +1361,6 @@ ATF_TC_BODY(cgd_aes_xts_256, tc)
 
 	rump_init();
 
-	mktemp(imgpath);
 	RL(dkfd = open_disk(dkpath, imgpath, dksize));
 
 	RL(cgdfd = open_cgd(0));
@@ -1407,7 +1406,7 @@ ATF_TC_HEAD(cgd_aes_xts_512, tc)
 
 ATF_TC_BODY(cgd_aes_xts_512, tc)
 {
-	char imgpath[] = "aes-xts-512.XXXXXX";
+	const char imgpath[] = "aes-xts-512.img";
 	const char *dkpath = "/dev/dk";
 	const size_t dksize = 65536 * SECSIZE; /* Last blkno is 0xffff. */
 	int dkfd, cgdfd;
@@ -1416,7 +1415,6 @@ ATF_TC_BODY(cgd_aes_xts_512, tc)
 
 	rump_init();
 
-	mktemp(imgpath);
 	RL(dkfd = open_disk(dkpath, imgpath, dksize));
 
 	RL(cgdfd = open_cgd(0));
