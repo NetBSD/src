@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtod.3,v 1.28 2016/11/07 21:51:42 riastradh Exp $
+.\"	$NetBSD: strtod.3,v 1.29 2016/11/07 21:52:36 riastradh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -213,7 +213,7 @@ if (errno) {
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er ERANGE
-The value is too large or small in magnitude to be represented.
+The conversion resulted in floating-point underflow or overflow.
 .El
 .Sh SEE ALSO
 .Xr atof 3 ,
