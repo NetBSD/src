@@ -1,4 +1,4 @@
-#	$NetBSD: t_ping6_opts.sh,v 1.3 2016/11/07 05:25:37 ozaki-r Exp $
+#	$NetBSD: t_ping6_opts.sh,v 1.4 2016/11/07 05:44:48 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -398,6 +398,23 @@ ping6_opts_hops_body()
 	    $IP6SRCGW2 $IP6DST
 	check_echo_request_pkt_with_macaddr_and_rthdr0 \
 	    $my_macaddr $gw_shmif2_macaddr $IP6SRC $IP6SRCGW2 $IP6DST
+
+	# ping6 -g <gateway> hops
+	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
+	    -g $IP6SRCGW $IP6SRCGW $IP6DST
+	check_echo_request_pkt_with_macaddr_and_rthdr0 \
+	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6SRCGW $IP6DST
+
+	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
+	    -g $IP6SRCGW2 $IP6SRCGW2 $IP6DST
+	check_echo_request_pkt_with_macaddr_and_rthdr0 \
+	    $my_macaddr $gw_shmif2_macaddr $IP6SRC $IP6SRCGW2 $IP6DST
+
+	# ping6 -g <gateway> hops, but different nexthops (is it valid?)
+	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
+	    -g $IP6SRCGW $IP6SRCGW2 $IP6DST
+	check_echo_request_pkt_with_macaddr_and_rthdr0 \
+	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6SRCGW2 $IP6DST
 }
 
 ping6_opts_hops_cleanup()
