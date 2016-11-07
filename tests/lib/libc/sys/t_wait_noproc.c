@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait_noproc.c,v 1.1 2016/11/06 15:03:30 kamil Exp $ */
+/* $NetBSD: t_wait_noproc.c,v 1.2 2016/11/07 02:23:43 kamil Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait_noproc.c,v 1.1 2016/11/06 15:03:30 kamil Exp $");
+__RCSID("$NetBSD: t_wait_noproc.c,v 1.2 2016/11/07 02:23:43 kamil Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -94,7 +94,6 @@ ATF_TC_BODY(waitid, tc)
 	ATF_REQUIRE(errno == ECHILD);
 }
 
-#if TWAIT_OPTION == 0
 ATF_TC(wait3);
 ATF_TC_HEAD(wait3, tc)
 {
@@ -104,11 +103,14 @@ ATF_TC_HEAD(wait3, tc)
 
 ATF_TC_BODY(wait3, tc)
 {
+#if TWAIT_OPTION
+	/* wait4() (and friends) with WNOHANG and no children does not error */
+	atf_tc_expect_fail("PR standards/51606");
+#endif
 	errno = 0;
-	ATF_REQUIRE(wait3(NULL, 0, NULL) == -1);
+	ATF_REQUIRE(wait3(NULL, TWAIT_OPTION, NULL) == -1);
 	ATF_REQUIRE(errno == ECHILD);
 }
-#endif
 
 ATF_TC(wait4);
 ATF_TC_HEAD(wait4, tc)
@@ -156,9 +158,7 @@ ATF_TP_ADD_TCS(tp)
 #endif
 	ATF_TP_ADD_TC(tp, waitpid);
 	ATF_TP_ADD_TC(tp, waitid);
-#if TWAIT_OPTION == 0
 	ATF_TP_ADD_TC(tp, wait3);
-#endif
 	ATF_TP_ADD_TC(tp, wait4);
 	ATF_TP_ADD_TC(tp, wait6);
 
