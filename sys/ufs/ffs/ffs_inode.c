@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.118 2016/10/28 20:38:12 jdolecek Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.119 2016/11/07 21:05:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.118 2016/10/28 20:38:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.119 2016/11/07 21:05:38 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -675,11 +675,11 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	 * Recursively free blocks on the now last partial indirect block.
 	 */
 	if (level > SINGLE && lastbn >= 0) {
-		nb = RBAP(ip, last);
+		last = lastbn % factor;
+		nb = RBAP(ip, i);
 		if (nb != 0) {
 			error = ffs_indirtrunc(ip, nlbn, FFS_FSBTODB(fs, nb),
-					       lastbn % factor, level - 1,
-					       countp);
+					       last, level - 1, countp);
 			if (error)
 				goto out;
 		}
