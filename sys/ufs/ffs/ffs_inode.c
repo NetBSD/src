@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.119 2016/11/07 21:05:38 jdolecek Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.120 2016/11/07 21:14:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.119 2016/11/07 21:05:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.120 2016/11/07 21:14:23 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -686,7 +686,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	}
 
 out:
-	if (RBAP(ip, 0) == 0) {
+	if (lastbn < 0 && error == 0) {
 		/* all freed, release without writing back */
 		brelse(bp, BC_INVAL);
 	} else {
