@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.29 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.30 2016/11/07 15:30:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.29 2016/05/09 21:46:56 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.30 2016/11/07 15:30:18 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: hist.c,v 1.29 2016/05/09 21:46:56 christos Exp $");
  */
 #include <stdlib.h>
 #include <string.h>
+#include <vis.h>
 
 #include "el.h"
 
@@ -166,11 +167,32 @@ hist_command(EditLine *el, int argc, const wchar_t **argv)
 		return -1;
 
 	if (argc == 1 || wcscmp(argv[1], L"list") == 0) {
+		size_t maxlen = 0;
+		char *buf = NULL;
+		int hno = 1;
 		 /* List history entries */
 
-		for (str = HIST_LAST(el); str != NULL; str = HIST_PREV(el))
-			(void) fprintf(el->el_outfile, "%d %s",
-			    el->el_history.ev.num, ct_encode_string(str, &el->el_scratch));
+		for (str = HIST_LAST(el); str != NULL; str = HIST_PREV(el)) {
+			char *ptr =
+			    ct_encode_string(str, &el->el_scratch);
+			size_t len = strlen(ptr);
+			if (len > 0 && ptr[len - 1] == '\n') 
+				ptr[--len] = '\0';
+			len = len * 4 + 1;
+			if (len >= maxlen) {
+				maxlen = len + 1024;
+				char *nbuf = el_realloc(buf, maxlen);
+				if (nbuf == NULL) {
+					el_free(buf);
+					return -1;
+				}
+				buf = nbuf;
+			}
+			strvis(buf, ptr, VIS_NL);
+			(void) fprintf(el->el_outfile, "%d\t%s\n",
+			    hno++, buf);
+		}
+		el_free(buf);
 		return 0;
 	}
 
