@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.27 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: fileassoc.9,v 1.28 2016/11/08 02:43:29 pgoyette Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,12 +25,12 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 26, 2010
+.Dd November 7, 2016
 .Dt FILEASSOC 9
 .Os
 .Sh NAME
 .Nm fileassoc
-.Nd in-kernel, file-system independent, file-meta data association
+.Nd in-kernel, file system independent, file meta-data association
 .Sh SYNOPSIS
 .In sys/fileassoc.h
 .Ft int
@@ -56,12 +56,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-KPI allows association of meta-data with files independent of file-system
+KPI allows association of meta-data with files independent of file system
 support for such elaborate meta-data.
 .Pp
 When plugging a new fileassoc to the system, a developer can specify private
 data to be associated with every file, as well as (potentially different)
-private data to be associated with every file-system mount.
+private data to be associated with every file system mount.
 .Pp
 For example, a developer might choose to associate a custom ACL with every
 file, and a count of total files with ACLs with the mount.
@@ -88,7 +88,7 @@ KPI it is important to keep in mind that the interface provides memory
 management only for
 .Nm
 internal memory.
-Any additional memory stored in the tables (such as private data-structures
+Any additional memory stored in the tables (such as private data structures
 used by custom fileassocs) should be allocated and freed by the developer.
 .Pp
 .Nm
@@ -172,7 +172,7 @@ from
 .Pp
 If specified, the fileassoc's
 .Dq cleanup routine
-will be called with a pointer to the private data-structure.
+will be called with a pointer to the private data structure.
 .Pp
 .It Fn fileassoc_table_run "mp" "id" "cb" "cookie"
 For each entry for
@@ -225,7 +225,7 @@ for the fileassoc specified by
 .Pp
 If specified, the fileassoc's
 .Dq cleanup routine
-will be called with a pointer to the private data-structure and indication of
+will be called with a pointer to the private data structure and indication of
 .Dv FILEASSOC_CLEANUP_FILE .
 .El
 .Sh EXAMPLES
@@ -334,6 +334,8 @@ The
 .Nm
 is implemented within
 .Pa src/sys/kern/kern_fileassoc.c .
+.Sh SEE ALSO
+.Xr veriexec 9
 .Sh HISTORY
 The
 .Nm
