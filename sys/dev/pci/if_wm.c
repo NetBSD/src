@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.440 2016/11/08 09:38:36 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.441 2016/11/08 10:37:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.440 2016/11/08 09:38:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.441 2016/11/08 10:37:40 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8840,7 +8840,7 @@ wm_access_phy_wakeup_reg_bm(device_t self, int offset, int16_t *val, int rd)
 {
 	struct wm_softc *sc = device_private(self);
 	uint16_t regnum = BM_PHY_REG_NUM(offset);
-	uint16_t wuce;
+	uint16_t wuce, reg;
 
 	DPRINTF(WM_DEBUG_GMII, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
@@ -8849,19 +8849,30 @@ wm_access_phy_wakeup_reg_bm(device_t self, int offset, int16_t *val, int rd)
 		/* XXX e1000 driver do nothing... why? */
 	}
 
+	/*
+	 * 1) Enable PHY wakeup register first.
+	 * See e1000_enable_phy_wakeup_reg_access_bm().
+	 */
+
 	/* Set page 769 */
 	wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
 	    BM_WUC_ENABLE_PAGE << BME1000_PAGE_SHIFT);
 
+	/* Read WUCE and save it */
 	wuce = wm_gmii_mdic_readreg(self, 1, BM_WUC_ENABLE_REG);
 
-	wuce &= ~BM_WUC_HOST_WU_BIT;
-	wm_gmii_mdic_writereg(self, 1, BM_WUC_ENABLE_REG,
-	    wuce | BM_WUC_ENABLE_BIT);
+	reg = wuce | BM_WUC_ENABLE_BIT;
+	reg &= ~(BM_WUC_ME_WU_BIT | BM_WUC_HOST_WU_BIT);
+	wm_gmii_mdic_writereg(self, 1, BM_WUC_ENABLE_REG, reg);
 
 	/* Select page 800 */
 	wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
 	    BM_WUC_PAGE << BME1000_PAGE_SHIFT);
+
+	/*
+	 * 2) Access PHY wakeup register.
+	 * See e1000_access_phy_wakeup_reg_bm.
+	 */
 
 	/* Write page 800 */
 	wm_gmii_mdic_writereg(self, 1, BM_WUC_ADDRESS_OPCODE, regnum);
@@ -8871,6 +8882,10 @@ wm_access_phy_wakeup_reg_bm(device_t self, int offset, int16_t *val, int rd)
 	else
 		wm_gmii_mdic_writereg(self, 1, BM_WUC_DATA_OPCODE, *val);
 
+	/*
+	 * 3) Disable PHY wakeup register.
+	 * See e1000_disable_phy_wakeup_reg_access_bm().
+	 */
 	/* Set page 769 */
 	wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
 	    BM_WUC_ENABLE_PAGE << BME1000_PAGE_SHIFT);

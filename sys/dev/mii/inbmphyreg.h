@@ -1,4 +1,4 @@
-/*	$NetBSD: inbmphyreg.h,v 1.7 2016/10/28 05:50:18 msaitoh Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.8 2016/11/08 10:37:39 msaitoh Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
 All rights reserved.
@@ -111,5 +111,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define	BM_WUC_ENABLE_REG	17
 #define	BM_WUC_ENABLE_BIT	(1 << 2)
 #define	BM_WUC_HOST_WU_BIT	(1 << 4)
+#define	BM_WUC_ME_WU_BIT	(1 << 5)
 
 #endif /* _DEV_MII_INBMPHYREG_H_ */
