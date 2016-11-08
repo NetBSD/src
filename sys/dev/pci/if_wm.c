@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.439 2016/11/08 08:54:30 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.440 2016/11/08 09:38:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.439 2016/11/08 08:54:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.440 2016/11/08 09:38:36 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8373,9 +8373,6 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 			sc->sc_phytype = WMPHY_IGP_3;
 
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
-
-		printf("XXX OUI = %08x, model = %04x, rev = %04x\n",
-		    child->mii_mpd_oui, child->mii_mpd_model, child->mii_mpd_rev);
 	}
 }
 
