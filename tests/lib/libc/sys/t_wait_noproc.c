@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait_noproc.c,v 1.2 2016/11/07 02:23:43 kamil Exp $ */
+/* $NetBSD: t_wait_noproc.c,v 1.3 2016/11/08 15:21:34 kamil Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait_noproc.c,v 1.2 2016/11/07 02:23:43 kamil Exp $");
+__RCSID("$NetBSD: t_wait_noproc.c,v 1.3 2016/11/08 15:21:34 kamil Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -50,9 +50,7 @@ ATF_TC_HEAD(wait, tc)
 
 ATF_TC_BODY(wait, tc)
 {
-	errno = 0;
-	ATF_REQUIRE(wait(NULL) == -1);
-	ATF_REQUIRE(errno == ECHILD);
+	ATF_REQUIRE_ERRNO(ECHILD, wait(NULL) == -1);
 }
 #endif
 
@@ -70,9 +68,7 @@ ATF_TC_BODY(waitpid, tc)
 	/* wait4() (and friends) with WNOHANG and no children does not error */
 	atf_tc_expect_fail("PR standards/51606");
 #endif
-	errno = 0;
-	ATF_REQUIRE(waitpid(WAIT_ANY, NULL, TWAIT_OPTION) == -1);
-	ATF_REQUIRE(errno == ECHILD);
+	ATF_REQUIRE_ERRNO(ECHILD, waitpid(WAIT_ANY, NULL, TWAIT_OPTION) == -1);
 }
 
 ATF_TC(waitid);
@@ -89,9 +85,8 @@ ATF_TC_BODY(waitid, tc)
 	/* wait4() (and friends) with WNOHANG and no children does not error */
 	atf_tc_expect_fail("PR standards/51606");
 #endif
-	errno = 0;
-	ATF_REQUIRE(waitid(P_ALL, 0, NULL, WEXITED | TWAIT_OPTION) == -1);
-	ATF_REQUIRE(errno == ECHILD);
+	ATF_REQUIRE_ERRNO(ECHILD,
+	    waitid(P_ALL, 0, NULL, WEXITED | TWAIT_OPTION) == -1);
 }
 
 ATF_TC(wait3);
@@ -107,9 +102,7 @@ ATF_TC_BODY(wait3, tc)
 	/* wait4() (and friends) with WNOHANG and no children does not error */
 	atf_tc_expect_fail("PR standards/51606");
 #endif
-	errno = 0;
-	ATF_REQUIRE(wait3(NULL, TWAIT_OPTION, NULL) == -1);
-	ATF_REQUIRE(errno == ECHILD);
+	ATF_REQUIRE_ERRNO(ECHILD, wait3(NULL, TWAIT_OPTION, NULL) == -1);
 }
 
 ATF_TC(wait4);
@@ -126,9 +119,8 @@ ATF_TC_BODY(wait4, tc)
 	/* wait4() (and friends) with WNOHANG and no children does not error */
 	atf_tc_expect_fail("PR standards/51606");
 #endif
-	errno = 0;
-	ATF_REQUIRE(wait4(WAIT_ANY, NULL, TWAIT_OPTION, NULL) == -1);
-	ATF_REQUIRE(errno == ECHILD);
+	ATF_REQUIRE_ERRNO(ECHILD,
+	    wait4(WAIT_ANY, NULL, TWAIT_OPTION, NULL) == -1);
 }
 
 ATF_TC(wait6);
@@ -145,9 +137,8 @@ ATF_TC_BODY(wait6, tc)
 	/* wait4() (and friends) with WNOHANG and no children does not error */
 	atf_tc_expect_fail("PR standards/51606");
 #endif
-	errno = 0;
-	ATF_REQUIRE(wait6(P_ALL, 0, NULL, WEXITED | TWAIT_OPTION, NULL, NULL) == -1);
-	ATF_REQUIRE(errno == ECHILD);
+	ATF_REQUIRE_ERRNO(ECHILD,
+	    wait6(P_ALL, 0, NULL, WEXITED | TWAIT_OPTION, NULL, NULL) == -1);
 }
 
 ATF_TP_ADD_TCS(tp)
