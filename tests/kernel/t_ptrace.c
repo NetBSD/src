@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.13 2016/11/07 21:09:03 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.14 2016/11/08 11:21:41 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,19 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.13 2016/11/07 21:09:03 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.14 2016/11/08 11:21:41 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
-#include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <err.h>
 #include <errno.h>
-#include <signal.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 #include <atf-c.h>
@@ -97,10 +92,23 @@ ATF_TC_BODY(attach_pid1, tc)
 	ATF_REQUIRE_ERRNO(EPERM, ptrace(PT_ATTACH, 1, NULL, 0) == -1);
 }
 
+ATF_TC(attach_self);
+ATF_TC_HEAD(attach_self, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that a debugger cannot attach to self (as it's nonsense)");
+}
+
+ATF_TC_BODY(attach_self, tc)
+{
+	ATF_REQUIRE_ERRNO(EINVAL, ptrace(PT_ATTACH, getpid(), NULL, 0) == -1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, attach_pid0);
 	ATF_TP_ADD_TC(tp, attach_pid1);
+	ATF_TP_ADD_TC(tp, attach_self);
 
 	return atf_no_error();
 }
