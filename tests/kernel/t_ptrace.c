@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.14 2016/11/08 11:21:41 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.15 2016/11/08 14:49:04 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,12 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.14 2016/11/08 11:21:41 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.15 2016/11/08 14:49:04 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
-#include <sys/wait.h>
+#include <sys/stat.h>
 #include <err.h>
 #include <errno.h>
 #include <unistd.h>
@@ -104,11 +104,76 @@ ATF_TC_BODY(attach_self, tc)
 	ATF_REQUIRE_ERRNO(EINVAL, ptrace(PT_ATTACH, getpid(), NULL, 0) == -1);
 }
 
+ATF_TC(attach_chroot);
+ATF_TC_HEAD(attach_chroot, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that a debugger cannot trace another process unless the "
+	    "process's root directory is at or below the tracing process's "
+	    "root");
+
+	atf_tc_set_md_var(tc, "require.user", "root");
+}                    
+
+ATF_TC_BODY(attach_chroot, tc)
+{
+	char buf[PATH_MAX];
+	pid_t child;
+	int fds_toparent[2], fds_fromparent[2];
+	int rv;
+	uint8_t msg = 0xde; /* dummy message for IPC based on pipe(2) */
+
+	(void)memset(buf, '\0', sizeof(buf));
+	ATF_REQUIRE(getcwd(buf, sizeof(buf)) != NULL);
+	(void)strlcat(buf, "/dir", sizeof(buf));
+
+	ATF_REQUIRE(mkdir(buf, 0500) == 0);
+	ATF_REQUIRE(chdir(buf) == 0);
+
+	ATF_REQUIRE(pipe(fds_toparent) == 0);
+	ATF_REQUIRE(pipe(fds_fromparent) == 0);
+	child = atf_utils_fork();
+	if (child == 0) {
+		FORKEE_ASSERT(close(fds_toparent[0]) == 0);
+		FORKEE_ASSERT(close(fds_fromparent[1]) == 0);
+
+		FORKEE_ASSERT(chroot(buf) == 0);
+
+		rv = write(fds_toparent[1], &msg, sizeof(msg));
+		FORKEE_ASSERTX(rv == sizeof(msg));
+
+		ATF_REQUIRE_ERRNO(EPERM,
+			ptrace(PT_ATTACH, getppid(), NULL, 0) == -1);
+
+		rv = read(fds_fromparent[0], &msg, sizeof(msg));
+		FORKEE_ASSERTX(rv == sizeof(msg));
+
+		_exit(0);
+	}
+	ATF_REQUIRE(close(fds_toparent[1]) == 0);
+	ATF_REQUIRE(close(fds_fromparent[0]) == 0);
+
+	printf("Waiting for chrooting of the child PID %d", child);
+	rv = read(fds_toparent[0], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == sizeof(msg)); 
+
+	printf("Child is ready, it will try to PT_ATTACH to parent\n");
+	rv = write(fds_fromparent[1], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == sizeof(msg));
+
+        printf("fds_fromparent is no longer needed - close it\n");
+        ATF_REQUIRE(close(fds_fromparent[1]) == 0);
+
+        printf("fds_toparent is no longer needed - close it\n");
+        ATF_REQUIRE(close(fds_toparent[0]) == 0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, attach_pid0);
 	ATF_TP_ADD_TC(tp, attach_pid1);
 	ATF_TP_ADD_TC(tp, attach_self);
+	ATF_TP_ADD_TC(tp, attach_chroot);
 
 	return atf_no_error();
 }
