@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.60 2016/09/19 20:46:55 maya Exp $	*/
+/*	$NetBSD: pmap.h,v 1.61 2016/11/08 03:05:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -482,6 +482,7 @@ void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t, u_int);
 int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
 	    vm_prot_t, u_int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
+void	pmap_free_ptps(struct vm_page *);
 
 /*
  * Hooks for the pool allocator.
