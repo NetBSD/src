@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.438 2016/11/06 02:38:25 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.439 2016/11/08 08:54:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.438 2016/11/06 02:38:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.439 2016/11/08 08:54:30 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -824,7 +824,7 @@ static void	wm_put_hw_semaphore_82573(struct wm_softc *);
  * Management mode and power management related subroutines.
  * BMC, AMT, suspend/resume and EEE.
  */
-#ifdef WM_WOL
+#if 0
 static int	wm_check_mng_mode(struct wm_softc *);
 static int	wm_check_mng_mode_ich8lan(struct wm_softc *);
 static int	wm_check_mng_mode_82574(struct wm_softc *);
@@ -839,11 +839,9 @@ static void	wm_smbustopci(struct wm_softc *);
 static void	wm_init_manageability(struct wm_softc *);
 static void	wm_release_manageability(struct wm_softc *);
 static void	wm_get_wakeup(struct wm_softc *);
-#ifdef WM_WOL
 static void	wm_enable_phy_wakeup(struct wm_softc *);
 static void	wm_igp3_phy_powerdown_workaround_ich8lan(struct wm_softc *);
 static void	wm_enable_wakeup(struct wm_softc *);
-#endif
 /* LPLU (Low Power Link Up) */
 static void	wm_lplu_d0_disable(struct wm_softc *);
 static void	wm_lplu_d0_disable_pch(struct wm_softc *);
@@ -2678,6 +2676,7 @@ wm_detach(device_t self, int flags __unused)
 	WM_CORE_LOCK(sc);
 	wm_release_manageability(sc);
 	wm_release_hw_control(sc);
+	wm_enable_wakeup(sc);
 	WM_CORE_UNLOCK(sc);
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
@@ -2740,9 +2739,7 @@ wm_suspend(device_t self, const pmf_qual_t *qual)
 
 	wm_release_manageability(sc);
 	wm_release_hw_control(sc);
-#ifdef WM_WOL
 	wm_enable_wakeup(sc);
-#endif
 
 	return true;
 }
@@ -12019,7 +12016,6 @@ wm_get_wakeup(struct wm_softc *sc)
 	 */
 }
 
-#ifdef WM_WOL
 /* WOL in the newer chipset interfaces (pchlan) */
 static void
 wm_enable_phy_wakeup(struct wm_softc *sc)
@@ -12167,7 +12163,6 @@ wm_enable_wakeup(struct wm_softc *sc)
 #endif
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, pmreg + PCI_PMCSR, pmode);
 }
-#endif /* WM_WOL */
 
 /* LPLU */
 
