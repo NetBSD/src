@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.47 2016/07/07 06:55:44 msaitoh Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.48 2016/11/09 05:08:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.47 2016/07/07 06:55:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.48 2016/11/09 05:08:35 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -168,7 +168,13 @@ static void
 ufs_extattr_uepm_lock(struct ufsmount *ump)
 {
 
-	/* XXX Why does this need to be recursive? */
+	/*
+	 * XXX This needs to be recursive for the following reasons:
+	 *   - it is taken in ufs_extattr_vnode_inactive
+	 *   - which is called from VOP_INACTIVE
+	 *   - which can be triggered by any vrele, vput, or vn_close
+	 *   - several of these can happen while it's held
+	 */
 	if (mutex_owned(&ump->um_extattr.uepm_lock)) {
 		ump->um_extattr.uepm_lockcnt++;
 		return;
