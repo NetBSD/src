@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.207 2016/10/13 18:58:00 macallan Exp $	*/
+/*	$NetBSD: locore.S,v 1.208 2016/11/09 11:50:09 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,15 +63,9 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.207 2016/10/13 18:58:00 macallan Exp $")
+RCSID("$NetBSD: locore.S,v 1.208 2016/11/09 11:50:09 maya Exp $")
 
 #include "assym.h"
-
-#if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
-#define MFC0_HAZARD	nop
-#else
-#define MFC0_HAZARD	/* nothing */
-#endif
 
 	.set	noreorder
 
