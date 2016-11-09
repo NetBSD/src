@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait_noproc.c,v 1.3 2016/11/08 15:21:34 kamil Exp $ */
+/* $NetBSD: t_wait_noproc.c,v 1.4 2016/11/09 12:44:29 kre Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait_noproc.c,v 1.3 2016/11/08 15:21:34 kamil Exp $");
+__RCSID("$NetBSD: t_wait_noproc.c,v 1.4 2016/11/09 12:44:29 kre Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -64,10 +64,6 @@ ATF_TC_HEAD(waitpid, tc)
 
 ATF_TC_BODY(waitpid, tc)
 {
-#if TWAIT_OPTION
-	/* wait4() (and friends) with WNOHANG and no children does not error */
-	atf_tc_expect_fail("PR standards/51606");
-#endif
 	ATF_REQUIRE_ERRNO(ECHILD, waitpid(WAIT_ANY, NULL, TWAIT_OPTION) == -1);
 }
 
@@ -81,10 +77,6 @@ ATF_TC_HEAD(waitid, tc)
 
 ATF_TC_BODY(waitid, tc)
 {
-#if TWAIT_OPTION
-	/* wait4() (and friends) with WNOHANG and no children does not error */
-	atf_tc_expect_fail("PR standards/51606");
-#endif
 	ATF_REQUIRE_ERRNO(ECHILD,
 	    waitid(P_ALL, 0, NULL, WEXITED | TWAIT_OPTION) == -1);
 }
@@ -98,10 +90,6 @@ ATF_TC_HEAD(wait3, tc)
 
 ATF_TC_BODY(wait3, tc)
 {
-#if TWAIT_OPTION
-	/* wait4() (and friends) with WNOHANG and no children does not error */
-	atf_tc_expect_fail("PR standards/51606");
-#endif
 	ATF_REQUIRE_ERRNO(ECHILD, wait3(NULL, TWAIT_OPTION, NULL) == -1);
 }
 
@@ -115,10 +103,6 @@ ATF_TC_HEAD(wait4, tc)
 
 ATF_TC_BODY(wait4, tc)
 {
-#if TWAIT_OPTION
-	/* wait4() (and friends) with WNOHANG and no children does not error */
-	atf_tc_expect_fail("PR standards/51606");
-#endif
 	ATF_REQUIRE_ERRNO(ECHILD,
 	    wait4(WAIT_ANY, NULL, TWAIT_OPTION, NULL) == -1);
 }
@@ -133,10 +117,6 @@ ATF_TC_HEAD(wait6, tc)
 
 ATF_TC_BODY(wait6, tc)
 {
-#if TWAIT_OPTION
-	/* wait4() (and friends) with WNOHANG and no children does not error */
-	atf_tc_expect_fail("PR standards/51606");
-#endif
 	ATF_REQUIRE_ERRNO(ECHILD,
 	    wait6(P_ALL, 0, NULL, WEXITED | TWAIT_OPTION, NULL, NULL) == -1);
 }
