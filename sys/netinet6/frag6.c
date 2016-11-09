@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.56 2014/09/05 05:33:06 matt Exp $	*/
+/*	$NetBSD: frag6.c,v 1.57 2016/11/09 03:49:38 ozaki-r Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.56 2014/09/05 05:33:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.57 2016/11/09 03:49:38 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	if (ip6->ip6_plen == 0) {
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER, offset);
 		in6_ifstat_inc(dstifp, ifs6_reass_fail);
-		return IPPROTO_DONE;
+		goto done;
 	}
 
 	/*
@@ -162,7 +162,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 		    offsetof(struct ip6_hdr, ip6_plen));
 		in6_ifstat_inc(dstifp, ifs6_reass_fail);
-		return IPPROTO_DONE;
+		goto done;
 	}
 
 	IP6_STATINC(IP6_STAT_FRAGMENTS);
@@ -267,14 +267,14 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 			icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 			    offset - sizeof(struct ip6_frag) +
 			    offsetof(struct ip6_frag, ip6f_offlg));
-			return IPPROTO_DONE;
+			goto done;
 		}
 	} else if (fragoff + frgpartlen > IPV6_MAXPACKET) {
 		mutex_exit(&frag6_lock);
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 			    offset - sizeof(struct ip6_frag) +
 				offsetof(struct ip6_frag, ip6f_offlg));
-		return IPPROTO_DONE;
+		goto done;
 	}
 	/*
 	 * If it's the first fragment, do the above check for each
@@ -382,13 +382,13 @@ insert:
 	     af6 = af6->ip6af_down) {
 		if (af6->ip6af_off != next) {
 			mutex_exit(&frag6_lock);
-			return IPPROTO_DONE;
+			goto done;
 		}
 		next += af6->ip6af_frglen;
 	}
 	if (af6->ip6af_up->ip6af_mff) {
 		mutex_exit(&frag6_lock);
-		return IPPROTO_DONE;
+		goto done;
 	}
 
 	/*
@@ -479,6 +479,7 @@ insert:
 	in6_ifstat_inc(dstifp, ifs6_reass_fail);
 	IP6_STATINC(IP6_STAT_FRAGDROPPED);
 	m_freem(m);
+ done:
 	return IPPROTO_DONE;
 }
 
