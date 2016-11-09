@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.233 2016/10/28 20:38:12 jdolecek Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.234 2016/11/09 04:12:55 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.233 2016/10/28 20:38:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.234 2016/11/09 04:12:55 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1764,7 +1764,7 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 /*
  * Allocate a new inode.
  */
-int
+static int
 ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 	const struct ufs_lookup_results *ulr,
 	struct vnode **vpp, struct componentname *cnp)
