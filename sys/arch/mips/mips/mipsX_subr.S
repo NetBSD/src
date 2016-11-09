@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.94 2016/10/02 09:06:35 maya Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.95 2016/11/09 11:50:09 maya Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -136,12 +136,6 @@
 
 #if defined(MIPS1) || defined(MIPS2)
 #error use locore_mips1.S
-#endif
-
-#if defined(MIPS3)
-#define	MFC0_HAZARD	nop
-#else
-#define	MFC0_HAZARD	/* nothing */
 #endif
 
 #if defined(__mips_o32)
