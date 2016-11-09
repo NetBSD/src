@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.51 2016/08/13 08:08:11 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.52 2016/11/09 11:50:09 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -508,6 +508,13 @@ _C_LABEL(x):
 #define	NOP_L		nop
 #else
 #define	NOP_L		/* nothing */
+#endif
+
+/* CPU dependent hook for cp0 load delays */
+#if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
+#define MFC0_HAZARD	nop
+#else
+#define MFC0_HAZARD	/* nothing */
 #endif
 
 #if _MIPS_ISA == _MIPS_ISA_MIPS1 || _MIPS_ISA == _MIPS_ISA_MIPS2 || \
