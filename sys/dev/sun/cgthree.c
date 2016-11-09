@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.32 2016/04/21 18:06:06 macallan Exp $ */
+/*	$NetBSD: cgthree.c,v 1.33 2016/11/09 19:54:25 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.32 2016/04/21 18:06:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.33 2016/11/09 19:54:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,7 +436,7 @@ cgthree_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			wdf = (void *)data;
 			wdf->height = ri->ri_height;
 			wdf->width = ri->ri_width;
-			wdf->depth = ri->ri_depth;
+			wdf->depth = 8;
 			wdf->cmsize = 256;
 			return 0;
 
@@ -474,8 +474,16 @@ cgthree_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 paddr_t
 cgthree_mmap(void *v, void *vs, off_t offset, int prot)
 {
-	/* I'm not at all sure this is the right thing to do */
-	return cgthreemmap(0, offset, prot); /* assume minor dev 0 for now */
+	struct vcons_data *vd = v;
+	struct cgthree_softc *sc = vd->cookie;
+
+	if (offset < 0) return -1;
+	if (offset >= sc->sc_fb.fb_type.fb_size)
+		return -1;
+
+	return bus_space_mmap(sc->sc_bustag,
+		sc->sc_paddr, CG3REG_MEM + offset,
+		prot, BUS_SPACE_MAP_LINEAR);
 }
 
 int
