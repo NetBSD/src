@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.264 2016/11/05 02:59:22 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.265 2016/11/09 00:30:17 kre Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.264 2016/11/05 02:59:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.265 2016/11/09 00:30:17 kre Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -826,7 +826,7 @@ sys_wait6(struct lwp *l, const struct sys_wait6_args *uap, register_t *retval)
  *	 2:	This is the only match
  */
 static int
-match_process(struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
+match_process(const struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
     int options, struct wrusage *wrusage, siginfo_t *siginfo)
 {
 	struct rusage *rup;
@@ -930,6 +930,66 @@ match_process(struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
 }
 
 /*
+ * Determine if there are existing processes being debugged
+ * that used to be (and sometime later will be again) children
+ * of a specific parent (while matching wait criteria)
+ */
+static bool
+debugged_child_exists(idtype_t idtype, id_t id, int options, siginfo_t *si,
+    const struct proc *parent)
+{
+	struct proc *pp;
+
+	/*
+	 * If we are searching for a specific pid, we can optimise a little
+	 */
+	if (idtype == P_PID) {
+		/*
+		 * Check the specific process to see if its real parent is us
+		 */
+		pp = proc_find_raw((pid_t)id);
+		if (pp != NULL && pp->p_stat != SIDL && pp->p_opptr == parent) {
+			/*
+			 * using P_ALL here avoids match_process() doing the
+			 * same work that we just did, but incorrectly for
+			 * this scenario.
+			 */
+			if (match_process(parent, &pp, P_ALL, id, options,
+			    NULL, si))
+				return true;
+		}
+		return false;
+	}
+
+	/*
+	 * For the hard cases, just look everywhere to see if some
+	 * stolen (reparented) process is really our lost child.
+	 * Then check if that process could satisfy the wait conditions.
+	 */
+
+	/*
+	 * XXX inefficient, but hopefully fairly rare.
+	 * XXX should really use a list of reparented processes.
+	 */
+	PROCLIST_FOREACH(pp, &allproc) {
+		if (pp->p_stat == SIDL)		/* XXX impossible ?? */
+			continue;
+		if (pp->p_opptr == parent &&
+		    match_process(parent, &pp, idtype, id, options, NULL, si))
+			return true;
+	}
+	PROCLIST_FOREACH(pp, &zombproc) {
+		if (pp->p_stat == SIDL)		/* XXX impossible ?? */
+			continue;
+		if (pp->p_opptr == parent &&
+		    match_process(parent, &pp, idtype, id, options, NULL, si))
+			return true;
+	}
+
+	return false;
+}
+
+/*
  * Scan list of child processes for a child process that has stopped or
  * exited.  Used by sys_wait4 and 'compat' equivalents.
  *
@@ -940,7 +1000,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
     struct proc **child_p, struct wrusage *wru, siginfo_t *si)
 {
 	struct proc *child, *dead;
-	int error, nohang;
+	int error;
 
 	KASSERT(mutex_owned(proc_lock));
 
@@ -969,7 +1029,6 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 		idtype = P_PGID;
 	}
 
-	nohang = (options & WNOHANG) != 0;
 	for (;;) {
 		error = ECHILD;
 		dead = NULL;
@@ -1053,9 +1112,22 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 			}
 		}
 
-		if (child != NULL || error != 0 || (nohang && dead == NULL)) {
+		/*
+		 * If we found nothing, but we are the bereaved parent
+		 * of a stolen child, look and see if that child (or
+		 * one of them) meets our search criteria.   If so, then
+		 * we cannot succeed, but we can hang (wait...), 
+		 * or if WNOHANG, return 0 instead of ECHILD
+		 */
+		if (child == NULL && error == ECHILD && 
+		    (parent->p_slflag & PSL_CHTRACED) &&
+		    debugged_child_exists(idtype, id, options, si, parent))
+			error = 0;
+
+		if (child != NULL || error != 0 ||
+		    ((options & WNOHANG) != 0 && dead == NULL)) {
 			*child_p = child;
-			return (nohang && error == ECHILD) ? 0 : error;
+			return error;
 		}
 
 		/*
