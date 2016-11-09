@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_psref.c,v 1.5 2016/10/28 07:27:52 ozaki-r Exp $	*/
+/*	$NetBSD: subr_psref.c,v 1.6 2016/11/09 09:00:46 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.5 2016/10/28 07:27:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.6 2016/11/09 09:00:46 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -195,6 +195,28 @@ psref_target_init(struct psref_target *target,
 	target->prt_draining = false;
 }
 
+#ifdef DEBUG
+static void
+psref_check_duplication(struct psref_cpu *pcpu, struct psref *psref,
+    const struct psref_target *target)
+{
+	bool found = false;
+	struct psref *_psref;
+
+	LIST_FOREACH(_psref, &pcpu->pcpu_head, psref_entry) {
+		if (_psref == psref &&
+		    _psref->psref_target == target) {
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		panic("trying to acquire a target twice with the same psref: "
+		    "psref=%p target=%p", psref, target);
+	}
+}
+#endif /* DEBUG */
+
 /*
  * psref_acquire(psref, target, class)
  *
@@ -230,6 +252,11 @@ psref_acquire(struct psref *psref, const struct psref_target *target,
 	/* Block interrupts and acquire the current CPU's reference list.  */
 	s = splraiseipl(class->prc_iplcookie);
 	pcpu = percpu_getref(class->prc_percpu);
+
+#ifdef DEBUG
+	/* Sanity-check if the target is already acquired with the same psref.  */
+	psref_check_duplication(pcpu, psref, target);
+#endif
 
 	/* Record our reference.  */
 	LIST_INSERT_HEAD(&pcpu->pcpu_head, psref, psref_entry);
