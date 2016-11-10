@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.35 2016/10/02 19:02:57 christos Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.36 2016/11/10 20:56:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.35 2016/10/02 19:02:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.36 2016/11/10 20:56:32 jdolecek Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -182,7 +182,7 @@ ffs_wapbl_sync_metadata(struct mount *mp, struct wapbl_dealloc *fdealloc)
 	ufs_wapbl_verify_inodes(mp, __func__);
 #endif
 
-	for (wd = fdealloc; wd != NULL; wd = SIMPLEQ_NEXT(wd, wd_entries)) {
+	for (wd = fdealloc; wd != NULL; wd = TAILQ_NEXT(wd, wd_entries)) {
 		/*
 		 * blkfree errors are unreported, might silently fail
 		 * if it cannot read the cylinder group block
@@ -206,7 +206,7 @@ ffs_wapbl_abort_sync_metadata(struct mount *mp, struct wapbl_dealloc *fdealloc)
 	struct fs *fs = ump->um_fs;
 	struct wapbl_dealloc *wd;
 
-	for (wd = fdealloc; wd != NULL; wd = SIMPLEQ_NEXT(wd, wd_entries)) {
+	for (wd = fdealloc; wd != NULL; wd = TAILQ_NEXT(wd, wd_entries)) {
 		/*
 		 * Since the above blkfree may have failed, this blkalloc might
 		 * fail as well, so don't check its error.  Note that if the
