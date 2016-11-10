@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.32 2016/11/05 23:49:59 christos Exp $	*/
+/*	$NetBSD: wait.h,v 1.33 2016/11/10 17:07:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -100,23 +100,23 @@
 #define	WTRAPPED	0x00000040	/* Wait for a process to hit a trap or
 				 	   a breakpoint. */
 
+#define	WNOWAIT		0x00010000	/* Don't mark child 'P_WAITED' */
+#define	WNOZOMBIE	0x00020000	/* Ignore zombies */
+
+#ifdef _NETBSD_SOURCE
 /*
  * These are the Linux names of some of the above flags, for compatibility
  * with Linux's clone(2) API.
  */
 #define	__WCLONE	WALTSIG
 #define	__WALL		WALLSIG
+#endif /* _NETBSD_SOURCE */
 
-/*
- * These bits are used in order to support SVR4 (etc) functionality
- * without replicating sys_wait4 5 times.
- */
-#define	WNOWAIT		0x00010000	/* Don't mark child 'P_WAITED' */
-#define	WNOZOMBIE	0x00020000	/* Ignore zombies */
-#define	WOPTSCHECKED	0x00040000	/* Compat call, options verified */
-#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
+#ifdef _KERNEL
+#define WSELECTOPTS	(WEXITED|WUNTRACED|WCONTINUED|WTRAPPED)
+#define WALLOPTS	(WNOHANG|WALTSIG|WALLSIG|WNOWAIT|WNOZOMBIE|WSELECTOPTS)
+#endif /* _KERNEL */
 
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 /* POSIX extensions and 4.2/4.3 compatibility: */
 
 /*

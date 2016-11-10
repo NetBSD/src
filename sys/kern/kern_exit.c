@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.265 2016/11/09 00:30:17 kre Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.266 2016/11/10 17:07:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.265 2016/11/09 00:30:17 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.266 2016/11/10 17:07:14 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -1004,14 +1004,12 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 
 	KASSERT(mutex_owned(proc_lock));
 
-	if (options & ~(WUNTRACED|WNOHANG|WALTSIG|WALLSIG|WTRAPPED|WEXITED|
-	    WNOWAIT|WCONTINUED)
-	    && !(options & WOPTSCHECKED)) {
+	if (options & ~WALLOPTS) {
 		*child_p = NULL;
 		return EINVAL;
 	}
 
-	if ((options & (WEXITED|WUNTRACED|WCONTINUED|WTRAPPED)) == 0) {
+	if ((options & WSELECTOPTS) == 0) {
 		/*
 		 * We will be unable to find any matching processes,
 		 * because there are no known events to look for.
