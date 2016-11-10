@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.442 2016/11/10 06:57:15 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.443 2016/11/10 08:35:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.442 2016/11/10 06:57:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.443 2016/11/10 08:35:24 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -637,6 +637,7 @@ static void	wm_lan_init_done(struct wm_softc *);
 static void	wm_get_cfg_done(struct wm_softc *);
 static void	wm_initialize_hardware_bits(struct wm_softc *);
 static uint32_t	wm_rxpbs_adjust_82580(uint32_t);
+static void	wm_flush_desc_rings(struct wm_softc *);
 static void	wm_reset(struct wm_softc *);
 static int	wm_add_rxbuf(struct wm_rxqueue *, int);
 static void	wm_rxdrain(struct wm_rxqueue *);
@@ -3742,6 +3743,82 @@ wm_rxpbs_adjust_82580(uint32_t val)
 	return rv;
 }
 
+static void
+wm_flush_desc_rings(struct wm_softc *sc)
+{
+	pcireg_t preg;
+	uint32_t reg;
+	int nexttx;
+
+	/* First, disable MULR fix in FEXTNVM11 */
+	reg = CSR_READ(sc, WMREG_FEXTNVM11);
+	reg |= FEXTNVM11_DIS_MULRFIX;
+	CSR_WRITE(sc, WMREG_FEXTNVM11, reg);
+
+	preg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, WM_PCI_DESCRING_STATUS);
+	reg = CSR_READ(sc, WMREG_TDLEN(0));
+	if (((preg & DESCRING_STATUS_FLUSH_REQ) != 0) && (reg != 0)) {
+		struct wm_txqueue *txq;
+		wiseman_txdesc_t *txd;
+
+		/* TX */
+		printf("%s: Need TX flush (reg = %08x, len = %u)\n",
+		    device_xname(sc->sc_dev), preg, reg);
+		reg = CSR_READ(sc, WMREG_TCTL);
+		CSR_WRITE(sc, WMREG_TCTL, reg | TCTL_EN);
+
+		txq = &sc->sc_queue[0].wmq_txq;
+		nexttx = txq->txq_next;
+		txd = &txq->txq_descs[nexttx];
+		wm_set_dma_addr(&txd->wtx_addr, WM_CDTXADDR(txq, nexttx));
+		txd->wtx_cmdlen = htole32(WTX_CMD_IFCS| 512);
+		txd->wtx_fields.wtxu_status = 0;
+		txd->wtx_fields.wtxu_options = 0;
+		txd->wtx_fields.wtxu_vlan = 0;
+
+		bus_space_barrier(sc->sc_st, sc->sc_sh, 0, 0,
+			BUS_SPACE_BARRIER_WRITE);
+		
+		txq->txq_next = WM_NEXTTX(txq, txq->txq_next);
+		CSR_WRITE(sc, WMREG_TDT(0), txq->txq_next);
+		bus_space_barrier(sc->sc_st, sc->sc_sh, 0, 0,
+			BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+		delay(250);
+	}
+	preg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, WM_PCI_DESCRING_STATUS);
+	if (preg & DESCRING_STATUS_FLUSH_REQ) {
+		uint32_t rctl;
+
+		/* RX */
+		printf("%s: Need RX flush (reg = %08x)\n",
+		    device_xname(sc->sc_dev), preg);
+		rctl = CSR_READ(sc, WMREG_RCTL);
+		CSR_WRITE(sc, WMREG_RCTL, rctl & ~RCTL_EN);
+		CSR_WRITE_FLUSH(sc);
+		delay(150);
+
+		reg = CSR_READ(sc, WMREG_RXDCTL(0));
+		/* zero the lower 14 bits (prefetch and host thresholds) */
+		reg &= 0xffffc000;
+		/*
+		 * update thresholds: prefetch threshold to 31, host threshold
+		 * to 1 and make sure the granularity is "descriptors" and not
+		 * "cache lines"
+		 */
+		reg |= (0x1f | (1 << 8) | RXDCTL_GRAN);
+		CSR_WRITE(sc, WMREG_RXDCTL(0), reg);
+
+		/*
+		 * momentarily enable the RX ring for the changes to take
+		 * effect
+		 */
+		CSR_WRITE(sc, WMREG_RCTL, rctl | RCTL_EN);
+		CSR_WRITE_FLUSH(sc);
+		delay(150);
+		CSR_WRITE(sc, WMREG_RCTL, rctl & ~RCTL_EN);
+	}
+}
+
 /*
  * wm_reset:
  *
@@ -4663,6 +4740,10 @@ wm_init_locked(struct ifnet *ifp)
 	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
 	ifp->if_ierrors += CSR_READ(sc, WMREG_RXERRC);
 
+	/* PCH_SPT hardware workaround */
+	if (sc->sc_type == WM_T_PCH_SPT)
+		wm_flush_desc_rings(sc);
+
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
 
@@ -5235,49 +5316,6 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 				bus_dmamap_unload(sc->sc_dmat,txs->txs_dmamap);
 				m_freem(txs->txs_mbuf);
 				txs->txs_mbuf = NULL;
-			}
-		}
-		if (sc->sc_type == WM_T_PCH_SPT) {
-			pcireg_t preg;
-			uint32_t reg;
-			int nexttx;
-
-			/* First, disable MULR fix in FEXTNVM11 */
-			reg = CSR_READ(sc, WMREG_FEXTNVM11);
-			reg |= FEXTNVM11_DIS_MULRFIX;
-			CSR_WRITE(sc, WMREG_FEXTNVM11, reg);
-
-			preg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
-			    WM_PCI_DESCRING_STATUS);
-			reg = CSR_READ(sc, WMREG_TDLEN(0));
-			printf("XXX RST: FLUSH = %08x, len = %u\n",
-			    (uint32_t)(preg & DESCRING_STATUS_FLUSH_REQ), reg);
-			if (((preg & DESCRING_STATUS_FLUSH_REQ) != 0)
-			    && (reg != 0)) {
-				/* TX */
-				printf("XXX need TX flush (reg = %08x)\n",
-				    preg);
-				wm_init_tx_descs(sc, txq);
-				wm_init_tx_regs(sc, wmq, txq);
-				nexttx = txq->txq_next;
-				wm_set_dma_addr(
-					&txq->txq_descs[nexttx].wtx_addr,
-					WM_CDTXADDR(txq, nexttx));
-				txq->txq_descs[nexttx].wtx_cmdlen
-				    = htole32(WTX_CMD_IFCS | 512);
-				wm_cdtxsync(txq, nexttx, 1,
-				    BUS_DMASYNC_PREREAD |BUS_DMASYNC_PREWRITE);
-				CSR_WRITE(sc, WMREG_TCTL, TCTL_EN);
-				CSR_WRITE(sc, WMREG_TDT(0), nexttx);
-				CSR_WRITE_FLUSH(sc);
-				delay(250);
-				CSR_WRITE(sc, WMREG_TCTL, 0);
-			}
-			preg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
-			    WM_PCI_DESCRING_STATUS);
-			if (preg & DESCRING_STATUS_FLUSH_REQ) {
-				/* RX */
-				printf("XXX need RX flush\n");
 			}
 		}
 		mutex_exit(txq->txq_lock);
