@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.19 2016/10/28 20:30:37 jdolecek Exp $
+$NetBSD: storage,v 1.20 2016/11/10 21:28:15 jdolecek Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -92,9 +92,8 @@ best option at this point is:
 + Fixing WAPBL (e.g. to flush newly allocated/newly written blocks to
 disk early) has been examined by several people who know the code base
 and judged difficult. Also, some other problems have come to light
-more recently; e.g. PR 50725, PR 47146, and a problem where truncating
-large sparse files takes ~forever in PR 49175. Also see PR 45676. Still,
-it might be the best way forward.
+more recently; e.g. PR 50725, and 45676. Still, it might be the best
+way forward.
 
 + There is another journaling FFS; the Harvard one done by Margo
 Seltzer's group some years back. We have a copy of this, but as it was
