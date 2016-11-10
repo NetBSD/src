@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.33 2016/11/10 17:07:14 christos Exp $	*/
+/*	$NetBSD: wait.h,v 1.34 2016/11/10 17:32:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -75,35 +75,37 @@
 #endif
 
 /*
- * Option bits for the third argument of wait4.  WNOHANG causes the
- * wait to not hang if there are no stopped or terminated processes, rather
- * returning an error indication in this case (pid==0).  WUNTRACED
- * indicates that the caller should receive status about untraced children
- * which stop due to signals.  If children are stopped and a wait without
- * this option is done, it is as though they were still running... nothing
- * about them is returned.
+ * Option bits for the third argument of wait4/waitpid/waitid/wait6.
+ * WNOHANG causes the wait to not hang if there are no stopped or
+ * terminated processes, rather returning an error indication in this case
+ * (pid==0). WSTOPPED indicates that the caller should receive status about
+ * untraced children which stop due to signals. If children are stopped and
+ * a wait without this option is done, it is as though they were still running,
+ * nothing about them is returned. WCONTINUED returns information for children
+ * that were continued from job control. WEXITED is the default for
+ * wait/wait3/wait4/waitpid (to report children that have exited), but needs
+ * to be explicitly specified for waitid/wait6. WNOWAIT returns information
+ * about the children without reaping them (changing their status to have
+ * been already waited for.
  */
-#define WNOHANG		0x00000001	/* don't hang in wait */
-#define WUNTRACED	0x00000002	/* tell about stopped,
-					   untraced children */
-#define	WSTOPPED	WUNTRACED	/* SUS compatibility */
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#define	WNOHANG		0x00000001	/* don't hang in wait */
+#define	WSTOPPED	0x00000002	/* include stopped/untraceed children */
+#define	WCONTINUED	0x00000010	/* include continued processes */
+#define	WEXITED		0x00000020	/* Wait for exited processes. */
+#define	WNOWAIT		0x00010000	/* Don't mark child 'P_WAITED' */
+
+#if defined(_NETBSD_SOURCE)
+#define	WUNTRACED	WSTOPPED	/* BSD compatibility */
 #define	WALTSIG		0x00000004	/* wait for processes that exit
 					   with an alternate signal (i.e.
 					   not SIGCHLD) */
 #define	WALLSIG		0x00000008	/* wait for processes that exit
 					   with any signal, i.e. SIGCHLD
 					   and alternates */
-#define	WCONTINUED	0x00000010	/* Report a job control continued
-					   process. */
-#define	WEXITED		0x00000020	/* Wait for exited processes. */
 #define	WTRAPPED	0x00000040	/* Wait for a process to hit a trap or
 				 	   a breakpoint. */
-
-#define	WNOWAIT		0x00010000	/* Don't mark child 'P_WAITED' */
 #define	WNOZOMBIE	0x00020000	/* Ignore zombies */
 
-#ifdef _NETBSD_SOURCE
 /*
  * These are the Linux names of some of the above flags, for compatibility
  * with Linux's clone(2) API.
@@ -113,10 +115,11 @@
 #endif /* _NETBSD_SOURCE */
 
 #ifdef _KERNEL
-#define WSELECTOPTS	(WEXITED|WUNTRACED|WCONTINUED|WTRAPPED)
-#define WALLOPTS	(WNOHANG|WALTSIG|WALLSIG|WNOWAIT|WNOZOMBIE|WSELECTOPTS)
+#define	WSELECTOPTS	(WEXITED|WUNTRACED|WCONTINUED|WTRAPPED)
+#define	WALLOPTS	(WNOHANG|WALTSIG|WALLSIG|WNOWAIT|WNOZOMBIE|WSELECTOPTS)
 #endif /* _KERNEL */
 
+#if defined(_NETBSD_SOURCE) || defined(_XOPEN_SOURCE)
 /* POSIX extensions and 4.2/4.3 compatibility: */
 
 /*
