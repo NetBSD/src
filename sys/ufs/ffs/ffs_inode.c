@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.120 2016/11/07 21:14:23 jdolecek Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.121 2016/11/10 19:10:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.120 2016/11/07 21:14:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.121 2016/11/10 19:10:05 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -533,6 +533,8 @@ out:
 	 * blocks were deallocated creating a hole, but that is okay.
 	 */
 	if (error == EAGAIN) {
+		if (!allerror)
+			allerror = error;
 		length = osize;
 		uvm_vnp_setsize(ovp, length);
 	}
@@ -573,10 +575,12 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	int64_t *bap2 = NULL;
 	struct vnode *vp;
 	daddr_t nb, nlbn, last;
+	char *copy = NULL;
 	int64_t factor;
 	int64_t nblocks;
-	int error = 0;
+	int error = 0, allerror = 0;
 	const int needswap = UFS_FSNEEDSWAP(fs);
+	const int wapbl = (ip->i_ump->um_mountp->mnt_wapbl != NULL);
 
 #define RBAP(ip, i) (((ip)->i_ump->um_fstype == UFS1) ? \
 	    ufs_rw32(bap1[i], needswap) : ufs_rw64(bap2[i], needswap))
@@ -602,7 +606,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	nblocks = btodb(fs->fs_bsize);
 	/*
 	 * Get buffer of block pointers, zero those entries corresponding
-	 * to blocks to be free'd, and update on disk copy.  Since
+	 * to blocks to be free'd, and update on disk copy first.  Since
 	 * double(triple) indirect before single(double) indirect, calls
 	 * to bmap on these blocks will fail.  However, we already have
 	 * the on disk address, so we have to set the b_blkno field
@@ -635,13 +639,35 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		return error;
 	}
 
-	if (ip->i_ump->um_fstype == UFS1)
-		bap1 = (int32_t *)bp->b_data;
-	else
-		bap2 = (int64_t *)bp->b_data;
+	/*
+	 * Clear reference to blocks to be removed on disk, before actually
+	 * reclaiming them, so that fsck is more likely to be able to recover
+	 * the filesystem if system goes down during the truncate process.
+	 * This assumes the truncate process would not fail, contrary
+	 * to the wapbl case.
+	 */
+	if (lastbn >= 0 && !wapbl) {
+		copy = kmem_alloc(fs->fs_bsize, KM_SLEEP);
+		memcpy((void *)copy, bp->b_data, (u_int)fs->fs_bsize);
+		for (i = last + 1; i < FFS_NINDIR(fs); i++)
+			BAP_ASSIGN(ip, i, 0);
+		error = bwrite(bp);
+		if (error)
+			allerror = error;
+
+		if (ip->i_ump->um_fstype == UFS1)
+			bap1 = (int32_t *)copy;
+		else
+			bap2 = (int64_t *)copy;
+	} else {
+		if (ip->i_ump->um_fstype == UFS1)
+			bap1 = (int32_t *)bp->b_data;
+		else
+			bap2 = (int64_t *)bp->b_data;
+	}
 
 	/*
-	 * Recursively free totally unused blocks, starting from first.
+	 * Recursively free totally unused blocks.
 	 */
 	for (i = FFS_NINDIR(fs) - 1, nlbn = lbn + 1 - i * factor; i > last;
 	    i--, nlbn += factor) {
@@ -686,15 +712,22 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	}
 
 out:
-	if (lastbn < 0 && error == 0) {
+ 	if (error && !allerror)
+ 		allerror = error;
+
+ 	if (copy != NULL) {
+ 		kmem_free(copy, fs->fs_bsize);
+ 	} else if (lastbn < 0 && error == 0) {
 		/* all freed, release without writing back */
 		brelse(bp, BC_INVAL);
-	} else {
-		/* only partially freed, write the updated block */
-		(void) bwrite(bp);
+	} else if (wapbl) {
+ 		/* only partially freed, write the updated block */
+ 		error = bwrite(bp);
+ 		if (!allerror)
+ 			allerror = error;
 	}
 
-	return (error);
+	return (allerror);
 }
 
 void
