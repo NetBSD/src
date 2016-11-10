@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.34 2016/11/10 17:32:50 christos Exp $	*/
+/*	$NetBSD: wait.h,v 1.35 2016/11/10 18:35:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -75,27 +75,39 @@
 #endif
 
 /*
- * Option bits for the third argument of wait4/waitpid/waitid/wait6.
- * WNOHANG causes the wait to not hang if there are no stopped or
- * terminated processes, rather returning an error indication in this case
- * (pid==0). WSTOPPED indicates that the caller should receive status about
- * untraced children which stop due to signals. If children are stopped and
- * a wait without this option is done, it is as though they were still running,
- * nothing about them is returned. WCONTINUED returns information for children
- * that were continued from job control. WEXITED is the default for
- * wait/wait3/wait4/waitpid (to report children that have exited), but needs
- * to be explicitly specified for waitid/wait6. WNOWAIT returns information
- * about the children without reaping them (changing their status to have
- * been already waited for.
+ * POSIX option bits for the "options" argument of wait{3,4,6} wait{,p}id:
+ *
+ * WNOHANG
+ *	Causes the wait to not hang if there are no stopped or terminated
+ *	processes, rather returning an error indication in this case (pid==0).
+ *
+ * WSTOPPED/WUNTRACED
+ *	Indicates that the caller should receive status about untraced
+ *	children which stop due to signals. If children are stopped
+ *	and a wait without this option is done, it is as though they
+ *	were still running, nothing about them is returned.
+ *
+ * WCONTINUED
+ *	Returns information for children that were continued from job
+ *	control.
+ *
+ * WEXITED
+ *	Is the default for wait/wait3/wait4/waitpid (to report children
+ *	that have exited), but needs to be explicitly specified for
+ *	waitid/wait6.
+ *
+ * WNOWAIT
+ *	Returns information about the children without reaping them
+ *	(changing their status to have been already waited for).
  */
 #define	WNOHANG		0x00000001	/* don't hang in wait */
 #define	WSTOPPED	0x00000002	/* include stopped/untraceed children */
+#define	WUNTRACED	WSTOPPED	/* the original name for WSTOPPED */
 #define	WCONTINUED	0x00000010	/* include continued processes */
 #define	WEXITED		0x00000020	/* Wait for exited processes. */
 #define	WNOWAIT		0x00010000	/* Don't mark child 'P_WAITED' */
 
 #if defined(_NETBSD_SOURCE)
-#define	WUNTRACED	WSTOPPED	/* BSD compatibility */
 #define	WALTSIG		0x00000004	/* wait for processes that exit
 					   with an alternate signal (i.e.
 					   not SIGCHLD) */
