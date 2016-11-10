@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.177 2016/11/07 01:55:17 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.178 2016/11/10 04:13:53 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.177 2016/11/07 01:55:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.178 2016/11/10 04:13:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -408,6 +408,9 @@ ip6_output(
 		    sizeof(struct ip6_hdr) + optlen);
 	}
 
+	/* Need to save for pmtu */
+	finaldst = ip6->ip6_dst;
+
 	/*
 	 * If there is a routing header, replace destination address field
 	 * with the first hop of the routing header.
@@ -417,7 +420,6 @@ ip6_output(
 
 		rh = (struct ip6_rthdr *)(mtod(exthdrs.ip6e_rthdr,
 		    struct ip6_rthdr *));
-		finaldst = ip6->ip6_dst; /* need to save for pmtu */
 
 		error = ip6_handle_rthdr(rh, ip6);
 		if (error != 0)
@@ -499,12 +501,31 @@ ip6_output(
 	ip6 = mtod(m, struct ip6_hdr *);
 
 	sockaddr_in6_init(&dst_sa, &ip6->ip6_dst, 0, 0, 0);
-	if ((error = in6_selectroute(&dst_sa, opt, im6o, ro,
-	    &ifp, &psref, &rt, 0)) != 0) {
-		if (ifp != NULL)
-			in6_ifstat_inc(ifp, ifs6_out_discard);
-		goto bad;
+
+	/* We do not need a route for multicast */
+	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
+		struct in6_pktinfo *pi = NULL;
+
+		/*
+		 * If the outgoing interface for the address is specified by
+		 * the caller, use it.
+		 */
+		if (opt && (pi = opt->ip6po_pktinfo) != NULL) {
+			/* XXX boundary check is assumed to be already done. */
+			ifp = if_get_byindex(pi->ipi6_ifindex, &psref);
+		} else if (im6o != NULL) {
+			ifp = if_get_byindex(im6o->im6o_multicast_if_index,
+			    &psref);
+		}
 	}
+
+	if (ifp == NULL) {
+		error = in6_selectroute(&dst_sa, opt, &ro, &rt, true);
+		if (error != 0)
+			goto bad;
+		ifp = if_get_byindex(rt->rt_ifp->if_index, &psref);
+	}
+
 	if (rt == NULL) {
 		/*
 		 * If in6_selectroute() does not return a route entry,
@@ -578,18 +599,9 @@ ip6_output(
 		goto bad;
 	}
 
-	if (rt == NULL || IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
-		dst = satocsin6(rtcache_getdst(ro));
-		KASSERT(dst != NULL);
-	} else if (opt && rtcache_validate(&opt->ip6po_nextroute) != NULL) {
-		/*
-		 * The nexthop is explicitly specified by the
-		 * application.  We assume the next hop is an IPv6
-		 * address.
-		 */
-		dst = (struct sockaddr_in6 *)opt->ip6po_nexthop;
-	} else if ((rt->rt_flags & RTF_GATEWAY))
-		dst = (struct sockaddr_in6 *)rt->rt_gateway;
+	if (rt != NULL && (rt->rt_flags & RTF_GATEWAY) &&
+	    !IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
+		dst = satocsin6(rt->rt_gateway);
 	else
 		dst = satocsin6(rtcache_getdst(ro));
 
