@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.95 2016/07/07 06:55:38 msaitoh Exp $ */
+/*	$NetBSD: sbus.c,v 1.96 2016/11/10 06:44:35 macallan Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.95 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.96 2016/11/10 06:44:35 macallan Exp $");
 
 #include "opt_ddb.h"
 
@@ -382,6 +382,13 @@ _sbus_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size, int flags,
 				t->ranges, t->nranges, &addr)) != 0)
 			return (error);
 	}
+
+	/*
+	 * BUS_SPACE_MAP_PREFETCHABLE doesn't work right through sbus, so weed
+	 * it out for now until we know better
+	 */
+
+	flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
 
 	return (bus_space_map(t->parent, addr, size, flags, hp));
 }
