@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.36 2016/11/10 20:56:32 jdolecek Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.37 2016/11/10 22:19:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.36 2016/11/10 20:56:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.37 2016/11/10 22:19:23 jdolecek Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -371,6 +371,23 @@ ffs_wapbl_start(struct mount *mp)
 				if (error)
 					goto out;
 			}
+
+			/*
+			 * XXX discard interferes with block deallocation
+			 * registration and hence log consistency
+			 */
+			if (mp->mnt_flag & MNT_DISCARD) {
+				CLR(mp->mnt_flag, MNT_DISCARD);
+				printf("%s: %s: disabling discard to preserve log consistency\n", __func__,
+				    fs->fs_fsmnt);
+
+				if (ump->um_discarddata != NULL) {
+		                	ffs_discard_finish(ump->um_discarddata,
+					    0);
+	                		ump->um_discarddata = NULL;
+				}
+			}
+
 		} else if (fs->fs_flags & FS_DOWAPBL) {
 			fs->fs_fmod = 1;
 			fs->fs_flags &= ~FS_DOWAPBL;
