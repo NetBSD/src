@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.715 2016/11/04 20:40:11 mlelstv Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.716 2016/11/10 15:42:13 hauke Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.723 2016/11/04 20:39:33 mlelstv Exp
+ *	NetBSD: usbdevs,v 1.724 2016/11/10 15:38:51 hauke Exp
  */
 
 /*
@@ -1863,6 +1863,7 @@
 
 #define	USB_PRODUCT_INTEL2_RMH	0x0020		/* Rate Matching Hub */
 #define	USB_PRODUCT_INTEL2_RMH2	0x0024		/* Rate Matching Hub */
+#define	USB_PRODUCT_INTEL2_N_6235_BT	0x07da		/* Advanced-N 6235 Combo Bluetooth */
 
 /* Intersil products */
 #define	USB_PRODUCT_INTERSIL_PRISM_GT	0x1000		/* PrismGT USB 2.0 WLAN */
@@ -3338,6 +3339,7 @@
 #define	USB_PRODUCT_VALIDITY_VFS300	0x0008		/* VFS300 Fingerprint Reader */
 #define	USB_PRODUCT_VALIDITY_VFS5011	0x0011		/* VFS5011 Fingerprint Reader */
 #define	USB_PRODUCT_VALIDITY_VFS471	0x003c		/* VFS471 Fingerprint Reader */
+#define	USB_PRODUCT_VALIDITY_VFS491	0x003d		/* VFS491 Fingerprint Reader */
 
 /* VidzMedia products */
 #define	USB_PRODUCT_VIDZMEDIA_MONSTERTV	0x4fb1		/* MonsterTV P2H */
