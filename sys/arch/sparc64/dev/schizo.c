@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.36 2016/05/10 19:23:59 palle Exp $	*/
+/*	$NetBSD: schizo.c,v 1.37 2016/11/10 06:44:35 macallan Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.36 2016/05/10 19:23:59 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.37 2016/11/10 06:44:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -737,6 +737,12 @@ schizo_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
 	    (unsigned long long)size,
 	    flags));
 
+	/*
+	 * BUS_SPACE_MAP_PREFETCHABLE causes hard hangs on schizo, so weed it
+	 * out for now
+	 */
+	flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+
 	ss = sparc_pci_childspace(t->type);
 	DPRINTF(SDB_BUSMAP, (" cspace %d\n", ss));
 
@@ -763,6 +769,12 @@ schizo_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
 	struct schizo_softc *sc = pbm->sp_sc;
 	struct schizo_range *sr;
 	int ss;
+
+	/*
+	 * BUS_SPACE_MAP_PREFETCHABLE causes hard hangs on schizo, so weed it
+	 * out for now
+	 */
+	flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
 
 	ss = sparc_pci_childspace(t->type);
 
