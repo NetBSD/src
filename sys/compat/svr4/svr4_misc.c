@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.156 2014/09/05 09:21:55 matt Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.157 2016/11/10 17:00:51 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.156 2014/09/05 09:21:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.157 2016/11/10 17:00:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1030,7 +1030,7 @@ svr4_sys_waitsys(struct lwp *l, const struct svr4_sys_waitsys_args *uap, registe
 	}
 
 	/* Translate options */
-	options = WOPTSCHECKED;
+	options = 0;
 	if (SCARG(uap, options) & SVR4_WNOWAIT)
 		options |= WNOWAIT;
 	if (SCARG(uap, options) & SVR4_WNOHANG)
