@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.1 2016/11/07 21:09:03 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.2 2016/11/10 18:33:52 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.1 2016/11/07 21:09:03 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.2 2016/11/10 18:33:52 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -671,6 +671,143 @@ ATF_TC_BODY(attach1, tc)
 }
 #endif
 
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(attach2);
+ATF_TC_HEAD(attach2, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that any tracer sees process termination before its "
+	    "parent");
+}
+
+ATF_TC_BODY(attach2, tc)
+{
+	int fds_totracee[2], fds_totracer[2], fds_fromtracer[2];
+	int rv;
+	const int exitval_tracee = 5;
+	const int exitval_tracer1 = 10, exitval_tracer2 = 20;
+	pid_t tracee, tracer, wpid;
+	uint8_t msg = 0xde; /* dummy message for IPC based on pipe(2) */
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	printf("Spawn tracee\n");
+	ATF_REQUIRE(pipe(fds_totracee) == 0);
+	tracee = atf_utils_fork();
+	if (tracee == 0) {
+		FORKEE_ASSERT(close(fds_totracee[1]) == 0);
+
+		/* Wait for message from the parent */
+		rv = read(fds_totracee[0], &msg, sizeof(msg));
+		FORKEE_ASSERT(rv == sizeof(msg));
+
+		_exit(exitval_tracee);
+	}
+	ATF_REQUIRE(close(fds_totracee[0]) == 0);
+
+	printf("Spawn debugger\n");
+	ATF_REQUIRE(pipe(fds_totracer) == 0);
+	ATF_REQUIRE(pipe(fds_fromtracer) == 0);
+	tracer = atf_utils_fork();
+	if (tracer == 0) {
+		/* No IPC to communicate with the child */
+		FORKEE_ASSERT(close(fds_totracee[1]) == 0);
+
+		FORKEE_ASSERT(close(fds_totracer[1]) == 0);
+		FORKEE_ASSERT(close(fds_fromtracer[0]) == 0);
+
+		/* Fork again and drop parent to reattach to PID 1 */
+		tracer = atf_utils_fork();
+		if (tracer != 0)
+			_exit(exitval_tracer1);
+
+		printf("Before calling PT_ATTACH from tracee %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
+
+		/* Wait for tracee and assert that it was stopped w/ SIGSTOP */
+		FORKEE_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
+
+		forkee_status_stopped(status, SIGSTOP);
+
+		/* Resume tracee with PT_CONTINUE */
+		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
+
+		/* Inform parent that tracer has attached to tracee */
+		rv = write(fds_fromtracer[1], &msg, sizeof(msg));
+		FORKEE_ASSERT(rv == sizeof(msg));
+
+		/* Wait for parent */
+		rv = read(fds_totracer[0], &msg, sizeof(msg));
+		FORKEE_ASSERT(rv == sizeof(msg));
+
+		/* Wait for tracee and assert that it exited */
+		FORKEE_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
+
+		forkee_status_exited(status, exitval_tracee);
+
+		printf("Before exiting of the tracer process\n");
+		_exit(exitval_tracer2);
+	}
+	ATF_REQUIRE(close(fds_totracer[0]) == 0);
+	ATF_REQUIRE(close(fds_fromtracer[1]) == 0);
+
+	printf("Wait for the tracer process (direct child) to exit calling "
+	    "%s()\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(
+	    wpid = TWAIT_GENERIC(tracer, &status, 0), tracer);
+
+	validate_status_exited(status, exitval_tracer1);
+
+	printf("Wait for the non-exited tracee process with %s()\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(
+	    wpid = TWAIT_GENERIC(tracee, NULL, WNOHANG), 0);
+
+	printf("Wait for the tracer to attach to the tracee\n");
+	rv = read(fds_fromtracer[0], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == sizeof(msg));
+
+	printf("Resume the tracee and let it exit\n");
+	rv = write(fds_totracee[1], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == sizeof(msg));
+
+	printf("fds_totracee is no longer needed - close it\n");
+	ATF_REQUIRE(close(fds_totracee[1]) == 0);
+
+	printf("Detect that tracee is zombie\n");
+	await_zombie(tracee);
+
+	printf("Assert that there is no status about tracee - "
+	    "Tracer must detect zombie first - calling %s()\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(
+	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
+
+	printf("Resume the tracer and let it detect exited tracee\n");
+	rv = write(fds_totracer[1], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == sizeof(msg));
+
+	printf("Wait for tracer to exit (pipe broken expected)\n");
+	rv = read(fds_fromtracer[0], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == 0);
+
+	printf("Wait for tracee to finish its job and exit - calling %s()\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
+	    tracee);
+
+	validate_status_exited(status, exitval_tracee);
+
+	printf("fds_fromtracer is no longer needed - close it\n");
+	ATF_REQUIRE(close(fds_fromtracer[0]) == 0);
+
+	printf("fds_totracer is no longer needed - close it\n");
+	ATF_REQUIRE(close(fds_totracer[1]) == 0);
+}
+#endif
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, traceme1);
@@ -680,6 +817,7 @@ ATF_TP_ADD_TCS(tp)
 
 #if defined(TWAIT_HAVE_PID)
 	ATF_TP_ADD_TC(tp, attach1);
+	ATF_TP_ADD_TC(tp, attach2);
 #endif
 
 #if defined(TWAIT_WAIT4TYPE)
