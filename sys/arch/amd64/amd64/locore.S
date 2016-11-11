@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.112 2016/11/11 11:31:26 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.113 2016/11/11 11:34:51 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -940,10 +940,10 @@ longmode_hi:
 	movq	$1,%rsi
 	call	cpu_init_msrs	/* cpu_init_msrs(ci, true); */
 
-	call	xen_pmap_bootstrap
+	call	xen_locore
 
 	/*
-	 * The first VA available is returned by xen_pmap_bootstrap in %rax. We
+	 * The first VA available is returned by xen_locore in %rax. We
 	 * use it as the UAREA, and set up the stack here.
 	 */
 	movq	%rax,%rsi

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.139 2016/11/11 11:00:38 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.140 2016/11/11 11:34:51 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.139 2016/11/11 11:00:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.140 2016/11/11 11:34:51 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -917,10 +917,10 @@ begin:
 	call	_C_LABEL(initgdt)
 	addl	$4,%esp
 
-	call	xen_pmap_bootstrap
+	call	xen_locore
 
 	/*
-	 * The first VA available is returned by xen_pmap_bootstrap in %eax. We
+	 * The first VA available is returned by xen_locore in %eax. We
 	 * use it as the UAREA, and set up the stack here.
 	 */
 	movl	%eax,%esi
