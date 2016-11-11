@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.76 2016/10/05 10:51:27 bouyer Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.77 2016/11/11 07:07:34 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -9056,4 +9056,14 @@ xsrc/xfree/xc/programs/Xserver/include/dix.h	patch
 		can cause a one byte buffer read underrun.
 		Affected versions: libXvMC <= 1.0.9
 	[mrg, ticket #1411]
+
+etc/namedb/root.cache				1.21, 1.22
+
+	Update root.cache to 2016102001 (October 20, 2016).
+	[taca, ticket #1413]
+
+sys/kern/uipc_usrreq.c				1.181
+
+	Fix a memory leak.
+	[maxv, ticket #1415]
 
