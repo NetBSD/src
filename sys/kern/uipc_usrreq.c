@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.136.8.3 2013/02/18 22:00:49 riz Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.136.8.4 2016/11/11 07:08:05 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.136.8.3 2013/02/18 22:00:49 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.136.8.4 2016/11/11 07:08:05 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1014,11 +1014,11 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		goto bad2;
 	}
 	vp = nd.ni_vp;
+	pathbuf_destroy(pb);
 	if (vp->v_type != VSOCK) {
 		error = ENOTSOCK;
 		goto bad;
 	}
-	pathbuf_destroy(pb);
 	if ((error = VOP_ACCESS(vp, VWRITE, l->l_cred)) != 0)
 		goto bad;
 	/* Acquire v_interlock to protect against unp_detach(). */
