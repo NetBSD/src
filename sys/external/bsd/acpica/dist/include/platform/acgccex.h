@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Name: acintel.h - VC specific defines, etc.
+ * Name: acgccex.h - Extra GCC specific defines, etc.
  *
  *****************************************************************************/
 
@@ -41,48 +41,18 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-#ifndef __ACINTEL_H__
-#define __ACINTEL_H__
+#ifndef __ACGCCEX_H__
+#define __ACGCCEX_H__
 
 /*
- * Use compiler specific <stdarg.h> is a good practice for even when
- * -nostdinc is specified (i.e., ACPI_USE_STANDARD_HEADERS undefined.
- */
-#include <stdarg.h>
-
-/* Configuration specific to Intel 64-bit C compiler */
-
-#define COMPILER_DEPENDENT_INT64    __int64
-#define COMPILER_DEPENDENT_UINT64   unsigned __int64
-#define ACPI_INLINE                 __inline
-
-/*
- * Calling conventions:
+ * Some versions of gcc implement strchr() with a buggy macro. So,
+ * undef it here. Prevents error messages of this form (usually from the
+ * file getopt.c):
  *
- * ACPI_SYSTEM_XFACE        - Interfaces to host OS (handlers, threads)
- * ACPI_EXTERNAL_XFACE      - External ACPI interfaces
- * ACPI_INTERNAL_XFACE      - Internal ACPI interfaces
- * ACPI_INTERNAL_VAR_XFACE  - Internal variable-parameter list interfaces
+ * error: logical '&&' with non-zero constant will always evaluate as true
  */
-#define ACPI_SYSTEM_XFACE
-#define ACPI_EXTERNAL_XFACE
-#define ACPI_INTERNAL_XFACE
-#define ACPI_INTERNAL_VAR_XFACE
+#ifdef strchr
+#undef strchr
+#endif
 
-/* remark 981 - operands evaluated in no particular order */
-#pragma warning(disable:981)
-
-/* warn C4100: unreferenced formal parameter */
-#pragma warning(disable:4100)
-
-/* warn C4127: conditional expression is constant */
-#pragma warning(disable:4127)
-
-/* warn C4706: assignment within conditional expression */
-#pragma warning(disable:4706)
-
-/* warn C4214: bit field types other than int */
-#pragma warning(disable:4214)
-
-
-#endif /* __ACINTEL_H__ */
+#endif /* __ACGCCEX_H__ */

@@ -31,15 +31,14 @@ OBJECTS = \
     $(OBJDIR)/axmain.o\
     $(OBJDIR)/axutils.o\
     $(OBJDIR)/getopt.o\
-    $(OBJDIR)/oslibcfs.o\
     $(OBJDIR)/osunixxf.o\
     $(OBJDIR)/utascii.o\
     $(OBJDIR)/utdebug.o\
     $(OBJDIR)/utexcep.o\
     $(OBJDIR)/utglobal.o\
+	$(OBJDIR)/uthex.o\
     $(OBJDIR)/utmath.o\
     $(OBJDIR)/utnonansi.o\
-    $(OBJDIR)/utprint.o\
     $(OBJDIR)/utxferror.o
 
 #
