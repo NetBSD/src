@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.12 2016/08/13 08:08:11 skrll Exp $	*/
+/*	$NetBSD: spl.S,v 1.13 2016/11/11 16:45:14 maya Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.12 2016/08/13 08:08:11 skrll Exp $")
+RCSID("$NetBSD: spl.S,v 1.13 2016/11/11 16:45:14 maya Exp $")
 
 #include "assym.h"
 
@@ -133,7 +133,6 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	INT_L	a1, (v1)			# load SR bits for this IPL
 1:
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
-	NOP_L					# load delay
 	xor	a1, MIPS_INT_MASK		# invert SR bits
 	or	v1, a1				# set any bits for this IPL
 	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
