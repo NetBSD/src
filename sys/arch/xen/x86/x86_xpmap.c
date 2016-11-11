@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.64 2016/11/11 11:12:42 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.65 2016/11/11 11:34:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -68,7 +68,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.64 2016/11/11 11:12:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.65 2016/11/11 11:34:51 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -122,7 +122,7 @@ extern struct xenstore_domain_interface *xenstore_interface; /* XXX */
 static void xen_bt_set_readonly(vaddr_t);
 static void xen_bootstrap_tables(vaddr_t, vaddr_t, size_t, size_t, int);
 
-vaddr_t xen_pmap_bootstrap(void);
+vaddr_t xen_locore(void);
 
 /*
  * kcpuset internally uses an array of uint32_t while xen uses an array of
@@ -596,7 +596,7 @@ static const int l2_4_count = PTP_LEVELS - 1;
  * tables.
  */
 vaddr_t
-xen_pmap_bootstrap(void)
+xen_locore(void)
 {
 	size_t count, oldcount, mapsize;
 	vaddr_t bootstrap_tables, init_tables;
