@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.224 2016/11/11 09:47:18 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.225 2016/11/11 11:34:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224 2016/11/11 09:47:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.225 2016/11/11 11:34:51 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -512,7 +512,7 @@ static struct pool_cache pmap_pv_cache;
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *early_zero_pte;
 static char *csrcp, *cdstp, *zerop, *ptpp;
 #ifdef XEN
-char *early_zerop; /* also referenced from xen_pmap_bootstrap() */
+char *early_zerop; /* also referenced from xen_locore() */
 #else
 static char *early_zerop;
 #endif
@@ -1337,7 +1337,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		 * XXXfvdl fix this for MULTIPROCESSOR later.
 		 */
 #ifdef XEN
-		/* early_zerop initialized in xen_pmap_bootstrap() */
+		/* early_zerop initialized in xen_locore() */
 #else
 		early_zerop = (void *)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
 #endif
