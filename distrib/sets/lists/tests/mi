@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.697 2016/11/10 23:47:23 alnsn Exp $
+# $NetBSD: mi,v 1.698 2016/11/11 07:39:58 alnsn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1366,6 +1366,7 @@
 ./usr/tests/dev/cgd/h_img2cgd/h_img2cgd		tests-obsolete		obsolete
 ./usr/tests/dev/cgd/paramsfile			tests-fs-tests		compattestfile,atf
 ./usr/tests/dev/cgd/t_cgd			tests-fs-tests		compattestfile,atf
+./usr/tests/dev/cgd/t_cgd_3des			tests-fs-tests		atf,compattestfile,crypto,rump
 ./usr/tests/dev/cgd/t_cgd_aes			tests-fs-tests		atf,compattestfile,crypto,rump
 ./usr/tests/dev/cgd/t_cgd_blowfish		tests-fs-tests		atf,compattestfile,crypto,rump
 ./usr/tests/dev/clock_subr			tests-fs-tests		compattestfile,atf
