@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.38 2016/07/22 14:08:33 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.39 2016/11/11 12:06:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,17 +128,6 @@
  */
 
 /*
- * The first generation of Hammer processors can use 48 bits of
- * virtual memory, and 40 bits of physical memory. This will be
- * more for later generations. These defines can be changed to
- * variable names containing the # of bits, extracted from an
- * extended cpuid instruction (variables are harder to use during
- * bootstrap, though)
- */
-#define VIRT_BITS	48
-#define PHYS_BITS	40
-
-/*
  * Mask to get rid of the sign-extended part of addresses.
  */
 #define VA_SIGN_MASK		0xffff000000000000
@@ -150,10 +139,10 @@
 
 #define L4_SLOT_PTE		255
 #ifndef XEN
-#define L4_SLOT_KERN		256
+#define L4_SLOT_KERN		256 /* pl4_i(VM_MIN_KERNEL_ADDRESS) */
 #else
 /* Xen use slots 256-272, let's move farther */
-#define L4_SLOT_KERN		320
+#define L4_SLOT_KERN		320 /* pl4_i(VM_MIN_KERNEL_ADDRESS) */
 #endif
 #define L4_SLOT_KERNBASE	511 /* pl4_i(KERNBASE) */
 
