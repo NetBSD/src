@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2208 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2209 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -393,3 +393,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	bind: Import version 9.10.4-P4. [christos 20161101]
 	zoneinfo: Import tzdata2016i.  [kre 20161103]
 	libc: Update to tzcode2016i. [christos 20161104]
+	acpi(4): Updated ACPICA to 20160930. [christos 20161111]
