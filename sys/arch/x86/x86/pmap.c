@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.223 2016/11/08 03:05:36 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.224 2016/11/11 09:47:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.223 2016/11/08 03:05:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224 2016/11/11 09:47:18 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4547,8 +4547,8 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 			pmap_kenter_pa(x86_tmp_pml_vaddr[level],
 			    x86_tmp_pml_paddr[level],
 			    VM_PROT_READ | VM_PROT_WRITE, 0);
-			pmap_update(pmap_kernel());
 		}
+		pmap_update(pmap_kernel());
 		maps_loaded = true;
 	}
 
