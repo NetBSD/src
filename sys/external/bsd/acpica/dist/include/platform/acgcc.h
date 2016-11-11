@@ -48,7 +48,11 @@
  * Use compiler specific <stdarg.h> is a good practice for even when
  * -nostdinc is specified (i.e., ACPI_USE_STANDARD_HEADERS undefined.
  */
+#ifdef _KERNEL
+#include <sys/stdarg.h>
+#else
 #include <stdarg.h>
+#endif
 
 #define ACPI_INLINE             __inline__
 

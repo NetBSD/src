@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.13 $
+ *       $Revision: 1.14 $
  *
  *****************************************************************************/
 
@@ -44,10 +44,6 @@
 
 #ifndef __ACNETBSD_H__
 #define __ACNETBSD_H__
-
-/* NetBSD uses GCC */
-
-#include "acgcc.h"
 
 #define ACPI_UINTPTR_T          uintptr_t
 #define ACPI_USE_LOCAL_CACHE
