@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.122 2016/11/10 20:56:32 jdolecek Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.123 2016/11/11 10:50:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.122 2016/11/10 20:56:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.123 2016/11/11 10:50:16 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -659,6 +659,10 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	 * This assumes the truncate process would not fail, contrary
 	 * to the wapbl case.
 	 */
+	if (ip->i_ump->um_fstype == UFS1)
+		bap1 = (int32_t *)bp->b_data;
+	else
+		bap2 = (int64_t *)bp->b_data;
 	if (lastbn >= 0 && !wapbl) {
 		copy = kmem_alloc(fs->fs_bsize, KM_SLEEP);
 		memcpy((void *)copy, bp->b_data, (u_int)fs->fs_bsize);
@@ -672,11 +676,6 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 			bap1 = (int32_t *)copy;
 		else
 			bap2 = (int64_t *)copy;
-	} else {
-		if (ip->i_ump->um_fstype == UFS1)
-			bap1 = (int32_t *)bp->b_data;
-		else
-			bap2 = (int64_t *)bp->b_data;
 	}
 
 	/*
