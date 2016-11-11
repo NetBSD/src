@@ -1,4 +1,4 @@
-# $NetBSD: files.acpica,v 1.14 2016/05/04 19:27:57 christos Exp $
+# $NetBSD: files.acpica,v 1.15 2016/11/11 21:11:30 christos Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/bsd/acpica/dist/include"
@@ -204,6 +204,7 @@ file	utilities/utpredef.c		acpica
 file	utilities/utresrc.c		acpica
 file	utilities/utstate.c		acpica
 file	utilities/utstring.c		acpica
+file	utilities/utstrtoul64.c		acpica
 file	utilities/uttrack.c		acpica
 file	utilities/utuuid.c		acpica
 file	utilities/utxface.c		acpica
