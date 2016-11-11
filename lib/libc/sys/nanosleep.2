@@ -1,4 +1,4 @@
-.\"	$NetBSD: nanosleep.2,v 1.21 2016/06/16 12:48:09 ryoon Exp $
+.\"	$NetBSD: nanosleep.2,v 1.22 2016/11/11 16:07:05 christos Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)sleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 16, 2016
+.Dd November 11, 2016
 .Dt NANOSLEEP 2
 .Os
 .Sh NAME
@@ -124,7 +124,16 @@ If
 is
 .Pf non- Dv NULL ,
 the timespec structure it references is updated to contain the
-unslept amount (the request time minus the time actually slept).
+unslept amount (the request time minus the time actually slept),
+unless it is called from
+.Fn clock_nanosleep
+with a 
+.Fa flags
+argument of
+.Dv TIMER_ABSTIME .
+In that case, the
+.Fa rmtp
+argument is left unmodified.
 .Sh ERRORS
 If any of the following conditions occur, the
 .Fn nanosleep
