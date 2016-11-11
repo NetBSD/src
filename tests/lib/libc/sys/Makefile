@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.44 2016/11/06 15:04:14 kamil Exp $
+# $NetBSD: Makefile,v 1.45 2016/11/11 15:30:44 njoly Exp $
 
 MKMAN=	no
 
@@ -12,6 +12,7 @@ TESTS_C+=		t_access
 TESTS_C+=		t_bind
 TESTS_C+=		t_chroot
 TESTS_C+=		t_clock_gettime
+TESTS_C+=		t_clock_nanosleep
 TESTS_C+=		t_clone
 TESTS_C+=		t_connect
 TESTS_C+=		t_dup
