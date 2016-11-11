@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.111 2016/11/11 10:40:00 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.112 2016/11/11 11:31:26 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -312,6 +312,16 @@
  * Initialization
  */
 	.data
+
+#if NLAPIC > 0
+	.align	PAGE_SIZE
+	.globl	_C_LABEL(local_apic)
+
+	.type	_C_LABEL(local_apic), @object
+LABEL(local_apic)
+	.space	PAGE_SIZE
+END(local_apic)
+#endif
 
 	.globl	_C_LABEL(tablesize)
 	.globl	_C_LABEL(nox_flag)
