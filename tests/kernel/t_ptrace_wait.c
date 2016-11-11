@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.3 2016/11/11 12:01:14 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.4 2016/11/11 17:08:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.3 2016/11/11 12:01:14 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.4 2016/11/11 17:08:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -203,7 +203,8 @@ validate_status_exited(int status, int expected)
         ATF_REQUIRE_MSG(!WIFSTOPPED(status), "Reported stopped process");
 
 	ATF_REQUIRE_EQ_MSG(WEXITSTATUS(status), expected,
-	    "The process has exited with invalid value");
+	    "The process has exited with invalid value %d != %d",
+	    WEXITSTATUS(status), expected);
 }
 
 static void __used
@@ -270,8 +271,12 @@ validate_status_stopped(int status, int expected)
 	ATF_REQUIRE_MSG(!WIFSIGNALED(status), "Reported signaled process");
 	ATF_REQUIRE_MSG(WIFSTOPPED(status), "Reported stopped process");
 
+	char st[128], ex[128];
+	strlcpy(st, strsignal(WSTOPSIG(status)), sizeof(st));
+	strlcpy(ex, strsignal(expected), sizeof(ex));
+
 	ATF_REQUIRE_EQ_MSG(WSTOPSIG(status), expected,
-	    "Unexpected stop signal received");
+	    "Unexpected stop signal received [%s] != [%s]", st, ex);
 }
 
 static void __used
@@ -825,9 +830,6 @@ ATF_TC_BODY(attach3, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-
-	/* PT_ATTACH from a parent is unreliable */
-	atf_tc_expect_fail("PR kern/51621");
 
 	printf("Spawn tracee\n");
 	ATF_REQUIRE(pipe(fds_totracee) == 0);
