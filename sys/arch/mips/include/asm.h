@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.52 2016/11/09 11:50:09 maya Exp $	*/
+/*	$NetBSD: asm.h,v 1.53 2016/11/11 16:41:32 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -512,7 +512,7 @@ _C_LABEL(x):
 
 /* CPU dependent hook for cp0 load delays */
 #if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
-#define MFC0_HAZARD	nop
+#define MFC0_HAZARD	sll $0,$0,1	/* super scalar nop */
 #else
 #define MFC0_HAZARD	/* nothing */
 #endif
