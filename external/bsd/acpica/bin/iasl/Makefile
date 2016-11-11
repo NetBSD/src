@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2016/05/04 19:28:15 christos Exp $
+# $NetBSD: Makefile,v 1.13 2016/11/11 21:09:21 christos Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -38,6 +38,7 @@ SRCS+= \
 	aslfileio.c \
 	aslfiles.c \
 	aslfold.c \
+	aslhelp.c \
 	aslhex.c \
 	asllength.c \
 	asllisting.c \
@@ -237,12 +238,13 @@ SRCS+= \
 	utresrc.c \
 	utstate.c \
 	utstring.c \
+	utstrtoul64.c \
 	utuuid.c \
 	utxface.c \
 	utxferror.c
 
 .PATH: ${TOPDIR}/../os_specific/service_layers
-SRCS+=	osunixxf.c oslibcfs.c
+SRCS+=	osunixxf.c
 
 
 aslparser.y: asltokens.y asltypes.y aslrules.y aslsupport.y
