@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.89 2016/05/06 08:56:20 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.90 2016/11/11 07:31:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -237,7 +237,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_SWDPIO_SHIFT	22
 #define	CTRL_SWDPIO_MASK	0x0f
 #define	CTRL_SWDPIO(x)		(1U << (CTRL_SWDPIO_SHIFT + (x)))
-#define CTRL_MEHE	(1U << 17)	/* Memory Error Handling Enable(I217)*/
+#define CTRL_MEHE	(1U << 19)	/* Memory Error Handling Enable(I217)*/
 #define	CTRL_RST	(1U << 26)	/* device reset */
 #define	CTRL_RFCE	(1U << 27)	/* Rx flow control enable */
 #define	CTRL_TFCE	(1U << 28)	/* Tx flow control enable */
