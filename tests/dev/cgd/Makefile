@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2016/11/10 23:44:36 alnsn Exp $
+#	$NetBSD: Makefile,v 1.7 2016/11/11 07:39:58 alnsn Exp $
 #
 
 .include <bsd.own.mk>
@@ -10,7 +10,7 @@ FILESDIR=	${TESTSDIR}
 TESTS_SH=	t_cgd
 
 .if ${MKCRYPTO} != "no" && ${MKRUMP} != "no"
-TESTS_C=	t_cgd_aes t_cgd_blowfish
+TESTS_C=	t_cgd_3des t_cgd_aes t_cgd_blowfish
 
 WARNS=	4
 CPPFLAGS+=	-D_KERNTYPES
