@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.174 2016/11/10 23:44:36 alnsn Exp $
+# $NetBSD: mi,v 1.175 2016/11/11 07:39:58 alnsn Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1591,6 +1591,7 @@
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_xcbcmac.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/dev/audio/h_pad.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/dev/cgd/h_img2cgd/h_img2cgd.debug			tests-obsolete	obsolete,compattestfile
+./usr/libdata/debug/usr/tests/dev/cgd/t_cgd_3des.debug			tests-fs-debug		atf,compattestfile,crypto,debug,rump
 ./usr/libdata/debug/usr/tests/dev/cgd/t_cgd_aes.debug			tests-fs-debug		atf,compattestfile,crypto,debug,rump
 ./usr/libdata/debug/usr/tests/dev/cgd/t_cgd_blowfish.debug		tests-fs-debug		atf,compattestfile,crypto,debug,rump
 ./usr/libdata/debug/usr/tests/dev/clock_subr/t_clock_subr.debug		tests-fs-debug		debug,atf,rump
