@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.175 2016/11/11 07:39:58 alnsn Exp $
+# $NetBSD: mi,v 1.176 2016/11/11 15:30:44 njoly Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2014,6 +2014,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_chroot.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_clock_gettime.debug	tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_clock_nanosleep.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_clone.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_connect.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_context.debug		tests-obsolete		obsolete,compattestfile
