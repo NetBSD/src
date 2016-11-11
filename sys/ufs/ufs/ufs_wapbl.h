@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.13 2016/11/10 20:56:32 jdolecek Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.14 2016/11/11 22:59:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -171,8 +171,8 @@ ufs_wapbl_end(struct mount *mp)
 #define	UFS_WAPBL_JUNLOCK_ASSERT(mp)
 #define	UFS_WAPBL_REGISTER_INODE(mp, ino, mode)		do { } while (0)
 #define	UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)	do { } while (0)
-#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)		0
-#define	UFS_WAPBL_REGISTER_DEALLOCATION_FORCE(mp, blk, len)	0
+#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len, cookiep)		0
+#define	UFS_WAPBL_REGISTER_DEALLOCATION_FORCE(mp, blk, len)		0
 #define	UFS_WAPBL_UNREGISTER_DEALLOCATION(mp, cookie)	do { } while (0)
 #endif
 
