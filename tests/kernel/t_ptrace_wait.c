@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.9 2016/11/12 19:44:59 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.10 2016/11/12 20:03:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.9 2016/11/12 19:44:59 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.10 2016/11/12 20:03:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -615,7 +615,7 @@ ATF_TC_BODY(attach1, tc)
 		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
-		forkee_status_stopped(status, SIGTRAP);
+		forkee_status_stopped(status, SIGSTOP);
 
 		/* Resume tracee with PT_CONTINUE */
 		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
@@ -743,7 +743,7 @@ ATF_TC_BODY(attach2, tc)
 		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
-		forkee_status_stopped(status, SIGTRAP);
+		forkee_status_stopped(status, SIGSTOP);
 
 		/* Resume tracee with PT_CONTINUE */
 		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
@@ -952,7 +952,7 @@ ATF_TC_BODY(attach4, tc)
 		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(getppid(), &status, 0), getppid());
 
-		forkee_status_stopped(status, SIGTRAP);
+		forkee_status_stopped(status, SIGSTOP);
 
 		printf("Resume parent with PT_DETACH\n");
 		FORKEE_ASSERT(ptrace(PT_DETACH, getppid(), (void *)1, 0)
@@ -1071,7 +1071,7 @@ ATF_TC_BODY(attach5, tc)
 		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
-		forkee_status_stopped(status, SIGTRAP);
+		forkee_status_stopped(status, SIGSTOP);
 
 		/* Resume tracee with PT_CONTINUE */
 		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
