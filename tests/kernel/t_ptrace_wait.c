@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.8 2016/11/12 16:33:48 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.9 2016/11/12 19:44:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.8 2016/11/12 16:33:48 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.9 2016/11/12 19:44:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -154,21 +154,30 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.8 2016/11/12 16:33:48 kamil Exp $");
  * overcomplicate the tests - do not log from a child and use err(3)/errx(3)
  * wrapped with FORKEE_ASSERT()/FORKEE_ASSERTX() as that is guaranteed to work.
  */
-#define FORKEE_ASSERTX(x)							\
-do {										\
-	int ret = (x);								\
-	if (!ret)								\
-		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",	\
-		     __FILE__, __LINE__, __func__, #x);				\
-} while (0)
+#define FORKEE_ASSERT_EQ(x, y)						\
+do {									\
+	int ret = (x) == (y);						\
+	if (!ret)							\
+		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: "	\
+		    "%s(%d) == %s(%d)", __FILE__, __LINE__, __func__,	\
+		    #x, (int)x, #y, (int)y);				\
+} while (/*CONSTCOND*/0)
 
-#define FORKEE_ASSERT(x)							\
-do {										\
-	int ret = (x);								\
-	if (!ret)								\
-		err(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",	\
-		     __FILE__, __LINE__, __func__, #x);				\
-} while (0)
+#define FORKEE_ASSERTX(x)						\
+do {									\
+	int ret = (x);							\
+	if (!ret)							\
+		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",\
+		     __FILE__, __LINE__, __func__, #x);			\
+} while (/*CONSTCOND*/0)
+
+#define FORKEE_ASSERT(x)						\
+do {									\
+	int ret = (x);							\
+	if (!ret)							\
+		err(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",\
+		     __FILE__, __LINE__, __func__, #x);			\
+} while (/*CONSTCOND*/0)
 
 /*
  * If waitid(2) returns because one or more processes have a state change to
@@ -215,7 +224,7 @@ forkee_status_exited(int status, int expected)
 	FORKEE_ASSERTX(!WIFSIGNALED(status));
 	FORKEE_ASSERTX(!WIFSTOPPED(status));
 
-	FORKEE_ASSERTX(WEXITSTATUS(status) == expected);
+	FORKEE_ASSERT_EQ(WEXITSTATUS(status), expected);
 }
 
 static void __used
@@ -259,8 +268,8 @@ forkee_status_signaled(int status, int expected_termsig, int expected_core)
 	FORKEE_ASSERTX(WIFSIGNALED(status));
 	FORKEE_ASSERTX(!WIFSTOPPED(status));
 
-	FORKEE_ASSERTX(WTERMSIG(status) == expected_termsig);
-	FORKEE_ASSERTX(WCOREDUMP(status) == expected_core);
+	FORKEE_ASSERT_EQ(WTERMSIG(status), expected_termsig);
+	FORKEE_ASSERT_EQ(WCOREDUMP(status), expected_core);
 }
 
 static void __used
@@ -287,7 +296,7 @@ forkee_status_stopped(int status, int expected)
 	FORKEE_ASSERTX(!WIFSIGNALED(status));
 	FORKEE_ASSERTX(WIFSTOPPED(status));
 
-	FORKEE_ASSERTX(WSTOPSIG(status) == expected);
+	FORKEE_ASSERT_EQ(WSTOPSIG(status), expected);
 }
 #else
 #define validate_status_exited(a,b)
@@ -391,7 +400,7 @@ static int traceme2_caught = 0;
 static void
 traceme2_sighandler(int sig)
 {
-	FORKEE_ASSERTX(sig == SIGINT);
+	FORKEE_ASSERT_EQ(sig, SIGINT);
 
 	++traceme2_caught;
 }
@@ -421,7 +430,7 @@ ATF_TC_BODY(traceme2, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERTX(traceme2_caught == 1);
+		FORKEE_ASSERT_EQ(traceme2_caught, 1);
 
 		printf("Before exiting of the child process\n");
 		_exit(exitval);
@@ -606,7 +615,7 @@ ATF_TC_BODY(attach1, tc)
 		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
-		forkee_status_stopped(status, SIGSTOP);
+		forkee_status_stopped(status, SIGTRAP);
 
 		/* Resume tracee with PT_CONTINUE */
 		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
@@ -734,7 +743,7 @@ ATF_TC_BODY(attach2, tc)
 		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
-		forkee_status_stopped(status, SIGSTOP);
+		forkee_status_stopped(status, SIGTRAP);
 
 		/* Resume tracee with PT_CONTINUE */
 		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
@@ -943,14 +952,17 @@ ATF_TC_BODY(attach4, tc)
 		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(getppid(), &status, 0), getppid());
 
-		forkee_status_stopped(status, SIGSTOP);
+		forkee_status_stopped(status, SIGTRAP);
 
 		printf("Resume parent with PT_DETACH\n");
 		FORKEE_ASSERT(ptrace(PT_DETACH, getppid(), (void *)1, 0)
 		    != -1);
 
-		/* Wait for message from the parent */
+		/* Tell parent we are ready */
 		rv = write(fds_fromtracer[1], &msg, sizeof(msg));
+		FORKEE_ASSERT(rv == sizeof(msg));
+		/* Wait for message from the parent */
+		rv = read(fds_totracer[0], &msg, sizeof(msg));
 		FORKEE_ASSERT(rv == sizeof(msg));
 
 		_exit(exitval_tracer);
@@ -962,8 +974,11 @@ ATF_TC_BODY(attach4, tc)
 	rv = write(fds_totracer[1], &msg, sizeof(msg));
 	ATF_REQUIRE(rv == sizeof(msg));
 
-	printf("Let the tracer exit now\n");
+	printf("Wait for the tracer to resume\n");
 	rv = read(fds_fromtracer[0], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == sizeof(msg));
+	printf("Allow the tracer to exit now\n");
+	rv = write(fds_totracer[1], &msg, sizeof(msg));
 	ATF_REQUIRE(rv == sizeof(msg));
 
 	printf("Wait for tracer to exit with %s()\n", TWAIT_FNAME);
@@ -1008,8 +1023,6 @@ ATF_TC_BODY(attach5, tc)
 	 * Tracee process cannot see its appropriate parent when debugged by a
 	 * tracer
 	 */
-	atf_tc_expect_fail("PR kern/51624");
-
 	printf("Spawn tracee\n");
 	ATF_REQUIRE(pipe(fds_totracee) == 0);
 	ATF_REQUIRE(pipe(fds_fromtracee) == 0);
@@ -1028,7 +1041,7 @@ ATF_TC_BODY(attach5, tc)
 		rv = read(fds_totracee[0], &msg, sizeof(msg));
 		FORKEE_ASSERT(rv == sizeof(msg));
 
-		FORKEE_ASSERTX(parent == getppid());
+		FORKEE_ASSERT_EQ(parent, getppid());
 
 		_exit(exitval_tracee);
 	}
@@ -1058,7 +1071,7 @@ ATF_TC_BODY(attach5, tc)
 		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
-		forkee_status_stopped(status, SIGSTOP);
+		forkee_status_stopped(status, SIGTRAP);
 
 		/* Resume tracee with PT_CONTINUE */
 		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
