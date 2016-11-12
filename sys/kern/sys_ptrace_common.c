@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.3 2016/11/11 17:10:04 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.4 2016/11/12 20:03:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.3 2016/11/11 17:10:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.4 2016/11/12 20:03:17 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -814,7 +814,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		 * Stop the target.
 		 */
 		proc_changeparent(t, p);
-		signo = SIGTRAP;
+		signo = SIGSTOP;
 		goto sendsig;
 
 	case  PT_GET_EVENT_MASK:
