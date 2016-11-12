@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.54 2016/07/13 11:11:53 jmcneill Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.55 2016/11/12 16:06:04 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -552,7 +552,7 @@ struct netbsd32_clockctl_clock_settime {
 
 struct netbsd32_clockctl_ntp_adjtime {
 	netbsd32_timexp_t tp;
-	/* register_t */ int32_t retval;
+	register32_t retval;
 };
 
 #define CLOCKCTL_NTP_ADJTIME32 _IOWR('C', 0x8, \
