@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.6 2016/11/12 14:48:55 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.7 2016/11/12 16:23:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.6 2016/11/12 14:48:55 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.7 2016/11/12 16:23:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -839,7 +839,13 @@ ATF_TC_BODY(attach3, tc)
 		FORKEE_ASSERT(close(fds_totracee[1]) == 0);
 		FORKEE_ASSERT(close(fds_fromtracee[0]) == 0);
 
-		/* Wait for message from the parent */
+		/* Wait for message 1 from the parent */
+		rv = read(fds_totracee[0], &msg, sizeof(msg));
+		FORKEE_ASSERT(rv == sizeof(msg));
+		/* Send response to parent */
+		rv = write(fds_fromtracee[1], &msg, sizeof(msg));
+		FORKEE_ASSERT(rv == sizeof(msg));
+		/* Wait for message 2 from the parent */
 		rv = read(fds_totracee[0], &msg, sizeof(msg));
 		FORKEE_ASSERT(rv == sizeof(msg));
 
@@ -854,7 +860,13 @@ ATF_TC_BODY(attach3, tc)
 	ATF_REQUIRE(close(fds_totracee[0]) == 0);
 	ATF_REQUIRE(close(fds_fromtracee[1]) == 0);
 
-	printf("Wait for the tracee to become ready\n");
+	printf("Send message 1 to tracee\n");
+	rv = write(fds_totracee[1], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == sizeof(msg));
+	printf("Wait for response from tracee\n");
+	rv = read(fds_fromtracee[0], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == sizeof(msg));
+	printf("Send message 2 to tracee\n");
 	rv = write(fds_totracee[1], &msg, sizeof(msg));
 	ATF_REQUIRE(rv == sizeof(msg));
 
@@ -1127,6 +1139,8 @@ ATF_TC_BODY(attach5, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
+	setvbuf(stdout, NULL, _IONBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
 	ATF_TP_ADD_TC(tp, traceme1);
 	ATF_TP_ADD_TC(tp, traceme2);
 	ATF_TP_ADD_TC(tp, traceme3);
