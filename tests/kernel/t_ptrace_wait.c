@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.10 2016/11/12 20:03:53 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.11 2016/11/12 20:56:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.10 2016/11/12 20:03:53 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.11 2016/11/12 20:56:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -860,8 +860,11 @@ ATF_TC_BODY(attach3, tc)
 
 		printf("Parent should now attach to tracee\n");
 
-		/* Wait for message from the parent */
+		/* Write to pearent we are ok */
 		rv = write(fds_fromtracee[1], &msg, sizeof(msg));
+		FORKEE_ASSERT(rv == sizeof(msg));
+		/* Wait for message from the parent */
+		rv = read(fds_totracee[0], &msg, sizeof(msg));
 		FORKEE_ASSERT(rv == sizeof(msg));
 
 		_exit(exitval_tracee);
@@ -894,6 +897,8 @@ ATF_TC_BODY(attach3, tc)
 
 	printf("Let the tracee exit now\n");
 	rv = read(fds_fromtracee[0], &msg, sizeof(msg));
+	ATF_REQUIRE(rv == sizeof(msg));
+	rv = write(fds_totracee[1], &msg, sizeof(msg));
 	ATF_REQUIRE(rv == sizeof(msg));
 
 	printf("Wait for tracee to exit with %s()\n", TWAIT_FNAME);
