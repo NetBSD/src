@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.7 2016/11/12 16:23:36 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.8 2016/11/12 16:33:48 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.7 2016/11/12 16:23:36 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.8 2016/11/12 16:33:48 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -878,7 +878,7 @@ ATF_TC_BODY(attach3, tc)
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
-	validate_status_stopped(status, SIGTRAP);
+	validate_status_stopped(status, SIGSTOP);
 
 	printf("Resume tracee with PT_CONTINUE\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
