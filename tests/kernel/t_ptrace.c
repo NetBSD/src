@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.15 2016/11/08 14:49:04 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.16 2016/11/12 16:23:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.15 2016/11/08 14:49:04 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.16 2016/11/12 16:23:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -170,6 +170,8 @@ ATF_TC_BODY(attach_chroot, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
+	setvbuf(stdout, NULL, _IONBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
 	ATF_TP_ADD_TC(tp, attach_pid0);
 	ATF_TP_ADD_TC(tp, attach_pid1);
 	ATF_TP_ADD_TC(tp, attach_self);
