@@ -5,7 +5,7 @@ include_HEADERS = blacklist.h
 
 bin_PROGRAMS = blacklistd blacklistctl srvtest cltest
 
-VPATH = ../bin:../lib:../test
+VPATH = ../bin:../lib:../test:../include
 
 AM_CPPFLAGS = -I../include  -DDOT="."
 AM_CFLAGS = @WARNINGS@
