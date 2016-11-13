@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.16 2016/11/12 16:23:43 christos Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.17 2016/11/13 22:59:31 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.16 2016/11/12 16:23:43 christos Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.17 2016/11/13 22:59:31 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <err.h>
 #include <errno.h>
 #include <unistd.h>
@@ -89,6 +90,31 @@ ATF_TC_HEAD(attach_pid1, tc)
 
 ATF_TC_BODY(attach_pid1, tc)
 {
+	ATF_REQUIRE_ERRNO(EPERM, ptrace(PT_ATTACH, 1, NULL, 0) == -1);
+}
+
+ATF_TC(attach_pid1_securelevel);
+ATF_TC_HEAD(attach_pid1_securelevel, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that a debugger cannot attach to PID 1 with "
+	    "securelevel >= 1 (as root)");
+
+	atf_tc_set_md_var(tc, "require.user", "root");
+}
+
+ATF_TC_BODY(attach_pid1_securelevel, tc)
+{
+	int level;
+	size_t len = sizeof(level);
+
+	ATF_REQUIRE(sysctlbyname("kern.securelevel", &level, &len, NULL, 0)
+	    != -1);
+
+	if (level < 1) {
+		atf_tc_skip("Test must be run with securelevel >= 1");
+	}
+
 	ATF_REQUIRE_ERRNO(EPERM, ptrace(PT_ATTACH, 1, NULL, 0) == -1);
 }
 
@@ -174,6 +200,7 @@ ATF_TP_ADD_TCS(tp)
 	setvbuf(stderr, NULL, _IONBF, 0);
 	ATF_TP_ADD_TC(tp, attach_pid0);
 	ATF_TP_ADD_TC(tp, attach_pid1);
+	ATF_TP_ADD_TC(tp, attach_pid1_securelevel);
 	ATF_TP_ADD_TC(tp, attach_self);
 	ATF_TP_ADD_TC(tp, attach_chroot);
 
