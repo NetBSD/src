@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.66 2016/10/16 10:38:49 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.67 2016/11/13 12:38:14 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.66 2016/10/16 10:38:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.67 2016/11/13 12:38:14 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -194,6 +194,10 @@ IDTVEC(intr_lapic_tlb)
 IDTVEC_END(intr_lapic_tlb)
 
 #if defined(DDB)
+/*
+ * No need to use INTRENTRY, since we were brought here through a task-gate
+ * which triggered a hardware context switch and saved the GPRs in the TSS.
+ */
 IDTVEC(intrddbipi)
 1:
 	str	%ax
