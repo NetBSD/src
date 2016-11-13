@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.77 2016/11/11 07:07:34 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.78 2016/11/13 06:45:09 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -9066,4 +9066,10 @@ sys/kern/uipc_usrreq.c				1.181
 
 	Fix a memory leak.
 	[maxv, ticket #1415]
+
+external/gpl3/gcc/dist/gcc/cp/cfns.gper		patch
+external/gpl3/gcc/dist/gcc/cp/cfns.h		patch
+
+	Fix build with gcc5.
+	[pgoyette, ticket #1417]
 
