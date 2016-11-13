@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.118 2016/11/05 17:55:56 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.119 2016/11/13 07:29:32 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -6892,4 +6892,9 @@ external/bsd/bind/lib/libbind9/Makefile         up to 1.3
 
 	Update BIND to 9.10.4-P4.  Fixes CVE-2016-8864.
 	[snj, ticket #1271]
+
+sys/conf/files					1.1165
+
+	Update dependencies for COMPAT_LINUX32 to include COMPAT_NETBSD32
+	[pgoyette, ticket #1270]
 
