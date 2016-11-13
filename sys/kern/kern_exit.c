@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.266 2016/11/10 17:07:14 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.267 2016/11/13 15:25:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.266 2016/11/10 17:07:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.267 2016/11/13 15:25:01 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -1320,11 +1320,12 @@ proc_reparent(struct proc *child, struct proc *parent)
 		child->p_pptr->p_nstopchild--;
 		parent->p_nstopchild++;
 	}
-	if (parent == initproc)
+	if (parent == initproc) {
 		child->p_exitsig = SIGCHLD;
+		child->p_ppid = parent->p_pid;
+	}
 
 	LIST_REMOVE(child, p_sibling);
 	LIST_INSERT_HEAD(&parent->p_children, child, p_sibling);
 	child->p_pptr = parent;
-	child->p_ppid = parent->p_pid;
 }
