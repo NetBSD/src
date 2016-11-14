@@ -1,4 +1,4 @@
-.\"	$NetBSD: nanosleep.2,v 1.22 2016/11/11 16:07:05 christos Exp $
+.\"	$NetBSD: nanosleep.2,v 1.23 2016/11/14 10:40:59 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -127,7 +127,7 @@ the timespec structure it references is updated to contain the
 unslept amount (the request time minus the time actually slept),
 unless it is called from
 .Fn clock_nanosleep
-with a 
+with a
 .Fa flags
 argument of
 .Dv TIMER_ABSTIME .
