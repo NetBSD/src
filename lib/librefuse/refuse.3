@@ -1,4 +1,4 @@
-.\"	$NetBSD: refuse.3,v 1.10 2016/11/14 17:19:29 pho Exp $
+.\"	$NetBSD: refuse.3,v 1.11 2016/11/14 17:48:57 pho Exp $
 .\"
 .\" Copyright © 2007 Alistair Crooks.  All rights reserved.
 .\"
@@ -44,6 +44,15 @@
 .Fo FUSE_ARGS_INIT
 .Fa "int argc" "char **argv"
 .Fc
+.Ft struct fuse_opt
+.Fo FUSE_OPT_KEY
+.Fa "const char* templ" "int32_t key"
+.Fc
+.Vt struct fuse_opt Dv FUSE_OPT_END;
+.Vt int32_t Dv FUSE_OPT_KEY_OPT;
+.Vt int32_t Dv FUSE_OPT_KEY_NONOPT;
+.Vt int32_t Dv FUSE_OPT_KEY_KEEP;
+.Vt int32_t Dv FUSE_OPT_KEY_DISCARD;
 .Ft int
 .Fo fuse_opt_add_arg
 .Fa "struct fuse_args *args" "const char *arg"
