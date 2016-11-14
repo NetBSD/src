@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.11 2016/11/12 20:56:49 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.12 2016/11/14 00:18:33 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.11 2016/11/12 20:56:49 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.12 2016/11/14 00:18:33 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1041,6 +1041,10 @@ ATF_TC_BODY(attach5, tc)
 		/* Emit message to the parent */
 		rv = write(fds_fromtracee[1], &msg, sizeof(msg));
 		FORKEE_ASSERT(rv == sizeof(msg));
+		rv = read(fds_totracee[0], &msg, sizeof(msg));
+		FORKEE_ASSERT(rv == sizeof(msg));
+		rv = write(fds_fromtracee[1], &msg, sizeof(msg));
+		FORKEE_ASSERT(rv == sizeof(msg));
 
 		/* Wait for message from the parent */
 		rv = read(fds_totracee[0], &msg, sizeof(msg));
@@ -1053,7 +1057,11 @@ ATF_TC_BODY(attach5, tc)
 	ATF_REQUIRE(close(fds_totracee[0]) == 0);
 	ATF_REQUIRE(close(fds_fromtracee[1]) == 0);
 
-	printf("Wait for child to record its parent identifier (pid\n");
+	printf("Wait for child to record its parent identifier (pid)\n");
+	rv = read(fds_fromtracee[0], &msg, sizeof(msg));
+	FORKEE_ASSERT(rv == sizeof(msg));
+	rv = write(fds_totracee[1], &msg, sizeof(msg));
+	FORKEE_ASSERT(rv == sizeof(msg));
 	rv = read(fds_fromtracee[0], &msg, sizeof(msg));
 	FORKEE_ASSERT(rv == sizeof(msg));
 
