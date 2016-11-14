@@ -1,4 +1,4 @@
-.\"	$NetBSD: refuse.3,v 1.9 2014/03/18 18:20:38 riastradh Exp $
+.\"	$NetBSD: refuse.3,v 1.10 2016/11/14 17:19:29 pho Exp $
 .\"
 .\" Copyright © 2007 Alistair Crooks.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 30, 2007
+.Dd November 15, 2016
 .Dt REFUSE 3
 .Os
 .Sh NAME
@@ -40,9 +40,29 @@
 .Fo fuse_main
 .Fa "int argc" "char **argv" "const struct fuse_operations *"
 .Fc
+.Ft struct fuse_args
+.Fo FUSE_ARGS_INIT
+.Fa "int argc" "char **argv"
+.Fc
 .Ft int
 .Fo fuse_opt_add_arg
 .Fa "struct fuse_args *args" "const char *arg"
+.Fc
+.Ft int
+.Fo fuse_opt_add_opt
+.Fa "char **opts" "const char *opt"
+.Fc
+.Ft int
+.Fo fuse_opt_add_opt_escaped
+.Fa "char **opts" "const char *opt"
+.Fc
+.Ft void
+.Fo fuse_opt_free_args
+.Fa "struct fuse_args *args"
+.Fc
+.Ft int
+.Fo fuse_opt_insert_arg
+.Fa "struct fuse_args *args" "int pos" "const char *arg"
 .Fc
 .Ft int
 .Fo fuse_opt_parse
