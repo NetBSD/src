@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.17 2016/11/14 19:22:52 maya Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.18 2016/11/14 19:24:23 maya Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #define	__INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.17 2016/11/14 19:22:52 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.18 2016/11/14 19:24:23 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ pizazz_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 	HANDLE_INTR(SYS_INTR_LEVEL0,	MIPS_INT_MASK_0);
 
 #if !defined(NOFPU)
-	/* FPU notificaition */
+	/* FPU notification */
 	if (ipending & INT_MASK_FPU) {
 		if (!USERMODE(status))
 			panic("kernel used FPU: PC %x, SR %x",
