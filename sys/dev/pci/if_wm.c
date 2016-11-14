@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.443 2016/11/10 08:35:24 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.444 2016/11/14 05:38:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.443 2016/11/10 08:35:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.444 2016/11/14 05:38:39 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5200,9 +5200,8 @@ wm_init_locked(struct ifnet *ifp)
 		reg |= PBECCSTS_UNCORR_ECC_ENABLE;
 		CSR_WRITE(sc, WMREG_PBECCSTS, reg);
 
-		reg = CSR_READ(sc, WMREG_CTRL);
-		reg |= CTRL_MEHE;
-		CSR_WRITE(sc, WMREG_CTRL, reg);
+		sc->sc_ctrl |= CTRL_MEHE;
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 		break;
 	default:
 		break;
