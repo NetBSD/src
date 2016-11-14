@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.986 2016/11/13 22:13:55 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.987 2016/11/14 20:42:46 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -825,9 +825,8 @@ MKPICLIB:=	no
 .endif
 
 .if !defined(COMMON_MACHINE_ARCH)
-# Native AArch64 and PowerPC64 ABIs are PIC.
+# Native PowerPC64 ABI is PIC.
 MKPICLIB.powerpc64:=	no
-#MKPICLIB.aarch64=	no
 .endif
 
 #
