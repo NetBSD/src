@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.90 2016/11/11 07:31:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.91 2016/11/14 08:48:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -459,6 +459,16 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_ICS	0x00c8	/* Interrupt Cause Set Register */
 	/* See ICR bits. */
 
+#define	WMREG_IMS	0x00d0	/* Interrupt Mask Set Register */
+	/* See ICR bits. */
+
+#define	WMREG_IMC	0x00d8	/* Interrupt Mask Clear Register */
+	/* See ICR bits. */
+
+#define	WMREG_EIAC_82574 0x00dc	/* Interrupt Auto Clear Register */
+#define	WMREG_EIAC_82574_MSIX_MASK	(ICR_RXQ(0) | ICR_RXQ(1)	\
+	    | ICR_TXQ(0) | ICR_TXQ(1) | ICR_OTHER)
+
 #define WMREG_IVAR	0x00e4  /* Interrupt Vector Allocation Register */
 #define WMREG_IVAR0	0x01700 /* Interrupt Vector Allocation */
 #define IVAR_ALLOC_MASK  __BITS(0, 6)	/* Bit 5 and 6 are reserved */
@@ -482,16 +492,6 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_IVAR_MISC	0x01740 /* IVAR for other causes */
 #define IVAR_MISC_TCPTIMER __BITS(0, 7)
 #define IVAR_MISC_OTHER	__BITS(8, 15)
-
-#define	WMREG_IMS	0x00d0	/* Interrupt Mask Set Register */
-	/* See ICR bits. */
-
-#define	WMREG_IMC	0x00d8	/* Interrupt Mask Clear Register */
-	/* See ICR bits. */
-
-#define	WMREG_EIAC_82574 0x00dc	/* Interrupt Auto Clear Register */
-#define	WMREG_EIAC_82574_MSIX_MASK	(ICR_RXQ(0) | ICR_RXQ(1)	\
-	    | ICR_TXQ(0) | ICR_TXQ(1) | ICR_OTHER)
 
 #define	WMREG_RCTL	0x0100	/* Receive Control */
 #define	RCTL_EN		(1U << 1)	/* receiver enable */
