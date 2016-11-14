@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.15 2011/03/01 11:23:42 soda Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.16 2016/11/14 17:19:29 pho Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -39,6 +39,7 @@
 #include <err.h>
 #include <fuse.h>
 #include <fuse_opt.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,22 +65,8 @@ struct fuse_opt_option {
 
 static int fuse_opt_popt(struct fuse_opt_option *, const struct fuse_opt *);
 
-/* 
+/*
  * Public API.
- *
- * The following functions always return 0:
- *
- * int	fuse_opt_add_opt(char **, const char *);
- *
- * We implement the next ones:
- *
- * int	fuse_opt_add_arg(struct fuse_args *, const char *);
- * void	fuse_opt_free_args(struct fuse_args *);
- * int	fuse_opt_insert_arg(struct fuse_args *, const char *);
- * int	fuse_opt_match(const struct fuse_opt *, const char *);
- * int	fuse_opt_parse(struct fuse_args *, void *,
- * 		       const struct fuse_opt *, fuse_opt_proc_t);
- *
  */
 
 /* ARGSUSED */
@@ -180,12 +167,44 @@ fuse_opt_insert_arg(struct fuse_args *args, int pos, const char *arg)
 	return 0;
 }
 
-/* ARGSUSED */
+static int add_opt(char **opts, const char *opt, bool escape)
+{
+	const size_t orig_len = *opts == NULL ? 0 : strlen(*opts);
+	char* buf = realloc(*opts, orig_len + 1 + strlen(opt) * 2 + 1);
+
+	if (buf == NULL) {
+		return -1;
+	}
+	*opts = buf;
+
+	if (orig_len > 0) {
+		buf += orig_len;
+		*buf++ = ',';
+	}
+
+	for (; *opt; opt++) {
+		if (escape && (*opt == ',' || *opt == '\\')) {
+			*buf++ = '\\';
+		}
+		*buf++ = *opt;
+	}
+	*buf = '\0';
+
+	return 0;
+}
+
 int fuse_opt_add_opt(char **opts, const char *opt)
 {
 	DPRINTF(("%s: arguments passed: [opts=%s] [opt=%s]\n",
 	    __func__, *opts, opt));
-	return 0;
+	return add_opt(opts, opt, false);
+}
+
+int fuse_opt_add_opt_escaped(char **opts, const char *opt)
+{
+	DPRINTF(("%s: arguments passed: [opts=%s] [opt=%s]\n",
+	    __func__, *opts, opt));
+	return add_opt(opts, opt, true);
 }
 
 /*

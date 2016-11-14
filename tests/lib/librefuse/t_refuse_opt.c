@@ -1,11 +1,8 @@
-/*	$NetBSD: t_refuse_opt.c,v 1.1 2016/11/14 16:10:31 pho Exp $ */
+/*	$NetBSD: t_refuse_opt.c,v 1.2 2016/11/14 17:19:29 pho Exp $ */
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jukka Ruohonen.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_refuse_opt.c,v 1.1 2016/11/14 16:10:31 pho Exp $");
+__RCSID("$NetBSD: t_refuse_opt.c,v 1.2 2016/11/14 17:19:29 pho Exp $");
 
 #include <atf-c.h>
 
@@ -85,13 +82,28 @@ ATF_TC_BODY(efuse_opt_add_opt, tc)
 {
 	char* opt = NULL;
 
-	atf_tc_expect_death("fuse_opt_add_opt(3) is not implemented yet");
+	RZ(fuse_opt_add_opt(&opt, "fo\\o"));
+	ATF_CHECK_STREQ(opt, "fo\\o");
 
-	RZ(fuse_opt_add_opt(&opt, "foo"));
-	ATF_CHECK_STREQ(opt, "foo");
+	RZ(fuse_opt_add_opt(&opt, "ba,r"));
+	ATF_CHECK_STREQ(opt, "fo\\o,ba,r");
+}
 
-	RZ(fuse_opt_add_opt(&opt, "b\\a,r"));
-	ATF_CHECK_STREQ(opt, "foo,b\\a,r");
+ATF_TC(efuse_opt_add_opt_escaped);
+ATF_TC_HEAD(efuse_opt_add_opt_escaped, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Check that fuse_opt_add_opt_escaped(3) works");
+}
+
+ATF_TC_BODY(efuse_opt_add_opt_escaped, tc)
+{
+	char* opt = NULL;
+
+	RZ(fuse_opt_add_opt_escaped(&opt, "fo\\o"));
+	ATF_CHECK_STREQ(opt, "fo\\\\o");
+
+	RZ(fuse_opt_add_opt_escaped(&opt, "ba,r"));
+	ATF_CHECK_STREQ(opt, "fo\\\\o,ba\\,r");
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -99,6 +111,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, efuse_opt_add_arg);
 	ATF_TP_ADD_TC(tp, efuse_opt_insert_arg);
 	ATF_TP_ADD_TC(tp, efuse_opt_add_opt);
+	ATF_TP_ADD_TC(tp, efuse_opt_add_opt_escaped);
 
 	return atf_no_error();
 }
