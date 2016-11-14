@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.36 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.37 2016/11/14 08:55:51 kre Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.36 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.37 2016/11/14 08:55:51 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ procfs_dostatus(
 	mutex_enter(p->p_lock);
 
 	pid = p->p_pid;
-	ppid = p->p_pptr ? p->p_pptr->p_pid : 0,
+	ppid = p->p_ppid;
 	pgid = p->p_pgrp->pg_id;
 	sess = p->p_pgrp->pg_session;
 	sid = sess->s_sid;

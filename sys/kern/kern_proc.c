@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.198 2016/09/29 20:40:53 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.199 2016/11/14 08:55:51 kre Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.198 2016/09/29 20:40:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.199 2016/11/14 08:55:51 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2186,8 +2186,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 			strncpy(ep->e_wmesg, l->l_wmesg, WMESGLEN);
 		lwp_unlock(l);
 	}
-	if (p->p_pptr)
-		ep->e_ppid = p->p_pptr->p_pid;
+	ep->e_ppid = p->p_ppid;
 	if (p->p_pgrp && p->p_session) {
 		ep->e_pgid = p->p_pgrp->pg_id;
 		ep->e_jobc = p->p_pgrp->pg_jobc;
@@ -2247,10 +2246,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	ki->p_flag |= sysctl_map_flags(sysctl_lflagmap, p->p_lflag);
 	ki->p_flag |= sysctl_map_flags(sysctl_stflagmap, p->p_stflag);
 	ki->p_pid = p->p_pid;
-	if (p->p_pptr)
-		ki->p_ppid = p->p_pptr->p_pid;
-	else
-		ki->p_ppid = 0;
+	ki->p_ppid = p->p_ppid;
 	ki->p_uid = kauth_cred_geteuid(p->p_cred);
 	ki->p_ruid = kauth_cred_getuid(p->p_cred);
 	ki->p_gid = kauth_cred_getegid(p->p_cred);
