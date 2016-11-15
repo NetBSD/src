@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.75 2016/08/01 16:07:39 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.76 2016/11/15 15:00:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.75 2016/08/01 16:07:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.76 2016/11/15 15:00:56 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -849,14 +849,10 @@ init_x86_vm(paddr_t pa_kend)
 			x86_freelists[i].freelist = VM_FREELIST_DEFAULT;
 	}
 
-	/* Make sure the end of the space used by the kernel is rounded. */
-	pa_kend = round_page(pa_kend);
-
 #ifdef amd64
 	extern vaddr_t kern_end;
 	extern vaddr_t module_start, module_end;
 
-	kern_end = KERNBASE + pa_kend;
 	module_start = kern_end;
 	module_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
 #endif

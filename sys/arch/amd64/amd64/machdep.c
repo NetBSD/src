@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.230 2016/08/27 16:17:16 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.231 2016/11/15 15:00:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.230 2016/08/27 16:17:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.231 2016/11/15 15:00:56 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1540,7 +1540,9 @@ init_x86_64(paddr_t first_avail)
 	int x;
 #ifndef XEN
 	int ist;
-#endif /* !XEN */
+#endif
+
+	KASSERT(first_avail % PAGE_SIZE == 0);
 
 #ifdef XEN
 	KASSERT(HYPERVISOR_shared_info != NULL);
@@ -1609,11 +1611,13 @@ init_x86_64(paddr_t first_avail)
 	 */
 	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
 
+	/* End of the virtual space we have created so far. */
+	kern_end = KERNBASE + first_avail;
+
 #ifndef XEN
 	/* Internalize the physical pages into the VM system. */
 	init_x86_vm(first_avail);
 #else	/* XEN */
-	kern_end = KERNBASE + first_avail;
 	physmem = xen_start_info.nr_pages;
 
 	uvm_page_physload(atop(avail_start),

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.763 2016/11/11 11:34:51 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.764 2016/11/15 15:00:55 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.763 2016/11/11 11:34:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.764 2016/11/15 15:00:55 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1140,6 +1140,8 @@ init386(paddr_t first_avail)
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
 #endif
+
+	KASSERT(first_avail % PAGE_SIZE == 0);
 
 #ifdef XEN
 	XENPRINTK(("HYPERVISOR_shared_info %p (%x)\n", HYPERVISOR_shared_info,
