@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.181 2016/10/25 02:45:09 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.182 2016/11/15 01:50:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.181 2016/10/25 02:45:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.182 2016/11/15 01:50:06 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.181 2016/10/25 02:45:09 ozaki-r Exp $");
 #include <sys/pool.h>
 #include <sys/kauth.h>
 #include <sys/workqueue.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1632,6 +1633,44 @@ rt_check_reject_route(const struct rtentry *rt, const struct ifnet *ifp)
 	}
 
 	return 0;
+}
+
+void
+rt_delete_matched_entries(sa_family_t family, int (*f)(struct rtentry *, void *),
+    void *v)
+{
+
+	for (;;) {
+		int s;
+		int error;
+		struct rtentry *rt, *retrt = NULL;
+
+		s = splsoftnet();
+		rt = rtbl_search_matched_entry(family, f, v);
+		if (rt == NULL) {
+			splx(s);
+			return;
+		}
+		rt->rt_refcnt++;
+		splx(s);
+
+		error = rtrequest(RTM_DELETE, rt_getkey(rt), rt->rt_gateway,
+		    rt_mask(rt), rt->rt_flags, &retrt);
+		if (error == 0) {
+			KASSERT(retrt == rt);
+			KASSERT((retrt->rt_flags & RTF_UP) == 0);
+			retrt->rt_ifp = NULL;
+			rtfree(rt);
+			rtfree(retrt);
+		} else if (error == ESRCH) {
+			/* Someone deleted the entry already. */
+			rtfree(rt);
+		} else {
+			log(LOG_ERR, "%s: unable to delete rtentry @ %p, "
+			    "error = %d\n", rt->rt_ifp->if_xname, rt, error);
+			/* XXX how to treat this case? */
+		}
+	}
 }
 
 #ifdef DDB

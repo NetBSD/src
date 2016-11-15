@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.361 2016/11/05 23:30:22 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.362 2016/11/15 01:50:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.361 2016/11/05 23:30:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.362 2016/11/15 01:50:06 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -185,7 +185,7 @@ int	ifqmaxlen = IFQ_MAXLEN;
 
 struct psref_class		*ifa_psref_class __read_mostly;
 
-static int	if_rt_walktree(struct rtentry *, void *);
+static int	if_delroute_matcher(struct rtentry *, void *);
 
 static struct if_clone *if_clone_lookup(const char *, int *);
 
@@ -1279,11 +1279,9 @@ again:
 
 	if_free_sadl(ifp);
 
-	/* Walk the routing table looking for stragglers. */
-	for (i = 0; i <= AF_MAX; i++) {
-		while (rt_walktree(i, if_rt_walktree, ifp) == ERESTART)
-			continue;
-	}
+	/* Delete stray routes from the routing table. */
+	for (i = 0; i <= AF_MAX; i++)
+		rt_delete_matched_entries(i, if_delroute_matcher, ifp);
 
 	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifdetach != NULL && ifp->if_afdata[dp->dom_family])
@@ -1403,28 +1401,14 @@ if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
  * ifnet.
  */
 static int
-if_rt_walktree(struct rtentry *rt, void *v)
+if_delroute_matcher(struct rtentry *rt, void *v)
 {
 	struct ifnet *ifp = (struct ifnet *)v;
-	int error;
-	struct rtentry *retrt;
 
-	if (rt->rt_ifp != ifp)
+	if (rt->rt_ifp == ifp)
+		return 1;
+	else
 		return 0;
-
-	/* Delete the entry. */
-	error = rtrequest(RTM_DELETE, rt_getkey(rt), rt->rt_gateway,
-	    rt_mask(rt), rt->rt_flags, &retrt);
-	if (error == 0) {
-		KASSERT(retrt == rt);
-		KASSERT((retrt->rt_flags & RTF_UP) == 0);
-		retrt->rt_ifp = NULL;
-		rtfree(retrt);
-	} else {
-		printf("%s: warning: unable to delete rtentry @ %p, "
-		    "error = %d\n", ifp->if_xname, rt, error);
-	}
-	return ERESTART;
 }
 
 /*
