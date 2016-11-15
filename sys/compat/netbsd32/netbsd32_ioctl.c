@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.85 2016/11/12 16:06:04 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.86 2016/11/15 10:57:57 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.85 2016/11/12 16:06:04 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.86 2016/11/15 10:57:57 rin Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_ntp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,6 +426,7 @@ netbsd32_to_clockctl_clock_settime(
 	p->tp = NETBSD32PTR64(s32p->tp);
 }
 
+#ifdef NTP
 static inline void
 netbsd32_to_clockctl_ntp_adjtime(
     const struct netbsd32_clockctl_ntp_adjtime *s32p,
@@ -432,6 +437,7 @@ netbsd32_to_clockctl_ntp_adjtime(
 	p->tp = NETBSD32PTR64(s32p->tp);
 	p->retval = s32p->retval;
 }
+#endif
 
 static inline void
 netbsd32_to_ksyms_gsymbol(
@@ -842,6 +848,7 @@ netbsd32_from_clockctl_clock_settime(
 	NETBSD32PTR32(s32p->tp, p->tp);
 }
 
+#ifdef NTP
 static inline void
 netbsd32_from_clockctl_ntp_adjtime(
     const struct clockctl_ntp_adjtime *p,
@@ -852,6 +859,7 @@ netbsd32_from_clockctl_ntp_adjtime(
 	NETBSD32PTR32(s32p->tp, p->tp);
 	s32p->retval = p->retval;
 }
+#endif
 
 static inline void
 netbsd32_from_ksyms_gsymbol(
@@ -922,6 +930,7 @@ netbsd32_from_devrescanargs(
 	NETBSD32PTR32(s32p->locators, p->locators);
 }
 
+#ifdef NTP
 static int
 netbsd32_do_clockctl_ntp_adjtime(struct clockctl_ntp_adjtime *args)
 {
@@ -944,6 +953,7 @@ netbsd32_do_clockctl_ntp_adjtime(struct clockctl_ntp_adjtime *args)
 
 	return error;
 }
+#endif
 
 /*
  * main ioctl syscall.
@@ -1314,6 +1324,7 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	case CLOCKCTL_CLOCK_SETTIME32:
 		IOCTL_STRUCT_CONV_TO(CLOCKCTL_CLOCK_SETTIME,
 		    clockctl_clock_settime);
+#ifdef NTP
 	case CLOCKCTL_NTP_ADJTIME32:
 		{
 			size = IOCPARM_LEN(CLOCKCTL_NTP_ADJTIME);
@@ -1335,6 +1346,7 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 
 			break;
 		}
+#endif
 
 	case KIOCGSYMBOL32:
 		IOCTL_STRUCT_CONV_TO(KIOCGSYMBOL, ksyms_gsymbol);
