@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.65 2016/11/11 11:34:51 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.66 2016/11/15 15:37:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -38,7 +38,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 /*
@@ -66,9 +65,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.65 2016/11/11 11:34:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.66 2016/11/15 15:37:20 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -90,20 +88,15 @@ __KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.65 2016/11/11 11:34:51 maxv Exp $");
 
 #undef	XENDEBUG
 /* #define XENDEBUG_SYNC */
-/* #define XENDEBUG_LOW */
 
 #ifdef XENDEBUG
 #define	XENPRINTF(x) printf x
-#define	XENPRINTK(x) printk x
 #define	XENPRINTK2(x) /* printk x */
 static char XBUF[256];
 #else
 #define	XENPRINTF(x)
-#define	XENPRINTK(x)
 #define	XENPRINTK2(x)
 #endif
-#define	PRINTF(x) printf x
-#define	PRINTK(x) printk x
 
 volatile shared_info_t *HYPERVISOR_shared_info;
 /* Xen requires the start_info struct to be page aligned */
@@ -120,7 +113,7 @@ extern volatile struct xencons_interface *xencons_interface; /* XXX */
 extern struct xenstore_domain_interface *xenstore_interface; /* XXX */
 
 static void xen_bt_set_readonly(vaddr_t);
-static void xen_bootstrap_tables(vaddr_t, vaddr_t, size_t, size_t, int);
+static void xen_bootstrap_tables(vaddr_t, vaddr_t, size_t, size_t, bool);
 
 vaddr_t xen_locore(void);
 
@@ -180,7 +173,8 @@ static int xpq_idx_array[MAXCPUS];
 
 #ifdef i386
 extern union descriptor tmpgdt[];
-#endif /* i386 */
+#endif
+
 void
 xpq_flush_queue(void)
 {
@@ -581,7 +575,7 @@ xpq_debug_dump(void)
 
 #ifdef PAE
 /*
- * For PAE, we consider a single contigous L2 "superpage" of 4 pages, all of
+ * For PAE, we consider a single contiguous L2 "superpage" of 4 pages, all of
  * them mapped by the L3 page. We also need a shadow page for L3[3].
  */
 static const int l2_4_count = 6;
@@ -643,15 +637,15 @@ xen_locore(void)
 #ifdef __x86_64__
 	count = TABLE_L2_ENTRIES;
 #else
-	count = (mapsize + (NBPD_L2 -1)) >> L2_SHIFT;
+	count = (mapsize + (NBPD_L2 - 1)) >> L2_SHIFT;
 #endif
 
 	/*
 	 * Now compute how many L2 pages we need exactly. This is useful only
 	 * on i386, since the initial count for amd64 is already enough.
 	 */
-	while (mapsize + (count + l2_4_count) * PAGE_SIZE + KERNTEXTOFF >
-	    (count << L2_SHIFT) + KERNBASE) {
+	while (KERNTEXTOFF + mapsize + (count + l2_4_count) * PAGE_SIZE >
+	    KERNBASE + (count << L2_SHIFT)) {
 		count++;
 	}
 
@@ -682,20 +676,23 @@ bootstrap_again:
 		bootstrap_tables = init_tables +
 		    ((count + l2_4_count) * PAGE_SIZE);
 
-	/* Make sure we have enough to map the bootstrap tables. */
+	/*
+	 * Make sure the number of L2 pages we have is enough to map everything
+	 * from KERNBASE to the bootstrap tables themselves.
+	 */
 	if (bootstrap_tables + ((oldcount + l2_4_count) * PAGE_SIZE) > 
-	    (oldcount << L2_SHIFT) + KERNBASE) {
+	    KERNBASE + (oldcount << L2_SHIFT)) {
 		oldcount++;
 		goto bootstrap_again;
 	}
 
 	/* Create temporary tables */
 	xen_bootstrap_tables(init_tables, bootstrap_tables,
-	    xen_start_info.nr_pt_frames, oldcount, 0);
+	    xen_start_info.nr_pt_frames, oldcount, false);
 
 	/* Create final tables */
 	xen_bootstrap_tables(bootstrap_tables, init_tables,
-	    oldcount + l2_4_count, count, 1);
+	    oldcount + l2_4_count, count, true);
 
 	/* Zero out free space after tables */
 	memset((void *)(init_tables + ((count + l2_4_count) * PAGE_SIZE)), 0,
@@ -715,7 +712,7 @@ bootstrap_again:
  */
 static void
 xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
-    size_t new_count, int final)
+    size_t new_count, bool final)
 {
 	pd_entry_t *pdtpe, *pde, *pte;
 	pd_entry_t *bt_pgd;
@@ -736,7 +733,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	pg_nx = (descs[3] & CPUID_NOX) ? PG_NX : 0;
 
 	/*
-	 * Size of RW area after the kernel image:
+	 * Layout of RW area after the kernel image:
 	 *     xencons_interface (if present)
 	 *     xenstore_interface (if present)
 	 *     table pages (new_count + l2_4_count entries)
@@ -762,14 +759,15 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	 * atdevbase -> atdevbase + IOM_SIZE will be mapped only in
 	 * this case.
 	 */
-	if (final)
+	if (final) {
 		atdevbase = map_end;
 #ifdef DOM0OPS
-	if (final && xendomain_is_dom0()) {
-		/* ISA I/O mem */
-		map_end += IOM_SIZE;
-	}
+		if (xendomain_is_dom0()) {
+			/* ISA I/O mem */
+			map_end += IOM_SIZE;
+		}
 #endif
+	}
 
 	__PRINTK(("xen_bootstrap_tables map_end 0x%lx\n", map_end));
 	__PRINTK(("console %#lx ", xen_start_info.console_mfn));
@@ -801,8 +799,8 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	avail += PAGE_SIZE;
 
 	addr = ((u_long)pdtpe) - KERNBASE;
-	bt_pgd[pl4_pi(KERNTEXTOFF)] = bt_cpu_pgd[pl4_pi(KERNTEXTOFF)] =
-	    xpmap_ptom_masked(addr) | PG_k | PG_RW | PG_V;
+	bt_pgd[L4_SLOT_KERNBASE] = bt_cpu_pgd[L4_SLOT_KERNBASE] =
+	    xpmap_ptom_masked(addr) | PG_k | PG_V | PG_RW;
 #else
 	pdtpe = bt_pgd;
 #endif
@@ -814,7 +812,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	avail += PAGE_SIZE;
 
 	addr = ((u_long)pde) - KERNBASE;
-	pdtpe[pl3_pi(KERNTEXTOFF)] =
+	pdtpe[L3_SLOT_KERNBASE] =
 	    xpmap_ptom_masked(addr) | PG_k | PG_V | PG_RW;
 #elif defined(PAE)
 	/* Our PAE-style level 2: 5 contigous pages (4 L2 + 1 shadow) */
@@ -949,17 +947,10 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
 		pde[PDIR_SLOT_PTE + i] = xpmap_ptom_masked(addr) | PG_k | PG_V |
 		    pg_nx;
-		__PRINTK(("pde[%d] va %#" PRIxVADDR " pa %#" PRIxPADDR
-		    " entry %#" PRIxPADDR "\n",
-		    (int)(PDIR_SLOT_PTE + i), pde + PAGE_SIZE * i,
-		    addr, pde[PDIR_SLOT_PTE + i]));
 	}
 #if 0
 	addr += PAGE_SIZE; /* point to shadow L2 */
 	pde[PDIR_SLOT_PTE + 3] = xpmap_ptom_masked(addr) | PG_k | PG_V;
-	__PRINTK(("pde[%d] va 0x%lx pa 0x%lx entry 0x%" PRIx64 "\n",
-	    (int)(PDIR_SLOT_PTE + 3), pde + PAGE_SIZE * 4, (long)addr,
-	    (int64_t)pde[PDIR_SLOT_PTE + 3]));
 #endif
 	/* Mark tables RO, and pin the kernel's shadow as L2 */
 	addr = (u_long)pde - KERNBASE;
@@ -968,18 +959,15 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 #if 0
 		if (i == 2 || i == 3)
 			continue;
-		__PRINTK(("pin L2 %d addr 0x%" PRIx64 "\n", i, (int64_t)addr));
 		xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
 #endif
 	}
 	if (final) {
 		addr = (u_long)pde - KERNBASE + 3 * PAGE_SIZE;
-		__PRINTK(("pin L2 %d addr %#" PRIxPADDR "\n", 2, addr));
 		xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
 	}
 #if 0
 	addr = (u_long)pde - KERNBASE + 2 * PAGE_SIZE;
-	__PRINTK(("pin L2 %d addr 0x%" PRIx64 "\n", 2, (int64_t)addr));
 	xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
 #endif
 #else /* PAE */
@@ -992,9 +980,6 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	bt_cpu_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_cpu_pgd - KERNBASE)
 	    | PG_k | PG_RO | PG_V | pg_nx;
 #endif
-	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] va %#" PRIxVADDR " pa %#" PRIxPADDR
-	    " entry %#" PRIxPADDR "\n", new_pgd, (paddr_t)new_pgd - KERNBASE,
-	    bt_pgd[PDIR_SLOT_PTE]));
 
 	/* Mark tables RO */
 	xen_bt_set_readonly((vaddr_t)pde);
@@ -1007,7 +992,6 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 #endif
 
 	/* Pin the PGD */
-	__PRINTK(("pin PGD: %"PRIxVADDR"\n", new_pgd - KERNBASE));
 #ifdef __x86_64__
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #elif PAE
@@ -1024,10 +1008,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 #endif
 
 	/* Switch to new tables */
-	__PRINTK(("switch to PGD\n"));
 	xpq_queue_pt_switch(xpmap_ptom_masked(new_pgd - KERNBASE));
-	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] now entry %#" PRIxPADDR "\n",
-	    bt_pgd[PDIR_SLOT_PTE]));
 
 #ifdef PAE
 	if (final) {
@@ -1044,31 +1025,27 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	}
 #elif defined(__x86_64__)
 	if (final) {
-		/* Save the address of the real per-cpu L4 pgd page */
+		/* Save the address of the real per-cpu L4 page. */
 		cpu_info_primary.ci_kpm_pdir = bt_cpu_pgd;
-		cpu_info_primary.ci_kpm_pdirpa = ((paddr_t) bt_cpu_pgd - KERNBASE);
+		cpu_info_primary.ci_kpm_pdirpa = ((paddr_t)bt_cpu_pgd - KERNBASE);
 	}
 #endif
 	__USE(pdtpe);
 
-	/* Now we can safely reclaim space taken by old tables */
-	
-	__PRINTK(("unpin old PGD\n"));
+	/*
+	 * Now we can safely reclaim the space taken by the old tables.
+	 */
+
 	/* Unpin old PGD */
 	xpq_queue_unpin_table(xpmap_ptom_masked(old_pgd - KERNBASE));
+
 	/* Mark old tables RW */
 	page = old_pgd;
-	addr = (paddr_t)pde[pl2_pi(page)] & PG_FRAME;
-	addr = xpmap_mtop(addr);
+	addr = xpmap_mtop((paddr_t)pde[pl2_pi(page)] & PG_FRAME);
 	pte = (pd_entry_t *)((u_long)addr + KERNBASE);
 	pte += pl1_pi(page);
-	__PRINTK(("*pde %#" PRIxPADDR " addr %#" PRIxPADDR " pte %#lx\n",
-	    pde[pl2_pi(page)], addr, (long)pte));
 	while (page < old_pgd + (old_count * PAGE_SIZE) && page < map_end) {
-		addr = xpmap_ptom(((u_long) pte) - KERNBASE);
-		XENPRINTK(("addr %#" PRIxPADDR " pte %#lx "
-		   "*pte %#" PRIxPADDR "\n",
-		   addr, (long)pte, *pte));
+		addr = xpmap_ptom(((u_long)pte) - KERNBASE);
 		xpq_queue_pte_update(addr, *pte | PG_RW);
 		page += PAGE_SIZE;
 		/* 
