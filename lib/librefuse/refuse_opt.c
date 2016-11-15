@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.16 2016/11/14 17:19:29 pho Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.17 2016/11/15 00:34:19 pho Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -207,19 +207,53 @@ int fuse_opt_add_opt_escaped(char **opts, const char *opt)
 	return add_opt(opts, opt, true);
 }
 
+static bool match_templ(const char *templ, const char *opt, size_t *sep_idx)
+{
+	const char *sep = strpbrk(templ, "= ");
+
+	if (sep != NULL && (sep[1] == '\0' || sep[1] == '%')) {
+		const size_t cmp_len =
+			sep[0] == '=' ? sep - templ + 1 : sep - templ;
+
+		if (strlen(opt) >= cmp_len && strncmp(templ, opt, cmp_len) == 0) {
+			if (sep_idx != NULL)
+				*sep_idx = sep - templ;
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	else {
+		if (strcmp(templ, opt) == 0) {
+			if (sep_idx != NULL)
+				*sep_idx = 0;
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+}
+
+static const struct fuse_opt *
+find_opt(const struct fuse_opt *opts, const char *opt, size_t *sep_idx)
+{
+	for (; opts != NULL && opts->templ != NULL; opts++) {
+		if (match_templ(opts->templ, opt, sep_idx))
+			return opts;
+	}
+	return NULL;
+}
+
 /*
- * Returns 0 if opt was matched with any option from opts,
- * otherwise returns 1.
+ * Returns 1 if opt was matched with any option from opts,
+ * otherwise returns 0.
  */
 int
 fuse_opt_match(const struct fuse_opt *opts, const char *opt)
 {
-	while (opts++) {
-		if (strcmp(opt, opts->templ) == 0)
-			return 0;
-	}
-
-	return 1;
+	return find_opt(opts, opt, NULL) != NULL ? 1 : 0;
 }
 
 /*
