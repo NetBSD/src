@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.106 2016/10/25 02:45:09 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.107 2016/11/15 01:50:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -408,6 +408,8 @@ struct sockaddr *
 	rt_gettag(const struct rtentry *);
 
 int	rt_check_reject_route(const struct rtentry *, const struct ifnet *);
+void	rt_delete_matched_entries(sa_family_t,
+	    int (*)(struct rtentry *, void *), void *);
 
 static inline void
 rt_assert_referenced(const struct rtentry *rt)
@@ -504,6 +506,9 @@ struct rtentry *
 	rt_matchaddr(rtbl_t *, const struct sockaddr *);
 int	rt_refines(const struct sockaddr *, const struct sockaddr *);
 int	rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
+struct rtentry *
+	rtbl_search_matched_entry(sa_family_t,
+	    int (*)(struct rtentry *, void *), void *);
 void	rtbl_init(void);
 
 #endif /* _KERNEL */
