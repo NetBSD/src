@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.119 2016/08/16 10:31:57 roy Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.120 2016/11/15 01:50:06 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.119 2016/08/16 10:31:57 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.120 2016/11/15 01:50:06 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ static void in6_init_address_ltimes(struct nd_prefix *,
 	struct in6_addrlifetime *);
 static void purge_detached(struct ifnet *);
 
-static int rt6_deleteroute(struct rtentry *, void *);
+static int rt6_deleteroute_matcher(struct rtentry *, void *);
 
 extern int nd6_recalc_reachtm_interval;
 
@@ -2162,12 +2162,12 @@ rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 		return;
 	}
 
-	rt_walktree(AF_INET6, rt6_deleteroute, (void *)gateway);
+	rt_delete_matched_entries(AF_INET6, rt6_deleteroute_matcher, gateway);
 	splx(s);
 }
 
 static int
-rt6_deleteroute(struct rtentry *rt, void *arg)
+rt6_deleteroute_matcher(struct rtentry *rt, void *arg)
 {
 	struct in6_addr *gate = (struct in6_addr *)arg;
 
@@ -2192,8 +2192,7 @@ rt6_deleteroute(struct rtentry *rt, void *arg)
 	if ((rt->rt_flags & RTF_HOST) == 0)
 		return (0);
 
-	return (rtrequest(RTM_DELETE, rt_getkey(rt), rt->rt_gateway,
-	    rt_mask(rt), rt->rt_flags, NULL));
+	return 1;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.45 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: radix.c,v 1.46 2016/11/15 01:50:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.45 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.46 2016/11/15 01:50:06 ozaki-r Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -1001,6 +1001,37 @@ rn_walktree(
 		rn = next;
 		if (rn->rn_flags & RNF_ROOT)
 			return 0;
+	}
+	/* NOTREACHED */
+}
+
+struct radix_node *
+rn_search_matched(struct radix_node_head *h,
+    int (*matcher)(struct radix_node *, void *), void *w)
+{
+	bool matched;
+	struct radix_node *base, *next, *rn;
+	/*
+	 * This gets complicated because we may delete the node
+	 * while applying the function f to it, so we need to calculate
+	 * the successor node in advance.
+	 */
+	rn = rn_walkfirst(h->rnh_treetop, NULL, NULL);
+	for (;;) {
+		base = rn;
+		next = rn_walknext(rn, NULL, NULL);
+		/* Process leaves */
+		while ((rn = base) != NULL) {
+			base = rn->rn_dupedkey;
+			if (!(rn->rn_flags & RNF_ROOT)) {
+				matched = (*matcher)(rn, w);
+				if (matched)
+					return rn;
+			}
+		}
+		rn = next;
+		if (rn->rn_flags & RNF_ROOT)
+			return NULL;
 	}
 	/* NOTREACHED */
 }
