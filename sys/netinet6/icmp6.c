@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.200 2016/10/31 04:16:25 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.201 2016/11/15 20:50:28 mlelstv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.200 2016/10/31 04:16:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.201 2016/11/15 20:50:28 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -481,6 +481,20 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		icmp6_ifstat_inc(rcvif, ifs6_in_error);
 		goto freeit;
+	}
+	/*
+	 * Enforce alignment requirements that are violated in
+	 * some cases, see kern/50766 for details.
+	 */
+	if (IP6_HDR_ALIGNED_P(icmp6) == 0) {
+		m = m_copyup(m, off + sizeof(struct icmp6_hdr), 0);
+		if (m == NULL) {
+			ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
+			icmp6_ifstat_inc(rcvif, ifs6_in_error);
+			goto freeit;
+		}
+		ip6 = mtod(m, struct ip6_hdr *);
+		icmp6 = (struct icmp6_hdr *)(ip6 + 1);
 	}
 	KASSERT(IP6_HDR_ALIGNED_P(icmp6));
 

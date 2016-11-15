@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.227 2016/10/19 01:13:01 ozaki-r Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.228 2016/11/15 20:50:28 mlelstv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.227 2016/10/19 01:13:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.228 2016/11/15 20:50:28 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -354,6 +354,19 @@ udp_input(struct mbuf *m, ...)
 	if (uh == NULL) {
 		UDP_STATINC(UDP_STAT_HDROPS);
 		return;
+	}
+	/*
+	 * Enforce alignment requirements that are violated in
+	 * some cases, see kern/50766 for details.
+	 */
+	if (UDP_HDR_ALIGNED_P(uh) == 0) {
+		m = m_copyup(m, iphlen + sizeof(struct udphdr), 0);
+		if (m == NULL) {
+			UDP_STATINC(UDP_STAT_HDROPS);
+			return;
+		}
+		ip = mtod(m, struct ip *);
+		uh = (struct udphdr *)(mtod(m, char *) + iphlen);
 	}
 	KASSERT(UDP_HDR_ALIGNED_P(uh));
 
