@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.124 2016/07/15 07:40:09 ozaki-r Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.125 2016/11/15 20:50:28 mlelstv Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.124 2016/07/15 07:40:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.125 2016/11/15 20:50:28 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -581,6 +581,19 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 		IP6_STATINC(IP6_STAT_TOOSHORT);
 		return IPPROTO_DONE;
 	}
+	/*
+	 * Enforce alignment requirements that are violated in
+	 * some cases, see kern/50766 for details.
+	 */
+        if (UDP_HDR_ALIGNED_P(uh) == 0) {
+                m = m_copyup(m, off + sizeof(struct udphdr), 0); 
+                if (m == NULL) {
+                        IP6_STATINC(IP6_STAT_TOOSHORT);
+                        return IPPROTO_DONE;
+                }
+		ip6 = mtod(m, struct ip6_hdr *);
+                uh = (struct udphdr *)(mtod(m, char *) + off);
+        }
 	KASSERT(UDP_HDR_ALIGNED_P(uh));
 	ulen = ntohs((u_short)uh->uh_ulen);
 	/*
