@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.13 2016/11/14 04:55:57 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.14 2016/11/15 02:20:50 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.13 2016/11/14 04:55:57 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.14 2016/11/15 02:20:50 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.13 2016/11/14 04:55:57 kamil Exp $");
  *                         exact process identifier
  * The TWAIT_HAVE_RUSAGE - specifies whether a function can request
  *                         the struct rusage value
- * 
+ *
  */
 
 #if defined(TWAIT_WAIT)
@@ -360,13 +360,13 @@ ATF_TC_BODY(traceme1, tc)
 	printf("Before forking process PID=%d\n", getpid());
 	child = atf_utils_fork();
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());fflush(stdout);
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));fflush(stdout);
+		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");fflush(stdout);
+		printf("Before exiting of the child process\n");
 		_exit(exitval);
 	}
 	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
@@ -1352,7 +1352,7 @@ ATF_TC_BODY(attach7, tc)
 
 	ATF_REQUIRE((rv = stat(fname, &st)) == 0 || (errno == ENOENT));
 	if (rv != 0) {
-		atf_tc_skip("/proc/curproc/stat not found");
+		atf_tc_skip("/proc/curproc/status not found");
 	}
 
 	printf("Spawn tracee\n");
