@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.129 2016/10/31 04:16:25 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.130 2016/11/15 21:17:07 mlelstv Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.129 2016/10/31 04:16:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.130 2016/11/15 21:17:07 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1229,6 +1229,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 {
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct dadq *dp;
+	int duplicate = 0;
 
 #ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
@@ -1286,10 +1287,6 @@ nd6_dad_timer(struct ifaddr *ifa)
 		 * We have transmitted sufficient number of DAD packets.
 		 * See what we've got.
 		 */
-		int duplicate;
-
-		duplicate = 0;
-
 		if (dp->dad_na_icount) {
 			/*
 			 * the check is in nd6_dad_na_input(),
@@ -1306,7 +1303,6 @@ nd6_dad_timer(struct ifaddr *ifa)
 		if (duplicate) {
 			/* (*dp) will be freed in nd6_dad_duplicated() */
 			dp = NULL;
-			nd6_dad_duplicated(ifa);
 		} else {
 			/*
 			 * We are done with DAD.  No NA came, no NS came.
@@ -1329,6 +1325,10 @@ nd6_dad_timer(struct ifaddr *ifa)
 
 done:
 	mutex_exit(&nd6_dad_lock);
+
+	if (duplicate)
+		nd6_dad_duplicated(ifa);
+
 #ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
