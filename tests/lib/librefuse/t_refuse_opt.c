@@ -1,4 +1,4 @@
-/*	$NetBSD: t_refuse_opt.c,v 1.2 2016/11/14 17:19:29 pho Exp $ */
+/*	$NetBSD: t_refuse_opt.c,v 1.3 2016/11/15 00:32:42 pho Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_refuse_opt.c,v 1.2 2016/11/14 17:19:29 pho Exp $");
+__RCSID("$NetBSD: t_refuse_opt.c,v 1.3 2016/11/15 00:32:42 pho Exp $");
 
 #include <atf-c.h>
 
@@ -106,12 +106,52 @@ ATF_TC_BODY(efuse_opt_add_opt_escaped, tc)
 	ATF_CHECK_STREQ(opt, "fo\\\\o,ba\\,r");
 }
 
+ATF_TC(efuse_opt_match);
+ATF_TC_HEAD(efuse_opt_match, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Check that fuse_opt_match(3) works"
+					  " for every form of templates");
+}
+
+ATF_TC_BODY(efuse_opt_match, tc)
+{
+	struct fuse_opt o1[] = { FUSE_OPT_KEY("-x"    , 0), FUSE_OPT_END };
+	struct fuse_opt o2[] = { FUSE_OPT_KEY("foo"   , 0), FUSE_OPT_END };
+	struct fuse_opt o3[] = { FUSE_OPT_KEY("foo="  , 0), FUSE_OPT_END };
+	struct fuse_opt o4[] = { FUSE_OPT_KEY("foo=%s", 0), FUSE_OPT_END };
+	struct fuse_opt o5[] = { FUSE_OPT_KEY("-x "   , 0), FUSE_OPT_END };
+	struct fuse_opt o6[] = { FUSE_OPT_KEY("-x %s" , 0), FUSE_OPT_END };
+
+	ATF_CHECK(fuse_opt_match(o1, "-x") == 1);
+	ATF_CHECK(fuse_opt_match(o1,  "x") == 0);
+
+	ATF_CHECK(fuse_opt_match(o2,  "foo") == 1);
+	ATF_CHECK(fuse_opt_match(o2, "-foo") == 0);
+
+	ATF_CHECK(fuse_opt_match(o3, "foo=bar") == 1);
+	ATF_CHECK(fuse_opt_match(o3, "foo"    ) == 0);
+
+	ATF_CHECK(fuse_opt_match(o4, "foo=bar") == 1);
+	ATF_CHECK(fuse_opt_match(o4, "foo"    ) == 0);
+
+	ATF_CHECK(fuse_opt_match(o5, "-xbar" ) == 1);
+	ATF_CHECK(fuse_opt_match(o5, "-x"    ) == 1);
+	ATF_CHECK(fuse_opt_match(o5, "-x=bar") == 1);
+	ATF_CHECK(fuse_opt_match(o5, "bar"   ) == 0);
+
+	ATF_CHECK(fuse_opt_match(o6, "-xbar" ) == 1);
+	ATF_CHECK(fuse_opt_match(o6, "-x"    ) == 1);
+	ATF_CHECK(fuse_opt_match(o6, "-x=bar") == 1);
+	ATF_CHECK(fuse_opt_match(o6, "bar"   ) == 0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, efuse_opt_add_arg);
 	ATF_TP_ADD_TC(tp, efuse_opt_insert_arg);
 	ATF_TP_ADD_TC(tp, efuse_opt_add_opt);
 	ATF_TP_ADD_TC(tp, efuse_opt_add_opt_escaped);
+	ATF_TP_ADD_TC(tp, efuse_opt_match);
 
 	return atf_no_error();
 }
