@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.348 2016/11/15 20:50:28 mlelstv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.349 2016/11/15 22:23:09 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.348 2016/11/15 20:50:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.349 2016/11/15 22:23:09 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1357,7 +1357,9 @@ tcp_input(struct mbuf *m, ...)
 			return;
 		}
 		ip = mtod(m, struct ip *);
+#ifdef INET6
 		ip6 = mtod(m, struct ip6_hdr *);
+#endif
 		th = (struct tcphdr *)(mtod(m, char *) + toff);
 	}
 	KASSERT(TCP_HDR_ALIGNED_P(th));
