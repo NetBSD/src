@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.231 2016/11/15 15:00:56 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.232 2016/11/15 15:26:59 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.231 2016/11/15 15:00:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.232 2016/11/15 15:26:59 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -377,12 +377,14 @@ cpu_startup(void)
 	/*
 	 * Create the module map.
 	 *
-	 * XXX: the module map is taken as what is left of the bootstrap memory
-	 * created in locore.S, which is not big enough if we want to load many
-	 * modules dynamically. We really should be using kernel_map instead.
+	 * The kernel uses RIP-relative addressing with a maximum offset of
+	 * 2GB. The problem is, kernel_map is too far away in memory from
+	 * the kernel .text. So we cannot use it, and have to create a
+	 * special module_map.
 	 *
-	 * But the modules must be located above the kernel image, and that
-	 * wouldn't be guaranteed if we were using kernel_map.
+	 * The module map is taken as what is left of the bootstrap memory
+	 * created in locore.S. This memory is right above the kernel
+	 * image, so this is the best place to put our modules.
 	 */
 	uvm_map_setup(&module_map_store, module_start, module_end, 0);
 	module_map_store.pmap = pmap_kernel();
