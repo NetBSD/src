@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.66 2016/11/15 15:37:20 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.67 2016/11/15 17:01:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.66 2016/11/15 15:37:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.67 2016/11/15 17:01:12 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -799,7 +799,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	avail += PAGE_SIZE;
 
 	addr = ((u_long)pdtpe) - KERNBASE;
-	bt_pgd[L4_SLOT_KERNBASE] = bt_cpu_pgd[L4_SLOT_KERNBASE] =
+	bt_pgd[pl4_pi(KERNTEXTOFF)] = bt_cpu_pgd[pl4_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_k | PG_V | PG_RW;
 #else
 	pdtpe = bt_pgd;
@@ -812,7 +812,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	avail += PAGE_SIZE;
 
 	addr = ((u_long)pde) - KERNBASE;
-	pdtpe[L3_SLOT_KERNBASE] =
+	pdtpe[pl3_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_k | PG_V | PG_RW;
 #elif defined(PAE)
 	/* Our PAE-style level 2: 5 contigous pages (4 L2 + 1 shadow) */
