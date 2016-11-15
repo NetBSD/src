@@ -1,4 +1,4 @@
-/*	$NetBSD: t_refuse_opt.c,v 1.4 2016/11/15 00:37:18 pho Exp $ */
+/*	$NetBSD: t_refuse_opt.c,v 1.5 2016/11/15 10:05:22 martin Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -26,7 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_refuse_opt.c,v 1.4 2016/11/15 00:37:18 pho Exp $");
+__RCSID("$NetBSD: t_refuse_opt.c,v 1.5 2016/11/15 10:05:22 martin Exp $");
+
+#define _KERNTYPES
+#include <machine/types.h>
 
 #include <atf-c.h>
 
