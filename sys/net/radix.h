@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.22 2009/05/27 17:46:50 pooka Exp $	*/
+/*	$NetBSD: radix.h,v 1.23 2016/11/15 01:50:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -139,6 +139,10 @@ int	rn_refines(const void *, const void *);
 int	rn_walktree(struct radix_node_head *,
 	            int (*)(struct radix_node *, void *),
 		    void *);
+struct radix_node *
+	rn_search_matched(struct radix_node_head *,
+	                  int (*)(struct radix_node *, void *),
+		          void *);
 struct radix_node
 	 *rn_addmask(const void *, int, int),
 	 *rn_addroute(const void *, const void *, struct radix_node_head *,
