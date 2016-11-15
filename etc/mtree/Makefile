@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2016/06/09 04:26:07 christos Exp $
+#	$NetBSD: Makefile,v 1.36 2016/11/15 22:31:07 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -58,7 +58,7 @@ NetBSD.dist.xcompat: NetBSD.dist.xcompat.in mkcompat.awk
 
 NetBSD.dist.tests.compat: NetBSD.dist.tests mkcompattree.awk 
 	${MKCREATE}
-	${TOOL_AWK} -f ${.ALLSRC:M*.awk}/mkcompattree.awk \
+	${TOOL_AWK} -f ${.ALLSRC:M*.awk} \
 	    -v COMPATDIRS=${ARCHDIR_SUBDIR:T:Q} -v S="usr/tests" \
 		${.ALLSRC:M*.tests} > ${.TARGET}
 
