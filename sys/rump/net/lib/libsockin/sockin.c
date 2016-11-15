@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.63 2016/01/26 23:12:19 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.64 2016/11/15 09:04:30 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.63 2016/01/26 23:12:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.64 2016/11/15 09:04:30 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -707,3 +707,4 @@ sockin_unavailable(void)
 __strong_alias(rtrequest,sockin_unavailable);
 __strong_alias(ifunit,sockin_unavailable);
 __strong_alias(ifreq_setaddr,sockin_unavailable);
+__strong_alias(rt_delete_matched_entries,sockin_unavailable);
