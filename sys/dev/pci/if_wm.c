@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.447 2016/11/16 08:56:17 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.448 2016/11/16 09:27:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.447 2016/11/16 08:56:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.448 2016/11/16 09:27:49 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1934,11 +1934,6 @@ alloc_retry:
 	/* clear interesting stat counters */
 	CSR_READ(sc, WMREG_COLC);
 	CSR_READ(sc, WMREG_RXERRC);
-
-	/* get PHY control from SMBus to PCIe */
-	if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)
-	    || (sc->sc_type == WM_T_PCH_LPT) || (sc->sc_type == WM_T_PCH_SPT))
-		wm_smbustopci(sc);
 
 	if ((sc->sc_type == WM_T_82574) || (sc->sc_type == WM_T_82583)
 	    || (sc->sc_type >= WM_T_ICH8))
@@ -8364,6 +8359,11 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		mii->mii_writereg = wm_gmii_hv_writereg;
 	}
 	mii->mii_statchg = wm_gmii_statchg;
+
+	/* get PHY control from SMBus to PCIe */
+	if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)
+	    || (sc->sc_type == WM_T_PCH_LPT) || (sc->sc_type == WM_T_PCH_SPT))
+		wm_smbustopci(sc);
 
 	wm_gmii_reset(sc);
 
