@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.119 2016/11/13 07:29:32 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.120 2016/11/16 08:37:23 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -6897,4 +6897,9 @@ sys/conf/files					1.1165
 
 	Update dependencies for COMPAT_LINUX32 to include COMPAT_NETBSD32
 	[pgoyette, ticket #1270]
+
+external/bsd/dhcp/dist/common/packet.c		1.2
+
+	Check correctly the packet length (CVE-2015-8605)
+	[snj, ticket #1273]
 
