@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.484 2016/11/02 00:11:59 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.485 2016/11/16 00:46:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.484 2016/11/02 00:11:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.485 2016/11/16 00:46:46 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -175,6 +175,7 @@ extern void *_binary_splash_image_end;
 #include <sys/ksyms.h>
 #include <sys/uidinfo.h>
 #include <sys/kprintf.h>
+#include <sys/bufq.h>
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -426,6 +427,9 @@ main(void)
 
 	/* Second part of module system initialization. */
 	module_start_unload_thread();
+
+	/* Initialize the bufq strategy sub-system */
+	bufq_init();
 
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
