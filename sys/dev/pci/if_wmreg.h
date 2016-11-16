@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.91 2016/11/14 08:48:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.92 2016/11/16 07:24:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -202,6 +202,8 @@ struct livengood_tcpip_ctxdesc {
 /* registers for FLASH access on ICH8 */
 #define WM_ICH8_FLASH	0x0014
 
+#define WM_PCI_LTR_CAP_LPT	0xa8
+
 /* XXX Only for PCH_SPT? */
 #define WM_PCI_DESCRING_STATUS	0xe4
 #define DESCRING_STATUS_FLUSH_REQ	__BIT(8)
@@ -255,10 +257,10 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_FUNCID_MASK  3		/* ... */
 #define	STATUS_TXOFF	(1U << 4)	/* Tx paused */
 #define	STATUS_TBIMODE	(1U << 5)	/* fiber mode (Livengood) */
-#define	STATUS_SPEED(x)	((x) << 6)	/* speed indication */
-#define	STATUS_SPEED_10	  STATUS_SPEED(0)
-#define	STATUS_SPEED_100  STATUS_SPEED(1)
-#define	STATUS_SPEED_1000 STATUS_SPEED(2)
+#define	STATUS_SPEED	__BITS(7, 6)	/* speed indication */
+#define	STATUS_SPEED_10	  0
+#define	STATUS_SPEED_100  1
+#define	STATUS_SPEED_1000 2
 #define	STATUS_ASDV(x)	((x) << 8)	/* auto speed det. val. (Livengood) */
 #define	STATUS_LAN_INIT_DONE (1U << 9)	/* Lan Init Completion by NVM */
 #define	STATUS_MTXCKOK	(1U << 10)	/* MTXD clock running */
@@ -307,6 +309,9 @@ struct livengood_tcpip_ctxdesc {
 #define	EERD_START	0x01	/* First bit for telling part to start operation */
 #define	EERD_ADDR_SHIFT	2	/* Shift to the address bits */
 #define	EERD_DATA_SHIFT	16	/* Offset to data in EEPROM read/write registers */
+
+#define	WMREG_FEXTNVM6	0x0010	/* Future Extended NVM 6 */
+#define	FEXTNVM6_K1_OFF_ENABLE	__BIT(31)
 
 #define	WMREG_CTRL_EXT	0x0018	/* Extended Device Control Register */
 #define	CTRL_EXT_NSICR		__BIT(0) /* Non Interrupt clear on read */
@@ -367,6 +372,11 @@ struct livengood_tcpip_ctxdesc {
 #define SCTL_CTL_ADDR_SHIFT 8
 #define SCTL_CTL_POLL_TIMEOUT 640
 #define SCTL_DISABLE_SERDES_LOOPBACK 0x0400
+
+#define WMREG_FEXTNVM4	0x0024	/* Future Extended NVM 4 - RW */
+#define FEXTNVM4_BEACON_DURATION	__BITS(2, 0)
+#define FEXTNVM4_BEACON_DURATION_8US	0x7
+#define FEXTNVM4_BEACON_DURATION_16US	0x3
 
 #define	WMREG_FCAL	0x0028	/* Flow Control Address Low */
 #define	FCAL_CONST	0x00c28001	/* Flow Control MAC addr low */
@@ -492,6 +502,15 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_IVAR_MISC	0x01740 /* IVAR for other causes */
 #define IVAR_MISC_TCPTIMER __BITS(0, 7)
 #define IVAR_MISC_OTHER	__BITS(8, 15)
+
+#define	WMREG_LTRV	0x00f8	/* Latency Tolerance Reporting */
+#define	LTRV_VALUE	__BITS(9, 0)
+#define	LTRV_SCALE	__BITS(12, 10)
+#define	LTRV_SCALE_MAX	5
+#define	LTRV_SNOOP_REQ	__BIT(15)
+#define	LTRV_SEND	__BIT(30)
+#define	LTRV_NONSNOOP	__BITS(31, 16)
+#define	LTRV_NONSNOOP_REQ __BIT(31)
 
 #define	WMREG_RCTL	0x0100	/* Receive Control */
 #define	RCTL_EN		(1U << 1)	/* receiver enable */
@@ -728,6 +747,8 @@ struct livengood_tcpip_ctxdesc {
 #define	PHY_CTRL_NOND0A_GBE_DIS	(1 << 3)
 #define	PHY_CTRL_GBE_DIS	(1 << 6)
 
+#define	WMREG_PCIEANACFG 0x0f18	/* PCIE Analog Config */
+
 #define	WMREG_IOSFPC	0x0f28	/* Tx corrupted data */
 
 #define	WMREG_PBA	0x1000	/* Packet Buffer Allocation */
@@ -749,6 +770,7 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_40K		0x0028
 #define	PBA_48K		0x0030		/* 48K, default Rx allocation */
 #define	PBA_64K		0x0040
+#define	PBA_RXA_MASK	__BITS(15, 0)
 
 #define	WMREG_PBS	0x1008	/* Packet Buffer Size (ICH) */
 
