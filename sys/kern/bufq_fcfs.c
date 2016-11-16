@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_fcfs.c,v 1.11 2016/11/16 00:46:46 pgoyette Exp $	*/
+/*	$NetBSD: bufq_fcfs.c,v 1.12 2016/11/16 10:42:14 pgoyette Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.11 2016/11/16 00:46:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.12 2016/11/16 10:42:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ bufq_fcfs_init(struct bufq_state *bufq)
 	TAILQ_INIT(&fcfs->bq_head);
 }
 
-MODULE(MODULE_CLASS_MISC, bufq_fcfs, NULL);
+MODULE(MODULE_CLASS_BUFQ, bufq_fcfs, NULL);
 
 static int
 bufq_fcfs_modcmd(modcmd_t cmd, void *opaque)
