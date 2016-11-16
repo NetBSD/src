@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.444 2016/11/14 05:38:39 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.445 2016/11/16 07:24:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.444 2016/11/14 05:38:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.445 2016/11/16 07:24:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -862,6 +862,7 @@ static void	wm_set_mdio_slow_mode_hv(struct wm_softc *);
 static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
 static void	wm_reset_init_script_82575(struct wm_softc *);
 static void	wm_reset_mdicnfg_82580(struct wm_softc *);
+static int	wm_platform_pm_pch_lpt(struct wm_softc *, bool);
 static void	wm_pll_workaround_i210(struct wm_softc *);
 
 CFATTACH_DECL3_NEW(wm, sizeof(struct wm_softc),
@@ -7507,6 +7508,7 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 		__func__));
 
 	if (icr & ICR_LSC) {
+		uint32_t reg;
 		uint32_t status = CSR_READ(sc, WMREG_STATUS);
 
 		if ((sc->sc_type == WM_T_ICH8) && ((status & STATUS_LU) == 0))
@@ -7574,6 +7576,44 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 				    HV_MUX_DATA_CTRL,
 				    HV_MUX_DATA_CTRL_GEN_TO_MAC);
 			}
+		}
+		/*
+		 * I217 Packet Loss issue:
+		 * ensure that FEXTNVM4 Beacon Duration is set correctly
+		 * on power up.
+		 * Set the Beacon Duration for I217 to 8 usec
+		 */
+		if ((sc->sc_type == WM_T_PCH_LPT)
+		    || (sc->sc_type == WM_T_PCH_SPT)) {
+			reg = CSR_READ(sc, WMREG_FEXTNVM4);
+			reg &= ~FEXTNVM4_BEACON_DURATION;
+			reg |= FEXTNVM4_BEACON_DURATION_8US;
+			CSR_WRITE(sc, WMREG_FEXTNVM4, reg);
+		}
+
+		/* XXX Work-around I218 hang issue */
+		/* e1000_k1_workaround_lpt_lp() */
+
+		if ((sc->sc_type == WM_T_PCH_LPT)
+		    || (sc->sc_type == WM_T_PCH_SPT)) {
+			/*
+			 * Set platform power management values for Latency
+			 * Tolerance Reporting (LTR)
+			 */
+			wm_platform_pm_pch_lpt(sc,
+				((sc->sc_mii.mii_media_status & IFM_ACTIVE)
+				    != 0));
+		}
+
+		/* FEXTNVM6 K1-off workaround */
+		if (sc->sc_type == WM_T_PCH_SPT) {
+			reg = CSR_READ(sc, WMREG_FEXTNVM6);
+			if (CSR_READ(sc, WMREG_PCIEANACFG)
+			    & FEXTNVM6_K1_OFF_ENABLE)
+				reg |= FEXTNVM6_K1_OFF_ENABLE;
+			else
+				reg &= ~FEXTNVM6_K1_OFF_ENABLE;
+			CSR_WRITE(sc, WMREG_FEXTNVM6, reg);
 		}
 	} else if (icr & ICR_RXSEQ) {
 		DPRINTF(WM_DEBUG_LINK, ("%s: LINK Receive sequence error\n",
@@ -12523,6 +12563,90 @@ wm_reset_mdicnfg_82580(struct wm_softc *sc)
 	if (nvmword & NVM_CFG3_PORTA_COM_MDIO)
 		reg |= MDICNFG_COM_MDIO;
 	CSR_WRITE(sc, WMREG_MDICNFG, reg);
+}
+
+static int
+wm_platform_pm_pch_lpt(struct wm_softc *sc, bool link)
+{
+	uint32_t reg = __SHIFTIN(link, LTRV_NONSNOOP_REQ)
+	    | __SHIFTIN(link, LTRV_SNOOP_REQ) | LTRV_SEND;
+	uint32_t rxa;
+	uint16_t scale = 0, lat_enc = 0;
+	int64_t lat_ns, value;
+	
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
+	if (link) {
+		pcireg_t preg;
+		uint16_t max_snoop, max_nosnoop, max_ltr_enc;
+
+		rxa = CSR_READ(sc, WMREG_PBA) & PBA_RXA_MASK;
+
+		/*
+		 * Determine the maximum latency tolerated by the device.
+		 *
+		 * Per the PCIe spec, the tolerated latencies are encoded as
+		 * a 3-bit encoded scale (only 0-5 are valid) multiplied by
+		 * a 10-bit value (0-1023) to provide a range from 1 ns to
+		 * 2^25*(2^10-1) ns.  The scale is encoded as 0=2^0ns,
+		 * 1=2^5ns, 2=2^10ns,...5=2^25ns.
+		 */
+		lat_ns = ((int64_t)rxa * 1024 -
+		    (2 * (int64_t)sc->sc_ethercom.ec_if.if_mtu)) * 8 * 1000;
+		if (lat_ns < 0)
+			lat_ns = 0;
+		else {
+			uint32_t status;
+			uint16_t speed;
+
+			status = CSR_READ(sc, WMREG_STATUS);
+			switch (__SHIFTOUT(status, STATUS_SPEED)) {
+			case STATUS_SPEED_10:
+				speed = 10;
+				break;
+			case STATUS_SPEED_100:
+				speed = 100;
+				break;
+			case STATUS_SPEED_1000:
+				speed = 1000;
+				break;
+			default:
+				printf("%s: Unknown speed (status = %08x)\n",
+				    device_xname(sc->sc_dev), status);
+				return -1;
+			}
+			lat_ns /= speed;
+		}
+		value = lat_ns;
+
+		while (value > LTRV_VALUE) {
+			scale ++;
+			value = howmany(value, __BIT(5));
+		}
+		if (scale > LTRV_SCALE_MAX) {
+			printf("%s: Invalid LTR latency scale %d\n",
+			    device_xname(sc->sc_dev), scale);
+			return -1;
+		}
+		lat_enc = (uint16_t)(__SHIFTIN(scale, LTRV_SCALE) | value);
+
+		preg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+		    WM_PCI_LTR_CAP_LPT);
+		max_snoop = preg & 0xffff;
+		max_nosnoop = preg >> 16;
+
+		max_ltr_enc = MAX(max_snoop, max_nosnoop);
+
+		if (lat_enc > max_ltr_enc) {
+			lat_enc = max_ltr_enc;
+		}
+	}
+	/* Snoop and No-Snoop latencies the same */
+	reg |= lat_enc | __SHIFTIN(lat_enc, LTRV_NONSNOOP);
+	CSR_WRITE(sc, WMREG_LTRV, reg);
+
+	return 0;
 }
 
 /*
