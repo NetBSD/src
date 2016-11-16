@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.485 2016/11/16 00:46:46 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.486 2016/11/16 10:42:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.485 2016/11/16 00:46:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.486 2016/11/16 10:42:14 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -483,6 +483,12 @@ main(void)
 
 	/* Initialize sockets thread(s) */
 	soinit1();
+
+	/*
+	 * Initialize the bufq strategy modules - they may be needed
+	 * by some devices during configuration
+	 */
+	module_init_class(MODULE_CLASS_BUFQ);
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
