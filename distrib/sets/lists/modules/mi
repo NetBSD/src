@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.100 2016/11/02 00:12:41 pgoyette Exp $
+# $NetBSD: mi,v 1.101 2016/11/16 00:50:12 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -30,6 +30,14 @@
 ./@MODULEDIR@/bpf/bpf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/bpf_filter			base-kernel-modules	kmod
 ./@MODULEDIR@/bpf_filter/bpf_filter.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/bufq_disksort			base-kernel-modules	kmod
+./@MODULEDIR@/bufq_disksort/bufq_disksort.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/bufq_fcfs				base-kernel-modules	kmod
+./@MODULEDIR@/bufq_fcfs/bufq_fcfs.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/bufq_priocscan			base-kernel-modules	kmod
+./@MODULEDIR@/bufq_priocscan/bufq_priocscan.kmod base-kernel-modules	kmod
+./@MODULEDIR@/bufq_readprio			base-kernel-modules	kmod
+./@MODULEDIR@/bufq_readprio/bufq_readprio.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/cac				base-obsolete		obsolete
 ./@MODULEDIR@/cac/cac.kmod			base-obsolete		obsolete
 ./@MODULEDIR@/cac_pci				base-obsolete		obsolete
