@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.4 2016/11/13 07:12:40 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.5 2016/11/16 08:37:15 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -109,4 +109,9 @@ lib/libc/gen/glob.c				1.36
 	Bump the glob limits to 512KB for total string size and 64K
 	path entries.
 	[joerg, ticket #1247]
+
+external/bsd/dhcp/dist/common/packet.c		1.2
+
+	Check correctly the packet length (CVE-2015-8605)
+	[snj, ticket #1273]
 
