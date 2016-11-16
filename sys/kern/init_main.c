@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.486 2016/11/16 10:42:14 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.487 2016/11/16 12:31:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.486 2016/11/16 10:42:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.487 2016/11/16 12:31:33 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -428,9 +428,6 @@ main(void)
 	/* Second part of module system initialization. */
 	module_start_unload_thread();
 
-	/* Initialize the bufq strategy sub-system */
-	bufq_init();
-
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
 	/*
@@ -485,9 +482,11 @@ main(void)
 	soinit1();
 
 	/*
-	 * Initialize the bufq strategy modules - they may be needed
-	 * by some devices during configuration
+	 * Initialize the bufq strategy sub-system and any built-in
+	 * strategy modules - they may be needed by some devices during
+	 * auto-configuration
 	 */
+	bufq_init();
 	module_init_class(MODULE_CLASS_BUFQ);
 
 	/* Configure the system hardware.  This will enable interrupts. */
