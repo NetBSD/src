@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_pmax.c,v 1.23 2011/07/09 17:32:29 matt Exp $	*/
+/*	$NetBSD: ibus_pmax.c,v 1.24 2016/11/16 19:37:06 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.23 2011/07/09 17:32:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.24 2016/11/16 19:37:06 macallan Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -113,6 +113,7 @@ ibus_pmax_attach(device_t parent, device_t self, void *aux)
 	ibus_attached = 1;
 
 	ida.ida_busname = "ibus";
+	ida.ida_memt = normal_memt;
 	switch (systype) {
 #ifdef DEC_3100
 	case DS_PMAX:
