@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.267 2016/11/13 06:50:10 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.268 2016/11/16 18:07:03 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -15398,4 +15398,26 @@ external/gpl3/gcc/dist/gcc/cp/cfns.h		patch
 
 	Fix build with gcc5.
 	[pgoyette, ticket #1417]
+
+bin/sh/exec.c					1.45
+bin/sh/var.c					1.43
+
+	PR/48312: unset should not return an error for functions are
+	variables that were not previously set.
+	[dholland, ticket #1412]
+
+usr.bin/ftp/fetch.c				1.225
+
+	Fix crash in ftp when given an IPv6 URL that's missing a slash.
+	PR bin/51558.
+	[nonaka, ticket #1414]
+
+sys/arch/alpha/alpha/machdep.c			1.347
+sys/arch/alpha/alpha/prom.c			1.49
+sys/arch/alpha/stand/common/booted_dev.c	1.4
+sys/arch/alpha/stand/common/prom.c		1.15
+
+	Match the two prom_getenv() and fix buffer overflow causing
+	wrong host controller SCSI ID for DEC 3000.
+	[flxd, ticket #1416]
 
