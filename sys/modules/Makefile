@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.182 2016/11/02 00:12:00 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.183 2016/11/16 00:49:27 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,10 @@ SUBDIR+=	aio
 SUBDIR+=	blowfish
 SUBDIR+=	bpf
 SUBDIR+=	bpf_filter
+SUBDIR+=	bufq_disksort
+SUBDIR+=	bufq_fcfs
+SUBDIR+=	bufq_priocscan
+SUBDIR+=	bufq_readprio
 SUBDIR+=	camellia
 SUBDIR+=	cast128
 SUBDIR+=	ccd
