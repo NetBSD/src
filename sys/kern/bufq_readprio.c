@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_readprio.c,v 1.14 2016/11/16 00:46:46 pgoyette Exp $	*/
+/*	$NetBSD: bufq_readprio.c,v 1.15 2016/11/16 10:42:14 pgoyette Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.14 2016/11/16 00:46:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.15 2016/11/16 10:42:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ bufq_readprio_init(struct bufq_state *bufq)
 	TAILQ_INIT(&prio->bq_write);
 }
 
-MODULE(MODULE_CLASS_MISC, bufq_readprio, NULL);
+MODULE(MODULE_CLASS_BUFQ, bufq_readprio, NULL);
  
 static int 
 bufq_readprio_modcmd(modcmd_t cmd, void *opaque)
