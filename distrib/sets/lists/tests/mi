@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.700 2016/11/15 12:59:33 skrll Exp $
+# $NetBSD: mi,v 1.701 2016/11/16 21:36:23 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -128,6 +128,7 @@
 ./usr/libdata/debug/usr/tests/lib/libprop				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen			tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libpthread_dbg			tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/librt					tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/librefuse				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/librumpclient				tests-lib-debug		compattestfile,atf
@@ -3015,6 +3016,10 @@
 ./usr/tests/lib/libpthread/t_status		tests-obsolete		obsolete
 ./usr/tests/lib/libpthread/t_swapcontext	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_timedmutex		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread_dbg			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread_dbg/Atffile		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread_dbg/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/libpthread_dbg/t_dummy		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librt				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librt/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librt/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
