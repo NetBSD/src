@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.22 2016/11/16 00:46:46 pgoyette Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.23 2016/11/16 10:42:14 pgoyette Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.22 2016/11/16 00:46:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.23 2016/11/16 10:42:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ bufq_alloc(struct bufq_state **bufqp, const char *strategy, int flags)
 		strlcpy(module_name, "bufq_", sizeof(module_name));
 		strlcat(module_name, strategy, sizeof(module_name));
 		mutex_exit(&bufq_mutex);
-		(void) module_autoload(module_name, MODULE_CLASS_MISC);
+		(void) module_autoload(module_name, MODULE_CLASS_BUFQ);
 		mutex_enter(&bufq_mutex);
 	} while (gen != module_gen);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.19 2016/11/16 00:46:46 pgoyette Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.20 2016/11/16 10:42:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c)2004,2005,2006,2008,2009,2011,2012 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.19 2016/11/16 00:46:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.20 2016/11/16 10:42:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,7 +444,7 @@ bufq_priocscan_init(struct bufq_state *bufq)
 	}
 }
 
-MODULE(MODULE_CLASS_MISC, bufq_priocscan, NULL);
+MODULE(MODULE_CLASS_BUFQ, bufq_priocscan, NULL);
 
 static int
 bufq_priocscan_modcmd(modcmd_t cmd, void *opaque)
