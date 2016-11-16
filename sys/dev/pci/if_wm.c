@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.446 2016/11/16 08:14:39 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.447 2016/11/16 08:56:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.446 2016/11/16 08:14:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.447 2016/11/16 08:56:17 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -396,6 +396,7 @@ struct wm_queue {
 struct wm_phyop {
 	int (*acquire)(struct wm_softc *);
 	void (*release)(struct wm_softc *);
+	int reset_delay_us;
 };
 
 /*
@@ -637,6 +638,7 @@ static void	wm_lan_init_done(struct wm_softc *);
 static void	wm_get_cfg_done(struct wm_softc *);
 static void	wm_initialize_hardware_bits(struct wm_softc *);
 static uint32_t	wm_rxpbs_adjust_82580(uint32_t);
+static void	wm_reset_phy(struct wm_softc *);
 static void	wm_flush_desc_rings(struct wm_softc *);
 static void	wm_reset(struct wm_softc *);
 static int	wm_add_rxbuf(struct wm_rxqueue *, int);
@@ -840,6 +842,7 @@ static void	wm_smbustopci(struct wm_softc *);
 static void	wm_init_manageability(struct wm_softc *);
 static void	wm_release_manageability(struct wm_softc *);
 static void	wm_get_wakeup(struct wm_softc *);
+static void	wm_ulp_disable(struct wm_softc *);
 static void	wm_enable_phy_wakeup(struct wm_softc *);
 static void	wm_igp3_phy_powerdown_workaround_ich8lan(struct wm_softc *);
 static void	wm_enable_wakeup(struct wm_softc *);
@@ -862,6 +865,8 @@ static void	wm_set_mdio_slow_mode_hv(struct wm_softc *);
 static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
 static void	wm_reset_init_script_82575(struct wm_softc *);
 static void	wm_reset_mdicnfg_82580(struct wm_softc *);
+static bool	wm_phy_is_accessible_pchlan(struct wm_softc *);
+static void	wm_toggle_lanphypc_pch_lpt(struct wm_softc *);
 static int	wm_platform_pm_pch_lpt(struct wm_softc *, bool);
 static void	wm_pll_workaround_i210(struct wm_softc *);
 
@@ -1630,6 +1635,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	/* Set default function pointers */
 	sc->phy.acquire = wm_get_null;
 	sc->phy.release = wm_put_null;
+	sc->phy.reset_delay_us = (sc->sc_type >= WM_T_82571) ? 100 : 10000;
 
 	if (sc->sc_type < WM_T_82543) {
 		if (sc->sc_rev < 2) {
@@ -3725,6 +3731,40 @@ wm_rxpbs_adjust_82580(uint32_t val)
 		rv = wm_82580_rxpbs_table[val];
 
 	return rv;
+}
+
+/*
+ * wm_reset_phy:
+ *
+ *	generic PHY reset function.
+ *	Same as e1000_phy_hw_reset_generic()
+ */
+static void
+wm_reset_phy(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+	if (wm_phy_resetisblocked(sc))
+		return;
+
+	sc->phy.acquire(sc);
+
+	reg = CSR_READ(sc, WMREG_CTRL);
+	CSR_WRITE(sc, WMREG_CTRL, reg | CTRL_PHY_RESET);
+	CSR_WRITE_FLUSH(sc);
+
+	delay(sc->phy.reset_delay_us);
+
+	CSR_WRITE(sc, WMREG_CTRL, reg);
+	CSR_WRITE_FLUSH(sc);
+
+	delay(150);
+	
+	sc->phy.release(sc);
+
+	wm_get_cfg_done(sc);
 }
 
 static void
@@ -11902,6 +11942,7 @@ static void
 wm_smbustopci(struct wm_softc *sc)
 {
 	uint32_t fwsm, reg;
+	int rv = 0;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
@@ -11909,46 +11950,82 @@ wm_smbustopci(struct wm_softc *sc)
 	/* Gate automatic PHY configuration by hardware on non-managed 82579 */
 	wm_gate_hw_phy_config_ich8lan(sc, true);
 
+	/* Disable ULP */
+	wm_ulp_disable(sc);
+
 	/* Acquire PHY semaphore */
 	sc->phy.acquire(sc);
 
 	fwsm = CSR_READ(sc, WMREG_FWSM);
-	if (((fwsm & FWSM_FW_VALID) == 0)
-	    && ((wm_phy_resetisblocked(sc) == false))) {
-		if (sc->sc_type >= WM_T_PCH_LPT) {
-			reg = CSR_READ(sc, WMREG_CTRL_EXT);
-			reg |= CTRL_EXT_FORCE_SMBUS;
-			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
-			CSR_WRITE_FLUSH(sc);
-			delay(50*1000);
+	switch (sc->sc_type) {
+	case WM_T_PCH_LPT:
+	case WM_T_PCH_SPT:
+		if (wm_phy_is_accessible_pchlan(sc))
+			break;
+
+		reg = CSR_READ(sc, WMREG_CTRL_EXT);
+		reg |= CTRL_EXT_FORCE_SMBUS;
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+#if 0
+		/* XXX Isn't this required??? */
+		CSR_WRITE_FLUSH(sc);
+#endif
+		delay(50 * 1000);
+		/* FALLTHROUGH */
+	case WM_T_PCH2:
+		if (wm_phy_is_accessible_pchlan(sc) == true)
+			break;
+		/* FALLTHROUGH */
+	case WM_T_PCH:
+		if ((sc->sc_type == WM_T_PCH))
+			if ((fwsm & FWSM_FW_VALID) != 0)
+				break;
+
+		if (wm_phy_resetisblocked(sc) == true) {
+			printf("XXX reset is blocked(3)\n");
+			break;
 		}
 
-		/* Toggle LANPHYPC */
-		sc->sc_ctrl |= CTRL_LANPHYPC_OVERRIDE;
-		sc->sc_ctrl &= ~CTRL_LANPHYPC_VALUE;
-		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-		CSR_WRITE_FLUSH(sc);
-		delay(1000);
-		sc->sc_ctrl &= ~CTRL_LANPHYPC_OVERRIDE;
-		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-		CSR_WRITE_FLUSH(sc);
-		delay(50*1000);
+		wm_toggle_lanphypc_pch_lpt(sc);
 
 		if (sc->sc_type >= WM_T_PCH_LPT) {
+			if (wm_phy_is_accessible_pchlan(sc) == true)
+				break;
+
 			reg = CSR_READ(sc, WMREG_CTRL_EXT);
 			reg &= ~CTRL_EXT_FORCE_SMBUS;
 			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+			if (wm_phy_is_accessible_pchlan(sc) == true)
+				break;
+			rv = -1;
 		}
+		break;
+	default:
+		break;
 	}
 
 	/* Release semaphore */
 	sc->phy.release(sc);
 
+	if (rv == 0) {
+		if (wm_phy_resetisblocked(sc)) {
+			printf("XXX reset is blocked(4)\n");
+			goto out;
+		}
+		wm_reset_phy(sc);
+		if (wm_phy_resetisblocked(sc))
+			printf("XXX reset is blocked(4)\n");
+	}
+
+out:
 	/*
 	 * Ungate automatic PHY configuration by hardware on non-managed 82579
 	 */
-	if ((sc->sc_type == WM_T_PCH2) && ((fwsm & FWSM_FW_VALID) == 0))
+	if ((sc->sc_type == WM_T_PCH2) && ((fwsm & FWSM_FW_VALID) == 0)) {
+		delay(10*1000);
 		wm_gate_hw_phy_config_ich8lan(sc, false);
+	}
 }
 
 static void
@@ -12049,6 +12126,102 @@ wm_get_wakeup(struct wm_softc *sc)
 	 * Note that the WOL flags is set after the resetting of the eeprom
 	 * stuff
 	 */
+}
+
+/*
+ * Unconfigure Ultra Low Power mode.
+ * Only for I217 and newer (see below).
+ */
+static void
+wm_ulp_disable(struct wm_softc *sc)
+{
+	uint32_t reg;
+	int i = 0;
+
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+	/* Exclude old devices */
+	if ((sc->sc_type < WM_T_PCH_LPT)
+	    || (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I217_LM)
+	    || (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I217_V)
+	    || (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_LM2)
+	    || (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_V2))
+		return;
+
+	if ((CSR_READ(sc, WMREG_FWSM) & FWSM_FW_VALID) != 0) {
+		/* Request ME un-configure ULP mode in the PHY */
+		reg = CSR_READ(sc, WMREG_H2ME);
+		reg &= ~H2ME_ULP;
+		reg |= H2ME_ENFORCE_SETTINGS;
+		CSR_WRITE(sc, WMREG_H2ME, reg);
+
+		/* Poll up to 300msec for ME to clear ULP_CFG_DONE. */
+		while ((CSR_READ(sc, WMREG_FWSM) & FWSM_ULP_CFG_DONE) != 0) {
+			if (i++ == 30) {
+				printf("%s timed out\n", __func__);
+				return;
+			}
+			delay(10 * 1000);
+		}
+		reg = CSR_READ(sc, WMREG_H2ME);
+		reg &= ~H2ME_ENFORCE_SETTINGS;
+		CSR_WRITE(sc, WMREG_H2ME, reg);
+
+		return;
+	}
+
+	/* Acquire semaphore */
+	sc->phy.acquire(sc);
+
+	/* Toggle LANPHYPC */
+	wm_toggle_lanphypc_pch_lpt(sc);
+
+	/* Unforce SMBus mode in PHY */
+	reg = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, CV_SMB_CTRL);
+	if (reg == 0x0000 || reg == 0xffff) {
+		uint32_t reg2;
+
+		printf("%s: Force SMBus first.\n", __func__);
+		reg2 = CSR_READ(sc, WMREG_CTRL_EXT);
+		reg2 |= CTRL_EXT_FORCE_SMBUS;
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg2);
+		delay(50 * 1000);
+
+		reg = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, CV_SMB_CTRL);
+	}
+	reg &= ~CV_SMB_CTRL_FORCE_SMBUS;
+	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, CV_SMB_CTRL, reg);
+
+	/* Unforce SMBus mode in MAC */
+	reg = CSR_READ(sc, WMREG_CTRL_EXT);
+	reg &= ~CTRL_EXT_FORCE_SMBUS;
+	CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+	reg = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, HV_PM_CTRL);
+	reg |= HV_PM_CTRL_K1_ENA;
+	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, HV_PM_CTRL, reg);
+
+	reg = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, I218_ULP_CONFIG1);
+	reg &= ~(I218_ULP_CONFIG1_IND
+	    | I218_ULP_CONFIG1_STICKY_ULP
+	    | I218_ULP_CONFIG1_RESET_TO_SMBUS
+	    | I218_ULP_CONFIG1_WOL_HOST
+	    | I218_ULP_CONFIG1_INBAND_EXIT
+	    | I218_ULP_CONFIG1_EN_ULP_LANPHYPC
+	    | I218_ULP_CONFIG1_DIS_CLR_STICKY_ON_PERST
+	    | I218_ULP_CONFIG1_DIS_SMB_PERST);
+	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, I218_ULP_CONFIG1, reg);
+	reg |= I218_ULP_CONFIG1_START;
+	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, I218_ULP_CONFIG1, reg);
+
+	reg = CSR_READ(sc, WMREG_FEXTNVM7);
+	reg &= ~FEXTNVM7_DIS_SMB_PERST;
+	CSR_WRITE(sc, WMREG_FEXTNVM7, reg);
+
+	/* Release semaphore */
+	sc->phy.release(sc);
+	wm_gmii_reset(sc);
+	delay(50 * 1000);
 }
 
 /* WOL in the newer chipset interfaces (pchlan) */
@@ -12509,6 +12682,99 @@ wm_reset_mdicnfg_82580(struct wm_softc *sc)
 	if (nvmword & NVM_CFG3_PORTA_COM_MDIO)
 		reg |= MDICNFG_COM_MDIO;
 	CSR_WRITE(sc, WMREG_MDICNFG, reg);
+}
+
+#define MII_INVALIDID(x)	(((x) == 0x0000) || ((x) == 0xffff))
+
+static bool
+wm_phy_is_accessible_pchlan(struct wm_softc *sc)
+{
+	int i;
+	uint32_t reg;
+	uint16_t id1, id2;
+
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+	id1 = id2 = 0xffff;
+	for (i = 0; i < 2; i++) {
+		id1 = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, MII_PHYIDR1);
+		if (MII_INVALIDID(id1))
+			continue;
+		id2 = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, MII_PHYIDR2);
+		if (MII_INVALIDID(id2))
+			continue;
+		break;
+	}
+	if (!MII_INVALIDID(id1) && !MII_INVALIDID(id2)) {
+		goto out;
+	}
+
+	if (sc->sc_type < WM_T_PCH_LPT) {
+		sc->phy.release(sc);
+		wm_set_mdio_slow_mode_hv(sc);
+		id1 = wm_gmii_hv_readreg(sc->sc_dev, 2, MII_PHYIDR1);
+		id2 = wm_gmii_hv_readreg(sc->sc_dev, 2, MII_PHYIDR2);
+		sc->phy.acquire(sc);
+	}
+	if (MII_INVALIDID(id1) || MII_INVALIDID(id2)) {
+		printf("XXX return with false\n");
+		return false;
+	}
+out:
+	if ((sc->sc_type == WM_T_PCH_LPT) || (sc->sc_type == WM_T_PCH_SPT)) {
+		/* Only unforce SMBus if ME is not active */
+		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_FW_VALID) == 0) {
+			/* Unforce SMBus mode in PHY */
+			reg = wm_gmii_hv_readreg_locked(sc->sc_dev, 2,
+			    CV_SMB_CTRL);
+			reg &= ~CV_SMB_CTRL_FORCE_SMBUS;
+			wm_gmii_hv_writereg_locked(sc->sc_dev, 2,
+			    CV_SMB_CTRL, reg);
+
+			/* Unforce SMBus mode in MAC */
+			reg = CSR_READ(sc, WMREG_CTRL_EXT);
+			reg &= ~CTRL_EXT_FORCE_SMBUS;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+		}
+	}
+	return true;
+}
+
+static void
+wm_toggle_lanphypc_pch_lpt(struct wm_softc *sc)
+{
+	uint32_t reg;
+	int i;
+
+	/* Set PHY Config Counter to 50msec */
+	reg = CSR_READ(sc, WMREG_FEXTNVM3);
+	reg &= ~FEXTNVM3_PHY_CFG_COUNTER_MASK;
+	reg |= FEXTNVM3_PHY_CFG_COUNTER_50MS;
+	CSR_WRITE(sc, WMREG_FEXTNVM3, reg);
+
+	/* Toggle LANPHYPC */
+	reg = CSR_READ(sc, WMREG_CTRL);
+	reg |= CTRL_LANPHYPC_OVERRIDE;
+	reg &= ~CTRL_LANPHYPC_VALUE;
+	CSR_WRITE(sc, WMREG_CTRL, reg);
+	CSR_WRITE_FLUSH(sc);
+	delay(1000);
+	reg &= ~CTRL_LANPHYPC_OVERRIDE;
+	CSR_WRITE(sc, WMREG_CTRL, reg);
+	CSR_WRITE_FLUSH(sc);
+
+	if (sc->sc_type < WM_T_PCH_LPT)
+		delay(50 * 1000);
+	else {
+		i = 20;
+
+		do {
+			delay(5 * 1000);
+		} while (((CSR_READ(sc, WMREG_CTRL_EXT) & CTRL_EXT_LPCD) == 0)
+		    && i--);
+
+		delay(30 * 1000);
+	}
 }
 
 static int

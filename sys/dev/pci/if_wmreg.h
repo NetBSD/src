@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.92 2016/11/16 07:24:52 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.93 2016/11/16 08:56:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -317,6 +317,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_NSICR		__BIT(0) /* Non Interrupt clear on read */
 #define	CTRL_EXT_GPI_EN(x)	(1U << (x)) /* gpin interrupt enable */
 #define CTRL_EXT_NVMVS		__BITS(0, 1) /* NVM valid sector */
+#define CTRL_EXT_LPCD		__BIT(2) /* LCD Power Cycle Done */
 #define	CTRL_EXT_SWDPINS_SHIFT	4
 #define	CTRL_EXT_SWDPINS_MASK	0x0d
 /* The bit order of the SW Definable pin is not 6543 but 3654! */
@@ -423,6 +424,11 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_VET	0x0038	/* VLAN Ethertype */
 #define	WMREG_MDPHYA	0x003C	/* PHY address - RW */
+
+#define WMREG_FEXTNVM3	0x003c	/* Future Extended NVM 3 */
+#define FEXTNVM3_PHY_CFG_COUNTER_MASK	__BITS(27, 26)
+#define FEXTNVM3_PHY_CFG_COUNTER_50MS	__BIT(27)
+
 #define	WMREG_RAL_BASE	0x0040	/* Receive Address List */
 #define	WMREG_CORDOVA_RAL_BASE 0x5400
 #define	WMREG_RAL_LO(b, x) ((b) + ((x) << 3))
@@ -478,6 +484,11 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_EIAC_82574 0x00dc	/* Interrupt Auto Clear Register */
 #define	WMREG_EIAC_82574_MSIX_MASK	(ICR_RXQ(0) | ICR_RXQ(1)	\
 	    | ICR_TXQ(0) | ICR_TXQ(1) | ICR_OTHER)
+
+#define WMREG_FEXTNVM7	0x00e4  /* Future Extended NVM 7 */
+#define FEXTNVM7_SIDE_CLK_UNGATE __BIT(2)
+#define FEXTNVM7_DIS_SMB_PERST	__BIT(5)
+#define FEXTNVM7_DIS_PB_READ	__BIT(18)
 
 #define WMREG_IVAR	0x00e4  /* Interrupt Vector Allocation Register */
 #define WMREG_IVAR0	0x01700 /* Interrupt Vector Allocation */
@@ -1035,6 +1046,10 @@ struct livengood_tcpip_ctxdesc {
 #define	SWSM_SWESMBI	0x00000002	/* FW Semaphore bit */
 #define	SWSM_WMNG	0x00000004	/* Wake MNG Clock */
 #define	SWSM_DRV_LOAD	0x00000008	/* Driver Loaded Bit */
+/* Intel driver defines H2ME register at 0x5b50 */
+#define	WMREG_H2ME	0x5b50	/* SW Semaphore */
+#define H2ME_ULP		__BIT(11)
+#define H2ME_ENFORCE_SETTINGS	__BIT(12)
 
 #define	WMREG_FWSM	0x5b54	/* FW Semaphore */
 #define	FWSM_MODE		__BITS(1, 3)
@@ -1042,6 +1057,7 @@ struct livengood_tcpip_ctxdesc {
 #define	MNG_IAMT_MODE		0x3
 #define FWSM_RSPCIPHY		__BIT(6)  /* Reset PHY on PCI reset */
 #define FWSM_WLOCK_MAC		__BITS(7, 9)  /* Reset PHY on PCI reset */
+#define FWSM_ULP_CFG_DONE	__BIT(10)
 #define FWSM_FW_VALID		__BIT(15) /* FW established a valid mode */
 
 #define	WMREG_SWSM2	0x5b58	/* SW Semaphore 2 */
