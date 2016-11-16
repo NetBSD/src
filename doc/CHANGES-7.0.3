@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.5 2016/11/16 08:37:15 bouyer Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.6 2016/11/16 18:31:23 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -114,4 +114,9 @@ external/bsd/dhcp/dist/common/packet.c		1.2
 
 	Check correctly the packet length (CVE-2015-8605)
 	[snj, ticket #1273]
+
+sys/external/bsd/drm2/dist/drm/drm_gem.c	1.6
+
+	Avoid zero-size uao.
+	[maya, ticket #1272]
 
