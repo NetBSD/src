@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1377 2016/11/11 21:11:03 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1378 2016/11/16 09:38:48 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1418,10 +1418,10 @@ For the data files, do use external/public-domain/tz/tzdata2netbsd.
 
 Package:	wpa_supplicant/hostapd
 Version:	2.4
-Current Vers:	2.4
+Current Vers:	2.6
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
-Archive Site:	http://hostap.epitest.fi/releases/
-Home Page:	http://hostap.epitest.fi/wpa_supplicant/
+Archive Site:	http://w1.fi/releases/
+Home Page:	http://w1.fi/wpa_supplicant/
 Mailing List:
 Responsible:	scw, dyoung, christos
 License:	BSD or GPLv2
