@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.445 2016/11/16 07:24:52 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.446 2016/11/16 08:14:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.445 2016/11/16 07:24:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.446 2016/11/16 08:14:39 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2191,27 +2191,10 @@ alloc_retry:
 		wm_pll_workaround_i210(sc);
 
 	wm_get_wakeup(sc);
-	switch (sc->sc_type) {
-	case WM_T_82571:
-	case WM_T_82572:
-	case WM_T_82573:
-	case WM_T_82574:
-	case WM_T_82583:
-	case WM_T_80003:
-	case WM_T_ICH8:
-	case WM_T_ICH9:
-	case WM_T_ICH10:
-	case WM_T_PCH:
-	case WM_T_PCH2:
-	case WM_T_PCH_LPT:
-	case WM_T_PCH_SPT:
-		/* Non-AMT based hardware can now take control from firmware */
-		if ((sc->sc_flags & WM_F_HAS_AMT) == 0)
-			wm_get_hw_control(sc);
-		break;
-	default:
-		break;
-	}
+
+	/* Non-AMT based hardware can now take control from firmware */
+	if ((sc->sc_flags & WM_F_HAS_AMT) == 0)
+		wm_get_hw_control(sc);
 
 	/*
 	 * Read the Ethernet address from the EEPROM, if not first found
@@ -4748,27 +4731,9 @@ wm_init_locked(struct ifnet *ifp)
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
 
-	switch (sc->sc_type) {
-	case WM_T_82571:
-	case WM_T_82572:
-	case WM_T_82573:
-	case WM_T_82574:
-	case WM_T_82583:
-	case WM_T_80003:
-	case WM_T_ICH8:
-	case WM_T_ICH9:
-	case WM_T_ICH10:
-	case WM_T_PCH:
-	case WM_T_PCH2:
-	case WM_T_PCH_LPT:
-	case WM_T_PCH_SPT:
-		/* AMT based hardware can now take control from firmware */
-		if ((sc->sc_flags & WM_F_HAS_AMT) != 0)
-			wm_get_hw_control(sc);
-		break;
-	default:
-		break;
-	}
+	/* AMT based hardware can now take control from firmware */
+	if ((sc->sc_flags & WM_F_HAS_AMT) != 0)
+		wm_get_hw_control(sc);
 
 	/* Init hardware bits */
 	wm_initialize_hardware_bits(sc);
@@ -11886,28 +11851,12 @@ wm_get_hw_control(struct wm_softc *sc)
 	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	switch (sc->sc_type) {
-	case WM_T_82573:
+	if (sc->sc_type == WM_T_82573) {
 		reg = CSR_READ(sc, WMREG_SWSM);
 		CSR_WRITE(sc, WMREG_SWSM, reg | SWSM_DRV_LOAD);
-		break;
-	case WM_T_82571:
-	case WM_T_82572:
-	case WM_T_82574:
-	case WM_T_82583:
-	case WM_T_80003:
-	case WM_T_ICH8:
-	case WM_T_ICH9:
-	case WM_T_ICH10:
-	case WM_T_PCH:
-	case WM_T_PCH2:
-	case WM_T_PCH_LPT:
-	case WM_T_PCH_SPT:
+	} else if (sc->sc_type >= WM_T_82571) {
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_DRV_LOAD);
-		break;
-	default:
-		break;
 	}
 }
 
@@ -11919,13 +11868,10 @@ wm_release_hw_control(struct wm_softc *sc)
 	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	if ((sc->sc_flags & WM_F_HAS_MANAGE) == 0)
-		return;
-
 	if (sc->sc_type == WM_T_82573) {
 		reg = CSR_READ(sc, WMREG_SWSM);
 		CSR_WRITE(sc, WMREG_SWSM, reg & ~SWSM_DRV_LOAD);
-	} else {
+	} else if (sc->sc_type >= WM_T_82571) {
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg & ~CTRL_EXT_DRV_LOAD);
 	}
