@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.225 2016/11/11 11:34:51 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.226 2016/11/17 16:26:07 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.225 2016/11/11 11:34:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.226 2016/11/17 16:26:07 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1288,17 +1288,16 @@ pmap_bootstrap(vaddr_t kva_start)
 		pmap_pg_g = PG_G;		/* enable software */
 
 		/* add PG_G attribute to already mapped kernel pages */
+
 		if (KERNBASE == VM_MIN_KERNEL_ADDRESS) {
+			/* i386 only */
 			kva_end = virtual_avail;
 		} else {
-			extern vaddr_t eblob, esym;
-			kva_end = (vaddr_t)&end;
-			if (esym > kva_end)
-				kva_end = esym;
-			if (eblob > kva_end)
-				kva_end = eblob;
-			kva_end = roundup(kva_end, PAGE_SIZE);
+			/* amd64 only */
+			extern vaddr_t kern_end;
+			kva_end = kern_end;
 		}
+
 		for (kva = KERNBASE; kva < kva_end; kva += PAGE_SIZE) {
 			p1i = pl1_i(kva);
 			if (pmap_valid_entry(PTE_BASE[p1i]))
