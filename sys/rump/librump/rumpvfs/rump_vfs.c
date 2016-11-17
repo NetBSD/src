@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.85 2016/11/16 23:24:47 pgoyette Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.86 2016/11/17 23:15:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.85 2016/11/16 23:24:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.86 2016/11/17 23:15:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -171,6 +171,7 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 		}
 	}
 
+	module_init_class(MODULE_CLASS_BUFQ);
 	module_init_class(MODULE_CLASS_VFS);
 
 	/*
