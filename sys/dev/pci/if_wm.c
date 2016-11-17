@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.448 2016/11/16 09:27:49 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.449 2016/11/17 03:36:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.448 2016/11/16 09:27:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.449 2016/11/17 03:36:23 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -12078,8 +12078,6 @@ wm_get_wakeup(struct wm_softc *sc)
 		sc->sc_flags |= WM_F_HAS_AMT;
 		/* FALLTHROUGH */
 	case WM_T_80003:
-	case WM_T_82541:
-	case WM_T_82547:
 	case WM_T_82571:
 	case WM_T_82572:
 	case WM_T_82574:
@@ -12090,6 +12088,11 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_I354:
 		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE) != 0)
 			sc->sc_flags |= WM_F_ARC_SUBSYS_VALID;
+		/* FALLTHROUGH */
+	case WM_T_82541:
+	case WM_T_82541_2:
+	case WM_T_82547:
+	case WM_T_82547_2:
 		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;
 		break;
 	case WM_T_ICH8:
@@ -12098,7 +12101,7 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_PCH:
 	case WM_T_PCH2:
 	case WM_T_PCH_LPT:
-	case WM_T_PCH_SPT: /* XXX only Q170 chipset? */
+	case WM_T_PCH_SPT:
 		sc->sc_flags |= WM_F_HAS_AMT;
 		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;
 		break;
