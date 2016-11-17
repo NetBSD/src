@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.449 2016/11/17 03:36:23 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.450 2016/11/17 03:40:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.449 2016/11/17 03:36:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.450 2016/11/17 03:40:08 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -12078,9 +12078,6 @@ wm_get_wakeup(struct wm_softc *sc)
 		sc->sc_flags |= WM_F_HAS_AMT;
 		/* FALLTHROUGH */
 	case WM_T_80003:
-	case WM_T_82571:
-	case WM_T_82572:
-	case WM_T_82574:
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
@@ -12093,6 +12090,9 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_82541_2:
 	case WM_T_82547:
 	case WM_T_82547_2:
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82574:
 		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;
 		break;
 	case WM_T_ICH8:
