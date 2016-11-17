@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/09/02 04:27:13 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.6 2016/11/17 05:28:43 snj Exp $
 
 DRIVER=		xf86-video-nouveau
 DRIVER_NAME=	nouveau_drv
@@ -55,7 +55,6 @@ COPTS.nouveau_xv.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer
 
 .if ${XORG_SERVER_SUBDIR} != "xorg-server.old"
 CPPFLAGS+=	-DHAVE_XORG_LIST
-CPPFLAGS+=	-DHAVE_XAA_H
 .endif
 
 # from pkgsrc/x11/xf86-video-nouveau/patches/patch-configure
