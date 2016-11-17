@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.226 2016/11/17 16:26:07 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.227 2016/11/17 16:32:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.226 2016/11/17 16:26:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.227 2016/11/17 16:32:06 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1557,6 +1557,9 @@ pmap_init_directmap(struct pmap *kpm)
 	}
 
 	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dm_pdp | pteflags | PG_U;
+
+	*pte = 0;
+	pmap_update_pg(tmpva);
 
 	tlbflush();
 }
