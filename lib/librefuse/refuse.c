@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.96 2012/12/30 10:04:22 tron Exp $	*/
+/*	$NetBSD: refuse.c,v 1.97 2016/11/17 14:20:25 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.96 2012/12/30 10:04:22 tron Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.97 2016/11/17 14:20:25 pho Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -765,8 +765,22 @@ puffs_fuse_node_create(struct puffs_usermount *pu, void *opc,
 
 	set_fuse_context_uid_gid(pcn->pcn_cred);
 
+	memset(&fi, 0, sizeof(fi));
 	created = 0;
 	if (fuse->op.create) {
+		/* In puffs "create" and "open" are two separate operations
+		 * with atomicity achieved by locking the parent vnode. In
+		 * fuse, on the other hand, "create" is actually a
+		 * create-and-open-atomically and the open flags (O_RDWR,
+		 * O_APPEND, ...) are passed via fi.flags. So the only way to
+		 * emulate the fuse semantics is to open the file with dummy
+		 * flags and then immediately close it.
+		 *
+		 * You might think that we could simply use fuse->op.mknod all
+		 * the time but no, that's not possible because most file
+		 * systems nowadays expect op.mknod to be called only for
+		 * non-regular files and many don't even support it. */
+		fi.flags = O_WRONLY | O_CREAT | O_EXCL;
 		ret = fuse->op.create(path, mode | S_IFREG, &fi);
 		if (ret == 0)
 			created = 1;
@@ -782,12 +796,11 @@ puffs_fuse_node_create(struct puffs_usermount *pu, void *opc,
 		ret = fuse_newnode(pu, path, va, &fi, pni, &pn);
 
 		/* sweet..  create also open the file */
-		if (created) {
-			struct refusenode *rn;
-
-			rn = pn->pn_data;
-			rn->flags |= RN_OPEN;
-			rn->opencount++;
+		if (created && fuse->op.release) {
+			struct refusenode *rn = pn->pn_data;
+			/* The return value of op.release is expected to be
+			 * discarded. */
+			(void)fuse->op.release(path, &rn->file_info);
 		}
 	}
 
