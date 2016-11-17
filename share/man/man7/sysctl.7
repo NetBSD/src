@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.103 2016/10/12 08:52:49 roy Exp $
+.\"	$NetBSD: sysctl.7,v 1.104 2016/11/17 01:22:00 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd October 12, 2016
+.Dd November 17, 2016
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -399,11 +399,16 @@ A
 .Vt struct timeval
 structure is returned.
 This structure contains the time that the system was booted.
+.It Li kern.bufq
+This variable contains information on the
+.Xr bufq 9
+subsystem.
+Currently, the only third level name implemented is
+.Dv kern.bufq.strategies
+which provides a list of buffer queue strategies currently available.
 .It Li kern.buildinfo
 When the kernel is built, the build environment may optionally provide
 arbitrary information to be stored in this variable.
-.\" .It Li kern.bufq
-.\" XXX: Undocumented.
 .It Li kern.ccpu ( Dv KERN_CCPU )
 The scheduler exponential decay value.
 .It Li kern.clockrate ( Dv KERN_CLOCKRATE )
