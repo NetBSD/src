@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.232 2016/11/15 15:26:59 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.233 2016/11/17 16:26:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.232 2016/11/15 15:26:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233 2016/11/17 16:26:08 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1607,14 +1607,14 @@ init_x86_64(paddr_t first_avail)
 	    pmap_pa_start, avail_start, avail_end));
 #endif	/* !XEN */
 
+	/* End of the virtual space we have created so far. */
+	kern_end = KERNBASE + first_avail;
+
 	/*
 	 * Call pmap initialization to make new kernel address space.
 	 * We must do this before loading pages into the VM system.
 	 */
 	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
-
-	/* End of the virtual space we have created so far. */
-	kern_end = KERNBASE + first_avail;
 
 #ifndef XEN
 	/* Internalize the physical pages into the VM system. */
