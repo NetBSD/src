@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dummy.c,v 1.1 2016/11/16 21:36:23 kamil Exp $	*/
+/*	$NetBSD: t_dummy.c,v 1.2 2016/11/17 03:37:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,10 +28,12 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dummy.c,v 1.1 2016/11/16 21:36:23 kamil Exp $");
+__RCSID("$NetBSD: t_dummy.c,v 1.2 2016/11/17 03:37:23 kamil Exp $");
 
+#include <dlfcn.h>
 #include <pthread.h>
 #include <pthread_dbg.h>
+#include <stdio.h>
 
 #include <atf-c.h>
 
@@ -71,7 +73,6 @@ dummy1_proc_setregs(void *arg, int regset, int lwp, void *buf)
 	return TD_ERR_ERR;
 }
 
-
 ATF_TC(dummy1);
 ATF_TC_HEAD(dummy1, tc)
 {
@@ -96,10 +97,96 @@ ATF_TC_BODY(dummy1, tc)
 	ATF_REQUIRE(td_open(&dummy1_callbacks, NULL, &main_ta) == TD_ERR_ERR);
 }
 
+static int
+dummy2_proc_read(void *arg, caddr_t addr, void *buf, size_t size)
+{
+	memcpy(addr, buf, size);
+
+	return TD_ERR_OK;
+}
+
+static int
+dummy2_proc_write(void *arg, caddr_t addr, void *buf, size_t size)
+{
+	memcpy(addr, buf, size);
+
+	return TD_ERR_OK;
+}
+
+static int
+dummy2_proc_lookup(void *arg, const char *sym, caddr_t *addr)
+{
+	void *handle;
+	void *symbol;
+
+	ATF_REQUIRE_MSG((handle = dlopen(NULL, RTLD_LOCAL | RTLD_LAZY))
+	    != NULL, "dlopen(3) failed: %s", dlerror());
+
+	symbol = dlsym(handle, sym);
+
+	ATF_REQUIRE_MSG(dlclose(handle) == 0, "dlclose(3) failed: %s",
+	    dlerror());
+
+	if (!symbol)
+		return TD_ERR_NOSYM;
+
+	*addr = (caddr_t)(uintptr_t)symbol;
+
+	return TD_ERR_OK;
+}
+
+static int
+dummy2_proc_regsize(void *arg, int regset, size_t *size)
+{
+	return TD_ERR_ERR;
+}
+ 
+static int
+dummy2_proc_getregs(void *arg, int regset, int lwp, void *buf)   
+{
+	return TD_ERR_ERR;
+}
+
+static int
+dummy2_proc_setregs(void *arg, int regset, int lwp, void *buf)
+{
+	return TD_ERR_ERR;
+}
+
+
+ATF_TC(dummy2);
+ATF_TC_HEAD(dummy2, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Asserts that dummy lookup functions stops td_open()");
+}
+
+ATF_TC_BODY(dummy2, tc)
+{
+
+	struct td_proc_callbacks_t dummy2_callbacks;
+	td_proc_t *main_ta;
+
+	dummy2_callbacks.proc_read	= dummy2_proc_read;
+	dummy2_callbacks.proc_write	= dummy2_proc_write;
+	dummy2_callbacks.proc_lookup	= dummy2_proc_lookup;
+	dummy2_callbacks.proc_regsize	= dummy2_proc_regsize;
+	dummy2_callbacks.proc_getregs	= dummy2_proc_getregs;
+	dummy2_callbacks.proc_setregs	= dummy2_proc_setregs;
+
+	printf("Calling td_open(3)\n");
+	ATF_REQUIRE(td_open(&dummy2_callbacks, NULL, &main_ta) == TD_ERR_OK);
+
+	printf("Calling td_close(3)\n");
+	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, dummy1);
+	ATF_TP_ADD_TC(tp, dummy2);
 
 	return atf_no_error();
 }
