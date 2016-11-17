@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.23 2016/11/16 10:42:14 pgoyette Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.24 2016/11/17 08:06:49 pgoyette Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.23 2016/11/16 10:42:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.24 2016/11/17 08:06:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,18 +82,18 @@ __KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.23 2016/11/16 10:42:14 pgoyette Exp 
 #define	STRAT_MATCH(id, bs)	(strcmp((id), (bs)->bs_name) == 0)
 
 static void sysctl_kern_bufq_strategies_setup(struct sysctllog **);
-static SLIST_HEAD(, bufq_strat) bufq_strat_list;
+static SLIST_HEAD(, bufq_strat) bufq_strat_list =
+    SLIST_HEAD_INITIALIZER(bufq_strat_list);
 
 static kmutex_t bufq_mutex;
 
-static struct sysctllog *sysctllog;
+static struct sysctllog *sysctllog = NULL;
 
 void
 bufq_init(void)
 {
 
 	mutex_init(&bufq_mutex, MUTEX_DEFAULT, IPL_NONE);
-	SLIST_INIT(&bufq_strat_list);
 	sysctl_kern_bufq_strategies_setup(&sysctllog);
 }
 
