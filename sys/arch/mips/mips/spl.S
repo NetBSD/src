@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.15 2016/11/18 13:50:36 macallan Exp $	*/
+/*	$NetBSD: spl.S,v 1.16 2016/11/18 16:23:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.15 2016/11/18 13:50:36 macallan Exp $")
+RCSID("$NetBSD: spl.S,v 1.16 2016/11/18 16:23:40 skrll Exp $")
 
 #include "assym.h"
 
@@ -159,6 +159,7 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	PTR_ADDU v1, a2				# add to table addr
 	INT_L	a1, (v1)			# load SR bits for this IPL
 	mfc0	v1, MIPS_COP_0_STATUS
+	MFC0_HAZARD				# load delay
 	and	v1, MIPS_INT_MASK
 	xor	a1, MIPS_INT_MASK
 3:	bne	a1, v1, 3b
@@ -197,6 +198,7 @@ END(_splsw_spl0)
 STATIC_LEAF(_splsw_setsoftintr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 #if !defined(__mips_o32)
+	MFC0_HAZARD				# load delay
 	or	v0, v1, MIPS_SR_INT_IE		#
 	xor	v0, MIPS_SR_INT_IE		# clear interrupt enable bit
 	mtc0	v0, MIPS_COP_0_STATUS		## disable interrupts
@@ -216,6 +218,7 @@ END(_splsw_setsoftintr)
 STATIC_LEAF(_splsw_clrsoftintr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 #if !defined(__mips_o32)
+	MFC0_HAZARD				# load delay
 	or	v0, v1, MIPS_SR_INT_IE		#
 	xor	v0, MIPS_SR_INT_IE		# clear interrupt enable bit
 	mtc0	v0, MIPS_COP_0_STATUS		## disable interrupts
@@ -271,6 +274,7 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 1:
 #ifdef PARANOIA
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
+	MFC0_HAZARD				# load delay
 	and	v1, MIPS_INT_MASK		# any int bits set?
 2:	bnez	v1, 2b				# loop forever.
 	 nop					# branch delay
@@ -370,6 +374,7 @@ STATIC_LEAF(_splsw_splcheck)
 	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
 
 	mfc0	t0, MIPS_COP_0_STATUS		# get current status
+	MFC0_HAZARD				# load delay
 	and	t0, MIPS_INT_MASK		# just want INT bits
 
 	PTR_LA	t2, _C_LABEL(ipl_sr_map)
