@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.156 2016/10/08 17:37:32 joerg Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.157 2016/11/18 10:38:55 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,12 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.156 2016/10/08 17:37:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.157 2016/11/18 10:38:55 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_modular.h"
 #include "opt_compat_netbsd.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 
@@ -4915,9 +4916,14 @@ found:
 
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
+#ifdef NET_MPSAFE
+		pserialize_perform(in_ifaddrhash_psz);
+#endif
+		IN_ADDRHASH_ENTRY_DESTROY(ifatoia(ifa));
 
 		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, &new_dst, 0);
 
+		IN_ADDRHASH_ENTRY_INIT(ifatoia(ifa));
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
@@ -4977,9 +4983,14 @@ found:
 
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
+#ifdef NET_MPSAFE
+		pserialize_perform(in_ifaddrhash_psz);
+#endif
+		IN_ADDRHASH_ENTRY_DESTROY(ifatoia(ifa));
 
 		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, &new_dst, 0);
 
+		IN_ADDRHASH_ENTRY_INIT(ifatoia(ifa));
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
