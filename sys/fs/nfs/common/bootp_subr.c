@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp_subr.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $	*/
+/*	$NetBSD: bootp_subr.c,v 1.2 2016/11/18 22:37:50 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1995 Gordon Ross, Adam Glass
  * Copyright (c) 1992 Regents of the University of California.
@@ -43,16 +43,15 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nfs/bootp_subr.c 297326 2016-03-27 23:16:37Z ian "); */
-__RCSID("$NetBSD: bootp_subr.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $");
+__RCSID("$NetBSD: bootp_subr.c,v 1.2 2016/11/18 22:37:50 pgoyette Exp $");
 
-#include "opt_bootp.h"
-#include "opt_nfs.h"
-#include "opt_rootdevname.h"
+#ifdef _KERNEL_OPT
+#include "opt_newnfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/endian.h>
-#include <sys/jail.h>
 #include <sys/kernel.h>
 #include <sys/sockio.h>
 #include <sys/malloc.h>
@@ -66,7 +65,6 @@ __RCSID("$NetBSD: bootp_subr.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $");
 #include <sys/uio.h>
 
 #include <net/if.h>
-#include <net/if_var.h>
 #include <net/route.h>
 #ifdef BOOTP_DEBUG
 #include <net/route_var.h>
@@ -76,13 +74,12 @@ __RCSID("$NetBSD: bootp_subr.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $");
 #include <netinet/in_var.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
-#include <net/vnet.h>
 
-#include <nfs/nfsproto.h>
-#include <nfsclient/nfs.h>
-#include <nfs/nfsdiskless.h>
-#include <nfs/krpc.h>
-#include <nfs/xdr_subs.h>
+#include <fs/nfs/common/nfsproto.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/common/nfsdiskless.h>
+#include <fs/nfs/common/krpc.h>
+#include <fs/nfs/common/xdr_subs.h>
 
 
 #define BOOTP_MIN_LEN		300	/* Minimum size of bootp udp packet */

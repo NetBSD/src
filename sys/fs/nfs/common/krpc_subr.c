@@ -44,11 +44,10 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nfs/krpc_subr.c 298788 2016-04-29 16:07:25Z pfg "); */
-__RCSID("$NetBSD: krpc_subr.c,v 1.5 2016/11/18 08:31:30 pgoyette Exp $");
+__RCSID("$NetBSD: krpc_subr.c,v 1.6 2016/11/18 22:37:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/jail.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
@@ -57,15 +56,11 @@ __RCSID("$NetBSD: krpc_subr.c,v 1.5 2016/11/18 08:31:30 pgoyette Exp $");
 #include <sys/uio.h>
 
 #include <net/if.h>
-#include <net/vnet.h>
 
 #include <netinet/in.h>
 
-#include <rpc/types.h>
-#include <rpc/auth.h>
-#include <rpc/rpc_msg.h>
-#include <nfs/krpc.h>
-#include <nfs/xdr_subs.h>
+#include <fs/nfs/common/krpc.h>
+#include <fs/nfs/common/xdr_subs.h>
 
 /*
  * Kernel support for Sun RPC
