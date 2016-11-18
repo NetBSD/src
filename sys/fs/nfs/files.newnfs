@@ -1,11 +1,9 @@
-#	$NetBSD: files.newnfs,v 1.4 2016/11/18 08:31:29 pgoyette Exp $
+#	$NetBSD: files.newnfs,v 1.5 2016/11/18 09:58:38 pgoyette Exp $
 
 deffs NEW_NFSCLIENT
 defflag opt_newnfs.h			DTRACEALL
 					NEW_NFS_BOOT_BOOTP
 					NEW_NFSSERVER
-					COMPILE-WITH
-					"${CDDL_C}"
 					NEW_NFSLOCKD
 					DTNFSCL
 					NEW_NFS_BOOT
@@ -14,7 +12,7 @@ defflag opt_newnfs.h			DTRACEALL
 define	new_nfsclient: vfs, net
 file	fs/nfs/client/nfs_clbio.c	 new_nfsclient
 file	fs/nfs/client/nfs_clcomsubs.c	 new_nfsclient
-file	fs/nfs/client/nfs_clkdtrace.c	 dtnfscl & new_nfsclient | dtraceall & new_nfsclient compile-with & "${CDDL_C}"
+file	fs/nfs/client/nfs_clkdtrace.c	 new_nfsclient & (dtnfscl | dtraceall)
 file	fs/nfs/client/nfs_clkrpc.c	 new_nfsclient
 file	fs/nfs/client/nfs_clnfsiod.c	 new_nfsclient
 file	fs/nfs/client/nfs_clnode.c	 new_nfsclient
