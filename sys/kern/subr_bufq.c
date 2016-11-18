@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.24 2016/11/17 08:06:49 pgoyette Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.25 2016/11/18 02:37:33 pgoyette Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.24 2016/11/17 08:06:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.25 2016/11/18 02:37:33 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ static SLIST_HEAD(, bufq_strat) bufq_strat_list =
 
 static kmutex_t bufq_mutex;
 
-static struct sysctllog *sysctllog = NULL;
+static struct sysctllog *sysctllog;
 
 void
 bufq_init(void)
