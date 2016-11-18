@@ -1,4 +1,4 @@
-.\"     $NetBSD: bufq.9,v 1.21 2016/11/17 01:16:27 pgoyette Exp $
+.\"     $NetBSD: bufq.9,v 1.22 2016/11/18 08:29:43 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,7 +79,11 @@ subsystem is a set of operations for the management of device buffer queues.
 Various strategies for ordering of entries in the buffer queues can be
 provided by loadable kernel modules (see
 .Xr module 9 ) .
-By default, the BUFQ_FCFS and BUFQ_DISKSORT strategies are included in
+By default, the
+.Dv BUFQ_FCFS
+and
+.Dv BUFQ_DISKSORT
+strategies are included in
 the kernel; see
 .Xr options 4
 for more details.
