@@ -1,13 +1,18 @@
-#	$NetBSD: files.newnfs,v 1.1.1.1 2013/09/30 07:18:57 dholland Exp $
+#	$NetBSD: files.newnfs,v 1.1.1.2 2016/11/18 07:49:09 pgoyette Exp $
 
 deffs NEW_NFSCLIENT
-defflag opt_newnfs.h			NEW_NFS_BOOT_BOOTP
+defflag opt_newnfs.h			DTRACEALL
+					NEW_NFS_BOOT_BOOTP
 					NEW_NFSSERVER
+					COMPILE-WITH
+					"${CDDL_C}"
 					NEW_NFSLOCKD
+					DTNFSCL
 					NEW_NFS_BOOT
 
 file	fs/nfs/client/nfs_clbio.c	 new_nfsclient
 file	fs/nfs/client/nfs_clcomsubs.c	 new_nfsclient
+file	fs/nfs/client/nfs_clkdtrace.c	 dtnfscl & new_nfsclient | dtraceall & new_nfsclient compile-with & "${CDDL_C}"
 file	fs/nfs/client/nfs_clkrpc.c	 new_nfsclient
 file	fs/nfs/client/nfs_clnfsiod.c	 new_nfsclient
 file	fs/nfs/client/nfs_clnode.c	 new_nfsclient
@@ -17,8 +22,8 @@ file	fs/nfs/client/nfs_clstate.c	 new_nfsclient
 file	fs/nfs/client/nfs_clsubs.c	 new_nfsclient
 file	fs/nfs/client/nfs_clvfsops.c	 new_nfsclient
 file	fs/nfs/client/nfs_clvnops.c	 new_nfsclient
-file	fs/nfs/common/bootp_subr.c	 new_nfs_boot_bootp & new_nfs_boot_bootp & new_nfsclient
-file	fs/nfs/common/krpc_subr.c	 new_nfs_boot_bootp & new_nfs_boot_bootp & new_nfsclient
+file	fs/nfs/common/bootp_subr.c	 new_nfs_boot_bootp & new_nfsclient
+file	fs/nfs/common/krpc_subr.c	 new_nfs_boot_bootp & new_nfsclient
 file	fs/nfs/common/nfs_commonacl.c	 new_nfsclient | new_nfsserver
 file	fs/nfs/common/nfs_commonkrpc.c	 new_nfsclient | new_nfsserver
 file	fs/nfs/common/nfs_commonport.c	 new_nfsclient | new_nfsserver
