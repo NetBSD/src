@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.88 2016/10/11 13:59:30 roy Exp $	*/
+/*	$NetBSD: in_var.h,v 1.89 2016/11/18 10:38:55 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,6 +172,7 @@ extern	u_long in_ifaddrhash;			/* size of hash table - 1 */
 extern  struct in_ifaddrhashhead *in_ifaddrhashtbl;	/* Hash table head */
 extern  struct in_ifaddrhead in_ifaddrhead;		/* List head (in ip_input) */
 
+extern pserialize_t in_ifaddrhash_psz;
 extern struct pslist_head *in_ifaddrhashtbl_pslist;
 extern u_long in_ifaddrhash_pslist;
 extern struct pslist_head in_ifaddrhead_pslist;
