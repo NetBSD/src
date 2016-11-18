@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clbio.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $	*/
+/*	$NetBSD: nfs_clbio.c,v 1.4 2016/11/18 22:58:08 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +35,10 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clbio.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clbio.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_clbio.c,v 1.4 2016/11/18 22:58:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/bio.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -47,19 +46,11 @@ __RCSID("$NetBSD: nfs_clbio.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $");
 #include <sys/vmmeter.h>
 #include <sys/vnode.h>
 
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_extern.h>
-#include <vm/vm_page.h>
-#include <vm/vm_object.h>
-#include <vm/vm_pager.h>
-#include <vm/vnode_pager.h>
-
-#include <fs/nfs/nfsport.h>
-#include <fs/nfsclient/nfsmount.h>
-#include <fs/nfsclient/nfs.h>
-#include <fs/nfsclient/nfsnode.h>
-#include <fs/nfsclient/nfs_kdtrace.h>
+#include <fs/nfs/common/nfsport.h>
+#include <fs/nfs/client/nfsmount.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/client/nfsnode.h>
+#include <fs/nfs/client/nfs_kdtrace.h>
 
 extern int newnfs_directio_allow_mmap;
 extern struct nfsstatsv1 nfsstatsv1;
