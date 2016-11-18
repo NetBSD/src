@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.450 2016/11/17 03:40:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.451 2016/11/18 06:55:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.450 2016/11/17 03:40:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.451 2016/11/18 06:55:00 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -12353,7 +12353,7 @@ wm_enable_wakeup(struct wm_softc *sc)
 	if (sc->sc_type >= WM_T_PCH)
 		wm_enable_phy_wakeup(sc);
 	else {
-		CSR_WRITE(sc, WMREG_WUC, WUC_PME_EN);
+		CSR_WRITE(sc, WMREG_WUC, CSR_READ(sc, WMREG_WUC) | WUC_PME_EN);
 		CSR_WRITE(sc, WMREG_WUFC, reg);
 	}
 
