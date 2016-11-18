@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clkdtrace.c,v 1.1.1.1 2016/11/18 07:49:10 pgoyette Exp $	*/
+/*	$NetBSD: nfs_clkdtrace.c,v 1.2 2016/11/18 22:58:08 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2009 Robert N. M. Watson
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clkdtrace.c 298788 2016-04-29 16:07:25Z pfg "); */
-__RCSID("$NetBSD: nfs_clkdtrace.c,v 1.1.1.1 2016/11/18 07:49:10 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_clkdtrace.c,v 1.2 2016/11/18 22:58:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,12 +39,15 @@ __RCSID("$NetBSD: nfs_clkdtrace.c,v 1.1.1.1 2016/11/18 07:49:10 pgoyette Exp $")
 #include <sys/malloc.h>
 #include <sys/module.h>
 
+#if 0
 #include <sys/dtrace.h>
+#endif
+
 #include <sys/dtrace_bsd.h>
 
-#include <fs/nfs/nfsproto.h>
+#include <fs/nfs/common/nfsproto.h>
 
-#include <fs/nfsclient/nfs_kdtrace.h>
+#include <fs/nfs/client/nfs_kdtrace.h>
 
 /*
  * dtnfscl is a DTrace provider that tracks the intent to perform RPCs

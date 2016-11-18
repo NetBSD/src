@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clnode.c,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $	*/
+/*	$NetBSD: nfs_clnode.c,v 1.2 2016/11/18 22:58:08 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clnode.c 302210 2016-06-26 14:18:28Z kib "); */
-__RCSID("$NetBSD: nfs_clnode.c,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_clnode.c,v 1.2 2016/11/18 22:58:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ uma_zone_t newnfsnode_zone;
 
 const char nfs_vnode_tag[] = "nfs";
 
-static void	nfs_freesillyrename(void *arg, __unused int pending);
+static void	nfs_freesillyrename(void *arg);
 
 void
 ncl_nhinit(void)
@@ -191,7 +191,7 @@ ncl_nget(struct mount *mntp, u_int8_t *fhp, int fhsize, struct nfsnode **npp,
  * deadlock because of a LOR when vrele() locks the directory vnode.
  */
 static void
-nfs_freesillyrename(void *arg, __unused int pending)
+nfs_freesillyrename(void *arg)
 {
 	struct sillyrename *sp;
 
@@ -222,8 +222,7 @@ ncl_releasesillyrename(struct vnode *vp, struct thread *td)
 		 */
 		ncl_removeit(sp, vp);
 		crfree(sp->s_cred);
-		TASK_INIT(&sp->s_task, 0, nfs_freesillyrename, sp);
-		taskqueue_enqueue(taskqueue_thread, &sp->s_task);
+		sysmon_task_queue_sched(0, nfs_freesillyrename, sp);
 		mtx_lock(&np->n_mtx);
 	}
 }
