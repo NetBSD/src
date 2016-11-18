@@ -1,4 +1,4 @@
-#	$NetBSD: files.newnfs,v 1.5 2016/11/18 09:58:38 pgoyette Exp $
+#	$NetBSD: files.newnfs,v 1.6 2016/11/18 22:41:18 pgoyette Exp $
 
 deffs NEW_NFSCLIENT
 defflag opt_newnfs.h			DTRACEALL
@@ -10,6 +10,7 @@ defflag opt_newnfs.h			DTRACEALL
 
 # XXX
 define	new_nfsclient: vfs, net
+file	fs/nfs/client/nfs_clmodule.c	 new_nfsclient
 file	fs/nfs/client/nfs_clbio.c	 new_nfsclient
 file	fs/nfs/client/nfs_clcomsubs.c	 new_nfsclient
 file	fs/nfs/client/nfs_clkdtrace.c	 new_nfsclient & (dtnfscl | dtraceall)
@@ -24,6 +25,7 @@ file	fs/nfs/client/nfs_clvfsops.c	 new_nfsclient
 file	fs/nfs/client/nfs_clvnops.c	 new_nfsclient
 file	fs/nfs/common/bootp_subr.c	 new_nfs_boot_bootp & new_nfsclient
 file	fs/nfs/common/krpc_subr.c	 new_nfs_boot_bootp & new_nfsclient
+file	fs/nfs/common/nfs_module.c	 new_nfsclient | new_nfsserver
 file	fs/nfs/common/nfs_commonacl.c	 new_nfsclient | new_nfsserver
 file	fs/nfs/common/nfs_commonkrpc.c	 new_nfsclient | new_nfsserver
 file	fs/nfs/common/nfs_commonport.c	 new_nfsclient | new_nfsserver
@@ -39,6 +41,7 @@ file	fs/nfs/nlm/nlm_prot_server.c	 new_nfslockd | new_nfsserver
 file	fs/nfs/nlm/nlm_prot_svc.c	 new_nfslockd | new_nfsserver
 file	fs/nfs/nlm/nlm_prot_xdr.c	 new_nfslockd | new_nfsserver
 file	fs/nfs/nlm/sm_inter_xdr.c	 new_nfslockd | new_nfsserver
+file	fs/nfs/server/nfs_nfsdmodule.c	 new_nfsserver
 file	fs/nfs/server/nfs_fha_new.c	 new_nfsserver
 file	fs/nfs/server/nfs_nfsdcache.c	 new_nfsserver
 file	fs/nfs/server/nfs_nfsdkrpc.c	 new_nfsserver
