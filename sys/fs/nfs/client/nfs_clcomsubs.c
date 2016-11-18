@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clcomsubs.c,v 1.1.1.2 2016/11/18 07:49:10 pgoyette Exp $	*/
+/*	$NetBSD: nfs_clcomsubs.c,v 1.2 2016/11/18 22:58:08 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clcomsubs.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clcomsubs.c,v 1.1.1.2 2016/11/18 07:49:10 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_clcomsubs.c,v 1.2 2016/11/18 22:58:08 pgoyette Exp $");
 
 /*
  * These functions support the macros and help fiddle mbuf chains for
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: nfs_clcomsubs.c,v 1.1.1.2 2016/11/18 07:49:10 pgoyette Exp $")
  * copy data between mbuf chains and uio lists.
  */
 #ifndef APPLEKEXT
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 extern struct nfsstatsv1 nfsstatsv1;
 extern struct nfsv4_opflag nfsv4_opflag[NFSV41_NOPS];

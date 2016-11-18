@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsnode.h,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $	*/
+/*	$NetBSD: nfsnode.h,v 1.2 2016/11/18 22:58:08 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,20 +31,17 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfsclient/nfsnode.h 303715 2016-08-03 15:58:20Z kib 
- * $NetBSD: nfsnode.h,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $
+ * $NetBSD: nfsnode.h,v 1.2 2016/11/18 22:58:08 pgoyette Exp $
  */
 
 #ifndef _NFSCLIENT_NFSNODE_H_
 #define	_NFSCLIENT_NFSNODE_H_
-
-#include <sys/_task.h>
 
 /*
  * Silly rename structure that hangs off the nfsnode until the name
  * can be removed by nfs_inactive()
  */
 struct sillyrename {
-	struct	task s_task;
 	struct	ucred *s_cred;
 	struct	vnode *s_dvp;
 	long	s_namlen;
