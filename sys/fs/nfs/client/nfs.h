@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.1.1.1 2013/09/30 07:19:30 dholland Exp $	*/
+/*	$NetBSD: nfs.h,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: head/sys/fs/nfsclient/nfs.h 221040 2011-04-25 23:12:18Z rmacklem 
- * $NetBSD: nfs.h,v 1.1.1.1 2013/09/30 07:19:30 dholland Exp $
+ * FreeBSD: head/sys/fs/nfsclient/nfs.h 276140 2014-12-23 14:24:36Z rmacklem 
+ * $NetBSD: nfs.h,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $
  */
 
 #ifndef _NFSCLIENT_NFS_H_
@@ -56,6 +56,24 @@
 	(VFSTONFS((v)->v_mount)->nm_flag & NFSMNT_NFSV4)
 #define	NFS_ISV34(v) \
 	(VFSTONFS((v)->v_mount)->nm_flag & (NFSMNT_NFSV3 | NFSMNT_NFSV4))
+
+#ifdef NFS_DEBUG
+
+extern int nfs_debug;
+#define	NFS_DEBUG_ASYNCIO	1 /* asynchronous i/o */
+#define	NFS_DEBUG_WG		2 /* server write gathering */
+#define	NFS_DEBUG_RC		4 /* server request caching */
+
+#define	NFS_DPF(cat, args)					\
+	do {							\
+		if (nfs_debug & NFS_DEBUG_##cat) printf args;	\
+	} while (0)
+
+#else
+
+#define	NFS_DPF(cat, args)
+
+#endif
 
 /*
  * NFS iod threads can be in one of these three states once spawned.
