@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsport.h,v 1.1.1.2 2016/11/18 07:49:13 pgoyette Exp $	*/
+/*	$NetBSD: nfsport.h,v 1.2 2016/11/18 22:37:50 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfs/nfsport.h 304026 2016-08-12 22:44:59Z rmacklem 
- * $NetBSD: nfsport.h,v 1.1.1.2 2016/11/18 07:49:13 pgoyette Exp $
+ * $NetBSD: nfsport.h,v 1.2 2016/11/18 22:37:50 pgoyette Exp $
  */
 
 #ifndef _NFS_NFSPORT_H_
@@ -51,7 +51,6 @@
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/jail.h>
 #include <sys/kernel.h>
 #include <sys/lockf.h>
 #include <sys/malloc.h>
@@ -68,24 +67,19 @@
 #include <sys/socketvar.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
-#include <sys/sysproto.h>
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
-#include <sys/bio.h>
 #include <sys/buf.h>
-#include <sys/acl.h>
 #include <sys/module.h>
-#include <sys/sysent.h>
 #include <sys/syscall.h>
-#include <sys/priv.h>
 #include <sys/kthread.h>
-#include <sys/syscallsubr.h>
+
 #include <net/if.h>
-#include <net/if_var.h>
 #include <net/radix.h>
 #include <net/route.h>
 #include <net/if_dl.h>
+
 #include <netinet/in.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_systm.h>
@@ -97,11 +91,9 @@
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <machine/in_cksum.h>
+
 #include <crypto/des/des.h>
 #include <sys/md5.h>
-#include <rpc/rpc.h>
-#include <rpc/rpcsec_gss.h>
 
 /*
  * For Darwin, these functions should be "static" when built in a kext.
@@ -113,13 +105,13 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/extattr.h>
 #include <ufs/ufs/ufsmount.h>
-#include <vm/uma.h>
-#include <vm/vm.h>
-#include <vm/vm_object.h>
-#include <vm/vm_extern.h>
-#include <nfs/nfssvc.h>
-#include "opt_nfs.h"
-#include "opt_ufs.h"
+
+#ifdef _KERNEL_OPT
+#include "opt_newnfs.h"
+#include "opt_ffs.h"
+#endif
+
+#include <fs/nfs/common/nfssvc.h>
 
 /*
  * These types must be defined before the nfs includes.
@@ -495,20 +487,23 @@ struct ext_nfsstats {
 #define	NFS_NPROCS		NFSV4_NPROCS
 #endif
 
-#include <fs/nfs/nfskpiport.h>
-#include <fs/nfs/nfsdport.h>
-#include <fs/nfs/rpcv2.h>
-#include <fs/nfs/nfsproto.h>
-#include <fs/nfs/nfs.h>
-#include <fs/nfs/nfsclstate.h>
-#include <fs/nfs/nfs_var.h>
-#include <fs/nfs/nfsm_subs.h>
-#include <fs/nfs/nfsrvcache.h>
-#include <fs/nfs/nfsrvstate.h>
-#include <fs/nfs/xdr_subs.h>
-#include <fs/nfs/nfscl.h>
+#include <fs/nfs/common/nfskpiport.h>
+#include <fs/nfs/common/nfsdport.h>
+#include <fs/nfs/common/rpcv2.h>
+#include <fs/nfs/common/nfsproto.h>
+#include <fs/nfs/common/nfs.h>
+#include <fs/nfs/common/nfsclstate.h>
+#include <fs/nfs/common/nfs_var.h>
+#include <fs/nfs/common/nfsm_subs.h>
+#include <fs/nfs/common/nfsrvcache.h>
+#include <fs/nfs/common/nfsrvstate.h>
+#include <fs/nfs/common/xdr_subs.h>
+#include <fs/nfs/common/nfscl.h>
+#include <fs/nfs/client/nfsmount.h>
+
+#if 0
 #include <nfsclient/nfsargs.h>
-#include <fs/nfsclient/nfsmount.h>
+#endif
 
 /*
  * Just to keep nfs_var.h happy.
@@ -543,7 +538,7 @@ struct nfsvattr {
 #define	na_filerev	na_vattr.va_filerev
 #define	na_vaflags	na_vattr.va_vaflags
 
-#include <fs/nfsclient/nfsnode.h>
+#include <fs/nfs/client/nfsnode.h>
 
 /*
  * This is the header structure used for the lists, etc. (It has the
