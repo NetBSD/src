@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.228 2016/11/15 20:50:28 mlelstv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.229 2016/11/18 06:50:04 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.228 2016/11/15 20:50:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.229 2016/11/18 06:50:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.228 2016/11/15 20:50:28 mlelstv Exp
 #include "opt_inet_csum.h"
 #include "opt_ipkdb.h"
 #include "opt_mbuftrace.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -1139,11 +1140,15 @@ udp_purgeif(struct socket *so, struct ifnet *ifp)
 	int s;
 
 	s = splsoftnet();
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
+#endif
 	in_pcbpurgeif0(&udbtable, ifp);
 	in_purgeif(ifp);
 	in_pcbpurgeif(&udbtable, ifp);
+#ifndef NET_MPSAFE
 	mutex_exit(softnet_lock);
+#endif
 	splx(s);
 
 	return 0;
