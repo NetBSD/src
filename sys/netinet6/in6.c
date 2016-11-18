@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.221 2016/10/18 07:30:31 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.222 2016/11/18 06:50:04 knakahara Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.221 2016/10/18 07:30:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.222 2016/11/18 06:50:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2376,8 +2376,12 @@ in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 		lltable_unlink_entry(llt, lle);
 	}
 
+#ifdef NET_MPSAFE
+	callout_halt(&lle->lle_timer, NULL);
+#else
 	KASSERT(mutex_owned(softnet_lock));
 	callout_halt(&lle->lle_timer, softnet_lock);
+#endif
 	LLE_REMREF(lle);
 
 	llentry_free(lle);

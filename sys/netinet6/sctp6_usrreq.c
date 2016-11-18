@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.8 2016/08/01 03:15:31 ozaki-r Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.9 2016/11/18 06:50:04 knakahara Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,12 +33,13 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.8 2016/08/01 03:15:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.9 2016/11/18 06:50:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_sctp.h"
+#include "opt_net_mpsafe.h"
 #endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
@@ -1301,9 +1302,13 @@ sctp6_purgeif(struct socket *so, struct ifnet *ifp)
 		}
 	}
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
+#endif
 	in6_purgeif(ifp);
+#ifndef NET_MPSAFE
 	mutex_exit(softnet_lock);
+#endif
 
 	return 0;
 }
