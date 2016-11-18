@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.2 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.3 2016/11/18 08:31:30 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: head/sys/fs/nfs/nfsm_subs.h 249592 2013-04-17 21:00:22Z ken 
- * $NetBSD: nfsm_subs.h,v 1.2 2016/07/07 06:55:42 msaitoh Exp $
+ * FreeBSD: head/sys/fs/nfs/nfsm_subs.h 276780 2015-01-07 17:22:56Z rwatson 
+ * $NetBSD: nfsm_subs.h,v 1.3 2016/11/18 08:31:30 pgoyette Exp $
  */
 
 #ifndef _NFS_NFSM_SUBS_H_
@@ -48,16 +48,6 @@
 /*
  * First define what the actual subs. return
  */
-#define	M_HASCL(m)	((m)->m_flags & M_EXT)
-#define	NFSMINOFF(m) 							\
-		if (M_HASCL(m)) 					\
-			(m)->m_data = (m)->m_ext.ext_buf; 		\
-		else if ((m)->m_flags & M_PKTHDR) 			\
-			(m)->m_data = (m)->m_pktdat; 			\
-				else 					\
-			(m)->m_data = (m)->m_dat
-#define	NFSMSIZ(m)	((M_HASCL(m))?MCLBYTES: 			\
-				(((m)->m_flags & M_PKTHDR)?MHLEN:MLEN))
 #define	NFSM_DATAP(m, s)	(m)->m_data += (s)
 
 /*
