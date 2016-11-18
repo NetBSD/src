@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dummy.c,v 1.4 2016/11/17 17:30:22 kamil Exp $	*/
+/*	$NetBSD: t_dummy.c,v 1.5 2016/11/18 22:50:19 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,90 +28,13 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dummy.c,v 1.4 2016/11/17 17:30:22 kamil Exp $");
+__RCSID("$NetBSD: t_dummy.c,v 1.5 2016/11/18 22:50:19 kamil Exp $");
 
-#include <dlfcn.h>
-#include <pthread.h>
+#include "h_common.h"
 #include <pthread_dbg.h>
 #include <stdio.h>
 
 #include <atf-c.h>
-
-static int
-dummy_proc_read(void *arg, caddr_t addr, void *buf, size_t size)
-{
-	return TD_ERR_ERR;
-}
-
-static int
-dummy_proc_write(void *arg, caddr_t addr, void *buf, size_t size)
-{
-	return TD_ERR_ERR;
-}
-
-static int
-dummy_proc_lookup(void *arg, const char *sym, caddr_t *addr)
-{
-	return TD_ERR_ERR;
-}
-
-static int
-dummy_proc_regsize(void *arg, int regset, size_t *size)
-{
-	return TD_ERR_ERR;
-}
- 
-static int
-dummy_proc_getregs(void *arg, int regset, int lwp, void *buf)   
-{
-	return TD_ERR_ERR;
-}
-
-static int
-dummy_proc_setregs(void *arg, int regset, int lwp, void *buf)
-{
-	return TD_ERR_ERR;
-}
-
-/* Minimalistic basic implementation */
-
-static int
-basic_proc_read(void *arg, caddr_t addr, void *buf, size_t size)
-{
-	memcpy(addr, buf, size);
-
-	return TD_ERR_OK;
-}
-
-static int
-basic_proc_write(void *arg, caddr_t addr, void *buf, size_t size)
-{
-	memcpy(addr, buf, size);
-
-	return TD_ERR_OK;
-}
-
-static int
-basic_proc_lookup(void *arg, const char *sym, caddr_t *addr)
-{
-	void *handle;
-	void *symbol;
-
-	ATF_REQUIRE_MSG((handle = dlopen(NULL, RTLD_LOCAL | RTLD_LAZY))
-	    != NULL, "dlopen(3) failed: %s", dlerror());
-
-	symbol = dlsym(handle, sym);
-
-	ATF_REQUIRE_MSG(dlclose(handle) == 0, "dlclose(3) failed: %s",
-	    dlerror());
-
-	if (!symbol)
-		return TD_ERR_NOSYM;
-
-	*addr = (caddr_t)(uintptr_t)symbol;
-
-	return TD_ERR_OK;
-}
 
 
 ATF_TC(dummy1);
