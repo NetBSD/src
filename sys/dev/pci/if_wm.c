@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.451 2016/11/18 06:55:00 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.452 2016/11/18 11:46:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.451 2016/11/18 06:55:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.452 2016/11/18 11:46:04 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -11977,7 +11977,7 @@ wm_smbustopci(struct wm_softc *sc)
 			break;
 		/* FALLTHROUGH */
 	case WM_T_PCH:
-		if ((sc->sc_type == WM_T_PCH))
+		if (sc->sc_type == WM_T_PCH)
 			if ((fwsm & FWSM_FW_VALID) != 0)
 				break;
 
