@@ -1,4 +1,4 @@
-/*	$NetBSD: h_common.h,v 1.1 2016/11/18 22:50:19 kamil Exp $	*/
+/*	$NetBSD: h_common.h,v 1.2 2016/11/19 02:30:54 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ dummy_proc_setregs(void *arg, int regset, int lwp, void *buf)
 static int __used
 basic_proc_read(void *arg, caddr_t addr, void *buf, size_t size)
 {
-	memcpy(addr, buf, size);
+	memcpy(buf, addr, size);
 
 	return TD_ERR_OK;
 }
