@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.26 2013/03/29 21:46:32 christos Exp $
+.\"	$NetBSD: scsictl.8,v 1.27 2016/11/19 08:43:40 flxd Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -224,6 +224,28 @@ Set the highest speed that the optical drive should use for reading
 data.
 The units are multiples of a single speed CDROM (150 KB/s).
 Specify 0 to use the drive's fastest speed.
+.Pp
+.Nm getrealloc
+.Pp
+Returns automatic reallocation parameters for the device.
+.Pp
+.Nm setrealloc
+.Ar none|r|w|rw
+.Op Ar save
+.Pp
+Set automatic reallocation parameters for the device.
+Automatic reallocation may be disabled
+.Pq none ,
+the automatic read reallocation enabled
+.Pq r ,
+the automatic write reallocation enabled
+.Pq w ,
+or both automatic read and write reallocation enabled
+.Pq rw .
+If the drive's automatic reallocation parameters are savable, specifying
+.Ar save
+after the automatic reallocation enable state will cause the parameters to be
+saved in non-volatile storage.
 .Sh BUS COMMANDS
 The following commands are supported for SCSI busses:
 .Pp
