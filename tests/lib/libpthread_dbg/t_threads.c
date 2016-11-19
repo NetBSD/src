@@ -1,4 +1,4 @@
-/*	$NetBSD: t_threads.c,v 1.1 2016/11/18 22:50:19 kamil Exp $	*/
+/*	$NetBSD: t_threads.c,v 1.2 2016/11/19 15:13:46 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_threads.c,v 1.1 2016/11/18 22:50:19 kamil Exp $");
+__RCSID("$NetBSD: t_threads.c,v 1.2 2016/11/19 15:13:46 kamil Exp $");
 
 #include <dlfcn.h>
 #include <pthread.h>
@@ -73,9 +73,6 @@ ATF_TC_BODY(threads1, tc)
 	const size_t max_threads = 10;
 	size_t i;
 	pthread_t threads[max_threads];
-
-	/* td_thr_iter in <pthread_dbg.h> seems broken */
-	atf_tc_expect_fail("PR lib/51635");
 
 	dummy_callbacks.proc_read	= basic_proc_read;
 	dummy_callbacks.proc_write	= basic_proc_write;
