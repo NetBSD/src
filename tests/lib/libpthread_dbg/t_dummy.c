@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dummy.c,v 1.5 2016/11/18 22:50:19 kamil Exp $	*/
+/*	$NetBSD: t_dummy.c,v 1.6 2016/11/19 15:13:46 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dummy.c,v 1.5 2016/11/18 22:50:19 kamil Exp $");
+__RCSID("$NetBSD: t_dummy.c,v 1.6 2016/11/19 15:13:46 kamil Exp $");
 
 #include "h_common.h"
 #include <pthread_dbg.h>
@@ -74,9 +74,6 @@ ATF_TC_BODY(dummy2, tc)
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
 
-	/* tests/lib/libpthread_dbg/t_dummy unreliable */
-	atf_tc_expect_fail("PR lib/51633");
-
 	dummy_callbacks.proc_read	= basic_proc_read;
 	dummy_callbacks.proc_write	= basic_proc_write;
 	dummy_callbacks.proc_lookup	= basic_proc_lookup;
@@ -104,9 +101,6 @@ ATF_TC_BODY(dummy3, tc)
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta1;
 	td_proc_t *main_ta2;
-
-	/* tests/lib/libpthread_dbg/t_dummy unreliable */
-	atf_tc_expect_fail("PR lib/51633");
 
 	dummy_callbacks.proc_read	= basic_proc_read;
 	dummy_callbacks.proc_write	= basic_proc_write;
