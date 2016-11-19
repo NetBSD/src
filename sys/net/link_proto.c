@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.31 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.32 2016/11/19 14:44:00 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.31 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.32 2016/11/19 14:44:00 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -337,7 +337,7 @@ link_stat(struct socket *so, struct stat *ub)
 {
 	KASSERT(solocked(so));
 
-	return EOPNOTSUPP;
+	return 0;
 }
 
 static int
