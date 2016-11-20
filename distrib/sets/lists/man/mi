@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1538 2016/10/29 17:12:20 kamil Exp $
+# $NetBSD: mi,v 1.1539 2016/11/20 16:55:18 macallan Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1531,6 +1531,7 @@
 ./usr/share/man/cat4/piixpm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pim.0			man-sys-catman		.cat
 ./usr/share/man/cat4/plip.0			man-sys-catman		.cat
+./usr/share/man/cat4/pm3fb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pmax/asc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pmax/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/pmax/dc.0			man-obsolete		obsolete
@@ -4578,6 +4579,7 @@
 ./usr/share/man/html4/piixpm.html		man-sys-htmlman		html
 ./usr/share/man/html4/pim.html			man-sys-htmlman		html
 ./usr/share/man/html4/plip.html			man-sys-htmlman		html
+./usr/share/man/html4/pm3fb.html		man-sys-htmlman		html
 ./usr/share/man/html4/pmax/asc.html		man-sys-htmlman		html
 ./usr/share/man/html4/pmax/autoconf.html	man-sys-htmlman		html
 ./usr/share/man/html4/pmax/ibus.html		man-sys-htmlman		html
@@ -7497,6 +7499,7 @@
 ./usr/share/man/man4/piixpm.4			man-sys-man		.man
 ./usr/share/man/man4/pim.4			man-sys-man		.man
 ./usr/share/man/man4/plip.4			man-sys-man		.man
+./usr/share/man/man4/pm3fb.4			man-sys-man		.man
 ./usr/share/man/man4/pmax/asc.4			man-sys-man		.man
 ./usr/share/man/man4/pmax/autoconf.4		man-sys-man		.man
 ./usr/share/man/man4/pmax/dc.4			man-obsolete		obsolete
