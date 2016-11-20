@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.275 2016/06/26 07:31:35 mlelstv Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.276 2016/11/20 15:37:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.275 2016/06/26 07:31:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.276 2016/11/20 15:37:19 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ const struct cdevsw scsibus_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 static int	scsibusprint(void *, const char *);
@@ -240,6 +240,12 @@ scsibusattach(device_t parent, device_t self, void *aux)
 			chan->chan_adapter->adapt_max_periph = 256;
 	}
 
+	mutex_init(chan_mtx(chan), MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&chan->chan_cv_thr, "scshut");
+	cv_init(&chan->chan_cv_comp, "sccomp");
+	cv_init(&chan->chan_cv_xs, "xscmd");
+	chan_running(chan) = true;
+
 	if (scsipi_adapter_addref(chan->chan_adapter))
 		return;
 
@@ -293,8 +299,7 @@ scsibus_config(struct scsibus_softc *sc)
 		    "waiting %d seconds for devices to settle...\n",
 		    SCSI_DELAY);
 		/* ...an identifier we know no one will use... */
-		(void) tsleep(scsibus_config, PRIBIO,
-		    "scsidly", SCSI_DELAY * hz);
+		kpause("scsidly", false, SCSI_DELAY * hz, NULL);
 	}
 
 	/* Make sure the devices probe in scsibus order to avoid jitter. */
@@ -331,18 +336,11 @@ scsibusdetach(device_t self, int flags)
 	struct scsipi_xfer *xs;
 	int error;
 
-	/* XXXSMP scsipi */
-	KERNEL_LOCK(1, curlwp);
-
 	/*
 	 * Detach all of the periphs.
 	 */
-	if ((error = scsipi_target_detach(chan, -1, -1, flags)) != 0) {
-		/* XXXSMP scsipi */
-		KERNEL_UNLOCK_ONE(curlwp);
-
+	if ((error = scsipi_target_detach(chan, -1, -1, flags)) != 0)
 		return error;
-	}
 
 	pmf_device_deregister(self);
 
@@ -373,8 +371,11 @@ scsibusdetach(device_t self, int flags)
 	 */
 	scsipi_channel_shutdown(chan);
 
-	/* XXXSMP scsipi */
-	KERNEL_UNLOCK_ONE(curlwp);
+	chan_running(chan) = false;
+	cv_destroy(&chan->chan_cv_xs);
+	cv_destroy(&chan->chan_cv_comp);
+	cv_destroy(&chan->chan_cv_thr);
+	mutex_destroy(chan_mtx(chan));
 
 	return 0;
 }
@@ -389,9 +390,6 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 	struct scsipi_channel *chan = sc->sc_channel;
 	int maxtarget, mintarget, maxlun, minlun;
 	int error;
-
-	/* XXXSMP scsipi */
-	KERNEL_LOCK(1, curlwp);
 
 	if (target == -1) {
 		maxtarget = chan->chan_ntargets - 1;
@@ -415,9 +413,7 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 	 * Some HBAs provide an abstracted view of the bus; give them an
 	 * oppertunity to re-scan it before we do.
 	 */
-	if (chan->chan_adapter->adapt_ioctl != NULL)
-		(*chan->chan_adapter->adapt_ioctl)(chan, SCBUSIOLLSCAN, NULL,
-		    0, curproc);
+	scsipi_adapter_ioctl(chan, SCBUSIOLLSCAN, NULL, 0, curproc);
 
 	if ((error = scsipi_adapter_addref(chan->chan_adapter)) != 0)
 		goto ret;
@@ -442,7 +438,6 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 	}
 	scsipi_adapter_delref(chan->chan_adapter);
 ret:
-	KERNEL_UNLOCK_ONE(curlwp);
 	return (error);
 }
 
@@ -469,17 +464,15 @@ scsidevdetached(device_t self, device_t child)
 	target = device_locator(child, SCSIBUSCF_TARGET);
 	lun = device_locator(child, SCSIBUSCF_LUN);
 
-	/* XXXSMP scsipi */
-	KERNEL_LOCK(1, curlwp);
+	mutex_enter(chan_mtx(chan));
 
-	periph = scsipi_lookup_periph(chan, target, lun);
+	periph = scsipi_lookup_periph_locked(chan, target, lun);
 	KASSERT(periph->periph_dev == child);
 
 	scsipi_remove_periph(chan, periph);
-	free(periph, M_DEVBUF);
+	scsipi_free_periph(periph);
 
-	/* XXXSMP scsipi */
-	KERNEL_UNLOCK_ONE(curlwp);
+	mutex_exit(chan_mtx(chan));
 }
 
 /*
@@ -1044,7 +1037,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	return (docontinue);
 
 bad:
-	free(periph, M_DEVBUF);
+	scsipi_free_periph(periph);
 	return (docontinue);
 }
 
@@ -1132,11 +1125,7 @@ scsibusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case SCBUSIORESET:
 		/* FALLTHROUGH */
 	default:
-		if (chan->chan_adapter->adapt_ioctl == NULL)
-			error = ENOTTY;
-		else
-			error = (*chan->chan_adapter->adapt_ioctl)(chan,
-			    cmd, addr, flag, l->l_proc);
+		error = scsipi_adapter_ioctl(chan, cmd, addr, flag, l->l_proc);
 		break;
 	}
 
