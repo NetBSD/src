@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.47 2016/11/20 03:53:47 kamil Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.48 2016/11/20 21:49:24 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.47 2016/11/20 03:53:47 kamil Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.48 2016/11/20 21:49:24 kamil Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -279,6 +279,9 @@ td_thr_getname(td_thread_t *thread, char *name, int len)
 	else if ((val = READ(thread->proc, nameaddr,
 	    name, (size_t)MIN(PTHREAD_MAX_NAMELEN_NP, len))) != 0)
 		return val;
+
+	if (len < PTHREAD_MAX_NAMELEN_NP)
+		name[len - 1] = '\0';
 
 	return 0;
 }
