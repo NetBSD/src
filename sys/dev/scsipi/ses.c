@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.49 2016/07/14 10:19:06 msaitoh Exp $ */
+/*	$NetBSD: ses.c,v 1.50 2016/11/20 15:37:19 mlelstv Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.49 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.50 2016/11/20 15:37:19 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -150,7 +150,7 @@ const struct cdevsw ses_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 static int ses_runcmd(struct ses_softc *, char *, int, char *, int *);
