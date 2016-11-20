@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.53 2013/10/25 16:05:47 martin Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.54 2016/11/20 15:37:19 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.53 2013/10/25 16:05:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.54 2016/11/20 15:37:19 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,7 @@ scanjet_read(struct ss_softc *ss, struct buf *bp)
 	_lto3b(bp->b_bcount, cmd.len);
 
 	/* go ask the adapter to do all this for us */
-	xs = scsipi_make_xs(periph,
+	xs = scsipi_make_xs_locked(periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    (u_char *)bp->b_data, bp->b_bcount,
 	    SCANJET_RETRIES, 100000, bp,
