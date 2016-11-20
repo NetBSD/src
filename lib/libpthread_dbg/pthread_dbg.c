@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.45 2016/11/20 02:27:56 kamil Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.46 2016/11/20 03:11:32 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.45 2016/11/20 02:27:56 kamil Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.46 2016/11/20 03:11:32 kamil Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -263,7 +263,7 @@ td_thr_getname(td_thread_t *thread, char *name, int len)
 	caddr_t nameaddr;
 	
 
-	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
+	val = READ(thread->proc, OFFSET(thread, pt_magic), &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
 
@@ -441,7 +441,7 @@ td_thr_suspend(td_thread_t *thread)
 	int tmp, val;
 
 	/* validate the thread */
-	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
+	val = READ(thread->proc, OFFSET(thread, pt_magic), &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
 	if (tmp != PT_MAGIC)
@@ -463,7 +463,7 @@ td_thr_resume(td_thread_t *thread)
 	int tmp, val;
 
 	/* validate the thread */
-	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
+	val = READ(thread->proc, OFFSET(thread, pt_magic), &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
 	if (tmp != PT_MAGIC)
