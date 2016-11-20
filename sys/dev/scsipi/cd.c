@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.331 2016/05/15 15:37:38 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.332 2016/11/20 02:38:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.331 2016/05/15 15:37:38 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.332 2016/11/20 02:38:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,12 +339,12 @@ cddetach(device_t self, int flags)
 	/* Kill off any queued buffers. */
 	bufq_drain(cd->buf_queue);
 
-	bufq_free(cd->buf_queue);
-
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(cd->sc_periph);
 
 	splx(s);
+
+	bufq_free(cd->buf_queue);
 
 	mutex_destroy(&cd->sc_lock);
 

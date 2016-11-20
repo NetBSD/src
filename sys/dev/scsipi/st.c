@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.228 2016/07/14 04:00:46 msaitoh Exp $ */
+/*	$NetBSD: st.c,v 1.229 2016/11/20 02:38:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.228 2016/07/14 04:00:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.229 2016/11/20 02:38:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -445,12 +445,12 @@ stdetach(device_t self, int flags)
 	/* Kill off any queued buffers. */
 	bufq_drain(st->buf_queue);
 
-	bufq_free(st->buf_queue);
-
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(st->sc_periph);
 
 	splx(s);
+
+	bufq_free(st->buf_queue);
 
 	/* Nuke the vnodes for any open instances */
 	mn = STUNIT(device_unit(self));

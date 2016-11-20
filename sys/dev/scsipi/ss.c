@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.86 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: ss.c,v 1.87 2016/11/20 02:38:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.86 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.87 2016/11/20 02:38:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,12 +212,12 @@ ssdetach(device_t self, int flags)
 	/* Kill off any queued buffers. */
 	bufq_drain(ss->buf_queue);
 
-	bufq_free(ss->buf_queue);
-
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(ss->sc_periph);
 
 	splx(s);
+
+	bufq_free(ss->buf_queue);
 
 	/* Nuke the vnodes for any open instances */
 	mn = SSUNIT(device_unit(self));
