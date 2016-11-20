@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.139 2016/11/20 22:47:39 riastradh Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.140 2016/11/20 22:56:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.139 2016/11/20 22:47:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.140 2016/11/20 22:56:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -2508,7 +2508,7 @@ fwohci_txbufdb(struct fwohci_softc *sc, int dmach, struct fw_bulkxfer *bulkxfer)
 	unsigned short chtag;
 	int idb;
 
-	KASSERT(mutex_owner(&sc->fc.fc_mtx));
+	KASSERT(mutex_owned(&sc->fc.fc_mtx));
 
 	dbch = &sc->it[dmach];
 	chtag = sc->it[dmach].xferq.flag & 0xff;
