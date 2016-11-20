@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.322 2016/05/28 22:24:51 sevan Exp $
+# $NetBSD: GENERIC,v 1.323 2016/11/20 16:55:18 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.322 $"
+#ident 		"GENERIC-$Revision: 1.323 $"
 
 maxusers	32
 
@@ -291,6 +291,7 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 chipsfb*	at pci?	function ?	# C&T 65550
 gffb*		at pci?	function ?	# NVIDIA GeForce2 MX
 machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
+pm3fb*		at pci? function ?	# 3Dlabs Permedia 3 Graphics
 tdvfb*		at pci? function ?	# 3Dfx Voodoo2
 r128fb*		at pci? function ?	# ATI Rage 128
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
