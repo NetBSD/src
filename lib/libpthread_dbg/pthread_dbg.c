@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.44 2016/01/23 14:02:21 christos Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.45 2016/11/20 02:27:56 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.44 2016/01/23 14:02:21 christos Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.45 2016/11/20 02:27:56 kamil Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -210,7 +210,7 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 {
 	int tmp, val;
 
-	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
+	val = READ(thread->proc, OFFSET(thread, pt_magic), &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
 
