@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.46 2016/11/20 22:36:45 riastradh Exp $	*/
+/*	$NetBSD: firewire.c,v 1.47 2016/11/20 22:47:39 riastradh Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.46 2016/11/20 22:36:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.47 2016/11/20 22:47:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -682,6 +682,20 @@ fw_init_isodma(struct firewire_comm *fc)
 
 		fc->ir[i]->maxq = FWMAXQUEUE;
 		fc->it[i]->maxq = FWMAXQUEUE;
+
+		cv_init(&fc->ir[i]->cv, "fw_read");
+		cv_init(&fc->it[i]->cv, "fw_write");
+	}
+}
+
+void
+fw_destroy_isodma(struct firewire_comm *fc)
+{
+	unsigned i;
+
+	for (i = 0; i < fc->nisodma; i++) {
+		cv_destroy(&fc->ir[i]->cv);
+		cv_destroy(&fc->it[i]->cv);
 	}
 }
 
