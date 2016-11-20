@@ -1,4 +1,4 @@
-/*	$NetBSD: t_threads.c,v 1.3 2016/11/20 16:13:03 kamil Exp $	*/
+/*	$NetBSD: t_threads.c,v 1.4 2016/11/20 17:42:56 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_threads.c,v 1.3 2016/11/20 16:13:03 kamil Exp $");
+__RCSID("$NetBSD: t_threads.c,v 1.4 2016/11/20 17:42:56 kamil Exp $");
 
 #include <dlfcn.h>
 #include <pthread.h>
@@ -241,12 +241,91 @@ ATF_TC_BODY(threads3, tc)
 	    count, max_threads + 1);
 }
 
+ATF_TC(threads4);
+ATF_TC_HEAD(threads4, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Asserts that for each td_thr_iter() call td_thr_getname() is "
+	    "valid");
+}
+
+static volatile int exiting4;
+
+static void *
+busyFunction4(void *arg)
+{
+
+	while (exiting4 == 0)
+		usleep(50000);
+
+	return NULL;
+}
+
+static int
+iterateThreads4(td_thread_t *thread, void *arg)
+{
+	int *counter = (int *)arg;
+	char name[PTHREAD_MAX_NAMELEN_NP];
+
+	ATF_REQUIRE(td_thr_getname(thread, name, sizeof(name)) == TD_ERR_OK);
+
+	printf("Thread name: %s\n", name);
+
+	++(*counter);
+
+	return TD_ERR_OK;
+}
+
+ATF_TC_BODY(threads4, tc)
+{
+	struct td_proc_callbacks_t dummy_callbacks;
+	td_proc_t *main_ta;
+	const size_t max_threads = 10;
+	size_t i;
+	pthread_t threads[max_threads];
+	int count = 0;
+
+	dummy_callbacks.proc_read	= basic_proc_read;
+	dummy_callbacks.proc_write	= basic_proc_write;
+	dummy_callbacks.proc_lookup	= basic_proc_lookup;
+	dummy_callbacks.proc_regsize	= dummy_proc_regsize;
+	dummy_callbacks.proc_getregs	= dummy_proc_getregs;
+	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
+
+	for (i = 0; i < max_threads; i++) {
+		printf("Creating thread %zu\n", i);
+		PTHREAD_REQUIRE
+		    (pthread_create(&threads[i], NULL, busyFunction4, NULL));
+	}
+
+	for (i = 0; i < max_threads; i++) {
+		PTHREAD_REQUIRE
+		    (pthread_setname_np(threads[i], "test_%d", (void*)i));
+	}
+
+	printf("Calling td_open(3)\n");
+	ATF_REQUIRE(td_open(&dummy_callbacks, NULL, &main_ta) == TD_ERR_OK);
+
+	ATF_REQUIRE(td_thr_iter(main_ta, iterateThreads4, &count) == TD_ERR_OK);
+
+	exiting4 = 1;
+
+	printf("Calling td_close(3)\n");
+	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
+
+	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	    "counted threads (%d) != expected threads (%d)",
+	    count, max_threads + 1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, threads1);
 	ATF_TP_ADD_TC(tp, threads2);
 	ATF_TP_ADD_TC(tp, threads3);
+	ATF_TP_ADD_TC(tp, threads4);
 
 	return atf_no_error();
 }
