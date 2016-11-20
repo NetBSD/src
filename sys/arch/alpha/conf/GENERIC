@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.369 2016/10/15 09:57:51 flxd Exp $
+# $NetBSD: GENERIC,v 1.370 2016/11/20 16:55:18 macallan Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.369 $"
+ident		"GENERIC-$Revision: 1.370 $"
 
 maxusers 32
 
@@ -363,6 +363,7 @@ viaide* at	pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 pcn*	at	pci? dev ? function ?		# AMD PCnet-PCI Ethernet
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 pm2fb*	at	pci? dev ? function ?		# 3Dlabs Permedia 2 Graphics
+pm3fb*	at	pci? dev ? function ?		# 3Dlabs Permedia 3 Graphics
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
 radeonfb* at	pci? dev ? function ?		# ATI/AMD Radeon Graphics
