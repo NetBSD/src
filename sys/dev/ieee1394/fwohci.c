@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.138 2016/11/20 22:36:45 riastradh Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.139 2016/11/20 22:47:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.138 2016/11/20 22:36:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.139 2016/11/20 22:47:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -534,6 +534,7 @@ fwohci_detach(struct fwohci_softc *sc, int flags)
 		fwohci_db_free(sc, &sc->ir[i]);
 	}
 
+	fw_destroy_isodma(&sc->fc);
 	fw_destroy(&sc->fc);
 
 	return 0;
@@ -2228,9 +2229,9 @@ fwohci_tbuf_update(struct fwohci_softc *sc, int dmach)
 		STAILQ_INSERT_TAIL(&it->stfree, chunk, link);
 		w++;
 	}
-	mutex_exit(&fc->fc_mtx);
 	if (w)
-		wakeup(it);
+		cv_broadcast(&it->cv);
+	mutex_exit(&fc->fc_mtx);
 }
 
 static void
@@ -2285,14 +2286,15 @@ fwohci_rbuf_update(struct fwohci_softc *sc, int dmach)
 		}
 		w++;
 	}
-	if ((ir->flag & FWXFERQ_HANDLER) == 0)
+	if ((ir->flag & FWXFERQ_HANDLER) == 0) {
+		if (w)
+			cv_broadcast(&ir->cv);
 		mutex_exit(&fc->fc_mtx);
+	}
 	if (w == 0)
 		return;
 	if (ir->flag & FWXFERQ_HANDLER)
 		ir->hand(ir);
-	else
-		wakeup(ir);
 }
 
 static void
