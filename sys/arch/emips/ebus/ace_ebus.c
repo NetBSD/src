@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.19 2015/04/26 15:15:19 mlelstv Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.20 2016/11/20 03:30:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.19 2015/04/26 15:15:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.20 2016/11/20 03:30:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1704,12 +1704,12 @@ acedetach(device_t self, int flags)
 	/* Kill off any queued buffers. */
 	bufq_drain(sc->sc_q);
 
-	bufq_free(sc->sc_q);
 #if 0
 	sc->atabus->ata_killpending(sc->drvp);
 #endif
 
 	splx(s);
+	bufq_free(sc->sc_q);
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
