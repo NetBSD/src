@@ -1,4 +1,4 @@
-.\"	$NetBSD: refuse.3,v 1.12 2016/11/15 00:34:19 pho Exp $
+.\"	$NetBSD: refuse.3,v 1.13 2016/11/20 13:28:32 pho Exp $
 .\"
 .\" Copyright © 2007 Alistair Crooks.  All rights reserved.
 .\"
@@ -83,13 +83,21 @@
 .Fa "const struct fuse_opt *descriptions" "fuse_opt_proc_t processingfunc"
 .Fc
 .Ft int
-.Fo fuse_teardown
-.Fa "struct fuse *fuse" "char *mountpoint"
+.Fo fuse_new
+.Fa "struct fuse_args *args" "const struct fuse_operations *ops"
+.Fa "size_t opssize" "void *userdata"
 .Fc
-.Ft struct fuse *
-.Fo fuse_setup
-.Fa "int argc" "char **argv" "const struct fuse_operations *ops"
-.Fa "size_t opssize" "char **mountpoint" "int *multithreaded" "int *fd"
+.Ft int
+.Fo fuse_mount
+.Fa "struct fuse *fuse" "const char *mountpoint"
+.Fc
+.Ft int
+.Fo fuse_unmount
+.Fa "struct fuse* fuse"
+.Fc
+.Ft int
+.Fo fuse_daemonize
+.Fa "struct fuse *fuse"
 .Fc
 .Ft int
 .Fo puffs_fuse_node_getattr
