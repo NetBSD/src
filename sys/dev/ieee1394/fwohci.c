@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.137 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.138 2016/11/20 22:36:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.137 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.138 2016/11/20 22:36:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -427,6 +427,8 @@ fwohci_attach(struct fwohci_softc *sc)
 	    i);
 	if (i == 0)
 		return ENXIO;
+
+	fw_init_isodma(&sc->fc);
 
 	for (i = 0; i < sc->fc.nisodma; i++) {
 		sc->fc.it[i] = &sc->it[i].xferq;
