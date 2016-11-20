@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.317 2015/08/24 23:13:15 pooka Exp $	*/
+/*	$NetBSD: sd.c,v 1.318 2016/11/20 02:38:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.317 2015/08/24 23:13:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.318 2016/11/20 02:38:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -385,12 +385,12 @@ sddetach(device_t self, int flags)
 	/* Kill off any queued buffers. */
 	bufq_drain(sd->buf_queue);
 
-	bufq_free(sd->buf_queue);
-
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(sd->sc_periph);
 
 	splx(s);
+
+	bufq_free(sd->buf_queue);
 
 	/* Detach from the disk list. */
 	disk_detach(&sd->sc_dk);
