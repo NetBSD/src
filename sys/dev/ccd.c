@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.167 2016/08/07 02:40:41 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.168 2016/11/20 02:35:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.167 2016/08/07 02:40:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.168 2016/11/20 02:35:19 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1291,8 +1291,9 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			kmem_free(vpp, ccio->ccio_ndisks * sizeof(*vpp));
 			kmem_free(cpp, ccio->ccio_ndisks * sizeof(*cpp));
 			disk_detach(&cs->sc_dkdev);
+			mutex_exit(&cs->sc_dvlock);
 			bufq_free(cs->sc_bufq);
-			goto out;
+			return error;
 		}
 
 		/* We can free the temporary variables now. */
