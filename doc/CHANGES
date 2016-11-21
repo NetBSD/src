@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2210 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2211 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -396,3 +396,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	acpi(4): Updated ACPICA to 20160930. [christos 20161111]
 	scsipi(9): Make scsipi framework MPSAFE. [mlelstv 20161120]
 	umass(4): mark MPSAFE. [skrll 20161121]
+	wpa: Import wpa_supplicant and hostapd 2.6. [christos 20161121]
