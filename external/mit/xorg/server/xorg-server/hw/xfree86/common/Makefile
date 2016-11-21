@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2016/10/08 20:08:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2016/11/21 08:09:54 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -85,8 +85,7 @@ CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \
 		-D__XSERVERNAME__='"Xorg"' -D__XCONFIGFILE__='"xorg.conf"' \
 		-D__VENDORDWEBSUPPORT__='"http://wiki.X.Org"' \
 		-DXVENDORNAME='"The X.Org Foundation"' \
-		-DHAVE_XORG_CONFIG_H \
-		-DHAVE_PCI_DEVICE_IS_BOOT_VGA
+		-DHAVE_XORG_CONFIG_H
 
 .if ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
