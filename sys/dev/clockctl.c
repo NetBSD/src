@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.34 2016/01/06 18:06:38 christos Exp $ */
+/*      $NetBSD: clockctl.c,v 1.35 2016/11/21 03:53:59 rin Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.34 2016/01/06 18:06:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35 2016/11/21 03:53:59 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -266,7 +266,7 @@ clockctlioctl(
 #ifdef COMPAT_50
 		error = compat50_clockctlioctl(dev, cmd, data, flags, l);
 #else
-		error = EINVAL;
+		error = ENOTTY;
 #endif
 	}
 
@@ -328,13 +328,16 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
 		error = clock_settime1(l->l_proc, args->clock_id, &tp, true);
 		break;
 	}
-	case CLOCKCTL_ONTP_ADJTIME:
+#ifdef NTP
+	case CLOCKCTL_ONTP_ADJTIME: {
 		/* The ioctl number changed but the data did not change. */
 		error = (cd->d_ioctl)(dev, CLOCKCTL_NTP_ADJTIME,
 		    data, flags, l);
 		break;
+	}
+#endif
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	return (error);
