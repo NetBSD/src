@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.48 2016/11/20 21:49:24 kamil Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.49 2016/11/21 03:02:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.48 2016/11/20 21:49:24 kamil Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.49 2016/11/21 03:02:34 kamil Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -225,13 +225,11 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	case PT_STATE_RUNNING:
 		info->thread_state = TD_STATE_RUNNING;
 		break;
-#ifdef XXXLWP
-	case PT_STATE_SUSPENDED:
-		info->thread_state = TD_STATE_SUSPENDED;
-		break;
-#endif
 	case PT_STATE_ZOMBIE:
 		info->thread_state = TD_STATE_ZOMBIE;
+		break;
+	case PT_STATE_DEAD:
+		info->thread_state = TD_STATE_DEAD;
 		break;
 	default:
 		info->thread_state = TD_STATE_UNKNOWN;
@@ -306,6 +304,7 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 			return val;
 		break;
 	case PT_STATE_ZOMBIE:
+	case PT_STATE_DEAD:
 	default:
 		return TD_ERR_BADTHREAD;
 	}
@@ -333,6 +332,7 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 			return val;
 		break;
 	case PT_STATE_ZOMBIE:
+	case PT_STATE_DEAD:
 	default:
 		return TD_ERR_BADTHREAD;
 	}
