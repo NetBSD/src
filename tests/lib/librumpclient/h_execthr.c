@@ -1,4 +1,4 @@
-/*	$NetBSD: h_execthr.c,v 1.3 2014/08/13 00:03:00 pooka Exp $	*/
+/*	$NetBSD: h_execthr.c,v 1.4 2016/11/21 06:17:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -151,15 +151,19 @@ main(int argc, char *argv[], char *envp[])
 	if (rump_sys_fcntl(p1[1], F_SETFD, FD_CLOEXEC) == -1)
 		err(1, "cloexec");
 
-	for (i = 0; i < NTHR; i++)
-		if (pthread_create(&pt, NULL,
-		    wrk, (void *)(uintptr_t)p1[0]) != 0)
-			errx(1, "pthread_create 1 %d", i);
+	for (i = 0; i < NTHR; i++) {
+		errno = pthread_create(&pt, NULL,
+		    wrk, (void *)(uintptr_t)p1[0]);
+		if (errno != 0)
+			err(1, "pthread_create 1 %d", i);
+	}
 
-	for (i = 0; i < NTHR; i++)
-		if (pthread_create(&pt, NULL,
-		    wrk, (void *)(uintptr_t)p2[0]) != 0)
-			errx(1, "pthread_create 2 %d", i);
+	for (i = 0; i < NTHR; i++) {
+		errno = pthread_create(&pt, NULL,
+		    wrk, (void *)(uintptr_t)p2[0]);
+		if (errno != 0)
+			err(1, "pthread_create 2 %d", i);
+	}
 
 	/* wait for all the threads to be enjoying themselves */
 	for (;;) {
