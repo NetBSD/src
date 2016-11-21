@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2016/06/29 19:16:23 christos Exp $
+# $NetBSD: Makefile,v 1.9 2016/11/21 20:15:16 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -11,6 +11,7 @@ common.c \
 config.c \
 config_file.c \
 ctrl_iface.c \
+ctrl_iface_common.c \
 ctrl_iface_unix.c \
 driver_common.c \
 driver_bsd.c \
@@ -43,6 +44,7 @@ wpa_supplicant.c \
 wpabuf.c \
 wpas_glue.c
 
+
 MAN=	wpa_supplicant.8 wpa_supplicant.conf.5
 
 .PATH.c:  \
@@ -66,6 +68,22 @@ CPPFLAGS+=-DCONFIG_CTRL_IFACE_UNIX
 CPPFLAGS+=-DCONFIG_SMARTCARD
 CPPFLAGS+=-DCONFIG_DEBUG_FILE
 CPPFLAGS+=-DCONFIG_DEBUG_SYSLOG
+
+#CPPFLAGS+=-DCONFIG_FST
+#SRCS+=fst.c \
+#fst_ctrl_aux.c \
+#fst_ctrl_iface.c \
+#fst_group.c \
+#fst_iface.c \
+#fst_session.c
+
+#CPPFLAGS+=-DCONFIG_ACS
+#CPPFLAGS+=-DCONFIG_MBO
+#CPPFLAGS+=-DCONFIG_WNM 
+#CPPFLAGS+=-DCONFIG_AP
+#SRCS+=ap.c \
+#gas.c \
+#mbo.c 
 
 DPADD+=	${LIBPCAP}
 LDADD+=	-lpcap

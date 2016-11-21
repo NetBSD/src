@@ -918,7 +918,8 @@ bsd_commit(void *priv)
 
 static int
 bsd_set_sta_authorized(void *priv, const u8 *addr,
-		       int total_flags, int flags_or, int flags_and)
+		       unsigned int total_flags, unsigned int flags_or,
+		       unsigned int flags_and)
 {
 	int authorized = -1;
 
@@ -1298,7 +1299,8 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 		case RTM_IEEE80211_SCAN:
 			if (drv->is_ap)
 				break;
-			wpa_supplicant_event(drv->ctx, EVENT_SCAN_RESULTS, NULL);
+			wpa_supplicant_event(drv->ctx, EVENT_SCAN_RESULTS,
+					     NULL);
 			break;
 		case RTM_IEEE80211_LEAVE:
 			leave = (struct ieee80211_leave_event *) &ifan[1];
@@ -1325,7 +1327,7 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 			event.michael_mic_failure.unicast =
 				!IEEE80211_IS_MULTICAST(mic->iev_dst);
 			wpa_supplicant_event(drv->ctx,
-				EVENT_MICHAEL_MIC_FAILURE, &event);
+					     EVENT_MICHAEL_MIC_FAILURE, &event);
 			break;
 		}
 		break;
@@ -1635,8 +1637,8 @@ wpa_driver_bsd_deinit(void *priv)
 		if (set80211param(drv, IEEE80211_IOC_ROAMING, drv->prev_roaming)
 		    < 0)
 			wpa_printf(MSG_DEBUG,
-				"%s: failed to restore roaming state",
-				__func__);
+				   "%s: failed to restore roaming state",
+				   __func__);
 	}
 
 	if (drv->sock_xmit != NULL)
