@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.22 2012/06/24 18:31:53 jym Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.23 2016/11/21 04:10:05 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.22 2012/06/24 18:31:53 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.23 2016/11/21 04:10:05 ozaki-r Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -120,7 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.22 2012/06/24 18:31:53 jym Exp $");
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
-#include <sys/xcall.h>
 
 #include <uvm/uvm.h>
 
