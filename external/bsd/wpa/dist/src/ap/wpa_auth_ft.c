@@ -534,10 +534,8 @@ static u8 * wpa_ft_process_rdie(struct wpa_state_machine *sm,
 		return pos;
 	}
 
-#ifdef NEED_AP_MLME
-	if (parse.wmm_tspec && sm->wpa_auth->conf.ap_mlme) {
+	if (parse.wmm_tspec) {
 		struct wmm_tspec_element *tspec;
-		int res;
 
 		if (parse.wmm_tspec_len + 2 < (int) sizeof(*tspec)) {
 			wpa_printf(MSG_DEBUG, "FT: Too short WMM TSPEC IE "
@@ -555,7 +553,13 @@ static u8 * wpa_ft_process_rdie(struct wpa_state_machine *sm,
 		}
 		tspec = (struct wmm_tspec_element *) pos;
 		os_memcpy(tspec, parse.wmm_tspec - 2, sizeof(*tspec));
-		res = wmm_process_tspec(tspec);
+	}
+
+#ifdef NEED_AP_MLME
+	if (parse.wmm_tspec && sm->wpa_auth->conf.ap_mlme) {
+		int res;
+
+		res = wmm_process_tspec((struct wmm_tspec_element *) pos);
 		wpa_printf(MSG_DEBUG, "FT: ADDTS processing result: %d", res);
 		if (res == WMM_ADDTS_STATUS_INVALID_PARAMETERS)
 			rdie->status_code =
@@ -566,20 +570,17 @@ static u8 * wpa_ft_process_rdie(struct wpa_state_machine *sm,
 		else {
 			/* TSPEC accepted; include updated TSPEC in response */
 			rdie->descr_count = 1;
-			pos += sizeof(*tspec);
+			pos += sizeof(struct wmm_tspec_element);
 		}
 		return pos;
 	}
 #endif /* NEED_AP_MLME */
 
 	if (parse.wmm_tspec && !sm->wpa_auth->conf.ap_mlme) {
-		struct wmm_tspec_element *tspec;
 		int res;
 
-		tspec = (struct wmm_tspec_element *) pos;
-		os_memcpy(tspec, parse.wmm_tspec - 2, sizeof(*tspec));
 		res = wpa_ft_add_tspec(sm->wpa_auth, sm->addr, pos,
-				       sizeof(*tspec));
+				       sizeof(struct wmm_tspec_element));
 		if (res >= 0) {
 			if (res)
 				rdie->status_code = host_to_le16(res);
@@ -587,7 +588,7 @@ static u8 * wpa_ft_process_rdie(struct wpa_state_machine *sm,
 				/* TSPEC accepted; include updated TSPEC in
 				 * response */
 				rdie->descr_count = 1;
-				pos += sizeof(*tspec);
+				pos += sizeof(struct wmm_tspec_element);
 			}
 			return pos;
 		}
@@ -719,11 +720,6 @@ u8 * wpa_sm_write_assoc_resp_ies(struct wpa_state_machine *sm, u8 *pos,
 	ftie_len = res;
 	pos += res;
 
-	os_free(sm->assoc_resp_ftie);
-	sm->assoc_resp_ftie = os_malloc(ftie_len);
-	if (sm->assoc_resp_ftie)
-		os_memcpy(sm->assoc_resp_ftie, ftie, ftie_len);
-
 	_ftie = (struct rsn_ftie *) (ftie + 2);
 	if (auth_alg == WLAN_AUTH_FT)
 		_ftie->mic_control[1] = 3; /* Information element count */
@@ -748,6 +744,11 @@ u8 * wpa_sm_write_assoc_resp_ies(struct wpa_state_machine *sm, u8 *pos,
 		       ric_start, ric_start ? pos - ric_start : 0,
 		       _ftie->mic) < 0)
 		wpa_printf(MSG_DEBUG, "FT: Failed to calculate MIC");
+
+	os_free(sm->assoc_resp_ftie);
+	sm->assoc_resp_ftie = os_malloc(ftie_len);
+	if (sm->assoc_resp_ftie)
+		os_memcpy(sm->assoc_resp_ftie, ftie, ftie_len);
 
 	return pos;
 }

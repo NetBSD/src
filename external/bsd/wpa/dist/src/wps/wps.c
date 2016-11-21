@@ -19,6 +19,10 @@
 int wps_version_number = 0x20;
 int wps_testing_dummy_cred = 0;
 int wps_corrupt_pkhash = 0;
+int wps_force_auth_types_in_use = 0;
+u16 wps_force_auth_types = 0;
+int wps_force_encr_types_in_use = 0;
+u16 wps_force_encr_types = 0;
 #endif /* CONFIG_WPS_TESTING */
 
 
@@ -170,7 +174,7 @@ void wps_deinit(struct wps_data *data)
 	} else if (data->registrar)
 		wps_registrar_unlock_pin(data->wps->registrar, data->uuid_e);
 
-	wpabuf_free(data->dh_privkey);
+	wpabuf_clear_free(data->dh_privkey);
 	wpabuf_free(data->dh_pubkey_e);
 	wpabuf_free(data->dh_pubkey_r);
 	wpabuf_free(data->last_msg);
@@ -355,16 +359,16 @@ int wps_is_addr_authorized(const struct wpabuf *msg, const u8 *addr,
 int wps_ap_priority_compar(const struct wpabuf *wps_a,
 			   const struct wpabuf *wps_b)
 {
-	struct wps_parse_attr attr_a, attr_b;
+	struct wps_parse_attr attr;
 	int sel_a, sel_b;
 
-	if (wps_a == NULL || wps_parse_msg(wps_a, &attr_a) < 0)
+	if (wps_a == NULL || wps_parse_msg(wps_a, &attr) < 0)
 		return 1;
-	if (wps_b == NULL || wps_parse_msg(wps_b, &attr_b) < 0)
-		return -1;
+	sel_a = attr.selected_registrar && *attr.selected_registrar != 0;
 
-	sel_a = attr_a.selected_registrar && *attr_a.selected_registrar != 0;
-	sel_b = attr_b.selected_registrar && *attr_b.selected_registrar != 0;
+	if (wps_b == NULL || wps_parse_msg(wps_b, &attr) < 0)
+		return -1;
+	sel_b = attr.selected_registrar && *attr.selected_registrar != 0;
 
 	if (sel_a && !sel_b)
 		return -1;
@@ -618,7 +622,8 @@ int wps_attr_text(struct wpabuf *data, char *buf, char *end)
 		if (str == NULL)
 			return pos - buf;
 		for (i = 0; i < attr.dev_name_len; i++) {
-			if (attr.dev_name[i] < 32)
+			if (attr.dev_name[i] == 0 ||
+			    is_ctrl_char(attr.dev_name[i]))
 				str[i] = '_';
 			else
 				str[i] = attr.dev_name[i];

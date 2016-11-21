@@ -37,6 +37,8 @@ struct tls_global {
 			 union tls_event_data *data);
 	void *cb_ctx;
 	int cert_in_cb;
+
+	char *ocsp_stapling_response;
 };
 
 struct tls_connection {
@@ -133,6 +135,7 @@ void tls_deinit(void *ssl_ctx)
 		if (global->params_set)
 			gnutls_certificate_free_credentials(global->xcred);
 		os_free(global->session_data);
+		os_free(global->ocsp_stapling_response);
 		os_free(global);
 	}
 
@@ -346,6 +349,18 @@ int tls_connection_set_params(void *tls_ctx, struct tls_connection *conn,
 
 	if (conn == NULL || params == NULL)
 		return -1;
+
+	if (params->flags & TLS_CONN_REQUIRE_OCSP_ALL) {
+		wpa_printf(MSG_INFO,
+			   "GnuTLS: ocsp=3 not supported");
+		return -1;
+	}
+
+	if (params->flags & TLS_CONN_EXT_CERT_CHECK) {
+		wpa_printf(MSG_INFO,
+			   "GnuTLS: tls_ext_cert_check=1 not supported");
+		return -1;
+	}
 
 	if (params->subject_match) {
 		wpa_printf(MSG_INFO, "GnuTLS: subject_match not supported");
@@ -596,6 +611,44 @@ int tls_connection_set_params(void *tls_ctx, struct tls_connection *conn,
 }
 
 
+#if GNUTLS_VERSION_NUMBER >= 0x030103
+static int server_ocsp_status_req(gnutls_session_t session, void *ptr,
+				  gnutls_datum_t *resp)
+{
+	struct tls_global *global = ptr;
+	char *cached;
+	size_t len;
+
+	if (!global->ocsp_stapling_response) {
+		wpa_printf(MSG_DEBUG, "GnuTLS: OCSP status callback - no response configured");
+		return GNUTLS_E_NO_CERTIFICATE_STATUS;
+	}
+
+	cached = os_readfile(global->ocsp_stapling_response, &len);
+	if (!cached) {
+		wpa_printf(MSG_DEBUG,
+			   "GnuTLS: OCSP status callback - could not read response file (%s)",
+			   global->ocsp_stapling_response);
+		return GNUTLS_E_NO_CERTIFICATE_STATUS;
+	}
+
+	wpa_printf(MSG_DEBUG,
+		   "GnuTLS: OCSP status callback - send cached response");
+	resp->data = gnutls_malloc(len);
+	if (!resp->data) {
+		os_free(resp);
+		return GNUTLS_E_MEMORY_ERROR;
+	}
+
+	os_memcpy(resp->data, cached, len);
+	resp->size = len;
+	os_free(cached);
+
+	return GNUTLS_E_SUCCESS;
+}
+#endif /* 3.1.3 */
+
+
 int tls_global_set_params(void *tls_ctx,
 			  const struct tls_connection_params *params)
 {
@@ -690,6 +743,17 @@ int tls_global_set_params(void *tls_ctx,
 		}
 	}
 
+#if GNUTLS_VERSION_NUMBER >= 0x030103
+	os_free(global->ocsp_stapling_response);
+	if (params->ocsp_stapling_response)
+		global->ocsp_stapling_response =
+			os_strdup(params->ocsp_stapling_response);
+	else
+		global->ocsp_stapling_response = NULL;
+	gnutls_certificate_set_ocsp_status_request_function(
+		global->xcred, server_ocsp_status_req, global);
+#endif /* 3.1.3 */
+
 	global->params_set = 1;
 
 	return 0;
@@ -708,7 +772,8 @@ int tls_global_set_verify(void *ssl_ctx, int check_crl)
 
 
 int tls_connection_set_verify(void *ssl_ctx, struct tls_connection *conn,
-			      int verify_peer)
+			      int verify_peer, unsigned int flags,
+			      const u8 *session_ctx, size_t session_ctx_len)
 {
 	if (conn == NULL || conn->session == NULL)
 		return -1;
@@ -722,8 +787,8 @@ int tls_connection_set_verify(void *ssl_ctx, struct tls_connection *conn,
 }
 
 
-int tls_connection_get_keys(void *ssl_ctx, struct tls_connection *conn,
-			    struct tls_keys *keys)
+int tls_connection_get_random(void *ssl_ctx, struct tls_connection *conn,
+			    struct tls_random *keys)
 {
 #if GNUTLS_VERSION_NUMBER >= 0x030012
 	gnutls_datum_t client, server;
@@ -745,15 +810,22 @@ int tls_connection_get_keys(void *ssl_ctx, struct tls_connection *conn,
 }
 
 
-int tls_connection_prf(void *tls_ctx, struct tls_connection *conn,
-		       const char *label, int server_random_first,
-		       u8 *out, size_t out_len)
+int tls_connection_export_key(void *tls_ctx, struct tls_connection *conn,
+			      const char *label, u8 *out, size_t out_len)
 {
 	if (conn == NULL || conn->session == NULL)
 		return -1;
 
 	return gnutls_prf(conn->session, os_strlen(label), label,
-			  server_random_first, 0, NULL, out_len, (char *) out);
+			  0 /* client_random first */, 0, NULL, out_len,
+			  (char *) out);
+}
+
+
+int tls_connection_get_eap_fast_key(void *tls_ctx, struct tls_connection *conn,
+				    u8 *out, size_t out_len)
+{
+	return -1;
 }
 
 
@@ -1426,6 +1498,14 @@ int tls_connection_set_cipher_list(void *tls_ctx, struct tls_connection *conn,
 }
 
 
+int tls_get_version(void *ssl_ctx, struct tls_connection *conn,
+		    char *buf, size_t buflen)
+{
+	/* TODO */
+	return -1;
+}
+
+
 int tls_get_cipher(void *ssl_ctx, struct tls_connection *conn,
 		   char *buf, size_t buflen)
 {
@@ -1476,20 +1556,6 @@ int tls_connection_get_write_alerts(void *ssl_ctx, struct tls_connection *conn)
 }
 
 
-int tls_connection_get_keyblock_size(void *tls_ctx,
-				     struct tls_connection *conn)
-{
-	/* TODO */
-	return -1;
-}
-
-
-unsigned int tls_capabilities(void *tls_ctx)
-{
-	return 0;
-}
-
-
 int tls_connection_set_session_ticket_cb(void *tls_ctx,
 					 struct tls_connection *conn,
 					 tls_session_ticket_cb cb, void *ctx)
@@ -1502,4 +1568,27 @@ int tls_get_library_version(char *buf, size_t buf_len)
 {
 	return os_snprintf(buf, buf_len, "GnuTLS build=%s run=%s",
 			   GNUTLS_VERSION, gnutls_check_version(NULL));
+}
+
+
+void tls_connection_set_success_data(struct tls_connection *conn,
+				     struct wpabuf *data)
+{
+}
+
+
+void tls_connection_set_success_data_resumed(struct tls_connection *conn)
+{
+}
+
+
+const struct wpabuf *
+tls_connection_get_success_data(struct tls_connection *conn)
+{
+	return NULL;
+}
+
+
+void tls_connection_remove_session(struct tls_connection *conn)
+{
 }

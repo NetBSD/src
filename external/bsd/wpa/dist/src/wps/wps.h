@@ -1,6 +1,6 @@
 /*
  * Wi-Fi Protected Setup
- * Copyright (c) 2007-2013, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2007-2016, Jouni Malinen <j@w1.fi>
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -9,6 +9,7 @@
 #ifndef WPS_H
 #define WPS_H
 
+#include "common/ieee802_11_defs.h"
 #include "wps_defs.h"
 
 /**
@@ -44,7 +45,7 @@ struct wps_parse_attr;
  * @cred_attr_len: Length of cred_attr in octets
  */
 struct wps_credential {
-	u8 ssid[32];
+	u8 ssid[SSID_MAX_LEN];
 	size_t ssid_len;
 	u16 auth_type;
 	u16 encr_type;
@@ -78,7 +79,7 @@ struct wps_credential {
  * @sec_dev_type: Array of secondary device types
  * @num_sec_dev_type: Number of secondary device types
  * @os_version: OS Version
- * @rf_bands: RF bands (WPS_RF_24GHZ, WPS_RF_50GHZ flags)
+ * @rf_bands: RF bands (WPS_RF_24GHZ, WPS_RF_50GHZ, WPS_RF_60GHZ flags)
  * @p2p: Whether the device is a P2P device
  */
 struct wps_device_data {
@@ -623,7 +624,7 @@ struct wps_context {
 	 * Credentials. In addition, AP uses it when acting as an Enrollee to
 	 * notify Registrar of the current configuration.
 	 */
-	u8 ssid[32];
+	u8 ssid[SSID_MAX_LEN];
 
 	/**
 	 * ssid_len - Length of ssid in octets
@@ -661,6 +662,16 @@ struct wps_context {
 	 * encr_types - Enabled encryption types (bit field of WPS_ENCR_*)
 	 */
 	u16 encr_types;
+
+	/**
+	 * encr_types_rsn - Enabled encryption types for RSN (WPS_ENCR_*)
+	 */
+	u16 encr_types_rsn;
+
+	/**
+	 * encr_types_wpa - Enabled encryption types for WPA (WPS_ENCR_*)
+	 */
+	u16 encr_types_wpa;
 
 	/**
 	 * auth_types - Authentication types (bit field of WPS_AUTH_*)
@@ -826,7 +837,7 @@ int wps_build_credential_wrap(struct wpabuf *msg,
 
 unsigned int wps_pin_checksum(unsigned int pin);
 unsigned int wps_pin_valid(unsigned int pin);
-unsigned int wps_generate_pin(void);
+int wps_generate_pin(unsigned int *pin);
 int wps_pin_str_valid(const char *pin);
 void wps_free_pending_msgs(struct upnp_pending_message *msgs);
 
