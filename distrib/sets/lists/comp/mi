@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2069 2016/11/20 13:26:28 pho Exp $
+#	$NetBSD: mi,v 1.2070 2016/11/21 20:43:25 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -8443,6 +8443,7 @@
 ./usr/share/man/cat3/pthread_condattr_setpshared.0	comp-c-catman	.cat
 ./usr/share/man/cat3/pthread_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_curcpu_np.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_dbg.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_detach.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_equal.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_exit.0		comp-c-catman		.cat
@@ -9361,6 +9362,8 @@
 ./usr/share/man/cat3/tcsendbreak.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tcsetattr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tcsetpgrp.0		comp-c-catman		.cat
+./usr/share/man/cat3/td_close.0			comp-c-catman		.cat
+./usr/share/man/cat3/td_open.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tdelete.0			comp-c-catman		.cat
 ./usr/share/man/cat3/telldir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tempnam.0			comp-c-catman		.cat
@@ -15734,6 +15737,7 @@
 ./usr/share/man/html3/pthread_condattr_setpshared.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_create.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_curcpu_np.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_dbg.html		comp-c-htmlman		html
 ./usr/share/man/html3/pthread_detach.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_equal.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_exit.html		comp-c-htmlman		html
@@ -16616,6 +16620,8 @@
 ./usr/share/man/html3/tcsendbreak.html		comp-c-htmlman		html
 ./usr/share/man/html3/tcsetattr.html		comp-c-htmlman		html
 ./usr/share/man/html3/tcsetpgrp.html		comp-c-htmlman		html
+./usr/share/man/html3/td_close.html		comp-c-htmlman		html
+./usr/share/man/html3/td_open.html		comp-c-htmlman		html
 ./usr/share/man/html3/tdelete.html		comp-c-htmlman		html
 ./usr/share/man/html3/telldir.html		comp-c-htmlman		html
 ./usr/share/man/html3/tempnam.html		comp-c-htmlman		html
@@ -23018,6 +23024,7 @@
 ./usr/share/man/man3/pthread_condattr_setpshared.3	comp-c-man	.man
 ./usr/share/man/man3/pthread_create.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_curcpu_np.3	comp-c-man		.man
+./usr/share/man/man3/pthread_dbg.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_detach.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_equal.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_exit.3		comp-c-man		.man
@@ -23932,6 +23939,8 @@
 ./usr/share/man/man3/tcsendbreak.3		comp-c-man		.man
 ./usr/share/man/man3/tcsetattr.3		comp-c-man		.man
 ./usr/share/man/man3/tcsetpgrp.3		comp-c-man		.man
+./usr/share/man/man3/td_close.3			comp-c-man		.man
+./usr/share/man/man3/td_open.3			comp-c-man		.man
 ./usr/share/man/man3/tdelete.3			comp-c-man		.man
 ./usr/share/man/man3/telldir.3			comp-c-man		.man
 ./usr/share/man/man3/tempnam.3			comp-c-man		.man
