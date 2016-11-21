@@ -900,13 +900,13 @@ static inline int wpa_drv_setband(struct wpa_supplicant *wpa_s,
 }
 
 static inline int wpa_drv_get_pref_freq_list(struct wpa_supplicant *wpa_s,
-					     enum wpa_driver_if_type if_type,
+					     enum wpa_driver_if_type type,
 					     unsigned int *num,
 					     unsigned int *freq_list)
 {
 	if (!wpa_s->driver->get_pref_freq_list)
 		return -1;
-	return wpa_s->driver->get_pref_freq_list(wpa_s->drv_priv, if_type,
+	return wpa_s->driver->get_pref_freq_list(wpa_s->drv_priv, type,
 						 num, freq_list);
 }
 
