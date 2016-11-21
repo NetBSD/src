@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.987 2016/11/14 20:42:46 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.988 2016/11/21 17:00:32 snj Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1459,7 +1459,7 @@ EXTRA_DRIVERS=	modesetting
 	ag10e amdgpu apm ark ast ati ati-kms chips cirrus crime \
 	geode glint i128 i740 igs imstt intel intel-old \
 	${EXTRA_DRIVERS} mach64 mga \
-	neomagic newport nouveau nsc nv nvxbox openchrome pnozz \
+	neomagic newport nouveau nsc nv openchrome pnozz \
 	r128 rendition \
 	s3 s3virge savage siliconmotion sis suncg14 \
 	suncg6 sunffb sunleo suntcx \
