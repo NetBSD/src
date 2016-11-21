@@ -695,6 +695,7 @@ struct subscription * subscription_start(struct upnp_wps_device_sm *sm,
 	struct subscription *s;
 	time_t now = time(NULL);
 	time_t expire = now + UPNP_SUBSCRIBE_SEC;
+	char str[80];
 
 	/* Get rid of expired subscriptions so we have room */
 	subscription_list_age(sm, now);
@@ -743,8 +744,10 @@ struct subscription * subscription_start(struct upnp_wps_device_sm *sm,
 		subscription_destroy(s);
 		return NULL;
 	}
-	wpa_printf(MSG_DEBUG, "WPS UPnP: Subscription %p started with %s",
-		   s, callback_urls);
+	uuid_bin2str(s->uuid, str, sizeof(str));
+	wpa_printf(MSG_DEBUG,
+		   "WPS UPnP: Subscription %p (SID %s) started with %s",
+		   s, str, callback_urls);
 	/* Schedule sending this */
 	event_send_all_later(sm);
 	return s;
@@ -1079,6 +1082,7 @@ upnp_wps_get_iface(struct upnp_wps_device_sm *sm, void *priv)
 void upnp_wps_device_deinit(struct upnp_wps_device_sm *sm, void *priv)
 {
 	struct upnp_wps_device_interface *iface;
+	struct upnp_wps_peer *peer;
 
 	if (!sm)
 		return;
@@ -1099,8 +1103,13 @@ void upnp_wps_device_deinit(struct upnp_wps_device_sm *sm, void *priv)
 					    iface->wps->registrar);
 	dl_list_del(&iface->list);
 
-	if (iface->peer.wps)
-		wps_deinit(iface->peer.wps);
+	while ((peer = dl_list_first(&iface->peers, struct upnp_wps_peer,
+				     list))) {
+		if (peer->wps)
+			wps_deinit(peer->wps);
+		dl_list_del(&peer->list);
+		os_free(peer);
+	}
 	os_free(iface->ctx->ap_pin);
 	os_free(iface->ctx);
 	os_free(iface);
@@ -1138,6 +1147,7 @@ upnp_wps_device_init(struct upnp_wps_device_ctx *ctx, struct wps_context *wps,
 	}
 	wpa_printf(MSG_DEBUG, "WPS UPnP: Init interface instance %p", iface);
 
+	dl_list_init(&iface->peers);
 	iface->ctx = ctx;
 	iface->wps = wps;
 	iface->priv = priv;

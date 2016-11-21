@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "crypto/sha256.h"
+#include "crypto/ms_funcs.h"
 #include "eap_server/eap_i.h"
 #include "eap_common/eap_pwd_common.h"
 
@@ -24,6 +25,7 @@ struct eap_pwd_data {
 	size_t id_server_len;
 	u8 *password;
 	size_t password_len;
+	int password_hash;
 	u32 token;
 	u16 group_num;
 	EAP_PWD_group *grp;
@@ -112,6 +114,7 @@ static void * eap_pwd_init(struct eap_sm *sm)
 	}
 	data->password_len = sm->user->password_len;
 	os_memcpy(data->password, sm->user->password, data->password_len);
+	data->password_hash = sm->user->password_hash;
 
 	data->bnctx = BN_CTX_new();
 	if (data->bnctx == NULL) {
@@ -175,13 +178,19 @@ static void eap_pwd_build_id_req(struct eap_sm *sm, struct eap_pwd_data *data,
 		return;
 	}
 
-	/* an lfsr is good enough to generate unpredictable tokens */
-	data->token = os_random();
+	if (os_get_random((u8 *) &data->token, sizeof(data->token)) < 0) {
+		wpabuf_free(data->outbuf);
+		data->outbuf = NULL;
+		eap_pwd_state(data, FAILURE);
+		return;
+	}
+
 	wpabuf_put_be16(data->outbuf, data->group_num);
 	wpabuf_put_u8(data->outbuf, EAP_PWD_DEFAULT_RAND_FUNC);
 	wpabuf_put_u8(data->outbuf, EAP_PWD_DEFAULT_PRF);
 	wpabuf_put_data(data->outbuf, &data->token, sizeof(data->token));
-	wpabuf_put_u8(data->outbuf, EAP_PWD_PREP_NONE);
+	wpabuf_put_u8(data->outbuf, data->password_hash ? EAP_PWD_PREP_MS :
+		      EAP_PWD_PREP_NONE);
 	wpabuf_put_data(data->outbuf, data->id_server, data->id_server_len);
 }
 
@@ -579,6 +588,10 @@ static void eap_pwd_process_id_resp(struct eap_sm *sm,
 				    const u8 *payload, size_t payload_len)
 {
 	struct eap_pwd_id *id;
+	const u8 *password;
+	size_t password_len;
+	u8 pwhashhash[16];
+	int res;
 
 	if (payload_len < sizeof(struct eap_pwd_id)) {
 		wpa_printf(MSG_INFO, "EAP-pwd: Invalid ID response");
@@ -610,11 +623,25 @@ static void eap_pwd_process_id_resp(struct eap_sm *sm,
 			   "group");
 		return;
 	}
-	if (compute_password_element(data->grp, data->group_num,
-				     data->password, data->password_len,
-				     data->id_server, data->id_server_len,
-				     data->id_peer, data->id_peer_len,
-				     (u8 *) &data->token)) {
+
+	if (data->password_hash) {
+		res = hash_nt_password_hash(data->password, pwhashhash);
+		if (res)
+			return;
+		password = pwhashhash;
+		password_len = sizeof(pwhashhash);
+	} else {
+		password = data->password;
+		password_len = data->password_len;
+	}
+
+	res = compute_password_element(data->grp, data->group_num,
+				       password, password_len,
+				       data->id_server, data->id_server_len,
+				       data->id_peer, data->id_peer_len,
+				       (u8 *) &data->token);
+	os_memset(pwhashhash, 0, sizeof(pwhashhash));
+	if (res) {
 		wpa_printf(MSG_INFO, "EAP-PWD (server): unable to compute "
 			   "PWE");
 		return;
@@ -634,8 +661,20 @@ eap_pwd_process_commit_resp(struct eap_sm *sm, struct eap_pwd_data *data,
 	BIGNUM *x = NULL, *y = NULL, *cofactor = NULL;
 	EC_POINT *K = NULL, *point = NULL;
 	int res = 0;
+	size_t prime_len, order_len;
 
 	wpa_printf(MSG_DEBUG, "EAP-pwd: Received commit response");
+
+	prime_len = BN_num_bytes(data->grp->prime);
+	order_len = BN_num_bytes(data->grp->order);
+
+	if (payload_len != 2 * prime_len + order_len) {
+		wpa_printf(MSG_INFO,
+			   "EAP-pwd: Unexpected Commit payload length %u (expected %u)",
+			   (unsigned int) payload_len,
+			   (unsigned int) (2 * prime_len + order_len));
+		goto fin;
+	}
 
 	if (((data->peer_scalar = BN_new()) == NULL) ||
 	    ((data->k = BN_new()) == NULL) ||
@@ -751,6 +790,13 @@ eap_pwd_process_confirm_resp(struct eap_sm *sm, struct eap_pwd_data *data,
 	u16 grp;
 	u8 conf[SHA256_MAC_LEN], *cruft = NULL, *ptr;
 	int offset;
+
+	if (payload_len != SHA256_MAC_LEN) {
+		wpa_printf(MSG_INFO,
+			   "EAP-pwd: Unexpected Confirm payload length %u (expected %u)",
+			   (unsigned int) payload_len, SHA256_MAC_LEN);
+		goto fin;
+	}
 
 	/* build up the ciphersuite: group | random_function | prf */
 	grp = htons(data->group_num);
@@ -901,24 +947,35 @@ static void eap_pwd_process(struct eap_sm *sm, void *priv,
 	 * the first fragment has a total length
 	 */
 	if (EAP_PWD_GET_LENGTH_BIT(lm_exch)) {
+		if (len < 2) {
+			wpa_printf(MSG_DEBUG,
+				   "EAP-pwd: Frame too short to contain Total-Length field");
+			return;
+		}
 		tot_len = WPA_GET_BE16(pos);
 		wpa_printf(MSG_DEBUG, "EAP-pwd: Incoming fragments, total "
 			   "length = %d", tot_len);
 		if (tot_len > 15000)
 			return;
+		if (data->inbuf) {
+			wpa_printf(MSG_DEBUG,
+				   "EAP-pwd: Unexpected new fragment start when previous fragment is still in use");
+			return;
+		}
 		data->inbuf = wpabuf_alloc(tot_len);
 		if (data->inbuf == NULL) {
 			wpa_printf(MSG_INFO, "EAP-pwd: Out of memory to "
 				   "buffer fragments!");
 			return;
 		}
+		data->in_frag_pos = 0;
 		pos += sizeof(u16);
 		len -= sizeof(u16);
 	}
 	/*
 	 * the first and all intermediate fragments have the M bit set
 	 */
-	if (EAP_PWD_GET_MORE_BIT(lm_exch)) {
+	if (EAP_PWD_GET_MORE_BIT(lm_exch) || data->in_frag_pos) {
 		if ((data->in_frag_pos + len) > wpabuf_size(data->inbuf)) {
 			wpa_printf(MSG_DEBUG, "EAP-pwd: Buffer overflow "
 				   "attack detected! (%d+%d > %d)",
@@ -929,6 +986,8 @@ static void eap_pwd_process(struct eap_sm *sm, void *priv,
 		}
 		wpabuf_put_data(data->inbuf, pos, len);
 		data->in_frag_pos += len;
+	}
+	if (EAP_PWD_GET_MORE_BIT(lm_exch)) {
 		wpa_printf(MSG_DEBUG, "EAP-pwd: Got a %d byte fragment",
 			   (int) len);
 		return;
@@ -938,8 +997,6 @@ static void eap_pwd_process(struct eap_sm *sm, void *priv,
 	 * buffering fragments so that's how we know it's the last)
 	 */
 	if (data->in_frag_pos) {
-		wpabuf_put_data(data->inbuf, pos, len);
-		data->in_frag_pos += len;
 		pos = wpabuf_head_u8(data->inbuf);
 		len = data->in_frag_pos;
 		wpa_printf(MSG_DEBUG, "EAP-pwd: Last fragment, %d bytes",
@@ -1042,7 +1099,6 @@ static u8 * eap_pwd_get_session_id(struct eap_sm *sm, void *priv, size_t *len)
 int eap_server_pwd_register(void)
 {
 	struct eap_method *eap;
-	int ret;
 	struct timeval tp;
 	struct timezone tz;
 	u32 sr;
@@ -1069,9 +1125,6 @@ int eap_server_pwd_register(void)
 	eap->isSuccess = eap_pwd_is_success;
 	eap->getSessionId = eap_pwd_get_session_id;
 
-	ret = eap_server_method_register(eap);
-	if (ret)
-		eap_server_method_free(eap);
-	return ret;
+	return eap_server_method_register(eap);
 }
 
