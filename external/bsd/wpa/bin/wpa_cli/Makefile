@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2012/10/08 00:03:20 christos Exp $
+# $NetBSD: Makefile,v 1.5 2016/11/21 20:15:16 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -6,6 +6,7 @@
 
 PROG=	wpa_cli
 SRCS=	wpa_cli.c wpa_ctrl.c os_unix.c eloop.c edit.c wpa_debug.c common.c
+SRCS+=	cli.c
 
 CPPFLAGS+=-DCONFIG_READLINE
 LDADD+=-ledit -lterminfo
