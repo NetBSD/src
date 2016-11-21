@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.452 2016/11/18 11:46:04 joerg Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.453 2016/11/21 03:57:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.452 2016/11/18 11:46:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.453 2016/11/21 03:57:37 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -738,6 +738,11 @@ static void	wm_gmii_82580_writereg(device_t, int, int, int);
 static int	wm_gmii_gs40g_readreg(device_t, int, int);
 static void	wm_gmii_gs40g_writereg(device_t, int, int, int);
 static void	wm_gmii_statchg(struct ifnet *);
+/*
+ * kumeran related (80003, ICH* and PCH*).
+ * These functions are not for accessing MII registers but for accessing
+ * kumeran specific registers.
+ */
 static int	wm_kmrn_readreg(struct wm_softc *, int);
 static int	wm_kmrn_readreg_locked(struct wm_softc *, int);
 static void	wm_kmrn_writereg(struct wm_softc *, int, int);
@@ -9290,6 +9295,8 @@ wm_gmii_statchg(struct ifnet *ifp)
 	}
 }
 
+/* kumeran related (80003, ICH* and PCH*) */
+
 /*
  * wm_kmrn_readreg:
  *
@@ -10136,6 +10143,7 @@ out:
 
 	return mediatype;
 }
+
 /*
  * NVM related.
  * Microwire, SPI (w/wo EERD) and Flash.
