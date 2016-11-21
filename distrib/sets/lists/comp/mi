@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2070 2016/11/21 20:43:25 kamil Exp $
+#	$NetBSD: mi,v 1.2071 2016/11/21 22:19:03 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9364,6 +9364,7 @@
 ./usr/share/man/cat3/tcsetpgrp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/td_close.0			comp-c-catman		.cat
 ./usr/share/man/cat3/td_open.0			comp-c-catman		.cat
+./usr/share/man/cat3/td_thr_info.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tdelete.0			comp-c-catman		.cat
 ./usr/share/man/cat3/telldir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tempnam.0			comp-c-catman		.cat
@@ -16622,6 +16623,7 @@
 ./usr/share/man/html3/tcsetpgrp.html		comp-c-htmlman		html
 ./usr/share/man/html3/td_close.html		comp-c-htmlman		html
 ./usr/share/man/html3/td_open.html		comp-c-htmlman		html
+./usr/share/man/html3/td_thr_info.html		comp-c-htmlman		html
 ./usr/share/man/html3/tdelete.html		comp-c-htmlman		html
 ./usr/share/man/html3/telldir.html		comp-c-htmlman		html
 ./usr/share/man/html3/tempnam.html		comp-c-htmlman		html
@@ -23941,6 +23943,7 @@
 ./usr/share/man/man3/tcsetpgrp.3		comp-c-man		.man
 ./usr/share/man/man3/td_close.3			comp-c-man		.man
 ./usr/share/man/man3/td_open.3			comp-c-man		.man
+./usr/share/man/man3/td_thr_info.3		comp-c-man		.man
 ./usr/share/man/man3/tdelete.3			comp-c-man		.man
 ./usr/share/man/man3/telldir.3			comp-c-man		.man
 ./usr/share/man/man3/tempnam.3			comp-c-man		.man
