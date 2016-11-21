@@ -1,4 +1,4 @@
-/*	$NetBSD: h_execthr.c,v 1.4 2016/11/21 06:17:20 dholland Exp $	*/
+/*	$NetBSD: h_execthr.c,v 1.5 2016/11/21 06:19:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -114,9 +114,10 @@ main(int argc, char *argv[], char *envp[])
 
 	if (execd) {
 		canreturn = 1;
-		if (pthread_create(&pt, NULL,
-		    wrk, (void *)(uintptr_t)P2_0) != 0)
-			errx(1, "exec pthread_create");
+		errno = pthread_create(&pt, NULL,
+		    wrk, (void *)(uintptr_t)P2_0);
+		if (errno != 0)
+			err(1, "exec pthread_create");
 
 		i = 37;
 		rump_sys_write(P2_1, &i, sizeof(i));
@@ -177,10 +178,12 @@ main(int argc, char *argv[], char *envp[])
 	 * load up one more (big) set.  these won't start executing, though,
 	 * but we're interested in if they create blockage
 	 */
-	for (i = 0; i < 3*NTHR; i++)
-		if (pthread_create(&pt, NULL,
-		    wrk, (void *)(uintptr_t)p1[0]) != 0)
-			errx(1, "pthread_create 1 %d", i);
+	for (i = 0; i < 3*NTHR; i++) {
+		errno = pthread_create(&pt, NULL,
+		    wrk, (void *)(uintptr_t)p1[0]);
+		if (errno != 0)
+			err(1, "pthread_create 3 %d", i);
+	}
 
 	/* then, we exec! */
 	execarg[0] = argv[0];
