@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.167 2016/11/20 15:37:19 mlelstv Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.168 2016/11/21 21:03:22 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.167 2016/11/20 15:37:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.168 2016/11/21 21:03:22 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -2277,7 +2277,7 @@ scsipi_async_event_max_openings(struct scsipi_channel *chan,
 
 	/* XXX This could really suck with a large LUN space. */
 	for (; minlun <= maxlun; minlun++) {
-		periph = scsipi_lookup_periph(chan, mo->mo_target, minlun);
+		periph = scsipi_lookup_periph_locked(chan, mo->mo_target, minlun);
 		if (periph == NULL)
 			continue;
 
@@ -2373,7 +2373,7 @@ scsipi_async_event_channel_reset(struct scsipi_channel *chan)
 		if (target == chan->chan_id)
 			continue;
 		for (lun = 0; lun <  chan->chan_nluns; lun++) {
-			periph = scsipi_lookup_periph(chan, target, lun);
+			periph = scsipi_lookup_periph_locked(chan, target, lun);
 			if (periph) {
 				xs = periph->periph_xscheck;
 				if (xs)
