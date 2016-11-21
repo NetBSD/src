@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.140 2016/11/20 22:56:13 riastradh Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.141 2016/11/21 01:19:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.140 2016/11/20 22:56:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.141 2016/11/21 01:19:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -428,8 +428,6 @@ fwohci_attach(struct fwohci_softc *sc)
 	if (i == 0)
 		return ENXIO;
 
-	fw_init_isodma(&sc->fc);
-
 	for (i = 0; i < sc->fc.nisodma; i++) {
 		sc->fc.it[i] = &sc->it[i].xferq;
 		sc->fc.ir[i] = &sc->ir[i].xferq;
@@ -440,6 +438,8 @@ fwohci_attach(struct fwohci_softc *sc)
 		sc->it[i].off = OHCI_ITOFF(i);
 		sc->ir[i].off = OHCI_IROFF(i);
 	}
+
+	fw_init_isodma(&sc->fc);
 
 	sc->fc.config_rom = fwdma_alloc_setup(sc->fc.dev, sc->fc.dmat,
 	    CROMSIZE, &sc->crom_dma, CROMSIZE, BUS_DMA_NOWAIT);
