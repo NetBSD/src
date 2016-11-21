@@ -155,7 +155,8 @@ static void p2p_group_add_common_ies(struct p2p_group *group,
 		group_capab |= P2P_GROUP_CAPAB_CROSS_CONN;
 	if (group->num_members >= group->cfg->max_clients)
 		group_capab |= P2P_GROUP_CAPAB_GROUP_LIMIT;
-	group_capab |= P2P_GROUP_CAPAB_IP_ADDR_ALLOCATION;
+	if (group->cfg->ip_addr_alloc)
+		group_capab |= P2P_GROUP_CAPAB_IP_ADDR_ALLOCATION;
 	p2p_buf_add_capability(ie, dev_capab, group_capab);
 }
 
@@ -296,14 +297,14 @@ static int wifi_display_add_dev_info_descr(struct wpabuf *buf,
 	os_memset(zero_addr, 0, ETH_ALEN);
 	pos = wpabuf_head_u8(m->wfd_ie);
 	end = pos + wpabuf_len(m->wfd_ie);
-	while (pos + 1 < end) {
+	while (end - pos >= 3) {
 		u8 id;
 		u16 len;
 
 		id = *pos++;
 		len = WPA_GET_BE16(pos);
 		pos += 2;
-		if (pos + len > end)
+		if (len > end - pos)
 			break;
 
 		switch (id) {
@@ -849,6 +850,20 @@ static struct p2p_group_member * p2p_group_get_client(struct p2p_group *group,
 }
 
 
+const u8 * p2p_group_get_client_interface_addr(struct p2p_group *group,
+					       const u8 *dev_addr)
+{
+	struct p2p_group_member *m;
+
+	if (!group)
+		return NULL;
+	m = p2p_group_get_client(group, dev_addr);
+	if (m)
+		return m->addr;
+	return NULL;
+}
+
+
 static struct p2p_group_member * p2p_group_get_client_iface(
 	struct p2p_group *group, const u8 *interface_addr)
 {
@@ -1070,4 +1085,44 @@ void p2p_loop_on_all_groups(struct p2p_data *p2p,
 		if (!group_callback(p2p->groups[i], user_data))
 			break;
 	}
+}
+
+
+int p2p_group_get_common_freqs(struct p2p_group *group, int *common_freqs,
+			       unsigned int *num)
+
+{
+	struct p2p_channels intersect, res;
+	struct p2p_group_member *m;
+
+	if (!group || !common_freqs || !num)
+		return -1;
+
+	os_memset(&intersect, 0, sizeof(intersect));
+	os_memset(&res, 0, sizeof(res));
+
+	p2p_channels_union(&intersect, &group->p2p->cfg->channels,
+			   &intersect);
+
+	p2p_channels_dump(group->p2p,
+			  "Group common freqs before iterating members",
+			  &intersect);
+
+	for (m = group->members; m; m = m->next) {
+		struct p2p_device *dev;
+
+		dev = p2p_get_device(group->p2p, m->dev_addr);
+		if (!dev || dev->channels.reg_classes == 0)
+			continue;
+
+		p2p_channels_intersect(&intersect, &dev->channels, &res);
+		intersect = res;
+	}
+
+	p2p_channels_dump(group->p2p, "Group common channels", &intersect);
+
+	os_memset(common_freqs, 0, *num * sizeof(int));
+	*num = p2p_channels_to_freqs(&intersect, common_freqs, *num);
+
+	return 0;
 }
