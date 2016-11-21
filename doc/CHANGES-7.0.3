@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.6 2016/11/16 18:31:23 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.7 2016/11/21 07:24:40 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -119,4 +119,9 @@ sys/external/bsd/drm2/dist/drm/drm_gem.c	1.6
 
 	Avoid zero-size uao.
 	[maya, ticket #1272]
+
+etc/rc.d/rtadvd					1.9
+
+	Don't fail to start if rtadvd's config file doesn't exist.
+	[kre, ticket #1274]
 
