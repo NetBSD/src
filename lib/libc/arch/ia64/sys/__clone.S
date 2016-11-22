@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.2 2016/08/05 16:40:47 scole Exp $ */
+/* $NetBSD: __clone.S,v 1.3 2016/11/22 22:51:53 scole Exp $ */
 
 /*-
  * Copyright (c) 2006,2016 The NetBSD Foundation, Inc.
@@ -37,6 +37,6 @@ WEAK_ALIAS(clone, __clone)
 
 ENTRY(__clone,4)
 	/* XXX implement, break in ski*/
-	break.i 0
+	break.i 1
 	
 END(__clone)
