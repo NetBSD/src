@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.50 2016/11/22 04:17:05 kamil Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.51 2016/11/22 04:51:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.50 2016/11/22 04:17:05 kamil Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.51 2016/11/22 04:51:06 kamil Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -234,8 +234,6 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	default:
 		info->thread_state = TD_STATE_UNKNOWN;
 	}
-
-	info->thread_type = TD_TYPE_USER;
 
 	if ((val = READ(thread->proc, OFFSET(thread, pt_stack),
 	    &info->thread_stack, sizeof(stack_t))) != 0)
