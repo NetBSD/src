@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.228 2016/10/08 17:40:12 joerg Exp $	*/
+/*	$NetBSD: if.h,v 1.229 2016/11/22 02:06:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1031,7 +1031,6 @@ void	loopattach(int);
 void	loopinit(void);
 int	looutput(struct ifnet *,
 	   struct mbuf *, const struct sockaddr *, const struct rtentry *);
-void	lortrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
 /*
  * These are exported because they're an easy way to tell if
