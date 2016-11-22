@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_dbg.3,v 1.1 2016/11/21 20:43:25 kamil Exp $
+.\"	$NetBSD: pthread_dbg.3,v 1.2 2016/11/22 01:49:36 kamil Exp $
 .\"
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -102,12 +102,13 @@ functions:
 The following functions comprise the core of the
 .Nm
 library:
-.Bl -column -offset indent "td_thr_info(3)" "XXX"
+.Bl -column -offset indent "td_thr_getname(3)" "iterate over the threads in the process"
 .It Sy Function Ta Sy Description
-.It Xr td_close 3 Ta close connection to a threaded process
-.It Xr td_open 3 Ta make connection to a threaded process
-.It Xr td_thr_info 3 Ta get information on a thread
-.It Xr td_thr_iter 3 Ta iterate over the threads in the process
+.It Xr td_close 3       Ta close connection to a threaded process
+.It Xr td_open 3        Ta make connection to a threaded process
+.It Xr td_thr_getname 3 Ta get the user-assigned name of a thread
+.It Xr td_thr_info 3    Ta get information on a thread
+.It Xr td_thr_iter 3    Ta iterate over the threads in the process
 .El
 .Sh SEE ALSO
 .Xr pthread 3
