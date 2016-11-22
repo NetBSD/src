@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.21 2015/05/21 01:09:00 ozaki-r Exp $	*/
+/*	$NetBSD: net.c,v 1.22 2016/11/22 12:04:35 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -833,11 +833,12 @@ done:
 	}
 
 	/*
-	 * wait a couple of seconds for the interface to go live.
+	 * wait for addresses to become valid
 	 */
 	if (!nfs_root) {
 		msg_display_add(MSG_wait_network);
-		sleep(5);
+		run_program(RUN_DISPLAY | RUN_PROGRESS,
+		    "/sbin/ifconfig -w 15 -W 5");
 	}
 
 	/*
