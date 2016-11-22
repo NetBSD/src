@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2016/11/21 22:19:03 kamil Exp $
+#	$NetBSD: Makefile,v 1.14 2016/11/22 00:07:40 kamil Exp $
 #
 
 WARNS?=		5
@@ -43,6 +43,7 @@ INCSDIR=/usr/include
 MAN+=	pthread_dbg.3
 MAN+=	td_open.3
 MAN+=	td_thr_info.3
+MAN+=	td_thr_iter.3
 
 MLINKS+=	td_open.3 td_close.3
 
