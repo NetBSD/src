@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.49 2016/11/21 03:02:34 kamil Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.50 2016/11/22 04:17:05 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.49 2016/11/21 03:02:34 kamil Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.50 2016/11/22 04:17:05 kamil Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -345,9 +345,7 @@ td_map_pth2thr(td_proc_t *proc, pthread_t thread, td_thread_t **threadp)
 {
 	int magic, val;
 
-	val = READ(proc,
-	    (char *)thread + offsetof(struct __pthread_st, pt_magic),
-	    &magic, sizeof(magic));
+	val = READ(proc, (caddr_t)&thread->pt_magic, &magic, sizeof(magic));
 	if (val != 0)
 		return val;
 
