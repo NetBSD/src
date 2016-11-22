@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.S,v 1.2 2016/08/05 16:40:47 scole Exp $ */
+/* $NetBSD: ptrace.S,v 1.3 2016/11/22 22:52:14 scole Exp $ */
 	
 /*-
  * Copyright (c) 2006,2016 The NetBSD Foundation, Inc.
@@ -31,6 +31,6 @@
 	
 ENTRY(ptrace,0)
 	/* XXX implement, halt in ski */
-	break.i 0
+	break.i 1
 
 END(ptrace)

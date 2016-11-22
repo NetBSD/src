@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.1 2016/08/05 16:40:47 scole Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.2 2016/11/22 22:50:32 scole Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -35,6 +35,6 @@ WEAK_ALIAS(getcontext, _getcontext)
 ENTRY(_getcontext,0)
 	
 	/* XXX implement, halt in ski */
-	break.i 0
+	break.i 1
 
 END(_getcontext)
