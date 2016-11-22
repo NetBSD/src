@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1379 2016/11/21 20:16:21 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1380 2016/11/22 01:20:20 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -943,7 +943,7 @@ HAVE_STRICT_ALIGNMENT.  Fix RCS IDs, import.
 
 Package:	ntp
 Version:	4.2.8p8
-Current Vers:	4.2.8p8
+Current Vers:	4.2.8p9
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	http://www.ntp.org/
 Home Page:	http://www.ntp.org/, http://support.ntp.org/
