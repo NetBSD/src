@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.h,v 1.8 2016/11/21 03:02:34 kamil Exp $	*/
+/*	$NetBSD: pthread_dbg.h,v 1.9 2016/11/22 04:51:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -84,9 +84,9 @@ typedef struct td_thread_info_st {
 #define	TD_STATE_UNUSED6	6	/* former TD_STATE_SUSPENDED for SA */
 #define	TD_STATE_DEAD		7
 
-#define	TD_TYPE_UNKNOWN	0
-#define	TD_TYPE_USER	1
-#define	TD_TYPE_SYSTEM	2
+#define	TD_TYPE_UNUSED0	0
+#define	TD_TYPE_UNUSED1	1
+#define	TD_TYPE_UNUSED2	2
 
 typedef struct {
 	caddr_t	sync_addr;	/* Address within the process */
