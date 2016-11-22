@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.19 2016/08/18 18:42:09 mrg Exp $
+#	$NetBSD: Makefile.Xserver,v 1.20 2016/11/22 10:34:57 snj Exp $
 
 .for _SL in \
 	mi \
@@ -40,7 +40,6 @@
 	hw/xfree86/dri2 \
 	hw/xfree86/dummy \
 	hw/xfree86/i2c \
-	hw/xfree86/init \
 	hw/xfree86/int10 \
 	hw/xfree86/loader \
 	hw/xfree86/xorgos \

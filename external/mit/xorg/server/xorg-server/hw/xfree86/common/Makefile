@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2016/11/21 08:43:49 snj Exp $
+#	$NetBSD: Makefile,v 1.31 2016/11/22 10:34:57 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ SRCS.randr=	xf86RandR.c
 SRCS=	xf86Configure.c xf86Bus.c xf86Config.c \
 	xf86Cursor.c xf86DGA.c xf86DPMS.c \
 	xf86Events.c xf86Globals.c xf86AutoConfig.c \
-	xf86Option.c \
+	xf86Option.c xf86Init.c \
 	xf86VidMode.c xf86fbman.c xf86cmap.c \
 	xf86Helper.c xf86PM.c xf86Xinput.c xisb.c \
 	xf86Mode.c xorgHelper.c \
@@ -28,18 +28,6 @@ SRCS=	xf86Configure.c xf86Bus.c xf86Config.c \
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 SRCS.bus+=	xf86sbusBus.c
 .endif
-
-# Rebuild xf86Build.h on every make
-#
-CLEANFILES+=	xf86Build.h
-xf86Build.h: .PHONY
-	${_MKTARGET_CREATE}
-	echo "#define BUILD_DATE `date +%Y%m%d`" > ${.TARGET}
-
-# We don't use  DPSRCS+=xf86Build.h  because we don't want the entire
-# library to be rebuilt each time
-#
-xf86Init.c xf86Init.o: xf86Build.h
 
 CLEANFILES+=	xf86DefModeSet.c
 xf86DefModeSet.c:
@@ -111,7 +99,9 @@ IDRIVERS=	mouse keyboard acecad calcomp citron digitaledge \
 CPPFLAGS.xf86Bus.c=		-DBUILDERADDR='"xfree86@xfree86.org"'
 CPPFLAGS.xf86Init.c=		-DOSNAME='"NetBSD/${MACHINE} ${OS_RELEASE} -"' \
 				-DBUILDERADDR='"xorg@xorg.org"' \
-				-DOSVENDOR='" The NetBSD Foundation, Inc."'
+				-DOSVENDOR='"The NetBSD Foundation, Inc."' \
+				-DDEFAULT_MODULE_PATH='"${X11USRLIBDIR}/modules"' \
+				-DDEFAULT_LIBRARY_PATH='"${X11USRLIBDIR}"'
 CPPFLAGS.xf86Globals.c=		-DDEFAULT_MODULE_PATH='"${X11USRLIBDIR}/modules"'
 CPPFLAGS.xf86Configure.c=	-DXF86CONFIGFILE='"xorg.conf"'
 CPPFLAGS.xf86Config.c=		-DDRIVERS='"${DRIVERS}"' \
