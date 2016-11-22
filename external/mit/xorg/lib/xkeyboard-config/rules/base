@@ -9,11 +9,14 @@
 // If you want non-latin layouts implicitly include the en_US layout
 // uncomment lines below
 //! $nonlatin = am ara ben bd bg bt by cs deva ge gh gr guj guru il \
-//              in ir iku jp kan kh kr la lao lk mk mm mn mv mal ori pk \
-//              ru scc sy syr tel th tj tam ua uz
+//              in ir iku jp kan kh kr la lao lk mk mm mn mv mal olck \
+//              ori pk ru scc sy syr tel th tj tam ua uz
 
 // PC models
 ! $pcmodels = pc101 pc102 pc104 pc105
+
+// Jolla devices and keyboards
+! $jollamodels = jollasbj
 
 // Microsoft models (using MS geometry)
 ! $msmodels = microsoft microsoft4000 microsoft7000 microsoftpro microsoftprousb microsoftprose
@@ -122,7 +125,8 @@
               sk1300 sk2500 sk6200 sk7100 \
               sven sven303 symplon \
               toshiba_s3000 trust trustda \
-              unitekkb1925 yahoo
+              unitekkb1925 yahoo \
+              teck227 teck229
 
 ! $inetmediakbds = acer_ferrari4k acer_laptop btc5090 btc9019u cherryblueb \
 		cherrybluea herrycyboard chicony042 compaqik13 compaqik18 \
@@ -347,6 +351,8 @@
   classmate	us			=	pc+%l(classmate)
   empty         *                       =       empty(basic)
   *             empty                   =       empty(basic)
+  jollasbj 	$nonlatin		=	jolla_vndr/sbj(common)+us+%l%(v):2
+  jollasbj	*			=	jolla_vndr/sbj(common)+%l%(v)
  $sun		$sun_custom		=	pc+sun_vndr/%l%(v)
   pc98		nec_vndr/jp		=	nec_vndr/jp(pc98)
   macintosh_old	us			=	macintosh_vndr/us(oldmac)
@@ -456,6 +462,7 @@
   *		yu(unicodeyz)			=	pc+srp(latinunicodeyz)
   ataritt	*			=	xfree68_vndr/ataritt(us)+%l[1]%(v[1])
   amiga		*			=	xfree68_vndr/amiga(usa1)+%l[1]%(v[1])
+  jollasbj	*			=	jolla_vndr/sbj(common)+%l[1]%(v[1])
  $sun		$sun_custom	=	pc+sun_vndr/%l[1]%(v[1])
   macintosh_old	us			=	macintosh_vndr/us(oldmac)
   macintosh_old	$macvendorlayouts	=	macintosh_vndr/us(oldmac)+macintosh_vndr/%l[1]%(v[1])
@@ -927,6 +934,7 @@
   btc5126t      =       +inet(nav_acpi_common)
   btc9116u      =       +inet(btc9019u)
   btc6301urf    =       +inet(media_nav_acpi_common)
+  chromebook    =       +inet(chromebook)
   dellsk8125    =       +inet(dell)
   dellsk8135    =       +inet(dell)
   cherrybunlim  =       +inet(nav_common)
@@ -977,26 +985,51 @@
 ! layout	variant		=	compat
   de		neo			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
   de		adnw			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		koy			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		bone			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		bone_eszett_home			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		neo_qwertz			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		neo_qwerty			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
   jp        $sun_compat =   complete+japan(kana_lock)
 
 ! layout[1]	variant[1]	=	compat
   de		neo			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
   de		adnw			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		koy			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		bone			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		bone_eszett_home			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		neo_qwertz			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
+  de		neo_qwerty			=	+caps(caps_lock)+misc(assign_shift_left_action)+level5(level5_lock)
   jp       $sun_compat =   complete+japan(kana_lock)
 
 ! layout[2]	variant[2]	=	compat
   de		neo			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
   de		adnw			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		koy			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		bone			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		bone_eszett_home			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		neo_qwertz			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
+  de		neo_qwerty			=	+caps(caps_lock):2+misc(assign_shift_left_action):2+level5(level5_lock):2
   jp       $sun_compat  =   +complete+japan(kana_lock):2
 
 ! layout[3]	variant[3]	=	compat
   de		neo			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
   de		adnw			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		koy			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		bone			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		bone_eszett_home			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		neo_qwertz			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
+  de		neo_qwerty			=	+caps(caps_lock):3+misc(assign_shift_left_action):3+level5(level5_lock):3
   jp       $sun_compat  =   +complete+japan(kana_lock):3
 
 ! layout[4]	variant[4]	=	compat
   de		neo			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
   de		adnw			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		koy			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		bone			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		bone_eszett_home			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		neo_qwertz			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
+  de		neo_qwerty			=	+caps(caps_lock):4+misc(assign_shift_left_action):4+level5(level5_lock):4
   jp       $sun_compat  =   +complete+japan(kana_lock):4
 
 ! model		layout		=	compat
@@ -1046,7 +1079,9 @@
   altwin:left_meta_win	=	+altwin(left_meta_win)
   altwin:hyper_win	=	+altwin(hyper_win)
   altwin:alt_super_win	=	+altwin(alt_super_win)
+  altwin:swap_lalt_lwin	=	+altwin(swap_lalt_lwin)
   altwin:swap_alt_win	=	+altwin(swap_alt_win)
+  altwin:prtsc_rwin	=	+altwin(prtsc_rwin)
   grab:debug		=	+srvr_ctrl(grab_debug)
   grp:switch		=	+group(switch)
   grp:lswitch		=	+group(lswitch)
@@ -1089,6 +1124,7 @@
   grp:ralt_rshift_toggle	=	+group(ralt_rshift_toggle)
   grp:alt_shift_toggle	=	+group(alt_shift_toggle)
   grp:alt_shift_toggle_bidir	=	+group(alt_shift_toggle_bidir)
+  grp:lctrl_lwin_toggle	=	+group(lctrl_lwin_toggle)
   lv3:switch		=	+level3(switch)
   lv3:ralt_switch	=	+level3(ralt_switch)
   lv3:ralt_switch_multikey	=	+level3(ralt_switch_multikey)
@@ -1108,6 +1144,7 @@
   caps:backspace	=	+capslock(backspace)
   caps:super		=	+capslock(super)
   caps:hyper		=	+capslock(hyper)
+  caps:menu		=	+capslock(menu)
   caps:none		=	+capslock(none)
   caps:ctrl_modifier	=	+capslock(ctrl_modifier)
   ctrl:nocaps		=	+ctrl(nocaps)
@@ -1205,7 +1242,7 @@
   lv5:ralt_switch_lock_cancel     =       +level5(ralt_switch_lock_cancel)
   lv5:lwin_switch_lock_cancel     =       +level5(lwin_switch_lock_cancel)
   lv5:rwin_switch_lock_cancel     =       +level5(rwin_switch_lock_cancel)
-
+  parens:swap_brackets   =   +parens(swap_brackets)
 
 
 ! option	=	compat
