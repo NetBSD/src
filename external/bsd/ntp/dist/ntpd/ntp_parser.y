@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.1.1.12 2016/06/03 20:19:14 christos Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.1.1.13 2016/11/22 01:35:01 christos Exp $	*/
 
 /* ntp_parser.y
  *
@@ -80,6 +80,7 @@
 %token	<Integer>	T_Automax
 %token	<Integer>	T_Average
 %token	<Integer>	T_Bclient
+%token	<Integer>	T_Bcpollbstep
 %token	<Integer>	T_Beacon
 %token	<Integer>	T_Broadcast
 %token	<Integer>	T_Broadcastclient
@@ -647,7 +648,8 @@ tos_option
 	;
 
 tos_option_int_keyword
-	:	T_Ceiling
+	:	T_Bcpollbstep
+	|	T_Ceiling
 	|	T_Floor
 	|	T_Orphan
 	|	T_Orphanwait

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.1.1.9 2016/05/01 15:57:23 christos Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.1.1.10 2016/11/22 01:35:00 christos Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers
@@ -107,6 +107,10 @@
 /*								      */
 /*  2015/05/15							      */
 /*    [Add]    Support the SEIKO TIME SYSTEMS TDC-300		      */
+/*								      */
+/*  2016/05/08							      */
+/*    [Fix]    C-DEX JST2000                                          */
+/*             Thanks to Mr. Kuramatsu for the report and the patch.  */
 /*								      */
 /**********************************************************************/
 
@@ -1501,9 +1505,9 @@ jjy_receive_cdex_jst2000 ( struct recvbuf *rbufp )
 		return JJY_RECEIVE_ERROR ;
 	}
 
-	/* JYYMMDD HHMMSSS */
+	/* JYYMMDDWHHMMSSS */
 
-	rc = sscanf ( pBuf, "J%2d%2d%2d %2d%2d%2d%1d",
+	rc = sscanf ( pBuf, "J%2d%2d%2d%*1d%2d%2d%2d%1d",
 		      &up->year, &up->month, &up->day,
 		      &up->hour, &up->minute, &up->second,
 		      &up->msecond ) ;
