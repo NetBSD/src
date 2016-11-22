@@ -1,4 +1,4 @@
-/*	$NetBSD: t_threads.c,v 1.5 2016/11/20 18:02:46 kamil Exp $	*/
+/*	$NetBSD: t_threads.c,v 1.6 2016/11/22 03:21:46 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_threads.c,v 1.5 2016/11/20 18:02:46 kamil Exp $");
+__RCSID("$NetBSD: t_threads.c,v 1.6 2016/11/22 03:21:46 kamil Exp $");
 
 #include <dlfcn.h>
 #include <pthread.h>
@@ -399,6 +399,317 @@ ATF_TC_BODY(threads5, tc)
 	    count, max_threads + 1);
 }
 
+ATF_TC(threads6);
+ATF_TC_HEAD(threads6, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Asserts that pthread_t can be translated with td_map_pth2thr() "
+	    "to td_thread_t -- and assert earlier that td_thr_iter() call is "
+	    "valid");
+}
+
+static volatile int exiting6;
+
+static void *
+busyFunction6(void *arg)
+{
+
+	while (exiting6 == 0)
+		usleep(50000);
+
+	return NULL;
+}
+
+static int
+iterateThreads6(td_thread_t *thread, void *arg)
+{
+	int *counter = (int *)arg;
+
+	++(*counter);
+
+	return TD_ERR_OK;
+}
+
+ATF_TC_BODY(threads6, tc)
+{
+	struct td_proc_callbacks_t dummy_callbacks;
+	td_proc_t *main_ta;
+	const size_t max_threads = 10;
+	size_t i;
+	pthread_t threads[max_threads];
+	int count = 0;
+
+	dummy_callbacks.proc_read	= basic_proc_read;
+	dummy_callbacks.proc_write	= basic_proc_write;
+	dummy_callbacks.proc_lookup	= basic_proc_lookup;
+	dummy_callbacks.proc_regsize	= dummy_proc_regsize;
+	dummy_callbacks.proc_getregs	= dummy_proc_getregs;
+	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
+
+	for (i = 0; i < max_threads; i++) {
+		printf("Creating thread %zu\n", i);
+		PTHREAD_REQUIRE
+		    (pthread_create(&threads[i], NULL, busyFunction6, NULL));
+	}
+
+	printf("Calling td_open(3)\n");
+	ATF_REQUIRE(td_open(&dummy_callbacks, NULL, &main_ta) == TD_ERR_OK);
+
+	ATF_REQUIRE(td_thr_iter(main_ta, iterateThreads6, &count) == TD_ERR_OK);
+
+	for (i = 0; i < max_threads; i++) {
+		td_thread_t *td_thread;
+		ATF_REQUIRE(td_map_pth2thr(main_ta, threads[i], &td_thread)
+		    == TD_ERR_OK);
+	}
+
+	exiting6 = 1;
+
+	printf("Calling td_close(3)\n");
+	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
+
+	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	    "counted threads (%d) != expected threads (%d)",
+	    count, max_threads + 1);
+}
+
+ATF_TC(threads7);
+ATF_TC_HEAD(threads7, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Asserts that pthread_t can be translated with td_map_pth2thr() "
+	    "to td_thread_t -- and assert later that td_thr_iter() call is "
+	    "valid");
+}
+
+static volatile int exiting7;
+
+static void *
+busyFunction7(void *arg)
+{
+
+	while (exiting7 == 0)
+		usleep(50000);
+
+	return NULL;
+}
+
+static int
+iterateThreads7(td_thread_t *thread, void *arg)
+{
+	int *counter = (int *)arg;
+
+	++(*counter);
+
+	return TD_ERR_OK;
+}
+
+ATF_TC_BODY(threads7, tc)
+{
+	struct td_proc_callbacks_t dummy_callbacks;
+	td_proc_t *main_ta;
+	const size_t max_threads = 10;
+	size_t i;
+	pthread_t threads[max_threads];
+	int count = 0;
+
+	dummy_callbacks.proc_read	= basic_proc_read;
+	dummy_callbacks.proc_write	= basic_proc_write;
+	dummy_callbacks.proc_lookup	= basic_proc_lookup;
+	dummy_callbacks.proc_regsize	= dummy_proc_regsize;
+	dummy_callbacks.proc_getregs	= dummy_proc_getregs;
+	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
+
+	for (i = 0; i < max_threads; i++) {
+		printf("Creating thread %zu\n", i);
+		PTHREAD_REQUIRE
+		    (pthread_create(&threads[i], NULL, busyFunction7, NULL));
+	}
+
+	printf("Calling td_open(3)\n");
+	ATF_REQUIRE(td_open(&dummy_callbacks, NULL, &main_ta) == TD_ERR_OK);
+
+	for (i = 0; i < max_threads; i++) {
+		td_thread_t *td_thread;
+		ATF_REQUIRE(td_map_pth2thr(main_ta, threads[i], &td_thread)
+		    == TD_ERR_OK);
+	}
+
+	ATF_REQUIRE(td_thr_iter(main_ta, iterateThreads7, &count) == TD_ERR_OK);
+
+	exiting7 = 1;
+
+	printf("Calling td_close(3)\n");
+	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
+
+	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	    "counted threads (%d) != expected threads (%d)",
+	    count, max_threads + 1);
+}
+
+ATF_TC(threads8);
+ATF_TC_HEAD(threads8, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Asserts that pthread_t can be translated with td_map_pth2thr() "
+	    "to td_thread_t -- compare thread's name of pthread_t and "
+	    "td_thread_t");
+}
+
+static volatile int exiting8;
+
+static void *
+busyFunction8(void *arg)
+{
+
+	while (exiting8 == 0)
+		usleep(50000);
+
+	return NULL;
+}
+
+static int
+iterateThreads8(td_thread_t *thread, void *arg)
+{
+	int *counter = (int *)arg;
+
+	++(*counter);
+
+	return TD_ERR_OK;
+}
+
+ATF_TC_BODY(threads8, tc)
+{
+	struct td_proc_callbacks_t dummy_callbacks;
+	td_proc_t *main_ta;
+	const size_t max_threads = 10;
+	size_t i;
+	pthread_t threads[max_threads];
+	int count = 0;
+
+	dummy_callbacks.proc_read	= basic_proc_read;
+	dummy_callbacks.proc_write	= basic_proc_write;
+	dummy_callbacks.proc_lookup	= basic_proc_lookup;
+	dummy_callbacks.proc_regsize	= dummy_proc_regsize;
+	dummy_callbacks.proc_getregs	= dummy_proc_getregs;
+	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
+
+	for (i = 0; i < max_threads; i++) {
+		printf("Creating thread %zu\n", i);
+		PTHREAD_REQUIRE
+		    (pthread_create(&threads[i], NULL, busyFunction8, NULL));
+	}
+
+	printf("Calling td_open(3)\n");
+	ATF_REQUIRE(td_open(&dummy_callbacks, NULL, &main_ta) == TD_ERR_OK);
+
+	ATF_REQUIRE(td_thr_iter(main_ta, iterateThreads8, &count) == TD_ERR_OK);
+
+	for (i = 0; i < max_threads; i++) {
+		td_thread_t *td_thread;
+		const int len = PTHREAD_MAX_NAMELEN_NP;
+		char td_threadname[len];
+		char pth_threadname[len];
+		ATF_REQUIRE(td_map_pth2thr(main_ta, threads[i], &td_thread)
+		    == TD_ERR_OK);
+		ATF_REQUIRE(td_thr_getname(td_thread, td_threadname, len)
+		    == TD_ERR_OK);
+		PTHREAD_REQUIRE
+		    (pthread_getname_np(threads[i], pth_threadname, len));
+		ATF_REQUIRE(strcmp(td_threadname, pth_threadname) == 0);
+	}
+
+	exiting8 = 1;
+
+	printf("Calling td_close(3)\n");
+	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
+
+	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	    "counted threads (%d) != expected threads (%d)",
+	    count, max_threads + 1);
+}
+
+ATF_TC(threads9);
+ATF_TC_HEAD(threads9, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Asserts that pthread_t can be translated with td_map_pth2thr() "
+	    "to td_thread_t -- assert that thread is in the TD_STATE_RUNNING "
+            "state");
+}
+
+static volatile int exiting9;
+
+static void *
+busyFunction9(void *arg)
+{
+
+	while (exiting9 == 0)
+		usleep(50000);
+
+	return NULL;
+}
+
+static int
+iterateThreads9(td_thread_t *thread, void *arg)
+{
+	int *counter = (int *)arg;
+
+	++(*counter);
+
+	return TD_ERR_OK;
+}
+
+ATF_TC_BODY(threads9, tc)
+{
+	struct td_proc_callbacks_t dummy_callbacks;
+	td_proc_t *main_ta;
+	const size_t max_threads = 10;
+	size_t i;
+	pthread_t threads[max_threads];
+	int count = 0;
+
+	dummy_callbacks.proc_read	= basic_proc_read;
+	dummy_callbacks.proc_write	= basic_proc_write;
+	dummy_callbacks.proc_lookup	= basic_proc_lookup;
+	dummy_callbacks.proc_regsize	= dummy_proc_regsize;
+	dummy_callbacks.proc_getregs	= dummy_proc_getregs;
+	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
+
+	for (i = 0; i < max_threads; i++) {
+		printf("Creating thread %zu\n", i);
+		PTHREAD_REQUIRE
+		    (pthread_create(&threads[i], NULL, busyFunction9, NULL));
+	}
+
+	printf("Calling td_open(3)\n");
+	ATF_REQUIRE(td_open(&dummy_callbacks, NULL, &main_ta) == TD_ERR_OK);
+
+	for (i = 0; i < max_threads; i++) {
+		td_thread_t *td_thread;
+		td_thread_info_t info;
+		ATF_REQUIRE(td_map_pth2thr(main_ta, threads[i], &td_thread)
+		    == TD_ERR_OK);
+		ATF_REQUIRE(td_thr_info(td_thread, &info) == TD_ERR_OK);
+		ATF_REQUIRE_EQ(info.thread_state, TD_STATE_RUNNING);
+	}
+
+	ATF_REQUIRE(td_thr_iter(main_ta, iterateThreads9, &count) == TD_ERR_OK);
+
+	exiting9 = 1;
+
+	printf("Calling td_close(3)\n");
+	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
+
+	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	    "counted threads (%d) != expected threads (%d)",
+	    count, max_threads + 1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -407,6 +718,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, threads3);
 	ATF_TP_ADD_TC(tp, threads4);
 	ATF_TP_ADD_TC(tp, threads5);
+	ATF_TP_ADD_TC(tp, threads6);
+	ATF_TP_ADD_TC(tp, threads7);
+	ATF_TP_ADD_TC(tp, threads8);
+	ATF_TP_ADD_TC(tp, threads9);
 
 	return atf_no_error();
 }
