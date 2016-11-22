@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.1 2016/08/05 16:50:07 scole Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.2 2016/11/22 22:53:09 scole Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1 2016/08/05 16:50:07 scole Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2 2016/11/22 22:53:09 scole Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
     struct core *chdr)
 {
   /* XXX implement, pause in ski */
-  __asm __volatile("break.i 0");
+  __asm __volatile("break.i 1");
 
   return -1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetsticky.c,v 1.1 2016/08/05 16:40:47 scole Exp $	*/
+/*	$NetBSD: fpgetsticky.c,v 1.2 2016/11/22 22:50:32 scole Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@ fp_except_t
 fpgetsticky(void)
 {
   /* XXX implement, pause in ski */
-  __asm __volatile("break.i 0");
+  __asm __volatile("break.i 1");
 
   return (fp_except_t)0;
 }
