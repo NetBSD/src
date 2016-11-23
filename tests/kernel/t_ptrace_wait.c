@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.24 2016/11/23 19:46:51 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.25 2016/11/23 20:56:47 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.24 2016/11/23 19:46:51 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.25 2016/11/23 20:56:47 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2525,14 +2525,14 @@ ATF_TC_BODY(io_write_d4, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-ATF_TC(read1);
-ATF_TC_HEAD(read1, tc)
+ATF_TC(read_d1);
+ATF_TC_HEAD(read_d1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify PT_READ_D called once");
 }
 
-ATF_TC_BODY(read1, tc)
+ATF_TC_BODY(read_d1, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -2586,14 +2586,14 @@ ATF_TC_BODY(read1, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-ATF_TC(read2);
-ATF_TC_HEAD(read2, tc)
+ATF_TC(read_d2);
+ATF_TC_HEAD(read_d2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify PT_READ_D called twice");
 }
 
-ATF_TC_BODY(read2, tc)
+ATF_TC_BODY(read_d2, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -2659,14 +2659,14 @@ ATF_TC_BODY(read2, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-ATF_TC(read3);
-ATF_TC_HEAD(read3, tc)
+ATF_TC(read_d3);
+ATF_TC_HEAD(read_d3, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify PT_READ_D called three times");
 }
 
-ATF_TC_BODY(read3, tc)
+ATF_TC_BODY(read_d3, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -2744,14 +2744,14 @@ ATF_TC_BODY(read3, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-ATF_TC(read4);
-ATF_TC_HEAD(read4, tc)
+ATF_TC(read_d4);
+ATF_TC_HEAD(read_d4, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify PT_READ_D called four times");
 }
 
-ATF_TC_BODY(read4, tc)
+ATF_TC_BODY(read_d4, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -2841,14 +2841,14 @@ ATF_TC_BODY(read4, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-ATF_TC(write1);
-ATF_TC_HEAD(write1, tc)
+ATF_TC(write_d1);
+ATF_TC_HEAD(write_d1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify PT_WRITE_D called once");
 }
 
-ATF_TC_BODY(write1, tc)
+ATF_TC_BODY(write_d1, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -2897,14 +2897,14 @@ ATF_TC_BODY(write1, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-ATF_TC(write2);
-ATF_TC_HEAD(write2, tc)
+ATF_TC(write_d2);
+ATF_TC_HEAD(write_d2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify PT_WRITE_D called twice");
 }
 
-ATF_TC_BODY(write2, tc)
+ATF_TC_BODY(write_d2, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -2960,14 +2960,14 @@ ATF_TC_BODY(write2, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-ATF_TC(write3);
-ATF_TC_HEAD(write3, tc)
+ATF_TC(write_d3);
+ATF_TC_HEAD(write_d3, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify PT_WRITE_D called three times");
 }
 
-ATF_TC_BODY(write3, tc)
+ATF_TC_BODY(write_d3, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -3030,14 +3030,14 @@ ATF_TC_BODY(write3, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-ATF_TC(write4);
-ATF_TC_HEAD(write4, tc)
+ATF_TC(write_d4);
+ATF_TC_HEAD(write_d4, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify PT_WRITE_D called four times");
 }
 
-ATF_TC_BODY(write4, tc)
+ATF_TC_BODY(write_d4, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -3321,15 +3321,15 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, io_write_d3);
 	ATF_TP_ADD_TC(tp, io_write_d4);
 
-	ATF_TP_ADD_TC(tp, read1);
-	ATF_TP_ADD_TC(tp, read2);
-	ATF_TP_ADD_TC(tp, read3);
-	ATF_TP_ADD_TC(tp, read4);
+	ATF_TP_ADD_TC(tp, read_d1);
+	ATF_TP_ADD_TC(tp, read_d2);
+	ATF_TP_ADD_TC(tp, read_d3);
+	ATF_TP_ADD_TC(tp, read_d4);
 
-	ATF_TP_ADD_TC(tp, write1);
-	ATF_TP_ADD_TC(tp, write2);
-	ATF_TP_ADD_TC(tp, write3);
-	ATF_TP_ADD_TC(tp, write4);
+	ATF_TP_ADD_TC(tp, write_d1);
+	ATF_TP_ADD_TC(tp, write_d2);
+	ATF_TP_ADD_TC(tp, write_d3);
+	ATF_TP_ADD_TC(tp, write_d4);
 
 	ATF_TP_ADD_TC(tp, io_read_d_write_d_handshake1);
 	ATF_TP_ADD_TC(tp, io_read_d_write_d_handshake2);
