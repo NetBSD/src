@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.10 2016/11/22 19:51:37 snj Exp $
+#	$NetBSD: Makefile,v 1.11 2016/11/23 09:50:52 snj Exp $
 
 .include <bsd.own.mk>
 
 # XXX when updating to a new xkeyboard-config, regenerate with xsltproc
-MAN=		xkeyboard-config.7
+#MAN=		xkeyboard-config.7
 
 SUBDIR=		compat geometry keycodes rules symbols types
 
