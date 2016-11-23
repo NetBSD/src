@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.21 2016/11/23 01:49:05 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.22 2016/11/23 03:02:56 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.21 2016/11/23 01:49:05 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.22 2016/11/23 03:02:56 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2525,6 +2525,322 @@ ATF_TC_BODY(io_write_d4, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
+ATF_TC(read1);
+ATF_TC_HEAD(read1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify PT_READ_D called once");
+}
+
+ATF_TC_BODY(read1, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+	int lookup_me = 0;
+	const int magic = (int)random();
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		lookup_me = magic;
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Read new lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
+	    child, getpid());
+	errno = 0;
+	lookup_me = ptrace(PT_READ_D, child, &lookup_me, 0);
+	ATF_REQUIRE_EQ(errno, 0);
+
+	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
+	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me, magic);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+ATF_TC(read2);
+ATF_TC_HEAD(read2, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify PT_READ_D called twice");
+}
+
+ATF_TC_BODY(read2, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+	int lookup_me1 = 0;
+	int lookup_me2 = 0;
+	const int magic1 = (int)random();
+	const int magic2 = (int)random();
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		lookup_me1 = magic1;
+		lookup_me2 = magic2;
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
+	    child, getpid());
+	errno = 0;
+	lookup_me1 = ptrace(PT_READ_D, child, &lookup_me1, 0);
+	ATF_REQUIRE_EQ(errno, 0);
+
+	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
+	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me1, magic1);
+
+	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
+	    child, getpid());
+	errno = 0;
+	lookup_me2 = ptrace(PT_READ_D, child, &lookup_me2, 0);
+	ATF_REQUIRE_EQ(errno, 0);
+
+	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
+	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me2, magic2);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+ATF_TC(read3);
+ATF_TC_HEAD(read3, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify PT_READ_D called three times");
+}
+
+ATF_TC_BODY(read3, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+	int lookup_me1 = 0;
+	int lookup_me2 = 0;
+	int lookup_me3 = 0;
+	const int magic1 = (int)random();
+	const int magic2 = (int)random();
+	const int magic3 = (int)random();
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		lookup_me1 = magic1;
+		lookup_me2 = magic2;
+		lookup_me3 = magic3;
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
+	    child, getpid());
+	errno = 0;
+	lookup_me1 = ptrace(PT_READ_D, child, &lookup_me1, 0);
+	ATF_REQUIRE_EQ(errno, 0);
+
+	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
+	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me1, magic1);
+
+	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
+	    child, getpid());
+	errno = 0;
+	lookup_me2 = ptrace(PT_READ_D, child, &lookup_me2, 0);
+	ATF_REQUIRE_EQ(errno, 0);
+
+	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
+	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me2, magic2);
+
+	printf("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
+	    child, getpid());
+	errno = 0;
+	lookup_me3 = ptrace(PT_READ_D, child, &lookup_me3, 0);
+	ATF_REQUIRE_EQ(errno, 0);
+
+	ATF_REQUIRE_EQ_MSG(lookup_me3, magic3,
+	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me3, magic3);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+ATF_TC(read4);
+ATF_TC_HEAD(read4, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify PT_READ_D called four times");
+}
+
+ATF_TC_BODY(read4, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+	int lookup_me1 = 0;
+	int lookup_me2 = 0;
+	int lookup_me3 = 0;
+	int lookup_me4 = 0;
+	const int magic1 = (int)random();
+	const int magic2 = (int)random();
+	const int magic3 = (int)random();
+	const int magic4 = (int)random();
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		lookup_me1 = magic1;
+		lookup_me2 = magic2;
+		lookup_me3 = magic3;
+		lookup_me4 = magic4;
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
+	    child, getpid());
+	errno = 0;
+	lookup_me1 = ptrace(PT_READ_D, child, &lookup_me1, 0);
+	ATF_REQUIRE_EQ(errno, 0);
+
+	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
+	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me1, magic1);
+
+	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
+	    child, getpid());
+	errno = 0;
+	lookup_me2 = ptrace(PT_READ_D, child, &lookup_me2, 0);
+	ATF_REQUIRE_EQ(errno, 0);
+
+	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
+	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me2, magic2);
+
+	printf("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
+	    child, getpid());
+	errno = 0;
+	lookup_me3 = ptrace(PT_READ_D, child, &lookup_me3, 0);
+	ATF_REQUIRE_EQ(errno, 0);
+
+	ATF_REQUIRE_EQ_MSG(lookup_me3, magic3,
+	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me3, magic3);
+
+	printf("Read new lookup_me4 from tracee (PID=%d) by tracer (PID=%d)\n",
+	    child, getpid());
+	errno = 0;
+	lookup_me4 = ptrace(PT_READ_D, child, &lookup_me4, 0);
+	ATF_REQUIRE_EQ(errno, 0);
+
+	ATF_REQUIRE_EQ_MSG(lookup_me4, magic4,
+	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me4, magic4);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
 ATF_TC(write1);
 ATF_TC_HEAD(write1, tc)
 {
@@ -2832,6 +3148,11 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, io_write_d2);
 	ATF_TP_ADD_TC(tp, io_write_d3);
 	ATF_TP_ADD_TC(tp, io_write_d4);
+
+	ATF_TP_ADD_TC(tp, read1);
+	ATF_TP_ADD_TC(tp, read2);
+	ATF_TP_ADD_TC(tp, read3);
+	ATF_TP_ADD_TC(tp, read4);
 
 	ATF_TP_ADD_TC(tp, write1);
 	ATF_TP_ADD_TC(tp, write2);
