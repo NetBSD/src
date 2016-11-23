@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.19 2016/11/23 17:22:44 christos Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.20 2016/11/23 17:25:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.19 2016/11/23 17:22:44 christos Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.20 2016/11/23 17:25:11 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -349,9 +349,9 @@ sysctlfs_domount(struct puffs_usermount *pu)
 	filegid = getegid();
 
 	if (fileuid == 0)
-		fileperms = 0755;
+		fileperms = 0644;
 	else
-		fileperms = 0555;
+		fileperms = 0444;
 
 	return 0;
 }
