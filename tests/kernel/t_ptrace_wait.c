@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.23 2016/11/23 05:00:20 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.24 2016/11/23 19:46:51 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23 2016/11/23 05:00:20 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.24 2016/11/23 19:46:51 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3107,14 +3107,14 @@ ATF_TC_BODY(write4, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-ATF_TC(io_read_write_handshake);
-ATF_TC_HEAD(io_read_write_handshake, tc)
+ATF_TC(io_read_d_write_d_handshake1);
+ATF_TC_HEAD(io_read_d_write_d_handshake1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify PT_IO with PIOD_READ_D and PIOD_WRITE_D handshake");
 }
 
-ATF_TC_BODY(io_read_write_handshake, tc)
+ATF_TC_BODY(io_read_d_write_d_handshake1, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -3193,6 +3193,92 @@ ATF_TC_BODY(io_read_write_handshake, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
+ATF_TC(io_read_d_write_d_handshake2);
+ATF_TC_HEAD(io_read_d_write_d_handshake2, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify PT_IO with PIOD_WRITE_D and PIOD_READ_D handshake");
+}
+
+ATF_TC_BODY(io_read_d_write_d_handshake2, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+	uint8_t lookup_me_fromtracee = 0;
+	const uint8_t magic_fromtracee = (uint8_t)random();
+	uint8_t lookup_me_totracee = 0;
+	const uint8_t magic_totracee = (uint8_t)random();
+	struct ptrace_io_desc io_fromtracee = {
+		.piod_op = PIOD_READ_D,
+		.piod_offs = &lookup_me_fromtracee,
+		.piod_addr = &lookup_me_fromtracee,
+		.piod_len = sizeof(lookup_me_fromtracee)
+	};
+	struct ptrace_io_desc io_totracee = {
+		.piod_op = PIOD_WRITE_D,
+		.piod_offs = &lookup_me_totracee,
+		.piod_addr = &lookup_me_totracee,
+		.piod_len = sizeof(lookup_me_totracee)
+	};
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		lookup_me_fromtracee = magic_fromtracee;
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		FORKEE_ASSERT_EQ(lookup_me_totracee, magic_totracee);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	lookup_me_totracee = magic_totracee;
+
+	printf("Write lookup_me_totracee to PID=%d by tracer (PID=%d)\n",
+	    child, getpid());
+	ATF_REQUIRE(ptrace(PT_IO, child, &io_totracee, 0) != -1);
+
+	ATF_REQUIRE_EQ_MSG(lookup_me_totracee, magic_totracee,
+	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me_totracee,
+	    magic_totracee);
+
+	printf("Read lookup_me_fromtracee PID=%d by tracer (PID=%d)\n",
+	    child, getpid());
+	ATF_REQUIRE(ptrace(PT_IO, child, &io_fromtracee, 0) != -1);
+
+	ATF_REQUIRE_EQ_MSG(lookup_me_fromtracee, magic_fromtracee,
+	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me_fromtracee,
+	    magic_fromtracee);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
 #if defined(TWAIT_HAVE_PID)
 #define ATF_TP_ADD_TC_HAVE_PID(a,b)	ATF_TP_ADD_TC(a,b)
 #else
@@ -3245,7 +3331,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, write3);
 	ATF_TP_ADD_TC(tp, write4);
 
-	ATF_TP_ADD_TC(tp, io_read_write_handshake);
+	ATF_TP_ADD_TC(tp, io_read_d_write_d_handshake1);
+	ATF_TP_ADD_TC(tp, io_read_d_write_d_handshake2);
 
 	return atf_no_error();
 }
