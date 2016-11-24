@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.11 2016/11/24 09:03:53 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.12 2016/11/24 11:34:51 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -97,7 +97,7 @@ dad_basic_body()
 	#atf_check -s exit:0 -x "cat ./out |grep 10.0.0.2 |grep -iq tentative"
 
 	atf_check -s exit:0 sleep 2
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	# Check DAD probe packets
@@ -111,7 +111,7 @@ dad_basic_body()
 	atf_check -s exit:0 rump.ifconfig -w 10
 	# Give a chance to send a DAD announce packet
 	atf_check -s exit:0 sleep 1
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	# Check the DAD announce packet
@@ -131,7 +131,7 @@ dad_basic_body()
 
 	# Check DAD probe packets
 	atf_check -s exit:0 sleep 2
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 	pkt=$(make_pkt_str 10.0.0.3 0.0.0.0)
 	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
@@ -140,7 +140,7 @@ dad_basic_body()
 	atf_check -s exit:0 rump.ifconfig -w 10
 	# Give a chance to send a DAD announce packet
 	atf_check -s exit:0 sleep 1
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	# Check the DAD announce packet
