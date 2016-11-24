@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.27 2016/11/23 23:30:50 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.28 2016/11/24 04:08:37 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.27 2016/11/23 23:30:50 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.28 2016/11/24 04:08:37 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.27 2016/11/23 23:30:50 kamil Exp $");
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
+#include <machine/reg.h>
 #include <err.h>
 #include <errno.h>
 #include <signal.h>
@@ -179,6 +180,21 @@ do {									\
 		err(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: %s",\
 		     __FILE__, __LINE__, __func__, #x);			\
 } while (/*CONSTCOND*/0)
+
+/*
+ * Simplify logic for functions using general purpose registers add HAVE_GPREGS
+ *
+ * For platforms that do not implement all needed calls for simplicity assume
+ * that they are unsupported at all.
+ */
+#if defined(PT_GETREGS)			\
+    && defined(PT_SETREGS)		\
+    && defined(PTRACE_REG_PC)		\
+    && defined(PTRACE_REG_SET_PC)	\
+    && defined(PTRACE_REG_SP)		\
+    && defined(PTRACE_REG_INTRV)
+#define HAVE_GPREGS
+#endif
 
 /*
  * If waitid(2) returns because one or more processes have a state change to
@@ -4042,10 +4058,297 @@ ATF_TC_BODY(read_i4, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
+#if defined(HAVE_GPREGS)
+ATF_TC(regs1);
+ATF_TC_HEAD(regs1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify plain PT_GETREGS call without further steps");
+}
+
+ATF_TC_BODY(regs1, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct reg r;
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETREGS for the child process\n");
+	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_GPREGS)
+ATF_TC(regs2);
+ATF_TC_HEAD(regs2, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify plain PT_GETREGS call and retrieve PC");
+}
+
+ATF_TC_BODY(regs2, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct reg r;
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETREGS for the child process\n");
+	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+
+	printf("Retrieved PC=%" PRIxREGISTER "\n", PTRACE_REG_PC(&r));
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_GPREGS)
+ATF_TC(regs3);
+ATF_TC_HEAD(regs3, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify plain PT_GETREGS call and retrieve SP");
+}
+
+ATF_TC_BODY(regs3, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct reg r;
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETREGS for the child process\n");
+	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+
+	printf("Retrieved SP=%" PRIxREGISTER "\n", PTRACE_REG_SP(&r));
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_GPREGS)
+ATF_TC(regs4);
+ATF_TC_HEAD(regs4, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify plain PT_GETREGS call and retrieve INTRV");
+}
+
+ATF_TC_BODY(regs4, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct reg r;
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETREGS for the child process\n");
+	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+
+	printf("Retrieved INTRV=%" PRIxREGISTER "\n", PTRACE_REG_INTRV(&r));
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_GPREGS)
+ATF_TC(regs5);
+ATF_TC_HEAD(regs5, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify PT_GETREGS and PT_SETREGS calls without changing regs");
+}
+
+ATF_TC_BODY(regs5, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct reg r;
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETREGS for the child process\n");
+	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+
+	printf("Call SETREGS for the child process (without changed regs)\n");
+	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+
+	printf("Retrieved SP=%" PRIxREGISTER "\n", PTRACE_REG_SP(&r));
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
 #if defined(TWAIT_HAVE_PID)
 #define ATF_TP_ADD_TC_HAVE_PID(a,b)	ATF_TP_ADD_TC(a,b)
 #else
 #define ATF_TP_ADD_TC_HAVE_PID(a,b)
+#endif
+
+#if defined(HAVE_GPREGS)
+#define ATF_TP_ADD_TC_HAVE_GPREGS(a,b)	ATF_TP_ADD_TC(a,b)
+#else
+#define ATF_TP_ADD_TC_HAVE_GPREGS(a,b)
 #endif
 
 ATF_TP_ADD_TCS(tp)
@@ -4109,6 +4412,12 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, read_i2);
 	ATF_TP_ADD_TC(tp, read_i3);
 	ATF_TP_ADD_TC(tp, read_i4);
+
+	ATF_TP_ADD_TC_HAVE_GPREGS(tp, regs1);
+	ATF_TP_ADD_TC_HAVE_GPREGS(tp, regs2);
+	ATF_TP_ADD_TC_HAVE_GPREGS(tp, regs3);
+	ATF_TP_ADD_TC_HAVE_GPREGS(tp, regs4);
+	ATF_TP_ADD_TC_HAVE_GPREGS(tp, regs5);
 
 	return atf_no_error();
 }
