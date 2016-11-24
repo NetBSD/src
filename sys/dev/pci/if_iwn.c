@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.79 2016/08/03 19:56:41 mlelstv Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.80 2016/11/24 12:32:47 hkenken Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.79 2016/08/03 19:56:41 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.80 2016/11/24 12:32:47 hkenken Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -2642,12 +2642,16 @@ iwn_intr(void *arg)
 
 	/* Read interrupts from ICT (fast) or from registers (slow). */
 	if (sc->sc_flags & IWN_FLAG_USE_ICT) {
+		bus_dmamap_sync(sc->sc_dmat, sc->ict_dma.map, 0,
+		    IWN_ICT_SIZE, BUS_DMASYNC_POSTREAD);
 		tmp = 0;
 		while (sc->ict[sc->ict_cur] != 0) {
 			tmp |= sc->ict[sc->ict_cur];
 			sc->ict[sc->ict_cur] = 0;	/* Acknowledge. */
 			sc->ict_cur = (sc->ict_cur + 1) % IWN_ICT_COUNT;
 		}
+		bus_dmamap_sync(sc->sc_dmat, sc->ict_dma.map, 0,
+		    IWN_ICT_SIZE, BUS_DMASYNC_PREWRITE);
 		tmp = le32toh(tmp);
 		if (tmp == 0xffffffff)	/* Shouldn't happen. */
 			tmp = 0;
