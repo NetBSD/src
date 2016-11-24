@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.2 2016/11/24 09:03:53 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.3 2016/11/24 09:05:16 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -47,3 +47,41 @@ extract_new_packets()
 	cat ./.__diff
 }
 
+check_route()
+{
+	local target=$1
+	local gw=$2
+	local flags=${3:-\.\+}
+	local ifname=${4:-\.\+}
+
+	target=$(echo $target |sed 's/\./\\./g')
+	if [ "$gw" = "" ]; then
+		gw=".+"
+	else
+		gw=$(echo $gw |sed 's/\./\\./g')
+	fi
+
+	atf_check -s exit:0 -e ignore \
+	    -o match:"^$target +$gw +$flags +- +- +.+ +$ifname" \
+	    rump.netstat -rn
+}
+
+check_route_flags()
+{
+
+	check_route "$1" "" "$2" ""
+}
+
+check_route_gw()
+{
+
+	check_route "$1" "$2" "" ""
+}
+
+check_route_no_entry()
+{
+	local target=$(echo $1 |sed 's/\./\\./g')
+
+	atf_check -s exit:0 -e ignore -o not-match:"^$target" \
+	    rump.netstat -rn
+}
