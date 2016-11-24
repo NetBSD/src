@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.16 2016/11/07 05:25:37 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.17 2016/11/24 11:54:57 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,7 +40,6 @@ IP6SRC=fc00:0:0:1::2
 IP6SRCGW=fc00:0:0:1::1
 IP6DSTGW=fc00:0:0:2::1
 IP6DST=fc00:0:0:2::2
-HTTPD_PID=httpd.pid
 HTML_FILE=index.html
 
 DEBUG=${DEBUG:-false}
@@ -164,20 +163,6 @@ setup6()
 	setup_endpoint $SOCKSRC $IP6SRC bus1 ipv6 $IP6SRCGW
 	setup_endpoint $SOCKDST $IP6DST bus2 ipv6 $IP6DSTGW
 	setup_forwarder ipv6
-}
-
-setup_bozo()
-{
-	local ip=$1
-
-	export RUMP_SERVER=$SOCKDST
-
-	touch $HTML_FILE
-	# start bozo in daemon mode
-	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    /usr/libexec/httpd -P $HTTPD_PID -i $ip -b -s $(pwd)
-
-	$DEBUG && rump.netstat -a
 }
 
 test_http_get()
@@ -312,16 +297,6 @@ cleanup()
 	env RUMP_SERVER=$SOCKSRC rump.halt
 	env RUMP_SERVER=$SOCKFWD rump.halt
 	env RUMP_SERVER=$SOCKDST rump.halt
-}
-
-cleanup_bozo()
-{
-
-	if [ -f $HTTPD_PID ]; then
-		kill -9 "$(cat $HTTPD_PID)"
-		rm -f $HTTPD_PID
-	fi
-	rm -f $HTML_FILE
 }
 
 dump()
@@ -481,7 +456,10 @@ ipforwarding_fastforward_v4_body()
 	setup_forwarding
 	test_setup_forwarding
 
-	setup_bozo $IP4DST
+	touch $HTML_FILE
+	start_httpd $SOCKDST $IP4DST
+	$DEBUG && rump.netstat -a
+
 	test_http_get $IP4DST
 
 	teardown_interfaces
@@ -495,7 +473,10 @@ ipforwarding_fastforward_v6_body()
 	setup_forwarding6
 	test_setup_forwarding6
 
-	setup_bozo $IP6DST
+	touch $HTML_FILE
+	start_httpd $SOCKDST $IP6DST
+	$DEBUG && rump.netstat -a
+
 	test_http_get "[$IP6DST]"
 
 	teardown_interfaces
@@ -513,7 +494,10 @@ ipforwarding_misc_body()
 
 	test_directed_broadcast
 
-	setup_bozo $IP4DST
+	touch $HTML_FILE
+	start_httpd $SOCKDST $IP4DST
+	$DEBUG && rump.netstat -a
+
 	test_sysctl_ttl $IP4DST
 
 	teardown_interfaces
@@ -535,21 +519,21 @@ ipforwarding_v6_cleanup()
 ipforwarding_fastforward_v4_cleanup()
 {
 	dump
-	cleanup_bozo
+	stop_httpd
 	cleanup
 }
 
 ipforwarding_fastforward_v6_cleanup()
 {
 	dump
-	cleanup_bozo
+	stop_httpd
 	cleanup
 }
 
 ipforwarding_misc_cleanup()
 {
 	dump
-	cleanup_bozo
+	stop_httpd
 	cleanup
 }
 
