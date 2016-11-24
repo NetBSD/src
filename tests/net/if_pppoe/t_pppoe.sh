@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.11 2016/11/10 10:32:59 knakahara Exp $
+#	$NetBSD: t_pppoe.sh,v 1.12 2016/11/24 09:03:53 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -28,6 +28,7 @@
 server="rump_server -lrump -lrumpnet -lrumpnet_net -lrumpnet_netinet	\
 		    -lrumpnet_netinet6 -lrumpnet_shmif -lrumpdev	\
 		    -lrumpnet_pppoe"
+# pppoectl doesn't work with RUMPHIJACK=sysctl=yes
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so"
 
 SERVER=unix://commsock1

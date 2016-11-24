@@ -1,4 +1,4 @@
-#	$NetBSD: t_tap.sh,v 1.4 2016/11/07 05:25:37 ozaki-r Exp $
+#	$NetBSD: t_tap.sh,v 1.5 2016/11/24 09:03:53 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -27,7 +27,6 @@
 
 RUMP_FLAGS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6"
 RUMP_FLAGS="$RUMP_FLAGS -lrumpnet_shmif -lrumpnet_tap -lrumpnet_bridge -lrumpdev"
-HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
 
 SOCK_LOCAL=unix://commsock1
 SOCK_REMOTE=unix://commsock2
