@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx6.c,v 1.1 2016/05/17 06:44:45 ryo Exp $	*/
+/*	$NetBSD: if_enet_imx6.c,v 1.2 2016/11/24 03:59:36 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.1 2016/05/17 06:44:45 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.2 2016/11/24 03:59:36 hkenken Exp $");
 
 #include "locators.h"
 #include "imxccm.h"
@@ -93,7 +93,8 @@ enet_attach(device_t parent, device_t self, void *aux)
 
 #if NIMXCCM > 0
 	/* PLL power up */
-	if (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1) != 0) {
+	if (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
+		CCM_ANALOG_PLL_ENET_ENABLE) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't enable CCM_ANALOG_PLL_ENET\n");
 		return;
