@@ -1,4 +1,4 @@
-#	$NetBSD: t_mtudisc6.sh,v 1.3 2016/11/24 09:03:53 ozaki-r Exp $
+#	$NetBSD: t_mtudisc6.sh,v 1.4 2016/11/24 11:54:57 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -32,7 +32,6 @@ inetserver="$inetserver -lrumpdev"
 SOCKLOCAL=unix://commsock1
 SOCKGATEWAY=unix://commsock2
 SOCKREMOTE=unix://commsock3
-HTTPD_PID=httpd.pid
 HTML_FILE=index.html
 
 DEBUG=${DEBUG:-false}
@@ -64,27 +63,16 @@ setup_server()
 	$DEBUG && rump.ifconfig $if
 }
 
-setup_httpd()
+prepare_download_file()
 {
-	local sock=$1
-	local ip=$2
+	local file=$1
 	local data="0123456789"
 
-	export RUMP_SERVER=$sock
-
-	touch $HTML_FILE
+	touch $file
 	for i in `seq 1 512`
 	do
-		echo $data >> $HTML_FILE
+		echo $data >> $file
 	done
-
-	# start httpd in daemon mode
-	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    /usr/libexec/httpd -P $HTTPD_PID -i $ip -b -s $(pwd)
-
-	$DEBUG && rump.netstat -a
-
-	sleep 5
 }
 
 do_http_get()
@@ -139,7 +127,9 @@ mtudisc6_basic_body()
 	export RUMP_SERVER=$SOCKREMOTE
 
 	# Start httpd daemon
-	setup_httpd $SOCKREMOTE $remote_ip
+	prepare_download_file $HTML_FILE
+	start_httpd $SOCKREMOTE $remote_ip
+	$DEBUG && rump.netstat -a
 
 	# Teach the peer that local serer is behind gateway server
 	atf_check -s exit:0 -o ignore \
@@ -202,7 +192,7 @@ mtudisc6_basic_cleanup()
 {
 
 	$DEBUG && dump
-	kill "$(cat ${HTTPD_PID})"
+	stop_httpd
 	env RUMP_SERVER=$SOCKLOCAL rump.halt
 	env RUMP_SERVER=$SOCKGATEWAY rump.halt
 	env RUMP_SERVER=$SOCKREMOTE rump.halt
