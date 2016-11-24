@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.39 2016/11/01 15:30:47 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.40 2016/11/24 00:12:52 kamil Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 1, 2016
@@ -534,24 +534,6 @@ If zero is supplied, the first thread of the process is written.
 .\" can usefully be changed; they are set to the values returned by the
 .\" syscall and will be passed back to the traced process by the normal
 .\" syscall return mechanism.
-.It Dv PT_DUMPCORE
-Cause the traced process to dump core.
-If the
-.Fa addr
-argument is not
-.Dv NULL
-it is taken to be the pathname of the core file to be generated and the
-.Fa data
-argument should contain the length of the pathname.
-The pathname may contain
-.Dv %
-patterns that are expanded as described in
-.Xr sysctl 8 .
-If the
-.Fa data
-argument is
-.Dv NULL ,
-the default core file path generation rules are followed.
 .El
 .Sh ERRORS
 Some requests can cause
