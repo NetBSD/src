@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.5 2016/11/24 09:07:09 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.6 2016/11/24 11:54:57 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -102,4 +102,32 @@ get_macaddr()
 
 	env RUMP_SERVER=${1} \
 	    rump.ifconfig ${2} |awk '/address/ {print $2;}'
+}
+
+HTTPD_PID=./.__httpd.pid
+start_httpd()
+{
+	local sock=$1
+	local ip=$2
+	local backup=$RUMP_SERVER
+
+	export RUMP_SERVER=$sock
+
+	# start httpd in daemon mode
+	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
+	    /usr/libexec/httpd -P $HTTPD_PID -i $ip -b -s $(pwd)
+
+	export RUMP_SERVER=$backup
+
+	sleep 3
+}
+
+stop_httpd()
+{
+
+	if [ -f $HTTPD_PID ]; then
+		kill -9 $(cat $HTTPD_PID)
+		rm -f $HTTPD_PID
+		sleep 1
+	fi
 }
