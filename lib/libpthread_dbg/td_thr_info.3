@@ -1,4 +1,4 @@
-.\"	$NetBSD: td_thr_info.3,v 1.1 2016/11/21 22:19:03 kamil Exp $
+.\"	$NetBSD: td_thr_info.3,v 1.2 2016/11/24 12:18:02 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,20 +41,19 @@ The
 .Fn td_thr_info
 function retrieves information on a thread specified in the
 .Fa thread
-argument
-and saves the result in
+argument and saves the result in
 .Fa info .
 .Pp
-In the
+The following members are defined in the
 .Dv td_thread_info_t
-structure there are defined the following members:
+structure:
 .Bl -column "thread_state" "caddr_t" "Pointer to underlaying Dv pthread_t object"
 .It Sy Name      Ta Sy Type     Ta Sy Description
 .It thread_addr  Ta Dv caddr_t  Ta Points to underlaying Dv pthread_t object
 .It thread_state Ta Dv int      Ta Defines Dv TD_STATE of the thread
 .\" TODO: Add ATF tests, verify and document:
 .\" thread_type
-.\" thread_id 
+.\" thread_id
 .\" thread_stack
 .\" thread_hasjoiners
 .\" thread_tls
@@ -73,8 +72,8 @@ The following state types are possible in
 .It Dv TD_STATE_DEAD    Ta "Thread is dead"
 .El
 .Pp
-It is not possible to retrieve with this interface information whether a thread
-is suspended or resumed,
+It is not possible to retrieve information whether a thread
+is suspended or resumed using this interface,
 as this data is stored only inside the kernel and not in the
 .Dv pthread_t
 object.
@@ -83,7 +82,7 @@ The
 name is kept for backwards compatibility with old Scheduler Activation threads.
 The
 .Dv TD_STATE_RUNNING
-state might be returned only for mismatch between versions of
+state might only be returned for a mismatch between the versions of
 .Xr pthread 3
 and
 .Xr pthread_dbg 3 .
@@ -103,6 +102,7 @@ The
 function first appeared in
 .Nx 2.0 .
 .Sh AUTHORS
+.An -nosplit
 .An Nathan J. Williams Aq Mt nathanw@NetBSD.org
 .Pp
 This manual page was written by

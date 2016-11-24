@@ -1,4 +1,4 @@
-.\"	$NetBSD: td_map_pth2thr.3,v 1.1 2016/11/22 03:52:01 kamil Exp $
+.\"	$NetBSD: td_map_pth2thr.3,v 1.2 2016/11/24 12:18:02 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm td_map_pth2thr
-.Nd convert the pthread_t to a thread handle
+.Nd convert a pthread_t to a thread handle
 .Sh LIBRARY
 .Lb libpthread_dbg
 .Sh SYNOPSIS
@@ -39,11 +39,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-function converts
+function converts a
 .Ta POSIX
 thread
 .Fa thread
-to
+to a
 .Xr pthread_dbg 3
 specific thread passed in the
 .Fa threadp
@@ -64,6 +64,7 @@ The
 function first appeared in
 .Nx 2.0 .
 .Sh AUTHORS
+.An -nosplit
 .An Nathan J. Williams Aq Mt nathanw@NetBSD.org
 .Pp
 This manual page was written by
