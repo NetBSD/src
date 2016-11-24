@@ -1,4 +1,4 @@
-/*	$NetBSD: t_threads.c,v 1.6 2016/11/22 03:21:46 kamil Exp $	*/
+/*	$NetBSD: t_threads.c,v 1.7 2016/11/24 19:26:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_threads.c,v 1.6 2016/11/22 03:21:46 kamil Exp $");
+__RCSID("$NetBSD: t_threads.c,v 1.7 2016/11/24 19:26:32 joerg Exp $");
 
 #include <dlfcn.h>
 #include <pthread.h>
@@ -164,7 +164,7 @@ ATF_TC_BODY(threads2, tc)
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
 	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
-	    "counted threads (%d) != expected threads (%d)",
+	    "counted threads (%d) != expected threads (%zu)",
 	    count, max_threads + 1);
 }
 
@@ -235,7 +235,7 @@ ATF_TC_BODY(threads3, tc)
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
 	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
-	    "counted threads (%d) != expected threads (%d)",
+	    "counted threads (%d) != expected threads (%zu)",
 	    count, max_threads + 1);
 }
 
@@ -313,7 +313,7 @@ ATF_TC_BODY(threads4, tc)
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
 	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
-	    "counted threads (%d) != expected threads (%d)",
+	    "counted threads (%d) != expected threads (%zu)",
 	    count, max_threads + 1);
 }
 
@@ -395,7 +395,7 @@ ATF_TC_BODY(threads5, tc)
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
 	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
-	    "counted threads (%d) != expected threads (%d)",
+	    "counted threads (%d) != expected threads (%zu)",
 	    count, max_threads + 1);
 }
 
@@ -470,7 +470,7 @@ ATF_TC_BODY(threads6, tc)
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
 	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
-	    "counted threads (%d) != expected threads (%d)",
+	    "counted threads (%d) != expected threads (%zu)",
 	    count, max_threads + 1);
 }
 
@@ -545,7 +545,7 @@ ATF_TC_BODY(threads7, tc)
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
 	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
-	    "counted threads (%d) != expected threads (%d)",
+	    "counted threads (%d) != expected threads (%zu)",
 	    count, max_threads + 1);
 }
 
@@ -628,7 +628,7 @@ ATF_TC_BODY(threads8, tc)
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
 	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
-	    "counted threads (%d) != expected threads (%d)",
+	    "counted threads (%d) != expected threads (%zu)",
 	    count, max_threads + 1);
 }
 
@@ -706,7 +706,7 @@ ATF_TC_BODY(threads9, tc)
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
 	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
-	    "counted threads (%d) != expected threads (%d)",
+	    "counted threads (%d) != expected threads (%zu)",
 	    count, max_threads + 1);
 }
 
