@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.28 2016/11/24 04:08:37 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.29 2016/11/24 04:11:16 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.28 2016/11/24 04:08:37 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.29 2016/11/24 04:11:16 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4322,8 +4322,6 @@ ATF_TC_BODY(regs5, tc)
 
 	printf("Call SETREGS for the child process (without changed regs)\n");
 	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
-
-	printf("Retrieved SP=%" PRIxREGISTER "\n", PTRACE_REG_SP(&r));
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
