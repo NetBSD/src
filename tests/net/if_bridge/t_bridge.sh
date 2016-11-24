@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.13 2016/08/10 22:37:07 kre Exp $
+#	$NetBSD: t_bridge.sh,v 1.14 2016/11/24 09:07:09 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -360,11 +360,8 @@ test_brconfig_maxaddr()
 	addr1= addr3= n=
 
 	# Get MAC addresses of the endpoints.
-	export RUMP_SERVER=$SOCK1
-	addr1=$(rump.ifconfig shmif0 |awk '/address:/ { print $2;}')
-	export RUMP_SERVER=$SOCK3
-	addr3=$(rump.ifconfig shmif0 |awk '/address:/ { print $2;}')
-	unset RUMP_SERVER
+	addr1=$(get_macaddr $SOCK1 shmif0)
+	addr3=$(get_macaddr $SOCK3 shmif0)
 
 	# Refill the MAC addresses of the endpoints.
 	export RUMP_SERVER=$SOCK1
@@ -448,11 +445,8 @@ bridge_rtable_body()
 	setup_bridge
 
 	# Get MAC addresses of the endpoints.
-	export RUMP_SERVER=$SOCK1
-	addr1=$(rump.ifconfig shmif0 |awk '/address:/ { print $2;}')
-	export RUMP_SERVER=$SOCK3
-	addr3=$(rump.ifconfig shmif0 |awk '/address:/ { print $2;}')
-	unset RUMP_SERVER
+	addr1=$(get_macaddr $SOCK1 shmif0)
+	addr3=$(get_macaddr $SOCK3 shmif0)
 
 	# Confirm there is no MAC address caches.
 	export RUMP_SERVER=$SOCK2

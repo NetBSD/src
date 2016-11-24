@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.4 2016/11/24 09:06:09 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.5 2016/11/24 09:07:09 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -95,4 +95,11 @@ get_linklocal_addr()
 	unset RUMP_SERVER
 
 	return 0
+}
+
+get_macaddr()
+{
+
+	env RUMP_SERVER=${1} \
+	    rump.ifconfig ${2} |awk '/address/ {print $2;}'
 }

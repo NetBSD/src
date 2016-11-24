@@ -1,4 +1,4 @@
-#	$NetBSD: t_ping6_opts.sh,v 1.6 2016/11/24 09:06:09 ozaki-r Exp $
+#	$NetBSD: t_ping6_opts.sh,v 1.7 2016/11/24 09:07:09 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -107,13 +107,6 @@ setup6()
 	setup_endpoint $SOCKSRC $IP6SRC $BUS_SRCGW $IP6SRCGW
 	setup_endpoint $SOCKDST $IP6DST $BUS_DSTGW $IP6DSTGW
 	setup_forwarder
-}
-
-get_macaddr()
-{
-
-	env RUMP_SERVER=${1} \
-	    rump.ifconfig ${2} |awk '/address/ {print $2;}'
 }
 
 check_echo_request_pkt()
