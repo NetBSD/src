@@ -1,4 +1,4 @@
-#	$NetBSD: t_icmp_redirect.sh,v 1.4 2016/11/07 05:25:36 ozaki-r Exp $
+#	$NetBSD: t_icmp_redirect.sh,v 1.5 2016/11/24 09:05:16 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -111,33 +111,6 @@ teardown_gw()
 	env RUMP_SERVER=$SOCK_GW rump.halt
 }
 
-check_entry_flags()
-{
-	local ip=$(echo $1 |sed 's/\./\\./g')
-	local flags=$2
-
-	atf_check -s exit:0 -o match:" $flags " -e ignore -x \
-	    "rump.netstat -rn -f inet | grep ^'$ip'"
-}
-
-check_entry_gw()
-{
-	local ip=$(echo $1 |sed 's/\./\\./g')
-	local gw=$2
-
-	atf_check -s exit:0 -o match:" $gw " -e ignore -x \
-	    "rump.netstat -rn -f inet | grep ^'$ip'"
-}
-
-check_entry_fail()
-{
-	local ip=$(echo $1 |sed 's/\./\\./g')
-	local flags=$2  # Not used currently
-
-	atf_check -s not-exit:0 -e ignore -x \
-	    "rump.netstat -rn -f inet | grep ^'$ip'"
-}
-
 icmp_redirect_timeout_body()
 {
 
@@ -159,7 +132,7 @@ icmp_redirect_timeout_body()
 	export RUMP_SERVER=$SOCK_PEER
 	atf_check -s exit:0 -o ignore rump.route add -net 10.0.2.0/24 10.0.0.254
 	# Up, Gateway, Static
-	check_entry_flags 10.0.2/24 UGS
+	check_route_flags 10.0.2/24 UGS
 
 	#
 	# Setup the default gateway to the peer, 10.0.0.1
@@ -167,20 +140,20 @@ icmp_redirect_timeout_body()
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.route add default 10.0.0.1
 	# Up, Gateway, Static
-	check_entry_flags default UGS
+	check_route_flags default UGS
 
 	# Try ping 10.0.2.1
 	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 10.0.2.1
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Gateway, Host, Dynamic
-	check_entry_flags 10.0.2.1 UGHD
-	check_entry_gw 10.0.2.1 10.0.0.254
+	check_route_flags 10.0.2.1 UGHD
+	check_route_gw 10.0.2.1 10.0.0.254
 
 	atf_check -s exit:0 sleep $((REDIRECT_TIMEOUT + 2))
 
 	# The dynamic entry should be expired and removed
-	check_entry_fail 10.0.2.1
+	check_route_no_entry 10.0.2.1
 
 	export RUMP_SERVER=$SOCK_PEER
 	$DEBUG && rump.netstat -rn -f inet
@@ -249,7 +222,7 @@ icmp_redirect_body()
 	export RUMP_SERVER=$SOCK_PEER
 	atf_check -s exit:0 -o ignore rump.route add -net 10.0.2.0/24 10.0.0.254
 	# Up, Gateway, Static
-	check_entry_flags 10.0.2/24 UGS
+	check_route_flags 10.0.2/24 UGS
 
 	#
 	# Setup the default gateway to the peer, 10.0.0.1
@@ -257,7 +230,7 @@ icmp_redirect_body()
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.route add default 10.0.0.1
 	# Up, Gateway, Static
-	check_entry_flags default UGS
+	check_route_flags default UGS
 
 
 	### ICMP redirects are NOT sent by the peer ###
@@ -274,7 +247,7 @@ icmp_redirect_body()
 	$DEBUG && rump.netstat -rn -f inet
 
 	# A direct route shouldn't be created
-	check_entry_fail 10.0.2.1
+	check_route_no_entry 10.0.2.1
 
 
 	### ICMP redirects are sent by the peer ###
@@ -291,8 +264,8 @@ icmp_redirect_body()
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Gateway, Host, Dynamic
-	check_entry_flags 10.0.2.1 UGHD
-	check_entry_gw 10.0.2.1 10.0.0.254
+	check_route_flags 10.0.2.1 UGHD
+	check_route_gw 10.0.2.1 10.0.0.254
 
 	export RUMP_SERVER=$SOCK_PEER
 	$DEBUG && rump.netstat -rn -f inet
@@ -301,7 +274,7 @@ icmp_redirect_body()
 	# cleanup
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.route delete 10.0.2.1
-	check_entry_fail 10.0.2.1
+	check_route_no_entry 10.0.2.1
 
 
 	### ICMP redirects are NOT sent by the peer (again) ###
@@ -318,7 +291,7 @@ icmp_redirect_body()
 	$DEBUG && rump.netstat -rn -f inet
 
 	# A direct route shouldn't be created
-	check_entry_fail 10.0.2.1
+	check_route_no_entry 10.0.2.1
 
 
 	teardown_gw
