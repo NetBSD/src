@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_puffs.8,v 1.2 2016/11/23 14:33:29 pho Exp $
+.\"	$NetBSD: mount_puffs.8,v 1.3 2016/11/24 12:38:32 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -51,14 +51,17 @@ file.
 .Pp
 This command is usually only executed by
 .Xr mount 8 ,
-as users can directly execute file servers to mount them. The
+as users can directly execute file servers to mount them.
+The
 .Ar program
 parameter is either the path to the file server or the file name of
-it. In the latter case the
+it.
+In the latter case the
 .Ar program
 is searched in the
 .Ev PATH
-variable. The
+variable.
+The
 .Ar source
 parameter, when specified, will be passed to the
 .Ar program
@@ -71,7 +74,8 @@ The options are as follows:
 .It Fl o
 Options are specified with a
 .Fl o
-flag followed by a comma separated string of options. They are passed to the
+flag followed by a comma separated string of options.
+They are passed to the
 .Ar program
 without any modifications except for
 .Cm getargs ,
@@ -96,7 +100,7 @@ at
 Or in
 .Xr fstab 5 :
 .Bd -literal -offset indent -compact
-dmegfs  /dmesg  puffs  rw
+dmesgfs  /dmesg  puffs  rw
 .Ed
 .Pp
 These are equivalent to:
@@ -121,8 +125,8 @@ Or in
 These are equivalent to:
 .Dl # /usr/bin/rot13fs -o rdonly /home/foo /mnt/rot13
 .Sh SEE ALSO
-.Xr puffs 4 ,
 .Xr refuse 3 ,
+.Xr puffs 4 ,
 .Xr fusermount 8 ,
 .Xr mount 8
 .Sh HISTORY
