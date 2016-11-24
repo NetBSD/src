@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.9 2016/11/07 05:25:36 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.10 2016/11/24 08:52:19 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -72,21 +72,6 @@ make_pkt_str()
 	pkt="> ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806), length 42:"
 	pkt="$pkt Request who-has $target tell $sender, length 28"
 	echo $pkt
-}
-
-extract_new_packets()
-{
-	local old=./old
-
-	if [ ! -f $old ]; then
-		old=/dev/null
-	fi
-
-	shmif_dumpbus -p - bus1 2>/dev/null| \
-	    tcpdump -n -e -r - 2>/dev/null > ./new
-	diff -u $old ./new |grep '^+' |cut -d '+' -f 2 > ./diff
-	mv -f ./new ./old
-	cat ./diff
 }
 
 dad_basic_body()
