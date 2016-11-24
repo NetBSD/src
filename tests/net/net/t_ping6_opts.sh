@@ -1,4 +1,4 @@
-#	$NetBSD: t_ping6_opts.sh,v 1.5 2016/11/24 08:52:20 ozaki-r Exp $
+#	$NetBSD: t_ping6_opts.sh,v 1.6 2016/11/24 09:06:09 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -107,14 +107,6 @@ setup6()
 	setup_endpoint $SOCKSRC $IP6SRC $BUS_SRCGW $IP6SRCGW
 	setup_endpoint $SOCKDST $IP6DST $BUS_DSTGW $IP6DSTGW
 	setup_forwarder
-}
-
-get_lladdr()
-{
-
-	env RUMP_SERVER=${1} \
-	    rump.ifconfig ${2} inet6 | grep "fe80" \
-	    | awk '{print $2}' | sed -e "s/%$2//g" -e 's;/[0-9]*$;;'
 }
 
 get_macaddr()
@@ -242,8 +234,8 @@ ping6_opts_interface_body()
 	setup6
 	setup_forwarding6
 
-	shmif0_lladdr=$(get_lladdr ${SOCKSRC} shmif0)
-	gw_lladdr=$(get_lladdr ${SOCKFWD} shmif0)
+	shmif0_lladdr=$(get_linklocal_addr ${SOCKSRC} shmif0)
+	gw_lladdr=$(get_linklocal_addr ${SOCKFWD} shmif0)
 
 	export RUMP_SERVER=$SOCKSRC
 	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT $gw_lladdr
@@ -253,7 +245,7 @@ ping6_opts_interface_body()
 	atf_check -s exit:0 rump.ifconfig shmif1 linkstr $BUS_SRCGW
 	atf_check -s exit:0 rump.ifconfig shmif1 up
 	atf_check -s exit:0 rump.ifconfig -w 10
-	shmif1_lladdr=$(get_lladdr ${SOCKSRC} shmif1)
+	shmif1_lladdr=$(get_linklocal_addr ${SOCKSRC} shmif1)
 
 	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT $gw_lladdr
 	check_echo_request_pkt $shmif0_lladdr $gw_lladdr

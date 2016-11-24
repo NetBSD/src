@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6address.sh,v 1.10 2016/11/07 05:25:37 ozaki-r Exp $
+#	$NetBSD: t_ipv6address.sh,v 1.11 2016/11/24 09:06:09 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -119,10 +119,10 @@ setup_route()
 {
 	local tmp_rump_server=$RUMP_SERVER
 
-	local src_if0_lladdr=`get_lladdr ${SOCKSRC} shmif0`
-	local dst_if0_lladdr=`get_lladdr ${SOCKDST} shmif0`
-	local fwd_if0_lladdr=`get_lladdr ${SOCKFWD} shmif0`
-	local fwd_if1_lladdr=`get_lladdr ${SOCKFWD} shmif1`
+	local src_if0_lladdr=`get_linklocal_addr ${SOCKSRC} shmif0`
+	local dst_if0_lladdr=`get_linklocal_addr ${SOCKDST} shmif0`
+	local fwd_if0_lladdr=`get_linklocal_addr ${SOCKFWD} shmif0`
+	local fwd_if1_lladdr=`get_linklocal_addr ${SOCKFWD} shmif1`
 
 	export RUMP_SERVER=${SOCKSRC}
 	atf_check -s ignore -o ignore -e ignore \
@@ -198,17 +198,6 @@ cleanup_bus()
 	export RUMP_SERVER=$tmp_rump_server
 }
 
-
-get_lladdr()
-{
-	export RUMP_SERVER=${1}
-	rump.ifconfig ${2} inet6 | grep "fe80" \
-	    | awk '{print $2}' | sed -e "s/%$2//g" -e 's;/[0-9]*$;;'
-	unset RUMP_SERVER
-
-	return 0
-}
-
 cleanup_rump_servers()
 {
 
@@ -253,11 +242,11 @@ linklocal_body()
 {
 	setup
 
-	local src_if0_lladdr=`get_lladdr ${SOCKSRC} shmif0`
-	local src_if1_lladdr=`get_lladdr ${SOCKSRC} shmif1`
-	local dst_if0_lladdr=`get_lladdr ${SOCKDST} shmif0`
-	local fwd_if0_lladdr=`get_lladdr ${SOCKFWD} shmif0`
-	local fwd_if1_lladdr=`get_lladdr ${SOCKFWD} shmif1`
+	local src_if0_lladdr=`get_linklocal_addr ${SOCKSRC} shmif0`
+	local src_if1_lladdr=`get_linklocal_addr ${SOCKSRC} shmif1`
+	local dst_if0_lladdr=`get_linklocal_addr ${SOCKDST} shmif0`
+	local fwd_if0_lladdr=`get_linklocal_addr ${SOCKFWD} shmif0`
+	local fwd_if1_lladdr=`get_linklocal_addr ${SOCKFWD} shmif1`
 
 	export RUMP_SERVER=${SOCKSRC}
 	$DEBUG && rump.ifconfig
@@ -362,7 +351,7 @@ linklocal_ops_body()
 
 	setup
 
-	src_if0_lladdr=`get_lladdr ${SOCKSRC} shmif0`
+	src_if0_lladdr=`get_linklocal_addr ${SOCKSRC} shmif0`
 
 	export RUMP_SERVER=${SOCKSRC}
 

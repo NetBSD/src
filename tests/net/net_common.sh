@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.3 2016/11/24 09:05:16 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.4 2016/11/24 09:06:09 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -84,4 +84,15 @@ check_route_no_entry()
 
 	atf_check -s exit:0 -e ignore -o not-match:"^$target" \
 	    rump.netstat -rn
+}
+
+get_linklocal_addr()
+{
+
+	export RUMP_SERVER=${1}
+	rump.ifconfig ${2} inet6 |
+	    awk "/fe80/ {sub(/%$2/, \"\"); sub(/\\/[0-9]*/, \"\"); print \$2;}"
+	unset RUMP_SERVER
+
+	return 0
 }
