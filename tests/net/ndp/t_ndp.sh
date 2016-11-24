@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.14 2016/11/07 05:25:37 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.15 2016/11/24 08:52:20 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -324,21 +324,6 @@ make_pkt_str_na()
 	echo $pkt
 }
 
-extract_new_packets()
-{
-	local old=./old
-
-	if [ ! -f $old ]; then
-		old=/dev/null
-	fi
-
-	shmif_dumpbus -p - bus1 2>/dev/null| \
-	    tcpdump -n -e -r - 2>/dev/null > ./new
-	diff -u $old ./new |grep '^+' |cut -d '+' -f 2 > ./diff
-	mv -f ./new ./old
-	cat ./diff
-}
-
 ndp_link_activation_body()
 {
 	local linklocal=
@@ -350,7 +335,7 @@ ndp_link_activation_body()
 	setup_src_server
 
 	# flush old packets
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 
 	export RUMP_SERVER=$SOCKSRC
 
@@ -358,7 +343,7 @@ ndp_link_activation_body()
 	    b2:a1:00:00:00:01
 
 	atf_check -s exit:0 sleep 1
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	linklocal=$(rump.ifconfig shmif0 |awk '/fe80/ {print $2;}' |awk -F % '{print $1;}')
@@ -371,7 +356,7 @@ ndp_link_activation_body()
 	    b2:a1:00:00:00:02 active
 
 	atf_check -s exit:0 sleep 1
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	linklocal=$(rump.ifconfig shmif0 |awk '/fe80/ {print $2;}' |awk -F % '{print $1;}')

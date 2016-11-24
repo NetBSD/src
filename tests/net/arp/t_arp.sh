@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.18 2016/11/07 05:25:36 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.19 2016/11/24 08:52:19 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -363,21 +363,6 @@ make_pkt_str_garp()
 	echo $pkt
 }
 
-extract_new_packets()
-{
-	local old=./old
-
-	if [ ! -f $old ]; then
-		old=/dev/null
-	fi
-
-	shmif_dumpbus -p - bus1 2>/dev/null| \
-	    tcpdump -n -e -r - 2>/dev/null > ./new
-	diff -u $old ./new |grep '^+' |cut -d '+' -f 2 > ./diff
-	mv -f ./new ./old
-	cat ./diff
-}
-
 test_proxy_arp()
 {
 	local arp_keep=5
@@ -416,7 +401,7 @@ test_proxy_arp()
 	    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP1
 
 	# Flushing
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 
 	# Set up proxy ARP entry
 	export RUMP_SERVER=$SOCKDST
@@ -435,7 +420,7 @@ test_proxy_arp()
 		    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP1
 	fi
 
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	pkt1=$(make_pkt_str_arprep $IP4DST_PROXYARP1 $macaddr_dst)
@@ -461,7 +446,7 @@ test_proxy_arp()
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP2
 
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	# ARP reply should be sent
@@ -502,7 +487,7 @@ arp_link_activation_body()
 	setup_src_server $arp_keep
 
 	# flush old packets
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 
 	export RUMP_SERVER=$SOCKSRC
 
@@ -510,7 +495,7 @@ arp_link_activation_body()
 	    b2:a1:00:00:00:01
 
 	atf_check -s exit:0 sleep 1
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	pkt=$(make_pkt_str_arpreq $IP4SRC $IP4SRC)
@@ -520,7 +505,7 @@ arp_link_activation_body()
 	    b2:a1:00:00:00:02 active
 
 	atf_check -s exit:0 sleep 1
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	pkt=$(make_pkt_str_arpreq $IP4SRC $IP4SRC)

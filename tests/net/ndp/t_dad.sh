@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.9 2016/11/07 05:25:37 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.10 2016/11/24 08:52:20 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -85,21 +85,6 @@ make_ns_pkt_str()
 	echo $pkt
 }
 
-extract_new_packets()
-{
-	local old=./old
-
-	if [ ! -f $old ]; then
-		old=/dev/null
-	fi
-
-	shmif_dumpbus -p - bus1 2>/dev/null| \
-	    tcpdump -n -e -r - 2>/dev/null > ./new
-	diff -u $old ./new |grep '^+' |cut -d '+' -f 2 > ./diff
-	mv -f ./new ./old
-	cat ./diff
-}
-
 dad_basic_body()
 {
 	local pkt=
@@ -127,7 +112,7 @@ dad_basic_body()
 	#atf_check -s exit:0 -x "cat ./out |grep $localip2 |grep -q tentative"
 
 	atf_check -s exit:0 sleep 2
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	# Check DAD probe packets (Neighbor Solicitation Message)
@@ -139,7 +124,7 @@ dad_basic_body()
 
 	# Waiting for DAD complete
 	atf_check -s exit:0 rump.ifconfig -w 10
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	# IPv6 DAD doesn't announce (Neighbor Advertisement Message)
@@ -158,14 +143,14 @@ dad_basic_body()
 
 	# Check DAD probe packets (Neighbor Solicitation Message)
 	atf_check -s exit:0 sleep 2
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 	pkt=$(make_ns_pkt_str 3 $localip3)
 	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
 
 	# Waiting for DAD complete
 	atf_check -s exit:0 rump.ifconfig -w 10
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	# IPv6 DAD doesn't announce (Neighbor Advertisement Message)
@@ -229,7 +214,7 @@ dad_count_test()
 
 	# Check the number of DAD probe packets (Neighbor Solicitation Message)
 	atf_check -s exit:0 sleep 2
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 	pkt=$(make_ns_pkt_str $id $target)
 	atf_check -s exit:0 -o match:"$count" \
