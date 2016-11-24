@@ -1,4 +1,4 @@
-/*	$NetBSD: h_execthr.c,v 1.6 2016/11/21 06:38:18 dholland Exp $	*/
+/*	$NetBSD: h_execthr.c,v 1.7 2016/11/24 00:37:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <rump/rumpclient.h>
 #include <rump/rump_syscalls.h>
 
-#define VERBOSE
+//#define VERBOSE
 
 #ifdef VERBOSE
 #define SAY(...) printf(__VA_ARGS__)
