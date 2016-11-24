@@ -1,4 +1,4 @@
-#	$NetBSD: t_mtudisc.sh,v 1.3 2016/11/07 05:25:37 ozaki-r Exp $
+#	$NetBSD: t_mtudisc.sh,v 1.4 2016/11/24 08:52:20 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -62,22 +62,6 @@ setup_server()
 	atf_check -s exit:0 rump.ifconfig -w 10
 
 	$DEBUG && rump.ifconfig $if
-}
-
-extract_new_packets()
-{
-	local bus=$1
-	local old=./old
-
-	if [ ! -f $old ]; then
-		old=/dev/null
-	fi
-
-	shmif_dumpbus -p - $bus 2>/dev/null| \
-	    tcpdump -n -e -r - 2>/dev/null > ./new
-	diff -u $old ./new |grep '^+' |cut -d '+' -f 2 > ./diff
-	mv -f ./new ./old
-	cat ./diff
 }
 
 setup_httpd()
