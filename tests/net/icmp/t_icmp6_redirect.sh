@@ -1,4 +1,4 @@
-#	$NetBSD: t_icmp6_redirect.sh,v 1.5 2016/11/07 05:25:36 ozaki-r Exp $
+#	$NetBSD: t_icmp6_redirect.sh,v 1.6 2016/11/24 09:06:09 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -46,17 +46,6 @@ REDIRECT_TIMEOUT=5
 
 DEBUG=${DEBUG:-true}
 
-get_lladdr()
-{
-
-	export RUMP_SERVER=${1}
-	rump.ifconfig ${2} inet6 |
-	    awk "/fe80/ {sub(/%$2/, \"\"); sub(/\\/[0-9]*/, \"\"); print \$2;}"
-	unset RUMP_SERVER
-
-	return 0
-}
-
 atf_test_case icmp6_redirect_basic cleanup
 
 icmp6_redirect_basic_head()
@@ -96,8 +85,8 @@ icmp6_redirect_basic_body()
 	    net.inet6.ip6.forwarding=1
 	unset RUMP_SERVER
 
-	gw1_lladdr0=`get_lladdr ${SOCK_GW1} shmif0`
-	gw1_lladdr1=`get_lladdr ${SOCK_GW1} shmif1`
+	gw1_lladdr0=`get_linklocal_addr ${SOCK_GW1} shmif0`
+	gw1_lladdr1=`get_linklocal_addr ${SOCK_GW1} shmif1`
 
 	# Setup a peer behind gateway #1
 	export RUMP_SERVER=${SOCK_PEER}
@@ -122,7 +111,7 @@ icmp6_redirect_basic_body()
 	    net.inet6.ip6.forwarding=1
 	unset RUMP_SERVER
 
-	gw2_lladdr0=`get_lladdr ${SOCK_GW2} shmif0`
+	gw2_lladdr0=`get_linklocal_addr ${SOCK_GW2} shmif0`
 
 	export RUMP_SERVER=${SOCK_LOCAL}
 	atf_check -s exit:0 rump.ifconfig shmif0 create
