@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipaddress.sh,v 1.6 2016/11/24 07:32:19 ozaki-r Exp $
+#	$NetBSD: t_ipaddress.sh,v 1.7 2016/11/24 09:05:17 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -32,24 +32,6 @@ BUS=bus
 
 DEBUG=${DEBUG:-false}
 
-check_entry()
-{
-	local ip=$(echo $1 |sed 's/\./\\./g')
-	local word=$2
-
-	atf_check -s exit:0 -o match:"$word" -e ignore -x \
-	    "rump.netstat -rn | grep ^'$ip'"
-}
-
-check_entry_fail()
-{
-	local ip=$(echo $1 |sed 's/\./\\./g')
-	local flags=$2  # Not used currently
-
-	atf_check -s not-exit:0 -e ignore -x \
-	    "rump.netstat -rn | grep ^'$ip'"
-}
-
 test_same_address()
 {
 	local ip=10.0.0.1
@@ -66,20 +48,16 @@ test_same_address()
 
 	$DEBUG && rump.netstat -nr -f inet
 
-	check_entry $ip UHl
-	check_entry $ip lo0
-	check_entry $ip 'link#2'
-	check_entry $net UC
-	check_entry $net shmif0
-	check_entry $net 'link#2'
+	check_route $ip 'link#2' UHl lo0
+	check_route $net 'link#2' UC shmif0
 
 	# Delete the address
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 $ip delete
 
 	$DEBUG && rump.netstat -nr -f inet
 
-	check_entry_fail $ip
-	check_entry_fail $net
+	check_route_no_entry $ip
+	check_route_no_entry $net
 
 	# Assign the same address again
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 $ip/24
@@ -87,20 +65,16 @@ test_same_address()
 
 	$DEBUG && rump.netstat -nr -f inet
 
-	check_entry $ip UHl
-	check_entry $ip lo0
-	check_entry $ip 'link#2'
-	check_entry $net UC
-	check_entry $net shmif0
-	check_entry $net 'link#2'
+	check_route $ip 'link#2' UHl lo0
+	check_route $net 'link#2' UC shmif0
 
 	# Delete the address again
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 $ip delete
 
 	$DEBUG && rump.netstat -nr -f inet
 
-	check_entry_fail $ip
-	check_entry_fail $net
+	check_route_no_entry $ip
+	check_route_no_entry $net
 }
 
 test_same_address6()
@@ -119,20 +93,16 @@ test_same_address6()
 
 	$DEBUG && rump.netstat -nr -f inet6
 
-	check_entry $ip UHl
-	check_entry $ip lo0
-	check_entry $ip 'link#2'
-	check_entry $net UC
-	check_entry $net shmif0
-	check_entry $net 'link#2'
+	check_route $ip 'link#2' UHl lo0
+	check_route $net 'link#2' UC shmif0
 
 	# Delete the address
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 $ip delete
 
 	$DEBUG && rump.netstat -nr -f inet6
 
-	check_entry_fail $ip
-	check_entry_fail $net
+	check_route_no_entry $ip
+	check_route_no_entry $net
 
 	# Assign the same address again
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 $ip
@@ -140,20 +110,16 @@ test_same_address6()
 
 	$DEBUG && rump.netstat -nr -f inet6
 
-	check_entry $ip UHl
-	check_entry $ip lo0
-	check_entry $ip 'link#2'
-	check_entry $net UC
-	check_entry $net shmif0
-	check_entry $net 'link#2'
+	check_route $ip 'link#2' UHl lo0
+	check_route $net 'link#2' UC shmif0
 
 	# Delete the address again
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 $ip delete
 
 	$DEBUG && rump.netstat -nr -f inet6
 
-	check_entry_fail $ip
-	check_entry_fail $net
+	check_route_no_entry $ip
+	check_route_no_entry $net
 }
 
 test_auto_linklocal()

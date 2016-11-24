@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.12 2016/11/07 05:25:37 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.13 2016/11/24 09:05:17 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -97,40 +97,13 @@ teardown_gw()
 	env RUMP_SERVER=$SOCK_GW rump.halt
 }
 
-check_entry_flags()
-{
-	local ip=$(echo $1 |sed 's/\./\\./g')
-	local flags=$2
-
-	atf_check -s exit:0 -o match:" $flags " -e ignore -x \
-	    "rump.netstat -rn -f inet | grep ^'$ip'"
-}
-
-check_entry_gw()
-{
-	local ip=$(echo $1 |sed 's/\./\\./g')
-	local gw=$2
-
-	atf_check -s exit:0 -o match:" $gw " -e ignore -x \
-	    "rump.netstat -rn -f inet | grep ^'$ip'"
-}
-
-check_entry_fail()
-{
-	ip=$(echo $1 |sed 's/\./\\./g')
-	flags=$2  # Not used currently
-
-	atf_check -s not-exit:0 -e ignore -x \
-	    "rump.netstat -rn -f inet | grep ^'$ip'"
-}
-
 test_lo()
 {
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
 	# Up, Host, local
-	check_entry_flags 127.0.0.1 UHl
+	check_route_flags 127.0.0.1 UHl
 }
 
 test_connected()
@@ -139,10 +112,10 @@ test_connected()
 	export RUMP_SERVER=$SOCK_LOCAL
 
 	# Up, Host, LLINFO, local
-	check_entry_flags 10.0.0.2 UHl
+	check_route_flags 10.0.0.2 UHl
 
 	# Up, Cloning
-	check_entry_flags 10.0.0/24 UC
+	check_route_flags 10.0.0/24 UC
 }
 
 test_default_gateway()
@@ -154,7 +127,7 @@ test_default_gateway()
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Gateway, Static
-	check_entry_flags default UGS
+	check_route_flags default UGS
 }
 
 test_static()
@@ -167,14 +140,14 @@ test_static()
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Gateway, Host, Static
-	check_entry_flags 10.0.1.1 UGHS
+	check_route_flags 10.0.1.1 UGHS
 
 	# Static route to network
 	atf_check -s exit:0 -o ignore rump.route add -net 10.0.2.0/24 10.0.0.1
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Gateway, Static
-	check_entry_flags 10.0.2/24 UGS
+	check_route_flags 10.0.2/24 UGS
 }
 
 test_blackhole()
@@ -193,14 +166,14 @@ test_blackhole()
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Gateway, Blackhole, Static
-	check_entry_flags 10.0.0/24 UGBS
+	check_route_flags 10.0.0/24 UGBS
 
 	atf_check -s not-exit:0 -o match:'100.0% packet loss' \
 	    rump.ping -n -w 1 -c 1 10.0.0.1
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Shouldn't be created
-	check_entry_fail 10.0.0.1 UH
+	check_route_no_entry 10.0.0.1
 }
 
 test_reject()
@@ -215,14 +188,14 @@ test_reject()
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Gateway, Reject, Static
-	check_entry_flags 10.0.0/24 UGRS
+	check_route_flags 10.0.0/24 UGRS
 
 	atf_check -s not-exit:0 -o ignore -e match:'No route to host' \
 	    rump.ping -n -w 1 -c 1 10.0.0.1
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Shouldn't be created
-	check_entry_fail 10.0.0.1 UH
+	check_route_no_entry 10.0.0.1
 
 	# Gateway is lo0 (RTF_GATEWAY)
 
@@ -234,14 +207,14 @@ test_reject()
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Gateway, Reject, Static
-	check_entry_flags 10.0.0/24 UGRS
+	check_route_flags 10.0.0/24 UGRS
 
 	atf_check -s not-exit:0 -o ignore -e match:'Network is unreachable' \
 	    rump.ping -n -w 1 -c 1 10.0.0.1
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Shouldn't be created
-	check_entry_fail 10.0.0.1 UH
+	check_route_no_entry 10.0.0.1
 
 	# Gateway is lo0 (RTF_HOST)
 
@@ -253,7 +226,7 @@ test_reject()
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Host, Reject, Static
-	check_entry_flags 10.0.0.1 UHRS
+	check_route_flags 10.0.0.1 UHRS
 
 	atf_check -s not-exit:0 -o ignore -e match:'No route to host' \
 	    rump.ping -n -w 1 -c 1 10.0.0.1
@@ -278,7 +251,7 @@ test_icmp_redirect()
 	export RUMP_SERVER=$SOCK_PEER
 	atf_check -s exit:0 -o ignore rump.route add -net 10.0.2.0/24 10.0.0.254
 	# Up, Gateway, Static
-	check_entry_flags 10.0.2/24 UGS
+	check_route_flags 10.0.2/24 UGS
 
 	#
 	# Setup the default gateway to the peer, 10.0.0.1
@@ -286,15 +259,15 @@ test_icmp_redirect()
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.route add default 10.0.0.1
 	# Up, Gateway, Static
-	check_entry_flags default UGS
+	check_route_flags default UGS
 
 	# Try ping 10.0.2.1
 	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 10.0.2.1
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Gateway, Host, Dynamic
-	check_entry_flags 10.0.2.1 UGHD
-	check_entry_gw 10.0.2.1 10.0.0.254
+	check_route_flags 10.0.2.1 UGHD
+	check_route_gw 10.0.2.1 10.0.0.254
 
 	export RUMP_SERVER=$SOCK_PEER
 	$DEBUG && rump.netstat -rn -f inet
@@ -307,16 +280,16 @@ test_icmp_redirect()
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.route add 10.0.2.2 10.0.0.1
 	# Up, Gateway, Host, Static
-	check_entry_flags 10.0.2.2 UGHS
-	check_entry_gw 10.0.2.2 10.0.0.1
+	check_route_flags 10.0.2.2 UGHS
+	check_route_gw 10.0.2.2 10.0.0.1
 
 	# Try ping 10.0.2.2
 	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 10.0.2.2
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Gateway, Host, Modified, Static
-	check_entry_flags 10.0.2.2 UGHMS
-	check_entry_gw 10.0.2.2 10.0.0.254
+	check_route_flags 10.0.2.2 UGHMS
+	check_route_gw 10.0.2.2 10.0.0.254
 
 	teardown_gw
 }
@@ -332,7 +305,7 @@ test_announce()
 	$DEBUG && rump.netstat -rn -f inet
 
 	# Up, Gateway, Static, proxy
-	check_entry_flags 10.0.0/24 UGSp
+	check_route_flags 10.0.0/24 UGSp
 
 	# TODO test its behavior
 }
