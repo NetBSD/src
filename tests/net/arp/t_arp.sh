@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.20 2016/11/24 09:03:53 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.21 2016/11/24 09:07:09 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -376,7 +376,7 @@ test_proxy_arp()
 
 	export RUMP_SERVER=$SOCKDST
 	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.ip.forwarding=1
-	macaddr_dst=$(rump.ifconfig shmif0 |awk '/address/ {print $2;}')
+	macaddr_dst=$(get_macaddr $SOCKDST shmif0)
 
 	if [ "$type" = "pub" ]; then
 		opts="pub"
@@ -523,8 +523,7 @@ arp_static_body()
 	setup_dst_server
 	setup_src_server $arp_keep
 
-	export RUMP_SERVER=$SOCKSRC
-	macaddr_src=$(rump.ifconfig shmif0 |awk '/address/ {print $2;}')
+	macaddr_src=$(get_macaddr $SOCKSRC shmif0)
 
 	# Set a (valid) static ARP entry for the src server
 	export RUMP_SERVER=$SOCKDST
