@@ -1,4 +1,4 @@
-.\"	$NetBSD: td_thr_getname.3,v 1.1 2016/11/22 01:49:36 kamil Exp $
+.\"	$NetBSD: td_thr_getname.3,v 1.2 2016/11/24 12:18:02 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,18 +39,18 @@
 .Sh DESCRIPTION
 The
 .Nm
-function retrieves user-assigned name of a thread
+function retrieves the user-assigned name of a thread
 .Fa thread
-and stores it in buffer
+and stores it in the buffer
 .Fa name
 of length
 .Fa len .
-If a name is longer than buffer size, the result will be truncated.
-The returned string always terminates with
+If the name is longer than the buffer size, the result will be truncated.
+The returned string always terminates with a
 .Dv NUL
 byte.
 The maximum length of a thread's name,
-including terminating character is defined by
+including terminating character, is defined by
 .Dv PTHREAD_MAX_NAMELEN_NP .
 .Sh RETURN VALUES
 If successful, the
@@ -68,6 +68,7 @@ The
 function first appeared in
 .Nx 2.0 .
 .Sh AUTHORS
+.An -nosplit
 .An Nathan J. Williams Aq Mt nathanw@NetBSD.org
 .Pp
 This manual page was written by
