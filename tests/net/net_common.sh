@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.1 2016/11/24 08:52:19 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.2 2016/11/24 09:03:53 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -28,6 +28,8 @@
 #
 # Common utility functions for tests/net
 #
+
+HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
 
 extract_new_packets()
 {

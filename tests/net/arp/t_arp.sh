@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.19 2016/11/24 08:52:19 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.20 2016/11/24 09:03:53 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,6 @@
 
 inetlib="-lrumpnet_shmif -lrumpnet_tap -lrumpnet -lrumpnet_net -lrumpnet_netinet"
 inetserver="rump_server $inetlib -lrumpdev"
-HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
 
 SOCKSRC=unix://commsock1
 SOCKDST=unix://commsock2
