@@ -1,4 +1,4 @@
-.\"	$NetBSD: td_open.3,v 1.1 2016/11/21 20:43:25 kamil Exp $
+.\"	$NetBSD: td_open.3,v 1.2 2016/11/24 12:18:02 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,14 +24,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-
 .Dd November 21, 2016
 .Dt TD_OPEN 3
 .Os
 .Sh NAME
-.Nm td_open
+.Nm td_open ,
 .Nm td_close
-.Nd make a conection to a threaded process
+.Nd make or close a connection to a threaded process
 .Sh LIBRARY
 .Lb libpthread_dbg
 .Sh SYNOPSIS
@@ -44,15 +43,15 @@
 The
 .Fn td_open
 function makes a connection to a threaded process.
-That program must be a consumer of
+That program must be a consumer of the
 .Tn POSIX
-threads implementation with the
-.Xr libpthreads 3
+threads implementation using the
+.Xr pthread 3
 library.
 .Pp
 The
 .Fn td_close
-function closes connection to a threaded process.
+function closes a connection to a threaded process.
 .Sh RETURN VALUES
 If successful, the
 .Fn td_open
@@ -73,6 +72,7 @@ and
 functions first appeared in
 .Nx 2.0 .
 .Sh AUTHORS
+.An -nosplit
 .An Nathan J. Williams Aq Mt nathanw@NetBSD.org
 .Pp
 This manual page was written by
