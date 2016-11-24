@@ -1,4 +1,4 @@
-#	$NetBSD: t_gif.sh,v 1.6 2016/10/18 04:10:24 ozaki-r Exp $
+#	$NetBSD: t_gif.sh,v 1.7 2016/11/24 09:03:53 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -27,7 +27,6 @@
 
 server="rump_server -v -lrumpdev -lrumpnet -lrumpnet_net -lrumpnet_netinet \
 		    -lrumpnet_netinet6 -lrumpnet_shmif -lrumpnet_gif"
-HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
 
 SOCK1=unix://commsock1 # for ROUTER1
 SOCK2=unix://commsock2 # for ROUTER2
