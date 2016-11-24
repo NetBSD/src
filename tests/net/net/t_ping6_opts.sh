@@ -1,4 +1,4 @@
-#	$NetBSD: t_ping6_opts.sh,v 1.4 2016/11/07 05:44:48 ozaki-r Exp $
+#	$NetBSD: t_ping6_opts.sh,v 1.5 2016/11/24 08:52:20 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -107,22 +107,6 @@ setup6()
 	setup_endpoint $SOCKSRC $IP6SRC $BUS_SRCGW $IP6SRCGW
 	setup_endpoint $SOCKDST $IP6DST $BUS_DSTGW $IP6DSTGW
 	setup_forwarder
-}
-
-extract_new_packets()
-{
-	local bus=$1
-	local old=./old
-
-	if [ ! -f $old ]; then
-		old=/dev/null
-	fi
-
-	shmif_dumpbus -p - $bus 2>/dev/null| \
-	    tcpdump -n -e -r - 2>/dev/null > ./new
-	diff -u $old ./new |grep '^+' |cut -d '+' -f 2 > ./diff
-	mv -f ./new ./old
-	cat ./diff
 }
 
 get_lladdr()
