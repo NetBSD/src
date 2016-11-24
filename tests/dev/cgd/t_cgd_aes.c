@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cgd_aes.c,v 1.3 2016/11/09 22:01:15 alnsn Exp $	*/
+/*	$NetBSD: t_cgd_aes.c,v 1.4 2016/11/24 22:42:16 alnsn Exp $	*/
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * Copyright (c) 2007 The Institute of Electrical and Electronics Engineers, Inc
@@ -3156,12 +3156,18 @@ unconfigure_cgd(int fd)
 static int
 write_testvec(int cgdfd, const struct testvec *tv)
 {
+	ssize_t written;
 
 	if (rump_sys_lseek(cgdfd, tv->blkno * SECSIZE, SEEK_SET) < 0)
 		return -1;
 
-	if (rump_sys_write(cgdfd, tv->ptxt, SECSIZE) != SECSIZE)
+	written = rump_sys_write(cgdfd, tv->ptxt, SECSIZE);
+	if (written < 0)
 		return -1;
+	if (written != SECSIZE) {
+		errno = EDOM; /* Something distinct. */
+		return -1;
+	}
 
 	return 0;
 }
@@ -3232,10 +3238,10 @@ ATF_TC_BODY(cgd_aes_cbc_128_encblkno1, tc)
 	RL(configure_cgd(cgdfd, dkpath, "aes-cbc", "encblkno1",
 	    aes_cbc_128_key, sizeof(aes_cbc_128_key)));
 
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_128_1_vectors[0]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_128_1_vectors[1]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_128_1_vectors[2]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_128_1_vectors[3]), 0);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_128_1_vectors[0]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_128_1_vectors[1]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_128_1_vectors[2]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_128_1_vectors[3]), -1);
 
 	RL(unconfigure_cgd(cgdfd));
 	RL(configure_cgd(cgdfd, dkpath, "aes-cbc", "encblkno1",
@@ -3279,10 +3285,10 @@ ATF_TC_BODY(cgd_aes_cbc_128_encblkno8, tc)
 	RL(configure_cgd(cgdfd, dkpath, "aes-cbc", "encblkno8",
 	    aes_cbc_128_key, sizeof(aes_cbc_128_key)));
 
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_128_8_vectors[0]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_128_8_vectors[1]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_128_8_vectors[2]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_128_8_vectors[3]), 0);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_128_8_vectors[0]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_128_8_vectors[1]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_128_8_vectors[2]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_128_8_vectors[3]), -1);
 
 	RL(unconfigure_cgd(cgdfd));
 	RL(configure_cgd(cgdfd, dkpath, "aes-cbc", "encblkno8",
@@ -3326,10 +3332,10 @@ ATF_TC_BODY(cgd_aes_cbc_192_encblkno1, tc)
 	RL(configure_cgd(cgdfd, dkpath, "aes-cbc", "encblkno1",
 	    aes_cbc_192_key, sizeof(aes_cbc_192_key)));
 
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_192_1_vectors[0]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_192_1_vectors[1]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_192_1_vectors[2]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_192_1_vectors[3]), 0);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_192_1_vectors[0]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_192_1_vectors[1]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_192_1_vectors[2]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_192_1_vectors[3]), -1);
 
 	RL(unconfigure_cgd(cgdfd));
 	RL(configure_cgd(cgdfd, dkpath, "aes-cbc", "encblkno1",
@@ -3373,10 +3379,10 @@ ATF_TC_BODY(cgd_aes_cbc_192_encblkno8, tc)
 	RL(configure_cgd(cgdfd, dkpath, "aes-cbc", "encblkno8",
 	    aes_cbc_192_key, sizeof(aes_cbc_192_key)));
 
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_192_8_vectors[0]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_192_8_vectors[1]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_192_8_vectors[2]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_192_8_vectors[3]), 0);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_192_8_vectors[0]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_192_8_vectors[1]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_192_8_vectors[2]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_192_8_vectors[3]), -1);
 
 	RL(unconfigure_cgd(cgdfd));
 	RL(configure_cgd(cgdfd, dkpath, "aes-cbc", "encblkno8",
@@ -3420,10 +3426,10 @@ ATF_TC_BODY(cgd_aes_cbc_256_encblkno1, tc)
 	RL(configure_cgd(cgdfd, dkpath, "aes-cbc", "encblkno1",
 	    aes_cbc_256_key, sizeof(aes_cbc_256_key)));
 
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_256_1_vectors[0]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_256_1_vectors[1]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_256_1_vectors[2]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_256_1_vectors[3]), 0);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_256_1_vectors[0]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_256_1_vectors[1]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_256_1_vectors[2]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_256_1_vectors[3]), -1);
 
 	RL(unconfigure_cgd(cgdfd));
 	RL(configure_cgd(cgdfd, dkpath, "aes-cbc", "encblkno1",
@@ -3467,10 +3473,10 @@ ATF_TC_BODY(cgd_aes_cbc_256_encblkno8, tc)
 	RL(configure_cgd(cgdfd, dkpath, "aes-cbc", "encblkno8",
 	    aes_cbc_256_key, sizeof(aes_cbc_256_key)));
 
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_256_8_vectors[0]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_256_8_vectors[1]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_256_8_vectors[2]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_cbc_256_8_vectors[3]), 0);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_256_8_vectors[0]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_256_8_vectors[1]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_256_8_vectors[2]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_cbc_256_8_vectors[3]), -1);
 
 	RL(unconfigure_cgd(cgdfd));
 	RL(configure_cgd(cgdfd, dkpath, "aes-cbc", "encblkno8",
@@ -3515,12 +3521,12 @@ ATF_TC_BODY(cgd_aes_xts_256, tc)
 	RL(configure_cgd(cgdfd, dkpath, "aes-xts", "encblkno1",
 	    aes_xts_256_key, sizeof(aes_xts_256_key)));
 
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_xts_256_vectors[0]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_xts_256_vectors[1]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_xts_256_vectors[2]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_xts_256_vectors[3]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_xts_256_vectors[4]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_xts_256_vectors[5]), 0);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_xts_256_vectors[0]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_xts_256_vectors[1]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_xts_256_vectors[2]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_xts_256_vectors[3]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_xts_256_vectors[4]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_xts_256_vectors[5]), -1);
 
 	RL(unconfigure_cgd(cgdfd));
 	RL(configure_cgd(cgdfd, dkpath, "aes-xts", "encblkno1",
@@ -3569,8 +3575,8 @@ ATF_TC_BODY(cgd_aes_xts_512, tc)
 	RL(configure_cgd(cgdfd, dkpath, "aes-xts", "encblkno1",
 	    aes_xts_512_key, sizeof(aes_xts_512_key)));
 
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_xts_512_vectors[0]), 0);
-	ATF_CHECK_EQ(write_testvec(cgdfd, &aes_xts_512_vectors[1]), 0);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_xts_512_vectors[0]), -1);
+	CHECK_LIBC(write_testvec(cgdfd, &aes_xts_512_vectors[1]), -1);
 
 	RL(unconfigure_cgd(cgdfd));
 	RL(configure_cgd(cgdfd, dkpath, "aes-xts", "encblkno1",
