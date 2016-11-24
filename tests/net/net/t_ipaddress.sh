@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipaddress.sh,v 1.5 2016/11/07 05:25:37 ozaki-r Exp $
+#	$NetBSD: t_ipaddress.sh,v 1.6 2016/11/24 07:32:19 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -69,7 +69,7 @@ test_same_address()
 	check_entry $ip UHl
 	check_entry $ip lo0
 	check_entry $ip 'link#2'
-	check_entry $net U
+	check_entry $net UC
 	check_entry $net shmif0
 	check_entry $net 'link#2'
 
@@ -90,7 +90,7 @@ test_same_address()
 	check_entry $ip UHl
 	check_entry $ip lo0
 	check_entry $ip 'link#2'
-	check_entry $net U
+	check_entry $net UC
 	check_entry $net shmif0
 	check_entry $net 'link#2'
 
@@ -122,7 +122,7 @@ test_same_address6()
 	check_entry $ip UHl
 	check_entry $ip lo0
 	check_entry $ip 'link#2'
-	check_entry $net U
+	check_entry $net UC
 	check_entry $net shmif0
 	check_entry $net 'link#2'
 
@@ -143,7 +143,7 @@ test_same_address6()
 	check_entry $ip UHl
 	check_entry $ip lo0
 	check_entry $ip 'link#2'
-	check_entry $net U
+	check_entry $net UC
 	check_entry $net shmif0
 	check_entry $net 'link#2'
 
