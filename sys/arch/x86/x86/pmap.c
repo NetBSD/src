@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.228 2016/11/25 14:12:56 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.229 2016/11/25 14:26:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.228 2016/11/25 14:12:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.229 2016/11/25 14:26:53 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1621,12 +1621,7 @@ pmap_remap_largepages(void)
 	}
 
 	/* Remap the kernel data+bss using large pages. */
-	/*
-	 * XXX: we need to make sure the first page (PAGE_SIZE) of .data is not
-	 * mapped with a large page. As bizarre as it might seem, this first
-	 * page is used as the VA for the LAPIC page.
-	 */
-	kva = roundup((vaddr_t)&__data_start+PAGE_SIZE, NBPD_L2);
+	kva = roundup((vaddr_t)&__data_start, NBPD_L2);
 	kva_end = rounddown((vaddr_t)&__kernel_end, NBPD_L1);
 	pa = kva - KERNBASE;
 	for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
