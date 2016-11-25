@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.6 2016/11/24 11:54:57 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.7 2016/11/25 08:51:16 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -130,4 +130,163 @@ stop_httpd()
 		rm -f $HTTPD_PID
 		sleep 1
 	fi
+}
+
+BASIC_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet \
+    -lrumpnet_shmif -lrumpdev"
+FS_LIBS="$BASIC_LIBS -lrumpvfs -lrumpfs_ffs"
+
+# We cannot keep variables between test phases, so need to store in files
+_rump_server_socks=./.__socks
+_rump_server_ifaces=./.__ifaces
+_rump_server_buses=./.__buses
+
+_rump_server_start_common()
+{
+	local sock=$1
+	local libs=
+
+	shift 1
+	libs="$*"
+
+	atf_check -s exit:0 rump_server $libs $sock
+
+	echo $sock >> $_rump_server_socks
+	$DEBUG && cat $_rump_server_socks
+}
+
+rump_server_start()
+{
+	local sock=$1
+	local _libs=
+	local libs="$BASIC_LIBS"
+
+	shift 1
+	_libs="$*"
+
+	for lib in $_libs; do
+		libs="$libs -lrumpnet_$lib"
+	done
+
+	_rump_server_start_common $sock $libs
+
+	return 0
+}
+
+rump_server_fs_start()
+{
+	local sock=$1
+	local _libs=
+	local libs="$FS_LIBS"
+
+	shift 1
+	_libs="$*"
+
+	for lib in $_libs; do
+		libs="$libs -lrumpnet_$lib"
+	done
+
+	_rump_server_start_common $sock $libs
+
+	return 0
+}
+
+rump_server_add_iface()
+{
+	local sock=$1
+	local ifname=$2
+	local bus=$3
+	local backup=$RUMP_SERVER
+
+	export RUMP_SERVER=$sock
+	atf_check -s exit:0 rump.ifconfig $ifname create
+	atf_check -s exit:0 rump.ifconfig $ifname linkstr $bus
+	export RUMP_SERVER=$backup
+
+	echo $sock $ifname >> $_rump_server_ifaces
+	$DEBUG && cat $_rump_server_ifaces
+
+	echo $bus >> $_rump_server_buses
+	cat $_rump_server_buses |sort -u >./.__tmp
+	mv -f ./.__tmp $_rump_server_buses
+	$DEBUG && cat $_rump_server_buses
+
+	return 0
+}
+
+rump_server_destroy_ifaces()
+{
+	local backup=$RUMP_SERVER
+
+	$DEBUG && cat $_rump_server_ifaces
+	cat $_rump_server_ifaces | while read sock ifname; do
+		export RUMP_SERVER=$sock
+		if rump.ifconfig -l |grep -q $ifname; then
+			atf_check -s exit:0 rump.ifconfig $ifname destroy
+		fi
+		atf_check -s exit:0 -o ignore rump.ifconfig
+	done
+	export RUMP_SERVER=$backup
+
+	return 0
+}
+
+rump_server_halt_servers()
+{
+	local backup=$RUMP_SERVER
+
+	$DEBUG && cat $_rump_server_socks
+	for sock in $(cat $_rump_server_socks); do
+		env RUMP_SERVER=$sock rump.halt
+	done
+	export RUMP_SERVER=$backup
+
+	return 0
+}
+
+rump_server_dump_servers()
+{
+	local backup=$RUMP_SERVER
+
+	$DEBUG && cat $_rump_server_socks
+	for sock in $(cat $_rump_server_socks); do
+		echo "### Dumping $sock"
+		export RUMP_SERVER=$sock
+		rump.ifconfig
+		rump.netstat -nr
+		rump.arp -na
+		rump.ndp -na
+		$HIJACKING dmesg
+	done
+	export RUMP_SERVER=$backup
+
+	if [ -f rump_server.core ]; then
+		gdb -ex bt /usr/bin/rump_server rump_server.core
+		strings rump_server.core |grep panic
+	fi
+	return 0
+}
+
+rump_server_dump_buses()
+{
+
+	$DEBUG && cat $_rump_server_buses
+	for bus in $(cat $_rump_server_buses); do
+		echo "### Dumping $bus"
+		shmif_dumpbus -p - $bus 2>/dev/null| tcpdump -n -e -r -
+	done
+	return 0
+}
+
+cleanup()
+{
+
+	rump_server_halt_servers
+}
+
+dump()
+{
+
+	rump_server_dump_servers
+	rump_server_dump_buses
 }
