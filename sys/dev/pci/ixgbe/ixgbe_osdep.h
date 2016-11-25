@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.10 2015/08/13 04:56:43 msaitoh Exp $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.11 2016/11/25 13:33:24 msaitoh Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
@@ -125,8 +125,6 @@ typedef uint64_t	u64;
 
 #define le16_to_cpu 
 
-#ifdef __HAVE_PCI_MSI_MSIX
-#define NETBSD_MSI_OR_MSIX
 /*
  * This device driver divides interrupt to TX, RX and link state.
  * Each MSI-X vector indexes are below.
@@ -135,9 +133,6 @@ typedef uint64_t	u64;
 #define IXG_MSIX_TXRXINTR_IDX	0
 #define IXG_MSIX_LINKINTR_IDX	1
 #define IXG_MAX_NINTR		IXG_MSIX_NINTR
-#else
-#define IXG_MAX_NINTR		1
-#endif
 
 #if __FreeBSD_version < 800000
 #if defined(__i386__) || defined(__amd64__)
