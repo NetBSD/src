@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.233 2016/11/17 16:26:08 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.234 2016/11/25 11:57:36 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233 2016/11/17 16:26:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2016/11/25 11:57:36 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1609,6 +1609,12 @@ init_x86_64(paddr_t first_avail)
 
 	/* End of the virtual space we have created so far. */
 	kern_end = KERNBASE + first_avail;
+
+#ifndef XEN
+	/* The area for the module map. */
+	module_start = kern_end;
+	module_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
+#endif
 
 	/*
 	 * Call pmap initialization to make new kernel address space.
