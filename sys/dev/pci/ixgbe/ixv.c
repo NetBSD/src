@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixv.c 275358 2014-12-01 11:45:24Z hselasky $*/
-/*$NetBSD: ixv.c,v 1.17 2016/06/10 13:27:15 ozaki-r Exp $*/
+/*$NetBSD: ixv.c,v 1.18 2016/11/25 13:33:24 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -266,7 +266,11 @@ ixv_probe(device_t dev, cfdata_t cf, void *aux)
 {
 	const struct pci_attach_args *pa = aux;
 
+#ifdef __HAVE_PCI_MSI_MSIX
 	return (ixv_lookup(pa) != NULL) ? 1 : 0;
+#else
+	return 0;
+#endif
 }
 
 static ixv_vendor_info_t *
@@ -1668,9 +1672,6 @@ ixv_identify_hardware(struct adapter *adapter)
 static int
 ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 {
-#if !defined(NETBSD_MSI_OR_MSIX)
-	return 0;
-#else
 	device_t        dev = adapter->dev;
 	struct ix_queue *que = adapter->queues;
 	int 		error, rid, vector = 0;
@@ -1778,7 +1779,6 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	}
 
 	return (0);
-#endif
 }
 
 /*
@@ -1788,9 +1788,6 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 static int
 ixv_setup_msix(struct adapter *adapter)
 {
-#if !defined(NETBSD_MSI_OR_MSIX)
-	return 0;
-#else
 	device_t dev = adapter->dev;
 	int want, msgs;
 
@@ -1809,7 +1806,6 @@ ixv_setup_msix(struct adapter *adapter)
 	aprint_normal_dev(dev,
 	    "Using MSIX interrupts with %d vectors\n", msgs);
 	return (want);
-#endif
 }
 
 
@@ -1867,8 +1863,6 @@ map_err:
 static void
 ixv_free_pci_resources(struct adapter * adapter)
 {
-#if !defined(NETBSD_MSI_OR_MSIX)
-#else
 	struct 		ix_queue *que = adapter->queues;
 	int		rid;
 
@@ -1905,7 +1899,6 @@ ixv_free_pci_resources(struct adapter * adapter)
 		    adapter->osdep.mem_size);
 	}
 
-#endif
 	return;
 }
 
