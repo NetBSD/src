@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.53 2016/10/15 09:50:27 maxv Exp $	*/
+/*	$NetBSD: lapic.c,v 1.54 2016/11/25 14:12:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.53 2016/10/15 09:50:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.54 2016/11/25 14:12:56 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -93,7 +93,7 @@ static void
 lapic_map(paddr_t lapic_base)
 {
 	pt_entry_t *pte;
-	vaddr_t va = (vaddr_t)&local_apic;
+	vaddr_t va = local_apic_va;
 
 	/*
 	 * If the CPU has an APIC MSR, use it and ignore the supplied value:
