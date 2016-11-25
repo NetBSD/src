@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.716 2016/11/10 15:42:13 hauke Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.717 2016/11/25 15:37:19 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.724 2016/11/10 15:38:51 hauke Exp
+ *	NetBSD: usbdevs,v 1.725 2016/11/25 15:35:35 skrll Exp
  */
 
 /*
@@ -2036,6 +2036,7 @@
 /* Linksys products */
 #define	USB_PRODUCT_LINKSYS_MAUSB2	0x0105		/* Camedia MAUSB-2 */
 #define	USB_PRODUCT_LINKSYS_USB10TX1	0x200c		/* USB10TX */
+#define	USB_PRODUCT_LINKSYS_HG20F9	0x20f9		/* HG20F9 Ethernet */
 #define	USB_PRODUCT_LINKSYS_USB10T	0x2202		/* USB10T Ethernet */
 #define	USB_PRODUCT_LINKSYS_USB100TX	0x2203		/* USB100TX Ethernet */
 #define	USB_PRODUCT_LINKSYS_USB100H1	0x2204		/* USB100H1 Ethernet/HPNA */
