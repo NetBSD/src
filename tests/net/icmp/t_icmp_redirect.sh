@@ -1,4 +1,4 @@
-#	$NetBSD: t_icmp_redirect.sh,v 1.5 2016/11/24 09:05:16 ozaki-r Exp $
+#	$NetBSD: t_icmp_redirect.sh,v 1.6 2016/11/25 08:51:16 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,8 +27,6 @@
 
 # Most codes are derived from tests/net/route/t_flags.sh
 
-netserver=\
-"rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif -lrumpdev"
 SOCK_LOCAL=unix://commsock1
 SOCK_PEER=unix://commsock2
 SOCK_GW=unix://commsock3
@@ -50,11 +48,10 @@ icmp_redirect_timeout_head()
 setup_local()
 {
 
-	atf_check -s exit:0 ${netserver} ${SOCK_LOCAL}
+	rump_server_start $SOCK_LOCAL
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr ${BUS}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 10.0.0.2/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 
@@ -68,11 +65,10 @@ setup_local()
 setup_peer()
 {
 
-	atf_check -s exit:0 ${netserver} ${SOCK_PEER}
+	rump_server_start $SOCK_PEER
+	rump_server_add_iface $SOCK_PEER shmif0 $BUS
 
 	export RUMP_SERVER=$SOCK_PEER
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr ${BUS}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 10.0.0.1/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 
@@ -83,16 +79,14 @@ setup_peer()
 setup_gw()
 {
 
-	atf_check -s exit:0 ${netserver} ${SOCK_GW}
+	rump_server_start $SOCK_GW
+	rump_server_add_iface $SOCK_GW shmif0 $BUS
+	rump_server_add_iface $SOCK_GW shmif1 $BUS2
 
 	export RUMP_SERVER=$SOCK_GW
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr ${BUS}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 10.0.0.254/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 linkstr ${BUS2}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 10.0.2.1/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 alias 10.0.2.2/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 up
@@ -103,12 +97,6 @@ setup_gw()
 
 	$DEBUG && rump.ifconfig
 	$DEBUG && rump.netstat -rn -f inet
-}
-
-teardown_gw()
-{
-
-	env RUMP_SERVER=$SOCK_GW rump.halt
 }
 
 icmp_redirect_timeout_body()
@@ -158,21 +146,7 @@ icmp_redirect_timeout_body()
 	export RUMP_SERVER=$SOCK_PEER
 	$DEBUG && rump.netstat -rn -f inet
 
-	teardown_gw
-}
-
-dump()
-{
-
-	shmif_dumpbus -p - $BUS 2>/dev/null | tcpdump -n -e -r -
-	gdb -ex bt /usr/bin/rump_server rump_server.core
-}
-
-cleanup()
-{
-
-	env RUMP_SERVER=$SOCK_LOCAL rump.halt
-	env RUMP_SERVER=$SOCK_PEER rump.halt
+	rump_server_destroy_ifaces
 }
 
 icmp_redirect_timeout_cleanup()
@@ -293,8 +267,7 @@ icmp_redirect_body()
 	# A direct route shouldn't be created
 	check_route_no_entry 10.0.2.1
 
-
-	teardown_gw
+	rump_server_destroy_ifaces
 }
 
 icmp_redirect_cleanup()

@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.5 2016/11/07 05:25:37 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.6 2016/11/25 08:51:17 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,10 +25,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-RUMPFLAGS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6"
-RUMPFLAGS="${RUMPFLAGS} -lrumpnet_shmif -lrumpdev"
-RUMPFLAGS="${RUMPFLAGS} -lrumpvfs -lrumpfs_ffs"
-
 RUMPSRV=unix://r1
 RUMPCLI=unix://r2
 IP6SRV=fc00:1::1
@@ -39,11 +35,12 @@ DEBUG=${DEBUG:-true}
 
 setup_shmif0()
 {
-	local IP6ADDR=${1}
-	shift
+	local sock=$1
+	local IP6ADDR=$2
 
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
+	rump_server_add_iface $sock shmif0 bus1
+
+	export RUMP_SERVER=$sock
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 ${IP6ADDR}
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 
@@ -83,19 +80,19 @@ ra_basic_head()
 ra_basic_body()
 {
 
-	atf_check -s exit:0 rump_server ${RUMPFLAGS} ${RUMPSRV}
-	atf_check -s exit:0 rump_server ${RUMPFLAGS} ${RUMPCLI}
+	rump_server_fs_start $RUMPSRV netinet6
+	rump_server_start $RUMPCLI netinet6
 
+	setup_shmif0 ${RUMPSRV} ${IP6SRV}
 	export RUMP_SERVER=${RUMPSRV}
-	setup_shmif0 ${IP6SRV}
 	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.forwarding=1
 	export LD_PRELOAD=/usr/lib/librumphijack.so
 	atf_check -s exit:0 mkdir -p /rump/var/chroot/rtadvd
 	unset LD_PRELOAD
 	unset RUMP_SERVER
 
+	setup_shmif0 ${RUMPCLI} ${IP6CLI}
 	export RUMP_SERVER=${RUMPCLI}
-	setup_shmif0 ${IP6CLI}
 	$DEBUG && rump.ndp -n -a
 	atf_check -s exit:0 -o match:'= 0' rump.sysctl net.inet6.ip6.accept_rtadv
 	unset RUMP_SERVER
@@ -144,7 +141,7 @@ ra_basic_body()
 	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
 	wait_term ${PIDFILE}
 
-	return 0
+	rump_server_destroy_ifaces
 }
 
 ra_basic_cleanup()
@@ -155,8 +152,8 @@ ra_basic_cleanup()
 		wait_term ${PIDFILE}
 	fi
 
-	env RUMP_SERVER=${RUMPSRV} rump.halt
-	env RUMP_SERVER=${RUMPCLI} rump.halt
+	$DEBUG && dump
+	cleanup
 }
 
 atf_init_test_cases()

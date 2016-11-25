@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.18 2016/11/25 08:10:12 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.19 2016/11/25 08:51:17 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -24,9 +24,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
-inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif -lrumpdev"
-inet6server="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6 -lrumpnet_shmif -lrumpdev"
 
 SOCKSRC=unix://commsock1
 SOCKFWD=unix://commsock2
@@ -89,9 +86,9 @@ setup_endpoint()
 	mode=${4}
 	gw=${5}
 
+	rump_server_add_iface $sock shmif0 $bus
+
 	export RUMP_SERVER=${sock}
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr ${bus}
 	if [ $mode = "ipv6" ]; then
 		atf_check -s exit:0 rump.ifconfig shmif0 inet6 ${addr}
 		atf_check -s exit:0 -o ignore rump.route add -inet6 default ${gw}
@@ -127,12 +124,10 @@ setup_forwarder()
 {
 	mode=${1}
 
-	export RUMP_SERVER=$SOCKFWD
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
+	rump_server_add_iface $SOCKFWD shmif0 bus1
+	rump_server_add_iface $SOCKFWD shmif1 bus2
 
-	atf_check -s exit:0 rump.ifconfig shmif1 create
-	atf_check -s exit:0 rump.ifconfig shmif1 linkstr bus2
+	export RUMP_SERVER=$SOCKFWD
 
 	if [ $mode = "ipv6" ]; then
 		atf_check -s exit:0 rump.ifconfig shmif0 inet6 ${IP6SRCGW}
@@ -157,9 +152,9 @@ setup_forwarder()
 
 setup()
 {
-	atf_check -s exit:0 ${inetserver} $SOCKSRC
-	atf_check -s exit:0 ${inetserver} $SOCKFWD
-	atf_check -s exit:0 ${inetserver} $SOCKDST
+	rump_server_start $SOCKSRC
+	rump_server_start $SOCKFWD
+	rump_server_start $SOCKDST
 
 	setup_endpoint $SOCKSRC $IP4SRC bus1 ipv4 $IP4SRCGW
 	setup_endpoint $SOCKDST $IP4DST bus2 ipv4 $IP4DSTGW
@@ -168,9 +163,9 @@ setup()
 
 setup6()
 {
-	atf_check -s exit:0 ${inet6server} $SOCKSRC
-	atf_check -s exit:0 ${inet6server} $SOCKFWD
-	atf_check -s exit:0 ${inet6server} $SOCKDST
+	rump_server_start $SOCKSRC netinet6
+	rump_server_start $SOCKFWD netinet6
+	rump_server_start $SOCKDST netinet6
 
 	setup_endpoint $SOCKSRC $IP6SRC bus1 ipv6 $IP6SRCGW
 	setup_endpoint $SOCKDST $IP6DST bus2 ipv6 $IP6DSTGW
@@ -267,15 +262,8 @@ teardown_icmp_bmcastecho()
 
 teardown_interfaces()
 {
-	export RUMP_SERVER=$SOCKSRC
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 destroy
 
-	export RUMP_SERVER=$SOCKFWD
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 destroy
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 destroy
-
-	export RUMP_SERVER=$SOCKDST
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 destroy
+	rump_server_destroy_ifaces
 }
 
 test_setup_forwarding()
@@ -302,23 +290,6 @@ test_teardown_forwarding6()
 	export RUMP_SERVER=$SOCKFWD
 	atf_check -s exit:0 -o match:"net.inet6.ip6.forwarding = 0" \
 	    rump.sysctl net.inet6.ip6.forwarding
-}
-
-cleanup()
-{
-	env RUMP_SERVER=$SOCKSRC rump.halt
-	env RUMP_SERVER=$SOCKFWD rump.halt
-	env RUMP_SERVER=$SOCKDST rump.halt
-}
-
-dump()
-{
-	env RUMP_SERVER=$SOCKSRC rump.netstat -nr
-	env RUMP_SERVER=$SOCKFWD rump.netstat -nr
-	env RUMP_SERVER=$SOCKDST rump.netstat -nr
-
-	/usr/bin/shmif_dumpbus -p - bus1 2>/dev/null| /usr/sbin/tcpdump -n -e -r -
-	/usr/bin/shmif_dumpbus -p - bus2 2>/dev/null| /usr/sbin/tcpdump -n -e -r -
 }
 
 test_ping_failure()
@@ -518,33 +489,33 @@ ipforwarding_misc_body()
 
 ipforwarding_v4_cleanup()
 {
-	dump
+	$DEBUG && dump
 	cleanup
 }
 
 ipforwarding_v6_cleanup()
 {
-	dump
+	$DEBUG && dump
 	cleanup
 }
 
 ipforwarding_fastforward_v4_cleanup()
 {
-	dump
+	$DEBUG && dump
 	stop_httpd
 	cleanup
 }
 
 ipforwarding_fastforward_v6_cleanup()
 {
-	dump
+	$DEBUG && dump
 	stop_httpd
 	cleanup
 }
 
 ipforwarding_misc_cleanup()
 {
-	dump
+	$DEBUG && dump
 	stop_httpd
 	cleanup
 }

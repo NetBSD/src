@@ -1,4 +1,4 @@
-#	$NetBSD: t_mtudisc.sh,v 1.6 2016/11/24 11:54:57 ozaki-r Exp $
+#	$NetBSD: t_mtudisc.sh,v 1.7 2016/11/25 08:51:17 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,10 +25,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet"
-inetserver="$inetserver -lrumpnet_netinet6 -lrumpnet_shmif"
-inetserver="$inetserver -lrumpdev"
-
 SOCKLOCAL=unix://commsock1
 SOCKGATEWAY=unix://commsock2
 SOCKREMOTE=unix://commsock3
@@ -51,10 +47,9 @@ setup_server()
 	local bus=$3
 	local ip=$4
 
-	export RUMP_SERVER=$sock
+	rump_server_add_iface $sock $if $bus
 
-	atf_check -s exit:0 rump.ifconfig $if create
-	atf_check -s exit:0 rump.ifconfig $if linkstr $bus
+	export RUMP_SERVER=$sock
 	atf_check -s exit:0 rump.ifconfig $if $ip
 	atf_check -s exit:0 rump.ifconfig $if up
 	atf_check -s exit:0 rump.ifconfig -w 10
@@ -94,9 +89,9 @@ mtudisc_basic_body()
 	local remote_ip=10.0.1.2
 	local prefixlen=24
 
-	atf_check -s exit:0 ${inetserver} $SOCKLOCAL
-	atf_check -s exit:0 ${inetserver} $SOCKGATEWAY
-	atf_check -s exit:0 ${inetserver} $SOCKREMOTE
+	rump_server_start $SOCKLOCAL
+	rump_server_start $SOCKGATEWAY
+	rump_server_start $SOCKREMOTE
 
 	#
 	# Setup servers
@@ -181,43 +176,14 @@ mtudisc_basic_body()
 		-o match:"^10.0.0.2 +10.0.1.1 +UGHS +- +- +1280 +shmif0" \
 		rump.netstat -nr -f inet
 
-}
-
-cleanup()
-{
-	gdb -ex bt /usr/bin/rump_server rump_server.core
-	gdb -ex bt /usr/sbin/arp arp.core
-	env RUMP_SERVER=$SOCKLOCAL rump.halt
-	env RUMP_SERVER=$SOCKGATEWAY rump.halt
-	env RUMP_SERVER=$SOCKREMOTE rump.halt
-}
-
-dump_server()
-{
-	local sock=$1
-	export RUMP_SERVER=$sock
-	rump.netstat -nr
-	rump.arp -n -a
-	rump.ifconfig
-	$HIJACKING dmesg
-}
-
-dump()
-{
-	dump_server $SOCKLOCAL
-	dump_server $SOCKGATEWAY
-	dump_server $SOCKREMOTE
-	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
-	shmif_dumpbus -p - bus2 2>/dev/null| tcpdump -n -e -r -
+	rump_server_destroy_ifaces
 }
 
 mtudisc_basic_cleanup()
 {
 	$DEBUG && dump
 	stop_httpd
-	env RUMP_SERVER=$SOCKLOCAL rump.halt
-	env RUMP_SERVER=$SOCKGATEWAY rump.halt
-	env RUMP_SERVER=$SOCKREMOTE rump.halt
+	cleanup
 }
 
 atf_init_test_cases()

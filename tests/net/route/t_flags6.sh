@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags6.sh,v 1.10 2016/11/24 09:05:17 ozaki-r Exp $
+#	$NetBSD: t_flags6.sh,v 1.11 2016/11/25 08:51:17 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,9 +25,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-RUMP_OPTS="-lrumpdev -lrumpnet -lrumpnet_net"
-RUMP_OPTS="$RUMP_OPTS -lrumpnet_netinet -lrumpnet_netinet6"
-RUMP_OPTS="$RUMP_OPTS -lrumpnet_shmif"
 SOCK_LOCAL=unix://commsock1
 SOCK_PEER=unix://commsock2
 SOCK_GW=unix://commsock3
@@ -42,11 +39,10 @@ DEBUG=${DEBUG:-false}
 setup_local()
 {
 
-	atf_check -s exit:0 rump_server ${RUMP_OPTS} ${SOCK_LOCAL}
+	rump_server_start $SOCK_LOCAL netinet6
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr ${BUS}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 $IP6_LOCAL
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 
@@ -57,11 +53,10 @@ setup_local()
 setup_peer()
 {
 
-	atf_check -s exit:0 rump_server ${RUMP_OPTS} ${SOCK_PEER}
+	rump_server_start $SOCK_PEER netinet6
+	rump_server_add_iface $SOCK_PEER shmif0 $BUS
 
 	export RUMP_SERVER=$SOCK_PEER
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr ${BUS}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 $IP6_PEER
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 
@@ -235,14 +230,6 @@ test_announce6()
 	# TODO test its behavior
 }
 
-cleanup()
-{
-	$DEBUG && /usr/bin/shmif_dumpbus -p - $BUS 2>/dev/null | \
-	    /usr/sbin/tcpdump -n -e -r -
-	env RUMP_SERVER=$SOCK_LOCAL rump.halt
-	env RUMP_SERVER=$SOCK_PEER rump.halt
-}
-
 add_test()
 {
 	local name=$1
@@ -257,8 +244,10 @@ add_test()
 			setup_local; \
 			setup_peer; \
 			test_${name}; \
+			rump_server_destroy_ifaces; \
 		}; \
 	    route_flags_${name}_cleanup() { \
+			$DEBUG && dump; \
 			cleanup; \
 		}"
 	atf_add_test_case "route_flags_${name}"

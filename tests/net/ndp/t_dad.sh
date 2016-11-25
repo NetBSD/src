@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.11 2016/11/24 09:03:53 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.12 2016/11/25 08:51:17 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -24,10 +24,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
-inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet"
-inetserver="$inetserver -lrumpnet_netinet6 -lrumpnet_shmif"
-inetserver="$inetserver -lrumpdev"
 
 SOCKLOCAL=unix://commsock1
 SOCKPEER=unix://commsock2
@@ -63,10 +59,9 @@ setup_server()
 	local sock=$1
 	local ip=$2
 
-	export RUMP_SERVER=$sock
+	rump_server_add_iface $sock shmif0 bus1
 
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
+	export RUMP_SERVER=$sock
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 	atf_check -s exit:0 rump.ifconfig -w 10
@@ -91,11 +86,10 @@ dad_basic_body()
 	local localip2=fc00::2
 	local localip3=fc00::3
 
-	atf_check -s exit:0 ${inetserver} $SOCKLOCAL
-	export RUMP_SERVER=$SOCKLOCAL
+	rump_server_start $SOCKLOCAL netinet6
+	rump_server_add_iface $SOCKLOCAL shmif0 bus1
 
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
+	export RUMP_SERVER=$SOCKLOCAL
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $localip1
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $localip2
 	$DEBUG && rump.ifconfig shmif0
@@ -156,6 +150,8 @@ dad_basic_body()
 
 	# The new address left tentative
 	atf_check -s not-exit:0 -x "rump.ifconfig shmif0 |grep $localip3 |grep -q tentative"
+
+	rump_server_destroy_ifaces
 }
 
 dad_duplicated_body()
@@ -164,8 +160,8 @@ dad_duplicated_body()
 	local localip2=fc00::11
 	local peerip=fc00::2
 
-	atf_check -s exit:0 ${inetserver} $SOCKLOCAL
-	atf_check -s exit:0 ${inetserver} $SOCKPEER
+	rump_server_start $SOCKLOCAL netinet6
+	rump_server_start $SOCKPEER netinet6
 
 	setup_server $SOCKLOCAL $localip1
 	setup_server $SOCKPEER $peerip
@@ -191,6 +187,8 @@ dad_duplicated_body()
 	atf_check -s exit:0 sleep 1
 	atf_check -s exit:0 -o not-match:"$localip2.+$duplicated" \
 	    rump.ifconfig shmif0
+
+	rump_server_destroy_ifaces
 }
 
 dad_count_test()
@@ -225,15 +223,15 @@ dad_count_body()
 	local localip1=fc00::1
 	local localip2=fc00::2
 
-	atf_check -s exit:0 ${inetserver} $SOCKLOCAL
+	rump_server_start $SOCKLOCAL netinet6
+	rump_server_add_iface $SOCKLOCAL shmif0 bus1
+
 	export RUMP_SERVER=$SOCKLOCAL
 
 	# Check default value
 	atf_check -s exit:0 -o match:"1" rump.sysctl -n net.inet6.ip6.dad_count
 
 	# Setup interface
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 	atf_check -s exit:0 sleep 2
 	rump.ifconfig shmif0 > ./out
@@ -248,46 +246,14 @@ dad_count_body()
 	# Set and test DAD count (count=8)
 	#
 	dad_count_test 8 2 $localip2
-}
 
-cleanup()
-{
-	gdb -ex bt /usr/bin/rump_server rump_server.core
-	gdb -ex bt /usr/sbin/arp arp.core
-	env RUMP_SERVER=$SOCKLOCAL rump.halt
-	env RUMP_SERVER=$SOCKPEER rump.halt
-}
-
-dump_local()
-{
-	export RUMP_SERVER=$SOCKLOCAL
-	rump.netstat -nr
-	rump.arp -n -a
-	rump.ifconfig
-	$HIJACKING dmesg
-}
-
-dump_peer()
-{
-	export RUMP_SERVER=$SOCKPEER
-	rump.netstat -nr
-	rump.arp -n -a
-	rump.ifconfig
-	$HIJACKING dmesg
-}
-
-dump()
-{
-	dump_local
-	dump_peer
-	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
+	rump_server_destroy_ifaces
 }
 
 dad_basic_cleanup()
 {
-	$DEBUG && dump_local
-	$DEBUG && shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
-	env RUMP_SERVER=$SOCKLOCAL rump.halt
+	$DEBUG && dump
+	cleanup
 }
 
 dad_duplicated_cleanup()
@@ -298,9 +264,8 @@ dad_duplicated_cleanup()
 
 dad_count_cleanup()
 {
-	$DEBUG && dump_local
-	$DEBUG && shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
-	env RUMP_SERVER=$SOCKLOCAL rump.halt
+	$DEBUG && dump
+	cleanup
 }
 
 atf_init_test_cases()
