@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.158 2016/11/25 05:00:29 knakahara Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.159 2016/11/25 05:03:12 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.158 2016/11/25 05:00:29 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.159 2016/11/25 05:03:12 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.158 2016/11/25 05:00:29 knakahara 
 #include <sys/kauth.h>
 #include <sys/cprng.h>
 #include <sys/module.h>
+#include <sys/workqueue.h>
+#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -365,7 +367,9 @@ static int sppp_params(struct sppp *sp, u_long cmd, void *data);
 #ifdef INET
 static void sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst,
 			      uint32_t *srcmask);
+static void sppp_set_ip_addrs_work(struct work *wk, void *arg);
 static void sppp_set_ip_addrs(struct sppp *sp);
+static void sppp_clear_ip_addrs_work(struct work *wk, void *arg);
 static void sppp_clear_ip_addrs(struct sppp *sp);
 #endif
 static void sppp_keepalive(void *dummy);
@@ -947,6 +951,9 @@ sppp_detach(struct ifnet *ifp)
 			*q = p->pp_next;
 			break;
 		}
+
+	workqueue_destroy(sp->ipcp.set_addrs_wq);
+	workqueue_destroy(sp->ipcp.clear_addrs_wq);
 
 	/* Stop keepalive handler. */
 	if (! spppq) {
@@ -2725,6 +2732,8 @@ sppp_lcp_check_and_close(struct sppp *sp)
 static void
 sppp_ipcp_init(struct sppp *sp)
 {
+	int error;
+
 	sp->ipcp.opts = 0;
 	sp->ipcp.flags = 0;
 	sp->state[IDX_IPCP] = STATE_INITIAL;
@@ -2732,6 +2741,20 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->pp_seq[IDX_IPCP] = 0;
 	sp->pp_rseq[IDX_IPCP] = 0;
 	callout_init(&sp->ch[IDX_IPCP], 0);
+
+	error = workqueue_create(&sp->ipcp.set_addrs_wq, "ipcp_set_addrs",
+	    sppp_set_ip_addrs_work, sp, PRI_SOFTNET, IPL_NET, 0);
+	if (error)
+		panic("%s: set_addrs workqueue_create failed (%d)\n",
+		    __func__, error);
+	error = workqueue_create(&sp->ipcp.clear_addrs_wq, "ipcp_clear_addrs",
+	    sppp_clear_ip_addrs_work, sp, PRI_SOFTNET, IPL_NET, 0);
+	if (error)
+		panic("%s: clear_addrs workqueue_create failed (%d)\n",
+		    __func__, error);
+
+	sp->ipcp.set_addrs_enqueued = 0;
+	sp->ipcp.clear_addrs_enqueued = 0;
 }
 
 static void
@@ -2797,7 +2820,6 @@ sppp_ipcp_open(struct sppp *sp)
 static void
 sppp_ipcp_close(struct sppp *sp)
 {
-	STDDCL;
 
 	sppp_close_event(&ipcp, sp);
 #ifdef INET
@@ -2807,15 +2829,6 @@ sppp_ipcp_close(struct sppp *sp)
 		 */
 		sppp_clear_ip_addrs(sp);
 #endif
-
-	if (sp->pp_saved_mtu > 0) {
-		ifp->if_mtu = sp->pp_saved_mtu;
-		sp->pp_saved_mtu = 0;
-		if (debug)
-			log(LOG_DEBUG,
-			    "%s: resetting MTU to %" PRIu64 " bytes\n",
-			    ifp->if_xname, ifp->if_mtu);
-	}
 }
 
 static void
@@ -3163,21 +3176,7 @@ sppp_ipcp_tlu(struct sppp *sp)
 {
 #ifdef INET
 	/* we are up. Set addresses and notify anyone interested */
-	STDDCL;
-
 	sppp_set_ip_addrs(sp);
-
-	if (ifp->if_mtu > sp->lcp.their_mru) {
-		sp->pp_saved_mtu = ifp->if_mtu;
-		ifp->if_mtu = sp->lcp.their_mru;
-		if (debug)
-			log(LOG_DEBUG,
-			    "%s: setting MTU to %" PRIu64 " bytes\n",
-			    ifp->if_xname, ifp->if_mtu);
-	}
-
-	if (sp->pp_con)
-		sp->pp_con(sp);
 #endif
 }
 
@@ -4874,18 +4873,23 @@ sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst, uint32_t *srcma
  * If an address is 0, leave it the way it is.
  */
 static void
-sppp_set_ip_addrs(struct sppp *sp)
+sppp_set_ip_addrs_work(struct work *wk, void *arg)
 {
+	struct sppp *sp = arg;
 	STDDCL;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
 	uint32_t myaddr = 0, hisaddr = 0;
+	int s;
+
+	atomic_swap_uint(&sp->ipcp.set_addrs_enqueued, 0);
 
 	/*
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 	si = dest = NULL;
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
@@ -4893,6 +4897,7 @@ sppp_set_ip_addrs(struct sppp *sp)
 			break;
 		}
 	}
+	pserialize_read_exit(s);
 
 	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) && (sp->ipcp.flags & IPCP_MYADDR_SEEN))
 		myaddr = sp->ipcp.req_myaddr;
@@ -4941,23 +4946,50 @@ sppp_set_ip_addrs(struct sppp *sp)
 			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
 		}
 	}
+
+	if (ifp->if_mtu > sp->lcp.their_mru) {
+		sp->pp_saved_mtu = ifp->if_mtu;
+		ifp->if_mtu = sp->lcp.their_mru;
+		if (debug)
+			log(LOG_DEBUG,
+			    "%s: setting MTU to %" PRIu64 " bytes\n",
+			    ifp->if_xname, ifp->if_mtu);
+	}
+
+	if (sp->pp_con)
+		sp->pp_con(sp);
+}
+
+static void
+sppp_set_ip_addrs(struct sppp *sp)
+{
+
+	if (atomic_swap_uint(&sp->ipcp.set_addrs_enqueued, 1) == 1)
+		return;
+
+	workqueue_enqueue(sp->ipcp.set_addrs_wq, &sp->ipcp.set_addrs_wk, NULL);
 }
 
 /*
  * Clear IP addresses.  Must be called at splnet.
  */
 static void
-sppp_clear_ip_addrs(struct sppp *sp)
+sppp_clear_ip_addrs_work(struct work *wk, void *arg)
 {
+	struct sppp *sp = arg;
 	STDDCL;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
+	int s;
+
+	atomic_swap_uint(&sp->ipcp.clear_addrs_enqueued, 0);
 
 	/*
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 	si = dest = NULL;
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
@@ -4965,6 +4997,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 			break;
 		}
 	}
+	pserialize_read_exit(s);
 
 	if (si != NULL) {
 		struct sockaddr_in new_sin = *si;
@@ -5000,6 +5033,25 @@ sppp_clear_ip_addrs(struct sppp *sp)
 			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
 		}
 	}
+
+	if (sp->pp_saved_mtu > 0) {
+		ifp->if_mtu = sp->pp_saved_mtu;
+		sp->pp_saved_mtu = 0;
+		if (debug)
+			log(LOG_DEBUG,
+			    "%s: resetting MTU to %" PRIu64 " bytes\n",
+			    ifp->if_xname, ifp->if_mtu);
+	}
+}
+
+static void
+sppp_clear_ip_addrs(struct sppp *sp)
+{
+
+	if (atomic_swap_uint(&sp->ipcp.clear_addrs_enqueued, 1) == 1)
+		return;
+
+	workqueue_enqueue(sp->ipcp.clear_addrs_wq, &sp->ipcp.clear_addrs_wk, NULL);
 }
 #endif
 
