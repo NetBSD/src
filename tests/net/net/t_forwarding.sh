@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.17 2016/11/24 11:54:57 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.18 2016/11/25 08:10:12 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,6 +60,18 @@ ipforwarding_v4_head()
 ipforwarding_v6_head()
 {
 	atf_set "descr" "Does IPv6 forwarding tests"
+	atf_set "require.progs" "rump_server"
+}
+
+ipforwarding_fastforward_v4_head()
+{
+	atf_set "descr" "Tests for IPv4 fastforward"
+	atf_set "require.progs" "rump_server"
+}
+
+ipforwarding_fastforward_v6_head()
+{
+	atf_set "descr" "Tests for IPv6 fastfoward"
 	atf_set "require.progs" "rump_server"
 }
 
