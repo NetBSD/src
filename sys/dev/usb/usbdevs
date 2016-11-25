@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.724 2016/11/10 15:38:51 hauke Exp $
+$NetBSD: usbdevs,v 1.725 2016/11/25 15:35:35 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2029,6 +2029,7 @@ product LEXMARK S2450		0x0009	Optra S 2450
 /* Linksys products */
 product LINKSYS MAUSB2		0x0105	Camedia MAUSB-2
 product LINKSYS USB10TX1	0x200c	USB10TX
+product LINKSYS HG20F9		0x20f9	HG20F9 Ethernet
 product LINKSYS USB10T		0x2202	USB10T Ethernet
 product LINKSYS USB100TX	0x2203	USB100TX Ethernet
 product LINKSYS USB100H1	0x2204	USB100H1 Ethernet/HPNA
