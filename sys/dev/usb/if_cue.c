@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.73 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.74 2016/11/25 12:56:29 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,10 +56,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.73 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.74 2016/11/25 12:56:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "opt_usb.h"
 #endif
 
 #include <sys/param.h>

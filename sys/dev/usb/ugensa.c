@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.34 2016/11/25 12:51:59 skrll Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.35 2016/11/25 12:56:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.34 2016/11/25 12:51:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.35 2016/11/25 12:56:29 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
