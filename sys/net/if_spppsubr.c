@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.157 2016/11/18 10:38:55 knakahara Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.158 2016/11/25 05:00:29 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.157 2016/11/18 10:38:55 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.158 2016/11/25 05:00:29 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -365,7 +365,7 @@ static int sppp_params(struct sppp *sp, u_long cmd, void *data);
 #ifdef INET
 static void sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst,
 			      uint32_t *srcmask);
-static void sppp_set_ip_addrs(struct sppp *sp, uint32_t myaddr, uint32_t hisaddr);
+static void sppp_set_ip_addrs(struct sppp *sp);
 static void sppp_clear_ip_addrs(struct sppp *sp);
 #endif
 static void sppp_keepalive(void *dummy);
@@ -3164,14 +3164,8 @@ sppp_ipcp_tlu(struct sppp *sp)
 #ifdef INET
 	/* we are up. Set addresses and notify anyone interested */
 	STDDCL;
-	uint32_t myaddr, hisaddr;
 
-	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
-	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) && (sp->ipcp.flags & IPCP_MYADDR_SEEN))
-		myaddr = sp->ipcp.req_myaddr;
-	if ((sp->ipcp.flags & IPCP_HISADDR_DYN) && (sp->ipcp.flags & IPCP_HISADDR_SEEN))
-		hisaddr = sp->ipcp.req_hisaddr;
-	sppp_set_ip_addrs(sp, myaddr, hisaddr);
+	sppp_set_ip_addrs(sp);
 
 	if (ifp->if_mtu > sp->lcp.their_mru) {
 		sp->pp_saved_mtu = ifp->if_mtu;
@@ -4880,28 +4874,37 @@ sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst, uint32_t *srcma
  * If an address is 0, leave it the way it is.
  */
 static void
-sppp_set_ip_addrs(struct sppp *sp, uint32_t myaddr, uint32_t hisaddr)
+sppp_set_ip_addrs(struct sppp *sp)
 {
 	STDDCL;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
+	uint32_t myaddr = 0, hisaddr = 0;
 
 	/*
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
-
+	si = dest = NULL;
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
-			goto found;
+			break;
 		}
 	}
-	return;
 
-found:
-	{
+	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) && (sp->ipcp.flags & IPCP_MYADDR_SEEN))
+		myaddr = sp->ipcp.req_myaddr;
+	else if (si != NULL)
+		myaddr = ntohl(si->sin_addr.s_addr);
+
+	if ((sp->ipcp.flags & IPCP_HISADDR_DYN) && (sp->ipcp.flags & IPCP_HISADDR_SEEN))
+		hisaddr = sp->ipcp.req_hisaddr;
+	else if (dest != NULL)
+		hisaddr = ntohl(dest->sin_addr.s_addr);
+
+	if (si != NULL) {
 		int error;
 		struct sockaddr_in new_sin = *si;
 		struct sockaddr_in new_dst = *dest;
@@ -4950,28 +4953,20 @@ sppp_clear_ip_addrs(struct sppp *sp)
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
 
-	uint32_t remote;
-	if (sp->ipcp.flags & IPCP_HISADDR_DYN)
-		remote = sp->ipcp.saved_hisaddr;
-	else
-		sppp_get_ip_addrs(sp, 0, &remote, 0);
-
 	/*
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
-
+	si = dest = NULL;
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
-			goto found;
+			break;
 		}
 	}
-	return;
 
-found:
-	{
+	if (si != NULL) {
 		struct sockaddr_in new_sin = *si;
 		struct sockaddr_in new_dst = *dest;
 		int error;
