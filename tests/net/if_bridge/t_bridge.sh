@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.14 2016/11/24 09:07:09 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.15 2016/11/25 08:10:50 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -44,6 +44,7 @@ IPBR2=10.0.0.12
 IP6BR1=fc00::11
 IP6BR2=fc00::12
 
+DEBUG=${DEBUG:-false}
 TIMEOUT=5
 
 atf_test_case bridge_ipv4 cleanup
@@ -99,7 +100,7 @@ setup_endpoint()
 	fi
 
 	atf_check -s exit:0 rump.ifconfig shmif0 up
-	rump.ifconfig shmif0
+	$DEBUG && rump.ifconfig shmif0
 }
 
 test_endpoint()
@@ -116,14 +117,6 @@ test_endpoint()
 	else
 		atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 ${addr}
 	fi
-}
-
-show_endpoint()
-{
-	sock=${1}
-
-	export RUMP_SERVER=${sock}
-	rump.ifconfig -v shmif0
 }
 
 test_setup()
@@ -451,7 +444,7 @@ bridge_rtable_body()
 	# Confirm there is no MAC address caches.
 	export RUMP_SERVER=$SOCK2
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	/sbin/brconfig bridge0
+	$DEBUG && /sbin/brconfig bridge0
 	atf_check -s exit:0 -o not-match:"$addr1" /sbin/brconfig bridge0
 	atf_check -s exit:0 -o not-match:"$addr3" /sbin/brconfig bridge0
 	unset LD_PRELOAD
@@ -464,7 +457,7 @@ bridge_rtable_body()
 	# Tests the addresses are in the cache.
 	export RUMP_SERVER=$SOCK2
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	/sbin/brconfig bridge0
+	$DEBUG && /sbin/brconfig bridge0
 	atf_check -s exit:0 -o match:"$addr1 shmif0" /sbin/brconfig bridge0
 	atf_check -s exit:0 -o match:"$addr3 shmif1" /sbin/brconfig bridge0
 
@@ -481,7 +474,7 @@ bridge_rtable_body()
 	unset RUMP_SERVER
 	export RUMP_SERVER=$SOCK2
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	/sbin/brconfig bridge0
+	$DEBUG && /sbin/brconfig bridge0
 	atf_check -s exit:0 -o match:"$addr1 shmif0" /sbin/brconfig bridge0
 	atf_check -s exit:0 -o match:"$addr3 shmif1" /sbin/brconfig bridge0
 
