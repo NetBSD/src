@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.33 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.34 2016/11/25 12:51:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.33 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.34 2016/11/25 12:51:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.33 2016/07/07 06:55:42 msaitoh Exp $");
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/ucomvar.h>
-
-/* XXXrcd: heh */
-#define UGENSA_DEBUG 1
 
 #ifdef UGENSA_DEBUG
 #define DPRINTF(x)	if (ugensadebug) printf x
