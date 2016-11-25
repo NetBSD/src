@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.227 2016/11/17 16:32:06 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.228 2016/11/25 14:12:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.227 2016/11/17 16:32:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.228 2016/11/25 14:12:56 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -483,6 +483,11 @@ static vaddr_t virtual_avail __read_mostly;	/* VA of first free KVA */
 static vaddr_t virtual_end __read_mostly;	/* VA of last free KVA */
 
 /*
+ * LAPIC virtual address.
+ */
+volatile vaddr_t local_apic_va;
+
+/*
  * pool that pmap structures are allocated from
  */
 static struct pool_cache pmap_cache;
@@ -554,6 +559,7 @@ extern vaddr_t pentium_idt_vaddr;
  * Local prototypes
  */
 
+static void pmap_init_lapic(void);
 #ifdef __HAVE_DIRECT_MAP
 static void pmap_init_directmap(struct pmap *);
 #endif
@@ -1324,6 +1330,8 @@ pmap_bootstrap(vaddr_t kva_start)
 	}
 #endif /* !XEN */
 
+	pmap_init_lapic();
+
 #ifdef __HAVE_DIRECT_MAP
 	pmap_init_directmap(kpm);
 #else
@@ -1454,6 +1462,12 @@ pmap_bootstrap(vaddr_t kva_start)
 		kva += nkptp[i] * nbpd[i];
 	}
 	pmap_maxkvaddr = kva;
+}
+
+static void
+pmap_init_lapic(void)
+{
+	local_apic_va = pmap_bootstrap_valloc(1);
 }
 
 #ifdef __HAVE_DIRECT_MAP

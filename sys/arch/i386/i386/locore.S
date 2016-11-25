@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.140 2016/11/11 11:34:51 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.141 2016/11/25 14:12:55 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.140 2016/11/11 11:34:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.141 2016/11/25 14:12:55 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -269,16 +269,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.140 2016/11/11 11:34:51 maxv Exp $");
  * Initialization
  */
 	.data
-
-#if NLAPIC > 0
-	.align	PAGE_SIZE
-	.globl	_C_LABEL(local_apic)
-
-	.type	_C_LABEL(local_apic), @object
-LABEL(local_apic)
-	.space	PAGE_SIZE
-END(local_apic)
-#endif
 
 	.globl	_C_LABEL(tablesize)
 	.globl	_C_LABEL(nox_flag)
