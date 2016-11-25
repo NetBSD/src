@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.16 2016/11/24 09:03:53 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.17 2016/11/25 08:51:17 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -24,10 +24,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-
-inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet"
-inetserver="$inetserver -lrumpnet_netinet6 -lrumpnet_shmif"
-inetserver="$inetserver -lrumpdev"
 
 SOCKSRC=unix://commsock1
 SOCKDST=unix://commsock2
@@ -77,9 +73,8 @@ setup_dst_server()
 {
 	local assign_ip=$1
 
+	rump_server_add_iface $SOCKDST shmif0 bus1
 	export RUMP_SERVER=$SOCKDST
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
 	if [ "$assign_ip" != no ]; then
 		atf_check -s exit:0 rump.ifconfig shmif0 inet6 $IP6DST
 	fi
@@ -96,8 +91,7 @@ setup_src_server()
 	export RUMP_SERVER=$SOCKSRC
 
 	# Setup an interface
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
+	rump_server_add_iface $SOCKSRC shmif0 bus1
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $IP6SRC
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 	atf_check -s exit:0 rump.ifconfig -w 10
@@ -118,8 +112,9 @@ get_timeout()
 
 ndp_cache_expiration_body()
 {
-	atf_check -s exit:0 ${inetserver} $SOCKSRC
-	atf_check -s exit:0 ${inetserver} $SOCKDST
+
+	rump_server_start $SOCKSRC netinet6
+	rump_server_start $SOCKDST netinet6
 
 	setup_dst_server
 	setup_src_server
@@ -143,6 +138,8 @@ ndp_cache_expiration_body()
 	atf_check -s exit:0 -o match:'permanent' rump.ndp -n $IP6SRC
 	# Expired but remains until GC sweaps it (1 day)
 	atf_check -s exit:0 -o match:'(1d0h0m|23h59m)' rump.ndp -n $IP6DST
+
+	rump_server_destroy_ifaces
 }
 
 ifdown_dst_server()
@@ -154,8 +151,9 @@ ifdown_dst_server()
 
 ndp_commands_body()
 {
-	atf_check -s exit:0 ${inetserver} $SOCKSRC
-	atf_check -s exit:0 ${inetserver} $SOCKDST
+
+	rump_server_start $SOCKSRC netinet6
+	rump_server_start $SOCKDST netinet6
 
 	setup_dst_server
 	setup_src_server
@@ -216,13 +214,14 @@ ndp_commands_body()
 	$DEBUG && rump.ndp -n -a
 	atf_check -s exit:0 -o not-match:'permanent' rump.ndp -n fc00::10
 
-	return 0
+	rump_server_destroy_ifaces
 }
 
 ndp_cache_overwriting_body()
 {
-	atf_check -s exit:0 ${inetserver} $SOCKSRC
-	atf_check -s exit:0 ${inetserver} $SOCKDST
+
+	rump_server_start $SOCKSRC netinet6
+	rump_server_start $SOCKDST netinet6
 
 	setup_dst_server
 	setup_src_server
@@ -248,7 +247,7 @@ ndp_cache_overwriting_body()
 	#atf_check -s not-exit:0 -e ignore rump.ndp -s fc00::10 b2:a0:20:00:00:ff
 	#$DEBUG && rump.ndp -n -a
 
-	return 0
+	rump_server_destroy_ifaces
 }
 
 get_n_caches()
@@ -260,8 +259,8 @@ get_n_caches()
 ndp_neighborgcthresh_body()
 {
 
-	atf_check -s exit:0 ${inetserver} $SOCKSRC
-	atf_check -s exit:0 ${inetserver} $SOCKDST
+	rump_server_start $SOCKSRC netinet6
+	rump_server_start $SOCKDST netinet6
 
 	setup_dst_server no
 	setup_src_server
@@ -310,7 +309,7 @@ ndp_neighborgcthresh_body()
 		atf_fail "Neighbor caches are not GC-ed"
 	fi
 
-	return 0
+	rump_server_destroy_ifaces
 }
 
 make_pkt_str_na()
@@ -327,8 +326,8 @@ ndp_link_activation_body()
 {
 	local linklocal=
 
-	atf_check -s exit:0 ${inetserver} $SOCKSRC
-	atf_check -s exit:0 ${inetserver} $SOCKDST
+	rump_server_start $SOCKSRC netinet6
+	rump_server_start $SOCKDST netinet6
 
 	setup_dst_server
 	setup_src_server
@@ -363,39 +362,8 @@ ndp_link_activation_body()
 
 	pkt=$(make_pkt_str_na $linklocal b2:a1:00:00:00:02)
 	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
-}
 
-cleanup()
-{
-	env RUMP_SERVER=$SOCKSRC rump.halt
-	env RUMP_SERVER=$SOCKDST rump.halt
-}
-
-dump_src()
-{
-	export RUMP_SERVER=$SOCKSRC
-	rump.netstat -nr
-	rump.ndp -n -a
-	rump.ifconfig
-	$HIJACKING dmesg
-}
-
-dump_dst()
-{
-	export RUMP_SERVER=$SOCKDST
-	rump.netstat -nr
-	rump.ndp -n -a
-	rump.ifconfig
-	$HIJACKING dmesg
-}
-
-dump()
-{
-	dump_src
-	dump_dst
-	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
-	$DEBUG && gdb -ex bt /usr/bin/rump_server rump_server.core
-	$DEBUG && gdb -ex bt /usr/sbin/rump.ndp rump.ndp.core
+	rump_server_destroy_ifaces
 }
 
 ndp_cache_expiration_cleanup()

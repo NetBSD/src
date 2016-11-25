@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.13 2016/11/24 09:05:17 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.14 2016/11/25 08:51:17 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,9 +25,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-netserver=\
-"rump_server -lrumpdev -lrumpnet -lrumpnet_net -lrumpnet_netinet \
-	-lrumpnet_shmif"
 SOCK_LOCAL=unix://commsock1
 SOCK_PEER=unix://commsock2
 SOCK_GW=unix://commsock3
@@ -39,11 +36,10 @@ DEBUG=${DEBUG:-false}
 setup_local()
 {
 
-	atf_check -s exit:0 ${netserver} ${SOCK_LOCAL}
+	rump_server_start $SOCK_LOCAL
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr ${BUS}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 10.0.0.2/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 
@@ -54,11 +50,10 @@ setup_local()
 setup_peer()
 {
 
-	atf_check -s exit:0 ${netserver} ${SOCK_PEER}
+	rump_server_start $SOCK_PEER
+	rump_server_add_iface $SOCK_PEER shmif0 $BUS
 
 	export RUMP_SERVER=$SOCK_PEER
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr ${BUS}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 10.0.0.1/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 
@@ -69,16 +64,14 @@ setup_peer()
 setup_gw()
 {
 
-	atf_check -s exit:0 ${netserver} ${SOCK_GW}
+	rump_server_start $SOCK_GW
+	rump_server_add_iface $SOCK_GW shmif0 $BUS
+	rump_server_add_iface $SOCK_GW shmif1 $BUS2
 
 	export RUMP_SERVER=$SOCK_GW
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr ${BUS}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 10.0.0.254/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 linkstr ${BUS2}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 10.0.2.1/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 alias 10.0.2.2/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 up
@@ -89,12 +82,6 @@ setup_gw()
 
 	$DEBUG && rump.ifconfig
 	$DEBUG && rump.netstat -rn -f inet
-}
-
-teardown_gw()
-{
-
-	env RUMP_SERVER=$SOCK_GW rump.halt
 }
 
 test_lo()
@@ -290,8 +277,6 @@ test_icmp_redirect()
 	# Up, Gateway, Host, Modified, Static
 	check_route_flags 10.0.2.2 UGHMS
 	check_route_gw 10.0.2.2 10.0.0.254
-
-	teardown_gw
 }
 
 test_announce()
@@ -310,14 +295,6 @@ test_announce()
 	# TODO test its behavior
 }
 
-cleanup()
-{
-	$DEBUG && /usr/bin/shmif_dumpbus -p - $BUS 2>/dev/null | \
-	    /usr/sbin/tcpdump -n -e -r -
-	env RUMP_SERVER=$SOCK_LOCAL rump.halt
-	env RUMP_SERVER=$SOCK_PEER rump.halt
-}
-
 add_test()
 {
 	local name=$1
@@ -332,8 +309,10 @@ add_test()
 			setup_local; \
 			setup_peer; \
 			test_${name}; \
+			rump_server_destroy_ifaces; \
 		}; \
 	    route_flags_${name}_cleanup() { \
+			$DEBUG && dump; \
 			cleanup; \
 		}"
 	atf_add_test_case "route_flags_${name}"
