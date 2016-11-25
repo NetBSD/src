@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.30 2016/11/24 22:52:03 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.31 2016/11/25 20:01:05 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.30 2016/11/24 22:52:03 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.31 2016/11/25 20:01:05 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2593,7 +2593,7 @@ ATF_TC_BODY(read_d1, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me, magic);
+	    "got value %x != expected %x", lookup_me, magic);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -2657,7 +2657,7 @@ ATF_TC_BODY(read_d2, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me1, magic1);
+	    "got value %x != expected %x", lookup_me1, magic1);
 
 	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
@@ -2666,7 +2666,7 @@ ATF_TC_BODY(read_d2, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me2, magic2);
+	    "got value %x != expected %x", lookup_me2, magic2);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -2733,7 +2733,7 @@ ATF_TC_BODY(read_d3, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me1, magic1);
+	    "got value %x != expected %x", lookup_me1, magic1);
 
 	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
@@ -2742,7 +2742,7 @@ ATF_TC_BODY(read_d3, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me2, magic2);
+	    "got value %x != expected %x", lookup_me2, magic2);
 
 	printf("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
@@ -2751,7 +2751,7 @@ ATF_TC_BODY(read_d3, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me3, magic3,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me3, magic3);
+	    "got value %x != expected %x", lookup_me3, magic3);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -2821,7 +2821,7 @@ ATF_TC_BODY(read_d4, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me1, magic1);
+	    "got value %x != expected %x", lookup_me1, magic1);
 
 	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
@@ -2830,7 +2830,7 @@ ATF_TC_BODY(read_d4, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me2, magic2);
+	    "got value %x != expected %x", lookup_me2, magic2);
 
 	printf("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
@@ -2839,7 +2839,7 @@ ATF_TC_BODY(read_d4, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me3, magic3,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me3, magic3);
+	    "got value %x != expected %x", lookup_me3, magic3);
 
 	printf("Read new lookup_me4 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
@@ -2848,7 +2848,7 @@ ATF_TC_BODY(read_d4, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me4, magic4,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me4, magic4);
+	    "got value %x != expected %x", lookup_me4, magic4);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -3352,7 +3352,7 @@ ATF_TC_BODY(read_d_write_d_handshake1, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me_fromtracee, magic_fromtracee,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me_fromtracee,
+	    "got value %x != expected %x", lookup_me_fromtracee,
 	    magic_fromtracee);
 
 	printf("Write new lookup_me_totracee to PID=%d from tracer (PID=%d)\n",
@@ -3431,7 +3431,7 @@ ATF_TC_BODY(read_d_write_d_handshake2, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me_fromtracee, magic_fromtracee,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me_fromtracee,
+	    "got value %x != expected %x", lookup_me_fromtracee,
 	    magic_fromtracee);
 
 	printf("Before resuming the child process where it left off and "
@@ -3797,7 +3797,7 @@ ATF_TC_BODY(read_i1, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me, magic);
+	    "got value %x != expected %x", lookup_me, magic);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -3860,7 +3860,7 @@ ATF_TC_BODY(read_i2, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me1, magic1);
+	    "got value %x != expected %x", lookup_me1, magic1);
 
 	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
@@ -3869,7 +3869,7 @@ ATF_TC_BODY(read_i2, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me2, magic2);
+	    "got value %x != expected %x", lookup_me2, magic2);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -3935,7 +3935,7 @@ ATF_TC_BODY(read_i3, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me1, magic1);
+	    "got value %x != expected %x", lookup_me1, magic1);
 
 	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
@@ -3944,7 +3944,7 @@ ATF_TC_BODY(read_i3, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me2, magic2);
+	    "got value %x != expected %x", lookup_me2, magic2);
 
 	printf("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
@@ -3953,7 +3953,7 @@ ATF_TC_BODY(read_i3, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me3, magic3,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me3, magic3);
+	    "got value %x != expected %x", lookup_me3, magic3);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -4022,7 +4022,7 @@ ATF_TC_BODY(read_i4, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me1, magic1);
+	    "got value %x != expected %x", lookup_me1, magic1);
 
 	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
@@ -4031,7 +4031,7 @@ ATF_TC_BODY(read_i4, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me2, magic2);
+	    "got value %x != expected %x", lookup_me2, magic2);
 
 	printf("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
@@ -4040,7 +4040,7 @@ ATF_TC_BODY(read_i4, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me3, magic3,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me3, magic3);
+	    "got value %x != expected %x", lookup_me3, magic3);
 
 	printf("Read new lookup_me4 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
@@ -4049,7 +4049,7 @@ ATF_TC_BODY(read_i4, tc)
 	ATF_REQUIRE_EQ(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me4, magic4,
-	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me4, magic4);
+	    "got value %x != expected %x", lookup_me4, magic4);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
