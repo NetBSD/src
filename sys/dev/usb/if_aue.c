@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.137 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.138 2016/11/25 12:56:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,9 +78,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.137 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.138 2016/11/25 12:56:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_usb.h"
 #include "opt_inet.h"
 #endif
 

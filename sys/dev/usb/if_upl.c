@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.56 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.57 2016/11/25 12:56:29 skrll Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.56 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.57 2016/11/25 12:56:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
