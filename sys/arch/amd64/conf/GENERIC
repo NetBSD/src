@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.437 2016/08/07 10:44:05 christos Exp $
+# $NetBSD: GENERIC,v 1.438 2016/11/25 23:06:58 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.437 $"
+#ident 		"GENERIC-$Revision: 1.438 $"
 
 maxusers	64		# estimated number of users
 
@@ -110,6 +110,14 @@ makeoptions	DEBUG="-g"	# compile full symbol table for CTF
 options 	KDTRACE_HOOKS	# kernel DTrace hooks
 
 # Compatibility options
+#options	EXEC_AOUT	# required by binaries from before 1.5
+#options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
+#options 	COMPAT_09	# NetBSD 0.9,
+#options 	COMPAT_10	# NetBSD 1.0,
+#options 	COMPAT_11	# NetBSD 1.1,
+#options 	COMPAT_12	# NetBSD 1.2 (and 386BSD and BSDI),
+#options 	COMPAT_13	# NetBSD 1.3 (and 386BSD and BSDI),
+#options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
@@ -127,16 +135,6 @@ options 	COMPAT_LINUX
 options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
 options 	EXEC_ELF32
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
-
-# The following options are for running i386 binaries for pre-1.6
-#options	EXEC_AOUT
-#options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
-#options 	COMPAT_09	# NetBSD 0.9,
-#options 	COMPAT_10	# NetBSD 1.0,
-#options 	COMPAT_11	# NetBSD 1.1,
-#options 	COMPAT_12	# NetBSD 1.2 (and 386BSD and BSDI),
-#options 	COMPAT_13	# NetBSD 1.3 (and 386BSD and BSDI),
-#options 	COMPAT_14	# NetBSD 1.4,
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
