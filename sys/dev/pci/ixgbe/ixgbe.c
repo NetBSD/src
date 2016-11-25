@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 279805 2015-03-09 10:29:15Z araujo $*/
-/*$NetBSD: ixgbe.c,v 1.40 2016/10/13 20:05:06 jdolecek Exp $*/
+/*$NetBSD: ixgbe.c,v 1.41 2016/11/25 13:33:24 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -230,11 +230,9 @@ static void	ixgbe_setup_optics(struct adapter *);
 /* Legacy (single vector interrupt handler */
 static int	ixgbe_legacy_irq(void *);
 
-#if defined(NETBSD_MSI_OR_MSIX)
 /* The MSI/X Interrupt handlers */
 static int	ixgbe_msix_que(void *);
 static int	ixgbe_msix_link(void *);
-#endif
 
 /* Software interrupts for deferred work */
 static void	ixgbe_handle_que(void *);
@@ -310,7 +308,6 @@ static int ixgbe_smart_speed = ixgbe_smart_speed_on;
 static int ixgbe_enable_msix = 1;
 SYSCTL_INT("hw.ixgbe.enable_msix", &ixgbe_enable_msix);
 
-#if defined(NETBSD_MSI_OR_MSIX)
 /*
  * Number of Queues, can be set to 0,
  * it then autoconfigures based on the
@@ -319,7 +316,6 @@ SYSCTL_INT("hw.ixgbe.enable_msix", &ixgbe_enable_msix);
  */
 static int ixgbe_num_queues = 1;
 SYSCTL_INT("hw.ixgbe.num_queues", &ixgbe_num_queues);
-#endif
 
 /*
 ** Number of TX descriptors per ring,
@@ -512,7 +508,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	u16		csum;
 	u32		ctrl_ext;
 	ixgbe_vendor_info_t *ent;
-	const struct pci_attach_args *pa = aux;
+	struct pci_attach_args *pa = aux;
 
 	INIT_DEBUGOUT("ixgbe_attach: begin");
 
@@ -1693,7 +1689,6 @@ ixgbe_legacy_irq(void *arg)
 }
 
 
-#if defined(NETBSD_MSI_OR_MSIX)
 /*********************************************************************
  *
  *  MSIX Queue Interrupt Service routine
@@ -1862,7 +1857,6 @@ ixgbe_msix_link(void *arg)
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMS, IXGBE_EIMS_OTHER);
 	return 1;
 }
-#endif
 
 /*********************************************************************
  *
@@ -2498,27 +2492,11 @@ ixgbe_allocate_legacy(struct adapter *adapter,
 #ifndef IXGBE_LEGACY_TX
 	struct tx_ring		*txr = adapter->tx_rings;
 #endif
-#ifndef NETBSD_MSI_OR_MSIX
-	pci_intr_handle_t	ih;
-#else
 	int		counts[PCI_INTR_TYPE_SIZE];
 	pci_intr_type_t intr_type, max_type;
-#endif
 	char intrbuf[PCI_INTRSTR_LEN];
 	const char	*intrstr = NULL;
  
-#ifndef NETBSD_MSI_OR_MSIX
-	/* We allocate a single interrupt resource */
- 	if (pci_intr_map(pa, &ih) != 0) {
-		aprint_error_dev(dev, "unable to map interrupt\n");
-		return ENXIO;
-	} else {
-		intrstr = pci_intr_string(adapter->osdep.pc, ih, intrbuf,
-		    sizeof(intrbuf));
-	}
-	adapter->osdep.ihs[0] = pci_intr_establish_xname(adapter->osdep.pc, ih,
-	    IPL_NET, ixgbe_legacy_irq, que, device_xname(dev));
-#else
 	/* Allocation settings */
 	max_type = PCI_INTR_TYPE_MSI;
 	counts[PCI_INTR_TYPE_MSIX] = 0;
@@ -2554,14 +2532,11 @@ alloc_retry:
 			break;
 		}
 	}
-#endif
 	if (adapter->osdep.ihs[0] == NULL) {
 		aprint_error_dev(dev,
 		    "couldn't establish interrupt%s%s\n",
 		    intrstr ? " at " : "", intrstr ? intrstr : "");
-#ifdef NETBSD_MSI_OR_MSIX
 		pci_intr_release(adapter->osdep.pc, adapter->osdep.intrs, 1);
-#endif
 		return ENXIO;
 	}
 	aprint_normal_dev(dev, "interrupting at %s\n", intrstr);
@@ -2614,9 +2589,6 @@ alloc_retry:
 static int
 ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 {
-#if !defined(NETBSD_MSI_OR_MSIX)
-	return 0;
-#else
 	device_t        dev = adapter->dev;
 	struct 		ix_queue *que = adapter->queues;
 	struct  	tx_ring *txr = adapter->tx_rings;
@@ -2778,7 +2750,6 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 	kcpuset_destroy(affinity);
 	return (0);
-#endif
 }
 
 /*
@@ -2787,9 +2758,6 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 static int
 ixgbe_setup_msix(struct adapter *adapter)
 {
-#if !defined(NETBSD_MSI_OR_MSIX)
-	return 0;
-#else
 	device_t dev = adapter->dev;
 	int want, queues, msgs;
 
@@ -2849,7 +2817,6 @@ msi:
        	msgs = 1;
 	aprint_normal_dev(dev,"Using an MSI interrupt\n");
 	return (msgs);
-#endif
 }
 
 
@@ -2904,12 +2871,9 @@ map_err:
 static void
 ixgbe_free_pci_resources(struct adapter * adapter)
 {
-#if defined(NETBSD_MSI_OR_MSIX)
 	struct 		ix_queue *que = adapter->queues;
-#endif
 	int		rid;
 
-#if defined(NETBSD_MSI_OR_MSIX)
 	/*
 	**  Release all msix queue resources:
 	*/
@@ -2918,7 +2882,6 @@ ixgbe_free_pci_resources(struct adapter * adapter)
 			pci_intr_disestablish(adapter->osdep.pc,
 			    adapter->osdep.ihs[i]);
 	}
-#endif
 
 	/* Clean the Legacy or Link interrupt last */
 	if (adapter->linkvec) /* we are doing MSIX */
@@ -2932,10 +2895,8 @@ ixgbe_free_pci_resources(struct adapter * adapter)
 		adapter->osdep.ihs[rid] = NULL;
 	}
 
-#if defined(NETBSD_MSI_OR_MSIX)
 	pci_intr_release(adapter->osdep.pc, adapter->osdep.intrs,
 	    adapter->osdep.nintrs);
-#endif
 
 	if (adapter->osdep.mem_size != 0) {
 		bus_space_unmap(adapter->osdep.mem_bus_space_tag,
