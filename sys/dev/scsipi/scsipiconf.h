@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.124 2016/11/20 15:37:19 mlelstv Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.125 2016/11/25 02:23:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -208,7 +208,6 @@ struct scsipi_adapter {
 	kmutex_t adapt_mtx;
 	bool	adapt_running;	/* attachment initialized */
 };
-#endif
 
 /* adapt_flags */
 #define SCSIPI_ADAPT_POLL_ONLY	0x01 /* Adaptor can't do interrupts. */
@@ -220,6 +219,7 @@ void scsipi_adapter_request(struct scsipi_channel *,
 int scsipi_adapter_ioctl(struct scsipi_channel *, u_long,
 	void *, int, struct proc *);
 int scsipi_adapter_enable(struct scsipi_adapter *, int);
+#endif
 
 
 /*
