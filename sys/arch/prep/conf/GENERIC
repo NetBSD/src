@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.175 2015/09/26 11:16:12 maxv Exp $
+# $NetBSD: GENERIC,v 1.176 2016/11/26 13:59:45 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.175 $"
+#ident		"GENERIC-$Revision: 1.176 $"
 
 maxusers	32
 
@@ -585,6 +585,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #

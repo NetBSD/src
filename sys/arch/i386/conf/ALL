@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.402 2016/10/11 05:16:04 ozaki-r Exp $
+# $NetBSD: ALL,v 1.403 2016/11/26 13:59:45 christos Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.402 $"
+#ident 		"ALL-$Revision: 1.403 $"
 
 maxusers	64		# estimated number of users
 
@@ -1823,6 +1823,7 @@ pseudo-device	dmoverio
 pseudo-device	nandemulator
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 pseudo-device	veriexec
