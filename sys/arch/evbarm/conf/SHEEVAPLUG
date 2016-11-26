@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.48 2016/03/19 23:21:02 gdt Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.49 2016/11/26 13:59:45 christos Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -509,6 +509,7 @@ pseudo-device	swdmover		# software dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #pseudo-device	veriexec
