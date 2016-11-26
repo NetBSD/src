@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.442 2016/11/26 01:09:33 dholland Exp $
+# $NetBSD: GENERIC,v 1.443 2016/11/26 13:59:45 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.442 $"
+#ident 		"GENERIC-$Revision: 1.443 $"
 
 maxusers	64		# estimated number of users
 
@@ -1307,7 +1307,8 @@ pseudo-device	pad
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
 
-options 	FILEASSOC		# fileassoc(9) - needed by Veriexec/PaX
+options 	FILEASSOC		# fileassoc(9) - needed by Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #
