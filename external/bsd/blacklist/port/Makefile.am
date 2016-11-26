@@ -1,7 +1,7 @@
 #
 ACLOCAL_AMFLAGS = -I m4
 lib_LTLIBRARIES = libblacklist.la
-include_HEADERS = blacklist.h
+include_HEADERS = ../include/blacklist.h
 
 bin_PROGRAMS = blacklistd blacklistctl srvtest cltest
 
