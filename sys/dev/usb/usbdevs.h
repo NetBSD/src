@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.717 2016/11/25 15:37:19 skrll Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.718 2016/11/26 09:37:39 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.725 2016/11/25 15:35:35 skrll Exp
+ *	NetBSD: usbdevs,v 1.727 2016/11/26 09:36:43 skrll Exp
  */
 
 /*
@@ -1798,7 +1798,7 @@
 #define	USB_PRODUCT_HUAWEI_E171INIT	0x14fe		/* Huawei E171 USB CD */
 #define	USB_PRODUCT_HUAWEI_E171	0x1506		/* Huawei E171 */
 #define	USB_PRODUCT_HUAWEI_E353_HiLink	0x1507		/* Huawei E353_HiLink */
-/* Accessing http://192.168.1.1/html/switchProjectMode.html on 
+/* Accessing http://192.168.1.1/html/switchProjectMode.html on
    a Huawei HiLink device will switch it to u3g mode */
 #define	USB_PRODUCT_HUAWEI_E353	0x1442		/* Huawei E353 */
 #define	USB_PRODUCT_HUAWEI_K3765INIT	0x1520		/* Huawei K3765 USB CD */
@@ -3038,6 +3038,7 @@
 #define	USB_PRODUCT_SITECOMEU_WL349V4	0x0050		/* WL-349 v4 */
 #define	USB_PRODUCT_SITECOMEU_RT3070_1	0x0051		/* RT3070 */
 #define	USB_PRODUCT_SITECOMEU_RTL8188CU	0x0052		/* RTL8188CU */
+#define	USB_PRODUCT_SITECOMEU_LN031	0x0056		/* LN-031 */
 #define	USB_PRODUCT_SITECOMEU_RTL8188CU_2	0x005c		/* RTL8188CU */
 #define	USB_PRODUCT_SITECOMEU_RT3072_5	0x005f		/* RT3072 */
 #define	USB_PRODUCT_SITECOMEU_WLA4000	0x0060		/* WLA-4000 */
