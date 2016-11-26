@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.7 2016/11/25 08:51:16 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.8 2016/11/26 03:20:42 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -269,6 +269,10 @@ rump_server_dump_servers()
 
 rump_server_dump_buses()
 {
+
+	if [ ! -f $_rump_server_buses ]; then
+		return 0
+	fi
 
 	$DEBUG && cat $_rump_server_buses
 	for bus in $(cat $_rump_server_buses); do
