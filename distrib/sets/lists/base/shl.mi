@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.790 2016/11/01 14:04:48 christos Exp $
+# $NetBSD: shl.mi,v 1.791 2016/11/26 03:17:58 ozaki-r Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -742,6 +742,9 @@
 ./usr/lib/librumpnet_virtif.so			base-rump-shlib		rump
 ./usr/lib/librumpnet_virtif.so.0		base-rump-shlib		rump
 ./usr/lib/librumpnet_virtif.so.0.0		base-rump-shlib		rump
+./usr/lib/librumpnet_vlan.so			base-rump-shlib		rump
+./usr/lib/librumpnet_vlan.so.0			base-rump-shlib		rump
+./usr/lib/librumpnet_vlan.so.0.0		base-rump-shlib		rump
 ./usr/lib/librumpuser.so			base-rump-shlib		compatfile,rump
 ./usr/lib/librumpuser.so.0			base-rump-shlib		compatfile,rump
 ./usr/lib/librumpuser.so.0.1			base-rump-shlib		compatfile,rump
