@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.370 2016/11/20 16:55:18 macallan Exp $
+# $NetBSD: GENERIC,v 1.371 2016/11/26 13:59:45 christos Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.370 $"
+ident		"GENERIC-$Revision: 1.371 $"
 
 maxusers 32
 
@@ -778,6 +778,7 @@ pseudo-device	btuart			# Bluetooth HCI UART (H4)
 pseudo-device	putter			# for puffs and pud
 
 #options	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #
