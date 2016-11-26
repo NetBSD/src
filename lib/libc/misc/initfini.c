@@ -1,4 +1,4 @@
-/* 	$NetBSD: initfini.c,v 1.11 2013/08/19 22:14:37 matt Exp $	 */
+/* 	$NetBSD: initfini.c,v 1.12 2016/11/26 20:38:20 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: initfini.c,v 1.11 2013/08/19 22:14:37 matt Exp $");
+__RCSID("$NetBSD: initfini.c,v 1.12 2016/11/26 20:38:20 dholland Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -77,8 +77,12 @@ void _libc_init(void);
 struct ps_strings *__ps_strings;
 
 /*
- * _libc_init is called twice.  The first time explicitly by crt0.o
- * (for newer versions) and the second time as indirectly via _init().
+ * _libc_init is called twice.  One call comes explicitly from crt0.o
+ * (for newer versions) and the other is via global constructor handling.
+ *
+ * In static binaries the explicit call is first; in dynamically linked
+ * binaries the global constructors of libc are called from ld.elf_so
+ * before crt0.o is reached.
  */
 void __section(".text.startup")
 _libc_init(void)
