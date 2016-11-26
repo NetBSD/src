@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.168 2016/08/14 23:07:04 dholland Exp $
+$NetBSD: acronyms.comp,v 1.169 2016/11/26 03:33:34 kamil Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -904,6 +904,7 @@ PBE	programming by example
 PC	personal computer
 PC	program counter
 PCB	printed circuit board
+PCB	process control block
 PCC	Portable C Compiler
 PCD	page-level cache disable
 PCE	performance-monitor counter enable
