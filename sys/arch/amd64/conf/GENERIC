@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.440 2016/11/25 23:33:46 dholland Exp $
+# $NetBSD: GENERIC,v 1.441 2016/11/26 00:34:01 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.440 $"
+#ident 		"GENERIC-$Revision: 1.441 $"
 
 maxusers	64		# estimated number of users
 
@@ -110,6 +110,7 @@ makeoptions	DEBUG="-g"	# compile full symbol table for CTF
 options 	KDTRACE_HOOKS	# kernel DTrace hooks
 
 # Compatibility options
+# (note that really old compat is only useful for 32-bit binaries)
 #options	EXEC_AOUT	# required by binaries from before 1.5
 #options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
 #options 	COMPAT_09	# NetBSD 0.9,
