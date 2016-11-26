@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.85 2015/08/08 06:36:25 maxv Exp $
+#	$NetBSD: GUMSTIX,v 1.86 2016/11/26 13:59:45 christos Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -418,6 +418,7 @@ pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 pseudo-device	drvctl
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #pseudo-device	veriexec
