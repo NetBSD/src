@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35 2016/10/19 00:08:42 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.36 2016/11/26 15:03:23 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.35 2016/10/19 00:08:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.36 2016/11/26 15:03:23 nonaka Exp $");
 
 #include "opt_pci.h"
 
@@ -496,6 +496,31 @@ pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev,
 	}
 }
 #endif
+
+pci_intr_type_t
+pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+{
+
+	return PCI_INTR_TYPE_INTX;
+}
+
+int
+pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *counts, pci_intr_type_t max_type)
+{
+
+	if (counts != NULL && counts[PCI_INTR_TYPE_INTX] == 0)
+		return EINVAL;
+
+	return pci_intx_alloc(pa, ihps);
+}
+
+void
+pci_intr_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih, int count)
+{
+
+	kmem_free(pih, sizeof(*pih));
+}
 
 int
 pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihpp)
