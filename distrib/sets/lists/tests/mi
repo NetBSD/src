@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.702 2016/11/18 22:50:19 kamil Exp $
+# $NetBSD: mi,v 1.703 2016/11/26 03:19:48 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3235,6 +3235,10 @@
 ./usr/tests/net/if_tun/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/if_tun/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_tun/t_tun			tests-net-tests		atf,rump
+./usr/tests/net/if_vlan				tests-net-tests		compattestfile,atf
+./usr/tests/net/if_vlan/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/if_vlan/Kyuafile		tests-net-tests		atf,rump,kyua
+./usr/tests/net/if_vlan/t_vlan			tests-net-tests		atf,rump
 ./usr/tests/net/in_cksum			tests-net-tests		compattestfile,atf
 ./usr/tests/net/in_cksum/Atffile		tests-net-tests		compattestfile,atf
 ./usr/tests/net/in_cksum/Kyuafile		tests-net-tests		compattestfile,atf,kyua
