@@ -1,4 +1,4 @@
-#	$NetBSD $
+#	$NetBSD: Makefile,v 1.2 2016/11/26 11:20:09 njoly Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net
