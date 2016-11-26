@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.98 2016/10/11 18:31:11 jdolecek Exp $	*/
+/*	$NetBSD: ld.c,v 1.99 2016/11/26 12:32:03 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.98 2016/10/11 18:31:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.99 2016/11/26 12:32:03 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,11 +444,11 @@ ldsize(dev_t dev)
 
 	unit = DISKUNIT(dev);
 	if ((sc = device_lookup_private(&ld_cd, unit)) == NULL)
-		return (ENODEV);
+		return (-1);
 	dksc = &sc->sc_dksc;
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
-		return (ENODEV);
+		return (-1);
 
 	return dk_size(dksc, dev);
 }
