@@ -1,4 +1,4 @@
-# $NetBSD: ARMADILLO-IOT-G3,v 1.3 2016/10/17 10:36:56 ryo Exp $
+# $NetBSD: ARMADILLO-IOT-G3,v 1.4 2016/11/26 13:59:45 christos Exp $
 #
 # ARMADILLO-IOT-G3 -- Atmark Techno, Armadillo-IoT G3
 #
@@ -399,6 +399,7 @@ pseudo-device	wsfont
 pseudo-device	drvctl
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #
