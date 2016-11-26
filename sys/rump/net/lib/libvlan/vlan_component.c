@@ -1,7 +1,9 @@
-/*	$NetBSD: net_stub.c,v 1.24 2016/11/26 03:17:58 ozaki-r Exp $	*/
+/*	$NetBSD: vlan_component.c,v 1.1 2016/11/26 03:17:58 ozaki-r Exp $	*/
 
 /*
- * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2016 Internet Initiative Japan Inc.
+ * All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,59 +28,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.24 2016/11/26 03:17:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlan_component.c,v 1.1 2016/11/26 03:17:58 ozaki-r Exp $");
 
-#include <sys/mutex.h>
 #include <sys/param.h>
-#include <sys/protosw.h>
-#include <sys/socketvar.h>
-#include <sys/pslist.h>
-#include <sys/psref.h>
 
-#include <net/if.h>
-#include <net/route.h>
+#include <rump-sys/kern.h>
 
-#include <compat/sys/socket.h>
-#include <compat/sys/sockio.h>
+int vlanattach(int);
 
-int rumpnet_stub(void);
-int
-rumpnet_stub(void)
+RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
 {
 
-	panic("component not available");
-}
-
-/*
- * Weak symbols so that we can optionally leave components out.
- * (would be better to fix sys/net* to be more modular, though)
- */
-
-/* bridge */
-__weak_alias(bridge_ifdetach,rumpnet_stub);
-__weak_alias(bridge_output,rumpnet_stub);
-
-/* agr */
-__weak_alias(agr_input,rumpnet_stub);
-__weak_alias(ieee8023ad_lacp_input,rumpnet_stub);
-__weak_alias(ieee8023ad_marker_input,rumpnet_stub);
-
-/* pppoe */
-__weak_alias(pppoe_input,rumpnet_stub);
-__weak_alias(pppoedisc_input,rumpnet_stub);
-
-/* vlan */
-__weak_alias(vlan_input,rumpnet_stub);
-__weak_alias(vlan_ifdetach,rumpnet_stub);
-
-struct ifnet_head ifnet_list;
-struct pslist_head ifnet_pslist;
-struct psref_class *ifnet_psref_class;
-kmutex_t ifnet_mtx;
-
-int
-compat_ifconf(u_long cmd, void *data)
-{
-
-	return EOPNOTSUPP;
+	vlanattach(0);
 }
