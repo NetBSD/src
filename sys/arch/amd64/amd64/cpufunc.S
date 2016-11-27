@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.25 2014/02/12 23:24:09 dsl Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.26 2016/11/27 02:32:56 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ ENTRY(ldr6)
 	ret
 
 ENTRY(rdr6)
-	movq	%dr6, %rdi
+	movq	%dr6, %rax
 	ret
 
 ENTRY(x86_disable_intr)
