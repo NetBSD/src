@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.8 2016/10/31 12:27:22 skrll Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.9 2016/11/28 04:18:08 mrg Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.8 2016/10/31 12:27:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.9 2016/11/28 04:18:08 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -302,7 +302,9 @@ octeon_mbox_test(void)
 void
 octeon_intr_init(struct cpu_info *ci)
 {
+#ifdef DIAGNOSTIC
 	const int cpunum = cpu_index(ci);
+#endif
 	const char * const xname = cpu_name(ci);
 	struct cpu_softc *cpu = ci->ci_softc;
 
