@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.27 2014/04/20 22:48:59 dholland Exp $	*/
+/*	$NetBSD: ps.h,v 1.28 2016/11/28 08:21:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -86,9 +86,16 @@ typedef struct var {
 	double	longestnd;	/* longest negative double */
 } VAR;
 
-#define	OUTPUT(vent, ki, kl, mode) do {					\
+struct pinfo {
+	struct kinfo_proc2 *ki;
+	double pcpu;
+};
+
+#define	OUTPUT(vent, kl, pi, ki, mode) do {				\
 	if ((vent)->var->flag & LWP)					\
 		((vent)->var->oproc)((void *)(kl), (vent), (mode));	\
+	else if ((vent)->var->type == PCPU)				\
+		((vent)->var->oproc)((void *)(pi), (vent), (mode));	\
 	else								\
 		((vent)->var->oproc)((void *)(ki), (vent), (mode));	\
 	} while (/*CONSTCOND*/ 0)
