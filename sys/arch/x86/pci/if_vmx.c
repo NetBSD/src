@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.9 2016/11/25 06:48:37 hikaru Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.10 2016/11/28 20:12:41 martin Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.9 2016/11/25 06:48:37 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.10 2016/11/28 20:12:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2006,7 +2006,7 @@ vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq)
 	struct ifnet *ifp;
 	struct vmxnet3_rxring *rxr;
 	struct vmxnet3_comp_ring *rxc;
-	struct vmxnet3_rxdesc *rxd;
+	struct vmxnet3_rxdesc *rxd __diagused;
 	struct vmxnet3_rxcompdesc *rxcd;
 	struct mbuf *m, *m_head, *m_tail;
 	int idx, length;
