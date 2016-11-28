@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.123 2014/11/15 01:58:34 joerg Exp $	*/
+/*	$NetBSD: print.c,v 1.124 2016/11/28 08:19:23 rin Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.123 2014/11/15 01:58:34 joerg Exp $");
+__RCSID("$NetBSD: print.c,v 1.124 2016/11/28 08:19:23 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1094,12 +1094,9 @@ lcputime(void *arg, VARENT *ve, enum mode mode)
 double
 getpcpu(const struct kinfo_proc2 *k)
 {
-	static int failure;
 
 	if (!nlistread)
-		failure = (kd) ? donlist() : 1;
-	if (failure)
-		return (0.0);
+		donlist();
 
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
@@ -1108,7 +1105,7 @@ getpcpu(const struct kinfo_proc2 *k)
 	if (rawcpu)
 		return (100.0 * fxtofl(k->p_pctcpu));
 	return (100.0 * fxtofl(k->p_pctcpu) /
-		(1.0 - exp(k->p_swtime * log(ccpu))));
+		(1.0 - exp(k->p_swtime * log_ccpu)));
 }
 
 void
@@ -1127,14 +1124,11 @@ pcpu(void *arg, VARENT *ve, enum mode mode)
 double
 getpmem(const struct kinfo_proc2 *k)
 {
-	static int failure;
 	double fracmem;
 	int szptudot;
 
 	if (!nlistread)
-		failure = (kd) ? donlist() : 1;
-	if (failure)
-		return (0.0);
+		donlist();
 
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = uspace/getpagesize();

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.35 2014/04/20 22:48:59 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.36 2016/11/28 08:19:23 rin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -36,7 +36,7 @@
  * defined the types we use.
  */
 
-extern double ccpu;
+extern double log_ccpu;
 extern int eval, fscale, mempages, nlistread, rawcpu, maxslp, uspace;
 extern int sumrusage, termwidth, totwidth;
 extern int needenv, needcomm, commandonly;
@@ -49,8 +49,8 @@ extern VARLIST sortlist;
 void	 command(void *, VARENT *, enum mode);
 void	 cpuid(void *, VARENT *, enum mode);
 void	 cputime(void *, VARENT *, enum mode);
-int	 donlist(void);
-int	 donlist_sysctl(void);
+void	 donlist(void);
+void	 donlist_sysctl(void);
 void	 fmt_puts(char *, int *);
 void	 fmt_putc(int, int *);
 void	 elapsed(void *, VARENT *, enum mode);
