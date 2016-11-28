@@ -1,4 +1,4 @@
-.\"	$NetBSD: dksubr.9,v 1.1 2016/11/28 11:00:24 mlelstv Exp $
+.\"	$NetBSD: dksubr.9,v 1.2 2016/11/28 11:54:18 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,7 +87,8 @@
 .Fn dk_getdisklabel "struct dk_softc *" "dev_t"
 .Sh DESCRIPTION
 The disk driver subroutines provide common functionality for all disk drivers
-to reduce the amount of replicated code. For many disk drivers, their
+to reduce the amount of replicated code.
+For many disk drivers, their
 corresponding entry points can be made mostly stubs.
 .Pp
 The subroutines encapsulate data structures found in a driver's softc
@@ -97,7 +98,7 @@ struct dk_softc {
 	device_t		sc_dev;
 	struct disk		sc_dkdev;
 	struct bufq_state	sc_bufq;
-	krndsoruce_t		sc_rnd_source;
+	krndsource_t		sc_rnd_source;
 ...
 }
 .Ed
@@ -129,7 +130,8 @@ callback to handle initialization steps.
 .It Fn dk_close
 Handles close steps for the
 .Xr disk 9
-framework. The driver may provide the
+framework.
+The driver may provide the
 .Nm d_lastclose
 callback to handle finalization steps.
 .Nm dk_open
@@ -142,7 +144,7 @@ these to the
 .Nm d_discard
 callback.
 .It Fn dk_size
-returns dump size information from the
+Returns dump size information from the
 .Xr disklabel 9
 and opens and closes the driver when necessary.
 .It Fn dk_dump
@@ -154,17 +156,20 @@ callback in appropriate chunks determined by the
 callback.
 .It Fn dk_ioctl
 Handles the ioctls
-.Nm DIOCKLABEL
-.Nm DIOCWLABEL
-.Nm DIOCGDEFLABEL
-.Nm DIOCGSTRATEGY
-.Nm DIOCSSTRATEGY
+.Dv DIOCKLABEL ,
+.Dv DIOCWLABEL ,
+.Dv DIOCGDEFLABEL ,
+.Dv DIOCGSTRATEGY ,
+and
+.Dv DIOCSSTRATEGY
 and passes other disk ioctls through the
 .Xr disk 9
-framework. Returns
+framework.
+Returns
 .Nm ENOTTY
-when an ioctl isn't implemented. This routine is run as a fallback to
-handle commands, that are not specific to the driver.
+when an ioctl isn't implemented.
+This routine is run as a fallback to
+handle commands that are not specific to the driver.
 .It Fn dk_strategy
 Validates parameters, computes raw block numbers, queues a buffer for I/O
 and triggers queue processing by calling
@@ -172,7 +177,8 @@ and triggers queue processing by calling
 .It Fn dk_strategy_defer
 Alternative to
 .Nm dk_strategy
-that only queues the buffer. Drivers that implement a separate I/O thread
+that only queues the buffer.
+Drivers that implement a separate I/O thread
 can use
 .Nm dk_strategy_defer
 within their own strategy routine and signal the thread through a private
@@ -185,12 +191,16 @@ The driver must then call
 .Nm dk_start
 to trigger queue processing.
 .It Fn dk_start
-If bp != NULL put it into the queue. Run the
+If
+.Ar bp != Dv NULL
+put it into the queue.
+Run the
 .Nm d_diskstart
 callback for every buffer until the queue is empty or the callback returns
 .Nm EAGAIN .
 In the latter case, the buffer is saved and issued on the
-next queue run. This also calls
+next queue run.
+This also calls
 .Nm disk_busy
 accordingly to handle I/O metrics.
 .It Fn dk_done
@@ -201,8 +211,8 @@ logs errors, calls
 to handle I/O metrics and collects entropy for the
 .Xr cprng 9 .
 .It Fn dk_drain
-Aborts all queued I/O. This function must be called instead
-of
+Aborts all queued I/O.
+This function must be called instead of
 .Fn bufq_drain
 to cooperate with
 .Nm dk_start .
@@ -250,8 +260,8 @@ Truncate I/O size to the driver limit.
 Issue a single I/O requests, called by
 .Nm dk_dump .
 .It Fn d_lastclose
-Private cleanup after last user is finished. Often used to
-flush write caches.
+Private cleanup after last user is finished.
+Often used to flush write caches.
 .It Fn d_discard
 Issue a single I/O request to invalidate a disk region.
 .It Fn d_firstopen
@@ -282,6 +292,6 @@ The framework includes a
 .Nm dk_lookup
 helper function, that is used by the
 .Xr cgd 4
-driver to open a vnode for a block device. This looks too generic
+driver to open a vnode for a block device.
+This looks too generic
 and should be put somewhere better (and be renamed).
-
