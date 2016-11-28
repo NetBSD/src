@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixv.c 275358 2014-12-01 11:45:24Z hselasky $*/
-/*$NetBSD: ixv.c,v 1.18 2016/11/25 13:33:24 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.19 2016/11/28 06:09:19 knakahara Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -264,9 +264,9 @@ static int ixv_total_ports;
 static int
 ixv_probe(device_t dev, cfdata_t cf, void *aux)
 {
+#ifdef __HAVE_PCI_MSI_MSIX
 	const struct pci_attach_args *pa = aux;
 
-#ifdef __HAVE_PCI_MSI_MSIX
 	return (ixv_lookup(pa) != NULL) ? 1 : 0;
 #else
 	return 0;
