@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 279393 2015-02-28 14:57:57Z ngie $*/
-/*$NetBSD: ixgbe.h,v 1.9 2015/08/17 06:16:03 knakahara Exp $*/
+/*$NetBSD: ixgbe.h,v 1.10 2016/11/28 02:23:33 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -111,6 +111,7 @@
 
 #include "ixgbe_netbsd.h"
 #include "ixgbe_api.h"
+#include "ixgbe_vf.h"
 
 /* Tunables */
 
@@ -565,4 +566,26 @@ ixgbe_rx_unrefreshed(struct rx_ring *rxr)
 		    rxr->next_to_refresh - 1);
 }       
 
+#ifdef IXGBE_LEGACY_TX
+void     ixgbe_start(struct ifnet *);
+void     ixgbe_start_locked(struct tx_ring *, struct ifnet *);
+#else /* ! IXGBE_LEGACY_TX */
+int	ixgbe_mq_start(struct ifnet *, struct mbuf *);
+int	ixgbe_mq_start_locked(struct ifnet *, struct tx_ring *);
+void	ixgbe_qflush(struct ifnet *);
+void	ixgbe_deferred_mq_start(void *, int);
+#endif /* IXGBE_LEGACY_TX */
+
+int	ixgbe_allocate_queues(struct adapter *);
+int      ixgbe_allocate_transmit_buffers(struct tx_ring *);
+int	ixgbe_setup_transmit_structures(struct adapter *);
+void     ixgbe_free_transmit_structures(struct adapter *);
+int      ixgbe_allocate_receive_buffers(struct rx_ring *);
+int      ixgbe_setup_receive_structures(struct adapter *);
+void     ixgbe_free_receive_structures(struct adapter *);
+void	ixgbe_txeof(struct tx_ring *);
+bool	ixgbe_rxeof(struct ix_queue *);
+
+int	ixgbe_dma_malloc(struct adapter *,
+		bus_size_t, struct ixgbe_dma_alloc *, int);
 #endif /* _IXGBE_H_ */
