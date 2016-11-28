@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixv.c 275358 2014-12-01 11:45:24Z hselasky $*/
-/*$NetBSD: ixv.c,v 1.19 2016/11/28 06:09:19 knakahara Exp $*/
+/*$NetBSD: ixv.c,v 1.20 2016/11/28 08:31:17 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -3708,7 +3708,7 @@ ixv_setup_vlan_support(struct adapter *adapter)
 	** the VFTA and other state, so if there
 	** have been no vlan's registered do nothing.
 	*/
-	if (adapter->num_vlans == 0)
+	if (!VLAN_ATTACHED(&adapter->osdep.ec))
 		return;
 
 	/* Enable the queues */
