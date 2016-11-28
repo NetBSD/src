@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.32 2016/11/26 02:34:49 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.33 2016/11/28 21:37:00 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.32 2016/11/26 02:34:49 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.33 2016/11/28 21:37:00 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -362,6 +362,40 @@ await_zombie(pid_t process)
 	}
 }
 #endif
+
+/* Happy number sequence -- this function is used to just consume cpu cycles */
+#define	HAPPY_NUMBER	1
+
+/* If n is not happy then its sequence ends in the cycle:
+ * 4, 16, 37, 58, 89, 145, 42, 20, 4, ... */
+#define	SAD_NUMBER	4
+
+/* Calculate the sum of the squares of the digits of n */
+static unsigned __used
+dsum(unsigned n)
+{
+	unsigned sum, x;
+	for (sum = 0; n; n /= 10) {
+		x = n % 10;
+		sum += x * x;
+	}
+	return sum;
+}
+
+static int __used
+check_happy(unsigned n)
+{
+	for (;;) {
+		unsigned total = dsum(n);
+
+		if (total == HAPPY_NUMBER)
+			return 1;
+		if (total == SAD_NUMBER)
+			return 0;
+
+		n = total;
+	}
+}
 
 ATF_TC(traceme1);
 ATF_TC_HEAD(traceme1, tc)
@@ -4455,6 +4489,70 @@ ATF_TC_BODY(fpregs2, tc)
 }
 #endif
 
+#if defined(PT_STEP)
+ATF_TC(step1);
+ATF_TC_HEAD(step1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify single PT_STEP call");
+}
+
+ATF_TC_BODY(step1, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	int happy;
+
+	printf("Before forking process PID=%d\n", getpid());
+	child = atf_utils_fork();
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		happy = check_happy(100);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		FORKEE_ASSERT_EQ(happy, check_happy(100));
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent (use PT_STEP)\n");
+	ATF_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
 #if defined(TWAIT_HAVE_PID)
 #define ATF_TP_ADD_TC_HAVE_PID(a,b)	ATF_TP_ADD_TC(a,b)
 #else
@@ -4471,6 +4569,12 @@ ATF_TC_BODY(fpregs2, tc)
 #define ATF_TP_ADD_TC_HAVE_FPREGS(a,b)	ATF_TP_ADD_TC(a,b)
 #else
 #define ATF_TP_ADD_TC_HAVE_FPREGS(a,b)
+#endif
+
+#if defined(PT_STEP)
+#define ATF_TP_ADD_TC_PT_STEP(a,b)	ATF_TP_ADD_TC(a,b)
+#else
+#define ATF_TP_ADD_TC_PT_STEP(a,b)
 #endif
 
 ATF_TP_ADD_TCS(tp)
@@ -4543,6 +4647,8 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC_HAVE_FPREGS(tp, fpregs1);
 	ATF_TP_ADD_TC_HAVE_FPREGS(tp, fpregs2);
+
+	ATF_TP_ADD_TC_PT_STEP(tp, step1);
 
 	return atf_no_error();
 }
