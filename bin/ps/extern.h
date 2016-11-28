@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.36 2016/11/28 08:19:23 rin Exp $	*/
+/*	$NetBSD: extern.h,v 1.37 2016/11/28 08:21:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 extern double log_ccpu;
-extern int eval, fscale, mempages, nlistread, rawcpu, maxslp, uspace;
+extern int eval, fscale, mempages, nlistread, maxslp, uspace;
 extern int sumrusage, termwidth, totwidth;
 extern int needenv, needcomm, commandonly;
 extern uid_t myuid;

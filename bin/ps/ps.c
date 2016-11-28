@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.85 2016/11/28 08:18:27 rin Exp $	*/
+/*	$NetBSD: ps.c,v 1.86 2016/11/28 08:21:10 rin Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.85 2016/11/28 08:18:27 rin Exp $");
+__RCSID("$NetBSD: ps.c,v 1.86 2016/11/28 08:21:10 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ __RCSID("$NetBSD: ps.c,v 1.85 2016/11/28 08:18:27 rin Exp $");
 #include <kvm.h>
 #include <limits.h>
 #include <locale.h>
+#include <math.h>
 #include <nlist.h>
 #include <paths.h>
 #include <pwd.h>
@@ -106,12 +107,10 @@ __RCSID("$NetBSD: ps.c,v 1.85 2016/11/28 08:18:27 rin Exp $");
 #define	GETOPTSTR	"aAcCeghjk:LlM:mN:O:o:p:rSsTt:U:uvW:wx"
 #define	ARGOPTS		"kMNOopUW"
 
-struct kinfo_proc2 *kinfo;
 struct varlist displaylist = SIMPLEQ_HEAD_INITIALIZER(displaylist);
 struct varlist sortlist = SIMPLEQ_HEAD_INITIALIZER(sortlist);
 
 int	eval;			/* exit value */
-int	rawcpu;			/* -C */
 int	sumrusage;		/* -S */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
@@ -124,6 +123,8 @@ static struct kinfo_lwp
 		    struct kinfo_lwp *, int);
 static struct kinfo_proc2
 		*getkinfo_kvm(kvm_t *, int, int, int *);
+static struct pinfo
+		*setpinfo(struct kinfo_proc2 *, int, int, int);
 static char	*kludge_oldps_options(char *);
 static int	 pscomp(const void *, const void *);
 static void	 scanvars(void);
@@ -197,12 +198,14 @@ ttyname2dev(const char *ttname, int *xflg, int *what)
 int
 main(int argc, char *argv[])
 {
+	struct kinfo_proc2 *kinfo;
+	struct pinfo *pinfo;
 	struct varent *vent;
 	struct winsize ws;
 	struct kinfo_lwp *kl, *l;
 	int ch, i, j, fmt, lineno, nentries, nlwps;
 	long long flag;
-	int prtheader, wflag, what, xflg, showlwps;
+	int calc_pcpu, prtheader, wflag, what, xflg, rawcpu, showlwps;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	char *ttname;
 
@@ -394,11 +397,20 @@ main(int argc, char *argv[])
 
 	/* Add default sort criteria */
 	parsesort("tdev,pid");
+	calc_pcpu = 0;
 	SIMPLEQ_FOREACH(vent, &sortlist, next) {
 		if (vent->var->flag & LWP || vent->var->type == UNSPECIFIED)
 			warnx("Cannot sort on %s, sort key ignored",
 				vent->var->name);
+		if (vent->var->type == PCPU)
+			calc_pcpu = 1;
 	}
+	if (!calc_pcpu)
+		SIMPLEQ_FOREACH(vent, &displaylist, next)
+			if (vent->var->type == PCPU) {
+				calc_pcpu = 1;
+				break;
+			}
 
 	/*
 	 * scan requested variables, noting what structures are needed.
@@ -414,10 +426,12 @@ main(int argc, char *argv[])
 		printheader();
 		return 1;
 	}
+	pinfo = setpinfo(kinfo, nentries, calc_pcpu, rawcpu);
+
 	/*
 	 * sort proc list
 	 */
-	qsort(kinfo, nentries, sizeof(struct kinfo_proc2), pscomp);
+	qsort(pinfo, nentries, sizeof(struct pinfo), pscomp);
 	/*
 	 * For each proc, call each variable output function in
 	 * "setwidth" mode to determine the widest element of
@@ -425,7 +439,8 @@ main(int argc, char *argv[])
 	 */
 
 	for (i = 0; i < nentries; i++) {
-		struct kinfo_proc2 *ki = &kinfo[i];
+		struct pinfo *pi = &pinfo[i];
+		struct kinfo_proc2 *ki = pi->ki;
 
 		if (xflg == 0 && (ki->p_tdev == (uint32_t)NODEV ||
 		    (ki->p_flag & P_CONTROLT) == 0))
@@ -438,7 +453,7 @@ main(int argc, char *argv[])
 		if (showlwps == 0) {
 			l = pick_representative_lwp(ki, kl, nlwps);
 			SIMPLEQ_FOREACH(vent, &displaylist, next)
-				OUTPUT(vent, ki, l, WIDTHMODE);
+				OUTPUT(vent, l, pi, ki, WIDTHMODE);
 		} else {
 			/* The printing is done with the loops
 			 * reversed, but here we don't need that,
@@ -446,7 +461,7 @@ main(int argc, char *argv[])
 			 */
 			SIMPLEQ_FOREACH(vent, &displaylist, next)
 				for (j = 0; j < nlwps; j++)
-					OUTPUT(vent, ki, &kl[j], WIDTHMODE);
+					OUTPUT(vent, &kl[j], pi, ki, WIDTHMODE);
 		}
 	}
 	/*
@@ -460,7 +475,8 @@ main(int argc, char *argv[])
 	 * print mode.
 	 */
 	for (i = lineno = 0; i < nentries; i++) {
-		struct kinfo_proc2 *ki = &kinfo[i];
+		struct pinfo *pi = &pinfo[i];
+		struct kinfo_proc2 *ki = pi->ki;
 
 		if (xflg == 0 && (ki->p_tdev == (uint32_t)NODEV ||
 		    (ki->p_flag & P_CONTROLT ) == 0))
@@ -472,7 +488,7 @@ main(int argc, char *argv[])
 		if (showlwps == 0) {
 			l = pick_representative_lwp(ki, kl, nlwps);
 			SIMPLEQ_FOREACH(vent, &displaylist, next) {
-				OUTPUT(vent, ki, l, PRINTMODE);
+				OUTPUT(vent, l, pi, ki, PRINTMODE);
 				if (SIMPLEQ_NEXT(vent, next) != NULL)
 					(void)putchar(' ');
 			}
@@ -485,7 +501,7 @@ main(int argc, char *argv[])
 		} else {
 			for (j = 0; j < nlwps; j++) {
 				SIMPLEQ_FOREACH(vent, &displaylist, next) {
-					OUTPUT(vent, ki, &kl[j], PRINTMODE);
+					OUTPUT(vent, &kl[j], pi, ki, PRINTMODE);
 					if (SIMPLEQ_NEXT(vent, next) != NULL)
 						(void)putchar(' ');
 				}
@@ -567,6 +583,36 @@ getkinfo_kvm(kvm_t *kdp, int what, int flag, int *nentriesp)
 	    nentriesp));
 }
 
+static struct pinfo *
+setpinfo(struct kinfo_proc2 *ki, int nentries, int calc_pcpu, int rawcpu)
+{
+	struct pinfo *pi;
+	int i;
+
+	pi = malloc(nentries * sizeof(struct pinfo));
+	if (pi == NULL)
+		err(1, "malloc");
+
+	if (calc_pcpu && !nlistread)
+		donlist();
+
+	for (i = 0; i < nentries; i++) {
+		pi[i].ki = &ki[i];
+		if (!calc_pcpu)
+			continue;
+		if (ki[i].p_realstat == SZOMB ||
+		    (!rawcpu && ki[i].p_swtime == 0)) {
+			pi[i].pcpu = 0.0;
+			continue;
+		}
+		pi[i].pcpu = 100.0 * (double)ki[i].p_pctcpu / fscale;
+		if (!rawcpu)
+			pi[i].pcpu /= 1.0 - exp(ki[i].p_swtime * log_ccpu);
+	}
+
+	return pi;
+}
+
 static void
 scanvars(void)
 {
@@ -585,8 +631,10 @@ scanvars(void)
 static int
 pscomp(const void *a, const void *b)
 {
-	const struct kinfo_proc2 *ka = (const struct kinfo_proc2 *)a;
-	const struct kinfo_proc2 *kb = (const struct kinfo_proc2 *)b;
+	const struct pinfo *pa = (const struct pinfo *)a;
+	const struct pinfo *pb = (const struct pinfo *)b;
+	const struct kinfo_proc2 *ka = pa->ki;
+	const struct kinfo_proc2 *kb = pb->ki;
 
 	int i;
 	int64_t i64;
@@ -631,8 +679,8 @@ pscomp(const void *a, const void *b)
 		case UINT32:
 			RDIFF(uint32_t);
 		case SIGLIST:
-			sa = (const void *)((const char *)a + v->off);
-			sb = (const void *)((const char *)b + v->off);
+			sa = (const void *)((const char *)ka + v->off);
+			sb = (const void *)((const char *)kb + v->off);
 			i = 0;
 			do {
 				if (sa->__bits[i] > sb->__bits[i])
@@ -666,7 +714,7 @@ pscomp(const void *a, const void *b)
 				return i64 > 0 ? 1 : -1;
 			continue;
 		case PCPU:
-			i = getpcpu(kb) - getpcpu(ka);
+			i = pb->pcpu - pa->pcpu;
 			if (i != 0)
 				return i;
 			continue;
