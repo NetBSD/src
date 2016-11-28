@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.124 2016/11/28 08:19:23 rin Exp $	*/
+/*	$NetBSD: print.c,v 1.125 2016/11/28 08:21:10 rin Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.124 2016/11/28 08:19:23 rin Exp $");
+__RCSID("$NetBSD: print.c,v 1.125 2016/11/28 08:21:10 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1091,33 +1091,14 @@ lcputime(void *arg, VARENT *ve, enum mode mode)
 	cputime1(secs, psecs, v, mode);
 }
 
-double
-getpcpu(const struct kinfo_proc2 *k)
-{
-
-	if (!nlistread)
-		donlist();
-
-#define	fxtofl(fixpt)	((double)(fixpt) / fscale)
-
-	if (k->p_swtime == 0 || k->p_realstat == SZOMB)
-		return (0.0);
-	if (rawcpu)
-		return (100.0 * fxtofl(k->p_pctcpu));
-	return (100.0 * fxtofl(k->p_pctcpu) /
-		(1.0 - exp(k->p_swtime * log_ccpu)));
-}
-
 void
 pcpu(void *arg, VARENT *ve, enum mode mode)
 {
-	struct kinfo_proc2 *k;
 	VAR *v;
 	double dbl;
 
-	k = arg;
 	v = ve->var;
-	dbl = getpcpu(k);
+	dbl = ((struct pinfo *)arg)->pcpu;
 	doubleprintorsetwidth(v, dbl, (dbl >= 99.95) ? 0 : 1, mode);
 }
 
