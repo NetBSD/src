@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.67 2016/04/27 02:19:12 christos Exp $	*/
+/*	$NetBSD: disk.h,v 1.68 2016/11/28 08:42:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -481,6 +481,7 @@ struct dkdriver {
 	int	(*d_dumpblocks)(device_t, void *, daddr_t, int);
 	int	(*d_lastclose)(device_t);
 	int	(*d_discard)(device_t, off_t, off_t);
+	int	(*d_firstopen)(device_t, dev_t, int, int);
 };
 #endif
 

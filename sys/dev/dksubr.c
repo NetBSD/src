@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.91 2016/10/24 17:14:27 jdolecek Exp $ */
+/* $NetBSD: dksubr.c,v 1.92 2016/11/28 08:42:20 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.91 2016/10/24 17:14:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.92 2016/11/28 08:42:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,7 @@ int
 dk_open(struct dk_softc *dksc, dev_t dev,
     int flags, int fmt, struct lwp *l)
 {
+	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
 	struct	disklabel *lp = dksc->sc_dkdev.dk_label;
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
@@ -140,6 +141,15 @@ dk_open(struct dk_softc *dksc, dev_t dev,
 	if (dk->dk_nwedges != 0 && part != RAW_PART) {
 		ret = EBUSY;
 		goto done;
+	}
+
+	/*
+	 * initialize driver for the first opener
+	 */
+	if (dk->dk_openmask == 0 && dkd->d_firstopen != NULL) {
+		ret = (*dkd->d_firstopen)(dksc->sc_dev, dev, flags, fmt);
+		if (ret)
+			goto done;
 	}
 
 	/*
