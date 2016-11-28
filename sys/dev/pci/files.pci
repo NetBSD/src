@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.382 2016/11/21 16:34:34 macallan Exp $
+#	$NetBSD: files.pci,v 1.383 2016/11/28 02:23:33 msaitoh Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -665,8 +665,10 @@ attach	stge at pci
 file	dev/pci/if_stge.c		stge
 
 # Intel i82598 & i82599 10-Gigabit Ethernet
+define	ixgbe_common
+file	dev/pci/ixgbe/ix_txrx.c	ixgbe_common
 device	ixg: ether, ifnet, arp
-attach	ixg at pci
+attach	ixg at pci:	ixgbe_common
 file	dev/pci/ixgbe/ixgbe.c		ixg
 file	dev/pci/ixgbe/ixgbe_netbsd.c	ixg
 file	dev/pci/ixgbe/ixgbe_82598.c	ixg
