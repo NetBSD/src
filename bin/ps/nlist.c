@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.26 2008/04/28 20:22:51 martin Exp $	*/
+/*	$NetBSD: nlist.c,v 1.27 2016/11/28 08:19:23 rin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.26 2008/04/28 20:22:51 martin Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.27 2016/11/28 08:19:23 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,50 +97,73 @@ struct	nlist psnl[] = {
 	{ .n_name = NULL }
 };
 
-double	ccpu;				/* kernel _ccpu variable */
+double	log_ccpu;			/* log of kernel _ccpu variable */
 int	nlistread;			/* if nlist already read. */
 int	mempages;			/* number of pages of phys. memory */
 int	fscale;				/* kernel _fscale variable */
 int	maxslp;				/* kernel _maxslp variable */
 int	uspace;				/* kernel USPACE value */
 
+/* XXX Hopefully reasonable default */
+#define MEMPAGES 	0
+#ifndef FSCALE
+#define FSCALE		(1 << 8)
+#endif
+#define LOG_CCPU	(-1.0 / 20.0)
+#ifndef MAXSLP
+#define MAXSLP		20
+#endif
+#ifndef USPACE
+#define USPACE		(getpagesize())
+#endif
+
 #define	kread(x, v) \
 	kvm_read(kd, psnl[x].n_value, (char *)&v, sizeof v) != sizeof(v)
 
-int
+void
 donlist(void)
 {
-	int rval;
 	fixpt_t xccpu;
 
-	rval = 0;
 	nlistread = 1;
+
 	if (kvm_nlist(kd, psnl)) {
 		nlisterr(psnl);
 		eval = 1;
-		return (1);
+		fscale = FSCALE;
+		mempages = MEMPAGES;
+		log_ccpu = LOG_CCPU;
+		maxslp = MAXSLP;
+		return;
 	}
+
 	if (kread(X_FSCALE, fscale)) {
 		warnx("fscale: %s", kvm_geterr(kd));
-		eval = rval = 1;
+		eval = 1;
+		fscale = FSCALE;
 	}
+
 	if (kread(X_PHYSMEM, mempages)) {
 		warnx("avail_start: %s", kvm_geterr(kd));
-		eval = rval = 1;
+		eval = 1;
+		mempages = MEMPAGES;
 	}
+
 	if (kread(X_CCPU, xccpu)) {
 		warnx("ccpu: %s", kvm_geterr(kd));
-		eval = rval = 1;
-	}
+		eval = 1;
+		log_ccpu = LOG_CCPU;
+	} else
+		log_ccpu = log((double)xccpu / fscale);
+
 	if (kread(X_MAXSLP, maxslp)) {
 		warnx("maxslp: %s", kvm_geterr(kd));
-		eval = rval = 1;
+		eval = 1;
+		maxslp = MAXSLP;
 	}
-	ccpu = (double)xccpu / fscale;
-	return (rval);
 }
 
-int
+void
 donlist_sysctl(void)
 {
 	int mib[2];
@@ -149,49 +172,53 @@ donlist_sysctl(void)
 	uint64_t memsize;
 
 	nlistread = 1;
-	mib[0] = CTL_HW;
-	mib[1] = HW_PHYSMEM64;
-	size = sizeof(memsize);
-	if (sysctl(mib, 2, &memsize, &size, NULL, 0) == 0)
-		mempages = memsize / getpagesize();
-	else
-		mempages = 0;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_FSCALE;
 	size = sizeof(fscale);
-	if (sysctl(mib, 2, &fscale, &size, NULL, 0) == -1)
-		fscale = (1 << 8);	/* XXX Hopefully reasonable default */
+	if (sysctl(mib, 2, &fscale, &size, NULL, 0)) {
+		warn("fscale");
+		eval = 1;
+		fscale = FSCALE;
+	}
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_PHYSMEM64;
+	size = sizeof(memsize);
+	if (sysctl(mib, 2, &memsize, &size, NULL, 0)) {
+		warn("avail_start");
+		eval = 1;
+		mempages = MEMPAGES;
+	} else
+		mempages = memsize / getpagesize();
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CCPU;
 	size = sizeof(xccpu);
-	if (sysctl(mib, 2, &xccpu, &size, NULL, 0) == -1)
-		ccpu = exp(-1.0 / 20.0); /* XXX Hopefully reasonable default */
-	else
-		ccpu = (double)xccpu / fscale;
+	if (sysctl(mib, 2, &xccpu, &size, NULL, 0)) {
+		warn("ccpu");
+		eval = 1;
+		log_ccpu = LOG_CCPU;
+	} else
+		log_ccpu = log((double)xccpu / fscale);
 
 	mib[0] = CTL_VM;
 	mib[1] = VM_MAXSLP;
 	size = sizeof(maxslp);
-	if (sysctl(mib, 2, &maxslp, &size, NULL, 0) == -1)
-#ifdef MAXSLP
+	if (sysctl(mib, 2, &maxslp, &size, NULL, 0)) {
+		warn("maxslp");
+		eval = 1;
 		maxslp = MAXSLP;
-#else
-		maxslp = 20;		/* XXX Hopefully reasonable default */
-#endif
+	}
 
 	mib[0] = CTL_VM;
 	mib[1] = VM_USPACE;
 	size = sizeof(uspace);
-	if (sysctl(mib, 2, &uspace, &size, NULL, 0) == -1)
-#ifdef USPACE
+	if (sysctl(mib, 2, &uspace, &size, NULL, 0)) {
+		warn("uspace");
+		eval = 1;
 		uspace = USPACE;
-#else
-		uspace = getpagesize();	/* XXX Hopefully reasonable default */
-#endif
-
-	return 0;
+	}
 }
 
 void
