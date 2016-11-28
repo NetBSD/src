@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.84 2016/09/05 01:00:07 sevan Exp $	*/
+/*	$NetBSD: ps.c,v 1.85 2016/11/28 08:18:27 rin Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.84 2016/09/05 01:00:07 sevan Exp $");
+__RCSID("$NetBSD: ps.c,v 1.85 2016/11/28 08:18:27 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,8 +261,7 @@ main(int argc, char *argv[])
 			break;			/* no-op - was dontuseprocfs */
 		case 'L':
 			showkey();
-			exit(0);
-			/* NOTREACHED */
+			return 0;
 		case 'l':
 			parsefmt(lfmt);
 			fmt = 1;
@@ -387,7 +386,7 @@ main(int argc, char *argv[])
 	} else
 		kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
 
-	if (kd == 0)
+	if (kd == NULL)
 		errx(1, "%s", errbuf);
 
 	if (!fmt)
@@ -413,7 +412,7 @@ main(int argc, char *argv[])
 		err(1, "%s", kvm_geterr(kd));
 	if (nentries == 0) {
 		printheader();
-		exit(1);
+		return 1;
 	}
 	/*
 	 * sort proc list
@@ -499,8 +498,7 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-	exit(eval);
-	/* NOTREACHED */
+	return eval;
 }
 
 static struct kinfo_lwp *
@@ -560,7 +558,6 @@ pick_representative_lwp(struct kinfo_proc2 *ki, struct kinfo_lwp *kl, int nlwps)
 	warnx("Inconsistent LWP state for process %d", ki->p_pid);
 	return kl;
 }
-
 
 static struct kinfo_proc2 *
 getkinfo_kvm(kvm_t *kdp, int what, int flag, int *nentriesp)
