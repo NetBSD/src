@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.8 2016/11/26 03:20:42 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.9 2016/11/28 07:29:56 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -219,13 +219,15 @@ rump_server_destroy_ifaces()
 	local backup=$RUMP_SERVER
 
 	$DEBUG && cat $_rump_server_ifaces
-	cat $_rump_server_ifaces | while read sock ifname; do
+	# XXX using pipe doesn't work. See PR bin/51667
+	#cat $_rump_server_ifaces | while read sock ifname; do
+	while read sock ifname; do
 		export RUMP_SERVER=$sock
 		if rump.ifconfig -l |grep -q $ifname; then
 			atf_check -s exit:0 rump.ifconfig $ifname destroy
 		fi
 		atf_check -s exit:0 -o ignore rump.ifconfig
-	done
+	done < $_rump_server_ifaces
 	export RUMP_SERVER=$backup
 
 	return 0
