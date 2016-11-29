@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.125 2016/11/25 02:23:14 christos Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.126 2016/11/29 03:23:00 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ struct scsipi_adapter {
 			struct scsipi_inquiry_pattern *);
 
 	kmutex_t adapt_mtx;
-	bool	adapt_running;	/* attachment initialized */
+	volatile int	adapt_running;	/* how many users of mutex */
 };
 
 /* adapt_flags */

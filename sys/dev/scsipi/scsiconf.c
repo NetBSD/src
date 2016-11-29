@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.276 2016/11/20 15:37:19 mlelstv Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.277 2016/11/29 03:23:00 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.276 2016/11/20 15:37:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.277 2016/11/29 03:23:00 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.276 2016/11/20 15:37:19 mlelstv Exp $
 #include <sys/fcntl.h>
 #include <sys/scsiio.h>
 #include <sys/queue.h>
+#include <sys/atomic.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -240,11 +241,12 @@ scsibusattach(device_t parent, device_t self, void *aux)
 			chan->chan_adapter->adapt_max_periph = 256;
 	}
 
-	mutex_init(chan_mtx(chan), MUTEX_DEFAULT, IPL_BIO);
+	if (atomic_inc_uint_nv(&chan_running(chan)) == 1)
+		mutex_init(chan_mtx(chan), MUTEX_DEFAULT, IPL_BIO);
+
 	cv_init(&chan->chan_cv_thr, "scshut");
 	cv_init(&chan->chan_cv_comp, "sccomp");
 	cv_init(&chan->chan_cv_xs, "xscmd");
-	chan_running(chan) = true;
 
 	if (scsipi_adapter_addref(chan->chan_adapter))
 		return;
@@ -371,11 +373,12 @@ scsibusdetach(device_t self, int flags)
 	 */
 	scsipi_channel_shutdown(chan);
 
-	chan_running(chan) = false;
 	cv_destroy(&chan->chan_cv_xs);
 	cv_destroy(&chan->chan_cv_comp);
 	cv_destroy(&chan->chan_cv_thr);
-	mutex_destroy(chan_mtx(chan));
+
+	if (atomic_dec_uint_nv(&chan_running(chan)) == 0)
+		mutex_destroy(chan_mtx(chan));
 
 	return 0;
 }

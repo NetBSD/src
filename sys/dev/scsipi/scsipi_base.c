@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.168 2016/11/21 21:03:22 mlelstv Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.169 2016/11/29 03:23:00 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.168 2016/11/21 21:03:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.169 2016/11/29 03:23:00 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -571,7 +571,7 @@ scsipi_put_xs(struct scsipi_xfer *xs)
 void
 scsipi_channel_freeze(struct scsipi_channel *chan, int count)
 {
-	bool lock = chan_running(chan);
+	bool lock = chan_running(chan) > 0;
 
 	if (lock)
 		mutex_enter(chan_mtx(chan));
@@ -595,7 +595,7 @@ scsipi_channel_freeze_locked(struct scsipi_channel *chan, int count)
 void
 scsipi_channel_thaw(struct scsipi_channel *chan, int count)
 {
-	bool lock = chan_running(chan);
+	bool lock = chan_running(chan) > 0;
 
 	if (lock)
 		mutex_enter(chan_mtx(chan));
