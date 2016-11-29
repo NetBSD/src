@@ -1,4 +1,4 @@
-/*	$NetBSD: standout.c,v 1.16 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: standout.c,v 1.17 2016/11/29 17:33:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)standout.c	8.3 (Berkeley) 8/10/94";
 #else
-__RCSID("$NetBSD: standout.c,v 1.16 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: standout.c,v 1.17 2016/11/29 17:33:48 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -89,6 +89,7 @@ wstandout(WINDOW *win)
 int
 wstandend(WINDOW *win)
 {
-	win->wattr &= ~__STANDOUT;
+	// http://pubs.opengroup.org/onlinepubs/7908799/xcurses/wstandend.html
+	win->wattr = __NORMAL;
 	return (1);
 }
