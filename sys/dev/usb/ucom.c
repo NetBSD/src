@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.115 2016/11/19 09:49:20 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.116 2016/11/29 07:26:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.115 2016/11/19 09:49:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.116 2016/11/29 07:26:53 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -523,7 +523,6 @@ ucom_shutdown(struct ucom_softc *sc)
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	KASSERT(mutex_owned(&sc->sc_lock));
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
 	 * notice even if we immediately open the port again.
@@ -531,7 +530,7 @@ ucom_shutdown(struct ucom_softc *sc)
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		ucom_dtr(sc, 0);
 		/* XXX will only timeout */
-		(void) kpause(ttclos, false, hz, &sc->sc_lock);
+		(void) kpause(ttclos, false, hz, NULL);
 	}
 }
 
@@ -1644,9 +1643,9 @@ ucom_cleanup(struct ucom_softc *sc)
 		return;
 	}
 
-	ucom_shutdown(sc);
-
 	mutex_exit(&sc->sc_lock);
+
+	ucom_shutdown(sc);
 
 	if (sc->sc_bulkin_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
