@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.89 2016/11/20 15:37:19 mlelstv Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.90 2016/11/29 03:23:00 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.89 2016/11/20 15:37:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.90 2016/11/29 03:23:00 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.89 2016/11/20 15:37:19 mlelstv Exp $
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
+#include <sys/atomic.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
@@ -152,7 +153,9 @@ atapibusattach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": %d targets\n", chan->chan_ntargets);
 
-	mutex_init(&chan->chan_adapter->adapt_mtx, MUTEX_DEFAULT, IPL_BIO);
+	if (atomic_inc_uint_nv(&chan_running(chan)) == 1)
+		mutex_init(chan_mtx(chan), MUTEX_DEFAULT, IPL_BIO);
+
 	cv_init(&chan->chan_cv_thr, "scshut");
 	cv_init(&chan->chan_cv_comp, "sccomp");
 	cv_init(&chan->chan_cv_xs, "xscmd");
@@ -222,12 +225,14 @@ atapibusdetach(device_t self, int flags)
 	}
 	mutex_exit(chan_mtx(chan));
 
-out:
 	cv_destroy(&chan->chan_cv_xs);
 	cv_destroy(&chan->chan_cv_comp);
 	cv_destroy(&chan->chan_cv_thr);
-	mutex_destroy(chan_mtx(chan));
 
+	if (atomic_dec_uint_nv(&chan_running(chan)) == 0)
+		mutex_destroy(chan_mtx(chan));
+
+out:
 	/* XXXSMP scsipi */
 	KERNEL_UNLOCK_ONE(curlwp);
 	return error;
