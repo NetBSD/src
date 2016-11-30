@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 279805 2015-03-09 10:29:15Z araujo $*/
-/*$NetBSD: ix_txrx.c,v 1.1 2016/11/28 02:23:33 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.2 2016/11/30 05:30:28 msaitoh Exp $*/
 
 #include "ixgbe.h"
 
@@ -1017,10 +1017,6 @@ ixgbe_txeof(struct tx_ring *txr)
 			    buf->map);
 			m_freem(buf->m_head);
 			buf->m_head = NULL;
-			/*
-			 * NetBSD: Don't override buf->map with NULL here.
-			 * It'll panic when a ring runs one lap around.
-			 */
 		}
 		buf->eop = NULL;
 		++txr->tx_avail;
@@ -1047,11 +1043,6 @@ ixgbe_txeof(struct tx_ring *txr)
 				    buf->map);
 				m_freem(buf->m_head);
 				buf->m_head = NULL;
-				/*
-				 * NetBSD: Don't override buf->map with NULL
-				 * here. It'll panic when a ring runs one lap
-				 * around.
-				 */
 			}
 			++txr->tx_avail;
 			buf->eop = NULL;
