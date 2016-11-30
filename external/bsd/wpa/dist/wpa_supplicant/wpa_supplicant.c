@@ -4422,8 +4422,8 @@ static void radio_start_next_work(void *eloop_ctx, void *timeout_ctx)
 	os_get_reltime(&now);
 	os_reltime_sub(&now, &work->time, &diff);
 	wpa_dbg(wpa_s, MSG_DEBUG,
-		"Starting radio work '%s'@%p after %jd.%06ld second wait",
-		work->type, work, (intmax_t)diff.sec, diff.usec);
+		"Starting radio work '%s'@%p after %jd.%06jd second wait",
+		work->type, work, (intmax_t)diff.sec, (intmax_t)diff.usec);
 	work->started = 1;
 	work->time = now;
 	radio->num_active_works++;
@@ -6903,7 +6903,7 @@ int wpa_is_bss_tmp_disallowed(struct wpa_supplicant *wpa_s, const u8 *bssid)
 
 	os_reltime_sub(&bss->disallowed_until, &now, &age);
 	wpa_printf(MSG_DEBUG,
-		   "BSS " MACSTR " disabled for %jd.%0ld seconds",
-		   MAC2STR(bss->bssid), (intmax_t)age.sec, age.usec);
+		   "BSS " MACSTR " disabled for %jd.%0jd seconds",
+		   MAC2STR(bss->bssid), (intmax_t)age.sec, (intmax_t)age.usec);
 	return 1;
 }
