@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.179 2016/11/30 19:43:32 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.180 2016/11/30 20:25:23 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.179 2016/11/30 19:43:32 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.180 2016/11/30 20:25:23 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1135,7 +1135,8 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 				}
 			}
 			/*
-			 * Search the dynamic linker itself, and possibly				 * resolve the symbol from there if it is not defined
+			 * Search the dynamic linker itself, and possibly
+			 * resolve the symbol from there if it is not defined
 			 * already or weak. This is how the application links
 			 * to dynamic linker services such as dlopen. Only the
 			 * values listed in the "_rtld_exports" array can be
