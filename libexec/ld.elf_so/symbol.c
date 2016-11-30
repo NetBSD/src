@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.65 2014/08/10 23:35:26 matt Exp $	 */
+/*	$NetBSD: symbol.c,v 1.66 2016/11/30 19:43:32 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.65 2014/08/10 23:35:26 matt Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.66 2016/11/30 19:43:32 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -80,7 +80,7 @@ _rtld_donelist_check(DoneList *dlp, const Obj_Entry *obj)
 	return false;
 }
 
-static bool
+bool
 _rtld_is_exported(const Elf_Sym *def)
 {
 	static const fptr_t _rtld_exports[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.178 2016/05/24 20:32:33 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.179 2016/11/30 19:43:32 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.178 2016/05/24 20:32:33 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.179 2016/11/30 19:43:32 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1132,6 +1132,21 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 				    flags, ventry)) != NULL) {
 					defobj = obj;
 					break;
+				}
+			}
+			/*
+			 * Search the dynamic linker itself, and possibly				 * resolve the symbol from there if it is not defined
+			 * already or weak. This is how the application links
+			 * to dynamic linker services such as dlopen. Only the
+			 * values listed in the "_rtld_exports" array can be
+			 * resolved from the dynamic linker.
+			 */
+			if (!def || ELF_ST_BIND(def->st_info) == STB_WEAK) {
+				const Elf_Sym *symp = _rtld_symlook_obj(name,
+				    hash, &_rtld_objself, flags, ventry);
+				if (symp != NULL && _rtld_is_exported(symp)) {
+					def = symp;
+					defobj = &_rtld_objself;
 				}
 			}
 			break;
