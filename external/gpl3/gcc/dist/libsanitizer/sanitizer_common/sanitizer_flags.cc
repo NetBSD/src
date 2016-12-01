@@ -35,7 +35,11 @@ IntrusiveList<FlagDescription> flag_descriptions;
 void SetCommonFlagsDefaults(CommonFlags *f) {
   f->symbolize = true;
   f->external_symbolizer_path = 0;
+#if SANITIZER_NETBSD
+  f->allow_addr2line = true;
+#else
   f->allow_addr2line = false;
+#endif
   f->strip_path_prefix = "";
   f->fast_unwind_on_check = false;
   f->fast_unwind_on_fatal = false;
