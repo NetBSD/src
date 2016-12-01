@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.11 2016/11/25 13:33:24 msaitoh Exp $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.12 2016/12/01 06:27:18 msaitoh Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
@@ -71,9 +71,9 @@
 	#define DEBUGOUT5(S,A,B,C,D,E)  printf(S "\n",A,B,C,D,E)
 	#define DEBUGOUT6(S,A,B,C,D,E,F)  printf(S "\n",A,B,C,D,E,F)
 	#define DEBUGOUT7(S,A,B,C,D,E,F,G)  printf(S "\n",A,B,C,D,E,F,G)
-	#define ERROR_REPORT1(S,A)      printf(S A "\n")
-	#define ERROR_REPORT2(S,A,B)    printf(S A "\n",B)
-	#define ERROR_REPORT3(S,A,B,C)  printf(S A "\n",B,C)
+	#define ERROR_REPORT1(S,A)      printf(S "\n",A)
+	#define ERROR_REPORT2(S,A,B)    printf(S "\n",A,B)
+	#define ERROR_REPORT3(S,A,B,C)  printf(S "\n",A,B,C)
 #else
 	#define DEBUGOUT(S)		do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT1(S,A)		do { } while (/*CONSTCOND*/false)

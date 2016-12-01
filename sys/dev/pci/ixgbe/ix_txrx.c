@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2013, Intel Corporation 
+  Copyright (c) 2001-2014, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -58,13 +58,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 279805 2015-03-09 10:29:15Z araujo $*/
-/*$NetBSD: ix_txrx.c,v 1.2 2016/11/30 05:30:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 280182 2015-03-17 18:32:28Z jfv $*/
+/*$NetBSD: ix_txrx.c,v 1.3 2016/12/01 06:27:18 msaitoh Exp $*/
 
 #include "ixgbe.h"
 
 /*
-** HW RSC control: 
+** HW RSC control:
 **  this feature only works with
 **  IPv4, and only on 82599 and later.
 **  Also this will cause IP forwarding to
@@ -77,6 +77,64 @@
 */
 static bool ixgbe_rsc_enable = FALSE;
 
+#ifdef IXGBE_FDIR
+/*
+** For Flow Director: this is the
+** number of TX packets we sample
+** for the filter pool, this means
+** every 20th packet will be probed.
+**
+** This feature can be disabled by
+** setting this to 0.
+*/
+static int atr_sample_rate = 20;
+#endif
+
+/* Shared PCI config read/write */
+u16
+ixgbe_read_pci_cfg(struct ixgbe_hw *hw, u32 reg)
+{
+	switch (reg % 4) {
+	case 0:
+		return pci_conf_read(hw->back->pc, hw->back->tag, reg) &
+		    __BITS(15, 0);
+	case 2:
+		return __SHIFTOUT(pci_conf_read(hw->back->pc, hw->back->tag,
+		    reg - 2), __BITS(31, 16));
+	default:
+		panic("%s: invalid register (%" PRIx32, __func__, reg); 
+		break;
+	}
+}
+
+void
+ixgbe_write_pci_cfg(struct ixgbe_hw *hw, u32 reg, u16 value)
+{
+	pcireg_t old;
+
+	switch (reg % 4) {
+	case 0:
+		old = pci_conf_read(hw->back->pc, hw->back->tag, reg) &
+		    __BITS(31, 16);
+		pci_conf_write(hw->back->pc, hw->back->tag, reg, value | old);
+		break;
+	case 2:
+		old = pci_conf_read(hw->back->pc, hw->back->tag, reg - 2) &
+		    __BITS(15, 0);
+		pci_conf_write(hw->back->pc, hw->back->tag, reg - 2,
+		    __SHIFTIN(value, __BITS(31, 16)) | old);
+		break;
+	default:
+		panic("%s: invalid register (%" PRIx32, __func__, reg); 
+		break;
+	}
+
+	return;
+}
+
+/*********************************************************************
+ *  Local Function prototypes
+ *********************************************************************/
 static void	ixgbe_setup_transmit_ring(struct tx_ring *);
 static void     ixgbe_free_transmit_buffers(struct tx_ring *);
 static int	ixgbe_setup_receive_ring(struct rx_ring *);
@@ -97,7 +155,6 @@ static __inline void ixgbe_rx_discard(struct rx_ring *, int);
 static __inline void ixgbe_rx_input(struct rx_ring *, struct ifnet *,
 		    struct mbuf *, u32);
 
-static void     ixgbe_dma_free(struct adapter *, struct ixgbe_dma_alloc *);
 static void	ixgbe_setup_hw_rsc(struct rx_ring *);
 
 #ifdef IXGBE_LEGACY_TX
@@ -155,11 +212,6 @@ ixgbe_start_locked(struct tx_ring *txr, struct ifnet * ifp)
 
 		/* Send a copy of the frame to the BPF listener */
 		bpf_mtap(ifp, m_head);
-
-		/* Set watchdog on */
-		getmicrotime(&txr->watchdog_time);
-		txr->queue_status = IXGBE_QUEUE_WORKING;
-
 	}
 	return;
 }
@@ -200,7 +252,6 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 	uint32_t bucket_id;
 #endif
 
-	/* Which queue to use */
 	/*
 	 * When doing RSS, map it to the same outbound queue
 	 * as the incoming flow would be mapped to.
@@ -211,18 +262,18 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 	if (M_HASHTYPE_GET(m) != M_HASHTYPE_NONE) {
 #ifdef	RSS
 		if (rss_hash2bucket(m->m_pkthdr.flowid,
-		    M_HASHTYPE_GET(m), &bucket_id) == 0) {
-			/* XXX TODO: spit out something if bucket_id > num_queues? */
+		    M_HASHTYPE_GET(m), &bucket_id) == 0)
+			/* TODO: spit out something if bucket_id > num_queues? */
 			i = bucket_id % adapter->num_queues;
-		} else {
+		else
 #endif
 			i = m->m_pkthdr.flowid % adapter->num_queues;
-#ifdef	RSS
-		}
-#endif
-	} else {
+	} else
 		i = curcpu % adapter->num_queues;
-	}
+
+	/* Check for a hung queue and pick alternative */
+	if (((1 << i) & adapter->active_queues) == 0)
+		i = ffsl(adapter->active_queues);
 
 	txr = &adapter->tx_rings[i];
 	que = &adapter->queues[i];
@@ -272,6 +323,12 @@ ixgbe_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 		drbr_advance(ifp, txr->br);
 #endif
 		enqueued++;
+#if 0 // this is VF-only
+#if __FreeBSD_version >= 1100036
+		if (next->m_flags & M_MCAST)
+			if_inc_counter(ifp, IFCOUNTER_OMCASTS, 1);
+#endif
+#endif
 		/* Send a copy of the frame to the BPF listener */
 		bpf_mtap(ifp, next);
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
@@ -279,12 +336,6 @@ ixgbe_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 #if __FreeBSD_version < 901504
 		next = drbr_dequeue(ifp, txr->br);
 #endif
-	}
-
-	if (enqueued > 0) {
-		/* Set watchdog on */
-		txr->queue_status = IXGBE_QUEUE_WORKING;
-		getmicrotime(&txr->watchdog_time);
 	}
 
 	if (txr->tx_avail < IXGBE_TX_CLEANUP_THRESHOLD)
@@ -328,6 +379,7 @@ ixgbe_qflush(struct ifnet *ifp)
 	if_qflush(ifp);
 }
 #endif /* IXGBE_LEGACY_TX */
+
 
 /*********************************************************************
  *
@@ -424,6 +476,7 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	}
 #endif
 
+	olinfo_status |= IXGBE_ADVTXD_CC;
 	i = txr->next_avail_desc;
 	for (j = 0; j < map->dm_nsegs; j++) {
 		bus_size_t seglen;
@@ -471,7 +524,11 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	 * hardware that this frame is available to transmit.
 	 */
 	++txr->total_packets.ev_count;
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_TDT(txr->me), i);
+	IXGBE_WRITE_REG(&adapter->hw, txr->tail, i);
+
+	/* Mark queue as having work */
+	if (txr->busy == 0)
+		txr->busy = 1;
 
 	return 0;
 }
@@ -739,8 +796,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	if ((mtag = VLAN_OUTPUT_TAG(ec, mp)) != NULL) {
 		vtag = htole16(VLAN_TAG_VALUE(mtag) & 0xffff);
 		vlan_macip_lens |= (vtag << IXGBE_ADVTXD_VLAN_SHIFT);
-	} else if (offload == FALSE) /* ... no offload to do */
-		return 0;
+	}
 
 	/*
 	 * Determine where frame payload starts.
@@ -760,6 +816,9 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 
 	/* Set the ether header length */
 	vlan_macip_lens |= ehdrlen << IXGBE_ADVTXD_MACLEN_SHIFT;
+
+	if (offload == FALSE)
+		goto no_offloads;
 
 	switch (etype) {
 	case ETHERTYPE_IP:
@@ -790,7 +849,6 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 		*olinfo_status |= IXGBE_TXD_POPTS_IXSM << 8;
 
 	vlan_macip_lens |= ip_hlen;
-	type_tucmd_mlhl |= IXGBE_ADVTXD_DCMD_DEXT | IXGBE_ADVTXD_DTYP_CTXT;
 
 	if (mp->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_TCPv6)) {
 		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
@@ -801,6 +859,9 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 		*olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
 		KASSERT(ipproto == IPPROTO_UDP);
 	}
+
+no_offloads:
+	type_tucmd_mlhl |= IXGBE_ADVTXD_DCMD_DEXT | IXGBE_ADVTXD_DTYP_CTXT;
 
 	/* Now copy bits into descriptor */
 	TXD->vlan_macip_lens = htole32(vlan_macip_lens);
@@ -936,6 +997,7 @@ ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp,
 	return (0);
 }
 
+
 /**********************************************************************
  *
  *  Examine each tx_buffer in the used queue. If the hardware is done
@@ -952,7 +1014,6 @@ ixgbe_txeof(struct tx_ring *txr)
 	u16			limit = txr->process_limit;
 	struct ixgbe_tx_buf	*buf;
 	union ixgbe_adv_tx_desc *txd;
-	struct timeval now, elapsed;
 
 	KASSERT(mutex_owned(&txr->tx_mtx));
 
@@ -987,7 +1048,7 @@ ixgbe_txeof(struct tx_ring *txr)
 #endif /* DEV_NETMAP */
 
 	if (txr->tx_avail == txr->num_desc) {
-		txr->queue_status = IXGBE_QUEUE_IDLE;
+		txr->busy = 0;
 		return;
 	}
 
@@ -1051,7 +1112,6 @@ ixgbe_txeof(struct tx_ring *txr)
 		++txr->packets;
 		++processed;
 		++ifp->if_opackets;
-		getmicrotime(&txr->watchdog_time);
 
 		/* Try the next packet */
 		++txd;
@@ -1073,21 +1133,28 @@ ixgbe_txeof(struct tx_ring *txr)
 	txr->next_to_clean = work;
 
 	/*
-	** Watchdog calculation, we know there's
+	** Queue Hang detection, we know there's
 	** work outstanding or the first return
-	** would have been taken, so none processed
-	** for too long indicates a hang.
+	** would have been taken, so increment busy
+	** if nothing managed to get cleaned, then
+	** in local_timer it will be checked and 
+	** marked as HUNG if it exceeds a MAX attempt.
 	*/
-	getmicrotime(&now);
-	timersub(&now, &txr->watchdog_time, &elapsed);
-	if (!processed && tvtohz(&elapsed) > IXGBE_WATCHDOG)
-		txr->queue_status = IXGBE_QUEUE_HUNG;
+	if ((processed == 0) && (txr->busy != IXGBE_QUEUE_HUNG))
+		++txr->busy;
+	/*
+	** If anything gets cleaned we reset state to 1,
+	** note this will turn off HUNG if its set.
+	*/
+	if (processed)
+		txr->busy = 1;
 
 	if (txr->tx_avail == txr->num_desc)
-		txr->queue_status = IXGBE_QUEUE_IDLE;
+		txr->busy = 0;
 
 	return;
 }
+
 
 #ifdef IXGBE_FDIR
 /*
@@ -1204,6 +1271,7 @@ ixgbe_setup_hw_rsc(struct rx_ring *rxr)
 	rdrxctl = IXGBE_READ_REG(hw, IXGBE_RDRXCTL);
 	rdrxctl &= ~IXGBE_RDRXCTL_RSCFRSTSIZE;
 #ifdef DEV_NETMAP /* crcstrip is optional in netmap */
+	extern int ix_crcstrip;
 	if (adapter->ifp->if_capenable & IFCAP_NETMAP && !ix_crcstrip)
 #endif /* DEV_NETMAP */
 	rdrxctl |= IXGBE_RDRXCTL_CRCSTRIP;
@@ -1311,7 +1379,7 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 update:
 	if (refreshed) /* Update hardware tail index */
 		IXGBE_WRITE_REG(&adapter->hw,
-		    IXGBE_RDT(rxr->me), rxr->next_to_refresh);
+		    rxr->tail, rxr->next_to_refresh);
 	return;
 }
 
@@ -1368,6 +1436,7 @@ fail:
 	ixgbe_free_receive_structures(adapter);
 	return (error);
 }
+
 
 static void     
 ixgbe_free_receive_ring(struct rx_ring *rxr)
@@ -1558,6 +1627,7 @@ fail:
 
 	return (ENOBUFS);
 }
+
 
 /*********************************************************************
  *
@@ -1789,6 +1859,11 @@ ixgbe_rxeof(struct ix_queue *que)
 
 		/* Make sure bad packets are discarded */
 		if (eop && (staterr & IXGBE_RXDADV_ERR_FRAME_ERR_MASK) != 0) {
+#if 0 // VF-only
+#if __FreeBSD_version >= 1100036
+		if_inc_counter(ifp, IFCOUNTER_IERRORS, 1);
+#endif
+#endif
 			rxr->rx_discarded.ev_count++;
 			ixgbe_rx_discard(rxr, i);
 			goto next_desc;
@@ -1896,7 +1971,7 @@ ixgbe_rxeof(struct ix_queue *que)
 			}
 			if ((ifp->if_capenable & IFCAP_RXCSUM) != 0) {
 				ixgbe_rx_checksum(staterr, sendmp, ptype,
-				   &adapter->stats);
+				   &adapter->stats.pf);
 			}
 #if __FreeBSD_version >= 800000
 #ifdef RSS
@@ -1931,9 +2006,7 @@ ixgbe_rxeof(struct ix_queue *que)
 				M_HASHTYPE_SET(sendmp, M_HASHTYPE_RSS_UDP_IPV6_EX);
 				break;
 			default:
-				/* XXX fallthrough */
 				M_HASHTYPE_SET(sendmp, M_HASHTYPE_OPAQUE);
-				break;
 			}
 #else /* RSS */
 			sendmp->m_pkthdr.flowid = que->msix;
@@ -2111,7 +2184,7 @@ fail_0:
 	return r;
 }
 
-static void
+void
 ixgbe_dma_free(struct adapter *adapter, struct ixgbe_dma_alloc *dma)
 {
 	bus_dmamap_sync(dma->dma_tag->dt_dmat, dma->dma_map, 0, dma->dma_size,
@@ -2258,6 +2331,7 @@ ixgbe_allocate_queues(struct adapter *adapter)
 	for (int i = 0; i < adapter->num_queues; i++) {
 		que = &adapter->queues[i];
 		que->adapter = adapter;
+		que->me = i;
 		que->txr = &adapter->tx_rings[i];
 		que->rxr = &adapter->rx_rings[i];
 	}

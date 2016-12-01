@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2013, Intel Corporation 
+  Copyright (c) 2001-2014, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.h 247822 2013-03-04 23:07:40Z jfv $*/
-/*$NetBSD: ixgbe_mbx.h,v 1.4 2015/04/24 07:00:51 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.h 280182 2015-03-17 18:32:28Z jfv $*/
+/*$NetBSD: ixgbe_mbx.h,v 1.5 2016/12/01 06:27:18 msaitoh Exp $*/
 
 #ifndef _IXGBE_MBX_H_
 #define _IXGBE_MBX_H_
