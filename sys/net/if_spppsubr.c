@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.160 2016/12/01 02:15:20 knakahara Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.161 2016/12/01 02:30:54 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.160 2016/12/01 02:15:20 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.161 2016/12/01 02:30:54 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -147,6 +147,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.160 2016/12/01 02:15:20 knakahara 
 #define IPCP_OPT_ADDRESS	3	/* local IP address */
 #define	IPCP_OPT_PRIMDNS	129	/* primary remote dns address */
 #define	IPCP_OPT_SECDNS		131	/* secondary remote dns address */
+
+#define IPCP_UPDATE_LIMIT	8	/* limit of pending IP updating job */
+#define IPCP_SET_ADDRS		1	/* marker for IP address setting job */
+#define IPCP_CLEAR_ADDRS	2	/* marker for IP address clearing job */
 
 #define IPV6CP_OPT_IFID		1	/* interface identifier */
 #define IPV6CP_OPT_COMPRESSION	2	/* IPv6 compression protocol */
@@ -367,10 +371,11 @@ static int sppp_params(struct sppp *sp, u_long cmd, void *data);
 #ifdef INET
 static void sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst,
 			      uint32_t *srcmask);
-static void sppp_set_ip_addrs_work(struct work *wk, void *arg);
+static void sppp_set_ip_addrs_work(struct work *wk, struct sppp *sp);
 static void sppp_set_ip_addrs(struct sppp *sp);
-static void sppp_clear_ip_addrs_work(struct work *wk, void *arg);
+static void sppp_clear_ip_addrs_work(struct work *wk, struct sppp *sp);
 static void sppp_clear_ip_addrs(struct sppp *sp);
+static void sppp_update_ip_addrs_work(struct work *wk, void *arg);
 #endif
 static void sppp_keepalive(void *dummy);
 static void sppp_phase_network(struct sppp *sp);
@@ -952,8 +957,10 @@ sppp_detach(struct ifnet *ifp)
 			break;
 		}
 
-	workqueue_destroy(sp->ipcp.set_addrs_wq);
-	workqueue_destroy(sp->ipcp.clear_addrs_wq);
+	/* to avoid workqueue enqueued */
+	atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 1);
+	workqueue_destroy(sp->ipcp.update_addrs_wq);
+	pcq_destroy(sp->ipcp.update_addrs_q);
 
 	/* Stop keepalive handler. */
 	if (! spppq) {
@@ -2742,19 +2749,14 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->pp_rseq[IDX_IPCP] = 0;
 	callout_init(&sp->ch[IDX_IPCP], 0);
 
-	error = workqueue_create(&sp->ipcp.set_addrs_wq, "ipcp_set_addrs",
-	    sppp_set_ip_addrs_work, sp, PRI_SOFTNET, IPL_NET, 0);
+	error = workqueue_create(&sp->ipcp.update_addrs_wq, "ipcp_update_addrs",
+	    sppp_update_ip_addrs_work, sp, PRI_SOFTNET, IPL_NET, 0);
 	if (error)
-		panic("%s: set_addrs workqueue_create failed (%d)\n",
+		panic("%s: update_addrs workqueue_create failed (%d)\n",
 		    __func__, error);
-	error = workqueue_create(&sp->ipcp.clear_addrs_wq, "ipcp_clear_addrs",
-	    sppp_clear_ip_addrs_work, sp, PRI_SOFTNET, IPL_NET, 0);
-	if (error)
-		panic("%s: clear_addrs workqueue_create failed (%d)\n",
-		    __func__, error);
+	sp->ipcp.update_addrs_q = pcq_create(IPCP_UPDATE_LIMIT, KM_SLEEP);
 
-	sp->ipcp.set_addrs_enqueued = 0;
-	sp->ipcp.clear_addrs_enqueued = 0;
+	sp->ipcp.update_addrs_enqueued = 0;
 }
 
 static void
@@ -4873,16 +4875,13 @@ sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst, uint32_t *srcma
  * If an address is 0, leave it the way it is.
  */
 static void
-sppp_set_ip_addrs_work(struct work *wk, void *arg)
+sppp_set_ip_addrs_work(struct work *wk, struct sppp *sp)
 {
-	struct sppp *sp = arg;
 	STDDCL;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
 	uint32_t myaddr = 0, hisaddr = 0;
 	int s;
-
-	atomic_swap_uint(&sp->ipcp.set_addrs_enqueued, 0);
 
 	/*
 	 * Pick the first AF_INET address from the list,
@@ -4963,26 +4962,30 @@ sppp_set_ip_addrs_work(struct work *wk, void *arg)
 static void
 sppp_set_ip_addrs(struct sppp *sp)
 {
+	struct ifnet *ifp = &sp->pp_if;
 
-	if (atomic_swap_uint(&sp->ipcp.set_addrs_enqueued, 1) == 1)
+	if (!pcq_put(sp->ipcp.update_addrs_q, (void *)IPCP_SET_ADDRS)) {
+		log(LOG_WARNING, "%s: cannot enqueued, ignore sppp_clear_ip_addrs\n",
+		    ifp->if_xname);
+		return;
+	}
+
+	if (atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 1) == 1)
 		return;
 
-	workqueue_enqueue(sp->ipcp.set_addrs_wq, &sp->ipcp.set_addrs_wk, NULL);
+	workqueue_enqueue(sp->ipcp.update_addrs_wq, &sp->ipcp.update_addrs_wk, NULL);
 }
 
 /*
  * Clear IP addresses.  Must be called at splnet.
  */
 static void
-sppp_clear_ip_addrs_work(struct work *wk, void *arg)
+sppp_clear_ip_addrs_work(struct work *wk, struct sppp *sp)
 {
-	struct sppp *sp = arg;
 	STDDCL;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
 	int s;
-
-	atomic_swap_uint(&sp->ipcp.clear_addrs_enqueued, 0);
 
 	/*
 	 * Pick the first AF_INET address from the list,
@@ -5047,11 +5050,36 @@ sppp_clear_ip_addrs_work(struct work *wk, void *arg)
 static void
 sppp_clear_ip_addrs(struct sppp *sp)
 {
+	struct ifnet *ifp = &sp->pp_if;
 
-	if (atomic_swap_uint(&sp->ipcp.clear_addrs_enqueued, 1) == 1)
+	if (!pcq_put(sp->ipcp.update_addrs_q, (void *)IPCP_CLEAR_ADDRS)) {
+		log(LOG_WARNING, "%s: cannot enqueued, ignore sppp_clear_ip_addrs\n",
+		    ifp->if_xname);
+		return;
+	}
+
+	if (atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 1) == 1)
 		return;
 
-	workqueue_enqueue(sp->ipcp.clear_addrs_wq, &sp->ipcp.clear_addrs_wk, NULL);
+	workqueue_enqueue(sp->ipcp.update_addrs_wq, &sp->ipcp.update_addrs_wk, NULL);
+}
+
+static void
+sppp_update_ip_addrs_work(struct work *wk, void *arg)
+{
+	struct sppp *sp = arg;
+	void *work;
+
+	atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 0);
+
+	while ((work = pcq_get(sp->ipcp.update_addrs_q)) != NULL) {
+		int update = (intptr_t)work;
+
+		if (update == IPCP_SET_ADDRS)
+			sppp_set_ip_addrs_work(wk, sp);
+		else if (update == IPCP_CLEAR_ADDRS)
+			sppp_clear_ip_addrs_work(wk, sp);
+	}
 }
 #endif
 
