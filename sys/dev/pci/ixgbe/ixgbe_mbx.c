@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2014, Intel Corporation 
+  Copyright (c) 2001-2015, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.c 280182 2015-03-17 18:32:28Z jfv $*/
-/*$NetBSD: ixgbe_mbx.c,v 1.4 2016/12/01 06:27:18 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.c 282289 2015-04-30 22:53:27Z erj $*/
+/*$NetBSD: ixgbe_mbx.c,v 1.5 2016/12/01 06:56:28 msaitoh Exp $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_mbx.h"
@@ -608,7 +608,6 @@ static s32 ixgbe_check_for_rst_pf(struct ixgbe_hw *hw, u16 vf_number)
 		break;
 	case ixgbe_mac_X550:
 	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_X550EM_a:
 	case ixgbe_mac_X540:
 		vflre = IXGBE_READ_REG(hw, IXGBE_VFLREC(reg_offset));
 		break;
@@ -746,7 +745,6 @@ void ixgbe_init_mbx_params_pf(struct ixgbe_hw *hw)
 	if (hw->mac.type != ixgbe_mac_82599EB &&
 	    hw->mac.type != ixgbe_mac_X550 &&
 	    hw->mac.type != ixgbe_mac_X550EM_x &&
-	    hw->mac.type != ixgbe_mac_X550EM_a &&
 	    hw->mac.type != ixgbe_mac_X540)
 		return;
 
