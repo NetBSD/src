@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 280197 2015-03-17 22:40:50Z jfv $*/
-/*$NetBSD: ixv.c,v 1.21 2016/12/01 06:27:18 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 282289 2015-04-30 22:53:27Z erj $*/
+/*$NetBSD: ixv.c,v 1.22 2016/12/01 06:56:28 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -59,7 +59,6 @@ static ixgbe_vendor_info_t ixv_vendor_info_array[] =
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_VF, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_X540_VF, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_X550_VF, 0, 0, 0},
-	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_X550EM_A_VF, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_X550EM_X_VF, 0, 0, 0},
 	/* required last entry */
 	{0, 0, 0, 0, 0}
@@ -77,7 +76,7 @@ static const char    *ixv_strings[] = {
  *  Function prototypes
  *********************************************************************/
 static int      ixv_probe(device_t, cfdata_t, void *);
-static void      ixv_attach(device_t, device_t, void *);
+static void	ixv_attach(device_t, device_t, void *);
 static int      ixv_detach(device_t, int);
 #if 0
 static int      ixv_shutdown(device_t);
@@ -96,6 +95,7 @@ static int      ixv_allocate_msix(struct adapter *,
 static int	ixv_setup_msix(struct adapter *);
 static void	ixv_free_pci_resources(struct adapter *);
 static void     ixv_local_timer(void *);
+static void     ixv_local_timer_locked(void *);
 static void     ixv_setup_interface(device_t, struct adapter *);
 static void     ixv_config_link(struct adapter *);
 
@@ -157,10 +157,11 @@ static driver_t ixv_driver = {
 	"ixv", ixv_methods, sizeof(struct adapter),
 };
 
-devclass_t ixgbe_devclass;
-DRIVER_MODULE(ixv, pci, ixv_driver, ixgbe_devclass, 0, 0);
+devclass_t ixv_devclass;
+DRIVER_MODULE(ixv, pci, ixv_driver, ixv_devclass, 0, 0);
 MODULE_DEPEND(ixv, pci, 1, 1, 1);
 MODULE_DEPEND(ixv, ether, 1, 1, 1);
+/* XXX depend on 'ix' ? */
 #endif
 
 /*
@@ -203,9 +204,6 @@ TUNABLE_INT("hw.ixv.rxd", &ixv_rxd);
 ** a soft reset and we need to repopulate it.
 */
 static u32 ixv_shadow_vfta[IXGBE_VFTA_SIZE];
-
-/* Keep running tab on them for sanity check */
-static int ixv_total_ports;
 
 /*********************************************************************
  *  Device identification routine
@@ -250,7 +248,6 @@ ixv_lookup(const struct pci_attach_args *pa)
 
 		    ((PCI_SUBSYS_ID(subid) == ent->subdevice_id) ||
 		     (ent->subdevice_id == 0))) {
-			++ixv_total_ports;
 			return ent;
 		}
 	}
@@ -927,7 +924,7 @@ ixv_msix_mbx(void *arg)
 	struct ixgbe_hw *hw = &adapter->hw;
 	u32		reg;
 
-	++adapter->vector_irq.ev_count;
+	++adapter->link_irq.ev_count;
 
 	/* First get the cause */
 	reg = IXGBE_READ_REG(hw, IXGBE_VTEICS);
@@ -1080,11 +1077,21 @@ ixv_mc_array_itr(struct ixgbe_hw *hw, u8 **update_ptr, u32 *vmdq)
  **********************************************************************/
 
 static void
-ixv_local_timer1(void *arg)
+ixv_local_timer(void *arg)
+{
+	struct adapter *adapter = arg;
+
+	IXGBE_CORE_LOCK(adapter);
+	ixv_local_timer_locked(adapter);
+	IXGBE_CORE_UNLOCK(adapter);
+}
+
+static void
+ixv_local_timer_locked(void *arg)
 {
 	struct adapter	*adapter = arg;
 	device_t	dev = adapter->dev;
-	struct ix_queue *que = adapter->queues;
+	struct ix_queue	*que = adapter->queues;
 	u64		queues = 0;
 	int		hung = 0;
 
@@ -1099,8 +1106,8 @@ ixv_local_timer1(void *arg)
 	** Check the TX queues status
 	**      - mark hung queues so we don't schedule on them
 	**      - watchdog only if all queues show hung
-	*/          
-        for (int i = 0; i < adapter->num_queues; i++, que++) {
+	*/
+	for (int i = 0; i < adapter->num_queues; i++, que++) {
 		/* Keep track of queues with work for soft irq */
 		if (que->txr->busy)
 			queues |= ((u64)1 << que->me);
@@ -1113,12 +1120,12 @@ ixv_local_timer1(void *arg)
 			++hung;
 			/* Mark the queue as inactive */
 			adapter->active_queues &= ~((u64)1 << que->me);
- 			continue;
+			continue;
 		} else {
 			/* Check if we've come back from hung */
 			if ((adapter->active_queues & ((u64)1 << que->me)) == 0)
                                 adapter->active_queues |= ((u64)1 << que->me);
- 		}
+		}
 		if (que->busy >= IXGBE_MAX_TX_BUSY) {
 			device_printf(dev,"Warning queue %d "
 			    "appears to be hung!\n", i);
@@ -1143,16 +1150,6 @@ watchdog:
 	adapter->ifp->if_flags &= ~IFF_RUNNING;
 	adapter->watchdog_events.ev_count++;
 	ixv_init_locked(adapter);
-}
-
-static void
-ixv_local_timer(void *arg)
-{
-	struct adapter *adapter = arg;
-
-	IXGBE_CORE_LOCK(adapter);
-	ixv_local_timer1(adapter);
-	IXGBE_CORE_UNLOCK(adapter);
 }
 
 /*
@@ -2095,8 +2092,10 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 	    xname, "Discarded RX packets");
 	evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC, NULL,
 	    xname, "TX Packets");
-	evcnt_attach_dynamic(&txr->tx_bytes, EVCNT_TYPE_MISC, NULL,
+#if 0
+	evcnt_attach_dynamic(&txr->bytes, EVCNT_TYPE_MISC, NULL,
 	    xname, "TX Bytes");
+#endif
 	evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC, NULL,
 	    xname, "# of times not enough descriptors were available during TX");
 	evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC, NULL,
@@ -2150,7 +2149,7 @@ ixv_print_debug_info(struct adapter *adapter)
         }
 
         device_printf(dev,"MBX IRQ Handled: %lu\n",
-            (long)adapter->vector_irq.ev_count);
+            (long)adapter->link_irq.ev_count);
         return;
 }
 
