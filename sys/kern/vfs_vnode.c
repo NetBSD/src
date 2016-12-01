@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.59 2016/11/03 11:04:21 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.60 2016/12/01 14:49:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.59 2016/11/03 11:04:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.60 2016/12/01 14:49:03 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -444,16 +444,11 @@ try_nextlist:
 		KASSERT(vp->v_usecount == 0);
 		KASSERT(vp->v_freelisthd == listhd);
 
-		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) != 0)
+		if (!mutex_tryenter(vp->v_interlock))
 			continue;
-		if (!mutex_tryenter(vp->v_interlock)) {
-			VOP_UNLOCK(vp);
-			continue;
-		}
 		mp = vp->v_mount;
 		if (fstrans_start_nowait(mp, FSTRANS_SHARED) != 0) {
 			mutex_exit(vp->v_interlock);
-			VOP_UNLOCK(vp);
 			continue;
 		}
 		break;
@@ -468,21 +463,12 @@ try_nextlist:
 		return EBUSY;
 	}
 
-	/* Remove it from the freelist. */
-	TAILQ_REMOVE(listhd, vp, v_freelist);
-	vp->v_freelisthd = NULL;
 	mutex_exit(&vnode_free_list_lock);
 
-	KASSERT(vp->v_usecount == 0);
-
-	/*
-	 * The vnode is still associated with a file system, so we must
-	 * clean it out before freeing it.  We need to add a reference
-	 * before doing this.
-	 */
-	vp->v_usecount = 1;
-	vcache_reclaim(vp);
-	vrelel(vp, 0);
+	if (vget(vp, 0, true /* wait */) == 0) {
+		if (!vrecycle(vp))
+			vrele(vp);
+	}
 	fstrans_done(mp);
 
 	return 0;
@@ -949,19 +935,37 @@ holdrelel(vnode_t *vp)
 bool
 vrecycle(vnode_t *vp)
 {
-
-	if (vn_lock(vp, LK_EXCLUSIVE) != 0)
-		return false;
+	int error __diagused;
 
 	mutex_enter(vp->v_interlock);
 
+	/* Make sure we hold the last reference. */
+	VSTATE_WAIT_STABLE(vp);
 	if (vp->v_usecount != 1) {
 		mutex_exit(vp->v_interlock);
-		VOP_UNLOCK(vp);
 		return false;
 	}
+
+	/* If the vnode is already clean we're done. */
+	if (VSTATE_GET(vp) != VS_ACTIVE) {
+		VSTATE_ASSERT(vp, VS_RECLAIMED);
+		vrelel(vp, 0);
+		return true;
+	}
+
+	/* Prevent further references until the vnode is locked. */
+	VSTATE_CHANGE(vp, VS_ACTIVE, VS_BLOCKED);
+	mutex_exit(vp->v_interlock);
+
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	KASSERT(error == 0);
+
+	mutex_enter(vp->v_interlock);
+	VSTATE_CHANGE(vp, VS_BLOCKED, VS_ACTIVE);
+
 	vcache_reclaim(vp);
 	vrelel(vp, 0);
+
 	return true;
 }
 
@@ -1488,8 +1492,7 @@ vcache_reclaim(vnode_t *vp)
 	/*
 	 * Clean out any cached data associated with the vnode.
 	 * If purging an active vnode, it must be closed and
-	 * deactivated before being reclaimed. Note that the
-	 * VOP_INACTIVE will unlock the vnode.
+	 * deactivated before being reclaimed.
 	 */
 	error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
 	if (error != 0) {
@@ -1502,17 +1505,12 @@ vcache_reclaim(vnode_t *vp)
 	if (active && (vp->v_type == VBLK || vp->v_type == VCHR)) {
 		 spec_node_revoke(vp);
 	}
-	if (active) {
-		VOP_INACTIVE(vp, &recycle);
-	} else {
-		/*
-		 * Any other processes trying to obtain this lock must first
-		 * wait for VS_RECLAIMED, then call the new lock operation.
-		 */
-		VOP_UNLOCK(vp);
-	}
 
-	/* Disassociate the underlying file system from the vnode. */
+	/*
+	 * Disassociate the underlying file system from the vnode.
+	 * Note that the VOP_INACTIVE will unlock the vnode.
+	 */
+	VOP_INACTIVE(vp, &recycle);
 	if (VOP_RECLAIM(vp)) {
 		vnpanic(vp, "%s: cannot reclaim", __func__);
 	}
