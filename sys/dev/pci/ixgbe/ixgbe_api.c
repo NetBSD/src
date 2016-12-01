@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2014, Intel Corporation 
+  Copyright (c) 2001-2015, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,11 +30,27 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.c 280197 2015-03-17 22:40:50Z jfv $*/
-/*$NetBSD: ixgbe_api.c,v 1.12 2016/12/01 06:27:18 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.c 282289 2015-04-30 22:53:27Z erj $*/
+/*$NetBSD: ixgbe_api.c,v 1.13 2016/12/01 06:56:28 msaitoh Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
+
+static const u32 ixgbe_mvals_base[IXGBE_MVALS_IDX_LIMIT] = {
+	IXGBE_MVALS_INIT()
+};
+
+static const u32 ixgbe_mvals_X540[IXGBE_MVALS_IDX_LIMIT] = {
+	IXGBE_MVALS_INIT(_X540)
+};
+
+static const u32 ixgbe_mvals_X550[IXGBE_MVALS_IDX_LIMIT] = {
+	IXGBE_MVALS_INIT(_X550)
+};
+
+static const u32 ixgbe_mvals_X550EM_x[IXGBE_MVALS_IDX_LIMIT] = {
+	IXGBE_MVALS_INIT(_X550EM_x)
+};
 
 /**
  * ixgbe_dcb_get_rtrup2tc - read rtrup2tc reg
@@ -82,20 +98,16 @@ s32 ixgbe_init_shared_code(struct ixgbe_hw *hw)
 	case ixgbe_mac_X540:
 		status = ixgbe_init_ops_X540(hw);
 		break;
-#if 0 //JFV temporary disable
 	case ixgbe_mac_X550:
 		status = ixgbe_init_ops_X550(hw);
 		break;
 	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_X550EM_a:
 		status = ixgbe_init_ops_X550EM(hw);
 		break;
-#endif
 	case ixgbe_mac_82599_vf:
 	case ixgbe_mac_X540_vf:
 	case ixgbe_mac_X550_vf:
 	case ixgbe_mac_X550EM_x_vf:
-	case ixgbe_mac_X550EM_a_vf:
 		status = ixgbe_init_ops_vf(hw);
 		break;
 	default:
@@ -124,6 +136,8 @@ s32 ixgbe_set_mac_type(struct ixgbe_hw *hw)
 			     "Unsupported vendor id: %x", hw->vendor_id);
 		return IXGBE_ERR_DEVICE_NOT_SUPPORTED;
 	}
+
+	hw->mvals = ixgbe_mvals_base;
 
 	switch (hw->device_id) {
 	case IXGBE_DEV_ID_82598:
@@ -165,14 +179,17 @@ s32 ixgbe_set_mac_type(struct ixgbe_hw *hw)
 	case IXGBE_DEV_ID_X540_VF:
 	case IXGBE_DEV_ID_X540_VF_HV:
 		hw->mac.type = ixgbe_mac_X540_vf;
+		hw->mvals = ixgbe_mvals_X540;
 		break;
 	case IXGBE_DEV_ID_X540T:
 	case IXGBE_DEV_ID_X540T1:
 	case IXGBE_DEV_ID_X540_BYPASS:
 		hw->mac.type = ixgbe_mac_X540;
+		hw->mvals = ixgbe_mvals_X540;
 		break;
 	case IXGBE_DEV_ID_X550T:
 		hw->mac.type = ixgbe_mac_X550;
+		hw->mvals = ixgbe_mvals_X550;
 		break;
 	case IXGBE_DEV_ID_X550EM_X_KX4:
 	case IXGBE_DEV_ID_X550EM_X_KR:
@@ -180,21 +197,17 @@ s32 ixgbe_set_mac_type(struct ixgbe_hw *hw)
 	case IXGBE_DEV_ID_X550EM_X_1G_T:
 	case IXGBE_DEV_ID_X550EM_X_SFP:
 		hw->mac.type = ixgbe_mac_X550EM_x;
-		break;
-	case IXGBE_DEV_ID_X550EM_A_KR:
-		hw->mac.type = ixgbe_mac_X550EM_a;
+		hw->mvals = ixgbe_mvals_X550EM_x;
 		break;
 	case IXGBE_DEV_ID_X550_VF:
 	case IXGBE_DEV_ID_X550_VF_HV:
 		hw->mac.type = ixgbe_mac_X550_vf;
+		hw->mvals = ixgbe_mvals_X550;
 		break;
 	case IXGBE_DEV_ID_X550EM_X_VF:
 	case IXGBE_DEV_ID_X550EM_X_VF_HV:
 		hw->mac.type = ixgbe_mac_X550EM_x_vf;
-		break;
-	case IXGBE_DEV_ID_X550EM_A_VF:
-	case IXGBE_DEV_ID_X550EM_A_VF_HV:
-		hw->mac.type = ixgbe_mac_X550EM_a_vf;
+		hw->mvals = ixgbe_mvals_X550EM_x;
 		break;
 	default:
 		ret_val = IXGBE_ERR_DEVICE_NOT_SUPPORTED;
@@ -1284,6 +1297,23 @@ s32 ixgbe_enter_lplu(struct ixgbe_hw *hw)
 }
 
 /**
+ * ixgbe_handle_lasi - Handle external Base T PHY interrupt
+ * @hw: pointer to hardware structure
+ *
+ * Handle external Base T PHY interrupt. If high temperature
+ * failure alarm then return error, else if link status change
+ * then setup internal/external PHY link
+ *
+ * Return IXGBE_ERR_OVERTEMP if interrupt is high temperature
+ * failure alarm, else return PHY access status.
+ */
+s32 ixgbe_handle_lasi(struct ixgbe_hw *hw)
+{
+	return ixgbe_call_func(hw, hw->phy.ops.handle_lasi, (hw),
+				IXGBE_NOT_IMPLEMENTED);
+}
+
+/**
  *  ixgbe_read_analog_reg8 - Reads 8 bit analog register
  *  @hw: pointer to hardware structure
  *  @reg: analog register to read
@@ -1341,6 +1371,23 @@ s32 ixgbe_read_i2c_byte(struct ixgbe_hw *hw, u8 byte_offset, u8 dev_addr,
 }
 
 /**
+ *  ixgbe_read_i2c_byte_unlocked - Reads 8 bit word via I2C from device address
+ *  @hw: pointer to hardware structure
+ *  @byte_offset: byte offset to read
+ *  @dev_addr: I2C bus address to read from
+ *  @data: value read
+ *
+ *  Performs byte read operation to SFP module's EEPROM over I2C interface.
+ **/
+s32 ixgbe_read_i2c_byte_unlocked(struct ixgbe_hw *hw, u8 byte_offset,
+				 u8 dev_addr, u8 *data)
+{
+	return ixgbe_call_func(hw, hw->phy.ops.read_i2c_byte_unlocked,
+			       (hw, byte_offset, dev_addr, data),
+			       IXGBE_NOT_IMPLEMENTED);
+}
+
+/**
  * ixgbe_read_i2c_combined - Perform I2C read combined operation
  * @hw: pointer to the hardware structure
  * @addr: I2C bus address to read from
@@ -1353,6 +1400,23 @@ s32 ixgbe_read_i2c_combined(struct ixgbe_hw *hw, u8 addr, u16 reg, u16 *val)
 {
 	return ixgbe_call_func(hw, hw->phy.ops.read_i2c_combined, (hw, addr,
 			       reg, val), IXGBE_NOT_IMPLEMENTED);
+}
+
+/**
+ * ixgbe_read_i2c_combined_unlocked - Perform I2C read combined operation
+ * @hw: pointer to the hardware structure
+ * @addr: I2C bus address to read from
+ * @reg: I2C device register to read from
+ * @val: pointer to location to receive read value
+ *
+ * Returns an error code on error.
+ **/
+s32 ixgbe_read_i2c_combined_unlocked(struct ixgbe_hw *hw, u8 addr, u16 reg,
+				     u16 *val)
+{
+	return ixgbe_call_func(hw, hw->phy.ops.read_i2c_combined_unlocked,
+			       (hw, addr, reg, val),
+			       IXGBE_NOT_IMPLEMENTED);
 }
 
 /**
@@ -1373,6 +1437,24 @@ s32 ixgbe_write_i2c_byte(struct ixgbe_hw *hw, u8 byte_offset, u8 dev_addr,
 }
 
 /**
+ *  ixgbe_write_i2c_byte_unlocked - Writes 8 bit word over I2C
+ *  @hw: pointer to hardware structure
+ *  @byte_offset: byte offset to write
+ *  @dev_addr: I2C bus address to write to
+ *  @data: value to write
+ *
+ *  Performs byte write operation to SFP module's EEPROM over I2C interface
+ *  at a specified device address.
+ **/
+s32 ixgbe_write_i2c_byte_unlocked(struct ixgbe_hw *hw, u8 byte_offset,
+				  u8 dev_addr, u8 data)
+{
+	return ixgbe_call_func(hw, hw->phy.ops.write_i2c_byte_unlocked,
+			       (hw, byte_offset, dev_addr, data),
+			       IXGBE_NOT_IMPLEMENTED);
+}
+
+/**
  * ixgbe_write_i2c_combined - Perform I2C write combined operation
  * @hw: pointer to the hardware structure
  * @addr: I2C bus address to write to
@@ -1385,6 +1467,22 @@ s32 ixgbe_write_i2c_combined(struct ixgbe_hw *hw, u8 addr, u16 reg, u16 val)
 {
 	return ixgbe_call_func(hw, hw->phy.ops.write_i2c_combined, (hw, addr,
 			       reg, val), IXGBE_NOT_IMPLEMENTED);
+}
+
+/**
+ * ixgbe_write_i2c_combined_unlocked - Perform I2C write combined operation
+ * @hw: pointer to the hardware structure
+ * @addr: I2C bus address to write to
+ * @reg: I2C device register to write to
+ * @val: value to write
+ *
+ * Returns an error code on error.
+ **/
+s32 ixgbe_write_i2c_combined_unlocked(struct ixgbe_hw *hw, u8 addr, u16 reg,
+				      u16 val)
+{
+	return ixgbe_call_func(hw, hw->phy.ops.write_i2c_combined_unlocked,
+			       (hw, addr, reg, val), IXGBE_NOT_IMPLEMENTED);
 }
 
 /**
