@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2014, Intel Corporation 
+  Copyright (c) 2001-2015, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_vf.c 280182 2015-03-17 18:32:28Z jfv $*/
-/*$NetBSD: ixgbe_vf.c,v 1.7 2016/12/01 06:27:18 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_vf.c 282289 2015-04-30 22:53:27Z erj $*/
+/*$NetBSD: ixgbe_vf.c,v 1.8 2016/12/01 06:56:28 msaitoh Exp $*/
 
 
 #include "ixgbe_api.h"
@@ -670,4 +670,3 @@ int ixgbevf_get_queues(struct ixgbe_hw *hw, unsigned int *num_tcs,
 	UNREFERENCED_3PARAMETER(hw, num_tcs, default_tc);
 	return IXGBE_SUCCESS;
 }
-

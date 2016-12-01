@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.383 2016/11/28 02:23:33 msaitoh Exp $
+#	$NetBSD: files.pci,v 1.384 2016/12/01 06:56:28 msaitoh Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -665,20 +665,20 @@ attach	stge at pci
 file	dev/pci/if_stge.c		stge
 
 # Intel i82598 & i82599 10-Gigabit Ethernet
-define	ixgbe_common
-file	dev/pci/ixgbe/ix_txrx.c	ixgbe_common
 device	ixg: ether, ifnet, arp
-attach	ixg at pci:	ixgbe_common
-file	dev/pci/ixgbe/ixgbe.c		ixg
-file	dev/pci/ixgbe/ixgbe_netbsd.c	ixg
-file	dev/pci/ixgbe/ixgbe_82598.c	ixg
-file	dev/pci/ixgbe/ixgbe_82599.c	ixg
-file	dev/pci/ixgbe/ixgbe_x540.c	ixg
-file	dev/pci/ixgbe/ixgbe_api.c	ixg
-file	dev/pci/ixgbe/ixgbe_common.c	ixg
-file	dev/pci/ixgbe/ixgbe_mbx.c	ixg
-file	dev/pci/ixgbe/ixgbe_phy.c	ixg
-file	dev/pci/ixgbe/ixgbe_vf.c	ixg
+attach	ixg at pci
+file	dev/pci/ixgbe/ixgbe.c		ixg | ixv
+file	dev/pci/ixgbe/ix_txrx.c		ixg | ixv
+file	dev/pci/ixgbe/ixgbe_netbsd.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_82598.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_82599.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_x540.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_x550.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_api.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_common.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_mbx.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_phy.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_vf.c	ixg | ixv
 
 # This appears to be the driver for virtual instances of i82599.
 device	ixv: ether, ifnet, arp
