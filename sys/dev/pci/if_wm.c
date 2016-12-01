@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.453 2016/11/21 03:57:37 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.454 2016/12/01 02:36:50 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.453 2016/11/21 03:57:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.454 2016/12/01 02:36:50 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -683,14 +683,17 @@ static int	wm_init_txrx_queues(struct wm_softc *);
 /* Start */
 static int	wm_tx_offload(struct wm_softc *, struct wm_txsoft *,
     uint32_t *, uint8_t *);
+static inline int	wm_select_txqueue(struct ifnet *, struct mbuf *);
 static void	wm_start(struct ifnet *);
 static void	wm_start_locked(struct ifnet *);
+static int	wm_transmit(struct ifnet *, struct mbuf *);
+static void	wm_transmit_locked(struct ifnet *, struct wm_txqueue *);
+static void	wm_send_common_locked(struct ifnet *, struct wm_txqueue *, bool);
 static int	wm_nq_tx_offload(struct wm_softc *, struct wm_txqueue *,
     struct wm_txsoft *, uint32_t *, uint32_t *, bool *);
 static void	wm_nq_start(struct ifnet *);
 static void	wm_nq_start_locked(struct ifnet *);
 static int	wm_nq_transmit(struct ifnet *, struct mbuf *);
-static inline int	wm_nq_select_txqueue(struct ifnet *, struct mbuf *);
 static void	wm_nq_transmit_locked(struct ifnet *, struct wm_txqueue *);
 static void	wm_nq_send_common_locked(struct ifnet *, struct wm_txqueue *, bool);
 /* Interrupt */
@@ -2513,8 +2516,11 @@ alloc_retry:
 		ifp->if_start = wm_nq_start;
 		if (sc->sc_nqueues > 1)
 			ifp->if_transmit = wm_nq_transmit;
-	} else
+	} else {
 		ifp->if_start = wm_start;
+		if (sc->sc_nqueues > 1)
+			ifp->if_transmit = wm_transmit;
+	}
 	ifp->if_watchdog = wm_watchdog;
 	ifp->if_init = wm_init;
 	ifp->if_stop = wm_stop;
@@ -6301,6 +6307,20 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	return 0;
 }
 
+static inline int
+wm_select_txqueue(struct ifnet *ifp, struct mbuf *m)
+{
+	struct wm_softc *sc = ifp->if_softc;
+	u_int cpuid = cpu_index(curcpu());
+
+	/*
+	 * Currently, simple distribute strategy.
+	 * TODO:
+	 * destribute by flowid(RSS has value).
+	 */
+	return (cpuid + sc->sc_affinity_offset) % sc->sc_nqueues;
+}
+
 /*
  * wm_start:		[ifnet interface function]
  *
@@ -6325,6 +6345,52 @@ wm_start_locked(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_txqueue *txq = &sc->sc_queue[0].wmq_txq;
+
+	wm_send_common_locked(ifp, txq, false);
+}
+
+static int
+wm_transmit(struct ifnet *ifp, struct mbuf *m)
+{
+	int qid;
+	struct wm_softc *sc = ifp->if_softc;
+	struct wm_txqueue *txq;
+
+	qid = wm_select_txqueue(ifp, m);
+	txq = &sc->sc_queue[qid].wmq_txq;
+
+	if (__predict_false(!pcq_put(txq->txq_interq, m))) {
+		m_freem(m);
+		WM_Q_EVCNT_INCR(txq, txdrop);
+		return ENOBUFS;
+	}
+
+	if (mutex_tryenter(txq->txq_lock)) {
+		/* XXXX should be per TX queue */
+		ifp->if_obytes += m->m_pkthdr.len;
+		if (m->m_flags & M_MCAST)
+			ifp->if_omcasts++;
+
+		if (!txq->txq_stopping)
+			wm_transmit_locked(ifp, txq);
+		mutex_exit(txq->txq_lock);
+	}
+
+	return 0;
+}
+
+static void
+wm_transmit_locked(struct ifnet *ifp, struct wm_txqueue *txq)
+{
+
+	wm_send_common_locked(ifp, txq, true);
+}
+
+static void
+wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
+    bool is_transmit)
+{
+	struct wm_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
 	struct m_tag *mtag;
 	struct wm_txsoft *txs;
@@ -6364,7 +6430,10 @@ wm_start_locked(struct ifnet *ifp)
 		}
 
 		/* Grab a packet off the queue. */
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (is_transmit)
+			m0 = pcq_get(txq->txq_interq);
+		else
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 
@@ -6848,20 +6917,6 @@ wm_nq_start_locked(struct ifnet *ifp)
 	wm_nq_send_common_locked(ifp, txq, false);
 }
 
-static inline int
-wm_nq_select_txqueue(struct ifnet *ifp, struct mbuf *m)
-{
-	struct wm_softc *sc = ifp->if_softc;
-	u_int cpuid = cpu_index(curcpu());
-
-	/*
-	 * Currently, simple distribute strategy.
-	 * TODO:
-	 * destribute by flowid(RSS has value).
-	 */
-	return (cpuid + sc->sc_affinity_offset) % sc->sc_nqueues;
-}
-
 static int
 wm_nq_transmit(struct ifnet *ifp, struct mbuf *m)
 {
@@ -6869,7 +6924,7 @@ wm_nq_transmit(struct ifnet *ifp, struct mbuf *m)
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_txqueue *txq;
 
-	qid = wm_nq_select_txqueue(ifp, m);
+	qid = wm_select_txqueue(ifp, m);
 	txq = &sc->sc_queue[qid].wmq_txq;
 
 	if (__predict_false(!pcq_put(txq->txq_interq, m))) {
