@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.277 2016/11/29 03:23:00 mlelstv Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.278 2016/12/01 15:39:02 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.277 2016/11/29 03:23:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.278 2016/12/01 15:39:02 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +470,7 @@ scsidevdetached(device_t self, device_t child)
 	mutex_enter(chan_mtx(chan));
 
 	periph = scsipi_lookup_periph_locked(chan, target, lun);
-	KASSERT(periph->periph_dev == child);
+	KASSERT(periph != NULL && periph->periph_dev == child);
 
 	scsipi_remove_periph(chan, periph);
 	scsipi_free_periph(periph);
