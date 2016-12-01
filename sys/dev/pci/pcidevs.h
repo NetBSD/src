@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1264 2016/11/23 16:11:34 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1265 2016/12/01 09:04:37 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1272 2016/11/23 16:10:59 christos Exp
+ *	NetBSD: pcidevs,v 1.1273 2016/12/01 09:04:03 msaitoh Exp
  */
 
 /*
@@ -3024,10 +3024,15 @@
 #define	PCI_PRODUCT_INTEL_XL710_VF	0x154c		/* XL710 Ethernet Virtual Function */
 #define	PCI_PRODUCT_INTEL_82599_SFP_SF2	0x154d		/* 82599 (SFP+) 10 GbE Controller */
 #define	PCI_PRODUCT_INTEL_82599EN_SFP	0x1557		/* 82599 10 GbE Controller */
+#define	PCI_PRODUCT_INTEL_82599_QSFP_SF_QP	0x1558		/* X520 10 GbE QSFP+ */
 #define	PCI_PRODUCT_INTEL_I218_V	0x1559		/* I218-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I218_LM	0x155a		/* I218-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_X540_BYPASS	0x155c		/* X540 10 GbE Bypass */
 #define	PCI_PRODUCT_INTEL_82599_BYPASS	0x155d		/* 82599 10 GbE Bypass */
+#define	PCI_PRODUCT_INTEL_X540T1	0x1560		/* X540 10G Ethernet */
+#define	PCI_PRODUCT_INTEL_X550T	0x1563		/* X550 10G Ethernet */
+#define	PCI_PRODUCT_INTEL_X550_VF_HV	0x1564		/* X550 10 GbE Virtual Function */
+#define	PCI_PRODUCT_INTEL_X550_VF	0x1565		/* X550 10 GbE Virtual Function */
 #define	PCI_PRODUCT_INTEL_I219_LM	0x156f		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V	0x1570		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_XL710_VF_HV	0x1571		/* XL710 Ethernet Virtual Function */
@@ -3055,6 +3060,7 @@
 #define	PCI_PRODUCT_INTEL_I219_LM2	0x15b7		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V2	0x15b8		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM3	0x15b9		/* I219-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_X550T1	0x15d1		/* X550 10G Ethernet */
 #define	PCI_PRODUCT_INTEL_I219_V5	0x15d6		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM4	0x15d7		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V4	0x15d8		/* I219-V Ethernet Connection */
