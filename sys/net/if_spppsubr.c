@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.159 2016/11/25 05:03:12 knakahara Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.160 2016/12/01 02:15:20 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.159 2016/11/25 05:03:12 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.160 2016/12/01 02:15:20 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4909,7 +4909,7 @@ sppp_set_ip_addrs_work(struct work *wk, void *arg)
 	else if (dest != NULL)
 		hisaddr = ntohl(dest->sin_addr.s_addr);
 
-	if (si != NULL) {
+	if (si != NULL && dest != NULL) {
 		int error;
 		struct sockaddr_in new_sin = *si;
 		struct sockaddr_in new_dst = *dest;
