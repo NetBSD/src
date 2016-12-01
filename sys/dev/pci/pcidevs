@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1272 2016/11/23 16:10:59 christos Exp $
+$NetBSD: pcidevs,v 1.1273 2016/12/01 09:04:03 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2930,7 +2930,7 @@ product INTEL 82599_KX4		0x10F7	82599 (KX/KX4) 10 GbE Controller
 product INTEL 82599_COMBO_BACKPLANE	0x10F8	82599 (combined backplane; KR/KX4/KX) 10 GbE Controller
 product INTEL 82599_CX4		0x10F9	82599 (CX4) 10 GbE Controller
 product INTEL 82599_SFP		0x10FB	82599 (SFI/SFP+) 10 GbE Controller
-product INTEL 82599_XAUI_LOM		0x10FC	82599 (XAUI/BX4) 10 GbE Controller
+product INTEL 82599_XAUI_LOM	0x10FC	82599 (XAUI/BX4) 10 GbE Controller
 product INTEL 82552		0x10fe	82552 10/100 Network Connection
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
@@ -3017,10 +3017,15 @@ product INTEL 82599_SFP_SF_QP	0x154a	82599 10 GbE Controller
 product INTEL XL710_VF		0x154c	XL710 Ethernet Virtual Function
 product INTEL 82599_SFP_SF2	0x154d	82599 (SFP+) 10 GbE Controller
 product INTEL 82599EN_SFP	0x1557	82599 10 GbE Controller
+product INTEL 82599_QSFP_SF_QP	0x1558	X520 10 GbE QSFP+
 product INTEL I218_V		0x1559	I218-V Ethernet Connection
 product INTEL I218_LM		0x155a	I218-LM Ethernet Connection
 product INTEL X540_BYPASS	0x155c	X540 10 GbE Bypass
 product INTEL 82599_BYPASS	0x155d	82599 10 GbE Bypass
+product INTEL X540T1	 	0x1560	X540 10G Ethernet
+product INTEL X550T	 	0x1563	X550 10G Ethernet
+product INTEL X550_VF_HV	0x1564	X550 10 GbE Virtual Function
+product INTEL X550_VF		0x1565	X550 10 GbE Virtual Function
 product INTEL I219_LM		0x156f	I219-LM Ethernet Connection
 product INTEL I219_V		0x1570	I219-V Ethernet Connection
 product INTEL XL710_VF_HV	0x1571	XL710 Ethernet Virtual Function
@@ -3048,6 +3053,7 @@ product INTEL X552_1G_T		0x15ae	X552 1000Base-T
 product INTEL I219_LM2		0x15b7	I219-LM Ethernet Connection
 product INTEL I219_V2		0x15b8	I219-V Ethernet Connection
 product INTEL I219_LM3		0x15b9	I219-LM Ethernet Connection
+product INTEL X550T1	 	0x15d1	X550 10G Ethernet
 product INTEL I219_V5		0x15d6	I219-V Ethernet Connection
 product INTEL I219_LM4		0x15d7	I219-LM Ethernet Connection
 product INTEL I219_V4		0x15d8	I219-V Ethernet Connection
