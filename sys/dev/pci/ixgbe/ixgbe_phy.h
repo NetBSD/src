@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2013, Intel Corporation 
+  Copyright (c) 2001-2014, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_phy.h 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_phy.h,v 1.5 2015/08/05 04:08:44 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_phy.h 280182 2015-03-17 18:32:28Z jfv $*/
+/*$NetBSD: ixgbe_phy.h,v 1.6 2016/12/01 06:27:18 msaitoh Exp $*/
 
 #ifndef _IXGBE_PHY_H_
 #define _IXGBE_PHY_H_
@@ -55,6 +55,15 @@
 #define IXGBE_SFF_SFF_8472_COMP		0x5E
 #define IXGBE_SFF_SFF_8472_OSCB		0x6E
 #define IXGBE_SFF_SFF_8472_ESCB		0x76
+#define IXGBE_SFF_IDENTIFIER_QSFP_PLUS	0xD
+#define IXGBE_SFF_QSFP_VENDOR_OUI_BYTE0	0xA5
+#define IXGBE_SFF_QSFP_VENDOR_OUI_BYTE1	0xA6
+#define IXGBE_SFF_QSFP_VENDOR_OUI_BYTE2	0xA7
+#define IXGBE_SFF_QSFP_CONNECTOR	0x82
+#define IXGBE_SFF_QSFP_10GBE_COMP	0x83
+#define IXGBE_SFF_QSFP_1GBE_COMP	0x86
+#define IXGBE_SFF_QSFP_CABLE_LENGTH	0x92
+#define IXGBE_SFF_QSFP_DEVICE_TECH	0x93
 
 /* Bitmasks */
 #define IXGBE_SFF_DA_PASSIVE_CABLE	0x4
@@ -68,12 +77,22 @@
 #define IXGBE_SFF_SOFT_RS_SELECT_MASK	0x8
 #define IXGBE_SFF_SOFT_RS_SELECT_10G	0x8
 #define IXGBE_SFF_SOFT_RS_SELECT_1G	0x0
+#define IXGBE_SFF_ADDRESSING_MODE	0x4
+#define IXGBE_SFF_QSFP_DA_ACTIVE_CABLE	0x1
+#define IXGBE_SFF_QSFP_DA_PASSIVE_CABLE	0x8
+#define IXGBE_SFF_QSFP_CONNECTOR_NOT_SEPARABLE	0x23
+#define IXGBE_SFF_QSFP_TRANSMITER_850NM_VCSEL	0x0
 #define IXGBE_I2C_EEPROM_READ_MASK	0x100
 #define IXGBE_I2C_EEPROM_STATUS_MASK	0x3
 #define IXGBE_I2C_EEPROM_STATUS_NO_OPERATION	0x0
 #define IXGBE_I2C_EEPROM_STATUS_PASS	0x1
 #define IXGBE_I2C_EEPROM_STATUS_FAIL	0x2
 #define IXGBE_I2C_EEPROM_STATUS_IN_PROGRESS	0x3
+
+#define IXGBE_CS4227			0xBE	/* CS4227 address */
+#define IXGBE_CS4227_SPARE24_LSB	0x12B0	/* Reg to program EDC */
+#define IXGBE_CS4227_EDC_MODE_CX1	0x0002
+#define IXGBE_CS4227_EDC_MODE_SR	0x0004
 
 /* Flow control defines */
 #define IXGBE_TAF_SYM_PAUSE		0x400
@@ -102,16 +121,15 @@
 #define IXGBE_I2C_T_SU_STO	4
 #define IXGBE_I2C_T_BUF		5
 
+#ifndef IXGBE_SFP_DETECT_RETRIES
+#define IXGBE_SFP_DETECT_RETRIES	10
+
+#endif /* IXGBE_SFP_DETECT_RETRIES */
 #define IXGBE_TN_LASI_STATUS_REG	0x9005
 #define IXGBE_TN_LASI_STATUS_TEMP_ALARM	0x0008
 
 /* SFP+ SFF-8472 Compliance */
 #define IXGBE_SFF_SFF_8472_UNSUP	0x00
-#define IXGBE_SFF_SFF_8472_REV_9_3	0x01
-#define IXGBE_SFF_SFF_8472_REV_9_5	0x02
-#define IXGBE_SFF_SFF_8472_REV_10_2	0x03
-#define IXGBE_SFF_SFF_8472_REV_10_4	0x04
-#define IXGBE_SFF_SFF_8472_REV_11_0	0x05
 
 s32 ixgbe_init_phy_ops_generic(struct ixgbe_hw *hw);
 bool ixgbe_validate_phy_addr(struct ixgbe_hw *hw, u32 phy_addr);
@@ -134,6 +152,7 @@ s32 ixgbe_setup_phy_link_speed_generic(struct ixgbe_hw *hw,
 s32 ixgbe_get_copper_link_capabilities_generic(struct ixgbe_hw *hw,
 					       ixgbe_link_speed *speed,
 					       bool *autoneg);
+s32 ixgbe_check_reset_blocked(struct ixgbe_hw *hw);
 
 /* PHY specific */
 s32 ixgbe_check_phy_link_tnx(struct ixgbe_hw *hw,
@@ -146,8 +165,11 @@ s32 ixgbe_get_phy_firmware_version_generic(struct ixgbe_hw *hw,
 					   u16 *firmware_version);
 
 s32 ixgbe_reset_phy_nl(struct ixgbe_hw *hw);
+s32 ixgbe_set_copper_phy_power(struct ixgbe_hw *hw, bool on);
 s32 ixgbe_identify_module_generic(struct ixgbe_hw *hw);
 s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw);
+s32 ixgbe_get_supported_phy_sfp_layer_generic(struct ixgbe_hw *hw);
+s32 ixgbe_identify_qsfp_module_generic(struct ixgbe_hw *hw);
 s32 ixgbe_get_sfp_init_sequence_offsets(struct ixgbe_hw *hw,
 					u16 *list_offset,
 					u16 *data_offset);
