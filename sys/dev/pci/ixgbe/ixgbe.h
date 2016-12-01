@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 280182 2015-03-17 18:32:28Z jfv $*/
-/*$NetBSD: ixgbe.h,v 1.11 2016/12/01 06:27:18 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 282289 2015-04-30 22:53:27Z erj $*/
+/*$NetBSD: ixgbe.h,v 1.12 2016/12/01 06:56:28 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -110,6 +110,8 @@
 
 #include "ixgbe_netbsd.h"
 #include "ixgbe_api.h"
+#include "ixgbe_common.h"
+#include "ixgbe_phy.h"
 #include "ixgbe_vf.h"
 
 /* Tunables */
@@ -164,7 +166,11 @@
 #define IXGBE_TX_CLEANUP_THRESHOLD	(adapter->num_tx_desc / 8)
 #define IXGBE_TX_OP_THRESHOLD		(adapter->num_tx_desc / 32)
 
-#define IXGBE_MAX_FRAME_SIZE	0x3F00
+/* These defines are used in MTU calculations */
+#define IXGBE_MAX_FRAME_SIZE	9728
+#define IXGBE_MTU_HDR		(ETHER_HDR_LEN + ETHER_CRC_LEN + \
+				 ETHER_VLAN_ENCAP_LEN)
+#define IXGBE_MAX_MTU		(IXGBE_MAX_FRAME_SIZE - IXGBE_MTU_HDR)
 
 /* Flow control constants */
 #define IXGBE_FC_PAUSE		0xFFFF
@@ -247,6 +253,17 @@
 #define IXGBE_AVE_LATENCY	400
 #define IXGBE_BULK_LATENCY	1200
 #define IXGBE_LINK_ITR		2000
+
+/* MAC type macros */
+#define IXGBE_IS_X550VF(_adapter) \
+	((_adapter->hw.mac.type == ixgbe_mac_X550_vf) || \
+	 (_adapter->hw.mac.type == ixgbe_mac_X550EM_x_vf))
+
+#define IXGBE_IS_VF(_adapter) \
+	(IXGBE_IS_X550VF(_adapter) || \
+	 (_adapter->hw.mac.type == ixgbe_mac_X540_vf) || \
+	 (_adapter->hw.mac.type == ixgbe_mac_82599_vf))
+
 
 /*
  *****************************************************************************
@@ -352,7 +369,6 @@ struct tx_ring {
 	u32			bytes;  /* used for AIM */
 	u32			packets;
 	/* Soft Stats */
-	struct evcnt	   	tx_bytes;
 	struct evcnt	   	tso_tx;
 	struct evcnt	   	no_tx_map_avail;
 	struct evcnt		no_desc_avail;
@@ -447,6 +463,13 @@ struct adapter {
 	u32			link_speed;
 	bool			link_up;
 	u32 			vector;
+	u16			dmac;
+	bool			eee_support;
+	bool			eee_enabled;
+
+	/* Power management-related */
+	bool			wol_support;
+	u32			wufc;
 
 	/* Mbuf cluster size */
 	u32			rx_mbuf_sz;
@@ -460,6 +483,7 @@ struct adapter {
 	int			fdir_reinit;
 	void			*fdir_si;
 #endif
+	void			*phy_si;   /* PHY intr tasklet */
 
 	/*
 	** Queues: 
@@ -502,7 +526,7 @@ struct adapter {
 	struct evcnt	   	enomem_tx_dma_setup;
 	struct evcnt	   	watchdog_events;
 	struct evcnt	   	tso_err;
-	struct evcnt		vector_irq;
+	struct evcnt		link_irq;
 	struct evcnt		morerx;
 	struct evcnt		moretx;
 	struct evcnt		txloops;
@@ -578,12 +602,17 @@ struct adapter {
 #define IXGBE_SET_IQDROPS(sc, count)     (sc)->ifp->if_iqdrops = (count)
 #endif
 
+/* External PHY register addresses */
+#define IXGBE_PHY_CURRENT_TEMP		0xC820
+#define IXGBE_PHY_OVERTEMP_STATUS	0xC830
+
 /* Sysctl help messages; displayed with sysctl -d */
 #define IXGBE_SYSCTL_DESC_ADV_SPEED \
 	"\nControl advertised link speed using these flags:\n" \
 	"\t0x1 - advertise 100M\n" \
 	"\t0x2 - advertise 1G\n" \
-	"\t0x4 - advertise 10G"
+	"\t0x4 - advertise 10G\n\n" \
+	"\t100M is only supported on certain 10GBaseT adapters.\n"
 
 #define IXGBE_SYSCTL_DESC_SET_FC \
 	"\nSet flow control mode using these values:\n" \

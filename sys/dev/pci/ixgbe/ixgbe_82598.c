@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2014, Intel Corporation 
+  Copyright (c) 2001-2015, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82598.c 280182 2015-03-17 18:32:28Z jfv $*/
-/*$NetBSD: ixgbe_82598.c,v 1.6 2016/12/01 06:27:18 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82598.c 282289 2015-04-30 22:53:27Z erj $*/
+/*$NetBSD: ixgbe_82598.c,v 1.7 2016/12/01 06:56:28 msaitoh Exp $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_82598.h"
@@ -261,6 +261,8 @@ s32 ixgbe_start_hw_82598(struct ixgbe_hw *hw)
 	DEBUGFUNC("ixgbe_start_hw_82598");
 
 	ret_val = ixgbe_start_hw_generic(hw);
+	if (ret_val)
+		return ret_val;
 
 	/* Disable relaxed ordering */
 	for (i = 0; ((i < hw->mac.max_tx_queues) &&
@@ -279,8 +281,7 @@ s32 ixgbe_start_hw_82598(struct ixgbe_hw *hw)
 	}
 
 	/* set the completion timeout for interface */
-	if (ret_val == IXGBE_SUCCESS)
-		ixgbe_set_pcie_completion_timeout(hw);
+	ixgbe_set_pcie_completion_timeout(hw);
 
 	return ret_val;
 }
