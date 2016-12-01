@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2014, Intel Corporation 
+  Copyright (c) 2001-2015, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 280182 2015-03-17 18:32:28Z jfv $*/
-/*$NetBSD: ixgbe_82599.c,v 1.12 2016/12/01 06:27:18 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 282289 2015-04-30 22:53:27Z erj $*/
+/*$NetBSD: ixgbe_82599.c,v 1.13 2016/12/01 06:56:28 msaitoh Exp $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"
@@ -422,6 +422,8 @@ s32 ixgbe_get_link_capabilities_82599(struct ixgbe_hw *hw,
 	/* Check if 1G SFP module. */
 	if (hw->phy.sfp_type == ixgbe_sfp_type_1g_cu_core0 ||
 	    hw->phy.sfp_type == ixgbe_sfp_type_1g_cu_core1 ||
+	    hw->phy.sfp_type == ixgbe_sfp_type_1g_lx_core0 ||
+	    hw->phy.sfp_type == ixgbe_sfp_type_1g_lx_core1 ||
 	    hw->phy.sfp_type == ixgbe_sfp_type_1g_sx_core0 ||
 	    hw->phy.sfp_type == ixgbe_sfp_type_1g_sx_core1) {
 		*speed = IXGBE_LINK_SPEED_1GB_FULL;
@@ -1804,7 +1806,6 @@ s32 ixgbe_fdir_set_input_mask_82599(struct ixgbe_hw *hw,
 		switch (hw->mac.type) {
 		case ixgbe_mac_X550:
 		case ixgbe_mac_X550EM_x:
-		case ixgbe_mac_X550EM_a:
 			IXGBE_WRITE_REG(hw, IXGBE_FDIRSCTPM, ~fdirtcpm);
 			break;
 		default:
@@ -2465,7 +2466,6 @@ reset_pipeline_out:
 
 	return ret_val;
 }
-
 
 /**
  *  ixgbe_read_i2c_byte_82599 - Reads 8 bit word over I2C

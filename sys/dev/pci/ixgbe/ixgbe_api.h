@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2014, Intel Corporation 
+  Copyright (c) 2001-2015, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.h 280182 2015-03-17 18:32:28Z jfv $*/
-/*$NetBSD: ixgbe_api.h,v 1.7 2016/12/01 06:27:18 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.h 282289 2015-04-30 22:53:27Z erj $*/
+/*$NetBSD: ixgbe_api.h,v 1.8 2016/12/01 06:56:28 msaitoh Exp $*/
 
 #ifndef _IXGBE_API_H_
 #define _IXGBE_API_H_
@@ -174,10 +174,18 @@ u32 ixgbe_atr_compute_sig_hash_82599(union ixgbe_atr_hash_dword input,
 bool ixgbe_verify_lesm_fw_enabled_82599(struct ixgbe_hw *hw);
 s32 ixgbe_read_i2c_byte(struct ixgbe_hw *hw, u8 byte_offset, u8 dev_addr,
 			u8 *data);
+s32 ixgbe_read_i2c_byte_unlocked(struct ixgbe_hw *hw, u8 byte_offset,
+				 u8 dev_addr, u8 *data);
 s32 ixgbe_read_i2c_combined(struct ixgbe_hw *hw, u8 addr, u16 reg, u16 *val);
+s32 ixgbe_read_i2c_combined_unlocked(struct ixgbe_hw *hw, u8 addr, u16 reg,
+				     u16 *val);
 s32 ixgbe_write_i2c_byte(struct ixgbe_hw *hw, u8 byte_offset, u8 dev_addr,
 			 u8 data);
+s32 ixgbe_write_i2c_byte_unlocked(struct ixgbe_hw *hw, u8 byte_offset,
+				  u8 dev_addr, u8 data);
 s32 ixgbe_write_i2c_combined(struct ixgbe_hw *hw, u8 addr, u16 reg, u16 val);
+s32 ixgbe_write_i2c_combined_unlocked(struct ixgbe_hw *hw, u8 addr, u16 reg,
+				      u16 val);
 s32 ixgbe_write_i2c_eeprom(struct ixgbe_hw *hw, u8 byte_offset, u8 eeprom_data);
 s32 ixgbe_get_san_mac_addr(struct ixgbe_hw *hw, u8 *san_mac_addr);
 s32 ixgbe_set_san_mac_addr(struct ixgbe_hw *hw, u8 *san_mac_addr);
@@ -204,6 +212,7 @@ void ixgbe_enable_mdd(struct ixgbe_hw *hw);
 void ixgbe_mdd_event(struct ixgbe_hw *hw, u32 *vf_bitmap);
 void ixgbe_restore_mdd_vf(struct ixgbe_hw *hw, u32 vf);
 s32 ixgbe_enter_lplu(struct ixgbe_hw *hw);
+s32 ixgbe_handle_lasi(struct ixgbe_hw *hw);
 void ixgbe_set_rate_select_speed(struct ixgbe_hw *hw, ixgbe_link_speed speed);
 void ixgbe_disable_rx(struct ixgbe_hw *hw);
 void ixgbe_enable_rx(struct ixgbe_hw *hw);
