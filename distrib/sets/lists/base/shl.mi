@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.791 2016/11/26 03:17:58 ozaki-r Exp $
+# $NetBSD: shl.mi,v 1.792 2016/12/02 02:30:47 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -25,9 +25,9 @@
 ./lib/libcrypto.so				base-crypto-shlib	dynamicroot,crypto
 ./lib/libcrypto.so.12				base-crypto-shlib	dynamicroot,crypto
 ./lib/libcrypto.so.12.0				base-crypto-shlib	dynamicroot,crypto
-./lib/libdevmapper.so				base-lvm-shlib		dynamicroot
-./lib/libdevmapper.so.1				base-lvm-shlib		dynamicroot
-./lib/libdevmapper.so.1.0			base-lvm-shlib		dynamicroot
+./lib/libdevmapper.so				base-lvm-shlib		dynamicroot,lvm
+./lib/libdevmapper.so.1				base-lvm-shlib		dynamicroot,lvm
+./lib/libdevmapper.so.1.0			base-lvm-shlib		dynamicroot,lvm
 ./lib/libdm.so					base-sys-shlib		dynamicroot
 ./lib/libdm.so.0				base-sys-shlib		dynamicroot
 ./lib/libdm.so.0.0				base-sys-shlib		dynamicroot
@@ -55,9 +55,9 @@
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
 ./lib/libm.so.0.11				base-sys-shlib		dynamicroot
-./lib/libnpf.so					base-npf-shlib		dynamicroot
-./lib/libnpf.so.0				base-npf-shlib		dynamicroot
-./lib/libnpf.so.0.0				base-npf-shlib		dynamicroot
+./lib/libnpf.so					base-npf-shlib		dynamicroot,npf
+./lib/libnpf.so.0				base-npf-shlib		dynamicroot,npf
+./lib/libnpf.so.0.0				base-npf-shlib		dynamicroot,npf
 ./lib/libpcap.so				base-sys-shlib		dynamicroot
 ./lib/libpcap.so.5				base-sys-shlib		dynamicroot
 ./lib/libpcap.so.5.1				base-sys-shlib		dynamicroot
