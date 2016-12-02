@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.704 2016/12/01 20:23:11 kamil Exp $
+# $NetBSD: mi,v 1.705 2016/12/02 00:50:09 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2131,12 +2131,12 @@
 ./usr/tests/kernel/t_posix_fallocate		tests-obsolete		obsolete
 ./usr/tests/kernel/t_ps_strings			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_ptrace			tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_amd64_wait		tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_amd64_wait3		tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_amd64_wait4		tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_amd64_wait6		tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_amd64_waitid	tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_amd64_waitpid	tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/t_ptrace_amd64_wait		tests-kernel-tests	compattestfile,atf,machine=amd64
+./usr/tests/kernel/t_ptrace_amd64_wait3		tests-kernel-tests	compattestfile,atf,machine=amd64
+./usr/tests/kernel/t_ptrace_amd64_wait4		tests-kernel-tests	compattestfile,atf,machine=amd64
+./usr/tests/kernel/t_ptrace_amd64_wait6		tests-kernel-tests	compattestfile,atf,machine=amd64
+./usr/tests/kernel/t_ptrace_amd64_waitid	tests-kernel-tests	compattestfile,atf,machine=amd64
+./usr/tests/kernel/t_ptrace_amd64_waitpid	tests-kernel-tests	compattestfile,atf,machine=amd64
 ./usr/tests/kernel/t_ptrace_wait		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_ptrace_wait3		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_ptrace_wait4		tests-kernel-tests	compattestfile,atf
