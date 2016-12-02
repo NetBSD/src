@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.28 2016/11/28 08:21:10 rin Exp $	*/
+/*	$NetBSD: ps.h,v 1.29 2016/12/02 21:59:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,6 +55,14 @@ typedef struct varent {
 	struct var *var;
 } VARENT;
 
+struct pinfo {
+	struct kinfo_proc2 *ki;
+	struct kinfo_lwp *li;
+	char *prefix;
+	int level;
+	double pcpu;
+};
+
 typedef struct var {
 	const char *name;	/* name(s) of variable */
 	const char *header;	/* header, possibly changed from default */
@@ -67,7 +75,7 @@ typedef struct var {
 #define	ALIAS	0x40		/* entry is alias for 'header' */
 	u_int	flag;
 				/* output routine */
-	void	(*oproc)(void *, struct varent *, enum mode);
+	void	(*oproc)(struct pinfo *pi, struct varent *, enum mode);
 	/*
 	 * The following (optional) elements are hooks for passing information
 	 * to the generic output routine: pvar (that which prints simple
@@ -86,18 +94,11 @@ typedef struct var {
 	double	longestnd;	/* longest negative double */
 } VAR;
 
-struct pinfo {
-	struct kinfo_proc2 *ki;
-	double pcpu;
-};
 
-#define	OUTPUT(vent, kl, pi, ki, mode) do {				\
-	if ((vent)->var->flag & LWP)					\
-		((vent)->var->oproc)((void *)(kl), (vent), (mode));	\
-	else if ((vent)->var->type == PCPU)				\
-		((vent)->var->oproc)((void *)(pi), (vent), (mode));	\
-	else								\
-		((vent)->var->oproc)((void *)(ki), (vent), (mode));	\
+#define	OUTPUT(vent, kl, pi, ki, mode) do {		\
+	if ((vent)->var->flag & LWP)			\
+	    pi->li = kl;				\
+	((vent)->var->oproc)(pi, (vent), (mode));	\
 	} while (/*CONSTCOND*/ 0)
 
 #include "extern.h"
