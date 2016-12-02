@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_amd64_waitid.c,v 1.1 2016/12/01 20:11:17 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_waitid.c,v 1.1 2016/12/02 05:54:15 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,4 +27,4 @@
  */
 
 #define TWAIT_WAITID
-#include "t_ptrace_amd64_wait.c"
+#include "t_ptrace_wait.c"
