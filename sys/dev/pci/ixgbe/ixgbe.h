@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ixgbe.h,v 1.16 2016/12/02 10:42:04 msaitoh Exp $*/
+/*$NetBSD: ixgbe.h,v 1.17 2016/12/02 10:46:58 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -677,7 +677,7 @@ struct adapter {
 	"\t0x1 - advertise 100M\n" \
 	"\t0x2 - advertise 1G\n" \
 	"\t0x4 - advertise 10G\n\n" \
-	"\t100M is only supported on certain 10GBaseT adapters.\n"
+	"\t100M is only supported on certain 10GBaseT adapters."
 
 #define IXGBE_SYSCTL_DESC_SET_FC \
 	"\nSet flow control mode using these values:\n" \
