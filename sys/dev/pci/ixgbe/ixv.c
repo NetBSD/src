@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 282289 2015-04-30 22:53:27Z erj $*/
-/*$NetBSD: ixv.c,v 1.22 2016/12/01 06:56:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 283881 2015-06-01 17:15:25Z jfv $*/
+/*$NetBSD: ixv.c,v 1.23 2016/12/02 10:21:43 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -42,7 +42,7 @@
 /*********************************************************************
  *  Driver version
  *********************************************************************/
-char ixv_driver_version[] = "1.2.5";
+char ixv_driver_version[] = "1.4.0";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -168,6 +168,11 @@ MODULE_DEPEND(ixv, ether, 1, 1, 1);
 ** TUNEABLE PARAMETERS:
 */
 
+/* Number of Queues - do not exceed MSIX vectors - 1 */
+static int ixv_num_queues = 1;
+#define	TUNABLE_INT(__x, __y)
+TUNABLE_INT("hw.ixv.num_queues", &ixv_num_queues);
+
 /*
 ** AIM: Adaptive Interrupt Moderation
 ** which means that the interrupt rate
@@ -175,7 +180,6 @@ MODULE_DEPEND(ixv, ether, 1, 1, 1);
 ** traffic for that interrupt vector
 */
 static int ixv_enable_aim = FALSE;
-#define	TUNABLE_INT(__x, __y)
 TUNABLE_INT("hw.ixv.enable_aim", &ixv_enable_aim);
 
 /* How many packets rxeof tries to clean at a time */
@@ -378,6 +382,11 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	ixgbe_init_mbx_params_vf(hw);
 
 	ixgbe_reset_hw(hw);
+
+	/* Get the Mailbox API version */
+	device_printf(dev,"MBX API %d negotiation: %d\n",
+	    ixgbe_mbox_api_11,
+	    ixgbevf_negotiate_api_version(hw, ixgbe_mbox_api_11));
 
 	error = ixgbe_init_hw(hw);
 	if (error) {
@@ -1457,7 +1466,9 @@ map_err:
 		return ENXIO;
 	}
 
-	adapter->num_queues = 1;
+	/* Pick up the tuneable queues */
+	adapter->num_queues = ixv_num_queues;
+
 	adapter->hw.back = &adapter->osdep;
 
 	/*
@@ -1675,35 +1686,43 @@ ixv_initialize_transmit_units(struct adapter *adapter)
 static void
 ixv_initialize_receive_units(struct adapter *adapter)
 {
-	int i;
 	struct	rx_ring	*rxr = adapter->rx_rings;
 	struct ixgbe_hw	*hw = &adapter->hw;
-	struct ifnet   *ifp = adapter->ifp;
-	u32		bufsz, fctrl, rxcsum, hlreg;
+	struct ifnet	*ifp = adapter->ifp;
+	u32		bufsz, rxcsum, psrtype;
+	int		max_frame;
 
-
-	/* Enable broadcasts */
-	fctrl = IXGBE_READ_REG(hw, IXGBE_FCTRL);
-	fctrl |= IXGBE_FCTRL_BAM;
-	fctrl |= IXGBE_FCTRL_DPF;
-	fctrl |= IXGBE_FCTRL_PMCF;
-	IXGBE_WRITE_REG(hw, IXGBE_FCTRL, fctrl);
-
-	/* Set for Jumbo Frames? */
-	hlreg = IXGBE_READ_REG(hw, IXGBE_HLREG0);
-	if (ifp->if_mtu > ETHERMTU) {
-		hlreg |= IXGBE_HLREG0_JUMBOEN;
+	if (ifp->if_mtu > ETHERMTU)
 		bufsz = 4096 >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
-	} else {
-		hlreg &= ~IXGBE_HLREG0_JUMBOEN;
+	else
 		bufsz = 2048 >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
-	}
-	IXGBE_WRITE_REG(hw, IXGBE_HLREG0, hlreg);
 
-	for (i = 0; i < adapter->num_queues; i++, rxr++) {
+	psrtype = IXGBE_PSRTYPE_TCPHDR | IXGBE_PSRTYPE_UDPHDR |
+	    IXGBE_PSRTYPE_IPV4HDR | IXGBE_PSRTYPE_IPV6HDR |
+	    IXGBE_PSRTYPE_L2HDR;
+
+	IXGBE_WRITE_REG(hw, IXGBE_VFPSRTYPE, psrtype);
+
+	/* Tell PF our expected packet-size */
+	max_frame = ifp->if_mtu + IXGBE_MTU_HDR;
+	ixgbevf_rlpml_set_vf(hw, max_frame);
+
+	for (int i = 0; i < adapter->num_queues; i++, rxr++) {
 		u64 rdba = rxr->rxdma.dma_paddr;
 		u32 reg, rxdctl;
 
+		/* Disable the queue */
+		rxdctl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(i));
+		rxdctl &= ~(IXGBE_RXDCTL_ENABLE | IXGBE_RXDCTL_VME);
+		IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(i), rxdctl);
+		for (int j = 0; j < 10; j++) {
+			if (IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(i)) &
+			    IXGBE_RXDCTL_ENABLE)
+				msec_delay(1);
+			else
+				break;
+		}
+		wmb();
 		/* Setup the Base and Length of the Rx Descriptor Ring */
 		IXGBE_WRITE_REG(hw, IXGBE_VFRDBAL(i),
 		    (rdba & 0x00000000ffffffffULL));
@@ -1711,6 +1730,10 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		    (rdba >> 32));
 		IXGBE_WRITE_REG(hw, IXGBE_VFRDLEN(i),
 		    adapter->num_rx_desc * sizeof(union ixgbe_adv_rx_desc));
+
+		/* Reset the ring indices */
+		IXGBE_WRITE_REG(hw, IXGBE_VFRDH(rxr->me), 0);
+		IXGBE_WRITE_REG(hw, IXGBE_VFRDT(rxr->me), 0);
 
 		/* Set up the SRRCTL register */
 		reg = IXGBE_READ_REG(hw, IXGBE_VFSRRCTL(i));
@@ -1720,14 +1743,14 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		reg |= IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF;
 		IXGBE_WRITE_REG(hw, IXGBE_VFSRRCTL(i), reg);
 
-		/* Setup the HW Rx Head and Tail Descriptor Pointers */
-		IXGBE_WRITE_REG(hw, IXGBE_VFRDH(rxr->me), 0);
+		/* Set the Tail Pointer */
 		IXGBE_WRITE_REG(hw, IXGBE_VFRDT(rxr->me),
 		    adapter->num_rx_desc - 1);
+
 		/* Set the processing limit */
 		rxr->process_limit = ixv_rx_process_limit;
 
-		/* Set Rx Tail register */
+		/* Capture Rx Tail index */
 		rxr->tail = IXGBE_VFRDT(rxr->me);
 
 		/* Do the queue enabling last */
@@ -2092,10 +2115,6 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 	    xname, "Discarded RX packets");
 	evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC, NULL,
 	    xname, "TX Packets");
-#if 0
-	evcnt_attach_dynamic(&txr->bytes, EVCNT_TYPE_MISC, NULL,
-	    xname, "TX Bytes");
-#endif
 	evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC, NULL,
 	    xname, "# of times not enough descriptors were available during TX");
 	evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC, NULL,
