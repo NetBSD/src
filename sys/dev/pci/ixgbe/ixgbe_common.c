@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 282289 2015-04-30 22:53:27Z erj $*/
-/*$NetBSD: ixgbe_common.c,v 1.9 2016/12/01 06:56:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 292674 2015-12-23 22:45:17Z sbruno $*/
+/*$NetBSD: ixgbe_common.c,v 1.10 2016/12/02 10:42:04 msaitoh Exp $*/
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -71,7 +71,7 @@ s32 ixgbe_init_ops_generic(struct ixgbe_hw *hw)
 {
 	struct ixgbe_eeprom_info *eeprom = &hw->eeprom;
 	struct ixgbe_mac_info *mac = &hw->mac;
-	u32 eec = IXGBE_READ_REG(hw, IXGBE_EEC);
+	u32 eec = IXGBE_READ_REG(hw, IXGBE_EEC_BY_MAC(hw));
 
 	DEBUGFUNC("ixgbe_init_ops_generic");
 
@@ -189,6 +189,7 @@ bool ixgbe_device_supports_autoneg_fc(struct ixgbe_hw *hw)
 		case IXGBE_DEV_ID_X540T1:
 		case IXGBE_DEV_ID_X540_BYPASS:
 		case IXGBE_DEV_ID_X550T:
+		case IXGBE_DEV_ID_X550T1:
 		case IXGBE_DEV_ID_X550EM_X_10G_T:
 			supported = TRUE;
 			break;
@@ -1039,7 +1040,7 @@ void ixgbe_set_lan_id_multi_port_pcie(struct ixgbe_hw *hw)
 	bus->lan_id = bus->func;
 
 	/* check for a port swap */
-	reg = IXGBE_READ_REG(hw, IXGBE_FACTPS);
+	reg = IXGBE_READ_REG(hw, IXGBE_FACTPS_BY_MAC(hw));
 	if (reg & IXGBE_FACTPS_LFS)
 		bus->func ^= 0x1;
 }
@@ -1165,7 +1166,7 @@ s32 ixgbe_init_eeprom_params_generic(struct ixgbe_hw *hw)
 		 * Check for EEPROM present first.
 		 * If not present leave as none
 		 */
-		eec = IXGBE_READ_REG(hw, IXGBE_EEC);
+		eec = IXGBE_READ_REG(hw, IXGBE_EEC_BY_MAC(hw));
 		if (eec & IXGBE_EEC_PRES) {
 			eeprom->type = ixgbe_eeprom_spi;
 
@@ -1726,14 +1727,14 @@ static s32 ixgbe_acquire_eeprom(struct ixgbe_hw *hw)
 		status = IXGBE_ERR_SWFW_SYNC;
 
 	if (status == IXGBE_SUCCESS) {
-		eec = IXGBE_READ_REG(hw, IXGBE_EEC);
+		eec = IXGBE_READ_REG(hw, IXGBE_EEC_BY_MAC(hw));
 
 		/* Request EEPROM Access */
 		eec |= IXGBE_EEC_REQ;
-		IXGBE_WRITE_REG(hw, IXGBE_EEC, eec);
+		IXGBE_WRITE_REG(hw, IXGBE_EEC_BY_MAC(hw), eec);
 
 		for (i = 0; i < IXGBE_EEPROM_GRANT_ATTEMPTS; i++) {
-			eec = IXGBE_READ_REG(hw, IXGBE_EEC);
+			eec = IXGBE_READ_REG(hw, IXGBE_EEC_BY_MAC(hw));
 			if (eec & IXGBE_EEC_GNT)
 				break;
 			usec_delay(5);
@@ -1742,7 +1743,7 @@ static s32 ixgbe_acquire_eeprom(struct ixgbe_hw *hw)
 		/* Release if grant not acquired */
 		if (!(eec & IXGBE_EEC_GNT)) {
 			eec &= ~IXGBE_EEC_REQ;
-			IXGBE_WRITE_REG(hw, IXGBE_EEC, eec);
+			IXGBE_WRITE_REG(hw, IXGBE_EEC_BY_MAC(hw), eec);
 			DEBUGOUT("Could not acquire EEPROM grant\n");
 
 			hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
@@ -1753,7 +1754,7 @@ static s32 ixgbe_acquire_eeprom(struct ixgbe_hw *hw)
 		if (status == IXGBE_SUCCESS) {
 			/* Clear CS and SK */
 			eec &= ~(IXGBE_EEC_CS | IXGBE_EEC_SK);
-			IXGBE_WRITE_REG(hw, IXGBE_EEC, eec);
+			IXGBE_WRITE_REG(hw, IXGBE_EEC_BY_MAC(hw), eec);
 			IXGBE_WRITE_FLUSH(hw);
 			usec_delay(1);
 		}
@@ -1783,7 +1784,7 @@ static s32 ixgbe_get_eeprom_semaphore(struct ixgbe_hw *hw)
 		 * If the SMBI bit is 0 when we read it, then the bit will be
 		 * set and we have the semaphore
 		 */
-		swsm = IXGBE_READ_REG(hw, IXGBE_SWSM);
+		swsm = IXGBE_READ_REG(hw, IXGBE_SWSM_BY_MAC(hw));
 		if (!(swsm & IXGBE_SWSM_SMBI)) {
 			status = IXGBE_SUCCESS;
 			break;
@@ -1808,7 +1809,7 @@ static s32 ixgbe_get_eeprom_semaphore(struct ixgbe_hw *hw)
 		 * If the SMBI bit is 0 when we read it, then the bit will be
 		 * set and we have the semaphore
 		 */
-		swsm = IXGBE_READ_REG(hw, IXGBE_SWSM);
+		swsm = IXGBE_READ_REG(hw, IXGBE_SWSM_BY_MAC(hw));
 		if (!(swsm & IXGBE_SWSM_SMBI))
 			status = IXGBE_SUCCESS;
 	}
@@ -1816,17 +1817,17 @@ static s32 ixgbe_get_eeprom_semaphore(struct ixgbe_hw *hw)
 	/* Now get the semaphore between SW/FW through the SWESMBI bit */
 	if (status == IXGBE_SUCCESS) {
 		for (i = 0; i < timeout; i++) {
-			swsm = IXGBE_READ_REG(hw, IXGBE_SWSM);
+			swsm = IXGBE_READ_REG(hw, IXGBE_SWSM_BY_MAC(hw));
 
 			/* Set the SW EEPROM semaphore bit to request access */
 			swsm |= IXGBE_SWSM_SWESMBI;
-			IXGBE_WRITE_REG(hw, IXGBE_SWSM, swsm);
+			IXGBE_WRITE_REG(hw, IXGBE_SWSM_BY_MAC(hw), swsm);
 
 			/*
 			 * If we set the bit successfully then we got the
 			 * semaphore.
 			 */
-			swsm = IXGBE_READ_REG(hw, IXGBE_SWSM);
+			swsm = IXGBE_READ_REG(hw, IXGBE_SWSM_BY_MAC(hw));
 			if (swsm & IXGBE_SWSM_SWESMBI)
 				break;
 
@@ -1923,15 +1924,15 @@ static void ixgbe_standby_eeprom(struct ixgbe_hw *hw)
 
 	DEBUGFUNC("ixgbe_standby_eeprom");
 
-	eec = IXGBE_READ_REG(hw, IXGBE_EEC);
+	eec = IXGBE_READ_REG(hw, IXGBE_EEC_BY_MAC(hw));
 
 	/* Toggle CS to flush commands */
 	eec |= IXGBE_EEC_CS;
-	IXGBE_WRITE_REG(hw, IXGBE_EEC, eec);
+	IXGBE_WRITE_REG(hw, IXGBE_EEC_BY_MAC(hw), eec);
 	IXGBE_WRITE_FLUSH(hw);
 	usec_delay(1);
 	eec &= ~IXGBE_EEC_CS;
-	IXGBE_WRITE_REG(hw, IXGBE_EEC, eec);
+	IXGBE_WRITE_REG(hw, IXGBE_EEC_BY_MAC(hw), eec);
 	IXGBE_WRITE_FLUSH(hw);
 	usec_delay(1);
 }
@@ -1951,7 +1952,7 @@ static void ixgbe_shift_out_eeprom_bits(struct ixgbe_hw *hw, u16 data,
 
 	DEBUGFUNC("ixgbe_shift_out_eeprom_bits");
 
-	eec = IXGBE_READ_REG(hw, IXGBE_EEC);
+	eec = IXGBE_READ_REG(hw, IXGBE_EEC_BY_MAC(hw));
 
 	/*
 	 * Mask is used to shift "count" bits of "data" out to the EEPROM
@@ -1972,7 +1973,7 @@ static void ixgbe_shift_out_eeprom_bits(struct ixgbe_hw *hw, u16 data,
 		else
 			eec &= ~IXGBE_EEC_DI;
 
-		IXGBE_WRITE_REG(hw, IXGBE_EEC, eec);
+		IXGBE_WRITE_REG(hw, IXGBE_EEC_BY_MAC(hw), eec);
 		IXGBE_WRITE_FLUSH(hw);
 
 		usec_delay(1);
@@ -1989,7 +1990,7 @@ static void ixgbe_shift_out_eeprom_bits(struct ixgbe_hw *hw, u16 data,
 
 	/* We leave the "DI" bit set to "0" when we leave this routine. */
 	eec &= ~IXGBE_EEC_DI;
-	IXGBE_WRITE_REG(hw, IXGBE_EEC, eec);
+	IXGBE_WRITE_REG(hw, IXGBE_EEC_BY_MAC(hw), eec);
 	IXGBE_WRITE_FLUSH(hw);
 }
 
@@ -2012,7 +2013,7 @@ static u16 ixgbe_shift_in_eeprom_bits(struct ixgbe_hw *hw, u16 count)
 	 * the value of the "DO" bit.  During this "shifting in" process the
 	 * "DI" bit should always be clear.
 	 */
-	eec = IXGBE_READ_REG(hw, IXGBE_EEC);
+	eec = IXGBE_READ_REG(hw, IXGBE_EEC_BY_MAC(hw));
 
 	eec &= ~(IXGBE_EEC_DO | IXGBE_EEC_DI);
 
@@ -2020,7 +2021,7 @@ static u16 ixgbe_shift_in_eeprom_bits(struct ixgbe_hw *hw, u16 count)
 		data = data << 1;
 		ixgbe_raise_eeprom_clk(hw, &eec);
 
-		eec = IXGBE_READ_REG(hw, IXGBE_EEC);
+		eec = IXGBE_READ_REG(hw, IXGBE_EEC_BY_MAC(hw));
 
 		eec &= ~(IXGBE_EEC_DI);
 		if (eec & IXGBE_EEC_DO)
@@ -2046,7 +2047,7 @@ static void ixgbe_raise_eeprom_clk(struct ixgbe_hw *hw, u32 *eec)
 	 * (setting the SK bit), then delay
 	 */
 	*eec = *eec | IXGBE_EEC_SK;
-	IXGBE_WRITE_REG(hw, IXGBE_EEC, *eec);
+	IXGBE_WRITE_REG(hw, IXGBE_EEC_BY_MAC(hw), *eec);
 	IXGBE_WRITE_FLUSH(hw);
 	usec_delay(1);
 }
@@ -2065,7 +2066,7 @@ static void ixgbe_lower_eeprom_clk(struct ixgbe_hw *hw, u32 *eec)
 	 * delay
 	 */
 	*eec = *eec & ~IXGBE_EEC_SK;
-	IXGBE_WRITE_REG(hw, IXGBE_EEC, *eec);
+	IXGBE_WRITE_REG(hw, IXGBE_EEC_BY_MAC(hw), *eec);
 	IXGBE_WRITE_FLUSH(hw);
 	usec_delay(1);
 }
@@ -2080,19 +2081,19 @@ static void ixgbe_release_eeprom(struct ixgbe_hw *hw)
 
 	DEBUGFUNC("ixgbe_release_eeprom");
 
-	eec = IXGBE_READ_REG(hw, IXGBE_EEC);
+	eec = IXGBE_READ_REG(hw, IXGBE_EEC_BY_MAC(hw));
 
 	eec |= IXGBE_EEC_CS;  /* Pull CS high */
 	eec &= ~IXGBE_EEC_SK; /* Lower SCK */
 
-	IXGBE_WRITE_REG(hw, IXGBE_EEC, eec);
+	IXGBE_WRITE_REG(hw, IXGBE_EEC_BY_MAC(hw), eec);
 	IXGBE_WRITE_FLUSH(hw);
 
 	usec_delay(1);
 
 	/* Stop requesting EEPROM access */
 	eec &= ~IXGBE_EEC_REQ;
-	IXGBE_WRITE_REG(hw, IXGBE_EEC, eec);
+	IXGBE_WRITE_REG(hw, IXGBE_EEC_BY_MAC(hw), eec);
 
 	hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_EEP_SM);
 
@@ -3148,6 +3149,9 @@ s32 ixgbe_disable_pcie_master(struct ixgbe_hw *hw)
 	DEBUGOUT("GIO Master Disable bit didn't clear - requesting resets\n");
 	hw->mac.flags |= IXGBE_FLAGS_DOUBLE_RESET_REQUIRED;
 
+	if (hw->mac.type >= ixgbe_mac_X550)
+		goto out;
+
 	/*
 	 * Before proceeding, make sure that the PCIe block does not have
 	 * transactions pending.
@@ -4070,7 +4074,7 @@ s32 ixgbe_check_mac_link_generic(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 	}
 
 	if (link_up_wait_to_complete) {
-		for (i = 0; i < IXGBE_LINK_UP_TIME; i++) {
+		for (i = 0; i < hw->mac.max_link_up_time; i++) {
 			if (links_reg & IXGBE_LINKS_UP) {
 				*link_up = TRUE;
 				break;
@@ -4716,7 +4720,7 @@ bool ixgbe_mng_present(struct ixgbe_hw *hw)
 	if (hw->mac.type < ixgbe_mac_82599EB)
 		return FALSE;
 
-	fwsm = IXGBE_READ_REG(hw, IXGBE_FWSM);
+	fwsm = IXGBE_READ_REG(hw, IXGBE_FWSM_BY_MAC(hw));
 	fwsm &= IXGBE_FWSM_MODE_MASK;
 	return fwsm == IXGBE_FWSM_FW_MODE_PT;
 }
@@ -4731,7 +4735,7 @@ bool ixgbe_mng_enabled(struct ixgbe_hw *hw)
 {
 	u32 fwsm, manc, factps;
 
-	fwsm = IXGBE_READ_REG(hw, IXGBE_FWSM);
+	fwsm = IXGBE_READ_REG(hw, IXGBE_FWSM_BY_MAC(hw));
 	if ((fwsm & IXGBE_FWSM_MODE_MASK) != IXGBE_FWSM_FW_MODE_PT)
 		return FALSE;
 
@@ -4740,7 +4744,7 @@ bool ixgbe_mng_enabled(struct ixgbe_hw *hw)
 		return FALSE;
 
 	if (hw->mac.type <= ixgbe_mac_X540) {
-		factps = IXGBE_READ_REG(hw, IXGBE_FACTPS);
+		factps = IXGBE_READ_REG(hw, IXGBE_FACTPS_BY_MAC(hw));
 		if (factps & IXGBE_FACTPS_MNGCG)
 			return FALSE;
 	}

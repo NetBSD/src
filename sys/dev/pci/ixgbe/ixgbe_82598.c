@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82598.c 282289 2015-04-30 22:53:27Z erj $*/
-/*$NetBSD: ixgbe_82598.c,v 1.7 2016/12/01 06:56:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82598.c 292674 2015-12-23 22:45:17Z sbruno $*/
+/*$NetBSD: ixgbe_82598.c,v 1.8 2016/12/02 10:42:04 msaitoh Exp $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_82598.h"
@@ -661,7 +661,7 @@ static s32 ixgbe_check_mac_link_82598(struct ixgbe_hw *hw,
 		hw->phy.ops.read_reg(hw, 0xC00C, IXGBE_TWINAX_DEV,
 				     &adapt_comp_reg);
 		if (link_up_wait_to_complete) {
-			for (i = 0; i < IXGBE_LINK_UP_TIME; i++) {
+			for (i = 0; i < hw->mac.max_link_up_time; i++) {
 				if ((link_reg & 1) &&
 				    ((adapt_comp_reg & 1) == 0)) {
 					*link_up = TRUE;
@@ -690,7 +690,7 @@ static s32 ixgbe_check_mac_link_82598(struct ixgbe_hw *hw,
 
 	links_reg = IXGBE_READ_REG(hw, IXGBE_LINKS);
 	if (link_up_wait_to_complete) {
-		for (i = 0; i < IXGBE_LINK_UP_TIME; i++) {
+		for (i = 0; i < hw->mac.max_link_up_time; i++) {
 			if (links_reg & IXGBE_LINKS_UP) {
 				*link_up = TRUE;
 				break;

@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 282289 2015-04-30 22:53:27Z erj $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.13 2016/12/01 06:56:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 292674 2015-12-23 22:45:17Z sbruno $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.14 2016/12/02 10:42:04 msaitoh Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
@@ -162,7 +162,7 @@ void prefetch(void *x)
  * non-overlapping regions and 32-byte padding on both src and dst.
  */
 static __inline int
-ixgbe_bcopy(void *_src, void *_dst, int l)
+ixgbe_bcopy(void *restrict _src, void *restrict _dst, int l)
 {
 	uint64_t *src = _src;
 	uint64_t *dst = _dst;
@@ -185,15 +185,17 @@ struct ixgbe_osdep
 	bus_space_handle_t mem_bus_space_handle;
 	bus_size_t         mem_size;
 	bus_dma_tag_t      dmat;
-	device_t           dev;
 	pci_intr_handle_t  *intrs;
 	int		   nintrs;
 	void               *ihs[IXG_MAX_NINTR];
 	bool		   attached;
 };
 
-/* These routines are needed by the shared code */
+/* These routines need struct ixgbe_hw declared */
 struct ixgbe_hw; 
+device_t ixgbe_dev_from_hw(struct ixgbe_hw *hw);
+
+/* These routines are needed by the shared code */
 extern u16 ixgbe_read_pci_cfg(struct ixgbe_hw *, u32);
 #define IXGBE_READ_PCIE_WORD ixgbe_read_pci_cfg
 
@@ -202,26 +204,18 @@ extern void ixgbe_write_pci_cfg(struct ixgbe_hw *, u32, u16);
 
 #define IXGBE_WRITE_FLUSH(a) IXGBE_READ_REG(a, IXGBE_STATUS)
 
-#define IXGBE_READ_REG(a, reg) (\
-   bus_space_read_4( ((a)->back)->mem_bus_space_tag, \
-                     ((a)->back)->mem_bus_space_handle, \
-                     reg))
+extern u32 ixgbe_read_reg(struct ixgbe_hw *, u32);
+#define IXGBE_READ_REG(a, reg) ixgbe_read_reg(a, reg)
 
-#define IXGBE_WRITE_REG(a, reg, value) (\
-   bus_space_write_4( ((a)->back)->mem_bus_space_tag, \
-                     ((a)->back)->mem_bus_space_handle, \
-                     reg, value))
+extern void ixgbe_write_reg(struct ixgbe_hw *, u32, u32);
+#define IXGBE_WRITE_REG(a, reg, val) ixgbe_write_reg(a, reg, val)
 
+extern u32 ixgbe_read_reg_array(struct ixgbe_hw *, u32, u32);
+#define IXGBE_READ_REG_ARRAY(a, reg, offset) \
+    ixgbe_read_reg_array(a, reg, offset)
 
-#define IXGBE_READ_REG_ARRAY(a, reg, offset) (\
-   bus_space_read_4( ((a)->back)->mem_bus_space_tag, \
-                     ((a)->back)->mem_bus_space_handle, \
-                     (reg + ((offset) << 2))))
-
-#define IXGBE_WRITE_REG_ARRAY(a, reg, offset, value) (\
-      bus_space_write_4( ((a)->back)->mem_bus_space_tag, \
-                      ((a)->back)->mem_bus_space_handle, \
-                      (reg + ((offset) << 2)), value))
-
+extern void ixgbe_write_reg_array(struct ixgbe_hw *, u32, u32, u32);
+#define IXGBE_WRITE_REG_ARRAY(a, reg, offset, val) \
+    ixgbe_write_reg_array(a, reg, offset, val)
 
 #endif /* _IXGBE_OS_H_ */

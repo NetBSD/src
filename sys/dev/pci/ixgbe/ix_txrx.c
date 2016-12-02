@@ -58,8 +58,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 289238 2015-10-13 17:34:18Z sbruno $*/
-/*$NetBSD: ix_txrx.c,v 1.7 2016/12/02 10:34:23 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 292674 2015-12-23 22:45:17Z sbruno $*/
+/*$NetBSD: ix_txrx.c,v 1.8 2016/12/02 10:42:04 msaitoh Exp $*/
+
+#include "opt_inet.h"
+#include "opt_inet6.h"
 
 #include "ixgbe.h"
 
@@ -97,48 +100,6 @@ static bool ixgbe_rsc_enable = FALSE;
 */
 static int atr_sample_rate = 20;
 #endif
-
-/* Shared PCI config read/write */
-u16
-ixgbe_read_pci_cfg(struct ixgbe_hw *hw, u32 reg)
-{
-	switch (reg % 4) {
-	case 0:
-		return pci_conf_read(hw->back->pc, hw->back->tag, reg) &
-		    __BITS(15, 0);
-	case 2:
-		return __SHIFTOUT(pci_conf_read(hw->back->pc, hw->back->tag,
-		    reg - 2), __BITS(31, 16));
-	default:
-		panic("%s: invalid register (%" PRIx32, __func__, reg); 
-		break;
-	}
-}
-
-void
-ixgbe_write_pci_cfg(struct ixgbe_hw *hw, u32 reg, u16 value)
-{
-	pcireg_t old;
-
-	switch (reg % 4) {
-	case 0:
-		old = pci_conf_read(hw->back->pc, hw->back->tag, reg) &
-		    __BITS(31, 16);
-		pci_conf_write(hw->back->pc, hw->back->tag, reg, value | old);
-		break;
-	case 2:
-		old = pci_conf_read(hw->back->pc, hw->back->tag, reg - 2) &
-		    __BITS(15, 0);
-		pci_conf_write(hw->back->pc, hw->back->tag, reg - 2,
-		    __SHIFTIN(value, __BITS(31, 16)) | old);
-		break;
-	default:
-		panic("%s: invalid register (%" PRIx32, __func__, reg); 
-		break;
-	}
-
-	return;
-}
 
 /*********************************************************************
  *  Local Function prototypes
@@ -246,8 +207,8 @@ ixgbe_start(struct ifnet *ifp)
 #else /* ! IXGBE_LEGACY_TX */
 
 /*
-** Multiqueue Transmit driver
-**
+** Multiqueue Transmit Entry Point
+** (if_transmit function)
 */
 int
 ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
@@ -267,13 +228,22 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 	 * If everything is setup correctly, it should be the
 	 * same bucket that the current CPU we're on is.
 	 */
+#if __FreeBSD_version < 1100054
+	if (m->m_flags & M_FLOWID) {
+#else
 	if (M_HASHTYPE_GET(m) != M_HASHTYPE_NONE) {
+#endif
 #ifdef	RSS
 		if (rss_hash2bucket(m->m_pkthdr.flowid,
-		    M_HASHTYPE_GET(m), &bucket_id) == 0)
+		    M_HASHTYPE_GET(m), &bucket_id) == 0) {
 			/* TODO: spit out something if bucket_id > num_queues? */
 			i = bucket_id % adapter->num_queues;
-		else
+#ifdef IXGBE_DEBUG
+			if (bucket_id > adapter->num_queues)
+				if_printf(ifp, "bucket_id (%d) > num_queues "
+				    "(%d)\n", bucket_id, adapter->num_queues);
+#endif
+		} else
 #endif
 			i = m->m_pkthdr.flowid % adapter->num_queues;
 	} else
@@ -489,6 +459,7 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	}
 #endif
 
+	olinfo_status |= IXGBE_ADVTXD_CC;
 	i = txr->next_avail_desc;
 	for (j = 0; j < map->dm_nsegs; j++) {
 		bus_size_t seglen;
@@ -777,15 +748,21 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	struct m_tag *mtag;
 	struct ixgbe_adv_tx_context_desc *TXD;
 	struct ether_vlan_header *eh;
-	struct ip ip;
-	struct ip6_hdr ip6;
+#ifdef INET
+	struct ip *ip;
+#endif
+#ifdef INET6
+	struct ip6_hdr *ip6;
+#endif
 	u32 vlan_macip_lens = 0, type_tucmd_mlhl = 0;
 	int	ehdrlen, ip_hlen = 0;
 	u16	etype;
-	u8	ipproto __diagused = 0;
+	u8	ipproto = 0;
 	int	offload = TRUE;
 	int	ctxd = txr->next_avail_desc;
 	u16	vtag = 0;
+	char	*l3d;
+
 
 	/* First check if TSO is to be used */
 	if (mp->m_pkthdr.csum_flags & (M_CSUM_TSOv4|M_CSUM_TSOv6))
@@ -833,25 +810,29 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	if (offload == FALSE)
 		goto no_offloads;
 
+	/*
+	 * If the first mbuf only includes the ethernet header, jump to the next one
+	 * XXX: This assumes the stack splits mbufs containing headers on header boundaries
+	 * XXX: And assumes the entire IP header is contained in one mbuf
+	 */
+	if (mp->m_len == ehdrlen && mp->m_next)
+		l3d = mtod(mp->m_next, char *);
+	else
+		l3d = mtod(mp, char *) + ehdrlen;
+
 	switch (etype) {
 	case ETHERTYPE_IP:
-		m_copydata(mp, ehdrlen, sizeof(ip), &ip);
-		ip_hlen = ip.ip_hl << 2;
-		ipproto = ip.ip_p;
-#if 0
-		ip.ip_sum = 0;
-		m_copyback(mp, ehdrlen, sizeof(ip), &ip);
-#else
-		KASSERT((mp->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0 ||
-		    ip.ip_sum == 0);
-#endif
+		ip = (struct ip *)(l3d);
+		ip_hlen = ip->ip_hl << 2;
+		ipproto = ip->ip_p;
 		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
+		KASSERT((mp->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0 ||
+		    ip->ip_sum == 0);
 		break;
 	case ETHERTYPE_IPV6:
-		m_copydata(mp, ehdrlen, sizeof(ip6), &ip6);
-		ip_hlen = sizeof(ip6);
-		/* XXX-BZ this will go badly in case of ext hdrs. */
-		ipproto = ip6.ip6_nxt;
+		ip6 = (struct ip6_hdr *)(l3d);
+		ip_hlen = sizeof(struct ip6_hdr);
+		ipproto = ip6->ip6_nxt;
 		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
 		break;
 	default:
@@ -863,15 +844,25 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 
 	vlan_macip_lens |= ip_hlen;
 
-	if (mp->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_TCPv6)) {
-		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
-		*olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
-		KASSERT(ipproto == IPPROTO_TCP);
-	} else if (mp->m_pkthdr.csum_flags & (M_CSUM_UDPv4|M_CSUM_UDPv6)) {
-		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
-		*olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
-		KASSERT(ipproto == IPPROTO_UDP);
+	/* No support for offloads for non-L4 next headers */
+ 	switch (ipproto) {
+ 		case IPPROTO_TCP:
+			if (mp->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_TCPv6))
+
+				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
+			else
+				offload = false;
+			break;
+		case IPPROTO_UDP:
+			if (mp->m_pkthdr.csum_flags & (M_CSUM_UDPv4|M_CSUM_UDPv6))
+				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
+			else
+				offload = false;
+			break;
 	}
+
+	if (offload) /* Insert L4 checksum into data descriptors */
+		*olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
 
 no_offloads:
 	type_tucmd_mlhl |= IXGBE_ADVTXD_DCMD_DEXT | IXGBE_ADVTXD_DTYP_CTXT;
@@ -917,7 +908,6 @@ ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp,
 	struct ip *ip;
 #endif
 	struct tcphdr *th;
-
 
 	/*
 	 * Determine where frame payload starts.
@@ -1072,8 +1062,9 @@ ixgbe_txeof(struct tx_ring *txr)
 	work -= txr->num_desc; /* The distance to ring end */
         ixgbe_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
 	    BUS_DMASYNC_POSTREAD);
+
 	do {
-		union ixgbe_adv_tx_desc *eop= buf->eop;
+		union ixgbe_adv_tx_desc *eop = buf->eop;
 		if (eop == NULL) /* No work */
 			break;
 
@@ -1318,6 +1309,7 @@ ixgbe_setup_hw_rsc(struct rx_ring *rxr)
 
 	rxr->hw_rsc = TRUE;
 }
+
 /*********************************************************************
  *
  *  Refresh mbuf buffers for RX descriptor rings
@@ -1449,7 +1441,6 @@ fail:
 	return (error);
 }
 
-
 static void     
 ixgbe_free_receive_ring(struct rx_ring *rxr)
 { 
@@ -1469,7 +1460,6 @@ ixgbe_free_receive_ring(struct rx_ring *rxr)
 		}
 	}
 }
-
 
 /*********************************************************************
  *
@@ -1981,6 +1971,7 @@ ixgbe_rxeof(struct ix_queue *que)
 				ixgbe_rx_checksum(staterr, sendmp, ptype,
 				   &adapter->stats.pf);
 			}
+
 #if 0 /* FreeBSD */
                         /*
                          * In case of multiqueue, we have RXCSUM.PCSD bit set
@@ -2037,7 +2028,7 @@ ixgbe_rxeof(struct ix_queue *que)
                                 sendmp->m_pkthdr.flowid = que->msix;
 				M_HASHTYPE_SET(sendmp, M_HASHTYPE_OPAQUE);
 			}
-#endif /* FreeBSD_version */
+#endif
 		}
 next_desc:
 		ixgbe_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
@@ -2103,24 +2094,25 @@ ixgbe_rx_checksum(u32 staterr, struct mbuf * mp, u32 ptype,
 	u16	status = (u16) staterr;
 	u8	errors = (u8) (staterr >> 24);
 #if 0
-	bool	sctp = FALSE;
+	bool	sctp = false;
 
 	if ((ptype & IXGBE_RXDADV_PKTTYPE_ETQF) == 0 &&
 	    (ptype & IXGBE_RXDADV_PKTTYPE_SCTP) != 0)
-		sctp = TRUE;
+		sctp = true;
 #endif
 
+	/* IPv4 checksum */
 	if (status & IXGBE_RXD_STAT_IPCS) {
 		stats->ipcs.ev_count++;
 		if (!(errors & IXGBE_RXD_ERR_IPE)) {
 			/* IP Checksum Good */
 			mp->m_pkthdr.csum_flags = M_CSUM_IPv4;
-
 		} else {
 			stats->ipcs_bad.ev_count++;
 			mp->m_pkthdr.csum_flags = M_CSUM_IPv4|M_CSUM_IPv4_BAD;
 		}
 	}
+	/* TCP/UDP/SCTP checksum */
 	if (status & IXGBE_RXD_STAT_L4CS) {
 		stats->l4cs.ev_count++;
 		int type = M_CSUM_TCPv4|M_CSUM_TCPv6|M_CSUM_UDPv4|M_CSUM_UDPv6;
@@ -2131,7 +2123,6 @@ ixgbe_rx_checksum(u32 staterr, struct mbuf * mp, u32 ptype,
 			mp->m_pkthdr.csum_flags |= type | M_CSUM_TCP_UDP_BAD;
 		}
 	}
-	return;
 }
 
 
