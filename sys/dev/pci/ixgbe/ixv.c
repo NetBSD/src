@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 285590 2015-07-15 00:35:50Z pkelsey $*/
-/*$NetBSD: ixv.c,v 1.24 2016/12/02 10:24:31 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 289238 2015-10-13 17:34:18Z sbruno $*/
+/*$NetBSD: ixv.c,v 1.25 2016/12/02 10:34:23 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -121,6 +121,8 @@ static void	ixv_save_stats(struct adapter *);
 static void	ixv_init_stats(struct adapter *);
 static void	ixv_update_stats(struct adapter *);
 static void	ixv_add_stats_sysctls(struct adapter *);
+static void	ixv_set_sysctl_value(struct adapter *, const char *,
+		    const char *, int *, int);
 
 /* The MSI/X Interrupt handlers */
 static int	ixv_msix_que(void *);
@@ -132,6 +134,18 @@ static void	ixv_handle_mbx(void *);
 
 const struct sysctlnode *ixv_sysctl_instance(struct adapter *);
 static ixgbe_vendor_info_t *ixv_lookup(const struct pci_attach_args *);
+
+#ifdef DEV_NETMAP
+/*
+ * This is defined in <dev/netmap/ixgbe_netmap.h>, which is included by
+ * if_ix.c.
+ */
+extern void ixgbe_netmap_attach(struct adapter *adapter);
+
+#include <net/netmap.h>
+#include <sys/selinfo.h>
+#include <dev/netmap/netmap_kern.h>
+#endif /* DEV_NETMAP */
 
 /*********************************************************************
  *  FreeBSD Device Interface Entry Points
@@ -161,6 +175,9 @@ devclass_t ixv_devclass;
 DRIVER_MODULE(ixv, pci, ixv_driver, ixv_devclass, 0, 0);
 MODULE_DEPEND(ixv, pci, 1, 1, 1);
 MODULE_DEPEND(ixv, ether, 1, 1, 1);
+#ifdef DEV_NETMAP
+MODULE_DEPEND(ix, netmap, 1, 1, 1);
+#endif /* DEV_NETMAP */
 /* XXX depend on 'ix' ? */
 #endif
 
@@ -327,6 +344,11 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	aprint_normal(": %s, Version - %s\n",
 	    ixv_strings[ent->index], ixv_driver_version);
 
+#ifdef DEV_NETMAP
+	adapter->init_locked = ixv_init_locked;
+	adapter->stop_locked = ixv_stop;
+#endif
+
 	/* Core Lock Init*/
 	IXGBE_CORE_LOCK_INIT(adapter, device_xname(dev));
 
@@ -345,6 +367,15 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		error = ENXIO;
 		goto err_out;
 	}
+
+	/* Sysctls for limiting the amount of work done in the taskqueues */
+	ixv_set_sysctl_value(adapter, "rx_processing_limit",
+	    "max number of rx packets to process",
+	    &adapter->rx_process_limit, ixv_rx_process_limit);
+
+	ixv_set_sysctl_value(adapter, "tx_processing_limit",
+	    "max number of tx packets to process",
+	    &adapter->tx_process_limit, ixv_tx_process_limit);
 
 	/* Do descriptor calc and sanity checks */
 	if (((ixv_txd * sizeof(union ixgbe_adv_tx_desc)) % DBA_ALIGN) != 0 ||
@@ -426,6 +457,9 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	    ixv_unregister_vlan, adapter, EVENTHANDLER_PRI_FIRST);
 #endif
 
+#ifdef DEV_NETMAP
+	ixgbe_netmap_attach(adapter);
+#endif /* DEV_NETMAP */
 	INIT_DEBUGOUT("ixv_attach: end");
 	adapter->osdep.attached = true;
 	return;
@@ -495,6 +529,9 @@ ixv_detach(device_t dev, int flags)
 
 	ether_ifdetach(adapter->ifp);
 	callout_halt(&adapter->timer, NULL);
+#ifdef DEV_NETMAP
+	netmap_detach(adapter->ifp);
+#endif /* DEV_NETMAP */
 	ixv_free_pci_resources(adapter);
 #if 0 /* XXX the NetBSD port is probably missing something here */
 	bus_generic_detach(dev);
@@ -1652,9 +1689,6 @@ ixv_initialize_transmit_units(struct adapter *adapter)
 		/* Set Tx Tail register */
 		txr->tail = IXGBE_VFTDT(i);
 
-		/* Set the processing limit */
-		txr->process_limit = ixv_tx_process_limit;
-
 		/* Set Ring parameters */
 		IXGBE_WRITE_REG(hw, IXGBE_VFTDBAL(i),
 		       (tdba & 0x00000000ffffffffULL));
@@ -1743,9 +1777,6 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		reg |= IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF;
 		IXGBE_WRITE_REG(hw, IXGBE_VFSRRCTL(i), reg);
 
-		/* Set the processing limit */
-		rxr->process_limit = ixv_rx_process_limit;
-
 		/* Capture Rx Tail index */
 		rxr->tail = IXGBE_VFRDT(rxr->me);
 
@@ -1763,8 +1794,33 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		wmb();
 
 		/* Set the Tail Pointer */
-		IXGBE_WRITE_REG(hw, IXGBE_VFRDT(rxr->me),
-		    adapter->num_rx_desc - 1);
+#ifdef DEV_NETMAP
+		/*
+		 * In netmap mode, we must preserve the buffers made
+		 * available to userspace before the if_init()
+		 * (this is true by default on the TX side, because
+		 * init makes all buffers available to userspace).
+		 *
+		 * netmap_reset() and the device specific routines
+		 * (e.g. ixgbe_setup_receive_rings()) map these
+		 * buffers at the end of the NIC ring, so here we
+		 * must set the RDT (tail) register to make sure
+		 * they are not overwritten.
+		 *
+		 * In this driver the NIC ring starts at RDH = 0,
+		 * RDT points to the last slot available for reception (?),
+		 * so RDT = num_rx_desc - 1 means the whole ring is available.
+		 */
+		if (ifp->if_capenable & IFCAP_NETMAP) {
+			struct netmap_adapter *na = NA(adapter->ifp);
+			struct netmap_kring *kring = &na->rx_rings[i];
+			int t = na->num_rx_desc - 1 - nm_kr_rxspace(kring);
+
+			IXGBE_WRITE_REG(hw, IXGBE_VFRDT(rxr->me), t);
+		} else
+#endif /* DEV_NETMAP */
+			IXGBE_WRITE_REG(hw, IXGBE_VFRDT(rxr->me),
+			    adapter->num_rx_desc - 1);
 	}
 
 	rxcsum = IXGBE_READ_REG(hw, IXGBE_RXCSUM);
@@ -2119,6 +2175,26 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 	    xname, "# of times not enough descriptors were available during TX");
 	evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC, NULL,
 	    xname, "TX TSO");
+}
+
+static void
+ixv_set_sysctl_value(struct adapter *adapter, const char *name,
+	const char *description, int *limit, int value)
+{
+	device_t dev =  adapter->dev;
+	struct sysctllog **log;
+	const struct sysctlnode *rnode, *cnode;
+
+	log = &adapter->sysctllog;
+	if ((rnode = ixv_sysctl_instance(adapter)) == NULL) {
+		aprint_error_dev(dev, "could not create sysctl root\n");
+		return;
+	}
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE|CTLFLAG_IMMEDIATE, CTLTYPE_INT,
+	    name, SYSCTL_DESCR(description),
+	    NULL, value, limit, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
 }
 
 /**********************************************************************
