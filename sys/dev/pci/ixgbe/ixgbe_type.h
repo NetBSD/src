@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 282289 2015-04-30 22:53:27Z erj $*/
-/*$NetBSD: ixgbe_type.h,v 1.15 2016/12/01 06:56:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 292674 2015-12-23 22:45:17Z sbruno $*/
+/*$NetBSD: ixgbe_type.h,v 1.16 2016/12/02 10:42:04 msaitoh Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -145,6 +145,7 @@
 #define IXGBE_DEV_ID_X540_BYPASS		0x155C
 #define IXGBE_DEV_ID_X540T1			0x1560
 #define IXGBE_DEV_ID_X550T			0x1563
+#define IXGBE_DEV_ID_X550T1			0x15D1
 #define IXGBE_DEV_ID_X550EM_X_KX4		0x15AA
 #define IXGBE_DEV_ID_X550EM_X_KR		0x15AB
 #define IXGBE_DEV_ID_X550EM_X_SFP		0x15AC
@@ -1558,7 +1559,9 @@ struct ixgbe_dmac_config {
 #define TN1010_PHY_ID	0x00A19410
 #define TNX_FW_REV	0xB
 #define X540_PHY_ID	0x01540200
-#define X550_PHY_ID	0x01540220
+#define X550_PHY_ID1	0x01540220
+#define X550_PHY_ID2	0x01540223
+#define X550_PHY_ID3	0x01540221
 #define X557_PHY_ID	0x01540240
 #define AQ_FW_REV	0x20
 #define QT2022_PHY_ID	0x0043A400
@@ -1951,6 +1954,7 @@ enum {
  *	FIP  (0x8914):	 Filter 4
  *	LLDP (0x88CC):	 Filter 5
  *	LACP (0x8809):	 Filter 6
+ *	FC   (0x8808):	 Filter 7
  */
 #define IXGBE_ETQF_FILTER_EAPOL		0
 #define IXGBE_ETQF_FILTER_FCOE		2
@@ -1958,6 +1962,7 @@ enum {
 #define IXGBE_ETQF_FILTER_FIP		4
 #define IXGBE_ETQF_FILTER_LLDP		5
 #define IXGBE_ETQF_FILTER_LACP		6
+#define IXGBE_ETQF_FILTER_FC		7
 /* VLAN Control Bit Masks */
 #define IXGBE_VLNCTRL_VET		0x0000FFFF  /* bits 0-15 */
 #define IXGBE_VLNCTRL_CFI		0x10000000  /* bit 28 */
@@ -2817,7 +2822,9 @@ enum ixgbe_fdir_pballoc_type {
 #define IXGBE_FDIRCTRL_REPORT_STATUS		0x00000020
 #define IXGBE_FDIRCTRL_REPORT_STATUS_ALWAYS	0x00000080
 #define IXGBE_FDIRCTRL_DROP_Q_SHIFT		8
+#define IXGBE_FDIRCTRL_DROP_Q_MASK		0x00007F00
 #define IXGBE_FDIRCTRL_FLEX_SHIFT		16
+#define IXGBE_FDIRCTRL_DROP_NO_MATCH		0x00008000
 #define IXGBE_FDIRCTRL_FILTERMODE_SHIFT		21
 #define IXGBE_FDIRCTRL_FILTERMODE_MACVLAN	0x0001 /* bit 23:21, 001b */
 #define IXGBE_FDIRCTRL_FILTERMODE_CLOUD		0x0002 /* bit 23:21, 010b */
@@ -2921,6 +2928,11 @@ enum ixgbe_fdir_pballoc_type {
 #define FW_DISABLE_RXEN_CMD		0xDE
 #define FW_DISABLE_RXEN_LEN		0x1
 #define FW_PHY_MGMT_REQ_CMD		0x20
+#define FW_INT_PHY_REQ_CMD		0xB
+#define FW_INT_PHY_REQ_LEN		10
+#define FW_INT_PHY_REQ_READ		0
+#define FW_INT_PHY_REQ_WRITE		1
+
 /* Host Interface Command Structures */
 
 struct ixgbe_hic_hdr {
@@ -2987,6 +2999,21 @@ struct ixgbe_hic_disable_rxen {
 	u8  port_number;
 	u8  pad2;
 	u16 pad3;
+};
+
+struct ixgbe_hic_internal_phy_req {
+	struct ixgbe_hic_hdr hdr;
+	u8 port_number;
+	u8 command_type;
+	u16 address;
+	u16 rsv1;
+	u32 write_data;
+	u16 pad;
+};
+
+struct ixgbe_hic_internal_phy_resp {
+	struct ixgbe_hic_hdr hdr;
+	u32 read_data;
 };
 
 
@@ -3324,6 +3351,7 @@ union ixgbe_atr_hash_dword {
 	IXGBE_CAT(SRAMREL, m),		\
 	IXGBE_CAT(FACTPS, m),		\
 	IXGBE_CAT(SWSM, m),		\
+	IXGBE_CAT(SWFW_SYNC, m),	\
 	IXGBE_CAT(FWSM, m),		\
 	IXGBE_CAT(SDP0_GPIEN, m),	\
 	IXGBE_CAT(SDP1_GPIEN, m),	\
@@ -3814,6 +3842,7 @@ struct ixgbe_mac_info {
 	u8				flags;
 	struct ixgbe_dmac_config dmac_config;
 	bool set_lben;
+	u32  max_link_up_time;
 };
 
 struct ixgbe_phy_info {
@@ -3828,6 +3857,7 @@ struct ixgbe_phy_info {
 	u32 phy_semaphore_mask;
 	bool				reset_disable;
 	ixgbe_autoneg_advertised	autoneg_advertised;
+	ixgbe_link_speed speeds_supported;
 	enum ixgbe_smart_speed		smart_speed;
 	bool				smart_speed_active;
 	bool				multispeed_fiber;
@@ -3868,7 +3898,7 @@ struct ixgbe_mbx_info {
 };
 
 struct ixgbe_hw {
-	struct ixgbe_osdep		*back;
+	struct adapter *back;
 	struct ixgbe_mac_info		mac;
 	struct ixgbe_addr_filter_info	addr_ctrl;
 	struct ixgbe_fc_info		fc;
@@ -3939,15 +3969,15 @@ struct ixgbe_hw {
 #define IXGBE_FUSES0_300MHZ		(1 << 5)
 #define IXGBE_FUSES0_REV1		(1 << 6)
 
-#define IXGBE_KRM_PORT_CAR_GEN_CTRL(P)	((P == 0) ? (0x4010) : (0x8010))
-#define IXGBE_KRM_LINK_CTRL_1(P)	((P == 0) ? (0x420C) : (0x820C))
-#define IXGBE_KRM_AN_CNTL_1(P)		((P == 0) ? (0x422C) : (0x822C))
-#define IXGBE_KRM_DSP_TXFFE_STATE_4(P)	((P == 0) ? (0x4634) : (0x8634))
-#define IXGBE_KRM_DSP_TXFFE_STATE_5(P)	((P == 0) ? (0x4638) : (0x8638))
-#define IXGBE_KRM_RX_TRN_LINKUP_CTRL(P)	((P == 0) ? (0x4B00) : (0x8B00))
-#define IXGBE_KRM_PMD_DFX_BURNIN(P)	((P == 0) ? (0x4E00) : (0x8E00))
-#define IXGBE_KRM_TX_COEFF_CTRL_1(P)	((P == 0) ? (0x5520) : (0x9520))
-#define IXGBE_KRM_RX_ANA_CTL(P)		((P == 0) ? (0x5A00) : (0x9A00))
+#define IXGBE_KRM_PORT_CAR_GEN_CTRL(P)	((P) ? 0x8010 : 0x4010)
+#define IXGBE_KRM_LINK_CTRL_1(P)	((P) ? 0x820C : 0x420C)
+#define IXGBE_KRM_AN_CNTL_1(P)		((P) ? 0x822C : 0x422C)
+#define IXGBE_KRM_DSP_TXFFE_STATE_4(P)	((P) ? 0x8634 : 0x4634)
+#define IXGBE_KRM_DSP_TXFFE_STATE_5(P)	((P) ? 0x8638 : 0x4638)
+#define IXGBE_KRM_RX_TRN_LINKUP_CTRL(P)	((P) ? 0x8B00 : 0x4B00)
+#define IXGBE_KRM_PMD_DFX_BURNIN(P)	((P) ? 0x8E00 : 0x4E00)
+#define IXGBE_KRM_TX_COEFF_CTRL_1(P)	((P) ? 0x9520 : 0x5520)
+#define IXGBE_KRM_RX_ANA_CTL(P)		((P) ? 0x9A00 : 0x5A00)
 
 #define IXGBE_KRM_PORT_CAR_GEN_CTRL_NELB_32B		(1 << 9)
 #define IXGBE_KRM_PORT_CAR_GEN_CTRL_NELB_KRPCS		(1 << 11)
@@ -3981,15 +4011,6 @@ struct ixgbe_hw {
 #define IXGBE_KRM_TX_COEFF_CTRL_1_CZERO_EN		(1 << 3)
 #define IXGBE_KRM_TX_COEFF_CTRL_1_OVRRD_EN		(1 << 31)
 
-#define IXGBE_KX4_LINK_CNTL_1				0x4C
-#define IXGBE_KX4_LINK_CNTL_1_TETH_AN_CAP_KX		(1 << 16)
-#define IXGBE_KX4_LINK_CNTL_1_TETH_AN_CAP_KX4		(1 << 17)
-#define IXGBE_KX4_LINK_CNTL_1_TETH_EEE_CAP_KX		(1 << 24)
-#define IXGBE_KX4_LINK_CNTL_1_TETH_EEE_CAP_KX4		(1 << 25)
-#define IXGBE_KX4_LINK_CNTL_1_TETH_AN_ENABLE		(1 << 29)
-#define IXGBE_KX4_LINK_CNTL_1_TETH_FORCE_LINK_UP	(1 << 30)
-#define IXGBE_KX4_LINK_CNTL_1_TETH_AN_RESTART		(1 << 31)
-
 #define IXGBE_SB_IOSF_INDIRECT_CTRL	0x00011144
 #define IXGBE_SB_IOSF_INDIRECT_DATA	0x00011148
 
@@ -4006,8 +4027,6 @@ struct ixgbe_hw {
 #define IXGBE_SB_IOSF_CTRL_BUSY_SHIFT		31
 #define IXGBE_SB_IOSF_CTRL_BUSY		(1 << IXGBE_SB_IOSF_CTRL_BUSY_SHIFT)
 #define IXGBE_SB_IOSF_TARGET_KR_PHY	0
-#define IXGBE_SB_IOSF_TARGET_KX4_PHY	1
-#define IXGBE_SB_IOSF_TARGET_KX4_PCS	2
 
 #define IXGBE_NW_MNG_IF_SEL		0x00011178
 #define IXGBE_NW_MNG_IF_SEL_INT_PHY_MODE (1 << 24)
