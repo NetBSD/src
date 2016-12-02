@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.50 2016/12/02 11:56:55 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 294578 2016-01-22 17:03:32Z smh $*/
+/*$NetBSD: ixgbe.c,v 1.51 2016/12/02 12:14:37 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2033,10 +2033,16 @@ ixgbe_media_change(struct ifnet * ifp)
 
 	hw->mac.autotry_restart = TRUE;
 	hw->mac.ops.setup_link(hw, speed, TRUE);
-	adapter->advertise =
-		((speed & IXGBE_LINK_SPEED_10GB_FULL) << 2) |
-		((speed & IXGBE_LINK_SPEED_1GB_FULL) << 1) |
-		((speed & IXGBE_LINK_SPEED_100_FULL) << 0);
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
+		adapter->advertise = 0;
+	} else {
+		if ((speed & IXGBE_LINK_SPEED_10GB_FULL) != 0)
+			adapter->advertise |= 1 << 2;
+		if ((speed & IXGBE_LINK_SPEED_1GB_FULL) != 0)
+			adapter->advertise |= 1 << 1;
+		if ((speed & IXGBE_LINK_SPEED_100_FULL) != 0)
+			adapter->advertise |= 1 << 0;
+	}
 
 	return (0);
 
@@ -3066,18 +3072,8 @@ ixgbe_config_link(struct adapter *adapter)
 	sfp = ixgbe_is_sfp(hw);
 
 	if (sfp) { 
-		void *ip;
-
-		if (hw->phy.multispeed_fiber) {
-			hw->mac.ops.setup_sfp(hw);
-			ixgbe_enable_tx_laser(hw);
-			ip = adapter->msf_si;
-		} else {
-			ip = adapter->mod_si;
-		}
-
 		kpreempt_disable();
-		softint_schedule(ip);
+		softint_schedule(adapter->mod_si);
 		kpreempt_enable();
 	} else {
 		if (hw->mac.ops.check_link)
@@ -3885,23 +3881,66 @@ ixgbe_handle_mod(void *context)
 {
 	struct adapter  *adapter = context;
 	struct ixgbe_hw *hw = &adapter->hw;
+	enum ixgbe_phy_type orig_type = hw->phy.type;
 	device_t	dev = adapter->dev;
 	u32 err;
+
+	IXGBE_CORE_LOCK(adapter);
+
+	/* Check to see if the PHY type changed */
+	if (hw->phy.ops.identify) {
+		hw->phy.type = ixgbe_phy_unknown;
+		hw->phy.ops.identify(hw);
+	}
+
+	if (hw->phy.type != orig_type) {
+		device_printf(dev, "Detected phy_type %d\n", hw->phy.type);
+
+		if (hw->phy.type == ixgbe_phy_none) {
+			hw->phy.sfp_type = ixgbe_sfp_type_unknown;
+			goto out;
+		}
+
+		/* Try to do the initialization that was skipped before */
+		if (hw->phy.ops.init)
+			hw->phy.ops.init(hw);
+		if (hw->phy.ops.reset)
+			hw->phy.ops.reset(hw);
+	}
 
 	err = hw->phy.ops.identify_sfp(hw);
 	if (err == IXGBE_ERR_SFP_NOT_SUPPORTED) {
 		device_printf(dev,
 		    "Unsupported SFP+ module type was detected.\n");
-		return;
+		goto out;
 	}
 
 	err = hw->mac.ops.setup_sfp(hw);
 	if (err == IXGBE_ERR_SFP_NOT_SUPPORTED) {
 		device_printf(dev,
 		    "Setup failure - unsupported SFP+ module type.\n");
-		return;
+		goto out;
 	}
-	softint_schedule(adapter->msf_si);
+	if (hw->phy.multispeed_fiber)
+		softint_schedule(adapter->msf_si);
+out:
+	/* Update media type */
+	switch (hw->mac.ops.get_media_type(hw)) {
+		case ixgbe_media_type_fiber:
+			adapter->optics = IFM_10G_SR;
+			break;
+		case ixgbe_media_type_copper:
+			adapter->optics = IFM_10G_TWINAX;
+			break;
+		case ixgbe_media_type_cx4:
+			adapter->optics = IFM_10G_CX4;
+			break;
+		default:
+			adapter->optics = 0;
+			break;
+	}
+
+	IXGBE_CORE_UNLOCK(adapter);
 	return;
 }
 
@@ -3917,6 +3956,7 @@ ixgbe_handle_msf(void *context)
 	u32 autoneg;
 	bool negotiate;
 
+	IXGBE_CORE_LOCK(adapter);
 	/* get_supported_phy_layer will call hw->phy.ops.identify_sfp() */
 	adapter->phy_layer = ixgbe_get_supported_physical_layer(hw);
 
@@ -3931,6 +3971,7 @@ ixgbe_handle_msf(void *context)
 	/* Adjust media types shown in ifconfig */
 	ifmedia_removeall(&adapter->media);
 	ixgbe_add_media_types(adapter);
+	IXGBE_CORE_UNLOCK(adapter);
 	return;
 }
 

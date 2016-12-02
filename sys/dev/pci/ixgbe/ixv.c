@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.27 2016/12/02 11:56:55 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.28 2016/12/02 12:14:37 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1744,7 +1744,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 
 		/* Disable the queue */
 		rxdctl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(i));
-		rxdctl &= ~(IXGBE_RXDCTL_ENABLE | IXGBE_RXDCTL_VME);
+		rxdctl &= ~IXGBE_RXDCTL_ENABLE;
 		IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(i), rxdctl);
 		for (int j = 0; j < 10; j++) {
 			if (IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(i)) &
@@ -1778,8 +1778,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		rxr->tail = IXGBE_VFRDT(rxr->me);
 
 		/* Do the queue enabling last */
-		rxdctl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(i));
-		rxdctl |= IXGBE_RXDCTL_ENABLE;
+		rxdctl |= IXGBE_RXDCTL_ENABLE | IXGBE_RXDCTL_VME;
 		IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(i), rxdctl);
 		for (int k = 0; k < 10; k++) {
 			if (IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(i)) &
@@ -2236,10 +2235,10 @@ ixv_print_debug_info(struct adapter *adapter)
                 device_printf(dev,"RX(%d) Bytes Received: %lu\n",
                     rxr->me, (long)rxr->rx_bytes.ev_count);
 #ifdef LRO
-                device_printf(dev,"RX(%d) LRO Queued= %d\n",
-                    rxr->me, lro->lro_queued);
-                device_printf(dev,"RX(%d) LRO Flushed= %d\n",
-                    rxr->me, lro->lro_flushed);
+                device_printf(dev,"RX(%d) LRO Queued= %lld\n",
+                    rxr->me, (long long)lro->lro_queued);
+                device_printf(dev,"RX(%d) LRO Flushed= %lld\n",
+                    rxr->me, (long long)lro->lro_flushed);
 #endif /* LRO */
                 device_printf(dev,"TX(%d) Packets Sent: %lu\n",
                     txr->me, (long)txr->total_packets.ev_count);
