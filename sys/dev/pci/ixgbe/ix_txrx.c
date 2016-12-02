@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ix_txrx.c,v 1.8 2016/12/02 10:42:04 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 292751 2015-12-26 17:27:48Z bz $*/
+/*$NetBSD: ix_txrx.c,v 1.9 2016/12/02 12:14:37 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -821,6 +821,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 		l3d = mtod(mp, char *) + ehdrlen;
 
 	switch (etype) {
+#ifdef INET
 	case ETHERTYPE_IP:
 		ip = (struct ip *)(l3d);
 		ip_hlen = ip->ip_hl << 2;
@@ -829,12 +830,15 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 		KASSERT((mp->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0 ||
 		    ip->ip_sum == 0);
 		break;
+#endif
+#ifdef INET6
 	case ETHERTYPE_IPV6:
 		ip6 = (struct ip6_hdr *)(l3d);
 		ip_hlen = sizeof(struct ip6_hdr);
 		ipproto = ip6->ip6_nxt;
 		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
 		break;
+#endif
 	default:
 		break;
 	}
