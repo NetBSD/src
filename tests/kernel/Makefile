@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.42 2016/12/01 20:11:17 kamil Exp $
+# $NetBSD: Makefile,v 1.43 2016/12/02 05:54:15 kamil Exp $
 
 NOMAN=		# defined
 
@@ -6,7 +6,8 @@ NOMAN=		# defined
 
 TESTSDIR=	${TESTSBASE}/kernel
 
-TESTS_SUBDIRS=	kqueue
+TESTS_SUBDIRS=	arch
+TESTS_SUBDIRS+=	kqueue
 TESTS_C=	t_lock
 TESTS_C+=	t_lockf
 TESTS_C+=	t_ptrace
@@ -22,15 +23,6 @@ TESTS_C+=	t_sysv
 TESTS_C+=	t_subr_prf
 TESTS_C+=	t_kauth_pr_47598
 TESTS_C+=	t_sysctl
-
-.if (${MACHINE} == "amd64")
-TESTS_C+=	t_ptrace_amd64_wait
-TESTS_C+=	t_ptrace_amd64_wait3
-TESTS_C+=	t_ptrace_amd64_wait4
-TESTS_C+=	t_ptrace_amd64_wait6
-TESTS_C+=	t_ptrace_amd64_waitid
-TESTS_C+=	t_ptrace_amd64_waitpid
-.endif
 
 TESTS_SH=	t_umount
 TESTS_SH+=	t_umountstress
