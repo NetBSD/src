@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.c 282289 2015-04-30 22:53:27Z erj $*/
-/*$NetBSD: ixgbe_api.c,v 1.13 2016/12/01 06:56:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.c 292674 2015-12-23 22:45:17Z sbruno $*/
+/*$NetBSD: ixgbe_api.c,v 1.14 2016/12/02 10:42:04 msaitoh Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
@@ -114,6 +114,7 @@ s32 ixgbe_init_shared_code(struct ixgbe_hw *hw)
 		status = IXGBE_ERR_DEVICE_NOT_SUPPORTED;
 		break;
 	}
+	hw->mac.max_link_up_time = IXGBE_LINK_UP_TIME;
 
 	return status;
 }
@@ -188,6 +189,7 @@ s32 ixgbe_set_mac_type(struct ixgbe_hw *hw)
 		hw->mvals = ixgbe_mvals_X540;
 		break;
 	case IXGBE_DEV_ID_X550T:
+	case IXGBE_DEV_ID_X550T1:
 		hw->mac.type = ixgbe_mac_X550;
 		hw->mvals = ixgbe_mvals_X550;
 		break;

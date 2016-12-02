@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.h 282289 2015-04-30 22:53:27Z erj $*/
-/*$NetBSD: ixgbe_api.h,v 1.8 2016/12/01 06:56:28 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.h 292674 2015-12-23 22:45:17Z sbruno $*/
+/*$NetBSD: ixgbe_api.h,v 1.9 2016/12/02 10:42:04 msaitoh Exp $*/
 
 #ifndef _IXGBE_API_H_
 #define _IXGBE_API_H_
@@ -149,10 +149,10 @@ s32 ixgbe_reinit_fdir_tables_82599(struct ixgbe_hw *hw);
 s32 ixgbe_init_fdir_signature_82599(struct ixgbe_hw *hw, u32 fdirctrl);
 s32 ixgbe_init_fdir_perfect_82599(struct ixgbe_hw *hw, u32 fdirctrl,
 					bool cloud_mode);
-s32 ixgbe_fdir_add_signature_filter_82599(struct ixgbe_hw *hw,
-					  union ixgbe_atr_hash_dword input,
-					  union ixgbe_atr_hash_dword common,
-					  u8 queue);
+void ixgbe_fdir_add_signature_filter_82599(struct ixgbe_hw *hw,
+					   union ixgbe_atr_hash_dword input,
+					   union ixgbe_atr_hash_dword common,
+					   u8 queue);
 s32 ixgbe_fdir_set_input_mask_82599(struct ixgbe_hw *hw,
 				    union ixgbe_atr_input *input_mask, bool cloud_mode);
 s32 ixgbe_fdir_write_perfect_filter_82599(struct ixgbe_hw *hw,
@@ -181,6 +181,7 @@ s32 ixgbe_read_i2c_combined_unlocked(struct ixgbe_hw *hw, u8 addr, u16 reg,
 				     u16 *val);
 s32 ixgbe_write_i2c_byte(struct ixgbe_hw *hw, u8 byte_offset, u8 dev_addr,
 			 u8 data);
+void ixgbe_set_fdir_drop_queue_82599(struct ixgbe_hw *hw, u8 dropqueue);
 s32 ixgbe_write_i2c_byte_unlocked(struct ixgbe_hw *hw, u8 byte_offset,
 				  u8 dev_addr, u8 data);
 s32 ixgbe_write_i2c_combined(struct ixgbe_hw *hw, u8 addr, u16 reg, u16 val);
