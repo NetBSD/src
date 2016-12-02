@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.454 2016/12/01 02:36:50 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.455 2016/12/02 01:48:44 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.454 2016/12/01 02:36:50 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.455 2016/12/02 01:48:44 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6334,6 +6334,10 @@ wm_start(struct ifnet *ifp)
 
 	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
 
+	/*
+	 * ifp->if_obytes and ifp->if_omcasts are added in if_transmit()@if.c.
+	 */
+
 	mutex_enter(txq->txq_lock);
 	if (!txq->txq_stopping)
 		wm_start_locked(ifp);
@@ -6365,12 +6369,14 @@ wm_transmit(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	}
 
-	if (mutex_tryenter(txq->txq_lock)) {
-		/* XXXX should be per TX queue */
-		ifp->if_obytes += m->m_pkthdr.len;
-		if (m->m_flags & M_MCAST)
-			ifp->if_omcasts++;
+	/*
+	 * XXXX NOMPSAFE: ifp->if_data should be percpu.
+	 */
+	ifp->if_obytes += m->m_pkthdr.len;
+	if (m->m_flags & M_MCAST)
+		ifp->if_omcasts++;
 
+	if (mutex_tryenter(txq->txq_lock)) {
 		if (!txq->txq_stopping)
 			wm_transmit_locked(ifp, txq);
 		mutex_exit(txq->txq_lock);
@@ -6902,6 +6908,10 @@ wm_nq_start(struct ifnet *ifp)
 
 	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
 
+	/*
+	 * ifp->if_obytes and ifp->if_omcasts are added in if_transmit()@if.c.
+	 */
+
 	mutex_enter(txq->txq_lock);
 	if (!txq->txq_stopping)
 		wm_nq_start_locked(ifp);
@@ -6933,12 +6943,14 @@ wm_nq_transmit(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	}
 
-	if (mutex_tryenter(txq->txq_lock)) {
-		/* XXXX should be per TX queue */
-		ifp->if_obytes += m->m_pkthdr.len;
-		if (m->m_flags & M_MCAST)
-			ifp->if_omcasts++;
+	/*
+	 * XXXX NOMPSAFE: ifp->if_data should be percpu.
+	 */
+	ifp->if_obytes += m->m_pkthdr.len;
+	if (m->m_flags & M_MCAST)
+		ifp->if_omcasts++;
 
+	if (mutex_tryenter(txq->txq_lock)) {
 		if (!txq->txq_stopping)
 			wm_nq_transmit_locked(ifp, txq);
 		mutex_exit(txq->txq_lock);
