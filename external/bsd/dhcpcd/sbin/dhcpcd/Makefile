@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.33 2016/10/09 09:23:59 roy Exp $
+# $NetBSD: Makefile,v 1.34 2016/12/02 02:41:54 riastradh Exp $
 #
 
 WARNS?=		6
@@ -67,11 +67,13 @@ FILESDIR=		/libexec/dhcpcd-hooks
 EGHOOKS=		10-wpa_supplicant 15-timezone 29-lookup-hostname
 EGHOOKS+=		50-ypbind
 
+.if ${MKSHARE} != "no"
 EGFILES=		${EGHOOKS:C,^,${DIST}/dhcpcd-hooks/,}
 FILES+=			${EGFILES}
 .for f in ${EGFILES}
 FILESDIR_${f}=		/usr/share/examples/dhcpcd/hooks
 .endfor
+.endif
 
 MAN=			dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
 
