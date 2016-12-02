@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 289238 2015-10-13 17:34:18Z sbruno $*/
-/*$NetBSD: ixgbe.h,v 1.15 2016/12/02 10:34:23 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 292674 2015-12-23 22:45:17Z sbruno $*/
+/*$NetBSD: ixgbe.h,v 1.16 2016/12/02 10:42:04 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -153,12 +153,6 @@
 #define DBA_ALIGN	128
 
 /*
- * This parameter controls the maximum no of times the driver will loop in
- * the isr. Minimum Value = 1
- */
-#define MAX_LOOP	10
-
-/*
  * This is the max watchdog interval, ie. the time that can
  * pass between any two TX clean operations, such only happening
  * when the TX hardware is functioning.
@@ -174,9 +168,11 @@
 
 /* These defines are used in MTU calculations */
 #define IXGBE_MAX_FRAME_SIZE	9728
-#define IXGBE_MTU_HDR		(ETHER_HDR_LEN + ETHER_CRC_LEN + \
+#define IXGBE_MTU_HDR		(ETHER_HDR_LEN + ETHER_CRC_LEN)
+#define IXGBE_MTU_HDR_VLAN	(ETHER_HDR_LEN + ETHER_CRC_LEN + \
 				 ETHER_VLAN_ENCAP_LEN)
 #define IXGBE_MAX_MTU		(IXGBE_MAX_FRAME_SIZE - IXGBE_MTU_HDR)
+#define IXGBE_MAX_MTU_VLAN	(IXGBE_MAX_FRAME_SIZE - IXGBE_MTU_HDR_VLAN)
 
 /* Flow control constants */
 #define IXGBE_FC_PAUSE		0xFFFF
@@ -224,15 +220,12 @@
 #define MSIX_82598_BAR			3
 #define MSIX_82599_BAR			4
 #define IXGBE_TSO_SIZE			262140
-#define IXGBE_TX_BUFFER_SIZE		((u32) 1514)
 #define IXGBE_RX_HDR			128
 #define IXGBE_VFTA_SIZE			128
 #define IXGBE_BR_SIZE			4096
 #define IXGBE_QUEUE_MIN_FREE		32
 #define IXGBE_MAX_TX_BUSY		10
 #define IXGBE_QUEUE_HUNG		0x80000000
-
-#define IXV_EITR_DEFAULT		128
 
 #define IXV_EITR_DEFAULT		128
 
@@ -258,7 +251,11 @@
 #define IXGBE_LOW_LATENCY	128
 #define IXGBE_AVE_LATENCY	400
 #define IXGBE_BULK_LATENCY	1200
-#define IXGBE_LINK_ITR		2000
+
+/* Using 1FF (the max value), the interval is ~1.05ms */
+#define IXGBE_LINK_ITR_QUANTA	0x1FF
+#define IXGBE_LINK_ITR		((IXGBE_LINK_ITR_QUANTA << 3) & \
+				    IXGBE_EITR_ITR_INT_MASK)
 
 /* MAC type macros */
 #define IXGBE_IS_X550VF(_adapter) \
@@ -474,11 +471,11 @@ struct ixgbe_vf {
 
 /* Our adapter structure */
 struct adapter {
-	struct ifnet		*ifp;
 	struct ixgbe_hw		hw;
-
 	struct ixgbe_osdep	osdep;
+
 	device_t		dev;
+	struct ifnet		*ifp;
 
 	struct resource		*pci_mem;
 	struct resource		*msix_mem;
