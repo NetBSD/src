@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.13 2016/12/02 05:28:27 knakahara Exp $
+#	$NetBSD: t_pppoe.sh,v 1.14 2016/12/02 06:19:50 knakahara Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -295,7 +295,7 @@ run_test6()
 	export RUMP_SERVER=$CLIENT
 	wait_for_disconnected
 	atf_check -s not-exit:0 -o ignore -e ignore \
-	    rump.ping6 -c 1 -w $TIMEOUT $SERVER_IP6
+	    rump.ping6 -c 1 -X $TIMEOUT $SERVER_IP6
 	atf_check -s exit:0 -o not-match:"$session_id" -x "$HIJACKING pppoectl -d pppoe0"
 	unset RUMP_SERVER
 
