@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.12 2016/11/24 09:03:53 ozaki-r Exp $
+#	$NetBSD: t_pppoe.sh,v 1.13 2016/12/02 05:28:27 knakahara Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -208,7 +208,7 @@ run_test()
 	wait_for_session_established dontfail
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
-	atf_check -s exit:0 -o match:'initial' -x "$HIJACKING pppoectl -d pppoe0"
+	atf_check -s exit:0 -o match:'DETACHED' rump.ifconfig pppoe0
 	unset RUMP_SERVER
 }
 
