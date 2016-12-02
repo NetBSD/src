@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 283893 2015-06-01 20:05:06Z jhb $*/
-/*$NetBSD: ixgbe.h,v 1.14 2016/12/02 10:24:31 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 289238 2015-10-13 17:34:18Z sbruno $*/
+/*$NetBSD: ixgbe.h,v 1.15 2016/12/02 10:34:23 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -388,7 +388,6 @@ struct tx_ring {
 	volatile u16		tx_avail;
 	u16			next_avail_desc;
 	u16			next_to_clean;
-	u32			process_limit;
 	u16			num_desc;
 	u32			txd_cmd;
 	ixgbe_dma_tag_t		*txtag;
@@ -431,7 +430,6 @@ struct rx_ring {
         u16 			next_to_check;
 	u16			num_desc;
 	u16			mbuf_sz;
-	u32			process_limit;
 	char			mtx_name[16];
 	struct ixgbe_rx_buf	*rx_buffers;
 	ixgbe_dma_tag_t		*ptag;
@@ -559,6 +557,7 @@ struct adapter {
 	 */
 	struct tx_ring		*tx_rings;
 	u32			num_tx_desc;
+	u32			tx_process_limit;
 
 	/*
 	 * Receive rings:
@@ -567,6 +566,7 @@ struct adapter {
 	struct rx_ring		*rx_rings;
 	u64			active_queues;
 	u32			num_rx_desc;
+	u32			rx_process_limit;
 
 	/* Multicast array memory */
 	struct ixgbe_mc_addr	*mta;
@@ -574,6 +574,10 @@ struct adapter {
 	int			pool;
 #ifdef PCI_IOV
 	struct ixgbe_vf		*vfs;
+#endif
+#ifdef DEV_NETMAP
+	void 			(*init_locked)(struct adapter *);
+	void 			(*stop_locked)(void *);
 #endif
 
 	/* Misc stats maintained by the driver */

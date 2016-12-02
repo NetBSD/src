@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.h 283883 2015-06-01 17:43:34Z jfv $*/
-/*$NetBSD: ixgbe_mbx.h,v 1.8 2016/12/02 10:24:31 msaitoh Exp $*/
+/*$NetBSD: ixgbe_mbx.h,v 1.9 2016/12/02 10:34:23 msaitoh Exp $*/
 
 #ifndef _IXGBE_MBX_H_
 #define _IXGBE_MBX_H_
