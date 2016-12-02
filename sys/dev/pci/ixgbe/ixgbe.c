@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.49 2016/12/02 10:46:58 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.50 2016/12/02 11:56:55 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -4816,9 +4816,9 @@ ixgbe_set_sysctl_value(struct adapter *adapter, const char *name,
 		return;
 	}
 	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE|CTLFLAG_IMMEDIATE, CTLTYPE_INT,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
 	    name, SYSCTL_DESCR(description),
-		NULL, value, limit, 0, CTL_CREATE, CTL_EOL) != 0)
+		NULL, 0, limit, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 	*limit = value;
 }
