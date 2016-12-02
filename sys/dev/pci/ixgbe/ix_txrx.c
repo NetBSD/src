@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 285528 2015-07-14 09:13:18Z hiren $*/
-/*$NetBSD: ix_txrx.c,v 1.6 2016/12/02 10:24:31 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 289238 2015-10-13 17:34:18Z sbruno $*/
+/*$NetBSD: ix_txrx.c,v 1.7 2016/12/02 10:34:23 msaitoh Exp $*/
 
 #include "ixgbe.h"
 
@@ -267,11 +267,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 	 * If everything is setup correctly, it should be the
 	 * same bucket that the current CPU we're on is.
 	 */
-#if __FreeBSD_version < 1100054
-	if (m->m_flags & M_FLOWID) {
-#else
 	if (M_HASHTYPE_GET(m) != M_HASHTYPE_NONE) {
-#endif
 #ifdef	RSS
 		if (rss_hash2bucket(m->m_pkthdr.flowid,
 		    M_HASHTYPE_GET(m), &bucket_id) == 0)
@@ -1028,7 +1024,7 @@ ixgbe_txeof(struct tx_ring *txr)
 	struct adapter		*adapter = txr->adapter;
 	struct ifnet		*ifp = adapter->ifp;
 	u32			work, processed = 0;
-	u16			limit = txr->process_limit;
+	u32			limit = adapter->tx_process_limit;
 	struct ixgbe_tx_buf	*buf;
 	union ixgbe_adv_tx_desc *txd;
 
@@ -1818,7 +1814,7 @@ ixgbe_rxeof(struct ix_queue *que)
 #endif /* LRO */
 	int			i, nextp, processed = 0;
 	u32			staterr = 0;
-	u16			count = rxr->process_limit;
+	u32			count = adapter->rx_process_limit;
 	union ixgbe_adv_rx_desc	*cur;
 	struct ixgbe_rx_buf	*rbuf, *nbuf;
 #ifdef RSS
