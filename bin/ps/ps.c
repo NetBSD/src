@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.86 2016/11/28 08:21:10 rin Exp $	*/
+/*	$NetBSD: ps.c,v 1.87 2016/12/02 21:59:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.86 2016/11/28 08:21:10 rin Exp $");
+__RCSID("$NetBSD: ps.c,v 1.87 2016/12/02 21:59:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ __RCSID("$NetBSD: ps.c,v 1.86 2016/11/28 08:21:10 rin Exp $");
  * ARGOPTS must contain all option characters that take arguments
  * (except for 't'!) - it is used in kludge_oldps_options()
  */
-#define	GETOPTSTR	"aAcCeghjk:LlM:mN:O:o:p:rSsTt:U:uvW:wx"
+#define	GETOPTSTR	"aAcCdeghjk:LlM:mN:O:o:p:rSsTt:U:uvW:wx"
 #define	ARGOPTS		"kMNOopUW"
 
 struct varlist displaylist = SIMPLEQ_HEAD_INITIALIZER(displaylist);
@@ -130,6 +130,7 @@ static int	 pscomp(const void *, const void *);
 static void	 scanvars(void);
 __dead static void	 usage(void);
 static int	 parsenum(const char *, const char *);
+static void	 descendant_sort(struct pinfo *, int);
 
 char dfmt[] = "pid tt state time command";
 char jfmt[] = "user pid ppid pgid sess jobc state tt time command";
@@ -203,7 +204,7 @@ main(int argc, char *argv[])
 	struct varent *vent;
 	struct winsize ws;
 	struct kinfo_lwp *kl, *l;
-	int ch, i, j, fmt, lineno, nentries, nlwps;
+	int ch, i, j, fmt, lineno, descendancy, nentries, nlwps;
 	long long flag;
 	int calc_pcpu, prtheader, wflag, what, xflg, rawcpu, showlwps;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
@@ -223,7 +224,7 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		argv[1] = kludge_oldps_options(argv[1]);
 
-	fmt = prtheader = wflag = xflg = showlwps = 0;
+	descendancy = fmt = prtheader = wflag = xflg = showlwps = 0;
 	what = KERN_PROC_UID;
 	flag = myuid = getuid();
 	memf = nlistf = swapf = NULL;
@@ -240,6 +241,9 @@ main(int argc, char *argv[])
 			break;
 		case 'c':
 			commandonly = 1;
+			break;
+		case 'd':
+			descendancy = 1;
 			break;
 		case 'e':			/* XXX set ufmt */
 			needenv = 1;
@@ -432,6 +436,13 @@ main(int argc, char *argv[])
 	 * sort proc list
 	 */
 	qsort(pinfo, nentries, sizeof(struct pinfo), pscomp);
+
+	/*
+	 * We want things in descendant order
+	 */
+	if (descendancy)
+		descendant_sort(pinfo, nentries);
+
 	/*
 	 * For each proc, call each variable output function in
 	 * "setwidth" mode to determine the widest element of
@@ -589,9 +600,9 @@ setpinfo(struct kinfo_proc2 *ki, int nentries, int calc_pcpu, int rawcpu)
 	struct pinfo *pi;
 	int i;
 
-	pi = malloc(nentries * sizeof(struct pinfo));
+	pi = calloc(nentries, sizeof(*pi));
 	if (pi == NULL)
-		err(1, "malloc");
+		err(1, "calloc");
 
 	if (calc_pcpu && !nlistread)
 		donlist();
@@ -814,12 +825,122 @@ parsenum(const char *str, const char *msg)
 }
 
 static void
+descendant_sort(struct pinfo *ki, int items)
+{
+	int dst, lvl, maxlvl, n, ndst, nsrc, siblings, src;
+	unsigned char *path;
+	struct pinfo kn;
+
+	/*
+	 * First, sort the entries by descendancy, tracking the descendancy
+	 * depth in the level field.
+	 */
+	src = 0;
+	maxlvl = 0;
+	while (src < items) {
+		if (ki[src].level) {
+			src++;
+			continue;
+		}
+		for (nsrc = 1; src + nsrc < items; nsrc++)
+			if (!ki[src + nsrc].level)
+				break;
+
+		for (dst = 0; dst < items; dst++) {
+			if (ki[dst].ki->p_pid == ki[src].ki->p_pid)
+				continue;
+			if (ki[dst].ki->p_pid == ki[src].ki->p_ppid)
+				break;
+		}
+
+		if (dst == items) {
+			src += nsrc;
+			continue;
+		}
+
+		for (ndst = 1; dst + ndst < items; ndst++)
+			if (ki[dst + ndst].level <= ki[dst].level)
+				break;
+
+		for (n = src; n < src + nsrc; n++) {
+			ki[n].level += ki[dst].level + 1;
+			if (maxlvl < ki[n].level)
+				maxlvl = ki[n].level;
+		}
+
+		while (nsrc) {
+			if (src < dst) {
+				kn = ki[src];
+				memmove(ki + src, ki + src + 1,
+				    (dst - src + ndst - 1) * sizeof *ki);
+				ki[dst + ndst - 1] = kn;
+				nsrc--;
+				dst--;
+				ndst++;
+			} else if (src != dst + ndst) {
+				kn = ki[src];
+				memmove(ki + dst + ndst + 1, ki + dst + ndst,
+				    (src - dst - ndst) * sizeof *ki);
+				ki[dst + ndst] = kn;
+				ndst++;
+				nsrc--;
+				src++;
+			} else {
+				ndst += nsrc;
+				src += nsrc;
+				nsrc = 0;
+			}
+		}
+	}
+
+	/*
+	 * Now populate prefix (instead of level) with the command
+	 * prefix used to show descendancies.
+	 */
+	path = malloc((maxlvl + 7) / 8);
+	memset(path, '\0', (maxlvl + 7) / 8);
+	for (src = 0; src < items; src++) {
+		if ((lvl = ki[src].level) == 0) {
+			ki[src].prefix = NULL;
+			continue;
+		}
+		if ((ki[src].prefix = malloc(lvl * 2 + 1)) == NULL)
+			errx(1, "malloc failed");
+		for (n = 0; n < lvl - 2; n++) {
+			ki[src].prefix[n * 2] =
+			    path[n / 8] & 1 << (n % 8) ? '|' : ' ';
+			ki[src].prefix[n * 2 + 1] = ' ';
+				
+		}
+		if (n == lvl - 2) {
+			/* Have I any more siblings? */
+			for (siblings = 0, dst = src + 1; dst < items; dst++) {
+				if (ki[dst].level > lvl)
+					continue;
+				if (ki[dst].level == lvl)
+					siblings = 1;
+				break;
+			}
+			if (siblings)
+				path[n / 8] |= 1 << (n % 8);
+			else
+				path[n / 8] &= ~(1 << (n % 8));
+			ki[src].prefix[n * 2] = siblings ? '|' : '`';
+			ki[src].prefix[n * 2 + 1] = '-';
+			n++;
+		}
+		strcpy(ki[src].prefix + n * 2, "- ");
+	}
+	free(path);
+}
+
+static void
 usage(void)
 {
 
 	(void)fprintf(stderr,
 	    "usage:\t%s\n\t   %s\n\t%s\n",
-	    "ps [-AaCcehjlmrSsTuvwx] [-k key] [-M core] [-N system] [-O fmt]",
+	    "ps [-AaCcdehjlmrSsTuvwx] [-k key] [-M core] [-N system] [-O fmt]",
 	    "[-o fmt] [-p pid] [-t tty] [-U user] [-W swap]",
 	    "ps -L");
 	exit(1);
