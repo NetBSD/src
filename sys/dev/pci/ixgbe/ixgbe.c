@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 285590 2015-07-15 00:35:50Z pkelsey $*/
-/*$NetBSD: ixgbe.c,v 1.46 2016/12/02 10:24:31 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 289238 2015-10-13 17:34:18Z sbruno $*/
+/*$NetBSD: ixgbe.c,v 1.47 2016/12/02 10:34:23 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -198,6 +198,8 @@ static void	ixgbe_add_device_sysctls(struct adapter *);
 static void     ixgbe_add_hw_stats(struct adapter *);
 
 /* Sysctl handlers */
+static void	ixgbe_set_sysctl_value(struct adapter *, const char *,
+		    const char *, int *, int);
 static int	ixgbe_set_flowcntl(SYSCTLFN_PROTO);
 static int	ixgbe_set_advertise(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_thermal_test(SYSCTLFN_PROTO);
@@ -449,6 +451,11 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	aprint_normal(": %s, Version - %s\n",
 	    ixgbe_strings[ent->index], ixgbe_driver_version);
 
+#ifdef DEV_NETMAP
+	adapter->init_locked = ixgbe_init_locked;
+	adapter->stop_locked = ixgbe_stop;
+#endif
+
 	/* Core Lock Init*/
 	IXGBE_CORE_LOCK_INIT(adapter, device_xname(dev));
 
@@ -464,6 +471,15 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		error = ENXIO;
 		goto err_out;
 	}
+
+	/* Sysctls for limiting the amount of work done in the taskqueues */
+	ixgbe_set_sysctl_value(adapter, "rx_processing_limit",
+	    "max number of rx packets to process",
+	    &adapter->rx_process_limit, ixgbe_rx_process_limit);
+
+	ixgbe_set_sysctl_value(adapter, "tx_processing_limit",
+	    "max number of tx packets to process",
+	&adapter->tx_process_limit, ixgbe_tx_process_limit);
 
 	/* Do descriptor calc and sanity checks */
 	if (((ixgbe_txd * sizeof(union ixgbe_adv_tx_desc)) % DBA_ALIGN) != 0 ||
@@ -686,6 +702,8 @@ ixgbe_detach(device_t dev, int flags)
 		return (EBUSY);
 	}
 #endif /* PCI_IOV */
+
+	pmf_device_deregister(dev);
 
 	/* Stop the adapter */
 	IXGBE_CORE_LOCK(adapter);
@@ -3033,9 +3051,6 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 		/* Cache the tail address */
 		txr->tail = IXGBE_TDT(j);
 
-		/* Set the processing limit */
-		txr->process_limit = ixgbe_tx_process_limit;
-
 		/* Disable Head Writeback */
 		switch (hw->mac.type) {
 		case ixgbe_mac_82598EB:
@@ -3292,9 +3307,6 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 		/* Setup the HW Rx Head and Tail Descriptor Pointers */
 		IXGBE_WRITE_REG(hw, IXGBE_RDH(j), 0);
 		IXGBE_WRITE_REG(hw, IXGBE_RDT(j), 0);
-
-		/* Set the processing limit */
-		rxr->process_limit = ixgbe_rx_process_limit;
 
 		/* Set the driver rx tail address */
 		rxr->tail =  IXGBE_RDT(rxr->me);
@@ -4698,6 +4710,27 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    stats->namebuf, "512-1023 byte frames transmitted");
 	evcnt_attach_dynamic(&stats->ptc1522, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "1024-1522 byte frames transmitted");
+}
+
+static void
+ixgbe_set_sysctl_value(struct adapter *adapter, const char *name,
+    const char *description, int *limit, int value)
+{
+	device_t dev =  adapter->dev;
+	struct sysctllog **log;
+	const struct sysctlnode *rnode, *cnode;
+
+	log = &adapter->sysctllog;
+	if ((rnode = ixgbe_sysctl_instance(adapter)) == NULL) {
+		aprint_error_dev(dev, "could not create sysctl root\n");
+		return;
+	}
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    name, SYSCTL_DESCR(description),
+		NULL, 0, limit, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+	*limit = value;
 }
 
 /*
