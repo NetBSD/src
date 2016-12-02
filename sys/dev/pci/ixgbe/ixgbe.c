@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.48 2016/12/02 10:42:04 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.49 2016/12/02 10:46:58 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -699,6 +699,8 @@ ixgbe_detach(device_t dev, int flags)
 		return (EBUSY);
 	}
 #endif /* PCI_IOV */
+
+	pmf_device_deregister(dev);
 
 	ether_ifdetach(adapter->ifp);
 	/* Stop the adapter */
@@ -3706,13 +3708,13 @@ ixgbe_get_slot_info(struct adapter *adapter)
 	mac->ops.set_lan_id(hw);
 
 display:
-	device_printf(dev,"PCI Express Bus: Speed %s %s\n",
+	device_printf(dev,"PCI Express Bus: Speed %s Width %s\n",
 	    ((hw->bus.speed == ixgbe_bus_speed_8000) ? "8.0GT/s":
 	    (hw->bus.speed == ixgbe_bus_speed_5000) ? "5.0GT/s":
 	    (hw->bus.speed == ixgbe_bus_speed_2500) ? "2.5GT/s":"Unknown"),
-	    (hw->bus.width == ixgbe_bus_width_pcie_x8) ? "Width x8" :
-	    (hw->bus.width == ixgbe_bus_width_pcie_x4) ? "Width x4" :
-	    (hw->bus.width == ixgbe_bus_width_pcie_x1) ? "Width x1" :
+	    (hw->bus.width == ixgbe_bus_width_pcie_x8) ? "x8" :
+	    (hw->bus.width == ixgbe_bus_width_pcie_x4) ? "x4" :
+	    (hw->bus.width == ixgbe_bus_width_pcie_x1) ? "x1" :
 	    ("Unknown"));
 
 	if ((hw->device_id != IXGBE_DEV_ID_82599_SFP_SF_QP) &&
