@@ -1,4 +1,4 @@
-/*	$NetBSD: unwind.h,v 1.3 2014/10/22 16:30:21 christos Exp $	*/
+/*	$NetBSD: unwind.h,v 1.4 2016/12/02 19:25:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,8 +34,15 @@ __BEGIN_DECLS
 struct _Unwind_Context;
 struct _Unwind_Exception;
 typedef int _Unwind_Reason_Code;
+typedef int _Unwind_Action;
 typedef void *_Unwind_Ptr;
 typedef long _Unwind_Word;
+
+#define	_UA_SEARCH_PHASE	0x01
+#define	_UA_CLEANUP_PHASE	0x02
+#define	_UA_HANDLER_FRAME 	0x04
+#define	_UA_FORCE_UNWIND	0x08
+#define	_UA_END_OF_STACK 	0x10
 
 #define	_URC_NO_REASON			0
 #define	_URC_FOREIGN_EXCEPTION_CAUGHT	1
