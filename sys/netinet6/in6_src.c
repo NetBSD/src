@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.74 2016/11/10 04:13:53 ozaki-r Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.75 2016/12/02 00:19:54 ozaki-r Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.74 2016/11/10 04:13:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.75 2016/12/02 00:19:54 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -670,9 +670,9 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 *  our own addresses.)
 	 */
 	if (opts && opts->ip6po_pktinfo && opts->ip6po_pktinfo->ipi6_ifindex) {
-		if (!(rt->rt_ifp->if_flags & IFF_LOOPBACK) &&
+		if (rt != NULL && !(rt->rt_ifp->if_flags & IFF_LOOPBACK) &&
 		    rt->rt_ifp->if_index != opts->ip6po_pktinfo->ipi6_ifindex) {
-			if (rt != NULL && count_discard)
+			if (count_discard)
 				in6_ifstat_inc(rt->rt_ifp, ifs6_out_discard);
 			error = EHOSTUNREACH;
 			rt = NULL;
