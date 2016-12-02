@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 283881 2015-06-01 17:15:25Z jfv $*/
-/*$NetBSD: ixgbe.h,v 1.13 2016/12/02 10:21:43 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 283893 2015-06-01 20:05:06Z jhb $*/
+/*$NetBSD: ixgbe.h,v 1.14 2016/12/02 10:24:31 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -111,6 +111,7 @@
 #ifdef PCI_IOV
 #include <sys/nv.h>
 #include <sys/iov_schema.h>
+#include <dev/pci/pci_iov.h>
 #endif
 
 #include "ixgbe_netbsd.h"

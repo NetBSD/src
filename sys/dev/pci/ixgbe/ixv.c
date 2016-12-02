@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 283881 2015-06-01 17:15:25Z jfv $*/
-/*$NetBSD: ixv.c,v 1.23 2016/12/02 10:21:43 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 285590 2015-07-15 00:35:50Z pkelsey $*/
+/*$NetBSD: ixv.c,v 1.24 2016/12/02 10:24:31 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1743,10 +1743,6 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		reg |= IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF;
 		IXGBE_WRITE_REG(hw, IXGBE_VFSRRCTL(i), reg);
 
-		/* Set the Tail Pointer */
-		IXGBE_WRITE_REG(hw, IXGBE_VFRDT(rxr->me),
-		    adapter->num_rx_desc - 1);
-
 		/* Set the processing limit */
 		rxr->process_limit = ixv_rx_process_limit;
 
@@ -1765,6 +1761,10 @@ ixv_initialize_receive_units(struct adapter *adapter)
 				msec_delay(1);
 		}
 		wmb();
+
+		/* Set the Tail Pointer */
+		IXGBE_WRITE_REG(hw, IXGBE_VFRDT(rxr->me),
+		    adapter->num_rx_desc - 1);
 	}
 
 	rxcsum = IXGBE_READ_REG(hw, IXGBE_RXCSUM);

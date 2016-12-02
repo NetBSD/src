@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 283881 2015-06-01 17:15:25Z jfv $*/
-/*$NetBSD: ixgbe.c,v 1.45 2016/12/02 10:21:43 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 285590 2015-07-15 00:35:50Z pkelsey $*/
+/*$NetBSD: ixgbe.c,v 1.46 2016/12/02 10:24:31 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -262,6 +262,9 @@ DRIVER_MODULE(ix, pci, ix_driver, ix_devclass, 0, 0);
 
 MODULE_DEPEND(ix, pci, 1, 1, 1);
 MODULE_DEPEND(ix, ether, 1, 1, 1);
+#ifdef DEV_NETMAP
+MODULE_DEPEND(ix, netmap, 1, 1, 1);
+#endif /* DEV_NETMAP */
 #endif
 
 /*
@@ -3277,10 +3280,12 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 		 * so we do not need to clear the bit, but do it just in case
 		 * this code is moved elsewhere.
 		 */
-		if (adapter->num_queues > 1 && adapter->fc == ixgbe_fc_none)
+		if (adapter->num_queues > 1 &&
+		    adapter->hw.fc.requested_mode == ixgbe_fc_none) {
 			srrctl |= IXGBE_SRRCTL_DROP_EN;
-		else
+		} else {
 			srrctl &= ~IXGBE_SRRCTL_DROP_EN;
+		}
 
 		IXGBE_WRITE_REG(hw, IXGBE_SRRCTL(j), srrctl);
 
@@ -5530,10 +5535,10 @@ ixgbe_vf_api_negotiate(struct adapter *adapter, struct ixgbe_vf *vf,
     uint32_t *msg)
 {
 
-	switch (msg[0]) {
+	switch (msg[1]) {
 	case IXGBE_API_VER_1_0:
 	case IXGBE_API_VER_1_1:
-		vf->api_ver = msg[0];
+		vf->api_ver = msg[1];
 		ixgbe_send_vf_ack(adapter, vf, msg[0]);
 		break;
 	default:
