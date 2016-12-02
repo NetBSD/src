@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.705 2016/12/02 00:50:09 kamil Exp $
+# $NetBSD: mi,v 1.706 2016/12/02 05:54:14 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -55,6 +55,8 @@
 ./usr/libdata/debug/usr/tests/include/sys				tests-include-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests		compattestfile,atf
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests	compattestfile,atf
+./usr/libdata/debug/usr/tests/kernel/arch				tests-kernel-tests	compattestfile,atf
+./usr/libdata/debug/usr/tests/kernel/arch/amd64				tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue				tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read			tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write			tests-kernel-tests	compattestfile,atf
@@ -2080,6 +2082,18 @@
 ./usr/tests/kernel				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/Atffile			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/Kyuafile			tests-kernel-tests	compattestfile,atf,kyua
+./usr/tests/kernel/arch				tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/arch/Atffile			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/arch/Kyuafile		tests-kernel-tests	compattestfile,atf,kyua
+./usr/tests/kernel/arch/amd64			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/arch/amd64/Atffile		tests-kernel-tests	compattestfile,atf,machine=amd64
+./usr/tests/kernel/arch/amd64/Kyuafile		tests-kernel-tests	compattestfile,atf,kyua,machine=amd64
+./usr/tests/kernel/arch/amd64/t_ptrace_wait	tests-kernel-tests	compattestfile,atf,machine=amd64
+./usr/tests/kernel/arch/amd64/t_ptrace_wait3	tests-kernel-tests	compattestfile,atf,machine=amd64
+./usr/tests/kernel/arch/amd64/t_ptrace_wait4	tests-kernel-tests	compattestfile,atf,machine=amd64
+./usr/tests/kernel/arch/amd64/t_ptrace_wait6	tests-kernel-tests	compattestfile,atf,machine=amd64
+./usr/tests/kernel/arch/amd64/t_ptrace_waitid	tests-kernel-tests	compattestfile,atf,machine=amd64
+./usr/tests/kernel/arch/amd64/t_ptrace_waitpid	tests-kernel-tests	compattestfile,atf,machine=amd64
 ./usr/tests/kernel/h_ps_strings1		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_ps_strings2		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/kqueue			tests-kernel-tests	compattestfile,atf
@@ -2131,12 +2145,6 @@
 ./usr/tests/kernel/t_posix_fallocate		tests-obsolete		obsolete
 ./usr/tests/kernel/t_ps_strings			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_ptrace			tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_amd64_wait		tests-kernel-tests	compattestfile,atf,machine=amd64
-./usr/tests/kernel/t_ptrace_amd64_wait3		tests-kernel-tests	compattestfile,atf,machine=amd64
-./usr/tests/kernel/t_ptrace_amd64_wait4		tests-kernel-tests	compattestfile,atf,machine=amd64
-./usr/tests/kernel/t_ptrace_amd64_wait6		tests-kernel-tests	compattestfile,atf,machine=amd64
-./usr/tests/kernel/t_ptrace_amd64_waitid	tests-kernel-tests	compattestfile,atf,machine=amd64
-./usr/tests/kernel/t_ptrace_amd64_waitpid	tests-kernel-tests	compattestfile,atf,machine=amd64
 ./usr/tests/kernel/t_ptrace_wait		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_ptrace_wait3		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_ptrace_wait4		tests-kernel-tests	compattestfile,atf

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_amd64_wait.c,v 1.1 2016/12/01 20:11:17 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.1 2016/12/02 05:54:15 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_amd64_wait.c,v 1.1 2016/12/01 20:11:17 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.1 2016/12/02 05:54:15 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,9 +48,9 @@ __RCSID("$NetBSD: t_ptrace_amd64_wait.c,v 1.1 2016/12/01 20:11:17 kamil Exp $");
 
 #include <atf-c.h>
 
-#include "../h_macros.h"
+#include "../../../h_macros.h"
 
-#include "t_ptrace_wait.h"
+#include "../../t_ptrace_wait.h"
 
 #if defined(HAVE_DBREGS)
 ATF_TC(dbregs1);
