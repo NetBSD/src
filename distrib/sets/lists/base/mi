@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1140 2016/11/24 05:47:33 kre Exp $
+# $NetBSD: mi,v 1.1141 2016/12/03 15:18:41 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5121,7 +5121,7 @@
 ./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share		obsolete
 ./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share		obsolete
 ./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share		obsolete
-./usr/share/tabset				base-util-share		share
+./usr/share/tabset				base-util-share
 ./usr/share/tabset/3101				base-util-share		share
 ./usr/share/tabset/9837				base-util-share		share
 ./usr/share/tabset/aa				base-util-share		share
