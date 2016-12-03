@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.992 2016/12/03 04:06:25 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.993 2016/12/03 16:02:10 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -150,6 +150,8 @@ EXTERNAL_GDB_SUBDIR=		/does/not/exist
     ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_ARCH} == "mips64el" || \
     ${MACHINE_ARCH} == "mips64eb" || \
+    ${MACHINE} == "sparc" || \
+    ${MACHINE} == "sparc64" || \
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "vax"
 HAVE_BINUTILS?=	227
