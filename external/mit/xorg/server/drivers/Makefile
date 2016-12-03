@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.92 2016/10/16 08:20:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.93 2016/12/03 16:38:15 macallan Exp $
 
 .include <bsd.own.mk>
 
@@ -223,6 +223,7 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-ati \
 	xf86-video-chips \
+	xf86-video-glint \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-nv \
@@ -290,6 +291,7 @@ SUBDIR+= \
     ${MACHINE} == "sparc64"
 SUBDIR+= \
 	xf86-video-ati \
+	xf86-video-glint \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-r128 \
@@ -298,7 +300,6 @@ SUBDIR+= \
 	xf86-video-sunffb \
 	xf86-video-wsfb
 #	xf86-video-ag10e \
-#	xf86-video-glint \
 
 .if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 SUBDIR+= \
