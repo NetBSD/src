@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vma_manager.c,v 1.1.4.2 2015/07/05 21:29:26 snj Exp $	*/
+/*	$NetBSD: drm_vma_manager.c,v 1.1.4.2.2.1 2016/12/03 12:23:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vma_manager.c,v 1.1.4.2 2015/07/05 21:29:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vma_manager.c,v 1.1.4.2.2.1 2016/12/03 12:23:57 martin Exp $");
 
 #include <sys/kmem.h>
 #include <sys/rbtree.h>
@@ -176,10 +176,10 @@ drm_vma_offset_add(struct drm_vma_offset_manager *mgr,
 	node->von_startpage = startpage;
 	node->von_npages = npages;
 
-	rw_enter(&node->von_lock, RW_WRITER);
+	rw_enter(&mgr->vom_lock, RW_WRITER);
 	collision = rb_tree_insert_node(&mgr->vom_nodes, node);
 	KASSERT(collision == node);
-	rw_exit(&node->von_lock);
+	rw_exit(&mgr->vom_lock);
 
 	return 0;
 }
@@ -192,9 +192,9 @@ drm_vma_offset_remove(struct drm_vma_offset_manager *mgr,
 	if (node->von_npages == 0)
 		return;
 
-	rw_enter(&node->von_lock, RW_WRITER);
+	rw_enter(&mgr->vom_lock, RW_WRITER);
 	rb_tree_remove_node(&mgr->vom_nodes, node);
-	rw_exit(&node->von_lock);
+	rw_exit(&mgr->vom_lock);
 
 	vmem_free(mgr->vom_vmem, node->von_startpage, node->von_npages);
 
