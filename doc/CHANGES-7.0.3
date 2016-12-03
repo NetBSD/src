@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.9 2016/12/03 12:24:27 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.10 2016/12/03 12:33:56 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -140,4 +140,10 @@ sys/external/bsd/drm2/drm/drm_vma_manager.c	1.5
 
 	Lock the manager and not just the node for inserting/removing nodes.
 	[maya, ticket #1277]
+
+sys/net/if_vlan.c				1.92
+
+	Don't check parent capabilities when a parent interface hasn't been
+	assigned.
+	[joerg, ticket #1279]
 
