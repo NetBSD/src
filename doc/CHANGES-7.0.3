@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.7 2016/11/21 07:24:40 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.8 2016/12/03 12:06:56 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -124,4 +124,15 @@ etc/rc.d/rtadvd					1.9
 
 	Don't fail to start if rtadvd's config file doesn't exist.
 	[kre, ticket #1274]
+
+sys/arch/mips/include/vmparam.h			1.57
+
+	1TB is enough UVA for anyone... plus not all MIPS cpus can support
+	more.
+	[mrg, ticket #1275]
+
+sys/uvm/pmap/pmap_segtab.c			1.4 (via patch)
+	Fix the start index generation in pmap_segtab_release() to
+	ensure it fits in the actual array.
+	[mrg, ticket #1275]
 
