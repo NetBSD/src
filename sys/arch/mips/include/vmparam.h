@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.52 2014/01/25 15:16:50 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.52.4.1 2016/12/03 12:08:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -152,7 +152,7 @@
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
 #ifdef _LP64
-#define MIPS_VM_MAXUSER_ADDRESS	((vaddr_t) 1L << (4*PGSHIFT-8))
+#define MIPS_VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 40)
 #ifdef ENABLE_MIPS_16KB_PAGE
 #define VM_MAXUSER_ADDRESS	mips_vm_maxuser_address
 #else
