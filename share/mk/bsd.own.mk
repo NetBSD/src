@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.990 2016/12/02 17:54:35 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.991 2016/12/03 02:18:38 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -131,13 +131,7 @@ USE_SSP?=	yes
 #
 # What GDB is used?
 #
-.if \
-    ${MACHINE_ARCH} == "mips64el" || \
-    ${MACHINE_ARCH} == "mips64eb"
-HAVE_GDB?=	710
-.else
 HAVE_GDB?=	712
-.endif
 
 .if ${HAVE_GDB} == 712
 EXTERNAL_GDB_SUBDIR=		gdb
@@ -153,6 +147,8 @@ EXTERNAL_GDB_SUBDIR=		/does/not/exist
 .if \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_CPU} == "m68k" || \
+    ${MACHINE_ARCH} == "mips64el" || \
+    ${MACHINE_ARCH} == "mips64eb" || \
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "vax"
 HAVE_BINUTILS?=	227
