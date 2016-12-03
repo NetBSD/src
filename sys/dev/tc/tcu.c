@@ -1,4 +1,4 @@
-/* $NetBSD: tcu.c,v 1.3 2016/12/03 18:12:50 flxd Exp $ */
+/* $NetBSD: tcu.c,v 1.4 2016/12/03 18:18:12 flxd Exp $ */
 
 /*-
  * Copyright (c) 2016, Felix Deichmann
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcu.c,v 1.3 2016/12/03 18:12:50 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcu.c,v 1.4 2016/12/03 18:18:12 flxd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ tcu_attach(device_t parent, device_t self, void *aux)
 
 	if ((cfg & TCU_CFG_S1_1) != 0 && ta->ta_busspeed != TC_SPEED_12_5_MHZ)
 		aprint_error_dev(self, "warning: switch S1-1 asserted with "
-		    "clock != 12.5 MHz");
+		    "clock != 12.5 MHz\n");
 
 #if NSLHCI_TCU > 0
 	/* Attach slhci. */
