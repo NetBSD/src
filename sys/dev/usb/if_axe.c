@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.77 2016/12/04 10:08:26 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.78 2016/12/04 11:47:29 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.77 2016/12/04 10:08:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.78 2016/12/04 11:47:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1307,7 +1307,7 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 			 * of 4.
 			 */
 			pktlen = AXE_CSUM_RXBYTES(csum_hdr.len);
-			int len = sizeof(csum_hdr) + pktlen;
+			u_int len = sizeof(csum_hdr) + pktlen;
 			len = (len + 3) & ~3;
 			if (total_len < len) {
 				DPRINTFN(20, "total_len %#x < len %#x",
