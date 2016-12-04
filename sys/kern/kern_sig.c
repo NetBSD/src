@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.330 2016/09/13 07:39:45 martin Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.331 2016/12/04 16:40:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.330 2016/09/13 07:39:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.331 2016/12/04 16:40:43 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -923,10 +923,6 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 				    mask, ksi);
 		}
 	} else {
-		/* XXX for core dump/debugger */
-		p->p_sigctx.ps_lwp = l->l_lid;
-		p->p_sigctx.ps_signo = ksi->ksi_signo;
-		p->p_sigctx.ps_code = ksi->ksi_trap;
 		kpsignal2(p, ksi);
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
@@ -1241,6 +1237,11 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 */
 	if (p->p_stat != SACTIVE && p->p_stat != SSTOP)
 		return 0;
+
+	/* XXX for core dump/debugger */
+	p->p_sigctx.ps_lwp = ksi->ksi_lid;
+	p->p_sigctx.ps_signo = ksi->ksi_signo;
+	p->p_sigctx.ps_code = ksi->ksi_trap;
 
 	/*
 	 * Notify any interested parties of the signal.
