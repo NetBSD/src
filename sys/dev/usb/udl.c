@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.18 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: udl.c,v 1.19 2016/12/04 10:12:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.18 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.19 2016/12/04 10:12:35 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -516,7 +516,7 @@ udl_detach(device_t self, int flags)
 	 * Free framebuffer memory.
 	 */
 	udl_fbmem_free(sc);
-	
+
 	mutex_enter(&sc->sc_thread_mtx);
 	sc->sc_dying = true;
 	cv_broadcast(&sc->sc_thread_cv);
@@ -1415,9 +1415,9 @@ udl_cmd_add_buf_comp(struct udl_softc *sc, uint16_t *buf, int width)
 	}
 
 	/*
- 	 * If we have bits left in our last byte, round up to the next
- 	 * byte, so we don't overwrite them.
- 	 */
+	 * If we have bits left in our last byte, round up to the next
+	 * byte, so we don't overwrite them.
+	 */
 	if (bit_pos > 0) {
 		sc->sc_cmd_buf++;
 		sc->sc_cmd_cblen++;
@@ -1881,7 +1881,7 @@ udl_update_thread(void *v)
 		fb = (uint16_t *)sc->sc_fbmem;
 		for (offs = 0; offs < sc->sc_height * sc->sc_width; offs += stride)
 			udl_draw_line(sc, &fb[offs], offs, stride);
-			
+
 #endif
 
 		kpause("udlslp", false, (40 * hz)/1000 + 1, &sc->sc_thread_mtx);

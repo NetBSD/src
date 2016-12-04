@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.216 2016/09/06 06:46:15 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.217 2016/12/04 10:12:35 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.216 2016/09/06 06:46:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.217 2016/12/04 10:12:35 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -138,8 +138,8 @@ usbd_get_string_desc(struct usbd_device *dev, int sindex, int langid,
 		return USBD_SHORT_XFER;
 
 	USETW(req.wLength, sdesc->bLength);	/* the whole string */
- 	err = usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
- 		&actlen, USBD_DEFAULT_TIMEOUT);
+	err = usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
+		&actlen, USBD_DEFAULT_TIMEOUT);
 	if (err)
 		return err;
 
