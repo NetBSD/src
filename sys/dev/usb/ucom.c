@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.116 2016/11/29 07:26:53 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.117 2016/12/04 10:12:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.116 2016/11/29 07:26:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.117 2016/12/04 10:12:35 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -82,29 +82,29 @@ int ucomdebug = 0;
 
 SYSCTL_SETUP(sysctl_hw_ucom_setup, "sysctl hw.ucom setup")
 {
-        int err;
-        const struct sysctlnode *rnode;
-        const struct sysctlnode *cnode;
+	int err;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
 
-        err = sysctl_createv(clog, 0, NULL, &rnode,
-            CTLFLAG_PERMANENT, CTLTYPE_NODE, "ucom",
-            SYSCTL_DESCR("ucom global controls"),
-            NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ucom",
+	    SYSCTL_DESCR("ucom global controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
 
-        if (err)
-                goto fail;
+	if (err)
+		goto fail;
 
-        /* control debugging printfs */
-        err = sysctl_createv(clog, 0, &rnode, &cnode,
-            CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
-            "debug", SYSCTL_DESCR("Enable debugging output"),
-            NULL, 0, &ucomdebug, sizeof(ucomdebug), CTL_CREATE, CTL_EOL);
-        if (err)
-                goto fail;
+	/* control debugging printfs */
+	err = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &ucomdebug, sizeof(ucomdebug), CTL_CREATE, CTL_EOL);
+	if (err)
+		goto fail;
 
-        return;
+	return;
 fail:
-        aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
+	aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
 }
 
 #endif /* UCOM_DEBUG */
@@ -1129,7 +1129,7 @@ ucom_status_change(struct ucom_softc *sc)
 	struct tty *tp = sc->sc_tty;
 
 	if (sc->sc_methods->ucom_get_status != NULL) {
-    		u_char msr, lsr;
+		u_char msr, lsr;
 
 		sc->sc_methods->ucom_get_status(sc->sc_parent, sc->sc_portno,
 		    &lsr, &msr);

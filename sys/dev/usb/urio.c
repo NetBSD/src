@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.45 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: urio.c,v 1.46 2016/12/04 10:12:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.45 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.46 2016/12/04 10:12:35 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -101,7 +101,7 @@ const struct cdevsw urio_cdevsw = {
 
 
 struct urio_softc {
- 	device_t		sc_dev;
+	device_t		sc_dev;
 	struct usbd_device *	sc_udev;
 	struct usbd_interface *	sc_iface;
 

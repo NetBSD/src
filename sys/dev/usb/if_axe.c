@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.76 2016/12/04 10:07:06 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.77 2016/12/04 10:08:26 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.76 2016/12/04 10:07:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.77 2016/12/04 10:08:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -209,7 +209,7 @@ static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_ETGUS2 }, AX178 },
 	{ { USB_VENDOR_JVC,		USB_PRODUCT_JVC_MP_PRX1}, 0 },
 	{ { USB_VENDOR_LENOVO,		USB_PRODUCT_LENOVO_ETHERNET }, AX772B },
- 	{ { USB_VENDOR_LINKSYS, 	USB_PRODUCT_LINKSYS_HG20F9}, AX772B },
+	{ { USB_VENDOR_LINKSYS, 	USB_PRODUCT_LINKSYS_HG20F9}, AX772B },
 	{ { USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_USB200M}, 0 },
 	{ { USB_VENDOR_LINKSYS4,	USB_PRODUCT_LINKSYS4_USB1000 }, AX178 },
 	{ { USB_VENDOR_LOGITEC,		USB_PRODUCT_LOGITEC_LAN_GTJU2}, AX178 },
@@ -325,7 +325,7 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 static int
 axe_miibus_readreg_locked(device_t dev, int phy, int reg)
 {
-    	AXEHIST_FUNC(); AXEHIST_CALLED();
+	AXEHIST_FUNC(); AXEHIST_CALLED();
 	struct axe_softc *sc = device_private(dev);
 	usbd_status err;
 	uint16_t val;

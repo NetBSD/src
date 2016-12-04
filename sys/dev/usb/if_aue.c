@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.138 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.139 2016/12/04 10:12:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.138 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.139 2016/12/04 10:12:35 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -662,7 +662,7 @@ aue_reset(struct aue_softc *sc)
 	 *
 	 * Note: We force all of the GPIO pins low first, *then*
 	 * enable the ones we want.
-  	 */
+	 */
 	if (sc->aue_flags & LSYS) {
 		/* Grrr. LinkSys has to be different from everyone else. */
 		aue_csr_write_1(sc, AUE_GPIO0,
@@ -671,7 +671,7 @@ aue_reset(struct aue_softc *sc)
 		aue_csr_write_1(sc, AUE_GPIO0,
 		    AUE_GPIO_OUT0 | AUE_GPIO_SEL0);
 	}
-  	aue_csr_write_1(sc, AUE_GPIO0,
+	aue_csr_write_1(sc, AUE_GPIO0,
 	    AUE_GPIO_OUT0 | AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
 
 	if (sc->aue_flags & PII)

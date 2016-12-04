@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.13 2016/09/05 20:58:51 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.14 2016/12/04 10:12:35 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.13 2016/09/05 20:58:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.14 2016/12/04 10:12:35 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -2279,7 +2279,7 @@ athn_usb_txeof(struct usbd_xfer *xfer, void * priv,
 
 Static int
 athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
-    	struct athn_usb_tx_data *data)
+    struct athn_usb_tx_data *data)
 {
 	struct athn_usb_softc *usc = ATHN_USB_SOFTC(sc);
 	struct athn_node *an = ATHN_NODE(ni);
