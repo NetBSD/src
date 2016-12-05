@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.1 2016/12/01 20:11:17 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.2 2016/12/05 20:10:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -124,6 +124,16 @@
  * always refer to checks for positive values.
  */
 
+#define TEST_REQUIRE_EQ(x, y)						\
+do {									\
+	uintmax_t vx = (x);						\
+	uintmax_t vy = (y);						\
+	int ret = vx == vy;						\
+	if (!ret)							\
+		ATF_REQUIRE_EQ_MSG(vx, vy, "%s(%ju) == %s(%ju)", 	\
+		    #x, vx, #y, vy);					\
+} while (/*CONSTCOND*/0)
+
 /*
  * A child process cannot call atf functions and expect them to magically
  * work like in the parent.
@@ -134,11 +144,13 @@
  */
 #define FORKEE_ASSERT_EQ(x, y)						\
 do {									\
-	int ret = (x) == (y);						\
+	uintmax_t vx = (x);						\
+	uintmax_t vy = (y);						\
+	int ret = vx == vy;						\
 	if (!ret)							\
 		errx(EXIT_FAILURE, "%s:%d %s(): Assertion failed for: "	\
-		    "%s(%d) == %s(%d)", __FILE__, __LINE__, __func__,	\
-		    #x, (int)x, #y, (int)y);				\
+		    "%s(%ju) == %s(%ju)", __FILE__, __LINE__, __func__,	\
+		    #x, vx, #y, vy);					\
 } while (/*CONSTCOND*/0)
 
 #define FORKEE_ASSERTX(x)						\
@@ -191,15 +203,15 @@ do {									\
  * are no stopped, continued or exited children, 0 is returned.
  */
 #if defined(TWAIT_WAITID)
-#define TWAIT_REQUIRE_SUCCESS(a,b)	ATF_REQUIRE((a) == 0)
+#define TWAIT_REQUIRE_SUCCESS(a,b)	TEST_REQUIRE_EQ((a), 0)
 #define TWAIT_REQUIRE_FAILURE(a,b)	ATF_REQUIRE_ERRNO((a),(b) == -1)
-#define FORKEE_REQUIRE_SUCCESS(a,b)	FORKEE_ASSERTX((a) == 0)
+#define FORKEE_REQUIRE_SUCCESS(a,b)	FORKEE_ASSERT_EQ(a, 0)
 #define FORKEE_REQUIRE_FAILURE(a,b)	\
 	FORKEE_ASSERTX(((a) == errno) && ((b) == -1))
 #else
-#define TWAIT_REQUIRE_SUCCESS(a,b)	ATF_REQUIRE((a) == (b))
+#define TWAIT_REQUIRE_SUCCESS(a,b)	TEST_REQUIRE_EQ((a), (b))
 #define TWAIT_REQUIRE_FAILURE(a,b)	ATF_REQUIRE_ERRNO((a),(b) == -1)
-#define FORKEE_REQUIRE_SUCCESS(a,b)	FORKEE_ASSERTX((a) == (b))
+#define FORKEE_REQUIRE_SUCCESS(a,b)	FORKEE_ASSERT_EQ(a, b)
 #define FORKEE_REQUIRE_FAILURE(a,b)	\
 	FORKEE_ASSERTX(((a) == errno) && ((b) == -1))
 #endif
