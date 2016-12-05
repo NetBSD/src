@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.5 2016/11/19 19:06:12 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.6 2016/12/05 22:07:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.5 2016/11/19 19:06:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.6 2016/12/05 22:07:16 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -891,7 +891,14 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		if (lt) {
 			lwp_addref(lt);
 			pl.pl_lwpid = lt->l_lid;
-			if (lt->l_lid == t->p_sigctx.ps_lwp)
+			/*
+			 * If we match the lwp, or it was sent to every lwp,
+			 * we set PL_EVENT_SIGNAL.
+			 * XXX: ps_lwp == 0 means everyone and noone, so
+			 * check ps_signo too.
+			 */
+			if (lt->l_lid == t->p_sigctx.ps_lwp
+			    || (t->p_sigctx.ps_lwp == 0 && t->p_sigctx.ps_signo))
 				pl.pl_event = PL_EVENT_SIGNAL;
 		}
 		mutex_exit(t->p_lock);
