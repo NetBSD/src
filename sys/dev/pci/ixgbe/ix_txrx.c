@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 292751 2015-12-26 17:27:48Z bz $*/
-/*$NetBSD: ix_txrx.c,v 1.9 2016/12/02 12:14:37 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
+/*$NetBSD: ix_txrx.c,v 1.10 2016/12/05 08:50:29 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -433,7 +433,7 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	}
 
 	/* Make certain there are enough descriptors */
-	if (map->dm_nsegs > txr->tx_avail - 2) {
+	if (txr->tx_avail < (map->dm_nsegs + 2)) {
 		txr->no_desc_avail.ev_count++;
 		ixgbe_dmamap_unload(txr->txtag, txbuf->map);
 		return EAGAIN;
@@ -1804,7 +1804,6 @@ ixgbe_rxeof(struct ix_queue *que)
 	struct ifnet		*ifp = adapter->ifp;
 #ifdef LRO
 	struct lro_ctrl		*lro = &rxr->lro;
-	struct lro_entry	*queued;
 #endif /* LRO */
 	int			i, nextp, processed = 0;
 	u32			staterr = 0;
@@ -2026,7 +2025,7 @@ ixgbe_rxeof(struct ix_queue *que)
 #endif
                                     default:
                                         M_HASHTYPE_SET(sendmp,
-                                            M_HASHTYPE_OPAQUE);
+                                            M_HASHTYPE_OPAQUE_HASH);
                                 }
                         } else {
                                 sendmp->m_pkthdr.flowid = que->msix;
@@ -2066,10 +2065,7 @@ next_desc:
 	/*
 	 * Flush any outstanding LRO work
 	 */
-	while ((queued = SLIST_FIRST(&lro->lro_active)) != NULL) {
-		SLIST_REMOVE_HEAD(&lro->lro_active, next);
-		tcp_lro_flush(lro, queued);
-	}
+	tcp_lro_flush_all(lro);
 #endif /* LRO */
 
 	IXGBE_RX_UNLOCK(rxr);
