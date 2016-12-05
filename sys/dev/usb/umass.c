@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.15 2016/10/27 07:46:19 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.16 2016/12/05 10:55:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.15 2016/10/27 07:46:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.16 2016/12/05 10:55:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -527,8 +527,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 	DPRINTFM(UDMASS_USB, "sc %p: opening iface %p epaddr %d for BULKOUT",
 	    sc, sc->sc_iface, sc->sc_epaddr[UMASS_BULKOUT], 0);
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_BULKOUT],
-				USBD_EXCLUSIVE_USE,
-				&sc->sc_pipe[UMASS_BULKOUT]);
+	    USBD_EXCLUSIVE_USE | USBD_MPSAFE, &sc->sc_pipe[UMASS_BULKOUT]);
 	if (err) {
 		aprint_error_dev(self, "cannot open %u-out pipe (bulk)\n",
 		    sc->sc_epaddr[UMASS_BULKOUT]);
@@ -538,7 +537,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 	DPRINTFM(UDMASS_USB, "sc %p: opening iface %p epaddr %d for BULKIN",
 	    sc, sc->sc_iface, sc->sc_epaddr[UMASS_BULKIN], 0);
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_BULKIN],
-	    USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_BULKIN]);
+	    USBD_EXCLUSIVE_USE | USBD_MPSAFE, &sc->sc_pipe[UMASS_BULKIN]);
 	if (err) {
 		aprint_error_dev(self, "could not open %u-in pipe (bulk)\n",
 		    sc->sc_epaddr[UMASS_BULKIN]);
@@ -562,7 +561,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 		    "sc %p: opening iface %p epaddr %d for INTRIN",
 		    sc, sc->sc_iface, sc->sc_epaddr[UMASS_INTRIN], 0);
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_INTRIN],
-				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_INTRIN]);
+		    USBD_EXCLUSIVE_USE | USBD_MPSAFE, &sc->sc_pipe[UMASS_INTRIN]);
 		if (err) {
 			aprint_error_dev(self, "couldn't open %u-in (intr)\n",
 			    sc->sc_epaddr[UMASS_INTRIN]);

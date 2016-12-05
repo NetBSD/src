@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.30.2.5 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.30.2.6 2016/12/05 10:55:18 skrll Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.30.2.5 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.30.2.6 2016/12/05 10:55:18 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

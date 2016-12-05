@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.142.2.6 2016/10/05 20:56:04 skrll Exp $
+#	$NetBSD: Makefile,v 1.142.2.7 2016/12/05 10:55:26 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,10 @@ SUBDIR+=	aio
 SUBDIR+=	blowfish
 SUBDIR+=	bpf
 SUBDIR+=	bpf_filter
+SUBDIR+=	bufq_disksort
+SUBDIR+=	bufq_fcfs
+SUBDIR+=	bufq_priocscan
+SUBDIR+=	bufq_readprio
 SUBDIR+=	camellia
 SUBDIR+=	cast128
 SUBDIR+=	ccd
@@ -96,6 +100,8 @@ SUBDIR+=	pf
 SUBDIR+=	ppp_bsdcomp
 SUBDIR+=	ppp_deflate
 SUBDIR+=	procfs
+SUBDIR+=	ptrace
+SUBDIR+=	ptrace_common
 SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
@@ -234,16 +240,18 @@ SUBDIR+=	wmimsi
 .if ${MACHINE_CPU} == "arm" \
     || (!empty(MACHINE_ARCH:Mmips64*) && !defined(BSD_MK_COMPAT_FILE))
 SUBDIR+=	compat_netbsd32
-SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_mqueue
+SUBDIR+=	compat_netbsd32_nfssrv
+SUBDIR+=	compat_netbsd32_ptrace
 SUBDIR+=	compat_netbsd32_sysvipc
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
-SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_mqueue
+SUBDIR+=	compat_netbsd32_nfssrv
+SUBDIR+=	compat_netbsd32_ptrace
 SUBDIR+=	compat_netbsd32_sysvipc
 .endif
 

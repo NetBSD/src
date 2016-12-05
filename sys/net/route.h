@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.84.4.6 2016/10/05 20:56:08 skrll Exp $	*/
+/*	$NetBSD: route.h,v 1.84.4.7 2016/12/05 10:55:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -371,14 +371,10 @@ int	rt_timer_add(struct rtentry *,
 	    struct rttimer_queue *);
 unsigned long
 	rt_timer_count(struct rttimer_queue *);
-void	rt_timer_init(void);
 void	rt_timer_queue_change(struct rttimer_queue *, long);
 struct rttimer_queue *
 	rt_timer_queue_create(u_int);
-void	rt_timer_queue_destroy(struct rttimer_queue *, int);
-void	rt_timer_queue_remove_all(struct rttimer_queue *, int);
-void	rt_timer_remove_all(struct rtentry *, int);
-void	rt_timer_timer(void *);
+void	rt_timer_queue_destroy(struct rttimer_queue *);
 
 void	rt_newmsg(const int, const struct rtentry *);
 struct rtentry *
@@ -412,6 +408,8 @@ struct sockaddr *
 	rt_gettag(const struct rtentry *);
 
 int	rt_check_reject_route(const struct rtentry *, const struct ifnet *);
+void	rt_delete_matched_entries(sa_family_t,
+	    int (*)(struct rtentry *, void *), void *);
 
 static inline void
 rt_assert_referenced(const struct rtentry *rt)
@@ -447,12 +445,6 @@ rtcache_lookup1(struct route *ro, const struct sockaddr *dst, int clone)
 	int hit;
 
 	return rtcache_lookup2(ro, dst, clone, &hit);
-}
-
-static inline struct rtentry *
-rtcache_lookup_noclone(struct route *ro, const struct sockaddr *dst)
-{
-	return rtcache_lookup1(ro, dst, 0);
 }
 
 static inline struct rtentry *
@@ -514,6 +506,9 @@ struct rtentry *
 	rt_matchaddr(rtbl_t *, const struct sockaddr *);
 int	rt_refines(const struct sockaddr *, const struct sockaddr *);
 int	rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
+struct rtentry *
+	rtbl_search_matched_entry(sa_family_t,
+	    int (*)(struct rtentry *, void *), void *);
 void	rtbl_init(void);
 
 #endif /* _KERNEL */

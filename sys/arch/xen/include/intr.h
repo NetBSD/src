@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.35.14.2 2016/07/09 20:24:59 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.35.14.3 2016/12/05 10:54:59 skrll Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -46,7 +46,7 @@
 
 struct cpu_info;
 /*
- * Struct describing an event channel. 
+ * Struct describing an event channel.
  */
 
 struct evtsource {
@@ -164,6 +164,8 @@ void intr_default_setup(void);
 int x86_nmi(void);
 
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
+void *intr_establish_xname(int, struct pic *, int, int, int, int (*)(void *), void *,
+    bool, const char *);
 void intr_disestablish(struct intrhand *);
 const char *intr_string(intr_handle_t);
 void cpu_intr_init(struct cpu_info *);
@@ -184,7 +186,6 @@ void xen_broadcast_ipi(uint32_t);
 #define xen_send_ipi(_i1, _i2) (0) /* nothing */
 #define xen_broadcast_ipi(_i1) ((void) 0) /* nothing */
 #endif /* MULTIPROCESSOR */
-
 #endif /* !_LOCORE */
 
 #endif /* _XEN_INTR_H_ */

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.145.2.1 2015/09/22 12:05:39 skrll Exp $
+# $NetBSD: GENERIC,v 1.145.2.2 2016/12/05 10:54:51 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.145.2.1 $"
+#ident 		"GENERIC-$Revision: 1.145.2.2 $"
 
 maxusers	32
 
@@ -343,6 +343,7 @@ pseudo-device	wsfont
 #pseudo-device	drvctl
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 
 # Veriexec

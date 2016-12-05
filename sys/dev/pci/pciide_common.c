@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.60.6.1 2016/07/09 20:25:14 skrll Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.60.6.2 2016/12/05 10:55:16 skrll Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.60.6.1 2016/07/09 20:25:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.60.6.2 2016/12/05 10:55:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -354,8 +354,9 @@ pciide_mapregs_native(const struct pci_attach_args *pa,
 			goto bad;
 		}
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
-		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
-		    intrhandle, IPL_BIO, pci_intr, sc);
+		sc->sc_pci_ih = pci_intr_establish_xname(pa->pa_pc,
+		    intrhandle, IPL_BIO, pci_intr, sc,
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev));
 		if (sc->sc_pci_ih != NULL) {
 			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "using %s for native-PCI interrupt\n",

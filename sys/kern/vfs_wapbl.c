@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.61.2.4 2016/10/05 20:56:03 skrll Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.61.2.5 2016/12/05 10:55:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.61.2.4 2016/10/05 20:56:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.61.2.5 2016/12/05 10:55:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -206,7 +206,7 @@ struct wapbl {
 	int wl_brperjblock;	/* r Block records per journal block */
 #endif
 
-	SIMPLEQ_HEAD(, wapbl_dealloc) wl_dealloclist;	/* lm:	list head */
+	TAILQ_HEAD(, wapbl_dealloc) wl_dealloclist;	/* lm:	list head */
 	int wl_dealloccnt;				/* lm:	total count */
 	int wl_dealloclim;				/* r:	max count */
 
@@ -266,6 +266,9 @@ static struct wapbl_ino *wapbl_inodetrk_get(struct wapbl *wl, ino_t ino);
 
 static size_t wapbl_transaction_len(struct wapbl *wl);
 static inline size_t wapbl_transaction_inodes_len(struct wapbl *wl);
+
+static void wapbl_deallocation_free(struct wapbl *, struct wapbl_dealloc *,
+	bool);
 
 #if 0
 int wapbl_replay_verify(struct wapbl_replay *, struct vnode *);
@@ -512,7 +515,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 
 	/* XXX tie this into resource estimation */
 	wl->wl_dealloclim = wl->wl_bufbytes_max / mp->mnt_stat.f_bsize / 2;
-	SIMPLEQ_INIT(&wl->wl_dealloclist);
+	TAILQ_INIT(&wl->wl_dealloclist);
 
 	wl->wl_buffer = wapbl_alloc(MAXPHYS);
 	wl->wl_buffer_used = 0;
@@ -586,7 +589,7 @@ wapbl_discard(struct wapbl *wl)
 	 * if we want to call flush from inside a transaction
 	 */
 	rw_enter(&wl->wl_rwlock, RW_WRITER);
-	wl->wl_flush(wl->wl_mount, SIMPLEQ_FIRST(&wl->wl_dealloclist));
+	wl->wl_flush(wl->wl_mount, TAILQ_FIRST(&wl->wl_dealloclist));
 
 #ifdef WAPBL_DEBUG_PRINT
 	{
@@ -688,11 +691,8 @@ wapbl_discard(struct wapbl *wl)
 	}
 
 	/* Discard list of deallocs */
-	while ((wd = SIMPLEQ_FIRST(&wl->wl_dealloclist)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&wl->wl_dealloclist, wd_entries);
-		pool_put(&wapbl_dealloc_pool, wd);
-		wl->wl_dealloccnt--;
-	}
+	while ((wd = TAILQ_FIRST(&wl->wl_dealloclist)) != NULL)
+		wapbl_deallocation_free(wl, wd, true);
 
 	/* XXX should we clear wl_reserved_bytes? */
 
@@ -702,7 +702,7 @@ wapbl_discard(struct wapbl *wl)
 	KASSERT(LIST_EMPTY(&wl->wl_bufs));
 	KASSERT(SIMPLEQ_EMPTY(&wl->wl_entries));
 	KASSERT(wl->wl_inohashcnt == 0);
-	KASSERT(SIMPLEQ_EMPTY(&wl->wl_dealloclist));
+	KASSERT(TAILQ_EMPTY(&wl->wl_dealloclist));
 	KASSERT(wl->wl_dealloccnt == 0);
 
 	rw_exit(&wl->wl_rwlock);
@@ -738,7 +738,7 @@ wapbl_stop(struct wapbl *wl, int force)
 	KASSERT(wl->wl_dealloccnt == 0);
 	KASSERT(SIMPLEQ_EMPTY(&wl->wl_entries));
 	KASSERT(wl->wl_inohashcnt == 0);
-	KASSERT(SIMPLEQ_EMPTY(&wl->wl_dealloclist));
+	KASSERT(TAILQ_EMPTY(&wl->wl_dealloclist));
 	KASSERT(wl->wl_dealloccnt == 0);
 
 	wapbl_free(wl->wl_wc_scratch, wl->wl_wc_header->wc_len);
@@ -1561,7 +1561,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	 * if we want to call flush from inside a transaction
 	 */
 	rw_enter(&wl->wl_rwlock, RW_WRITER);
-	wl->wl_flush(wl->wl_mount, SIMPLEQ_FIRST(&wl->wl_dealloclist));
+	wl->wl_flush(wl->wl_mount, TAILQ_FIRST(&wl->wl_dealloclist));
 
 	/*
 	 * Now that we are exclusively locked and the file system has
@@ -1739,7 +1739,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
  out:
 	if (error) {
 		wl->wl_flush_abort(wl->wl_mount,
-		    SIMPLEQ_FIRST(&wl->wl_dealloclist));
+		    TAILQ_FIRST(&wl->wl_dealloclist));
 	}
 
 #ifdef WAPBL_DEBUG_PRINT
@@ -1878,7 +1878,7 @@ wapbl_print(struct wapbl *wl,
 		{
 			struct wapbl_dealloc *wd;
 			cnt = 0;
-			SIMPLEQ_FOREACH(wd, &wl->wl_dealloclist, wd_entries) {
+			TAILQ_FOREACH(wd, &wl->wl_dealloclist, wd_entries) {
 				(*pr)(" %"PRId64":%d,",
 				      wd->wd_blkno,
 				      wd->wd_len);
@@ -1929,22 +1929,36 @@ wapbl_dump(struct wapbl *wl)
 
 /****************************************************************/
 
-void
-wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
+int
+wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len, bool force,
+    void **cookiep)
 {
 	struct wapbl_dealloc *wd;
+	int error = 0;
 
 	wapbl_jlock_assert(wl);
 
 	mutex_enter(&wl->wl_mtx);
-	/* XXX should eventually instead tie this into resource estimation */
-	/*
-	 * XXX this panic needs locking/mutex analysis and the
-	 * ability to cope with the failure.
-	 */
-	/* XXX this XXX doesn't have enough XXX */
-	if (__predict_false(wl->wl_dealloccnt >= wl->wl_dealloclim))
-		panic("wapbl_register_deallocation: out of resources");
+
+	if (__predict_false(wl->wl_dealloccnt >= wl->wl_dealloclim)) {
+		if (!force) {
+			error = EAGAIN;
+			goto out;
+		}
+
+		/*
+		 * Forced registration can only be used when:
+		 * 1) the caller can't cope with failure
+		 * 2) the path can be triggered only bounded, small
+		 *    times per transaction
+		 * If this is not fullfilled, and the path would be triggered
+		 * many times, this could overflow maximum transaction size
+		 * and panic later.
+		 */
+		printf("%s: forced dealloc registration over limit: %d >= %d\n",
+			wl->wl_mount->mnt_stat.f_mntonname,
+			wl->wl_dealloccnt, wl->wl_dealloclim);
+	}
 
 	wl->wl_dealloccnt++;
 	mutex_exit(&wl->wl_mtx);
@@ -1954,11 +1968,45 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 	wd->wd_len = len;
 
 	mutex_enter(&wl->wl_mtx);
-	SIMPLEQ_INSERT_TAIL(&wl->wl_dealloclist, wd, wd_entries);
+	TAILQ_INSERT_TAIL(&wl->wl_dealloclist, wd, wd_entries);
+
+	if (cookiep)
+		*cookiep = wd;
+
+ out:
 	mutex_exit(&wl->wl_mtx);
 
 	WAPBL_PRINTF(WAPBL_PRINT_ALLOC,
-	    ("wapbl_register_deallocation: blk=%"PRId64" len=%d\n", blk, len));
+	    ("wapbl_register_deallocation: blk=%"PRId64" len=%d error=%d\n",
+	    blk, len, error));
+
+	return error;
+}
+
+static void
+wapbl_deallocation_free(struct wapbl *wl, struct wapbl_dealloc *wd,
+	bool locked)
+{
+	KASSERT(!locked
+	    || rw_lock_held(&wl->wl_rwlock) || mutex_owned(&wl->wl_mtx));
+
+	if (!locked)
+		mutex_enter(&wl->wl_mtx);
+
+	TAILQ_REMOVE(&wl->wl_dealloclist, wd, wd_entries);
+	wl->wl_dealloccnt--;
+
+	if (!locked)
+		mutex_exit(&wl->wl_mtx);
+
+	pool_put(&wapbl_dealloc_pool, wd);
+}
+
+void
+wapbl_unregister_deallocation(struct wapbl *wl, void *cookie)
+{
+	KASSERT(cookie != NULL);
+	wapbl_deallocation_free(wl, cookie, false);
 }
 
 /****************************************************************/
@@ -2338,7 +2386,7 @@ wapbl_write_revocations(struct wapbl *wl, off_t *offp)
 	if (wl->wl_dealloccnt == 0)
 		return 0;
 
-	while ((wd = SIMPLEQ_FIRST(&wl->wl_dealloclist)) != NULL) {
+	while ((wd = TAILQ_FIRST(&wl->wl_dealloclist)) != NULL) {
 		wc->wc_type = WAPBL_WC_REVOCATIONS;
 		wc->wc_len = blocklen;
 		wc->wc_blkcount = 0;
@@ -2349,7 +2397,7 @@ wapbl_write_revocations(struct wapbl *wl, off_t *offp)
 			    wd->wd_len;
 			wc->wc_blkcount++;
 
-			wd = SIMPLEQ_NEXT(wd, wd_entries);
+			wd = TAILQ_NEXT(wd, wd_entries);
 		}
 		WAPBL_PRINTF(WAPBL_PRINT_WRITE,
 		    ("wapbl_write_revocations: len = %u off = %"PRIdMAX"\n",
@@ -2360,12 +2408,10 @@ wapbl_write_revocations(struct wapbl *wl, off_t *offp)
 
 		/* free all successfully written deallocs */
 		lwd = wd;
-		while ((wd = SIMPLEQ_FIRST(&wl->wl_dealloclist)) != NULL) {
+		while ((wd = TAILQ_FIRST(&wl->wl_dealloclist)) != NULL) {
 			if (wd == lwd)
 				break;
-			SIMPLEQ_REMOVE_HEAD(&wl->wl_dealloclist, wd_entries);
-			pool_put(&wapbl_dealloc_pool, wd);
-			wl->wl_dealloccnt--;
+			wapbl_deallocation_free(wl, wd, true);
 		}
 	}
 	*offp = off;

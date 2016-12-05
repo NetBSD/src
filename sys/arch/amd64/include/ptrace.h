@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.3.100.2 2015/12/27 12:09:28 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.3.100.3 2016/12/05 10:54:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -67,6 +67,9 @@
 
 #define process_read_regs32	netbsd32_process_read_regs
 #define process_read_fpregs32	netbsd32_process_read_fpregs
+
+#define process_write_regs32	netbsd32_process_write_regs
+#define process_write_fpregs32	netbsd32_process_write_fpregs
 
 #define process_reg32		struct reg32
 #define process_fpreg32		struct fpreg32

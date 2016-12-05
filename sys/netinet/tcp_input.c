@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.334.4.5 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.334.4.6 2016/12/05 10:55:28 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.334.4.5 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.334.4.6 2016/12/05 10:55:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1346,7 +1346,22 @@ tcp_input(struct mbuf *m, ...)
 		m_freem(m);
 		return;
 	}
-
+	/*
+         * Enforce alignment requirements that are violated in
+	 * some cases, see kern/50766 for details.
+	 */
+	if (TCP_HDR_ALIGNED_P(th) == 0) {
+		m = m_copyup(m, toff + sizeof(struct tcphdr), 0);
+		if (m == NULL) {
+			TCP_STATINC(TCP_STAT_RCVSHORT);
+			return;
+		}
+		ip = mtod(m, struct ip *);
+#ifdef INET6
+		ip6 = mtod(m, struct ip6_hdr *);
+#endif
+		th = (struct tcphdr *)(mtod(m, char *) + toff);
+	}
 	KASSERT(TCP_HDR_ALIGNED_P(th));
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.27.6.3 2016/10/05 20:55:37 skrll Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.27.6.4 2016/12/05 10:54:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.27.6.3 2016/10/05 20:55:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.27.6.4 2016/12/05 10:54:59 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -274,8 +274,8 @@ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
 	}
 }
 
-void *
-pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+static void *
+pci_intr_establish_xname_internal(pci_chipset_tag_t pc, pci_intr_handle_t ih,
     int level, int (*func)(void *), void *arg, const char *xname)
 {
 	int pin, irq;
@@ -331,8 +331,19 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
     int level, int (*func)(void *), void *arg)
 {
 
-	return pci_intr_establish_xname(pc, ih, level, func, arg, "unknown");
+	return pci_intr_establish_xname_internal(pc, ih, level, func, arg, "unknown");
 }
+
+#ifdef __HAVE_PCI_MSI_MSIX
+void *
+pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+    int level, int (*func)(void *), void *arg, const char *xname)
+{
+
+	return pci_intr_establish_xname_internal(pc, ih, level, func, arg, xname);
+}
+#endif
+
 
 void
 pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
@@ -351,6 +362,7 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 }
 
 #if NIOAPIC > 0
+#ifdef __HAVE_PCI_MSI_MSIX
 pci_intr_type_t
 pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
@@ -544,4 +556,5 @@ pci_intr_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih, int count)
 	}
 
 }
-#endif
+#endif /* __HAVE_PCI_MSI_MSIX */
+#endif /*  NIOAPIC > 0 */

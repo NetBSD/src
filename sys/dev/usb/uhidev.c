@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61.4.13 2016/07/09 20:25:16 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.4.14 2016/12/05 10:55:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.13 2016/07/09 20:25:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.14 2016/12/05 10:55:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -103,7 +103,7 @@ uhidev_match(device_t parent, cfdata_t match, void *aux)
 	if (USBIF_IS_XINPUT(uiaa))
 		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 	/* Xbox One controllers */
- 	if (USBIF_IS_X1INPUT(uiaa) && uiaa->uiaa_ifaceno == 0)
+	if (USBIF_IS_X1INPUT(uiaa) && uiaa->uiaa_ifaceno == 0)
 		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 
 	if (uiaa->uiaa_class != UICLASS_HID)

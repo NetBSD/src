@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177.2.7 2016/10/05 20:55:35 skrll Exp $
+# $NetBSD: GENERIC,v 1.177.2.8 2016/12/05 10:54:58 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.177.2.7 $"
+#ident 		"GENERIC-$Revision: 1.177.2.8 $"
 
 maxusers	64
 
@@ -994,6 +994,7 @@ pseudo-device	lockstat		# lock profiling
 pseudo-device	putter			# for puffs and pud
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #

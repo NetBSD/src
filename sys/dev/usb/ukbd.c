@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.129.6.7 2016/05/29 08:44:31 skrll Exp $        */
+/*      $NetBSD: ukbd.c,v 1.129.6.8 2016/12/05 10:55:18 skrll Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,14 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129.6.7 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129.6.8 2016/12/05 10:55:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_ddb.h"
 #include "opt_ukbd.h"
 #include "opt_ukbd_layout.h"
 #include "opt_usb.h"
 #include "opt_wsdisplay_compat.h"
-#include "opt_ddb.h"
 #endif /* _KERNEL_OPT */
 
 #include <sys/param.h>

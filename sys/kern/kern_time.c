@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.179.10.5 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.179.10.6 2016/12/05 10:55:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179.10.5 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179.10.6 2016/12/05 10:55:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -319,7 +319,8 @@ sys_clock_nanosleep(struct lwp *l, const struct sys_clock_nanosleep_args *uap,
 	if (SCARG(uap, rmtp) == NULL || (error != 0 && error != EINTR))
 		goto out;
 
-	if ((error1 = copyout(&rmt, SCARG(uap, rmtp), sizeof(rmt))) != 0)
+	if ((SCARG(uap, flags) & TIMER_ABSTIME) == 0 &&
+	    (error1 = copyout(&rmt, SCARG(uap, rmtp), sizeof(rmt))) != 0)
 		error = error1;
 out:
 	*retval = error;
@@ -471,7 +472,7 @@ settimeofday1(const struct timeval *utv, bool userspace,
 		log(LOG_WARNING, "pid %d attempted to set the "
 		    "(obsolete) kernel time zone\n", l->l_proc->p_pid);
 
-	if (utv == NULL) 
+	if (utv == NULL)
 		return 0;
 
 	if (userspace) {
@@ -531,7 +532,7 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 		}
 		mutex_spin_exit(&timecounter_lock);
 	}
-	
+
 	if (delta) {
 		mutex_spin_enter(&timecounter_lock);
 		time_adjtime = delta->tv_sec * 1000000 + delta->tv_usec;
@@ -679,7 +680,7 @@ sys_timer_delete(struct lwp *l, const struct sys_timer_delete_args *uap,
 
 	timerid = SCARG(uap, timerid);
 	pts = p->p_timers;
-	
+
 	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
 		return (EINVAL);
 
@@ -1430,7 +1431,7 @@ timer_intr(void *cookie)
 	ksiginfo_t ksi;
 	struct ptimer *pt;
 	proc_t *p;
-	
+
 	mutex_enter(proc_lock);
 	mutex_spin_enter(&timer_lock);
 	while ((pt = TAILQ_FIRST(&timer_queue)) != NULL) {

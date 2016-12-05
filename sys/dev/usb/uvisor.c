@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.45.24.8 2016/07/09 20:25:17 skrll Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.45.24.9 2016/12/05 10:55:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.8 2016/07/09 20:25:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.9 2016/12/05 10:55:20 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

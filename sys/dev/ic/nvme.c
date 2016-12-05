@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.2.2.4 2016/10/05 20:55:41 skrll Exp $	*/
+/*	$NetBSD: nvme.c,v 1.2.2.5 2016/12/05 10:55:01 skrll Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.2.2.4 2016/10/05 20:55:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.2.2.5 2016/12/05 10:55:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.2.2.4 2016/10/05 20:55:41 skrll Exp $");
 #include <dev/ic/nvmevar.h>
 #include <dev/ic/nvmeio.h>
 
-int nvme_adminq_size = 128;
+int nvme_adminq_size = 32;
 int nvme_ioq_size = 1024;
 
 static int	nvme_print(void *, const char *);
@@ -58,7 +58,7 @@ static int	nvme_identify(struct nvme_softc *, u_int);
 static void	nvme_fill_identify(struct nvme_queue *, struct nvme_ccb *,
 		    void *);
 
-static int	nvme_ccbs_alloc(struct nvme_queue *, u_int);
+static int	nvme_ccbs_alloc(struct nvme_queue *, uint16_t);
 static void	nvme_ccbs_free(struct nvme_queue *);
 
 static struct nvme_ccb *
@@ -85,9 +85,11 @@ static void	nvme_q_submit(struct nvme_softc *, struct nvme_queue *,
 static int	nvme_q_complete(struct nvme_softc *, struct nvme_queue *q);
 static void	nvme_q_free(struct nvme_softc *, struct nvme_queue *);
 
-static int	nvme_dmamem_alloc(struct nvme_softc *, size_t,
-		    struct nvme_dmamem *);
+static struct nvme_dmamem *
+		nvme_dmamem_alloc(struct nvme_softc *, size_t);
 static void	nvme_dmamem_free(struct nvme_softc *, struct nvme_dmamem *);
+static void	nvme_dmamem_sync(struct nvme_softc *, struct nvme_dmamem *,
+		    int);
 
 static void	nvme_ns_io_fill(struct nvme_queue *, struct nvme_ccb *,
 		    void *);
@@ -151,12 +153,8 @@ nvme_write8(struct nvme_softc *sc, bus_size_t r, uint64_t v)
 #endif
 }
 #endif /* __LP64__ */
-
 #define nvme_barrier(_s, _r, _l, _f) \
 	bus_space_barrier((_s)->sc_iot, (_s)->sc_ioh, (_r), (_l), (_f))
-#define nvme_dmamem_sync(sc, mem, ops) \
-	bus_dmamap_sync((sc)->sc_dmat, NVME_DMA_MAP(mem), \
-	    0, NVME_DMA_LEN(mem), (ops));
 
 static void
 nvme_version(struct nvme_softc *sc, uint32_t ver)
@@ -335,8 +333,8 @@ nvme_attach(struct nvme_softc *sc)
 	uint32_t reg;
 	u_int dstrd;
 	u_int mps = PAGE_SHIFT;
-	int adminq_entries = nvme_adminq_size;
-	int ioq_entries = nvme_ioq_size;
+	uint16_t adminq_entries = nvme_adminq_size;
+	uint16_t ioq_entries = nvme_ioq_size;
 	int i;
 
 	reg = nvme_read4(sc, NVME_VS);
@@ -357,6 +355,8 @@ nvme_attach(struct nvme_softc *sc)
 	}
 	if (NVME_CAP_MPSMAX(cap) < mps)
 		mps = NVME_CAP_MPSMAX(cap);
+	if (ioq_entries > NVME_CAP_MQES(cap))
+		ioq_entries = NVME_CAP_MQES(cap);
 
 	/* set initial values to be used for admin queue during probe */
 	sc->sc_rdy_to = NVME_CAP_TO(cap);
@@ -445,16 +445,23 @@ free_admin_q:
 int
 nvme_rescan(device_t self, const char *attr, const int *flags)
 {
-	int i;
 	struct nvme_softc *sc = device_private(self);
 	struct nvme_attach_args naa;
+	uint64_t cap;
+	int ioq_entries = nvme_ioq_size;
+	int i;
+
+	cap = nvme_read8(sc, NVME_CAP);
+	if (ioq_entries > NVME_CAP_MQES(cap))
+		ioq_entries = NVME_CAP_MQES(cap);
 
 	for (i = 0; i < sc->sc_nn; i++) {
 		if (sc->sc_namespaces[i].dev)
 			continue;
 		memset(&naa, 0, sizeof(naa));
 		naa.naa_nsid = i + 1;
-		naa.naa_qentries = nvme_ioq_size;
+		naa.naa_qentries = (ioq_entries - 1) * sc->sc_nq;
+		naa.naa_maxphys = sc->sc_mdts;
 		sc->sc_namespaces[i].dev = config_found(sc->sc_dev, &naa,
 		    nvme_print);
 	}
@@ -560,19 +567,19 @@ nvme_ns_identify(struct nvme_softc *sc, uint16_t nsid)
 {
 	struct nvme_sqe sqe;
 	struct nvm_identify_namespace *identify;
-	struct nvme_dmamem mem;
+	struct nvme_dmamem *mem;
 	struct nvme_ccb *ccb;
 	struct nvme_namespace *ns;
-	int error;
+	int rv;
 
 	KASSERT(nsid > 0);
 
 	ccb = nvme_ccb_get(sc->sc_admin_q);
 	KASSERT(ccb != NULL); /* it's a bug if we don't have spare ccb here */
 
-	error = nvme_dmamem_alloc(sc, sizeof(*identify), &mem);
-	if (error)
-		return error;
+	mem = nvme_dmamem_alloc(sc, sizeof(*identify));
+	if (mem == NULL)
+		return ENOMEM;
 
 	memset(&sqe, 0, sizeof(sqe));
 	sqe.opcode = NVM_ADMIN_IDENTIFY;
@@ -584,30 +591,30 @@ nvme_ns_identify(struct nvme_softc *sc, uint16_t nsid)
 	ccb->ccb_cookie = &sqe;
 
 	nvme_dmamem_sync(sc, mem, BUS_DMASYNC_PREREAD);
-	error = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill,
-	    NVME_TIMO_IDENT);
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill, NVME_TIMO_IDENT);
 	nvme_dmamem_sync(sc, mem, BUS_DMASYNC_POSTREAD);
 
 	nvme_ccb_put(sc->sc_admin_q, ccb);
 
-	if (error != 0) {
-		error = EIO;
+	if (rv != 0) {
+		rv = EIO;
 		goto done;
 	}
 
 	/* commit */
 
 	identify = kmem_zalloc(sizeof(*identify), KM_SLEEP);
-	memcpy(identify, NVME_DMA_KVA(mem), sizeof(*identify));
+	*identify = *((volatile struct nvm_identify_namespace *)NVME_DMA_KVA(mem));
+	//memcpy(identify, NVME_DMA_KVA(mem), sizeof(*identify));
 
 	ns = nvme_ns_get(sc, nsid);
 	KASSERT(ns);
 	ns->ident = identify;
 
 done:
-	nvme_dmamem_free(sc, &mem);
+	nvme_dmamem_free(sc, mem);
 
-	return error;
+	return rv;
 }
 
 int
@@ -660,7 +667,7 @@ nvme_ns_dobio(struct nvme_softc *sc, uint16_t nsid, void *cookie,
 		bus_dmamap_sync(sc->sc_dmat,
 		    NVME_DMA_MAP(q->q_ccb_prpls),
 		    ccb->ccb_prpl_off,
-		    sizeof(*ccb->ccb_prpl) * dmap->dm_nsegs - 1,
+		    sizeof(*ccb->ccb_prpl) * (dmap->dm_nsegs - 1),
 		    BUS_DMASYNC_PREWRITE);
 	}
 
@@ -718,7 +725,7 @@ nvme_ns_io_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 		bus_dmamap_sync(sc->sc_dmat,
 		    NVME_DMA_MAP(q->q_ccb_prpls),
 		    ccb->ccb_prpl_off,
-		    sizeof(*ccb->ccb_prpl) * dmap->dm_nsegs - 1,
+		    sizeof(*ccb->ccb_prpl) * (dmap->dm_nsegs - 1),
 		    BUS_DMASYNC_POSTWRITE);
 	}
 
@@ -825,7 +832,7 @@ nvme_pt_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 			bus_dmamap_sync(sc->sc_dmat,
 			    NVME_DMA_MAP(q->q_ccb_prpls),
 			    ccb->ccb_prpl_off,
-			    sizeof(*ccb->ccb_prpl) * dmap->dm_nsegs - 1,
+			    sizeof(*ccb->ccb_prpl) * (dmap->dm_nsegs - 1),
 			    BUS_DMASYNC_PREWRITE);
 			htolem64(&sqe->entry.prp[1], ccb->ccb_prpl_dva);
 			break;
@@ -852,7 +859,7 @@ nvme_pt_done(struct nvme_queue *q, struct nvme_ccb *ccb, struct nvme_cqe *cqe)
 			bus_dmamap_sync(sc->sc_dmat,
 			    NVME_DMA_MAP(q->q_ccb_prpls),
 			    ccb->ccb_prpl_off,
-			    sizeof(*ccb->ccb_prpl) * dmap->dm_nsegs - 1,
+			    sizeof(*ccb->ccb_prpl) * (dmap->dm_nsegs - 1),
 			    BUS_DMASYNC_POSTWRITE);
 		}
 
@@ -1061,7 +1068,20 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 			q->q_cq_phase ^= NVME_CQE_PHASE;
 		}
 
-		rv = 1;
+#ifdef DEBUG
+		/*
+		 * If we get spurious completion notification, something
+		 * is seriously hosed up. Very likely DMA to some random
+		 * memory place happened, so just bail out.
+		 */
+		if ((intptr_t)ccb->ccb_cookie == NVME_CCB_FREE) {
+			panic("%s: invalid ccb detected",
+			    device_xname(sc->sc_dev));
+			/* NOTREACHED */
+		}
+#endif
+
+		rv++;
 
 		/*
 		 * Unlock the mutex before calling the ccb_done callback
@@ -1080,6 +1100,12 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 
 	mutex_exit(&q->q_cq_mtx);
 
+	if (rv) {
+		mutex_enter(&q->q_ccb_mtx);
+		q->q_nccbs_avail += rv;
+		mutex_exit(&q->q_ccb_mtx);
+	}
+
 	return rv;
 }
 
@@ -1088,29 +1114,29 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 {
 	char sn[41], mn[81], fr[17];
 	struct nvm_identify_controller *identify;
-	struct nvme_dmamem mem;
+	struct nvme_dmamem *mem;
 	struct nvme_ccb *ccb;
 	u_int mdts;
-	int error;
+	int rv = 1;
 
 	ccb = nvme_ccb_get(sc->sc_admin_q);
 	KASSERT(ccb != NULL); /* it's a bug if we don't have spare ccb here */
 
-	error = nvme_dmamem_alloc(sc, sizeof(*identify), &mem);
-	if (error)
-		return error;
+	mem = nvme_dmamem_alloc(sc, sizeof(*identify));
+	if (mem == NULL)
+		return 1;
 
 	ccb->ccb_done = nvme_empty_done;
-	ccb->ccb_cookie = &mem;
+	ccb->ccb_cookie = mem;
 
 	nvme_dmamem_sync(sc, mem, BUS_DMASYNC_PREREAD);
-	error = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_fill_identify,
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_fill_identify,
 	    NVME_TIMO_IDENT);
 	nvme_dmamem_sync(sc, mem, BUS_DMASYNC_POSTREAD);
 
 	nvme_ccb_put(sc->sc_admin_q, ccb);
 
-	if (error != 0)
+	if (rv != 0)
 		goto done;
 
 	identify = NVME_DMA_KVA(mem);
@@ -1135,9 +1161,9 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 	memcpy(&sc->sc_identify, identify, sizeof(sc->sc_identify));
 
 done:
-	nvme_dmamem_free(sc, &mem);
+	nvme_dmamem_free(sc, mem);
 
-	return error;
+	return rv;
 }
 
 static int
@@ -1240,19 +1266,18 @@ nvme_fill_identify(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 	struct nvme_dmamem *mem = ccb->ccb_cookie;
 
 	sqe->opcode = NVM_ADMIN_IDENTIFY;
-	htolem64(&sqe->entry.prp[0], NVME_DMA_DVA(*mem));
+	htolem64(&sqe->entry.prp[0], NVME_DMA_DVA(mem));
 	htolem32(&sqe->cdw10, 1);
 }
 
 static int
-nvme_ccbs_alloc(struct nvme_queue *q, u_int nccbs)
+nvme_ccbs_alloc(struct nvme_queue *q, uint16_t nccbs)
 {
 	struct nvme_softc *sc = q->q_sc;
 	struct nvme_ccb *ccb;
 	bus_addr_t off;
 	uint64_t *prpl;
 	u_int i;
-	int error;
 
 	mutex_init(&q->q_ccb_mtx, MUTEX_DEFAULT, IPL_BIO);
 	SIMPLEQ_INIT(&q->q_ccb_list);
@@ -1262,12 +1287,9 @@ nvme_ccbs_alloc(struct nvme_queue *q, u_int nccbs)
 		return 1;
 
 	q->q_nccbs = nccbs;
-	error = nvme_dmamem_alloc(sc, sizeof(*prpl) * sc->sc_max_sgl * nccbs,
-	    &q->q_ccb_prpls);
-	if (error) {
-		kmem_free(q->q_ccbs, sizeof(*ccb) * q->q_nccbs);
-		return error;
-	}
+	q->q_nccbs_avail = nccbs;
+	q->q_ccb_prpls = nvme_dmamem_alloc(sc,
+	    sizeof(*prpl) * sc->sc_max_sgl * nccbs);
 
 	prpl = NVME_DMA_KVA(q->q_ccb_prpls);
 	off = 0;
@@ -1302,12 +1324,19 @@ free_maps:
 static struct nvme_ccb *
 nvme_ccb_get(struct nvme_queue *q)
 {
-	struct nvme_ccb *ccb;
+	struct nvme_ccb *ccb = NULL;
 
 	mutex_enter(&q->q_ccb_mtx);
-	ccb = SIMPLEQ_FIRST(&q->q_ccb_list);
-	if (ccb != NULL)
+	if (q->q_nccbs_avail > 0) {
+		ccb = SIMPLEQ_FIRST(&q->q_ccb_list);
+		KASSERT(ccb != NULL);
+		q->q_nccbs_avail--;
+
 		SIMPLEQ_REMOVE_HEAD(&q->q_ccb_list, ccb_entry);
+#ifdef DEBUG
+		ccb->ccb_cookie = NULL;
+#endif
+	}
 	mutex_exit(&q->q_ccb_mtx);
 
 	return ccb;
@@ -1318,6 +1347,9 @@ nvme_ccb_put(struct nvme_queue *q, struct nvme_ccb *ccb)
 {
 
 	mutex_enter(&q->q_ccb_mtx);
+#ifdef DEBUG
+	ccb->ccb_cookie = (void *)NVME_CCB_FREE;
+#endif
 	SIMPLEQ_INSERT_HEAD(&q->q_ccb_list, ccb, ccb_entry);
 	mutex_exit(&q->q_ccb_mtx);
 }
@@ -1335,7 +1367,7 @@ nvme_ccbs_free(struct nvme_queue *q)
 	}
 	mutex_exit(&q->q_ccb_mtx);
 
-	nvme_dmamem_free(sc, &q->q_ccb_prpls);
+	nvme_dmamem_free(sc, q->q_ccb_prpls);
 	kmem_free(q->q_ccbs, sizeof(*ccb) * q->q_nccbs);
 	q->q_ccbs = NULL;
 	mutex_destroy(&q->q_ccb_mtx);
@@ -1345,21 +1377,20 @@ static struct nvme_queue *
 nvme_q_alloc(struct nvme_softc *sc, uint16_t id, u_int entries, u_int dstrd)
 {
 	struct nvme_queue *q;
-	int error;
 
 	q = kmem_alloc(sizeof(*q), KM_SLEEP);
 	if (q == NULL)
 		return NULL;
 
 	q->q_sc = sc;
-	error = nvme_dmamem_alloc(sc, sizeof(struct nvme_sqe) * entries,
-	    &q->q_sq_dmamem);
-	if (error)
+	q->q_sq_dmamem = nvme_dmamem_alloc(sc,
+	    sizeof(struct nvme_sqe) * entries);
+	if (q->q_sq_dmamem == NULL)
 		goto free;
 
-	error = nvme_dmamem_alloc(sc, sizeof(struct nvme_cqe) * entries,
-	    &q->q_cq_dmamem);
-	if (error)
+	q->q_cq_dmamem = nvme_dmamem_alloc(sc,
+	    sizeof(struct nvme_cqe) * entries);
+	if (q->q_cq_dmamem == NULL)
 		goto free_sq;
 
 	memset(NVME_DMA_KVA(q->q_sq_dmamem), 0, NVME_DMA_LEN(q->q_sq_dmamem));
@@ -1378,7 +1409,12 @@ nvme_q_alloc(struct nvme_softc *sc, uint16_t id, u_int entries, u_int dstrd)
 	nvme_dmamem_sync(sc, q->q_sq_dmamem, BUS_DMASYNC_PREWRITE);
 	nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_PREREAD);
 
-	if (nvme_ccbs_alloc(q, entries) != 0) {
+	/*
+	 * Due to definition of full and empty queue (queue is empty
+	 * when head == tail, full when tail is one less then head),
+	 * we can actually only have (entries - 1) in-flight commands.
+	 */
+	if (nvme_ccbs_alloc(q, entries - 1) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to allocate ccbs\n");
 		goto free_cq;
 	}
@@ -1386,9 +1422,9 @@ nvme_q_alloc(struct nvme_softc *sc, uint16_t id, u_int entries, u_int dstrd)
 	return q;
 
 free_cq:
-	nvme_dmamem_free(sc, &q->q_cq_dmamem);
+	nvme_dmamem_free(sc, q->q_cq_dmamem);
 free_sq:
-	nvme_dmamem_free(sc, &q->q_sq_dmamem);
+	nvme_dmamem_free(sc, q->q_sq_dmamem);
 free:
 	kmem_free(q, sizeof(*q));
 
@@ -1403,8 +1439,8 @@ nvme_q_free(struct nvme_softc *sc, struct nvme_queue *q)
 	mutex_destroy(&q->q_cq_mtx);
 	nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_POSTREAD);
 	nvme_dmamem_sync(sc, q->q_sq_dmamem, BUS_DMASYNC_POSTWRITE);
-	nvme_dmamem_free(sc, &q->q_cq_dmamem);
-	nvme_dmamem_free(sc, &q->q_sq_dmamem);
+	nvme_dmamem_free(sc, q->q_cq_dmamem);
+	nvme_dmamem_free(sc, q->q_sq_dmamem);
 	kmem_free(q, sizeof(*q));
 }
 
@@ -1412,19 +1448,38 @@ int
 nvme_intr(void *xsc)
 {
 	struct nvme_softc *sc = xsc;
-	int rv = 0;
 
 	/*
 	 * INTx is level triggered, controller deasserts the interrupt only
 	 * when we advance command queue head via write to the doorbell.
+	 * Tell the controller to block the interrupts while we process
+	 * the queue(s).
 	 */
-	if (nvme_q_complete(sc, sc->sc_admin_q))
-	        rv = 1;
-	if (sc->sc_q != NULL)
-	        if (nvme_q_complete(sc, sc->sc_q[0]))
-	                rv = 1;
+	nvme_write4(sc, NVME_INTMS, 1);
 
-	return rv;
+	softint_schedule(sc->sc_softih[0]);
+
+	/* don't know, might not have been for us */
+	return 1;
+}
+
+void
+nvme_softintr_intx(void *xq)
+{
+	struct nvme_queue *q = xq;
+	struct nvme_softc *sc = q->q_sc;
+
+	nvme_q_complete(sc, sc->sc_admin_q);
+	if (sc->sc_q != NULL)
+	        nvme_q_complete(sc, sc->sc_q[0]);
+
+	/*
+	 * Processing done, tell controller to issue interrupts again. There
+	 * is no race, as NVMe spec requires the controller to maintain state,
+	 * and assert the interrupt whenever there are unacknowledged
+	 * completion queue entries.
+	 */
+	nvme_write4(sc, NVME_INTMC, 1);
 }
 
 int
@@ -1435,7 +1490,10 @@ nvme_intr_msi(void *xq)
 	KASSERT(q && q->q_sc && q->q_sc->sc_softih
 	    && q->q_sc->sc_softih[q->q_id]);
 
-	/* MSI are edge triggered, so can handover processing to softint */
+	/*
+	 * MSI/MSI-X are edge triggered, so can handover processing to softint
+	 * without masking the interrupt.
+	 */
 	softint_schedule(q->q_sc->sc_softih[q->q_id]);
 
 	return 1;
@@ -1450,12 +1508,16 @@ nvme_softintr_msi(void *xq)
 	nvme_q_complete(sc, q);
 }
 
-static int
-nvme_dmamem_alloc(struct nvme_softc *sc, size_t size, struct nvme_dmamem *ndm)
+static struct nvme_dmamem *
+nvme_dmamem_alloc(struct nvme_softc *sc, size_t size)
 {
+	struct nvme_dmamem *ndm;
 	int nsegs;
 
-	memset(ndm, 0, sizeof(*ndm));
+	ndm = kmem_zalloc(sizeof(*ndm), KM_SLEEP);
+	if (ndm == NULL)
+		return NULL;
+
 	ndm->ndm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
@@ -1475,7 +1537,7 @@ nvme_dmamem_alloc(struct nvme_softc *sc, size_t size, struct nvme_dmamem *ndm)
 	    NULL, BUS_DMA_WAITOK) != 0)
 		goto unmap;
 
-	return 0;
+	return ndm;
 
 unmap:
 	bus_dmamem_unmap(sc->sc_dmat, ndm->ndm_kva, size);
@@ -1484,7 +1546,15 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, ndm->ndm_map);
 ndmfree:
-	return ENOMEM;
+	kmem_free(ndm, sizeof(*ndm));
+	return NULL;
+}
+
+static void
+nvme_dmamem_sync(struct nvme_softc *sc, struct nvme_dmamem *mem, int ops)
+{
+	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(mem),
+	    0, NVME_DMA_LEN(mem), ops);
 }
 
 void
@@ -1494,6 +1564,7 @@ nvme_dmamem_free(struct nvme_softc *sc, struct nvme_dmamem *ndm)
 	bus_dmamem_unmap(sc->sc_dmat, ndm->ndm_kva, ndm->ndm_size);
 	bus_dmamem_free(sc->sc_dmat, &ndm->ndm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, ndm->ndm_map);
+	kmem_free(ndm, sizeof(*ndm));
 }
 
 /*

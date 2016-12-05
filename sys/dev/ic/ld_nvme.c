@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.1.2.3 2016/10/05 20:55:41 skrll Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.1.2.4 2016/12/05 10:55:01 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.1.2.3 2016/10/05 20:55:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.1.2.4 2016/12/05 10:55:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,8 +108,8 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 
 	ld->sc_secsize = 1 << f->lbads;
 	ld->sc_secperunit = nsze;
-	ld->sc_maxxfer = MAXPHYS; /* XXX set according to device */
-	ld->sc_maxqueuecnt = naa->naa_qentries; /* XXX set to max allowed by device, not current config */
+	ld->sc_maxxfer = naa->naa_maxphys;
+	ld->sc_maxqueuecnt = naa->naa_qentries;
 	ld->sc_start = ld_nvme_start;
 	ld->sc_dump = ld_nvme_dump;
 	ld->sc_flush = ld_nvme_flush;
@@ -186,7 +186,8 @@ ld_nvme_flush(struct ld_softc *ld, int flags)
 
 	/* wait for the sync to finish */
 	return nvme_ns_sync(sc->sc_nvme, sc->sc_nsid, sc,
-	    NVME_NS_CTX_F_POLL, ld_nvme_syncdone);
+	    (flags & LDFL_POLL) ? NVME_NS_CTX_F_POLL : 0,
+	    ld_nvme_syncdone);
 }
 
 static void

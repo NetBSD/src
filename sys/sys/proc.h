@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.320.6.7 2016/10/05 20:56:11 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.320.6.8 2016/12/05 10:55:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -557,6 +557,10 @@ _proclist_skipmarker(struct proc *p0)
 }
 
 #define PROC_PTRSZ(p) (((p)->p_flag & PK_32) ? sizeof(int) : sizeof(void *))
+#define PROC_REGSZ(p) (((p)->p_flag & PK_32) ? \
+    sizeof(process_reg32) : sizeof(struct reg))
+#define PROC_FPREGSZ(p) (((p)->p_flag & PK_32) ? \
+    sizeof(process_fpreg32) : sizeof(struct fpreg))
 
 /*
  * PROCLIST_FOREACH: iterate on the given proclist, skipping PK_MARKER ones.

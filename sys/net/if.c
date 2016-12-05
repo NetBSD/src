@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.300.2.9 2016/10/05 20:56:08 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.300.2.10 2016/12/05 10:55:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.9 2016/10/05 20:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.10 2016/12/05 10:55:27 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -185,7 +185,7 @@ int	ifqmaxlen = IFQ_MAXLEN;
 
 struct psref_class		*ifa_psref_class __read_mostly;
 
-static int	if_rt_walktree(struct rtentry *, void *);
+static int	if_delroute_matcher(struct rtentry *, void *);
 
 static struct if_clone *if_clone_lookup(const char *, int *);
 
@@ -226,6 +226,25 @@ static void sysctl_percpuq_setup(struct sysctllog **, const char *,
 #if defined(INET) || defined(INET6)
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
 #endif
+
+/*
+ * Pointer to stub or real compat_cvtcmd() depending on presence of
+ * the compat module
+ */
+u_long stub_compat_cvtcmd(u_long);
+u_long (*vec_compat_cvtcmd)(u_long) = stub_compat_cvtcmd;
+
+/* Similarly, pointer to compat_ifioctl() if it is present */
+
+int (*vec_compat_ifioctl)(struct socket *, u_long, u_long, void *,
+	struct lwp *) = NULL;
+
+/* The stub version of compat_cvtcmd() */
+u_long stub_compat_cvtcmd(u_long cmd)
+{
+
+	return cmd;
+}
 
 static int
 if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -1260,11 +1279,9 @@ again:
 
 	if_free_sadl(ifp);
 
-	/* Walk the routing table looking for stragglers. */
-	for (i = 0; i <= AF_MAX; i++) {
-		while (rt_walktree(i, if_rt_walktree, ifp) == ERESTART)
-			continue;
-	}
+	/* Delete stray routes from the routing table. */
+	for (i = 0; i <= AF_MAX; i++)
+		rt_delete_matched_entries(i, if_delroute_matcher, ifp);
 
 	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifdetach != NULL && ifp->if_afdata[dp->dom_family])
@@ -1384,28 +1401,14 @@ if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
  * ifnet.
  */
 static int
-if_rt_walktree(struct rtentry *rt, void *v)
+if_delroute_matcher(struct rtentry *rt, void *v)
 {
 	struct ifnet *ifp = (struct ifnet *)v;
-	int error;
-	struct rtentry *retrt;
 
-	if (rt->rt_ifp != ifp)
+	if (rt->rt_ifp == ifp)
+		return 1;
+	else
 		return 0;
-
-	/* Delete the entry. */
-	error = rtrequest(RTM_DELETE, rt_getkey(rt), rt->rt_gateway,
-	    rt_mask(rt), rt->rt_flags, &retrt);
-	if (error == 0) {
-		KASSERT(retrt == rt);
-		KASSERT((retrt->rt_flags & RTF_UP) == 0);
-		retrt->rt_ifp = NULL;
-		rtfree(retrt);
-	} else {
-		printf("%s: warning: unable to delete rtentry @ %p, "
-		    "error = %d\n", ifp->if_xname, rt, error);
-	}
-	return ERESTART;
 }
 
 /*
@@ -1621,15 +1624,15 @@ ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
 	IFNET_LOCK();
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 	IFADDR_WRITER_REMOVE(ifa);
-	IFADDR_ENTRY_DESTROY(ifa);
-#if notyet
+#ifdef NET_MPSAFE
 	pserialize_perform(ifnet_psz);
 #endif
 	IFNET_UNLOCK();
 
-#if notyet
+#ifdef NET_MPSAFE
 	psref_target_destroy(&ifa->ifa_psref, ifa_psref_class);
 #endif
+	IFADDR_ENTRY_DESTROY(ifa);
 	ifafree(ifa);
 }
 
@@ -2769,7 +2772,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 
 #ifdef COMPAT_OIFREQ
-	cmd = compat_cvtcmd(cmd);
+	cmd = (*vec_compat_cvtcmd)(cmd);
 	if (cmd != ocmd) {
 		oifr = data;
 		data = ifr = &ifrb;
@@ -2866,11 +2869,12 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		error = EOPNOTSUPP;
 	else {
 #ifdef COMPAT_OSOCK
-		error = compat_ifioctl(so, ocmd, cmd, data, l);
-#else
-		error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
-		    cmd, data, ifp);
+		if (vec_compat_ifioctl != NULL)
+			error = (*vec_compat_ifioctl)(so, ocmd, cmd, data, l);
+		else
 #endif
+			error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
+			    cmd, data, ifp);
 	}
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
@@ -3015,7 +3019,7 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 	struct ifreq ifrb;
 	struct oifreq *oifr = NULL;
 	u_long ocmd = cmd;
-	cmd = compat_cvtcmd(cmd);
+	cmd = (*vec_compat_cvtcmd)(cmd);
 	if (cmd != ocmd) {
 		oifr = (struct oifreq *)(void *)ifr;
 		ifr = &ifrb;

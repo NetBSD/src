@@ -1,4 +1,4 @@
-# $NetBSD: ARMADILLO-IOT-G3,v 1.1.2.3 2016/10/05 20:55:26 skrll Exp $
+# $NetBSD: ARMADILLO-IOT-G3,v 1.1.2.4 2016/12/05 10:54:51 skrll Exp $
 #
 # ARMADILLO-IOT-G3 -- Atmark Techno, Armadillo-IoT G3
 #
@@ -22,6 +22,7 @@ options 	MULTIPROCESSOR
 options 	PMAPCOUNTERS
 
 options 	MEMSIZE=512
+options 	MEMSIZE_RESERVED=32	# only reserved 32M for Cortex-M4 core
 
 # Standard system options
 
@@ -398,6 +399,7 @@ pseudo-device	wsfont
 pseudo-device	drvctl
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #

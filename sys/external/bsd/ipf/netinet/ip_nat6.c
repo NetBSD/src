@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat6.c,v 1.7.6.2 2015/12/27 12:10:03 skrll Exp $	*/
+/*	$NetBSD: ip_nat6.c,v 1.7.6.3 2016/12/05 10:55:25 skrll Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -319,8 +319,8 @@ ipf_nat6_delrdr(ipf_nat_softc_t *softn, ipnat_t *n)
 	*n->in_prnext = n->in_rnext;
 	n->in_use--;
 }
-                                        
-                       
+
+
 /* ------------------------------------------------------------------------ */
 /* Function:    ipf_nat6_delmap                                             */
 /* Returns:     Nil                                                         */
@@ -2471,8 +2471,8 @@ ipf_nat6_lookupredir(ipf_main_softc_t *softc, natlookup_t *np)
 				}
 			}
 
-			np->nl_realip6 = nat->nat_ndst6.in6;
-			np->nl_realport = nat->nat_ndport;
+			np->nl_realip6 = nat->nat_odst6.in6;
+			np->nl_realport = nat->nat_odport;
 		}
  	}
 

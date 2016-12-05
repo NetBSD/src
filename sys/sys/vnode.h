@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.249.4.7 2016/10/05 20:56:11 skrll Exp $	*/
+/*	$NetBSD: vnode.h,v 1.249.4.8 2016/12/05 10:55:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -589,18 +589,6 @@ void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...)
 void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...)
     __printflike(1, 2));
 #endif /* DDB */
-
-#ifdef _VFS_VNODE_PRIVATE
-/*
- * Private vnode manipulation functions.
- */
-struct vnode *
-	vnalloc_marker(struct mount *);
-void	vnfree_marker(vnode_t *);
-bool	vnis_marker(vnode_t *);
-void	vcache_print(vnode_t *, const char *,
-    void (*)(const char *, ...) __printflike(1, 2));
-#endif	/* _VFS_VNODE_PRIVATE */
 
 #endif /* _KERNEL */
 

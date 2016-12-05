@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.6.6.1 2015/04/06 15:17:58 skrll Exp $	*/
+/*	$NetBSD: parse.c,v 1.6.6.2 2016/12/05 10:54:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -103,7 +103,7 @@ static const char helpmsg[] =
 	"commands are:\n"
 	"boot [device(unit,part)filename] [-ads]\n"
 	" (ex. \"boot sd(6,0)netbsd\", \"boot le()netbsd.old\" etc.)\n"
-	"  Note unit number for SCSI device is (ctlr) * 10 + (id)."
+	"  Note unit number for SCSI device is (ctlr) * 10 + (id).\n"
 	"ls [device(unit, part)[path]]\n"
 	" (ex. \"ls sd(0,0)/bin\")\n"
 	"help\n"

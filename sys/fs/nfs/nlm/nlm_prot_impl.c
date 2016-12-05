@@ -1,4 +1,4 @@
-/*	$NetBSD: nlm_prot_impl.c,v 1.1.1.1.12.1 2015/12/27 12:10:04 skrll Exp $	*/
+/*	$NetBSD: nlm_prot_impl.c,v 1.1.1.1.12.2 2016/12/05 10:55:26 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  * Authors: Doug Rabson <dfr@rabson.org>
@@ -29,8 +29,8 @@
 #include "opt_inet6.h"
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/nlm/nlm_prot_impl.c 255333 2013-09-06 23:14:31Z rmacklem "); */
-__RCSID("$NetBSD: nlm_prot_impl.c,v 1.1.1.1.12.1 2015/12/27 12:10:04 skrll Exp $");
+/* __FBSDID("FreeBSD: head/sys/nlm/nlm_prot_impl.c 302216 2016-06-26 20:08:42Z kib "); */
+__RCSID("$NetBSD: nlm_prot_impl.c,v 1.1.1.1.12.2 2016/12/05 10:55:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/fail.h>
@@ -297,7 +297,7 @@ nlm_init(void *dummy)
 	TAILQ_INIT(&nlm_hosts);
 
 	error = syscall_register(&nlm_syscall_offset, &nlm_syscall_sysent,
-	    &nlm_syscall_prev_sysent);
+	    &nlm_syscall_prev_sysent, SY_THR_STATIC_KLD);
 	if (error)
 		NLM_ERR("Can't register NLM syscall\n");
 	else
@@ -330,7 +330,7 @@ nlm_make_netobj(struct netobj *dst, caddr_t src, size_t srcsize,
 
 /*
  * Copy a struct netobj.
- */ 
+ */
 void
 nlm_copy_netobj(struct netobj *dst, struct netobj *src,
     struct malloc_type *type)
@@ -373,7 +373,7 @@ nlm_get_rpc(struct sockaddr *sa, rpcprog_t prog, rpcvers_t vers)
 		protofmly = "inet";
 		so = nlm_socket;
 		break;
-		
+
 #ifdef INET6
 	case AF_INET6:
 		((struct sockaddr_in6 *)&ss)->sin6_port = htons(111);
@@ -468,7 +468,7 @@ again:
 				((struct sockaddr_in *)&ss)->sin_port =
 					htons(port);
 				break;
-		
+
 #ifdef INET6
 			case AF_INET6:
 				((struct sockaddr_in6 *)&ss)->sin6_port =
@@ -540,7 +540,7 @@ again:
 		    prog, vers, 0, 0);
 		CLNT_CONTROL(rpcb, CLSET_WAITCHAN, wchan);
 		rpcb->cl_auth = nlm_auth;
-		
+
 	} else {
 		/*
 		 * Re-use the client we used to speak to rpcbind.
@@ -661,7 +661,7 @@ nlm_cancel_async_lock(struct nlm_async_lock *af)
 	}
 
 	mtx_lock(&host->nh_lock);
-	
+
 	if (!error) {
 		NLM_DEBUG(2, "NLM: async lock %p for %s (sysid %d) "
 		    "cancelled\n", af, host->nh_caller_name, host->nh_sysid);
@@ -965,7 +965,7 @@ nlm_check_idle(void)
 			}
 			nlm_host_unmonitor(host);
 			mtx_lock(&nlm_global_lock);
-		} 
+		}
 	}
 }
 
@@ -1009,7 +1009,7 @@ nlm_find_host_by_name(const char *name, const struct sockaddr *addr,
 	 * can send async replies etc.
 	 */
 	if (addr) {
-		
+
 		KASSERT(addr->sa_len < sizeof(struct sockaddr_storage),
 		    ("Strange remote transport address length"));
 
@@ -1074,7 +1074,7 @@ nlm_find_host_by_addr(const struct sockaddr *addr, int vers)
 		break;
 #endif
 	default:
-		strcpy(tmp, "<unknown>");
+		strlcpy(tmp, "<unknown>", sizeof(tmp));
 	}
 
 
@@ -1350,7 +1350,7 @@ nlm_deregister_wait_lock(void *handle)
 	mtx_lock(&nlm_global_lock);
 	TAILQ_REMOVE(&nlm_waiting_locks, nw, nw_link);
 	mtx_unlock(&nlm_global_lock);
-	
+
 	free(nw, M_NLM);
 }
 
@@ -1358,7 +1358,7 @@ int
 nlm_wait_lock(void *handle, int timo)
 {
 	struct nlm_waiting_lock *nw = handle;
-	int error;
+	int error, stops_deferred;
 
 	/*
 	 * If the granted message arrived before we got here,
@@ -1366,8 +1366,11 @@ nlm_wait_lock(void *handle, int timo)
 	 */
 	mtx_lock(&nlm_global_lock);
 	error = 0;
-	if (nw->nw_waiting)
+	if (nw->nw_waiting) {
+		stops_deferred = sigdeferstop(SIGDEFERSTOP_ERESTART);
 		error = msleep(nw, &nlm_global_lock, PCATCH, "nlmlock", timo);
+		sigallowstop(stops_deferred);
+	}
 	TAILQ_REMOVE(&nlm_waiting_locks, nw, nw_link);
 	if (error) {
 		/*
@@ -1428,7 +1431,6 @@ nlm_register_services(SVCPOOL *pool, int addr_count, char **addrs)
 	static void (*dispatchers[])(struct svc_req *, SVCXPRT *) = {
 		nlm_prog_0, nlm_prog_1, nlm_prog_3, nlm_prog_4
 	};
-	static const int version_count = sizeof(versions) / sizeof(versions[0]);
 
 	SVCXPRT **xprts;
 	char netid[16];
@@ -1441,8 +1443,14 @@ nlm_register_services(SVCPOOL *pool, int addr_count, char **addrs)
 		return (EINVAL);
 	}
 
+	if (addr_count < 0 || addr_count > 256 ) {
+		NLM_ERR("NLM:  too many service addresses (%d) given, "
+		    "max 256 - can't start server\n", addr_count);
+		return (EINVAL);
+	}
+
 	xprts = malloc(addr_count * sizeof(SVCXPRT *), M_NLM, M_WAITOK|M_ZERO);
-	for (i = 0; i < version_count; i++) {
+	for (i = 0; i < nitems(versions); i++) {
 		for (j = 0; j < addr_count; j++) {
 			/*
 			 * Create transports for the first version and
@@ -1749,7 +1757,7 @@ nlm_get_vfs_state(struct nlm_host *host, struct svc_req *rqstp,
 {
 	int error, exflags;
 	struct ucred *cred = NULL, *credanon = NULL;
-	
+
 	memset(vs, 0, sizeof(*vs));
 
 	vs->vs_mp = vfs_getvfs(&fhp->fh_fsid);
@@ -1855,7 +1863,7 @@ nlm_do_test(nlm4_testargs *argp, nlm4_testres *result, struct svc_req *rqstp,
 	int error, sysid;
 	struct flock fl;
 	accmode_t accmode;
-	
+
 	memset(result, 0, sizeof(*result));
 	memset(&vs, 0, sizeof(vs));
 
@@ -1953,7 +1961,7 @@ nlm_do_lock(nlm4_lockargs *argp, nlm4_res *result, struct svc_req *rqstp,
 	int error, sysid;
 	struct flock fl;
 	accmode_t accmode;
-	
+
 	memset(result, 0, sizeof(*result));
 	memset(&vs, 0, sizeof(vs));
 
@@ -2122,7 +2130,7 @@ nlm_do_lock(nlm4_lockargs *argp, nlm4_res *result, struct svc_req *rqstp,
 		if (monitor)
 			nlm_host_monitor(host, argp->state);
 		result->stat.stat = nlm4_granted;
-	}       
+	}
 
 out:
 	nlm_release_vfs_state(&vs);
@@ -2142,7 +2150,7 @@ nlm_do_cancel(nlm4_cancargs *argp, nlm4_res *result, struct svc_req *rqstp,
 	int error, sysid;
 	struct flock fl;
 	struct nlm_async_lock *af;
-	
+
 	memset(result, 0, sizeof(*result));
 	memset(&vs, 0, sizeof(vs));
 
@@ -2231,7 +2239,7 @@ nlm_do_unlock(nlm4_unlockargs *argp, nlm4_res *result, struct svc_req *rqstp,
 	struct nlm_host *host;
 	int error, sysid;
 	struct flock fl;
-	
+
 	memset(result, 0, sizeof(*result));
 	memset(&vs, 0, sizeof(vs));
 
@@ -2291,7 +2299,7 @@ nlm_do_granted(nlm4_testargs *argp, nlm4_res *result, struct svc_req *rqstp,
 {
 	struct nlm_host *host;
 	struct nlm_waiting_lock *nw;
-	
+
 	memset(result, 0, sizeof(*result));
 
 	host = nlm_find_host_by_addr(svc_getrpccaller(rqstp), rqstp->rq_vers);

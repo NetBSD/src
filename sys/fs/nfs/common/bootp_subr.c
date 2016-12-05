@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp_subr.c,v 1.1.1.1 2013/09/30 07:19:31 dholland Exp $	*/
+/*	$NetBSD: bootp_subr.c,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $	*/
 /*-
  * Copyright (c) 1995 Gordon Ross, Adam Glass
  * Copyright (c) 1992 Regents of the University of California.
@@ -42,16 +42,16 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/nfs/bootp_subr.c 253847 2013-07-31 19:14:00Z ian "); */
-__RCSID("$NetBSD: bootp_subr.c,v 1.1.1.1 2013/09/30 07:19:31 dholland Exp $");
+/* __FBSDID("FreeBSD: head/sys/nfs/bootp_subr.c 297326 2016-03-27 23:16:37Z ian "); */
+__RCSID("$NetBSD: bootp_subr.c,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $");
 
-#include "opt_bootp.h"
-#include "opt_nfs.h"
-#include "opt_rootdevname.h"
+#ifdef _KERNEL_OPT
+#include "opt_newnfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/jail.h>
+#include <sys/endian.h>
 #include <sys/kernel.h>
 #include <sys/sockio.h>
 #include <sys/malloc.h>
@@ -66,18 +66,20 @@ __RCSID("$NetBSD: bootp_subr.c,v 1.1.1.1 2013/09/30 07:19:31 dholland Exp $");
 
 #include <net/if.h>
 #include <net/route.h>
+#ifdef BOOTP_DEBUG
+#include <net/route_var.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
-#include <net/vnet.h>
 
-#include <nfs/nfsproto.h>
-#include <nfsclient/nfs.h>
-#include <nfs/nfsdiskless.h>
-#include <nfs/krpc.h>
-#include <nfs/xdr_subs.h>
+#include <fs/nfs/common/nfsproto.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/common/nfsdiskless.h>
+#include <fs/nfs/common/krpc.h>
+#include <fs/nfs/common/xdr_subs.h>
 
 
 #define BOOTP_MIN_LEN		300	/* Minimum size of bootp udp packet */
@@ -156,6 +158,7 @@ struct bootpc_ifcontext {
 	int dhcpquerytype;		/* dhcp type sent */
 	struct in_addr dhcpserver;
 	int gotdhcpserver;
+	uint16_t mtu;
 };
 
 #define TAG_MAXLEN 1024
@@ -197,6 +200,7 @@ struct bootpc_globalcontext {
 #define TAG_ROUTERS	  3  /* Routers (in order of preference) */
 #define TAG_HOSTNAME	 12  /* Client host name */
 #define TAG_ROOT	 17  /* Root path */
+#define TAG_INTF_MTU	 26  /* Interface MTU Size (RFC2132) */
 
 /* DHCP specific tags */
 #define TAG_OVERLOAD	 52  /* Option Overload */
@@ -271,7 +275,7 @@ static int	bootpc_call(struct bootpc_globalcontext *gctx,
 static void	bootpc_fakeup_interface(struct bootpc_ifcontext *ifctx,
 		    struct thread *td);
 
-static int	bootpc_adjust_interface(struct bootpc_ifcontext *ifctx,
+static void	bootpc_adjust_interface(struct bootpc_ifcontext *ifctx,
 		    struct bootpc_globalcontext *gctx, struct thread *td);
 
 static void	bootpc_decode_reply(struct nfsv3_diskless *nd,
@@ -344,7 +348,7 @@ bootpboot_p_rtentry(struct rtentry *rt)
 	bootpboot_p_sa(rt->rt_gateway, NULL);
 	printf(" ");
 	printf("flags %x", (unsigned short) rt->rt_flags);
-	printf(" %d", (int) rt->rt_rmx.rmx_expire);
+	printf(" %d", (int) rt->rt_expire);
 	printf(" %s\n", rt->rt_ifp->if_xname);
 }
 
@@ -370,15 +374,15 @@ bootpboot_p_tree(struct radix_node *rn)
 void
 bootpboot_p_rtlist(void)
 {
-	struct radix_node_head *rnh;
+	struct rib_head *rnh;
 
 	printf("Routing table:\n");
 	rnh = rt_tables_get_rnh(0, AF_INET);
 	if (rnh == NULL)
 		return;
-	RADIX_NODE_HEAD_RLOCK(rnh);	/* could sleep XXX */
+	RIB_RLOCK(rnh);	/* could sleep XXX */
 	bootpboot_p_tree(rnh->rnh_treetop);
-	RADIX_NODE_HEAD_RUNLOCK(rnh);
+	RIB_RUNLOCK(rnh);
 }
 
 void
@@ -1006,33 +1010,41 @@ bootpc_shutdown_interface(struct bootpc_ifcontext *ifctx, struct thread *td)
 		panic("%s: SIOCDIFADDR, error=%d", __func__, error);
 }
 
-static int
+static void
 bootpc_adjust_interface(struct bootpc_ifcontext *ifctx,
     struct bootpc_globalcontext *gctx, struct thread *td)
 {
 	int error;
-	struct sockaddr_in defdst;
-	struct sockaddr_in defmask;
 	struct sockaddr_in *sin;
 	struct ifreq *ifr;
 	struct in_aliasreq *ifra;
 	struct sockaddr_in *myaddr;
 	struct sockaddr_in *netmask;
-	struct sockaddr_in *gw;
 
 	ifr = &ifctx->ireq;
 	ifra = &ifctx->iareq;
 	myaddr = &ifctx->myaddr;
 	netmask = &ifctx->netmask;
-	gw = &ifctx->gw;
 
 	if (bootpc_ifctx_isresolved(ifctx) == 0) {
 		/* Shutdown interfaces where BOOTP failed */
 		bootpc_shutdown_interface(ifctx, td);
-		return (0);
+		return;
 	}
 
-	printf("Adjusted interface %s\n", ifctx->ireq.ifr_name);
+	printf("Adjusted interface %s", ifctx->ireq.ifr_name);
+
+	/* Do BOOTP interface options */
+	if (ifctx->mtu != 0) {
+		printf(" (MTU=%d%s)", ifctx->mtu, 
+		    (ifctx->mtu > 1514) ? "/JUMBO" : "");
+		ifr->ifr_mtu = ifctx->mtu;
+		error = ifioctl(bootp_so, SIOCSIFMTU, (caddr_t) ifr, td);
+		if (error != 0)
+			panic("%s: SIOCSIFMTU, error=%d", __func__, error);
+	}
+	printf("\n");
+
 	/*
 	 * Do enough of ifconfig(8) so that the chosen interface
 	 * can talk to the servers.  (just set the address)
@@ -1052,24 +1064,48 @@ bootpc_adjust_interface(struct bootpc_ifcontext *ifctx,
 	error = ifioctl(bootp_so, SIOCAIFADDR, (caddr_t)ifra, td);
 	if (error != 0)
 		panic("%s: SIOCAIFADDR, error=%d", __func__, error);
+}
 
-	/* Add new default route */
+static void
+bootpc_add_default_route(struct bootpc_ifcontext *ifctx)
+{
+	int error;
+	struct sockaddr_in defdst;
+	struct sockaddr_in defmask;
 
-	if (ifctx->gotgw != 0 || gctx->gotgw == 0) {
-		clear_sinaddr(&defdst);
-		clear_sinaddr(&defmask);
-		/* XXX MRT just table 0 */
-		error = rtrequest_fib(RTM_ADD,
-		    (struct sockaddr *) &defdst, (struct sockaddr *) gw,
-		    (struct sockaddr *) &defmask,
-		    (RTF_UP | RTF_GATEWAY | RTF_STATIC), NULL, RT_DEFAULT_FIB);
-		if (error != 0) {
-			printf("%s: RTM_ADD, error=%d\n", __func__, error);
-			return (error);
-		}
+	if (ifctx->gw.sin_addr.s_addr == htonl(INADDR_ANY))
+		return;
+
+	clear_sinaddr(&defdst);
+	clear_sinaddr(&defmask);
+
+	error = rtrequest_fib(RTM_ADD, (struct sockaddr *)&defdst,
+	    (struct sockaddr *) &ifctx->gw, (struct sockaddr *)&defmask,
+	    (RTF_UP | RTF_GATEWAY | RTF_STATIC), NULL, RT_DEFAULT_FIB);
+	if (error != 0) {
+		printf("%s: RTM_ADD, error=%d\n", __func__, error);
 	}
+}
 
-	return (0);
+static void
+bootpc_remove_default_route(struct bootpc_ifcontext *ifctx)
+{
+	int error;
+	struct sockaddr_in defdst;
+	struct sockaddr_in defmask;
+
+	if (ifctx->gw.sin_addr.s_addr == htonl(INADDR_ANY))
+		return;
+
+	clear_sinaddr(&defdst);
+	clear_sinaddr(&defmask);
+
+	error = rtrequest_fib(RTM_DELETE, (struct sockaddr *)&defdst,
+	    (struct sockaddr *) &ifctx->gw, (struct sockaddr *)&defmask,
+	    (RTF_UP | RTF_GATEWAY | RTF_STATIC), NULL, RT_DEFAULT_FIB);
+	if (error != 0) {
+		printf("%s: RTM_DELETE, error=%d\n", __func__, error);
+	}
 }
 
 static int
@@ -1453,7 +1489,7 @@ bootpc_decode_reply(struct nfsv3_diskless *nd, struct bootpc_ifcontext *ifctx,
 	 *    the server value).
 	 */
 	p = NULL;
-	if ((s = getenv("vfs.root.mountfrom")) != NULL) {
+	if ((s = kern_getenv("vfs.root.mountfrom")) != NULL) {
 		if ((p = strstr(s, "nfs:")) != NULL)
 			p = strdup(p + 4, M_TEMP);
 		freeenv(s);
@@ -1461,6 +1497,8 @@ bootpc_decode_reply(struct nfsv3_diskless *nd, struct bootpc_ifcontext *ifctx,
 	if (p == NULL) {
 		p = bootpc_tag(&gctx->tag, &ifctx->reply, ifctx->replylen,
 		       TAG_ROOT);
+		if (p != NULL)
+			ifctx->gotrootpath = 1;
 	}
 #ifdef ROOTDEVNAME
 	if ((p == NULL || (boothowto & RB_DFLTROOT) != 0) && 
@@ -1480,7 +1518,6 @@ bootpc_decode_reply(struct nfsv3_diskless *nd, struct bootpc_ifcontext *ifctx,
 			}
 			printf("rootfs %s ", p);
 			gctx->gotrootpath = 1;
-			ifctx->gotrootpath = 1;
 			gctx->setrootfs = ifctx;
 
 			p = bootpc_tag(&gctx->tag, &ifctx->reply,
@@ -1520,6 +1557,11 @@ bootpc_decode_reply(struct nfsv3_diskless *nd, struct bootpc_ifcontext *ifctx,
 		p[i] = '\0';
 	}
 
+	p = bootpc_tag(&gctx->tag, &ifctx->reply, ifctx->replylen,
+		       TAG_INTF_MTU);
+	if (p != NULL) {
+		ifctx->mtu = be16dec(p);
+	}
 
 	printf("\n");
 
@@ -1530,10 +1572,6 @@ bootpc_decode_reply(struct nfsv3_diskless *nd, struct bootpc_ifcontext *ifctx,
 			ifctx->netmask.sin_addr.s_addr = htonl(IN_CLASSB_NET);
 		else
 			ifctx->netmask.sin_addr.s_addr = htonl(IN_CLASSC_NET);
-	}
-	if (ifctx->gotgw == 0) {
-		/* Use proxyarp */
-		ifctx->gw.sin_addr.s_addr = ifctx->myaddr.sin_addr.s_addr;
 	}
 }
 
@@ -1724,11 +1762,13 @@ retry:
 
 	if (gctx->gotrootpath != 0) {
 
-		setenv("boot.netif.name", ifctx->ifp->if_xname);
+		kern_setenv("boot.netif.name", ifctx->ifp->if_xname);
 
+		bootpc_add_default_route(ifctx);
 		error = md_mount(&nd->root_saddr, nd->root_hostnam,
 				 nd->root_fh, &nd->root_fhsize,
 				 &nd->root_args, td);
+		bootpc_remove_default_route(ifctx);
 		if (error != 0) {
 			if (gctx->any_root_overrides == 0)
 				panic("nfs_boot: mount root, error=%d", error);
@@ -1736,9 +1776,6 @@ retry:
 				goto out;
 		}
 		rootdevnames[0] = "nfs:";
-#ifdef NFSCLIENT
-		rootdevnames[1] = "oldnfs:";
-#endif
 		nfs_diskless_valid = 3;
 	}
 
@@ -1749,6 +1786,7 @@ retry:
 		ifctx->myaddr.sin_addr.s_addr |
 		~ ifctx->netmask.sin_addr.s_addr;
 	bcopy(&ifctx->netmask, &nd->myif.ifra_mask, sizeof(ifctx->netmask));
+	bcopy(&ifctx->gw, &nd->mygateway, sizeof(ifctx->gw));
 
 out:
 	while((ifctx = STAILQ_FIRST(&gctx->interfaces)) != NULL) {

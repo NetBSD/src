@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6var.h,v 1.2.2.2 2016/03/19 11:29:56 skrll Exp $	*/
+/*	$NetBSD: imx6var.h,v 1.2.2.3 2016/12/05 10:54:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -68,6 +68,7 @@ uint32_t imx6_armrootclk(void);
 void imx6_reset(void) __dead;
 void imx6_device_register(device_t, void *);
 void imx6_cpu_hatch(struct cpu_info *);
+void imx6_set_gpio(device_t, const char *, int32_t *, int32_t *, u_int);
 uint32_t imx6_chip_id(void);
 #define CHIPID_MINOR_MASK		0x000000ff
 #define CHIPID_MAJOR_MASK		0x00ffff00

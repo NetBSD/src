@@ -130,7 +130,7 @@ mvspi_attach(struct device *parent, struct device *self, void *aux)
 	ctl &= MVSPI_DIRHS_MASK;
 	ctl &= MVSPI_1BYTE_MASK;
 
-	PUTREG(sc, MVSPI_INTCONF_REG, ctl),
+	PUTREG(sc, MVSPI_INTCONF_REG, ctl);
 
 	/*
 	 * Initialize SPI controller.

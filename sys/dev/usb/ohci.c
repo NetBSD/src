@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.78 2016/10/05 20:55:57 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.79 2016/12/05 10:55:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.78 2016/10/05 20:55:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.79 2016/12/05 10:55:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3670,7 +3670,7 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 	memset(&tail->itd, 0, sizeof(tail->itd));
 	tail->held = &opipe->tail.itd;
 	tail->nextitd = NULL;
- 	tail->xfer = NULL;
+	tail->xfer = NULL;
 	usb_syncmem(&tail->dma, tail->offs, sizeof(tail->itd),
 	    BUS_DMASYNC_PREWRITE);
 

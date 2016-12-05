@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.87.4.4 2016/10/05 20:55:56 skrll Exp $	*/
+/*	$NetBSD: if_se.c,v 1.87.4.5 2016/12/05 10:55:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.87.4.4 2016/10/05 20:55:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.87.4.5 2016/12/05 10:55:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -375,11 +375,9 @@ se_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_generic *cmd,
     struct buf *bp, int flags)
 {
 	int error;
-	int s = splbio();
 
 	error = scsipi_command(periph, cmd, cmdlen, data_addr,
 	    datalen, retries, timeout, bp, flags);
-	splx(s);
 	return (error);
 }
 

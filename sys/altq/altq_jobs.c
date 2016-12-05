@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.7.2.2 2016/04/22 15:44:08 skrll Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.7.2.3 2016/12/05 10:54:48 skrll Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -37,29 +37,29 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*                                                                     
- * JoBS - altq prototype implementation                                
- *                                                                     
+/*
+ * JoBS - altq prototype implementation
+ *
  * Author: Nicolas Christin <nicolas@cs.virginia.edu>
  *
- * JoBS algorithms originally devised and proposed by		       
+ * JoBS algorithms originally devised and proposed by
  * Nicolas Christin and Jorg Liebeherr.
- * Grateful acknowledgments to Tarek Abdelzaher for his help and       
+ * Grateful acknowledgments to Tarek Abdelzaher for his help and
  * comments, and to Kenjiro Cho for some helpful advice.
  * Contributed by the Multimedia Networks Group at the University
- * of Virginia. 
+ * of Virginia.
  *
- * Papers and additional info can be found at 
+ * Papers and additional info can be found at
  * http://qosbox.cs.virginia.edu
- *                                                                      
- */ 							               
+ *
+ */
 
 /*
  * JoBS queue
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.7.2.2 2016/04/22 15:44:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.7.2.3 2016/12/05 10:54:48 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -315,25 +315,25 @@ jobs_class_create(struct jobs_if *jif, int pri, int64_t adc, int64_t rdc,
 	if (adc == -1) {
 		cl->concerned_adc = 0;
 		adc = ALTQ_INFINITY;
-	} else 
+	} else
 		cl->concerned_adc = 1;
 
 	if (alc == -1) {
 		cl->concerned_alc = 0;
 		alc = ALTQ_INFINITY;
-	} else 
+	} else
 		cl->concerned_alc = 1;
 
 	if (rdc == -1) {
 		rdc = 0;
 		cl->concerned_rdc = 0;
-	} else 
+	} else
 		cl->concerned_rdc = 1;
 
 	if (rlc == -1) {
 		rlc = 0;
 		cl->concerned_rlc = 0;
-	} else 
+	} else
 		cl->concerned_rlc = 1;
 
 	if (arc == -1) {
@@ -522,7 +522,7 @@ jobs_enqueue(struct ifaltq *ifq, struct mbuf *m)
 				PKTCNTR_RESET(&scan->cl_rout);
 				PKTCNTR_RESET(&scan->cl_rout_th);
 				PKTCNTR_RESET(&scan->cl_arrival);
-				PKTCNTR_RESET(&scan->cl_dropcnt);	
+				PKTCNTR_RESET(&scan->cl_dropcnt);
 				scan->cl_lastdel = 0;
 				scan->current_loss = 0;
 				scan->service_rate = 0;
@@ -556,7 +556,7 @@ jobs_enqueue(struct ifaltq *ifq, struct mbuf *m)
 				PKTCNTR_RESET(&scan->cl_rout);
 				PKTCNTR_RESET(&scan->cl_rout_th);
 				PKTCNTR_RESET(&scan->cl_arrival);
-				PKTCNTR_RESET(&scan->cl_dropcnt);	
+				PKTCNTR_RESET(&scan->cl_dropcnt);
 				scan->current_loss = 0;
 				scan->service_rate = 0;
 				scan->idletime = now;
@@ -978,7 +978,7 @@ tslist_enqueue(struct jobs_class *cl, u_int64_t arv)
 	TSENTRY *pushed;
 	pushed = malloc(sizeof(TSENTRY), M_DEVBUF, M_WAITOK);
 	if (pushed == NULL)
-		return (0);	
+		return (0);
 
 	pushed->timestamp = arv;
 	TAILQ_INSERT_TAIL(cl->arv_tm, pushed, ts_list);
@@ -1161,7 +1161,7 @@ adjust_rates_rdc(struct jobs_if *jif)
 
 	prop_control = (upper_bound*upper_bound*min_share)
 	    /(max_prod*(max_avg_pkt_size << 2));
-  
+
 	prop_control = bps_to_internal(ticks_to_secs(prop_control)); /* in BT-1 */
 
 	credit = 0;
@@ -1237,7 +1237,7 @@ adjust_rates_rdc(struct jobs_if *jif)
 		cl = jif->jif_classes[i];
 		class_exists = (cl != NULL);
 		is_backlogged = (class_exists && !qempty(cl->cl_q));
- 
+
 		if (is_backlogged && cl->concerned_rdc) {
 			available = result[i]
 			    + cl->service_rate-cl->min_rate_adc;
@@ -1547,7 +1547,7 @@ static int64_t *
 update_error(struct jobs_if *jif)
 {
 	int i;
-	int active_classes, backlogged_classes;
+	int active_classes;
 	u_int64_t mean_weighted_delay;
 	u_int64_t delays[JOBS_MAXPRI];
 	int64_t* error;
@@ -1562,7 +1562,6 @@ update_error(struct jobs_if *jif)
 
 	mean_weighted_delay = 0;
 	active_classes = 0;
-	backlogged_classes = 0;
 
 	for (i = 0; i <= jif->jif_maxpri; i++) {
 		cl = jif->jif_classes[i];
@@ -1570,7 +1569,6 @@ update_error(struct jobs_if *jif)
 		is_backlogged = (class_exists && !qempty(cl->cl_q));
 
 		if (is_backlogged) {
-			backlogged_classes++;
 			if (cl->concerned_rdc) {
 				delays[i] = proj_delay(jif, i);
 				mean_weighted_delay += cl->delay_prod_others*delays[i];
@@ -1623,7 +1621,7 @@ min_rates_adc(struct jobs_if *jif)
 		cl = jif->jif_classes[i];
 		class_exists = (cl != NULL);
 		is_backlogged = (class_exists && !qempty(cl->cl_q));
-		if (is_backlogged && cl->concerned_adc) { 
+		if (is_backlogged && cl->concerned_adc) {
 			remaining_time = cl->cl_adc - proj_delay(jif, i);
 			if (remaining_time > 0 ) {
 				/* min rate needed for ADC */
@@ -1685,7 +1683,7 @@ pick_dropped_rlc(struct jobs_if *jif)
 {
 	int64_t mean;
 	int64_t* loss_error;
-	int i, active_classes, backlogged_classes;
+	int i, active_classes;
 	int class_exists, is_backlogged;
 	int class_dropped;
 	int64_t max_error;
@@ -1704,14 +1702,12 @@ pick_dropped_rlc(struct jobs_if *jif)
 	max_error = 0;
 	mean = 0;
 	active_classes = 0;
-	backlogged_classes = 0;
 
 	for (i = 0; i <= jif->jif_maxpri; i++) {
 		cl = jif->jif_classes[i];
 		class_exists = (cl != NULL);
 		is_backlogged = (class_exists && !qempty(cl->cl_q));
 		if (is_backlogged) {
-			backlogged_classes ++;
 			if (cl->concerned_rlc) {
 				mean += cl->loss_prod_others
 				    * cl->current_loss;

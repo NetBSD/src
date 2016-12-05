@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.24.4.12 2016/10/05 20:55:59 skrll Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.24.4.13 2016/12/05 10:55:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.12 2016/10/05 20:55:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.13 2016/12/05 10:55:20 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

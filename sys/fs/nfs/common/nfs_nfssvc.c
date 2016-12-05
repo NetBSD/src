@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfssvc.c,v 1.1.1.1 2013/09/30 07:19:33 dholland Exp $	*/
+/*	$NetBSD: nfs_nfssvc.c,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/nfs/nfs_nfssvc.c 243782 2012-12-02 01:16:04Z rmacklem "); */
-__RCSID("$NetBSD: nfs_nfssvc.c,v 1.1.1.1 2013/09/30 07:19:33 dholland Exp $");
+/* __FBSDID("FreeBSD: head/sys/nfs/nfs_nfssvc.c 298788 2016-04-29 16:07:25Z pfg "); */
+__RCSID("$NetBSD: nfs_nfssvc.c,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $");
 
 #include "opt_nfs.h"
 
@@ -72,7 +72,7 @@ int (*nfsd_call_nfscl)(struct thread *, struct nfssvc_args *) = NULL;
 int (*nfsd_call_nfsd)(struct thread *, struct nfssvc_args *) = NULL;
 
 /*
- * Nfs server psuedo system call for the nfsd's
+ * Nfs server pseudo system call for the nfsd's
  */
 int
 sys_nfssvc(struct thread *td, struct nfssvc_args *uap)
@@ -125,7 +125,7 @@ nfssvc_modevent(module_t mod, int type, void *data)
 	switch (type) {
 	case MOD_LOAD:
 		error = syscall_register(&nfssvc_offset, &nfssvc_sysent,
-		    &nfssvc_prev_sysent);
+		    &nfssvc_prev_sysent, SY_THR_STATIC_KLD);
 		if (error)
 			break;
 		registered = 1;

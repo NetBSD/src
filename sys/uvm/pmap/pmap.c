@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4.6.4 2016/10/05 20:56:12 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4.6.5 2016/12/05 10:55:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4.6.4 2016/10/05 20:56:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4.6.5 2016/12/05 10:55:30 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -681,9 +681,11 @@ void
 pmap_activate(struct lwp *l)
 {
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
+#define LNAME(l) \
+	((l)->l_name ? (l)->l_name : (l)->l_proc->p_comm)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
-	UVMHIST_LOG(pmaphist, "(l=%p (pmap=%p))", l, pmap, 0, 0);
+	UVMHIST_LOG(pmaphist, "(l=%p pmap=%p (%s))", l, pmap, LNAME(l), 0);
 	PMAP_COUNT(activate);
 
 	kpreempt_disable();
@@ -695,7 +697,7 @@ pmap_activate(struct lwp *l)
 	pmap_md_tlb_miss_lock_exit();
 	kpreempt_enable();
 
-	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
+	UVMHIST_LOG(pmaphist, " <-- done (%u:%u)", l->l_proc->p_pid, l->l_lid, 0, 0);
 }
 
 /*
@@ -826,7 +828,7 @@ pmap_deactivate(struct lwp *l)
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
-	UVMHIST_LOG(pmaphist, "(l=%p (pmap=%p))", l, pmap, 0, 0);
+	UVMHIST_LOG(pmaphist, "(l=%p pmap=%p (%s))", l, pmap, LNAME(l), 0);
 	PMAP_COUNT(deactivate);
 
 	kpreempt_disable();
@@ -840,7 +842,7 @@ pmap_deactivate(struct lwp *l)
 	pmap_md_tlb_miss_lock_exit();
 	kpreempt_enable();
 
-	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
+	UVMHIST_LOG(pmaphist, " <-- done (%u:%u)", l->l_proc->p_pid, l->l_lid, 0, 0);
 }
 
 void
@@ -1254,6 +1256,25 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		return ENOMEM;
 	}
 	const pt_entry_t opte = *ptep;
+	const bool resident = pte_valid_p(opte);
+	bool remap = false;
+	if (resident) {
+		if (pte_to_paddr(opte) != pa) {
+			KASSERT(!is_kernel_pmap_p);
+		    	const pt_entry_t rpte = pte_nv_entry(false);
+
+			pmap_addr_range_check(pmap, va, va + NBPG, __func__);
+			pmap_pte_process(pmap, va, va + NBPG, pmap_pte_remove,
+			    rpte);
+			PMAP_COUNT(user_mappings_changed);
+			remap = true;
+		}
+		update_flags |= PMAP_TLB_NEED_IPI;
+	}
+
+	if (!resident || remap) {
+		pmap->pm_stats.resident_count++;
+	}
 
 	/* Done after case that may sleep/return. */
 	if (pg)
@@ -1273,20 +1294,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	    pte_value(npte), pa, 0, 0);
 
 	KASSERT(pte_valid_p(npte));
-	const bool resident = pte_valid_p(opte);
-	bool remap = false;
-	if (resident) {
-		if (pte_to_paddr(opte) != pa) {
-			pmap_remove(pmap, va, va + NBPG);
-			PMAP_COUNT(user_mappings_changed);
-			remap = true;
-		}
-		update_flags |= PMAP_TLB_NEED_IPI;
-	}
-
-	if (!resident || remap) {
-		pmap->pm_stats.resident_count++;
-	}
 
 	pmap_md_tlb_miss_lock_enter();
 	*ptep = npte;

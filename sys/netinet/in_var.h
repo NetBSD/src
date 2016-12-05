@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.70.4.4 2016/10/05 20:56:09 skrll Exp $	*/
+/*	$NetBSD: in_var.h,v 1.70.4.5 2016/12/05 10:55:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ struct in_ifaddr {
 	int	ia4_flags;		/* address flags */
 	void	(*ia_dad_start) (struct ifaddr *);	/* DAD start function */
 	void	(*ia_dad_stop) (struct ifaddr *);	/* DAD stop function */
+	time_t	ia_dad_defended;	/* last time of DAD defence */
 
 #ifdef _KERNEL
 	struct pslist_entry	ia_hash_pslist_entry;
@@ -171,6 +172,7 @@ extern	u_long in_ifaddrhash;			/* size of hash table - 1 */
 extern  struct in_ifaddrhashhead *in_ifaddrhashtbl;	/* Hash table head */
 extern  struct in_ifaddrhead in_ifaddrhead;		/* List head (in ip_input) */
 
+extern pserialize_t in_ifaddrhash_psz;
 extern struct pslist_head *in_ifaddrhashtbl_pslist;
 extern u_long in_ifaddrhash_pslist;
 extern struct pslist_head in_ifaddrhead_pslist;
