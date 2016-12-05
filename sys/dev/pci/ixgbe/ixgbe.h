@@ -58,8 +58,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ixgbe.h,v 1.17 2016/12/02 10:46:58 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 303890 2016-08-09 19:32:06Z dumbbell $*/
+/*$NetBSD: ixgbe.h,v 1.18 2016/12/05 08:50:29 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -509,6 +509,7 @@ struct adapter {
 	u32			optics;
 	u32			fc; /* local flow ctrl setting */
 	int			advertise;  /* link speeds */
+	bool			enable_aim; /* adaptive interrupt moderation */
 	bool			link_active;
 	u16			max_frame_size;
 	u16			num_segs;

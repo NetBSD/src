@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.28 2016/12/02 12:14:37 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
+/*$NetBSD: ixv.c,v 1.29 2016/12/05 08:50:29 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1189,7 +1189,7 @@ ixv_local_timer_locked(void *arg)
 
 	}
 
-	/* Only truely watchdog if all queues show hung */
+	/* Only truly watchdog if all queues show hung */
 	if (hung == adapter->num_queues)
 		goto watchdog;
 	else if (queues != 0) { /* Force an IRQ on queues with work */
@@ -2038,7 +2038,7 @@ ixv_handle_mbx(void *context)
 }
 
 /*
-** The VF stats registers never have a truely virgin
+** The VF stats registers never have a truly virgin
 ** starting point, so this routine tries to make an
 ** artificial one, marking ground zero on attach as
 ** it were.
