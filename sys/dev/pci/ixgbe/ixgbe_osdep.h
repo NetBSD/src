@@ -30,7 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 294734 2016-01-25 16:18:53Z smh $*//*$NetBSD: ixgbe_osdep.h,v 1.15 2016/12/05 08:50:29 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 294734 2016-01-25 16:18:53Z smh $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.16 2016/12/05 10:05:11 msaitoh Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
