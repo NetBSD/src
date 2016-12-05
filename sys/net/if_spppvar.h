@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.16.40.1 2016/10/05 20:56:08 skrll Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.16.40.2 2016/12/05 10:55:27 skrll Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -25,6 +25,9 @@
  *
  * From: Id: if_sppp.h,v 1.7 1998/12/01 20:20:19 hm Exp
  */
+
+#include <sys/workqueue.h>
+#include <sys/pcq.h>
 
 #include <net/if_media.h>
 
@@ -61,6 +64,11 @@ struct sipcp {
 	uint32_t saved_hisaddr;/* if hisaddr (IPv4) is dynamic, save original one here, in network byte order */
 	uint32_t req_hisaddr;	/* remote address requested */
 	uint32_t req_myaddr;	/* local address requested */
+
+	struct workqueue *update_addrs_wq;
+	struct work update_addrs_wk;
+	u_int update_addrs_enqueued;
+	pcq_t *update_addrs_q;
 };
 
 struct sauth {

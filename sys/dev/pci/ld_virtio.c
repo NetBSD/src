@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.6.4.4 2016/10/05 20:55:43 skrll Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.6.4.5 2016/12/05 10:55:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.6.4.4 2016/10/05 20:55:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.6.4.5 2016/12/05 10:55:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,7 +399,6 @@ ld_virtio_start(struct ld_softc *ld, struct buf *bp)
 	r = virtio_enqueue_reserve(vsc, vq, slot, vr->vr_payload->dm_nsegs +
 	    VIRTIO_BLK_MIN_SEGMENTS);
 	if (r != 0) {
-		virtio_enqueue_abort(vsc, vq, slot);
 		bus_dmamap_unload(vsc->sc_dmat, vr->vr_payload);
 		return r;
 	}

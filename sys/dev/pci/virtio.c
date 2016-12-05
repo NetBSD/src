@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.7.2.6 2016/10/05 20:55:55 skrll Exp $	*/
+/*	$NetBSD: virtio.c,v 1.7.2.7 2016/12/05 10:55:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.7.2.6 2016/10/05 20:55:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.7.2.7 2016/12/05 10:55:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1018,7 +1018,6 @@ vq_free_entry(struct virtqueue *vq, struct vq_entry *qe)
  *	r = bus_dmamap_load(dmat, dmamap_payload[slot], data, count, ..);
  *	if (r) {
  *	  virtio_enqueue_abort(sc, vq, slot);
- *	  bus_dmamap_unload(dmat, dmamap_payload[slot]);
  *	  return r;
  *	}
  *	r = virtio_enqueue_reserve(sc, vq, slot,

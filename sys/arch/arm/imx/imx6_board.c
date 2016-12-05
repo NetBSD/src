@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_board.c,v 1.2.2.3 2016/03/19 11:29:56 skrll Exp $	*/
+/*	$NetBSD: imx6_board.c,v 1.2.2.4 2016/12/05 10:54:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.2.2.3 2016/03/19 11:29:56 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.2.2.4 2016/12/05 10:54:50 skrll Exp $");
 
 #include "opt_imx.h"
 #include "arml2cc.h"
@@ -36,6 +36,7 @@ __KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.2.2.3 2016/03/19 11:29:56 skrll Exp
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/gpio.h>
 
 #include <arm/locore.h>
 #include <arm/cortex/a9tmr_var.h>
@@ -47,6 +48,7 @@ __KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.2.2.3 2016/03/19 11:29:56 skrll Exp
 #include <arm/imx/imx6_mmdcreg.h>
 #include <arm/imx/imx6_ccmreg.h>
 #include <arm/imx/imxwdogreg.h>
+#include <arm/imx/imxgpiovar.h>
 
 bus_space_tag_t imx6_ioreg_bst = &armv7_generic_bs_tag;
 bus_space_handle_t imx6_ioreg_bsh;
@@ -205,7 +207,7 @@ imx6_device_register(device_t self, void *aux)
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
 		 * addresses by 2.  The simpliest remedy is to replace with our
-		 * bus space used for the armcore regisers (which armperiph uses).
+		 * bus space used for the armcore registers (which armperiph uses).
 		 */
 		struct mainbus_attach_args * const mb = aux;
 		mb->mb_iot = imx6_armcore_bst;
@@ -230,3 +232,50 @@ imx6_cpu_hatch(struct cpu_info *ci)
 	a9tmr_init_cpu_clock(ci);
 }
 #endif
+
+void
+imx6_set_gpio(device_t self, const char *name, int32_t *gpio,
+    int32_t *active, u_int dir)
+{
+	prop_dictionary_t dict;
+	const char *pin_data;
+	int grp, pin;
+
+	*gpio = -1;
+	*active = -1;
+
+	dict = device_properties(self);
+	if (!prop_dictionary_get_cstring_nocopy(dict, name, &pin_data))
+		return;
+
+	/*
+	 * "!1,6" -> gpio = GPIO_NO(1,6),  active = GPIO_PIN_LOW
+	 * "3,31" -> gpio = GPIO_NO(3,31), active = GPIO_PIN_HIGH
+	 * "!"    -> always not detected
+	 * none   -> always detected
+	 */
+	if (*pin_data == '!') {
+		*active = GPIO_PIN_LOW;
+		pin_data++;
+	} else
+		*active = GPIO_PIN_HIGH;
+
+	if (*pin_data == '\0')
+		return;
+
+	for (grp = 0; (*pin_data >= '0') && (*pin_data <= '9'); pin_data++)
+		grp = grp * 10 + *pin_data - '0';
+
+	KASSERT(*pin_data == ',');
+	pin_data++;
+
+	for (pin = 0; (*pin_data >= '0') && (*pin_data <= '9'); pin_data++)
+		pin = pin * 10 + *pin_data - '0';
+
+	KASSERT(*pin_data == '\0');
+
+	*gpio = GPIO_NO(grp, pin);
+#if NIMXGPIO > 0
+	gpio_set_direction(*gpio, dir);
+#endif
+}

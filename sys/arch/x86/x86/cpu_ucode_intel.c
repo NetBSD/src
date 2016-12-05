@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.5.6.3 2015/12/27 12:09:45 skrll Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.5.6.4 2016/12/05 10:54:59 skrll Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.5.6.3 2015/12/27 12:09:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.5.6.4 2016/12/05 10:54:59 skrll Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.5.6.3 2015/12/27 12:09:45 skrl
 #include <sys/cpuio.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
-#include <sys/xcall.h>
 
 #include <machine/cpufunc.h>
 #include <machine/specialreg.h>

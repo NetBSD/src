@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.20.2.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.20.2.2 2016/12/05 10:55:02 skrll Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
@@ -300,7 +300,7 @@ void ndis_attach_pci(device_t parent, device_t self, void *aux)
 					if((sc->ndis_res_altmem = 
 						malloc(sizeof(struct ndis_resource), M_DEVBUF, M_NOWAIT | M_ZERO)) == NULL) {
 						sc->error = ENOMEM;
-						return;
+						goto out;
 					}
 					sc->ndis_res_altmem->res_base = base;
 					sc->ndis_res_altmem->res_size = size;

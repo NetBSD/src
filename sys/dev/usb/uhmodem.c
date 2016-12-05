@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.13.24.8 2016/04/16 13:22:00 skrll Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.13.24.9 2016/12/05 10:55:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.8 2016/04/16 13:22:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.9 2016/12/05 10:55:18 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211.4.7 2016/10/05 20:55:23 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211.4.8 2016/12/05 10:54:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.7 2016/10/05 20:55:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.8 2016/12/05 10:54:49 skrll Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -377,12 +377,14 @@ cpu_startup(void)
 	/*
 	 * Create the module map.
 	 *
-	 * XXX: the module map is taken as what is left of the bootstrap memory
-	 * created in locore.S, which is not big enough if we want to load many
-	 * modules dynamically. We really should be using kernel_map instead.
+	 * The kernel uses RIP-relative addressing with a maximum offset of
+	 * 2GB. The problem is, kernel_map is too far away in memory from
+	 * the kernel .text. So we cannot use it, and have to create a
+	 * special module_map.
 	 *
-	 * But the modules must be located above the kernel image, and that
-	 * wouldn't be guaranteed if we were using kernel_map.
+	 * The module map is taken as what is left of the bootstrap memory
+	 * created in locore.S. This memory is right above the kernel
+	 * image, so this is the best place to put our modules.
 	 */
 	uvm_map_setup(&module_map_store, module_start, module_end, 0);
 	module_map_store.pmap = pmap_kernel();
@@ -1540,7 +1542,9 @@ init_x86_64(paddr_t first_avail)
 	int x;
 #ifndef XEN
 	int ist;
-#endif /* !XEN */
+#endif
+
+	KASSERT(first_avail % PAGE_SIZE == 0);
 
 #ifdef XEN
 	KASSERT(HYPERVISOR_shared_info != NULL);
@@ -1603,6 +1607,15 @@ init_x86_64(paddr_t first_avail)
 	    pmap_pa_start, avail_start, avail_end));
 #endif	/* !XEN */
 
+	/* End of the virtual space we have created so far. */
+	kern_end = KERNBASE + first_avail;
+
+#ifndef XEN
+	/* The area for the module map. */
+	module_start = kern_end;
+	module_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
+#endif
+
 	/*
 	 * Call pmap initialization to make new kernel address space.
 	 * We must do this before loading pages into the VM system.
@@ -1613,7 +1626,6 @@ init_x86_64(paddr_t first_avail)
 	/* Internalize the physical pages into the VM system. */
 	init_x86_vm(first_avail);
 #else	/* XEN */
-	kern_end = KERNBASE + first_avail;
 	physmem = xen_start_info.nr_pages;
 
 	uvm_page_physload(atop(avail_start),

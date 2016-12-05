@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.217.4.6 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.217.4.7 2016/12/05 10:55:28 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217.4.6 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217.4.7 2016/12/05 10:55:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217.4.6 2016/07/09 20:25:22 skrll E
 #include "opt_inet_csum.h"
 #include "opt_ipkdb.h"
 #include "opt_mbuftrace.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -354,6 +355,19 @@ udp_input(struct mbuf *m, ...)
 	if (uh == NULL) {
 		UDP_STATINC(UDP_STAT_HDROPS);
 		return;
+	}
+	/*
+	 * Enforce alignment requirements that are violated in
+	 * some cases, see kern/50766 for details.
+	 */
+	if (UDP_HDR_ALIGNED_P(uh) == 0) {
+		m = m_copyup(m, iphlen + sizeof(struct udphdr), 0);
+		if (m == NULL) {
+			UDP_STATINC(UDP_STAT_HDROPS);
+			return;
+		}
+		ip = mtod(m, struct ip *);
+		uh = (struct udphdr *)(mtod(m, char *) + iphlen);
 	}
 	KASSERT(UDP_HDR_ALIGNED_P(uh));
 
@@ -1126,11 +1140,15 @@ udp_purgeif(struct socket *so, struct ifnet *ifp)
 	int s;
 
 	s = splsoftnet();
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
+#endif
 	in_pcbpurgeif0(&udbtable, ifp);
 	in_purgeif(ifp);
 	in_pcbpurgeif(&udbtable, ifp);
+#ifndef NET_MPSAFE
 	mutex_exit(softnet_lock);
+#endif
 	splx(s);
 
 	return 0;
@@ -1339,13 +1357,9 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	((u_int16_t *)(tag + 1))[1] = dport;
 	m_tag_prepend(m, tag);
 
-#ifdef IPSEC
 	if (ipsec_used)
 		ipsec4_common_input(m, iphdrlen, IPPROTO_ESP);
 	/* XXX: else */
-#else
-	esp4_input(m, iphdrlen);
-#endif
 
 	/* We handled it, it shouldn't be handled by UDP */
 	*mp = NULL; /* avoid free by caller ... */

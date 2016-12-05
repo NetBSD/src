@@ -1,4 +1,4 @@
-/*	$NetBSD: vexpress_machdep.c,v 1.2.2.2 2015/04/06 15:17:56 skrll Exp $	*/
+/*	$NetBSD: vexpress_machdep.c,v 1.2.2.3 2016/12/05 10:54:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_machdep.c,v 1.2.2.2 2015/04/06 15:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_machdep.c,v 1.2.2.3 2016/12/05 10:54:52 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -265,7 +265,7 @@ vexpress_device_register(device_t self, void *aux)
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
 		 * addresses by 2.  The simpliest remedy is to replace with our
-		 * bus space used for the armcore regisers (which armperiph uses).
+		 * bus space used for the armcore registers (which armperiph uses).
 		 */
 		struct mainbus_attach_args *const mb = aux;
 		mb->mb_iot = &vexpress_bs_tag;

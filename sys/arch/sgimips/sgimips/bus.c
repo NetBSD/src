@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.65.14.2 2016/10/05 20:55:34 skrll Exp $	*/
+/*	$NetBSD: bus.c,v 1.65.14.3 2016/12/05 10:54:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.65.14.2 2016/10/05 20:55:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.65.14.3 2016/12/05 10:54:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,22 +80,17 @@ bus_space_tag_t	normal_memt = NULL;
 void
 sgimips_bus_dma_init(void)
 {
-	printf("%s\n", __func__);
 	normal_bus_mem_init(&normal_mbst, NULL);
 	normal_memt = &normal_mbst;
 
-#if 0
+#ifdef MIPS1
 	switch (mach_type) {
 	/* R2000/R3000 */
-	case MACH_SGI_IP6 | MACH_SGI_IP10:
+	case MACH_SGI_IP6 | MACH_SGI_IP10: /* same number... */
 	case MACH_SGI_IP12:
 		sgimips_default_bus_dma_tag._dmamap_ops.dmamap_sync =
 		    _bus_dmamap_sync_mips1;
 		break;
-
-	default:
-		panic("sgimips_bus_dma_init: unsupported mach type IP%d\n",
-		    mach_type);
 	}
 #endif
 }
@@ -129,6 +124,7 @@ bus_space_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 }
 #endif
 
+#ifdef MIPS1
 /* Common function from DMA map synchronization. May be called
  * by chipset-specific DMA map synchronization functions.
  *
@@ -229,24 +225,6 @@ _bus_dmamap_sync_mips1(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		offset = 0;
 		len -= minlen;
 	}
-}
-
-#if 0
-paddr_t
-bus_space_mmap(bus_space_tag_t space, bus_addr_t addr, off_t off,
-         int prot, int flags)
-{
-
-	if (flags & BUS_SPACE_MAP_CACHEABLE) {
-
-		return mips_btop(MIPS_KSEG0_TO_PHYS(addr) + off);
-	} else
-#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
-		return mips_btop((MIPS_KSEG1_TO_PHYS(addr) + off)
-		    | PGC_NOCACHE);
-#else
-		return mips_btop((MIPS_KSEG1_TO_PHYS(addr) + off));
-#endif
 }
 #endif
 

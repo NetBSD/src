@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.173.2.5 2016/10/05 20:56:03 skrll Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.173.2.6 2016/12/05 10:55:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.173.2.5 2016/10/05 20:56:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.173.2.6 2016/12/05 10:55:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -1511,6 +1511,7 @@ sockargs_sb(struct sockaddr_big *sb, const void *name, socklen_t buflen)
 	if (error)
 		return error;
 
+	ktrkuser(mbuftypes[MT_SONAME], sb, buflen);
 #if BYTE_ORDER != BIG_ENDIAN
 	/*
 	 * 4.3BSD compat thing - need to stay, since bind(2),

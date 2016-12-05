@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.64.6.1 2016/10/05 20:55:28 skrll Exp $	*/
+/*	$NetBSD: vector.S,v 1.64.6.2 2016/12/05 10:54:53 skrll Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.64.6.1 2016/10/05 20:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.64.6.2 2016/12/05 10:54:53 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -162,7 +162,8 @@ IDTVEC(intr_lapic_ipi)
 	pushl	$0
 	pushl	$T_ASTFLT
 	INTRENTRY
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	movl	_C_LABEL(local_apic_va),%ebx
+	movl	$0,LAPIC_EOI(%ebx)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_HIGH,%ebx
 	jae	2f
@@ -188,12 +189,17 @@ IDTVEC(intr_lapic_tlb)
 	pushl	$0
 	pushl	$T_ASTFLT
 	INTRENTRY
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	movl	_C_LABEL(local_apic_va),%eax
+	movl	$0,LAPIC_EOI(%eax)
 	call	_C_LABEL(pmap_tlb_intr)
 	INTRFASTEXIT
 IDTVEC_END(intr_lapic_tlb)
 
 #if defined(DDB)
+/*
+ * No need to use INTRENTRY, since we were brought here through a task-gate
+ * which triggered a hardware context switch and saved the GPRs in the TSS.
+ */
 IDTVEC(intrddbipi)
 1:
 	str	%ax
@@ -201,12 +207,15 @@ IDTVEC(intrddbipi)
 	movzwl	(%eax),%eax
 	GET_TSS
 	pushl	%eax
-	movl	$0xff,_C_LABEL(lapic_tpr)
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	movl	_C_LABEL(local_apic_va),%ebx
+	movl	$0xff,LAPIC_TPRI(%ebx)
+	movl	_C_LABEL(local_apic_va),%ebx
+	movl	$0,LAPIC_EOI(%ebx)
 	sti
 	call	_C_LABEL(ddb_ipi_tss)
 	addl	$4,%esp
-	movl	$0,_C_LABEL(lapic_tpr)
+	movl	_C_LABEL(local_apic_va),%ebx
+	movl	$0,LAPIC_TPRI(%ebx)
 	iret
 	jmp	1b
 IDTVEC_END(intrddbipi)
@@ -229,7 +238,8 @@ IDTVEC(intr_lapic_ltimer)
 	pushl	$0
 	pushl	$T_ASTFLT
 	INTRENTRY
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	movl	_C_LABEL(local_apic_va),%ebx
+	movl	$0,LAPIC_EOI(%ebx)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f

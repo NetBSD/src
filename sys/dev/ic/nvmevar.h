@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.1.2.4 2016/10/05 20:55:41 skrll Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.1.2.5 2016/12/05 10:55:01 skrll Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -30,10 +30,10 @@ struct nvme_dmamem {
 	size_t			ndm_size;
 	void			*ndm_kva;
 };
-#define NVME_DMA_MAP(_ndm)	((_ndm).ndm_map)
-#define NVME_DMA_LEN(_ndm)	((_ndm).ndm_map->dm_segs[0].ds_len)
-#define NVME_DMA_DVA(_ndm)	((uint64_t)(_ndm).ndm_map->dm_segs[0].ds_addr)
-#define NVME_DMA_KVA(_ndm)	((void *)(_ndm).ndm_kva)
+#define NVME_DMA_MAP(_ndm)	((_ndm)->ndm_map)
+#define NVME_DMA_LEN(_ndm)	((_ndm)->ndm_map->dm_segs[0].ds_len)
+#define NVME_DMA_DVA(_ndm)	((uint64_t)(_ndm)->ndm_map->dm_segs[0].ds_addr)
+#define NVME_DMA_KVA(_ndm)	((void *)(_ndm)->ndm_kva)
 
 struct nvme_softc;
 struct nvme_queue;
@@ -53,6 +53,7 @@ struct nvme_ccb {
 	/* command context */
 	uint16_t		ccb_id;
 	void			*ccb_cookie;
+#define NVME_CCB_FREE	0xbeefdeed
 	void			(*ccb_done)(struct nvme_queue *,
 				    struct nvme_ccb *, struct nvme_cqe *);
 
@@ -74,8 +75,8 @@ struct nvme_queue {
 	struct nvme_softc	*q_sc;
 	kmutex_t		q_sq_mtx;
 	kmutex_t		q_cq_mtx;
-	struct nvme_dmamem	q_sq_dmamem;
-	struct nvme_dmamem	q_cq_dmamem;
+	struct nvme_dmamem	*q_sq_dmamem;
+	struct nvme_dmamem	*q_cq_dmamem;
 	bus_size_t 		q_sqtdbl; /* submission queue tail doorbell */
 	bus_size_t 		q_cqhdbl; /* completion queue head doorbell */
 	uint16_t		q_id;
@@ -85,10 +86,11 @@ struct nvme_queue {
 	uint16_t		q_cq_phase;
 
 	kmutex_t		q_ccb_mtx;
-	u_int			q_nccbs;
+	uint16_t		q_nccbs;	/* total number of ccbs */
+	uint16_t		q_nccbs_avail;	/* available ccbs */
 	struct nvme_ccb		*q_ccbs;
 	SIMPLEQ_HEAD(, nvme_ccb) q_ccb_list;
-	struct nvme_dmamem	q_ccb_prpls;
+	struct nvme_dmamem	*q_ccb_prpls;
 };
 
 struct nvme_namespace {
@@ -143,7 +145,8 @@ struct nvme_softc {
 
 struct nvme_attach_args {
 	uint16_t	naa_nsid;
-	uint32_t	naa_qentries;
+	uint32_t	naa_qentries;	/* total number of queue slots */
+	uint32_t	naa_maxphys;	/* maximum device transfer size */
 };
 
 int	nvme_attach(struct nvme_softc *);
@@ -151,6 +154,7 @@ int	nvme_detach(struct nvme_softc *, int flags);
 int	nvme_rescan(device_t, const char *, const int *);
 void	nvme_childdet(device_t, device_t);
 int	nvme_intr(void *);
+void	nvme_softintr_intx(void *);
 int	nvme_intr_msi(void *);
 void	nvme_softintr_msi(void *);
 

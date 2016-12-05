@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.10.28.3 2016/10/05 20:55:32 skrll Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.10.28.4 2016/12/05 10:54:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.10.28.3 2016/10/05 20:55:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.10.28.4 2016/12/05 10:54:55 skrll Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -157,7 +157,7 @@ mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 	}
 
 	if (fixed)
-		mips_icache_sync_range((vaddr_t)start,
+		mips_icache_sync_range((intptr_t)start,
 		   sizeof(start[0]) * (end - start));
 
 	return fixed;
@@ -491,7 +491,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 	if (sizeof(uint32_t [end - start]) > mips_cache_info.mci_picache_size)
 		mips_icache_sync_all();
 	else
-		mips_icache_sync_range((vaddr_t)start,
+		mips_icache_sync_range((intptr_t)start,
 		    sizeof(uint32_t [end - start]));
 
 #ifdef DEBUG

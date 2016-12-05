@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.181.2.9 2016/10/05 20:56:08 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.181.2.10 2016/12/05 10:55:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -243,7 +243,7 @@ typedef struct ifnet {
 	struct bpf_if *if_bpf;		/* packet filter structure */
 	if_index_t	if_index;	/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_slowtimo called */
-	short	if_flags;		/* up/down, broadcast, etc. */
+	unsigned short	if_flags;	/* up/down, broadcast, etc. */
 	short	if_extflags;		/* if_output MP-safe, etc. */
 	struct	if_data if_data;	/* statistics and other data about if */
 	/*
@@ -1031,7 +1031,6 @@ void	loopattach(int);
 void	loopinit(void);
 int	looutput(struct ifnet *,
 	   struct mbuf *, const struct sockaddr *, const struct rtentry *);
-void	lortrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
 /*
  * These are exported because they're an easy way to tell if

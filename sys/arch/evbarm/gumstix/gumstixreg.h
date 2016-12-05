@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstixreg.h,v 1.7.14.1 2016/04/22 15:44:09 skrll Exp $  */
+/*	$NetBSD: gumstixreg.h,v 1.7.14.2 2016/12/05 10:54:52 skrll Exp $  */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -49,8 +49,16 @@
 
 #define OVERO_L4_CORE_VBASE		0xc0000000
 #define OVERO_L4_PERIPHERAL_VBASE	0xc0100000
-#define OVERO_GPMC_VBASE		0xc0200000
+#define OVERO_L4_WAKEUP_VBASE		0xc0200000
+#define OVERO_GPMC_VBASE		0xc0300000
 
+#define DUOVERO_L4_CM_VBASE		0xc0000000
+#define DUOVERO_L4_PERIPHERAL_VBASE	0xc0100000
+#define DUOVERO_L4_WAKEUP_VBASE		0xc0400000
+#define DUOVERO_GPMC_VBASE		0xc0500000
+
+#define PEPPER_PRCM_VBASE		0xc0000000
+#define PEPPER_L4_PERIPHERAL_VBASE	0xc0100000
 
 #define ioreg_read(a)		(*(volatile unsigned *)(a))
 #define ioreg_write(a,v)	(*(volatile unsigned *)(a)=(v))

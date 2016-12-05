@@ -1,4 +1,4 @@
-/*	$NetBSD: mntva.c,v 1.1.2.2 2016/10/05 20:55:24 skrll Exp $	*/
+/*	$NetBSD: mntva.c,v 1.1.2.3 2016/12/05 10:54:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012, 2016 The NetBSD Foundation, Inc.		
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mntva.c,v 1.1.2.2 2016/10/05 20:55:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mntva.c,v 1.1.2.3 2016/12/05 10:54:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -593,6 +593,7 @@ mntvacninit(struct consdev *cd)
 void 
 mntvacnprobe(struct consdev *cd)
 {
+#ifdef MNTVA_CONSOLE
 	/* 
 	 * This isn't exactly true, but cons.h does not define anything
 	 * that would fit our case exactly.
@@ -600,6 +601,7 @@ mntvacnprobe(struct consdev *cd)
 	cd->cn_pri = CN_INTERNAL;
 
 	cd->cn_dev = NODEV; /* Filled later by wscons. */
+#endif /* MNTVA_CONSOLE */
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_nfssvc.c,v 1.3.2.3 2015/12/27 12:09:47 skrll Exp $	*/
+/*	$NetBSD: netbsd32_nfssvc.c,v 1.3.2.4 2016/12/05 10:55:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_nfssvc.c,v 1.3.2.3 2015/12/27 12:09:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_nfssvc.c,v 1.3.2.4 2016/12/05 10:55:00 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -198,11 +198,11 @@ static const struct syscall_package compat_nfssvc_syscalls[] = {
 
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32_nfssrv, "nfsserver,compat_netbsd32");
 
-static int      
+static int
 compat_netbsd32_nfssrv_modcmd(modcmd_t cmd, void *arg)
-{               
-	int error;      
-                
+{
+	int error;
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		error = syscall_establish(&emul_netbsd32,

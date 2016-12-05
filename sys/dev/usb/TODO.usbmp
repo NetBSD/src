@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.8.4.3 2015/10/17 10:24:58 skrll Exp $
+$NetBSD: TODO.usbmp,v 1.8.4.4 2016/12/05 10:55:17 skrll Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -149,7 +149,7 @@ driver testing:		STATUS
   - udl
   - ulpt		attaches ok
   - uhso		working (must take kernel lock for scsipi)
-  - umass		working (must take kernel lock for scsipi)
+  - umass		working
   - uaudio		working
   - umidi		working
   - uirda

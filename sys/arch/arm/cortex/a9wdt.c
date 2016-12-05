@@ -1,4 +1,4 @@
-/*	$NetBSD: a9wdt.c,v 1.2.4.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: a9wdt.c,v 1.2.4.2 2016/12/05 10:54:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.2.4.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.2.4.2 2016/12/05 10:54:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -253,4 +253,8 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self,
 			    "failed to start kernel tickler: %d\n", error);
  	}
+
+	if (sysmon_wdog_register(&sc->sc_smw) != 0)
+		aprint_error("%s: unable to register with sysmon\n",
+		    device_xname(sc->sc_dev));
 }

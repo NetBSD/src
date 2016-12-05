@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.109.6.3 2016/10/05 20:55:31 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.109.6.4 2016/12/05 10:54:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -150,6 +150,9 @@ struct cpu_info {
 #define	CPUF_RUNNING	0x04		/* CPU is running */
 #define	CPUF_PAUSED	0x08		/* CPU is paused */
 #define	CPUF_USERPMAP	0x20		/* CPU has a user pmap activated */
+	kcpuset_t *ci_multicastcpus;
+	kcpuset_t *ci_watchcpus;
+	kcpuset_t *ci_ddbcpus;
 #endif
 
 };

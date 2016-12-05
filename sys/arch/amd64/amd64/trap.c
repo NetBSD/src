@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79.2.3 2016/10/05 20:55:23 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.79.2.4 2016/12/05 10:54:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79.2.3 2016/10/05 20:55:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79.2.4 2016/12/05 10:54:49 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -662,9 +662,10 @@ faultcommon:
 		}
 
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): signal %d at rip %lx addr %lx "
-		    "error %d\n", p->p_pid, l->l_lid, p->p_comm, ksi.ksi_signo,
-		    frame->tf_rip, va, error);
+		printf("pid %d.%d (%s): signal %d at rip %#lx addr %#lx "
+		    "error %d trap %d cr2 %p\n", p->p_pid, l->l_lid, p->p_comm,
+		    ksi.ksi_signo, frame->tf_rip, va, error, ksi.ksi_trap,
+		    ksi.ksi_addr);
 		frame_dump(frame);
 #endif
 		(*p->p_emul->e_trapsignal)(l, &ksi);

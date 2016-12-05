@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.78.2.5 2016/10/05 20:55:40 skrll Exp $	*/
+/*	$NetBSD: ld.c,v 1.78.2.6 2016/12/05 10:55:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.78.2.5 2016/10/05 20:55:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.78.2.6 2016/12/05 10:55:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.78.2.5 2016/10/05 20:55:40 skrll Exp $");
 #include <sys/syslog.h>
 #include <sys/mutex.h>
 #include <sys/module.h>
+#include <sys/reboot.h>
 
 #include <dev/ldvar.h>
 
@@ -274,7 +275,8 @@ ld_shutdown(device_t dev, int flags)
 	struct ld_softc *sc = device_private(dev);
 	struct dk_softc *dksc = &sc->sc_dksc;
 
-	if (sc->sc_flush != NULL && (*sc->sc_flush)(sc, LDFL_POLL) != 0) {
+	if ((flags & RB_NOSYNC) == 0 && sc->sc_flush != NULL
+	    && (*sc->sc_flush)(sc, LDFL_POLL) != 0) {
 		device_printf(dksc->sc_dev, "unable to flush cache\n");
 		return false;
 	}
@@ -442,11 +444,11 @@ ldsize(dev_t dev)
 
 	unit = DISKUNIT(dev);
 	if ((sc = device_lookup_private(&ld_cd, unit)) == NULL)
-		return (ENODEV);
+		return (-1);
 	dksc = &sc->sc_dksc;
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
-		return (ENODEV);
+		return (-1);
 
 	return dk_size(dksc, dev);
 }

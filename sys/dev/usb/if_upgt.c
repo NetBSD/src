@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12.4.12 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.4.13 2016/12/05 10:55:18 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.12 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.13 2016/12/05 10:55:18 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/callout.h>

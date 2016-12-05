@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.2.2.6 2016/10/05 20:56:02 skrll Exp $
+#	$NetBSD: files.kern,v 1.2.2.7 2016/12/05 10:55:26 skrll Exp $
 
 #
 # kernel sources
@@ -144,7 +144,9 @@ file	kern/sys_mqueue.c		mqueue
 file	kern/sys_lwp.c			kern
 file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_pmc.c			kern
-file	kern/sys_process.c		ptrace | ktrace
+file	kern/sys_process.c		ptrace_hooks | ktrace
+file	kern/sys_ptrace.c		ptrace
+file	kern/sys_ptrace_common.c	ptrace
 file	kern/sys_pset.c			kern
 file	kern/sys_select.c		kern
 file	kern/sys_sig.c			kern

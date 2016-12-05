@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.325.2.3 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: cd.c,v 1.325.2.4 2016/12/05 10:55:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.325.2.3 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.325.2.4 2016/12/05 10:55:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ const struct bdevsw cd_bdevsw = {
 	.d_dump = cddump,
 	.d_psize = cdsize,
 	.d_discard = nodiscard,
-	.d_flag = D_DISK
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 const struct cdevsw cd_cdevsw = {
@@ -226,7 +226,7 @@ const struct cdevsw cd_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_DISK
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 static struct dkdriver cddkdriver = {
@@ -316,7 +316,9 @@ static int
 cddetach(device_t self, int flags)
 {
 	struct cd_softc *cd = device_private(self);
-	int s, bmaj, cmaj, i, mn;
+	struct scsipi_periph *periph = cd->sc_periph;
+	struct scsipi_channel *chan = periph->periph_channel;
+	int bmaj, cmaj, i, mn;
 
 	if (cd->sc_dk.dk_openmask != 0 && (flags & DETACH_FORCE) == 0)
 		return EBUSY;
@@ -334,17 +336,17 @@ cddetach(device_t self, int flags)
 	/* kill any pending restart */
 	callout_stop(&cd->sc_callout);
 
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 
 	/* Kill off any queued buffers. */
 	bufq_drain(cd->buf_queue);
 
-	bufq_free(cd->buf_queue);
-
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(cd->sc_periph);
 
-	splx(s);
+	mutex_exit(chan_mtx(chan));
+
+	bufq_free(cd->buf_queue);
 
 	mutex_destroy(&cd->sc_lock);
 
@@ -576,8 +578,8 @@ cdstrategy(struct buf *bp)
 	struct cd_softc *cd = device_lookup_private(&cd_cd,CDUNIT(bp->b_dev));
 	struct disklabel *lp;
 	struct scsipi_periph *periph = cd->sc_periph;
+	struct scsipi_channel *chan = periph->periph_channel;
 	daddr_t blkno;
-	int s;
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2, ("cdstrategy "));
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB1,
@@ -719,7 +721,7 @@ cdstrategy(struct buf *bp)
 				cd->params.blksize;
 		}
 	}
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 
 	/*
 	 * Place it in the queue of disk activities for this disk.
@@ -733,9 +735,9 @@ cdstrategy(struct buf *bp)
 	 * Tell the device to get going on the transfer if it's
 	 * not doing anything, otherwise just wait for completion
 	 */
-	cdstart(cd->sc_periph);
+	cdstart(periph);
 
-	splx(s);
+	mutex_exit(chan_mtx(chan));
 	return;
 
 done:
@@ -759,8 +761,8 @@ done:
  * have been made of the scsi driver, to ensure that the queue
  * continues to be drained.
  *
- * must be called at the correct (highish) spl level
- * cdstart() is called at splbio from cdstrategy, cdrestart and scsipi_done
+ * must be called with channel lock held
+ * cdstart() is called from cdstrategy, cdrestart and scsipi_done
  */
 static void
 cdstart(struct scsipi_periph *periph)
@@ -774,6 +776,7 @@ cdstart(struct scsipi_periph *periph)
 	int flags, nblks, cmdlen, error __diagused;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdstart "));
+
 	/*
 	 * Check if the device has room for another command
 	 */
@@ -785,7 +788,7 @@ cdstart(struct scsipi_periph *periph)
 		 */
 		if (periph->periph_flags & PERIPH_WAITING) {
 			periph->periph_flags &= ~PERIPH_WAITING;
-			wakeup((void *)periph);
+			cv_broadcast(periph_cv_periph(periph));
 			return;
 		}
 
@@ -864,7 +867,7 @@ cdstart(struct scsipi_periph *periph)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		xs = scsipi_make_xs(periph, cmdp, cmdlen,
+		xs = scsipi_make_xs_locked(periph, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    CDRETRIES, 30000, bp, flags);
 		if (__predict_false(xs == NULL)) {
@@ -896,9 +899,12 @@ cdstart(struct scsipi_periph *periph)
 static void
 cdrestart(void *v)
 {
-	int s = splbio();
+	struct scsipi_periph *periph = (struct scsipi_periph *)v;
+	struct scsipi_channel *chan = periph->periph_channel;
+
+	mutex_enter(chan_mtx(chan));
 	cdstart((struct scsipi_periph *)v);
-	splx(s);
+	mutex_exit(chan_mtx(chan));
 }
 
 static void
@@ -951,7 +957,6 @@ cdbounce(struct buf *bp)
 		struct buf *nbp;
 		daddr_t blkno;
 		long count;
-		int s;
 
 		blkno = obp->b_rawblkno +
 		    ((obp->b_bcount - bounce->resid) / lp->d_secsize);
@@ -995,10 +1000,10 @@ cdbounce(struct buf *bp)
 		putiobuf(bp);
 
 		/* enqueue the request and return */
-		s = splbio();
+		mutex_enter(chan_mtx(cd->sc_periph->periph_channel));
 		bufq_put(cd->buf_queue, nbp);
 		cdstart(cd->sc_periph);
-		splx(s);
+		mutex_exit(chan_mtx(cd->sc_periph->periph_channel));
 
 		return;
 	}
@@ -1270,7 +1275,6 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct cd_formatted_toc toc;
 	int part = CDPART(dev);
 	int error;
-	int s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
 #endif
@@ -1638,6 +1642,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case DIOCGSTRATEGY:
 	    {
 		struct disk_strategy *dks = addr;
+		int s;
 
 		s = splbio();
 		strlcpy(dks->dks_name, bufq_getstrategyname(cd->buf_queue),
@@ -1652,6 +1657,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		struct disk_strategy *dks = addr;
 		struct bufq_state *new;
 		struct bufq_state *old;
+		int s;
 
 		if ((flag & FWRITE) == 0) {
 			return EBADF;

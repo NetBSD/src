@@ -1,4 +1,4 @@
-#	$NetBSD: mk.gumstix,v 1.4.30.1 2016/04/22 15:44:09 skrll Exp $
+#	$NetBSD: mk.gumstix,v 1.4.30.2 2016/12/05 10:54:52 skrll Exp $
 
 SYSTEM_FIRST_OBJ=	gumstix_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/gumstix/gumstix_start.S
@@ -8,6 +8,10 @@ _OSRELEASE!=            ${HOST_SH} $S/conf/osrelease.sh
 .if ${BOARDTYPE} == "gumstix"
 KERNEL_BASE_PHYS=0xa0200000
 .elif ${BOARDTYPE} == "overo"
+KERNEL_BASE_PHYS=$(LOADADDRESS)
+.elif ${BOARDTYPE} == "duovero"
+KERNEL_BASE_PHYS=$(LOADADDRESS)
+.elif ${BOARDTYPE} == "pepper"
 KERNEL_BASE_PHYS=$(LOADADDRESS)
 .endif
 KERNEL_BASE_VIRT=$(LOADADDRESS)

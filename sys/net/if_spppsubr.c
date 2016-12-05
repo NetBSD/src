@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.131.2.6 2016/10/05 20:56:08 skrll Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.131.2.7 2016/12/05 10:55:27 skrll Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,12 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.131.2.6 2016/10/05 20:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.131.2.7 2016/12/05 10:55:27 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_modular.h"
 #include "opt_compat_netbsd.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 
@@ -65,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.131.2.6 2016/10/05 20:56:08 skrll 
 #include <sys/kauth.h>
 #include <sys/cprng.h>
 #include <sys/module.h>
+#include <sys/workqueue.h>
+#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -144,6 +147,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.131.2.6 2016/10/05 20:56:08 skrll 
 #define IPCP_OPT_ADDRESS	3	/* local IP address */
 #define	IPCP_OPT_PRIMDNS	129	/* primary remote dns address */
 #define	IPCP_OPT_SECDNS		131	/* secondary remote dns address */
+
+#define IPCP_UPDATE_LIMIT	8	/* limit of pending IP updating job */
+#define IPCP_SET_ADDRS		1	/* marker for IP address setting job */
+#define IPCP_CLEAR_ADDRS	2	/* marker for IP address clearing job */
 
 #define IPV6CP_OPT_IFID		1	/* interface identifier */
 #define IPV6CP_OPT_COMPRESSION	2	/* IPv6 compression protocol */
@@ -364,8 +371,11 @@ static int sppp_params(struct sppp *sp, u_long cmd, void *data);
 #ifdef INET
 static void sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst,
 			      uint32_t *srcmask);
-static void sppp_set_ip_addrs(struct sppp *sp, uint32_t myaddr, uint32_t hisaddr);
+static void sppp_set_ip_addrs_work(struct work *wk, struct sppp *sp);
+static void sppp_set_ip_addrs(struct sppp *sp);
+static void sppp_clear_ip_addrs_work(struct work *wk, struct sppp *sp);
 static void sppp_clear_ip_addrs(struct sppp *sp);
+static void sppp_update_ip_addrs_work(struct work *wk, void *arg);
 #endif
 static void sppp_keepalive(void *dummy);
 static void sppp_phase_network(struct sppp *sp);
@@ -946,6 +956,11 @@ sppp_detach(struct ifnet *ifp)
 			*q = p->pp_next;
 			break;
 		}
+
+	/* to avoid workqueue enqueued */
+	atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 1);
+	workqueue_destroy(sp->ipcp.update_addrs_wq);
+	pcq_destroy(sp->ipcp.update_addrs_q);
 
 	/* Stop keepalive handler. */
 	if (! spppq) {
@@ -2724,6 +2739,8 @@ sppp_lcp_check_and_close(struct sppp *sp)
 static void
 sppp_ipcp_init(struct sppp *sp)
 {
+	int error;
+
 	sp->ipcp.opts = 0;
 	sp->ipcp.flags = 0;
 	sp->state[IDX_IPCP] = STATE_INITIAL;
@@ -2731,6 +2748,15 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->pp_seq[IDX_IPCP] = 0;
 	sp->pp_rseq[IDX_IPCP] = 0;
 	callout_init(&sp->ch[IDX_IPCP], 0);
+
+	error = workqueue_create(&sp->ipcp.update_addrs_wq, "ipcp_update_addrs",
+	    sppp_update_ip_addrs_work, sp, PRI_SOFTNET, IPL_NET, 0);
+	if (error)
+		panic("%s: update_addrs workqueue_create failed (%d)\n",
+		    __func__, error);
+	sp->ipcp.update_addrs_q = pcq_create(IPCP_UPDATE_LIMIT, KM_SLEEP);
+
+	sp->ipcp.update_addrs_enqueued = 0;
 }
 
 static void
@@ -2796,7 +2822,6 @@ sppp_ipcp_open(struct sppp *sp)
 static void
 sppp_ipcp_close(struct sppp *sp)
 {
-	STDDCL;
 
 	sppp_close_event(&ipcp, sp);
 #ifdef INET
@@ -2806,15 +2831,6 @@ sppp_ipcp_close(struct sppp *sp)
 		 */
 		sppp_clear_ip_addrs(sp);
 #endif
-
-	if (sp->pp_saved_mtu > 0) {
-		ifp->if_mtu = sp->pp_saved_mtu;
-		sp->pp_saved_mtu = 0;
-		if (debug)
-			log(LOG_DEBUG,
-			    "%s: resetting MTU to %" PRIu64 " bytes\n",
-			    ifp->if_xname, ifp->if_mtu);
-	}
 }
 
 static void
@@ -3162,27 +3178,7 @@ sppp_ipcp_tlu(struct sppp *sp)
 {
 #ifdef INET
 	/* we are up. Set addresses and notify anyone interested */
-	STDDCL;
-	uint32_t myaddr, hisaddr;
-
-	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
-	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) && (sp->ipcp.flags & IPCP_MYADDR_SEEN))
-		myaddr = sp->ipcp.req_myaddr;
-	if ((sp->ipcp.flags & IPCP_HISADDR_DYN) && (sp->ipcp.flags & IPCP_HISADDR_SEEN))
-		hisaddr = sp->ipcp.req_hisaddr;
-	sppp_set_ip_addrs(sp, myaddr, hisaddr);
-
-	if (ifp->if_mtu > sp->lcp.their_mru) {
-		sp->pp_saved_mtu = ifp->if_mtu;
-		ifp->if_mtu = sp->lcp.their_mru;
-		if (debug)
-			log(LOG_DEBUG,
-			    "%s: setting MTU to %" PRIu64 " bytes\n",
-			    ifp->if_xname, ifp->if_mtu);
-	}
-
-	if (sp->pp_con)
-		sp->pp_con(sp);
+	sppp_set_ip_addrs(sp);
 #endif
 }
 
@@ -3208,7 +3204,7 @@ sppp_ipcp_tlf(struct sppp *sp)
 static void
 sppp_ipcp_scr(struct sppp *sp)
 {
-	char opt[6 /* compression */ + 6 /* address */ + 12 /* dns addresses */];
+	uint8_t opt[6 /* compression */ + 6 /* address */ + 12 /* dns addresses */];
 #ifdef INET
 	uint32_t ouraddr;
 #endif
@@ -4879,28 +4875,40 @@ sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst, uint32_t *srcma
  * If an address is 0, leave it the way it is.
  */
 static void
-sppp_set_ip_addrs(struct sppp *sp, uint32_t myaddr, uint32_t hisaddr)
+sppp_set_ip_addrs_work(struct work *wk, struct sppp *sp)
 {
 	STDDCL;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
+	uint32_t myaddr = 0, hisaddr = 0;
+	int s;
 
 	/*
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
-
+	si = dest = NULL;
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
-			goto found;
+			break;
 		}
 	}
-	return;
+	pserialize_read_exit(s);
 
-found:
-	{
+	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) && (sp->ipcp.flags & IPCP_MYADDR_SEEN))
+		myaddr = sp->ipcp.req_myaddr;
+	else if (si != NULL)
+		myaddr = ntohl(si->sin_addr.s_addr);
+
+	if ((sp->ipcp.flags & IPCP_HISADDR_DYN) && (sp->ipcp.flags & IPCP_HISADDR_SEEN))
+		hisaddr = sp->ipcp.req_hisaddr;
+	else if (dest != NULL)
+		hisaddr = ntohl(dest->sin_addr.s_addr);
+
+	if (si != NULL && dest != NULL) {
 		int error;
 		struct sockaddr_in new_sin = *si;
 		struct sockaddr_in new_dst = *dest;
@@ -4915,9 +4923,14 @@ found:
 
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
+#ifdef NET_MPSAFE
+		pserialize_perform(in_ifaddrhash_psz);
+#endif
+		IN_ADDRHASH_ENTRY_DESTROY(ifatoia(ifa));
 
 		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, &new_dst, 0);
 
+		IN_ADDRHASH_ENTRY_INIT(ifatoia(ifa));
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
@@ -4932,40 +4945,64 @@ found:
 			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
 		}
 	}
+
+	if (ifp->if_mtu > sp->lcp.their_mru) {
+		sp->pp_saved_mtu = ifp->if_mtu;
+		ifp->if_mtu = sp->lcp.their_mru;
+		if (debug)
+			log(LOG_DEBUG,
+			    "%s: setting MTU to %" PRIu64 " bytes\n",
+			    ifp->if_xname, ifp->if_mtu);
+	}
+
+	if (sp->pp_con)
+		sp->pp_con(sp);
+}
+
+static void
+sppp_set_ip_addrs(struct sppp *sp)
+{
+	struct ifnet *ifp = &sp->pp_if;
+
+	if (!pcq_put(sp->ipcp.update_addrs_q, (void *)IPCP_SET_ADDRS)) {
+		log(LOG_WARNING, "%s: cannot enqueued, ignore sppp_clear_ip_addrs\n",
+		    ifp->if_xname);
+		return;
+	}
+
+	if (atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 1) == 1)
+		return;
+
+	workqueue_enqueue(sp->ipcp.update_addrs_wq, &sp->ipcp.update_addrs_wk, NULL);
 }
 
 /*
  * Clear IP addresses.  Must be called at splnet.
  */
 static void
-sppp_clear_ip_addrs(struct sppp *sp)
+sppp_clear_ip_addrs_work(struct work *wk, struct sppp *sp)
 {
 	STDDCL;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
-
-	uint32_t remote;
-	if (sp->ipcp.flags & IPCP_HISADDR_DYN)
-		remote = sp->ipcp.saved_hisaddr;
-	else
-		sppp_get_ip_addrs(sp, 0, &remote, 0);
+	int s;
 
 	/*
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
-
+	si = dest = NULL;
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
-			goto found;
+			break;
 		}
 	}
-	return;
+	pserialize_read_exit(s);
 
-found:
-	{
+	if (si != NULL) {
 		struct sockaddr_in new_sin = *si;
 		struct sockaddr_in new_dst = *dest;
 		int error;
@@ -4977,9 +5014,14 @@ found:
 
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
+#ifdef NET_MPSAFE
+		pserialize_perform(in_ifaddrhash_psz);
+#endif
+		IN_ADDRHASH_ENTRY_DESTROY(ifatoia(ifa));
 
 		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, &new_dst, 0);
 
+		IN_ADDRHASH_ENTRY_INIT(ifatoia(ifa));
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
@@ -4993,6 +5035,50 @@ found:
 			(void)pfil_run_hooks(if_pfil,
 			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
 		}
+	}
+
+	if (sp->pp_saved_mtu > 0) {
+		ifp->if_mtu = sp->pp_saved_mtu;
+		sp->pp_saved_mtu = 0;
+		if (debug)
+			log(LOG_DEBUG,
+			    "%s: resetting MTU to %" PRIu64 " bytes\n",
+			    ifp->if_xname, ifp->if_mtu);
+	}
+}
+
+static void
+sppp_clear_ip_addrs(struct sppp *sp)
+{
+	struct ifnet *ifp = &sp->pp_if;
+
+	if (!pcq_put(sp->ipcp.update_addrs_q, (void *)IPCP_CLEAR_ADDRS)) {
+		log(LOG_WARNING, "%s: cannot enqueued, ignore sppp_clear_ip_addrs\n",
+		    ifp->if_xname);
+		return;
+	}
+
+	if (atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 1) == 1)
+		return;
+
+	workqueue_enqueue(sp->ipcp.update_addrs_wq, &sp->ipcp.update_addrs_wk, NULL);
+}
+
+static void
+sppp_update_ip_addrs_work(struct work *wk, void *arg)
+{
+	struct sppp *sp = arg;
+	void *work;
+
+	atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 0);
+
+	while ((work = pcq_get(sp->ipcp.update_addrs_q)) != NULL) {
+		int update = (intptr_t)work;
+
+		if (update == IPCP_SET_ADDRS)
+			sppp_set_ip_addrs_work(wk, sp);
+		else if (update == IPCP_CLEAR_ADDRS)
+			sppp_clear_ip_addrs_work(wk, sp);
 	}
 }
 #endif

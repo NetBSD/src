@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.67.4.2 2016/10/05 20:55:37 skrll Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.67.4.3 2016/12/05 10:54:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67.4.2 2016/10/05 20:55:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67.4.3 2016/12/05 10:54:59 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -848,18 +848,6 @@ init_x86_vm(paddr_t pa_kend)
 		if (avail_end < x86_freelists[i].limit)
 			x86_freelists[i].freelist = VM_FREELIST_DEFAULT;
 	}
-
-	/* Make sure the end of the space used by the kernel is rounded. */
-	pa_kend = round_page(pa_kend);
-
-#ifdef amd64
-	extern vaddr_t kern_end;
-	extern vaddr_t module_start, module_end;
-
-	kern_end = KERNBASE + pa_kend;
-	module_start = kern_end;
-	module_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
-#endif
 
 	/*
 	 * Now, load the memory clusters (which have already been rounded and

@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.61.2.5 2016/10/05 20:56:09 skrll Exp $	*/
+/*	$NetBSD: mld6.c,v 1.61.2.6 2016/12/05 10:55:28 skrll Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,10 +102,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.61.2.5 2016/10/05 20:56:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.61.2.6 2016/12/05 10:55:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -789,7 +790,11 @@ in6_delmulti(struct in6_multi *in6m)
 
 		/* Tell mld_timeo we're halting the timer */
 		in6m->in6m_timer = IN6M_TIMER_UNDEF;
+#ifdef NET_MPSAFE
+		callout_halt(&in6m->in6m_timer_ch, NULL);
+#else
 		callout_halt(&in6m->in6m_timer_ch, softnet_lock);
+#endif
 		callout_destroy(&in6m->in6m_timer_ch);
 
 		free(in6m, M_IPMADDR);
