@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.20 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: uep.c,v 1.21 2016/12/05 13:14:22 maya Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  *  eGalax USB touchpanel controller driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.20 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.21 2016/12/05 13:14:22 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,14 @@ __KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.20 2016/04/23 10:15:32 skrll Exp $");
 #include <dev/wscons/tpcalibvar.h>
 
 #define UIDSTR	"eGalax USB SN000000"
+/* calibration - integer values, perhaps sysctls?  */
+#define X_RATIO   293 
+#define X_OFFSET  -28
+#define Y_RATIO   -348
+#define Y_OFFSET  537
+/* an X_RATIO of ``312''  means : reduce by a factor 3.12 x axis amplitude */
+/* an Y_RATIO of ``-157'' means : reduce by a factor 1.57 y axis amplitude,
+ * and reverse y motion */
 
 struct uep_softc {
 	device_t sc_dev;
@@ -358,6 +366,17 @@ uep_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	return EPASSTHROUGH;
 }
 
+static int
+uep_adjust(int v, int off, int rat)
+{
+	int num = 100 * v;
+	int quot = num / rat;
+	int rem = num % rat;
+	if (num >= 0 && rem < 0)
+		quot++;
+	return quot + off;
+}
+
 void
 uep_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
@@ -429,8 +448,8 @@ uep_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 		default:
 			msk = 0x0f;	/* H=0, L=0 */
 		}
-		x = ((p[3] & msk) << 7) | p[4];
-		y = ((p[1] & msk) << 7) | p[2];
+		x = uep_adjust(((p[3] & msk) << 7) | p[4], X_OFFSET, X_RATIO);
+		y = uep_adjust(((p[1] & msk) << 7) | p[2], Y_OFFSET, Y_RATIO);
 
 		tpcalib_trans(&sc->sc_tpcalib, x, y, &x, &y);
 
