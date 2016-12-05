@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.41 2016/12/05 20:10:10 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.42 2016/12/05 21:20:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.41 2016/12/05 20:10:10 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.42 2016/12/05 21:20:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -312,8 +312,8 @@ ATF_TC_BODY(attach1, tc)
 	ATF_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracee = atf_utils_fork();
 	if (tracee == 0) {
-		CHILD_FROM_PARENT("message 1", parent_tracee, msg);
-		msg_close(&parent_tracee);
+		// Wait for parent to let us exit
+		CHILD_FROM_PARENT("exit tracee", parent_tracee, msg);
 		_exit(exitval_tracee);
 	}
 
@@ -334,9 +334,10 @@ ATF_TC_BODY(attach1, tc)
 		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
 
 		/* Inform parent that tracer has attached to tracee */
-		CHILD_TO_PARENT("Message 1", parent_tracer, msg);
+		CHILD_TO_PARENT("tracer ready", parent_tracer, msg);
 
-		CHILD_FROM_PARENT("Message 2", parent_tracer, msg);
+		/* Wait for parent to tell use that tracee should have exited */
+		CHILD_FROM_PARENT("wait for tracee exit", parent_tracer, msg);
 
 		/* Wait for tracee and assert that it exited */
 		FORKEE_REQUIRE_SUCCESS(
@@ -345,38 +346,32 @@ ATF_TC_BODY(attach1, tc)
 		forkee_status_exited(status, exitval_tracee);
 		printf("Tracee %d exited with %d\n", tracee, exitval_tracee);
 
-		CHILD_TO_PARENT("Message 3", parent_tracer, msg);
-
 		printf("Before exiting of the tracer process\n");
-		msg_close(&parent_tracer);
 		_exit(exitval_tracer);
 	}
 
 	printf("Wait for the tracer to attach to the tracee\n");
-	PARENT_FROM_CHILD("Message 1", parent_tracer, msg);
+	PARENT_FROM_CHILD("tracer ready", parent_tracer, msg);
 
 	printf("Resume the tracee and let it exit\n");
-	PARENT_TO_CHILD("Message 1", parent_tracee,  msg);
+	PARENT_TO_CHILD("exit tracee", parent_tracee,  msg);
 
 	printf("Detect that tracee is zombie\n");
 	await_zombie(tracee);
 
-	printf("Tell the tracer child should have exited\n");
-	PARENT_TO_CHILD("Message 2", parent_tracer,  msg);
 
-	printf("Wait from tracer child to complete waiting for tracee\n");
-	PARENT_FROM_CHILD("Message 3", parent_tracer, msg);
 	printf("Assert that there is no status about tracee %d - "
 	    "Tracer must detect zombie first - calling %s()\n", tracee,
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
 
-	printf("Resume the tracer and let it detect exited tracee\n");
-	PARENT_TO_CHILD("Message 2", parent_tracer, msg);
-
+	printf("Tell the tracer child should have exited\n");
+	PARENT_TO_CHILD("wait for tracee exit", parent_tracer,  msg);
 	printf("Wait for tracer to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
+
+	printf("Wait from tracer child to complete waiting for tracee\n");
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracer, &status, 0),
 	    tracer);
 
@@ -385,7 +380,7 @@ ATF_TC_BODY(attach1, tc)
 	printf("Wait for tracee to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
-	    0);
+	    tracee);
 
 	validate_status_exited(status, exitval_tracee);
 
@@ -649,17 +644,15 @@ ATF_TC_BODY(attach5, tc)
 		parent = getppid();
 
 		/* Emit message to the parent */
-		CHILD_TO_PARENT("Message 1", parent_tracee, msg);
-
-		CHILD_FROM_PARENT("Message 2", parent_tracee, msg);
+		CHILD_TO_PARENT("tracee ready", parent_tracee, msg);
+		CHILD_FROM_PARENT("exit tracee", parent_tracee, msg);
 
 		FORKEE_ASSERT_EQ(parent, getppid());
 
 		_exit(exitval_tracee);
 	}
 	printf("Wait for child to record its parent identifier (pid)\n");
-	PARENT_FROM_CHILD("Message 1", parent_tracee, msg);
-	PARENT_TO_CHILD("Message 2", parent_tracee, msg);
+	PARENT_FROM_CHILD("tracee ready", parent_tracee, msg);
 
 	printf("Spawn debugger\n");
 	tracer = atf_utils_fork();
@@ -678,7 +671,10 @@ ATF_TC_BODY(attach5, tc)
 		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
 
 		/* Inform parent that tracer has attached to tracee */
-		CHILD_TO_PARENT("Message 1", parent_tracer, msg);
+		CHILD_TO_PARENT("tracer ready", parent_tracer, msg);
+
+		/* Wait for parent to tell use that tracee should have exited */
+		CHILD_FROM_PARENT("wait for tracee exit", parent_tracer, msg);
 
 		/* Wait for tracee and assert that it exited */
 		FORKEE_REQUIRE_SUCCESS(
@@ -691,8 +687,10 @@ ATF_TC_BODY(attach5, tc)
 	}
 
 	printf("Wait for the tracer to attach to the tracee\n");
-	PARENT_FROM_CHILD("Message 1",  parent_tracer, msg);
-	PARENT_TO_CHILD("Message 2",  parent_tracee, msg);
+	PARENT_FROM_CHILD("tracer ready",  parent_tracer, msg);
+
+	printf("Resume the tracee and let it exit\n");
+	PARENT_TO_CHILD("exit tracee",  parent_tracee, msg);
 
 	printf("Detect that tracee is zombie\n");
 	await_zombie(tracee);
@@ -702,11 +700,10 @@ ATF_TC_BODY(attach5, tc)
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
 
-	printf("Resume the tracer and let it detect exited tracee\n");
-	PARENT_TO_CHILD("Message 2",  parent_tracer, msg);
+	printf("Tell the tracer child should have exited\n");
+	PARENT_TO_CHILD("wait for tracee exit",  parent_tracer, msg);
 
-	printf("Wait for tracer to finish its job and exit - calling %s()\n",
-	    TWAIT_FNAME);
+	printf("Wait from tracer child to complete waiting for tracee\n");
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracer, &status, 0),
 	    tracer);
 
@@ -885,9 +882,9 @@ ATF_TC_BODY(attach7, tc)
 	if (tracee == 0) {
 		parent = getppid();
 
-		/* Emit message to the parent */
-		CHILD_TO_PARENT("Message 1", parent_tracee, msg);
-		CHILD_FROM_PARENT("Message 2", parent_tracee, msg);
+		// Wait for parent to let us exit
+		CHILD_TO_PARENT("tracee ready", parent_tracee, msg);
+		CHILD_FROM_PARENT("tracee exit", parent_tracee, msg);
 
 		FORKEE_ASSERT((fp = fopen(fname, "r")) != NULL);
 		fscanf(fp, "%s %d %d", s_executable, &s_pid, &s_ppid);
@@ -898,8 +895,7 @@ ATF_TC_BODY(attach7, tc)
 	}
 
 	printf("Wait for child to record its parent identifier (pid)\n");
-	PARENT_FROM_CHILD("Message 1", parent_tracee, msg);
-	PARENT_TO_CHILD("Message 2", parent_tracee, msg);
+	PARENT_FROM_CHILD("tracee ready", parent_tracee, msg);
 
 	printf("Spawn debugger\n");
 	tracer = atf_utils_fork();
@@ -917,8 +913,11 @@ ATF_TC_BODY(attach7, tc)
 		FORKEE_ASSERT(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
 
 		/* Inform parent that tracer has attached to tracee */
-		CHILD_TO_PARENT("Message 1", parent_tracer, msg);
-		CHILD_FROM_PARENT("Message 2", parent_tracer, msg);
+		CHILD_TO_PARENT("tracer ready", parent_tracer, msg);
+
+		/* Wait for parent to tell use that tracee should have exited */
+		CHILD_FROM_PARENT("wait for tracee exit", parent_tracer, msg);
+
 		/* Wait for tracee and assert that it exited */
 		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
@@ -929,9 +928,9 @@ ATF_TC_BODY(attach7, tc)
 		_exit(exitval_tracer);
 	}
 	printf("Wait for the tracer to attach to the tracee\n");
-	PARENT_FROM_CHILD("Message 1", parent_tracer, msg);
+	PARENT_FROM_CHILD("tracer ready", parent_tracer, msg);
 	printf("Resume the tracee and let it exit\n");
-	PARENT_TO_CHILD("Message 1", parent_tracee, msg);
+	PARENT_TO_CHILD("tracee exit", parent_tracee, msg);
 
 	printf("Detect that tracee is zombie\n");
 	await_zombie(tracee);
