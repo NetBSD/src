@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.80.4.7 2016/10/05 20:56:08 skrll Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.80.4.8 2016/12/05 10:55:27 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.80.4.7 2016/10/05 20:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.80.4.8 2016/12/05 10:55:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -136,6 +136,8 @@ static void	lostart(struct ifnet *);
 
 static int	loop_clone_create(struct if_clone *, int);
 static int	loop_clone_destroy(struct ifnet *);
+
+static void	loop_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
 static struct if_clone loop_cloner =
     IF_CLONE_INITIALIZER("lo", loop_clone_create, loop_clone_destroy);
@@ -441,8 +443,8 @@ lostart(struct ifnet *ifp)
 #endif /* ALTQ */
 
 /* ARGSUSED */
-void
-lortrequest(int cmd, struct rtentry *rt,
+static void
+loop_rtrequest(int cmd, struct rtentry *rt,
     const struct rt_addrinfo *info)
 {
 
@@ -467,7 +469,7 @@ loioctl(struct ifnet *ifp, u_long cmd, void *data)
 		ifp->if_flags |= IFF_UP;
 		ifa = (struct ifaddr *)data;
 		if (ifa != NULL)
-			ifa->ifa_rtrequest = lortrequest;
+			ifa->ifa_rtrequest = loop_rtrequest;
 		/*
 		 * Everything else is done at a higher level.
 		 */

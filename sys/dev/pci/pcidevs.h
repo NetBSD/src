@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1199.2.8 2016/10/05 20:55:43 skrll Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1199.2.9 2016/12/05 10:55:03 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1205.2.3 2015/09/21 16:21:19 skrll Exp
+ *	NetBSD: pcidevs,v 1.1205.2.8 2016/10/05 20:55:43 skrll Exp
  */
 
 /*
@@ -1612,6 +1612,7 @@
 #define	PCI_PRODUCT_ATHEROS_AR9300	0x0030		/* AR9300 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR9485	0x0032		/* AR9485 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR9462	0x0034		/* AR9462 Wireless LAN */
+#define	PCI_PRODUCT_ATHEROS_AR9565	0x0036		/* AR9565 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_QCA988X	0x003c		/* QCA986x/988x Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR5201_AP	0x0207		/* AR5201 Wireless LAN Reference Card (Early AP11) */
 #define	PCI_PRODUCT_ATHEROS_AR5201_DEFAULT	0x1107		/* AR5201 Wireless LAN (no eeprom) */
@@ -2329,6 +2330,7 @@
 
 /* Marvell products */
 #define	PCI_PRODUCT_MARVELL_GT64010A	0x0146		/* GT-64010A System Controller */
+#define	PCI_PRODUCT_MARVELL_88AP510	0x0510		/* 88AP510 */
 #define	PCI_PRODUCT_MARVELL_88F1181	0x1181		/* 88F1181 */
 #define	PCI_PRODUCT_MARVELL_88F1281	0x1281		/* 88F1281 SoC Orion2 */
 #define	PCI_PRODUCT_MARVELL_88W8300_1	0x1fa6		/* Libertas 88W8300 */
@@ -2972,7 +2974,7 @@
 #define	PCI_PRODUCT_INTEL_82870P2_PPB	0x1460		/* 82870P2 P64H2 PCI-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_82870P2_IOxAPIC	0x1461		/* 82870P2 P64H2 IOxAPIC */
 #define	PCI_PRODUCT_INTEL_82870P2_HPLUG	0x1462		/* 82870P2 P64H2 Hot Plug Controller */
-#define	PCI_PRODUCT_INTEL_82801I_82567V_3	0x1501		/* i82567V-3 LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801H_82567V_3	0x1501		/* i82567V-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_PCH2_LV_LM	0x1502		/* 82579LM Gigabit Network Connection */
 #define	PCI_PRODUCT_INTEL_PCH2_LV_V	0x1503		/* 82579V Gigabit Network Connection */
 #define	PCI_PRODUCT_INTEL_82599_SFP_EM	0x1507		/* 82599 10G Ethernet Express Module */
@@ -3022,10 +3024,15 @@
 #define	PCI_PRODUCT_INTEL_XL710_VF	0x154c		/* XL710 Ethernet Virtual Function */
 #define	PCI_PRODUCT_INTEL_82599_SFP_SF2	0x154d		/* 82599 (SFP+) 10 GbE Controller */
 #define	PCI_PRODUCT_INTEL_82599EN_SFP	0x1557		/* 82599 10 GbE Controller */
+#define	PCI_PRODUCT_INTEL_82599_QSFP_SF_QP	0x1558		/* X520 10 GbE QSFP+ */
 #define	PCI_PRODUCT_INTEL_I218_V	0x1559		/* I218-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I218_LM	0x155a		/* I218-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_X540_BYPASS	0x155c		/* X540 10 GbE Bypass */
 #define	PCI_PRODUCT_INTEL_82599_BYPASS	0x155d		/* 82599 10 GbE Bypass */
+#define	PCI_PRODUCT_INTEL_X540T1	0x1560		/* X540 10G Ethernet */
+#define	PCI_PRODUCT_INTEL_X550T	0x1563		/* X550 10G Ethernet */
+#define	PCI_PRODUCT_INTEL_X550_VF_HV	0x1564		/* X550 10 GbE Virtual Function */
+#define	PCI_PRODUCT_INTEL_X550_VF	0x1565		/* X550 10 GbE Virtual Function */
 #define	PCI_PRODUCT_INTEL_I219_LM	0x156f		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V	0x1570		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_XL710_VF_HV	0x1571		/* XL710 Ethernet Virtual Function */
@@ -3053,6 +3060,11 @@
 #define	PCI_PRODUCT_INTEL_I219_LM2	0x15b7		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V2	0x15b8		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM3	0x15b9		/* I219-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_X550T1	0x15d1		/* X550 10G Ethernet */
+#define	PCI_PRODUCT_INTEL_I219_V5	0x15d6		/* I219-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_LM4	0x15d7		/* I219-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_V4	0x15d8		/* I219-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_LM5	0x15e3		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_CORE5G_HB_1	0x1604		/* Core 5G Host Bridge */
 #define	PCI_PRODUCT_INTEL_CORE5G_M_GT1	0x1606		/* HD Graphics (GT1) */
 #define	PCI_PRODUCT_INTEL_CORE5G_HDA_1	0x160c		/* Core 5G HD Audio */
@@ -3676,12 +3688,75 @@
 #define	PCI_PRODUCT_INTEL_82GM45_IGD	0x2a42		/* 82GM45 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82GM45_IGD_1	0x2a43		/* 82GM45 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82GM45_KT	0x2a47		/* 82GM45 KT */
-#define	PCI_PRODUCT_INTEL_CORE_QP_REG_1	0x2c61		/* QuickPath Generic Non-Core Register */
-#define	PCI_PRODUCT_INTEL_CORE_QP_SAD	0x2d01		/* QuickPath Generic System Address Decoder */
-#define	PCI_PRODUCT_INTEL_CORE_QPI_LINK	0x2d10		/* QPI Link */
-#define	PCI_PRODUCT_INTEL_CORE_QPI_PHYS	0x2d11		/* QPI Physical */
-#define	PCI_PRODUCT_INTEL_CORE_RSVD_1	0x2d12		/* Reserved */
-#define	PCI_PRODUCT_INTEL_CORE_RSVD_2	0x2d13		/* Reserved */
+#define	PCI_PRODUCT_INTEL_XE55_QP_SAD	0x2c01		/* QuickPath System Address Decoder */
+#define	PCI_PRODUCT_INTEL_XE55_QPI_LINK0	0x2c10		/* Xeon 5500 QPI Link 0 */
+#define	PCI_PRODUCT_INTEL_XE55_QPI_PHYS0	0x2c11		/* Xeon 5500 QPI Physical 0 */
+#define	PCI_PRODUCT_INTEL_XE55_MIRR_LINK0	0x2c12		/* Xeon 5500 Mirror Port Link 0 */
+#define	PCI_PRODUCT_INTEL_XE55_MIRR_LINK1	0x2c13		/* Xeon 5500 Mirror Port Link 1 */
+#define	PCI_PRODUCT_INTEL_XE55_QPI_LINK1	0x2c14		/* Xeon 5500 QPI Link 1 */
+#define	PCI_PRODUCT_INTEL_XE55_QPI_PHYS1	0x2c15		/* Xeon 5500 QPI Physical 1 */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_REG	0x2c18		/* Xeon 5500 IMC */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_TAD	0x2c19		/* Xeon 5500 IMC Target Address Decoder */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_RAS	0x2c1a		/* Xeon 5500 IMC RAS */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_TEST	0x2c1c		/* Xeon 5500 IMC Test */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH0_CTRL	0x2c20		/* Xeon 5500 IMC Channel 0 Control */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH0_ADDR	0x2c21		/* Xeon 5500 IMC Channel 0 Address */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH0_RANK	0x2c22		/* Xeon 5500 IMC Channel 0 Rank */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH0_THERM	0x2c23		/* Xeon 5500 IMC Channel 0 Thermal Control */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH1_CTRL	0x2c28		/* Xeon 5500 IMC Channel 1 Control */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH1_ADDR	0x2c29		/* Xeon 5500 IMC Channel 1 Address */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH1_RANK	0x2c2a		/* Xeon 5500 IMC Channel 1 Rank */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH1_THERM	0x2c2b		/* Xeon 5500 IMC Channel 1 Thermal Control */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH2_CTRL	0x2c30		/* Xeon 5500 IMC Channel 2 Control */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH2_ADDR	0x2c31		/* Xeon 5500 IMC Channel 2 Address */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH2_RANK	0x2c32		/* Xeon 5500 IMC Channel 2 Rank */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH2_THERM	0x2c33		/* Xeon 5500 IMC Channel 2 Thermal Control */
+#define	PCI_PRODUCT_INTEL_XE55_QP_REG	0x2c40		/* Xeon 5500 QuickPath Generic Non-Core Register */
+#define	PCI_PRODUCT_INTEL_CORE_QP_REG_2	0x2c51		/* Core i7-800 and i5-700 QuickPath Generic Non-Core Register */
+#define	PCI_PRODUCT_INTEL_CORE_QP_REG_1	0x2c61		/* Core i5-600, i3-500 and Pentium 6000 QuickPath Generic Non-Core Register */
+#define	PCI_PRODUCT_INTEL_XE56_QP_REG	0x2c70		/* Xeon 5600 QuickPath Generic Non-Core Register */
+#define	PCI_PRODUCT_INTEL_CORE_QP_SAD_2	0x2c81		/* Core i7-800 and i5-700 QuickPath Generic System Address Decoder */
+#define	PCI_PRODUCT_INTEL_CORE_QPI_LINK_2	0x2c90		/* Core i7-800 and i5-700 QPI Link */
+#define	PCI_PRODUCT_INTEL_CORE_QPI_PHYS_2	0x2c91		/* Core i7-800 and i5-700 QPI Physical */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_REG	0x2c98		/* Core i7-800 and i5-700 IMC */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_TAD	0x2c99		/* Core i7-800 and i5-700 IMC Target Address Decoder */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_TEST	0x2c9c		/* Core i7-800 and i5-700 IMC Test */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH0_CTRL	0x2ca0		/* Core i7-800 and i5-700 IMC Channel 0 Control */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH0_ADDR	0x2ca1		/* Core i7-800 and i5-700 IMC Channel 0 Address */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH0_RANK	0x2ca2		/* Core i7-800 and i5-700 IMC Channel 0 Rank */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH0_THERM	0x2ca3		/* Core i7-800 and i5-700 IMC Channel 0 Thermal Control */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH1_CTRL	0x2ca8		/* Core i7-800 and i5-700 IMC Channel 1 Control */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH1_ADDR	0x2ca9		/* Core i7-800 and i5-700 IMC Channel 1 Address */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH1_RANK	0x2caa		/* Core i7-800 and i5-700 IMC Channel 1 Rank */
+#define	PCI_PRODUCT_INTEL_CORE_IMC_CH1_THERM	0x2cab		/* Core i7-800 and i5-700 IMC Channel 1 Thermal Control */
+#define	PCI_PRODUCT_INTEL_CORE_QP_SAD	0x2d01		/* Core i5-600, i3-500 and Pentium 6000 QuickPath Generic System Address Decoder */
+#define	PCI_PRODUCT_INTEL_CORE_QPI_LINK	0x2d10		/* Core i5-600, i3-500 and Pentium 6000 QPI Link */
+#define	PCI_PRODUCT_INTEL_CORE_QPI_PHYS	0x2d11		/* Core i5-600, i3-500 and Pentium 6000 QPI Physical */
+#define	PCI_PRODUCT_INTEL_CORE_RSVD_1	0x2d12		/* Core i5-600, i3-500 and Pentium 6000 Reserved */
+#define	PCI_PRODUCT_INTEL_CORE_RSVD_2	0x2d13		/* Core i5-600, i3-500 and Pentium 6000 Reserved */
+#define	PCI_PRODUCT_INTEL_XE56_QP_SAD	0x2d81		/* QuickPath System Address Decoder */
+#define	PCI_PRODUCT_INTEL_XE56_QPI_LINK0	0x2d90		/* Xeon 5600 QPI Link 0 */
+#define	PCI_PRODUCT_INTEL_XE56_QPI_PHYS0	0x2d91		/* Xeon 5600 QPI Physical 0 */
+#define	PCI_PRODUCT_INTEL_XE56_MIRR_LINK0	0x2d92		/* Xeon 5600 Mirror Port Link 0 */
+#define	PCI_PRODUCT_INTEL_XE56_MIRR_LINK1	0x2d93		/* Xeon 5600 Mirror Port Link 1 */
+#define	PCI_PRODUCT_INTEL_XE56_QPI_LINK1	0x2d94		/* Xeon 5600 QPI Link 1 */
+#define	PCI_PRODUCT_INTEL_XE56_QPI_PHYS1	0x2d95		/* Xeon 5600 QPI Physical 1 */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_REG	0x2d98		/* Xeon 5600 IMC */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_TAD	0x2d99		/* Xeon 5600 IMC Target Address Decoder */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_RAS	0x2d9a		/* Xeon 5600 IMC RAS */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_TEST	0x2d9c		/* Xeon 5600 IMC Test */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH0_CTRL	0x2da0		/* Xeon 5600 IMC Channel 0 Control */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH0_ADDR	0x2da1		/* Xeon 5600 IMC Channel 0 Address */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH0_RANK	0x2da2		/* Xeon 5600 IMC Channel 0 Rank */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH0_THERM	0x2da3		/* Xeon 5600 IMC Channel 0 Thermal Control */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH1_CTRL	0x2da8		/* Xeon 5600 IMC Channel 1 Control */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH1_ADDR	0x2da9		/* Xeon 5600 IMC Channel 1 Address */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH1_RANK	0x2daa		/* Xeon 5600 IMC Channel 1 Rank */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH1_THERM	0x2dab		/* Xeon 5600 IMC Channel 1 Thermal Control */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH2_CTRL	0x2db0		/* Xeon 5600 IMC Channel 2 Control */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH2_ADDR	0x2db1		/* Xeon 5600 IMC Channel 2 Address */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH2_RANK	0x2db2		/* Xeon 5600 IMC Channel 2 Rank */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH2_THERM	0x2db3		/* Xeon 5600 IMC Channel 2 Thermal Control */
 #define	PCI_PRODUCT_INTEL_82IGD_E_HB	0x2e00		/* 82IGD_E Host Bridge */
 #define	PCI_PRODUCT_INTEL_82IGD_E_IGD	0x2e02		/* 82IGD_E Integrated Graphics */
 #define	PCI_PRODUCT_INTEL_82Q45_KT	0x2e07		/* 82Q45 KT */
@@ -3728,9 +3803,13 @@
 #define	PCI_PRODUCT_INTEL_XE5_V3_R2PCIE_2	0x2f34		/* Xeon E5 v3/Core i7-6xxxK PCIe Ring Performance Monitoring */
 #define	PCI_PRODUCT_INTEL_XE5_V3_RQPI_PM_1	0x2f36		/* Xeon E5 v3/Core i7-6xxxK QPI Ring Performance Monitoring */
 #define	PCI_PRODUCT_INTEL_XE5_V3_RQPI_PM_2	0x2f37		/* Xeon E5 v3/Core i7-6xxxK QPI Ring Interface Monitoring */
+#define	PCI_PRODUCT_INTEL_XE7_V4_QPI_LINK2	0x2f40		/* Xeon E7 v4 QPI Link 2 */
+#define	PCI_PRODUCT_INTEL_XE7_V4_RQPI_RING	0x2f41		/* Xeon E7 v4 QPI Ring Interface */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_MAIN	0x2f68		/* Xeon E5 v3 IMC Main */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_TADR1	0x2f6a		/* Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_TADR2	0x2f6b		/* Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers */
+#define	PCI_PRODUCT_INTEL_XE7_V4_IMC1_TADR3	0x2f6c		/* Xeon E7 v4 IMC Ch 0-3 Target Address Decoder */
+#define	PCI_PRODUCT_INTEL_XE7_V4_IMC1_TADR4	0x2f6d		/* Xeon E7 v4 IMC Ch 0-3 Target Address Decoder */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_RAS	0x2f71		/* Xeon E5 v3 IMC RAS Registers */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_RAS	0x2f79		/* Xeon E5 v3 IMC Ras Registers */
 #define	PCI_PRODUCT_INTEL_XE5_V3_UBOX_2	0x2f7d		/* Xeon E5 v3 Scratchpad and Semaphores */
@@ -3764,6 +3843,10 @@
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_7	0x2fbe		/* Xeon E5 v3 IMC DDRIO Multicast */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_8	0x2fbf		/* Xeon E5 v3 IMC DDRIO Multicast */
 #define	PCI_PRODUCT_INTEL_XE5_V3_PCU_4	0x2fc0		/* Xeon E5 v3 Power Control Unit */
+#define	PCI_PRODUCT_INTEL_XE7_V4_IMC1_REG3	0x2fd0		/* Xeon E7 v4 IMC Ch 0-3 Registers */
+#define	PCI_PRODUCT_INTEL_XE7_V4_IMC1_REG4	0x2fd1		/* Xeon E7 v4 IMC Ch 0-3 Registers */
+#define	PCI_PRODUCT_INTEL_XE7_V4_IMC1_REG5	0x2fd2		/* Xeon E7 v4 IMC Ch 0-3 Registers */
+#define	PCI_PRODUCT_INTEL_XE7_V4_IMC1_REG6	0x2fd3		/* Xeon E7 v4 IMC Ch 0-3 Registers */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_REG5	0x2fd4		/* Xeon E5 v3 IMC Ch 0-1 Registers */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_REG6	0x2fd5		/* Xeon E5 v3 IMC Ch 0-1 Registers */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_REG7	0x2fd6		/* Xeon E5 v3 IMC Ch 0-1 Registers */
@@ -5630,7 +5713,7 @@
 #define	PCI_PRODUCT_RALINK_RT5390_3	0x539a		/* RT5390 */
 #define	PCI_PRODUCT_RALINK_RT5390_4	0x539b		/* RT5390 */
 #define	PCI_PRODUCT_RALINK_RT5390_5	0x539f		/* RT5390 */
-
+	
 /* RATOC Systems products */
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
 

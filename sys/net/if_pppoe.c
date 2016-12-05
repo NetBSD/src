@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.102.2.5 2016/10/05 20:56:08 skrll Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.102.2.6 2016/12/05 10:55:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.102.2.5 2016/10/05 20:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.102.2.6 2016/12/05 10:55:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -284,8 +284,10 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_sppp.pp_tlf = pppoe_tlf;
 	sc->sc_sppp.pp_framebytes = PPPOE_HEADERLEN;	/* framing added to ppp packets */
 
-	if_attach(&sc->sc_sppp.pp_if);
+	if_initialize(&sc->sc_sppp.pp_if);
+	sc->sc_sppp.pp_if.if_percpuq = if_percpuq_create(&sc->sc_sppp.pp_if);
 	sppp_attach(&sc->sc_sppp.pp_if);
+	if_register(&sc->sc_sppp.pp_if);
 
 	bpf_attach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
 	if (LIST_EMPTY(&pppoe_softc_list)) {

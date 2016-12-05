@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.113.2.4 2016/10/05 20:55:28 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.113.2.5 2016/12/05 10:54:53 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.4 2016/10/05 20:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.5 2016/12/05 10:54:53 skrll Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -269,27 +269,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.4 2016/10/05 20:55:28 skrll Exp $
  * Initialization
  */
 	.data
-
-	.globl	_C_LABEL(lapic_tpr)
-
-#if NLAPIC > 0
-	.align	PAGE_SIZE
-	.globl	_C_LABEL(local_apic)
-
-	.type	_C_LABEL(local_apic), @object
-LABEL(local_apic)
-	.space	LAPIC_TPRI
-END(local_apic)
-	.type	_C_LABEL(lapic_tpr), @object
-LABEL(lapic_tpr)
-	.space	PAGE_SIZE-LAPIC_TPRI
-END(lapic_tpr)
-#else
-	.type	_C_LABEL(lapic_tpr), @object
-LABEL(lapic_tpr)
-	.long 0
-END(lapic_tpr)
-#endif
 
 	.globl	_C_LABEL(tablesize)
 	.globl	_C_LABEL(nox_flag)
@@ -858,7 +837,7 @@ begin:
 	pushl	$0	/* init386() expects a 64 bits paddr_t with PAE */
 #endif
 	pushl	%eax
-	call	_C_LABEL(init386)	/* wire 386 chip for unix operation */
+	call	_C_LABEL(init386)
 	addl	$PDE_SIZE,%esp		/* pop paddr_t */
 	addl	$NGDT*8,%esp		/* pop temporary gdt */
 
@@ -887,62 +866,67 @@ begin:
 	popfl
 
 	cld
-	movl	%esp, %ebx		/* save start of available space */
-	movl	$_RELOC(tmpstk),%esp	/* bootstrap stack end location */
+
+	/*
+	 * Xen info:
+	 * - %esp -> stack, *theoretically* the last used page by Xen bootstrap
+	 */
+	movl	%esp,%ebx
+	movl	$_RELOC(tmpstk),%esp
 
 	/* Clear BSS. */
 	xorl	%eax,%eax
 	movl	$RELOC(__bss_start),%edi
 	movl	$RELOC(_end),%ecx
 	subl	%edi,%ecx
-	rep stosb
+	rep
+	stosb
 
 	/* Copy the necessary stuff from start_info structure. */
 	/* We need to copy shared_info early, so that sti/cli work */
 	movl	$RELOC(start_info_union),%edi
 	movl	$128,%ecx
-	rep movsl
+	rep
+	movsl
 
-	/* Clear segment registers; always null in proc0. */
+	/* Clear segment registers. */
 	xorl	%eax,%eax
 	movw	%ax,%fs
 	movw	%ax,%gs
-	decl	%eax
-	movl	%eax,RELOC(cpuid_level)
 
 	xorl	%eax,%eax
 	cpuid
 	movl	%eax,RELOC(cpuid_level)
 
 	/*
-	 * Use a temp page. We'll re- add it to uvm(9) once we're
-	 * done using it.
+	 * Use a temporary GDT page. We'll re-add it to uvm(9) once we're done
+	 * using it.
 	 */
-	movl	$RELOC(tmpgdt), %eax
+	movl	$RELOC(tmpgdt),%eax
 	pushl	%eax		/* start of temporary gdt */
 	call	_C_LABEL(initgdt)
 	addl	$4,%esp
 
-	call	xen_pmap_bootstrap
+	call	xen_locore
 
 	/*
-	 * First avail returned by xen_pmap_bootstrap in %eax
+	 * The first VA available is returned by xen_locore in %eax. We
+	 * use it as the UAREA, and set up the stack here.
 	 */
-	movl	%eax, %esi;
-	movl	%esi, _C_LABEL(lwp0uarea)
-
-	/* Set up bootstrap stack. */
+	movl	%eax,%esi
+	movl	%esi,_C_LABEL(lwp0uarea)
 	leal	(USPACE-FRAMESIZE)(%eax),%esp
 	xorl	%ebp,%ebp		/* mark end of frames */
 
-	addl	$USPACE, %esi
-	subl	$KERNBASE, %esi		/* init386 wants a physical address */
+	/* Set first_avail after the UAREA. */
+	addl	$USPACE,%esi
+	subl	$KERNBASE,%esi		/* init386 wants a physical address */
 
 #ifdef PAE
 	pushl	$0	/* init386() expects a 64 bits paddr_t with PAE */
 #endif
 	pushl	%esi
-	call	_C_LABEL(init386)	/* wire 386 chip for unix operation */
+	call	_C_LABEL(init386)
 	addl	$PDE_SIZE,%esp		/* pop paddr_t */
 	call 	_C_LABEL(main)
 #endif /* XEN */

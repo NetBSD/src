@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.280.2.4 2016/05/29 08:44:19 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.280.2.5 2016/12/05 10:54:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.280.2.4 2016/05/29 08:44:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.280.2.5 2016/12/05 10:54:58 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2293,6 +2293,9 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 	if (!(flags & BUS_SPACE_MAP_CACHEABLE))
 		pm_flags |= PMAP_NC;
 
+	if ((flags & BUS_SPACE_MAP_PREFETCHABLE))
+		pm_flags |= PMAP_WC;
+
 	if ((err = extent_alloc(io_space, size, PAGE_SIZE,
 		0, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&v)))
 			panic("sparc_bus_map: cannot allocate io_space: %d", err);
@@ -2357,8 +2360,14 @@ paddr_t
 sparc_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
 	int flags)
 {
+	paddr_t pa;
 	/* Devices are un-cached... although the driver should do that */
-	return ((paddr+off)|PMAP_NC);
+	pa = (paddr + off) | PMAP_NC;
+	if (flags & BUS_SPACE_MAP_LITTLE)
+		pa |= PMAP_LITTLE;
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		pa |= PMAP_WC;	
+	return pa;
 }
 
 

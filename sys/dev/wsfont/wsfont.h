@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.24.24.1 2015/06/06 14:40:14 skrll Exp $	*/
+/* 	$NetBSD: wsfont.h,v 1.24.24.2 2016/12/05 10:55:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@ int	wsfont_find(const char *, int, int, int, int, int, int);
 #define WSFONT_FIND_ALPHA	0x02
 #define WSFONT_FIND_ALL		0xff
 #define WSFONT_FIND_BESTWIDTH	0x1000
+#define WSFONT_PREFER_ALPHA	0x2000
+
 void	wsfont_walk(void (*)(struct wsdisplay_font *, void *, int), void *);
 
 int	wsfont_add(struct wsdisplay_font *, int);

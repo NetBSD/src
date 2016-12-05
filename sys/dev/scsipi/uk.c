@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.62.4.1 2016/10/05 20:55:56 skrll Exp $	*/
+/*	$NetBSD: uk.c,v 1.62.4.2 2016/12/05 10:55:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.62.4.1 2016/10/05 20:55:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.62.4.2 2016/12/05 10:55:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ const struct cdevsw uk_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 static int

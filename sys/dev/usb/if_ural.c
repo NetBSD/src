@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.44.14.11 2016/07/09 20:25:15 skrll Exp $ */
+/*	$NetBSD: if_ural.c,v 1.44.14.12 2016/12/05 10:55:18 skrll Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.11 2016/07/09 20:25:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.12 2016/12/05 10:55:18 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/sockio.h>

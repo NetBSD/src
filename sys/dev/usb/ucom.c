@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.31 2016/11/06 11:50:54 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.32 2016/12/05 10:55:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.31 2016/11/06 11:50:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.32 2016/12/05 10:55:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -82,29 +82,29 @@ int ucomdebug = 10;
 
 SYSCTL_SETUP(sysctl_hw_ucom_setup, "sysctl hw.ucom setup")
 {
-        int err;
-        const struct sysctlnode *rnode;
-        const struct sysctlnode *cnode;
+	int err;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
 
-        err = sysctl_createv(clog, 0, NULL, &rnode,
-            CTLFLAG_PERMANENT, CTLTYPE_NODE, "ucom",
-            SYSCTL_DESCR("ucom global controls"),
-            NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ucom",
+	    SYSCTL_DESCR("ucom global controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
 
-        if (err)
-                goto fail;
+	if (err)
+		goto fail;
 
-        /* control debugging printfs */
-        err = sysctl_createv(clog, 0, &rnode, &cnode,
-            CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
-            "debug", SYSCTL_DESCR("Enable debugging output"),
-            NULL, 0, &ucomdebug, sizeof(ucomdebug), CTL_CREATE, CTL_EOL);
-        if (err)
-                goto fail;
+	/* control debugging printfs */
+	err = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &ucomdebug, sizeof(ucomdebug), CTL_CREATE, CTL_EOL);
+	if (err)
+		goto fail;
 
-        return;
+	return;
 fail:
-        aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
+	aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
 }
 
 #endif /* UCOM_DEBUG */
@@ -142,11 +142,11 @@ struct ucom_buffer {
 struct ucom_softc {
 	device_t		sc_dev;		/* base device */
 
-	struct usbd_device	*sc_udev;	/* USB device */
-	struct usbd_interface	*sc_iface;	/* data interface */
+	struct usbd_device *	sc_udev;	/* USB device */
+	struct usbd_interface *	sc_iface;	/* data interface */
 
 	int			sc_bulkin_no;	/* bulk in endpoint address */
-	struct usbd_pipe	*sc_bulkin_pipe;	/* bulk in pipe */
+	struct usbd_pipe *	sc_bulkin_pipe;/* bulk in pipe */
 	u_int			sc_ibufsize;	/* read buffer size */
 	u_int			sc_ibufsizepad;	/* read buffer size padded */
 	struct ucom_buffer	sc_ibuff[UCOM_IN_BUFFS];
@@ -546,7 +546,6 @@ ucom_shutdown(struct ucom_softc *sc)
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	KASSERT(mutex_owned(&sc->sc_lock));
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
 	 * notice even if we immediately open the port again.
@@ -554,7 +553,7 @@ ucom_shutdown(struct ucom_softc *sc)
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		ucom_dtr(sc, 0);
 		/* XXX will only timeout */
-		(void) kpause(ttclos, false, hz, &sc->sc_lock);
+		(void) kpause(ttclos, false, hz, NULL);
 	}
 }
 
@@ -1156,7 +1155,7 @@ ucom_status_change(struct ucom_softc *sc)
 	struct tty *tp = sc->sc_tty;
 
 	if (sc->sc_methods->ucom_get_status != NULL) {
-    		u_char msr, lsr;
+		u_char msr, lsr;
 
 		sc->sc_methods->ucom_get_status(sc->sc_parent, sc->sc_portno,
 		    &lsr, &msr);
@@ -1198,6 +1197,16 @@ ucomparam(struct tty *tp, struct termios *t)
 
 	if (sc == NULL)
 		return EIO;
+
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_dying) {
+		DPRINTF("... dying", 0, 0, 0, 0);
+		mutex_exit(&sc->sc_lock);
+		return EIO;
+	}
+
+	sc->sc_refcnt++;
+	mutex_exit(&sc->sc_lock);
 
 	mutex_enter(&sc->sc_lock);
 	if (sc->sc_dying) {
@@ -1523,6 +1532,8 @@ ucom_read_complete(struct ucom_softc *sc)
 		if (ub->ub_index == ub->ub_len) {
 			SIMPLEQ_REMOVE_HEAD(&sc->sc_ibuff_full, ub_link);
 
+			sc->sc_refcnt--;
+			/* increments sc_refcnt */
 			ucomsubmitread(sc, ub);
 
 			ub = SIMPLEQ_FIRST(&sc->sc_ibuff_full);
@@ -1537,6 +1548,8 @@ ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 {
 	usbd_status err;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	if (sc->sc_bulkin_no != -1) {
 		usbd_setup_xfer(ub->ub_xfer, sc, ub->ub_data, sc->sc_ibufsize,
 		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, ucomreadcb);
@@ -1548,6 +1561,8 @@ ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 		}
 	}
 
+	sc->sc_refcnt++;
+
 	SIMPLEQ_INSERT_TAIL(&sc->sc_ibuff_empty, ub, ub_link);
 
 	return 0;
@@ -1557,27 +1572,36 @@ void
 ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
-	struct tty *tp = sc->sc_tty;
 	struct ucom_buffer *ub;
 	uint32_t cc;
 	u_char *cp;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	if (status == USBD_CANCELLED) {
-		DPRINTF("... done (cancelled status %d)", status, 0, 0, 0);
-		return;
-	}
-
 	mutex_enter(&sc->sc_lock);
-	if (status == USBD_IOERROR || sc->sc_dying) {
-		DPRINTF("dying", 0, 0, 0, 0);
-		/* Send something to wake upper layer */
-		(tp->t_linesw->l_rint)('\n', tp);
-		mutex_spin_enter(&tty_lock);	/* XXX */
-		ttwakeup(tp);
-		mutex_spin_exit(&tty_lock);	/* XXX */
+
+	struct tty *tp = sc->sc_tty;
+
+	if (status == USBD_CANCELLED || status == USBD_IOERROR ||
+	    sc->sc_dying) {
+
+		DPRINTF("... done (status %d dying %d)", status, sc->sc_dying,
+		    0, 0);
+
+		if (status == USBD_IOERROR || sc->sc_dying) {
+			/* Send something to wake upper layer */
+			(tp->t_linesw->l_rint)('\n', tp);
+			mutex_spin_enter(&tty_lock);	/* XXX */
+			ttwakeup(tp);
+			mutex_spin_exit(&tty_lock);	/* XXX */
+		}
+
+		if (--sc->sc_refcnt < 0)
+			cv_broadcast(&sc->sc_detachcv);
+		DPRINTF("unit=%d refcnt %d", UCOMUNIT(tp->t_dev), sc->sc_refcnt,
+		    0, 0);
 		mutex_exit(&sc->sc_lock);
+
 		return;
 	}
 
@@ -1596,7 +1620,8 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 		}
 
 		DPRINTF("... done (status %d)", status, 0, 0, 0);
-		/* re-adds ub to sc_ibuff_empty */
+		sc->sc_refcnt--;
+		/* re-adds ub to sc_ibuff_empty and increments sc_refcnt */
 		ucomsubmitread(sc, ub);
 		mutex_exit(&sc->sc_lock);
 		return;
@@ -1610,13 +1635,14 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 		device_printf(sc->sc_dev, "ucomreadcb: zero length xfer!\n");
 	}
 #endif
-
 	KDASSERT(cp == ub->ub_data);
 
 	rnd_add_uint32(&sc->sc_rndsource, cc);
 
 	if (sc->sc_state != UCOM_OPEN) {
 		/* Go around again - we're not quite ready */
+		sc->sc_refcnt--;
+		/* re-adds ub to sc_ibuff_empty and increments sc_refcnt */
 		ucomsubmitread(sc, ub);
 		mutex_exit(&sc->sc_lock);
 		DPRINTF("... done (not open)", 0, 0, 0, 0);
@@ -1659,9 +1685,9 @@ ucom_cleanup(struct ucom_softc *sc)
 		return;
 	}
 
-	ucom_shutdown(sc);
-
 	mutex_exit(&sc->sc_lock);
+
+	ucom_shutdown(sc);
 
 	if (sc->sc_bulkin_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_bulkin_pipe);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.133.2.5 2016/10/05 20:55:43 skrll Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.133.2.6 2016/12/05 10:55:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.133.2.5 2016/10/05 20:55:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.133.2.6 2016/12/05 10:55:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.133.2.5 2016/10/05 20:55:43 skrll Exp
 #include <sys/module.h>
 #else
 #include <pci.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -567,6 +568,43 @@ static const struct pci_class pci_class[] = {
 
 DEV_VERBOSE_DEFINE(pci);
 
+/*
+ * Append a formatted string to dest without writing more than len
+ * characters (including the trailing NUL character).  dest and len
+ * are updated for use in subsequent calls to snappendf().
+ *
+ * Returns 0 on success, a negative value if vnsprintf() fails, or
+ * a positive value if the dest buffer would have overflowed.
+ */
+
+static int __printflike(3,4)
+snappendf(char **dest, size_t *len, const char * restrict fmt, ...)
+{
+	va_list	ap;
+	int count;
+
+	va_start(ap, fmt);
+	count = vsnprintf(*dest, *len, fmt, ap);
+	va_end(ap);
+
+	/* Let vsnprintf() errors bubble up to caller */
+	if (count < 0 || *len == 0)
+		return count;
+
+	/* Handle overflow */
+	if ((size_t)count >= *len) {
+		*dest += *len - 1;
+		*len = 1;
+		return 1;
+	}
+
+	/* Update dest & len to point at trailing NUL */
+	*dest += count;
+	*len -= count;
+		
+	return 0;
+}
+
 void
 pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
     size_t l)
@@ -577,9 +615,6 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 	pci_revision_t revision;
 	char vendor[PCI_VENDORSTR_LEN], product[PCI_PRODUCTSTR_LEN];
 	const struct pci_class *classp, *subclassp, *interfacep;
-	char *ep;
-
-	ep = cp + l;
 
 	pciclass = PCI_CLASS(class_reg);
 	subclass = PCI_SUBCLASS(class_reg);
@@ -612,32 +647,31 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 		interfacep++;
 	}
 
-	cp += snprintf(cp, ep - cp, "%s %s", vendor, product);
+	(void)snappendf(&cp, &l, "%s %s", vendor, product);
 	if (showclass) {
-		cp += snprintf(cp, ep - cp, " (");
+		(void)snappendf(&cp, &l, " (");
 		if (classp->name == NULL)
-			cp += snprintf(cp, ep - cp,
-			    "class 0x%02x, subclass 0x%02x", pciclass, subclass);
+			(void)snappendf(&cp, &l,
+			    "class 0x%02x, subclass 0x%02x",
+			    pciclass, subclass);
 		else {
 			if (subclassp == NULL || subclassp->name == NULL)
-				cp += snprintf(cp, ep - cp,
+				(void)snappendf(&cp, &l,
 				    "%s, subclass 0x%02x",
 				    classp->name, subclass);
 			else
-				cp += snprintf(cp, ep - cp, "%s %s",
+				(void)snappendf(&cp, &l, "%s %s",
 				    subclassp->name, classp->name);
 		}
 		if ((interfacep == NULL) || (interfacep->name == NULL)) {
 			if (interface != 0)
-				cp += snprintf(cp, ep - cp,
-				    ", interface 0x%02x", interface);
+				(void)snappendf(&cp, &l, ", interface 0x%02x",
+				    interface);
 		} else if (strncmp(interfacep->name, "", 1) != 0)
-			cp += snprintf(cp, ep - cp, ", %s",
-			    interfacep->name);
+			(void)snappendf(&cp, &l, ", %s", interfacep->name);
 		if (revision != 0)
-			cp += snprintf(cp, ep - cp, ", revision 0x%02x",
-			    revision);
-		cp += snprintf(cp, ep - cp, ")");
+			(void)snappendf(&cp, &l, ", revision 0x%02x", revision);
+		(void)snappendf(&cp, &l, ")");
 	}
 }
 
@@ -1080,6 +1114,8 @@ pci_conf_print_msi_cap(const pcireg_t *regs, int capoff)
 	    mme > 0 ? "on" : "off", 1 << mme, mme > 0 ? "s" : "");
 	onoff("64 Bit Address Capable", ctl, PCI_MSI_CTL_64BIT_ADDR);
 	onoff("Per-Vector Masking Capable", ctl, PCI_MSI_CTL_PERVEC_MASK);
+	onoff("Extended Message Data Capable", ctl, PCI_MSI_CTL_EXTMDATA_CAP);
+	onoff("Extended Message Data Enable", ctl, PCI_MSI_CTL_EXTMDATA_EN);
 	printf("    Message Address %sregister: 0x%08x\n",
 	    ctl & PCI_MSI_CTL_64BIT_ADDR ? "(lower) " : "", *regs++);
 	if (ctl & PCI_MSI_CTL_64BIT_ADDR) {
@@ -1594,6 +1630,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("Unsupported Request Detected", reg, PCIE_DCSR_URD);
 	onoff("Aux Power Detected", reg, PCIE_DCSR_AUX_PWR);
 	onoff("Transaction Pending", reg, PCIE_DCSR_TRANSACTION_PND);
+	onoff("Emergency Power Reduction Detected", reg,
+	    PCIE_DCSR_EMGPWRREDD);
 
 	if (check_link) {
 		/* Link Capability Register */
@@ -1862,6 +1900,23 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("End-End TLP Prefix Supported", reg, PCIE_DCAP2_EETLP_PREF);
 	printf("      Max End-End TLP Prefixes: %u\n",
 	    (unsigned int)(reg & PCIE_DCAP2_MAX_EETLP) >> 22);
+	printf("      Emergency Power Reduction Supported: ");
+	switch (__SHIFTOUT(reg, PCIE_DCAP2_EMGPWRRED)) {
+	case 0x0:
+		printf("Not supported\n");
+		break;
+	case 0x1:
+		printf("Device Specific mechanism\n");
+		break;
+	case 0x2:
+		printf("Form Factor spec or Device Specific mechanism\n");
+		break;
+	case 0x3:
+		printf("Reserved\n");
+		break;
+	}
+	onoff("Emergency Power Reduction Initialization Required", reg,
+	    PCIE_DCAP2_EMGPWRRED_INI);
 	onoff("FRS Supported", reg, PCIE_DCAP2_FRS);
 
 	/* Device Control 2 */
@@ -1876,6 +1931,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("IDO Request Enabled", reg, PCIE_DCSR2_IDO_REQ);
 	onoff("IDO Completion Enabled", reg, PCIE_DCSR2_IDO_COMP);
 	onoff("LTR Mechanism Enabled", reg, PCIE_DCSR2_LTR_MEC);
+	onoff("Emergency Power Reduction Request", reg,
+	    PCIE_DCSR2_EMGPWRRED_REQ);
 	printf("      OBFF: ");
 	switch ((reg & PCIE_DCSR2_OBFF_EN) >> 13) {
 	case 0x0:
@@ -2478,8 +2535,12 @@ pci_conf_print_pwrbdgt_base_power(uint8_t reg)
 	case 0xf2:
 		return "275W < x <= 300W";
 	default:
-		return "Unknown";
+		break;
 	}
+	if (reg >= 0xf3)
+		return "reserved for above 300W";
+
+	return "Unknown";
 }
 
 static const char *
@@ -2513,6 +2574,10 @@ pci_conf_print_pwrbdgt_type(uint8_t reg)
 		return "Idle";
 	case 0x03:
 		return "Sustained";
+	case 0x04:
+		return "Sustained (Emergency Power Reduction)";
+	case 0x05:
+		return "Maximum (Emergency Power Reduction)";
 	case 0x07:
 		return "Maximun";
 	default:
@@ -2992,7 +3057,65 @@ pci_conf_print_page_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 /* XXX pci_conf_print_amd_cap */
-/* XXX pci_conf_print_resiz_bar_cap */
+
+#define MEM_PBUFSIZE	sizeof("999GB")
+
+static void
+pci_conf_print_resizbar_cap(const pcireg_t *regs, int capoff, int extcapoff)
+{
+	pcireg_t cap, ctl;
+	unsigned int bars, i, n;
+	char pbuf[MEM_PBUFSIZE];
+	
+	printf("\n  Resizable BAR\n");
+
+	/* Get Number of Resizable BARs */
+	ctl = regs[o2i(extcapoff + PCI_RESIZBAR_CTL(0))];
+	bars = __SHIFTOUT(ctl, PCI_RESIZBAR_CTL_NUMBAR);
+	printf("    Number of Resizable BARs: ");
+	if (bars <= 6)
+		printf("%u\n", bars);
+	else {
+		printf("incorrect (%u)\n", bars);
+		return;
+	}
+
+	for (n = 0; n < 6; n++) {
+		cap = regs[o2i(extcapoff + PCI_RESIZBAR_CAP(n))];
+		printf("    Capability register(%u): 0x%08x\n", n, cap);
+		if ((cap & PCI_RESIZBAR_CAP_SIZEMASK) == 0)
+			continue; /* Not Used */
+		printf("      Acceptable BAR sizes:");
+		for (i = 4; i <= 23; i++) {
+			if ((cap & (1 << i)) != 0) {
+				humanize_number(pbuf, MEM_PBUFSIZE,
+				    (int64_t)1024 * 1024 << (i - 4), "B",
+#ifdef _KERNEL
+				    1);
+#else
+				    HN_AUTOSCALE, HN_NOSPACE);
+#endif
+				printf(" %s", pbuf);
+			}
+		}
+		printf("\n");
+
+		ctl = regs[o2i(extcapoff + PCI_RESIZBAR_CTL(n))];
+		printf("    Control register(%u): 0x%08x\n", n, ctl);
+		printf("      BAR Index: %u\n",
+		    (unsigned int)__SHIFTOUT(ctl, PCI_RESIZBAR_CTL_BARIDX));
+		humanize_number(pbuf, MEM_PBUFSIZE,
+		    (int64_t)1024 * 1024
+		    << __SHIFTOUT(ctl, PCI_RESIZBAR_CTL_BARSIZ),
+		    "B",
+#ifdef _KERNEL
+		    1);
+#else
+		    HN_AUTOSCALE, HN_NOSPACE);
+#endif
+		printf("      BAR Size: %s\n", pbuf);
+	}
+}
 
 static void
 pci_conf_print_dpa_cap(const pcireg_t *regs, int capoff, int extcapoff)
@@ -3346,6 +3469,7 @@ pci_conf_print_ptm_cap(const pcireg_t *regs, int capoff, int extcapoff)
 /* XXX pci_conf_print_frsq_cap */
 /* XXX pci_conf_print_rtr_cap */
 /* XXX pci_conf_print_desigvndsp_cap */
+/* XXX pci_conf_print_vf_resizbar_cap */
 
 #undef	MS
 #undef	SM
@@ -3398,8 +3522,8 @@ static struct {
 	  pci_conf_print_page_req_cap },
 	{ PCI_EXTCAP_AMD,	"Reserved for AMD",
 	  NULL },
-	{ PCI_EXTCAP_RESIZ_BAR,	"Resizable BAR",
-	  NULL },
+	{ PCI_EXTCAP_RESIZBAR,	"Resizable BAR",
+	  pci_conf_print_resizbar_cap },
 	{ PCI_EXTCAP_DPA,	"Dynamic Power Allocation",
 	  pci_conf_print_dpa_cap },
 	{ PCI_EXTCAP_TPH_REQ,	"TPH Requester",
@@ -3427,6 +3551,8 @@ static struct {
 	{ PCI_EXTCAP_RTR,	"Readiness Time Reporting",
 	  NULL },
 	{ PCI_EXTCAP_DESIGVNDSP, "Designated Vendor-Specific",
+	  NULL },
+	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
 	  NULL },
 };
 

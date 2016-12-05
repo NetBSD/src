@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.18.16.3 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.18.16.4 2016/12/05 10:55:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.18.16.3 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.18.16.4 2016/12/05 10:55:18 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

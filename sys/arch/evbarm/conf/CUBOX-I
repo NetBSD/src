@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX-I,v 1.2.2.3 2016/10/05 20:55:26 skrll Exp $
+# $NetBSD: CUBOX-I,v 1.2.2.4 2016/12/05 10:54:51 skrll Exp $
 #
 # CuBox-i
 # - http://www.solid-run.com/products/cubox-i-mini-computer/
@@ -420,6 +420,7 @@ pseudo-device	wsfont
 pseudo-device	drvctl
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #

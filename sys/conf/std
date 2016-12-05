@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.20.2.1 2015/12/27 12:09:48 skrll Exp $
+# $NetBSD: std,v 1.20.2.2 2016/12/05 10:55:00 skrll Exp $
 #
 # standard MI 'options'
 #
@@ -26,8 +26,9 @@ select	net		# XXX Clean up dependency
 options	VMSWAP		# Swap device/file support
 options	BUFQ_FCFS	# First-come First-serve strategy
 options	BUFQ_DISKSORT	# Traditional min seek sort strategy
-options	RFC2292		# Previous version of Adv. Sockets API for IPv6 
-options	PTRACE		# Include ptrace(2)
+options	RFC2292		# Previous version of Adv. Sockets API for IPv6
+options	PTRACE		# Include ptrace(2) syscall
+options	PTRACE_HOOKS	# Include ptrace hooks
 options	COREDUMP	# allow processes to coredump.
 options	AIO		# POSIX asynchronous I/O
 options	MQUEUE		# POSIX message queues

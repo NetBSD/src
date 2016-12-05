@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndisreg.h,v 1.1.32.2 2016/03/20 08:42:19 skrll Exp $ */
+/*	$NetBSD: if_urndisreg.h,v 1.1.32.3 2016/12/05 10:55:18 skrll Exp $ */
 /*	$OpenBSD: if_urndisreg.h,v 1.14 2010/07/08 18:22:01 ckuethe Exp $ */
 
 /*
@@ -303,5 +303,5 @@ struct urndis_keepalive_comp {
 /* Rndis offsets */
 #define RNDIS_HEADER_OFFSET	(sizeof(uint32_t) * 2)
 #define RNDIS_DATA_OFFSET	(sizeof(struct urndis_packet_msg) - \
-    				 offsetof(struct urndis_packet_msg, \
-    				 rm_dataoffset))
+				 offsetof(struct urndis_packet_msg, \
+				 rm_dataoffset))

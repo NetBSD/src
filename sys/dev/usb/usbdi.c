@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.47 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.48 2016/12/05 10:55:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.47 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.48 2016/12/05 10:55:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -893,7 +893,7 @@ void
 usb_transfer_complete(struct usbd_xfer *xfer)
 {
 	struct usbd_pipe *pipe = xfer->ux_pipe;
- 	struct usbd_bus *bus = pipe->up_dev->ud_bus;
+	struct usbd_bus *bus = pipe->up_dev->ud_bus;
 	int sync = xfer->ux_flags & USBD_SYNCHRONOUS;
 	int erred =
 	    xfer->ux_status == USBD_CANCELLED ||

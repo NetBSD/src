@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.36.4.1 2016/10/05 20:55:23 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.36.4.2 2016/12/05 10:54:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,7 +114,7 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		0
-#define VM_MAXUSER_ADDRESS	0x00007f8000000000
+#define VM_MAXUSER_ADDRESS	(0x00007f8000000000 - PAGE_SIZE)
 #define VM_MAX_ADDRESS		0x00007fbfdfeff000
 #ifndef XEN
 #define VM_MIN_KERNEL_ADDRESS	0xffff800000000000

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_pinctrl.c,v 1.2.2.2 2016/03/19 11:30:09 skrll Exp $ */
+/* $NetBSD: fdt_pinctrl.c,v 1.2.2.3 2016/12/05 10:55:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Martin Fouts
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.2.2.2 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.2.2.3 2016/12/05 10:55:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -120,6 +120,7 @@ fdtbus_pinctrl_set_config(int phandle, const char *cfgname)
 	next = result;
 	while (next - result < len) {
 		if (!strcmp(next, cfgname)) {
+			kmem_free(result, len);
 			return fdtbus_pinctrl_set_config_index(phandle, index);
 		}
 		index++;
@@ -128,5 +129,6 @@ fdtbus_pinctrl_set_config(int phandle, const char *cfgname)
 		next++;
 	}
 
+	kmem_free(result, len);
 	return -1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.170.2.5 2016/10/05 20:56:09 skrll Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.170.2.6 2016/12/05 10:55:28 skrll Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.170.2.5 2016/10/05 20:56:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.170.2.6 2016/12/05 10:55:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -481,6 +481,20 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		icmp6_ifstat_inc(rcvif, ifs6_in_error);
 		goto freeit;
+	}
+	/*
+	 * Enforce alignment requirements that are violated in
+	 * some cases, see kern/50766 for details.
+	 */
+	if (IP6_HDR_ALIGNED_P(icmp6) == 0) {
+		m = m_copyup(m, off + sizeof(struct icmp6_hdr), 0);
+		if (m == NULL) {
+			ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
+			icmp6_ifstat_inc(rcvif, ifs6_in_error);
+			goto freeit;
+		}
+		ip6 = mtod(m, struct ip6_hdr *);
+		icmp6 = (struct icmp6_hdr *)(ip6 + 1);
 	}
 	KASSERT(IP6_HDR_ALIGNED_P(icmp6));
 
@@ -1132,7 +1146,6 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	sin6.sin6_family = PF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *dst;
-	s = pserialize_read_enter();
 	rcvif = m_get_rcvif(m, &s);
 	if (in6_setscope(&sin6.sin6_addr, rcvif, NULL)) {
 		m_put_rcvif(rcvif, &s);
@@ -2000,9 +2013,9 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	int type, code;
 	struct ifnet *outif = NULL;
 	struct in6_addr origdst;
-	const struct in6_addr *src = NULL;
 	struct ifnet *rcvif;
 	int s;
+	bool ip6_src_filled = false;
 
 	/* too short to reflect */
 	if (off < sizeof(struct ip6_hdr)) {
@@ -2070,8 +2083,10 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		;
 	else if ((ip6a = ip6_getdstifaddr(m)) != NULL) {
 		if ((ip6a->ip6a_flags &
-		     (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0)
-			src = &ip6a->ip6a_src;
+		     (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0) {
+			ip6->ip6_src = ip6a->ip6a_src;
+			ip6_src_filled = true;
+		}
 	} else {
 		union {
 			struct sockaddr_in6 sin6;
@@ -2088,13 +2103,15 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		if (ifa != NULL) {
 			ia = ifatoia6(ifa);
 			if ((ia->ia6_flags &
-				 (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0)
-				src = &ia->ia_addr.sin6_addr;
+				 (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0) {
+				ip6->ip6_src = ia->ia_addr.sin6_addr;
+				ip6_src_filled = true;
+			}
 		}
 		pserialize_read_exit(_s);
 	}
 
-	if (src == NULL) {
+	if (!ip6_src_filled) {
 		int e;
 		struct sockaddr_in6 sin6;
 		struct route ro;
@@ -2108,9 +2125,10 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		sockaddr_in6_init(&sin6, &ip6->ip6_dst, 0, 0, 0);
 
 		memset(&ro, 0, sizeof(ro));
-		src = in6_selectsrc(&sin6, NULL, NULL, &ro, NULL, NULL, NULL, &e);
+		e = in6_selectsrc(&sin6, NULL, NULL, &ro, NULL, NULL, NULL,
+		    &ip6->ip6_src);
 		rtcache_free(&ro);
-		if (src == NULL) {
+		if (e != 0) {
 			nd6log(LOG_DEBUG,
 			    "source can't be determined: "
 			    "dst=%s, error=%d\n",
@@ -2119,7 +2137,6 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		}
 	}
 
-	ip6->ip6_src = *src;
 	ip6->ip6_flow = 0;
 	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc |= IPV6_VERSION;
@@ -2832,8 +2849,7 @@ sysctl_net_inet6_icmp6_redirtimeout(SYSCTLFN_ARGS)
 
 	if (icmp6_redirect_timeout_q != NULL) {
 		if (icmp6_redirtimeout == 0) {
-			rt_timer_queue_destroy(icmp6_redirect_timeout_q,
-			    true);
+			rt_timer_queue_destroy(icmp6_redirect_timeout_q);
 		} else {
 			rt_timer_queue_change(icmp6_redirect_timeout_q,
 			    icmp6_redirtimeout);

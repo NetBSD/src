@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.6.14.7 2016/10/05 20:55:57 skrll Exp $	*/
+/*	$NetBSD: uark.c,v 1.6.14.8 2016/12/05 10:55:18 skrll Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -16,6 +16,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.6.14.8 2016/12/05 10:55:18 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

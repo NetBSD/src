@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.310.2.3 2015/09/22 12:06:00 skrll Exp $	*/
+/*	$NetBSD: sd.c,v 1.310.2.4 2016/12/05 10:55:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,11 +47,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.310.2.3 2015/09/22 12:06:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.310.2.4 2016/12/05 10:55:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
 #endif
+
+#define SD_MPSAFE D_MPSAFE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +167,7 @@ const struct bdevsw sd_bdevsw = {
 	.d_dump = sddump,
 	.d_psize = sdsize,
 	.d_discard = nodiscard,
-	.d_flag = D_DISK
+	.d_flag = D_DISK | SD_MPSAFE
 };
 
 const struct cdevsw sd_cdevsw = {
@@ -180,7 +182,7 @@ const struct cdevsw sd_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_DISK
+	.d_flag = D_DISK | SD_MPSAFE
 };
 
 static struct dkdriver sddkdriver = {
@@ -356,7 +358,9 @@ static int
 sddetach(device_t self, int flags)
 {
 	struct sd_softc *sd = device_private(self);
-	int s, bmaj, cmaj, i, mn, rc;
+	struct scsipi_periph *periph = sd->sc_periph;
+	struct scsipi_channel *chan = periph->periph_channel;
+	int bmaj, cmaj, i, mn, rc;
 
 	rnd_add_uint32(&sd->rnd_source, 0);
 
@@ -380,17 +384,17 @@ sddetach(device_t self, int flags)
 	/* Delete all of our wedges. */
 	dkwedge_delall(&sd->sc_dk);
 
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 
 	/* Kill off any queued buffers. */
 	bufq_drain(sd->buf_queue);
 
-	bufq_free(sd->buf_queue);
-
 	/* Kill off any pending commands. */
 	scsipi_kill_pending(sd->sc_periph);
 
-	splx(s);
+	mutex_exit(chan_mtx(chan));
+
+	bufq_free(sd->buf_queue);
 
 	/* Detach from the disk list. */
 	disk_detach(&sd->sc_dk);
@@ -669,9 +673,9 @@ sdstrategy(struct buf *bp)
 {
 	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(bp->b_dev));
 	struct scsipi_periph *periph = sd->sc_periph;
+	struct scsipi_channel *chan = periph->periph_channel;
 	struct disklabel *lp;
 	daddr_t blkno;
-	int s;
 	bool sector_aligned;
 
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdstrategy "));
@@ -740,7 +744,7 @@ sdstrategy(struct buf *bp)
 
 	bp->b_rawblkno = blkno;
 
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 
 	/*
 	 * Place it in the queue of disk activities for this disk.
@@ -754,9 +758,9 @@ sdstrategy(struct buf *bp)
 	 * Tell the device to get going on the transfer if it's
 	 * not doing anything, otherwise just wait for completion
 	 */
-	sdstart(sd->sc_periph);
+	sdstart(periph);
 
-	splx(s);
+	mutex_exit(chan_mtx(chan));
 	return;
 
 done:
@@ -780,8 +784,8 @@ done:
  * have been made of the scsi driver, to ensure that the queue
  * continues to be drained.
  *
- * must be called at the correct (highish) spl level
- * sdstart() is called at splbio from sdstrategy, sdrestart and scsipi_done
+ * must be called with channel lock held
+ * sdstart() is called from sdstrategy, sdrestart and scsipi_done
  */
 static void
 sdstart(struct scsipi_periph *periph)
@@ -797,6 +801,7 @@ sdstart(struct scsipi_periph *periph)
 	int nblks, cmdlen, error __diagused, flags;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdstart "));
+
 	/*
 	 * Check if the device has room for another command
 	 */
@@ -808,7 +813,7 @@ sdstart(struct scsipi_periph *periph)
 		 */
 		if (periph->periph_flags & PERIPH_WAITING) {
 			periph->periph_flags &= ~PERIPH_WAITING;
-			wakeup((void *)periph);
+			cv_broadcast(periph_cv_periph(periph));
 			return;
 		}
 
@@ -902,7 +907,7 @@ sdstart(struct scsipi_periph *periph)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		xs = scsipi_make_xs(periph, cmdp, cmdlen,
+		xs = scsipi_make_xs_locked(periph, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    SDRETRIES, SD_IO_TIMEOUT, bp, flags);
 		if (__predict_false(xs == NULL)) {
@@ -934,9 +939,12 @@ sdstart(struct scsipi_periph *periph)
 static void
 sdrestart(void *v)
 {
-	int s = splbio();
+	struct scsipi_periph *periph = v;
+	struct scsipi_channel *chan = periph->periph_channel;
+
+	mutex_enter(chan_mtx(chan));
 	sdstart((struct scsipi_periph *)v);
-	splx(s);
+	mutex_exit(chan_mtx(chan));
 }
 
 static void
@@ -1020,7 +1028,6 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct scsipi_periph *periph = sd->sc_periph;
 	int part = SDPART(dev);
 	int error;
-	int s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
 #endif
@@ -1206,6 +1213,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case DIOCGSTRATEGY:
 	    {
 		struct disk_strategy *dks = addr;
+		int s;
 
 		s = splbio();
 		strlcpy(dks->dks_name, bufq_getstrategyname(sd->buf_queue),
@@ -1221,6 +1229,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		struct disk_strategy *dks = addr;
 		struct bufq_state *new_bufq;
 		struct bufq_state *old_bufq;
+		int s;
 
 		if ((flag & FWRITE) == 0) {
 			return EBADF;
@@ -1367,9 +1376,10 @@ static int
 sd_interpret_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
+	struct scsipi_channel *chan = periph->periph_channel;
 	struct scsi_sense_data *sense = &xs->sense.scsi_sense;
 	struct sd_softc *sd = device_private(periph->periph_dev);
-	int s, error, retval = EJUSTRETURN;
+	int error, retval = EJUSTRETURN;
 
 	/*
 	 * If the periph is already recovering, just do the normal
@@ -1427,9 +1437,9 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 		} else if (sense->ascq == 0x02) {
 			printf("%s: pack is stopped, restarting...\n",
 			    device_xname(sd->sc_dev));
-			s = splbio();
+			mutex_enter(chan_mtx(chan));
 			periph->periph_flags |= PERIPH_RECOVERING;
-			splx(s);
+			mutex_exit(chan_mtx(chan));
 			error = scsipi_start(periph, SSS_START,
 			    XS_CTL_URGENT|XS_CTL_HEAD_TAG|
 			    XS_CTL_THAW_PERIPH|XS_CTL_FREEZE_PERIPH);
@@ -1439,9 +1449,9 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 				retval = error;
 			} else
 				retval = ERESTART;
-			s = splbio();
+			mutex_enter(chan_mtx(chan));
 			periph->periph_flags &= ~PERIPH_RECOVERING;
-			splx(s);
+			mutex_exit(chan_mtx(chan));
 		}
 	}
 	if (SSD_SENSE_KEY(sense->flags) == SKEY_MEDIUM_ERROR &&

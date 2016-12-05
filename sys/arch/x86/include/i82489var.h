@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.14 2011/06/12 03:35:50 rmind Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.14.30.1 2016/12/05 10:54:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,21 +40,19 @@ static __inline uint32_t i82489_readreg(int);
 static __inline void i82489_writereg(int, uint32_t);
 
 #ifdef _KERNEL
-extern volatile uint32_t local_apic[];
-extern volatile uint32_t lapic_tpr;
+extern volatile vaddr_t local_apic_va;
 #endif
 
 static __inline uint32_t
 i82489_readreg(int reg)
 {
-	return *((volatile uint32_t *)(((volatile uint8_t *)local_apic)
-	    + reg));
+	return *((volatile uint32_t *)(local_apic_va + reg));
 }
 
 static __inline void
 i82489_writereg(int reg, uint32_t val)
 {
-	*((volatile uint32_t *)(((volatile uint8_t *)local_apic) + reg)) = val;
+	*((volatile uint32_t *)(local_apic_va + reg)) = val;
 }
 
 #define lapic_cpu_number() 	(i82489_readreg(LAPIC_ID) >> LAPIC_ID_SHIFT)

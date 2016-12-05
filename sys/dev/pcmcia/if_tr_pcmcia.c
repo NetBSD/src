@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.25.14.1 2016/10/05 20:55:56 skrll Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.25.14.2 2016/12/05 10:55:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.25.14.1 2016/10/05 20:55:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.25.14.2 2016/12/05 10:55:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,7 @@ tr_pcmcia_enable(struct tr_softc *sc)
 		return 1;
 	}
 
-        ret = pcmcia_function_enable(psc->sc_pf);
+	ret = pcmcia_function_enable(psc->sc_pf);
 	if (ret != 0)
 		return ret;
 

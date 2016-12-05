@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.44.30.1 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: fp.S,v 1.44.30.2 2016/12/05 10:54:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,8 @@
 #include <mips/asm.h>
 #include <mips/trap.h>
 #include <mips/cpuregs.h>
+
+#include <mips/locore.h>
 
 #include "assym.h"
 

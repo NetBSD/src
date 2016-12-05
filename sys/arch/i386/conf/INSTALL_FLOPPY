@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.27.2.2 2015/12/27 12:09:36 skrll Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.27.2.3 2016/12/05 10:54:53 skrll Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -64,6 +64,7 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 no options 	EXEC_AOUT
 
 no options 	RFC2292		# Previous version of Adv. Sockets API for IPv6
+no options	PTRACE_HOOKS
 no options 	PTRACE		# Include ptrace(2)
 
 # Diagnostic/debugging support options

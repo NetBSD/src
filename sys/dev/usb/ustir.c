@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.33.10.12 2016/07/09 20:25:17 skrll Exp $	*/
+/*	$NetBSD: ustir.c,v 1.33.10.13 2016/12/05 10:55:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.12 2016/07/09 20:25:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.13 2016/12/05 10:55:20 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.179.2.9 2016/10/05 20:56:09 skrll Exp $	*/
+/*	$NetBSD: in6.c,v 1.179.2.10 2016/12/05 10:55:28 skrll Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,11 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.179.2.9 2016/10/05 20:56:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.179.2.10 2016/12/05 10:55:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -773,9 +774,13 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	}
 
 	s = splnet();
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
+#endif
 	error = in6_control1(so , cmd, data, ifp);
+#ifndef NET_MPSAFE
 	mutex_exit(softnet_lock);
+#endif
 	splx(s);
 	return error;
 }
@@ -2371,8 +2376,12 @@ in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 		lltable_unlink_entry(llt, lle);
 	}
 
+#ifdef NET_MPSAFE
+	callout_halt(&lle->lle_timer, NULL);
+#else
 	KASSERT(mutex_owned(softnet_lock));
 	callout_halt(&lle->lle_timer, softnet_lock);
+#endif
 	LLE_REMREF(lle);
 
 	llentry_free(lle);

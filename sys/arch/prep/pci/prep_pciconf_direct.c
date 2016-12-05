@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_direct.c,v 1.8.30.1 2015/12/27 12:09:41 skrll Exp $	*/
+/*	$NetBSD: prep_pciconf_direct.c,v 1.8.30.2 2016/12/05 10:54:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Klaus J. Klein.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.8.30.1 2015/12/27 12:09:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.8.30.2 2016/12/05 10:54:57 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,6 +109,17 @@ prep_pci_get_chipset_tag_direct(pci_chipset_tag_t pc)
 	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
 	pc->pc_intr_establish = genppc_pci_intr_establish;
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
+	pc->pc_intr_setattr = genppc_pci_intr_setattr;
+	pc->pc_intr_type = genppc_pci_intr_type;
+	pc->pc_intr_alloc = genppc_pci_intr_alloc;
+	pc->pc_intr_release = genppc_pci_intr_release;
+	pc->pc_intx_alloc = genppc_pci_intx_alloc;
+
+	pc->pc_msi_v = NULL;
+	genppc_pci_chipset_msi_init(pc);
+
+	pc->pc_msix_v = NULL;
+	genppc_pci_chipset_msix_init(pc);
 
 	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
 	pc->pc_decompose_tag = prep_pci_direct_decompose_tag;

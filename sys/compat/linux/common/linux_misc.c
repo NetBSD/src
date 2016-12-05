@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.230.2.2 2016/10/05 20:55:38 skrll Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.230.2.3 2016/12/05 10:55:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.230.2.2 2016/10/05 20:55:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.230.2.3 2016/12/05 10:55:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,10 +223,10 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 	proc_t *p;
 
 	linux_options = SCARG(uap, options);
-	options = WOPTSCHECKED;
 	if (linux_options & ~(LINUX_WAIT4_KNOWNFLAGS))
 		return (EINVAL);
 
+	options = 0;
 	if (linux_options & LINUX_WAIT4_WNOHANG)
 		options |= WNOHANG;
 	if (linux_options & LINUX_WAIT4_WUNTRACED)

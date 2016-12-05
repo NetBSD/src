@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.29.14.1 2015/09/22 12:05:49 skrll Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.29.14.2 2016/12/05 10:54:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.29.14.1 2015/09/22 12:05:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.29.14.2 2016/12/05 10:54:56 skrll Exp $");
 
 #define	_PMAX_BUS_DMA_PRIVATE
 /*
@@ -112,7 +112,7 @@ tcbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	tba->tba_busname = "tc";
-	tba->tba_memt = 0;
+	tba->tba_memt = normal_memt;
 	tba->tba_intr_evcnt = tc_ds_intr_evcnt;
 	tba->tba_intr_establish = tc_ds_intr_establish;
 	tba->tba_intr_disestablish = tc_ds_intr_disestablish;

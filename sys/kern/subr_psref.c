@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_psref.c,v 1.4.2.2 2016/04/22 15:44:16 skrll Exp $	*/
+/*	$NetBSD: subr_psref.c,v 1.4.2.3 2016/12/05 10:55:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.4.2.2 2016/04/22 15:44:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.4.2.3 2016/12/05 10:55:26 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -195,6 +195,28 @@ psref_target_init(struct psref_target *target,
 	target->prt_draining = false;
 }
 
+#ifdef DEBUG
+static void
+psref_check_duplication(struct psref_cpu *pcpu, struct psref *psref,
+    const struct psref_target *target)
+{
+	bool found = false;
+	struct psref *_psref;
+
+	LIST_FOREACH(_psref, &pcpu->pcpu_head, psref_entry) {
+		if (_psref == psref &&
+		    _psref->psref_target == target) {
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		panic("trying to acquire a target twice with the same psref: "
+		    "psref=%p target=%p", psref, target);
+	}
+}
+#endif /* DEBUG */
+
 /*
  * psref_acquire(psref, target, class)
  *
@@ -230,6 +252,11 @@ psref_acquire(struct psref *psref, const struct psref_target *target,
 	/* Block interrupts and acquire the current CPU's reference list.  */
 	s = splraiseipl(class->prc_iplcookie);
 	pcpu = percpu_getref(class->prc_percpu);
+
+#ifdef DEBUG
+	/* Sanity-check if the target is already acquired with the same psref.  */
+	psref_check_duplication(pcpu, psref, target);
+#endif
 
 	/* Record our reference.  */
 	LIST_INSERT_HEAD(&pcpu->pcpu_head, psref, psref_entry);
@@ -457,19 +484,28 @@ _psref_held(const struct psref_target *target, struct psref_class *class,
 
 	/* Search through all the references on this CPU.  */
 	LIST_FOREACH(psref, &pcpu->pcpu_head, psref_entry) {
-		/* Sanity-check the reference.  */
-		KASSERTMSG((lwp_mismatch_ok || psref->psref_lwp == curlwp),
-		    "passive reference transferred from lwp %p to lwp %p",
-		    psref->psref_lwp, curlwp);
+		/* Sanity-check the reference's CPU.  */
 		KASSERTMSG((psref->psref_cpu == curcpu()),
 		    "passive reference transferred from CPU %u to CPU %u",
 		    cpu_index(psref->psref_cpu), cpu_index(curcpu()));
 
-		/* If it matches, stop here and answer yes.  */
-		if (psref->psref_target == target) {
-			held = true;
-			break;
-		}
+		/* If it doesn't match, skip it and move on.  */
+		if (psref->psref_target != target)
+			continue;
+
+		/*
+		 * Sanity-check the reference's LWP if we are asserting
+		 * via psref_held that this LWP holds it, but not if we
+		 * are testing in psref_target_destroy whether any LWP
+		 * still holds it.
+		 */
+		KASSERTMSG((lwp_mismatch_ok || psref->psref_lwp == curlwp),
+		    "passive reference transferred from lwp %p to lwp %p",
+		    psref->psref_lwp, curlwp);
+
+		/* Stop here and report that we found it.  */
+		held = true;
+		break;
 	}
 
 	/* Release the CPU list and restore interrupts.  */

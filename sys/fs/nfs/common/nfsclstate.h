@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsclstate.h,v 1.1.1.1 2013/09/30 07:19:40 dholland Exp $	*/
+/*	$NetBSD: nfsclstate.h,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -24,8 +24,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: head/sys/fs/nfs/nfsclstate.h 244042 2012-12-08 22:52:39Z rmacklem 
- * $NetBSD: nfsclstate.h,v 1.1.1.1 2013/09/30 07:19:40 dholland Exp $
+ * FreeBSD: head/sys/fs/nfs/nfsclstate.h 268115 2014-07-01 20:47:16Z rmacklem 
+ * $NetBSD: nfsclstate.h,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $
  */
 
 #ifndef _NFS_NFSCLSTATE_H_
@@ -59,6 +59,7 @@ struct nfsclsession {
 	struct mtx	nfsess_mtx;
 	struct nfsslot	nfsess_cbslots[NFSV4_CBSLOTS];
 	nfsquad_t	nfsess_clientid;
+	SVCXPRT		*nfsess_xprt;		/* For backchannel callback */
 	uint32_t	nfsess_slotseq[64];	/* Max for 64bit nm_slots */
 	uint64_t	nfsess_slots;
 	uint32_t	nfsess_sequenceid;

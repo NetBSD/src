@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.35.4.4 2016/03/19 11:30:39 skrll Exp $	*/
+/*	$NetBSD: module.h,v 1.35.4.5 2016/12/05 10:55:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,8 @@ typedef enum modclass {
 	MODULE_CLASS_VFS,
 	MODULE_CLASS_DRIVER,
 	MODULE_CLASS_EXEC,
-	MODULE_CLASS_SECMODEL
+	MODULE_CLASS_SECMODEL,
+	MODULE_CLASS_BUFQ
 } modclass_t;
 
 /* Module sources: where did it come from? */

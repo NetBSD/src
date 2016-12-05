@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp3k.c,v 1.1.2.2 2015/09/22 12:06:00 skrll Exp $ */
+/*	$NetBSD: mcp3k.c,v 1.1.2.3 2016/12/05 10:55:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ static struct mcp3kadc_model mcp3k_models[] = {
 		.flags = M3K_SIGNED | M3K_SGLDIFF | M3K_D2D1D0
 	},
 	{
-		.name = 3204,
+		.name = 3304,
 		.bits = 13,
 		.channels = 8,
 		.lead = 2,

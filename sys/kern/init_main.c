@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.461.2.8 2016/10/05 20:56:02 skrll Exp $	*/
+/*	$NetBSD: init_main.c,v 1.461.2.9 2016/12/05 10:55:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461.2.8 2016/10/05 20:56:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461.2.9 2016/12/05 10:55:26 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -175,6 +175,7 @@ extern void *_binary_splash_image_end;
 #include <sys/ksyms.h>
 #include <sys/uidinfo.h>
 #include <sys/kprintf.h>
+#include <sys/bufq.h>
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -190,9 +191,6 @@ extern void *_binary_splash_image_end;
 #endif
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
-#ifdef PTRACE
-#include <sys/ptrace.h>
-#endif /* PTRACE */
 #include <sys/cprng.h>
 
 #include <sys/syscall.h>
@@ -483,6 +481,14 @@ main(void)
 	/* Initialize sockets thread(s) */
 	soinit1();
 
+	/*
+	 * Initialize the bufq strategy sub-system and any built-in
+	 * strategy modules - they may be needed by some devices during
+	 * auto-configuration
+	 */
+	bufq_init();
+	module_init_class(MODULE_CLASS_BUFQ);
+
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
 
@@ -562,11 +568,6 @@ main(void)
 	/* Initialize ktrace. */
 	ktrinit();
 #endif
-
-#ifdef PTRACE
-	/* Initialize ptrace. */
-	ptrace_init();
-#endif /* PTRACE */
 
 	machdep_init();
 

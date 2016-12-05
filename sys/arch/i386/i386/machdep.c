@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.752.6.4 2016/10/05 20:55:28 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.752.6.5 2016/12/05 10:54:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.4 2016/10/05 20:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.5 2016/12/05 10:54:53 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -993,7 +993,7 @@ initgdt(union descriptor *tgdt)
 	/*
 	 * We jumpstart the bootstrap process a bit so we can update
 	 * page permissions. This is done redundantly later from
-	 * x86_xpmap.c:xen_pmap_bootstrap() - harmless.
+	 * x86_xpmap.c:xen_locore() - harmless.
 	 */
 	xpmap_phys_to_machine_mapping =
 	    (unsigned long *)xen_start_info.mfn_list;
@@ -1141,6 +1141,8 @@ init386(paddr_t first_avail)
 	extern u_char biostramp_image[];
 #endif
 
+	KASSERT(first_avail % PAGE_SIZE == 0);
+
 #ifdef XEN
 	XENPRINTK(("HYPERVISOR_shared_info %p (%x)\n", HYPERVISOR_shared_info,
 	    xen_start_info.shared_info));
@@ -1173,7 +1175,7 @@ init386(paddr_t first_avail)
 #if defined(PAE) && !defined(XEN)
 	/*
 	 * Save VA and PA of L3 PD of boot processor (for Xen, this is done
-	 * in xen_pmap_bootstrap())
+	 * in xen_locore())
 	 */
 	cpu_info_primary.ci_pae_l3_pdirpa = rcr3();
 	cpu_info_primary.ci_pae_l3_pdir = (pd_entry_t *)(rcr3() + KERNBASE);

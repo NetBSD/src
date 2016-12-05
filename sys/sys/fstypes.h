@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.32.14.1 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.32.14.2 2016/12/05 10:55:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -267,7 +267,7 @@ typedef struct fhandle	fhandle_t;
 	"\20" \
 	"\13IMNT_ONWORKLIST" \
 	"\12IMNT_CAN_RWTORO" \
-        "\11IMNT_MPSAFE" \
+	"\11IMNT_MPSAFE" \
 	"\10IMNT_HAS_TRANS" \
 	"\07IMNT_DTYPE" \
 	"\03IMNT_WANTRDWR" \

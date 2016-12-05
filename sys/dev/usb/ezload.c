@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.c,v 1.15.14.2 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: ezload.c,v 1.15.14.3 2016/12/05 10:55:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.15.14.2 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.15.14.3 2016/12/05 10:55:18 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

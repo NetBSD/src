@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.1.30.1 2015/04/06 15:18:12 skrll Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.1.30.2 2016/12/05 10:55:17 skrll Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/workqueue.h>
+#include <dev/pci/pcivar.h>
 
 #include "ixgbe_netbsd.h"
 
@@ -247,4 +248,16 @@ ixgbe_getjcl(ixgbe_extmem_head_t *eh, int nowait /* M_DONTWAIT */,
 	}
 
 	return m;
+}
+
+void
+ixgbe_pci_enable_busmaster(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t	pci_cmd_word;
+
+	pci_cmd_word = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	if (!(pci_cmd_word & PCI_COMMAND_MASTER_ENABLE)) {
+		pci_cmd_word |= PCI_COMMAND_MASTER_ENABLE;
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, pci_cmd_word);
+	}
 }

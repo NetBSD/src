@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.32.4.2 2016/03/19 11:30:32 skrll Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.32.4.3 2016/12/05 10:55:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.32.4.2 2016/03/19 11:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.32.4.3 2016/12/05 10:55:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -657,10 +657,10 @@ npf_napt_rwr(const npf_cache_t *npc, u_int which,
 	case IPPROTO_ICMP:
 #ifdef INET6
 	case IPPROTO_ICMPV6:
+#endif
 		KASSERT(npf_iscached(npc, NPC_ICMP));
 		/* Nothing. */
 		break;
-#endif
 	default:
 		return ENOTSUP;
 	}

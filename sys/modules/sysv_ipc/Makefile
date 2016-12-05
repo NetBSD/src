@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.3 2015/12/27 12:10:06 skrll Exp $
+# $NetBSD: Makefile,v 1.1.2.4 2016/12/05 10:55:27 skrll Exp $
 
 .include "../Makefile.inc"
 
@@ -17,11 +17,6 @@ CPPFLAGS+=	-DCOMPAT_13
 CPPFLAGS+=	-DCOMPAT_14
 CPPFLAGS+=	-DCOMPAT_50
 
-SRCS+=	sysv_msg_14.c sysv_sem_14.c sysv_shm_14.c
-SRCS+=	sysv_msg_50.c sysv_sem_50.c sysv_shm_50.c sysv_ipc_50.c
-
-.if ${MACHINE_ARCH} != "alpha"
-SRCS+=  kern_ipc_10.c
-.endif
+.include "../../compat/common/Makefile.sysv"
 
 .include <bsd.kmodule.mk>

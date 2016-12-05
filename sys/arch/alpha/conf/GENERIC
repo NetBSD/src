@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.362.2.5 2016/04/22 15:44:08 skrll Exp $
+# $NetBSD: GENERIC,v 1.362.2.6 2016/12/05 10:54:48 skrll Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.362.2.5 $"
+ident		"GENERIC-$Revision: 1.362.2.6 $"
 
 maxusers 32
 
@@ -262,6 +262,8 @@ sfb*	at	tc? slot ? offset ?
 #sfbp*	at	tc? slot ? offset ?
 px*	at	tc? slot ? offset ?
 pxg*	at	tc? slot ? offset ?
+tcu*	at	tc? slot ? offset ?
+slhci*	at	tcu?
 
 # TURBOchannel serial attachments
 zstty0	at	zsc0 channel ?			# serial port on B channels
@@ -361,6 +363,7 @@ viaide* at	pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 pcn*	at	pci? dev ? function ?		# AMD PCnet-PCI Ethernet
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 pm2fb*	at	pci? dev ? function ?		# 3Dlabs Permedia 2 Graphics
+pm3fb*	at	pci? dev ? function ?		# 3Dlabs Permedia 3 Graphics
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
 radeonfb* at	pci? dev ? function ?		# ATI/AMD Radeon Graphics
@@ -399,6 +402,9 @@ iopsp*	at iop? tid ?			# SCSI/FC-AL ports
 ld*	at iop? tid ?			# block devices
 # XXX dpti.c wants a processor type that is not assigned for x86-64
 #dpti*	at iop? tid 0			# DPT/Adaptec control interface
+
+# GPIO devices
+gpio*	at gpiobus?
 
 # MII/PHY support
 brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
@@ -772,6 +778,7 @@ pseudo-device	btuart			# Bluetooth HCI UART (H4)
 pseudo-device	putter			# for puffs and pud
 
 #options	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #

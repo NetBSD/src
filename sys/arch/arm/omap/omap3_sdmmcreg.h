@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdmmcreg.h,v 1.7.6.2 2016/10/05 20:55:25 skrll Exp $	*/
+/*	$NetBSD: omap3_sdmmcreg.h,v 1.7.6.3 2016/12/05 10:54:50 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -92,6 +92,11 @@
 #define MMCHS_CSRE		0x024	/* Card status response error */
 #define MMCHS_SYSTEST		0x028	/* System Test */
 #define MMCHS_CON		0x02c	/* Configuration */
+#  define CON_SDMA_LNE			(1 << 21)	/*Slave DMA Lvl/Edg Rq*/
+#  define CON_MNS			(1 << 20)	/* DMA Mstr/Slv sel */
+#  define CON_DDR			(1 << 19)	/* Dual Data Rate */
+#  define CON_CF0			(1 << 18)	/*Boot status support*/
+#  define CON_BOOTACK			(1 << 17)	/*Boot acknowledge rcv*/
 #  define CON_CLKEXTFREE		(1 << 16)
 #  define CON_PADEN			(1 << 15)	/* Ctrl Pow for MMC */
 #  define CON_OBIE			(1 << 14)	/* Out-of-Band Intr */

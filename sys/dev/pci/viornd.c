@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.5.2.2 2015/12/27 12:09:57 skrll Exp $ */
+/* 	$NetBSD: viornd.c,v 1.5.2.3 2016/12/05 10:55:16 skrll Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -107,7 +107,6 @@ viornd_get(size_t bytes, void *priv)
 		goto out;
 	}
         if (virtio_enqueue_reserve(vsc, vq, slot, 1)) {
-		virtio_enqueue_abort(vsc, vq, slot);
 		goto out;
 	}
         virtio_enqueue(vsc, vq, slot, sc->sc_dmamap, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.244.4.4 2016/10/05 20:56:02 skrll Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.244.4.5 2016/12/05 10:55:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.244.4.4 2016/10/05 20:56:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.244.4.5 2016/12/05 10:55:26 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -457,6 +457,10 @@ exit1(struct lwp *l, int exitcode, int signo)
 			if (q->p_opptr == p)
 				q->p_opptr = NULL;
 		}
+		PROCLIST_FOREACH(q, &zombproc) {
+			if (q->p_opptr == p)
+				q->p_opptr = NULL;
+		}
 	}
 
 	/*
@@ -684,9 +688,9 @@ do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
 			proc_free(child, wru);
 		}
 	} else {
-		/* Child state must have been SSTOP. */
-		*status = child->p_xsig == SIGCONT ? W_CONTCODE() :
-		    W_STOPCODE(child->p_xsig);
+		/* Don't mark SIGCONT if we are being stopped */
+		*status = (child->p_xsig == SIGCONT && child->p_stat != SSTOP) ?
+		    W_CONTCODE() : W_STOPCODE(child->p_xsig);
 		mutex_exit(proc_lock);
 	}
 	return 0;
@@ -822,7 +826,7 @@ sys_wait6(struct lwp *l, const struct sys_wait6_args *uap, register_t *retval)
  *	 2:	This is the only match
  */
 static int
-match_process(struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
+match_process(const struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
     int options, struct wrusage *wrusage, siginfo_t *siginfo)
 {
 	struct rusage *rup;
@@ -926,6 +930,66 @@ match_process(struct proc *pp, struct proc **q, idtype_t idtype, id_t id,
 }
 
 /*
+ * Determine if there are existing processes being debugged
+ * that used to be (and sometime later will be again) children
+ * of a specific parent (while matching wait criteria)
+ */
+static bool
+debugged_child_exists(idtype_t idtype, id_t id, int options, siginfo_t *si,
+    const struct proc *parent)
+{
+	struct proc *pp;
+
+	/*
+	 * If we are searching for a specific pid, we can optimise a little
+	 */
+	if (idtype == P_PID) {
+		/*
+		 * Check the specific process to see if its real parent is us
+		 */
+		pp = proc_find_raw((pid_t)id);
+		if (pp != NULL && pp->p_stat != SIDL && pp->p_opptr == parent) {
+			/*
+			 * using P_ALL here avoids match_process() doing the
+			 * same work that we just did, but incorrectly for
+			 * this scenario.
+			 */
+			if (match_process(parent, &pp, P_ALL, id, options,
+			    NULL, si))
+				return true;
+		}
+		return false;
+	}
+
+	/*
+	 * For the hard cases, just look everywhere to see if some
+	 * stolen (reparented) process is really our lost child.
+	 * Then check if that process could satisfy the wait conditions.
+	 */
+
+	/*
+	 * XXX inefficient, but hopefully fairly rare.
+	 * XXX should really use a list of reparented processes.
+	 */
+	PROCLIST_FOREACH(pp, &allproc) {
+		if (pp->p_stat == SIDL)		/* XXX impossible ?? */
+			continue;
+		if (pp->p_opptr == parent &&
+		    match_process(parent, &pp, idtype, id, options, NULL, si))
+			return true;
+	}
+	PROCLIST_FOREACH(pp, &zombproc) {
+		if (pp->p_stat == SIDL)		/* XXX impossible ?? */
+			continue;
+		if (pp->p_opptr == parent &&
+		    match_process(parent, &pp, idtype, id, options, NULL, si))
+			return true;
+	}
+
+	return false;
+}
+
+/*
  * Scan list of child processes for a child process that has stopped or
  * exited.  Used by sys_wait4 and 'compat' equivalents.
  *
@@ -940,14 +1004,12 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 
 	KASSERT(mutex_owned(proc_lock));
 
-	if (options & ~(WUNTRACED|WNOHANG|WALTSIG|WALLSIG|WTRAPPED|WEXITED|
-	    WNOWAIT|WCONTINUED)
-	    && !(options & WOPTSCHECKED)) {
+	if (options & ~WALLOPTS) {
 		*child_p = NULL;
 		return EINVAL;
 	}
 
-	if ((options & (WEXITED|WUNTRACED|WCONTINUED|WTRAPPED)) == 0) {
+	if ((options & WSELECTOPTS) == 0) {
 		/*
 		 * We will be unable to find any matching processes,
 		 * because there are no known events to look for.
@@ -1047,6 +1109,18 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 				break;
 			}
 		}
+
+		/*
+		 * If we found nothing, but we are the bereaved parent
+		 * of a stolen child, look and see if that child (or
+		 * one of them) meets our search criteria.   If so, then
+		 * we cannot succeed, but we can hang (wait...),
+		 * or if WNOHANG, return 0 instead of ECHILD
+		 */
+		if (child == NULL && error == ECHILD &&
+		    (parent->p_slflag & PSL_CHTRACED) &&
+		    debugged_child_exists(idtype, id, options, si, parent))
+			error = 0;
 
 		if (child != NULL || error != 0 ||
 		    ((options & WNOHANG) != 0 && dead == NULL)) {
@@ -1201,6 +1275,33 @@ proc_free(struct proc *p, struct wrusage *wru)
 }
 
 /*
+ * Change the parent of a process for tracing purposes.
+ */
+void
+proc_changeparent(struct proc *t, struct proc *p)
+{
+	SET(t->p_slflag, PSL_TRACED);
+	t->p_opptr = t->p_pptr;
+	if (t->p_pptr == p)
+		return;
+	struct proc *parent = t->p_pptr;
+
+	if (parent->p_lock < t->p_lock) {
+		if (!mutex_tryenter(parent->p_lock)) {
+			mutex_exit(t->p_lock);
+			mutex_enter(parent->p_lock);
+			mutex_enter(t->p_lock);
+		}
+	} else if (parent->p_lock > t->p_lock) {
+		mutex_enter(parent->p_lock);
+	}
+	parent->p_slflag |= PSL_CHTRACED;
+	proc_reparent(t, p);
+	if (parent->p_lock != t->p_lock)
+		mutex_exit(parent->p_lock);
+}
+
+/*
  * make process 'parent' the new parent of process 'child'.
  *
  * Must be called with proc_lock held.
@@ -1219,11 +1320,12 @@ proc_reparent(struct proc *child, struct proc *parent)
 		child->p_pptr->p_nstopchild--;
 		parent->p_nstopchild++;
 	}
-	if (parent == initproc)
+	if (parent == initproc) {
 		child->p_exitsig = SIGCHLD;
+		child->p_ppid = parent->p_pid;
+	}
 
 	LIST_REMOVE(child, p_sibling);
 	LIST_INSERT_HEAD(&parent->p_children, child, p_sibling);
 	child->p_pptr = parent;
-	child->p_ppid = parent->p_pid;
 }

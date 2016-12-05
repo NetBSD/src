@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.77.2.5 2016/10/05 20:55:23 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.77.2.6 2016/12/05 10:54:49 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -312,21 +312,6 @@
  * Initialization
  */
 	.data
-
-#if NLAPIC > 0
-	.align	PAGE_SIZE
-	.globl	_C_LABEL(local_apic)
-	.globl	_C_LABEL(lapic_tpr)
-
-	.type	_C_LABEL(local_apic), @object
-LABEL(local_apic)
-	.space	LAPIC_TPRI
-END(local_apic)
-	.type	_C_LABEL(lapic_tpr), @object
-LABEL(lapic_tpr)
-	.space	PAGE_SIZE-LAPIC_TPRI
-END(lapic_tpr)
-#endif /* NLAPIC > 0 */
 
 	.globl	_C_LABEL(tablesize)
 	.globl	_C_LABEL(nox_flag)
@@ -892,10 +877,9 @@ longmode_hi:
 	/*
 	 * Xen info:
 	 * - %rsi -> start_info struct
-	 * - %rsp -> stack, *theoretically* the last used page
-	 *	by Xen bootstrap
+	 * - %rsp -> stack, *theoretically* the last used page by Xen bootstrap
 	 */
-	movq	%rsi, %rbx
+	movq	%rsi,%rbx
 
 	/* Clear BSS. */
 	xorq	%rax,%rax
@@ -905,7 +889,7 @@ longmode_hi:
 	rep
 	stosb
 
-	/* Copy start_info to a safe place */
+	/* Copy start_info to a safe place. */
 	movq	%rbx,%rsi
 	movq	$_C_LABEL(start_info_union),%rdi
 	movq	$64,%rcx
@@ -929,45 +913,40 @@ longmode_hi:
 	 */
 
 	/*
-	 * We want our own page tables, let's rebuild them
-	 * We will reclaim xen space afterward INCLUDING stack
-	 * so let's change it to a temporary one
+	 * We want our own page tables, and will rebuild them. We will reclaim
+	 * the Xen space later, INCLUDING the stack. So we need to switch to a
+	 * temporary one now.
 	 */
-
-	movq	$tmpstk, %rax
-	subq	$8, %rax
-	movq	%rax, %rsp
+	movq	$tmpstk,%rax
+	subq	$8,%rax
+	movq	%rax,%rsp
 
 	xorl	%eax,%eax
 	cpuid
 	movl	%eax,_C_LABEL(cpuid_level)
 
-	movq	$cpu_info_primary, %rdi
-	movq	%rdi, CPU_INFO_SELF(%rdi) /* ci->ci_self = ci */
-	movq	$1, %rsi
+	movq	$cpu_info_primary,%rdi
+	movq	%rdi,CPU_INFO_SELF(%rdi) /* ci->ci_self = ci */
+	movq	$1,%rsi
 	call	cpu_init_msrs	/* cpu_init_msrs(ci, true); */
 
-	call	xen_pmap_bootstrap
+	call	xen_locore
 
 	/*
-	 * First avail returned by xen_pmap_bootstrap in %rax
+	 * The first VA available is returned by xen_locore in %rax. We
+	 * use it as the UAREA, and set up the stack here.
 	 */
-	movq	%rax, %rsi
+	movq	%rax,%rsi
 	movq	%rsi,(_C_LABEL(lwp0)+L_PCB)	/* XXX L_PCB != uarea */
-
-	/*
-	 * Set new stack and clear segments
-	 */
 	leaq	(USPACE-FRAMESIZE)(%rsi),%rsp
 	xorq	%rbp,%rbp
 
+	/* Clear segment registers. */
 	xorw	%ax,%ax
 	movw	%ax,%gs
 	movw	%ax,%fs
 
-	/*
-	 * Set first_avail after proc0
-	 */
+	/* Set first_avail after the UAREA. */
 	movq	%rsi,%rdi
 	addq	$USPACE,%rdi
 	subq	$KERNBASE,%rdi	/* init_x86_64 wants a physical address */

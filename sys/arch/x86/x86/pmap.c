@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.187.2.6 2016/10/05 20:55:37 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.187.2.7 2016/12/05 10:54:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187.2.6 2016/10/05 20:55:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187.2.7 2016/12/05 10:54:59 skrll Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -483,6 +483,11 @@ static vaddr_t virtual_avail __read_mostly;	/* VA of first free KVA */
 static vaddr_t virtual_end __read_mostly;	/* VA of last free KVA */
 
 /*
+ * LAPIC virtual address.
+ */
+volatile vaddr_t local_apic_va;
+
+/*
  * pool that pmap structures are allocated from
  */
 static struct pool_cache pmap_cache;
@@ -512,7 +517,7 @@ static struct pool_cache pmap_pv_cache;
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *early_zero_pte;
 static char *csrcp, *cdstp, *zerop, *ptpp;
 #ifdef XEN
-char *early_zerop; /* also referenced from xen_pmap_bootstrap() */
+char *early_zerop; /* also referenced from xen_locore() */
 #else
 static char *early_zerop;
 #endif
@@ -554,6 +559,7 @@ extern vaddr_t pentium_idt_vaddr;
  * Local prototypes
  */
 
+static void pmap_init_lapic(void);
 #ifdef __HAVE_DIRECT_MAP
 static void pmap_init_directmap(struct pmap *);
 #endif
@@ -1288,17 +1294,16 @@ pmap_bootstrap(vaddr_t kva_start)
 		pmap_pg_g = PG_G;		/* enable software */
 
 		/* add PG_G attribute to already mapped kernel pages */
+
 		if (KERNBASE == VM_MIN_KERNEL_ADDRESS) {
+			/* i386 only */
 			kva_end = virtual_avail;
 		} else {
-			extern vaddr_t eblob, esym;
-			kva_end = (vaddr_t)&end;
-			if (esym > kva_end)
-				kva_end = esym;
-			if (eblob > kva_end)
-				kva_end = eblob;
-			kva_end = roundup(kva_end, PAGE_SIZE);
+			/* amd64 only */
+			extern vaddr_t kern_end;
+			kva_end = kern_end;
 		}
+
 		for (kva = KERNBASE; kva < kva_end; kva += PAGE_SIZE) {
 			p1i = pl1_i(kva);
 			if (pmap_valid_entry(PTE_BASE[p1i]))
@@ -1325,6 +1330,8 @@ pmap_bootstrap(vaddr_t kva_start)
 	}
 #endif /* !XEN */
 
+	pmap_init_lapic();
+
 #ifdef __HAVE_DIRECT_MAP
 	pmap_init_directmap(kpm);
 #else
@@ -1337,7 +1344,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		 * XXXfvdl fix this for MULTIPROCESSOR later.
 		 */
 #ifdef XEN
-		/* early_zerop initialized in xen_pmap_bootstrap() */
+		/* early_zerop initialized in xen_locore() */
 #else
 		early_zerop = (void *)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
 #endif
@@ -1457,6 +1464,12 @@ pmap_bootstrap(vaddr_t kva_start)
 	pmap_maxkvaddr = kva;
 }
 
+static void
+pmap_init_lapic(void)
+{
+	local_apic_va = pmap_bootstrap_valloc(1);
+}
+
 #ifdef __HAVE_DIRECT_MAP
 /*
  * Create the amd64 direct map. Called only once at boot time.
@@ -1559,6 +1572,9 @@ pmap_init_directmap(struct pmap *kpm)
 
 	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dm_pdp | pteflags | PG_U;
 
+	*pte = 0;
+	pmap_update_pg(tmpva);
+
 	tlbflush();
 }
 #endif /* __HAVE_DIRECT_MAP */
@@ -1605,12 +1621,7 @@ pmap_remap_largepages(void)
 	}
 
 	/* Remap the kernel data+bss using large pages. */
-	/*
-	 * XXX: we need to make sure the first page (PAGE_SIZE) of .data is not
-	 * mapped with a large page. As bizarre as it might seem, this first
-	 * page is used as the VA for the LAPIC page.
-	 */
-	kva = roundup((vaddr_t)&__data_start+PAGE_SIZE, NBPD_L2);
+	kva = roundup((vaddr_t)&__data_start, NBPD_L2);
 	kva_end = rounddown((vaddr_t)&__kernel_end, NBPD_L1);
 	pa = kva - KERNBASE;
 	for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
@@ -2277,7 +2288,7 @@ pmap_create(void)
  * pmap_free_ptps: put a list of ptps back to the freelist.
  */
 
-static void
+void
 pmap_free_ptps(struct vm_page *empty_ptps)
 {
 	struct vm_page *ptp;
@@ -4547,8 +4558,8 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 			pmap_kenter_pa(x86_tmp_pml_vaddr[level],
 			    x86_tmp_pml_paddr[level],
 			    VM_PROT_READ | VM_PROT_WRITE, 0);
-			pmap_update(pmap_kernel());
 		}
+		pmap_update(pmap_kernel());
 		maps_loaded = true;
 	}
 

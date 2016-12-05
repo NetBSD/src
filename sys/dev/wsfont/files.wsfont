@@ -1,4 +1,4 @@
-# 	$NetBSD: files.wsfont,v 1.20.2.1 2015/04/06 15:18:14 skrll Exp $
+# 	$NetBSD: files.wsfont,v 1.20.2.2 2016/12/05 10:55:20 skrll Exp $
 
 defpseudo wsfont
 
@@ -27,5 +27,6 @@ defflag	opt_wsfont.h		FONT_BOLD8x16
 				FONT_DROID_SANS_MONO12x22
 				FONT_DROID_SANS_MONO9x18
 				FONT_DROID_SANS_MONO19x36
+				FONT_GO_MONO12x23
 
 file	dev/wsfont/wsfontdev.c	wsfont needs-flag
