@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2215 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2216 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -403,3 +403,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		(a.k.a. XP). [tsutsui 20161203]
 	axe(4): added support for AX88772A and AX88772B chipsets (from
 		FreeBSD) [skrll 20161204]
+	ixg(4): Add X55x support [msaitoh 20161205]
