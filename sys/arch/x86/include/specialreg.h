@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.89 2016/08/19 18:53:29 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.90 2016/12/05 03:59:47 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -354,9 +354,9 @@
 	"\11" "BMI2"	"\12" "ERMS"	"\13" "INVPCID"	"\14" "RTM"	\
 	"\15" "QM"	"\16" "FPUCSDS"	"\17" "MPX"    	"\20" "PQE"	\
 	"\21" "AVX512F"	"\22" "AVX512DQ" "\23" "RDSEED"	"\24" "ADX"	\
-	"\25" "SMAP"					"\28" "CLFLUSHOPT" \
+	"\25" "SMAP"					"\30" "CLFLUSHOPT" \
 			"\32" "PT"	"\33" "AVX512PF" "\34" "AVX512ER" \
-	"\35" "AVX512CD""\36" "SHA"	"\37" "AVX512BW" "\38" "AVX512VL"
+	"\35" "AVX512CD""\36" "SHA"	"\37" "AVX512BW" "\40" "AVX512VL"
 
 /* %ecx */
 #define CPUID_SEF_PREFETCHWT1	__BIT(0)
