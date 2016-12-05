@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.52 2016/12/05 08:50:29 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.53 2016/12/05 10:05:11 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -4537,7 +4537,7 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	/* for WoL-capable devices */
 	if (hw->device_id == IXGBE_DEV_ID_X550EM_X_10G_T) {
 		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READWRITE, CTLTYPE_INT,
+		    CTLFLAG_READWRITE, CTLTYPE_BOOL,
 		    "wol_enable", SYSCTL_DESCR("Enable/Disable Wake on LAN"),
 		    ixgbe_sysctl_wol_enable, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 			aprint_error_dev(dev, "could not create sysctl\n");
@@ -4921,9 +4921,8 @@ ixgbe_sysctl_flowcntl(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 	struct adapter *adapter = (struct adapter *)node.sysctl_data;
 
-	node.sysctl_data = &adapter->fc;
 	fc = adapter->fc;
-
+	node.sysctl_data = &fc;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error != 0 || newp == NULL)
 		return error;
@@ -5261,18 +5260,18 @@ ixgbe_sysctl_wol_enable(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 	struct adapter *adapter = (struct adapter *)node.sysctl_data;
 	struct ixgbe_hw *hw = &adapter->hw;
-	int new_wol_enabled;
+	bool new_wol_enabled;
 	int error = 0;
 
 	new_wol_enabled = hw->wol_enabled;
+	node.sysctl_data = &new_wol_enabled;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if ((error) || (newp == NULL))
 		return (error);
-	new_wol_enabled = !!(new_wol_enabled);
 	if (new_wol_enabled == hw->wol_enabled)
 		return (0);
 
-	if (new_wol_enabled > 0 && !adapter->wol_support)
+	if (new_wol_enabled && !adapter->wol_support)
 		return (ENODEV);
 	else
 		hw->wol_enabled = new_wol_enabled;
@@ -5415,7 +5414,7 @@ ixgbe_sysctl_wufc(SYSCTLFN_ARGS)
 	u32 new_wufc;
 
 	new_wufc = adapter->wufc;
-
+	node.sysctl_data = &new_wufc;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if ((error) || (newp == NULL))
 		return (error);
