@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.43 2016/12/05 22:05:53 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.44 2016/12/06 08:03:09 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.43 2016/12/05 22:05:53 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.44 2016/12/06 08:03:09 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.43 2016/12/05 22:05:53 christos Exp $");
 
 #include "t_ptrace_wait.h"
 #include "msg.h"
-#define atf_utils_fork() fork()
 
 #define PARENT_TO_CHILD(info, fds, msg) \
     ATF_REQUIRE(msg_write_child(info " to child " # fds, &fds, &msg, sizeof(msg)) == 0)
@@ -4471,14 +4470,6 @@ ATF_TC_BODY(lwpinfo2, tc)
 	int status;
 #endif
 	struct ptrace_lwpinfo info = {0};
-
-#if 0
-	/*
-	 * ptrace(2): Signal does not set PL_EVENT_SIGNAL inOB
-	 * (struct ptrace_lwpinfo.)pl_event
-	 */
-	atf_tc_expect_fail("PR kern/51685");
-#endif
 
 	printf("Spawn tracee\n");
 	ATF_REQUIRE(msg_open(&parent_tracee) == 0);
