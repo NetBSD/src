@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.89 2016/11/18 10:38:55 knakahara Exp $	*/
+/*	$NetBSD: in_var.h,v 1.90 2016/12/06 07:01:47 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -420,6 +420,8 @@ const char *in_fmtaddr(struct in_addr);
 int	in_control(struct socket *, u_long, void *, struct ifnet *);
 void	in_purgeaddr(struct ifaddr *);
 void	in_purgeif(struct ifnet *);
+void	in_addrhash_insert(struct in_ifaddr *);
+void	in_addrhash_remove(struct in_ifaddr *);
 int	ipflow_fastforward(struct mbuf *);
 
 struct ipid_state;

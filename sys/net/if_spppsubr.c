@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.161 2016/12/01 02:30:54 knakahara Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.162 2016/12/06 07:01:47 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.161 2016/12/01 02:30:54 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.162 2016/12/06 07:01:47 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4921,19 +4921,11 @@ sppp_set_ip_addrs_work(struct work *wk, struct sppp *sp)
 				sp->ipcp.saved_hisaddr = dest->sin_addr.s_addr;
 		}
 
-		LIST_REMOVE(ifatoia(ifa), ia_hash);
-		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
-#ifdef NET_MPSAFE
-		pserialize_perform(in_ifaddrhash_psz);
-#endif
-		IN_ADDRHASH_ENTRY_DESTROY(ifatoia(ifa));
+		in_addrhash_remove(ifatoia(ifa));
 
 		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, &new_dst, 0);
 
-		IN_ADDRHASH_ENTRY_INIT(ifatoia(ifa));
-		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
-		    ifatoia(ifa), ia_hash);
-		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
+		in_addrhash_insert(ifatoia(ifa));
 
 		if (debug && error)
 		{
@@ -5012,19 +5004,11 @@ sppp_clear_ip_addrs_work(struct work *wk, struct sppp *sp)
 		if (sp->ipcp.flags & IPCP_HISADDR_DYN)
 			new_dst.sin_addr.s_addr = sp->ipcp.saved_hisaddr;
 
-		LIST_REMOVE(ifatoia(ifa), ia_hash);
-		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
-#ifdef NET_MPSAFE
-		pserialize_perform(in_ifaddrhash_psz);
-#endif
-		IN_ADDRHASH_ENTRY_DESTROY(ifatoia(ifa));
+		in_addrhash_remove(ifatoia(ifa));
 
 		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, &new_dst, 0);
 
-		IN_ADDRHASH_ENTRY_INIT(ifatoia(ifa));
-		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
-		    ifatoia(ifa), ia_hash);
-		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
+		in_addrhash_insert(ifatoia(ifa));
 
 		if (debug && error)
 		{
