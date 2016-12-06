@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.114 2016/11/25 14:12:55 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.115 2016/12/06 15:05:07 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -597,7 +597,7 @@ no_NOX:
  */
 
 	/* Find end of kernel image; brings us on (1). */
-	movl	$RELOC(end),%edi
+	movl	$RELOC(__kernel_end),%edi
 
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB)
 	/* Save the symbols (if loaded); brinds us on (2). */
