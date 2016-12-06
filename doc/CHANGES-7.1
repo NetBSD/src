@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.123 2016/12/03 12:35:48 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.124 2016/12/06 06:58:05 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -6943,4 +6943,38 @@ sys/net/if_vlan.c				1.92
 	Don't check parent capabilities when a parent interface hasn't been
 	assigned.
 	[joerg, ticket #1279]
+
+sys/arch/luna68k/luna68k/locore.s		1.60-1.62
+
+	luna68k:
+	- Make kernel work with 8kB/page (PGSHIFT==13) settings.
+	- Make kernels build without options M68030.
+	- Fix spelling in comments.
+	[tsutsui, ticket #1281]
+
+sys/arch/x68k/x68k/machdep.c			1.194
+
+	Fix crashdump on machines with EXTENDED_MEMORY.
+	PR port-x68k/51663.
+	[tsutsui, ticket #1282]
+
+distrib/sets/lists/comp/md.luna68k		1.21
+etc/etc.luna68k/MAKEDEV.conf			1.9
+sys/arch/luna68k/conf/GENERIC			1.120
+sys/arch/luna68k/conf/files.luna68k		1.25
+sys/arch/luna68k/conf/majors.luna68k		1.21
+sys/arch/luna68k/dev/xp.c			1.1
+sys/arch/luna68k/include/Makefile		1.19
+sys/arch/luna68k/include/xpio.h			1.1
+sys/arch/luna68k/luna68k/mainbus.c		1.14
+
+	Preliminary support for LUNA's HD647180X I/O processor (aka XP).
+	[tsutsui, ticket #1283]
+
+sys/arch/dreamcast/dev/pvr.c			1.36
+
+	Properly zero out struct fb_devconfig, including rasops_info.
+	Fixes panic after wsconscfg(8) from serial console, caused by
+	a junk function pointer.
+	[tsutsui, ticket #1284]
 
