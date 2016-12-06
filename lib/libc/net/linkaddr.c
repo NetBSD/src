@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.16 2012/03/20 17:44:18 matt Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.17 2016/12/06 18:41:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: linkaddr.c,v 1.16 2012/03/20 17:44:18 matt Exp $");
+__RCSID("$NetBSD: linkaddr.c,v 1.17 2016/12/06 18:41:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: linkaddr.c,v 1.16 2012/03/20 17:44:18 matt Exp $");
 void
 link_addr(const char *addr, struct sockaddr_dl *sdl)
 {
-	register char *cp = sdl->sdl_data;
+	char *cp = sdl->sdl_data;
 	char *cplim = sdl->sdl_len + (char *)(void *)sdl;
 	int byte = 0, state = NAMING;
 	size_t newaddr = 0;	/* pacify gcc */
@@ -138,33 +138,42 @@ char *
 link_ntoa(const struct sockaddr_dl *sdl)
 {
 	static char obuf[64];
-	register char *out = obuf; 
-	register size_t i;
+	char *out = obuf; 
+	size_t i;
 	const u_char *in = (const u_char *)CLLADDR(sdl);
 	const u_char *inlim = in + sdl->sdl_alen;
 	int firsttime = 1;
 
 	_DIAGASSERT(sdl != NULL);
 
+#define ADDC(ch) \
+	do { \
+		if (out >= obuf + sizeof(obuf)) \
+			return NULL; \
+		*out++ = (ch); \
+	} while (/*CONSTCOND*/0)
+
 	if (sdl->sdl_nlen) {
+		if (sdl->sdl_nlen >= sizeof(obuf))
+			return NULL;
 		(void)memcpy(obuf, sdl->sdl_data, (size_t)sdl->sdl_nlen);
 		out += sdl->sdl_nlen;
 		if (sdl->sdl_alen)
-			*out++ = ':';
+			ADDC(':');
 	}
 	while (in < inlim) {
 		if (firsttime)
 			firsttime = 0;
 		else
-			*out++ = '.';
+			ADDC('.');
 		i = *in++;
 		if (i > 0xf) {
-			out[1] = hexlist[i & 0xf];
+			size_t j = i & 0xf;
 			i >>= 4;
-			out[0] = hexlist[i];
-			out += 2;
+			ADDC(hexlist[i]);
+			ADDC(hexlist[j]);
 		} else
-			*out++ = hexlist[i];
+			ADDC(hexlist[i]);
 	}
 	*out = 0;
 	return (obuf);
