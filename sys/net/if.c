@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.362 2016/11/15 01:50:06 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.363 2016/12/06 01:23:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.362 2016/11/15 01:50:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.363 2016/12/06 01:23:01 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -833,6 +833,7 @@ if_percpuq_destroy(struct if_percpuq *ipq)
 	softint_disestablish(ipq->ipq_si);
 	percpu_foreach(ipq->ipq_ifqs, &if_percpuq_purge_ifq, NULL);
 	percpu_free(ipq->ipq_ifqs, sizeof(struct ifqueue));
+	kmem_free(ipq, sizeof(*ipq));
 }
 
 void
