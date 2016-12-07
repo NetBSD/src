@@ -427,7 +427,7 @@ pm3fb_mmap(void *v, void *vs, off_t offset, int prot)
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->sc_fbsize) {
 		pa = bus_space_mmap(sc->sc_memt, sc->sc_fb + offset, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 		return pa;
 	}
 
@@ -445,7 +445,7 @@ pm3fb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	if ((offset >= sc->sc_fb) && (offset < (sc->sc_fb + sc->sc_fbsize))) {
 		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 		return pa;
 	}
 
@@ -713,17 +713,8 @@ pm3fb_bitblt(void *cookie, int srcx, int srcy, int dstx, int dsty,
 	int x_align,  offset_x, offset_y; 
 	uint32_t dir = 0;
 
-	if (srcx > dstx) {
-		offset_x = srcx - dstx;
-	} else {
-		offset_x = dstx - srcx;
-	}
-
-	if (srcy > dsty) {
-		offset_y = srcy - dsty;
-	} else {
-		offset_y = dsty - srcy;
-	}
+	offset_x = srcx - dstx;
+	offset_y = srcy - dsty;
 
 	if (dsty <= srcy) {
 		dir |= PM3_RENDER2D_YPOSITIVE;
