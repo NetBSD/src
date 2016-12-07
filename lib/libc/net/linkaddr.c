@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.20 2016/12/07 03:16:45 christos Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.21 2016/12/07 09:52:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: linkaddr.c,v 1.20 2016/12/07 03:16:45 christos Exp $");
+__RCSID("$NetBSD: linkaddr.c,v 1.21 2016/12/07 09:52:34 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -152,6 +152,21 @@ link_ntoa(const struct sockaddr_dl *sdl)
 			return obuf; \
 		*out++ = (ch); \
 	} while (/*CONSTCOND*/0)
+
+	/*
+	 * This is not needed on the first call, as the static
+	 * obuf wil be fully init'd to 0 by default.   But after
+	 * obuf has been returned to userspace the first time,
+	 * anything may have been written to it, so, let's be safe.
+	 *
+	 * (An alternative method would be to make ADDC() more
+	 *  complex:
+	 *	if (out < obuf + sizeof(obuf) - ((ch) != '\0'))
+	 *		*out++ = (ch);
+	 *  so it never returns, and the final ACCD(0) always works
+	 *  but that evaluates 'ch' twice, and is slower, so ...)
+	 */
+	obuf[sizeof(obuf) - 1] = '\0';
 
 	if (sdl->sdl_nlen) {
 		if (sdl->sdl_nlen >= sizeof(obuf))
