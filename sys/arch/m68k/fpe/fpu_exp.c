@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_exp.c,v 1.9 2016/12/05 15:31:01 isaki Exp $	*/
+/*	$NetBSD: fpu_exp.c,v 1.10 2016/12/07 11:27:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.9 2016/12/05 15:31:01 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.10 2016/12/07 11:27:18 isaki Exp $");
 
 #include <machine/ieee.h>
 
@@ -136,10 +136,12 @@ fpu_etox(struct fpemu *fe)
 	/* extract k as integer format from fpn format */
 	j = FP_LG - fp->fp_exp;
 	if (j < 0) {
-		if (fp->fp_sign)
+		if (fp->fp_sign) {
 			fp->fp_class = FPC_ZERO;		/* k < -2^18 */
-		else
+			fp->fp_sign = 0;
+		} else {
 			fp->fp_class = FPC_INF;			/* k >  2^18 */
+		}
 		return fp;
 	}
 	k = fp->fp_mant[0] >> j;
