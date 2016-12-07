@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.17 2016/12/06 18:41:02 christos Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.18 2016/12/07 02:36:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: linkaddr.c,v 1.17 2016/12/06 18:41:02 christos Exp $");
+__RCSID("$NetBSD: linkaddr.c,v 1.18 2016/12/07 02:36:41 dholland Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -148,7 +148,7 @@ link_ntoa(const struct sockaddr_dl *sdl)
 
 #define ADDC(ch) \
 	do { \
-		if (out >= obuf + sizeof(obuf)) \
+		if (out >= obuf + sizeof(obuf) - 1) \
 			return NULL; \
 		*out++ = (ch); \
 	} while (/*CONSTCOND*/0)
