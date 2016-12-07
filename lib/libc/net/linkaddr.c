@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.19 2016/12/07 02:48:54 christos Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.20 2016/12/07 03:16:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: linkaddr.c,v 1.19 2016/12/07 02:48:54 christos Exp $");
+__RCSID("$NetBSD: linkaddr.c,v 1.20 2016/12/07 03:16:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -148,16 +148,18 @@ link_ntoa(const struct sockaddr_dl *sdl)
 
 #define ADDC(ch) \
 	do { \
-		if (out >= obuf + sizeof(obuf)) \
-			return NULL; \
+		if (out >= obuf + sizeof(obuf) - 1) \
+			return obuf; \
 		*out++ = (ch); \
 	} while (/*CONSTCOND*/0)
 
 	if (sdl->sdl_nlen) {
 		if (sdl->sdl_nlen >= sizeof(obuf))
-			return NULL;
-		(void)memcpy(obuf, sdl->sdl_data, (size_t)sdl->sdl_nlen);
-		out += sdl->sdl_nlen;
+			i = sizeof(obuf) - 1;
+		else
+			i = sdl->sdl_nlen;
+		(void)memcpy(obuf, sdl->sdl_data, i);
+		out += i;
 		if (sdl->sdl_alen)
 			ADDC(':');
 	}
@@ -176,5 +178,5 @@ link_ntoa(const struct sockaddr_dl *sdl)
 			ADDC(hexlist[i]);
 	}
 	ADDC('\0');
-	return (obuf);
+	return obuf;
 }
