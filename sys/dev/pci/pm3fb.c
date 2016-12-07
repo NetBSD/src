@@ -603,6 +603,7 @@ static void
 pm3fb_init(struct pm3fb_softc *sc)
 {
 
+	pm3fb_wait(sc, 16);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_LB_DESTREAD_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_LB_DESTREAD_ENABLES, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_LB_SOURCEREAD_MODE, 0);
@@ -619,6 +620,8 @@ pm3fb_init(struct pm3fb_softc *sc)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_STENCIL_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_STENCIL_DATA, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_COLORDDA_MODE, 0);
+
+	pm3fb_wait(sc, 16);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_TEXTUREADDRESS_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_TEXTUREINDEX_MODE0, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_TEXTUREINDEX_MODE1, 0);
@@ -635,6 +638,8 @@ pm3fb_init(struct pm3fb_softc *sc)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_CHROMATEST_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_ALPHATEST_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_ANTIALIAS_MODE, 0);
+
+	pm3fb_wait(sc, 16);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_YUV_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_ALPHABLENDCOLOR_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_ALPHABLENDALPHA_MODE, 0);
@@ -651,6 +656,8 @@ pm3fb_init(struct pm3fb_softc *sc)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_FBDESTREAD_ENABLE,
 	    PM3_FBDESTREAD_SET(0xff, 0xff, 0xff));
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_FBDESTREAD_BUFFERADDRESS0, 0);
+
+	pm3fb_wait(sc, 16);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_FBDESTREAD_BUFFEROFFSET0, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_FBDESTREAD_BUFFERWIDTH0,
 	    PM3_FBDESTREAD_BUFFERWIDTH_WIDTH(sc->sc_stride));
@@ -674,6 +681,8 @@ pm3fb_init(struct pm3fb_softc *sc)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_SIZEOF_FRAMEBUFFER, 4095);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_DITHER_MODE, PM3_CF_TO_DIM_CF(4));
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_DXDOM, 0);
+
+	pm3fb_wait(sc, 6);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_DXSUB, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_DY, 1 << 16);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM3_STARTXDOM, 0);
@@ -702,7 +711,9 @@ pm3fb_rectfill(struct pm3fb_softc *sc, int x, int y, int wi, int he,
 	    PM3_RENDER2D_OPERATION_NORMAL | PM3_RENDER2D_SPANOPERATION | 
 	    (((he) & 0x0fff) << 16) | ((wi) & 0x0fff));
 
+#ifdef PM3FB_DEBUG
 	pm3fb_flush_engine(sc);
+#endif
 }
 
 static void
@@ -755,7 +766,9 @@ pm3fb_bitblt(void *cookie, int srcx, int srcy, int dstx, int dsty,
 	    PM3_RENDER2D_OPERATION_NORMAL | PM3_RENDER2D_SPANOPERATION | PM3_RENDER2D_FBSOURCEREADENABLE |
 	    (((height) & 0x0fff) << 16) | ((width + x_align) & 0x0fff));
 
+#ifdef PM3FB_DEBUG
 	pm3fb_flush_engine(sc);
+#endif
 }
 
 static void
