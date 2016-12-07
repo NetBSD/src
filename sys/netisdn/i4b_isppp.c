@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.28 2016/06/10 13:27:16 ozaki-r Exp $
+ *	$Id: i4b_isppp.c,v 1.29 2016/12/07 03:23:09 ozaki-r Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.28 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.29 2016/12/07 03:23:09 ozaki-r Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
@@ -335,6 +335,11 @@ ipppattach(void)
 		ether_ifattach(&sc->sc_sp.pp_if, 0);
 #else
 		if_attach(&sc->sc_sp.pp_if);
+#ifndef USE_ISPPP
+		sc->sc_sp.pp_if._if_input = sppp_input;
+#else
+		sc->sc_sp.pp_if._if_input = isppp_input;
+#endif
 #endif
 #ifndef USE_ISPPP
 		sppp_attach(&sc->sc_sp.pp_if);
@@ -666,7 +671,6 @@ i4bisppp_rx_data_rdy(void *softc)
 {
 	struct i4bisppp_softc *sc = softc;
 	struct mbuf *m;
-	int s;
 
 	if((m = *sc->sc_ilt->rx_mbuf) == NULL)
 		return;
@@ -697,15 +701,7 @@ i4bisppp_rx_data_rdy(void *softc)
 
 #endif /* NBPFILTER > 0  || NBPF > 0 */
 
-	s = splnet();
-
-#ifndef USE_ISPPP
-	sppp_input(&sc->sc_sp.pp_if, m);
-#else
-	isppp_input(&sc->sc_sp.pp_if, m);
-#endif
-
-	splx(s);
+	if_percpuq_enqueue(sc->sc_sp.pp_if.if_percpuq, m);
 }
 
 /*---------------------------------------------------------------------------*
