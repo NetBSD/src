@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.4 2016/12/04 03:38:58 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.5 2016/12/07 22:24:44 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.4 2016/12/04 03:38:58 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.5 2016/12/07 22:24:44 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -105,7 +105,7 @@ ATF_TC_BODY(dbregs_print, tc)
 	size_t i;
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -173,7 +173,7 @@ ATF_TC_BODY(dbregs_preserve_dr0, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -257,7 +257,7 @@ ATF_TC_BODY(dbregs_preserve_dr1, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -341,7 +341,7 @@ ATF_TC_BODY(dbregs_preserve_dr2, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -425,7 +425,7 @@ ATF_TC_BODY(dbregs_preserve_dr3, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -510,7 +510,7 @@ ATF_TC_BODY(dbregs_preserve_dr0_yield, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -600,7 +600,7 @@ ATF_TC_BODY(dbregs_preserve_dr1_yield, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -690,7 +690,7 @@ ATF_TC_BODY(dbregs_preserve_dr2_yield, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -780,7 +780,7 @@ ATF_TC_BODY(dbregs_preserve_dr3_yield, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -870,7 +870,7 @@ ATF_TC_BODY(dbregs_preserve_dr0_continued, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -966,7 +966,7 @@ ATF_TC_BODY(dbregs_preserve_dr1_continued, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1062,7 +1062,7 @@ ATF_TC_BODY(dbregs_preserve_dr2_continued, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1158,7 +1158,7 @@ ATF_TC_BODY(dbregs_preserve_dr3_continued, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1259,7 +1259,7 @@ ATF_TC_BODY(dbregs_dr0_trap_variable, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1370,7 +1370,7 @@ ATF_TC_BODY(dbregs_dr1_trap_variable, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1481,7 +1481,7 @@ ATF_TC_BODY(dbregs_dr2_trap_variable, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -1592,7 +1592,7 @@ ATF_TC_BODY(dbregs_dr3_trap_variable, tc)
 	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
-	child = atf_utils_fork();
+	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
