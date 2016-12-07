@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.252 2016/12/07 15:00:46 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.253 2016/12/07 19:57:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.252 2016/12/07 15:00:46 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.253 2016/12/07 19:57:09 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.252 2016/12/07 15:00:46 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.253 2016/12/07 19:57:09 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -726,13 +726,13 @@ Main_SetObjdir(const char *fmt, ...)
 }
 
 static Boolean
-Main_SetVarObjdir(const char *var)
+Main_SetVarObjdir(const char *var, const char *suffix)
 {
 	char *p1, *path;
 	if ((path = Var_Value(var, VAR_CMD, &p1)) == NULL)
 		return FALSE;
 
-	(void)Main_SetObjdir("%s%s", path, curdir);
+	(void)Main_SetObjdir("%s%s", path, suffix);
 	free(p1);
 	return TRUE;
 }
@@ -1120,8 +1120,8 @@ main(int argc, char **argv)
 	Dir_Init(curdir);
 	(void)Main_SetObjdir("%s", curdir);
 
-	if (!Main_SetVarObjdir("MAKEOBJDIRPREFIX") &&
-	    !Main_SetVarObjdir("MAKEOBJDIR") &&
+	if (!Main_SetVarObjdir("MAKEOBJDIRPREFIX", curdir) &&
+	    !Main_SetVarObjdir("MAKEOBJDIR", "") &&
 	    !Main_SetObjdir("%s.%s", _PATH_OBJDIR, machine) &&
 	    !Main_SetObjdir("%s", _PATH_OBJDIR))
 		(void)Main_SetObjdir("%s%s", _PATH_OBJDIRPREFIX, curdir);
