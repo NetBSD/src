@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.363 2016/12/06 01:23:01 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.364 2016/12/08 01:06:35 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.363 2016/12/06 01:23:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.364 2016/12/08 01:06:35 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -222,6 +222,16 @@ static void if_percpuq_drops(void *, void *, struct cpu_info *);
 static int sysctl_percpuq_drops_handler(SYSCTLFN_PROTO);
 static void sysctl_percpuq_setup(struct sysctllog **, const char *,
     struct if_percpuq *);
+
+struct if_deferred_start {
+	struct ifnet	*ids_ifp;
+	void		(*ids_if_start)(struct ifnet *);
+	void		*ids_si;
+};
+
+static void if_deferred_start_softint(void *);
+static void if_deferred_start_common(struct ifnet *);
+static void if_deferred_start_destroy(struct ifnet *);
 
 #if defined(INET) || defined(INET6)
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
@@ -953,6 +963,99 @@ bad:
 	return;
 }
 
+/*
+ * The deferred if_start framework
+ *
+ * The common APIs to defer if_start to softint when if_start is requested
+ * from a device driver running in hardware interrupt context.
+ */
+/*
+ * Call ifp->if_start (or equivalent) in a dedicated softint for
+ * deferred if_start.
+ */
+static void
+if_deferred_start_softint(void *arg)
+{
+	struct if_deferred_start *ids = arg;
+	struct ifnet *ifp = ids->ids_ifp;
+
+#ifdef DEBUG
+	log(LOG_DEBUG, "%s: deferred start on %s\n", __func__,
+	    ifp->if_xname);
+#endif
+
+	ids->ids_if_start(ifp);
+}
+
+/*
+ * The default callback function for deferred if_start.
+ */
+static void
+if_deferred_start_common(struct ifnet *ifp)
+{
+
+	if_start_lock(ifp);
+}
+
+static inline bool
+if_snd_is_used(struct ifnet *ifp)
+{
+
+	return ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit ||
+	    ALTQ_IS_ENABLED(&ifp->if_snd);
+}
+
+/*
+ * Schedule deferred if_start.
+ */
+void
+if_schedule_deferred_start(struct ifnet *ifp)
+{
+
+	KASSERT(ifp->if_deferred_start != NULL);
+
+	if (if_snd_is_used(ifp) && IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
+
+	softint_schedule(ifp->if_deferred_start->ids_si);
+}
+
+/*
+ * Create an instance of deferred if_start. A driver should call the function
+ * only if the driver needs deferred if_start. Drivers can setup their own
+ * deferred if_start function via 2nd argument.
+ */
+void
+if_deferred_start_init(struct ifnet *ifp, void (*func)(struct ifnet *))
+{
+	struct if_deferred_start *ids;
+
+	ids = kmem_zalloc(sizeof(*ids), KM_SLEEP);
+	if (ids == NULL)
+		panic("kmem_zalloc failed");
+
+	ids->ids_ifp = ifp;
+	ids->ids_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
+	    if_deferred_start_softint, ids);
+	if (func != NULL)
+		ids->ids_if_start = func;
+	else
+		ids->ids_if_start = if_deferred_start_common;
+
+	ifp->if_deferred_start = ids;
+}
+
+static void
+if_deferred_start_destroy(struct ifnet *ifp)
+{
+
+	if (ifp->if_deferred_start == NULL)
+		return;
+
+	softint_disestablish(ifp->if_deferred_start->ids_si);
+	kmem_free(ifp->if_deferred_start, sizeof(*ifp->if_deferred_start));
+	ifp->if_deferred_start = NULL;
+}
 
 /*
  * The common interface input routine that is called by device drivers,
@@ -1194,6 +1297,7 @@ if_detach(struct ifnet *ifp)
 		callout_destroy(ifp->if_slowtimo_ch);
 		kmem_free(ifp->if_slowtimo_ch, sizeof(*ifp->if_slowtimo_ch));
 	}
+	if_deferred_start_destroy(ifp);
 
 	/*
 	 * Do an if_down() to give protocols a chance to do something.

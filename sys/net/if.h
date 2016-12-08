@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.229 2016/11/22 02:06:00 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.230 2016/12/08 01:06:35 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -230,6 +230,7 @@ struct bridge_iflist;
 struct callout;
 struct krwlock;
 struct if_percpuq;
+struct if_deferred_start;
 
 typedef unsigned short if_index_t;
 
@@ -342,6 +343,7 @@ typedef struct ifnet {
 	struct pslist_entry	if_pslist_entry;
 	struct psref_target     if_psref;
 	struct pslist_head	if_addr_pslist;
+	struct if_deferred_start	*if_deferred_start;
 #endif
 } ifnet_t;
  
@@ -988,6 +990,9 @@ struct if_percpuq *
 void	if_percpuq_destroy(struct if_percpuq *);
 void
 	if_percpuq_enqueue(struct if_percpuq *, struct mbuf *);
+
+void	if_deferred_start_init(struct ifnet *, void (*)(struct ifnet *));
+void	if_schedule_deferred_start(struct ifnet *);
 
 void ifa_insert(struct ifnet *, struct ifaddr *);
 void ifa_remove(struct ifnet *, struct ifaddr *);
