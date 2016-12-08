@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.78 2016/10/02 14:16:03 christos Exp $ */
+/*	$NetBSD: if_xi.c,v 1.79 2016/12/08 01:12:01 ozaki-r Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.78 2016/10/02 14:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.79 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -219,6 +219,7 @@ xi_attach(struct xi_softc *sc, u_int8_t *myea)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, myea);
 
 	/*
@@ -360,8 +361,7 @@ xi_intr(void *arg)
 	}
 
 	/* Try to start more packets transmitting. */
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		xi_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	/* Detected excessive collisions? */
 	if ((tx_status & EXCESSIVE_COLL) && ifp->if_opackets > 0) {

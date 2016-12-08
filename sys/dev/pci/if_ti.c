@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.99 2016/07/14 04:15:27 msaitoh Exp $ */
+/* $NetBSD: if_ti.c,v 1.100 2016/12/08 01:12:01 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.99 2016/07/14 04:15:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.100 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1866,6 +1866,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
 
 	/*
@@ -2180,9 +2181,8 @@ ti_intr(void *xsc)
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, TI_MB_HOSTINTR, 0);
 
-	if ((ifp->if_flags & IFF_RUNNING) != 0 &&
-	    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		ti_start(ifp);
+	if ((ifp->if_flags & IFF_RUNNING) != 0)
+		if_schedule_deferred_start(ifp);
 
 	return (1);
 }
