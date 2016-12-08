@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.40 2013/08/30 20:57:26 mrg Exp $	*/
+/*	$NetBSD: ctl.c,v 1.41 2016/12/08 10:28:44 nat Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ctl.c,v 1.40 2013/08/30 20:57:26 mrg Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.41 2016/12/08 10:28:44 nat Exp $");
 #endif
 
 
@@ -65,6 +65,8 @@ static audio_info_t info;
 static char encbuf[1000];
 
 static int properties, fullduplex, rerror;
+
+static struct audio_pid vchan_pid;
 
 int verbose;
 
@@ -290,6 +292,9 @@ getinfo(int fd)
 {
 	int pos, i;
 
+	if (vchan_pid.pid >= 0 && ioctl(fd, AUDIO_SETPROC, &vchan_pid) < 0)
+		err(1, "AUDIO_SETPROC");
+
 	if (ioctl(fd, AUDIO_GETDEV, &adev) < 0)
 		err(1, "AUDIO_GETDEV");
 	for (pos = 0, i = 0; ; i++) {
@@ -322,9 +327,9 @@ usage(void)
 {
 	const char *prog = getprogname();
 
-	fprintf(stderr, "Usage: %s [-d file] [-n] name ...\n", prog);
-	fprintf(stderr, "Usage: %s [-d file] [-n] -w name=value ...\n", prog);
-	fprintf(stderr, "Usage: %s [-d file] [-n] -a\n", prog);
+	fprintf(stderr, "Usage: %s [-d file] [-p] pid [-n] name ...\n", prog);
+	fprintf(stderr, "Usage: %s [-d file] [-p] pid [-n] -w name=value ...\n", prog);
+	fprintf(stderr, "Usage: %s [-d file] [-p] pid [-n] -a\n", prog);
 	exit(1);
 }
 
@@ -337,11 +342,12 @@ main(int argc, char *argv[])
 	const char *file;
 	const char *sep = "=";
 
+	vchan_pid.pid = -1;
 	file = getenv("AUDIOCTLDEVICE");
 	if (file == NULL)
 		file = deffile;
 
-	while ((ch = getopt(argc, argv, "ad:f:nw")) != -1) {
+	while ((ch = getopt(argc, argv, "ad:f:np:w")) != -1) {
 		switch(ch) {
 		case 'a':
 			aflag++;
@@ -351,6 +357,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			sep = 0;
+			break;
+		case 'p':
+			vchan_pid.pid = atoi(optarg);
 			break;
 		case 'f': /* compatibility */
 		case 'd':
@@ -425,6 +434,9 @@ static void
 audioctl_write(int fd, int argc, char *argv[])
 {
 	struct field *p;
+
+	if (vchan_pid.pid >= 0 && ioctl(fd, AUDIO_SETPROC, &vchan_pid) < 0)
+		err(1, "AUDIO_SETPROC");
 
 	AUDIO_INITINFO(&info);
 	while (argc--) {
