@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.79 2016/07/15 07:40:09 ozaki-r Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.80 2016/12/08 05:16:34 ozaki-r Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.79 2016/07/15 07:40:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.80 2016/12/08 05:16:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -176,17 +176,20 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
 
 	sockaddr_in6_init(&u.dst6, &sin6_dst->sin6_addr, 0, 0, 0);
-	if ((rt = rtcache_lookup(&sc->gif_ro, &u.dst)) == NULL) {
+	rt = rtcache_lookup(&sc->gif_ro, &u.dst);
+	if (rt == NULL) {
 		m_freem(m);
 		return ENETUNREACH;
 	}
 
 	/* If the route constitutes infinite encapsulation, punt. */
 	if (rt->rt_ifp == ifp) {
+		rtcache_unref(rt, &sc->gif_ro);
 		rtcache_free(&sc->gif_ro);
 		m_freem(m);
 		return ENETUNREACH;	/* XXX */
 	}
+	rtcache_unref(rt, &sc->gif_ro);
 
 #ifdef IPV6_MINMTU
 	/*
