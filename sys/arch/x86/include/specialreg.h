@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.78.4.4 2016/03/06 17:49:55 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.78.4.5 2016/12/08 00:15:25 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -318,6 +318,7 @@
 /* %ebx */
 #define CPUID_SEF_FSGSBASE	__BIT(0)
 #define CPUID_SEF_TSC_ADJUST	__BIT(1)
+#define CPUID_SEF_SGX		__BIT(2)
 #define CPUID_SEF_BMI1		__BIT(3)
 #define CPUID_SEF_HLE		__BIT(4)
 #define CPUID_SEF_AVX2		__BIT(5)
@@ -332,6 +333,7 @@
 #define CPUID_SEF_MPX		__BIT(14)
 #define CPUID_SEF_PQE		__BIT(15)
 #define CPUID_SEF_AVX512F	__BIT(16)
+#define CPUID_SEF_AVX512DQ	__BIT(17)
 #define CPUID_SEF_RDSEED	__BIT(18)
 #define CPUID_SEF_ADX		__BIT(19)
 #define CPUID_SEF_SMAP		__BIT(20)
@@ -341,25 +343,32 @@
 #define CPUID_SEF_AVX512ER	__BIT(27)
 #define CPUID_SEF_AVX512CD	__BIT(28)
 #define CPUID_SEF_SHA		__BIT(29)
+#define CPUID_SEF_AVX512BW	__BIT(30)
+#define CPUID_SEF_AVX512VL	__BIT(31)
 
 #define CPUID_SEF_FLAGS	"\20" \
-	"\1" "FSGSBASE"	"\2" "TSCADJUST"		"\4" "BMI1"	\
+	"\1" "FSGSBASE"	"\2" "TSCADJUST" "\3" "SGX"	"\4" "BMI1"	\
 	"\5" "HLE"	"\6" "AVX2"	"\7" "FDPEXONLY" "\10" "SMEP"	\
 	"\11" "BMI2"	"\12" "ERMS"	"\13" "INVPCID"	"\14" "RTM"	\
 	"\15" "QM"	"\16" "FPUCSDS"	"\17" "MPX"    	"\20" "PQE"	\
-	"\21" "AVX512F"			"\23" "RDSEED"	"\24" "ADX"	\
-	"\25" "SMAP"	"\26" "CLFLUSHOPT"				\
-			"\32" "PT"	"\33" "AVX512PF""\34" "AVX512ER" \
-	"\35" "AVX512CD""\36" "SHA"
+	"\21" "AVX512F"	"\22" "AVX512DQ" "\23" "RDSEED"	"\24" "ADX"	\
+	"\25" "SMAP"					"\30" "CLFLUSHOPT" \
+			"\32" "PT"	"\33" "AVX512PF" "\34" "AVX512ER" \
+	"\35" "AVX512CD""\36" "SHA"	"\37" "AVX512BW" "\40" "AVX512VL"
 
 /* %ecx */
 #define CPUID_SEF_PREFETCHWT1	__BIT(0)
+#define CPUID_SEF_UMIP		__BIT(2)
 #define CPUID_SEF_PKU		__BIT(3)
 #define CPUID_SEF_OSPKE		__BIT(4)
+#define CPUID_SEF_RDPID		__BIT(22)
+#define CPUID_SEF_SGXLC		__BIT(30)
 
 #define CPUID_SEF_FLAGS1	"\20" \
-	"\1" "PREFETCHWT1"				"\4" "PKU"	\
-	"\5" "OSPKE"
+	"\1" "PREFETCHWT1"		"\3" "UMIP"	"\4" "PKU"	\
+	"\5" "OSPKE"							\
+					"\27" "RDPID"			\
+					"\37" "SGXLC"
 
 /*
  * CPUID Processor extended state Enumeration Fn0000000d
