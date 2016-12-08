@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.189 2016/12/06 07:01:47 knakahara Exp $	*/
+/*	$NetBSD: in.c,v 1.190 2016/12/08 05:16:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.189 2016/12/06 07:01:47 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.190 2016/12/08 05:16:33 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1790,7 +1790,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 		}
 		if (ia == NULL) {
 			*errorp = EADDRNOTAVAIL;
-			return NULL;
+			goto out;
 		}
 	}
 	/*
@@ -1820,7 +1820,8 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 				if (ia != NULL)
 					ia4_release(ia, psref);
 				*errorp = EADDRNOTAVAIL;
-				return NULL;
+				ia = NULL;
+				goto out;
 			}
 			pserialize_read_exit(s);
 		}
@@ -1830,7 +1831,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 		                                      sintosa(sin)));
 		if (ia == NULL) {
 			*errorp = EADDRNOTAVAIL;
-			return NULL;
+			goto out;
 		}
 		/* FIXME NOMPSAFE */
 		ia4_acquire(ia, psref);
@@ -1839,6 +1840,8 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	else
 		printf("%s: missing ifa_getifa\n", __func__);
 #endif
+out:
+	rtcache_unref(rt, ro);
 	return ia;
 }
 

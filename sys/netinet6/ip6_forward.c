@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.81 2016/08/31 09:14:47 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.82 2016/12/08 05:16:34 ozaki-r Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.81 2016/08/31 09:14:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.82 2016/12/08 05:16:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -128,7 +128,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	const struct sockaddr_in6 *dst;
-	struct rtentry *rt;
+	struct rtentry *rt = NULL;
 	int error = 0, type = 0, code = 0;
 	struct mbuf *mcopy = NULL;
 	struct ifnet *origifp;	/* maybe unnecessary */
@@ -136,7 +136,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	struct in6_addr src_in6, dst_in6;
 	struct ifnet *rcvif = NULL;
 	struct psref psref;
-	struct route *ro;
+	struct route *ro = NULL;
 #ifdef IPSEC
 	int needipsec = 0;
 	struct secpolicy *sp = NULL;
@@ -213,14 +213,14 @@ ip6_forward(struct mbuf *m, int srcrt)
 		} u;
 
 		sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
-		if ((rt = rtcache_lookup(ro, &u.dst)) == NULL) {
+		rt = rtcache_lookup(ro, &u.dst);
+		if (rt == NULL) {
 			IP6_STATINC(IP6_STAT_NOROUTE);
 			/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
 			if (mcopy) {
 				icmp6_error(mcopy, ICMP6_DST_UNREACH,
 					    ICMP6_DST_UNREACH_NOROUTE, 0);
 			}
-			percpu_putref(ip6_forward_rt_percpu);
 			goto drop;
 		}
 	} else if ((rt = rtcache_validate(ro)) == NULL &&
@@ -235,11 +235,9 @@ ip6_forward(struct mbuf *m, int srcrt)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 			    ICMP6_DST_UNREACH_NOROUTE, 0);
 		}
-		percpu_putref(ip6_forward_rt_percpu);
 		goto drop;
 	}
 	dst = satocsin6(rtcache_getdst(ro));
-	percpu_putref(ip6_forward_rt_percpu);
 
 	/*
 	 * Source scope check: if a packet can't be delivered to its
@@ -324,11 +322,9 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 */
 	if (rt->rt_ifp == rcvif && !srcrt && ip6_sendredirects &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
-		ro = percpu_getref(ip6_forward_rt_percpu);
 		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) &&
 		    nd6_is_addr_neighbor(satocsin6(rtcache_getdst(ro)),
 		                         rt->rt_ifp)) {
-			percpu_putref(ip6_forward_rt_percpu);
 			/*
 			 * If the incoming interface is equal to the outgoing
 			 * one, the link attached to the interface is
@@ -348,7 +344,6 @@ ip6_forward(struct mbuf *m, int srcrt)
 				    ICMP6_DST_UNREACH_ADDR, 0);
 			goto drop;
 		}
-		percpu_putref(ip6_forward_rt_percpu);
 		type = ND_REDIRECT;
 	}
 
@@ -417,10 +412,11 @@ ip6_forward(struct mbuf *m, int srcrt)
 			IP6_STATINC(IP6_STAT_REDIRECTSENT);
 		else {
 #ifdef GATEWAY
-			ro = percpu_getref(ip6_forward_rt_percpu);
+			/* Need to release rt here */
+			rtcache_unref(rt, ro);
+			rt = NULL;
 			if (m->m_flags & M_CANFASTFWD)
 				ip6flow_create(ro, m);
-			percpu_putref(ip6_forward_rt_percpu);
 #endif
 			if (mcopy)
 				goto freecopy;
@@ -464,6 +460,9 @@ ip6_forward(struct mbuf *m, int srcrt)
  drop:
  	m_freem(m);
  out:
+	rtcache_unref(rt, ro);
+	if (ro != NULL)
+		percpu_putref(ip6_forward_rt_percpu);
 	if (rcvif != NULL)
 		m_put_rcvif_psref(rcvif, &psref);
 	return;
