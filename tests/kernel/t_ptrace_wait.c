@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.45 2016/12/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.46 2016/12/08 13:32:17 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.45 2016/12/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.46 2016/12/08 13:32:17 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4398,7 +4398,7 @@ ATF_TC_BODY(lwpinfo1, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	struct ptrace_lwpinfo info = {0};
+	struct ptrace_lwpinfo info = {0, 0};
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -4469,7 +4469,7 @@ ATF_TC_BODY(lwpinfo2, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	struct ptrace_lwpinfo info = {0};
+	struct ptrace_lwpinfo info = {0, 0};
 
 	printf("Spawn tracee\n");
 	ATF_REQUIRE(msg_open(&parent_tracee) == 0);
