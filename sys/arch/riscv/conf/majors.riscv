@@ -1,4 +1,4 @@
-#	$NetBSD: majors.riscv,v 1.1 2014/09/19 17:36:26 matt Exp $
+#	$NetBSD: majors.riscv,v 1.2 2016/12/08 11:31:12 nat Exp $
 #
 # Device majors for evbmips
 #
@@ -12,7 +12,6 @@ device-major	lpt		char 31			lpt
 device-major	ipl		char 35			ipfilter
 device-major	satlink		char 38			satlink
 
-device-major	spkr		char 41			spkr
 device-major	esh		char 44			esh
 device-major	midi		char 49			midi
 device-major	sequencer	char 50			sequencer

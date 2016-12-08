@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.19 2016/03/19 23:21:02 gdt Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.20 2016/12/08 11:31:10 nat Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -192,6 +192,9 @@ wd*	at umass?
 # USB audio
 uaudio* at uhub? port ? configuration ?
 audio* at uaudio?
+
+options VAUDIOSPEAKER
+spkr0	at audio0		# PC speaker (synthesized)
 
 # USB MIDI
 umidi*	at uhub? port ? configuration ?

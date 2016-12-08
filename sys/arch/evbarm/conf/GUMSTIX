@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.86 2016/11/26 13:59:45 christos Exp $
+#	$NetBSD: GUMSTIX,v 1.87 2016/12/08 11:31:10 nat Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -203,6 +203,9 @@ pxaacu0	at pxaip? addr 0x40500000 intr 14	# Audiostix, Audiostx2, GPSstix
 
 # Audio support
 audio*	at audiobus?
+
+options VAUDIOSPEAKER
+spkr0	at audio0		# PC speaker (synthesized)
 
 # LCD
 lcd0	at pxaip? addr 0x44000000		# consoleLCD-vx,consoleLCD16-vx

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.8 2016/03/19 23:21:02 gdt Exp $
+# $NetBSD: GENERIC,v 1.9 2016/12/08 11:31:10 nat Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -547,6 +547,9 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 harmony* at gsc?			# Audio Type 2 (CS4215)
 #com*	at harmony?			# Telephone add-in card
 audio*	at audiobus?
+
+options VAUDIOSPEAKER
+spkr0	at audio0		# PC speaker (synthesized)
 
 # USB Controller and Devices
 

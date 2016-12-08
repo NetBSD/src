@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.311 2014/11/16 16:01:40 manu Exp $
+# $NetBSD: GENERIC,v 1.312 2016/12/08 11:31:09 nat Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.311 $"
+#ident 		"GENERIC-$Revision: 1.312 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -343,6 +343,9 @@ a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
+
+options VAUDIOSPEAKER
+spkr0	at audio0		# PC speaker (synthesized)
 
 a1k2cp0         at mainbus0             # A1200 on-board clockport
 clockport*      at a1k2cp0

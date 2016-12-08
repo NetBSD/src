@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.29 2015/04/23 23:22:51 pgoyette Exp $
+#	$NetBSD: majors.evbmips,v 1.30 2016/12/08 11:31:10 nat Exp $
 #
 # Device majors for evbmips
 #
@@ -39,7 +39,6 @@ device-major	se		char 37			se
 device-major	satlink		char 38			satlink
 device-major	rnd		char 39			rnd
 
-device-major	spkr		char 41			spkr
 device-major	scsibus		char 42			scsibus
 device-major	raid		char 43  block 16	raid
 device-major	esh		char 44			esh

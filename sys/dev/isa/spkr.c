@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.37 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: spkr.c,v 1.38 2016/12/08 11:31:08 nat Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -42,8 +42,9 @@
  *      use hz value from param.c
  */
 
+#ifdef PCPPISPEAKER
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.37 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.38 2016/12/08 11:31:08 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.37 2016/07/14 10:19:06 msaitoh Exp $");
 
 #include <dev/isa/spkrio.h>
 
-int spkrprobe(device_t, cfdata_t, void *);
 void spkrattach(device_t, device_t, void *);
 int spkrdetach(device_t, int);
 
@@ -75,9 +75,14 @@ MODULE(MODULE_CLASS_DRIVER, spkr, NULL /* "pcppi" */);
 #include "ioconf.c"
 #endif
 
+#endif /* PCPPISPEAKER */
 
+int spkrprobe(device_t, cfdata_t, void *);
+
+#ifdef PCPPISPEAKER
 CFATTACH_DECL_NEW(spkr, 0,
     spkrprobe, spkrattach, spkrdetach, NULL);
+#endif
 
 dev_type_open(spkropen);
 dev_type_close(spkrclose);
@@ -99,7 +104,9 @@ const struct cdevsw spkr_cdevsw = {
 	.d_flag = D_OTHER
 };
 
+#ifdef PCPPISPEAKER
 static pcppi_tag_t ppicookie;
+#endif
 
 #define SPKRPRI (PZERO - 1)
 
@@ -109,6 +116,7 @@ static void playinit(void);
 static void playtone(int, int, int);
 static void playstring(char *, int);
 
+#ifdef PCPPISPEAKER
 static void
 tone(u_int xhz, u_int ticks)
 /* emit tone of frequency hz for given number of ticks */
@@ -131,6 +139,7 @@ rest(int ticks)
     if (ticks > 0)
 	    tsleep(rest, SPKRPRI | PCATCH, "rest", ticks);
 }
+#endif
 
 /**************** PLAY STRING INTERPRETER BEGINS HERE **********************
  *
@@ -424,6 +433,7 @@ spkrprobe(device_t parent, cfdata_t match, void *aux)
 	return (!spkr_attached);
 }
 
+#ifdef PCPPISPEAKER
 void
 spkrattach(device_t parent, device_t self, void *aux)
 {
@@ -445,6 +455,7 @@ spkrdetach(device_t self, int flags)
 
 	return 0;
 }
+#endif
 
 int
 spkropen(dev_t dev, int	flags, int mode, struct lwp *l)

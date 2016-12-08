@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.12 2014/08/23 20:26:59 dholland Exp $
+# $NetBSD: ENCPP1,v 1.13 2016/12/08 11:31:12 nat Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.12 $"
+#ident 		"ENCPP1-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -175,6 +175,9 @@ auvia*	at pci? dev ? function ?	# VIA integrated AC'97 Audio
 
 # Audio support
 audio*	at audiobus?
+
+options VAUDIOSPEAKER
+spkr0	at audio0		# PC speaker (synthesized)
 
 pckbc0		at isa?			# PS/2 keyboard controller
 pckbd*		at pckbc?		# PC keyboard

@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.136 2015/08/24 22:50:33 pooka Exp $ */
+/* $NetBSD: wskbd.c,v 1.137 2016/12/08 11:31:08 nat Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.136 2015/08/24 22:50:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.137 2016/12/08 11:31:08 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -156,6 +156,10 @@ int	wskbddebug = 0;
 
 #include <dev/wscons/wsmuxvar.h>
 
+#ifdef VAUDIOSPEAKER
+#include <dev/spkrvar.h>
+#endif
+
 struct wskbd_internal {
 	const struct wskbd_mapdata *t_keymap;
 
@@ -186,7 +190,7 @@ struct wskbd_softc {
 	int	sc_ledstate;
 
 	int	sc_isconsole;
-
+	
 	struct wskbd_bell_data sc_bell_data;
 	struct wskbd_keyrepeat_data sc_keyrepeat_data;
 #ifdef WSDISPLAY_SCROLLSUPPORT
@@ -1089,16 +1093,27 @@ wskbd_displayioctl(device_t dev, u_long cmd, void *data, int flag,
 	case WSKBDIO_BELL:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
+#ifndef VAUDIOSPEAKER
 		return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
 		    WSKBDIO_COMPLEXBELL, (void *)&sc->sc_bell_data, flag, l));
+#else
+		wskbd_cnbell(0, sc->sc_bell_data.pitch, sc->sc_bell_data.period,
+		    sc->sc_bell_data.volume);
+		return 0;
+#endif
 
 	case WSKBDIO_COMPLEXBELL:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
 		ubdp = (struct wskbd_bell_data *)data;
 		SETBELL(ubdp, ubdp, &sc->sc_bell_data);
+#ifndef VAUDIOSPEAKER
 		return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
 		    WSKBDIO_COMPLEXBELL, (void *)ubdp, flag, l));
+#else
+		wskbd_cnbell(0, ubdp->pitch, ubdp->period, ubdp->volume);
+		return 0;
+#endif
 
 	case WSKBDIO_SETBELL:
 		if ((flag & FWRITE) == 0)
@@ -1466,10 +1481,14 @@ wskbd_cnbell(dev_t dev, u_int pitch, u_int period, u_int volume)
 	if (!wskbd_console_initted)
 		return;
 
+#ifndef VAUDIOSPEAKER
 	if (wskbd_console_data.t_consops->bell != NULL)
 		(*wskbd_console_data.t_consops->bell)
 		    (wskbd_console_data.t_consaccesscookie, pitch, period,
 			volume);
+#else
+	speaker_play(pitch, period, volume);
+#endif
 }
 
 static inline void

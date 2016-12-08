@@ -33,6 +33,7 @@ no wskbd*
 no btmagic*
 no btsco*
 no audio*
+no spkr0 at audio0
 no config netbsd
 
 # Use ld0a for SD slot in Mobile and v4 or sd0a for USB disk

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.90 2016/11/26 13:59:45 christos Exp $
+#	$NetBSD: GENERIC,v 1.91 2016/12/08 11:31:11 nat Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90 $"
+#ident 		"GENERIC-$Revision: 1.91 $"
 
 maxusers	32		# estimated number of users
 
@@ -699,6 +699,9 @@ opl*	at yds?
 
 # Audio support
 audio*	at audiobus?
+
+options VAUDIOSPEAKER
+spkr0	at audio0		# PC speaker (synthesized)
 
 # MPU 401 UARTs
 mpu*	at cmpci?

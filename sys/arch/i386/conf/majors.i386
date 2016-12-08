@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.44 2015/04/23 23:22:52 pgoyette Exp $
+#	$NetBSD: majors.i386,v 1.45 2016/12/08 11:31:11 nat Exp $
 #
 # Device majors for i386
 #
@@ -30,7 +30,6 @@ device-major	bpf		char 23			bpfilter  vector=8,linkzero
 device-major	md		char 24  block 17	md	vector=4:8
 
 device-major	joy		char 26			joy
-device-major	spkr		char 27			spkr
 
 # next three are obsolete
 #device-major	omms		char 35			omms
