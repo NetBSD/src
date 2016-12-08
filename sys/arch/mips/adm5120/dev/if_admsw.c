@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.14 2016/06/10 13:27:12 ozaki-r Exp $ */
+/* $NetBSD: if_admsw.c,v 1.15 2016/12/08 01:12:00 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.14 2016/06/10 13:27:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.15 2016/12/08 01:12:00 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -480,6 +480,7 @@ admsw_attach(device_t parent, device_t self, void *aux)
 
 		/* Attach the interface. */
 		if_attach(ifp);
+		if_deferred_start_init(ifp, NULL);
 		ether_ifattach(ifp, enaddr);
 		enaddr[5]++;
 	}
@@ -886,7 +887,7 @@ admsw_txintr(struct admsw_softc *sc, int prio)
 		ifp = &sc->sc_ethercom[0].ec_if;
 
 		/* Try to queue more packets. */
-		admsw_start(ifp);
+		if_schedule_deferred_start(ifp);
 
 		/*
 		 * If there are no more pending transmissions,
