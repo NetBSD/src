@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.269 2016/12/08 10:28:44 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.270 2016/12/08 20:33:52 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.269 2016/12/08 10:28:44 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.270 2016/12/08 20:33:52 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3580,7 +3580,7 @@ audio_upmix(void *v)
 			continue;
 		i--;
 		vc = sc->sc_vchan[n];
-		if (!vc->sc_open & AUOPEN_READ)
+		if (!(vc->sc_open & AUOPEN_READ))
 			continue;
 		if (!vc->sc_rbus)
 			continue;
