@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.125 2016/12/08 00:15:50 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.126 2016/12/08 08:12:10 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -6989,4 +6989,177 @@ usr.sbin/cpuctl/arch/i386.c			1.72-1.74
 	- Fix the bit location of CLFLUSHOPT.
 	- Add new TLB descriptor 0x64 and 0xc4.
 	[msaitoh, ticket #1285]
+
+sys/dev/i2c/sdtemp.c				1.26-1.32 via patch
+sys/dev/i2c/sdtemp_reg.h			1.8-1.12
+share/man/man4/sdtemp.4				1.5-1.6
+
+	Changes for sdtemp(4):
+	- Add support for Atmel AT30TS00, AT30TSE004, Giantec GT30TS00,
+	  GT34TS02, Microchip MCP9804, MCP98244, IDT TS3000GB[02], TS3001GB2,
+	  TSE2004GB2, On Semiconductor CAT34TS02C and CAT34TS04.
+	- Add JEDEC TSE2004av support. If a device conforms TES2004av, it can
+	  be used without adding new entry into the matching table.
+	- Check the temperature resolution field in the capability register
+	  instead of the hard coded value in the match table. With this change,
+	  some devices' temperature resolution would be fixed.
+	- The resolution register is a vendor specific register.
+	- All of IDT devices have the resolution register.
+	- The address of the resolution register of Microchip MCP98244 is
+	  different from other Microchip devices.
+	- Show accuracy, range, resolution, high voltage standoff and shutdown.
+	- Show timeout with AB_DEBUG.
+	- Fix dmesg of STTS2004.
+	[msaitoh, ticket #1286]
+
+sys/arch/arm/include/armreg.h			1.111
+
+	Fix CORTEXA9Rx definitions.
+	[msaitoh, ticket #1287]
+
+distrib/sets/lists/man/mi			1.1521, 1.1522
+lib/libc/stdlib/Makefile.inc			1.92
+
+	Add malloc.conf.5 (link to jemalloc.3).
+	[msaitoh, ticket #1288]
+
+sys/dev/usb/usbdevs			1.683-1.684, 1.686-1.689, 1.691-1.695, 1.697-1.700, 1.702-1.711, 1.713-1.715, 1.717-1.727
+sys/dev/usb/usbdevs.h			regen
+sys/dev/usb/usbdevs_data.h		regen
+
+	- Add Realtek RTL8152, RTL8153, RTL8192EU.
+	- Add Atheros AR3012.
+	- Add Validity Sensors, Inc. and their devices. PR#45732 from
+	  Greg A. Woods.
+	- Add some SMSC devices (PR#49484)
+	- Add Silicon Labs EC3 USB debug adapter.
+	- Add Xbox 360 Wireless Receiver.
+	- Add Arduino, TP-Link, Compare, DataApex, Evoluton Robotics devices.
+	- Add another RTL8192CU device of Asustek.
+	- Add Belkin Components RTL8192CPU, RTL8188CU and F7D2102.
+	- Add another RTL8188CUS. device of Chicony Electronics.
+	- Add another RTL8192CU and DWA-131 rev. B of D-Link.
+	- Add Guillemot RTL8192CU.
+	- Add Hawking RTL8192CU.
+	- Add IO-DATA WN-G150UM and RTL8192CU.
+	- Add another RTL8188RU of Realtek.
+	- Add Huawei U8150, E353_HiLink.
+	- Add vendor ID of Ingenic Semiconductor Ltd.
+	- Add Conexant USB Modem.
+	- Add TI TUSB3410, MSP-FET430UIF and MSP-FET430UIF JTAG.
+	  Part of PR#49814.
+	- Add Lenovo ThinkPad Compact USB keyboard with TrackPoint.
+	- Add Panasonic Lumix Camera DMC-FS45 from kern/49809.
+	- Add Asustek USB-N53 and USB-N66.
+	- Add D-Link DWA-1xx devices.
+	- Add Ralink RT3573 and RT5572.
+	- Add Sitecom Europe ET3072 and LN-031.
+	- Add Elecom WDC-433SU2M2.
+	- Add Apple iPhone[45], iPad[23] and iPad Mini.
+	- Add Century CT-USB1HUB.
+	- Add MosChip MCS7832 Ethernet Adapter.
+	- Add another RTL8188CU of Realtek.
+	- Add DisplayLink MIMO, Polaris2 USB dock, Plugable docking station,
+	  FY-DVI and FY-DVI2.
+	- Add a NetChip USB-IDE bridge.
+	- Add MS Confort Mouse 6000 from Martijn van Buul (PR#50701).
+	- Add NTT DOCOMO L-05A.
+	- Add Buffalo WI-U2-300D.
+	- Add Sandisk Cruzer (PR#46547).
+	- Add D-Link DWA 125 rev. D1 USB wireless network adapter
+	  from Jake Slazenger (part of PR#51529).
+	- Add C-Meida USB Pnp Sound.
+	- Add AboCom RTL8188EU.
+	- Add Intel Advanced-N 6235 Combo Bluetooth.
+	- Add Validity Sensors VFS491.
+	- Add Linksys HG20F9 Ethernet.
+	[msaitoh, ticket #1289]
+
+sys/dev/pci/satalink.c				1.53
+
+	Remove PCI_PRODUCT_CMDTECH_240's entry because CMDTECH_AAR_1210SA
+	has the same ID.
+	[msaitoh, ticket #1290]
+
+sys/dev/pci/pcidevs				1.1221-1.1245, 1.1247-1.1262, 1.1264-1.1269, 1.1271-1.1273
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Add SystemBase SB16C1050 UARTs.
+	- Add D-Link DFE520TX (part of PR#49889 reported by Maxim Tsyplakov).
+	- Add Realtek RTL8188EE and RTL8192CE
+	- Add PLX Technology PEX 8111.
+	- Add some Red Hat devices.
+	- Add Samsung SM951.
+	- Add several NVIDIA geforce and NVS cards.
+	- Add some ATI/AMD devices.
+	- Add Radeon HD 2400 and TSB82AA2 IEEE 1394 Host Controller.
+	  Reported by T. M. Pederson (PR#40987).
+	- Add some Edimax, AWT, Fusion-io and Ralink devices of ral(4).
+	- Add MSI RT3090, Edimax RT3591, Ralink RT 536[02] and RT5390 of
+	  ral(4).
+	- Add vendor ID of Super Micro.
+	- Add MegaRAID SAS3008.
+	- Fix entries. The following problems were found while sorting entries:
+	  - Remove the following entries because the value is duplicated:
+	    CMDTECH_240		(CMDTECH_AAR_1210SA has the same value)
+	    INTEL_C610_SATA_RAID (INTEL_82801H_SATA_RAID has the same vaule)
+	    INTEL_C610_PCIE_1_3	(82801BA_HPB has the same value)
+	    GEFORCE_610M3	(GEFORCE_610M2 has the same value)
+	  - RADEON_RV350_NQ is not 0x4e41 but 0x4e51
+	  - 82801JD_SATA_RAID is not 0x3a02 but 0x3a05.
+	  - The following two entries have the same number. Fix one of them:
+	    DH89XXCL_USB_2 to 0x23b5	(was 0x23b4 (== DH89XXCL_USB_1))
+	    5500_HB to 0x3404 and change the desc (was 0x3403 (== 3400_HB))
+	    82X58_PCIE_0_1 to 0x3421	(was 0x3420 (== 82X58_PCIE_0_0))
+	    82801JI_THERMAL to 0x3a32	(was 0x3a30 (== 82801JI_SMB))
+	- Add the following Intel entries:
+	  - PCIe NVMe SSD.
+	  - Dual Band Wireless AC 3165.
+	  - I219 family Ethernet devices.
+	  - Dual Band Wireless AC 3165, 4165 and 8260 devices.
+	  - 82597EX_SR (part of PR#47750).
+	  - Braswell devices.
+	  - Core 6G devices.
+	  - 100 series chipset devices.
+	  - Xeon D devices.
+	  - Xeon 5[56]00 devices.
+	  - Xeon E7 v4 devices.
+	- Add "Core i7-6xxxK" to some Intel devices' description.
+	- Fix Intel XE5_V3_IMC1_DDRIO_[34]'s values.
+	- Add another ID for Intel 82Q45 KT.
+	- Add some entries of Intel 965 Express Chipset.
+	- Add some Intel Xeon E5 v3 devices.
+	- Add some Intel 1st gen Core PCI devices.
+	- Add some Intel Core 5G devices.
+	- Add some Intel Core i7-6xxxK devices.
+	- Add some Intel Core i7-800 and i5-700 devices.
+	- Add some Intel 10G devices.
+	- Add ASMedia ASM1042A USB 3.0 Host Controller.
+	- Add ASMEDIA ASM1083/1085/1142.
+	- Add Marvell Armada38x and 88AP510.
+	- Add Qualcomm Atheros QCA986x/988x.
+	- Add Atheros AR9565 Wireless LAN.
+	- Sort entries in device ID's order.
+	- Fix typo.
+	[msaitoh, ticket #1291]
+
+sys/dev/pci/pucdata.c				1.95-1.98
+share/man/man4/puc.4				1.39-40
+
+	Add three devices to puc(4):
+	- Add support for SystemBase SB16C1050 PCI serial card. PR#49819
+	  reported by Roberto E. Vargas Caballero.
+	- Add another Intel Q45 KT.
+	- Add Intel 100 Series Chipset KT.
+	[msaitoh, ticket #1292]
+
+sys/arch/x86/x86/procfs_machdep.c		1.12-1.14
+
+	Update for x86 /proc/cpuinfo:
+	- Add ptsc, avx512dq, avx512bw, avx512vl and rdt_a.
+	- Update VIA/Cyrix/Centaur-defined bits. Part of PR#39950.
+	- Remove pcommit.
+	- Update some Linux mapping unused in /proc/cpuinfo.
+	[msaitoh, ticket #1293]
 
