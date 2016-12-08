@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.6.4.1 2016/03/06 17:58:22 martin Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.6.4.2 2016/12/08 08:06:38 snj Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.4.1 2016/03/06 17:58:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.4.2 2016/12/08 08:06:38 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,13 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.4.1 2016/03/06 17:58:22 marti
  *  x86/include/asm/cpufeatures.h.
  */
 static const char * const x86_features[][32] = {
-	{ /* (0) Common */
+	{ /* (0) Common: 0x0000001 edx */
 	"fpu", "vme", "de", "pse", "tsc", "msr", "pae", "mce",
 	"cx8", "apic", NULL, "sep", "mtrr", "pge", "mca", "cmov",
 	"pat", "pse36", "pn", "clflush", NULL, "dts", "acpi", "mmx",
 	"fxsr", "sse", "sse2", "ss", "ht", "tm", "ia64", "pbe"},
 
-	{ /* (1) AMD-defined: 80000001 edx */
+	{ /* (1) AMD-defined: 0x80000001 edx */
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, "syscall", NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, "mp", "nx", NULL, "mmxext", NULL,
@@ -86,7 +86,7 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
-	{ /* (4) Intel-defined: 80000001 ecx */
+	{ /* (4) Intel-defined: 0x00000001 ecx */
 	"pni", "pclmulqdq", "dtes64", "monitor", "ds_cpl", "vmx", "smx", "est",
 	"tm2", "ssse3", "cid", "sdbg", "fma", "cx16", "xtpr", "pdcm",
 	NULL, "pcid", "dca", "sse4_1", "sse4_2", "x2apic", "movbe", "popcnt",
@@ -95,7 +95,7 @@ static const char * const x86_features[][32] = {
 
 	{ /* (5) VIA/Cyrix/Centaur-defined */
 	NULL, NULL, "rng", "rng_en", NULL, NULL, "ace", "ace_en",
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	"ace2", "ace2_en", "phe", "phe_en", "pmm", "pmm_en", NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
@@ -105,12 +105,13 @@ static const char * const x86_features[][32] = {
 	"3dnowprefetch", "osvw", "ibs", "xop", "skinit", "wdt", NULL, "lwp",
 	"fma4", "tce", NULL, "nodeid_msr",
 	NULL, "tbm", "topoext", "perfctr_core",
-	"perfctr_nb", NULL, "bpext", NULL, "perfctr_l2", "mwaitx", NULL, NULL},
+	"perfctr_nb", NULL, "bpext", "ptsc",
+	"perfctr_l2", "mwaitx", NULL, NULL},
 
 	{ /* (7) Linux mapping */
-	"ida", "arat", "cpb", "ebp", NULL, "pln", "pts", "dtherm",
-	"hw_pstate", "proc_feedback", "hwp", "hwp_notify", "hwp_act_window",
-	"hwp_epp", "hwp_pkg_req", "intel_pt",
+	NULL, NULL, "cpb", "ebp", NULL, "pln", "pts", "dtherm",
+	"hw_pstate", "proc_feedback", NULL, NULL,
+	NULL, NULL, NULL, "intel_pt",
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
@@ -124,11 +125,11 @@ static const char * const x86_features[][32] = {
 
 	{ /* (9) Intel-defined: 00000007 ebx */
 	"fsgsbase", "tsc_adjust", NULL, "bmi1", "hle", "avx2", NULL, "smep",
-	"bmi2", "erms", "invpcid", "rtm", "cqm", NULL, "mpx", NULL,
-	"avx512f", NULL, "rdseed", "adx",
-	"smap", NULL, "pcommit", "clflushopt",
+	"bmi2", "erms", "invpcid", "rtm", "cqm", NULL, "mpx", "rdt_a",
+	"avx512f", "avx512dq", "rdseed", "adx",
+	"smap", NULL, NULL, "clflushopt",
 	"clwb", NULL, "avx512pf", "avx512er",
-	"avx512cd", "sha_ni", NULL, NULL},
+	"avx512cd", "sha_ni", "avx512bw", "avx512vl"},
 
 	{ /* (10) 0000000d eax */
 	"xsaveopt", "xsavec", "xgetbv1", "xsaves", NULL, NULL, NULL, NULL,
