@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.92 2016/11/28 08:42:20 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.93 2016/12/08 12:22:56 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.92 2016/11/28 08:42:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.93 2016/12/08 12:22:56 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -815,6 +815,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 void
 dk_getdefaultlabel(struct dk_softc *dksc, struct disklabel *lp)
 {
+	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
 	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 
 	memset(lp, 0, sizeof(*lp));
@@ -843,7 +844,11 @@ dk_getdefaultlabel(struct dk_softc *dksc, struct disklabel *lp)
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
-	lp->d_checksum = dkcksum(dksc->sc_dkdev.dk_label);
+
+	if (dkd->d_label)
+		dkd->d_label(dksc->sc_dev, lp);
+
+	lp->d_checksum = dkcksum(lp);
 }
 
 /* ARGSUSED */
