@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.42 2016/06/10 13:27:14 ozaki-r Exp $	 */
+/* $NetBSD: if_bce.c,v 1.43 2016/12/08 01:12:01 ozaki-r Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.42 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.43 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include "vlan.h"
 
@@ -445,6 +445,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the interface */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	sc->enaddr[0] = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
 	    BCE_MAGIC_ENET0);
 	sc->enaddr[1] = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
@@ -713,7 +714,7 @@ bce_intr(void *xsc)
 			bce_init(ifp);
 		rnd_add_uint32(&sc->rnd_source, intstatus);
 		/* Try to get more packets going. */
-		bce_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 	return (handled);
 }

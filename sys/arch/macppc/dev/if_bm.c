@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.51 2016/10/03 01:23:55 ozaki-r Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.52 2016/12/08 01:12:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.51 2016/10/03 01:23:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.52 2016/12/08 01:12:00 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -260,6 +260,7 @@ bmac_attach(device_t parent, device_t self, void *aux)
 	bmac_reset_chip(sc);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 }
 
@@ -441,7 +442,7 @@ bmac_intr(void *v)
 		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 		sc->sc_if.if_timer = 0;
 		sc->sc_if.if_opackets++;
-		bmac_start(&sc->sc_if);
+		if_schedule_deferred_start(&sc->sc_if);
 	}
 
 	/* XXX should do more! */

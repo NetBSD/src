@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.15 2016/10/20 09:53:08 skrll Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.16 2016/12/08 01:12:01 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.15 2016/10/20 09:53:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.16 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -503,6 +503,7 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 
 	ether_ifattach(ifp, sc->sc_enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, mvxpe_ifflags_cb);
@@ -1479,8 +1480,7 @@ mvxpe_rxtxth_intr(void *arg)
 	}
 	mvxpe_sc_unlock(sc);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		mvxpe_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	rnd_add_uint32(&sc->sc_rnd_source, datum);
 

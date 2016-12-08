@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.80 2016/11/24 12:32:47 hkenken Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.81 2016/12/08 01:12:01 ozaki-r Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.80 2016/11/24 12:32:47 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.81 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -593,6 +593,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ieee80211_ifattach(ic);
 	ic->ic_node_alloc = iwn_node_alloc;
 	ic->ic_newassoc = iwn_newassoc;
@@ -2341,7 +2342,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int ackfailcnt,
 		sc->qfullmsk &= ~(1 << ring->qid);
 		if (sc->qfullmsk == 0 && (ifp->if_flags & IFF_OACTIVE)) {
 			ifp->if_flags &= ~IFF_OACTIVE;
-			(*ifp->if_start)(ifp);
+			if_schedule_deferred_start(ifp);
 		}
 	}
 }

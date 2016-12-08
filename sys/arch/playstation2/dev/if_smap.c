@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.21 2016/06/10 13:27:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.22 2016/12/08 01:12:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.21 2016/06/10 13:27:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.22 2016/12/08 01:12:00 ozaki-r Exp $");
 
 #include "debug_playstation2.h"
 
@@ -246,6 +246,7 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, emac3->eaddr);
 	
 	spd_intr_establish(SPD_NIC, smap_intr, sc);
@@ -321,8 +322,7 @@ smap_intr(void *arg)
 	
 	/* if transmission is pending, start here */
 	ifp = &sc->ethercom.ec_if;
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		smap_start(ifp);
+	if_schedule_deferred_start(ifp);
 	rnd_add_uint32(&sc->rnd_source, cause | sc->tx_fifo_ptr << 16);
 
 	return (1);

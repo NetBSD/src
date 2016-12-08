@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.59 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.60 2016/12/08 01:12:01 ozaki-r Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.59 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.60 2016/12/08 01:12:01 ozaki-r Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -846,6 +846,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach to the Ethernet interface list. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp,sc->eaddr);
 
 	callout_init(&sc->bnx_timeout, 0);
@@ -5384,8 +5385,7 @@ bnx_intr(void *xsc)
 	    BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | sc->last_status_idx);
 
 	/* Handle any frames that arrived while handling the interrupt. */
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		bnx_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return 1;
 }

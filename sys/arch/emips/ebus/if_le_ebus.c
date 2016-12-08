@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.11 2016/10/03 17:35:38 maya Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.12 2016/12/08 01:12:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.11 2016/10/03 17:35:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.12 2016/12/08 01:12:00 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -216,6 +216,7 @@ enic_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	sc->sc_sh = shutdownhook_establish(enic_shutdown, ifp);
@@ -540,7 +541,7 @@ enic_init(struct ifnet *ifp)
 	printf("enic_init <- %x\n",ctl);
 #endif
 
-	enic_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return 0;
 }
@@ -819,7 +820,7 @@ void enic_tint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 		ifp->if_timer = 0;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
-	enic_start(ifp);
+	if_schedule_deferred_start(ifp);
 #if DEBUG
 	sc->it = 1;
 #endif

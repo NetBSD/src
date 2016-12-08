@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.82 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.83 2016/12/08 01:12:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.82 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.83 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1458,6 +1458,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 
 	ether_ifattach(ifp, sc_if->sk_enaddr);
 
@@ -2397,10 +2398,10 @@ sk_intr(void *xsc)
 
 	CSR_WRITE_4(sc, SK_IMR, sc->sk_intrmask);
 
-	if (ifp0 != NULL && !IFQ_IS_EMPTY(&ifp0->if_snd))
-		sk_start(ifp0);
-	if (ifp1 != NULL && !IFQ_IS_EMPTY(&ifp1->if_snd))
-		sk_start(ifp1);
+	if (ifp0 != NULL)
+		if_schedule_deferred_start(ifp0);
+	if (ifp1 != NULL)
+		if_schedule_deferred_start(ifp1);
 
 	rnd_add_uint32(&sc->rnd_source, status);
 

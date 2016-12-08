@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.8 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.9 2016/12/08 01:12:01 ozaki-r Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.8 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.9 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -357,9 +357,10 @@ rtwn_attach(device_t parent, device_t self, void *aux)
 
 	if_initialize(ifp);
 	ieee80211_ifattach(ic);
-	if_register(ifp);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_deferred_start_init(ifp, NULL);
+	if_register(ifp);
 
 	/* override default methods */
 	ic->ic_newassoc = rtwn_newassoc;
@@ -3519,7 +3520,7 @@ rtwn_intr(void *xsc)
 	if ((status & RTWN_INT_ENABLE_TX) && sc->qfullmsk == 0) {
 		struct ifnet *ifp = GET_IFP(sc);
 		ifp->if_flags &= ~IFF_OACTIVE;
-		rtwn_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	/* Enable interrupts. */

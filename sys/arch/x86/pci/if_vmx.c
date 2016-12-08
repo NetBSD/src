@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.11 2016/11/29 22:27:09 dholland Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.12 2016/12/08 01:12:01 ozaki-r Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.11 2016/11/29 22:27:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.12 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1717,6 +1717,7 @@ vmxnet3_setup_interface(struct vmxnet3_softc *sc)
 	ifmedia_set(&sc->vmx_media, IFM_ETHER|IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->vmx_lladdr);
 	ether_set_ifflags_cb(&sc->vmx_ethercom, vmxnet3_ifflags_cb);
 	vmxnet3_link_status(sc);
@@ -1747,7 +1748,7 @@ vmxnet3_evintr(struct vmxnet3_softc *sc)
 	if (event & VMXNET3_EVENT_LINK) {
 		vmxnet3_link_status(sc);
 		if (sc->vmx_link_active != 0)
-			vmxnet3_start(&sc->vmx_ethercom.ec_if);
+			if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
 	}
 
 	if (event & (VMXNET3_EVENT_TQERROR | VMXNET3_EVENT_RQERROR)) {

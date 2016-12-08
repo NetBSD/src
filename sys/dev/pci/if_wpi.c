@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.74 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.75 2016/12/08 01:12:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.74 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.75 2016/12/08 01:12:01 ozaki-r Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -359,6 +359,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ieee80211_ifattach(ic);
 	/* override default methods */
 	ic->ic_node_alloc = wpi_node_alloc;
@@ -1630,7 +1631,7 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	wpi_start(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 static void

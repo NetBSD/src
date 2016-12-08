@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.48 2016/06/10 13:27:14 ozaki-r Exp $ */
+/*	$NetBSD: if_age.c,v 1.49 2016/12/08 01:12:01 ozaki-r Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.48 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.49 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include "vlan.h"
 
@@ -285,6 +285,7 @@ age_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	if (pmf_device_register1(self, NULL, age_resume, age_shutdown))
@@ -535,7 +536,7 @@ age_intr(void *arg)
 				age_init(ifp);
 			}
 
-			age_start(ifp);
+			if_schedule_deferred_start(ifp);
 
 			if (status & INTR_SMB)
 				age_stats_update(sc);

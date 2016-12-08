@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.25 2016/06/10 13:27:13 ozaki-r Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.26 2016/12/08 01:12:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.25 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.26 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -232,6 +232,7 @@ ec_attach(device_t parent, device_t self, void *aux)
 
 	/* Now we can attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	idprom_etheraddr(myaddr);
 	ether_ifattach(ifp, myaddr);
 	aprint_normal_dev(self, "address %s\n", ether_sprintf(myaddr));
@@ -352,7 +353,6 @@ ec_intr(void *arg)
 	int recv_first;
 	int recv_second;
 	int retval;
-	struct mbuf *m0;
 
 	retval = 0;
 
@@ -434,9 +434,7 @@ ec_intr(void *arg)
 			sc->sc_ethercom.ec_if.if_opackets++;
 			sc->sc_jammed = 0;
 			ifp->if_flags &= ~IFF_OACTIVE;
-			IFQ_POLL(&ifp->if_snd, m0);
-			if (m0 != NULL)
-				ec_start(ifp);
+			if_schedule_deferred_start(ifp);
 		}
 	} else {
 
@@ -646,7 +644,6 @@ ec_coll(struct ec_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_short jams;
-	struct mbuf *m0;
 
 	if ((++sc->sc_colliding) >= EC_COLLISIONS_JAMMED) {
 		sc->sc_ethercom.ec_if.if_oerrors++;
@@ -656,9 +653,7 @@ ec_coll(struct ec_softc *sc)
 		sc->sc_jammed = 1;
 		sc->sc_colliding = 0;
 		ifp->if_flags &= ~IFF_OACTIVE;
-		IFQ_POLL(&ifp->if_snd, m0);
-		if (m0 != NULL)
-			ec_start(ifp);
+		if_schedule_deferred_start(ifp);
 	} else {
 		jams = MAX(sc->sc_colliding, EC_BACKOFF_PRNG_COLL_MAX);
 		sc->sc_backoff_seed =

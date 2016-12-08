@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.60 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.61 2016/12/08 01:12:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.60 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.61 2016/12/08 01:12:01 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -658,6 +658,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 #ifdef STGE_EVENT_COUNTERS
@@ -1141,7 +1142,7 @@ stge_intr(void *arg)
 	    sc->sc_IntEnable);
 
 	/* Try to get more packets going. */
-	stge_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return (1);
 }

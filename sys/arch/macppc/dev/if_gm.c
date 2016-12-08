@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.47 2016/06/10 13:27:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.48 2016/12/08 01:12:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.47 2016/06/10 13:27:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.48 2016/12/08 01:12:00 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -247,6 +247,7 @@ gmac_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, laddr);
 	rnd_attach_source(&sc->sc_rnd_source, xname, RND_TYPE_NET,
 			  RND_FLAG_DEFAULT); 
@@ -343,7 +344,7 @@ gmac_tint(struct gmac_softc *sc)
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
-	gmac_start(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 void

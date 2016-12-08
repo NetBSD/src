@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.24 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.25 2016/12/08 01:12:01 ozaki-r Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.24 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.25 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -609,6 +609,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
@@ -2016,7 +2017,7 @@ cas_tint(struct cas_softc *sc, u_int32_t status)
 	if (sc->sc_tx_cnt == 0)
 		ifp->if_timer = 0;
 
-	cas_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return (1);
 }

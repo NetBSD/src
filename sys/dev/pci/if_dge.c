@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.45 2016/07/07 06:55:41 msaitoh Exp $ */
+/*	$NetBSD: if_dge.c,v 1.46 2016/12/08 01:12:01 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.45 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.46 2016/12/08 01:12:01 ozaki-r Exp $");
 
 
 
@@ -943,6 +943,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
@@ -1578,7 +1579,7 @@ dge_intr(void *arg)
 			dge_init(ifp);
 
 		/* Try to get more packets going. */
-		dge_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	return (handled);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.41 2016/06/10 13:27:12 ozaki-r Exp $ */
+/* $NetBSD: if_aumac.c,v 1.42 2016/12/08 01:12:00 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.41 2016/06/10 13:27:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.42 2016/12/08 01:12:00 ozaki-r Exp $");
 
 
 
@@ -338,6 +338,7 @@ aumac_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the interface. */
 	if_attach(ifp); 
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
@@ -578,7 +579,7 @@ aumac_txintr(struct aumac_softc *sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 		/* Try to queue more packets. */
-		aumac_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	if (pkts)

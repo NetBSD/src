@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.147 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_de.c,v 1.148 2016/12/08 01:12:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.147 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.148 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -4111,7 +4111,7 @@ tulip_intr_handler(
 	if (sc->tulip_flags & (TULIP_WANTTXSTART|TULIP_TXPROBE_ACTIVE|TULIP_DOINGSETUP|TULIP_PROMISC)) {
 	    tulip_tx_intr(sc);
 	    if ((sc->tulip_flags & TULIP_TXPROBE_ACTIVE) == 0)
-		tulip_ifstart(&sc->tulip_if);
+		if_schedule_deferred_start(&sc->tulip_if);
 	}
     }
     if (sc->tulip_flags & TULIP_NEEDRESET) {
@@ -5136,6 +5136,7 @@ tulip_attach(
     TULIP_ETHER_IFATTACH(sc);
 #else
     if_attach(ifp);
+    if_deferred_start_init(ifp, NULL);
 #if defined(__NetBSD__) || (defined(__FreeBSD__) && BSD >= 199506)
     TULIP_ETHER_IFATTACH(sc);
 #endif

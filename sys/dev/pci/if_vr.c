@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.119 2016/07/14 04:00:46 msaitoh Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.120 2016/12/08 01:12:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.119 2016/07/14 04:00:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.120 2016/12/08 01:12:01 ozaki-r Exp $");
 
 
 
@@ -987,7 +987,7 @@ vr_intr(void *arg)
 	CSR_WRITE_2(sc, VR_IMR, VR_INTRS);
 
 	if (dotx)
-		vr_start(ifp);
+		if_schedule_deferred_start(ifp);
 
 	return (handled);
 }
@@ -1745,6 +1745,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->vr_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(self),

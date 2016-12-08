@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.45 2016/07/14 10:19:06 msaitoh Exp $ */
+/* $NetBSD: if_txp.c,v 1.46 2016/12/08 01:12:01 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.45 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.46 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -343,6 +343,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 	 * Attach us everywhere
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	if (pmf_device_register1(self, NULL, NULL, txp_shutdown))
@@ -652,7 +653,7 @@ txp_intr(void *vsc)
 	/* unmask all interrupts */
 	WRITE_REG(sc, TXP_IMR, TXP_INT_A2H_3);
 
-	txp_start(&sc->sc_arpcom.ec_if);
+	if_schedule_deferred_start(&sc->sc_arpcom.ec_if);
 
 	return (claimed);
 }

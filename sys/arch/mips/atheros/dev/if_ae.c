@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.28 2016/06/10 13:27:12 ozaki-r Exp $ */
+/* $Id: if_ae.c,v 1.29 2016/12/08 01:12:00 ozaki-r Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.28 2016/06/10 13:27:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.29 2016/12/08 01:12:00 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -383,6 +383,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, ae_ifflags_cb);
 
@@ -993,7 +994,7 @@ ae_intr(void *arg)
 	}
 
 	/* Try to get more packets going. */
-	ae_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	if (handled)
 		rnd_add_uint32(&sc->sc_rnd_source, status);

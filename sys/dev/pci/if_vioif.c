@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.27 2016/11/29 21:54:11 uwe Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.28 2016/12/08 01:12:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.27 2016/11/29 21:54:11 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.28 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -672,6 +672,7 @@ skip:
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_mac);
 
 	return;
@@ -1130,7 +1131,7 @@ vioif_tx_vq_done(struct virtqueue *vq)
 out:
 	VIOIF_TX_UNLOCK(sc);
 	if (r)
-		vioif_start(ifp);
+		if_schedule_deferred_start(ifp);
 	return r;
 }
 

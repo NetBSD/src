@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.46 2016/06/10 13:27:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.47 2016/12/08 01:12:00 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.46 2016/06/10 13:27:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.47 2016/12/08 01:12:00 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -324,6 +324,7 @@ sq_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	memset(&sc->sq_trace, 0, sizeof(sc->sq_trace));
@@ -1110,7 +1111,7 @@ sq_txintr(struct sq_softc *sc)
 		ifp->if_timer = 0;
 
 	SQ_TRACE(SQ_TXINTR_EXIT, sc, sc->sc_prevtx, status);
-	sq_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return 1;
 }

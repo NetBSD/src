@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.53 2016/06/10 13:27:13 ozaki-r Exp $ */
+/* $NetBSD: if_mec.c,v 1.54 2016/12/08 01:12:01 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.53 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.54 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 
@@ -614,6 +614,7 @@ mec_attach(device_t parent, device_t self, void *aux)
 
 	/* attach the interface */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	/* establish interrupt */
@@ -1607,9 +1608,9 @@ mec_intr(void *arg)
 		}
 	}
 
-	if (sent && !IFQ_IS_EMPTY(&ifp->if_snd)) {
+	if (sent) {
 		/* try to get more packets going */
-		mec_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	if (handled)

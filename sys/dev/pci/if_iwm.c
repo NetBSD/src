@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.43 2016/09/23 19:53:52 maya Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.44 2016/12/08 01:12:01 ozaki-r Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.41 2015/05/22 06:50:54 kettenis Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.43 2016/09/23 19:53:52 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.44 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -3330,7 +3330,7 @@ iwm_mvm_rx_tx_cmd(struct iwm_softc *sc,
 			 * I guess net80211 does all sorts of stunts in
 			 * interrupt context, so maybe this is no biggie.
 			 */
-			(*ifp->if_start)(ifp);
+			if_schedule_deferred_start(ifp);
 		}
 	}
 }
@@ -6831,9 +6831,10 @@ iwm_attach(device_t parent, device_t self, void *aux)
 #else
 	ether_ifattach(ifp, ic->ic_myaddr);	/* XXX */
 #endif
-	if_register(ifp);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_deferred_start_init(ifp, NULL);
+	if_register(ifp);
 
 	callout_init(&sc->sc_calib_to, 0);
 	callout_setfunc(&sc->sc_calib_to, iwm_calib_timeout, sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.298 2016/07/11 06:14:51 knakahara Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.299 2016/12/08 01:12:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.298 2016/07/11 06:14:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.299 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4061,6 +4061,7 @@ alloc_retry:
 	 */
 	DPRINTFN(5, ("if_attach\n"));
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	DPRINTFN(5, ("ether_ifattach\n"));
 	ether_ifattach(ifp, eaddr);
 	ether_set_ifflags_cb(&sc->ethercom, bge_ifflags_cb);
@@ -4788,8 +4789,8 @@ bge_intr(void *xsc)
 	/* Re-enable interrupts. */
 	bge_writembx_flush(sc, BGE_MBX_IRQ0_LO, statustag);
 
-	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
-		bge_start(ifp);
+	if (ifp->if_flags & IFF_RUNNING)
+		if_schedule_deferred_start(ifp);
 
 	return 1;
 }
