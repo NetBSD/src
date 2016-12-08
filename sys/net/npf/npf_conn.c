@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.16 2015/02/05 22:04:03 rmind Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.17 2016/12/08 23:07:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014-2015 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.16 2015/02/05 22:04:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.17 2016/12/08 23:07:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -432,11 +432,21 @@ npf_conn_inspect(npf_cache_t *npc, const int di, int *error)
 	ok = npf_state_inspect(npc, &con->c_state, forw);
 	mutex_exit(&con->c_lock);
 
+	/* If invalid state: let the rules deal with it. */
 	if (__predict_false(!ok)) {
-		/* Invalid: let the rules deal with it. */
 		npf_conn_release(con);
 		npf_stats_inc(NPF_STAT_INVALID_STATE);
-		con = NULL;
+		return NULL;
+	}
+
+	/*
+	 * If this is multi-end state, then specially tag the packet
+	 * so it will be just passed-through on other interfaces.
+	 */
+	if (con->c_ifid == 0 && nbuf_add_tag(nbuf, NPF_NTAG_PASS) != 0) {
+		npf_conn_release(con);
+		*error = ENOMEM;
+		return NULL;
 	}
 	return con;
 }

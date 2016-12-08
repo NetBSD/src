@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.16 2016/03/18 10:09:46 mrg Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.17 2016/12/08 23:07:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.16 2016/03/18 10:09:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.17 2016/12/08 23:07:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -274,7 +274,7 @@ nbuf_cksum_barrier(nbuf_t *nbuf, int di)
  * => Returns 0 on success or errno on failure.
  */
 int
-nbuf_add_tag(nbuf_t *nbuf, uint32_t key, uint32_t val)
+nbuf_add_tag(nbuf_t *nbuf, uint32_t val)
 {
 	struct mbuf *m = nbuf->nb_mbuf0;
 	struct m_tag *mt;
@@ -298,7 +298,7 @@ nbuf_add_tag(nbuf_t *nbuf, uint32_t key, uint32_t val)
  * => Returns 0 on success or errno on failure.
  */
 int
-nbuf_find_tag(nbuf_t *nbuf, uint32_t key, void **data)
+nbuf_find_tag(nbuf_t *nbuf, uint32_t *val)
 {
 	struct mbuf *m = nbuf->nb_mbuf0;
 	struct m_tag *mt;
@@ -309,6 +309,6 @@ nbuf_find_tag(nbuf_t *nbuf, uint32_t key, void **data)
 	if (mt == NULL) {
 		return EINVAL;
 	}
-	*data = (void *)(mt + 1);
+	*val = *(uint32_t *)(mt + 1);
 	return 0;
 }
