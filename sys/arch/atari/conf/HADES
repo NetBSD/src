@@ -1,5 +1,5 @@
 #
-# $NetBSD: HADES,v 1.107 2014/11/24 08:29:26 tsutsui Exp $
+# $NetBSD: HADES,v 1.108 2016/12/08 11:31:09 nat Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -91,6 +91,10 @@ ep* at pci? dev ? function ? # 3Com 3c59x
 fxp* at pci? dev ? function ? # Intel EtherExpress PRO 10+/100B
 eso* at pci? dev ? function ? # ESS Solo-1 PCI AudioDrive
 audio* at eso?
+
+options VAUDIOSPEAKER
+spkr0	at audio0		# PC speaker (synthesized)
+
 pseudo-device view 4 # View (graphics mapping)
 pseudo-device mouse 1 # mouse
 ncrscsi0 at mainbus0 # NCR5380 SCSI driver
