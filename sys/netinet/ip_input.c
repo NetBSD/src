@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.345 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.346 2016/12/08 06:25:43 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.345 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.346 2016/12/08 06:25:43 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -287,7 +287,7 @@ static void		ipintr(void *);
 static void		ip_input(struct mbuf *);
 static void		ip_forward(struct mbuf *, int, struct ifnet *);
 static bool		ip_dooptions(struct mbuf *);
-static struct in_ifaddr *ip_rtaddr(struct in_addr);
+static struct in_ifaddr *ip_rtaddr(struct in_addr, struct psref *);
 static void		sysctl_net_inet_ip_setup(struct sysctllog **);
 
 static struct in_ifaddr	*ip_match_our_address(struct ifnet *, struct ip *,
@@ -943,7 +943,8 @@ ip_dooptions(struct mbuf *m)
 		 * address is on directly accessible net.
 		 */
 		case IPOPT_LSRR:
-		case IPOPT_SSRR:
+		case IPOPT_SSRR: {
+			struct psref psref;
 			if (ip_allowsrcrt == 0) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_NET_PROHIB;
@@ -989,34 +990,35 @@ ip_dooptions(struct mbuf *m)
 			 */
 			memcpy((void *)&ipaddr.sin_addr, (void *)(cp + off),
 			    sizeof(ipaddr.sin_addr));
-			s = pserialize_read_enter();
 			if (opt == IPOPT_SSRR) {
-				ifa = ifa_ifwithladdr(sintosa(&ipaddr));
+				ifa = ifa_ifwithladdr_psref(sintosa(&ipaddr),
+				    &psref);
 				if (ifa != NULL)
 					ia = ifatoia(ifa);
 				else
 					ia = NULL;
 			} else {
-				ia = ip_rtaddr(ipaddr.sin_addr);
+				ia = ip_rtaddr(ipaddr.sin_addr, &psref);
 			}
 			if (ia == NULL) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_SRCFAIL;
-				pserialize_read_exit(s);
 				goto bad;
 			}
 			ip->ip_dst = ipaddr.sin_addr;
 			bcopy((void *)&ia->ia_addr.sin_addr,
 			    (void *)(cp + off), sizeof(struct in_addr));
-			pserialize_read_exit(s);
+			ia4_release(ia, &psref);
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			/*
 			 * Let ip_intr's mcast routing check handle mcast pkts
 			 */
 			forward = !IN_MULTICAST(ip->ip_dst.s_addr);
 			break;
+		    }
 
-		case IPOPT_RR:
+		case IPOPT_RR: {
+			struct psref psref;
 			if (optlen < IPOPT_OFFSET + sizeof(*cp)) {
 				code = &cp[IPOPT_OLEN] - (u_char *)ip;
 				goto bad;
@@ -1037,12 +1039,10 @@ ip_dooptions(struct mbuf *m)
 			 * locate outgoing interface; if we're the destination,
 			 * use the incoming interface (should be same).
 			 */
-			s = pserialize_read_enter();
-			ifa = ifa_ifwithaddr(sintosa(&ipaddr));
+			ifa = ifa_ifwithaddr_psref(sintosa(&ipaddr), &psref);
 			if (ifa == NULL) {
-				ia = ip_rtaddr(ipaddr.sin_addr);
+				ia = ip_rtaddr(ipaddr.sin_addr, &psref);
 				if (ia == NULL) {
-					pserialize_read_exit(s);
 					type = ICMP_UNREACH;
 					code = ICMP_UNREACH_HOST;
 					goto bad;
@@ -1052,9 +1052,10 @@ ip_dooptions(struct mbuf *m)
 			}
 			bcopy((void *)&ia->ia_addr.sin_addr,
 			    (void *)(cp + off), sizeof(struct in_addr));
-			pserialize_read_exit(s);
+			ia4_release(ia, &psref);
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			break;
+		    }
 
 		case IPOPT_TS:
 			code = cp - (u_char *)ip;
@@ -1172,7 +1173,7 @@ bad:
  * return internet address info of interface to be used to get there.
  */
 static struct in_ifaddr *
-ip_rtaddr(struct in_addr dst)
+ip_rtaddr(struct in_addr dst, struct psref *psref)
 {
 	struct rtentry *rt;
 	union {
@@ -1190,6 +1191,7 @@ ip_rtaddr(struct in_addr dst)
 		return NULL;
 	}
 
+	ia4_acquire(ifatoia(rt->rt_ifa), psref);
 	rtcache_unref(rt, ro);
 	percpu_putref(ipforward_rt_percpu);
 
