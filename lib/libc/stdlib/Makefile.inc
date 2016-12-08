@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.82.2.2 2015/05/16 17:58:46 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.82.2.3 2016/12/08 07:43:44 snj Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -69,6 +69,7 @@ MLINKS+=hcreate.3 hdestroy.3 hcreate.3 hsearch.3
 MLINKS+=hcreate.3 hcreate_r.3 hcreate.3 hdestroy_r.3 hcreate.3 hsearch_r.3
 MLINKS+=hcreate.3 hdestroy1.3 hcreate.3 hdestroy1_r.3
 MLINKS+=insque.3 remque.3
+MLINKS+=jemalloc.3 malloc.conf.5
 MLINKS+=lsearch.3 lfind.3
 MLINKS+=malloc.3 calloc.3 malloc.3 realloc.3 malloc.3 free.3
 MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
