@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.60 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.61 2016/12/08 01:12:01 ozaki-r Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.60 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.61 2016/12/08 01:12:01 ozaki-r Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -297,6 +297,7 @@ ipw_attach(device_t parent, device_t self, void *aux)
 	    ether_sprintf(ic->ic_myaddr));
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ieee80211_ifattach(ic);
 
 	/* override state transition machine */
@@ -1215,7 +1216,7 @@ ipw_tx_intr(struct ipw_softc *sc)
 
 	/* Call start() since some buffer descriptors have been released */
 	ifp->if_flags &= ~IFF_OACTIVE;
-	(*ifp->if_start)(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 static int

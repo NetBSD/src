@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.45 2016/06/10 13:27:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.46 2016/12/08 01:12:00 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.45 2016/06/10 13:27:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.46 2016/12/08 01:12:00 ozaki-r Exp $");
 
 #include "opt_emac.h"
 
@@ -550,6 +550,7 @@ emac_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 #ifdef EMAC_EVENT_COUNTERS
@@ -1559,7 +1560,7 @@ emac_txeob_intr(void *arg)
 	handled |= emac_txreap(sc);
 
 	/* try to get more packets going */
-	emac_start(&sc->sc_ethercom.ec_if);
+	if_schedule_deferred_start(&sc->sc_ethercom.ec_if);
 
 	return handled;
 }

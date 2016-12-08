@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.163 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.164 2016/12/08 01:12:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.163 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.164 2016/12/08 01:12:01 ozaki-r Exp $");
 
 
 
@@ -1283,6 +1283,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, sip_ifflags_cb);
 	sc->sc_prev.ec_capenable = sc->sc_ethercom.ec_capenable;
@@ -1952,7 +1953,7 @@ sipcom_intr(void *arg)
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_IER, IER_IE);
 
 	/* Try to get more packets going. */
-	sipcom_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return (handled);
 }

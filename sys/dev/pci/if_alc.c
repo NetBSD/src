@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.21 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.22 2016/12/08 01:12:01 ozaki-r Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1466,6 +1466,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->alc_eaddr);
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -2300,8 +2301,7 @@ alc_intr(void *arg)
 		}
 
 		alc_txeof(sc);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			alc_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	/* Re-enable interrupts. */

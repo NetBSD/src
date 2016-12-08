@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.23 2016/07/14 04:00:46 msaitoh Exp $ */
+/*      $NetBSD: if_xge.c,v 1.24 2016/12/08 01:12:01 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.23 2016/07/14 04:00:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.24 2016/12/08 01:12:01 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -553,6 +553,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	/*
@@ -750,7 +751,7 @@ xge_intr(void *pv)
 	if (sc->sc_lasttx != lasttx)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
-	xge_start(ifp); /* Try to get more packets on the wire */
+	if_schedule_deferred_start(ifp); /* Try to get more packets on the wire */
 
 	if ((val = PIF_RCSR(RX_TRAFFIC_INT))) {
 		XGE_EVCNT_INCR(&sc->sc_rxintr);
