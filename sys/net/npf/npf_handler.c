@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.33 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.34 2016/12/08 23:07:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.33 2014/07/23 01:25:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.34 2016/12/08 23:07:11 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,6 +147,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	npf_rule_t *rl;
 	npf_rproc_t *rp;
 	int error, retfl;
+	uint32_t ntag;
 	int decision;
 
 	/*
@@ -177,6 +178,12 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 			/* More fragments should come; return. */
 			return 0;
 		}
+	}
+
+	/* Just pass-through if specially tagged. */
+	if (nbuf_find_tag(&nbuf, &ntag) == 0 && (ntag & NPF_NTAG_PASS) != 0) {
+		con = NULL;
+		goto pass;
 	}
 
 	/* Inspect the list of connections (if found, acquires a reference). */

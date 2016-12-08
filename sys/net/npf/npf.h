@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.47 2014/08/10 19:09:43 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.48 2016/12/08 23:07:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -116,8 +116,8 @@ void *		nbuf_ensure_contig(nbuf_t *, size_t);
 void *		nbuf_ensure_writable(nbuf_t *, size_t);
 
 bool		nbuf_cksum_barrier(nbuf_t *, int);
-int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
-int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
+int		nbuf_add_tag(nbuf_t *, uint32_t);
+int		nbuf_find_tag(nbuf_t *, uint32_t *);
 
 /*
  * Packet information cache.
@@ -259,8 +259,8 @@ bool		npf_autounload_p(void);
 #define	NPF_LAYER_2			2
 #define	NPF_LAYER_3			3
 
-/* XXX mbuf.h: just for now. */
-#define	PACKET_TAG_NPF			10
+/* Packet tags. */
+#define	NPF_NTAG_PASS			0x0001
 
 /*
  * Rule commands (non-ioctl).
