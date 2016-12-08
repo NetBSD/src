@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL64,v 1.8 2014/07/20 10:06:11 alnsn Exp $
+# 	$NetBSD: INSTALL64,v 1.9 2016/12/08 11:31:11 nat Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -105,6 +105,9 @@ lkkbd*	at	zsc1 channel ?		# keyboard port on A channels
 #vsms*	at	zsc0 channel ?		# mouse port on A channels   
 
 #audio*	at	bba?
+
+#options VAUDIOSPEAKER
+#spkr0	at audio0		# PC speaker (synthesized)
 
 dtkbd*	at	dt? addr ?
 #dtms*	at	dt? addr ?
