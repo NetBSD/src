@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.124 2016/12/06 06:58:05 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.125 2016/12/08 00:15:50 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -6977,4 +6977,16 @@ sys/arch/dreamcast/dev/pvr.c			1.36
 	Fixes panic after wsconscfg(8) from serial console, caused by
 	a junk function pointer.
 	[tsutsui, ticket #1284]
+
+sys/arch/x86/include/cacheinfo.h		1.22
+sys/arch/x86/include/specialreg.h		1.87 and 1.90
+usr.sbin/cpuctl/arch/i386.c			1.72-1.74
+
+	Changes for x86's cpuctl(8):
+	- Add Quark X1000, Xeon E[57] v4, Core i7-69xx Extreme, 7th gen Core,
+	  Denverton, Xeon Phi [357]200, Future Xeon and Future Xeon Phi.
+	- Add SGX, UMIP, RDPID, SGXLC, AVX512DQ, AVX512BW and AVX512VL bit.
+	- Fix the bit location of CLFLUSHOPT.
+	- Add new TLB descriptor 0x64 and 0xc4.
+	[msaitoh, ticket #1285]
 
