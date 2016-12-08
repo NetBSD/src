@@ -143,6 +143,7 @@ uhub*	at usb?						# USB Hubs
 uhub*	at uhub? port ?
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
 uhid*	at uhidev? reportid ?				# USB Generic HID
+
 ukbd*	at uhidev? reportid ?				# USB Keyboards
 wskbd*	at ukbd? console ?
 ums*	at uhidev? reportid ?				# USB Mice

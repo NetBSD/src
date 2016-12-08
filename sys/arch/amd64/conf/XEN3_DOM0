@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.120 2016/07/27 07:05:40 msaitoh Exp $
+# $NetBSD: XEN3_DOM0,v 1.121 2016/12/08 11:31:09 nat Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -746,6 +746,9 @@ hdafg*		at hdaudiobus?
 
 # Audio support
 audio*	at audiobus?
+
+options VAUDIOSPEAKER
+spkr0	at audio0		# PC speaker (synthesized)
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card

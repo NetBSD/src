@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.25 2015/04/23 23:22:51 pgoyette Exp $
+#	$NetBSD: majors.amd64,v 1.26 2016/12/08 11:31:09 nat Exp $
 #
 # Device majors for amd64
 #
@@ -28,8 +28,6 @@ device-major	uk		char 20			uk
 device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
-
-device-major	spkr		char 27			spkr
 
 device-major	cy		char 38			cy
 device-major	mcd		char 39  block 7	mcd

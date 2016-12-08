@@ -1,4 +1,4 @@
-#	$NetBSD: files.audio,v 1.4 2016/12/08 10:28:44 nat Exp $
+#	$NetBSD: files.audio,v 1.5 2016/12/08 11:31:08 nat Exp $
 
 define	audiobus	{ }
 define	midibus		{ }
@@ -17,6 +17,8 @@ device	audio {}: audiodev, auconv, aurateconv
 attach	audio at audiobus
 device	midi: audio
 attach	midi at midibus
+device	spkr: audiobell
+attach  spkr at audio with spkr_synth
 
 # console bell via audio device
 #
@@ -24,10 +26,11 @@ define	audiobell
 
 file	dev/auconv.c			auconv
 file	dev/audio.c			audio			needs-flag
-file	dev/audiobell.c			audiobell
+file	dev/audiobell.c			audiobell & vaudiospeaker needs-flag
 file	dev/aurateconv.c		aurateconv		needs-flag
 file	dev/auvolconv.c			auvolconv
 file	dev/midi.c			midi			needs-flag
 file	dev/midictl.c			midisyn
 file	dev/midisyn.c			midisyn
 file	dev/mulaw.c			mulaw			needs-flag
+file	dev/spkr_synth.c		spkr & vaudiospeaker	needs-flag

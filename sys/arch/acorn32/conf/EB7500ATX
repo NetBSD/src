@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.58 2015/08/12 07:53:57 maxv Exp $
+#	$NetBSD: EB7500ATX,v 1.59 2016/12/08 11:31:09 nat Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.58 $"
+#ident		"EB7500ATX-$Revision: 1.59 $"
 
 # estimated number of users
 maxusers	32
@@ -221,6 +221,9 @@ pseudo-device	wsmux
 # Audio device
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
+
+options VAUDIOSPEAKER
+spkr0	at audio0		# PC speaker (synthesized)
 
 rsbus0	at mainbus?
 
