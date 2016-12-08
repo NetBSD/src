@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.34 2011/09/06 01:16:43 jmcneill Exp $	*/
+/*	$NetBSD: audioio.h,v 1.35 2016/12/08 10:28:44 nat Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -143,6 +143,11 @@ typedef struct audio_encoding {
 #define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
 } audio_encoding_t;
 
+struct audio_pid {
+	pid_t	pid;			/* for audio device belonging to pid */
+	lwpid_t	lwpid;			/* unused */
+};
+
 /*
  * Balance settings.
  */
@@ -189,6 +194,7 @@ typedef struct audio_encoding {
 #define  AUDIO_PROP_PLAYBACK	0x10
 #define  AUDIO_PROP_CAPTURE	0x20
 #define AUDIO_GETBUFINFO	_IOR('A', 35, struct audio_info)
+#define AUDIO_SETPROC	_IOW('A', 36, struct audio_pid)
 
 /*
  * Mixer device

@@ -1,4 +1,4 @@
-.\" $NetBSD: audioctl.1,v 1.19 2010/05/15 00:08:31 joerg Exp $
+.\" $NetBSD: audioctl.1,v 1.20 2016/12/08 10:28:44 nat Exp $
 .\"
 .\" Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,14 +35,17 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d Ar device
+.Op Fl p Ar pid
 .Op Fl n
 .Fl a
 .Nm
 .Op Fl d Ar device
+.Op Fl p Ar pid
 .Op Fl n
 .Ar name ...
 .Nm
 .Op Fl d Ar device
+.Op Fl p Ar pid
 .Op Fl n
 .Fl w
 .Ar name=value ...
@@ -68,6 +71,11 @@ flag can be used to give an alternative audio control device, the default is
 .Pa /dev/audioctl0 .
 .Pp
 The
+.Fl p
+flag can be used to give a virtual channel pid to control, the default is
+current process id.
+.Pp
+The
 .Fl n
 flag suppresses printing of the variable name.
 .Sh ENVIRONMENT
@@ -85,10 +93,11 @@ audio control device
 audio I/O device (does not reset on open)
 .El
 .Sh EXAMPLES
-To set the playing sampling rate to 11025, you can use
-.Dl audioctl -w play.sample_rate=11025
+To set the playing sampling rate to 11025, for the channel opened by pid 3
+you can use
+.Dl audioctl -p 3 -w play.sample_rate=11025
 To set all of the play parameters for CD-quality audio, you can use
-.Dl audioctl -w play=44100,2,16,slinear_le
+.Dl audioctl -p 3 -w play=44100,2,16,slinear_le
 Note that many of the variables that can be inspected and changed with
 .Nm
 are reset when
