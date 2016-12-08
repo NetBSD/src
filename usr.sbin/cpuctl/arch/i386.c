@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.58.2.5 2016/03/06 17:49:56 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.58.2.6 2016/12/08 00:15:25 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.58.2.5 2016/03/06 17:49:56 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.58.2.6 2016/12/08 00:15:25 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -298,7 +298,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium (P54C)", "Pentium (P24T)",
 				"Pentium/MMX", "Pentium", 0,
 				"Pentium (P54C)", "Pentium/MMX (Tillamook)",
-				0, 0, 0, 0, 0, 0, 0,
+				"Quark X1000", 0, 0, 0, 0, 0, 0,
 			},
 			"Pentium",	/* Default */
 			NULL,
@@ -368,12 +368,18 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x4c] = "Atom X[57]-Z8000 (Airmont)",
 				[0x4d] = "Atom C2000",
 				[0x4e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
-				[0x4f] = "Future gen Xeon (Broadwell)",
+				[0x4f] = "Xeon E[57] v4 (Broadwell), Core i7-69xx Extreme",
+				[0x55] = "Future Xeon",
 				[0x56] = "Xeon D-1500 (Broadwell)",
-				[0x57] = "Next gen Xeon Phi",
+				[0x57] = "Xeon Phi [357]200",
 				[0x5a] = "Atom E3500",
+				[0x5c] = "Next Atom (Goldmont)",
 				[0x5d] = "Atom X3-C3000 (Silvermont)",
 				[0x5e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
+				[0x5f] = "Future Atom (Denverton)",
+				[0x85] = "Future Xeon Phi",
+				[0x8e] = "7th gen Core (Kaby Lake)",
+				[0x9e] = "7th gen Core (Kaby Lake)",
 			},
 			"Pentium Pro, II or III",	/* Default */
 			NULL,
