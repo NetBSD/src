@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.99 2016/07/27 07:05:39 msaitoh Exp $
+#	$NetBSD: XEN3_DOM0,v 1.100 2016/12/08 11:31:11 nat Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -718,6 +718,9 @@ hdafg*		at hdaudiobus?
 
 # Audio support
 audio*	at audiobus?
+
+options VAUDIOSPEAKER
+spkr0	at audio0		# PC speaker (synthesized)
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.191 2015/08/08 06:36:25 maxv Exp $
+# $NetBSD: GENERIC,v 1.192 2016/12/08 11:31:10 nat Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.191 $"
+#ident 		"GENERIC-$Revision: 1.192 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -284,6 +284,9 @@ uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 # 425e digital audio
 arcofi* 	at dio? scode ?
 audio*		at arcofi?
+
+options VAUDIOSPEAKER
+spkr0	at audio0		# PC speaker (synthesized)
 
 #
 # Pseudo-devices
