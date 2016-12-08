@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.58 2016/06/10 13:27:14 ozaki-r Exp $ */
+/* $NetBSD: if_vge.c,v 1.59 2016/12/08 01:12:01 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.58 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.59 2016/12/08 01:12:01 ozaki-r Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1067,6 +1067,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, vge_ifflags_cb);
 
@@ -1529,8 +1530,8 @@ vge_intr(void *arg)
 	/* Re-enable interrupts */
 	CSR_WRITE_1(sc, VGE_CRS3, VGE_CR3_INT_GMSK);
 
-	if (claim && !IFQ_IS_EMPTY(&ifp->if_snd))
-		vge_start(ifp);
+	if (claim)
+		if_schedule_deferred_start(ifp);
 
 	return claim;
 }

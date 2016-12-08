@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.10 2016/03/11 22:09:54 macallan Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.11 2016/12/08 01:12:01 ozaki-r Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.10 2016/03/11 22:09:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.11 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -356,6 +356,7 @@ cmalo_attach(void *arg)
 
 	/* attach interface */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ieee80211_ifattach(ic);
 
 	sc->sc_newstate = ic->ic_newstate;
@@ -1070,7 +1071,7 @@ cmalo_tx_done(struct malo_softc *sc)
 	ifp->if_opackets++;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
-	cmalo_start(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 static void
