@@ -1,5 +1,5 @@
 /*	$KAME: sctp_timer.c,v 1.30 2005/06/16 18:29:25 jinmei Exp $	*/
-/*	$NetBSD: sctp_timer.c,v 1.2 2016/04/25 21:21:02 rjs Exp $	*/
+/*	$NetBSD: sctp_timer.c,v 1.3 2016/12/08 05:16:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_timer.c,v 1.2 2016/04/25 21:21:02 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_timer.c,v 1.3 2016/12/08 05:16:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -247,8 +247,10 @@ sctp_find_alternate_net(struct sctp_tcb *stcb,
 			(!(alt->dest_state & SCTP_ADDR_UNCONFIRMED))
 			) {
 			/* Found a reachable address */
+			rtcache_unref(rt, &alt->ro);
 			break;
 		}
+		rtcache_unref(rt, &alt->ro);
 		mnet = alt;
 	} while (alt != NULL);
 
@@ -1346,6 +1348,7 @@ void sctp_pathmtu_timer(struct sctp_inpcb *inp,
 				net->mtu = next_mtu;
 			}
 		}
+		rtcache_unref(rt, &net->ro);
 	}
 	/* restart the timer */
 	sctp_timer_start(SCTP_TIMER_TYPE_PATHMTURAISE, inp, stcb, net);
