@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.74 2016/06/20 06:46:37 knakahara Exp $	*/
+/*	$NetBSD: pf.c,v 1.75 2016/12/08 05:16:33 ozaki-r Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.74 2016/06/20 06:46:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.75 2016/12/08 05:16:33 ozaki-r Exp $");
 
 #include "pflog.h"
 
@@ -2980,6 +2980,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	if ((rt = rtcache_init_noclone(rop)) != NULL) {
 		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
 		mss = max(tcp_mssdflt, mss);
+		rtcache_unref(rt, rop);
 	}
 	rtcache_free(rop);
 #endif
@@ -5068,6 +5069,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
 	} u;
 	struct route		 ro;
 	int			 ret = 1;
+	struct rtentry		*rt;
 
 	bzero(&ro, sizeof(ro));
 	switch (af) {
@@ -5084,7 +5086,10 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
 	}
 	rtcache_setdst(&ro, &u.dst);
 
-	ret = rtcache_init(&ro) != NULL ? 1 : 0;
+	rt = rtcache_init(&ro);
+	ret = rt != NULL ? 1 : 0;
+	if (rt != NULL)
+		rtcache_unref(rt, &ro);
 	rtcache_free(&ro);
 
 	return (ret);
@@ -5300,6 +5305,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 
 		if (rt->rt_flags & RTF_GATEWAY)
 			dst = rt->rt_gateway;
+		rtcache_unref(rt, ro); /* FIXME dst is NOMPSAFE */
 	} else {
 		if (TAILQ_EMPTY(&r->rpool.list)) {
 			DPFPRINTF(PF_DEBUG_URGENT,

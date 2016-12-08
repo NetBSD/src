@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.186 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.187 2016/12/08 05:16:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.186 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.187 2016/12/08 05:16:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -337,6 +337,14 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 			size -= hdrlen;
 		}
 	}
+#endif
+#ifdef INET
+	if (inp)
+		in_pcbrtentry_unref(rt, inp);
+#endif
+#ifdef INET6
+	if (in6p)
+		in6_pcbrtentry_unref(rt, in6p);
 #endif
  out:
 	/*
@@ -547,7 +555,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 int
 tcp_output(struct tcpcb *tp)
 {
-	struct rtentry *rt;
+	struct rtentry *rt = NULL;
 	struct socket *so;
 	struct route *ro;
 	long len, win;
@@ -638,6 +646,10 @@ tcp_output(struct tcpcb *tp)
 #endif
 	    (rt = rtcache_validate(&tp->t_inpcb->inp_route)) != NULL &&
 	    (rt->rt_ifp->if_capenable & IFCAP_TSOv4) != 0;
+	if (rt != NULL) {
+		rtcache_unref(rt, &tp->t_inpcb->inp_route);
+		rt = NULL;
+	}
 #endif /* defined(INET) */
 #if defined(INET6)
 	has_tso6 = tp->t_in6pcb != NULL &&
@@ -647,6 +659,8 @@ tcp_output(struct tcpcb *tp)
 #endif
 	    (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL &&
 	    (rt->rt_ifp->if_capenable & IFCAP_TSOv6) != 0;
+	if (rt != NULL)
+		rtcache_unref(rt, &tp->t_in6pcb->in6p_route);
 #endif /* defined(INET6) */
 	has_tso = (has_tso4 || has_tso6) && !alwaysfrag;
 
@@ -1134,6 +1148,14 @@ send:
 		tp->snd_nxt = tp->iss;
 		tp->t_ourmss = tcp_mss_to_advertise(synrt != NULL ?
 						    synrt->rt_ifp : NULL, af);
+#ifdef INET
+		if (tp->t_inpcb)
+			in_pcbrtentry_unref(synrt, tp->t_inpcb);
+#endif
+#ifdef INET6
+		if (tp->t_in6pcb)
+			in6_pcbrtentry_unref(synrt, tp->t_in6pcb);
+#endif
 		if ((tp->t_flags & TF_NOOPT) == 0 && OPT_FITS(4)) {
 			opt[0] = TCPOPT_MAXSEG;
 			opt[1] = 4;

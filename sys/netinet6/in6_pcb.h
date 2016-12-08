@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.46 2015/05/24 15:43:45 rtr Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.47 2016/12/08 05:16:34 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -179,6 +179,8 @@ int	in6_pcbsetport(struct sockaddr_in6 *, struct in6pcb *, struct lwp *);
 
 extern struct rtentry *
 	in6_pcbrtentry(struct in6pcb *);
+extern void
+	in6_pcbrtentry_unref(struct rtentry *, struct in6pcb *);
 extern struct in6pcb *in6_pcblookup_connect(struct inpcbtable *,
 					    const struct in6_addr *, u_int, const struct in6_addr *, u_int, int,
 					    struct vestigial_inpcb *);

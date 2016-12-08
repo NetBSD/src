@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.344 2016/10/18 07:30:31 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.345 2016/12/08 05:16:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.344 2016/10/18 07:30:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.345 2016/12/08 05:16:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1183,13 +1183,15 @@ ip_rtaddr(struct in_addr dst)
 
 	sockaddr_in_init(&u.dst4, &dst, 0);
 
-	SOFTNET_LOCK();
 	ro = percpu_getref(ipforward_rt_percpu);
 	rt = rtcache_lookup(ro, &u.dst);
-	percpu_putref(ipforward_rt_percpu);
-	SOFTNET_UNLOCK();
-	if (rt == NULL)
+	if (rt == NULL) {
+		percpu_putref(ipforward_rt_percpu);
 		return NULL;
+	}
+
+	rtcache_unref(rt, ro);
+	percpu_putref(ipforward_rt_percpu);
 
 	return ifatoia(rt->rt_ifa);
 }
@@ -1349,7 +1351,8 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
 
 	ro = percpu_getref(ipforward_rt_percpu);
-	if ((rt = rtcache_lookup(ro, &u.dst)) == NULL) {
+	rt = rtcache_lookup(ro, &u.dst);
+	if (rt == NULL) {
 		percpu_putref(ipforward_rt_percpu);
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
 		return;
@@ -1393,6 +1396,7 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 			code = ICMP_REDIRECT_HOST;
 		}
 	}
+	rtcache_unref(rt, ro);
 
 	error = ip_output(m, NULL, ro,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
@@ -1450,8 +1454,10 @@ error:
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
 
-		if ((rt = rtcache_validate(ro)) != NULL)
+		if ((rt = rtcache_validate(ro)) != NULL) {
 			destmtu = rt->rt_ifp->if_mtu;
+			rtcache_unref(rt, ro);
+		}
 #ifdef IPSEC
 		if (ipsec_used)
 			(void)ipsec4_forward(mcopy, &destmtu);
