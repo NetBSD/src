@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.32 2016/10/18 07:30:31 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.33 2016/12/08 05:16:34 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.32 2016/10/18 07:30:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.33 2016/12/08 05:16:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -259,7 +259,7 @@ ip6flow_fastforward(struct mbuf **mp)
 {
 	struct ip6flow *ip6f;
 	struct ip6_hdr *ip6;
-	struct rtentry *rt;
+	struct rtentry *rt = NULL;
 	struct mbuf *m;
 	const struct sockaddr *dst;
 	int error;
@@ -327,14 +327,14 @@ ip6flow_fastforward(struct mbuf **mp)
 	if ((rt = rtcache_validate(&ip6f->ip6f_ro)) == NULL ||
 	    (rt->rt_ifp->if_flags & IFF_UP) == 0 ||
 	    (rt->rt_flags & RTF_BLACKHOLE) != 0)
-		goto out;
+		goto out_unref;
 
 	/*
 	 * Packet size greater than MTU?
 	 */
 	if (m->m_pkthdr.len > rt->rt_ifp->if_mtu) {
 		/* Return to main IPv6 input function. */
-		goto out;
+		goto out_unref;
 	}
 
 	/*
@@ -343,7 +343,7 @@ ip6flow_fastforward(struct mbuf **mp)
 	m->m_pkthdr.csum_flags = 0;
 
 	if (ip6->ip6_hlim <= IPV6_HLIMDEC)
-		goto out;
+		goto out_unref;
 
 	/* Decrement hop limit (same as TTL) */
 	ip6->ip6_hlim -= IPV6_HLIMDEC;
@@ -373,7 +373,9 @@ ip6flow_fastforward(struct mbuf **mp)
 		ip6f->ip6f_forwarded++;
 	}
 	ret = 1;
- out:
+out_unref:
+	rtcache_unref(rt, &ip6f->ip6f_ro);
+out:
 	mutex_exit(&ip6flow_lock);
 	return ret;
 }
@@ -382,12 +384,11 @@ ip6flow_fastforward(struct mbuf **mp)
  * Add the IPv6 flow statistics to the main IPv6 statistics.
  */
 static void
-ip6flow_addstats(const struct ip6flow *ip6f)
+ip6flow_addstats_rt(struct rtentry *rt, struct ip6flow *ip6f)
 {
-	struct rtentry *rt;
 	uint64_t *ip6s;
 
-	if ((rt = rtcache_validate(&ip6f->ip6f_ro)) != NULL)
+	if (rt != NULL)
 		rt->rt_use += ip6f->ip6f_uses;
 	ip6s = IP6_STAT_GETREF();
 	ip6s[IP6_STAT_FASTFORWARDFLOWS] = ip6flow_inuse;
@@ -397,6 +398,16 @@ ip6flow_addstats(const struct ip6flow *ip6f)
 	ip6s[IP6_STAT_FORWARD] += ip6f->ip6f_forwarded;
 	ip6s[IP6_STAT_FASTFORWARD] += ip6f->ip6f_forwarded;
 	IP6_STAT_PUTREF();
+}
+
+static void
+ip6flow_addstats(struct ip6flow *ip6f)
+{
+	struct rtentry *rt;
+
+	rt = rtcache_validate(&ip6f->ip6f_ro);
+	ip6flow_addstats_rt(rt, ip6f);
+	rtcache_unref(rt, &ip6f->ip6f_ro);
 }
 
 /*
@@ -452,12 +463,14 @@ ip6flow_reap_locked(int just_one)
 		struct ip6flow *maybe_ip6f = TAILQ_LAST(&ip6flowlist, ip6flowhead);
 
 		TAILQ_FOREACH(ip6f, &ip6flowlist, ip6f_list) {
+			struct rtentry *rt;
 			/*
 			 * If this no longer points to a valid route -
 			 * reclaim it.
 			 */
-			if (rtcache_validate(&ip6f->ip6f_ro) == NULL)
+			if ((rt = rtcache_validate(&ip6f->ip6f_ro)) == NULL)
 				goto done;
+			rtcache_unref(rt, &ip6f->ip6f_ro);
 			/*
 			 * choose the one that's been least recently
 			 * used or has had the least uses in the
@@ -516,17 +529,19 @@ ip6flow_slowtimo_work(struct work *wk, void *arg)
 	mutex_enter(&ip6flow_lock);
 
 	for (ip6f = TAILQ_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
+		struct rtentry *rt = NULL;
 		next_ip6f = TAILQ_NEXT(ip6f, ip6f_list);
 		if (PRT_SLOW_ISEXPIRED(ip6f->ip6f_timer) ||
-		    rtcache_validate(&ip6f->ip6f_ro) == NULL) {
+		    (rt = rtcache_validate(&ip6f->ip6f_ro)) == NULL) {
 			ip6flow_free(ip6f);
 		} else {
 			ip6f->ip6f_last_uses = ip6f->ip6f_uses;
-			ip6flow_addstats(ip6f);
+			ip6flow_addstats_rt(rt, ip6f);
 			ip6f->ip6f_uses = 0;
 			ip6f->ip6f_dropped = 0;
 			ip6f->ip6f_forwarded = 0;
 		}
+		rtcache_unref(rt, &ip6f->ip6f_ro);
 	}
 
 	mutex_exit(&ip6flow_lock);
@@ -552,7 +567,7 @@ ip6flow_slowtimo(void)
  * IPv6 stack. Now create/update a flow.
  */
 void
-ip6flow_create(const struct route *ro, struct mbuf *m)
+ip6flow_create(struct route *ro, struct mbuf *m)
 {
 	const struct ip6_hdr *ip6;
 	struct ip6flow *ip6f;

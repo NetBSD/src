@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.19 2016/06/20 06:46:38 knakahara Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.20 2016/12/08 05:16:33 ozaki-r Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.19 2016/06/20 06:46:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.20 2016/12/08 05:16:33 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,7 @@ ddp_route(struct mbuf *m, struct route *ro)
 	struct ifnet   *ifp = NULL;
 	uint16_t        net;
 	uint8_t         loopback = 0;
+	int		error;
 
 	if ((rt = rtcache_validate(ro)) != NULL && (ifp = rt->rt_ifp) != NULL) {
 		const struct sockaddr_at *dst = satocsat(rtcache_getdst(ro));
@@ -153,7 +154,8 @@ ddp_route(struct mbuf *m, struct route *ro)
 		printf("%s: no address found\n", __func__);
 #endif
 		m_freem(m);
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 	}
 	/*
          * There are several places in the kernel where data is added to
@@ -163,8 +165,10 @@ ddp_route(struct mbuf *m, struct route *ro)
          */
 	if (!(aa->aa_flags & AFA_PHASE2)) {
 		M_PREPEND(m, SZ_ELAPHDR, M_DONTWAIT);
-		if (m == NULL)
-			return ENOBUFS;
+		if (m == NULL) {
+			error = ENOBUFS;
+			goto out;
+		}
 
 		elh = mtod(m, struct elaphdr *);
 		elh->el_snode = satosat(&aa->aa_addr)->sat_addr.s_node;
@@ -203,5 +207,9 @@ ddp_route(struct mbuf *m, struct route *ro)
 #endif
 		looutput(lo0ifp, copym, rtcache_getdst(ro), NULL);
 	}
-	return if_output_lock(ifp, ifp, m, (struct sockaddr *)&gate, NULL);
+
+	error = if_output_lock(ifp, ifp, m, (struct sockaddr *)&gate, NULL);
+out:
+	rtcache_unref(rt, ro);
+	return error;
 }

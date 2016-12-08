@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.77 2016/10/18 07:30:31 ozaki-r Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.78 2016/12/08 05:16:33 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.77 2016/10/18 07:30:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.78 2016/12/08 05:16:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -208,7 +208,7 @@ ipflow_fastforward(struct mbuf *m)
 	struct ip *ip;
 	struct ip ip_store;
 	struct ipflow *ipf;
-	struct rtentry *rt;
+	struct rtentry *rt = NULL;
 	const struct sockaddr *dst;
 	int error;
 	int iplen;
@@ -258,7 +258,7 @@ ipflow_fastforward(struct mbuf *m)
 		 M_CSUM_IPv4_BAD)) {
 	case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
 		m_put_rcvif(ifp, &s);
-		goto out;
+		goto out_unref;
 
 	case M_CSUM_IPv4:
 		/* Checksum was okay. */
@@ -268,7 +268,7 @@ ipflow_fastforward(struct mbuf *m)
 		/* Must compute it ourselves. */
 		if (in_cksum(m, sizeof(struct ip)) != 0) {
 			m_put_rcvif(ifp, &s);
-			goto out;
+			goto out_unref;
 		}
 		break;
 	}
@@ -277,16 +277,16 @@ ipflow_fastforward(struct mbuf *m)
 	/*
 	 * Route and interface still up?
 	 */
-	if ((rt = rtcache_validate(&ipf->ipf_ro)) == NULL ||
-	    (rt->rt_ifp->if_flags & IFF_UP) == 0 ||
+	rt = rtcache_validate(&ipf->ipf_ro);
+	if (rt == NULL || (rt->rt_ifp->if_flags & IFF_UP) == 0 ||
 	    (rt->rt_flags & (RTF_BLACKHOLE | RTF_BROADCAST)) != 0)
-		goto out;
+		goto out_unref;
 
 	/*
 	 * Packet size OK?  TTL?
 	 */
 	if (m->m_pkthdr.len > rt->rt_ifp->if_mtu || ip->ip_ttl <= IPTTLDEC)
-		goto out;
+		goto out_unref;
 
 	/*
 	 * Clear any in-bound checksum flags for this packet.
@@ -359,7 +359,9 @@ ipflow_fastforward(struct mbuf *m)
 			ipf->ipf_errors++;
 	}
 	ret = 1;
- out:
+out_unref:
+	rtcache_unref(rt, &ipf->ipf_ro);
+out:
 	mutex_exit(&ipflow_lock);
 	return ret;
 }
@@ -370,8 +372,11 @@ ipflow_addstats(struct ipflow *ipf)
 	struct rtentry *rt;
 	uint64_t *ips;
 
-	if ((rt = rtcache_validate(&ipf->ipf_ro)) != NULL)
+	rt = rtcache_validate(&ipf->ipf_ro);
+	if (rt != NULL) {
 		rt->rt_use += ipf->ipf_uses;
+		rtcache_unref(rt, &ipf->ipf_ro);
+	}
 	
 	ips = IP_STAT_GETREF();
 	ips[IP_STAT_CANTFORWARD] += ipf->ipf_errors + ipf->ipf_dropped;
@@ -431,12 +436,15 @@ ipflow_reap(bool just_one)
 		struct ipflow *maybe_ipf = TAILQ_LAST(&ipflowlist, ipflowhead);
 
 		TAILQ_FOREACH(ipf, &ipflowlist, ipf_list) {
+			struct rtentry *rt;
 			/*
 			 * If this no longer points to a valid route
 			 * reclaim it.
 			 */
-			if (rtcache_validate(&ipf->ipf_ro) == NULL)
+			rt = rtcache_validate(&ipf->ipf_ro);
+			if (rt == NULL)
 				goto done;
+			rtcache_unref(rt, &ipf->ipf_ro);
 			/*
 			 * choose the one that's been least recently
 			 * used or has had the least uses in the
@@ -488,6 +496,7 @@ ipflow_slowtimo_work(struct work *wk, void *arg)
 		} else {
 			ipf->ipf_last_uses = ipf->ipf_uses;
 			rt->rt_use += ipf->ipf_uses;
+			rtcache_unref(rt, &ipf->ipf_ro);
 			ips = IP_STAT_GETREF();
 			ips[IP_STAT_TOTAL] += ipf->ipf_uses;
 			ips[IP_STAT_FORWARD] += ipf->ipf_uses;
@@ -515,7 +524,7 @@ ipflow_slowtimo(void)
 }
 
 void
-ipflow_create(const struct route *ro, struct mbuf *m)
+ipflow_create(struct route *ro, struct mbuf *m)
 {
 	const struct ip *const ip = mtod(m, const struct ip *);
 	struct ipflow *ipf;

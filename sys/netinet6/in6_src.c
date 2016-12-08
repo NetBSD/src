@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.75 2016/12/02 00:19:54 ozaki-r Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.76 2016/12/08 05:16:34 ozaki-r Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.75 2016/12/02 00:19:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.76 2016/12/08 05:16:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -599,6 +599,7 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	} u;
 
 	KASSERT(ro != NULL);
+	KASSERT(*ro != NULL);
 	KASSERT(retrt != NULL);
 
 #if 0
@@ -638,10 +639,14 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		rt = rtcache_lookup(ron, sin6tosa(sin6_next));
 		if (rt == NULL || (rt->rt_flags & RTF_GATEWAY) != 0 ||
 		    !nd6_is_addr_neighbor(sin6_next, rt->rt_ifp)) {
+			if (rt != NULL) {
+				if (count_discard)
+					in6_ifstat_inc(rt->rt_ifp,
+					    ifs6_out_discard);
+				rtcache_unref(rt, ron);
+				rt = NULL;
+			}
 			rtcache_free(ron);
-			if (rt != NULL && count_discard)
-				in6_ifstat_inc(rt->rt_ifp, ifs6_out_discard);
-			rt = NULL;
 			error = EHOSTUNREACH;
 			goto done;
 		}
@@ -691,7 +696,7 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	struct ip6_moptions *mopts, struct route *ro, struct ifnet **retifp,
 	struct psref *psref)
 {
-	int error;
+	int error = 0;
 	struct rtentry *rt = NULL;
 	struct in6_addr *dst;
 	struct in6_pktinfo *pi = NULL;
@@ -743,8 +748,11 @@ getroute:
 	 * Although this may not be very harmful, it should still be confusing.
 	 * We thus reject the case here.
 	 */
-	if ((rt->rt_flags & (RTF_REJECT | RTF_BLACKHOLE)))
-		return (rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
+	if ((rt->rt_flags & (RTF_REJECT | RTF_BLACKHOLE))) {
+		error = (rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
+		/* XXX: ifp can be returned with psref even if error */
+		goto out;
+	}
 
 	/*
 	 * Adjust the "outgoing" interface.  If we're going to loop the packet
@@ -760,8 +768,9 @@ getroute:
 		*retifp = rt->rt_ifa->ifa_ifp;
 		if_acquire_NOMPSAFE(*retifp, psref);
 	}
-
-	return (0);
+out:
+	rtcache_unref(rt, ro);
+	return error;
 }
 
 /*
@@ -791,9 +800,11 @@ in6_selecthlim_rt(struct in6pcb *in6p)
 		return in6_selecthlim(in6p, NULL);
 
 	rt = rtcache_validate(&in6p->in6p_route);
-	if (rt != NULL)
-		return in6_selecthlim(in6p, rt->rt_ifp);
-	else
+	if (rt != NULL) {
+		int ret = in6_selecthlim(in6p, rt->rt_ifp);
+		rtcache_unref(rt, &in6p->in6p_route);
+		return ret;
+	} else
 		return in6_selecthlim(in6p, NULL);
 }
 
