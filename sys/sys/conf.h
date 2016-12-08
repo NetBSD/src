@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.146 2016/01/17 23:16:46 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.147 2016/12/08 10:28:44 nat Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -60,6 +60,7 @@ struct vnode;
 #define	D_TAPE		0x0001
 #define	D_DISK		0x0002
 #define	D_TTY		0x0003
+#define	D_MCLOSE	0x0004
 #define	D_TYPEMASK	0x00ff
 #define	D_MPSAFE	0x0100
 #define	D_NEGOFFSAFE	0x0200
