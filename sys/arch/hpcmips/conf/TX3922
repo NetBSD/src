@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.102 2016/03/19 23:21:02 gdt Exp $
+#	$NetBSD: TX3922,v 1.103 2016/12/08 11:31:10 nat Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -224,6 +224,9 @@ scsibus* at umass? channel ?
 # USB audio
 uaudio*	at uhub? port ? configuration ?
 audio*	at uaudio?
+
+options VAUDIOSPEAKER
+spkr0	at audio0		# PC speaker (synthesized)
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
