@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.455 2016/12/02 01:48:44 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.456 2016/12/08 01:12:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.455 2016/12/02 01:48:44 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.456 2016/12/08 01:12:01 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -696,6 +696,7 @@ static void	wm_nq_start_locked(struct ifnet *);
 static int	wm_nq_transmit(struct ifnet *, struct mbuf *);
 static void	wm_nq_transmit_locked(struct ifnet *, struct wm_txqueue *);
 static void	wm_nq_send_common_locked(struct ifnet *, struct wm_txqueue *, bool);
+static void	wm_deferred_start(struct ifnet *);
 /* Interrupt */
 static int	wm_txeof(struct wm_softc *, struct wm_txqueue *);
 static void	wm_rxeof(struct wm_rxqueue *);
@@ -1612,6 +1613,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	bool force_clear_smbi;
 	uint32_t link_mode;
 	uint32_t reg;
+	void (*deferred_start_func)(struct ifnet *) = NULL;
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, CALLOUT_FLAGS);
@@ -2514,12 +2516,16 @@ alloc_retry:
 	ifp->if_ioctl = wm_ioctl;
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		ifp->if_start = wm_nq_start;
-		if (sc->sc_nqueues > 1)
+		if (sc->sc_nqueues > 1) {
 			ifp->if_transmit = wm_nq_transmit;
+			deferred_start_func = wm_deferred_start;
+		}
 	} else {
 		ifp->if_start = wm_start;
-		if (sc->sc_nqueues > 1)
+		if (sc->sc_nqueues > 1) {
 			ifp->if_transmit = wm_transmit;
+			deferred_start_func = wm_deferred_start;
+		}
 	}
 	ifp->if_watchdog = wm_watchdog;
 	ifp->if_init = wm_init;
@@ -2620,6 +2626,7 @@ alloc_retry:
 	/* Attach the interface. */
 	if_initialize(ifp);
 	sc->sc_ipq = if_percpuq_create(&sc->sc_ethercom.ec_if);
+	if_deferred_start_init(ifp, deferred_start_func);
 	ether_ifattach(ifp, enaddr);
 	if_register(ifp);
 	ether_set_ifflags_cb(&sc->sc_ethercom, wm_ifflags_cb);
@@ -7245,6 +7252,53 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	}
 }
 
+static void
+wm_deferred_start(struct ifnet *ifp)
+{
+	struct wm_softc *sc = ifp->if_softc;
+	int qid = 0;
+
+	/*
+	 * Try to transmit on all Tx queues. Passing a txq somehow and
+	 * transmitting only on the txq may be better.
+	 */
+restart:
+	WM_CORE_LOCK(sc);
+	if (sc->sc_core_stopping)
+		goto out;
+
+	for (; qid < sc->sc_nqueues; qid++) {
+		struct wm_txqueue *txq = &sc->sc_queue[qid].wmq_txq;
+
+		if (!mutex_tryenter(txq->txq_lock))
+			continue;
+
+		if (txq->txq_stopping) {
+			mutex_exit(txq->txq_lock);
+			continue;
+		}
+		WM_CORE_UNLOCK(sc);
+
+		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+			/* XXX need for ALTQ */
+			if (qid == 0)
+				wm_nq_start_locked(ifp);
+			wm_nq_transmit_locked(ifp, txq);
+		} else {
+			/* XXX need for ALTQ */
+			if (qid == 0)
+				wm_start_locked(ifp);
+			wm_transmit_locked(ifp, txq);
+		}
+		mutex_exit(txq->txq_lock);
+
+		qid++;
+		goto restart;
+	}
+out:
+	WM_CORE_UNLOCK(sc);
+}
+
 /* Interrupt */
 
 /*
@@ -7926,7 +7980,7 @@ wm_intr_legacy(void *arg)
 
 	if (handled) {
 		/* Try to get more packets going. */
-		ifp->if_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	return handled;
@@ -7965,15 +8019,13 @@ wm_txrxintr_msix(void *arg)
 
 	/* Try to get more packets going. */
 	if (pcq_peek(txq->txq_interq) != NULL)
-		wm_nq_transmit_locked(ifp, txq);
+		if_schedule_deferred_start(ifp);
 	/*
 	 * There are still some upper layer processing which call
 	 * ifp->if_start(). e.g. ALTQ
 	 */
-	if (wmq->wmq_id == 0) {
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			wm_nq_start_locked(ifp);
-	}
+	if (wmq->wmq_id == 0)
+		if_schedule_deferred_start(ifp);
 
 	mutex_exit(txq->txq_lock);
 
