@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.263 2016/09/20 14:30:13 roy Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.264 2016/12/08 05:16:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.263 2016/09/20 14:30:13 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.264 2016/12/08 05:16:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -765,6 +765,7 @@ sendit:
 	}
 done:
 	ia4_release(ia, &psref_ia);
+	rtcache_unref(rt, ro);
 	if (ro == &iproute) {
 		rtcache_free(&iproute);
 	}
@@ -1543,6 +1544,7 @@ ip_get_membership(const struct sockopt *sopt, struct ifnet **ifp,
 		if (error != 0)
 			return error;
 		*ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp : NULL;
+		rtcache_unref(rt, &ro);
 		rtcache_free(&ro);
 	} else {
 		*ifp = ip_multicast_if(&mreq.imr_interface, NULL);

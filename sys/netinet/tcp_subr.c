@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.267 2016/11/09 03:33:30 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.268 2016/12/08 05:16:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.267 2016/11/09 03:33:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.268 2016/12/08 05:16:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1156,7 +1156,7 @@ tcp_close(struct tcpcb *tp)
 #endif
 	struct socket *so;
 #ifdef RTV_RTT
-	struct rtentry *rt;
+	struct rtentry *rt = NULL;
 #endif
 	struct route *ro;
 	int j;
@@ -1245,6 +1245,7 @@ tcp_close(struct tcpcb *tp)
 				rt->rt_rmx.rmx_ssthresh = i;
 		}
 	}
+	rtcache_unref(rt, ro);
 #endif /* RTV_RTT */
 	/* free the reassembly queue, if any */
 	TCP_REASS_LOCK(tp);
@@ -1774,6 +1775,7 @@ tcp_mtudisc(struct inpcb *inp, int errno)
 		 * If this was not a host route, remove and realloc.
 		 */
 		if ((rt->rt_flags & RTF_HOST) == 0) {
+			in_pcbrtentry_unref(rt, inp);
 			in_rtchange(inp, errno);
 			if ((rt = in_pcbrtentry(inp)) == NULL)
 				return;
@@ -1791,6 +1793,7 @@ tcp_mtudisc(struct inpcb *inp, int errno)
 			tp->snd_cwnd =
 			    TCP_INITIAL_WINDOW(tcp_init_win,
 			    rt->rt_rmx.rmx_mtu);
+		in_pcbrtentry_unref(rt, inp);
 	}
 
 	/*
@@ -1833,6 +1836,7 @@ tcp6_mtudisc(struct in6pcb *in6p, int errno)
 		 * If this was not a host route, remove and realloc.
 		 */
 		if ((rt->rt_flags & RTF_HOST) == 0) {
+			in6_pcbrtentry_unref(rt, in6p);
 			in6_rtchange(in6p, errno);
 			rt = in6_pcbrtentry(in6p);
 			if (rt == NULL)
@@ -1851,6 +1855,7 @@ tcp6_mtudisc(struct in6pcb *in6p, int errno)
 			tp->snd_cwnd = TCP_INITIAL_WINDOW(tcp_init_win,
 			    rt->rt_rmx.rmx_mtu);
 		}
+		in6_pcbrtentry_unref(rt, in6p);
 	}
 
 	/*
@@ -2039,6 +2044,16 @@ tcp_mss_from_peer(struct tcpcb *tp, int offer)
 		tp->snd_ssthresh = max(2 * mss, rt->rt_rmx.rmx_ssthresh);
 	}
 #endif
+#if defined(RTV_SPIPE) || defined(RTV_SSTHRESH)
+#ifdef INET
+	if (tp->t_inpcb)
+		in_pcbrtentry_unref(rt, tp->t_inpcb);
+#endif
+#ifdef INET6
+	if (tp->t_in6pcb)
+		in6_pcbrtentry_unref(rt, tp->t_in6pcb);
+#endif
+#endif
 }
 
 /*
@@ -2135,6 +2150,16 @@ tcp_established(struct tcpcb *tp)
 			bufsize = sb_max;
 		(void) sbreserve(&so->so_rcv, bufsize, so);
 	}
+#ifdef RTV_RPIPE
+#ifdef INET
+	if (tp->t_inpcb)
+		in_pcbrtentry_unref(rt, tp->t_inpcb);
+#endif
+#ifdef INET6
+	if (tp->t_in6pcb)
+		in6_pcbrtentry_unref(rt, tp->t_in6pcb);
+#endif
+#endif
 }
 
 /*
@@ -2188,6 +2213,14 @@ tcp_rmx_rtt(struct tcpcb *tp)
 		    ((tp->t_srtt >> 2) + tp->t_rttvar) >> (1 + 2),
 		    tp->t_rttmin, TCPTV_REXMTMAX);
 	}
+#ifdef INET
+	if (tp->t_inpcb)
+		in_pcbrtentry_unref(rt, tp->t_inpcb);
+#endif
+#ifdef INET6
+	if (tp->t_in6pcb)
+		in6_pcbrtentry_unref(rt, tp->t_in6pcb);
+#endif
 #endif
 }
 

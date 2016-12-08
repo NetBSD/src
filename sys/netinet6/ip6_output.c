@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.178 2016/11/10 04:13:53 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.179 2016/12/08 05:16:34 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.178 2016/11/10 04:13:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.179 2016/12/08 05:16:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -695,8 +695,10 @@ ip6_output(
 		sockaddr_in6_init(&u.dst6, &finaldst, 0, 0, 0);
 		rt_pmtu = rtcache_lookup(ro_pmtu, &u.dst);
 	} else
-		rt_pmtu = rtcache_validate(ro_pmtu);
+		rt_pmtu = rt;
 	error = ip6_getpmtu(rt_pmtu, ifp, &mtu, &alwaysfrag);
+	if (rt_pmtu != NULL && rt_pmtu != rt)
+		rtcache_unref(rt_pmtu, ro_pmtu);
 	if (error != 0)
 		goto bad;
 
@@ -1037,6 +1039,7 @@ sendorfree:
 		IP6_STATINC(IP6_STAT_FRAGMENTED);
 
 done:
+	rtcache_unref(rt, ro);
 	if (ro == &ip6route)
 		rtcache_free(&ip6route);
 
@@ -1869,6 +1872,7 @@ else 					\
 			sockaddr_in6_init(&u.dst6, &in6p->in6p_faddr, 0, 0, 0);
 			rt = rtcache_lookup(ro, &u.dst);
 			error = ip6_getpmtu(rt, NULL, &pmtu, NULL);
+			rtcache_unref(rt, ro);
 			if (error)
 				break;
 			if (pmtu > IPV6_MAXPACKET)
@@ -2405,7 +2409,10 @@ ip6_get_membership(const struct sockopt *sopt, struct ifnet **ifp, void *v,
 		error = rtcache_setdst(&ro, &u.dst);
 		if (error != 0)
 			return error;
-		*ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp : NULL;
+		rt = rtcache_init(&ro);
+		*ifp = rt != NULL ? rt->rt_ifp : NULL;
+		/* FIXME *ifp is NOMPSAFE */
+		rtcache_unref(rt, &ro);
 		rtcache_free(&ro);
 	} else {
 		/*

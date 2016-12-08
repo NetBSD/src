@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.18 2016/07/18 21:07:30 pgoyette Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.19 2016/12/08 05:16:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.18 2016/07/18 21:07:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.19 2016/12/08 05:16:33 ozaki-r Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -1330,6 +1330,7 @@ done:
 		softc->ipf_frouteok[1]++;
 
 # if __NetBSD_Version__ >= 499001100
+	rtcache_unref(rt, ro);
 	rtcache_free(ro);
 # else
 	if (rt) {
@@ -1467,6 +1468,7 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 	}
 bad:
 # if __NetBSD_Version__ >= 499001100
+	rtcache_unref(rt, ro);
 	rtcache_free(ro);
 # else
 	if (ro->ro_rt != NULL) {
@@ -1501,6 +1503,7 @@ ipf_verifysrc(fr_info_t *fin)
 		rc = 0;
 	else
 		rc = (fin->fin_ifp == rt->rt_ifp);
+	rtcache_unref(rt, &iproute);
 	rtcache_free(&iproute);
 #else
 	dst = (struct sockaddr_in *)&iproute.ro_dst;

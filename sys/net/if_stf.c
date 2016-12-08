@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.99 2016/08/18 11:38:58 knakahara Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.100 2016/12/08 05:16:33 ozaki-r Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.99 2016/08/18 11:38:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.100 2016/12/08 05:16:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -446,11 +446,13 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	/* If the route constitutes infinite encapsulation, punt. */
 	if (rt->rt_ifp == ifp) {
+		rtcache_unref(rt, &sc->sc_ro);
 		rtcache_free(&sc->sc_ro);
 		m_freem(m);
 		ifp->if_oerrors++;
 		return ENETUNREACH;
 	}
+	rtcache_unref(rt, &sc->sc_ro);
 
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len - sizeof(struct ip);

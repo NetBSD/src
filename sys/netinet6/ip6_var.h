@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.70 2016/11/10 04:13:53 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.71 2016/12/08 05:16:34 ozaki-r Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -377,7 +377,7 @@ void	frag6_drainstub(void);
 int	ip6flow_init(int);
 void	ip6flow_poolinit(void);
 struct  ip6flow *ip6flow_reap(int);
-void    ip6flow_create(const struct route *, struct mbuf *);
+void    ip6flow_create(struct route *, struct mbuf *);
 void    ip6flow_slowtimo(void);
 int	ip6flow_invalidate_all(int);
 

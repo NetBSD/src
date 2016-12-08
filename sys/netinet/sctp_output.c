@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.7 2016/07/07 09:32:02 ozaki-r Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.8 2016/12/08 05:16:33 ozaki-r Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.7 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.8 2016/12/08 05:16:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1083,6 +1083,7 @@ sctp_ipv4_source_address_selection(struct sctp_inpcb *inp,
 	const struct sockaddr_in *to;
 	struct rtentry *rt;
 	uint8_t ipv4_scope, loopscope;
+
 	/*
 	 * Rules:
 	 * - Find the route if needed, cache if I can.
@@ -1176,8 +1177,9 @@ sctp_ipv4_source_address_selection(struct sctp_inpcb *inp,
 		 * it is a negative list. Addresses being added
 		 * by asconf.
 		 */
-		return (sctp_choose_v4_boundall(inp, stcb, net, rt,
-		    ipv4_scope, loopscope, non_asoc_addr_ok));
+		ans = sctp_choose_v4_boundall(inp, stcb, net, rt,
+		    ipv4_scope, loopscope, non_asoc_addr_ok);
+		goto out;
         }
 	/*
  	 * Three possiblities here:
@@ -1199,15 +1201,19 @@ sctp_ipv4_source_address_selection(struct sctp_inpcb *inp,
 	 *    the v6 address selection.
 	 */
 	if (stcb) {
-		return (sctp_choose_v4_boundspecific_stcb(inp, stcb, net,
-		    rt, ipv4_scope, loopscope, non_asoc_addr_ok));
+		ans = sctp_choose_v4_boundspecific_stcb(inp, stcb, net,
+		    rt, ipv4_scope, loopscope, non_asoc_addr_ok);
+		goto out;
 	} else {
-		return (sctp_choose_v4_boundspecific_inp(inp, rt,
-		    ipv4_scope, loopscope));
+		ans = sctp_choose_v4_boundspecific_inp(inp, rt,
+		    ipv4_scope, loopscope);
+		goto out;
 	}
 	/* this should not be reached */
 	memset(&ans, 0, sizeof(ans));
-	return (ans);
+out:
+	rtcache_unref(rt, ro);
+	return ans;
 }
 
 
@@ -1980,6 +1986,7 @@ sctp_ipv6_source_address_selection(struct sctp_inpcb *inp,
 			/* we can't have a non-asoc address since we have no association */
 			rt_addr = sctp_choose_v6_boundspecific_inp(inp,  rt, loc_scope, loopscope);
 	}
+	rtcache_unref(rt, ro);
 	if (rt_addr == NULL) {
 		/* no suitable address? */
 		struct in6_addr in6;
@@ -2150,7 +2157,9 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 		if (net == NULL) {
 			ro = &iproute;
 			memset(&iproute, 0, sizeof(iproute));
-			rtcache_lookup(ro, to);
+			/* XXX */
+			rt = rtcache_lookup(ro, to);
+			rtcache_unref(rt, ro);
 		} else {
 			ro = (struct route *)&net->ro;
 		}
@@ -2164,9 +2173,11 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 				((struct sockaddr_in *)&net->_s_addr)->sin_addr = sctp_ipv4_source_address_selection(inp,
 				    stcb,
 				    ro, net, out_of_asoc_ok);
-				if (rtcache_validate(ro)) {
+				rt = rtcache_validate(ro);
+				if (rt != NULL) {
 					net->src_addr_selected = 1;
 				}
+				rtcache_unref(rt, ro);
 			}
 			ip->ip_src = ((struct sockaddr_in *)&net->_s_addr)->sin_addr;
 		} else {
@@ -2264,6 +2275,7 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 				net->src_addr_selected = 0;
 			}
 		}
+		rtcache_unref(rt, ro);
 		return (ret);
 	}
 #ifdef INET6
@@ -2312,7 +2324,9 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 		if (net == NULL) {
 			memset(&ip6route, 0, sizeof(ip6route));
 			ro = (struct route *)&ip6route;
-			rtcache_lookup(ro, (struct sockaddr *) sin6);
+			/* XXX */
+			rt = rtcache_lookup(ro, (struct sockaddr *) sin6);
+			rtcache_unref(rt, ro);
 		} else {
 			ro = (struct route *)&net->ro;
 		}
@@ -2429,6 +2443,8 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 			prev_scope = sin6->sin6_scope_id;
 			prev_port = sin6->sin6_port;
 		}
+		/* XXX NOMPSAFE need to hold ifp here */
+		rtcache_unref(rt, ro);
 		ret = ip6_output(m, ((struct in6pcb *)inp)->in6p_outputopts,
 				 ro,
 				 o_flgs,
@@ -2460,6 +2476,7 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 							    &stcb->asoc,
 							    rt->rt_rmx.rmx_mtu);
 				}
+				rtcache_unref(rt, ro);
 			} else if (ifp) {
 				if (ND_IFINFO(ifp)->linkmtu &&
 				    (stcb->asoc.smallest_mtu > ND_IFINFO(ifp)->linkmtu)) {
@@ -3252,6 +3269,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	int cnt_inits_to=0;
 	uint16_t his_limit, i_want;
 	int abort_flag, padval, sz_of;
+	struct rtentry *rt;
 
 	if (stcb) {
 		asoc = &stcb->asoc;
@@ -3402,7 +3420,9 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 			memset(&iproute, 0, sizeof(iproute));
 			ro = &iproute;
 
-			rtcache_lookup(ro, (struct sockaddr *) sin);
+			/* XXX */
+			rt = rtcache_lookup(ro, (struct sockaddr *) sin);
+			rtcache_unref(rt, ro);
 			addr = sctp_ipv4_source_address_selection(inp, NULL,
 			    ro, NULL, 0);
 			stc.laddress[0] = addr.s_addr;
@@ -3488,7 +3508,9 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 			/* local from address */
 			memset(&iproute6, 0, sizeof(iproute6));
 			ro = (struct route *)&iproute6;
-			rtcache_lookup(ro, (struct sockaddr *) sin6);
+			/* XXX */
+			rt = rtcache_lookup(ro, (struct sockaddr *) sin6);
+			rtcache_unref(rt, ro);
 			addr = sctp_ipv6_source_address_selection(inp, NULL,
 			    ro, NULL, 0);
 			memcpy(&stc.laddress, &addr, sizeof(struct in6_addr));
@@ -5401,6 +5423,7 @@ sctp_med_chunk_output(struct sctp_inpcb *inp,
 		return (0);
 	}
 	TAILQ_FOREACH(net, &asoc->nets, sctp_next) {
+		struct rtentry *rt;
 		/* how much can we send? */
 		if (net->ref_count < 2) {
 			/* Ref-count of 1 so we cannot have data or control
@@ -5413,7 +5436,8 @@ sctp_med_chunk_output(struct sctp_inpcb *inp,
 		no_fragmentflg = 1;
 		one_chunk = 0;
 
-		if (rtcache_validate(&net->ro)) {
+		rt = rtcache_validate(&net->ro);
+		if (rt != NULL) {
 			/* if we have a route and an ifp
 			 * check to see if we have room to
 			 * send to this guy
@@ -5425,8 +5449,10 @@ sctp_med_chunk_output(struct sctp_inpcb *inp,
 #ifdef SCTP_LOG_MAXBURST
 				sctp_log_maxburst(net, ifp->if_snd.ifq_len, ifp->if_snd.ifq_maxlen, SCTP_MAX_IFP_APPLIED);
   #endif
+				rtcache_unref(rt, &net->ro);
 				continue;
 			}
+			rtcache_unref(rt, &net->ro);
 		}
 		if (((struct sockaddr *)&net->ro.ro_sa)->sa_family == AF_INET) {
 			mtu = net->mtu - (sizeof(struct ip) + sizeof(struct sctphdr));

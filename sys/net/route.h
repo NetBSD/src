@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.107 2016/11/15 01:50:06 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.108 2016/12/08 05:16:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -478,6 +478,13 @@ rtcache_validate(const struct route *ro)
 		return rt;
 	return NULL;
 
+}
+
+static inline void
+rtcache_unref(struct rtentry *rt, struct route *ro)
+{
+
+	/* Will do something useful in the future. */
 }
 
 /* rtsock */
