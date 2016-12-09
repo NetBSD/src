@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.364 2016/12/08 01:06:35 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.365 2016/12/09 02:38:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.364 2016/12/08 01:06:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.365 2016/12/09 02:38:14 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -978,11 +978,6 @@ if_deferred_start_softint(void *arg)
 {
 	struct if_deferred_start *ids = arg;
 	struct ifnet *ifp = ids->ids_ifp;
-
-#ifdef DEBUG
-	log(LOG_DEBUG, "%s: deferred start on %s\n", __func__,
-	    ifp->if_xname);
-#endif
 
 	ids->ids_if_start(ifp);
 }
