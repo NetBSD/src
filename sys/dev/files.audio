@@ -1,4 +1,4 @@
-#	$NetBSD: files.audio,v 1.5 2016/12/08 11:31:08 nat Exp $
+#	$NetBSD: files.audio,v 1.6 2016/12/09 04:32:39 christos Exp $
 
 define	audiobus	{ }
 define	midibus		{ }
@@ -33,4 +33,5 @@ file	dev/midi.c			midi			needs-flag
 file	dev/midictl.c			midisyn
 file	dev/midisyn.c			midisyn
 file	dev/mulaw.c			mulaw			needs-flag
-file	dev/spkr_synth.c		spkr & vaudiospeaker	needs-flag
+file	dev/spkr.c			spkr			needs-flag
+file	dev/spkr_synth.c		spkr_synth		needs-flag
