@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.123.2.1 2015/01/17 14:13:40 martin Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.123.2.2 2016/12/09 05:23:58 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.120.2.1 2015/01/17 13:46:39 martin Exp
+ *	NetBSD: miidevs,v 1.120.2.2 2016/12/09 05:23:31 snj Exp
  */
 
 /*-
@@ -383,6 +383,10 @@
 #define	MII_STR_xxMARVELL_E1111	"Marvell 88E1111 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1145	0x000d
 #define	MII_STR_xxMARVELL_E1145	"Marvell 88E1145 Quad Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E6060	0x0010
+#define	MII_STR_xxMARVELL_E6060	"Marvell 88E6060 6-Port 10/100 Fast Ethernet Switch"
+#define	MII_MODEL_xxMARVELL_E1512	0x001d
+#define	MII_STR_xxMARVELL_E1512	"Marvell 88E1512 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116	0x0021
 #define	MII_STR_xxMARVELL_E1116	"Marvell 88E1116 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1118	0x0022
