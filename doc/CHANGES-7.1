@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.126 2016/12/08 08:12:10 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.127 2016/12/09 05:41:31 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7162,4 +7162,57 @@ sys/arch/x86/x86/procfs_machdep.c		1.12-1.14
 	- Remove pcommit.
 	- Update some Linux mapping unused in /proc/cpuinfo.
 	[msaitoh, ticket #1293]
+
+sys/dev/pci/ichsmb.c				1.43-1.44
+
+	ichsmb(4): Add Braswell PCU SMBus and Intel 100 Series SMBus.
+	[msaitoh, ticket #1294]
+
+sys/arch/x86/pci/ichlpcib.c			1.50
+
+	Add Core 5G (mobile) LPC support.
+	[msaitoh, ticket #1295]
+
+sys/dev/pci/pci_subr.c				1.155 via patch
+
+	Protect against buffer overflow.
+	[pgoyette, ticket #1296]
+
+sys/arch/amd64/conf/ALL				1.37
+sys/arch/amd64/conf/GENERIC			1.436
+sys/arch/amd64/conf/XEN3_DOM0			1.120
+sys/arch/i386/conf/ALL				1.400
+sys/arch/i386/conf/GENERIC			1.1138
+sys/arch/i386/conf/XEN3_DOM0			1.99
+
+	x86 kernel configs:
+	- Add ichsmb(4), spdmem(4) and iic(4) to XEN3_DOM0.
+	- Add sdtemp(4). For ALL kernels, it's enabled. For others, it's
+	commented out.
+	[msaitoh, ticket #1297]
+
+sys/dev/pci/pcidevs				1.1246
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/piixide.c				1.65
+
+	Correct name of 82801HBM AHCI SATA Controller and
+	SATA RAID Controller.
+	[msaitoh, ticket #1298]
+
+sys/dev/mii/miidevs				1.123, 1.124
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+
+	- Add xxMarvell E6060 6-port 10/100 Fast Ethernet Switch
+	- Add Marvell 88E1512.
+	[msaitoh, ticket #1299]
+
+sys/dev/pci/if_wm.c				1.426
+sys/dev/pci/pcidevs				1.1270
+sys/dev/pci/pcidevs.h				regen
+sys/edv/pci/pcidevs_data.h			regen
+
+	i82567V-3 is not ICH9 but ICH8.
+	[msaitoh, ticket #1300]
 
