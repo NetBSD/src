@@ -1,4 +1,4 @@
-#	$NetBSD: files.octeon,v 1.4 2015/06/01 22:55:12 matt Exp $
+#	$NetBSD: files.octeon,v 1.5 2016/12/09 10:30:48 roy Exp $
 
 file	arch/evbmips/cavium/autoconf.c
 file	arch/evbmips/cavium/machdep.c
@@ -8,6 +8,9 @@ file	arch/evbmips/cavium/octeon_bootbus_machdep.c	bootbus
 file	arch/evbmips/evbmips/interrupt.c
 
 file	kern/subr_disk_mbr.c
+
+# Stack-less Just-In-Time compiler
+include	"external/bsd/sljit/conf/files.sljit"
 
 #device	cpu
 #attach	cpu at mainbus
