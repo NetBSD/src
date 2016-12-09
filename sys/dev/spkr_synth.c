@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_synth.c,v 1.2 2016/12/09 04:32:39 christos Exp $	*/
+/*	$NetBSD: spkr_synth.c,v 1.3 2016/12/09 05:17:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.2 2016/12/09 04:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.3 2016/12/09 05:17:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,11 +76,6 @@ spkr_modcmd(modcmd_t cmd, void *arg)
 {
 	return spkr__modcmd(cmd, arg);
 }
-
-#ifdef _MODULE
-#include "ioconf.c"
-#endif
-
 
 CFATTACH_DECL3_NEW(spkr_synth, 0,
     spkr_probe, spkrattach, spkrdetach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
