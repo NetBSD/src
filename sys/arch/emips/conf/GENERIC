@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.16 2016/12/08 11:31:10 nat Exp $
+# $NetBSD: GENERIC,v 1.17 2016/12/09 22:50:10 nat Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/emips/conf/std.emips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.16 $"
+#ident		"GENERIC-$Revision: 1.17 $"
 
 maxusers	64
 
@@ -180,9 +180,6 @@ acns*   at	ebus0 addr ?    # AC97 audio
 epio*   at	ebus0 addr ?    # GPIO interface
 gpio*   at	epio?
 lcd*    at	ebus0 addr ?    # lcd display
-
-options VAUDIOSPEAKER
-spkr0	at audio0		# PC speaker (synthesized)
 
 #########################################################################
 # Pseudo-devices							#
