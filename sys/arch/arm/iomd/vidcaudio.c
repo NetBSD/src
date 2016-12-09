@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.53 2014/10/25 10:58:12 skrll Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.54 2016/12/09 13:26:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.53 2014/10/25 10:58:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.54 2016/12/09 13:26:47 christos Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -270,7 +270,8 @@ vidcaudio_attach(device_t parent, device_t self, void *aux)
 
 	beepdev = audio_attach_mi(&vidcaudio_hw_if, sc, self);
 #if NPCKBD > 0
-	pckbd_hookup_bell(audiobell, beepdev);
+	int unit = device_unit(beepdev);
+	pckbd_hookup_bell(audiobell, &unit);
 #endif
 }
 
