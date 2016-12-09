@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.38 2016/12/08 11:31:08 nat Exp $	*/
+/*	$NetBSD: spkr.c,v 1.39 2016/12/09 02:22:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -42,9 +42,8 @@
  *      use hz value from param.c
  */
 
-#ifdef PCPPISPEAKER
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.38 2016/12/08 11:31:08 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.39 2016/12/09 02:22:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,29 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.38 2016/12/08 11:31:08 nat Exp $");
 
 #include <sys/bus.h>
 
-#include <dev/isa/pcppivar.h>
-
 #include <dev/isa/spkrio.h>
-
-void spkrattach(device_t, device_t, void *);
-int spkrdetach(device_t, int);
-
-#include "ioconf.h"
-
-MODULE(MODULE_CLASS_DRIVER, spkr, NULL /* "pcppi" */);
-
-#ifdef _MODULE
-#include "ioconf.c"
-#endif
-
-#endif /* PCPPISPEAKER */
-
-int spkrprobe(device_t, cfdata_t, void *);
-
-#ifdef PCPPISPEAKER
-CFATTACH_DECL_NEW(spkr, 0,
-    spkrprobe, spkrattach, spkrdetach, NULL);
-#endif
 
 dev_type_open(spkropen);
 dev_type_close(spkrclose);
@@ -104,48 +81,15 @@ const struct cdevsw spkr_cdevsw = {
 	.d_flag = D_OTHER
 };
 
-#ifdef PCPPISPEAKER
-static pcppi_tag_t ppicookie;
-#endif
-
-#define SPKRPRI (PZERO - 1)
-
-static void tone(u_int, u_int);
-static void rest(int);
 static void playinit(void);
 static void playtone(int, int, int);
 static void playstring(char *, int);
-
-#ifdef PCPPISPEAKER
-static void
-tone(u_int xhz, u_int ticks)
-/* emit tone of frequency hz for given number of ticks */
-{
-	pcppi_bell(ppicookie, xhz, ticks, PCPPI_BELL_SLEEP);
-}
-
-static void
-rest(int ticks)
-/* rest for given number of ticks */
-{
-    /*
-     * Set timeout to endrest function, then give up the timeslice.
-     * This is so other processes can execute while the rest is being
-     * waited out.
-     */
-#ifdef SPKRDEBUG
-    printf("rest: %d\n", ticks);
-#endif /* SPKRDEBUG */
-    if (ticks > 0)
-	    tsleep(rest, SPKRPRI | PCATCH, "rest", ticks);
-}
-#endif
 
 /**************** PLAY STRING INTERPRETER BEGINS HERE **********************
  *
  * Play string interpretation is modelled on IBM BASIC 2.0's PLAY statement;
  * M[LNS] are missing and the ~ synonym and octave-tracking facility is added.
- * Requires tone(), rest(), and endtone(). String play is not interruptible
+ * Requires spkr_tone(), spkr_rest(). String play is not interruptible
  * except possibly at physical block boundaries.
  */
 
@@ -223,7 +167,7 @@ playtone(int pitch, int val, int sustain)
     }
 
     if (pitch == -1)
-	rest(whole * snum / (val * sdenom));
+	spkr_rest(whole * snum / (val * sdenom));
     else
     {
 	sound = (whole * snum) / (val * sdenom)
@@ -235,9 +179,9 @@ playtone(int pitch, int val, int sustain)
 	    pitch, sound, silence);
 #endif /* SPKRDEBUG */
 
-	tone(pitchtab[pitch], sound);
+	spkr_tone(pitchtab[pitch], sound);
 	if (fill != LEGATO)
-	    rest(silence);
+	    spkr_rest(silence);
     }
 }
 
@@ -418,44 +362,13 @@ playstring(char *cp, int slen)
 
 /******************* UNIX DRIVER HOOKS BEGIN HERE **************************
  *
- * This section implements driver hooks to run playstring() and the tone(),
- * endtone(), and rest() functions defined above.
+ * This section implements driver hooks to run playstring() and the spkr_tone()
+ * and spkr_rest() functions defined above.
  */
 
-static int spkr_active;	/* exclusion flag */
+int spkr_active;	/* exclusion flag */
+extern int spkr_attached;
 static void *spkr_inbuf;
-
-static int spkr_attached = 0;
-
-int
-spkrprobe(device_t parent, cfdata_t match, void *aux)
-{
-	return (!spkr_attached);
-}
-
-#ifdef PCPPISPEAKER
-void
-spkrattach(device_t parent, device_t self, void *aux)
-{
-	aprint_naive("\n");
-	aprint_normal("\n");
-	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
-	spkr_attached = 1;
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-}
-
-int
-spkrdetach(device_t self, int flags)
-{
-
-	pmf_device_deregister(self);
-	spkr_attached = 0;
-	ppicookie = NULL;
-
-	return 0;
-}
-#endif
 
 int
 spkropen(dev_t dev, int	flags, int mode, struct lwp *l)
@@ -510,7 +423,7 @@ spkrclose(dev_t dev, int flags, int mode, struct lwp *l)
 	return(ENXIO);
     else
     {
-	tone(0, 0);
+	spkr_tone(0, 0);
 	free(spkr_inbuf, M_DEVBUF);
 	spkr_active = 0;
     }
@@ -531,9 +444,9 @@ spkrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	tone_t	*tp = (tone_t *)data;
 
 	if (tp->frequency == 0)
-	    rest(tp->duration);
+	    spkr_rest(tp->duration);
 	else
-	    tone(tp->frequency, tp->duration);
+	    spkr_tone(tp->frequency, tp->duration);
     }
     else if (cmd == SPKRTUNE)
     {
@@ -548,53 +461,12 @@ spkrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	    if (ttp.duration == 0)
 		    break;
 	    if (ttp.frequency == 0)
-		rest(ttp.duration);
+		spkr_rest(ttp.duration);
 	    else
-		tone(ttp.frequency, ttp.duration);
+		spkr_tone(ttp.frequency, ttp.duration);
 	}
     }
     else
 	return(EINVAL);
     return(0);
 }
-
-static int
-spkr_modcmd(modcmd_t cmd, void *arg)
-{
-#ifdef _MODULE
-	devmajor_t bmajor, cmajor;
-#endif
-	int error = 0;
-
-#ifdef _MODULE
-	switch(cmd) {
-	case MODULE_CMD_INIT:
-		bmajor = cmajor = -1;
-		error = devsw_attach(spkr_cd.cd_name, NULL, &bmajor,
-		    &spkr_cdevsw, &cmajor);
-		if (error)
-			break;
-
-		error = config_init_component(cfdriver_ioconf_spkr,
-			cfattach_ioconf_spkr, cfdata_ioconf_spkr);
-		if (error) {
-			devsw_detach(NULL, &spkr_cdevsw);
-		}
-		break;
-
-	case MODULE_CMD_FINI:
-		if (spkr_active)
-			return EBUSY;
-		error = config_fini_component(cfdriver_ioconf_spkr,
-			cfattach_ioconf_spkr, cfdata_ioconf_spkr);
-		devsw_detach(NULL, &spkr_cdevsw);
-		break;
-	default:
-		error = ENOTTY;
-		break;
-	}
-#endif
-
-	return error;
-}
-/* spkr.c ends here */

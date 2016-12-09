@@ -1,4 +1,4 @@
-/*	$NetBSD: spkrio.h,v 1.2 2015/09/06 06:01:00 dholland Exp $	*/
+/*	$NetBSD: spkrio.h,v 1.3 2016/12/09 02:22:34 christos Exp $	*/
 
 /*
  * spkr.h -- interface definitions for speaker ioctl()
@@ -16,5 +16,8 @@ typedef struct {
 	int	frequency;	/* in hertz */
 	int	duration;	/* in 1/100ths of a second */
 } tone_t;
+
+void spkr_tone(u_int, u_int);
+void spkr_rest(int);
 
 #endif /* _DEV_ISA_SPKR_H_ */
