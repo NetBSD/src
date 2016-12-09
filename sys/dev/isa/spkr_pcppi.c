@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.2 2016/12/09 04:32:39 christos Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.3 2016/12/09 04:46:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.2 2016/12/09 04:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.3 2016/12/09 04:46:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.2 2016/12/09 04:32:39 christos Exp 
 
 #include <dev/isa/pcppivar.h>
 
+#include <dev/spkrvar.h>
 #include <dev/spkrio.h>
 
 extern int spkr_attached;
