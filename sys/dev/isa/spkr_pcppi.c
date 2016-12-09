@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.3 2016/12/09 04:46:39 christos Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.4 2016/12/09 05:17:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.3 2016/12/09 04:46:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.4 2016/12/09 05:17:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,10 +77,6 @@ spkr_modcmd(modcmd_t cmd, void *arg)
 {
 	return spkr__modcmd(cmd, arg);
 }
-
-#ifdef _MODULE
-#include "ioconf.c"
-#endif
 
 CFATTACH_DECL_NEW(spkr_pcppi, 0, spkr_probe, spkrattach, spkrdetach, NULL);
 
