@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_synth.c,v 1.1 2016/12/08 11:31:08 nat Exp $	*/
+/*	$NetBSD: spkr_synth.c,v 1.2 2016/12/09 04:32:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -26,9 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef VAUDIOSPEAKER
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.1 2016/12/08 11:31:08 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.2 2016/12/09 04:32:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,18 +61,21 @@ static int beep_sysctl_device(SYSCTLFN_PROTO);
 #include <dev/audiobellvar.h>
 
 #include <dev/spkrvar.h>
-#include <dev/isa/spkrio.h>
+#include <dev/spkrio.h>
 
-#include "isa/spkr.c"
-
-int spkrprobe(device_t, cfdata_t, void *);
-void spkrattach(device_t, device_t, void *);
-int spkrdetach(device_t, int);
+static void spkrattach(device_t, device_t, void *);
+static int spkrdetach(device_t, int);
 device_t speakerattach_mi(device_t);
 
 #include "ioconf.h"
 
 MODULE(MODULE_CLASS_DRIVER, spkr, NULL /* "audio" */);
+
+static int
+spkr_modcmd(modcmd_t cmd, void *arg)
+{
+	return spkr__modcmd(cmd, arg);
+}
 
 #ifdef _MODULE
 #include "ioconf.c"
@@ -81,7 +83,7 @@ MODULE(MODULE_CLASS_DRIVER, spkr, NULL /* "audio" */);
 
 
 CFATTACH_DECL3_NEW(spkr_synth, 0,
-    spkrprobe, spkrattach, spkrdetach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
+    spkr_probe, spkrattach, spkrdetach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver audio_cd;
 
@@ -97,17 +99,17 @@ struct spkr_attach_args {
 	device_t dev;
 };
 
-static void
-tone(u_int xhz, u_int ticks)
+void
+spkr_tone(u_int xhz, u_int ticks)
 {
 	audiobell(beep_index, xhz, ticks * (1000 / hz), 80, 0);
 }
 
-static void
-rest(int ticks)
+void
+spkr_rest(int ticks)
 {
 #ifdef SPKRDEBUG
-    printf("rest: %d\n", ticks);
+    printf("%s: %d\n", __func__, ticks);
 #endif /* SPKRDEBUG */
     if (ticks > 0)
 	audiobell(beep_index, 0, ticks * (1000 / hz), 80, 0);
@@ -121,7 +123,7 @@ speakerattach_mi(device_t dev)
 	return config_found(dev, &sa, NULL);
 }
 
-void
+static void
 spkrattach(device_t parent, device_t self, void *aux)
 {
 	const struct sysctlnode *node;
@@ -160,7 +162,7 @@ spkrattach(device_t parent, device_t self, void *aux)
 	    bell_thread, &sc_bell_args, &sc_bellthread, "vbell");
 }
 
-int
+static int
 spkrdetach(device_t self, int flags)
 {
 
@@ -250,6 +252,3 @@ beep_sysctl_device(SYSCTLFN_ARGS)
 
 	return error;
 }
-
-#endif /* VAUDIOSPEAKER */
-/* spkr.c ends here */

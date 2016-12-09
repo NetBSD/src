@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.1 2016/12/09 02:22:34 christos Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.2 2016/12/09 04:32:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.1 2016/12/09 02:22:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.2 2016/12/09 04:32:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,21 +61,27 @@ __KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.1 2016/12/09 02:22:34 christos Exp 
 
 #include <dev/isa/pcppivar.h>
 
-#include <dev/isa/spkrio.h>
+#include <dev/spkrio.h>
 
-void spkrattach(device_t, device_t, void *);
-int spkrdetach(device_t, int);
-int spkrprobe(device_t, cfdata_t, void *);
+extern int spkr_attached;
+static void spkrattach(device_t, device_t, void *);
+static int spkrdetach(device_t, int);
 
 #include "ioconf.h"
 
 MODULE(MODULE_CLASS_DRIVER, spkr, NULL /* "pcppi" */);
 
+static int
+spkr_modcmd(modcmd_t cmd, void *arg)
+{
+	return spkr__modcmd(cmd, arg);
+}
+
 #ifdef _MODULE
 #include "ioconf.c"
 #endif
 
-CFATTACH_DECL_NEW(spkr_pcppi, 0, spkrprobe, spkrattach, spkrdetach, NULL);
+CFATTACH_DECL_NEW(spkr_pcppi, 0, spkr_probe, spkrattach, spkrdetach, NULL);
 
 static pcppi_tag_t ppicookie;
 
@@ -104,18 +110,7 @@ spkr_rest(int ticks)
 	    tsleep(spkr_rest, SPKRPRI | PCATCH, "rest", ticks);
 }
 
-extern int spkr_active;	/* exclusion flag */
-extern const struct cdevsw spkr_cdevsw;
-
-int spkr_attached = 0;
-
-int
-spkrprobe(device_t parent, cfdata_t match, void *aux)
-{
-	return (!spkr_attached);
-}
-
-void
+static void
 spkrattach(device_t parent, device_t self, void *aux)
 {
 	aprint_naive("\n");
@@ -126,7 +121,7 @@ spkrattach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-int
+static int
 spkrdetach(device_t self, int flags)
 {
 
@@ -135,45 +130,4 @@ spkrdetach(device_t self, int flags)
 	ppicookie = NULL;
 
 	return 0;
-}
-
-
-static int
-spkr_modcmd(modcmd_t cmd, void *arg)
-{
-#ifdef _MODULE
-	devmajor_t bmajor, cmajor;
-#endif
-	int error = 0;
-
-#ifdef _MODULE
-	switch(cmd) {
-	case MODULE_CMD_INIT:
-		bmajor = cmajor = -1;
-		error = devsw_attach(spkr_cd.cd_name, NULL, &bmajor,
-		    &spkr_cdevsw, &cmajor);
-		if (error)
-			break;
-
-		error = config_init_component(cfdriver_ioconf_spkr,
-			cfattach_ioconf_spkr, cfdata_ioconf_spkr);
-		if (error) {
-			devsw_detach(NULL, &spkr_cdevsw);
-		}
-		break;
-
-	case MODULE_CMD_FINI:
-		if (spkr_active)
-			return EBUSY;
-		error = config_fini_component(cfdriver_ioconf_spkr,
-			cfattach_ioconf_spkr, cfdata_ioconf_spkr);
-		devsw_detach(NULL, &spkr_cdevsw);
-		break;
-	default:
-		error = ENOTTY;
-		break;
-	}
-#endif
-
-	return error;
 }
