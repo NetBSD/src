@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exect.c,v 1.2 2016/12/09 06:12:02 kamil Exp $	*/
+/*	$NetBSD: t_exect.c,v 1.3 2016/12/09 06:47:48 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,16 +42,25 @@ ATF_TC_HEAD(t_exect_null, tc)
 	    "Tests an empty exect(2) executing");
 }
 
+static sig_atomic_t caught = 0;
+
 static void
 sigtrap_handler(int sig, siginfo_t *info, void *ctx)
 {
 	ATF_REQUIRE_EQ(sig, SIGTRAP);
 	ATF_REQUIRE_EQ(info->si_code, TRAP_TRACE);
+
+	++caught;
 }
 
 ATF_TC_BODY(t_exect_null, tc)
 {
 	struct sigaction act;
+
+	/*
+	 * exect(NULL,NULL,NULL) generates 15859 times SIGTRAP on amd64
+	 */
+	atf_tc_expect_fail("PR port-amd64/51700");
 
 	ATF_REQUIRE(sigemptyset(&act.sa_mask) == 0);
 	act.sa_sigaction = sigtrap_handler;
@@ -60,6 +69,9 @@ ATF_TC_BODY(t_exect_null, tc)
 	ATF_REQUIRE(sigaction(SIGTRAP, &act, 0) == 0);
 
 	ATF_REQUIRE_ERRNO(EFAULT, exect(NULL, NULL, NULL) == -1);
+
+	ATF_REQUIRE_EQ_MSG(caught, 1, "expected caught (1) != received (%d)",
+	    caught);
 }
 
 ATF_TP_ADD_TCS(tp)
