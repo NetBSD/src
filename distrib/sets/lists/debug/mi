@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.183 2016/12/02 05:54:14 kamil Exp $
+# $NetBSD: mi,v 1.184 2016/12/09 06:12:02 kamil Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1863,6 +1863,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/db/h_db.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/db/h_lfsr.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/db/t_db_hash_seq.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/gen/exect/t_exect.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/execve/t_execve.debug	tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_fileactions.debug	tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_spawn.debug		tests-kernel-tests	debug,atf,compattestfile

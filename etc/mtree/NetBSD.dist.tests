@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.136 2016/12/02 05:54:14 kamil Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.137 2016/12/09 06:12:02 kamil Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -80,6 +80,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/c063
 ./usr/libdata/debug/usr/tests/lib/libc/db
 ./usr/libdata/debug/usr/tests/lib/libc/gen
+./usr/libdata/debug/usr/tests/lib/libc/gen/exect
 ./usr/libdata/debug/usr/tests/lib/libc/gen/execve
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn
 ./usr/libdata/debug/usr/tests/lib/libc/hash
@@ -262,6 +263,7 @@
 ./usr/tests/lib/libc/c063
 ./usr/tests/lib/libc/db
 ./usr/tests/lib/libc/gen
+./usr/tests/lib/libc/gen/exect
 ./usr/tests/lib/libc/gen/execve
 ./usr/tests/lib/libc/gen/posix_spawn
 ./usr/tests/lib/libc/hash
