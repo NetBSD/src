@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_synth.c,v 1.4 2016/12/09 13:16:22 christos Exp $	*/
+/*	$NetBSD: spkr_synth.c,v 1.5 2016/12/09 13:26:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.4 2016/12/09 13:16:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.5 2016/12/09 13:26:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ struct spkr_attach_args {
 void
 spkr_tone(u_int xhz, u_int ticks)
 {
-	audiobell(beep_unit, xhz, ticks * (1000 / hz), 80, 0);
+	audiobell(&beep_unit, xhz, ticks * (1000 / hz), 80, 0);
 }
 
 void
@@ -107,7 +107,7 @@ spkr_rest(int ticks)
     printf("%s: %d\n", __func__, ticks);
 #endif /* SPKRDEBUG */
     if (ticks > 0)
-	audiobell(beep_unit, 0, ticks * (1000 / hz), 80, 0);
+	audiobell(&beep_unit, 0, ticks * (1000 / hz), 80, 0);
 }
 
 device_t
@@ -202,7 +202,7 @@ bell_thread(void *arg)
 		bperiod = vb->period;
 		bvolume = vb->volume;
 		mutex_exit(&sc_bellock);
-		audiobell(beep_unit, bpitch, bperiod, bvolume, 0);
+		audiobell(&beep_unit, bpitch, bperiod, bvolume, 0);
 	}
 }
 
