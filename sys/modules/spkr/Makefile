@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.4 2016/12/09 02:22:56 christos Exp $
+# $NetBSD: Makefile,v 1.5 2016/12/09 06:12:03 christos Exp $
 
 .include "../Makefile.inc"
 
-.PATH:	${S}/dev/isa
+.PATH:	${S}/dev/isa ${S}/dev
 
 KMOD=	spkr
 IOCONF=	spkr.ioconf
