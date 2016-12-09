@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.165 2016/12/08 11:31:08 nat Exp $
+#	$NetBSD: files.isa,v 1.166 2016/12/09 02:22:34 christos Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -434,8 +434,9 @@ device	pcppi {}
 attach	pcppi at isa
 file	dev/isa/pcppi.c			pcppi			needs-flag
 
-attach	spkr at pcppi
-file	dev/isa/spkr.c			spkr & pcppispeaker	needs-flag
+attach	spkr at pcppi with spkr_pcppi
+file	dev/isa/spkr.c			spkr			needs-flag
+file	dev/isa/spkr_pcppi.c		spkr_pcppi
 
 attach	midi at pcppi with midi_pcppi: midisyn
 file	dev/isa/midi_pcppi.c		midi_pcppi
