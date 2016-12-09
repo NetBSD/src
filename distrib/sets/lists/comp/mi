@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2077 2016/12/02 02:29:54 riastradh Exp $
+#	$NetBSD: mi,v 1.2078 2016/12/09 05:18:37 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -577,7 +577,7 @@
 ./usr/include/dev/isa/sbdspvar.h		comp-obsolete		obsolete
 ./usr/include/dev/isa/sbreg.h			comp-obsolete		obsolete
 ./usr/include/dev/isa/sbvar.h			comp-obsolete		obsolete
-./usr/include/dev/isa/spkrio.h			comp-c-include
+./usr/include/dev/isa/spkrio.h			comp-obsolete		obsolete
 ./usr/include/dev/isa/vga_isavar.h		comp-obsolete		obsolete
 ./usr/include/dev/isa/wdlink.h			comp-obsolete		obsolete
 ./usr/include/dev/isa/wdreg.h			comp-obsolete		obsolete
@@ -698,6 +698,7 @@
 ./usr/include/dev/scsipi/ses.h			comp-c-include
 ./usr/include/dev/scsipi/ss_mustek.h		comp-obsolete		obsolete
 ./usr/include/dev/scsipi/ssvar.h		comp-obsolete		obsolete
+./usr/include/dev/spkrio.h			comp-c-include
 ./usr/include/dev/sun/disklabel.h		comp-c-include
 ./usr/include/dev/sun/eeprom.h			comp-c-include
 ./usr/include/dev/sun/event_var.h		comp-obsolete		obsolete
