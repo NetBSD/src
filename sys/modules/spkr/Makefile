@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2016/12/08 23:22:18 nat Exp $
+# $NetBSD: Makefile,v 1.4 2016/12/09 02:22:56 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -6,8 +6,7 @@
 
 KMOD=	spkr
 IOCONF=	spkr.ioconf
-CFLAGS+= -DPCPPISPEAKER
-SRCS=	spkr.c
+SRCS=	spkr.c spkr_pcppi.c
 
 WARNS=	4
 
