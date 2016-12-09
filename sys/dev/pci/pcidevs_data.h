@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1191.2.8 2016/12/09 05:16:35 snj Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1191.2.9 2016/12/09 05:28:13 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1199.2.8 2016/12/09 05:15:18 snj Exp
+ *	NetBSD: pcidevs,v 1.1199.2.9 2016/12/09 05:27:30 snj Exp
  */
 
 /*
@@ -4686,7 +4686,7 @@ static const uint16_t pci_products[] = {
 	    19362, 19370, 17461, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_HPLUG, 
 	    19362, 19370, 19376, 19380, 6293, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_82567V_3, 
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_82567V_3, 
 	    19385, 4534, 6293, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCH2_LV_LM, 
 	    19395, 5547, 3888, 18507, 0,
