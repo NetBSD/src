@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.115 2016/12/06 15:05:07 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.116 2016/12/09 17:57:24 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -592,6 +592,8 @@ no_NOX:
  *
  * (PROC0 STK + L4 + L3 + L2 + L1) is later referred to as BOOTSTRAP TABLES.
  *
+ * ISA I/O MEM has no physical page allocated here, just virtual addresses.
+ *
  * Important note: the kernel segments are properly 4k-aligned
  * (see kern.ldscript), so there's no need to enforce alignment.
  */
@@ -864,8 +866,8 @@ longmode_hi:
 	movw	%ax,%gs
 	movw	%ax,%fs
 
-	/* XXX merge these */
-	leaq	(TABLESIZE+IOM_SIZE)(%rsi),%rdi
+	/* The first physical page available. */
+	leaq	(TABLESIZE)(%rsi),%rdi
 
 #else	/* XEN */
 	/* First, reset the PSL. */
