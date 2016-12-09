@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.270 2016/12/08 20:33:52 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.271 2016/12/09 13:06:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.270 2016/12/08 20:33:52 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.271 2016/12/09 13:06:02 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3167,7 +3167,7 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot)
 	}
 
 	mutex_exit(sc->sc_lock);
-	rv = (paddr_t)cb->s.start + off;
+	rv = (paddr_t)(uintptr_t)(cb->s.start + off);
 	mutex_enter(sc->sc_lock);
 
 	return rv;
