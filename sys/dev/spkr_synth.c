@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_synth.c,v 1.3 2016/12/09 05:17:03 christos Exp $	*/
+/*	$NetBSD: spkr_synth.c,v 1.4 2016/12/09 13:16:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.3 2016/12/09 05:17:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.4 2016/12/09 13:16:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ CFATTACH_DECL3_NEW(spkr_synth, 0,
 extern struct cfdriver audio_cd;
 
 static struct sysctllog	*spkr_sc_log;	/* sysctl log */
-static int beep_index = 0;
+static int beep_unit = 0;
 
 struct vbell_args sc_bell_args;
 lwp_t		*sc_bellthread;
@@ -97,7 +97,7 @@ struct spkr_attach_args {
 void
 spkr_tone(u_int xhz, u_int ticks)
 {
-	audiobell(beep_index, xhz, ticks * (1000 / hz), 80, 0);
+	audiobell(beep_unit, xhz, ticks * (1000 / hz), 80, 0);
 }
 
 void
@@ -107,7 +107,7 @@ spkr_rest(int ticks)
     printf("%s: %d\n", __func__, ticks);
 #endif /* SPKRDEBUG */
     if (ticks > 0)
-	audiobell(beep_index, 0, ticks * (1000 / hz), 80, 0);
+	audiobell(beep_unit, 0, ticks * (1000 / hz), 80, 0);
 }
 
 device_t
@@ -124,7 +124,7 @@ spkrattach(device_t parent, device_t self, void *aux)
 	const struct sysctlnode *node;
 
 	printf("\n");
-	beep_index = 0;
+	beep_unit = 0;
 	spkr_attached = 1;
 	
 	if (!pmf_device_register(self, NULL, NULL))
@@ -202,14 +202,14 @@ bell_thread(void *arg)
 		bperiod = vb->period;
 		bvolume = vb->volume;
 		mutex_exit(&sc_bellock);
-		audiobell(beep_index, bpitch, bperiod, bvolume, 0);
+		audiobell(beep_unit, bpitch, bperiod, bvolume, 0);
 	}
 }
 
 void
 speaker_play(u_int pitch, u_int period, u_int volume)
 {
-	if (spkr_attached == 0 || beep_index == -1)
+	if (spkr_attached == 0 || beep_unit == -1)
 		return;
 
 	mutex_enter(&sc_bellock);
@@ -232,7 +232,7 @@ beep_sysctl_device(SYSCTLFN_ARGS)
 
 	node = *rnode;
 
-	t = beep_index;
+	t = beep_unit;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -243,7 +243,7 @@ beep_sysctl_device(SYSCTLFN_ARGS)
 	    NULL))
 		return EINVAL;
 
-	beep_index = t;
+	beep_unit = t;
 
 	return error;
 }

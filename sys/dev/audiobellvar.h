@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobellvar.h,v 1.7 2016/12/08 11:31:08 nat Exp $	*/
+/*	$NetBSD: audiobellvar.h,v 1.8 2016/12/09 13:16:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 Ben Harris
@@ -38,4 +38,4 @@
  * This function is designed to be passed to pckbd_hookup_bell() and
  * equivalents.
  */
-extern void audiobell(int, u_int, u_int, u_int, int);
+void audiobell(int, u_int, u_int, u_int, int);

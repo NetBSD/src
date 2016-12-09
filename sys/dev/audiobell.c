@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.9 2016/12/08 11:31:08 nat Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.10 2016/12/09 13:16:22 christos Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.9 2016/12/08 11:31:08 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.10 2016/12/09 13:16:22 christos Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -137,24 +137,23 @@ audiobell_synthesize(uint8_t *buf, u_int pitch, u_int period, u_int volume)
 }
 
 void
-audiobell(int arg, u_int pitch, u_int period, u_int volume, int poll)
+audiobell(int unit, u_int pitch, u_int period, u_int volume, int poll)
 {
-	dev_t audio = arg;
 	uint8_t *buf;
 	struct audio_info ai;
 	struct uio auio;
 	struct iovec aiov;
 	int size, len, offset;
+	dev_t audio = (dev_t)(AUDIO_DEVICE | unit);
 
 	/* The audio system isn't built for polling. */
 	if (poll) return;
 
 	/* If not configured, we can't beep. */
-	if (audioopen(AUDIO_DEVICE | audio, FWRITE, 0, NULL) != 0)
+	if (audioopen(audio, FWRITE, 0, NULL) != 0)
 		return;
 
-	if (audioioctl((dev_t)(AUDIO_DEVICE | audio),
-	    AUDIO_GETINFO, &ai, 0, NULL) != 0)
+	if (audioioctl(audio, AUDIO_GETINFO, &ai, 0, NULL) != 0)
 		return;
 
 	buf = NULL;
@@ -180,11 +179,11 @@ audiobell(int arg, u_int pitch, u_int period, u_int volume, int poll)
 		auio.uio_rw = UIO_WRITE;
 		UIO_SETUP_SYSSPACE(&auio);
 
-		audiowrite(AUDIO_DEVICE | audio, &auio, 0);
+		audiowrite(audio, &auio, 0);
 		len -= size;
 		offset += size;
 	}
 out:
 	if (buf != NULL) free(buf, M_TEMP);
-	audioclose(AUDIO_DEVICE | audio, FWRITE, 0, NULL);
+	audioclose(audio, FWRITE, 0, NULL);
 }
