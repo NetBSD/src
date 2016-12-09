@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exect.c,v 1.1 2016/12/09 04:00:36 kamil Exp $	*/
+/*	$NetBSD: t_exect.c,v 1.2 2016/12/09 06:12:02 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
 #include <atf-c.h>
 
 #include <errno.h>
+#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -41,14 +42,24 @@ ATF_TC_HEAD(t_exect_null, tc)
 	    "Tests an empty exect(2) executing");
 }
 
+static void
+sigtrap_handler(int sig, siginfo_t *info, void *ctx)
+{
+	ATF_REQUIRE_EQ(sig, SIGTRAP);
+	ATF_REQUIRE_EQ(info->si_code, TRAP_TRACE);
+}
+
 ATF_TC_BODY(t_exect_null, tc)
 {
-	int err;
+	struct sigaction act;
 
-	err = exect(NULL, NULL, NULL);
-	ATF_REQUIRE(err == -1);
-	ATF_REQUIRE_MSG(errno == EFAULT,
-	    "wrong error returned %d instead of %d", errno, EFAULT);
+	ATF_REQUIRE(sigemptyset(&act.sa_mask) == 0);
+	act.sa_sigaction = sigtrap_handler;
+	act.sa_flags = SA_SIGINFO;
+
+	ATF_REQUIRE(sigaction(SIGTRAP, &act, 0) == 0);
+
+	ATF_REQUIRE_ERRNO(EFAULT, exect(NULL, NULL, NULL) == -1);
 }
 
 ATF_TP_ADD_TCS(tp)
