@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.2 2016/12/09 04:46:39 christos Exp $	*/
+/*	$NetBSD: spkr.c,v 1.3 2016/12/09 05:17:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.2 2016/12/09 04:46:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.3 2016/12/09 05:17:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,15 +478,18 @@ spkrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
     return(0);
 }
 
+#ifdef _MODULE
+extern struct cfdriver spkr_cd;
+#include "ioconf.c"
+#endif
+
 int
 spkr__modcmd(modcmd_t cmd, void *arg)
 {
 #ifdef _MODULE
 	devmajor_t bmajor, cmajor;
-#endif
 	int error = 0;
 
-#ifdef _MODULE
 	switch(cmd) {
 	case MODULE_CMD_INIT:
 		bmajor = cmajor = -1;
@@ -513,7 +516,9 @@ spkr__modcmd(modcmd_t cmd, void *arg)
 		error = ENOTTY;
 		break;
 	}
-#endif
 
 	return error;
+#else
+	return 0;
+#endif
 }
