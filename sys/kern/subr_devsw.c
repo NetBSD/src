@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34 2016/02/01 05:05:43 riz Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.35 2016/12/09 19:13:47 nat Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34 2016/02/01 05:05:43 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.35 2016/12/09 19:13:47 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -796,6 +796,16 @@ bdev_dump(dev_t dev, daddr_t addr, void *data, size_t sz)
 }
 
 int
+bdev_flags(dev_t dev)
+{
+	const struct bdevsw *d;
+
+	if ((d = bdevsw_lookup(dev)) == NULL)
+		return 0;
+	return d->d_flag & ~D_TYPEMASK;
+}
+
+int
 bdev_type(dev_t dev)
 {
 	const struct bdevsw *d;
@@ -1023,6 +1033,16 @@ cdev_discard(dev_t dev, off_t pos, off_t len)
 	DEV_UNLOCK(d);
 
 	return rv;
+}
+
+int
+cdev_flags(dev_t dev)
+{
+	const struct cdevsw *d;
+
+	if ((d = cdevsw_lookup(dev)) == NULL)
+		return 0;
+	return d->d_flag & ~D_TYPEMASK;
 }
 
 int
