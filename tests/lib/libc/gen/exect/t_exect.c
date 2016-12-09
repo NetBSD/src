@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exect.c,v 1.3 2016/12/09 06:47:48 kamil Exp $	*/
+/*	$NetBSD: t_exect.c,v 1.4 2016/12/09 08:34:37 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -57,10 +57,12 @@ ATF_TC_BODY(t_exect_null, tc)
 {
 	struct sigaction act;
 
+#if defined(__x86_64__)
 	/*
 	 * exect(NULL,NULL,NULL) generates 15859 times SIGTRAP on amd64
 	 */
 	atf_tc_expect_fail("PR port-amd64/51700");
+#endif
 
 	ATF_REQUIRE(sigemptyset(&act.sa_mask) == 0);
 	act.sa_sigaction = sigtrap_handler;
@@ -71,7 +73,7 @@ ATF_TC_BODY(t_exect_null, tc)
 	ATF_REQUIRE_ERRNO(EFAULT, exect(NULL, NULL, NULL) == -1);
 
 	ATF_REQUIRE_EQ_MSG(caught, 1, "expected caught (1) != received (%d)",
-	    caught);
+	    (int)caught);
 }
 
 ATF_TP_ADD_TCS(tp)
