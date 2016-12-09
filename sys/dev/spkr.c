@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.1 2016/12/09 04:32:39 christos Exp $	*/
+/*	$NetBSD: spkr.c,v 1.2 2016/12/09 04:46:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.1 2016/12/09 04:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.2 2016/12/09 04:46:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.1 2016/12/09 04:32:39 christos Exp $");
 #include <sys/bus.h>
 
 #include <dev/spkrio.h>
+#include <dev/spkrvar.h>
 
 dev_type_open(spkropen);
 dev_type_close(spkrclose);
