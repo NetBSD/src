@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.706 2016/12/02 05:54:14 kamil Exp $
+# $NetBSD: mi,v 1.707 2016/12/09 06:12:02 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -90,6 +90,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/c063				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/db				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/exect			tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/execve			tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn			tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo			tests-obsolete		obsolete
@@ -2417,6 +2418,10 @@
 ./usr/tests/lib/libc/gen			tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/Atffile		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/libc/gen/exect			tests-kernel-tests	compattestfile,atf
+./usr/tests/lib/libc/gen/exect/Atffile		tests-kernel-tests	compattestfile,atf
+./usr/tests/lib/libc/gen/exect/Kyuafile		tests-kernel-tests	compattestfile,atf,kyua
+./usr/tests/lib/libc/gen/exect/t_exect		tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/execve			tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/execve/Atffile		tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/execve/Kyuafile	tests-kernel-tests	compattestfile,atf,kyua
