@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.39 2016/12/09 02:22:34 christos Exp $	*/
+/*	$NetBSD: spkr.c,v 1.1 2016/12/09 04:32:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.39 2016/12/09 02:22:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.1 2016/12/09 04:32:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.39 2016/12/09 02:22:34 christos Exp $");
 
 #include <sys/bus.h>
 
-#include <dev/isa/spkrio.h>
+#include <dev/spkrio.h>
 
 dev_type_open(spkropen);
 dev_type_close(spkrclose);
@@ -366,9 +366,15 @@ playstring(char *cp, int slen)
  * and spkr_rest() functions defined above.
  */
 
-int spkr_active;	/* exclusion flag */
-extern int spkr_attached;
+static int spkr_active;	/* exclusion flag */
+int spkr_attached;
 static void *spkr_inbuf;
+
+int
+spkr_probe(device_t parent, cfdata_t match, void *aux)
+{
+	return (!spkr_attached);
+}
 
 int
 spkropen(dev_t dev, int	flags, int mode, struct lwp *l)
@@ -469,4 +475,44 @@ spkrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
     else
 	return(EINVAL);
     return(0);
+}
+
+int
+spkr__modcmd(modcmd_t cmd, void *arg)
+{
+#ifdef _MODULE
+	devmajor_t bmajor, cmajor;
+#endif
+	int error = 0;
+
+#ifdef _MODULE
+	switch(cmd) {
+	case MODULE_CMD_INIT:
+		bmajor = cmajor = -1;
+		error = devsw_attach(spkr_cd.cd_name, NULL, &bmajor,
+		    &spkr_cdevsw, &cmajor);
+		if (error)
+			break;
+
+		error = config_init_component(cfdriver_ioconf_spkr,
+			cfattach_ioconf_spkr, cfdata_ioconf_spkr);
+		if (error) {
+			devsw_detach(NULL, &spkr_cdevsw);
+		}
+		break;
+
+	case MODULE_CMD_FINI:
+		if (spkr_active)
+			return EBUSY;
+		error = config_fini_component(cfdriver_ioconf_spkr,
+			cfattach_ioconf_spkr, cfdata_ioconf_spkr);
+		devsw_detach(NULL, &spkr_cdevsw);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

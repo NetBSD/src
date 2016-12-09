@@ -1,4 +1,4 @@
-/*	$NetBSD: spkrio.h,v 1.3 2016/12/09 02:22:34 christos Exp $	*/
+/*	$NetBSD: spkrio.h,v 1.1 2016/12/09 04:32:39 christos Exp $	*/
 
 /*
  * spkr.h -- interface definitions for speaker ioctl()
@@ -19,5 +19,8 @@ typedef struct {
 
 void spkr_tone(u_int, u_int);
 void spkr_rest(int);
+int spkr__modcmd(modcmd_t, void *);
+int spkr_probe(device_t, cfdata_t, void *);
+extern int spkr_attached;
 
-#endif /* _DEV_ISA_SPKR_H_ */
+#endif
