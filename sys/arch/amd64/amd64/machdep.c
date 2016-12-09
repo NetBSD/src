@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.234 2016/11/25 11:57:36 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.235 2016/12/09 17:57:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2016/11/25 11:57:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2016/12/09 17:57:24 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1608,7 +1608,7 @@ init_x86_64(paddr_t first_avail)
 #endif	/* !XEN */
 
 	/* End of the virtual space we have created so far. */
-	kern_end = KERNBASE + first_avail;
+	kern_end = (vaddr_t)atdevbase + IOM_SIZE;
 
 #ifndef XEN
 	/* The area for the module map. */
