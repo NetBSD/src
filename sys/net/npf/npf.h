@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.48 2016/12/08 23:07:11 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.49 2016/12/09 02:26:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -258,6 +258,9 @@ bool		npf_autounload_p(void);
 /* Layers. */
 #define	NPF_LAYER_2			2
 #define	NPF_LAYER_3			3
+
+/* XXX mbuf.h: just for now. */
+#define	PACKET_TAG_NPF			10
 
 /* Packet tags. */
 #define	NPF_NTAG_PASS			0x0001
