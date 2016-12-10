@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.96 2016/12/10 09:51:43 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.97 2016/12/10 10:41:07 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,10 +52,12 @@
 #define	CPU_ARCH		4	/* integer: cpu architecture version */
 #define	CPU_MAXID		5	/* number of valid machdep ids */
 
-#ifdef _KERNEL
 /*
  * Exported definitions unique to SPARC cpu support.
  */
+
+/* Things needed by crash or the kernel */
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
@@ -76,6 +78,8 @@
 #include <arch/sparc/sparc/vaddrs.h>
 #include <arch/sparc/sparc/cache.h>
 #endif
+
+struct trapframe;
 
 /*
  * Message structure for Inter Processor Communication in MP systems
@@ -337,11 +341,17 @@ struct cpu_info {
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
+#define	cpuinfo			(*(struct cpu_info *)CPUINFO_VA)
 #define	curcpu()		(cpuinfo.ci_self)
 #define	curlwp			(cpuinfo.ci_curlwp)
 #define	CPU_IS_PRIMARY(ci)	((ci)->master)
 
 #define	cpu_number()		(cpuinfo.ci_cpuid)
+
+#endif /* _KERNEL || _KMEMUSER */
+
+/* Kernel only things. */
+#if defined(_KERNEL)
 void	cpu_proc_fork(struct proc *, struct proc *);
 
 #if defined(MULTIPROCESSOR)

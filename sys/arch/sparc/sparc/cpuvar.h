@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.93 2016/12/10 09:51:43 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.94 2016/12/10 10:41:07 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -232,8 +232,6 @@ extern struct cpu_info *cpus[];
 #ifdef MULTIPROCESSOR
 extern u_int cpu_ready_mask;		/* the set of CPUs marked as READY */
 #endif
-
-#define cpuinfo	(*(struct cpu_info *)CPUINFO_VA)
 
 #if defined(DDB) || defined(MULTIPROCESSOR)
 /*
