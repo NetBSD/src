@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.40 2016/11/24 00:12:52 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.41 2016/12/10 20:02:07 kamil Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 1, 2016
@@ -257,10 +257,6 @@ argument should contain the name of the core file to be generated
 and the
 .Fa data
 argument should contain the length of the core filename.
-This
-.Nm
-call currently does not stop the child process so it can generate
-inconsistent data.
 .It Dv PT_LWPINFO
 Returns information about a thread from the list of threads for the
 process specified in the
