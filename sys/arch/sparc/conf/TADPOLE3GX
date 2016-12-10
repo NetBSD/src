@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.68 2016/12/08 11:31:12 nat Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.69 2016/12/10 23:03:25 christos Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -345,7 +345,6 @@ options 	DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
 dbri0		at sbus0 slot ? offset ?		# SUNW,DBRI[s3|e]
 audio*		at audiobus?
 
-options VAUDIOSPEAKER
 spkr0	at audio0		# PC speaker (synthesized)
 
 # Tadpole 3GX/3GS (P9100 -- P Nine One Zero Zero -> pnozz)
