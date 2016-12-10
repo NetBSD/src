@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.38 2016/12/10 19:07:22 christos Exp $	*/
+/*	$NetBSD: npf.c,v 1.39 2016/12/10 21:04:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.38 2016/12/10 19:07:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.39 2016/12/10 21:04:12 christos Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -1249,9 +1249,8 @@ _npf_debug_addif(nl_config_t *ncf, const char *ifname)
 	prop_object_release(ifdict);
 }
 
-
 int
-npf_nat_lookup(int fd, int af, npf_addr_t **addr, in_port_t *port,
+npf_nat_lookup(int fd, int af, npf_addr_t *addr[2], in_port_t port[2],
     int proto, int dir)
 {
 	prop_dictionary_t conn_dict, conn_res = NULL;
