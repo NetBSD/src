@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2016/12/10 00:40:27 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2 2016/12/10 05:09:10 nat Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,7 @@
 
 KMOD=	spkr_synth
 IOCONF=	spkr_synth.ioconf
-SRCS=	spkr.c spkr_synth.c
+SRCS=	audiobell.c spkr.c spkr_synth.c
 
 WARNS=	4
 
