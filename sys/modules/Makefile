@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.185 2016/12/08 23:22:18 nat Exp $
+#	$NetBSD: Makefile,v 1.186 2016/12/10 00:39:40 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -116,6 +116,7 @@ SUBDIR+=	skipjack
 SUBDIR+=	slcompress
 SUBDIR+=	smbfs
 SUBDIR+=	spdmem
+SUBDIR+=	spkr_synth
 SUBDIR+=	sppp_subr
 SUBDIR+=	sysmon
 SUBDIR+=	sysmon_envsys

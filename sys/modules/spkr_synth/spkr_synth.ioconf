@@ -1,0 +1,10 @@
+# $NetBSD: spkr_synth.ioconf,v 1.1 2016/12/10 00:39:40 pgoyette Exp $
+
+ioconf spkr
+
+include "conf/files"
+include "conf/files.audio"
+
+pseudo-root audio*
+
+spkr* at audio?
