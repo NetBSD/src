@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2016/12/10 14:03:34 rin Exp $
+#	$NetBSD: Makefile,v 1.18 2016/12/10 14:06:44 rin Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -15,7 +15,7 @@ BINDIR=		/usr/mdec
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
 
-STRIPFLAG=		# not an a.out
+STRIPFLAG=		# not an elf
 
 AOUT2HUXDIR!=	cd ${.CURDIR}/../aout2hux && ${PRINTOBJDIR}
 AOUT2HUX=	${AOUT2HUXDIR}/aout2hux
