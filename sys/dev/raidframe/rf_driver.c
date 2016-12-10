@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.132 2015/12/26 00:58:45 pgoyette Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.133 2016/12/10 23:03:27 maya Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.132 2015/12/26 00:58:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.133 2016/12/10 23:03:27 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -120,9 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.132 2015/12/26 00:58:45 pgoyette Exp
 /* rad == RF_RaidAccessDesc_t */
 #define RF_MAX_FREE_RAD 128
 #define RF_MIN_FREE_RAD  32
-
-/* debug variables */
-char    rf_panicbuf[2048];	/* a buffer to hold an error msg when we panic */
 
 /* main configuration routines */
 static int raidframe_booted = 0;
@@ -888,17 +885,15 @@ rf_ConfigureDebug(RF_Config_t *cfgPtr)
 void
 rf_print_panic_message(int line, const char *file)
 {
-	snprintf(rf_panicbuf, sizeof(rf_panicbuf),
-	    "raidframe error at line %d file %s", line, file);
+	kern_assert("raidframe error at line %d file %s", line, file);
 }
 
 #ifdef RAID_DIAGNOSTIC
 void
 rf_print_assert_panic_message(int line,	const char *file, const char *condition)
 {
-	snprintf(rf_panicbuf, sizeof(rf_panicbuf),
-		"raidframe error at line %d file %s (failed asserting %s)\n",
-		line, file, condition);
+	kern_assert("raidframe error at line %d file %s (failed asserting %s)\n",
+	    line, file, condition);
 }
 #endif
 
