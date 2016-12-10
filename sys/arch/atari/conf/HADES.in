@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES.in,v 1.13 2016/12/08 11:31:09 nat Exp $
+#	$NetBSD: HADES.in,v 1.14 2016/12/10 23:03:23 christos Exp $
 #
 # Medusa-Hades
 #
@@ -70,7 +70,6 @@ ep*	at pci0 dev ? function 0	# 3Com 3c59x/3c90x Ethernet
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 audio*	at eso?
 
-options VAUDIOSPEAKER
 spkr0	at audio0		# PC speaker (synthesized)
 
 #endif /* SMALL030_KERNEL */

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.149 2016/12/09 02:25:46 christos Exp $
+# $NetBSD: GENERIC,v 1.150 2016/12/10 23:03:23 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.149 $"
+#ident 		"GENERIC-$Revision: 1.150 $"
 
 maxusers	32
 
@@ -209,7 +209,6 @@ wss0	at isa? port 0x82c irq 30 drq 6 drq2 7	# Windows Sound System
 # Audio support
 audio*	at audiobus?
 
-options VAUDIOSPEAKER
 spkr0	at audio0		# PC speaker (synthesized)
 
 # MIDI support
