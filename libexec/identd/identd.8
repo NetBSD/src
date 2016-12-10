@@ -1,9 +1,9 @@
-.\" $NetBSD: identd.8,v 1.20 2005/04/04 18:43:55 peter Exp $
+.\" $NetBSD: identd.8,v 1.21 2016/12/10 05:43:11 christos Exp $
 .\"
 .\" This software is in the public domain.
 .\" Written by Peter Postma <peter@NetBSD.org>
 .\"
-.Dd April 4, 2005
+.Dd December 9, 2016
 .Dt IDENTD 8
 .Os
 .Sh NAME
@@ -124,9 +124,10 @@ The
 .Ar filter
 argument specifies which packet filter should be used to lookup the
 connections, currently
-.Sq pf
+.Sq ipfilter ,
+.Sq npf ,
 and
-.Sq ipfilter
+.Sq pf
 are supported packet filters.
 Note that
 .Nm
@@ -231,10 +232,11 @@ When forwarding is enabled with the
 flag then
 .Nm
 will need access to either
-.Pa /etc/pf
-(pf) or
-.Pa /etc/ipnat
-(ipfilter).
+.Pa /dev/ipnat
+(ipfilter),
+.Pa /dev/pf
+(pf), or
+.Pa /dev/npf.
 Since it's not a good idea to run
 .Nm
 under root, you'll need to adjust group owner/permissions to the device(s)
