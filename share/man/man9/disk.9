@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.40 2014/12/31 20:13:41 mlelstv Exp $
+.\"	$NetBSD: disk.9,v 1.41 2016/12/10 09:49:00 mlelstv Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -368,15 +368,36 @@ The
 above is the disk's
 .Dq driver
 switch.
-This switch currently includes a pointer to the disk's
-.Dq strategy
-routine.
+This switch currently includes pointers to several driver entry points,
+where only the
+.Nm d_strategy
+entry point is used by the disk framework.
 This switch needs to have global scope and should be initialized as follows:
 .Bd -literal
-void foostrategy(struct buf *);
+void    (foostrategy)(struct buf *);
+void    (foominphys)(struct buf *);
+int     (fooopen)(dev_t, int, int, struct lwp *);
+int     (fooclose)(dev_t, int, int, struct lwp *);
+int     (foo_discard)(device_t, off_t, off_t);
+int     (foo_diskstart)(device_t, struct buf *);
+void    (foo_iosize)(device_t, int *);
+int     (foo_dumpblocks)(device_t, void *, daddr_t, int);
+int     (foo_lastclose)(device_t);
+int     (foo_firstopen)(device_t, dev_t, int, int);
+int     (foo_label)(device_t, struct disklabel *);
 
 const struct dkdriver foodkdriver = {
+	.d_open = fooopen,
+	.d_close = fooclose,
 	.d_strategy = foostrategy,
+	.d_minphys = foominphys,
+	.d_discard = foo_discard,
+	.d_diskstart = foo_diskstart,	/* optional */
+	.d_dumpblocks = foo_dumpblocks,	/* optional */
+	.d_iosize = foo_iosize,		/* optional */
+	.d_firstopen = foo_firstopen,	/* optional */
+	.d_lastclose = foo_lastclose,	/* optional */
+	.d_label = foo_label,		/* optional */
 };
 .Ed
 .Pp
@@ -519,7 +540,8 @@ and
 .Sh SEE ALSO
 .Xr ccd 4 ,
 .Xr dm 4 ,
-.Xr vnd 4
+.Xr vnd 4 ,
+.Xr dksubr 4
 .Sh HISTORY
 The
 .Nx
