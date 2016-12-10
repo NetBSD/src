@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.18 2016/12/10 05:41:10 christos Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.19 2016/12/10 09:26:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 2014-2015 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.18 2016/12/10 05:41:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.19 2016/12/10 09:26:16 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -964,9 +964,7 @@ npf_connkey_import(prop_dictionary_t idict, npf_connkey_t *key, uint16_t *dir)
 	size_t alen = prop_data_size(sobj);
 	if (alen != prop_data_size(dobj))
 		return 0;
-	*(const int *)ips[NPF_SRC], id[NPF_SRC],
-	*(const int *)ips[NPF_DST], id[NPF_DST], alen, proto, *dir);
-	
+
 	return connkey_setkey(key, proto, ips, id, alen, true);
 }
 
