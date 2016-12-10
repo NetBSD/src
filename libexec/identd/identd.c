@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.34 2012/03/15 02:02:21 joerg Exp $ */
+/* $NetBSD: identd.c,v 1.35 2016/12/10 05:43:11 christos Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: identd.c,v 1.34 2012/03/15 02:02:21 joerg Exp $");
+__RCSID("$NetBSD: identd.c,v 1.35 2016/12/10 05:43:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -65,22 +65,28 @@ __dead static void  timeout_handler(int);
 __dead static void  fatal(const char *);
 __dead static void  die(const char *, ...) __printflike(1, 2);
 
-static int   bflag, eflag, fflag, iflag, Iflag;
+static int   bflag, dflag, eflag, fflag, iflag, Iflag;
 static int   lflag, Lflag, nflag, Nflag, rflag;
 
 /* NAT lookup function pointer. */
-static int  (*nat_lookup)(struct sockaddr_storage *, struct sockaddr *, int *);
+typedef int (*nat_lookup_t)(const struct sockaddr_storage *,
+    struct sockaddr_storage *, in_port_t *);
+
+static nat_lookup_t  nat_lookup;
 
 /* Packet filters. */
 static const struct {
 	const char *name;
-	int (*fn)(struct sockaddr_storage *, struct sockaddr *, int *);
+	nat_lookup_t fn;
 } filters[] = {
 #ifdef WITH_PF
 	{ "pf", pf_natlookup },
 #endif
 #ifdef WITH_IPF
 	{ "ipfilter", ipf_natlookup },
+#endif
+#ifdef WITH_NPF
+	{ "npf", npf_natlookup },
 #endif
 	{ NULL, NULL }
 };
@@ -109,7 +115,7 @@ main(int argc, char *argv[])
 	filter = proxy = NULL;
 	address = charset = fmt = NULL;
 	uid = gid = 0;
-	bflag = eflag = fflag = iflag = Iflag = 0;
+	bflag = dflag = eflag = fflag = iflag = Iflag = 0;
 	lflag = Lflag = nflag = Nflag = rflag = 0;
 
 	/* Started from a tty? then run as daemon. */
@@ -118,7 +124,7 @@ main(int argc, char *argv[])
 
 	/* Parse command line arguments. */
 	while ((ch = getopt(argc, argv,
-	    "46a:bceF:f:g:IiL:lm:Nno:P:p:rt:u:")) != -1) {
+	    "46a:bcdeF:f:g:IiL:lm:Nno:P:p:rt:u:")) != -1) {
 		switch (ch) {
 		case '4':
 			IPv4or6 = AF_INET;
@@ -134,6 +140,9 @@ main(int argc, char *argv[])
 			break;
 		case 'c':
 			charset = optarg;
+			break;
+		case 'd':
+			dflag++;
 			break;
 		case 'e':
 			eflag = 1;
@@ -255,7 +264,7 @@ main(int argc, char *argv[])
 		int fd, nfds, rv;
 		struct pollfd *rfds;
 
-		if (daemon(0, 0) < 0)
+		if (!dflag && daemon(0, 0) < 0)
 			die("daemon: %s", strerror(errno));
 
 		rfds = malloc(*socks * sizeof(struct pollfd));
@@ -424,16 +433,16 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	if (ident_getuid(ss, sizeof(ss), proxy, &uid) == -1) {
 		/* Lookup failed, try to forward if enabled. */
 		if (nat_lookup != NULL) {
-			struct sockaddr nat_addr;
-			int nat_lport;
+			struct sockaddr_storage nat_addr;
+			in_port_t nat_lport;
 
 			(void)memset(&nat_addr, 0, sizeof(nat_addr));
-
 			if ((*nat_lookup)(ss, &nat_addr, &nat_lport) &&
-			    forward(fd, &nat_addr, nat_lport, fport, lport)) {
+			    forward(fd, (struct sockaddr *)&nat_addr,
+			    nat_lport, fport, lport)) {
 				maybe_syslog(LOG_INFO,
 				    "Succesfully forwarded the request to %s",
-				    gethost(&nat_addr));
+				    gethost((struct sockaddr *)&nat_addr));
 				return 0;
 			}
 		}
@@ -812,7 +821,7 @@ forward(int fd, struct sockaddr *nat_addr, int nat_lport, int fport, int lport)
 	 * Send the ident query to the NAT host, but use as local port
 	 * the port of the NAT host.
 	 */
-	(void)snprintf(buf, sizeof(buf), "%d , %d\r\n", nat_lport, fport);
+	(void)snprintf(buf, sizeof(buf), "%d , %d\r\n", fport, nat_lport);
 	if (send(sock, buf, strlen(buf), 0) < 0) {
 		maybe_syslog(LOG_ERR, "send: %m");
 		(void)close(sock);
@@ -830,6 +839,8 @@ forward(int fd, struct sockaddr *nat_addr, int nat_lport, int fport, int lport)
 		return 0;
 	}
 	reply[n] = '\0';
+	if (dflag)
+		maybe_syslog(LOG_ERR, "Replied %s", reply);
 	(void)close(sock);
 
 	/* Extract everything after the port specs from the ident reply. */
