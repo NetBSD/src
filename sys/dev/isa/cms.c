@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.21 2012/04/09 10:18:16 plunky Exp $ */
+/* $NetBSD: cms.c,v 1.22 2016/12/10 17:41:44 maya Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.21 2012/04/09 10:18:16 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.22 2016/12/10 17:41:44 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ cms_on(midisyn *ms, uint_fast16_t vidx, midipitch_t mp, int16_t level_cB)
 
 	/* set the volume */
 	/* this may be the wrong curve but will do something. no docs! */
-	vol = 15 + (level_cB > -75) ? level_cB/5 : -15;
+	vol = 15 + ((level_cB > -75) ? level_cB/5 : -15);
 	CMS_WRITE(sc, chip, CMS_IREG_VOL0 + voice, ((vol<<4)|vol));
 
 	/* enable the voice */
