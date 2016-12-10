@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.128 2016/12/08 11:31:11 nat Exp $
+# $NetBSD: GENERIC,v 1.129 2016/12/10 23:03:25 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -274,7 +274,6 @@ midi*		at sb?					# SB1 MIDI port
 # Audio support
 audio*		at sb?
 
-options VAUDIOSPEAKER
 spkr0	at audio0		# PC speaker (synthesized)
 
 # Pseudo-Devices

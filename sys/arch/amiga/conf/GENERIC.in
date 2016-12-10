@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.130 2016/12/08 11:31:09 nat Exp $
+# $NetBSD: GENERIC.in,v 1.131 2016/12/10 23:03:23 christos Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.130 $"
+#ident 		"GENERIC-$Revision: 1.131 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -414,7 +414,6 @@ m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
 
-options VAUDIOSPEAKER
 spkr0	at audio0		# PC speaker (synthesized)
 
 a1k2cp0         at mainbus0             # A1200 on-board clockport

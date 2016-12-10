@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.50 2016/12/08 11:31:10 nat Exp $
+#	$NetBSD: ARMADILLO9,v 1.51 2016/12/10 23:03:23 christos Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -251,7 +251,6 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # Audio support
 #audio*	at audiobus?
 
-#options VAUDIOSPEAKER
 #spkr0	at audio0		# PC speaker (synthesized)
 
 # MIDI support
