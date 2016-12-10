@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.35 2016/12/10 05:43:11 christos Exp $ */
+/* $NetBSD: identd.c,v 1.36 2016/12/10 22:08:13 christos Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: identd.c,v 1.35 2016/12/10 05:43:11 christos Exp $");
+__RCSID("$NetBSD: identd.c,v 1.36 2016/12/10 22:08:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -1050,12 +1050,17 @@ die(const char *message, ...)
 {
 	va_list ap;
 
-	va_start(ap, message);
-	if (bflag)
+	if (bflag) {
+		va_start(ap, message);
 		vwarnx(message, ap);
-	if (lflag)
+		va_end(ap);
+	}
+
+	if (lflag) {
+		va_start(ap, message);
 		vsyslog(LOG_ERR, message, ap);
-	va_end(ap);
+		va_end(ap);
+	}
 
 	exit(EXIT_FAILURE);
 }
