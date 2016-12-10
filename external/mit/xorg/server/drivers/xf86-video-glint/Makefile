@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2016/12/03 16:41:34 macallan Exp $
+#	$NetBSD: Makefile,v 1.14 2016/12/10 01:58:36 macallan Exp $
 
 DRIVER=		xf86-video-glint
 DRIVER_NAME=	glint_drv
 
 SRCS=		glint_dga.c glint_driver.c glint_shadow.c
-SRCS+=		IBMramdac.c pm2_accel.c pm2_common.c pm2_dac.c 
+SRCS+=		IBMramdac.c pm2_accel.c pm2_common.c pm2_dac.c pm2_exa.c
 SRCS+=		pm2ramdac.c pm2v_dac.c pm2_video.c pm2vramdac.c pm3_accel.c
 SRCS+=		pm3_dac.c pm3_exa.c pm3_video.c pm_accel.c pm_dac.c 
 SRCS+=		sx_accel.c TIramdac.c tx_accel.c tx_dac.c
