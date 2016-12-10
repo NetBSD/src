@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.17 2016/12/08 11:31:10 nat Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.18 2016/12/10 23:03:23 christos Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -102,7 +102,6 @@ awge0		at awinio0 port ?
 #awinhdmiaudio0	at awinio0
 #audio1		at awinhdmiaudio0
 
-#options VAUDIOSPEAKER
 #spkr0	at audio0		# PC speaker (synthesized)
 
 # TCON

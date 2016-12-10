@@ -1,8 +1,8 @@
-#	$NetBSD: NONPLUS64,v 1.48 2016/12/08 11:31:12 nat Exp $
+#	$NetBSD: NONPLUS64,v 1.49 2016/12/10 23:03:25 christos Exp $
 
 include 	"arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.48 $"
+#ident		"NONPLUS64-$Revision: 1.49 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -365,7 +365,6 @@ pseudo-device	ipfilter
 audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
 audio*		at audiocs0
 
-options VAUDIOSPEAKER
 spkr0	at audio0		# PC speaker (synthesized)
 
 

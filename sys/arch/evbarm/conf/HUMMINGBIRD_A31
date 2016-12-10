@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.25 2016/12/08 11:31:10 nat Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.26 2016/12/10 23:03:23 christos Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -95,7 +95,6 @@ awinhdmi0	at awinio0
 awinhdmiaudio0	at awinio0
 audio1		at awinhdmiaudio0
 
-options VAUDIOSPEAKER
 spkr0	at audio0		# PC speaker (synthesized)
 
 # TCON
