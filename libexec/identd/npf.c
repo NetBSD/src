@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.1 2016/12/10 05:43:11 christos Exp $	*/
+/*	$NetBSD: npf.c,v 1.2 2016/12/10 22:09:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf.c,v 1.1 2016/12/10 05:43:11 christos Exp $");
+__RCSID("$NetBSD: npf.c,v 1.2 2016/12/10 22:09:18 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -84,7 +84,7 @@ npf_natlookup(const struct sockaddr_storage *ss,
 		maybe_syslog(LOG_ERR, "Cannot open /dev/npf: %m");
 		return 0;
 	}
-	if (npf_nat_lookup(dev, af, addr, port, IPPROTO_TCP, PFIL_IN) == -1) {
+	if (npf_nat_lookup(dev, af, addr, port, IPPROTO_TCP, PFIL_OUT) == -1) {
 		maybe_syslog(LOG_ERR, "NAT lookup failure: %m");
 		(void)close(dev);
 		return 0;
