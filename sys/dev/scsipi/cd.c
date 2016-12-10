@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.334 2016/12/10 10:26:38 mlelstv Exp $	*/
+/*	$NetBSD: cd.c,v 1.335 2016/12/10 21:17:12 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.334 2016/12/10 10:26:38 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.335 2016/12/10 21:17:12 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -722,7 +722,7 @@ cdstrategy(struct buf *bp)
 	 * If label and device don't agree in sector size use a bounce buffer
 	 */
 	if (dksc->sc_dkdev.dk_label->d_secsize != dksc->sc_dkdev.dk_geom.dg_secsize) {
-		struct cdbounce *bounce;
+		struct cdbounce *bounce = NULL;
 
 		error = cd_make_bounce(cd, bp, &bounce);
 		if (error)
