@@ -1,4 +1,4 @@
-/* $NetBSD: pf.c,v 1.2 2005/06/14 12:18:24 peter Exp $ */
+/* $NetBSD: pf.c,v 1.3 2016/12/10 05:43:11 christos Exp $ */
 
 /*
  * pf.c - NAT lookup code for pf.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pf.c,v 1.2 2005/06/14 12:18:24 peter Exp $");
+__RCSID("$NetBSD: pf.c,v 1.3 2016/12/10 05:43:11 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -27,8 +27,8 @@ __RCSID("$NetBSD: pf.c,v 1.2 2005/06/14 12:18:24 peter Exp $");
 #include "identd.h"
 
 int
-pf_natlookup(struct sockaddr_storage *ss, struct sockaddr *nat_addr,
-    int *nat_lport)
+pf_natlookup(const struct sockaddr_storage *ss,
+    struct sockaddr_storage *nat_addr, in_port_t *nat_lport)
 {
 	struct pfioc_natlook nl;
 	int dev;
@@ -38,23 +38,23 @@ pf_natlookup(struct sockaddr_storage *ss, struct sockaddr *nat_addr,
 	/* Build the pf natlook structure. */
 	switch (ss[0].ss_family) {
 	case AF_INET:
-		(void)memcpy(&nl.daddr.v4, &satosin(&ss[0])->sin_addr,
+		(void)memcpy(&nl.daddr.v4, &csatosin(&ss[0])->sin_addr,
 		    sizeof(struct in_addr));
-		(void)memcpy(&nl.saddr.v4, &satosin(&ss[1])->sin_addr,
+		(void)memcpy(&nl.saddr.v4, &csatosin(&ss[1])->sin_addr,
 		    sizeof(struct in_addr));
-		nl.dport = satosin(&ss[0])->sin_port;
-		nl.sport = satosin(&ss[1])->sin_port;
+		nl.dport = csatosin(&ss[0])->sin_port;
+		nl.sport = csatosin(&ss[1])->sin_port;
 		nl.af = AF_INET;
 		nl.proto = IPPROTO_TCP;
 		nl.direction = PF_IN;
 		break;
 	case AF_INET6:
-		(void)memcpy(&nl.daddr.v6, &satosin6(&ss[0])->sin6_addr,
+		(void)memcpy(&nl.daddr.v6, &csatosin6(&ss[0])->sin6_addr,
 		    sizeof(struct in6_addr));
-		(void)memcpy(&nl.saddr.v6, &satosin6(&ss[1])->sin6_addr,
+		(void)memcpy(&nl.saddr.v6, &csatosin6(&ss[1])->sin6_addr,
 		    sizeof(struct in6_addr));
-		nl.dport = satosin6(&ss[0])->sin6_port;
-		nl.sport = satosin6(&ss[1])->sin6_port;
+		nl.dport = csatosin6(&ss[0])->sin6_port;
+		nl.sport = csatosin6(&ss[1])->sin6_port;
 		nl.af = AF_INET6;
 		nl.proto = IPPROTO_TCP;
 		nl.direction = PF_IN;
