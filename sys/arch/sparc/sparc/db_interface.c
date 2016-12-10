@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.91 2015/10/04 08:17:03 joerg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.92 2016/12/10 10:41:07 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -33,16 +33,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.91 2015/10/04 08:17:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.92 2016/12/10 10:41:07 mrg Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 
 #include <dev/cons.h>
 
@@ -53,7 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.91 2015/10/04 08:17:03 joerg Exp 
 #include <ddb/db_access.h>
 #include <ddb/ddbvar.h>
 
-#if defined(DDB)
+#if defined(DDB) || defined(_KMEMUSER)
+#include <ddb/db_user.h>
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
@@ -63,9 +68,13 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.91 2015/10/04 08:17:03 joerg Exp 
 #endif
 
 #include <machine/instr.h>
+#if defined(_KERNEL)
 #include <machine/promlib.h>
+#endif
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
+
+#if defined(_KERNEL)
 #include <sparc/sparc/asm.h>
 
 #include "fb.h"
@@ -102,6 +111,7 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 	}
 
 }
+#endif
 
 db_regs_t *ddb_regp;
 
@@ -118,6 +128,10 @@ cpu_Debugger(void)
 	sparc_noop();	/* Force this function to allocate a stack frame */
 }
 
+#endif /* DDB */
+
+#if defined(DDB) || defined(_KMEMUSER)
+
 static long nil;
 
 /*
@@ -129,43 +143,43 @@ static long nil;
 static int db_sparc_regop(const struct db_variable *, db_expr_t *, int);
 
 const struct db_variable db_regs[] = {
-	{ "psr",	dbreg(psr),		db_sparc_regop, },
-	{ "pc",		dbreg(pc),		db_sparc_regop, },
-	{ "npc",	dbreg(npc),		db_sparc_regop, },
-	{ "y",		dbreg(y),		db_sparc_regop, },
-	{ "wim",	dbreg(global[0]),	db_sparc_regop, }, /* see reg.h */
-	{ "g0",		&nil,			FCN_NULL, 	},
-	{ "g1",		dbreg(global[1]),	db_sparc_regop, },
-	{ "g2",		dbreg(global[2]),	db_sparc_regop, },
-	{ "g3",		dbreg(global[3]),	db_sparc_regop, },
-	{ "g4",		dbreg(global[4]),	db_sparc_regop, },
-	{ "g5",		dbreg(global[5]),	db_sparc_regop, },
-	{ "g6",		dbreg(global[6]),	db_sparc_regop, },
-	{ "g7",		dbreg(global[7]),	db_sparc_regop, },
-	{ "o0",		dbreg(out[0]),		db_sparc_regop, },
-	{ "o1",		dbreg(out[1]),		db_sparc_regop, },
-	{ "o2",		dbreg(out[2]),		db_sparc_regop, },
-	{ "o3",		dbreg(out[3]),		db_sparc_regop, },
-	{ "o4",		dbreg(out[4]),		db_sparc_regop, },
-	{ "o5",		dbreg(out[5]),		db_sparc_regop, },
-	{ "o6",		dbreg(out[6]),		db_sparc_regop, },
-	{ "o7",		dbreg(out[7]),		db_sparc_regop, },
-	{ "l0",		dbregfr(local[0]),	db_sparc_regop, },
-	{ "l1",		dbregfr(local[1]),	db_sparc_regop, },
-	{ "l2",		dbregfr(local[2]),	db_sparc_regop, },
-	{ "l3",		dbregfr(local[3]),	db_sparc_regop, },
-	{ "l4",		dbregfr(local[4]),	db_sparc_regop, },
-	{ "l5",		dbregfr(local[5]),	db_sparc_regop, },
-	{ "l6",		dbregfr(local[6]),	db_sparc_regop, },
-	{ "l7",		dbregfr(local[7]),	db_sparc_regop, },
-	{ "i0",		dbregfr(arg[0]),	db_sparc_regop, },
-	{ "i1",		dbregfr(arg[1]),	db_sparc_regop, },
-	{ "i2",		dbregfr(arg[2]),	db_sparc_regop, },
-	{ "i3",		dbregfr(arg[3]),	db_sparc_regop, },
-	{ "i4",		dbregfr(arg[4]),	db_sparc_regop, },
-	{ "i5",		dbregfr(arg[5]),	db_sparc_regop, },
-	{ "i6",		dbregfr(fp),		db_sparc_regop, },
-	{ "i7",		dbregfr(pc),		db_sparc_regop, },
+	{ "psr",	dbreg(psr),		db_sparc_regop, NULL, },
+	{ "pc",		dbreg(pc),		db_sparc_regop, NULL, },
+	{ "npc",	dbreg(npc),		db_sparc_regop, NULL, },
+	{ "y",		dbreg(y),		db_sparc_regop, NULL, },
+	{ "wim",	dbreg(global[0]),	db_sparc_regop, NULL, }, /* see reg.h */
+	{ "g0",		&nil,			FCN_NULL, 	NULL, },
+	{ "g1",		dbreg(global[1]),	db_sparc_regop, NULL, },
+	{ "g2",		dbreg(global[2]),	db_sparc_regop, NULL, },
+	{ "g3",		dbreg(global[3]),	db_sparc_regop, NULL, },
+	{ "g4",		dbreg(global[4]),	db_sparc_regop, NULL, },
+	{ "g5",		dbreg(global[5]),	db_sparc_regop, NULL, },
+	{ "g6",		dbreg(global[6]),	db_sparc_regop, NULL, },
+	{ "g7",		dbreg(global[7]),	db_sparc_regop, NULL, },
+	{ "o0",		dbreg(out[0]),		db_sparc_regop, NULL, },
+	{ "o1",		dbreg(out[1]),		db_sparc_regop, NULL, },
+	{ "o2",		dbreg(out[2]),		db_sparc_regop, NULL, },
+	{ "o3",		dbreg(out[3]),		db_sparc_regop, NULL, },
+	{ "o4",		dbreg(out[4]),		db_sparc_regop, NULL, },
+	{ "o5",		dbreg(out[5]),		db_sparc_regop, NULL, },
+	{ "o6",		dbreg(out[6]),		db_sparc_regop, NULL, },
+	{ "o7",		dbreg(out[7]),		db_sparc_regop, NULL, },
+	{ "l0",		dbregfr(local[0]),	db_sparc_regop, NULL, },
+	{ "l1",		dbregfr(local[1]),	db_sparc_regop, NULL, },
+	{ "l2",		dbregfr(local[2]),	db_sparc_regop, NULL, },
+	{ "l3",		dbregfr(local[3]),	db_sparc_regop, NULL, },
+	{ "l4",		dbregfr(local[4]),	db_sparc_regop, NULL, },
+	{ "l5",		dbregfr(local[5]),	db_sparc_regop, NULL, },
+	{ "l6",		dbregfr(local[6]),	db_sparc_regop, NULL, },
+	{ "l7",		dbregfr(local[7]),	db_sparc_regop, NULL, },
+	{ "i0",		dbregfr(arg[0]),	db_sparc_regop, NULL, },
+	{ "i1",		dbregfr(arg[1]),	db_sparc_regop, NULL, },
+	{ "i2",		dbregfr(arg[2]),	db_sparc_regop, NULL, },
+	{ "i3",		dbregfr(arg[3]),	db_sparc_regop, NULL, },
+	{ "i4",		dbregfr(arg[4]),	db_sparc_regop, NULL, },
+	{ "i5",		dbregfr(arg[5]),	db_sparc_regop, NULL, },
+	{ "i6",		dbregfr(fp),		db_sparc_regop, NULL, },
+	{ "i7",		dbregfr(pc),		db_sparc_regop, NULL, },
 };
 const struct db_variable * const db_eregs =
     db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
@@ -184,7 +198,11 @@ db_sparc_regop (const struct db_variable *vp, db_expr_t *val, int opcode)
 		*regaddr = *val;
 		break;
 	default:
+#ifdef _KERNEL
 		panic("db_sparc_regop: unknown op %d", opcode);
+#else
+		printf("db_sparc_regop: unknown op %d\n", opcode);
+#endif
 	}
 	return 0;
 }
@@ -193,17 +211,19 @@ int	db_active = 0;
 
 extern char *trap_type[];
 
+#ifdef _KERNEL
 void kdb_kbd_trap(struct trapframe *);
 void db_prom_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_page_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_proc_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_dump_pcb(db_expr_t, bool, db_expr_t, const char *);
-void db_uvmhistdump(db_expr_t, bool, db_expr_t, const char *);
+#endif
 #ifdef MULTIPROCESSOR
 void db_cpu_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_xcall_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
-void db_page_cmd(db_expr_t, bool, db_expr_t, const char *);
 
+#ifdef _KERNEL
 /*
  * Received keyboard interrupt sequence.
  */
@@ -215,6 +235,7 @@ kdb_kbd_trap(struct trapframe *tf)
 		kdb_trap(-1, tf);
 	}
 }
+#endif
 
 /* struct cpu_info of CPU being investigated */
 struct cpu_info *ddb_cpuinfo;
@@ -278,6 +299,7 @@ ddb_suspend(struct trapframe *tf)
 }
 #endif /* MULTIPROCESSOR */
 
+#if defined(DDB)
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
@@ -342,7 +364,17 @@ kdb_trap(int type, struct trapframe *tf)
 
 	return (1);
 }
+#endif /* DDB */
 
+#ifndef _KERNEL
+static inline pri_t
+lwp_eprio(lwp_t *l)
+{
+	return 0;
+}
+#endif
+
+#ifdef _KERNEL
 void
 db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
@@ -442,6 +474,7 @@ db_page_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	db_printf("pa %llx pg %p\n", (unsigned long long)addr,
 	    PHYS_TO_VM_PAGE(addr));
 }
+#endif
 
 #if defined(MULTIPROCESSOR)
 
@@ -487,8 +520,12 @@ db_xcall_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 #endif /* MULTIPROCESSOR */
 
 const struct db_command db_machine_command_table[] = {
+#ifdef _KERNEL
 	{ DDB_ADD_CMD("prom",	db_prom_cmd,	0,
 	  "Enter the Sun PROM monitor.",NULL,NULL) },
+	{ DDB_ADD_CMD("page",	db_page_cmd,	0,
+	  "Display the address of a struct vm_page given a physical address",
+	   "pa", "   pa:\tphysical address to look up") },
 	{ DDB_ADD_CMD("proc",	db_proc_cmd,	0,
 	  "Display some information about an LWP",
 	  "[addr]","   addr:\tstruct lwp address (curlwp otherwise)") },
@@ -496,9 +533,7 @@ const struct db_command db_machine_command_table[] = {
 	  "Display information about a struct pcb",
 	  "[address]",
 	  "   address:\tthe struct pcb to print (curpcb otherwise)") },
-	{ DDB_ADD_CMD("page",	db_page_cmd,	0,
-	  "Display the address of a struct vm_page given a physical address",
-	   "pa", "   pa:\tphysical address to look up") },
+#endif
 #ifdef MULTIPROCESSOR
 	{ DDB_ADD_CMD("cpu",	db_cpu_cmd,	0,
 	  "switch to another cpu's registers", "cpu-no", NULL) },
@@ -558,7 +593,12 @@ db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 
       default:
 	/* not a branch */
+#ifdef _KERNEL
 	panic("branch_taken() on non-branch");
+#else
+	printf("branch_taken() on non-branch\n");
+	return 0;
+#endif
     }
 }
 
