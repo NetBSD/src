@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.274 2016/12/10 17:31:33 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.275 2016/12/10 22:37:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.274 2016/12/10 17:31:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.275 2016/12/10 22:37:12 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -179,9 +179,6 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.274 2016/12/10 17:31:33 martin Exp $");
 #include <dev/audiovar.h>
 #include <dev/auconv.h>
 #include <dev/auvolconv.h>
-#ifdef VAUDIOSPEAKER
-#include <dev/spkrvar.h>
-#endif
 
 #include <machine/endian.h>
 
@@ -840,9 +837,6 @@ bad_rec:
 	    audio_rec_thread, sc, &sc->sc_recthread, "audiorec");
 	kthread_create(PRI_NONE, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
 	    audio_play_thread, sc, &sc->sc_playthread, "audiomix");
-#ifdef VAUDIOSPEAKER
-	speakerattach_mi(self);
-#endif
 }
 
 int
