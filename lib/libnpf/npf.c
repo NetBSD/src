@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.36 2016/12/10 05:37:55 christos Exp $	*/
+/*	$NetBSD: npf.c,v 1.37 2016/12/10 08:48:11 kre Exp $	*/
 
 /*-
  * Copyright (c) 2010-2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.36 2016/12/10 05:37:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.37 2016/12/10 08:48:11 kre Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -1291,7 +1291,6 @@ npf_nat_lookup(int fd, int af, npf_addr_t **addr, in_port_t *port,
 	}
 	prop_dictionary_get_uint16(nat, "oport", &port[0]);
 	prop_dictionary_get_uint16(nat, "tport", &port[1]);
-	ntohs(port[1]));
 	prop_object_release(conn_res);
 out:
 	prop_object_release(conn_dict);
