@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.35 2015/02/02 00:55:28 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.36 2016/12/10 05:37:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.35 2015/02/02 00:55:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.36 2016/12/10 05:37:55 christos Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -102,6 +102,48 @@ struct nl_config {
 
 static prop_array_t	_npf_ruleset_transform(prop_array_t);
 
+static bool
+_npf_add_addr(prop_dictionary_t dict, const char *name, int af,
+    const npf_addr_t *addr)
+{
+	size_t sz;
+
+	if (af == AF_INET) {
+		sz = sizeof(struct in_addr);
+	} else if (af == AF_INET6) {
+		sz = sizeof(struct in6_addr);
+	} else {
+		return false;
+	}
+	prop_data_t addrdat = prop_data_create_data(addr, sz);
+	if (addrdat == NULL) {
+		return false;
+	}
+	prop_dictionary_set(dict, name, addrdat);
+	prop_object_release(addrdat);
+	return true;
+}
+
+static bool
+_npf_get_addr(prop_dictionary_t dict, const char *name, npf_addr_t *addr)
+{
+	prop_object_t obj = prop_dictionary_get(dict, name);
+	const void *d = prop_data_data_nocopy(obj);
+
+	if (d == NULL)
+		return false;
+
+	size_t sz = prop_data_size(obj);
+	switch (sz) {
+	case sizeof(struct in_addr):
+	case sizeof(struct in6_addr):
+		memcpy(addr, d, sz);
+		return true;
+	default:
+		return false;
+	}
+}
+		
 /*
  * CONFIGURATION INTERFACE.
  */
@@ -530,7 +572,7 @@ npf_rule_setcode(nl_rule_t *rl, int type, const void *code, size_t len)
 	default:
 		return ENOTSUP;
 	}
-	prop_dictionary_set_uint32(rldict, "code-type", type);
+	prop_dictionary_set_uint32(rldict, "code-type", (uint32_t)type);
 	if ((cdata = prop_data_create_data(code, len)) == NULL) {
 		return ENOMEM;
 	}
@@ -881,17 +923,7 @@ npf_nat_create(int type, u_int flags, const char *ifname,
 {
 	nl_rule_t *rl;
 	prop_dictionary_t rldict;
-	prop_data_t addrdat;
 	uint32_t attr;
-	size_t sz;
-
-	if (af == AF_INET) {
-		sz = sizeof(struct in_addr);
-	} else if (af == AF_INET6) {
-		sz = sizeof(struct in6_addr);
-	} else {
-		return NULL;
-	}
 
 	attr = NPF_RULE_PASS | NPF_RULE_FINAL |
 	    (type == NPF_NATOUT ? NPF_RULE_OUT : NPF_RULE_IN);
@@ -908,14 +940,11 @@ npf_nat_create(int type, u_int flags, const char *ifname,
 	prop_dictionary_set_uint32(rldict, "flags", flags);
 
 	/* Translation IP and mask. */
-	addrdat = prop_data_create_data(addr, sz);
-	if (addrdat == NULL) {
+	if (!_npf_add_addr(rldict, "nat-ip", af, addr)) {
 		npf_rule_destroy(rl);
 		return NULL;
 	}
-	prop_dictionary_set(rldict, "nat-ip", addrdat);
-	prop_dictionary_set_uint32(rldict, "nat-mask", mask);
-	prop_object_release(addrdat);
+	prop_dictionary_set_uint32(rldict, "nat-mask", (uint32_t)mask);
 
 	/* Translation port (for redirect case). */
 	prop_dictionary_set_uint16(rldict, "nat-port", port);
@@ -1037,8 +1066,6 @@ npf_table_add_entry(nl_table_t *tl, int af, const npf_addr_t *addr,
 {
 	prop_dictionary_t tldict = tl->ntl_dict, entdict;
 	prop_array_t tblents;
-	prop_data_t addrdata;
-	unsigned alen;
 
 	/* Create the table entry. */
 	entdict = prop_dictionary_create();
@@ -1046,21 +1073,10 @@ npf_table_add_entry(nl_table_t *tl, int af, const npf_addr_t *addr,
 		return ENOMEM;
 	}
 
-	switch (af) {
-	case AF_INET:
-		alen = sizeof(struct in_addr);
-		break;
-	case AF_INET6:
-		alen = sizeof(struct in6_addr);
-		break;
-	default:
+	if (!_npf_add_addr(entdict, "addr", af, addr)) {
 		return EINVAL;
 	}
-
-	addrdata = prop_data_create_data(addr, alen);
-	prop_dictionary_set(entdict, "addr", addrdata);
 	prop_dictionary_set_uint8(entdict, "mask", mask);
-	prop_object_release(addrdata);
 
 	tblents = prop_dictionary_get(tldict, "entries");
 	prop_array_add(tblents, entdict);
@@ -1231,4 +1247,53 @@ _npf_debug_addif(nl_config_t *ncf, const char *ifname)
 	prop_dictionary_set_uint32(ifdict, "index", if_idx);
 	prop_array_add(iflist, ifdict);
 	prop_object_release(ifdict);
+}
+
+
+int
+npf_nat_lookup(int fd, int af, npf_addr_t **addr, in_port_t *port,
+    int proto, int dir)
+{
+	prop_dictionary_t conn_dict, conn_res;
+	int error = EINVAL;
+
+	conn_dict = prop_dictionary_create();
+	if (conn_dict == NULL) {
+		return ENOMEM;
+	}
+	if (!_npf_add_addr(conn_dict, "saddr", af, addr[0]))
+		goto out;
+
+	if (!_npf_add_addr(conn_dict, "daddr", af, addr[1]))
+		goto out;
+
+	prop_dictionary_set_uint16(conn_dict, "sport", port[0]);
+	prop_dictionary_set_uint16(conn_dict, "dport", port[1]);
+	prop_dictionary_set_uint16(conn_dict, "proto", proto);
+	prop_dictionary_set_uint16(conn_dict, "direction", dir);
+
+	prop_dictionary_externalize_to_file(conn_dict, "/tmp/in");
+	error = prop_dictionary_sendrecv_ioctl(conn_dict, fd,
+	    IOC_NPF_CONN_LOOKUP, &conn_res);
+	if (error != 0)
+		goto out;
+
+	prop_dictionary_externalize_to_file(conn_res, "/tmp/out");
+	prop_dictionary_t nat = prop_dictionary_get(conn_res, "nat");
+	if (nat == NULL) {
+		errno = ENOENT;
+		goto out;
+	}
+	if (!_npf_get_addr(nat, "oaddr", addr[0])) {
+		prop_object_release(nat);
+		error = EINVAL;
+		goto out;
+	}
+	prop_dictionary_get_uint16(nat, "oport", &port[0]);
+	prop_dictionary_get_uint16(nat, "tport", &port[1]);
+	ntohs(port[1]));
+	prop_object_release(conn_res);
+out:
+	prop_object_release(conn_dict);
+	return error;
 }
