@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.37 2016/12/10 08:48:11 kre Exp $	*/
+/*	$NetBSD: npf.c,v 1.38 2016/12/10 19:07:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.37 2016/12/10 08:48:11 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.38 2016/12/10 19:07:22 christos Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -1254,45 +1254,56 @@ int
 npf_nat_lookup(int fd, int af, npf_addr_t **addr, in_port_t *port,
     int proto, int dir)
 {
-	prop_dictionary_t conn_dict, conn_res;
+	prop_dictionary_t conn_dict, conn_res = NULL;
 	int error = EINVAL;
 
 	conn_dict = prop_dictionary_create();
-	if (conn_dict == NULL) {
+	if (conn_dict == NULL)
 		return ENOMEM;
-	}
-	if (!_npf_add_addr(conn_dict, "saddr", af, addr[0]))
+
+	if (!prop_dictionary_set_uint16(conn_dict, "direction", dir))
 		goto out;
 
-	if (!_npf_add_addr(conn_dict, "daddr", af, addr[1]))
+	conn_res = prop_dictionary_create();
+	if (conn_res == NULL)
 		goto out;
 
-	prop_dictionary_set_uint16(conn_dict, "sport", port[0]);
-	prop_dictionary_set_uint16(conn_dict, "dport", port[1]);
-	prop_dictionary_set_uint16(conn_dict, "proto", proto);
-	prop_dictionary_set_uint16(conn_dict, "direction", dir);
+	if (!_npf_add_addr(conn_res, "saddr", af, addr[0]))
+		goto out;
+	if (!_npf_add_addr(conn_res, "daddr", af, addr[1]))
+		goto out;
+	if (!prop_dictionary_set_uint16(conn_res, "sport", port[0]))
+		goto out;
+	if (!prop_dictionary_set_uint16(conn_res, "dport", port[1]))
+		goto out;
+	if (!prop_dictionary_set_uint16(conn_res, "proto", proto))
+		goto out;
+	if (!prop_dictionary_set(conn_dict, "key", conn_res))
+		goto out;
 
-	prop_dictionary_externalize_to_file(conn_dict, "/tmp/in");
+	prop_object_release(conn_res);
+
 	error = prop_dictionary_sendrecv_ioctl(conn_dict, fd,
 	    IOC_NPF_CONN_LOOKUP, &conn_res);
 	if (error != 0)
 		goto out;
 
-	prop_dictionary_externalize_to_file(conn_res, "/tmp/out");
 	prop_dictionary_t nat = prop_dictionary_get(conn_res, "nat");
 	if (nat == NULL) {
 		errno = ENOENT;
 		goto out;
 	}
+
 	if (!_npf_get_addr(nat, "oaddr", addr[0])) {
-		prop_object_release(nat);
 		error = EINVAL;
 		goto out;
 	}
+
 	prop_dictionary_get_uint16(nat, "oport", &port[0]);
 	prop_dictionary_get_uint16(nat, "tport", &port[1]);
-	prop_object_release(conn_res);
 out:
+	if (conn_res)
+		prop_object_release(conn_res);
 	prop_object_release(conn_dict);
 	return error;
 }
