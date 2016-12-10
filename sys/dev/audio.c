@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.272 2016/12/10 16:08:04 maya Exp $	*/
+/*	$NetBSD: audio.c,v 1.273 2016/12/10 17:01:08 maya Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.272 2016/12/10 16:08:04 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.273 2016/12/10 17:01:08 maya Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1075,9 +1075,9 @@ audio_printsc(struct audio_softc *sc)
 	printf("rchan 0x%x wchan 0x%x ", cv_has_waiters(&sc->sc_rchan),
 	    cv_has_waiters(&sc->sc_wchan));
 	printf("rring used 0x%x pring used=%d\n",
-	       audio_stream_get_used(&sc->sc_vchan[n].sc_mrr.s),
-	       audio_stream_get_used(&sc->sc_vhan[n].sc_mpr.s));
-	printf("rbus 0x%x pbus 0x%x ", sc->sc_rbus, sc->sc_vchan[n]->sc_pbus);
+	       audio_stream_get_used(&sc->sc_vchan[n]->sc_mrr.s),
+	       audio_stream_get_used(&sc->sc_vchan[n]->sc_mpr.s));
+	printf("rbus 0x%x pbus 0x%x ", sc->sc_vchan[n]->sc_rbus, sc->sc_vchan[n]->sc_pbus);
 	printf("blksize %d", sc->sc_vchan[n]->sc_mpr.blksize);
 	printf("hiwat %d lowat %d\n", sc->sc_vchan[n]->sc_mpr.usedhigh,
 	    sc->sc_vchan[n]->sc_mpr.usedlow);
@@ -1299,7 +1299,7 @@ audio_setup_rfilters(struct audio_softc *sc, const audio_params_t *rp,
 	for (i = 0; i < rfilters->req_size; i++) {
 		char num[100];
 		snprintf(num, 100, "[%d]", i);
-		audio_print_params(num, &sc->sc_rstreams[i].param);
+		audio_print_params(num, &vc->sc_rstreams[i].param);
 	}
 #endif /* AUDIO_DEBUG */
 
@@ -1782,10 +1782,10 @@ audio_initbufs(struct audio_softc *sc, int n)
 		sc->sc_pblktime = (u_long)(
 		    (double)sc->sc_vchan[n]->sc_mpr.blksize * 100000 /
 		    (double)(sc->sc_vchan[n]->sc_pparams.precision / NBBY *
-			     sc->sc_vhan[n].sc_pparams.channels *
-			     sc->sc_vhan[n].sc_pparams.sample_rate)) * 10;
+			     sc->sc_vchan[n].sc_pparams.channels *
+			     sc->sc_vchan[n].sc_pparams.sample_rate)) * 10;
 		DPRINTF(("audio: play blktime = %lu for %d\n",
-			 sc->sc_pblktime, sc->sc_vhan[n].sc_mpr.blksize));
+			 sc->sc_pblktime, sc->sc_vchan[n].sc_mpr.blksize));
 	}
 	if (audio_can_capture(sc)) {
 		sc->sc_rnintr = 0;
@@ -1978,7 +1978,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	/* audio_close() decreases sc_mpr[n].usedlow, recalculate here */
 	audio_calcwater(sc, n);
 
-	DPRINTF(("audio_open: done sc_mode = 0x%x\n", sc->sc_mode[n]));
+	DPRINTF(("audio_open: done sc_mode = 0x%x\n", vc->sc_mode));
 
 	mutex_enter(sc->sc_intr_lock);
 	sc->sc_nmixer_states += 2;
@@ -2064,7 +2064,7 @@ audio_drain(struct audio_softc *sc, int n)
 	KASSERT(mutex_owned(sc->sc_lock));
 	KASSERT(mutex_owned(sc->sc_intr_lock));
 	
-	DPRINTF(("audio_drain: enter busy=%d\n", sc->sc_pbus[n]));
+	DPRINTF(("audio_drain: enter busy=%d\n", sc->sc_vchan[n]->sc_pbus));
 	cb = &sc->sc_vchan[n]->sc_mpr;
 	if (cb->mmapped)
 		return 0;
@@ -3495,7 +3495,7 @@ audio_mix(void *v)
 		mix_func(sc, cb, n);
 
 		DPRINTFN(2, ("audio_pint: mode=%d pause=%d used=%d lowat=%d\n",
-			     sc->sc_mode[n], cb->pause,
+			     vc->sc_mode, cb->pause,
 			     audio_stream_get_used(vc->sc_pustream),
 			     cb->usedlow));
 
@@ -4371,7 +4371,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset, int n)
 #ifdef AUDIO_DEBUG
 	if (audiodebug > 1 && nr > 0) {
 	    audio_print_params("audiosetinfo() After setting record params:",
-		&sc->sc_rparams);
+		&vc->sc_rparams);
 	}
 	if (audiodebug > 1 && np > 0) {
 	    audio_print_params("audiosetinfo() After setting play params:",
