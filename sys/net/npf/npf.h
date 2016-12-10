@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.49 2016/12/09 02:26:36 christos Exp $	*/
+/*	$NetBSD: npf.h,v 1.50 2016/12/10 05:41:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -317,6 +317,7 @@ typedef struct npf_ioctl_table {
 #define	IOC_NPF_STATS		_IOW('N', 104, void *)
 #define	IOC_NPF_SAVE		_IOR('N', 105, struct plistref)
 #define	IOC_NPF_RULE		_IOWR('N', 107, struct plistref)
+#define	IOC_NPF_CONN_LOOKUP	_IOWR('N', 108, struct plistref)
 
 /*
  * Statistics counters.
