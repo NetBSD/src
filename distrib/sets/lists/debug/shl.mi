@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.151 2016/11/26 11:36:38 njoly Exp $
+# $NetBSD: shl.mi,v 1.152 2016/12/10 05:39:13 christos Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.205.debug			comp-sys-debug	debug,dynamicroot
@@ -14,7 +14,7 @@
 ./usr/libdata/debug/lib/liblzf.so.1.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/liblzma.so.2.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libm.so.0.11.debug			comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libnpf.so.0.0.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libnpf.so.0.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libpcap.so.5.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libppath.so.0.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libprop.so.1.1.debug			comp-sys-debug	debug,dynamicroot
@@ -142,7 +142,7 @@
 ./usr/libdata/debug/usr/lib/libmudflapth.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=48
 ./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug		comp-crypto-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libnetpgpverify.so.4.0.debug	comp-crypto-debug	debug,compatfile,crypto
-./usr/libdata/debug/usr/lib/libnpf.so.0.0.debug			comp-npf-debug	debug,compatfile,npf
+./usr/libdata/debug/usr/lib/libnpf.so.0.1.debug			comp-npf-debug	debug,compatfile,npf
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug		comp-sys-debug	debug,compatfile,gcc
 ./usr/libdata/debug/usr/lib/libopcodes.so.7.0.debug		comp-c-debug	debug,compatfile,binutils=226
