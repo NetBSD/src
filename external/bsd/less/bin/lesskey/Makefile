@@ -1,12 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2011/07/03 18:02:01 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2016/12/10 13:44:51 rin Exp $
 
 .include <bsd.own.mk>
 
 PROG=	lesskey
 
 SRCS=	lesskey version.c  
-
-LDADD+=	-ltermcap
-DPADD+=	${LIBTERM}
 
 .include "bsd.prog.mk"

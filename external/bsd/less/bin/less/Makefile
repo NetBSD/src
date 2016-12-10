@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/07/03 18:15:18 tron Exp $
+#	$NetBSD: Makefile,v 1.3 2016/12/10 13:44:51 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -11,8 +11,8 @@ SRCS=	main.c screen.c brac.c ch.c charset.c cmdbuf.c \
 	output.c pattern.c position.c prompt.c search.c signal.c \
 	tags.c ttyin.c version.c  
 
-LDADD+=	-lcurses -ltermcap
-DPADD+=	${LIBCURSES}
+LDADD+=	-lterminfo
+DPADD+=	${LIBTERMINFO}
 
 MLINKS=	less.1 more.1 less.1 page.1
 LINKS=	${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
