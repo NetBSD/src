@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.273 2016/12/10 17:01:08 maya Exp $	*/
+/*	$NetBSD: audio.c,v 1.274 2016/12/10 17:31:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.273 2016/12/10 17:01:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.274 2016/12/10 17:31:33 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1809,7 +1809,7 @@ audio_calcwater(struct audio_softc *sc, int n)
 	struct virtual_channel *vc = sc->sc_vchan[n];
 
 	/* set high at 100% */
-	if (audio_can_playback(sc)) {
+	if (audio_can_playback(sc) && vc && vc->sc_pustream) {
 		vc->sc_mpr.usedhigh =
 		    vc->sc_pustream->end - vc->sc_pustream->start;
 		/* set low at 75% of usedhigh */
@@ -1818,7 +1818,7 @@ audio_calcwater(struct audio_softc *sc, int n)
 			vc->sc_mpr.usedlow -= vc->sc_mpr.blksize;
 	}
 
-	if (audio_can_capture(sc)) {
+	if (audio_can_capture(sc) && vc && vc->sc_rustream) {
 		vc->sc_mrr.usedhigh =
 		    vc->sc_rustream->end - vc->sc_rustream->start -
 		    vc->sc_mrr.blksize;
