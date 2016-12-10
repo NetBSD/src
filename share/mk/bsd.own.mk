@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.995 2016/12/10 23:19:26 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.996 2016/12/10 23:40:03 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -145,20 +145,14 @@ EXTERNAL_GDB_SUBDIR=		/does/not/exist
 # What binutils is used?
 #
 .if \
-    ${MACHINE} == "alpha" || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_CPU} == "m68k" || \
-    ${MACHINE_ARCH} == "mips64el" || \
-    ${MACHINE_ARCH} == "mips64eb" || \
-    ${MACHINE_CPU} == "powerpc" || \
-    ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "vax"
-HAVE_BINUTILS?=	227
-.else
+    ${MACHINE_CPU} == "aarch64" || \
+    ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_CPU} == "hppa" || \
+    ${MACHINE_ARCH} == "mipsel" || \
+    ${MACHINE_ARCH} == "mipseb"
 HAVE_BINUTILS?=	226
+.else
+HAVE_BINUTILS?=	227
 .endif
 
 .if ${HAVE_BINUTILS} == 226
