@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.16 2013/08/21 08:17:34 matt Exp $
+#	$NetBSD: Makefile,v 1.17 2016/12/10 14:03:34 rin Exp $
 
 S=	${.CURDIR}/../../../..
 
 BASE=	loadbsd
 PROG=	${BASE}.x	# Human68k ".x" executable
-STRIPFLAG=		# not an a.out
 BINMODE=444		# not to be run on NetBSD
 SRCS=	start.S loadbsd.c xprintf.c trampoline.S
 
@@ -15,6 +14,8 @@ BINDIR=		/usr/mdec
 
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
+
+STRIPFLAG=		# not an a.out
 
 AOUT2HUXDIR!=	cd ${.CURDIR}/../aout2hux && ${PRINTOBJDIR}
 AOUT2HUX=	${AOUT2HUXDIR}/aout2hux
