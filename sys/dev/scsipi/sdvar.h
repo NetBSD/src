@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.37 2015/08/24 23:13:15 pooka Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.38 2016/12/10 10:26:38 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #include "opt_scsi.h"
 #endif
 
-#include <sys/rndsource.h>
+#include <dev/dkvar.h>
 
 #ifndef	SDRETRIES
 #define	SDRETRIES	4
@@ -74,12 +74,9 @@ struct disk_parms {
 };
 
 struct sd_softc {
-	device_t sc_dev;
-	struct disk sc_dk;
+	struct dk_softc sc_dksc;
 
 	int flags;
-#define	SDF_WLABEL	0x04		/* label is writable */
-#define	SDF_LABELLING	0x08		/* writing label */
 #define	SDF_ANCIENT	0x10		/* disk is ancient; for minphys */
 #define	SDF_DIRTY	0x20		/* disk is dirty; needs cache flush */
 #define	SDF_FLUSHING	0x40		/* flushing, for sddone() */
@@ -88,12 +85,9 @@ struct sd_softc {
 
 	struct disk_parms params;
 
-	struct bufq_state *buf_queue;
 	callout_t sc_callout;
 	u_int8_t type;
 	char name[16]; /* product name, for default disklabel */
-
-	krndsource_t rnd_source;
 };
 
 #define	SDGP_RESULT_OK		0	/* parameters obtained */
