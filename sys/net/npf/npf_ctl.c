@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.43 2015/10/28 01:54:10 christos Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.44 2016/12/10 05:41:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.43 2015/10/28 01:54:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.44 2016/12/10 05:41:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -700,6 +700,32 @@ out:
 	} else {
 		prop_object_release(npf_dict);
 	}
+	return error;
+}
+
+/*
+ * npfctl_conn_lookup: lookup a connection in the list of connections
+ */
+int
+npfctl_conn_lookup(u_long cmd, void *data)
+{
+	struct plistref *pref = data;
+	prop_dictionary_t conn_data, conn_result;
+	int error;
+
+	error = prop_dictionary_copyin_ioctl(pref, cmd, &conn_data);
+	if (error) {
+		return error;
+	}
+
+	error = npf_conn_find(conn_data, &conn_result);
+	if (error) {
+		goto out;
+	}
+	prop_dictionary_copyout_ioctl(pref, cmd, conn_result);
+	prop_object_release(conn_result);
+out:
+	prop_object_release(conn_data);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.62 2016/12/09 02:40:38 christos Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.63 2016/12/10 05:41:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -169,6 +169,7 @@ int		npfctl_reload(u_long, void *);
 int		npfctl_save(u_long, void *);
 int		npfctl_load(u_long, void *);
 int		npfctl_rule(u_long, void *);
+int		npfctl_conn_lookup(u_long, void *);
 int		npfctl_table(void *);
 
 void		npf_stats_inc(npf_stats_t);
