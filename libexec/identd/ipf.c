@@ -1,4 +1,4 @@
-/* $NetBSD: ipf.c,v 1.2 2005/06/14 12:18:24 peter Exp $ */
+/* $NetBSD: ipf.c,v 1.3 2016/12/10 05:43:11 christos Exp $ */
 
 /*
  * ipf.c - NAT lookup code for IP Filter.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ipf.c,v 1.2 2005/06/14 12:18:24 peter Exp $");
+__RCSID("$NetBSD: ipf.c,v 1.3 2016/12/10 05:43:11 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -31,8 +31,8 @@ __RCSID("$NetBSD: ipf.c,v 1.2 2005/06/14 12:18:24 peter Exp $");
 #include "identd.h"
 
 int
-ipf_natlookup(struct sockaddr_storage *ss, struct sockaddr *nat_addr,
-    int *nat_lport)
+ipf_natlookup(const struct sockaddr_storage *ss,
+    struct sockaddr_storage *nat_addr, in_port_t *nat_lport)
 {
 	natlookup_t nl;
 	ipfobj_t obj;
@@ -50,12 +50,12 @@ ipf_natlookup(struct sockaddr_storage *ss, struct sockaddr *nat_addr,
 	/* Build the ipf natlook structure. */
 	switch (ss[0].ss_family) {
 	case AF_INET:
-		(void)memcpy(&nl.nl_realip, &satosin(&ss[0])->sin_addr,
+		(void)memcpy(&nl.nl_realip, &csatosin(&ss[0])->sin_addr,
 		    sizeof(struct in_addr));
-		(void)memcpy(&nl.nl_outip, &satosin(&ss[1])->sin_addr,
+		(void)memcpy(&nl.nl_outip, &csatosin(&ss[1])->sin_addr,
 		    sizeof(struct in_addr));
-		nl.nl_realport = ntohs(satosin(&ss[0])->sin_port);
-		nl.nl_outport = ntohs(satosin(&ss[1])->sin_port);
+		nl.nl_realport = ntohs(csatosin(&ss[0])->sin_port);
+		nl.nl_outport = ntohs(csatosin(&ss[1])->sin_port);
 		nl.nl_flags = IPN_TCP | IPN_IN;
 		break;
 	case AF_INET6:
