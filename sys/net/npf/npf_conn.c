@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.19 2016/12/10 09:26:16 kre Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.20 2016/12/10 19:05:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014-2015 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.19 2016/12/10 09:26:16 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.20 2016/12/10 19:05:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -241,10 +241,10 @@ npf_conn_trackable_p(const npf_cache_t *npc)
 }
 
 static uint32_t
-connkey_setkey(npf_connkey_t *key, uint32_t proto, const void *ipv,
-    uint16_t *id, size_t alen, bool forw)
+connkey_setkey(npf_connkey_t *key, uint16_t proto, const void *ipv,
+    const uint16_t *id, uint16_t alen, bool forw)
 {
-	uint32_t isrc, idst;
+	uint32_t isrc, idst, *k = key->ck_key;
 	const npf_addr_t * const *ips = ipv;
 	if (__predict_true(forw)) {
 		isrc = NPF_SRC, idst = NPF_DST;
@@ -264,18 +264,40 @@ connkey_setkey(npf_connkey_t *key, uint32_t proto, const void *ipv,
 	 * on the 'alen' field; it is a length in bytes, either 4 or 16.
 	 */
 
-	key->ck_key[0] = ((uint32_t)proto << 16) | (alen & 0xffff);
-	key->ck_key[1] = ((uint32_t)id[isrc] << 16) | id[idst];
+	k[0] = ((uint32_t)proto << 16) | (alen & 0xffff);
+	k[1] = ((uint32_t)id[isrc] << 16) | id[idst];
 
 	if (__predict_true(alen == sizeof(in_addr_t))) {
-		key->ck_key[2] = ips[isrc]->s6_addr32[0];
-		key->ck_key[3] = ips[idst]->s6_addr32[0];
+		k[2] = ips[isrc]->s6_addr32[0];
+		k[3] = ips[idst]->s6_addr32[0];
 		return 4 * sizeof(uint32_t);
 	} else {
 		const u_int nwords = alen >> 2;
-		memcpy(&key->ck_key[2], ips[isrc], alen);
-		memcpy(&key->ck_key[2 + nwords], ips[idst], alen);
+		memcpy(&k[2], ips[isrc], alen);
+		memcpy(&k[2 + nwords], ips[idst], alen);
 		return (2 + (nwords * 2)) * sizeof(uint32_t);
+	}
+}
+
+static void
+connkey_getkey(const npf_connkey_t *key, uint16_t *proto, npf_addr_t *ips,
+    uint16_t *id, uint16_t *alen)
+{
+	const uint32_t *k = key->ck_key;
+
+	*proto = k[0] >> 16;
+	*alen = k[0] & 0xffff;
+	id[NPF_SRC] = k[1] >> 16;
+	id[NPF_DST] = k[1] & 0xffff;
+
+	switch (*alen) {
+	case sizeof(struct in6_addr):
+	case sizeof(struct in_addr):
+		memcpy(&ips[NPF_SRC], &k[2], *alen);
+		memcpy(&ips[NPF_DST], &k[2 + ((unsigned)*alen >> 2)], *alen);
+		return;
+	default:
+		KASSERT(0);
 	}
 }
 
@@ -287,7 +309,7 @@ connkey_setkey(npf_connkey_t *key, uint32_t proto, const void *ipv,
 unsigned
 npf_conn_conkey(const npf_cache_t *npc, npf_connkey_t *key, const bool forw)
 {
-	const u_int alen = npc->npc_alen;
+	const uint16_t alen = npc->npc_alen;
 	const struct tcphdr *th;
 	const struct udphdr *uh;
 	uint16_t id[2];
@@ -902,13 +924,37 @@ npf_conndb_export(prop_array_t conlist)
 	return 0;
 }
 
+static prop_dictionary_t
+npf_connkey_export(const npf_connkey_t *key)
+{
+	uint16_t id[2], alen, proto;
+	npf_addr_t ips[2];
+	prop_data_t d;
+	prop_dictionary_t kdict = prop_dictionary_create();
+
+	connkey_getkey(key, &proto, ips, id, &alen);
+
+	prop_dictionary_set_uint16(kdict, "proto", proto);
+
+	prop_dictionary_set_uint16(kdict, "sport", id[NPF_SRC]);
+	prop_dictionary_set_uint16(kdict, "dport", id[NPF_DST]);
+
+	d = prop_data_create_data(&ips[NPF_SRC], alen);
+	prop_dictionary_set_and_rel(kdict, "saddr", d);
+
+	d = prop_data_create_data(&ips[NPF_DST], alen);
+	prop_dictionary_set_and_rel(kdict, "daddr", d);
+
+	return kdict;
+}
+
 /*
  * npf_conn_export: serialise a single connection.
  */
 prop_dictionary_t
 npf_conn_export(const npf_conn_t *con)
 {
-	prop_dictionary_t cdict;
+	prop_dictionary_t cdict, kdict;
 	prop_data_t d;
 
 	if ((con->c_flags & (CONN_ACTIVE|CONN_EXPIRE)) != CONN_ACTIVE) {
@@ -925,13 +971,11 @@ npf_conn_export(const npf_conn_t *con)
 	d = prop_data_create_data(&con->c_state, sizeof(npf_state_t));
 	prop_dictionary_set_and_rel(cdict, "state", d);
 
-	const uint32_t *fkey = con->c_forw_entry.ck_key;
-	d = prop_data_create_data(fkey, NPF_CONN_MAXKEYLEN);
-	prop_dictionary_set_and_rel(cdict, "forw-key", d);
+	kdict = npf_connkey_export(&con->c_forw_entry);
+	prop_dictionary_set_and_rel(cdict, "forw-key", kdict);
 
-	const uint32_t *bkey = con->c_back_entry.ck_key;
-	d = prop_data_create_data(bkey, NPF_CONN_MAXKEYLEN);
-	prop_dictionary_set_and_rel(cdict, "back-key", d);
+	kdict = npf_connkey_export(&con->c_back_entry);
+	prop_dictionary_set_and_rel(cdict, "back-key", kdict);
 
 	if (con->c_nat) {
 		npf_nat_export(cdict, con->c_nat);
@@ -940,65 +984,35 @@ npf_conn_export(const npf_conn_t *con)
 }
 
 static uint32_t
-npf_connkey_import(prop_dictionary_t idict, npf_connkey_t *key, uint16_t *dir)
+npf_connkey_import(prop_dictionary_t kdict, npf_connkey_t *key)
 {
 	uint16_t proto;
 	prop_object_t sobj, dobj;
 	uint16_t id[2];
 	npf_addr_t const * ips[2];
 
-	prop_dictionary_get_uint16(idict, "proto", &proto);
-	prop_dictionary_get_uint16(idict, "direction", dir);
+	if (!prop_dictionary_get_uint16(kdict, "proto", &proto))
+		return 0;
 
-	prop_dictionary_get_uint16(idict, "sport", &id[NPF_SRC]);
-	prop_dictionary_get_uint16(idict, "dport", &id[NPF_DST]);
+	if (!prop_dictionary_get_uint16(kdict, "sport", &id[NPF_SRC]))
+		return 0;
 
-	sobj = prop_dictionary_get(idict, "saddr");
+	if (!prop_dictionary_get_uint16(kdict, "dport", &id[NPF_DST]))
+		return 0;
+
+	sobj = prop_dictionary_get(kdict, "saddr");
 	if ((ips[NPF_SRC] = prop_data_data_nocopy(sobj)) == NULL)
 		return 0;
 
-	dobj = prop_dictionary_get(idict, "daddr");
+	dobj = prop_dictionary_get(kdict, "daddr");
 	if ((ips[NPF_DST] = prop_data_data_nocopy(dobj)) == NULL)
 		return 0;
 
-	size_t alen = prop_data_size(sobj);
+	uint16_t alen = prop_data_size(sobj);
 	if (alen != prop_data_size(dobj))
 		return 0;
 
 	return connkey_setkey(key, proto, ips, id, alen, true);
-}
-
-int
-npf_conn_find(prop_dictionary_t idict, prop_dictionary_t *odict)
-{
-	npf_connkey_t key;
-	npf_conn_t *con;
-	uint16_t dir;
-	bool forw;
-
-	if (!npf_connkey_import(idict, &key, &dir)) {
-		return EINVAL;
-	}
-
-	con = npf_conndb_lookup(conn_db, &key, &forw);
-	if (con == NULL) {
-		return ESRCH;
-	}
-
-	dir = dir == PFIL_IN ? PFIL_OUT : PFIL_IN;
-	if (!npf_conn_ok(con, dir, true)) {
-		atomic_dec_uint(&con->c_refcnt);
-		return ESRCH;
-	}
-
-	*odict = npf_conn_export(con);
-	if (*odict == NULL) {
-		atomic_dec_uint(&con->c_refcnt);
-		return ENOSPC;
-	}
-	atomic_dec_uint(&con->c_refcnt);
-
-	return 0;
 }
 
 /*
@@ -1048,20 +1062,16 @@ npf_conn_import(npf_conndb_t *cd, prop_dictionary_t cdict,
 	 * Fetch and copy the keys for each direction.
 	 */
 	obj = prop_dictionary_get(cdict, "forw-key");
-	if ((d = prop_data_data_nocopy(obj)) == NULL ||
-	    prop_data_size(obj) != NPF_CONN_MAXKEYLEN) {
+	fw = &con->c_forw_entry;
+	if (obj == NULL || !npf_connkey_import(obj, fw)) {
 		goto err;
 	}
-	fw = &con->c_forw_entry;
-	memcpy(&fw->ck_key, d, NPF_CONN_MAXKEYLEN);
 
 	obj = prop_dictionary_get(cdict, "back-key");
-	if ((d = prop_data_data_nocopy(obj)) == NULL ||
-	    prop_data_size(obj) != NPF_CONN_MAXKEYLEN) {
+	bk = &con->c_back_entry;
+	if (obj == NULL || !npf_connkey_import(obj, bk)) {
 		goto err;
 	}
-	bk = &con->c_back_entry;
-	memcpy(&bk->ck_key, d, NPF_CONN_MAXKEYLEN);
 
 	fw->ck_backptr = bk->ck_backptr = con;
 
@@ -1080,6 +1090,45 @@ npf_conn_import(npf_conndb_t *cd, prop_dictionary_t cdict,
 err:
 	npf_conn_destroy(con);
 	return EINVAL;
+}
+
+int
+npf_conn_find(prop_dictionary_t idict, prop_dictionary_t *odict)
+{
+	npf_connkey_t key;
+	npf_conn_t *con;
+	uint16_t dir;
+	bool forw;
+	prop_dictionary_t kdict;
+
+	if ((kdict = prop_dictionary_get(idict, "key")) == NULL)
+		return EINVAL;
+
+	if (!npf_connkey_import(kdict, &key))
+		return EINVAL;
+
+	if (!prop_dictionary_get_uint16(idict, "direction", &dir))
+		return EINVAL;
+
+	con = npf_conndb_lookup(conn_db, &key, &forw);
+	if (con == NULL) {
+		return ESRCH;
+	}
+
+	dir = dir == PFIL_IN ? PFIL_OUT : PFIL_IN;
+	if (!npf_conn_ok(con, dir, true)) {
+		atomic_dec_uint(&con->c_refcnt);
+		return ESRCH;
+	}
+
+	*odict = npf_conn_export(con);
+	if (*odict == NULL) {
+		atomic_dec_uint(&con->c_refcnt);
+		return ENOSPC;
+	}
+	atomic_dec_uint(&con->c_refcnt);
+
+	return 0;
 }
 
 #if defined(DDB) || defined(_NPF_TESTING)
