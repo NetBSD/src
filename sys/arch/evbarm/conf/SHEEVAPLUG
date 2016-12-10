@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.50 2016/12/08 11:31:10 nat Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.51 2016/12/10 23:03:24 christos Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -437,7 +437,6 @@ mvsocrtc* at mvsoc? offset ? irq ?
 # Audio support
 audio*	at audiobus?
 
-options VAUDIOSPEAKER
 spkr0	at audio0		# PC speaker (synthesized)
 
 # Pseudo-Devices

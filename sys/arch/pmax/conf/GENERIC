@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.188 2016/12/08 11:31:11 nat Exp $
+# $NetBSD: GENERIC,v 1.189 2016/12/10 23:03:25 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.188 $"
+#ident		"GENERIC-$Revision: 1.189 $"
 
 maxusers	64
 
@@ -205,7 +205,6 @@ vsms*	at	zsc0 channel ?		# mouse port on A channels
 
 audio*	at	bba?
 
-options VAUDIOSPEAKER
 spkr0	at audio0		# PC speaker (synthesized)
 
 dtkbd*	at	dt? addr ?

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.144 2016/12/09 02:24:17 christos Exp $
+#	$NetBSD: GENERIC_TINY,v 1.145 2016/12/10 23:03:24 christos Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -510,7 +510,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
 
-#options VAUDIOSPEAKER
 #spkr0	at audio0		# PC speaker (synthesized)
 
 # Joysticks

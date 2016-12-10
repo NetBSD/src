@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.149 2016/12/08 11:31:09 nat Exp $
+# $NetBSD: GENERIC,v 1.150 2016/12/10 23:03:23 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.149 $"
+#ident 		"GENERIC-$Revision: 1.150 $"
 
 maxusers	32
 
@@ -306,7 +306,6 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 # Audio support
 #audio*		at audiobus?
 
-#options VAUDIOSPEAKER
 #spkr0	at audio0		# PC speaker (synthesized)
 
 # Pseudo-devices

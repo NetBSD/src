@@ -1,5 +1,5 @@
 #
-# $NetBSD: HADES,v 1.108 2016/12/08 11:31:09 nat Exp $
+# $NetBSD: HADES,v 1.109 2016/12/10 23:03:23 christos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -92,7 +92,6 @@ fxp* at pci? dev ? function ? # Intel EtherExpress PRO 10+/100B
 eso* at pci? dev ? function ? # ESS Solo-1 PCI AudioDrive
 audio* at eso?
 
-options VAUDIOSPEAKER
 spkr0	at audio0		# PC speaker (synthesized)
 
 pseudo-device view 4 # View (graphics mapping)

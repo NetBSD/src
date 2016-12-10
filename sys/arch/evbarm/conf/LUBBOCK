@@ -160,7 +160,6 @@ options 	PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
 pxaacu0 	at pxaip? addr 0x40500000 intr 14
 audio*		at audiobus?
 
-options VAUDIOSPEAKER
 spkr0	at audio0		# PC speaker (synthesized)
 
 # On-board device support
