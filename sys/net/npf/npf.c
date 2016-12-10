@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.31 2015/10/29 15:19:43 christos Exp $	*/
+/*	$NetBSD: npf.c,v 1.32 2016/12/10 05:41:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.31 2015/10/29 15:19:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.32 2016/12/10 05:41:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -243,6 +243,9 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		break;
 	case IOC_NPF_LOAD:
 		error = npfctl_load(cmd, data);
+		break;
+	case IOC_NPF_CONN_LOOKUP:
+		error = npfctl_conn_lookup(cmd, data);
 		break;
 	case IOC_NPF_VERSION:
 		*(int *)data = NPF_VERSION;
