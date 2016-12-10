@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.271 2016/12/09 13:06:02 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.272 2016/12/10 16:08:04 maya Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.271 2016/12/09 13:06:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.272 2016/12/10 16:08:04 maya Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1331,8 +1331,6 @@ audio_stream_ctor(audio_stream_t *stream, const audio_params_t *param, int size)
 	size = min(size, AU_RING_SIZE);
 	stream->bufsize = size;
 	stream->start = kmem_zalloc(size, KM_SLEEP);
-	if (stream->start == NULL)
-		return ENOMEM;
 	frame_size = (param->precision + 7) / 8 * param->channels;
 	size = (size / frame_size) * frame_size;
 	stream->end = stream->start + size;
@@ -1864,8 +1862,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		return ENXIO;
 
 	sc->sc_vchan[n] = kmem_zalloc(sizeof(struct virtual_channel), KM_SLEEP);
-	if (sc->sc_vchan[n] == NULL)
-		return ENOMEM;
 	vc = sc->sc_vchan[n];
 
 	vc->sc_open = 0;
