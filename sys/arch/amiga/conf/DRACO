@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.178 2016/12/08 11:31:09 nat Exp $
+# $NetBSD: DRACO,v 1.179 2016/12/10 23:03:23 christos Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.178 $"
+#ident 		"GENERIC-$Revision: 1.179 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -284,7 +284,6 @@ lpt0		at drsupio? port ?	# DraCo parallel
 repulse*	at zbus0		# ALiENDESiGN Repulse
 audio*		at repulse?
 
-options VAUDIOSPEAKER
 spkr0	at audio0		# PC speaker (synthesized)
 
 toccata*	at zbus0		# MacroSystem GmbH Toccata
