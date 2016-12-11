@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.15 2016/12/11 08:04:17 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.16 2016/12/11 08:06:39 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.15 2016/12/11 08:04:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.16 2016/12/11 08:06:39 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -822,8 +822,7 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 			name = "athn-ar7010-11";
 		else
 			name = "athn-ar7010";
-	}
-	else
+	} else
 		name = "athn-ar9271";
 
 	/* Read firmware image from the filesystem. */
@@ -1323,8 +1322,7 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 			athn_set_hostap_timers(sc);
 			/* Enable software beacon alert interrupts. */
 			imask = htobe32(AR_IMR_SWBA);
-		}
-		else
+		} else
 #endif
 		{
 			athn_set_sta_timers(sc);
@@ -2007,8 +2005,7 @@ athn_usb_rx_radiotap(struct athn_softc *sc, struct mbuf *m,
 		tap->wr_rate = rate;
 		if (!(rs->rs_flags & AR_RXS_FLAG_GI))
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTGI;
-	}
-	else if (rate & 0x10) {	/* CCK. */
+	} else if (rate & 0x10) {	/* CCK. */
 		if (rate & 0x04)
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 		switch (rate & ~0x14) {
@@ -2018,8 +2015,7 @@ athn_usb_rx_radiotap(struct athn_softc *sc, struct mbuf *m,
 		case 0x8: tap->wr_rate =  22; break;
 		default:  tap->wr_rate =   0; break;
 		}
-	}
-	else {			/* OFDM. */
+	} else {			/* OFDM. */
 		switch (rate) {
 		case 0xb: tap->wr_rate =  12; break;
 		case 0xf: tap->wr_rate =  18; break;
@@ -2154,8 +2150,7 @@ athn_usb_rxeof(struct usbd_xfer *xfer, void * priv,
 			buf += off;
 			len -= off;
 			stream->left = 0;
-		}
-		else {
+		} else {
 			/* Still need more bytes, save what we have. */
 			if (__predict_true(stream->m != NULL)) {
 				memcpy(mtod(stream->m, uint8_t *) +
@@ -2190,8 +2185,7 @@ athn_usb_rxeof(struct usbd_xfer *xfer, void * priv,
 					}
 				}
 			}
-		}
-		else	/* Drop frames larger than MCLBYTES. */
+		} else	/* Drop frames larger than MCLBYTES. */
 			m = NULL;
 		/*
 		 * NB: m can be NULL, in which case the next pktlen bytes
@@ -2302,8 +2296,7 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		qos = ieee80211_get_qos(wh);
 		tid = qos & IEEE80211_QOS_TID;
 		qid = ieee80211_up_to_ac(ic, tid);
-	}
-	else
+	} else
 #endif /* notyet_edca */
 	{
 		tid = 0;
@@ -2350,8 +2343,7 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		}
 		txf->key_idx = 0xff;
 		frm = (uint8_t *)&txf[1];
-	}
-	else {
+	} else {
 		htc->endpoint_id = usc->usc_ep_mgmt;
 
 		txm = (struct ar_tx_mgmt *)&htc[1];
