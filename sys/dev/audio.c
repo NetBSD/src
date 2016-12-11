@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.276 2016/12/11 07:36:30 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.277 2016/12/11 10:28:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.276 2016/12/11 07:36:30 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.277 2016/12/11 10:28:00 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1713,7 +1713,7 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
 		blksize = sc->hw_if->round_blocksize(sc->hw_hdl, blksize,
 						     mode, &rp->s.param);
 	if (blksize <= 0)
-		panic("audio_init_ringbuffer: blksize");
+		panic("audio_init_ringbuffer: blksize=%d", blksize);
 	nblks = rp->s.bufsize / blksize;
 
 	DPRINTF(("audio_init_ringbuffer: final blksize=%d\n", blksize));
