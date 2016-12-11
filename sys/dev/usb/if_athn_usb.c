@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.16 2016/12/11 08:06:39 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.17 2016/12/11 08:30:39 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.16 2016/12/11 08:06:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.17 2016/12/11 08:30:39 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -1172,7 +1172,7 @@ athn_usb_read(struct athn_softc *sc, uint32_t addr)
 	if (usc->usc_dying)
 		return 0;
 
-	DPRINTFN(DBG_FN, sc, "\n");
+ 	DPRINTFN(DBG_FN, sc, "addr %#x\n", htobe32(addr));
 
 	/* Flush pending writes for strict consistency. */
 	athn_usb_write_barrier(sc);
@@ -1180,8 +1180,12 @@ athn_usb_read(struct athn_softc *sc, uint32_t addr)
 	addr = htobe32(addr);
 	error = athn_usb_wmi_xcmd(usc, AR_WMI_CMD_REG_READ,
 	    &addr, sizeof(addr), &val);
-	if (error != 0)
+	if (error != 0) {
+		DPRINTFN(DBG_FN, sc, "error %d\n", addr);
 		return 0xdeadbeef;
+	}
+ 	DPRINTFN(DBG_FN, sc, "addr %#x return %#x\n", addr, be32toh(val));
+
 	return be32toh(val);
 }
 
@@ -1193,7 +1197,7 @@ athn_usb_write(struct athn_softc *sc, uint32_t addr, uint32_t val)
 	if (usc->usc_dying)
 		return;
 
-	DPRINTFN(DBG_FN, sc, "\n");
+ 	DPRINTFN(DBG_FN, sc, "addr %#x val %#x\n", addr, val);
 
 	usc->usc_wbuf[usc->usc_wcount].addr = htobe32(addr);
 	usc->usc_wbuf[usc->usc_wcount].val  = htobe32(val);
@@ -1209,7 +1213,7 @@ athn_usb_write_barrier(struct athn_softc *sc)
 	if (usc->usc_dying)
 		goto done;
 
-	DPRINTFN(DBG_FN, sc, "\n");
+ 	DPRINTFN(DBG_FN, sc, "usc_wcount %d\n", usc->usc_wcount);
 
 	if (usc->usc_wcount == 0)
 		return;
@@ -1938,12 +1942,18 @@ athn_usb_intr(struct usbd_xfer *xfer, void * priv,
 	len -= sizeof(*htc);
 
 	if (htc->endpoint_id != 0) {
-		if (__predict_false(htc->endpoint_id != usc->usc_ep_ctrl))
+		if (__predict_false(htc->endpoint_id != usc->usc_ep_ctrl)) {
+			DPRINTFN(DBG_RX, usc, "Rx %d != %d\n",
+			    htc->endpoint_id, usc->usc_ep_ctrl);
 			return;
+		}
 		/* Remove trailer if present. */
 		if (htc->flags & AR_HTC_FLAG_TRAILER) {
-			if (__predict_false(len < htc->control[0]))
+			if (__predict_false(len < htc->control[0])) {
+				DPRINTFN(DBG_RX, usc, "Rx trailer %d < %d\n",
+				    len,  htc->control[0]);
 				return;
+			}
 			len -= htc->control[0];
 		}
 		athn_usb_rx_wmi_ctrl(usc, buf, len);
