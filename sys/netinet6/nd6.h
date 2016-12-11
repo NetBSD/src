@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.73 2016/12/11 07:36:20 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.74 2016/12/11 07:36:55 ozaki-r Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -434,18 +434,12 @@ void nd6_dad_duplicated(struct ifaddr *);
 /* nd6_rtr.c */
 void nd6_rs_input(struct mbuf *, int, int);
 void nd6_ra_input(struct mbuf *, int, int);
-void defrouter_addreq(struct nd_defrouter *);
 void defrouter_reset(void);
 void defrouter_select(void);
 void defrtrlist_del(struct nd_defrouter *, struct in6_ifextra *);
 void prelist_remove(struct nd_prefix *);
-int nd6_prelist_add(struct nd_prefixctl *, struct nd_defrouter *,
-	struct nd_prefix **);
-int nd6_prefix_onlink(struct nd_prefix *);
-int nd6_prefix_offlink(struct nd_prefix *);
 void pfxlist_onlink_check(void);
 struct nd_defrouter *defrouter_lookup(const struct in6_addr *, struct ifnet *);
-struct nd_prefix *nd6_prefix_lookup(struct nd_prefixctl *);
 void rt6_flush(struct in6_addr *, struct ifnet *);
 int nd6_setdefaultiface(int);
 int in6_tmpifadd(const struct in6_ifaddr *, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.120 2016/11/15 01:50:06 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.121 2016/12/11 07:36:55 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.120 2016/11/15 01:50:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.121 2016/12/11 07:36:55 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,8 @@ static void pfxrtr_add(struct nd_prefix *, struct nd_defrouter *);
 static void pfxrtr_del(struct nd_pfxrouter *);
 static struct nd_pfxrouter *find_pfxlist_reachable_router
 	(struct nd_prefix *);
+
+static void defrouter_addreq(struct nd_defrouter *);
 static void defrouter_delreq(struct nd_defrouter *);
 
 static int in6_init_prefix_ltimes(struct nd_prefix *);
@@ -81,6 +83,12 @@ static void in6_init_address_ltimes(struct nd_prefix *,
 static void purge_detached(struct ifnet *);
 
 static int rt6_deleteroute_matcher(struct rtentry *, void *);
+
+static int nd6_prelist_add(struct nd_prefixctl *, struct nd_defrouter *,
+	struct nd_prefix **);
+static int nd6_prefix_onlink(struct nd_prefix *);
+static int nd6_prefix_offlink(struct nd_prefix *);
+static struct nd_prefix *nd6_prefix_lookup(struct nd_prefixctl *);
 
 extern int nd6_recalc_reachtm_interval;
 
@@ -444,7 +452,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 /*
  * default router list processing sub routines
  */
-void
+static void
 defrouter_addreq(struct nd_defrouter *newdr)
 {
 	union {
@@ -873,7 +881,7 @@ pfxrtr_del(struct nd_pfxrouter *pfr)
 	free(pfr, M_IP6NDP);
 }
 
-struct nd_prefix *
+static struct nd_prefix *
 nd6_prefix_lookup(struct nd_prefixctl *key)
 {
 	struct nd_prefix *search;
@@ -934,7 +942,8 @@ purge_detached(struct ifnet *ifp)
 			prelist_remove(pr);
 	}
 }
-int
+
+static int
 nd6_prelist_add(struct nd_prefixctl *prc, struct nd_defrouter *dr, 
 	struct nd_prefix **newp)
 {
@@ -1649,7 +1658,7 @@ pfxlist_onlink_check(void)
 	}
 }
 
-int
+static int
 nd6_prefix_onlink(struct nd_prefix *pr)
 {
 	struct ifaddr *ifa;
@@ -1760,7 +1769,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	return (error);
 }
 
-int
+static int
 nd6_prefix_offlink(struct nd_prefix *pr)
 {
 	int error = 0;
