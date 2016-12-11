@@ -1,7 +1,7 @@
-/*	$NetBSD: midirecord.c,v 1.10 2015/09/23 05:31:01 mrg Exp $	*/
+/*	$NetBSD: midirecord.c,v 1.11 2016/12/11 08:40:10 mrg Exp $	*/
 
 /*
- * Copyright (c) 2014 Matthew R. Green
+ * Copyright (c) 2014, 2015 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midirecord.c,v 1.10 2015/09/23 05:31:01 mrg Exp $");
+__RCSID("$NetBSD: midirecord.c,v 1.11 2016/12/11 08:40:10 mrg Exp $");
 #endif
 
 #include <sys/param.h>
