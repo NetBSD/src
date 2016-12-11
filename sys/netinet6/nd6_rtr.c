@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.122 2016/12/11 07:37:53 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.123 2016/12/11 07:38:50 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.122 2016/12/11 07:37:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.123 2016/12/11 07:38:50 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,7 +432,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	 * router's neighbor cache, which might also affect our on-link
 	 * detection of adveritsed prefixes.
 	 */
-	pfxlist_onlink_check();
+	nd6_pfxlist_onlink_check();
     }
 
  freeit:
@@ -483,7 +483,7 @@ defrouter_addreq(struct nd_defrouter *newdr)
 }
 
 struct nd_defrouter *
-defrouter_lookup(const struct in6_addr *addr, struct ifnet *ifp)
+nd6_defrouter_lookup(const struct in6_addr *addr, struct ifnet *ifp)
 {
 	struct nd_defrouter *dr;
 
@@ -496,7 +496,7 @@ defrouter_lookup(const struct in6_addr *addr, struct ifnet *ifp)
 }
 
 void
-defrtrlist_del(struct nd_defrouter *dr, struct in6_ifextra *ext)
+nd6_defrtrlist_del(struct nd_defrouter *dr, struct in6_ifextra *ext)
 {
 	struct nd_defrouter *deldr = NULL;
 	struct nd_prefix *pr;
@@ -517,7 +517,7 @@ defrtrlist_del(struct nd_defrouter *dr, struct in6_ifextra *ext)
 	 */
 	/* XXX: better condition? */
 	if (!ip6_forwarding && nd6_accepts_rtadv(ndi))
-		rt6_flush(&dr->rtaddr, dr->ifp);
+		nd6_rt_flush(&dr->rtaddr, dr->ifp);
 
 	if (dr->installed) {
 		deldr = dr;
@@ -533,19 +533,19 @@ defrtrlist_del(struct nd_defrouter *dr, struct in6_ifextra *ext)
 		if ((pfxrtr = pfxrtr_lookup(pr, dr)) != NULL)
 			pfxrtr_del(pfxrtr);
 	}
-	pfxlist_onlink_check();
+	nd6_pfxlist_onlink_check();
 
 	/*
 	 * If the router is the primary one, choose a new one.
-	 * Note that defrouter_select() will remove the current gateway
+	 * Note that nd6_defrouter_select() will remove the current gateway
 	 * from the routing table.
 	 */
 	if (deldr)
-		defrouter_select();
+		nd6_defrouter_select();
 
 	ext->ndefrouters--;
 	if (ext->ndefrouters < 0) {
-		log(LOG_WARNING, "defrtrlist_del: negative count on %s\n",
+		log(LOG_WARNING, "nd6_defrtrlist_del: negative count on %s\n",
 		    dr->ifp->if_xname);
 	}
 
@@ -554,7 +554,7 @@ defrtrlist_del(struct nd_defrouter *dr, struct in6_ifextra *ext)
 
 /*
  * Remove the default route for a given router.
- * This is just a subroutine function for defrouter_select(), and should
+ * This is just a subroutine function for nd6_defrouter_select(), and should
  * not be called from anywhere else.
  */
 static void
@@ -595,7 +595,7 @@ defrouter_delreq(struct nd_defrouter *dr)
  * remove all default routes from default router list
  */
 void
-defrouter_reset(void)
+nd6_defrouter_reset(void)
 {
 	struct nd_defrouter *dr;
 
@@ -631,7 +631,7 @@ defrouter_reset(void)
  * complicated and the possibility of introducing bugs.
  */
 void
-defrouter_select(void)
+nd6_defrouter_select(void)
 {
 	struct nd_ifinfo *ndi;
 	int s = splsoftnet();
@@ -678,7 +678,7 @@ defrouter_select(void)
 			installed_dr = dr;
 		else if (dr->installed && installed_dr) {
 			/* this should not happen.  warn for diagnosis. */
-			log(LOG_ERR, "defrouter_select: more than one router"
+			log(LOG_ERR, "nd6_defrouter_select: more than one router"
 			    " is installed\n");
 		}
 	}
@@ -750,10 +750,10 @@ defrtrlist_update(struct nd_defrouter *newdr)
 	struct in6_ifextra *ext = newdr->ifp->if_afdata[AF_INET6];
 	int s = splsoftnet();
 
-	if ((dr = defrouter_lookup(&newdr->rtaddr, newdr->ifp)) != NULL) {
+	if ((dr = nd6_defrouter_lookup(&newdr->rtaddr, newdr->ifp)) != NULL) {
 		/* entry exists */
 		if (newdr->rtlifetime == 0) {
-			defrtrlist_del(dr, ext);
+			nd6_defrtrlist_del(dr, ext);
 			dr = NULL;
 		} else {
 			int oldpref = rtpref(dr);
@@ -776,9 +776,9 @@ defrtrlist_update(struct nd_defrouter *newdr)
 			 * preferred router may be changed, so relocate
 			 * this router.
 			 * XXX: calling TAILQ_REMOVE directly is a bad manner.
-			 * However, since defrtrlist_del() has many side
+			 * However, since nd6_defrtrlist_del() has many side
 			 * effects, we intentionally do so here.
-			 * defrouter_select() below will handle routing
+			 * nd6_defrouter_select() below will handle routing
 			 * changes later.
 			 */
 			TAILQ_REMOVE(&nd_defrouter, dr, dr_entry);
@@ -834,7 +834,7 @@ insert:
 	else
 		TAILQ_INSERT_TAIL(&nd_defrouter, n, dr_entry);
 
-	defrouter_select();
+	nd6_defrouter_select();
 
 	ext->ndefrouters++;
 
@@ -868,7 +868,7 @@ pfxrtr_add(struct nd_prefix *pr, struct nd_defrouter *dr)
 
 	LIST_INSERT_HEAD(&pr->ndpr_advrtrs, newpfr, pfr_entry);
 
-	pfxlist_onlink_check();
+	nd6_pfxlist_onlink_check();
 }
 
 static void
@@ -936,7 +936,7 @@ purge_detached(struct ifnet *ifp)
 		pserialize_read_exit(s);
 
 		if (pr->ndpr_refcnt == 0)
-			prelist_remove(pr);
+			nd6_prelist_remove(pr);
 	}
 }
 
@@ -1010,7 +1010,7 @@ nd6_prelist_add(struct nd_prefixctl *prc, struct nd_defrouter *dr,
 }
 
 void
-prelist_remove(struct nd_prefix *pr)
+nd6_prelist_remove(struct nd_prefix *pr)
 {
 	struct nd_pfxrouter *pfr, *next;
 	int e, s;
@@ -1053,7 +1053,7 @@ prelist_remove(struct nd_prefix *pr)
 	if (ext) {
 		ext->nprefixes--;
 		if (ext->nprefixes < 0) {
-			log(LOG_WARNING, "prelist_remove: negative count on "
+			log(LOG_WARNING, "nd6_prelist_remove: negative count on "
 			    "%s\n", pr->ndpr_ifp->if_xname);
 		}
 	}
@@ -1061,7 +1061,7 @@ prelist_remove(struct nd_prefix *pr)
 
 	free(pr, M_IP6NDP);
 
-	pfxlist_onlink_check();
+	nd6_pfxlist_onlink_check();
 }
 
 static int
@@ -1397,7 +1397,7 @@ prelist_update(struct nd_prefixctl *newprc,
 			 * of other addresses, so we check and update it.
 			 * XXX: what if address duplication happens?
 			 */
-			pfxlist_onlink_check();
+			nd6_pfxlist_onlink_check();
 		} else {
 			/* just set an error. do not bark here. */
 			error = EADDRNOTAVAIL; /* XXX: might be unused. */
@@ -1444,7 +1444,7 @@ find_pfxlist_reachable_router(struct nd_prefix *pr)
  * is no router around us.
  */
 void
-pfxlist_onlink_check(void)
+nd6_pfxlist_onlink_check(void)
 {
 	struct nd_prefix *pr;
 	struct in6_ifaddr *ia;
@@ -2101,7 +2101,7 @@ in6_tmpifadd(
 	 * and, in fact, we surely need the check when we create a new
 	 * temporary address due to deprecation of an old temporary address.
 	 */
-	pfxlist_onlink_check();
+	nd6_pfxlist_onlink_check();
 
 	return (0);
 }
@@ -2158,7 +2158,7 @@ in6_init_address_ltimes(struct nd_prefix *newpr,
  * it shouldn't be called when acting as a router.
  */
 void
-rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
+nd6_rt_flush(struct in6_addr *gateway, struct ifnet *ifp)
 {
 	int s = splsoftnet();
 
