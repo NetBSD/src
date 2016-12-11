@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.101 2016/05/25 13:01:11 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.102 2016/12/11 15:47:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.101 2016/05/25 13:01:11 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.102 2016/12/11 15:47:06 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -111,6 +111,7 @@ read_end(struct el_read_t *el_read)
 	read_clearmacros(&el_read->macros);
 	el_free(el_read->macros.macro);
 	el_read->macros.macro = NULL;
+	el_free(el_read);
 }
 
 /* el_read_setfn():
