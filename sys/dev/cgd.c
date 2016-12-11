@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.111 2016/09/14 23:16:30 mlelstv Exp $ */
+/* $NetBSD: cgd.c,v 1.112 2016/12/11 00:20:49 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.111 2016/09/14 23:16:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.112 2016/12/11 00:20:49 alnsn Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,6 +58,18 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.111 2016/09/14 23:16:30 mlelstv Exp $");
 #include <miscfs/specfs/specdev.h> /* for v_rdev */
 
 #include "ioconf.h"
+
+struct selftest_params {
+	const char *alg;
+	int blocksize;	/* number of bytes */
+	int secsize;
+	daddr_t blkno;
+	int keylen;	/* number of bits */
+	int txtlen;	/* number of bytes */
+	const uint8_t *key;
+	const uint8_t *ptxt;
+	const uint8_t *ctxt;
+};
 
 /* Entry Point Functions */
 
@@ -94,6 +106,101 @@ const struct cdevsw cgd_cdevsw = {
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
 	.d_flag = D_DISK
+};
+
+/*
+ * Vector 5 from IEEE 1619/D16 truncated to 64 bytes, blkno 1.
+ */
+static const uint8_t selftest_aes_xts_256_ptxt[64] = {
+	0x27, 0xa7, 0x47, 0x9b, 0xef, 0xa1, 0xd4, 0x76,
+	0x48, 0x9f, 0x30, 0x8c, 0xd4, 0xcf, 0xa6, 0xe2,
+	0xa9, 0x6e, 0x4b, 0xbe, 0x32, 0x08, 0xff, 0x25,
+	0x28, 0x7d, 0xd3, 0x81, 0x96, 0x16, 0xe8, 0x9c,
+	0xc7, 0x8c, 0xf7, 0xf5, 0xe5, 0x43, 0x44, 0x5f,
+	0x83, 0x33, 0xd8, 0xfa, 0x7f, 0x56, 0x00, 0x00,
+	0x05, 0x27, 0x9f, 0xa5, 0xd8, 0xb5, 0xe4, 0xad,
+	0x40, 0xe7, 0x36, 0xdd, 0xb4, 0xd3, 0x54, 0x12,
+};
+
+static const uint8_t selftest_aes_xts_256_ctxt[512] = {
+	0x26, 0x4d, 0x3c, 0xa8, 0x51, 0x21, 0x94, 0xfe,
+	0xc3, 0x12, 0xc8, 0xc9, 0x89, 0x1f, 0x27, 0x9f,
+	0xef, 0xdd, 0x60, 0x8d, 0x0c, 0x02, 0x7b, 0x60,
+	0x48, 0x3a, 0x3f, 0xa8, 0x11, 0xd6, 0x5e, 0xe5,
+	0x9d, 0x52, 0xd9, 0xe4, 0x0e, 0xc5, 0x67, 0x2d,
+	0x81, 0x53, 0x2b, 0x38, 0xb6, 0xb0, 0x89, 0xce,
+	0x95, 0x1f, 0x0f, 0x9c, 0x35, 0x59, 0x0b, 0x8b,
+	0x97, 0x8d, 0x17, 0x52, 0x13, 0xf3, 0x29, 0xbb,
+};
+
+static const uint8_t selftest_aes_xts_256_key[33] = {
+	0x27, 0x18, 0x28, 0x18, 0x28, 0x45, 0x90, 0x45,
+	0x23, 0x53, 0x60, 0x28, 0x74, 0x71, 0x35, 0x26,
+	0x31, 0x41, 0x59, 0x26, 0x53, 0x58, 0x97, 0x93,
+	0x23, 0x84, 0x62, 0x64, 0x33, 0x83, 0x27, 0x95,
+	0
+};
+
+/*
+ * Vector 11 from IEEE 1619/D16 truncated to 64 bytes, blkno 0xffff.
+ */
+static const uint8_t selftest_aes_xts_512_ptxt[64] = {
+	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+	0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+	0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+	0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+	0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+	0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
+};
+
+static const uint8_t selftest_aes_xts_512_ctxt[64] = {
+	0x77, 0xa3, 0x12, 0x51, 0x61, 0x8a, 0x15, 0xe6,
+	0xb9, 0x2d, 0x1d, 0x66, 0xdf, 0xfe, 0x7b, 0x50,
+	0xb5, 0x0b, 0xad, 0x55, 0x23, 0x05, 0xba, 0x02,
+	0x17, 0xa6, 0x10, 0x68, 0x8e, 0xff, 0x7e, 0x11,
+	0xe1, 0xd0, 0x22, 0x54, 0x38, 0xe0, 0x93, 0x24,
+	0x2d, 0x6d, 0xb2, 0x74, 0xfd, 0xe8, 0x01, 0xd4,
+	0xca, 0xe0, 0x6f, 0x20, 0x92, 0xc7, 0x28, 0xb2,
+	0x47, 0x85, 0x59, 0xdf, 0x58, 0xe8, 0x37, 0xc2,
+};
+
+static const uint8_t selftest_aes_xts_512_key[65] = {
+	0x27, 0x18, 0x28, 0x18, 0x28, 0x45, 0x90, 0x45,
+	0x23, 0x53, 0x60, 0x28, 0x74, 0x71, 0x35, 0x26,
+	0x62, 0x49, 0x77, 0x57, 0x24, 0x70, 0x93, 0x69,
+	0x99, 0x59, 0x57, 0x49, 0x66, 0x96, 0x76, 0x27,
+	0x31, 0x41, 0x59, 0x26, 0x53, 0x58, 0x97, 0x93,
+	0x23, 0x84, 0x62, 0x64, 0x33, 0x83, 0x27, 0x95,
+	0x02, 0x88, 0x41, 0x97, 0x16, 0x93, 0x99, 0x37,
+	0x51, 0x05, 0x82, 0x09, 0x74, 0x94, 0x45, 0x92,
+	0
+};
+
+const struct selftest_params selftests[] = {
+	{
+		.alg = "aes-xts",
+		.blocksize = 16,
+		.secsize = 512,
+		.blkno = 1,
+		.keylen = 256,
+		.txtlen = sizeof(selftest_aes_xts_256_ptxt),
+		.key  = selftest_aes_xts_256_key,
+		.ptxt = selftest_aes_xts_256_ptxt,
+		.ctxt = selftest_aes_xts_256_ctxt
+	},
+	{
+		.alg = "aes-xts",
+		.blocksize = 16,
+		.secsize = 512,
+		.blkno = 0xffff,
+		.keylen = 512,
+		.txtlen = sizeof(selftest_aes_xts_512_ptxt),
+		.key  = selftest_aes_xts_512_key,
+		.ptxt = selftest_aes_xts_512_ptxt,
+		.ctxt = selftest_aes_xts_512_ctxt
+	}
 };
 
 static int cgd_match(device_t, cfdata_t, void *);
@@ -896,19 +1003,6 @@ bail:
  * We implement here the IV method ``encrypted block
  * number''.
  *
- * For the encryption case, we accomplish this by setting
- * up a struct uio where the first iovec of the source is
- * the blocknumber and the first iovec of the dest is a
- * sink.  We then call the cipher with an IV of zero, and
- * the right thing happens.
- *
- * For the decryption case, we use the same basic mechanism
- * for symmetry, but we encrypt the block number in the
- * first iovec.
- *
- * We mainly do this to avoid requiring the definition of
- * an ECB mode.
- *
  * XXXrcd: for now we rely on our own crypto framework defined
  *         in dev/cgd_crypto.c.  This will change when we
  *         get a generic kernel crypto framework.
@@ -945,7 +1039,8 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
     size_t len, daddr_t blkno, size_t secsize, int dir)
 {
 	char		*dst = dstv;
-	char 		*src = srcv;
+	char		*src = srcv;
+	cfunc_cipher_prep	*ciprep = cs->sc_cfuncs->cf_cipher_prep;
 	cfunc_cipher	*cipher = cs->sc_cfuncs->cf_cipher;
 	struct uio	dstuio;
 	struct uio	srcuio;
@@ -953,9 +1048,7 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 	struct iovec	srciov[2];
 	size_t		blocksize = cs->sc_cdata.cf_blocksize;
 	size_t		todo;
-	char		sink[CGD_MAXBLOCKSIZE];
-	char		zero_iv[CGD_MAXBLOCKSIZE];
-	char		blkno_buf[CGD_MAXBLOCKSIZE];
+	char		blkno_buf[CGD_MAXBLOCKSIZE], *iv;
 
 	DPRINTF_FOLLOW(("cgd_cipher() dir=%d\n", dir));
 
@@ -966,46 +1059,37 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 	DIAGCONDPANIC(sizeof(daddr_t) > blocksize,
 	    ("cgd_cipher: sizeof(daddr_t) > blocksize"));
 
-	memset(zero_iv, 0x0, blocksize);
+	DIAGCONDPANIC(blocksize > CGD_MAXBLOCKSIZE,
+	    ("cgd_cipher: blocksize > CGD_MAXBLOCKSIZE"));
 
 	dstuio.uio_iov = dstiov;
-	dstuio.uio_iovcnt = 2;
+	dstuio.uio_iovcnt = 1;
 
 	srcuio.uio_iov = srciov;
-	srcuio.uio_iovcnt = 2;
-
-	dstiov[0].iov_base = sink;
-	dstiov[0].iov_len  = blocksize;
-	srciov[0].iov_base = blkno_buf;
-	srciov[0].iov_len  = blocksize;
+	srcuio.uio_iovcnt = 1;
 
 	for (; len > 0; len -= todo) {
 		todo = MIN(len, secsize);
 
-		dstiov[1].iov_base = dst;
-		srciov[1].iov_base = src;
-		dstiov[1].iov_len  = todo;
-		srciov[1].iov_len  = todo;
+		dstiov[0].iov_base = dst;
+		srciov[0].iov_base = src;
+		dstiov[0].iov_len  = todo;
+		srciov[0].iov_len  = todo;
 
 		memset(blkno_buf, 0x0, blocksize);
 		blkno2blkno_buf(blkno_buf, blkno);
-		if (dir == CGD_CIPHER_DECRYPT) {
-			dstuio.uio_iovcnt = 1;
-			srcuio.uio_iovcnt = 1;
-			IFDEBUG(CGDB_CRYPTO, hexprint("step 0: blkno_buf",
-			    blkno_buf, blocksize));
-			cipher(cs->sc_cdata.cf_priv, &dstuio, &srcuio,
-			    zero_iv, CGD_CIPHER_ENCRYPT);
-			memcpy(blkno_buf, sink, blocksize);
-			dstuio.uio_iovcnt = 2;
-			srcuio.uio_iovcnt = 2;
-		}
-
 		IFDEBUG(CGDB_CRYPTO, hexprint("step 1: blkno_buf",
 		    blkno_buf, blocksize));
-		cipher(cs->sc_cdata.cf_priv, &dstuio, &srcuio, zero_iv, dir);
-		IFDEBUG(CGDB_CRYPTO, hexprint("step 2: sink",
-		    sink, blocksize));
+
+		/*
+		 * Compute an initial IV. All ciphers
+		 * can convert blkno_buf in-place.
+		 */
+		iv = blkno_buf;
+		ciprep(cs->sc_cdata.cf_priv, iv, blkno_buf, blocksize, dir);
+		IFDEBUG(CGDB_CRYPTO, hexprint("step 2: iv", iv, blocksize));
+
+		cipher(cs->sc_cdata.cf_priv, &dstuio, &srcuio, iv, dir);
 
 		dst += todo;
 		src += todo;
@@ -1026,6 +1110,61 @@ hexprint(const char *start, void *buf, int len)
 }
 #endif
 
+static void
+selftest(void)
+{
+	struct cgd_softc cs;
+	void *buf;
+
+	printf("running cgd selftest ");
+
+	for (size_t i = 0; i < __arraycount(selftests); i++) {
+		const char *alg = selftests[i].alg;
+		const uint8_t *key = selftests[i].key;
+		int keylen = selftests[i].keylen;
+		int txtlen = selftests[i].txtlen;
+
+		printf("%s-%d ", alg, keylen);
+
+		memset(&cs, 0, sizeof(cs));
+
+		cs.sc_cfuncs = cryptfuncs_find(alg);
+		if (cs.sc_cfuncs == NULL)
+			panic("%s not implemented", alg);
+
+		cs.sc_cdata.cf_blocksize = 8 * selftests[i].blocksize;
+		cs.sc_cdata.cf_mode = CGD_CIPHER_CBC_ENCBLKNO1;
+		cs.sc_cdata.cf_keylen = keylen;
+
+		cs.sc_cdata.cf_priv = cs.sc_cfuncs->cf_init(keylen,
+		    key, &cs.sc_cdata.cf_blocksize);
+		if (cs.sc_cdata.cf_priv == NULL)
+			panic("cf_priv is NULL");
+		if (cs.sc_cdata.cf_blocksize > CGD_MAXBLOCKSIZE)
+			panic("bad block size %zu", cs.sc_cdata.cf_blocksize);
+
+		cs.sc_cdata.cf_blocksize /= 8;
+
+		buf = malloc(txtlen, M_DEVBUF, M_WAITOK);
+		memcpy(buf, selftests[i].ptxt, txtlen);
+
+		cgd_cipher(&cs, buf, buf, txtlen, selftests[i].blkno,
+				selftests[i].secsize, CGD_CIPHER_ENCRYPT);
+		if (memcmp(buf, selftests[i].ctxt, txtlen) != 0)
+			panic("encryption is broken");
+
+		cgd_cipher(&cs, buf, buf, txtlen, selftests[i].blkno,
+				selftests[i].secsize, CGD_CIPHER_DECRYPT);
+		if (memcmp(buf, selftests[i].ptxt, txtlen) != 0)
+			panic("decryption is broken");
+
+		free(buf, M_DEVBUF);
+		cs.sc_cfuncs->cf_destroy(cs.sc_cdata.cf_priv);
+	}
+
+	printf("done\n");
+}
+
 MODULE(MODULE_CLASS_DRIVER, cgd, "dk_subr");
 
 #ifdef _MODULE
@@ -1041,6 +1180,7 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		selftest();
 #ifdef _MODULE
 		error = config_cfdriver_attach(&cgd_cd);
 		if (error)
