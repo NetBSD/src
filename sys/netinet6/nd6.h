@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.74 2016/12/11 07:36:55 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.75 2016/12/11 07:37:53 ozaki-r Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -354,7 +354,6 @@ extern int nd6_debug;
 	do { if (nd6_debug) log(level, "%s: " fmt, __func__, ##args);} while (0)
 
 /* nd6_rtr.c */
-extern int nd6_defifindex;
 extern int ip6_desync_factor;	/* seconds */
 extern u_int32_t ip6_temp_preferred_lifetime; /* seconds */
 extern u_int32_t ip6_temp_valid_lifetime; /* seconds */
@@ -441,7 +440,6 @@ void prelist_remove(struct nd_prefix *);
 void pfxlist_onlink_check(void);
 struct nd_defrouter *defrouter_lookup(const struct in6_addr *, struct ifnet *);
 void rt6_flush(struct in6_addr *, struct ifnet *);
-int nd6_setdefaultiface(int);
 int in6_tmpifadd(const struct in6_ifaddr *, int, int);
 bool nd6_accepts_rtadv(const struct nd_ifinfo *);
 

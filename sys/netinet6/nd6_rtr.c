@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.121 2016/12/11 07:36:55 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.122 2016/12/11 07:37:53 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.121 2016/12/11 07:36:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.122 2016/12/11 07:37:53 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,9 +91,6 @@ static int nd6_prefix_offlink(struct nd_prefix *);
 static struct nd_prefix *nd6_prefix_lookup(struct nd_prefixctl *);
 
 extern int nd6_recalc_reachtm_interval;
-
-static struct ifnet *nd6_defifp;
-int nd6_defifindex;
 
 int ip6_use_tempaddr = 0;
 
@@ -2202,33 +2199,4 @@ rt6_deleteroute_matcher(struct rtentry *rt, void *arg)
 		return (0);
 
 	return 1;
-}
-
-int
-nd6_setdefaultiface(int ifindex)
-{
-	ifnet_t *ifp;
-	int error = 0;
-	int s;
-
-	s = pserialize_read_enter();
-	ifp = if_byindex(ifindex);
-	if (ifp == NULL) {
-		pserialize_read_exit(s);
-		return EINVAL;
-	}
-	if (nd6_defifindex != ifindex) {
-		nd6_defifindex = ifindex;
-		nd6_defifp = nd6_defifindex > 0 ? ifp : NULL;
-
-		/*
-		 * Our current implementation assumes one-to-one maping between
-		 * interfaces and links, so it would be natural to use the
-		 * default interface as the default link.
-		 */
-		scope6_setdefault(nd6_defifp);
-	}
-	pserialize_read_exit(s);
-
-	return (error);
 }
