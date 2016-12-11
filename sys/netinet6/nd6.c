@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.211 2016/11/14 02:34:19 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.212 2016/12/11 07:37:53 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.211 2016/11/14 02:34:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.212 2016/12/11 07:37:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -124,6 +124,11 @@ static struct work	nd6_timer_wk;
 
 static int fill_drlist(void *, size_t *, size_t);
 static int fill_prlist(void *, size_t *, size_t);
+
+static struct ifnet *nd6_defifp;
+static int nd6_defifindex;
+
+static int nd6_setdefaultiface(int);
 
 MALLOC_DEFINE(M_IP6NDP, "NDP", "IPv6 Neighbour Discovery");
 
@@ -2779,4 +2784,33 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 	splx(s);
 
 	return error;
+}
+
+static int
+nd6_setdefaultiface(int ifindex)
+{
+	ifnet_t *ifp;
+	int error = 0;
+	int s;
+
+	s = pserialize_read_enter();
+	ifp = if_byindex(ifindex);
+	if (ifp == NULL) {
+		pserialize_read_exit(s);
+		return EINVAL;
+	}
+	if (nd6_defifindex != ifindex) {
+		nd6_defifindex = ifindex;
+		nd6_defifp = nd6_defifindex > 0 ? ifp : NULL;
+
+		/*
+		 * Our current implementation assumes one-to-one maping between
+		 * interfaces and links, so it would be natural to use the
+		 * default interface as the default link.
+		 */
+		scope6_setdefault(nd6_defifp);
+	}
+	pserialize_read_exit(s);
+
+	return (error);
 }
