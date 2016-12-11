@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.17 2016/12/11 08:30:39 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.18 2016/12/11 15:01:37 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.17 2016/12/11 08:30:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.18 2016/12/11 15:01:37 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -94,6 +94,7 @@ CFATTACH_DECL_NEW(athn_usb, sizeof(struct athn_usb_softc), athn_usb_match,
 
 Static int	athn_usb_alloc_rx_list(struct athn_usb_softc *);
 Static int	athn_usb_alloc_tx_cmd(struct athn_usb_softc *);
+Static int	athn_usb_alloc_tx_msg(struct athn_usb_softc *);
 Static int	athn_usb_alloc_tx_list(struct athn_usb_softc *);
 Static void	athn_usb_attachhook(device_t);
 Static void	athn_usb_bcneof(struct usbd_xfer *, void *,
@@ -108,6 +109,7 @@ Static void	athn_usb_do_async(struct athn_usb_softc *,
 		    void (*)(struct athn_usb_softc *, void *), void *, int);
 Static void	athn_usb_free_rx_list(struct athn_usb_softc *);
 Static void	athn_usb_free_tx_cmd(struct athn_usb_softc *);
+Static void	athn_usb_free_tx_msg(struct athn_usb_softc *);
 Static void	athn_usb_free_tx_list(struct athn_usb_softc *);
 Static int	athn_usb_htc_connect_svc(struct athn_usb_softc *, uint16_t,
 		    uint8_t, uint8_t, uint8_t *);
@@ -115,6 +117,7 @@ Static int	athn_usb_htc_msg(struct athn_usb_softc *, uint16_t, void *,
 		    int);
 Static int	athn_usb_htc_setup(struct athn_usb_softc *);
 Static int	athn_usb_init(struct ifnet *);
+Static int	athn_usb_init_locked(struct ifnet *);
 Static void	athn_usb_intr(struct usbd_xfer *, void *,
 		    usbd_status);
 Static int	athn_usb_ioctl(struct ifnet *, u_long, void *);
@@ -140,7 +143,9 @@ Static void	athn_usb_rx_wmi_ctrl(struct athn_usb_softc *, uint8_t *, size_t);
 Static void	athn_usb_rxeof(struct usbd_xfer *, void *,
 		    usbd_status);
 Static void	athn_usb_start(struct ifnet *);
+//Static void	athn_usb_start_locked(struct ifnet *);
 Static void	athn_usb_stop(struct ifnet *);
+Static void	athn_usb_stop_locked(struct ifnet *);
 Static void	athn_usb_swba(struct athn_usb_softc *);
 Static int	athn_usb_switch_chan(struct athn_softc *,
 		    struct ieee80211_channel *, struct ieee80211_channel *);
@@ -152,9 +157,8 @@ Static void	athn_usb_txeof(struct usbd_xfer *, void *,
 Static void	athn_usb_updateslot(struct ifnet *);
 Static void	athn_usb_updateslot_cb(struct athn_usb_softc *, void *);
 Static void	athn_usb_wait_async(struct athn_usb_softc *);
-Static void	athn_usb_wait_cmd(struct athn_usb_softc *);
-Static void	athn_usb_wait_msg(struct athn_usb_softc *);
-Static void	athn_usb_wait_wmi(struct athn_usb_softc *);
+Static int	athn_usb_wait_cmd(struct athn_usb_softc *);
+Static int	athn_usb_wait_msg(struct athn_usb_softc *);
 Static void	athn_usb_watchdog(struct ifnet *);
 Static int	athn_usb_wmi_xcmd(struct athn_usb_softc *, uint16_t, void *,
 		    int, void *);
@@ -268,6 +272,13 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ops.write = athn_usb_write;
 	sc->sc_ops.write_barrier = athn_usb_write_barrier;
 
+	mutex_init(&usc->usc_lock, MUTEX_DEFAULT, IPL_NONE);
+	
+	cv_init(&usc->usc_cmd_cv, "athncmd");
+	mutex_init(&usc->usc_cmd_mtx, MUTEX_DEFAULT, IPL_SOFTUSB);
+	cv_init(&usc->usc_msg_cv, "athnmsg");
+	mutex_init(&usc->usc_msg_mtx, MUTEX_DEFAULT, IPL_SOFTUSB);
+
 	cv_init(&usc->usc_task_cv, "athntsk");
 	mutex_init(&usc->usc_task_mtx, MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&usc->usc_tx_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -295,6 +306,10 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	if (athn_usb_alloc_tx_cmd(usc) != 0)
 		goto fail;
 
+	/* Allocate xfer for firmware commands. */
+	if (athn_usb_alloc_tx_msg(usc) != 0)
+		goto fail;
+
 	/* Allocate Tx/Rx buffers. */
 	error = athn_usb_alloc_rx_list(usc);
 	if (error != 0)
@@ -309,13 +324,23 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	return;
 
  fail:
+ 
 	/* Free Tx/Rx buffers. */
 	athn_usb_abort_pipes(usc);
 	athn_usb_free_tx_list(usc);
 	athn_usb_free_rx_list(usc);
 	athn_usb_free_tx_cmd(usc);
+	athn_usb_free_tx_msg(usc);
 	athn_usb_close_pipes(usc);
 	usb_rem_task(usc->usc_udev, &usc->usc_task);
+
+	cv_destroy(&usc->usc_cmd_cv);
+	cv_destroy(&usc->usc_msg_cv);
+
+	mutex_destroy(&usc->usc_lock);
+
+	mutex_destroy(&usc->usc_cmd_mtx);
+	mutex_destroy(&usc->usc_msg_mtx);
 	mutex_destroy(&usc->usc_tx_mtx);
 	mutex_destroy(&usc->usc_task_mtx);
 }
@@ -447,9 +472,12 @@ athn_usb_detach(device_t self, int flags)
 	s = splusb();
 	usc->usc_dying = 1;
 
-	athn_usb_wait_wmi(usc);
+	mutex_enter(&usc->usc_cmd_mtx);
 	athn_usb_wait_cmd(usc);
+	mutex_exit(&usc->usc_cmd_mtx);
+	mutex_enter(&usc->usc_msg_mtx);
 	athn_usb_wait_msg(usc);
+	mutex_exit(&usc->usc_msg_mtx);
 	athn_usb_wait_async(usc);
 
 	usb_rem_task(usc->usc_udev, &usc->usc_task);
@@ -734,6 +762,40 @@ athn_usb_free_tx_cmd(struct athn_usb_softc *usc)
 		usbd_destroy_xfer(xfer);
 }
 
+Static int
+athn_usb_alloc_tx_msg(struct athn_usb_softc *usc)
+{
+	struct athn_usb_tx_data *data = &usc->usc_tx_msg;
+
+	DPRINTFN(DBG_FN, usc, "\n");
+
+	data->sc = usc;	/* Backpointer for callbacks. */
+
+	int err = usbd_create_xfer(usc->usc_tx_intr_pipe, ATHN_USB_TXCMDSZ,
+	    0, 0, &data->xfer);
+	if (err) {
+		aprint_error_dev(usc->usc_dev,
+		    "could not allocate command xfer\n");
+		return err;
+	}
+	data->buf = usbd_get_buffer(data->xfer);
+
+	return 0;
+}
+
+Static void
+athn_usb_free_tx_msg(struct athn_usb_softc *usc)
+{
+	struct usbd_xfer *xfer;
+
+	DPRINTFN(DBG_FN, usc, "\n");
+
+	CTASSERT(sizeof(xfer) == sizeof(void *));
+	xfer = atomic_swap_ptr(&usc->usc_tx_msg.xfer, NULL);
+	if (xfer != NULL)
+		usbd_destroy_xfer(xfer);
+}
+
 Static void
 athn_usb_task(void *arg)
 {
@@ -811,7 +873,7 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 	u_char *fw, *ptr;
 	size_t size, remain;
 	uint32_t addr;
-	int s, mlen, error;
+	int mlen, error;
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
@@ -882,14 +944,24 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 	USETW(req.wValue, addr);
 	USETW(req.wLength, 0);
 
-	s = splusb();
+	mutex_enter(&usc->usc_msg_mtx);
+	error = athn_usb_wait_msg(usc);
+	if (error) {
+		mutex_exit(&usc->usc_msg_mtx);
+		return error;
+	}
+
 	usc->usc_wait_msg_id = AR_HTC_MSG_READY;
 	error = usbd_do_request(usc->usc_udev, &req, NULL);
+
 	/* Wait at most 1 second for firmware to boot. */
-	if (error == 0 && usc->usc_wait_msg_id != 0)
-		error = tsleep(&usc->usc_wait_msg_id, 0, "athnfw", hz);
-	usc->usc_wait_msg_id = 0;
-	splx(s);
+	if (error == 0)
+		error = athn_usb_wait_msg(usc);
+
+	mutex_exit(&usc->usc_msg_mtx);
+
+	DPRINTFN(DBG_FN, sc, "return %d\n", error);
+
 	return error;
 }
 
@@ -897,7 +969,7 @@ Static int
 athn_usb_htc_msg(struct athn_usb_softc *usc, uint16_t msg_id, void *buf,
     int len)
 {
-	struct athn_usb_tx_data *data = &usc->usc_tx_cmd;
+	struct athn_usb_tx_data *data = &usc->usc_tx_msg;
 	struct ar_htc_frame_hdr *htc;
 	struct ar_htc_msg_hdr *msg;
 
@@ -905,6 +977,8 @@ athn_usb_htc_msg(struct athn_usb_softc *usc, uint16_t msg_id, void *buf,
 		return USBD_CANCELLED;
 
 	DPRINTFN(DBG_FN, usc, "\n");
+
+	KASSERT(mutex_owned(&usc->usc_msg_mtx));
 
 	htc = (struct ar_htc_frame_hdr *)data->buf;
 	memset(htc, 0, sizeof(*htc));
@@ -920,13 +994,15 @@ athn_usb_htc_msg(struct athn_usb_softc *usc, uint16_t msg_id, void *buf,
 	    sizeof(*htc) + sizeof(*msg) + len,
 	    USBD_SHORT_XFER_OK, ATHN_USB_CMD_TIMEOUT, NULL);
 	return usbd_sync_transfer(data->xfer);
+
+
 }
 
 Static int
 athn_usb_htc_setup(struct athn_usb_softc *usc)
 {
 	struct ar_htc_msg_config_pipe cfg;
-	int s, error;
+	int error;
 
 	/*
 	 * Connect WMI services to USB pipes.
@@ -973,26 +1049,41 @@ athn_usb_htc_setup(struct athn_usb_softc *usc)
 	cfg.pipe_id = UE_GET_ADDR(AR_PIPE_TX_DATA);
 	cfg.credits = (usc->usc_flags & ATHN_USB_FLAG_AR7010) ? 45 : 33;
 
-	s = splusb();
+	mutex_enter(&usc->usc_msg_mtx);
+	error = athn_usb_wait_msg(usc);
+	if (error) {
+		mutex_exit(&usc->usc_msg_mtx);
+		return error;
+	}
 
 	usc->usc_wait_msg_id = AR_HTC_MSG_CONF_PIPE_RSP;
 	error = athn_usb_htc_msg(usc, AR_HTC_MSG_CONF_PIPE, &cfg, sizeof(cfg));
-	if (error == 0 && usc->usc_wait_msg_id != 0)
-		error = tsleep(&usc->usc_wait_msg_id, 0, "athnhtc", hz);
-	usc->usc_wait_msg_id = 0;
-
-	splx(s);
 
 	if (error != 0) {
-		aprint_error_dev(usc->usc_dev, "could not configure pipe\n");
+		aprint_error_dev(usc->usc_dev, "could not request pipe configurations\n");
+		mutex_exit(&usc->usc_msg_mtx);
+		return error;
+	}
+	error = athn_usb_wait_msg(usc);
+	if (error) {
+		mutex_exit(&usc->usc_msg_mtx);
 		return error;
 	}
 
 	error = athn_usb_htc_msg(usc, AR_HTC_MSG_SETUP_COMPLETE, NULL, 0);
 	if (error != 0) {
-		aprint_error_dev(usc->usc_dev, "could not complete setup\n");
+		aprint_error_dev(usc->usc_dev, "could not request complete setup\n");
+		mutex_exit(&usc->usc_msg_mtx);
 		return error;
 	}
+	error = athn_usb_wait_msg(usc);
+	if (error) {
+		mutex_exit(&usc->usc_msg_mtx);
+		return error;
+	}
+
+	mutex_exit(&usc->usc_msg_mtx);
+
 	return 0;
 }
 
@@ -1002,7 +1093,7 @@ athn_usb_htc_connect_svc(struct athn_usb_softc *usc, uint16_t svc_id,
 {
 	struct ar_htc_msg_conn_svc msg;
 	struct ar_htc_msg_conn_svc_rsp rsp;
-	int s, error;
+	int error;
 
 	DPRINTFN(DBG_FN, usc, "\n");
 
@@ -1010,17 +1101,19 @@ athn_usb_htc_connect_svc(struct athn_usb_softc *usc, uint16_t svc_id,
 	msg.svc_id = htobe16(svc_id);
 	msg.dl_pipeid = UE_GET_ADDR(dl_pipe);
 	msg.ul_pipeid = UE_GET_ADDR(ul_pipe);
-	s = splusb();
+
+	mutex_enter(&usc->usc_msg_mtx);
+	athn_usb_wait_msg(usc);
 
 	usc->usc_msg_conn_svc_rsp = &rsp;
 
 	usc->usc_wait_msg_id = AR_HTC_MSG_CONN_SVC_RSP;
 	error = athn_usb_htc_msg(usc, AR_HTC_MSG_CONN_SVC, &msg, sizeof(msg));
-	if (error == 0 && usc->usc_wait_msg_id != 0)
-		error = tsleep(&usc->usc_wait_msg_id, 0, "athnhtc", hz);
-	usc->usc_wait_msg_id = 0;
+	if (error == 0)
+		error = athn_usb_wait_msg(usc);
 
-	splx(s);
+	mutex_exit(&usc->usc_msg_mtx);
+
 	if (error != 0) {
 		aprint_error_dev(usc->usc_dev,
 		    "error waiting for service %d connection\n", svc_id);
@@ -1041,24 +1134,34 @@ athn_usb_htc_connect_svc(struct athn_usb_softc *usc, uint16_t svc_id,
 	return 0;
 }
 
-Static void
+Static int
 athn_usb_wait_msg(struct athn_usb_softc *usc)
 {
+ 	DPRINTFN(DBG_FN, usc, "\n");
 
-	DPRINTFN(DBG_FN, usc, "\n");
+	KASSERT(mutex_owned(&usc->usc_msg_mtx));
 
-	while (__predict_false(usc->usc_wait_msg_id))
-		tsleep(&usc->usc_wait_msg_id, 0, "athnmsg", hz);
+	int error = 0;
+	while (usc->usc_wait_msg_id)
+		error = cv_timedwait(&usc->usc_msg_cv, &usc->usc_msg_mtx, hz);
+
+	return error;
 }
 
-Static void
+Static int
 athn_usb_wait_cmd(struct athn_usb_softc *usc)
 {
 
-	DPRINTFN(DBG_FN, usc, "\n");
+ 	DPRINTFN(DBG_FN, usc, "\n");
 
-	while (__predict_false(usc->usc_wait_cmd_id))
-		tsleep(&usc->usc_wait_cmd_id, 0, "athncmd", hz);
+	KASSERT(mutex_owned(&usc->usc_cmd_mtx));
+
+	int error = 0;
+	while (usc->usc_wait_cmd_id)
+		error = cv_timedwait(&usc->usc_cmd_cv, &usc->usc_cmd_mtx, hz);
+
+	return error;
+
 }
 
 Static void
@@ -1067,13 +1170,10 @@ athn_usb_wmieof(struct usbd_xfer *xfer, void * priv,
 {
 	struct athn_usb_softc *usc = priv;
 
-	DPRINTFN(DBG_FN, usc, "\n");
+ 	DPRINTFN(DBG_FN, usc, "\n");
 
 	if (__predict_false(status == USBD_STALLED))
 		usbd_clear_endpoint_stall_async(usc->usc_tx_intr_pipe);
-
-	usc->usc_wmi_done = 1;
-	wakeup(&usc->usc_wmi_done);
 }
 
 Static int
@@ -1083,12 +1183,20 @@ athn_usb_wmi_xcmd(struct athn_usb_softc *usc, uint16_t cmd_id, void *ibuf,
 	struct athn_usb_tx_data *data = &usc->usc_tx_cmd;
 	struct ar_htc_frame_hdr *htc;
 	struct ar_wmi_cmd_hdr *wmi;
-	int s, error;
+	int error;
 
 	if (usc->usc_dying)
 		return EIO;
 
-	DPRINTFN(DBG_FN, usc, "\n");
+ 	DPRINTFN(DBG_FN, usc, "cmd_id %#x\n", cmd_id);
+
+	mutex_enter(&usc->usc_cmd_mtx);
+	error = athn_usb_wait_cmd(usc);
+
+	if (error) {
+		mutex_exit(&usc->usc_cmd_mtx);
+		return error;
+	}
 
 	htc = (struct ar_htc_frame_hdr *)data->buf;
 	memset(htc, 0, sizeof(*htc));
@@ -1107,30 +1215,23 @@ athn_usb_wmi_xcmd(struct athn_usb_softc *usc, uint16_t cmd_id, void *ibuf,
 	    USBD_SHORT_XFER_OK, ATHN_USB_CMD_TIMEOUT,
 	    athn_usb_wmieof);
 
-	s = splusb();
-	usc->usc_wmi_done = 0;
 	usc->usc_wait_cmd_id = cmd_id;
-	error = usbd_transfer(data->xfer);
-	if (__predict_true(error == 0 || error == USBD_IN_PROGRESS)) {
-		usc->usc_obuf = obuf;
+	usc->usc_obuf = obuf;
 
-		/* Wait for WMI command to complete. */
-		error = tsleep(&usc->usc_wait_cmd_id, 0, "athnwmi", hz);
-		usc->usc_wait_cmd_id = 0;
-		athn_usb_wait_wmi(usc);
+	error = usbd_sync_transfer(data->xfer);
+	if (error) {
+	    	DPRINTFN(DBG_FN, usc, "transfer error %d\n", error);
+
+		mutex_exit(&usc->usc_cmd_mtx);
+
+		return error;
 	}
-	splx(s);
+
+	error = athn_usb_wait_cmd(usc);
+
+	mutex_exit(&usc->usc_cmd_mtx);
+
 	return error;
-}
-
-Static void
-athn_usb_wait_wmi(struct athn_usb_softc *usc)
-{
-
-	DPRINTFN(DBG_FN, usc, "\n");
-
-	while (__predict_false(!usc->usc_wmi_done))
-		tsleep(&usc->usc_wmi_done, 0, "athnwmi", 0);
 }
 
 #ifdef unused
@@ -1869,15 +1970,18 @@ athn_usb_rx_wmi_ctrl(struct athn_usb_softc *usc, uint8_t *buf, size_t len)
 	cmd_id = be16toh(wmi->cmd_id);
 
 	if (!(cmd_id & AR_WMI_EVT_FLAG)) {
-		if (usc->usc_wait_cmd_id != cmd_id)
-			return;	/* Unexpected reply. */
-		if (usc->usc_obuf != NULL) {
-			/* Copy answer into caller supplied buffer. */
-			memcpy(usc->usc_obuf, &wmi[1], len - sizeof(*wmi));
+		mutex_enter(&usc->usc_cmd_mtx);
+		if (usc->usc_wait_cmd_id == cmd_id) {
+
+			if (usc->usc_obuf != NULL) {
+				/* Copy answer into caller supplied buffer. */
+				memcpy(usc->usc_obuf, &wmi[1], len - sizeof(*wmi));
+			}
+			/* Notify caller of completion. */
+			usc->usc_wait_cmd_id = 0;
+			cv_broadcast(&usc->usc_cmd_cv);
 		}
-		/* Notify caller of completion. */
-		usc->usc_wait_cmd_id = 0;
-		wakeup(&usc->usc_wait_cmd_id);
+		mutex_exit(&usc->usc_cmd_mtx);
 		return;
 	}
 	/*
@@ -1971,20 +2075,28 @@ athn_usb_intr(struct usbd_xfer *xfer, void * priv,
 	switch (msg_id) {
 	case AR_HTC_MSG_READY:
 	case AR_HTC_MSG_CONF_PIPE_RSP:
-		if (usc->usc_wait_msg_id != msg_id)
-			break;
-		usc->usc_wait_msg_id = 0;
-		wakeup(&usc->usc_wait_msg_id);
+		mutex_enter(&usc->usc_msg_mtx);
+		DPRINTFN(DBG_RX, usc, "AR_HTC_MSG_READY: %d vs %d\n",
+		    usc->usc_wait_msg_id, msg_id);
+		if (usc->usc_wait_msg_id == msg_id) {
+			usc->usc_wait_msg_id = 0;
+			cv_broadcast(&usc->usc_msg_cv);
+		}
+		mutex_exit(&usc->usc_msg_mtx);
 		break;
 	case AR_HTC_MSG_CONN_SVC_RSP:
-		if (usc->usc_wait_msg_id != msg_id)
-			break;
-		if (usc->usc_msg_conn_svc_rsp != NULL) {
-			memcpy(usc->usc_msg_conn_svc_rsp, &msg[1],
-			    sizeof(*usc->usc_msg_conn_svc_rsp));
+		mutex_enter(&usc->usc_msg_mtx);
+		DPRINTFN(DBG_RX, usc, "AR_HTC_MSG_CONN_SVC_RSP: %d vs %d\n",
+		    usc->usc_wait_msg_id, msg_id);
+		if (usc->usc_wait_msg_id == msg_id) {
+			if (usc->usc_msg_conn_svc_rsp != NULL) {
+				memcpy(usc->usc_msg_conn_svc_rsp, &msg[1],
+				    sizeof(*usc->usc_msg_conn_svc_rsp));
+			}
+			usc->usc_wait_msg_id = 0;
+			cv_broadcast(&usc->usc_msg_cv);
 		}
-		usc->usc_wait_msg_id = 0;
-		wakeup(&usc->usc_wait_msg_id);
+		mutex_exit(&usc->usc_msg_mtx);
 		break;
 	default:
 		DPRINTFN(DBG_RX, usc, "HTC message %d ignored\n", msg_id);
@@ -2556,8 +2668,10 @@ athn_usb_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = 0;
 		if (IS_UP_AND_RUNNING(ifp) &&
 		    ic->ic_roaming != IEEE80211_ROAMING_MANUAL) {
-			athn_usb_stop(ifp);
-			error = athn_usb_init(ifp);
+			mutex_enter(&usc->usc_lock);
+			athn_usb_stop_locked(ifp);
+			error = athn_usb_init_locked(ifp);
+			mutex_exit(&usc->usc_lock);
 		}
 	}
 	splx(s);
@@ -2566,6 +2680,19 @@ athn_usb_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 Static int
 athn_usb_init(struct ifnet *ifp)
+{
+	struct athn_softc *sc = ifp->if_softc;
+	struct athn_usb_softc *usc = ATHN_USB_SOFTC(sc);
+
+	mutex_enter(&usc->usc_lock);
+	int ret = athn_usb_init_locked(ifp);
+	mutex_exit(&usc->usc_lock);
+
+	return ret;
+}
+  
+Static int
+athn_usb_init_locked(struct ifnet *ifp)
 {
 	struct athn_softc *sc = ifp->if_softc;
 	struct athn_usb_softc *usc = ATHN_USB_SOFTC(sc);
@@ -2692,6 +2819,7 @@ athn_usb_init(struct ifnet *ifp)
 	if (error != 0)
 		goto fail;
 
+
 	/* Queue Rx xfers. */
 	for (i = 0; i < ATHN_USB_RX_LIST_COUNT; i++) {
 		data = &usc->usc_rx_data[i];
@@ -2735,6 +2863,17 @@ athn_usb_stop(struct ifnet *ifp)
 {
 	struct athn_softc *sc = ifp->if_softc;
 	struct athn_usb_softc *usc = ATHN_USB_SOFTC(sc);
+
+	mutex_enter(&usc->usc_lock);
+	athn_usb_stop_locked(ifp);
+	mutex_exit(&usc->usc_lock);
+}
+
+Static void
+athn_usb_stop_locked(struct ifnet *ifp)
+{
+	struct athn_softc *sc = ifp->if_softc;
+	struct athn_usb_softc *usc = ATHN_USB_SOFTC(sc);
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ar_htc_target_vif hvif;
 	struct mbuf *m;
@@ -2758,10 +2897,6 @@ athn_usb_stop(struct ifnet *ifp)
 	/* Abort Tx/Rx. */
 	usbd_abort_pipe(usc->usc_tx_data_pipe);
 	usbd_abort_pipe(usc->usc_rx_data_pipe);
-
-	/* Free Tx/Rx buffers. */
-	athn_usb_free_tx_list(usc);
-	athn_usb_free_rx_list(usc);
 
 	/* Flush Rx stream. */
 	CTASSERT(sizeof(m) == sizeof(void *));
