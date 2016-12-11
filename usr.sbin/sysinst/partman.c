@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.13 2016/05/30 17:03:21 dholland Exp $ */
+/*	$NetBSD: partman.c,v 1.14 2016/12/11 00:56:34 alnsn Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -1023,12 +1023,19 @@ pm_cgd_set_value(menudesc *m, void *arg)
 		case PMC_MENU_ENCTYPE:
 			process_menu(MENU_cgd_enctype, &retstring);
 			dev_ptr->enc_type = retstring;
+			if (! strcmp(retstring, "aes-xts"))
+				dev_ptr->key_size = 256;
+			if (! strcmp(retstring, "aes-cbc"))
+				dev_ptr->key_size = 192;
 			if (! strcmp(retstring, "blowfish-cbc"))
 				dev_ptr->key_size = 128;
 			if (! strcmp(retstring, "3des-cbc"))
 				dev_ptr->key_size = 192;
 			return 0;
 		case PMC_MENU_KEYSIZE:
+			if (! strcmp(dev_ptr->enc_type, "aes-xts"))
+				dev_ptr->key_size +=
+					(dev_ptr->key_size < 512)? 256 : -256;
 			if (! strcmp(dev_ptr->enc_type, "aes-cbc"))
 				dev_ptr->key_size +=
 					(dev_ptr->key_size < 256)? 64 : -128;
@@ -1071,9 +1078,9 @@ pm_cgd_init(void *arg1, void *arg2)
 		.pm_part = 0,
 		.keygen_type = "pkcs5_pbkdf2/sha1",
 		.verify_type = "disklabel",
-		.enc_type = "aes-cbc",
+		.enc_type = "aes-xts",
 		.iv_type = "encblkno1",
-		.key_size = 192,
+		.key_size = 256,
 	};
 	if (disk_entrie != NULL) {
 		pm_getdevstring(disk_entrie->fullname, SSTRSIZE,
