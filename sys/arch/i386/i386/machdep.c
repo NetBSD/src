@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.765 2016/12/11 08:31:53 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.766 2016/12/11 22:38:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.765 2016/12/11 08:31:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.766 2016/12/11 22:38:50 martin Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -188,6 +188,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.765 2016/12/11 08:31:53 maxv Exp $");
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
 #include <machine/acpi_machdep.h>
+#else
+#include <machine/i82489var.h>
 #endif
 
 #include "isa.h"
