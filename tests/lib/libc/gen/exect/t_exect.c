@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exect.c,v 1.4 2016/12/09 08:34:37 kamil Exp $	*/
+/*	$NetBSD: t_exect.c,v 1.5 2016/12/11 03:38:09 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -57,12 +57,17 @@ ATF_TC_BODY(t_exect_null, tc)
 {
 	struct sigaction act;
 
-#if defined(__x86_64__)
 	/*
-	 * exect(NULL,NULL,NULL) generates 15859 times SIGTRAP on amd64
+	 * Currently exect(3) is misdesigned -- see PR port-amd64/51700 and it
+	 * needs to be redone from scratch.
+	 *
+	 * This test affects amd64 releng machines causing tests to hang or
+	 * fail. As there is little point to test interface that is still not,
+	 * designed and implemented and is breaking tests - skip it
+	 * unconditionally for all ports.
 	 */
-	atf_tc_expect_fail("PR port-amd64/51700");
-#endif
+
+	atf_tc_skip("exect(3) misdesigned and hangs - PR port-amd64/51700");
 
 	ATF_REQUIRE(sigemptyset(&act.sa_mask) == 0);
 	act.sa_sigaction = sigtrap_handler;
