@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.275 2016/12/10 22:37:12 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.276 2016/12/11 07:36:30 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.275 2016/12/10 22:37:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.276 2016/12/11 07:36:30 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -4506,7 +4506,8 @@ cleanup:
 		int init_error;
 
 		mutex_enter(sc->sc_intr_lock);
-		init_error = audio_initbufs(sc, n);
+		init_error = (pausechange == 1 && reset == 0) ? 0 :
+		    audio_initbufs(sc, n);
 		if (init_error) goto err;
 		if (vc->sc_mpr.blksize != oldpblksize ||
 		    vc->sc_mrr.blksize != oldrblksize ||
