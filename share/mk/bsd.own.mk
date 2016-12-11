@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.997 2016/12/11 02:38:54 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.998 2016/12/11 03:40:57 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -145,7 +145,6 @@ EXTERNAL_GDB_SUBDIR=		/does/not/exist
 # What binutils is used?
 #
 .if \
-    ${MACHINE_CPU} == "aarch64" || \
     ${MACHINE_CPU} == "hppa"
 HAVE_BINUTILS?=	226
 .else
