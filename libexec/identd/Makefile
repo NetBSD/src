@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2016/12/10 05:43:11 christos Exp $
+# $NetBSD: Makefile,v 1.15 2016/12/11 15:43:48 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -22,8 +22,8 @@ CPPFLAGS+=-DWITH_PF
 .if (${MKNPF} != "no")
 SRCS+=	npf.c
 CPPFLAGS+=-DWITH_NPF
-LDADD+=-lnpf
-DPADD+=${LIBNPF}
+LDADD+=-lnpf -lprop
+DPADD+=${LIBNPF} ${LIBPROP}
 .endif
 
 .include <bsd.prog.mk>
