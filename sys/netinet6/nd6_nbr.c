@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.130 2016/11/15 21:17:07 mlelstv Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.131 2016/12/11 07:38:50 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.130 2016/11/15 21:17:07 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.131 2016/12/11 07:38:50 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -819,18 +819,18 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * context.  However, we keep it just for safety.
 			 */
 			s = splsoftnet();
-			dr = defrouter_lookup(in6, ln->lle_tbl->llt_ifp);
+			dr = nd6_defrouter_lookup(in6, ln->lle_tbl->llt_ifp);
 			if (dr)
-				defrtrlist_del(dr, NULL);
+				nd6_defrtrlist_del(dr, NULL);
 			else if (!ip6_forwarding) {
 				/*
 				 * Even if the neighbor is not in the default
 				 * router list, the neighbor may be used
 				 * as a next hop for some destinations
 				 * (e.g. redirect case). So we must
-				 * call rt6_flush explicitly.
+				 * call nd6_rt_flush explicitly.
 				 */
-				rt6_flush(&ip6->ip6_src, ln->lle_tbl->llt_ifp);
+				nd6_rt_flush(&ip6->ip6_src, ln->lle_tbl->llt_ifp);
 			}
 			splx(s);
 		}
@@ -853,7 +853,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		LLE_WUNLOCK(ln);
 
 	if (checklink)
-		pfxlist_onlink_check();
+		nd6_pfxlist_onlink_check();
 
 	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);

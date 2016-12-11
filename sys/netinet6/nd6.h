@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.75 2016/12/11 07:37:53 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.76 2016/12/11 07:38:50 ozaki-r Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -433,13 +433,13 @@ void nd6_dad_duplicated(struct ifaddr *);
 /* nd6_rtr.c */
 void nd6_rs_input(struct mbuf *, int, int);
 void nd6_ra_input(struct mbuf *, int, int);
-void defrouter_reset(void);
-void defrouter_select(void);
-void defrtrlist_del(struct nd_defrouter *, struct in6_ifextra *);
-void prelist_remove(struct nd_prefix *);
-void pfxlist_onlink_check(void);
-struct nd_defrouter *defrouter_lookup(const struct in6_addr *, struct ifnet *);
-void rt6_flush(struct in6_addr *, struct ifnet *);
+void nd6_defrouter_reset(void);
+void nd6_defrouter_select(void);
+void nd6_defrtrlist_del(struct nd_defrouter *, struct in6_ifextra *);
+void nd6_prelist_remove(struct nd_prefix *);
+void nd6_pfxlist_onlink_check(void);
+struct nd_defrouter *nd6_defrouter_lookup(const struct in6_addr *, struct ifnet *);
+void nd6_rt_flush(struct in6_addr *, struct ifnet *);
 int in6_tmpifadd(const struct in6_ifaddr *, int, int);
 bool nd6_accepts_rtadv(const struct nd_ifinfo *);
 
