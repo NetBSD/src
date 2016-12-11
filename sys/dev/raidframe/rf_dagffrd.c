@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffrd.c,v 1.19 2013/09/15 12:23:06 martin Exp $	*/
+/*	$NetBSD: rf_dagffrd.c,v 1.20 2016/12/11 05:27:00 nat Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.19 2013/09/15 12:23:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.20 2016/12/11 05:27:00 nat Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -138,6 +138,10 @@ rf_CreateNonredundantDAG(RF_Raid_t *raidPtr,
 
 	n = asmap->numStripeUnitsAccessed;
 	dag_h->creator = "NonredundantDAG";
+
+	doFunc = rf_NullNodeFunc;
+	undoFunc = rf_NullNodeUndoFunc;
+	name = NULL;
 
 	RF_ASSERT(RF_IO_IS_R_OR_W(type));
 	switch (type) {
