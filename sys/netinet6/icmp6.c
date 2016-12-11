@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.201 2016/11/15 20:50:28 mlelstv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.202 2016/12/11 07:35:42 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.201 2016/11/15 20:50:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.202 2016/12/11 07:35:42 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2421,8 +2421,10 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 		goto fail;
 
 	/* sanity check */
-	if (!m0 || !rt || !(rt->rt_flags & RTF_UP) || !(ifp = rt->rt_ifp))
-		goto fail;
+	KASSERT(m0 != NULL);
+	KASSERT(rt != NULL);
+
+	ifp = rt->rt_ifp;
 
 	/*
 	 * Address check:
