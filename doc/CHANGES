@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2221 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2222 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -411,6 +411,9 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	zoneinfo: Import tzdata2016i.  [kre 20161103]
 	libc: Update to tzcode2016i. [christos 20161104]
 	acpi(4): Updated ACPICA to 20160930. [christos 20161111]
+	scsictl(8): Add "getrealloc" and "setrealloc" commands to get/set
+		automatic reallocation parameters/enables for error recovery.
+		[flxd 20161119]
 	scsipi(9): Make scsipi framework MPSAFE. [mlelstv 20161120]
 	umass(4): mark MPSAFE. [skrll 20161121]
 	wpa: Import wpa_supplicant and hostapd 2.6. [christos 20161121]
