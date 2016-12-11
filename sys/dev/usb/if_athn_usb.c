@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.14 2016/12/04 10:12:35 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.15 2016/12/11 08:04:17 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.14 2016/12/04 10:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.15 2016/12/11 08:04:17 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -740,30 +740,25 @@ athn_usb_task(void *arg)
 	struct athn_usb_softc *usc = arg;
 	struct athn_usb_host_cmd_ring *ring = &usc->usc_cmdq;
 	struct athn_usb_host_cmd *cmd;
-	int s;
 
 	DPRINTFN(DBG_FN, usc, "\n");
 
 	/* Process host commands. */
-	s = splusb();
 	mutex_spin_enter(&usc->usc_task_mtx);
 	while (ring->next != ring->cur) {
 		cmd = &ring->cmd[ring->next];
 		mutex_spin_exit(&usc->usc_task_mtx);
-		splx(s);
 
 		/* Invoke callback. */
 		if (!usc->usc_dying)
 			cmd->cb(usc, cmd->data);
 
-		s = splusb();
 		mutex_spin_enter(&usc->usc_task_mtx);
 		ring->queued--;
 		ring->next = (ring->next + 1) % ATHN_USB_HOST_CMD_RING_COUNT;
 	}
 	mutex_spin_exit(&usc->usc_task_mtx);
-	wakeup(ring);
-	splx(s);
+	cv_broadcast(&usc->usc_task_cv);
 }
 
 Static void
@@ -772,14 +767,12 @@ athn_usb_do_async(struct athn_usb_softc *usc,
 {
 	struct athn_usb_host_cmd_ring *ring = &usc->usc_cmdq;
 	struct athn_usb_host_cmd *cmd;
-	int s;
 
 	if (usc->usc_dying)
 		return;
 
 	DPRINTFN(DBG_FN, usc, "\n");
 
-	s = splusb();
 	mutex_spin_enter(&usc->usc_task_mtx);
 	cmd = &ring->cmd[ring->cur];
 	cmd->cb = cb;
@@ -789,12 +782,9 @@ athn_usb_do_async(struct athn_usb_softc *usc,
 
 	/* If there is no pending command already, schedule a task. */
 	if (++ring->queued == 1) {
-		mutex_spin_exit(&usc->usc_task_mtx);
 		usb_add_task(usc->usc_udev, &usc->usc_task, USB_TASKQ_DRIVER);
 	}
-	else
-		mutex_spin_exit(&usc->usc_task_mtx);
-	splx(s);
+	mutex_spin_exit(&usc->usc_task_mtx);
 }
 
 Static void
