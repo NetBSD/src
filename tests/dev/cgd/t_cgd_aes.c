@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cgd_aes.c,v 1.4 2016/11/24 22:42:16 alnsn Exp $	*/
+/*	$NetBSD: t_cgd_aes.c,v 1.5 2016/12/11 00:23:44 alnsn Exp $	*/
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * Copyright (c) 2007 The Institute of Electrical and Electronics Engineers, Inc
@@ -3511,8 +3511,6 @@ ATF_TC_BODY(cgd_aes_xts_256, tc)
 	const size_t dksize = 256 * SECSIZE; /* Last blkno is 0xff. */
 	int dkfd, cgdfd;
 
-	atf_tc_expect_fail("aes-xts implementation not committed yet");
-
 	rump_init();
 
 	RL(dkfd = open_disk(dkpath, imgpath, dksize));
@@ -3564,8 +3562,6 @@ ATF_TC_BODY(cgd_aes_xts_512, tc)
 	const char *dkpath = "/dev/dk";
 	const size_t dksize = 65536 * SECSIZE; /* Last blkno is 0xffff. */
 	int dkfd, cgdfd;
-
-	atf_tc_expect_fail("aes-xts implementation not committed yet");
 
 	rump_init();
 
