@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.212 2016/12/11 07:37:53 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.213 2016/12/11 07:38:50 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.212 2016/12/11 07:37:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.213 2016/12/11 07:38:50 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -595,7 +595,7 @@ nd6_timer_work(struct work *wk, void *arg)
 	
 	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, next_dr) {
 		if (dr->expire && dr->expire < time_uptime) {
-			defrtrlist_del(dr, NULL);
+			nd6_defrtrlist_del(dr, NULL);
 		}
 	}
 
@@ -706,7 +706,7 @@ nd6_timer_work(struct work *wk, void *arg)
 			 * separate.  NEVER perform in6_purgeaddr here.
 			 */
 
-			prelist_remove(pr);
+			nd6_prelist_remove(pr);
 		}
 	}
 
@@ -844,7 +844,7 @@ nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 
 		if (dr->ifp == ifp) {
 			KASSERT(ext != NULL);
-			defrtrlist_del(dr, ext);
+			nd6_defrtrlist_del(dr, ext);
 		}
 	}
 
@@ -854,7 +854,7 @@ nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 
 		if (dr->ifp == ifp) {
 			KASSERT(ext != NULL);
-			defrtrlist_del(dr, ext);
+			nd6_defrtrlist_del(dr, ext);
 		}
 	}
 
@@ -876,7 +876,7 @@ nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 			 * by itself.
 			 * (jinmei@kame.net 20010129)
 			 */
-			prelist_remove(pr);
+			nd6_prelist_remove(pr);
 		}
 	}
 
@@ -889,7 +889,7 @@ nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 		struct nd_ifinfo *ndi = ND_IFINFO(ifp);
 		if (ndi && nd6_accepts_rtadv(ndi)) {
 			/* refresh default router list */
-			defrouter_select();
+			nd6_defrouter_select();
 		}
 	}
 
@@ -1168,7 +1168,7 @@ nd6_free(struct llentry *ln, int gc)
 	if (!ip6_forwarding) {
 		int s;
 		s = splsoftnet();
-		dr = defrouter_lookup(in6, ifp);
+		dr = nd6_defrouter_lookup(in6, ifp);
 
 		if (dr != NULL && dr->expire &&
 		    ln->ln_state == ND6_LLINFO_STALE && gc) {
@@ -1196,20 +1196,20 @@ nd6_free(struct llentry *ln, int gc)
 
 		if (ln->ln_router || dr) {
 			/*
-			 * We need to unlock to avoid a LOR with rt6_flush()
+			 * We need to unlock to avoid a LOR with nd6_rt_flush()
 			 * with the rnh and for the calls to
-			 * pfxlist_onlink_check() and defrouter_select() in the
+			 * nd6_pfxlist_onlink_check() and nd6_defrouter_select() in the
 			 * block further down for calls into nd6_lookup().
 			 * We still hold a ref.
 			 */
 			LLE_WUNLOCK(ln);
 
 			/*
-			 * rt6_flush must be called whether or not the neighbor
+			 * nd6_rt_flush must be called whether or not the neighbor
 			 * is in the Default Router List.
 			 * See a corresponding comment in nd6_na_input().
 			 */
-			rt6_flush(in6, ifp);
+			nd6_rt_flush(in6, ifp);
 		}
 
 		if (dr) {
@@ -1229,17 +1229,17 @@ nd6_free(struct llentry *ln, int gc)
 			ln->ln_state = ND6_LLINFO_INCOMPLETE;
 
 			/*
-			 * Since defrouter_select() does not affect the
+			 * Since nd6_defrouter_select() does not affect the
 			 * on-link determination and MIP6 needs the check
 			 * before the default router selection, we perform
 			 * the check now.
 			 */
-			pfxlist_onlink_check();
+			nd6_pfxlist_onlink_check();
 
 			/*
 			 * refresh default router list
 			 */
-			defrouter_select();
+			nd6_defrouter_select();
 		}
 
 #ifdef __FreeBSD__
@@ -1845,8 +1845,8 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 #undef ND
 	case SIOCSNDFLUSH_IN6:	/* XXX: the ioctl name is confusing... */
 		/* sync kernel routing table with the default router list */
-		defrouter_reset();
-		defrouter_select();
+		nd6_defrouter_reset();
+		nd6_defrouter_select();
 		break;
 	case SIOCSPFXFLUSH_IN6:
 	{
@@ -1880,7 +1880,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 				}
 			}
 			pserialize_read_exit(_s);
-			prelist_remove(pfx);
+			nd6_prelist_remove(pfx);
 		}
 		splx(s);
 		break;
@@ -1891,11 +1891,11 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		struct nd_defrouter *drtr, *next;
 
 		s = splsoftnet();
-		defrouter_reset();
+		nd6_defrouter_reset();
 		TAILQ_FOREACH_SAFE(drtr, &nd_defrouter, dr_entry, next) {
-			defrtrlist_del(drtr, NULL);
+			nd6_defrtrlist_del(drtr, NULL);
 		}
-		defrouter_select();
+		nd6_defrouter_select();
 		splx(s);
 		break;
 	}
@@ -2172,17 +2172,17 @@ nd6_cache_lladdr(
 	 * Question: can we restrict the first condition to the "is_newentry"
 	 * case?
 	 * XXX: when we hear an RA from a new router with the link-layer
-	 * address option, defrouter_select() is called twice, since
+	 * address option, nd6_defrouter_select() is called twice, since
 	 * defrtrlist_update called the function as well.  However, I believe
 	 * we can compromise the overhead, since it only happens the first
 	 * time.
-	 * XXX: although defrouter_select() should not have a bad effect
+	 * XXX: although nd6_defrouter_select() should not have a bad effect
 	 * for those are not autoconfigured hosts, we explicitly avoid such
 	 * cases for safety.
 	 */
 	if (do_update && router && !ip6_forwarding &&
 	    nd6_accepts_rtadv(ndi))
-		defrouter_select();
+		nd6_defrouter_select();
 }
 
 static void
