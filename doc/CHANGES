@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2219 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2220 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -407,3 +407,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	audio(4): Audio sub-system changes - in kernel mixing [nat 20161208]
 	speaker(4):Synthesized beep for platforms with audio [nat 20161208]
 	crash(8): Add sparc support.  [mrg 20161210]
+	cgd(4): Add aes-xts. [alnsn 20161211]
