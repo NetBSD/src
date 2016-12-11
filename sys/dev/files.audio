@@ -1,4 +1,4 @@
-#	$NetBSD: files.audio,v 1.6 2016/12/09 04:32:39 christos Exp $
+#	$NetBSD: files.audio,v 1.7 2016/12/11 06:30:11 christos Exp $
 
 define	audiobus	{ }
 define	midibus		{ }
@@ -26,7 +26,7 @@ define	audiobell
 
 file	dev/auconv.c			auconv
 file	dev/audio.c			audio			needs-flag
-file	dev/audiobell.c			audiobell & vaudiospeaker needs-flag
+file	dev/audiobell.c			audiobell		needs-flag
 file	dev/aurateconv.c		aurateconv		needs-flag
 file	dev/auvolconv.c			auvolconv
 file	dev/midi.c			midi			needs-flag
