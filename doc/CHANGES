@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2220 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2221 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -133,6 +133,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	dhcpcd(8): Import dhcpcd-6.7.1. [roy 20150130]
 	zoneinfo: Import tzdata2015a. [apb 20150131]
 	libc: Import tzcode2015a. [christos 20150131]
+	tetris(6): Add down key support, as 'n'.  [mrg 20150218]
 	bind: patch to version 9.10.1-P2. [spz 20150221]
 	network: introduce RTF_LOCAL for local address routes. [roy 20150226]
 	evbarm: Add support for RPI2. [skrll 20150304]
@@ -160,6 +161,11 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	netinet: Added IN_IFF_TENTATIVE, IN_IFF_DUPLICATED and IN_IFF_DETACHED.
 		IPV4 addresses now perform DAD using ARP as described in
 		RFC 5227. [roy 20150502]
+	amd64: Bump CHILD_MAX and OPEN_MAX.  [mrg 20150507]
+	i386: Bump CHILD_MAX and OPEN_MAX.  [mrg 20150507]
+	aarch64: Bump CHILD_MAX and OPEN_MAX.  [mrg 20150507]
+	evbarm: Bump CHILD_MAX and OPEN_MAX.  [mrg 20150507]
+	sparc64: Bump CHILD_MAX and OPEN_MAX.  [mrg 20150507]
 	dhcpcd(8): Import dhcpcd-6.9.0. [roy 20150517]
 	FFS: General improvements in the superblock parser. [maxv 20150523]
 	openssl: Import openssl 1.0.1n [christos 20150612]
@@ -174,6 +180,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	iostat(8): Support fnmatch(3) patterns for disknames.  [mrg 20150709]
 	openssl: Import openssl 1.0.1p [christos 20150709]
 	ntp: Import ntp 4.2.8p3. [christos 20150710]
+	X11: Delete XFree86 sources.  [mrg 20150723]
 	arm: Add support for NVIDIA Tegra K1 SoC. [jmcneill 20150725]
 	evbarm: Add support for NVIDIA Jetson TK1. [jmcneill 20150725]
 	bind: Import version 9.10.2-P3. [christos 20150728]
@@ -203,6 +210,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	dhcpcd: Import dhcpcd 6.9.3. [roy 20150904]
 	ftp(1): SNI support for https.  [wiz 20150912]
 	netstat(1): Now knows how tall the display is.  [mrg 20150919]
+	atactl(8): Add smart codes 210, 246, 247 and 248.  [mrg 20150920]
 	libproc, librtld_db: Added from FreeBSD [christos 20150924]
 	dtrace: Updated from FreeBSD [christos 20150924]
 	resolvconf: Import openresolv-3.7.1 [roy 20150929]
@@ -213,6 +221,8 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	libc: Update to tzcode2015g. [christos 20151009]
 	wm(4): Support RX multiqueue. [knakahara,msaitoh 20151013]
 	ntp: Import ntp 4.2.8p4. [christos 20151023]
+	scdebug: Add a way to have system call debug logs go to a kernel
+		history.  [mrg 20151028]
 	vioscsi(4): Add driver for virtio SCSI devices [christos 20151030]
 	omapgpio(4): Add support for TI AM335x GPIO. [jmcneill 20151101]
 	libc/ti-rpc: Remove FD_SETSIZE limit; provide MT support for svc_run()
@@ -231,8 +241,6 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		[ozaki-r 20151125]
 	dhcpcd: Import dhcpcd 6.9.4. [roy 20151130]
 	openssl: Import openssl 1.0.1q [christos 20151206]
-	network: Packet input processing (except for bpf) never runs in
-		hardware interrupt. [ozaki-r 20160209]
 	ip6addrctl: Import from FreeBSD [christos 20151212]
 	adm1026hm(4): Add driver for ADM1026 i2c hardware monitor
 		[jdc 20151216]
@@ -257,9 +265,12 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	gettext: Upgrade to 0.16.1 [christos 20160112]
 	bind: Import version 9.10.3-P3. [christos 20160119]
 	dhcpcd: Import dhcpcd 6.10.1. [roy 20160120]
+	gcc: Import GCC 5.3.0.  [mrg 20160123]
 	lua: Updated to 5.3.2 [lneto 20160128]
 	openssl: Import openssl 1.0.1r [christos 20160130]
 	gdb(1): Updated to 7.10.1.  [christos 20160202]
+	network: Packet input processing (except for bpf) never runs in
+		hardware interrupt. [ozaki-r 20160209]
 	elftoolchain: Import FreeBSD-2016-02-19. [christos 20160219]
 	openresolv: Import openresolv-3.7.3. [roy 20160222]
 	mv(1): Add SIGINFO support. [mrg 20160228]
@@ -272,6 +283,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	wpa_supplicant(8): Added interface matching rules [roy 20160323]
 	lua: Applied second and third patch from http://lua.org/bugs.html
 		[mbalmer 20160325]
+	i366: Add a GENERIC_PAE kernel that supports >4GB systems.  [mrg 20160326]
 	network: Drop the concept of cloning/cloned routes [ozaki-r 20160404]
 	network: Remove RTF_CLONING, RTF_XRESOLVE, RTF_LLINFO, RTF_CLONED and
 		RTM_RESOLVE [ozaki-r 20160404]
@@ -290,7 +302,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	dhcpcd(8): Import dhcpcd-6.10.2 [roy 20160410]
 	openresolv(8): Import openresolv-3.8.0 [roy 20160411]
 	ddb(4): rename show arptab to show routes [ozaki-r 20160413]
-	bridge(4): Device is now MP-safe. [ozaki-r 20150108]
+	bridge(4): Device is now MP-safe. [ozaki-r 20160108]
 	dhcpcd(8): Import dhcpcd-6.10.3 [roy 20160420]
 	usb(4) subsystem: Merge nick-nhusb [skrll 20160423]
 		- API / infra changes to support memory management changes.
@@ -330,7 +342,9 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	sys_info: Import a script to return version information for system
 		libraries and utilities [agc 20160604]
 	nvmectl(8): Added NVM Express control utility. [nonaka 20160604]
+	gcc: Import GCC 5.4.0.  [mrg 20160606]
 	dhcpcd(8): Import dhcpcd-6.11.1. [roy 20160617]
+	nfs: Support NFS server with COMAPT_NETBSD32.  [mrg 20160622]
 	ext2fs: Add ext4 htree index support from FreeBSD, ported and
 		contributed by Hrishikesh Goyal (GSoc 2016). [christos 20160624]
 	mdocml: Import 1.13.4. [christos 20160715]
@@ -345,10 +359,11 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		TS3000GB[02], TS3001GB2, TSE200[24]GB2 and On Semiconductor
 		CAT34TS04. [msaitoh 20160726]
 	sdtemp(4): Add JEDEC TSE2004av support. [msaitoh 20160728]
+	xorg-server: Import xorg-server 1.18.4.  [mrg 20160801]
 	OpenSSH: Imported 7.3. [christos 20160802]
 	xen: Map the kernel image segments independently with fine-grained
 		permissions (W^X). [maxv 20160802]
-	ext2fs: Add ext4 extra_inode support. [jdolecek 20160603]
+	ext2fs: Add ext4 extra_inode support. [jdolecek 20160803]
 	kernel: Provide an efficient way to prevent NULL from being mappable
 		in userland processes. [maxv 20160806]
 	ext2fs: Actually fill file type for readdir(4) and friends.
@@ -360,14 +375,15 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		[jdolecek 20160612]
 	dhcpcd(8): Import dhcpcd-6.11.3. [roy 20160815]
 	ext2fs: Add ext4 dir_nlink support, supporting up to 64000 file hard
-		links, and unlimited directory links. [jdolecek 20160615]
+		links, and unlimited directory links. [jdolecek 20160815]
+	ext2fs: Add ext4 gdt_csum/uninit_bg support. [jdolecek 20160815]
 	unbound: Import 1.5.9. [christos 20160820]
-	ext2fs: Add ext4 gdt_csum/uninit_bg support. [jdolecek 20160615]
 	tmux(1): Import of tmux 2.2 [christos 20160831]
 	lua: updated to 5.3.3 and applied all three patches from 
 		http://lua.org/bugs.html [salazar 20160908]
 	libc: Update to tzcode2016f. [christos 20160916]
 	nvme(4): NVMe driver is now MPSAFE. [jdolecek 20160918]
+	pci(4): Introduce a better drvname method. [mrg 20160924]
 	zoneinfo: Import tzdata2016g.  [kre 20160929]
 	libc: Add <stdalign.h> and <stdnoreturn.h>. [kamil 20161002]
 	c11: Import cc(1) wrapper for C11. [kamil 20161003]
@@ -380,6 +396,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		definition in <time.h>. Changes conform to the C11 standard.
 		[kamil 20161004]
 	bind: Import version 9.10.4-P3. [christos 20161004]
+	atactl(8): Add smart code 249.  [mrg 20161004]
 	mips: Add support for MediaTek MT7628 SoC [ryo 20161006]
 	libc: Update to tzcode2016g. [christos 20161007]
 	dhcpcd(8): Import dhcpcd-6.11.4 [roy 20161009]
@@ -399,6 +416,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	wpa: Import wpa_supplicant and hostapd 2.6. [christos 20161121]
 	ntp: Import ntp 4.2.8p9. [christos 20161121]
 	zoneinfo: Import tzdata2016j.  [kre 20161124]
+	systat(1): Add -b option to dump once and exit.  [mrg 20161202]
 	luna68k: Preliminary support for LUNA's HD647180X I/O processor
 		(a.k.a. XP). [tsutsui 20161203]
 	axe(4): added support for AX88772A and AX88772B chipsets (from
