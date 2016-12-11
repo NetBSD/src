@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.15 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: copywin.c,v 1.16 2016/12/11 21:25:22 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.15 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.16 2016/12/11 21:25:22 blymn Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -58,6 +58,13 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 	cchar_t cc;
 	nschar_t *np;
 #endif /* HAVE_WCHAR */
+
+#ifdef DEBUG
+	__CTRACE(__CTRACE_WINDOW,
+	    "copywin %s mode: from (%d,%d) to (%d,%d-%d,%d)\n",
+	    dooverlay ? "overlay" : "overwrite",
+	    sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol);
+#endif
 
 	/* overwrite() and overlay() can come here with -ve srcwin coords */
 	if (sminrow < 0) {
@@ -104,12 +111,18 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 	for (; dminrow <= dmaxrow; sminrow++, dminrow++) {
 		sp = &srcwin->alines[sminrow]->line[smincol];
 		end = sp + dmaxcol - dmincol;
+#ifdef DEBUG
+	__CTRACE(__CTRACE_WINDOW, "copywin: row %d\n", sminrow);
+#endif
 		for (dcol = dmincol; sp <= end; dcol++, sp++) {
 			/* XXX: Perhaps this should check for the
 			 * background character
 			 */
 			if ((dooverlay && !isspace(sp->ch)) || !dooverlay) {
 				wmove(dstwin, dminrow, dcol);
+#ifdef DEBUG
+	__CTRACE(__CTRACE_WINDOW, "copywin: dcol = %d\n", dcol);
+#endif
 #ifndef HAVE_WCHAR
 				__waddch(dstwin, sp);
 #else
