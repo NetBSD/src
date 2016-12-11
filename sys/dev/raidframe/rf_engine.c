@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.51 2016/01/03 08:17:24 mlelstv Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.52 2016/12/11 05:27:00 nat Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.51 2016/01/03 08:17:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.52 2016/12/11 05:27:00 nat Exp $");
 
 #include <sys/errno.h>
 
@@ -229,14 +229,14 @@ NodeReady(RF_DagNode_t *node)
 {
 	int     ready;
 
+	ready = RF_FALSE;
+
 	switch (node->dagHdr->status) {
 	case rf_enable:
 	case rf_rollForward:
 		if ((node->status == rf_wait) &&
 		    (node->numAntecedents == node->numAntDone))
 			ready = RF_TRUE;
-		else
-			ready = RF_FALSE;
 		break;
 	case rf_rollBackward:
 		RF_ASSERT(node->numSuccDone <= node->numSuccedents);
@@ -245,8 +245,6 @@ NodeReady(RF_DagNode_t *node)
 		if ((node->status == rf_good) &&
 		    (node->numSuccDone == node->numSuccedents))
 			ready = RF_TRUE;
-		else
-			ready = RF_FALSE;
 		break;
 	default:
 		printf("Execution engine found illegal DAG status in NodeReady\n");
