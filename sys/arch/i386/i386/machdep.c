@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.764 2016/11/15 15:00:55 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.765 2016/12/11 08:31:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.764 2016/11/15 15:00:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.765 2016/12/11 08:31:53 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1131,6 +1131,7 @@ void
 init386(paddr_t first_avail)
 {
 	extern void consinit(void);
+	extern paddr_t local_apic_pa;
 	int x;
 #ifndef XEN
 	union descriptor *tgdt;
@@ -1300,6 +1301,11 @@ init386(paddr_t first_avail)
 	/* Needed early, for bioscall() */
 	cpu_info_primary.ci_pmap = pmap_kernel();
 #endif
+
+	pmap_kenter_pa(local_apic_va, local_apic_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_update(pmap_kernel());
+	memset((void *)local_apic_va, 0, PAGE_SIZE);
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_kenter_pa(gdt_vaddr, gdt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);

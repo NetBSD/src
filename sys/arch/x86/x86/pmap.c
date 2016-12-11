@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.229 2016/11/25 14:26:53 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.230 2016/12/11 08:31:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.229 2016/11/25 14:26:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.230 2016/12/11 08:31:53 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -483,9 +483,10 @@ static vaddr_t virtual_avail __read_mostly;	/* VA of first free KVA */
 static vaddr_t virtual_end __read_mostly;	/* VA of last free KVA */
 
 /*
- * LAPIC virtual address.
+ * LAPIC virtual address, and fake physical address.
  */
 volatile vaddr_t local_apic_va;
+paddr_t local_apic_pa;
 
 /*
  * pool that pmap structures are allocated from
@@ -1467,7 +1468,17 @@ pmap_bootstrap(vaddr_t kva_start)
 static void
 pmap_init_lapic(void)
 {
+	/*
+	 * On CPUs that have no LAPIC, local_apic_va is never kentered. But our
+	 * x86 implementation relies a lot on this address to be valid; so just
+	 * allocate a fake physical page that will be kentered into
+	 * local_apic_va by machdep.
+	 *
+	 * If the LAPIC is present, the va will be remapped somewhere else
+	 * later in lapic_map.
+	 */
 	local_apic_va = pmap_bootstrap_valloc(1);
+	local_apic_pa = pmap_bootstrap_palloc(1);
 }
 
 #ifdef __HAVE_DIRECT_MAP

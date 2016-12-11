@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.235 2016/12/09 17:57:24 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.236 2016/12/11 08:31:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2016/12/09 17:57:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2016/12/11 08:31:53 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1537,6 +1537,7 @@ void
 init_x86_64(paddr_t first_avail)
 {
 	extern void consinit(void);
+	extern paddr_t local_apic_pa;
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
 	int x;
@@ -1638,6 +1639,11 @@ init_x86_64(paddr_t first_avail)
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	kpreempt_disable();
+
+	pmap_kenter_pa(local_apic_va, local_apic_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_update(pmap_kernel());
+	memset((void *)local_apic_va, 0, PAGE_SIZE);
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_kenter_pa(gdt_vaddr, gdt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
