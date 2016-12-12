@@ -1,4 +1,4 @@
-/* $NetBSD: hytp14reg.h,v 1.2 2014/06/29 09:06:05 kardel Exp $ */
+/* $NetBSD: hytp14reg.h,v 1.3 2016/12/12 15:58:44 maya Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -68,8 +68,8 @@
 
 #define HYTP14_RESP_MASK	0x03
 #define HYTP14_RESP_BUSY	0x00 /* device is busy */
-#define HYTP14_RESP_ACK		0x01 /* positive acknowlege */
-#define HYTP14_RESP_NACK	0x02 /* negative acknowlege */
+#define HYTP14_RESP_ACK		0x01 /* positive acknowledge */
+#define HYTP14_RESP_NACK	0x02 /* negative acknowledge */
 
 #define HYTP14_ST_CMDMODE	0x8000 /* command mode */
 #define HYTP14_ST_STALE		0x4000 /* stale measurement data */
