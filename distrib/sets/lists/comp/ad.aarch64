@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.12 2016/10/11 08:04:23 mrg Exp $
+# $NetBSD: ad.aarch64,v 1.13 2016/12/12 13:13:11 kamil Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -144,6 +144,9 @@
 ./usr/libdata/ldscripts/aarch64elf.x		-unknown-		binutils
 ./usr/libdata/ldscripts/aarch64elf.xbn		-unknown-		binutils
 ./usr/libdata/ldscripts/aarch64elf.xc		-unknown-		binutils
+./usr/libdata/ldscripts/aarch64elf.xd		-unknown-		binutils
+./usr/libdata/ldscripts/aarch64elf.xdc		-unknown-		binutils
+./usr/libdata/ldscripts/aarch64elf.xdw		-unknown-		binutils
 ./usr/libdata/ldscripts/aarch64elf.xn		-unknown-		binutils
 ./usr/libdata/ldscripts/aarch64elf.xr		-unknown-		binutils
 ./usr/libdata/ldscripts/aarch64elf.xs		-unknown-		binutils
@@ -154,6 +157,9 @@
 ./usr/libdata/ldscripts/aarch64elfb.x		-unknown-		binutils
 ./usr/libdata/ldscripts/aarch64elfb.xbn		-unknown-		binutils
 ./usr/libdata/ldscripts/aarch64elfb.xc		-unknown-		binutils
+./usr/libdata/ldscripts/aarch64elfb.xd		-unknown-		binutils
+./usr/libdata/ldscripts/aarch64elfb.xdc		-unknown-		binutils
+./usr/libdata/ldscripts/aarch64elfb.xdw		-unknown-		binutils
 ./usr/libdata/ldscripts/aarch64elfb.xn		-unknown-		binutils
 ./usr/libdata/ldscripts/aarch64elfb.xr		-unknown-		binutils
 ./usr/libdata/ldscripts/aarch64elfb.xs		-unknown-		binutils
