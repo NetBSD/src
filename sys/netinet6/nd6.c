@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.215 2016/12/12 03:14:01 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.216 2016/12/12 03:55:57 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.215 2016/12/12 03:14:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.216 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1003,10 +1003,10 @@ nd6_is_new_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 			 */
 			if (!IN6_ARE_ADDR_EQUAL(&pr->ndpr_prefix.sin6_addr,
 			    &satocsin6(rt_getkey(rt))->sin6_addr)) {
-				rtfree(rt);
+				rt_unref(rt);
 				continue;
 			}
-			rtfree(rt);
+			rt_unref(rt);
 		}
 
 		if (IN6_ARE_MASKED_ADDR_EQUAL(&pr->ndpr_prefix.sin6_addr,
@@ -1131,10 +1131,10 @@ nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	    rt->rt_ifp->if_carpdev == ifp->if_carpdev)
 #endif
 	    )) {
-		rtfree(rt);
+		rt_unref(rt);
 		return 1;
 	}
-	rtfree(rt);
+	rt_unref(rt);
 
 	return 0;
 }

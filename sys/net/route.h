@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.108 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.109 2016/12/12 03:55:57 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,6 +38,12 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <net/if.h>
+#ifdef _KERNEL
+#include <sys/rwlock.h>
+#include <sys/condvar.h>
+#include <sys/pserialize.h>
+#include <sys/psref.h>
+#endif
 
 #if !(defined(_KERNEL) || defined(_STANDALONE))
 #include <stdbool.h>
@@ -60,6 +66,10 @@ struct route {
 	struct	sockaddr	*ro_sa;
 	LIST_ENTRY(route)	ro_rtcache_next;
 	bool			ro_invalid;
+#ifdef _KERNEL
+	struct	psref		ro_psref;
+	int			ro_bound;
+#endif
 };
 
 /*
@@ -115,6 +125,10 @@ struct rtentry {
 	struct	rtentry *rt_parent;	/* parent of cloned route */
 	struct	sockaddr *_rt_key;
 	struct	sockaddr *rt_tag;	/* route tagging info */
+#ifdef _KERNEL
+	kcondvar_t rt_cv;
+	struct psref_target	rt_psref;
+#endif
 };
 
 static inline const struct sockaddr *
@@ -159,6 +173,7 @@ struct ortentry {
 #define RTF_ANNOUNCE	0x20000		/* announce new ARP or NDP entry */
 #define RTF_LOCAL	0x40000		/* route represents a local address */
 #define RTF_BROADCAST	0x80000		/* route represents a bcast address */
+#define RTF_UPDATING	0x100000	/* route is updating */
 
 /*
  * Routing statistics.
@@ -376,10 +391,15 @@ struct rttimer_queue *
 	rt_timer_queue_create(u_int);
 void	rt_timer_queue_destroy(struct rttimer_queue *);
 
+void	rt_free(struct rtentry *);
+void	rt_unref(struct rtentry *);
+
+int	rt_update_prepare(struct rtentry *);
+void	rt_update_finish(struct rtentry *);
+
 void	rt_newmsg(const int, const struct rtentry *);
 struct rtentry *
 	rtalloc1(const struct sockaddr *, int);
-void	rtfree(struct rtentry *);
 int	rtinit(struct ifaddr *, int, int);
 void	rtredirect(const struct sockaddr *, const struct sockaddr *,
 	    const struct sockaddr *, int, const struct sockaddr *,
@@ -410,6 +430,7 @@ struct sockaddr *
 int	rt_check_reject_route(const struct rtentry *, const struct ifnet *);
 void	rt_delete_matched_entries(sa_family_t,
 	    int (*)(struct rtentry *, void *), void *);
+int	rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
 
 static inline void
 rt_assert_referenced(const struct rtentry *rt)
@@ -418,7 +439,7 @@ rt_assert_referenced(const struct rtentry *rt)
 	KASSERT(rt->rt_refcnt > 0);
 }
 
-void	rtcache_copy(struct route *, const struct route *);
+void	rtcache_copy(struct route *, struct route *);
 void	rtcache_free(struct route *);
 struct rtentry *
 	rtcache_init(struct route *);
@@ -436,7 +457,6 @@ rtcache_invariants(const struct route *ro)
 {
 	KASSERT(ro->ro_sa != NULL || ro->_ro_rt == NULL);
 	KASSERT(!ro->ro_invalid || ro->_ro_rt != NULL);
-	KASSERT(ro->_ro_rt == NULL || ro->_ro_rt->rt_refcnt > 0);
 }
 
 static inline struct rtentry *
@@ -456,36 +476,15 @@ rtcache_lookup(struct route *ro, const struct sockaddr *dst)
 static inline const struct sockaddr *
 rtcache_getdst(const struct route *ro)
 {
+
 	rtcache_invariants(ro);
 	return ro->ro_sa;
 }
 
-/* If the cache is not empty, and the cached route is still present
- * in the routing table, return the cached route.  Otherwise, return
- * NULL.
- */
-static inline struct rtentry *
-rtcache_validate(const struct route *ro)
-{
-	struct rtentry *rt = ro->_ro_rt;
+struct rtentry *
+	rtcache_validate(struct route *);
 
-	rtcache_invariants(ro);
-
-	if (ro->ro_invalid)
-		return NULL;
-
-	if (rt != NULL && (rt->rt_flags & RTF_UP) != 0 && rt->rt_ifp != NULL)
-		return rt;
-	return NULL;
-
-}
-
-static inline void
-rtcache_unref(struct rtentry *rt, struct route *ro)
-{
-
-	/* Will do something useful in the future. */
-}
+void	rtcache_unref(struct rtentry *, struct route *);
 
 /* rtsock */
 void	rt_ieee80211msg(struct ifnet *, int, void *, size_t);
@@ -512,7 +511,7 @@ struct rtentry *
 struct rtentry *
 	rt_matchaddr(rtbl_t *, const struct sockaddr *);
 int	rt_refines(const struct sockaddr *, const struct sockaddr *);
-int	rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
+int	rtbl_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
 struct rtentry *
 	rtbl_search_matched_entry(sa_family_t,
 	    int (*)(struct rtentry *, void *), void *);

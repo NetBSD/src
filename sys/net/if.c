@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.365 2016/12/09 02:38:14 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.366 2016/12/12 03:55:57 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.365 2016/12/09 02:38:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.366 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1686,6 +1686,7 @@ ifa_psref_init(struct ifaddr *ifa)
 void
 ifaref(struct ifaddr *ifa)
 {
+	KASSERT(!ISSET(ifa->ifa_flags, IFA_DESTROYING));
 	ifa->ifa_refcnt++;
 }
 
@@ -1698,6 +1699,13 @@ ifafree(struct ifaddr *ifa)
 	if (--ifa->ifa_refcnt == 0) {
 		free(ifa, M_IFADDR);
 	}
+}
+
+bool
+ifa_is_destroying(struct ifaddr *ifa)
+{
+
+	return ISSET(ifa->ifa_flags, IFA_DESTROYING);
 }
 
 void

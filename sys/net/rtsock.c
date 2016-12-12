@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.198 2016/10/26 06:49:10 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.199 2016/12/12 03:55:57 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.198 2016/10/26 06:49:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.199 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -445,7 +445,7 @@ route_get_sdl_index(struct rt_addrinfo *info, int *sdl_index)
 	 * due to changing to ifplo0.
 	 */
 	*sdl_index = satosdl(nrt->rt_gateway)->sdl_index;
-	rtfree(nrt);
+	rt_unref(nrt);
 
 	return 0;
 }
@@ -636,7 +636,8 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 	}
 	if (ifa) {
 		struct ifaddr *oifa = rt->rt_ifa;
-		if (oifa != ifa) {
+		if (oifa != ifa &&
+		    !ifa_is_destroying(ifa) && !if_is_deactivated(new_ifp)) {
 			if (oifa && oifa->ifa_rtrequest)
 				oifa->ifa_rtrequest(RTM_DELETE, rt, info);
 			rt_replace_ifa(rt, ifa);
@@ -646,7 +647,8 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 			ifa_release(ifa, &psref_ifa);
 	}
 	ifa_release(new_ifa, &psref_new_ifa);
-	if (new_ifp && rt->rt_ifp != new_ifp)
+	if (new_ifp && rt->rt_ifp != new_ifp
+	    && !if_is_deactivated(new_ifp))
 		rt->rt_ifp = new_ifp;
 	rt_setmetrics(rtm->rtm_inits, rtm, rt);
 	if (rt->rt_flags != info->rti_flags)
@@ -674,6 +676,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 	sa_family_t family;
 	struct sockaddr_dl sdl;
 	int bound = curlwp_bind();
+	bool do_rt_free = false;
 
 #define senderr(e) do { error = e; goto flush;} while (/*CONSTCOND*/ 0)
 	if (m == NULL || ((m->m_len < sizeof(int32_t)) &&
@@ -784,7 +787,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error == 0) {
 			rt_setmetrics(rtm->rtm_inits, rtm, saved_nrt);
-			rtfree(saved_nrt);
+			rt_unref(saved_nrt);
 		}
 		break;
 
@@ -804,6 +807,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			break;
 
 		rt = saved_nrt;
+		do_rt_free = true;
 		info.rti_info[RTAX_DST] = rt_getkey(rt);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
@@ -883,7 +887,11 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			break;
 
 		case RTM_CHANGE:
-			error = route_output_change(rt, &info, rtm);
+			error = rt_update_prepare(rt);
+			if (error == 0) {
+				error = route_output_change(rt, &info, rtm);
+				rt_update_finish(rt);
+			}
 			if (error != 0)
 				goto flush;
 			/*FALLTHROUGH*/
@@ -914,8 +922,12 @@ flush:
 	 */
 	if (old_rtm != NULL)
 		Free(old_rtm);
-	if (rt)
-		rtfree(rt);
+	if (rt) {
+		if (do_rt_free)
+			rt_free(rt);
+		else
+			rt_unref(rt);
+	}
     {
 	struct rawcb *rp = NULL;
 	/*

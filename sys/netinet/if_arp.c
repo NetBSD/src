@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.232 2016/11/05 20:03:15 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.233 2016/12/12 03:55:57 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.232 2016/11/05 20:03:15 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.233 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -894,7 +894,7 @@ notfound:
 			arprequest(ifp,
 			    &satocsin(_rt->rt_ifa->ifa_addr)->sin_addr,
 			    &satocsin(dst)->sin_addr, enaddr);
-			rtfree(_rt);
+			rt_unref(_rt);
 		}
 		return error;
 	}

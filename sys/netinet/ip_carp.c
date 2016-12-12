@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.79 2016/10/11 13:39:34 roy Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.80 2016/12/12 03:55:57 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.79 2016/10/11 13:39:34 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.80 2016/12/12 03:55:57 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -397,7 +397,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			hr_otherif = (rt && rt->rt_ifp != &sc->sc_if &&
 			    (rt->rt_flags & RTF_CONNECTED));
 			if (rt != NULL) {
-				rtfree(rt);
+				rt_unref(rt);
 				rt = NULL;
 			}
 
@@ -441,7 +441,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 				break;
 			}
 			if (rt != NULL) {
-				rtfree(rt);
+				rt_unref(rt);
 				rt = NULL;
 			}
 			break;

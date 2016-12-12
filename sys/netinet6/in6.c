@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.223 2016/12/11 07:38:50 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.224 2016/12/12 03:55:57 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.223 2016/12/11 07:38:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.224 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1139,7 +1139,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (memcmp(&mltaddr.sin6_addr,
 			    &satocsin6(rt_getkey(rt))->sin6_addr,
 			    MLTMASK_LEN)) {
-				rtfree(rt);
+				rt_unref(rt);
 				rt = NULL;
 			} else if (rt->rt_ifp != ifp) {
 				IN6_DPRINTF("%s: rt_ifp %p -> %p (%s) "
@@ -1167,7 +1167,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (error)
 				goto cleanup;
 		} else {
-			rtfree(rt);
+			rt_unref(rt);
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
 		if (!imm) {
@@ -1220,7 +1220,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (memcmp(&mltaddr.sin6_addr,
 			    &satocsin6(rt_getkey(rt))->sin6_addr,
 			    32 / NBBY)) {
-				rtfree(rt);
+				rt_unref(rt);
 				rt = NULL;
 			} else if (rt->rt_ifp != ifp) {
 				IN6_DPRINTF("%s: rt_ifp %p -> %p (%s) "
@@ -1248,7 +1248,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 				goto cleanup;
 #undef	MLTMASK_LEN
 		} else {
-			rtfree(rt);
+			rt_unref(rt);
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
 		if (!imm) {
@@ -1332,6 +1332,10 @@ in6_purgeaddr(struct ifaddr *ifa)
 	struct ifnet *ifp = ifa->ifa_ifp;
 	struct in6_ifaddr *ia = (struct in6_ifaddr *) ifa;
 	struct in6_multi_mship *imm;
+
+	KASSERT(!ifa_held(ifa));
+
+	ifa->ifa_flags |= IFA_DESTROYING;
 
 	/* stop DAD processing */
 	nd6_dad_stop(ifa);
@@ -2411,17 +2415,17 @@ in6_lltable_rtcheck(struct ifnet *ifp,
 		if (ifa != NULL) {
 			pserialize_read_exit(s);
 			if (rt != NULL)
-				rtfree(rt);
+				rt_unref(rt);
 			return 0;
 		}
 		pserialize_read_exit(s);
 		log(LOG_INFO, "IPv6 address: \"%s\" is not on the network\n",
 		    ip6_sprintf(&((const struct sockaddr_in6 *)l3addr)->sin6_addr));
 		if (rt != NULL)
-			rtfree(rt);
+			rt_unref(rt);
 		return EINVAL;
 	}
-	rtfree(rt);
+	rt_unref(rt);
 	return 0;
 }
 

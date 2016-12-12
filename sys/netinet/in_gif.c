@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.84 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.85 2016/12/12 03:55:57 ozaki-r Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.84 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.85 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -331,10 +331,10 @@ gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
 			    (u_int32_t)ntohl(u.sin.sin_addr.s_addr));
 #endif
 			if (rt != NULL)
-				rtfree(rt);
+				rt_unref(rt);
 			return 0;
 		}
-		rtfree(rt);
+		rt_unref(rt);
 	}
 
 	return 32 * 2;

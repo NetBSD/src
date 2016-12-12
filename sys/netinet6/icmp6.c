@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.202 2016/12/11 07:35:42 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.203 2016/12/12 03:55:57 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.202 2016/12/11 07:35:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.203 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1164,7 +1164,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 		}
 	}
 	if (rt) {
-		rtfree(rt);
+		rt_unref(rt);
 	}
 
 	/*
@@ -2259,7 +2259,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 			    "ICMP6 redirect rejected; no route "
 			    "with inet6 gateway found for redirect dst: %s\n",
 			    icmp6_redirect_diag(&src6, &reddst6, &redtgt6));
-			rtfree(rt);
+			rt_unref(rt);
 			goto bad;
 		}
 
@@ -2270,7 +2270,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 			    "not equal to gw-for-src=%s (must be same): %s\n",
 			    ip6_sprintf(gw6),
 			    icmp6_redirect_diag(&src6, &reddst6, &redtgt6));
-			rtfree(rt);
+			rt_unref(rt);
 			goto bad;
 		}
 	} else {
@@ -2279,7 +2279,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		    icmp6_redirect_diag(&src6, &reddst6, &redtgt6));
 		goto bad;
 	}
-	rtfree(rt);
+	rt_unref(rt);
 	rt = NULL;
     }
 	if (IN6_IS_ADDR_MULTICAST(&reddst6)) {
@@ -2373,7 +2373,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		if (newrt) {
 			(void)rt_timer_add(newrt, icmp6_redirect_timeout,
 			    icmp6_redirect_timeout_q);
-			rtfree(newrt);
+			rt_unref(newrt);
 		}
 	}
 	/* finally update cached route in each socket via pfctlinput */
@@ -2760,17 +2760,17 @@ icmp6_mtudisc_clone(struct sockaddr *dst)
 		error = rtrequest(RTM_ADD, dst, rt->rt_gateway, NULL,
 		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
 		if (error) {
-			rtfree(rt);
+			rt_unref(rt);
 			return NULL;
 		}
 		nrt->rt_rmx = rt->rt_rmx;
-		rtfree(rt);
+		rt_unref(rt);
 		rt = nrt;
 	}
 	error = rt_timer_add(rt, icmp6_mtudisc_timeout,
 			icmp6_mtudisc_timeout_q);
 	if (error) {
-		rtfree(rt);
+		rt_unref(rt);
 		return NULL;
 	}
 
