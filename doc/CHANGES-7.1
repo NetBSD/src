@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.129 2016/12/12 09:34:08 msaitoh Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.130 2016/12/12 10:22:20 msaitoh Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7381,9 +7381,137 @@ sys/external/bsd/drm2/ttm/ttm_bus_dma.c		1.2
         - i915: avoid taking locks during interrupts
 	[snj, ticket #1280]
 
+xsrc/external/mit/xf86-video-nouveau/dist/COPYING patch
+xsrc/external/mit/xf86-video-nouveau/dist/Makefile.am patch
+xsrc/external/mit/xf86-video-nouveau/dist/ChangeLog patch
+xsrc/external/mit/xf86-video-nouveau/dist/INSTALL patch
+xsrc/external/mit/xf86-video-nouveau/dist/Makefile.in patch
+xsrc/external/mit/xf86-video-nouveau/dist/aclocal.m4 patch
+xsrc/external/mit/xf86-video-nouveau/dist/compile patch
+xsrc/external/mit/xf86-video-nouveau/dist/config.guess patch
+xsrc/external/mit/xf86-video-nouveau/dist/config.h.in patch
+xsrc/external/mit/xf86-video-nouveau/dist/config.sub patch
+xsrc/external/mit/xf86-video-nouveau/dist/configure patch
+xsrc/external/mit/xf86-video-nouveau/dist/configure.ac patch
+xsrc/external/mit/xf86-video-nouveau/dist/depcomp patch
+xsrc/external/mit/xf86-video-nouveau/dist/install-sh patch	
+xsrc/external/mit/xf86-video-nouveau/dist/ltmain.sh patch
+xsrc/external/mit/xf86-video-nouveau/dist/missing patch
+xsrc/external/mit/xf86-video-nouveau/dist/man/Makefile.am patch
+xsrc/external/mit/xf86-video-nouveau/dist/man/Makefile.in patch
+xsrc/external/mit/xf86-video-nouveau/dist/man/nouveau.man patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/Makefile.am patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/Makefile.in patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_copy.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_dri2.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_present.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_present.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_wfb.c	patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv04_exa.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv10_exa.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv30_exa.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv40_exa.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv50_accel.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv50_accel.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv50_exa.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv_accel_common.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv_const.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv_driver.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv_proto.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv_type.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nvc0_accel.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nvc0_exa.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/compat-api.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_copy.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_copy85b5.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_copy90b5.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_copya0b5.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_exa.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_local.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_sync.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_sync.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv04_accel.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv_dma.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv_rop.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv_shadow.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nvc0_accel.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/vl_hwmc.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/vl_hwmc.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/drmmode_display.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nouveau_xv.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv04_xv_blit.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv04_xv_ovl.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv10_xv_ovl.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv30_xv_tex.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv40_xv_tex.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv50_xv.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nv_include.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/nvc0_xv.c patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/hwdefs/nv01_2d.xml.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/hwdefs/nv10_3d.xml.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/hwdefs/nv30-40_3d.xml.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/hwdefs/nv50_2d.xml.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/hwdefs/nv50_3d.xml.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/hwdefs/nv50_defs.xml.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/hwdefs/nv50_texture.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/hwdefs/nv_3ddefs.xml.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/hwdefs/nv_m2mf.xml.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/hwdefs/nv_object.xml.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/hwdefs/nvc0_3d.xml.h patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/hwdefs/nvc0_m2mf.xml.h
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/Makefile patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exac8nvf0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exac8nvf0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exacanve0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exacanve0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exacanvf0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exacanvf0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exacmnve0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exacmnve0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exacmnvf0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exacmnvf0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exas8nvf0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exas8nvf0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exasanve0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exasanve0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exasanvf0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exasanvf0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exascnvf0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exascnvf0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/videonvf0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/videonvf0.fpc
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exac8nvc0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exac8nvc0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exac8nve0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exac8nve0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exacanvc0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exacanvc0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exacmnvc0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exacmnvc0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exas8nvc0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exas8nvc0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exas8nve0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exas8nve0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exasanvc0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exasanvc0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exascnvc0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exascnvc0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exascnve0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/exascnve0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/videonvc0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/videonvc0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/videonve0.fp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/videonve0.fpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/xfrm2nvc0.vp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/xfrm2nvc0.vpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/xfrm2nve0.vp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/xfrm2nve0.vpc patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/xfrm2nvf0.vp patch
+xsrc/external/mit/xf86-video-nouveau/dist/src/shader/xfrm2nvf0.vpc patch
 xsrc/external/mit/xorg-server/dist/include/list.h	1.3
 
-	Add list_append() macro that xf86-video-nouveau 1.0.11 wants.
+	- Sync xf86-video-nouveau as of 2016/12/12.
+	- Add list_append() macro that xf86-video-nouveau 1.0.11 wants.
 	[snj, ticket #1304]
 
 distrib/sets/lists/xbase/md.amd64		1.15 via patch
