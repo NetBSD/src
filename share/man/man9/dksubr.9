@@ -1,4 +1,4 @@
-.\"	$NetBSD: dksubr.9,v 1.3 2016/12/10 09:49:00 mlelstv Exp $
+.\"	$NetBSD: dksubr.9,v 1.4 2016/12/12 10:10:05 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -219,7 +219,8 @@ to cooperate with
 .It Fn dk_getdefaultlabel
 Compute a common default disklabel for all disk drivers.
 Some drivers provide device specific information or assign specific
-disk formats to partitions. Such drivers may implement the
+disk formats to partitions.
+Such drivers may implement the
 .Nm d_label
 callback that is called by
 .Nm dk_getdefaultlabel
@@ -257,7 +258,8 @@ and starts queue processing as appropriate.
 The driver minphys routine limits the buffer
 .Nm b_bcount
 to the maximum size for an I/O transfer supported by the driver
-and hardware. It also calls
+and hardware.
+It also calls
 .Nm minphys
 to apply the platform limit.
 .It Fn d_open
@@ -268,7 +270,8 @@ The driver close routine.
 Issues a single I/O request, called by
 .Nm dk_start .
 .It Fn d_iosize
-Truncate I/O size to the driver limit. This is similar to
+Truncate I/O size to the driver limit.
+This is similar to
 .Nm minphys
 but operates on an integer value instead of a buffer.
 .It Fn d_dumpblocks
@@ -282,11 +285,11 @@ Issue a single I/O request to invalidate a disk region.
 .It Fn d_firstopen
 Private initialization when first user opens the driver.
 .Sh SEE ALSO
-.Xr driver 9 ,
-.Xr disk 9 ,
-.Xr cprng 9 ,
+.Xr cgd 4 ,
 .Xr ld 4 ,
-.Xr cgd 4 .
+.Xr cprng 9 ,
+.Xr disk 9 ,
+.Xr driver 9
 .Sh HISTORY
 The
 .Nx
