@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exect.c,v 1.5 2016/12/11 03:38:09 kamil Exp $	*/
+/*	$NetBSD: t_exect.c,v 1.6 2016/12/12 10:34:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ ATF_TC_HEAD(t_exect_null, tc)
 	    "Tests an empty exect(2) executing");
 }
 
-static sig_atomic_t caught = 0;
+static volatile sig_atomic_t caught = 0;
 
 static void
 sigtrap_handler(int sig, siginfo_t *info, void *ctx)
@@ -66,8 +66,9 @@ ATF_TC_BODY(t_exect_null, tc)
 	 * designed and implemented and is breaking tests - skip it
 	 * unconditionally for all ports.
 	 */
-
-	atf_tc_skip("exect(3) misdesigned and hangs - PR port-amd64/51700");
+	/* Prevent static analysis from requiring t_exec_null to be __dead. */
+	if (!caught) 
+		atf_tc_skip("exect(3) misdesigned and hangs - PR port-amd64/51700");
 
 	ATF_REQUIRE(sigemptyset(&act.sa_mask) == 0);
 	act.sa_sigaction = sigtrap_handler;
