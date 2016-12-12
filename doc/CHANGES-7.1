@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.128 2016/12/12 08:08:33 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.129 2016/12/12 09:34:08 msaitoh Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7348,3 +7348,62 @@ usr.sbin/mld6query/mld6.c			1.15
 	PR/51353: Patrick Mackey: mld6query "-r" option is not recognised
 	[riastradh, ticket #1308]
 
+sys/external/bsd/drm2/dist/drm/i915/i915_gpu_error.c 1.4
+sys/external/bsd/drm2/dist/drm/nouveau/core/core/nouveau_core_object.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/device/nouveau_engine_device_base.c 1.11
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/disp/nouveau_engine_disp_nvd0.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_base.c 1.5
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nv40.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/devinit/nouveau_subdev_devinit_nv04.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/mxm/nouveau_subdev_mxm_mxms.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/mxm/nouveau_subdev_mxm_nv50.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_bo.c 1.7
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_connector.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_dp.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_gem.c 1.4
+sys/external/bsd/drm2/dist/drm/radeon/radeon_ttm.c 1.8
+sys/external/bsd/drm2/dist/drm/ttm/ttm_tt.c	1.7
+sys/external/bsd/drm2/dist/include/drm/ttm/ttm_bo_driver.h 1.3
+sys/external/bsd/drm2/drm/drm_vma_manager.c	1.4
+sys/external/bsd/drm2/include/drm/drm_wait_netbsd.h 1.14
+sys/external/bsd/drm2/include/drm/ttm/ttm_page_alloc.h 1.2
+sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.8
+sys/external/bsd/drm2/ttm/ttm_bus_dma.c		1.2
+
+	DRMKMS fixes:
+	- nouveau:
+	  + fix non-DEBUG builds
+	  + misc cleanup
+          + use bus_space_subregion to get fifo channels out of mmio
+	    registers
+        - suspend/resume improvements
+        - make sure rbtrees are empty on destruction
+        - i915: avoid taking locks during interrupts
+	[snj, ticket #1280]
+
+xsrc/external/mit/xorg-server/dist/include/list.h	1.3
+
+	Add list_append() macro that xf86-video-nouveau 1.0.11 wants.
+	[snj, ticket #1304]
+
+distrib/sets/lists/xbase/md.amd64		1.15 via patch
+distrib/sets/lists/xbase/md.i386		1.29
+distrib/sets/lists/xcomp/md.amd64		1.43 via patch
+distrib/sets/lists/xcomp/md.i386		1.48 via patch
+distrib/sets/lists/xcomp/mi			1.175
+distrib/sets/lists/xdebug/md.amd64		1.22 via patch
+distrib/sets/lists/xdebug/md.i386		1.21 via patch
+distrib/sets/lists/xserver/md.amd64		1.85-1.87
+distrib/sets/lists/xserver/md.i386		1.103-1.105
+external/mit/xorg/lib/Makefile			1.36
+external/mit/xorg/lib/gallium/Makefile		1.8
+external/mit/xorg/lib/gallium/Makefile		1.9
+external/mit/xorg/lib/libdrm/drm/Makefile	1.7
+external/mit/xorg/lib/libdrm_nouveau/Makefile	1.1
+external/mit/xorg/lib/libdrm_nouveau/shlib_version 1.1
+external/mit/xorg/server/drivers/Makefile	1.70
+external/mit/xorg/server/drivers/xf86-video-nouveau/Makefile 1.1, 1.2 via patch
+share/mk/bsd.own.mk				1.875 via patch
+
+	Build xf86-video-nouveau and libdrm_nouveau on x86.
+	[snj, ticket #1305]
