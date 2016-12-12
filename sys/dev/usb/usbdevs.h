@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.718 2016/11/26 09:37:39 skrll Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.719 2016/12/12 16:43:14 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.727 2016/11/26 09:36:43 skrll Exp
+ *	NetBSD: usbdevs,v 1.728 2016/12/12 16:41:08 bouyer Exp
  */
 
 /*
@@ -3391,7 +3391,8 @@
 
 /* WinChipHead products */
 #define	USB_PRODUCT_WINCHIPHEAD_CH341SER	0x5523		/* CH341/CH340 USB-Serial Bridge */
-#define	USB_PRODUCT_WINCHIPHEAD2_CH341	0x7523		/* CH341 serial/parallel */
+#define	USB_PRODUCT_WINCHIPHEAD2_CH341	0x7523		/* CH341 USB-Serial Bridge */
+#define	USB_PRODUCT_WINCHIPHEAD2_CH341_2	0x5523		/* CH341 USB-Serial Bridge */
 
 /* Wistron NeWeb products */
 #define	USB_PRODUCT_WISTRONNEWEB_WNC0600	0x0326		/* WNC-0600USB */
