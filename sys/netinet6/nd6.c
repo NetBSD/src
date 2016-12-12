@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.214 2016/12/12 03:13:14 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.215 2016/12/12 03:14:01 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.214 2016/12/12 03:13:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.215 2016/12/12 03:14:01 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -692,7 +692,7 @@ nd6_timer_work(struct work *wk, void *arg)
 	curlwp_bindx(bound);
 
 	/* expire prefix list */
-	LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, next_pr) {
+	ND_PREFIX_LIST_FOREACH_SAFE(pr, next_pr) {
 		/*
 		 * check prefix lifetime.
 		 * since pltime is just for autoconf, pltime processing for
@@ -859,7 +859,7 @@ nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 	}
 
 	/* Nuke prefix list entries toward ifp */
-	LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, npr) {
+	ND_PREFIX_LIST_FOREACH_SAFE(pr, npr) {
 		if (pr->ndpr_ifp == ifp) {
 			/*
 			 * Because if_detach() does *not* release prefixes
@@ -981,7 +981,7 @@ nd6_is_new_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	 * If the address matches one of our on-link prefixes, it should be a
 	 * neighbor.
 	 */
-	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
+	ND_PREFIX_LIST_FOREACH(pr) {
 		if (pr->ndpr_ifp != ifp)
 			continue;
 
@@ -1079,7 +1079,7 @@ nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	 * If the address matches one of our on-link prefixes, it should be a
 	 * neighbor.
 	 */
-	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
+	ND_PREFIX_LIST_FOREACH(pr) {
 		if (pr->ndpr_ifp != ifp)
 			continue;
 
@@ -1647,7 +1647,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		 */
 		memset(oprl, 0, sizeof(*oprl));
 		s = splsoftnet();
-		LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
+		ND_PREFIX_LIST_FOREACH(pr) {
 			struct nd_pfxrouter *pfr;
 			int j;
 
@@ -1854,7 +1854,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		struct nd_prefix *pfx, *next;
 
 		s = splsoftnet();
-		LIST_FOREACH_SAFE(pfx, &nd_prefix, ndpr_entry, next) {
+		ND_PREFIX_LIST_FOREACH_SAFE(pfx, next) {
 			struct in6_ifaddr *ia, *ia_next;
 			int _s;
 
@@ -2696,7 +2696,7 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 	}
 	l = 0;
 
-	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
+	ND_PREFIX_LIST_FOREACH(pr) {
 		u_short advrtrs;
 		struct sockaddr_in6 sin6;
 		struct nd_pfxrouter *pfr;
