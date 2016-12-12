@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.16.2.1 2015/11/04 18:19:58 riz Exp $ */
+/*	$NetBSD: atphy.c,v 1.16.2.2 2016/12/12 07:04:31 snj Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.16.2.1 2015/11/04 18:19:58 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.16.2.2 2016/12/12 07:04:31 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,9 @@ atphy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_mpd_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
+	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
+	sc->mii_mpd_rev = MII_REV(ma->mii_id2);
 	sc->mii_funcs = &atphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;

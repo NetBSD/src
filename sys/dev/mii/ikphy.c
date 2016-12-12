@@ -1,4 +1,4 @@
-/*	$NetBSD: ikphy.c,v 1.10 2014/06/16 16:48:16 msaitoh Exp $	*/
+/*	$NetBSD: ikphy.c,v 1.10.2.1 2016/12/12 07:04:31 snj Exp $	*/
 
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
@@ -59,7 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.10 2014/06/16 16:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.10.2.1 2016/12/12 07:04:31 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,9 @@ ikphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_mpd_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
+	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
+	sc->mii_mpd_rev = MII_REV(ma->mii_id2);
 	sc->mii_funcs = &ikphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
