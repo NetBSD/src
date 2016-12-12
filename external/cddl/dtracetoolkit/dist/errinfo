@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/pkg/bin/perl
 #
 # errinfo - report on syscall failures and print errno error messages.
 #	    Written using Perl and DTrace (Solaris 10 03/05)
@@ -9,7 +9,7 @@
 # and prints details for all syscall failures along with their message,
 # whether the failing program is already printing this info or not.
 #
-# $Id: errinfo,v 1.1.1.1 2015/09/30 22:01:06 christos Exp $
+# $Id: errinfo,v 1.2 2016/12/12 16:30:03 christos Exp $
 #
 # USAGE:	errinfo [-ch] [-p PID] [-n name]
 #
