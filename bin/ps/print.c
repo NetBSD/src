@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.126 2016/12/02 21:59:03 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.127 2016/12/12 20:35:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.126 2016/12/02 21:59:03 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.127 2016/12/12 20:35:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1342,17 +1342,16 @@ printval(void *bp, VAR *v, enum mode mode)
 void
 pvar(struct pinfo *pi, VARENT *ve, enum mode mode)
 {
-	struct kinfo_proc2 *ki = pi->ki;
-	VAR *v;
+	VAR *v = ve->var;
+	char *b = (v->flag & LWP) ? (char *)pi->li : (char *)pi->ki;
 
-	v = ve->var;
-	if (v->flag & UAREA && !ki->p_uvalid) {
+	if ((v->flag & UAREA) && !pi->ki->p_uvalid) {
 		if (mode == PRINTMODE)
 			(void)printf("%*s", v->width, "-");
 		return;
 	}
 
-	(void)printval((char *)ki + v->off, v, mode);
+	(void)printval(b + v->off, v, mode);
 }
 
 void
@@ -1360,8 +1359,9 @@ putimeval(struct pinfo *pi, VARENT *ve, enum mode mode)
 {
 	VAR *v = ve->var;
 	struct kinfo_proc2 *k = pi->ki;
-	ulong secs = *(uint32_t *)((char *)k + v->off);
-	ulong usec = *(uint32_t *)((char *)k + v->off + sizeof (uint32_t));
+	char *b = (v->flag & LWP) ? (char *)pi->li : (char *)pi->ki;
+	ulong secs = *(uint32_t *)(b + v->off);
+	ulong usec = *(uint32_t *)(b + v->off + sizeof (uint32_t));
 	int fmtlen;
 
 	if (!k->p_uvalid) {
