@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.719 2016/11/26 09:37:39 skrll Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.720 2016/12/12 16:43:14 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.727 2016/11/26 09:36:43 skrll Exp
+ *	NetBSD: usbdevs,v 1.728 2016/12/12 16:41:08 bouyer Exp
  */
 
 /*
@@ -4587,15 +4587,17 @@ static const uint16_t usb_products[] = {
 	    USB_VENDOR_WINCHIPHEAD, USB_PRODUCT_WINCHIPHEAD_CH341SER, 
 	    19140, 16875, 1764, 0,
 	    USB_VENDOR_WINCHIPHEAD2, USB_PRODUCT_WINCHIPHEAD2_CH341, 
-	    19152, 19158, 0,
+	    19152, 16875, 1764, 0,
+	    USB_VENDOR_WINCHIPHEAD2, USB_PRODUCT_WINCHIPHEAD2_CH341_2, 
+	    19152, 16875, 1764, 0,
 	    USB_VENDOR_WISTRONNEWEB, USB_PRODUCT_WISTRONNEWEB_WNC0600, 
-	    19174, 0,
+	    19158, 0,
 	    USB_VENDOR_WISTRONNEWEB, USB_PRODUCT_WISTRONNEWEB_UR045G, 
 	    5185, 4718, 5193, 5158, 0,
 	    USB_VENDOR_WISTRONNEWEB, USB_PRODUCT_WISTRONNEWEB_UR055G, 
-	    19186, 0,
+	    19170, 0,
 	    USB_VENDOR_WISTRONNEWEB, USB_PRODUCT_WISTRONNEWEB_O8494, 
-	    19193, 19201, 0,
+	    19177, 19185, 0,
 	    USB_VENDOR_WISTRONNEWEB, USB_PRODUCT_WISTRONNEWEB_AR5523_1, 
 	    6763, 0,
 	    USB_VENDOR_WISTRONNEWEB, USB_PRODUCT_WISTRONNEWEB_AR5523_1_NF, 
@@ -4605,7 +4607,7 @@ static const uint16_t usb_products[] = {
 	    USB_VENDOR_WISTRONNEWEB, USB_PRODUCT_WISTRONNEWEB_AR5523_2_NF, 
 	    6763, 0,
 	    USB_VENDOR_XIRLINK, USB_PRODUCT_XIRLINK_IMAGING, 
-	    19209, 19217, 0,
+	    19193, 19201, 0,
 	    USB_VENDOR_XIRLINK, USB_PRODUCT_XIRLINK_PCCAM, 
 	    672, 5627, 2890, 0,
 	    USB_VENDOR_CONEXANT, USB_PRODUCT_CONEXANT_MODEM_1, 
@@ -4615,53 +4617,53 @@ static const uint16_t usb_products[] = {
 	    USB_VENDOR_CONEXANT, USB_PRODUCT_CONEXANT_PRISM_GT_2, 
 	    5185, 4718, 5193, 5158, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_UX256, 
-	    19224, 16389, 16380, 0,
+	    19208, 16389, 16380, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_MU1000, 
-	    19230, 16389, 16424, 0,
+	    19214, 16389, 16424, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_MU2000, 
-	    19237, 16389, 16424, 0,
+	    19221, 16389, 16424, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_MU500, 
-	    19244, 16389, 16424, 0,
+	    19228, 16389, 16424, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_UW500, 
-	    19250, 4718, 7014, 16380, 0,
+	    19234, 4718, 7014, 16380, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_MOTIF6, 
-	    19256, 16389, 16424, 19263, 0,
+	    19240, 16389, 16424, 19247, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_MOTIF7, 
-	    19275, 16389, 16424, 19263, 0,
+	    19259, 16389, 16424, 19247, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_MOTIF8, 
-	    19282, 16389, 16424, 19263, 0,
+	    19266, 16389, 16424, 19247, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_UX96, 
-	    19289, 16389, 16380, 0,
+	    19273, 16389, 16380, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_UX16, 
-	    19294, 16389, 16380, 0,
+	    19278, 16389, 16380, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_S08, 
-	    19299, 16389, 5719, 0,
+	    19283, 16389, 5719, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_CLP150, 
-	    19303, 14208, 19311, 0,
+	    19287, 14208, 19295, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_CLP170, 
-	    19317, 14208, 19311, 0,
+	    19301, 14208, 19295, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_RPU200, 
-	    19325, 0,
+	    19309, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_RTA54I, 
-	    19333, 19344, 19351, 19366, 0,
+	    19317, 19328, 19335, 19350, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_RTW65B, 
-	    19333, 19373, 19380, 3666, 19366, 0,
+	    19317, 19357, 19364, 3666, 19350, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_RTW65I, 
-	    19333, 19390, 19351, 3666, 19366, 0,
+	    19317, 19374, 19335, 3666, 19350, 0,
 	    USB_VENDOR_YAMAHA, USB_PRODUCT_YAMAHA_RTA55I, 
-	    19333, 19397, 19380, 19404, 19366, 0,
+	    19317, 19381, 19364, 19388, 19350, 0,
 	    USB_VENDOR_YANO, USB_PRODUCT_YANO_U640MO, 
-	    19409, 0,
+	    19393, 0,
 	    USB_VENDOR_YEDATA, USB_PRODUCT_YEDATA_FLASHBUSTERU, 
-	    19419, 0,
+	    19403, 0,
 	    USB_VENDOR_ZCOM, USB_PRODUCT_ZCOM_M4Y750, 
-	    19433, 0,
+	    19417, 0,
 	    USB_VENDOR_ZCOM, USB_PRODUCT_ZCOM_725, 
-	    19441, 5349, 5158, 0,
+	    19425, 5349, 5158, 0,
 	    USB_VENDOR_ZCOM, USB_PRODUCT_ZCOM_XI735, 
-	    19449, 0,
+	    19433, 0,
 	    USB_VENDOR_ZCOM, USB_PRODUCT_ZCOM_MD40900, 
-	    19456, 0,
+	    19440, 0,
 	    USB_VENDOR_ZCOM, USB_PRODUCT_ZCOM_XG703A, 
 	    5185, 4718, 5193, 5158, 0,
 	    USB_VENDOR_ZCOM, USB_PRODUCT_ZCOM_ZD1211, 
@@ -4675,15 +4677,15 @@ static const uint16_t usb_products[] = {
 	    USB_VENDOR_ZCOM, USB_PRODUCT_ZCOM_RT2870_1, 
 	    4944, 0,
 	    USB_VENDOR_ZCOM, USB_PRODUCT_ZCOM_UB81, 
-	    19464, 0,
+	    19448, 0,
 	    USB_VENDOR_ZCOM, USB_PRODUCT_ZCOM_RT2870_2, 
 	    4944, 0,
 	    USB_VENDOR_ZCOM, USB_PRODUCT_ZCOM_UB82, 
-	    19469, 0,
+	    19453, 0,
 	    USB_VENDOR_ZEEVO, USB_PRODUCT_ZEEVO_BLUETOOTH, 
-	    19474, 4722, 4718, 4732, 0,
+	    19458, 4722, 4718, 4732, 0,
 	    USB_VENDOR_ZINWELL, USB_PRODUCT_ZINWELL_ZWXG261, 
-	    19481, 0,
+	    19465, 0,
 	    USB_VENDOR_ZINWELL, USB_PRODUCT_ZINWELL_RT2870_1, 
 	    4944, 0,
 	    USB_VENDOR_ZINWELL, USB_PRODUCT_ZINWELL_RT2870_2, 
@@ -4695,73 +4697,73 @@ static const uint16_t usb_products[] = {
 	    USB_VENDOR_ZINWELL, USB_PRODUCT_ZINWELL_RT3070, 
 	    4951, 0,
 	    USB_VENDOR_ZOOM, USB_PRODUCT_ZOOM_2986L, 
-	    19490, 19496, 5794, 0,
+	    19474, 19480, 5794, 0,
 	    USB_VENDOR_ZOOM, USB_PRODUCT_ZOOM_3095, 
-	    19500, 4718, 19496, 5794, 0,
+	    19484, 4718, 19480, 5794, 0,
 	    USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF622, 
-	    19505, 5794, 0,
+	    19489, 5794, 0,
 	    USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF628, 
-	    19511, 5794, 0,
+	    19495, 5794, 0,
 	    USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF626, 
-	    19517, 5794, 0,
+	    19501, 5794, 0,
 	    USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF820D_INSTALLER, 
-	    19523, 11071, 0,
+	    19507, 11071, 0,
 	    USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF820D, 
-	    19523, 5794, 0,
+	    19507, 5794, 0,
 	    USB_VENDOR_ZTE, USB_PRODUCT_ZTE_INSTALLER, 
-	    19530, 11071, 0,
+	    19514, 11071, 0,
 	    USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MC2718, 
-	    19535, 5794, 0,
+	    19519, 5794, 0,
 	    USB_VENDOR_ZTE, USB_PRODUCT_ZTE_AC8700, 
-	    5622, 19542, 4718, 5794, 0,
+	    5622, 19526, 4718, 5794, 0,
 	    USB_VENDOR_ZYDAS, USB_PRODUCT_ZYDAS_ZD1201, 
-	    19549, 0,
+	    19533, 0,
 	    USB_VENDOR_ZYDAS, USB_PRODUCT_ZYDAS_ZD1211, 
-	    18296, 5158, 19556, 0,
+	    18296, 5158, 19540, 0,
 	    USB_VENDOR_ZYDAS, USB_PRODUCT_ZYDAS_ZD1211B, 
 	    5233, 0,
 	    USB_VENDOR_ZYDAS, USB_PRODUCT_ZYDAS_ZD1221, 
-	    19560, 0,
+	    19544, 0,
 	    USB_VENDOR_ZYDAS, USB_PRODUCT_ZYDAS_ALL0298, 
 	    18802, 0,
 	    USB_VENDOR_ZYDAS, USB_PRODUCT_ZYDAS_ZD1211B_2, 
 	    5233, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_OMNI56K, 
-	    19567, 18243, 10722, 0,
+	    19551, 18243, 10722, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_980N, 
 	    16034, 7681, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_ZYAIRG220, 
-	    18450, 19572, 0,
+	    18450, 19556, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_G200V2, 
-	    19578, 7302, 0,
+	    19562, 7302, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_AG225H, 
-	    19584, 0,
+	    19568, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_M202, 
-	    19592, 0,
+	    19576, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_G270S, 
-	    19598, 0,
+	    19582, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_G220V2, 
-	    19572, 7302, 0,
+	    19556, 7302, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_G202, 
-	    19605, 0,
+	    19589, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_RT2573, 
 	    5115, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_RT2870_1, 
 	    4944, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_NWD271N, 
-	    19611, 0,
+	    19595, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_NWD211AN, 
-	    19620, 0,
+	    19604, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_RT2870_2, 
 	    4944, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_NWD2105, 
-	    19630, 0,
+	    19614, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_RTL8192CU, 
 	    5065, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_RT3070, 
 	    4951, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_PRESTIGE, 
-	    19638, 0,
+	    19622, 0,
 };
 static const char usb_words[] = { "." 
 	    "Unknown\0" /* 4 refs @ 1 */
@@ -4996,7 +4998,7 @@ static const char usb_words[] = { "."
 	    "Chic\0" /* 1 refs @ 1745 */
 	    "Barco\0" /* 1 refs @ 1750 */
 	    "Display\0" /* 1 refs @ 1756 */
-	    "Bridge\0" /* 18 refs @ 1764 */
+	    "Bridge\0" /* 20 refs @ 1764 */
 	    "Information\0" /* 1 refs @ 1771 */
 	    "SMK\0" /* 1 refs @ 1783 */
 	    "Solid\0" /* 3 refs @ 1787 */
@@ -6983,7 +6985,7 @@ static const char usb_words[] = { "."
 	    "JY-DV9USB\0" /* 1 refs @ 16846 */
 	    "SCP-4900\0" /* 1 refs @ 16856 */
 	    "SL11R-IDE\0" /* 1 refs @ 16865 */
-	    "USB-Serial\0" /* 2 refs @ 16875 */
+	    "USB-Serial\0" /* 4 refs @ 16875 */
 	    "SeaPort+4\0" /* 4 refs @ 16886 */
 	    "NUB-8301\0" /* 1 refs @ 16896 */
 	    "SN1\0" /* 1 refs @ 16905 */
@@ -7305,73 +7307,72 @@ static const char usb_words[] = { "."
 	    "External\0" /* 1 refs @ 19127 */
 	    "HDD\0" /* 1 refs @ 19136 */
 	    "CH341/CH340\0" /* 1 refs @ 19140 */
-	    "CH341\0" /* 1 refs @ 19152 */
-	    "serial/parallel\0" /* 1 refs @ 19158 */
-	    "WNC-0600USB\0" /* 1 refs @ 19174 */
-	    "UR055G\0" /* 1 refs @ 19186 */
-	    "ORiNOCO\0" /* 1 refs @ 19193 */
-	    "802.11n\0" /* 1 refs @ 19201 */
-	    "IMAGING\0" /* 1 refs @ 19209 */
-	    "DEVICE\0" /* 1 refs @ 19217 */
-	    "UX256\0" /* 1 refs @ 19224 */
-	    "MU1000\0" /* 1 refs @ 19230 */
-	    "MU2000\0" /* 1 refs @ 19237 */
-	    "MU500\0" /* 1 refs @ 19244 */
-	    "UW500\0" /* 1 refs @ 19250 */
-	    "MOTIF6\0" /* 1 refs @ 19256 */
-	    "Workstation\0" /* 3 refs @ 19263 */
-	    "MOTIF7\0" /* 1 refs @ 19275 */
-	    "MOTIF8\0" /* 1 refs @ 19282 */
-	    "UX96\0" /* 1 refs @ 19289 */
-	    "UX16\0" /* 1 refs @ 19294 */
-	    "S08\0" /* 1 refs @ 19299 */
-	    "CLP-150\0" /* 1 refs @ 19303 */
-	    "piano\0" /* 2 refs @ 19311 */
-	    "CLP-170\0" /* 1 refs @ 19317 */
-	    "RP-U200\0" /* 1 refs @ 19325 */
-	    "NetVolante\0" /* 4 refs @ 19333 */
-	    "RTA54i\0" /* 1 refs @ 19344 */
-	    "Broadband&ISDN\0" /* 2 refs @ 19351 */
-	    "Router\0" /* 4 refs @ 19366 */
-	    "RTW65b\0" /* 1 refs @ 19373 */
-	    "Broadband\0" /* 2 refs @ 19380 */
-	    "RTW65i\0" /* 1 refs @ 19390 */
-	    "RTA55i\0" /* 1 refs @ 19397 */
-	    "VoIP\0" /* 1 refs @ 19404 */
-	    "U640MO-03\0" /* 1 refs @ 19409 */
-	    "Flashbuster-U\0" /* 1 refs @ 19419 */
-	    "M4Y-750\0" /* 1 refs @ 19433 */
-	    "725/726\0" /* 1 refs @ 19441 */
-	    "XI-735\0" /* 1 refs @ 19449 */
-	    "MD40900\0" /* 1 refs @ 19456 */
-	    "UB81\0" /* 1 refs @ 19464 */
-	    "UB82\0" /* 1 refs @ 19469 */
-	    "BT-500\0" /* 1 refs @ 19474 */
-	    "ZWX-G261\0" /* 1 refs @ 19481 */
-	    "2986L\0" /* 1 refs @ 19490 */
-	    "Fax\0" /* 2 refs @ 19496 */
-	    "3095\0" /* 1 refs @ 19500 */
-	    "MF622\0" /* 1 refs @ 19505 */
-	    "MF628\0" /* 1 refs @ 19511 */
-	    "MF626\0" /* 1 refs @ 19517 */
-	    "MF820D\0" /* 2 refs @ 19523 */
-	    "UMTS\0" /* 1 refs @ 19530 */
-	    "MC2718\0" /* 1 refs @ 19535 */
-	    "1xEVDO\0" /* 1 refs @ 19542 */
-	    "ZD1201\0" /* 1 refs @ 19549 */
-	    "abg\0" /* 1 refs @ 19556 */
-	    "ZD1221\0" /* 1 refs @ 19560 */
-	    "Omni\0" /* 1 refs @ 19567 */
-	    "G-220\0" /* 2 refs @ 19572 */
-	    "G-200\0" /* 1 refs @ 19578 */
-	    "AG-225H\0" /* 1 refs @ 19584 */
-	    "M-202\0" /* 1 refs @ 19592 */
-	    "G-270S\0" /* 1 refs @ 19598 */
-	    "G-202\0" /* 1 refs @ 19605 */
-	    "NWD-271N\0" /* 1 refs @ 19611 */
-	    "NWD-211AN\0" /* 1 refs @ 19620 */
-	    "NWD2105\0" /* 1 refs @ 19630 */
-	    "Prestige\0" /* 1 refs @ 19638 */
+	    "CH341\0" /* 2 refs @ 19152 */
+	    "WNC-0600USB\0" /* 1 refs @ 19158 */
+	    "UR055G\0" /* 1 refs @ 19170 */
+	    "ORiNOCO\0" /* 1 refs @ 19177 */
+	    "802.11n\0" /* 1 refs @ 19185 */
+	    "IMAGING\0" /* 1 refs @ 19193 */
+	    "DEVICE\0" /* 1 refs @ 19201 */
+	    "UX256\0" /* 1 refs @ 19208 */
+	    "MU1000\0" /* 1 refs @ 19214 */
+	    "MU2000\0" /* 1 refs @ 19221 */
+	    "MU500\0" /* 1 refs @ 19228 */
+	    "UW500\0" /* 1 refs @ 19234 */
+	    "MOTIF6\0" /* 1 refs @ 19240 */
+	    "Workstation\0" /* 3 refs @ 19247 */
+	    "MOTIF7\0" /* 1 refs @ 19259 */
+	    "MOTIF8\0" /* 1 refs @ 19266 */
+	    "UX96\0" /* 1 refs @ 19273 */
+	    "UX16\0" /* 1 refs @ 19278 */
+	    "S08\0" /* 1 refs @ 19283 */
+	    "CLP-150\0" /* 1 refs @ 19287 */
+	    "piano\0" /* 2 refs @ 19295 */
+	    "CLP-170\0" /* 1 refs @ 19301 */
+	    "RP-U200\0" /* 1 refs @ 19309 */
+	    "NetVolante\0" /* 4 refs @ 19317 */
+	    "RTA54i\0" /* 1 refs @ 19328 */
+	    "Broadband&ISDN\0" /* 2 refs @ 19335 */
+	    "Router\0" /* 4 refs @ 19350 */
+	    "RTW65b\0" /* 1 refs @ 19357 */
+	    "Broadband\0" /* 2 refs @ 19364 */
+	    "RTW65i\0" /* 1 refs @ 19374 */
+	    "RTA55i\0" /* 1 refs @ 19381 */
+	    "VoIP\0" /* 1 refs @ 19388 */
+	    "U640MO-03\0" /* 1 refs @ 19393 */
+	    "Flashbuster-U\0" /* 1 refs @ 19403 */
+	    "M4Y-750\0" /* 1 refs @ 19417 */
+	    "725/726\0" /* 1 refs @ 19425 */
+	    "XI-735\0" /* 1 refs @ 19433 */
+	    "MD40900\0" /* 1 refs @ 19440 */
+	    "UB81\0" /* 1 refs @ 19448 */
+	    "UB82\0" /* 1 refs @ 19453 */
+	    "BT-500\0" /* 1 refs @ 19458 */
+	    "ZWX-G261\0" /* 1 refs @ 19465 */
+	    "2986L\0" /* 1 refs @ 19474 */
+	    "Fax\0" /* 2 refs @ 19480 */
+	    "3095\0" /* 1 refs @ 19484 */
+	    "MF622\0" /* 1 refs @ 19489 */
+	    "MF628\0" /* 1 refs @ 19495 */
+	    "MF626\0" /* 1 refs @ 19501 */
+	    "MF820D\0" /* 2 refs @ 19507 */
+	    "UMTS\0" /* 1 refs @ 19514 */
+	    "MC2718\0" /* 1 refs @ 19519 */
+	    "1xEVDO\0" /* 1 refs @ 19526 */
+	    "ZD1201\0" /* 1 refs @ 19533 */
+	    "abg\0" /* 1 refs @ 19540 */
+	    "ZD1221\0" /* 1 refs @ 19544 */
+	    "Omni\0" /* 1 refs @ 19551 */
+	    "G-220\0" /* 2 refs @ 19556 */
+	    "G-200\0" /* 1 refs @ 19562 */
+	    "AG-225H\0" /* 1 refs @ 19568 */
+	    "M-202\0" /* 1 refs @ 19576 */
+	    "G-270S\0" /* 1 refs @ 19582 */
+	    "G-202\0" /* 1 refs @ 19589 */
+	    "NWD-271N\0" /* 1 refs @ 19595 */
+	    "NWD-211AN\0" /* 1 refs @ 19604 */
+	    "NWD2105\0" /* 1 refs @ 19614 */
+	    "Prestige\0" /* 1 refs @ 19622 */
 };
-const int usb_nwords = 2608;
+const int usb_nwords = 2607;
 
