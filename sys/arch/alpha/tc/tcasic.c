@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.44 2012/02/06 02:14:16 matt Exp $ */
+/* $NetBSD: tcasic.c,v 1.45 2016/12/12 17:03:40 flxd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.44 2012/02/06 02:14:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.45 2016/12/12 17:03:40 flxd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,6 @@ extern void	mfb_cnattach(tc_addr_t);
 extern void	tfb_cnattach(tc_addr_t);
 extern void	px_cnattach(tc_addr_t);
 extern void	pxg_cnattach(tc_addr_t);
-extern int	tc_checkslot(tc_addr_t, char *);
 
 struct cnboards {
 	const char	*cb_tcname;

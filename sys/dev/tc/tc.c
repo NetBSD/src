@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.53 2016/07/19 18:27:27 christos Exp $	*/
+/*	$NetBSD: tc.c,v 1.54 2016/12/12 17:03:41 flxd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.53 2016/07/19 18:27:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.54 2016/12/12 17:03:41 flxd Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -209,6 +209,17 @@ static const tc_offset_t tc_slot_romoffs[] = {
 static int
 tc_check_romp(const struct tc_rommap *romp)
 {
+
+	switch (romp->tcr_width.v) {
+	case 1:
+	case 2:
+	case 4:
+		break;
+
+	default:
+		return 0;
+	}
+
 	if (romp->tcr_stride.v != 4)
 		return 0;
 
@@ -231,16 +242,6 @@ tc_checkslot(tc_addr_t slotbase, char *namep)
 	for (i = 0; i < __arraycount(tc_slot_romoffs); i++) {
 		romp = (struct tc_rommap *)
 		    (slotbase + tc_slot_romoffs[i]);
-
-		switch (romp->tcr_width.v) {
-		case 1:
-		case 2:
-		case 4:
-			break;
-
-		default:
-			continue;
-		}
 
 		if (!tc_check_romp(romp))
 			continue;
