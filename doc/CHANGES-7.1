@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.127 2016/12/09 05:41:31 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.128 2016/12/12 08:08:33 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7215,4 +7215,136 @@ sys/edv/pci/pcidevs_data.h			regen
 
 	i82567V-3 is not ICH9 but ICH8.
 	[msaitoh, ticket #1300]
+
+sys/dev/mii/atphy.c				1.18
+sys/dev/mii/ihphy.c				1.10
+sys/dev/mii/ikphy.c				1.12
+sys/dev/mii/inphy.c				1.55
+sys/dev/mii/makphy.c				1.42
+
+	Set mii_mpd{oui,model,rev}. It's required to check
+	the values in wm(4) correctly.
+	[msaitoh, ticket #1301]
+
+sys/dev/pci/if_wm.c				1.390, 1.392-1.395, 1.397, 1.419-1.425, 1.427-1.428, 1.430-1.435, 1.437-1.453 via patch
+sys/dev/pci/if_wmreg.h				1.89-1.93 via patch
+sys/dev/pci/if_wmvar.h				1.31-1.32
+sys/dev/mii/mii.h				1.19-1.20
+sys/dev/mii/igphyreg.h				1.7-1.10
+sys/dev/mii/ikphyreg.h				1.3
+sys/dev/mii/inbmphyreg.h			1.4-1.9
+
+	Update wm(4) up to if_wm.c rev. 1.453 except MSI/MSI-X, multiqueue and
+	NET_MPSAFE:
+	- Add I219 support. It's not stable so it's disabled by default.
+	- wm_gate_hw_phy_config_ich8lan() is for younger than PCH2.
+	- Drop the host wakeup bit after resetting PHY on PCH and newer
+	  devices.
+	- Increase delay while toggling LANPHYPC
+	- Move call of wm_reset() in wm_attach() after setting PHY and NVM
+	  related flags because those flags are used in wm_reset().
+	- Use mutex for NVM access on ICH8 and newer devices. Same as FreeBSD.
+	- Rewrite PHY related lock stuff. Almost the same as FreeBSD.
+	  This change will fix a bug that PHY read/write fail on some cases.
+	- Increase delay in wm_phy_resetisblocked(). Same as FreeBSD.
+	- Use semaphore in wm_hv_phy_workaround_ich8lan() and
+	  wm_k1_gig_workaround_hv()
+	- Use wm_gii_mdic_readreg/writereg() in wm_access_phy_wakeup_reg_bm()
+	  because these functions are called with taking lock.
+	- 82567V_3 is BME1000_E_2(bm). Tested with Advantech AIMB-212 1st
+	  Ethernet port.
+	- Use wm_gmii_82544_{read,write}reg() on non-82567 ICH8, 9 and 10.
+	- Remove an 82578 workaround which was for PCH rev < 3. FreeBSD
+	  removed this workaround in r228386.
+	- Add an 82578 workaround which is for PHY rev < 2. From FreeBSD and
+	  Linux.
+	- Fix wm(4) input drop packet counter. WMREG_RNBC is incremented when
+	  there is no available buffers in host memory. However, ethernet
+	  controller can receive packets in such case if there is space in
+	  phy's FIFO. That is, ethernet controller drops packet only if there
+	  is no available buffers *and* there is no space in phy's FIFO. So,
+	  the number of dropped packets should be added WMREG_MPC only.
+	- Use MII_ADDRMASK.
+	- Define WMPHY_I217, WMPHY_VF and WMPHY_210.
+	- Use BME1000_PHY_PAGE_SELECT in wm_gmii_bm_{read,write}reg(). This
+	  change has no effect because GG82563_PHY_PAGE_SELECT and
+	  BME1000_PHY_PAGE_SELECT have the same value.
+	- Fix PHY access on  82567(ICH8 or ICH10), 82574 and 82583:
+	  - Use wm_gmii_bm_{read,write}reg() on 82574 and 82573.
+	  - Issue page select correctly on BM PHYs.
+	- Fix workaround which did dummy read BM_WUC register. This code was
+	  changed to drop BM_WUC_HOST_WU_BIT of BM_PROT_GEN_CFG register in
+	  FreeBSD r228386. The code was added rev. 1.149, but the location was
+	  not the best.
+	- wm_gmii_hv_{read/write}reg*(): USE PHY address 1 for some special
+	  registers.
+	- Add check code for an 82578 workaround. Not completed yet.
+	- wm_release_hw_control(): Remove extra line. No any effect.
+	- Add "10/100" into non-gigabit devices' name.
+	- Call wm_enable_wakeup() in wm_detach() and wm_suspend(). Now wake on
+	  lan works on Thinkpad X61(ICH8).
+	- Fix wm_access_phy_wakeup_reg_bm(). This change has no effect because
+	  this function is used for WUC register and our driver currenlty
+	  doesn't access to it.
+	- Call wm_enable_phy_wakeup() on PCH2 and newer, too. Now these devices
+	  can do WOL. Tested with Thinkpad X220(PCH2).
+	- Set CTRL_MEHE correctly (PCH_{LPT,SPT} only).
+	- Add three workarounds for PCH_{LPT,SPT}.
+	- Fix a bug that 8257[56], 82580, I35[04] and I21[01] didn't use
+	  wm_{get,release}_hw_control() correctly.
+	- Sync wm_smbustopci() with Linux and FreeBSD. This change effects PCH
+	  and newer devices.
+	- Move the location of wm_smbustopci() call.
+	- Fix flag check in wm_get_wakeup()
+	  - 8254[17]* and 8257[124] should not set WM_F_ARC_SUBSYS_VALID.
+	  - Add missing WM_T_82541_2 and WM_T_82547_2.
+	- Fix WOL related setting of the WUC register for other than PCH* in
+	  wm_enable_wakeup(). Tested with 82567V(ICH8) and 82583V.
+	- Use common MII_ADDRMASK.
+	- igphy(4): No binary change:
+	  - s/IGPPHY/IGPHY/
+	  - Fix the definition of PLHR_VALID_CHANNEL_*
+	  - Fix the definition of MSE_CHANNEL_*
+	  - Add MII_IGPHY_POWER_MGMT.
+	- Add some KASSERT.
+	- Add comment. Modify comment.
+	- Add debug code.
+	[msaitoh, ticket #1302]
+
+lib/libc/stdio/funopen.c			1.15
+
+	PR/51572: calling funopen on each printw call is a tad excessive,
+	but this is not a reason for funopen to leak. Always call the
+	close function since we are indirecting through our cookie and we
+	need to free it.
+	[mrg, ticket #1303]
+
+sys/kern/subr_xcall.c				1.19
+
+	Fix a race condition of low priority xcall.  PR kern/51632.
+	[ozaki-r, ticket #1306]
+
+lib/libterminfo/curterm.c			1.11-1.12
+lib/libterminfo/term.c				1.18-1.20
+lib/libterminfo/termcap.c			1.18-1.19
+lib/libterminfo/terminfo.3			1.13
+lib/libterminfo/tparm.c				1.16
+
+	libterminfo:
+	- fix ti_puts prototype (terminfo.3)
+	- PR/50092: Fix memory leak.
+	- PR/50092: Rin Okuyama: Fix memory leak.
+	- sprintf -> snprintf
+	- PR/50092: handle calling _ti_readterm with an existing
+	  initialized terminal
+	- always copy the area buffer, even when the length was the same
+	- if we are freeing cur_term, set it to NULL.
+	- preserve and free "last" properly.
+	- off-by-one in memcpy
+	[riastradh, ticket #1307]
+
+usr.sbin/mld6query/mld6.c			1.15
+
+	PR/51353: Patrick Mackey: mld6query "-r" option is not recognised
+	[riastradh, ticket #1308]
 
