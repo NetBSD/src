@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132.4.14 2016/12/12 13:15:39 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.4.15 2016/12/12 13:17:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.14 2016/12/12 13:15:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.15 2016/12/12 13:17:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -810,8 +810,6 @@ aue_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "missing endpoint\n");
 		return;
 	}
-
-
 
 	/* Reset the adapter. */
 	aue_reset(sc);
