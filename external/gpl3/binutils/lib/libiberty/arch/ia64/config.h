@@ -224,7 +224,7 @@
 #define HAVE_RINDEX 1
 
 /* Define to 1 if you have the `sbrk' function. */
-/* #undef HAVE_SBRK */
+#define HAVE_SBRK 1
 
 /* Define to 1 if you have the `setenv' function. */
 #define HAVE_SETENV 1
@@ -401,7 +401,7 @@
 #define HAVE_VASPRINTF 1
 
 /* Define to 1 if you have the `vfork' function. */
-/* #undef HAVE_VFORK */
+#define HAVE_VFORK 1
 
 /* Define to 1 if you have the <vfork.h> header file. */
 /* #undef HAVE_VFORK_H */
@@ -428,7 +428,7 @@
 #define HAVE_WORKING_FORK 1
 
 /* Define to 1 if `vfork' works. */
-/* #undef HAVE_WORKING_VFORK */
+#define HAVE_WORKING_VFORK 1
 
 /* Define to 1 if you have the `_doprnt' function. */
 /* #undef HAVE__DOPRNT */
@@ -567,4 +567,4 @@
 /* #undef uintptr_t */
 
 /* Define as `fork' if `vfork' does not work. */
-#define vfork fork
+/* #undef vfork */
