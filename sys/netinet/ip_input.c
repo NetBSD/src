@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.346 2016/12/08 06:25:43 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.347 2016/12/12 03:55:57 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.346 2016/12/08 06:25:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.347 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -335,7 +335,6 @@ ip_init(void)
 	ip_ids = ip_id_init();
 	ip_id = time_uptime & 0xfffff;
 
-	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 #ifdef GATEWAY
 	ipflow_init();
 #endif
