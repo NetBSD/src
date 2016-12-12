@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axenreg.h,v 1.1.12.2 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.1.12.3 2016/12/12 13:15:39 skrll Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
@@ -276,6 +276,8 @@ struct axen_softc {
 	uint16_t		axen_vendor;
 	uint16_t		axen_product;
 	uint16_t		axen_flags;
+	
+	struct if_percpuq	*axen_ipq;
 
 	int			axen_ed[AXEN_ENDPT_MAX];
 	struct usbd_pipe	*axen_ep[AXEN_ENDPT_MAX];
@@ -289,6 +291,9 @@ struct axen_softc {
 
 	struct usb_task		axen_tick_task;
 
+	kmutex_t		axen_lock;
+	kmutex_t		axen_txlock;
+	kmutex_t		axen_rxlock;
 	krwlock_t		axen_mii_lock;
 
 	int			axen_link;

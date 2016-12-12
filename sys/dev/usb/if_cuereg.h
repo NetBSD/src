@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.18.24.4 2016/03/20 08:42:19 skrll Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.18.24.5 2016/12/12 13:15:39 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -184,6 +184,12 @@ struct cue_softc {
 	int			cue_if_flags;
 	uint16_t		cue_rxfilt;
 	struct cue_cdata	cue_cdata;
+
+	kmutex_t		cue_lock;
+	kmutex_t		cue_txlock;
+	kmutex_t		cue_rxlock;
+
+	struct if_percpuq	*cue_ipq;
 
 	char			cue_dying;
 	char			cue_attached;

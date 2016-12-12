@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.3.6.12 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.3.6.13 2016/12/12 13:15:39 skrll Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.12 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.13 2016/12/12 13:15:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -93,7 +93,9 @@ CFATTACH_DECL_NEW(axen, sizeof(struct axen_softc),
 	axen_match, axen_attach, axen_detach, axen_activate);
 
 static int	axen_tx_list_init(struct axen_softc *);
+static void	axen_tx_list_free(struct axen_softc *);
 static int	axen_rx_list_init(struct axen_softc *);
+static void	axen_rx_list_free(struct axen_softc *);
 static struct mbuf *axen_newbuf(void);
 static int	axen_encap(struct axen_softc *, struct mbuf *, int);
 static void	axen_rxeof(struct usbd_xfer *, void *, usbd_status);
@@ -101,9 +103,13 @@ static void	axen_txeof(struct usbd_xfer *, void *, usbd_status);
 static void	axen_tick(void *);
 static void	axen_tick_task(void *);
 static void	axen_start(struct ifnet *);
+static void	axen_start_locked(struct ifnet *);
 static int	axen_ioctl(struct ifnet *, u_long, void *);
+static int	axen_ifflags_cb(struct ethercom *ec);
 static int	axen_init(struct ifnet *);
+static int	axen_init_locked(struct ifnet *);
 static void	axen_stop(struct ifnet *, int);
+static void	axen_stop_locked(struct ifnet *, int);
 static void	axen_watchdog(struct ifnet *);
 static int	axen_miibus_readreg(device_t, int, int);
 static void	axen_miibus_writereg(device_t, int, int, int);
@@ -654,7 +660,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 	char *devinfop;
 	const char *devname = device_xname(self);
 	struct ifnet *ifp;
-	int i, s;
+	int i;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -677,6 +683,10 @@ axen_attach(device_t parent, device_t self, void *aux)
 
 	rw_init(&sc->axen_mii_lock);
 	usb_init_task(&sc->axen_tick_task, axen_tick_task, sc, 0);
+
+	mutex_init(&sc->axen_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->axen_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mutex_init(&sc->axen_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
 
 	err = usbd_device2interface_handle(dev, AXEN_IFACE_IDX,&sc->axen_iface);
 	if (err) {
@@ -721,8 +731,6 @@ axen_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	s = splnet();
-
 	sc->axen_phyno = AXEN_PHY_ID;
 	DPRINTF(("%s: phyno %d\n", device_xname(self), sc->axen_phyno));
 
@@ -756,6 +764,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, devname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_extflags = IFEF_START_MPSAFE;
 	ifp->if_ioctl = axen_ioctl;
 	ifp->if_start = axen_start;
 	ifp->if_init = axen_init;
@@ -792,8 +801,11 @@ axen_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	/* Attach the interface. */
-	if_attach(ifp);
+	if_initialize(ifp);
+	sc->axen_ipq = if_percpuq_create(&sc->axen_ec.ec_if);
 	ether_ifattach(ifp, eaddr);
+	if_register(ifp);
+	ether_set_ifflags_cb(&sc->axen_ec, axen_ifflags_cb);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->axen_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
@@ -801,7 +813,6 @@ axen_attach(device_t parent, device_t self, void *aux)
 	callout_setfunc(&sc->axen_stat_ch, axen_tick, sc);
 
 	sc->axen_attached = true;
-	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->axen_udev,sc->axen_dev);
 
@@ -908,13 +919,12 @@ axen_newbuf(void)
 static int
 axen_rx_list_init(struct axen_softc *sc)
 {
-	struct axen_cdata *cd;
+	struct axen_cdata *cd = &sc->axen_cdata;
 	struct axen_chain *c;
 	int i;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->axen_dev), __func__));
 
-	cd = &sc->axen_cdata;
 	for (i = 0; i < AXEN_RX_LIST_CNT; i++) {
 		c = &cd->axen_rx_chain[i];
 		c->axen_sc = sc;
@@ -930,6 +940,17 @@ axen_rx_list_init(struct axen_softc *sc)
 	}
 
 	return 0;
+}
+
+static void
+axen_rx_list_free(struct axen_softc *sc)
+{
+	for (size_t i = 0; i < AXEN_RX_LIST_CNT; i++) {
+		if (sc->axen_cdata.axen_rx_chain[i].axen_xfer != NULL) {
+			usbd_destroy_xfer(sc->axen_cdata.axen_rx_chain[i].axen_xfer);
+			sc->axen_cdata.axen_rx_chain[i].axen_xfer = NULL;
+		}
+	}
 }
 
 static int
@@ -959,6 +980,17 @@ axen_tx_list_init(struct axen_softc *sc)
 	return 0;
 }
 
+static void
+axen_tx_list_free(struct axen_softc *sc)
+{
+	for (size_t i = 0; i < AXEN_TX_LIST_CNT; i++) {
+		if (sc->axen_cdata.axen_tx_chain[i].axen_xfer != NULL) {
+			usbd_destroy_xfer(sc->axen_cdata.axen_tx_chain[i].axen_xfer);
+			sc->axen_cdata.axen_tx_chain[i].axen_xfer = NULL;
+		}
+	}
+}
+
 /*
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
@@ -977,7 +1009,6 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	uint16_t hdr_offset, pkt_count;
 	size_t pkt_len;
 	size_t temp;
-	int s;
 
 	DPRINTFN(10,("%s: %s: enter\n", device_xname(sc->axen_dev), __func__));
 
@@ -1105,10 +1136,8 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		memcpy(mtod(m, char *), buf + 2, pkt_len - 6);
 
 		/* push the packet up */
-		s = splnet();
 		bpf_mtap(ifp, m);
-		if_percpuq_enqueue((ifp)->if_percpuq, (m));
-		splx(s);
+		if_percpuq_enqueue(sc->axen_ipq, (m));
 
 nextpkt:
 		/*
@@ -1278,6 +1307,17 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 static void
 axen_start(struct ifnet *ifp)
 {
+	struct axen_softc * const sc = ifp->if_softc;
+	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
+
+	mutex_enter(&sc->axen_txlock);
+	axen_start_locked(ifp);
+	mutex_exit(&sc->axen_txlock);
+}
+
+static void
+axen_start_locked(struct ifnet *ifp)
+{
 	struct axen_softc *sc;
 	struct mbuf *m;
 
@@ -1294,7 +1334,6 @@ axen_start(struct ifnet *ifp)
 		return;
 
 	if (axen_encap(sc, m, 0)) {
-		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
 	IFQ_DEQUEUE(&ifp->if_snd, m);
@@ -1318,17 +1357,26 @@ static int
 axen_init(struct ifnet *ifp)
 {
 	struct axen_softc *sc = ifp->if_softc;
+
+	mutex_enter(&sc->axen_lock);
+	int ret = axen_init_locked(ifp);
+	mutex_exit(&sc->axen_lock);
+
+	return ret;
+}
+
+static int
+axen_init_locked(struct ifnet *ifp)
+{
+	struct axen_softc *sc = ifp->if_softc;
 	struct axen_chain *c;
 	usbd_status err;
-	int i, s;
+	int i;
 	uint16_t rxmode;
 	uint16_t wval;
 	uint8_t bval;
 
-	s = splnet();
-
-	if (ifp->if_flags & IFF_RUNNING)
-		axen_stop(ifp, 0);
+	axen_stop_locked(ifp, 1);
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1359,8 +1407,7 @@ axen_init(struct ifnet *ifp)
 	if (err) {
 		aprint_error_dev(sc->axen_dev, "open rx pipe failed: %s\n",
 		    usbd_errstr(err));
-		splx(s);
-		return EIO;
+		goto fail;
 	}
 
 	err = usbd_open_pipe(sc->axen_iface, sc->axen_ed[AXEN_ENDPT_TX],
@@ -1368,22 +1415,19 @@ axen_init(struct ifnet *ifp)
 	if (err) {
 		aprint_error_dev(sc->axen_dev, "open tx pipe failed: %s\n",
 		    usbd_errstr(err));
-		splx(s);
-		return EIO;
+		goto fail1;
 	}
 
 	/* Init RX ring. */
 	if (axen_rx_list_init(sc)) {
 		aprint_error_dev(sc->axen_dev, "rx list init failed\n");
-		splx(s);
-		return ENOBUFS;
+		goto fail2;
 	}
 
 	/* Init TX ring. */
 	if (axen_tx_list_init(sc)) {
 		aprint_error_dev(sc->axen_dev, "tx list init failed\n");
-		splx(s);
-		return ENOBUFS;
+		goto fail3;
 	}
 
 	/* Start up the receive pipe. */
@@ -1398,56 +1442,52 @@ axen_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	splx(s);
-
 	callout_schedule(&sc->axen_stat_ch, hz);
 	return 0;
+
+fail3:
+	axen_rx_list_free(sc);
+fail2:
+	usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_TX]);
+fail1:
+	usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_RX]);
+fail:
+	return EIO;
 }
 
 static int
 axen_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct axen_softc *sc = ifp->if_softc;
 	int s;
 	int error = 0;
 
 	s = splnet();
-
-	switch (cmd) {
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-			break;
-
-		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
-		case IFF_RUNNING:
-			axen_stop(ifp, 1);
-			break;
-		case IFF_UP:
-			axen_init(ifp);
-			break;
-		case IFF_UP | IFF_RUNNING:
-			if ((ifp->if_flags ^ sc->axen_if_flags) == IFF_PROMISC)
-				axen_iff(sc);
-			else
-				axen_init(ifp);
-			break;
-		}
-		sc->axen_if_flags = ifp->if_flags;
-		break;
-
-	default:
-		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
-			break;
-
-		error = 0;
-
-		if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI)
-			axen_iff(sc);
-		break;
-	}
+	error = ether_ioctl(ifp, cmd, data);
 	splx(s);
 
 	return error;
+}
+
+static int
+axen_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct axen_softc *sc = ifp->if_softc;
+	int ret;
+
+	mutex_enter(&sc->axen_lock);
+
+	int change = ifp->if_flags ^ sc->axen_if_flags;
+	sc->axen_if_flags = ifp->if_flags;
+
+	if ((change & IFF_PROMISC) == 0) {
+		ret = ENETRESET;
+	} else {
+		axen_iff(sc);
+		ret = 0;
+	}
+	mutex_exit(&sc->axen_lock);
+	return ret;
 }
 
 static void
@@ -1480,11 +1520,20 @@ axen_watchdog(struct ifnet *ifp)
 static void
 axen_stop(struct ifnet *ifp, int disable)
 {
+	struct axen_softc * const sc = ifp->if_softc;
+
+	mutex_enter(&sc->axen_lock);
+	axen_stop_locked(ifp, disable);
+	mutex_exit(&sc->axen_lock);
+}
+
+static void
+axen_stop_locked(struct ifnet *ifp, int disable)
+{
 	struct axen_softc *sc = ifp->if_softc;
 	usbd_status err;
-	int i;
 
-	axen_reset(sc);
+//	axen_reset(sc);
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -1517,21 +1566,9 @@ axen_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	/* Free RX resources. */
-	for (i = 0; i < AXEN_RX_LIST_CNT; i++) {
-		if (sc->axen_cdata.axen_rx_chain[i].axen_xfer != NULL) {
-			usbd_destroy_xfer(sc->axen_cdata.axen_rx_chain[i].axen_xfer);
-			sc->axen_cdata.axen_rx_chain[i].axen_xfer = NULL;
-		}
-	}
+	axen_rx_list_free(sc);
 
-	/* Free TX resources. */
-	for (i = 0; i < AXEN_TX_LIST_CNT; i++) {
-		if (sc->axen_cdata.axen_tx_chain[i].axen_xfer != NULL) {
-			usbd_destroy_xfer(sc->axen_cdata.axen_tx_chain[i].axen_xfer);
-			sc->axen_cdata.axen_tx_chain[i].axen_xfer = NULL;
-		}
-	}
+	axen_tx_list_free(sc);
 
 	/* Close pipes. */
 	if (sc->axen_ep[AXEN_ENDPT_RX] != NULL) {
@@ -1562,6 +1599,9 @@ axen_stop(struct ifnet *ifp, int disable)
 	}
 
 	sc->axen_link = 0;
+
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 MODULE(MODULE_CLASS_DRIVER, if_axen, "bpf");
