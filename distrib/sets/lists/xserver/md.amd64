@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.73.4.3 2015/03/09 08:45:26 snj Exp $
+# $NetBSD: md.amd64,v 1.73.4.4 2016/12/12 09:32:35 msaitoh Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -367,6 +367,8 @@
 ./usr/X11R7/lib/modules/dri/mach64_dri.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/mga_dri.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/nouveau_dri.so		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/nouveau_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r128_dri.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/r128_dri.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/r200_dri.so			-unknown-	xorg
@@ -437,6 +439,8 @@
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/neomagic_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/neomagic_drv.so.1	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/nouveau_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/nouveau_drv.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/nsc_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/nsc_drv.so.2		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/nv_drv.so		-unknown-	xorg
@@ -625,6 +629,7 @@
 ./usr/X11R7/man/cat4/mga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mousedrv.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/neomagic.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/nouveau.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/nsc.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/nv.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/openchrome.0			-unknown-	.cat,xorg
@@ -670,6 +675,7 @@
 ./usr/X11R7/man/html4/mga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mousedrv.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/neomagic.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/nouveau.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/nsc.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/nv.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/openchrome.html			-unknown-	html,xorg
@@ -715,6 +721,7 @@
 ./usr/X11R7/man/man4/mga.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/neomagic.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/nouveau.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/nsc.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/nv.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/openchrome.4			-unknown-	.man,xorg

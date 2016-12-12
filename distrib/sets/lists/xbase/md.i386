@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.27 2013/08/11 22:29:03 joerg Exp $
+# $NetBSD: md.i386,v 1.27.4.1 2016/12/12 09:32:34 msaitoh Exp $
 ./usr/X11R7/lib/libI810XvMC.so			-unknown-		xorg
 ./usr/X11R7/lib/libI810XvMC.so.1		-unknown-		xorg
 ./usr/X11R7/lib/libI810XvMC.so.1.0		-unknown-		xorg
@@ -14,4 +14,7 @@
 ./usr/X11R7/lib/libdrm_intel.so			-unknown-		xorg
 ./usr/X11R7/lib/libdrm_intel.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libdrm_intel.so.0.0		-unknown-		xorg
+./usr/X11R7/lib/libdrm_nouveau.so		-unknown-		xorg
+./usr/X11R7/lib/libdrm_nouveau.so.2		-unknown-		xorg
+./usr/X11R7/lib/libdrm_nouveau.so.2.0		-unknown-		xorg
 ./usr/X11R7/share/pciids/pci.ids		-unknown-		obsolete

@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.38 2014/05/15 16:32:28 apb Exp $
+# $NetBSD: md.amd64,v 1.38.2.1 2016/12/12 09:32:34 msaitoh Exp $
 #./usr/libdata/lint/llib-lIntelXvMC.ln			-unknown-	lint,xorg
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
@@ -87,8 +87,13 @@
 ./usr/X11R7/lib/libdrm_intel.a				-unknown-	xorg
 ./usr/X11R7/lib/libdrm_intel_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libdrm_intel_pic.a			-unknown-	xorg,picinstall
+./usr/X11R7/lib/libdrm_nouveau.a			-unknown-	xorg
+./usr/X11R7/lib/libdrm_nouveau_p.a			-unknown-	profile,xorg
+./usr/X11R7/lib/libdrm_nouveau_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/pkgconfig/libdrm_intel.pc		-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/libdrm_nouveau.pc		-unknown-	xorg
 ./usr/libdata/lint/llib-lI810XvMC.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lchromeXvMC.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lchromeXvMCPro.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-ldrm_intel.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-ldrm_nouveau.ln			-unknown-	lint,xorg
