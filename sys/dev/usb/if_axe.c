@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.67.4.12 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.67.4.13 2016/12/12 13:15:39 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.12 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.13 2016/12/12 13:15:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -246,16 +246,23 @@ CFATTACH_DECL_NEW(axe, sizeof(struct axe_softc),
 	axe_match, axe_attach, axe_detach, axe_activate);
 
 static int	axe_tx_list_init(struct axe_softc *);
+#if 0
+static void	axe_tx_list_free(struct axe_softc *);
+#endif
 static int	axe_rx_list_init(struct axe_softc *);
+static void	axe_rx_list_free(struct axe_softc *);
 static int	axe_encap(struct axe_softc *, struct mbuf *, int);
 static void	axe_rxeof(struct usbd_xfer *, void *, usbd_status);
 static void	axe_txeof(struct usbd_xfer *, void *, usbd_status);
 static void	axe_tick(void *);
 static void	axe_tick_task(void *);
 static void	axe_start(struct ifnet *);
+static void	axe_start_locked(struct ifnet *);
 static int	axe_ioctl(struct ifnet *, u_long, void *);
 static int	axe_init(struct ifnet *);
+static int	axe_init_locked(struct ifnet *);
 static void	axe_stop(struct ifnet *, int);
+static void	axe_stop_locked(struct ifnet *, int);
 static void	axe_watchdog(struct ifnet *);
 static int	axe_miibus_readreg_locked(device_t, int, int);
 static int	axe_miibus_readreg(device_t, int, int);
@@ -741,6 +748,32 @@ axe_ax88772_init(struct axe_softc *sc)
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
 }
 
+static int
+axe_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct axe_softc *sc = ifp->if_softc;
+	int rc = 0;
+
+	mutex_enter(&sc->axe_lock);
+	int change = ifp->if_flags ^ sc->axe_if_flags;
+	sc->axe_if_flags = ifp->if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
+		rc = ENETRESET;
+		goto out;
+	}
+
+	if ((change & IFF_PROMISC) != 0) {
+		axe_setmulti(sc);
+	}
+
+out:
+	mutex_exit(&sc->axe_lock);
+
+	return rc;
+}
+
 static void
 axe_ax88772_phywake(struct axe_softc *sc)
 {
@@ -887,6 +920,9 @@ axe_attach(device_t parent, device_t self, void *aux)
 
 	sc->axe_flags = axe_lookup(uaa->uaa_vendor, uaa->uaa_product)->axe_flags;
 
+	mutex_init(&sc->axe_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->axe_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mutex_init(&sc->axe_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&sc->axe_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc, 0);
 
@@ -990,6 +1026,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	strncpy(ifp->if_xname, devname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_extflags = IFEF_START_MPSAFE;
 	ifp->if_ioctl = axe_ioctl;
 	ifp->if_start = axe_start;
 	ifp->if_init = axe_init;
@@ -1043,8 +1080,12 @@ axe_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
 	/* Attach the interface. */
-	if_attach(ifp);
+	if_initialize(ifp);
+	sc->axe_ipq = if_percpuq_create(&sc->axe_ec.ec_if);
 	ether_ifattach(ifp, sc->axe_enaddr);
+	if_register(ifp);
+	ether_set_ifflags_cb(&sc->axe_ec, axe_ifflags_cb);
+
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->axe_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
@@ -1101,6 +1142,9 @@ axe_detach(device_t self, int flags)
 	}
 
 	callout_destroy(&sc->axe_stat_ch);
+	mutex_destroy(&sc->axe_lock);
+	mutex_destroy(&sc->axe_txlock);
+	mutex_destroy(&sc->axe_rxlock);
 	mutex_destroy(&sc->axe_mii_lock);
 	rnd_detach_source(&sc->rnd_source);
 	mii_detach(&sc->axe_mii, MII_PHY_ANY, MII_OFFSET_ANY);
@@ -1166,6 +1210,18 @@ axe_rx_list_init(struct axe_softc *sc)
 	return 0;
 }
 
+static void
+axe_rx_list_free(struct axe_softc *sc)
+{
+	/* Free RX resources */
+	for (size_t i = 0; i < AXE_RX_LIST_CNT; i++) {
+		if (sc->axe_cdata.axe_rx_chain[i].axe_xfer != NULL) {
+			usbd_destroy_xfer(sc->axe_cdata.axe_rx_chain[i].axe_xfer);
+			sc->axe_cdata.axe_rx_chain[i].axe_xfer = NULL;
+		}
+	}
+}
+
 static int
 axe_tx_list_init(struct axe_softc *sc)
 {
@@ -1192,6 +1248,18 @@ axe_tx_list_init(struct axe_softc *sc)
 	return 0;
 }
 
+static void
+axe_tx_list_free(struct axe_softc *sc)
+{
+	/* Free TX resources */
+	for (size_t i = 0; i < AXE_TX_LIST_CNT; i++) {
+		if (sc->axe_cdata.axe_tx_chain[i].axe_xfer != NULL) {
+			usbd_destroy_xfer(sc->axe_cdata.axe_tx_chain[i].axe_xfer);
+			sc->axe_cdata.axe_tx_chain[i].axe_xfer = NULL;
+		}
+	}
+}
+
 /*
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
@@ -1206,7 +1274,6 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	uint8_t *buf;
 	uint32_t total_len;
 	struct mbuf *m;
-	int s;
 
 	c = (struct axe_chain *)priv;
 	sc = c->axe_sc;
@@ -1374,13 +1441,9 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 
 		DPRINTFN(10, "deliver %d (%#x)", m->m_len, m->m_len, 0, 0);
 
-		s = splnet();
-
 		bpf_mtap(ifp, m);
 
-		if_percpuq_enqueue((ifp)->if_percpuq, (m));
-
-		splx(s);
+		if_percpuq_enqueue(sc->axe_ipq, (m));
 
 	} while (total_len > 0);
 
@@ -1587,10 +1650,18 @@ axe_csum_cfg(struct axe_softc *sc)
 static void
 axe_start(struct ifnet *ifp)
 {
-	struct axe_softc *sc;
-	struct mbuf *m;
+	struct axe_softc *sc = ifp->if_softc;
 
-	sc = ifp->if_softc;
+	mutex_enter(&sc->axe_txlock);
+	axe_start_locked(ifp);
+	mutex_exit(&sc->axe_txlock);
+}
+
+static void
+axe_start_locked(struct ifnet *ifp)
+{
+	struct axe_softc *sc = ifp->if_softc;
+	struct mbuf *m;
 
 	if ((ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING)
 		return;
@@ -1601,7 +1672,6 @@ axe_start(struct ifnet *ifp)
 	}
 
 	if (axe_encap(sc, m, 0)) {
-		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
 	IFQ_DEQUEUE(&ifp->if_snd, m);
@@ -1626,17 +1696,25 @@ axe_start(struct ifnet *ifp)
 static int
 axe_init(struct ifnet *ifp)
 {
+	struct axe_softc *sc = ifp->if_softc;
+
+	mutex_enter(&sc->axe_lock);
+	int ret = axe_init_locked(ifp);
+	mutex_exit(&sc->axe_lock);
+
+	return ret;
+}
+
+static int
+axe_init_locked(struct ifnet *ifp)
+{
 	AXEHIST_FUNC(); AXEHIST_CALLED();
 	struct axe_softc *sc = ifp->if_softc;
-	struct axe_chain *c;
 	usbd_status err;
 	int rxmode;
-	int i, s;
+	int i, error;
 
-	s = splnet();
-
-	if (ifp->if_flags & IFF_RUNNING)
-		axe_stop(ifp, 0);
+	axe_stop_locked(ifp, 0);
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1735,8 +1813,8 @@ axe_init(struct ifnet *ifp)
 	if (err) {
 		aprint_error_dev(sc->axe_dev, "open rx pipe failed: %s\n",
 		    usbd_errstr(err));
-		splx(s);
-		return EIO;
+		error = EIO;
+		goto fail;
 	}
 
 	err = usbd_open_pipe(sc->axe_iface, sc->axe_ed[AXE_ENDPT_TX],
@@ -1744,27 +1822,27 @@ axe_init(struct ifnet *ifp)
 	if (err) {
 		aprint_error_dev(sc->axe_dev, "open tx pipe failed: %s\n",
 		    usbd_errstr(err));
-		splx(s);
-		return EIO;
+		error = EIO;
+		goto fail1;
 	}
 
 	/* Init RX ring. */
 	if (axe_rx_list_init(sc) != 0) {
 		aprint_error_dev(sc->axe_dev, "rx list init failed\n");
-		splx(s);
-		return ENOBUFS;
+		error = ENOBUFS;
+		goto fail2;
 	}
 
 	/* Init TX ring. */
 	if (axe_tx_list_init(sc) != 0) {
 		aprint_error_dev(sc->axe_dev, "tx list init failed\n");
-		splx(s);
-		return ENOBUFS;
+		error = ENOBUFS;
+		goto fail3;
 	}
 
 	/* Start up the receive pipe. */
 	for (i = 0; i < AXE_RX_LIST_CNT; i++) {
-		c = &sc->axe_cdata.axe_rx_chain[i];
+		struct axe_chain *c = &sc->axe_cdata.axe_rx_chain[i];
 		usbd_setup_xfer(c->axe_xfer, c, c->axe_buf, sc->axe_bufsz,
 		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, axe_rxeof);
 		usbd_transfer(c->axe_xfer);
@@ -1773,10 +1851,17 @@ axe_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	splx(s);
-
 	callout_schedule(&sc->axe_stat_ch, hz);
+
 	return 0;
+fail3:
+	axe_rx_list_free(sc);
+fail2:
+	usbd_close_pipe(sc->axe_ep[AXE_ENDPT_TX]);
+fail1:
+	usbd_close_pipe(sc->axe_ep[AXE_ENDPT_RX]);
+fail:
+	return error;
 }
 
 static int
@@ -1787,40 +1872,19 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int error = 0;
 
 	s = splnet();
-
-	switch(cmd) {
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-			break;
-
-		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
-		case IFF_RUNNING:
-			axe_stop(ifp, 1);
-			break;
-		case IFF_UP:
-			axe_init(ifp);
-			break;
-		case IFF_UP | IFF_RUNNING:
-			if ((ifp->if_flags ^ sc->axe_if_flags) == IFF_PROMISC)
-				axe_setmulti(sc);
-			else
-				axe_init(ifp);
-			break;
-		}
-		sc->axe_if_flags = ifp->if_flags;
-		break;
-
-	default:
-		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
-			break;
-
-		error = 0;
-
-		if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI)
-			axe_setmulti(sc);
-
-	}
+	error = ether_ioctl(ifp, cmd, data);
 	splx(s);
+
+	if (error == ENETRESET) {
+		error = 0;
+		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
+			mutex_enter(&sc->axe_lock);
+			axe_setmulti(sc);
+			mutex_exit(&sc->axe_lock);
+		}
+	}
 
 	return error;
 }
@@ -1852,12 +1916,22 @@ axe_watchdog(struct ifnet *ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
+
 static void
 axe_stop(struct ifnet *ifp, int disable)
 {
 	struct axe_softc *sc = ifp->if_softc;
+
+	mutex_enter(&sc->axe_lock);
+	axe_stop_locked(ifp, disable);
+	mutex_exit(&sc->axe_lock);
+}
+
+static void
+axe_stop_locked(struct ifnet *ifp, int disable)
+{
+	struct axe_softc *sc = ifp->if_softc;
 	usbd_status err;
-	int i;
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -1891,21 +1965,9 @@ axe_stop(struct ifnet *ifp, int disable)
 
 	axe_reset(sc);
 
-	/* Free RX resources. */
-	for (i = 0; i < AXE_RX_LIST_CNT; i++) {
-		if (sc->axe_cdata.axe_rx_chain[i].axe_xfer != NULL) {
-			usbd_destroy_xfer(sc->axe_cdata.axe_rx_chain[i].axe_xfer);
-			sc->axe_cdata.axe_rx_chain[i].axe_xfer = NULL;
-		}
-	}
+	axe_rx_list_free(sc);
 
-	/* Free TX resources. */
-	for (i = 0; i < AXE_TX_LIST_CNT; i++) {
-		if (sc->axe_cdata.axe_tx_chain[i].axe_xfer != NULL) {
-			usbd_destroy_xfer(sc->axe_cdata.axe_tx_chain[i].axe_xfer);
-			sc->axe_cdata.axe_tx_chain[i].axe_xfer = NULL;
-		}
-	}
+	axe_tx_list_free(sc);
 
 	/* Close pipes. */
 	if (sc->axe_ep[AXE_ENDPT_RX] != NULL) {
