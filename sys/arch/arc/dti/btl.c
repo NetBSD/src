@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.26 2014/10/18 08:33:24 snj Exp $	*/
+/*	$NetBSD: btl.c,v 1.27 2016/12/12 15:58:44 maya Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.26 2014/10/18 08:33:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.27 2016/12/12 15:58:44 maya Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -515,7 +515,7 @@ btintr(void *arg)
 #endif /* BTDEBUG */
 
 	/*
-	 * First acknowlege the interrupt, Then if it's not telling about
+	 * First acknowledge the interrupt, Then if it's not telling about
 	 * a completed operation just return.
 	 */
 	sts = isa_inb(iobase + BT_INTR_PORT);

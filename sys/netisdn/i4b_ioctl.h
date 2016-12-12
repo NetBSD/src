@@ -27,7 +27,7 @@
  *	i4b_ioctl.h - messages kernel <--> userland
  *	-------------------------------------------
  *
- *	$Id: i4b_ioctl.h,v 1.13 2015/09/06 06:01:01 dholland Exp $
+ *	$Id: i4b_ioctl.h,v 1.14 2016/12/12 15:58:45 maya Exp $
  *
  * $FreeBSD$
  *
@@ -348,7 +348,7 @@ typedef struct {
 
 /*---------------------------------------------------------------------------*
  *	call proceeding indication
- *		indicates outgoing SETUP has been acknowleged
+ *		indicates outgoing SETUP has been acknowledged
  *---------------------------------------------------------------------------*/
 typedef struct {
 	msg_hdr_t	header;		/* common header		   */
