@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bus_dma.c,v 1.1 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: ttm_bus_dma.c,v 1.1.4.1 2016/12/12 09:13:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.1 2014/07/16 20:59:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.1.4.1 2016/12/12 09:13:41 msaitoh Exp $");
 
 #include <sys/bus.h>
 
@@ -40,17 +40,41 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.1 2014/07/16 20:59:58 riastradh Ex
 #include <ttm/ttm_bo_driver.h>
 #include <ttm/ttm_page_alloc.h>
 
+/*
+ * ttm_bus_dma_populate(ttm_dma)
+ *
+ *	If ttm_dma is not already populated, wire its pages and load
+ *	its DMA map.  The wiring and loading are stable as long as the
+ *	associated bo is reserved.
+ *
+ *	Transitions from tt_unpopulated or tt_unbound to tt_unbound.
+ *	Marks as wired, a.k.a. !swapped.
+ */
 int
 ttm_bus_dma_populate(struct ttm_dma_tt *ttm_dma)
 {
 	int ret;
 
-	/* If it's already populated, nothing to do.  */
-	if (ttm_dma->ttm.state != tt_unpopulated)
-		return 0;
+	KASSERT(ttm_dma->ttm.state != tt_bound);
 
-	/* Wire the pages, allocating them if necessary.  */
-	ret = ttm_tt_swapin(&ttm_dma->ttm);
+	/* Check the current state.  */
+	if (ttm_dma->ttm.state == tt_unbound) {
+		/*
+		 * If it's populated, then if the pages are wired and
+		 * loaded already, nothing to do.
+		 */
+		if (!ISSET(ttm_dma->ttm.page_flags, TTM_PAGE_FLAG_SWAPPED))
+			return 0;
+	} else if (ttm_dma->ttm.state == tt_unpopulated) {
+		/* If it's unpopulated, it can't be swapped.  */
+		KASSERT(!ISSET(ttm_dma->ttm.page_flags,
+			TTM_PAGE_FLAG_SWAPPED));
+		/* Pretend it is now, for the sake of ttm_tt_wire.  */
+		ttm_dma->ttm.page_flags |= TTM_PAGE_FLAG_SWAPPED;
+	}
+
+	/* Wire the uvm pages and fill the ttm page array.  */
+	ret = ttm_tt_wire(&ttm_dma->ttm);
 	if (ret)
 		goto fail0;
 
@@ -62,34 +86,86 @@ ttm_bus_dma_populate(struct ttm_dma_tt *ttm_dma)
 	if (ret)
 		goto fail1;
 
-	/* Success!  */
+	/* Mark it wired.  */
+	ttm_dma->ttm.page_flags &= ~TTM_PAGE_FLAG_SWAPPED;
+
+	/* Mark it populated but unbound.  */
 	ttm_dma->ttm.state = tt_unbound;
+
+	/* Success!  */
 	return 0;
 
 fail2: __unused
 	bus_dmamap_unload(ttm_dma->ttm.bdev->dmat, ttm_dma->dma_address);
-fail1:	ttm_tt_swapout(&ttm_dma->ttm, NULL);
+fail1:	ttm_tt_unwire(&ttm_dma->ttm);
 fail0:	KASSERT(ret);
 	return ret;
 }
 
-void
-ttm_bus_dma_unpopulate(struct ttm_dma_tt *ttm_dma)
+static void
+ttm_bus_dma_put(struct ttm_dma_tt *ttm_dma, int flags)
 {
 	struct uvm_object *const uobj = ttm_dma->ttm.swap_storage;
 	const size_t size = (ttm_dma->ttm.num_pages << PAGE_SHIFT);
 
-	/* Unload the DMA map.  */
-	bus_dmamap_unload(ttm_dma->ttm.bdev->dmat, ttm_dma->dma_address);
+	/*
+	 * Can't be tt_bound -- still in use and needs to be removed
+	 * from GPU page tables.  Can't be tt_unpopulated -- if it
+	 * were, why are you hnadling this?  Hence tt_unbound.
+	 */
+	KASSERTMSG((ttm_dma->ttm.state == tt_unbound),
+	    "ttm_tt %p in invalid state for unpopulate/swapout: %d",
+	    &ttm_dma->ttm, (int)ttm_dma->ttm.state);
 
-	/* Unwire the pages.  */
-	ttm_tt_swapout(&ttm_dma->ttm, NULL);
+	/* If pages are wired and loaded, unload and unwire them.  */
+	if (!ISSET(ttm_dma->ttm.page_flags, TTM_PAGE_FLAG_SWAPPED)) {
+		bus_dmamap_unload(ttm_dma->ttm.bdev->dmat,
+		    ttm_dma->dma_address);
+		ttm_tt_unwire(&ttm_dma->ttm);
+		ttm_dma->ttm.page_flags |= TTM_PAGE_FLAG_SWAPPED;
+	}
 
 	/* We are using uvm_aobj, which had better have a pgo_put.  */
 	KASSERT(uobj->pgops->pgo_put);
 
-	/* Release the pages.  */
+	/* Release or deactivate the pages.  */
 	mutex_enter(uobj->vmobjlock);
-	(void)(*uobj->pgops->pgo_put)(uobj, 0, size, PGO_CLEANIT|PGO_FREE);
+	(void)(*uobj->pgops->pgo_put)(uobj, 0, size, flags);
 	/* pgo_put unlocks uobj->vmobjlock.  */
+
+	/* Mark it unpopulated.  */
+	ttm_dma->ttm.state = tt_unpopulated;
+}
+
+/*
+ * ttmm_bus_dma_unpopulate(ttm_dma)
+ *
+ *	Unload any DMA map, unwire any pages, and release any pages
+ *	associated with ttm_dma.
+ *
+ *	Transitions from tt_unbound to tt_unpopulated.  Marks as
+ *	unwired, a.k.a. swapped.
+ */
+void
+ttm_bus_dma_unpopulate(struct ttm_dma_tt *ttm_dma)
+{
+
+	ttm_bus_dma_put(ttm_dma, PGO_CLEANIT|PGO_FREE);
+}
+
+/*
+ * ttm_bus_dma_swapout(ttm_dma)
+ *
+ *	Unload any DMA map, unwire any pages, and deactivate any pages
+ *	associated with ttm_dma so that they can be swapped out, but
+ *	don't release them.
+ *
+ *	Transitions from tt_unbound to tt_unpopulated.  Marks as
+ *	unwired, a.k.a. swapped.
+ */
+void
+ttm_bus_dma_swapout(struct ttm_dma_tt *ttm_dma)
+{
+
+	ttm_bus_dma_put(ttm_dma, PGO_DEACTIVATE);
 }

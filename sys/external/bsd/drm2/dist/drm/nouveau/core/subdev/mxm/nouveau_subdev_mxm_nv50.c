@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_mxm_nv50.c,v 1.1.1.1.4.1 2015/03/06 21:39:09 snj Exp $	*/
+/*	$NetBSD: nouveau_subdev_mxm_nv50.c,v 1.1.1.1.4.2 2016/12/12 09:13:42 msaitoh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mxm_nv50.c,v 1.1.1.1.4.1 2015/03/06 21:39:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mxm_nv50.c,v 1.1.1.1.4.2 2016/12/12 09:13:42 msaitoh Exp $");
 
 #include <subdev/mxm.h>
 #include <subdev/bios.h>
@@ -170,6 +170,7 @@ mxm_dcb_sanitise_entry(struct nouveau_bios *bios, void *data, int idx, u16 pdcb)
 		break;
 	case 0x0e: /* eDP, falls through to DPint */
 		ctx.outp[1] |= 0x00010000;
+		/*FALLTHROUGH*/
 	case 0x07: /* DP internal, wtf is this?? HP8670w */
 		ctx.outp[1] |= 0x00000004; /* use_power_scripts? */
 		type = DCB_CONNECTOR_eDP;
