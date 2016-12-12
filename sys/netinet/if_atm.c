@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.38 2016/04/28 00:16:56 ozaki-r Exp $       */
+/*      $NetBSD: if_atm.c,v 1.39 2016/12/12 03:55:57 ozaki-r Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.38 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.39 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -219,7 +219,7 @@ atmresolve(const struct rtentry *rt0, struct mbuf *m, const struct sockaddr *dst
 		if ((rt->rt_flags & RTF_GATEWAY) != 0 ||
 		    /* XXX: are we using LLINFO? */
 		    rt->rt_gateway->sa_family != AF_LINK) {
-			rtfree(rt);
+			rt_unref(rt);
 			goto bad;
 		}
 	}
@@ -241,12 +241,12 @@ atmresolve(const struct rtentry *rt0, struct mbuf *m, const struct sockaddr *dst
 	if (sdl->sdl_family == AF_LINK && sdl->sdl_alen == sizeof(*desten)) {
 		memcpy(desten, CLLADDR(sdl), sdl->sdl_alen);
 		if (rt != NULL)
-			rtfree(rt);
+			rt_unref(rt);
 		return (1);	/* ok, go for it! */
 	}
 
 	if (rt != NULL)
-		rtfree(rt);
+		rt_unref(rt);
 
 	/*
 	 * we got an entry, but it doesn't have valid link address
