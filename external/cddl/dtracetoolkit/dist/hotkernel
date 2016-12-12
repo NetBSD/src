@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/pkg/bin/perl -w
 #
 # hotkernel - sample on-CPU kernel-level functions and modules.
 #             Written using Perl and DTrace (Solaris 10 03/05)
@@ -9,7 +9,7 @@
 # the hottest. See Notes/ALLexclusive_notes.txt for an explanation of
 # exclusive time.
 #
-# $Id: hotkernel,v 1.1.1.1 2015/09/30 22:01:06 christos Exp $
+# $Id: hotkernel,v 1.2 2016/12/12 16:30:03 christos Exp $
 #
 # USAGE:        hotkernel [-hm]
 #

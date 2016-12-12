@@ -1,4 +1,4 @@
-#!/usr/bin/ksh
+#!/bin/ksh
 #
 # rwtop - display top read/write bytes by process.
 #         Written using DTrace (Solaris 10 3/05).
@@ -6,7 +6,7 @@
 # This is measuring reads and writes at the application level. This matches
 # read and write system calls.
 #
-# $Id: rwtop,v 1.1.1.1 2015/09/30 22:01:06 christos Exp $
+# $Id: rwtop,v 1.2 2016/12/12 16:30:03 christos Exp $
 #
 # USAGE:	rwtop [-cC] [-j|-Z] [-n name] [-p pid]
 #		      [-t top] [interval [count]]
