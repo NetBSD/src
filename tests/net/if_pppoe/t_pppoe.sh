@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.14 2016/12/02 06:19:50 knakahara Exp $
+#	$NetBSD: t_pppoe.sh,v 1.15 2016/12/12 09:56:58 knakahara Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -114,8 +114,14 @@ wait_for_disconnected()
 	local n=$WAITTIME
 
 	for i in $(seq $n); do
-		$HIJACKING pppoectl -d pppoe0 | grep -q "state = session"
-		[ $? -eq 0 ] || return
+		$HIJACKING pppoectl -d pppoe0 | grep -q "state = initial"
+		[ $? = 0 ] && return
+		# If PPPoE client is disconnected by PPPoE server and then
+		# the client kicks callout of pppoe_timeout(), the client
+		# state is changed to PPPOE_STATE_PADI_SENT while padi retrying.
+		$HIJACKING pppoectl -d pppoe0 | grep -q "state = PADI sent"
+		[ $? = 0 ] && return
+
 		sleep 1
 	done
 
