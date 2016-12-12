@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.25.24.3 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.25.24.4 2016/12/12 13:15:39 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -233,7 +233,6 @@ struct aue_softc {
 	krndsource_t	rnd_source;
 	struct lwp		*aue_thread;
 	int			aue_closing;
-	kcondvar_t		aue_domc;
 	kcondvar_t		aue_closemc;
 	kmutex_t		aue_mcmtx;
 #define GET_IFP(sc) (&(sc)->aue_ec.ec_if)
@@ -264,6 +263,11 @@ struct aue_softc {
 	struct usb_task		aue_stop_task;
 
 	kmutex_t		aue_mii_lock;
+	kmutex_t		aue_lock;
+	kmutex_t		aue_txlock;
+	kmutex_t		aue_rxlock;
+
+	struct if_percpuq	*aue_ipq;
 };
 
 #define AUE_TIMEOUT		1000
