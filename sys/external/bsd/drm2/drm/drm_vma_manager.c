@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vma_manager.c,v 1.1.4.3 2016/12/03 12:24:50 martin Exp $	*/
+/*	$NetBSD: drm_vma_manager.c,v 1.1.4.4 2016/12/12 09:13:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vma_manager.c,v 1.1.4.3 2016/12/03 12:24:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vma_manager.c,v 1.1.4.4 2016/12/12 09:13:43 msaitoh Exp $");
 
 #include <sys/kmem.h>
 #include <sys/rbtree.h>
@@ -120,6 +120,8 @@ drm_vma_offset_manager_destroy(struct drm_vma_offset_manager *mgr)
 {
 
 	vmem_destroy(mgr->vom_vmem);
+	KASSERTMSG((RB_TREE_MIN(&mgr->vom_nodes) == NULL),
+	    "drm vma offset manager %p not empty", mgr);
 #if 0
 	rb_tree_destroy(&mgr->vom_nodes);
 #endif
@@ -143,6 +145,8 @@ void
 drm_vma_node_destroy(struct drm_vma_offset_node *node)
 {
 
+	KASSERTMSG((RB_TREE_MIN(&node->von_files) == NULL),
+	    "drm vma node %p not empty", node);
 #if 0
 	rb_tree_destroy(&node->von_files);
 #endif

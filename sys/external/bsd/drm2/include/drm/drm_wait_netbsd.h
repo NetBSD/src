@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.4.2.4 2015/04/23 07:31:17 snj Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.4.2.5 2016/12/12 09:13:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,9 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/condvar.h>
-#if DIAGNOSTIC
 #include <sys/cpu.h>		/* cpu_intr_p */
-#endif
 #include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/systm.h>
