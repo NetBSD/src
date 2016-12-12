@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.43 2011/08/29 11:07:38 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.44 2016/12/12 04:20:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.43 2011/08/29 11:07:38 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.44 2016/12/12 04:20:31 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -510,8 +510,9 @@ qiflush(void)
 }
 #endif	/* _CURSES_USE_MACROS */
 
+/*ARGSUSED*/
 int
-intrflush(WINDOW *win, bool bf)	/*ARGSUSED*/
+intrflush(WINDOW *win, bool bf)
 {
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
