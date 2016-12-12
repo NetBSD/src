@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.19.2.4 2016/02/26 22:08:17 snj Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.19.2.5 2016/12/12 07:18:29 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -149,6 +149,7 @@ typedef enum {
 	WM_T_PCH,			/* PCH (Platform Controller Hub) LAN */
 	WM_T_PCH2,			/* PCH2 LAN */
 	WM_T_PCH_LPT,			/* PCH "Lynx Point" LAN (I217, I218) */
+	WM_T_PCH_SPT,			/* PCH "Sunrise Point" LAN (I219) */
 } wm_chip_type;
 
 typedef enum {
@@ -164,7 +165,10 @@ typedef enum {
 	WMPHY_82577,
 	WMPHY_82578,
 	WMPHY_82579,
-	WMPHY_82580
+	WMPHY_I217,
+	WMPHY_82580,
+	WMPHY_VF,
+	WMPHY_210
 } wm_phy_type;
 
 
