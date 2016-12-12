@@ -1,4 +1,4 @@
-#!/usr/bin/ksh
+#!/bin/ksh
 #
 # dexplorer - DTrace system explorer, runs a collection of scripts.
 #             Written using DTrace (Solaris 10 3/05).
@@ -7,7 +7,7 @@
 # many areas of the system, and places the output in a meaningful directory
 # structure that is tar'd and gzip'd.
 #
-# $Id: dexplorer,v 1.1.1.1 2015/09/30 22:01:06 christos Exp $
+# $Id: dexplorer,v 1.2 2016/12/12 16:30:03 christos Exp $
 #
 # USAGE:	dexplorer [-yDT] [-d outputdir] [-i interval]
 #
@@ -64,7 +64,7 @@ tar=1					# create tar file
 delete=1				# delete output dirs
 dtrace=/usr/sbin/dtrace			# path to dtrace
 root=.					# default output dir
-PATH=/usr/bin:/usr/sbin			# safe path
+PATH=/bin:/sbin:/usr/bin:/usr/sbin		# safe path
 dir=de_`uname -n`_`date +%Y%m%d%H%M`	# OUTPUT FILENAME
 samples=20				# max number of tests
 current=0				# current sample
