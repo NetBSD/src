@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.123 2016/12/11 07:38:50 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.124 2016/12/12 03:13:14 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.123 2016/12/11 07:38:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.124 2016/12/12 03:13:14 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,7 @@ nd6_defrouter_lookup(const struct in6_addr *addr, struct ifnet *ifp)
 {
 	struct nd_defrouter *dr;
 
-	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
+	ND_DEFROUTER_LIST_FOREACH(dr) {
 		if (dr->ifp == ifp && IN6_ARE_ADDR_EQUAL(addr, &dr->rtaddr))
 			break;
 	}
@@ -523,7 +523,7 @@ nd6_defrtrlist_del(struct nd_defrouter *dr, struct in6_ifextra *ext)
 		deldr = dr;
 		defrouter_delreq(dr);
 	}
-	TAILQ_REMOVE(&nd_defrouter, dr, dr_entry);
+	ND_DEFROUTER_LIST_REMOVE(dr);
 
 	/*
 	 * Also delete all the pointers to the router in each prefix lists.
@@ -599,8 +599,7 @@ nd6_defrouter_reset(void)
 {
 	struct nd_defrouter *dr;
 
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
-	     dr = TAILQ_NEXT(dr, dr_entry))
+	ND_DEFROUTER_LIST_FOREACH(dr)
 		defrouter_delreq(dr);
 
 	/*
@@ -654,7 +653,7 @@ nd6_defrouter_select(void)
 	 * Let's handle easy case (3) first:
 	 * If default router list is empty, there's nothing to be done.
 	 */
-	if (!TAILQ_FIRST(&nd_defrouter)) {
+	if (ND_DEFROUTER_LIST_EMPTY()) {
 		splx(s);
 		return;
 	}
@@ -664,8 +663,7 @@ nd6_defrouter_select(void)
 	 * We just pick up the first reachable one (if any), assuming that
 	 * the ordering rule of the list described in defrtrlist_update().
 	 */
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
-	     dr = TAILQ_NEXT(dr, dr_entry)) {
+	ND_DEFROUTER_LIST_FOREACH(dr) {
 		ndi = ND_IFINFO(dr->ifp);
 		if (nd6_accepts_rtadv(ndi))
 			continue;
@@ -691,10 +689,11 @@ nd6_defrouter_select(void)
 	 * or when the new one has a really higher preference value.
 	 */
 	if (selected_dr == NULL) {
-		if (installed_dr == NULL || !TAILQ_NEXT(installed_dr, dr_entry))
-			selected_dr = TAILQ_FIRST(&nd_defrouter);
+		if (installed_dr == NULL ||
+		    ND_DEFROUTER_LIST_NEXT(installed_dr) == NULL)
+			selected_dr = ND_DEFROUTER_LIST_FIRST();
 		else
-			selected_dr = TAILQ_NEXT(installed_dr, dr_entry);
+			selected_dr = ND_DEFROUTER_LIST_NEXT(installed_dr);
 	} else if (installed_dr &&
 	    nd6_is_llinfo_probreach(installed_dr) &&
 	    rtpref(selected_dr) <= rtpref(installed_dr)) {
@@ -781,7 +780,7 @@ defrtrlist_update(struct nd_defrouter *newdr)
 			 * nd6_defrouter_select() below will handle routing
 			 * changes later.
 			 */
-			TAILQ_REMOVE(&nd_defrouter, dr, dr_entry);
+			ND_DEFROUTER_LIST_REMOVE(dr);
 			n = dr;
 			goto insert;
 		}
@@ -824,15 +823,14 @@ insert:
 	 */
 
 	/* insert at the end of the group */
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
-	     dr = TAILQ_NEXT(dr, dr_entry)) {
+	ND_DEFROUTER_LIST_FOREACH(dr) {
 		if (rtpref(n) > rtpref(dr))
 			break;
 	}
 	if (dr)
-		TAILQ_INSERT_BEFORE(dr, n, dr_entry);
+		ND_DEFROUTER_LIST_INSERT_BEFORE(dr, n);
 	else
-		TAILQ_INSERT_TAIL(&nd_defrouter, n, dr_entry);
+		ND_DEFROUTER_LIST_INSERT_TAIL(n);
 
 	nd6_defrouter_select();
 
@@ -1465,7 +1463,7 @@ nd6_pfxlist_onlink_check(void)
 	 * that does not advertise any prefixes.
 	 */
 	if (pr == NULL) {
-		TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
+		ND_DEFROUTER_LIST_FOREACH(dr) {
 			struct nd_prefix *pr0;
 
 			LIST_FOREACH(pr0, &nd_prefix, ndpr_entry) {
@@ -1476,7 +1474,7 @@ nd6_pfxlist_onlink_check(void)
 				break;
 		}
 	}
-	if (pr != NULL || (TAILQ_FIRST(&nd_defrouter) && !pfxrtr)) {
+	if (pr != NULL || (!ND_DEFROUTER_LIST_EMPTY() && !pfxrtr)) {
 		/*
 		 * There is at least one prefix that has a reachable router,
 		 * or at least a router which probably does not advertise

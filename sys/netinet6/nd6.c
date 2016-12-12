@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.213 2016/12/11 07:38:50 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.214 2016/12/12 03:13:14 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.213 2016/12/11 07:38:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.214 2016/12/12 03:13:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -138,7 +138,7 @@ nd6_init(void)
 	int error;
 
 	/* initialization of the default router list */
-	TAILQ_INIT(&nd_defrouter);
+	ND_DEFROUTER_LIST_INIT();
 
 	callout_init(&nd6_slowtimo_ch, CALLOUT_MPSAFE);
 	callout_init(&nd6_timer_ch, CALLOUT_MPSAFE);
@@ -593,7 +593,7 @@ nd6_timer_work(struct work *wk, void *arg)
 
 	/* expire default router list */
 	
-	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, next_dr) {
+	ND_DEFROUTER_LIST_FOREACH_SAFE(dr, next_dr) {
 		if (dr->expire && dr->expire < time_uptime) {
 			nd6_defrtrlist_del(dr, NULL);
 		}
@@ -838,7 +838,7 @@ nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 	 * in the routing table, in order to keep additional side effects as
 	 * small as possible.
 	 */
-	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr) {
+	ND_DEFROUTER_LIST_FOREACH_SAFE(dr, ndr) {
 		if (dr->installed)
 			continue;
 
@@ -848,7 +848,7 @@ nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 		}
 	}
 
-	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr) {
+	ND_DEFROUTER_LIST_FOREACH_SAFE(dr, ndr) {
 		if (!dr->installed)
 			continue;
 
@@ -1033,7 +1033,7 @@ nd6_is_new_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	 * as on-link, and thus, as a neighbor.
 	 */
 	if (ND_IFINFO(ifp)->flags & ND6_IFF_ACCEPT_RTADV &&
-	    TAILQ_EMPTY(&nd_defrouter) &&
+	    ND_DEFROUTER_LIST_EMPTY() &&
 	    nd6_defifindex == ifp->if_index) {
 		return 1;
 	}
@@ -1097,7 +1097,7 @@ nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	 * XXX: we restrict the condition to hosts, because routers usually do
 	 * not have the "default router list".
 	 */
-	if (!ip6_forwarding && TAILQ_FIRST(&nd_defrouter) == NULL &&
+	if (!ip6_forwarding && ND_DEFROUTER_LIST_EMPTY() &&
 	    nd6_defifindex == ifp->if_index) {
 		return 1;
 	}
@@ -1617,7 +1617,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		 */
 		memset(drl, 0, sizeof(*drl));
 		s = splsoftnet();
-		TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
+		ND_DEFROUTER_LIST_FOREACH(dr) {
 			if (i >= DRLSTSIZ)
 				break;
 			drl->defrouter[i].rtaddr = dr->rtaddr;
@@ -1892,7 +1892,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 
 		s = splsoftnet();
 		nd6_defrouter_reset();
-		TAILQ_FOREACH_SAFE(drtr, &nd_defrouter, dr_entry, next) {
+		ND_DEFROUTER_LIST_FOREACH_SAFE(drtr, next) {
 			nd6_defrtrlist_del(drtr, NULL);
 		}
 		nd6_defrouter_select();
@@ -2644,7 +2644,7 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 	}
 	l = 0;
 
-	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
+	ND_DEFROUTER_LIST_FOREACH(dr) {
 
 		if (oldp && d + 1 <= de) {
 			memset(d, 0, sizeof(*d));
