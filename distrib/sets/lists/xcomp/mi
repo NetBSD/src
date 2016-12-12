@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.152.2.6 2015/04/10 20:40:19 snj Exp $
+#	 $NetBSD: mi,v 1.152.2.7 2016/12/12 09:32:34 msaitoh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5800,6 +5800,7 @@
 ./usr/X11R7/include/libdrm/intel_debug.h		-unknown-	xorg
 ./usr/X11R7/include/libdrm/mach64_drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/mga_drm.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/nouveau.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/nouveau_drm.h		-unknown-	xorg
 ./usr/X11R7/include/libdrm/qxl_drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/r128_drm.h			-unknown-	xorg
