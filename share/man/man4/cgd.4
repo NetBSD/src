@@ -1,4 +1,4 @@
-.\" $NetBSD: cgd.4,v 1.20 2016/12/11 00:24:48 alnsn Exp $
+.\" $NetBSD: cgd.4,v 1.21 2016/12/12 10:13:00 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,9 +71,9 @@ in
 mode.
 .Tn AES-XTS
 uses a 128 bit blocksize and can accept keys of length 256 or 512.
-Note that
+Note that an
 .Tn AES-XTS
-key is made of two
+key consists of two
 .Tn AES
 keys of equal size.
 The second key is used solely to encrypt the block number of the physical
@@ -174,7 +174,6 @@ and their associated data structures are defined in
 .In dev/cgdvar.h
 header.
 .Sh WARNINGS
-.Pp
 It goes without saying that if you forget the passphrase that you used
 to configure a
 .Nm ,
@@ -192,7 +191,7 @@ mode to plaintext blocks of their choice.
 The
 .Tn
 XTS mode isn't vulnerable to this particular attack but a lack of
-integrity should be taken into accout when evaluating security risks.
+integrity should be taken into account when evaluating security risks.
 .Sh FILES
 .Bl -tag -width indentxxxxxxxxxxx
 .It /dev/{,r}cgd*
