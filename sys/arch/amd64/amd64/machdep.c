@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.236 2016/12/11 08:31:53 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.237 2016/12/12 02:51:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2016/12/11 08:31:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2016/12/12 02:51:24 pgoyette Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -207,6 +207,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2016/12/11 08:31:53 maxv Exp $");
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
 #include <machine/acpi_machdep.h>
+#else
+#include <machine/i82489var.h>
 #endif
 
 #include "isa.h"
