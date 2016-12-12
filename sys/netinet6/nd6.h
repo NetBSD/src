@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.77 2016/12/12 03:13:14 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.78 2016/12/12 03:14:01 ozaki-r Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -320,6 +320,15 @@ struct nd_prefix {
 #define ndpr_raf_onlink		ndpr_flags.onlink
 #define ndpr_raf_auto		ndpr_flags.autonomous
 #define ndpr_raf_router		ndpr_flags.router
+
+#define ND_PREFIX_LIST_FOREACH(pr)					\
+	LIST_FOREACH((pr), &nd_prefix, ndpr_entry)
+#define ND_PREFIX_LIST_FOREACH_SAFE(pr, pr_next)			\
+	LIST_FOREACH_SAFE((pr), &nd_prefix, ndpr_entry, (pr_next))
+#define ND_PREFIX_LIST_REMOVE(pr)					\
+	LIST_REMOVE((pr), ndpr_entry)
+#define ND_PREFIX_LIST_INSERT_HEAD(pr)					\
+	LIST_INSERT_HEAD(&nd_prefix, (pr), ndpr_entry)
 
 /*
  * Message format for use in obtaining information about prefixes
