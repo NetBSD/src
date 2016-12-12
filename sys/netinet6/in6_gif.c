@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.80 2016/12/08 05:16:34 ozaki-r Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.81 2016/12/12 03:55:57 ozaki-r Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.80 2016/12/08 05:16:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.81 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -333,10 +333,10 @@ gif_validate6(const struct ip6_hdr *ip6, struct gif_softc *sc,
 			    ip6_sprintf(&u.sin6.sin6_addr));
 #endif
 			if (rt != NULL)
-				rtfree(rt);
+				rt_unref(rt);
 			return 0;
 		}
-		rtfree(rt);
+		rt_unref(rt);
 	}
 
 	return 128 * 2;

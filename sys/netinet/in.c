@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.190 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.191 2016/12/12 03:55:57 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.190 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.191 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -823,6 +823,7 @@ in_purgeaddr(struct ifaddr *ifa)
 
 	KASSERT(!ifa_held(ifa));
 
+	ifa->ifa_flags |= IFA_DESTROYING;
 	in_scrubaddr(ia);
 
 	mutex_enter(&in_ifaddr_lock);
@@ -2008,7 +2009,7 @@ in_lltable_rtcheck(struct ifnet *ifp, u_int flags, const struct sockaddr *l3addr
 
 	error = 0;
 error:
-	rtfree(rt);
+	rt_unref(rt);
 	return error;
 }
 

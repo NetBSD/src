@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.171 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.172 2016/12/12 03:55:57 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.171 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.172 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -816,7 +816,7 @@ in_losing(struct inpcb *inp)
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, &nrt);
 		rtcache_unref(rt, &inp->inp_route);
 		if (error == 0)
-			rtfree(nrt);
+			rt_free(nrt);
 	} else
 		rtcache_unref(rt, &inp->inp_route);
 	/*
