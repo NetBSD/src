@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.16 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.17 2016/12/12 16:47:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.16 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.17 2016/12/12 16:47:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -95,6 +95,7 @@ int	uchcomdebug = 0;
 #define UCHCOM_REG_LCR2		0x25
 
 #define UCHCOM_VER_20		0x20
+#define UCHCOM_VER_30		0x30
 
 #define UCHCOM_BASE_UNKNOWN	0
 #define UCHCOM_BPS_MOD_BASE	20000000
@@ -180,6 +181,7 @@ static const struct uchcom_divider_record dividers[] =
 static const struct usb_devno uchcom_devs[] = {
 	{ USB_VENDOR_WINCHIPHEAD, USB_PRODUCT_WINCHIPHEAD_CH341SER },
 	{ USB_VENDOR_WINCHIPHEAD2, USB_PRODUCT_WINCHIPHEAD2_CH341 },
+	{ USB_VENDOR_WINCHIPHEAD2, USB_PRODUCT_WINCHIPHEAD2_CH341_2 },
 };
 #define uchcom_lookup(v, p)	usb_lookup(uchcom_devs, v, p)
 
@@ -572,6 +574,7 @@ update_version(struct uchcom_softc *sc)
 		    usbd_errstr(err));
 		return EIO;
 	}
+	DPRINTF(("%s: update_version %d\n", device_xname(sc->sc_dev), sc->sc_version));
 
 	return 0;
 }
@@ -717,50 +720,52 @@ set_dte_rate(struct uchcom_softc *sc, uint32_t rate)
 static int
 set_line_control(struct uchcom_softc *sc, tcflag_t cflag)
 {
-	usbd_status err;
-	uint8_t lcr1val = 0, lcr2val = 0;
+	if (sc->sc_version < UCHCOM_VER_30) {
+		usbd_status err;
+		uint8_t lcr1val = 0, lcr2val = 0;
 
-	err = read_reg(sc, UCHCOM_REG_LCR1, &lcr1val, UCHCOM_REG_LCR2, &lcr2val);
-	if (err) {
-		aprint_error_dev(sc->sc_dev, "cannot get LCR: %s\n",
-		    usbd_errstr(err));
-		return EIO;
-	}
+		err = read_reg(sc, UCHCOM_REG_LCR1, &lcr1val, UCHCOM_REG_LCR2, &lcr2val);
+		if (err) {
+			aprint_error_dev(sc->sc_dev, "cannot get LCR: %s\n",
+			    usbd_errstr(err));
+			return EIO;
+		}
 
-	lcr1val &= ~UCHCOM_LCR1_MASK;
-	lcr2val &= ~UCHCOM_LCR2_MASK;
+		lcr1val &= ~UCHCOM_LCR1_MASK;
+		lcr2val &= ~UCHCOM_LCR2_MASK;
 
-	/*
-	 * XXX: it is difficult to handle the line control appropriately:
-	 *   - CS8, !CSTOPB and any parity mode seems ok, but
-	 *   - the chip doesn't have the function to calculate parity
-	 *     in !CS8 mode.
-	 *   - it is unclear that the chip supports CS5,6 mode.
-	 *   - it is unclear how to handle stop bits.
-	 */
+		/*
+		 * XXX: it is difficult to handle the line control appropriately:
+		 *   - CS8, !CSTOPB and any parity mode seems ok, but
+		 *   - the chip doesn't have the function to calculate parity
+		 *     in !CS8 mode.
+		 *   - it is unclear that the chip supports CS5,6 mode.
+		 *   - it is unclear how to handle stop bits.
+		 */
 
-	switch (ISSET(cflag, CSIZE)) {
-	case CS5:
-	case CS6:
-	case CS7:
-		return EINVAL;
-	case CS8:
-		break;
-	}
+		switch (ISSET(cflag, CSIZE)) {
+		case CS5:
+		case CS6:
+		case CS7:
+			return EINVAL;
+		case CS8:
+			break;
+		}
 
-	if (ISSET(cflag, PARENB)) {
-		lcr1val |= UCHCOM_LCR1_PARENB;
-		if (ISSET(cflag, PARODD))
-			lcr2val |= UCHCOM_LCR2_PARODD;
-		else
-			lcr2val |= UCHCOM_LCR2_PAREVEN;
-	}
+		if (ISSET(cflag, PARENB)) {
+			lcr1val |= UCHCOM_LCR1_PARENB;
+			if (ISSET(cflag, PARODD))
+				lcr2val |= UCHCOM_LCR2_PARODD;
+			else
+				lcr2val |= UCHCOM_LCR2_PAREVEN;
+		}
 
-	err = write_reg(sc, UCHCOM_REG_LCR1, lcr1val, UCHCOM_REG_LCR2, lcr2val);
-	if (err) {
-		aprint_error_dev(sc->sc_dev, "cannot set LCR: %s\n",
-		    usbd_errstr(err));
-		return EIO;
+		err = write_reg(sc, UCHCOM_REG_LCR1, lcr1val, UCHCOM_REG_LCR2, lcr2val);
+		if (err) {
+			aprint_error_dev(sc->sc_dev, "cannot set LCR: %s\n",
+			    usbd_errstr(err));
+			return EIO;
+		}
 	}
 
 	return 0;
