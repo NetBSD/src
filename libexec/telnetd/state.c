@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.29 2012/01/09 16:36:48 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.30 2016/12/12 15:58:44 maya Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.29 2012/01/09 16:36:48 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.30 2016/12/12 15:58:44 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -401,14 +401,14 @@ gotiac:			switch (c) {
  * Finally, there is one catch.  If we send a negative response to a
  * positive request, my_state will be the positive while want_state will
  * remain negative.  my_state will revert to negative when the negative
- * acknowlegment arrives from the peer.  Thus, my_state generally tells
+ * acknowledgment arrives from the peer.  Thus, my_state generally tells
  * us not only the last negotiated state, but also tells us what the peer
  * wants to be doing as well.  It is important to understand this difference
  * as we may wish to be processing data streams based on our desired state
  * (want_state) or based on what the peer thinks the state is (my_state).
  *
  * This all works fine because if the peer sends a positive request, the data
- * that we receive prior to negative acknowlegment will probably be affected
+ * that we receive prior to negative acknowledgment will probably be affected
  * by the positive state, and we can process it as such (if we can; if we
  * can't then it really doesn't matter).  If it is that important, then the
  * peer probably should be buffering until this option state negotiation
