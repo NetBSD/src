@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.60.2.5 2016/02/26 22:08:17 snj Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.60.2.6 2016/12/12 07:18:29 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -202,6 +202,12 @@ struct livengood_tcpip_ctxdesc {
 /* registers for FLASH access on ICH8 */
 #define WM_ICH8_FLASH	0x0014
 
+#define WM_PCI_LTR_CAP_LPT	0xa8
+
+/* XXX Only for PCH_SPT? */
+#define WM_PCI_DESCRING_STATUS	0xe4
+#define DESCRING_STATUS_FLUSH_REQ	__BIT(8)
+
 /*
  * Wiseman Control/Status Registers.
  */
@@ -233,7 +239,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_SWDPIO_SHIFT	22
 #define	CTRL_SWDPIO_MASK	0x0f
 #define	CTRL_SWDPIO(x)		(1U << (CTRL_SWDPIO_SHIFT + (x)))
-#define CTRL_MEHE	(1U << 17)	/* Memory Error Handling Enable(I217)*/
+#define CTRL_MEHE	(1U << 19)	/* Memory Error Handling Enable(I217)*/
 #define	CTRL_RST	(1U << 26)	/* device reset */
 #define	CTRL_RFCE	(1U << 27)	/* Rx flow control enable */
 #define	CTRL_TFCE	(1U << 28)	/* Tx flow control enable */
@@ -251,10 +257,10 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_FUNCID_MASK  3		/* ... */
 #define	STATUS_TXOFF	(1U << 4)	/* Tx paused */
 #define	STATUS_TBIMODE	(1U << 5)	/* fiber mode (Livengood) */
-#define	STATUS_SPEED(x)	((x) << 6)	/* speed indication */
-#define	STATUS_SPEED_10	  STATUS_SPEED(0)
-#define	STATUS_SPEED_100  STATUS_SPEED(1)
-#define	STATUS_SPEED_1000 STATUS_SPEED(2)
+#define	STATUS_SPEED	__BITS(7, 6)	/* speed indication */
+#define	STATUS_SPEED_10	  0
+#define	STATUS_SPEED_100  1
+#define	STATUS_SPEED_1000 2
 #define	STATUS_ASDV(x)	((x) << 8)	/* auto speed det. val. (Livengood) */
 #define	STATUS_LAN_INIT_DONE (1U << 9)	/* Lan Init Completion by NVM */
 #define	STATUS_MTXCKOK	(1U << 10)	/* MTXD clock running */
@@ -269,6 +275,12 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_PCIXSPD_MASK    STATUS_PCIXSPD(3)
 #define	STATUS_GIO_M_ENA (1U << 19)	/* GIO master enable */
 #define	STATUS_DEV_RST_SET (1U << 20)	/* Device Reset Set */
+
+/* Strapping Option Register (PCH_SPT and newer) */
+#define WMREG_STRAP	0x000c
+#define STRAP_NVMSIZE	__BITS(1, 6)
+#define STRAP_FREQ	__BITS(12, 13)
+#define STRAP_SMBUSADDR	__BITS(17, 23)
 
 #define	WMREG_EECD	0x0010	/* EEPROM Control Register */
 #define	EECD_SK		(1U << 0)	/* clock */
@@ -298,8 +310,13 @@ struct livengood_tcpip_ctxdesc {
 #define	EERD_ADDR_SHIFT	2	/* Shift to the address bits */
 #define	EERD_DATA_SHIFT	16	/* Offset to data in EEPROM read/write registers */
 
+#define	WMREG_FEXTNVM6	0x0010	/* Future Extended NVM 6 */
+#define	FEXTNVM6_K1_OFF_ENABLE	__BIT(31)
+
 #define	WMREG_CTRL_EXT	0x0018	/* Extended Device Control Register */
 #define	CTRL_EXT_GPI_EN(x)	(1U << (x)) /* gpin interrupt enable */
+#define CTRL_EXT_NVMVS		__BITS(0, 1) /* NVM valid sector */
+#define CTRL_EXT_LPCD		__BIT(2) /* LCD Power Cycle Done */
 #define	CTRL_EXT_SWDPINS_SHIFT	4
 #define	CTRL_EXT_SWDPINS_MASK	0x0d
 /* The bit order of the SW Definable pin is not 6543 but 3654! */
@@ -309,6 +326,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_SWDPIO_MASK	0x0d
 #define	CTRL_EXT_SWDPIO(x)	(1U << (CTRL_EXT_SWDPIO_SHIFT \
 		+ ((x) == 3 ? 3 : ((x) - 4))))
+#define	CTRL_EXT_FORCE_SMBUS	__BIT(11)  /* Force SMBus mode */
 #define	CTRL_EXT_ASDCHK		(1U << 12) /* ASD check */
 #define	CTRL_EXT_EE_RST		(1U << 13) /* EEPROM reset */
 #define	CTRL_EXT_IPS		(1U << 14) /* invert power state bit 0 */
@@ -352,6 +370,11 @@ struct livengood_tcpip_ctxdesc {
 #define SCTL_CTL_ADDR_SHIFT 8
 #define SCTL_CTL_POLL_TIMEOUT 640
 #define SCTL_DISABLE_SERDES_LOOPBACK 0x0400
+
+#define WMREG_FEXTNVM4	0x0024	/* Future Extended NVM 4 - RW */
+#define FEXTNVM4_BEACON_DURATION	__BITS(2, 0)
+#define FEXTNVM4_BEACON_DURATION_8US	0x7
+#define FEXTNVM4_BEACON_DURATION_16US	0x3
 
 #define	WMREG_FCAL	0x0028	/* Flow Control Address Low */
 #define	FCAL_CONST	0x00c28001	/* Flow Control MAC addr low */
@@ -398,6 +421,11 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_VET	0x0038	/* VLAN Ethertype */
 #define	WMREG_MDPHYA	0x003C	/* PHY address - RW */
+
+#define WMREG_FEXTNVM3	0x003c	/* Future Extended NVM 3 */
+#define FEXTNVM3_PHY_CFG_COUNTER_MASK	__BITS(27, 26)
+#define FEXTNVM3_PHY_CFG_COUNTER_50MS	__BIT(27)
+
 #define	WMREG_RAL_BASE	0x0040	/* Receive Address List */
 #define	WMREG_CORDOVA_RAL_BASE 0x5400
 #define	WMREG_RAL_LO(b, x) ((b) + ((x) << 3))
@@ -447,6 +475,20 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_IMC	0x00d8	/* Interrupt Mask Clear Register */
 	/* See ICR bits. */
 
+#define WMREG_FEXTNVM7	0x00e4  /* Future Extended NVM 7 */
+#define FEXTNVM7_SIDE_CLK_UNGATE __BIT(2)
+#define FEXTNVM7_DIS_SMB_PERST	__BIT(5)
+#define FEXTNVM7_DIS_PB_READ	__BIT(18)
+
+#define	WMREG_LTRV	0x00f8	/* Latency Tolerance Reporting */
+#define	LTRV_VALUE	__BITS(9, 0)
+#define	LTRV_SCALE	__BITS(12, 10)
+#define	LTRV_SCALE_MAX	5
+#define	LTRV_SNOOP_REQ	__BIT(15)
+#define	LTRV_SEND	__BIT(30)
+#define	LTRV_NONSNOOP	__BITS(31, 16)
+#define	LTRV_NONSNOOP_REQ __BIT(31)
+
 #define	WMREG_RCTL	0x0100	/* Receive Control */
 #define	RCTL_EN		(1U << 1)	/* receiver enable */
 #define	RCTL_SBP	(1U << 2)	/* store bad packets */
@@ -463,6 +505,7 @@ struct livengood_tcpip_ctxdesc {
 #define	RCTL_RDMTS_MASK	RCTL_RDMTS(3)
 #define	RCTL_MO(x)	((x) << 12)	/* multicast offset */
 #define	RCTL_BAM	(1U << 15)	/* broadcast accept mode */
+#define	RCTL_RDMTS_HEX	__BIT(16)
 #define	RCTL_2k		(0 << 16)	/* 2k Rx buffers */
 #define	RCTL_1k		(1 << 16)	/* 1k Rx buffers */
 #define	RCTL_512	(2 << 16)	/* 512 byte Rx buffers */
@@ -667,6 +710,10 @@ struct livengood_tcpip_ctxdesc {
 #define	PHY_CTRL_NOND0A_GBE_DIS	(1 << 3)
 #define	PHY_CTRL_GBE_DIS	(1 << 6)
 
+#define	WMREG_PCIEANACFG 0x0f18	/* PCIE Analog Config */
+
+#define	WMREG_IOSFPC	0x0f28	/* Tx corrupted data */
+
 #define	WMREG_PBA	0x1000	/* Packet Buffer Allocation */
 #define	PBA_BYTE_SHIFT	10		/* KB -> bytes */
 #define	PBA_ADDR_SHIFT	7		/* KB -> quadwords */
@@ -686,6 +733,7 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_40K		0x0028
 #define	PBA_48K		0x0030		/* 48K, default Rx allocation */
 #define	PBA_64K		0x0040
+#define	PBA_RXA_MASK	__BITS(15, 0)
 
 #define	WMREG_PBS	0x1008	/* Packet Buffer Size (ICH) */
 
@@ -895,6 +943,10 @@ struct livengood_tcpip_ctxdesc {
 #define	SWSM_SWESMBI	0x00000002	/* FW Semaphore bit */
 #define	SWSM_WMNG	0x00000004	/* Wake MNG Clock */
 #define	SWSM_DRV_LOAD	0x00000008	/* Driver Loaded Bit */
+/* Intel driver defines H2ME register at 0x5b50 */
+#define	WMREG_H2ME	0x5b50	/* SW Semaphore */
+#define H2ME_ULP		__BIT(11)
+#define H2ME_ENFORCE_SETTINGS	__BIT(12)
 
 #define	WMREG_FWSM	0x5b54	/* FW Semaphore */
 #define	FWSM_MODE		__BITS(1, 3)
@@ -902,6 +954,7 @@ struct livengood_tcpip_ctxdesc {
 #define	MNG_IAMT_MODE		0x3
 #define FWSM_RSPCIPHY		__BIT(6)  /* Reset PHY on PCI reset */
 #define FWSM_WLOCK_MAC		__BITS(7, 9)  /* Reset PHY on PCI reset */
+#define FWSM_ULP_CFG_DONE	__BIT(10)
 #define FWSM_FW_VALID		__BIT(15) /* FW established a valid mode */
 
 #define	WMREG_SWSM2	0x5b58	/* SW Semaphore 2 */
@@ -918,6 +971,9 @@ struct livengood_tcpip_ctxdesc {
 #define	SWFW_FIRM_SHIFT		16	/* firmware semaphores */
 
 #define WMREG_GCR2	0x5b64	/* 3GPIO Control Register 2 */
+#define WMREG_FEXTNVM9	0x5bb4	/* Future Extended NVM 9 */
+#define WMREG_FEXTNVM11	0x5bbc	/* Future Extended NVM 11 */
+#define FEXTNVM11_DIS_MULRFIX	__BIT(13)	/* Disable MULR fix */
 
 #define WMREG_CRC_OFFSET 0x5f50
 
@@ -1140,6 +1196,9 @@ struct livengood_tcpip_ctxdesc {
 #define ICH_NVM_SIG_MASK	0xc000
 #define ICH_NVM_VALID_SIG_MASK	0xc0
 #define ICH_NVM_SIG_VALUE	0x80
+
+#define NVM_SIZE_MULTIPLIER 4096	/* multiplier for NVMS field */
+#define WM_PCH_SPT_FLASHOFFSET	0xe000	/* offset of NVM access regs(PCH_SPT)*/
 
 /* for PCI express Capability registers */
 #define	WM_PCIE_DCSR2_16MS	0x00000005
