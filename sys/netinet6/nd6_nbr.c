@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.131 2016/12/11 07:38:50 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.132 2016/12/12 03:55:57 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.131 2016/12/11 07:38:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.132 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -256,7 +256,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 			}
 		}
 		if (rt)
-			rtfree(rt);
+			rt_unref(rt);
 	}
 	if (ifa == NULL) {
 		/*

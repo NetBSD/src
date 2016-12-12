@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.230 2016/12/08 01:06:35 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.231 2016/12/12 03:55:57 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -604,6 +604,7 @@ struct ifaddr {
 #endif
 };
 #define	IFA_ROUTE	RTF_UP	/* (0x01) route installed */
+#define	IFA_DESTROYING	0x2
 
 /*
  * Message format for use in obtaining information about interfaces from
@@ -1001,6 +1002,7 @@ void	ifa_psref_init(struct ifaddr *);
 void	ifa_acquire(struct ifaddr *, struct psref *);
 void	ifa_release(struct ifaddr *, struct psref *);
 bool	ifa_held(struct ifaddr *);
+bool	ifa_is_destroying(struct ifaddr *);
 
 void	ifaref(struct ifaddr *);
 void	ifafree(struct ifaddr *);

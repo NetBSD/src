@@ -1,4 +1,4 @@
-/*	$NetBSD: rtbl.c,v 1.4 2016/11/15 01:50:06 ozaki-r Exp $	*/
+/*	$NetBSD: rtbl.c,v 1.5 2016/12/12 03:55:57 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008, 2011 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #endif /* _KERNEL && _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.4 2016/11/15 01:50:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.5 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -190,7 +190,7 @@ rt_walktree_visitor(struct radix_node *rn, void *v)
 }
 
 int
-rt_walktree(sa_family_t family, int (*f)(struct rtentry *, void *), void *v)
+rtbl_walktree(sa_family_t family, int (*f)(struct rtentry *, void *), void *v)
 {
 	rtbl_t *t = rt_tables[family];
 	struct rtwalk rw;
