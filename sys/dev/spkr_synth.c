@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_synth.c,v 1.5 2016/12/09 13:26:11 christos Exp $	*/
+/*	$NetBSD: spkr_synth.c,v 1.6 2016/12/12 10:46:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.5 2016/12/09 13:26:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.6 2016/12/12 10:46:39 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ struct vbell_args {
 	bool dying;
 };
 
-void bell_thread(void *);
+static void bell_thread(void *) __dead;
 static int beep_sysctl_device(SYSCTLFN_PROTO);
 
 #include <dev/audiobellvar.h>
