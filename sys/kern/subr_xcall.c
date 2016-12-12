@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.18 2013/11/26 21:13:05 rmind Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.18.4.1 2016/12/12 07:29:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.18 2013/11/26 21:13:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.18.4.1 2016/12/12 07:29:16 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -105,7 +105,6 @@ typedef struct {
 
 /* Low priority xcall structures. */
 static xc_state_t	xc_low_pri	__cacheline_aligned;
-static uint64_t		xc_tailp	__cacheline_aligned;
 
 /* High priority xcall structures. */
 static xc_state_t	xc_high_pri	__cacheline_aligned;
@@ -134,7 +133,6 @@ xc_init(void)
 	memset(xclo, 0, sizeof(xc_state_t));
 	mutex_init(&xclo->xc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&xclo->xc_busy, "xclocv");
-	xc_tailp = 0;
 
 	memset(xchi, 0, sizeof(xc_state_t));
 	mutex_init(&xchi->xc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
@@ -256,7 +254,7 @@ xc_lowpri(xcfunc_t func, void *arg1, void *arg2, struct cpu_info *ci)
 	uint64_t where;
 
 	mutex_enter(&xc->xc_lock);
-	while (xc->xc_headp != xc_tailp) {
+	while (xc->xc_headp != xc->xc_donep) {
 		cv_wait(&xc->xc_busy, &xc->xc_lock);
 	}
 	xc->xc_arg1 = arg1;
@@ -277,7 +275,7 @@ xc_lowpri(xcfunc_t func, void *arg1, void *arg2, struct cpu_info *ci)
 		ci->ci_data.cpu_xcall_pending = true;
 		cv_signal(&ci->ci_data.cpu_xcall);
 	}
-	KASSERT(xc_tailp < xc->xc_headp);
+	KASSERT(xc->xc_donep < xc->xc_headp);
 	where = xc->xc_headp;
 	mutex_exit(&xc->xc_lock);
 
@@ -302,7 +300,7 @@ xc_thread(void *cookie)
 	mutex_enter(&xc->xc_lock);
 	for (;;) {
 		while (!ci->ci_data.cpu_xcall_pending) {
-			if (xc->xc_headp == xc_tailp) {
+			if (xc->xc_headp == xc->xc_donep) {
 				cv_broadcast(&xc->xc_busy);
 			}
 			cv_wait(&ci->ci_data.cpu_xcall, &xc->xc_lock);
@@ -312,7 +310,6 @@ xc_thread(void *cookie)
 		func = xc->xc_func;
 		arg1 = xc->xc_arg1;
 		arg2 = xc->xc_arg2;
-		xc_tailp++;
 		mutex_exit(&xc->xc_lock);
 
 		KASSERT(func != NULL);
