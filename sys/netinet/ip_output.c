@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.264 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.265 2016/12/12 03:55:57 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.264 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.265 2016/12/12 03:55:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -361,10 +361,12 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			error = EHOSTUNREACH;
 			goto bad;
 		}
-		/*
-		 * XXX NOMPSAFE: depends on accessing rt->rt_ifa isn't racy.
-		 * Revisit when working on rtentry MP-ification.
-		 */
+		if (ifa_is_destroying(rt->rt_ifa)) {
+			rtcache_unref(rt, ro);
+			IP_STATINC(IP_STAT_NOROUTE);
+			error = EHOSTUNREACH;
+			goto bad;
+		}
 		ifa_acquire(rt->rt_ifa, &psref_ia);
 		ia = ifatoia(rt->rt_ifa);
 		ifp = rt->rt_ifp;
