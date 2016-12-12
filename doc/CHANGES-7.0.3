@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.10 2016/12/03 12:33:56 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.11 2016/12/12 07:56:11 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -146,4 +146,22 @@ sys/net/if_vlan.c				1.92
 	Don't check parent capabilities when a parent interface hasn't been
 	assigned.
 	[joerg, ticket #1279]
+
+lib/libc/stdio/funopen.c			1.15
+
+	PR/51572: calling funopen on each printw call is a tad excessive,
+	but this is not a reason for funopen to leak. Always call the
+	close function since we are indirecting through our cookie and
+	we need to free it.
+	[mrg, ticket #1303]
+
+sys/kern/subr_xcall.c				1.19
+
+	Fix a race condition of low priority xcall.  PR kern/51632.
+	[ozaki-r, ticket #1306]
+
+usr.sbin/mld6query/mld6.c			1.15
+
+	PR/51353: Patrick Mackey: mld6query "-r" option is not recognised
+	[riastradh, ticket #1308]
 
