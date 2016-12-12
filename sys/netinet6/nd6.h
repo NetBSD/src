@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.76 2016/12/11 07:38:50 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.77 2016/12/12 03:13:14 ozaki-r Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -255,6 +255,25 @@ struct	nd_defrouter {
 	struct  ifnet *ifp;
 	int	installed;	/* is installed into kernel routing table */
 };
+
+#define ND_DEFROUTER_LIST_INIT()					\
+	TAILQ_INIT(&nd_defrouter)
+#define ND_DEFROUTER_LIST_FOREACH(dr)					\
+	TAILQ_FOREACH((dr), &nd_defrouter, dr_entry)
+#define ND_DEFROUTER_LIST_FOREACH_SAFE(dr, dr_next)			\
+	TAILQ_FOREACH_SAFE((dr), &nd_defrouter, dr_entry, (dr_next))
+#define ND_DEFROUTER_LIST_EMPTY()					\
+	TAILQ_EMPTY(&nd_defrouter)
+#define ND_DEFROUTER_LIST_REMOVE(dr)					\
+	TAILQ_REMOVE(&nd_defrouter, (dr), dr_entry)
+#define ND_DEFROUTER_LIST_INSERT_BEFORE(dr, dr_new)			\
+	TAILQ_INSERT_BEFORE((dr), (dr_new), dr_entry)
+#define ND_DEFROUTER_LIST_INSERT_TAIL(dr)				\
+	TAILQ_INSERT_TAIL(&nd_defrouter, (dr), dr_entry)
+#define ND_DEFROUTER_LIST_FIRST()					\
+	TAILQ_FIRST(&nd_defrouter)
+#define ND_DEFROUTER_LIST_NEXT(dr)					\
+	TAILQ_NEXT((dr), dr_entry)
 
 struct nd_prefixctl {
 	struct ifnet *ndprc_ifp;
