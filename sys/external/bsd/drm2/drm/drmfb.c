@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb.c,v 1.2 2015/11/09 23:11:18 jmcneill Exp $	*/
+/*	$NetBSD: drmfb.c,v 1.3 2016/12/12 19:45:56 maya Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.2 2015/11/09 23:11:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.3 2016/12/12 19:45:56 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -103,9 +103,7 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 	prop_dictionary_set_uint32(dict, "width", sizes->surface_width);
 	prop_dictionary_set_uint32(dict, "height", sizes->surface_height);
 	prop_dictionary_set_uint8(dict, "depth", sizes->surface_bpp);
-	prop_dictionary_set_uint16(dict, "linebytes",
-	    roundup2((sizes->surface_width * howmany(sizes->surface_bpp, 8)),
-		64));
+	prop_dictionary_set_uint16(dict, "linebytes", da->da_fb_linebytes);
 	prop_dictionary_set_uint32(dict, "address", 0); /* XXX >32-bit */
 	CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
 	prop_dictionary_set_uint64(dict, "virtual_address",

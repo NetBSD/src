@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb.h,v 1.1 2015/03/05 17:50:41 riastradh Exp $	*/
+/*	$NetBSD: drmfb.h,v 1.2 2016/12/12 19:45:56 maya Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ struct drmfb_attach_args {
 	struct drm_fb_helper		*da_fb_helper;
 	const struct drm_fb_helper_surface_size	*da_fb_sizes;
 	void				*da_fb_vaddr;
+	uint32_t			da_fb_linebytes;
 	const struct drmfb_params	*da_params;
 };
 
