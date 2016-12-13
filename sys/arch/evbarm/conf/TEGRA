@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.9 2016/12/10 23:03:24 christos Exp $
+#	$NetBSD: TEGRA,v 1.10 2016/12/13 20:42:17 christos Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -125,7 +125,7 @@ options 	HDAUDIO_32BIT_ACCESS
 options 	HDAUDIO_ENABLE_HDMI
 options 	HDAUDIO_ENABLE_DISPLAYPORT
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*		at audio?		# PC speaker (synthesized)
 
 # HDMI CEC
 tegracec0	at fdt?			# HDMI CEC

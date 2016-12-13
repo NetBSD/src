@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.374 2016/12/10 23:03:23 christos Exp $
+# $NetBSD: GENERIC,v 1.375 2016/12/13 20:42:16 christos Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.374 $"
+ident		"GENERIC-$Revision: 1.375 $"
 
 maxusers 32
 
@@ -440,7 +440,7 @@ pckbd*	at	pckbc?				# PC keyboard (kbd port)
 pms*	at	pckbc?				# PS/2-style mouse (aux port)
 attimer* at	isa?				# AT Timer
 pcppi*	at	isa?				# PC prog. periph. interface
-spkr0	at	pcppi?				# IBM BASIC emulation
+spkr*	at	pcppi?				# IBM BASIC emulation
 isabeep0 at	pcppi?				# "keyboard" beep
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
@@ -709,7 +709,7 @@ midi*	at midibus?
 midi*	at pcppi?
 midi*	at sb?
 
-#spkr0	at audio0		# PC speaker (synthesized)
+spkr*	at audio?		# PC speaker (synthesized)
 
 # Workstation Console attachments
 wsdisplay0	at	wsemuldisplaydev? console 1
