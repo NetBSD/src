@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1144 2016/12/10 23:03:24 christos Exp $
+# $NetBSD: GENERIC,v 1.1145 2016/12/13 20:42:18 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1144 $"
+#ident 		"GENERIC-$Revision: 1.1145 $"
 
 maxusers	64		# estimated number of users
 
@@ -1466,9 +1466,8 @@ midi*	at midibus?
 midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pcppi?		# PC speaker
-
-#spkr0	at audio0		# PC speaker (synthesized)
+#spkr*	at pcppi?		# PC speaker
+#spkr*	at audio?		# PC speaker (synthesized)
 
 
 # FM-Radio devices

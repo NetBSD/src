@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.198 2016/12/10 23:03:26 christos Exp $
+# $NetBSD: GENERIC,v 1.199 2016/12/13 20:42:21 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.198 $"
+#ident 		"GENERIC-$Revision: 1.199 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -209,7 +209,7 @@ vsaudio0	at vsbus0 csr 0x200d0000 # VS4000/60 (or VLC) audio
 vsaudio0	at vsbus0 csr 0x26800000 # VS4000/90 audio
 audio*		at audiobus?
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*		at audio?		# PC speaker (synthesized)
 
 tc0		at vsbus0 csr 0x36000000 # VS4000/60 or 90 TC adapter
 tcds*		at tc0 slot ? offset ?	 # TC dual SCSI controller
