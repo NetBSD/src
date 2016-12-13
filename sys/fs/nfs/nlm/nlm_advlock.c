@@ -1,4 +1,4 @@
-/*	$NetBSD: nlm_advlock.c,v 1.1.1.2 2016/11/18 07:49:13 pgoyette Exp $	*/
+/*	$NetBSD: nlm_advlock.c,v 1.2 2016/12/13 21:58:17 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  * Authors: Doug Rabson <dfr@rabson.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nlm/nlm_advlock.c 302216 2016-06-26 20:08:42Z kib "); */
-__RCSID("$NetBSD: nlm_advlock.c,v 1.1.1.2 2016/11/18 07:49:13 pgoyette Exp $");
+__RCSID("$NetBSD: nlm_advlock.c,v 1.2 2016/12/13 21:58:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -48,12 +48,12 @@ __RCSID("$NetBSD: nlm_advlock.c,v 1.1.1.2 2016/11/18 07:49:13 pgoyette Exp $");
 #include <sys/unistd.h>
 #include <sys/vnode.h>
 
-#include <nfs/nfsproto.h>
-#include <nfsclient/nfs.h>
-#include <nfsclient/nfsmount.h>
+#include <fs/nfs/common/nfsproto.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/client/nfsmount.h>
 
-#include <nlm/nlm_prot.h>
-#include <nlm/nlm.h>
+#include <fs/nfs/nlm/nlm_prot.h>
+#include <fs/nfs/nlm/nlm.h>
 
 /*
  * We need to keep track of the svid values used for F_FLOCK locks.
