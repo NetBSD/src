@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.19 2016/12/01 02:30:54 knakahara Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.20 2016/12/13 00:35:11 knakahara Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -111,6 +111,7 @@ struct sppp {
 	int	pp_auth_failures;	/* authorization failures */
 	int	pp_max_auth_fail;	/* max. allowed authorization failures */
 	int	pp_phase;	/* phase we're currently in */
+	kmutex_t	*pp_lock;	/* lock for sppp structure */
 	int	query_dns;	/* 1 if we want to know the dns addresses */
 	uint32_t	dns_addrs[2];
 	int	state[IDX_COUNT];	/* state machine */
@@ -180,5 +181,8 @@ int sppp_ioctl(struct ifnet *, u_long, void *);
 struct mbuf *sppp_dequeue (struct ifnet *);
 int sppp_isempty (struct ifnet *);
 void sppp_flush (struct ifnet *);
+void sppp_lock_enter(struct sppp *);
+void sppp_lock_exit(struct sppp *);
+int sppp_locked(struct sppp *);
 #endif
 #endif /* !_NET_IF_SPPPVAR_H_ */
