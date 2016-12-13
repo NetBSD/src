@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_asconf.c,v 1.5 2016/07/07 09:32:02 ozaki-r Exp $ */
+/*	$NetBSD: sctp_asconf.c,v 1.6 2016/12/13 08:29:03 ozaki-r Exp $ */
 /*	$KAME: sctp_asconf.c,v 1.25 2005/06/16 20:44:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.5 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.6 2016/12/13 08:29:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.5 2016/07/07 09:32:02 ozaki-r Exp 
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet/icmp6.h>
-#include <netinet6/nd6.h>
 #include <netinet6/scope6_var.h>
 #endif /* INET6 */
 
