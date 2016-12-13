@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.11 2016/12/09 13:26:11 christos Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.12 2016/12/13 20:18:32 christos Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.11 2016/12/09 13:26:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.12 2016/12/13 20:18:32 christos Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -137,14 +137,14 @@ audiobell_synthesize(uint8_t *buf, u_int pitch, u_int period, u_int volume)
 }
 
 void
-audiobell(void *unit, u_int pitch, u_int period, u_int volume, int poll)
+audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 {
 	uint8_t *buf;
 	struct audio_info ai;
 	struct uio auio;
 	struct iovec aiov;
 	int size, len, offset;
-	dev_t audio = (dev_t)(AUDIO_DEVICE | *(int *)unit);
+	dev_t audio = AUDIO_DEVICE | device_unit((device_t)v);
 
 	/* The audio system isn't built for polling. */
 	if (poll) return;
