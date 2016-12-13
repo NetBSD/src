@@ -1,4 +1,4 @@
-$NetBSD: networking,v 1.11 2016/05/18 09:12:04 ozaki-r Exp $
+$NetBSD: networking,v 1.12 2016/12/13 09:51:34 rjs Exp $
 
 NetBSD Networking Roadmap
 =========================
@@ -46,8 +46,8 @@ the specific drivers.
 2. Mobile IPv6
 --------------
 
-Responsible: TBD
-Status: not started
+Responsible: rjs
+Status: compiles, not debugged yet.
 Comment[christos]: XXX: Fill in the project description and justification.
 
 3. network driver polling
