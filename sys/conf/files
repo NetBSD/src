@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1166 2016/11/02 00:11:59 pgoyette Exp $
+#	$NetBSD: files,v 1.1167 2016/12/13 20:20:34 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -330,6 +330,10 @@ define	onewirebus	{ }
 define 	pckbport	{[slot = -1]}
 define	pckbport_machdep_cnattach
 define	firmload
+
+# speaker devices, attaches to audio or pcppi drivers
+device	spkr
+file	dev/spkr.c			spkr
 
 include "dev/files.audio"
 

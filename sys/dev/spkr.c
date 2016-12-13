@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.3 2016/12/09 05:17:03 christos Exp $	*/
+/*	$NetBSD: spkr.c,v 1.4 2016/12/13 20:20:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.3 2016/12/09 05:17:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.4 2016/12/13 20:20:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,9 +82,9 @@ const struct cdevsw spkr_cdevsw = {
 	.d_flag = D_OTHER
 };
 
-static void playinit(void);
-static void playtone(int, int, int);
-static void playstring(char *, int);
+static void playinit(struct spkr_softc *);
+static void playtone(struct spkr_softc *, int, int, int);
+static void playstring(struct spkr_softc *, const char *, size_t);
 
 /**************** PLAY STRING INTERPRETER BEGINS HERE **********************
  *
@@ -95,13 +95,6 @@ static void playstring(char *, int);
  */
 
 #define dtoi(c)		((c) - '0')
-
-static int octave;	/* currently selected octave */
-static int whole;	/* whole-note time at current tempo, in ticks */
-static int value;	/* whole divisor for note time, quarter note = 1 */
-static int fill;	/* controls spacing of notes */
-static bool octtrack;	/* octave-tracking on? */
-static bool octprefix;	/* override current octave-tracking state? */
 
 /*
  * Magic number avoidance...
@@ -144,221 +137,211 @@ static const int pitchtab[] =
 #define NOCTAVES (int)(__arraycount(pitchtab) / OCTAVE_NOTES)
 
 static void
-playinit(void)
+playinit(struct spkr_softc *sc)
 {
-    octave = DFLT_OCTAVE;
-    whole = (hz * SECS_PER_MIN * WHOLE_NOTE) / DFLT_TEMPO;
-    fill = NORMAL;
-    value = DFLT_VALUE;
-    octtrack = false;
-    octprefix = true;	/* act as though there was an initial O(n) */
+	sc->sc_octave = DFLT_OCTAVE;
+	sc->sc_whole = (hz * SECS_PER_MIN * WHOLE_NOTE) / DFLT_TEMPO;
+	sc->sc_fill = NORMAL;
+	sc->sc_value = DFLT_VALUE;
+	sc->sc_octtrack = false;
+	sc->sc_octprefix = true;/* act as though there was an initial O(n) */
 }
 
-static void
-playtone(int pitch, int val, int sustain)
 /* play tone of proper duration for current rhythm signature */
+static void
+playtone(struct spkr_softc *sc, int pitch, int val, int sustain)
 {
-    int	sound, silence, snum = 1, sdenom = 1;
+	int sound, silence, snum = 1, sdenom = 1;
 
-    /* this weirdness avoids floating-point arithmetic */
-    for (; sustain; sustain--)
-    {
-	snum *= NUM_MULT;
-	sdenom *= DENOM_MULT;
-    }
+	/* this weirdness avoids floating-point arithmetic */
+	for (; sustain; sustain--) {
+		snum *= NUM_MULT;
+		sdenom *= DENOM_MULT;
+	}
 
-    if (pitch == -1)
-	spkr_rest(whole * snum / (val * sdenom));
-    else
-    {
-	sound = (whole * snum) / (val * sdenom)
-		- (whole * (FILLTIME - fill)) / (val * FILLTIME);
-	silence = whole * (FILLTIME-fill) * snum / (FILLTIME * val * sdenom);
+	if (pitch == -1) {
+		(*sc->sc_rest)(sc->sc_dev, sc->sc_whole
+		    * snum / (val * sdenom));
+		return;
+	}
+
+	int fac = sc->sc_whole * (FILLTIME - sc->sc_fill);
+	int fval = FILLTIME * val;
+	sound = (sc->sc_whole * snum) / (val * sdenom) -  fac / fval;
+	silence = fac * snum / (fval * sdenom);
 
 #ifdef SPKRDEBUG
-	printf("playtone: pitch %d for %d ticks, rest for %d ticks\n",
+	aprint_debug_dev(sc->sc_dev,
+	    "%s: pitch %d for %d ticks, rest for %d ticks\n", __func__,
 	    pitch, sound, silence);
 #endif /* SPKRDEBUG */
 
-	spkr_tone(pitchtab[pitch], sound);
-	if (fill != LEGATO)
-	    spkr_rest(silence);
-    }
+	(*sc->sc_tone)(sc->sc_dev, pitchtab[pitch], sound);
+	if (sc->sc_fill != LEGATO)
+		(*sc->sc_rest)(sc->sc_dev, silence);
 }
 
-static void
-playstring(char *cp, int slen)
 /* interpret and play an item from a notation string */
+static void
+playstring(struct spkr_softc *sc, const char *cp, size_t slen)
 {
-    int		pitch, lastpitch = OCTAVE_NOTES * DFLT_OCTAVE;
+	int		pitch, lastpitch = OCTAVE_NOTES * DFLT_OCTAVE;
 
-#define GETNUM(cp, v)	for(v=0; slen > 0 && isdigit(cp[1]); ) \
-				{v = v * 10 + (*++cp - '0'); slen--;}
-    for (; slen--; cp++)
-    {
-	int		sustain, timeval, tempo;
-	char	c = toupper(*cp);
+#define GETNUM(cp, v)	\
+	for (v = 0; slen > 0 && isdigit((unsigned char)cp[1]); ) { \
+		v = v * 10 + (*++cp - '0'); \
+		slen--; \
+	}
+
+	for (; slen--; cp++) {
+		int sustain, timeval, tempo;
+		char c = toupper((unsigned char)*cp);
 
 #ifdef SPKRDEBUG
-	printf("playstring: %c (%x)\n", c, c);
+		aprint_debug_dev(sc->sc_dev, "%s: %c (%x)\n", __func__, c, c);
 #endif /* SPKRDEBUG */
 
-	switch (c)
-	{
-	case 'A':  case 'B': case 'C': case 'D': case 'E': case 'F': case 'G':
+		switch (c) {
+		case 'A':  case 'B': case 'C': case 'D':
+		case 'E': case 'F': case 'G':
+			/* compute pitch */
+			pitch = notetab[c - 'A'] + sc->sc_octave * OCTAVE_NOTES;
 
-	    /* compute pitch */
-	    pitch = notetab[c - 'A'] + octave * OCTAVE_NOTES;
+			/* this may be followed by an accidental sign */
+			if (slen > 0 && (cp[1] == '#' || cp[1] == '+')) {
+				++pitch;
+				++cp;
+				slen--;
+			} else if (slen > 0 && cp[1] == '-') {
+				--pitch;
+				++cp;
+				slen--;
+			}
 
-	    /* this may be followed by an accidental sign */
-	    if (slen > 0 && (cp[1] == '#' || cp[1] == '+'))
-	    {
-		++pitch;
-		++cp;
-		slen--;
-	    }
-	    else if (slen > 0 && cp[1] == '-')
-	    {
-		--pitch;
-		++cp;
-		slen--;
-	    }
+			/*
+			 * If octave-tracking mode is on, and there has been no
+			 * octave- setting prefix, find the version of the
+			 * current letter note * closest to the last
+			 * regardless of octave.
+			 */
+			if (sc->sc_octtrack && !sc->sc_octprefix) {
+				int d = abs(pitch - lastpitch);
+				if (d > abs(pitch + OCTAVE_NOTES - lastpitch)) {
+					if (sc->sc_octave < NOCTAVES - 1) {
+						++sc->sc_octave;
+						pitch += OCTAVE_NOTES;
+					}
+				}
 
-	    /*
-	     * If octave-tracking mode is on, and there has been no octave-
-	     * setting prefix, find the version of the current letter note
-	     * closest to the last regardless of octave.
-	     */
-	    if (octtrack && !octprefix)
-	    {
-		if (abs(pitch-lastpitch) > abs(pitch+OCTAVE_NOTES-lastpitch))
-		{
-		    if (octave < NOCTAVES - 1) {
-			++octave;
-			pitch += OCTAVE_NOTES;
-		    }
+				if (d > abs(pitch - OCTAVE_NOTES - lastpitch)) {
+					if (sc->sc_octave > 0) {
+						--sc->sc_octave;
+						pitch -= OCTAVE_NOTES;
+					}
+				}
+			}
+			sc->sc_octprefix = false;
+			lastpitch = pitch;
+
+			/*
+			 * ...which may in turn be followed by an override
+			 * time value
+			 */
+			GETNUM(cp, timeval);
+			if (timeval <= 0 || timeval > MIN_VALUE)
+				timeval = sc->sc_value;
+
+			/* ...and/or sustain dots */
+			for (sustain = 0; slen > 0 && cp[1] == '.'; cp++) {
+				slen--;
+				sustain++;
+			}
+
+			/* time to emit the actual tone */
+			playtone(sc, pitch, timeval, sustain);
+			break;
+
+		case 'O':
+			if (slen > 0 && (cp[1] == 'N' || cp[1] == 'n')) {
+				sc->sc_octprefix = sc->sc_octtrack = false;
+				++cp;
+				slen--;
+			} else if (slen > 0 && (cp[1] == 'L' || cp[1] == 'l')) {
+				sc->sc_octtrack = true;
+				++cp;
+				slen--;
+			} else {
+				GETNUM(cp, sc->sc_octave);
+				if (sc->sc_octave >= NOCTAVES)
+					sc->sc_octave = DFLT_OCTAVE;
+				sc->sc_octprefix = true;
+			}
+			break;
+
+		case '>':
+			if (sc->sc_octave < NOCTAVES - 1)
+				sc->sc_octave++;
+			sc->sc_octprefix = true;
+			break;
+
+		case '<':
+			if (sc->sc_octave > 0)
+				sc->sc_octave--;
+			sc->sc_octprefix = true;
+			break;
+
+		case 'N':
+			GETNUM(cp, pitch);
+			for (sustain = 0; slen > 0 && cp[1] == '.'; cp++) {
+				slen--;
+				sustain++;
+			}
+			playtone(sc, pitch - 1, sc->sc_value, sustain);
+			break;
+
+		case 'L':
+			GETNUM(cp, sc->sc_value);
+			if (sc->sc_value <= 0 || sc->sc_value > MIN_VALUE)
+				sc->sc_value = DFLT_VALUE;
+			break;
+
+		case 'P':
+		case '~':
+			/* this may be followed by an override time value */
+			GETNUM(cp, timeval);
+			if (timeval <= 0 || timeval > MIN_VALUE)
+				timeval = sc->sc_value;
+			for (sustain = 0; slen > 0 && cp[1] == '.'; cp++) {
+				slen--;
+				sustain++;
+			}
+			playtone(sc, -1, timeval, sustain);
+			break;
+
+		case 'T':
+			GETNUM(cp, tempo);
+			if (tempo < MIN_TEMPO || tempo > MAX_TEMPO)
+				tempo = DFLT_TEMPO;
+			sc->sc_whole = (hz * SECS_PER_MIN * WHOLE_NOTE) / tempo;
+			break;
+
+		case 'M':
+			if (slen > 0 && (cp[1] == 'N' || cp[1] == 'n')) {
+				sc->sc_fill = NORMAL;
+				++cp;
+				slen--;
+			} else if (slen > 0 && (cp[1] == 'L' || cp[1] == 'l')) {
+				sc->sc_fill = LEGATO;
+				++cp;
+				slen--;
+			} else if (slen > 0 && (cp[1] == 'S' || cp[1] == 's')) {
+				sc->sc_fill = STACCATO;
+				++cp;
+				slen--;
+			}
+			break;
 		}
-
-		if (abs(pitch-lastpitch) > abs((pitch-OCTAVE_NOTES)-lastpitch))
-		{
-		    if (octave > 0) {
-			--octave;
-			pitch -= OCTAVE_NOTES;
-		    }
-		}
-	    }
-	    octprefix = false;
-	    lastpitch = pitch;
-
-	    /* ...which may in turn be followed by an override time value */
-	    GETNUM(cp, timeval);
-	    if (timeval <= 0 || timeval > MIN_VALUE)
-		timeval = value;
-
-	    /* ...and/or sustain dots */
-	    for (sustain = 0; slen > 0 && cp[1] == '.'; cp++)
-	    {
-		slen--;
-		sustain++;
-	    }
-
-	    /* time to emit the actual tone */
-	    playtone(pitch, timeval, sustain);
-	    break;
-
-	case 'O':
-	    if (slen > 0 && (cp[1] == 'N' || cp[1] == 'n'))
-	    {
-		octprefix = octtrack = false;
-		++cp;
-		slen--;
-	    }
-	    else if (slen > 0 && (cp[1] == 'L' || cp[1] == 'l'))
-	    {
-		octtrack = true;
-		++cp;
-		slen--;
-	    }
-	    else
-	    {
-		GETNUM(cp, octave);
-		if (octave >= NOCTAVES)
-		    octave = DFLT_OCTAVE;
-		octprefix = true;
-	    }
-	    break;
-
-	case '>':
-	    if (octave < NOCTAVES - 1)
-		octave++;
-	    octprefix = true;
-	    break;
-
-	case '<':
-	    if (octave > 0)
-		octave--;
-	    octprefix = true;
-	    break;
-
-	case 'N':
-	    GETNUM(cp, pitch);
-	    for (sustain = 0; slen > 0 && cp[1] == '.'; cp++)
-	    {
-		slen--;
-		sustain++;
-	    }
-	    playtone(pitch - 1, value, sustain);
-	    break;
-
-	case 'L':
-	    GETNUM(cp, value);
-	    if (value <= 0 || value > MIN_VALUE)
-		value = DFLT_VALUE;
-	    break;
-
-	case 'P':
-	case '~':
-	    /* this may be followed by an override time value */
-	    GETNUM(cp, timeval);
-	    if (timeval <= 0 || timeval > MIN_VALUE)
-		timeval = value;
-	    for (sustain = 0; slen > 0 && cp[1] == '.'; cp++)
-	    {
-		slen--;
-		sustain++;
-	    }
-	    playtone(-1, timeval, sustain);
-	    break;
-
-	case 'T':
-	    GETNUM(cp, tempo);
-	    if (tempo < MIN_TEMPO || tempo > MAX_TEMPO)
-		tempo = DFLT_TEMPO;
-	    whole = (hz * SECS_PER_MIN * WHOLE_NOTE) / tempo;
-	    break;
-
-	case 'M':
-	    if (slen > 0 && (cp[1] == 'N' || cp[1] == 'n'))
-	    {
-		fill = NORMAL;
-		++cp;
-		slen--;
-	    }
-	    else if (slen > 0 && (cp[1] == 'L' || cp[1] == 'l'))
-	    {
-		fill = LEGATO;
-		++cp;
-		slen--;
-	    }
-	    else if (slen > 0 && (cp[1] == 'S' || cp[1] == 's'))
-	    {
-		fill = STACCATO;
-		++cp;
-		slen--;
-	    }
-	    break;
 	}
-    }
 }
 
 /******************* UNIX DRIVER HOOKS BEGIN HERE **************************
@@ -366,116 +349,125 @@ playstring(char *cp, int slen)
  * This section implements driver hooks to run playstring() and the spkr_tone()
  * and spkr_rest() functions defined above.
  */
+extern struct cfdriver spkr_cd;
+#define spkrenter(d)	device_lookup_private(&spkr_cd, d)
 
-static int spkr_active;	/* exclusion flag */
-int spkr_attached;
-static void *spkr_inbuf;
-
-int
-spkr_probe(device_t parent, cfdata_t match, void *aux)
+void
+spkr_attach(device_t self, void (*tone)(device_t, u_int, u_int),
+    void (*rest)(device_t, int))
 {
-	return (!spkr_attached);
+	struct spkr_softc *sc = device_private(self);
+
+	sc->sc_dev = self;
+	sc->sc_tone = tone;
+	sc->sc_rest = rest;
+	sc->sc_inbuf = NULL;
 }
 
 int
 spkropen(dev_t dev, int	flags, int mode, struct lwp *l)
 {
 #ifdef SPKRDEBUG
-    printf("spkropen: entering with dev = %"PRIx64"\n", dev);
+	aprint_debug("%s: entering with dev = %"PRIx64"\n", __func__, dev);
 #endif /* SPKRDEBUG */
+	struct spkr_softc *sc = spkrenter(minor(dev));
 
-    if (minor(dev) != 0 || !spkr_attached)
-	return(ENXIO);
-    else if (spkr_active)
-	return(EBUSY);
-    else
-    {
-	playinit();
-	spkr_inbuf = malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
-	spkr_active = 1;
-    }
-    return(0);
+	if (sc == NULL)
+		return ENXIO;
+	if (sc->sc_inbuf)
+		return EBUSY;
+
+	sc->sc_inbuf = malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
+	playinit(sc);
+	return 0;
 }
 
 int
 spkrwrite(dev_t dev, struct uio *uio, int flags)
 {
-    int n;
-    int error;
 #ifdef SPKRDEBUG
-    printf("spkrwrite: entering with dev = %"PRIx64", count = %zu\n",
-		dev, uio->uio_resid);
+	aprint_debug("%s: entering with dev = %"PRIx64", count = %zu\n",
+	    __func__, dev, uio->uio_resid);
 #endif /* SPKRDEBUG */
+	struct spkr_softc *sc = spkrenter(minor(dev));
 
-    if (minor(dev) != 0)
-	return(ENXIO);
-    else
-    {
-	n = min(DEV_BSIZE, uio->uio_resid);
-	error = uiomove(spkr_inbuf, n, uio);
-	if (!error)
-		playstring((char *)spkr_inbuf, n);
-	return(error);
-    }
+	if (sc == NULL)
+		return ENXIO;
+	if (!sc->sc_inbuf)
+		return EINVAL;
+
+	size_t n = min(DEV_BSIZE, uio->uio_resid);
+	int error = uiomove(sc->sc_inbuf, n, uio);
+	if (error)
+		return error;
+	playstring(sc, sc->sc_inbuf, n);
+	return 0;
 }
 
 int
 spkrclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 #ifdef SPKRDEBUG
-    printf("spkrclose: entering with dev = %"PRIx64"\n", dev);
+	aprint_debug("%s: entering with dev = %"PRIx64"\n", __func__, dev);
 #endif /* SPKRDEBUG */
+	struct spkr_softc *sc = spkrenter(minor(dev));
 
-    if (minor(dev) != 0)
-	return(ENXIO);
+	if (sc == NULL)
+		return ENXIO;
+	if (!sc->sc_inbuf)
+		return EINVAL;
+
+	sc->sc_tone(sc->sc_dev, 0, 0);
+	free(sc->sc_inbuf, M_DEVBUF);
+	sc->sc_inbuf = NULL;
+
+	return 0;
+}
+
+static void
+playonetone(struct spkr_softc *sc, tone_t *tp)
+{
+    if (tp->frequency == 0)
+	    (*sc->sc_rest)(sc->sc_dev, tp->duration);
     else
-    {
-	spkr_tone(0, 0);
-	free(spkr_inbuf, M_DEVBUF);
-	spkr_active = 0;
-    }
-    return(0);
+	    (*sc->sc_tone)(sc->sc_dev, tp->frequency, tp->duration);
 }
 
 int
 spkrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-#ifdef SPKRDEBUG
-    printf("spkrioctl: entering with dev = %"PRIx64", cmd = %lx\n", dev, cmd);
-#endif /* SPKRDEBUG */
-
-    if (minor(dev) != 0)
-	return(ENXIO);
-    else if (cmd == SPKRTONE)
-    {
-	tone_t	*tp = (tone_t *)data;
-
-	if (tp->frequency == 0)
-	    spkr_rest(tp->duration);
-	else
-	    spkr_tone(tp->frequency, tp->duration);
-    }
-    else if (cmd == SPKRTUNE)
-    {
-	tone_t  *tp = (tone_t *)(*(void **)data);
+	tone_t *tp;
 	tone_t ttp;
 	int error;
+#ifdef SPKRDEBUG
+	aprint_debug("%s: entering with dev = %"PRIx64", cmd = %lx\n",
+	    __func__, dev, cmd);
+#endif /* SPKRDEBUG */
 
-	for (; ; tp++) {
-	    error = copyin(tp, &ttp, sizeof(tone_t));
-	    if (error)
-		    return(error);
-	    if (ttp.duration == 0)
-		    break;
-	    if (ttp.frequency == 0)
-		spkr_rest(ttp.duration);
-	    else
-		spkr_tone(ttp.frequency, ttp.duration);
+	struct spkr_softc *sc = spkrenter(minor(dev));
+
+	if (sc == NULL)
+		return ENXIO;
+	if (!sc->sc_inbuf)
+		return EINVAL;
+
+	switch (cmd) {
+    	case SPKRTONE:
+		playonetone(sc, data);
+		return 0;
+	case SPKRTUNE:
+		for (tp = *(void **)data;; tp++) {
+			error = copyin(tp, &ttp, sizeof(tone_t));
+			if (error)
+				return(error);
+			if (ttp.duration == 0)
+				break;
+			playonetone(sc, &ttp);
+		}
+		return 0;
+	default:
+		return ENOTTY;
 	}
-    }
-    else
-	return(EINVAL);
-    return(0);
 }
 
 #ifdef _MODULE
@@ -506,12 +498,13 @@ spkr__modcmd(modcmd_t cmd, void *arg)
 		break;
 
 	case MODULE_CMD_FINI:
-		if (spkr_active)
-			return EBUSY;
+		return EBUSY;
+#ifdef notyet
 		error = config_fini_component(cfdriver_ioconf_spkr,
 			cfattach_ioconf_spkr, cfdata_ioconf_spkr);
 		devsw_detach(NULL, &spkr_cdevsw);
 		break;
+#endif
 	default:
 		error = ENOTTY;
 		break;
