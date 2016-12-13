@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.162 2016/12/06 07:01:47 knakahara Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.163 2016/12/13 00:35:11 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.162 2016/12/06 07:01:47 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.163 2016/12/13 00:35:11 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -90,6 +90,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.162 2016/12/06 07:01:47 knakahara 
 
 #include <net/if_sppp.h>
 #include <net/if_spppvar.h>
+
+#ifdef NET_MPSAFE
+#define SPPPSUBR_MPSAFE	1
+#endif
 
 #define	LCP_KEEPALIVE_INTERVAL		10	/* seconds between checks */
 #define LOOPALIVECNT     		3	/* loopback detection tries */
@@ -242,9 +246,16 @@ struct cp {
 };
 
 static struct sppp *spppq;
+static kmutex_t *spppq_lock = NULL;
 static callout_t keepalive_ch;
 
+#define SPPPQ_LOCK()	if (spppq_lock) \
+				mutex_enter(spppq_lock);
+#define SPPPQ_UNLOCK()	if (spppq_lock) \
+				mutex_exit(spppq_lock);
+
 #ifdef INET
+#ifndef SPPPSUBR_MPSAFE
 /*
  * The following disgusting hack gets around the problem that IP TOS
  * can't be set yet.  We want to put "interactive" traffic on a high
@@ -258,6 +269,7 @@ static u_short interactive_ports[8] = {
 	0,	21,	0,	23,
 };
 #define INTERACTIVE(p)	(interactive_ports[(p) & 7] == (p))
+#endif /* SPPPSUBR_MPSAFE */
 #endif
 
 /* almost every function needs these */
@@ -457,6 +469,8 @@ sppp_change_phase(struct sppp *sp, int phase)
 {
 	STDDCL;
 
+	KASSERT(sppp_locked(sp));
+
 	if (sp->pp_phase == phase)
 		return;
 
@@ -492,6 +506,10 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	int debug = ifp->if_flags & IFF_DEBUG;
 	int isr = 0;
 
+	KASSERT(!sppp_locked(sp));
+
+	sppp_lock_enter(sp);
+
 	if (ifp->if_flags & IFF_UP) {
 		/* Count received bytes, add hardware framing */
 		ifp->if_ibytes += m->m_pkthdr.len + sp->pp_framebytes;
@@ -509,6 +527,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		++ifp->if_ierrors;
 		++ifp->if_iqdrops;
 		m_freem(m);
+		sppp_lock_exit(sp);
 		return;
 	}
 
@@ -553,6 +572,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 				++ifp->if_noproto;
 				goto invalid;
 			case CISCO_KEEPALIVE:
+				sppp_lock_exit(sp);
 				sppp_cisco_input((struct sppp *) ifp, m);
 				m_freem(m);
 				return;
@@ -596,23 +616,33 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		++ifp->if_noproto;
 		goto drop;
 	case PPP_LCP:
+		sppp_lock_exit(sp);
 		sppp_cp_input(&lcp, sp, m);
 		m_freem(m);
 		return;
 	case PPP_PAP:
-		if (sp->pp_phase >= SPPP_PHASE_AUTHENTICATE)
+		if (sp->pp_phase >= SPPP_PHASE_AUTHENTICATE) {
+			sppp_lock_exit(sp);
 			sppp_pap_input(sp, m);
+		} else
+			sppp_lock_exit(sp);
 		m_freem(m);
 		return;
 	case PPP_CHAP:
-		if (sp->pp_phase >= SPPP_PHASE_AUTHENTICATE)
+		if (sp->pp_phase >= SPPP_PHASE_AUTHENTICATE) {
+			sppp_lock_exit(sp);
 			sppp_chap_input(sp, m);
+		} else
+			sppp_lock_exit(sp);
 		m_freem(m);
 		return;
 #ifdef INET
 	case PPP_IPCP:
-		if (sp->pp_phase == SPPP_PHASE_NETWORK)
+		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
+			sppp_lock_exit(sp);
 			sppp_cp_input(&ipcp, sp, m);
+		} else
+			sppp_lock_exit(sp);
 		m_freem(m);
 		return;
 	case PPP_IP:
@@ -624,8 +654,11 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 #ifdef INET6
 	case PPP_IPV6CP:
-		if (sp->pp_phase == SPPP_PHASE_NETWORK)
+		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
+			sppp_lock_exit(sp);
 			sppp_cp_input(&ipv6cp, sp, m);
+		} else
+			sppp_lock_exit(sp);
 		m_freem(m);
 		return;
 
@@ -643,9 +676,11 @@ queue_pkt:
 		goto drop;
 	}
 
+	sppp_lock_exit(sp);
 	/* Check queue. */
 	if (__predict_true(pktq)) {
 		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+			sppp_lock_enter(sp);
 			goto drop;
 		}
 		return;
@@ -659,6 +694,7 @@ queue_pkt:
 		if (debug)
 			log(LOG_DEBUG, "%s: protocol queue overflow\n",
 				ifp->if_xname);
+		sppp_lock_enter(sp);
 		goto drop;
 	}
 	IF_ENQUEUE(inq, m);
@@ -675,16 +711,20 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 {
 	struct sppp *sp = (struct sppp *) ifp;
 	struct ppp_header *h = NULL;
+#ifndef SPPPSUBR_MPSAFE
 	struct ifqueue *ifq = NULL;		/* XXX */
+#endif
 	int s, error = 0;
 	uint16_t protocol;
 
 	s = splnet();
 
+	sppp_lock_enter(sp);
 	sp->pp_last_activity = time_uptime;
 
 	if ((ifp->if_flags & IFF_UP) == 0 ||
 	    (ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == 0) {
+		sppp_lock_exit(sp);
 		m_freem(m);
 		splx(s);
 		return (ENETDOWN);
@@ -710,16 +750,20 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 #ifdef INET
 	if (dst->sa_family == AF_INET) {
 		struct ip *ip = NULL;
+#ifndef SPPPSUBR_MPSAFE
 		struct tcphdr *th = NULL;
+#endif
 
 		if (m->m_len >= sizeof(struct ip)) {
 			ip = mtod(m, struct ip *);
+#ifndef SPPPSUBR_MPSAFE
 			if (ip->ip_p == IPPROTO_TCP &&
 			    m->m_len >= sizeof(struct ip) + (ip->ip_hl << 2) +
 			    sizeof(struct tcphdr)) {
 				th = (struct tcphdr *)
 				    ((char *)ip + (ip->ip_hl << 2));
 			}
+#endif
 		} else
 			ip = NULL;
 
@@ -736,6 +780,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		if (ip && ip->ip_src.s_addr == INADDR_ANY) {
 			uint8_t proto = ip->ip_p;
 
+			sppp_lock_exit(sp);
 			m_freem(m);
 			splx(s);
 			if (proto == IPPROTO_TCP)
@@ -744,16 +789,17 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 				return (0);
 		}
 
+#ifndef SPPPSUBR_MPSAFE
 		/*
 		 * Put low delay, telnet, rlogin and ftp control packets
 		 * in front of the queue.
 		 */
-
 		if (!IF_QFULL(&sp->pp_fastq) &&
 		    ((ip && (ip->ip_tos & IPTOS_LOWDELAY)) ||
 		     (th && (INTERACTIVE(ntohs(th->th_sport)) ||
 		      INTERACTIVE(ntohs(th->th_dport))))))
 			ifq = &sp->pp_fastq;
+#endif /* !SPPPSUBR_MPSAFE */
 	}
 #endif
 
@@ -773,6 +819,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 				log(LOG_DEBUG, "%s: no memory for transmit header\n",
 					ifp->if_xname);
 			++ifp->if_oerrors;
+			sppp_lock_exit(sp);
 			splx(s);
 			return (ENOBUFS);
 		}
@@ -834,6 +881,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	default:
 		m_freem(m);
 		++ifp->if_oerrors;
+		sppp_lock_exit(sp);
 		splx(s);
 		return (EAFNOSUPPORT);
 	}
@@ -845,6 +893,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 				log(LOG_DEBUG, "%s: no memory for transmit header\n",
 					ifp->if_xname);
 			++ifp->if_oerrors;
+			sppp_lock_exit(sp);
 			splx(s);
 			return (ENOBUFS);
 		}
@@ -854,6 +903,11 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	}
 
 
+#ifdef SPPPSUBR_MPSAFE
+	error = if_transmit_lock(ifp, m);
+	if (error == 0)
+		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
+#else /* !SPPPSUBR_MPSAFE */
 	error = ifq_enqueue2(ifp, ifq, m);
 
 	if (error == 0) {
@@ -862,10 +916,15 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * The packet length includes header + additional hardware
 		 * framing according to RFC 1333.
 		 */
-		if (!(ifp->if_flags & IFF_OACTIVE))
+		if (!(ifp->if_flags & IFF_OACTIVE)) {
+			sppp_lock_exit(sp);
 			if_start_lock(ifp);
+			sppp_lock_enter(sp);
+		}
 		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 	}
+#endif /* !SPPPSUBR_MPSAFE */
+	sppp_lock_exit(sp);
 	splx(s);
 	return error;
 }
@@ -880,7 +939,10 @@ sppp_mediachange(struct ifnet *ifp)
 static void
 sppp_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
 {
+	struct sppp *sp = (struct sppp *)ifp;
+	KASSERT(!sppp_locked(sp));
 
+	sppp_lock_enter(sp);
 	switch (ifp->if_link_state) {
 	case LINK_STATE_UP:
 		imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
@@ -893,6 +955,7 @@ sppp_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
 		imr->ifm_status = 0;
 		break;
 	}
+	sppp_lock_exit(sp);
 }
 
 void
@@ -905,6 +968,9 @@ sppp_attach(struct ifnet *ifp)
 		callout_init(&keepalive_ch, 0);
 		callout_reset(&keepalive_ch, hz * LCP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
 	}
+
+	if (! spppq_lock)
+		spppq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
 
 	/* Insert new entry into the keepalive list. */
 	sp->pp_next = spppq;
@@ -928,6 +994,7 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_phase = SPPP_PHASE_DEAD;
 	sp->pp_up = lcp.Up;
 	sp->pp_down = lcp.Down;
+	sp->pp_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
 
 	if_alloc_sadl(ifp);
 
@@ -950,7 +1017,9 @@ sppp_detach(struct ifnet *ifp)
 {
 	struct sppp **q, *p, *sp = (struct sppp *) ifp;
 
+	sppp_lock_enter(sp);
 	/* Remove the entry from the keepalive list. */
+	SPPPQ_LOCK();
 	for (q = &spppq; (p = *q); q = &p->pp_next)
 		if (p == sp) {
 			*q = p->pp_next;
@@ -966,6 +1035,7 @@ sppp_detach(struct ifnet *ifp)
 	if (! spppq) {
 		callout_stop(&keepalive_ch);
 	}
+	SPPPQ_UNLOCK();
 
 	callout_stop(&sp->ch[IDX_LCP]);
 	callout_stop(&sp->ch[IDX_IPCP]);
@@ -984,6 +1054,11 @@ sppp_detach(struct ifnet *ifp)
 
 	/* Safety - shouldn't be needed as there is no media to set. */
 	ifmedia_delete_instance(&sp->pp_im, IFM_INST_ANY);
+
+	sppp_lock_exit(sp);
+	if (sp->pp_lock)
+		mutex_obj_free(sp->pp_lock);
+
 }
 
 /*
@@ -1008,9 +1083,13 @@ sppp_isempty(struct ifnet *ifp)
 	struct sppp *sp = (struct sppp *) ifp;
 	int empty, s;
 
+	KASSERT(!sppp_locked(sp));
+
 	s = splnet();
+	sppp_lock_enter(sp);
 	empty = IF_IS_EMPTY(&sp->pp_fastq) && IF_IS_EMPTY(&sp->pp_cpq) &&
 		IFQ_IS_EMPTY(&sp->pp_if.if_snd);
+	sppp_lock_exit(sp);
 	splx(s);
 	return (empty);
 }
@@ -1026,6 +1105,7 @@ sppp_dequeue(struct ifnet *ifp)
 	int s;
 
 	s = splnet();
+	sppp_lock_enter(sp);
 	/*
 	 * Process only the control protocol queue until we have at
 	 * least one NCP open.
@@ -1039,6 +1119,7 @@ sppp_dequeue(struct ifnet *ifp)
 		if (m == NULL)
 			IFQ_DEQUEUE(&sp->pp_if.if_snd, m);
 	}
+	sppp_lock_exit(sp);
 	splx(s);
 	return m;
 }
@@ -1064,6 +1145,8 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
+
+		sppp_lock_enter(sp);
 		going_up = ifp->if_flags & IFF_UP &&
 			(ifp->if_flags & IFF_RUNNING) == 0;
 		going_down = (ifp->if_flags & IFF_UP) == 0 &&
@@ -1075,8 +1158,9 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			ifp->if_flags &= ~IFF_AUTO;
 		}
 
-		if (going_up || going_down)
+		if (going_up || going_down) {
 			lcp.Close(sp);
+		}
 		if (going_up && newmode == 0) {
 			/* neither auto-dial nor passive */
 			ifp->if_flags |= IFF_RUNNING;
@@ -1086,7 +1170,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			sppp_flush(ifp);
 			ifp->if_flags &= ~IFF_RUNNING;
 		}
-
+		sppp_lock_exit(sp);
 		break;
 
 	case SIOCSIFMTU:
@@ -1177,11 +1261,16 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 	uint32_t me, mymask = 0;	/* XXX: GCC */
 #endif
 
+	KASSERT(!sppp_locked(sp));
+
+	sppp_lock_enter(sp);
+
 	if (m->m_pkthdr.len < CISCO_PACKET_LEN) {
 		if (debug)
 			log(LOG_DEBUG,
 			    "%s: cisco invalid packet length: %d bytes\n",
 			    ifp->if_xname, m->m_pkthdr.len);
+		sppp_lock_exit(sp);
 		return;
 	}
 	h = mtod(m, struct cisco_packet *);
@@ -1212,7 +1301,9 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 					ifp->if_xname);
 				sp->pp_loopcnt = 0;
 				if (ifp->if_flags & IFF_UP) {
+					sppp_lock_exit(sp);
 					if_down(ifp);
+					sppp_lock_enter(sp);
 					IF_PURGE(&sp->pp_cpq);
 				}
 			}
@@ -1225,17 +1316,22 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 		sp->pp_loopcnt = 0;
 		if (! (ifp->if_flags & IFF_UP) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
+			sppp_lock_exit(sp);
 			if_up(ifp);
+			sppp_lock_enter(sp);
 		}
 		break;
 	case CISCO_ADDR_REQ:
 #ifdef INET
+		sppp_lock_exit(sp);
 		sppp_get_ip_addrs(sp, &me, 0, &mymask);
 		if (me != 0L)
 			sppp_cisco_send(sp, CISCO_ADDR_REPLY, me, mymask);
 #endif
+		sppp_lock_enter(sp);
 		break;
 	}
+	sppp_lock_exit(sp);
 }
 
 /*
@@ -1249,6 +1345,8 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 	struct cisco_packet *ch;
 	struct mbuf *m;
 	uint32_t t;
+
+	KASSERT(sppp_locked(sp));
 
 	t = time_uptime * 1000;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1286,8 +1384,11 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 		return;
 	} else
 		IF_ENQUEUE(&sp->pp_cpq, m);
-	if (! (ifp->if_flags & IFF_OACTIVE))
+	if (! (ifp->if_flags & IFF_OACTIVE)) {
+		sppp_lock_exit(sp);
 		if_start_lock(ifp);
+		sppp_lock_enter(sp);
+	}
 	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
@@ -1306,6 +1407,8 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	struct lcp_header *lh;
 	struct mbuf *m;
 	size_t pkthdrlen;
+
+	KASSERT(sppp_locked(sp));
 
 	pkthdrlen = (sp->pp_flags & PP_NOFRAMING) ? 2 : PPP_HEADER_LEN;
 
@@ -1351,8 +1454,13 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 		return;
 	} else
 		IF_ENQUEUE(&sp->pp_cpq, m);
-	if (! (ifp->if_flags & IFF_OACTIVE))
+
+	if (! (ifp->if_flags & IFF_OACTIVE)) {
+		sppp_lock_exit(sp);
 		if_start_lock(ifp);
+		sppp_lock_enter(sp);
+	}
+
 	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
@@ -1369,6 +1477,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 	u_char *p;
 	uint32_t u32;
 
+	KASSERT(!sppp_locked(sp));
 	if (len < 4) {
 		if (debug)
 			log(LOG_DEBUG,
@@ -1400,17 +1509,22 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 				addlog("%s: %s invalid conf-req length %d\n",
 				       ifp->if_xname, cp->name,
 				       len);
+			sppp_lock_enter(sp);
 			++ifp->if_ierrors;
+			sppp_lock_exit(sp);
 			break;
 		}
 		/* handle states where RCR doesn't get a SCA/SCN */
+		sppp_lock_enter(sp);
 		switch (sp->state[cp->protoidx]) {
 		case STATE_CLOSING:
 		case STATE_STOPPING:
+			sppp_lock_exit(sp);
 			return;
 		case STATE_CLOSED:
 			sppp_cp_send(sp, cp->proto, TERM_ACK, h->ident,
 				     0, 0);
+			sppp_lock_exit(sp);
 			return;
 		}
 		rv = (cp->RCR)(sp, h, len);
@@ -1418,6 +1532,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			/* fatal error, shut down */
 			(cp->tld)(sp);
 			sppp_lcp_tlf(sp);
+			sppp_lock_exit(sp);
 			return;
 		}
 		switch (sp->state[cp->protoidx]) {
@@ -1448,20 +1563,24 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 				sppp_cp_change_state(cp, sp, STATE_ACK_RCVD);
 			break;
 		default:
+			sppp_lock_enter(sp);
 			printf("%s: %s illegal %s in state %s\n",
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
 			       sppp_state_name(sp->state[cp->protoidx]));
 			++ifp->if_ierrors;
 		}
+		sppp_lock_exit(sp);
 		break;
 	case CONF_ACK:
+		sppp_lock_enter(sp);
 		if (h->ident != sp->confid[cp->protoidx]) {
 			if (debug)
 				addlog("%s: %s id mismatch 0x%x != 0x%x\n",
 				       ifp->if_xname, cp->name,
 				       h->ident, sp->confid[cp->protoidx]);
 			++ifp->if_ierrors;
+			sppp_lock_exit(sp);
 			break;
 		}
 		switch (sp->state[cp->protoidx]) {
@@ -1498,15 +1617,18 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       sppp_state_name(sp->state[cp->protoidx]));
 			++ifp->if_ierrors;
 		}
+		sppp_lock_exit(sp);
 		break;
 	case CONF_NAK:
 	case CONF_REJ:
+		sppp_lock_enter(sp);
 		if (h->ident != sp->confid[cp->protoidx]) {
 			if (debug)
 				addlog("%s: %s id mismatch 0x%x != 0x%x\n",
 				       ifp->if_xname, cp->name,
 				       h->ident, sp->confid[cp->protoidx]);
 			++ifp->if_ierrors;
+			sppp_lock_exit(sp);
 			break;
 		}
 		if (h->type == CONF_NAK)
@@ -1541,9 +1663,11 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       sppp_state_name(sp->state[cp->protoidx]));
 			++ifp->if_ierrors;
 		}
+		sppp_lock_exit(sp);
 		break;
 
 	case TERM_REQ:
+		sppp_lock_enter(sp);
 		switch (sp->state[cp->protoidx]) {
 		case STATE_ACK_RCVD:
 		case STATE_ACK_SENT:
@@ -1573,8 +1697,10 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       sppp_state_name(sp->state[cp->protoidx]));
 			++ifp->if_ierrors;
 		}
+		sppp_lock_exit(sp);
 		break;
 	case TERM_ACK:
+		sppp_lock_enter(sp);
 		switch (sp->state[cp->protoidx]) {
 		case STATE_CLOSED:
 		case STATE_STOPPED:
@@ -1606,9 +1732,11 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       sppp_state_name(sp->state[cp->protoidx]));
 			++ifp->if_ierrors;
 		}
+		sppp_lock_exit(sp);
 		break;
 	case CODE_REJ:
 		/* XXX catastrophic rejects (RXJ-) aren't handled yet. */
+		sppp_lock_enter(sp);
 		log(LOG_INFO,
 		    "%s: %s: ignoring RXJ (%s) for code ?, "
 		    "danger will robinson\n",
@@ -1633,6 +1761,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       sppp_state_name(sp->state[cp->protoidx]));
 			++ifp->if_ierrors;
 		}
+		sppp_lock_exit(sp);
 		break;
 	case PROTO_REJ:
 	    {
@@ -1653,6 +1782,8 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		if (upper == NULL)
 			catastrophic++;
 
+		sppp_lock_enter(sp);
+
 		if (debug)
 			log(LOG_INFO,
 			    "%s: %s: RXJ%c (%s) for proto 0x%x (%s/%s)\n",
@@ -1668,6 +1799,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		if (upper && !catastrophic) {
 			if (sp->state[upper->protoidx] == STATE_REQ_SENT) {
 				upper->Close(sp);
+				sppp_lock_exit(sp);
 				break;
 			}
 		}
@@ -1692,6 +1824,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       sppp_state_name(sp->state[cp->protoidx]));
 			++ifp->if_ierrors;
 		}
+		sppp_lock_exit(sp);
 		break;
 	    }
 	case DISC_REQ:
@@ -1702,11 +1835,13 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 	case ECHO_REQ:
 		if (cp->proto != PPP_LCP)
 			goto illegal;
+		sppp_lock_enter(sp);
 		if (sp->state[cp->protoidx] != STATE_OPENED) {
 			if (debug)
 				addlog("%s: lcp echo req but lcp closed\n",
 				       ifp->if_xname);
 			++ifp->if_ierrors;
+			sppp_lock_exit(sp);
 			break;
 		}
 		if (len < 8) {
@@ -1714,6 +1849,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 				addlog("%s: invalid lcp echo request "
 				       "packet length: %d bytes\n",
 				       ifp->if_xname, len);
+			sppp_lock_exit(sp);
 			break;
 		}
 		memcpy(&u32, h + 1, sizeof u32);
@@ -1727,6 +1863,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			/* XXX */
 			lcp.Down(sp);
 			lcp.Up(sp);
+			sppp_lock_exit(sp);
 			break;
 		}
 		u32 = htonl(sp->lcp.magic);
@@ -1736,12 +1873,15 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       ifp->if_xname);
 		sppp_cp_send(sp, PPP_LCP, ECHO_REPLY, h->ident, len - 4,
 		    h + 1);
+		sppp_lock_exit(sp);
 		break;
 	case ECHO_REPLY:
 		if (cp->proto != PPP_LCP)
 			goto illegal;
+		sppp_lock_enter(sp);
 		if (h->ident != sp->lcp.echoid) {
 			++ifp->if_ierrors;
+			sppp_lock_exit(sp);
 			break;
 		}
 		if (len < 8) {
@@ -1749,6 +1889,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 				addlog("%s: lcp invalid echo reply "
 				       "packet length: %d bytes\n",
 				       ifp->if_xname, len);
+			sppp_lock_exit(sp);
 			break;
 		}
 		if (debug)
@@ -1757,16 +1898,19 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		memcpy(&u32, h + 1, sizeof u32);
 		if (ntohl(u32) != sp->lcp.magic)
 			sp->pp_alivecnt = 0;
+		sppp_lock_exit(sp);
 		break;
 	default:
 		/* Unknown packet type -- send Code-Reject packet. */
 	  illegal:
+		sppp_lock_enter(sp);
 		if (debug)
 			addlog("%s: %s send code-rej for 0x%x\n",
 			       ifp->if_xname, cp->name, h->type);
 		sppp_cp_send(sp, cp->proto, CODE_REJ,
 		    ++sp->pp_seq[cp->protoidx], m->m_pkthdr.len, h);
 		++ifp->if_ierrors;
+		sppp_lock_exit(sp);
 	}
 }
 
@@ -1779,6 +1923,8 @@ static void
 sppp_up_event(const struct cp *cp, struct sppp *sp)
 {
 	STDDCL;
+
+	KASSERT(sppp_locked(sp));
 
 	if (debug)
 		log(LOG_DEBUG, "%s: %s up(%s)\n",
@@ -1805,6 +1951,8 @@ static void
 sppp_down_event(const struct cp *cp, struct sppp *sp)
 {
 	STDDCL;
+
+	KASSERT(sppp_locked(sp));
 
 	if (debug)
 		log(LOG_DEBUG, "%s: %s down(%s)\n",
@@ -1842,6 +1990,8 @@ sppp_open_event(const struct cp *cp, struct sppp *sp)
 {
 	STDDCL;
 
+	KASSERT(sppp_locked(sp));
+
 	if (debug)
 		log(LOG_DEBUG, "%s: %s open(%s)\n",
 		    ifp->if_xname, cp->name,
@@ -1877,6 +2027,8 @@ static void
 sppp_close_event(const struct cp *cp, struct sppp *sp)
 {
 	STDDCL;
+
+	KASSERT(sppp_locked(sp));
 
 	if (debug)
 		log(LOG_DEBUG, "%s: %s close(%s)\n",
@@ -1918,7 +2070,10 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 	STDDCL;
 	int s;
 
+	KASSERT(sppp_locked(sp));
+
 	s = splnet();
+
 	if (debug)
 		log(LOG_DEBUG, "%s: %s TO(%s) rst_counter = %d\n",
 		    ifp->if_xname, cp->name,
@@ -1979,6 +2134,8 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 void
 sppp_cp_change_state(const struct cp *cp, struct sppp *sp, int newstate)
 {
+	KASSERT(sppp_locked(sp));
+
 	sp->state[cp->protoidx] = newstate;
 	callout_stop(&sp->ch[cp->protoidx]);
 	switch (newstate) {
@@ -2009,6 +2166,7 @@ sppp_cp_change_state(const struct cp *cp, struct sppp *sp, int newstate)
 static void
 sppp_lcp_init(struct sppp *sp)
 {
+	sppp_lock_enter(sp);
 	sp->lcp.opts = (1 << LCP_OPT_MAGIC);
 	sp->lcp.magic = 0;
 	sp->state[IDX_LCP] = STATE_INITIAL;
@@ -2029,12 +2187,15 @@ sppp_lcp_init(struct sppp *sp)
 	sp->lcp.max_configure = 10;
 	sp->lcp.max_failure = 10;
 	callout_init(&sp->ch[IDX_LCP], 0);
+	sppp_lock_exit(sp);
 }
 
 static void
 sppp_lcp_up(struct sppp *sp)
 {
 	STDDCL;
+
+	KASSERT(sppp_locked(sp));
 
 	/* Initialize activity timestamp: opening a connection is an activity */
 	sp->pp_last_receive = sp->pp_last_activity = time_uptime;
@@ -2070,6 +2231,8 @@ sppp_lcp_down(struct sppp *sp)
 {
 	STDDCL;
 
+	KASSERT(sppp_locked(sp));
+
 	sppp_down_event(&lcp, sp);
 
 	/*
@@ -2084,7 +2247,9 @@ sppp_lcp_down(struct sppp *sp)
 			log(LOG_INFO,
 			    "%s: Down event (carrier loss), taking interface down.\n",
 			    ifp->if_xname);
+		sppp_lock_exit(sp);
 		if_down(ifp);
+		sppp_lock_enter(sp);
 	} else {
 		if (debug)
 			log(LOG_DEBUG,
@@ -2100,6 +2265,8 @@ sppp_lcp_down(struct sppp *sp)
 static void
 sppp_lcp_open(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
+
 	if (sp->pp_if.if_mtu < PP_MTU) {
 		sp->lcp.mru = sp->pp_if.if_mtu;
 		sp->lcp.opts |= (1 << LCP_OPT_MRU);
@@ -2121,13 +2288,19 @@ sppp_lcp_open(struct sppp *sp)
 static void
 sppp_lcp_close(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	sppp_close_event(&lcp, sp);
 }
 
 static void
 sppp_lcp_TO(void *cookie)
 {
-	sppp_to_event(&lcp, (struct sppp *)cookie);
+	struct sppp *sp = (struct sppp*)cookie;
+	KASSERT(!sppp_locked(sp));
+
+	sppp_lock_enter(sp);
+	sppp_to_event(&lcp, sp);
+	sppp_lock_exit(sp);
 }
 
 /*
@@ -2144,6 +2317,8 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	int origlen, rlen;
 	uint32_t nmagic;
 	u_short authproto;
+
+	KASSERT(sppp_locked(sp));
 
 	len -= 4;
 	origlen = len;
@@ -2269,7 +2444,9 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 					ifp->if_xname);
 				sp->pp_loopcnt = 0;
 				if (ifp->if_flags & IFF_UP) {
+					sppp_lock_exit(sp);
 					if_down(ifp);
+					sppp_lock_enter(sp);
 					IF_PURGE(&sp->pp_cpq);
 					/* XXX ? */
 					lcp.Down(sp);
@@ -2388,6 +2565,8 @@ sppp_lcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 	STDDCL;
 	u_char *buf, *p, l;
 
+	KASSERT(sppp_locked(sp));
+
 	len -= 4;
 	buf = malloc (len, M_TEMP, M_NOWAIT);
 	if (!buf)
@@ -2469,6 +2648,8 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	STDDCL;
 	u_char *buf, *p, l, blen;
 	uint32_t magic;
+
+	KASSERT(sppp_locked(sp));
 
 	len -= 4;
 	buf = malloc (blen = len, M_TEMP, M_NOWAIT);
@@ -2557,11 +2738,15 @@ sppp_lcp_tlu(struct sppp *sp)
 	int i;
 	uint32_t mask;
 
+	KASSERT(sppp_locked(sp));
+
 	/* XXX ? */
 	if (! (ifp->if_flags & IFF_UP) &&
 	    (ifp->if_flags & IFF_RUNNING)) {
 		/* Coming out of loopback mode. */
+		sppp_lock_exit(sp);
 		if_up(ifp);
+		sppp_lock_enter(sp);
 	}
 
 	for (i = 0; i < IDX_COUNT; i++)
@@ -2593,9 +2778,11 @@ sppp_lcp_tlu(struct sppp *sp)
 	}
 
 	/* Send Up events to all started protos. */
-	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1)
-		if ((sp->lcp.protos & mask) && ((cps[i])->flags & CP_LCP) == 0)
+	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1) {
+		if ((sp->lcp.protos & mask) && ((cps[i])->flags & CP_LCP) == 0) {
 			(cps[i])->Up(sp);
+		}
+	}
 
 	/* notify low-level driver of state change */
 	if (sp->pp_chg)
@@ -2612,6 +2799,8 @@ sppp_lcp_tld(struct sppp *sp)
 	int i;
 	uint32_t mask;
 
+	KASSERT(sppp_locked(sp));
+
 	sppp_change_phase(sp, SPPP_PHASE_TERMINATE);
 
 	/*
@@ -2620,22 +2809,27 @@ sppp_lcp_tld(struct sppp *sp)
 	 * ``a flurry of terminate-request packets'', as the RFC
 	 * describes it.
 	 */
-	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1)
+	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1) {
 		if ((sp->lcp.protos & mask) && ((cps[i])->flags & CP_LCP) == 0) {
 			(cps[i])->Down(sp);
 			(cps[i])->Close(sp);
 		}
+	}
 }
 
 static void
 sppp_lcp_tls(struct sppp *sp)
 {
 
+	KASSERT(sppp_locked(sp));
+
 	if (sp->pp_max_auth_fail != 0 && sp->pp_auth_failures >= sp->pp_max_auth_fail) {
-	    printf("%s: authentication failed %d times, not retrying again\n",
+		printf("%s: authentication failed %d times, not retrying again\n",
 		sp->pp_if.if_xname, sp->pp_auth_failures);
-	    if_down(&sp->pp_if);
-	    return;
+		sppp_lock_exit(sp);
+		if_down(&sp->pp_if);
+		sppp_lock_enter(sp);
+		return;
 	}
 
 	sppp_change_phase(sp, SPPP_PHASE_ESTABLISH);
@@ -2648,6 +2842,7 @@ sppp_lcp_tls(struct sppp *sp)
 static void
 sppp_lcp_tlf(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 
 	sppp_change_phase(sp, SPPP_PHASE_DEAD);
 
@@ -2662,6 +2857,8 @@ sppp_lcp_scr(struct sppp *sp)
 	char opt[6 /* magicnum */ + 4 /* mru */ + 5 /* chap */];
 	int i = 0;
 	u_short authproto;
+
+	KASSERT(sppp_locked(sp));
 
 	if (sp->lcp.opts & (1 << LCP_OPT_MAGIC)) {
 		if (! sp->lcp.magic)
@@ -2716,6 +2913,7 @@ sppp_ncp_check(struct sppp *sp)
 static void
 sppp_lcp_check_and_close(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 
 	if (sp->pp_phase < SPPP_PHASE_NETWORK)
 		/* don't bother, we are already going down */
@@ -2723,7 +2921,6 @@ sppp_lcp_check_and_close(struct sppp *sp)
 
 	if (sppp_ncp_check(sp))
 		return;
-
 	lcp.Close(sp);
 }
 
@@ -2741,6 +2938,7 @@ sppp_ipcp_init(struct sppp *sp)
 {
 	int error;
 
+	sppp_lock_enter(sp);
 	sp->ipcp.opts = 0;
 	sp->ipcp.flags = 0;
 	sp->state[IDX_IPCP] = STATE_INITIAL;
@@ -2757,17 +2955,20 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->ipcp.update_addrs_q = pcq_create(IPCP_UPDATE_LIMIT, KM_SLEEP);
 
 	sp->ipcp.update_addrs_enqueued = 0;
+	sppp_lock_exit(sp);
 }
 
 static void
 sppp_ipcp_up(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	sppp_up_event(&ipcp, sp);
 }
 
 static void
 sppp_ipcp_down(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	sppp_down_event(&ipcp, sp);
 }
 
@@ -2776,6 +2977,8 @@ sppp_ipcp_open(struct sppp *sp)
 {
 	STDDCL;
 	uint32_t myaddr, hisaddr;
+
+	KASSERT(sppp_locked(sp));
 
 	sp->ipcp.flags &= ~(IPCP_HISADDR_SEEN|IPCP_MYADDR_SEEN|IPCP_MYADDR_DYN|IPCP_HISADDR_DYN);
 	sp->ipcp.req_myaddr = 0;
@@ -2823,7 +3026,9 @@ static void
 sppp_ipcp_close(struct sppp *sp)
 {
 
+	KASSERT(sppp_locked(sp));
 	sppp_close_event(&ipcp, sp);
+
 #ifdef INET
 	if (sp->ipcp.flags & (IPCP_MYADDR_DYN|IPCP_HISADDR_DYN))
 		/*
@@ -2836,7 +3041,13 @@ sppp_ipcp_close(struct sppp *sp)
 static void
 sppp_ipcp_TO(void *cookie)
 {
+	struct sppp *sp = cookie;
+
+	KASSERT(!sppp_locked(sp));
+
+	sppp_lock_enter(sp);
 	sppp_to_event(&ipcp, (struct sppp *)cookie);
+	sppp_lock_exit(sp);
 }
 
 /*
@@ -2853,6 +3064,7 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	int rlen, origlen, debug = ifp->if_flags & IFF_DEBUG;
 	uint32_t hisaddr, desiredaddr;
 
+	KASSERT(sppp_locked(sp));
 	len -= 4;
 	origlen = len;
 	/*
@@ -3047,6 +3259,8 @@ sppp_ipcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
 
+	KASSERT(sppp_locked(sp));
+
 	len -= 4;
 	buf = malloc (blen = len, M_TEMP, M_NOWAIT);
 	if (!buf)
@@ -3100,6 +3314,8 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
 	uint32_t wantaddr;
+
+	KASSERT(sppp_locked(sp));
 
 	len -= 4;
 
@@ -3177,6 +3393,7 @@ static void
 sppp_ipcp_tlu(struct sppp *sp)
 {
 #ifdef INET
+	KASSERT(sppp_locked(sp));
 	/* we are up. Set addresses and notify anyone interested */
 	sppp_set_ip_addrs(sp);
 #endif
@@ -3190,6 +3407,7 @@ sppp_ipcp_tld(struct sppp *sp)
 static void
 sppp_ipcp_tls(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	/* indicate to LCP that it must stay alive */
 	sp->lcp.protos |= (1 << IDX_IPCP);
 }
@@ -3197,6 +3415,7 @@ sppp_ipcp_tls(struct sppp *sp)
 static void
 sppp_ipcp_tlf(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	/* we no longer need LCP */
 	sp->lcp.protos &= ~(1 << IDX_IPCP);
 }
@@ -3209,6 +3428,8 @@ sppp_ipcp_scr(struct sppp *sp)
 	uint32_t ouraddr;
 #endif
 	int i = 0;
+
+	KASSERT(sppp_locked(sp));
 
 #ifdef notyet
 	if (sp->ipcp.opts & (1 << IPCP_OPT_COMPRESSION)) {
@@ -3270,6 +3491,7 @@ sppp_ipcp_scr(struct sppp *sp)
 static void
 sppp_ipv6cp_init(struct sppp *sp)
 {
+	sppp_lock_enter(sp);
 	sp->ipv6cp.opts = 0;
 	sp->ipv6cp.flags = 0;
 	sp->state[IDX_IPV6CP] = STATE_INITIAL;
@@ -3277,17 +3499,20 @@ sppp_ipv6cp_init(struct sppp *sp)
 	sp->pp_seq[IDX_IPV6CP] = 0;
 	sp->pp_rseq[IDX_IPV6CP] = 0;
 	callout_init(&sp->ch[IDX_IPV6CP], 0);
+	sppp_lock_exit(sp);
 }
 
 static void
 sppp_ipv6cp_up(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	sppp_up_event(&ipv6cp, sp);
 }
 
 static void
 sppp_ipv6cp_down(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	sppp_down_event(&ipv6cp, sp);
 }
 
@@ -3296,6 +3521,8 @@ sppp_ipv6cp_open(struct sppp *sp)
 {
 	STDDCL;
 	struct in6_addr myaddr, hisaddr;
+
+	KASSERT(sppp_locked(sp));
 
 #ifdef IPV6CP_MYIFID_DYN
 	sp->ipv6cp.flags &= ~(IPV6CP_MYIFID_SEEN|IPV6CP_MYIFID_DYN);
@@ -3326,13 +3553,19 @@ sppp_ipv6cp_open(struct sppp *sp)
 static void
 sppp_ipv6cp_close(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	sppp_close_event(&ipv6cp, sp);
 }
 
 static void
 sppp_ipv6cp_TO(void *cookie)
 {
+	struct sppp *sp = cookie;
+	KASSERT(!sppp_locked(sp));
+
+	sppp_lock_enter(sp);
 	sppp_to_event(&ipv6cp, (struct sppp *)cookie);
+	sppp_lock_exit(sp);
 }
 
 /*
@@ -3351,6 +3584,8 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	int ifidcount;
 	int type;
 	int collision, nohisaddr;
+
+	KASSERT(sppp_locked(sp));
 
 	len -= 4;
 	origlen = len;
@@ -3529,6 +3764,8 @@ sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
 
+	KASSERT(sppp_locked(sp));
+
 	len -= 4;
 	buf = malloc (blen = len, M_TEMP, M_NOWAIT);
 	if (!buf)
@@ -3581,6 +3818,8 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
 	struct in6_addr suggestaddr;
+
+	KASSERT(sppp_locked(sp));
 
 	len -= 4;
 	buf = malloc (blen = len, M_TEMP, M_NOWAIT);
@@ -3677,6 +3916,7 @@ drop:
 static void
 sppp_ipv6cp_tlu(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	/* we are up - notify isdn daemon */
 	if (sp->pp_con)
 		sp->pp_con(sp);
@@ -3690,6 +3930,7 @@ sppp_ipv6cp_tld(struct sppp *sp)
 static void
 sppp_ipv6cp_tls(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	/* indicate to LCP that it must stay alive */
 	sp->lcp.protos |= (1 << IDX_IPV6CP);
 }
@@ -3697,6 +3938,7 @@ sppp_ipv6cp_tls(struct sppp *sp)
 static void
 sppp_ipv6cp_tlf(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	/* we no longer need LCP */
 	sp->lcp.protos &= ~(1 << IDX_IPV6CP);
 }
@@ -3707,6 +3949,8 @@ sppp_ipv6cp_scr(struct sppp *sp)
 	char opt[10 /* ifid */ + 4 /* compression, minimum */];
 	struct in6_addr ouraddr;
 	int i = 0;
+
+	KASSERT(sppp_locked(sp));
 
 	if (sp->ipv6cp.opts & (1 << IPV6CP_OPT_IFID)) {
 		sppp_get_ip6_addrs(sp, &ouraddr, 0, 0);
@@ -3904,6 +4148,8 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	int value_len, name_len;
 	MD5_CTX ctx;
 
+	KASSERT(!sppp_locked(sp));
+
 	len = m->m_pkthdr.len;
 	if (len < 4) {
 		if (debug)
@@ -3919,12 +4165,14 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	switch (h->type) {
 	/* challenge, failure and success are his authproto */
 	case CHAP_CHALLENGE:
+		sppp_lock_enter(sp);
 		if (sp->myauth.secret == NULL || sp->myauth.name == NULL) {
-		    /* can't do anything useful */
-		    sp->pp_auth_failures++;
-		    printf("%s: chap input without my name and my secret being set\n",
-		    	ifp->if_xname);
-		    break;
+			/* can't do anything useful */
+			sp->pp_auth_failures++;
+			printf("%s: chap input without my name and my secret being set\n",
+				ifp->if_xname);
+			sppp_lock_exit(sp);
+			break;
 		}
 		value = 1 + (u_char *)(h + 1);
 		value_len = value[-1];
@@ -3943,6 +4191,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 					    len - 4);
 				addlog(">\n");
 			}
+			sppp_lock_exit(sp);
 			break;
 		}
 
@@ -3972,9 +4221,11 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			       sp->myauth.name_len,
 			       sp->myauth.name,
 			       0);
+		sppp_lock_exit(sp);
 		break;
 
 	case CHAP_SUCCESS:
+		sppp_lock_enter(sp);
 		if (debug) {
 			log(LOG_DEBUG, "%s: chap success",
 			    ifp->if_xname);
@@ -3996,14 +4247,17 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			 * to network phase.
 			 */
 			splx(x);
+			sppp_lock_exit(sp);
 			break;
 		}
 		splx(x);
 		sppp_phase_network(sp);
+		sppp_lock_exit(sp);
 		break;
 
 	case CHAP_FAILURE:
 		x = splnet();
+		sppp_lock_enter(sp);
 		sp->pp_auth_failures++;
 		splx(x);
 		if (debug) {
@@ -4017,15 +4271,18 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		} else
 			log(LOG_INFO, "%s: chap failure\n",
 			    ifp->if_xname);
+		sppp_lock_exit(sp);
 		/* await LCP shutdown by authenticator */
 		break;
 
 	/* response is my authproto */
 	case CHAP_RESPONSE:
+		sppp_lock_enter(sp);
 		if (sp->hisauth.secret == NULL) {
-		    /* can't do anything useful */
-		    printf("%s: chap input without his secret being set\n",
-		    	ifp->if_xname);
+			/* can't do anything useful */
+			printf("%s: chap input without his secret being set\n",
+			    ifp->if_xname);
+			sppp_lock_exit(sp);
 		    break;
 		}
 		value = 1 + (u_char *)(h + 1);
@@ -4045,6 +4302,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 					    len - 4);
 				addlog(">\n");
 			}
+			sppp_lock_exit(sp);
 			break;
 		}
 		if (h->ident != sp->confid[IDX_CHAP]) {
@@ -4054,6 +4312,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 				    "(got %d, expected %d)\n",
 				    ifp->if_xname,
 				    h->ident, sp->confid[IDX_CHAP]);
+			sppp_lock_exit(sp);
 			break;
 		}
 		if (sp->hisauth.name != NULL &&
@@ -4102,6 +4361,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		if (value_len != sizeof digest ||
 		    memcmp(digest, value, value_len) != 0) {
 chap_failure:
+			KASSERT(sppp_locked(sp));
 			/* action scn, tld */
 			x = splnet();
 			sp->pp_auth_failures++;
@@ -4110,6 +4370,7 @@ chap_failure:
 				       sizeof(FAILMSG) - 1, (const u_char *)FAILMSG,
 				       0);
 			chap.tld(sp);
+			sppp_lock_exit(sp);
 			break;
 		}
 		sp->pp_auth_failures = 0;
@@ -4123,10 +4384,12 @@ chap_failure:
 			sppp_cp_change_state(&chap, sp, STATE_OPENED);
 			chap.tlu(sp);
 		}
+		sppp_lock_exit(sp);
 		break;
 
 	default:
 		/* Unknown CHAP packet type -- ignore. */
+		sppp_lock_enter(sp);
 		if (debug) {
 			log(LOG_DEBUG, "%s: chap unknown input(%s) "
 			    "<0x%x id=0x%xh len=%d",
@@ -4137,25 +4400,49 @@ chap_failure:
 				sppp_print_bytes((u_char *)(h + 1), len - 4);
 			addlog(">\n");
 		}
+		sppp_lock_exit(sp);
 		break;
 
 	}
 }
 
+void
+sppp_lock_enter(struct sppp *sp)
+{
+	if (sp->pp_lock)
+		mutex_enter(sp->pp_lock);
+}
+
+void
+sppp_lock_exit(struct sppp *sp)
+{
+	if (sp->pp_lock)
+		mutex_exit(sp->pp_lock);
+}
+
+int
+sppp_locked(struct sppp *sp)
+{
+	return (!(sp->pp_lock) || mutex_owned(sp->pp_lock));
+}
+
 static void
 sppp_chap_init(struct sppp *sp)
 {
+	sppp_lock_enter(sp);
 	/* Chap doesn't have STATE_INITIAL at all. */
 	sp->state[IDX_CHAP] = STATE_CLOSED;
 	sp->fail_counter[IDX_CHAP] = 0;
 	sp->pp_seq[IDX_CHAP] = 0;
 	sp->pp_rseq[IDX_CHAP] = 0;
 	callout_init(&sp->ch[IDX_CHAP], 0);
+	sppp_lock_exit(sp);
 }
 
 static void
 sppp_chap_open(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	if (sp->hisauth.proto == PPP_CHAP &&
 	    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0) {
 		/* we are authenticator for CHAP, start it */
@@ -4169,6 +4456,8 @@ sppp_chap_open(struct sppp *sp)
 static void
 sppp_chap_close(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
+
 	if (sp->state[IDX_CHAP] != STATE_CLOSED)
 		sppp_cp_change_state(&chap, sp, STATE_CLOSED);
 }
@@ -4180,7 +4469,11 @@ sppp_chap_TO(void *cookie)
 	STDDCL;
 	int s;
 
+	KASSERT(!sppp_locked(sp));
+
 	s = splnet();
+	sppp_lock_enter(sp);
+
 	if (debug)
 		log(LOG_DEBUG, "%s: chap TO(%s) rst_counter = %d\n",
 		    ifp->if_xname,
@@ -4209,6 +4502,7 @@ sppp_chap_TO(void *cookie)
 			break;
 		}
 
+	sppp_lock_exit(sp);
 	splx(s);
 }
 
@@ -4218,6 +4512,7 @@ sppp_chap_tlu(struct sppp *sp)
 	STDDCL;
 	int i, x;
 
+	KASSERT(sppp_locked(sp));
 	i = 0;
 	sp->rst_counter[IDX_CHAP] = sp->lcp.max_configure;
 
@@ -4277,6 +4572,8 @@ sppp_chap_tld(struct sppp *sp)
 {
 	STDDCL;
 
+	KASSERT(sppp_locked(sp));
+
 	if (debug)
 		log(LOG_DEBUG, "%s: chap tld\n", ifp->if_xname);
 	callout_stop(&sp->ch[IDX_CHAP]);
@@ -4290,6 +4587,8 @@ sppp_chap_scr(struct sppp *sp)
 {
 	uint32_t *ch;
 	u_char clen = 4 * sizeof(uint32_t);
+
+	KASSERT(sppp_locked(sp));
 
 	if (sp->hisauth.name == NULL) {
 	    /* can't do anything useful */
@@ -4336,6 +4635,8 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	char *name, *secret;
 	int name_len, secret_len;
 
+	KASSERT(!sppp_locked(sp));
+
 	/*
 	 * Malicious input might leave this uninitialized, so
 	 * init to an impossible value.
@@ -4356,11 +4657,14 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	switch (h->type) {
 	/* PAP request is my authproto */
 	case PAP_REQ:
+		sppp_lock_enter(sp);
 		if (sp->hisauth.name == NULL || sp->hisauth.secret == NULL) {
-		    /* can't do anything useful */
-		    printf("%s: pap request without his name and his secret being set\n",
-		    	ifp->if_xname);
-		    break;
+			/* can't do anything useful */
+			printf("%s: "
+			    "pap request without his name and his secret being set\n",
+			    ifp->if_xname);
+			sppp_lock_exit(sp);
+			break;
 		}
 		name = 1 + (u_char *)(h + 1);
 		name_len = name[-1];
@@ -4378,6 +4682,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 					    len - 4);
 				addlog(">\n");
 			}
+			sppp_lock_exit(sp);
 			break;
 		}
 		if (debug) {
@@ -4404,6 +4709,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 				       sizeof(FAILMSG) - 1, (const u_char *)FAILMSG,
 				       0);
 			pap.tld(sp);
+			sppp_lock_exit(sp);
 			break;
 		}
 		/* action sca, perhaps tlu */
@@ -4419,10 +4725,12 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			sppp_cp_change_state(&pap, sp, STATE_OPENED);
 			pap.tlu(sp);
 		}
+		sppp_lock_exit(sp);
 		break;
 
 	/* ack and nak are his authproto */
 	case PAP_ACK:
+		sppp_lock_enter(sp);
 		callout_stop(&sp->pap_my_to_ch);
 		if (debug) {
 			log(LOG_DEBUG, "%s: pap success",
@@ -4447,13 +4755,16 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			 * to network phase.
 			 */
 			splx(x);
+			sppp_lock_exit(sp);
 			break;
 		}
 		splx(x);
 		sppp_phase_network(sp);
+		sppp_lock_exit(sp);
 		break;
 
 	case PAP_NAK:
+		sppp_lock_enter(sp);
 		callout_stop(&sp->pap_my_to_ch);
 		sp->pp_auth_failures++;
 		if (debug) {
@@ -4470,10 +4781,12 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			log(LOG_INFO, "%s: pap failure\n",
 			    ifp->if_xname);
 		/* await LCP shutdown by authenticator */
+		sppp_lock_exit(sp);
 		break;
 
 	default:
 		/* Unknown PAP packet type -- ignore. */
+		sppp_lock_enter(sp);
 		if (debug) {
 			log(LOG_DEBUG, "%s: pap corrupted input "
 			    "<0x%x id=0x%x len=%d",
@@ -4483,6 +4796,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 				sppp_print_bytes((u_char *)(h + 1), len - 4);
 			addlog(">\n");
 		}
+		sppp_lock_exit(sp);
 		break;
 
 	}
@@ -4492,17 +4806,21 @@ static void
 sppp_pap_init(struct sppp *sp)
 {
 	/* PAP doesn't have STATE_INITIAL at all. */
+	sppp_lock_enter(sp);
 	sp->state[IDX_PAP] = STATE_CLOSED;
 	sp->fail_counter[IDX_PAP] = 0;
 	sp->pp_seq[IDX_PAP] = 0;
 	sp->pp_rseq[IDX_PAP] = 0;
 	callout_init(&sp->ch[IDX_PAP], 0);
 	callout_init(&sp->pap_my_to_ch, 0);
+	sppp_lock_exit(sp);
 }
 
 static void
 sppp_pap_open(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
+
 	if (sp->hisauth.proto == PPP_PAP &&
 	    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0) {
 		/* we are authenticator for PAP, start our timer */
@@ -4520,6 +4838,7 @@ sppp_pap_open(struct sppp *sp)
 static void
 sppp_pap_close(struct sppp *sp)
 {
+	KASSERT(sppp_locked(sp));
 	if (sp->state[IDX_PAP] != STATE_CLOSED)
 		sppp_cp_change_state(&pap, sp, STATE_CLOSED);
 }
@@ -4535,7 +4854,10 @@ sppp_pap_TO(void *cookie)
 	STDDCL;
 	int s;
 
+	KASSERT(!sppp_locked(sp));
+
 	s = splnet();
+	sppp_lock_enter(sp);
 	if (debug)
 		log(LOG_DEBUG, "%s: pap TO(%s) rst_counter = %d\n",
 		    ifp->if_xname,
@@ -4559,6 +4881,7 @@ sppp_pap_TO(void *cookie)
 			break;
 		}
 
+	sppp_lock_exit(sp);
 	splx(s);
 }
 
@@ -4573,11 +4896,15 @@ sppp_pap_my_TO(void *cookie)
 	struct sppp *sp = (struct sppp *)cookie;
 	STDDCL;
 
+	KASSERT(!sppp_locked(sp));
+
+	sppp_lock_enter(sp);
 	if (debug)
 		log(LOG_DEBUG, "%s: pap peer TO\n",
 		    ifp->if_xname);
 
 	pap.scr(sp);
+	sppp_lock_exit(sp);
 }
 
 static void
@@ -4586,6 +4913,7 @@ sppp_pap_tlu(struct sppp *sp)
 	STDDCL;
 	int x;
 
+	KASSERT(sppp_locked(sp));
 	sp->rst_counter[IDX_PAP] = sp->lcp.max_configure;
 
 	if (debug)
@@ -4615,6 +4943,8 @@ sppp_pap_tld(struct sppp *sp)
 {
 	STDDCL;
 
+	KASSERT(sppp_locked(sp));
+
 	if (debug)
 		log(LOG_DEBUG, "%s: pap tld\n", ifp->if_xname);
 	callout_stop(&sp->ch[IDX_PAP]);
@@ -4628,6 +4958,8 @@ static void
 sppp_pap_scr(struct sppp *sp)
 {
 	u_char idlen, pwdlen;
+
+	KASSERT(sppp_locked(sp));
 
 	if (sp->myauth.secret == NULL || sp->myauth.name == NULL) {
 	    /* can't do anything useful */
@@ -4677,6 +5009,8 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 	unsigned int mlen;
 	const char *msg;
 	va_list ap;
+
+	KASSERT(sppp_locked(sp));
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (! m)
@@ -4739,8 +5073,11 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 		return;
 	} else
 		IF_ENQUEUE(&sp->pp_cpq, m);
-	if (! (ifp->if_flags & IFF_OACTIVE))
+	if (! (ifp->if_flags & IFF_OACTIVE)) {
+		sppp_lock_exit(sp);
 		if_start_lock(ifp);
+		sppp_lock_enter(sp);
+	}
 	ifp->if_obytes += m->m_pkthdr.len + 3;
 }
 
@@ -4754,10 +5091,15 @@ sppp_keepalive(void *dummy)
 	int s;
 	time_t now;
 
+	SPPPQ_LOCK();
+
 	s = splnet();
 	now = time_uptime;
 	for (sp=spppq; sp; sp=sp->pp_next) {
-		struct ifnet *ifp = &sp->pp_if;
+		struct ifnet *ifp = NULL;
+
+		sppp_lock_enter(sp);
+		ifp = &sp->pp_if;
 
 		/* check idle timeout */
 		if ((sp->pp_idle_timeout != 0) && (ifp->if_flags & IFF_RUNNING)
@@ -4769,29 +5111,38 @@ sppp_keepalive(void *dummy)
 				sp->pp_if.if_xname,
 				(unsigned long)(now-sp->pp_last_activity));
 			lcp.Close(sp);
+			sppp_lock_exit(sp);
 			continue;
 		    }
 		}
 
 		/* Keepalive mode disabled or channel down? */
 		if (! (sp->pp_flags & PP_KEEPALIVE) ||
-		    ! (ifp->if_flags & IFF_RUNNING))
+		    ! (ifp->if_flags & IFF_RUNNING)) {
+			sppp_lock_exit(sp);
 			continue;
+		}
+
 
 		/* No keepalive in PPP mode if LCP not opened yet. */
 		if (! (sp->pp_flags & PP_CISCO) &&
-		    sp->pp_phase < SPPP_PHASE_AUTHENTICATE)
+		    sp->pp_phase < SPPP_PHASE_AUTHENTICATE) {
+			sppp_lock_exit(sp);
 			continue;
+		}
 
 		/* No echo reply, but maybe user data passed through? */
 		if ((now - sp->pp_last_receive) < sp->pp_max_noreceive) {
 			sp->pp_alivecnt = 0;
+			sppp_lock_exit(sp);
 			continue;
 		}
 
 		if (sp->pp_alivecnt >= sp->pp_maxalive) {
 			/* No keepalive packets got.  Stop the interface. */
+			sppp_lock_exit(sp);
 			if_down (ifp);
+			sppp_lock_enter(sp);
 			IF_PURGE(&sp->pp_cpq);
 			if (! (sp->pp_flags & PP_CISCO)) {
 				printf("%s: LCP keepalive timed out, going to restart the connection\n",
@@ -4808,6 +5159,8 @@ sppp_keepalive(void *dummy)
 				 * will summon the magic needed to reestablish it. */
 				if (sp->pp_tlf)
 					sp->pp_tlf(sp);
+
+				sppp_lock_exit(sp);
 				continue;
 			}
 		}
@@ -4822,9 +5175,13 @@ sppp_keepalive(void *dummy)
 			sppp_cp_send(sp, PPP_LCP, ECHO_REQ,
 				sp->lcp.echoid, 4, &nmagic);
 		}
+
+		sppp_lock_exit(sp);
 	}
 	splx(s);
 	callout_reset(&keepalive_ch, hz * LCP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
+
+	SPPPQ_UNLOCK();
 }
 
 #ifdef INET
@@ -5210,6 +5567,8 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		int error;
 		size_t len;
 
+		sppp_lock_enter(sp);
+
 		cfg->myauthflags = sp->myauth.flags;
 		cfg->hisauthflags = sp->hisauth.flags;
 		strlcpy(cfg->ifname, sp->pp_if.if_xname, sizeof(cfg->ifname));
@@ -5227,10 +5586,15 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 			cfg->myname_length = 0;
 		    } else {
 			len = sp->myauth.name_len + 1;
+
+			sppp_lock_exit(sp);
+
 			if (cfg->myname_length < len)
 			    return (ENAMETOOLONG);
 			error = copyout(sp->myauth.name, cfg->myname, len);
 			if (error) return error;
+
+			sppp_lock_enter(sp);
 		    }
 		}
 		if (cfg->hisname_length == 0) {
@@ -5241,18 +5605,24 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		    	cfg->hisname_length = 0;
 		    } else {
 			len = sp->hisauth.name_len + 1;
+
+			sppp_lock_exit(sp);
 			if (cfg->hisname_length < len)
 			    return (ENAMETOOLONG);
 			error = copyout(sp->hisauth.name, cfg->hisname, len);
 			if (error) return error;
+			sppp_lock_enter(sp);
 		    }
 		}
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPSETAUTHCFG:
 	    {
 		struct spppauthcfg *cfg = (struct spppauthcfg *)data;
 		int error;
+
+		sppp_lock_enter(sp);
 
 		if (sp->myauth.name) {
 			free(sp->myauth.name, M_DEVBUF);
@@ -5272,56 +5642,72 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		}
 
 		if (cfg->hisname != NULL && cfg->hisname_length > 0) {
-		    if (cfg->hisname_length >= MCLBYTES)
-			return (ENAMETOOLONG);
-		    sp->hisauth.name = malloc(cfg->hisname_length, M_DEVBUF, M_WAITOK);
-		    error = copyin(cfg->hisname, sp->hisauth.name, cfg->hisname_length);
-		    if (error) {
-			free(sp->hisauth.name, M_DEVBUF);
-			sp->hisauth.name = NULL;
-			return error;
-		    }
-		    sp->hisauth.name_len = cfg->hisname_length - 1;
-		    sp->hisauth.name[sp->hisauth.name_len] = 0;
+			if (cfg->hisname_length >= MCLBYTES) {
+				sppp_lock_exit(sp);
+				return (ENAMETOOLONG);
+			}
+			sp->hisauth.name = malloc(cfg->hisname_length, M_DEVBUF, M_WAITOK);
+			error = copyin(cfg->hisname, sp->hisauth.name, cfg->hisname_length);
+			if (error) {
+				free(sp->hisauth.name, M_DEVBUF);
+				sp->hisauth.name = NULL;
+				sppp_lock_exit(sp);
+				return error;
+			}
+			sp->hisauth.name_len = cfg->hisname_length - 1;
+			sp->hisauth.name[sp->hisauth.name_len] = 0;
 		}
 		if (cfg->hissecret != NULL && cfg->hissecret_length > 0) {
-		    if (cfg->hissecret_length >= MCLBYTES)
-			return (ENAMETOOLONG);
-		    sp->hisauth.secret = malloc(cfg->hissecret_length, M_DEVBUF, M_WAITOK);
-		    error = copyin(cfg->hissecret, sp->hisauth.secret, cfg->hissecret_length);
-		    if (error) {
-		    	free(sp->hisauth.secret, M_DEVBUF);
-		    	sp->hisauth.secret = NULL;
-			return error;
-		    }
-		    sp->hisauth.secret_len = cfg->hissecret_length - 1;
-		    sp->hisauth.secret[sp->hisauth.secret_len] = 0;
+			if (cfg->hissecret_length >= MCLBYTES) {
+				sppp_lock_exit(sp);
+				return (ENAMETOOLONG);
+			}
+			sp->hisauth.secret = malloc(cfg->hissecret_length,
+			    M_DEVBUF, M_WAITOK);
+			error = copyin(cfg->hissecret, sp->hisauth.secret,
+			    cfg->hissecret_length);
+			if (error) {
+				free(sp->hisauth.secret, M_DEVBUF);
+				sp->hisauth.secret = NULL;
+				sppp_lock_exit(sp);
+				return error;
+			}
+			sp->hisauth.secret_len = cfg->hissecret_length - 1;
+			sp->hisauth.secret[sp->hisauth.secret_len] = 0;
 		}
 		if (cfg->myname != NULL && cfg->myname_length > 0) {
-		    if (cfg->myname_length >= MCLBYTES)
-			return (ENAMETOOLONG);
-		    sp->myauth.name = malloc(cfg->myname_length, M_DEVBUF, M_WAITOK);
-		    error = copyin(cfg->myname, sp->myauth.name, cfg->myname_length);
-		    if (error) {
-			free(sp->myauth.name, M_DEVBUF);
-			sp->myauth.name = NULL;
-			return error;
-		    }
-		    sp->myauth.name_len = cfg->myname_length - 1;
-		    sp->myauth.name[sp->myauth.name_len] = 0;
+			if (cfg->myname_length >= MCLBYTES) {
+				sppp_lock_exit(sp);
+				return (ENAMETOOLONG);
+			}
+			sp->myauth.name = malloc(cfg->myname_length, M_DEVBUF, M_WAITOK);
+			error = copyin(cfg->myname, sp->myauth.name, cfg->myname_length);
+			if (error) {
+				free(sp->myauth.name, M_DEVBUF);
+				sp->myauth.name = NULL;
+				sppp_lock_exit(sp);
+				return error;
+			}
+			sp->myauth.name_len = cfg->myname_length - 1;
+			sp->myauth.name[sp->myauth.name_len] = 0;
 		}
 		if (cfg->mysecret != NULL && cfg->mysecret_length > 0) {
-		    if (cfg->mysecret_length >= MCLBYTES)
-			return (ENAMETOOLONG);
-		    sp->myauth.secret = malloc(cfg->mysecret_length, M_DEVBUF, M_WAITOK);
-		    error = copyin(cfg->mysecret, sp->myauth.secret, cfg->mysecret_length);
-		    if (error) {
-		    	free(sp->myauth.secret, M_DEVBUF);
-		    	sp->myauth.secret = NULL;
-			return error;
-		    }
-		    sp->myauth.secret_len = cfg->mysecret_length - 1;
-		    sp->myauth.secret[sp->myauth.secret_len] = 0;
+			if (cfg->mysecret_length >= MCLBYTES) {
+				sppp_lock_exit(sp);
+				return (ENAMETOOLONG);
+			}
+			sp->myauth.secret = malloc(cfg->mysecret_length,
+			    M_DEVBUF, M_WAITOK);
+			error = copyin(cfg->mysecret, sp->myauth.secret,
+			    cfg->mysecret_length);
+			if (error) {
+				free(sp->myauth.secret, M_DEVBUF);
+				sp->myauth.secret = NULL;
+				sppp_lock_exit(sp);
+				return error;
+			}
+			sp->myauth.secret_len = cfg->mysecret_length - 1;
+			sp->myauth.secret[sp->myauth.secret_len] = 0;
 		}
 		sp->myauth.flags = cfg->myauthflags;
 		if (cfg->myauth)
@@ -5334,120 +5720,156 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		    sp->lcp.opts |= (1 << LCP_OPT_AUTH_PROTO);
 		else
 		    sp->lcp.opts &= ~(1 << LCP_OPT_AUTH_PROTO);
+
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPGETLCPCFG:
 	    {
-	    	struct sppplcpcfg *lcpp = (struct sppplcpcfg *)data;
-	    	lcpp->lcp_timeout = sp->lcp.timeout;
+		struct sppplcpcfg *lcpp = (struct sppplcpcfg *)data;
+		sppp_lock_enter(sp);
+		lcpp->lcp_timeout = sp->lcp.timeout;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPSETLCPCFG:
 	    {
-	    	struct sppplcpcfg *lcpp = (struct sppplcpcfg *)data;
-	    	sp->lcp.timeout = lcpp->lcp_timeout;
+		struct sppplcpcfg *lcpp = (struct sppplcpcfg *)data;
+		sppp_lock_enter(sp);
+		sp->lcp.timeout = lcpp->lcp_timeout;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPGETSTATUS:
 	    {
 		struct spppstatus *status = (struct spppstatus *)data;
+		sppp_lock_enter(sp);
 		status->phase = sp->pp_phase;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPGETSTATUSNCP:
 	    {
 		struct spppstatusncp *status = (struct spppstatusncp *)data;
+		sppp_lock_enter(sp);
 		status->phase = sp->pp_phase;
+		sppp_lock_exit(sp);
 		status->ncpup = sppp_ncp_check(sp);
 	    }
 	    break;
 	case SPPPGETIDLETO:
 	    {
 	    	struct spppidletimeout *to = (struct spppidletimeout *)data;
+		sppp_lock_enter(sp);
 		to->idle_seconds = sp->pp_idle_timeout;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPSETIDLETO:
 	    {
 	    	struct spppidletimeout *to = (struct spppidletimeout *)data;
-	    	sp->pp_idle_timeout = to->idle_seconds;
+		sppp_lock_enter(sp);
+		sp->pp_idle_timeout = to->idle_seconds;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPSETAUTHFAILURE:
 	    {
 	    	struct spppauthfailuresettings *afsettings = (struct spppauthfailuresettings *)data;
-	    	sp->pp_max_auth_fail = afsettings->max_failures;
-	    	sp->pp_auth_failures = 0;
+		sppp_lock_enter(sp);
+		sp->pp_max_auth_fail = afsettings->max_failures;
+		sp->pp_auth_failures = 0;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPGETAUTHFAILURES:
 	    {
 	    	struct spppauthfailurestats *stats = (struct spppauthfailurestats *)data;
-	    	stats->auth_failures = sp->pp_auth_failures;
-	    	stats->max_failures = sp->pp_max_auth_fail;
+		sppp_lock_enter(sp);
+		stats->auth_failures = sp->pp_auth_failures;
+		stats->max_failures = sp->pp_max_auth_fail;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPSETDNSOPTS:
 	    {
 		struct spppdnssettings *req = (struct spppdnssettings *)data;
+		sppp_lock_enter(sp);
 		sp->query_dns = req->query_dns & 3;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPGETDNSOPTS:
 	    {
 		struct spppdnssettings *req = (struct spppdnssettings *)data;
+		sppp_lock_enter(sp);
 		req->query_dns = sp->query_dns;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPGETDNSADDRS:
 	    {
-	    	struct spppdnsaddrs *addrs = (struct spppdnsaddrs *)data;
-	    	memcpy(&addrs->dns, &sp->dns_addrs, sizeof addrs->dns);
+		struct spppdnsaddrs *addrs = (struct spppdnsaddrs *)data;
+		sppp_lock_enter(sp);
+		memcpy(&addrs->dns, &sp->dns_addrs, sizeof addrs->dns);
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPGETKEEPALIVE:
 	    {
 	    	struct spppkeepalivesettings *settings =
 		     (struct spppkeepalivesettings*)data;
+		sppp_lock_enter(sp);
 		settings->maxalive = sp->pp_maxalive;
 		settings->max_noreceive = sp->pp_max_noreceive;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case SPPPSETKEEPALIVE:
 	    {
 	    	struct spppkeepalivesettings *settings =
 		     (struct spppkeepalivesettings*)data;
+		sppp_lock_enter(sp);
 		sp->pp_maxalive = settings->maxalive;
 		sp->pp_max_noreceive = settings->max_noreceive;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 #if defined(COMPAT_50) || defined(MODULAR)
 	case __SPPPGETIDLETO50:
 	    {
 	    	struct spppidletimeout50 *to = (struct spppidletimeout50 *)data;
+		sppp_lock_enter(sp);
 		to->idle_seconds = (uint32_t)sp->pp_idle_timeout;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case __SPPPSETIDLETO50:
 	    {
-	    	struct spppidletimeout50 *to = (struct spppidletimeout50 *)data;
-	    	sp->pp_idle_timeout = (time_t)to->idle_seconds;
+		struct spppidletimeout50 *to = (struct spppidletimeout50 *)data;
+		sppp_lock_enter(sp);
+		sp->pp_idle_timeout = (time_t)to->idle_seconds;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case __SPPPGETKEEPALIVE50:
 	    {
 	    	struct spppkeepalivesettings50 *settings =
 		     (struct spppkeepalivesettings50*)data;
+		sppp_lock_enter(sp);
 		settings->maxalive = sp->pp_maxalive;
 		settings->max_noreceive = (uint32_t)sp->pp_max_noreceive;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 	case __SPPPSETKEEPALIVE50:
 	    {
 	    	struct spppkeepalivesettings50 *settings =
 		     (struct spppkeepalivesettings50*)data;
+		sppp_lock_enter(sp);
 		sp->pp_maxalive = settings->maxalive;
 		sp->pp_max_noreceive = (time_t)settings->max_noreceive;
+		sppp_lock_exit(sp);
 	    }
 	    break;
 #endif /* COMPAT_50 || MODULAR */
@@ -5464,6 +5886,8 @@ sppp_phase_network(struct sppp *sp)
 	int i;
 	uint32_t mask;
 
+	KASSERT(sppp_locked(sp));
+
 	sppp_change_phase(sp, SPPP_PHASE_NETWORK);
 
 	/* Notify NCPs now. */
@@ -5473,8 +5897,9 @@ sppp_phase_network(struct sppp *sp)
 
 	/* Send Up events to all NCPs. */
 	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1)
-		if ((sp->lcp.protos & mask) && ((cps[i])->flags & CP_NCP))
+		if ((sp->lcp.protos & mask) && ((cps[i])->flags & CP_NCP)) {
 			(cps[i])->Up(sp);
+		}
 
 	/* if no NCP is starting, all this was in vain, close down */
 	sppp_lcp_check_and_close(sp);
