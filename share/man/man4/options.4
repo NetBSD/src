@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.455 2016/12/01 02:12:21 mrg Exp $
+.\"	$NetBSD: options.4,v 1.456 2016/12/13 10:55:40 kamil Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2517,10 +2517,6 @@ bus using information from the
 See
 .Xr pcibios 4
 for details.
-.It Cd options KSTACK_CHECK_DR0
-Detect kernel stack overflow using DR0 register.
-This option uses DR0 register exclusively so you can't use DR0 register for
-other purpose (e.g., hardware breakpoint) if you turn this on.
 .It Cd options MTRR
 Include support for accessing MTRR registers from user-space.
 See
