@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.22 2016/11/22 12:04:35 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.23 2016/12/13 19:03:49 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -837,27 +837,13 @@ done:
 	 */
 	if (!nfs_root) {
 		msg_display_add(MSG_wait_network);
-		run_program(RUN_DISPLAY | RUN_PROGRESS,
+		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
 		    "/sbin/ifconfig -w 15 -W 5");
+	} else {
+		/* Assume network is up. */
+		network_up = 1;
 	}
 
-	/*
-	 * ping should be verbose, so users can see the cause
-	 * of a network failure.
-	 */
-	if (net_defroute[0] != '\0' && network_up)
-		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
-		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_defroute);
-	if (net_namesvr[0] != '\0' && network_up) {
-#ifdef INET6
-		if (strchr(net_namesvr, ':'))
-			network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
-			    "/sbin/ping6 -v -c 3 -n %s", net_namesvr);
-		else
-#endif
-			network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
-			    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_namesvr);
-	}
 	fflush(NULL);
 
 	return network_up;
