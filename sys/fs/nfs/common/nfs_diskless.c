@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_diskless.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $	*/
+/*	$NetBSD: nfs_diskless.c,v 1.2 2016/12/13 22:41:46 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,9 +35,11 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nfs/nfs_diskless.c 297086 2016-03-20 21:48:26Z ian "); */
-__RCSID("$NetBSD: nfs_diskless.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_diskless.c,v 1.2 2016/12/13 22:41:46 pgoyette Exp $");
 
-#include "opt_bootp.h"
+#ifdef _KERNEL_OPT
+#include "opt_newnfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,14 +52,16 @@ __RCSID("$NetBSD: nfs_diskless.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+
 #include <net/if_var.h>
 #include <net/ethernet.h>
 #include <net/vnet.h>
 
 #include <netinet/in.h>
-#include <nfs/nfsproto.h>
-#include <nfsclient/nfs.h>
-#include <nfs/nfsdiskless.h>
+
+#include <fs/nfs/common/nfsproto.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/common/nfsdiskless.h>
 
 #define	NFS_IFACE_TIMEOUT_SECS	10 /* Timeout for interface to appear. */
 
@@ -424,7 +428,7 @@ decode_nfshandle(char *ev, u_char *fh, int maxfh)
 	}
 }
 
-#if !defined(BOOTP_NFSROOT)
+#if !defined(NEW_NFS_BOOT_BOOTP)
 static void
 nfs_rootconf(void)
 {
