@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_lock.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $	*/
+/*	$NetBSD: nfs_lock.c,v 1.2 2016/12/13 22:41:46 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
  *
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nfs/nfs_lock.c 303382 2016-07-27 11:08:59Z kib "); */
-__RCSID("$NetBSD: nfs_lock.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_lock.c,v 1.2 2016/12/13 22:41:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,12 +55,12 @@ __RCSID("$NetBSD: nfs_lock.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $");
 
 #include <net/if.h>
 
-#include <nfs/nfsproto.h>
-#include <nfs/nfs_lock.h>
-#include <nfsclient/nfs.h>
-#include <nfsclient/nfsmount.h>
-#include <nfsclient/nfsnode.h>
-#include <nfsclient/nlminfo.h>
+#include <fs/nfs/common/nfsproto.h>
+#include <fs/nfs/common/nfs_lock.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/client/nfsmount.h>
+#include <fs/nfs/client/nfsnode.h>
+#include <fs/nfs/client/nlminfo.h>
 
 extern void (*nlminfo_release_p)(struct proc *p);
 
