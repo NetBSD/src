@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.325 2016/12/10 23:03:25 christos Exp $
+# $NetBSD: GENERIC,v 1.326 2016/12/13 20:42:19 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.325 $"
+#ident 		"GENERIC-$Revision: 1.326 $"
 
 maxusers	32
 
@@ -566,7 +566,7 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 # Audio support
 audio*	at audiobus?
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*	at audio?		# PC speaker (synthesized)
 
 # MPU 401 UARTs
 #mpu*	at cmpci?

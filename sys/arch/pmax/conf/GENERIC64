@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.23 2016/12/10 23:03:25 christos Exp $
+# $NetBSD: GENERIC64,v 1.24 2016/12/13 20:42:20 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.23 $"
+#ident		"GENERIC-$Revision: 1.24 $"
 
 maxusers	64
 
@@ -204,7 +204,7 @@ vsms*	at	zsc0 channel ?		# mouse port on A channels
 
 audio*	at	bba?
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*	at	audio?			# PC speaker (synthesized)
 
 dtkbd*	at	dt? addr ?
 dtms*	at	dt? addr ?

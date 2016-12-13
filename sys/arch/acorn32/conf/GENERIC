@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.119 2016/12/10 23:03:22 christos Exp $
+# 	$NetBSD: GENERIC,v 1.120 2016/12/13 20:42:15 christos Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.119 $"
+#ident		"GENERIC-$Revision: 1.120 $"
 
 # estimated number of users
 maxusers	32
@@ -248,7 +248,7 @@ lpt*	at pioc? offset 0x0278 irq 0	# Old driver
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*	at audio?			# PC speaker (synthesized)
 
 # Podule bus device
 podulebus0	at root

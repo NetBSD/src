@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.69 2016/12/10 23:03:26 christos Exp $
+#	$NetBSD: GENERIC,v 1.70 2016/12/13 20:42:21 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -241,7 +241,7 @@ audio* at zaudio?
 # Audio support
 audio* at audiobus?
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr* at audio?		# PC speaker (synthesized)
 
 # integrated 16550 UARTs
 options 	COM_PXA2X0

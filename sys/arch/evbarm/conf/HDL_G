@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.47 2016/12/10 23:03:23 christos Exp $
+# $NetBSD: HDL_G,v 1.48 2016/12/13 20:42:17 christos Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -377,7 +377,7 @@ ugen*	at uhub? port ?
 # Audio support
 audio*  at audiobus?
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*	at audio?			# PC speaker (synthesized)
 
 # MIDI support
 midi*   at midibus?

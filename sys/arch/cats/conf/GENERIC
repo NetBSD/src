@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.160 2016/12/10 23:03:23 christos Exp $
+# $NetBSD: GENERIC,v 1.161 2016/12/13 20:42:16 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -502,9 +502,8 @@ lpt1	at isa? port 0x278 irq 5
 #ep*	at isa? port ? irq ?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-spkr0	at pcppi?			# PC speaker
-
-#spkr0	at audio0		# PC speaker (synthesized)
+spkr*	at pcppi?			# PC speaker
+spkr*	at audio?			# PC speaker (synthesized)
 
 ds1687rtc0	at isa? port 0x72	# Dallas 1687 RTC
 

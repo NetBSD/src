@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.29 2016/12/10 23:03:23 christos Exp $
+#	$NetBSD: HPT5325,v 1.30 2016/12/13 20:42:17 christos Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -436,7 +436,7 @@ mvsocrtc* at mvsoc? offset ? irq ?
 # Audio support
 audio*	at audiobus?
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*	at audio?			# PC speaker (synthesized)
 
 # Pseudo-Devices
 

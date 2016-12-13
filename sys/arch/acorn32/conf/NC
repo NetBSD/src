@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.68 2016/12/10 23:03:22 christos Exp $
+#	$NetBSD: NC,v 1.69 2016/12/13 20:42:15 christos Exp $
 #
 #	NC - with wscons
 #
@@ -210,7 +210,7 @@ lpt*	at pioc? offset 0x0278 irq 0	# Old driver
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*	at audio?		# PC speaker (synthesized)
 
 # Podule bus device
 podulebus0	at root

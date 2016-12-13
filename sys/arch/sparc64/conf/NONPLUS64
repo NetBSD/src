@@ -1,8 +1,8 @@
-#	$NetBSD: NONPLUS64,v 1.49 2016/12/10 23:03:25 christos Exp $
+#	$NetBSD: NONPLUS64,v 1.50 2016/12/13 20:42:20 christos Exp $
 
 include 	"arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.49 $"
+#ident		"NONPLUS64-$Revision: 1.50 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -365,7 +365,7 @@ pseudo-device	ipfilter
 audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
 audio*		at audiocs0
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*		at audio?		# PC speaker (synthesized)
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m

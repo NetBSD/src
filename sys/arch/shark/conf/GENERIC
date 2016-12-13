@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.125 2016/12/10 23:03:25 christos Exp $
+#	$NetBSD: GENERIC,v 1.126 2016/12/13 20:42:20 christos Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.125 $"
+#ident		"GENERIC-$Revision: 1.126 $"
 
 # estimated number of users
 maxusers	32
@@ -271,7 +271,7 @@ audio*		at ess?
 opl*		at ess?
 midi*		at opl?
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*		at audio?		# PC speaker (synthesized)
 
 # Joystick @OFW
 joy*		at ofisa?

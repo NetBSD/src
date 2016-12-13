@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.66 2016/12/10 23:03:24 christos Exp $
+#	$NetBSD: EV64260,v 1.67 2016/12/13 20:42:17 christos Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -237,7 +237,7 @@ cd*		at scsibus? target ? lun ?
 #auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 #audio*	at auvia?
 
-#spkr0	at audio0		# PC speaker (synthesized)
+#spkr*	at audio?		# PC speaker (synthesized)
 
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers

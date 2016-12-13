@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.107 2016/12/10 23:03:25 christos Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.108 2016/12/13 20:42:20 christos Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.107 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.108 $"
 
 maxusers	32
 
@@ -280,7 +280,7 @@ zsms0		at zsc1 channel 1
 scsibus*	at scsi?		# HPC SCSI
 audio*  	at audiobus?
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*		at audio?		# PC speaker (synthesized)
 
 # Pseudo-Devices
 

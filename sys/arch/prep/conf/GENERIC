@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.179 2016/12/10 23:03:25 christos Exp $
+# $NetBSD: GENERIC,v 1.180 2016/12/13 20:42:20 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.179 $"
+#ident		"GENERIC-$Revision: 1.180 $"
 
 maxusers	32
 
@@ -506,9 +506,8 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pcppi?		# PC speaker
-
-#spkr0	at audio0		# PC speaker (synthesized)
+#spkr*	at pcppi?		# PC speaker
+#spkr*	at audio?		# PC speaker (synthesized)
 
 
 # Joysticks

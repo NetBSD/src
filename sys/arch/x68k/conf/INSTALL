@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.111 2016/12/10 23:03:26 christos Exp $
+#	$NetBSD: INSTALL,v 1.112 2016/12/13 20:42:21 christos Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.111 $"
+#ident 		"INSTALL-$Revision: 1.112 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -255,7 +255,7 @@ sram0	at intio0 addr 0xed0000		# battery-backuped static RAM
 #vs0 at intio0 addr 0xe92000 dma 3 dmaintr 106
 #audio*	at vs?
 
-#spkr0	at audio0		# PC speaker (synthesized)
+#spkr*	at audio?				# PC speaker (synthesized)
 
 ## Network interfaces
 ne*	at intio0 addr 0xece300 intr 249	# Nereid Ethernet

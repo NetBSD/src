@@ -1,4 +1,4 @@
-# $NetBSD: MMEYE_WLF,v 1.19 2016/12/10 23:03:25 christos Exp $
+# $NetBSD: MMEYE_WLF,v 1.20 2016/12/13 20:42:19 christos Exp $
 #
 # MMEYE_WLF -- Brains Inc. MMEYE-WLF platforms kernel
 #
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.19 $"
+#ident 		"GENERIC-$Revision: 1.20 $"
 
 maxusers	16		# estimated number of users
 
@@ -174,7 +174,7 @@ rs5c372rtc* at iic? addr 0x32
 #ac97x	at mainbus? addr1 0xb3000000-0xb300000f irq1 1	# AD1881A
 audio* at audiobus?
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*	at audio?		# PC speaker (synthesized)
 
 # SH4 Area5/6 PCMCIA space devices
 ne0	at mainbus? addr1 0x14000000 irq1 13

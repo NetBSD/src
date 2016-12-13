@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.147 2016/12/10 23:03:24 christos Exp $
+#	$NetBSD: INSTALL_TINY,v 1.148 2016/12/13 20:42:18 christos Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -468,9 +468,8 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #audio*	at audiobus?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pcppi?		# PC speaker
-
-#spkr0	at audio0		# PC speaker (synthesized)
+#spkr*	at pcppi?		# PC speaker
+#spkr*	at audio?		# PC speaker (synthesized)
 
 
 # Joysticks

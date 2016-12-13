@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.34 2016/12/10 23:03:23 christos Exp $
+#	$NetBSD: MDINSTALL,v 1.35 2016/12/13 20:42:16 christos Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -185,7 +185,7 @@ a2kbbc0 	at mainbus0		# A2000 battery backed clock
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*		at audio?		# PC speaker (synthesized)
 
 #
 # DraCo Mainboard devices (sans keyboard)

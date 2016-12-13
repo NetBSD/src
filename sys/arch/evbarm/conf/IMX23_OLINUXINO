@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.14 2016/12/10 23:03:23 christos Exp $
+# $Id: IMX23_OLINUXINO,v 1.15 2016/12/13 20:42:17 christos Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -73,7 +73,7 @@ rtc0		at apbx? addr 0x8005C000 size 0x2000 irq -1
 digfilt0	at apbx? addr 0x80048000 size 0x8000 irq -1
 audio0		at digfilt0
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*		at audio?		# PC speaker (synthesized)
 
 # USB host
 ehci0		at imxusbc0 unit 0 irq 11
