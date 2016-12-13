@@ -1,18 +1,27 @@
-/* $NetBSD: spkrvar.h,v 1.3 2016/12/09 05:45:20 christos Exp $ */
+/* $NetBSD: spkrvar.h,v 1.4 2016/12/13 20:20:34 christos Exp $ */
 
 #ifndef _SYS_DEV_SPKRVAR_H
 #define _SYS_DEV_SPKRVAR_H
 
 #include <sys/module.h>
 
-device_t speakerattach_mi(device_t);
-void speaker_play(u_int, u_int, u_int);
+struct spkr_softc {
+	device_t sc_dev;
+	int sc_octave;	/* currently selected octave */
+	int sc_whole;	/* whole-note time at current tempo, in ticks */
+	int sc_value;	/* whole divisor for note time, quarter note = 1 */
+	int sc_fill;	/* controls spacing of notes */
+	bool sc_octtrack;	/* octave-tracking on? */
+	bool sc_octprefix;	/* override current octave-tracking state? */
+	char *sc_inbuf;
 
-// XXX:
-void spkr_tone(u_int, u_int);
-void spkr_rest(int);
+	/* attachment-specific hooks */
+	void (*sc_tone)(device_t, u_int, u_int);
+	void (*sc_rest)(device_t, int);
+};
+
 int spkr__modcmd(modcmd_t, void *);
-int spkr_probe(device_t, cfdata_t, void *);
-extern int spkr_attached;
+void spkr_attach(device_t,
+    void (*)(device_t, u_int, u_int), void (*)(device_t, int));
 
 #endif /* _SYS_DEV_SPKRVAR_H */

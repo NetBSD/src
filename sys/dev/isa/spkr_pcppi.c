@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.4 2016/12/09 05:17:03 christos Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.5 2016/12/13 20:20:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.4 2016/12/09 05:17:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.5 2016/12/13 20:20:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,11 +64,18 @@ __KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.4 2016/12/09 05:17:03 christos Exp 
 #include <dev/spkrvar.h>
 #include <dev/spkrio.h>
 
-extern int spkr_attached;
-static void spkrattach(device_t, device_t, void *);
-static int spkrdetach(device_t, int);
+struct spkr_pcppi_softc {
+	device_t sc_dev;
+	device_t sc_spkr_dev;
+	pcppi_tag_t sc_pcppicookie;
+};
 
-#include "ioconf.h"
+static int spkr_pcppi_probe(device_t, cfdata_t, void *);
+static void spkr_pcppi_attach(device_t, device_t, void *);
+static int spkr_pcppi_detach(device_t, int);
+
+CFATTACH_DECL_NEW(spkr_pcppi, sizeof(struct spkr_pcppi_softc),
+    spkr_pcppi_probe, spkr_pcppi_attach, spkr_pcppi_detach, NULL);
 
 MODULE(MODULE_CLASS_DRIVER, spkr, NULL /* "pcppi" */);
 
@@ -78,53 +85,62 @@ spkr_modcmd(modcmd_t cmd, void *arg)
 	return spkr__modcmd(cmd, arg);
 }
 
-CFATTACH_DECL_NEW(spkr_pcppi, 0, spkr_probe, spkrattach, spkrdetach, NULL);
-
-static pcppi_tag_t ppicookie;
-
 #define SPKRPRI (PZERO - 1)
 
-void
-spkr_tone(u_int xhz, u_int ticks)
 /* emit tone of frequency hz for given number of ticks */
+static void
+spkr_pcppi_tone(device_t self, u_int xhz, u_int ticks)
 {
-	pcppi_bell(ppicookie, xhz, ticks, PCPPI_BELL_SLEEP);
+#ifdef SPKRDEBUG
+	aprint_debug_dev(self, "%s: %u %u\n", __func__, xhz, ticks);
+#endif /* SPKRDEBUG */
+	struct spkr_pcppi_softc *sc = device_private(self);
+	pcppi_bell(sc->sc_pcppicookie, xhz, ticks, PCPPI_BELL_SLEEP);
 }
 
-void
-spkr_rest(int ticks)
 /* rest for given number of ticks */
+static void
+spkr_pcppi_rest(device_t self, int ticks)
 {
-    /*
-     * Set timeout to endrest function, then give up the timeslice.
-     * This is so other processes can execute while the rest is being
-     * waited out.
-     */
+	/*
+	 * Set timeout to endrest function, then give up the timeslice.
+	 * This is so other processes can execute while the rest is being
+	 * waited out.
+	 */
 #ifdef SPKRDEBUG
-    printf("%s: %d\n", __func__, ticks);
+	aprint_debug_dev(self, "%s: %d\n", __func__, ticks);
 #endif /* SPKRDEBUG */
-    if (ticks > 0)
-	    tsleep(spkr_rest, SPKRPRI | PCATCH, "rest", ticks);
+	if (ticks > 0)
+		tsleep(self, SPKRPRI | PCATCH, device_xname(self), ticks);
+}
+
+static int
+spkr_pcppi_probe(device_t parent, cfdata_t cf, void *aux)
+{
+	return 1;
 }
 
 static void
-spkrattach(device_t parent, device_t self, void *aux)
+spkr_pcppi_attach(device_t parent, device_t self, void *aux)
 {
+	struct pcppi_attach_args *pa = aux;
+	struct spkr_pcppi_softc *sc = device_private(self);
+
 	aprint_naive("\n");
 	aprint_normal("\n");
-	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
-	spkr_attached = 1;
+
+	sc->sc_pcppicookie = pa->pa_cookie;
+	spkr_attach(self, spkr_pcppi_tone, spkr_pcppi_rest);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
-spkrdetach(device_t self, int flags)
+spkr_pcppi_detach(device_t self, int flags)
 {
+	struct spkr_pcppi_softc *sc = device_private(self);
 
+	sc->sc_pcppicookie = NULL;
 	pmf_device_deregister(self);
-	spkr_attached = 0;
-	ppicookie = NULL;
-
 	return 0;
 }
