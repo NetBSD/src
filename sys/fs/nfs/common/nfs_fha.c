@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_fha.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $	*/
+/*	$NetBSD: nfs_fha.c,v 1.2 2016/12/13 22:41:46 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  *
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nfs/nfs_fha.c 267479 2014-06-14 12:26:12Z mav "); */
-__RCSID("$NetBSD: nfs_fha.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_fha.c,v 1.2 2016/12/13 22:41:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: nfs_fha.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $");
 #include <sys/sbuf.h>
 
 #include <rpc/rpc.h>
-#include <nfs/nfs_fha.h>
+#include <fs/nfs/common/nfs_fha.h>
 
 static MALLOC_DEFINE(M_NFS_FHA, "NFS FHA", "NFS FHA");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_commonsubs.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $	*/
+/*	$NetBSD: nfs_commonsubs.c,v 1.2 2016/12/13 22:31:51 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonsubs.c 308708 2016-11-16 01:11:49Z cperciva "); */
-__RCSID("$NetBSD: nfs_commonsubs.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_commonsubs.c,v 1.2 2016/12/13 22:31:51 pgoyette Exp $");
 
 /*
  * These functions support the macros and help fiddle mbuf chains for
@@ -42,9 +42,12 @@ __RCSID("$NetBSD: nfs_commonsubs.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $"
  * copy data between mbuf chains and uio lists.
  */
 #ifndef APPLEKEXT
+#ifdef _KERNEL_OPT
 #include "opt_inet6.h"
+#include "opt_quota.h"
+#endif
 
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 #include <security/mac/mac_framework.h>
 
