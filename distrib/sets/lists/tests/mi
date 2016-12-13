@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.707 2016/12/09 06:12:02 kamil Exp $
+# $NetBSD: mi,v 1.708 2016/12/13 18:00:10 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -57,6 +57,7 @@
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/kernel/arch				tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/kernel/arch/amd64				tests-kernel-tests	compattestfile,atf
+./usr/libdata/debug/usr/tests/kernel/arch/i386				tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue				tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read			tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write			tests-kernel-tests	compattestfile,atf
@@ -2095,6 +2096,15 @@
 ./usr/tests/kernel/arch/amd64/t_ptrace_wait6	tests-kernel-tests	compattestfile,atf,machine=amd64
 ./usr/tests/kernel/arch/amd64/t_ptrace_waitid	tests-kernel-tests	compattestfile,atf,machine=amd64
 ./usr/tests/kernel/arch/amd64/t_ptrace_waitpid	tests-kernel-tests	compattestfile,atf,machine=amd64
+./usr/tests/kernel/arch/i386			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/arch/i386/Atffile		tests-kernel-tests	compattestfile,atf,machine=i386
+./usr/tests/kernel/arch/i386/Kyuafile		tests-kernel-tests	compattestfile,atf,kyua,machine=i386
+./usr/tests/kernel/arch/i386/t_ptrace_wait	tests-kernel-tests	compattestfile,atf,machine=i386
+./usr/tests/kernel/arch/i386/t_ptrace_wait3	tests-kernel-tests	compattestfile,atf,machine=i386
+./usr/tests/kernel/arch/i386/t_ptrace_wait4	tests-kernel-tests	compattestfile,atf,machine=i386
+./usr/tests/kernel/arch/i386/t_ptrace_wait6	tests-kernel-tests	compattestfile,atf,machine=i386
+./usr/tests/kernel/arch/i386/t_ptrace_waitid	tests-kernel-tests	compattestfile,atf,machine=i386
+./usr/tests/kernel/arch/i386/t_ptrace_waitpid	tests-kernel-tests	compattestfile,atf,machine=i386
 ./usr/tests/kernel/h_ps_strings1		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_ps_strings2		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/kqueue			tests-kernel-tests	compattestfile,atf
