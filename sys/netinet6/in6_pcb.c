@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.154 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.155 2016/12/13 08:29:03 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.154 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.155 2016/12/13 08:29:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.154 2016/12/12 03:55:57 ozaki-r Exp $"
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/scope6_var.h>
-#include <netinet6/nd6.h>
 
 #include "faith.h"
 
