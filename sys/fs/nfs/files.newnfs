@@ -1,4 +1,4 @@
-#	$NetBSD: files.newnfs,v 1.6 2016/11/18 22:41:18 pgoyette Exp $
+#	$NetBSD: files.newnfs,v 1.7 2016/12/13 21:44:01 pgoyette Exp $
 
 deffs NEW_NFSCLIENT
 defflag opt_newnfs.h			DTRACEALL
@@ -7,6 +7,7 @@ defflag opt_newnfs.h			DTRACEALL
 					NEW_NFSLOCKD
 					DTNFSCL
 					NEW_NFS_BOOT
+					NFS4_ACL_EXTATTR_NAME
 
 # XXX
 define	new_nfsclient: vfs, net
