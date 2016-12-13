@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.141 2016/05/20 03:41:20 jnemeth Exp $
+#	$NetBSD: files.xen,v 1.142 2016/12/13 10:54:27 kamil Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -39,7 +39,6 @@ file	arch/i386/i386/aout_machdep.c	exec_aout
 file	arch/i386/i386/busfunc.S
 file	arch/i386/i386/cpufunc.S
 file	arch/i386/i386/cpu_in_cksum.S   (inet | inet6) & cpu_in_cksum
-file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_machdep.c	ddb
