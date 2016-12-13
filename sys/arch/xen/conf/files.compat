@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.24 2012/10/03 18:58:32 dsl Exp $
+#	$NetBSD: files.compat,v 1.25 2016/12/13 10:54:27 kamil Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -42,9 +42,6 @@ defflag	opt_compat_oldboot.h		XXXCOMPAT_OLDBOOT
 
 # Large page size
 defflag	opt_largepages.h		XXXLARGEPAGES
-
-# kernel stack debug
-defflag	opt_kstack_dr0.h		XXXKSTACK_CHECK_DR0
 
 #Pentium 4+ Thermal Monitor ODCM (aka On Demand Clock Modulation)
 defflag opt_intel_odcm.h	XXXINTEL_ONDEMAND_CLOCKMOD
