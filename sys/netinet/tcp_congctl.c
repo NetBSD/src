@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.21 2016/04/26 08:44:44 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.22 2016/12/13 08:29:03 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.21 2016/04/26 08:44:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.22 2016/12/13 08:29:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -176,7 +176,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.21 2016/04/26 08:44:44 ozaki-r Exp
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet/icmp6.h>
-#include <netinet6/nd6.h>
 #endif
 
 #include <netinet/tcp.h>

@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.10 2016/12/06 08:58:16 knakahara Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.11 2016/12/13 08:29:03 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.10 2016/12/06 08:58:16 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.11 2016/12/13 08:29:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.10 2016/12/06 08:58:16 knakahara 
 #include <netinet/icmp6.h>
 #include <netinet6/sctp6_var.h>
 #include <netinet6/ip6protosw.h>
-#include <netinet6/nd6.h>
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>

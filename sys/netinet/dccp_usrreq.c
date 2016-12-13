@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.9 2016/07/07 06:55:43 msaitoh Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.10 2016/12/13 08:29:03 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.9 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.10 2016/12/13 08:29:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -108,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.9 2016/07/07 06:55:43 msaitoh Exp 
 #ifdef INET6
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/nd6.h>
 #include <netinet6/dccp6_var.h>
 #endif
 #include <netinet/dccp.h>

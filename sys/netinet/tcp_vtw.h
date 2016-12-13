@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_vtw.h,v 1.7 2016/04/26 08:44:45 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_vtw.h,v 1.8 2016/12/13 08:29:03 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -143,7 +143,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet/icmp6.h>
-#include <netinet6/nd6.h>
 
 #define	VTW_NCLASS	(1+3)		/* # different classes */
 
