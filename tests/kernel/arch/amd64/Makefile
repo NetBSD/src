@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2016/12/02 05:54:15 kamil Exp $
+# $NetBSD: Makefile,v 1.2 2016/12/13 12:59:46 kamil Exp $
 
 NOMAN=		# defined
 
@@ -12,5 +12,7 @@ TESTS_C+=	t_ptrace_wait4
 TESTS_C+=	t_ptrace_wait6
 TESTS_C+=	t_ptrace_waitid
 TESTS_C+=	t_ptrace_waitpid
+
+CPPFLAGS+=	-D_KERNTYPES
 
 .include <bsd.test.mk>
