@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.33.2.1 2015/01/25 09:11:03 martin Exp $	*/
+/*	$NetBSD: private.h,v 1.33.2.2 2016/12/13 06:39:13 snj Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -476,6 +476,17 @@ const char *	scheck(const char * string, const char * format);
 #ifndef TYPE_SIGNED
 #define TYPE_SIGNED(type) (/*CONSTCOND*/((type) -1) < 0)
 #endif /* !defined TYPE_SIGNED */
+
+#define TWOS_COMPLEMENT(t) (/*CONSTCOND*/(t) ~ (t) 0 < 0)
+
+/* Max and min values of the integer type T, of which only the bottom
+   B bits are used, and where the highest-order used bit is considered
+   to be a sign bit if T is signed.  */
+#define MAXVAL(t, b) /*LINTED*/					\
+  ((t) (((t) 1 << ((b) - 1 - TYPE_SIGNED(t)))			\
+	- 1 + ((t) 1 << ((b) - 1 - TYPE_SIGNED(t)))))
+#define MINVAL(t, b)						\
+  ((t) (TYPE_SIGNED(t) ? - TWOS_COMPLEMENT(t) - MAXVAL(t, b) : 0))
 
 #ifdef LOCALTIME_IMPLEMENTATION
 /* The minimum and maximum finite time values.  */
