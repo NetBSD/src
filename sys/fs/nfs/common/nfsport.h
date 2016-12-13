@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsport.h,v 1.2 2016/11/18 22:37:50 pgoyette Exp $	*/
+/*	$NetBSD: nfsport.h,v 1.3 2016/12/13 22:52:46 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfs/nfsport.h 304026 2016-08-12 22:44:59Z rmacklem 
- * $NetBSD: nfsport.h,v 1.2 2016/11/18 22:37:50 pgoyette Exp $
+ * $NetBSD: nfsport.h,v 1.3 2016/12/13 22:52:46 pgoyette Exp $
  */
 
 #ifndef _NFS_NFSPORT_H_
@@ -74,6 +74,7 @@
 #include <sys/module.h>
 #include <sys/syscall.h>
 #include <sys/kthread.h>
+#include <sys/lwp.h>
 
 #include <net/if.h>
 #include <net/radix.h>
@@ -117,7 +118,7 @@
  * These types must be defined before the nfs includes.
  */
 #define	NFSSOCKADDR_T	struct sockaddr *
-#define	NFSPROC_T	struct thread
+#define	NFSPROC_T	struct lwp
 #define	NFSDEV_T	dev_t
 #define	NFSSVCARGS	nfssvc_args
 #define	NFSACL_T	struct acl
@@ -174,7 +175,7 @@
 /*
  * Type for a mutex lock.
  */
-#define	NFSMUTEX_T		struct mtx
+#define	NFSMUTEX_T		kmutex_t
 
 #endif	/* _KERNEL */
 
@@ -639,16 +640,20 @@ void nfsrvd_rcv(struct socket *, void *, int);
  * for signal handling, etc.
  */
 #define	NFSNEWCRED(c)		(crdup(c))
-#define	NFSPROCCRED(p)		((p)->td_ucred)
+#define	NFSPROCCRED(p)		((p)->l_ucred)
 #define	NFSFREECRED(c)		(crfree(c))
 #define	NFSUIOPROC(u, p)	((u)->uio_td = NULL)
-#define	NFSPROCP(p)		((p)->td_proc)
+#define	NFSPROCP(p)		((p)->l_proc)
 
 /*
  * Define these so that cn_hash and its length is ignored.
  */
 #define	NFSCNHASHZERO(c)
 #define	NFSCNHASH(c, v)
+
+#ifdef NCHNAMLEN
+#undef NCHNAMLEN	/* defined in sys/namei.h */
+#endif
 #define	NCHNAMLEN	9999999
 
 /*
@@ -660,56 +665,56 @@ void nfsrvd_rcv(struct socket *, void *, int);
 /*
  * Handle SMP stuff:
  */
-#define	NFSSTATESPINLOCK	extern struct mtx nfs_state_mutex
-#define	NFSLOCKSTATE()		mtx_lock(&nfs_state_mutex)
-#define	NFSUNLOCKSTATE()	mtx_unlock(&nfs_state_mutex)
+#define	NFSSTATESPINLOCK	extern struct kmutex nfs_state_mutex
+#define	NFSLOCKSTATE()		mutex_enter(&nfs_state_mutex)
+#define	NFSUNLOCKSTATE()	mutex_exit(&nfs_state_mutex)
 #define	NFSSTATEMUTEXPTR	(&nfs_state_mutex)
-#define	NFSREQSPINLOCK		extern struct mtx nfs_req_mutex
-#define	NFSLOCKREQ()		mtx_lock(&nfs_req_mutex)
-#define	NFSUNLOCKREQ()		mtx_unlock(&nfs_req_mutex)
-#define	NFSSOCKMUTEX		extern struct mtx nfs_slock_mutex
+#define	NFSREQSPINLOCK		extern struct kmutex nfs_req_mutex
+#define	NFSLOCKREQ()		mutex_enter(&nfs_req_mutex)
+#define	NFSUNLOCKREQ()		mutex_exit(&nfs_req_mutex)
+#define	NFSSOCKMUTEX		extern struct kmutex nfs_slock_mutex
 #define	NFSSOCKMUTEXPTR		(&nfs_slock_mutex)
-#define	NFSLOCKSOCK()		mtx_lock(&nfs_slock_mutex)
-#define	NFSUNLOCKSOCK()		mtx_unlock(&nfs_slock_mutex)
-#define	NFSNAMEIDMUTEX		extern struct mtx nfs_nameid_mutex
-#define	NFSLOCKNAMEID()		mtx_lock(&nfs_nameid_mutex)
-#define	NFSUNLOCKNAMEID()	mtx_unlock(&nfs_nameid_mutex)
-#define	NFSNAMEIDREQUIRED()	mtx_assert(&nfs_nameid_mutex, MA_OWNED)
-#define	NFSCLSTATEMUTEX		extern struct mtx nfs_clstate_mutex
+#define	NFSLOCKSOCK()		mutex_enter(&nfs_slock_mutex)
+#define	NFSUNLOCKSOCK()		mutex_exit(&nfs_slock_mutex)
+#define	NFSNAMEIDMUTEX		extern struct kmutex nfs_nameid_mutex
+#define	NFSLOCKNAMEID()		mutex_enter(&nfs_nameid_mutex)
+#define	NFSUNLOCKNAMEID()	mutex_exit(&nfs_nameid_mutex)
+#define	NFSNAMEIDREQUIRED()	mutex_owned(&nfs_nameid_mutex)
+#define	NFSCLSTATEMUTEX		extern struct kmutex nfs_clstate_mutex
 #define	NFSCLSTATEMUTEXPTR	(&nfs_clstate_mutex)
-#define	NFSLOCKCLSTATE()	mtx_lock(&nfs_clstate_mutex)
-#define	NFSUNLOCKCLSTATE()	mtx_unlock(&nfs_clstate_mutex)
-#define	NFSDLOCKMUTEX		extern struct mtx newnfsd_mtx
+#define	NFSLOCKCLSTATE()	mutex_enter(&nfs_clstate_mutex)
+#define	NFSUNLOCKCLSTATE()	mutex_exit(&nfs_clstate_mutex)
+#define	NFSDLOCKMUTEX		extern struct kmutex newnfsd_mtx
 #define	NFSDLOCKMUTEXPTR	(&newnfsd_mtx)
-#define	NFSD_LOCK()		mtx_lock(&newnfsd_mtx)
-#define	NFSD_UNLOCK()		mtx_unlock(&newnfsd_mtx)
-#define	NFSD_LOCK_ASSERT()	mtx_assert(&newnfsd_mtx, MA_OWNED)
-#define	NFSD_UNLOCK_ASSERT()	mtx_assert(&newnfsd_mtx, MA_NOTOWNED)
+#define	NFSD_LOCK()		mutex_enter(&newnfsd_mtx)
+#define	NFSD_UNLOCK()		mutex_exit(&newnfsd_mtx)
+#define	NFSD_LOCK_ASSERT()	mutex_owned(&newnfsd_mtx)
+#define	NFSD_UNLOCK_ASSERT()	!mutex_owned(&newnfsd_mtx)
 #define	NFSV4ROOTLOCKMUTEX	extern struct mtx nfs_v4root_mutex
 #define	NFSV4ROOTLOCKMUTEXPTR	(&nfs_v4root_mutex)
-#define	NFSLOCKV4ROOTMUTEX()	mtx_lock(&nfs_v4root_mutex)
-#define	NFSUNLOCKV4ROOTMUTEX()	mtx_unlock(&nfs_v4root_mutex)
-#define	NFSLOCKNODE(n)		mtx_lock(&((n)->n_mtx))
-#define	NFSUNLOCKNODE(n)	mtx_unlock(&((n)->n_mtx))
-#define	NFSLOCKMNT(m)		mtx_lock(&((m)->nm_mtx))
-#define	NFSUNLOCKMNT(m)		mtx_unlock(&((m)->nm_mtx))
-#define	NFSLOCKREQUEST(r)	mtx_lock(&((r)->r_mtx))
-#define	NFSUNLOCKREQUEST(r)	mtx_unlock(&((r)->r_mtx))
+#define	NFSLOCKV4ROOTMUTEX()	mutex_enter(&nfs_v4root_mutex)
+#define	NFSUNLOCKV4ROOTMUTEX()	mutex_exit(&nfs_v4root_mutex)
+#define	NFSLOCKNODE(n)		mutex_enter(&((n)->n_mtx))
+#define	NFSUNLOCKNODE(n)	mutex_exit(&((n)->n_mtx))
+#define	NFSLOCKMNT(m)		mutex_enter(&((m)->nm_mtx))
+#define	NFSUNLOCKMNT(m)		mutex_exit(&((m)->nm_mtx))
+#define	NFSLOCKREQUEST(r)	mutex_enter(&((r)->r_mtx))
+#define	NFSUNLOCKREQUEST(r)	mutex_exit(&((r)->r_mtx))
 #define	NFSPROCLISTLOCK()	sx_slock(&allproc_lock)
 #define	NFSPROCLISTUNLOCK()	sx_sunlock(&allproc_lock)
-#define	NFSLOCKSOCKREQ(r)	mtx_lock(&((r)->nr_mtx))
-#define	NFSUNLOCKSOCKREQ(r)	mtx_unlock(&((r)->nr_mtx))
-#define	NFSLOCKDS(d)		mtx_lock(&((d)->nfsclds_mtx))
-#define	NFSUNLOCKDS(d)		mtx_unlock(&((d)->nfsclds_mtx))
+#define	NFSLOCKSOCKREQ(r)	mutex_enter(&((r)->nr_mtx))
+#define	NFSUNLOCKSOCKREQ(r)	mutex_exit(&((r)->nr_mtx))
+#define	NFSLOCKDS(d)		mutex_enter(&((d)->nfsclds_mtx))
+#define	NFSUNLOCKDS(d)		mutex_exit(&((d)->nfsclds_mtx))
 #define	NFSSESSIONMUTEXPTR(s)	(&((s)->mtx))
-#define	NFSLOCKSESSION(s)	mtx_lock(&((s)->mtx))
-#define	NFSUNLOCKSESSION(s)	mtx_unlock(&((s)->mtx))
+#define	NFSLOCKSESSION(s)	mutex_enter(&((s)->mtx))
+#define	NFSUNLOCKSESSION(s)	mutex_exit(&((s)->mtx))
 
 /*
  * Use these macros to initialize/free a mutex.
  */
-#define	NFSINITSOCKMUTEX(m)	mtx_init((m), "nfssock", NULL, MTX_DEF)
-#define	NFSFREEMUTEX(m)		mtx_destroy((m))
+#define	NFSINITSOCKMUTEX(m)	mutex_init((m), MUTEX_DEFAULT, IPL_NONE)
+#define	NFSFREEMUTEX(m)		mutex_destroy((m))
 
 int nfsmsleep(void *, void *, int, const char *, struct timespec *);
 
@@ -758,9 +763,11 @@ int nfsmsleep(void *, void *, int, const char *, struct timespec *);
 /*
  * Some queue.h files don't have these dfined in them.
  */
+#if 0	/* NetBSD has these, and redefining them here is an error */
 #define	LIST_END(head)		NULL
 #define	SLIST_END(head)		NULL
 #define	TAILQ_END(head)		NULL
+#endif
 
 /*
  * This must be defined to be a global variable that increments once
@@ -854,11 +861,11 @@ MALLOC_DECLARE(M_NEWNFSDSESSION);
 #define	NFSWRITERPC_SETTIME(w, n, a, v4)				\
 	do {								\
 		if (w) {						\
-			mtx_lock(&((n)->n_mtx));			\
+			mutex_enter(&((n)->n_mtx));			\
 			(n)->n_mtime = (a)->na_mtime;			\
 			if (v4)						\
 				(n)->n_change = (a)->na_filerev;	\
-			mtx_unlock(&((n)->n_mtx));			\
+			mutex_exit(&((n)->n_mtx));			\
 		}							\
 	} while (0)
 
@@ -1011,7 +1018,7 @@ struct nfsreq {
 	TAILQ_ENTRY(nfsreq) r_chain;
 	u_int32_t	r_flags;	/* flags on request, see below */
 	struct nfsmount *r_nmp;		/* Client mnt ptr */
-	struct mtx	r_mtx;		/* Mutex lock for this structure */
+	kmutex_t	r_mtx;		/* Mutex lock for this structure */
 };
 
 #ifndef NFS_MAXBSIZE
