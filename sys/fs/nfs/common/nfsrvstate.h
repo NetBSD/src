@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrvstate.h,v 1.1.1.2 2016/11/18 07:49:13 pgoyette Exp $	*/
+/*	$NetBSD: nfsrvstate.h,v 1.2 2016/12/13 22:52:46 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfs/nfsrvstate.h 298788 2016-04-29 16:07:25Z pfg 
- * $NetBSD: nfsrvstate.h,v 1.1.1.2 2016/11/18 07:49:13 pgoyette Exp $
+ * $NetBSD: nfsrvstate.h,v 1.2 2016/12/13 22:52:46 pgoyette Exp $
  */
 
 #ifndef _NFS_NFSRVSTATE_H_
@@ -68,7 +68,7 @@ TAILQ_HEAD(nfsuserhashhead, nfsusrgrp);
 		% nfsrv_lughashsize])
 
 struct nfssessionhash {
-	struct mtx			mtx;
+	struct kmutex			mtx;
 	struct nfssessionhashhead	list;
 };
 #define	NFSSESSIONHASH(f) 						\
