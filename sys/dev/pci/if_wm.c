@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.456 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.457 2016/12/13 10:01:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.456 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.457 2016/12/13 10:01:44 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2411,6 +2411,76 @@ alloc_retry:
 	    || sc->sc_type == WM_T_82574 || sc->sc_type == WM_T_82583) {
 		/* STATUS_TBIMODE reserved/reused, can't rely on it */
 		wm_gmii_mediainit(sc, wmp->wmp_product);
+	} else if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
+	    || (sc->sc_type ==WM_T_82580) || (sc->sc_type ==WM_T_I350)
+	    || (sc->sc_type ==WM_T_I354) || (sc->sc_type ==WM_T_I210)
+	    || (sc->sc_type ==WM_T_I211)) {
+		reg = CSR_READ(sc, WMREG_CTRL_EXT);
+		link_mode = reg & CTRL_EXT_LINK_MODE_MASK;
+		switch (link_mode) {
+		case CTRL_EXT_LINK_MODE_1000KX:
+			aprint_verbose_dev(sc->sc_dev, "1000KX\n");
+			sc->sc_mediatype = WM_MEDIATYPE_SERDES;
+			break;
+		case CTRL_EXT_LINK_MODE_SGMII:
+			if (wm_sgmii_uses_mdio(sc)) {
+				aprint_verbose_dev(sc->sc_dev,
+				    "SGMII(MDIO)\n");
+				sc->sc_flags |= WM_F_SGMII;
+				sc->sc_mediatype = WM_MEDIATYPE_COPPER;
+				break;
+			}
+			aprint_verbose_dev(sc->sc_dev, "SGMII(I2C)\n");
+			/*FALLTHROUGH*/
+		case CTRL_EXT_LINK_MODE_PCIE_SERDES:
+			sc->sc_mediatype = wm_sfp_get_media_type(sc);
+			if (sc->sc_mediatype == WM_MEDIATYPE_UNKNOWN) {
+				if (link_mode
+				    == CTRL_EXT_LINK_MODE_SGMII) {
+					sc->sc_mediatype = WM_MEDIATYPE_COPPER;
+					sc->sc_flags |= WM_F_SGMII;
+				} else {
+					sc->sc_mediatype = WM_MEDIATYPE_SERDES;
+					aprint_verbose_dev(sc->sc_dev,
+					    "SERDES\n");
+				}
+				break;
+			}
+			if (sc->sc_mediatype == WM_MEDIATYPE_SERDES)
+				aprint_verbose_dev(sc->sc_dev, "SERDES\n");
+
+			/* Change current link mode setting */
+			reg &= ~CTRL_EXT_LINK_MODE_MASK;
+			switch (sc->sc_mediatype) {
+			case WM_MEDIATYPE_COPPER:
+				reg |= CTRL_EXT_LINK_MODE_SGMII;
+				break;
+			case WM_MEDIATYPE_SERDES:
+				reg |= CTRL_EXT_LINK_MODE_PCIE_SERDES;
+				break;
+			default:
+				break;
+			}
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+			break;
+		case CTRL_EXT_LINK_MODE_GMII:
+		default:
+			aprint_verbose_dev(sc->sc_dev, "Copper\n");
+			sc->sc_mediatype = WM_MEDIATYPE_COPPER;
+			break;
+		}
+
+		reg &= ~CTRL_EXT_I2C_ENA;
+		if ((sc->sc_flags & WM_F_SGMII) != 0)
+			reg |= CTRL_EXT_I2C_ENA;
+		else
+			reg &= ~CTRL_EXT_I2C_ENA;
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+		if (sc->sc_mediatype == WM_MEDIATYPE_COPPER)
+			wm_gmii_mediainit(sc, wmp->wmp_product);
+		else
+			wm_tbi_mediainit(sc);
 	} else if (sc->sc_type < WM_T_82543 ||
 	    (CSR_READ(sc, WMREG_STATUS) & STATUS_TBIMODE) != 0) {
 		if (sc->sc_mediatype == WM_MEDIATYPE_COPPER) {
@@ -2420,91 +2490,12 @@ alloc_retry:
 		}
 		wm_tbi_mediainit(sc);
 	} else {
-		switch (sc->sc_type) {
-		case WM_T_82575:
-		case WM_T_82576:
-		case WM_T_82580:
-		case WM_T_I350:
-		case WM_T_I354:
-		case WM_T_I210:
-		case WM_T_I211:
-			reg = CSR_READ(sc, WMREG_CTRL_EXT);
-			link_mode = reg & CTRL_EXT_LINK_MODE_MASK;
-			switch (link_mode) {
-			case CTRL_EXT_LINK_MODE_1000KX:
-				aprint_verbose_dev(sc->sc_dev, "1000KX\n");
-				sc->sc_mediatype = WM_MEDIATYPE_SERDES;
-				break;
-			case CTRL_EXT_LINK_MODE_SGMII:
-				if (wm_sgmii_uses_mdio(sc)) {
-					aprint_verbose_dev(sc->sc_dev,
-					    "SGMII(MDIO)\n");
-					sc->sc_flags |= WM_F_SGMII;
-					sc->sc_mediatype = WM_MEDIATYPE_COPPER;
-					break;
-				}
-				aprint_verbose_dev(sc->sc_dev, "SGMII(I2C)\n");
-				/*FALLTHROUGH*/
-			case CTRL_EXT_LINK_MODE_PCIE_SERDES:
-				sc->sc_mediatype = wm_sfp_get_media_type(sc);
-				if (sc->sc_mediatype == WM_MEDIATYPE_UNKNOWN) {
-					if (link_mode
-					    == CTRL_EXT_LINK_MODE_SGMII) {
-						sc->sc_mediatype
-						    = WM_MEDIATYPE_COPPER;
-						sc->sc_flags |= WM_F_SGMII;
-					} else {
-						sc->sc_mediatype
-						    = WM_MEDIATYPE_SERDES;
-						aprint_verbose_dev(sc->sc_dev,
-						    "SERDES\n");
-					}
-					break;
-				}
-				if (sc->sc_mediatype == WM_MEDIATYPE_SERDES)
-					aprint_verbose_dev(sc->sc_dev,
-					    "SERDES\n");
-
-				/* Change current link mode setting */
-				reg &= ~CTRL_EXT_LINK_MODE_MASK;
-				switch (sc->sc_mediatype) {
-				case WM_MEDIATYPE_COPPER:
-					reg |= CTRL_EXT_LINK_MODE_SGMII;
-					break;
-				case WM_MEDIATYPE_SERDES:
-					reg |= CTRL_EXT_LINK_MODE_PCIE_SERDES;
-					break;
-				default:
-					break;
-				}
-				CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
-				break;
-			case CTRL_EXT_LINK_MODE_GMII:
-			default:
-				aprint_verbose_dev(sc->sc_dev, "Copper\n");
-				sc->sc_mediatype = WM_MEDIATYPE_COPPER;
-				break;
-			}
-
-			reg &= ~CTRL_EXT_I2C_ENA;
-			if ((sc->sc_flags & WM_F_SGMII) != 0)
-				reg |= CTRL_EXT_I2C_ENA;
-			else
-				reg &= ~CTRL_EXT_I2C_ENA;
-			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
-
-			if (sc->sc_mediatype == WM_MEDIATYPE_COPPER)
-				wm_gmii_mediainit(sc, wmp->wmp_product);
-			else
-				wm_tbi_mediainit(sc);
-			break;
-		default:
-			if (sc->sc_mediatype == WM_MEDIATYPE_FIBER)
-				aprint_error_dev(sc->sc_dev,
-				    "WARNING: TBIMODE clear on 1000BASE-X product!\n");
+		if (sc->sc_mediatype == WM_MEDIATYPE_FIBER) {
+			aprint_error_dev(sc->sc_dev,
+			    "WARNING: TBIMODE clear on 1000BASE-X product!\n");
 			sc->sc_mediatype = WM_MEDIATYPE_COPPER;
-			wm_gmii_mediainit(sc, wmp->wmp_product);
 		}
+		wm_gmii_mediainit(sc, wmp->wmp_product);
 	}
 
 	ifp = &sc->sc_ethercom.ec_if;
@@ -9677,8 +9668,17 @@ do {									\
 
 	aprint_normal_dev(sc->sc_dev, "");
 
-	/* Only 82545 is LX */
-	if (sc->sc_type == WM_T_82545) {
+	if (sc->sc_type == WM_T_I354) {
+		uint32_t status;
+
+		status = CSR_READ(sc, WMREG_STATUS);
+		if (((status & STATUS_2P5_SKU) != 0)
+		    && ((status & STATUS_2P5_SKU_OVER) == 0)) {
+			ADD("2500baseKX-FDX", IFM_2500_SX | IFM_FDX,ANAR_X_FD);
+		} else
+			ADD("1000baseSX-FDX", IFM_1000_SX | IFM_FDX,ANAR_X_FD);
+	} else if (sc->sc_type == WM_T_82545) {
+		/* Only 82545 is LX (XXX except SFP) */
 		ADD("1000baseLX", IFM_1000_LX, ANAR_X_HD);
 		ADD("1000baseLX-FDX", IFM_1000_LX | IFM_FDX, ANAR_X_FD);
 	} else {
@@ -10087,7 +10087,32 @@ wm_serdes_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	sc->sc_tbi_linkup = 1;
 	ifmr->ifm_status |= IFM_ACTIVE;
-	ifmr->ifm_active |= IFM_1000_SX; /* XXX */
+	if (sc->sc_type == WM_T_I354) {
+		uint32_t status;
+
+		status = CSR_READ(sc, WMREG_STATUS);
+		if (((status & STATUS_2P5_SKU) != 0)
+		    && ((status & STATUS_2P5_SKU_OVER) == 0)) {
+			ifmr->ifm_active |= IFM_2500_SX; /* XXX KX */
+		} else
+			ifmr->ifm_active |= IFM_1000_SX; /* XXX KX */
+	} else {
+		switch (__SHIFTOUT(reg, PCS_LSTS_SPEED)) {
+		case PCS_LSTS_SPEED_10:
+			ifmr->ifm_active |= IFM_10_T; /* XXX */
+			break;
+		case PCS_LSTS_SPEED_100:
+			ifmr->ifm_active |= IFM_100_FX; /* XXX */
+			break;
+		case PCS_LSTS_SPEED_1000:
+			ifmr->ifm_active |= IFM_1000_SX; /* XXX */
+			break;
+		default:
+			device_printf(sc->sc_dev, "Unknown speed\n");
+			ifmr->ifm_active |= IFM_1000_SX; /* XXX */
+			break;
+		}
+	}
 	if ((reg & PCS_LSTS_FDX) != 0)
 		ifmr->ifm_active |= IFM_FDX;
 	else
@@ -10120,7 +10145,6 @@ wm_serdes_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 		    && (pcs_lpab & TXCW_ASYM_PAUSE)) {
 			mii->mii_media_active |= IFM_FLOW
 			    | IFM_ETH_RXPAUSE;
-		} else {
 		}
 	}
 	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK)
@@ -10161,7 +10185,7 @@ wm_serdes_tick(struct wm_softc *sc)
 	} else {
 		mii->mii_media_status |= IFM_NONE;
 		sc->sc_tbi_linkup = 0;
-		    /* If the timer expired, retry autonegotiation */
+		/* If the timer expired, retry autonegotiation */
 		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
 		    && (++sc->sc_tbi_serdes_ticks
 			>= sc->sc_tbi_serdes_anegticks)) {
