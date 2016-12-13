@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $	*/
+/*	$NetBSD: nfs.h,v 1.2 2016/12/13 22:52:46 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfs/nfs.h 291527 2015-11-30 21:54:27Z rmacklem 
- * $NetBSD: nfs.h,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $
+ * $NetBSD: nfs.h,v 1.2 2016/12/13 22:52:46 pgoyette Exp $
  */
 
 #ifndef _NFS_NFS_H_
@@ -72,8 +72,10 @@
 #ifndef NFS_MAXATTRTIMO
 #define	NFS_MAXATTRTIMO 60
 #endif
+#if 0	/* Defined in NetBSD in machine/param.h */
 #define	NFS_WSIZE	8192		/* Def. write data size <= 8192 */
 #define	NFS_RSIZE	8192		/* Def. read data size <= 8192 */
+#endif
 #define	NFS_READDIRSIZE	8192		/* Def. readdir size */
 #define	NFS_DEFRAHEAD	1		/* Def. read ahead # blocks */
 #define	NFS_MAXRAHEAD	16		/* Max. read ahead # blocks */
@@ -146,9 +148,9 @@
  * Oddballs
  */
 #define	NFS_CMPFH(n, f, s) 						\
-    ((n)->n_fhp->nfh_len == (s) && !NFSBCMP((n)->n_fhp->nfh_fh, (caddr_t)(f), (s)))
+    ((n)->n_fhp->nfh_len == (s) && !NFSBCMP((n)->n_fhp->nfh_fh, (void *)(f), (s)))
 #define	NFSRV_CMPFH(nf, ns, f, s) 					\
-	((ns) == (s) && !NFSBCMP((caddr_t)(nf), (caddr_t)(f), (s)))
+	((ns) == (s) && !NFSBCMP((void *)(nf), (void *)(f), (s)))
 #define	NFS_CMPTIME(t1, t2) 						\
 	((t1).tv_sec == (t2).tv_sec && (t1).tv_nsec == (t2).tv_nsec)
 #define	NFS_SETTIME(t) do { 						\
@@ -165,7 +167,7 @@
  */
 struct nfsd_addsock_args {
 	int	sock;		/* Socket to serve */
-	caddr_t	name;		/* Client addr for connection based sockets */
+	char	*name;		/* Client addr for connection based sockets */
 	int	namelen;	/* Length of name */
 };
 
@@ -187,7 +189,7 @@ struct nfsd_nfscbd_args {
 
 struct nfscbd_args {
 	int	sock;		/* Socket to serve */
-	caddr_t	name;		/* Client addr for connection based sockets */
+	char	*name;		/* Client addr for connection based sockets */
 	int	namelen;	/* Length of name */
 	u_short	port;		/* Port# for callbacks */
 };
@@ -582,8 +584,8 @@ struct nfsrv_descript {
 	mbuf_t			nd_mb;		/* Current build mbuf */
 	NFSSOCKADDR_T		nd_nam;		/* and socket addr */
 	NFSSOCKADDR_T		nd_nam2;	/* return socket addr */
-	caddr_t			nd_dpos;	/* Current dissect pos */
-	caddr_t			nd_bpos;	/* Current build pos */
+	char			*nd_dpos;	/* Current dissect pos */
+	char			*nd_bpos;	/* Current build pos */
 	u_int16_t		nd_procnum;	/* RPC # */
 	u_int32_t		nd_flag;	/* nd_flag */
 	u_int32_t		nd_repstat;	/* Reply status */
