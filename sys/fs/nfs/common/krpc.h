@@ -1,6 +1,6 @@
 /*	NetBSD: krpc.h,v 1.4 1995/12/19 23:07:11 cgd Exp 	*/
 /* FreeBSD: head/sys/nfs/krpc.h 221032 2011-04-25 22:22:51Z rmacklem 	*/
-/* $NetBSD: krpc.h,v 1.1.1.1 2013/09/30 07:19:31 dholland Exp $	*/
+/* $NetBSD: krpc.h,v 1.2 2016/12/13 22:52:46 pgoyette Exp $	*/
 
 #include <sys/cdefs.h>
 
@@ -11,10 +11,10 @@ struct sockaddr_in;
 
 int krpc_call(struct sockaddr_in *_sin,
 	u_int prog, u_int vers, u_int func,
-	struct mbuf **data, struct sockaddr **from, struct thread *td);
+	struct mbuf **data, struct sockaddr **from, struct lwp *td);
 
 int krpc_portmap(struct sockaddr_in *_sin,
-	u_int prog, u_int vers, u_int16_t *portp, struct thread *td);
+	u_int prog, u_int vers, u_int16_t *portp, struct lwp *td);
 
 struct mbuf *xdr_string_encode(char *str, int len);
 
