@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.33 2016/12/10 23:03:24 christos Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.34 2016/12/13 20:42:18 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -710,9 +710,8 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pcppi?		# PC speaker
-
-#spkr0	at audio0		# PC speaker (synthesized)
+#spkr*	at pcppi?		# PC speaker
+#spkr*	at audio?		# PC speaker (synthesized)
 
 # Mice
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.446 2016/12/10 23:03:23 christos Exp $
+# $NetBSD: GENERIC,v 1.447 2016/12/13 20:42:16 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.446 $"
+#ident 		"GENERIC-$Revision: 1.447 $"
 
 maxusers	64		# estimated number of users
 
@@ -1109,9 +1109,8 @@ hdafg*		at hdaudiobus?
 audio*	at audiobus?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-spkr0	at pcppi?		# PC speaker
-
-#spkr0	at audio0		# PC speaker (synthesized)
+spkr*	at pcppi?		# PC speaker
+spkr*	at audio?		# PC speaker (synthesized)
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
