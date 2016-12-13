@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_synth.c,v 1.7 2016/12/13 20:20:34 christos Exp $	*/
+/*	$NetBSD: spkr_synth.c,v 1.8 2016/12/13 20:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.7 2016/12/13 20:20:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.8 2016/12/13 20:50:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ spkr_synth_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_bellcv, "bellcv");
 
 	kthread_create(PRI_BIO, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
-	    bell_thread, sc, &sc->sc_bellthread, device_xname(self));
+	    bell_thread, sc, &sc->sc_bellthread, "%s", device_xname(self));
 
 	spkr_attach(self, spkr_synth_tone, spkr_synth_rest);
 }
