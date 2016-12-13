@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrvcache.h,v 1.1.1.2 2016/11/18 07:49:13 pgoyette Exp $	*/
+/*	$NetBSD: nfsrvcache.h,v 1.2 2016/12/13 22:52:46 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfs/nfsrvcache.h 269347 2014-07-31 19:24:44Z kib 
- * $NetBSD: nfsrvcache.h,v 1.1.1.2 2016/11/18 07:49:13 pgoyette Exp $
+ * $NetBSD: nfsrvcache.h,v 1.2 2016/12/13 22:52:46 pgoyette Exp $
  */
 
 #ifndef _NFS_NFSRVCACHE_H_
@@ -117,7 +117,7 @@ LIST_HEAD(nfsrvhashhead, nfsrvcache);
 
 /* The fine-grained locked cache hash table for TCP. */
 struct nfsrchash_bucket {
-	struct mtx		mtx;
+	struct kmutex		mtx;
 	struct nfsrvhashhead	tbl;
 };
 
