@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.277 2016/12/11 10:28:00 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.278 2016/12/13 17:12:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.277 2016/12/11 10:28:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.278 2016/12/13 17:12:51 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -305,6 +305,8 @@ int	audioprobe(device_t, cfdata_t, void *);
 void	audioattach(device_t, device_t, void *);
 int	audiodetach(device_t, int);
 int	audioactivate(device_t, enum devact);
+void	audiochilddet(device_t, device_t);
+int	audiorescan(device_t, const char *, const int *);
 
 #ifdef AUDIO_PM_IDLE
 static void	audio_idle(void *);
@@ -436,8 +438,8 @@ const struct audio_params audio_default = {
 };
 
 CFATTACH_DECL3_NEW(audio, sizeof(struct audio_softc),
-    audioprobe, audioattach, audiodetach, audioactivate, NULL, NULL,
-    DVF_DETACH_SHUTDOWN);
+    audioprobe, audioattach, audiodetach, audioactivate, audiorescan,
+    audiochilddet, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver audio_cd;
 
@@ -837,6 +839,7 @@ bad_rec:
 	    audio_rec_thread, sc, &sc->sc_recthread, "audiorec");
 	kthread_create(PRI_NONE, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
 	    audio_play_thread, sc, &sc->sc_playthread, "audiomix");
+	audiorescan(self, "audio", NULL);
 }
 
 int
@@ -970,6 +973,37 @@ audiodetach(device_t self, int flags)
 
 	return 0;
 }
+
+void
+audiochilddet(device_t self, device_t child)
+{
+
+	/* we hold no child references, so do nothing */
+}
+
+static int
+audiosearch(device_t parent, cfdata_t cf, const int *locs, void *aux)
+{
+
+	if (config_match(parent, cf, aux))
+		config_attach_loc(parent, cf, locs, aux, NULL);
+
+	return 0;
+}
+
+int
+audiorescan(device_t self, const char *ifattr, const int *flags)
+{
+	struct audio_softc *sc = device_private(self);
+
+	if (!ifattr_match(ifattr, "audio"))
+		return 0;
+
+	config_search_loc(audiosearch, sc->dev, "audio", NULL, NULL);
+
+	return 0;
+}
+
 
 int
 au_portof(struct audio_softc *sc, char *name, int class)
