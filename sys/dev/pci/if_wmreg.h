@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.93 2016/11/16 08:56:17 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.94 2016/12/13 10:01:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -267,7 +267,9 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_PHYRA	(1U << 10)	/* PHY Reset Asserted (PCH) */
 #define	STATUS_PCI66	(1U << 11)	/* 66MHz bus (Livengood) */
 #define	STATUS_BUS64	(1U << 12)	/* 64-bit bus (Livengood) */
+#define	STATUS_2P5_SKU	__BIT(12)	/* Value of the 2.5GBE SKU strap */
 #define	STATUS_PCIX_MODE (1U << 13)	/* PCIX mode (Cordova) */
+#define	STATUS_2P5_SKU_OVER __BIT(13)	/* Value of the 2.5GBE SKU override */
 #define	STATUS_PCIXSPD(x) ((x) << 14)	/* PCIX speed indication (Cordova) */
 #define	STATUS_PCIXSPD_50_66   STATUS_PCIXSPD(0)
 #define	STATUS_PCIXSPD_66_100  STATUS_PCIXSPD(1)
@@ -915,8 +917,10 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_PCS_LSTS	0x420c	/* PCS Link Status */
 #define PCS_LSTS_LINKOK	__BIT(0)
-#define PCS_LSTS_SPEED_100  __BIT(1)
-#define PCS_LSTS_SPEED_1000 __BIT(2)
+#define PCS_LSTS_SPEED	__BITS(2, 1)
+#define PCS_LSTS_SPEED_10	0
+#define PCS_LSTS_SPEED_100	1
+#define PCS_LSTS_SPEED_1000	2
 #define PCS_LSTS_FDX	__BIT(3)
 #define PCS_LSTS_AN_COMP __BIT(16)
 
