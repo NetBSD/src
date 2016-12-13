@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdsocket.c,v 1.1.1.2 2016/11/18 07:49:13 pgoyette Exp $	*/
+/*	$NetBSD: nfs_nfsdsocket.c,v 1.2 2016/12/13 21:50:32 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,14 +34,14 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdsocket.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_nfsdsocket.c,v 1.1.1.2 2016/11/18 07:49:13 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_nfsdsocket.c,v 1.2 2016/12/13 21:50:32 pgoyette Exp $");
 
 /*
  * Socket operations for use by the nfs server.
  */
 
 #ifndef APPLEKEXT
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 extern struct nfsstatsv1 nfsstatsv1;
 extern struct nfsrvfh nfs_pubfh, nfs_rootfh;
