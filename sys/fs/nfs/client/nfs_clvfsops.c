@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clvfsops.c,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $	*/
+/*	$NetBSD: nfs_clvfsops.c,v 1.2 2016/12/13 22:17:33 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +35,12 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clvfsops.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clvfsops.c,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_clvfsops.c,v 1.2 2016/12/13 22:17:33 pgoyette Exp $");
 
 
-#include "opt_bootp.h"
-#include "opt_nfsroot.h"
+#ifdef _KERNEL_OPT
+#include "opt_newnfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,11 +71,11 @@ __RCSID("$NetBSD: nfs_clvfsops.c,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $");
 #include <net/route.h>
 #include <netinet/in.h>
 
-#include <fs/nfs/nfsport.h>
-#include <fs/nfsclient/nfsnode.h>
-#include <fs/nfsclient/nfsmount.h>
-#include <fs/nfsclient/nfs.h>
-#include <nfs/nfsdiskless.h>
+#include <fs/nfs/common/nfsport.h>
+#include <fs/nfs/client/nfsnode.h>
+#include <fs/nfs/client/nfsmount.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/common/nfsdiskless.h>
 
 FEATURE(nfscl, "NFSv4 client");
 
@@ -158,7 +159,7 @@ MODULE_DEPEND(nfs, nfslock, 1, 1, 1);
  * will be defined for kernels built without NFS_ROOT, although it
  * isn't used in that case.
  */
-#if !defined(NFS_ROOT)
+#if !defined(NEW_NFS_BOOT)
 struct nfs_diskless	nfs_diskless = { { { 0 } } };
 struct nfsv3_diskless	nfsv3_diskless = { { { 0 } } };
 int			nfs_diskless_valid = 0;
@@ -405,9 +406,9 @@ nfs_mountroot(struct mount *mp)
 	char buf[128];
 	char *cp;
 
-#if defined(BOOTP_NFSROOT) && defined(BOOTP)
+#if defined(NEW_NFS_BOOT) && defined(NEW_NFS_BOOT_BOOTP)
 	bootpc_init();		/* use bootp to get nfs_diskless filled in */
-#elif defined(NFS_ROOT)
+#elif defined(NEW_NFS_BOOT)
 	nfs_setup_diskless();
 #endif
 
