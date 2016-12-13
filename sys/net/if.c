@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.366 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.367 2016/12/13 02:05:48 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.366 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.367 2016/12/13 02:05:48 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1151,7 +1151,7 @@ if_deactivate(struct ifnet *ifp)
 }
 
 bool
-if_is_deactivated(struct ifnet *ifp)
+if_is_deactivated(const struct ifnet *ifp)
 {
 
 	return ifp->if_output == if_nulloutput;
