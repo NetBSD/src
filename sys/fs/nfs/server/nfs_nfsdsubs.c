@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdsubs.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $	*/
+/*	$NetBSD: nfs_nfsdsubs.c,v 1.4 2016/12/13 21:50:32 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,15 +34,20 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdsubs.c 298523 2016-04-23 21:18:45Z rmacklem "); */
-__RCSID("$NetBSD: nfs_nfsdsubs.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_nfsdsubs.c,v 1.4 2016/12/13 21:50:32 pgoyette Exp $");
 
 #ifndef APPLEKEXT
+
+#ifdef _KERNEL_OPT
+#include "opt_newnfs.h"
+#endif
+
 /*
  * These functions support the macros and help fiddle mbuf chains for
  * the nfs op functions. They do things like create the rpc header and
  * copy data between mbuf chains and uio lists.
  */
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 extern u_int32_t newnfs_true, newnfs_false;
 extern int nfs_pubfhset;
