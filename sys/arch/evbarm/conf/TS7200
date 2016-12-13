@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.65 2016/12/10 23:03:24 christos Exp $
+#	$NetBSD: TS7200,v 1.66 2016/12/13 20:42:17 christos Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -425,7 +425,7 @@ ugen*	at uhub? port ?
 # Audio support
 #audio*	at audiobus?
 
-#spkr0	at audio0		# PC speaker (synthesized)
+#spkr*	at audio?			# PC speaker (synthesized)
 
 # MPU 401 UARTs
 #mpu*	at cmpci?

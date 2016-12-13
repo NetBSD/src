@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.48 2016/12/10 23:03:23 christos Exp $
+# $NetBSD: NULL,v 1.49 2016/12/13 20:42:16 christos Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.48 $"
+#ident          "GENERIC-$Revision: 1.49 $"
 
 maxusers	8
 
@@ -209,7 +209,7 @@ fd*		at fdc0 unit ?		# floppy disks on the later
 #aucc*		at mainbus0		# Amiga CC audio
 #audio*		at aucc?
 
-#spkr0	at audio0		# PC speaker (synthesized)
+#spkr*		at audio?		# PC speaker (synthesized)
 
 # wscons aware interface to amiga custom chips.
 # If you enable it enable also wskbd.
