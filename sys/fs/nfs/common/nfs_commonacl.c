@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_commonacl.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $	*/
+/*	$NetBSD: nfs_commonacl.c,v 1.2 2016/12/13 22:31:51 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -28,10 +28,10 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonacl.c 297793 2016-04-10 23:07:00Z pfg "); */
-__RCSID("$NetBSD: nfs_commonacl.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_commonacl.c,v 1.2 2016/12/13 22:31:51 pgoyette Exp $");
 
 #ifndef APPLEKEXT
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 extern int nfsrv_useacl;
 #endif
