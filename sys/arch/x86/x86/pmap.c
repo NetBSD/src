@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.230 2016/12/11 08:31:53 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.231 2016/12/13 10:54:27 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,15 +171,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.230 2016/12/11 08:31:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.231 2016/12/13 10:54:27 kamil Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
-#if !defined(__x86_64__)
-#include "opt_kstack_dr0.h"
-#endif /* !defined(__x86_64__) */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2627,15 +2624,6 @@ pmap_activate(struct lwp *l)
 	if (l == ci->ci_curlwp) {
 		KASSERT(ci->ci_want_pmapload == 0);
 		KASSERT(ci->ci_tlbstate != TLBSTATE_VALID);
-#ifdef KSTACK_CHECK_DR0
-		/*
-		 * setup breakpoint on the top of stack
-		 */
-		if (l == &lwp0)
-			dr0(0, 0, 0, 0);
-		else
-			dr0(KSTACK_LOWEST_ADDR(l), 1, 3, 1);
-#endif
 
 		/*
 		 * no need to switch to kernel vmspace because
