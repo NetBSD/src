@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_commonkrpc.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $	*/
+/*	$NetBSD: nfs_commonkrpc.c,v 1.2 2016/12/13 22:31:51 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1991, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -34,14 +34,19 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonkrpc.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_commonkrpc.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_commonkrpc.c,v 1.2 2016/12/13 22:31:51 pgoyette Exp $");
 
 /*
  * Socket operations for use by nfs
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_dtrace.h"
+#include "opt_newnfs.h"
+#if 0
 #include "opt_kgssapi.h"
-#include "opt_nfs.h"
+#endif
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,11 +65,11 @@ __RCSID("$NetBSD: nfs_commonkrpc.c,v 1.1.1.2 2016/11/18 07:49:12 pgoyette Exp $"
 #include <sys/vnode.h>
 
 #include <rpc/rpc.h>
-#include <rpc/krpc.h>
+#include <fs/nfs/common/krpc.h>
 
 #include <kgssapi/krb5/kcrypto.h>
 
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 #ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>
