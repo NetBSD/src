@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_mountcommon.h,v 1.1.1.1 2013/09/30 07:19:33 dholland Exp $	*/
+/*	$NetBSD: nfs_mountcommon.h,v 1.2 2016/12/13 22:52:46 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/nfs/nfs_mountcommon.h 216931 2011-01-03 20:37:31Z rmacklem 
- * $NetBSD: nfs_mountcommon.h,v 1.1.1.1 2013/09/30 07:19:33 dholland Exp $
+ * $NetBSD: nfs_mountcommon.h,v 1.2 2016/12/13 22:52:46 pgoyette Exp $
  */
 
 #ifndef _NFS_MOUNTCOMMON_H_
@@ -39,10 +39,10 @@
 typedef void	nfs_getinfofromvp_ftype(struct vnode *, uint8_t *, size_t *,
 		    struct sockaddr_storage *, int *, off_t *,
 		    struct timeval *);
-typedef int	nfs_vinvalbuf_ftype(struct vnode *, int, struct thread *, int);
+typedef int	nfs_vinvalbuf_ftype(struct vnode *, int, struct lwp *, int);
 
 struct	nfsmount_common {
-	struct mtx	nmcom_mtx;
+	kmutex_t	nmcom_mtx;
 	int	nmcom_flag;		/* Flags for soft/hard... */
 	int	nmcom_state;		/* Internal state flags */
 	struct	mount *nmcom_mountp;	/* Vfs structure for this filesystem */
