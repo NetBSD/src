@@ -1,4 +1,4 @@
-/*	$NetBSD: nlm_prot_server.c,v 1.1.1.1 2013/09/30 07:19:45 dholland Exp $	*/
+/*	$NetBSD: nlm_prot_server.c,v 1.2 2016/12/13 21:58:17 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  * Authors: Doug Rabson <dfr@rabson.org>
@@ -33,14 +33,14 @@
 /* __RCSID("NetBSD: nlm_prot.x,v 1.6 2000/06/07 14:30:15 bouyer Exp "); */
 #endif /* not lint */
 /* __FBSDID("FreeBSD: head/sys/nlm/nlm_prot_server.c 197840 2009-10-07 19:50:14Z zml "); */
-__RCSID("$NetBSD: nlm_prot_server.c,v 1.1.1.1 2013/09/30 07:19:45 dholland Exp $");
+__RCSID("$NetBSD: nlm_prot_server.c,v 1.2 2016/12/13 21:58:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <nlm/nlm_prot.h>
-#include <nlm/nlm.h>
+#include <fs/nfs/nlm/nlm_prot.h>
+#include <fs/nfs/nlm/nlm.h>
 
 /**********************************************************************/
 
