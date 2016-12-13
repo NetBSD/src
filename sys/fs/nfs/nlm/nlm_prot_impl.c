@@ -1,4 +1,4 @@
-/*	$NetBSD: nlm_prot_impl.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $	*/
+/*	$NetBSD: nlm_prot_impl.c,v 1.4 2016/12/13 21:58:17 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  * Authors: Doug Rabson <dfr@rabson.org>
@@ -26,11 +26,13 @@
  * SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_inet6.h"
+#endif
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nlm/nlm_prot_impl.c 302216 2016-06-26 20:08:42Z kib "); */
-__RCSID("$NetBSD: nlm_prot_impl.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $");
+__RCSID("$NetBSD: nlm_prot_impl.c,v 1.4 2016/12/13 21:58:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/fail.h>
@@ -40,9 +42,6 @@ __RCSID("$NetBSD: nlm_prot_impl.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $");
 #include <sys/lockf.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
-#if __FreeBSD_version >= 700000
-#include <sys/priv.h>
-#endif
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -56,12 +55,19 @@ __RCSID("$NetBSD: nlm_prot_impl.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $");
 #include <sys/unistd.h>
 #include <sys/vnode.h>
 
-#include <nfs/nfsproto.h>
-#include <nfs/nfs_lock.h>
+#if 0
+#if __FreeBSD_version >= 700000
+#include <sys/priv.h>
+#endif
+#endif
 
-#include <nlm/nlm_prot.h>
-#include <nlm/sm_inter.h>
-#include <nlm/nlm.h>
+#include <fs/nfs/common/nfsproto.h>
+#include <fs/nfs/common/nfs_lock.h>
+
+#include <fs/nfs/nlm/nlm_prot.h>
+#include <fs/nfs/nlm/sm_inter.h>
+#include <fs/nfs/nlm/nlm.h>
+
 #include <rpc/rpc_com.h>
 #include <rpc/rpcb_prot.h>
 
