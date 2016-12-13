@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $	*/
+/*	$NetBSD: nfs.h,v 1.2 2016/12/13 22:54:24 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfsclient/nfs.h 276140 2014-12-23 14:24:36Z rmacklem 
- * $NetBSD: nfs.h,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $
+ * $NetBSD: nfs.h,v 1.2 2016/12/13 22:54:24 pgoyette Exp $
  */
 
 #ifndef _NFSCLIENT_NFS_H_
@@ -91,34 +91,35 @@ enum nfsiod_state {
 /*
  * Function prototypes.
  */
-int ncl_meta_setsize(struct vnode *, struct ucred *, struct thread *,
+int ncl_meta_setsize(struct vnode *, struct kauth_cred *, struct lwp *,
     u_quad_t);
 void ncl_doio_directwrite(struct buf *);
-int ncl_bioread(struct vnode *, struct uio *, int, struct ucred *);
-int ncl_biowrite(struct vnode *, struct uio *, int, struct ucred *);
-int ncl_vinvalbuf(struct vnode *, int, struct thread *, int);
-int ncl_asyncio(struct nfsmount *, struct buf *, struct ucred *,
-    struct thread *);
-int ncl_doio(struct vnode *, struct buf *, struct ucred *, struct thread *,
+int ncl_bioread(struct vnode *, struct uio *, int, struct kauth_cred *);
+int ncl_biowrite(struct vnode *, struct uio *, int, struct kauth_cred *);
+int ncl_vinvalbuf(struct vnode *, int, struct kauth_cred *, int);
+int ncl_asyncio(struct nfsmount *, struct buf *, struct kauth_cred *,
+    struct lwp *);
+int ncl_doio(struct vnode *, struct buf *, struct kauth_cred *, struct lwp *,
     int);
 void ncl_nhinit(void);
 void ncl_nhuninit(void);
 void ncl_nodelock(struct nfsnode *);
 void ncl_nodeunlock(struct nfsnode *);
 int ncl_getattrcache(struct vnode *, struct vattr *);
-int ncl_readrpc(struct vnode *, struct uio *, struct ucred *);
-int ncl_writerpc(struct vnode *, struct uio *, struct ucred *, int *, int *,
-    int);
-int ncl_readlinkrpc(struct vnode *, struct uio *, struct ucred *);
-int ncl_readdirrpc(struct vnode *, struct uio *, struct ucred *,
-    struct thread *);
-int ncl_readdirplusrpc(struct vnode *, struct uio *, struct ucred *,
-    struct thread *);
-int ncl_writebp(struct buf *, int, struct thread *);
-int ncl_commit(struct vnode *, u_quad_t, int, struct ucred *, struct thread *);
+int ncl_readrpc(struct vnode *, struct uio *, struct kauth_cred *);
+int ncl_writerpc(struct vnode *, struct uio *, struct kauth_cred *, int *,
+    int *, int);
+int ncl_readlinkrpc(struct vnode *, struct uio *, struct kauth_cred *);
+int ncl_readdirrpc(struct vnode *, struct uio *, struct kauth_cred *,
+    struct lwp *);
+int ncl_readdirplusrpc(struct vnode *, struct uio *, struct kauth_cred *,
+    struct lwp *);
+int ncl_writebp(struct buf *, int, struct lwp *);
+int ncl_commit(struct vnode *, u_quad_t, int, struct kauth_cred *,
+    struct lwp *);
 void ncl_clearcommit(struct mount *);
-int ncl_fsinfo(struct nfsmount *, struct vnode *, struct ucred *,
-    struct thread *);
+int ncl_fsinfo(struct nfsmount *, struct vnode *, struct kauth_cred *,
+    struct lwp *);
 int ncl_init(struct vfsconf *);
 int ncl_uninit(struct vfsconf *);
 void	ncl_nfsiodnew(void);
