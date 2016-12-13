@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdkrpc.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $	*/
+/*	$NetBSD: nfs_nfsdkrpc.c,v 1.4 2016/12/13 21:50:32 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,20 +34,26 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdkrpc.c 299203 2016-05-06 23:40:37Z pfg "); */
-__RCSID("$NetBSD: nfs_nfsdkrpc.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_nfsdkrpc.c,v 1.4 2016/12/13 21:50:32 pgoyette Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet6.h"
+#if 0
 #include "opt_kgssapi.h"
+#endif
+#endif
 
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 #include <rpc/rpc.h>
 #include <rpc/rpcsec_gss.h>
 
-#include <nfs/nfs_fha.h>
-#include <fs/nfsserver/nfs_fha_new.h>
+#include <fs/nfs/common/nfs_fha.h>
+#include <fs/nfs/server/nfs_fha_new.h>
 
+#if 0
 #include <security/mac/mac_framework.h>
+#endif
 
 NFSDLOCKMUTEX;
 NFSV4ROOTLOCKMUTEX;
@@ -177,7 +183,7 @@ nfssvc_program(struct svc_req *rqst, SVCXPRT *xprt)
 		    nd.nd_procnum != NFSPROC_NULL) {
 #ifdef INET6
 			char b6[INET6_ADDRSTRLEN];
-#if defined(KLD_MODULE)
+#if defined(_MODULE)
 			/* Do not use ip6_sprintf: the nfs module should work without INET6. */
 #define	ip6_sprintf(buf, a)						\
 			(snprintf((buf), sizeof(buf), "%x:%x:%x:%x:%x:%x:%x:%x",	\
@@ -192,7 +198,7 @@ nfssvc_program(struct svc_req *rqst, SVCXPRT *xprt)
 #ifdef INET6
 			    sin->sin_family == AF_INET6 ?
 			    ip6_sprintf(b6, &satosin6(sin)->sin6_addr) :
-#if defined(KLD_MODULE)
+#if defined(_MODULE)
 #undef ip6_sprintf
 #endif
 #endif
