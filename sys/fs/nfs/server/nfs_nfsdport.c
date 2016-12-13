@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdport.c,v 1.1.1.2 2016/11/18 07:49:14 pgoyette Exp $	*/
+/*	$NetBSD: nfs_nfsdport.c,v 1.2 2016/12/13 21:50:32 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,9 +34,11 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdport.c 308212 2016-11-02 12:43:15Z kib "); */
-__RCSID("$NetBSD: nfs_nfsdport.c,v 1.1.1.2 2016/11/18 07:49:14 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_nfsdport.c,v 1.2 2016/12/13 21:50:32 pgoyette Exp $");
 
+#if 0
 #include <sys/capsicum.h>
+#endif
 
 /*
  * Functions that perform the vfs operations required by the routines in
@@ -44,11 +46,14 @@ __RCSID("$NetBSD: nfs_nfsdport.c,v 1.1.1.2 2016/11/18 07:49:14 pgoyette Exp $");
  * portable.
  */
 
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 #include <sys/hash.h>
 #include <sys/sysctl.h>
+
+#if 0
 #include <nlm/nlm_prot.h>
 #include <nlm/nlm.h>
+#endif
 
 FEATURE(nfsd, "NFSv4 server");
 
