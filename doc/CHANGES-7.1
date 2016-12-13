@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.130 2016/12/12 10:22:20 msaitoh Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.131 2016/12/13 07:34:53 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7535,3 +7535,41 @@ share/mk/bsd.own.mk				1.875 via patch
 
 	Build xf86-video-nouveau and libdrm_nouveau on x86.
 	[snj, ticket #1305]
+
+lib/libc/time/private.h				patch
+lib/libc/time/zic.c				patch
+
+	Make zic properly parse newer tzdata files.
+	[kre, ticket #1323]
+
+distrib/sets/lists/base/mi			1.1125, 1.1128, 1.1132, 1.1137, 1.1139, 1.1140
+external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.3
+external/public-domain/tz/dist/LICENSE          up to 1.1.1.2
+external/public-domain/tz/dist/Makefile         up to 1.1.1.16
+external/public-domain/tz/dist/NEWS             up to 1.1.1.16
+external/public-domain/tz/dist/README           up to 1.1.1.5
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.6
+external/public-domain/tz/dist/Theory           up to 1.1.1.9
+external/public-domain/tz/dist/africa           up to 1.1.1.9
+external/public-domain/tz/dist/antarctica       up to 1.1.1.7
+external/public-domain/tz/dist/asia             up to 1.1.1.15
+external/public-domain/tz/dist/australasia      up to 1.1.1.10
+external/public-domain/tz/dist/backward         up to 1.1.1.6
+external/public-domain/tz/dist/backzone         up to 1.1.1.10
+external/public-domain/tz/dist/etcetera         up to 1.1.1.2
+external/public-domain/tz/dist/europe           up to 1.1.1.16
+external/public-domain/tz/dist/factory          up to 1.1.1.2
+external/public-domain/tz/dist/iso3166.tab      up to 1.1.1.4
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.6
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.7
+external/public-domain/tz/dist/northamerica     up to 1.1.1.14
+external/public-domain/tz/dist/southamerica     up to 1.1.1.10
+external/public-domain/tz/dist/version          up to 1.1.1.3
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.10
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.12
+external/public-domain/tz/share/zoneinfo/Makefile up to 1.3
+external/public-domain/tz/tzdata2netbsd         up to 1.11
+
+	Update tzdata to 2016j.
+	[kre, ticket #1324]
+
