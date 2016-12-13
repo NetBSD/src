@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clport.c,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $	*/
+/*	$NetBSD: nfs_clport.c,v 1.2 2016/12/13 22:17:33 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,10 +34,12 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clport.c 299413 2016-05-11 06:35:46Z kib "); */
-__RCSID("$NetBSD: nfs_clport.c,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_clport.c,v 1.2 2016/12/13 22:17:33 pgoyette Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_inet6.h"
+#endif
 
 #include <sys/capsicum.h>
 
@@ -46,15 +48,17 @@ __RCSID("$NetBSD: nfs_clport.c,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $");
  * be the easiest way to handle the port.
  */
 #include <sys/fail.h>
+
 #include <sys/hash.h>
 #include <sys/sysctl.h>
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
+
 #include <netinet/in_fib.h>
 #include <netinet/if_ether.h>
 #include <netinet6/ip6_var.h>
 #include <net/if_types.h>
 
-#include <fs/nfsclient/nfs_kdtrace.h>
+#include <fs/nfs/client/nfs_kdtrace.h>
 
 #ifdef KDTRACE_HOOKS
 dtrace_nfsclient_attrcache_flush_probe_func_t
