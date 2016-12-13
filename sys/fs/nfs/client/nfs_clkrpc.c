@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clkrpc.c,v 1.1.1.1 2013/09/30 07:19:04 dholland Exp $	*/
+/*	$NetBSD: nfs_clkrpc.c,v 1.2 2016/12/13 22:17:33 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +34,13 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clkrpc.c 255216 2013-09-04 22:47:56Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clkrpc.c,v 1.1.1.1 2013/09/30 07:19:04 dholland Exp $");
+__RCSID("$NetBSD: nfs_clkrpc.c,v 1.2 2016/12/13 22:17:33 pgoyette Exp $");
 
+#ifdef NOTYET /* _KERNEL_OPT */
 #include "opt_kgssapi.h"
+#endif
 
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 #include <rpc/rpc.h>
 #include <rpc/rpcsec_gss.h>
