@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.182 2016/12/10 23:03:26 christos Exp $
+# $NetBSD: GENERIC,v 1.183 2016/12/13 20:42:21 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.182 $"
+#ident 		"GENERIC-$Revision: 1.183 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -293,7 +293,7 @@ com1	at intio0 addr 0xefff10 intr 241	# PSX16550, port2
 vs0 at intio0 addr 0xe92000 dma 3 dmaintr 106
 audio*	at vs?
 
-spkr0	at audio0		# PC speaker (synthesized)
+spkr*	at audio?				# PC speaker (synthesized)
 
 ## Network interfaces
 ne*	at intio0 addr 0xece300 intr 249	# Nereid Ethernet
