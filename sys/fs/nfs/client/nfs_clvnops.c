@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clvnops.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $	*/
+/*	$NetBSD: nfs_clvnops.c,v 1.4 2016/12/13 22:17:33 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,13 +35,16 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clvnops.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clvnops.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_clvnops.c,v 1.4 2016/12/13 22:17:33 pgoyette Exp $");
 
 /*
  * vnode op calls for Sun NFS version 2, 3 and 4
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_dtrace.h"
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -68,17 +71,17 @@ __RCSID("$NetBSD: nfs_clvnops.c,v 1.3 2016/11/18 08:31:30 pgoyette Exp $");
 #include <vm/vm_extern.h>
 #include <vm/vm_object.h>
 
-#include <fs/nfs/nfsport.h>
-#include <fs/nfsclient/nfsnode.h>
-#include <fs/nfsclient/nfsmount.h>
-#include <fs/nfsclient/nfs.h>
-#include <fs/nfsclient/nfs_kdtrace.h>
+#include <fs/nfs/common/nfsport.h>
+#include <fs/nfs/client/nfsnode.h>
+#include <fs/nfs/client/nfsmount.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/client/nfs_kdtrace.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 
-#include <nfs/nfs_lock.h>
+#include <fs/nfs/common/nfs_lock.h>
 
 #ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>

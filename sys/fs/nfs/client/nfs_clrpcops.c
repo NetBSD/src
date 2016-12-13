@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clrpcops.c,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $	*/
+/*	$NetBSD: nfs_clrpcops.c,v 1.2 2016/12/13 22:17:33 pgoyette Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clrpcops.c 298788 2016-04-29 16:07:25Z pfg "); */
-__RCSID("$NetBSD: nfs_clrpcops.c,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_clrpcops.c,v 1.2 2016/12/13 22:17:33 pgoyette Exp $");
 
 /*
  * Rpc op calls, generally called from the vnode op calls or through the
@@ -45,9 +45,11 @@ __RCSID("$NetBSD: nfs_clrpcops.c,v 1.1.1.2 2016/11/18 07:49:11 pgoyette Exp $");
  */
 
 #ifndef APPLEKEXT
+#ifdef _KERNEL_OPT
 #include "opt_inet6.h"
+#endif
 
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 #include <sys/sysctl.h>
 
 SYSCTL_DECL(_vfs_nfs);
