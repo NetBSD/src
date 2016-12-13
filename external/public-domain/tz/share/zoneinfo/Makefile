@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/08/08 09:17:03 apb Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2016/12/13 07:28:23 snj Exp $
 
 .include <bsd.own.mk>
 .include "../../Makefile.inc"
@@ -138,6 +138,8 @@ afterinstall: ${DATA} ${REDO} ${TABDATA}
 		${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 			${TZDISTDIR}/$$f ${DESTDIR}${TZDIR}; \
 	done
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+		${TZDISTDIR}/TZDATA_VERSION ${DESTDIR}${TZDIR}/TZDATA_VERSION
 .else	# ${MKSHARE} == "no"
 afterinstall:
 .endif	# ${MKSHARE} == "no"
