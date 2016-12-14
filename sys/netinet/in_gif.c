@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.85 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.86 2016/12/14 11:19:15 knakahara Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.85 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.86 2016/12/14 11:19:15 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -83,6 +83,7 @@ int
 in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct rtentry *rt;
+	struct route *ro;
 	struct gif_softc *sc = ifp->if_softc;
 	struct sockaddr_in *sin_src = satosin(sc->gif_psrc);
 	struct sockaddr_in *sin_dst = satosin(sc->gif_pdst);
@@ -170,21 +171,26 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	bcopy(&iphdr, mtod(m, struct ip *), sizeof(struct ip));
 
 	sockaddr_in_init(&u.dst4, &sin_dst->sin_addr, 0);
-	if ((rt = rtcache_lookup(&sc->gif_ro, &u.dst)) == NULL) {
+
+	ro = percpu_getref(sc->gif_ro_percpu);
+	if ((rt = rtcache_lookup(ro, &u.dst)) == NULL) {
+		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;
 	}
 
 	/* If the route constitutes infinite encapsulation, punt. */
 	if (rt->rt_ifp == ifp) {
-		rtcache_unref(rt, &sc->gif_ro);
-		rtcache_free(&sc->gif_ro);
+		rtcache_unref(rt, ro);
+		rtcache_free(ro);
+		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;	/*XXX*/
 	}
-	rtcache_unref(rt, &sc->gif_ro);
+	rtcache_unref(rt, ro);
 
-	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL, NULL);
+	error = ip_output(m, NULL, ro, 0, NULL, NULL);
+	percpu_putref(sc->gif_ro_percpu);
 	return (error);
 }
 
@@ -399,7 +405,7 @@ in_gif_detach(struct gif_softc *sc)
 
 	error = in_gif_pause(sc);
 
-	rtcache_free(&sc->gif_ro);
+	percpu_foreach(sc->gif_ro_percpu, gif_rtcache_free_pc, NULL);
 
 	return error;
 }
