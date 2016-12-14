@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.126 2016/12/14 04:13:50 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.127 2016/12/14 06:33:01 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.126 2016/12/14 04:13:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.127 2016/12/14 06:33:01 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -745,7 +745,7 @@ rtpref(struct nd_defrouter *dr)
 static struct nd_defrouter *
 defrtrlist_update(struct nd_defrouter *newdr)
 {
-	struct nd_defrouter *dr, *n;
+	struct nd_defrouter *dr, *n, *ret = NULL;
 	struct in6_ifextra *ext = newdr->ifp->if_afdata[AF_INET6];
 	int s = splsoftnet();
 
@@ -767,8 +767,8 @@ defrtrlist_update(struct nd_defrouter *newdr)
 			 * to sort the entries.
 			 */
 			if (rtpref(newdr) == oldpref) {
-				splx(s);
-				return (dr);
+				ret = dr;
+				goto out;
 			}
 
 			/*
@@ -784,33 +784,25 @@ defrtrlist_update(struct nd_defrouter *newdr)
 			n = dr;
 			goto insert;
 		}
-		splx(s);
-		return (dr);
+		ret = dr;
+		goto out;
 	}
 
-	if (ip6_maxifdefrouters >= 0 &&
-	    ext->ndefrouters >= ip6_maxifdefrouters) {
-		splx(s);
-		return (NULL);
-	}
+	if (ip6_maxifdefrouters >= 0 && ext->ndefrouters >= ip6_maxifdefrouters)
+		goto out;
 
 	/* entry does not exist */
-	if (newdr->rtlifetime == 0) {
-		splx(s);
-		return (NULL);
-	}
+	if (newdr->rtlifetime == 0)
+		goto out;
 
 	if (ip6_rtadv_maxroutes <= nd6_numroutes) {
 		ICMP6_STATINC(ICMP6_STAT_DROPPED_RAROUTE);
-		splx(s);
-		return (NULL);
+		goto out;
 	}
 
 	n = (struct nd_defrouter *)malloc(sizeof(*n), M_IP6NDP, M_NOWAIT);
-	if (n == NULL) {
-		splx(s);
-		return (NULL);
-	}
+	if (n == NULL)
+		goto out;
 	memset(n, 0, sizeof(*n));
 	*n = *newdr;
 
@@ -836,9 +828,10 @@ insert:
 
 	ext->ndefrouters++;
 
+	ret = n;
+out:
 	splx(s);
-
-	return (n);
+	return ret;
 }
 
 static struct nd_pfxrouter *
