@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6address.sh,v 1.11 2016/11/24 09:06:09 ozaki-r Exp $
+#	$NetBSD: t_ipv6address.sh,v 1.12 2016/12/14 02:50:42 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -215,7 +215,7 @@ dump_bus()
 	shmif_dumpbus -p - ${BUS2}   2>/dev/null| tcpdump -n -e -r -
 }
 
-dump()
+_dump()
 {
 
 	export RUMP_SERVER=${SOCKSRC}
@@ -287,7 +287,7 @@ linklocal_body()
 	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
 
 	$DEBUG && rump.ifconfig shmif0
-	$DEBUG && dump
+	$DEBUG && _dump
 
 	export RUMP_SERVER=${SOCKSRC}
 	atf_check -s exit:0 -o match:"0.0% packet loss" \
@@ -332,7 +332,7 @@ linklocal_body()
 linklocal_cleanup()
 {
 
-	$DEBUG && dump
+	$DEBUG && _dump
 	$DEBUG && dump_bus
 	cleanup_rump_servers
 }
