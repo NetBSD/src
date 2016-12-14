@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.186 2016/12/14 12:59:51 kre Exp $
+# $NetBSD: mi,v 1.187 2016/12/14 19:29:31 rjs Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1595,7 +1595,7 @@
 ./usr/libdata/debug/usr/tests/dev/cgd/t_cgd_3des.debug			tests-fs-debug		atf,compattestfile,crypto,debug,rump
 ./usr/libdata/debug/usr/tests/dev/cgd/t_cgd_aes.debug			tests-fs-debug		atf,compattestfile,crypto,debug,rump
 ./usr/libdata/debug/usr/tests/dev/cgd/t_cgd_blowfish.debug		tests-fs-debug		atf,compattestfile,crypto,debug,rump
-./usr/libdata/debug/usr/tests/dev/clock_subr/t_clock_subr.debug		tests-fs-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/dev/clock_subr/t_clock_subr.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/dev/md/h_mdserv.debug					tests-fs-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/dev/scsipi/t_cd.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/dev/sysmon/t_swwdog.debug			tests-fs-debug		debug,atf,rump
