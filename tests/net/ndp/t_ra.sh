@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.6 2016/11/25 08:51:17 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.7 2016/12/14 07:37:26 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -67,6 +67,17 @@ create_rtadvdconfig()
 shmif0:\
 	:mtu#1300:maxinterval#4:mininterval#3:
 _EOF
+}
+
+dump_entries()
+{
+
+	echo ndp -n -a
+	rump.ndp -n -a
+	echo ndp -p
+	rump.ndp -p
+	echo ndp -r
+	rump.ndp -r
 }
 
 atf_test_case ra_basic cleanup
@@ -156,8 +167,160 @@ ra_basic_cleanup()
 	cleanup
 }
 
+atf_test_case ra_flush_prefix_entries cleanup
+ra_flush_prefix_entries_head()
+{
+
+	atf_set "descr" "Tests for flushing prefixes (ndp -P)"
+	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+}
+
+ra_flush_prefix_entries_body()
+{
+
+	rump_server_fs_start $RUMPSRV netinet6
+	rump_server_start $RUMPCLI netinet6
+
+	setup_shmif0 ${RUMPSRV} ${IP6SRV}
+	setup_shmif0 ${RUMPCLI} ${IP6CLI}
+
+	export RUMP_SERVER=${RUMPSRV}
+	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.forwarding=1
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	atf_check -s exit:0 mkdir -p /rump/var/chroot/rtadvd
+	unset LD_PRELOAD
+	unset RUMP_SERVER
+
+	create_rtadvdconfig
+
+	export RUMP_SERVER=${RUMPCLI}
+	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
+	unset RUMP_SERVER
+
+	export RUMP_SERVER=${RUMPSRV}
+	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} shmif0
+	atf_check -s exit:0 sleep 3
+	atf_check -s exit:0 -o ignore -e empty cat ${PIDFILE}
+	unset RUMP_SERVER
+
+	export RUMP_SERVER=${RUMPCLI}
+	$DEBUG && dump_entries
+	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
+	atf_check -s exit:0 -o match:'advertised' rump.ndp -p
+	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o match:'23h59m..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
+
+	# Flush all the entries in the prefix list
+	atf_check -s exit:0 rump.ndp -P
+
+	$DEBUG && dump_entries
+	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
+	atf_check -s exit:0 -o empty rump.ndp -p
+	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o match:'23h59m..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
+	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ifconfig shmif0 inet6
+	unset RUMP_SERVER
+
+	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
+	wait_term ${PIDFILE}
+
+	rump_server_destroy_ifaces
+}
+
+ra_flush_prefix_entries_cleanup()
+{
+
+	if [ -f ${PIDFILE} ]; then
+		kill -TERM `cat ${PIDFILE}`
+		wait_term ${PIDFILE}
+	fi
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case ra_flush_defrouter_entries cleanup
+ra_flush_defrouter_entries_head()
+{
+
+	atf_set "descr" "Tests for flushing default routers (ndp -R)"
+	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+}
+
+ra_flush_defrouter_entries_body()
+{
+
+	rump_server_fs_start $RUMPSRV netinet6
+	rump_server_start $RUMPCLI netinet6
+
+	setup_shmif0 ${RUMPSRV} ${IP6SRV}
+	setup_shmif0 ${RUMPCLI} ${IP6CLI}
+
+	export RUMP_SERVER=${RUMPSRV}
+	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.forwarding=1
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	atf_check -s exit:0 mkdir -p /rump/var/chroot/rtadvd
+	unset LD_PRELOAD
+	unset RUMP_SERVER
+
+	create_rtadvdconfig
+
+	export RUMP_SERVER=${RUMPCLI}
+	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
+	unset RUMP_SERVER
+
+	export RUMP_SERVER=${RUMPSRV}
+	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} shmif0
+	atf_check -s exit:0 sleep 3
+	atf_check -s exit:0 -o ignore -e empty cat ${PIDFILE}
+	unset RUMP_SERVER
+
+	export RUMP_SERVER=${RUMPCLI}
+	$DEBUG && dump_entries
+	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
+	atf_check -s exit:0 -o match:'advertised' rump.ndp -p
+	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o match:'23h59m..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
+
+	# Flush all the entries in the default router list
+	atf_check -s exit:0 rump.ndp -R
+
+	$DEBUG && dump_entries
+	atf_check -s exit:0 -o empty rump.ndp -r
+	atf_check -s exit:0 -o match:'No advertising router' rump.ndp -p
+	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o match:'23h59m..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
+	unset RUMP_SERVER
+
+	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
+	wait_term ${PIDFILE}
+
+	rump_server_destroy_ifaces
+}
+
+ra_flush_defrouter_entries_cleanup()
+{
+
+	if [ -f ${PIDFILE} ]; then
+		kill -TERM `cat ${PIDFILE}`
+		wait_term ${PIDFILE}
+	fi
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case ra_basic
+	atf_add_test_case ra_flush_prefix_entries
+	atf_add_test_case ra_flush_defrouter_entries
 }
