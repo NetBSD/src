@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.61 2016/12/14 15:46:57 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.62 2016/12/14 15:48:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.61 2016/12/14 15:46:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.62 2016/12/14 15:48:55 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -428,6 +428,7 @@ static int
 cleanvnode(void)
 {
 	vnode_t *vp;
+	vnode_impl_t *vi;
 	vnodelst_t *listhd;
 	struct mount *mp;
 
@@ -435,7 +436,8 @@ cleanvnode(void)
 
 	listhd = &vnode_free_list;
 try_nextlist:
-	TAILQ_FOREACH(vp, listhd, v_freelist) {
+	TAILQ_FOREACH(vi, listhd, vi_lrulist) {
+		vp = VIMPL_TO_VNODE(vi);
 		/*
 		 * It's safe to test v_usecount and v_iflag
 		 * without holding the interlock here, since
@@ -443,7 +445,7 @@ try_nextlist:
 		 * lists.
 		 */
 		KASSERT(vp->v_usecount == 0);
-		KASSERT(vp->v_freelisthd == listhd);
+		KASSERT(vi->vi_lrulisthd == listhd);
 
 		if (!mutex_tryenter(vp->v_interlock))
 			continue;
@@ -455,7 +457,7 @@ try_nextlist:
 		break;
 	}
 
-	if (vp == NULL) {
+	if (vi == NULL) {
 		if (listhd == &vnode_free_list) {
 			listhd = &vnode_hold_list;
 			goto try_nextlist;
@@ -504,6 +506,7 @@ vdrain_thread(void *cookie)
 void
 vremfree(vnode_t *vp)
 {
+	vnode_impl_t *vi = VNODE_TO_VIMPL(vp);
 
 	KASSERT(mutex_owned(vp->v_interlock));
 	KASSERT(vp->v_usecount == 0);
@@ -514,12 +517,12 @@ vremfree(vnode_t *vp)
 	 */
 	mutex_enter(&vnode_free_list_lock);
 	if (vp->v_holdcnt > 0) {
-		KASSERT(vp->v_freelisthd == &vnode_hold_list);
+		KASSERT(vi->vi_lrulisthd == &vnode_hold_list);
 	} else {
-		KASSERT(vp->v_freelisthd == &vnode_free_list);
+		KASSERT(vi->vi_lrulisthd == &vnode_free_list);
 	}
-	TAILQ_REMOVE(vp->v_freelisthd, vp, v_freelist);
-	vp->v_freelisthd = NULL;
+	TAILQ_REMOVE(vi->vi_lrulisthd, vi, vi_lrulist);
+	vi->vi_lrulisthd = NULL;
 	mutex_exit(&vnode_free_list_lock);
 }
 
@@ -620,11 +623,12 @@ vtryrele(vnode_t *vp)
 static void
 vrelel(vnode_t *vp, int flags)
 {
+	vnode_impl_t *vi = VNODE_TO_VIMPL(vp);
 	bool recycle, defer;
 	int error;
 
 	KASSERT(mutex_owned(vp->v_interlock));
-	KASSERT(vp->v_freelisthd == NULL);
+	KASSERT(vi->vi_lrulisthd == NULL);
 
 	if (__predict_false(vp->v_op == dead_vnodeop_p &&
 	    VSTATE_GET(vp) != VS_RECLAIMED)) {
@@ -694,7 +698,7 @@ vrelel(vnode_t *vp, int flags)
 			 * clean it here.  We donate it our last reference.
 			 */
 			mutex_enter(&vrele_lock);
-			TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
+			TAILQ_INSERT_TAIL(&vrele_list, vi, vi_lrulist);
 			if (++vrele_pending > (desiredvnodes >> 8))
 				cv_signal(&vrele_cv);
 			mutex_exit(&vrele_lock);
@@ -785,11 +789,11 @@ vrelel(vnode_t *vp, int flags)
 		 */
 		mutex_enter(&vnode_free_list_lock);
 		if (vp->v_holdcnt > 0) {
-			vp->v_freelisthd = &vnode_hold_list;
+			vi->vi_lrulisthd = &vnode_hold_list;
 		} else {
-			vp->v_freelisthd = &vnode_free_list;
+			vi->vi_lrulisthd = &vnode_free_list;
 		}
-		TAILQ_INSERT_TAIL(vp->v_freelisthd, vp, v_freelist);
+		TAILQ_INSERT_TAIL(vi->vi_lrulisthd, vi, vi_lrulist);
 		mutex_exit(&vnode_free_list_lock);
 		mutex_exit(vp->v_interlock);
 	}
@@ -825,6 +829,7 @@ vrele_thread(void *cookie)
 {
 	vnodelst_t skip_list;
 	vnode_t *vp;
+	vnode_impl_t *vi;
 	struct mount *mp;
 
 	TAILQ_INIT(&skip_list);
@@ -835,13 +840,14 @@ vrele_thread(void *cookie)
 			vrele_gen++;
 			cv_broadcast(&vrele_cv);
 			cv_timedwait(&vrele_cv, &vrele_lock, hz);
-			TAILQ_CONCAT(&vrele_list, &skip_list, v_freelist);
+			TAILQ_CONCAT(&vrele_list, &skip_list, vi_lrulist);
 		}
-		vp = TAILQ_FIRST(&vrele_list);
+		vi = TAILQ_FIRST(&vrele_list);
+		vp = VIMPL_TO_VNODE(vi);
 		mp = vp->v_mount;
-		TAILQ_REMOVE(&vrele_list, vp, v_freelist);
+		TAILQ_REMOVE(&vrele_list, vi, vi_lrulist);
 		if (fstrans_start_nowait(mp, FSTRANS_LAZY) != 0) {
-			TAILQ_INSERT_TAIL(&skip_list, vp, v_freelist);
+			TAILQ_INSERT_TAIL(&skip_list, vi, vi_lrulist);
 			continue;
 		}
 		vrele_pending--;
@@ -878,15 +884,16 @@ vref(vnode_t *vp)
 void
 vholdl(vnode_t *vp)
 {
+	vnode_impl_t *vi = VNODE_TO_VIMPL(vp);
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
 	if (vp->v_holdcnt++ == 0 && vp->v_usecount == 0) {
 		mutex_enter(&vnode_free_list_lock);
-		KASSERT(vp->v_freelisthd == &vnode_free_list);
-		TAILQ_REMOVE(vp->v_freelisthd, vp, v_freelist);
-		vp->v_freelisthd = &vnode_hold_list;
-		TAILQ_INSERT_TAIL(vp->v_freelisthd, vp, v_freelist);
+		KASSERT(vi->vi_lrulisthd == &vnode_free_list);
+		TAILQ_REMOVE(vi->vi_lrulisthd, vi, vi_lrulist);
+		vi->vi_lrulisthd = &vnode_hold_list;
+		TAILQ_INSERT_TAIL(vi->vi_lrulisthd, vi, vi_lrulist);
 		mutex_exit(&vnode_free_list_lock);
 	}
 }
@@ -898,6 +905,7 @@ vholdl(vnode_t *vp)
 void
 holdrelel(vnode_t *vp)
 {
+	vnode_impl_t *vi = VNODE_TO_VIMPL(vp);
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
@@ -908,10 +916,10 @@ holdrelel(vnode_t *vp)
 	vp->v_holdcnt--;
 	if (vp->v_holdcnt == 0 && vp->v_usecount == 0) {
 		mutex_enter(&vnode_free_list_lock);
-		KASSERT(vp->v_freelisthd == &vnode_hold_list);
-		TAILQ_REMOVE(vp->v_freelisthd, vp, v_freelist);
-		vp->v_freelisthd = &vnode_free_list;
-		TAILQ_INSERT_TAIL(vp->v_freelisthd, vp, v_freelist);
+		KASSERT(vi->vi_lrulisthd == &vnode_hold_list);
+		TAILQ_REMOVE(vi->vi_lrulisthd, vi, vi_lrulist);
+		vi->vi_lrulisthd = &vnode_free_list;
+		TAILQ_INSERT_TAIL(vi->vi_lrulisthd, vi, vi_lrulist);
 		mutex_exit(&vnode_free_list_lock);
 	}
 }
