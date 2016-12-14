@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.15 2016/12/12 09:56:58 knakahara Exp $
+#	$NetBSD: t_pppoe.sh,v 1.16 2016/12/14 03:30:30 knakahara Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -164,8 +164,11 @@ run_test()
 	unset RUMP_SERVER
 
 	# test for disconnection from server
-	atf_check -s exit:0 -x "env RUMP_SERVER=$SERVER rump.ifconfig pppoe0 down"
+	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
 	export RUMP_SERVER=$CLIENT
+	wait_for_disconnected
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 	atf_check -s exit:0 -o match:'PADI sent' -x "$HIJACKING pppoectl -d pppoe0"
@@ -179,8 +182,11 @@ run_test()
 	unset RUMP_SERVER
 
 	# test for disconnection from client
-	atf_check -s exit:0 -x "env RUMP_SERVER=$CLIENT rump.ifconfig pppoe0 down"
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 -x rump.ifconfig pppoe0 down
+	wait_for_disconnected
 	export RUMP_SERVER=$SERVER
+	wait_for_disconnected
 	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -c 1 -w $TIMEOUT $CLIENT_IP
@@ -205,6 +211,7 @@ run_test()
 	# test for invalid password
 	export RUMP_SERVER=$CLIENT
 	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
 	local setup_clientparam="pppoectl pppoe0 myauthproto=$auth \
 				    'myauthname=$AUTHNAME' \
 				    'myauthsecret=invalidsecret' \
@@ -323,8 +330,8 @@ run_test6()
 	wait_for_disconnected
 
 	export RUMP_SERVER=$SERVER
-	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	wait_for_disconnected
+	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping6 -c 1 -X $TIMEOUT $CLIENT_IP6
 	atf_check -s exit:0 -o match:'initial' -x "$HIJACKING pppoectl -d pppoe0"
