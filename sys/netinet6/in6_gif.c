@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.81 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.82 2016/12/14 11:19:15 knakahara Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.81 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.82 2016/12/14 11:19:15 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -86,6 +86,7 @@ int
 in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct rtentry *rt;
+	struct route *ro;
 	struct gif_softc *sc = ifp->if_softc;
 	struct sockaddr_in6 *sin6_src = satosin6(sc->gif_psrc);
 	struct sockaddr_in6 *sin6_dst = satosin6(sc->gif_pdst);
@@ -176,20 +177,23 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
 
 	sockaddr_in6_init(&u.dst6, &sin6_dst->sin6_addr, 0, 0, 0);
-	rt = rtcache_lookup(&sc->gif_ro, &u.dst);
+	ro = percpu_getref(sc->gif_ro_percpu);
+	rt = rtcache_lookup(ro, &u.dst);
 	if (rt == NULL) {
+		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;
 	}
 
 	/* If the route constitutes infinite encapsulation, punt. */
 	if (rt->rt_ifp == ifp) {
-		rtcache_unref(rt, &sc->gif_ro);
-		rtcache_free(&sc->gif_ro);
+		rtcache_unref(rt, ro);
+		rtcache_free(ro);
+		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;	/* XXX */
 	}
-	rtcache_unref(rt, &sc->gif_ro);
+	rtcache_unref(rt, ro);
 
 #ifdef IPV6_MINMTU
 	/*
@@ -197,11 +201,11 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	 * it is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
 	 */
-	error = ip6_output(m, 0, &sc->gif_ro, IPV6_MINMTU, NULL, NULL, NULL);
+	error = ip6_output(m, 0, ro, IPV6_MINMTU, NULL, NULL, NULL);
 #else
-	error = ip6_output(m, 0, &sc->gif_ro, 0, NULL, NULL, NULL);
+	error = ip6_output(m, 0, ro, 0, NULL, NULL, NULL);
 #endif
-
+	percpu_putref(sc->gif_ro_percpu);
 	return (error);
 }
 
@@ -402,7 +406,7 @@ in6_gif_detach(struct gif_softc *sc)
 
 	error = in6_gif_pause(sc);
 
-	rtcache_free(&sc->gif_ro);
+	percpu_foreach(sc->gif_ro_percpu, gif_rtcache_free_pc, NULL);
 
 	return error;
 }
@@ -426,6 +430,7 @@ in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d, void *eparg)
 	struct ip6ctlparam *ip6cp = NULL;
 	struct ip6_hdr *ip6;
 	const struct sockaddr_in6 *dst6;
+	struct route *ro;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -454,13 +459,15 @@ in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d, void *eparg)
 	if (sc->gif_psrc->sa_family != AF_INET6)
 		return NULL;
 
-	dst6 = satocsin6(rtcache_getdst(&sc->gif_ro));
+	ro = percpu_getref(sc->gif_ro_percpu);
+	dst6 = satocsin6(rtcache_getdst(ro));
 	/* XXX scope */
 	if (dst6 == NULL)
 		;
 	else if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst6->sin6_addr))
-		rtcache_free(&sc->gif_ro);
+		rtcache_free(ro);
 
+	percpu_putref(sc->gif_ro_percpu);
 	return NULL;
 }
 
