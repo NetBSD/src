@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.680.2.6 2016/12/08 07:49:42 snj Exp $
+$NetBSD: usbdevs,v 1.680.2.7 2016/12/14 19:16:14 snj Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -3377,7 +3377,8 @@ product WESTERN EXTHDD		0x0400	External HDD
 
 /* WinChipHead products */
 product WINCHIPHEAD CH341SER	0x5523	CH341/CH340 USB-Serial Bridge
-product WINCHIPHEAD2 CH341	0x7523	CH341 serial/parallel
+product WINCHIPHEAD2 CH341	0x7523	CH341 USB-Serial Bridge
+product WINCHIPHEAD2 CH341_2	0x5523	CH341 USB-Serial Bridge
 
 /* Wistron NeWeb products */
 product WISTRONNEWEB WNC0600	0x0326	WNC-0600USB
