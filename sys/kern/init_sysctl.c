@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.211 2016/05/31 05:44:19 pgoyette Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.212 2016/12/14 15:46:57 hannken Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.211 2016/05/31 05:44:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.212 2016/12/14 15:46:57 hannken Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.211 2016/05/31 05:44:19 pgoyette E
 #include <sys/unistd.h>
 #include <sys/disklabel.h>
 #include <sys/cprng.h>
-#include <sys/vnode.h>
+#include <sys/vnode_impl.h>	/* For vfs_drainvnodes(). */
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <dev/cons.h>
@@ -756,7 +756,7 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 
 	old_vnodes = desiredvnodes;
 	desiredvnodes = new_vnodes;
-	error = vfs_drainvnodes(new_vnodes);
+	error = vfs_drainvnodes();
 	if (error) {
 		desiredvnodes = old_vnodes;
 		return (error);
