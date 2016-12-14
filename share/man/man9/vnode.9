@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.72 2016/08/20 12:41:31 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.73 2016/12/14 15:48:54 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 20, 2016
+.Dd December 14, 2016
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -175,8 +175,6 @@ struct vnode {
 	int		v_synclist_slot;	/* synclist slot index */
 	struct mount	*v_mount;		/* ptr to vfs we are in */
 	int		(**v_op)(void *);	/* vnode operations vector */
-	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
-	struct vnodelst	*v_freelisthd;		/* which freelist? */
 	TAILQ_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
@@ -300,11 +298,8 @@ When both the
 .Em v_usecount
 and
 .Em v_holdcnt
-reach zero, the vnode is recycled to the freelist and may be reused
-for another file.
-The transition to and from the freelist is handled by
-a kernel thread
-and
+reach zero, the vnode is cached.
+The transition from the cache is handled by a kernel thread and
 .Fn vrecycle .
 Access to
 .Em v_usecount ,
@@ -354,14 +349,9 @@ See
 .Xr vnodeops 9
 for a description of vnode operations.
 .Pp
-When not in use, vnodes are kept on the freelist through
-.Em v_freelist .
-The vnodes still reference valid files but may be reused to refer to a
-new file at any time.
-When a valid vnode which is on the freelist is used again, the user
-must call
+When a valid vnode which is cached is used again, the user must call
 .Fn vget
-to increment the reference count and retrieve it from the freelist.
+to increment the reference count.
 When a user wants a new vnode for another file,
 .Fn vcache_get
 or
@@ -512,7 +502,6 @@ The members
 .Em v_holdcnt ,
 .Em v_dirtyblkhd ,
 .Em v_cleanblkhd ,
-.Em v_freelist ,
 and
 .Em v_synclist
 are modified in interrupt context and must be protected by
@@ -547,14 +536,14 @@ If both
 .Em v_usecount
 and
 .Em v_holdcnt
-are zero, the vnode is placed on the freelist.
+are zero, the vnode is cached.
 .It Fn vrele_async "vp"
 Will asychronously release the vnode in different context than the caller,
 sometime after the call.
 .It Fn vget "vp" "lockflags" "wait"
 Reclaim vnode
 .Fa vp
-from the freelist and increment its reference count.
+from the cache and increment its reference count.
 .Pp
 The vnode
 .Fa vp
@@ -628,17 +617,15 @@ directly.
 Mark the vnode
 .Fa vp
 as active by incrementing
-.Em vp-\*[Gt]v_holdcnt
-and moving the vnode from the freelist to the holdlist.
-Once on the holdlist, the vnode will not be recycled until it is
+.Em vp-\*[Gt]v_holdcnt .
+Once held, the vnode will not be recycled until it is
 released with
 .Fn holdrele .
 .It Fn holdrele "vp"
 Mark the vnode
 .Fa vp
 as inactive by decrementing
-.Em vp-\*[Gt]v_holdcnt
-and moving the vnode from the holdlist to the freelist.
+.Em vp-\*[Gt]v_holdcnt .
 .It Fn vcache_get "mp" "key" "key_len" "vpp"
 Allocate a new vnode.
 The new vnode is returned referenced in the address specified by

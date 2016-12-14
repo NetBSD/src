@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.3 2016/12/14 15:46:57 hannken Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.4 2016/12/14 15:48:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@ enum vnode_state {
 	VS_RECLAIMING,	/* Intermediate, detaching the fs node. */
 	VS_RECLAIMED	/* Stable, no fs node attached. */
 };
+TAILQ_HEAD(vnodelst, vnode_impl);
+typedef struct vnodelst vnodelst_t;
 struct vcache_key {
 	struct mount *vk_mount;
 	const void *vk_key;
@@ -50,6 +52,8 @@ struct vcache_key {
 struct vnode_impl {
 	struct vnode vi_vnode;
 	enum vnode_state vi_state;
+	struct vnodelst *vi_lrulisthd;
+	TAILQ_ENTRY(vnode_impl) vi_lrulist;
 	SLIST_ENTRY(vnode_impl) vi_hash;
 	struct vcache_key vi_key;
 };
