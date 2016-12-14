@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.133 2016/12/14 10:52:38 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.134 2016/12/14 19:33:33 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7572,4 +7572,27 @@ external/public-domain/tz/tzdata2netbsd         up to 1.11
 
 	Update tzdata to 2016j.
 	[kre, ticket #1324]
+
+sys/external/bsd/drm2/drm/drmfb.c		1.3
+sys/external/bsd/drm2/i915drm/intelfb.c		1.14
+sys/external/bsd/drm2/include/drm/drmfb.h	1.2
+sys/external/bsd/drm2/nouveau/nouveaufb.c	1.4
+
+	Fix misaligned linebytes in nouveaufb.  PR kern/51181.
+	[riastradh, ticket #1322]
+
+sys/dev/usb/usbdevs				1.728
+sys/dev/usb/usbdevs_data.h			regen
+sys/dev/usb/usbdevs.h				regen
+
+	Rename "CH341 serial/parallel" to "CH341 USB-Serial Bridge",
+	and add a second device id for this chip.
+	[bouyer, ticket #1320]
+
+sys/dev/usb/uchcom.c				1.17
+
+	- For newer (0x30-on) CH340 devices, don't update LCR1/LCR2.
+	  With this change, currently available devices now work.
+	- Match USB_PRODUCT_WINCHIPHEAD2_CH341_2.
+	[bouyer, ticket #1321]
 
