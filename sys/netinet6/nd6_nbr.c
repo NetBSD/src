@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.132 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.133 2016/12/14 04:05:11 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.132 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.133 2016/12/14 04:05:11 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -84,6 +84,7 @@ static void nd6_dad_timer(struct ifaddr *);
 static void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
 static void nd6_dad_ns_input(struct ifaddr *);
 static void nd6_dad_na_input(struct ifaddr *);
+static void nd6_dad_duplicated(struct ifaddr *);
 
 static int dad_ignore_ns = 0;	/* ignore NS in DAD - specwise incorrect*/
 static int dad_maxtry = 15;	/* max # of *tries* to transmit DAD packet */
@@ -1335,7 +1336,7 @@ done:
 #endif
 }
 
-void
+static void
 nd6_dad_duplicated(struct ifaddr *ifa)
 {
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
