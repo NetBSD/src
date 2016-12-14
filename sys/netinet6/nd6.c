@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.216 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.217 2016/12/14 04:05:11 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.216 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.217 2016/12/14 04:05:11 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -116,6 +116,7 @@ static void nd6_llinfo_timer(void *);
 static void nd6_timer(void *);
 static void nd6_timer_work(struct work *, void *);
 static void clear_llinfo_pqueue(struct llentry *);
+static struct nd_opt_hdr *nd6_option(union nd_opts *);
 
 static callout_t nd6_slowtimo_ch;
 static callout_t nd6_timer_ch;
@@ -259,7 +260,7 @@ nd6_option_init(void *opt, int icmp6len, union nd_opts *ndopts)
 /*
  * Take one ND option.
  */
-struct nd_opt_hdr *
+static struct nd_opt_hdr *
 nd6_option(union nd_opts *ndopts)
 {
 	struct nd_opt_hdr *nd_opt;
