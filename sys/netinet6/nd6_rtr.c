@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.125 2016/12/12 03:14:01 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.126 2016/12/14 04:13:50 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.125 2016/12/12 03:14:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.126 2016/12/14 04:13:50 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -900,9 +900,8 @@ purge_detached(struct ifnet *ifp)
 	struct in6_ifaddr *ia;
 	struct ifaddr *ifa, *ifa_next;
 
-	for (pr = nd_prefix.lh_first; pr; pr = pr_next) {
+	ND_PREFIX_LIST_FOREACH_SAFE(pr, pr_next) {
 		int s;
-		pr_next = pr->ndpr_next;
 
 		/*
 		 * This function is called when we need to make more room for
