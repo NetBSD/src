@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.60 2016/12/01 14:49:03 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.61 2016/12/14 15:46:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.60 2016/12/01 14:49:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.61 2016/12/14 15:46:57 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -208,6 +208,7 @@ SLIST_HEAD(hashhead, vnode_impl);
 static struct {
 	kmutex_t	lock;
 	kcondvar_t	cv;
+	u_int		hashsize;
 	u_long		hashmask;
 	struct hashhead	*hashtab;
 	pool_cache_t	pool;
@@ -857,20 +858,6 @@ vrele_thread(void *cookie)
 	}
 }
 
-void
-vrele_flush(void)
-{
-	int gen;
-
-	mutex_enter(&vrele_lock);
-	gen = vrele_gen;
-	while (vrele_pending && gen == vrele_gen) {
-		cv_broadcast(&vrele_cv);
-		cv_wait(&vrele_cv, &vrele_lock);
-	}
-	mutex_exit(&vrele_lock);
-}
-
 /*
  * Vnode reference, where a reference is already held by some other
  * object (for example, a file structure).
@@ -1040,6 +1027,7 @@ vcache_init(void)
 	KASSERT(vcache.pool != NULL);
 	mutex_init(&vcache.lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&vcache.cv, "vcache");
+	vcache.hashsize = desiredvnodes;
 	vcache.hashtab = hashinit(desiredvnodes, HASH_SLIST, true,
 	    &vcache.hashmask);
 }
@@ -1057,6 +1045,7 @@ vcache_reinit(void)
 	mutex_enter(&vcache.lock);
 	oldtab = vcache.hashtab;
 	oldmask = vcache.hashmask;
+	vcache.hashsize = desiredvnodes;
 	vcache.hashtab = newtab;
 	vcache.hashmask = newmask;
 	for (i = 0; i <= oldmask; i++) {
@@ -1601,13 +1590,21 @@ vdead_check(struct vnode *vp, int flags)
 }
 
 int
-vfs_drainvnodes(long target)
+vfs_drainvnodes(void)
 {
-	int error;
+	int error, gen;
+
+	mutex_enter(&vrele_lock);
+	gen = vrele_gen;
+	while (vrele_pending && gen == vrele_gen) {
+		cv_broadcast(&vrele_cv);
+		cv_wait(&vrele_cv, &vrele_lock);
+	}
+	mutex_exit(&vrele_lock);
 
 	mutex_enter(&vnode_free_list_lock);
 
-	while (numvnodes > target) {
+	while (numvnodes > desiredvnodes) {
 		error = cleanvnode();
 		if (error != 0)
 			return error;
@@ -1616,7 +1613,8 @@ vfs_drainvnodes(long target)
 
 	mutex_exit(&vnode_free_list_lock);
 
-	vcache_reinit();
+	if (vcache.hashsize != desiredvnodes)
+		vcache_reinit();
 
 	return 0;
 }
