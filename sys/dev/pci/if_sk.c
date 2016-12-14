@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.83 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.84 2016/12/14 22:21:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.83 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.84 2016/12/14 22:21:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -985,11 +985,38 @@ sk_ifmedia_upd(struct ifnet *ifp)
 	return rc;
 }
 
+static void
+sk_promisc(struct sk_if_softc *sc_if, int on)
+{
+	struct sk_softc *sc = sc_if->sk_softc;
+	switch (sc->sk_type) {
+	case SK_GENESIS:
+		if (on)
+			SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_PROMISC);
+		else
+			SK_XM_CLRBIT_4(sc_if, XM_MODE, XM_MODE_RX_PROMISC);
+		break;
+	case SK_YUKON:
+	case SK_YUKON_LITE:
+	case SK_YUKON_LP:
+		if (on)
+			SK_YU_CLRBIT_2(sc_if, YUKON_RCR,
+			    YU_RCR_UFLEN | YU_RCR_MUFLEN);
+		else
+			SK_YU_SETBIT_2(sc_if, YUKON_RCR,
+			    YU_RCR_UFLEN | YU_RCR_MUFLEN);
+		break;
+	default:
+		aprint_error_dev(sc_if->sk_dev, "Can't set promisc for %d\n",
+			sc->sk_type);
+		break;
+	}
+}
+
 int
 sk_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
-	struct sk_softc *sc = sc_if->sk_softc;
 	int s, error = 0;
 
 	/* DPRINTFN(2, ("sk_ioctl\n")); */
@@ -1002,45 +1029,20 @@ sk_ioctl(struct ifnet *ifp, u_long command, void *data)
 	        DPRINTFN(2, ("sk_ioctl IFFLAGS\n"));
 		if ((error = ifioctl_common(ifp, command, data)) != 0)
 			break;
-		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc_if->sk_if_flags & IFF_PROMISC)) {
-				switch (sc->sk_type) {
-				case SK_GENESIS:
-					SK_XM_SETBIT_4(sc_if, XM_MODE,
-					    XM_MODE_RX_PROMISC);
-					break;
-				case SK_YUKON:
-				case SK_YUKON_LITE:
-				case SK_YUKON_LP:
-					SK_YU_CLRBIT_2(sc_if, YUKON_RCR,
-					    YU_RCR_UFLEN | YU_RCR_MUFLEN);
-					break;
-				}
-				sk_setmulti(sc_if);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc_if->sk_if_flags & IFF_PROMISC) {
-				switch (sc->sk_type) {
-				case SK_GENESIS:
-					SK_XM_CLRBIT_4(sc_if, XM_MODE,
-					    XM_MODE_RX_PROMISC);
-					break;
-				case SK_YUKON:
-				case SK_YUKON_LITE:
-				case SK_YUKON_LP:
-					SK_YU_SETBIT_2(sc_if, YUKON_RCR,
-					    YU_RCR_UFLEN | YU_RCR_MUFLEN);
-					break;
-				}
-
+		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
+		case IFF_RUNNING:
+			sk_stop(ifp, 1);
+			break;
+		case IFF_UP:
+			sk_init(ifp);
+			break;
+		case IFF_UP | IFF_RUNNING:
+			if ((ifp->if_flags ^ sc_if->sk_if_flags) == IFF_PROMISC)			{
+				sk_promisc(sc_if, ifp->if_flags & IFF_PROMISC);
 				sk_setmulti(sc_if);
 			} else
-				(void) sk_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				sk_stop(ifp,0);
+				sk_init(ifp);
+			break;
 		}
 		sc_if->sk_if_flags = ifp->if_flags;
 		error = 0;
