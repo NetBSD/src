@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.11 2016/12/13 20:42:17 christos Exp $
+#	$NetBSD: GENERIC,v 1.12 2016/12/14 14:01:10 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/epoc32/conf/std.epoc32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.11 $"
+#ident 		"GENERIC-$Revision: 1.12 $"
 
 maxusers	32			# estimated number of users
 
@@ -167,8 +167,7 @@ wskbd*	at epockbd?
 #tp*	at spi*					# ADS7843 Touch screen
 
 #audio* at audio?
-
-spkr*	at audio?		# PC speaker (synthesized)
+#spkr*	at audio?		# PC speaker (synthesized)
 
 # External devices
 
