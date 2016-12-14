@@ -1,6 +1,6 @@
-# $NetBSD: md.amd64,v 1.90 2016/07/02 15:40:51 christos Exp $
-./usr/lib/i386/libi386_g.a			comp-c-debuglib		debuglib,compat
+# $NetBSD: md.amd64,v 1.91 2016/12/14 12:59:51 kre Exp $
 ./usr/lib/i386/12.202++_g.a			comp-c-debuglib		debuglib,compat,12.202xx
+./usr/lib/i386/libi386_g.a			comp-c-debuglib		debuglib,compat
 ./usr/lib/libx86_64_g.a				comp-c-debuglib		debuglib
 ./usr/libdata/debug/libexec/ld.elf_so-i386.debug	comp-sys-debug		debug,compat
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
