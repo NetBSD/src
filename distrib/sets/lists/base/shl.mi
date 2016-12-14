@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.793 2016/12/10 05:39:13 christos Exp $
+# $NetBSD: shl.mi,v 1.794 2016/12/14 12:59:51 kre Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -809,12 +809,12 @@
 ./usr/lib/libukfs.so				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1.0			base-sys-shlib		compatfile,rump
-./usr/lib/libunbound.so				base-sys-shlib		compatfile,crypto,unbound
-./usr/lib/libunbound.so.6			base-sys-shlib		compatfile,crypto,unbound
-./usr/lib/libunbound.so.6.1			base-sys-shlib		compatfile,crypto,unbound
 ./usr/lib/libumem.so				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libumem.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libumem.so.0.0			base-zfs-shlib		compatfile,zfs
+./usr/lib/libunbound.so				base-sys-shlib		compatfile,crypto,unbound
+./usr/lib/libunbound.so.6			base-sys-shlib		compatfile,crypto,unbound
+./usr/lib/libunbound.so.6.1			base-sys-shlib		compatfile,crypto,unbound
 ./usr/lib/libusbhid.so				base-sys-shlib		compatfile
 ./usr/lib/libusbhid.so.1			base-sys-shlib		compatfile
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib		compatfile
