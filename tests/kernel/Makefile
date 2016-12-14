@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.43 2016/12/02 05:54:15 kamil Exp $
+# $NetBSD: Makefile,v 1.44 2016/12/14 06:19:59 kamil Exp $
 
 NOMAN=		# defined
 
@@ -46,10 +46,10 @@ LDADD.t_extattrctl+= -lrump -lpthread
 LDADD.t_filedesc+=  ${LDADD.t_rnd}
 LDADD.t_rnd+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser
 LDADD.t_rnd+=  -lrump -lpthread
-CPPFLAGS+=	-D_KERNTYPES
 
 .endif
 
+CPPFLAGS+=	-D_KERNTYPES
 
 .PATH:			${NETBSDSRCDIR}/sys/kern
 TESTS_C+=		t_extent
