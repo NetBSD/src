@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.10 2016/12/05 08:50:29 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.11 2016/12/14 10:46:12 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -840,6 +840,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 		break;
 #endif
 	default:
+		offload = false;
 		break;
 	}
 
@@ -862,6 +863,9 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
 			else
 				offload = false;
+			break;
+		default:
+			offload = false;
 			break;
 	}
 
