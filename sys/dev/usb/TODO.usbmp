@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.8.4.4 2016/12/05 10:55:17 skrll Exp $
+$NetBSD: TODO.usbmp,v 1.8.4.5 2016/12/14 22:09:21 skrll Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -18,7 +18,7 @@ KERNEL_LOCK
   - uhub.c
   - usscanner.c
 
-usb_detach_{waitold,wakeup} to usb_detach_{wait,broadcast} conversion:
+usb_detach_{waitold,wakeup} to cv_{wait,broadcast} conversion:
   - drivers:
       if_aue.c
       if_axe.c
@@ -26,15 +26,12 @@ usb_detach_{waitold,wakeup} to usb_detach_{wait,broadcast} conversion:
       if_smsc.c
       if_udav.c
       if_url.c
-      stuirda.c
       ubt.c
-      ucom.c
       ucycom.c
       udsir.c
       uhso.c
       uirda.c
       ulpt.c
-      umass.c		- done, partially done -- need to check umass_scsipi.c change
       urio.c
       uscanner.c
       usscanner.c
@@ -88,26 +85,31 @@ splusb drivers:
   - ubt.c
   - ucycom.c
   - udsir.c
+  - uhso.c
+  - ukbd.c
+  - ulpt.c
+  - urio.c
+  - uscanner.c
+  - usscanner.c
+  - ustir.c
+  - utoppy.c
+  - uvideo.c
 
 wakeup/tsleep drivers:
-  - if_otus.c
   - if_run.c
-  - if_upgt.c
   - if_urtwn.c
   - if_zyd.c
-  - ucom.c
   - ucycom.c
   - udsir.c
   - uirda.c
-  - ulpt.c
   - umass_isdata.c
+  - ulpt.c
   - ustir.c
   - uthum.c
   - uvscom.c
   - uyurex.c
 
 missing D_MPSAFE drivers:
-  - ucom
   - ucycom
   - ugen		- partially ready
   - uhso
@@ -148,7 +150,7 @@ driver testing:		STATUS
   - uep
   - udl
   - ulpt		attaches ok
-  - uhso		working (must take kernel lock for scsipi)
+  - uhso		working
   - umass		working
   - uaudio		working
   - umidi		working
@@ -177,7 +179,7 @@ driver testing:		STATUS
   - uberry
   - uipad
   - urio
-  - uscanner		? (must take kernel lock for scsipi)
+  - uscanner		?
   - usscanner
   - utoppy
   - uyap
@@ -185,9 +187,9 @@ driver testing:		STATUS
   - ugen		mostly done
   - pseye		working
   - uvideo
-  - auvitek		? (must take kernel lock for scsipi)
-  - emdtv		? (must take kernel lock for scsipi)
-  - ubt			working (must take kernel lock for scsipi)
+  - auvitek		?
+  - emdtv		?
+  - ubt			working
   - aubtfwl
   - u3ginit
 ucom attachments:
@@ -195,7 +197,7 @@ ucom attachments:
   - uark
   - ubsa
   - uchcom
-  - uftdi
+  - uftdi		working
   - uipaq
   - umct
   - uplcom		attaches ok
