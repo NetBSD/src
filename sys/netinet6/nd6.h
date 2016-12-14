@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.78 2016/12/12 03:14:01 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.79 2016/12/14 04:05:11 ozaki-r Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -422,7 +422,6 @@ struct nd_ifinfo *nd6_ifattach(struct ifnet *);
 void nd6_ifdetach(struct ifnet *, struct in6_ifextra *);
 int nd6_is_addr_neighbor(const struct sockaddr_in6 *, struct ifnet *);
 void nd6_option_init(void *, int, union nd_opts *);
-struct nd_opt_hdr *nd6_option(union nd_opts *);
 int nd6_options(union nd_opts *);
 struct llentry *nd6_lookup(const struct in6_addr *, const struct ifnet *, bool);
 struct llentry *nd6_create(const struct in6_addr *, const struct ifnet *);
@@ -456,7 +455,6 @@ void nd6_ns_output(struct ifnet *, const struct in6_addr *,
 const void *nd6_ifptomac(const struct ifnet *);
 void nd6_dad_start(struct ifaddr *, int);
 void nd6_dad_stop(struct ifaddr *);
-void nd6_dad_duplicated(struct ifaddr *);
 
 /* nd6_rtr.c */
 void nd6_rs_input(struct mbuf *, int, int);
