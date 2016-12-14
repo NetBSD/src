@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1539 2016/11/20 16:55:18 macallan Exp $
+# $NetBSD: mi,v 1.1540 2016/12/14 12:59:51 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -390,12 +390,12 @@
 ./usr/share/man/cat1/openssl_genrsa.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_nseq.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_passwd.0		man-crypto-catman	crypto,.cat
-./usr/share/man/cat1/openssl_pkey.0		man-crypto-catman	crypto,.cat
-./usr/share/man/cat1/openssl_pkeyparam.0	man-crypto-catman	crypto,.cat
-./usr/share/man/cat1/openssl_pkeyutl.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_pkcs12.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_pkcs7.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_pkcs8.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_pkey.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_pkeyparam.0	man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_pkeyutl.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_rand.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_req.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_rsa.0		man-crypto-catman	crypto,.cat
