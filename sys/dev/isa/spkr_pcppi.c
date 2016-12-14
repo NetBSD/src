@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.5 2016/12/13 20:20:34 christos Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.6 2016/12/14 21:52:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.5 2016/12/13 20:20:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.6 2016/12/14 21:52:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.5 2016/12/13 20:20:34 christos Exp 
 #include <dev/spkrio.h>
 
 struct spkr_pcppi_softc {
-	device_t sc_dev;
-	device_t sc_spkr_dev;
+	struct spkr_softc sc_spkr;
 	pcppi_tag_t sc_pcppicookie;
 };
 
