@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.92 2016/12/10 10:41:07 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.93 2016/12/14 18:50:56 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.92 2016/12/10 10:41:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.93 2016/12/14 18:50:56 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -365,14 +365,6 @@ kdb_trap(int type, struct trapframe *tf)
 	return (1);
 }
 #endif /* DDB */
-
-#ifndef _KERNEL
-static inline pri_t
-lwp_eprio(lwp_t *l)
-{
-	return 0;
-}
-#endif
 
 #ifdef _KERNEL
 void
