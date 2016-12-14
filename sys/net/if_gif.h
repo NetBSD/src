@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.24 2016/06/24 04:38:12 knakahara Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.25 2016/12/14 11:19:15 knakahara Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #define _NET_IF_GIF_H_
 
 #include <sys/queue.h>
+#include <sys/percpu.h>
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -52,9 +53,7 @@ struct gif_softc {
 	struct ifnet	gif_if;	   /* common area - must be at the top */
 	struct sockaddr	*gif_psrc; /* Physical src addr */
 	struct sockaddr	*gif_pdst; /* Physical dst addr */
-	union {
-		struct route  gifscr_ro;    /* xxx */
-	} gifsc_gifscr;
+	percpu_t *gif_ro_percpu;
 	int		gif_flags;
 	const struct encaptab *encap_cookie4;
 	const struct encaptab *encap_cookie6;
@@ -62,14 +61,14 @@ struct gif_softc {
 };
 #define GIF_ROUTE_TTL	10
 
-#define gif_ro gifsc_gifscr.gifscr_ro
-
 #define GIF_MTU		(1280)	/* Default MTU */
 #define	GIF_MTU_MIN	(1280)	/* Minimum MTU */
 #define	GIF_MTU_MAX	(8192)	/* Maximum MTU */
 
 /* Prototypes */
 void	gif_input(struct mbuf *, int, struct ifnet *);
+
+void	gif_rtcache_free_pc(void *, void *, struct cpu_info *);
 
 #ifdef GIF_ENCAPCHECK
 int	gif_encapcheck(struct mbuf *, int, int, void *);
