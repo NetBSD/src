@@ -1,4 +1,4 @@
-#	$NetBSD: vchain,v 1.7 2013/11/23 16:15:25 riz Exp $
+#	$NetBSD: vchain,v 1.8 2016/12/14 15:48:55 hannken Exp $
 
 #	@(#)vchain	8.1 (Berkeley) 6/10/93
 #
@@ -7,9 +7,10 @@ define vchain
 	set $num = 0
 
 	set $vp=(struct vnode *)$arg0
+	set $vi=(struct vnode_impl *)$arg0
 	while ($vp)
-		printf "vp: 0x%lx freelist_next: 0x%lx usecount: %d flags: i:0x%x v:0x%x u:0x%x\n",\
-		       $vp, $vp->v_freelist.tqe_next, $vp->v_uobj.uo_refs, \
+		printf "vp: 0x%lx lrulist_next: 0x%lx usecount: %d flags: i:0x%x v:0x%x u:0x%x\n",\
+		       $vp, $vi->vi_lrulist.tqe_next, $vp->v_uobj.uo_refs, \
 		       $vp->v_iflag, $vp->v_vflag, $vp->v_uflag
 		set $num++
 		set $vp = $vp->v_mntvnodes.tqe_next
