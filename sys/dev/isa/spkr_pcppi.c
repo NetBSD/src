@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.6 2016/12/14 21:52:43 christos Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.7 2016/12/14 22:30:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.6 2016/12/14 21:52:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.7 2016/12/14 22:30:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ spkr_pcppi_attach(device_t parent, device_t self, void *aux)
 	struct spkr_pcppi_softc *sc = device_private(self);
 
 	aprint_naive("\n");
-	aprint_normal("\n");
+	aprint_normal(": PC Speaker\n");
 
 	sc->sc_pcppicookie = pa->pa_cookie;
 	spkr_attach(self, spkr_pcppi_tone, spkr_pcppi_rest);

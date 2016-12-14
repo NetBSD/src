@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_synth.c,v 1.8 2016/12/13 20:50:13 christos Exp $	*/
+/*	$NetBSD: spkr_synth.c,v 1.9 2016/12/14 22:30:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.8 2016/12/13 20:50:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.9 2016/12/14 22:30:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,8 @@ spkr_synth_attach(device_t parent, device_t self, void *aux)
 {
 	struct spkr_synth_softc *sc = device_private(self);
 
-	aprint_normal("\n");
+	aprint_naive("\n");
+	aprint_normal(": PC Speaker (synthesized)\n");
 
 	sc->sc_audiodev = parent;
 	
