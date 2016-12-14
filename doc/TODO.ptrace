@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.1 2016/12/13 09:44:35 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.2 2016/12/14 06:26:04 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -10,10 +10,14 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - add PT_DUMPCORE tests in the ATF framework
  - add ATF tests for PT_WRITE_I and PIOD_WRITE_I - test mprotect restrictions
  - add ATF tests for PIOD_READ_AUXV
- - document more all MD specific ptrace(2) interfaces
+ - document all MD specific ptrace(2) interfaces
    (PT_GETXMMREGS, PT_SETXMMREGS, ...)
  - add tests for the procfs interface covering all functions available on the
    same level as ptrace(2)
+ - add support for PT_STEP, PT_GETREGS, PT_SETREGS, PT_GETFPREGS, PT_SETFPREGS
+   in all ports
+ - integrate all ptrace(2) features in gdb
+ - add ptrace(2) NetBSD support in LLDB
 
 and of course: fix as many bugs as possible.
 
