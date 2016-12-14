@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2079 2016/12/09 06:05:25 christos Exp $
+#	$NetBSD: mi,v 1.2080 2016/12/14 12:59:51 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9366,8 +9366,8 @@
 ./usr/share/man/cat3/tcsetattr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tcsetpgrp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/td_close.0			comp-c-catman		.cat
-./usr/share/man/cat3/td_open.0			comp-c-catman		.cat
 ./usr/share/man/cat3/td_map_pth2thr.0		comp-c-catman		.cat
+./usr/share/man/cat3/td_open.0			comp-c-catman		.cat
 ./usr/share/man/cat3/td_thr_getname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/td_thr_info.0		comp-c-catman		.cat
 ./usr/share/man/cat3/td_thr_iter.0		comp-c-catman		.cat
@@ -16629,8 +16629,8 @@
 ./usr/share/man/html3/tcsetattr.html		comp-c-htmlman		html
 ./usr/share/man/html3/tcsetpgrp.html		comp-c-htmlman		html
 ./usr/share/man/html3/td_close.html		comp-c-htmlman		html
-./usr/share/man/html3/td_open.html		comp-c-htmlman		html
 ./usr/share/man/html3/td_map_pth2thr.html	comp-c-htmlman		html
+./usr/share/man/html3/td_open.html		comp-c-htmlman		html
 ./usr/share/man/html3/td_thr_getname.html	comp-c-htmlman		html
 ./usr/share/man/html3/td_thr_info.html		comp-c-htmlman		html
 ./usr/share/man/html3/td_thr_iter.html		comp-c-htmlman		html
@@ -23953,8 +23953,8 @@
 ./usr/share/man/man3/tcsetattr.3		comp-c-man		.man
 ./usr/share/man/man3/tcsetpgrp.3		comp-c-man		.man
 ./usr/share/man/man3/td_close.3			comp-c-man		.man
-./usr/share/man/man3/td_open.3			comp-c-man		.man
 ./usr/share/man/man3/td_map_pth2thr.3		comp-c-man		.man
+./usr/share/man/man3/td_open.3			comp-c-man		.man
 ./usr/share/man/man3/td_thr_getname.3		comp-c-man		.man
 ./usr/share/man/man3/td_thr_info.3		comp-c-man		.man
 ./usr/share/man/man3/td_thr_iter.3		comp-c-man		.man
