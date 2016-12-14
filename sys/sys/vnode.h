@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.266 2016/12/14 15:46:57 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.267 2016/12/14 15:48:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -119,7 +119,6 @@ struct vnode;
 struct buf;
 
 LIST_HEAD(buflists, buf);
-TAILQ_HEAD(vnodelst, vnode);
 
 /*
  * Reading or writing any of these items requires holding the appropriate
@@ -152,8 +151,6 @@ struct vnode {
 	int		v_synclist_slot;	/* s: synclist slot index */
 	struct mount	*v_mount;		/* v: ptr to vfs we are in */
 	int		(**v_op)(void *);	/* :: vnode operations vector */
-	TAILQ_ENTRY(vnode) v_freelist;		/* f: vnode freelist */
-	struct vnodelst	*v_freelisthd;		/* f: which freelist? */
 	TAILQ_ENTRY(vnode) v_mntvnodes;		/* m: vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* x: clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* x: dirty blocklist head */
@@ -181,7 +178,6 @@ struct vnode {
 #define	v_fifoinfo	v_un.vu_fifoinfo
 #define	v_ractx		v_un.vu_ractx
 
-typedef struct vnodelst vnodelst_t;
 typedef struct vnode vnode_t;
 #endif
 
