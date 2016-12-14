@@ -1,4 +1,4 @@
-.\"	$NetBSD: cmp.1,v 1.11 2016/10/30 19:33:49 christos Exp $
+.\"	$NetBSD: cmp.1,v 1.12 2016/12/14 15:24:06 abhinav Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)cmp.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd October 30, 2016
+.Dd December 13, 2016
 .Dt CMP 1
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@ and
 respectively, where the comparison will begin.
 The offset is decimal by default, but may be expressed as an hexadecimal
 or octal value by preceding it with a leading ``0x'' or ``0''.
-.Pp
+.Sh EXIT STATUS
 The
 .Nm
 utility exits with one of the following values:
@@ -105,11 +105,18 @@ file (before any differences were found).
 An error occurred.
 .El
 .Sh SEE ALSO
+.Xr comm 1 ,
 .Xr diff 1 ,
-.Xr diff3 1
+.Xr diff3 1 ,
+.Xr sdiff 1
 .Sh STANDARDS
 The
 .Nm
 utility is expected to be
 .St -p1003.2
 compatible.
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.At v1 .
