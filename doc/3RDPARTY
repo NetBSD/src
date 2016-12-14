@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1145.2.31 2016/11/05 17:54:05 martin Exp $
+#	$NetBSD: 3RDPARTY,v 1.1145.2.32 2016/12/14 08:20:41 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1300,15 +1300,15 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2014j / tzdata2015f
-Current Vers:	tzcode2015b / tzdata2015f
+Version:	tzcode2014j (+ upgraded zic) / tzdata2016j
+Current Vers:	tzcode2016j / tzdata2016j
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
 Old Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:	http://www.iana.org/time-zones
 Mailing List:	tz@iana.org
-Responsible:	kleink, christos, apb
+Responsible:	kleink, christos, kre
 License:	Public domain
 Location:	lib/libc/time/zoneinfo, external/public-domain/tz/share
 Notes:
