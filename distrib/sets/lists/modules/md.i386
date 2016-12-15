@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.71 2016/09/27 20:52:43 pgoyette Exp $
+# $NetBSD: md.i386,v 1.72 2016/12/15 06:50:37 pgoyette Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -154,8 +154,6 @@
 ./@MODULEDIR@/sisdrm/sisdrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/sljit				base-kernel-modules	kmod,sljit
 ./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod,sljit
-./@MODULEDIR@/spkr				base-kernel-modules	kmod
-./@MODULEDIR@/spkr/spkr.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu/syscallemu.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/tco				base-kernel-modules	kmod

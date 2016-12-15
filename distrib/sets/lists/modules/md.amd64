@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.70 2016/10/19 09:44:00 skrll Exp $
+# $NetBSD: md.amd64,v 1.71 2016/12/15 06:50:37 pgoyette Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -141,8 +141,6 @@
 ./@MODULEDIR@/pwdog/pwdog.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/sljit				base-kernel-modules	kmod,sljit
 ./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod,sljit
-./@MODULEDIR@/spkr				base-kernel-modules	kmod
-./@MODULEDIR@/spkr/spkr.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu/syscallemu.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/tco				base-kernel-modules	kmod
