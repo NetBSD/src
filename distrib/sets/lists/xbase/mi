@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.137 2016/11/23 09:50:52 snj Exp $
+# $NetBSD: mi,v 1.138 2016/12/15 09:17:26 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1393,6 +1393,7 @@
 ./usr/X11R7/man/cat7/XOrgFoundation.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat7/XProjectTeam.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat7/Xsecurity.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat7/xkeyboard-config.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1					base-x11-root	xorg
 ./usr/X11R7/man/html1/appres.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/atobm.html			-unknown-	html,xorg
@@ -1536,7 +1537,7 @@
 ./usr/X11R7/man/html7/XOrgFoundation.html		-unknown-	html,xorg
 ./usr/X11R7/man/html7/XProjectTeam.html			-unknown-	html,xorg
 ./usr/X11R7/man/html7/Xsecurity.html			-unknown-	html,xorg
-#./usr/X11R7/man/html7/xkeyboard-config.html		-unknown-	html,xorg
+./usr/X11R7/man/html7/xkeyboard-config.html		-unknown-	html,xorg
 ./usr/X11R7/man/man1					base-x11-root	xorg
 ./usr/X11R7/man/man1/appres.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/atobm.1				-unknown-	.man,xorg
@@ -1681,7 +1682,7 @@
 ./usr/X11R7/man/man7/XOrgFoundation.7			-unknown-	.man,xorg
 ./usr/X11R7/man/man7/XProjectTeam.7			-unknown-	.man,xorg
 ./usr/X11R7/man/man7/Xsecurity.7			-unknown-	.man,xorg
-#./usr/X11R7/man/man7/xkeyboard-config.7			-unknown-	.man,xorg
+./usr/X11R7/man/man7/xkeyboard-config.7			-unknown-	.man,xorg
 ./usr/X11R7/man/whatis.db				-unknown-	man,xorg,!makemandb
 ./usr/X11R7/share					base-x11-root	xorg
 ./usr/X11R7/share/aclocal				base-x11-root	xorg
