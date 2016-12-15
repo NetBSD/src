@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.104 2016/12/15 06:50:37 pgoyette Exp $
+# $NetBSD: mi,v 1.105 2016/12/15 07:08:27 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -314,8 +314,10 @@
 ./@MODULEDIR@/smbfs/smbfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/solaris				base-kernel-modules     kmod,solaris
 ./@MODULEDIR@/solaris/solaris.kmod		base-kernel-modules     kmod,solaris
-./@MODULEDIR@/spkr				base-obsolete		obsolete
-./@MODULEDIR@/spkr/spkr.kmod			base-obsolete		obsolete
+./@MODULEDIR@/spkr				base-kernel-modules	kmod
+./@MODULEDIR@/spkr/spkr.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/spkr_synch			base-obsolete		obsolete
+./@MODULEDIR@/spkr/_synchspkr._synchkmod	base-obsolete		obsolete
 ./@MODULEDIR@/spdmem				base-kernel-modules	kmod
 ./@MODULEDIR@/spdmem/spdmem.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/sppp_subr				base-kernel-modules	kmod
