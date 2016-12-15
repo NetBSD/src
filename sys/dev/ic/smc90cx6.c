@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.67 2016/06/10 13:27:14 ozaki-r Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.68 2016/12/15 09:28:05 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.67 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.68 2016/12/15 09:28:05 ozaki-r Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -596,12 +596,9 @@ bah_srint(void *vsc)
 		len -= len1;
 	}
 
-	bpf_mtap(ifp, head);
-
 	if_percpuq_enqueue((&sc->sc_arccom.ac_if)->if_percpuq, head);
 
 	head = NULL;
-	ifp->if_ipackets++;
 
 cleanup:
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.139 2016/10/02 14:16:02 christos Exp $	*/
+/*	$NetBSD: elink3.c,v 1.140 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.139 2016/10/02 14:16:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.140 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1485,14 +1485,6 @@ again:
 		ifp->if_ierrors++;
 		goto abort;
 	}
-
-	++ifp->if_ipackets;
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	bpf_mtap(ifp, m);
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 

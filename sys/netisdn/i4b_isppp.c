@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.29 2016/12/07 03:23:09 ozaki-r Exp $
+ *	$Id: i4b_isppp.c,v 1.30 2016/12/15 09:28:06 ozaki-r Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.29 2016/12/07 03:23:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.30 2016/12/15 09:28:06 ozaki-r Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
@@ -678,8 +678,6 @@ i4bisppp_rx_data_rdy(void *softc)
 	m_set_rcvif(m, &sc->sc_sp.pp_if);
 	m->m_pkthdr.len = m->m_len;
 
-	sc->sc_sp.pp_if.if_ipackets++;
-
 #if I4BISPPPACCT
 	sc->sc_inb += m->m_pkthdr.len;
 #endif
@@ -687,19 +685,6 @@ i4bisppp_rx_data_rdy(void *softc)
 #ifdef I4BISPPPDEBUG
 	printf("i4bisppp_rx_data_ready: received packet!\n");
 #endif
-
-#if NBPFILTER > 0 || NBPF > 0
-
-#ifdef __FreeBSD__
-	if(sc->sc_sp.pp_if.if_bpf)
-		bpf_mtap(&sc->sc_sp.pp_if, m);
-#endif /* __FreeBSD__ */
-
-#ifdef __NetBSD__
-	bpf_mtap(&sc->sc_sp.pp_if, m);
-#endif
-
-#endif /* NBPFILTER > 0  || NBPF > 0 */
 
 	if_percpuq_enqueue(sc->sc_sp.pp_if.if_percpuq, m);
 }

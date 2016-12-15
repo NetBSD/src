@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.60 2016/12/06 07:49:25 ozaki-r Exp $ */
+/*	$NetBSD: if_ie.c,v 1.61 2016/12/15 09:28:04 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.60 2016/12/06 07:49:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.61 2016/12/15 09:28:04 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -920,14 +920,10 @@ ie_readframe(struct ie_softc *sc, int num)
 	}
 #endif
 
-	/* Pass it up. */
-	bpf_mtap(&sc->sc_if, m);
-
 	/*
 	 * Finally pass this packet up to higher layers.
 	 */
 	if_percpuq_enqueue((&sc->sc_if)->if_percpuq, m);
-	sc->sc_if.if_ipackets++;
 }
 
 static void 

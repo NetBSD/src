@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.34 2016/06/10 13:27:13 ozaki-r Exp $ */
+/* $NetBSD: i82596.c,v 1.35 2016/12/15 09:28:05 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.34 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.35 2016/12/15 09:28:05 ozaki-r Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -280,9 +280,7 @@ iee_intr(void *intarg)
 			    device_xname(sc->sc_dev));
 		bus_dmamap_sync(sc->sc_dmat, rx_map, 0,
 		    rx_map->dm_mapsize, BUS_DMASYNC_PREREAD);
-		bpf_mtap(ifp, rx_mbuf);
 		if_percpuq_enqueue(ifp->if_percpuq, rx_mbuf);
-		ifp->if_ipackets++;
 		sc->sc_rx_mbuf[sc->sc_rx_done] = new_mbuf;
 		rbd->rbd_count = 0;
 		rbd->rbd_size = IEE_RBD_EL | rx_map->dm_segs[0].ds_len;

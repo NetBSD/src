@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.100 2016/12/08 01:12:01 ozaki-r Exp $ */
+/* $NetBSD: if_ti.c,v 1.101 2016/12/15 09:28:05 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.100 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.101 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1968,16 +1968,7 @@ ti_rxeof(struct ti_softc *sc)
 		}
 
 		m->m_pkthdr.len = m->m_len = cur_rx->ti_len;
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
-
-		/*
-	 	 * Handle BPF listeners. Let the BPF user see the packet, but
-	 	 * don't pass it up to the ether_input() layer unless it's
-	 	 * a broadcast packet, multicast packet, matches our ethernet
-	 	 * address or the interface is in promiscuous mode.
-	 	 */
-		bpf_mtap(ifp, m);
 
 		eh = mtod(m, struct ether_header *);
 		switch (ntohs(eh->ether_type)) {
