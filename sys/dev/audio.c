@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.278 2016/12/13 17:12:51 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.279 2016/12/15 22:01:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.278 2016/12/13 17:12:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.279 2016/12/15 22:01:57 pgoyette Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -5001,8 +5001,10 @@ audio_suspend(device_t dv, const pmf_qual_t *qual)
 		if (sc->sc_audiopid[n].pid == curproc->p_pid)
 			break;
 	}
-	if (n == VAUDIOCHANS)
+	if (n == VAUDIOCHANS) {
+		mutex_exit(sc->sc_lock);
 		return false;
+	}
 
 	audio_mixer_capture(sc);
 	mutex_enter(sc->sc_intr_lock);
