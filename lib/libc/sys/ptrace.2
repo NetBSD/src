@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.41 2016/12/10 20:02:07 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.42 2016/12/15 13:06:08 kamil Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 1, 2016
@@ -102,44 +102,6 @@ except that they write rather than read.
 The
 .Fa data
 argument supplies the value to be written.
-.\" .It Dv PT_READ_U
-.\" This request reads an
-.\" .Li int
-.\" from the traced process' user structure.
-.\" The
-.\" .Fa addr
-.\" argument specifies the location of the int relative to the base of the
-.\" user structure; it will usually be an integer value cast to
-.\" .Li void *
-.\" either explicitly or via the presence of a prototype for
-.\" .Eo \&
-.\" .Fn ptrace
-.\" .Ec .
-.\" Unlike
-.\" .Dv PT_READ_I
-.\" and
-.\" .Dv PT_READ_D ,
-.\" .Fa addr
-.\" must be aligned on an
-.\" .Li int
-.\" boundary.
-.\" The value read is returned as the return value from
-.\" .Eo \&
-.\" .Fn ptrace
-.\" .Ec .
-.\" .It Dv PT_WRITE_U
-.\" This request writes an
-.\" .Li int
-.\" into the traced process' user structure.
-.\" .Fa addr
-.\" specifies the offset, just as for
-.\" .Dv PT_READ_U ,
-.\" and
-.\" .Fa data
-.\" specifies the value to be written, just as for
-.\" .Dv PT_WRITE_I
-.\" and
-.\" .Dv PT_WRITE_D .
 .It Dv PT_CONTINUE
 The traced process continues execution.
 .Fa addr
@@ -428,108 +390,6 @@ The
 argument contains the LWP ID of the thread whose registers are to
 be written.
 If zero is supplied, the first thread of the process is written.
-.\" .It Dv PT_SYSCALL
-.\" This request is like
-.\" .Dv PT_CONTINUE
-.\" except that the process will stop next time it executes any system
-.\" call.
-.\" Information about the system call can be examined with
-.\" .Dv PT_READ_U
-.\" and potentially modified with
-.\" .Dv PT_WRITE_U
-.\" through the
-.\" .Li u_kproc.kp_proc.p_md
-.\" element of the user structure (see below).
-.\" If the process is continued
-.\" with another
-.\" .Dv PT_SYSCALL
-.\" request, it will stop again on exit from the syscall, at which point
-.\" the return values can be examined and potentially changed.
-.\" The
-.\" .Li u_kproc.kp_proc.p_md
-.\" element is of type
-.\" .Dq Li "struct mdproc" ,
-.\" which should be declared by including
-.\" .In sys/param.h ,
-.\" .In sys/user.h ,
-.\" and
-.\" .In machine/proc.h ,
-.\" and contains the following fields (among others):
-.\" .Bl -item -compact -offset indent
-.\" .It
-.\" .Li syscall_num
-.\" .It
-.\" .Li syscall_nargs
-.\" .It
-.\" .Li syscall_args[8]
-.\" .It
-.\" .Li syscall_err
-.\" .It
-.\" .Li syscall_rv[2]
-.\" .El
-.\" When a process stops on entry to a syscall,
-.\" .Li syscall_num
-.\" holds the number of the syscall,
-.\" .Li syscall_nargs
-.\" holds the number of arguments it expects, and
-.\" .Li syscall_args
-.\" holds the arguments themselves.
-.\" (Only the first
-.\" .Li syscall_nargs
-.\" elements of
-.\" .Li syscall_args
-.\" are guaranteed to be useful.)
-.\" When a process stops on exit from a syscall,
-.\" .Li syscall_num
-.\" is
-.\" .Eo \&
-.\" .Li \-1
-.\" .Ec ,
-.\" .Li syscall_err
-.\" holds the error number
-.\" .Po
-.\" see
-.\" .Xr errno 2
-.\" .Pc ,
-.\" or 0 if no error occurred, and
-.\" .Li syscall_rv
-.\" holds the return values.
-.\" (If the syscall returns only one value, only
-.\" .Li syscall_rv[0]
-.\" is useful.)
-.\" The tracing process can modify any of these with
-.\" .Dv PT_WRITE_U ;
-.\" only some modifications are useful.
-.\" .Pp
-.\" On entry to a syscall,
-.\" .Li syscall_num
-.\" can be changed, and the syscall actually performed will correspond to
-.\" the new number (it is the responsibility of the tracing process to fill
-.\" in
-.\" .Li syscall_args
-.\" appropriately for the new call, but there is no need to modify
-.\" .Eo \&
-.\" .Li syscall_nargs
-.\" .Ec ).
-.\" If the new syscall number is 0, no syscall is actually performed;
-.\" instead,
-.\" .Li syscall_err
-.\" and
-.\" .Li syscall_rv
-.\" are passed back to the traced process directly (and therefore should be
-.\" filled in).
-.\" If the syscall number is otherwise out of range, a dummy
-.\" syscall which simply produces an
-.\" .Er ENOSYS
-.\" error is effectively performed.
-.\" .Pp
-.\" On exit from a syscall, only
-.\" .Li syscall_err
-.\" and
-.\" .Li syscall_rv
-.\" can usefully be changed; they are set to the values returned by the
-.\" syscall and will be passed back to the traced process by the normal
-.\" syscall return mechanism.
 .El
 .Sh ERRORS
 Some requests can cause
@@ -566,22 +426,11 @@ on itself.
 The
 .Fa request
 was not a legal request on this machine architecture.
-.\" .It
-.\" The
-.\" .Fa addr
-.\" to
-.\" .Dv PT_READ_U
-.\" or
-.\" .Dv PT_WRITE_U
-.\" was not
-.\" .Li int Ns \&-aligned.
 .It
 The signal number (in
 .Fa data )
 to
 .Dv PT_CONTINUE
-.\" or
-.\" .Dv PT_SYSCALL
 was neither 0 nor a legal signal number.
 .It
 .Dv PT_GETREGS ,
@@ -627,10 +476,3 @@ to
 .Fn ptrace
 .Ec ,
 should be able to sidestep this.
-.\" .Pp
-.\" When using
-.\" .Dv PT_SYSCALL ,
-.\" there is no easy way to tell whether the traced process stopped because
-.\" it made a syscall or because a signal was sent at a moment that it just
-.\" happened to have valid-looking garbage in its
-.\" .Dq Li "struct mdproc" .
