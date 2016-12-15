@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.44 2016/12/15 09:28:05 ozaki-r Exp $ */
+/*      $NetBSD: sgec.c,v 1.45 2016/12/15 09:33:25 ozaki-r Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.44 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.45 2016/12/15 09:33:25 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -421,6 +421,8 @@ zestart(struct ifnet *ifp)
 		if ((ZE_RCSR(ZE_CSR5) & ZE_NICSR5_TS) != ZE_NICSR5_TS_RUN)
 			ZE_WCSR(ZE_CSR1, -1);
 		sc->sc_nexttx = nexttx;
+
+		bpf_mtap(ifp, m);
 	}
 	if (sc->sc_inq == (TXDESCS - 1))
 		ifp->if_flags |= IFF_OACTIVE;
@@ -504,7 +506,6 @@ sgec_intr(struct ze_softc *sc)
 			ifp->if_opackets++;
 			bus_dmamap_unload(sc->sc_dmat, map);
 			KASSERT(sc->sc_txmbuf[lastack]);
-			bpf_mtap(ifp, sc->sc_txmbuf[lastack]);
 			m_freem(sc->sc_txmbuf[lastack]);
 			sc->sc_txmbuf[lastack] = 0;
 			if (++lastack == TXDESCS)
