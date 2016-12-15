@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.142 2016/12/13 10:54:27 kamil Exp $
+#	$NetBSD: files.xen,v 1.143 2016/12/15 12:04:18 kamil Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -84,6 +84,7 @@ file	arch/x86/x86/convert_xmm_s87.c
 file	arch/x86/x86/db_memrw.c		ddb | kgdb
 file	arch/x86/x86/db_trace.c		ddb
 file	arch/x86/x86/fpu.c
+file	arch/x86/x86/dbregs.c
 file	arch/xen/x86/hypervisor_machdep.c
 # file 	arch/x86/x86/mtrr_i686.c	mtrr
 file	arch/x86/x86/syscall.c

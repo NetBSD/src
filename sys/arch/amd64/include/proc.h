@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.19 2014/02/20 18:19:10 dsl Exp $	*/
+/*	$NetBSD: proc.h,v 1.20 2016/12/15 12:04:17 kamil Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -38,6 +38,7 @@
 
 #include <machine/frame.h>
 #include <machine/pcb.h>
+#include <x86/dbregs.h>
 
 /*
  * Machine-dependent part of the lwp structure for amd64.
@@ -51,10 +52,12 @@ struct mdlwp {
 	struct vm_page *md_gc_ptp;	/* pages from pmap g/c */
 	int	md_flags;		/* machine-dependent flags */
 	volatile int md_astpending;
+	struct	x86_hw_watchpoint md_watchpoint[X86_HW_WATCHPOINTS];
 };
 
-#define	MDL_COMPAT32	0x0008	/* i386, always return via iret */
-#define	MDL_IRET	0x0010	/* force return via iret, not sysret */
+#define	MDL_COMPAT32		0x0008	/* i386, always return via iret */
+#define	MDL_IRET		0x0010	/* force return via iret, not sysret */
+#define	MDL_X86_HW_WATCHPOINTS	0x0020	/* has hardware watchpoints */
 
 struct mdproc {
 	int	md_flags;
