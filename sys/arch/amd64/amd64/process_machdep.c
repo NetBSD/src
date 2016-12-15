@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.29 2014/02/15 22:20:41 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.30 2016/12/15 12:04:17 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -49,11 +49,21 @@
  *
  * process_set_pc(proc)
  *	Set the process's program counter.
+ *
+ * process_count_watchpoints(proc, retval)
+ *	Return the number of supported hardware watchpoints.
+ *
+ * process_read_watchpoint(proc, watchpoint)
+ *	Read hardware watchpoint of the given index.
+ *
+ * process_write_watchpoint(proc, watchpoint)
+ *	Write hardware watchpoint of the given index.
+ *
  */
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29 2014/02/15 22:20:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.30 2016/12/15 12:04:17 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29 2014/02/15 22:20:41 dsl Exp
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/segments.h>
+#include <x86/dbregs.h>
 #include <x86/fpu.h>
 
 static inline struct trapframe *process_frame(struct lwp *);
@@ -154,6 +165,84 @@ process_set_pc(struct lwp *l, void *addr)
 	if ((uint64_t)addr > VM_MAXUSER_ADDRESS)
 		return EINVAL;
 	tf->tf_rip = (uint64_t)addr;
+
+	return (0);
+}
+
+int
+process_count_watchpoints(struct lwp *l, register_t *retval)
+{
+
+	*retval = X86_HW_WATCHPOINTS;
+
+	return (0);
+}
+
+int
+process_read_watchpoint(struct lwp *l, struct ptrace_watchpoint *pw)
+{
+
+	pw->pw_md.md_address =
+	    (void*)(intptr_t)l->l_md.md_watchpoint[pw->pw_index].address;
+	pw->pw_md.md_condition = l->l_md.md_watchpoint[pw->pw_index].condition;
+	pw->pw_md.md_length = l->l_md.md_watchpoint[pw->pw_index].length;
+
+	return (0);
+}
+
+static void
+update_mdl_x86_hw_watchpoints(struct lwp *l)
+{
+	size_t i;
+
+	for (i = 0; i < X86_HW_WATCHPOINTS; i++) {
+		if (l->l_md.md_watchpoint[0].address != 0) {
+			return;
+		}
+	}
+	l->l_md.md_flags &= ~MDL_X86_HW_WATCHPOINTS;
+}
+
+int
+process_write_watchpoint(struct lwp *l, struct ptrace_watchpoint *pw)
+{
+
+	if (pw->pw_index > X86_HW_WATCHPOINTS)
+		return (EINVAL);
+
+	if (pw->pw_md.md_address == 0) {
+		l->l_md.md_watchpoint[pw->pw_index].address = 0;
+		update_mdl_x86_hw_watchpoints(l);
+		return (0);
+	}
+
+	if ((vaddr_t)pw->pw_md.md_address > VM_MAXUSER_ADDRESS)
+		return (EINVAL);
+
+	switch (pw->pw_md.md_condition) {
+	case X86_HW_WATCHPOINT_DR7_CONDITION_EXECUTION:
+	case X86_HW_WATCHPOINT_DR7_CONDITION_DATA_WRITE:
+	case X86_HW_WATCHPOINT_DR7_CONDITION_DATA_READWRITE:
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	switch (pw->pw_md.md_length) {
+	case X86_HW_WATCHPOINT_DR7_LENGTH_BYTE:
+	case X86_HW_WATCHPOINT_DR7_LENGTH_TWOBYTES:
+	case X86_HW_WATCHPOINT_DR7_LENGTH_FOURBYTES:
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	l->l_md.md_watchpoint[pw->pw_index].address =
+	    (vaddr_t)pw->pw_md.md_address;
+	l->l_md.md_watchpoint[pw->pw_index].condition = pw->pw_md.md_condition;
+	l->l_md.md_watchpoint[pw->pw_index].length = pw->pw_md.md_length;
+
+	l->l_md.md_flags |= MDL_X86_HW_WATCHPOINTS;
 
 	return (0);
 }
