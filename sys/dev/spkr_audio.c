@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_audio.c,v 1.1 2016/12/15 04:36:07 christos Exp $	*/
+/*	$NetBSD: spkr_audio.c,v 1.2 2016/12/15 06:48:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.1 2016/12/15 04:36:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.2 2016/12/15 06:48:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.1 2016/12/15 04:36:07 christos Exp 
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/module.h>
 #include <sys/uio.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
@@ -76,14 +75,6 @@ struct spkr_audio_softc {
 
 CFATTACH_DECL_NEW(spkr_audio, sizeof(struct spkr_audio_softc),
     spkr_audio_probe, spkr_audio_attach, spkr_audio_detach, NULL);
-
-MODULE(MODULE_CLASS_DRIVER, spkr, NULL /* "audio" */);
-
-static int
-spkr_modcmd(modcmd_t cmd, void *arg)
-{
-	return spkr__modcmd(cmd, arg);
-}
 
 static void
 spkr_audio_tone(device_t self, u_int xhz, u_int ticks)
