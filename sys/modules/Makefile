@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.187 2016/12/15 04:37:00 christos Exp $
+#	$NetBSD: Makefile,v 1.188 2016/12/15 06:48:14 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -116,6 +116,7 @@ SUBDIR+=	skipjack
 SUBDIR+=	slcompress
 SUBDIR+=	smbfs
 SUBDIR+=	spdmem
+SUBDIR+=	spkr
 SUBDIR+=	sppp_subr
 SUBDIR+=	sysmon
 SUBDIR+=	sysmon_envsys
@@ -365,7 +366,6 @@ SUBDIR+=	auvitek
 SUBDIR+=	coram
 SUBDIR+=	cxdtv
 SUBDIR+=	emdtv
-SUBDIR+=	spkr
 .endif
 
 .if (${MKISCSI} != "no")
