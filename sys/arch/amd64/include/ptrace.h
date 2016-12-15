@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.7 2016/10/19 09:44:00 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.8 2016/12/15 12:04:17 kamil Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -36,18 +36,24 @@
 /*
  * i386-dependent ptrace definitions
  */
-#define	PT_STEP		(PT_FIRSTMACH + 0)
-#define	PT_GETREGS	(PT_FIRSTMACH + 1)
-#define	PT_SETREGS	(PT_FIRSTMACH + 2)
-#define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
-#define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
+#define	PT_STEP			(PT_FIRSTMACH + 0)
+#define	PT_GETREGS		(PT_FIRSTMACH + 1)
+#define	PT_SETREGS		(PT_FIRSTMACH + 2)
+#define	PT_GETFPREGS		(PT_FIRSTMACH + 3)
+#define	PT_SETFPREGS		(PT_FIRSTMACH + 4)
+#define	PT_READ_WATCHPOINT	(PT_FIRSTMACH + 5)
+#define	PT_WRITE_WATCHPOINT	(PT_FIRSTMACH + 6)
+#define	PT_COUNT_WATCHPOINTS	(PT_FIRSTMACH + 7)
 
 #define PT_MACHDEP_STRINGS \
 	"PT_STEP", \
 	"PT_GETREGS", \
 	"PT_SETREGS", \
 	"PT_GETFPREGS", \
-	"PT_SETFPREGS",
+	"PT_SETFPREGS", \
+	"PT_READ_WATCHPOINT", \
+	"PT_WRITE_WATCHPOINT", \
+	"PT_COUNT_WATCHPOINTS"
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->regs[_REG_RIP]
@@ -58,6 +64,34 @@
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xcc })
 #define PTRACE_BREAKPOINT_SIZE	1
 #define PTRACE_BREAKPOINT_ADJ	1
+
+#define __HAVE_PTRACE_WATCHPOINTS
+
+/*
+ * This MD structure translates into x86_hw_watchpoint
+ *
+ * pw_address - 0 represents disabled hardware watchpoint
+ *
+ * conditions:
+ *     0b00 - execution
+ *     0b01 - data write
+ *     0b10 - io read/write (not implemented)
+ *     0b11 - data read/write
+ *
+ * length:
+ *     0b00 - 1 byte
+ *     0b01 - 2 bytes
+ *     0b10 - undefined (8 bytes in modern CPUs - not implemented)
+ *     0b11 - 4 bytes
+ *
+ * Helper symbols for conditions and length are available in <x86/dbregs.h>
+ *
+ */
+struct mdpw {
+	void	*md_address;
+	int	 md_condition;
+	int	 md_length;
+};
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -71,8 +105,13 @@
 #define process_write_regs32	netbsd32_process_write_regs
 #define process_write_fpregs32	netbsd32_process_write_fpregs
 
+#define process_write_watchpoint32	netbsd32_process_write_watchpoint
+#define process_read_watchpoint32	netbsd32_process_read_watchpoint
+#define process_count_watchpoint32	netbsd32_process_count_watchpoint
+
 #define process_reg32		struct reg32
 #define process_fpreg32		struct fpreg32
+#define process_watchpoint32	struct ptrace_watchpoint32
 #endif	/* COMPAT_NETBSD32 */
 #endif	/* _KERNEL_OPT */
 
