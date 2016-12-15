@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.8 2016/09/28 06:47:55 wiz Exp $ */
+/* $NetBSD: TODO.modules,v 1.9 2016/12/15 03:24:43 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -109,3 +109,14 @@ christos and pgoyette.
 
 12. Item #11 gets even murkier when a particular parent can provide more
     than one attribute.
+
+13. It seems that we might want some additional sets-lists "attributes"
+    to control contents of distributions.  As an example, many of our
+    architectures have PCI bus capabilities, but not all.  It is rather
+    painful to need to maintain individual architectures' modules/md_*
+    sets lists, especially when we already have to conditionalize the
+    build of the modules based on architecture.  If we had a single
+    "attribute" for PCI-bus-capable, the same attribute could be used to
+    select which modules to build and which modules from modules/mi to
+    include in the release.  (This is not limited to PCI;  recently we
+    encounter similar issues with spkr aka spkr_synth module.)
