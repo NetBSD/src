@@ -757,6 +757,31 @@ alpha_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
   return pc + offset;
 }
 
+/* GNU ld for alpha is so clever that the redundant GP load in function
+   entrypoint is skipped.  We must therefore skip initial GP loads; otherwise
+   breakpoints in function entrypoints can also be skipped.  */
+
+static CORE_ADDR
+alpha_skip_entrypoint (struct gdbarch *gdbarch, CORE_ADDR pc)
+{
+  unsigned long inst;
+  gdb_byte buf[ALPHA_INSN_SIZE];
+
+  /* Refer to the comment in alpha_skip_prologue above.  */
+  if (target_read_memory (pc, buf, sizeof (buf)))
+    return pc;
+
+  /* Skip a GP load in the first two words in the function entrypoint.  */
+  inst = alpha_read_insn (gdbarch, pc);
+  if ((inst & 0xffff0000) != 0x27bb0000)	/* ldah $gp,n($t12) */
+    return pc;
+  inst = alpha_read_insn (gdbarch, pc + ALPHA_INSN_SIZE);
+  if ((inst & 0xffff0000) != 0x23bd0000)	/* lda $gp,n($gp) */
+    return pc;
+
+  return pc + 2 * ALPHA_INSN_SIZE;
+}
+
 
 static const int ldl_l_opcode = 0x2a;
 static const int ldq_l_opcode = 0x2b;
@@ -1801,6 +1826,9 @@ alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Prologue heuristics.  */
   set_gdbarch_skip_prologue (gdbarch, alpha_skip_prologue);
+
+  /* Entrypoint heuristics.  */
+  set_gdbarch_skip_entrypoint (gdbarch, alpha_skip_entrypoint);
 
   /* Disassembler.  */
   set_gdbarch_print_insn (gdbarch, print_insn_alpha);
