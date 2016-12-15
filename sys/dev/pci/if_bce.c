@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.43 2016/12/08 01:12:01 ozaki-r Exp $	 */
+/* $NetBSD: if_bce.c,v 1.44 2016/12/15 09:28:05 ozaki-r Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.43 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.44 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "vlan.h"
 
@@ -807,13 +807,6 @@ bce_rxintr(struct bce_softc *sc)
 
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
-		ifp->if_ipackets++;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

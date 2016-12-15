@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.29 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.30 2016/12/15 09:28:06 ozaki-r Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1346,7 +1346,6 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			goto done;
 		}
 
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = pktlen;
 		m->m_flags |= M_HASFCS;
@@ -1416,7 +1415,6 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 		/* push the packet up */
 		s = splnet();
-		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 		splx(s);
 	}

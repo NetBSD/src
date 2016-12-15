@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.367 2016/12/13 02:05:48 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.368 2016/12/15 09:28:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.367 2016/12/13 02:05:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.368 2016/12/15 09:28:06 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -141,6 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.367 2016/12/13 02:05:48 ozaki-r Exp $");
 #ifndef IPSEC
 #include <netinet/ip_encap.h>
 #endif
+#include <net/bpf.h>
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
@@ -775,8 +776,18 @@ if_percpuq_softint(void *arg)
 	struct ifnet *ifp = ipq->ipq_ifp;
 	struct mbuf *m;
 
-	while ((m = if_percpuq_dequeue(ipq)) != NULL)
+	while ((m = if_percpuq_dequeue(ipq)) != NULL) {
+		ifp->if_ipackets++;
+#ifndef NET_MPSAFE
+		KERNEL_LOCK(1, NULL);
+#endif
+		bpf_mtap(ifp, m);
+#ifndef NET_MPSAFE
+		KERNEL_UNLOCK_ONE(NULL);
+#endif
+
 		ifp->_if_input(ifp, m);
+	}
 }
 
 static void
@@ -1063,6 +1074,15 @@ if_input(struct ifnet *ifp, struct mbuf *m)
 
 	KASSERT(ifp->if_percpuq == NULL);
 	KASSERT(!cpu_intr_p());
+
+	ifp->if_ipackets++;
+#ifndef NET_MPSAFE
+	KERNEL_LOCK(1, NULL);
+#endif
+	bpf_mtap(ifp, m);
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
+#endif
 
 	ifp->_if_input(ifp, m);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ndis.c,v 1.37 2016/08/15 08:12:32 maxv Exp $	*/
+/*	$NetBSD: if_ndis.c,v 1.38 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.37 2016/08/15 08:12:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.38 2016/12/15 09:28:05 ozaki-r Exp $");
 #endif
 
 
@@ -1021,7 +1021,6 @@ ndis_rxeof(ndis_handle adapter, ndis_packet **packets, uint32_t pktcnt)
 			} else
 				p->np_oob.npo_status = NDIS_STATUS_PENDING;
 			m_set_rcvif(m0, ifp);
-			ifp->if_ipackets++;
 
 			/* Deal with checksum offload. */
 /* 
@@ -1044,9 +1043,7 @@ ndis_rxeof(ndis_handle adapter, ndis_packet **packets, uint32_t pktcnt)
 					  //  CSUM_DATA_VALID|CSUM_PSEUDO_HDR;
 					m0->m_pkthdr.csum_data = 0xFFFF;
 				}
-			}			
-
-			bpf_mtap(ifp, m0);
+			}
 
 			if_percpuq_enqueue(ifp->if_percpuq, m0);
 		}

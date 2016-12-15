@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.4 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.5 2016/12/15 09:28:03 ozaki-r Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.4 2016/07/11 16:15:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.5 2016/12/15 09:28:03 ozaki-r Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -1495,17 +1495,11 @@ octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 
 	octeon_ipd_offload(word2, m->m_data, &m->m_pkthdr.csum_flags);
 
-	/* count input packet */
-	ifp->if_ipackets++;
-
 	/* XXX XXX XXX */
 	if (sc->sc_soft_req_cnt > sc->sc_soft_req_thresh) {
 		octeon_eth_send_queue_flush_fetch(sc);
 		octeon_eth_send_queue_flush(sc);
 	}
-	/* XXX XXX XXX */
-
-	bpf_mtap(ifp, m);
 
 	/* XXX XXX XXX */
 	if (sc->sc_flush)

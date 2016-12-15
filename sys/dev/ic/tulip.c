@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.188 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: tulip.c,v 1.189 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.188 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.189 2016/12/15 09:28:05 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1356,7 +1356,6 @@ tlp_rxintr(struct tulip_softc *sc)
 		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
 
-		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
@@ -1380,12 +1379,6 @@ tlp_rxintr(struct tulip_softc *sc)
 				m->m_pkthdr.len = m->m_len = len =
 				    ETHER_MAX_FRAME(ifp, etype, 0);
 		}
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/*
 		 * We sometimes have to run the 21140 in Hash-Only

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.60 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.61 2016/12/15 09:28:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.60 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.61 2016/12/15 09:28:06 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -852,8 +852,6 @@ cnw_recv(struct cnw_softc *sc)
 			return;
 		}
 		++ifp->if_ipackets;
-
-		bpf_mtap(ifp, m);
 
 		/* Pass the packet up. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

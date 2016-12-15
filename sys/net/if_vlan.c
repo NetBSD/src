@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.92 2016/11/28 00:39:03 joerg Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.93 2016/12/15 09:28:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.92 2016/11/28 00:39:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.93 2016/12/15 09:28:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -936,8 +936,6 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 
 	m_set_rcvif(m, &ifv->ifv_if);
 	ifv->ifv_if.if_ipackets++;
-
-	bpf_mtap(&ifv->ifv_if, m);
 
 	m->m_flags &= ~M_PROMISC;
 	if_input(&ifv->ifv_if, m);

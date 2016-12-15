@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.105 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.106 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.105 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.106 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1078,7 +1078,6 @@ tl_intr(void *v)
 					ether_printheader(eh);
 				}
 #endif
-				bpf_mtap(ifp, m);
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			}
 		}
