@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipaddress.sh,v 1.8 2016/11/25 08:51:17 ozaki-r Exp $
+#	$NetBSD: t_ipaddress.sh,v 1.9 2016/12/15 02:43:56 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -178,7 +178,7 @@ add_test()
 			test_${name}; \
 		}; \
 	    ipaddr_${name}_cleanup() { \
-			$DEBUG && dump \
+			$DEBUG && dump; \
 			cleanup; \
 		}"
 	atf_add_test_case "ipaddr_${name}"
