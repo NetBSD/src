@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.75 2016/06/10 13:27:15 ozaki-r Exp $ */
+/*      $NetBSD: if_qe.c,v 1.76 2016/12/15 09:28:06 ozaki-r Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.75 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.76 2016/12/15 09:28:06 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -595,7 +595,6 @@ qeintr(void *arg)
 			m->m_pkthdr.len = m->m_len = len;
 			if (++sc->sc_nextrx == RXDESCS)
 				sc->sc_nextrx = 0;
-			bpf_mtap(ifp, m);
 			if ((status1 & QE_ESETUP) == 0)
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			else
