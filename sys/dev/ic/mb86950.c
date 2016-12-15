@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.24 2016/06/10 13:27:13 ozaki-r Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.25 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.24 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.25 2016/12/15 09:28:05 ozaki-r Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -832,16 +832,13 @@ mb86950_rint(struct mb86950_softc *sc, u_int8_t rstat)
 			mb86950_drain_fifo(sc);
 			return;
 		}
-
-		/* Successfully received a packet.  Update stat. */
-		ifp->if_ipackets++;
 	}
 }
 
 /*
  * Receive packet.
  * Retrieve packet from receive buffer and send to the next level up via
- * ether_input(). If there is a BPF listener, give a copy to BPF, too.
+ * ether_input().
  * Returns 0 if success, -1 if error (i.e., mbuf allocation failure).
  */
 int
@@ -901,12 +898,6 @@ mb86950_get_fifo(struct mb86950_softc *sc, u_int len)
 
 	/* Get a packet. */
 	bus_space_read_multi_stream_2(bst, bsh, BMPR_FIFO, mtod(m, u_int16_t *), (len + 1) >> 1);
-
-	/*
-	 * Check if there's a BPF listener on this interface.  If so, hand off
-	 * the raw packet to bpf.
-	 */
-	bpf_mtap(ifp, m);
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 	return (0);

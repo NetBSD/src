@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.10 2016/12/06 07:09:38 ozaki-r Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.11 2016/12/15 09:28:02 ozaki-r Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.10 2016/12/06 07:09:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.11 2016/12/15 09:28:02 ozaki-r Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -848,14 +848,12 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	 */
 	m = hwq->hwq_rxmbuf;
 	m_set_rcvif(m, ifp);	/* set receive interface */
-	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_pkthdr.len;
 	switch (DESC0_RXSTS_GET(d->d_desc0)) {
 	case DESC0_RXSTS_GOOD:
 	case DESC0_RXSTS_LONG:
 		m->m_data += 2;
 		KASSERT(m_length(m) == m->m_pkthdr.len);
-		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 		break;
 	default:

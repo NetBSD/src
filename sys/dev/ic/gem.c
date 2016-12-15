@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.106 2016/06/10 13:27:13 ozaki-r Exp $ */
+/*	$NetBSD: gem.c,v 1.107 2016/12/15 09:28:05 ozaki-r Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.106 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.107 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1805,7 +1805,6 @@ gem_rint(struct gem_softc *sc)
 		}
 
 		progress++;
-		ifp->if_ipackets++;
 
 		if (rxstat & GEM_RD_BAD_CRC) {
 			ifp->if_ierrors++;
@@ -1850,12 +1849,6 @@ gem_rint(struct gem_softc *sc)
 
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 #ifdef INET
 		/* hardware checksum */

@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.53 2016/12/08 01:12:01 ozaki-r Exp $ */
+/* $NetBSD: if_msk.c,v 1.54 2016/12/15 09:28:05 ozaki-r Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.53 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.54 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1770,10 +1770,6 @@ msk_rxeof(struct sk_if_softc *sc_if, u_int16_t len, u_int32_t rxstat)
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = total_len;
 	}
-
-	ifp->if_ipackets++;
-
-	bpf_mtap(ifp, m);
 
 	/* pass it on. */
 	if_percpuq_enqueue(ifp->if_percpuq, m);

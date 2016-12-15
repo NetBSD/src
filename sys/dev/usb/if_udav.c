@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.49 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.50 2016/12/15 09:28:06 ozaki-r Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.49 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.50 2016/12/15 09:28:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1176,7 +1176,6 @@ udav_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		goto done;
 	}
 
-	ifp->if_ipackets++;
 	total_len -= ETHER_CRC_LEN;
 
 	m->m_pkthdr.len = m->m_len = total_len;
@@ -1188,8 +1187,6 @@ udav_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		ifp->if_ierrors++;
 		goto done1;
 	}
-
-	bpf_mtap(ifp, m);
 
 	DPRINTF(("%s: %s: deliver %d\n", device_xname(sc->sc_dev),
 		 __func__, m->m_len));

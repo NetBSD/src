@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.47 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.48 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.47 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.48 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -944,9 +944,6 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		memcpy(m->m_data + m->m_len, rxb->rxb_data, buflen);
 		m->m_len = buflen;
 		m->m_pkthdr.len = buflen;
-
-		ifp->if_ipackets++;
-		bpf_mtap(ifp, m);
 
 		eh = (const struct ether_header *) m->m_data;
 		if ((ifp->if_flags & IFF_PROMISC) ||

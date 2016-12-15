@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.12 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.13 2016/12/15 09:28:04 ozaki-r Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.12 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.13 2016/12/15 09:28:04 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1994,8 +1994,6 @@ vmxnet3_rxq_input(struct vmxnet3_rxqueue *rxq,
 
 	rxq->vxrxq_stats.vmrxs_ipackets++;
 	rxq->vxrxq_stats.vmrxs_ibytes += m->m_pkthdr.len;
-
-	bpf_mtap(ifp, m);
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }

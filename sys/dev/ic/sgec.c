@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.43 2016/06/10 13:27:13 ozaki-r Exp $ */
+/*      $NetBSD: sgec.c,v 1.44 2016/12/15 09:28:05 ozaki-r Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.43 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.44 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -452,7 +452,6 @@ sgec_intr(struct ze_softc *sc)
 		while ((zc->zc_recv[sc->sc_nextrx].ze_framelen &
 		    ZE_FRAMELEN_OW) == 0) {
 
-			ifp->if_ipackets++;
 			m = sc->sc_rxmbuf[sc->sc_nextrx];
 			len = zc->zc_recv[sc->sc_nextrx].ze_framelen;
 			ze_add_rxbuf(sc, sc->sc_nextrx);
@@ -465,7 +464,6 @@ sgec_intr(struct ze_softc *sc)
 				m_set_rcvif(m, ifp);
 				m->m_pkthdr.len = m->m_len =
 				    len - ETHER_CRC_LEN;
-				bpf_mtap(ifp, m);
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			}
 		}

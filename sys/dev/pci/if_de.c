@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.148 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_de.c,v 1.149 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.148 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.149 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -3644,8 +3644,6 @@ tulip_rx_intr(
 	    if (sc->tulip_bpf != NULL) {
 		if (me == ms)
 		    bpf_tap(ifp, mtod(ms, void *), total_len);
-		else
-		    bpf_mtap(ifp, ms);
 	    }
 	    sc->tulip_flags |= TULIP_RXACT;
 	    if ((sc->tulip_flags & (TULIP_PROMISC|TULIP_HASHONLY))
@@ -3704,7 +3702,6 @@ tulip_rx_intr(
 #if defined(TULIP_DEBUG)
 	cnt++;
 #endif
-	ifp->if_ipackets++;
 	if (++eop == ri->ri_last)
 	    eop = ri->ri_first;
 	ri->ri_nextin = eop;

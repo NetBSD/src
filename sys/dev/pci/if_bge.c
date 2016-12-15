@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.299 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.300 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.299 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.300 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4546,7 +4546,6 @@ bge_rxeof(struct bge_softc *sc)
 			}
 		}
 
-		ifp->if_ipackets++;
 #ifndef __NO_STRICT_ALIGNMENT
 		/*
 		 * XXX: if the 5701 PCIX-Rx-DMA workaround is in effect,
@@ -4562,11 +4561,6 @@ bge_rxeof(struct bge_softc *sc)
 
 		m->m_pkthdr.len = m->m_len = cur_rx->bge_len - ETHER_CRC_LEN;
 		m_set_rcvif(m, ifp);
-
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet.
-		 */
-		bpf_mtap(ifp, m);
 
 		bge_rxcsum(sc, cur_rx, m);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.12 2016/12/08 01:12:00 ozaki-r Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.13 2016/12/15 09:28:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.12 2016/12/08 01:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.13 2016/12/15 09:28:02 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -758,15 +758,6 @@ enic_rint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 	/* Adjust size */
 	m->m_pkthdr.len = len;
 	m->m_len = len; /* recheck */
-
-	ifp->if_ipackets++;
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp, m);
 
 	/* Pass the packet up. */
 	if_percpuq_enqueue(ifp->if_percpuq, m);

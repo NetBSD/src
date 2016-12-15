@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.46 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.47 2016/12/15 09:28:05 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.46 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.47 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2079,10 +2079,6 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 
 		/* Skip on first 2byte (HW header) */
 		m_adj(m,  MVGBE_HWHEADER_SIZE);
-
-		ifp->if_ipackets++;
-
-		bpf_mtap(ifp, m);
 
 		/* pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

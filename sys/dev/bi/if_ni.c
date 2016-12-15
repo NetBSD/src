@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.43 2016/06/10 13:27:13 ozaki-r Exp $ */
+/*	$NetBSD: if_ni.c,v 1.44 2016/12/15 09:28:04 ozaki-r Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.43 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.44 2016/12/15 09:28:04 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -617,7 +617,6 @@ niintr(void *arg)
 			if (m == (void *)data->nd_cmdref)
 				break; /* Out of mbufs */
 
-			bpf_mtap(ifp, m);
 			if_percpuq_enqueue(ifp->if_percpuq, m);
 			break;
 

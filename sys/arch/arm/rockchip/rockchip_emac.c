@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_emac.c,v 1.15 2016/06/10 13:27:11 ozaki-r Exp $ */
+/* $NetBSD: rockchip_emac.c,v 1.16 2016/12/15 09:28:02 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rkemac.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.15 2016/06/10 13:27:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.16 2016/12/15 09:28:02 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -877,8 +877,6 @@ rkemac_rxintr(struct rkemac_softc *sc)
 		m_set_rcvif(m, ifp);
 		m->m_flags |= M_HASFCS;
 
-		bpf_mtap(ifp, m);
-		ifp->if_ipackets++;
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 skip:

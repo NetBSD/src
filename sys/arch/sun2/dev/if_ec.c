@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.26 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.27 2016/12/15 09:28:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.26 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.27 2016/12/15 09:28:04 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -521,14 +521,6 @@ ec_recv(struct ec_softc *sc, int intbit)
 	}
 
 	if (total_length == 0) {
-		ifp->if_ipackets++;
-
-		/*
-	 	* Check if there's a BPF listener on this interface.
-	 	* If so, hand off the raw packet to BPF.
-	 	*/
-		bpf_mtap(ifp, m0);
-
 		/* Pass the packet up. */
 		if_percpuq_enqueue(ifp->if_percpuq, m0);
 

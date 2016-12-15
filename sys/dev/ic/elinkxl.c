@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.119 2016/06/10 13:27:13 ozaki-r Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.120 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.119 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.120 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1372,7 +1372,6 @@ ex_intr(void *arg)
 					}
 					m_set_rcvif(m, ifp);
 					m->m_pkthdr.len = m->m_len = total_len;
-					bpf_mtap(ifp, m);
 		/*
 		 * Set the incoming checksum information for the packet.
 		 */

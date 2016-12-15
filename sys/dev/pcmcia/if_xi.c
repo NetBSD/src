@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.79 2016/12/08 01:12:01 ozaki-r Exp $ */
+/*	$NetBSD: if_xi.c,v 1.80 2016/12/15 09:28:06 ozaki-r Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.79 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.80 2016/12/15 09:28:06 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -470,10 +470,6 @@ xi_get(struct xi_softc *sc)
 
 	/* Trim the CRC off the end of the packet. */
 	m_adj(top, -ETHER_CRC_LEN);
-
-	ifp->if_ipackets++;
-
-	bpf_mtap(ifp, top);
 
 	if_percpuq_enqueue(ifp->if_percpuq, top);
 	return (recvcount);

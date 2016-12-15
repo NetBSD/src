@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.15 2016/12/08 01:12:00 ozaki-r Exp $ */
+/* $NetBSD: if_admsw.c,v 1.16 2016/12/15 09:28:03 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.15 2016/12/08 01:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.16 2016/12/15 09:28:03 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -999,12 +999,9 @@ admsw_rxintr(struct admsw_softc *sc, int high)
 			if (stat & ADM5120_DMA_CSUMFAIL)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
 		}
-		/* Pass this up to any BPF listeners. */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
-		ifp->if_ipackets++;
 	}
 #ifdef ADMSW_EVENT_COUNTERS
 	if (pkts)

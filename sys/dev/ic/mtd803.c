@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.32 2016/10/02 14:16:02 christos Exp $ */
+/* $NetBSD: mtd803.c,v 1.33 2016/12/15 09:28:05 ozaki-r Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.32 2016/10/02 14:16:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.33 2016/12/15 09:28:05 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -677,9 +677,6 @@ mtd_rxirq(struct mtd_softc *sc)
 			continue;
 		}
 
-		++ifp->if_ipackets;
-
-		bpf_mtap(ifp, m);
 		/* Pass the packet up */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}

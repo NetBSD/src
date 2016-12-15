@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.25 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.26 2016/12/15 09:28:05 ozaki-r Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.25 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.26 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -1300,9 +1300,6 @@ cas_rint(struct cas_softc *sc)
 				 * Pass this up to any BPF listeners, but only
 				 * pass it up the stack if its for us.
 				 */
-				bpf_mtap(ifp, m);
-
-				ifp->if_ipackets++;
 				m->m_pkthdr.csum_flags = 0;
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			} else
@@ -1333,9 +1330,6 @@ cas_rint(struct cas_softc *sc)
 				 * Pass this up to any BPF listeners, but only
 				 * pass it up the stack if its for us.
 				 */
-				bpf_mtap(ifp, m);
-
-				ifp->if_ipackets++;
 				m->m_pkthdr.csum_flags = 0;
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			} else

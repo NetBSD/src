@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.42 2016/12/08 01:12:00 ozaki-r Exp $ */
+/* $NetBSD: if_aumac.c,v 1.43 2016/12/15 09:28:03 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.42 2016/12/08 01:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.43 2016/12/15 09:28:03 ozaki-r Exp $");
 
 
 
@@ -716,12 +716,8 @@ aumac_rxintr(struct aumac_softc *sc)
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
-		/* Pass this up to any BPF listeners. */
-		bpf_mtap(ifp, m);
-
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
-		ifp->if_ipackets++;
 	}
 	if (pkts)
 		AUMAC_EVCNT_INCR(&sc->sc_ev_rxintr);

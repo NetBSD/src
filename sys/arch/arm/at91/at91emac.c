@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.17 2016/06/10 13:27:10 ozaki-r Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.17 2016/06/10 13:27:10 ozaki-r Exp $	*/
+/*	$Id: at91emac.c,v 1.18 2016/12/15 09:28:02 ozaki-r Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.18 2016/12/15 09:28:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.17 2016/06/10 13:27:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.18 2016/12/15 09:28:02 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -282,7 +282,6 @@ emac_intr(void *arg)
 				m_set_rcvif(sc->rxq[bi].m, ifp);
 				sc->rxq[bi].m->m_pkthdr.len = 
 					sc->rxq[bi].m->m_len = fl;
-				bpf_mtap(ifp, sc->rxq[bi].m);
 				DPRINTFN(2,("received %u bytes packet\n", fl));
 				if_percpuq_enqueue(ifp->if_percpuq, sc->rxq[bi].m);
 				if (mtod(m, intptr_t) & 3) {

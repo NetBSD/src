@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.11 2016/10/05 15:54:58 ryo Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.12 2016/12/15 09:28:03 ozaki-r Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.11 2016/10/05 15:54:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.12 2016/12/15 09:28:03 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1540,7 +1540,6 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
 		/* push it up the inteface */
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 
 #ifdef RALINK_ETH_DEBUG
@@ -1564,12 +1563,6 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 		 * using PF's ROUTETO option for load balancing.
 		 */
 		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if its for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		sc->sc_evcnt_input.ev_count++;

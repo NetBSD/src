@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.11 2016/12/14 10:46:12 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.12 2016/12/15 09:28:05 ozaki-r Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1751,8 +1751,6 @@ ixgbe_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype
 	IXGBE_RX_UNLOCK(rxr);
 
 	s = splnet();
-	/* Pass this up to any BPF listeners. */
-	bpf_mtap(ifp, m);
 	if_input(ifp, m);
 	splx(s);
 

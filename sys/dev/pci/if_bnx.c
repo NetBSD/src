@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.60 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.61 2016/12/15 09:28:05 ozaki-r Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.60 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.61 2016/12/15 09:28:05 ozaki-r Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4638,14 +4638,8 @@ bnx_rx_intr(struct bnx_softc *sc)
 				    continue);
 			}
 
-			/*
-			 * Handle BPF listeners. Let the BPF
-			 * user see the packet.
-			 */
-			bpf_mtap(ifp, m);
-
 			/* Pass the mbuf off to the upper layers. */
-			ifp->if_ipackets++;
+
 			DBPRINT(sc, BNX_VERBOSE_RECV,
 			    "%s(): Passing received frame up.\n", __func__);
 			if_percpuq_enqueue(ifp->if_percpuq, m);

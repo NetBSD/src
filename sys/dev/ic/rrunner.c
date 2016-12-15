@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.82 2016/10/02 14:16:02 christos Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.83 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.82 2016/10/02 14:16:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.83 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -2360,18 +2360,6 @@ esh_read_snap_ring(struct esh_softc *sc, u_int16_t consumer, int error)
 		if (control & RR_CT_PACKET_END) { /* XXX: RR2_ matches */
 			m = recv->ec_cur_pkt;
 			if (!error && !recv->ec_error) {
-				/*
-				 * We have a complete packet, send it up
-				 * the stack...
-				 */
-				ifp->if_ipackets++;
-
-				/*
-				 * Check if there's a BPF listener on this
-				 * interface.  If so, hand off the raw packet
-				 * to BPF.
-				 */
-				bpf_mtap(ifp, m);
 				if ((ifp->if_flags & IFF_RUNNING) == 0) {
 					m_freem(m);
 				} else {

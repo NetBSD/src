@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.56 2016/06/10 13:27:13 ozaki-r Exp $ */
+/* $NetBSD: seeq8005.c,v 1.57 2016/12/15 09:28:05 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.56 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.57 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1207,7 +1207,6 @@ ea_rxint(struct seeq8005_softc *sc)
 			return;
 		}
 
-		ifp->if_ipackets++;
 		/* Pass data up to upper levels. */
 		ea_read(sc, addr + 4, len);
 
@@ -1245,12 +1244,6 @@ ea_read(struct seeq8005_softc *sc, int addr, int len)
 	m = ea_get(sc, addr, len, ifp);
 	if (m == NULL)
 		return;
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to bpf.
-	 */
-	bpf_mtap(ifp, m);
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.49 2016/12/08 01:12:01 ozaki-r Exp $ */
+/*	$NetBSD: if_age.c,v 1.50 2016/12/15 09:28:05 ozaki-r Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.49 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.50 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "vlan.h"
 
@@ -1504,7 +1504,6 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 			}
 #endif
 
-			bpf_mtap(ifp, m);
 			/* Pass it on. */
 			if_percpuq_enqueue(ifp->if_percpuq, m);
 

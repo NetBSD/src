@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.61 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.62 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.61 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.62 2016/12/15 09:28:05 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1353,7 +1353,6 @@ stge_rxintr(struct stge_softc *sc)
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
-		bpf_mtap(ifp, m);
 #ifdef	STGE_VLAN_UNTAG
 		/*
 		 * Check for VLAN tagged packets

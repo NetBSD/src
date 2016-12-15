@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.39 2016/08/07 17:38:34 christos Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.40 2016/12/15 09:28:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.39 2016/08/07 17:38:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.40 2016/12/15 09:28:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -161,7 +161,6 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 		return;
 	}
 
-	ifp->if_ipackets++;
 	m_set_rcvif(m, ifp);
 
 #define DNH_DEBUG
@@ -185,7 +184,6 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 	}
 #endif
 
-	bpf_mtap(ifp, m);
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.46 2016/12/08 01:12:01 ozaki-r Exp $ */
+/* $NetBSD: if_txp.c,v 1.47 2016/12/15 09:28:05 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.46 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.47 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -730,11 +730,6 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 			m = mnew;
 		}
 #endif
-
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet.
-		 */
-		bpf_mtap(ifp, m);
 
 		if (rxd->rx_stat & htole32(RX_STAT_IPCKSUMBAD))
 			sumflags |= (M_CSUM_IPv4|M_CSUM_IPv4_BAD);

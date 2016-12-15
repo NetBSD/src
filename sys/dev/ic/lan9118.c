@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.22 2016/06/10 13:27:13 ozaki-r Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.23 2016/12/15 09:28:05 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.22 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.23 2016/12/15 09:28:05 ozaki-r Exp $");
 
 /*
  * The LAN9118 Family
@@ -991,15 +991,8 @@ dropit:
 		    roundup(pad + pktlen, sizeof(uint32_t)) >> 2);
 		m->m_data += pad;
 
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = (pktlen - ETHER_CRC_LEN);
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass if up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

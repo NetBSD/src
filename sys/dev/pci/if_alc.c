@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.22 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.23 2016/12/15 09:28:05 ozaki-r Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2585,8 +2585,6 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 				VLAN_INPUT_TAG(ifp, m, ntohs(vtag), );
 			}
 #endif
-
-			bpf_mtap(ifp, m);
 
 			/* Pass it on. */
 			if_percpuq_enqueue(ifp->if_percpuq, m);

@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.29 2016/12/08 01:12:00 ozaki-r Exp $ */
+/* $Id: if_ae.c,v 1.30 2016/12/15 09:28:03 ozaki-r Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.29 2016/12/08 01:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.30 2016/12/15 09:28:03 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1129,15 +1129,8 @@ ae_rxintr(struct ae_softc *sc)
 		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
 
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if its for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

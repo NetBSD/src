@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.24 2016/12/08 01:12:01 ozaki-r Exp $ */
+/*      $NetBSD: if_xge.c,v 1.25 2016/12/15 09:28:05 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.24 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.25 2016/12/15 09:28:05 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -806,8 +806,6 @@ xge_intr(void *pv)
 			break;
 		}
 
-		ifp->if_ipackets++;
-
 		if (RXD_CTL1_PROTOS(val) & (RXD_CTL1_P_IPv4|RXD_CTL1_P_IPv6)) {
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if (RXD_CTL1_L3CSUM(val) != 0xffff)
@@ -823,8 +821,6 @@ xge_intr(void *pv)
 			if (RXD_CTL1_L4CSUM(val) != 0xffff)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
-
-		bpf_mtap(ifp, m);
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 

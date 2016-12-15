@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.85 2016/06/10 13:27:13 ozaki-r Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.86 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.85 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.86 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -938,14 +938,6 @@ dp8390_read(struct dp8390_softc *sc, int buf, u_short len)
 		ifp->if_ierrors++;
 		return;
 	}
-
-	ifp->if_ipackets++;
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to bpf.
-	 */
-	bpf_mtap(ifp, m);
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
