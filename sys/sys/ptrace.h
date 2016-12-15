@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.50 2016/12/15 12:04:18 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.51 2016/12/15 20:04:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -118,7 +118,6 @@ struct ptrace_lwpinfo {
 #define PL_EVENT_NONE	0
 #define PL_EVENT_SIGNAL	1
 
-#ifdef __HAVE_PTRACE_WATCHPOINTS
 /*
  * Hardware Watchpoints
  *
@@ -127,9 +126,10 @@ struct ptrace_lwpinfo {
 typedef struct ptrace_watchpoint {
 	int		pw_index;	/* HW Watchpoint ID (count from 0) */
 	lwpid_t		pw_lwpid;	/* LWP described */
+#ifdef __HAVE_PTRACE_WATCHPOINTS
 	struct mdpw	pw_md;		/* MD fields */
-} ptrace_watchpoint_t;
 #endif
+} ptrace_watchpoint_t;
 
 #ifdef _KERNEL
 
@@ -264,10 +264,8 @@ int	process_write_watchpoint(struct lwp *, struct ptrace_watchpoint *);
 #endif
 #endif
 
-#ifdef __HAVE_PROCFS_MACHDEP
 int	ptrace_machdep_dorequest(struct lwp *, struct lwp *, int,
 	    void *, int);
-#endif
 
 #ifndef FIX_SSTEP
 #define FIX_SSTEP(p)
