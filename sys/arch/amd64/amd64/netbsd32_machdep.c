@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.97 2016/10/19 09:44:00 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.98 2016/12/15 12:04:17 kamil Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.97 2016/10/19 09:44:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.98 2016/12/15 12:04:17 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -128,6 +128,8 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	    ?  __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 
 	p->p_flag |= PK_32;
+
+	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);

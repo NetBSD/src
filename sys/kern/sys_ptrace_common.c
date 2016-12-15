@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.6 2016/12/05 22:07:16 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.7 2016/12/15 12:04:18 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.6 2016/12/05 22:07:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.7 2016/12/15 12:04:18 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -201,6 +201,11 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 #endif
 #ifdef PT_SETFPREGS
 	case PT_SETFPREGS:
+#endif
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+	case PT_READ_WATCHPOINT:
+	case PT_WRITE_WATCHPOINT:
+	case PT_COUNT_WATCHPOINTS:
 #endif
 	case PT_SET_EVENT_MASK:
 	case PT_GET_EVENT_MASK:
@@ -295,6 +300,9 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	struct ptrace_event pe;
 	struct ptrace_state ps;
 	struct ptrace_lwpinfo pl;
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+	struct ptrace_watchpoint pw;
+#endif
 	struct vmspace *vm;
 	int error, write, tmp, pheld;
 	int signo = 0;
@@ -404,6 +412,11 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 #endif
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
+#endif
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+	case  PT_READ_WATCHPOINT:
+	case  PT_WRITE_WATCHPOINT:
+	case  PT_COUNT_WATCHPOINTS:
 #endif
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
@@ -993,6 +1006,54 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		break;
 #endif
 
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+		/*
+		 * The "write" variable is used as type of operation.
+		 * Possible values:
+		 *	0 - return the number of supported hardware watchpoints
+		 *	1 - set new watchpoint value
+		 *	2 - get existing watchpoint image
+		 */
+	case  PT_WRITE_WATCHPOINT:
+		write = 1;
+	case  PT_READ_WATCHPOINT:
+		/* write = 0 done above */
+
+		if (data != sizeof(pw)) {
+			DPRINTF(("ptrace(%d): %d != %zu\n", req,
+			    data, sizeof(pe)));
+			error = EINVAL;
+			break;
+		}
+		error = copyin(addr, &pw, sizeof(pw));
+		if (error)
+			break;
+		tmp = pw.pw_lwpid;
+		if (tmp != 0 && t->p_nlwps > 1) {
+			lwp_delref(lt);
+			mutex_enter(t->p_lock);
+			lt = lwp_find(t, tmp);
+			if (lt == NULL) {
+				mutex_exit(t->p_lock);
+				error = ESRCH;
+				break;
+			}
+			lwp_addref(lt);
+			mutex_exit(t->p_lock);
+		}
+		++write;
+	case  PT_COUNT_WATCHPOINTS:
+		if (!process_validwatchpoint(lt))
+			error = EINVAL;
+		else {
+			lwp_lock(lt);
+			error = ptm->ptm_dowatchpoint(l, lt, write, &pw, addr,
+			    retval);
+			lwp_unlock(lt);
+		}
+		break;
+#endif
+
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
 		error = ptrace_machdep_dorequest(l, lt, req, addr, data);
@@ -1135,6 +1196,45 @@ process_auxv_offset(struct proc *p, struct uio *uio)
 #endif
 	return 0;
 }
+
+int
+process_dowatchpoint(struct lwp *curl /*tracer*/, struct lwp *l /*traced*/,
+    int operation, struct ptrace_watchpoint *pw, void *addr,
+    register_t *retval)
+{
+
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+	int error;
+
+	KASSERT(operation >= 0);
+	KASSERT(operation <= 2);
+
+	switch (operation) {
+	case 0:
+		return process_count_watchpoints(l, retval);
+	case 1:
+		error = process_read_watchpoint(l, pw);
+		if (error)
+			return error;
+		return copyout(pw, addr, sizeof(*pw));
+	default:
+		return process_write_watchpoint(l, pw);
+	}
+#else
+	return EINVAL;
+#endif
+}
+
+int
+process_validwatchpoint(struct lwp *l)
+{
+
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+	return (l->l_flag & LW_SYSTEM) == 0;
+#else
+	return 0;
+#endif
+}
 #endif /* PTRACE */
 
 MODULE(MODULE_CLASS_EXEC, ptrace_common, "");
@@ -1158,4 +1258,3 @@ ptrace_common_modcmd(modcmd_t cmd, void *arg)
         }
         return error;
 }
-

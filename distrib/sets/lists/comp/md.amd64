@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.239 2016/12/14 12:59:51 kre Exp $
+# $NetBSD: md.amd64,v 1.240 2016/12/15 12:04:18 kamil Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -496,6 +496,7 @@
 ./usr/include/x86/cpu_ucode.h			comp-c-include
 ./usr/include/x86/cputypes.h			comp-c-include
 ./usr/include/x86/cpuvar.h			comp-c-include
+./usr/include/x86/dbregs.h			comp-c-include
 ./usr/include/x86/float.h			comp-c-include
 ./usr/include/x86/fpu.h				comp-c-include
 ./usr/include/x86/ieee.h			comp-c-include

@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.9 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: userret.h,v 1.10 2016/12/15 12:04:17 kamil Exp $	*/
 
 /*
  * XXXfvdl same as i386 counterpart, but should probably be independent.
@@ -67,6 +67,7 @@
  */
 
 #include <sys/userret.h>
+#include <x86/dbregs.h>
 
 static __inline void userret(struct lwp *);
 
@@ -80,4 +81,15 @@ userret(struct lwp *l)
 
 	/* Invoke MI userret code */
 	mi_userret(l);
+
+	/*
+	 * Never mix debug registers with single step, while technically
+	 * possible on x86 CPUs, it adds unnecessary complications we do
+	 * not want to handle it.
+	 */
+	if ((l->l_md.md_regs->tf_rflags & PSL_T) == 0 &&
+	    l->l_md.md_flags & MDL_X86_HW_WATCHPOINTS)
+		set_x86_hw_watchpoints(l);
+	else
+		clear_x86_hw_watchpoints();
 }

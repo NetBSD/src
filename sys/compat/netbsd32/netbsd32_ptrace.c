@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ptrace.c,v 1.2 2016/11/02 00:11:59 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_ptrace.c,v 1.3 2016/12/15 12:04:18 kamil Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.2 2016/11/02 00:11:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.3 2016/12/15 12:04:18 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -58,6 +58,8 @@ static int netbsd32_copyinpiod(struct ptrace_io_desc *, const void *);
 static void netbsd32_copyoutpiod(const struct ptrace_io_desc *, void *);
 static int netbsd32_doregs(struct lwp *, struct lwp *, struct uio *);
 static int netbsd32_dofpregs(struct lwp *, struct lwp *, struct uio *);
+static int netbsd32_dowatchpoint(struct lwp *, struct lwp *, int,
+	    struct ptrace_watchpoint *, void *, register_t *);
 
 
 static int
@@ -165,11 +167,22 @@ netbsd32_dofpregs(struct lwp *curl /*tracer*/,
 #endif
 }
 
+static int
+netbsd32_dowatchpoint(struct lwp *curl /*tracer*/, struct lwp *l /*traced*/,
+    int write, struct ptrace_watchpoint *pw, void *addr, register_t *retval)
+{
+
+	/* unimplemented */
+
+	return EINVAL;
+}
+
 static struct ptrace_methods netbsd32_ptm = {
 	.ptm_copyinpiod = netbsd32_copyinpiod,
 	.ptm_copyoutpiod = netbsd32_copyoutpiod,
 	.ptm_doregs = netbsd32_doregs,
-	.ptm_dofpregs = netbsd32_dofpregs
+	.ptm_dofpregs = netbsd32_dofpregs,
+	.ptm_dowatchpoint = netbsd32_dowatchpoint
 };
 
 

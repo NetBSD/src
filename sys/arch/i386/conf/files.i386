@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.375 2016/12/13 10:54:27 kamil Exp $
+#	$NetBSD: files.i386,v 1.376 2016/12/15 12:04:18 kamil Exp $
 #
 # new style config file for i386 architecture
 #
@@ -79,6 +79,7 @@ file	arch/x86/x86/convert_xmm_s87.c
 file	arch/i386/i386/trap.c
 file	dev/cons.c
 file	arch/x86/x86/fpu.c
+file	arch/x86/x86/dbregs.c
 
 file	arch/i386/i386/mptramp.S	multiprocessor
 

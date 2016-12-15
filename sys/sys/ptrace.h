@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.49 2016/11/04 18:14:04 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.50 2016/12/15 12:04:18 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -118,6 +118,19 @@ struct ptrace_lwpinfo {
 #define PL_EVENT_NONE	0
 #define PL_EVENT_SIGNAL	1
 
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+/*
+ * Hardware Watchpoints
+ *
+ * MD code handles switch informing whether a particular watchpoint is enabled
+ */
+typedef struct ptrace_watchpoint {
+	int		pw_index;	/* HW Watchpoint ID (count from 0) */
+	lwpid_t		pw_lwpid;	/* LWP described */
+	struct mdpw	pw_md;		/* MD fields */
+} ptrace_watchpoint_t;
+#endif
+
 #ifdef _KERNEL
 
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
@@ -138,12 +151,22 @@ struct fpreg;
 #define process_fpreg64 struct fpreg
 #endif
 #endif
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+#ifndef process_watchpoint32
+#define process_watchpoint32 struct ptrace_watchpoint
+#endif
+#ifndef process_watchpoint64
+#define process_watchpoint64 struct ptrace_watchpoint
+#endif
+#endif
 
 struct ptrace_methods {
 	int (*ptm_copyinpiod)(struct ptrace_io_desc *, const void *);
 	void (*ptm_copyoutpiod)(const struct ptrace_io_desc *, void *);
 	int (*ptm_doregs)(struct lwp *, struct lwp *, struct uio *);
 	int (*ptm_dofpregs)(struct lwp *, struct lwp *, struct uio *);
+	int (*ptm_dowatchpoint)(struct lwp *, struct lwp *, int,
+	    struct ptrace_watchpoint *, void *, register_t *);
 };
 
 int	ptrace_init(void);
@@ -155,6 +178,10 @@ int	process_validregs(struct lwp *);
 
 int	process_dofpregs(struct lwp *, struct lwp *, struct uio *);
 int	process_validfpregs(struct lwp *);
+
+int	process_dowatchpoint(struct lwp *, struct lwp *, int,
+	    struct ptrace_watchpoint *, void *, register_t *);
+int	process_validwatchpoint(struct lwp *);
 
 int	process_domem(struct lwp *, struct lwp *, struct uio *);
 
@@ -208,6 +235,32 @@ int	process_write_regs(struct lwp *, const struct reg *);
 #endif
 #ifndef process_write_regs64
 #define process_write_regs64	process_write_regs
+#endif
+#endif
+
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+int	process_count_watchpoints(struct lwp *, register_t *retval);
+#ifndef process_count_watchpoints32
+#define process_count_watchpoints32	process_count_watchpoints
+#endif
+#ifndef process_count_watchpoints64
+#define process_count_watchpoints64	process_count_watchpoints
+#endif
+
+int	process_read_watchpoint(struct lwp *, struct ptrace_watchpoint *);
+#ifndef process_read_watchpoint32
+#define process_read_watchpoint32	process_read_watchpoint
+#endif
+#ifndef process_read_watchpoint64
+#define process_read_watchpoint64	process_read_watchpoint
+#endif
+
+int	process_write_watchpoint(struct lwp *, struct ptrace_watchpoint *);
+#ifndef process_write_watchpoint32
+#define process_write_watchpoint32	process_write_watchpoint
+#endif
+#ifndef process_write_watchpoint64
+#define process_write_watchpoint64	process_write_watchpoint
 #endif
 #endif
 

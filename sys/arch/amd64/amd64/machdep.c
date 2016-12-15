@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.237 2016/12/12 02:51:24 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.238 2016/12/15 12:04:17 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2016/12/12 02:51:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.238 2016/12/15 12:04:17 kamil Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -482,6 +482,7 @@ x86_64_proc0_tss_ldt_init(void)
 	pmap_kernel()->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_rsp0 - 1;
+	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
 
 #if !defined(XEN)
 	lldt(pmap_kernel()->pm_ldt_sel);
@@ -1315,6 +1316,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	pcb->pcb_flags = 0;
 
 	l->l_proc->p_flag &= ~PK_32;
+
+	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
