@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 2016/11/08 03:05:36 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.27 2016/12/15 12:04:18 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26 2016/11/08 03:05:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.27 2016/12/15 12:04:18 kamil Exp $");
 
 #include "opt_mtrr.h"
 
@@ -231,6 +231,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_esp = (int)sf;
 	pcb2->pcb_ebp = (int)l2;
 #endif
+
+	/*
+	 * Do not inherit hardware watchpoints. If they are desired, userland
+	 * should do it on its own.
+	 */
+	memset(l2->l_md.md_watchpoint, 0, sizeof(*l2->l_md.md_watchpoint));
 }
 
 /*
