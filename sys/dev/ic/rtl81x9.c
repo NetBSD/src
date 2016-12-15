@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.100 2016/06/10 13:27:13 ozaki-r Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.101 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.100 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.101 2016/12/15 09:28:05 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1073,9 +1073,6 @@ rtk_rxeof(struct rtk_softc *sc)
 		if (m == NULL)
 			continue;
 
-		ifp->if_ipackets++;
-
-		bpf_mtap(ifp, m);
 		/* pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.54 2016/12/08 01:12:01 ozaki-r Exp $ */
+/* $NetBSD: if_mec.c,v 1.55 2016/12/15 09:28:04 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.54 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.55 2016/12/15 09:28:04 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 
@@ -1730,14 +1730,6 @@ mec_rxintr(struct mec_softc *sc)
 		m->m_pkthdr.len = m->m_len = len;
 		if ((ifp->if_csum_flags_rx & (M_CSUM_TCPv4|M_CSUM_UDPv4)) != 0)
 			mec_rxcsum(sc, m, RXSTAT_CKSUM(rxstat), crc);
-
-		ifp->if_ipackets++;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

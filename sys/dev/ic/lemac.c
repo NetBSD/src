@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.46 2016/12/06 08:21:47 ozaki-r Exp $ */
+/* $NetBSD: lemac.c,v 1.47 2016/12/15 09:28:05 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.46 2016/12/06 08:21:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.47 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -305,7 +305,6 @@ lemac_input(
 
     m->m_pkthdr.len = m->m_len = length;
     m_set_rcvif(m, &sc->sc_if);
-    bpf_mtap(&sc->sc_if, m);
 
     if_percpuq_enqueue((&sc->sc_if)->if_percpuq, m);
 }
@@ -322,7 +321,6 @@ lemac_rne_intr(
 	unsigned rxpg = LEMAC_INB(sc, LEMAC_REG_RQ);
 	u_int32_t rxlen;
 
-	sc->sc_if.if_ipackets++;
 	if (LEMAC_USE_PIO_MODE(sc)) {
 	    LEMAC_OUTB(sc, LEMAC_REG_IOP, rxpg);
 	    LEMAC_OUTB(sc, LEMAC_REG_PI1, 0);

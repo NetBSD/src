@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.28 2016/06/10 13:27:11 ozaki-r Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.29 2016/12/15 09:28:02 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1013,7 +1013,6 @@ bcmeth_rx_input(
 	}
 	m_set_rcvif(m, ifp);
 
-	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_pkthdr.len;
 
 	/*
@@ -1025,7 +1024,6 @@ bcmeth_rx_input(
 	mutex_enter(sc->sc_lock);
 #else
 	int s = splnet();
-	bpf_mtap(ifp, m);
 	if_input(ifp, m);
 	splx(s);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.20 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.21 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.20 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.21 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "vlan.h"
 
@@ -1543,9 +1543,6 @@ ale_rxeof(struct ale_softc *sc)
 			VLAN_INPUT_TAG(ifp, m, ALE_RX_VLAN_TAG(vtags), );
 		}
 #endif
-
-
-		bpf_mtap(ifp, m);
 
 		/* Pass it to upper layer. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

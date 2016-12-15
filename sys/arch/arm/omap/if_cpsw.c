@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.17 2016/12/08 01:12:00 ozaki-r Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.18 2016/12/15 09:28:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.17 2016/12/08 01:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.18 2016/12/15 09:28:02 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1166,10 +1166,6 @@ cpsw_rxintr(void *arg)
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 		m->m_data += off;
-
-		ifp->if_ipackets++;
-
-		bpf_mtap(ifp, m);
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 
