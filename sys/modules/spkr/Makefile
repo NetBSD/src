@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2016/12/09 06:12:03 christos Exp $
+# $NetBSD: Makefile,v 1.6 2016/12/15 06:48:14 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -7,6 +7,9 @@
 KMOD=	spkr
 IOCONF=	spkr.ioconf
 SRCS=	spkr.c spkr_pcppi.c
+
+.PATH:	${S}/dev
+SRCS+=	spkr_audio.c audiobell.c
 
 WARNS=	4
 
