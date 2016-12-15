@@ -1,8 +1,9 @@
-# $NetBSD: md.i386,v 1.72 2016/12/15 06:50:37 pgoyette Exp $
+# $NetBSD: md.i386,v 1.73 2016/12/15 12:56:52 kre Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
 #
+
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -121,17 +122,16 @@
 ./@MODULEDIR@/lm_wbsio/lm_wbsio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mach64drm				base-kernel-modules	kmod
 ./@MODULEDIR@/mach64drm/mach64drm.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/mlx_eisa				base-obsolete		obsolete
-./@MODULEDIR@/mlx_eisa/mlx_eisa.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/mgadrm				base-kernel-modules	kmod
 ./@MODULEDIR@/mgadrm/mgadrm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/mlx_eisa				base-obsolete		obsolete
+./@MODULEDIR@/mlx_eisa/mlx_eisa.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/mt2131				base-kernel-modules	kmod
 ./@MODULEDIR@/mt2131/mt2131.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/nsclpcsio				base-kernel-modules	kmod
 ./@MODULEDIR@/nsclpcsio/nsclpcsio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/nvme				base-obsolete		obsolete
 ./@MODULEDIR@/nvme/nvme.kmod			base-obsolete		obsolete
-
 ./@MODULEDIR@/nxt2k				base-kernel-modules	kmod
 ./@MODULEDIR@/nxt2k/nxt2k.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/odcm				base-kernel-modules	kmod
