@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_synth.c,v 1.9 2016/12/14 22:30:42 christos Exp $	*/
+/*	$NetBSD: spkr_audio.c,v 1.1 2016/12/15 04:36:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_synth.c,v 1.9 2016/12/14 22:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.1 2016/12/15 04:36:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,11 +61,11 @@ static void bell_thread(void *) __dead;
 #include <dev/spkrvar.h>
 #include <dev/spkrio.h>
 
-static int spkr_synth_probe(device_t, cfdata_t, void *);
-static void spkr_synth_attach(device_t, device_t, void *);
-static int spkr_synth_detach(device_t, int);
+static int spkr_audio_probe(device_t, cfdata_t, void *);
+static void spkr_audio_attach(device_t, device_t, void *);
+static int spkr_audio_detach(device_t, int);
 
-struct spkr_synth_softc {
+struct spkr_audio_softc {
 	struct spkr_softc sc_spkr;
 	lwp_t		*sc_bellthread;
 	kmutex_t	sc_bellock;
@@ -74,8 +74,8 @@ struct spkr_synth_softc {
 	struct vbell_args sc_bell_args;
 };
 
-CFATTACH_DECL_NEW(spkr_synth, sizeof(struct spkr_synth_softc),
-    spkr_synth_probe, spkr_synth_attach, spkr_synth_detach, NULL);
+CFATTACH_DECL_NEW(spkr_audio, sizeof(struct spkr_audio_softc),
+    spkr_audio_probe, spkr_audio_attach, spkr_audio_detach, NULL);
 
 MODULE(MODULE_CLASS_DRIVER, spkr, NULL /* "audio" */);
 
@@ -86,9 +86,9 @@ spkr_modcmd(modcmd_t cmd, void *arg)
 }
 
 static void
-spkr_synth_tone(device_t self, u_int xhz, u_int ticks)
+spkr_audio_tone(device_t self, u_int xhz, u_int ticks)
 {
-	struct spkr_synth_softc *sc = device_private(self);
+	struct spkr_audio_softc *sc = device_private(self);
 
 #ifdef SPKRDEBUG
 	aprint_debug_dev(self, "%s: %u %d\n", __func__, xhz, ticks);
@@ -97,9 +97,9 @@ spkr_synth_tone(device_t self, u_int xhz, u_int ticks)
 }
 
 static void
-spkr_synth_rest(device_t self, int ticks)
+spkr_audio_rest(device_t self, int ticks)
 {
-	struct spkr_synth_softc *sc = device_private(self);
+	struct spkr_audio_softc *sc = device_private(self);
 	
 #ifdef SPKRDEBUG
 	aprint_debug_dev(self, "%s: %d\n", __func__, ticks);
@@ -110,9 +110,9 @@ spkr_synth_rest(device_t self, int ticks)
 
 #ifdef notyet
 static void
-spkr_synth_play(device_t self, u_int pitch, u_int period, u_int volume)
+spkr_audio_play(device_t self, u_int pitch, u_int period, u_int volume)
 {
-	struct spkr_synth_softc *sc = device_private(self);
+	struct spkr_audio_softc *sc = device_private(self);
 
 	mutex_enter(&sc->sc_bellock);
 	sc->sc_bell_args.dying = false;
@@ -126,16 +126,16 @@ spkr_synth_play(device_t self, u_int pitch, u_int period, u_int volume)
 #endif
 
 static int
-spkr_synth_probe(device_t parent, cfdata_t cf, void *aux)
+spkr_audio_probe(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 static void
-spkr_synth_attach(device_t parent, device_t self, void *aux)
+spkr_audio_attach(device_t parent, device_t self, void *aux)
 {
-	struct spkr_synth_softc *sc = device_private(self);
+	struct spkr_audio_softc *sc = device_private(self);
 
 	aprint_naive("\n");
 	aprint_normal(": PC Speaker (synthesized)\n");
@@ -150,13 +150,13 @@ spkr_synth_attach(device_t parent, device_t self, void *aux)
 	kthread_create(PRI_BIO, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
 	    bell_thread, sc, &sc->sc_bellthread, "%s", device_xname(self));
 
-	spkr_attach(self, spkr_synth_tone, spkr_synth_rest);
+	spkr_attach(self, spkr_audio_tone, spkr_audio_rest);
 }
 
 static int
-spkr_synth_detach(device_t self, int flags)
+spkr_audio_detach(device_t self, int flags)
 {
-	struct spkr_synth_softc *sc = device_private(self);
+	struct spkr_audio_softc *sc = device_private(self);
 
 	pmf_device_deregister(self);
 
@@ -177,7 +177,7 @@ spkr_synth_detach(device_t self, int flags)
 static void
 bell_thread(void *arg)
 {
-	struct spkr_synth_softc *sc = arg;
+	struct spkr_audio_softc *sc = arg;
 	struct vbell_args *vb = &sc->sc_bell_args;
 	u_int bpitch;
 	u_int bperiod;
