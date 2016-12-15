@@ -1,8 +1,7 @@
-$NetBSD: TODO.ptrace,v 1.3 2016/12/15 07:47:08 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.4 2016/12/15 12:42:38 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
- - merge hardware watchpoint (breakpoint) support with HEAD
  - verify ppid of core dump generated with PT_DUMPCORE
    it must point to the real parent, not tracer
  - adapt OpenBSD regress test (regress/sys/ptrace/ptrace.c) for the ATF context
@@ -21,7 +20,8 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - add support for detecting equivalent events to PTRACE_O_TRACEEXEC,
    PTRACE_O_TRACECLONE, PTRACE_O_TRACEEXIT from Linux
  - exect(3) rething or remove -- maybe PT_TRACE_ME + PTRACE_O_TRACEEXEC?
-   
+ - refactor pthread_dbg(3) to only query private pthread_t data, otherwise it
+   duplicates ptrace(2) interface and cannot cover all types of threads
 
 and of course: fix as many bugs as possible.
 
