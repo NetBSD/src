@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.50 2016/06/10 13:27:13 ozaki-r Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.51 2016/12/15 09:35:24 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.50 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.51 2016/12/15 09:35:24 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1574,7 +1574,7 @@ sca_frame_process(sca_port_t *scp)
 		return;
 	}
 
-	bpf_mtap(&scp->sp_if, m);
+	bpf_mtap(&scp->sp_if, m); /* XXX not in softint */
 
 	scp->sp_if.if_ipackets++;
 
