@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.149 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_de.c,v 1.150 2016/12/15 09:33:25 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.149 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.150 2016/12/15 09:33:25 ozaki-r Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -3894,8 +3894,6 @@ tulip_tx_intr(
 		    TULIP_TXMAP_POSTSYNC(sc, map);
 		    tulip_free_txmap(sc, map);
 #endif /* TULIP_BUS_DMA */
-		    if (sc->tulip_bpf != NULL)
-			bpf_mtap(&sc->tulip_if, m);
 		    m_freem(m);
 #if defined(TULIP_DEBUG)
 		} else {
@@ -4548,6 +4546,8 @@ tulip_txput(
     } while ((m0 = m0->m_next) != NULL);
 #endif /* TULIP_BUS_DMA */
 
+    if (sc->tulip_bpf != NULL)
+	bpf_mtap(&sc->tulip_if, m);
     /*
      * The descriptors have been filled in.  Now get ready
      * to transmit.
