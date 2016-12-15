@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.47 2016/12/08 01:12:00 ozaki-r Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.48 2016/12/15 09:28:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.47 2016/12/08 01:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.48 2016/12/15 09:28:04 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1017,12 +1017,9 @@ sq_rxintr(struct sq_softc *sc)
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = framelen;
 
-		ifp->if_ipackets++;
-
 		SQ_DPRINTF(("%s: sq_rxintr: buf %d len %d\n",
 		    device_xname(sc->sc_dev), i, framelen));
 
-		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 

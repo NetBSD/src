@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.22 2016/12/08 01:12:00 ozaki-r Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.23 2016/12/15 09:28:04 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.22 2016/12/08 01:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.23 2016/12/15 09:28:04 ozaki-r Exp $");
 
 #include "debug_playstation2.h"
 
@@ -394,8 +394,6 @@ smap_rxeof(void *arg)
 		memcpy(mtod(m, void *), (void *)sc->rx_buf, sz);
 
 	next_packet:
-		ifp->if_ipackets++;
-
 		_reg_write_1(SMAP_RXFIFO_FRAME_DEC_REG8, 1);
 
 		/* free descriptor */
@@ -404,11 +402,8 @@ smap_rxeof(void *arg)
 		d->stat	= SMAP_RXDESC_EMPTY;
 		_wbflush();
 		
-		if (m != NULL) {
-			if (ifp->if_bpf)
-				bpf_mtap(ifp, m);
+		if (m != NULL)
 			if_percpuq_enqueue(ifp->if_percpuq, m);
-		}
 	}
 	sc->rx_done_index = i;
 

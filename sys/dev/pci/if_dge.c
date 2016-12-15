@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.46 2016/12/08 01:12:01 ozaki-r Exp $ */
+/*	$NetBSD: if_dge.c,v 1.47 2016/12/15 09:28:05 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.46 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.47 2016/12/15 09:28:05 ozaki-r Exp $");
 
 
 
@@ -1807,11 +1807,6 @@ dge_rxintr(struct dge_softc *sc)
 			if (errors & RDESC_ERR_TCPE)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
-
-		ifp->if_ipackets++;
-
-		/* Pass this up to any BPF listeners. */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

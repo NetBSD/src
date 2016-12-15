@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.52 2016/12/08 01:12:00 ozaki-r Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.53 2016/12/15 09:28:03 ozaki-r Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.52 2016/12/08 01:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.53 2016/12/15 09:28:03 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -499,13 +499,7 @@ bmac_rint(void *v)
 			goto next;
 		}
 
-		/*
-		 * Check if there's a BPF listener on this interface.
-		 * If so, hand off the raw packet to BPF.
-		 */
-		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
-		ifp->if_ipackets++;
 
 next:
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_IN_LAST, 0, DBDMA_INT_ALWAYS,

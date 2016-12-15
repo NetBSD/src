@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.51 2016/10/02 14:16:02 christos Exp $	*/
+/*	$NetBSD: lance.c,v 1.52 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.51 2016/10/02 14:16:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.52 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,8 +444,6 @@ lance_read(struct lance_softc *sc, int boff, int len)
 		return;
 	}
 
-	ifp->if_ipackets++;
-
 	eh = mtod(m, struct ether_header *);
 
 #ifdef LANCE_REVC_BUG
@@ -471,12 +469,6 @@ lance_read(struct lance_softc *sc, int boff, int len)
 		m_freem(m);
 		return;
 	}
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	bpf_mtap(ifp, m);
 
 	/* Pass the packet up. */
 	if_percpuq_enqueue(ifp->if_percpuq, m);

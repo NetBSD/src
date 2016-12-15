@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.84 2016/12/14 22:21:13 christos Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.85 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.84 2016/12/14 22:21:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.85 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2116,9 +2116,6 @@ sk_rxeof(struct sk_if_softc *sc_if)
 			m->m_pkthdr.len = m->m_len = total_len;
 		}
 
-		ifp->if_ipackets++;
-
-		bpf_mtap(ifp, m);
 		/* pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}

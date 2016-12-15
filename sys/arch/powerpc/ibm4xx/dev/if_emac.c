@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.46 2016/12/08 01:12:00 ozaki-r Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.47 2016/12/15 09:28:04 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.46 2016/12/08 01:12:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.47 2016/12/15 09:28:04 ozaki-r Exp $");
 
 #include "opt_emac.h"
 
@@ -1666,15 +1666,8 @@ emac_rxeob_intr(void *arg)
 			}
 		}
 
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

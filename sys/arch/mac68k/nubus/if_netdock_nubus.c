@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.24 2016/06/10 13:27:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.25 2016/12/15 09:28:03 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.24 2016/06/10 13:27:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.25 2016/12/15 09:28:03 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -763,8 +763,6 @@ netdock_read(struct netdock_softc *sc, int len)
 	m = netdock_get(sc, len);
 	if (m == 0)
 		return (0);
-
-	bpf_mtap(ifp, m);
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 
