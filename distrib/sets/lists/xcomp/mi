@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.186 2016/09/24 21:57:38 mrg Exp $
+#	 $NetBSD: mi,v 1.187 2016/12/15 12:56:52 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -768,8 +768,8 @@
 ./usr/X11R7/include/xorg/atKeynames.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/bstore.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/bstorestr.h			-unknown-	obsolete
-./usr/X11R7/include/xorg/bt829.h			-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/include/xorg/bt829.h			-unknown-	xorg,obsolete,xorg_server_ver=118
+./usr/X11R7/include/xorg/bt829.h			-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/include/xorg/callback.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/cfb.h				-unknown-	obsolete
 ./usr/X11R7/include/xorg/cfb16.h			-unknown-	obsolete
