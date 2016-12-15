@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.42 2016/12/15 13:06:08 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.43 2016/12/15 14:49:46 kamil Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 1, 2016
@@ -381,6 +381,33 @@ This request is the converse of
 .Dv PT_GETFPREGS ;
 it loads the traced process' floating-point registers from the
 .Dq Li "struct fpreg"
+(defined in
+.In machine/reg.h )
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be written.
+If zero is supplied, the first thread of the process is written.
+.It Dv PT_GETXMMREGS
+This request reads the traced process' XMM registers into
+the
+.Dq Li "struct xmmregs"
+(defined in
+.In machine/reg.h )
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be read.
+If zero is supplied, the first thread of the process is read.
+.It Dv PT_SETXMMREGS
+This request is the converse of
+.Dv PT_GETXMMREGS ;
+it loads the traced process' XMM registers from the
+.Dq Li "struct xmmregs"
 (defined in
 .In machine/reg.h )
 pointed to by
