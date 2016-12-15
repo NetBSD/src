@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.766 2016/12/11 22:38:50 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.767 2016/12/15 12:04:18 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.766 2016/12/11 22:38:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.767 2016/12/15 12:04:18 kamil Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -513,6 +513,7 @@ i386_proc0_tss_ldt_init(void)
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
 	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
 	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
+	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
 
 #ifndef XEN
 	lldt(pmap_kernel()->pm_ldt_sel);
@@ -845,6 +846,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
 	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
+
+	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
 
 	tf = l->l_md.md_regs;
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
