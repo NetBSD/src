@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.457 2016/12/13 10:01:44 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.458 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.457 2016/12/13 10:01:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.458 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7585,12 +7585,7 @@ wm_rxeof(struct wm_rxqueue *rxq)
 			}
 		}
 
-		ifp->if_ipackets++;
-
 		mutex_exit(rxq->rxq_lock);
-
-		/* Pass this up to any BPF listeners. */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(sc->sc_ipq, m);

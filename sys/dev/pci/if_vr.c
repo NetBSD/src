@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.120 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.121 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.120 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.121 2016/12/15 09:28:05 ozaki-r Exp $");
 
 
 
@@ -777,16 +777,8 @@ vr_rxeof(struct vr_softc *sc)
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
 
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = total_len;
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet, but
-		 * don't pass it up to the ether_input() layer unless it's
-		 * a broadcast packet, multicast packet, matches our ethernet
-		 * address or the interface is in promiscuous mode.
-		 */
-		bpf_mtap(ifp, m);
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.20 2016/12/12 15:58:44 maya Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.21 2016/12/15 09:28:06 ozaki-r Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.20 2016/12/12 15:58:44 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.21 2016/12/15 09:28:06 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -585,7 +585,6 @@ qtrint(struct qt_softc *sc)
 			sc->is_if.if_ierrors++;
 			goto rnext;
 		}
-		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 rnext:
 		--sc->nrcv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.74 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: i82586.c,v 1.75 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.74 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.75 2016/12/15 09:28:05 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1037,9 +1037,6 @@ ie_readframe(
 			pktlen);
 	}
 #endif
-
-	/* Pass it up. */
-	bpf_mtap(&sc->sc_ethercom.ec_if, m);
 
 	/*
 	 * Finally pass this packet up to higher layers.

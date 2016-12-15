@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.42 2016/06/10 13:27:15 ozaki-r Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.43 2016/12/15 09:28:06 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.42 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.43 2016/12/15 09:28:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -712,7 +712,6 @@ cdce_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		goto done;
 	}
 
-	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = total_len;
 	m_set_rcvif(m, ifp);
 
@@ -722,8 +721,6 @@ cdce_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		ifp->if_ierrors++;
 		goto done1;
 	}
-
-	bpf_mtap(ifp, m);
 
 	if_percpuq_enqueue((ifp)->if_percpuq, (m));
 

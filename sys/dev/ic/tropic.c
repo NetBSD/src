@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.47 2016/07/14 04:00:45 msaitoh Exp $	*/
+/*	$NetBSD: tropic.c,v 1.48 2016/12/15 09:28:05 ozaki-r Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.47 2016/07/14 04:00:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.48 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1258,9 +1258,7 @@ tr_rint(struct tr_softc *sc)
 		 */
 		ASB_OUTB(sc, asb, RECV_RETCODE, 0);
 		ACA_SETB(sc, ACA_ISRA_o, RESP_IN_ASB);
-		++ifp->if_ipackets;
 
-		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 }

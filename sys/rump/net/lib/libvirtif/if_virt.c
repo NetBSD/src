@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.53 2016/06/16 02:38:40 ozaki-r Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.54 2016/12/15 09:28:07 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.53 2016/06/16 02:38:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.54 2016/12/15 09:28:07 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -375,12 +375,10 @@ VIF_DELIVERPKT(struct virtif_sc *sc, struct iovec *iov, size_t iovlen)
 
 	if (passup) {
 		int bound;
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 		KERNEL_LOCK(1, NULL);
 		/* Prevent LWP migrations between CPUs for psref(9) */
 		bound = curlwp_bind();
-		bpf_mtap(ifp, m);
 		if_input(ifp, m);
 		curlwp_bindx(bound);
 		KERNEL_UNLOCK_LAST(NULL);
