@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.36 2016/08/19 22:37:03 mrg Exp $
+# $NetBSD: shl.mi,v 1.37 2016/12/15 12:56:52 kre Exp $
 ./usr/libdata/debug/usr/X11R7/lib	-unknown-		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	obsolete		xorg,obsolete
@@ -41,8 +41,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/libXinerama.so.2.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXmu.so.7.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXmuu.so.2.0.debug	-unknown-		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libXpresent.so.1.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXpm.so.5.0.debug	-unknown-		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libXpresent.so.1.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXrandr.so.3.2.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXrender.so.2.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXss.so.2.0.debug	-unknown-		xorg,debug,compatx11file
@@ -61,8 +61,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/libfontconfig.so.2.2.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libfontenc.so.2.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libfreetype.so.18.0.13.debug	-unknown-		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libglapi.so.0.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libgbm.so.1.0.debug	-unknown-		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libglapi.so.0.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libglut.so.4.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libpciaccess.so.0.3.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libpixman-1.so.2.2.debug	-unknown-		xorg,debug,compatx11file
@@ -104,10 +104,10 @@
 ./usr/libdata/debug/usr/X11R7/lib/libxshmfence.so.1.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/gallium_dri.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0.debug	-unknown-	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	-unknown-	xorg,debug,machine=i386
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	-unknown-	xorg,debug,machine=amd64
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	-unknown-	xorg,debug,machine=i386
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	obsolete	obsolete,xorg,debug,!machine=i386,!machine=amd64
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/libswrast_dri.so.0.debug	obsolete	obsolete,xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	-unknown-	xorg,debug,machine=amd64
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	-unknown-	xorg,debug,machine=i386
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/libswrast_dri.so.0.debug	obsolete	obsolete,xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/swrast_dri.so.0.debug	-unknown-	xorg,debug

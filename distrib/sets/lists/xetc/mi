@@ -1,8 +1,8 @@
-# $NetBSD: mi,v 1.26 2015/09/03 22:24:02 youri Exp $
+# $NetBSD: mi,v 1.27 2016/12/15 12:56:52 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
-./etc/drirc						-unknown-	xorg
+./etc/X11/ctwm/system.ctwmrc				-unknown-	xorg
 ./etc/X11/fs/config					-unknown-	x11
 ./etc/X11/fs/config					-unknown-	xorg
 ./etc/X11/lbxproxy/AtomControl				-obsolete-	obsolete,xorg
@@ -23,7 +23,6 @@
 ./etc/X11/rstart/contexts/x				-unknown-	x11
 ./etc/X11/rstart/contexts/x11				-unknown-	x11
 ./etc/X11/rstart/contexts/x11r6				-unknown-	x11
-./etc/X11/ctwm/system.ctwmrc				-unknown-	xorg
 ./etc/X11/twm/system.twmrc				-unknown-	x11
 ./etc/X11/twm/system.twmrc				-unknown-	xorg
 ./etc/X11/xdm/GiveConsole				-unknown-	x11
@@ -57,6 +56,7 @@
 ./etc/X11/xserver/SecurityPolicy			-unknown-	x11
 ./etc/X11/xsm/system.xsm				-unknown-	x11
 ./etc/X11/xsm/system.xsm				-unknown-	xorg
+./etc/drirc						-unknown-	xorg
 ./etc/fonts/conf.avail/10-autohint.conf			-unknown-	xorg
 ./etc/fonts/conf.avail/10-no-sub-pixel.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-scale-bitmap-fonts.conf	-unknown-	xorg

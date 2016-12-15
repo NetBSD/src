@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.54 2016/10/18 12:56:11 christos Exp $	x11
+# $NetBSD: md.sgimips,v 1.55 2016/12/15 12:56:52 kre Exp $	x11
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -9,12 +9,12 @@
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/cirrus_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/crime_drv.so		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/crime_drv.so		-unknown-	xorg,xorg_server_ver=118
 ./usr/X11R7/lib/modules/drivers/crime_drv.so.0		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/crime_drv.so.0		-unknown-	xorg,xorg_server_ver=118
-./usr/X11R7/lib/modules/drivers/cirrus_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg,xorg_server_ver=110
@@ -26,8 +26,8 @@
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/newport_drv.so		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/newport_drv.so.0	-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/newport_drv.so		-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/lib/modules/drivers/newport_drv.so.0	-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/newport_drv.so.0	-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/drivers/s3_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/s3_drv.so.0		-unknown-	xorg
@@ -176,9 +176,9 @@
 ./usr/X11R7/man/html1/cvt.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/gtf.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/xorgconfig.html			-unknown-	obsolete
+./usr/X11R7/man/html4/cirrus.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/crime.html			-unknown-	html,xorg,xorg_server_ver=110
 ./usr/X11R7/man/html4/crime.html			-unknown-	html,xorg,xorg_server_ver=118,obsolete
-./usr/X11R7/man/html4/cirrus.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg,xorg_server_ver=110
 ./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg,xorg_server_ver=118,obsolete
@@ -196,9 +196,9 @@
 ./usr/X11R7/man/man1/cvt.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/gtf.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xorgconfig.1			-unknown-	obsolete
+./usr/X11R7/man/man4/cirrus.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/crime.4				-unknown-	.man,xorg,xorg_server_ver=110
 ./usr/X11R7/man/man4/crime.4				-unknown-	.man,xorg,xorg_server_ver=118,obsolete
-./usr/X11R7/man/man4/cirrus.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg,xorg_server_ver=110
 ./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg,xorg_server_ver=118,obsolete

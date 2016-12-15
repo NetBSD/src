@@ -1,4 +1,5 @@
-# $NetBSD: md.mac68k,v 1.5 2016/09/24 21:57:38 mrg Exp $
+# $NetBSD: md.mac68k,v 1.6 2016/12/15 12:56:52 kre Exp $
+
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/cvt.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	debug,xorg
@@ -23,4 +24,3 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug	-unknown-	debug,xorg,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug	-unknown-	debug,xorg,xorg_server_ver=118,obsolete
-
