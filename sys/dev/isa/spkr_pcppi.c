@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.7 2016/12/14 22:30:42 christos Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.8 2016/12/15 06:48:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.7 2016/12/14 22:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.8 2016/12/15 06:48:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.7 2016/12/14 22:30:42 christos Exp 
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/module.h>
 #include <sys/uio.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
@@ -75,14 +74,6 @@ static int spkr_pcppi_detach(device_t, int);
 
 CFATTACH_DECL_NEW(spkr_pcppi, sizeof(struct spkr_pcppi_softc),
     spkr_pcppi_probe, spkr_pcppi_attach, spkr_pcppi_detach, NULL);
-
-MODULE(MODULE_CLASS_DRIVER, spkr, NULL /* "pcppi" */);
-
-static int
-spkr_modcmd(modcmd_t cmd, void *arg)
-{
-	return spkr__modcmd(cmd, arg);
-}
 
 #define SPKRPRI (PZERO - 1)
 
