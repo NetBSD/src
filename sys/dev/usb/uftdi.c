@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.63 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.64 2016/12/15 17:21:21 maya Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.63 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.64 2016/12/15 17:21:21 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -340,6 +340,9 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 
