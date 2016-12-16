@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.281 2016/12/16 22:03:10 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.282 2016/12/16 22:14:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.281 2016/12/16 22:03:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.282 2016/12/16 22:14:15 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -528,7 +528,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	    hwp->query_devinfo == 0 ||
 	    hwp->get_props == 0) {
 		aprint_error(": missing method\n");
-		sc->hw_if = 0;
+		sc->hw_if = NULL;
 		return;
 	}
 #endif
@@ -1432,7 +1432,7 @@ audio_enter(dev_t dev, krw_t rw, struct audio_softc **scp)
 
 	/* First, find the device and take sc_lock. */
 	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
-	if (sc == NULL || sc->hw_if)
+	if (sc == NULL || sc->hw_if == NULL)
 		return ENXIO;
 	mutex_enter(sc->sc_lock);
 	if (sc->sc_dying) {
