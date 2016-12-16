@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.7 2009/02/24 18:42:36 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.8 2016/12/16 04:45:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -61,13 +61,14 @@ DIR *__opendir230(const char *, int);
 int scandir(const char *, struct dirent12 ***,
     int (*)(const struct dirent12 *), int (*)(const void *, const void *));
 int __scandir30(const char *, struct dirent ***,
-    int (*)(const struct dirent *), int (*)(const void *, const void *));
+    int (*)(const struct dirent *),
+    int (*)(const struct dirent **, const struct dirent **));
 
 int getdents(int, char *, size_t);
 int __getdents30(int, char *, size_t);
 
 int alphasort(const void *, const void *);
-int __alphasort30(const void *, const void *);
+int __alphasort30(const struct dirent **, const struct dirent **);
 
 int getdirentries(int, char *, int, long *);
 

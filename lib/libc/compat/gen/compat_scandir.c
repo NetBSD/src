@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_scandir.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_scandir.c,v 1.2 2016/12/16 04:45:04 mrg Exp $	*/
 
 #include <sys/stat.h>
 #define __LIBC12_SOURCE__
@@ -16,5 +16,6 @@ __warn_references(scandir,
 #endif
 
 #define dirent dirent12
+#define COMPARARG void *
 
 #include "gen/scandir.c"

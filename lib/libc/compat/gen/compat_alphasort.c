@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_alphasort.c,v 1.1 2009/02/24 18:42:36 christos Exp $	*/
+/*	$NetBSD: compat_alphasort.c,v 1.2 2016/12/16 04:45:04 mrg Exp $	*/
 
 #include <sys/stat.h>
 #define __LIBC12_SOURCE__
@@ -16,5 +16,6 @@ __warn_references(alphasort,
 #endif
 
 #define dirent dirent12
+#define ALPHASORTARG void *
 
 #include "gen/alphasort.c"
