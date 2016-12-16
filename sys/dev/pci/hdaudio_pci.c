@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.4 2016/07/14 04:19:27 msaitoh Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.5 2016/12/16 11:34:52 nonaka Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.4 2016/07/14 04:19:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.5 2016/12/16 11:34:52 nonaka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,6 +58,7 @@ struct hdaudio_pci_softc {
 	pci_chipset_tag_t	sc_pc;
 	void			*sc_ih;
 	pcireg_t		sc_id;
+	pci_intr_handle_t	*sc_pihp;
 };
 
 static int	hdaudio_pci_match(device_t, cfdata_t, void *);
@@ -105,7 +106,6 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 {
 	struct hdaudio_pci_softc *sc = device_private(self);
 	struct pci_attach_args *pa = opaque;
-	pci_intr_handle_t ih;
 	const char *intrstr;
 	pcireg_t csr;
 	int err;
@@ -140,13 +140,13 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_hdaudio.sc_dmat = pa->pa_dmat;
 
 	/* Map interrupt and establish handler */
-	err = pci_intr_map(pa, &ih);
-	if (err) {
+	if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0)) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO,
+	intrstr = pci_intr_string(pa->pa_pc, sc->sc_pihp[0], intrbuf,
+	    sizeof(intrbuf));
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, sc->sc_pihp[0], IPL_AUDIO,
 	    hdaudio_pci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
@@ -165,6 +165,7 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 	/* Attach bus-independent HD audio layer */
 	if (hdaudio_attach(self, &sc->sc_hdaudio)) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		pci_intr_release(sc->sc_pc, sc->sc_pihp, 1);
 		sc->sc_ih = NULL;
 		bus_space_unmap(sc->sc_hdaudio.sc_memt,
 				sc->sc_hdaudio.sc_memh,
@@ -205,6 +206,7 @@ hdaudio_pci_detach(device_t self, int flags)
 
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		pci_intr_release(sc->sc_pc, sc->sc_pihp, 1);
 		sc->sc_ih = NULL;
 	}
 	if (sc->sc_hdaudio.sc_memvalid == true) {
