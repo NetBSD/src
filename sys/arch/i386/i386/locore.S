@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.142 2016/12/06 15:05:07 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.143 2016/12/16 19:52:22 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.142 2016/12/06 15:05:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.143 2016/12/16 19:52:22 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -918,8 +918,8 @@ begin:
 	leal	(USPACE-FRAMESIZE)(%eax),%esp
 	xorl	%ebp,%ebp		/* mark end of frames */
 
-	/* Set first_avail after the UAREA. */
-	addl	$USPACE,%esi
+	/* Set first_avail after the DUMMY PAGE (see xen_locore). */
+	addl	$(USPACE+PAGE_SIZE),%esi
 	subl	$KERNBASE,%esi		/* init386 wants a physical address */
 
 #ifdef PAE
