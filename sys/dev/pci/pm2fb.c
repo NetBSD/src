@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.28 2015/09/16 16:52:54 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.29 2016/12/16 23:34:46 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.28 2015/09/16 16:52:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.29 2016/12/16 23:34:46 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,6 +603,7 @@ pm2fb_mmap(void *v, void *vs, off_t offset, int prot)
 		    BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
+	/* XXX 2nd fb BAR? */
 
 #ifdef PCI_MAGIC_IO_RANGE
 	/* allow mapping of IO space */
@@ -879,9 +880,11 @@ pm2fb_rectfill(struct pm2fb_softc *sc, int x, int y, int wi, int he,
      uint32_t colour)
 {
 
-	pm2fb_wait(sc, 7);
+	pm2fb_wait(sc, 9);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DDA_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_ALPHA_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DITHER_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_CONFIG,
 	    PM2RECFG_WRITE_EN);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_BLOCK_COLOUR,
@@ -917,9 +920,11 @@ pm2fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 	if (xd <= xs) {
 		dir |= PM2RE_INC_X;
 	}
-	pm2fb_wait(sc, 8);
+	pm2fb_wait(sc, 10);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DDA_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_ALPHA_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DITHER_MODE, 0);
 	if (sc->sc_depth == 8) {
 		int adjust;
 		/*
@@ -1130,9 +1135,9 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct pm2fb_softc *sc = scr->scr_cookie;
-	uint32_t bg, fg, /*latch = 0,*/ bg8, fg8, pixel;
-	int i, x, y, wi, he, r, g, b, aval;
-	int r1, g1, b1, r0, g0, b0, fgo, bgo;
+	uint32_t bg, fg, pixel, /*bg32,*/ fg32, aval;
+	int i, x, y, wi, he;
+	int r1, g1, b1, /*r0, g0, b0,*/ fgo/*, bgo*/;
 	uint8_t *data8;
 	int rv = GC_NOPE, cnt = 0;
 
@@ -1149,8 +1154,12 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
+
+	/* always blit the cell with the background colour */
+	pm2fb_rectfill(sc, x, y, wi, he, bg);
+
+	/* if we draw a whitespace we're done here */
 	if (c == 0x20) {
-		pm2fb_rectfill(sc, x, y, wi, he, bg);
 		if (attr & 1)
 			pm2fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
@@ -1166,77 +1175,57 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 
 	data8 = WSFONT_GLYPH(c, font);
 
-	pm2fb_wait(sc, 5);
-#if 0
-	/*
-	 * TODO:
-	 * - use packed mode here as well, instead of writing each pixel separately
-	 * - see if we can trick the chip into doing the alpha blending for us
-	 */
-	x = x >> 2;
-	wi = (wi + 3) >> 2;
-#endif
+	pm2fb_wait(sc, 7);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_MODE, 0);
+	/*
+	 * XXX
+	 * we *chould* be able to get away without reading the framebuffer
+	 * since our background colour is always constant, but for some reason
+	 * that produces random, mostly black background
+	 */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_CONFIG,
-			    PM2RECFG_WRITE_EN /*| PM2RECFG_PACKED*/);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    PM2_RE_RECT_START, (y << 16) | x);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    PM2_RE_RECT_SIZE, (he << 16) | wi);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    PM2_RE_RENDER,
-			    PM2RE_RECTANGLE | PM2RE_SYNC_ON_HOST |
-			    PM2RE_INC_X | PM2RE_INC_Y);
+			    PM2RECFG_WRITE_EN | PM2RECFG_READ_DST);
+
+	/* enable alpha blending and R3G3B2 output */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_ALPHA_MODE,
+			    PM2AL_ENABLE |
+			    PM2AL_OP_SRC_IS_SRC_ALPHA | 
+			    PM2AL_OP_DST_IS_ONE_MINUS_SRC_ALPHA |
+			    PM2AL_332F | PM2AL_RGB);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DITHER_MODE,
+			    PM2DM_ENABLE |
+			    PM2DM_332F | PM2DM_RGB);
+
 	/*
 	 * we need the RGB colours here, so get offsets into rasops_cmap
 	 */
 	fgo = ((attr >> 24) & 0xf) * 3;
-	bgo = ((attr >> 16) & 0xf) * 3;
 
-	r0 = rasops_cmap[bgo];
 	r1 = rasops_cmap[fgo];
-	g0 = rasops_cmap[bgo + 1];
 	g1 = rasops_cmap[fgo + 1];
-	b0 = rasops_cmap[bgo + 2];
 	b1 = rasops_cmap[fgo + 2];
-#define R3G3B2(r, g, b) ((r & 0xe0) | ((g >> 3) & 0x1c) | (b >> 6))
-	bg8 = R3G3B2(r0, g0, b0);
-	fg8 = R3G3B2(r1, g1, b1);
 
-	pm2fb_wait(sc, 200);
+	fg32 = ( r1 << 16) | (g1 << 8) | b1;
 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_RECT_START, (y << 16) | x);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_RECT_SIZE, (he << 16) | wi);
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_RENDER,
+			    PM2RE_RECTANGLE | PM2RE_SYNC_ON_HOST |
+			    PM2RE_INC_X | PM2RE_INC_Y);
+
+	pm2fb_wait(sc, min(200, ri->ri_fontscale));
+
+	/*
+	 * and now we just hammer the forground colour and alpha values into
+	 * the upload port
+	 */
 	for (i = 0; i < ri->ri_fontscale; i++) {
 		aval = *data8;
-		if (aval == 0) {
-			pixel = bg8;
-		} else if (aval == 255) {
-			pixel = fg8;
-		} else {
-			r = aval * r1 + (255 - aval) * r0;
-			g = aval * g1 + (255 - aval) * g0;
-			b = aval * b1 + (255 - aval) * b0;
-			pixel = ((r & 0xe000) >> 8) |
-				((g & 0xe000) >> 11) |
-				((b & 0xc000) >> 14);
-		}
-#if 0
-		latch = (latch << 8) | pixel;
-		/* write in 32bit chunks */
-		if ((i & 3) == 3) {
-			bus_space_write_stream_4(sc->sc_memt, sc->sc_regh,
-			    PM2_RE_DATA, latch);
-			/*
-			 * not strictly necessary, old data should be shifted 
-			 * out 
-			 */
-			latch = 0;
-			cnt++;
-			if (cnt > 190) {
-				pm2fb_wait(sc, 200);
-				cnt = 0;
-			}
-		}
-#else
+		pixel = fg32 | (aval << 24);
 		bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_COLOUR, pixel);
 
@@ -1244,17 +1233,8 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 			pm2fb_wait(sc, 200);
 			cnt = 0;
 		}		
-#endif
 		data8++;
 	}
-#if 0
-	/* if we have pixels left in latch write them out */
-	if ((i & 3) != 0) {
-		latch = latch << ((4 - (i & 3)) << 3);	
-		bus_space_write_stream_4(sc->sc_memt, sc->sc_regh,
-				    PM2_RE_DATA, latch);
-	}
-#endif
 	/* 
 	 * XXX
 	 * occasionally characters end up in the cache only partially drawn
