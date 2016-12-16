@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.10 2016/12/16 09:10:08 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.11 2016/12/16 09:10:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -32,6 +32,17 @@ IP6CLI=fc00:2::2
 PIDFILE=./rump.rtadvd.pid
 CONFIG=./rtadvd.conf
 DEBUG=${DEBUG:-true}
+
+init_server()
+{
+
+	export RUMP_SERVER=$1
+	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.forwarding=1
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	atf_check -s exit:0 mkdir -p /rump/var/chroot/rtadvd
+	unset LD_PRELOAD
+	unset RUMP_SERVER
+}
 
 setup_shmif0()
 {
@@ -70,6 +81,32 @@ shmif0:\
 _EOF
 }
 
+start_rtadvd()
+{
+	local sock=$1
+	local pidfile=$2
+
+	export RUMP_SERVER=$sock
+	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p $pidfile shmif0
+	atf_check -s exit:0 sleep 3
+	atf_check -s exit:0 -o ignore -e empty cat $pidfile
+	unset RUMP_SERVER
+}
+
+check_entries()
+{
+
+	export RUMP_SERVER=$1
+	$DEBUG && dump_entries
+	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
+	atf_check -s exit:0 -o match:'advertised' rump.ndp -p
+	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
+	unset RUMP_SERVER
+}
+
 dump_entries()
 {
 
@@ -96,12 +133,7 @@ ra_basic_body()
 	rump_server_start $RUMPCLI netinet6
 
 	setup_shmif0 ${RUMPSRV} ${IP6SRV}
-	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.forwarding=1
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 mkdir -p /rump/var/chroot/rtadvd
-	unset LD_PRELOAD
-	unset RUMP_SERVER
+	init_server $RUMPSRV
 
 	setup_shmif0 ${RUMPCLI} ${IP6CLI}
 	export RUMP_SERVER=${RUMPCLI}
@@ -110,12 +142,7 @@ ra_basic_body()
 	unset RUMP_SERVER
 
 	create_rtadvdconfig
-
-	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p ${PIDFILE} shmif0
-	atf_check -s exit:0 sleep 3
-	atf_check -s exit:0 -o ignore -e empty cat ${PIDFILE}
-	unset RUMP_SERVER
+	start_rtadvd $RUMPSRV $PIDFILE
 
 	export RUMP_SERVER=${RUMPCLI}
 	atf_check -s exit:0 -o empty rump.ndp -r
@@ -133,22 +160,9 @@ ra_basic_body()
 	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
 	unset RUMP_SERVER
 
-	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p ${PIDFILE} shmif0
-	atf_check -s exit:0 sleep 3
-	atf_check -s exit:0 -o ignore -e empty cat ${PIDFILE}
-	unset RUMP_SERVER
+	start_rtadvd $RUMPSRV $PIDFILE
 
-	export RUMP_SERVER=${RUMPCLI}
-	$DEBUG && rump.ndp -n -a
-	$DEBUG && rump.ndp -r
-	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
-	atf_check -s exit:0 -o match:'advertised' rump.ndp -p
-	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
-	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
-	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
-	unset RUMP_SERVER
+	check_entries $RUMPCLI
 
 	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
 	wait_term ${PIDFILE}
@@ -185,12 +199,7 @@ ra_flush_prefix_entries_body()
 	setup_shmif0 ${RUMPSRV} ${IP6SRV}
 	setup_shmif0 ${RUMPCLI} ${IP6CLI}
 
-	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.forwarding=1
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 mkdir -p /rump/var/chroot/rtadvd
-	unset LD_PRELOAD
-	unset RUMP_SERVER
+	init_server $RUMPSRV
 
 	create_rtadvdconfig
 
@@ -198,20 +207,11 @@ ra_flush_prefix_entries_body()
 	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
 	unset RUMP_SERVER
 
-	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p ${PIDFILE} shmif0
-	atf_check -s exit:0 sleep 3
-	atf_check -s exit:0 -o ignore -e empty cat ${PIDFILE}
-	unset RUMP_SERVER
+	start_rtadvd $RUMPSRV $PIDFILE
+
+	check_entries $RUMPCLI
 
 	export RUMP_SERVER=${RUMPCLI}
-	$DEBUG && dump_entries
-	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
-	atf_check -s exit:0 -o match:'advertised' rump.ndp -p
-	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
-	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
-	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
 
 	# Terminate rtadvd to prevent new RA messages from coming
 	# Note that ifconfig down; kill -TERM doesn't work
@@ -256,12 +256,7 @@ ra_flush_defrouter_entries_body()
 	setup_shmif0 ${RUMPSRV} ${IP6SRV}
 	setup_shmif0 ${RUMPCLI} ${IP6CLI}
 
-	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.forwarding=1
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 mkdir -p /rump/var/chroot/rtadvd
-	unset LD_PRELOAD
-	unset RUMP_SERVER
+	init_server $RUMPSRV
 
 	create_rtadvdconfig
 
@@ -269,20 +264,11 @@ ra_flush_defrouter_entries_body()
 	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
 	unset RUMP_SERVER
 
-	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p ${PIDFILE} shmif0
-	atf_check -s exit:0 sleep 3
-	atf_check -s exit:0 -o ignore -e empty cat ${PIDFILE}
-	unset RUMP_SERVER
+	start_rtadvd $RUMPSRV $PIDFILE
+
+	check_entries $RUMPCLI
 
 	export RUMP_SERVER=${RUMPCLI}
-	$DEBUG && dump_entries
-	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
-	atf_check -s exit:0 -o match:'advertised' rump.ndp -p
-	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
-	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
-	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
 
 	# Terminate rtadvd to prevent new RA messages from coming
 	# Note that ifconfig down; kill -TERM doesn't work
@@ -327,12 +313,7 @@ ra_delete_address_body()
 	setup_shmif0 ${RUMPSRV} ${IP6SRV}
 	setup_shmif0 ${RUMPCLI} ${IP6CLI}
 
-	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.forwarding=1
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	atf_check -s exit:0 mkdir -p /rump/var/chroot/rtadvd
-	unset LD_PRELOAD
-	unset RUMP_SERVER
+	init_server $RUMPSRV
 
 	create_rtadvdconfig
 
@@ -340,21 +321,11 @@ ra_delete_address_body()
 	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
 	unset RUMP_SERVER
 
-	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p ${PIDFILE} shmif0
-	atf_check -s exit:0 sleep 3
-	atf_check -s exit:0 -o ignore -e empty cat ${PIDFILE}
-	unset RUMP_SERVER
+	start_rtadvd $RUMPSRV $PIDFILE
+
+	check_entries $RUMPCLI
 
 	export RUMP_SERVER=${RUMPCLI}
-	$DEBUG && dump_entries
-	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
-	atf_check -s exit:0 -o match:'advertised' rump.ndp -p
-	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
-	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
-	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
-
 	$DEBUG && rump.ifconfig shmif0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 \
 	    $(rump.ifconfig shmif0 |awk '/AUTOCONF/ {print $2}') delete
