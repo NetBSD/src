@@ -1,4 +1,4 @@
-/*	$NetBSD: alphasort.c,v 1.2 2009/03/01 19:59:55 christos Exp $	*/
+/*	$NetBSD: alphasort.c,v 1.3 2016/12/16 04:45:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: alphasort.c,v 1.2 2009/03/01 19:59:55 christos Exp $");
+__RCSID("$NetBSD: alphasort.c,v 1.3 2016/12/16 04:45:04 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,11 +44,15 @@ __RCSID("$NetBSD: alphasort.c,v 1.2 2009/03/01 19:59:55 christos Exp $");
 #include <dirent.h>
 #include <string.h>
 
+#ifndef ALPHASORTARG
+#define ALPHASORTARG struct dirent **
+#endif
+
 /*
  * Alphabetic order comparison routine for those who want it.
  */
 int
-alphasort(const void *d1, const void *d2)
+alphasort(const ALPHASORTARG d1, const ALPHASORTARG d2)
 {
 
 	_DIAGASSERT(d1 != NULL);

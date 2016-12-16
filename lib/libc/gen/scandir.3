@@ -1,4 +1,4 @@
-.\"	$NetBSD: scandir.3,v 1.14 2010/12/17 19:20:42 njoly Exp $
+.\"	$NetBSD: scandir.3,v 1.15 2016/12/16 04:45:04 mrg Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)scandir.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 29, 2010
+.Dd December 15, 2016
 .Dt SCANDIR 3
 .Os
 .Sh NAME
@@ -42,9 +42,9 @@
 .In sys/types.h
 .In dirent.h
 .Ft int
-.Fn scandir "const char *dirname" "struct dirent ***namelist" "int \*(lp*select\*(rp\*(lpconst struct dirent *\*(rp" "int \*(lp*compar\*(rp\*(lpconst void *, const void *\*(rp"
+.Fn scandir "const char *dirname" "struct dirent ***namelist" "int \*(lp*select\*(rp\*(lpconst struct dirent *\*(rp" "int \*(lp*compar\*(rp\*(lpconst struct dirent **, const struct dirent **\*(rp"
 .Ft int
-.Fn alphasort "const void *d1" "const void *d2"
+.Fn alphasort "const struct dirent **d1" "const struct dirent **d2"
 .Sh DESCRIPTION
 The
 .Fn scandir
@@ -111,3 +111,12 @@ and
 .Fn alphasort
 functions appeared in
 .Bx 4.2 .
+.Pp
+They were changed in
+.Nx 8.0
+to use
+.Dq struct dirent **
+instead of
+.Dq void *
+for the comparision function, including
+.Fn alphasort .
