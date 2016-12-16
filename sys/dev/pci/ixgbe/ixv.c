@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.29 2016/12/05 08:50:29 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.30 2016/12/16 08:30:20 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -637,7 +637,7 @@ ixv_ioctl(struct ifnet * ifp, u_long command, void *data)
 		IOCTL_DEBUGOUT("ioctl: SIOCSIFMTU (Set Interface MTU)");
 		break;
 	default:
-		IOCTL_DEBUGOUT1("ioctl: UNKNOWN (0x%X)\n", (int)command);
+		IOCTL_DEBUGOUT1("ioctl: UNKNOWN (0x%X)", (int)command);
 		break;
 	}
 
