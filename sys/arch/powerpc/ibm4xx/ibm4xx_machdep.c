@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.20 2016/12/16 03:59:31 rin Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.21 2016/12/16 04:27:03 rin Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.20 2016/12/16 03:59:31 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.21 2016/12/16 04:27:03 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -135,7 +135,7 @@ extern const uint32_t errata51handler[], errata51size;
 #if defined(DDB)
 extern const uint32_t ddblow[], ddbsize;
 #endif
-#if defined(IPKBD)
+#if defined(IPKDB)
 extern const uint32_t ipkdblow[], ipkdbsize;
 #endif
 static const struct exc_info trap_table[] = {
@@ -153,7 +153,7 @@ static const struct exc_info trap_table[] = {
 #if defined(DDB)
 	{ EXC_PGM,	ddblow,		(uintptr_t)&ddbsize },
 #endif
-#if defined(IPKBD)
+#if defined(IPKDB)
 	{ EXC_PGM,	ipkdblow,	(uintptr_t)&ipkdbsize },
 #endif
 };
