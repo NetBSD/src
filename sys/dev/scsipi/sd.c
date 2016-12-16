@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.320 2016/12/10 10:26:38 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.321 2016/12/16 14:58:53 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.320 2016/12/10 10:26:38 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.321 2016/12/16 14:58:53 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -831,6 +831,7 @@ sddone(struct scsipi_xfer *xs, int error)
 		}
 
 		dk_done(dksc, bp);
+		/* dk_start is called from scsipi_complete */
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.335 2016/12/10 21:17:12 mlelstv Exp $	*/
+/*	$NetBSD: cd.c,v 1.336 2016/12/16 14:58:53 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.335 2016/12/10 21:17:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.336 2016/12/16 14:58:53 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -920,6 +920,7 @@ cddone(struct scsipi_xfer *xs, int error)
 		}
 
 		dk_done(dksc, bp);
+		/* dk_start is called from scsipi_complete */
 	}
 }
 
