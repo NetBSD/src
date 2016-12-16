@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.279 2016/12/15 22:01:57 pgoyette Exp $	*/
+/*	$NetBSD: audio.c,v 1.280 2016/12/16 16:03:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.279 2016/12/15 22:01:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.280 2016/12/16 16:03:28 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2177,6 +2177,8 @@ audio_close(struct audio_softc *sc, int flags, int ifmt,
 	vc = sc->sc_vchan[n];
 
 	hw = sc->hw_if;
+	if (hw == NULL)
+		return ENXIO;
 	mutex_enter(sc->sc_intr_lock);
 	DPRINTF(("audio_close: sc=%p\n", sc));
 	/* Stop recording. */
@@ -2269,6 +2271,8 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	if (m == VAUDIOCHANS)
 		return EINVAL;
 
+	if (sc->hw_if == NULL)
+		return ENXIO;
 	vc = sc->sc_vchan[m];
 
 	cb = &vc->sc_mrr;
@@ -2600,6 +2604,9 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 	if (n == VAUDIOCHANS)
 		return EINVAL;
 
+	if (sc->hw_if == NULL)
+		return ENXIO;
+
 	vc = sc->sc_vchan[n];
 	cb = &vc->sc_mpr;
 
@@ -2773,6 +2780,8 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 	DPRINTF(("audio_ioctl(%lu,'%c',%lu)\n",
 		 IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff));
 	hw = sc->hw_if;
+	if (hw == NULL)
+		return ENXIO;
 	error = 0;
 	switch (cmd) {
 	case AUDIO_SETPROC:
@@ -3140,6 +3149,9 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot)
 	}
 	if (n == VAUDIOCHANS)
 		return -1;
+
+	if (sc->hw_if == NULL)
+		return ENXIO;
 
 	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", (long long)off, prot));
 	vc = sc->sc_vchan[n];
@@ -4759,6 +4771,8 @@ mixer_close(struct audio_softc *sc, int flags, int ifmt, struct lwp *l)
 {
 
 	KASSERT(mutex_owned(sc->sc_lock));
+	if (sc->hw_if == NULL)
+		return ENXIO;
 
 	DPRINTF(("mixer_close: sc %p\n", sc));
 	mixer_remove(sc);
@@ -4777,6 +4791,8 @@ mixer_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 	DPRINTF(("mixer_ioctl(%lu,'%c',%lu)\n",
 		 IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff));
 	hw = sc->hw_if;
+	if (hw == NULL)
+		return ENXIO;
 	error = EINVAL;
 
 	/* we can return cached values if we are sleeping */
