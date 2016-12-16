@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.7 2016/12/14 07:37:26 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.8 2016/12/16 03:14:23 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -43,6 +43,7 @@ setup_shmif0()
 	export RUMP_SERVER=$sock
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 ${IP6ADDR}
 	atf_check -s exit:0 rump.ifconfig shmif0 up
+	atf_check -s exit:0 rump.ifconfig -w 10
 
 	$DEBUG && rump.ifconfig
 }
@@ -144,7 +145,7 @@ ra_basic_body()
 	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
 	atf_check -s exit:0 -o match:'advertised' rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'23h59m..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
@@ -208,9 +209,13 @@ ra_flush_prefix_entries_body()
 	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
 	atf_check -s exit:0 -o match:'advertised' rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'23h59m..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
+
+	# Terminate rtadvd to prevent new RA messages from coming
+	# Note that ifconfig down; kill -TERM doesn't work
+	kill -KILL `cat ${PIDFILE}`
 
 	# Flush all the entries in the prefix list
 	atf_check -s exit:0 rump.ndp -P
@@ -219,24 +224,16 @@ ra_flush_prefix_entries_body()
 	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
 	atf_check -s exit:0 -o empty rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'23h59m..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
-
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
-	wait_term ${PIDFILE}
 
 	rump_server_destroy_ifaces
 }
 
 ra_flush_prefix_entries_cleanup()
 {
-
-	if [ -f ${PIDFILE} ]; then
-		kill -TERM `cat ${PIDFILE}`
-		wait_term ${PIDFILE}
-	fi
 
 	$DEBUG && dump
 	cleanup
@@ -283,9 +280,13 @@ ra_flush_defrouter_entries_body()
 	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
 	atf_check -s exit:0 -o match:'advertised' rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'23h59m..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
+
+	# Terminate rtadvd to prevent new RA messages from coming
+	# Note that ifconfig down; kill -TERM doesn't work
+	kill -KILL `cat ${PIDFILE}`
 
 	# Flush all the entries in the default router list
 	atf_check -s exit:0 rump.ndp -R
@@ -294,24 +295,16 @@ ra_flush_defrouter_entries_body()
 	atf_check -s exit:0 -o empty rump.ndp -r
 	atf_check -s exit:0 -o match:'No advertising router' rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'23h59m..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
-
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
-	wait_term ${PIDFILE}
 
 	rump_server_destroy_ifaces
 }
 
 ra_flush_defrouter_entries_cleanup()
 {
-
-	if [ -f ${PIDFILE} ]; then
-		kill -TERM `cat ${PIDFILE}`
-		wait_term ${PIDFILE}
-	fi
 
 	$DEBUG && dump
 	cleanup
