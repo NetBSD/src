@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.109 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.110 2016/12/16 20:11:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -42,8 +42,8 @@
 #include <sys/rwlock.h>
 #include <sys/condvar.h>
 #include <sys/pserialize.h>
-#include <sys/psref.h>
 #endif
+#include <sys/psref.h>
 
 #if !(defined(_KERNEL) || defined(_STANDALONE))
 #include <stdbool.h>
@@ -66,10 +66,8 @@ struct route {
 	struct	sockaddr	*ro_sa;
 	LIST_ENTRY(route)	ro_rtcache_next;
 	bool			ro_invalid;
-#ifdef _KERNEL
 	struct	psref		ro_psref;
 	int			ro_bound;
-#endif
 };
 
 /*
