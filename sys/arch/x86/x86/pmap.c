@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.231 2016/12/13 10:54:27 kamil Exp $	*/
+/*	$NetBSD: pmap.c,v 1.232 2016/12/16 19:52:22 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.231 2016/12/13 10:54:27 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.232 2016/12/16 19:52:22 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1399,15 +1399,16 @@ pmap_bootstrap(vaddr_t kva_start)
 #endif
 
 #if defined(XEN) && defined(__x86_64__)
+	extern vaddr_t xen_dummy_page;
 	/*
 	 * We want a dummy page directory for Xen: when deactivating a pmap, Xen
 	 * will still consider it active. So we set user PGD to this one to lift
 	 * all protection on the now inactive page tables set.
 	 */
-	xen_dummy_user_pgd = pmap_bootstrap_palloc(1);
+	xen_dummy_user_pgd = xen_dummy_page - KERNBASE;
 
 	/* Zero fill it, the less checks in Xen it requires the better */
-	memset((void *) (xen_dummy_user_pgd + KERNBASE), 0, PAGE_SIZE);
+	memset((void *)(xen_dummy_user_pgd + KERNBASE), 0, PAGE_SIZE);
 	/* Mark read-only */
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
 	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);

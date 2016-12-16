@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.767 2016/12/15 12:04:18 kamil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.768 2016/12/16 19:52:22 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.767 2016/12/15 12:04:18 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.768 2016/12/16 19:52:22 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1214,9 +1214,9 @@ init386(paddr_t first_avail)
 	/* Parse Xen command line (replace bootinfo) */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 
-	/* Steal one page for gdt */
-	gdt = (void *)((u_long)first_avail + KERNBASE);
-	first_avail += PAGE_SIZE;
+	/* Use the dummy page as a gdt */
+	extern vaddr_t xen_dummy_page;
+	gdt = (void *)xen_dummy_page;
 
 	/* Determine physical address space */
 	first_avail = round_page(first_avail);

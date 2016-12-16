@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.116 2016/12/09 17:57:24 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.117 2016/12/16 19:52:22 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -948,9 +948,9 @@ longmode_hi:
 	movw	%ax,%gs
 	movw	%ax,%fs
 
-	/* Set first_avail after the UAREA. */
+	/* Set first_avail after the DUMMY PAGE (see xen_locore). */
 	movq	%rsi,%rdi
-	addq	$USPACE,%rdi
+	addq	$(USPACE+PAGE_SIZE),%rdi
 	subq	$KERNBASE,%rdi	/* init_x86_64 wants a physical address */
 #endif	/* XEN */
 

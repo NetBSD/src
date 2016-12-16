@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.67 2016/11/15 17:01:12 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.68 2016/12/16 19:52:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.67 2016/11/15 17:01:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.68 2016/12/16 19:52:22 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -103,6 +103,7 @@ volatile shared_info_t *HYPERVISOR_shared_info;
 union start_info_union start_info_union __aligned(PAGE_SIZE);
 unsigned long *xpmap_phys_to_machine_mapping;
 kmutex_t pte_lock;
+vaddr_t xen_dummy_page;
 
 void xen_failsafe_handler(void);
 
@@ -588,6 +589,20 @@ static const int l2_4_count = PTP_LEVELS - 1;
 /*
  * Xen locore: get rid of the Xen bootstrap tables. Build and switch to new page
  * tables.
+ *
+ * Virtual address space of the kernel when leaving this function:
+ * +--------------+------------------+-------------+------------+---------------
+ * | KERNEL IMAGE | BOOTSTRAP TABLES | PROC0 UAREA | DUMMY PAGE | HYPER. SHARED 
+ * +--------------+------------------+-------------+------------+---------------
+ *
+ * ------+-----------------+-------------+
+ *  INFO | EARLY ZERO PAGE | ISA I/O MEM |
+ * ------+-----------------+-------------+
+ *
+ * DUMMY PAGE is either a PDG for amd64 or a GDT for i386.
+ *
+ * (HYPER. SHARED INFO + EARLY ZERO PAGE + ISA I/O MEM) have no physical
+ * addresses preallocated.
  */
 vaddr_t
 xen_locore(void)
@@ -694,7 +709,7 @@ bootstrap_again:
 	xen_bootstrap_tables(bootstrap_tables, init_tables,
 	    oldcount + l2_4_count, count, true);
 
-	/* Zero out free space after tables */
+	/* Zero out PROC0 UAREA and DUMMY PAGE. */
 	memset((void *)(init_tables + ((count + l2_4_count) * PAGE_SIZE)), 0,
 	    (UPAGES + 1) * PAGE_SIZE);
 
@@ -746,7 +761,9 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	 */
 	map_end = new_pgd + ((new_count + l2_4_count) * PAGE_SIZE);
 	if (final) {
-		map_end += (UPAGES + 1) * PAGE_SIZE;
+		map_end += UPAGES * PAGE_SIZE;
+		xen_dummy_page = (vaddr_t)map_end;
+		map_end += PAGE_SIZE;
 		HYPERVISOR_shared_info = (shared_info_t *)map_end;
 		map_end += PAGE_SIZE;
 		early_zerop = (char *)map_end;
