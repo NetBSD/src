@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.91 2016/05/29 13:11:21 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.92 2016/12/16 15:06:39 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.91 2016/05/29 13:11:21 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.92 2016/12/16 15:06:39 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -86,8 +86,10 @@ struct dkwedge_softc {
 	struct bufq_state *sc_bufq;	/* buffer queue */
 	struct callout	sc_restart_ch;	/* callout to restart I/O */
 
+	kmutex_t	sc_iolock;
+	kcondvar_t	sc_dkdrn;
 	u_int		sc_iopend;	/* I/Os pending */
-	int		sc_flags;	/* flags (splbio) */
+	int		sc_flags;	/* flags (sc_iolock) */
 };
 
 #define	DK_F_WAIT_DRAIN		0x0001	/* waiting for I/O to drain */
@@ -123,7 +125,7 @@ const struct bdevsw dk_bdevsw = {
 	.d_dump = dkdump,
 	.d_psize = dksize,
 	.d_discard = dkdiscard,
-	.d_flag = D_DISK
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 const struct cdevsw dk_cdevsw = {
@@ -138,7 +140,7 @@ const struct cdevsw dk_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = dkdiscard,
-	.d_flag = D_DISK
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 static struct dkwedge_softc **dkwedges;
@@ -185,16 +187,17 @@ CFATTACH_DECL3_NEW(dk, 0,
  * dkwedge_wait_drain:
  *
  *	Wait for I/O on the wedge to drain.
- *	NOTE: Must be called at splbio()!
  */
 static void
 dkwedge_wait_drain(struct dkwedge_softc *sc)
 {
 
+	mutex_enter(&sc->sc_iolock);
 	while (sc->sc_iopend != 0) {
 		sc->sc_flags |= DK_F_WAIT_DRAIN;
-		(void) tsleep(&sc->sc_iopend, PRIBIO, "dkdrn", 0);
+		cv_wait(&sc->sc_dkdrn, &sc->sc_iolock);
 	}
+	mutex_exit(&sc->sc_iolock);
 }
 
 /*
@@ -324,6 +327,9 @@ dkwedge_add(struct dkwedge_info *dkw)
 
 	callout_init(&sc->sc_restart_ch, 0);
 	callout_setfunc(&sc->sc_restart_ch, dkrestart, sc);
+
+	mutex_init(&sc->sc_iolock, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&sc->sc_dkdrn, "dkdrn");
 
 	/*
 	 * Wedge will be added; increment the wedge count for the parent.
@@ -568,7 +574,7 @@ dkwedge_detach(device_t self, int flags)
 {
 	struct dkwedge_softc *sc = NULL;
 	u_int unit;
-	int bmaj, cmaj, rc, s;
+	int bmaj, cmaj, rc;
 
 	rw_enter(&dkwedges_lock, RW_WRITER);
 	for (unit = 0; unit < ndkwedges; unit++) {
@@ -600,10 +606,8 @@ dkwedge_detach(device_t self, int flags)
 	 * state of the wedge is not RUNNING.  Once we've done
 	 * that, wait for any other pending I/O to complete.
 	 */
-	s = splbio();
 	dkstart(sc);
 	dkwedge_wait_drain(sc);
-	splx(s);
 
 	/* Nuke the vnodes for any open instances. */
 	vdevgone(bmaj, unit, unit, VBLK);
@@ -634,6 +638,9 @@ dkwedge_detach(device_t self, int flags)
 	dkwedges[unit] = NULL;
 	sc->sc_state = DKW_STATE_DEAD;
 	rw_exit(&dkwedges_lock);
+
+	mutex_destroy(&sc->sc_iolock);
+	cv_destroy(&sc->sc_dkdrn);
 
 	free(sc, M_DKWEDGE);
 
@@ -1206,7 +1213,6 @@ dkstrategy(struct buf *bp)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(bp->b_dev);
 	uint64_t p_size, p_offset;
-	int s;
 
 	if (sc == NULL) {
 		bp->b_error = ENODEV;
@@ -1234,11 +1240,12 @@ dkstrategy(struct buf *bp)
 	bp->b_rawblkno = bp->b_blkno + p_offset;
 
 	/* Place it in the queue and start I/O on the unit. */
-	s = splbio();
+	mutex_enter(&sc->sc_iolock);
 	sc->sc_iopend++;
 	bufq_put(sc->sc_bufq, bp);
+	mutex_exit(&sc->sc_iolock);
+
 	dkstart(sc);
-	splx(s);
 	return;
 
  done:
@@ -1250,7 +1257,6 @@ dkstrategy(struct buf *bp)
  * dkstart:
  *
  *	Start I/O that has been enqueued on the wedge.
- *	NOTE: Must be called at splbio()!
  */
 static void
 dkstart(struct dkwedge_softc *sc)
@@ -1258,36 +1264,58 @@ dkstart(struct dkwedge_softc *sc)
 	struct vnode *vp;
 	struct buf *bp, *nbp;
 
+	mutex_enter(&sc->sc_iolock);
+
 	/* Do as much work as has been enqueued. */
 	while ((bp = bufq_peek(sc->sc_bufq)) != NULL) {
+
 		if (sc->sc_state != DKW_STATE_RUNNING) {
 			(void) bufq_get(sc->sc_bufq);
 			if (sc->sc_iopend-- == 1 &&
 			    (sc->sc_flags & DK_F_WAIT_DRAIN) != 0) {
 				sc->sc_flags &= ~DK_F_WAIT_DRAIN;
-				wakeup(&sc->sc_iopend);
+				cv_broadcast(&sc->sc_dkdrn);
 			}
+			mutex_exit(&sc->sc_iolock);
 			bp->b_error = ENXIO;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
+			mutex_enter(&sc->sc_iolock);
+			continue;
 		}
 
-		/* Instrumentation. */
-		disk_busy(&sc->sc_dk);
-
+		/* fetch an I/O buf with sc_iolock dropped */
+		mutex_exit(&sc->sc_iolock);
 		nbp = getiobuf(sc->sc_parent->dk_rawvp, false);
+		mutex_enter(&sc->sc_iolock);
 		if (nbp == NULL) {
 			/*
 			 * No resources to run this request; leave the
 			 * buffer queued up, and schedule a timer to
 			 * restart the queue in 1/2 a second.
 			 */
-			disk_unbusy(&sc->sc_dk, 0, bp->b_flags & B_READ);
 			callout_schedule(&sc->sc_restart_ch, hz / 2);
-			return;
+			break;
 		}
 
-		(void) bufq_get(sc->sc_bufq);
+		/*
+		 * fetch buf, this can fail if another thread
+		 * has already processed the queue, it can also
+		 * return a completely different buf.
+		 */
+		bp = bufq_get(sc->sc_bufq);
+		if (bp == NULL) {
+			mutex_exit(&sc->sc_iolock);
+			putiobuf(nbp);
+			mutex_enter(&sc->sc_iolock);
+			continue;
+		}
+
+		/* Instrumentation. */
+		disk_busy(&sc->sc_dk);
+
+		/* release lock for VOP_STRATEGY */
+		mutex_exit(&sc->sc_iolock);
 
 		nbp->b_data = bp->b_data;
 		nbp->b_flags = bp->b_flags;
@@ -1308,7 +1336,11 @@ dkstart(struct dkwedge_softc *sc)
 			mutex_exit(vp->v_interlock);
 		}
 		VOP_STRATEGY(vp, nbp);
+
+		mutex_enter(&sc->sc_iolock);
 	}
+
+	mutex_exit(&sc->sc_iolock);
 }
 
 /*
@@ -1322,26 +1354,25 @@ dkiodone(struct buf *bp)
 	struct buf *obp = bp->b_private;
 	struct dkwedge_softc *sc = dkwedge_lookup(obp->b_dev);
 
-	int s = splbio();
-
 	if (bp->b_error != 0)
 		obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
 	putiobuf(bp);
 
+	mutex_enter(&sc->sc_iolock);
 	if (sc->sc_iopend-- == 1 && (sc->sc_flags & DK_F_WAIT_DRAIN) != 0) {
 		sc->sc_flags &= ~DK_F_WAIT_DRAIN;
-		wakeup(&sc->sc_iopend);
+		cv_broadcast(&sc->sc_dkdrn);
 	}
 
 	disk_unbusy(&sc->sc_dk, obp->b_bcount - obp->b_resid,
 	    obp->b_flags & B_READ);
+	mutex_exit(&sc->sc_iolock);
 
 	biodone(obp);
 
 	/* Kick the queue in case there is more work we can do. */
 	dkstart(sc);
-	splx(s);
 }
 
 /*
@@ -1354,11 +1385,8 @@ static void
 dkrestart(void *v)
 {
 	struct dkwedge_softc *sc = v;
-	int s;
 
-	s = splbio();
 	dkstart(sc);
-	splx(s);
 }
 
 /*
