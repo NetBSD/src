@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.120 2016/12/13 00:35:11 knakahara Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.121 2016/12/16 08:47:36 knakahara Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.120 2016/12/13 00:35:11 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.121 2016/12/16 08:47:36 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1395,9 +1395,9 @@ pppoe_timeout(void *arg)
 				retry_wait = PPPOE_SLOW_RETRY;
 			} else {
 				pppoe_abort_connect(sc);
+				RELEASE_SPLNET();
 				PPPOE_PARAM_UNLOCK(sc);
 				PPPOE_SESSION_UNLOCK(sc);
-				RELEASE_SPLNET();
 				return;
 			}
 		}
