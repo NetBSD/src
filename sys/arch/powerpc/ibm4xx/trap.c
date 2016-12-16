@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67 2014/10/18 08:33:26 snj Exp $	*/
+/*	$NetBSD: trap.c,v 1.68 2016/12/16 06:29:11 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2014/10/18 08:33:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.68 2016/12/16 06:29:11 rin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -206,7 +206,7 @@ trap(struct trapframe *tf)
 			rv = uvm_fault(map, trunc_page(va), ftype);
 			pcb->pcb_onfault = fb;
 			if (rv == 0)
-				goto done;
+				return;
 			if (fb != NULL) {
 				tf->tf_pid = KERNEL_PID;
 				tf->tf_srr0 = fb->fb_pc;
@@ -217,7 +217,7 @@ trap(struct trapframe *tf)
 				tf->tf_fixreg[3] = 1; /* Return TRUE */
 				memcpy(&tf->tf_fixreg[13], fb->fb_fixreg,
 				    sizeof(fb->fb_fixreg));
-				goto done;
+				return;
 			}
 		}
 		goto brain_damage;
@@ -331,16 +331,17 @@ trap(struct trapframe *tf)
 				tf->tf_cr = fb->fb_cr;
 				memcpy(&tf->tf_fixreg[13], fb->fb_fixreg,
 				    sizeof(fb->fb_fixreg));
-				goto done;
+				return;
 			}
 		}
 		goto brain_damage;
+
 	default:
- brain_damage:
+brain_damage:
 		printf("trap type 0x%x at 0x%lx\n", type, tf->tf_srr0);
 #if defined(DDB) || defined(KGDB)
 		if (kdb_trap(type, tf))
-			goto done;
+			return;
 #endif
 #ifdef TRAP_PANICWAIT
 		printf("Press a key to panic.\n");
@@ -351,8 +352,6 @@ trap(struct trapframe *tf)
 
 	/* Invoke MI userret code */
 	mi_userret(l);
- done:
-	return;
 }
 
 int
