@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2080 2016/12/14 12:59:51 kre Exp $
+#	$NetBSD: mi,v 1.2081 2016/12/16 22:11:04 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2901,6 +2901,7 @@
 ./usr/include/sys/properties.h			comp-obsolete		obsolete
 ./usr/include/sys/protosw.h			comp-c-include
 ./usr/include/sys/pset.h			comp-c-include
+./usr/include/sys/psref.h			comp-c-include
 ./usr/include/sys/ptrace.h			comp-c-include
 ./usr/include/sys/ptree.h			comp-c-include
 ./usr/include/sys/queue.h			comp-c-include
