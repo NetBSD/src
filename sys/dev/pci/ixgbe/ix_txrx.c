@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.12 2016/12/15 09:28:05 ozaki-r Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.13 2016/12/16 08:24:40 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1573,7 +1573,12 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	rxr->next_to_refresh = 0;
 	rxr->lro_enabled = FALSE;
 	rxr->rx_copies.ev_count = 0;
+#if 0 /* NetBSD */
 	rxr->rx_bytes.ev_count = 0;
+#if 1	/* Fix inconsistency */
+	rxr->rx_packets.ev_count = 0;
+#endif
+#endif
 	rxr->vtag_strip = FALSE;
 
 	ixgbe_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
