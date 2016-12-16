@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.11 2016/12/16 09:10:37 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.12 2016/12/16 09:11:18 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -27,9 +27,14 @@
 
 RUMPSRV=unix://r1
 RUMPCLI=unix://r2
+RUMPSRV3=unix://r3
 IP6SRV=fc00:1::1
+IP6SRV_PREFIX=fc00:1:
 IP6CLI=fc00:2::2
+IP6SRV3=fc00:3::1
+IP6SRV3_PREFIX=fc00:3:
 PIDFILE=./rump.rtadvd.pid
+PIDFILE3=./rump.rtadvd.pid3
 CONFIG=./rtadvd.conf
 DEBUG=${DEBUG:-true}
 
@@ -95,15 +100,25 @@ start_rtadvd()
 
 check_entries()
 {
+	local cli=$1
+	local srv=$2
+	local addr_prefix=$3
+	local mac_srv= ll_srv=
 
-	export RUMP_SERVER=$1
+	ll_srv=$(get_linklocal_addr $srv shmif0)
+	mac_srv=$(get_macaddr $srv shmif0)
+
+	export RUMP_SERVER=$cli
 	$DEBUG && dump_entries
 	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
 	atf_check -s exit:0 -o match:'advertised' rump.ndp -p
+	atf_check -s exit:0 -o match:"${ll_srv}%shmif0 \(reachable\)" rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
-	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
-	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
+	atf_check -s exit:0 \
+	    -o match:"$ll_srv%shmif0 +$mac_srv +shmif0 +(23h59m|1d0h0m)..s S R" \
+	    rump.ndp -n -a
+	atf_check -s exit:0 -o match:$addr_prefix rump.ndp -n -a
+	atf_check -s exit:0 -o match:$addr_prefix rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
 }
 
@@ -162,7 +177,7 @@ ra_basic_body()
 
 	start_rtadvd $RUMPSRV $PIDFILE
 
-	check_entries $RUMPCLI
+	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
 	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
 	wait_term ${PIDFILE}
@@ -209,7 +224,7 @@ ra_flush_prefix_entries_body()
 
 	start_rtadvd $RUMPSRV $PIDFILE
 
-	check_entries $RUMPCLI
+	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
 	export RUMP_SERVER=${RUMPCLI}
 
@@ -266,7 +281,7 @@ ra_flush_defrouter_entries_body()
 
 	start_rtadvd $RUMPSRV $PIDFILE
 
-	check_entries $RUMPCLI
+	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
 	export RUMP_SERVER=${RUMPCLI}
 
@@ -323,7 +338,7 @@ ra_delete_address_body()
 
 	start_rtadvd $RUMPSRV $PIDFILE
 
-	check_entries $RUMPCLI
+	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
 	export RUMP_SERVER=${RUMPCLI}
 	$DEBUG && rump.ifconfig shmif0
@@ -349,6 +364,64 @@ ra_delete_address_cleanup()
 	cleanup
 }
 
+atf_test_case ra_multiple_routers cleanup
+ra_multiple_routers_head()
+{
+
+	atf_set "descr" "Tests for deleting auto-configured address"
+	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+}
+
+ra_multiple_routers_body()
+{
+
+	rump_server_fs_start $RUMPSRV netinet6
+	rump_server_fs_start $RUMPSRV3 netinet6
+	rump_server_start $RUMPCLI netinet6
+
+	setup_shmif0 ${RUMPSRV} ${IP6SRV}
+	setup_shmif0 ${RUMPSRV3} ${IP6SRV3}
+	setup_shmif0 ${RUMPCLI} ${IP6CLI}
+
+	init_server $RUMPSRV
+	init_server $RUMPSRV3
+
+	create_rtadvdconfig
+
+	export RUMP_SERVER=${RUMPCLI}
+	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
+	unset RUMP_SERVER
+
+	start_rtadvd $RUMPSRV $PIDFILE
+	start_rtadvd $RUMPSRV3 $PIDFILE3
+
+	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
+	check_entries $RUMPCLI $RUMPSRV3 $IP6SRV3_PREFIX
+
+	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
+	wait_term ${PIDFILE}
+	atf_check -s exit:0 kill -TERM `cat ${PIDFILE3}`
+	wait_term ${PIDFILE3}
+
+	rump_server_destroy_ifaces
+}
+
+ra_multiple_routers_cleanup()
+{
+
+	if [ -f ${PIDFILE} ]; then
+		kill -TERM `cat ${PIDFILE}`
+		wait_term ${PIDFILE}
+	fi
+	if [ -f ${PIDFILE3} ]; then
+		kill -TERM `cat ${PIDFILE3}`
+		wait_term ${PIDFILE3}
+	fi
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -356,4 +429,5 @@ atf_init_test_cases()
 	atf_add_test_case ra_flush_prefix_entries
 	atf_add_test_case ra_flush_defrouter_entries
 	atf_add_test_case ra_delete_address
+	atf_add_test_case ra_multiple_routers
 }
