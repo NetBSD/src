@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.51 2015/11/11 07:48:41 ozaki-r Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.52 2016/12/16 09:09:38 ozaki-r Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -180,9 +180,10 @@ main(int argc, char *argv[])
 	int i, ch;
 	int fflag = 0, logopt;
 	struct passwd *pw;
+	const char *pidfilepath = NULL;
 
 	/* get command line options and arguments */
-#define OPTIONS "c:dDfM:Rs"
+#define OPTIONS "c:dDfM:p:Rs"
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 #undef OPTIONS
 		switch (ch) {
@@ -201,6 +202,9 @@ main(int argc, char *argv[])
 		case 'M':
 			mcastif = optarg;
 			break;
+		case 'p':
+			pidfilepath = optarg;
+			break;
 		case 'R':
 			fprintf(stderr, "rtadvd: "
 				"the -R option is currently ignored.\n");
@@ -217,7 +221,7 @@ main(int argc, char *argv[])
 	if (argc == 0) {
 		fprintf(stderr,
 			"usage: rtadvd [-DdfRs] [-c conffile]"
-			" [-M ifname] interface ...\n");
+			" [-M ifname] [-p pidfile] interface ...\n");
 		exit(1);
 	}
 
@@ -262,7 +266,7 @@ main(int argc, char *argv[])
 
 #ifdef __NetBSD__
 	/* record the current PID */
-	if (pidfile(NULL) < 0) {
+	if (pidfile(pidfilepath) < 0) {
 		syslog(LOG_ERR,
 		    "<%s> failed to open the pid log file, run anyway.",
 		    __func__);
