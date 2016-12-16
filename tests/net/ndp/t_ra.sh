@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.9 2016/12/16 03:49:45 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.10 2016/12/16 09:10:08 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -29,7 +29,7 @@ RUMPSRV=unix://r1
 RUMPCLI=unix://r2
 IP6SRV=fc00:1::1
 IP6CLI=fc00:2::2
-PIDFILE=/var/run/rump.rtadvd.pid
+PIDFILE=./rump.rtadvd.pid
 CONFIG=./rtadvd.conf
 DEBUG=${DEBUG:-true}
 
@@ -112,7 +112,7 @@ ra_basic_body()
 	create_rtadvdconfig
 
 	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} shmif0
+	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p ${PIDFILE} shmif0
 	atf_check -s exit:0 sleep 3
 	atf_check -s exit:0 -o ignore -e empty cat ${PIDFILE}
 	unset RUMP_SERVER
@@ -134,7 +134,7 @@ ra_basic_body()
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} shmif0
+	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p ${PIDFILE} shmif0
 	atf_check -s exit:0 sleep 3
 	atf_check -s exit:0 -o ignore -e empty cat ${PIDFILE}
 	unset RUMP_SERVER
@@ -199,7 +199,7 @@ ra_flush_prefix_entries_body()
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} shmif0
+	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p ${PIDFILE} shmif0
 	atf_check -s exit:0 sleep 3
 	atf_check -s exit:0 -o ignore -e empty cat ${PIDFILE}
 	unset RUMP_SERVER
@@ -270,7 +270,7 @@ ra_flush_defrouter_entries_body()
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} shmif0
+	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p ${PIDFILE} shmif0
 	atf_check -s exit:0 sleep 3
 	atf_check -s exit:0 -o ignore -e empty cat ${PIDFILE}
 	unset RUMP_SERVER
@@ -341,7 +341,7 @@ ra_delete_address_body()
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=${RUMPSRV}
-	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} shmif0
+	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p ${PIDFILE} shmif0
 	atf_check -s exit:0 sleep 3
 	atf_check -s exit:0 -o ignore -e empty cat ${PIDFILE}
 	unset RUMP_SERVER
