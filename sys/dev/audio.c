@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.280 2016/12/16 16:03:28 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.281 2016/12/16 22:03:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.280 2016/12/16 16:03:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.281 2016/12/16 22:03:10 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1432,7 +1432,7 @@ audio_enter(dev_t dev, krw_t rw, struct audio_softc **scp)
 
 	/* First, find the device and take sc_lock. */
 	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
-	if (sc == NULL)
+	if (sc == NULL || sc->hw_if)
 		return ENXIO;
 	mutex_enter(sc->sc_lock);
 	if (sc->sc_dying) {
