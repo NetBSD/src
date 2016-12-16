@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.169 2016/11/29 03:23:00 mlelstv Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.170 2016/12/16 15:00:52 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.169 2016/11/29 03:23:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.170 2016/12/16 15:00:52 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -410,6 +410,7 @@ struct scsipi_xfer *
 scsipi_get_xs(struct scsipi_periph *periph, int flags)
 {
 	struct scsipi_xfer *xs;
+	bool lock = (flags & XS_CTL_NOSLEEP) == 0;
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("scsipi_get_xs\n"));
 
@@ -444,6 +445,8 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 	 *	  command, URGENT commands must block, because only
 	 *	  one recovery command can execute at a time.
 	 */
+	if (lock)
+		mutex_enter(chan_mtx(periph->periph_channel));
 	for (;;) {
 		if (flags & XS_CTL_URGENT) {
 			if (periph->periph_active > periph->periph_openings)
@@ -467,25 +470,31 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 
  wait_for_opening:
 		if (flags & XS_CTL_NOSLEEP) {
+			KASSERT(!lock);
 			return (NULL);
 		}
+		KASSERT(lock);
 		SC_DEBUG(periph, SCSIPI_DB3, ("sleeping\n"));
-		mutex_enter(chan_mtx(periph->periph_channel));
 		periph->periph_flags |= PERIPH_WAITING;
 		cv_wait(periph_cv_periph(periph),
 		    chan_mtx(periph->periph_channel));
-		mutex_exit(chan_mtx(periph->periph_channel));
 	}
+	if (lock)
+		mutex_exit(chan_mtx(periph->periph_channel));
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("calling pool_get\n"));
 	xs = pool_get(&scsipi_xfer_pool,
 	    ((flags & XS_CTL_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
 	if (xs == NULL) {
+		if (lock)
+			mutex_enter(chan_mtx(periph->periph_channel));
 		if (flags & XS_CTL_URGENT) {
 			if ((flags & XS_CTL_REQSENSE) == 0)
 				periph->periph_flags &= ~PERIPH_RECOVERY_ACTIVE;
 		} else
 			periph->periph_active--;
+		if (lock)
+			mutex_exit(chan_mtx(periph->periph_channel));
 		scsipi_printaddr(periph);
 		printf("unable to allocate %sscsipi_xfer\n",
 		    (flags & XS_CTL_URGENT) ? "URGENT " : "");
