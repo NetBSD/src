@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.54 2016/12/16 08:30:20 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.55 2016/12/16 08:41:01 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -3038,67 +3038,98 @@ ixgbe_add_media_types(struct adapter *adapter)
 
 	layer = adapter->phy_layer;
 
+#define	ADD(mm, dd)							\
+	ifmedia_add(&adapter->media, IFM_ETHER | (mm), (dd), NULL);
+
 	/* Media types with matching NetBSD media defines */
-	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_T)
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_10G_T, 0, NULL);
-	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_T)
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_1000_T, 0, NULL);
-	if (layer & IXGBE_PHYSICAL_LAYER_100BASE_TX)
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_100_TX, 0, NULL);
-	
+	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_T) {
+		ADD(IFM_10G_T, 0);
+		ADD(IFM_10G_T | IFM_FDX, 0);
+	}
+	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_T) {
+		ADD(IFM_1000_T, 0);
+		ADD(IFM_1000_T | IFM_FDX, 0);
+	}
+	if (layer & IXGBE_PHYSICAL_LAYER_100BASE_TX) {
+		ADD(IFM_100_TX, 0);
+		ADD(IFM_100_TX | IFM_FDX, 0);
+	}
+
 	if (layer & IXGBE_PHYSICAL_LAYER_SFP_PLUS_CU ||
-	    layer & IXGBE_PHYSICAL_LAYER_SFP_ACTIVE_DA)
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_10G_TWINAX, 0, NULL);
+	    layer & IXGBE_PHYSICAL_LAYER_SFP_ACTIVE_DA) {
+		ADD(IFM_10G_TWINAX, 0);
+		ADD(IFM_10G_TWINAX | IFM_FDX, 0);
+	}
 
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_LR) {
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_10G_LR, 0, NULL);
-		if (hw->phy.multispeed_fiber)
-			ifmedia_add(&adapter->media, IFM_ETHER | IFM_1000_LX, 0, NULL);
+		ADD(IFM_10G_LR, 0);
+		ADD(IFM_10G_LR | IFM_FDX, 0);
+		if (hw->phy.multispeed_fiber) {
+			ADD(IFM_1000_LX, 0);
+			ADD(IFM_1000_LX | IFM_FDX, 0);
+		}
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_SR) {
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_10G_SR, 0, NULL);
-		if (hw->phy.multispeed_fiber)
-			ifmedia_add(&adapter->media, IFM_ETHER | IFM_1000_SX, 0, NULL);
-	} else if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_SX)
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_1000_SX, 0, NULL);
-	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_CX4)
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_10G_CX4, 0, NULL);
+		ADD(IFM_10G_SR, 0);
+		ADD(IFM_10G_SR | IFM_FDX, 0);
+		if (hw->phy.multispeed_fiber) {
+			ADD(IFM_1000_SX, 0);
+			ADD(IFM_1000_SX | IFM_FDX, 0);
+		}
+	} else if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_SX) {
+		ADD(IFM_1000_SX, 0);
+		ADD(IFM_1000_SX | IFM_FDX, 0);
+	}
+	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_CX4) {
+		ADD(IFM_10G_CX4, 0);
+		ADD(IFM_10G_CX4 | IFM_FDX, 0);
+	}
 
 #ifdef IFM_ETH_XTYPE
-	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR)
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_10G_KR, 0, NULL);
-	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KX4)
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_10G_KX4, 0, NULL);
-	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_KX)
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_1000_KX, 0, NULL);
+	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR) {
+		ADD(IFM_10G_KR, 0);
+		ADD(IFM_10G_KR | IFM_FDX, 0);
+	}
+	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KX4) {
+		ADD(AIFM_10G_KX4, 0);
+		ADD(AIFM_10G_KX4 | IFM_FDX, 0);
+	}
+	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_KX) {
+		ADD(IFM_1000_KX, 0);
+		ADD(IFM_1000_KX | IFM_FDX, 0);
+	}
 #else
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR) {
 		device_printf(dev, "Media supported: 10GbaseKR\n");
 		device_printf(dev, "10GbaseKR mapped to 10GbaseSR\n");
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_10G_SR, 0, NULL);
+		ADD(IFM_10G_SR, 0);
+		ADD(IFM_10G_SR | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KX4) {
 		device_printf(dev, "Media supported: 10GbaseKX4\n");
 		device_printf(dev, "10GbaseKX4 mapped to 10GbaseCX4\n");
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_10G_CX4, 0, NULL);
+		ADD(IFM_10G_CX4, 0);
+		ADD(IFM_10G_CX4 | IFM_FDX, 0);
 	}
 	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_KX) {
 		device_printf(dev, "Media supported: 1000baseKX\n");
 		device_printf(dev, "1000baseKX mapped to 1000baseCX\n");
-		ifmedia_add(&adapter->media, IFM_ETHER | IFM_1000_CX, 0, NULL);
+		ADD(IFM_1000_CX, 0);
+		ADD(IFM_1000_CX | IFM_FDX, 0);
 	}
 #endif
 	if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_BX)
 		device_printf(dev, "Media supported: 1000baseBX\n");
+	/* XXX no ifmedia_set? */
 	
 	if (hw->device_id == IXGBE_DEV_ID_82598AT) {
-		ifmedia_add(&adapter->media,
-		    IFM_ETHER | IFM_1000_T | IFM_FDX, 0, NULL);
-		ifmedia_add(&adapter->media,
-		    IFM_ETHER | IFM_1000_T, 0, NULL);
+		ADD(IFM_1000_T | IFM_FDX, 0);
+		ADD(IFM_1000_T, 0);
 	}
 
-	ifmedia_add(&adapter->media, IFM_ETHER | IFM_AUTO, 0, NULL);
+	ADD(IFM_AUTO, 0);
+
+#undef ADD
 }
 
 static void
