@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.232 2016/12/16 19:52:22 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.233 2016/12/17 13:43:33 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.232 2016/12/16 19:52:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.233 2016/12/17 13:43:33 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1351,46 +1351,33 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	/*
 	 * Now we allocate the "special" VAs which are used for tmp mappings
-	 * by the pmap (and other modules). We allocate the VAs by advancing
-	 * virtual_avail (note that there are no pages mapped at these VAs).
-	 * we find the PTE that maps the allocated VA via the linear PTE
-	 * mapping.
+	 * by pmap. We allocate the VAs, and find the PTE that maps them via
+	 * the linear PTE mapping.
 	 */
-
-	pt_entry_t *pte = PTE_BASE + pl1_i(virtual_avail);
+	vaddr_t cpuva_base;
+	pt_entry_t *pte;
 
 #ifdef MULTIPROCESSOR
 	/*
-	 * Waste some VA space to avoid false sharing of cache lines
-	 * for page table pages: Give each possible CPU a cache line
-	 * of PTE's (8) to play with, though we only need 4.  We could
-	 * recycle some of this waste by putting the idle stacks here
-	 * as well; we could waste less space if we knew the largest
-	 * CPU ID beforehand.
+	 * Waste some VA space to avoid false sharing of cache lines for page
+	 * table pages: give each possible CPU a cache line of 8 PTEs to play
+	 * with, though we only need 4.
 	 */
-	csrcp = (char *) virtual_avail;  csrc_pte = pte;
-
-	cdstp = (char *) virtual_avail+PAGE_SIZE;  cdst_pte = pte+1;
-
-	zerop = (char *) virtual_avail+PAGE_SIZE*2;  zero_pte = pte+2;
-
-	ptpp = (char *) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
-
-	virtual_avail += PAGE_SIZE * maxcpus * NPTECL;
-	pte += maxcpus * NPTECL;
+	cpuva_base = pmap_bootstrap_valloc(maxcpus * NPTECL);
 #else
-	csrcp = (void *) virtual_avail;  csrc_pte = pte;	/* allocate */
-	virtual_avail += PAGE_SIZE; pte++;			/* advance */
-
-	cdstp = (void *) virtual_avail;  cdst_pte = pte;
-	virtual_avail += PAGE_SIZE; pte++;
-
-	zerop = (void *) virtual_avail;  zero_pte = pte;
-	virtual_avail += PAGE_SIZE; pte++;
-
-	ptpp = (void *) virtual_avail;  ptp_pte = pte;
-	virtual_avail += PAGE_SIZE; pte++;
+	cpuva_base = pmap_bootstrap_valloc(4);
 #endif
+	pte = PTE_BASE + pl1_i(cpuva_base);
+
+	/* Values used to index the array */
+	csrcp = (char *)cpuva_base;
+	csrc_pte = pte;
+	cdstp = (char *)cpuva_base + PAGE_SIZE;
+	cdst_pte = pte + 1;
+	zerop = (char *)cpuva_base + PAGE_SIZE * 2;
+	zero_pte = pte + 2;
+	ptpp = (char *)cpuva_base + PAGE_SIZE * 3;
+	ptp_pte = pte + 3;
 
 	if (VM_MIN_KERNEL_ADDRESS == KERNBASE) {
 		early_zerop = zerop;
@@ -3152,8 +3139,8 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 
 	kpreempt_disable();
 	id = cpu_number();
-	spte = PTESLEW(csrc_pte,id);
-	dpte = PTESLEW(cdst_pte,id);
+	spte = PTESLEW(csrc_pte, id);
+	dpte = PTESLEW(cdst_pte, id);
 	csrcva = VASLEW(csrcp, id);
 	cdstva = VASLEW(cdstp, id);
 
