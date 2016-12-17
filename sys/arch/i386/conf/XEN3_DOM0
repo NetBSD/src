@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.102 2016/12/13 20:42:18 christos Exp $
+#	$NetBSD: XEN3_DOM0,v 1.103 2016/12/17 14:49:26 maxv Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -56,6 +56,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 
+options 	MODULAR		# new style module(7) framework
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
