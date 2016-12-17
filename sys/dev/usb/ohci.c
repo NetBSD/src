@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.79 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.80 2016/12/17 10:08:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.79 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.80 2016/12/17 10:08:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2229,7 +2229,7 @@ ohci_close_pipe(struct usbd_pipe *pipe, ohci_soft_ed_t *head)
 }
 
 /*
- * Cancel or timeour a device request.  We have two cases to deal with
+ * Cancel or timeout a device request.  We have two cases to deal with
  *
  * 1) A driver wants to stop scheduled or inflight transfers
  * 2) A transfer has timed out
@@ -2298,8 +2298,6 @@ ohci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	 * Step 1: When cancelling a transfer make sure the timeout handler
 	 * didn't run or ran to the end and saw the USBD_CANCELLED status.
 	 * Otherwise we must have got here via a timeout.
-	 *
-	 * If we timed out then
 	 */
 	if (status == USBD_CANCELLED) {
 		xfer->ux_status = status;
