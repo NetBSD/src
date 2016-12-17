@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.3 2016/12/15 08:57:24 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.4 2016/12/17 03:43:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -380,7 +380,12 @@ dsum(unsigned n)
  *
  * Tested with GCC 5.4 on NetBSD 7.99.47 amd64
  */
-static int __used __attribute__((optimize("O0")))
+static int __used
+#ifdef __clang__
+__attribute__((__optnone__))
+#else
+__attribute__((__optimize__("O0")))
+#endif
 check_happy(unsigned n)
 {
 	for (;;) {
