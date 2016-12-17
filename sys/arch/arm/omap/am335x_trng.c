@@ -1,4 +1,4 @@
-/* $NetBSD: am335x_trng.c,v 1.1 2015/06/06 14:00:32 jmcneill Exp $ */
+/* $NetBSD: am335x_trng.c,v 1.2 2016/12/17 15:24:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.1 2015/06/06 14:00:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.2 2016/12/17 15:24:35 riastradh Exp $");
 
 #include "opt_omap.h"
 
@@ -34,7 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.1 2015/06/06 14:00:32 jmcneill Exp
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/intr.h>
 #include <sys/mutex.h>
 #include <sys/bus.h>
 #include <sys/rndpool.h>
@@ -58,16 +57,12 @@ struct trng_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	kmutex_t sc_intr_lock;
-	kmutex_t sc_rnd_lock;
-	u_int sc_bytes_wanted;
-	void *sc_sih;
+	kmutex_t sc_lock;
 	krndsource_t sc_rndsource;
 };
 
 static int	trng_match(device_t, cfdata_t, void *);
 static void	trng_attach(device_t, device_t, void *);
-static void	trng_softintr(void *);
 static void	trng_callback(size_t, void *);
 
 CFATTACH_DECL_NEW(trng, sizeof(struct trng_softc),
@@ -104,15 +99,8 @@ trng_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map address spcae\n");
 		return;
 	}
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SERIAL);
-	mutex_init(&sc->sc_rnd_lock, MUTEX_DEFAULT, IPL_SERIAL);
-	sc->sc_bytes_wanted = 0;
-	sc->sc_sih = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
-	    trng_softintr, sc);
-	if (sc->sc_sih == NULL) {
-		aprint_error(": couldn't establish softint\n");
-		return;
-	}
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 
 	prcm_module_enable(&rng_module);
 
@@ -136,14 +124,14 @@ trng_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-trng_softintr(void *priv)
+trng_callback(size_t bytes_wanted, void *priv)
 {
 	struct trng_softc * const sc = priv;
 	uint32_t buf[2];
 	u_int retry;
 
-	mutex_enter(&sc->sc_intr_lock);
-	while (sc->sc_bytes_wanted) {
+	mutex_enter(&sc->sc_lock);
+	while (bytes_wanted) {
 		for (retry = 10; retry > 0; retry--) {
 			if (TRNG_READ(sc, TRNG_STATUS_REG) & TRNG_STATUS_READY)
 				break;
@@ -154,31 +142,10 @@ trng_softintr(void *priv)
 		buf[0] = TRNG_READ(sc, TRNG_OUTPUT_L_REG);
 		buf[1] = TRNG_READ(sc, TRNG_OUTPUT_H_REG);
 		TRNG_WRITE(sc, TRNG_INTACK_REG, TRNG_INTACK_READY);
-		mutex_exit(&sc->sc_intr_lock);
-		mutex_enter(&sc->sc_rnd_lock);
-		rnd_add_data(&sc->sc_rndsource, buf, sizeof(buf),
+		rnd_add_data_sync(&sc->sc_rndsource, buf, sizeof(buf),
 		    sizeof(buf) * NBBY);
-		mutex_exit(&sc->sc_rnd_lock);
-		mutex_enter(&sc->sc_intr_lock);
-		sc->sc_bytes_wanted -= MIN(sc->sc_bytes_wanted, sizeof(buf));
+		bytes_wanted -= MIN(bytes_wanted, sizeof(buf));
 	}
 	explicit_memset(buf, 0, sizeof(buf));
-	mutex_exit(&sc->sc_intr_lock);
-}
-
-static void
-trng_callback(size_t bytes_wanted, void *priv)
-{
-	struct trng_softc * const sc = priv;
-
-	mutex_enter(&sc->sc_intr_lock);
-	if (sc->sc_bytes_wanted == 0) {
-		softint_schedule(sc->sc_sih);
-	}
-	if (bytes_wanted > (UINT_MAX - sc->sc_bytes_wanted)) {
-		sc->sc_bytes_wanted = UINT_MAX;
-	} else {
-		sc->sc_bytes_wanted += bytes_wanted;
-	}
-	mutex_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_lock);
 }

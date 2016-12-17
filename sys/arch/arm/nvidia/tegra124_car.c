@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.6 2016/09/08 00:38:23 jakllsch Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.7 2016/12/17 15:24:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.6 2016/09/08 00:38:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.7 2016/12/17 15:24:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -676,10 +676,7 @@ struct tegra124_car_softc {
 	u_int			sc_clock_cells;
 	u_int			sc_reset_cells;
 
-	kmutex_t		sc_intr_lock;
-	kmutex_t		sc_rnd_lock;
-	u_int			sc_bytes_wanted;
-	void			*sc_sih;
+	kmutex_t		sc_rndlock;
 	krndsource_t		sc_rndsource;
 };
 
@@ -688,7 +685,6 @@ static void	tegra124_car_utmip_init(struct tegra124_car_softc *);
 static void	tegra124_car_xusb_init(struct tegra124_car_softc *);
 
 static void	tegra124_car_rnd_attach(device_t);
-static void	tegra124_car_rnd_intr(void *);
 static void	tegra124_car_rnd_callback(size_t, void *);
 
 CFATTACH_DECL_NEW(tegra124_car, sizeof(struct tegra124_car_softc),
@@ -842,61 +838,33 @@ tegra124_car_rnd_attach(device_t self)
 {
 	struct tegra124_car_softc * const sc = device_private(self);
 
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SERIAL);
-	mutex_init(&sc->sc_rnd_lock, MUTEX_DEFAULT, IPL_SERIAL);
-	sc->sc_bytes_wanted = 0;
-	sc->sc_sih = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
-	    tegra124_car_rnd_intr, sc);
-	if (sc->sc_sih == NULL) {
-		aprint_error_dev(sc->sc_dev, "couldn't establish softint\n");
-		return;
-	}
-
+	mutex_init(&sc->sc_rndlock, MUTEX_DEFAULT, IPL_VM);
 	rndsource_setcb(&sc->sc_rndsource, tegra124_car_rnd_callback, sc);
 	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
 	    RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
-}
-
-static void
-tegra124_car_rnd_intr(void *priv)
-{
-	struct tegra124_car_softc * const sc = priv;
-	uint16_t buf[512];
-	uint32_t cnt;
-
-	mutex_enter(&sc->sc_intr_lock);
-	while (sc->sc_bytes_wanted) {
-		const u_int nbytes = MIN(sc->sc_bytes_wanted, 1024);
-		for (cnt = 0; cnt < sc->sc_bytes_wanted / 2; cnt++) {
-			buf[cnt] = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
-			    CAR_PLL_LFSR_REG) & 0xffff;
-		}
-		mutex_exit(&sc->sc_intr_lock);
-		mutex_enter(&sc->sc_rnd_lock);
-		rnd_add_data(&sc->sc_rndsource, buf, nbytes, nbytes * NBBY);
-		mutex_exit(&sc->sc_rnd_lock);
-		mutex_enter(&sc->sc_intr_lock);
-		sc->sc_bytes_wanted -= MIN(sc->sc_bytes_wanted, nbytes);
-	}
-	explicit_memset(buf, 0, sizeof(buf));
-	mutex_exit(&sc->sc_intr_lock);
+	tegra124_car_rnd_callback(RND_POOLBITS / NBBY, sc);
 }
 
 static void
 tegra124_car_rnd_callback(size_t bytes_wanted, void *priv)
 {
 	struct tegra124_car_softc * const sc = priv;
+	uint16_t buf[512];
+	uint32_t cnt;
 
-	mutex_enter(&sc->sc_intr_lock);
-	if (sc->sc_bytes_wanted == 0) {
-		softint_schedule(sc->sc_sih);
+	mutex_enter(&sc->sc_rndlock);
+	while (bytes_wanted) {
+		const u_int nbytes = MIN(bytes_wanted, 1024);
+		for (cnt = 0; cnt < bytes_wanted / 2; cnt++) {
+			buf[cnt] = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+			    CAR_PLL_LFSR_REG) & 0xffff;
+		}
+		rnd_add_data_sync(&sc->sc_rndsource, buf, nbytes,
+		    nbytes * NBBY);
+		bytes_wanted -= MIN(bytes_wanted, nbytes);
 	}
-	if (bytes_wanted > (UINT_MAX - sc->sc_bytes_wanted)) {
-		sc->sc_bytes_wanted = UINT_MAX;
-	} else {
-		sc->sc_bytes_wanted += bytes_wanted;
-	}
-	mutex_exit(&sc->sc_intr_lock);
+	explicit_memset(buf, 0, sizeof(buf));
+	mutex_exit(&sc->sc_rndlock);
 }
 
 static struct tegra_clk *
