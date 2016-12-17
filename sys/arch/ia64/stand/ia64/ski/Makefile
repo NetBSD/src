@@ -4,6 +4,7 @@ VERSIONFILE= ${.CURDIR}/version
 
 .include "../Makefile.booters"
 
+NOPIE=		yes
 PROG=		skiload
 MAN=#
 BINDIR?=	/usr/mdec
