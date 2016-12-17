@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.69 2015/08/12 07:53:57 maxv Exp $
+# $NetBSD: XEN3_DOMU,v 1.70 2016/12/17 14:49:26 maxv Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -42,6 +42,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 
+options 	MODULAR		# new style module(7) framework
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
