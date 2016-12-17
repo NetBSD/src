@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.284 2016/12/17 16:08:29 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.285 2016/12/17 17:04:04 maya Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.284 2016/12/17 16:08:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.285 2016/12/17 17:04:04 maya Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -575,7 +575,8 @@ bad_play:
 			if (sc->sc_pr.s.start != NULL)
 				audio_free_ring(sc, &sc->sc_pr);
 			sc->hw_if = NULL;
-			aprint_error("audio: could not allocate play buffer\n");
+			aprint_error_dev(sc->sc_dev, "could not allocate play "
+			    "buffer\n");
 			return;
 		}
 	}
@@ -596,8 +597,8 @@ bad_rec:
 			if (sc->sc_vchan[0]->sc_mpr.s.start != 0)
 				audio_free_ring(sc, &sc->sc_vchan[0]->sc_mpr);
 			sc->hw_if = NULL;
-			aprint_error("audio: could not allocate record "
-			   "buffer\n");
+			aprint_error_dev(sc->sc_dev, "could not allocate record"
+			   " buffer\n");
 			return;
 		}
 	}
@@ -605,11 +606,12 @@ bad_rec:
 	sc->sc_lastgain = 128;
 	sc->sc_saturate = true;
 
-	audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL |
+	error = audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL |
 	    AUMODE_RECORD, &vaudio_formats[0], 0);
 	mutex_exit(sc->sc_lock);
 	if (error != 0) {
-		aprint_error("audioattach: audio_set_defaults() failed\n");
+		aprint_error_dev(sc->sc_dev, "%s: audio_set_vchan_defaults() "
+		    "failed\n", __func__);
 		sc->hw_if = NULL;
 		return;
 	}
