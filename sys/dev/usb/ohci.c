@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.80 2016/12/17 10:08:30 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.81 2016/12/17 10:10:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.80 2016/12/17 10:08:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.81 2016/12/17 10:10:34 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2369,7 +2369,10 @@ ohci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	DPRINTF("--- dump end ---", 0, 0, 0, 0);
 #endif
 
-#define OHCI_CC_ACCESSED_P(x)		(((x) & OHCI_CC_NOT_ACCESSED_MASK) != OHCI_CC_NOT_ACCESSED)
+#define OHCI_CC_ACCESSED_P(x)	\
+    (((x) & OHCI_CC_NOT_ACCESSED_MASK) != OHCI_CC_NOT_ACCESSED)
+
+
 	headp = O32TOH(sed->ed.ed_headp) & OHCI_HEADMASK;
 	hit = 0;
 	for (; p->xfer == xfer; p = n) {
