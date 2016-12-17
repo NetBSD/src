@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.283 2016/12/17 15:18:28 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.284 2016/12/17 16:08:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.283 2016/12/17 15:18:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.284 2016/12/17 16:08:29 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -5619,6 +5619,18 @@ recswvol_func(struct audio_softc *sc, struct audio_ringbuffer *cb, int n,
 	}
 }
 
+static uint8_t *
+find_vchan_vol(struct audio_softc *sc, int d)
+{
+	size_t j, n = (size_t)d / 2;
+	
+	for (size_t i = j = 0; i <= n; i++)
+		if (sc->sc_audiopid[i].pid != -1)
+			j++;
+
+	return (d & 1) == 0 ?
+	    &sc->sc_vchan[j]->sc_swvol : &sc->sc_vchan[j]->sc_recswvol;
+}
 
 static int
 audio_set_port(struct audio_softc *sc, mixer_ctrl_t *mc)
@@ -5630,19 +5642,12 @@ audio_set_port(struct audio_softc *sc, mixer_ctrl_t *mc)
 	if (d < 0)
 		return sc->hw_if->set_port(sc->hw_hdl, mc);
 
-	size_t j, n = (size_t)d / 2;
-	
-	for (size_t i = j = 0; i <= n; i++)
-		if (sc->sc_audiopid[i].pid != -1)
-			j++;
-
 	uint8_t *level = &mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-	uint8_t *vol = (d & 1) == 0 ?
-	    &sc->sc_vchan[j]->sc_swvol : &sc->sc_vchan[j]->sc_recswvol;
-
+	uint8_t *vol = find_vchan_vol(sc, d);
 	*vol = *level;
 	return 0;
 }
+
 
 static int
 audio_get_port(struct audio_softc *sc, mixer_ctrl_t *mc)
@@ -5655,16 +5660,8 @@ audio_get_port(struct audio_softc *sc, mixer_ctrl_t *mc)
 	if (d < 0)
 		return sc->hw_if->get_port(sc->hw_hdl, mc);
 
-	size_t j, n = (size_t)d / 2;
-	
-	for (size_t i = j = 0; i <= n; i++)
-		if (sc->sc_audiopid[i].pid != -1)
-			j++;
-
 	u_char *level = &mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-	uint8_t *vol = (d & 1) == 0 ?
-	    &sc->sc_vchan[j]->sc_swvol : &sc->sc_vchan[j]->sc_recswvol;
-
+	uint8_t *vol = find_vchan_vol(sc, d);
 	*level = *vol;
 	return 0;
 
