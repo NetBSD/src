@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.h,v 1.6 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.h,v 1.7 2016/12/17 12:11:38 maya Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -79,6 +79,7 @@ struct tegra_drmfb_attach_args {
 	struct drm_fb_helper_surface_size tfa_fb_sizes;
 	bus_space_tag_t		tfa_fb_bst;
 	bus_dma_tag_t		tfa_fb_dmat;
+	uint32_t		tfa_fb_linebytes;
 };
 
 struct tegra_crtc {
