@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.768 2016/12/16 19:52:22 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.769 2016/12/17 14:27:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.768 2016/12/16 19:52:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.769 2016/12/17 14:27:53 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -988,8 +988,8 @@ initgdt(union descriptor *tgdt)
 	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
 	    0);
 #endif
-	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary, 0xfffff,
-	    SDT_MEMRWA, SEL_KPL, 1, 1);
+	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary,
+	    sizeof(struct cpu_info) - 1, SDT_MEMRWA, SEL_KPL, 1, 0);
 
 #ifndef XEN
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
