@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.340 2016/08/04 08:46:06 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.341 2016/12/17 14:36:29 flxd Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.340 2016/08/04 08:46:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.341 2016/12/17 14:36:29 flxd Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6522,7 +6522,7 @@ pmap_bootstrap_pv_page_free(struct pool *pp, void *v)
  *
  * This routine is called after the vm and kmem subsystems have been
  * initialised. This allows the pmap code to perform any initialisation
- * that can only be done one the memory allocation is in place.
+ * that can only be done once the memory allocation is in place.
  */
 void
 pmap_postinit(void)
