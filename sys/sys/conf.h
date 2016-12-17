@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.150 2016/12/16 23:35:04 riastradh Exp $	*/
+/*	$NetBSD: conf.h,v 1.151 2016/12/17 03:46:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -147,7 +147,6 @@ paddr_t	nommap(dev_t, off_t, int);
 #define	nullioctl	((dev_type_ioctl((*)))nullop)
 #define	nullstop	((dev_type_stop((*)))nullop)
 #define	nullpoll	((dev_type_poll((*)))nullop)
-#define	nullmmap	((dev_type_mmap((*)))nullop)
 #define	nulldump	((dev_type_dump((*)))nullop)
 #define	nullkqfilter	((dev_type_kqfilter((*)))eopnotsupp)
 #define nulldiscard	((dev_type_discard((*)))nullop)
