@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.18 2016/12/11 15:01:37 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.19 2016/12/17 15:27:26 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.18 2016/12/11 15:01:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.19 2016/12/17 15:27:26 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -499,8 +499,15 @@ athn_usb_detach(device_t self, int flags)
 	athn_usb_close_pipes(usc);
 
 	mutex_destroy(&usc->usc_tx_mtx);
-	mutex_destroy(&usc->usc_task_mtx);
 	cv_destroy(&usc->usc_task_cv);
+	mutex_destroy(&usc->usc_task_mtx);
+
+	mutex_destroy(&usc->usc_cmd_mtx);
+	cv_destroy(&usc->usc_cmd_cv);
+	mutex_destroy(&usc->usc_msg_mtx);
+	cv_destroy(&usc->usc_msg_cv);
+
+	mutex_destroy(&usc->usc_lock);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, usc->usc_udev, sc->sc_dev);
 	return 0;
