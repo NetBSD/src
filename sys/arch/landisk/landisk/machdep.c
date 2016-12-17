@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2015/11/22 18:44:25 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2016/12/17 01:10:38 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2015/11/22 18:44:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2016/12/17 01:10:38 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -367,11 +367,7 @@ haltsys:
 
 	printf("rebooting...\n");
 	machine_reset();
-
 	/*NOTREACHED*/
-	for (;;) {
-		continue;
-	}
 }
 
 void
