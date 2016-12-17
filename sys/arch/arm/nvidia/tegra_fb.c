@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_fb.c,v 1.2 2015/11/12 00:43:52 jmcneill Exp $ */
+/* $NetBSD: tegra_fb.c,v 1.3 2016/12/17 12:11:38 maya Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_fb.c,v 1.2 2015/11/12 00:43:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_fb.c,v 1.3 2016/12/17 12:11:38 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,7 +78,6 @@ tegra_fb_attach(device_t parent, device_t self, void *aux)
 	struct tegra_fb_softc * const sc = device_private(self);
 	struct tegra_drm_softc * const drmsc = device_private(parent);
 	struct tegra_drmfb_attach_args * const tfa = aux;
-	struct drmfb_attach_args da;
 	int error;
 
 	sc->sc_dev = self;
@@ -89,11 +88,14 @@ tegra_fb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	da.da_dev = self;
-	da.da_fb_helper = tfa->tfa_fb_helper;
-	da.da_fb_sizes = &tfa->tfa_fb_sizes;
-	da.da_fb_vaddr = sc->sc_fb->obj->dmap;
-	da.da_params = &tegrafb_drmfb_params;
+	const struct drmfb_attach_args da = {
+		.da_dev = self,
+		.da_fb_helper = tfa->tfa_fb_helper,
+		.da_fb_sizes = &tfa->tfa_fb_sizes,
+		.da_fb_vaddr = sc->sc_fb->obj->dmap,
+		.da_fb_linebytes = tfa->tfa_fb_linebytes,
+		.da_params = &tegrafb_drmfb_params,
+	};
 
 	error = drmfb_attach(&sc->sc_drmfb, &da);
 	if (error) {
