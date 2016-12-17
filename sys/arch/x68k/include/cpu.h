@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58 2014/07/31 14:41:19 isaki Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59 2016/12/17 14:36:30 flxd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,7 +64,7 @@
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
- * machine state in an opaque clockframe.  One the x68k, we use
+ * machine state in an opaque clockframe.  On the x68k, we use
  * what the hardware pushes on an interrupt (frame format 0).
  */
 struct clockframe {
