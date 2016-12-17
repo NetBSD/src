@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.117 2016/12/16 19:52:22 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.118 2016/12/17 13:49:05 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1141,9 +1141,9 @@ skip_CR0:
 
 	/* The 32bit LWPs are handled differently. */
 	testl	$PCB_COMPAT32,PCB_FLAGS(%r14)
-	jne	lwp_64bit
+	jnz	lwp_32bit
 
-lwp_32bit:
+lwp_64bit:
 	/* Zero out %fs/%gs registers. */
 	xorq	%rax,%rax
 	movw	%ax,%fs
@@ -1170,7 +1170,7 @@ lwp_32bit:
 
 	jmp	switch_return
 
-lwp_64bit:
+lwp_32bit:
 	/* Reload %fs/%gs GDT descriptors. */
 	movq	CPUVAR(GDT),%rcx
 	movq	PCB_FS(%r14),%rax
