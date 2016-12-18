@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.173 2016/12/18 15:27:34 skrll Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.174 2016/12/18 15:32:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.173 2016/12/18 15:27:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.174 2016/12/18 15:32:36 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -145,7 +145,7 @@ scsipi_channel_init(struct scsipi_channel *chan)
 		panic("scsipi_channel_init");
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -180,7 +180,7 @@ scsipi_chan_periph_hash(uint64_t t, uint64_t l)
 	hash = hash32_buf(&t, sizeof(t), HASH32_BUF_INIT);
 	hash = hash32_buf(&l, sizeof(l), hash);
 
-	return (hash & SCSIPI_CHAN_PERIPH_HASHMASK);
+	return hash & SCSIPI_CHAN_PERIPH_HASHMASK;
 }
 
 /*
@@ -227,7 +227,7 @@ scsipi_lookup_periph_internal(struct scsipi_channel *chan, int target, int lun, 
 
 	if (target >= chan->chan_ntargets ||
 	    lun >= chan->chan_nluns)
-		return (NULL);
+		return NULL;
 
 	hash = scsipi_chan_periph_hash(target, lun);
 
@@ -241,7 +241,7 @@ scsipi_lookup_periph_internal(struct scsipi_channel *chan, int target, int lun, 
 	if (lock)
 		mutex_exit(chan_mtx(chan));
 
-	return (periph);
+	return periph;
 }
 
 struct scsipi_periph *
@@ -271,16 +271,16 @@ scsipi_get_resource(struct scsipi_channel *chan)
 	if (chan->chan_flags & SCSIPI_CHAN_OPENINGS) {
 		if (chan->chan_openings > 0) {
 			chan->chan_openings--;
-			return (1);
+			return 1;
 		}
-		return (0);
+		return 0;
 	}
 
 	if (adapt->adapt_openings > 0) {
 		adapt->adapt_openings--;
-		return (1);
+		return 1;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -301,7 +301,7 @@ scsipi_grow_resources(struct scsipi_channel *chan)
 			scsipi_adapter_request(chan,
 			    ADAPTER_REQ_GROW_RESOURCES, NULL);
 			mutex_enter(chan_mtx(chan));
-			return (scsipi_get_resource(chan));
+			return scsipi_get_resource(chan);
 		}
 		/*
 		 * ask the channel thread to do it. It'll have to thaw the
@@ -310,10 +310,10 @@ scsipi_grow_resources(struct scsipi_channel *chan)
 		scsipi_channel_freeze_locked(chan, 1);
 		chan->chan_tflags |= SCSIPI_CHANT_GROWRES;
 		cv_broadcast(chan_cv_complete(chan));
-		return (0);
+		return 0;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -471,7 +471,7 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
  wait_for_opening:
 		if (flags & XS_CTL_NOSLEEP) {
 			KASSERT(!lock);
-			return (NULL);
+			return NULL;
 		}
 		KASSERT(lock);
 		SC_DEBUG(periph, SCSIPI_DB3, ("sleeping\n"));
@@ -514,7 +514,7 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 		if ((flags & XS_CTL_NOSLEEP) == 0)
 			mutex_exit(chan_mtx(periph->periph_channel));
 	}
-	return (xs);
+	return xs;
 }
 
 /*
@@ -889,7 +889,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		    ("calling private err_handler()\n"));
 		error = (*periph->periph_switch->psw_error)(xs);
 		if (error != EJUSTRETURN)
-			return (error);
+			return error;
 	}
 	/* otherwise use the default */
 	switch (SSD_RCODE(sense->response_code)) {
@@ -899,21 +899,21 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		 * codes other than 70.
 		 */
 	case 0x00:		/* no error (command completed OK) */
-		return (0);
+		return 0;
 	case 0x04:		/* drive not ready after it was selected */
 		if ((periph->periph_flags & PERIPH_REMOVABLE) != 0)
 			periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 		if ((xs->xs_control & XS_CTL_IGNORE_NOT_READY) != 0)
-			return (0);
+			return 0;
 		/* XXX - display some sort of error here? */
-		return (EIO);
+		return EIO;
 	case 0x20:		/* invalid command */
 		if ((xs->xs_control &
 		     XS_CTL_IGNORE_ILLEGAL_REQUEST) != 0)
-			return (0);
-		return (EINVAL);
+			return 0;
+		return EINVAL;
 	case 0x25:		/* invalid LUN (Adaptec ACB-4000) */
-		return (EACCES);
+		return EACCES;
 
 		/*
 		 * If it's code 70, use the extended stuff and
@@ -947,20 +947,20 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 			if ((periph->periph_flags & PERIPH_REMOVABLE) != 0)
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 			if ((xs->xs_control & XS_CTL_IGNORE_NOT_READY) != 0)
-				return (0);
+				return 0;
 			if (sense->asc == 0x3A) {
 				error = ENODEV; /* Medium not present */
 				if (xs->xs_control & XS_CTL_SILENT_NODEV)
-					return (error);
+					return error;
 			} else
 				error = EIO;
 			if ((xs->xs_control & XS_CTL_SILENT) != 0)
-				return (error);
+				return error;
 			break;
 		case SKEY_ILLEGAL_REQUEST:
 			if ((xs->xs_control &
 			     XS_CTL_IGNORE_ILLEGAL_REQUEST) != 0)
-				return (0);
+				return 0;
 			/*
 			 * Handle the case where a device reports
 			 * Logical Unit Not Supported during discovery.
@@ -968,16 +968,16 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 			if ((xs->xs_control & XS_CTL_DISCOVERY) != 0 &&
 			    sense->asc == 0x25 &&
 			    sense->ascq == 0x00)
-				return (EINVAL);
+				return EINVAL;
 			if ((xs->xs_control & XS_CTL_SILENT) != 0)
-				return (EIO);
+				return EIO;
 			error = EINVAL;
 			break;
 		case SKEY_UNIT_ATTENTION:
 			if (sense->asc == 0x29 &&
 			    sense->ascq == 0x00) {
 				/* device or bus reset */
-				return (ERESTART);
+				return ERESTART;
 			}
 			if ((periph->periph_flags & PERIPH_REMOVABLE) != 0)
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
@@ -986,10 +986,10 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 				/* XXX Should reupload any transient state. */
 				(periph->periph_flags &
 				 PERIPH_REMOVABLE) == 0) {
-				return (ERESTART);
+				return ERESTART;
 			}
 			if ((xs->xs_control & XS_CTL_SILENT) != 0)
-				return (EIO);
+				return EIO;
 			error = EIO;
 			break;
 		case SKEY_DATA_PROTECT:
@@ -1017,7 +1017,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		if ((key == 0) ||
 		    ((xs->xs_control & XS_CTL_SILENT) != 0) ||
 		    (scsipi_print_sense(xs, 0) != 0))
-			return (error);
+			return error;
 
 		/* Print brief(er) sense information */
 		scsipi_printaddr(periph);
@@ -1051,7 +1051,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 				    sense->csi[n]);
 		}
 		printf("\n");
-		return (error);
+		return error;
 
 	/*
 	 * Some other code, just report it
@@ -1085,7 +1085,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		}
 		printf("\n");
 #endif
-		return (EIO);
+		return EIO;
 	}
 }
 
@@ -1102,7 +1102,7 @@ scsipi_test_unit_ready(struct scsipi_periph *periph, int flags)
 
 	/* some ATAPI drives don't support TEST UNIT READY. Sigh */
 	if (periph->periph_quirks & PQUIRK_NOTUR)
-		return (0);
+		return 0;
 
 	if (flags & XS_CTL_DISCOVERY)
 		retries = 0;
@@ -1112,8 +1112,8 @@ scsipi_test_unit_ready(struct scsipi_periph *periph, int flags)
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = SCSI_TEST_UNIT_READY;
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    retries, 10000, NULL, flags));
+	return scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    retries, 10000, NULL, flags);
 }
 
 static const struct scsipi_inquiry3_pattern {
@@ -1269,8 +1269,8 @@ scsipi_start(struct scsipi_periph *periph, int type, int flags)
 	cmd.byte2 = 0x00;
 	cmd.how = type;
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    SCSIPIRETRIES, (type & SSS_START) ? 60000 : 10000, NULL, flags));
+	return scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    SCSIPIRETRIES, (type & SSS_START) ? 60000 : 10000, NULL, flags);
 }
 
 /*
@@ -1291,8 +1291,8 @@ scsipi_mode_sense(struct scsipi_periph *periph, int byte2, int page,
 	cmd.page = page;
 	cmd.length = len & 0xff;
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN));
+	return scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN);
 }
 
 int
@@ -1308,8 +1308,8 @@ scsipi_mode_sense_big(struct scsipi_periph *periph, int byte2, int page,
 	cmd.page = page;
 	_lto2b(len, cmd.length);
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN));
+	return scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN);
 }
 
 int
@@ -1324,8 +1324,8 @@ scsipi_mode_select(struct scsipi_periph *periph, int byte2,
 	cmd.byte2 = byte2;
 	cmd.length = len & 0xff;
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT));
+	return scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT);
 }
 
 int
@@ -1340,8 +1340,8 @@ scsipi_mode_select_big(struct scsipi_periph *periph, int byte2,
 	cmd.byte2 = byte2;
 	_lto2b(len, cmd.length);
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT));
+	return scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT);
 }
 
 /*
@@ -1693,7 +1693,7 @@ scsipi_complete(struct scsipi_xfer *xs)
 		if (error == 0) {
 			scsipi_periph_thaw_locked(periph, 1);
 			mutex_exit(chan_mtx(chan));
-			return (ERESTART);
+			return ERESTART;
 		}
 	}
 
@@ -1713,7 +1713,7 @@ scsipi_complete(struct scsipi_xfer *xs)
 		scsipi_put_xs(xs);
 	mutex_exit(chan_mtx(chan));
 
-	return (error);
+	return error;
 }
 
 /*
@@ -1793,7 +1793,7 @@ scsipi_enqueue(struct scsipi_xfer *xs)
 	if ((xs->xs_control & XS_CTL_POLL) != 0 &&
 	    TAILQ_FIRST(&chan->chan_queue) != NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
-		return (EAGAIN);
+		return EAGAIN;
 	}
 
 	/*
@@ -1832,7 +1832,7 @@ scsipi_enqueue(struct scsipi_xfer *xs)
  out:
 	if (xs->xs_control & XS_CTL_THAW_PERIPH)
 		scsipi_periph_thaw_locked(xs->xs_periph, 1);
-	return (0);
+	return 0;
 }
 
 /*
@@ -2072,7 +2072,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	 * completed asynchronously, just return now.
 	 */
 	if (async)
-		return (0);
+		return 0;
 
 	/*
 	 * Not an asynchronous command; wait for it to complete.
@@ -2117,7 +2117,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	scsipi_run_queue(chan);
 
 	mutex_enter(chan_mtx(chan));
-	return (error);
+	return error;
 }
 
 /*
@@ -2226,7 +2226,7 @@ scsipi_thread_call_callback(struct scsipi_channel *chan,
 	chan->chan_tflags |= SCSIPI_CHANT_CALLBACK;
 	cv_broadcast(chan_cv_complete(chan));
 	mutex_exit(chan_mtx(chan));
-	return(0);
+	return 0;
 }
 
 /*
@@ -2436,10 +2436,10 @@ scsipi_target_detach(struct scsipi_channel *chan, int target, int lun,
 				continue;
 			error = config_detach(periph->periph_dev, flags);
 			if (error)
-				return (error);
+				return error;
 		}
 	}
-	return(0);
+	return 0;
 }
 
 /*
@@ -2461,7 +2461,7 @@ scsipi_adapter_addref(struct scsipi_adapter *adapt)
 		if (error)
 			atomic_dec_uint(&adapt->adapt_refcnt);
 	}
-	return (error);
+	return error;
 }
 
 /*
@@ -2502,10 +2502,10 @@ scsipi_sync_period_to_factor(int period /* ns * 100 */)
 
 	for (i = 0; i < scsipi_nsyncparams; i++) {
 		if (period <= scsipi_syncparams[i].ss_period)
-			return (scsipi_syncparams[i].ss_factor);
+			return scsipi_syncparams[i].ss_factor;
 	}
 
-	return ((period / 100) / 4);
+	return (period / 100) / 4;
 }
 
 int
@@ -2515,10 +2515,10 @@ scsipi_sync_factor_to_period(int factor)
 
 	for (i = 0; i < scsipi_nsyncparams; i++) {
 		if (factor == scsipi_syncparams[i].ss_factor)
-			return (scsipi_syncparams[i].ss_period);
+			return scsipi_syncparams[i].ss_period;
 	}
 
-	return ((factor * 4) * 100);
+	return (factor * 4) * 100;
 }
 
 int
@@ -2528,10 +2528,10 @@ scsipi_sync_factor_to_freq(int factor)
 
 	for (i = 0; i < scsipi_nsyncparams; i++) {
 		if (factor == scsipi_syncparams[i].ss_factor)
-			return (100000000 / scsipi_syncparams[i].ss_period);
+			return 100000000 / scsipi_syncparams[i].ss_period;
 	}
 
-	return (10000000 / ((factor * 4) * 10));
+	return 10000000 / ((factor * 4) * 10);
 }
 
 static inline void
