@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/05/23 19:59:17 dholland Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2016/12/18 06:37:30 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -17,8 +17,8 @@ CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS
 #COPTS+=-fno-strict-aliasing
 #.endif
 
-LDADD+=	-lcurses -lterminfo
-DPADD+=	${LIBCURSES} ${LIBTERMINFO}
+LDADD+=	-lcurses -lterminfo -lutil
+DPADD+=	${LIBCURSES} ${LIBTERMINFO} ${LIBUTIL}
 PROG=	vi
 SRCS=	api.c cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	conv.c cut.c delete.c ex.c ex_abbrev.c ex_append.c \
