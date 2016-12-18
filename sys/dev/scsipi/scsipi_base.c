@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.172 2016/12/18 15:18:40 skrll Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.173 2016/12/18 15:27:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.172 2016/12/18 15:18:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.173 2016/12/18 15:27:34 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -2140,7 +2140,7 @@ scsipi_completion_thread(void *arg)
 	chan->chan_flags |= SCSIPI_CHAN_TACTIVE;
 	for (;;) {
 		xs = TAILQ_FIRST(&chan->chan_complete);
-		if (xs == NULL && chan->chan_tflags  == 0) {
+		if (xs == NULL && chan->chan_tflags == 0) {
 			/* nothing to do; wait */
 			cv_wait(chan_cv_complete(chan), chan_mtx(chan));
 			continue;
