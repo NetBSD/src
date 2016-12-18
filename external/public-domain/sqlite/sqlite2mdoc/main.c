@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.1 2016/03/30 21:30:20 christos Exp $ */
+/*	$Id: main.c,v 1.2 2016/12/18 16:56:32 christos Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
+#include <time.h>
 #include <getopt.h>
 #include <search.h>
 #include <stdio.h>
@@ -1014,7 +1015,7 @@ lookup(char *key)
  * Emit a valid mdoc(7) document within the given prefix.
  */
 static void
-emit(const struct defn *d)
+emit(const struct defn *d, const char *mdocdate)
 {
 	struct decl	*first;
 	size_t		 sz, i, col, last, ns;
@@ -1039,7 +1040,11 @@ emit(const struct defn *d)
 		f = stdout;
 
 	/* Begin by outputting the mdoc(7) header. */
+#if 0
 	fputs(".Dd $" "Mdocdate$\n", f);
+#else
+	fprintf(f, ".Dd %s\n", mdocdate);
+#endif
 	fprintf(f, ".Dt %s 3\n", d->dt);
 	fputs(".Os\n", f);
 	fputs(".Sh NAME\n", f);
@@ -1485,6 +1490,12 @@ main(int argc, char *argv[])
 			goto usage;
 		}
 
+	time_t now = time(NULL);
+	struct tm tm;
+	char mdocdate[256];
+	if (gmtime_r(&now, &tm) == NULL)
+		err(EXIT_FAILURE, "gmtime");
+	strftime(mdocdate, sizeof(mdocdate), "%B %d, %Y", &tm);
 	/*
 	 * Read in line-by-line and process in the phase dictated by our
 	 * finite state automaton.
@@ -1533,7 +1544,7 @@ main(int argc, char *argv[])
 			TAILQ_FOREACH(d, &p.dqhead, entries)
 				postprocess(prefix, d);
 			TAILQ_FOREACH(d, &p.dqhead, entries)
-				emit(d);
+				emit(d, mdocdate);
 			rc = 1;
 		} else if (PHASE_DECL != p.phase)
 			warnx("%s:%zu: exit when not in "
