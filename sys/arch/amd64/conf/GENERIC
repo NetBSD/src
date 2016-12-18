@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.447 2016/12/13 20:42:16 christos Exp $
+# $NetBSD: GENERIC,v 1.448 2016/12/18 04:35:26 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.447 $"
+#ident 		"GENERIC-$Revision: 1.448 $"
 
 maxusers	64		# estimated number of users
 
@@ -60,7 +60,7 @@ options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
-options		CPU_UCODE	# cpu ucode loading support
+options 	CPU_UCODE	# cpu ucode loading support
 
 # Note: SysV IPC parameters could be changed dynamically, see sysctl(8).
 options 	SYSVMSG		# System V-like message queues
@@ -111,7 +111,7 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 
 # Compatibility options
 # (note that really old compat (< 1.6) is only useful for 32-bit binaries)
-#options	EXEC_AOUT	# required by binaries from before 1.5
+#options 	EXEC_AOUT	# required by binaries from before 1.5
 #options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
 #options 	COMPAT_09	# NetBSD 0.9,
 #options 	COMPAT_10	# NetBSD 1.0,
@@ -142,7 +142,7 @@ options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
-options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+options 	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -309,7 +309,7 @@ attimer*	at acpi?		# AT Timer
 #fdc*		at acpi?		# Floppy disk controller
 fujbp*		at acpi?		# Fujitsu Brightness & Pointer
 fujhk*		at acpi?		# Fujitsu Hotkeys
-#hpacel*	at acpi?		# HP 3D DriveGuard accelerometer
+#hpacel* 	at acpi?		# HP 3D DriveGuard accelerometer
 #hpqlb*		at acpi?		# HP Quick Launch Buttons
 hpet*		at acpihpetbus?		# High Precision Event Timer (table)
 hpet*		at acpinodebus?		# High Precision Event Timer (device)
@@ -407,7 +407,7 @@ sysbeep0	at pcppi?
 #savagedrm*	at drm?		# S3 Savage DRM driver
 #sisdrm* 	at drm?		# SiS DRM driver
 #tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
-#viadrm*	at drm?		# VIA DRM driver
+#viadrm* 	at drm?		# VIA DRM driver
 
 # DRMKMS drivers
 i915drmkms* 	at pci? dev ? function ?
@@ -465,7 +465,7 @@ lpt1	at isa? port 0x278
 # Hardware monitors
 
 amdnb_misc* at pci?			# AMD NB Misc Configuration
-amdtemp* at amdnb_misc?			# AMD CPU Temperature sensors
+amdtemp* at amdnb_misc?  		# AMD CPU Temperature sensors
 
 # Winbond LPC Super I/O
 #wbsio*	at isa? port 0x2e
@@ -553,8 +553,8 @@ ld*	at iop? tid ?			# block devices
 gpio*		at gpiobus?
 
 # 1- Wire support
-#gpioow*	at gpio? offset ? mask ?	# 1-wire bitbanging via gpio
-gpioow*	at gpio?
+#gpioow* 	at gpio? offset ? mask ?	# 1-wire bitbanging via gpio
+gpioow* 	at gpio?
 onewire*	at gpioow?
 
 # I2C support
@@ -669,7 +669,7 @@ wdc*	at pcmcia? function ?
 
 # CardBus IDE controllers
 njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
-siisata* at cardbus? function ?		# SiI SteelVine controllers
+siisata* at cardbus? function ? 	# SiI SteelVine controllers
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -847,7 +847,7 @@ iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
-nsphyter* at mii? phy ?			# NS83843 PHYs
+nsphyter* at mii? phy ? 		# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 rgephy* at mii? phy ?			# Realtek 8169S/8110 internal PHYs
@@ -970,7 +970,7 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 #mos*	at uhub? port ?		# Moschip MCS7730/MCS7830/MCS7832 based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
-urndis*	at uhub? port ?		# Microsoft RNDIS specification
+urndis* at uhub? port ? 	# Microsoft RNDIS specification
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
@@ -991,13 +991,13 @@ ucom*	at uipaq? portno ?
 umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 ucom*	at umct? portno ?
 
-uplcom* at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
 
 uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
 ucom*	at uslsa? portno ?
 
-uvscom* at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
+uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
 
 # RIM BlackBerry
@@ -1208,11 +1208,11 @@ ld*	at sdmmc?
 weasel* at pci?
 
 # Virtio devices
-virtio*	at pci? dev ? function ?	# Virtio PCI device
+virtio* at pci? dev ? function ?	# Virtio PCI device
 viomb*	at virtio?			# Virtio memory balloon device
 ld*	at virtio?			# Virtio disk device
 vioif*	at virtio?			# Virtio network device
-viornd*	at virtio?			# Virtio entropy device
+viornd* at virtio?			# Virtio entropy device
 vioscsi* at virtio?			# Virtio SCSI device
 
 # Pull in optional local configuration

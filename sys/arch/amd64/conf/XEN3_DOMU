@@ -1,8 +1,8 @@
-# $NetBSD: XEN3_DOMU,v 1.66 2016/12/17 14:49:26 maxv Exp $
+# $NetBSD: XEN3_DOMU,v 1.67 2016/12/18 04:35:26 dholland Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
-options		MULTIPROCESSOR
+options 	MULTIPROCESSOR
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -77,7 +77,7 @@ options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
-options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+options 	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
