@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.124 2016/12/17 14:49:26 maxv Exp $
+# $NetBSD: XEN3_DOM0,v 1.125 2016/12/18 04:35:26 dholland Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -34,7 +34,7 @@ options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
-options		CPU_UCODE	# cpu ucode loading support
+options 	CPU_UCODE	# cpu ucode loading support
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -83,7 +83,7 @@ options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
-options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+options 	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -296,7 +296,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 # Hardware monitors
 
 amdnb_misc* at pci?			# AMD NB Misc Configuration
-amdtemp* at amdnb_misc?			# AMD CPU Temperature sensors
+amdtemp* at amdnb_misc? 		# AMD CPU Temperature sensors
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
@@ -649,7 +649,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
-urndis* at uhub? port ?		# Microsoft RNDIS specification
+urndis* at uhub? port ? 	# Microsoft RNDIS specification
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters

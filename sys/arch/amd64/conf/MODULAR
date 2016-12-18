@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.5 2016/09/09 21:10:56 christos Exp $
+# $NetBSD: MODULAR,v 1.6 2016/12/18 04:35:26 dholland Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -35,26 +35,26 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no options	SYSVSHM		# System V-like memory sharing
 
 # XXX: for now
-#no file-system 	FFS		# UFS
--no file-system	MFS		# memory file system
--no file-system 	NFS		# Network File System client
--no file-system	TMPFS		# Efficient memory file-system
--no file-system	EXT2FS		# second extended file system (linux)
--no file-system	LFS		# log-structured file system
--no file-system	NTFS		# Windows/NT file system (experimental)
--no file-system	CD9660		# ISO 9660 + Rock Ridge file system
--no file-system	MSDOSFS		# MS-DOS file system
--no file-system	FDESC		# /dev/fd
--no file-system	KERNFS		# /kern
--no file-system	NULLFS		# loopback file system
--no file-system	OVERLAY		# overlay file system
--no file-system	PROCFS		# /proc
--no file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
--no file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
--no file-system	UMAPFS		# NULLFS + uid and gid remapping
--no file-system	UNION		# union file system
--no file-system	CODA		# Coda File System; also needs vcoda (below)
--no file-system	PTYFS		# /dev/ptm support
+#no file-system FFS		# UFS
+-no file-system MFS		# memory file system
+-no file-system NFS		# Network File System client
+-no file-system TMPFS		# Efficient memory file-system
+-no file-system EXT2FS		# second extended file system (linux)
+-no file-system LFS		# log-structured file system
+-no file-system NTFS		# Windows/NT file system (experimental)
+-no file-system CD9660		# ISO 9660 + Rock Ridge file system
+-no file-system MSDOSFS 	# MS-DOS file system
+-no file-system FDESC		# /dev/fd
+-no file-system KERNFS		# /kern
+-no file-system NULLFS		# loopback file system
+-no file-system OVERLAY 	# overlay file system
+-no file-system PROCFS		# /proc
+-no file-system PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+-no file-system SMBFS		# experimental - CIFS; also needs nsmb (below)
+-no file-system UMAPFS		# NULLFS + uid and gid remapping
+-no file-system UNION		# union file system
+-no file-system CODA		# Coda File System; also needs vcoda (below)
+-no file-system PTYFS		# /dev/ptm support
 
 -no options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 -no options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -84,7 +84,7 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no alc*	at pci?
 -no ath*	at pci?
 
--no select sppp			# Synchronous-Point-to-Point Protocol
+-no select sppp 			# Synchronous-Point-to-Point Protocol
 
 -no pseudo-device 	crypto			# /dev/crypto device
 -no pseudo-device	swcrypto		# software crypto implementation
