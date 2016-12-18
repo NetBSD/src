@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.171 2016/12/18 13:59:14 mlelstv Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.172 2016/12/18 15:18:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.171 2016/12/18 13:59:14 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.172 2016/12/18 15:18:40 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -2188,6 +2188,7 @@ scsipi_completion_thread(void *arg)
 			 * for some reason.
 			 */
 			scsipi_run_queue(chan);
+			mutex_enter(chan_mtx(chan));
 		}
 	}
 
