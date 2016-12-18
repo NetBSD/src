@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.313 2016/12/18 19:00:20 christos Exp $
+#	$NetBSD: build.sh,v 1.314 2016/12/18 19:39:05 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1892,7 +1892,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.313 2016/12/18 19:00:20 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.314 2016/12/18 19:39:05 christos Exp $
 # with these arguments: ${_args}
 #
 
@@ -2194,9 +2194,9 @@ setup_mkrepro()
 		return
 	fi
 	buildtools
-	local dirs=${NETBSDSRCDIR-/usr/src}
+	local dirs=${NETBSDSRCDIR-/usr/src}/
 	if [ ${MKX11-no} = "yes" ]; then
-		dirs="$dirs ${X11SRCDIR-/usr/xsrc}"
+		dirs="$dirs ${X11SRCDIR-/usr/xsrc}/"
 	fi
 	local cvslatest=$(print_tooldir_program cvslatest)
 	MKREPRO_TIMESTAMP=$(${cvslatest} ${dirs})
