@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.92 2016/02/29 16:25:06 riastradh Exp $	*/
+/*	$NetBSD: ping6.c,v 1.93 2016/12/18 01:30:54 dholland Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.92 2016/02/29 16:25:06 riastradh Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.93 2016/12/18 01:30:54 dholland Exp $");
 #endif
 #endif
 
@@ -297,6 +297,7 @@ main(int argc, char *argv[])
 {
 	struct addrinfo hints;
 	u_int i, packlen;
+	long l;
 	int ch, hold, preload, optval, ret_ga;
 	u_char *datap, *packet;
 	char *e, *target, *ifname = NULL, *gateway = NULL;
@@ -400,10 +401,16 @@ main(int argc, char *argv[])
 #endif
 			break;
 		case 'c':
-			npackets = strtol(optarg, &e, 10);
-			if (npackets <= 0 || *optarg == '\0' || *e != '\0')
+			l = strtol(optarg, &e, 10);
+			if (l <= 0 || *optarg == '\0' || *e != '\0')
 				errx(1,
 				    "illegal number of packets -- %s", optarg);
+#if INT_MAX < LONG_MAX
+			if (l > INT_MAX)
+				errx(EXIT_FAILURE,
+				    "Too many packets to count: %ld", l);
+#endif
+			npackets = l;
 			break;
 		case 'd':
 			options |= F_SO_DEBUG;
@@ -447,15 +454,18 @@ main(int argc, char *argv[])
 				errx(1, "%s: only root may use interval < 1s",
 				    strerror(EPERM));
 			}
-			interval.tv_sec = (long)intval;
+			if (intval > INT_MAX/1000.0 - 1.0) {
+				errx(1, "Interval %s too large", optarg);
+			}
+			interval.tv_sec = (time_t)intval;
 			interval.tv_nsec =
 			    (long)((intval - interval.tv_sec) * 1000000000);
-			if (interval.tv_sec < 0)
+			if (interval.tv_sec < 0 || interval.tv_nsec < 0)
 				errx(1, "illegal timing interval %s", optarg);
 			/* less than 1/hz does not make sense */
 			if (interval.tv_sec == 0 &&
 			    interval.tv_nsec < 10000000) {
-				warnx("too small interval, raised to 0.01");
+				warnx("Interval too small; raised to 0.01");
 				interval.tv_nsec = 10000000;
 			}
 			options |= F_INTERVAL;
@@ -465,9 +475,15 @@ main(int argc, char *argv[])
 				errno = EPERM;
 				errx(1, "Must be superuser to preload");
 			}
-			preload = strtol(optarg, &e, 10);
-			if (preload < 0 || *optarg == '\0' || *e != '\0')
+			l = strtol(optarg, &e, 10);
+			if (l < 0 || *optarg == '\0' || *e != '\0')
 				errx(1, "illegal preload value -- %s", optarg);
+#if INT_MAX < LONG_MAX
+			if (l > INT_MAX)
+				errx(EXIT_FAILURE,
+				    "Too many preload packets: %ld", l);
+#endif
+			preload = l;
 			break;
 		case 'm':
 #ifdef IPV6_USE_MIN_MTU
