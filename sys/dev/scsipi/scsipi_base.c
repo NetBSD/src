@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.170 2016/12/16 15:00:52 mlelstv Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.171 2016/12/18 13:59:14 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.170 2016/12/16 15:00:52 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.171 2016/12/18 13:59:14 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1462,8 +1462,8 @@ scsipi_done(struct scsipi_xfer *xs)
 	 * completion queue, and wake up the completion thread.
 	 */
 	TAILQ_INSERT_TAIL(&chan->chan_complete, xs, channel_q);
-	mutex_exit(chan_mtx(chan));
 	cv_broadcast(chan_cv_complete(chan));
+	mutex_exit(chan_mtx(chan));
 
  out:
 	/*
@@ -2138,21 +2138,17 @@ scsipi_completion_thread(void *arg)
 
 	mutex_enter(chan_mtx(chan));
 	chan->chan_flags |= SCSIPI_CHAN_TACTIVE;
-	mutex_exit(chan_mtx(chan));
 	for (;;) {
-		mutex_enter(chan_mtx(chan));
 		xs = TAILQ_FIRST(&chan->chan_complete);
 		if (xs == NULL && chan->chan_tflags  == 0) {
 			/* nothing to do; wait */
 			cv_wait(chan_cv_complete(chan), chan_mtx(chan));
-			mutex_exit(chan_mtx(chan));
 			continue;
 		}
 		if (chan->chan_tflags & SCSIPI_CHANT_CALLBACK) {
 			/* call chan_callback from thread context */
 			chan->chan_tflags &= ~SCSIPI_CHANT_CALLBACK;
 			chan->chan_callback(chan, chan->chan_callback_arg);
-			mutex_exit(chan_mtx(chan));
 			continue;
 		}
 		if (chan->chan_tflags & SCSIPI_CHANT_GROWRES) {
@@ -2164,6 +2160,7 @@ scsipi_completion_thread(void *arg)
 			scsipi_channel_thaw(chan, 1);
 			if (chan->chan_tflags & SCSIPI_CHANT_GROWRES)
 				kpause("scsizzz", FALSE, hz/10, NULL);
+			mutex_enter(chan_mtx(chan));
 			continue;
 		}
 		if (chan->chan_tflags & SCSIPI_CHANT_KICK) {
@@ -2171,10 +2168,10 @@ scsipi_completion_thread(void *arg)
 			chan->chan_tflags &= ~SCSIPI_CHANT_KICK;
 			mutex_exit(chan_mtx(chan));
 			scsipi_run_queue(chan);
+			mutex_enter(chan_mtx(chan));
 			continue;
 		}
 		if (chan->chan_tflags & SCSIPI_CHANT_SHUTDOWN) {
-			mutex_exit(chan_mtx(chan));
 			break;
 		}
 		if (xs) {
@@ -2191,8 +2188,6 @@ scsipi_completion_thread(void *arg)
 			 * for some reason.
 			 */
 			scsipi_run_queue(chan);
-		} else {
-			mutex_exit(chan_mtx(chan));
 		}
 	}
 
@@ -2200,6 +2195,7 @@ scsipi_completion_thread(void *arg)
 
 	/* In case parent is waiting for us to exit. */
 	cv_broadcast(chan_cv_thread(chan));
+	mutex_exit(chan_mtx(chan));
 
 	kthread_exit(0);
 }
