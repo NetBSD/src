@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolver.3,v 1.30 2016/01/22 10:58:39 wiz Exp $
+.\"	$NetBSD: resolver.3,v 1.31 2016/12/18 17:34:36 christos Exp $
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -33,7 +33,7 @@
 .\"	@(#)resolver.3	6.5 (Berkeley) 6/23/90
 .\"	Id: resolver.man3,v 1.2 2009/01/21 00:12:34 each Exp
 .\"
-.Dd January 22, 2016
+.Dd December 18, 2016
 .Dt RESOLVER 3
 .Os
 .Sh NAME
@@ -611,10 +611,16 @@ The functions
 .Fn res_nclose
 /
 .Fn res_close
-close any open files referenced through
+close any open socket file descriptors referenced through
 .Fa statp
 /
 .Fa _res .
+These functions were designed to be used to emulate
+.Xr endhostent 3 ,
+and don't release other resources held in
+.Ft res_state ;
+to free all_resources, call
+.Fn res_ndestroy .
 .Pp
 The function
 .Fn res_ndestroy
