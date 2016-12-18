@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.58.2.3 2015/02/04 07:13:04 snj Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.58.2.4 2016/12/18 07:40:50 snj Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/ptree.h>
 
 #include <net/bpf.h>
 #include <net/bpfjit.h>
@@ -227,8 +226,6 @@ bool		npf_bpf_validate(const void *, size_t);
 /* Tableset interface. */
 void		npf_tableset_sysinit(void);
 void		npf_tableset_sysfini(void);
-
-extern const pt_tree_ops_t npf_table_ptree_ops;
 
 npf_tableset_t *npf_tableset_create(u_int);
 void		npf_tableset_destroy(npf_tableset_t *);
