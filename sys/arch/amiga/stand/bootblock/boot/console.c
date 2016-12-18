@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.14 2016/01/15 08:27:04 mlelstv Exp $ */
+/* $NetBSD: console.c,v 1.15 2016/12/18 12:02:37 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -110,8 +110,8 @@ consinit(void *consptr) {
 
 	if (consptr != NULL) {
 		/* Check magic? */
-		ConsoleBase = consptr;		/* Use existing console */
-		return (0);
+		mc = consptr;		/* Use existing console */
+		goto done;
 	}
 
 	mc = &myConsole;
@@ -147,6 +147,8 @@ consinit(void *consptr) {
 
 	if (OpenDevice("timer.device", 0, (struct AmigaIO*)mc->tmior, 0))
 		goto err;
+
+done:
 
 #ifdef SERCONSOLE
 	conspreinit();
