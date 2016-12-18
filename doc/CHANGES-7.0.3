@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.13 2016/12/14 08:22:33 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.14 2016/12/18 08:48:09 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -202,4 +202,17 @@ external/public-domain/tz/tzdata2netbsd         up to 1.11
 
 	Update tzdata to 2016j.
 	[kre, ticket #1324]
+
+sys/arch/x86/include/pmap.h			1.61
+sys/arch/x86/x86/pmap.c				1.223
+sys/arch/x86/x86/vm_machdep.c			1.26
+
+	PR/49691: KAMADA Ken'ichi: free deferred ptp mappings if present.
+	[riastradh, ticket #1316]
+
+sbin/ping/ping.c				1.113
+
+	PR bin/36997 Zafer Aydogan: ping doesn't validate numeric inputs
+	enough.
+	[dholland, ticket #1333]
 
