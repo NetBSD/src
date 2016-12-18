@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.134 2016/12/14 19:33:33 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.135 2016/12/18 08:27:59 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7595,4 +7595,127 @@ sys/dev/usb/uchcom.c				1.17
 	  With this change, currently available devices now work.
 	- Match USB_PRODUCT_WINCHIPHEAD2_CH341_2.
 	[bouyer, ticket #1321]
+
+common/lib/libc/stdlib/_strtoul.h		1.10
+
+	Set *endptr in all paths out of strtoul and family.
+	[riastradh, ticket #1310]
+
+lib/libc/stdlib/strtod.3			1.21-1.29
+lib/libc/stdlib/strtol.3			1.36-1.38
+lib/libc/stdlib/strtoul.3			1.36
+
+	Documentation improvements.
+	[riastradh, ticket #1311]
+
+external/bsd/nvi/Makefile.inc			1.2-1.4
+external/bsd/nvi/dist/cl/cl.h			1.3
+external/bsd/nvi/dist/cl/cl_main.c		1.5
+external/bsd/nvi/dist/cl/cl_screen.c		1.5
+external/bsd/nvi/dist/cl/cl_term.c		1.5
+external/bsd/nvi/dist/common/key.h		1.3
+external/bsd/nvi/dist/common/vi_db1.c		1.8
+external/bsd/nvi/dist/docs/vi.man/vi.1		1.3, 1.4
+external/bsd/nvi/dist/ex/ex_map.c		1.4
+external/bsd/nvi/dist/ex/ex_script.c		1.5, 1.6
+external/bsd/nvi/usr.bin/nvi/Makefile		1.7
+
+	nvi:
+	- Fix memory leaks in vi when resizing. PR/50092
+	- Fix the script command of vi(1). PR/50484
+	- Fix > 1024 char lines in script.
+	- Fix synopsis for :tagprev.  PR 51446.
+	[riastradh, ticket #1312]
+
+usr.sbin/paxctl/paxctl.8			1.15
+
+	Documentation fixes.
+	[riastradh, ticket #1313]
+
+share/man/man9/fileassoc.9			1.28
+
+	Documentation fixes.
+	[riastradh, ticket #1314]
+
+share/man/man3/bits.3				1.17
+
+	Remove bogus BUGS content.
+	[riastradh, ticket #1315]
+
+sys/arch/x86/include/pmap.h			1.61
+sys/arch/x86/x86/pmap.c				1.223
+sys/arch/x86/x86/vm_machdep.c			1.26
+
+	PR/49691: KAMADA Ken'ichi: free deferred ptp mappings if present.
+	[riastradh, ticket #1316]
+
+share/misc/bsd-family-tree			1.57, 1.58
+
+	Add various entries.
+	[nakayama, ticket #1317]
+
+sys/modules/npf/Makefile			1.19
+sys/net/npf/files.npf				1.18
+sys/net/npf/lpm.c				1.1
+sys/net/npf/lpm.h				1.1
+sys/net/npf/npf_impl.h				1.62
+sys/net/npf/npf_tableset.c			1.24
+sys/net/npf/npf_tableset_ptree.c		delete
+sys/rump/net/lib/libnpf/Makefile		1.18
+
+	Ditches the ptree(3) library, because it is broken (you
+	can get missing entries!).  Instead, as a temporary solution,
+	we switch to a simple linear scan of the hash tables for the
+	longest-prefix-match (lpm.c lpm.h) algorithm.
+	[rmind, ticket #1319]
+
+usr.bin/calendar/calendars/calendar.birthday	1.26
+usr.bin/calendar/calendars/calendar.christian	1.6
+usr.bin/calendar/calendars/calendar.history	1.33, 1.34
+usr.bin/calendar/calendars/calendar.holiday	1.26, 1.27
+usr.bin/calendar/calendars/calendar.judaic	1.6
+usr.bin/calendar/calendars/calendar.netbsd	1.36, 1.37
+usr.bin/calendar/calendars/calendar.usholiday	1.7
+
+	Various updates and fixes for calendar entries.
+	[jnemeth, ticket #1325]
+
+sys/arch/xen/conf/files.xen			1.141
+
+	make CPU microcode loading dependent on both DOM0OPS AND
+	CPU_UCODE
+	[jnemeth, ticket #1326]
+
+sys/dev/pci/if_wm.c				1.457
+sys/dev/pci/if_wmreg.h				1.94
+
+	wm(4):
+	- Change to use 2500Base-KX correctly on C2000(I354). It worked,
+	  but the output of ifconfig and if_baudrate was not good.
+	- Check SERDES's speed directly from the PCS layer (PCS_LSTS
+	  register) for old devices.
+	- Style fix.
+	[msaitoh, ticket #1327]
+
+external/bsd/blacklist/bin/blacklistctl.c	1.21
+
+	Correct misplaced break.
+	[jnemeth, ticket #1330]
+
+usr.bin/ftp/fetch.c				1.226
+
+	Handle proxy authentication correctly.
+	[nonaka, ticket #1331]
+
+tools/Makefile.nbincludes			1.4
+
+	Add endian_machdep.h files for sh3 machines to _ARCH_INCS as
+	sh3/include/elf_machdep.h needs it since r1.11.  Unbreaks tools
+	build on non-netbsd hosts.
+	[uwe, ticket #1332]
+
+sbin/ping/ping.c				1.113
+
+	PR bin/36997: ping doesn't validate numeric inputs enough.
+	[dholland, ticket #1333]
 
