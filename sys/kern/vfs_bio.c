@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.262 2016/10/28 20:17:27 jdolecek Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.263 2016/12/18 05:43:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.262 2016/10/28 20:17:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.263 2016/12/18 05:43:20 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1524,7 +1524,7 @@ biowait(buf_t *bp)
  *	process, invokes a procedure specified in the buffer structure" ]
  *
  * In real life, the pagedaemon (or other system processes) wants
- * to do async stuff to, and doesn't want the buffer brelse()'d.
+ * to do async stuff too, and doesn't want the buffer brelse()'d.
  * (for swap pager, that puts swap buffers on the free lists (!!!),
  * for the vn device, that puts allocated buffers on the free lists!)
  */
