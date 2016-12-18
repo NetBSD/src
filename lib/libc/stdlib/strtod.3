@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtod.3,v 1.20 2007/10/24 13:42:10 reed Exp $
+.\"	$NetBSD: strtod.3,v 1.20.50.1 2016/12/18 06:31:01 snj Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strtod.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 12, 2006
+.Dd November 4, 2016
 .Dt STRTOD 3
 .Os
 .Sh NAME
@@ -151,7 +151,9 @@ If no conversion is performed, zero is returned and the value of
 is stored in the location referenced by
 .Fa endptr .
 .Pp
-If the correct value would cause overflow, plus or minus
+If the correct value is too large in magnitude to be represented
+.Pq Sq overflow ,
+plus or minus
 .Dv HUGE_VAL ,
 .Dv HUGE_VALF ,
 or
@@ -160,15 +162,58 @@ is returned (according to the return type and sign of the value), and
 .Dv ERANGE
 is stored in
 .Va errno .
-If the correct value would cause underflow, zero is
-returned and
+.Pp
+If the correct value is too small in magnitude to be represented
+normally with full precision
+.Pq Sq underflow ,
+the closest subnormal value, or zero, is returned, and
 .Dv ERANGE
 is stored in
 .Va errno .
+.Sh EXAMPLES
+Since there is no out-of-band channel or sentinel value to indicate an
+error, callers who wish to know whether there was overflow or underflow
+must set
+.Va errno
+to zero before calling
+.Fn strtod ,
+.Fn strtof ,
+or
+.Fn strtold ;
+in the case of no underflow or overflow, these functions preserve
+.Va errno .
+.Pp
+To check for syntax errors, callers must
+.Em also
+check whether
+.Fa endptr
+was updated to reflect the true end of the string in order to determine
+whether the full string was consumed or whether there were additional
+erroneous characters in it.
+.Bd -literal -offset abcd
+char *end;
+double d;
+
+\&...
+
+errno = 0;
+d = strtod(s, &end);
+if (end == s)
+	errx(EXIT_FAILURE, "invalid syntax");
+if (end[0] != '\e0')
+	errx(EXIT_FAILURE, "trailing garbage");
+if (errno) {
+	assert(errno == ERANGE);
+	assert(isinf(d) || d == 0 ||
+	    fpclassify(d) == FP_SUBNORMAL);
+	warnx("%s", isinf(d) ? "overflow" : "underflow");
+}
+/* d is the best floating-point approximation to the number in s */
+.Ed
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er ERANGE
-Overflow or underflow occurred.
+The conversion resulted in floating-point underflow or overflow.
 .El
 .Sh SEE ALSO
 .Xr atof 3 ,
