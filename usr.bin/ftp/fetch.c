@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.205.4.5 2016/11/01 19:30:44 snj Exp $	*/
+/*	$NetBSD: fetch.c,v 1.205.4.6 2016/12/18 08:03:09 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.205.4.5 2016/11/01 19:30:44 snj Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.205.4.6 2016/12/18 08:03:09 snj Exp $");
 #endif /* not lint */
 
 /*
@@ -855,8 +855,7 @@ print_connect(FETCH *fin, const struct urlinfo *ui)
 #define C_OK 0
 #define C_CLEANUP 1
 #define C_IMPROPER 2
-#define C_PROXY 3
-#define C_NOPROXY 4
+#define C_RESTART 3
 
 static int
 getresponseline(FETCH *fin, char *buf, size_t buflen, int *len)
@@ -1086,7 +1085,7 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 	case 401:
 	case 407:
 	    {
-		struct  authinfo aauth;
+		struct authinfo aauth;
 		char **authp;
 
 		if (hcode == 401)
@@ -1121,7 +1120,8 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 		authp = &aauth.auth;
 		if (auth_url(*auth, authp, &aauth) == 0) {
 			*rval = fetch_url(url, penv,
-			    pauth->auth, wauth->auth);
+			    hcode == 401 ? pauth->auth : aauth.auth,
+			    hcode == 401 ? aauth.auth : wauth->auth);
 			memset(*authp, 0, strlen(*authp));
 			FREEPTR(*authp);
 		}
@@ -1216,6 +1216,34 @@ connectmethod(int s, FETCH *fin, struct urlinfo *oui, struct urlinfo *ui,
 	switch (hcode) {
 	case 200:
 		break;
+#ifndef NO_AUTH
+	case 407:
+		if (verbose || pauth->auth == NULL ||
+		    pauth->user == NULL || pauth->pass == NULL)
+			fprintf(ttyout, "%s\n", message);
+		if (EMPTYSTRING(*auth)) {
+			warnx("No authentication challenge provided by server");
+			goto cleanup_fetch_url;
+		}
+
+		if (pauth->auth != NULL) {
+			char reply[10];
+
+			fprintf(ttyout, "Authorization failed. Retry (y/n)? ");
+			if (get_line(stdin, reply, sizeof(reply), NULL)
+			    < 0) {
+				goto cleanup_fetch_url;
+			}
+			if (tolower((unsigned char)reply[0]) != 'y')
+				goto cleanup_fetch_url;
+			pauth->user = NULL;
+			pauth->pass = NULL;
+		}
+
+		if (auth_url(*auth, &pauth->auth, pauth) == 0)
+			goto restart_fetch_url;
+		goto cleanup_fetch_url;
+#endif
 	default:
 		if (message)
 			warnx("Error proxy connect " "`%s'", message);
@@ -1235,6 +1263,9 @@ improper:
 	goto out;
 cleanup_fetch_url:
 	rv = C_CLEANUP;
+	goto out;
+restart_fetch_url:
+	rv = C_RESTART;
 	goto out;
 out:
 	FREEPTR(message);
@@ -1444,6 +1475,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		if (isproxy && oui.utype == HTTPS_URL_T) {
 			switch (connectmethod(s, fin, &oui, &ui, &pauth, &auth,
 			    &hasleading)) {
+			case C_RESTART:
+				rval = fetch_url(url, penv, pauth.auth,
+				    wauth.auth);
+				/*FALLTHROUGH*/
 			case C_CLEANUP:
 				goto cleanup_fetch_url;
 			case C_IMPROPER:
