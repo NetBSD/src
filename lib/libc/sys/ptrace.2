@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.44 2016/12/15 15:03:17 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.45 2016/12/19 07:17:45 abhinav Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 1, 2016
@@ -143,8 +143,8 @@ Second, no process may trace the process running
 .Xr init 8 .
 Third, if a process has its root directory set with
 .Xr chroot 2 ,
-it may not trace another process unless that process's root directory
-is at or below the tracing process's root.
+it may not trace another process unless that process' root directory
+is at or below the tracing process' root.
 .It Dv PT_DETACH
 This request is like PT_CONTINUE, except that after it
 succeeds, the traced process is no longer traced and continues
