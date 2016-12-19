@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.13 2016/12/19 01:37:30 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.14 2016/12/19 02:27:02 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -26,14 +26,17 @@
 #
 
 RUMPSRV=unix://r1
+RUMPSRV1_2=unix://r12
 RUMPCLI=unix://r2
 RUMPSRV3=unix://r3
 IP6SRV=fc00:1::1
+IP6SRV1_2=fc00:1::2
 IP6SRV_PREFIX=fc00:1:
 IP6CLI=fc00:2::2
 IP6SRV3=fc00:3::1
 IP6SRV3_PREFIX=fc00:3:
 PIDFILE=./rump.rtadvd.pid
+PIDFILE1_2=./rump.rtadvd.pid12
 PIDFILE3=./rump.rtadvd.pid3
 CONFIG=./rtadvd.conf
 DEBUG=${DEBUG:-true}
@@ -374,6 +377,7 @@ ra_multiple_routers_head()
 
 ra_multiple_routers_body()
 {
+	local n=
 
 	rump_server_fs_start $RUMPSRV netinet6
 	rump_server_fs_start $RUMPSRV3 netinet6
@@ -397,6 +401,12 @@ ra_multiple_routers_body()
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 	check_entries $RUMPCLI $RUMPSRV3 $IP6SRV3_PREFIX
+
+	export RUMP_SERVER=$RUMPCLI
+	# Two prefixes are advertised by differnt two routers
+	n=$(rump.ndp -p |grep 'advertised by' |wc -l)
+	atf_check_equal $n 2
+	unset RUMP_SERVER
 
 	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
 	wait_term ${PIDFILE}
@@ -422,6 +432,71 @@ ra_multiple_routers_cleanup()
 	cleanup
 }
 
+atf_test_case ra_multiple_routers_single_prefix cleanup
+ra_multiple_routers_single_prefix_head()
+{
+
+	atf_set "descr" "Tests for multiple routers with a single prefix"
+	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+}
+
+ra_multiple_routers_single_prefix_body()
+{
+	local n=
+
+	rump_server_fs_start $RUMPSRV netinet6
+	rump_server_fs_start $RUMPSRV1_2 netinet6
+	rump_server_start $RUMPCLI netinet6
+
+	setup_shmif0 ${RUMPSRV} ${IP6SRV}
+	setup_shmif0 ${RUMPSRV1_2} ${IP6SRV1_2}
+	setup_shmif0 ${RUMPCLI} ${IP6CLI}
+
+	init_server $RUMPSRV
+	init_server $RUMPSRV1_2
+
+	create_rtadvdconfig
+
+	export RUMP_SERVER=${RUMPCLI}
+	atf_check -s exit:0 -o match:'0.->.1' rump.sysctl -w net.inet6.ip6.accept_rtadv=1
+	unset RUMP_SERVER
+
+	start_rtadvd $RUMPSRV $PIDFILE
+	start_rtadvd $RUMPSRV1_2 $PIDFILE1_2
+
+	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
+	check_entries $RUMPCLI $RUMPSRV1_2 $IP6SRV_PREFIX
+
+	export RUMP_SERVER=$RUMPCLI
+	# One prefix is advertised by differnt two routers
+	n=$(rump.ndp -p |grep 'advertised by' |wc -l)
+	atf_check_equal $n 1
+	unset RUMP_SERVER
+
+	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
+	wait_term ${PIDFILE}
+	atf_check -s exit:0 kill -TERM `cat ${PIDFILE1_2}`
+	wait_term ${PIDFILE1_2}
+
+	rump_server_destroy_ifaces
+}
+
+ra_multiple_routers_single_prefix_cleanup()
+{
+
+	if [ -f ${PIDFILE} ]; then
+		kill -TERM `cat ${PIDFILE}`
+		wait_term ${PIDFILE}
+	fi
+	if [ -f ${PIDFILE1_2} ]; then
+		kill -TERM `cat ${PIDFILE1_2}`
+		wait_term ${PIDFILE1_2}
+	fi
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -430,4 +505,5 @@ atf_init_test_cases()
 	atf_add_test_case ra_flush_defrouter_entries
 	atf_add_test_case ra_delete_address
 	atf_add_test_case ra_multiple_routers
+	atf_add_test_case ra_multiple_routers_single_prefix
 }
