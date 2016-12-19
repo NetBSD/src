@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.217 2016/12/14 04:05:11 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.218 2016/12/19 03:32:54 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.217 2016/12/14 04:05:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.218 2016/12/19 03:32:54 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -904,6 +904,26 @@ nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 	 */
 	if (ext->lltable != NULL)
 		lltable_purge_entries(ext->lltable);
+}
+
+void
+nd6_assert_purged(struct ifnet *ifp)
+{
+	struct nd_defrouter *dr;
+	struct nd_prefix *pr;
+
+	ND_DEFROUTER_LIST_FOREACH(dr) {
+		KASSERTMSG(dr->ifp != ifp,
+		    "defrouter %s remains on %s",
+		    ip6_sprintf(&dr->rtaddr), ifp->if_xname);
+	}
+
+	ND_PREFIX_LIST_FOREACH(pr) {
+		KASSERTMSG(pr->ndpr_ifp != ifp,
+		    "prefix %s/%d remains on %s",
+		    ip6_sprintf(&pr->ndpr_prefix.sin6_addr),
+		    pr->ndpr_plen, ifp->if_xname);
+	}
 }
 
 struct llentry *
