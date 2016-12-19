@@ -38,7 +38,7 @@
  * as well.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: update.c,v 1.5 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: update.c,v 1.6 2016/12/19 03:15:31 christos Exp $");
 
 #include "cvs.h"
 #include <assert.h>
@@ -1366,12 +1366,16 @@ VERS: ", 0);
 	    /* set the time from the RCS file iff it was unknown before */
 	    set_time =
 		(!noexec
+#if 0
+		/*
+		 * always pass the time to the client, and let it decide
+		 * if it is going to set the time
+		 */
 		 && (vers_ts->vn_user == NULL ||
 		     strncmp (vers_ts->ts_rcs, "Initial", 7) == 0)
+#endif
 		 && !file_is_dead);
-
 	    wrap_fromcvs_process_file (finfo->file);
-
 	    xvers_ts = Version_TS (finfo, options, tag, date, 
 				   force_tag_match, set_time);
 	    if (strcmp (xvers_ts->options, "-V4") == 0)
@@ -1768,7 +1772,7 @@ patch_file (struct file_info *finfo, Vers_TS *vers_ts, int *docheckout,
         /* This stuff is just copied blindly from checkout_file.  I
 	   don't really know what it does.  */
         xvers_ts = Version_TS (finfo, options, tag, date,
-			       force_tag_match, 0);
+			       force_tag_match, 1);
 	if (strcmp (xvers_ts->options, "-V4") == 0)
 	    xvers_ts->options[0] = '\0';
 
