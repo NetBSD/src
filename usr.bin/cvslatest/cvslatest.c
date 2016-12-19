@@ -1,4 +1,4 @@
-/*	$NetBSD: cvslatest.c,v 1.2 2016/01/24 20:14:44 christos Exp $	*/
+/*	$NetBSD: cvslatest.c,v 1.3 2016/12/19 01:48:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cvslatest.c,v 1.2 2016/01/24 20:14:44 christos Exp $");
+__RCSID("$NetBSD: cvslatest.c,v 1.3 2016/12/19 01:48:00 christos Exp $");
 
 /*
  * Find the latest timestamp in a set of CVS trees, by examining the
@@ -120,7 +120,7 @@ getlatest(const char *path, const char *repo, struct latest *lat)
 			lat->time = t;
 			snprintf(lat->path, sizeof(lat->path),
 			    "%s/%s", repo, fn);
-			if (debug)
+			if (debug > 1)
 				printlat(lat);
 		}
 	}
