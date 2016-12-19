@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.80 2016/12/19 03:32:54 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.81 2016/12/19 07:51:34 ozaki-r Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -381,6 +381,14 @@ extern int nd6_debug;
 #define nd6log(level, fmt, args...) \
 	do { if (nd6_debug) log(level, "%s: " fmt, __func__, ##args);} while (0)
 
+extern krwlock_t nd6_lock;
+
+#define ND6_RLOCK()		rw_enter(&nd6_lock, RW_READER)
+#define ND6_WLOCK()		rw_enter(&nd6_lock, RW_WRITER)
+#define ND6_UNLOCK()		rw_exit(&nd6_lock)
+#define ND6_ASSERT_WLOCK()	KASSERT(rw_write_held(&nd6_lock))
+#define ND6_ASSERT_LOCK()	KASSERT(rw_lock_held(&nd6_lock))
+
 /* nd6_rtr.c */
 extern int ip6_desync_factor;	/* seconds */
 extern u_int32_t ip6_temp_preferred_lifetime; /* seconds */
@@ -463,6 +471,7 @@ void nd6_ra_input(struct mbuf *, int, int);
 void nd6_defrouter_reset(void);
 void nd6_defrouter_select(void);
 void nd6_defrtrlist_del(struct nd_defrouter *, struct in6_ifextra *);
+void nd6_prefix_unref(struct nd_prefix *);
 void nd6_prelist_remove(struct nd_prefix *);
 void nd6_pfxlist_onlink_check(void);
 struct nd_defrouter *nd6_defrouter_lookup(const struct in6_addr *, struct ifnet *);
