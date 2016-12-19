@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.14 2013/09/12 15:36:15 joerg Exp $ */
+/*	$NetBSD: bzero.S,v 1.15 2016/12/19 14:30:23 christos Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -32,7 +32,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bzero.S,v 1.14 2013/09/12 15:36:15 joerg Exp $")
+__RCSID("$NetBSD: bzero.S,v 1.15 2016/12/19 14:30:23 christos Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 #include "assym.h"
@@ -54,6 +54,8 @@ __RCSID("$NetBSD: bzero.S,v 1.14 2013/09/12 15:36:15 joerg Exp $")
 		.align 4
 ENTRY(bzero)
 		li	r_val, 0		/* Value to stuff in */
+		cmplwi	%cr1, %r4, 0		/* Zero length? */
+		beqlr-	%cr1			/* Yes, do nothing */
 		b	cb_memset
 END(bzero)
 
