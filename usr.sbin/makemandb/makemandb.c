@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.45 2016/12/17 17:04:38 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.46 2016/12/19 14:10:57 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.45 2016/12/17 17:04:38 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.46 2016/12/19 14:10:57 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -996,6 +996,8 @@ pmdoc_Nd(const struct roff_node *n, mandb_rec *rec)
 {
 	if (n->type == ROFFT_BODY)
 		deroff(&rec->name_desc, n);
+	if (rec->name_desc)
+		replace_hyph(rec->name_desc);
 
 }
 
