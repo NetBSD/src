@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2015/07/15 11:24:03 martin Exp $
+#	$NetBSD: Makefile,v 1.10 2016/12/19 15:50:13 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		sshramdisk.fs
-IMAGESIZE=	14848k
+IMAGESIZE=	19000k
 MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
