@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.224 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.225 2016/12/19 07:51:34 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.224 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.225 2016/12/19 07:51:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -709,23 +709,11 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	}
 
 	case SIOCDIFADDR_IN6:
-	{
-		struct nd_prefix *pr;
-
-		/*
-		 * If the address being deleted is the only one that owns
-		 * the corresponding prefix, expire the prefix as well.
-		 * Note that in6_purgeaddr() will decrement ndpr_refcnt.
-		 */
-		pr = ia->ia6_ndpr;
 		ia6_release(ia, &psref);
 		in6_purgeaddr(&ia->ia_ifa);
 		ia = NULL;
-		if (pr && pr->ndpr_refcnt == 0)
-			nd6_prelist_remove(pr);
 		run_hooks = true;
 		break;
-	}
 
 	default:
 		error = ENOTTY;
@@ -1388,7 +1376,7 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	 * Release the reference to the ND prefix.
 	 */
 	if (ia->ia6_ndpr != NULL) {
-		ia->ia6_ndpr->ndpr_refcnt--;
+		nd6_prefix_unref(ia->ia6_ndpr);
 		ia->ia6_ndpr = NULL;
 	}
 
@@ -1397,8 +1385,11 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	 * nd6_pfxlist_onlink_check() since the release might affect the status of
 	 * other (detached) addresses.
 	 */
-	if ((ia->ia6_flags & IN6_IFF_AUTOCONF) != 0)
+	if ((ia->ia6_flags & IN6_IFF_AUTOCONF) != 0) {
+		ND6_WLOCK();
 		nd6_pfxlist_onlink_check();
+		ND6_UNLOCK();
+	}
 
 	IN6_ADDRLIST_ENTRY_DESTROY(ia);
 
@@ -2153,7 +2144,9 @@ in6_if_link_up(struct ifnet *ifp)
 	curlwp_bindx(bound);
 
 	/* Restore any detached prefixes */
+	ND6_WLOCK();
 	nd6_pfxlist_onlink_check();
+	ND6_UNLOCK();
 }
 
 void
@@ -2180,7 +2173,9 @@ in6_if_link_down(struct ifnet *ifp)
 	int s, bound;
 
 	/* Any prefixes on this interface should be detached as well */
+	ND6_WLOCK();
 	nd6_pfxlist_onlink_check();
+	ND6_UNLOCK();
 
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
