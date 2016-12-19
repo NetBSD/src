@@ -38,7 +38,7 @@
  * as well.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: update.c,v 1.7 2016/12/19 04:37:13 christos Exp $");
+__RCSID("$NetBSD: update.c,v 1.8 2016/12/19 04:44:35 christos Exp $");
 
 #include "cvs.h"
 #include <assert.h>
@@ -1377,7 +1377,7 @@ VERS: ", 0);
 		 * always pass the time to the client, and let it decide
 		 * if it is going to set the time
 		 */
-		 && (preserve_timestamps_on_update ||
+		 && (!preserve_timestamps_on_update ||
 		     vers_ts->vn_user == NULL ||
 		     strncmp (vers_ts->ts_rcs, "Initial", 7) == 0)
 		 && !file_is_dead);
