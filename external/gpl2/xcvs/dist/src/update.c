@@ -38,7 +38,7 @@
  * as well.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: update.c,v 1.9 2016/12/19 04:54:49 christos Exp $");
+__RCSID("$NetBSD: update.c,v 1.10 2016/12/19 17:31:47 christos Exp $");
 
 #include "cvs.h"
 #include <assert.h>
@@ -127,12 +127,12 @@ static const char *const update_usage[] =
     "\t-l\tLocal directory only, no recursion.\n",
     "\t-R\tProcess directories recursively.\n",
     "\t-p\tSend updates to standard output (avoids stickiness).\n",
+    "\t-t\tPreserve timestamps on update.\n",
     "\t-k kopt\tUse RCS kopt -k option on checkout. (is sticky)\n",
     "\t-r rev\tUpdate using specified revision/tag (is sticky).\n",
     "\t-D date\tSet date to update from (is sticky).\n",
     "\t-j rev\tMerge in changes made between current revision and rev.\n",
     "\t-I ign\tMore files to ignore (! to reset).\n",
-    "\t-t Preserve timestamps on update.\n",
     "\t-W spec\tWrappers specification line.\n",
     "(Specify the --help global option for a list of other help options)\n",
     NULL
