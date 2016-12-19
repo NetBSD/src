@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.35 2015/12/08 14:52:06 christos Exp $
+.\"	$NetBSD: kqueue.2,v 1.36 2016/12/19 07:48:35 abhinav Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -299,7 +299,6 @@ Takes a descriptor as the identifier, and returns whenever
 there is data available to read.
 The behavior of the filter is slightly different depending
 on the descriptor type.
-.Pp
 .Bl -tag -width 2n
 .It Sockets
 Sockets which have previously been passed to
@@ -487,7 +486,9 @@ This filter automatically sets the EV_CLEAR flag internally.
 .Fn kqueue
 creates a new kernel event queue and returns a file descriptor.
 If there was an error creating the kernel event queue, a value of \-1 is
-returned and errno set.
+returned and
+.Dv errno
+is set.
 .Pp
 .Fn kevent
 returns the number of events placed in the
