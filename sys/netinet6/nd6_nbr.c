@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.133 2016/12/14 04:05:11 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.134 2016/12/19 07:51:34 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.133 2016/12/14 04:05:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.134 2016/12/19 07:51:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -809,17 +809,10 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 */
 			struct nd_defrouter *dr;
 			const struct in6_addr *in6;
-			int s;
 
 			in6 = &ln->r_l3addr.addr6;
 
-			/*
-			 * Lock to protect the default router list.
-			 * XXX: this might be unnecessary, since this function
-			 * is only called under the network software interrupt
-			 * context.  However, we keep it just for safety.
-			 */
-			s = splsoftnet();
+			ND6_WLOCK();
 			dr = nd6_defrouter_lookup(in6, ln->lle_tbl->llt_ifp);
 			if (dr)
 				nd6_defrtrlist_del(dr, NULL);
@@ -833,7 +826,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 				 */
 				nd6_rt_flush(&ip6->ip6_src, ln->lle_tbl->llt_ifp);
 			}
-			splx(s);
+			ND6_UNLOCK();
 		}
 		ln->ln_router = is_router;
 	}
@@ -853,8 +846,11 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	if (ln != NULL)
 		LLE_WUNLOCK(ln);
 
-	if (checklink)
+	if (checklink) {
+		ND6_WLOCK();
 		nd6_pfxlist_onlink_check();
+		ND6_UNLOCK();
+	}
 
 	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
