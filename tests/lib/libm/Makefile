@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.40 2016/08/31 14:05:10 maya Exp $
+# $NetBSD: Makefile,v 1.41 2016/12/19 17:38:24 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,7 @@ TESTS_C+=	t_cosh
 TESTS_C+=	t_erf
 TESTS_C+=	t_exp
 TESTS_C+=	t_fenv
+TESTS_C+=	t_fe_round
 TESTS_C+=	t_fmod
 TESTS_C+=	t_hypot
 TESTS_C+=	t_ilogb
