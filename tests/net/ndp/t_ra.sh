@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.14 2016/12/19 02:27:02 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.15 2016/12/19 03:07:05 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -29,15 +29,19 @@ RUMPSRV=unix://r1
 RUMPSRV1_2=unix://r12
 RUMPCLI=unix://r2
 RUMPSRV3=unix://r3
+RUMPSRV4=unix://r4
 IP6SRV=fc00:1::1
 IP6SRV1_2=fc00:1::2
 IP6SRV_PREFIX=fc00:1:
 IP6CLI=fc00:2::2
 IP6SRV3=fc00:3::1
 IP6SRV3_PREFIX=fc00:3:
+IP6SRV4=fc00:4::1
+IP6SRV4_PREFIX=fc00:4:
 PIDFILE=./rump.rtadvd.pid
 PIDFILE1_2=./rump.rtadvd.pid12
 PIDFILE3=./rump.rtadvd.pid3
+PIDFILE4=./rump.rtadvd.pid4
 CONFIG=./rtadvd.conf
 DEBUG=${DEBUG:-true}
 
@@ -481,16 +485,82 @@ ra_multiple_routers_single_prefix_body()
 	rump_server_destroy_ifaces
 }
 
-ra_multiple_routers_single_prefix_cleanup()
+atf_test_case ra_multiple_routers_maxifprefixes cleanup
+ra_multiple_routers_maxifprefixes_head()
+{
+
+	atf_set "descr" "Tests for exceeding the number of maximum prefixes"
+	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+}
+
+ra_multiple_routers_maxifprefixes_body()
+{
+	local n=
+
+	rump_server_fs_start $RUMPSRV netinet6
+	rump_server_fs_start $RUMPSRV3 netinet6
+	rump_server_fs_start $RUMPSRV4 netinet6
+	rump_server_start $RUMPCLI netinet6
+
+	setup_shmif0 ${RUMPSRV} ${IP6SRV}
+	setup_shmif0 ${RUMPSRV3} ${IP6SRV3}
+	setup_shmif0 ${RUMPSRV4} ${IP6SRV4}
+	setup_shmif0 ${RUMPCLI} ${IP6CLI}
+
+	init_server $RUMPSRV
+	init_server $RUMPSRV3
+	init_server $RUMPSRV4
+
+	create_rtadvdconfig
+
+	export RUMP_SERVER=${RUMPCLI}
+	atf_check -s exit:0 -o match:'0.->.1' \
+	    rump.sysctl -w net.inet6.ip6.accept_rtadv=1
+	# Limit the maximum number of prefix entries to 2
+	atf_check -s exit:0 -o match:'16.->.2' \
+	    rump.sysctl -w net.inet6.ip6.maxifprefixes=2
+	unset RUMP_SERVER
+
+	start_rtadvd $RUMPSRV $PIDFILE
+	start_rtadvd $RUMPSRV3 $PIDFILE3
+
+	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
+	check_entries $RUMPCLI $RUMPSRV3 $IP6SRV3_PREFIX
+
+	start_rtadvd $RUMPSRV4 $PIDFILE4
+
+	export RUMP_SERVER=${RUMPCLI}
+	$DEBUG && dump_entries
+	# There should remain two prefixes
+	n=$(rump.ndp -p |grep 'advertised by' |wc -l)
+	atf_check_equal $n 2
+	# TODO check other conditions
+	unset RUMP_SERVER
+
+	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
+	wait_term ${PIDFILE}
+	atf_check -s exit:0 kill -TERM `cat ${PIDFILE3}`
+	wait_term ${PIDFILE3}
+	atf_check -s exit:0 kill -TERM `cat ${PIDFILE4}`
+	wait_term ${PIDFILE4}
+
+	rump_server_destroy_ifaces
+}
+
+ra_multiple_routers_maxifprefixes_cleanup()
 {
 
 	if [ -f ${PIDFILE} ]; then
 		kill -TERM `cat ${PIDFILE}`
 		wait_term ${PIDFILE}
 	fi
-	if [ -f ${PIDFILE1_2} ]; then
-		kill -TERM `cat ${PIDFILE1_2}`
-		wait_term ${PIDFILE1_2}
+	if [ -f ${PIDFILE3} ]; then
+		kill -TERM `cat ${PIDFILE3}`
+		wait_term ${PIDFILE3}
+	fi
+	if [ -f ${PIDFILE4} ]; then
+		kill -TERM `cat ${PIDFILE4}`
+		wait_term ${PIDFILE4}
 	fi
 
 	$DEBUG && dump
@@ -506,4 +576,5 @@ atf_init_test_cases()
 	atf_add_test_case ra_delete_address
 	atf_add_test_case ra_multiple_routers
 	atf_add_test_case ra_multiple_routers_single_prefix
+	atf_add_test_case ra_multiple_routers_maxifprefixes
 }
