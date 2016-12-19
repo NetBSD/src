@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.4 2016/12/15 12:42:38 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.5 2016/12/19 03:19:37 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -9,8 +9,7 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - add PT_DUMPCORE tests in the ATF framework
  - add ATF tests for PT_WRITE_I and PIOD_WRITE_I - test mprotect restrictions
  - add ATF tests for PIOD_READ_AUXV
- - document all MD specific ptrace(2) interfaces
-   (PT_GETXMMREGS, PT_SETXMMREGS, ...)
+ - once the API for hardware watchpoints will stabilize, document it
  - add tests for the procfs interface covering all functions available on the
    same level as ptrace(2)
  - add support for PT_STEP, PT_GETREGS, PT_SETREGS, PT_GETFPREGS, PT_SETFPREGS
