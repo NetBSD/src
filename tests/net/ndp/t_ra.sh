@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.12 2016/12/16 09:11:18 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.13 2016/12/19 01:37:30 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -368,7 +368,7 @@ atf_test_case ra_multiple_routers cleanup
 ra_multiple_routers_head()
 {
 
-	atf_set "descr" "Tests for deleting auto-configured address"
+	atf_set "descr" "Tests for multiple routers"
 	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
 }
 
