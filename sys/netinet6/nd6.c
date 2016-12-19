@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.218 2016/12/19 03:32:54 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.219 2016/12/19 04:52:17 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.218 2016/12/19 03:32:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.219 2016/12/19 04:52:17 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -196,6 +196,8 @@ void
 nd6_ifdetach(struct ifnet *ifp, struct in6_ifextra *ext)
 {
 
+	/* Ensure all IPv6 addresses are purged before calling nd6_purge */
+	if_purgeaddrs(ifp, AF_INET6, in6_purgeaddr);
 	nd6_purge(ifp, ext);
 	free(ext->nd_ifinfo, M_IP6NDP);
 }
@@ -863,20 +865,9 @@ nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 	ND_PREFIX_LIST_FOREACH_SAFE(pr, npr) {
 		if (pr->ndpr_ifp == ifp) {
 			/*
-			 * Because if_detach() does *not* release prefixes
-			 * while purging addresses the reference count will
-			 * still be above zero. We therefore reset it to
-			 * make sure that the prefix really gets purged.
+			 * All addresses referencing pr should be already freed.
 			 */
-			pr->ndpr_refcnt = 0;
-			/*
-			 * Previously, pr->ndpr_addr is removed as well,
-			 * but I strongly believe we don't have to do it.
-			 * nd6_purge() is only called from in6_ifdetach(),
-			 * which removes all the associated interface addresses
-			 * by itself.
-			 * (jinmei@kame.net 20010129)
-			 */
+			KASSERT(pr->ndpr_refcnt == 0);
 			nd6_prelist_remove(pr);
 		}
 	}
