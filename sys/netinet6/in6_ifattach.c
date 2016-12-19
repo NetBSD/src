@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.107 2016/11/30 02:08:57 ozaki-r Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.108 2016/12/19 03:32:54 ozaki-r Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.107 2016/11/30 02:08:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.108 2016/12/19 03:32:54 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -815,21 +815,13 @@ in6_ifdetach(struct ifnet *ifp)
 	/* remove ip6_mrouter stuff */
 	ip6_mrouter_detach(ifp);
 
-	/* remove neighbor management table */
-	nd6_purge(ifp, NULL);
-
 	/* cleanup multicast address kludge table, if there is any */
 	in6_purgemkludge(ifp);
 
-	/*
-	 * remove neighbor management table.  we call it twice just to make
-	 * sure we nuke everything.  maybe we need just one call.
-	 * XXX: since the first call did not release addresses, some prefixes
-	 * might remain.  We should call nd6_purge() again to release the
-	 * prefixes after removing all addresses above.
-	 * (Or can we just delay calling nd6_purge until at this point?)
-	 */
+	/* remove neighbor management table */
 	nd6_purge(ifp, NULL);
+
+	nd6_assert_purged(ifp);
 }
 
 int
