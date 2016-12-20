@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.15 2016/12/19 03:07:05 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.16 2016/12/20 10:12:24 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -43,6 +43,7 @@ PIDFILE1_2=./rump.rtadvd.pid12
 PIDFILE3=./rump.rtadvd.pid3
 PIDFILE4=./rump.rtadvd.pid4
 CONFIG=./rtadvd.conf
+WAITTIME=2
 DEBUG=${DEBUG:-true}
 
 init_server()
@@ -100,8 +101,9 @@ start_rtadvd()
 
 	export RUMP_SERVER=$sock
 	atf_check -s exit:0 rump.rtadvd -c ${CONFIG} -p $pidfile shmif0
-	atf_check -s exit:0 sleep 3
-	atf_check -s exit:0 -o ignore -e empty cat $pidfile
+	while [ ! -f $pidfile ]; do
+		sleep 0.2
+	done
 	unset RUMP_SERVER
 }
 
@@ -165,6 +167,7 @@ ra_basic_body()
 
 	create_rtadvdconfig
 	start_rtadvd $RUMPSRV $PIDFILE
+	sleep $WAITTIME
 
 	export RUMP_SERVER=${RUMPCLI}
 	atf_check -s exit:0 -o empty rump.ndp -r
@@ -183,6 +186,7 @@ ra_basic_body()
 	unset RUMP_SERVER
 
 	start_rtadvd $RUMPSRV $PIDFILE
+	sleep $WAITTIME
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
@@ -230,6 +234,7 @@ ra_flush_prefix_entries_body()
 	unset RUMP_SERVER
 
 	start_rtadvd $RUMPSRV $PIDFILE
+	sleep $WAITTIME
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
@@ -287,6 +292,7 @@ ra_flush_defrouter_entries_body()
 	unset RUMP_SERVER
 
 	start_rtadvd $RUMPSRV $PIDFILE
+	sleep $WAITTIME
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
@@ -344,6 +350,7 @@ ra_delete_address_body()
 	unset RUMP_SERVER
 
 	start_rtadvd $RUMPSRV $PIDFILE
+	sleep $WAITTIME
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
@@ -402,6 +409,7 @@ ra_multiple_routers_body()
 
 	start_rtadvd $RUMPSRV $PIDFILE
 	start_rtadvd $RUMPSRV3 $PIDFILE3
+	sleep $WAITTIME
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 	check_entries $RUMPCLI $RUMPSRV3 $IP6SRV3_PREFIX
@@ -467,6 +475,7 @@ ra_multiple_routers_single_prefix_body()
 
 	start_rtadvd $RUMPSRV $PIDFILE
 	start_rtadvd $RUMPSRV1_2 $PIDFILE1_2
+	sleep $WAITTIME
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 	check_entries $RUMPCLI $RUMPSRV1_2 $IP6SRV_PREFIX
@@ -523,11 +532,13 @@ ra_multiple_routers_maxifprefixes_body()
 
 	start_rtadvd $RUMPSRV $PIDFILE
 	start_rtadvd $RUMPSRV3 $PIDFILE3
+	sleep $WAITTIME
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 	check_entries $RUMPCLI $RUMPSRV3 $IP6SRV3_PREFIX
 
 	start_rtadvd $RUMPSRV4 $PIDFILE4
+	sleep $WAITTIME
 
 	export RUMP_SERVER=${RUMPCLI}
 	$DEBUG && dump_entries
