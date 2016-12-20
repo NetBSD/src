@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.26 2016/10/07 22:32:50 joerg Exp $	*/
+/*	$NetBSD: table.c,v 1.27 2016/12/20 03:35:12 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.26 2016/10/07 22:32:50 joerg Exp $");
+__RCSID("$NetBSD: table.c,v 1.27 2016/12/20 03:35:12 ozaki-r Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -778,6 +778,7 @@ static struct khash {
 #define	    KS_DYNAMIC	0x080		/* result of redirect */
 #define	    KS_DELETED	0x100		/* already deleted from kernel */
 #define	    KS_CHECK	0x200
+#define	    KS_LOCAL	0x400
 	time_t	k_keep;
 #define	    K_KEEP_LIM	30
 	time_t	k_redirect_time;	/* when redirected route 1st seen */
@@ -924,11 +925,13 @@ rtm_add(struct rt_msghdr *rtm,
 	}
 	k->k_state &= ~(KS_DELETE | KS_ADD | KS_CHANGE | KS_DEL_ADD
 			| KS_DELETED | KS_GATEWAY | KS_STATIC
-			| KS_NEW | KS_CHECK);
+			| KS_NEW | KS_CHECK | KS_LOCAL);
 	if (rtm->rtm_flags & RTF_GATEWAY)
 		k->k_state |= KS_GATEWAY;
 	if (rtm->rtm_flags & RTF_STATIC)
 		k->k_state |= KS_STATIC;
+	if (rtm->rtm_flags & RTF_LOCAL)
+		k->k_state |= KS_LOCAL;
 
 	if (0 != (rtm->rtm_flags & (RTF_DYNAMIC | RTF_MODIFIED))) {
 		if (INFO_AUTHOR(info) != 0
@@ -964,7 +967,7 @@ rtm_add(struct rt_msghdr *rtm,
 	/* If it is not a static route, quit until the next comparison
 	 * between the kernel and daemon tables, when it will be deleted.
 	 */
-	if (!(k->k_state & KS_STATIC)) {
+	if (!(k->k_state & KS_STATIC) && !(k->k_state & KS_LOCAL)) {
 		k->k_state |= KS_DELETE;
 		LIM_SEC(need_kern, k->k_keep);
 		return;
@@ -1363,7 +1366,7 @@ kern_out(struct ag_info *ag)
 		return;
 	}
 
-	if (k->k_state & KS_STATIC)
+	if ((k->k_state & KS_STATIC) || (k->k_state & KS_LOCAL))
 		return;
 
 	/* modify existing kernel entry if necessary */
@@ -1508,6 +1511,12 @@ fix_kern(void)
 			/* Do not touch static routes */
 			if (k->k_state & KS_STATIC) {
 				kern_check_static(k,0);
+				pk = &k->k_next;
+				continue;
+			}
+
+			/* Do not touch local routes */
+			if (k->k_state & KS_LOCAL) {
 				pk = &k->k_next;
 				continue;
 			}
