@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.77 2016/11/25 11:57:36 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.78 2016/12/20 12:48:30 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.77 2016/11/25 11:57:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.78 2016/12/20 12:48:30 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -834,11 +834,12 @@ init_x86_clusters(void)
 /*
  * init_x86_vm: initialize the VM system on x86. We basically internalize as
  * many physical pages as we can, starting at avail_start, but we don't
- * internalize the kernel physical pages (from IOM_END to pa_kend).
+ * internalize the kernel physical pages (from pa_kstart to pa_kend).
  */
 int
 init_x86_vm(paddr_t pa_kend)
 {
+	paddr_t pa_kstart = (KERNTEXTOFF - KERNBASE);
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
 	int x;
@@ -853,8 +854,7 @@ init_x86_vm(paddr_t pa_kend)
 	 * Now, load the memory clusters (which have already been rounded and
 	 * truncated) into the VM system.
 	 *
-	 * NOTE: we assume that memory starts at 0 and that the kernel is
-	 * loaded at IOM_END (1MB).
+	 * NOTE: we assume that memory starts at 0.
 	 */
 	for (x = 0; x < mem_cluster_cnt; x++) {
 		const phys_ram_seg_t *cluster = &mem_clusters[x];
@@ -878,10 +878,10 @@ init_x86_vm(paddr_t pa_kend)
 		 * If this segment contains the kernel, split it in two, around
 		 * the kernel.
 		 */
-		if (seg_start <= IOM_END && pa_kend <= seg_end) {
+		if (seg_start <= pa_kstart && pa_kend <= seg_end) {
 			seg_start1 = pa_kend;
 			seg_end1 = seg_end;
-			seg_end = IOM_END;
+			seg_end = pa_kstart;
 			KASSERT(seg_end < seg_end1);
 		}
 
