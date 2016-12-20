@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_script.c,v 1.4.6.1 2016/12/18 06:37:30 snj Exp $ */
+/*	$NetBSD: ex_script.c,v 1.4.6.2 2016/12/20 05:25:26 snj Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 static const char sccsid[] = "Id: ex_script.c,v 10.38 2001/06/25 15:19:19 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:19 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_script.c,v 1.4.6.1 2016/12/18 06:37:30 snj Exp $");
+__RCSID("$NetBSD: ex_script.c,v 1.4.6.2 2016/12/20 05:25:26 snj Exp $");
 #endif
 
 #include <sys/types.h>
@@ -274,7 +274,7 @@ sscr_exec(SCR *sp, db_recno_t lno)
 		return (1);
 	INT2CHAR(sp, ip, ilen, p, last_len);
 	if (last_len == sc->sh_prompt_len &&
-	    strnstr(p, sc->sh_prompt, last_len) == p) {
+	    memcmp(p, sc->sh_prompt, last_len) == 0) {
 		matchprompt = 1;
 		GET_SPACE_RETC(sp, bp, blen, last_len + 128);
 		memmove(bp, p, last_len);
@@ -294,7 +294,8 @@ sscr_exec(SCR *sp, db_recno_t lno)
 	INT2CHAR(sp, ip, ilen, p, len);
 
 	/* Delete any prompt. */
-	if (strnstr(p, sc->sh_prompt, len) == p) {
+	if (len >= sc->sh_prompt_len &&
+	    memcmp(p, sc->sh_prompt, sc->sh_prompt_len) == 0) {
 		len -= sc->sh_prompt_len;
 		if (len == 0) {
 empty:			msgq(sp, M_BERR, "151|No command to execute");
@@ -473,7 +474,7 @@ more:	switch (nr = read(sc->sh_master, endp, bp + sizeof(bp) - endp)) {
 	 */
 	len = p - t;
 	if (sc->sh_prompt == NULL || len != sc->sh_prompt_len ||
-	    strnstr(p, sc->sh_prompt, len) == NULL) {
+	    memcmp(t, sc->sh_prompt, len) != 0) {
 		tv.tv_sec = 0;
 		tv.tv_usec = 100000;
 		FD_ZERO(&rdfd);
@@ -509,7 +510,7 @@ more:	switch (nr = read(sc->sh_master, endp, bp + sizeof(bp) - endp)) {
 /*
  * sscr_setprompt --
  *
- * Set the prompt to the last line we got from the shell.
+ * Set the prompt in external ("char") encoding.
  *
  */
 static int
