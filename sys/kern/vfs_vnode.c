@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.63 2016/12/14 15:49:35 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.64 2016/12/20 10:02:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.63 2016/12/14 15:49:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.64 2016/12/20 10:02:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -502,26 +502,25 @@ vdrain_vrele(vnode_t *vp)
 
 	KASSERT(mutex_owned(&vdrain_lock));
 
-	/*
-	 * Safe to take v_interlock -- no other thread will
-	 * lock v_interlock -> vdrain_lock as usecount > 0.
-	 */
-	mutex_enter(vp->v_interlock);
 	mp = vp->v_mount;
-	if (fstrans_start_nowait(mp, FSTRANS_SHARED) != 0) {
-		mutex_exit(vp->v_interlock);
+	if (fstrans_start_nowait(mp, FSTRANS_LAZY) != 0)
 		return;
-	}
 
-	/* First put the vnode back onto its lru list. */
+	/*
+	 * First remove the vnode from the vrele list.
+	 * Put it on the last lru list, the last vrele()
+	 * will put it back onto the right list before
+	 * its v_usecount reaches zero.
+	 */
 	KASSERT(node->vi_lrulisthd == &lru_vrele_list);
 	TAILQ_REMOVE(node->vi_lrulisthd, node, vi_lrulist);
-	node->vi_lrulisthd = lru_which(vp);
+	node->vi_lrulisthd = &lru_hold_list;
 	TAILQ_INSERT_TAIL(node->vi_lrulisthd, node, vi_lrulist);
 
 	vdrain_retry = true;
 	mutex_exit(&vdrain_lock);
 
+	mutex_enter(vp->v_interlock);
 	vrelel(vp, 0);
 	fstrans_done(mp);
 
