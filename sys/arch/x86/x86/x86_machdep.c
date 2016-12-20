@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.78 2016/12/20 12:48:30 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.79 2016/12/20 14:03:15 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.78 2016/12/20 12:48:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.79 2016/12/20 14:03:15 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -482,7 +482,7 @@ static struct {
 	{ VM_FREELIST_FIRST16,	16 * 1024 * 1024 },
 };
 
-extern paddr_t avail_start, avail_end;
+extern paddr_t lowmem_rsvd, avail_end;
 
 int
 x86_select_freelist(uint64_t maxaddr)
@@ -833,7 +833,7 @@ init_x86_clusters(void)
 
 /*
  * init_x86_vm: initialize the VM system on x86. We basically internalize as
- * many physical pages as we can, starting at avail_start, but we don't
+ * many physical pages as we can, starting at lowmem_rsvd, but we don't
  * internalize the kernel physical pages (from pa_kstart to pa_kend).
  */
 int
@@ -865,11 +865,11 @@ init_x86_vm(paddr_t pa_kend)
 		seg_end1 = 0;
 
 		/* Skip memory before our available starting point. */
-		if (seg_end <= avail_start)
+		if (seg_end <= lowmem_rsvd)
 			continue;
 
-		if (seg_start <= avail_start && avail_start < seg_end) {
-			seg_start = avail_start;
+		if (seg_start <= lowmem_rsvd && lowmem_rsvd < seg_end) {
+			seg_start = lowmem_rsvd;
 			if (seg_start == seg_end)
 				continue;
 		}

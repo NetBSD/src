@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.769 2016/12/17 14:27:53 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.770 2016/12/20 14:03:15 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.769 2016/12/17 14:27:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.770 2016/12/20 14:03:15 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -254,6 +254,7 @@ vaddr_t pentium_idt_vaddr;
 
 struct vm_map *phys_map = NULL;
 
+extern paddr_t lowmem_rsvd;
 extern paddr_t avail_start, avail_end;
 #ifdef XEN
 extern paddr_t pmap_pa_start, pmap_pa_end;
@@ -1199,6 +1200,8 @@ init386(paddr_t first_avail)
 	 */
 	uvmexp.ncolors = 2;
 
+	avail_start = first_avail;
+
 #ifndef XEN
 	/*
 	 * Low memory reservations:
@@ -1209,7 +1212,7 @@ init386(paddr_t first_avail)
 	 * Page 4:	Temporary page table for 0MB-4MB
 	 * Page 5:	Temporary page directory
 	 */
-	avail_start = 6 * PAGE_SIZE;
+	lowmem_rsvd = 6 * PAGE_SIZE;
 #else /* !XEN */
 	/* Parse Xen command line (replace bootinfo) */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
@@ -1219,8 +1222,6 @@ init386(paddr_t first_avail)
 	gdt = (void *)xen_dummy_page;
 
 	/* Determine physical address space */
-	first_avail = round_page(first_avail);
-	avail_start = first_avail;
 	avail_end = ctob((paddr_t)xen_start_info.nr_pages);
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = pmap_pa_start + ctob((paddr_t)xen_start_info.nr_pages);
@@ -1261,7 +1262,7 @@ init386(paddr_t first_avail)
 	init_x86_clusters();
 
 	/* Internalize the physical pages into the VM system. */
-	init_x86_vm(first_avail);
+	init_x86_vm(avail_start);
 #else /* !XEN */
 	XENPRINTK(("load the memory cluster 0x%" PRIx64 " (%" PRId64 ") - "
 	    "0x%" PRIx64 " (%" PRId64 ")\n",

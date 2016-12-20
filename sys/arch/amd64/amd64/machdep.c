@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.239 2016/12/16 20:16:50 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.240 2016/12/20 14:03:15 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2016/12/16 20:16:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2016/12/20 14:03:15 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -276,6 +276,7 @@ vaddr_t kern_end;
 
 struct vm_map *phys_map = NULL;
 
+extern paddr_t lowmem_rsvd;
 extern paddr_t avail_start, avail_end;
 #ifdef XEN
 extern paddr_t pmap_pa_start, pmap_pa_end;
@@ -1584,6 +1585,8 @@ init_x86_64(paddr_t first_avail)
 
 	uvmexp.ncolors = 2;
 
+	avail_start = first_avail;
+
 #ifndef XEN
 	/*
 	 * Low memory reservations:
@@ -1596,22 +1599,18 @@ init_x86_64(paddr_t first_avail)
 	 * Page 6:	Temporary page map level 3
 	 * Page 7:	Temporary page map level 4
 	 */
-	avail_start = 8 * PAGE_SIZE;
+	lowmem_rsvd = 8 * PAGE_SIZE;
 
 	/* Initialize the memory clusters (needed in pmap_boostrap). */
 	init_x86_clusters();
-#else	/* XEN */
+#else
 	/* Parse Xen command line (replace bootinfo) */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 
-	/* Determine physical address space */
-	avail_start = first_avail;
 	avail_end = ctob(xen_start_info.nr_pages);
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
-	__PRINTK(("pmap_pa_start 0x%lx avail_start 0x%lx avail_end 0x%lx\n",
-	    pmap_pa_start, avail_start, avail_end));
-#endif	/* !XEN */
+#endif
 
 	/* End of the virtual space we have created so far. */
 	kern_end = (vaddr_t)atdevbase + IOM_SIZE;
@@ -1628,14 +1627,12 @@ init_x86_64(paddr_t first_avail)
 
 #ifndef XEN
 	/* Internalize the physical pages into the VM system. */
-	init_x86_vm(first_avail);
-#else	/* XEN */
+	init_x86_vm(avail_start);
+#else
 	physmem = xen_start_info.nr_pages;
-
-	uvm_page_physload(atop(avail_start),
-		atop(avail_end), atop(avail_start),
-		atop(avail_end), VM_FREELIST_DEFAULT);
-#endif	/* !XEN */
+	uvm_page_physload(atop(avail_start), atop(avail_end),
+	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+#endif
 
 	init_x86_64_msgbuf();
 
