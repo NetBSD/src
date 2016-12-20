@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2225 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2226 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -434,3 +434,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		PT_READ_WATCHPOINT, PT_WRITE_WATCHPOINT and
 		PT_COUNT_WATCHPOINTS [kamil 20161215]
 	rtadvd(8): Support -p <pidfile> option. [ozaki-r 20161216]
+	xen: Add support for kernel modules. [maxv 20161216]
