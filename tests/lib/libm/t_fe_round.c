@@ -79,7 +79,7 @@ ATF_TC_BODY(fe_round, tc)
 
 		received = lrint(values[i].input);
 		ATF_CHECK_MSG(
-		    (abs(received - values[i].expected) < EPSILON),
+		    (labs(received - values[i].expected) < EPSILON),
 		    "lrint rounding wrong, difference too large\n"
 		    "input: %f (index %d): got %ld, expected %ld\n",
 		    values[i].input, i, received, values[i].expected);
