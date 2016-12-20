@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.233 2016/12/17 13:43:33 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.234 2016/12/20 14:03:15 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.233 2016/12/17 13:43:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.234 2016/12/20 14:03:15 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -393,6 +393,7 @@ int pmap_largepages __read_mostly = 0;
  * (shared with machdep.c) describe the physical address space
  * of this machine.
  */
+paddr_t lowmem_rsvd __read_mostly;
 paddr_t avail_start __read_mostly; /* PA of first available physical page */
 paddr_t avail_end __read_mostly; /* PA of last available physical page */
 
