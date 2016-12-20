@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.14 2016/12/18 08:48:09 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.15 2016/12/20 06:16:43 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -215,4 +215,9 @@ sbin/ping/ping.c				1.113
 	PR bin/36997 Zafer Aydogan: ping doesn't validate numeric inputs
 	enough.
 	[dholland, ticket #1333]
+
+common/lib/libc/stdlib/_strtoul.h		1.10
+
+	Set *endptr in all paths out of strtoul and family.
+	[riastradh, ticket #1310]
 
