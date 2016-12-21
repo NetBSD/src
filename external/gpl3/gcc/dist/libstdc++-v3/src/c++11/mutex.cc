@@ -25,7 +25,7 @@
 #include <mutex>
 
 #if defined(_GLIBCXX_HAS_GTHREADS) && defined(_GLIBCXX_USE_C99_STDINT_TR1)
-#ifndef _GLIBCXX_HAVE_TLS
+#if !defined(_GLIBCXX_HAVE_TLS) || !defined(FIXME_PR_51139)
 namespace
 {
   inline std::unique_lock<std::mutex>*&
@@ -41,7 +41,7 @@ namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
-#ifdef _GLIBCXX_HAVE_TLS
+#if defined(_GLIBCXX_HAVE_TLS) && defined(FIXME_PR_51139)
   __thread void* __once_callable;
   __thread void (*__once_call)();
 #else
@@ -76,7 +76,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   {
     void __once_proxy()
     {
-#ifndef _GLIBCXX_HAVE_TLS
+#if !defined(_GLIBCXX_HAVE_TLS) || !defined(FIXME_PR_51139)
       function<void()> __once_call = std::move(__once_functor);
       if (unique_lock<mutex>* __lock = __get_once_functor_lock_ptr())
       {
