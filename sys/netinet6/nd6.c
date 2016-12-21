@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.221 2016/12/21 04:08:47 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.222 2016/12/21 08:47:02 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.221 2016/12/21 04:08:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.222 2016/12/21 08:47:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -401,22 +401,18 @@ nd6_llinfo_settimer(struct llentry *ln, time_t xtick)
 	CTASSERT(sizeof(time_t) > sizeof(int));
 	LLE_WLOCK_ASSERT(ln);
 
-	if (xtick < 0) {
-		ln->ln_expire = 0;
-		ln->ln_ntick = 0;
-		callout_halt(&ln->ln_timer_ch, &ln->lle_lock);
+	KASSERT(xtick >= 0);
+
+	ln->ln_expire = time_uptime + xtick / hz;
+	LLE_ADDREF(ln);
+	if (xtick > INT_MAX) {
+		ln->ln_ntick = xtick - INT_MAX;
+		callout_reset(&ln->ln_timer_ch, INT_MAX,
+		    nd6_llinfo_timer, ln);
 	} else {
-		ln->ln_expire = time_uptime + xtick / hz;
-		LLE_ADDREF(ln);
-		if (xtick > INT_MAX) {
-			ln->ln_ntick = xtick - INT_MAX;
-			callout_reset(&ln->ln_timer_ch, INT_MAX,
-			    nd6_llinfo_timer, ln);
-		} else {
-			ln->ln_ntick = 0;
-			callout_reset(&ln->ln_timer_ch, xtick,
-			    nd6_llinfo_timer, ln);
-		}
+		ln->ln_ntick = 0;
+		callout_reset(&ln->ln_timer_ch, xtick,
+		    nd6_llinfo_timer, ln);
 	}
 }
 
@@ -456,6 +452,8 @@ nd6_llinfo_timer(void *arg)
 	const struct in6_addr *daddr6 = NULL;
 
 	LLE_WLOCK(ln);
+	if ((ln->la_flags & LLE_LINKED) == 0)
+		goto out;
 	if (ln->ln_ntick > 0) {
 		nd6_llinfo_settimer(ln, ln->ln_ntick);
 		goto out;
@@ -1208,9 +1206,6 @@ nd6_free(struct llentry *ln, int gc)
 	 * even though it is not harmful, it was not really necessary.
 	 */
 
-	/* cancel timer */
-	nd6_llinfo_settimer(ln, -1);
-
 	if (!ip6_forwarding) {
 		ND6_WLOCK();
 		dr = nd6_defrouter_lookup(in6, ifp);
@@ -1309,12 +1304,7 @@ nd6_free(struct llentry *ln, int gc)
 	IF_AFDATA_LOCK(ifp);
 	LLE_WLOCK(ln);
 
-	/* Guard against race with other llentry_free(). */
-	if (ln->la_flags & LLE_LINKED) {
-		LLE_REMREF(ln);
-		llentry_free(ln);
-	} else
-		LLE_FREE_LOCKED(ln);
+	lltable_free_entry(LLTABLE6(ifp), ln);
 
 	IF_AFDATA_UNLOCK(ifp);
 }

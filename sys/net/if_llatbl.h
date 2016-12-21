@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.9 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.10 2016/12/21 08:47:02 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -273,6 +273,7 @@ struct llentry *lltable_create_lle(struct lltable *llt, u_int flags,
     const void *paddr);
 void lltable_link_entry(struct lltable *llt, struct llentry *lle);
 void lltable_unlink_entry(struct lltable *llt, struct llentry *lle);
+void lltable_free_entry(struct lltable *llt, struct llentry *lle);
 void lltable_fill_sa_entry(const struct llentry *lle, struct sockaddr *sa);
 struct ifnet *lltable_get_ifp(const struct lltable *llt);
 int lltable_get_af(const struct lltable *llt);
