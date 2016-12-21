@@ -1,4 +1,4 @@
-.\"	$NetBSD: rarpd.8,v 1.13 2009/03/11 14:00:00 joerg Exp $
+.\"	$NetBSD: rarpd.8,v 1.14 2016/12/21 12:03:48 abhinav Exp $
 .\"
 .\" Copyright (c) 1988-1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -86,9 +86,11 @@ Log all requests to syslog.
 .\" .It Pa /tftpboot
 .El
 .Sh SEE ALSO
-.Xr bpf 4
+.Xr bpf 4 ,
+.Xr ethers 5 ,
+.Xr hosts 5
 .Rs
-.%R A Reverse Address  Resolution Protocol
+.%R A Reverse Address Resolution Protocol
 .%N RFC 903
 .%A Finlayson, R.
 .%A Mann, T.
@@ -96,5 +98,8 @@ Log all requests to syslog.
 .%A Theimer, M.
 .Re
 .Sh AUTHORS
-Craig Leres (leres@ee.lbl.gov) and Steven McCanne (mccanne@ee.lbl.gov).
+.An -nosplit
+.An Craig Leres Aq Mt leres@ee.lbl.gov
+and
+.An Steven McCanne Aq Mt mccanne@ee.lbl.gov .
 Lawrence Berkeley Laboratory, University of California, Berkeley, CA.
