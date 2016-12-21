@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.184 2016/12/21 00:33:49 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.185 2016/12/21 04:01:57 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.184 2016/12/21 00:33:49 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.185 2016/12/21 04:01:57 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -695,7 +695,9 @@ _rt_free(struct rtentry *rt)
 	RT_REFCNT_TRACE(rt);
 	KASSERTMSG(rt->rt_refcnt >= 0, "refcnt=%d", rt->rt_refcnt);
 	rt_wait_refcnt("free", rt, 0);
+#ifdef NET_MPSAFE
 	psref_target_destroy(&rt->rt_psref, rt_psref_class);
+#endif
 
 	rt_assert_inactive(rt);
 	rttrash--;
