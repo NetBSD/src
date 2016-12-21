@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.14 2016/11/25 08:51:17 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.15 2016/12/21 02:46:08 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,6 +42,7 @@ setup_local()
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 10.0.0.2/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
+	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
 
 	$DEBUG && rump.ifconfig
 	$DEBUG && rump.netstat -rn -f inet
@@ -56,6 +57,7 @@ setup_peer()
 	export RUMP_SERVER=$SOCK_PEER
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 10.0.0.1/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
+	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
 
 	$DEBUG && rump.ifconfig
 	$DEBUG && rump.netstat -rn -f inet
