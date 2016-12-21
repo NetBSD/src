@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.62 2016/12/11 20:40:41 mrg Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.63 2016/12/21 09:33:08 abhinav Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -190,7 +190,7 @@ when a URL in the form
 is being accessed.
 The function is passed three tables as arguments, the server
 environment, the request headers, and the decoded query string
-plus any data that was send as application/x-www-form-urlencoded.
+plus any data that was sent as application/x-www-form-urlencoded.
 .It Fl M Ar suffix type encoding encoding11
 Adds a new entry to the table that converts file suffixes to
 content type and encoding.
@@ -446,7 +446,7 @@ with
 on the compiler command line.
 .Ss COMPRESSION
 .Nm
-supports a very basic form compression.
+supports a very basic form of compression.
 .Nm
 will serve the requested file postpended with
 .Dq Pa .gz
