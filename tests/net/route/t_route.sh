@@ -1,4 +1,4 @@
-#	$NetBSD: t_route.sh,v 1.9 2016/11/25 08:51:17 ozaki-r Exp $
+#	$NetBSD: t_route.sh,v 1.10 2016/12/21 02:46:08 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -79,6 +79,7 @@ route_non_subnet_gateway_body()
 	rump_server_add_iface $SOCK_CLIENT shmif0 $BUS
 	atf_check -s exit:0 rump.ifconfig shmif0 10.0.0.1/32
 	atf_check -s exit:0 rump.ifconfig shmif0 up
+	atf_check -s exit:0 rump.ifconfig -w 10
 
 	$DEBUG && rump.netstat -nr -f inet
 
@@ -141,6 +142,7 @@ setup_endpoint()
 		atf_check -s exit:0 -o ignore rump.route add default ${gw}
 	fi
 	atf_check -s exit:0 rump.ifconfig shmif0 up
+	atf_check -s exit:0 rump.ifconfig -w 10
 
 	if $DEBUG; then
 		rump.ifconfig shmif0
@@ -166,6 +168,7 @@ setup_forwarder()
 
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 	atf_check -s exit:0 rump.ifconfig shmif1 up
+	atf_check -s exit:0 rump.ifconfig -w 10
 
 	if $DEBUG; then
 		rump.netstat -nr

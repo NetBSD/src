@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags6.sh,v 1.11 2016/11/25 08:51:17 ozaki-r Exp $
+#	$NetBSD: t_flags6.sh,v 1.12 2016/12/21 02:46:08 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -45,6 +45,7 @@ setup_local()
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 $IP6_LOCAL
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
+	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
 
 	$DEBUG && rump.ifconfig
 	$DEBUG && rump.netstat -rn -f inet6
@@ -59,6 +60,7 @@ setup_peer()
 	export RUMP_SERVER=$SOCK_PEER
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 $IP6_PEER
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
+	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
 
 	$DEBUG && rump.ifconfig
 	$DEBUG && rump.netstat -rn -f inet6
