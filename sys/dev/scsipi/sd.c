@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.321 2016/12/16 14:58:53 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.322 2016/12/21 21:28:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.321 2016/12/16 14:58:53 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.322 2016/12/21 21:28:30 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -754,7 +754,7 @@ sd_diskstart(device_t dev, struct buf *bp)
 		 * retry later.
 		 */
 		callout_reset(&sd->sc_callout, hz / 2, sdrestart, sd);
-		error = 0;
+		error = EAGAIN;
 		goto out;
 	}
 
