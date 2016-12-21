@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.183 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.184 2016/12/21 00:33:49 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.183 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.184 2016/12/21 00:33:49 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1916,7 +1916,7 @@ out:
 
 static struct dom_rtlist invalid_routes = LIST_HEAD_INITIALIZER(dom_rtlist);
 
-#ifdef RT_DEBUG
+#if defined(RT_DEBUG) && defined(NET_MPSAFE)
 static void
 rtcache_trace(const char *func, struct rtentry *rt, struct route *ro)
 {
