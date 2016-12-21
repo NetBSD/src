@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.23 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.24 2016/12/21 11:56:55 maya Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1272,7 +1272,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 			/* Disable ASPM L0S and L1. */
 			cap = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
 			    base + PCIE_LCAP) >> 16;
-			if ((cap & 0x00000c00) != 0) {
+			if ((cap & PCIE_LCAP_ASPM) != 0) {
 				ctl = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
 				    base + PCIE_LCSR) >> 16;
 				if ((ctl & 0x08) != 0)
