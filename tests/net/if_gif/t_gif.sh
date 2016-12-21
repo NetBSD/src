@@ -1,4 +1,4 @@
-#	$NetBSD: t_gif.sh,v 1.8 2016/11/25 08:51:16 ozaki-r Exp $
+#	$NetBSD: t_gif.sh,v 1.9 2016/12/21 09:46:39 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -61,7 +61,7 @@ ROUTER2_GIFIP6_DUMMY=fc00:14::1
 ROUTER2_GIFIP6_RECURSIVE1=fc00:104::1
 ROUTER2_GIFIP6_RECURSIVE2=fc00:204::1
 
-DEBUG=${DEBUG:-false}
+DEBUG=${DEBUG:-true}
 TIMEOUT=5
 
 setup_router()
