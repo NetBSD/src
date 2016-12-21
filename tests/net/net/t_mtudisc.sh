@@ -1,4 +1,4 @@
-#	$NetBSD: t_mtudisc.sh,v 1.7 2016/11/25 08:51:17 ozaki-r Exp $
+#	$NetBSD: t_mtudisc.sh,v 1.8 2016/12/21 01:16:18 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -126,7 +126,7 @@ mtudisc_basic_body()
 	# Start httpd daemon
 	prepare_download_file $HTML_FILE
 	start_httpd $SOCKREMOTE $remote_ip
-	$DEBUG && rump.netstat -a
+	$DEBUG && rump.netstat -a -f inet
 
 	# Teach the peer thar 10.0.0.2(local serer) is behind 10.0.1.1(gateway server)
 	atf_check -s exit:0 -o ignore rump.route add $local_ip/32 $gateway_remote_ip
