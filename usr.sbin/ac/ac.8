@@ -1,4 +1,4 @@
-.\" $NetBSD: ac.8,v 1.16 2009/04/08 14:37:29 joerg Exp $
+.\" $NetBSD: ac.8,v 1.17 2016/12/21 17:45:07 abhinav Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -120,10 +120,6 @@ allows times recorded in
 .Pa modems
 to be charged out at a different rate than
 .Pa other .
-.Pp
-The
-.Nm
-utility exits 0 on success, and \*[Gt]0 if a fatal error occurs.
 .Sh FILES
 .Bl -tag -width /var/log/wtmp.[0-7] -compact
 .It Pa /var/log/wtmp
@@ -131,6 +127,8 @@ connect time accounting file
 .It Pa /var/log/wtmp.[0-7]
 rotated files
 .El
+.Sh EXIT STATUS
+.Ex -std ac
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr utmp 5 ,
