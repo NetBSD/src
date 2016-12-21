@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.337 2016/12/21 00:56:30 mlelstv Exp $	*/
+/*	$NetBSD: cd.c,v 1.338 2016/12/21 21:28:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.337 2016/12/21 00:56:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.338 2016/12/21 21:28:30 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -847,7 +847,7 @@ cd_diskstart(device_t dev, struct buf *bp)
 		 * retry later.
 		 */
 		callout_reset(&cd->sc_callout, hz / 2, cdrestart, cd);
-		error = 0;
+		error = EAGAIN;
 		goto out;
 	}
 
