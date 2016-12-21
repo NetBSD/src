@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.220 2016/12/19 07:51:34 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.221 2016/12/21 04:08:47 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.220 2016/12/19 07:51:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.221 2016/12/21 04:08:47 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -455,11 +455,6 @@ nd6_llinfo_timer(void *arg)
 	bool send_ns = false;
 	const struct in6_addr *daddr6 = NULL;
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
-
 	LLE_WLOCK(ln);
 	if (ln->ln_ntick > 0) {
 		nd6_llinfo_settimer(ln, ln->ln_ntick);
@@ -513,9 +508,18 @@ nd6_llinfo_timer(void *arg)
  			}
 			nd6_free(ln, 0);
 			ln = NULL;
-			if (m != NULL)
+			if (m != NULL) {
+#ifndef NET_MPSAFE
+				mutex_enter(softnet_lock);
+				KERNEL_LOCK(1, NULL);
+#endif
 				icmp6_error2(m, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_ADDR, 0, ifp);
+#ifndef NET_MPSAFE
+				KERNEL_UNLOCK_ONE(NULL);
+				mutex_exit(softnet_lock);
+#endif
+			}
 		}
 		break;
 	case ND6_LLINFO_REACHABLE:
@@ -566,16 +570,20 @@ nd6_llinfo_timer(void *arg)
 		psrc = nd6_llinfo_get_holdsrc(ln, &src);
 		LLE_FREE_LOCKED(ln);
 		ln = NULL;
+#ifndef NET_MPSAFE
+		mutex_enter(softnet_lock);
+		KERNEL_LOCK(1, NULL);
+#endif
 		nd6_ns_output(ifp, daddr6, taddr6, psrc, 0);
+#ifndef NET_MPSAFE
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
+#endif
 	}
 
 out:
 	if (ln != NULL)
 		LLE_FREE_LOCKED(ln);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
 }
 
 /*
