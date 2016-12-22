@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.46 2015/04/03 01:03:42 riastradh Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.47 2016/12/22 12:55:21 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.46 2015/04/03 01:03:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.47 2016/12/22 12:55:21 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,17 @@ kmutex_t uvm_pageqlock;
 kmutex_t uvm_fpageqlock;
 kmutex_t uvm_kentry_lock;
 kmutex_t uvm_swap_data_lock;
+
+/*
+ * uvm_md_init: Init dependant on the MD boot context.
+ *		called from MD code.
+ */
+
+void
+uvm_md_init(void)
+{
+	uvm_setpagesize(); /* initialize PAGE_SIZE-dependent variables */
+}
 
 /*
  * uvm_init: init the VM system.   called from kern/init_main.c.
