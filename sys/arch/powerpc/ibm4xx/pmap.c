@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72 2012/01/27 19:48:39 para Exp $	*/
+/*	$NetBSD: pmap.c,v 1.73 2016/12/22 14:47:58 cherry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2012/01/27 19:48:39 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2016/12/22 14:47:58 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -294,7 +294,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	 * Announce page-size to the VM-system
 	 */
 	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Get memory.

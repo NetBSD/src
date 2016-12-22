@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 2015/06/26 22:55:40 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 2016/12/22 14:47:58 cherry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2015/06/26 22:55:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2016/12/22 14:47:58 cherry Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -211,10 +211,7 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 	if (bi_msg != NULL)
 		printf(bi_msg);
 
-	/*
-	 * Set the VM page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/* Find out how much memory is available. */
 	physmem = memsize_scan(kernend);
