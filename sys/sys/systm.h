@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.271 2016/07/06 05:20:48 ozaki-r Exp $	*/
+/*	$NetBSD: systm.h,v 1.272 2016/12/22 16:05:15 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -82,7 +82,7 @@ extern int autoniceval;         /* proc priority after autonicetime */
 extern int selwait;		/* select timeout address */
 
 extern int maxmem;		/* max memory per process */
-extern int physmem;		/* physical memory */
+extern psize_t physmem;		/* physical memory */
 
 extern dev_t dumpdev;		/* dump device */
 extern dev_t dumpcdev;		/* dump device (character equivalent) */
