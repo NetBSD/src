@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.222 2016/12/21 08:47:02 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.223 2016/12/22 03:46:51 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.222 2016/12/21 08:47:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.223 2016/12/22 03:46:51 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1146,7 +1146,6 @@ nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	}
 	ND6_UNLOCK();
 
-	IF_AFDATA_UNLOCK_ASSERT(ifp);
 	if (nd6_is_new_addr_neighbor(addr, ifp))
 		return 1;
 

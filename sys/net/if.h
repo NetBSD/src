@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.232 2016/12/13 02:05:48 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.233 2016/12/22 03:46:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -510,8 +510,6 @@ if_is_link_state_changeable(struct ifnet *ifp)
 	KASSERT(rw_read_held((ifp)->if_afdata_lock))
 #define	IF_AFDATA_WLOCK_ASSERT(ifp)	\
 	KASSERT(rw_write_held((ifp)->if_afdata_lock))
-#define	IF_AFDATA_UNLOCK_ASSERT(ifp)	\
-	KASSERT(!rw_lock_held((ifp)->if_afdata_lock))
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
