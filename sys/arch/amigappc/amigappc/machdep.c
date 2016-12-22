@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.51 2012/02/15 12:11:42 phx Exp $ */
+/* $NetBSD: machdep.c,v 1.52 2016/12/22 14:47:54 cherry Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2012/02/15 12:11:42 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2016/12/22 14:47:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -560,10 +560,7 @@ initppc(u_int startkernel, u_int endkernel)
 
 	/* XXX bus_space_init() not needed here */
 
-	/*
-	 * Set the page size
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Initialize pmap module

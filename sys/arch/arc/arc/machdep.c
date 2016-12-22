@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.129 2015/06/30 02:39:03 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130 2016/12/22 14:47:54 cherry Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2015/06/30 02:39:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2016/12/22 14:47:54 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -306,10 +306,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 		}
 	}
 
-	/*
-	 * Set the VM page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/* make sure that we don't call BIOS console from now on */
 	cn_tab = NULL;

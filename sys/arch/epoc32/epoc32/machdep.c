@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2014/09/13 18:08:40 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2016/12/22 14:47:54 cherry Exp $	*/
 /*
  * Copyright (c) 2012, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2014/09/13 18:08:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2016/12/22 14:47:54 cherry Exp $");
 
 #include "clpscom.h"
 #include "clpslcd.h"
@@ -440,7 +440,7 @@ initarm(void *arg)
 	undefined_init();
 
         /* Load memory into UVM. */
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 	uvm_page_physload(
 	    atop(_end_physical), atop(physical_end),
 	    atop(_end_physical), atop(physical_end),

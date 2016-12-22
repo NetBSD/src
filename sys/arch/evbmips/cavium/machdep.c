@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2016/10/20 07:26:03 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2016/12/22 14:47:56 cherry Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -114,7 +114,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2016/10/20 07:26:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2016/12/22 14:47:56 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,8 +220,7 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 
 	mach_init_vector();
 
-	/* set the VM page size */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	mach_init_bus_space();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.83 2014/09/13 18:08:39 matt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.84 2016/12/22 14:47:58 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.83 2014/09/13 18:08:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.84 2016/12/22 14:47:58 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -738,7 +738,7 @@ initarm(void *arg)
 
 	/* Load memory into UVM. */
 	printf("page ");
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 
 	/* XXX Always one RAM block -- nuke the loop. */
 	for (loop = 0; loop < bootconfig.dramblocks; loop++) {

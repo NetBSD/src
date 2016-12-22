@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2013/03/01 18:25:39 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2016/12/22 14:47:57 cherry Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2013/03/01 18:25:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2016/12/22 14:47:57 cherry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -218,10 +218,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 
 	printf("console set up\n");
 
-        /*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Initialize pmap module.

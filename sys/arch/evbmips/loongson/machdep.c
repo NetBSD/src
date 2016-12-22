@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2014/03/24 20:06:31 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2016/12/22 14:47:57 cherry Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2014/03/24 20:06:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2016/12/22 14:47:57 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -316,9 +316,8 @@ mach_init(int32_t argc, int32_t argva, int32_t enva, int32_t callvec,
 	DPRINTF(("mips_vector_init "));
 	mips_vector_init(NULL, false);
 
-	DPRINTF(("uvm_setpagesize\n"));
-	/* set the VM page size */
-	uvm_setpagesize();
+	DPRINTF(("uvm_md_init\n"));
+	uvm_md_init();
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	//ksyms_addsyms_elf((vaddr_t)esym - (vaddr_t)ssym, ssym, esym);
 #endif

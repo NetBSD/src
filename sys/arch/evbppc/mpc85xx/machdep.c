@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 2015/01/30 15:04:35 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 2016/12/22 14:47:57 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1267,10 +1267,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 
 	mtspr(SPR_TCR, TCR_WIE | mfspr(SPR_TCR));
 
-	/*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Initialize the pmap.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2015/06/30 02:39:03 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2016/12/22 14:47:57 cherry Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2015/06/30 02:39:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2016/12/22 14:47:57 cherry Exp $");
 
 #define __INTR_PRIVATE
 
@@ -265,8 +265,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	/* get system info from firmware */
 	memsize = rmixlfw_init(infop);
 
-	/* set the VM page size */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	physmem = btoc(memsize);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.182 2012/02/02 18:59:44 para Exp $	   */
+/*	$NetBSD: pmap.c,v 1.183 2016/12/22 14:48:00 cherry Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182 2012/02/02 18:59:44 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183 2016/12/22 14:48:00 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -302,7 +302,7 @@ pmap_bootstrap(void)
 
 	/* Set logical page size */
 	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
+	uvm_md_init();
 
 	physmem = btoc(avail_end);
 

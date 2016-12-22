@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.67 2013/10/25 20:51:14 martin Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.68 2016/12/22 14:47:58 cherry Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.67 2013/10/25 20:51:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.68 2016/12/22 14:47:58 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ pmap_bootstrap_finalize(void)
 	 * and they require this earlier.
 	 */
 	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
+	uvm_md_init();
 #endif
 
 	/*

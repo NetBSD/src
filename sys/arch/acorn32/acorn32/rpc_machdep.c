@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.90 2014/10/25 10:58:12 skrll Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.91 2016/12/22 14:47:53 cherry Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.90 2014/10/25 10:58:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.91 2016/12/22 14:47:53 cherry Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -924,7 +924,8 @@ initarm(void *cookie)
 #ifdef VERBOSE_INIT_ARM
 	printf("page ");
 #endif
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
+
 	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
 		paddr_t start = (paddr_t)bootconfig.dram[loop].address;
 		paddr_t end = start + (bootconfig.dram[loop].pages * PAGE_SIZE);

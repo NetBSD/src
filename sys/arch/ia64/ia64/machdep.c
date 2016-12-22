@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2014/03/14 17:45:37 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2016/12/22 14:47:58 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -465,7 +465,7 @@ ia64_init(void)
 	 */
 
 	uvmexp.pagesize = PAGE_SIZE;
-	uvm_setpagesize();
+	uvm_md_init();
 
 
 	/*

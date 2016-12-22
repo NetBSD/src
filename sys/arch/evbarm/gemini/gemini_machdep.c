@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.22 2013/08/18 15:58:20 matt Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.23 2016/12/22 14:47:55 cherry Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.22 2013/08/18 15:58:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.23 2016/12/22 14:47:55 cherry Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -707,7 +707,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("page ");
 #endif
-	uvm_setpagesize();        /* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 
 #if (GEMINI_RAM_RESV_PBASE != 0)
 	uvm_page_physload(atop(physical_freestart), atop(GEMINI_RAM_RESV_PBASE),

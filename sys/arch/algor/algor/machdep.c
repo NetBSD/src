@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 2015/06/30 02:39:03 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 2016/12/22 14:47:54 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2015/06/30 02:39:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2016/12/22 14:47:54 cherry Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -198,7 +198,7 @@ mach_init(int argc, char *argv[], char *envp[])
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
 	led_display('p', 'g', 's', 'z');
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Initialize bus space tags and bring up the console.
