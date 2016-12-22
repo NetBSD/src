@@ -1,4 +1,4 @@
-/* $NetBSD: t_uvm_physseg_load.c,v 1.1 2016/12/19 12:21:29 cherry Exp $ */
+/* $NetBSD: t_uvm_physseg_load.c,v 1.2 2016/12/22 08:15:20 cherry Exp $ */
 
 /*-
  * Copyright (c) 2015, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,28 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uvm_physseg_load.c,v 1.1 2016/12/19 12:21:29 cherry Exp $");
+__RCSID("$NetBSD: t_uvm_physseg_load.c,v 1.2 2016/12/22 08:15:20 cherry Exp $");
+
+/*
+ * If this line is commented out tests related touvm_physseg_get_pmseg()
+ * wont run.
+ *
+ * Have a look at machine/uvm_physseg.h for more details.
+ */
+#define __HAVE_PMAP_PHYSSEG
+
+/*
+ * This is a dummy struct used for testing purposes
+ *
+ * In reality this struct would exist in the MD part of the code residing in
+ * machines/vmparam.h
+ */
+
+#ifdef __HAVE_PMAP_PHYSSEG
+struct pmap_physseg {
+	int dummy_variable;		/* Dummy variable use for testing */
+};
+#endif
 
 /* Testing API - assumes userland */
 /* Provide Kernel API equivalents */
@@ -60,30 +81,8 @@ typedef unsigned long paddr_t;
 typedef unsigned long psize_t;
 typedef unsigned long vsize_t;
 
-#include <uvm/uvm_page.h>
-
-/*
- * If this line is commented out tests related touvm_physseg_get_pmseg()
- * wont run.
- *
- * Have a look at machine/uvm_physseg.h for more details.
- */
-#define __HAVE_PMAP_PHYSSEG
-
 #include <uvm/uvm_physseg.h>
-
-/*
- * This is a dummy struct used for testing purposes
- *
- * In reality this struct would exist in the MD part of the code residing in
- * machines/vmparam.h
- */
-
-#ifdef __HAVE_PMAP_PHYSSEG
-struct pmap_physseg {
-	bool dummy_variable;		/* Dummy variable use for testing */
-};
-#endif
+#include <uvm/uvm_page.h>
 
 #ifndef DIAGNOSTIC
 #define	KASSERTMSG(e, msg, ...)	/* NOTHING */
@@ -260,7 +259,7 @@ uvm_page_init_fake(struct vm_page *pagearray, psize_t pagecount)
 
 	for (bank = uvm_physseg_get_first(),
 		 uvm_physseg_seg_chomp_slab(bank, pagearray, pagecount);
-	     uvm_physseg_valid(bank);
+	     uvm_physseg_valid_p(bank);
 	     bank = uvm_physseg_get_next(bank)) {
 
 		n = uvm_physseg_get_end(bank) - uvm_physseg_get_start(bank);
