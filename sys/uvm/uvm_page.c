@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.188 2016/12/22 13:26:25 cherry Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.189 2016/12/22 16:05:15 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.188 2016/12/22 13:26:25 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.189 2016/12/22 16:05:15 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -116,7 +116,7 @@ int vm_page_reserve_kernel = UVM_RESERVED_PAGES_PER_CPU;
 /*
  * physical memory size;
  */
-int physmem;
+psize_t physmem;
 
 /*
  * local variables
