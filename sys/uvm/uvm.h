@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.66 2015/04/13 22:04:44 riastradh Exp $	*/
+/*	$NetBSD: uvm.h,v 1.67 2016/12/22 13:26:24 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -57,6 +57,7 @@
 #include <uvm/uvm_object.h>
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_pager.h>
+#include <uvm/uvm_physseg.h>
 #include <uvm/uvm_pdaemon.h>
 #include <uvm/uvm_swap.h>
 
