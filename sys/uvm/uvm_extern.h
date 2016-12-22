@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.199 2016/12/22 12:55:21 cherry Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.200 2016/12/22 13:26:24 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -475,6 +475,14 @@ extern bool vm_page_zero_enable;
 #endif
 
 /*
+ * Include the uvm_hotplug(9) API unconditionally until
+ * uvm_page_physload() et. al. are obsoleted
+ *
+ * After this, MD code will have to explicitly include it if needed.
+ */
+#include <uvm/uvm_physseg.h> 
+
+/*
  * helpers for calling ubc_release()
  */
 #ifdef PMAP_CACHE_VIVT
@@ -709,9 +717,6 @@ void			uvm_pagereplace(struct vm_page *,
 			    struct vm_page *);
 void			uvm_pagerealloc(struct vm_page *,
 			    struct uvm_object *, voff_t);
-/* Actually, uvm_page_physload takes PF#s which need their own type */
-void			uvm_page_physload(paddr_t, paddr_t, paddr_t,
-			    paddr_t, int);
 void			uvm_setpagesize(void);
 
 /* uvm_pager.c */
