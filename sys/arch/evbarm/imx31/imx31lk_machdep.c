@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.18 2014/09/13 18:08:39 matt Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.19 2016/12/22 14:47:55 cherry Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.18 2014/09/13 18:08:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.19 2016/12/22 14:47:55 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -692,7 +692,7 @@ printf("%s: textsize %#lx, totalsize %#lx\n",
 
 	/* Load memory into UVM. */
 	printf("page ");
-	uvm_setpagesize();        /* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);

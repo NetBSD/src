@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.38 2014/03/25 16:41:37 matt Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.39 2016/12/22 14:47:58 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.38 2014/03/25 16:41:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.39 2016/12/22 14:47:58 cherry Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -232,7 +232,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 		}
 	}
 
-	uvm_setpagesize();
+	uvm_md_init();
 
 	pmap_bootstrap(startkernel, endkernel);
 

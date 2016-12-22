@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.240 2016/12/20 14:03:15 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.241 2016/12/22 14:47:54 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2016/12/20 14:03:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.241 2016/12/22 14:47:54 cherry Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1581,7 +1581,7 @@ init_x86_64(paddr_t first_avail)
 	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	uvmexp.ncolors = 2;
 

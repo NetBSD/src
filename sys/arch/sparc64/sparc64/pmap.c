@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.304 2016/11/04 05:41:01 macallan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.305 2016/12/22 14:47:59 cherry Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.304 2016/11/04 05:41:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.305 2016/12/22 14:47:59 cherry Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -778,7 +778,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	 */
 	uvmexp.pagesize = NBPG;
 	uvmexp.ncolors = pmap_calculate_colors();
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Get hold or the message buffer.
