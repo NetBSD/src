@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.h,v 1.1 2016/12/19 12:21:29 cherry Exp $ */
+/* $NetBSD: uvm_physseg.h,v 1.2 2016/12/22 08:15:20 cherry Exp $ */
 
 /*
  * Consolidated API from uvm_page.c and others.
@@ -25,7 +25,7 @@
 
 /*
  * These are specific values of invalid constants for uvm_physseg_t.
- * uvm_physseg_valid() == false on any of the below constants.
+ * uvm_physseg_valid_p() == false on any of the below constants.
  *
  * Specific invalid constants encapsulate specific explicit failure
  * scenarios (see the comments next to them)
@@ -43,7 +43,7 @@ typedef struct uvm_physseg * uvm_physseg_t;
 
 /*
  * These are specific values of invalid constants for uvm_physseg_t.
- * uvm_physseg_valid() == false on any of the below constants.
+ * uvm_physseg_valid_p() == false on any of the below constants.
  *
  * Specific invalid constants encapsulate specific explicit failure
  * scenarios (see the comments next to them)
@@ -58,7 +58,7 @@ typedef int uvm_physseg_t;
 
 void uvm_physseg_init(void);
 
-bool uvm_physseg_valid(uvm_physseg_t);
+bool uvm_physseg_valid_p(uvm_physseg_t);
 
 /*
  * Return start/end pfn of given segment
