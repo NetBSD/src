@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.61 2016/07/04 04:40:13 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.62 2016/12/22 04:54:54 knakahara Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.61 2016/07/04 04:40:13 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.62 2016/12/22 04:54:54 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -966,12 +966,7 @@ encap_detach(const struct encaptab *cookie)
 	if (p == NULL)
 		return ENOENT;
 
-#ifndef USE_RADIX
-	/*
-	 * pserialize_perform(encaptab.psz) is already done in encap_remove().
-	 */
 	pserialize_perform(encaptab.psz);
-#endif
 	psref_target_destroy(&p->psref,
 	    encaptab.elem_class);
 	if (!ep->func) {
