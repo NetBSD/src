@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2014/02/25 14:33:32 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2016/12/22 14:47:57 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2014/02/25 14:33:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2016/12/22 14:47:57 cherry Exp $");
 
 #include "opt_marvell.h"
 #include "opt_modular.h"
@@ -224,10 +224,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 
 	consinit();
 
-	/*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Initialize pmap module.

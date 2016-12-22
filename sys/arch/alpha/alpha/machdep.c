@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.347 2016/10/13 16:18:20 flxd Exp $ */
+/* $NetBSD: machdep.c,v 1.348 2016/12/22 14:47:54 cherry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.347 2016/10/13 16:18:20 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.348 2016/12/22 14:47:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ nobootinfo:
 		panic("page size %lu != %d?!", hwrpb->rpb_page_size,
 		    ALPHA_PGBYTES);
 	uvmexp.pagesize = hwrpb->rpb_page_size;
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Find out what hardware we're on, and do basic initialization.

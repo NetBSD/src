@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2015/09/30 14:18:54 phx Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 2016/12/22 14:47:59 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2015/09/30 14:18:54 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2016/12/22 14:47:59 cherry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -198,8 +198,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	/* Initialize the console */
 	consinit();
 
-	/* Set the page size */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/* Initialize pmap module */
 	pmap_bootstrap(startkernel, endkernel);

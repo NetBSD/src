@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.22 2014/09/13 18:09:50 matt Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.23 2016/12/22 14:47:57 cherry Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.22 2014/09/13 18:09:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.23 2016/12/22 14:47:57 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -608,7 +608,7 @@ init_pxa2x0(int argc, char **argv, struct bootinfo *bi)
 #endif
 
 	/* Load memory into UVM. */
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
 		paddr_t dblk_start = (paddr_t)bootconfig.dram[loop].address;
 		paddr_t dblk_end = dblk_start

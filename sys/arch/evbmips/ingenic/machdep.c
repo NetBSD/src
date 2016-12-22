@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2016/08/26 13:53:36 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.12 2016/12/22 14:47:57 cherry Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2016/08/26 13:53:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2016/12/22 14:47:57 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -176,7 +176,7 @@ mach_init(void)
 	cpu_setmodel("Ingenic XBurst");
 	mips_vector_init(NULL, false);
 	cal_timer();
-	uvm_setpagesize();
+	uvm_md_init();
 	/*
 	 * Look at arguments passed to us and compute boothowto.
 	 */
