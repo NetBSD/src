@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.71 2016/12/22 10:13:09 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.72 2016/12/22 12:55:28 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.71 2016/12/22 10:13:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.72 2016/12/22 12:55:28 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -374,7 +374,6 @@ shmif_unclone(struct ifnet *ifp)
 
 	shmif_stop(ifp, 1);
 	if_down(ifp);
-	finibackend(sc);
 
 	mutex_enter(&sc->sc_mtx);
 	sc->sc_dying = true;
@@ -384,6 +383,13 @@ shmif_unclone(struct ifnet *ifp)
 	if (sc->sc_rcvl)
 		kthread_join(sc->sc_rcvl);
 	sc->sc_rcvl = NULL;
+
+	/*
+	 * Need to be called after the kthread left, otherwise closing kqueue
+	 * (sc_kq) hangs sometimes perhaps because of a race condition between
+	 * close and kevent in the kthread on the kqueue.
+	 */
+	finibackend(sc);
 
 	vmem_xfree(shmif_units, sc->sc_unit+1, 1);
 
