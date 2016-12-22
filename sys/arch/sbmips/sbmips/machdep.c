@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.53 2014/03/24 19:13:48 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.54 2016/12/22 14:47:59 cherry Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2014/03/24 19:13:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2016/12/22 14:47:59 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -190,7 +190,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 
 	consinit();
 
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Copy exception-dispatch code down to exception vector.
