@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.234 2016/12/20 14:03:15 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.235 2016/12/22 16:29:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.234 2016/12/20 14:03:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235 2016/12/22 16:29:05 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -480,11 +480,13 @@ static bool pmap_initialized __read_mostly = false; /* pmap_init done yet? */
 static vaddr_t virtual_avail __read_mostly;	/* VA of first free KVA */
 static vaddr_t virtual_end __read_mostly;	/* VA of last free KVA */
 
+#ifndef XEN
 /*
  * LAPIC virtual address, and fake physical address.
  */
 volatile vaddr_t local_apic_va;
 paddr_t local_apic_pa;
+#endif
 
 /*
  * pool that pmap structures are allocated from
@@ -558,11 +560,11 @@ extern vaddr_t pentium_idt_vaddr;
  * Local prototypes
  */
 
-static void pmap_init_lapic(void);
 #ifdef __HAVE_DIRECT_MAP
 static void pmap_init_directmap(struct pmap *);
 #endif
 #ifndef XEN
+static void pmap_init_lapic(void);
 static void pmap_remap_largepages(void);
 #endif
 
@@ -1327,9 +1329,9 @@ pmap_bootstrap(vaddr_t kva_start)
 		/* Remap the kernel. */
 		pmap_remap_largepages();
 	}
+	pmap_init_lapic();
 #endif /* !XEN */
 
-	pmap_init_lapic();
 
 #ifdef __HAVE_DIRECT_MAP
 	pmap_init_directmap(kpm);
@@ -1451,6 +1453,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	pmap_maxkvaddr = kva;
 }
 
+#ifndef XEN
 static void
 pmap_init_lapic(void)
 {
@@ -1466,6 +1469,7 @@ pmap_init_lapic(void)
 	local_apic_va = pmap_bootstrap_valloc(1);
 	local_apic_pa = pmap_bootstrap_palloc(1);
 }
+#endif
 
 #ifdef __HAVE_DIRECT_MAP
 /*
