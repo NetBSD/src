@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.36 2013/01/26 15:46:24 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.37 2016/12/22 16:05:15 cherry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.36 2013/01/26 15:46:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.37 2016/12/22 16:05:15 cherry Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -51,7 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.36 2013/01/26 15:46:24 tsutsui 
 
 extern char *etext;
 
-extern int maxmem, physmem;
+extern int maxmem;
+extern psize_t physmem;
 extern paddr_t avail_start, avail_end;
 
 /*
