@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.174 2016/12/18 15:32:36 skrll Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.175 2016/12/22 11:19:21 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.174 2016/12/18 15:32:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.175 2016/12/22 11:19:21 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1719,7 +1719,7 @@ scsipi_complete(struct scsipi_xfer *xs)
 /*
  * Issue a request sense for the given scsipi_xfer. Called when the xfer
  * returns with a CHECK_CONDITION status. Must be called in valid thread
- * context and with channel lock held.
+ * context.
  */
 
 static void
