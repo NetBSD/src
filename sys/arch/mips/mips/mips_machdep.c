@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.274 2016/07/30 05:55:34 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.275 2016/12/22 07:56:38 mrg Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.274 2016/07/30 05:55:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.275 2016/12/22 07:56:38 mrg Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -2427,7 +2427,8 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 	    mips_round_page(MSGBUFSIZE))) {
 		return EFAULT;
 	}
-	if (MIPS_XKSEG_P(v) && v < MIPS_KSEG0_START) {
+	if (MIPS_KSEG0_P(v) ||
+	    (MIPS_XKSEG_P(v) && v < MIPS_KSEG0_START)) {
 		*handled = true;
 		return 0;
 	}
