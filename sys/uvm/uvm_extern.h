@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.198 2016/07/20 12:38:43 maxv Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.199 2016/12/22 12:55:21 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -619,6 +619,7 @@ void			uvm_cpu_attach(struct cpu_info *);
 
 
 /* uvm_init.c */
+void			uvm_md_init(void);
 void			uvm_init(void);
 
 /* uvm_io.c */
