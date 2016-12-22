@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.30 2015/06/26 22:11:10 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.31 2016/12/22 14:47:56 cherry Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2015/06/26 22:11:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2016/12/22 14:47:56 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -207,10 +207,7 @@ mach_init(void)
 	 */
 	cal_timer();
 
-	/*
-	 * Set the VM page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.770 2016/12/20 14:03:15 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.771 2016/12/22 14:47:58 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.770 2016/12/20 14:03:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.771 2016/12/22 14:47:58 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1188,10 +1188,7 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_pae_l3_pdir = (pd_entry_t *)(rcr3() + KERNBASE);
 #endif /* PAE && !XEN */
 
-	/*
-	 * Initialize PAGE_SIZE-dependent variables.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Start with 2 color bins -- this is just a guess to get us
