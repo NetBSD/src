@@ -1,4 +1,4 @@
-.\" $NetBSD: ctime.3,v 1.51 2014/10/07 21:51:03 christos Exp $
+.\" $NetBSD: ctime.3,v 1.52 2016/12/22 17:27:02 abhinav Exp $
 .\"
 .\" XXX: License missing?
 .\"
@@ -65,7 +65,7 @@ function converts a time value contained in the
 .Fa tm
 structure to a string with the following general format:
 .Bd -literal -offset indent
-.D1 Thu Nov 24 18:22:48 1986\en\e0
+Thu Nov 24 18:22:48 1986\en\e0
 .Ed
 .Pp
 The
@@ -77,7 +77,7 @@ The
 .Fn asctime_r
 has the same behavior as
 .Fn asctime ,
-but the result is stored to
+but the result is stored in
 .Fa buf ,
 which should have a size of at least 26 bytes.
 .It Fn ctime "clock"
@@ -91,7 +91,7 @@ and returns a pointer to a string with the format described above.
 Years requiring fewer than four characters are padded with leading zeroes.
 For years longer than four characters, the string is of the form
 .Bd -literal -offset indent
-.D1 "Thu Nov 24 18:22:48     81986\en\e0"
+Thu Nov 24 18:22:48     81986\en\e0
 .Ed
 .Pp
 with five spaces before the year.
@@ -114,7 +114,7 @@ The
 .Fn ctime_r
 is similar to
 .Fn ctime ,
-except it places the result of the conversion on the
+except it places the result of the conversion in the
 .Fa buf
 argument, which should be 26 or more bytes long,
 instead of using a global static buffer.
@@ -165,7 +165,7 @@ is
 .Dv NULL ,
 UTC is used; otherwise,
 .Fa zone
-should be have been allocated by
+should have been allocated by
 .Fn tzalloc
 and should not be freed until after all uses (e.g., by calls to
 .Fn strftime )
@@ -184,11 +184,11 @@ structure described in
 .It Fn gmtime_r "clock" "result"
 The
 .Fn gmtime_r
-provides the same functionality as
+function provides the same functionality as
 .Fn gmtime ,
 differing in that the caller must supply a buffer area
 .Fa result
-to which the result is stored.
+in which the result is stored.
 .It Fn localtime "clock"
 Also
 .Fn localtime
@@ -215,7 +215,7 @@ the
 .Fn localtime_r
 takes an additional buffer
 .Fa result
-as a parameter and stores the result to it.
+as a parameter and stores the result in it.
 Note however that
 .Fn localtime_r
 does not imply initialization of the local time conversion information;
@@ -316,7 +316,7 @@ Coordinated Universal Time
 .Pq Tn UTC .
 .El
 .Pp
-Declarations of all the functions and externals, and the 
+Declarations of all the functions and externals, and the
 .Ft tm
 structure, are in the
 .In time.h
@@ -490,7 +490,7 @@ Rest of the functions conform to
 .Sh CAVEATS
 The functions that do not take an explicit
 .Ft timezone_t
-argument return values point to static data; the data is overwritten by
+argument return values pointing to static data; the data is overwritten by
 each call.
 For the above functions the
 .Fa tm_zone
