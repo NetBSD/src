@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113 2013/09/06 17:43:19 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.114 2016/12/22 14:47:59 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113 2013/09/06 17:43:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2016/12/22 14:47:59 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -893,7 +893,7 @@ pmap_bootstrap(vaddr_t nextva)
 
 	/* Notify the VM system of our page size. */
 	uvmexp.pagesize = PAGE_SIZE;
-	uvm_setpagesize();
+	uvm_md_init();
 
 	pmap_page_upload();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.33 2014/09/13 18:08:39 matt Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.34 2016/12/22 14:47:55 cherry Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.33 2014/09/13 18:08:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.34 2016/12/22 14:47:55 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -899,7 +899,7 @@ initarm(void *arg)
 
 	/* Load memory into UVM. */
 	printf("page ");
-	uvm_setpagesize();        /* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
