@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.93 2016/12/08 12:22:56 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.94 2016/12/22 13:42:14 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.93 2016/12/08 12:22:56 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.94 2016/12/22 13:42:14 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,9 +378,16 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 	if (bp != NULL)
 		bufq_put(dksc->sc_bufq, bp);
 
-	if (dksc->sc_busy)
+	/*
+	 * If another thread is running the queue, increment
+	 * busy counter to 2 so that the queue is retried,
+	 * because the driver may now accept additional
+	 * requests.
+	 */
+	if (dksc->sc_busy < 2)
+		dksc->sc_busy++;
+	if (dksc->sc_busy > 1)
 		goto done;
-	dksc->sc_busy = true;
 
 	/*
 	 * Peeking at the buffer queue and committing the operation
@@ -393,34 +400,37 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 	 * This keeps order of I/O operations, unlike bufq_put.
 	 */
 
-	bp = dksc->sc_deferred;
-	dksc->sc_deferred = NULL;
+	while (dksc->sc_busy > 0) {
 
-	if (bp == NULL)
-		bp = bufq_get(dksc->sc_bufq);
+		bp = dksc->sc_deferred;
+		dksc->sc_deferred = NULL;
 
-	while (bp != NULL) {
+		if (bp == NULL)
+			bp = bufq_get(dksc->sc_bufq);
 
-		disk_busy(&dksc->sc_dkdev);
-		mutex_exit(&dksc->sc_iolock);
-		error = dkd->d_diskstart(dksc->sc_dev, bp);
-		mutex_enter(&dksc->sc_iolock);
-		if (error == EAGAIN) {
-			dksc->sc_deferred = bp;
-			disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
-			break;
+		while (bp != NULL) {
+
+			disk_busy(&dksc->sc_dkdev);
+			mutex_exit(&dksc->sc_iolock);
+			error = dkd->d_diskstart(dksc->sc_dev, bp);
+			mutex_enter(&dksc->sc_iolock);
+			if (error == EAGAIN) {
+				dksc->sc_deferred = bp;
+				disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
+				break;
+			}
+
+			if (error != 0) {
+				bp->b_error = error;
+				bp->b_resid = bp->b_bcount;
+				dk_done1(dksc, bp, false);
+			}
+
+			bp = bufq_get(dksc->sc_bufq);
 		}
 
-		if (error != 0) {
-			bp->b_error = error;
-			bp->b_resid = bp->b_bcount;
-			dk_done1(dksc, bp, false);
-		}
-
-		bp = bufq_get(dksc->sc_bufq);
+		dksc->sc_busy--;
 	}
-
-	dksc->sc_busy = false;
 done:
 	mutex_exit(&dksc->sc_iolock);
 }
