@@ -1,4 +1,4 @@
-/* $NetBSD: t_uvm_physseg.c,v 1.1 2016/12/19 12:21:29 cherry Exp $ */
+/* $NetBSD: t_uvm_physseg.c,v 1.2 2016/12/22 08:15:20 cherry Exp $ */
 
 /*-
  * Copyright (c) 2015, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,28 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uvm_physseg.c,v 1.1 2016/12/19 12:21:29 cherry Exp $");
+__RCSID("$NetBSD: t_uvm_physseg.c,v 1.2 2016/12/22 08:15:20 cherry Exp $");
+
+/*
+ * If this line is commented out tests related to uvm_physseg_get_pmseg()
+ * wont run.
+ *
+ * Have a look at machine/uvm_physseg.h for more details.
+ */
+#define __HAVE_PMAP_PHYSSEG
+
+/*
+ * This is a dummy struct used for testing purposes
+ *
+ * In reality this struct would exist in the MD part of the code residing in
+ * machines/vmparam.h
+ */
+
+#ifdef __HAVE_PMAP_PHYSSEG
+struct pmap_physseg {
+	int dummy_variable;		/* Dummy variable use for testing */
+};
+#endif
 
 /* Testing API - assumes userland */
 /* Provide Kernel API equivalents */
@@ -60,30 +81,8 @@ typedef unsigned long paddr_t;
 typedef unsigned long psize_t;
 typedef unsigned long vsize_t;
 
-#include <uvm/uvm_page.h>
-
-/*
- * If this line is commented out tests related to uvm_physseg_get_pmseg()
- * wont run.
- *
- * Have a look at machine/uvm_physseg.h for more details.
- */
-#define __HAVE_PMAP_PHYSSEG
-
 #include <uvm/uvm_physseg.h>
-
-/*
- * This is a dummy struct used for testing purposes
- *
- * In reality this struct would exist in the MD part of the code residing in
- * machines/vmparam.h
- */
-
-#ifdef __HAVE_PMAP_PHYSSEG
-struct pmap_physseg {
-	bool dummy_variable;		/* Dummy variable use for testing */
-};
-#endif
+#include <uvm/uvm_page.h>
 
 #ifndef DIAGNOSTIC
 #define	KASSERTMSG(e, msg, ...)	/* NOTHING */
@@ -434,7 +433,7 @@ uvm_page_init_fake(struct vm_page *pagearray, psize_t pagecount)
 
 	for (bank = uvm_physseg_get_first(),
 		 uvm_physseg_seg_chomp_slab(bank, pagearray, pagecount);
-	     uvm_physseg_valid(bank);
+	     uvm_physseg_valid_p(bank);
 	     bank = uvm_physseg_get_next(bank)) {
 
 		n = uvm_physseg_get_end(bank) - uvm_physseg_get_start(bank);
@@ -584,13 +583,13 @@ ATF_TC_BODY(uvm_physseg_unplug, tc)
 
 	upm = uvm_physseg_find(atop(TWOFIFTYSIX_KILO + FIVEONETWO_KILO), NULL);
 
-	ATF_REQUIRE(uvm_physseg_valid(upm));
+	ATF_REQUIRE(uvm_physseg_valid_p(upm));
 
 	/* Now unplug the tail fragment - should swallow the complete entry */
 	ATF_REQUIRE_EQ(true, uvm_physseg_unplug(atop(TWOFIFTYSIX_KILO + FIVEONETWO_KILO), atop(TWOFIFTYSIX_KILO)));
 
 	/* The "swallow" above should have invalidated the handle */
-	ATF_REQUIRE_EQ(false, uvm_physseg_valid(upm));
+	ATF_REQUIRE_EQ(false, uvm_physseg_valid_p(upm));
 
 	/* Only the first one is left now */
 	ATF_REQUIRE_EQ(1, uvm_physseg_get_entries());
@@ -643,7 +642,7 @@ ATF_TC_BODY(uvm_page_physload_preload, tc)
 	    VALID_AVAIL_START_PFN_1, VALID_AVAIL_END_PFN_1, VM_FREELIST_DEFAULT);
 
 	/* Should return a valid handle */
-	ATF_REQUIRE(uvm_physseg_valid(upm));
+	ATF_REQUIRE(uvm_physseg_valid_p(upm));
 
 	/* No pages should be allocated yet */
 	ATF_REQUIRE_EQ(0, uvmexp.npages);
@@ -657,7 +656,7 @@ ATF_TC_BODY(uvm_page_physload_preload, tc)
 	    VALID_AVAIL_START_PFN_2, VALID_AVAIL_END_PFN_2, VM_FREELIST_DEFAULT);
 
 	/* Should return a valid handle */
-	ATF_REQUIRE(uvm_physseg_valid(upm));
+	ATF_REQUIRE(uvm_physseg_valid_p(upm));
 
 	ATF_REQUIRE_EQ(0, uvmexp.npages);
 
@@ -687,7 +686,7 @@ ATF_TC_BODY(uvm_page_physload_postboot, tc)
 	    VALID_AVAIL_START_PFN_1, VALID_AVAIL_END_PFN_1, VM_FREELIST_DEFAULT);
 
 	/* Should return a valid handle */
-	ATF_REQUIRE(uvm_physseg_valid(upm));
+	ATF_REQUIRE(uvm_physseg_valid_p(upm));
 
 	/* No pages should be allocated yet */
 	ATF_REQUIRE_EQ(0, uvmexp.npages);
@@ -705,7 +704,7 @@ ATF_TC_BODY(uvm_page_physload_postboot, tc)
 	    VALID_AVAIL_START_PFN_2, VALID_AVAIL_END_PFN_2, VM_FREELIST_DEFAULT);
 
 	/* Should return a valid handle */
-	ATF_REQUIRE(uvm_physseg_valid(upm));
+	ATF_REQUIRE(uvm_physseg_valid_p(upm));
 
 	ATF_REQUIRE_EQ(npages1 + npages2, uvmexp.npages);
 
@@ -1487,7 +1486,7 @@ ATF_TC(uvm_physseg_valid);
 ATF_TC_HEAD(uvm_physseg_valid, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Tests the pointer value for current \
-	    segment is valid using the uvm_physseg_valid() call.");
+	    segment is valid using the uvm_physseg_valid_p() call.");
 }
 ATF_TC_BODY(uvm_physseg_valid, tc)
 {
@@ -1509,14 +1508,14 @@ ATF_TC_BODY(uvm_physseg_valid, tc)
 
 	ATF_REQUIRE_EQ(PAGE_COUNT_1M, uvmexp.npages);
 
-	ATF_CHECK_EQ(true, uvm_physseg_valid(upm));
+	ATF_CHECK_EQ(true, uvm_physseg_valid_p(upm));
 }
 
 ATF_TC(uvm_physseg_valid_invalid);
 ATF_TC_HEAD(uvm_physseg_valid_invalid, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Tests the pointer value for current \
-	    segment is invalid using the uvm_physseg_valid() call.");
+	    segment is invalid using the uvm_physseg_valid_p() call.");
 }
 ATF_TC_BODY(uvm_physseg_valid_invalid, tc)
 {
@@ -1532,13 +1531,13 @@ ATF_TC_BODY(uvm_physseg_valid_invalid, tc)
 	ATF_REQUIRE_EQ(true, uvm.page_init_done);
 
 	/* Invalid uvm_physseg_t */
-	ATF_CHECK_EQ(false, uvm_physseg_valid(UVM_PHYSSEG_TYPE_INVALID));
+	ATF_CHECK_EQ(false, uvm_physseg_valid_p(UVM_PHYSSEG_TYPE_INVALID));
 
 	/*
 	 * Without any pages initialized for segment, it is considered
 	 * invalid
 	 */
-	ATF_CHECK_EQ(false, uvm_physseg_valid(upm));
+	ATF_CHECK_EQ(false, uvm_physseg_valid_p(upm));
 }
 
 ATF_TC(uvm_physseg_get_highest);

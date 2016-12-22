@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.1 2016/12/19 12:21:29 cherry Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.2 2016/12/22 08:15:20 cherry Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -417,7 +417,7 @@ uvm_physseg_t
 uvm_physseg_get_next(uvm_physseg_t upm)
 {
 	/* next of invalid is invalid, not fatal */
-	if (uvm_physseg_valid(upm) == false)
+	if (uvm_physseg_valid_p(upm) == false)
 		return UVM_PHYSSEG_TYPE_INVALID;
 
 	return (uvm_physseg_t) rb_tree_iterate(&(uvm_physseg_graph.rb_tree), upm,
@@ -428,7 +428,7 @@ uvm_physseg_t
 uvm_physseg_get_prev(uvm_physseg_t upm)
 {
 	/* prev of invalid is invalid, not fatal */
-	if (uvm_physseg_valid(upm) == false)
+	if (uvm_physseg_valid_p(upm) == false)
 		return UVM_PHYSSEG_TYPE_INVALID;
 
 	return (uvm_physseg_t) rb_tree_iterate(&(uvm_physseg_graph.rb_tree), upm,
@@ -603,7 +603,7 @@ int
 uvm_physseg_get_next(uvm_physseg_t lcv)
 {
 	/* next of invalid is invalid, not fatal */
-	if (uvm_physseg_valid(lcv) == false)
+	if (uvm_physseg_valid_p(lcv) == false)
 		return UVM_PHYSSEG_TYPE_INVALID;
 
 	return (lcv + 1);
@@ -613,7 +613,7 @@ int
 uvm_physseg_get_prev(uvm_physseg_t lcv)
 {
 	/* prev of invalid is invalid, not fatal */
-	if (uvm_physseg_valid(lcv) == false)
+	if (uvm_physseg_valid_p(lcv) == false)
 		return UVM_PHYSSEG_TYPE_INVALID;
 
 	return (lcv - 1);
@@ -778,7 +778,7 @@ uvm_physseg_plug(paddr_t pfn, size_t pages, uvm_physseg_t *psp)
 	uvm_physseg_t upm;
 	upm = uvm_physseg_find(pfn, &off);
 
-	if (uvm_physseg_valid(upm)) /* XXX; do we allow "update" plugs ? */
+	if (uvm_physseg_valid_p(upm)) /* XXX; do we allow "update" plugs ? */
 		return false;
 #endif
 
@@ -972,7 +972,7 @@ vm_physseg_find_linear(struct uvm_physseg *segs, int nsegs, paddr_t pframe, psiz
 #endif /* UVM_HOTPLUG */
 
 bool
-uvm_physseg_valid(uvm_physseg_t upm)
+uvm_physseg_valid_p(uvm_physseg_t upm)
 {
 	struct uvm_physseg *ps;
 
@@ -1007,7 +1007,7 @@ uvm_physseg_valid(uvm_physseg_t upm)
 paddr_t
 uvm_physseg_get_start(uvm_physseg_t upm)
 {
-	if (uvm_physseg_valid(upm) == false)
+	if (uvm_physseg_valid_p(upm) == false)
 		return (paddr_t) -1;
 
 	return HANDLE_TO_PHYSSEG_NODE(upm)->start;
@@ -1016,7 +1016,7 @@ uvm_physseg_get_start(uvm_physseg_t upm)
 paddr_t
 uvm_physseg_get_end(uvm_physseg_t upm)
 {
-	if (uvm_physseg_valid(upm) == false)
+	if (uvm_physseg_valid_p(upm) == false)
 		return (paddr_t) -1;
 
 	return HANDLE_TO_PHYSSEG_NODE(upm)->end;
@@ -1025,7 +1025,7 @@ uvm_physseg_get_end(uvm_physseg_t upm)
 paddr_t
 uvm_physseg_get_avail_start(uvm_physseg_t upm)
 {
-	if (uvm_physseg_valid(upm) == false)
+	if (uvm_physseg_valid_p(upm) == false)
 		return (paddr_t) -1;
 
 	return HANDLE_TO_PHYSSEG_NODE(upm)->avail_start;
@@ -1034,7 +1034,7 @@ uvm_physseg_get_avail_start(uvm_physseg_t upm)
 paddr_t
 uvm_physseg_get_avail_end(uvm_physseg_t upm)
 {
-	if (uvm_physseg_valid(upm) == false)
+	if (uvm_physseg_valid_p(upm) == false)
 		return (paddr_t) -1;
 
 	return HANDLE_TO_PHYSSEG_NODE(upm)->avail_end;
@@ -1043,7 +1043,7 @@ uvm_physseg_get_avail_end(uvm_physseg_t upm)
 struct vm_page *
 uvm_physseg_get_pg(uvm_physseg_t upm, paddr_t idx)
 {
-	KASSERT(uvm_physseg_valid(upm));
+	KASSERT(uvm_physseg_valid_p(upm));
 	return &HANDLE_TO_PHYSSEG_NODE(upm)->pgs[idx];
 }
 
@@ -1051,7 +1051,7 @@ uvm_physseg_get_pg(uvm_physseg_t upm, paddr_t idx)
 struct pmap_physseg *
 uvm_physseg_get_pmseg(uvm_physseg_t upm)
 {
-	KASSERT(uvm_physseg_valid(upm));
+	KASSERT(uvm_physseg_valid_p(upm));
 	return &(HANDLE_TO_PHYSSEG_NODE(upm)->pmseg);
 }
 #endif
@@ -1059,21 +1059,21 @@ uvm_physseg_get_pmseg(uvm_physseg_t upm)
 int
 uvm_physseg_get_free_list(uvm_physseg_t upm)
 {
-	KASSERT(uvm_physseg_valid(upm));
+	KASSERT(uvm_physseg_valid_p(upm));
 	return HANDLE_TO_PHYSSEG_NODE(upm)->free_list;
 }
 
 u_int
 uvm_physseg_get_start_hint(uvm_physseg_t upm)
 {
-	KASSERT(uvm_physseg_valid(upm));
+	KASSERT(uvm_physseg_valid_p(upm));
 	return HANDLE_TO_PHYSSEG_NODE(upm)->start_hint;
 }
 
 bool
 uvm_physseg_set_start_hint(uvm_physseg_t upm, u_int start_hint)
 {
-	if (uvm_physseg_valid(upm) == false)
+	if (uvm_physseg_valid_p(upm) == false)
 		return false;
 
 	HANDLE_TO_PHYSSEG_NODE(upm)->start_hint = start_hint;
@@ -1227,7 +1227,7 @@ uvm_physseg_unplug(paddr_t pfn, size_t pages)
 
 	upm = uvm_physseg_find(pfn, &off);
 
-	if (!uvm_physseg_valid(upm)) {
+	if (!uvm_physseg_valid_p(upm)) {
 		printf("%s: Tried to unplug from unknown offset\n", __func__);
 		return false;
 	}
