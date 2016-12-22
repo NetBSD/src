@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.70 2016/12/15 09:28:07 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.71 2016/12/22 10:13:09 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.70 2016/12/15 09:28:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.71 2016/12/22 10:13:09 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -685,8 +685,7 @@ shmif_rcv(void *arg)
 		    shmif_nextpktoff(busmem, busmem->shm_last)
 		     == sc->sc_nextpacket) {
 			shmif_unlockbus(busmem);
-			error = 0;
-			rumpcomp_shmif_watchwait(sc->sc_kq);
+			error = rumpcomp_shmif_watchwait(sc->sc_kq);
 			if (__predict_false(error))
 				printf("shmif_rcv: wait failed %d\n", error);
 			membar_consumer();
