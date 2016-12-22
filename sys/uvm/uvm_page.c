@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.187 2015/04/11 19:24:13 joerg Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.188 2016/12/22 13:26:25 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.187 2015/04/11 19:24:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.188 2016/12/22 13:26:25 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -735,7 +735,7 @@ uvm_page_physget(paddr_t *paddrp)
  * => we are limited to VM_PHYSSEG_MAX physical memory segments
  */
 
-void
+uvm_physseg_t
 uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
     paddr_t avail_end, int free_list)
 {
@@ -761,7 +761,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		printf("\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n",
 		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
 		printf("\tincrease VM_PHYSSEG_MAX\n");
-		return;
+		return 0;
 	}
 
 	/*
@@ -840,6 +840,8 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	if (!preload) {
 		uvmpdpol_reinit();
 	}
+
+	return 0;
 }
 
 /*
