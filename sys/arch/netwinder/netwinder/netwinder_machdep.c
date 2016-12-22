@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.84 2016/12/22 14:47:58 cherry Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.85 2016/12/22 16:05:15 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.84 2016/12/22 14:47:58 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.85 2016/12/22 16:05:15 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -477,7 +477,7 @@ initarm(void *arg)
 	physmem = (physical_end - physical_start) / PAGE_SIZE;
 
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: %"PRIxPSIZE" pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
 
 	/*
