@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2016/08/02 15:56:09 scole Exp $
+#	$NetBSD: Makefile,v 1.40 2016/12/23 10:19:57 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -26,5 +26,7 @@ MLINKS+=systat.1 sysstat.1
 CPPFLAGS+=-DINET6
 SRCS+=	ip6.c
 .endif
+
+.include "../../compat/exec.mk"
 
 .include <bsd.prog.mk>
