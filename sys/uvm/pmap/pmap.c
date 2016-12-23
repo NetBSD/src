@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 2016/12/23 07:15:28 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 2016/12/23 09:16:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2016/12/23 07:15:28 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2016/12/23 09:16:46 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -454,7 +454,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	paddr_t pa;
 	vaddr_t va;
 
-	uvm_physseg_t maybe_bank = UVM_PHYSMEM_TYPE_INVALID;
+	uvm_physseg_t maybe_bank = UVM_PHYSSEG_TYPE_INVALID;
 
 	size = round_page(size);
 	npgs = atop(size);
@@ -468,19 +468,19 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		if (uvm.page_init_done == true)
 			panic("pmap_steal_memory: called _after_ bootstrap");
 
-		aprint_debug("%s: seg %"PRIxPHYSMEM": %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR"\n",
+		aprint_debug("%s: seg %"PRIxPHYSSEG": %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR"\n",
 		    __func__, bank,
 		    uvm_physseg_get_avail_start(bank), uvm_physseg_get_start(bank),
 		    uvm_physseg_get_avail_end(bank), uvm_physseg_get_end(bank));
 
 		if (uvm_physseg_get_avail_start(bank) != uvm_physseg_get_start(bank)
 		    || uvm_physseg_get_avail_start(bank) >= uvm_physseg_get_avail_end(bank)) {
-			aprint_debug("%s: seg %"PRIxPHYSMEM": bad start\n", __func__, bank);
+			aprint_debug("%s: seg %"PRIxPHYSSEG": bad start\n", __func__, bank);
 			continue;
 		}
 
 		if (uvm_physseg_get_avail_end(bank) - uvm_physseg_get_avail_start(bank) < npgs) {
-			aprint_debug("%s: seg %"PRIxPHYSMEM": too small for %zu pages\n",
+			aprint_debug("%s: seg %"PRIxPHYSSEG": too small for %zu pages\n",
 			    __func__, bank, npgs);
 			continue;
 		}
@@ -502,14 +502,14 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 	if (uvm_physseg_valid_p(maybe_bank)) {
 		const uvm_physseg_t bank = maybe_bank;
-
+		
 		/*
 		 * There are enough pages here; steal them!
 		 */
 		pa = ptoa(uvm_physseg_get_start(bank));
 		uvm_physseg_unplug(atop(pa), npgs);
 
-		aprint_debug("%s: seg %"PRIxPHYSMEM": %zu pages stolen (%#"PRIxPADDR" left)\n",
+		aprint_debug("%s: seg %"PRIxPHYSSEG": %zu pages stolen (%#"PRIxPADDR" left)\n",
 		    __func__, bank, npgs, VM_PHYSMEM_SPACE(bank));
 
 		va = pmap_md_map_poolpage(pa, size);
