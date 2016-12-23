@@ -7,26 +7,31 @@ BOZOHTTPD?=	../bozohttpd
 BOZOHTTPD?=	../debug/bozohttpd-debug
 WGET?=		wget
 DATA?=		$(.CURDIR)/data 
+VERBOSE?=	yes
+
+.if ${VERBOSE} != "yes"
+SILENT=		@
+.else
+SILENT=
+.endif
+
 all:
 
 clean:
-	for a in $(SIMPLETESTS); do \
-		rm -f tmp.$$a.out; \
+	for a in $(SIMPLETESTS) $(BIGFILETESTS); do \
+		rm -f tmp.$$a.out tmp.$$a.err; \
 	done
 
 check: check-simple check-bigfile
 
 check-simple:
 .for a in $(SIMPLETESTS)
-	echo "Running test $a"
-	$(BOZOHTTPD) "$(DATA)" < $(.CURDIR)/$a.in > tmp.$a.out || true
-	$(.CURDIR)/html_cmp $(.CURDIR)/$a.out tmp.$a.out
+	${SILENT}$(.CURDIR)/test-simple "$a" "${BOZOHTTPD}" "${DATA}" "${VERBOSE}"
 .endfor
 
 check-bigfile:
 .for a in $(BIGFILETESTS)
-	echo "Running test $a"
-	$(.CURDIR)/test-bigfile "$a" "${BOZOHTTPD}" "${WGET}" "$(DATA)"
+	${SILENT}$(.CURDIR)/test-bigfile "$a" "${BOZOHTTPD}" "${WGET}" "${DATA}" "${VERBOSE}"
 .endfor
 
 .include <bsd.obj.mk>
