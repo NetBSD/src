@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.261 2016/12/21 03:13:00 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.262 2016/12/23 21:11:45 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -23,6 +23,7 @@ CPPFLAGS+=	-Wp,-iremap,${DESTDIR}:
 REPROFLAGS+=	-fdebug-prefix-map=\$$DESTDIR=
 .endif
 
+CPPFLAGS+=	-Wp,-fno-canonical-system-headers
 CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
 CPPFLAGS+=	-Wp,-iremap,${X11SRCDIR}:/usr/xsrc
 REPROFLAGS+=	-fdebug-prefix-map=\$$NETBSDSRCDIR=/usr/src
