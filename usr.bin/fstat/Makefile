@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2016/01/23 16:12:03 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2016/12/23 10:19:57 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -20,5 +20,7 @@ CPPFLAGS+=-D_KMEMUSER
 
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
+
+.include "../../compat/exec.mk"
 
 .include <bsd.prog.mk>
