@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 2016/12/01 02:15:08 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 2016/12/23 07:15:28 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2016/12/01 02:15:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2016/12/23 07:15:28 cherry Exp $");
 
 /*
  *	Manages physical address maps.
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2016/12/01 02:15:08 mrg Exp $");
 #include <sys/atomic.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_physseg.h>
 
 #if defined(MULTIPROCESSOR) && defined(PMAP_VIRTUAL_CACHE_ALIASES) \
     && !defined(PMAP_NO_PV_UNCACHED)
@@ -452,37 +453,39 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	size_t npgs;
 	paddr_t pa;
 	vaddr_t va;
-	struct vm_physseg *maybe_seg = NULL;
-	u_int maybe_bank = vm_nphysseg;
+
+	uvm_physseg_t maybe_bank = UVM_PHYSMEM_TYPE_INVALID;
 
 	size = round_page(size);
 	npgs = atop(size);
 
 	aprint_debug("%s: need %zu pages\n", __func__, npgs);
 
-	for (u_int bank = 0; bank < vm_nphysseg; bank++) {
-		struct vm_physseg * const seg = VM_PHYSMEM_PTR(bank);
+	for (uvm_physseg_t bank = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(bank);
+	     bank = uvm_physseg_get_next(bank)) {
+
 		if (uvm.page_init_done == true)
 			panic("pmap_steal_memory: called _after_ bootstrap");
 
-		aprint_debug("%s: seg %u: %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR"\n",
+		aprint_debug("%s: seg %"PRIxPHYSMEM": %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR"\n",
 		    __func__, bank,
-		    seg->avail_start, seg->start,
-		    seg->avail_end, seg->end);
+		    uvm_physseg_get_avail_start(bank), uvm_physseg_get_start(bank),
+		    uvm_physseg_get_avail_end(bank), uvm_physseg_get_end(bank));
 
-		if (seg->avail_start != seg->start
-		    || seg->avail_start >= seg->avail_end) {
-			aprint_debug("%s: seg %u: bad start\n", __func__, bank);
+		if (uvm_physseg_get_avail_start(bank) != uvm_physseg_get_start(bank)
+		    || uvm_physseg_get_avail_start(bank) >= uvm_physseg_get_avail_end(bank)) {
+			aprint_debug("%s: seg %"PRIxPHYSMEM": bad start\n", __func__, bank);
 			continue;
 		}
 
-		if (seg->avail_end - seg->avail_start < npgs) {
-			aprint_debug("%s: seg %u: too small for %zu pages\n",
+		if (uvm_physseg_get_avail_end(bank) - uvm_physseg_get_avail_start(bank) < npgs) {
+			aprint_debug("%s: seg %"PRIxPHYSMEM": too small for %zu pages\n",
 			    __func__, bank, npgs);
 			continue;
 		}
 
-		if (!pmap_md_ok_to_steal_p(seg, npgs)) {
+		if (!pmap_md_ok_to_steal_p(bank, npgs)) {
 			continue;
 		}
 
@@ -490,44 +493,24 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		 * Always try to allocate from the segment with the least
 		 * amount of space left.
 		 */
-#define VM_PHYSMEM_SPACE(s)	((s)->avail_end - (s)->avail_start)
-		if (maybe_seg == NULL
-		    || VM_PHYSMEM_SPACE(seg) < VM_PHYSMEM_SPACE(maybe_seg)) {
-			maybe_seg = seg;
+#define VM_PHYSMEM_SPACE(b)	((uvm_physseg_get_avail_end(b)) - (uvm_physseg_get_avail_start(b)))
+		if (uvm_physseg_valid_p(maybe_bank) == false
+		    || VM_PHYSMEM_SPACE(bank) < VM_PHYSMEM_SPACE(maybe_bank)) {
 			maybe_bank = bank;
 		}
 	}
 
-	if (maybe_seg) {
-		struct vm_physseg * const seg = maybe_seg;
-		u_int bank = maybe_bank;
+	if (uvm_physseg_valid_p(maybe_bank)) {
+		const uvm_physseg_t bank = maybe_bank;
 
 		/*
 		 * There are enough pages here; steal them!
 		 */
-		pa = ptoa(seg->avail_start);
-		seg->avail_start += npgs;
-		seg->start += npgs;
+		pa = ptoa(uvm_physseg_get_start(bank));
+		uvm_physseg_unplug(atop(pa), npgs);
 
-		/*
-		 * Have we used up this segment?
-		 */
-		if (seg->avail_start == seg->end) {
-			if (vm_nphysseg == 1)
-				panic("pmap_steal_memory: out of memory!");
-
-			aprint_debug("%s: seg %u: %zu pages stolen (removed)\n",
-			    __func__, bank, npgs);
-			/* Remove this segment from the list. */
-			vm_nphysseg--;
-			for (u_int x = bank; x < vm_nphysseg; x++) {
-				/* structure copy */
-				VM_PHYSMEM_PTR_SWAP(x, x + 1);
-			}
-		} else {
-			aprint_debug("%s: seg %u: %zu pages stolen (%#"PRIxPADDR" left)\n",
-			    __func__, bank, npgs, VM_PHYSMEM_SPACE(seg));
-		}
+		aprint_debug("%s: seg %"PRIxPHYSMEM": %zu pages stolen (%#"PRIxPADDR" left)\n",
+		    __func__, bank, npgs, VM_PHYSMEM_SPACE(bank));
 
 		va = pmap_md_map_poolpage(pa, size);
 		memset((void *)va, 0, size);
