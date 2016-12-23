@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.773 2016/12/23 07:15:27 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.774 2016/12/23 09:24:57 maya Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.773 2016/12/23 07:15:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.774 2016/12/23 09:24:57 maya Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1059,8 +1059,8 @@ init386_msgbuf(void)
 	}
 
 	if (sz != reqsz)
-		printf("%s: could only allocate %ld bytes of requested %ld bytes\n",
-		    __func__, sz, reqsz);
+		printf("%s: could only allocate %"PRIxPSIZE" bytes of requested"
+		    " %"PRIxPSIZE" bytes\n", __func__, sz, reqsz);
 }
 
 #ifndef XEN
