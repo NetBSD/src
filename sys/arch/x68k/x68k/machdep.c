@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.194 2016/12/02 12:43:07 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.195 2016/12/23 07:15:28 cherry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2016/12/02 12:43:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.195 2016/12/23 07:15:28 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2016/12/02 12:43:07 tsutsui Exp $"
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm.h>
+#include <uvm/uvm_physseg.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -553,10 +554,7 @@ cpu_init_kcore_hdr(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	psize_t size;
-#ifdef EXTENDED_MEMORY
-	int i, seg;
-#endif
+	uvm_physseg_t i;
 
 	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
@@ -605,20 +603,25 @@ cpu_init_kcore_hdr(void)
 	/*
 	 * X68k has multiple RAM segments on some models.
 	 */
-	size = phys_basemem_seg.end - phys_basemem_seg.start;
-	m->ram_segs[0].start = phys_basemem_seg.start;
-	m->ram_segs[0].size  = size;
-#ifdef EXTENDED_MEMORY
-	seg = 1;
-	for (i = 0; i < EXTMEM_SEGS; i++) {
-		size = phys_extmem_seg[i].end - phys_extmem_seg[i].start;
-		if (size == 0)
-			continue;
-		m->ram_segs[seg].start = phys_extmem_seg[i].start;
-		m->ram_segs[seg].size  = size;
-		seg++;
+	m->ram_segs[0].start = lowram;
+	m->ram_segs[0].size = mem_size - lowram;
+
+	i = uvm_physseg_get_first();
+	
+        for (uvm_physseg_get_next(i); uvm_physseg_valid_p(i); i = uvm_physseg_get_next(i)) {
+		if (uvm_physseg_valid_p(i) == false)
+			break;
+
+		const paddr_t startpfn = uvm_physseg_get_start(i);
+		const paddr_t endpfn = uvm_physseg_get_end(i);
+
+		KASSERT(startpfn != -1 && endpfn != -1);
+
+		m->ram_segs[i].start = 
+		    ctob(startpfn);
+		m->ram_segs[i].size  =			
+		    ctob(endpfn - startpfn);
 	}
-#endif
 }
 
 /*
@@ -1249,11 +1252,14 @@ cpu_intr_p(void)
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
-	int i;
+	uvm_physseg_t i;
 
-	for (i = 0; i < vm_nphysseg; i++) {
-		if (ctob(vm_physmem[i].start) <= pa &&
-		    pa < ctob(vm_physmem[i].end))
+	for (i = uvm_physseg_get_first(); uvm_physseg_valid_p(i); i = uvm_physseg_get_next(i)) {
+		if (uvm_physseg_valid_p(i) == false)
+			break;
+
+		if (ctob(uvm_physseg_get_start(i)) <= pa &&
+		    pa < ctob(uvm_physseg_get_end(i)))
 			return 0;
 	}
 	return EFAULT;

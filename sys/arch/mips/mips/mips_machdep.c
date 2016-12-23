@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.275 2016/12/22 07:56:38 mrg Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.276 2016/12/23 07:15:27 cherry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.275 2016/12/22 07:56:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.276 2016/12/23 07:15:27 cherry Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -145,6 +145,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.275 2016/12/22 07:56:38 mrg Exp $
 #endif
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_physseg.h>
 
 #include <dev/cons.h>
 #include <dev/mm.h>
@@ -2008,37 +2009,33 @@ mips_init_msgbuf(void)
 {
 	vsize_t sz = (vsize_t)round_page(MSGBUFSIZE);
 	vsize_t reqsz = sz;
-	u_int bank = vm_nphysseg - 1;
-	struct vm_physseg *vps = VM_PHYSMEM_PTR(bank);
+	uvm_physseg_t bank = uvm_physseg_get_last();
 #ifndef _LP64
 	/*
 	 * Fist the physical segment that can be mapped to KSEG0
 	 */
-	for (; vps >= vm_physmem; vps--, bank--) {
-		if (vps->avail_start + atop(sz) <= atop(MIPS_PHYS_MASK))
+	for (; uvm_physseg_valid_p(bank); bank = uvm_physseg_get_prev(bank)) {
+		if (uvm_physseg_get_avail_start(bank) + atop(sz) <= atop(MIPS_PHYS_MASK))
 			break;
 	}
 #endif
 
+	paddr_t start = uvm_physseg_get_start(bank);
+	paddr_t end = uvm_physseg_get_end(bank);
+	
 	/* shrink so that it'll fit in the last segment */
-	if ((vps->avail_end - vps->avail_start) < atop(sz))
-		sz = ptoa(vps->avail_end - vps->avail_start);
+	if ((end - start) < atop(sz))
+		sz = ptoa(end - start);
 
-	vps->end -= atop(sz);
-	vps->avail_end -= atop(sz);
+	end -= atop(sz);
+	uvm_physseg_unplug(end, atop(sz));
+	
 #ifdef _LP64
-	msgbufaddr = (void *) MIPS_PHYS_TO_XKPHYS_CACHED(ptoa(vps->end));
+	msgbufaddr = (void *) MIPS_PHYS_TO_XKPHYS_CACHED(ptoa(end));
 #else
-	msgbufaddr = (void *) MIPS_PHYS_TO_KSEG0(ptoa(vps->end));
+	msgbufaddr = (void *) MIPS_PHYS_TO_KSEG0(ptoa(end));
 #endif
 	initmsgbuf(msgbufaddr, sz);
-
-	/* Remove the [last] segment if it now has no pages. */
-	if (vps->start == vps->end) {
-		for (vm_nphysseg--; bank < vm_nphysseg - 1; bank++) {
-			VM_PHYSMEM_PTR_SWAP(bank, bank + 1);
-		}
-	}
 
 	/* warn if the message buffer had to be shrunk */
 	if (sz != reqsz)

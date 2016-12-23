@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.36 2012/05/11 15:39:17 skrll Exp $ */
+/* $NetBSD: pmap.c,v 1.37 2016/12/23 07:15:27 cherry Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2012/05/11 15:39:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2016/12/23 07:15:27 cherry Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/kmem.h>
@@ -293,19 +293,26 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 vaddr_t
 pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
-	int i;
 	vaddr_t addr;
+	uvm_physseg_t bank;
+
 	UVMHIST_FUNC("pmap_steal_memory");
 
 	UVMHIST_CALLED(pmaphist);
 	addr = 0;
 	size = round_page(size);
-	for (i = 0; i < vm_nphysseg; i++) {
-		if (VM_PHYSMEM_PTR(i)->avail_start < VM_PHYSMEM_PTR(i)->avail_end) {
+	for (bank = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(bank);
+	     bank = uvm_physseg_get_next(bank)) {
+		if (uvm_physseg_get_avail_start(bank) < uvm_physseg_get_avail_end(bank)) {
+			paddr_t avail_start = uvm_physseg_get_avail_start(bank);
+
 			addr = (vaddr_t)
 			    ((char*)MEMC_PHYS_BASE +
-				ptoa(VM_PHYSMEM_PTR(i)->avail_start));
-			VM_PHYSMEM_PTR(i)->avail_start++;
+				ptoa(avail_start));
+			avail_start++;
+			uvm_physseg_set_avail_start(avail_start);
+
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2016/12/22 14:47:58 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2016/12/23 07:15:27 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -175,18 +175,19 @@ cpu_startup(void)
 	 * Display any holes after the first chunk of extended memory.
 	 */
 	if (bootverbose) {
-		int lcv, sizetmp;
+		int sizetmp, vm_nphysseg;
+		uvm_physseg_t upm;
 
 		printf("Physical memory chunk(s):\n");
-		for (lcv = 0;
-		    lcv < vm_nphysseg || VM_PHYSMEM_PTR(lcv)->avail_end != 0;
-		    lcv++) {
-			sizetmp = VM_PHYSMEM_PTR(lcv)->avail_end -
-			    VM_PHYSMEM_PTR(lcv)->avail_start;
+		for (vm_nphysseg = 0, upm = uvm_physseg_get_first();
+		     uvm_physseg_valid_p(upm);
+		     vm_nphysseg++, upm = uvm_physseg_get_next(upm)) {
+			sizetmp = uvm_physseg_get_avail_end(upm) -
+			    uvm_physseg_get_avail_start(upm);
 
 			printf("0x%016lx - 0x%016lx, %ld bytes (%d pages)\n",
-			    ptoa(VM_PHYSMEM_PTR(lcv)->avail_start),
-				ptoa(VM_PHYSMEM_PTR(lcv)->avail_end) - 1,
+			    ptoa(uvm_physseg_get_avail_start(upm)),
+			    ptoa(uvm_physseg_get_avail_end(upm)) - 1,
 				    ptoa(sizetmp), sizetmp);
 		}
 		printf("Total number of segments: vm_nphysseg = %d \n",

@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.h,v 1.3 2016/12/22 15:54:35 cherry Exp $ */
+/* $NetBSD: uvm_physseg.h,v 1.4 2016/12/23 07:15:28 cherry Exp $ */
 
 /*
  * Consolidated API from uvm_page.c and others.
@@ -9,9 +9,7 @@
 #define _UVM_UVM_PHYSSEG_H_
 
 #if defined(_KERNEL_OPT)
-#if notyet
 #include "opt_uvm_hotplug.h"
-#endif
 #endif
 
 #include <sys/cdefs.h>

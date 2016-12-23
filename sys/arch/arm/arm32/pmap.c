@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.341 2016/12/17 14:36:29 flxd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.342 2016/12/23 07:15:27 cherry Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.341 2016/12/17 14:36:29 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.342 2016/12/23 07:15:27 cherry Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6453,8 +6453,8 @@ pmap_init(void)
 	 * One could argue whether this should be the entire memory or just
 	 * the memory that is useable in a user process.
 	 */
-	avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
-	avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
+	avail_start = ptoa(uvm_physseg_get_avail_start(uvm_physseg_get_first()));
+	avail_end = ptoa(uvm_physseg_get_avail_end(uvm_physseg_get_last()));
 
 	/*
 	 * Now we need to free enough pv_entry structures to allow us to get

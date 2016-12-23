@@ -1,4 +1,4 @@
-#	$NetBSD: files.uvm,v 1.27 2016/12/01 02:09:03 mrg Exp $
+#	$NetBSD: files.uvm,v 1.28 2016/12/23 07:15:28 cherry Exp $
 
 #
 # UVM options
@@ -15,6 +15,7 @@ defparam opt_pagermap.h		PAGER_MAP_SIZE
 defflag				PDPOLICY_CLOCKPRO
 defparam			USER_VA0_DISABLE_DEFAULT
 defflag opt_uvm_page_trkown.h	UVM_PAGE_TRKOWN
+defflag opt_uvm_hotplug.h	UVM_HOTPLUG
 
 define	uvm
 defflag	opt_uvm.h			UVM
@@ -42,6 +43,7 @@ file	uvm/uvm_pdaemon.c		uvm
 file	uvm/uvm_pdpolicy_clock.c	!pdpolicy_clockpro
 file	uvm/uvm_pdpolicy_clockpro.c	pdpolicy_clockpro
 file	uvm/uvm_pglist.c		uvm
+file	uvm/uvm_physseg.c		uvm
 file	uvm/uvm_readahead.c		uvm
 file	uvm/uvm_stat.c                	uvm
 file	uvm/uvm_swap.c			vmswap

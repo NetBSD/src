@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.242 2016/12/22 16:29:05 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.243 2016/12/23 07:15:27 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.242 2016/12/22 16:29:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243 2016/12/23 07:15:27 cherry Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -789,6 +789,7 @@ sparse_dump_mark(void)
 	paddr_t p, pstart, pend;
 	struct vm_page *pg;
 	int i;
+	uvm_physseg_t upm;
 
 	/*
 	 * Mark all memory pages, then unmark pages that are uninteresting.
@@ -805,10 +806,25 @@ sparse_dump_mark(void)
 			setbit(sparse_dump_physmap, p);
 		}
 	}
-	for (i = 0; i < vm_nphysseg; i++) {
-		struct vm_physseg *seg = VM_PHYSMEM_PTR(i);
+        for (upm = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(upm);
+	     upm = uvm_physseg_get_next(upm)) {
+		paddr_t pfn;
 
-		for (pg = seg->pgs; pg < seg->lastpg; pg++) {
+		if (uvm_physseg_valid_p(upm) == false)
+			break;
+
+		const paddr_t startpfn = uvm_physseg_get_start(upm);
+		const paddr_t endpfn = uvm_physseg_get_end(upm);
+
+		KASSERT(startpfn != -1 && endpfn != -1);
+
+		/*
+		 * We assume that seg->start to seg->end are
+		 * uvm_page_physload()ed
+		 */
+		for (pfn = startpfn; pfn <= endpfn; pfn++) {
+			pg = PHYS_TO_VM_PAGE(ptoa(pfn));
 			if (pg->uanon || (pg->pqflags & PQ_FREE) ||
 			    (pg->uobject && pg->uobject->pgops)) {
 				p = VM_PAGE_TO_PHYS(pg) / PAGE_SIZE;
@@ -1452,57 +1468,30 @@ extern vector *IDTVEC(exceptions)[];
 static void
 init_x86_64_msgbuf(void)
 {
-	/* Message buffer is located at end of core. */
-	struct vm_physseg *vps;
-	psize_t sz = round_page(MSGBUFSIZE);
-	psize_t reqsz = sz;
-	int x;
-		
- search_again:
-	vps = NULL;
+        /* Message buffer is located at end of core. */
+	psize_t reqsz = round_page(MSGBUFSIZE);
+	psize_t sz = 0;
 
-	for (x = 0; x < vm_nphysseg; x++) {
-		vps = VM_PHYSMEM_PTR(x);
-		if (ctob(vps->avail_end) == avail_end)
+	for (sz = 0; sz < reqsz; sz += PAGE_SIZE) {
+		paddr_t stolenpa;
+
+		if (!uvm_page_physget(&stolenpa))
 			break;
-	}
-	if (x == vm_nphysseg)
-		panic("init_x86_64: can't find end of memory");
 
-	/* Shrink so it'll fit in the last segment. */
-	if ((vps->avail_end - vps->avail_start) < atop(sz))
-		sz = ctob(vps->avail_end - vps->avail_start);
-
-	vps->avail_end -= atop(sz);
-	vps->end -= atop(sz);
-            msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-            msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(vps->avail_end);
-
-	/* Remove the last segment if it now has no pages. */
-	if (vps->start == vps->end) {
-		for (vm_nphysseg--; x < vm_nphysseg; x++)
-			VM_PHYSMEM_PTR_SWAP(x, x + 1);
+		if (stolenpa == (msgbuf_p_seg[msgbuf_p_cnt].paddr
+			+ PAGE_SIZE)) {
+			/* contiguous: append it to current buf alloc */
+			msgbuf_p_seg[msgbuf_p_cnt].sz += PAGE_SIZE;
+		} else  {
+			/* non-contiguous: start a new msgbuf seg */
+			msgbuf_p_seg[msgbuf_p_cnt].sz = PAGE_SIZE;
+			msgbuf_p_seg[msgbuf_p_cnt++].paddr = stolenpa;
+		}
 	}
 
-	/* Now find where the new avail_end is. */
-	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
-		if (VM_PHYSMEM_PTR(x)->avail_end > avail_end)
-			avail_end = VM_PHYSMEM_PTR(x)->avail_end;
-	avail_end = ctob(avail_end);
-
-	if (sz == reqsz)
-		return;
-
-	reqsz -= sz;
-	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
-		/* No more segments available, bail out. */
-		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
-		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
-		return;
-	}
-
-	sz = reqsz;
-	goto search_again;
+	if (sz != reqsz)
+		printf("%s: could only allocate %ld bytes of requested %ld bytes\n",
+		    __func__, sz, reqsz);
 }
 
 static void

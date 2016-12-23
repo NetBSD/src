@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 2016/09/03 09:07:54 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79 2016/12/23 07:15:28 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2016/09/03 09:07:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2016/12/23 07:15:28 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2016/09/03 09:07:54 christos Exp $");
 #include <sys/socketvar.h>	/* XXX: for sock_loan_thresh */
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_physseg.h>
 
 #include <sh3/mmu.h>
 #include <sh3/cache.h>
@@ -107,8 +108,8 @@ pmap_bootstrap(void)
 	/* Steal msgbuf area */
 	initmsgbuf((void *)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
 
-	avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
-	avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
+	avail_start = ptoa(uvm_physseg_get_start(uvm_physseg_get_first()));
+	avail_end = ptoa(uvm_physseg_get_end(uvm_physseg_get_last()));
 	__pmap_kve = VM_MIN_KERNEL_ADDRESS;
 
 	pmap_kernel()->pm_refcnt = 1;
@@ -126,39 +127,28 @@ pmap_bootstrap(void)
 vaddr_t
 pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 {
-	struct vm_physseg *bank;
-	int i, j, npage;
+	int npage;
 	paddr_t pa;
 	vaddr_t va;
+	uvm_physseg_t bank;
 
 	KDASSERT(!uvm.page_init_done);
 
 	size = round_page(size);
 	npage = atop(size);
 
-	bank = NULL;
-	for (i = 0; i < vm_nphysseg; i++) {
-		bank = VM_PHYSMEM_PTR(i);
-		if (npage <= bank->avail_end - bank->avail_start)
+	for (bank = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(bank);
+	     bank = uvm_physseg_get_next(bank)) {
+		if (npage <= uvm_physseg_get_end(bank) - uvm_physseg_get_start(bank))
 			break;
 	}
-	KDASSERT(i != vm_nphysseg);
-	KDASSERT(bank != NULL);
+
+	KDASSERT(uvm_physseg_valid_p(bank));
 
 	/* Steal pages */
-	pa = ptoa(bank->avail_start);
-	bank->avail_start += npage;
-	bank->start += npage;
-
-	/* GC memory bank */
-	if (bank->avail_start == bank->end) {
-		/* Remove this segment from the list. */
-		vm_nphysseg--;
-		KDASSERT(vm_nphysseg > 0);
-		for (j = i; i < vm_nphysseg; j++)
-			VM_PHYSMEM_PTR_SWAP(j, j + 1);
-	}
-
+	pa = ptoa(uvm_physseg_get_start(bank));
+	uvm_physseg_unplug(start, npage);
 	va = SH3_PHYS_TO_P1SEG(pa);
 	memset((void *)va, 0, size);
 

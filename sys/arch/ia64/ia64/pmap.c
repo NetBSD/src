@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.32 2014/03/10 13:47:45 martin Exp $ */
+/* $NetBSD: pmap.c,v 1.33 2016/12/23 07:15:27 cherry Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2014/03/10 13:47:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2016/12/23 07:15:27 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2014/03/10 13:47:45 martin Exp $");
 #include <sys/lock.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_physseg.h>
 
 #include <machine/pal.h>
 #include <machine/atomic.h>
@@ -316,47 +317,33 @@ pmap_steal_vhpt_memory(vsize_t);
 vaddr_t
 pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
-	int lcv, npgs, x;
+	int npgs;
+	uvm_physseg_t upm;
 	vaddr_t va;
 	paddr_t pa;
 
 	size = round_page(size);
 	npgs = atop(size);
 
-	for (lcv = 0; lcv < vm_nphysseg; lcv++) {
+	for (upm = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(upm);
+	     upm = uvm_physseg_get_next(upm)) {
 		if (uvm.page_init_done == true)
 			panic("pmap_steal_memory: called _after_ bootstrap");
 
-		if (VM_PHYSMEM_PTR(lcv)->avail_start != VM_PHYSMEM_PTR(lcv)->start ||
-		    VM_PHYSMEM_PTR(lcv)->avail_start >= VM_PHYSMEM_PTR(lcv)->avail_end)
+		if (uvm_physseg_get_avail_start(upm) != uvm_physseg_get_start(upm) ||
+		    uvm_physseg_get_avail_start(upm) >= uvm_physseg_get_avail_end(upm))
 			continue;
 
-		if ((VM_PHYSMEM_PTR(lcv)->avail_end - VM_PHYSMEM_PTR(lcv)->avail_start)
+		if ((uvm_physseg_get_avail_end(upm) - uvm_physseg_get_avail_start(upm))
 		    < npgs)
 			continue;
 
 		/*
 		 * There are enough pages here; steal them!
 		 */
-		pa = ptoa(VM_PHYSMEM_PTR(lcv)->avail_start);
-		VM_PHYSMEM_PTR(lcv)->avail_start += npgs;
-		VM_PHYSMEM_PTR(lcv)->start += npgs;
-
-		/*
-		 * Have we used up this segment?
-		 */
-		if (VM_PHYSMEM_PTR(lcv)->avail_start ==
-		    VM_PHYSMEM_PTR(lcv)->end) {
-			if (vm_nphysseg == 1)
-				panic("pmap_steal_memory: out of memory!");
-
-			/* Remove this segment from the list. */
-			vm_nphysseg--;
-			for (x = lcv; x < vm_nphysseg; x++) {
-				/* structure copy */
-				VM_PHYSMEM_PTR_SWAP(x, x + 1);
-			}
-		}
+		pa = ptoa(uvm_physseg_get_start(bank));
+		uvm_physseg_unplug(atop(pa), npgs);
 
 		va = IA64_PHYS_TO_RR7(pa);
 		memset((void *)va, 0, size);
@@ -380,31 +367,34 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 static vaddr_t
 pmap_steal_vhpt_memory(vsize_t size)
 {
-	int lcv, npgs, x;
+	int npgs;
+	uvm_physseg_t upm;
 	vaddr_t va;
-	paddr_t pa;
+	paddr_t tmppa, pa = 0;
 	paddr_t vhpt_start = 0, start1, start2, end1, end2;
 
 	size = round_page(size);
 	npgs = atop(size);
 
-	for (lcv = 0; lcv < vm_nphysseg; lcv++) {
+	for (upm = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(upm);
+	     upm = uvm_physseg_get_next(upm)) {
 		if (uvm.page_init_done == true)
 			panic("pmap_vhpt_steal_memory: called _after_ bootstrap");
 
-		if (VM_PHYSMEM_PTR(lcv)->avail_start != VM_PHYSMEM_PTR(lcv)->start || /* XXX: ??? */
-		    VM_PHYSMEM_PTR(lcv)->avail_start >= VM_PHYSMEM_PTR(lcv)->avail_end)
+		if (uvm_physseg_get_avail_start(upm) != uvm_physseg_get_start(upm) || /* XXX: ??? */
+		    uvm_physseg_get_avail_start(upm) >= uvm_physseg_get_avail_end(upm))
 			continue;
 
 		/* Break off a VHPT sized, aligned chunk off this segment. */
 
-		start1 = VM_PHYSMEM_PTR(lcv)->avail_start;
+		start1 = uvm_physseg_get_avail_start(upm);
 
 		/* Align requested start address on requested size boundary */
 		end1 = vhpt_start = roundup(start1, npgs);
 
 		start2 = vhpt_start + npgs;
-		end2 = VM_PHYSMEM_PTR(lcv)->avail_end;
+		end2 = uvm_physseg_get_avail_end(upm);
 
 		/* Case 1: Doesn't fit. skip this segment */
 
@@ -423,7 +413,7 @@ pmap_steal_vhpt_memory(vsize_t size)
 		 */
 		if (start1 == end1 &&
 		    start2 == end2 &&
-		    vm_nphysseg == 1) {
+		    uvm_physseg_get_first() == uvm_physseg_get_last() /* single segment */) {
 #ifdef DEBUG
 			printf("pmap_vhpt_steal_memory: out of memory!");
 #endif
@@ -431,10 +421,12 @@ pmap_steal_vhpt_memory(vsize_t size)
 		}
 
 		/* Remove this segment from the list. */
-		vm_nphysseg--;
-		for (x = lcv; x < vm_nphysseg; x++)
-			/* structure copy */
-			VM_PHYSMEM_PTR_SWAP(x, x + 1);
+		if (uvm_physseg_unplug(uvm_physseg_get_start(upm),
+			uvm_physseg_get_end(upm) - uvm_physseg_get_start(upm)) == false) {
+			panic("%s: uvm_physseg_unplug(%"PRIxPADDR", %"PRIxPADDR") failed\n",
+			    __func__, uvm_physseg_get_start(upm),
+			    uvm_physseg_get_end(upm) - uvm_physseg_get_start(upm));
+		}
 
 		/* Case 2: Perfect fit - skip segment reload. */
 

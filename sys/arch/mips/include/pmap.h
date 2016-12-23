@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.68 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.69 2016/12/23 07:15:27 cherry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,7 +116,7 @@ typedef uint32_t pt_entry_t;
 #define PMAP_SEGTAB_ALIGN __aligned(sizeof(void *)*NSEGPG) __section(".data1")
 #endif   
 
-struct vm_physseg;
+#include <uvm/uvm_physseg.h>
 
 void	pmap_md_init(void);
 void	pmap_md_icache_sync_all(void);
@@ -125,7 +125,7 @@ void	pmap_md_page_syncicache(struct vm_page *, const kcpuset_t *);
 bool	pmap_md_vca_add(struct vm_page *, vaddr_t, pt_entry_t *);
 void	pmap_md_vca_clean(struct vm_page *, int);
 void	pmap_md_vca_remove(struct vm_page *, vaddr_t, bool, bool);
-bool	pmap_md_ok_to_steal_p(const struct vm_physseg *, size_t);
+bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
 bool	pmap_md_tlb_check_entry(void *, vaddr_t, tlb_asid_t, pt_entry_t);
 
 static inline bool
