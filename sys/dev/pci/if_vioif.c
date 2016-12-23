@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.7.2.2 2016/09/18 05:57:00 snj Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.7.2.3 2016/12/23 05:57:40 snj Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.7.2.2 2016/09/18 05:57:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.7.2.3 2016/12/23 05:57:40 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,7 +397,7 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		C_L1(txhdr_dmamaps[i], tx_hdrs[i],
 		    sizeof(struct virtio_net_hdr), 1,
 		    WRITE, "tx header");
-		C(tx_dmamaps[i], NULL, ETHER_MAX_LEN, 256 /* XXX */, 0,
+		C(tx_dmamaps[i], NULL, ETHER_MAX_LEN, 16 /* XXX */, 0,
 		  "tx payload");
 	}
 
