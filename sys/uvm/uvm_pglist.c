@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.69 2016/12/23 08:53:56 skrll Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.70 2016/12/23 09:18:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.69 2016/12/23 08:53:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.70 2016/12/23 09:18:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,7 +410,7 @@ again:
 			paddr_t cidx = 0;
 			const uvm_physseg_t bank = uvm_physseg_find(candidate, &cidx);
 			KDASSERTMSG(bank == psi,
-			    "uvm_physseg_find(%#x) (%"PRIxPHYSMEM ") != psi %"PRIxPHYSMEM,
+			    "uvm_physseg_find(%#x) (%"PRIxPHYSSEG ") != psi %"PRIxPHYSSEG,
 			     candidate, bank, psi);
 			KDASSERTMSG(cidx == candidate - uvm_physseg_get_start(psi),
 			    "uvm_physseg_find(%#x): %#"PRIxPADDR" != off %"PRIxPADDR,
