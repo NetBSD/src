@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.285 2016/12/17 17:04:04 maya Exp $	*/
+/*	$NetBSD: audio.c,v 1.286 2016/12/23 21:01:00 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.285 2016/12/17 17:04:04 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.286 2016/12/23 21:01:00 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2094,6 +2094,7 @@ audio_drain(struct audio_softc *sc, int n)
 	KASSERT(mutex_owned(sc->sc_lock));
 	KASSERT(mutex_owned(sc->sc_intr_lock));
 	
+	error = 0;
 	DPRINTF(("audio_drain: enter busy=%d\n", sc->sc_vchan[n]->sc_pbus));
 	cb = &sc->sc_vchan[n]->sc_mpr;
 	if (cb->mmapped)
@@ -2117,7 +2118,8 @@ audio_drain(struct audio_softc *sc, int n)
 		error = audiostartp(sc, n);
 		if (error)
 			return error;
-	}
+	} else if (n == 0)
+		goto silence_buffer;
 	/*
 	 * Play until a silence block has been played, then we
 	 * know all has been drained.
@@ -2143,6 +2145,8 @@ audio_drain(struct audio_softc *sc, int n)
 		if (sc->sc_dying)
 			error = EIO;
 	}
+
+silence_buffer:
 
 	used = 0;
 	if (sc->sc_opens == 1) {
@@ -3265,6 +3269,8 @@ audiostartp(struct audio_softc *sc, int n)
 		mix_func(sc, &vc->sc_mpr, n);
 
 		if (sc->sc_trigger_started == false) {
+			mix_write(sc);
+			mix_func(sc, &vc->sc_mpr, n);
 			mix_write(sc);
 
 			cv_broadcast(&sc->sc_condvar);
@@ -5243,9 +5249,6 @@ mix_write(void *arg)
 	blksize = vc->sc_mpr.blksize;
 	cc = blksize;
 
-	if (sc->sc_trigger_started == false)
-		cc *= 2;
-
 	cc1 = cc;
 	if (vc->sc_pustream->inp + cc > vc->sc_pustream->end)
 		cc1 = vc->sc_pustream->end - vc->sc_pustream->inp;
@@ -5283,10 +5286,6 @@ mix_write(void *arg)
 			audio_clear(sc, 0);
 		}
 	}
-	if (sc->sc_trigger_started == false) {
-		vc->sc_mpr.s.outp = audio_stream_add_outp(&vc->sc_mpr.s,
-		    vc->sc_mpr.s.outp, blksize);
-	}
 	sc->sc_trigger_started = true;
 }
 
@@ -5298,8 +5297,6 @@ mix_func8(struct audio_softc *sc, struct audio_ringbuffer *cb, int n)
 
 	blksize = sc->sc_vchan[0]->sc_mpr.blksize;
 	resid = blksize;
-	if (sc->sc_trigger_started == false)
-		resid *= 2;
 
 	tomix = __UNCONST(cb->s.outp);
 	orig = (int8_t *)(sc->sc_pr.s.start);
@@ -5336,8 +5333,6 @@ mix_func16(struct audio_softc *sc, struct audio_ringbuffer *cb, int n)
 
 	blksize = sc->sc_vchan[0]->sc_mpr.blksize;
 	resid = blksize;
-	if (sc->sc_trigger_started == false)
-		resid *= 2;
 
 	tomix = __UNCONST(cb->s.outp);
 	orig = (int16_t *)(sc->sc_pr.s.start);
@@ -5374,8 +5369,6 @@ mix_func32(struct audio_softc *sc, struct audio_ringbuffer *cb, int n)
 
 	blksize = sc->sc_vchan[0]->sc_mpr.blksize;
 	resid = blksize;
-	if (sc->sc_trigger_started == false)
-		resid *= 2;
 
 	tomix = __UNCONST(cb->s.outp);
 	orig = (int32_t *)(sc->sc_pr.s.start);
