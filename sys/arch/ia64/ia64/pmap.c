@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.33 2016/12/23 07:15:27 cherry Exp $ */
+/* $NetBSD: pmap.c,v 1.34 2016/12/23 17:26:43 scole Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2016/12/23 07:15:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2016/12/23 17:26:43 scole Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,7 +342,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		/*
 		 * There are enough pages here; steal them!
 		 */
-		pa = ptoa(uvm_physseg_get_start(bank));
+		pa = ptoa(uvm_physseg_get_start(upm));
 		uvm_physseg_unplug(atop(pa), npgs);
 
 		va = IA64_PHYS_TO_RR7(pa);
@@ -370,7 +370,7 @@ pmap_steal_vhpt_memory(vsize_t size)
 	int npgs;
 	uvm_physseg_t upm;
 	vaddr_t va;
-	paddr_t tmppa, pa = 0;
+	paddr_t pa = 0;
 	paddr_t vhpt_start = 0, start1, start2, end1, end2;
 
 	size = round_page(size);
