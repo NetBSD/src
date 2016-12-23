@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.190 2016/12/23 07:15:28 cherry Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.191 2016/12/23 09:36:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.190 2016/12/23 07:15:28 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.191 2016/12/23 09:36:55 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -619,9 +619,9 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 
 	/* pass 1: try allocating from a matching end */
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
-	for (lcv = uvm_physseg_get_last() ; uvm_physseg_valid_p(lcv) ; lcv = uvm_physseg_get_prev(lcv))
+	for (lcv = uvm_physseg_get_last(); uvm_physseg_valid_p(lcv); lcv = uvm_physseg_get_prev(lcv))
 #else
-		for (lcv = uvm_physseg_get_first() ; uvm_physseg_valid_p(lcv) ; lcv = uvm_physseg_get_next(lcv))
+	for (lcv = uvm_physseg_get_first(); uvm_physseg_valid_p(lcv); lcv = uvm_physseg_get_next(lcv))
 #endif
 	{
 		if (uvm.page_init_done == true)
@@ -633,13 +633,13 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 				continue;
 		} else
 			return true;
-
+	}
 
 	/* pass2: forget about matching ends, just allocate something */
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
-		for (lcv = uvm_physseg_get_last() ; uvm_physseg_valid_p(lcv); lcv = uvm_physseg_get_prev(lcv))
+	for (lcv = uvm_physseg_get_last(); uvm_physseg_valid_p(lcv); lcv = uvm_physseg_get_prev(lcv))
 #else
-		for (lcv = uvm_physseg_get_first() ; uvm_physseg_valid_p(lcv) ; lcv = uvm_physseg_get_next(lcv))
+	for (lcv = uvm_physseg_get_first(); uvm_physseg_valid_p(lcv); lcv = uvm_physseg_get_next(lcv))
 #endif
 	{
 		/* Try the front regardless. */
@@ -648,7 +648,6 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 				continue;
 		} else
 			return true;
-	}
 	}
 	return false;
 }
