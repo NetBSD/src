@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.47 2016/12/22 12:55:21 cherry Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.48 2016/12/23 07:15:28 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.47 2016/12/22 12:55:21 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.48 2016/12/23 07:15:28 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.47 2016/12/22 12:55:21 cherry Exp $")
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
+#include <uvm/uvm_physseg.h>
 #include <uvm/uvm_readahead.h>
 
 /*
@@ -77,6 +78,7 @@ void
 uvm_md_init(void)
 {
 	uvm_setpagesize(); /* initialize PAGE_SIZE-dependent variables */
+	uvm_physseg_init();
 }
 
 /*

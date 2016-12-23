@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.80 2015/03/23 07:59:12 riastradh Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.81 2016/12/23 07:15:28 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -294,24 +294,6 @@ struct vm_page {
 #define VM_PSTRAT_BSEARCH	2
 #define VM_PSTRAT_BIGFIRST	3
 
-/*
- * vm_physseg: describes one segment of physical memory
- */
-struct vm_physseg {
-	paddr_t	start;			/* PF# of first page in segment */
-	paddr_t	end;			/* (PF# of last page in segment) + 1 */
-	paddr_t	avail_start;		/* PF# of first free page in segment */
-	paddr_t	avail_end;		/* (PF# of last free page in segment) +1  */
-	struct	vm_page *pgs;		/* vm_page structures (from start) */
-	struct	vm_page *lastpg;	/* vm_page structure for end */
-	int	free_list;		/* which free list they belong on */
-	u_int	start_hint;		/* start looking for free pages here */
-					/* protected by uvm_fpageqlock */
-#ifdef __HAVE_PMAP_PHYSSEG
-	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
-#endif
-};
-
 #ifdef _KERNEL
 
 /*
@@ -319,21 +301,6 @@ struct vm_physseg {
  */
 
 extern bool vm_page_zero_enable;
-
-/*
- * physical memory config is stored in vm_physmem.
- */
-
-#define	VM_PHYSMEM_PTR(i)	(&vm_physmem[i])
-#if VM_PHYSSEG_MAX == 1
-#define VM_PHYSMEM_PTR_SWAP(i, j) /* impossible */
-#else
-#define VM_PHYSMEM_PTR_SWAP(i, j) \
-	do { vm_physmem[(i)] = vm_physmem[(j)]; } while (0)
-#endif
-
-extern struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
-extern int vm_nphysseg;
 
 /*
  * prototypes: the following prototypes define the interface to pages
@@ -366,9 +333,12 @@ bool uvm_page_locked_p(struct vm_page *);
 
 int uvm_page_lookup_freelist(struct vm_page *);
 
-int vm_physseg_find(paddr_t, int *);
 struct vm_page *uvm_phys_to_vm_page(paddr_t);
 paddr_t uvm_vm_page_to_phys(const struct vm_page *);
+
+#if !defined(PMAP_STEAL_MEMORY)
+bool uvm_page_physget(paddr_t *);
+#endif
 
 /*
  * macros

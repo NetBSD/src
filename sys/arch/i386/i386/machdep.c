@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.772 2016/12/22 16:29:05 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.773 2016/12/23 07:15:27 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.772 2016/12/22 16:29:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.773 2016/12/23 07:15:27 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1037,57 +1037,30 @@ initgdt(union descriptor *tgdt)
 static void
 init386_msgbuf(void)
 {
-	/* Message buffer is located at end of core. */
-	struct vm_physseg *vps;
-	psize_t sz = round_page(MSGBUFSIZE);
-	psize_t reqsz = sz;
-	unsigned int x;
+        /* Message buffer is located at end of core. */
+	psize_t reqsz = round_page(MSGBUFSIZE);
+	psize_t sz = 0;
 
- search_again:
-	vps = NULL;
-	for (x = 0; x < vm_nphysseg; ++x) {
-		vps = VM_PHYSMEM_PTR(x);
-		if (ctob(vps->avail_end) == avail_end) {
+	for (sz = 0; sz < reqsz; sz += PAGE_SIZE) {
+		paddr_t stolenpa;
+
+		if (!uvm_page_physget(&stolenpa))
 			break;
+
+		if (stolenpa == (msgbuf_p_seg[msgbuf_p_cnt].paddr
+			+ PAGE_SIZE)) {
+			/* contiguous: append it to current buf alloc */
+			msgbuf_p_seg[msgbuf_p_cnt].sz += PAGE_SIZE;
+		} else  {
+			/* non-contiguous: start a new msgbuf seg */
+			msgbuf_p_seg[msgbuf_p_cnt].sz = PAGE_SIZE;
+			msgbuf_p_seg[msgbuf_p_cnt++].paddr = stolenpa;
 		}
 	}
-	if (x == vm_nphysseg)
-		panic("init386: can't find end of memory");
 
-	/* Shrink so it'll fit in the last segment. */
-	if (vps->avail_end - vps->avail_start < atop(sz))
-		sz = ctob(vps->avail_end - vps->avail_start);
-
-	vps->avail_end -= atop(sz);
-	vps->end -= atop(sz);
-	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-	msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(vps->avail_end);
-
-	/* Remove the last segment if it now has no pages. */
-	if (vps->start == vps->end) {
-		for (--vm_nphysseg; x < vm_nphysseg; x++)
-			VM_PHYSMEM_PTR_SWAP(x, x + 1);
-	}
-
-	/* Now find where the new avail_end is. */
-	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
-		if (VM_PHYSMEM_PTR(x)->avail_end > avail_end)
-			avail_end = VM_PHYSMEM_PTR(x)->avail_end;
-	avail_end = ctob(avail_end);
-
-	if (sz == reqsz)
-		return;
-
-	reqsz -= sz;
-	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
-		/* No more segments available, bail out. */
-		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
-		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
-		return;
-	}
-
-	sz = reqsz;
-	goto search_again;
+	if (sz != reqsz)
+		printf("%s: could only allocate %ld bytes of requested %ld bytes\n",
+		    __func__, sz, reqsz);
 }
 
 #ifndef XEN
