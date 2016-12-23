@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.2 2016/12/22 08:15:20 cherry Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.3 2016/12/23 07:42:32 cherry Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -818,6 +818,7 @@ uvm_physseg_plug(paddr_t pfn, size_t pages, uvm_physseg_t *psp)
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_RANDOM)
 	/* random: put it at the end (easy!) */
 	ps = VM_PHYSMEM_PTR(vm_nphysmem);
+	lcv = vm_nphysmem;
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 	{
 		int x;
