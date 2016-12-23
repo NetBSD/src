@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.6.4.5 2016/12/12 09:32:35 msaitoh Exp $
+# $NetBSD: md.i386,v 1.6.4.6 2016/12/23 06:56:52 snj Exp $
 ./usr/X11R6/lib/modules/extensions/libGLcore_g.a	-unknown-	debuglib,x11
 ./usr/X11R6/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,x11
 ./usr/X11R6/lib/modules/extensions/libextmod_g.a	-unknown-	debuglib,x11
@@ -115,6 +115,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libunichrome_dri.so.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/mach64_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/mga_dri.so.0.debug	-unknown-		obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r128_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r200_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r300_dri.so.0.debug	-unknown-		xorg,debug
