@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.68 2016/12/23 07:15:28 cherry Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.69 2016/12/23 08:53:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.68 2016/12/23 07:15:28 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.69 2016/12/23 08:53:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,6 @@ uvm_pglistalloc_contig(int num, paddr_t low, paddr_t high, paddr_t alignment,
 	for (fl = 0; fl < VM_NFREELIST; fl++) {
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
 		for (psi = uvm_physseg_get_last(); uvm_physseg_valid_p(psi); psi = uvm_physseg_get_prev(psi))
-
 #else
 		for (psi = uvm_physseg_get_first(); uvm_physseg_valid_p(psi); psi = uvm_physseg_get_next(psi))
 #endif
@@ -453,7 +452,6 @@ uvm_pglistalloc_simple(int num, paddr_t low, paddr_t high,
     struct pglist *rlist, int waitok)
 {
 	int fl, error;
-
 	uvm_physseg_t psi;
 
 	/* Default to "lose". */
@@ -472,7 +470,6 @@ again:
 	for (fl = 0; fl < VM_NFREELIST; fl++) {
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
 		for (psi = uvm_physseg_get_last(); uvm_physseg_valid_p(psi); psi = uvm_physseg_get_prev(psi))
-
 #else
 		for (psi = uvm_physseg_get_first(); uvm_physseg_valid_p(psi); psi = uvm_physseg_get_next(psi))
 #endif
