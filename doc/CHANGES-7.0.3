@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.15 2016/12/20 06:16:43 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.16 2016/12/23 07:52:53 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -220,4 +220,22 @@ common/lib/libc/stdlib/_strtoul.h		1.10
 
 	Set *endptr in all paths out of strtoul and family.
 	[riastradh, ticket #1310]
+
+libexec/httpd/CHANGES				1.23, 1.24
+libexec/httpd/bozohttpd.8			1.60-1.62
+libexec/httpd/bozohttpd.c			1.81-1.84
+libexec/httpd/bozohttpd.h			1.46
+libexec/httpd/cgi-bozo.c			1.35
+libexec/httpd/content-bozo.c			1.14
+libexec/httpd/main.c				1.14-1.16
+libexec/httpd/testsuite/Makefile		1.6
+libexec/httpd/testsuite/test-bigfile		1.3
+libexec/httpd/testsuite/test-simple		1.1, 1.2
+
+	update bozohttpd to 2016072:
+	- fix memory leak
+	- addd -G option to display version
+	- fix some content type issues
+	- fix issues in testsuite
+	[mrg, ticket #1309]
 
