@@ -1,4 +1,7 @@
-$eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
+$NetBSD: CHANGES,v 1.19.2.4 2016/12/23 07:42:09 snj Exp $
+
+changes in bozohttpd 20160517:
+	o add a bozo_get_version() function which returns the version number
 
 changes in bozohttpd 20160415:
 	o  add search-word support for CGI

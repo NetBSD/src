@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.8.2.1 2016/04/10 10:33:11 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.8.2.2 2016/12/23 07:42:09 snj Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
 
 /*
- * Copyright (c) 1997-2014 Matthew R. Green
+ * Copyright (c) 1997-2016 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -101,6 +101,7 @@ usage(bozohttpd_t *httpd, char *progname)
 	bozowarn(httpd,
 		"   -v virtualroot\tenable virtual host support "
 		"in this directory");
+	bozowarn(httpd, "   -V\t\tUnknown virtual hosts go to `slashdir'");
 #ifndef NO_DIRINDEX_SUPPORT
 	bozowarn(httpd,
 		"   -X\t\t\tenable automatic directory index support");
@@ -118,6 +119,7 @@ usage(bozohttpd_t *httpd, char *progname)
 			" and private key file\n"
 		"\t\t\tin pem format and enable bozohttpd in SSL mode");
 #endif /* NO_SSL_SUPPORT */
+	bozowarn(httpd, "   -G print version number and exit");
 	bozoerr(httpd, 1, "%s failed to start", progname);
 }
 
@@ -148,7 +150,7 @@ main(int argc, char **argv)
 	 */
 
 	while ((c = getopt(argc, argv,
-	    "C:EHI:L:M:P:S:U:VXZ:bc:defhi:np:st:uv:x:z:")) != -1) {
+	    "C:EGHI:L:M:P:S:U:VXZ:bc:defhi:np:st:uv:x:z:")) != -1) {
 		switch (c) {
 
 		case 'L':
@@ -350,6 +352,15 @@ main(int argc, char **argv)
 			break;
 
 #endif /* NO_DIRINDEX_SUPPORT */
+
+		case 'G':
+			{
+				char	version[128];
+
+				bozo_get_version(version, sizeof(version));
+				printf("bozohttpd version %s\n", version);
+			}
+			return 0;
 
 		default:
 			usage(&httpd, progname);
