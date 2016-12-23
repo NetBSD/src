@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2226 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2227 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -435,3 +435,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		PT_COUNT_WATCHPOINTS [kamil 20161215]
 	rtadvd(8): Support -p <pidfile> option. [ozaki-r 20161216]
 	xen: Add support for kernel modules. [maxv 20161216]
+	mips64: Use N64 binaries where kvm is required, fixing fstat, netstat,
+		systat, crash, pstat and kgmon.  [mrg 20161222]
