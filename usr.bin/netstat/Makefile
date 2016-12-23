@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2015/06/06 13:48:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.44 2016/12/23 10:19:57 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -27,5 +27,7 @@ RUMPSRCS+= if_indextoname.c getifaddrs.c getnameinfo.c
 .if (${USE_INET6} != "no")
 CPPFLAGS+= -DINET6
 .endif
+
+.include "../../compat/exec.mk"
 
 .include <bsd.prog.mk>
