@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2013/05/30 23:42:19 mrg Exp $
+# $NetBSD: Makefile,v 1.3.6.1 2016/12/23 08:04:04 snj Exp $
 
 LIBISMODULE=	yes
 SHLIB_MAJOR=	2 # XXX
@@ -15,3 +15,4 @@ CFLAGS+=-I${X11SRCDIR.X11}/src
 CWARNFLAGS.clang+=	-Wno-unused
 
 .include "../Makefile.ximcp"
+.include <bsd.lib.mk>
