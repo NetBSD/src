@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2016/12/10 10:42:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.33 2016/12/23 10:19:57 mrg Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -96,6 +96,8 @@ CLEANFILES+=	vers.c version
 SRCS+=	unsupported.c
 
 .endif				# }
+
+.include "../../compat/exec.mk"
 
 .include <bsd.prog.mk>
 .include <bsd.klinks.mk>
