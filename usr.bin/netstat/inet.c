@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.106 2015/02/08 15:09:45 christos Exp $	*/
+/*	$NetBSD: inet.c,v 1.107 2016/12/23 06:22:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.106 2015/02/08 15:09:45 christos Exp $");
+__RCSID("$NetBSD: inet.c,v 1.107 2016/12/23 06:22:00 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,8 @@ __RCSID("$NetBSD: inet.c,v 1.106 2015/02/08 15:09:45 christos Exp $");
 #include <stdlib.h>
 #include <err.h>
 #include <util.h>
+#include <errno.h>
+
 #include "netstat.h"
 #include "vtw.h"
 #include "prog_ops.h"
@@ -240,8 +242,14 @@ getpcblist_sysctl(const char *name, size_t *len) {
 		err(1, "asprintf");
 
 	/* get dynamic pcblist node */
-	if (sysctlnametomib(mibname, mib, &namelen) == -1)
+	if (sysctlnametomib(mibname, mib, &namelen) == -1) {
+		if (errno == ENOENT) {
+			*len = 0;
+			return NULL;
+		}
+			
 		err(1, "sysctlnametomib: %s", mibname);
+	}
 
 	free(mibname);
 
