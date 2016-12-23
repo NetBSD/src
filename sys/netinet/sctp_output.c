@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.8 2016/12/08 05:16:33 ozaki-r Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.9 2016/12/23 11:11:28 maya Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.8 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.9 2016/12/23 11:11:28 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2195,7 +2195,7 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 		 * being sent).
 		 */
 		rt = rtcache_validate(ro);
-		if ((rt == NULL)) {
+		if (rt == NULL) {
 			/*
 			 * src addr selection failed to find a route (or valid
 			 * source addr), so we can't get there from here!
@@ -2374,7 +2374,7 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 		}
 		lsa6->sin6_port = inp->sctp_lport;
 
-		if ((rt ==  NULL)) {
+		if (rt ==  NULL) {
 			/*
 			 * src addr selection failed to find a route (or valid
 			 * source addr), so we can't get there from here!
