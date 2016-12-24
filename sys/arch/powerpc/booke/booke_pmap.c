@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.24 2016/07/11 16:06:52 matt Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.25 2016/12/24 18:34:31 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.24 2016/07/11 16:06:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.25 2016/12/24 18:34:31 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -190,8 +190,8 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	 * for us.  Must do this before uvm_pageboot_alloc()
 	 * can be called.
 	 */
-	pmap_limits.avail_start = vm_physmem[0].start << PGSHIFT;
-	pmap_limits.avail_end = vm_physmem[vm_nphysseg - 1].end << PGSHIFT;
+	pmap_limits.avail_start = uvm_physseg_get_start(uvm_physseg_get_first()) << PGSHIFT;
+	pmap_limits.avail_end = uvm_physseg_get_end(uvm_physseg_get_last()) << PGSHIFT;
 	const size_t max_nsegtabs =
 	    (pmap_round_seg(VM_MAX_KERNEL_ADDRESS)
 		- pmap_trunc_seg(VM_MIN_KERNEL_ADDRESS)) / NBSEG;
