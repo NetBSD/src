@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.17 2014/04/18 00:21:14 christos Exp $	*/
+/*	$NetBSD: mem1.c,v 1.18 2016/12/24 17:43:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.17 2014/04/18 00:21:14 christos Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.18 2016/12/24 17:43:45 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -87,6 +87,47 @@ fnalloc(const char *s)
 	return (s != NULL ? fnnalloc(s, strlen(s)) : NULL);
 }
 
+struct repl {
+	char *orig;
+	char *repl;
+	size_t len;
+	struct repl *next;
+};
+
+struct repl *replist;
+
+void
+fnaddreplsrcdir(char *arg)
+{
+	struct repl *r = xmalloc(sizeof(*r));
+	
+	r->orig = arg;
+	if ((r->repl = strchr(arg, '=')) == NULL) 
+		err(1, "Bad replacement directory spec `%s'", arg);
+	r->len = r->repl - r->orig;
+	*(r->repl)++ = '\0';
+	if (replist == NULL) {
+		r->next = NULL;
+	} else
+		r->next = replist;
+	replist = r;
+}
+
+const char *
+fnxform(const char *name, size_t len)
+{
+	static char buf[MAXPATHLEN];
+	struct repl *r;
+
+	for (r = replist; r; r = r->next)
+		if (r->len < len && memcmp(name, r->orig, r->len) == 0)
+			break;
+	if (r == NULL)
+		return name;
+	snprintf(buf, sizeof(buf), "%s%s", r->repl, name + r->len);
+	return buf;
+}
+
 const char *
 fnnalloc(const char *s, size_t len)
 {
@@ -111,7 +152,7 @@ fnnalloc(const char *s, size_t len)
 		outclr();
 		outint(fn->fn_id);
 		outchar('s');
-		outstrg(fn->fn_name);
+		outstrg(fnxform(fn->fn_name, fn->fn_len));
 	}
 	return (fn->fn_name);
 }

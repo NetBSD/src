@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.67 2016/11/05 01:09:30 christos Exp $ */
+/* $NetBSD: scan.l,v 1.68 2016/12/24 17:43:45 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.67 2016/11/05 01:09:30 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.68 2016/12/24 17:43:45 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1117,7 +1117,8 @@ directive(void)
 		 */
 		if (first) {
 			csrc_pos.p_file = curr_pos.p_file;
-			outsrc(curr_pos.p_file);
+			outsrc(fnxform(curr_pos.p_file,
+			    strlen(curr_pos.p_file)));
 			first = 0;
 		}
 	}
