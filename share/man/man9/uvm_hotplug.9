@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm_hotplug.9,v 1.3 2016/12/24 07:22:41 abhinav Exp $
+.\"	$NetBSD: uvm_hotplug.9,v 1.4 2016/12/24 08:05:47 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,7 +95,7 @@ They must
 never be used after
 .Xr uvm_init 9 .
 .Pp
-.Em WARNING:
+.Em WARNING :
 This is an experimental feature and should not be used in production
 environments.
 Furthermore, attempting to "hotplug" without
@@ -114,7 +114,7 @@ once, at boot time, and from MD code.
 registers
 .Xr uvm 9
 with a memory segment span, and on a specified
-.Fa free_list.
+.Fa free_list .
 It must be called at system boot time as part of setting up memory
 management.
 The arguments describe the start and end of the physical addresses of the
@@ -280,41 +280,41 @@ depending on success or failure respectively.
 .Sh UTILITY FUNCTIONS
 .Bl -ohang
 .It Ft bool
-.Fn uvm_physseg_valid "uvm_physseg_t upm";
+.Fn uvm_physseg_valid "uvm_physseg_t upm"
 .It Ft paddr_t
-.Fn uvm_physseg_get_start "uvm_physseg_t upm";
+.Fn uvm_physseg_get_start "uvm_physseg_t upm"
 .It Ft paddr_t
-.Fn uvm_physseg_get_end "uvm_physseg_t upm";
+.Fn uvm_physseg_get_end "uvm_physseg_t upm"
 .It Ft paddr_t
-.Fn uvm_physseg_get_avail_start "uvm_physseg_t upm";
+.Fn uvm_physseg_get_avail_start "uvm_physseg_t upm"
 .It Ft paddr_t
-.Fn uvm_physseg_get_avail_end "uvm_physseg_t upm";
+.Fn uvm_physseg_get_avail_end "uvm_physseg_t upm"
 .It Ft struct vm_page *
-.Fn uvm_physseg_get_pg "uvm_physseg_t upm" "paddr_t index";
+.Fn uvm_physseg_get_pg "uvm_physseg_t upm" "paddr_t index"
 .It Ft struct pmap_physseg *
-.Fn uvm_physseg_get_pmesg "uvm_physseg_t upm";
+.Fn uvm_physseg_get_pmesg "uvm_physseg_t upm"
 .It Ft int
-.Fn uvm_physseg_get_free_list "uvm_physseg_t upm";
+.Fn uvm_physseg_get_free_list "uvm_physseg_t upm"
 .It Ft u_int
-.Fn uvm_physseg_get_start_hint "uvm_physseg_t upm";
+.Fn uvm_physseg_get_start_hint "uvm_physseg_t upm"
 .It Ft bool
-.Fn uvm_physseg_set_start_hint "uvm_physseg_t upm" "u_int start_hint";
+.Fn uvm_physseg_set_start_hint "uvm_physseg_t upm" "u_int start_hint"
 .It Ft uvm_physseg_t
-.Fn uvm_physseg_get_next "uvm_physseg_t upm";
+.Fn uvm_physseg_get_next "uvm_physseg_t upm"
 .It Ft uvm_physseg_t
-.Fn uvm_physseg_get_prev "uvm_physseg_t upm";
+.Fn uvm_physseg_get_prev "uvm_physseg_t upm"
 .It Ft uvm_physseg_t
-.Fn uvm_physseg_get_first "void";
+.Fn uvm_physseg_get_first "void"
 .It Ft uvm_physseg_t
-.Fn uvm_physseg_get_last "void";
+.Fn uvm_physseg_get_last "void"
 .It Ft paddr_t
-.Fn uvm_physseg_get_highest_frame "void";
+.Fn uvm_physseg_get_highest_frame "void"
 .It Ft paddr_t
-.Fn uvm_physseg_find "paddr pframe" "psize_t *offsetp";
+.Fn uvm_physseg_find "paddr pframe" "psize_t *offsetp"
 .It Ft void
-.Fn uvm_physseg_set_avail_start "uvm_physseg_t upm" "paddr_t avail_start";
+.Fn uvm_physseg_set_avail_start "uvm_physseg_t upm" "paddr_t avail_start"
 .It Ft void
-.Fn uvm_physseg_set_avail_end "uvm_physseg_t upm" "paddr_t avail_end";
+.Fn uvm_physseg_set_avail_end "uvm_physseg_t upm" "paddr_t avail_end"
 .El
 .Pp
 .Fn uvm_physseg_valid
@@ -499,20 +499,20 @@ in a kernel build where
 is not enabled.
 .Sh DIAGNOSTICS
 Tests for
-.Xr uvm_hotplug 9
+.Nm
 are in
 .Pa tests/sys/uvm .
 .Pp
 Unit / functional tests are in
 .Pa tests/sys/uvm/t_uvm_physseg.c .
 These tests focus on the expected working of the
-.Xr uvm_hotplug 9
+.Nm
 API and its utility functions.
 .Pp
 Load tests can be found in
 .Pa tests/sys/uvm/t_uvm_physseg_load.c .
 These tests focus on stressing the
-.Xr uvm_hotplug 9
+.Nm
 implementation in order to make performance comparisons between kernel
 builds with and without
 .Cd 'options UVM_HOTPLUG'
@@ -533,7 +533,7 @@ The uvm hotplug API is exported via
 .Sh HISTORY
 This API emerged out of the need to insert new pages at runtime in the
 Xen
-.Xr balloon 9
+.Xr x86/balloon 4
 driver.
 .Sh AUTHORS
 .An -nosplit
