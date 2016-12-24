@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.37 2016/12/23 07:15:27 cherry Exp $ */
+/* $NetBSD: pmap.c,v 1.38 2016/12/24 17:11:31 cherry Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2016/12/23 07:15:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2016/12/24 17:11:31 cherry Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/kmem.h>
@@ -311,7 +311,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			    ((char*)MEMC_PHYS_BASE +
 				ptoa(avail_start));
 			avail_start++;
-			uvm_physseg_set_avail_start(avail_start);
+			uvm_physseg_set_avail_start(bank, avail_start);
 
 			break;
 		}
