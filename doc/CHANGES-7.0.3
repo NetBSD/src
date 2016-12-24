@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.16 2016/12/23 07:52:53 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.17 2016/12/24 04:25:56 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -232,10 +232,15 @@ libexec/httpd/testsuite/Makefile		1.6
 libexec/httpd/testsuite/test-bigfile		1.3
 libexec/httpd/testsuite/test-simple		1.1, 1.2
 
-	update bozohttpd to 2016072:
+	update bozohttpd to 20160720:
 	- fix memory leak
 	- addd -G option to display version
 	- fix some content type issues
 	- fix issues in testsuite
 	[mrg, ticket #1309]
+
+sys/arch/amd64/amd64/copy.S			patch
+
+	suword: Don't allow 4 bytes to overflow beyond the userland space.
+	[maxv, ticket #1278]
 
