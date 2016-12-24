@@ -1,4 +1,4 @@
-.\"	$NetBSD: touch.1,v 1.25 2012/10/24 02:46:25 pgoyette Exp $
+.\"	$NetBSD: touch.1,v 1.26 2016/12/24 15:49:18 abhinav Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd October 22, 2012
+.Dd December 24, 2016
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -125,7 +125,20 @@ The hour of the day, from 0 to 23.
 .It Ar mm
 The minute of the hour, from 0 to 59.
 .It Ar SS
-The second of the minute, from 0 to 61.
+The second of the minute, from 0 to 60 (permitting leap seconds).
+If
+.Ar SS
+is 60 and the resulting time,
+as affected by the
+.Ev TZ
+environment variable,
+does not refer to a leap second,
+the resulting time is one second after a time where
+.Ar SS
+is 59.
+If
+.Ar SS
+is not given a value, it is assumed to be zero.
 .El
 .Pp
 If the
@@ -146,6 +159,15 @@ and
 .Fl t
 options are mutually exclusive.
 If more than one of these options is present, the last one is used.
+.Sh ENVIRONMENT
+.Bl -tag -width -iTZ
+.It Ev TZ
+The timezone to be used for interpreting the
+.Ar datetime
+argument of the
+.Fl t
+option.
+.El
 .Sh EXIT STATUS
 .Ex -std
 .Sh COMPATIBILITY
@@ -176,7 +198,8 @@ If the
 letter pair is in the range 69 to 99, the year is set to 1969 to 1999,
 otherwise, the year is set in the 21st century.
 .Sh SEE ALSO
-.Xr utimes 2
+.Xr utimes 2 ,
+.Xr parsedate 3
 .Sh STANDARDS
 The
 .Nm
