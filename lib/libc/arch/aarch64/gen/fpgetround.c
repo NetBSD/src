@@ -29,10 +29,9 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: fpgetround.c,v 1.1 2015/07/05 22:07:09 matt Exp $");
+__RCSID("$NetBSD: fpgetround.c,v 1.2 2016/12/24 15:23:06 maya Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/bitops.h>
 
 #include "namespace.h"
