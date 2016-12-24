@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm_hotplug.9,v 1.2 2016/12/19 13:45:57 wiz Exp $
+.\"	$NetBSD: uvm_hotplug.9,v 1.3 2016/12/24 07:22:41 abhinav Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -192,7 +192,8 @@ unloads pages from a segment (from the front or from the back)
 depending on its availability.
 When the last page is removed, the
 segment handle is invalidated and supporting metadata is freed.
-.Pp Note: This function can only be used during boot time.
+.Pp
+Note: This function can only be used during boot time.
 Pages, once unloaded, are unregistered from uvm and are therefore
 assumed to be managed by the code which called
 .Fn uvm_page_physunload 9
@@ -218,7 +219,8 @@ otherwise.
 unconditionally unloads pages from a segment.
 When the last page is removed, the segment handle
 is invalidated and supporting metadata is freed.
-.Pp Note: This function can only be used during boot time.
+.Pp
+Note: This function can only be used during boot time.
 Pages, once unloaded, are unregistered from uvm and are therefore
 assumed to be managed by the code which called
 .Fn uvm_page_physunload_force 9
@@ -234,7 +236,7 @@ The free list types are defined in the Machine Dependent code.
 The pointer to the physical address that was unloaded.
 .El
 .Pp
-If the unload the successful
+If the unload was successful
 .Fa true
 is returned,
 .Fa false
@@ -523,10 +525,10 @@ The uvm hotplug feature is implemented in the file
 The uvm hotplug API is exported via
 .Pa sys/uvm/uvm_physseg.h .
 .Sh SEE ALSO
+.Xr extent 9 ,
 .Xr free 9 ,
 .Xr malloc 9 ,
 .Xr memoryallocators 9 ,
-.Xr extent 9 ,
 .Xr uvm 9
 .Sh HISTORY
 This API emerged out of the need to insert new pages at runtime in the
@@ -546,4 +548,3 @@ implemented the dynamic segment handling code and all tests for this API.
 .An Nick Hudson
 .Aq Mt skrll@NetBSD.org
 contributed bugfixes and testing on a wide range of hardware ports.
-
