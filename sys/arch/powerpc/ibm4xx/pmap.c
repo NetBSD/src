@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 2016/12/24 18:07:31 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.76 2016/12/24 19:02:16 cherry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2016/12/24 18:07:31 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2016/12/24 19:02:16 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -201,7 +201,7 @@ pa_to_pv(paddr_t pa)
 	psize_t pg;
 
 	bank = uvm_physseg_find(atop(pa), &pg);
-	if (bank == -1)
+	if (bank == UVM_PHYSSEG_TYPE_INVALID)
 		return NULL;
 	return &uvm_physseg_get_pmseg(bank)->pvent[pg];
 }
@@ -213,7 +213,7 @@ pa_to_attr(paddr_t pa)
 	psize_t pg;
 
 	bank = uvm_physseg_find(atop(pa), &pg);
-	if (bank == -1)
+	if (bank == UVM_PHYSSEG_TYPE_INVALID)
 		return NULL;
 	return &uvm_physseg_get_pmseg(bank)->attrs[pg];
 }
