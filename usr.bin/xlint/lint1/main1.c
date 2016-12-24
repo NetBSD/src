@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.25 2014/04/18 21:53:44 christos Exp $	*/
+/*	$NetBSD: main1.c,v 1.26 2016/12/24 17:43:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.25 2014/04/18 21:53:44 christos Exp $");
+__RCSID("$NetBSD: main1.c,v 1.26 2016/12/24 17:43:45 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -176,7 +176,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	ERR_ZERO(&msgset);
-	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzFPSX:")) != -1) {
+	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzFPR:SX:")) != -1) {
 		switch (c) {
 		case 'a':	aflag++;	break;
 		case 'b':	bflag = 1;	break;
@@ -201,6 +201,10 @@ main(int argc, char *argv[])
 		case 'm':
 			msglist();
 			return(0);
+
+		case 'R':	
+			fnaddreplsrcdir(optarg);
+			break;
 
 		case 'X':
 			for (ptr = strtok(optarg, ","); ptr;
