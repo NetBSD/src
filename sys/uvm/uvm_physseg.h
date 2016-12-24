@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.h,v 1.4 2016/12/23 07:15:28 cherry Exp $ */
+/* $NetBSD: uvm_physseg.h,v 1.5 2016/12/24 15:42:05 maya Exp $ */
 
 /*
  * Consolidated API from uvm_page.c and others.
@@ -16,6 +16,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 
+#ifdef _KERNEL
 /*
  * No APIs are explicitly #included in uvm_physseg.c
  */
@@ -114,5 +115,6 @@ void uvm_physseg_set_avail_start(uvm_physseg_t, paddr_t);
 void uvm_physseg_set_avail_end(uvm_physseg_t, paddr_t);
 #endif /* PMAP_STEAL_MEMORY */
 
-#endif /* _UVM_UVM_PHYSSEG_H_ */
+#endif /* _KERNEL */
 
+#endif /* _UVM_UVM_PHYSSEG_H_ */
