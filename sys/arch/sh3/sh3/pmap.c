@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 2016/12/23 07:15:28 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80 2016/12/24 17:18:00 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2016/12/23 07:15:28 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2016/12/24 17:18:00 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 
 	/* Steal pages */
 	pa = ptoa(uvm_physseg_get_start(bank));
-	uvm_physseg_unplug(start, npage);
+	uvm_physseg_unplug(atop(pa), npage);
 	va = SH3_PHYS_TO_P1SEG(pa);
 	memset((void *)va, 0, size);
 
