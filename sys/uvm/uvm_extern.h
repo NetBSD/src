@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.200 2016/12/22 13:26:24 cherry Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.201 2016/12/24 19:21:29 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -472,7 +472,6 @@ extern bool vm_page_zero_enable;
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #include <uvm/uvm_map.h>
 #include <uvm/uvm_pager.h>
-#endif
 
 /*
  * Include the uvm_hotplug(9) API unconditionally until
@@ -481,6 +480,7 @@ extern bool vm_page_zero_enable;
  * After this, MD code will have to explicitly include it if needed.
  */
 #include <uvm/uvm_physseg.h> 
+#endif
 
 /*
  * helpers for calling ubc_release()
