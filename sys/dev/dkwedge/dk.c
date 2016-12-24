@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.92 2016/12/16 15:06:39 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.93 2016/12/24 16:39:55 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.92 2016/12/16 15:06:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.93 2016/12/24 16:39:55 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -369,6 +369,8 @@ dkwedge_add(struct dkwedge_info *dkw)
 	}
 	mutex_exit(&pdk->dk_openlock);
 	if (error) {
+		cv_destroy(&sc->sc_dkdrn);
+		mutex_destroy(&sc->sc_iolock);
 		bufq_free(sc->sc_bufq);
 		free(sc, M_DKWEDGE);
 		return (error);
@@ -422,6 +424,8 @@ dkwedge_add(struct dkwedge_info *dkw)
 		LIST_REMOVE(sc, sc_plink);
 		mutex_exit(&pdk->dk_openlock);
 
+		cv_destroy(&sc->sc_dkdrn);
+		mutex_destroy(&sc->sc_iolock);
 		bufq_free(sc->sc_bufq);
 		free(sc, M_DKWEDGE);
 		return (error);
@@ -448,6 +452,8 @@ dkwedge_add(struct dkwedge_info *dkw)
 		LIST_REMOVE(sc, sc_plink);
 		mutex_exit(&pdk->dk_openlock);
 
+		cv_destroy(&sc->sc_dkdrn);
+		mutex_destroy(&sc->sc_iolock);
 		bufq_free(sc->sc_bufq);
 		free(sc, M_DKWEDGE);
 		return (ENOMEM);
