@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.145 2012/06/18 21:23:56 martin Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.146 2016/12/24 06:04:50 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.145 2012/06/18 21:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.146 2016/12/24 06:04:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ ncr53c9x_attach(struct ncr53c9x_softc *sc)
 	/* Reset state & bus */
 	sc->sc_cfflags = device_cfdata(sc->sc_dev)->cf_flags;
 	sc->sc_state = 0;
-	ncr53c9x_init(sc, 1);
+	ncr53c9x_init(sc, 0);	/* no bus reset yet, leave that to scsibus* */
 
 	/*
 	 * Now try to attach all the sub-devices
@@ -555,13 +555,13 @@ ncr53c9x_init(struct ncr53c9x_softc *sc, int doreset)
 	if (doreset) {
 		sc->sc_state = NCR_SBR;
 		NCRCMD(sc, NCRCMD_RSTSCSI);
+
+		/* Notify upper layer */
+		scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_RESET, NULL);
 	} else {
 		sc->sc_state = NCR_IDLE;
 		ncr53c9x_sched(sc);
 	}
-
-	/* Notify upper layer */
-	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_RESET, NULL);
 
 	/* XXXSMP scsipi */
 	KERNEL_UNLOCK_ONE(curlwp);
