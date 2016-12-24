@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.18 2010/07/07 01:13:29 chs Exp $	*/
+/*	$NetBSD: copy.S,v 1.18.34.1 2016/12/24 04:07:25 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -413,7 +413,7 @@ ENTRY(fubyte)
 
 ENTRY(suword)
 	DEFERRED_SWITCH_CHECK
-	movq	$VM_MAXUSER_ADDRESS-4,%r11
+	movq	$VM_MAXUSER_ADDRESS-8,%r11
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
 
