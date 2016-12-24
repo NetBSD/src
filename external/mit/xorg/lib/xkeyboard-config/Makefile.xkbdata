@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xkbdata,v 1.1 2009/06/11 01:49:20 mrg Exp $
+#	$NetBSD: Makefile.xkbdata,v 1.2 2016/12/24 21:17:16 christos Exp $
 
 XKBDISTDIR=	${X11SRCDIR.xkeyboard-config}/${XKBNAME}
 
@@ -17,7 +17,10 @@ CLEANFILES+=		${XKBNAME}.dir
 ${XKBNAME}.dir:
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	(cd ${XKBDISTDIR} && ${XKBCOMP} -lfhlpR -o ${.OBJDIR}/${.TARGET} '*')
+	(cd ${XKBDISTDIR} && rm -f ${.OBJDIR}/${.TARGET}.tmp && \
+	    ${XKBCOMP} -lfhlpR -o ${.OBJDIR}/${.TARGET}.tmp '*' && \
+	    sort ${.OBJDIR}/${.TARGET}.tmp > ${.OBJDIR}/${.TARGET} && \
+	    rm -f ${.OBJDIR}/${.TARGET}.tmp)
 
 realall: ${FILES}
 
