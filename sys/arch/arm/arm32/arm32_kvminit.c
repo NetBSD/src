@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.37 2015/11/25 08:36:50 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.38 2016/12/24 09:19:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -124,7 +124,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.37 2015/11/25 08:36:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.38 2016/12/24 09:19:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -870,7 +870,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 	printf(mem_fmt, "SDRAM", bmi->bmi_start, bmi->bmi_end - 1,
 	    KERN_PHYSTOV(bmi, bmi->bmi_start), KERN_PHYSTOV(bmi, bmi->bmi_end - 1),
-	    physmem);
+	    (int)physmem);
 	printf(mem_fmt, "text section",
 	       text.pv_pa, text.pv_pa + text.pv_size - 1,
 	       text.pv_va, text.pv_va + text.pv_size - 1,
