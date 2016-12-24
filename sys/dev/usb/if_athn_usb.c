@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.19 2016/12/17 15:27:26 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.20 2016/12/24 11:51:33 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.19 2016/12/17 15:27:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.20 2016/12/24 11:51:33 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -826,8 +826,8 @@ athn_usb_task(void *arg)
 		ring->queued--;
 		ring->next = (ring->next + 1) % ATHN_USB_HOST_CMD_RING_COUNT;
 	}
-	mutex_spin_exit(&usc->usc_task_mtx);
 	cv_broadcast(&usc->usc_task_cv);
+	mutex_spin_exit(&usc->usc_task_mtx);
 }
 
 Static void
