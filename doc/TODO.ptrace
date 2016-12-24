@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.5 2016/12/19 03:19:37 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.6 2016/12/24 05:43:31 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -21,6 +21,7 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - exect(3) rething or remove -- maybe PT_TRACE_ME + PTRACE_O_TRACEEXEC?
  - refactor pthread_dbg(3) to only query private pthread_t data, otherwise it
    duplicates ptrace(2) interface and cannot cover all types of threads
+ - add ATF tests for SIGCHLD
 
 and of course: fix as many bugs as possible.
 
