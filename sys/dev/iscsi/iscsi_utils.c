@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.21 2016/06/15 04:30:30 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.22 2016/12/25 06:55:28 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -288,9 +288,8 @@ free_ccb(ccb_t *ccb)
 
 	mutex_enter(&sess->lock);
 	TAILQ_INSERT_TAIL(&sess->ccb_pool, ccb, chain);
-	mutex_exit(&sess->lock);
-
 	cv_broadcast(&sess->ccb_cv);
+	mutex_exit(&sess->lock);
 }
 
 /*
@@ -333,6 +332,7 @@ suspend_ccb(ccb_t *ccb, bool yes)
 	connection_t *conn;
 
 	conn = ccb->connection;
+	KASSERT(conn != NULL);
 
 	KASSERT(mutex_owned(&conn->lock));
 
@@ -362,6 +362,7 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 	connection_t *conn;
 
 	conn = ccb->connection;
+	KASSERT(conn != NULL);
 
 	DEBC(conn, 9, ("CCB %d done, ccb = %p, disp = %d\n",
 		ccb->CmdSN, ccb, ccb->disp));
@@ -381,25 +382,22 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 	/* change the disposition so nobody tries this again */
 	ccb->disp = CCBDISP_BUSY;
 	ccb->status = status;
+
+	if (disp == CCBDISP_WAIT)
+		cv_broadcast(&conn->ccb_cv);
 	mutex_exit(&conn->lock);
 
-	switch (disp) {
-	case CCBDISP_FREE:
-		free_ccb(ccb);
-		break;
-
+	switch(disp) {
 	case CCBDISP_WAIT:
-		cv_broadcast(&conn->ccb_cv);
+	case CCBDISP_DEFER:
 		break;
 
 	case CCBDISP_SCSIPI:
 		iscsi_done(ccb);
+		/* FALLTRHOUGH */
+	case CCBDISP_FREE:
 		free_ccb(ccb);
 		break;
-
-	case CCBDISP_DEFER:
-		break;
-
 	default:
 		DEBC(conn, 1, ("CCB done, ccb = %p, invalid disposition %d", ccb, disp));
 		free_ccb(ccb);
@@ -482,9 +480,8 @@ free_pdu(pdu_t *pdu)
 	mutex_enter(&conn->lock);
 	atomic_dec_uint(&conn->pducount);
 	TAILQ_INSERT_TAIL(&conn->pdu_pool, pdu, chain);
-	mutex_exit(&conn->lock);
-
 	cv_broadcast(&conn->pdu_cv);
+	mutex_exit(&conn->lock);
 }
 
 /*
