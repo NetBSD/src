@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.6 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.7 2016/12/25 00:07:47 christos Exp $	*/
 /* $OpenBSD: buffer.c,v 1.36 2014/04/30 05:29:56 djm Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: buffer.c,v 1.6 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.7 2016/12/25 00:07:47 christos Exp $");
 #include <sys/param.h>
 /* Emulation wrappers for legacy OpenSSH buffer API atop sshbuf */
 

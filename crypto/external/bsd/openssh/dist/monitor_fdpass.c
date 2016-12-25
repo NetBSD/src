@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_fdpass.c,v 1.6 2016/08/02 13:45:12 christos Exp $	*/
+/*	$NetBSD: monitor_fdpass.c,v 1.7 2016/12/25 00:07:47 christos Exp $	*/
 /* $OpenBSD: monitor_fdpass.c,v 1.21 2016/02/29 20:22:36 jca Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_fdpass.c,v 1.6 2016/08/02 13:45:12 christos Exp $");
+__RCSID("$NetBSD: monitor_fdpass.c,v 1.7 2016/12/25 00:07:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
