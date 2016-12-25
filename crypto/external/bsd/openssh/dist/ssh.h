@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.h,v 1.7 2016/03/11 01:55:00 christos Exp $	*/
+/*	$NetBSD: ssh.h,v 1.8 2016/12/25 00:07:47 christos Exp $	*/
 /* $OpenBSD: ssh.h,v 1.83 2015/12/11 03:19:09 djm Exp $ */
 
 /*

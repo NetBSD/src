@@ -1,4 +1,4 @@
-/*	$NetBSD: krl.c,v 1.8 2016/03/11 01:55:00 christos Exp $	*/
+/*	$NetBSD: krl.c,v 1.9 2016/12/25 00:07:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
@@ -17,9 +17,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: krl.c,v 1.8 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: krl.c,v 1.9 2016/12/25 00:07:47 christos Exp $");
 
-/* $OpenBSD: krl.c,v 1.37 2015/12/31 00:33:52 djm Exp $ */
+/* $OpenBSD: krl.c,v 1.38 2016/09/12 01:22:38 deraadt Exp $ */
 
 #include "includes.h"
 #include <sys/param.h>	/* MIN */
@@ -125,7 +125,7 @@ blob_cmp(struct revoked_blob *a, struct revoked_blob *b)
 	int r;
 
 	if (a->len != b->len) {
-		if ((r = memcmp(a->blob, b->blob, MIN(a->len, b->len))) != 0)
+		if ((r = memcmp(a->blob, b->blob, MINIMUM(a->len, b->len))) != 0)
 			return r;
 		return a->len > b->len ? 1 : -1;
 	} else
@@ -465,9 +465,9 @@ choose_next_state(int current_state, u_int64_t contig, int final,
 	 * Avoid unsigned overflows.
 	 * The limits are high enough to avoid confusing the calculations.
 	 */
-	contig = MIN(contig, 1ULL<<31);
-	last_gap = MIN(last_gap, 1ULL<<31);
-	next_gap = MIN(next_gap, 1ULL<<31);
+	contig = MINIMUM(contig, 1ULL<<31);
+	last_gap = MINIMUM(last_gap, 1ULL<<31);
+	next_gap = MINIMUM(next_gap, 1ULL<<31);
 
 	/*
 	 * Calculate the cost to switch from the current state to candidates.
@@ -493,8 +493,8 @@ choose_next_state(int current_state, u_int64_t contig, int final,
 	/* Estimate base cost in bits of each section type */
 	cost_list += 64 * contig + (final ? 0 : 8+64);
 	cost_range += (2 * 64) + (final ? 0 : 8+64);
-	cost_bitmap += last_gap + contig + (final ? 0 : MIN(next_gap, 8+64));
-	cost_bitmap_restart += contig + (final ? 0 : MIN(next_gap, 8+64));
+	cost_bitmap += last_gap + contig + (final ? 0 : MINIMUM(next_gap, 8+64));
+	cost_bitmap_restart += contig + (final ? 0 : MINIMUM(next_gap, 8+64));
 
 	/* Convert to byte costs for actual comparison */
 	cost_list = (cost_list + 7) / 8;

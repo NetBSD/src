@@ -1,5 +1,6 @@
-/*	$NetBSD: hostfile.c,v 1.8 2015/07/03 01:00:00 christos Exp $	*/
-/* $OpenBSD: hostfile.c,v 1.66 2015/05/04 06:10:48 djm Exp $ */
+/*	$NetBSD: hostfile.c,v 1.9 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: hostfile.c,v 1.67 2016/09/17 18:00:27 tedu Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: hostfile.c,v 1.8 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.9 2016/12/25 00:07:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -124,14 +125,13 @@ host_hash(const char *host, const char *name_from_hostfile, u_int src_len)
 	u_char salt[256], result[256];
 	char uu_salt[512], uu_result[512];
 	static char encoded[1024];
-	u_int i, len;
+	u_int len;
 
 	len = ssh_digest_bytes(SSH_DIGEST_SHA1);
 
 	if (name_from_hostfile == NULL) {
 		/* Create new salt */
-		for (i = 0; i < len; i++)
-			salt[i] = arc4random();
+		arc4random_buf(salt, len);
 	} else {
 		/* Extract salt from known host entry */
 		if (extract_salt(name_from_hostfile, src_len, salt,

@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: digest-openssl.c,v 1.3 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: digest-openssl.c,v 1.4 2016/12/25 00:07:47 christos Exp $");
 
 #include <sys/types.h>
 #include <limits.h>

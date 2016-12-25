@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.5 2016/08/02 13:45:12 christos Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.6 2016/12/25 00:07:46 christos Exp $	*/
 /* $OpenBSD: auth-passwd.c,v 1.45 2016/07/21 01:39:35 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-passwd.c,v 1.5 2016/08/02 13:45:12 christos Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.6 2016/12/25 00:07:46 christos Exp $");
 #include <sys/types.h>
 
 #include <login_cap.h>
@@ -98,17 +98,18 @@ auth_password(Authctxt *authctxt, const char *password)
 		ok = 0;
 	if (*password == '\0' && options.permit_empty_passwd == 0)
 		return 0;
-#ifdef USE_PAM
-	if (options.use_pam)
-		return (sshpam_auth_passwd(authctxt, password) && ok);
-#endif
 #ifdef KRB5
 	if (options.kerberos_authentication == 1) {
 		int ret = auth_krb5_password(authctxt, password);
-		if (ret == 1 || ret == 0)
-			return ret && ok;
-		/* Fall back to ordinary passwd authentication. */
+ 		if (ret == 1 || ret == 0)
+ 			return ret && ok;
+ 		/* Fall back to ordinary passwd authentication. */
 	}
+#endif
+
+#ifdef USE_PAM
+	if (options.use_pam)
+		return (sshpam_auth_passwd(authctxt, password) && ok);
 #endif
 	return (sys_auth_passwd(authctxt, password) && ok);
 }

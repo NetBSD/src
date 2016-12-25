@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-keygen.c,v 1.24 2016/08/02 13:45:12 christos Exp $	*/
-/* $OpenBSD: ssh-keygen.c,v 1.290 2016/05/02 09:36:42 djm Exp $ */
+/*	$NetBSD: ssh-keygen.c,v 1.25 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: ssh-keygen.c,v 1.292 2016/09/12 03:29:16 dtucker Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.24 2016/08/02 13:45:12 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.25 2016/12/25 00:07:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -203,8 +204,7 @@ type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 				*bitsp = sshkey_curve_nid_to_bits(nid);
 			if (*bitsp == 0)
 				*bitsp = DEFAULT_BITS_ECDSA;
-		}
-		else
+		} else
 #endif
 			*bitsp = DEFAULT_BITS;
 	}
@@ -2439,10 +2439,10 @@ main(int argc, char **argv)
 			break;
 		case 'J':
 			lines_to_process = strtoul(optarg, NULL, 10);
-                        break;
+			break;
 		case 'j':
 			start_lineno = strtoul(optarg, NULL, 10);
-                        break;
+			break;
 		case 'K':
 			if (strlen(optarg) >= PATH_MAX)
 				fatal("Checkpoint filename too long");

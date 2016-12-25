@@ -14,10 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: cipher-chachapoly.c,v 1.6 2014/07/03 12:42:16 jsing Exp $ */
-/* $OpenBSD: cipher-chachapoly.c,v 1.7 2015/01/14 10:24:42 markus Exp $ */
+/* $OpenBSD: cipher-chachapoly.c,v 1.8 2016/08/03 05:41:57 djm Exp $ */
 #include "includes.h"
-__RCSID("$NetBSD: cipher-chachapoly.c,v 1.3 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: cipher-chachapoly.c,v 1.4 2016/12/25 00:07:47 christos Exp $");
 
 #include <sys/types.h>
 #include <stdarg.h> /* needed for log.h */
@@ -29,7 +28,8 @@ __RCSID("$NetBSD: cipher-chachapoly.c,v 1.3 2015/04/03 23:58:19 christos Exp $")
 #include "ssherr.h"
 #include "cipher-chachapoly.h"
 
-int chachapoly_init(struct chachapoly_ctx *ctx,
+int
+chachapoly_init(struct chachapoly_ctx *ctx,
     const u_char *key, u_int keylen)
 {
 	if (keylen != (32 + 32)) /* 2 x 256 bit keys */

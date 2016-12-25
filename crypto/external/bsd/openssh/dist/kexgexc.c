@@ -1,5 +1,6 @@
-/*	$NetBSD: kexgexc.c,v 1.7 2015/07/03 01:00:00 christos Exp $	*/
-/* $OpenBSD: kexgexc.c,v 1.22 2015/05/26 23:23:40 dtucker Exp $ */
+/*	$NetBSD: kexgexc.c,v 1.8 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: kexgexc.c,v 1.23 2016/09/12 01:22:38 deraadt Exp $ */
+
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexc.c,v 1.7 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: kexgexc.c,v 1.8 2016/12/25 00:07:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +50,7 @@ __RCSID("$NetBSD: kexgexc.c,v 1.7 2015/07/03 01:00:00 christos Exp $");
 #include "dispatch.h"
 #include "ssherr.h"
 #include "sshbuf.h"
+#include "misc.h"
 
 static int input_kex_dh_gex_group(int, u_int32_t, void *);
 static int input_kex_dh_gex_reply(int, u_int32_t, void *);
@@ -66,7 +68,7 @@ kexgex_client(struct ssh *ssh)
 	kex->max = DH_GRP_MAX;
 	kex->nbits = nbits;
 	if (datafellows & SSH_BUG_DHGEX_LARGE)
-		kex->nbits = MIN(kex->nbits, 4096);
+		kex->nbits = MINIMUM(kex->nbits, 4096);
 	/* New GEX request */
 	if ((r = sshpkt_start(ssh, SSH2_MSG_KEX_DH_GEX_REQUEST)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, kex->min)) != 0 ||

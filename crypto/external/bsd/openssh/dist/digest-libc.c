@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: digest-libc.c,v 1.4 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: digest-libc.c,v 1.5 2016/12/25 00:07:47 christos Exp $");
 
 #include <sys/types.h>
 #include <limits.h>

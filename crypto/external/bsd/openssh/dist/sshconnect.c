@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.c,v 1.17 2016/03/16 21:00:37 christos Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.271 2016/01/14 22:56:56 markus Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.18 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.272 2016/09/12 01:22:38 deraadt Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -16,7 +16,8 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.17 2016/03/16 21:00:37 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.18 2016/12/25 00:07:47 christos Exp $");
+
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1414,7 +1415,7 @@ ssh_put_password(char *password)
 		packet_put_cstring(password);
 		return;
 	}
-	size = roundup(strlen(password) + 1, 32);
+	size = ROUNDUP(strlen(password) + 1, 32);
 	padded = xcalloc(1, size);
 	strlcpy(padded, password, size);
 	packet_put_string(padded, size);

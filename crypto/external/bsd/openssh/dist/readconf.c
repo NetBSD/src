@@ -1,5 +1,6 @@
-/*	$NetBSD: readconf.c,v 1.19 2016/08/02 13:45:12 christos Exp $	*/
-/* $OpenBSD: readconf.c,v 1.259 2016/07/22 03:35:11 djm Exp $ */
+/*	$NetBSD: readconf.c,v 1.20 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: readconf.c,v 1.262 2016/10/25 04:08:13 jsg Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.19 2016/08/02 13:45:12 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.20 2016/12/25 00:07:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -328,7 +329,7 @@ add_local_forward(Options *options, const struct Forward *newfwd)
 	extern uid_t original_real_uid;
 	int i;
 
-	if (newfwd->listen_port < IPPORT_RESERVED && original_real_uid != 0 &&
+	if (!bind_permitted(newfwd->listen_port, original_real_uid) &&
 	    newfwd->listen_path == NULL)
 		fatal("Privileged ports can only be forwarded by root.");
 	/* Don't add duplicates */
@@ -875,7 +876,6 @@ process_config_line_depth(Options *options, struct passwd *pw, const char *host,
 	case oBadOption:
 		/* don't panic, but count bad options */
 		return -1;
-		/* NOTREACHED */
 	case oIgnoredUnknownOption:
 		debug("%s line %d: Ignored unknown option \"%s\"",
 		    filename, linenum, keyword);

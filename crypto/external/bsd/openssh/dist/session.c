@@ -1,5 +1,6 @@
-/*	$NetBSD: session.c,v 1.20 2016/08/02 13:45:12 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.282 2016/03/10 11:47:57 djm Exp $ */
+/*	$NetBSD: session.c,v 1.21 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.286 2016/11/30 03:00:05 djm Exp $ */
+
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.20 2016/08/02 13:45:12 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.21 2016/12/25 00:07:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -60,7 +61,6 @@ __RCSID("$NetBSD: session.c,v 1.20 2016/08/02 13:45:12 christos Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
-#include "ssh1.h"
 #include "ssh2.h"
 #include "sshpty.h"
 #include "packet.h"
@@ -115,7 +115,6 @@ __dead void	do_child(Session *, const char *);
 void	do_motd(void);
 int	check_quietlogin(Session *, const char *);
 
-static void do_authenticated1(Authctxt *);
 static void do_authenticated2(Authctxt *);
 
 static int session_pty_req(Session *);
@@ -247,7 +246,7 @@ do_authenticated(Authctxt *authctxt)
 
 	/* setup the channel layer */
 	/* XXX - streamlocal? */
-	if (no_port_forwarding_flag ||
+	if (no_port_forwarding_flag || options.disable_forwarding ||
 	    (options.allow_tcp_forwarding & FORWARD_LOCAL) == 0)
 		channel_disable_adm_local_opens();
 	else
@@ -255,11 +254,7 @@ do_authenticated(Authctxt *authctxt)
 
 	auth_debug_send();
 
-	if (compat20)
-		do_authenticated2(authctxt);
-	else
-		do_authenticated1(authctxt);
-
+	do_authenticated2(authctxt);
 	do_cleanup(authctxt);
 }
 
@@ -276,216 +271,6 @@ xauth_valid_string(const char *s)
 		return 0;
 	}
 	return 1;
-}
-
-/*
- * Prepares for an interactive session.  This is called after the user has
- * been successfully authenticated.  During this message exchange, pseudo
- * terminals are allocated, X11, TCP/IP, and authentication agent forwardings
- * are requested, etc.
- */
-static void
-do_authenticated1(Authctxt *authctxt)
-{
-	Session *s;
-	char *command;
-	int success, type, screen_flag;
-	int enable_compression_after_reply = 0;
-	u_int proto_len, data_len, dlen, compression_level = 0;
-
-	s = session_new();
-	if (s == NULL) {
-		error("no more sessions");
-		return;
-	}
-	s->authctxt = authctxt;
-	s->pw = authctxt->pw;
-
-	/*
-	 * We stay in this loop until the client requests to execute a shell
-	 * or a command.
-	 */
-	for (;;) {
-		success = 0;
-
-		/* Get a packet from the client. */
-		type = packet_read();
-
-		/* Process the packet. */
-		switch (type) {
-		case SSH_CMSG_REQUEST_COMPRESSION:
-			compression_level = packet_get_int();
-			packet_check_eom();
-			if (compression_level < 1 || compression_level > 9) {
-				packet_send_debug("Received invalid compression level %d.",
-				    compression_level);
-				break;
-			}
-			if (options.compression == COMP_NONE) {
-				debug2("compression disabled");
-				break;
-			}
-			/* Enable compression after we have responded with SUCCESS. */
-			enable_compression_after_reply = 1;
-			success = 1;
-			break;
-
-		case SSH_CMSG_REQUEST_PTY:
-			success = session_pty_req(s);
-			break;
-
-		case SSH_CMSG_X11_REQUEST_FORWARDING:
-			s->auth_proto = packet_get_string(&proto_len);
-			s->auth_data = packet_get_string(&data_len);
-
-			screen_flag = packet_get_protocol_flags() &
-			    SSH_PROTOFLAG_SCREEN_NUMBER;
-			debug2("SSH_PROTOFLAG_SCREEN_NUMBER: %d", screen_flag);
-
-			if (packet_remaining() == 4) {
-				if (!screen_flag)
-					debug2("Buggy client: "
-					    "X11 screen flag missing");
-				s->screen = packet_get_int();
-			} else {
-				s->screen = 0;
-			}
-			packet_check_eom();
-			if (xauth_valid_string(s->auth_proto) &&
-			    xauth_valid_string(s->auth_data))
-				success = session_setup_x11fwd(s);
-			else {
-				success = 0;
-				error("Invalid X11 forwarding data");
-			}
-			if (!success) {
-				free(s->auth_proto);
-				free(s->auth_data);
-				s->auth_proto = NULL;
-				s->auth_data = NULL;
-			}
-			break;
-
-		case SSH_CMSG_AGENT_REQUEST_FORWARDING:
-			if (!options.allow_agent_forwarding ||
-			    no_agent_forwarding_flag || compat13) {
-				debug("Authentication agent forwarding not permitted for this authentication.");
-				break;
-			}
-			debug("Received authentication agent forwarding request.");
-			success = auth_input_request_forwarding(s->pw);
-			break;
-
-		case SSH_CMSG_PORT_FORWARD_REQUEST:
-			if (no_port_forwarding_flag) {
-				debug("Port forwarding not permitted for this authentication.");
-				break;
-			}
-			if (!(options.allow_tcp_forwarding & FORWARD_REMOTE)) {
-				debug("Port forwarding not permitted.");
-				break;
-			}
-			debug("Received TCP/IP port forwarding request.");
-			if (channel_input_port_forward_request(s->pw->pw_uid == 0,
-			    &options.fwd_opts) < 0) {
-				debug("Port forwarding failed.");
-				break;
-			}
-			success = 1;
-			break;
-
-		case SSH_CMSG_MAX_PACKET_SIZE:
-			if (packet_set_maxsize(packet_get_int()) > 0)
-				success = 1;
-			break;
-
-#if defined(AFS) || defined(KRB5)
-		case SSH_CMSG_HAVE_KERBEROS_TGT:
-			if (!options.kerberos_tgt_passing) {
-				verbose("Kerberos TGT passing disabled.");
-			} else {
-				char *kdata = packet_get_string(&dlen);
-				packet_check_eom();
-
-				/* XXX - 0x41, see creds_to_radix version */
-				if (kdata[0] != 0x41) {
-#ifdef KRB5
-					krb5_data tgt;
-					tgt.data = kdata;
-					tgt.length = dlen;
-
-					if (auth_krb5_tgt(s->authctxt, &tgt))
-						success = 1;
-					else
-						verbose("Kerberos v5 TGT refused for %.100s", s->authctxt->user);
-#endif /* KRB5 */
-				} else {
-#ifdef AFS
-					if (auth_krb4_tgt(s->authctxt, kdata))
-						success = 1;
-					else
-						verbose("Kerberos v4 TGT refused for %.100s", s->authctxt->user);
-#endif /* AFS */
-				}
-				free(kdata);
-			}
-			break;
-#endif /* AFS || KRB5 */
-
-#ifdef AFS
-		case SSH_CMSG_HAVE_AFS_TOKEN:
-			if (!options.afs_token_passing || !k_hasafs()) {
-				verbose("AFS token passing disabled.");
-			} else {
-				/* Accept AFS token. */
-				char *token = packet_get_string(&dlen);
-				packet_check_eom();
-
-				if (auth_afs_token(s->authctxt, token))
-					success = 1;
-				else
-					verbose("AFS token refused for %.100s",
-					    s->authctxt->user);
-				free(token);
-			}
-			break;
-#endif /* AFS */
-
-		case SSH_CMSG_EXEC_SHELL:
-		case SSH_CMSG_EXEC_CMD:
-			if (type == SSH_CMSG_EXEC_CMD) {
-				command = packet_get_string(&dlen);
-				debug("Exec command '%.500s'", command);
-				if (do_exec(s, command) != 0)
-					packet_disconnect(
-					    "command execution failed");
-				free(command);
-			} else {
-				if (do_exec(s, NULL) != 0)
-					packet_disconnect(
-					    "shell execution failed");
-			}
-			packet_check_eom();
-			session_close(s);
-			return;
-
-		default:
-			/*
-			 * Any unknown messages in this phase are ignored,
-			 * and a failure message is returned.
-			 */
-			logit("Unknown packet type received after authentication: %d", type);
-		}
-		packet_start(success ? SSH_SMSG_SUCCESS : SSH_SMSG_FAILURE);
-		packet_send();
-		packet_write_wait();
-
-		/* Enable compression now that we have replied if appropriate. */
-		if (enable_compression_after_reply) {
-			enable_compression_after_reply = 0;
-			packet_start_compression(compression_level);
-		}
-	}
 }
 
 #define USE_PIPES 1
@@ -642,14 +427,8 @@ do_exec_no_pty(Session *s, const char *command)
 	close(pout[1]);
 	close(perr[1]);
 
-	if (compat20) {
-		session_set_fds(s, pin[1], pout[0], perr[0],
-		    s->is_subsystem, 0);
-	} else {
-		/* Enter the interactive session. */
-		server_loop(pid, pin[1], pout[0], perr[0]);
-		/* server_loop has closed pin[1], pout[0], and perr[0]. */
-	}
+	session_set_fds(s, pin[1], pout[0], perr[0],
+	    s->is_subsystem, 0);
 #else
 	/* We are the parent.  Close the child sides of the socket pairs. */
 	close(inout[0]);
@@ -659,13 +438,8 @@ do_exec_no_pty(Session *s, const char *command)
 	 * Enter the interactive session.  Note: server_loop must be able to
 	 * handle the case that fdin and fdout are the same.
 	 */
-	if (compat20) {
-		session_set_fds(s, inout[1], inout[1], err[1],
-		    s->is_subsystem, 0);
-	} else {
-		server_loop(pid, inout[1], inout[1], err[1]);
-		/* server_loop has closed inout[1] and err[1]. */
-	}
+	session_set_fds(s, inout[1], inout[1], err[1],
+	    s->is_subsystem, 0);
 #endif
 	return 0;
 }
@@ -753,8 +527,7 @@ do_exec_pty(Session *s, const char *command)
 		close(ttyfd);
 
 		/* record login, etc. similar to login(1) */
-		if (!(options.use_login && command == NULL))
-			do_login(s, command);
+		do_login(s, command);
 
 		/*
 		 * Do common processing for the child, such as execing
@@ -774,12 +547,7 @@ do_exec_pty(Session *s, const char *command)
 	s->ptymaster = ptymaster;
 	packet_set_interactive(1, 
 	    options.ip_qos_interactive, options.ip_qos_bulk);
-	if (compat20) {
-		session_set_fds(s, ptyfd, fdout, -1, 1, 1);
-	} else {
-		server_loop(pid, ptyfd, fdout, -1);
-		/* server_loop _has_ closed ptyfd and fdout. */
-	}
+	session_set_fds(s, ptyfd, fdout, -1, 1, 1);
 	return 0;
 }
 
@@ -1012,67 +780,6 @@ child_set_env(char ***envp, u_int *envsizep, const char *name,
 	snprintf(env[i], strlen(name) + 1 + strlen(value) + 1, "%s=%s", name, value);
 }
 
-#ifdef HAVE_LOGIN_CAP
-/*
- * Sets any environment variables specified in login.conf.
- * Taken from:
- *	NetBSD: login_cap.c,v 1.11 2001/07/22 13:34:01 wiz Exp 
- * Modified to use child_set_env instead of setenv.
- */
-static void
-lc_setuserenv(char ***env, u_int *envsize, login_cap_t *lcp)
-{
-	const char *stop = ", \t";
-	int i, count;
-	char *ptr;
-	char **res;
-	char *str = login_getcapstr(lcp, "setenv", NULL, NULL);
-		  
-	if (str == NULL || *str == '\0')
-		return;
-	
-	/* count the sub-strings */
-	for (i = 1, ptr = str; *ptr; i++) {
-		ptr += strcspn(ptr, stop);
-		if (*ptr)
-			ptr++;
-	}
-
-	/* allocate ptr array and string */
-	count = i;
-	res = malloc(count * sizeof(char *) + strlen(str) + 1);
-
-	if (!res)
-		return;
-	
-	ptr = (char *)res + count * sizeof(char *);
-	strcpy(ptr, str);
-
-	/* split string */
-	for (i = 0; *ptr && i < count; i++) {
-		res[i] = ptr;
-		ptr += strcspn(ptr, stop);
-		if (*ptr)
-			*ptr++ = '\0';
-	}
-	
-	res[i] = NULL;
-
-	for (i = 0; i < count && res[i]; i++) {
-		if (*res[i] != '\0') {
-			if ((ptr = strchr(res[i], '=')) != NULL)
-				*ptr++ = '\0';
-			else 
-				ptr = __UNCONST("");
-			child_set_env(env, envsize, res[i], ptr);
-		}
-	}
-	
-	free(res);
-	return;
-}
-#endif
-
 /*
  * Reads environment variables from the given file and adds/overrides them
  * into the environment.  If the file does not exist, this does nothing.
@@ -1166,53 +873,41 @@ do_setup_env(Session *s, const char *shell)
 	ssh_gssapi_do_child(&env, &envsize);
 #endif
 
-	if (!options.use_login) {
-#ifdef HAVE_LOGIN_CAP
-		lc_setuserenv(&env, &envsize, lc);
-#endif
-		/* Set basic environment. */
-		for (i = 0; i < s->num_env; i++)
-			child_set_env(&env, &envsize, s->env[i].name,
-			    s->env[i].val);
+	/* Set basic environment. */
+	for (i = 0; i < s->num_env; i++)
+		child_set_env(&env, &envsize, s->env[i].name, s->env[i].val);
 
-		child_set_env(&env, &envsize, "USER", pw->pw_name);
-		child_set_env(&env, &envsize, "LOGNAME", pw->pw_name);
-		child_set_env(&env, &envsize, "HOME", pw->pw_dir);
-#ifdef HAVE_LOGIN_CAP
-		if (setusercontext(lc, pw, pw->pw_uid, LOGIN_SETPATH) < 0)
-			child_set_env(&env, &envsize, "PATH", _PATH_STDPATH);
-		else
-			child_set_env(&env, &envsize, "PATH", getenv("PATH"));
-#else
+	child_set_env(&env, &envsize, "USER", pw->pw_name);
+	child_set_env(&env, &envsize, "LOGNAME", pw->pw_name);
+	child_set_env(&env, &envsize, "HOME", pw->pw_dir);
+	if (setusercontext(lc, pw, pw->pw_uid, LOGIN_SETPATH) < 0)
 		child_set_env(&env, &envsize, "PATH", _PATH_STDPATH);
-#endif
+	else
+		child_set_env(&env, &envsize, "PATH", getenv("PATH"));
 
-		snprintf(buf, sizeof buf, "%.200s/%.50s",
-			 _PATH_MAILDIR, pw->pw_name);
-		child_set_env(&env, &envsize, "MAIL", buf);
+	snprintf(buf, sizeof buf, "%.200s/%.50s", _PATH_MAILDIR, pw->pw_name);
+	child_set_env(&env, &envsize, "MAIL", buf);
 
-		/* Normal systems set SHELL by default. */
-		child_set_env(&env, &envsize, "SHELL", shell);
-	}
+	/* Normal systems set SHELL by default. */
+	child_set_env(&env, &envsize, "SHELL", shell);
+
 	if (getenv("TZ"))
 		child_set_env(&env, &envsize, "TZ", getenv("TZ"));
 
 	/* Set custom environment options from RSA authentication. */
-	if (!options.use_login) {
-		while (custom_environment) {
-			struct envstring *ce = custom_environment;
-			char *str = ce->s;
+	while (custom_environment) {
+		struct envstring *ce = custom_environment;
+		char *str = ce->s;
 
-			for (i = 0; str[i] != '=' && str[i]; i++)
-				;
-			if (str[i] == '=') {
-				str[i] = 0;
-				child_set_env(&env, &envsize, str, str + i + 1);
-			}
-			custom_environment = ce->next;
-			free(ce->s);
-			free(ce);
+		for (i = 0; str[i] != '=' && str[i]; i++)
+			;
+		if (str[i] == '=') {
+			str[i] = 0;
+			child_set_env(&env, &envsize, str, str + i + 1);
 		}
+		custom_environment = ce->next;
+		free(ce->s);
+		free(ce);
 	}
 
 	/* SSH_CLIENT deprecated */
@@ -1252,7 +947,7 @@ do_setup_env(Session *s, const char *shell)
 	 * Pull in any environment variables that may have
 	 * been set by PAM.
 	 */
-	if (options.use_pam && !options.use_login) {
+	if (options.use_pam) {
 		char **p;
 
 		p = fetch_pam_child_environment();
@@ -1270,7 +965,7 @@ do_setup_env(Session *s, const char *shell)
 		    auth_sock_name);
 
 	/* read $HOME/.ssh/environment. */
-	if (options.permit_user_env && !options.use_login) {
+	if (options.permit_user_env) {
 		snprintf(buf, sizeof buf, "%.200s/.ssh/environment",
 		    pw->pw_dir);
 		read_environment_file(&env, &envsize, buf);
@@ -1539,20 +1234,6 @@ do_pwchange(Session *s)
 	exit(1);
 }
 
-__dead static void
-launch_login(struct passwd *pw, const char *hostname)
-{
-	/* Launch login(1). */
-
-	execl("/usr/bin/login", "login", "-h", hostname,
-	    "-p", "-f", "--", pw->pw_name, (char *)NULL);
-
-	/* Login couldn't be executed, die. */
-
-	perror("login");
-	exit(1);
-}
-
 static void
 child_close_fds(void)
 {
@@ -1600,11 +1281,10 @@ child_close_fds(void)
 void
 do_child(Session *s, const char *command)
 {
-	struct ssh *ssh = active_state;	/* XXX */
 	extern char **environ;
 	char **env;
 	char *argv[ARGV_MAX];
-	const char *shell, *shell0, *hostname = NULL;
+	const char *shell, *shell0;
 	struct passwd *pw = s->pw;
 	int r = 0;
 
@@ -1618,25 +1298,10 @@ do_child(Session *s, const char *command)
 		do_pwchange(s);
 	}
 
-	/* login(1) is only called if we execute the login shell */
-	if (options.use_login && command != NULL)
-		options.use_login = 0;
-
 	/*
 	 * Login(1) does this as well, and it needs uid 0 for the "-h"
 	 * switch, so we let login(1) to this for us.
 	 */
-	if (!options.use_login) {
-		do_nologin(pw);
-		do_setusercontext(pw);
-		/*
-		 * PAM session modules in do_setusercontext may have
-		 * generated messages, so if this in an interactive
-		 * login then display them too.
-		 */
-		if (!check_quietlogin(s, command))
-			display_loginmsg();
-	}
 #ifdef USE_PAM
 	if (options.use_pam && !is_pam_session_open()) {
 		debug3("PAM session not opened, exiting");
@@ -1644,6 +1309,8 @@ do_child(Session *s, const char *command)
 		exit(254);
 	}
 #endif
+	do_nologin(pw);
+	do_setusercontext(pw);
 
 	/*
 	 * Get the shell from the password data.  An empty shell field is
@@ -1662,10 +1329,6 @@ do_child(Session *s, const char *command)
 	    __UNCONST(shell));
 #endif
 
-	/* we have to stash the hostname before we close our socket. */
-	if (options.use_login)
-		hostname = session_get_remote_name_or_ip(ssh, utmp_len,
-		    options.use_dns);
 	/*
 	 * Close the connection descriptors; note that this is the child, and
 	 * the server will still have the socket open, and it is important
@@ -1722,8 +1385,7 @@ do_child(Session *s, const char *command)
 
 	(void)closefrom(STDERR_FILENO + 1);
 
-	if (!options.use_login)
-		do_rc_files(s, shell);
+	do_rc_files(s, shell);
 
 	/* restore SIGPIPE for child */
 	signal(SIGPIPE, SIG_DFL);
@@ -1749,11 +1411,6 @@ do_child(Session *s, const char *command)
 	}
 
 	fflush(NULL);
-
-	if (options.use_login) {
-		launch_login(pw, hostname);
-		/* NEVERREACHED */
-	}
 
 	/* Get the last component of the shell name. */
 	if ((shell0 = strrchr(shell, '/')) != NULL)
@@ -1998,14 +1655,8 @@ session_pty_req(Session *s)
 	}
 
 	s->term = packet_get_string(&len);
-
-	if (compat20) {
-		s->col = packet_get_int();
-		s->row = packet_get_int();
-	} else {
-		s->row = packet_get_int();
-		s->col = packet_get_int();
-	}
+	s->col = packet_get_int();
+	s->row = packet_get_int();
 	s->xpixel = packet_get_int();
 	s->ypixel = packet_get_int();
 
@@ -2027,9 +1678,7 @@ session_pty_req(Session *s)
 	}
 	debug("session_pty_req: session %d alloc %s", s->self, s->tty);
 
-	/* for SSH1 the tty modes length is not given */
-	if (!compat20)
-		n_bytes = packet_remaining();
+	n_bytes = packet_remaining();
 	tty_parse_modes(s->ttyfd, &n_bytes);
 
 	if (!use_privsep)
@@ -2245,8 +1894,6 @@ void
 session_set_fds(Session *s, int fdin, int fdout, int fderr, int ignore_fderr,
     int is_tty)
 {
-	if (!compat20)
-		fatal("session_set_fds: called for proto != 2.0");
 	/*
 	 * now that have a child and a pipe to the child,
 	 * we can activate our channel and register the fd's
@@ -2586,11 +2233,6 @@ session_setup_x11fwd(Session *s)
 		packet_send_debug("No xauth program; cannot forward with spoofing.");
 		return 0;
 	}
-	if (options.use_login) {
-		packet_send_debug("X11 forwarding disabled; "
-		    "not compatible with UseLogin=yes.");
-		return 0;
-	}
 	if (s->display != NULL) {
 		debug("X11 display already set.");
 		return 0;
@@ -2666,7 +2308,7 @@ do_cleanup(Authctxt *authctxt)
 #endif
 
 #ifdef GSSAPI
-	if (compat20 && options.gss_cleanup_creds)
+	if (options.gss_cleanup_creds)
 		ssh_gssapi_cleanup_creds();
 #endif
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.h,v 1.12 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: clientloop.h,v 1.32 2016/01/13 23:04:47 djm Exp $ */
+/*	$NetBSD: clientloop.h,v 1.13 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: clientloop.h,v 1.33 2016/09/30 09:19:13 markus Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -72,9 +72,10 @@ void client_expect_confirm(int, const char *, enum confirm_action);
 #define SSHMUX_COMMAND_FORWARD		5	/* Forward only, no command */
 #define SSHMUX_COMMAND_STOP		6	/* Disable mux but not conn */
 #define SSHMUX_COMMAND_CANCEL_FWD	7	/* Cancel forwarding(s) */
+#define SSHMUX_COMMAND_PROXY		8	/* Open new connection */
 
 void	muxserver_listen(void);
-void	muxclient(const char *);
+int	muxclient(const char *);
 void	mux_exit_message(Channel *, int);
 void	mux_tty_alloc_failed(Channel *);
 

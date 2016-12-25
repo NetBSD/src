@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.13 2016/08/02 13:45:12 christos Exp $	*/
-/* $OpenBSD: auth.h,v 1.88 2016/05/04 14:04:40 markus Exp $ */
+/*	$NetBSD: auth.h,v 1.14 2016/12/25 00:07:46 christos Exp $	*/
+/* $OpenBSD: auth.h,v 1.89 2016/08/13 17:47:41 markus Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -119,21 +119,11 @@ struct KbdintDevice
 	void	(*free_ctx)(void *ctx);
 };
 
-void 	 disable_forwarding(void);
-int      auth_rhosts(struct passwd *, const char *);
 int
 auth_rhosts2(struct passwd *, const char *, const char *, const char *);
 
-int	 auth_rhosts_rsa(Authctxt *, char *, Key *);
 int      auth_password(Authctxt *, const char *);
-int      auth_rsa(Authctxt *, BIGNUM *);
-int      auth_rsa_challenge_dialog(Key *);
-BIGNUM	*auth_rsa_generate_challenge(Key *);
-int	 auth_rsa_verify_response(Key *, BIGNUM *, u_char[]);
-int	 auth_rsa_key_allowed(struct passwd *, BIGNUM *, Key **);
 
-int	 auth_rhosts_rsa_key_allowed(struct passwd *, const char *,
-    const char *, Key *);
 int	 hostbased_key_allowed(struct passwd *, const char *, char *, Key *);
 int	 user_key_allowed(struct passwd *, Key *, int);
 void	 pubkey_auth_info(Authctxt *, const Key *, const char *, ...)
@@ -166,7 +156,6 @@ int	auth_krb5_password(Authctxt *authctxt, const char *password);
 void	krb5_cleanup_proc(Authctxt *authctxt);
 #endif /* KRB5 */
 
-void	do_authentication(Authctxt *);
 void	do_authentication2(Authctxt *);
 
 void	auth_info(Authctxt *authctxt, const char *, ...)
@@ -193,9 +182,6 @@ int	bsdauth_respond(void *, u_int, char **);
 int	allowed_user(struct passwd *);
 struct passwd * getpwnamallow(const char *user);
 
-char	*get_challenge(Authctxt *);
-int	verify_response(Authctxt *, const char *);
-
 char	*expand_authorized_keys(const char *, struct passwd *pw);
 char	*authorized_principals_file(struct passwd *);
 
@@ -215,7 +201,6 @@ Key	*get_hostkey_public_by_index(int, struct ssh *);
 Key	*get_hostkey_public_by_type(int, int, struct ssh *);
 Key	*get_hostkey_private_by_type(int, int, struct ssh *);
 int	 get_hostkey_index(Key *, int, struct ssh *);
-int	 ssh1_session_key(BIGNUM *);
 int	 sshd_hostkey_sign(Key *, Key *, u_char **, size_t *,
 	     const u_char *, size_t, const char *, u_int);
 
@@ -223,6 +208,8 @@ int	 sshd_hostkey_sign(Key *, Key *, u_char **, size_t *,
 void	 auth_debug_add(const char *fmt,...) __attribute__((format(printf, 1, 2)));
 void	 auth_debug_send(void);
 void	 auth_debug_reset(void);
+
+void	 disable_forwarding(void);
 
 struct passwd *fakepw(void);
 
