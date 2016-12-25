@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-server.c,v 1.14 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: sftp-server.c,v 1.109 2016/02/15 09:47:49 dtucker Exp $ */
+/*	$NetBSD: sftp-server.c,v 1.15 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: sftp-server.c,v 1.110 2016/09/12 01:22:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
@@ -18,7 +18,8 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-server.c,v 1.14 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: sftp-server.c,v 1.15 2016/12/25 00:07:47 christos Exp $");
+
 #include <sys/param.h>	/* MIN */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -501,7 +502,7 @@ status_to_message(u_int32_t status)
 		"Operation unsupported",	/* SSH_FX_OP_UNSUPPORTED */
 		"Unknown error"			/* Others */
 	};
-	return (status_messages[MIN(status,SSH2_FX_MAX)]);
+	return (status_messages[MINIMUM(status,SSH2_FX_MAX)]);
 }
 
 static void

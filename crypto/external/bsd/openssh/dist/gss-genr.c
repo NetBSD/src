@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-genr.c,v 1.7 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: gss-genr.c,v 1.23 2015/01/20 23:14:00 deraadt Exp $ */
+/*	$NetBSD: gss-genr.c,v 1.8 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: gss-genr.c,v 1.24 2016/09/12 01:22:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2007 Simon Wilkinson. All rights reserved.
@@ -29,7 +29,6 @@
 __RCSID("$NetBSD");
 #ifdef GSSAPI
 
-#include <sys/param.h>
 
 #include <stdarg.h>
 #include <string.h>

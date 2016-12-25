@@ -1,4 +1,4 @@
-/*	$NetBSD: random.h,v 1.3 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: random.h,v 1.4 2016/12/25 00:07:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

@@ -1,5 +1,6 @@
-/*	$NetBSD: sftp-common.c,v 1.7 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: sftp-common.c,v 1.28 2015/01/20 23:14:00 deraadt Exp $ */
+/*	$NetBSD: sftp-common.c,v 1.8 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: sftp-common.c,v 1.29 2016/09/12 01:22:38 deraadt Exp $ */
+
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
@@ -26,7 +27,8 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-common.c,v 1.7 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: sftp-common.c,v 1.8 2016/12/25 00:07:47 christos Exp $");
+
 #include <sys/param.h>	/* MAX */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -45,6 +47,7 @@ __RCSID("$NetBSD: sftp-common.c,v 1.7 2015/04/03 23:58:19 christos Exp $");
 #include "ssherr.h"
 #include "sshbuf.h"
 #include "log.h"
+#include "misc.h"
 
 #include "sftp.h"
 #include "sftp-common.h"
@@ -244,8 +247,8 @@ ls_file(const char *name, const struct stat *st, int remote, int si_units)
 	}
 	if (sz == 0)
 		tbuf[0] = '\0';
-	ulen = MAX(strlen(user), 8);
-	glen = MAX(strlen(group), 8);
+	ulen = MAXIMUM(strlen(user), 8);
+	glen = MAXIMUM(strlen(group), 8);
 	if (si_units) {
 		fmt_scaled((long long)st->st_size, sbuf);
 		snprintf(buf, sizeof buf, "%s %3u %-*s %-*s %8s %s %s", mode,
