@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.4 2016/12/25 03:39:26 christos Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.5 2016/12/25 06:30:58 cherry Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -543,34 +543,6 @@ uvm_physseg_find(paddr_t pframe, psize_t *offp)
 	return ps;
 }
 
-#if defined(PMAP_STEAL_MEMORY)
-void
-uvm_physseg_set_avail_start(uvm_physseg_t upm, paddr_t avail_start)
-{
-	struct uvm_physseg *ps = HANDLE_TO_PHYSSEG_NODE(upm);
-
-#if defined(DIAGNOSTIC)
-	paddr_t avail_end;
-	avail_end = uvm_physseg_get_avail_end(upm);
-#endif
-	KASSERT(avail_start < avail_end && avail_start >= ps->start);
-	ps->avail_start = avail_start;
-}
-void uvm_physseg_set_avail_end(uvm_physseg_t upm, paddr_t avail_end)
-{
-	struct uvm_physseg *ps = HANDLE_TO_PHYSSEG_NODE(upm);
-
-#if defined(DIAGNOSTIC)
-	paddr_t avail_start;
-	avail_start = uvm_physseg_get_avail_start(upm);
-#endif
-
-	KASSERT(avail_end > avail_start && avail_end <= ps->end);
-
-	ps->avail_end = avail_end;
-}
-
-#endif /* PMAP_STEAL_MEMORY */
 #else  /* UVM_HOTPLUG */
 
 /*
@@ -1036,10 +1008,32 @@ uvm_physseg_get_avail_start(uvm_physseg_t upm)
 void
 uvm_physseg_set_avail_start(uvm_physseg_t upm, paddr_t avail_start)
 {
+	struct uvm_physseg *ps = HANDLE_TO_PHYSSEG_NODE(upm);
+
+#if defined(DIAGNOSTIC)
+	paddr_t avail_end;
+	avail_end = uvm_physseg_get_avail_end(upm);
 	KASSERT(uvm_physseg_valid_p(upm));
-	HANDLE_TO_PHYSSEG_NODE(upm)->avail_start = avail_start;
-}
+	KASSERT(avail_start < avail_end && avail_start >= ps->start);
 #endif
+
+	ps->avail_start = avail_start;
+}
+void uvm_physseg_set_avail_end(uvm_physseg_t upm, paddr_t avail_end)
+{
+	struct uvm_physseg *ps = HANDLE_TO_PHYSSEG_NODE(upm);
+
+#if defined(DIAGNOSTIC)
+	paddr_t avail_start;
+	avail_start = uvm_physseg_get_avail_start(upm);
+	KASSERT(uvm_physseg_valid_p(upm));
+	KASSERT(avail_end > avail_start && avail_end <= ps->end);
+#endif
+
+	ps->avail_end = avail_end;
+}
+
+#endif /* PMAP_STEAL_MEMORY */
 
 paddr_t
 uvm_physseg_get_avail_end(uvm_physseg_t upm)
