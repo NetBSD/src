@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.22 2016/06/15 04:30:30 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.23 2016/12/25 06:55:28 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -128,10 +128,9 @@ register_event(iscsi_register_event_parameters_t *par)
 
 	was_empty = TAILQ_FIRST(&event_handlers) == NULL;
 	TAILQ_INSERT_TAIL(&event_handlers, handler, link);
-	mutex_exit(&iscsi_cleanup_mtx);
-
 	if (was_empty)
 		iscsi_notify_cleanup();
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	par->status = ISCSI_STATUS_SUCCESS;
 	DEB(5, ("Register Event OK, ID %d\n", par->event_id));
@@ -162,8 +161,6 @@ deregister_event(iscsi_register_event_parameters_t *par)
 	}
 
 	TAILQ_REMOVE(&event_handlers, handler, link);
-	mutex_exit(&iscsi_cleanup_mtx);
-
 	if (handler->waiter != NULL) {
 		handler->waiter->status = ISCSI_STATUS_EVENT_DEREGISTERED;
 		cv_broadcast(&iscsi_event_cv);
@@ -173,6 +170,7 @@ deregister_event(iscsi_register_event_parameters_t *par)
 		TAILQ_REMOVE(&handler->events, evt, link);
 		free(evt, M_TEMP);
 	}
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	free(handler, M_DEVBUF);
 	par->status = ISCSI_STATUS_SUCCESS;
@@ -490,6 +488,7 @@ void
 kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 {
 	session_t *sess = conn->session;
+	int terminating;
 
 	DEBC(conn, 1, ("Kill_connection: terminating=%d, status=%d, logout=%d, "
 			   "state=%d\n",
@@ -516,19 +515,18 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 			DEBC(conn, 1, ("Kill_connection setting destroy flag\n"));
 			conn->destroy = TRUE;
 		}
-		/* in case it was already terminated earlier and rcv/send-threads */
-		/* are waiting */
-		cv_broadcast(&conn->idle_cv);
 	}
 
-	/* Don't recurse */
-	if (conn->terminating) {
-		mutex_exit(&iscsi_cleanup_mtx);
-		DEBC(conn, 1, ("Kill_connection exiting (already terminating)\n"));
-		return;
-	}
-	conn->terminating = status;
+	terminating = conn->terminating;
+	if (!terminating)
+		conn->terminating = status;
 	mutex_exit(&iscsi_cleanup_mtx);
+
+	/* Don't recurse */
+	if (terminating) {
+		DEBC(conn, 1, ("Kill_connection exiting (already terminating)\n"));
+		goto done;
+	}
 
 	if (conn->state == ST_FULL_FEATURE) {
 		sess->active_connections--;
@@ -566,8 +564,11 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 
 	conn->state = ST_SETTLING;
 
+done:
 	/* let send thread take over next step of cleanup */
+	mutex_enter(&conn->lock);
 	cv_broadcast(&conn->conn_cv);
+	mutex_exit(&conn->lock);
 
 	DEBC(conn, 5, ("kill_connection returns\n"));
 }
@@ -899,10 +900,9 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 		suspend_ccb(ccb, FALSE);
 		TAILQ_INSERT_TAIL(&old_waiting, ccb, chain);
 	}
-	mutex_exit(&connection->lock);
-
 	init_sernum(&connection->StatSN_buf);
 	cv_broadcast(&connection->idle_cv);
+	mutex_exit(&connection->lock);
 
 	if ((rc = send_login(connection)) != 0) {
 		DEBOUT(("Login failed (rc %d)\n", rc));
@@ -954,7 +954,9 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 		}
 	}
 
+	mutex_enter(&session->lock);
 	cv_broadcast(&session->sess_cv);
+	mutex_exit(&session->lock);
 
 	DEBC(connection, 0, ("Connection ReCreated successfully - status %d\n",
 						 par->status));
@@ -1631,8 +1633,8 @@ add_connection_cleanup(connection_t *conn)
 {
 	mutex_enter(&iscsi_cleanup_mtx);
 	TAILQ_INSERT_TAIL(&iscsi_cleanupc_list, conn, connections);
-	mutex_exit(&iscsi_cleanup_mtx);
 	iscsi_notify_cleanup();
+	mutex_exit(&iscsi_cleanup_mtx);
 }
 
 /*
@@ -1646,8 +1648,8 @@ connection_timeout_co(void *par)
 	mutex_enter(&iscsi_cleanup_mtx);
 	conn->timedout = TOUT_QUEUED;
 	TAILQ_INSERT_TAIL(&iscsi_timeout_conn_list, conn, tchain);
-	mutex_exit(&iscsi_cleanup_mtx);
 	iscsi_notify_cleanup();
+	mutex_exit(&iscsi_cleanup_mtx);
 }
 
 void            
@@ -1685,8 +1687,8 @@ ccb_timeout_co(void *par)
 	mutex_enter(&iscsi_cleanup_mtx);
 	ccb->timedout = TOUT_QUEUED;
 	TAILQ_INSERT_TAIL(&iscsi_timeout_ccb_list, ccb, tchain);
-	mutex_exit(&iscsi_cleanup_mtx);
 	iscsi_notify_cleanup();
+	mutex_exit(&iscsi_cleanup_mtx);
 }
 
 void    
@@ -1773,6 +1775,13 @@ iscsi_cleanup_thread(void *par)
 
 			if (--sess->total_connections == 0) {
 				DEB(1, ("Cleanup: session %d\n", sess->id));
+				if (!sess->terminating) {
+					sess->terminating = ISCSI_CONNECTION_TERMINATED;
+					KASSERT(sess->sessions.tqe_prev != NULL);
+					TAILQ_REMOVE(&iscsi_sessions, sess, sessions);
+					sess->sessions.tqe_next = NULL;
+					sess->sessions.tqe_prev = NULL;
+				}
 				KASSERT(sess->sessions.tqe_prev == NULL);
 				TAILQ_INSERT_HEAD(&iscsi_cleanups_list, sess, sessions);
 			}
@@ -1896,6 +1905,8 @@ iscsi_destroy_cleanup(void)
 void
 iscsi_notify_cleanup(void)
 {
+	KASSERT(mutex_owned(&iscsi_cleanup_mtx));
+
 	cv_signal(&iscsi_cleanup_cv);
 }
 
