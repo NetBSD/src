@@ -1,4 +1,4 @@
-.\"	$NetBSD: strptime.3,v 1.34 2015/10/31 02:09:06 ginsbach Exp $
+.\"	$NetBSD: strptime.3,v 1.35 2016/12/25 06:37:50 abhinav Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -162,7 +162,7 @@ the time (12-hour clock) with %p, using the locale's time format.
 .It Cm \&%R
 the time as %H:%M.
 .It Cm \&%S
-the seconds [0,61];
+the seconds [0,60];
 leading zeros are permitted but not required.
 .It Cm \&%s
 the number of seconds since the Epoch, UTC (see
