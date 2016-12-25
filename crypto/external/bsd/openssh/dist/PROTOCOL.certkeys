@@ -285,4 +285,4 @@ permit-user-rc          empty         Flag indicating that execution of
                                       this option is not present.
 
 $OpenBSD: PROTOCOL.certkeys,v 1.10 2016/05/03 10:27:59 djm Exp $
-$NetBSD: PROTOCOL.certkeys,v 1.6 2016/08/02 13:45:12 christos Exp $
+$NetBSD: PROTOCOL.certkeys,v 1.7 2016/12/25 00:07:46 christos Exp $

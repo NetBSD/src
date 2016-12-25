@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.h,v 1.7 2016/08/02 13:45:12 christos Exp $	*/
+/*	$NetBSD: dh.h,v 1.8 2016/12/25 00:07:47 christos Exp $	*/
 /* $OpenBSD: dh.h,v 1.15 2016/05/02 10:26:04 djm Exp $ */
 
 /*
