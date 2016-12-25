@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.286 2016/12/23 21:01:00 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.287 2016/12/25 22:44:24 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -87,7 +87,7 @@
  */
 
 /*
- * Locking: there are three locks.
+ * Locking: there are two locks.
  *
  * - sc_lock, provided by the underlying driver.  This is an adaptive lock,
  *   returned in the second parameter to hw_if->get_locks().  It is known
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.286 2016/12/23 21:01:00 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.287 2016/12/25 22:44:24 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -480,6 +480,7 @@ audioattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_trigger_started = false;
 	sc->sc_rec_started = false;
+	sc->sc_dying = false;
 	sc->sc_vchan[0] = kmem_zalloc(sizeof(struct virtual_channel), KM_SLEEP);
 	vc = sc->sc_vchan[0];
 	memset(sc->sc_audiopid, -1, sizeof(sc->sc_audiopid));
@@ -853,6 +854,7 @@ audioactivate(device_t self, enum devact act)
 	case DVACT_DEACTIVATE:
 		mutex_enter(sc->sc_lock);
 		sc->sc_dying = true;
+		cv_broadcast(&sc->sc_condvar);
 		mutex_exit(sc->sc_lock);
 		return 0;
 	default:
@@ -5018,23 +5020,27 @@ audio_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct audio_softc *sc = device_private(dv);
 	const struct audio_hw_if *hwp = sc->hw_if;
+	struct virtual_channel *vc;
 	int n;
+	bool pbus, rbus;
 
+	pbus = rbus = false;
 	mutex_enter(sc->sc_lock);
-	for (n = 1; n < VAUDIOCHANS; n++) {
-		if (sc->sc_audiopid[n].pid == curproc->p_pid)
-			break;
-	}
-	if (n == VAUDIOCHANS) {
-		mutex_exit(sc->sc_lock);
-		return false;
-	}
-
 	audio_mixer_capture(sc);
+	for (n = 1; n < VAUDIOCHANS; n++) {
+		if (sc->sc_audiopid[n].pid == -1)
+			continue;
+
+		vc = sc->sc_vchan[n];
+		if (vc->sc_pbus && !pbus)
+			pbus = true;
+		if (vc->sc_rbus && !rbus)
+			rbus = true;
+	}
 	mutex_enter(sc->sc_intr_lock);
-	if (sc->sc_vchan[n]->sc_pbus == true)
+	if (pbus == true)
 		hwp->halt_output(sc->hw_hdl);
-	if (sc->sc_recopens == 1 && sc->sc_vchan[n]->sc_rbus == true)
+	if (rbus == true)
 		hwp->halt_input(sc->hw_hdl);
 	mutex_exit(sc->sc_intr_lock);
 #ifdef AUDIO_PM_IDLE
@@ -5052,25 +5058,28 @@ audio_resume(device_t dv, const pmf_qual_t *qual)
 	struct virtual_channel *vc;
 	int n;
 	
-	for (n = 1; n < VAUDIOCHANS; n++) {
-		if (sc->sc_audiopid[n].pid == curproc->p_pid)
-			break;
-	}
-	
-	if (n == VAUDIOCHANS)
-		return false;
-	vc = sc->sc_vchan[n];
-
 	mutex_enter(sc->sc_lock);
-	if (vc->sc_lastinfovalid)
-		audiosetinfo(sc, &vc->sc_lastinfo, true, n);
+	sc->sc_trigger_started = false;
+	sc->sc_rec_started = false;
+
+	audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL |
+	    AUMODE_RECORD, &vaudio_formats[0], 0);
+
 	audio_mixer_restore(sc);
-	mutex_enter(sc->sc_intr_lock);
-	if ((vc->sc_pbus == true) && !vc->sc_mpr.pause)
-		audiostartp(sc, n);
-	if ((vc->sc_rbus == true) && !vc->sc_mrr.pause)
-		audiostartr(sc, n);
-	mutex_exit(sc->sc_intr_lock);
+	for (n = 1; n < VAUDIOCHANS; n++) {
+		if (sc->sc_audiopid[n].pid == -1)
+			continue;
+		vc = sc->sc_vchan[n];
+
+		if (vc->sc_lastinfovalid == true)
+			audiosetinfo(sc, &vc->sc_lastinfo, true, n);
+		mutex_enter(sc->sc_intr_lock);
+		if (vc->sc_pbus == true && !vc->sc_mpr.pause)
+			audiostartp(sc, n);
+		if (vc->sc_rbus == true && !vc->sc_mrr.pause)
+			audiostartr(sc, n);
+		mutex_exit(sc->sc_intr_lock);
+	}
 	mutex_exit(sc->sc_lock);
 
 	return true;
@@ -5248,6 +5257,7 @@ mix_write(void *arg)
 	vc = sc->sc_vchan[0];
 	blksize = vc->sc_mpr.blksize;
 	cc = blksize;
+	error = 0;
 
 	cc1 = cc;
 	if (vc->sc_pustream->inp + cc > vc->sc_pustream->end)
@@ -5280,13 +5290,15 @@ mix_write(void *arg)
 		error = sc->hw_if->start_output(sc->hw_hdl,
 		    __UNCONST(vc->sc_mpr.s.outp), blksize,
 		    audio_pint, (void *)sc);
-		if (error) {
-			/* XXX does this really help? */
-			DPRINTF(("audio_mix restart failed: %d\n", error));
-			audio_clear(sc, 0);
-		}
 	}
 	sc->sc_trigger_started = true;
+
+	if (error) {
+		/* XXX does this really help? */
+		DPRINTF(("audio_mix restart failed: %d\n", error));
+		audio_clear(sc, 0);
+		sc->sc_trigger_started = false;
+	}
 }
 
 void
