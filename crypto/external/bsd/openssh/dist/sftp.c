@@ -1,5 +1,6 @@
-/*	$NetBSD: sftp.c,v 1.19 2016/08/02 13:45:12 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.175 2016/07/22 03:47:36 djm Exp $ */
+/*	$NetBSD: sftp.c,v 1.20 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: sftp.c,v 1.177 2016/10/18 12:41:22 millert Exp $ */
+
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -17,7 +18,8 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.19 2016/08/02 13:45:12 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.20 2016/12/25 00:07:47 christos Exp $");
+
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -211,6 +213,18 @@ killchild(int signo)
 	}
 
 	_exit(1);
+}
+
+/* ARGSUSED */
+static void
+suspchild(int signo)
+{
+	if (sshpid > 1) {
+		kill(sshpid, signo);
+		while (waitpid(sshpid, NULL, WUNTRACED) == -1 && errno == EINTR)
+			continue;
+	}
+	kill(getpid(), SIGSTOP);
 }
 
 /* ARGSUSED */
@@ -788,7 +802,7 @@ do_ls_dir(struct sftp_conn *conn, const char *path,
 		/* Count entries for sort and find longest filename */
 		for (n = 0; d[n] != NULL; n++) {
 			if (d[n]->filename[0] != '.' || (lflag & LS_SHOW_ALL))
-				m = MAX(m, strlen(d[n]->filename));
+				m = MAXIMUM(m, strlen(d[n]->filename));
 		}
 
 		/* Add any subpath that also needs to be counted */
@@ -800,9 +814,9 @@ do_ls_dir(struct sftp_conn *conn, const char *path,
 			width = ws.ws_col;
 
 		columns = width / (m + 2);
-		columns = MAX(columns, 1);
+		columns = MAXIMUM(columns, 1);
 		colspace = width / columns;
-		colspace = MIN(colspace, width);
+		colspace = MINIMUM(colspace, width);
 	}
 
 	if (lflag & SORT_FLAGS) {
@@ -911,10 +925,10 @@ do_globbed_ls(struct sftp_conn *conn, const char *path,
 	if (!(lflag & LS_SHORT_VIEW)) {
 		/* Count entries for sort and find longest filename */
 		for (i = 0; g.gl_pathv[i]; i++)
-			m = MAX(m, strlen(g.gl_pathv[i]));
+			m = MAXIMUM(m, strlen(g.gl_pathv[i]));
 
 		columns = width / (m + 2);
-		columns = MAX(columns, 1);
+		columns = MAXIMUM(columns, 1);
 		colspace = width / columns;
 	}
 
@@ -1675,16 +1689,16 @@ complete_display(char **list, u_int len)
 
 	/* Count entries for sort and find longest */
 	for (y = 0; list[y]; y++)
-		m = MAX(m, strlen(list[y]));
+		m = MAXIMUM(m, strlen(list[y]));
 
 	if (ioctl(fileno(stdin), TIOCGWINSZ, &ws) != -1)
 		width = ws.ws_col;
 
 	m = m > len ? m - len : 0;
 	columns = width / (m + 2);
-	columns = MAX(columns, 1);
+	columns = MAXIMUM(columns, 1);
 	colspace = width / columns;
-	colspace = MIN(colspace, width);
+	colspace = MINIMUM(colspace, width);
 
 	printf("\n");
 	m = 1;
@@ -2201,6 +2215,9 @@ connect_to_server(const char *path, char **args, int *in, int *out)
 	signal(SIGTERM, killchild);
 	signal(SIGINT, killchild);
 	signal(SIGHUP, killchild);
+	signal(SIGTSTP, suspchild);
+	signal(SIGTTIN, suspchild);
+	signal(SIGTTOU, suspchild);
 	close(c_in);
 	close(c_out);
 }

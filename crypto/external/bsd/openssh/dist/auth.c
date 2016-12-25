@@ -1,5 +1,6 @@
-/*	$NetBSD: auth.c,v 1.17 2016/08/02 13:45:12 christos Exp $	*/
-/* $OpenBSD: auth.c,v 1.115 2016/06/15 00:40:40 dtucker Exp $ */
+/*	$NetBSD: auth.c,v 1.18 2016/12/25 00:07:46 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.119 2016/12/15 21:29:05 dtucker Exp $ */
+
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.17 2016/08/02 13:45:12 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.18 2016/12/25 00:07:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -100,6 +101,7 @@ allowed_user(struct passwd * pw)
 	struct ssh *ssh = active_state; /* XXX */
 	struct stat st;
 	const char *hostname = NULL, *ipaddr = NULL;
+	int r;
 	u_int i;
 
 	/* Shouldn't be called if pw is NULL, but better safe than sorry... */
@@ -253,21 +255,31 @@ allowed_user(struct passwd * pw)
 
 	/* Return false if user is listed in DenyUsers */
 	if (options.num_deny_users > 0) {
-		for (i = 0; i < options.num_deny_users; i++)
-			if (match_user(pw->pw_name, hostname, ipaddr,
-			    options.deny_users[i])) {
+		for (i = 0; i < options.num_deny_users; i++) {
+			r = match_user(pw->pw_name, hostname, ipaddr,
+			    options.deny_users[i]);
+			if (r < 0) {
+				fatal("Invalid DenyUsers pattern \"%.100s\"",
+				    options.deny_users[i]);
+			} else if (r != 0) {
 				logit("User %.100s from %.100s not allowed "
 				    "because listed in DenyUsers",
 				    pw->pw_name, hostname);
 				return 0;
 			}
+		}
 	}
 	/* Return false if AllowUsers isn't empty and user isn't listed there */
 	if (options.num_allow_users > 0) {
-		for (i = 0; i < options.num_allow_users; i++)
-			if (match_user(pw->pw_name, hostname, ipaddr,
-			    options.allow_users[i]))
+		for (i = 0; i < options.num_allow_users; i++) {
+			r = match_user(pw->pw_name, hostname, ipaddr,
+			    options.allow_users[i]);
+			if (r < 0) {
+				fatal("Invalid AllowUsers pattern \"%.100s\"",
+				    options.allow_users[i]);
+			} else if (r == 1)
 				break;
+		}
 		/* i < options.num_allow_users iff we break for loop */
 		if (i >= options.num_allow_users) {
 			logit("User %.100s from %.100s not allowed because "
@@ -354,7 +366,7 @@ auth_log(Authctxt *authctxt, int authenticated, int partial,
 	else
 		authmsg = authenticated ? "Accepted" : "Failed";
 
-	authlog("%s %s%s%s for %s%.100s from %.200s port %d %s%s%s",
+	authlog("%s %s%s%s for %s%.100s from %.200s port %d ssh2%s%s",
 	    authmsg,
 	    method,
 	    submethod != NULL ? "/" : "", submethod == NULL ? "" : submethod,
@@ -362,7 +374,6 @@ auth_log(Authctxt *authctxt, int authenticated, int partial,
 	    authctxt->user,
 	    ssh_remote_ipaddr(ssh),
 	    ssh_remote_port(ssh),
-	    compat20 ? "ssh2" : "ssh1",
 	    authctxt->info != NULL ? ": " : "",
 	    authctxt->info != NULL ? authctxt->info : "");
 	if (!authctxt->postponed)
@@ -377,12 +388,11 @@ auth_maxtries_exceeded(Authctxt *authctxt)
 	struct ssh *ssh = active_state; /* XXX */
 
 	error("maximum authentication attempts exceeded for "
-	    "%s%.100s from %.200s port %d %s",
+	    "%s%.100s from %.200s port %d ssh2",
 	    authctxt->valid ? "" : "invalid user ",
 	    authctxt->user,
 	    ssh_remote_ipaddr(ssh),
-	    ssh_remote_port(ssh),
-	    compat20 ? "ssh2" : "ssh1");
+	    ssh_remote_port(ssh));
 	packet_disconnect("Too many authentication failures");
 	/* NOTREACHED */
 }

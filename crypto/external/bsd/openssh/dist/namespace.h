@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.5 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.6 2016/12/25 00:07:47 christos Exp $	*/
 #ifndef _SSH_NAMESPACE_H_
 #define _SSH_NAMESPACE_H_
 #define addargs		ssh_addargs

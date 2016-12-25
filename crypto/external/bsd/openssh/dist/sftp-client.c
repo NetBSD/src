@@ -1,5 +1,6 @@
-/*	$NetBSD: sftp-client.c,v 1.16 2016/08/02 13:45:12 christos Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.124 2016/05/25 23:48:45 schwarze Exp $ */
+/*	$NetBSD: sftp-client.c,v 1.17 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.125 2016/09/12 01:22:38 deraadt Exp $ */
+
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -22,7 +23,8 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.16 2016/08/02 13:45:12 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.17 2016/12/25 00:07:47 christos Exp $");
+
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -458,7 +460,7 @@ do_init(int fd_in, int fd_out, u_int transfer_buflen, u_int num_requests,
 
 	/* Some filexfer v.0 servers don't support large packets */
 	if (ret->version == 0)
-		ret->transfer_buflen = MIN(ret->transfer_buflen, 20480);
+		ret->transfer_buflen = MINIMUM(ret->transfer_buflen, 20480);
 
 	ret->limit_kbps = limit_kbps;
 	if (ret->limit_kbps > 0) {
@@ -1348,7 +1350,7 @@ do_download(struct sftp_conn *conn, const char *remote_path,
 				    req->offset, req->len, handle, handle_len);
 				/* Reduce the request size */
 				if (len < buflen)
-					buflen = MAX(MIN_READ_SIZE, len);
+					buflen = MAXIMUM(MIN_READ_SIZE, len);
 			}
 			if (max_req > 0) { /* max_req = 0 iff EOF received */
 				if (size > 0 && offset > size) {
