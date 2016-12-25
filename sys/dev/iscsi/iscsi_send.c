@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.31 2016/06/15 04:30:30 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.32 2016/12/25 06:55:28 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -408,7 +408,9 @@ iscsi_send_thread(void *par)
 	} while (!conn->destroy);
 
 	/* wake up anyone waiting for a PDU */
+	mutex_enter(&conn->lock);
 	cv_broadcast(&conn->conn_cv);
+	mutex_exit(&conn->lock);
 
 	/* wake up any waiting CCBs */
 	while ((ccb = TAILQ_FIRST(&conn->ccbs_waiting)) != NULL) {
@@ -468,6 +470,8 @@ send_pdu(ccb_t *ccb, pdu_t *pdu, ccb_disp_t cdisp, pdu_disp_t pdisp)
 
 	mutex_enter(&conn->lock);
 	if (pdisp == PDUDISP_WAIT) {
+		KASSERT(ccb != NULL);
+
 		ccb->pdu_waiting = pdu;
 
 		/* save UIO and IOVEC for retransmit */
@@ -483,16 +487,20 @@ send_pdu(ccb_t *ccb, pdu_t *pdu, ccb_disp_t cdisp, pdu_disp_t pdisp)
 		TAILQ_INSERT_HEAD(&conn->pdus_to_send, pdu, send_chain);
 	else
 		TAILQ_INSERT_TAIL(&conn->pdus_to_send, pdu, send_chain);
-	mutex_exit(&conn->lock);
 
 	cv_broadcast(&conn->conn_cv);
 
 	if (cdisp != CCBDISP_NOWAIT) {
-		ccb_timeout_start(ccb, COMMAND_TIMEOUT);
+		KASSERT(ccb != NULL);
+		KASSERTMSG(ccb->connection == conn, "conn mismatch %p != %p\n", ccb->connection, conn);
 
-		mutex_enter(&conn->lock);
 		if (prev_cdisp <= CCBDISP_NOWAIT)
 			suspend_ccb(ccb, TRUE);
+
+		mutex_exit(&conn->lock);
+		ccb_timeout_start(ccb, COMMAND_TIMEOUT);
+		mutex_enter(&conn->lock);
+
 		while (ccb->disp == CCBDISP_WAIT) {
 			DEBC(conn, 15, ("Send_pdu: ccb=%p cdisp=%d waiting\n",
 				ccb, ccb->disp));
@@ -500,8 +508,9 @@ send_pdu(ccb_t *ccb, pdu_t *pdu, ccb_disp_t cdisp, pdu_disp_t pdisp)
 			DEBC(conn, 15, ("Send_pdu: ccb=%p cdisp=%d returned\n",
 				ccb, ccb->disp));
 		}
-		mutex_exit(&conn->lock);
 	}
+
+	mutex_exit(&conn->lock);
 }
 
 
@@ -546,9 +555,8 @@ resend_pdu(ccb_t *ccb)
 		TAILQ_INSERT_TAIL(&conn->pdus_to_send, pdu, send_chain);
 	}
 	ccb_timeout_start(ccb, COMMAND_TIMEOUT);
-	mutex_exit(&conn->lock);
-
 	cv_broadcast(&conn->conn_cv);
+	mutex_exit(&conn->lock);
 }
 
 
@@ -872,8 +880,8 @@ negotiate_text(connection_t *conn, pdu_t *rx_pdu, ccb_t *tx_ccb)
 			handle_connection_error(conn, rc, LOGOUT_CONNECTION);
 		} else if (tx_pdu != NULL) {
 			init_text_pdu(conn, tx_ccb, tx_pdu, rx_pdu);
-			setup_tx_uio(tx_pdu, tx_pdu->temp_data_len, tx_pdu->temp_data,
-						 FALSE);
+			setup_tx_uio(tx_pdu, tx_pdu->temp_data_len,
+			     tx_pdu->temp_data, FALSE);
 			send_pdu(tx_ccb, tx_pdu, CCBDISP_NOWAIT, PDUDISP_FREE);
 		} else {
 			set_negotiated_parameters(tx_ccb);
@@ -1209,7 +1217,6 @@ send_logout(connection_t *conn, connection_t *refconn, int reason,
 	}
 
 	setup_tx_uio(ppdu, 0, NULL, FALSE);
-
 	send_pdu(ccb, ppdu, (wait) ? CCBDISP_WAIT : CCBDISP_FREE, PDUDISP_FREE);
 
 	if (wait) {
@@ -1350,7 +1357,6 @@ send_data_out(connection_t *conn, pdu_t *rx_pdu, ccb_t *tx_ccb,
 				sn, len, offs, totlen));
 
 		setup_tx_uio(tx_pdu, len, tx_ccb->data_ptr + offs, FALSE);
-
 		send_pdu(tx_ccb, tx_pdu, (totlen) ? CCBDISP_NOWAIT : disp, PDUDISP_FREE);
 
 		sn++;
