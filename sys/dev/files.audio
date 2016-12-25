@@ -1,4 +1,4 @@
-#	$NetBSD: files.audio,v 1.9 2016/12/15 04:36:07 christos Exp $
+#	$NetBSD: files.audio,v 1.10 2016/12/25 23:23:46 nat Exp $
 
 define	audiobus	{ }
 define	midibus		{ }
@@ -13,7 +13,7 @@ define	auvolconv
 
 # audio and midi devices, attaches to audio hardware driver
 #
-device	audio {}: audiodev, auconv, aurateconv
+device	audio {}: audiodev, auconv, aurateconv, mulaw
 attach	audio at audiobus
 device	midi: audio
 attach	midi at midibus
