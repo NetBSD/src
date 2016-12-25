@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.h,v 1.11 2016/08/02 13:45:12 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.h,v 1.30 2016/03/07 19:02:43 djm Exp $ */
+/*	$NetBSD: monitor_wrap.h,v 1.12 2016/12/25 00:07:47 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.h,v 1.32 2016/09/28 16:33:07 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -32,7 +32,7 @@
 extern int use_privsep;
 #define PRIVSEP(x)	(use_privsep ? mm_##x : x)
 
-enum mm_keytype {MM_NOKEY, MM_HOSTKEY, MM_USERKEY, MM_RSAHOSTKEY, MM_RSAUSERKEY};
+enum mm_keytype { MM_NOKEY, MM_HOSTKEY, MM_USERKEY };
 
 struct monitor;
 struct mm_master;
@@ -50,12 +50,7 @@ int mm_key_allowed(enum mm_keytype, const char *, const char *, Key *, int);
 int mm_user_key_allowed(struct passwd *, Key *, int);
 int mm_hostbased_key_allowed(struct passwd *, const char *,
     const char *, Key *);
-int mm_auth_rhosts_rsa_key_allowed(struct passwd *, const char *,
-    const char *, Key *);
 int mm_key_verify(Key *, u_char *, u_int, u_char *, u_int);
-int mm_auth_rsa_key_allowed(struct passwd *, BIGNUM *, Key **);
-int mm_auth_rsa_verify_response(Key *, BIGNUM *, u_char *);
-BIGNUM *mm_auth_rsa_generate_challenge(Key *);
 
 #ifdef GSSAPI
 OM_uint32 mm_ssh_gssapi_server_ctx(Gssctxt **, gss_OID);
@@ -79,10 +74,6 @@ void mm_terminate(void);
 int mm_pty_allocate(int *, int *, char *, size_t);
 void mm_session_pty_cleanup2(struct Session *);
 
-/* SSHv1 interfaces */
-void mm_ssh1_session_id(u_char *);
-int mm_ssh1_session_key(BIGNUM *);
-
 /* Key export functions */
 struct newkeys *mm_newkeys_from_blob(u_char *, int);
 int mm_newkeys_to_blob(int, u_char **, u_int *);
@@ -100,16 +91,9 @@ int mm_skey_query(void *, char **, char **, u_int *, char ***, u_int **);
 int mm_skey_respond(void *, u_int, char **);
 
 /* auth_krb */
-#ifdef KRB4
-int mm_auth_krb4(struct Authctxt *, void *, char **, void *);
-#endif
 #ifdef KRB5
 /* auth and reply are really krb5_data objects, but we don't want to
  * include all of the krb5 headers here */
 int mm_auth_krb5(void *authctxt, void *auth, char **client, void *reply);
 #endif
-
-/* zlib allocation hooks */
-void mm_init_compression(struct mm_master *);
-
 #endif /* _MM_WRAP_H_ */

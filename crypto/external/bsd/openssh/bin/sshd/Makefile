@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2016/01/14 22:30:04 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2016/12/25 00:07:46 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -7,18 +7,18 @@ MAN=	sshd.8 sshd_config.5 moduli.5
 
 BINDIR=	/usr/sbin
 
-SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
+SRCS=	sshd.c auth-rhosts.c auth-passwd.c \
 	sshpty.c sshlogin.c servconf.c serverloop.c \
-	auth.c auth1.c auth2.c auth-options.c session.c \
-	auth-chall.c auth2-chall.c groupaccess.c \
-	auth-skey.c auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
+	auth.c auth2.c auth-options.c session.c \
+	auth-krb5.c auth2-chall.c groupaccess.c \
+	auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
-	monitor_mm.c monitor.c monitor_wrap.c \
+	monitor.c monitor_wrap.c \
 	kexdhs.c kexgexs.c kexecdhs.c sftp-server.c sftp-common.c \
 	sandbox-rlimit.c pfilter.c
 
-COPTS.auth-options.c=	-Wno-pointer-sign
-COPTS.ldapauth.c=	-Wno-format-nonliteral	# XXX: should fix
+COPTS.auth-options.c+=	-Wno-pointer-sign
+COPTS.ldapauth.c+=	-Wno-format-nonliteral	# XXX: should fix
 
 .if (${USE_PAM} != "no")
 SRCS+=	auth-pam.c
@@ -47,7 +47,7 @@ DPADD+=	${LIBGSSAPI} ${LIBHEIMNTLM}
 LDADD+=	-lkafs
 DPADD+= ${LIBKAFS}
 
-SRCS+=	auth-krb5.c auth2-krb5.c
+SRCS+=	auth2-krb5.c
 LDADD+=	-lkrb5 -lasn1
 DPADD+=	${LIBKRB5} ${LIBASN1}
 
