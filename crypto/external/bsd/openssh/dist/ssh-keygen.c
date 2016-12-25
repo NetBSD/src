@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.290 2016/05/02 09:36:42 djm Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.292 2016/09/12 03:29:16 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -200,8 +200,7 @@ type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 				*bitsp = sshkey_curve_nid_to_bits(nid);
 			if (*bitsp == 0)
 				*bitsp = DEFAULT_BITS_ECDSA;
-		}
-		else
+		} else
 #endif
 			*bitsp = DEFAULT_BITS;
 	}
@@ -2437,10 +2436,10 @@ main(int argc, char **argv)
 			break;
 		case 'J':
 			lines_to_process = strtoul(optarg, NULL, 10);
-                        break;
+			break;
 		case 'j':
 			start_lineno = strtoul(optarg, NULL, 10);
-                        break;
+			break;
 		case 'K':
 			if (strlen(optarg) >= PATH_MAX)
 				fatal("Checkpoint filename too long");
