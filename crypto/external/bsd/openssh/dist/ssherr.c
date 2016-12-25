@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssherr.c,v 1.4 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: ssherr.c,v 1.5 2016/12/25 00:07:47 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>

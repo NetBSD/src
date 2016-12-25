@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-options.h,v 1.6 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: auth-options.h,v 1.21 2015/01/14 10:30:34 markus Exp $ */
+/*	$NetBSD: auth-options.h,v 1.7 2016/12/25 00:07:46 christos Exp $	*/
+/* $OpenBSD: auth-options.h,v 1.22 2016/11/30 02:57:40 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,6 +36,6 @@ extern char *authorized_principals;
 
 int	auth_parse_options(struct passwd *, const char *, const char *, u_long);
 void	auth_clear_options(void);
-int	auth_cert_options(struct sshkey *, struct passwd *);
+int	auth_cert_options(struct sshkey *, struct passwd *, const char **);
 
 #endif
