@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.56 2016/12/22 14:47:55 cherry Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.57 2016/12/25 04:35:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.56 2016/12/22 14:47:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.57 2016/12/25 04:35:30 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -453,8 +453,8 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
-	    physical_start, physical_end - 1);
+	printf("physmemory: %"PRIuPSIZE" pages at 0x%08lx -> 0x%08lx\n",
+	    physmem, physical_start, physical_end - 1);
 #endif
 
 	/*
