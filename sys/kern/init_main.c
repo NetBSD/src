@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.487 2016/11/16 12:31:33 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.488 2016/12/26 23:12:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.487 2016/11/16 12:31:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.488 2016/12/26 23:12:33 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -349,6 +349,7 @@ main(void)
 
 	/* Initialize the buffer cache */
 	bufinit();
+	biohist_init();
 
 
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_IMAGE)

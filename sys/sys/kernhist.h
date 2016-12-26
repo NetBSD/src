@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.12 2016/04/09 17:04:53 riastradh Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.13 2016/12/26 23:12:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -87,6 +87,7 @@ LIST_HEAD(kern_history_head, kern_history);
 #define	KERNHIST_UVMLOANHIST	0x00000008	/* loanhist */
 #define	KERNHIST_USBHIST	0x00000010	/* usbhist */
 #define	KERNHIST_SCDEBUGHIST	0x00000020	/* scdebughist */
+#define	KERNHIST_BIOHIST	0x00000040	/* biohist */
 
 #ifdef _KERNEL
 
