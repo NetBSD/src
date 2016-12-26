@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.264 2016/12/26 23:12:33 pgoyette Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.265 2016/12/26 23:15:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.264 2016/12/26 23:12:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.265 2016/12/26 23:15:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1647,17 +1647,20 @@ biointr(void *cookie)
 
 	ci = curcpu();
 
+	s = splvm();
 	while (!TAILQ_EMPTY(&ci->ci_data.cpu_biodone)) {
 		KASSERT(curcpu() == ci);
 
-		s = splvm();
 		bp = TAILQ_FIRST(&ci->ci_data.cpu_biodone);
 		TAILQ_REMOVE(&ci->ci_data.cpu_biodone, bp, b_actq);
 		splx(s);
 
 		KERNHIST_LOG(biohist, "bp=%p", bp, 0, 0, 0);
 		biodone2(bp);
+
+		s = splvm();
 	}
+	splx(s);
 }
 
 /*
