@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.457 2016/12/13 11:00:20 wiz Exp $
+.\"	$NetBSD: options.4,v 1.458 2016/12/26 23:12:33 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -710,6 +710,32 @@ kernel history.
 The default is 100.
 This option depends upon the
 .Em UVMHIST
+option.
+.It Cd options BIOHIST
+Like
+.Em KERNHIST ,
+it enables the BIO history logs.
+These logs can be displayed by using
+.Cm show kernhist
+from DDB.
+See the kernel source file
+.Pa sys/kern/vfs_vio.c
+for details.
+.It Cd options BIOHIST_PRINT
+Like
+.Em BIOHIST ,
+it prints the BIO history logs on the system console as entries are added.
+Note that the output is
+.Em extremely
+voluminous, so this option is really only useful for debugging
+the very earliest parts of kernel initialization.
+.It Cd options BIOHIST_SIZE
+Set the size of the
+.Dq biohist
+kernel history.
+The default is 500.
+This option depends upon the
+.Em BIOHIST
 option.
 .El
 .Ss File Systems
