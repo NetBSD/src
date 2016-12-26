@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.32 2016/11/19 14:44:00 njoly Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.33 2016/12/26 07:25:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.32 2016/11/19 14:44:00 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.33 2016/12/26 07:25:00 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -141,6 +141,7 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 	} u;
 	struct ifaddr *ifa;
 	const struct sockaddr_dl *asdl, *nsdl;
+	struct psref psref;
 
 	switch (cmd) {
 	case SIOCALIFADDR:
@@ -168,15 +169,19 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 
 		error = 0;
 
-		s = splnet();
-
+		s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa, ifp) {
-			if (sockaddr_cmp(&u.sa, ifa->ifa_addr) == 0)
+			if (sockaddr_cmp(&u.sa, ifa->ifa_addr) == 0) {
+				ifa_acquire(ifa, &psref);
 				break;
+			}
 		}
+		pserialize_read_exit(s);
 
 		switch (cmd) {
 		case SIOCGLIFADDR:
+			ifa_release(ifa, &psref);
+			s = pserialize_read_enter();
 			if ((iflr->flags & IFLR_PREFIX) == 0) {
 				IFADDR_READER_FOREACH(ifa, ifp) {
 					if (ifa->ifa_addr->sa_family == AF_LINK)
@@ -184,6 +189,7 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 				}
 			}
 			if (ifa == NULL) {
+				pserialize_read_exit(s);
 				error = EADDRNOTAVAIL;
 				break;
 			}
@@ -198,6 +204,8 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 
 			sockaddr_copy(sstosa(&iflr->addr), sizeof(iflr->addr),
 			    ifa->ifa_addr);
+			pserialize_read_exit(s);
+			ifa = NULL;
 
 			break;
 		case SIOCDLIFADDR:
@@ -212,12 +220,13 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 			}
 			break;
 		case SIOCALIFADDR:
-			if (ifa != NULL)
-				;
-			else if ((ifa = if_dl_create(ifp, &nsdl)) == NULL) {
-				error = ENOMEM;
-				break;
-			} else {
+			if (ifa == NULL) {
+				ifa = if_dl_create(ifp, &nsdl);
+				if (ifa == NULL) {
+					error = ENOMEM;
+					break;
+				}
+				ifa_acquire(ifa, &psref);
 				sockaddr_copy(ifa->ifa_addr,
 				    ifa->ifa_addr->sa_len, &u.sa);
 				ifa_insert(ifp, ifa);
@@ -234,7 +243,7 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 			}
 			break;
 		}
-		splx(s);
+		ifa_release(ifa, &psref);
 		if (error != ENETRESET)
 			return error;
 		else if ((ifp->if_flags & IFF_RUNNING) != 0 &&
