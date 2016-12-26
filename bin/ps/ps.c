@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.87 2016/12/02 21:59:03 christos Exp $	*/
+/*	$NetBSD: ps.c,v 1.88 2016/12/26 20:52:39 rin Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.87 2016/12/02 21:59:03 christos Exp $");
+__RCSID("$NetBSD: ps.c,v 1.88 2016/12/26 20:52:39 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -611,8 +611,7 @@ setpinfo(struct kinfo_proc2 *ki, int nentries, int calc_pcpu, int rawcpu)
 		pi[i].ki = &ki[i];
 		if (!calc_pcpu)
 			continue;
-		if (ki[i].p_realstat == SZOMB ||
-		    (!rawcpu && ki[i].p_swtime == 0)) {
+		if (ki[i].p_swtime == 0 || ki[i].p_realstat == SZOMB) {
 			pi[i].pcpu = 0.0;
 			continue;
 		}
