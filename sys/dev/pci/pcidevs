@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1273 2016/12/01 09:04:03 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1274 2016/12/26 07:53:03 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2897,7 +2897,7 @@ product INTEL 82598AF		0x10c7	82598 10 Gigabit AF
 product INTEL 82598AT		0x10c8	82598 10 Gigabit AT
 product INTEL 82576_COPPER	0x10c9	82576 1000BaseT Ethernet
 product INTEL 82576_VF		0x10ca	82576 1000BaseT Ethernet Virtual Function
-product INTEL 82801H_IGP_M_V 	0x10cb	i82801H IGP (MV) LAN Controller
+product INTEL 82801I_IGP_M_V 	0x10cb	i82801I IGP (MV) LAN Controller
 product INTEL 82801J_R_BM_LM	0x10cc	i82567LM-2 LAN Controller
 product INTEL 82801J_R_BM_LF	0x10cd	i82567LF-2 LAN Controller
 product INTEL 82801J_R_BM_V	0x10ce	i82567V-2 LAN Controller
