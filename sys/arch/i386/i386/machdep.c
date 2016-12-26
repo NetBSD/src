@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.775 2016/12/26 15:47:48 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.776 2016/12/26 17:54:06 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.775 2016/12/26 15:47:48 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.776 2016/12/26 17:54:06 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -235,13 +235,6 @@ int i386_fpu_fdivbug;
 int i386_use_fxsave;
 int i386_has_sse;
 int i386_has_sse2;
-
-vaddr_t msgbuf_vaddr;
-struct {
-	paddr_t paddr;
-	psize_t sz;
-} msgbuf_p_seg[VM_PHYSSEG_MAX];
-unsigned int msgbuf_p_cnt = 0;
 
 vaddr_t idt_vaddr;
 paddr_t idt_paddr;
@@ -1034,51 +1027,6 @@ initgdt(union descriptor *tgdt)
 #endif /* !XEN */
 }
 
-static void
-init386_msgbuf(void)
-{
-	/* Message buffer is located at end of core. */
-	psize_t sz = round_page(MSGBUFSIZE);
-	psize_t reqsz = sz;
-	uvm_physseg_t x;
-		
-search_again:
-        for (x = uvm_physseg_get_first();
-	     uvm_physseg_valid_p(x);
-	     x = uvm_physseg_get_next(x)) {
-		if (ctob(uvm_physseg_get_avail_end(x)) == avail_end) {
-			break;
-		}
-	}
-	if (uvm_physseg_valid_p(x) == false)
-		panic("init386: can't find end of memory");
-
-	/* Shrink so it'll fit in the last segment. */
-	if (uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x) < atop(sz))
-		sz = ctob(uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x));
-
-	uvm_physseg_unplug(uvm_physseg_get_end(x) - atop(sz), atop(sz));
-	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-        msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(uvm_physseg_get_avail_end(x));
-
-	/* Now find where the new avail_end is. */
-	avail_end = ctob(uvm_physseg_get_avail_end(x));
-
-	if (sz == reqsz)
-		return;
-
-	reqsz -= sz;
-	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
-		/* No more segments available, bail out. */
-		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
-		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
-		return;
-	}
-
-	sz = reqsz;
-	goto search_again;
-}
-
 #ifndef XEN
 static void
 init386_pte0(void)
@@ -1273,7 +1221,7 @@ init386(paddr_t first_avail)
 
 #endif /* !XEN */
 
-	init386_msgbuf();
+	init_x86_msgbuf();
 
 #if !defined(XEN) && NBIOSCALL > 0
 	/*
