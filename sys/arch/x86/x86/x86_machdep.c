@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.79 2016/12/20 14:03:15 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.80 2016/12/26 17:54:07 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.79 2016/12/20 14:03:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.80 2016/12/26 17:54:07 cherry Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -100,6 +100,16 @@ struct bootinfo bootinfo;
 /* --------------------------------------------------------------------- */
 
 static kauth_listener_t x86_listener;
+
+extern paddr_t lowmem_rsvd, avail_start, avail_end;
+
+vaddr_t msgbuf_vaddr;
+
+struct msgbuf_p_seg msgbuf_p_seg[VM_PHYSSEG_MAX];
+
+unsigned int msgbuf_p_cnt = 0;
+
+void init_x86_msgbuf(void);
 
 /*
  * Given the type of a bootinfo entry, looks for a matching item inside
@@ -481,8 +491,6 @@ static struct {
 	/* 24-bit addresses needed for ISA DMA. */
 	{ VM_FREELIST_FIRST16,	16 * 1024 * 1024 },
 };
-
-extern paddr_t lowmem_rsvd, avail_end;
 
 int
 x86_select_freelist(uint64_t maxaddr)
@@ -900,6 +908,52 @@ init_x86_vm(paddr_t pa_kend)
 }
 
 #endif /* !XEN */
+
+void
+init_x86_msgbuf(void)
+{
+	/* Message buffer is located at end of core. */
+	psize_t sz = round_page(MSGBUFSIZE);
+	psize_t reqsz = sz;
+	uvm_physseg_t x;
+		
+ search_again:
+        for (x = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(x);
+	     x = uvm_physseg_get_next(x)) {
+
+		if (ctob(uvm_physseg_get_avail_end(x)) == avail_end)
+			break;
+	}
+
+	if (uvm_physseg_valid_p(x) == false)
+		panic("init_x86_msgbuf: can't find end of memory");
+
+	/* Shrink so it'll fit in the last segment. */
+	if (uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x) < atop(sz))
+		sz = ctob(uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x));
+
+	uvm_physseg_unplug(uvm_physseg_get_end(x) - atop(sz), atop(sz));
+	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
+        msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(uvm_physseg_get_avail_end(x));
+
+	/* Now find where the new avail_end is. */
+	avail_end = ctob(uvm_physseg_get_avail_end(x));
+
+	if (sz == reqsz)
+		return;
+
+	reqsz -= sz;
+	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
+		/* No more segments available, bail out. */
+		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
+		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
+		return;
+	}
+
+	sz = reqsz;
+	goto search_again;
+}
 
 void
 x86_reset(void)
