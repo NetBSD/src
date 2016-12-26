@@ -31,7 +31,7 @@
 
 #if defined(_KERNEL)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.2 2016/12/26 12:44:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.3 2016/12/26 21:16:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -245,7 +245,7 @@ hashmap_remove(lpm_hmap_t *hmap, const void *key, size_t len)
 			} else {
 				hmap->bucket[i] = entry->next;
 			}
-			free(entry, M_TEMP);
+			kmem_free(entry, offsetof(lpm_ent_t, key[len]));
 			return 0;
 		}
 		prev = entry;
