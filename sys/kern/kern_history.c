@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.7 2016/12/26 23:12:33 pgoyette Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.8 2016/12/26 23:49:53 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.7 2016/12/26 23:12:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.8 2016/12/26 23:49:53 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.7 2016/12/26 23:12:33 pgoyette Ex
 #endif
 
 #ifdef BIOHIST
-#include <kern/biohist.h>
+#include <sys/biohist.h>
 #endif
 
 #ifdef SYSCALL_DEBUG
