@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.244 2016/12/26 12:54:42 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.245 2016/12/26 13:55:13 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.244 2016/12/26 12:54:42 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245 2016/12/26 13:55:13 cherry Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1485,8 +1485,6 @@ init_x86_64_msgbuf(void)
 	if (uvm_physseg_valid_p(x) == false)
 		panic("init_x86_64: can't find end of memory");
 
-	printf("uvm_physseg_find(atop(avail_end), NULL) == %d\n",
-	    uvm_physseg_find(atop(avail_end), NULL));
 	/* Shrink so it'll fit in the last segment. */
 	if (uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x) < atop(sz))
 		sz = ctob(uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x));
