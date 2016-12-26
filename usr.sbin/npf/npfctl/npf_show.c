@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.19 2015/06/03 23:36:05 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.20 2016/12/26 23:05:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.19 2015/06/03 23:36:05 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.20 2016/12/26 23:05:05 christos Exp $");
 
 #include <sys/socket.h>
+#define	__FAVOR_BSD
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
@@ -64,14 +65,18 @@ typedef struct {
 	uint32_t	curmark;
 } npf_conf_info_t;
 
-static npf_conf_info_t	stdout_ctx = {
-	.fp = stdout,
-	.fpos = 0,
-	.flags = 0
-};
+static npf_conf_info_t	stdout_ctx;
 
 static void	print_indent(npf_conf_info_t *, u_int);
 static void	print_linesep(npf_conf_info_t *);
+
+void
+npfctl_show_init(void)
+{
+	stdout_ctx.fp = stdout;
+	stdout_ctx.fpos = 0;
+	stdout_ctx.flags = 0;
+}
 
 /*
  * Helper routines to print various pieces of information.
@@ -488,15 +493,16 @@ npfctl_config_show(int fd)
 {
 	npf_conf_info_t *ctx = &stdout_ctx;
 	nl_config_t *ncf;
-	bool active, loaded;
+	bool loaded;
 
 	if (fd) {
-		ncf = npf_config_retrieve(fd, &active, &loaded);
+		ncf = npf_config_retrieve(fd);
 		if (ncf == NULL) {
 			return errno;
 		}
+		loaded = npf_config_loaded_p(ncf);
 		fprintf(ctx->fp, "# filtering:\t%s\n# config:\t%s\n",
-		    active ? "active" : "inactive",
+		    npf_config_active_p(ncf) ? "active" : "inactive",
 		    loaded ? "loaded" : "empty");
 		print_linesep(ctx);
 	} else {
