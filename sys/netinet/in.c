@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.191 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.192 2016/12/26 00:30:07 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.191 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.192 2016/12/26 00:30:07 knakahara Exp $");
 
 #include "arp.h"
 
@@ -831,11 +831,10 @@ in_purgeaddr(struct ifaddr *ifa)
 	TAILQ_REMOVE(&in_ifaddrhead, ia, ia_list);
 	IN_ADDRLIST_WRITER_REMOVE(ia);
 	ifa_remove(ifp, &ia->ia_ifa);
-	mutex_exit(&in_ifaddr_lock);
-
 #ifdef NET_MPSAFE
 	pserialize_perform(in_ifaddrhash_psz);
 #endif
+	mutex_exit(&in_ifaddr_lock);
 	IN_ADDRHASH_ENTRY_DESTROY(ia);
 	IN_ADDRLIST_ENTRY_DESTROY(ia);
 	ifafree(&ia->ia_ifa);
@@ -879,10 +878,10 @@ in_addrhash_remove(struct in_ifaddr *ia)
 
 	mutex_enter(&in_ifaddr_lock);
 	in_addrhash_remove_locked(ia);
-	mutex_exit(&in_ifaddr_lock);
 #ifdef NET_MPSAFE
 	pserialize_perform(in_ifaddrhash_psz);
 #endif
+	mutex_exit(&in_ifaddr_lock);
 	IN_ADDRHASH_ENTRY_DESTROY(ia);
 }
 
