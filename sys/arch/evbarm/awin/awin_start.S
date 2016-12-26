@@ -39,9 +39,9 @@
 #include "assym.h"
 
 #include <arm/allwinner/awin_reg.h>
-#include <evbarm/awin/platform.h>  
+#include <evbarm/awin/platform.h>
 
-RCSID("$NetBSD: awin_start.S,v 1.12 2015/04/18 11:04:49 skrll Exp $")
+RCSID("$NetBSD: awin_start.S,v 1.13 2016/12/26 13:28:59 rjs Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -240,13 +240,13 @@ a20_mpinit:
 	dsb
 
 	/* Ensure CPU1 reset also invalidates its L1 caches */
-	ldr	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG] 
+	ldr	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG]
 	bic	r1, r1, #(1 << 1)
 	str	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG]
 	dsb
 
 	/* Hold DBGPWRDUP signal low */
-	ldr	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG] 
+	ldr	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG]
 	bic	r1, r1, #(1 << 1)
 	str	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG]
 	dsb
@@ -263,7 +263,7 @@ a20_mpinit:
 	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
 
 	/* Clear power-off gating */
-	ldr	r1, [r5, #AWIN_CPUCFG_CPU1_PWROFF_REG] 
+	ldr	r1, [r5, #AWIN_CPUCFG_CPU1_PWROFF_REG]
 	bic	r1, r1, #(1 << 1)
 	str	r1, [r5, #AWIN_CPUCFG_CPU1_PWROFF_REG]
 	dsb
@@ -275,7 +275,7 @@ a20_mpinit:
 	dsb
 
 	/* Reassert DBGPWRDUP signal */
-	ldr	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG] 
+	ldr	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG]
 	orr	r1, r1, #(1 << 1)
 	str	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG]
 	dsb
@@ -285,7 +285,7 @@ a20_mpinit:
 #endif
 
 	//
-	// Wait up a second for CPU1 to hatch. 
+	// Wait up a second for CPU1 to hatch.
 	//
 	movw	r6, #:lower16:arm_cpu_hatched
 	movt	r6, #:upper16:arm_cpu_hatched
@@ -345,7 +345,7 @@ a31_mpinit_cpu:
 	dsb
 
 	/* Ensure CPUX reset also invalidates its L1 caches */
-	ldr	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG] 
+	ldr	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG]
 	mov	r0, #1
 	lsl	r0, r0, r12
 	bic	r1, r1, r0
@@ -391,9 +391,9 @@ a31_mpinit_cpu:
 	/* We need to wait (at least) 10ms */
 	mov	r0, #0x3b000			// 10.06ms
 	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
-	
+
 	/* Clear power-off gating */
-	ldr	r1, [r6, #AWIN_A31_PRCM_PWROFF_GATING_REG] 
+	ldr	r1, [r6, #AWIN_A31_PRCM_PWROFF_GATING_REG]
 	mov	r0, #1
 	lsl	r0, r0, r12
 	bic	r1, r1, r0
@@ -403,7 +403,7 @@ a31_mpinit_cpu:
 	/* We need to wait (at least) 10ms */
 	mov	r0, #0x3b000			// 10.06ms
 	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
-	
+
 	/* Bring CPUX out of reset */
 	mov	r1, #(AWIN_A31_CPUCFG_RST_CTRL_CPU_RESET|AWIN_A31_CPUCFG_RST_CTRL_CORE_RESET)
 	mov	r2, #0x40
@@ -422,7 +422,7 @@ a31_mpinit_cpu:
 #endif
 
 	//
-	// Wait up a second for CPU1-3 to hatch. 
+	// Wait up a second for CPU1-3 to hatch.
 	//
 	movw	r6, #:lower16:arm_cpu_hatched
 	movt	r6, #:upper16:arm_cpu_hatched
@@ -510,7 +510,7 @@ a80_mpinit_cpu:
 	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
 
 	/* Clear power-off gating */
-	ldr	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_PWR_GATING_REG] 
+	ldr	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_PWR_GATING_REG]
 	mov	r0, #1
 	lsl	r0, r0, r12
 	bic	r1, r1, r0
@@ -546,7 +546,7 @@ a80_mpinit_cpu:
 #endif
 
 	//
-	// Wait up a second for CPU1-3 to hatch. 
+	// Wait up a second for CPU1-3 to hatch.
 	//
 	movw	r6, #:lower16:arm_cpu_hatched
 	movt	r6, #:upper16:arm_cpu_hatched
