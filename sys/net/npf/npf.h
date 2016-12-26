@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.52 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf.h,v 1.53 2016/12/26 23:39:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 
-#define	NPF_VERSION		18
+#define	NPF_VERSION		19
 
 #if defined(_NPF_STANDALONE)
 #include "npf_stand.h"
