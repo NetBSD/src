@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf_comp.c,v 1.8 2015/06/08 01:00:43 rmind Exp $	*/
+/*	$NetBSD: npf_bpf_comp.c,v 1.9 2016/12/26 23:05:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.8 2015/06/08 01:00:43 rmind Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.9 2016/12/26 23:05:05 christos Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: npf_bpf_comp.c,v 1.8 2015/06/08 01:00:43 rmind Exp $");
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#define	__FAVOR_BSD
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/udp.h>
@@ -102,6 +103,10 @@ struct npf_bpf {
 /* Reduce re-allocations by expanding in 64 byte blocks. */
 #define	ALLOC_MASK		(64 - 1)
 #define	ALLOC_ROUND(x)		(((x) + ALLOC_MASK) & ~ALLOC_MASK)
+
+#ifndef IPV6_VERSION
+#define	IPV6_VERSION		0x60
+#endif
 
 npf_bpf_t *
 npfctl_bpf_create(void)

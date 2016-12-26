@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.18 2016/12/09 02:40:38 christos Exp $
+# $NetBSD: files.npf,v 1.19 2016/12/26 23:05:06 christos Exp $
 #
 # Public Domain.
 #
@@ -11,6 +11,7 @@ defpseudo	npf:	ifnet
 
 # Core
 file	net/npf/npf.c				npf
+file	net/npf/npf_os.c			npf
 file	net/npf/npf_conf.c			npf
 file	net/npf/npf_ctl.c			npf
 file	net/npf/npf_handler.c			npf

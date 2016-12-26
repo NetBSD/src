@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.30 2016/12/10 21:04:12 christos Exp $	*/
+/*	$NetBSD: npf.h,v 1.31 2016/12/26 23:05:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -58,14 +58,6 @@ typedef int (*npfext_paramfunc_t)(nl_ext_t *, const char *, const char *);
 
 #ifdef _NPF_PRIVATE
 
-typedef struct {
-	int		ne_id;
-	char *		ne_source_file;
-	u_int		ne_source_line;
-	int		ne_ncode_error;
-	int		ne_ncode_errat;
-} nl_error_t;
-
 typedef void (*nl_rule_callback_t)(nl_rule_t *, unsigned);
 typedef void (*nl_table_callback_t)(unsigned, int);
 
@@ -75,12 +67,14 @@ typedef void (*nl_table_callback_t)(unsigned, int);
 
 nl_config_t *	npf_config_create(void);
 void		npf_config_destroy(nl_config_t *);
-
-int		npf_config_submit(nl_config_t *, int);
-nl_config_t *	npf_config_retrieve(int, bool *, bool *);
-nl_config_t *	npf_config_import(const char *);
-int		npf_config_export(const nl_config_t *, const char *);
+int		npf_config_submit(nl_config_t *, int, npf_error_t *);
+nl_config_t *	npf_config_retrieve(int);
 int		npf_config_flush(int);
+nl_config_t *	npf_config_import(const void *, size_t);
+void *		npf_config_export(nl_config_t *, size_t *);
+bool		npf_config_active_p(nl_config_t *);
+bool		npf_config_loaded_p(nl_config_t *);
+void *		npf_config_build(nl_config_t *);
 
 int		npf_ruleset_add(int, const char *, nl_rule_t *, uint64_t *);
 int		npf_ruleset_remove(int, const char *, uint64_t);
@@ -94,7 +88,7 @@ void		npf_ext_param_string(nl_ext_t *, const char *, const char *);
 
 nl_rule_t *	npf_rule_create(const char *, uint32_t, const char *);
 int		npf_rule_setcode(nl_rule_t *, int, const void *, size_t);
-int		npf_rule_setprio(nl_rule_t *, pri_t);
+int		npf_rule_setprio(nl_rule_t *, int);
 int		npf_rule_setproc(nl_rule_t *, const char *);
 int		npf_rule_setkey(nl_rule_t *, const void *, size_t);
 int		npf_rule_setinfo(nl_rule_t *, const void *, size_t);
@@ -110,7 +104,7 @@ int		npf_rproc_insert(nl_config_t *, nl_rproc_t *);
 
 nl_nat_t *	npf_nat_create(int, u_int, const char *,
 		    int, npf_addr_t *, npf_netmask_t, in_port_t);
-int		npf_nat_insert(nl_config_t *, nl_nat_t *, pri_t);
+int		npf_nat_insert(nl_config_t *, nl_nat_t *, int);
 int		npf_nat_lookup(int, int, npf_addr_t *[2], in_port_t [2], int, int);
 
 nl_table_t *	npf_table_create(const char *, u_int, int);
@@ -149,8 +143,6 @@ int		npf_nat_setnpt66(nl_nat_t *, uint16_t);
 nl_rproc_t *	npf_rproc_iterate(nl_config_t *);
 const char *	npf_rproc_getname(nl_rproc_t *);
 
-void		_npf_config_error(nl_config_t *, nl_error_t *);
-void		_npf_config_setsubmit(nl_config_t *, const char *);
 int		_npf_ruleset_list(int, const char *, nl_config_t *);
 void		_npf_debug_addif(nl_config_t *, const char *);
 

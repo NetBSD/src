@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.47 2016/06/29 21:40:20 christos Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.48 2016/12/26 23:05:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,12 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.47 2016/06/29 21:40:20 christos Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.48 2016/12/26 23:05:05 christos Exp $");
 
-#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/mman.h>
+#ifdef __NetBSD__
+#include <sha1.h>
+#include <sys/ioctl.h>
 #include <sys/module.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +48,9 @@ __RCSID("$NetBSD: npfctl.c,v 1.47 2016/06/29 21:40:20 christos Exp $");
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sha1.h>
+
+#include <arpa/inet.h>
+#include <openssl/sha.h>
 
 #include "npfctl.h"
 
@@ -209,49 +215,47 @@ npfctl_print_stats(int fd)
 }
 
 void
-npfctl_print_error(const nl_error_t *ne)
+npfctl_print_error(const npf_error_t *ne)
 {
-	const char *srcfile = ne->ne_source_file;
+	const char *srcfile = ne->source_file;
 
 	if (srcfile) {
-		warnx("source %s line %d", srcfile, ne->ne_source_line);
+		warnx("source %s line %d", srcfile, ne->source_line);
 	}
-	if (ne->ne_id) {
-		warnx("object: %d", ne->ne_id);
+	if (ne->id) {
+		warnx("object: %" PRIi64, ne->id);
 	}
 }
 
 char *
 npfctl_print_addrmask(int alen, const npf_addr_t *addr, npf_netmask_t mask)
 {
+	const unsigned buflen = 64;
+	char *buf = ecalloc(1, buflen);
 	struct sockaddr_storage ss;
-	char *buf = ecalloc(1, 64);
-	int len;
+
+	memset(&ss, 0, sizeof(ss));
 
 	switch (alen) {
 	case 4: {
 		struct sockaddr_in *sin = (void *)&ss;
-		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
-		sin->sin_port = 0;
 		memcpy(&sin->sin_addr, addr, sizeof(sin->sin_addr));
 		break;
 	}
 	case 16: {
 		struct sockaddr_in6 *sin6 = (void *)&ss;
-		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
-		sin6->sin6_port = 0;
-		sin6->sin6_scope_id = 0;
 		memcpy(&sin6->sin6_addr, addr, sizeof(sin6->sin6_addr));
 		break;
 	}
 	default:
 		assert(false);
 	}
-	len = sockaddr_snprintf(buf, 64, "%a", (struct sockaddr *)&ss);
+	inet_ntop(ss.ss_family, (const void *)&ss, buf, buflen);
 	if (mask && mask != NPF_NO_NETMASK) {
-		snprintf(&buf[len], 64 - len, "/%u", mask);
+		const unsigned len = strlen(buf);
+		snprintf(&buf[len], buflen - len, "/%u", mask);
 	}
 	return buf;
 }
@@ -384,16 +388,18 @@ npfctl_parse_rule(int argc, char **argv)
 	return rl;
 }
 
-static void
-SHA1(const uint8_t *d, unsigned int n, uint8_t *md)
+#ifdef __NetBSD__
+unsigned char *
+SHA1(const unsigned char *d, unsigned long l, unsigned char *md)
 {
-    SHA1_CTX c;
+	SHA1_CTX c;
 
-    SHA1Init(&c);
-    SHA1Update(&c, d, n);
-    SHA1Final(md, &c);
-    memset(&c, 0, sizeof(c));
+	SHA1Init(&c);
+	SHA1Update(&c, d, l);
+	SHA1Final(md, &c);
+	return md;
 }
+#endif
 
 static void
 npfctl_generate_key(nl_rule_t *rl, void *key)
@@ -404,9 +410,9 @@ npfctl_generate_key(nl_rule_t *rl, void *key)
 	if ((meta = npf_rule_export(rl, &len)) == NULL) {
 		errx(EXIT_FAILURE, "error generating rule key");
 	}
-	__CTASSERT(NPF_RULE_MAXKEYLEN >= SHA1_DIGEST_LENGTH);
+	__CTASSERT(NPF_RULE_MAXKEYLEN >= SHA_DIGEST_LENGTH);
 	memset(key, 0, NPF_RULE_MAXKEYLEN);
-	SHA1(meta, (unsigned int)len, key);
+	SHA1(meta, len, key);
 	free(meta);
 }
 
@@ -471,7 +477,7 @@ npfctl_rule(int fd, int argc, char **argv)
 		error = npf_ruleset_flush(fd, ruleset_name);
 		break;
 	default:
-		assert(false);
+		abort();
 	}
 
 	switch (error) {
@@ -502,6 +508,7 @@ npfctl_bpfjit(bool onoff)
 static void
 npfctl_preload_bpfjit(void)
 {
+#ifdef __NetBSD__
 	modctl_load_t args = {
 		.ml_filename = "bpfjit",
 		.ml_flags = MODCTL_NO_PROP,
@@ -521,39 +528,45 @@ npfctl_preload_bpfjit(void)
 		warnx("To disable this warning `set bpf.jit off' in "
 		    "/etc/npf.conf");
 	}
-}
-
-static int
-npfctl_save(int fd)
-{
-	nl_config_t *ncf;
-	bool active, loaded;
-	int error;
-
-	ncf = npf_config_retrieve(fd, &active, &loaded);
-	if (ncf == NULL) {
-		return errno;
-	}
-	error = npf_config_export(ncf, NPF_DB_PATH);
-	npf_config_destroy(ncf);
-	return error;
+#endif
 }
 
 static int
 npfctl_load(int fd)
 {
 	nl_config_t *ncf;
+	npf_error_t errinfo;
+	struct stat sb;
+	size_t blen;
+	void *blob;
 	int error;
 
-	ncf = npf_config_import(NPF_DB_PATH);
+	/*
+	 * The file may change while reading - we are not handling this,
+	 * leaving this responsibility for the caller.
+	 */
+	if (stat(NPF_DB_PATH, &sb) == -1) {
+		err(EXIT_FAILURE, "stat");
+	}
+	if ((blen = sb.st_size) == 0) {
+		err(EXIT_FAILURE, "saved configuration file is empty");
+	}
+	if ((blob = mmap(NULL, blen, PROT_READ,
+	    MAP_FILE | MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
+		err(EXIT_FAILURE, "mmap");
+	}
+	ncf = npf_config_import(blob, blen);
+	munmap(blob, blen);
 	if (ncf == NULL) {
 		return errno;
 	}
-	errno = error = npf_config_submit(ncf, fd);
+
+	/*
+	 * Configuration imported - submit it now.
+	 **/
+	errno = error = npf_config_submit(ncf, fd, &errinfo);
 	if (error) {
-		nl_error_t ne;
-		_npf_config_error(ncf, &ne);
-		npfctl_print_error(&ne);
+		npfctl_print_error(&errinfo);
 	}
 	npf_config_destroy(ncf);
 	return error;
@@ -563,6 +576,8 @@ static void
 npfctl(int action, int argc, char **argv)
 {
 	int fd, ver, boolval, ret = 0;
+	nl_config_t *ncf;
+	const char *fun = "";
 
 	fd = open(NPF_DEV_PATH, O_RDONLY);
 	if (fd == -1) {
@@ -577,7 +592,6 @@ npfctl(int action, int argc, char **argv)
 		    "Hint: update userland?", NPF_VERSION, ver);
 	}
 
-	const char *fun = "";
 	switch (action) {
 	case NPFCTL_START:
 		boolval = true;
@@ -630,7 +644,13 @@ npfctl(int action, int argc, char **argv)
 		fun = "npfctl_config_load";
 		break;
 	case NPFCTL_SAVE:
-		fd = npfctl_save(fd);
+		ncf = npf_config_retrieve(fd);
+		if (ncf) {
+			npfctl_config_save(ncf, NPF_DB_PATH);
+			npf_config_destroy(ncf);
+		} else {
+			ret = errno;
+		}
 		fun = "npfctl_config_save";
 		break;
 	case NPFCTL_STATS:
@@ -652,6 +672,7 @@ main(int argc, char **argv)
 	if (argc < 2) {
 		usage();
 	}
+	npfctl_show_init();
 	cmd = argv[1];
 
 	if (strcmp(cmd, "debug") == 0) {

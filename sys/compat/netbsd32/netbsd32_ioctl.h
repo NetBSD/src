@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.55 2016/11/12 16:06:04 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.56 2016/12/26 23:05:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -575,15 +575,7 @@ struct netbsd32_ksyms_gvalue {
 #define	KIOCGSYMBOL32	_IOWR('l', 5, struct netbsd32_ksyms_gsymbol)
 #endif /* KIOCGSYMBOL */
 
-/* From net/npf/npf.h */
-typedef struct in6_addr		netbsd32_npf_addr_t;
-typedef uint8_t			netbsd32_npf_netmask_t;
-
-typedef struct netbsd32_npf_ioctl_ent {
-	int			alen;
-	netbsd32_npf_addr_t	addr;
-	netbsd32_npf_netmask_t	mask;
-} netbsd32_npf_ioctl_ent_t;
+#include <net/npf/npf.h>
 
 typedef struct netbsd32_npf_ioctl_buf {
 	netbsd32_voidp		buf;
@@ -594,7 +586,7 @@ typedef struct netbsd32_npf_ioctl_table {
 	int			nct_cmd;
 	netbsd32_charp		nct_name;
 	union {
-		netbsd32_npf_ioctl_ent_t ent;
+		npf_ioctl_ent_t ent;
 		netbsd32_npf_ioctl_buf_t buf;
 	} nct_data;
 } netbsd32_npf_ioctl_table_t;

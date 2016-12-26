@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.40 2016/03/18 10:09:46 mrg Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.41 2016/12/26 23:05:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -70,8 +70,9 @@
  *	port map and NAT entry is destroyed when connection expires.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.40 2016/03/18 10:09:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.41 2016/12/26 23:05:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -87,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.40 2016/03/18 10:09:46 mrg Exp $");
 
 #include <net/pfil.h>
 #include <netinet/in.h>
+#endif
 
 #include "npf_impl.h"
 #include "npf_conn.h"
@@ -113,6 +115,7 @@ typedef struct {
  * NAT policy structure.
  */
 struct npf_natpolicy {
+	npf_t *			n_npfctx;
 	kmutex_t		n_lock;
 	LIST_HEAD(, npf_nat)	n_nat_list;
 	volatile u_int		n_refcnt;
@@ -191,13 +194,14 @@ npf_nat_sysfini(void)
  * => Shares portmap if policy is on existing translation address.
  */
 npf_natpolicy_t *
-npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *rset)
+npf_nat_newpolicy(npf_t *npf, prop_dictionary_t natdict, npf_ruleset_t *rset)
 {
 	npf_natpolicy_t *np;
 	prop_object_t obj;
 	npf_portmap_t *pm;
 
 	np = kmem_zalloc(sizeof(npf_natpolicy_t), KM_SLEEP);
+	np->n_npfctx = npf;
 
 	/* The translation type, flags and policy ID. */
 	prop_dictionary_get_int32(natdict, "type", &np->n_type);
@@ -311,7 +315,7 @@ npf_nat_freepolicy(npf_natpolicy_t *np)
 		mutex_exit(&np->n_lock);
 
 		/* Kick the worker - all references should be going away. */
-		npf_worker_signal();
+		npf_worker_signal(np->n_npfctx);
 		kpause("npfgcnat", false, 1, NULL);
 	}
 	KASSERT(LIST_EMPTY(&np->n_nat_list));
@@ -529,7 +533,7 @@ static npf_natpolicy_t *
 npf_nat_inspect(npf_cache_t *npc, const int di)
 {
 	int slock = npf_config_read_enter();
-	npf_ruleset_t *rlset = npf_config_natset();
+	npf_ruleset_t *rlset = npf_config_natset(npc->npc_ctx);
 	npf_natpolicy_t *np;
 	npf_rule_t *rl;
 
@@ -561,7 +565,7 @@ npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np, npf_conn_t *con)
 	if (nt == NULL){
 		return NULL;
 	}
-	npf_stats_inc(NPF_STAT_NAT_CREATE);
+	npf_stats_inc(npc->npc_ctx, NPF_STAT_NAT_CREATE);
 	nt->nt_natpolicy = np;
 	nt->nt_conn = con;
 	nt->nt_alg = NULL;
@@ -657,12 +661,10 @@ npf_nat_algo(npf_cache_t *npc, const npf_natpolicy_t *np, bool forw)
 	int error;
 
 	switch (np->n_algo) {
-#ifdef INET6
 	case NPF_ALGO_NPT66:
 		error = npf_npt66_rwr(npc, which, &np->n_taddr,
 		    np->n_tmask, np->n_npt66_adj);
 		break;
-#endif
 	default:
 		error = npf_napt_rwr(npc, which, &np->n_taddr, np->n_tport);
 		break;
@@ -829,15 +831,14 @@ npf_nat_destroy(npf_nat_t *nt)
 	if ((np->n_flags & NPF_NAT_PORTMAP) != 0 && nt->nt_tport) {
 		npf_nat_putport(np, nt->nt_tport);
 	}
+	npf_stats_inc(np->n_npfctx, NPF_STAT_NAT_DESTROY);
 
 	mutex_enter(&np->n_lock);
 	LIST_REMOVE(nt, nt_entry);
 	KASSERT(np->n_refcnt > 0);
 	atomic_dec_uint(&np->n_refcnt);
 	mutex_exit(&np->n_lock);
-
 	pool_cache_put(nat_cache, nt);
-	npf_stats_inc(NPF_STAT_NAT_DESTROY);
 }
 
 /*
@@ -863,8 +864,8 @@ npf_nat_export(prop_dictionary_t condict, npf_nat_t *nt)
  * npf_nat_import: find the NAT policy and unserialise the NAT entry.
  */
 npf_nat_t *
-npf_nat_import(prop_dictionary_t natdict, npf_ruleset_t *natlist,
-    npf_conn_t *con)
+npf_nat_import(npf_t *npf, prop_dictionary_t natdict,
+    npf_ruleset_t *natlist, npf_conn_t *con)
 {
 	npf_natpolicy_t *np;
 	npf_nat_t *nt;
@@ -894,7 +895,7 @@ npf_nat_import(prop_dictionary_t natdict, npf_ruleset_t *natlist,
 		pool_cache_put(nat_cache, nt);
 		return NULL;
 	}
-	npf_stats_inc(NPF_STAT_NAT_CREATE);
+	npf_stats_inc(npf, NPF_STAT_NAT_CREATE);
 
 	/*
 	 * Associate, take a reference and insert.  Unlocked since

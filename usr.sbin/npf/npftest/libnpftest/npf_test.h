@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test.h,v 1.15 2014/02/13 03:34:40 rmind Exp $	*/
+/*	$NetBSD: npf_test.h,v 1.16 2016/12/26 23:05:05 christos Exp $	*/
 
 /*
  * Public Domain.
@@ -7,6 +7,7 @@
 #ifndef _LIB_NPF_TEST_H_
 #define _LIB_NPF_TEST_H_
 
+#ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/mbuf.h>
 
@@ -23,6 +24,7 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/ethertypes.h>
+#endif
 
 /* Test interfaces and IP addresses. */
 #define	IFNAME_EXT	"npftest0"
@@ -46,9 +48,46 @@
 #define	REMOTE_IP6	"2001:db8:fefe::1010"
 #define	EXPECTED_IP6	"2001:db8:1:d550::1234"
 
+#if defined(_NPF_STANDALONE)
+
+#define	MLEN		512
+
+struct mbuf {
+	unsigned	m_flags;
+	int		m_type;
+	unsigned	m_len;
+	void *		m_next;
+	struct {
+		int	len;
+	} m_pkthdr;
+	char *		m_data;
+	char		m_data0[MLEN];
+};
+
+
+#define	MT_FREE			0
+#define	M_UNWRITABLE(m, l)	false
+#define	M_NOWAIT		0x00001
+#define M_PKTHDR		0x00002
+
+#define	m_get(x, y)		npfkern_m_get(0, MLEN)
+#define	m_gethdr(x, y)		npfkern_m_get(M_PKTHDR, MLEN)
+#define	m_length(m)		npfkern_m_length(m)
+#define	m_freem(m)		npfkern_m_freem(m)
+#define	mtod(m, t)		((t)((m)->m_data))
+
+#endif
+
+const npf_mbufops_t	npftest_mbufops;
+
+struct mbuf *	npfkern_m_get(int, int);
+size_t		npfkern_m_length(const struct mbuf *);
+void		npfkern_m_freem(struct mbuf *);
+
 void		npf_test_init(int (*)(int, const char *, void *),
 		    const char *(*)(int, const void *, char *, socklen_t),
 		    long (*)(void));
+void		npf_test_fini(void);
 int		npf_test_load(const void *);
 ifnet_t *	npf_test_addif(const char *, bool, bool);
 ifnet_t *	npf_test_getif(const char *);

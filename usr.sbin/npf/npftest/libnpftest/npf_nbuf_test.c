@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nbuf_test.c,v 1.5 2013/11/08 00:38:27 rmind Exp $	*/
+/*	$NetBSD: npf_nbuf_test.c,v 1.6 2016/12/26 23:05:05 christos Exp $	*/
 
 /*
  * NPF nbuf interface test.
@@ -6,8 +6,10 @@
  * Public Domain.
  */
 
+#ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/kmem.h>
+#endif
 
 #include "npf_impl.h"
 #include "npf_test.h"
@@ -36,7 +38,7 @@ parse_nbuf_chain(struct mbuf *m)
 	void *nptr;
 	int n;
 
-	nbuf_init(&nbuf, m, dummy_ifp);
+	nbuf_init(npf_getkernctx(), &nbuf, m, dummy_ifp);
 
 	nptr = nbuf_advance(&nbuf, (random() % 16) + 1, (random() % 16) + 1);
 	mbuf_consistency_check(&nbuf);

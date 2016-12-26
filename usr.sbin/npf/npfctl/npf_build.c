@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.40 2015/06/08 01:00:43 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.41 2016/12/26 23:05:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -34,11 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.40 2015/06/08 01:00:43 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.41 2016/12/26 23:05:05 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#define	__FAVOR_BSD
 #include <netinet/tcp.h>
 
 #include <stdlib.h>
@@ -46,6 +47,7 @@ __RCSID("$NetBSD: npf_build.c,v 1.40 2015/06/08 01:00:43 rmind Exp $");
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <err.h>
 
@@ -80,30 +82,47 @@ npfctl_config_init(bool debug)
 int
 npfctl_config_send(int fd, const char *out)
 {
-	int error;
+	npf_error_t errinfo;
+	int error = 0;
 
-	if (out) {
-		_npf_config_setsubmit(npf_conf, out);
-		printf("\nSaving to %s\n", out);
-	}
 	if (!defgroup) {
 		errx(EXIT_FAILURE, "default group was not defined");
 	}
 	npf_rule_insert(npf_conf, NULL, defgroup);
-	error = npf_config_submit(npf_conf, fd);
+	if (out) {
+		printf("\nSaving to %s\n", out);
+		npfctl_config_save(npf_conf, out);
+	} else {
+		error = npf_config_submit(npf_conf, fd, &errinfo);
+	}
 	if (error == EEXIST) { /* XXX */
 		errx(EXIT_FAILURE, "(re)load failed: "
 		    "some table has a duplicate entry?");
 	}
 	if (error) {
-		nl_error_t ne;
-		_npf_config_error(npf_conf, &ne);
-		npfctl_print_error(&ne);
+		npfctl_print_error(&errinfo);
 	}
-	if (fd) {
-		npf_config_destroy(npf_conf);
-	}
+	npf_config_destroy(npf_conf);
 	return error;
+}
+
+void
+npfctl_config_save(nl_config_t *ncf, const char *outfile)
+{
+	void *blob;
+	size_t len;
+	int fd;
+
+	blob = npf_config_export(ncf, &len);
+	if (!blob)
+		err(EXIT_FAILURE, "npf_config_export");
+	if ((fd = open(outfile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) == -1)
+		err(EXIT_FAILURE, "could not open %s", outfile);
+	if (write(fd, blob, len) != (ssize_t)len) {
+		err(EXIT_FAILURE, "write to %s failed", outfile);
+	}
+	free(blob);
+	close(fd);
 }
 
 nl_config_t *
@@ -742,7 +761,9 @@ npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname)
 		void *cdb;
 		int fd;
 
-		strlcpy(sfn, "/tmp/npfcdb.XXXXXX", sizeof(sfn));
+		strncpy(sfn, "/tmp/npfcdb.XXXXXX", sizeof(sfn));
+		sfn[sizeof(sfn) - 1] = '\0';
+
 		if ((fd = mkstemp(sfn)) == -1) {
 			err(EXIT_FAILURE, "mkstemp");
 		}
