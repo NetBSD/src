@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.774 2016/12/23 09:24:57 maya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.775 2016/12/26 15:47:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.774 2016/12/23 09:24:57 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.775 2016/12/26 15:47:48 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1037,30 +1037,46 @@ initgdt(union descriptor *tgdt)
 static void
 init386_msgbuf(void)
 {
-        /* Message buffer is located at end of core. */
-	psize_t reqsz = round_page(MSGBUFSIZE);
-	psize_t sz = 0;
-
-	for (sz = 0; sz < reqsz; sz += PAGE_SIZE) {
-		paddr_t stolenpa;
-
-		if (!uvm_page_physget(&stolenpa))
+	/* Message buffer is located at end of core. */
+	psize_t sz = round_page(MSGBUFSIZE);
+	psize_t reqsz = sz;
+	uvm_physseg_t x;
+		
+search_again:
+        for (x = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(x);
+	     x = uvm_physseg_get_next(x)) {
+		if (ctob(uvm_physseg_get_avail_end(x)) == avail_end) {
 			break;
-
-		if (stolenpa == (msgbuf_p_seg[msgbuf_p_cnt].paddr
-			+ PAGE_SIZE)) {
-			/* contiguous: append it to current buf alloc */
-			msgbuf_p_seg[msgbuf_p_cnt].sz += PAGE_SIZE;
-		} else  {
-			/* non-contiguous: start a new msgbuf seg */
-			msgbuf_p_seg[msgbuf_p_cnt].sz = PAGE_SIZE;
-			msgbuf_p_seg[msgbuf_p_cnt++].paddr = stolenpa;
 		}
 	}
+	if (uvm_physseg_valid_p(x) == false)
+		panic("init386: can't find end of memory");
 
-	if (sz != reqsz)
-		printf("%s: could only allocate %"PRIxPSIZE" bytes of requested"
-		    " %"PRIxPSIZE" bytes\n", __func__, sz, reqsz);
+	/* Shrink so it'll fit in the last segment. */
+	if (uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x) < atop(sz))
+		sz = ctob(uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x));
+
+	uvm_physseg_unplug(uvm_physseg_get_end(x) - atop(sz), atop(sz));
+	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
+        msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(uvm_physseg_get_avail_end(x));
+
+	/* Now find where the new avail_end is. */
+	avail_end = ctob(uvm_physseg_get_avail_end(x));
+
+	if (sz == reqsz)
+		return;
+
+	reqsz -= sz;
+	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
+		/* No more segments available, bail out. */
+		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
+		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
+		return;
+	}
+
+	sz = reqsz;
+	goto search_again;
 }
 
 #ifndef XEN
