@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.125 2016/01/11 08:40:52 martin Exp $ */
+/*     $NetBSD: buf.h,v 1.126 2016/12/26 23:12:33 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -326,6 +326,7 @@ void	buf_init(buf_t *);
 void	buf_destroy(buf_t *);
 int	bbusy(buf_t *, bool, int, kmutex_t *);
 
+void	biohist_init(void);
 
 __END_DECLS
 #endif /* _KERNEL */
