@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.40 2015/12/26 16:54:41 macallan Exp $ */
+/* $NetBSD: awin_var.h,v 1.41 2016/12/26 13:28:59 rjs Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@ struct awin_locators {
 	const char *loc_name;
 	bus_size_t loc_offset;
 	bus_size_t loc_size;
-	int loc_port; 
+	int loc_port;
 	int loc_intr;
 #define	AWINIO_INTR_DEFAULT	0
 	int loc_flags;
@@ -101,7 +101,7 @@ extern struct arm32_bus_dma_tag awin_dma_tag;
 extern struct arm32_bus_dma_tag awin_coherent_dma_tag;
 
 psize_t awin_memprobe(void);
-void	awin_bootstrap(vaddr_t, vaddr_t); 
+void	awin_bootstrap(vaddr_t, vaddr_t);
 void	awin_dma_bootstrap(psize_t);
 void	awin_pll2_enable(void);
 void	awin_pll3_enable(void);

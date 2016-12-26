@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.40 2015/10/25 20:54:19 bouyer Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.41 2016/12/26 13:28:59 rjs Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.40 2015/10/25 20:54:19 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.41 2016/12/26 13:28:59 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -248,7 +248,7 @@ awin_current_frequency_sysctl_helper(SYSCTLFN_ARGS)
 	for (size_t i = 0; awin_freqs[i].freq > 0; i++) {
 		if (awin_freqs[i].freq == freq) {
 			new_awin_freq = awin_freqs[i];
-			error = 0;    
+			error = 0;
 			break;
 		}
 	}
@@ -315,7 +315,7 @@ awin_available_frequency_sysctl_helper(SYSCTLFN_ARGS)
 		if (awin_freqs[i].freq < awin_freq_min ||
 		    awin_freqs[i].freq > awin_freq_max)
 			continue;
-		snprintf(cur_cpu_freq, sizeof(cur_cpu_freq), "%u",      
+		snprintf(cur_cpu_freq, sizeof(cur_cpu_freq), "%u",
 		    awin_freqs[i].freq);
 		if (strlen(available_frequencies) > 0) {
 			strlcat(available_frequencies, " ", availfreq_size);
@@ -370,17 +370,17 @@ SYSCTL_SETUP(sysctl_awin_machdep_setup, "sysctl allwinner machdep subtree setup"
 	sysctl_createv(clog, 0, &freqnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "current", NULL,
-		       awin_current_frequency_sysctl_helper, 0, NULL, 0, 
+		       awin_current_frequency_sysctl_helper, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &freqnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "min", NULL,
-		       NULL, 0, &awin_freq_min, sizeof(awin_freq_min), 
+		       NULL, 0, &awin_freq_min, sizeof(awin_freq_min),
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &freqnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "max", NULL,
-		       NULL, 0, &awin_freq_max, sizeof(awin_freq_max), 
+		       NULL, 0, &awin_freq_max, sizeof(awin_freq_max),
 		       CTL_CREATE, CTL_EOL);
 }
 
