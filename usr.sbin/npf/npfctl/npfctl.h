@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.39 2014/12/26 22:44:54 christos Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.40 2016/12/26 23:05:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ void		npfctl_bpfjit(bool);
 void		npfctl_parse_file(const char *);
 void		npfctl_parse_string(const char *);
 
-void		npfctl_print_error(const nl_error_t *);
+void		npfctl_print_error(const npf_error_t *);
 char *		npfctl_print_addrmask(int, const npf_addr_t *, npf_netmask_t);
 void		npfctl_note_interface(const char *);
 unsigned	npfctl_table_getid(const char *);
@@ -182,6 +182,9 @@ void		npfctl_config_init(bool);
 int		npfctl_config_send(int, const char *);
 nl_config_t *	npfctl_config_ref(void);
 int		npfctl_config_show(int);
+void		npfctl_config_save(nl_config_t *, const char *);
+
+void		npfctl_show_init(void);
 int		npfctl_ruleset_show(int, const char *);
 
 nl_rule_t *	npfctl_rule_ref(void);
@@ -199,5 +202,15 @@ void		npfctl_build_natseg(int, int, const char *,
 		    const filt_opts_t *, unsigned);
 void		npfctl_build_maprset(const char *, int, const char *);
 void		npfctl_build_table(const char *, u_int, const char *);
+
+/*
+ * For the systems which do not define TH_ECE and TW_CRW.
+ */
+#ifndef TH_ECE
+#define	TH_ECE	  0x40
+#endif
+#ifndef TH_CWR
+#define	TH_CWR	  0x80
+#endif
 
 #endif
