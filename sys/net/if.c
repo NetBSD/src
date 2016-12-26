@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.368 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.369 2016/12/26 23:21:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.368 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.369 2016/12/26 23:21:49 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -194,7 +194,7 @@ static LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 static int if_cloners_count;
 
 /* Packet filtering hook for interfaces. */
-pfil_head_t *	if_pfil;
+pfil_head_t *			if_pfil __read_mostly;
 
 static kauth_listener_t if_listener;
 
@@ -690,8 +690,7 @@ if_initialize(ifnet_t *ifp)
 	IFQ_LOCK_INIT(&ifp->if_snd);
 
 	ifp->if_pfil = pfil_head_create(PFIL_TYPE_IFNET, ifp);
-	(void)pfil_run_hooks(if_pfil,
-	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
+	pfil_run_ifhooks(if_pfil, PFIL_IFNET_ATTACH, ifp);
 
 	IF_AFDATA_LOCK_INIT(ifp);
 
@@ -1433,8 +1432,7 @@ again:
 		}
 	}
 
-	(void)pfil_run_hooks(if_pfil,
-	    (struct mbuf **)PFIL_IFNET_DETACH, ifp, PFIL_IFNET);
+	pfil_run_ifhooks(if_pfil, PFIL_IFNET_DETACH, ifp);
 	(void)pfil_head_destroy(ifp->if_pfil);
 
 	/* Announce that the interface is gone. */

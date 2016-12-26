@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.28 2013/06/29 21:06:58 rmind Exp $	*/
+/*	$NetBSD: pfil.c,v 1.29 2016/12/26 23:21:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.28 2013/06/29 21:06:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.29 2016/12/26 23:21:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,11 @@ __KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.28 2013/06/29 21:06:58 rmind Exp $");
 
 #define	MAX_HOOKS	8
 
+/* Func is either pfil_func_t or pfil_ifunc_t. */
+typedef void		(*pfil_polyfunc_t)(void);
+
 typedef struct {
-	pfil_func_t	pfil_func;
+	pfil_polyfunc_t pfil_func;
 	void *		pfil_arg;
 } pfil_hook_t;
 
@@ -50,9 +53,11 @@ typedef struct {
 	u_int		nhooks;
 } pfil_list_t;
 
+CTASSERT(PFIL_IN == 1);
+CTASSERT(PFIL_OUT == 2);
+
 struct pfil_head {
-	pfil_list_t	ph_in;
-	pfil_list_t	ph_out;
+	pfil_list_t	ph_inout[2];
 	pfil_list_t	ph_ifaddr;
 	pfil_list_t	ph_ifevent;
 	int		ph_type;
@@ -116,9 +121,8 @@ pfil_hook_get(int dir, pfil_head_t *ph)
 {
 	switch (dir) {
 	case PFIL_IN:
-		return &ph->ph_in;
 	case PFIL_OUT:
-		return &ph->ph_out;
+		return &ph->ph_inout[dir];
 	case PFIL_IFADDR:
 		return &ph->ph_ifaddr;
 	case PFIL_IFNET:
@@ -128,7 +132,7 @@ pfil_hook_get(int dir, pfil_head_t *ph)
 }
 
 static int
-pfil_list_add(pfil_list_t *phlist, pfil_func_t func, void *arg, int flags)
+pfil_list_add(pfil_list_t *phlist, pfil_polyfunc_t func, void *arg, int flags)
 {
 	const u_int nhooks = phlist->nhooks;
 	pfil_hook_t *pfh;
@@ -173,8 +177,6 @@ pfil_list_add(pfil_list_t *phlist, pfil_func_t func, void *arg, int flags)
  *	PFIL_IN		call on incoming packets
  *	PFIL_OUT	call on outgoing packets
  *	PFIL_ALL	call on all of the above
- *	PFIL_IFADDR	call on interface reconfig (mbuf is ioctl #)
- *	PFIL_IFNET	call on interface attach/detach (mbuf is PFIL_IFNET_*)
  */
 int
 pfil_add_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
@@ -182,6 +184,7 @@ pfil_add_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 	int error = 0;
 
 	KASSERT(func != NULL);
+	KASSERT((flags & ~PFIL_ALL) == 0);
 
 	for (u_int i = 0; i < __arraycount(pfil_flag_cases); i++) {
 		const int fcase = pfil_flag_cases[i];
@@ -191,7 +194,8 @@ pfil_add_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 			continue;
 		}
 		phlist = pfil_hook_get(fcase, ph);
-		if ((error = pfil_list_add(phlist, func, arg, flags)) != 0) {
+		error = pfil_list_add(phlist, (pfil_polyfunc_t)func, arg, flags);
+		if (error) {
 			break;
 		}
 	}
@@ -202,10 +206,27 @@ pfil_add_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 }
 
 /*
+ * pfil_add_hook: add an interface-event function (hook) to the packet
+ * filter head.  The possible flags are:
+ *
+ *	PFIL_IFADDR	call on interface reconfig (mbuf is ioctl #)
+ *	PFIL_IFNET	call on interface attach/detach (mbuf is PFIL_IFNET_*)
+ */
+int
+pfil_add_ihook(pfil_ifunc_t func, void *arg, int flags, pfil_head_t *ph)
+{
+	pfil_list_t *phlist;
+
+	KASSERT(flags == PFIL_IFADDR || flags == PFIL_IFNET);
+	phlist = pfil_hook_get(flags, ph);
+	return pfil_list_add(phlist, (pfil_polyfunc_t)func, arg, flags);
+}
+
+/*
  * pfil_list_remove: remove the hook from a specified list.
  */
 static int
-pfil_list_remove(pfil_list_t *phlist, pfil_func_t func, void *arg)
+pfil_list_remove(pfil_list_t *phlist, pfil_polyfunc_t func, void *arg)
 {
 	const u_int nhooks = phlist->nhooks;
 
@@ -238,8 +259,19 @@ pfil_remove_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 			continue;
 		}
 		pflist = pfil_hook_get(fcase, ph);
-		(void)pfil_list_remove(pflist, func, arg);
+		(void)pfil_list_remove(pflist, (pfil_polyfunc_t)func, arg);
 	}
+	return 0;
+}
+
+int
+pfil_remove_ihook(pfil_ifunc_t func, void *arg, int flags, pfil_head_t *ph)
+{
+	pfil_list_t *pflist;
+
+	KASSERT(flags == PFIL_IFADDR || flags == PFIL_IFNET);
+	pflist = pfil_hook_get(flags, ph);
+	(void)pfil_list_remove(pflist, (pfil_polyfunc_t)func, arg);
 	return 0;
 }
 
@@ -249,32 +281,50 @@ pfil_remove_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 int
 pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 {
-	const bool pass_mbuf = (dir & PFIL_ALL) != 0 && mp;
-	struct mbuf *m = pass_mbuf ? *mp : NULL;
+	struct mbuf *m = mp ? *mp : NULL;
 	pfil_list_t *phlist;
 	int ret = 0;
 
-	if ((phlist = pfil_hook_get(dir, ph)) == NULL) {
+	KASSERT((dir & ~PFIL_ALL) == 0);
+	if (__predict_false((phlist = &ph->ph_inout[dir]) == NULL)) {
 		return ret;
 	}
 
 	for (u_int i = 0; i < phlist->nhooks; i++) {
 		pfil_hook_t *pfh = &phlist->hooks[i];
-		pfil_func_t func = pfh->pfil_func;
+		pfil_func_t func = (pfil_func_t)pfh->pfil_func;
 
-		if (__predict_true(dir & PFIL_ALL)) {
-			ret = (*func)(pfh->pfil_arg, &m, ifp, dir);
-			if (m == NULL)
-				break;
-		} else {
-			ret = (*func)(pfh->pfil_arg, mp, ifp, dir);
-		}
-		if (ret)
+		ret = (*func)(pfh->pfil_arg, &m, ifp, dir);
+		if (m == NULL || ret)
 			break;
 	}
 
-	if (pass_mbuf) {
+	if (mp) {
 		*mp = m;
 	}
 	return ret;
+}
+
+void
+pfil_run_addrhooks(pfil_head_t *ph, u_long cmd, struct ifaddr *ifa)
+{
+	pfil_list_t *phlist = &ph->ph_ifaddr;
+
+	for (u_int i = 0; i < phlist->nhooks; i++) {
+		pfil_hook_t *pfh = &phlist->hooks[i];
+		pfil_ifunc_t func = (pfil_ifunc_t)pfh->pfil_func;
+		(*func)(pfh->pfil_arg, cmd, (void *)ifa);
+	}
+}
+
+void
+pfil_run_ifhooks(pfil_head_t *ph, u_long cmd, struct ifnet *ifp)
+{
+	pfil_list_t *phlist = &ph->ph_ifevent;
+
+	for (u_int i = 0; i < phlist->nhooks; i++) {
+		pfil_hook_t *pfh = &phlist->hooks[i];
+		pfil_ifunc_t func = (pfil_ifunc_t)pfh->pfil_func;
+		(*func)(pfh->pfil_arg, cmd, (void *)ifp);
+	}
 }

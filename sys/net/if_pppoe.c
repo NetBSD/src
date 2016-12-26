@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.121 2016/12/16 08:47:36 knakahara Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.122 2016/12/26 23:21:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.121 2016/12/16 08:47:36 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.122 2016/12/26 23:21:49 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -235,7 +235,7 @@ static struct pppoe_softc * pppoe_find_softc_by_hunique(uint8_t *, size_t,
     struct ifnet *, krw_t);
 static struct mbuf *pppoe_get_mbuf(size_t len);
 
-static int pppoe_ifattach_hook(void *, struct mbuf **, struct ifnet *, int);
+static void pppoe_ifattach_hook(void *, u_long, void *);
 
 static LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
 static krwlock_t pppoe_softc_list_lock;
@@ -339,7 +339,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 
 	bpf_attach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
 	if (LIST_EMPTY(&pppoe_softc_list)) {
-		pfil_add_hook(pppoe_ifattach_hook, NULL, PFIL_IFNET, if_pfil);
+		pfil_add_ihook(pppoe_ifattach_hook, NULL, PFIL_IFNET, if_pfil);
 	}
 
 	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
@@ -364,7 +364,7 @@ pppoe_clone_destroy(struct ifnet *ifp)
 	LIST_REMOVE(sc, sc_list);
 
 	if (LIST_EMPTY(&pppoe_softc_list)) {
-		pfil_remove_hook(pppoe_ifattach_hook, NULL, PFIL_IFNET, if_pfil);
+		pfil_remove_ihook(pppoe_ifattach_hook, NULL, PFIL_IFNET, if_pfil);
 	}
 	rw_exit(&pppoe_softc_list_lock);
 
