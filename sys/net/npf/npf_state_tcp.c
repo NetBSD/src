@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.17 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.18 2016/12/26 23:10:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.17 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.18 2016/12/26 23:10:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -192,6 +192,8 @@ static const uint8_t npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 			[TCPFC_ACK]	= NPF_TCPS_ESTABLISHED,
 			/* FIN may be sent early. */
 			[TCPFC_FIN]	= NPF_TCPS_FIN_SENT,
+			/* Late SYN re-transmission. */
+			[TCPFC_SYN]	= NPF_TCPS_OK,
 		},
 		[NPF_FLOW_BACK] = {
 			/* SYN-ACK may be retransmitted. */
