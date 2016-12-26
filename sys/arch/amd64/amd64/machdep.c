@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.245 2016/12/26 13:55:13 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.246 2016/12/26 17:54:06 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245 2016/12/26 13:55:13 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2016/12/26 17:54:06 cherry Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -253,14 +253,6 @@ size_t dump_nmemsegs;
 size_t dump_npages;
 size_t dump_header_size;
 size_t dump_totalbytesleft;
-
-vaddr_t msgbuf_vaddr;
-
-struct {
-	paddr_t paddr;
-	psize_t sz;
-} msgbuf_p_seg[VM_PHYSSEG_MAX];
-unsigned int msgbuf_p_cnt = 0;
 
 vaddr_t idt_vaddr;
 paddr_t idt_paddr;
@@ -1466,52 +1458,6 @@ extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
 static void
-init_x86_64_msgbuf(void)
-{
-	/* Message buffer is located at end of core. */
-	psize_t sz = round_page(MSGBUFSIZE);
-	psize_t reqsz = sz;
-	uvm_physseg_t x;
-		
- search_again:
-        for (x = uvm_physseg_get_first();
-	     uvm_physseg_valid_p(x);
-	     x = uvm_physseg_get_next(x)) {
-
-		if (ctob(uvm_physseg_get_avail_end(x)) == avail_end)
-			break;
-	}
-
-	if (uvm_physseg_valid_p(x) == false)
-		panic("init_x86_64: can't find end of memory");
-
-	/* Shrink so it'll fit in the last segment. */
-	if (uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x) < atop(sz))
-		sz = ctob(uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x));
-
-	uvm_physseg_unplug(uvm_physseg_get_end(x) - atop(sz), atop(sz));
-	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-        msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(uvm_physseg_get_avail_end(x));
-
-	/* Now find where the new avail_end is. */
-	avail_end = ctob(uvm_physseg_get_avail_end(x));
-
-	if (sz == reqsz)
-		return;
-
-	reqsz -= sz;
-	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
-		/* No more segments available, bail out. */
-		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
-		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
-		return;
-	}
-
-	sz = reqsz;
-	goto search_again;
-}
-
-static void
 init_x86_64_ksyms(void)
 {
 #if NKSYMS || defined(DDB) || defined(MODULAR)
@@ -1640,7 +1586,7 @@ init_x86_64(paddr_t first_avail)
 	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
 #endif
 
-	init_x86_64_msgbuf();
+	init_x86_msgbuf();
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
