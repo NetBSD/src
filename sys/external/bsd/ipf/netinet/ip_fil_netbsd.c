@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.19 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.20 2016/12/26 23:21:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.19 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.20 2016/12/26 23:21:49 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -268,10 +268,13 @@ ipf_check_wrapper6(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 
 
 # if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
-static int ipf_pfilsync(void *, struct mbuf **, struct ifnet *, int);
 
-static int
-ipf_pfilsync(void *hdr, struct mbuf **mp, struct ifnet *ifp, int dir)
+#  if (__NetBSD_Version__ >= 799000400)
+
+static void ipf_pfilsync(void *, unsigned long, void *);
+
+static void
+ipf_pfilsync(void *hdr, unsigned long cmd, void *arg2)
 {
 	/*
 	 * The interface pointer is useless for create (we have nothing to
@@ -281,8 +284,20 @@ ipf_pfilsync(void *hdr, struct mbuf **mp, struct ifnet *ifp, int dir)
 	 * pointer, so it's not much use then, either.
 	 */
 	ipf_sync(&ipfmain, NULL);
+}
+
+#  else
+
+static int ipf_pfilsync(void *, struct mbuf **, struct ifnet *, int);
+
+static int
+ipf_pfilsync(void *hdr, struct mbuf **mp, struct ifnet *ifp, int dir)
+{
+	ipf_sync(&ipfmain, NULL);
 	return 0;
 }
+
+#  endif
 # endif
 
 #endif /* __NetBSD_Version__ >= 105110000 */
@@ -445,8 +460,13 @@ ipfattach(ipf_main_softc_t *softc)
 
 # if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
 	if (ph_ifsync != NULL)
+#if (__NetBSD_Version__ >= 799000400)
 		(void) pfil_add_hook((void *)ipf_pfilsync, NULL,
 				     PFIL_IFNET, ph_ifsync);
+#else
+		(void) pfil_add_hook((void *)ipf_pfilsync, NULL,
+				     PFIL_IFNET, ph_ifsync);
+#endif
 # endif
 #endif
 
