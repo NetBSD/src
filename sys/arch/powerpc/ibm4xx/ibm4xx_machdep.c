@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.24 2016/12/26 20:28:00 rin Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.25 2016/12/26 21:25:08 rin Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.24 2016/12/26 20:28:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.25 2016/12/26 21:25:08 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -193,6 +193,7 @@ ibm4xx_init(vaddr_t startkernel, vaddr_t endkernel, void (*handler)(void))
 	}
 
 	for (size_t i = 0; i < __arraycount(trap_table); i++) {
+		KASSERT(trap_table[i].exc_size <= 0x100);
 		trap_copy(trap_table[i].exc_addr, trap_table[i].exc_vector,
 		    trap_table[i].exc_size);
 	}
