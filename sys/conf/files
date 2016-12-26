@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1167 2016/12/13 20:20:34 christos Exp $
+#	$NetBSD: files,v 1.1168 2016/12/26 23:12:33 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -39,6 +39,7 @@ defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 
 defflag				AIO
 defflag				MQUEUE
+defflag				SEMAPHORE
 
 defflag				BUFQ_DISKSORT
 defflag				BUFQ_FCFS
@@ -199,6 +200,13 @@ file	kern/kern_history.c		kernhist
 # top level usb debug defines
 defflag	opt_usb.h			USB_DEBUG: KERNHIST
 defparam opt_usb.h			USBHIST_SIZE
+
+#
+# Options for BIOHIST
+#
+defflag opt_biohist.h           BIOHIST: KERNHIST
+defflag opt_biohist.h           BIOHIST_PRINT: KERNHIST_PRINT
+defparam opt_biohist.h          BIOHIST_SIZE
 
 #
 # System monitoring framework
@@ -1507,6 +1515,7 @@ include "miscfs/procfs/files.procfs"
 include "miscfs/umapfs/files.umapfs"
 include "nfs/files.nfs"
 include "ufs/files.ufs"
+include "fs/nfs/files.newnfs"
 
 #
 # UVM (virtual memory)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.6 2016/06/23 07:32:12 skrll Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.7 2016/12/26 23:12:33 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,13 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.6 2016/06/23 07:32:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.7 2016/12/26 23:12:33 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
 #include "opt_syscall_debug.h"
 #include "opt_usb.h"
 #include "opt_uvmhist.h"
+#include "opt_biohist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.6 2016/06/23 07:32:12 skrll Exp $
 
 #ifdef USB_DEBUG
 #include <dev/usb/usbhist.h>
+#endif
+
+#ifdef BIOHIST
+#include <kern/biohist.h>
 #endif
 
 #ifdef SYSCALL_DEBUG
@@ -200,6 +205,11 @@ kernhist_dumpmask(u_int32_t bitmask)	/* XXX only support 32 hists */
 		hists[i++] = &scdebughist;
 #endif
 
+#ifdef BIOHIST
+	if ((bitmask & KERNHIST_BIOHIST) || bitmask == 0)
+		hists[i++] = &biohist;
+#endif
+
 	hists[i] = NULL;
 
 	kernhist_dump_histories(hists, printf);
@@ -233,6 +243,9 @@ kernhist_print(void *addr, void (*pr)(const char *, ...) __printflike(1,2))
 
 #ifdef SYSCALL_DEBUG
 		hists[i++] = &scdebughist;
+#endif
+#ifdef BIOHIST
+		hists[i++] = &biohist;
 #endif
 		hists[i] = NULL;
 
