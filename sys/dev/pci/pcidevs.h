@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1265 2016/12/01 09:04:37 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1266 2016/12/26 07:53:31 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1273 2016/12/01 09:04:03 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1274 2016/12/26 07:53:03 msaitoh Exp
  */
 
 /*
@@ -2904,7 +2904,7 @@
 #define	PCI_PRODUCT_INTEL_82598AT	0x10c8		/* 82598 10 Gigabit AT */
 #define	PCI_PRODUCT_INTEL_82576_COPPER	0x10c9		/* 82576 1000BaseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82576_VF	0x10ca		/* 82576 1000BaseT Ethernet Virtual Function */
-#define	PCI_PRODUCT_INTEL_82801H_IGP_M_V	0x10cb		/* i82801H IGP (MV) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IGP_M_V	0x10cb		/* i82801I IGP (MV) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801J_R_BM_LM	0x10cc		/* i82567LM-2 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801J_R_BM_LF	0x10cd		/* i82567LF-2 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801J_R_BM_V	0x10ce		/* i82567V-2 LAN Controller */
