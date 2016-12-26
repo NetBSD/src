@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.35 2016/11/07 18:16:07 jnemeth Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.36 2016/12/26 23:05:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -38,8 +38,9 @@
  * on rewrites (e.g. by translation routines).
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.35 2016/11/07 18:16:07 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.36 2016/12/26 23:05:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -57,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.35 2016/11/07 18:16:07 jnemeth Exp $"
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
+#endif
 
 #include "npf_impl.h"
 
@@ -132,8 +134,8 @@ npf_addr_mix(const int sz, const npf_addr_t *a1, const npf_addr_t *a2)
 	KASSERT(sz > 0 && a1 != NULL && a2 != NULL);
 
 	for (int i = 0; i < (sz >> 2); i++) {
-		mix ^= a1->s6_addr32[i];
-		mix ^= a2->s6_addr32[i];
+		mix ^= a1->word32[i];
+		mix ^= a2->word32[i];
 	}
 	return mix;
 }
@@ -163,7 +165,7 @@ npf_addr_mask(const npf_addr_t *addr, const npf_netmask_t mask,
 		} else {
 			wordmask = 0;
 		}
-		out->s6_addr32[i] = addr->s6_addr32[i] & wordmask;
+		out->word32[i] = addr->word32[i] & wordmask;
 	}
 }
 
@@ -655,9 +657,7 @@ npf_napt_rwr(const npf_cache_t *npc, u_int which,
 		}
 		break;
 	case IPPROTO_ICMP:
-#ifdef INET6
 	case IPPROTO_ICMPV6:
-#endif
 		KASSERT(npf_iscached(npc, NPC_ICMP));
 		/* Nothing. */
 		break;
@@ -671,7 +671,6 @@ npf_napt_rwr(const npf_cache_t *npc, u_int which,
  * IPv6-to-IPv6 Network Prefix Translation (NPTv6), as per RFC 6296.
  */
 
-#ifdef INET6
 int
 npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
     npf_netmask_t len, uint16_t adj)
@@ -691,7 +690,7 @@ npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
 		 * subnet if /48 or shorter.
 		 */
 		word = 3;
-		if (addr->s6_addr16[word] == 0xffff) {
+		if (addr->word16[word] == 0xffff) {
 			return EINVAL;
 		}
 	} else {
@@ -699,19 +698,19 @@ npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
 		 * Also, all 0s or 1s in the host part are disallowed for
 		 * longer than /48 prefixes.
 		 */
-		if ((addr->s6_addr32[2] == 0 && addr->s6_addr32[3] == 0) ||
-		    (addr->s6_addr32[2] == ~0U && addr->s6_addr32[3] == ~0U))
+		if ((addr->word32[2] == 0 && addr->word32[3] == 0) ||
+		    (addr->word32[2] == ~0U && addr->word32[3] == ~0U))
 			return EINVAL;
 
 		/* Determine the 16-bit word to adjust. */
 		for (word = 4; word < 8; word++)
-			if (addr->s6_addr16[word] != 0xffff)
+			if (addr->word16[word] != 0xffff)
 				break;
 	}
 
 	/* Rewrite the prefix. */
 	for (unsigned i = 0; i < preflen; i++) {
-		addr->s6_addr16[i] = pref->s6_addr16[i];
+		addr->word16[i] = pref->word16[i];
 	}
 
 	/*
@@ -722,14 +721,14 @@ npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
 		const uint16_t wordmask = (1U << remnant) - 1;
 		const unsigned i = preflen;
 
-		addr->s6_addr16[i] = (pref->s6_addr16[i] & wordmask) |
-		    (addr->s6_addr16[i] & ~wordmask);
+		addr->word16[i] = (pref->word16[i] & wordmask) |
+		    (addr->word16[i] & ~wordmask);
 	}
 
 	/*
 	 * Performing 1's complement sum/difference.
 	 */
-	sum = addr->s6_addr16[word] + adj;
+	sum = addr->word16[word] + adj;
 	while (sum >> 16) {
 		sum = (sum >> 16) + (sum & 0xffff);
 	}
@@ -737,28 +736,21 @@ npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
 		/* RFC 1071. */
 		sum = 0x0000;
 	}
-	addr->s6_addr16[word] = sum;
+	addr->word16[word] = sum;
 	return 0;
 }
-#endif
 
 #if defined(DDB) || defined(_NPF_TESTING)
 
 const char *
 npf_addr_dump(const npf_addr_t *addr, int alen)
 {
-#ifdef INET6
 	if (alen == sizeof(struct in_addr)) {
-#else
-		KASSERT(alen == sizeof(struct in_addr));
-#endif
 		struct in_addr ip;
 		memcpy(&ip, addr, alen);
 		return inet_ntoa(ip);
-#ifdef INET6
 	}
-	return ip6_sprintf(addr);
-#endif
+	return "[IPv6]";
 }
 
 #endif
