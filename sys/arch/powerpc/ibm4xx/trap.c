@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.68 2016/12/16 06:29:11 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.69 2016/12/26 21:54:00 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.68 2016/12/16 06:29:11 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69 2016/12/26 21:54:00 rin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -171,10 +171,6 @@ trap(struct trapframe *tf)
 		ksi.ksi_addr = (void *)tf->tf_srr0;
 		trapsignal(l, &ksi);
 		break;
-
-	/*
-	 * If we could not find and install appropriate TLB entry, fall through.
-	 */
 
 	case EXC_DSI:
 		/* FALLTHROUGH */
