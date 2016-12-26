@@ -31,7 +31,7 @@
 
 #if defined(_KERNEL)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.1 2016/12/09 02:40:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.2 2016/12/26 12:44:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -117,7 +117,7 @@ lpm_clear(lpm_t *lpm, lpm_dtor_t dtor, void *arg)
 				entry = next;
 			}
 		}
-		kmem_free(hmap->bucket, hmap->hashsize);
+		kmem_free(hmap->bucket, hmap->hashsize * sizeof(lpm_ent_t *));
 		hmap->bucket = NULL;
 		hmap->hashsize = 0;
 		hmap->nitems = 0;
@@ -158,7 +158,7 @@ hashmap_rehash(lpm_hmap_t *hmap, uint32_t size)
 	for (hashsize = 1; hashsize < size; hashsize <<= 1) {
 		continue;
 	}
-	bucket = kmem_zalloc(hashsize * sizeof(*bucket), KM_SLEEP);
+	bucket = kmem_zalloc(hashsize * sizeof(lpm_ent_t *), KM_SLEEP);
 	if (bucket == NULL)
 		return false;
 	for (unsigned n = 0; n < hmap->hashsize; n++) {
@@ -175,7 +175,7 @@ hashmap_rehash(lpm_hmap_t *hmap, uint32_t size)
 		}
 	}
 	if (hmap->bucket)
-		kmem_free(hmap->bucket, hmap->hashsize);
+		kmem_free(hmap->bucket, hmap->hashsize * sizeof(lpm_ent_t *));
 	hmap->bucket = bucket;
 	hmap->hashsize = hashsize;
 	return true;
