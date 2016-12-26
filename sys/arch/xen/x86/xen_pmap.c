@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.24 2016/12/13 10:54:27 kamil Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.25 2016/12/26 08:53:11 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.24 2016/12/13 10:54:27 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.25 2016/12/26 08:53:11 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -188,9 +188,13 @@ pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot, u_int flags)
 
 	if (pmap_valid_entry(opte)) {
 #if defined(MULTIPROCESSOR)
-		kpreempt_disable();
-		pmap_tlb_shootdown(pmap_kernel(), va, opte, TLBSHOOT_KENTER);
-		kpreempt_enable();
+		if (__predict_false(x86_mp_online == false)) {
+			pmap_update_pg(va);
+		} else {
+			kpreempt_disable();
+			pmap_tlb_shootdown(pmap_kernel(), va, opte, TLBSHOOT_KENTER);
+			kpreempt_enable();
+		}
 #else
 		/* Don't bother deferring in the single CPU case. */
 		pmap_update_pg(va);
