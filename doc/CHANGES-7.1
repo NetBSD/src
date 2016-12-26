@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.138 2016/12/24 04:39:05 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.139 2016/12/26 19:01:18 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7790,4 +7790,9 @@ sys/external/bsd/ipf/netinet/ip_nat6.c		1.10
 	redirect rule.  This is required for transparent proxying by
 	squid, for example.
 	[sborrill, ticket #1261]
+
+sys/net/npf/lpm.c				1.2
+
+	Fix kmem_free() sizes in hashmap_rehash() and lpm_clear().
+	[rmind, ticket #1339]
 
