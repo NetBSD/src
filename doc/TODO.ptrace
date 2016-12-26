@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.6 2016/12/24 05:43:31 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.7 2016/12/26 03:24:11 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -18,10 +18,11 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - add ptrace(2) NetBSD support in LLDB
  - add support for detecting equivalent events to PTRACE_O_TRACEEXEC,
    PTRACE_O_TRACECLONE, PTRACE_O_TRACEEXIT from Linux
- - exect(3) rething or remove -- maybe PT_TRACE_ME + PTRACE_O_TRACEEXEC?
+ - exect(3) rethink or remove -- maybe PT_TRACE_ME + PTRACE_O_TRACEEXEC?
  - refactor pthread_dbg(3) to only query private pthread_t data, otherwise it
    duplicates ptrace(2) interface and cannot cover all types of threads
  - add ATF tests for SIGCHLD
+ - add ATF tsts for PT_SYSCALL and PT_SYSCALLEMU
 
 and of course: fix as many bugs as possible.
 
