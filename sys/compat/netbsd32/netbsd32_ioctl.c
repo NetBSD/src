@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.87 2016/11/21 03:50:50 rin Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.88 2016/12/26 23:05:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.87 2016/11/21 03:50:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.88 2016/12/26 23:05:06 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -472,9 +472,7 @@ netbsd32_to_npf_ioctl_table(
 	case NPF_CMD_TABLE_LOOKUP:
 	case NPF_CMD_TABLE_ADD:
 	case NPF_CMD_TABLE_REMOVE:
-		p->nct_data.ent.alen = s32p->nct_data.ent.alen;
-		p->nct_data.ent.addr = s32p->nct_data.ent.addr;
-		p->nct_data.ent.mask = s32p->nct_data.ent.mask;
+		p->nct_data.ent = s32p->nct_data.ent;
 		break;
 	case NPF_CMD_TABLE_LIST:
 		p->nct_data.buf.buf = NETBSD32PTR64(s32p->nct_data.buf.buf);
@@ -896,9 +894,7 @@ netbsd32_from_npf_ioctl_table(
 	case NPF_CMD_TABLE_LOOKUP:
 	case NPF_CMD_TABLE_ADD:
 	case NPF_CMD_TABLE_REMOVE:
-		s32p->nct_data.ent.alen = p->nct_data.ent.alen;
-		s32p->nct_data.ent.addr = p->nct_data.ent.addr;
-		s32p->nct_data.ent.mask = p->nct_data.ent.mask;
+		s32p->nct_data.ent = p->nct_data.ent;
 		break;
 	case NPF_CMD_TABLE_LIST:
 		NETBSD32PTR32(s32p->nct_data.buf.buf, p->nct_data.buf.buf);

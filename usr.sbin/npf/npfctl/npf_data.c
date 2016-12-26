@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.25 2014/02/13 03:34:40 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.26 2016/12/26 23:05:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.25 2014/02/13 03:34:40 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.26 2016/12/26 23:05:05 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
-
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -43,6 +42,7 @@ __RCSID("$NetBSD: npf_data.c,v 1.25 2014/02/13 03:34:40 rmind Exp $");
 #include <netinet/ip_icmp.h>
 #define ICMP6_STRINGS
 #include <netinet/icmp6.h>
+#define	__FAVOR_BSD
 #include <netinet/tcp.h>
 #include <net/if.h>
 
@@ -176,8 +176,8 @@ npfctl_parse_mask(const char *s, sa_family_t fam, npf_netmask_t *mask)
 		return true;
 	}
 
-	ap = addr.s6_addr + (*mask / 8) - 1;
-	while (ap >= addr.s6_addr) {
+	ap = addr.word8 + (*mask / 8) - 1;
+	while (ap >= addr.word8) {
 		for (int j = 8; j > 0; j--) {
 			if (*ap & 1)
 				return true;
@@ -456,6 +456,7 @@ npfctl_parse_tcpflag(const char *s)
 uint8_t
 npfctl_icmptype(int proto, const char *type)
 {
+#ifdef __NetBSD__
 	uint8_t ul;
 
 	switch (proto) {
@@ -475,7 +476,7 @@ npfctl_icmptype(int proto, const char *type)
 	default:
 		assert(false);
 	}
-
+#endif
 	yyerror("unknown icmp-type %s", type);
 	return ~0;
 }
@@ -483,6 +484,7 @@ npfctl_icmptype(int proto, const char *type)
 uint8_t
 npfctl_icmpcode(int proto, uint8_t type, const char *code)
 {
+#ifdef __NetBSD__
 	const char * const *arr;
 
 	switch (proto) {
@@ -565,6 +567,7 @@ npfctl_icmpcode(int proto, uint8_t type, const char *code)
 		if (strcmp(arr[ul], code) == 0)
 			return ul;
 	}
+#endif
 	yyerror("unknown code %s for icmp-type %d", code, type);
 	return ~0;
 }
