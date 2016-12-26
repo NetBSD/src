@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.7 2016/12/26 03:24:11 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.8 2016/12/26 08:43:55 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -22,7 +22,8 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - refactor pthread_dbg(3) to only query private pthread_t data, otherwise it
    duplicates ptrace(2) interface and cannot cover all types of threads
  - add ATF tests for SIGCHLD
- - add ATF tsts for PT_SYSCALL and PT_SYSCALLEMU
+ - add ATF tests for PT_SYSCALL and PT_SYSCALLEMU
+ - add support to read and write siginfo_t from and to tracee (reuse PT_IO?)
 
 and of course: fix as many bugs as possible.
 
