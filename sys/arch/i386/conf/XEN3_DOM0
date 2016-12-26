@@ -1,8 +1,10 @@
-#	$NetBSD: XEN3_DOM0,v 1.103 2016/12/17 14:49:26 maxv Exp $
+#	$NetBSD: XEN3_DOM0,v 1.104 2016/12/26 18:04:31 cherry Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
 include 	"arch/xen/conf/std.xen"
+
+#options 	MULTIPROCESSOR	# (experimental)
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
