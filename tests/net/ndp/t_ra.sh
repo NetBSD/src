@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.17 2016/12/21 07:02:16 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.18 2016/12/26 01:26:25 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -494,7 +494,7 @@ ra_multiple_routers_single_prefix_body()
 	rump_server_destroy_ifaces
 }
 
-multiple_routers_single_prefix_cleanup()
+ra_multiple_routers_single_prefix_cleanup()
 {
 
 	if [ -f ${PIDFILE} ]; then
