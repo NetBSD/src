@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.18 2013/10/20 03:02:27 christos Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.19 2016/12/26 12:46:31 leot Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.18 2013/10/20 03:02:27 christos Exp $
+ * $Id: m_netbsd.c,v 1.19 2016/12/26 12:46:31 leot Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.18 2013/10/20 03:02:27 christos Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.19 2016/12/26 12:46:31 leot Exp $");
 #endif
 
 #include <sys/param.h>
@@ -587,6 +587,7 @@ get_proc_info(struct system_info *si, struct process_select *sel,
 	int show_idle;
 	int show_system;
 	int show_uid;
+	char *show_command;
 
 	static struct handle handle;
 
@@ -626,6 +627,7 @@ get_proc_info(struct system_info *si, struct process_select *sel,
 	show_idle = sel->idle;
 	show_system = sel->system;
 	show_uid = sel->uid != -1;
+	show_command = sel->command;
 
 	/* count up process states and get pointers to interesting procs */
 	total_procs = 0;
@@ -646,9 +648,12 @@ get_proc_info(struct system_info *si, struct process_select *sel,
 			if (pp->p_stat != LSZOMB &&
 			    (show_idle || (pp->p_pctcpu != 0) || 
 			    (pp->p_stat == LSRUN || pp->p_stat == LSONPROC)) &&
-			    (!show_uid || pp->p_ruid == (uid_t)sel->uid)) {
-				*prefp++ = pp;
-				active_procs++;
+			    (!show_uid || pp->p_ruid == (uid_t)sel->uid) &&
+			    (!show_command ||
+			     strstr(get_command(sel, pp),
+				 show_command) != NULL)) {
+					*prefp++ = pp;
+					active_procs++;
 			}
 		}
 	}
@@ -685,6 +690,7 @@ get_lwp_info(struct system_info *si, struct process_select *sel,
 	int show_idle;
 	int show_system;
 	int show_uid;
+	char *show_command;
 
 	static struct handle handle;
 
@@ -736,6 +742,7 @@ get_lwp_info(struct system_info *si, struct process_select *sel,
 	show_idle = sel->idle;
 	show_system = sel->system;
 	show_uid = sel->uid != -1;
+	show_command = sel->command;
 
 	/* count up thread states and get pointers to interesting threads */
 	total_lwps = 0;
@@ -758,9 +765,12 @@ get_lwp_info(struct system_info *si, struct process_select *sel,
 			if (lp->l_stat != LSZOMB &&
 			    (show_idle || (lp->l_pctcpu != 0) || 
 			    (lp->l_stat == LSRUN || lp->l_stat == LSONPROC)) &&
-			    (!show_uid || uid_from_thread(lp) == sel->uid)) {
-				*lrefp++ = lp;
-				active_lwps++;
+			    (!show_uid || uid_from_thread(lp) == sel->uid) &&
+			    (!show_command ||
+			     strstr(get_command(sel, proc_from_thread(lp)),
+				 show_command) != NULL)) {
+					*lrefp++ = lp;
+					active_lwps++;
 			}
 		}
 	}
