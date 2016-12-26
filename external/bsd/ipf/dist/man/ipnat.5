@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.5,v 1.4 2015/08/11 16:06:52 prlw1 Exp $
+.\"	$NetBSD: ipnat.5,v 1.5 2016/12/26 00:11:14 khorben Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -418,7 +418,7 @@ rdr le0 0/0 port 80-88 -> 127.0.0.1 port 3128 tcp
 .fi
 .PP
 then port 80 would become 3128, port 81 would become 3129, etc.  If we
-want to redirect a number of different pots to just a single port, an
+want to redirect a number of different ports to just a single port, an
 equals sign ("=") is placed before the port number on the RHS like this:
 .nf
 
