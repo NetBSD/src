@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.50 2016/12/27 20:14:35 christos Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.51 2016/12/27 20:24:32 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.50 2016/12/27 20:14:35 christos Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.51 2016/12/27 20:24:32 wiz Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -150,7 +150,7 @@ usage(void)
 	    "\t%s save | load\n",
 	    progname);
 	fprintf(stderr,
-	    "\t%s list [-46hnNw] [-i <ifname>]\n",
+	    "\t%s list [-46hNnw] [-i <ifname>]\n",
 	    progname);
 	exit(EXIT_FAILURE);
 }
