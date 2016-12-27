@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.192 2016/12/26 00:30:07 knakahara Exp $	*/
+/*	$NetBSD: in.c,v 1.193 2016/12/27 10:53:11 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.192 2016/12/26 00:30:07 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.193 2016/12/27 10:53:11 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -705,8 +705,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 
 	if (error == 0) {
 		if (run_hook)
-			(void)pfil_run_hooks(if_pfil,
-			    (struct mbuf **)cmd, ifp, PFIL_IFADDR);
+			pfil_run_addrhooks(if_pfil, cmd, iatoifa(ia));
 	} else if (newifaddr) {
 		KASSERT(ia != NULL);
 		in_purgeaddr(&ia->ia_ifa);

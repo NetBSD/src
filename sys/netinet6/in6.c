@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.226 2016/12/21 08:47:02 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.227 2016/12/27 10:53:12 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.226 2016/12/21 08:47:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.227 2016/12/27 10:53:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -719,10 +719,9 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		error = ENOTTY;
 	}
 release:
-	ia6_release(ia, &psref);
-
 	if (run_hooks)
-		pfil_run_hooks(if_pfil, (struct mbuf **)cmd, ifp, PFIL_IFADDR);
+		pfil_run_addrhooks(if_pfil, cmd, (struct ifaddr *)ia);
+	ia6_release(ia, &psref);
 out:
 	curlwp_bindx(bound);
 	return error;
