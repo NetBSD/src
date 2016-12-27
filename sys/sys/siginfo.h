@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.25 2013/11/22 21:04:11 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.26 2016/12/27 02:20:46 kamil Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -221,7 +221,7 @@ typedef union siginfo {
 #define	CLD_STOPPED	5	/* Child has stopped			*/
 #define	CLD_CONTINUED	6	/* Stopped child has continued		*/
 
-/* SIGPOLL */
+/* SIGIO */
 #define	POLL_IN		1	/* Data input available			*/
 #define	POLL_OUT	2	/* Output buffers available		*/
 #define	POLL_MSG	3	/* Input message available		*/
