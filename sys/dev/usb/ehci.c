@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.104 2016/10/05 20:55:57 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.105 2016/12/27 08:59:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.104 2016/10/05 20:55:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.105 2016/12/27 08:59:48 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -412,8 +412,7 @@ ehci_init(ehci_softc_t *sc)
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
-	cv_init(&sc->sc_softwake_cv, "ehciab");
-	cv_init(&sc->sc_doorbell, "ehcidi");
+	cv_init(&sc->sc_doorbell, "ehcidb");
 
 	sc->sc_xferpool = pool_cache_init(sizeof(struct ehci_xfer), 0, 0, 0,
 	    "ehcixfer", NULL, IPL_USB, NULL, NULL, NULL);
@@ -751,8 +750,10 @@ Static void
 ehci_doorbell(void *addr)
 {
 	ehci_softc_t *sc = addr;
+	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
 	mutex_enter(&sc->sc_lock);
+	sc->sc_dbanswered = true;
 	cv_broadcast(&sc->sc_doorbell);
 	mutex_exit(&sc->sc_lock);
 }
@@ -853,11 +854,6 @@ ehci_softintr(void *v)
 	    !TAILQ_EMPTY(&sc->sc_intrhead))
 		callout_reset(&sc->sc_tmo_intrlist,
 		    hz, ehci_intrlist_timeout, sc);
-
-	if (sc->sc_softwake) {
-		sc->sc_softwake = 0;
-		cv_broadcast(&sc->sc_softwake_cv);
-	}
 }
 
 Static void
@@ -939,7 +935,6 @@ ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex, ex_completeq_t *cq)
 	}
  done:
 	DPRINTFN(10, "ex=%p done", ex, 0, 0, 0);
-	callout_stop(&ex->ex_xfer.ux_callout);
 	ehci_idone(ex, cq);
 }
 
@@ -985,7 +980,6 @@ ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex, ex_completeq_t *cq)
 	return;
 done:
 	DPRINTF("ex %p done", ex, 0, 0, 0);
-	callout_stop(&ex->ex_xfer.ux_callout);
 	ehci_idone(ex, cq);
 }
 
@@ -1023,7 +1017,6 @@ ehci_check_sitd_intr(ehci_softc_t *sc, struct ehci_xfer *ex, ex_completeq_t *cq)
 		return;
 
 	DPRINTFN(10, "ex=%p done", ex, 0, 0, 0);
-	callout_stop(&(ex->ex_xfer.ux_callout));
 	ehci_idone(ex, cq);
 }
 
@@ -1031,19 +1024,24 @@ ehci_check_sitd_intr(ehci_softc_t *sc, struct ehci_xfer *ex, ex_completeq_t *cq)
 Static void
 ehci_idone(struct ehci_xfer *ex, ex_completeq_t *cq)
 {
+	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 	struct usbd_xfer *xfer = &ex->ex_xfer;
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	struct ehci_softc *sc = EHCI_XFER2SC(xfer);
 	ehci_soft_qtd_t *sqtd, *fsqtd, *lsqtd;
 	uint32_t status = 0, nstatus = 0;
 	int actlen = 0;
+	bool polling = sc->sc_bus.ub_usepolling;
 
-	EHCIHIST_FUNC(); EHCIHIST_CALLED();
-
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
+	KASSERT(polling || mutex_owned(&sc->sc_lock));
 
 	DPRINTF("ex=%p", ex, 0, 0, 0);
 
+	/*
+	 * Make sure the timeout handler didn't run or ran to the end
+	 * and set the transfer status.
+	 */
+	callout_halt(&ex->ex_xfer.ux_callout, polling ? NULL : &sc->sc_lock);
 	if (xfer->ux_status == USBD_CANCELLED ||
 	    xfer->ux_status == USBD_TIMEOUT) {
 		DPRINTF("aborted xfer=%p", xfer, 0, 0, 0);
@@ -1332,7 +1330,6 @@ ehci_detach(struct ehci_softc *sc, int flags)
 		kmem_free(sc->sc_softitds,
 		    sc->sc_flsize * sizeof(ehci_soft_itd_t *));
 	cv_destroy(&sc->sc_doorbell);
-	cv_destroy(&sc->sc_softwake_cv);
 
 #if 0
 	/* XXX destroyed in ehci_pci.c as it controls ehci_intr access */
@@ -2158,22 +2155,27 @@ ehci_sync_hc(ehci_softc_t *sc)
 		DPRINTF("dying", 0, 0, 0, 0);
 		return;
 	}
+
 	/* ask for doorbell */
 	EOWRITE4(sc, EHCI_USBCMD, EOREAD4(sc, EHCI_USBCMD) | EHCI_CMD_IAAD);
 	DPRINTF("cmd = 0x%08x sts = 0x%08x",
 	    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS), 0, 0);
 
-	error = cv_timedwait(&sc->sc_doorbell, &sc->sc_lock, hz); /* bell wait */
+	sc->sc_dbanswered = false;
+	/* bell wait */
+	while (!sc->sc_dbanswered) {
+		error = cv_timedwait(&sc->sc_doorbell, &sc->sc_lock, hz);
 
-	DPRINTF("cmd = 0x%08x sts = 0x%08x ... done",
-	    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS), 0, 0);
+		DPRINTF("cmd = 0x%08x sts = 0x%08x ... done",
+		    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS), 0, 0);
 #ifdef DIAGNOSTIC
-	if (error == EWOULDBLOCK) {
-		printf("ehci_sync_hc: timed out\n");
-	} else if (error) {
-		printf("ehci_sync_hc: cv_timedwait: error %d\n", error);
-	}
+		if (error == EWOULDBLOCK) {
+			printf("%s: timed out\n", __func__);
+		} else if (error) {
+			printf("%s: cv_timedwait: error %d\n", __func__, error);
+		}
 #endif
+	}
 }
 
 Static void
@@ -3095,16 +3097,19 @@ ehci_close_pipe(struct usbd_pipe *pipe, ehci_soft_qh_t *head)
 }
 
 /*
- * Abort a device request.
- * If this routine is called at splusb() it guarantees that the request
- * will be removed from the hardware scheduling and that the callback
- * for it will be called with USBD_CANCELLED status.
- * It's impossible to guarantee that the requested transfer will not
- * have happened since the hardware runs concurrently.
- * If the transaction has already happened we rely on the ordinary
- * interrupt processing to process it.
- * XXX This is most probably wrong.
- * XXXMRG this doesn't make sense anymore.
+ * Cancel or timeout a device request.  We have two cases to deal with
+ *
+ * 1) A driver wants to stop scheduled or inflight transfers
+ * 2) A transfer has timed out
+ *
+ * have (partially) happened since the hardware runs concurrently.
+ *
+ * Transfer state is protected by the bus lock and we set the transfer status
+ * as soon as either of the above happens (with bus lock held).
+ *
+ * Then we arrange for the hardware to tells us that it is not still
+ * processing the TDs by setting the QH halted bit and wait for the ehci
+ * door bell
  */
 Static void
 ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
@@ -3128,8 +3133,9 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 
 	if (sc->sc_dying) {
 		/* If we're dying, just do the software part. */
-		xfer->ux_status = status;	/* make software ignore it */
-		callout_stop(&xfer->ux_callout);
+		xfer->ux_status = status;
+		callout_halt(&xfer->ux_callout, &sc->sc_lock);
+		KASSERT(xfer->ux_status == status);
 		usb_transfer_complete(xfer);
 		return;
 	}
@@ -3155,10 +3161,20 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	xfer->ux_hcflags |= UXFER_ABORTING;
 
 	/*
-	 * Step 1: Make interrupt routine and hardware ignore xfer.
+	 * Step 1: When cancelling a transfer make sure the timeout handler
+	 * didn't run or ran to the end and saw the USBD_CANCELLED status.
+	 * Otherwise we must have got here via a timeout.
 	 */
-	xfer->ux_status = status;	/* make software ignore it */
-	callout_stop(&xfer->ux_callout);
+	if (status == USBD_CANCELLED) {
+		xfer->ux_status = status;
+		callout_halt(&xfer->ux_callout, &sc->sc_lock);
+	} else {
+		KASSERT(xfer->ux_status == USBD_TIMEOUT);
+	}
+
+	/*
+	 * Step 2: Make interrupt routine and hardware ignore xfer.
+	 */
 	ehci_del_intr_list(sc, exfer);
 
 	usb_syncmem(&sqh->dma,
@@ -3166,12 +3182,6 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	    sizeof(sqh->qh.qh_qtd.qtd_status),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	qhstatus = sqh->qh.qh_qtd.qtd_status;
-	sqh->qh.qh_qtd.qtd_status = qhstatus | htole32(EHCI_QTD_HALTED);
-	usb_syncmem(&sqh->dma,
-	    sqh->offs + offsetof(ehci_qh_t, qh_qtd.qtd_status),
-	    sizeof(sqh->qh.qh_qtd.qtd_status),
-	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
 	if (exfer->ex_type == EX_CTRL) {
 		fsqtd = exfer->ex_setup;
 		lsqtd = exfer->ex_status;
@@ -3179,32 +3189,36 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		fsqtd = exfer->ex_sqtdstart;
 		lsqtd = exfer->ex_sqtdend;
 	}
-	for (sqtd = fsqtd; ; sqtd = sqtd->nextqtd) {
-		usb_syncmem(&sqtd->dma,
-		    sqtd->offs + offsetof(ehci_qtd_t, qtd_status),
-		    sizeof(sqtd->qtd.qtd_status),
-		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-		sqtd->qtd.qtd_status |= htole32(EHCI_QTD_HALTED);
-		usb_syncmem(&sqtd->dma,
-		    sqtd->offs + offsetof(ehci_qtd_t, qtd_status),
-		    sizeof(sqtd->qtd.qtd_status),
+	if (!(qhstatus & htole32(EHCI_QTD_HALTED))) {
+		sqh->qh.qh_qtd.qtd_status = qhstatus | htole32(EHCI_QTD_HALTED);
+		usb_syncmem(&sqh->dma,
+		    sqh->offs + offsetof(ehci_qh_t, qh_qtd.qtd_status),
+		    sizeof(sqh->qh.qh_qtd.qtd_status),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-		if (sqtd == lsqtd)
-			break;
+
+		for (sqtd = fsqtd; ; sqtd = sqtd->nextqtd) {
+			usb_syncmem(&sqtd->dma,
+			    sqtd->offs + offsetof(ehci_qtd_t, qtd_status),
+			    sizeof(sqtd->qtd.qtd_status),
+			    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+			sqtd->qtd.qtd_status |= htole32(EHCI_QTD_HALTED);
+			usb_syncmem(&sqtd->dma,
+			    sqtd->offs + offsetof(ehci_qtd_t, qtd_status),
+			    sizeof(sqtd->qtd.qtd_status),
+			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+			if (sqtd == lsqtd)
+				break;
+		}
 	}
 
 	/*
-	 * Step 2: Wait until we know hardware has finished any possible
-	 * use of the xfer.  Also make sure the soft interrupt routine
-	 * has run.
+	 * Step 3: Wait until we know hardware has finished any possible
+	 * use of the xfer.
 	 */
 	ehci_sync_hc(sc);
-	sc->sc_softwake = 1;
-	usb_schedsoftintr(&sc->sc_bus);
-	cv_wait(&sc->sc_softwake_cv, &sc->sc_lock);
 
 	/*
-	 * Step 3: Remove any vestiges of the xfer from the hardware.
+	 * Step 4: Remove any vestiges of the xfer from the hardware.
 	 * The complication here is that the hardware may have executed
 	 * beyond the xfer we're trying to abort.  So as we're scanning
 	 * the TDs of this xfer we check if the hardware points to
@@ -3225,6 +3239,7 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	sqtd = sqtd->nextqtd;
 	/* Zap curqtd register if hardware pointed inside the xfer. */
 	if (hit && sqtd != NULL) {
+printf("%s: hit!\n", __func__);
 		DPRINTF("cur=0x%08x", sqtd->physaddr, 0, 0, 0);
 		sqh->qh.qh_curqtd = htole32(sqtd->physaddr); /* unlink qTDs */
 		usb_syncmem(&sqh->dma,
@@ -3245,7 +3260,7 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	}
 
 	/*
-	 * Step 4: Execute callback.
+	 * Step 5: Execute callback.
 	 */
 #ifdef DIAGNOSTIC
 	exfer->ex_isdone = true;
@@ -3280,8 +3295,10 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	if (sc->sc_dying) {
+		/* If we're dying, just do the software part. */
 		xfer->ux_status = status;
-		callout_stop(&xfer->ux_callout);
+		callout_halt(&xfer->ux_callout, &sc->sc_lock);
+		KASSERT(xfer->ux_status == status);
 		usb_transfer_complete(xfer);
 		return;
 	}
@@ -3303,8 +3320,21 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 	}
 	xfer->ux_hcflags |= UXFER_ABORTING;
 
-	xfer->ux_status = status;
-	callout_stop(&xfer->ux_callout);
+	/*
+	 * Step 1: When cancelling a transfer make sure the timeout handler
+	 * didn't run or ran to the end and saw the USBD_CANCELLED status.
+	 * Otherwise we must have got here via a timeout.
+	 */
+	if (status == USBD_CANCELLED) {
+		xfer->ux_status = status;
+		callout_halt(&xfer->ux_callout, &sc->sc_lock);
+	} else {
+		KASSERT(xfer->ux_status == USBD_TIMEOUT);
+	}
+
+	/*
+	 * Step 2: Make interrupt routine and hardware ignore xfer.
+	 */
 	ehci_del_intr_list(sc, exfer);
 
 	if (xfer->ux_pipe->up_dev->ud_speed == USB_SPEED_HIGH) {
@@ -3345,10 +3375,6 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 		}
 	}
 
-	sc->sc_softwake = 1;
-	usb_schedsoftintr(&sc->sc_bus);
-	cv_wait(&sc->sc_softwake_cv, &sc->sc_lock);
-
 #ifdef DIAGNOSTIC
 	exfer->ex_isdone = true;
 #endif
@@ -3371,6 +3397,7 @@ ehci_timeout(void *addr)
 	struct usbd_pipe *pipe = xfer->ux_pipe;
 	struct usbd_device *dev = pipe->up_dev;
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
+	bool timeout = false;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
@@ -3380,17 +3407,23 @@ ehci_timeout(void *addr)
 		usbd_dump_pipe(pipe);
 #endif
 
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_dying) {
-		mutex_enter(&sc->sc_lock);
-		ehci_abort_xfer(xfer, USBD_TIMEOUT);
 		mutex_exit(&sc->sc_lock);
 		return;
 	}
+	if (xfer->ux_status != USBD_CANCELLED) {
+		xfer->ux_status = USBD_TIMEOUT;
+		timeout = true;
+	}
+	mutex_exit(&sc->sc_lock);
 
-	/* Execute the abort in a process context. */
-	usb_init_task(&xfer->ux_aborttask, ehci_timeout_task, xfer,
-	    USB_TASKQ_MPSAFE);
-	usb_add_task(dev, &xfer->ux_aborttask, USB_TASKQ_HC);
+	if (timeout) {
+		/* Execute the abort in a process context. */
+		usb_init_task(&xfer->ux_aborttask, ehci_timeout_task, xfer,
+		    USB_TASKQ_MPSAFE);
+		usb_add_task(dev, &xfer->ux_aborttask, USB_TASKQ_HC);
+	}
 }
 
 Static void
