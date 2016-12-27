@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: test-simple,v 1.2 2016/09/26 00:21:22 schmonz Exp $
+# $NetBSD: test-simple,v 1.3 2016/12/27 12:09:19 schmonz Exp $
 
 test="$1"
 bozohttpd="$2"
@@ -15,9 +15,9 @@ fi
 bozotestport=11111
 
 ${bozohttpd} ${datadir} < $test.in > tmp.$test.out
-if ./html_cmp $test.out tmp.$test.out; then
+if ./html_cmp cmp $test.out tmp.$test.out; then
 	exit 0
 else
-	[ "yes" = "$verbose" ] || echo "Failed test $test: `cat tmp.$test.err; echo; cat $test.out`"
+	[ "yes" = "$verbose" ] || echo "Failed test $test: `cat tmp.$test.err; echo; ./html_cmp diff $test.out tmp.$test.out`"
 	exit 1
 fi
