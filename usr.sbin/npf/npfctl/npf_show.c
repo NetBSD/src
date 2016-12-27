@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.20 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.21 2016/12/27 20:14:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.20 2016/12/26 23:05:05 christos Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.21 2016/12/27 20:14:35 christos Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -153,7 +153,7 @@ print_address(npf_conf_info_t *ctx, const uint32_t *words)
 		errx(EXIT_FAILURE, "invalid byte-code mark (address)");
 	}
 	addr = (const npf_addr_t *)words;
-	return npfctl_print_addrmask(alen, addr, mask);
+	return npfctl_print_addrmask(alen, "%a", addr, mask);
 }
 
 static char *
@@ -437,7 +437,7 @@ npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 
 	/* Get the translation address (and port, if used). */
 	npf_nat_getmap(nt, &addr, &alen, &port);
-	seg = npfctl_print_addrmask(alen, &addr, NPF_NO_NETMASK);
+	seg = npfctl_print_addrmask(alen, "%a", &addr, NPF_NO_NETMASK);
 	if (port) {
 		char *p;
 		easprintf(&p, "%s port %u", seg, ntohs(port));
