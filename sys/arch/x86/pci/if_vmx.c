@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.13 2016/12/15 09:28:04 ozaki-r Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.14 2016/12/27 03:09:55 hikaru Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.13 2016/12/15 09:28:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.14 2016/12/27 03:09:55 hikaru Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2813,7 +2813,8 @@ vmxnet3_set_rxfilter(struct vmxnet3_softc *sc)
 	 */
 	mode = VMXNET3_RXMODE_BCAST | VMXNET3_RXMODE_UCAST;
 
-	if (ISSET(ifp->if_flags, IFF_PROMISC) || ec->ec_multicnt > 682)
+	if (ISSET(ifp->if_flags, IFF_PROMISC) ||
+	    ec->ec_multicnt > VMXNET3_MULTICAST_MAX)
 		goto allmulti;
 
 	p = sc->vmx_mcast;
