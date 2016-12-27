@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.164 2016/12/26 23:21:49 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.165 2016/12/27 13:49:58 christos Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.164 2016/12/26 23:21:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.165 2016/12/27 13:49:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5372,8 +5372,7 @@ sppp_clear_ip_addrs_work(struct work *wk, struct sppp *sp)
 			    ifp->if_xname, __func__, error);
 		}
 		if (!error) {
-			(void)pfil_run_hooks(if_pfil,
-			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
+			pfil_run_addrhooks(if_pfil, SIOCAIFADDR, ifa);
 		}
 	}
 
