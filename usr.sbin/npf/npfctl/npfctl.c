@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.49 2016/12/27 13:43:38 christos Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.50 2016/12/27 20:14:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.49 2016/12/27 13:43:38 christos Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.50 2016/12/27 20:14:35 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -70,6 +70,7 @@ enum {
 	NPFCTL_STATS,
 	NPFCTL_SAVE,
 	NPFCTL_LOAD,
+	NPFCTL_CONN_LIST,
 };
 
 static const struct operations_s {
@@ -92,6 +93,7 @@ static const struct operations_s {
 	/* Full state save/load */
 	{	"save",		NPFCTL_SAVE		},
 	{	"load",		NPFCTL_LOAD		},
+	{	"list",		NPFCTL_CONN_LIST	},
 	/* --- */
 	{	NULL,		0			}
 };
@@ -146,6 +148,9 @@ usage(void)
 	    progname);
 	fprintf(stderr,
 	    "\t%s save | load\n",
+	    progname);
+	fprintf(stderr,
+	    "\t%s list [-46hnNw] [-i <ifname>]\n",
 	    progname);
 	exit(EXIT_FAILURE);
 }
@@ -230,9 +235,10 @@ npfctl_print_error(const npf_error_t *ne)
 }
 
 char *
-npfctl_print_addrmask(int alen, const npf_addr_t *addr, npf_netmask_t mask)
+npfctl_print_addrmask(int alen, const char *fmt, const npf_addr_t *addr,
+    npf_netmask_t mask)
 {
-	const unsigned buflen = 64;
+	const unsigned buflen = 256;
 	char *buf = ecalloc(1, buflen);
 	struct sockaddr_storage ss;
 
@@ -241,12 +247,14 @@ npfctl_print_addrmask(int alen, const npf_addr_t *addr, npf_netmask_t mask)
 	switch (alen) {
 	case 4: {
 		struct sockaddr_in *sin = (void *)&ss;
+		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		memcpy(&sin->sin_addr, addr, sizeof(sin->sin_addr));
 		break;
 	}
 	case 16: {
 		struct sockaddr_in6 *sin6 = (void *)&ss;
+		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		memcpy(&sin6->sin6_addr, addr, sizeof(sin6->sin6_addr));
 		break;
@@ -254,7 +262,7 @@ npfctl_print_addrmask(int alen, const npf_addr_t *addr, npf_netmask_t mask)
 	default:
 		assert(false);
 	}
-	inet_ntop(ss.ss_family, (const void *)&ss, buf, buflen);
+	sockaddr_snprintf(buf, buflen, fmt, (const void *)&ss);
 	if (mask && mask != NPF_NO_NETMASK) {
 		const unsigned len = strlen(buf);
 		snprintf(&buf[len], buflen - len, "/%u", mask);
@@ -359,7 +367,7 @@ again:
 		while (nct.nct_data.buf.len--) {
 			if (!ent->alen)
 				break;
-			buf = npfctl_print_addrmask(ent->alen,
+			buf = npfctl_print_addrmask(ent->alen, "%a",
 			    &ent->addr, ent->mask);
 			puts(buf);
 			ent++;
@@ -574,6 +582,103 @@ npfctl_load(int fd)
 	return error;
 }
 
+struct npf_conn_filter {
+	uint16_t alen;
+	const char *ifname;
+	bool nat;
+	bool wide;
+	bool name;
+	int width;
+	FILE *fp;
+};
+
+static int
+npfctl_conn_print(unsigned alen, const npf_addr_t *a, const in_port_t *p, 
+    const char *ifname, void *v)
+{
+	struct npf_conn_filter *fil = v;
+	FILE *fp = fil->fp;
+	char *src, *dst;
+
+	if (fil->ifname && strcmp(ifname, fil->ifname) != 0)
+		return 0;
+	if (fil->alen && alen != fil->alen)
+		return 0;
+	if (fil->nat && !p[2])
+		return 0;
+
+	int w = fil->width;
+	const char *fmt = fil->name ? "%A" :
+	    (alen == sizeof(struct in_addr) ? "%a" : "[%a]");
+	src = npfctl_print_addrmask(alen, fmt, &a[0], NPF_NO_NETMASK);
+	dst = npfctl_print_addrmask(alen, fmt, &a[1], NPF_NO_NETMASK);
+	if (fil->wide)
+		fprintf(fp, "%s:%d %s:%d", src, p[0], dst, p[1]);
+	else
+		fprintf(fp, "%*.*s:%-5d %*.*s:%-5d", w, w, src, p[0],
+		    w, w, dst, p[1]);
+	free(src);
+	free(dst);
+	if (!p[2]) {
+		fputc('\n', fp);
+		return 1;
+	}
+	fprintf(fp, " via %s:%d\n", ifname, ntohs(p[2]));
+	return 1;
+}
+
+
+static int
+npfctl_conn_list(int fd, int argc, char **argv)
+{
+	struct npf_conn_filter f;
+	int c;
+	int header = true;
+	memset(&f, 0, sizeof(f));
+
+	argc--;
+	argv++;
+
+	while ((c = getopt(argc, argv, "46hi:nNw")) != -1) {
+		switch (c) {
+		case '4':
+			f.alen = sizeof(struct in_addr);
+			break;
+		case '6':
+			f.alen = sizeof(struct in6_addr);
+			break;
+		case 'h':
+			header = false;
+		case 'i':
+			f.ifname = optarg;
+			break;
+		case 'n':
+			f.nat = true;
+			break;
+		case 'N':
+			f.name = true;
+			break;
+		case 'w':
+			f.wide = true;
+			break;
+		default:
+			fprintf(stderr,
+			    "Usage: %s list [-46hnNw] [-i <ifname>]\n",
+			    getprogname());
+			exit(EXIT_FAILURE);
+		}
+	}
+	f.width = f.alen == sizeof(struct in_addr) ? 25 : 41;
+	int w = f.width + 6;
+	f.fp = stdout;
+	if (header)
+		fprintf(f.fp, "%*.*s %*.*s\n",
+		    w, w, "From address:port ", w, w, "To address:port ");
+		
+	npf_conn_list(fd, npfctl_conn_print, &f);
+	return 0;
+}
+
 static void
 npfctl(int action, int argc, char **argv)
 {
@@ -658,6 +763,10 @@ npfctl(int action, int argc, char **argv)
 	case NPFCTL_STATS:
 		ret = npfctl_print_stats(fd);
 		fun = "npfctl_print_stats";
+		break;
+	case NPFCTL_CONN_LIST:
+		ret = npfctl_conn_list(fd, argc, argv);
+		fun = "npfctl_conn_list";
 		break;
 	}
 	if (ret) {
