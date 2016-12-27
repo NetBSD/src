@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.33 2016/12/27 14:58:07 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.34 2016/12/27 15:21:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.33 2016/12/27 14:58:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.34 2016/12/27 15:21:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1197,16 +1197,6 @@ ucomparam(struct tty *tp, struct termios *t)
 
 	if (sc == NULL)
 		return EIO;
-
-	mutex_enter(&sc->sc_lock);
-	if (sc->sc_dying) {
-		DPRINTF("... dying", 0, 0, 0, 0);
-		mutex_exit(&sc->sc_lock);
-		return EIO;
-	}
-
-	sc->sc_refcnt++;
-	mutex_exit(&sc->sc_lock);
 
 	mutex_enter(&sc->sc_lock);
 	if (sc->sc_dying) {
