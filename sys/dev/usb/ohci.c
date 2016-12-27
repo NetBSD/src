@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.81 2016/12/17 10:10:34 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.82 2016/12/27 08:32:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.81 2016/12/17 10:10:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.82 2016/12/27 08:32:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1402,8 +1402,9 @@ ohci_softintr(void *v)
 	int len, cc;
 	int i, j, actlen, iframes, uedir;
 	ohci_physaddr_t done = 0;
+	bool polling = sc->sc_bus.ub_usepolling;
 
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
+	KASSERT(polling || mutex_owned(&sc->sc_lock));
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
@@ -1491,7 +1492,7 @@ ohci_softintr(void *v)
 		 * Make sure the timeout handler didn't run or ran to the end
 		 * and set the transfer status.
 		 */
-		callout_halt(&xfer->ux_callout, &sc->sc_lock);
+		callout_halt(&xfer->ux_callout, polling ? NULL : &sc->sc_lock);
 
 		if (xfer->ux_status == USBD_CANCELLED ||
 		    xfer->ux_status == USBD_TIMEOUT) {
