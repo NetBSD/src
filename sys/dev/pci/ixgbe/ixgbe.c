@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.55 2016/12/16 08:41:01 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.56 2016/12/27 10:01:39 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -4987,8 +4987,10 @@ ixgbe_set_flowcntl(struct adapter *adapter, int fc)
 			return (EINVAL);
 	}
 	adapter->fc = fc;
+#if 0 /* XXX NetBSD */
 	/* Don't autoneg if forcing a value */
 	adapter->hw.fc.disable_fc_autoneg = TRUE;
+#endif
 	ixgbe_fc_enable(&adapter->hw);
 	return (0);
 }
