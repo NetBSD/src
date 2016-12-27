@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.32 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.33 2016/12/27 14:58:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.32 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.33 2016/12/27 14:58:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -323,7 +323,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_bulkin_no != -1) {
 		/* Open the bulk pipes */
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_no,
-		    USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
+		    USBD_EXCLUSIVE_USE | USBD_MPSAFE, &sc->sc_bulkin_pipe);
 		if (err) {
 			DPRINTF("open bulk in error (addr %d), err=%d",
 			    sc->sc_bulkin_no, err, 0, 0);
@@ -345,7 +345,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->sc_bulkout_no != -1) {
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_no,
-		    USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
+		    USBD_EXCLUSIVE_USE | USBD_MPSAFE, &sc->sc_bulkout_pipe);
 		if (err) {
 			DPRINTF("open bulk out error (addr %d), err=%d",
 			    sc->sc_bulkout_no, err, 0, 0);
