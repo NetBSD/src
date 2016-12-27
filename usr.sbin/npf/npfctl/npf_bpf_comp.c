@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf_comp.c,v 1.9 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npf_bpf_comp.c,v 1.10 2016/12/27 22:35:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.9 2016/12/26 23:05:05 christos Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.10 2016/12/27 22:35:33 rmind Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -244,15 +244,26 @@ npfctl_bpf_group(npf_bpf_t *ctx)
 }
 
 void
-npfctl_bpf_endgroup(npf_bpf_t *ctx)
+npfctl_bpf_endgroup(npf_bpf_t *ctx, bool invert)
 {
 	struct bpf_program *bp = &ctx->prog;
 	const size_t curoff = bp->bf_len;
 
 	/* If there are no blocks or only one - nothing to do. */
-	if ((ctx->nblocks - ctx->gblock) <= 1) {
+	if (!invert && (ctx->nblocks - ctx->gblock) <= 1) {
 		ctx->goff = ctx->gblock = 0;
 		return;
+	}
+
+	/*
+	 * If inverting, then prepend a jump over the statement below.
+	 * If matching, jump will jump below and the fail will happen.
+	 */
+	if (invert) {
+		struct bpf_insn insns_ret[] = {
+			BPF_STMT(BPF_JMP+BPF_JA, 1),
+		};
+		add_insns(ctx, insns_ret, __arraycount(insns_ret));
 	}
 
 	/*
@@ -309,7 +320,7 @@ fetch_l3(npf_bpf_t *ctx, sa_family_t af, u_int flags)
 		 */
 		if (ingroup) {
 			assert(ctx->nblocks == ctx->gblock);
-			npfctl_bpf_endgroup(ctx);
+			npfctl_bpf_endgroup(ctx, false);
 		}
 
 		/*
