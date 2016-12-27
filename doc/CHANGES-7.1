@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.139 2016/12/26 19:01:18 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.140 2016/12/27 07:12:32 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7795,4 +7795,9 @@ sys/net/npf/lpm.c				1.2
 
 	Fix kmem_free() sizes in hashmap_rehash() and lpm_clear().
 	[rmind, ticket #1339]
+
+sys/net/npf/lpm.c				1.3
+
+	Fix kmem_free() in hashmap_remove().
+	[rmind, ticket #1340]
 
