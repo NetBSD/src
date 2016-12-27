@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.23 2016/01/22 22:03:54 christos Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.24 2016/12/27 22:35:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -154,6 +154,7 @@ any			return ANY;
 ")"			return PAR_CLOSE;
 ","			return COMMA;
 "="			return EQ;
+"!"			return EXCL_MARK;
 
 "0x"{HEXDIG} {
 			char *endp, *buf = ecalloc(1, yyleng + 1);
