@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.105 2016/12/27 08:59:48 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.106 2016/12/27 10:16:49 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.105 2016/12/27 08:59:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.106 2016/12/27 10:16:49 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3239,7 +3239,6 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	sqtd = sqtd->nextqtd;
 	/* Zap curqtd register if hardware pointed inside the xfer. */
 	if (hit && sqtd != NULL) {
-printf("%s: hit!\n", __func__);
 		DPRINTF("cur=0x%08x", sqtd->physaddr, 0, 0, 0);
 		sqh->qh.qh_curqtd = htole32(sqtd->physaddr); /* unlink qTDs */
 		usb_syncmem(&sqh->dma,
