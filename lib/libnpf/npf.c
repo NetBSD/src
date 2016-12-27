@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.40 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npf.c,v 1.41 2016/12/27 20:14:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.40 2016/12/26 23:05:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.41 2016/12/27 20:14:07 christos Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -122,7 +122,7 @@ _npf_add_addr(prop_dictionary_t dict, const char *name, int af,
 	return true;
 }
 
-static bool
+static unsigned
 _npf_get_addr(prop_dictionary_t dict, const char *name, npf_addr_t *addr)
 {
 	prop_object_t obj = prop_dictionary_get(dict, name);
@@ -136,9 +136,9 @@ _npf_get_addr(prop_dictionary_t dict, const char *name, npf_addr_t *addr)
 	case sizeof(struct in_addr):
 	case sizeof(struct in6_addr):
 		memcpy(addr, d, sz);
-		return true;
+		return (unsigned)sz;
 	default:
-		return false;
+		return 0;
 	}
 }
 
@@ -1358,4 +1358,88 @@ out:
 		prop_object_release(conn_res);
 	prop_object_release(conn_dict);
 	return error;
+}
+
+struct npf_endpoint {
+	npf_addr_t addr[2];
+	in_port_t port[2];
+	uint16_t alen;
+	uint16_t proto;
+};
+
+static bool
+npf_endpoint_load(prop_dictionary_t cdict, const char *name,
+    struct npf_endpoint *ep)
+{
+	prop_dictionary_t ed = prop_dictionary_get(cdict, name);
+	if (ed == NULL)
+		return false;
+	if (!(ep->alen = _npf_get_addr(ed, "saddr", &ep->addr[0])))
+		return false;
+	if (ep->alen != _npf_get_addr(ed, "daddr", &ep->addr[1]))
+		return false;
+	if (!prop_dictionary_get_uint16(ed, "sport", &ep->port[0]))
+		return false;
+	if (!prop_dictionary_get_uint16(ed, "dport", &ep->port[1]))
+		return false;
+	if (!prop_dictionary_get_uint16(ed, "proto", &ep->proto))
+		return false;
+	return true;
+}
+
+static void
+npf_conn_handle(prop_dictionary_t cdict, npf_conn_func_t fun, void *v)
+{
+	prop_dictionary_t nat;
+	struct npf_endpoint ep;
+	uint16_t tport;
+	const char *ifname;
+
+	if (!prop_dictionary_get_cstring_nocopy(cdict, "ifname", &ifname))
+		goto err;
+
+	if ((nat = prop_dictionary_get(cdict, "nat")) != NULL &&
+	    prop_object_type(nat) == PROP_TYPE_DICTIONARY) {
+		if (!prop_dictionary_get_uint16(nat, "tport", &tport))
+			goto err;
+	} else {
+		tport = 0;
+	}
+	if (!npf_endpoint_load(cdict, "forw-key", &ep))
+		goto err;
+
+	in_port_t p[] = {
+	    ntohs(ep.port[0]),
+	    ntohs(ep.port[1]),
+	    ntohs(tport)
+	};
+	(*fun)((unsigned)ep.alen, ep.addr, p, ifname, v);
+err:
+	return;
+}
+
+int
+npf_conn_list(int fd, npf_conn_func_t fun, void *v)
+{
+	nl_config_t *ncf;
+
+	ncf = npf_config_retrieve(fd);
+	if (ncf == NULL) {
+		return errno;
+	}
+        
+        /* Connection list - array */ 
+        if (prop_object_type(ncf->ncf_conn_list) != PROP_TYPE_ARRAY) {
+                return EINVAL;
+        }
+        
+        prop_object_iterator_t it = prop_array_iterator(ncf->ncf_conn_list);
+        prop_dictionary_t condict;
+        while ((condict = prop_object_iterator_next(it)) != NULL) {
+                if (prop_object_type(condict) != PROP_TYPE_DICTIONARY) {
+			return EINVAL;
+                }
+		npf_conn_handle(condict, fun, v);
+	}
+	return 0;
 }
