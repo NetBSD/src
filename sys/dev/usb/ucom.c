@@ -1,12 +1,12 @@
-/*	$NetBSD: ucom.c,v 1.108.2.34 2016/12/27 15:21:46 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.35 2016/12/27 15:22:10 skrll Exp $	*/
 
 /*
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * Carlstedt Research & Technology, and Nick Hudson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.34 2016/12/27 15:21:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.35 2016/12/27 15:22:10 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
