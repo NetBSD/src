@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.41 2016/12/27 20:14:07 christos Exp $	*/
+/*	$NetBSD: npf.c,v 1.42 2016/12/27 20:32:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.41 2016/12/27 20:14:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.42 2016/12/27 20:32:58 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -1427,18 +1427,18 @@ npf_conn_list(int fd, npf_conn_func_t fun, void *v)
 	if (ncf == NULL) {
 		return errno;
 	}
-        
-        /* Connection list - array */ 
-        if (prop_object_type(ncf->ncf_conn_list) != PROP_TYPE_ARRAY) {
-                return EINVAL;
-        }
-        
-        prop_object_iterator_t it = prop_array_iterator(ncf->ncf_conn_list);
-        prop_dictionary_t condict;
-        while ((condict = prop_object_iterator_next(it)) != NULL) {
-                if (prop_object_type(condict) != PROP_TYPE_DICTIONARY) {
+
+	/* Connection list - array */ 
+	if (prop_object_type(ncf->ncf_conn_list) != PROP_TYPE_ARRAY) {
+		return EINVAL;
+	}
+
+	prop_object_iterator_t it = prop_array_iterator(ncf->ncf_conn_list);
+	prop_dictionary_t condict;
+	while ((condict = prop_object_iterator_next(it)) != NULL) {
+		if (prop_object_type(condict) != PROP_TYPE_DICTIONARY) {
 			return EINVAL;
-                }
+		}
 		npf_conn_handle(condict, fun, v);
 	}
 	return 0;
