@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.35 2016/12/27 15:22:10 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.36 2016/12/27 15:25:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2016 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.35 2016/12/27 15:22:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.36 2016/12/27 15:25:41 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1639,6 +1639,7 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 		return;
 	}
 
+	mutex_exit(&sc->sc_lock);
 	ub->ub_data = usbd_get_buffer(xfer);
 	if (sc->sc_methods->ucom_read != NULL) {
 		sc->sc_methods->ucom_read(sc->sc_parent, sc->sc_portno,
@@ -1648,6 +1649,15 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 		ub->ub_index = 0;
 
 	ub->ub_len = cc;
+
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_dying) {
+		if (--sc->sc_refcnt < 0)
+			cv_broadcast(&sc->sc_detachcv);
+		mutex_exit(&sc->sc_lock);
+		DPRINTF("... dying", 0, 0, 0, 0);
+		return;
+	}
 
 	SIMPLEQ_INSERT_TAIL(&sc->sc_ibuff_full, ub, ub_link);
 
