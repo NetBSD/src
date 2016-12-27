@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.49 2016/12/11 17:31:09 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.50 2016/12/27 14:43:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.49 2016/12/11 17:31:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.50 2016/12/27 14:43:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -860,7 +860,7 @@ usbd_get_interface(struct usbd_interface *iface, uint8_t *aiface)
 
 /*** Internal routines ***/
 
-/* Dequeue all pipe operations, called at splusb(). */
+/* Dequeue all pipe operations, called with bus lock held. */
 Static usbd_status
 usbd_ar_pipe(struct usbd_pipe *pipe)
 {
