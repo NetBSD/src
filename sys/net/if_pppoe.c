@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.122 2016/12/26 23:21:49 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.123 2016/12/27 01:31:06 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.122 2016/12/26 23:21:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.123 2016/12/27 01:31:06 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -235,7 +235,7 @@ static struct pppoe_softc * pppoe_find_softc_by_hunique(uint8_t *, size_t,
     struct ifnet *, krw_t);
 static struct mbuf *pppoe_get_mbuf(size_t len);
 
-static void pppoe_ifattach_hook(void *, u_long, void *);
+static void pppoe_ifattach_hook(void *, unsigned long, void *);
 
 static LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
 static krwlock_t pppoe_softc_list_lock;
@@ -1898,14 +1898,15 @@ pppoe_transmit(struct ifnet *ifp, struct mbuf *m)
 }
 #endif /* PPPOE_MPSAFE */
 
-static int
-pppoe_ifattach_hook(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+static void
+pppoe_ifattach_hook(void *arg, unsigned long cmd, void *arg2)
 {
+	struct ifnet *ifp = arg2;
 	struct pppoe_softc *sc;
 	DECLARE_SPLNET_VARIABLE;
 
-	if (mp != (struct mbuf **)PFIL_IFNET_DETACH)
-		return 0;
+	if (cmd != PFIL_IFNET_DETACH)
+		return;
 
 	ACQUIRE_SPLNET();
 	rw_enter(&pppoe_softc_list_lock, RW_READER);
@@ -1930,8 +1931,6 @@ pppoe_ifattach_hook(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	}
 	rw_exit(&pppoe_softc_list_lock);
 	RELEASE_SPLNET();
-
-	return 0;
 }
 
 static void
