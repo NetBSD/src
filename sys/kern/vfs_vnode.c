@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.64 2016/12/20 10:02:21 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.65 2016/12/27 11:59:36 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.64 2016/12/20 10:02:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.65 2016/12/27 11:59:36 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1305,7 +1305,7 @@ vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
 }
 
 /*
- * Prepare key change: lock old and new cache node.
+ * Prepare key change: update old cache nodes key and lock new cache node.
  * Return an error if the new node already exists.
  */
 int
@@ -1345,20 +1345,18 @@ vcache_rekey_enter(struct mount *mp, struct vnode *vp,
 	SLIST_INSERT_HEAD(&vcache.hashtab[new_hash & vcache.hashmask],
 	    new_node, vi_hash);
 
-	/* Lock old node. */
+	/* Replace old nodes key with the temporary copy. */
 	node = vcache_hash_lookup(&old_vcache_key, old_hash);
 	KASSERT(node != NULL);
 	KASSERT(VIMPL_TO_VNODE(node) == vp);
-	mutex_enter(vp->v_interlock);
-	VSTATE_CHANGE(vp, VS_ACTIVE, VS_BLOCKED);
+	KASSERT(node->vi_key.vk_key != old_vcache_key.vk_key);
 	node->vi_key = old_vcache_key;
-	mutex_exit(vp->v_interlock);
 	mutex_exit(&vcache.lock);
 	return 0;
 }
 
 /*
- * Key change complete: remove old node and unlock new node.
+ * Key change complete: update old node and remove placeholder.
  */
 void
 vcache_rekey_exit(struct mount *mp, struct vnode *vp,
@@ -1386,8 +1384,6 @@ vcache_rekey_exit(struct mount *mp, struct vnode *vp,
 	old_node = vcache_hash_lookup(&old_vcache_key, old_hash);
 	KASSERT(old_node != NULL);
 	KASSERT(VIMPL_TO_VNODE(old_node) == vp);
-	mutex_enter(vp->v_interlock);
-	VSTATE_ASSERT(vp, VS_BLOCKED);
 
 	new_node = vcache_hash_lookup(&new_vcache_key, new_hash);
 	KASSERT(new_node != NULL);
@@ -1404,8 +1400,6 @@ vcache_rekey_exit(struct mount *mp, struct vnode *vp,
 		SLIST_INSERT_HEAD(&vcache.hashtab[new_hash & vcache.hashmask],
 		    old_node, vi_hash);
 	}
-	VSTATE_CHANGE(vp, VS_BLOCKED, VS_ACTIVE);
-	mutex_exit(vp->v_interlock);
 
 	/* Remove new node used as placeholder. */
 	SLIST_REMOVE(&vcache.hashtab[new_hash & vcache.hashmask],
