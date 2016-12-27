@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.81 2016/11/05 01:09:30 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.82 2016/12/27 21:52:35 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.81 2016/11/05 01:09:30 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.82 2016/12/27 21:52:35 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -516,7 +516,9 @@ type_attribute_spec:
 	| T_AT_GNU_INLINE
 	| T_AT_FORMAT T_LPARN type_attribute_format_type T_COMMA
 	    constant T_COMMA constant T_RPARN
-	| T_AT_UNUSED
+	| T_AT_UNUSED {
+		addused();
+	}
 	| T_AT_WEAK
 	| T_AT_VISIBILITY T_LPARN constant T_RPARN
 	| T_QUAL {
