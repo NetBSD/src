@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.41 2016/12/27 20:14:35 christos Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.42 2016/12/27 22:35:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -78,6 +78,8 @@ typedef struct addr_port {
 typedef struct filt_opts {
 	addr_port_t	fo_from;
 	addr_port_t	fo_to;
+	bool		fo_finvert;
+	bool		fo_tinvert;
 } filt_opts_t;
 
 typedef struct opt_proto {
@@ -149,6 +151,7 @@ typedef struct npf_bpf npf_bpf_t;
 
 #define	MATCH_DST	0x01
 #define	MATCH_SRC	0x02
+#define	MATCH_INVERT	0x04
 
 enum {
 	BM_IPVER, BM_PROTO, BM_SRC_CIDR, BM_SRC_TABLE, BM_DST_CIDR,
@@ -162,7 +165,7 @@ const void *	npfctl_bpf_bmarks(npf_bpf_t *, size_t *);
 void		npfctl_bpf_destroy(npf_bpf_t *);
 
 void		npfctl_bpf_group(npf_bpf_t *);
-void		npfctl_bpf_endgroup(npf_bpf_t *);
+void		npfctl_bpf_endgroup(npf_bpf_t *, bool);
 
 void		npfctl_bpf_proto(npf_bpf_t *, sa_family_t, int);
 void		npfctl_bpf_cidr(npf_bpf_t *, u_int, sa_family_t,
