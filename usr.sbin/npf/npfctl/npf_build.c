@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.41 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.42 2016/12/27 22:35:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.41 2016/12/26 23:05:05 christos Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.42 2016/12/27 22:35:33 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -268,7 +268,7 @@ npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 			assert(false);
 		}
 	}
-	npfctl_bpf_endgroup(ctx);
+	npfctl_bpf_endgroup(ctx, (opts & MATCH_INVERT) != 0);
 }
 
 static void
@@ -321,6 +321,7 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	const addr_port_t *apto = &fopts->fo_to;
 	const int proto = op->op_proto;
 	npf_bpf_t *bc;
+	unsigned opts;
 	size_t len;
 
 	/* If none specified, then no byte-code. */
@@ -365,8 +366,10 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	}
 
 	/* Build IP address blocks. */
-	npfctl_build_vars(bc, family, apfrom->ap_netaddr, MATCH_SRC);
-	npfctl_build_vars(bc, family, apto->ap_netaddr, MATCH_DST);
+	opts = MATCH_SRC | (fopts->fo_finvert ? MATCH_INVERT : 0);
+	npfctl_build_vars(bc, family, apfrom->ap_netaddr, opts);
+	opts = MATCH_DST | (fopts->fo_tinvert ? MATCH_INVERT : 0);
+	npfctl_build_vars(bc, family, apto->ap_netaddr, opts);
 
 	/* Build port-range blocks. */
 	if (need_tcpudp) {
@@ -374,7 +377,7 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 		npfctl_bpf_group(bc);
 		npfctl_bpf_proto(bc, AF_UNSPEC, IPPROTO_TCP);
 		npfctl_bpf_proto(bc, AF_UNSPEC, IPPROTO_UDP);
-		npfctl_bpf_endgroup(bc);
+		npfctl_bpf_endgroup(bc, false);
 	}
 	npfctl_build_vars(bc, family, apfrom->ap_portrange, MATCH_SRC);
 	npfctl_build_vars(bc, family, apto->ap_portrange, MATCH_DST);
