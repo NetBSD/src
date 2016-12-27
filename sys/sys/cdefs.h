@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.128 2015/11/19 17:04:01 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.129 2016/12/27 21:52:01 christos Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -205,7 +205,7 @@
  * Calls to const functions can be optimised away and moved around
  * without limitations.
  */
-#if !__GNUC_PREREQ__(2, 0)
+#if !__GNUC_PREREQ__(2, 0) && !defined(__lint__)
 #define __attribute__(x)
 #endif
 
@@ -258,7 +258,7 @@
 /*
  * __unused: Note that item or function might be unused.
  */
-#if __GNUC_PREREQ__(2, 7)
+#if __GNUC_PREREQ__(2, 7) || defined(__lint__)
 #define	__unused	__attribute__((__unused__))
 #else
 #define	__unused	/* delete */
