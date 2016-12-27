@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.117 2016/10/31 05:10:45 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.118 2016/12/27 03:51:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1871,9 +1871,9 @@ struct pci_rom {
 #define	PCI_PASID_CAP_PRIVMODE	__BIT(2)	/* Privileged Mode Supported */
 #define	PCI_PASID_CAP_MAXPASIDW	__BITS(12, 8)	/* Max PASID Width */
 #define	PCI_PASID_CTL	0x04	/* Control Register */
-#define	PCI_PASID_CTL_PASID_EN	__BIT(0)	/* PASID Enable */
-#define	PCI_PASID_CTL_XPERM_EN	__BIT(1)	/* Execute Permission Enable */
-#define	PCI_PASID_CTL_PRIVMODE_EN __BIT(2)	/* Privileged Mode Enable */
+#define	PCI_PASID_CTL_PASID_EN	__BIT(0+16)	/* PASID Enable */
+#define	PCI_PASID_CTL_XPERM_EN	__BIT(1+16)	/* Execute Permission Enable */
+#define	PCI_PASID_CTL_PRIVMODE_EN __BIT(2+16)	/* Privileged Mode Enable */
 
 /*
  * Extended capability ID: 0x001c
