@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.458 2016/12/26 23:12:33 pgoyette Exp $
+.\"	$NetBSD: options.4,v 1.459 2016/12/27 10:30:24 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -717,7 +717,7 @@ Like
 it enables the BIO history logs.
 These logs can be displayed by using
 .Cm show kernhist
-from DDB.
+from DDB, and can help in debugging problems with Buffered I/O operations.
 See the kernel source file
 .Pa sys/kern/vfs_vio.c
 for details.
