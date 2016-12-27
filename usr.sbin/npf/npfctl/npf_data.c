@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.26 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.27 2016/12/27 22:35:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -31,10 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.26 2016/12/26 23:05:05 christos Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.27 2016/12/27 22:35:33 rmind Exp $");
+
+#include <stdlib.h>
+#include <stddef.h>
 
 #include <sys/types.h>
-#include <sys/null.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -46,8 +48,6 @@ __RCSID("$NetBSD: npf_data.c,v 1.26 2016/12/26 23:05:05 christos Exp $");
 #include <netinet/tcp.h>
 #include <net/if.h>
 
-#include <stdlib.h>
-#include <stddef.h>
 #include <string.h>
 #include <ctype.h>
 #include <err.h>
