@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.31 2016/12/27 08:49:29 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.32 2016/12/27 10:09:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.31 2016/12/27 08:49:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.32 2016/12/27 10:09:24 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_motg.h"
@@ -2090,7 +2090,6 @@ complete:
 	KASSERTMSG(xfer && xfer->ux_status == USBD_IN_PROGRESS && 
 	    ep->phase == DATA_OUT, "xfer %p status %d phase %d",
 	    xfer, xfer->ux_status, ep->phase);
-#endif
 	ep->phase = IDLE;
 	ep->xfer = NULL;
 	if (xfer && xfer->ux_status == USBD_IN_PROGRESS) {
