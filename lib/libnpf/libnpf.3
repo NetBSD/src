@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnpf.3,v 1.3 2016/12/27 17:58:56 rmind Exp $
+.\"	$NetBSD: libnpf.3,v 1.4 2016/12/27 21:25:12 wiz Exp $
 .\"
 .\" Copyright (c) 2011-2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,7 +132,7 @@ Flush the current configuration.
 .It Fn npf_config_retrieve "fd" "active" "loaded"
 Retrieve and return the loaded configuration from the kernel.
 .It Fn npf_config_active_p "ncf"
-Indicate whether the retrievied configuration is active (true if yes
+Indicate whether the retrieved configuration is active (true if yes
 and false otherwise).
 .It Fn npf_config_destroy "ncf"
 Destroy the configuration
@@ -210,7 +210,7 @@ and its size by
 .Fa len .
 The size shall not exceed
 .Dv NPF_RULE_MAXKEYLEN .
-The kernel does not validate the key is unique, it is the responsibilty
+The kernel does not validate the key is unique, it is the responsibility
 of the caller.
 .\" ---
 .It Fn npf_rule_setinfo "rl" "info" "len"
