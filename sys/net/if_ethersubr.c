@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.230 2016/12/28 07:26:24 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.231 2016/12/28 07:32:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.230 2016/12/28 07:26:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.231 2016/12/28 07:32:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.230 2016/12/28 07:26:24 ozaki-r E
 #include <sys/rnd.h>
 #include <sys/rndsource.h>
 #include <sys/cpu.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -966,6 +967,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 		if_set_sadl(ifp, lla, ETHER_ADDR_LEN, !ETHER_IS_LOCAL(lla));
 
 	LIST_INIT(&ec->ec_multiaddrs);
+	ec->ec_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 #ifdef MBUFTRACE
@@ -1012,12 +1014,16 @@ ether_ifdetach(struct ifnet *ifp)
 #endif
 
 	s = splnet();
+	mutex_enter(ec->ec_lock);
 	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
 		LIST_REMOVE(enm, enm_list);
-		free(enm, M_IFMADDR);
+		kmem_free(enm, sizeof(*enm));
 		ec->ec_multicnt--;
 	}
+	mutex_exit(ec->ec_lock);
 	splx(s);
+
+	mutex_destroy(ec->ec_lock);
 
 	ifp->if_mowner = NULL;
 	MOWNER_DETACH(&ec->ec_rx_mowner);
@@ -1224,56 +1230,62 @@ ether_multiaddr(const struct sockaddr *sa, uint8_t addrlo[ETHER_ADDR_LEN],
 int
 ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 {
-	struct ether_multi *enm;
+	struct ether_multi *enm, *_enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
-	int s = splnet(), error;
+	int s, error = 0;
 
+	/* Allocate out of lock */
+	enm = kmem_alloc(sizeof(*enm), KM_SLEEP);
+	if (enm == NULL)
+		return ENOBUFS;
+
+	s = splnet();
+	mutex_enter(ec->ec_lock);
 	error = ether_multiaddr(sa, addrlo, addrhi);
-	if (error != 0) {
-		splx(s);
-		return error;
-	}
+	if (error != 0)
+		goto out;
 
 	/*
 	 * Verify that we have valid Ethernet multicast addresses.
 	 */
 	if (!ETHER_IS_MULTICAST(addrlo) || !ETHER_IS_MULTICAST(addrhi)) {
-		splx(s);
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 	}
 	/*
 	 * See if the address range is already in the list.
 	 */
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm);
-	if (enm != NULL) {
+	ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, _enm);
+	if (_enm != NULL) {
 		/*
 		 * Found it; just increment the reference count.
 		 */
-		++enm->enm_refcount;
-		splx(s);
-		return 0;
+		++_enm->enm_refcount;
+		error = 0;
+		goto out;
 	}
 	/*
 	 * New address or range; malloc a new multicast record
 	 * and link it into the interface's multicast list.
 	 */
-	enm = (struct ether_multi *)malloc(sizeof(*enm), M_IFMADDR, M_NOWAIT);
-	if (enm == NULL) {
-		splx(s);
-		return ENOBUFS;
-	}
 	memcpy(enm->enm_addrlo, addrlo, 6);
 	memcpy(enm->enm_addrhi, addrhi, 6);
 	enm->enm_refcount = 1;
 	LIST_INSERT_HEAD(&ec->ec_multiaddrs, enm, enm_list);
 	ec->ec_multicnt++;
-	splx(s);
 	/*
 	 * Return ENETRESET to inform the driver that the list has changed
 	 * and its reception filter should be adjusted accordingly.
 	 */
-	return ENETRESET;
+	error = ENETRESET;
+	enm = NULL;
+out:
+	mutex_exit(ec->ec_lock);
+	splx(s);
+	if (enm != NULL)
+		kmem_free(enm, sizeof(*enm));
+	return error;
 }
 
 /*
@@ -1285,41 +1297,47 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
-	int s = splnet(), error;
+	int s, error;
 
+	s = splnet();
+	mutex_enter(ec->ec_lock);
 	error = ether_multiaddr(sa, addrlo, addrhi);
-	if (error != 0) {
-		splx(s);
-		return (error);
-	}
+	if (error != 0)
+		goto error;
 
 	/*
 	 * Look ur the address in our list.
 	 */
 	ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm);
 	if (enm == NULL) {
-		splx(s);
-		return (ENXIO);
+		error = ENXIO;
+		goto error;
 	}
 	if (--enm->enm_refcount != 0) {
 		/*
 		 * Still some claims to this record.
 		 */
-		splx(s);
-		return (0);
+		error = 0;
+		goto error;
 	}
 	/*
 	 * No remaining claims to this record; unlink and free it.
 	 */
 	LIST_REMOVE(enm, enm_list);
-	free(enm, M_IFMADDR);
 	ec->ec_multicnt--;
+	mutex_exit(ec->ec_lock);
 	splx(s);
+
+	kmem_free(enm, sizeof(*enm));
 	/*
 	 * Return ENETRESET to inform the driver that the list has changed
 	 * and its reception filter should be adjusted accordingly.
 	 */
-	return (ENETRESET);
+	return ENETRESET;
+error:
+	mutex_exit(ec->ec_lock);
+	splx(s);
+	return error;
 }
 
 void
@@ -1522,7 +1540,7 @@ ether_multicast_sysctl(SYSCTLFN_ARGS)
 	int error = 0;
 	size_t written;
 	struct psref psref;
-	int bound;
+	int bound, s;
 
 	if (namelen != 1)
 		return EINVAL;
@@ -1550,6 +1568,8 @@ ether_multicast_sysctl(SYSCTLFN_ARGS)
 	error = 0;
 	written = 0;
 
+	s = splnet();
+	mutex_enter(ec->ec_lock);
 	LIST_FOREACH(enm, &ec->ec_multiaddrs, enm_list) {
 		if (written + sizeof(addr) > *oldlenp)
 			break;
@@ -1562,6 +1582,8 @@ ether_multicast_sysctl(SYSCTLFN_ARGS)
 		written += sizeof(addr);
 		oldp = (char *)oldp + sizeof(addr);
 	}
+	mutex_exit(ec->ec_lock);
+	splx(s);
 	if_put(ifp, &psref);
 
 	*oldlenp = written;

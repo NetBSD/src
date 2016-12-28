@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.459 2016/12/26 07:55:00 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.460 2016/12/28 07:32:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.459 2016/12/26 07:55:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.460 2016/12/28 07:32:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3249,9 +3249,11 @@ wm_set_filter(struct wm_softc *sc)
 	for (i = 0; i < size; i++)
 		CSR_WRITE(sc, mta_reg + (i << 2), 0);
 
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ETHER_UNLOCK(ec);
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -3293,6 +3295,7 @@ wm_set_filter(struct wm_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
