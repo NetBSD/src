@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.29 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.30 2016/12/28 07:32:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.29 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.30 2016/12/28 07:32:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1446,6 +1446,7 @@ vioif_rx_filter(struct vioif_softc *sc)
 	}
 
 	nentries = -1;
+	ETHER_LOCK(&sc->sc_ethercom);
 	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
 	while (nentries++, enm != NULL) {
 		if (nentries >= VIRTIO_NET_CTRL_MAC_MAXENTRIES) {
@@ -1464,6 +1465,8 @@ vioif_rx_filter(struct vioif_softc *sc)
 	rxfilter = 1;
 
 set:
+	ETHER_UNLOCK(&sc->sc_ethercom);
+
 	if (rxfilter) {
 		sc->sc_ctrl_mac_tbl_uc->nentries = 0;
 		sc->sc_ctrl_mac_tbl_mc->nentries = nentries;
