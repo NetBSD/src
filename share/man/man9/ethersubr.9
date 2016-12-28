@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.26 2016/12/28 07:26:24 ozaki-r Exp $
+.\"	$NetBSD: ethersubr.9,v 1.27 2016/12/28 11:44:58 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,7 +97,9 @@ there.
 Drivers can initialize the link level address by themselves by calling
 the function with
 .Fa lla
-as NULL and calling
+as
+.Dv NULL
+and calling
 .Fn if_set_sadl .
 .Pp
 This function must be called from the driver's attach function.
@@ -193,4 +195,5 @@ Rewritten to attach to the new ARP system in
 .Sh AUTHORS
 UCB CSRG (original implementation)
 .Pp
-Ignatios Souvatzis (support for new ARP system)
+.An Ignatios Souvatzis
+(support for new ARP system)
