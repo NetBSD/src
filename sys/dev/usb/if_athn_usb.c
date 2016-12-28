@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6.8.16 2016/12/28 19:29:03 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.8.17 2016/12/28 19:36:03 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.16 2016/12/28 19:29:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.17 2016/12/28 19:36:03 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -1144,7 +1144,7 @@ athn_usb_htc_connect_svc(struct athn_usb_softc *usc, uint16_t svc_id,
 Static int
 athn_usb_wait_msg(struct athn_usb_softc *usc)
 {
- 	DPRINTFN(DBG_FN, usc, "\n");
+	DPRINTFN(DBG_FN, usc, "\n");
 
 	KASSERT(mutex_owned(&usc->usc_msg_mtx));
 
