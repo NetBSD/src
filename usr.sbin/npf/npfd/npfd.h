@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd.h,v 1.1 2016/12/27 22:20:00 rmind Exp $	*/
+/*	$NetBSD: npfd.h,v 1.2 2016/12/28 01:25:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #define	PCAP_NPACKETS		1024
 #define	NPFD_LOG_PATH		"/var/log"
+#define NPF_DEV_PATH		"/dev/npf"
 
 #define	NPFD_NPFLOG		"npflog"
 #define	NPFD_NPFLOG_LEN		(sizeof(NPFD_NPFLOG) - 1)
@@ -44,6 +45,9 @@ typedef struct npfd_log npfd_log_t;
 npfd_log_t *	npfd_log_create(unsigned);
 void		npfd_log_destroy(npfd_log_t *);
 int		npfd_log_getsock(npfd_log_t *);
+bool		npfd_log_reopen(npfd_log_t *);
 void		npfd_log(npfd_log_t *);
+void		npfd_log_stats(npfd_log_t *);
+
 
 #endif

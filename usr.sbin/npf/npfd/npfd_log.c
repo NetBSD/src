@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd_log.c,v 1.1 2016/12/27 22:20:00 rmind Exp $	*/
+/*	$NetBSD: npfd_log.c,v 1.2 2016/12/28 01:25:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,17 +30,27 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd_log.c,v 1.1 2016/12/27 22:20:00 rmind Exp $");
+__RCSID("$NetBSD: npfd_log.c,v 1.2 2016/12/28 01:25:48 christos Exp $");
+
+#include <sys/types.h>
+#include <sys/param.h>
+#include <net/if.h>
 
 #include <stdio.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <stdlib.h>
+#include <syslog.h>
+#include <stdbool.h>
 
 #include <pcap/pcap.h>
+#include "npfd.h"
 
 struct npfd_log {
-	pcap_t *	pcap;
-	pcap_dumper_t *	dumper;
+	char ifname[IFNAMSIZ];
+	char path[MAXPATHLEN];
+	pcap_t *pcap;
+	pcap_dumper_t *dumper;
 };
 
 npfd_log_t *
@@ -48,10 +58,8 @@ npfd_log_create(unsigned if_idx)
 {
 	npfd_log_t *ctx;
 	char errbuf[PCAP_ERRBUF_SIZE];
-	char ifname[IFNAMSIZ], path[PATH_MAX];
-	FILE *fp;
 
-	if ((ctx = calloc(1, sizeof(npfd_log_t))) == NULL) {
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
 		syslog(LOG_ERR, "malloc failed: %m");
 		return NULL;
 	}
@@ -59,37 +67,46 @@ npfd_log_create(unsigned if_idx)
 	/*
 	 * Open a live capture handle in non-blocking mode.
 	 */
-	snprintf(ifname, sizeof(ifname), NPFD_NPFLOG "%u", if_idx);
-	pcap = pcap_create(ifname, errbuf);
-	if ((ctx->pcap = pcap) == NULL) {
+	snprintf(ctx->ifname, sizeof(ctx->ifname), NPFD_NPFLOG "%u", if_idx);
+	ctx->pcap = pcap_create(ctx->ifname, errbuf);
+	if (ctx->pcap == NULL) {
 		syslog(LOG_ERR, "pcap_create failed: %s", errbuf);
 		goto err;
 	}
-	if (pcap_setnonblock(pcap, 1, errbuf) == -1) {
+	if (pcap_setnonblock(ctx->pcap, 1, errbuf) == -1) {
 		syslog(LOG_ERR, "pcap_setnonblock failed: %s", errbuf);
 		goto err;
 	}
-	pcap_set_snaplen(pcap, snaplen);
 
+	pcap_set_snaplen(ctx->pcap, 10240);
+
+	snprintf(ctx->path, sizeof(ctx->path), "%s/%s%s",
+	    NPFD_LOG_PATH, ctx->ifname, ".pcap");
+
+	if (!npfd_log_reopen(ctx))
+		goto err;
+
+	return ctx;
+err:
+	npfd_log_destroy(ctx);
+	return NULL;
+}
+
+bool
+npfd_log_reopen(npfd_log_t *ctx)
+{
+	if (ctx->dumper)
+		pcap_dump_close(ctx->dumper);
 	/*
 	 * Open a log file to write for a given interface and dump there.
 	 */
-	snprintf(path, sizeof(path), "%s/%s%s", NPFD_LOG_PATH, ifname, ".pcap");
-	if ((fp = fopen(path, "w")) == NULL) {
-		syslog(LOG_ERR, "open failed: %m");
-		goto err;
+	ctx->dumper = pcap_dump_open_append(ctx->pcap, ctx->path);
+	if (ctx->dumper == NULL) {
+		syslog(LOG_ERR, "pcap_dump_open_append failed for `%s': %s",
+		    ctx->path, pcap_geterr(ctx->pcap));
+		return false;
 	}
-	if ((ctx->dumper = pcap_dump_fopen(pcap, fp)) == NULL) {
-		syslog(LOG_ERR, "pcap_dump_fopen failed: %s", errbuf);
-		goto err;
-	}
-	return ctx;
-err:
-	if (!ctx->dumper && fp) {
-		fclose(fp);
-	}
-	npfd_log_destroy(ctx);
-	return NULL;
+	return true;
 }
 
 void
@@ -122,7 +139,7 @@ npfd_log_stats(npfd_log_t *ctx)
 	pcap_t *pcap = ctx->pcap;
 	struct pcap_stat ps;
 
-	if (pcap_stats(pcap, &ps) == -1)
+	if (pcap_stats(pcap, &ps) == -1) {
 		syslog(LOG_ERR, "pcap_stats failed: %s", pcap_geterr(pcap));
 		return;
 	}
