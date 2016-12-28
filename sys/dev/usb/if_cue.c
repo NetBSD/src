@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.68.4.13 2016/12/12 13:15:39 skrll Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.68.4.14 2016/12/28 09:45:16 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.13 2016/12/12 13:15:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.14 2016/12/28 09:45:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -612,6 +612,10 @@ cue_detach(device_t self, int flags)
 	    sc->cue_ep[CUE_ENDPT_INTR] != NULL)
 		aprint_debug_dev(self, "detach has active endpoints\n");
 #endif
+
+	mutex_destroy(&sc->cue_rxlock);
+	mutex_destroy(&sc->cue_txlock);
+	mutex_destroy(&sc->cue_lock);
 
 	sc->cue_attached = 0;
 	splx(s);
