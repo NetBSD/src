@@ -1,13 +1,17 @@
-#	$NetBSD: ERLITE,v 1.13 2016/09/22 08:09:40 roy Exp $
+#	$NetBSD: ERLITE,v 1.14 2016/12/28 03:49:16 mrg Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.13 $"
+#ident 		"ERLITE-$Revision: 1.14 $"
 
 maxusers	32
+
+# XXX UVM freelists vs 4GB issue.  Enable this if you see hangs
+# waiting for memory when there are actual free pages around.
+#options 	OCTEON_MEMSIZE="(256*1024*1024)"
 
 # Options for necessary to use MD
 #options 	MEMORY_DISK_HOOKS
@@ -98,6 +102,8 @@ options 	INET6		# IPV6
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	IPFILTER_LOG	# ipmon(8) log support
+options 	BPFJIT
+options 	SLJIT
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
@@ -158,19 +164,21 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter
 #pseudo-device	ipfilter			# IP filter (firewall) and NAT
+pseudo-device	npf				# NPF packet filter
 pseudo-device	loop				# network loopback
-#pseudo-device	ppp				# Point-to-Point Protocol
+pseudo-device	ppp				# Point-to-Point Protocol
+pseudo-device	pppoe				# Point-to-Point Protocol over Ethernet
 #pseudo-device	sl				# Serial Line IP
 #pseudo-device	strip				# Starmode Radio IP (Metricom)
-#pseudo-device	tun				# network tunneling over tty
-#pseudo-device	tap				# virtual Ethernet
+pseudo-device	tun				# network tunneling over tty
+pseudo-device	tap				# virtual Ethernet
 #pseudo-device	gre				# generic L3 over IP tunnel
 #pseudo-device	ipip				# RFC 2003 IP Encapsulation
 #pseudo-device	gif				# RFC1933 tunnel
 #pseudo-device	faith				# IPv[46] tcp relay translation
 #pseudo-device	stf				# 6to4 IPv6 over IPv4 encapsulation
-#pseudo-device	vlan				# IEEE 802.1q encapsulation
-#pseudo-device	bridge				# simple inter-network bridging
+pseudo-device	vlan				# IEEE 802.1q encapsulation
+pseudo-device	bridge				# simple inter-network bridging
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
