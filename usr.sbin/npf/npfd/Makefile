@@ -1,11 +1,12 @@
-# $NetBSD: Makefile,v 1.1 2016/12/27 22:20:00 rmind Exp $
+# $NetBSD: Makefile,v 1.2 2016/12/28 01:25:48 christos Exp $
 #
 # Public Domain
 #
 
+NOMAN=
 PROG=		npfd
 
-SRCS=		npfd.c
+SRCS=		npfd.c npfd_log.c
 CPPFLAGS+=	-I${.CURDIR}
 
 LDADD+=		-lnpf -lpcap
