@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscvar.h,v 1.3.4.4 2016/07/15 08:50:59 skrll Exp $	*/
+/*	$NetBSD: if_smscvar.h,v 1.3.4.5 2016/12/28 08:53:56 skrll Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -56,6 +56,7 @@ struct smsc_softc {
 	device_t		sc_dev;
 	struct usbd_device *	sc_udev;
 	bool			sc_dying;
+	bool			sc_stopping;
 
 	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
 	struct ethercom		sc_ec;
