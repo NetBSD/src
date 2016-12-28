@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.52 2014/12/20 23:36:21 jklos Exp $	*/
+/*	$NetBSD: am7930.c,v 1.53 2016/12/28 10:04:53 nat Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.52 2014/12/20 23:36:21 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.53 2016/12/28 10:04:53 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.52 2014/12/20 23:36:21 jklos Exp $");
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/mulaw.h>
 
 #include <dev/ic/am7930reg.h>
 #include <dev/ic/am7930var.h>
@@ -229,7 +230,8 @@ am7930_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
 	sc = addr;
 	if ((usemode & AUMODE_PLAY) == AUMODE_PLAY) {
 		if (p->sample_rate < 7500 || p->sample_rate > 8500 ||
-			p->encoding != AUDIO_ENCODING_ULAW ||
+			(p->encoding != AUDIO_ENCODING_ULAW &&
+			 p->encoding != AUDIO_ENCODING_SLINEAR) ||
 			p->precision != 8 ||
 			p->channels != 1)
 				return EINVAL;
@@ -243,7 +245,8 @@ am7930_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
 	}
 	if ((usemode & AUMODE_RECORD) == AUMODE_RECORD) {
 		if (r->sample_rate < 7500 || r->sample_rate > 8500 ||
-			r->encoding != AUDIO_ENCODING_ULAW ||
+			(r->encoding != AUDIO_ENCODING_ULAW &&
+			 r->encoding != AUDIO_ENCODING_SLINEAR) ||
 			r->precision != 8 ||
 			r->channels != 1)
 				return EINVAL;
@@ -254,6 +257,14 @@ am7930_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
 			hw.precision *= sc->sc_glue->factor;
 			pfil->append(rfil, sc->sc_glue->input_conv, &hw);
 		}
+	}
+
+	if (p->encoding == AUDIO_ENCODING_SLINEAR ||
+	    r->encoding == AUDIO_ENCODING_SLINEAR) {
+		hw.encoding = AUDIO_ENCODING_ULAW;
+		pfil->req_size = rfil->req_size = 0;
+		pfil->append(rfil, mulaw_to_linear8, &hw);
+		rfil->append(pfil, linear8_to_mulaw, &hw);
 	}
 
 	return 0;
@@ -268,6 +279,12 @@ am7930_query_encoding(void *addr, struct audio_encoding *fp)
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = 0;
+		break;
+	case 1:
+		strcpy(fp->name, AudioEslinear);
+		fp->encoding = AUDIO_ENCODING_SLINEAR;
+		fp->precision = 8;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return EINVAL;
