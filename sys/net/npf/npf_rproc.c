@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.14 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.15 2016/12/28 21:55:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -308,6 +308,15 @@ void
 npf_rproc_acquire(npf_rproc_t *rp)
 {
 	atomic_inc_uint(&rp->rp_refcnt);
+}
+
+/*
+ * npf_rproc_getname: return the name of the given rproc
+ */
+const char *
+npf_rproc_getname(const npf_rproc_t *rp)
+{
+	return rp->rp_name;
 }
 
 /*
