@@ -1,4 +1,4 @@
-.\"	$NetBSD: siginfo.2,v 1.12 2016/12/28 20:06:00 kamil Exp $
+.\"	$NetBSD: siginfo.2,v 1.13 2016/12/28 20:34:36 kamil Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,27 +79,27 @@ The
 field contains the pid of the sending process and the
 .Fa si_uid
 field contains the user id of the sending process.
-.\" .It SI_QUEUE
-.\" The signal was generated via
-.\" .Xr sigqueue 3 .
-.\" The
-.\" .Nm
-.\" structure contains the following additional members:
-.\" .Bd -literal -offset indent
-.\" pid_t si_pid;
-.\" uid_t si_uid;
-.\" sigval_t si_value;
-.\" .Ed
-.\" .Pp
-.\" The
-.\" .Fa si_pid
-.\" field contains the pid of the sending process and the
-.\" .Fa si_uid
-.\" field contains the user id of the sending process.
-.\" Finally, the
-.\" .Fa si_value
-.\" field contains the value sent via
-.\" .Xr sigqueue 3 .
+.It SI_QUEUE
+The signal was generated via
+.Xr sigqueue 2 .
+The
+.Nm
+structure contains the following additional members:
+.Bd -literal -offset indent
+pid_t si_pid;
+uid_t si_uid;
+sigval_t si_value;
+.Ed
+.Pp
+The
+.Fa si_pid
+field contains the pid of the sending process and the
+.Fa si_uid
+field contains the user id of the sending process.
+Finally, the
+.Fa si_value
+field contains the value sent via
+.Xr sigqueue 2 .
 .It SI_TIMER
 The signal was generated because a timer set by
 .Xr timer_settime 2
