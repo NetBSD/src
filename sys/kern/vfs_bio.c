@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.266 2016/12/27 04:12:34 pgoyette Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.267 2016/12/28 06:25:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.266 2016/12/27 04:12:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.267 2016/12/28 06:25:40 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1541,7 +1541,7 @@ biowait(buf_t *bp)
 
 	SDT_PROBE1(io, kernel, , wait__done, bp);
 
-	BIOHIST_LOG(biohist, "  return %d", bp->b_error, 0, 0, 0);
+	BIOHIST_LOG(biohist, "return %d", bp->b_error, 0, 0, 0);
 
 	return bp->b_error;
 }
