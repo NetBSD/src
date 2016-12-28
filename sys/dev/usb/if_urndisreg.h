@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndisreg.h,v 1.1.32.3 2016/12/05 10:55:18 skrll Exp $ */
+/*	$NetBSD: if_urndisreg.h,v 1.1.32.4 2016/12/28 08:55:20 skrll Exp $ */
 /*	$OpenBSD: if_urndisreg.h,v 1.14 2010/07/08 18:22:01 ckuethe Exp $ */
 
 /*
@@ -42,6 +42,10 @@ struct urndis_cdata {
 struct urndis_softc {
 	device_t			sc_dev;
 
+	kmutex_t			urndis_lock;
+	kmutex_t			urndis_txlock;
+	kmutex_t			urndis_rxlock;
+
 	char				sc_attached;
 	int				sc_dying;
 	struct ethercom			sc_ec;
@@ -63,6 +67,8 @@ struct urndis_softc {
 	struct usbd_pipe *		sc_bulkout_pipe;
 
 	struct urndis_cdata		sc_data;
+
+	struct if_percpuq *		urndis_ipq;
 };
 
 #define RNDIS_STATUS_BUFFER_OVERFLOW 	0x80000005L
