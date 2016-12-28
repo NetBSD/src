@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.43 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.44 2016/12/28 21:55:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.43 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.44 2016/12/28 21:55:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -740,6 +740,14 @@ npf_rule_export(npf_t *npf, const npf_ruleset_t *rlset,
 	if (rl->r_info) {
 		prop_dictionary_set(rldict, "info", rl->r_info);
 	}
+
+	npf_rproc_t *rp = npf_rule_getrproc(rl);
+	if (rp != NULL) {
+		prop_dictionary_set_cstring(rldict, "rproc",
+		    npf_rproc_getname(rp));
+		npf_rproc_release(rp);
+	}
+
 	return 0;
 }
 
