@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.16 2016/10/16 11:18:30 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.17 2016/12/28 07:44:26 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -557,7 +557,6 @@ smsc_init(struct ifnet *ifp)
 	return ret;
 }
 
-
 int
 smsc_init_locked(struct ifnet *ifp)
 {
@@ -581,7 +580,7 @@ smsc_init_locked(struct ifnet *ifp)
 
 	/* Open RX and TX pipes. */
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_ed[SMSC_ENDPT_RX],
-	    USBD_EXCLUSIVE_USE, &sc->sc_ep[SMSC_ENDPT_RX]);
+	    USBD_EXCLUSIVE_USE | USBD_MPSAFE, &sc->sc_ep[SMSC_ENDPT_RX]);
 	if (err) {
 		printf("%s: open rx pipe failed: %s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(err));
@@ -589,7 +588,7 @@ smsc_init_locked(struct ifnet *ifp)
 	}
 
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_ed[SMSC_ENDPT_TX],
-	    USBD_EXCLUSIVE_USE, &sc->sc_ep[SMSC_ENDPT_TX]);
+	    USBD_EXCLUSIVE_USE | USBD_MPSAFE, &sc->sc_ep[SMSC_ENDPT_TX]);
 	if (err) {
 		printf("%s: open tx pipe failed: %s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(err));
@@ -616,6 +615,8 @@ smsc_init_locked(struct ifnet *ifp)
 		usbd_transfer(c->sc_xfer);
 	}
 
+	sc->sc_stopping = false;
+
 	/* Indicate we are up and running. */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -641,7 +642,8 @@ smsc_start(struct ifnet *ifp)
 	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
 
 	mutex_enter(&sc->sc_txlock);
-	smsc_start_locked(ifp);
+	if (!sc->sc_stopping)
+		smsc_start_locked(ifp);
 	mutex_exit(&sc->sc_txlock);
 }
 
@@ -650,6 +652,8 @@ smsc_start_locked(struct ifnet *ifp)
 {
 	struct smsc_softc * const sc = ifp->if_softc;
 	struct mbuf *m_head = NULL;
+
+	KASSERT(mutex_owned(&sc->sc_txlock));
 
 	/* Don't send anything if there is no link or controller is busy. */
 	if ((sc->sc_flags & SMSC_FLAG_LINK) == 0) {
@@ -709,6 +713,13 @@ smsc_stop_locked(struct ifnet *ifp, int disable)
 	usbd_status err;
 
 //	smsc_reset(sc);
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+	mutex_enter(&sc->sc_rxlock);
+	mutex_enter(&sc->sc_txlock);
+	sc->sc_stopping = true;
+	mutex_exit(&sc->sc_txlock);
+	mutex_exit(&sc->sc_rxlock);
 
 	callout_stop(&sc->sc_stat_ch);
 
@@ -1012,6 +1023,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
+	sc->sc_stopping = false;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -1285,17 +1297,24 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	uint32_t		rxhdr;
 	uint16_t		pktlen;
 	struct mbuf		*m;
-	int			s;
 
-	if (sc->sc_dying)
-		return;
+	mutex_enter(&sc->sc_rxlock);
 
-	if (!(ifp->if_flags & IFF_RUNNING))
+	if (sc->sc_dying) {
+		mutex_exit(&sc->sc_rxlock);
 		return;
+	}
+
+	if (!(ifp->if_flags & IFF_RUNNING)) {
+		mutex_exit(&sc->sc_rxlock);
+		return;
+	}
 
 	if (status != USBD_NORMAL_COMPLETION) {
-		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
+		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
+	    		mutex_exit(&sc->sc_rxlock);
 			return;
+		}
 		if (usbd_ratecheck(&sc->sc_rx_notice)) {
 			printf("%s: usb errors on rx: %s\n",
 			    device_xname(sc->sc_dev), usbd_errstr(status));
@@ -1434,14 +1453,18 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		buf += pktlen;
 		total_len -= pktlen;
 
+		mutex_exit(&sc->sc_rxlock);
+
 		/* push the packet up */
-		s = splnet();
 		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(sc->sc_ipq, m);
-		splx(s);
+
+		mutex_enter(&sc->sc_rxlock);
 	}
 
 done:
+	mutex_exit(&sc->sc_rxlock);
+
 	/* Setup new transfer. */
 	usbd_setup_xfer(xfer, c, c->sc_buf, sc->sc_bufsz, USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, smsc_rxeof);
@@ -1457,17 +1480,24 @@ smsc_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct smsc_softc *sc = c->sc_sc;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 
-	if (sc->sc_dying)
-		return;
+	mutex_enter(&sc->sc_txlock);
 
-	int s = splnet();
+	if (sc->sc_dying) {
+		mutex_exit(&sc->sc_txlock);
+		return;
+	}
+
+	if (sc->sc_stopping) {
+		mutex_exit(&sc->sc_txlock);
+		return;
+	}
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
-			splx(s);
+			mutex_exit(&sc->sc_txlock);
 			return;
 		}
 		ifp->if_oerrors++;
@@ -1475,7 +1505,7 @@ smsc_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_ep[SMSC_ENDPT_TX]);
-		splx(s);
+		mutex_exit(&sc->sc_txlock);
 		return;
 	}
 	ifp->if_opackets++;
@@ -1484,9 +1514,9 @@ smsc_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	c->sc_mbuf = NULL;
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		smsc_start(ifp);
+		smsc_start_locked(ifp);
 
-	splx(s);
+	mutex_exit(&sc->sc_txlock);
 }
 
 int
