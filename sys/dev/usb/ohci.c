@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.83 2016/12/27 08:33:08 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.84 2016/12/28 10:44:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.83 2016/12/27 08:33:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.84 2016/12/28 10:44:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2960,6 +2960,7 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	DPRINTF("done", 0, 0, 0, 0);
 
+	xfer->ux_status = USBD_IN_PROGRESS;
 	mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
@@ -3171,6 +3172,8 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 			    ohci_timeout, xfer);
 	}
+
+	xfer->ux_status = USBD_IN_PROGRESS;
 	mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
@@ -3359,6 +3362,7 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	usb_syncmem(&sed->dma, sed->offs, sizeof(sed->ed),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
+	xfer->ux_status = USBD_IN_PROGRESS;
 	mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
