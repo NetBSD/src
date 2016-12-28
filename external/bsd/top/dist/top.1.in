@@ -4,7 +4,7 @@
 .nr D @DEFAULT_DELAY@
 .nr L @HAVE_GETOPT_LONG@
 .nr K @ENABLE_KILL@
-.TH TOP 1 Local
+.TH TOP 1 "December 28, 2016"
 .UC 4
 .SH NAME
 top \- display and update information about the top cpu processes
@@ -300,6 +300,11 @@ but usually include:  \*(lqcpu\*(rq, \*(lqres\*(rq, \*(lqsize\*(rq,
 .TP
 .B P
 Sort by CPU usage.  Shorthand for \*(lqo cpu\*(rq.
+.TP
+.B p
+Display only process with the specified pid (prompt for process id).
+If the pid specified is simply \*(lq-1\*(rq, then all processes are
+displayed.
 .TP
 .B q
 Quit
