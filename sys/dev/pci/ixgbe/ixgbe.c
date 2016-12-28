@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.57 2016/12/28 07:05:11 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.58 2016/12/28 09:29:35 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -4157,12 +4157,27 @@ ixgbe_setup_low_power_mode(struct adapter *adapter)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
-	if (!hw->wol_enabled)
-		ixgbe_set_phy_power(hw, FALSE);
-
 	/* Limit power management flow to X550EM baseT */
 	if (hw->device_id == IXGBE_DEV_ID_X550EM_X_10G_T
 	    && hw->phy.ops.enter_lplu) {
+		/* X550EM baseT adapters need a special LPLU flow */
+		hw->phy.reset_disable = true;
+		ixgbe_stop(adapter);
+		error = hw->phy.ops.enter_lplu(hw);
+		if (error)
+			device_printf(dev,
+			    "Error entering LPLU: %d\n", error);
+		hw->phy.reset_disable = false;
+	} else {
+		/* Just stop for other adapters */
+		ixgbe_stop(adapter);
+	}
+
+	if (!hw->wol_enabled) {
+		ixgbe_set_phy_power(hw, FALSE);
+		IXGBE_WRITE_REG(hw, IXGBE_WUFC, 0);
+		IXGBE_WRITE_REG(hw, IXGBE_WUC, 0);
+	} else {
 		/* Turn off support for APM wakeup. (Using ACPI instead) */
 		IXGBE_WRITE_REG(hw, IXGBE_GRC,
 		    IXGBE_READ_REG(hw, IXGBE_GRC) & ~(u32)2);
@@ -4183,17 +4198,6 @@ ixgbe_setup_low_power_mode(struct adapter *adapter)
 		IXGBE_WRITE_REG(hw, IXGBE_WUC,
 		    IXGBE_WUC_WKEN | IXGBE_WUC_PME_EN);
 
-		/* X550EM baseT adapters need a special LPLU flow */
-		hw->phy.reset_disable = true;
-		ixgbe_stop(adapter);
-		error = hw->phy.ops.enter_lplu(hw);
-		if (error)
-			device_printf(dev,
-			    "Error entering LPLU: %d\n", error);
-		hw->phy.reset_disable = false;
-	} else {
-		/* Just stop for other adapters */
-		ixgbe_stop(adapter);
 	}
 
 	return error;
