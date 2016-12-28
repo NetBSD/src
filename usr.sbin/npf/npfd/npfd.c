@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd.c,v 1.2 2016/12/28 01:25:48 christos Exp $	*/
+/*	$NetBSD: npfd.c,v 1.3 2016/12/28 03:02:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd.c,v 1.2 2016/12/28 01:25:48 christos Exp $");
+__RCSID("$NetBSD: npfd.c,v 1.3 2016/12/28 03:02:54 christos Exp $");
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -76,6 +76,8 @@ npfd_event_loop(void)
 	npfd_log_t *log;
 
 	log = npfd_log_create(0);
+	if (log == NULL)
+		exit(EXIT_FAILURE);
 	pfd.fd = npfd_log_getsock(log);
 	pfd.events = POLLHUP | POLLIN;
 
@@ -105,7 +107,6 @@ npfd_event_loop(void)
 }
 
 static void
-/*###114 [cc] error: 'sighandler' defined but not used [-Werror=unused-function]%%%*/
 sighandler(int sig)
 {
 	switch (sig) {
