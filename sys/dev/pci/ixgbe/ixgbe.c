@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.56 2016/12/27 10:01:39 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.57 2016/12/28 07:05:11 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -4998,6 +4998,7 @@ ixgbe_set_flowcntl(struct adapter *adapter, int fc)
 /*
 ** Control advertised link speed:
 **	Flags:
+**	0x0 - Default (all capable link speed)
 **	0x1 - advertise 100 Mb
 **	0x2 - advertise 1G
 **	0x4 - advertise 10G
@@ -5044,26 +5045,26 @@ ixgbe_set_advertise(struct adapter *adapter, int advertise)
 		return (EINVAL);
 	}
 
-	if (advertise < 0x1 || advertise > 0x7) {
+	if (advertise < 0x0 || advertise > 0x7) {
 		device_printf(dev,
-		    "Invalid advertised speed; valid modes are 0x1 through 0x7\n");
-		return (EINVAL);
-	}
-
-	if ((advertise & 0x1)
-	    && (hw->mac.type != ixgbe_mac_X540)
-	    && (hw->mac.type != ixgbe_mac_X550)) {
-		device_printf(dev, "Set Advertise: 100Mb on X540/X550 only\n");
+		    "Invalid advertised speed; valid modes are 0x0 through 0x7\n");
 		return (EINVAL);
 	}
 
 	/* Set new value and report new advertised mode */
 	speed = 0;
-	if (advertise & 0x1)
+	if ((hw->mac.type != ixgbe_mac_X540)
+	    && (hw->mac.type != ixgbe_mac_X550)) {
+		if (advertise & 0x1) {
+			device_printf(dev,
+			    "Set Advertise: 100Mb on X540/X550 only\n");
+			return (EINVAL);
+		}
+	} else if ((advertise & 0x1) || (advertise == 0))
 		speed |= IXGBE_LINK_SPEED_100_FULL;
-	if (advertise & 0x2)
+	if ((advertise & 0x2) || (advertise == 0))
 		speed |= IXGBE_LINK_SPEED_1GB_FULL;
-	if (advertise & 0x4)
+	if ((advertise & 0x4) || (advertise == 0))
 		speed |= IXGBE_LINK_SPEED_10GB_FULL;
 	adapter->advertise = advertise;
 
