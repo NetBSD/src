@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.47 2016/12/08 10:28:44 nat Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.48 2016/12/28 02:44:59 nat Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #include <sys/proc.h>
 
 #include <dev/audio_if.h>
+#include <dev/auconv.h>
 
 /*
  * Initial/default block duration is both configurable and patchable.
@@ -194,6 +195,7 @@ struct audio_softc {
 	bool		sc_trigger_started;
 	bool		sc_rec_started;
 	bool		sc_writeme;
+	bool		sc_ready;	/* audio hw configured properly */
 	int		sc_opens;
 	int		sc_recopens;
 	bool		sc_dying;
@@ -281,6 +283,9 @@ struct audio_softc {
 	bool		sc_saturate;
 	struct audio_info 	sc_ai;		/* Recent info for  dev sound */
 	bool			sc_aivalid;
+#define VAUDIO_NFORMATS	1
+	struct audio_format sc_format[VAUDIO_NFORMATS];
+	struct audio_params sc_vchan_params;
 };
 
 #endif /* _SYS_DEV_AUDIOVAR_H_ */
