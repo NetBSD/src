@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.80 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.81 2016/12/28 07:26:25 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.80 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.81 2016/12/28 07:26:25 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -835,33 +835,17 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = carp_ioctl;
 	ifp->if_start = carp_start;
-	ifp->if_output = carp_output;
-	ifp->if_type = IFT_CARP;
-	ifp->if_addrlen = ETHER_ADDR_LEN;
-	ifp->if_hdrlen = ETHER_HDR_LEN;
-	ifp->if_mtu = ETHERMTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
 	IFQ_SET_READY(&ifp->if_snd);
-	if_attach(ifp);
-
-	if_alloc_sadl(ifp);
-	ifp->if_broadcastaddr = etherbroadcastaddr;
+	if_initialize(ifp);
+	ether_ifattach(ifp, NULL);
 	carp_set_enaddr(sc);
-	LIST_INIT(&sc->sc_ac.ec_multiaddrs);
-	bpf_attach(ifp, DLT_EN10MB, ETHER_HDR_LEN);
-#ifdef MBUFTRACE
-	strlcpy(sc->sc_ac.ec_tx_mowner.mo_name, ifp->if_xname,
-	    sizeof(sc->sc_ac.ec_tx_mowner.mo_name));
-	strlcpy(sc->sc_ac.ec_tx_mowner.mo_descr, "tx",
-	    sizeof(sc->sc_ac.ec_tx_mowner.mo_descr));
-	strlcpy(sc->sc_ac.ec_rx_mowner.mo_name, ifp->if_xname,
-	    sizeof(sc->sc_ac.ec_rx_mowner.mo_name));
-	strlcpy(sc->sc_ac.ec_rx_mowner.mo_descr, "rx",
-	    sizeof(sc->sc_ac.ec_rx_mowner.mo_descr));
-	MOWNER_ATTACH(&sc->sc_ac.ec_tx_mowner);
-	MOWNER_ATTACH(&sc->sc_ac.ec_rx_mowner);
-	ifp->if_mowner = &sc->sc_ac.ec_tx_mowner;
-#endif
+	/* Overwrite ethernet defaults */
+	ifp->if_type = IFT_CARP;
+	ifp->if_output = carp_output;
+	ifp->if_extflags &= ~IFEF_OUTPUT_MPSAFE;
+	if_register(ifp);
+
 	return (0);
 }
 
