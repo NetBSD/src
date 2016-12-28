@@ -1,4 +1,4 @@
-.\"	$NetBSD: siginfo.2,v 1.13 2016/12/28 20:34:36 kamil Exp $
+.\"	$NetBSD: siginfo.2,v 1.14 2016/12/28 20:41:55 kamil Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -141,11 +141,11 @@ on a normal write it will contain
 .Dv POLLOUT | POLLWRNORM ;
 on an out-of-band write it will contain
 .Dv POLLPRI | POLLWRBAND .
-.\" .It SI_MESGQ
-.\" The signal was generated because of the arrival of a message on an empty
-.\" message queue.
-.\" See
-.\" .Xr mq_notify 3 .
+.It SI_MESGQ
+The signal was generated because of the arrival of a message on an empty
+message queue.
+See
+.Xr mq_notify 3 .
 .It SI_LWP
 The signal was generated via
 .Xr _lwp_kill 2 .
