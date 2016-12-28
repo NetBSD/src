@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.3.6.13 2016/12/12 13:15:39 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.3.6.14 2016/12/28 09:45:16 skrll Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.13 2016/12/12 13:15:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.14 2016/12/28 09:45:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -873,6 +873,10 @@ axen_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->axen_udev,sc->axen_dev);
 
 	rw_destroy(&sc->axen_mii_lock);
+
+	mutex_destroy(&sc->axen_txlock);
+	mutex_destroy(&sc->axen_rxlock);
+	mutex_destroy(&sc->axen_lock);
 
 	return 0;
 }

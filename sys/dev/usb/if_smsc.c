@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.17 2016/12/28 07:44:26 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.18 2016/12/28 09:45:16 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1223,6 +1223,10 @@ smsc_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	mutex_destroy(&sc->sc_mii_lock);
+
+	mutex_destroy(&sc->sc_rxlock);
+	mutex_destroy(&sc->sc_txlock);
+	mutex_destroy(&sc->sc_lock);
 
 	return 0;
 }

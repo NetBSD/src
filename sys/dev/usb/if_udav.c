@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.43.4.12 2016/12/12 13:15:39 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.43.4.13 2016/12/28 09:45:16 skrll Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.12 2016/12/12 13:15:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.13 2016/12/28 09:45:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -395,6 +395,10 @@ udav_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	mutex_destroy(&sc->sc_mii_lock);
+
+	mutex_destroy(&sc->sc_txlock);
+	mutex_destroy(&sc->sc_rxlock);
+	mutex_destroy(&sc->sc_lock);
 
 	return 0;
 }

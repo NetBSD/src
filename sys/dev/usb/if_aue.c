@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132.4.15 2016/12/12 13:17:56 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.4.16 2016/12/28 09:45:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.15 2016/12/12 13:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.16 2016/12/28 09:45:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -933,6 +933,9 @@ aue_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->aue_udev, sc->aue_dev);
 
 	mutex_destroy(&sc->aue_mii_lock);
+	mutex_destroy(&sc->aue_lock);
+	mutex_destroy(&sc->aue_txlock);
+	mutex_destroy(&sc->aue_rxlock);
 #if 0
 	mutex_destroy(&sc->wkmtx);
 #endif

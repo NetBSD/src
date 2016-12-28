@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.38.14.10 2016/12/12 13:15:39 skrll Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.38.14.11 2016/12/28 09:45:16 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38.14.10 2016/12/12 13:15:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38.14.11 2016/12/28 09:45:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -331,6 +331,10 @@ cdce_detach(device_t self, int flags)
 	ether_ifdetach(ifp);
 
 	if_detach(ifp);
+
+	mutex_destroy(&sc->cdce_rxlock);
+	mutex_destroy(&sc->cdce_txlock);
+	mutex_destroy(&sc->cdce_lock);
 
 	sc->cdce_attached = 0;
 	splx(s);
