@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.25 2016/12/26 20:28:00 rin Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.26 2016/12/28 09:36:02 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -191,20 +191,9 @@ _C_LABEL(extsize) = .-_C_LABEL(extint)
 /*
  * In case of DDB we want a separate trap catcher for it
  */
-	.lcomm	ddbstk,INTSTK,16	/* ddb stack */
-
 	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
 _C_LABEL(ddblow):
-	mtsprg1	%r1			/* save SP */
-	GET_CPUINFO(%r1)
-	stmw	%r28,CI_DDBSAVE(%r1)	/* free r28-r31 */
-	mflr	%r28			/* save LR */
-	mfcr	%r29			/* save CR */
-	mfsrr0	%r30
-	mfsrr1	%r31
-	stmw	%r30,(CI_DDBSAVE+CPUSAVE_SRR0)(%r1)	/* save srr0/srr1 */
-	lis	%r1,ddbstk+INTSTK-CALLFRAMELEN@ha	/* get new SP */
-	addi	%r1,%r1,ddbstk+INTSTK-CALLFRAMELEN@l
+	ACCESS_PROLOG(CI_DDBSAVE)
 	bla	ddbtrap
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 #endif	/* DDB || KGDB */
@@ -213,21 +202,9 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 /*
  * In case of IPKDB we want a separate trap catcher for it
  */
-
-	.lcomm	ipkdbstk,INTSTK,16	/* ipkdb stack */
-
 	.globl	_C_LABEL(ipkdblow),_C_LABEL(ipkdbsize)
 _C_LABEL(ipkdblow):
-	mtsprg1	%r1			/* save SP */
-	GET_CPUINFO(%r1)
-	stmw	%r28,CI_IPKDBSAVE(%r1)	/* free r28-r31 */
-	mflr	%r28			/* save LR */
-	mfcr	%r29			/* save CR */
-	mfsrr0	%r30
-	mfsrr1	%r31
-	stmw	%r30,(CI_IPKDBSAVE+CPUSAVE_SRR0)(%r1)	/* save srr0/srr1 */
-	lis	%r1,ipkdbstk+INTSTK-CALLFRAMELEN@ha	/* get new SP */
-	addi	%r1,%r1,ipkdbstk+INTSTK-CALLFRAMELEN@l
+	ACCESS_PROLOG(CI_IPKDBSAVE)
 	bla	ipkdbtrap
 _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 #endif	/* IPKDB */
