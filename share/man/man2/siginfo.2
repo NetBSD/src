@@ -1,4 +1,4 @@
-.\"	$NetBSD: siginfo.2,v 1.11 2016/12/28 20:00:15 kamil Exp $
+.\"	$NetBSD: siginfo.2,v 1.12 2016/12/28 20:06:00 kamil Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -146,6 +146,22 @@ on an out-of-band write it will contain
 .\" message queue.
 .\" See
 .\" .Xr mq_notify 3 .
+.It SI_LWP
+The signal was generated via
+.Xr _lwp_kill 2 .
+The
+.Nm
+structure contains the following additional members:
+.Bd -literal -offset indent
+pid_t si_pid;
+uid_t si_uid;
+.Ed
+.Pp
+The
+.Fa si_pid
+field contains the pid of the sending process and the
+.Fa si_uid
+field contains the user id of the sending process.
 .It SI_NOINFO
 The signal was generated without specifc info available.
 .El
