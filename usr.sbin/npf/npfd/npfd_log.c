@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd_log.c,v 1.2 2016/12/28 01:25:48 christos Exp $	*/
+/*	$NetBSD: npfd_log.c,v 1.3 2016/12/28 03:02:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd_log.c,v 1.2 2016/12/28 01:25:48 christos Exp $");
+__RCSID("$NetBSD: npfd_log.c,v 1.3 2016/12/28 03:02:54 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: npfd_log.c,v 1.2 2016/12/28 01:25:48 christos Exp $");
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <syslog.h>
 #include <stdbool.h>
 
@@ -80,6 +81,11 @@ npfd_log_create(unsigned if_idx)
 
 	pcap_set_snaplen(ctx->pcap, 10240);
 
+	if (pcap_activate(ctx->pcap) == -1) {
+		syslog(LOG_ERR, "pcap_activate failed: %s",
+		    pcap_geterr(ctx->pcap));
+		goto err;
+	}
 	snprintf(ctx->path, sizeof(ctx->path), "%s/%s%s",
 	    NPFD_LOG_PATH, ctx->ifname, ".pcap");
 
@@ -100,9 +106,12 @@ npfd_log_reopen(npfd_log_t *ctx)
 	/*
 	 * Open a log file to write for a given interface and dump there.
 	 */
-	ctx->dumper = pcap_dump_open_append(ctx->pcap, ctx->path);
+	if (access(ctx->path, F_OK) == 0)
+		ctx->dumper = pcap_dump_open_append(ctx->pcap, ctx->path);
+	else
+		ctx->dumper = pcap_dump_open(ctx->pcap, ctx->path);
 	if (ctx->dumper == NULL) {
-		syslog(LOG_ERR, "pcap_dump_open_append failed for `%s': %s",
+		syslog(LOG_ERR, "pcap_dump_open failed for `%s': %s",
 		    ctx->path, pcap_geterr(ctx->pcap));
 		return false;
 	}
