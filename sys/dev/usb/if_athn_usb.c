@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6.8.15 2016/12/17 15:30:34 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.8.16 2016/12/28 19:29:03 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.15 2016/12/17 15:30:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.16 2016/12/28 19:29:03 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -273,7 +273,7 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ops.write_barrier = athn_usb_write_barrier;
 
 	mutex_init(&usc->usc_lock, MUTEX_DEFAULT, IPL_NONE);
-	
+
 	cv_init(&usc->usc_cmd_cv, "athncmd");
 	mutex_init(&usc->usc_cmd_mtx, MUTEX_DEFAULT, IPL_SOFTUSB);
 	cv_init(&usc->usc_msg_cv, "athnmsg");
@@ -324,7 +324,7 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	return;
 
  fail:
- 
+
 	/* Free Tx/Rx buffers. */
 	athn_usb_abort_pipes(usc);
 	athn_usb_free_tx_list(usc);
@@ -2697,7 +2697,7 @@ athn_usb_init(struct ifnet *ifp)
 
 	return ret;
 }
-  
+
 Static int
 athn_usb_init_locked(struct ifnet *ifp)
 {
