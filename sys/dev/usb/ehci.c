@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.107 2016/12/27 10:37:52 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.108 2016/12/28 10:42:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.107 2016/12/27 10:37:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.108 2016/12/28 10:42:59 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4490,7 +4490,6 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
-
 	mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
@@ -4884,7 +4883,6 @@ ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
-
 	mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
