@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.64 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.65 2016/12/28 21:55:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -359,6 +359,7 @@ int		npf_rprocset_export(const npf_rprocset_t *, prop_array_t);
 npf_rproc_t *	npf_rproc_create(prop_dictionary_t);
 void		npf_rproc_acquire(npf_rproc_t *);
 void		npf_rproc_release(npf_rproc_t *);
+const char *	npf_rproc_getname(const npf_rproc_t *);
 bool		npf_rproc_run(npf_cache_t *, npf_rproc_t *, int *);
 
 /* State handling. */
