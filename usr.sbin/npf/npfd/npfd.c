@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd.c,v 1.1 2016/12/27 22:20:00 rmind Exp $	*/
+/*	$NetBSD: npfd.c,v 1.2 2016/12/28 01:25:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,21 +30,29 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd.c,v 1.1 2016/12/27 22:20:00 rmind Exp $");
+__RCSID("$NetBSD: npfd.c,v 1.2 2016/12/28 01:25:48 christos Exp $");
 
 #include <stdio.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdbool.h>
+#include <poll.h>
+#include <errno.h>
+#include <err.h>
 #include <syslog.h>
+
+#include <net/npf.h>
 
 #include "npfd.h"
 
-static volatile sig_atomic_t	hup = false;
+static volatile sig_atomic_t hup, stats, done;
 
-int
+static int
 npfd_getctl(void)
 {
-	int fd;
+	int fd, ver;
 
 	fd = open(NPF_DEV_PATH, O_RDONLY);
 	if (fd == -1) {
@@ -55,7 +63,7 @@ npfd_getctl(void)
 	}
 	if (ver != NPF_VERSION) {
 		errx(EXIT_FAILURE,
-		    "incompatible NPF interface version (%d, kernel %d)\n"
+		    "Incompatible NPF interface version (%d, kernel %d)\n"
 		    "Hint: update userland?", NPF_VERSION, ver);
 	}
 	return fd;
@@ -64,38 +72,57 @@ npfd_getctl(void)
 static void
 npfd_event_loop(void)
 {
-	int fds[8], fd, nfds = 0, maxfd = 0;
-	fd_set rfds;
+	struct pollfd pfd;
+	npfd_log_t *log;
 
-	FD_ZERO(&rfds);
+	log = npfd_log_create(0);
+	pfd.fd = npfd_log_getsock(log);
+	pfd.events = POLLHUP | POLLIN;
 
-	fd = npfd_log_create(0)
-	fds[nfds++] = fd;
-	FD_SET(fd, &rfds);
-
-	for (int i = 0; i < nfds; i++) {
-		maxfd = MAX(maxfd, fds[i] + 1);
-	}
-
-	while (!done) {
-		if ((ret = select(maxfd, &rfds, NULL, NULL, NULL)) == -1) {
-			syslog(LOG_ERR, "select failed: %m");
-			err(EXIT_FAILURE, "select");
-		}
+	while  (!done) {
 		if (hup) {
 			hup = false;
+			npfd_log_reopen(log);
+		}
+		if (stats) {
+			stats = false;
+			npfd_log_stats(log);
+		}
+		switch (poll(&pfd, 1, 1000)) {
+		case -1:
+			if (errno == EINTR)
+				continue;
+			syslog(LOG_ERR, "poll failed: %m");
+			exit(EXIT_FAILURE);
+		case 0:
+			continue;
+		default:
+			npfd_log(log);
 		}
 
-		for (fd = 0; fd < maxfd; fd++) {
-			// TODO
-		}
 	}
+	npfd_log_destroy(log);
 }
 
 static void
-sighup_handler(int sig)
+/*###114 [cc] error: 'sighandler' defined but not used [-Werror=unused-function]%%%*/
+sighandler(int sig)
 {
-	hup = true;
+	switch (sig) {
+	case SIGHUP:
+		hup = true;
+		break;
+	case SIGTERM:
+	case SIGINT:
+		hup = true;
+		break;
+	case SIGINFO:
+	case SIGQUIT:
+		stats = true;
+		break;
+	default:
+		syslog(LOG_ERR, "Unhandled signal %d", sig);
+	}
 }
 
 int
@@ -110,16 +137,22 @@ main(int argc, char **argv)
 			daemon_off = true;
 			break;
 		default:
-			errx(EXIT_FAILURE, "usage:\n\t%s [ -d ]", argv[0]);
+			fprintf(stderr, "Usage: %s [-d]\n", getprogname());
+			exit(EXIT_FAILURE);
 		}
 	}
+	int fd = npfd_getctl();
+	(void)close(fd);
 
-	openlog(argv[0], LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
 	if (!daemon_off && daemon(0, 0) == -1) {
-		syslog(LOG_ERR, "daemon failed: %m");
 		err(EXIT_FAILURE, "daemon");
 	}
-	signal(SIGHUP, sighup_handler);
+	openlog(argv[0], LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
+	signal(SIGHUP, sighandler);
+	signal(SIGINT, sighandler);
+	signal(SIGTERM, sighandler);
+	signal(SIGINFO, sighandler);
+	signal(SIGQUIT, sighandler);
 	npfd_event_loop();
 	closelog();
 
