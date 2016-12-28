@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.10.4.2 2016/05/29 08:44:21 skrll Exp $	*/
+/*	$NetBSD: athn.c,v 1.10.4.3 2016/12/28 19:41:41 skrll Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.10.4.2 2016/05/29 08:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.10.4.3 2016/12/28 19:41:41 skrll Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -329,10 +329,14 @@ athn_attach(struct athn_softc *sc)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = athn_init;
-	ifp->if_ioctl = athn_ioctl;
-	ifp->if_start = athn_start;
-	ifp->if_watchdog = athn_watchdog;
+	if (!ifp->if_init)
+		ifp->if_init = athn_init;
+	if (!ifp->if_ioctl)
+		ifp->if_ioctl = athn_ioctl;
+	if (!ifp->if_start)
+		ifp->if_start = athn_start;
+	if (!ifp->if_watchdog)
+		ifp->if_watchdog = athn_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
