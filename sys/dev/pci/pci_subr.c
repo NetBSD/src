@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.155 2016/11/02 00:39:56 pgoyette Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.156 2016/12/28 06:57:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.155 2016/11/02 00:39:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.156 2016/12/28 06:57:27 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1798,7 +1798,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			printf("off\n");
 			break;
 		}
-		onoff("Power Controller Control", reg, PCIE_SLCSR_PCC);
+		printf("      Power Controller Control: Power %s\n",
+		    reg & PCIE_SLCSR_PCC ? "off" : "on");
 		onoff("Electromechanical Interlock Control",
 		    reg, PCIE_SLCSR_EIC);
 		onoff("Data Link Layer State Changed Enable", reg,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.118 2016/12/27 03:51:55 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.119 2016/12/28 06:57:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -978,7 +978,10 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_SLCSR_HPE		__BIT(5)       /* Hot Plug Interrupt Enable */
 #define PCIE_SLCSR_AIC		__BITS(7, 6)   /* Attention Indicator Control*/
 #define PCIE_SLCSR_PIC		__BITS(9, 8)   /* Power Indicator Control */
-#define PCIE_SLCSR_PCC		__BIT(10)      /* Power Controller Control */
+#define PCIE_SLCSR_PCC		__BIT(10)      /*
+						* Power Controller Control:
+						* 0: Power on, 1: Power off.
+						*/
 #define PCIE_SLCSR_EIC		__BIT(11)      /* Electromechanical Interlock*/
 #define PCIE_SLCSR_DLLSCE	__BIT(12)      /* DataLinkLayer State Changed*/
 #define PCIE_SLCSR_AUTOSPLDIS	__BIT(13)      /* Auto Slot Power Limit Dis. */
@@ -1779,7 +1782,7 @@ struct pci_rom {
 
 /*
  * Extended capability ID: 0x0014
- * (Reserved for AMD)
+ * Enhanced Allocation
  */
 
 /*
