@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.18 2016/04/30 10:34:14 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.19 2016/12/28 10:25:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,7 +151,6 @@ typedef struct uhci_softc {
 
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
-	kcondvar_t sc_softwake_cv;
 
 	uhci_physaddr_t *sc_pframes;
 	usb_dma_t sc_dma;
@@ -173,8 +172,6 @@ typedef struct uhci_softc {
 
 	uint8_t sc_saved_sof;
 	uint16_t sc_saved_frnum;
-
-	char sc_softwake;
 
 	char sc_isreset;
 	char sc_suspend;
