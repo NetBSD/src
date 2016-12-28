@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9.4.12 2016/12/27 11:37:36 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.4.13 2016/12/28 09:45:16 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.12 2016/12/27 11:37:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.13 2016/12/28 09:45:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1562,6 +1562,11 @@ urndis_detach(device_t self, int flags)
 	}
 
 	urndis_stop(ifp);
+
+	mutex_destroy(&sc->urndis_rxlock);
+	mutex_destroy(&sc->urndis_txlock);
+	mutex_destroy(&sc->urndis_lock);
+
 	sc->sc_attached = 0;
 
 	splx(s);
