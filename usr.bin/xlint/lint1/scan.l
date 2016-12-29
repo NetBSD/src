@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.71 2016/12/29 18:44:49 christos Exp $ */
+/* $NetBSD: scan.l,v 1.72 2016/12/29 19:40:35 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.71 2016/12/29 18:44:49 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.72 2016/12/29 19:40:35 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -523,7 +523,7 @@ search(sbuf_t *sb)
 				struct kwtab *kw = sym->s_keyw;
 				if (!kw->kw_attr || attron)
 					return (sym);
-			} else if (sym->s_kind == symtyp)
+			} else if (!attron && sym->s_kind == symtyp)
 				return sym;
 		}
 	}
