@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.84 2016/12/29 16:41:16 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.85 2016/12/29 18:37:32 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.84 2016/12/29 16:41:16 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.85 2016/12/29 18:37:32 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -199,6 +199,7 @@ anonymize(sym_t *s)
 /* Type Attributes */
 %token <y_type>		T_ATTRIBUTE
 %token <y_type>		T_AT_ALIGNED
+%token <y_type>		T_AT_ALWAYS_INLINE
 %token <y_type>		T_AT_COLD
 %token <y_type>		T_AT_CONSTRUCTOR
 %token <y_type>		T_AT_DEPRECATED
@@ -526,6 +527,7 @@ type_attribute_spec:
 	| T_AT_PURE
 	| T_AT_TUNION
 	| T_AT_GNU_INLINE
+	| T_AT_ALWAYS_INLINE
 	| T_AT_FORMAT T_LPARN type_attribute_format_type T_COMMA
 	    constant T_COMMA constant T_RPARN
 	| T_AT_USED {
