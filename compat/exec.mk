@@ -1,4 +1,4 @@
-#	$NetBSD: exec.mk,v 1.1 2016/12/23 10:19:57 mrg Exp $
+#	$NetBSD: exec.mk,v 1.2 2016/12/29 23:42:38 mrg Exp $
 
 # this makefile fragment can be included to modify the default
 # ABI a program is compiled with.  this is designed to be used
@@ -12,6 +12,7 @@
 #   usr.bin/netstat/Makefile
 #   usr.bin/pmap/Makefile
 #   usr.bin/systat/Makefile
+#   usr.bin/vmstat/Makefile
 #   usr.sbin/crash/Makefile
 #   usr.sbin/kgmon/Makefile
 #   usr.sbin/pstat/Makefile
