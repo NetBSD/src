@@ -1,8 +1,8 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc_soc.3,v 1.15 2016/08/08 04:16:45 dholland Exp $
+.\"	$NetBSD: rpc_soc.3,v 1.16 2016/12/29 22:07:12 wiz Exp $
 .\" Converted to mdoc by Thomas Klausner <wiz@NetBSD.org>
 .\"
-.Dd December 12, 2008
+.Dd December 29, 2016
 .Dt RPC_SOC 3
 .Os
 .Sh NAME
@@ -81,8 +81,8 @@
 .Ft AUTH *
 .Fn authunix_create_default "void"
 .Ft int
-.Fn callrpc "char *host" "u_long prognum" "u_long versnum" \
-"u_long procnum" "xdrproc_t inproc" "char *in" "xdrproc_t outproc" "char *out"
+.Fn callrpc "char *host" "int prognum" "int versnum" \
+"int procnum" "xdrproc_t inproc" "char *in" "xdrproc_t outproc" "char *out"
 .Ft enum clnt_stat
 .Fn clnt_broadcast "u_long prognum" "u_long versnum" "u_long procnum" \
 "xdrproc_t inproc" "char *in" "xdrproc_t outproc" "char *out" \
@@ -93,7 +93,7 @@
 .Ft int
 .Fn clnt_destroy "CLIENT *clnt"
 .Ft CLIENT *
-.Fn clnt_create "char *host" "u_long prog" "u_long vers" "char *proto"
+.Fn clnt_create "const char *host" "rpcprog_t prog" "rpcvers_t vers" "const char *proto"
 .Ft bool_t
 .Fn clnt_control "CLIENT *cl" "u_int req" "char *info"
 .Ft int
@@ -101,17 +101,17 @@
 .Ft void
 .Fn clnt_geterr "CLIENT *clnt" "struct rpc_err errp"
 .Ft void
-.Fn clnt_pcreateerror "char *s"
+.Fn clnt_pcreateerror "const char *s"
 .Ft void
 .Fn clnt_perrno "enum clnt_stat stat"
-.Ft int
-.Fn clnt_perror "CLIENT *clnt" "char *s"
+.Ft void
+.Fn clnt_perror "CLIENT *clnt" "const char *s"
 .Ft char *
 .Fn clnt_spcreateerror "const char *s"
 .Ft char *
 .Fn clnt_sperrno "enum clnt_stat stat"
 .Ft char *
-.Fn clnt_sperror "CLIENT *rpch" "char *s"
+.Fn clnt_sperror "CLIENT *rpch" "const char *s"
 .Ft CLIENT *
 .Fn clntraw_create "u_long prognum" "u_long versnum"
 .Ft CLIENT *
@@ -130,7 +130,7 @@
 .Fn pmap_getmaps "struct sockaddr_in *addr"
 .Ft u_short
 .Fn pmap_getport "struct sockaddr_in *addr" "u_long prognum" \
-"u_long versnum" "u_long protocol"
+"u_long versnum" "u_int protocol"
 .Ft enum clnt_stat
 .Fo pmap_rmtcall
 .Fa "struct sockaddr_in *addr"
@@ -139,7 +139,7 @@
 .Fa "u_long procnum"
 .Fa "xdrproc_t inproc"
 .Fa "char *in"
-.Fa "xdrpoc_t outproc"
+.Fa "xdrproc_t outproc"
 .Fa "char *out"
 .Fa "struct timeval tout"
 .Fa "u_long *portp"
@@ -150,7 +150,7 @@
 .Ft int
 .Fn pmap_unset "u_long prognum" "u_long versnum"
 .Ft int
-.Fn registerrpc "u_long prognum" "u_long versnum" "u_long procnum" \
+.Fn registerrpc "int prognum" "int versnum" "int procnum" \
 "char *(*procname)()" "xdrproc_t inproc" "xdrproc_t outproc"
 .Fd struct rpc_createerr rpc_createerr;
 .Ft int
@@ -163,19 +163,19 @@
 .Fn svc_getargs "SVCXPRT *xprt" "xdrproc_t inproc" "char *in"
 .Ft struct sockaddr_in *
 .Fn svc_getcaller "SVCXPRT *xprt"
-.Ft int
+.Ft void
 .Fn svc_getreqset "fd_set *rdfds"
-.Ft int
+.Ft void
 .Fn svc_getreq "int rdfds"
 .Ft struct netbuf *
 .Fn svc_getrpccaller "SVCXPRT *xprt"
-.Ft int
+.Ft bool_t
 .Fn svc_register "SVCXPRT *xprt" "u_long prognum" "u_long versnum" \
-"void (*dispatch)()" "u_long protocol"
-.Ft int
+"void (*dispatch)()" "int protocol"
+.Ft void
 .Fn svc_run "void"
-.Ft int
-.Fn svc_sendreply "SVCXPRT *xprt" "xdrproc_t outproc" "char *out"
+.Ft bool_t
+.Fn svc_sendreply "SVCXPRT *xprt" "xdrproc_t xdr_results" "const char *location"
 .Ft void
 .Fn svc_unregister "u_long prognum" "u_long versnum"
 .Ft void
@@ -187,7 +187,7 @@
 .Ft void
 .Fn svcerr_noprog "SVCXPRT *xprt"
 .Ft void
-.Fn svcerr_progvers "SVCXPRT *xprt"
+.Fn svcerr_progvers "SVCXPRT *xprt" "rpcvers_t low_vers" "rpcvers_t high_vers"
 .Ft void
 .Fn svcerr_systemerr "SVCXPRT *xprt"
 .Ft void
@@ -207,7 +207,7 @@
 .Fn xdr_accepted_reply "XDR *xdrs" "struct accepted_reply *ar"
 .Ft int
 .Fn xdr_authunix_parms "XDR *xdrs" "struct authunix_parms *aupp"
-.Ft void
+.Ft bool_t
 .Fn xdr_callhdr "XDR *xdrs" "struct rpc_msg *chdr"
 .Ft int
 .Fn xdr_callmsg "XDR *xdrs" "struct rpc_msg *cmsg"
@@ -877,9 +877,9 @@ remote procedure call.
 The parameter
 .Fa xprt
 is the request's associated transport handle;
-.Fa outproc
+.Fa xdr_results
 is the XDR routine which is used to encode the results; and
-.Fa out
+.Fa xdr_location
 is the address of the results.
 This routine returns one if it succeeds, zero otherwise.
 .It Fn svc_unregister
@@ -910,6 +910,7 @@ Service implementors usually do not need this routine.
 Called when the desired version of a program is not registered
 with the RPC package.
 Service implementors usually do not need this routine.
+.\" TODO: document low_vers and high_vers
 .It Fn svcerr_systemerr
 Called by a service dispatch routine when it detects a system error
 not covered by any particular protocol.
