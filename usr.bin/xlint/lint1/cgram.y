@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.86 2016/12/29 18:44:49 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.87 2016/12/29 19:40:21 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.86 2016/12/29 18:44:49 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.87 2016/12/29 19:40:21 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -117,7 +117,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 92
+%expect 100
 
 %union {
 	int	y_int;
@@ -562,6 +562,11 @@ type_attribute:
 	}
 	;
 
+type_attribute_list:
+	  type_attribute
+	| type_attribute_list type_attribute
+	;
+
 clrtyp:
 	  {
 		clrtyp();
@@ -605,7 +610,7 @@ declmod:
 	| T_SCLASS {
 		addscl($1);
 	  }
-	| type_attribute
+	| type_attribute_list
 	;
 
 clrtyp_typespec:
@@ -1001,7 +1006,7 @@ notype_direct_decl:
 		popdecl();
 		blklev--;
 	  }
-	| notype_direct_decl type_attribute
+	| notype_direct_decl type_attribute_list
 	;
 
 type_decl:
@@ -1034,7 +1039,7 @@ type_direct_decl:
 		popdecl();
 		blklev--;
 	  }
-	| type_direct_decl type_attribute
+	| type_direct_decl type_attribute_list
 	;
 
 /*
@@ -1054,7 +1059,7 @@ param_decl:
 	;
 
 direct_param_decl:
-	  identifier type_attribute {
+	  identifier type_attribute_list {
 		$$ = dname(getsym($1));
 	  }
 	| identifier {
@@ -1407,7 +1412,7 @@ direct_abs_decl:
 		popdecl();
 		blklev--;
 	  }
-	| direct_abs_decl type_attribute
+	| direct_abs_decl type_attribute_list
 	;
 
 non_expr_stmnt:
