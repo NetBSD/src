@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.37 2016/12/29 08:38:19 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.38 2016/12/29 08:40:27 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.37 2016/12/29 08:38:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.38 2016/12/29 08:40:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1736,9 +1736,14 @@ usb_disconnect_port(struct usbd_port *up, device_t parent, int flags)
 		KASSERT(!dev->ud_nifaces_claimed);
 	}
 
-	usbd_add_dev_event(USB_EVENT_DEVICE_DETACH, dev);
+	mutex_enter(dev->ud_bus->ub_lock);
 	dev->ud_bus->ub_devices[dev->ud_addr] = NULL;
 	up->up_dev = NULL;
+	mutex_exit(dev->ud_bus->ub_lock);
+
+	usbd_add_dev_event(USB_EVENT_DEVICE_DETACH, dev);
+
 	usb_free_device(dev);
+
 	return 0;
 }
