@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.401 2016/09/20 08:56:34 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.402 2016/12/29 20:59:31 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1144,7 +1144,7 @@ _C_LABEL(trapbase_sun4v):
 	CLEANWIN1						! 0x24-0x27 = clean window
 	sun4v_trap_entry_fail 9					! 0x028-0x030			
 	VTRAP(T_DATA_MMU_MISS, sun4v_dtsb_miss)			! 0x031 = data MMU miss
-	sun4v_trap_entry_fail 78				! 0x032-0x07f
+	sun4v_trap_entry 78					! 0x032-0x07f
 	SPILL64(uspill8_sun4vt1,ASI_AIUS)			! 0x080 spill_0_normal -- save user windows
 	SPILL32(uspill4_sun4vt1,ASI_AIUS)			! 0x084 spill_1_normal
 	SPILLBOTH(uspill8_sun4vt1,uspill4_sun4vt1,ASI_AIUS)	! 0x088 spill_2_normal
