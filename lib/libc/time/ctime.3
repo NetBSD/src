@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.53 2016/12/22 17:39:28 abhinav Exp $
+.\" $NetBSD: ctime.3,v 1.54 2016/12/29 21:03:51 wiz Exp $
 .\"
 .\" XXX: License missing?
 .\"
-.Dd October 7, 2014
+.Dd December 29, 2016
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@
 .Ft char *
 .Fn asctime "const struct tm *tm"
 .Ft char *
-.Fn asctime_r "const struct tm restrict tm" "char * restrict buf"
+.Fn asctime_r "const struct tm *restrict tm" "char * restrict buf"
 .Ft char *
 .Fn ctime "const time_t *clock"
 .Ft char *
