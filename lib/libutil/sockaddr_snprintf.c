@@ -1,7 +1,7 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.13 2016/06/01 22:58:52 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.14 2016/12/29 18:30:55 christos Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -28,26 +28,47 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.13 2016/06/01 22:58:52 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.14 2016/12/29 18:30:55 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
 #include <netinet/in.h>
+#ifdef HAVE_NETATALK_AT_H
 #include <netatalk/at.h>
+#endif
+#ifdef HAVE_NET_IF_DL_H
 #include <net/if_dl.h>
+#endif
 
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#ifdef HAVE_UTIL_H
 #include <util.h>
+#endif
+#ifdef HAVE_LIBUTIL_H
+#include <libutil.h>
+#endif
 #include <netdb.h>
 
+#ifdef BSD4_4
+# define SALEN(sa)	((sa)->sa ## _len)
+#else
+# define SALEN(sa)	((unsigned)sizeof(*sa))
+#endif
+
+#ifdef HAVE_NETATALK_AT_H
 static int
 debug_at(char *str, size_t len, const struct sockaddr_at *sat)
 {
@@ -56,19 +77,20 @@ debug_at(char *str, size_t len, const struct sockaddr_at *sat)
 	    "sat_range.r_netrange.nr_phase=%u, "
 	    "sat_range.r_netrange.nr_firstnet=%u, "
 	    "sat_range.r_netrange.nr_lastnet=%u",
-	    sat->sat_len, sat->sat_family, sat->sat_port,
+	    SALEN(sat), sat->sat_family, sat->sat_port,
 	    sat->sat_addr.s_net, sat->sat_addr.s_node,
 	    sat->sat_range.r_netrange.nr_phase,
 	    sat->sat_range.r_netrange.nr_firstnet,
 	    sat->sat_range.r_netrange.nr_lastnet);
 }
+#endif
 
 static int
 debug_in(char *str, size_t len, const struct sockaddr_in *sin)
 {
 	return snprintf(str, len, "sin_len=%u, sin_family=%u, sin_port=%u, "
 	    "sin_addr.s_addr=%08x",
-	    sin->sin_len, sin->sin_family, sin->sin_port,
+	    SALEN(sin), sin->sin_family, sin->sin_port,
 	    sin->sin_addr.s_addr);
 }
 
@@ -81,7 +103,7 @@ debug_in6(char *str, size_t len, const struct sockaddr_in6 *sin6)
 	    "sin6_flowinfo=%u, "
 	    "sin6_addr=%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:"
 	    "%02x:%02x:%02x:%02x:%02x:%02x, sin6_scope_id=%u",
-	    sin6->sin6_len, sin6->sin6_family, sin6->sin6_port,
+	    SALEN(sin6), sin6->sin6_family, sin6->sin6_port,
 	    sin6->sin6_flowinfo, s[0x0], s[0x1], s[0x2], s[0x3], s[0x4], s[0x5],
 	    s[0x6], s[0x7], s[0x8], s[0x9], s[0xa], s[0xb], s[0xc], s[0xd],
 	    s[0xe], s[0xf], sin6->sin6_scope_id);
@@ -91,10 +113,11 @@ static int
 debug_un(char *str, size_t len, const struct sockaddr_un *sun)
 {
 	return snprintf(str, len, "sun_len=%u, sun_family=%u, sun_path=%*s",
-	    sun->sun_len, sun->sun_family, (int)sizeof(sun->sun_path),
+	    SALEN(sun), sun->sun_family, (int)sizeof(sun->sun_path),
 	    sun->sun_path);
 }
 
+#ifdef HAVE_NET_IF_DL_H
 static int
 debug_dl(char *str, size_t len, const struct sockaddr_dl *sdl)
 {
@@ -103,27 +126,34 @@ debug_dl(char *str, size_t len, const struct sockaddr_dl *sdl)
 	return snprintf(str, len, "sdl_len=%u, sdl_family=%u, sdl_index=%u, "
 	    "sdl_type=%u, sdl_nlen=%u, sdl_alen=%u, sdl_slen=%u, sdl_data="
 	    "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
-	    sdl->sdl_len, sdl->sdl_family, sdl->sdl_index,
+	    SALEN(sdl), sdl->sdl_family, sdl->sdl_index,
 	    sdl->sdl_type, sdl->sdl_nlen, sdl->sdl_alen, sdl->sdl_slen,
 	    s[0x0], s[0x1], s[0x2], s[0x3], s[0x4], s[0x5],
 	    s[0x6], s[0x7], s[0x8], s[0x9], s[0xa], s[0xb]);
 }
+#endif
 
 int
 sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
     const struct sockaddr * const sa)
 {
 	const void *a = NULL;
-	char abuf[1024], nbuf[1024], *addr = NULL, *w = NULL;
+	char abuf[1024], nbuf[1024], *addr = NULL;
 	char Abuf[1024], pbuf[32], *name = NULL, *port = NULL;
 	char *ebuf = &sbuf[len - 1], *buf = sbuf;
 	const char *ptr, *s;
+	size_t salen;
 	int p = -1;
+#ifdef HAVE_NETATALK_AT_H
 	const struct sockaddr_at *sat = NULL;
+#endif
 	const struct sockaddr_in *sin4 = NULL;
 	const struct sockaddr_in6 *sin6 = NULL;
 	const struct sockaddr_un *sun = NULL;
+#ifdef HAVE_NET_IF_DL_H
 	const struct sockaddr_dl *sdl = NULL;
+	char *w = NULL;
+#endif
 	int na = 1;
 
 #define ADDC(c) do { if (buf < ebuf) *buf++ = c; else buf++; } \
@@ -136,35 +166,46 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 	switch (sa->sa_family) {
 	case AF_UNSPEC:
 		goto done;
+#ifdef HAVE_NETATALK_AT_H
 	case AF_APPLETALK:
+		salen = sizeof(*sat);
 		sat = ((const struct sockaddr_at *)(const void *)sa);
 		p = ntohs(sat->sat_port);
 		(void)snprintf(addr = abuf, sizeof(abuf), "%u.%u",
 			ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node);
 		(void)snprintf(port = pbuf, sizeof(pbuf), "%d", p);
 		break;
+#endif
 	case AF_LOCAL:
+		salen = sizeof(*sun);
 		sun = ((const struct sockaddr_un *)(const void *)sa);
 		(void)strlcpy(addr = abuf, sun->sun_path, sizeof(abuf));
 		break;
 	case AF_INET:
+		salen = sizeof(*sin4);
 		sin4 = ((const struct sockaddr_in *)(const void *)sa);
 		p = ntohs(sin4->sin_port);
 		a = &sin4->sin_addr;
 		break;
 	case AF_INET6:
+		salen = sizeof(*sin6);
 		sin6 = ((const struct sockaddr_in6 *)(const void *)sa);
 		p = ntohs(sin6->sin6_port);
 		a = &sin6->sin6_addr;
 		break;
+#ifdef HAVE_NET_IF_DL_H
 	case AF_LINK:
 		sdl = ((const struct sockaddr_dl *)(const void *)sa);
 		addr = abuf;
 		if (sdl->sdl_slen == 0 && sdl->sdl_nlen == 0
 		    && sdl->sdl_alen == 0) {
+			salen = sizeof(*sdl);
 			(void)snprintf(abuf, sizeof(abuf), "link#%hu",
 			    sdl->sdl_index);
 		} else {
+			salen = sdl->sdl_slen + sdl->sdl_nlen +  sdl->sdl_alen;
+			if (salen < sizeof(*sdl))
+				salen = sizeof(*sdl);
 			(void)strlcpy(abuf, link_ntoa(sdl), sizeof(abuf));
 			if ((w = strchr(addr, ':')) != NULL) {
 			    *w++ = '\0';
@@ -172,6 +213,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			}
 		}
 		break;
+#endif
 	default:
 		errno = EAFNOSUPPORT;
 		return -1;
@@ -180,7 +222,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 	if (addr == abuf)
 		name = addr;
 
-	if (a && getnameinfo(sa, (socklen_t)sa->sa_len, addr = abuf,
+	if (a && getnameinfo(sa, (socklen_t)salen, addr = abuf,
 	    (unsigned int)sizeof(abuf), NULL, 0,
 	    NI_NUMERICHOST|NI_NUMERICSERV) != 0)
 		return -1;
@@ -210,7 +252,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			ADDS(nbuf);
 			break;
 		case 'l':
-			(void)snprintf(nbuf, sizeof(nbuf), "%d", sa->sa_len);
+			(void)snprintf(nbuf, sizeof(nbuf), "%zu", salen);
 			ADDS(nbuf);
 			break;
 		case 'A':
@@ -219,8 +261,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			else if (!a)
 				ADDNA();
 			else {
-				getnameinfo(sa, (socklen_t)sa->sa_len,
-					name = Abuf,
+				getnameinfo(sa, (socklen_t)salen, name = Abuf,
 					(unsigned int)sizeof(nbuf), NULL, 0, 0);
 				ADDS(name);
 			}
@@ -231,16 +272,19 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			else if (p == -1)
 				ADDNA();
 			else {
-				getnameinfo(sa, (socklen_t)sa->sa_len, NULL, 0,
+				getnameinfo(sa, (socklen_t)salen, NULL, 0,
 					port = pbuf,
 					(unsigned int)sizeof(pbuf), 0);
 				ADDS(port);
 			}
 			break;
 		case 'I':
+#ifdef HAVE_NET_IF_DL_H
 			if (sdl && addr != abuf) {
 				ADDS(abuf);
-			} else {
+			} else
+#endif
+			{
 				ADDNA();
 			}
 			break;
@@ -265,6 +309,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			}
 			break;
 		case 'R':
+#ifdef HAVE_NETATALK_AT_H
 			if (sat) {
 				const struct netrange *n =
 				    &sat->sat_range.r_netrange;
@@ -272,15 +317,19 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 				    "%d:[%d,%d]", n->nr_phase , n->nr_firstnet,
 				    n->nr_lastnet);
 				ADDS(nbuf);
-			} else {
+			} else
+#endif
+			{
 				ADDNA();
 			}
 			break;
 		case 'D':
 			switch (sa->sa_family) {
+#ifdef HAVE_NETATALK_AT_H
 			case AF_APPLETALK:
 				debug_at(nbuf, sizeof(nbuf), sat);
 				break;
+#endif
 			case AF_LOCAL:
 				debug_un(nbuf, sizeof(nbuf), sun);
 				break;
@@ -290,9 +339,11 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			case AF_INET6:
 				debug_in6(nbuf, sizeof(nbuf), sin6);
 				break;
+#ifdef HAVE_NET_IF_DL_H
 			case AF_LINK:
 				debug_dl(nbuf, sizeof(nbuf), sdl);
 				break;
+#endif
 			default:
 				abort();
 			}
