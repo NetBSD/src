@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.45 2016/12/19 07:17:45 abhinav Exp $
+.\"	$NetBSD: ptrace.2,v 1.46 2016/12/29 22:17:51 kamil Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 1, 2016
@@ -33,7 +33,12 @@ The tracing process is expected to notice this via
 .Xr wait 2
 or the delivery of a
 .Dv SIGCHLD
-signal, examine the state of the stopped process, and cause it to
+signal
+.Po
+see
+.Xr siginfo 2
+.Pc ,
+examine the state of the stopped process, and cause it to
 terminate or continue as appropriate.
 .Fn ptrace
 is the mechanism by which all this happens.
