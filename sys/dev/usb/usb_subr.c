@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.36 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.37 2016/12/29 08:38:19 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.36 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.37 2016/12/29 08:38:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1160,8 +1160,8 @@ usbd_get_initial_ddesc(struct usbd_device *dev, usb_device_descriptor_t *desc)
  * and attach a driver.
  */
 usbd_status
-usbd_new_device(device_t parent, struct usbd_bus* bus, int depth,
-                int speed, int port, struct usbd_port *up)
+usbd_new_device(device_t parent, struct usbd_bus *bus, int depth, int speed,
+    int port, struct usbd_port *up)
 {
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	struct usbd_device *dev, *adev;
@@ -1248,7 +1248,7 @@ usbd_new_device(device_t parent, struct usbd_bus* bus, int depth,
 
 	/* Establish the default pipe. */
 	err = usbd_setup_pipe_flags(dev, 0, &dev->ud_ep0, USBD_DEFAULT_INTERVAL,
-			      &dev->ud_pipe0, USBD_MPSAFE);
+	    &dev->ud_pipe0, USBD_MPSAFE);
 	if (err) {
 		usbd_remove_device(dev, up);
 		return err;
