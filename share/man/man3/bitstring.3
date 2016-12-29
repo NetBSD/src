@@ -1,4 +1,4 @@
-.\"	$NetBSD: bitstring.3,v 1.16 2015/11/20 20:41:58 christos Exp $
+.\"	$NetBSD: bitstring.3,v 1.17 2016/12/29 23:55:28 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)bitstring.3	8.1 (Berkeley) 7/19/93
 .\"
-.Dd November 20, 2015
+.Dd December 29, 2016
 .Dt BITSTRING 3
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@
 .Nm bit_test
 .Nd bit-string manipulation macros
 .Sh SYNOPSIS
+.In sys/types.h
 .In bitstring.h
 .Ft bitstr_t *
 .Fn bit_decl "bitstr_t *name" "size_t nbits"
