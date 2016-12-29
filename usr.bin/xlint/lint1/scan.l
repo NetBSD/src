@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.68 2016/12/24 17:43:45 christos Exp $ */
+/* $NetBSD: scan.l,v 1.69 2016/12/29 16:41:16 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.68 2016/12/24 17:43:45 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.69 2016/12/29 16:41:16 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -215,8 +215,12 @@ static	struct	kwtab {
 	{ "transparent_union",T_AT_TUNION,0,	0,	0,	  0, 0, 1, 1 },
 	{ "__unused__",	T_AT_UNUSED,	0,	0,	0,	  0, 0, 1, 1 },
 	{ "unused",	T_AT_UNUSED,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__used__",	T_AT_USED,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "used",	T_AT_USED,	0,	0,	0,	  0, 0, 1, 1 },
 	{ "__gnu_inline__",T_AT_GNU_INLINE,0,	0,	0,	  0, 0, 1, 1 },
 	{ "gnu_inline",	T_AT_GNU_INLINE,0,	0,	0,	  0, 0, 1, 1 },
+	{ "__constructor__",T_AT_CONSTRUCTOR,0,	0,	0,	  0, 0, 1, 1 },
+	{ "constructor",T_AT_CONSTRUCTOR,0,	0,	0,	  0, 0, 1, 1 },
 	{ "__deprecated__",T_AT_DEPRECATED,0,	0,	0,	  0, 0, 1, 1 },
 	{ "deprecated",	T_AT_DEPRECATED,0,	0,	0,	  0, 0, 1, 1 },
 	{ "__may_alias__",T_AT_MAY_ALIAS,0,	0,	0,	  0, 0, 1, 1 },
@@ -227,12 +231,20 @@ static	struct	kwtab {
 	{ "__printf__",	T_AT_FORMAT_PRINTF,0,	0,	0,	  0, 0, 1, 1 },
 	{ "scanf",	T_AT_FORMAT_SCANF,0,	0,	0,	  0, 0, 1, 1 },
 	{ "__scanf__",	T_AT_FORMAT_SCANF,0,	0,	0,	  0, 0, 1, 1 },
-	{ "strftime",	T_AT_FORMAT_SCANF,0,	0,	0,	  0, 0, 1, 1 },
+	{ "strfmon",	T_AT_FORMAT_STRFMON,0,	0,	0,	  0, 0, 1, 1 },
+	{ "__strfmon__",T_AT_FORMAT_STRFMON,0,	0,	0,	  0, 0, 1, 1 },
+	{ "strftime",	T_AT_FORMAT_STRFTIME,0,	0,	0,	  0, 0, 1, 1 },
 	{ "__strftime__",T_AT_FORMAT_STRFTIME,0,0,	0,	  0, 0, 1, 1 },
 	{ "pure",	T_AT_PURE,	0,	0,	0,	  0, 0, 1, 1 },
 	{ "__pure__",	T_AT_PURE,	0,	0,	0,	  0, 0, 1, 1 },
 	{ "noreturn",	T_AT_NORETURN,	0,	0,	0,	  0, 0, 1, 1 },
 	{ "__noreturn__",T_AT_NORETURN,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "no_instrument_function", T_AT_NO_INSTRUMENT_FUNCTION,
+					0,	0,	0,	  0, 0, 1, 1 },
+	{ "__no_instrument_function", T_AT_NO_INSTRUMENT_FUNCTION,
+					0,	0,	0,	  0, 0, 1, 1 },
+	{ "__no_instrument_function__", T_AT_NO_INSTRUMENT_FUNCTION,
+					0,	0,	0,	  0, 0, 1, 1 },
 	{ "sentinel",	T_AT_SENTINEL,	0,	0,	0,	  0, 0, 1, 1 },
 	{ "__sentinel__",T_AT_SENTINEL,	0,	0,	0,	  0, 0, 1, 1 },
 	{ "format_arg", T_AT_FORMAT_ARG,0,	0,	0,	  0, 0, 1, 1 },
@@ -273,12 +285,18 @@ static	struct	kwtab {
 	{ "int",	T_TYPE,		0,	INT,	0,	  0, 0, 0, 0 },
 	{ "__symbolrename", T_SYMBOLRENAME, 0,	0,	0,	  0, 0, 0, 0 },
 	{ "long",	T_TYPE,		0,	LONG,	0,	  0, 0, 0, 0 },
+	{ "mode",	T_AT_MODE,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__mode",	T_AT_MODE,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__mode__",	T_AT_MODE,	0,	0,	0,	  0, 0, 1, 1 },
 	{ "__real__",	T_REAL,		0,	0,	0,	  0, 1, 0, 0 },
 	{ "register",	T_SCLASS,	REG,	0,	0,	  0, 0, 0, 0 },
 	{ "__restrict__",T_QUAL,	0,	0,	RESTRICT, 0, 1, 0, 0 },
 	{ "restrict",	T_QUAL,		0,	0,	RESTRICT, 0, 1, 0, 0 },
 	{ "return",	T_RETURN,	0,	0,	0,	  0, 0, 0, 0 },
 	{ "__packed",	T_PACKED,	0,	0,	0,	  0, 0, 0, 0 },
+	{ "section",	T_AT_SECTION,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__section",	T_AT_SECTION,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__section__",T_AT_SECTION,	0,	0,	0,	  0, 0, 1, 1 },
 	{ "short",	T_TYPE,		0,	SHORT,	0,	  0, 0, 0, 0 },
 	{ "signed",	T_TYPE,		0,	SIGNED,	0,	  1, 0, 0, 0 },
 	{ "__signed__",	T_TYPE,		0,	SIGNED,	0,	  0, 0, 0, 0 },
