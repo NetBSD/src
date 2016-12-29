@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.82 2016/12/27 21:52:35 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.83 2016/12/29 16:01:46 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.82 2016/12/27 21:52:35 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.83 2016/12/29 16:01:46 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -117,7 +117,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 88
+%expect 92
 
 %union {
 	int	y_int;
@@ -504,6 +504,7 @@ type_attribute_spec:
 	| T_AT_ALIGNED T_LPARN constant T_RPARN
 	| T_AT_SENTINEL T_LPARN constant T_RPARN
 	| T_AT_FORMAT_ARG T_LPARN constant T_RPARN
+	| T_AT_ALIGNED 
 	| T_AT_MAY_ALIAS
 	| T_AT_NORETURN
 	| T_AT_COLD
@@ -694,6 +695,12 @@ member_declaration_list_with_rbrace:
 	  }
 	;
 
+opt_type_attribute:
+	  /* empty */ {
+	}
+	| type_attribute
+	;
+
 member_declaration_list:
 	  member_declaration {
 		$$ = $1;
@@ -707,17 +714,17 @@ member_declaration:
 	  noclass_declmods deftyp {
 		/* too late, i know, but getsym() compensates it */
 		symtyp = FMOS;
-	  } notype_member_decls {
+	  } notype_member_decls opt_type_attribute {
 		symtyp = FVFT;
 		$$ = $4;
 	  }
 	| noclass_declspecs deftyp {
 		symtyp = FMOS;
-	  } type_member_decls {
+	  } type_member_decls opt_type_attribute {
 		symtyp = FVFT;
 		$$ = $4;
 	  }
-	| noclass_declmods deftyp {
+	| noclass_declmods deftyp opt_type_attribute {
 		symtyp = FVFT;
 		/* struct or union member must be named */
 		if (!Sflag)
@@ -726,7 +733,7 @@ member_declaration:
 		$$ = dcs->d_type->t_str->memb;
 		anonymize($$);
 	  }
-	| noclass_declspecs deftyp {
+	| noclass_declspecs deftyp opt_type_attribute {
 		symtyp = FVFT;
 		/* struct or union member must be named */
 		if (!Sflag)
