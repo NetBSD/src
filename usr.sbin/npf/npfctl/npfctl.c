@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.51 2016/12/27 20:24:32 wiz Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.52 2016/12/29 20:48:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.51 2016/12/27 20:24:32 wiz Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.52 2016/12/29 20:48:50 rmind Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -70,6 +70,7 @@ enum {
 	NPFCTL_STATS,
 	NPFCTL_SAVE,
 	NPFCTL_LOAD,
+	NPFCTL_DEBUG,
 	NPFCTL_CONN_LIST,
 };
 
@@ -83,7 +84,6 @@ static const struct operations_s {
 	{	"reload",	NPFCTL_RELOAD		},
 	{	"show",		NPFCTL_SHOWCONF,	},
 	{	"flush",	NPFCTL_FLUSH		},
-	{	"valid",	NPFCTL_VALIDATE		},
 	/* Table */
 	{	"table",	NPFCTL_TABLE		},
 	/* Rule */
@@ -94,6 +94,9 @@ static const struct operations_s {
 	{	"save",		NPFCTL_SAVE		},
 	{	"load",		NPFCTL_LOAD		},
 	{	"list",		NPFCTL_CONN_LIST	},
+	/* Misc. */
+	{	"valid",	NPFCTL_VALIDATE		},
+	{	"debug",	NPFCTL_DEBUG		},
 	/* --- */
 	{	NULL,		0			}
 };
@@ -247,14 +250,12 @@ npfctl_print_addrmask(int alen, const char *fmt, const npf_addr_t *addr,
 	switch (alen) {
 	case 4: {
 		struct sockaddr_in *sin = (void *)&ss;
-		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		memcpy(&sin->sin_addr, addr, sizeof(sin->sin_addr));
 		break;
 	}
 	case 16: {
 		struct sockaddr_in6 *sin6 = (void *)&ss;
-		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		memcpy(&sin6->sin6_addr, addr, sizeof(sin6->sin6_addr));
 		break;
@@ -593,7 +594,7 @@ struct npf_conn_filter {
 };
 
 static int
-npfctl_conn_print(unsigned alen, const npf_addr_t *a, const in_port_t *p, 
+npfctl_conn_print(unsigned alen, const npf_addr_t *a, const in_port_t *p,
     const char *ifname, void *v)
 {
 	struct npf_conn_filter *fil = v;
@@ -674,21 +675,19 @@ npfctl_conn_list(int fd, int argc, char **argv)
 	if (header)
 		fprintf(f.fp, "%*.*s %*.*s\n",
 		    w, w, "From address:port ", w, w, "To address:port ");
-		
+
 	npf_conn_list(fd, npfctl_conn_print, &f);
 	return 0;
 }
 
-static void
-npfctl(int action, int argc, char **argv)
+static int
+npfctl_open_dev(const char *path)
 {
-	int fd, ver, boolval, ret = 0;
-	nl_config_t *ncf;
-	const char *fun = "";
+	int fd, ver;
 
-	fd = open(NPF_DEV_PATH, O_RDONLY);
+	fd = open(path, O_RDONLY);
 	if (fd == -1) {
-		err(EXIT_FAILURE, "cannot open '%s'", NPF_DEV_PATH);
+		err(EXIT_FAILURE, "cannot open '%s'", path);
 	}
 	if (ioctl(fd, IOC_NPF_VERSION, &ver) == -1) {
 		err(EXIT_FAILURE, "ioctl(IOC_NPF_VERSION)");
@@ -697,6 +696,24 @@ npfctl(int action, int argc, char **argv)
 		errx(EXIT_FAILURE,
 		    "incompatible NPF interface version (%d, kernel %d)\n"
 		    "Hint: update userland?", NPF_VERSION, ver);
+	}
+	return fd;
+}
+
+static void
+npfctl(int action, int argc, char **argv)
+{
+	int fd, boolval, ret = 0;
+	const char *fun = "";
+	nl_config_t *ncf;
+
+	switch (action) {
+	case NPFCTL_VALIDATE:
+	case NPFCTL_DEBUG:
+		fd = 0;
+		break;
+	default:
+		fd = npfctl_open_dev(NPF_DEV_PATH);
 	}
 
 	switch (action) {
@@ -724,12 +741,6 @@ npfctl(int action, int argc, char **argv)
 	case NPFCTL_FLUSH:
 		ret = npf_config_flush(fd);
 		fun = "npf_config_flush";
-		break;
-	case NPFCTL_VALIDATE:
-		npfctl_config_init(false);
-		npfctl_parse_file(argc < 3 ? NPF_CONF_PATH : argv[2]);
-		ret = npfctl_config_show(0);
-		fun = "npfctl_config_show";
 		break;
 	case NPFCTL_TABLE:
 		if ((argc -= 2) < 2) {
@@ -768,11 +779,24 @@ npfctl(int action, int argc, char **argv)
 		ret = npfctl_conn_list(fd, argc, argv);
 		fun = "npfctl_conn_list";
 		break;
+	case NPFCTL_VALIDATE:
+		npfctl_config_init(false);
+		npfctl_parse_file(argc > 2 ? argv[2] : NPF_CONF_PATH);
+		ret = npfctl_config_show(0);
+		fun = "npfctl_config_show";
+		break;
+	case NPFCTL_DEBUG:
+		npfctl_config_init(true);
+		npfctl_parse_file(argc > 2 ? argv[2] : NPF_CONF_PATH);
+		npfctl_config_send(0, argc > 3 ? argv[3] : "/tmp/npf.plist");
+		break;
 	}
 	if (ret) {
 		err(EXIT_FAILURE, "%s", fun);
 	}
-	close(fd);
+	if (fd) {
+		close(fd);
+	}
 }
 
 int
@@ -785,16 +809,6 @@ main(int argc, char **argv)
 	}
 	npfctl_show_init();
 	cmd = argv[1];
-
-	if (strcmp(cmd, "debug") == 0) {
-		const char *cfg = argc > 2 ? argv[2] : "/etc/npf.conf";
-		const char *out = argc > 3 ? argv[3] : "/tmp/npf.plist";
-
-		npfctl_config_init(true);
-		npfctl_parse_file(cfg);
-		npfctl_config_send(0, out);
-		return EXIT_SUCCESS;
-	}
 
 	/* Find and call the subroutine. */
 	for (int n = 0; operations[n].cmd != NULL; n++) {
