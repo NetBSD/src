@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_tty.3,v 1.8 2004/03/16 19:27:35 snj Exp $
+.\"	$NetBSD: curses_tty.3,v 1.9 2016/12/29 23:50:59 wiz Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd June 13, 2003
+.Dd December 29, 2016
 .Dt CURSES_TTY 3
 .Os
 .Sh NAME
@@ -98,16 +98,16 @@
 .Fn flushinp "void"
 .Ft int
 .Fn gettmode "void"
-.Ft int
+.Ft bool
 .Fn has_ic "void"
-.Ft int
+.Ft bool
 .Fn has_il "void"
 .Ft int
-.Fn idcok "WINDOW *win" "boolf flag"
+.Fn idcok "WINDOW *win" "bool flag"
 .Ft int
-.Fn idlok "WINDOW *win" "boolf flag"
+.Fn idlok "WINDOW *win" "bool flag"
 .Ft int
-.Fn intrflush "WINDOW *win" "boolf flag"
+.Fn intrflush "WINDOW *win" "bool flag"
 .Ft void
 .Fn noqiflush "void"
 .Ft void
@@ -115,7 +115,7 @@
 .Ft char
 .Fn killchar "void"
 .Ft int
-.Fn meta "WINDOW *win" "boolf flag"
+.Fn meta "WINDOW *win" "bool flag"
 .Ft int
 .Fn napms "int ms"
 .Ft int
