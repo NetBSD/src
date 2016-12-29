@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.156.2.14 2016/06/10 08:15:22 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.156.2.15 2016/12/29 08:36:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.14 2016/06/10 08:15:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.15 2016/12/29 08:36:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -132,7 +132,7 @@ struct usb_softc {
 #if 0
 	device_t	sc_dev;		/* base device */
 #endif
-	struct usbd_bus *sc_bus;		/* USB controller */
+	struct usbd_bus *sc_bus;	/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
 	struct lwp	*sc_event_thread;
