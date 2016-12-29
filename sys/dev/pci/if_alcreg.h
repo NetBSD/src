@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alcreg.h,v 1.5 2015/11/24 23:30:04 leot Exp $	*/
+/*	$NetBSD: if_alcreg.h,v 1.6 2016/12/29 19:22:51 leot Exp $	*/
 /*	$OpenBSD: if_alcreg.h,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1488,15 +1488,15 @@ struct alc_softc {
 
 /* Register access macros. */
 #define	CSR_WRITE_4(_sc, reg, val)	\
-	bus_space_write_4((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg), (val))
+	bus_space_write_4((_sc)->sc_mem_bt, (_sc)->sc_mem_bh, (reg), (val))
 #define	CSR_WRITE_2(_sc, reg, val)	\
-	bus_space_write_2((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg), (val))
+	bus_space_write_2((_sc)->sc_mem_bt, (_sc)->sc_mem_bh, (reg), (val))
 #define	CSR_WRITE_1(_sc, reg, val)	\
-	bus_space_write_1((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg), (val))
+	bus_space_write_1((_sc)->sc_mem_bt, (_sc)->sc_mem_bh, (reg), (val))
 #define	CSR_READ_2(_sc, reg)		\
-	bus_space_read_2((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg))
+	bus_space_read_2((_sc)->sc_mem_bt, (_sc)->sc_mem_bh, (reg))
 #define	CSR_READ_4(_sc, reg)		\
-	bus_space_read_4((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg))
+	bus_space_read_4((_sc)->sc_mem_bt, (_sc)->sc_mem_bh, (reg))
 
 #define	ALC_RXCHAIN_RESET(_sc)						\
 do {									\
