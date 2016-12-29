@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9.4.13 2016/12/28 09:45:16 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.4.14 2016/12/29 08:04:08 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.13 2016/12/28 09:45:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.14 2016/12/29 08:04:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1388,10 +1388,6 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ifaceno_ctl = if_ctl;
 	if_data = -1;
 
-	mutex_init(&sc->urndis_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->urndis_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->urndis_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
-
 	usb_desc_iter_init(sc->sc_udev, &iter);
 	while ((desc = (const void *)usb_desc_iter_next(&iter)) != NULL) {
 
@@ -1480,6 +1476,9 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	return;
 
 found:
+	mutex_init(&sc->urndis_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->urndis_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mutex_init(&sc->urndis_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
 
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
@@ -1503,7 +1502,7 @@ found:
 		aprint_error("%s: unable to get hardware address\n",
 		    DEVNAME(sc));
 		urndis_stop(ifp);
-		return;
+		goto fail;
 	}
 
 	if (bufsz == ETHER_ADDR_LEN) {
@@ -1515,7 +1514,7 @@ found:
 		aprint_error("%s: invalid address\n", DEVNAME(sc));
 		kmem_free(buf, bufsz);
 		urndis_stop(ifp);
-		return;
+		goto fail;
 	}
 
 	/* Initialize packet filter */
@@ -1526,7 +1525,7 @@ found:
 	    sizeof(filter)) != RNDIS_STATUS_SUCCESS) {
 		aprint_error("%s: unable to set data filters\n", DEVNAME(sc));
 		urndis_stop(ifp);
-		return;
+		goto fail;
 	}
 
 	if_initialize(ifp);
@@ -1535,6 +1534,12 @@ found:
 	if_register(ifp);
 	
 	sc->sc_attached = 1;
+	return;
+
+fail:
+	mutex_destroy(&sc->urndis_lock);
+	mutex_destroy(&sc->urndis_txlock);
+	mutex_destroy(&sc->urndis_rxlock);
 }
 
 static int
