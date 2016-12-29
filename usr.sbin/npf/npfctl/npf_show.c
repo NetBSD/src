@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.21 2016/12/27 20:14:35 christos Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.22 2016/12/29 20:48:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.21 2016/12/27 20:14:35 christos Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.22 2016/12/29 20:48:50 rmind Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -506,8 +506,8 @@ npfctl_config_show(int fd)
 		    loaded ? "loaded" : "empty");
 		print_linesep(ctx);
 	} else {
-		npfctl_config_send(0, NULL);
 		ncf = npfctl_config_ref();
+		(void)npf_config_build(ncf);
 		loaded = true;
 	}
 	ctx->conf = ncf;
