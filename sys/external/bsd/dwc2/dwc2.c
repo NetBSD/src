@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.29 2016/12/05 10:55:25 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.30 2016/12/29 08:15:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.29 2016/12/05 10:55:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.30 2016/12/29 08:15:18 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -316,24 +316,30 @@ Static void
 dwc2_timeout(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
-	struct dwc2_xfer *dxfer = DWC2_XFER2DXFER(xfer);
-// 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
  	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
+	bool timeout = false;
 
 	DPRINTF("dxfer=%p\n", dxfer);
-
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_dying) {
-		mutex_enter(&sc->sc_lock);
-		dwc2_abort_xfer(&dxfer->xfer, USBD_TIMEOUT);
 		mutex_exit(&sc->sc_lock);
 		return;
 	}
+	if (xfer->ux_status != USBD_CANCELLED) {
+		xfer->ux_status = USBD_TIMEOUT;
+		timeout = true;
+	}
+	mutex_exit(&sc->sc_lock);
 
-	/* Execute the abort in a process context. */
-	usb_init_task(&xfer->ux_aborttask, dwc2_timeout_task, addr,
-	    USB_TASKQ_MPSAFE);
-	usb_add_task(dxfer->xfer.ux_pipe->up_dev, &xfer->ux_aborttask,
-	    USB_TASKQ_HC);
+	if (timeout) {
+		struct usbd_device *dev = xfer->ux_pipe->up_dev;
+
+		/* Execute the abort in a process context. */
+		usb_init_task(&xfer->ux_aborttask, dwc2_timeout_task, addr,
+		    USB_TASKQ_MPSAFE);
+		usb_add_task(dev, &xfer->ux_aborttask, USB_TASKQ_HC);
+
+	}
 }
 
 Static void
@@ -345,6 +351,7 @@ dwc2_timeout_task(void *addr)
 	DPRINTF("xfer=%p\n", xfer);
 
 	mutex_enter(&sc->sc_lock);
+	KASSERT(xfer->ux_status == USBD_TIMEOUT);
 	dwc2_abort_xfer(xfer, USBD_TIMEOUT);
 	mutex_exit(&sc->sc_lock);
 }
@@ -455,11 +462,12 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	DPRINTF("xfer=%p\n", xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	ASSERT_SLEEPABLE();
 
 	if (sc->sc_dying) {
 		xfer->ux_status = status;
-		callout_stop(&xfer->ux_callout);
+		callout_halt(&xfer->ux_callout, &sc->sc_lock);
+		KASSERT(xfer->ux_status == status);
 		usb_transfer_complete(xfer);
 		return;
 	}
@@ -479,16 +487,26 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	/*
 	 * Step 1: Make the stack ignore it and stop the callout.
 	 */
-	mutex_spin_enter(&hsotg->lock);
 	xfer->ux_hcflags |= UXFER_ABORTING;
 
-	xfer->ux_status = status;	/* make software ignore it */
-	callout_stop(&xfer->ux_callout);
+	/*
+	 * Step 1: When cancelling a transfer make sure the timeout handler
+	 * didn't run or ran to the end and saw the USBD_CANCELLED status.
+	 * Otherwise we must have got here via a timeout.
+	 */
+	if (status == USBD_CANCELLED) {
+		xfer->ux_status = status;
+		callout_halt(&xfer->ux_callout, &sc->sc_lock);
+	} else {
+		KASSERT(xfer->ux_status == USBD_TIMEOUT);
+	}
 
+	mutex_spin_enter(&hsotg->lock);
 	/* XXXNH suboptimal */
 	TAILQ_FOREACH_SAFE(d, &sc->sc_complete, xnext, tmp) {
 		if (d == dxfer) {
 			TAILQ_REMOVE(&sc->sc_complete, dxfer, xnext);
+			break;
 		}
 	}
 
