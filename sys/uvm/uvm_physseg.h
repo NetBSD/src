@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.h,v 1.6 2016/12/26 18:47:00 cherry Exp $ */
+/* $NetBSD: uvm_physseg.h,v 1.7 2016/12/29 12:58:38 rin Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -135,14 +135,14 @@ uvm_physseg_t uvm_physseg_find(paddr_t, psize_t *);
 bool uvm_physseg_plug(paddr_t, size_t, uvm_physseg_t *);
 bool uvm_physseg_unplug(paddr_t, size_t);
 
-#if defined(PMAP_STEAL_MEMORY)
+#if defined(UVM_PHYSSEG_LEGACY)
 /*
  * XXX: Legacy: This needs to be upgraded to a full pa management
  * layer.
  */
 void uvm_physseg_set_avail_start(uvm_physseg_t, paddr_t);
 void uvm_physseg_set_avail_end(uvm_physseg_t, paddr_t);
-#endif /* PMAP_STEAL_MEMORY */
+#endif /* UVM_PHYSSEG_LEGACY */
 
 #endif /* _KERNEL */
 

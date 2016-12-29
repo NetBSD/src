@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.5 2016/12/25 06:30:58 cherry Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.6 2016/12/29 12:58:38 rin Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1004,7 +1004,7 @@ uvm_physseg_get_avail_start(uvm_physseg_t upm)
 	return HANDLE_TO_PHYSSEG_NODE(upm)->avail_start;
 }
 
-#if defined(PMAP_STEAL_MEMORY)
+#if defined(UVM_PHYSSEG_LEGACY)
 void
 uvm_physseg_set_avail_start(uvm_physseg_t upm, paddr_t avail_start)
 {
@@ -1033,7 +1033,7 @@ void uvm_physseg_set_avail_end(uvm_physseg_t upm, paddr_t avail_end)
 	ps->avail_end = avail_end;
 }
 
-#endif /* PMAP_STEAL_MEMORY */
+#endif /* UVM_PHYSSEG_LEGACY */
 
 paddr_t
 uvm_physseg_get_avail_end(uvm_physseg_t upm)
