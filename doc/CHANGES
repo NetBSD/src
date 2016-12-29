@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2228 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2229 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -438,3 +438,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	mips64: Use N64 binaries where kvm is required, fixing fstat, netstat,
 		systat, crash, pstat and kgmon.  [mrg 20161222]
 	OpenSSH: Imported 7.4. [christos 20161224]
+	dreamcast: Add preliminary "G1-ATA" IDE HDD support. [tsutsui 20161229]
