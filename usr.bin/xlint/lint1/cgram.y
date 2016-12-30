@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.89 2016/12/30 02:16:36 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.90 2016/12/30 03:36:51 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.89 2016/12/30 02:16:36 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.90 2016/12/30 03:36:51 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -209,14 +209,14 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_FORMAT_ARG
 %token <y_type>		T_AT_FORMAT_PRINTF
 %token <y_type>		T_AT_FORMAT_SCANF
-%token <y_type>		T_AT_FORMAT_STRFTIME
 %token <y_type>		T_AT_FORMAT_STRFMON
+%token <y_type>		T_AT_FORMAT_STRFTIME
 %token <y_type>		T_AT_GNU_INLINE
 %token <y_type>		T_AT_MAY_ALIAS
 %token <y_type>		T_AT_MINBYTES
 %token <y_type>		T_AT_MODE
-%token <y_type>		T_AT_NORETURN
 %token <y_type>		T_AT_NONNULL
+%token <y_type>		T_AT_NORETURN
 %token <y_type>		T_AT_NO_INSTRUMENT_FUNCTION
 %token <y_type>		T_AT_PACKED
 %token <y_type>		T_AT_PURE
@@ -224,7 +224,6 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_SECTION
 %token <y_type>		T_AT_SENTINEL
 %token <y_type>		T_AT_STRING
-%token <y_type>		T_AT_TUINION
 %token <y_type>		T_AT_TUNION
 %token <y_type>		T_AT_UNUSED
 %token <y_type>		T_AT_USED
