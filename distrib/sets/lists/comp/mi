@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2083 2016/12/22 16:32:31 maya Exp $
+#	$NetBSD: mi,v 1.2084 2016/12/30 22:38:38 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6380,6 +6380,7 @@
 ./usr/share/man/cat3/field_type.0		comp-c-catman		.cat
 ./usr/share/man/cat3/field_userptr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fileno.0			comp-c-catman		.cat
+./usr/share/man/cat3/filter.0			comp-c-catman		.cat
 ./usr/share/man/cat3/finite.0			comp-c-catman		.cat
 ./usr/share/man/cat3/finitef.0			comp-c-catman		.cat
 ./usr/share/man/cat3/flags_to_string.0		comp-c-catman		.cat
@@ -13720,6 +13721,7 @@
 ./usr/share/man/html3/field_type.html		comp-c-htmlman		html
 ./usr/share/man/html3/field_userptr.html	comp-c-htmlman		html
 ./usr/share/man/html3/fileno.html		comp-c-htmlman		html
+./usr/share/man/html3/filter.html		comp-c-htmlman		html
 ./usr/share/man/html3/finite.html		comp-c-htmlman		html
 ./usr/share/man/html3/finitef.html		comp-c-htmlman		html
 ./usr/share/man/html3/flags_to_string.html	comp-c-htmlman		html
@@ -20973,6 +20975,7 @@
 ./usr/share/man/man3/field_type.3		comp-c-man		.man
 ./usr/share/man/man3/field_userptr.3		comp-c-man		.man
 ./usr/share/man/man3/fileno.3			comp-c-man		.man
+./usr/share/man/man3/filter.3			comp-c-man		.man
 ./usr/share/man/man3/finite.3			comp-c-man		.man
 ./usr/share/man/man3/finitef.3			comp-c-man		.man
 ./usr/share/man/man3/flags_to_string.3		comp-c-man		.man
