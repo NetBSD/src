@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.23 2016/12/22 14:47:55 cherry Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.24 2016/12/30 07:35:14 rin Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.23 2016/12/22 14:47:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.24 2016/12/30 07:35:14 rin Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -1150,7 +1150,7 @@ printf("%s:%d: pmap_link_l2pt ipmq_pt\n", __FUNCTION__, __LINE__);
 
 	printf(mem_fmt, "SDRAM", physical_start, physical_end-1,
 	    KERN_PHYSTOV(physical_start), KERN_PHYSTOV(physical_end-1),
-	    physmem);
+	    (int)physmem);
 	printf(mem_fmt, "text section",
 	       KERN_VTOPHYS(KERNEL_BASE_virt), KERN_VTOPHYS(etext-1),
 	       (vaddr_t)KERNEL_BASE_virt, (vaddr_t)etext-1,
