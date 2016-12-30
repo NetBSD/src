@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.74 2016/12/30 00:57:10 christos Exp $ */
+/* $NetBSD: scan.l,v 1.75 2016/12/30 02:16:36 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.74 2016/12/30 00:57:10 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.75 2016/12/30 02:16:36 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -215,6 +215,7 @@ static	struct	kwtab {
 	{ "asm",	T_ASM,		0,	0,	0,	  0,0,1,0,7 },
 	{ "attribute",	T_ATTRIBUTE,	0,	0,	0,	  0,0,1,0,6 },
 	{ "auto",	T_SCLASS,	AUTO,	0,	0,	  0,0,0,0,1 },
+	{ "bounded",	T_AT_BOUNDED,	0,	0,	0,	  0,0,1,1,5 },
 	{ "break",	T_BREAK,	0,	0,	0,	  0,0,0,0,1 },
 	{ "case",	T_CASE,		0,	0,	0,	  0,0,0,0,1 },
 	{ "char",	T_TYPE,		0,	CHAR,	0,	  0,0,0,0,1 },
@@ -242,10 +243,11 @@ static	struct	kwtab {
 	{ "int",	T_TYPE,		0,	INT,	0,	  0,0,0,0,1 },
 	{ "long",	T_TYPE,		0,	LONG,	0,	  0,0,0,0,1 },
 	{ "may_alias",	T_AT_MAY_ALIAS,	0,	0,	0,	  0,0,1,1,5 },
+	{ "minbytes",	T_AT_MINBYTES,	0,	0,	0,	  0,0,1,1,5 },
 	{ "mode",	T_AT_MODE,	0,	0,	0,	  0,0,1,1,5 },
 	{ "no_instrument_function", T_AT_NO_INSTRUMENT_FUNCTION,
 					0,	0,	0,	  0,0,1,1,5 },
-	{ "non_null",	T_AT_NON_NULL,	0,	0,	0,	  0,0,1,1,5 },
+	{ "nonnull",	T_AT_NONNULL,	0,	0,	0,	  0,0,1,1,5 },
 	{ "noreturn",	T_AT_NORETURN,	0,	0,	0,	  0,0,1,1,5 },
 	{ "packed",	T_AT_PACKED,	0,	0,	0,	  0,0,1,1,5 },
 	{ "packed",	T_PACKED,	0,	0,	0,	  0,0,0,0,2 },
@@ -265,6 +267,7 @@ static	struct	kwtab {
 	{ "static",	T_SCLASS,	STATIC,	0,	0,	  0,0,0,0,1 },
 	{ "strfmon",	T_AT_FORMAT_STRFMON,0,	0,	0,	  0,0,1,1,5 },
 	{ "strftime",	T_AT_FORMAT_STRFTIME,0,	0,	0,	  0,0,1,1,5 },
+	{ "string",	T_AT_STRING,	0,	0,	0,	  0,0,1,1,5 },
 	{ "struct",	T_SOU,		0,	STRUCT,	0,	  0,0,0,0,1 },
 	{ "switch",	T_SWITCH,	0,	0,	0,	  0,0,0,0,1 },
 	{ "symbolrename", T_SYMBOLRENAME, 0,	0,	0,	  0,0,0,0,2 },

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.88 2016/12/29 23:54:29 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.89 2016/12/30 02:16:36 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.88 2016/12/29 23:54:29 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.89 2016/12/30 02:16:36 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -201,6 +201,7 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_ALIAS
 %token <y_type>		T_AT_ALIGNED
 %token <y_type>		T_AT_ALWAYS_INLINE
+%token <y_type>		T_AT_BOUNDED
 %token <y_type>		T_AT_COLD
 %token <y_type>		T_AT_CONSTRUCTOR
 %token <y_type>		T_AT_DEPRECATED
@@ -212,15 +213,17 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_FORMAT_STRFMON
 %token <y_type>		T_AT_GNU_INLINE
 %token <y_type>		T_AT_MAY_ALIAS
+%token <y_type>		T_AT_MINBYTES
 %token <y_type>		T_AT_MODE
 %token <y_type>		T_AT_NORETURN
-%token <y_type>		T_AT_NON_NULL
+%token <y_type>		T_AT_NONNULL
 %token <y_type>		T_AT_NO_INSTRUMENT_FUNCTION
 %token <y_type>		T_AT_PACKED
 %token <y_type>		T_AT_PURE
 %token <y_type>		T_AT_RETURNS_TWICE
 %token <y_type>		T_AT_SECTION
 %token <y_type>		T_AT_SENTINEL
+%token <y_type>		T_AT_STRING
 %token <y_type>		T_AT_TUINION
 %token <y_type>		T_AT_TUNION
 %token <y_type>		T_AT_UNUSED
@@ -512,9 +515,13 @@ type_attribute_format_type:
 type_attribute_spec:
 	  T_AT_DEPRECATED
 	| T_AT_ALIGNED T_LPARN constant T_RPARN
+	| T_AT_BOUNDED T_LPARN T_AT_MINBYTES T_COMMA constant T_COMMA
+	  constant T_RPARN
+	| T_AT_BOUNDED T_LPARN T_AT_STRING T_COMMA constant T_COMMA
+	  constant T_RPARN
 	| T_AT_SENTINEL T_LPARN constant T_RPARN
 	| T_AT_FORMAT_ARG T_LPARN constant T_RPARN
-	| T_AT_NON_NULL T_LPARN constant T_RPARN
+	| T_AT_NONNULL T_LPARN constant T_RPARN
 	| T_AT_MODE T_LPARN T_NAME T_RPARN
 	| T_AT_ALIAS T_LPARN string T_RPARN
 	| T_AT_SECTION T_LPARN string T_RPARN
