@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.73 2016/12/29 23:54:29 christos Exp $ */
+/* $NetBSD: scan.l,v 1.74 2016/12/30 00:57:10 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.73 2016/12/29 23:54:29 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.74 2016/12/30 00:57:10 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -270,7 +270,7 @@ static	struct	kwtab {
 	{ "symbolrename", T_SYMBOLRENAME, 0,	0,	0,	  0,0,0,0,2 },
 	{ "transparent_union",T_AT_TUNION,0,	0,	0,	  0,0,1,1,5 },
 	{ "typedef",	T_SCLASS,	TYPEDEF, 0,	0,	  0,0,0,0,1 },
-	{ "typeof",	T_TYPEOF,	0,	0,	0,	  0,0,1,0,5 },
+	{ "typeof",	T_TYPEOF,	0,	0,	0,	  0,0,1,0,7 },
 	{ "union",	T_SOU,		0,	UNION,	0,	  0,0,0,0,1 },
 	{ "unsigned",	T_TYPE,		0,	UNSIGN,	0,	  0,0,0,0,1 },
 	{ "unused",	T_AT_UNUSED,	0,	0,	0,	  0,0,1,1,5 },
