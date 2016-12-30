@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2229 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2230 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -439,3 +439,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		systat, crash, pstat and kgmon.  [mrg 20161222]
 	OpenSSH: Imported 7.4. [christos 20161224]
 	dreamcast: Add preliminary "G1-ATA" IDE HDD support. [tsutsui 20161229]
+	resolvconf(8): Import openresolv-3.9.0 [roy 20161230]
