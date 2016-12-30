@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.110 2015/12/22 23:35:21 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.111 2016/12/30 21:08:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.110 2015/12/22 23:35:21 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.111 2016/12/30 21:08:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -651,23 +651,23 @@ vtrans(struct vnode *vp, int i, int flag, long addr)
 		char buf[1024];
 		(void)snprintb(buf, sizeof(buf), VNODE_FLAGBITS,
 		    vn.v_iflag | vn.v_vflag | vn.v_uflag);
-		(void)printf(" flags %s\n", buf);
+		(void)printf("  flags %s\n", buf);
 		return;
 	} else if (badtype) {
-		(void)printf(" -         -  %10s    -\n", badtype);
+		(void)printf("  -         -  %10s    -\n", badtype);
 		return;
 	}
 	if (nflg)
-		(void)printf(" %2llu,%-2llu",
+		(void)printf("  %2llu,%-2llu",
 		    (unsigned long long)major(fst.fsid),
 		    (unsigned long long)minor(fst.fsid));
 	else
-		(void)printf(" %-8s", getmnton(vn.v_mount));
+		(void)printf("  %-8s", getmnton(vn.v_mount));
 	if (nflg)
 		(void)snprintf(mode, sizeof mode, "%o", fst.mode);
 	else
 		strmode(fst.mode, mode);
-	(void)printf(" %7"PRIu64" %*s", fst.fileid, nflg ? 5 : 10, mode);
+	(void)printf("  %7"PRIu64" %*s", fst.fileid, nflg ? 5 : 10, mode);
 	switch (vn.v_type) {
 	case VBLK:
 	case VCHR: {
