@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.90 2016/12/30 03:36:51 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.91 2016/12/30 19:53:08 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.90 2016/12/30 03:36:51 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.91 2016/12/30 19:53:08 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -202,6 +202,7 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_ALIGNED
 %token <y_type>		T_AT_ALWAYS_INLINE
 %token <y_type>		T_AT_BOUNDED
+%token <y_type>		T_AT_BUFFER
 %token <y_type>		T_AT_COLD
 %token <y_type>		T_AT_CONSTRUCTOR
 %token <y_type>		T_AT_DEPRECATED
@@ -260,7 +261,6 @@ anonymize(sym_t *s)
 %type	<y_type>	struct_spec
 %type	<y_type>	enum_spec
 %type	<y_type>	type_attribute
-%type	<y_type>	type_attribute_spec
 %type	<y_sym>		struct_tag
 %type	<y_sym>		enum_tag
 %type	<y_tspec>	struct
@@ -511,13 +511,18 @@ type_attribute_format_type:
 	| T_AT_FORMAT_STRFTIME
 	;
 
+type_attribute_bounded_type:
+	  T_AT_MINBYTES
+	| T_AT_STRING
+	| T_AT_BUFFER
+	;
+
 type_attribute_spec:
-	  T_AT_DEPRECATED
+	  /* empty */	
+	| T_AT_DEPRECATED
 	| T_AT_ALIGNED T_LPARN constant T_RPARN
-	| T_AT_BOUNDED T_LPARN T_AT_MINBYTES T_COMMA constant T_COMMA
-	  constant T_RPARN
-	| T_AT_BOUNDED T_LPARN T_AT_STRING T_COMMA constant T_COMMA
-	  constant T_RPARN
+	| T_AT_BOUNDED T_LPARN type_attribute_bounded_type
+	  T_COMMA constant T_COMMA constant T_RPARN
 	| T_AT_SENTINEL T_LPARN constant T_RPARN
 	| T_AT_FORMAT_ARG T_LPARN constant T_RPARN
 	| T_AT_NONNULL T_LPARN constant T_RPARN
@@ -732,8 +737,7 @@ member_declaration_list_with_rbrace:
 	;
 
 opt_type_attribute:
-	  /* empty */ {
-	}
+	  /* empty */
 	| type_attribute
 	;
 
