@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.24 2015/11/26 01:05:08 christos Exp $	*/
+/*	$NetBSD: screen.c,v 1.25 2016/12/30 22:38:38 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.24 2015/11/26 01:05:08 christos Exp $");
+__RCSID("$NetBSD: screen.c,v 1.25 2016/12/30 22:38:38 roy Exp $");
 #endif
 #endif					/* not lint */
 
@@ -42,6 +42,18 @@ __RCSID("$NetBSD: screen.c,v 1.24 2015/11/26 01:05:08 christos Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
+
+static int filtered;
+
+/*
+ * filter has to be called before either initscr or newterm.
+ */
+void
+filter(void)
+{
+
+	filtered = TRUE;
+}
 
 /*
  * set_term --
@@ -128,6 +140,8 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	new_screen->outfd = outfd;
 	new_screen->echoit = new_screen->nl = 1;
 	new_screen->pfast = new_screen->rawmode = new_screen->noqch = 0;
+	new_screen->filtered = filtered;
+	filtered = FALSE; /* filter() must preceed each newterm() */
 	new_screen->nca = A_NORMAL;
 	new_screen->color_type = COLOR_NONE;
 	new_screen->COLOR_PAIRS = 0;
