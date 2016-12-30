@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd_log.c,v 1.3 2016/12/28 03:02:54 christos Exp $	*/
+/*	$NetBSD: npfd_log.c,v 1.4 2016/12/30 19:55:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd_log.c,v 1.3 2016/12/28 03:02:54 christos Exp $");
+__RCSID("$NetBSD: npfd_log.c,v 1.4 2016/12/30 19:55:46 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <net/if.h>
 
 #include <stdio.h>
+#include <err.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -54,52 +55,60 @@ struct npfd_log {
 	pcap_dumper_t *dumper;
 };
 
+static void
+npfd_log_setfilter(npfd_log_t *ctx, const char *filter)
+{
+	struct bpf_program bprog;
+
+	if (pcap_compile(ctx->pcap, &bprog, filter, 1, 0) == -1)
+		errx(EXIT_FAILURE, "pcap_compile failed for `%s': %s", filter,
+		    pcap_geterr(ctx->pcap));
+	if (pcap_setfilter(ctx->pcap, &bprog) == -1)
+		errx(EXIT_FAILURE, "pcap_setfilter failed: %s",
+		    pcap_geterr(ctx->pcap));
+	pcap_freecode(&bprog);
+}
+
 npfd_log_t *
-npfd_log_create(unsigned if_idx)
+npfd_log_create(const char *ifname, const char *filter, int snaplen)
 {
 	npfd_log_t *ctx;
 	char errbuf[PCAP_ERRBUF_SIZE];
 
-	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
-		syslog(LOG_ERR, "malloc failed: %m");
-		return NULL;
-	}
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
+		err(EXIT_FAILURE, "malloc failed");
 
 	/*
 	 * Open a live capture handle in non-blocking mode.
 	 */
-	snprintf(ctx->ifname, sizeof(ctx->ifname), NPFD_NPFLOG "%u", if_idx);
+	snprintf(ctx->ifname, sizeof(ctx->ifname), "%s", ifname);
 	ctx->pcap = pcap_create(ctx->ifname, errbuf);
-	if (ctx->pcap == NULL) {
-		syslog(LOG_ERR, "pcap_create failed: %s", errbuf);
-		goto err;
-	}
-	if (pcap_setnonblock(ctx->pcap, 1, errbuf) == -1) {
-		syslog(LOG_ERR, "pcap_setnonblock failed: %s", errbuf);
-		goto err;
-	}
+	if (ctx->pcap == NULL)
+		errx(EXIT_FAILURE, "pcap_create failed: %s", errbuf);
 
-	pcap_set_snaplen(ctx->pcap, 10240);
+	if (pcap_setnonblock(ctx->pcap, 1, errbuf) == -1)
+		errx(EXIT_FAILURE, "pcap_setnonblock failed: %s", errbuf);
 
-	if (pcap_activate(ctx->pcap) == -1) {
-		syslog(LOG_ERR, "pcap_activate failed: %s",
+	if (pcap_set_snaplen(ctx->pcap, snaplen) == -1)
+		errx(EXIT_FAILURE, "pcap_set_snaplen failed: %s",
 		    pcap_geterr(ctx->pcap));
-		goto err;
-	}
-	snprintf(ctx->path, sizeof(ctx->path), "%s/%s%s",
-	    NPFD_LOG_PATH, ctx->ifname, ".pcap");
 
-	if (!npfd_log_reopen(ctx))
-		goto err;
+	if (pcap_activate(ctx->pcap) == -1)
+		errx(EXIT_FAILURE, "pcap_activate failed: %s",
+		    pcap_geterr(ctx->pcap));
 
+	if (filter)
+		npfd_log_setfilter(ctx, filter);
+
+	snprintf(ctx->path, sizeof(ctx->path), NPFD_LOG_PATH "/%s.pcap",
+	    ctx->ifname);
+
+	npfd_log_reopen(ctx, true);
 	return ctx;
-err:
-	npfd_log_destroy(ctx);
-	return NULL;
 }
 
 bool
-npfd_log_reopen(npfd_log_t *ctx)
+npfd_log_reopen(npfd_log_t *ctx, bool die)
 {
 	if (ctx->dumper)
 		pcap_dump_close(ctx->dumper);
@@ -111,6 +120,9 @@ npfd_log_reopen(npfd_log_t *ctx)
 	else
 		ctx->dumper = pcap_dump_open(ctx->pcap, ctx->path);
 	if (ctx->dumper == NULL) {
+		if (die)
+			errx(EXIT_FAILURE, "pcap_dump_open failed for `%s': %s",
+			    ctx->path, pcap_geterr(ctx->pcap));
 		syslog(LOG_ERR, "pcap_dump_open failed for `%s': %s",
 		    ctx->path, pcap_geterr(ctx->pcap));
 		return false;
@@ -135,6 +147,17 @@ npfd_log_getsock(npfd_log_t *ctx)
 }
 
 void
+npfd_log_flush(npfd_log_t *ctx)
+{
+	if (!ctx->dumper)
+		return;
+	if (pcap_dump_flush(ctx->dumper) == -1)
+		syslog(LOG_ERR, "pcap_dump_flush failed for `%s': %m",
+		    ctx->path);
+}
+
+
+void
 npfd_log(npfd_log_t *ctx)
 {
 	pcap_dumper_t *dumper = ctx->dumper;
@@ -152,6 +175,6 @@ npfd_log_stats(npfd_log_t *ctx)
 		syslog(LOG_ERR, "pcap_stats failed: %s", pcap_geterr(pcap));
 		return;
 	}
-	syslog(LOG_NOTICE, "packet statistics: %u received, %u dropped",
-	    ps.ps_recv, ps.ps_drop);
+	syslog(LOG_INFO, "packet statistics: %s: %u received, %u dropped",
+	    ctx->ifname, ps.ps_recv, ps.ps_drop);
 }
