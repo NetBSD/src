@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.4 2016/12/17 03:43:38 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.5 2016/12/30 17:29:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -416,12 +416,6 @@ check_happy(unsigned n)
 #define ATF_TP_ADD_TC_HAVE_FPREGS(a,b)	ATF_TP_ADD_TC(a,b)
 #else
 #define ATF_TP_ADD_TC_HAVE_FPREGS(a,b)
-#endif
-
-#if defined(HAVE_DBREGS)
-#define ATF_TP_ADD_TC_HAVE_DBREGS(a,b)	ATF_TP_ADD_TC(a,b)
-#else
-#define ATF_TP_ADD_TC_HAVE_DBREGS(a,b)
 #endif
 
 #if defined(PT_STEP)
