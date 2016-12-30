@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.16 2016/01/23 16:12:03 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.17 2016/12/30 21:08:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.16 2016/01/23 16:12:03 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.17 2016/12/30 21:08:23 christos Exp $");
 
 #include <stdbool.h>
 #include <sys/param.h>
@@ -113,12 +113,25 @@ static int
 p_bpf(struct file *f)
 {
 	struct bpf_d bpf;
+	struct bpf_if bi;
+	struct ifnet ifn;
+
+	strlcpy(ifn.if_xname, "???", sizeof(ifn.if_xname));
 
 	if (!KVM_READ(f->f_data, &bpf, sizeof(bpf))) {
 		dprintf("can't read bpf at %p for pid %d", f->f_data, Pid);
 		return 0;
 	}
-	(void)printf("* bpf rec=%lu, dr=%lu, cap=%lu, pid=%lu",
+	if (bpf.bd_bif != NULL) {
+		if (!KVM_READ(bpf.bd_bif, &bi, sizeof(bi)))
+			dprintf("can't read bpf interface at %p for pid %d",
+			    bpf.bd_bif, Pid);
+		if (bi.bif_ifp != NULL)
+			if (!KVM_READ(bi.bif_ifp, &ifn, sizeof(ifn)))
+				dprintf("can't read net interfsace"
+				    " at %p for pid %d", bi.bif_ifp, Pid);
+	}
+	(void)printf("* bpf@%s rec=%lu, dr=%lu, cap=%lu, pid=%lu", ifn.if_xname,
 	    bpf.bd_rcount, bpf.bd_dcount, bpf.bd_ccount,
 	    (unsigned long)bpf.bd_pid);
 	if (bpf.bd_promisc)
