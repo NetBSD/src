@@ -3207,8 +3207,8 @@ ctz (unsigned int mask)
 #endif
 }
 
-#ifndef __NetBSD__
-static inline int
+#if !defined (__NetBSD__) || (__NetBSD_Version__ < 600000000) 
+unsigned int
 popcount (unsigned int mask)
 {
 #if GCC_VERSION >= 3004
