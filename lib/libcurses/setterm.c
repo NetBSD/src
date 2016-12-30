@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.54 2016/01/09 19:05:13 jdc Exp $	*/
+/*	$NetBSD: setterm.c,v 1.55 2016/12/30 22:38:38 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.54 2016/01/09 19:05:13 jdc Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.55 2016/12/30 22:38:38 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,8 +99,27 @@ _cursesi_setterm(char *type, SCREEN *screen)
 		}
 	}
 
+	if (screen->filtered) {
+		/* Disable use of clear, cud, cud1, cup, cuu1 and vpa. */
+		screen->term->strs[TICODE_clear] = NULL;
+		screen->term->strs[TICODE_cud] = NULL;
+		screen->term->strs[TICODE_cud1] = NULL;
+		screen->term->strs[TICODE_cup] = NULL;
+		screen->term->strs[TICODE_cuu] = NULL;
+		screen->term->strs[TICODE_cuu1] = NULL;
+		screen->term->strs[TICODE_vpa] = NULL;
+		/* Set the value of the home string to the value of
+		 * the cr string. */
+		screen->term->strs[TICODE_home] = screen->term->strs[TICODE_cr];
+		/* Set lines equal to 1. */
+		screen->LINES = 1;
+	}
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INIT, "setterm: filtered %d", screen->filtered);
+#endif
+
 	/* POSIX 1003.2 requires that the environment override. */
-	if ((p = getenv("LINES")) != NULL)
+	if (!screen->filtered && (p = getenv("LINES")) != NULL)
 		screen->LINES = (int) strtol(p, NULL, 0);
 	if ((p = getenv("COLUMNS")) != NULL)
 		screen->COLS = (int) strtol(p, NULL, 0);

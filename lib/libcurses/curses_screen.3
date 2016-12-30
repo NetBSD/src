@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.15 2012/04/21 12:27:28 roy Exp $
+.\"	$NetBSD: curses_screen.3,v 1.16 2016/12/30 22:38:38 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,10 +30,11 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd April 5, 2012
+.Dd December 30, 2016
 .Dt CURSES_SCREEN 3
 .Os
 .Sh NAME
+.Nm filter ,
 .Nm curses_screen ,
 .Nm newterm ,
 .Nm set_term ,
@@ -48,6 +49,8 @@
 .Lb libcurses
 .Sh SYNOPSIS
 .In curses.h
+.Ft void
+.Fn filter "void"
 .Ft SCREEN *
 .Fn newterm "char *type" "FILE *outfd" "FILE *infd"
 .Ft SCREEN *
@@ -170,6 +173,23 @@ The
 argument must be a valid name or alias in the
 .Xr terminfo 5
 database for this function to succeed.
+.Pp
+The
+.Fn filter
+function changes the way the terminal is initialised.
+A subsequent call to
+.Fn initscr
+or
+.Fn newterm
+performs the following additonal actions:
+.Bl -bullet -compact
+.It
+Disable use of clear, cud, cud1, cup, cuu, cuu1 and vpa.
+.It
+Set the value of the home string to the value of the cr string.
+.It
+Set lines equal to 1.
+.El
 .Sh RETURN VALUES
 Functions returning pointers will return
 .Dv NULL

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.107 2015/06/08 12:38:57 joerg Exp $	*/
+/*	$NetBSD: curses.h,v 1.108 2016/12/30 22:38:38 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -638,6 +638,7 @@ int	 doupdate(void);
 int	 echo(void);
 int	 endwin(void);
 char     erasechar(void);
+void	 filter(void);
 int	 flash(void);
 int	 flushinp(void);
 int	 flushok(WINDOW *, bool);
