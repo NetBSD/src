@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.71 2014/07/05 22:31:32 dholland Exp $
+#	$NetBSD: Makefile,v 1.72 2016/12/30 22:38:38 roy Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -75,7 +75,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_refresh.3 doupdate.3 curses_window.3 dupwin.3 \
 	 curses_tty.3 echo.3 curses_echochar.3 echochar.3 \
 	 curses_screen.3 endwin.3 curses_clear.3 erase.3 \
-	 curses_tty.3 erasechar.3 \
+	 curses_tty.3 erasechar.3 curses_screen.3 filter.3 \
 	 curses_tty.3 flash.3 curses_tty.3 flushinp.3 \
 	 curses_refresh.3 flushok.3 \
 	 curses_termcap.3 fullname.3 curses_attributes.3 getattrs.3  \
