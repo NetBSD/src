@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2016/12/28 01:25:48 christos Exp $
+# $NetBSD: Makefile,v 1.3 2016/12/30 19:55:46 christos Exp $
 #
 # Public Domain
 #
@@ -6,11 +6,12 @@
 NOMAN=
 PROG=		npfd
 
+#DBG=-g
 SRCS=		npfd.c npfd_log.c
 CPPFLAGS+=	-I${.CURDIR}
 
-LDADD+=		-lnpf -lpcap
-DPADD+=		${LIBNPF} ${LIBPCAP}
+LDADD+=		-lnpf -lpcap -lutil
+DPADD+=		${LIBNPF} ${LIBPCAP} ${LIBUTIL}
 
 WARNS=		5
 NOLINT=		# disabled deliberately

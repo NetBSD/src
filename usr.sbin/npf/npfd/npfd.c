@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd.c,v 1.3 2016/12/28 03:02:54 christos Exp $	*/
+/*	$NetBSD: npfd.c,v 1.4 2016/12/30 19:55:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd.c,v 1.3 2016/12/28 03:02:54 christos Exp $");
+__RCSID("$NetBSD: npfd.c,v 1.4 2016/12/30 19:55:46 christos Exp $");
 
 #include <stdio.h>
+#include <string.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -42,6 +43,7 @@ __RCSID("$NetBSD: npfd.c,v 1.3 2016/12/28 03:02:54 christos Exp $");
 #include <errno.h>
 #include <err.h>
 #include <syslog.h>
+#include <util.h>
 
 #include <net/npf.h>
 
@@ -70,33 +72,31 @@ npfd_getctl(void)
 }
 
 static void
-npfd_event_loop(void)
+npfd_event_loop(npfd_log_t *log, int delay)
 {
 	struct pollfd pfd;
-	npfd_log_t *log;
 
-	log = npfd_log_create(0);
-	if (log == NULL)
-		exit(EXIT_FAILURE);
 	pfd.fd = npfd_log_getsock(log);
 	pfd.events = POLLHUP | POLLIN;
 
 	while  (!done) {
 		if (hup) {
 			hup = false;
-			npfd_log_reopen(log);
+			npfd_log_reopen(log, false);
 		}
 		if (stats) {
 			stats = false;
 			npfd_log_stats(log);
+			npfd_log_flush(log);
 		}
-		switch (poll(&pfd, 1, 1000)) {
+		switch (poll(&pfd, 1, delay)) {
 		case -1:
 			if (errno == EINTR)
 				continue;
 			syslog(LOG_ERR, "poll failed: %m");
 			exit(EXIT_FAILURE);
 		case 0:
+			npfd_log_flush(log);
 			continue;
 		default:
 			npfd_log(log);
@@ -115,7 +115,7 @@ sighandler(int sig)
 		break;
 	case SIGTERM:
 	case SIGINT:
-		hup = true;
+		done = true;
 		break;
 	case SIGINFO:
 	case SIGQUIT:
@@ -123,7 +123,36 @@ sighandler(int sig)
 		break;
 	default:
 		syslog(LOG_ERR, "Unhandled signal %d", sig);
+		break;
 	}
+}
+
+static __dead void
+usage(void)
+{
+	fprintf(stderr, "Usage: %s [-D] [-d <delay>] [-i <interface>]"
+	    " [-p <pidfile>] [-s <snaplen>] expression\n", getprogname());
+	exit(EXIT_FAILURE);
+}
+
+static char *
+copyargs(int argc, char **argv)
+{
+	if (argc == 0)
+		return NULL;
+
+	size_t len = 0, p = 0;
+	char *buf = NULL;
+
+	for (int i = 0; i < argc; i++) {
+		size_t l = strlen(argv[i]);
+		if (p + l + 1 >= len)
+			buf = erealloc(buf, len = p + l + 1);
+		memcpy(buf + p, argv[i], l);
+		p += l;
+		buf[p++] = i == argc - 1 ? '\0' : ' ';
+	}
+	return buf;
 }
 
 int
@@ -132,29 +161,58 @@ main(int argc, char **argv)
 	bool daemon_off = false;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "d")) != -1) {
-		switch (ch) {
-		case 'd':
-			daemon_off = true;
-			break;
-		default:
-			fprintf(stderr, "Usage: %s [-d]\n", getprogname());
-			exit(EXIT_FAILURE);
-		}
-	}
+	int delay = 60 * 1000;
+	const char *iface = "npflog0";
+	int snaplen = 116;
+	char *pidname = NULL;
+
 	int fd = npfd_getctl();
 	(void)close(fd);
 
-	if (!daemon_off && daemon(0, 0) == -1) {
-		err(EXIT_FAILURE, "daemon");
+	while ((ch = getopt(argc, argv, "Dd:i:p:s:")) != -1) {
+		switch (ch) {
+		case 'D':
+			daemon_off = true;
+			break;
+		case 'd':
+			delay = atoi(optarg) * 1000;
+			break;
+		case 'i':
+			iface = optarg;
+			break;
+		case 'p':
+			pidname = optarg;
+			break;
+		case 's':
+			snaplen = atoi(optarg);
+			break;
+		default:
+			usage();
+		}
 	}
+
+	argc -= optind;
+	argv += optind;
+
+	char *filter = copyargs(argc, argv);
+
+	npfd_log_t *log = npfd_log_create(iface, filter, snaplen);
+
+	if (!daemon_off) {
+		if (daemon(0, 0) == -1)
+			err(EXIT_FAILURE, "daemon");
+		pidfile(pidname);
+	}
+
 	openlog(argv[0], LOG_PID | LOG_NDELAY | LOG_CONS, LOG_DAEMON);
 	signal(SIGHUP, sighandler);
 	signal(SIGINT, sighandler);
 	signal(SIGTERM, sighandler);
 	signal(SIGINFO, sighandler);
 	signal(SIGQUIT, sighandler);
-	npfd_event_loop();
+
+	npfd_event_loop(log, delay);
+
 	closelog();
 
 	return 0;
