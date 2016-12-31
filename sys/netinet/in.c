@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.193 2016/12/27 10:53:11 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.194 2016/12/31 09:41:05 ryo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.193 2016/12/27 10:53:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.194 2016/12/31 09:41:05 ryo Exp $");
 
 #include "arp.h"
 
@@ -668,10 +668,10 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		break;
 
 	case SIOCDIFADDR:
+		pfil_run_addrhooks(if_pfil, cmd, iatoifa(ia));
 		ia4_release(ia, &psref);
 		in_purgeaddr(&ia->ia_ifa);
 		ia = NULL;
-		run_hook = true;
 		break;
 
 #ifdef MROUTING
