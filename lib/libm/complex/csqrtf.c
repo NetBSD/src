@@ -1,4 +1,4 @@
-/* $NetBSD: csqrtf.c,v 1.2 2016/12/31 20:01:15 maya Exp $ */
+/* $NetBSD: csqrtf.c,v 1.3 2016/12/31 22:54:56 maya Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,12 +55,13 @@ csqrtf(float complex z)
 	}
 
 	if (x == 0.0f) {
-		r = fabsf(y);
-		r = sqrtf(0.5f * r);
-		if (y > 0)
+		if (y > 0) {
+			r = sqrtf(0.5f * y);
 			w = r + r * I;
-		else
+		} else {
+			r = sqrtf(-0.5f * y);
 			w = r - r * I;
+		}
 		return w;
 	}
 
