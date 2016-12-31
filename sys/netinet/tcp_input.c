@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.350 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.351 2016/12/31 22:46:46 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.350 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.351 2016/12/31 22:46:46 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3181,35 +3181,26 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 	}
 
 #ifdef IPSEC
-	if (ipsec_used) {
-		union sockaddr_union dst;
-		/* Extract the destination from the IP header in the mbuf. */
-		memset(&dst, 0, sizeof(union sockaddr_union));
-		if (ip != NULL) {
-			dst.sa.sa_len = sizeof(struct sockaddr_in);
-			dst.sa.sa_family = AF_INET;
-			dst.sin.sin_addr = ip->ip_dst;
-		} else {
-			dst.sa.sa_len = sizeof(struct sockaddr_in6);
-			dst.sa.sa_family = AF_INET6;
-			dst.sin6.sin6_addr = ip6->ip6_dst;
-		}
+	union sockaddr_union dst;
 
-		/*
-		 * Look up an SADB entry which matches the address of the peer.
-		 */
-		return KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI), 0, 0);
+	/* Extract the destination from the IP header in the mbuf. */
+	memset(&dst, 0, sizeof(union sockaddr_union));
+	if (ip != NULL) {
+		dst.sa.sa_len = sizeof(struct sockaddr_in);
+		dst.sa.sa_family = AF_INET;
+		dst.sin.sin_addr = ip->ip_dst;
+	} else {
+		dst.sa.sa_len = sizeof(struct sockaddr_in6);
+		dst.sa.sa_family = AF_INET6;
+		dst.sin6.sin6_addr = ip6->ip6_dst;
 	}
-	return NULL;
+
+	/*
+	 * Look up an SADB entry which matches the address of the peer.
+	 */
+	return KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI), 0, 0);
 #else
-	if (ip)
-		return key_allocsa(AF_INET, (void *)&ip->ip_src,
-		    (void *)&ip->ip_dst, IPPROTO_TCP,
-		    htonl(TCP_SIG_SPI), 0, 0);
-	else
-		return key_allocsa(AF_INET6, (void *)&ip6->ip6_src,
-		    (void *)&ip6->ip6_dst, IPPROTO_TCP,
-		    htonl(TCP_SIG_SPI), 0, 0);
+	return NULL;
 #endif
 }
 
@@ -4564,7 +4555,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	optlen = 4 + (sc->sc_request_r_scale != 15 ? 4 : 0) +
 	    ((sc->sc_flags & SCF_SACK_PERMIT) ? (TCPOLEN_SACK_PERMITTED + 2) : 0) +
 #ifdef TCP_SIGNATURE
-	    ((sc->sc_flags & SCF_SIGNATURE) ? (TCPOLEN_SIGNATURE + 2) : 0) +
+	    ((sc->sc_flags & SCF_SIGNATURE) ? TCPOLEN_SIGLEN : 0) +
 #endif
 	    ((sc->sc_flags & SCF_TIMESTAMP) ? TCPOLEN_TSTAMP_APPA : 0);
 
