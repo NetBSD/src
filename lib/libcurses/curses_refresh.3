@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_refresh.3,v 1.10 2003/04/16 13:35:01 wiz Exp $
+.\"	$NetBSD: curses_refresh.3,v 1.11 2016/12/31 13:50:16 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd March 26, 2003
+.Dd December 31, 2016
 .Dt CURSES_REFRESH 3
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Nm wnoutrefresh ,
 .Nm doupdate ,
 .Nm leaveok ,
+.Nm is_leaveok ,
 .Nm flushok
 .Nd curses terminal update routines
 .Sh LIBRARY
@@ -56,6 +57,8 @@
 .Fn doupdate "void"
 .Ft int
 .Fn leaveok "WINDOW *win" "boolf flag"
+.Ft bool
+.Fn is_leaveok "const WINDOW *win"
 .Ft int
 .Fn flushok "WINDOW *win" "boolf flag"
 .Sh DESCRIPTION
@@ -116,6 +119,9 @@ to
 .Dv FALSE
 ensures that the screen cursor is positioned at the current cursor
 position after a refresh operation has taken place.
+The
+.Fn is_leaveok
+function returns the setting.
 .Pp
 The
 .Fn flushok
@@ -155,3 +161,10 @@ Single Unix Specification.
 .Sh HISTORY
 The Curses package appeared in
 .Bx 4.0 .
+The
+.Fn is_leaveok
+function is a
+.Em ncurses
+extension to the Curses library and was added in
+.Nx 8.0 .
+
