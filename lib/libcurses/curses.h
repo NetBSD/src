@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.110 2016/12/31 17:46:35 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.111 2016/12/31 22:47:01 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -750,6 +750,7 @@ attr_t	 term_attrs(void);
 int	 touchline(WINDOW *, int, int);
 int	 touchoverlap(WINDOW *, WINDOW *);
 int	 touchwin(WINDOW *);
+int	 typeahead(int);
 int	 ungetch(int);
 int	 untouchwin(WINDOW *);
 int	 use_default_colors(void);
