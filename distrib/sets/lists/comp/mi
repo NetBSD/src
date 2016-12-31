@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2085 2016/12/31 13:50:16 roy Exp $
+#	$NetBSD: mi,v 1.2086 2016/12/31 17:46:35 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9493,6 +9493,7 @@
 ./usr/share/man/cat3/unsetenv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/untouchwin.0		comp-c-catman		.cat
 ./usr/share/man/cat3/unvis.0			comp-c-catman		.cat
+./usr/share/man/cat3/use_env.0			comp-c-catman		.cat
 ./usr/share/man/cat3/update_panels.0		comp-c-catman		.cat
 ./usr/share/man/cat3/updlastlogx.0		comp-c-catman		.cat
 ./usr/share/man/cat3/updwtmpx.0			comp-c-catman		.cat
@@ -16761,6 +16762,7 @@
 ./usr/share/man/html3/unsetenv.html		comp-c-htmlman		html
 ./usr/share/man/html3/untouchwin.html		comp-c-htmlman		html
 ./usr/share/man/html3/unvis.html		comp-c-htmlman		html
+./usr/share/man/html3/use_env.html		comp-c-htmlman		html
 ./usr/share/man/html3/update_panels.html	comp-c-htmlman		html
 ./usr/share/man/html3/updlastlogx.html		comp-c-htmlman		html
 ./usr/share/man/html3/updwtmpx.html		comp-c-htmlman		html
@@ -24092,6 +24094,7 @@
 ./usr/share/man/man3/unsetenv.3			comp-c-man		.man
 ./usr/share/man/man3/untouchwin.3		comp-c-man		.man
 ./usr/share/man/man3/unvis.3			comp-c-man		.man
+./usr/share/man/man3/use_env.3			comp-c-man		.man
 ./usr/share/man/man3/update_panels.3		comp-c-man		.man
 ./usr/share/man/man3/updlastlogx.3		comp-c-man		.man
 ./usr/share/man/man3/updwtmpx.3			comp-c-man		.man

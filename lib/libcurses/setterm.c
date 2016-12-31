@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.55 2016/12/30 22:38:38 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.56 2016/12/31 17:46:35 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.55 2016/12/30 22:38:38 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.56 2016/12/31 17:46:35 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,8 +50,16 @@ __RCSID("$NetBSD: setterm.c,v 1.55 2016/12/30 22:38:38 roy Exp $");
 
 static int does_esc_m(const char *cap);
 static int does_ctrl_o(const char *exit_cap, const char *acs_cap);
+static bool __use_env = true;
 
 attr_t	 __mask_op, __mask_me, __mask_ue, __mask_se;
+
+void
+use_env(bool value)
+{
+
+	__use_env = value;
+}
 
 int
 setterm(char *type)
@@ -119,10 +127,12 @@ _cursesi_setterm(char *type, SCREEN *screen)
 #endif
 
 	/* POSIX 1003.2 requires that the environment override. */
-	if (!screen->filtered && (p = getenv("LINES")) != NULL)
-		screen->LINES = (int) strtol(p, NULL, 0);
-	if ((p = getenv("COLUMNS")) != NULL)
-		screen->COLS = (int) strtol(p, NULL, 0);
+	if (__use_env) {
+		if (!screen->filtered && (p = getenv("LINES")) != NULL)
+			screen->LINES = (int) strtol(p, NULL, 0);
+		if ((p = getenv("COLUMNS")) != NULL)
+			screen->COLS = (int) strtol(p, NULL, 0);
+	}
 	if ((p = getenv("ESCDELAY")) != NULL)
 		ESCDELAY = (int) strtol(p, NULL, 0);
 	if ((p = getenv("TABSIZE")) != NULL)
