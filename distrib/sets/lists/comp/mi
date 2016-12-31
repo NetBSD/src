@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2084 2016/12/30 22:38:38 roy Exp $
+#	$NetBSD: mi,v 1.2085 2016/12/31 13:50:16 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6663,6 +6663,7 @@
 ./usr/share/man/cat3/getskeyprompt.0		comp-c-catman		skey,.cat
 ./usr/share/man/cat3/getstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getsubopt.0		comp-c-catman		.cat
+./usr/share/man/cat3/getsyx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gettext.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gettmode.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getttyent.0		comp-c-catman		.cat
@@ -6873,6 +6874,8 @@
 ./usr/share/man/cat3/ipsec_strerror.0		comp-c-catman		.cat
 ./usr/share/man/cat3/iruserok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/iruserok_sa.0		comp-c-catman		.cat
+./usr/share/man/cat3/is_keypad.0		comp-c-catman		.cat
+./usr/share/man/cat3/is_leaveok.0		comp-c-catman		.cat
 ./usr/share/man/cat3/is_linetouched.0		comp-c-catman		.cat
 ./usr/share/man/cat3/is_wintouched.0		comp-c-catman		.cat
 ./usr/share/man/cat3/isalnum.0			comp-c-catman		.cat
@@ -8920,6 +8923,7 @@
 ./usr/share/man/cat3/setscrreg.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setservent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setstate.0			comp-c-catman		.cat
+./usr/share/man/cat3/setsyx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/setterm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/setttyent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setttyentpath.0		comp-c-catman		.cat
@@ -14011,6 +14015,7 @@
 ./usr/share/man/html3/getutmpx.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutxent.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutxid.html		comp-c-htmlman		html
+./usr/share/man/html3/getsyx.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutxline.html		comp-c-htmlman		html
 ./usr/share/man/html3/getw.html			comp-c-htmlman		html
 ./usr/share/man/html3/getwc.html		comp-c-htmlman		html
@@ -14212,6 +14217,8 @@
 ./usr/share/man/html3/ipsec_strerror.html	comp-c-htmlman		html
 ./usr/share/man/html3/iruserok.html		comp-c-htmlman		html
 ./usr/share/man/html3/iruserok_sa.html		comp-c-htmlman		html
+./usr/share/man/html3/is_keypad.html		comp-c-htmlman		html
+./usr/share/man/html3/is_leaveok.html		comp-c-htmlman		html
 ./usr/share/man/html3/is_linetouched.html	comp-c-htmlman		html
 ./usr/share/man/html3/is_wintouched.html	comp-c-htmlman		html
 ./usr/share/man/html3/isalnum.html		comp-c-htmlman		html
@@ -16212,6 +16219,7 @@
 ./usr/share/man/html3/setscrreg.html		comp-c-htmlman		html
 ./usr/share/man/html3/setservent.html		comp-c-htmlman		html
 ./usr/share/man/html3/setstate.html		comp-c-htmlman		html
+./usr/share/man/html3/setsyx.html		comp-c-htmlman		html
 ./usr/share/man/html3/setterm.html		comp-c-htmlman		html
 ./usr/share/man/html3/setttyent.html		comp-c-htmlman		html
 ./usr/share/man/html3/setttyentpath.html	comp-c-htmlman		html
@@ -21258,6 +21266,7 @@
 ./usr/share/man/man3/getskeyprompt.3		comp-c-man		skey,.man
 ./usr/share/man/man3/getstr.3			comp-c-man		.man
 ./usr/share/man/man3/getsubopt.3		comp-c-man		.man
+./usr/share/man/man3/getsyx.3			comp-c-man		.man
 ./usr/share/man/man3/gettext.3			comp-c-man		.man
 ./usr/share/man/man3/gettmode.3			comp-c-man		.man
 ./usr/share/man/man3/getttyent.3		comp-c-man		.man
@@ -21468,6 +21477,8 @@
 ./usr/share/man/man3/ipsec_strerror.3		comp-c-man		.man
 ./usr/share/man/man3/iruserok.3			comp-c-man		.man
 ./usr/share/man/man3/iruserok_sa.3		comp-c-man		.man
+./usr/share/man/man3/is_keypad.3		comp-c-man		.man
+./usr/share/man/man3/is_leaveok.3		comp-c-man		.man
 ./usr/share/man/man3/is_linetouched.3		comp-c-man		.man
 ./usr/share/man/man3/is_wintouched.3		comp-c-man		.man
 ./usr/share/man/man3/isalnum.3			comp-c-man		.man
@@ -23511,6 +23522,7 @@
 ./usr/share/man/man3/setscrreg.3		comp-c-man		.man
 ./usr/share/man/man3/setservent.3		comp-c-man		.man
 ./usr/share/man/man3/setstate.3			comp-c-man		.man
+./usr/share/man/man3/setsyx.3			comp-c-man		.man
 ./usr/share/man/man3/setterm.3			comp-c-man		.man
 ./usr/share/man/man3/setttyent.3		comp-c-man		.man
 ./usr/share/man/man3/setttyentpath.3		comp-c-man		.man

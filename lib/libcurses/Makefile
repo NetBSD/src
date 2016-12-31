@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2016/12/30 22:38:38 roy Exp $
+#	$NetBSD: Makefile,v 1.73 2016/12/31 13:50:16 roy Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -88,7 +88,8 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_cursor.3 getpary.3 curses_cursor.3 getparx.3 \
 	 curses_cursor.3 getparyx.3 curses_fileio.3 getwin.3 \
 	 curses_input.3 getstr.3 \
-	 curses_tty.3 gettmode.3 curses_cursor.3 getyx.3 \
+	 curses_tty.3 gettmode.3 \
+	 curses_cursor.3 getyx.3 curses_cursor.3 getsyx.3 \
 	 curses_color.3 has_colors.3 curses_tty.3 has_ic.3 \
 	 curses_tty.3 halfdelay.3 curses_tty.3 has_il.3 \
 	 curses_line.3 hline.3 curses_tty.3 idcok.3 \
@@ -98,7 +99,9 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_color.3 init_pair.3 curses_screen.3 initscr.3 \
 	 curses_insertch.3 insch.3 curses_insdelln.3 insdelln.3 \
 	 curses_insertln.3 insertln.3 curses_inch.3 instr.3 \
-	 curses_tty.3 intrflush.3 curses_touch.3 is_linetouched.3 \
+	 curses_tty.3 intrflush.3 \
+	 curses_pad.3 is_keypad.3 \
+	 curses_refresh.3 is_leaveok.3 curses_touch.3 is_linetouched.3 \
 	 curses_touch.3 is_wintouched.3 curses_screen.3 isendwin.3 \
 	 curses_keyname.3 keyname.3 \
 	 curses_input.3 keypad.3 curses_tty.3 killchar.3 \
@@ -140,6 +143,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_tty.3 savetty.3 curses_scanw.3 scanw.3 \
 	 curses_scroll.3 scrl.3 curses_scroll.3 scroll.3 \
 	 curses_scroll.3 scrollok.3 curses_scroll.3 setscrreg.3 \
+	 curses_cursor.3 setsyx.3 \
 	 curses_screen.3 set_term.3 curses_screen.3 setterm.3 \
 	 curses_standout.3 standend.3 curses_standout.3 standout.3 \
 	 curses_color.3 start_color.3 curses_pad.3 subpad.3 \

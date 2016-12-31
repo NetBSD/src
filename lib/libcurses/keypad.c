@@ -1,4 +1,4 @@
-/*	$NetBSD: keypad.c,v 1.12 2010/02/03 15:34:40 roy Exp $  */
+/*	$NetBSD: keypad.c,v 1.13 2016/12/31 13:50:16 roy Exp $  */
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keypad.c,v 1.12 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: keypad.c,v 1.13 2016/12/31 13:50:16 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -56,4 +56,15 @@ keypad(WINDOW *win, bool bf)
 		win->flags &= ~__KEYPAD;
 
 	return OK;
+}
+
+/*
+ * is_keypad --
+ *	Return true if window is set for keypad.
+ */
+bool
+is_keypad(const WINDOW *win)
+{
+
+	return win->flags & __KEYPAD ? true : false;
 }

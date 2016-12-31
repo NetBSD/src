@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_cursor.3,v 1.7 2010/02/24 13:02:13 drochner Exp $
+.\"	$NetBSD: curses_cursor.3,v 1.8 2016/12/31 13:50:16 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,13 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd February 23, 2010
+.Dd December 31, 2016
 .Dt CURSES 3
 .Os
 .Sh NAME
 .Nm curses_cursor ,
 .Nm getcury ,
 .Nm getcurx ,
+.Nm getsyx ,
 .Nm getyx ,
 .Nm getbegy ,
 .Nm getbegx ,
@@ -48,6 +49,7 @@
 .Nm getparx ,
 .Nm getparyx ,
 .Nm move ,
+.Nm setsyx ,
 .Nm wmove ,
 .Nm mvcur ,
 .Nm wcursyncup
@@ -60,6 +62,8 @@
 .Fn getcury "WINDOW *win"
 .Ft int
 .Fn getcurx "WINDOW *win"
+.Ft int
+.Fn getsyx "int y" "int x"
 .Ft void
 .Fn getyx "WINDOW *win" "int y" "int x"
 .Ft int
@@ -82,6 +86,8 @@
 .Fn getparyx "WINDOW *win" "int y" "int x"
 .Ft int
 .Fn move "int y" "int x"
+.Ft int
+.Fn setsyx "int y" "int x"
 .Ft int
 .Fn wmove "WINDOW *win" "int y" "int x"
 .Ft int
@@ -106,6 +112,30 @@ and
 .Fa x
 to the current row and column positions of the cursor in the window
 .Fa win .
+.Pp
+The
+.Fn getsyx
+macro sets the values of
+.Fa y
+and
+.Fa x
+of the current window if
+.Fn is_leaveok
+is false, otherwise \-1, \-1.
+The
+.Fn setsyx
+macro sets the row and column positions, respectively, of the cursor in the
+current window to the values of
+.Fa y
+and
+.Fa x.
+If both
+.Fa y
+and
+.Fa x
+are both \-1 then
+.Fn leaveok
+is set.
 .Pp
 The origin row and columns of a window
 .Fa win
@@ -221,3 +251,11 @@ functions are extensions.
 .Sh HISTORY
 The Curses package appeared in
 .Bx 4.0 .
+The
+.Fn getsyx
+and
+.Fn setsyx
+functions are
+.Em ncurses
+extensions to the Curses library and were added in
+.Nx 8.0 .
