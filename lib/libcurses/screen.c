@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.25 2016/12/30 22:38:38 roy Exp $	*/
+/*	$NetBSD: screen.c,v 1.26 2016/12/31 22:47:01 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.25 2016/12/30 22:38:38 roy Exp $");
+__RCSID("$NetBSD: screen.c,v 1.26 2016/12/31 22:47:01 roy Exp $");
 #endif
 #endif					/* not lint */
 
@@ -137,6 +137,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 #endif
 
 	new_screen->infd = infd;
+	new_screen->checkfd = fileno(infd);
 	new_screen->outfd = outfd;
 	new_screen->echoit = new_screen->nl = 1;
 	new_screen->pfast = new_screen->rawmode = new_screen->noqch = 0;
