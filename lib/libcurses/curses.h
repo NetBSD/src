@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.108 2016/12/30 22:38:38 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.109 2016/12/31 13:50:16 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -614,6 +614,24 @@ __END_DECLS
 #define	getmaxyx(w, y, x)	(y) = getmaxy(w), (x) = getmaxx(w)
 #define	getparyx(w, y, x)	(y) = getpary(w), (x) = getparx(w)
 
+#define	getsyx(y, x)						\
+	do {							\
+		if (is_leaveok(curscr))				\
+			(y) = (x) = -1;				\
+		else						\
+			getyx(curscr,(y), (x));			\
+	} while(0 /* CONSTCOND */)
+#define	setsyx(y, x)						\
+	do {							\
+		if ((y) == -1 && (x) == -1)			\
+			leaveok(curscr, TRUE);			\
+		else {						\
+			leaveok(curscr, FALSE);			\
+			wmove(curscr, (y), (x));		\
+		}						\
+	} while(0 /* CONSTCOND */)
+
+
 /* Public function prototypes. */
 __BEGIN_DECLS
 int	 assume_default_colors(short, short);
@@ -922,6 +940,10 @@ int getbkgrnd(cchar_t *);
 int wbkgrnd(WINDOW *, const cchar_t *);
 void wbkgrndset(WINDOW *, const cchar_t *);
 int wgetbkgrnd(WINDOW *, cchar_t *);
+
+/* ncurses window tests */
+bool is_keypad(const WINDOW *);
+bool is_leaveok(const WINDOW *);
 
 /* Private functions that are needed for user programs prototypes. */
 int	 __cputchar(int);
