@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.44 2016/12/12 04:20:31 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.45 2016/12/31 22:47:01 roy Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.44 2016/12/12 04:20:31 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.45 2016/12/31 22:47:01 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -669,4 +669,12 @@ killwchar( wchar_t *ch )
 	*ch = _cursesi_screen->baset.c_cc[VKILL];
 	return OK;
 #endif /* HAVE_WCHAR */
+}
+
+int
+typeahead(int filedes)
+{
+
+	_cursesi_screen->checkfd = filedes;
+	return OK;
 }
