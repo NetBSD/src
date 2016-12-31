@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.140 2016/12/27 07:12:32 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.141 2016/12/31 07:43:21 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7800,4 +7800,14 @@ sys/net/npf/lpm.c				1.3
 
 	Fix kmem_free() in hashmap_remove().
 	[rmind, ticket #1340]
+
+sys/compat/linux/common/linux_sched.c		1.68
+
+	Fix linux affinity syscalls.  PR/50021
+	[rin, ticket #1343]
+
+xsrc/external/mit/xorg-server/dist/include/servermd.h 1.7
+
+	ARM is not always little endian.  PR/50356
+	[rin, ticket #1344]
 
