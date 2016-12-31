@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.231 2016/12/28 07:32:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.232 2016/12/31 15:07:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.231 2016/12/28 07:32:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.232 2016/12/31 15:07:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1236,7 +1236,8 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	int s, error = 0;
 
 	/* Allocate out of lock */
-	enm = kmem_alloc(sizeof(*enm), KM_SLEEP);
+	/* XXX still can be called in softint */
+	enm = kmem_intr_alloc(sizeof(*enm), KM_SLEEP);
 	if (enm == NULL)
 		return ENOBUFS;
 
