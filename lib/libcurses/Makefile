@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.74 2016/12/31 17:46:35 roy Exp $
+#	$NetBSD: Makefile,v 1.75 2016/12/31 22:47:01 roy Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -149,7 +149,8 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_color.3 start_color.3 curses_pad.3 subpad.3 \
 	 curses_window.3 subwin.3 curses_input.3 timeout.3 \
 	 curses_touch.3 touchline.3 curses_touch.3 touchoverlap.3 \
-	 curses_touch.3 touchwin.3 curses_print.3 unctrl.3 \
+	 curses_touch.3 touchwin.3 curses_tty.3 typeahead.3 \
+	 curses_print.3 unctrl.3 \
 	 curses_underscore.3 underend.3 curses_underscore.3 underscore.3 \
 	 curses_input.3 ungetch.3 curses_touch.3 untouchwin.3 \
 	 curses_default_colors.3 use_default_colors.3 \
