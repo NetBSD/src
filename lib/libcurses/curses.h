@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.109 2016/12/31 13:50:16 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.110 2016/12/31 17:46:35 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -753,6 +753,7 @@ int	 touchwin(WINDOW *);
 int	 ungetch(int);
 int	 untouchwin(WINDOW *);
 int	 use_default_colors(void);
+void	 use_env(bool);
 int	 vline(chtype, int);
 int	 vw_printw(WINDOW *, const char *, __va_list) __printflike(2, 0);
 int	 vw_scanw(WINDOW *, const char *, __va_list) __scanflike(2, 0);
