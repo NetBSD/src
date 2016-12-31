@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.26 2015/09/29 14:27:00 christos Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.27 2016/12/31 10:13:15 dholland Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.26 2015/09/29 14:27:00 christos Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.27 2016/12/31 10:13:15 dholland Exp $");
 #endif
 
 #include <stdio.h>
@@ -392,9 +392,17 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 				cmd->value = -1;
 		}
 
-		if (verbose)
-			(void)printf("PARSE:%d %s, %d, '%s'\n", cmd->line, name,
-			       cmd->value, cmd->action);
+		if (verbose) {
+			char valuebuf[16];
+
+			if (cmd->anyvalue)
+				snprintf(valuebuf, sizeof(valuebuf), "%s", "*");
+			else
+				snprintf(valuebuf, sizeof(valuebuf), "%d",
+				    cmd->value);
+			(void)printf("PARSE:%d %s, %s, '%s'\n", cmd->line, name,
+				valuebuf, cmd->action);
+		}
 	}
 	(void)fclose(f);
 	return (cmds);
