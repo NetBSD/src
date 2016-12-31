@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.448 2016/12/18 04:35:26 dholland Exp $
+# $NetBSD: GENERIC,v 1.449 2016/12/31 15:41:39 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.448 $"
+#ident 		"GENERIC-$Revision: 1.449 $"
 
 maxusers	64		# estimated number of users
 
@@ -201,6 +201,7 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+#options	TCP_SIGNATURE	# Enable RFC-2385 TCP md5 signatures
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
