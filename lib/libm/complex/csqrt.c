@@ -1,4 +1,4 @@
-/* $NetBSD: csqrt.c,v 1.1 2007/08/20 16:01:37 drochner Exp $ */
+/* $NetBSD: csqrt.c,v 1.2 2016/12/31 15:33:03 maya Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,23 +45,24 @@ csqrt(double complex z)
 		if (x == 0.0) {
 			w = 0.0 + y * I;
 		} else {
-			r = fabs(x);
-			r = sqrt(r);
 			if (x < 0.0) {
+				r = sqrt(-x);
 				w = 0.0 + r * I;
 			} else {
-				w = r + y * I;
+				r = sqrt(x);
+				w = r;
 			}
 		}
 		return w;
 	}
 	if (x == 0.0) {
-		r = fabs(y);
-		r = sqrt(0.5 * r);
-		if (y > 0)
+		if (y > 0) {
+			r = sqrt(0.5 * y);
 			w = r + r * I;
-		else
+		} else {
+			r = sqrt(-0.5 * y);
 			w = r - r * I;
+		}
 		return w;
 	}
 	/* Rescale to avoid internal overflow or underflow.  */
