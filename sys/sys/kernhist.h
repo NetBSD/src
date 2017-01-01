@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.13 2016/12/26 23:12:33 pgoyette Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.14 2017/01/01 23:58:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -63,6 +63,39 @@ struct kern_history {
 	unsigned int n;			/* number of entries */
 	unsigned int f;			/* next free one */
 	struct kern_history_ent *e;	/* the allocated entries */
+	int s;				/* our sysctl number */
+};
+
+/*
+ * structs for exporting history info via sysctl(3)
+ */
+
+/* info for a single kernhist */
+struct sysctl_history_list_entry {
+	uint32_t	shle_nameoffset;
+	uint32_t	shle_numentries;
+	uint32_t	shle_nextfree;
+	uint32_t	shle_filler;
+};
+
+/* info for a single history event */
+struct sysctl_history_event {
+	struct timespec	she_tspec;
+	uint64_t	she_callnumber;
+	uint64_t	she_values[4];
+	uint32_t	she_cpunum;
+	uint32_t	she_fmtoffset;
+	uint32_t	she_funcoffset;
+	uint32_t	she_filler;
+};
+
+/* list of all events for a single history */
+struct sysctl_history {
+	struct sysctl_history_list_entry
+			sh_listentry;
+	struct sysctl_history_event
+			sh_events[];
+	/* char		sh_strings[]; */	/* follows last sh_events */
 };
 
 LIST_HEAD(kern_history_head, kern_history);
@@ -123,6 +156,7 @@ do { \
 	(NAME).f = 0; \
 	(NAME).e = (struct kern_history_ent *) \
 		kmem_zalloc(sizeof(struct kern_history_ent) * (N), KM_SLEEP); \
+	(NAME).s = 0; \
 	LIST_INSERT_HEAD(&kern_histories, &(NAME), list); \
 } while (/*CONSTCOND*/ 0)
 
@@ -133,6 +167,7 @@ do { \
 	.n = sizeof(BUF) / sizeof(struct kern_history_ent), \
 	.f = 0, \
 	.e = (struct kern_history_ent *) (BUF), \
+	.s = 0, \
 	/* BUF will inititalized to zeroes by being in .bss */ \
 }
 
@@ -146,6 +181,7 @@ do { \
 	(NAME).n = sizeof(BUF) / sizeof(struct kern_history_ent); \
 	(NAME).f = 0; \
 	(NAME).e = (struct kern_history_ent *) (BUF); \
+	(NAME).s = 0; \
 	memset((NAME).e, 0, sizeof(struct kern_history_ent) * (NAME).n); \
 	KERNHIST_LINK_STATIC(NAME); \
 } while (/*CONSTCOND*/ 0)
@@ -231,6 +267,8 @@ kernhist_entry_print(const struct kern_history_ent *e, void (*pr)(const char *, 
 void	kernhist_dump(struct kern_history *, void (*)(const char *, ...) __printflike(1, 2));
 void	kernhist_print(void *, void (*)(const char *, ...) __printflike(1, 2));
 #endif /* DDB */
+
+void sysctl_kernhist_init(void);
 
 #endif /* KERNHIST */
 
