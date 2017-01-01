@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.59 2012/04/21 12:27:28 roy Exp $	*/
+/*	$NetBSD: getch.c,v 1.60 2017/01/01 03:06:06 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.59 2012/04/21 12:27:28 roy Exp $");
+__RCSID("$NetBSD: getch.c,v 1.60 2017/01/01 03:06:06 roy Exp $");
 #endif
 #endif					/* not lint */
 
@@ -216,7 +216,8 @@ static void add_key_sequence(SCREEN *screen, char *sequence, int key_type);
 static key_entry_t *add_new_key(keymap_t *current, char ch, int key_type,
         int symbol);
 static void delete_key_sequence(keymap_t *current, int key_type);
-static void do_keyok(keymap_t *current, int key_type, bool flag, int *retval);
+static void do_keyok(keymap_t *current, int key_type, bool set, bool flag,
+	int *retval);
 static keymap_t *new_keymap(void); /* create a new keymap */
 static key_entry_t *new_key(void); /* create a new key entry */
 static wchar_t		inkey(int to, int delay);
@@ -733,7 +734,7 @@ keyok(int key_type, bool flag)
 {
 	int result = ERR;
 
-	do_keyok(_cursesi_screen->base_keymap, key_type, flag, &result);
+	do_keyok(_cursesi_screen->base_keymap, key_type, true, flag, &result);
 	return result;
 }
 
@@ -742,8 +743,8 @@ keyok(int key_type, bool flag)
  *       Does the actual work for keyok, we need to recurse through the
  * keymaps finding the passed key symbol.
  */
-void
-do_keyok(keymap_t *current, int key_type, bool flag, int *retval)
+static void
+do_keyok(keymap_t *current, int key_type, bool set, bool flag, int *retval)
 {
 	key_entry_t *key;
 	int i;
@@ -759,10 +760,11 @@ do_keyok(keymap_t *current, int key_type, bool flag, int *retval)
 		key = current->key[current->mapping[i]];
 
 		if (key->type == KEYMAP_MULTI)
-			do_keyok(key->value.next, key_type, flag, retval);
+			do_keyok(key->value.next, key_type, set, flag, retval);
 		else if ((key->type == KEYMAP_LEAF)
 			 && (key->value.symbol == key_type)) {
-			key->enable = flag;
+			if (set)
+				key->enable = flag;
 			*retval = OK; /* we found at least one instance, ok */
 		}
 	}
@@ -965,4 +967,13 @@ __unget(wint_t c)
 	_cursesi_screen->unget_list[_cursesi_screen->unget_pos] = c;
 	_cursesi_screen->unget_pos++;
 	return OK;
+}
+
+int
+has_key(int key_type)
+{
+	int result = ERR;
+
+	do_keyok(_cursesi_screen->base_keymap, key_type, false, false, &result);
+	return result;
 }
