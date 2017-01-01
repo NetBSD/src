@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.8 2016/12/26 23:49:53 pgoyette Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.9 2017/01/01 23:58:47 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.8 2016/12/26 23:49:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.9 2017/01/01 23:58:47 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -41,11 +41,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.8 2016/12/26 23:49:53 pgoyette Ex
 #include "opt_usb.h"
 #include "opt_uvmhist.h"
 #include "opt_biohist.h"
+#include "opt_sysctl.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/sysctl.h>
 #include <sys/kernhist.h>
+#include <sys/kmem.h>
 
 #ifdef UVMHIST
 #include <uvm/uvm.h>
@@ -63,6 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.8 2016/12/26 23:49:53 pgoyette Ex
 KERNHIST_DECL(scdebughist);
 #endif
 
+struct addr_xlt {
+	const char *addr;
+	size_t len;
+	uint32_t offset;
+};
+
 /*
  * globals
  */
@@ -70,6 +79,8 @@ KERNHIST_DECL(scdebughist);
 struct kern_history_head kern_histories;
 
 int kernhist_print_enabled = 1;
+
+int sysctl_hist_node;
 
 #ifdef DDB
 
@@ -79,10 +90,11 @@ int kernhist_print_enabled = 1;
 
 void kernhist_dump(struct kern_history *,
     void (*)(const char *, ...) __printflike(1, 2));
-void kernhist_dumpmask(u_int32_t);
+void kernhist_dumpmask(uint32_t);
 static void kernhist_dump_histories(struct kern_history *[],
     void (*)(const char *, ...) __printflike(1, 2));
 
+static int sysctl_kernhist_helper(SYSCTLFN_PROTO);
 
 /*
  * call this from ddb
@@ -176,7 +188,7 @@ restart:
  * expects the system to be quiesced, no locking
  */
 void
-kernhist_dumpmask(u_int32_t bitmask)	/* XXX only support 32 hists */
+kernhist_dumpmask(uint32_t bitmask)	/* XXX only support 32 hists */
 {
 	struct kern_history *hists[MAXHISTS + 1];
 	int i = 0;
@@ -256,3 +268,251 @@ kernhist_print(void *addr, void (*pr)(const char *, ...) __printflike(1,2))
 }
 
 #endif
+
+/*
+ * sysctl interface
+ */
+
+/*
+ * sysctl_hist_new()
+ *
+ *	Scan the list of histories;  for any history that does not already
+ *	have a sysctl node (under kern.hist) we create a new one and record
+ *	it's node number.
+ */
+static void
+sysctl_hist_new(void)
+{
+	int error;
+	struct kern_history *h;
+	const struct sysctlnode *rnode = NULL;
+
+	LIST_FOREACH(h, &kern_histories, list) {
+		if (h->s != 0)
+			continue;
+		error = sysctl_createv(NULL, 0, NULL, &rnode,
+			    CTLFLAG_PERMANENT,
+			    CTLTYPE_STRUCT, h->name,
+			    SYSCTL_DESCR("history data"),
+			    sysctl_kernhist_helper, 0, NULL, 0,
+			    CTL_KERN, sysctl_hist_node, CTL_CREATE, CTL_EOL);
+		if (error == 0)
+			h->s = rnode->sysctl_num;
+	}
+}
+
+/*
+ * sysctl_kerhnist_init()
+ *
+ *	Create the 2nd level "hw.hist" sysctl node
+ */
+void
+sysctl_kernhist_init(void)
+{
+	const struct sysctlnode *rnode = NULL;
+
+	sysctl_createv(NULL, 0, NULL, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "hist",
+			SYSCTL_DESCR("kernel history tables"),
+			sysctl_kernhist_helper, 0, NULL, 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_hist_node = rnode->sysctl_num;
+
+	sysctl_hist_new();
+}
+
+/*
+ * find_string()
+ *
+ *	Search the address-to-offset translation table for matching an
+ *	address and len, and return the index of the entry we found.  If
+ *	not found, returns index 0 which points to the "?" entry.  (We
+ *	start matching at index 1, ignoring any matches of the "?" entry
+ *	itself.)
+ */
+static int
+find_string(struct addr_xlt table[], size_t *count, const char *string,
+	    size_t len)
+{
+	int i;
+
+	for (i = 1; i < *count; i++)
+		if (string == table[i].addr && len == table[i].len)
+			return i;
+
+	return 0;
+}
+
+/*
+ * add_string()
+ *
+ *	If the string and len are unique, add a new address-to-offset
+ *	entry in the translation table and set the offset of the next
+ *	entry.
+ */
+static void
+add_string(struct addr_xlt table[], size_t *count, const char *string,
+	   size_t len)
+{
+
+	if (find_string(table, count, string, len) == 0) {
+		table[*count].addr = string;
+		table[*count].len = len;
+		table[*count + 1].offset = table[*count].offset + len + 1;
+		(*count)++;
+	}
+}
+
+/*
+ * sysctl_kernhist_helper
+ *
+ *	This helper routine is called for all accesses to the kern.hist
+ *	hierarchy.
+ */
+static int
+sysctl_kernhist_helper(SYSCTLFN_ARGS)
+{
+	struct kern_history *h;
+	struct kern_history_ent *in_evt;
+	struct sysctl_history_event *out_evt;
+	struct sysctl_history *buf;
+	struct addr_xlt *xlate_t, *xlt;
+	size_t bufsize, xlate_s;
+	size_t xlate_c;
+	const char *strp;
+	char *next;
+	int i, j;
+	int error;
+
+	sysctl_hist_new();	/* make sure we're up to date */
+
+	if (namelen == 1 && name[0] == CTL_QUERY)
+		return sysctl_query(SYSCTLFN_CALL(rnode));
+
+	/*
+	 * Disallow userland updates, verify that we arrived at a
+	 * valid history rnode
+	 */
+	if (newp)
+		return EPERM;
+	if (namelen != 1 || name[0] != CTL_EOL)
+		return EINVAL;
+
+	/* Find the correct kernhist for this sysctl node */
+	LIST_FOREACH(h, &kern_histories, list) {
+		if (h->s == rnode->sysctl_num)
+			break;
+	}
+	if (h == NULL)
+		return ENOENT;
+
+	/*
+	 * Worst case is two string pointers per history entry, plus
+	 * two for the history name and "?" string; allocate an extra
+	 * entry since we pre-set the "next" entry's offset member.
+	 */
+	xlate_s = sizeof(struct addr_xlt) * h->n * 2 + 3;
+	xlate_t = kmem_alloc(xlate_s, KM_SLEEP);
+	xlate_c = 0;
+
+	/* offset 0 reserved for NULL pointer, ie unused history entry */
+	xlate_t[0].offset = 1;
+
+	/*
+	 * If the history gets updated and an unexpected string is
+	 * found later, we'll point it here.  Otherwise, we'd have to
+	 * repeat this process iteratively, and it could take multiple
+	 * iterations before terminating.
+	 */
+	add_string(xlate_t, &xlate_c, "?", 0);
+
+	/* Copy the history name itself to the export structure */
+	add_string(xlate_t, &xlate_c, h->name, h->namelen);
+
+	/*
+	 * Loop through all used history entries to find the unique
+	 * fn and fmt strings
+	 */
+	for (i = 0, in_evt = h->e; i < h->n; i++, in_evt++) {
+		if (in_evt->fn == NULL)
+			continue;
+		add_string(xlate_t, &xlate_c, in_evt->fn, in_evt->fnlen);
+		add_string(xlate_t, &xlate_c, in_evt->fmt, in_evt->fmtlen);
+	}
+
+	/* Total buffer size includes header, events, and string table */
+	bufsize = sizeof(struct sysctl_history) + 
+	    h->n * sizeof(struct sysctl_history_event) +
+	    xlate_t[xlate_c].offset;
+	buf = kmem_alloc(bufsize, KM_SLEEP);
+
+	/*
+	 * Copy history header info to the export structure
+	 */
+	j = find_string(xlate_t, &xlate_c, h->name, h->namelen);
+	buf->sh_listentry.shle_nameoffset = xlate_t[j].offset;
+	buf->sh_listentry.shle_numentries = h->n;
+	buf->sh_listentry.shle_nextfree = h->f;
+
+	/*
+	 * Loop through the history events again, copying the data to
+	 * the export structure
+	 */
+	for (i = 0, in_evt = h->e, out_evt = buf->sh_events; i < h->n;
+	    i++, in_evt++, out_evt++) {
+		if (in_evt->fn == NULL) {	/* skip unused entries */
+			out_evt->she_funcoffset = 0;
+			out_evt->she_fmtoffset = 0;
+			continue;
+		}
+		TIMEVAL_TO_TIMESPEC(&in_evt->tv, &out_evt->she_tspec);
+		out_evt->she_callnumber = in_evt->call;
+		out_evt->she_cpunum = in_evt->cpunum;
+		out_evt->she_values[0] = in_evt->v[0];
+		out_evt->she_values[1] = in_evt->v[1];
+		out_evt->she_values[2] = in_evt->v[2];
+		out_evt->she_values[3] = in_evt->v[3];
+		j = find_string(xlate_t, &xlate_c, in_evt->fn, in_evt->fnlen);
+		out_evt->she_funcoffset = xlate_t[j].offset;
+		j = find_string(xlate_t, &xlate_c, in_evt->fmt, in_evt->fmtlen);
+		out_evt->she_fmtoffset = xlate_t[j].offset;
+	}
+
+	/*
+	 * Finally, fill the text string area with all the unique
+	 * strings we found earlier.
+	 *
+	 * Skip the initial byte, since we use an offset of 0 to mean
+	 * a NULL pointer (which means an unused history event).
+	 */
+	strp = next = (char *)(&buf->sh_events[h->n]);
+	*next++ = '\0';
+
+	/*
+	 * Then copy each string into the export structure, making
+	 * sure to terminate each string with a '\0' character
+	 */
+	for (i = 0, xlt = xlate_t; i < xlate_c; i++, xlt++) {
+		KASSERTMSG((next - strp) == xlt->offset,
+		    "entry %d at wrong offset %"PRIu32, i, xlt->offset);
+		memcpy(next, xlt->addr, xlt->len);
+		next += xlt->len;
+		*next++ = '\0';	
+	}
+
+	/* Copy data to userland */
+	error = copyout(buf, oldp, min(bufsize, *oldlenp));
+
+	/* If copyout was successful but only partial, report ENOMEM */
+	if (error == 0 && *oldlenp < bufsize)
+		error = ENOMEM;
+
+	*oldlenp = bufsize;	/* inform userland of space requirements */
+
+	/* Free up the stuff we allocated */
+	kmem_free(buf, bufsize);
+	kmem_free(xlate_t, xlate_s);
+
+	return error;
+}
