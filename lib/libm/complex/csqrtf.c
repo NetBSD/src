@@ -1,4 +1,4 @@
-/* $NetBSD: csqrtf.c,v 1.3 2016/12/31 22:54:56 maya Exp $ */
+/* $NetBSD: csqrtf.c,v 1.4 2017/01/01 19:32:14 maya Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,10 @@ csqrtf(float complex z)
 	x = crealf (z);
 	y = cimagf (z);
 
-	/* Input is a real number that isn't on the branch cut */
+	/* 
+	 * input is a real number and imaginary part isn't -0.0.
+	 * negative zero is on the branch cut.
+	 */
 	if ((y == 0.0f) && !signbit(y)) {
 		if (x < 0.0f) {
 			w = 0.0f + sqrtf(-x) * I;
@@ -93,9 +96,9 @@ csqrtf(float complex z)
 		r *= scale;
 	}
 
-	if (signbit(y))
-		w = t - r * I;
-	else
+	if (y > 0)
 		w = t + r * I;
+	else
+		w = t - r * I;
 	return w;
 }
