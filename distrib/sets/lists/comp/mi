@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2087 2016/12/31 22:47:01 roy Exp $
+#	$NetBSD: mi,v 1.2088 2017/01/01 03:06:06 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6740,6 +6740,7 @@
 ./usr/share/man/cat3/has_colors.0		comp-c-catman		.cat
 ./usr/share/man/cat3/has_ic.0			comp-c-catman		.cat
 ./usr/share/man/cat3/has_il.0			comp-c-catman		.cat
+./usr/share/man/cat3/has_key.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hash.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hcreate.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hcreate_r.0		comp-c-catman		.cat
@@ -14085,6 +14086,7 @@
 ./usr/share/man/html3/has_colors.html		comp-c-htmlman		html
 ./usr/share/man/html3/has_ic.html		comp-c-htmlman		html
 ./usr/share/man/html3/has_il.html		comp-c-htmlman		html
+./usr/share/man/html3/has_key.html		comp-c-htmlman		html
 ./usr/share/man/html3/hash.html			comp-c-htmlman		html
 ./usr/share/man/html3/hcreate.html		comp-c-htmlman		html
 ./usr/share/man/html3/hcreate_r.html		comp-c-htmlman		html
@@ -21347,6 +21349,7 @@
 ./usr/share/man/man3/has_colors.3		comp-c-man		.man
 ./usr/share/man/man3/has_ic.3			comp-c-man		.man
 ./usr/share/man/man3/has_il.3			comp-c-man		.man
+./usr/share/man/man3/has_key.3			comp-c-man		.man
 ./usr/share/man/man3/hash.3			comp-c-man		.man
 ./usr/share/man/man3/hcreate.3			comp-c-man		.man
 ./usr/share/man/man3/hcreate_r.3		comp-c-man		.man
