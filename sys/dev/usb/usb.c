@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.156.2.15 2016/12/29 08:36:46 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.156.2.16 2017/01/01 14:56:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.15 2016/12/29 08:36:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.16 2017/01/01 14:56:25 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -343,7 +343,7 @@ usb_doattach(device_t self)
 	usb_add_event(USB_EVENT_CTRLR_ATTACH, ue);
 
 	err = usbd_new_device(self, sc->sc_bus, 0, speed, 0,
-		  &sc->sc_port);
+	    &sc->sc_port);
 	if (!err) {
 		dev = sc->sc_port.up_dev;
 		if (dev->ud_hub == NULL) {
