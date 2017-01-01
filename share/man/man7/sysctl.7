@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.104 2016/11/17 01:22:00 pgoyette Exp $
+.\"	$NetBSD: sysctl.7,v 1.105 2017/01/01 23:59:19 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -547,6 +547,27 @@ otherwise\ 0.
 Returns the number of
 .Xr hardclock 9
 ticks.
+.It Li kern.hist
+This variable contains kernel history data if the kernel was
+configured for any of the options
+.Dv UVHMIST ,
+.Dv USB_DEBUG ,
+.Dv BIOHIST ,
+or
+.Dv SCDEBUG .
+(See
+.Xr options 4
+for more details.)
+The third-level names correspond to each available history table.
+The values of the history tables are in an internal format, and can be
+decoded by the
+.Xr vmstat 1
+utility's
+.Dv -U
+and
+.Dv u
+options;
+the -l option can be used to see which tables are available.
 .It Li kern.hostid ( Dv KERN_HOSTID )
 Get or set the host identifier.
 This is aimed to replace the legacy
