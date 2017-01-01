@@ -1,4 +1,4 @@
-.\"	$NetBSD: fseek.3,v 1.27 2012/01/22 19:13:42 wiz Exp $
+.\"	$NetBSD: fseek.3,v 1.28 2017/01/01 12:39:33 abhinav Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)fseek.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd January 21, 2012
+.Dd January 1, 2017
 .Dt FSEEK 3
 .Os
 .Sh NAME
@@ -127,10 +127,10 @@ except that the error indicator for the stream is also cleared
 (see
 .Xr clearerr 3 ) .
 .Pp
-In this implementations, an
+In this implementations,
 .Dq Fa fpos_t
-object is a complex object that represents both the position and the parse
-state of the stream making these routines are the only way to portably
+is a complex object that represents both the position and the parse
+state of the stream, making these routines as the only way to portably
 reposition a text stream.
 The
 .Ar pos
@@ -144,32 +144,34 @@ The
 .Fn rewind
 function
 returns no value.
+.Pp
 Upon successful completion,
 .Fn fgetpos ,
 .Fn fseek ,
 .Fn fseeko ,
 and
 .Fn fsetpos
-return 0.
-The functions
+return 0,
+whereas the functions
 .Fn ftell
 and
 .Fn ftello
 return the current offset.
-Otherwise,
+On failure,
 .Fn fseek ,
 .Fn fseeko ,
 .Fn ftell ,
 and
 .Fn ftello
-return \-1 while
+return \-1, while
 .Fn fgetpos
 and
 .Fn fsetpos
 return a nonzero value.
-On error all functions the global variable
+.Pp
+On error all functions set the global variable
 .Va errno
-is set to indicate the error.
+to indicate the error.
 Since the
 .Fn rewind
 function does not return an error code, applications need to clear
@@ -217,7 +219,9 @@ for any of the errors specified for the routines
 and
 .Xr malloc 3 .
 .Sh SEE ALSO
-.Xr lseek 2
+.Xr lseek 2 ,
+.Xr clearerr 3 ,
+.Xr ungetc 3
 .Sh STANDARDS
 The
 .Fn fgetpos ,
