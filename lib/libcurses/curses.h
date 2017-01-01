@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.111 2016/12/31 22:47:01 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.112 2017/01/01 03:06:06 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -677,6 +677,7 @@ int	 halfdelay(int);
 bool	 has_colors(void);
 bool	 has_ic(void);
 bool	 has_il(void);
+int	 has_key(int);
 int	 hline(chtype, int);
 int	 idcok(WINDOW *, bool);
 int	 idlok(WINDOW *, bool);
