@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.22 2012/04/21 12:27:28 roy Exp $
+.\"	$NetBSD: curses_input.3,v 1.23 2017/01/01 03:06:06 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd April 5, 2012
+.Dd January 1, 2017
 .Dt CURSES_INPUT 3
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Nm mvwgetch ,
 .Nm define_key ,
 .Nm keyok ,
+.Nm has_key ,
 .Nm getnstr ,
 .Nm wgetnstr ,
 .Nm mvgetnstr ,
@@ -70,6 +71,8 @@
 .Fn mvwgetch "WINDOW *win" "int y" "int x"
 .Ft int
 .Fn keyok "int key_symbol" "bool flag"
+.Ft int
+.Fn has_key "int key_symbol"
 .Ft int
 .Fn define_key "char *sequence" "int key_symbol"
 .Ft int
@@ -155,6 +158,13 @@ on a key symbol then
 will behave as if the character sequence associated with that key symbol
 was not recognised and will return the component characters one at a time to
 the caller.
+.Pp
+The
+.Fn has_key
+function takes a key value and returns
+.Dv TRUE
+if the current terminal recognises a key with that value, otherwise
+.Dv FALSE .
 .Pp
 Custom associations between sequences of characters and a key symbol can
 be made by using the
