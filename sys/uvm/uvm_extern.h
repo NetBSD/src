@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.201 2016/12/24 19:21:29 cherry Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.202 2017/01/02 20:22:20 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -644,12 +644,10 @@ void			uvm_km_free(struct vm_map *, vaddr_t, vsize_t,
 struct vm_map		*uvm_km_suballoc(struct vm_map *, vaddr_t *,
 			    vaddr_t *, vsize_t, int, bool,
 			    struct vm_map *);
-#ifdef _KERNEL
 int			uvm_km_kmem_alloc(vmem_t *, vmem_size_t, vm_flag_t,
 			    vmem_addr_t *);
 void			uvm_km_kmem_free(vmem_t *, vmem_addr_t, vmem_size_t);
 bool			uvm_km_va_starved_p(void);
-#endif
 
 /* uvm_map.c */
 int			uvm_map(struct vm_map *, vaddr_t *, vsize_t,
