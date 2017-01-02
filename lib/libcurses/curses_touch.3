@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_touch.3,v 1.8 2010/02/24 13:02:13 drochner Exp $
+.\"	$NetBSD: curses_touch.3,v 1.9 2017/01/02 10:28:34 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd February 23, 2010
+.Dd January 2, 2017
 .Dt CURSES_TOUCH 3
 .Os
 .Sh NAME
@@ -44,6 +44,7 @@
 .Nm is_wintouched ,
 .Nm redrawwin ,
 .Nm wredrawln ,
+.Nm syncok ,
 .Nm wsyncup ,
 .Nm wsyncdown
 .Nd curses window modification routines
@@ -69,6 +70,8 @@
 .Fn redrawwin "WINDOW *win"
 .Ft int
 .Fn wredrawln "WINDOW *win" "int line" "int n"
+.Ft int
+.Fn syncok "WINDOW *win"
 .Ft void
 .Fn wsyncup "WINDOW *win"
 .Ft void
@@ -163,6 +166,13 @@ lines starting at
 in the given window as corrupted.
 It is equivalent to
 .Fn wtouchln win line n 1 .
+.Pp
+The
+.Fn syncok
+function determines whether all the ancestors of the specified window are
+implicitly touched whenever there is a change in the window.
+The intial state is
+.Dv FALSE .
 .Pp
 The
 .Fn wsyncup
