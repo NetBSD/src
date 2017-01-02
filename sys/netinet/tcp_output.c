@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.188 2017/01/02 01:18:42 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.189 2017/01/02 02:38:54 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.188 2017/01/02 01:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.189 2017/01/02 02:38:54 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1225,19 +1225,15 @@ send:
 		/*
 		 * Initialize TCP-MD5 option (RFC2385)
 		 */
-		if (OPT_FITS(TCPOLEN_SIGNATURE)) {
-			*optp++ = TCPOPT_SIGNATURE;
-			*optp++ = TCPOLEN_SIGNATURE;
-			sigoff = optlen + 2;
-			memset(optp, 0, TCP_SIGLEN);
-			optlen += TCPOLEN_SIGNATURE;
-			optp += TCP_SIGLEN;
-		} else {
-reset:
-			TCP_REASS_UNLOCK(tp);
-			error = ECONNABORTED;
-			goto out;
-		}
+		if (!OPT_FITS(TCPOLEN_SIGNATURE))
+			goto reset;
+		
+		*optp++ = TCPOPT_SIGNATURE;
+		*optp++ = TCPOLEN_SIGNATURE;
+		sigoff = optlen + 2;
+		memset(optp, 0, TCP_SIGLEN);
+		optlen += TCPOLEN_SIGNATURE;
+		optp += TCP_SIGLEN;
 	}
 #endif /* TCP_SIGNATURE */
 
@@ -1282,8 +1278,11 @@ reset:
 
 	/* Terminate and pad TCP options to a 4 byte boundary. */
 	if (optlen % 4) {
-		if (!OPT_FITS(1))
-			goto reset;
+		if (!OPT_FITS(1)) {
+reset:			 TCP_REASS_UNLOCK(tp);
+			error = ECONNABORTED;
+			goto out;
+		}
 		optlen += TCPOLEN_EOL;
 		*optp++ = TCPOPT_EOL;
 	}
