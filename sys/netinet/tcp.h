@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.31 2015/02/14 12:57:53 he Exp $	*/
+/*	$NetBSD: tcp.h,v 1.32 2017/01/02 01:18:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -75,7 +75,11 @@ struct tcphdr {
 } __packed;
 
 #define	TCPOPT_EOL		0
+#define	   TCPOLEN_EOL			1
+#define	TCPOPT_PAD		0
+#define	   TCPOLEN_PAD			1
 #define	TCPOPT_NOP		1
+#define	   TCPOLEN_NOP			1
 #define	TCPOPT_MAXSEG		2
 #define	   TCPOLEN_MAXSEG		4
 #define	TCPOPT_WINDOW		3

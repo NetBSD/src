@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.268 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.269 2017/01/02 01:18:42 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.268 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.269 2017/01/02 01:18:42 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2439,7 +2439,7 @@ tcp_optlen(struct tcpcb *tp)
 
 #ifdef TCP_SIGNATURE
 	if (tp->t_flags & TF_SIGNATURE)
-		optlen += TCPOLEN_SIGNATURE + 2;
+		optlen += TCPOLEN_SIGLEN;
 #endif /* TCP_SIGNATURE */
 
 	return optlen;

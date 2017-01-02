@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.351 2016/12/31 22:46:46 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.352 2017/01/02 01:18:42 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.351 2016/12/31 22:46:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.352 2017/01/02 01:18:42 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4534,6 +4534,10 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	struct tcphdr *th;
 	u_int hlen;
 	struct socket *so;
+#ifdef TCP_SIGNATURE
+	struct secasvar *sav = NULL;
+	u_int8_t *sigp = NULL;
+#endif
 
 	ro = &sc->sc_route;
 	switch (sc->sc_src.sa.sa_family) {
@@ -4551,15 +4555,8 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		return (EAFNOSUPPORT);
 	}
 
-	/* Compute the size of the TCP options. */
-	optlen = 4 + (sc->sc_request_r_scale != 15 ? 4 : 0) +
-	    ((sc->sc_flags & SCF_SACK_PERMIT) ? (TCPOLEN_SACK_PERMITTED + 2) : 0) +
-#ifdef TCP_SIGNATURE
-	    ((sc->sc_flags & SCF_SIGNATURE) ? TCPOLEN_SIGLEN : 0) +
-#endif
-	    ((sc->sc_flags & SCF_TIMESTAMP) ? TCPOLEN_TSTAMP_APPA : 0);
-
-	tlen = hlen + sizeof(struct tcphdr) + optlen;
+	/* worst case scanario, since we don't know the option size yet  */
+	tlen = hlen + sizeof(struct tcphdr) + MAX_TCPOPTLEN;
 
 	/*
 	 * Create the IP+TCP header from scratch.
@@ -4568,8 +4565,9 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		m_freem(m);
 #ifdef DIAGNOSTIC
 	if (max_linkhdr + tlen > MCLBYTES)
-		return (ENOBUFS);
-#endif
+		return ENOBUFS;
+#endif  
+
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m && (max_linkhdr + tlen) > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
@@ -4579,12 +4577,11 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		}
 	}
 	if (m == NULL)
-		return (ENOBUFS);
+		return ENOBUFS;
 	MCLAIM(m, &tcp_tx_mowner);
 
 	/* Fixup the mbuf. */
 	m->m_data += max_linkhdr;
-	m->m_len = m->m_pkthdr.len = tlen;
 	if (sc->sc_tp) {
 		tp = sc->sc_tp;
 		if (tp->t_inpcb)
@@ -4625,50 +4622,102 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		break;
 #endif
 	default:
-		th = NULL;
+		return ENOBUFS;
 	}
 
 	th->th_seq = htonl(sc->sc_iss);
 	th->th_ack = htonl(sc->sc_irs + 1);
-	th->th_off = (sizeof(struct tcphdr) + optlen) >> 2;
 	th->th_flags = TH_SYN|TH_ACK;
 	th->th_win = htons(sc->sc_win);
-	/* th_sum already 0 */
-	/* th_urp already 0 */
+	/* th_x2, th_sum, th_urp already 0 from memset */
 
 	/* Tack on the TCP options. */
 	optp = (u_int8_t *)(th + 1);
+	optlen = 0;
 	*optp++ = TCPOPT_MAXSEG;
-	*optp++ = 4;
+	*optp++ = TCPOLEN_MAXSEG;
 	*optp++ = (sc->sc_ourmaxseg >> 8) & 0xff;
 	*optp++ = sc->sc_ourmaxseg & 0xff;
+	optlen += TCPOLEN_MAXSEG;
 
 	if (sc->sc_request_r_scale != 15) {
 		*((u_int32_t *)optp) = htonl(TCPOPT_NOP << 24 |
 		    TCPOPT_WINDOW << 16 | TCPOLEN_WINDOW << 8 |
 		    sc->sc_request_r_scale);
-		optp += 4;
-	}
-
-	if (sc->sc_flags & SCF_TIMESTAMP) {
-		u_int32_t *lp = (u_int32_t *)(optp);
-		/* Form timestamp option as shown in appendix A of RFC 1323. */
-		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
-		*lp++ = htonl(SYN_CACHE_TIMESTAMP(sc));
-		*lp   = htonl(sc->sc_timestamp);
-		optp += TCPOLEN_TSTAMP_APPA;
+		optp += TCPOLEN_WINDOW + TCPOLEN_NOP;
+		optlen += TCPOLEN_WINDOW + TCPOLEN_NOP;
 	}
 
 	if (sc->sc_flags & SCF_SACK_PERMIT) {
-		u_int8_t *p = optp;
-
 		/* Let the peer know that we will SACK. */
-		p[0] = TCPOPT_SACK_PERMITTED;
-		p[1] = 2;
-		p[2] = TCPOPT_NOP;
-		p[3] = TCPOPT_NOP;
-		optp += 4;
+		*optp++ = TCPOPT_SACK_PERMITTED;
+		*optp++ = TCPOLEN_SACK_PERMITTED;
+		optlen += TCPOLEN_SACK_PERMITTED;
 	}
+
+	if (sc->sc_flags & SCF_TIMESTAMP) {
+                while (!optlen || optlen % 4 != 2) {
+                        optlen += TCPOLEN_NOP;
+                        *optp++ = TCPOPT_NOP;
+                }
+		*optp++ = TCPOPT_TIMESTAMP;
+		*optp++ = TCPOLEN_TIMESTAMP;
+		u_int32_t *lp = (u_int32_t *)(optp);
+		/* Form timestamp option as shown in appendix A of RFC 1323. */
+		*lp++ = htonl(SYN_CACHE_TIMESTAMP(sc));
+		*lp   = htonl(sc->sc_timestamp);
+		optp += TCPOLEN_TIMESTAMP - 2;
+		optlen += TCPOLEN_TIMESTAMP;
+	}
+
+#ifdef TCP_SIGNATURE
+	if (sc->sc_flags & SCF_SIGNATURE) {
+
+		sav = tcp_signature_getsav(m, th);
+
+		if (sav == NULL) {
+			if (m)
+				m_freem(m);
+			return (EPERM);
+		}
+
+		*optp++ = TCPOPT_SIGNATURE;
+		*optp++ = TCPOLEN_SIGNATURE;
+		sigp = optp;
+		memset(optp, 0, TCP_SIGLEN);
+		optp += TCP_SIGLEN;
+		optlen += TCPOLEN_SIGNATURE;
+
+	}
+#endif
+	/* Terminate and pad TCP options to a 4 byte boundary. */
+	if (optlen % 4) {
+		optlen += TCPOLEN_EOL;
+		*optp++ = TCPOPT_EOL;
+	}
+	/*
+	 * According to RFC 793 (STD0007):
+	 *   "The content of the header beyond the End-of-Option option
+	 *    must be header padding (i.e., zero)."
+	 *   and later: "The padding is composed of zeros."
+	 */
+	while (optlen % 4) {
+		optlen += TCPOLEN_PAD;
+		*optp++ = TCPOPT_PAD;
+	}
+
+	/* compute the actual values now that we've added the options */
+	tlen = hlen + sizeof(struct tcphdr) + optlen;
+	m->m_len = m->m_pkthdr.len = tlen;
+	th->th_off = (sizeof(struct tcphdr) + optlen) >> 2;
+
+#ifdef TCP_SIGNATURE
+	if (sav) {
+		(void)tcp_signature(m, th, hlen, sav, sigp);
+		key_sa_recordxfer(sav, m);
+		KEY_FREESAV(&sav);
+	}
+#endif
 
 	/*
 	 * Send ECN SYN-ACK setup packet.
@@ -4719,33 +4768,6 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		TCP_STATINC(TCP_STAT_ECN_ECT);
 	}
 
-#ifdef TCP_SIGNATURE
-	if (sc->sc_flags & SCF_SIGNATURE) {
-		struct secasvar *sav;
-		u_int8_t *sigp;
-
-		sav = tcp_signature_getsav(m, th);
-
-		if (sav == NULL) {
-			if (m)
-				m_freem(m);
-			return (EPERM);
-		}
-
-		*optp++ = TCPOPT_SIGNATURE;
-		*optp++ = TCPOLEN_SIGNATURE;
-		sigp = optp;
-		memset(optp, 0, TCP_SIGLEN);
-		optp += TCP_SIGLEN;
-		*optp++ = TCPOPT_NOP;
-		*optp++ = TCPOPT_EOL;
-
-		(void)tcp_signature(m, th, hlen, sav, sigp);
-
-		key_sa_recordxfer(sav, m);
-		KEY_FREESAV(&sav);
-	}
-#endif
 
 	/* Compute the packet's checksum. */
 	switch (sc->sc_src.sa.sa_family) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.187 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.188 2017/01/02 01:18:42 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.187 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.188 2017/01/02 01:18:42 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -566,8 +566,8 @@ tcp_output(struct tcpcb *tp)
 	struct ip6_hdr *ip6;
 #endif
 	struct tcphdr *th;
-	u_char opt[MAX_TCPOPTLEN];
-#define OPT_FITS(more)	((optlen + (more)) < sizeof(opt))
+	u_char opt[MAX_TCPOPTLEN], *optp;
+#define OPT_FITS(more)	((optlen + (more)) <= sizeof(opt))
 	unsigned optlen, hdrlen, packetlen;
 	unsigned int sack_numblks;
 	int idle, sendalot, txsegsize, rxsegsize;
@@ -1116,6 +1116,7 @@ send:
 	 *	max_linkhdr + sizeof (struct tcpiphdr) + optlen <= MCLBYTES
 	 */
 	optlen = 0;
+	optp = opt;
 	switch (af) {
 #ifdef INET
 	case AF_INET:
@@ -1157,31 +1158,28 @@ send:
 			in6_pcbrtentry_unref(synrt, tp->t_in6pcb);
 #endif
 		if ((tp->t_flags & TF_NOOPT) == 0 && OPT_FITS(4)) {
-			opt[0] = TCPOPT_MAXSEG;
-			opt[1] = 4;
-			opt[2] = (tp->t_ourmss >> 8) & 0xff;
-			opt[3] = tp->t_ourmss & 0xff;
-			optlen = 4;
+			*optp++ = TCPOPT_MAXSEG;
+			*optp++ = TCPOLEN_MAXSEG;
+			*optp++ = (tp->t_ourmss >> 8) & 0xff;
+			*optp++ = tp->t_ourmss & 0xff;
+			optlen += TCPOLEN_MAXSEG;
 
 			if ((tp->t_flags & TF_REQ_SCALE) &&
 			    ((flags & TH_ACK) == 0 ||
 			    (tp->t_flags & TF_RCVD_SCALE)) &&
 			    OPT_FITS(4)) {
-				*((u_int32_t *) (opt + optlen)) = htonl(
+				*((uint32_t *)optp) = htonl(
 					TCPOPT_NOP << 24 |
 					TCPOPT_WINDOW << 16 |
 					TCPOLEN_WINDOW << 8 |
 					tp->request_r_scale);
-				optlen += 4;
+				optp += TCPOLEN_WINDOW + TCPOLEN_NOP;
+				optlen += TCPOLEN_WINDOW + TCPOLEN_NOP;
 			}
-			if (tcp_do_sack && OPT_FITS(4)) {
-				u_int8_t *cp = (u_int8_t *)(opt + optlen);
-
-				cp[0] = TCPOPT_SACK_PERMITTED;
-				cp[1] = 2;
-				cp[2] = TCPOPT_NOP;
-				cp[3] = TCPOPT_NOP;
-				optlen += 4;
+			if (tcp_do_sack && OPT_FITS(2)) {
+				*optp++ = TCPOPT_SACK_PERMITTED;
+				*optp++ = TCPOLEN_SACK_PERMITTED;
+				optlen += TCPOLEN_SACK_PERMITTED;
 			}
 		}
 	}
@@ -1194,35 +1192,71 @@ send:
 	if ((tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
 	     (flags & TH_RST) == 0 &&
 	    ((flags & (TH_SYN|TH_ACK)) == TH_SYN ||
-	     (tp->t_flags & TF_RCVD_TSTMP)) && OPT_FITS(TCPOLEN_TSTAMP_APPA)) {
-		u_int32_t *lp = (u_int32_t *)(opt + optlen);
+	     (tp->t_flags & TF_RCVD_TSTMP))) {
+		int alen = 0;
+		while (!optlen || optlen % 4 != 2) {
+			optlen += TCPOLEN_NOP;
+			*optp++ = TCPOPT_NOP;
+			alen++;
+		}
+		if (OPT_FITS(TCPOLEN_TIMESTAMP)) {
+			*optp++ = TCPOPT_TIMESTAMP;
+			*optp++ = TCPOLEN_TIMESTAMP;
+			uint32_t *lp = (uint32_t *)optp;
+			/* Form timestamp option (appendix A of RFC 1323) */
+			*lp++ = htonl(TCP_TIMESTAMP(tp));
+			*lp   = htonl(tp->ts_recent);
+			optp += TCPOLEN_TIMESTAMP - 2;
+			optlen += TCPOLEN_TIMESTAMP;
 
-		/* Form timestamp option as shown in appendix A of RFC 1323. */
-		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
-		*lp++ = htonl(TCP_TIMESTAMP(tp));
-		*lp   = htonl(tp->ts_recent);
-		optlen += TCPOLEN_TSTAMP_APPA;
-
-		/* Set receive buffer autosizing timestamp. */
-		if (tp->rfbuf_ts == 0 && (so->so_rcv.sb_flags & SB_AUTOSIZE))
-			tp->rfbuf_ts = TCP_TIMESTAMP(tp);
+			/* Set receive buffer autosizing timestamp. */
+			if (tp->rfbuf_ts == 0 &&
+			    (so->so_rcv.sb_flags & SB_AUTOSIZE))
+				tp->rfbuf_ts = TCP_TIMESTAMP(tp);
+		} else {
+			optp -= alen;
+			optlen -= alen;
+		}
 	}
+
+
+#ifdef TCP_SIGNATURE
+	if (tp->t_flags & TF_SIGNATURE) {
+		/*
+		 * Initialize TCP-MD5 option (RFC2385)
+		 */
+		if (OPT_FITS(TCPOLEN_SIGNATURE)) {
+			*optp++ = TCPOPT_SIGNATURE;
+			*optp++ = TCPOLEN_SIGNATURE;
+			sigoff = optlen + 2;
+			memset(optp, 0, TCP_SIGLEN);
+			optlen += TCPOLEN_SIGNATURE;
+			optp += TCP_SIGLEN;
+		} else {
+reset:
+			TCP_REASS_UNLOCK(tp);
+			error = ECONNABORTED;
+			goto out;
+		}
+	}
+#endif /* TCP_SIGNATURE */
 
 	/*
 	 * Tack on the SACK block if it is necessary.
 	 */
 	if (sack_numblks) {
-		int sack_len;
-		u_char *bp = (u_char *)(opt + optlen);
-		u_int32_t *lp = (u_int32_t *)(bp + 4);
-		struct ipqent *tiqe;
-
-		sack_len = sack_numblks * 8 + 2;
+		int alen = 0;
+		int sack_len = sack_numblks * 8;
+		while (!optlen || optlen % 4 != 2) {
+			optlen += TCPOLEN_NOP;
+			*optp++ = TCPOPT_NOP;
+			alen++;
+		}
 		if (OPT_FITS(sack_len + 2)) {
-			bp[0] = TCPOPT_NOP;
-			bp[1] = TCPOPT_NOP;
-			bp[2] = TCPOPT_SACK;
-			bp[3] = sack_len;
+			struct ipqent *tiqe;
+			*optp++ = TCPOPT_SACK;
+			*optp++ = sack_len + 2;
+			uint32_t *lp = (uint32_t *)optp;
 			if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
 				sack_numblks--;
 				*lp++ = htonl(tp->rcv_dsack_block.left);
@@ -1238,35 +1272,35 @@ send:
 				*lp++ = htonl(tiqe->ipqe_seq + tiqe->ipqe_len +
 				    ((tiqe->ipqe_flags & TH_FIN) != 0 ? 1 : 0));
 			}
-			optlen += sack_len + 2;
+			optlen += sack_len;
+			optp += sack_len;
+		} else {
+			optp -= alen;
+			optlen -= alen;
 		}
 	}
-	TCP_REASS_UNLOCK(tp);
 
-#ifdef TCP_SIGNATURE
-	if ((tp->t_flags & TF_SIGNATURE) && OPT_FITS(TCPOLEN_SIGNATURE + 2)) {
-		u_char *bp;
-		/*
-		 * Initialize TCP-MD5 option (RFC2385)
-		 */
-		bp = (u_char *)opt + optlen;
-		*bp++ = TCPOPT_SIGNATURE;
-		*bp++ = TCPOLEN_SIGNATURE;
-		sigoff = optlen + 2;
-		memset(bp, 0, TCP_SIGLEN);
-		bp += TCP_SIGLEN;
-		optlen += TCPOLEN_SIGNATURE;
-		/*
-		 * Terminate options list and maintain 32-bit alignment.
- 		 */
-		*bp++ = TCPOPT_NOP;
-		*bp++ = TCPOPT_EOL;
- 		optlen += 2;
- 	} else if ((tp->t_flags & TF_SIGNATURE) != 0) {
-		error = ECONNABORTED;
-		goto out;
+	/* Terminate and pad TCP options to a 4 byte boundary. */
+	if (optlen % 4) {
+		if (!OPT_FITS(1))
+			goto reset;
+		optlen += TCPOLEN_EOL;
+		*optp++ = TCPOPT_EOL;
 	}
-#endif /* TCP_SIGNATURE */
+	/*
+	 * According to RFC 793 (STD0007):
+	 *   "The content of the header beyond the End-of-Option option
+	 *    must be header padding (i.e., zero)."
+	 *   and later: "The padding is composed of zeros."
+	 */
+	while (optlen % 4) {
+		if (!OPT_FITS(1))
+			goto reset;
+		optlen += TCPOLEN_PAD;
+		*optp++ = TCPOPT_PAD;
+	}
+
+	TCP_REASS_UNLOCK(tp);
 
 	hdrlen += optlen;
 
