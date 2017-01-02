@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.62 2017/01/02 03:12:49 sevan Exp $
+.\" $NetBSD: bus_dma.9,v 1.63 2017/01/02 09:53:04 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -799,7 +799,8 @@ create a new bus_dma_tag_t with a limited bus address space.
 This function should not normally be used, but is useful for devices
 that do not support the full address space of the parent bus.
 Not all ports implement this method; on ports where it is unavailable,
-EOPNOTSUPP is returned.
+.Er EOPNOTSUPP
+is returned.
 The arguments are as follows:
 .Bl -tag -width max_addr -compact
 .It Fa tag
@@ -857,4 +858,4 @@ design was provided by
 .An Matthew Jacob ,
 .An Jonathan Stone ,
 and
-.An Matt Thomas.
+.An Matt Thomas .
