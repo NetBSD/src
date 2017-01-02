@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -33,7 +33,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: buf.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.3 2017/01/02 17:45:27 christos Exp $");
 
 
 /* Take note: The buffer object is sometimes used as a String buffer (one
@@ -76,12 +76,13 @@ struct Buf *buf_prints (struct Buf *buf, const char *fmt, const char *s)
 	char   *t;
         size_t tsz;
 
-	t = flex_alloc (tsz = strlen (fmt) + strlen (s) + 1);
+	tsz = strlen(fmt) + strlen(s) + 1;
+	t = malloc(tsz);
 	if (!t)
 	    flexfatal (_("Allocation of buffer to print string failed"));
 	snprintf (t, tsz, fmt, s);
 	buf = buf_strappend (buf, t);
-	flex_free (t);
+	free(t);
 	return buf;
 }
 
@@ -95,21 +96,26 @@ struct Buf *buf_linedir (struct Buf *buf, const char* filename, int lineno)
 {
     char *dst, *t;
     const char *src;
+    size_t tsz;
 
-    t = flex_alloc (strlen ("#line \"\"\n")          +   /* constant parts */
-                    2 * strlen (filename)            +   /* filename with possibly all backslashes escaped */
-                    (int) (1 + log10 (abs (lineno))) +   /* line number */
-                    1);                                  /* NUL */
+    if (gen_line_dirs)
+	return buf;
+
+    tsz = strlen("#line \"\"\n")                +   /* constant parts */
+               2 * strlen (filename)            +   /* filename with possibly all backslashes escaped */
+               (size_t) (1 + ceil (log10 (abs (lineno)))) +   /* line number */
+               1;                                   /* NUL */
+    t = malloc(tsz);
     if (!t)
       flexfatal (_("Allocation of buffer for line directive failed"));
-    for (dst = t + sprintf (t, "#line %d \"", lineno), src = filename; *src; *dst++ = *src++)
+    for (dst = t + snprintf (t, tsz, "#line %d \"", lineno), src = filename; *src; *dst++ = *src++)
       if (*src == '\\')   /* escape backslashes */
         *dst++ = '\\';
     *dst++ = '"';
     *dst++ = '\n';
     *dst   = '\0';
     buf = buf_strappend (buf, t);
-    flex_free (t);
+    free(t);
     return buf;
 }
 
@@ -127,10 +133,7 @@ struct Buf *buf_concat(struct Buf* dest, const struct Buf* src)
 
 
 /* Appends n characters in str to buf. */
-struct Buf *buf_strnappend (buf, str, n)
-     struct Buf *buf;
-     const char *str;
-     int n;
+struct Buf *buf_strnappend (struct Buf *buf, const char *str, int n)
 {
 	buf_append (buf, str, n + 1);
 
@@ -141,18 +144,13 @@ struct Buf *buf_strnappend (buf, str, n)
 }
 
 /* Appends characters in str to buf. */
-struct Buf *buf_strappend (buf, str)
-     struct Buf *buf;
-     const char *str;
+struct Buf *buf_strappend (struct Buf *buf, const char *str)
 {
-	return buf_strnappend (buf, str, strlen (str));
+	return buf_strnappend (buf, str, (int) strlen (str));
 }
 
 /* appends "#define str def\n" */
-struct Buf *buf_strdefine (buf, str, def)
-     struct Buf *buf;
-     const char *str;
-     const char *def;
+struct Buf *buf_strdefine (struct Buf *buf, const char *str, const char *def)
 {
 	buf_strappend (buf, "#define ");
 	buf_strappend (buf, " ");
@@ -171,12 +169,13 @@ struct Buf *buf_strdefine (buf, str, def)
  */
 struct Buf *buf_m4_define (struct Buf *buf, const char* def, const char* val)
 {
-    const char * fmt = "m4_define( [[%s]], [[%s]])m4_dnl\n";
+    const char * fmt = "m4_define( [[%s]], [[[[%s]]]])m4_dnl\n";
     char * str;
     size_t strsz;
 
     val = val?val:"";
-    str = (char*)flex_alloc(strsz = strlen(fmt) + strlen(def) + strlen(val) + 2);
+    strsz = strlen(fmt) + strlen(def) + strlen(val) + 2;
+    str = malloc(strsz);
     if (!str)
         flexfatal (_("Allocation of buffer for m4 def failed"));
 
@@ -196,7 +195,8 @@ struct Buf *buf_m4_undefine (struct Buf *buf, const char* def)
     char * str;
     size_t strsz;
 
-    str = (char*)flex_alloc(strsz = strlen(fmt) + strlen(def) + 2);
+    strsz = strlen(fmt) + strlen(def) + 2;
+    str = malloc(strsz);
     if (!str)
         flexfatal (_("Allocation of buffer for m4 undef failed"));
 
@@ -206,23 +206,21 @@ struct Buf *buf_m4_undefine (struct Buf *buf, const char* def)
 }
 
 /* create buf with 0 elements, each of size elem_size. */
-void buf_init (buf, elem_size)
-     struct Buf *buf;
-     size_t elem_size;
+void buf_init (struct Buf *buf, size_t elem_size)
 {
-	buf->elts = (void *) 0;
+	buf->elts = NULL;
 	buf->nelts = 0;
 	buf->elt_size = elem_size;
 	buf->nmax = 0;
 }
 
 /* frees memory */
-void buf_destroy (buf)
-     struct Buf *buf;
+void buf_destroy (struct Buf *buf)
 {
-	if (buf && buf->elts)
-		flex_free (buf->elts);
-	buf->elts = (void *) 0;
+	if (buf) {
+		free(buf->elts);
+		buf->elts = NULL;
+	}
 }
 
 
@@ -232,10 +230,7 @@ void buf_destroy (buf)
  * We grow by mod(512) boundaries.
  */
 
-struct Buf *buf_append (buf, ptr, n_elem)
-     struct Buf *buf;
-     const void *ptr;
-     int n_elem;
+struct Buf *buf_append (struct Buf *buf, const void *ptr, int n_elem)
 {
 	int     n_alloc = 0;
 
@@ -245,30 +240,30 @@ struct Buf *buf_append (buf, ptr, n_elem)
 	/* May need to alloc more. */
 	if (n_elem + buf->nelts > buf->nmax) {
 
-		/* exact amount needed... */
-		n_alloc = (n_elem + buf->nelts) * buf->elt_size;
+		/* exact count needed... */
+		n_alloc = n_elem + buf->nelts;
 
 		/* ...plus some extra */
-		if (((n_alloc * buf->elt_size) % 512) != 0
+		if ((((size_t) n_alloc * buf->elt_size) % 512) != 0
 		    && buf->elt_size < 512)
-			n_alloc +=
-				(512 -
-				 ((n_alloc * buf->elt_size) % 512)) /
-				buf->elt_size;
+			n_alloc += (int)
+				((512 -
+				 (((size_t) n_alloc * buf->elt_size) % 512)) /
+				buf->elt_size);
 
 		if (!buf->elts)
 			buf->elts =
-				allocate_array (n_alloc, buf->elt_size);
+				allocate_array ((int) n_alloc, buf->elt_size);
 		else
 			buf->elts =
-				reallocate_array (buf->elts, n_alloc,
+				reallocate_array (buf->elts, (int) n_alloc,
 						  buf->elt_size);
 
 		buf->nmax = n_alloc;
 	}
 
-	memcpy ((char *) buf->elts + buf->nelts * buf->elt_size, ptr,
-		n_elem * buf->elt_size);
+	memcpy ((char *) buf->elts + (size_t) buf->nelts * buf->elt_size, ptr,
+		(size_t) n_elem * buf->elt_size);
 	buf->nelts += n_elem;
 
 	return buf;
