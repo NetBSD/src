@@ -5,4 +5,4 @@
  */
 
 #define CURSES_LIB_MAJOR 7
-#define CURSES_LIB_MINOR 0
+#define CURSES_LIB_MINOR 1
