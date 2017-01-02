@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.31 2017/01/02 16:32:10 manu Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.32 2017/01/02 20:10:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include <compat/linux/arch/arm/linux_signal.h>
 #elif defined(__amd64__)
 #include <compat/linux/arch/amd64/linux_signal.h>
+#else
+typedef void linux_sigset_t;
 #endif
 
 typedef struct {
