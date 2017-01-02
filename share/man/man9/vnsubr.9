@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.43 2015/07/11 15:42:31 wiz Exp $
+.\"     $NetBSD: vnsubr.9,v 1.44 2017/01/02 10:33:28 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -146,9 +146,6 @@ appropriate error code is returned.
 .Pp
 .Fn vn_lock
 must not be called when the vnode's reference count is zero.
-Instead,
-.Xr vget 9
-should be used.
 .It Fn vn_markexec "vp"
 Common code to mark the vnode
 .Fa vp

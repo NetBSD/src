@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.452 2016/12/14 15:48:55 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.453 2017/01/02 10:33:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.452 2016/12/14 15:48:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.453 2017/01/02 10:33:28 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -736,7 +736,7 @@ lazy_sync_vnode(struct vnode *vp)
 	/* We are locking in the wrong direction. */
 	if (mutex_tryenter(vp->v_interlock)) {
 		mutex_exit(&syncer_data_lock);
-		if (vget(vp, LK_NOWAIT, false /* !wait */) == 0) {
+		if (vcache_tryvget(vp) == 0) {
 			if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
 				synced = true;
 				(void) VOP_FSYNC(vp, curlwp->l_cred,
