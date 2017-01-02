@@ -384,10 +384,6 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #define YY_TYPEDEF_YY_SIZE_T
 typedef size_t yy_size_t;
 #endif
-#ifndef YY_TYPEDEF_YY_SSIZE_T
-#define YY_TYPEDEF_YY_SSIZE_T
-typedef ssize_t yy_ssize_t;
-#endif
 
 %if-not-reentrant
 extern yy_size_t yyleng;
@@ -574,7 +570,7 @@ static int yy_did_buffer_switch_on_eof;
 
 void yyrestart ( FILE *input_file M4_YY_PROTO_LAST_ARG );
 void yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer M4_YY_PROTO_LAST_ARG );
-YY_BUFFER_STATE yy_create_buffer ( FILE *file, int size M4_YY_PROTO_LAST_ARG );
+YY_BUFFER_STATE yy_create_buffer ( FILE *file, yy_size_t size M4_YY_PROTO_LAST_ARG );
 void yy_delete_buffer ( YY_BUFFER_STATE b M4_YY_PROTO_LAST_ARG );
 void yy_flush_buffer ( YY_BUFFER_STATE b M4_YY_PROTO_LAST_ARG );
 void yypush_buffer_state ( YY_BUFFER_STATE new_buffer M4_YY_PROTO_LAST_ARG );
@@ -1495,9 +1491,9 @@ void yyFlexLexer::switch_streams( std::istream* new_in, std::ostream* new_out )
 }
 
 #ifdef YY_INTERACTIVE
-int yyFlexLexer::LexerInput( char* buf, int /* max_size */ )
+int yyFlexLexer::LexerInput( char* buf, yy_size_t /* max_size */ )
 #else
-int yyFlexLexer::LexerInput( char* buf, int max_size )
+int yyFlexLexer::LexerInput( char* buf, yy_size_t max_size )
 #endif
 {
 	if ( yyin.eof() || yyin.fail() )
@@ -1592,7 +1588,7 @@ int yyFlexLexer::yy_get_next_buffer()
 
 	else
 		{
-			yy_ssize_t num_to_read =
+			yy_size_t num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1669,7 +1665,7 @@ m4_ifdef( [[M4_YY_USES_REJECT]],
 
 	if ((YY_G(yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
-		int new_size = YY_G(yy_n_chars) + number_to_move + (YY_G(yy_n_chars) >> 1);
+		yy_size_t new_size = YY_G(yy_n_chars) + number_to_move + (YY_G(yy_n_chars) >> 1);
 		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc(
 			(void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf, (yy_size_t) new_size M4_YY_CALL_LAST_ARG );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
@@ -1978,10 +1974,10 @@ static void yy_load_buffer_state  (M4_YY_DEF_ONLY_ARG)
  * @return the allocated buffer state.
  */
 %if-c-only
-    YY_BUFFER_STATE yy_create_buffer  YYFARGS2( FILE *,file, int ,size)
+    YY_BUFFER_STATE yy_create_buffer  YYFARGS2( FILE *,file, yy_size_t ,size)
 %endif
 %if-c++-only
-    YY_BUFFER_STATE yyFlexLexer::yy_create_buffer( std::istream& file, int size )
+    YY_BUFFER_STATE yyFlexLexer::yy_create_buffer( std::istream& file, yy_size_t size )
 %endif
 {
 	YY_BUFFER_STATE b;
@@ -2014,7 +2010,7 @@ static void yy_load_buffer_state  (M4_YY_DEF_ONLY_ARG)
  * M4_YY_DOC_PARAM
  * @return the allocated buffer state.
  */
-	YY_BUFFER_STATE yyFlexLexer::yy_create_buffer( std::istream* file, int size )
+	YY_BUFFER_STATE yyFlexLexer::yy_create_buffer( std::istream* file, yy_size_t size )
 {
 	return yy_create_buffer( *file, size );
 }
@@ -2286,7 +2282,7 @@ YY_BUFFER_STATE yy_scan_buffer  YYFARGS2( char *,base, yy_size_t ,size)
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in yy_scan_buffer()" );
 
-	b->yy_buf_size = (int) (size - 2);	/* "- 2" to take care of EOB's */
+	b->yy_buf_size = (size - 2);	/* "- 2" to take care of EOB's */
 	b->yy_buf_pos = b->yy_ch_buf = base;
 	b->yy_is_our_buffer = 0;
 	b->yy_input_file = NULL;
