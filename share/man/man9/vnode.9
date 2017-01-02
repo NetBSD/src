@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.73 2016/12/14 15:48:54 hannken Exp $
+.\"     $NetBSD: vnode.9,v 1.74 2017/01/02 10:33:28 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 14, 2016
+.Dd January 2, 2017
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -35,7 +35,6 @@
 .Nm vref ,
 .Nm vrele ,
 .Nm vrele_async ,
-.Nm vget ,
 .Nm vput ,
 .Nm vhold ,
 .Nm holdrele ,
@@ -68,8 +67,6 @@
 .Fn vrele "struct vnode *vp"
 .Ft void
 .Fn vrele_async "struct vnode *vp"
-.Ft int
-.Fn vget "struct vnode *vp" "int lockflag" "int wait"
 .Ft void
 .Fn vput "struct vnode *vp"
 .Ft void
@@ -152,12 +149,10 @@ When a file system retrieves a vnode from a cache, the vnode may not
 have any users, and another thread in the system may be simultaneously
 deciding to reclaim it.
 Thus, to retrieve a vnode from a cache, one must use
-.Fn vget ,
+.Fn vcache_get ,
 not
 .Fn vref ,
-to acquire the first reference, and be prepared for
-.Fn vget
-to fail if another thread is reclaiming the vnode.
+to acquire the first reference.
 .Pp
 The vnode has the following structure:
 .Bd -literal
@@ -349,10 +344,8 @@ See
 .Xr vnodeops 9
 for a description of vnode operations.
 .Pp
-When a valid vnode which is cached is used again, the user must call
-.Fn vget
-to increment the reference count.
-When a user wants a new vnode for another file,
+When a user wants a new vnode for another file or wants a valid vnode
+which is cached,
 .Fn vcache_get
 or
 .Fn vcache_new
@@ -540,60 +533,6 @@ are zero, the vnode is cached.
 .It Fn vrele_async "vp"
 Will asychronously release the vnode in different context than the caller,
 sometime after the call.
-.It Fn vget "vp" "lockflags" "wait"
-Reclaim vnode
-.Fa vp
-from the cache and increment its reference count.
-.Pp
-The vnode
-.Fa vp
-may be changing state: another thread may be initializing it from disk,
-or revoking it with
-.Xr revoke 2 ,
-or reclaiming it with
-.Xr VOP_RECLAIM 9 .
-In that case,
-.Fn vget
-will wait until the state has changed, if
-.Fa lockflags
-is
-.Li 0
-and
-.Fa wait
-is
-.Li true ;
-or will return
-.Er EBUSY
-if
-.Fa lockflags
-is
-.Dv LK_NOWAIT
-and
-.Fa wait
-is
-.Li false .
-.Pp
-(The extra argument enables the compiler to detect old code which
-additionally used
-.Fn vget
-to lock the vnode.)
-.Pp
-Returns
-.Bl -tag -offset abcd -width ENOENT -compact
-.It Er EBUSY
-if
-.Fa vp
-was changing state and
-.Fa wait
-is false.
-.It Er ENOENT
-if the system was reclaiming
-.Fa vp
-with
-.Xr VOP_RECLAIM 9 .
-.It Li 0
-on success.
-.El
 .It Fn vput "vp"
 Legacy convenience routine for unlocking and releasing
 .Fa vp .
@@ -603,11 +542,6 @@ Equivalent to:
 .No "vrele(" Ns Fa vp Ns Li ");"
 .Ed
 .Pp
-Note that this is
-.Em not
-an inverse of
-.Fn vget .
-The name appears so for hysterical raisins.
 New code should prefer using
 .Xr VOP_UNLOCK 9
 and
