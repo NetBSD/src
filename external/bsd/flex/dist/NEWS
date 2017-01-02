@@ -3,6 +3,126 @@ changes between releases of flex.
 
 See the file COPYING for copying conditions.
 
+* version 2.6.3 released 2016-12-30
+
+** scanner
+
+*** several bug fixes resolved problems introduced in recent flex
+    versions regarding processing of comments, literals and various
+    quoting scenarios.
+
+*** If the path to m4 was sufficiently long, a buffer overflow could
+    occur. This has been resolved. The fix also removes dependence on
+    the constant PATH_MAX.
+
+** build
+
+*** A new configure option --disable-bootstrap changes the behavior of
+    the build system when building flex. The default
+    "--enable-bootstrap" behavior is to build flex, then to use that
+    flex to build flex again. With --disable-bootstrap, the scanner is
+    simply built by sedding the scanner source. This is friendlier to
+    cross compilation.
+
+*** The compatibility functions in lib/ are no longer built as a
+    library. Instead, they are built as $(LIBOBJ) objects. This is
+    simpler and friendlier to cross compilation.
+
+*** It is now possible to build flex without building the accompanying
+    libfl. This is friendlier to cross compilation. See the
+    --disable-libfl option to configure. Resolves #99.
+
+*** the PIC version of libfl was not correctly built. It is no longer
+    included in the build/installation targets of flex since it was
+    unused.
+
+*** the distributed man page is only rebuilt when the relevant source
+    files change or when the binary doesn't exist. In particular, this
+    is friendlier to cross compilation. Resolves #108
+
+** test
+
+*** the shell scripts in the test suite are more portable across different shell implementations.
+
+* version 2.6.2 released 2016-10-24
+
+** flex internals
+
+*** a segfalt involving yyrestart(NULL) has been fixed
+
+*** flex should now handle quoting when mixed with m4 processing correctly
+
+*** flex handles `[[' and `]]' correctly
+
+*** flex no longer generates non-ANSI code
+
+*** more compilation warnings were squashed in generated scanners
+
+*** prevented a buffer overflow that could occur when input buffers were the exact wrong size
+
+** test suite
+
+*** input filenames on MSWindows are now calculated correctly
+
+*** general code cleanups in a number of tests now make the test suite compile much more cleanly
+
+** build system
+
+*** the xz archive has been replaced with an lzip archive
+
+*** a new option to configure --enable-warnings to encapsulate passing
+    of warning-related flags which is useful in testing flex
+
+*** make indent now works for out of source builds
+
+*** Portability warnings when generating Makefile.in files are now suppressed; they were just noise and the use of GNU extensions in Makefile.{am,in,} was intentional and well known.
+
+** bugs
+
+*** resolved gh#67
+
+** new sv translation from the translation project
+
+* version 2.6.1 released 2016-03-01
+
+** flex resources
+
+*** The flex project is now hosted at github. Consider this a "period of transition". In particular, you should start at https://github.com/westes/flex for the flex codebase, issue tracking and pull requests.
+
+*** New releases of flex are to be found at https://github.com/westes/flex/releases.
+
+** flex internals
+
+*** Flex now uses more modern and more standard names for variable types. There's more work to be done on that front yet, though.
+
+*** A number of compiler warnings have been remedied.
+
+*** Line directives should now  work as expected and be absent when that is expected.
+
+** test suite
+
+*** When running the test suite, c++ files are compiled with the c++ header inside the flex distribution, rather than relying on the build system's flex header , which might not be installed yet or which might be out of date with respect to what flex tests expect.
+
+*** Some portability fixes in the test suite such as opening files for reading in binary mode
+
+** Building flex
+
+*** The file src/scan.c asdistributed  with flex source is now built with the current version of flex. Occasionally this had to be done manually to pick up new flex features. It's now just a part of flex's build system.
+
+*** The pdf version of the manual is no longer distributed with flex, although if you have the texinfo package installed, you can still build it.
+
+*** lots of general build system cleanup
+
+*** the build system tries a bit harder to find libtoolize and texi2dvi.
+
+*** When help2man and texi2dvi are missing, the error messages are now much more helpful.
+
+** bug fixes
+
+*** resolved github issues #53, #54, #55, #61.
+
+*** Resolved sf bugs #128, #129, #155, #160, #184, #187, #195.
+
 * version 2.6.0 released 2015-11-17
 
 ** User Visible Changes

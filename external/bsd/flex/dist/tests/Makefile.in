@@ -134,14 +134,14 @@ am__EXEEXT_1 = alloc_extra$(EXEEXT) array_nr$(EXEEXT) array_r$(EXEEXT) \
 	basic_nr$(EXEEXT) basic_r$(EXEEXT) bison_nr$(EXEEXT) \
 	bison_yylloc$(EXEEXT) bison_yylval$(EXEEXT) c_cxx_nr$(EXEEXT) \
 	c_cxx_r$(EXEEXT) ccl$(EXEEXT) cxx_basic$(EXEEXT) \
-	cxx_multiple_scanners$(EXEEXT) debug_nr$(EXEEXT) \
-	debug_r$(EXEEXT) extended$(EXEEXT) header_nr$(EXEEXT) \
-	header_r$(EXEEXT) mem_nr$(EXEEXT) mem_r$(EXEEXT) \
-	multiple_scanners_nr$(EXEEXT) multiple_scanners_r$(EXEEXT) \
-	noansi_nr$(EXEEXT) noansi_r$(EXEEXT) posix$(EXEEXT) \
+	cxx_multiple_scanners$(EXEEXT) cxx_restart$(EXEEXT) \
+	debug_nr$(EXEEXT) debug_r$(EXEEXT) extended$(EXEEXT) \
+	header_nr$(EXEEXT) header_r$(EXEEXT) mem_nr$(EXEEXT) \
+	mem_r$(EXEEXT) multiple_scanners_nr$(EXEEXT) \
+	multiple_scanners_r$(EXEEXT) posix$(EXEEXT) \
 	posixly_correct$(EXEEXT) prefix_nr$(EXEEXT) prefix_r$(EXEEXT) \
-	quotes$(EXEEXT) string_nr$(EXEEXT) string_r$(EXEEXT) \
-	top$(EXEEXT) yyextra$(EXEEXT)
+	quote_in_comment$(EXEEXT) quotes$(EXEEXT) string_nr$(EXEEXT) \
+	string_r$(EXEEXT) top$(EXEEXT) yyextra$(EXEEXT)
 am__EXEEXT_2 = reject_nr.reject$(EXEEXT) reject_r.reject$(EXEEXT)
 am__EXEEXT_3 = reject_ver.table$(EXEEXT) reject_ser.table$(EXEEXT)
 am__EXEEXT_4 = include_by_buffer.direct$(EXEEXT) \
@@ -267,6 +267,9 @@ am_cxx_multiple_scanners_OBJECTS =  \
 	cxx_multiple_scanners_2.$(OBJEXT)
 cxx_multiple_scanners_OBJECTS = $(am_cxx_multiple_scanners_OBJECTS)
 cxx_multiple_scanners_LDADD = $(LDADD)
+am_cxx_restart_OBJECTS = cxx_restart.$(OBJEXT)
+cxx_restart_OBJECTS = $(am_cxx_restart_OBJECTS)
+cxx_restart_LDADD = $(LDADD)
 am_cxx_yywrap_i3_OBJECTS = cxx_yywrap.$(OBJEXT)
 cxx_yywrap_i3_OBJECTS = $(am_cxx_yywrap_i3_OBJECTS)
 cxx_yywrap_i3_LDADD = $(LDADD)
@@ -325,12 +328,6 @@ am_multiple_scanners_r_OBJECTS = multiple_scanners_r_main.$(OBJEXT) \
 	multiple_scanners_r_2.$(OBJEXT)
 multiple_scanners_r_OBJECTS = $(am_multiple_scanners_r_OBJECTS)
 multiple_scanners_r_LDADD = $(LDADD)
-am_noansi_nr_OBJECTS = noansi_nr.$(OBJEXT)
-noansi_nr_OBJECTS = $(am_noansi_nr_OBJECTS)
-noansi_nr_LDADD = $(LDADD)
-am_noansi_r_OBJECTS = noansi_r.$(OBJEXT)
-noansi_r_OBJECTS = $(am_noansi_r_OBJECTS)
-noansi_r_LDADD = $(LDADD)
 am_posix_OBJECTS = posix.$(OBJEXT)
 posix_OBJECTS = $(am_posix_OBJECTS)
 posix_LDADD = $(LDADD)
@@ -346,6 +343,9 @@ prefix_r_LDADD = $(LDADD)
 am_pthread_pthread_OBJECTS = pthread.$(OBJEXT)
 pthread_pthread_OBJECTS = $(am_pthread_pthread_OBJECTS)
 pthread_pthread_DEPENDENCIES =
+am_quote_in_comment_OBJECTS = quote_in_comment.$(OBJEXT)
+quote_in_comment_OBJECTS = $(am_quote_in_comment_OBJECTS)
+quote_in_comment_LDADD = $(LDADD)
 am_quotes_OBJECTS = quotes.$(OBJEXT)
 quotes_OBJECTS = $(am_quotes_OBJECTS)
 quotes_LDADD = $(LDADD)
@@ -703,24 +703,24 @@ SOURCES = $(alloc_extra_SOURCES) $(array_nr_SOURCES) \
 	$(bison_nr_SOURCES) $(bison_yylloc_SOURCES) \
 	$(bison_yylval_SOURCES) $(c_cxx_nr_SOURCES) $(c_cxx_r_SOURCES) \
 	$(ccl_SOURCES) $(cxx_basic_SOURCES) \
-	$(cxx_multiple_scanners_SOURCES) $(cxx_yywrap_i3_SOURCES) \
-	$(debug_nr_SOURCES) $(debug_r_SOURCES) $(extended_SOURCES) \
-	$(header_nr_SOURCES) $(header_r_SOURCES) \
-	$(include_by_buffer_direct_SOURCES) \
+	$(cxx_multiple_scanners_SOURCES) $(cxx_restart_SOURCES) \
+	$(cxx_yywrap_i3_SOURCES) $(debug_nr_SOURCES) \
+	$(debug_r_SOURCES) $(extended_SOURCES) $(header_nr_SOURCES) \
+	$(header_r_SOURCES) $(include_by_buffer_direct_SOURCES) \
 	$(include_by_push_direct_SOURCES) \
 	$(include_by_reentrant_direct_SOURCES) \
 	$(lineno_nr_one_SOURCES) $(lineno_r_one_SOURCES) \
 	$(lineno_trailing_one_SOURCES) $(mem_nr_SOURCES) \
 	$(mem_r_SOURCES) $(multiple_scanners_nr_SOURCES) \
-	$(multiple_scanners_r_SOURCES) $(noansi_nr_SOURCES) \
-	$(noansi_r_SOURCES) $(posix_SOURCES) \
+	$(multiple_scanners_r_SOURCES) $(posix_SOURCES) \
 	$(posixly_correct_SOURCES) $(prefix_nr_SOURCES) \
 	$(prefix_r_SOURCES) $(pthread_pthread_SOURCES) \
-	$(quotes_SOURCES) $(reject_nr_reject_SOURCES) \
-	$(reject_r_reject_SOURCES) $(reject_ser_table_SOURCES) \
-	$(reject_ver_table_SOURCES) $(rescan_nr_direct_SOURCES) \
-	$(rescan_r_direct_SOURCES) $(string_nr_SOURCES) \
-	$(string_r_SOURCES) $(tableopts_opt_nr_CF_opt_SOURCES) \
+	$(quote_in_comment_SOURCES) $(quotes_SOURCES) \
+	$(reject_nr_reject_SOURCES) $(reject_r_reject_SOURCES) \
+	$(reject_ser_table_SOURCES) $(reject_ver_table_SOURCES) \
+	$(rescan_nr_direct_SOURCES) $(rescan_r_direct_SOURCES) \
+	$(string_nr_SOURCES) $(string_r_SOURCES) \
+	$(tableopts_opt_nr_CF_opt_SOURCES) \
 	$(tableopts_opt_nr_Ca_opt_SOURCES) \
 	$(tableopts_opt_nr_Cae_opt_SOURCES) \
 	$(tableopts_opt_nr_CaeF_opt_SOURCES) \
@@ -792,24 +792,24 @@ DIST_SOURCES = $(alloc_extra_SOURCES) $(array_nr_SOURCES) \
 	$(bison_nr_SOURCES) $(bison_yylloc_SOURCES) \
 	$(bison_yylval_SOURCES) $(c_cxx_nr_SOURCES) $(c_cxx_r_SOURCES) \
 	$(ccl_SOURCES) $(cxx_basic_SOURCES) \
-	$(cxx_multiple_scanners_SOURCES) $(cxx_yywrap_i3_SOURCES) \
-	$(debug_nr_SOURCES) $(debug_r_SOURCES) $(extended_SOURCES) \
-	$(header_nr_SOURCES) $(header_r_SOURCES) \
-	$(include_by_buffer_direct_SOURCES) \
+	$(cxx_multiple_scanners_SOURCES) $(cxx_restart_SOURCES) \
+	$(cxx_yywrap_i3_SOURCES) $(debug_nr_SOURCES) \
+	$(debug_r_SOURCES) $(extended_SOURCES) $(header_nr_SOURCES) \
+	$(header_r_SOURCES) $(include_by_buffer_direct_SOURCES) \
 	$(include_by_push_direct_SOURCES) \
 	$(include_by_reentrant_direct_SOURCES) \
 	$(lineno_nr_one_SOURCES) $(lineno_r_one_SOURCES) \
 	$(lineno_trailing_one_SOURCES) $(mem_nr_SOURCES) \
 	$(mem_r_SOURCES) $(multiple_scanners_nr_SOURCES) \
-	$(multiple_scanners_r_SOURCES) $(noansi_nr_SOURCES) \
-	$(noansi_r_SOURCES) $(posix_SOURCES) \
+	$(multiple_scanners_r_SOURCES) $(posix_SOURCES) \
 	$(posixly_correct_SOURCES) $(prefix_nr_SOURCES) \
 	$(prefix_r_SOURCES) $(pthread_pthread_SOURCES) \
-	$(quotes_SOURCES) $(reject_nr_reject_SOURCES) \
-	$(reject_r_reject_SOURCES) $(reject_ser_table_SOURCES) \
-	$(reject_ver_table_SOURCES) $(rescan_nr_direct_SOURCES) \
-	$(rescan_r_direct_SOURCES) $(string_nr_SOURCES) \
-	$(string_r_SOURCES) $(tableopts_opt_nr_CF_opt_SOURCES) \
+	$(quote_in_comment_SOURCES) $(quotes_SOURCES) \
+	$(reject_nr_reject_SOURCES) $(reject_r_reject_SOURCES) \
+	$(reject_ser_table_SOURCES) $(reject_ver_table_SOURCES) \
+	$(rescan_nr_direct_SOURCES) $(rescan_r_direct_SOURCES) \
+	$(string_nr_SOURCES) $(string_r_SOURCES) \
+	$(tableopts_opt_nr_CF_opt_SOURCES) \
 	$(tableopts_opt_nr_Ca_opt_SOURCES) \
 	$(tableopts_opt_nr_Cae_opt_SOURCES) \
 	$(tableopts_opt_nr_CaeF_opt_SOURCES) \
@@ -1147,14 +1147,14 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/tableopts.am \
 	bison_yylval_parser.c bison_yylval_parser.h \
 	bison_yylval_scanner.c ccl.c cxx_basic.cc \
 	cxx_multiple_scanners_1.cc cxx_multiple_scanners_2.cc \
-	cxx_yywrap.cc debug_nr.c debug_r.c extended.c \
+	cxx_restart.cc cxx_yywrap.cc debug_nr.c debug_r.c extended.c \
 	header_nr_scanner.c header_r_scanner.c \
 	include_by_buffer.direct.c include_by_push.direct.c \
 	include_by_reentrant.direct.c lineno_nr.c lineno_r.c \
 	lineno_trailing.c mem_nr.c mem_r.c multiple_scanners_nr_1.c \
 	multiple_scanners_nr_2.c multiple_scanners_r_1.c \
-	multiple_scanners_r_2.c noansi_nr.c noansi_r.c posix.c \
-	posixly_correct.c prefix_nr.c prefix_r.c pthread.c quotes.c \
+	multiple_scanners_r_2.c posix.c posixly_correct.c prefix_nr.c \
+	prefix_r.c pthread.c quote_in_comment.c quotes.c \
 	rescan_nr.direct.c rescan_r.direct.c string_nr.c string_r.c \
 	top.c yyextra.c
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -1246,8 +1246,10 @@ SET_MAKE = @SET_MAKE@
 SHARED_VERSION_INFO = @SHARED_VERSION_INFO@
 SHELL = @SHELL@
 STRIP = @STRIP@
+TEXI2DVI = @TEXI2DVI@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
+WARNINGFLAGS = @WARNINGFLAGS@
 XGETTEXT = @XGETTEXT@
 XGETTEXT_015 = @XGETTEXT_015@
 XGETTEXT_EXTRA_OPTIONS = @XGETTEXT_EXTRA_OPTIONS@
@@ -1298,6 +1300,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -1306,6 +1309,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+AM_CFLAGS = $(WARNINGFLAGS)
 TESTS = $(check_PROGRAMS) options.cn
 
 # The script testwrapper.sh will run most tests as is. A couple tests
@@ -1317,11 +1321,11 @@ TEST_EXTENSIONS = .reject .table .direct .cn .i3 .pthread .one .opt .ser .ver
 LOG_COMPILER = $(srcdir)/testwrapper.sh
 AM_LOG_FLAGS = -d $(srcdir) -r
 REJECT_LOG_COMPILER = $(srcdir)/testwrapper.sh
-AM_REJECT_LOG_FLAGS = -d $(srcdir) -i reject.txt -r
+AM_REJECT_LOG_FLAGS = -d $(srcdir) -i $(srcdir)/reject.txt -r
 TABLE_LOG_COMPILER = $(srcdir)/testwrapper.sh
 AM_TABLE_LOG_FLAGS = -d $(builddir) -i $(srcdir)/reject.txt -t
-DIRECT_LOG_COMPILER = $(srcdir)/testwrapper.sh
-AM_DIRECT_LOG_FLAGS = -d $(srcdir)
+DIRECT_LOG_COMPILER = $(srcdir)/testwrapper-direct.sh
+AM_DIRECT_LOG_FLAGS = -b $(abs_builddir) -s $(srcdir)
 CN_LOG_COMPILER = $(srcdir)/options.cn
 AM_CN_LOG_FLAGS = $(FLEX)
 I3_LOG_COMPILER = $(srcdir)/testwrapper.sh
@@ -1331,6 +1335,7 @@ AM_PTHREAD_LOG_FLAGS = -i $(srcdir)/pthread_1.txt -i $(srcdir)/pthread_2.txt -i 
 ONE_LOG_COMPILER = $(srcdir)/testwrapper.sh
 AM_ONE_LOG_FLAGS = -1 -d $(srcdir)
 AM_YFLAGS = -d -p test
+AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_srcdir)/src
 simple_tests = \
 	alloc_extra \
 	array_nr \
@@ -1345,6 +1350,7 @@ simple_tests = \
 	ccl \
 	cxx_basic \
 	cxx_multiple_scanners \
+	cxx_restart \
 	debug_nr \
 	debug_r \
 	extended \
@@ -1354,12 +1360,11 @@ simple_tests = \
 	mem_r \
 	multiple_scanners_nr \
 	multiple_scanners_r \
-	noansi_nr \
-	noansi_r \
 	posix \
 	posixly_correct \
 	prefix_nr \
 	prefix_r \
+	quote_in_comment \
 	quotes \
 	string_nr \
 	string_r \
@@ -1392,6 +1397,7 @@ ONE_TESTS = \
 	lineno_r.one \
 	lineno_trailing.one
 
+quote_in_comment_SOURCES = quote_in_comment.l
 alloc_extra_SOURCES = alloc_extra.l
 array_nr_SOURCES = array_nr.l
 array_r_SOURCES = array_r.l
@@ -1404,6 +1410,7 @@ c_cxx_nr_SOURCES = c_cxx_nr.lll
 c_cxx_r_SOURCES = c_cxx_r.lll
 ccl_SOURCES = ccl.l
 cxx_basic_SOURCES = cxx_basic.ll
+cxx_restart_SOURCES = cxx_restart.ll
 cxx_multiple_scanners_SOURCES = cxx_multiple_scanners_main.cc cxx_multiple_scanners_1.ll cxx_multiple_scanners_2.ll
 cxx_yywrap_i3_SOURCES = cxx_yywrap.ll
 debug_nr_SOURCES = debug_nr.l
@@ -1421,8 +1428,6 @@ mem_nr_SOURCES = mem_nr.l
 mem_r_SOURCES = mem_r.l
 multiple_scanners_nr_SOURCES = multiple_scanners_nr_main.c multiple_scanners_nr_1.l multiple_scanners_nr_2.l
 multiple_scanners_r_SOURCES = multiple_scanners_r_main.c multiple_scanners_r_1.l multiple_scanners_r_2.l
-noansi_nr_SOURCES = noansi_nr.l
-noansi_r_SOURCES = noansi_r.l
 posix_SOURCES = posix.l
 posixly_correct_SOURCES = posixly_correct.l
 prefix_nr_SOURCES = prefix_nr.l
@@ -1486,6 +1491,7 @@ CLEANFILES = \
 	cxx_basic.cc \
 	cxx_multiple_scanners_1.cc \
 	cxx_multiple_scanners_2.cc \
+	cxx_restart.cc \
 	cxx_yywrap.cc \
 	debug_nr.c \
 	debug_r.c \
@@ -1510,13 +1516,12 @@ CLEANFILES = \
 	multiple_scanners_r_1.h \
 	multiple_scanners_r_2.c \
 	multiple_scanners_r_2.h \
-	noansi_nr.c \
-	noansi_r.c \
 	posix.c \
 	posixly_correct.c \
 	prefix_nr.c \
 	prefix_r.c \
 	pthread.c \
+	quote_in_comment.c \
 	quotes.c \
 	reject_nr.reject.c \
 	reject_r.reject.c \
@@ -1550,6 +1555,7 @@ EXTRA_DIST = \
 	ccl.txt \
 	cxx_basic.txt \
 	cxx_multiple_scanners.txt \
+	cxx_restart.txt \
 	cxx_yywrap.txt \
 	debug_nr.txt \
 	debug_r.txt \
@@ -1570,8 +1576,6 @@ EXTRA_DIST = \
 	lineno_trailing.one.txt \
 	mem_nr.txt \
 	mem_r.txt \
-	noansi_nr.txt \
-	noansi_r.txt \
 	prefix_nr.txt \
 	prefix_r.txt \
 	pthread_1.txt \
@@ -1582,6 +1586,7 @@ EXTRA_DIST = \
 	reject.txt \
 	rescan_nr.direct.txt \
 	rescan_r.direct.txt \
+	quote_in_comment.txt \
 	quotes.txt \
 	top.txt \
 	yyextra.txt \
@@ -1592,6 +1597,7 @@ dist_noinst_SCRIPTS = \
 
 dist_check_SCRIPTS = \
 	options.cn \
+	testwrapper-direct.sh \
 	testwrapper.sh
 
 pthread_pthread_LDADD = -lpthread
@@ -1733,7 +1739,7 @@ tableopts_vertests := $(foreach opt,$(tableopts), tableopts_ver_nr$(opt) tableop
 tableopts_tests := $(tableopts_opttests) $(tableopts_vertests) $(tableopts_sertests)
 tableopts_c := $(addsuffix .c,$(tableopts_tests))
 OPT_LOG_COMPILER = $(srcdir)/testwrapper.sh
-AM_OPT_LOG_FLAGS = -d $(srcdir) -i tableopts.txt -r
+AM_OPT_LOG_FLAGS = -d $(srcdir) -i $(srcdir)/tableopts.txt -r
 SER_LOG_COMPILER = $(srcdir)/testwrapper.sh
 AM_SER_LOG_FLAGS = -d $(builddir) -i $(srcdir)/tableopts.txt -r -t
 VER_LOG_COMPILER = $(srcdir)/testwrapper.sh
@@ -1752,9 +1758,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/tableopts.am $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu tests/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign tests/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu tests/Makefile
+	  $(AUTOMAKE) --foreign tests/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -1844,6 +1850,10 @@ cxx_multiple_scanners$(EXEEXT): $(cxx_multiple_scanners_OBJECTS) $(cxx_multiple_
 	@rm -f cxx_multiple_scanners$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(cxx_multiple_scanners_OBJECTS) $(cxx_multiple_scanners_LDADD) $(LIBS)
 
+cxx_restart$(EXEEXT): $(cxx_restart_OBJECTS) $(cxx_restart_DEPENDENCIES) $(EXTRA_cxx_restart_DEPENDENCIES) 
+	@rm -f cxx_restart$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(cxx_restart_OBJECTS) $(cxx_restart_LDADD) $(LIBS)
+
 cxx_yywrap.i3$(EXEEXT): $(cxx_yywrap_i3_OBJECTS) $(cxx_yywrap_i3_DEPENDENCIES) $(EXTRA_cxx_yywrap_i3_DEPENDENCIES) 
 	@rm -f cxx_yywrap.i3$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(cxx_yywrap_i3_OBJECTS) $(cxx_yywrap_i3_LDADD) $(LIBS)
@@ -1908,14 +1918,6 @@ multiple_scanners_r$(EXEEXT): $(multiple_scanners_r_OBJECTS) $(multiple_scanners
 	@rm -f multiple_scanners_r$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(multiple_scanners_r_OBJECTS) $(multiple_scanners_r_LDADD) $(LIBS)
 
-noansi_nr$(EXEEXT): $(noansi_nr_OBJECTS) $(noansi_nr_DEPENDENCIES) $(EXTRA_noansi_nr_DEPENDENCIES) 
-	@rm -f noansi_nr$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(noansi_nr_OBJECTS) $(noansi_nr_LDADD) $(LIBS)
-
-noansi_r$(EXEEXT): $(noansi_r_OBJECTS) $(noansi_r_DEPENDENCIES) $(EXTRA_noansi_r_DEPENDENCIES) 
-	@rm -f noansi_r$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(noansi_r_OBJECTS) $(noansi_r_LDADD) $(LIBS)
-
 posix$(EXEEXT): $(posix_OBJECTS) $(posix_DEPENDENCIES) $(EXTRA_posix_DEPENDENCIES) 
 	@rm -f posix$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(posix_OBJECTS) $(posix_LDADD) $(LIBS)
@@ -1935,6 +1937,10 @@ prefix_r$(EXEEXT): $(prefix_r_OBJECTS) $(prefix_r_DEPENDENCIES) $(EXTRA_prefix_r
 pthread.pthread$(EXEEXT): $(pthread_pthread_OBJECTS) $(pthread_pthread_DEPENDENCIES) $(EXTRA_pthread_pthread_DEPENDENCIES) 
 	@rm -f pthread.pthread$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(pthread_pthread_OBJECTS) $(pthread_pthread_LDADD) $(LIBS)
+
+quote_in_comment$(EXEEXT): $(quote_in_comment_OBJECTS) $(quote_in_comment_DEPENDENCIES) $(EXTRA_quote_in_comment_DEPENDENCIES) 
+	@rm -f quote_in_comment$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(quote_in_comment_OBJECTS) $(quote_in_comment_LDADD) $(LIBS)
 
 quotes$(EXEEXT): $(quotes_OBJECTS) $(quotes_DEPENDENCIES) $(EXTRA_quotes_DEPENDENCIES) 
 	@rm -f quotes$(EXEEXT)
@@ -1991,6 +1997,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cxx_multiple_scanners_1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cxx_multiple_scanners_2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cxx_multiple_scanners_main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cxx_restart.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cxx_yywrap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/debug_nr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/debug_r.Po@am__quote@
@@ -2013,13 +2020,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multiple_scanners_r_1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multiple_scanners_r_2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multiple_scanners_r_main.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/noansi_nr.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/noansi_r.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/posix.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/posixly_correct.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prefix_nr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prefix_r.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pthread.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/quote_in_comment.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/quotes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rescan_nr.direct.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rescan_r.direct.Po@am__quote@
@@ -2030,43 +2036,49 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yyextra.Po@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
 .cc.o:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
 
 .cc.obj:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cc.lo:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
@@ -2364,6 +2376,13 @@ cxx_multiple_scanners.log: cxx_multiple_scanners$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+cxx_restart.log: cxx_restart$(EXEEXT)
+	@p='cxx_restart$(EXEEXT)'; \
+	b='cxx_restart'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 debug_nr.log: debug_nr$(EXEEXT)
 	@p='debug_nr$(EXEEXT)'; \
 	b='debug_nr'; \
@@ -2427,20 +2446,6 @@ multiple_scanners_r.log: multiple_scanners_r$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-noansi_nr.log: noansi_nr$(EXEEXT)
-	@p='noansi_nr$(EXEEXT)'; \
-	b='noansi_nr'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-noansi_r.log: noansi_r$(EXEEXT)
-	@p='noansi_r$(EXEEXT)'; \
-	b='noansi_r'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
 posix.log: posix$(EXEEXT)
 	@p='posix$(EXEEXT)'; \
 	b='posix'; \
@@ -2465,6 +2470,13 @@ prefix_nr.log: prefix_nr$(EXEEXT)
 prefix_r.log: prefix_r$(EXEEXT)
 	@p='prefix_r$(EXEEXT)'; \
 	b='prefix_r'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+quote_in_comment.log: quote_in_comment$(EXEEXT)
+	@p='quote_in_comment$(EXEEXT)'; \
+	b='quote_in_comment'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -2739,6 +2751,7 @@ maintainer-clean-generic:
 	-rm -f cxx_basic.cc
 	-rm -f cxx_multiple_scanners_1.cc
 	-rm -f cxx_multiple_scanners_2.cc
+	-rm -f cxx_restart.cc
 	-rm -f cxx_yywrap.cc
 	-rm -f debug_nr.c
 	-rm -f debug_r.c
@@ -2757,13 +2770,12 @@ maintainer-clean-generic:
 	-rm -f multiple_scanners_nr_2.c
 	-rm -f multiple_scanners_r_1.c
 	-rm -f multiple_scanners_r_2.c
-	-rm -f noansi_nr.c
-	-rm -f noansi_r.c
 	-rm -f posix.c
 	-rm -f posixly_correct.c
 	-rm -f prefix_nr.c
 	-rm -f prefix_r.c
 	-rm -f pthread.c
+	-rm -f quote_in_comment.c
 	-rm -f quotes.c
 	-rm -f rescan_nr.direct.c
 	-rm -f rescan_r.direct.c
@@ -2894,12 +2906,6 @@ header_nr_scanner.h: header_nr_scanner.c
 header_r_main.$(OBJEXT): header_r_scanner.h
 header_r_scanner.h: header_r_scanner.c
 
-include_by_buffer.direct$(EXE): include_by_buffer.direct.txt include_by_buffer.direct_2.txt include_by_buffer.direct_3.txt
-
-include_by_push.direct$(EXE): include_by_push.direct.txt include_by_push.direct_2.txt include_by_push.direct_3.txt
-
-include_by_reentrant.direct$(EXE): include_by_reentrant.direct.txt include_by_reentrant.direct_2.txt include_by_reentrant.direct_3.txt
-
 multiple_scanners_nr_main.$(OBJEXT): multiple_scanners_nr_1.h multiple_scanners_nr_2.h
 multiple_scanners_nr_1.h: multiple_scanners_nr_1.c
 multiple_scanners_nr_2.h: multiple_scanners_nr_2.c
@@ -2912,13 +2918,13 @@ posixly_correct.c: posixly_correct.l $(FLEX)
 	POSIXLY_CORRECT=1 $(FLEX) -o $@ $<
 
 reject_nr.reject.c: reject.l4 $(FLEX)
-	$(FLEX) -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -o $@ $<
 
 reject_nr.reject$(EXEEXT): reject_nr.reject.$(OBJEXT)
 	$(LINK) $^
 
 reject_r.reject.c: reject.l4 $(FLEX)
-	$(FLEX) --reentrant -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape --reentrant -o $@ $<
 
 reject_r.reject.$(OBJEXT): reject_r.reject.c
 	$(COMPILE) -DTEST_IS_REENTRANT -c -o $@ $<
@@ -2927,7 +2933,7 @@ reject_r.reject$(EXEEXT): reject_r.reject.$(OBJEXT)
 	$(LINK) $^
 
 reject_ver.table.c: reject.l4 $(FLEX)
-	$(FLEX) -o $@ --tables-verify --tables-file=$(basename $@).tables $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -o $@ --tables-verify --tables-file=$(basename $@).tables $<
 
 reject_ver.table.$(OBJEXT): reject_ver.table.c
 	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
@@ -2936,7 +2942,7 @@ reject_ver.table$(EXEEXT): reject_ver.table.$(OBJEXT)
 	$(LINK) $^
 
 reject_ser.table.c: reject.l4 $(FLEX)
-	$(FLEX) -o $@ --tables-file=$(basename $@).tables $<
+	$(FLEX) -o $@ --unsafe-no-m4-sect3-escape --tables-file=$(basename $@).tables $<
 
 reject_ser.table.$(OBJEXT): reject_ser.table.c
 	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
@@ -3155,31 +3161,31 @@ tableopts_ver_r-Caem.ver$(EXEEXT): tableopts_ver_r-Caem.$(OBJEXT)
 	$(LINK) -o $@ $<
 
 tableopts_opt_nr%.c: tableopts.l4 $(FLEX)
-	$(FLEX) -P $(subst -,_,$(basename $(*F))) $* -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) $* -o $@ $<
 
 tableopts_opt_nr%.$(OBJEXT): tableopts_opt_nr%.c 
 	$(COMPILE) -c -o $@ $<
 
 tableopts_opt_r%.c: tableopts.l4 $(FLEX)
-	$(FLEX) -P $(subst -,_,$(basename $(*F))) --reentrant $*  -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) --reentrant $*  -o $@ $<
 
 tableopts_opt_r%.$(OBJEXT):  tableopts_opt_r%.c 
 	$(COMPILE) -DTEST_IS_REENTRANT -c -o $@ $<
 
 tableopts_ser_nr%.c: tableopts.l4 $(FLEX)
-	$(FLEX) -P $(subst -,_,$(basename $(*F))) --tables-file="tableopts_ser_nr$*.ser.tables"  $* -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) --tables-file="tableopts_ser_nr$*.ser.tables"  $* -o $@ $<
 
 tableopts_ser_nr%.$(OBJEXT): tableopts_ser_nr%.c 
 	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
 
 tableopts_ser_r%.c: tableopts.l4 $(FLEX)
-	$(FLEX) -P $(subst -,_,$(basename $(*F))) -R --tables-file="tableopts_ser_r$*.ser.tables" $*  -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) -R --tables-file="tableopts_ser_r$*.ser.tables" $*  -o $@ $<
 
 tableopts_ser_r%.$(OBJEXT):  tableopts_ser_r%.c
 	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -DTEST_IS_REENTRANT -c -o $@ $<
 
 tableopts_ver_nr%.c: tableopts.l4 $(FLEX)
-	$(FLEX) -P $(subst -,_,$(basename $(*F))) --tables-file="tableopts_ver_nr$*.ver.tables" --tables-verify $* -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) --tables-file="tableopts_ver_nr$*.ver.tables" --tables-verify $* -o $@ $<
 
 tableopts_ver_nr%.$(OBJEXT): tableopts_ver_nr%.c 
 	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
@@ -3188,7 +3194,7 @@ tableopts_ver_nr%.ver$(EXEEXT): tableopts_ver_nr%.$(OBJEXT)
 	$(LINK) -o $@ $^
 
 tableopts_ver_r%.c: tableopts.l4 $(FLEX)
-	$(FLEX) -P $(subst -,_,$(basename $(*F))) -R --tables-file="tableopts_ver_r$*.ver.tables" --tables-verify $*  -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) -R --tables-file="tableopts_ver_r$*.ver.tables" --tables-verify $*  -o $@ $<
 
 tableopts_ver_r%.$(OBJEXT):  tableopts_ver_r%.c  
 	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -DTEST_IS_REENTRANT -c -o $@ $<

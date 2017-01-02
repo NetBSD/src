@@ -22,41 +22,30 @@
  */
 
 %{
-/* The scanner expects to link to bison yylval . */
-#include <stdio.h>
-#include <stdlib.h>
-#include "bison_nr_parser.h"
+
 #include "config.h"
-static char* STRDUP(char* s1);
-#define YY_EXTRA_TYPE int
+
 %}
 
 %option 8bit prefix="test"
-%option bison-locations yylineno
-%option prefix="test" header="bison_nr_scanner.h" yylineno
-%option nomain nounput noyy_top_state noyywrap nodefault noinput warn
-
+%option warn c++
+%option nounput nomain noinput noyywrap 
 
 %%
 
-^[[:digit:]]+  { 
-        yylval->lineno = yylineno;
-        yylloc->first_line = (int)strtol(yytext,NULL,10);
-        return LINENO;
-    }
-":"  { return COLON; }
-" "  { return SPACE; }
-"="  { return EQUAL; }
-[[:alnum:]_]+ {  yylval->str = STRDUP(yytext); return IDENT;}
+.              { }
 
-\r|\n { }
-.     { yyterminate();}
 %%
 
+int main(void);
 
-static char* STRDUP(char* s1)
+int
+main (void)
 {
-    char* s2 = malloc(strlen(s1)+1);
-    sprintf(s2,"%s",s1);
-    return s2;
+    yyFlexLexer f;
+    f.switch_streams(&std::cin, &std::cout);
+    f.yylex();
+    f.yyrestart(NULL);
+    std::cout << "TEST RETURNING OK." << std::endl;
+    return 0;
 }

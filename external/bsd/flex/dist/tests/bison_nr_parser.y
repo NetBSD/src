@@ -38,11 +38,10 @@
 /* #define YYLEX_PARAM   scanner */
 
 int yyerror(const char* msg);
-extern int testget_lineno(void);
 
 
 /* A dummy function. A check against seg-faults in yylval->str. */
-int process_text(char* s) {
+static int process_text(char* s) {
     int total =0;
     while(*s) {
         total += (int) *s;
@@ -54,7 +53,7 @@ int process_text(char* s) {
 
 %}
 
-%pure_parser
+%pure-parser
 
 %union  {
     int  lineno;
