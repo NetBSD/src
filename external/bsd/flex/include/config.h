@@ -155,7 +155,9 @@
 #undef LT_OBJDIR
 
 /* Define to the m4 executable name. */
-#define M4 "/usr/bin/gm4"
+#ifndef M4
+#define M4 "/usr/bin/m4"
+#endif
 
 /* Name of package */
 #define PACKAGE "flex"
