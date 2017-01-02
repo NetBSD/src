@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2088 2017/01/01 03:06:06 roy Exp $
+#	$NetBSD: mi,v 1.2089 2017/01/02 10:28:35 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6807,6 +6807,7 @@
 ./usr/share/man/cat3/ilogbl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/imaxabs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/imaxdiv.0			comp-c-catman		.cat
+./usr/share/man/cat3/immedok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inchnstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inchstr.0			comp-c-catman		.cat
@@ -9322,6 +9323,7 @@
 ./usr/share/man/cat3/swapon.0			comp-c-catman		.cat
 ./usr/share/man/cat3/swprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/swscanf.0			comp-c-catman		.cat
+./usr/share/man/cat3/synckok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sys_errlist.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sys_nerr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sys_siglist.0		comp-c-catman		.cat
@@ -14153,6 +14155,7 @@
 ./usr/share/man/html3/ilogbl.html		comp-c-htmlman		html
 ./usr/share/man/html3/imaxabs.html		comp-c-htmlman		html
 ./usr/share/man/html3/imaxdiv.html		comp-c-htmlman		html
+./usr/share/man/html3/immedok.html		comp-c-htmlman		html
 ./usr/share/man/html3/inch.html			comp-c-htmlman		html
 ./usr/share/man/html3/inchnstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/inchstr.html		comp-c-htmlman		html
@@ -16607,6 +16610,7 @@
 ./usr/share/man/html3/swapon.html		comp-c-htmlman		html
 ./usr/share/man/html3/swprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/swscanf.html		comp-c-htmlman		html
+./usr/share/man/html3/syncok.html		comp-c-htmlman		html
 ./usr/share/man/html3/sys_errlist.html		comp-c-htmlman		html
 ./usr/share/man/html3/sys_nerr.html		comp-c-htmlman		html
 ./usr/share/man/html3/sys_siglist.html		comp-c-htmlman		html
@@ -21416,6 +21420,7 @@
 ./usr/share/man/man3/ilogbl.3			comp-c-man		.man
 ./usr/share/man/man3/imaxabs.3			comp-c-man		.man
 ./usr/share/man/man3/imaxdiv.3			comp-c-man		.man
+./usr/share/man/man3/immedok.3			comp-c-man		.man
 ./usr/share/man/man3/inch.3			comp-c-man		.man
 ./usr/share/man/man3/inchnstr.3			comp-c-man		.man
 ./usr/share/man/man3/inchstr.3			comp-c-man		.man
@@ -23927,6 +23932,7 @@
 ./usr/share/man/man3/swapon.3			comp-c-man		.man
 ./usr/share/man/man3/swprintf.3			comp-c-man		.man
 ./usr/share/man/man3/swscanf.3			comp-c-man		.man
+./usr/share/man/man3/syncok.3			comp-c-man		.man
 ./usr/share/man/man3/sys_errlist.3		comp-c-man		.man
 ./usr/share/man/man3/sys_nerr.3			comp-c-man		.man
 ./usr/share/man/man3/sys_siglist.3		comp-c-man		.man
