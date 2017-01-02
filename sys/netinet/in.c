@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.194 2016/12/31 09:41:05 ryo Exp $	*/
+/*	$NetBSD: in.c,v 1.195 2017/01/02 23:00:25 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.194 2016/12/31 09:41:05 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.195 2017/01/02 23:00:25 christos Exp $");
 
 #include "arp.h"
 
@@ -668,9 +668,11 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		break;
 
 	case SIOCDIFADDR:
-		pfil_run_addrhooks(if_pfil, cmd, iatoifa(ia));
 		ia4_release(ia, &psref);
+		ifaref(&ia->ia_ifa);
 		in_purgeaddr(&ia->ia_ifa);
+		pfil_run_addrhooks(if_pfil, cmd, &ia->ia_ifa);
+		ifafree(&ia->ia_ifa);
 		ia = NULL;
 		break;
 
@@ -705,7 +707,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 
 	if (error == 0) {
 		if (run_hook)
-			pfil_run_addrhooks(if_pfil, cmd, iatoifa(ia));
+			pfil_run_addrhooks(if_pfil, cmd, &ia->ia_ifa);
 	} else if (newifaddr) {
 		KASSERT(ia != NULL);
 		in_purgeaddr(&ia->ia_ifa);

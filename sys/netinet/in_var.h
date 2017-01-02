@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.90 2016/12/06 07:01:47 knakahara Exp $	*/
+/*	$NetBSD: in_var.h,v 1.91 2017/01/02 23:00:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,8 +147,6 @@ struct	in_aliasreq {
  * return a pointer to the addr as a sockaddr_in.
  */
 #define	IA_SIN(ia) (&(((struct in_ifaddr *)(ia))->ia_addr))
-
-#define iatoifa(ia)	(struct ifaddr *)(ia)
 
 #ifdef _KERNEL
 
