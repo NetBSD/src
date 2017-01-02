@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.6 2010/02/23 19:48:26 drochner Exp $	*/
+/*	$NetBSD: line.c,v 1.7 2017/01/02 08:44:12 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: line.c,v 1.6 2010/02/23 19:48:26 drochner Exp $");
+__RCSID("$NetBSD: line.c,v 1.7 2017/01/02 08:44:12 roy Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -93,7 +93,7 @@ whline(WINDOW *win, chtype ch, int count)
 		ch |= ACS_HLINE;
 	for (i = 0; i < n; i++)
 		mvwaddch(win, win->cury, ocurx + i, ch);
-		
+
 	wmove(win, win->cury, ocurx);
 	return OK;
 #else
@@ -238,7 +238,7 @@ int whline_set(WINDOW *win, const cchar_t *wch, int n)
 #endif /* DEBUG */
 		mvwadd_wch(win, win->cury, ocurx + i * cw, &cc);
 	}
-		
+
 	wmove(win, win->cury, ocurx);
 	return OK;
 #endif /* HAVE_WCHAR */
