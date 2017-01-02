@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.208 2016/10/04 17:36:21 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.209 2017/01/02 01:02:19 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.208 2016/10/04 17:36:21 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.209 2017/01/02 01:02:19 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -309,7 +309,7 @@ __dead static void	usage(void);
 void	doforkst(void);
 
 void	hist_traverse(int, const char *);
-void	hist_dodump(struct kern_history *);
+void	hist_dodump(int[], unsigned int);
 
 char	**choosedrives(char **);
 
@@ -2000,122 +2000,122 @@ deref_kptr(const void *kptr, void *ptr, size_t len, const char *msg)
 void
 hist_traverse(int todo, const char *histname)
 {
-	struct kern_history_head histhead;
-	struct kern_history hist, *histkva;
-	char *name = NULL;
-	size_t namelen = 0;
+	int error;
+	int mib[4];
+	unsigned int i;
+	size_t len, miblen;
+	struct sysctlnode query, histnode[32];
 
-	if (histnl[0].n_value == 0) {
+	/* retrieve names of available histories */
+	miblen = __arraycount(mib);
+	error = sysctlnametomib("kern.hist", mib, &miblen);
+	if (error == ENOENT) {
 		warnx("kernel history is not compiled into the kernel.");
 		return;
 	}
+	if (error != 0) {
+		err(1, "nametomib failed");
+		return;
+	}
 
-	deref_kptr((void *)histnl[X_KERN_HISTORIES].n_value, &histhead,
-	    sizeof(histhead), histnl[X_KERN_HISTORIES].n_name);
-
-	if (histhead.lh_first == NULL) {
+	/* get the list of nodenames below kern.hist */
+	mib[2] = CTL_QUERY;
+	memset(&query, 0, sizeof(query));
+	query.sysctl_flags = SYSCTL_VERSION;
+	len = sizeof(histnode);
+	error = sysctl(mib, 3, &histnode[0], &len, &query, sizeof(query));
+	if (error != 0) {
+		err(1, "query failed");
+		return;
+	}
+	if (len == 0) {
 		warnx("No active kernel history logs.");
 		return;
 	}
 
+	len = len / sizeof(histnode[0]);	/* get # of entries returned */
+
 	if (todo & HISTLIST)
 		(void)printf("Active kernel histories:");
 
-	for (histkva = LIST_FIRST(&histhead); histkva != NULL;
-	    histkva = LIST_NEXT(&hist, list)) {
-		deref_kptr(histkva, &hist, sizeof(hist), "histkva");
-		if (name == NULL || hist.namelen > namelen) {
-			if (name != NULL)
-				free(name);
-			namelen = hist.namelen;
-			if ((name = malloc(namelen + 1)) == NULL)
-				err(1, "malloc history name");
-		}
-
-		deref_kptr(hist.name, name, namelen, "history name");
-		name[namelen] = '\0';
+	for (i = 0; i < len; i++) {
 		if (todo & HISTLIST)
-			(void)printf(" %s", name);
+			(void)printf(" %s", histnode[i].sysctl_name);
 		else {
 			/*
 			 * If we're dumping all histories, do it, else
 			 * check to see if this is the one we want.
 			 */
-			if (histname == NULL || strcmp(histname, name) == 0) {
+			if (histname == NULL ||
+			    strcmp(histname, histnode[i].sysctl_name) == 0) {
 				if (histname == NULL)
 					(void)printf(
-					    "\nkernel history `%s':\n", name);
-				hist_dodump(&hist);
+					    "\nkernel history `%s':\n",
+					    histnode[i].sysctl_name);
+				mib[2] = histnode[i].sysctl_num;
+				mib[3] = CTL_EOL;
+				hist_dodump(mib, 4);
 			}
 		}
 	}
 
 	if (todo & HISTLIST)
 		(void)putchar('\n');
-
-	if (name != NULL)
-		free(name);
 }
 
 /*
  * Actually dump the history buffer at the specified KVA.
  */
 void
-hist_dodump(struct kern_history *histp)
+hist_dodump(int mib[], unsigned int miblen)
 {
-	struct kern_history_ent *histents, *e;
+	struct sysctl_history *hist;
+	struct sysctl_history_event *e;
 	size_t histsize;
-	char *fmt = NULL, *fn = NULL;
-	size_t fmtlen = 0, fnlen = 0;
+	char *strp;
 	unsigned i;
+	char *fmt = NULL, *fn = NULL;
 
-	histsize = sizeof(struct kern_history_ent) * histp->n;
-
-	if ((histents = malloc(histsize)) == NULL)
-		err(1, "malloc history entries");
-
-	(void)memset(histents, 0, histsize);
-
-	deref_kptr(histp->e, histents, histsize, "history entries");
-	i = histp->f;
+	hist = NULL;
+	histsize = 0;
 	do {
-		e = &histents[i];
-		if (e->fmt != NULL) {
-			if (fmt == NULL || e->fmtlen > fmtlen) {
-				if (fmt != NULL)
-					free(fmt);
-				fmtlen = e->fmtlen;
-				if ((fmt = malloc(fmtlen + 1)) == NULL)
-					err(1, "malloc printf format");
-			}
-			if (fn == NULL || e->fnlen > fnlen) {
-				if (fn != NULL)
-					free(fn);
-				fnlen = e->fnlen;
-				if ((fn = malloc(fnlen + 1)) == NULL)
-					err(1, "malloc function name");
-			}
+		errno = 0;
+		if (sysctl(mib, miblen, hist, &histsize, NULL, 0) == 0)
+			break;
+		if (errno != ENOMEM)
+			break;
+		if ((hist = realloc(hist, histsize)) == NULL)
+			errx(1, "realloc history buffer");
+	} while (errno == ENOMEM);
+	if (errno != 0)
+		err(1, "sysctl failed");
 
-			deref_kptr(e->fmt, fmt, fmtlen, "printf format");
-			fmt[fmtlen] = '\0';
+	strp = (char *)(&hist->sh_events[hist->sh_listentry.shle_numentries]);
 
-			deref_kptr(e->fn, fn, fnlen, "function name");
-			fn[fnlen] = '\0';
+	(void)printf("%"PRIu32" entries, next is %"PRIu32"\n",
+	    hist->sh_listentry.shle_numentries,
+	    hist->sh_listentry.shle_nextfree);
 
-			(void)printf("%06ld.%06ld ", (long int)e->tv.tv_sec,
-			    (long int)e->tv.tv_usec);
-			(void)printf("%s#%ld@%d: ", fn, e->call, e->cpunum);
-			(void)printf(fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
+	i = hist->sh_listentry.shle_nextfree;
+
+	do {
+		e = &hist->sh_events[i];
+		if (e->she_fmtoffset != 0) {
+			fmt = &strp[e->she_fmtoffset];
+			fn = &strp[e->she_funcoffset];
+			(void)printf("%06ld.%06ld ",
+			    (long int)e->she_tspec.tv_sec,
+			    (long int)(e->she_tspec.tv_nsec / 1000));
+			(void)printf("%s#%ld@%d: ", fn, e->she_callnumber,
+			    e->she_cpunum);
+			(void)printf(fmt, e->she_values[0], e->she_values[1],
+			     e->she_values[2], e->she_values[3]);
 			(void)putchar('\n');
 		}
-		i = (i + 1) % histp->n;
-	} while (i != histp->f);
+		i = (i + 1) % hist->sh_listentry.shle_numentries;
+	} while (i != hist->sh_listentry.shle_nextfree);
 
-	free(histents);
-	if (fmt != NULL)
-		free(fmt);
-	if (fn != NULL)
-		free(fn);
+	free(hist);
 }
 
 static void
