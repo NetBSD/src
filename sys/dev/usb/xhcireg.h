@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.2.2.9 2017/01/02 16:39:36 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.2.2.10 2017/01/02 16:55:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -224,11 +224,9 @@
 #define	 XHCI_DB_SID_GET(x)	(((x) >> 16) & 0xFFFF)	/* RW - doorbell stream ID */
 #define	 XHCI_DB_SID_SET(x)	(((x) & 0xFFFF) << 16)	/* RW - doorbell stream ID */
 
-/* XHCI legacy support */
+/* 7 xHCI Extendeded capabilities */
 #define	XHCI_XECP_ID(x)		((x) & 0xFF)
 #define	XHCI_XECP_NEXT(x)	(((x) >> 8) & 0xFF)
-#define	XHCI_XECP_BIOS_SEM	0x0002
-#define	XHCI_XECP_OS_SEM	0x0003
 
 /* XHCI extended capability ID's */
 #define	XHCI_ID_USB_LEGACY	0x0001	/* USB Legacy Support */
@@ -241,6 +239,27 @@
 #define	XHCI_ID_USB_LOCAL_MEM	0x0006	/* Local Memory */
 #define	XHCI_ID_USB_DEBUG	0x000A	/* USB Debug Capability */
 #define	XHCI_ID_XMSG_IRQ	0x0011	/* Extended Message Interrupt */
+
+/* 7.1 xHCI legacy support */
+#define	XHCI_XECP_BIOS_SEM	0x0002
+#define	XHCI_XECP_OS_SEM	0x0003
+
+/* 7.2 xHCI Supported Protocol Capability */
+#define	XHCI_XECP_USBID 0x20425355
+
+#define	XHCI_XECP_SP_W0_MINOR_MASK	__BITS(23, 16)
+#define	XHCI_XECP_SP_W0_MINOR(x)	__SHIFTOUT((x), XHCI_XECP_SP_W0_MINOR_MASK)
+#define	XHCI_XECP_SP_W0_MAJOR_MASK	__BITS(31, 24)
+#define	XHCI_XECP_SP_W0_MAJOR(x)	__SHIFTOUT((x), XHCI_XECP_SP_W0_MAJOR_MASK)
+
+#define	XHCI_XECP_SP_W8_CPO_MASK	__BITS(7, 0)
+#define	XHCI_XECP_SP_W8_CPO(x)		__SHIFTOUT((x), XHCI_XECP_SP_W8_CPO_MASK)
+#define	XHCI_XECP_SP_W8_CPC_MASK	__BITS(15, 8)
+#define	XHCI_XECP_SP_W8_CPC(x)		__SHIFTOUT((x), XHCI_XECP_SP_W8_CPC_MASK)
+#define	XHCI_XECP_SP_W8_PD_MASK		__BITS(27, 16)
+#define	XHCI_XECP_SP_W8_PD(x)		__SHIFTOUT((x), XHCI_XECP_SP_W8_PD_MASK)
+#define	XHCI_XECP_SP_W8_PSIC_MASK	__BITS(31, 28)
+#define	XHCI_XECP_SP_W8_PSIC(x)		__SHIFTOUT((x), XHCI_XECP_SP_W8_PSIC_MASK)
 
 #define XHCI_PAGE_SIZE(sc) ((sc)->sc_pgsz)
 

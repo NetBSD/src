@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.1.2.2 2016/10/05 20:55:25 skrll Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.1.2.3 2017/01/02 16:55:50 skrll Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.1.2.2 2016/10/05 20:55:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.1.2.3 2017/01/02 16:55:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -348,6 +348,8 @@ tegra_xusb_mountroot(device_t self)
 	}
 
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+
+	sc->sc_child2 = config_found(self, &sc->sc_bus2, usbctlprint);
 
 	error = xusb_mailbox_send(psc, 0x01000000);
 	if (error) {
