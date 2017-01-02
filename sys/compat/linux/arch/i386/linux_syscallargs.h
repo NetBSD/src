@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.108 2016/07/24 13:23:25 njoly Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.109 2017/01/02 16:32:38 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -1086,6 +1086,16 @@ struct linux_sys_faccessat_args {
 };
 check_syscall_args(linux_sys_faccessat)
 
+struct linux_sys_pselect6_args {
+	syscallarg(int) nfds;
+	syscallarg(fd_set *) readfds;
+	syscallarg(fd_set *) writefds;
+	syscallarg(fd_set *) exceptfds;
+	syscallarg(struct linux_timespec *) timeout;
+	syscallarg(linux_sized_sigset_t *) ss;
+};
+check_syscall_args(linux_sys_pselect6)
+
 struct linux_sys_ppoll_args {
 	syscallarg(struct pollfd *) fds;
 	syscallarg(u_int) nfds;
@@ -1575,6 +1585,8 @@ int	sys_readlinkat(struct lwp *, const struct sys_readlinkat_args *, register_t 
 int	linux_sys_fchmodat(struct lwp *, const struct linux_sys_fchmodat_args *, register_t *);
 
 int	linux_sys_faccessat(struct lwp *, const struct linux_sys_faccessat_args *, register_t *);
+
+int	linux_sys_pselect6(struct lwp *, const struct linux_sys_pselect6_args *, register_t *);
 
 int	linux_sys_ppoll(struct lwp *, const struct linux_sys_ppoll_args *, register_t *);
 
