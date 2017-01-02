@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.69 2016/07/24 13:22:01 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.70 2017/01/02 16:32:10 manu Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -478,7 +478,10 @@
 277	UNIMPL		inotify_rm_watch
 278	UNIMPL		spu_run
 279	UNIMPL		spu_create
-280	UNIMPL		pselect6
+280	STD		{ int|linux_sys||pselect6(int nfds, fd_set *readfds, \
+			   fd_set *writefds, fd_set *exceptfds, \
+			   struct linux_timespec *timeout, \
+			   linux_sized_sigset_t *ss); }
 281	STD		{ int|linux_sys||ppoll(struct pollfd *fds, u_int nfds, \
 			    struct linux_timespec *timeout, \
 			    linux_sigset_t *sigset); }
