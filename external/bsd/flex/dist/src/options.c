@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -33,7 +33,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: options.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.3 2017/01/02 17:45:27 christos Exp $");
 
 #include "options.h"
 
@@ -217,10 +217,6 @@ optspec_t flexopts[] = {
 	,
 	{"--nowarn", OPT_NO_WARN, 0}
 	,			/* Suppress warning messages. */
-	{"--noansi-definitions", OPT_NO_ANSI_FUNC_DEFS, 0}
-	,
-	{"--noansi-prototypes", OPT_NO_ANSI_FUNC_PROTOS, 0}
-	,
 	{"--yyclass=NAME", OPT_YYCLASS, 0}
 	,
 	{"--yylineno", OPT_YYLINENO, 0}
@@ -279,7 +275,8 @@ optspec_t flexopts[] = {
 	,
 	{"--noyyset_lloc", OPT_NO_YYSET_LLOC, 0}
 	,
-
+        {"--unsafe-no-m4-sect3-escape", OPT_NO_SECT3_ESCAPE, 0}
+        ,
 	{0, 0, 0}		/* required final NULL entry. */
 };
 
