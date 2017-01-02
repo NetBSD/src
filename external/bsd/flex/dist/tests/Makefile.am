@@ -19,6 +19,8 @@
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE.
 
+AM_CFLAGS = $(WARNINGFLAGS)
+
 TESTS = $(check_PROGRAMS) options.cn
 
 # The script testwrapper.sh will run most tests as is. A couple tests
@@ -33,13 +35,13 @@ LOG_COMPILER = $(srcdir)/testwrapper.sh
 AM_LOG_FLAGS = -d $(srcdir) -r
 
 REJECT_LOG_COMPILER = $(srcdir)/testwrapper.sh
-AM_REJECT_LOG_FLAGS = -d $(srcdir) -i reject.txt -r
+AM_REJECT_LOG_FLAGS = -d $(srcdir) -i $(srcdir)/reject.txt -r
 
 TABLE_LOG_COMPILER = $(srcdir)/testwrapper.sh
 AM_TABLE_LOG_FLAGS = -d $(builddir) -i $(srcdir)/reject.txt -t
 
-DIRECT_LOG_COMPILER=$(srcdir)/testwrapper.sh
-AM_DIRECT_LOG_FLAGS = -d $(srcdir)
+DIRECT_LOG_COMPILER=$(srcdir)/testwrapper-direct.sh
+AM_DIRECT_LOG_FLAGS = -b $(abs_builddir) -s $(srcdir)
 
 CN_LOG_COMPILER=$(srcdir)/options.cn
 AM_CN_LOG_FLAGS=$(FLEX)
@@ -54,6 +56,7 @@ ONE_LOG_COMPILER = $(srcdir)/testwrapper.sh
 AM_ONE_LOG_FLAGS = -1 -d $(srcdir)
 
 AM_YFLAGS = -d -p test
+AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_srcdir)/src
 
 check_PROGRAMS = $(simple_tests) $(reject_tests) $(TABLE_TESTS) $(DIRECT_TESTS) $(I3_TESTS) $(PTHREAD_TESTS) $(ONE_TESTS) $(TABLEOPTS_TESTS)
 
@@ -71,6 +74,7 @@ simple_tests = \
 	ccl \
 	cxx_basic \
 	cxx_multiple_scanners \
+	cxx_restart \
 	debug_nr \
 	debug_r \
 	extended \
@@ -80,12 +84,11 @@ simple_tests = \
 	mem_r \
 	multiple_scanners_nr \
 	multiple_scanners_r \
-	noansi_nr \
-	noansi_r \
 	posix \
 	posixly_correct \
 	prefix_nr \
 	prefix_r \
+	quote_in_comment \
 	quotes \
 	string_nr \
 	string_r \
@@ -120,6 +123,7 @@ ONE_TESTS = \
 	lineno_r.one \
 	lineno_trailing.one
 
+quote_in_comment_SOURCES = quote_in_comment.l
 alloc_extra_SOURCES = alloc_extra.l
 array_nr_SOURCES = array_nr.l
 array_r_SOURCES = array_r.l
@@ -132,6 +136,7 @@ c_cxx_nr_SOURCES = c_cxx_nr.lll
 c_cxx_r_SOURCES = c_cxx_r.lll
 ccl_SOURCES = ccl.l
 cxx_basic_SOURCES = cxx_basic.ll
+cxx_restart_SOURCES = cxx_restart.ll
 cxx_multiple_scanners_SOURCES = cxx_multiple_scanners_main.cc cxx_multiple_scanners_1.ll cxx_multiple_scanners_2.ll
 cxx_yywrap_i3_SOURCES = cxx_yywrap.ll
 debug_nr_SOURCES = debug_nr.l
@@ -149,8 +154,6 @@ mem_nr_SOURCES = mem_nr.l
 mem_r_SOURCES = mem_r.l
 multiple_scanners_nr_SOURCES = multiple_scanners_nr_main.c multiple_scanners_nr_1.l multiple_scanners_nr_2.l
 multiple_scanners_r_SOURCES = multiple_scanners_r_main.c multiple_scanners_r_1.l multiple_scanners_r_2.l
-noansi_nr_SOURCES = noansi_nr.l
-noansi_r_SOURCES = noansi_r.l
 posix_SOURCES = posix.l
 posixly_correct_SOURCES = posixly_correct.l
 prefix_nr_SOURCES = prefix_nr.l
@@ -215,6 +218,7 @@ CLEANFILES = \
 	cxx_basic.cc \
 	cxx_multiple_scanners_1.cc \
 	cxx_multiple_scanners_2.cc \
+	cxx_restart.cc \
 	cxx_yywrap.cc \
 	debug_nr.c \
 	debug_r.c \
@@ -239,13 +243,12 @@ CLEANFILES = \
 	multiple_scanners_r_1.h \
 	multiple_scanners_r_2.c \
 	multiple_scanners_r_2.h \
-	noansi_nr.c \
-	noansi_r.c \
 	posix.c \
 	posixly_correct.c \
 	prefix_nr.c \
 	prefix_r.c \
 	pthread.c \
+	quote_in_comment.c \
 	quotes.c \
 	reject_nr.reject.c \
 	reject_r.reject.c \
@@ -284,6 +287,7 @@ EXTRA_DIST = \
 	ccl.txt \
 	cxx_basic.txt \
 	cxx_multiple_scanners.txt \
+	cxx_restart.txt \
 	cxx_yywrap.txt \
 	debug_nr.txt \
 	debug_r.txt \
@@ -304,8 +308,6 @@ EXTRA_DIST = \
 	lineno_trailing.one.txt \
 	mem_nr.txt \
 	mem_r.txt \
-	noansi_nr.txt \
-	noansi_r.txt \
 	prefix_nr.txt \
 	prefix_r.txt \
 	pthread_1.txt \
@@ -316,6 +318,7 @@ EXTRA_DIST = \
 	reject.txt \
 	rescan_nr.direct.txt \
 	rescan_r.direct.txt \
+	quote_in_comment.txt \
 	quotes.txt \
 	top.txt \
 	yyextra.txt \
@@ -326,6 +329,7 @@ dist_noinst_SCRIPTS = \
 
 dist_check_SCRIPTS = \
 	options.cn \
+	testwrapper-direct.sh \
 	testwrapper.sh
 
 pthread_pthread_LDADD = -lpthread
@@ -361,12 +365,6 @@ header_nr_scanner.h: header_nr_scanner.c
 header_r_main.$(OBJEXT): header_r_scanner.h
 header_r_scanner.h: header_r_scanner.c
 
-include_by_buffer.direct$(EXE): include_by_buffer.direct.txt include_by_buffer.direct_2.txt include_by_buffer.direct_3.txt
-
-include_by_push.direct$(EXE): include_by_push.direct.txt include_by_push.direct_2.txt include_by_push.direct_3.txt
-
-include_by_reentrant.direct$(EXE): include_by_reentrant.direct.txt include_by_reentrant.direct_2.txt include_by_reentrant.direct_3.txt
-
 multiple_scanners_nr_main.$(OBJEXT): multiple_scanners_nr_1.h multiple_scanners_nr_2.h
 multiple_scanners_nr_1.h: multiple_scanners_nr_1.c
 multiple_scanners_nr_2.h: multiple_scanners_nr_2.c
@@ -379,13 +377,13 @@ posixly_correct.c: posixly_correct.l $(FLEX)
 	POSIXLY_CORRECT=1 $(FLEX) -o $@ $<
 
 reject_nr.reject.c: reject.l4 $(FLEX)
-	$(FLEX) -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -o $@ $<
 
 reject_nr.reject$(EXEEXT): reject_nr.reject.$(OBJEXT)
 	$(LINK) $^
 
 reject_r.reject.c: reject.l4 $(FLEX)
-	$(FLEX) --reentrant -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape --reentrant -o $@ $<
 
 reject_r.reject.$(OBJEXT): reject_r.reject.c
 	$(COMPILE) -DTEST_IS_REENTRANT -c -o $@ $<
@@ -394,7 +392,7 @@ reject_r.reject$(EXEEXT): reject_r.reject.$(OBJEXT)
 	$(LINK) $^
 
 reject_ver.table.c: reject.l4 $(FLEX)
-	$(FLEX) -o $@ --tables-verify --tables-file=$(basename $@).tables $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -o $@ --tables-verify --tables-file=$(basename $@).tables $<
 
 reject_ver.table.$(OBJEXT): reject_ver.table.c
 	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
@@ -403,7 +401,7 @@ reject_ver.table$(EXEEXT): reject_ver.table.$(OBJEXT)
 	$(LINK) $^
 
 reject_ser.table.c: reject.l4 $(FLEX)
-	$(FLEX) -o $@ --tables-file=$(basename $@).tables $<
+	$(FLEX) -o $@ --unsafe-no-m4-sect3-escape --tables-file=$(basename $@).tables $<
 
 reject_ser.table.$(OBJEXT): reject_ser.table.c
 	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
@@ -434,16 +432,16 @@ tableopts_tests  := $(tableopts_opttests) $(tableopts_vertests) $(tableopts_sert
 tableopts_c := $(addsuffix .c,$(tableopts_tests))
 
 OPT_LOG_COMPILER = $(srcdir)/testwrapper.sh
-AM_OPT_LOG_FLAGS = -d $(srcdir) -i tableopts.txt -r
+AM_OPT_LOG_FLAGS = -d $(srcdir) -i $(srcdir)/tableopts.txt -r
 
 tableopts_opt_nr%.c: tableopts.l4 $(FLEX)
-	$(FLEX) -P $(subst -,_,$(basename $(*F))) $* -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) $* -o $@ $<
 
 tableopts_opt_nr%.$(OBJEXT): tableopts_opt_nr%.c 
 	$(COMPILE) -c -o $@ $<
 
 tableopts_opt_r%.c: tableopts.l4 $(FLEX)
-	$(FLEX) -P $(subst -,_,$(basename $(*F))) --reentrant $*  -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) --reentrant $*  -o $@ $<
 
 tableopts_opt_r%.$(OBJEXT):  tableopts_opt_r%.c 
 	$(COMPILE) -DTEST_IS_REENTRANT -c -o $@ $<
@@ -452,13 +450,13 @@ SER_LOG_COMPILER = $(srcdir)/testwrapper.sh
 AM_SER_LOG_FLAGS = -d $(builddir) -i $(srcdir)/tableopts.txt -r -t
 
 tableopts_ser_nr%.c: tableopts.l4 $(FLEX)
-	$(FLEX) -P $(subst -,_,$(basename $(*F))) --tables-file="tableopts_ser_nr$*.ser.tables"  $* -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) --tables-file="tableopts_ser_nr$*.ser.tables"  $* -o $@ $<
 
 tableopts_ser_nr%.$(OBJEXT): tableopts_ser_nr%.c 
 	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
 
 tableopts_ser_r%.c: tableopts.l4 $(FLEX)
-	$(FLEX) -P $(subst -,_,$(basename $(*F))) -R --tables-file="tableopts_ser_r$*.ser.tables" $*  -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) -R --tables-file="tableopts_ser_r$*.ser.tables" $*  -o $@ $<
 
 tableopts_ser_r%.$(OBJEXT):  tableopts_ser_r%.c
 	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -DTEST_IS_REENTRANT -c -o $@ $<
@@ -467,7 +465,7 @@ VER_LOG_COMPILER = $(srcdir)/testwrapper.sh
 AM_VER_LOG_FLAGS = -d $(builddir) -i $(srcdir)/tableopts.txt -r -t
 
 tableopts_ver_nr%.c: tableopts.l4 $(FLEX)
-	$(FLEX) -P $(subst -,_,$(basename $(*F))) --tables-file="tableopts_ver_nr$*.ver.tables" --tables-verify $* -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) --tables-file="tableopts_ver_nr$*.ver.tables" --tables-verify $* -o $@ $<
 
 tableopts_ver_nr%.$(OBJEXT): tableopts_ver_nr%.c 
 	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -c -o $@ $<
@@ -476,7 +474,7 @@ tableopts_ver_nr%.ver$(EXEEXT): tableopts_ver_nr%.$(OBJEXT)
 	$(LINK) -o $@ $^
 
 tableopts_ver_r%.c: tableopts.l4 $(FLEX)
-	$(FLEX) -P $(subst -,_,$(basename $(*F))) -R --tables-file="tableopts_ver_r$*.ver.tables" --tables-verify $*  -o $@ $<
+	$(FLEX) --unsafe-no-m4-sect3-escape -P $(subst -,_,$(basename $(*F))) -R --tables-file="tableopts_ver_r$*.ver.tables" --tables-verify $*  -o $@ $<
 
 tableopts_ver_r%.$(OBJEXT):  tableopts_ver_r%.c  
 	$(COMPILE) -DTEST_HAS_TABLES_EXTERNAL -DTEST_IS_REENTRANT -c -o $@ $<

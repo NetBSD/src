@@ -12,7 +12,6 @@ src/options.c
 src/parse.y
 src/scan.l
 src/scanopt.c
-src/skel.c
 src/sym.c
 src/tblcmp.c
 src/yylex.c
