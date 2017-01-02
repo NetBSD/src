@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.112 2017/01/01 03:06:06 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.113 2017/01/02 10:28:34 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -681,6 +681,7 @@ int	 has_key(int);
 int	 hline(chtype, int);
 int	 idcok(WINDOW *, bool);
 int	 idlok(WINDOW *, bool);
+int	 immedok(WINDOW *, bool);
 int	 init_color(short, short, short, short);
 int	 init_pair(short, short, short);
 WINDOW	*initscr(void);
@@ -746,6 +747,7 @@ SCREEN  *set_term(SCREEN *);
 int	 start_color(void);
 WINDOW	*subpad(WINDOW *, int, int, int, int);
 WINDOW	*subwin(WINDOW *, int, int, int, int);
+int	 syncok(WINDOW *, bool);
 chtype	 termattrs(void);
 attr_t	 term_attrs(void);
 int	 touchline(WINDOW *, int, int);

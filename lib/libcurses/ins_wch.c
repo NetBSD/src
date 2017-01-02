@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.7 2016/10/22 21:55:06 christos Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.8 2017/01/02 10:28:34 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.7 2016/10/22 21:55:06 christos Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.8 2017/01/02 10:28:34 roy Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -248,7 +248,7 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 	if ( newx > *lnp->lastchp )
 		*lnp->lastchp = newx;
 	__touchline(win, y, sx, (int) win->maxx - 1);
-
+	__sync(win);
 	return OK;
 #endif /* HAVE_WCHAR */
 }

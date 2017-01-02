@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.53 2016/12/31 22:47:01 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.54 2017/01/02 10:28:34 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -131,6 +131,8 @@ struct __window {		/* Window structure. */
 #define __IDCHAR	0x00040000	/* insert/delete char sequences */
 #define __ISPAD		0x00080000	/* "window" is a pad */
 #define __ISDERWIN	0x00100000	/* "window" is derived from parent */
+#define __IMMEDOK	0x00200000	/* refreshed when changed */
+#define __SYNCOK	0x00400000	/* sync when changed */
 	unsigned int flags;
 	int	delay;			/* delay for getch() */
 	attr_t	wattr;			/* Character attributes */
@@ -344,6 +346,7 @@ void	 __startwin(SCREEN *);
 void	 __stop_signal_handler(int);
 int	 __stopwin(void);
 void	 __swflags(WINDOW *);
+void	 __sync(WINDOW *);
 int	 __timeout(int);
 int	 __touchline(WINDOW *, int, int, int);
 int	 __touchwin(WINDOW *);
