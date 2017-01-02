@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_os.c,v 1.3 2017/01/02 21:49:51 rmind Exp $	*/
+/*	$NetBSD: npf_os.c,v 1.4 2017/01/02 23:02:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2016 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.3 2017/01/02 21:49:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.4 2017/01/02 23:02:04 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -54,6 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.3 2017/01/02 21:49:51 rmind Exp $");
 #include <sys/module.h>
 #include <sys/socketvar.h>
 #include <sys/uio.h>
+
+#include <netinet/in.h>
+#include <netinet6/in6_var.h>
 #endif
 
 #include "npf_impl.h"
