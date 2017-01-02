@@ -31,7 +31,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: ccl.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
+__RCSID("$NetBSD: ccl.c,v 1.3 2017/01/02 17:45:27 christos Exp $");
 
 
 /* return true if the chr is in the ccl. Takes negation into account. */
@@ -53,9 +53,7 @@ ccl_contains (const int cclp, const int ch)
 
 /* ccladd - add a single character to a ccl */
 
-void    ccladd (cclp, ch)
-     int     cclp;
-     int     ch;
+void ccladd (int cclp, int ch)
 {
 	int     ind, len, newpos, i;
 
@@ -86,7 +84,7 @@ void    ccladd (cclp, ch)
 	}
 
 	ccllen[cclp] = len + 1;
-	ccltbl[newpos] = ch;
+	ccltbl[newpos] = (unsigned char) ch;
 }
 
 /* dump_cclp - same thing as list_character_set, but for cclps.  */
@@ -186,7 +184,7 @@ ccl_set_union (int a, int b)
 
 /* cclinit - return an empty ccl */
 
-int     cclinit ()
+int     cclinit (void)
 {
 	if (++lastccl >= current_maxccls) {
 		current_maxccls += MAX_CCLS_INCREMENT;
@@ -226,8 +224,7 @@ int     cclinit ()
 
 /* cclnegate - negate the given ccl */
 
-void    cclnegate (cclp)
-     int     cclp;
+void    cclnegate (int cclp)
 {
 	cclng[cclp] = 1;
 	ccl_has_nl[cclp] = !ccl_has_nl[cclp];
@@ -241,9 +238,7 @@ void    cclnegate (cclp)
  * has a non-zero value in the cset array.
  */
 
-void    list_character_set (file, cset)
-     FILE   *file;
-     int     cset[];
+void    list_character_set (FILE *file, int cset[])
 {
 	int i;
 
