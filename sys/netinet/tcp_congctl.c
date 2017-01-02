@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.22 2016/12/13 08:29:03 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.23 2017/01/02 09:29:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.22 2016/12/13 08:29:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.23 2017/01/02 09:29:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -707,7 +707,6 @@ tcp_newreno_fast_retransmit_newack(struct tcpcb *tp, const struct tcphdr *th)
 		tp->t_partialacks++;
 		TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		tp->t_rtttime = 0;
-		tp->snd_nxt = th->th_ack;
 
 		if (TCP_SACK_ENABLED(tp)) {
 			/*
@@ -734,6 +733,7 @@ tcp_newreno_fast_retransmit_newack(struct tcpcb *tp, const struct tcphdr *th)
 			tp->t_flags |= TF_ACKNOW;
 			(void) tcp_output(tp);
 		} else {
+			tp->snd_nxt = th->th_ack;
 			/*
 			 * Set snd_cwnd to one segment beyond ACK'd offset
 			 * snd_una is not yet updated when we're called
