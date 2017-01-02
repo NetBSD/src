@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.65 2016/12/28 21:55:04 christos Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.66 2017/01/02 21:49:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -247,6 +247,10 @@ void		npf_ifmap_flush(npf_t *);
 u_int		npf_ifmap_getid(npf_t *, const ifnet_t *);
 const char *	npf_ifmap_getname(npf_t *, const u_int);
 
+void		npf_ifaddr_init(npf_t *);
+void		npf_ifaddr_sync(npf_t *, ifnet_t *);
+void		npf_ifaddr_flush(npf_t *, ifnet_t *);
+
 /* Packet filter hooks. */
 int		npf_pfil_register(bool);
 void		npf_pfil_unregister(bool);
@@ -297,12 +301,14 @@ void		npf_tableset_destroy(npf_tableset_t *);
 int		npf_tableset_insert(npf_tableset_t *, npf_table_t *);
 npf_table_t *	npf_tableset_getbyname(npf_tableset_t *, const char *);
 npf_table_t *	npf_tableset_getbyid(npf_tableset_t *, u_int);
+npf_table_t *	npf_tableset_swap(npf_tableset_t *, npf_table_t *);
 void		npf_tableset_reload(npf_t *, npf_tableset_t *, npf_tableset_t *);
 int		npf_tableset_export(npf_t *, const npf_tableset_t *, prop_array_t);
 
 npf_table_t *	npf_table_create(const char *, u_int, int, void *, size_t);
 void		npf_table_destroy(npf_table_t *);
 
+u_int		npf_table_getid(npf_table_t *);
 int		npf_table_check(npf_tableset_t *, const char *, u_int, int);
 int		npf_table_insert(npf_table_t *, const int,
 		    const npf_addr_t *, const npf_netmask_t);

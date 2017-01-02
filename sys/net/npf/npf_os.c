@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_os.c,v 1.2 2016/12/26 23:59:47 rmind Exp $	*/
+/*	$NetBSD: npf_os.c,v 1.3 2017/01/02 21:49:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2016 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.2 2016/12/26 23:59:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.3 2017/01/02 21:49:51 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -150,6 +150,7 @@ npf_init(void)
 	npf = npf_create(0, NULL, &kern_ifops);
 	npf_setkernctx(npf);
 	npf_pfil_register(true);
+	npf_ifaddr_init(npf);
 
 #ifdef _MODULE
 	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
@@ -196,7 +197,6 @@ npfattach(int nunits)
 static int
 npf_dev_open(dev_t dev, int flag, int mode, lwp_t *l)
 {
-
 	/* Available only for super-user. */
 	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FIREWALL,
 	    KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL)) {
@@ -354,11 +354,35 @@ npf_ifhook(void *arg, unsigned long cmd, void *arg2)
 	switch (cmd) {
 	case PFIL_IFNET_ATTACH:
 		npf_ifmap_attach(npf, ifp);
+		npf_ifaddr_sync(npf, ifp);
 		break;
 	case PFIL_IFNET_DETACH:
 		npf_ifmap_detach(npf, ifp);
+		npf_ifaddr_flush(npf, ifp);
 		break;
 	}
+}
+
+static void
+npf_ifaddrhook(void *arg, u_long cmd, void *arg2)
+{
+	npf_t *npf = npf_getkernctx();
+	struct ifaddr *ifa = arg2;
+
+	switch (cmd) {
+	case SIOCSIFADDR:
+	case SIOCAIFADDR:
+	case SIOCDIFADDR:
+#ifdef INET6
+	case SIOCSIFADDR_IN6:
+	case SIOCAIFADDR_IN6:
+	case SIOCDIFADDR_IN6:
+#endif
+		break;
+	default:
+		return;
+	}
+	npf_ifaddr_sync(npf, ifa->ifa_ifp);
 }
 
 /*
@@ -380,7 +404,13 @@ npf_pfil_register(bool init)
 			error = ENOENT;
 			goto out;
 		}
-		error = pfil_add_ihook(npf_ifhook, NULL, PFIL_IFNET, npf_ph_if);
+
+		error = pfil_add_ihook(npf_ifhook, NULL,
+		    PFIL_IFNET, npf_ph_if);
+		KASSERT(error == 0);
+
+		error = pfil_add_ihook(npf_ifaddrhook, NULL,
+		    PFIL_IFADDR, npf_ph_if);
 		KASSERT(error == 0);
 	}
 	if (init) {
@@ -432,7 +462,10 @@ npf_pfil_unregister(bool fini)
 	KERNEL_LOCK(1, NULL);
 
 	if (fini && npf_ph_if) {
-		(void)pfil_remove_ihook(npf_ifhook, NULL, PFIL_IFNET, npf_ph_if);
+		(void)pfil_remove_ihook(npf_ifhook, NULL,
+		    PFIL_IFNET, npf_ph_if);
+		(void)pfil_remove_ihook(npf_ifaddrhook, NULL,
+		    PFIL_IFADDR, npf_ph_if);
 	}
 	if (npf_ph_inet) {
 		(void)pfil_remove_hook(npfkern_packet_handler, npf,

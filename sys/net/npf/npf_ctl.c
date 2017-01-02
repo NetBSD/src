@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.45 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.46 2017/01/02 21:49:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.45 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.46 2017/01/02 21:49:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -108,7 +108,7 @@ npf_mk_table_entries(npf_table_t *t, prop_array_t entries)
 }
 
 static int __noinline
-npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
+npf_mk_tables(npf_t *npf, npf_tableset_t *tblset, prop_array_t tables,
     prop_dictionary_t errdict)
 {
 	prop_object_iterator_t it;
@@ -159,9 +159,6 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 			NPF_ERR_DEBUG(errdict);
 			error = EINVAL;
 			break;
-		}
-		if (type == NPF_TABLE_HASH) {
-			size = 1024; /* XXX */
 		}
 
 		/* Create and insert the table. */
@@ -558,7 +555,7 @@ npfctl_load(npf_t *npf, u_long cmd, void *data)
 		goto fail;
 	}
 	tblset = npf_tableset_create(nitems);
-	error = npf_mk_tables(tblset, tables, errdict);
+	error = npf_mk_tables(npf, tblset, tables, errdict);
 	if (error) {
 		goto fail;
 	}
