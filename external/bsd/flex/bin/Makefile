@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 6/24/90
-#	$NetBSD: Makefile,v 1.10 2017/01/02 17:45:26 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2017/01/02 18:33:22 christos Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -55,7 +55,7 @@ LINKS=	${BINDIR}/lex ${BINDIR}/flex \
 MLINKS=	flex.1 lex.1 
 
 skel.c: flex.skl mkskel.sh flexint.h tables_shared.h
-	${TOOL_SED} -e 's/m4_/m4postproc_/g' -e 's/m4preproc_/m4_/g' \
+	${TOOL_SED} -e 's/4_/a4_/g; s/m4preproc_/m4_/g' \
 	    ${IDIST}/flex.skl | ${TOOL_M4} -I${IDIST} -P \
 	    -DFLEX_MAJOR_VERSION=`echo ${VERSION} | cut -f 1 -d .` \
 	    -DFLEX_MINOR_VERSION=`echo ${VERSION} | cut -f 2 -d .` \
