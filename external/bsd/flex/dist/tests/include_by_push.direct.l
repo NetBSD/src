@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "config.h"
+
+int error = 0;
 %}
 
 %option 8bit prefix="test"
@@ -50,20 +52,22 @@
     yytext[yyleng-1]='\0';
     if((yyin=fopen(yytext,"r"))==NULL) {
         fprintf(stderr,"*** Error: Could not open include file \"%s\".\n",yytext);
+        error = 1;
         yyterminate();
     }
-    yypush_buffer_state( yy_create_buffer( yyin, YY_BUF_SIZE ));
+    testpush_buffer_state( yy_create_buffer( yyin, YY_BUF_SIZE ));
     BEGIN(0);
     }
 .|\n  {
     fprintf(stderr,"Invalid input \"%s\".\n", yytext);
+        error = 1;
     yyterminate();
    }
 }
 
 <<EOF>> {
            fclose(yyin);
-           yypop_buffer_state();
+           testpop_buffer_state();
            if(!YY_CURRENT_BUFFER)
                yyterminate();
         }
@@ -87,6 +91,9 @@ main ( int argc, char** argv )
     yyin = fp;
     yyout = stdout;
     yylex();
-    printf("TEST RETURNING OK.\n");
+    if (!error)
+        printf("TEST RETURNING OK.\n");
+    else
+        exit(-1);
     return 0;
 }
