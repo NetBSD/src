@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.66 2017/01/02 10:33:28 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.67 2017/01/02 10:35:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.66 2017/01/02 10:33:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.67 2017/01/02 10:35:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -755,18 +755,11 @@ vrelel(vnode_t *vp, int flags)
 		return;
 	}
 
-	if (VSTATE_GET(vp) == VS_RECLAIMED) {
+	if (VSTATE_GET(vp) == VS_RECLAIMED && vp->v_holdcnt == 0) {
 		/*
 		 * It's clean so destroy it.  It isn't referenced
 		 * anywhere since it has been reclaimed.
 		 */
-		KASSERT(vp->v_holdcnt == 0);
-		KASSERT(vp->v_writecount == 0);
-		mutex_exit(vp->v_interlock);
-		vfs_insmntque(vp, NULL);
-		if (vp->v_type == VBLK || vp->v_type == VCHR) {
-			spec_node_destroy(vp);
-		}
 		vcache_free(VNODE_TO_VIMPL(vp));
 	} else {
 		/*
@@ -1049,6 +1042,7 @@ vcache_alloc(void)
 
 /*
  * Free an unused, unreferenced vcache node.
+ * v_interlock locked on entry.
  */
 static void
 vcache_free(vnode_impl_t *node)
@@ -1056,10 +1050,18 @@ vcache_free(vnode_impl_t *node)
 	vnode_t *vp;
 
 	vp = VIMPL_TO_VNODE(node);
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	KASSERT(vp->v_usecount == 0);
-
+	KASSERT(vp->v_holdcnt == 0);
+	KASSERT(vp->v_writecount == 0);
 	lru_requeue(vp, NULL);
+	mutex_exit(vp->v_interlock);
+
+	vfs_insmntque(vp, NULL);
+	if (vp->v_type == VBLK || vp->v_type == VCHR)
+		spec_node_destroy(vp);
+
 	rw_destroy(&vp->v_lock);
 	uvm_obj_destroy(&vp->v_uobj, true);
 	cv_destroy(&vp->v_cv);
@@ -1076,39 +1078,22 @@ vcache_free(vnode_impl_t *node)
 int
 vcache_tryvget(vnode_t *vp)
 {
+	int error = 0;
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
-	/*
-	 * Before adding a reference, we must remove the vnode
-	 * from its freelist.
-	 */
-	if (vp->v_usecount == 0) {
+	if (__predict_false(VSTATE_GET(vp) == VS_RECLAIMED))
+		error = ENOENT;
+	else if (__predict_false(VSTATE_GET(vp) != VS_ACTIVE))
+		error = EBUSY;
+	else if (vp->v_usecount == 0)
 		vp->v_usecount = 1;
-	} else {
+	else
 		atomic_inc_uint(&vp->v_usecount);
-	}
 
-	/*
-	 * If the vnode is in the process of changing state we wait
-	 * for the change to complete and take care not to return
-	 * a clean vnode.
-	 */
-	if (VSTATE_GET(vp) == VS_RECLAIMED) {
-		vrelel(vp, 0);
-		return ENOENT;
-	} else if (VSTATE_GET(vp) != VS_ACTIVE) {
-		vrelel(vp, 0);
-		return EBUSY;
-	}
-
-	/*
-	 * Ok, we got it in good shape.
-	 */
-	VSTATE_ASSERT(vp, VS_ACTIVE);
 	mutex_exit(vp->v_interlock);
 
-	return 0;
+	return error;
 }
 
 /*
@@ -1124,34 +1109,25 @@ vcache_vget(vnode_t *vp)
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
-	/*
-	 * Before adding a reference, we must remove the vnode
-	 * from its freelist.
-	 */
-	if (vp->v_usecount == 0) {
-		vp->v_usecount = 1;
-	} else {
-		atomic_inc_uint(&vp->v_usecount);
-	}
-
-	/*
-	 * If the vnode is in the process of changing state we wait
-	 * for the change to complete and take care not to return
-	 * a clean vnode.
-	 */
+	/* Increment hold count to prevent vnode from disappearing. */
+	vp->v_holdcnt++;
 	VSTATE_WAIT_STABLE(vp);
-	if (VSTATE_GET(vp) == VS_RECLAIMED) {
-		vrelel(vp, 0);
-		return ENOENT;
-	} else if (VSTATE_GET(vp) != VS_ACTIVE) {
-		vrelel(vp, 0);
-		return EBUSY;
-	}
+	vp->v_holdcnt--;
 
-	/*
-	 * Ok, we got it in good shape.
-	 */
+	/* If this was the last reference to a reclaimed vnode free it now. */
+	if (__predict_false(VSTATE_GET(vp) == VS_RECLAIMED)) {
+		if (vp->v_holdcnt == 0 && vp->v_usecount == 0)
+			vcache_free(VNODE_TO_VIMPL(vp));
+		else
+			mutex_exit(vp->v_interlock);
+		return ENOENT;
+	}
 	VSTATE_ASSERT(vp, VS_ACTIVE);
+	if (vp->v_usecount == 0)
+		vp->v_usecount = 1;
+	else
+		atomic_inc_uint(&vp->v_usecount);
+
 	mutex_exit(vp->v_interlock);
 
 	return 0;
