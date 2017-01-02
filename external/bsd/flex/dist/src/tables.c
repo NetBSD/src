@@ -55,7 +55,7 @@
 int     yytbl_write32 (struct yytbl_writer *wr, flex_uint32_t v);
 int     yytbl_write16 (struct yytbl_writer *wr, flex_uint16_t v);
 int     yytbl_write8 (struct yytbl_writer *wr, flex_uint8_t v);
-int     yytbl_writen (struct yytbl_writer *wr, void *v, flex_int32_t len);
+int     yytbl_writen (struct yytbl_writer *wr, void *v, int len);
 static flex_int32_t yytbl_data_geti (const struct yytbl_data *tbl, int i);
 /* XXX Not used
 static flex_int32_t yytbl_data_getijk (const struct yytbl_data *tbl, int i,
@@ -86,12 +86,12 @@ int yytbl_hdr_init (struct yytbl_hdr *th, const char *version_str,
 	memset (th, 0, sizeof (struct yytbl_hdr));
 
 	th->th_magic = YYTBL_MAGIC;
-	th->th_hsize = 14 + strlen (version_str) + 1 + strlen (name) + 1;
+	th->th_hsize = (flex_uint32_t) (14 + strlen (version_str) + 1 + strlen (name) + 1);
 	th->th_hsize += yypad64 (th->th_hsize);
 	th->th_ssize = 0;	// Not known at this point.
 	th->th_flags = 0;
-	th->th_version = copy_string (version_str);
-	th->th_name = copy_string (name);
+	th->th_version = xstrdup(version_str);
+	th->th_name = xstrdup(name);
 	return 0;
 }
 
@@ -115,8 +115,7 @@ int yytbl_data_init (struct yytbl_data *td, enum yytbl_id id)
  */
 int yytbl_data_destroy (struct yytbl_data *td)
 {
-	if (td->td_data)
-		free (td->td_data);
+	free(td->td_data);
 	td->td_data = 0;
 	free (td);
 	return 0;
@@ -159,12 +158,12 @@ int yytbl_hdr_fwrite (struct yytbl_writer *wr, const struct yytbl_hdr *th)
 		flex_die (_("th_ssize|th_flags write failed"));
 	bwritten += 6;
 
-	sz = strlen (th->th_version) + 1;
+	sz = (int) strlen (th->th_version) + 1;
 	if ((rv = yytbl_writen (wr, th->th_version, sz)) != sz)
 		flex_die (_("th_version writen failed"));
 	bwritten += rv;
 
-	sz = strlen (th->th_name) + 1;
+	sz = (int) strlen (th->th_name) + 1;
 	if ((rv = yytbl_writen (wr, th->th_name, sz)) != sz)
 		flex_die (_("th_name writen failed"));
 	bwritten += rv;
@@ -214,13 +213,13 @@ int yytbl_data_fwrite (struct yytbl_writer *wr, struct yytbl_data *td)
 	for (i = 0; i < total_len; i++) {
 		switch (YYTDFLAGS2BYTES (td->td_flags)) {
 		case sizeof (flex_int8_t):
-			rv = yytbl_write8 (wr, yytbl_data_geti (td, i));
+			rv = yytbl_write8 (wr, (flex_uint8_t) yytbl_data_geti (td, i));
 			break;
 		case sizeof (flex_int16_t):
-			rv = yytbl_write16 (wr, yytbl_data_geti (td, i));
+			rv = yytbl_write16 (wr, (flex_uint16_t) yytbl_data_geti (td, i));
 			break;
 		case sizeof (flex_int32_t):
-			rv = yytbl_write32 (wr, yytbl_data_geti (td, i));
+			rv = yytbl_write32 (wr, (flex_uint32_t) yytbl_data_geti (td, i));
 			break;
 		default:
 			flex_die (_("invalid td_flags detected"));
@@ -233,7 +232,7 @@ int yytbl_data_fwrite (struct yytbl_writer *wr, struct yytbl_data *td)
 	}
 
 	/* Sanity check */
-	if (bwritten != (int) (12 + total_len * YYTDFLAGS2BYTES (td->td_flags))) {
+	if (bwritten != (12 + total_len * (int) YYTDFLAGS2BYTES (td->td_flags))) {
 		flex_die (_("insanity detected"));
 		return -1;
 	}
@@ -248,14 +247,14 @@ int yytbl_data_fwrite (struct yytbl_writer *wr, struct yytbl_data *td)
 	/* Now go back and update the th_hsize member */
 	if (fgetpos (wr->out, &pos) != 0
 	    || fsetpos (wr->out, &(wr->th_ssize_pos)) != 0
-	    || yytbl_write32 (wr, wr->total_written) < 0
+	    || yytbl_write32 (wr, (flex_uint32_t) wr->total_written) < 0
 	    || fsetpos (wr->out, &pos)) {
 		flex_die (_("get|set|fwrite32 failed"));
 		return -1;
 	}
 	else
 		/* Don't count the int we just wrote. */
-		wr->total_written -= sizeof (flex_int32_t);
+		wr->total_written -= (int) sizeof (flex_int32_t);
 	return bwritten;
 }
 
@@ -265,11 +264,11 @@ int yytbl_data_fwrite (struct yytbl_writer *wr, struct yytbl_data *td)
  *  @param  len  number of bytes
  *  @return  -1 on error. number of bytes written on success.
  */
-int yytbl_writen (struct yytbl_writer *wr, void *v, flex_int32_t len)
+int yytbl_writen (struct yytbl_writer *wr, void *v, int len)
 {
 	int  rv;
 
-	rv = fwrite (v, 1, len, wr->out);
+	rv = (int) fwrite (v, 1, (size_t) len, wr->out);
 	if (rv != len)
 		return -1;
 	wr->total_written += len;
@@ -284,11 +283,11 @@ int yytbl_writen (struct yytbl_writer *wr, void *v, flex_int32_t len)
 int yytbl_write32 (struct yytbl_writer *wr, flex_uint32_t v)
 {
 	flex_uint32_t vnet;
-	size_t  bytes, rv;
+	int  bytes, rv;
 
 	vnet = htonl (v);
-	bytes = sizeof (flex_uint32_t);
-	rv = fwrite (&vnet, bytes, 1, wr->out);
+	bytes = (int) sizeof (flex_uint32_t);
+	rv = (int) fwrite (&vnet, (size_t) bytes, 1, wr->out);
 	if (rv != 1)
 		return -1;
 	wr->total_written += bytes;
@@ -303,11 +302,11 @@ int yytbl_write32 (struct yytbl_writer *wr, flex_uint32_t v)
 int yytbl_write16 (struct yytbl_writer *wr, flex_uint16_t v)
 {
 	flex_uint16_t vnet;
-	size_t  bytes, rv;
+	int  bytes, rv;
 
 	vnet = htons (v);
-	bytes = sizeof (flex_uint16_t);
-	rv = fwrite (&vnet, bytes, 1, wr->out);
+	bytes = (int) sizeof (flex_uint16_t);
+	rv = (int) fwrite (&vnet, (size_t) bytes, 1, wr->out);
 	if (rv != 1)
 		return -1;
 	wr->total_written += bytes;
@@ -321,10 +320,10 @@ int yytbl_write16 (struct yytbl_writer *wr, flex_uint16_t v)
  */
 int yytbl_write8 (struct yytbl_writer *wr, flex_uint8_t v)
 {
-	size_t  bytes, rv;
+	int  bytes, rv;
 
-	bytes = sizeof (flex_uint8_t);
-	rv = fwrite (&v, bytes, 1, wr->out);
+	bytes = (int) sizeof (flex_uint8_t);
+	rv = (int) fwrite (&v, (size_t) bytes, 1, wr->out);
 	if (rv != 1)
 		return -1;
 	wr->total_written += bytes;
@@ -428,7 +427,7 @@ static void yytbl_data_seti (const struct yytbl_data *tbl, int i,
  */
 static size_t min_int_size (struct yytbl_data *tbl)
 {
-	flex_uint32_t i, total_len;
+	flex_int32_t i, total_len;
 	flex_int32_t max = 0;
 
 	total_len = yytbl_calc_total_len (tbl);
@@ -438,7 +437,7 @@ static size_t min_int_size (struct yytbl_data *tbl)
 
 		n = abs (yytbl_data_geti (tbl, i));
 
-		if (n > max)
+		if (max < n)
 			max = n;
 	}
 
@@ -461,7 +460,8 @@ static size_t min_int_size (struct yytbl_data *tbl)
  */
 void yytbl_data_compress (struct yytbl_data *tbl)
 {
-	flex_int32_t i, newsz, total_len;
+	flex_int32_t i, total_len;
+	size_t newsz;
 	struct yytbl_data newtbl;
 
 	yytbl_data_init (&newtbl, tbl->td_id);
@@ -472,19 +472,19 @@ void yytbl_data_compress (struct yytbl_data *tbl)
 	newsz = min_int_size (tbl);
 
 
-	if (newsz == (int) YYTDFLAGS2BYTES (tbl->td_flags))
+	if (newsz == YYTDFLAGS2BYTES (tbl->td_flags))
 		/* No change in this table needed. */
 		return;
 
-	if (newsz > (int) YYTDFLAGS2BYTES (tbl->td_flags)) {
+	if (newsz > YYTDFLAGS2BYTES (tbl->td_flags)) {
 		flex_die (_("detected negative compression"));
 		return;
 	}
 
 	total_len = yytbl_calc_total_len (tbl);
-	newtbl.td_data = calloc (total_len, newsz);
-	newtbl.td_flags =
-		TFLAGS_CLRDATA (newtbl.td_flags) | BYTES2TFLAG (newsz);
+	newtbl.td_data = calloc ((size_t) total_len, newsz);
+	newtbl.td_flags = (flex_uint16_t)
+		(TFLAGS_CLRDATA (newtbl.td_flags) | BYTES2TFLAG (newsz));
 
 	for (i = 0; i < total_len; i++) {
 		flex_int32_t g;

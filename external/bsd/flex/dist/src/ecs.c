@@ -36,7 +36,7 @@
 
 /* ccl2ecl - convert character classes to set of equivalence classes */
 
-void    ccl2ecl ()
+void    ccl2ecl (void)
 {
 	int     i, ich, newlen, cclp, ccls, cclmec;
 
@@ -56,7 +56,8 @@ void    ccl2ecl ()
 			cclmec = ecgroup[ich];
 
 			if (cclmec > 0) {
-				ccltbl[cclp + newlen] = cclmec;
+				/* Note: range 1..256 is mapped to 1..255,0 */
+				ccltbl[cclp + newlen] = (unsigned char) cclmec;
 				++newlen;
 			}
 		}
@@ -74,8 +75,7 @@ void    ccl2ecl ()
  * Returned is the number of classes.
  */
 
-int     cre8ecs (fwd, bck, num)
-     int     fwd[], bck[], num;
+int     cre8ecs (int fwd[], int bck[], int num)
 {
 	int     i, j, numcl;
 
@@ -100,9 +100,9 @@ int     cre8ecs (fwd, bck, num)
 /* mkeccl - update equivalence classes based on character class xtions
  *
  * synopsis
- *    Char ccls[];
+ *    unsigned char ccls[];
  *    int lenccl, fwd[llsiz], bck[llsiz], llsiz, NUL_mapping;
- *    void mkeccl( Char ccls[], int lenccl, int fwd[llsiz], int bck[llsiz],
+ *    void mkeccl( unsigned char ccls[], int lenccl, int fwd[llsiz], int bck[llsiz],
  *			int llsiz, int NUL_mapping );
  *
  * ccls contains the elements of the character class, lenccl is the
@@ -112,9 +112,7 @@ int     cre8ecs (fwd, bck, num)
  * NUL_mapping is the value which NUL (0) should be mapped to.
  */
 
-void    mkeccl (ccls, lenccl, fwd, bck, llsiz, NUL_mapping)
-     Char    ccls[];
-     int     lenccl, fwd[], bck[], llsiz, NUL_mapping;
+void    mkeccl (unsigned char ccls[], int lenccl, int fwd[], int bck[], int llsiz, int NUL_mapping)
 {
 	int     cclp, oldec, newec;
 	int     cclm, i, j;
@@ -201,8 +199,7 @@ void    mkeccl (ccls, lenccl, fwd, bck, llsiz, NUL_mapping)
 
 /* mkechar - create equivalence class for single character */
 
-void    mkechar (tch, fwd, bck)
-     int     tch, fwd[], bck[];
+void    mkechar (int tch, int fwd[], int bck[])
 {
 	/* If until now the character has been a proper subset of
 	 * an equivalence class, break it away to create a new ec

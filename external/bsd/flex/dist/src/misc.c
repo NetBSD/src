@@ -60,14 +60,15 @@ static void sko_push(bool dc)
 {
     if(!sko_stack){
         sko_sz = 1;
-        sko_stack = (struct sko_state*)flex_alloc(sizeof(struct sko_state)*sko_sz);
+        sko_stack = malloc(sizeof(struct sko_state) * (size_t) sko_sz);
         if (!sko_stack)
             flexfatal(_("allocation of sko_stack failed"));
         sko_len = 0;
     }
     if(sko_len >= sko_sz){
         sko_sz *= 2;
-        sko_stack = (struct sko_state*)flex_realloc(sko_stack,sizeof(struct sko_state)*sko_sz);
+        sko_stack = realloc(sko_stack,
+			sizeof(struct sko_state) * (size_t) sko_sz);
     }
     
     /* initialize to zero and push */
@@ -90,9 +91,7 @@ static void sko_pop(bool* dc)
 }
 
 /* Append "#define defname value\n" to the running buffer. */
-void action_define (defname, value)
-     const char *defname;
-     int value;
+void action_define (const char *defname, int value)
 {
 	char    buf[MAXLINE];
 	char   *cpy;
@@ -108,39 +107,14 @@ void action_define (defname, value)
 	add_action (buf);
 
 	/* track #defines so we can undef them when we're done. */
-	cpy = copy_string (defname);
+	cpy = xstrdup(defname);
 	buf_append (&defs_buf, &cpy, 1);
 }
 
-
-#ifdef notdef
-/** Append "m4_define([[defname]],[[value]])m4_dnl\n" to the running buffer.
- *  @param defname The macro name.
- *  @param value The macro value, can be NULL, which is the same as the empty string.
- */
-static void action_m4_define (const char *defname, const char * value)
-{
-	char    buf[MAXLINE];
-
-    flexfatal ("DO NOT USE THIS FUNCTION!");
-
-	if ((int) strlen (defname) > MAXLINE / 2) {
-		format_pinpoint_message (_
-					 ("name \"%s\" ridiculously long"),
-					 defname);
-		return;
-	}
-
-	snprintf (buf, sizeof(buf), "m4_define([[%s]],[[%s]])m4_dnl\n", defname, value?value:"");
-	add_action (buf);
-}
-#endif
-
 /* Append "new_text" to the running buffer. */
-void add_action (new_text)
-     const char   *new_text;
+void add_action (const char *new_text)
 {
-	int     len = strlen (new_text);
+	int     len = (int) strlen (new_text);
 
 	while (len + action_index >= action_size - 10 /* slop */ ) {
 		int     new_size = action_size * 2;
@@ -166,14 +140,12 @@ void add_action (new_text)
 
 /* allocate_array - allocate memory for an integer array of the given size */
 
-void   *allocate_array (size, element_size)
-     int size;
-     size_t element_size;
+void   *allocate_array (int size, size_t element_size)
 {
 	void *mem;
-	size_t  num_bytes = element_size * size;
+	size_t  num_bytes = element_size * (size_t) size;
 
-	mem = flex_alloc (num_bytes);
+	mem = malloc(num_bytes);
 	if (!mem)
 		flexfatal (_
 			   ("memory allocation failed in allocate_array()"));
@@ -184,11 +156,10 @@ void   *allocate_array (size, element_size)
 
 /* all_lower - true if a string is all lower-case */
 
-int all_lower (str)
-     char *str;
+int all_lower (char *str)
 {
 	while (*str) {
-		if (!isascii ((Char) * str) || !islower ((Char) * str))
+		if (!isascii ((unsigned char) * str) || !islower ((unsigned char) * str))
 			return 0;
 		++str;
 	}
@@ -199,11 +170,10 @@ int all_lower (str)
 
 /* all_upper - true if a string is all upper-case */
 
-int all_upper (str)
-     char *str;
+int all_upper (char *str)
 {
 	while (*str) {
-		if (!isascii ((Char) * str) || !isupper ((Char) * str))
+		if (!isascii ((unsigned char) * str) || !isupper ((unsigned char) * str))
 			return 0;
 		++str;
 	}
@@ -225,8 +195,7 @@ int intcmp (const void *a, const void *b)
  *		and exits.
  */
 
-void check_char (c)
-     int c;
+void check_char (int c)
 {
 	if (c >= CSIZE)
 		lerr (_("bad character '%s' detected in check_char()"),
@@ -242,57 +211,20 @@ void check_char (c)
 
 /* clower - replace upper-case letter to lower-case */
 
-Char clower (c)
-     int c;
+unsigned char clower (int c)
 {
-	return (Char) ((isascii (c) && isupper (c)) ? tolower (c) : c);
+	return (unsigned char) ((isascii (c) && isupper (c)) ? tolower (c) : c);
 }
 
 
-/* copy_string - returns a dynamically allocated copy of a string */
-
-char   *copy_string (str)
-     const char *str;
+char *xstrdup(const char *s)
 {
-	const char *c1;
-	char *c2;
-	char   *copy;
-	unsigned int size;
+	char *s2;
 
-	/* find length */
-	for (c1 = str; *c1; ++c1) ;
+	if ((s2 = strdup(s)) == NULL)
+		flexfatal (_("memory allocation failure in xstrdup()"));
 
-	size = (c1 - str + 1) * sizeof (char);
-
-	copy = (char *) flex_alloc (size);
-
-	if (copy == NULL)
-		flexfatal (_("dynamic memory failure in copy_string()"));
-
-	for (c2 = copy; (*c2++ = *str++) != 0;) ;
-
-	return copy;
-}
-
-
-/* copy_unsigned_string -
- *    returns a dynamically allocated copy of a (potentially) unsigned string
- */
-
-Char   *copy_unsigned_string (str)
-     Char *str;
-{
-	Char *c;
-	Char   *copy;
-
-	/* find length */
-	for (c = str; *c; ++c) ;
-
-	copy = allocate_Character_array (c - str + 1);
-
-	for (c = copy; (*c++ = *str++) != 0;) ;
-
-	return copy;
+	return s2;
 }
 
 
@@ -300,19 +232,19 @@ Char   *copy_unsigned_string (str)
 
 int cclcmp (const void *a, const void *b)
 {
-  if (!*(const Char *) a)
+  if (!*(const unsigned char *) a)
 	return 1;
   else
-	if (!*(const Char *) b)
+	if (!*(const unsigned char *) b)
 	  return - 1;
 	else
-	  return *(const Char *) a - *(const Char *) b;
+	  return *(const unsigned char *) a - *(const unsigned char *) b;
 }
 
 
 /* dataend - finish up a block of data declarations */
 
-void dataend ()
+void dataend (void)
 {
 	/* short circuit any output */
 	if (gentables) {
@@ -330,7 +262,7 @@ void dataend ()
 
 /* dataflush - flush generated data statements */
 
-void dataflush ()
+void dataflush (void)
 {
 	/* short circuit any output */
 	if (!gentables)
@@ -353,8 +285,7 @@ void dataflush ()
 
 /* flexerror - report an error message and terminate */
 
-void flexerror (msg)
-     const char *msg;
+void flexerror (const char *msg)
 {
 	fprintf (stderr, "%s: %s\n", program_name, msg);
 	flexend (1);
@@ -363,8 +294,7 @@ void flexerror (msg)
 
 /* flexfatal - report a fatal error message and terminate */
 
-void flexfatal (msg)
-     const char *msg;
+void flexfatal (const char *msg)
 {
 	fprintf (stderr, _("%s: fatal internal error, %s\n"),
 		 program_name, msg);
@@ -372,10 +302,9 @@ void flexfatal (msg)
 }
 
 
-/* htoi - convert a hexadecimal digit string to an integer value */
+/* htoui - convert a hexadecimal digit string to an unsigned integer value */
 
-int htoi (str)
-     Char str[];
+unsigned int htoui (unsigned char str[])
 {
 	unsigned int result;
 
@@ -387,7 +316,8 @@ int htoi (str)
 
 /* lerr - report an error message */
 
-void lerr (const char *msg, ...) {
+void lerr (const char *msg, ...)
+{
 	char    errmsg[MAXLINE];
 	va_list args;
 
@@ -414,9 +344,7 @@ void lerr_fatal (const char *msg, ...)
 
 /* line_directive_out - spit out a "#line" statement */
 
-void line_directive_out (output_file, do_infile)
-     FILE   *output_file;
-     int do_infile;
+void line_directive_out (FILE *output_file, int do_infile)
 {
 	char    directive[MAXLINE], filename[MAXLINE];
 	char   *s1, *s2, *s3;
@@ -434,8 +362,8 @@ void line_directive_out (output_file, do_infile)
 	s3 = &filename[sizeof (filename) - 2];
 
 	while (s2 < s3 && *s1) {
-		if (*s1 == '\\')
-			/* Escape the '\' */
+		if (*s1 == '\\' || *s1 == '"')
+			/* Escape the '\' or '"' */
 			*s2++ = '\\';
 
 		*s2++ = *s1++;
@@ -464,7 +392,7 @@ void line_directive_out (output_file, do_infile)
  *               representing where the user's section 1 definitions end
  *		 and the prolog begins
  */
-void mark_defs1 ()
+void mark_defs1 (void)
 {
 	defs1_offset = 0;
 	action_array[action_index++] = '\0';
@@ -476,7 +404,7 @@ void mark_defs1 ()
 /* mark_prolog - mark the current position in the action array as
  *               representing the end of the action prolog
  */
-void mark_prolog ()
+void mark_prolog (void)
 {
 	action_array[action_index++] = '\0';
 	action_offset = action_index;
@@ -488,8 +416,7 @@ void mark_prolog ()
  *
  * Generates a data statement initializing the current 2-D array to "value".
  */
-void mk2data (value)
-     int value;
+void mk2data (int value)
 {
 	/* short circuit any output */
 	if (!gentables)
@@ -518,8 +445,7 @@ void mk2data (value)
  * Generates a data statement initializing the current array element to
  * "value".
  */
-void mkdata (value)
-     int value;
+void mkdata (int value)
 {
 	/* short circuit any output */
 	if (!gentables)
@@ -544,8 +470,7 @@ void mkdata (value)
 
 /* myctoi - return the integer represented by a string of digits */
 
-int myctoi (array)
-     const char *array;
+int myctoi (const char *array)
 {
 	int     val = 0;
 
@@ -557,10 +482,9 @@ int myctoi (array)
 
 /* myesc - return character corresponding to escape sequence */
 
-Char myesc (array)
-     Char array[];
+unsigned char myesc (unsigned char array[])
 {
-	Char    c, esc_char;
+	unsigned char    c, esc_char;
 
 	switch (array[1]) {
 	case 'b':
@@ -573,19 +497,10 @@ Char myesc (array)
 		return '\r';
 	case 't':
 		return '\t';
-
-#if defined (__STDC__)
 	case 'a':
 		return '\a';
 	case 'v':
 		return '\v';
-#else
-	case 'a':
-		return '\007';
-	case 'v':
-		return '\013';
-#endif
-
 	case '0':
 	case '1':
 	case '2':
@@ -597,7 +512,8 @@ Char myesc (array)
 		{		/* \<octal> */
 			int     sptr = 1;
 
-			while (isascii (array[sptr]) &&
+			while (sptr <= 3 &&
+                               isascii (array[sptr]) &&
 			       isdigit (array[sptr]))
 				/* Don't increment inside loop control
 				 * because if isdigit() is a macro it might
@@ -608,7 +524,7 @@ Char myesc (array)
 			c = array[sptr];
 			array[sptr] = '\0';
 
-			esc_char = otoi (array + 1);
+			esc_char = (unsigned char) otoui (array + 1);
 
 			array[sptr] = c;
 
@@ -630,7 +546,7 @@ Char myesc (array)
 			c = array[sptr];
 			array[sptr] = '\0';
 
-			esc_char = htoi (array + 2);
+			esc_char = (unsigned char) htoui (array + 2);
 
 			array[sptr] = c;
 
@@ -643,10 +559,9 @@ Char myesc (array)
 }
 
 
-/* otoi - convert an octal digit string to an integer value */
+/* otoui - convert an octal digit string to an unsigned integer value */
 
-int otoi (str)
-     Char str[];
+unsigned int otoui (unsigned char str[])
 {
 	unsigned int result;
 
@@ -659,60 +574,47 @@ int otoi (str)
  *	 generated scanner, keeping track of the line count.
  */
 
-void out (str)
-     const char *str;
+void out (const char *str)
 {
 	fputs (str, stdout);
 }
 
-void out_dec (fmt, n)
-     const char *fmt;
-     int n;
+void out_dec (const char *fmt, int n)
 {
 	fprintf (stdout, fmt, n);
 }
 
-void out_dec2 (fmt, n1, n2)
-     const char *fmt;
-     int n1, n2;
+void out_dec2 (const char *fmt, int n1, int n2)
 {
 	fprintf (stdout, fmt, n1, n2);
 }
 
-void out_hex (fmt, x)
-     const char *fmt;
-     unsigned int x;
+void out_hex (const char *fmt, unsigned int x)
 {
 	fprintf (stdout, fmt, x);
 }
 
-void out_str (fmt, str)
-     const char *fmt, str[];
+void out_str (const char *fmt, const char str[])
 {
 	fprintf (stdout,fmt, str);
 }
 
-void out_str3 (fmt, s1, s2, s3)
-     const char *fmt, s1[], s2[], s3[];
+void out_str3 (const char *fmt, const char s1[], const char s2[], const char s3[])
 {
 	fprintf (stdout,fmt, s1, s2, s3);
 }
 
-void out_str_dec (fmt, str, n)
-     const char *fmt, str[];
-     int n;
+void out_str_dec (const char *fmt, const char str[], int n)
 {
 	fprintf (stdout,fmt, str, n);
 }
 
-void outc (c)
-     int c;
+void outc (int c)
 {
 	fputc (c, stdout);
 }
 
-void outn (str)
-     const char *str;
+void outn (const char *str)
 {
 	fputs (str,stdout);
     fputc('\n',stdout);
@@ -734,8 +636,7 @@ void out_m4_define (const char* def, const char* val)
  * The returned string is in static storage.
  */
 
-char   *readable_form (c)
-     int c;
+char   *readable_form (int c)
 {
 	static char rform[20];
 
@@ -751,14 +652,10 @@ char   *readable_form (c)
 			return "\\r";
 		case '\t':
 			return "\\t";
-
-#if defined (__STDC__)
 		case '\a':
 			return "\\a";
 		case '\v':
 			return "\\v";
-#endif
-
 		default:
 			if(trace_hex)
 				snprintf (rform, sizeof(rform), "\\x%.2x", (unsigned int) c);
@@ -772,7 +669,7 @@ char   *readable_form (c)
 		return "' '";
 
 	else {
-		rform[0] = c;
+		rform[0] = (char) c;
 		rform[1] = '\0';
 
 		return rform;
@@ -782,15 +679,12 @@ char   *readable_form (c)
 
 /* reallocate_array - increase the size of a dynamic array */
 
-void   *reallocate_array (array, size, element_size)
-     void   *array;
-     int size;
-     size_t element_size;
+void   *reallocate_array (void *array, int size, size_t element_size)
 {
 	void *new_array;
-	size_t  num_bytes = element_size * size;
+	size_t  num_bytes = element_size * (size_t) size;
 
-	new_array = flex_realloc (array, num_bytes);
+	new_array = realloc(array, num_bytes);
 	if (!new_array)
 		flexfatal (_("attempt to increase array size failed"));
 
@@ -804,7 +698,7 @@ void   *reallocate_array (array, size, element_size)
  *    Copies skelfile or skel array to stdout until a line beginning with
  *    "%%" or EOF is found.
  */
-void skelout ()
+void skelout (void)
 {
 	char    buf_storage[MAXLINE];
 	char   *buf = buf_storage;
@@ -935,8 +829,7 @@ void skelout ()
  * element_n.  Formats the output with spaces and carriage returns.
  */
 
-void transition_struct_out (element_v, element_n)
-     int element_v, element_n;
+void transition_struct_out (int element_v, int element_n)
 {
 
 	/* short circuit any output */
@@ -960,12 +853,14 @@ void transition_struct_out (element_v, element_n)
 
 /* The following is only needed when building flex's parser using certain
  * broken versions of bison.
+ *
+ * XXX: this is should go soon
  */
-void   *yy_flex_xmalloc (size)
-     int size;
+void   *yy_flex_xmalloc (int size)
 {
-	void   *result = flex_alloc ((size_t) size);
+	void   *result;
 
+	result = malloc((size_t) size);
 	if (!result)
 		flexfatal (_
 			   ("memory allocation failed in yy_flex_xmalloc()"));
@@ -974,29 +869,10 @@ void   *yy_flex_xmalloc (size)
 }
 
 
-/* zero_out - set a region of memory to 0
- *
- * Sets region_ptr[0] through region_ptr[size_in_bytes - 1] to zero.
- */
-
-void zero_out (region_ptr, size_in_bytes)
-     char   *region_ptr;
-     size_t size_in_bytes;
-{
-	char *rp, *rp_end;
-
-	rp = region_ptr;
-	rp_end = region_ptr + size_in_bytes;
-
-	while (rp < rp_end)
-		*rp++ = 0;
-}
-
 /* Remove all '\n' and '\r' characters, if any, from the end of str.
  * str can be any null-terminated string, or NULL.
  * returns str. */
-char   *chomp (str)
-     char   *str;
+char   *chomp (char *str)
 {
 	char   *p = str;
 

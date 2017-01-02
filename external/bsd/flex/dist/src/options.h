@@ -68,8 +68,6 @@ enum flexopt_flag_t {
 	OPT_META_ECS,
 	OPT_NEVER_INTERACTIVE,
 	OPT_NO_ALIGN,
-        OPT_NO_ANSI_FUNC_DEFS,
-        OPT_NO_ANSI_FUNC_PROTOS,
 	OPT_NO_DEBUG,
 	OPT_NO_DEFAULT,
 	OPT_NO_ECS,
@@ -127,7 +125,8 @@ enum flexopt_flag_t {
 	OPT_YYCLASS,
 	OPT_YYLINENO,
 	OPT_YYMORE,
-	OPT_YYWRAP
+	OPT_YYWRAP,
+        OPT_NO_SECT3_ESCAPE,
 };
 
 #endif

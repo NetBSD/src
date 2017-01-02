@@ -36,15 +36,15 @@
 #include "version.h"
 #include "options.h"
 #include "tables.h"
+#include "parse.h"
 
 static char flex_version[] = FLEX_VERSION;
 
 /* declare functions that have forward references */
 
-void flexinit PROTO ((int, char **));
-void readin PROTO ((void));
-void set_up_initial_allocations PROTO ((void));
-static char *basename2 PROTO ((char *path, int should_strip_ext));
+void flexinit(int, char **);
+void readin(void);
+void set_up_initial_allocations(void);
 
 
 /* these globals are all defined and commented in flexdef.h */
@@ -94,7 +94,7 @@ int    *accsiz, *dhash, numas;
 int     numsnpairs, jambase, jamstate;
 int     lastccl, *cclmap, *ccllen, *cclng, cclreuse;
 int     current_maxccls, current_max_ccl_tbl_size;
-Char   *ccltbl;
+unsigned char   *ccltbl;
 char    nmstr[MAXLINE];
 int     sectnum, nummt, hshcol, dfaeql, numeps, eps2, num_reallocs;
 int     tmpuses, totnst, peakpairs, numuniq, numdup, hshsave;
@@ -106,7 +106,6 @@ int     num_input_files;
 jmp_buf flex_main_jmp_buf;
 bool   *rule_has_nl, *ccl_has_nl;
 int     nlch = '\n';
-bool    ansi_func_defs, ansi_func_protos;
 
 bool    tablesext, tablesverify, gentables;
 char   *tablesfilename=0,*tablesname=0;
@@ -117,19 +116,9 @@ struct yytbl_writer tableswr;
  */
 char   *program_name = "flex";
 
-#ifndef SHORT_FILE_NAMES
 static const char outfile_template[] = "lex.%s.%s";
 static const char backing_name[] = "lex.backup";
 static const char tablesfile_template[] = "lex.%s.tables";
-#else
-static const char outfile_template[] = "lex%s.%s";
-static const char backing_name[] = "lex.bck";
-static const char tablesfile_template[] = "lex%s.tbl";
-#endif
-
-#ifdef MS_DOS
-extern unsigned _stklen = 16384;
-#endif
 
 /* From scan.l */
 extern FILE* yyout;
@@ -138,18 +127,15 @@ static char outfile_path[MAXLINE];
 static int outfile_created = 0;
 static char *skelname = NULL;
 static int _stdout_closed = 0; /* flag to prevent double-fclose() on stdout. */
-const char *escaped_qstart = "[[]]M4_YY_NOOP[M4_YY_NOOP[M4_YY_NOOP[[]]";
-const char *escaped_qend   = "[[]]M4_YY_NOOP]M4_YY_NOOP]M4_YY_NOOP[[]]";
+const char *escaped_qstart = "]]M4_YY_NOOP[M4_YY_NOOP[M4_YY_NOOP[[";
+const char *escaped_qend   = "]]M4_YY_NOOP]M4_YY_NOOP]M4_YY_NOOP[[";
 
 /* For debugging. The max number of filters to apply to skeleton. */
 static int preproc_level = 1000;
 
-int flex_main PROTO ((int argc, char *argv[]));
-int main PROTO ((int argc, char *argv[]));
+int flex_main (int argc, char *argv[]);
 
-int flex_main (argc, argv)
-     int argc;
-     char   *argv[];
+int flex_main (int argc, char *argv[])
 {
 	int     i, exit_status, child_status;
 
@@ -209,9 +195,7 @@ int flex_main (argc, argv)
 }
 
 /* Wrapper around flex_main, so flex_main can be built as a library. */
-int main (argc, argv)
-     int argc;
-     char   *argv[];
+int main (int argc, char *argv[])
 {
 #if ENABLE_NLS
 #if HAVE_LOCALE_H
@@ -227,7 +211,7 @@ int main (argc, argv)
 
 /* check_options - check user-specified options */
 
-void check_options ()
+void check_options (void)
 {
 	int     i;
     const char * m4 = NULL;
@@ -326,12 +310,6 @@ void check_options ()
 		}
 	}
 
-    if (!ansi_func_defs)
-        buf_m4_define( &m4defs_buf, "M4_YY_NO_ANSI_FUNC_DEFS", NULL);
-
-    if (!ansi_func_protos)
-        buf_m4_define( &m4defs_buf, "M4_YY_NO_ANSI_FUNC_PROTOS", NULL);
-
     if (extra_type)
         buf_m4_define( &m4defs_buf, "M4_EXTRA_TYPE_DEFS", extra_type);
 
@@ -363,8 +341,44 @@ void check_options ()
 
     /* Setup the filter chain. */
     output_chain = filter_create_int(NULL, filter_tee_header, headerfilename);
-    if ( !(m4 = getenv("M4")))
-        m4 = M4;
+    if ( !(m4 = getenv("M4"))) {
+	    char *slash;
+		m4 = M4;
+		if ((slash = strrchr(M4, '/')) != NULL) {
+			m4 = slash+1;
+			/* break up $PATH */
+			const char *path = getenv("PATH");
+			if (!path) {
+				m4 = M4;
+			} else {
+				int m4_length = strlen(m4);
+				do {
+					size_t length = strlen(path);
+					struct stat sbuf;
+
+					const char *endOfDir = strchr(path, ':');
+					if (!endOfDir)
+						endOfDir = path+length;
+
+					{
+						char m4_path[endOfDir-path + 1 + m4_length + 1];
+
+						memcpy(m4_path, path, endOfDir-path);
+						m4_path[endOfDir-path] = '/';
+						memcpy(m4_path + (endOfDir-path) + 1, m4, m4_length + 1);
+						if (stat(m4_path, &sbuf) == 0 &&
+							(S_ISREG(sbuf.st_mode)) && sbuf.st_mode & S_IXUSR) {
+							m4 = strdup(m4_path);
+							break;
+						}
+					}
+					path = endOfDir+1;
+				} while (path[0]);
+				if (!path[0])
+				    m4 = M4;
+			}
+		}
+	}
     filter_create_ext(output_chain, m4, "-P", 0);
     filter_create_int(output_chain, filter_fix_linedirs, NULL);
 
@@ -390,26 +404,25 @@ void check_options ()
 		FILE   *tablesout;
 		struct yytbl_hdr hdr;
 		char   *pname = 0;
-		int     nbytes = 0;
+		size_t  nbytes = 0;
 
 		buf_m4_define (&m4defs_buf, "M4_YY_TABLES_EXTERNAL", NULL);
 
 		if (!tablesfilename) {
 			nbytes = strlen (prefix) + strlen (tablesfile_template) + 2;
-			tablesfilename = pname = (char *) calloc (nbytes, 1);
+			tablesfilename = pname = calloc(nbytes, 1);
 			snprintf (pname, nbytes, tablesfile_template, prefix);
 		}
 
 		if ((tablesout = fopen (tablesfilename, "w")) == NULL)
 			lerr (_("could not create %s"), tablesfilename);
-		if (pname)
-			free (pname);
+		free(pname);
 		tablesfilename = 0;
 
 		yytbl_writer_init (&tableswr, tablesout);
 
 		nbytes = strlen (prefix) + strlen ("tables") + 2;
-		tablesname = (char *) calloc (nbytes, 1);
+		tablesname = calloc(nbytes, 1);
 		snprintf (tablesname, nbytes, "%stables", prefix);
 		yytbl_hdr_init (&hdr, flex_version, tablesname);
 
@@ -432,6 +445,8 @@ void check_options ()
 	if ( bison_bridge_lloc)
         buf_m4_define (&m4defs_buf, "<M4_YY_BISON_LLOC>", NULL);
 
+    if (strchr(prefix, '[') || strchr(prefix, ']'))
+        flexerror(_("Prefix cannot include '[' or ']'"));
     buf_m4_define(&m4defs_buf, "M4_YY_PREFIX", prefix);
 
 	if (did_outfilename)
@@ -452,7 +467,8 @@ void check_options ()
              char *str, *fmt = "#define %s %d\n";
              size_t strsz;
 
-             str = (char*)flex_alloc(strsz = strlen(fmt) + strlen(scname[i]) + (int)(1 + log10(i)) + 2);
+             strsz = strlen(fmt) + strlen(scname[i]) + (size_t)(1 + ceil (log10(i))) + 2;
+             str = malloc(strsz);
              if (!str)
                flexfatal(_("allocation of macro definition failed"));
              snprintf(str, strsz, fmt,      scname[i], i - 1);
@@ -474,7 +490,8 @@ void check_options ()
     m4defs_buf.nelts = 0; /* memory leak here. */
 
     /* Place a bogus line directive, it will be fixed in the filter. */
-    outn("#line 0 \"M4_YY_OUTFILE_NAME\"\n");
+    if (gen_line_dirs)
+        outn("#line 0 \"M4_YY_OUTFILE_NAME\"\n");
 
 	/* Dump the user defined preproc directives. */
 	if (userdef_buf.elts)
@@ -490,9 +507,7 @@ void check_options ()
  *    This routine does not return.
  */
 
-void flexend (exit_status)
-     int exit_status;
-
+void flexend (int exit_status)
 {
 	static int called_before = -1;	/* prevent infinite recursion. */
 	int     tblsiz;
@@ -539,7 +554,6 @@ void flexend (exit_status)
                 "EOB_ACT_END_OF_FILE",
                 "EOB_ACT_LAST_MATCH",
                 "FLEX_SCANNER",
-                "FLEX_STD",
                 "REJECT",
                 "YYFARGS0",
                 "YYFARGS1",
@@ -626,7 +640,7 @@ void flexend (exit_status)
 				"yypop_buffer_state",
 				"yyensure_buffer_stack",
                 "yyalloc",
-                "yyconst",
+                "const",
                 "yyextra",
                 "yyfree",
                 "yyget_debug",
@@ -926,9 +940,7 @@ void flexend (exit_status)
 
 /* flexinit - initialize flex */
 
-void flexinit (argc, argv)
-     int argc;
-     char  **argv;
+void flexinit (int argc, char **argv)
 {
 	int     i, sawcmpflag, rv, optind;
 	char   *arg;
@@ -953,7 +965,6 @@ void flexinit (argc, argv)
 	tablesext = tablesverify = false;
 	gentables = true;
 	tablesfilename = tablesname = NULL;
-    ansi_func_defs = ansi_func_protos = true;
 
 	sawcmpflag = false;
 
@@ -982,9 +993,9 @@ void flexinit (argc, argv)
     flex_init_regex();
 
 	/* Enable C++ if program name ends with '+'. */
-	program_name = basename2 (argv[0], 0);
+	program_name = basename (argv[0]);
 
-	if (program_name[0] != '\0' &&
+	if (program_name != NULL &&
 	    program_name[strlen (program_name) - 1] == '+')
 		C_plus_plus = true;
 
@@ -1105,7 +1116,7 @@ void flexinit (argc, argv)
 			break;
 
         case OPT_PREPROC_LEVEL:
-            preproc_level = strtol(arg,NULL,0);
+            preproc_level = (int) strtol(arg,NULL,0);
             break;
 
 		case OPT_MAIN:
@@ -1268,7 +1279,7 @@ void flexinit (argc, argv)
 				}
 				else {
 					buf_strnappend (&userdef_buf, arg,
-							def - arg);
+							(int) (def - arg));
 					buf_strappend (&userdef_buf, " ");
 					buf_strappend (&userdef_buf,
 						       def + 1);
@@ -1329,14 +1340,6 @@ void flexinit (argc, argv)
 		case OPT_NO_REJECT:
 			reject_really_used = false;
 			break;
-
-        case OPT_NO_ANSI_FUNC_DEFS:
-            ansi_func_defs = false;
-            break;
-
-        case OPT_NO_ANSI_FUNC_PROTOS:
-            ansi_func_protos = false;
-            break;
 
 		case OPT_NO_YY_PUSH_STATE:
 			//buf_strdefine (&userdef_buf, "YY_NO_PUSH_STATE", "1");
@@ -1424,6 +1427,10 @@ void flexinit (argc, argv)
 			break;
 		case OPT_HEX:
 			trace_hex = 1;
+                        break;
+                case OPT_NO_SECT3_ESCAPE:
+                        no_section3_escape = true;
+                        break;
 		}		/* switch */
 	}			/* while scanopt() */
 
@@ -1456,13 +1463,13 @@ void flexinit (argc, argv)
 
 /* readin - read in the rules section of the input file(s) */
 
-void readin ()
+void readin (void)
 {
 	static char yy_stdinit[] = "FILE *yyin = stdin, *yyout = stdout;";
 	static char yy_nostdinit[] =
-		"FILE *yyin = (FILE *) 0, *yyout = (FILE *) 0;";
+		"FILE *yyin = NULL, *yyout = NULL;";
 
-	line_directive_out ((FILE *) 0, 1);
+	line_directive_out(NULL, 1);
 
 	if (yyparse ()) {
 		pinpoint_message (_("fatal parse error"));
@@ -1590,10 +1597,7 @@ void readin ()
 		outn ("\n#define FLEX_DEBUG");
 
 	OUT_BEGIN_CODE ();
-	if (csize == 256)
-		outn ("typedef unsigned char YY_CHAR;");
-	else
-		outn ("typedef char YY_CHAR;");
+	outn ("typedef flex_uint8_t YY_CHAR;");
 	OUT_END_CODE ();
 
 	if (C_plus_plus) {
@@ -1637,7 +1641,7 @@ void readin ()
 
 	OUT_BEGIN_CODE ();
 	if (fullspd)
-		outn ("typedef yyconst struct yy_trans_info *yy_state_type;");
+		outn ("typedef const struct yy_trans_info *yy_state_type;");
 	else if (!C_plus_plus)
 		outn ("typedef int yy_state_type;");
 	OUT_END_CODE ();
@@ -1715,7 +1719,7 @@ void readin ()
 
 /* set_up_initial_allocations - allocate memory for internal tables */
 
-void set_up_initial_allocations ()
+void set_up_initial_allocations (void)
 {
 	maximum_mns = (long_align ? MAXIMUM_MNS_LONG : MAXIMUM_MNS);
 	current_mns = INITIAL_MNS;
@@ -1769,31 +1773,11 @@ void set_up_initial_allocations ()
 	dss = allocate_int_ptr_array (current_max_dfas);
 	dfaacc = allocate_dfaacc_union (current_max_dfas);
 
-	nultrans = (int *) 0;
+	nultrans = NULL;
 }
 
 
-/* extracts basename from path, optionally stripping the extension "\.*"
- * (same concept as /bin/sh `basename`, but different handling of extension). */
-static char *basename2 (path, strip_ext)
-     char   *path;
-     int strip_ext;		/* boolean */
-{
-	char   *b, *e = 0;
-
-	b = path;
-	for (b = path; *path; path++)
-		if (*path == '/')
-			b = path + 1;
-		else if (*path == '.')
-			e = path;
-
-	if (strip_ext && e && e > b)
-		*e = '\0';
-	return b;
-}
-
-void usage ()
+void usage (void)
 {
 	FILE   *f = stdout;
 
@@ -1851,8 +1835,6 @@ void usage ()
 		  "       --bison-bridge      scanner for bison pure parser.\n"
 		  "       --bison-locations   include yylloc support.\n"
 		  "       --stdinit           initialize yyin/yyout to stdin/stdout\n"
-          "       --noansi-definitions old-style function definitions\n"
-          "       --noansi-prototypes  empty parameter list in prototypes\n"
 		  "       --nounistd          do not include <unistd.h>\n"
 		  "       --noFUNCTION        do not generate a particular FUNCTION\n"
 		  "\n" "Miscellaneous:\n"

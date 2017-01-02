@@ -53,13 +53,13 @@ extern int yydebug;
     NAME = 263,
     PREVCCL = 264,
     EOF_OP = 265,
-    OPTION_OP = 266,
-    OPT_OUTFILE = 267,
-    OPT_PREFIX = 268,
-    OPT_YYCLASS = 269,
-    OPT_HEADER = 270,
-    OPT_EXTRA_TYPE = 271,
-    OPT_TABLES = 272,
+    TOK_OPTION = 266,
+    TOK_OUTFILE = 267,
+    TOK_PREFIX = 268,
+    TOK_YYCLASS = 269,
+    TOK_HEADER_FILE = 270,
+    TOK_EXTRA_TYPE = 271,
+    TOK_TABLES_FILE = 272,
     CCE_ALNUM = 273,
     CCE_ALPHA = 274,
     CCE_BLANK = 275,
@@ -101,13 +101,13 @@ extern int yydebug;
 #define NAME 263
 #define PREVCCL 264
 #define EOF_OP 265
-#define OPTION_OP 266
-#define OPT_OUTFILE 267
-#define OPT_PREFIX 268
-#define OPT_YYCLASS 269
-#define OPT_HEADER 270
-#define OPT_EXTRA_TYPE 271
-#define OPT_TABLES 272
+#define TOK_OPTION 266
+#define TOK_OUTFILE 267
+#define TOK_PREFIX 268
+#define TOK_YYCLASS 269
+#define TOK_HEADER_FILE 270
+#define TOK_EXTRA_TYPE 271
+#define TOK_TABLES_FILE 272
 #define CCE_ALNUM 273
 #define CCE_ALPHA 274
 #define CCE_BLANK 275
