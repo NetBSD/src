@@ -1,4 +1,4 @@
-/*	$NetBSD: yylex.c,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+/*	$NetBSD: yylex.c,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
 
 /* yylex - scanner front-end for flex */
 
@@ -33,7 +33,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: yylex.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
+__RCSID("$NetBSD: yylex.c,v 1.3 2017/01/02 17:45:27 christos Exp $");
 
 #include <ctype.h>
 #include "flexdef.h"
@@ -41,18 +41,20 @@ __RCSID("$NetBSD: yylex.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
 
 
 /* yylex - scan for a regular expression token */
-
+extern int yylval;	/* XXX: for bootstrap */
 extern char *yytext;
+extern FILE *yyout;
+bool no_section3_escape = false;
 int     yylex (void)
 {
 	int     toktype;
 	static int beglin = false;
 
-	if (eofseen)
+	if (eofseen) {
 		toktype = EOF;
-	else
+        } else {
 		toktype = flexscan ();
-
+        }
 	if (toktype == EOF || toktype == 0) {
 		eofseen = 1;
 
@@ -178,12 +180,12 @@ int     yylex (void)
 			fprintf (stderr, "<<EOF>>");
 			break;
 
-		case OPTION_OP:
+		case TOK_OPTION:
 			fprintf (stderr, "%s ", yytext);
 			break;
 
-		case OPT_OUTFILE:
-		case OPT_PREFIX:
+		case TOK_OUTFILE:
+		case TOK_PREFIX:
 		case CCE_ALNUM:
 		case CCE_ALPHA:
 		case CCE_BLANK:

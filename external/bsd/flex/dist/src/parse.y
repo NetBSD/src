@@ -1,10 +1,10 @@
-/*	$NetBSD: parse.y,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+/*	$NetBSD: parse.y,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
 
 /* parse.y - parser for flex input */
 
 %token CHAR NUMBER SECTEND SCDECL XSCDECL NAME PREVCCL EOF_OP
-%token OPTION_OP OPT_OUTFILE OPT_PREFIX OPT_YYCLASS OPT_HEADER OPT_EXTRA_TYPE
-%token OPT_TABLES
+%token TOK_OPTION TOK_OUTFILE TOK_PREFIX TOK_YYCLASS TOK_HEADER_FILE TOK_EXTRA_TYPE
+%token TOK_TABLES_FILE
 
 %token CCE_ALNUM CCE_ALPHA CCE_BLANK CCE_CNTRL CCE_DIGIT CCE_GRAPH
 %token CCE_LOWER CCE_PRINT CCE_PUNCT CCE_SPACE CCE_UPPER CCE_XDIGIT
@@ -65,7 +65,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: parse.y,v 1.2 2016/01/09 17:38:57 christos Exp $");
+__RCSID("$NetBSD: parse.y,v 1.3 2017/01/02 17:45:27 christos Exp $");
 
 #include "tables.h"
 
@@ -143,7 +143,7 @@ goal		:  initlex sect1 sect1end sect2 initforrule
 			else
 				add_action( "ECHO" );
 
-			add_action( ";\n\tYY_BREAK\n" );
+			add_action( ";\n\tYY_BREAK]]\n" );
 			}
 		;
 
@@ -187,28 +187,30 @@ namelist1	:  namelist1 NAME
 			{ synerr( _("bad start condition list") ); }
 		;
 
-options		:  OPTION_OP optionlist
+options		:  TOK_OPTION optionlist
 		;
 
 optionlist	:  optionlist option
 		|
 		;
 
-option		:  OPT_OUTFILE '=' NAME
+option		:  TOK_OUTFILE '=' NAME
 			{
-			outfilename = copy_string( nmstr );
+			outfilename = xstrdup(nmstr);
 			did_outfilename = 1;
 			}
-		|  OPT_EXTRA_TYPE '=' NAME
-			{ extra_type = copy_string( nmstr ); }
-		|  OPT_PREFIX '=' NAME
-			{ prefix = copy_string( nmstr ); }
-		|  OPT_YYCLASS '=' NAME
-			{ yyclass = copy_string( nmstr ); }
-		|  OPT_HEADER '=' NAME
-			{ headerfilename = copy_string( nmstr ); }
-	    |  OPT_TABLES '=' NAME
-            { tablesext = true; tablesfilename = copy_string( nmstr ); }
+		|  TOK_EXTRA_TYPE '=' NAME
+			{ extra_type = xstrdup(nmstr); }
+		|  TOK_PREFIX '=' NAME
+			{ prefix = xstrdup(nmstr);
+                          if (strchr(prefix, '[') || strchr(prefix, ']'))
+                              flexerror(_("Prefix must not contain [ or ]")); }
+		|  TOK_YYCLASS '=' NAME
+			{ yyclass = xstrdup(nmstr); }
+		|  TOK_HEADER_FILE '=' NAME
+			{ headerfilename = xstrdup(nmstr); }
+	    |  TOK_TABLES_FILE '=' NAME
+            { tablesext = true; tablesfilename = xstrdup(nmstr); }
 		;
 
 sect2		:  sect2 scon initforrule flexrule '\n'
@@ -728,7 +730,7 @@ singleton	:  singleton '*'
 			{
 				/* Sort characters for fast searching.
 				 */
-				qsort( ccltbl + cclmap[$1], ccllen[$1], sizeof (*ccltbl), cclcmp );
+				qsort( ccltbl + cclmap[$1], (size_t) ccllen[$1], sizeof (*ccltbl), cclcmp );
 
 			if ( useecs )
 				mkeccl( ccltbl + cclmap[$1], ccllen[$1],
@@ -954,7 +956,7 @@ string		:  string CHAR
  *                    conditions
  */
 
-void build_eof_action()
+void build_eof_action(void)
 	{
 	int i;
 	char action_text[MAXLINE];
@@ -979,7 +981,8 @@ void build_eof_action()
 			}
 		}
 
-	line_directive_out( (FILE *) 0, 1 );
+	line_directive_out(NULL, 1);
+        add_action("[[");
 
 	/* This isn't a normal rule after all - don't count it as
 	 * such, so we don't have any holes in the rule numbering
@@ -993,8 +996,7 @@ void build_eof_action()
 
 /* format_synerr - write out formatted syntax error */
 
-void format_synerr( msg, arg )
-const char *msg, arg[];
+void format_synerr( const char *msg, const char arg[] )
 	{
 	char errmsg[MAXLINE];
 
@@ -1005,8 +1007,7 @@ const char *msg, arg[];
 
 /* synerr - report a syntax error */
 
-void synerr( str )
-const char *str;
+void synerr( const char *str )
 	{
 	syntaxerror = true;
 	pinpoint_message( str );
@@ -1015,8 +1016,7 @@ const char *str;
 
 /* format_warn - write out formatted warning */
 
-void format_warn( msg, arg )
-const char *msg, arg[];
+void format_warn( const char *msg, const char arg[] )
 	{
 	char warn_msg[MAXLINE];
 
@@ -1027,8 +1027,7 @@ const char *msg, arg[];
 
 /* lwarn - report a warning, unless -w was given */
 
-void lwarn( str )
-const char *str;
+void lwarn( const char *str )
 	{
 	line_warning( str, linenum );
 	}
@@ -1037,8 +1036,7 @@ const char *str;
  *			     pinpointing its location
  */
 
-void format_pinpoint_message( msg, arg )
-const char *msg, arg[];
+void format_pinpoint_message( const char *msg, const char arg[] )
 	{
 	char errmsg[MAXLINE];
 
@@ -1049,8 +1047,7 @@ const char *msg, arg[];
 
 /* pinpoint_message - write out a message, pinpointing its location */
 
-void pinpoint_message( str )
-const char *str;
+void pinpoint_message( const char *str )
 	{
 	line_pinpoint( str, linenum );
 	}
@@ -1058,9 +1055,7 @@ const char *str;
 
 /* line_warning - report a warning at a given line, unless -w was given */
 
-void line_warning( str, line )
-const char *str;
-int line;
+void line_warning( const char *str, int line )
 	{
 	char warning[MAXLINE];
 
@@ -1074,9 +1069,7 @@ int line;
 
 /* line_pinpoint - write out a message, pinpointing it at the given line */
 
-void line_pinpoint( str, line )
-const char *str;
-int line;
+void line_pinpoint( const char *str, int line )
 	{
 	fprintf( stderr, "%s:%d: %s\n", infilename, line, str );
 	}
@@ -1086,8 +1079,7 @@ int line;
  *	     currently, messages are ignore
  */
 
-void yyerror( msg )
-const char *msg;
+void yyerror( const char *msg )
 	{
 		(void)msg;
 	}

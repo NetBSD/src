@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -70,8 +70,6 @@ enum flexopt_flag_t {
 	OPT_META_ECS,
 	OPT_NEVER_INTERACTIVE,
 	OPT_NO_ALIGN,
-        OPT_NO_ANSI_FUNC_DEFS,
-        OPT_NO_ANSI_FUNC_PROTOS,
 	OPT_NO_DEBUG,
 	OPT_NO_DEFAULT,
 	OPT_NO_ECS,
@@ -129,7 +127,8 @@ enum flexopt_flag_t {
 	OPT_YYCLASS,
 	OPT_YYLINENO,
 	OPT_YYMORE,
-	OPT_YYWRAP
+	OPT_YYWRAP,
+        OPT_NO_SECT3_ESCAPE,
 };
 
 #endif

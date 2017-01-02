@@ -1,4 +1,4 @@
-/*	$NetBSD: sym.c,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+/*	$NetBSD: sym.c,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
 
 /* sym - symbol table routines */
 
@@ -33,7 +33,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: sym.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
+__RCSID("$NetBSD: sym.c,v 1.3 2017/01/02 17:45:27 christos Exp $");
 
 
 /* Variables for symbol tables:
@@ -62,12 +62,10 @@ static struct hash_entry *ccltab[CCL_HASH_SIZE];
 
 /* declare functions that have forward references */
 
-static int addsym PROTO ((char[], char *, int, hash_table, int));
-static struct hash_entry *findsym PROTO ((const char *sym,
-					  hash_table table,
-
-					  int table_size));
-static int hashfunct PROTO ((const char *, int));
+static int addsym(char[], char *, int, hash_table, int);
+static struct hash_entry *findsym (const char *sym, hash_table table,
+				   int table_size);
+static int hashfunct(const char *, int);
 
 
 /* addsym - add symbol and definitions to symbol table
@@ -75,12 +73,7 @@ static int hashfunct PROTO ((const char *, int));
  * -1 is returned if the symbol already exists, and the change not made.
  */
 
-static int addsym (sym, str_def, int_def, table, table_size)
-     char sym[];
-     char   *str_def;
-     int     int_def;
-     hash_table table;
-     int     table_size;
+static int addsym (char sym[], char *str_def, int int_def, hash_table table, int table_size)
 {
 	int    hash_val = hashfunct (sym, table_size);
 	struct hash_entry *sym_entry = table[hash_val];
@@ -96,8 +89,7 @@ static int addsym (sym, str_def, int_def, table, table_size)
 	}
 
 	/* create new entry */
-	new_entry = (struct hash_entry *)
-		flex_alloc (sizeof (struct hash_entry));
+	new_entry = malloc(sizeof(struct hash_entry));
 
 	if (new_entry == NULL)
 		flexfatal (_("symbol table memory allocation failed"));
@@ -122,15 +114,13 @@ static int addsym (sym, str_def, int_def, table, table_size)
 
 /* cclinstal - save the text of a character class */
 
-void    cclinstal (ccltxt, cclnum)
-     Char    ccltxt[];
-     int     cclnum;
+void    cclinstal (char ccltxt[], int cclnum)
 {
 	/* We don't bother checking the return status because we are not
 	 * called unless the symbol is new.
 	 */
 
-	(void) addsym ((char *) copy_unsigned_string (ccltxt),
+	(void) addsym (xstrdup(ccltxt),
 		       (char *) 0, cclnum, ccltab, CCL_HASH_SIZE);
 }
 
@@ -140,23 +130,18 @@ void    cclinstal (ccltxt, cclnum)
  * Returns 0 if there's no CCL associated with the text.
  */
 
-int     ccllookup (ccltxt)
-     Char    ccltxt[];
+int     ccllookup (char ccltxt[])
 {
-	return findsym ((char *) ccltxt, ccltab, CCL_HASH_SIZE)->int_val;
+	return findsym (ccltxt, ccltab, CCL_HASH_SIZE)->int_val;
 }
 
 
 /* findsym - find symbol in symbol table */
 
-static struct hash_entry *findsym (sym, table, table_size)
-     const char *sym;
-     hash_table table;
-     int     table_size;
+static struct hash_entry *findsym (const char *sym, hash_table table, int table_size)
 {
 	static struct hash_entry empty_entry = {
-		(struct hash_entry *) 0, (struct hash_entry *) 0,
-		(char *) 0, (char *) 0, 0,
+		NULL, NULL, NULL, NULL, 0,
 	};
 	struct hash_entry *sym_entry =
 
@@ -173,9 +158,7 @@ static struct hash_entry *findsym (sym, table, table_size)
 
 /* hashfunct - compute the hash value for "str" and hash size "hash_size" */
 
-static int hashfunct (str, hash_size)
-     const char *str;
-     int     hash_size;
+static int hashfunct (const char *str, int hash_size)
 {
 	int hashval;
 	int locstr;
@@ -194,13 +177,11 @@ static int hashfunct (str, hash_size)
 
 /* ndinstal - install a name definition */
 
-void    ndinstal (name, definition)
-     const char *name;
-     Char    definition[];
+void    ndinstal (const char *name, char definition[])
 {
 
-	if (addsym (copy_string (name),
-		    (char *) copy_unsigned_string (definition), 0,
+	if (addsym (xstrdup(name),
+		    xstrdup(definition), 0,
 		    ndtbl, NAME_TABLE_HASH_SIZE))
 			synerr (_("name defined twice"));
 }
@@ -211,16 +192,15 @@ void    ndinstal (name, definition)
  * Returns a nil pointer if the name definition does not exist.
  */
 
-Char   *ndlookup (nd)
-     const char *nd;
+char   *ndlookup (const char *nd)
 {
-	return (Char *) findsym (nd, ndtbl, NAME_TABLE_HASH_SIZE)->str_val;
+	return findsym (nd, ndtbl, NAME_TABLE_HASH_SIZE)->str_val;
 }
 
 
 /* scextend - increase the maximum number of start conditions */
 
-void    scextend ()
+void    scextend (void)
 {
 	current_max_scs += MAX_SCS_INCREMENT;
 
@@ -240,17 +220,15 @@ void    scextend ()
  *    The start condition is "exclusive" if xcluflg is true.
  */
 
-void    scinstal (str, xcluflg)
-     const char *str;
-     int     xcluflg;
+void    scinstal (const char *str, int xcluflg)
 {
 
 	if (++lastsc >= current_max_scs)
 		scextend ();
 
-	scname[lastsc] = copy_string (str);
+	scname[lastsc] = xstrdup(str);
 
-	if (addsym (scname[lastsc], (char *) 0, lastsc,
+	if (addsym(scname[lastsc], NULL, lastsc,
 		    sctbl, START_COND_HASH_SIZE))
 			format_pinpoint_message (_
 						 ("start condition %s declared twice"),
@@ -268,8 +246,7 @@ str);
  * Returns 0 if no such start condition.
  */
 
-int     sclookup (str)
-     const char *str;
+int     sclookup (const char *str)
 {
 	return findsym (str, sctbl, START_COND_HASH_SIZE)->int_val;
 }

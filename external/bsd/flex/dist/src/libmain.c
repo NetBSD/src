@@ -1,4 +1,4 @@
-/*	$NetBSD: libmain.c,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+/*	$NetBSD: libmain.c,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
 
 /* libmain - flex run-time support library "main" function */
 
@@ -24,8 +24,10 @@
 /*  PURPOSE. */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: libmain.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
+__RCSID("$NetBSD: libmain.c,v 1.3 2017/01/02 17:45:27 christos Exp $");
 #endif
+
+#include <stdlib.h>
 
 extern int yylex (void);
 
@@ -36,5 +38,5 @@ int     main (int argc, char *argv[])
 
 	while (yylex () != 0) ;
 
-	return 0;
+	exit(0);
 }
