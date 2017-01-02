@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.710 2016/12/19 17:38:38 maya Exp $
+# $NetBSD: mi,v 1.711 2017/01/02 15:41:09 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3788,6 +3788,8 @@
 ./usr/tests/usr.bin/make/unit-tests/varmisc.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varshell.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varshell.mk	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/mixerctl			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/mixerctl/t_mixerctl		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mkdep			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mkdep/Atffile		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mkdep/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
