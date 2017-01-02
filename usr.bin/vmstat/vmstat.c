@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.210 2017/01/02 01:48:56 pgoyette Exp $ */
+/* $NetBSD: vmstat.c,v 1.211 2017/01/02 02:08:05 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.210 2017/01/02 01:48:56 pgoyette Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.211 2017/01/02 02:08:05 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -2080,6 +2080,9 @@ hist_dodump(struct kern_history *histp)
 		err(1, "malloc history entries");
 
 	(void)memset(histents, 0, histsize);
+
+	(void)printf("%"PRIu32" entries, next is %"PRIu32"\n",
+	    histp->n, histp->f);
 
 	deref_kptr(histp->e, histents, histsize, "history entries");
 	i = histp->f;
