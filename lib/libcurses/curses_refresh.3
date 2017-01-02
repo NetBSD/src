@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_refresh.3,v 1.11 2016/12/31 13:50:16 roy Exp $
+.\"	$NetBSD: curses_refresh.3,v 1.12 2017/01/02 10:28:34 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd December 31, 2016
+.Dd January 2, 2017
 .Dt CURSES_REFRESH 3
 .Os
 .Sh NAME
@@ -39,9 +39,10 @@
 .Nm wrefresh ,
 .Nm wnoutrefresh ,
 .Nm doupdate ,
+.Nm immedok ,
+.Nm flushok ,
 .Nm leaveok ,
-.Nm is_leaveok ,
-.Nm flushok
+.Nm is_leaveok
 .Nd curses terminal update routines
 .Sh LIBRARY
 .Lb libcurses
@@ -56,11 +57,13 @@
 .Ft int
 .Fn doupdate "void"
 .Ft int
+.Fn immedok "WINDOW *win" "boolf flag"
+.Ft int
+.Fn flushok "WINDOW *win" "boolf flag"
+.Ft int
 .Fn leaveok "WINDOW *win" "boolf flag"
 .Ft bool
 .Fn is_leaveok "const WINDOW *win"
-.Ft int
-.Fn flushok "WINDOW *win" "boolf flag"
 .Sh DESCRIPTION
 These functions update the terminal with the contents of
 .Dv stdscr
@@ -110,6 +113,23 @@ followed by
 .Fn doupdate .
 .Pp
 The
+.Fn immedok
+function determines whether the screen is refreshed whenever the window is
+changed.
+The initial state is
+.Dv FALSE .
+.Pp
+The
+.Fn flushok
+function is used to determine whether or not the screen's output file
+descriptor will be flushed on refresh.
+Setting
+.Fa flag
+to
+.Dv TRUE
+will cause the output to be flushed.
+.Pp
+The
 .Fn leaveok
 function determines whether refresh operations may leave the screen cursor
 in an arbitrary position on the screen.
@@ -122,16 +142,6 @@ position after a refresh operation has taken place.
 The
 .Fn is_leaveok
 function returns the setting.
-.Pp
-The
-.Fn flushok
-function is used to determine whether or not the screen's output file
-descriptor will be flushed on refresh.
-Setting
-.Fa flag
-to
-.Dv TRUE
-will cause the output to be flushed.
 .Sh RETURN VALUES
 Functions returning pointers will return
 .Dv NULL
