@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.399 2016/12/22 11:46:48 cherry Exp $
+#       $NetBSD: Makefile,v 1.400 2017/01/02 10:33:28 hannken Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -949,7 +949,6 @@ MLINKS+=vmem.9 vmem_alloc.9 \
 MLINKS+=vnode.9 vref.9 \
 	vnode.9 vrele.9 \
 	vnode.9 vrele_async.9 \
-	vnode.9 vget.9 \
 	vnode.9 vput.9 \
 	vnode.9 vhold.9 \
 	vnode.9 holdrele.9 \
