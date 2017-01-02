@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.78 2016/12/29 09:52:00 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.79 2017/01/02 16:32:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.78 2016/12/29 09:52:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.79 2017/01/02 16:32:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2184,7 +2184,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 
 	dd = &dev->ud_ddesc;
 
-	if ((depth == 0) && (port == 0)) {
+	if (depth == 0 && port == 0) {
 		KASSERT(bus->ub_devices[dev->ud_addr] == NULL);
 		bus->ub_devices[dev->ud_addr] = dev;
 		err = usbd_get_initial_ddesc(dev, dd);
@@ -2297,7 +2297,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 
 	usbd_add_dev_event(USB_EVENT_DEVICE_ATTACH, dev);
 
-	if ((depth == 0) && (port == 0)) {
+	if (depth == 0 && port == 0) {
 		usbd_attach_roothub(parent, dev);
 		DPRINTFN(1, "root_hub %p", bus->ub_roothub, 0, 0, 0);
 		return USBD_NORMAL_COMPLETION;
