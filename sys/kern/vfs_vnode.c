@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.67 2017/01/02 10:35:00 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.68 2017/01/02 10:36:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.67 2017/01/02 10:35:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.68 2017/01/02 10:36:58 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -304,6 +304,10 @@ vstate_assert_change(vnode_t *vp, enum vnode_state from, enum vnode_state to,
 	if (node->vi_state != from)
 		vnpanic(vp, "from is %s, expected %s at %s:%d\n",
 		    vstate_name(node->vi_state), vstate_name(from), func, line);
+	if ((from == VS_BLOCKED || to == VS_BLOCKED) && vp->v_usecount != 1)
+		vnpanic(vp, "%s to %s with usecount %d at %s:%d",
+		    vstate_name(from), vstate_name(to), vp->v_usecount,
+		    func, line);
 
 	node->vi_state = to;
 	if (from == VS_LOADING)
@@ -877,6 +881,7 @@ vrecycle(vnode_t *vp)
 	mutex_enter(vp->v_interlock);
 	VSTATE_CHANGE(vp, VS_BLOCKED, VS_ACTIVE);
 
+	KASSERT(vp->v_usecount == 1);
 	vcache_reclaim(vp);
 	vrelel(vp, 0);
 
