@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.4.12.11 2016/05/30 06:48:46 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.4.12.12 2017/01/02 16:55:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -41,6 +41,7 @@ struct xhci_xfer {
 #define XHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
 #define XHCI_PIPE2SC(pipe)	XHCI_BUS2SC((pipe)->up_dev->ud_bus)
 #define XHCI_XFER2SC(xfer)	XHCI_BUS2SC((xfer)->ux_bus)
+#define XHCI_XFER2BUS(xfer)	((xfer)->ux_bus)
 #define XHCI_XPIPE2SC(d)	XHCI_BUS2SC((d)->xp_pipe.up_dev->ud_bus)
 
 #define XHCI_XFER2XXFER(xfer)	((struct xhci_xfer *)(xfer))
@@ -70,6 +71,7 @@ struct xhci_slot {
 struct xhci_softc {
 	device_t sc_dev;
 	device_t sc_child;
+	device_t sc_child2;
 	bus_size_t sc_ios;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;	/* Base */
@@ -77,7 +79,8 @@ struct xhci_softc {
 	bus_space_handle_t sc_obh;	/* Operational Base */
 	bus_space_handle_t sc_rbh;	/* Runtime Base */
 	bus_space_handle_t sc_dbh;	/* Doorbell Registers */
-	struct usbd_bus sc_bus;
+	struct usbd_bus sc_bus;		/* USB 3 bus */
+	struct usbd_bus sc_bus2;	/* USB 2 bus */
 
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
@@ -86,22 +89,26 @@ struct xhci_softc {
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
 
-	struct usbd_xfer *sc_intrxfer;
-
 	pool_cache_t sc_xferpool;
 
 	bus_size_t sc_pgsz;		/* xHCI page size */
 	uint32_t sc_ctxsz;
 	int sc_maxslots;
 	int sc_maxintrs;
-	int sc_maxports;
 	int sc_maxspbuf;
 
-	/* XXX suboptimal */
-	int sc_hs_port_start;
-	int sc_hs_port_count;
-	int sc_ss_port_start;
-	int sc_ss_port_count;
+	/*
+	 * Port routing and root hub - xHCI 4.19.7
+	 */
+	int sc_maxports;		/* number of controller ports */
+
+	uint8_t *sc_ctlrportbus;	/* a bus bit per port */
+
+	int *sc_ctlrportmap;
+	int *sc_rhportmap[2];
+	int sc_rhportcount[2];
+	struct usbd_xfer *sc_intrxfer[2];
+
 
 	struct xhci_slot * sc_slots;
 
