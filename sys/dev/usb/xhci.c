@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.80 2017/01/02 16:34:40 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.81 2017/01/02 16:45:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.80 2017/01/02 16:34:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.81 2017/01/02 16:45:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2996,7 +2996,7 @@ xhci_setup_route(struct usbd_pipe *pipe, uint32_t *cp)
 				goto found;
 			}
 		}
-		panic("xhci_setup_route: cannot find HS port");
+		panic("%d: cannot find HS port", __func__);
 	found:
 		DPRINTFN(4, "high speed port %d", p, 0, 0, 0);
 	} else {
