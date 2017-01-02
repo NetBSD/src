@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2090 2017/01/02 10:33:28 hannken Exp $
+#	$NetBSD: mi,v 1.2091 2017/01/02 20:17:15 cherry Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3096,7 +3096,7 @@
 ./usr/include/uvm/uvm_pager_i.h			comp-obsolete		obsolete
 ./usr/include/uvm/uvm_param.h			comp-c-include
 ./usr/include/uvm/uvm_pdaemon.h			comp-c-include
-./usr/include/uvm/uvm_physseg.h			comp-c-include
+./usr/include/uvm/uvm_physseg.h			comp-c-include		obsolete
 ./usr/include/uvm/uvm_pglist.h			comp-c-include
 ./usr/include/uvm/uvm_pmap.h			comp-c-include
 ./usr/include/uvm/uvm_prot.h			comp-c-include
