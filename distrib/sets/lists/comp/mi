@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2089 2017/01/02 10:28:35 roy Exp $
+#	$NetBSD: mi,v 1.2090 2017/01/02 10:33:28 hannken Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11234,7 +11234,7 @@
 ./usr/share/man/cat9/vfs_write_suspend.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/vfsops.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vfssubr.0			comp-sys-catman		.cat
-./usr/share/man/cat9/vget.0			comp-sys-catman		.cat
+./usr/share/man/cat9/vget.0			comp-sys-catman		obsolete
 ./usr/share/man/cat9/vgone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vgonel.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vhold.0			comp-sys-catman		.cat
@@ -18418,7 +18418,7 @@
 ./usr/share/man/html9/vfs_vnode_iterator_next.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vfsops.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfssubr.html		comp-sys-htmlman	html
-./usr/share/man/html9/vget.html			comp-sys-htmlman	html
+./usr/share/man/html9/vget.html			comp-sys-htmlman	obsolete
 ./usr/share/man/html9/vgone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vgonel.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vhold.html		comp-sys-htmlman	html
@@ -25842,7 +25842,7 @@
 ./usr/share/man/man9/vfs_write_suspend.9	comp-obsolete		obsolete
 ./usr/share/man/man9/vfsops.9			comp-sys-man		.man
 ./usr/share/man/man9/vfssubr.9			comp-sys-man		.man
-./usr/share/man/man9/vget.9			comp-sys-man		.man
+./usr/share/man/man9/vget.9			comp-sys-man		obsolete
 ./usr/share/man/man9/vgone.9			comp-sys-man		.man
 ./usr/share/man/man9/vgonel.9			comp-sys-man		.man
 ./usr/share/man/man9/vhold.9			comp-sys-man		.man

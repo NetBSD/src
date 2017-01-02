@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.65 2016/12/27 11:59:36 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.66 2017/01/02 10:33:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  *	starts in one of the following ways:
  *
  *	- Allocation, via vcache_get(9) or vcache_new(9).
- *	- Reclamation of inactive vnode, via vget(9).
+ *	- Reclamation of inactive vnode, via vcache_vget(9).
  *
  *	Recycle from a free list, via getnewvnode(9) -> getcleanvnode(9)
  *	was another, traditional way.  Currently, only the draining thread
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.65 2016/12/27 11:59:36 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.66 2017/01/02 10:33:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -482,7 +482,7 @@ vdrain_remove(vnode_t *vp)
 	vdrain_retry = true;
 	mutex_exit(&vdrain_lock);
 
-	if (vget(vp, 0, true /* wait */) == 0) {
+	if (vcache_vget(vp) == 0) {
 		if (!vrecycle(vp))
 			vrele(vp);
 	}
@@ -575,63 +575,6 @@ vdrain_thread(void *cookie)
 			cv_wait(&vdrain_cv, &vdrain_lock);
 		}
 	}
-}
-
-/*
- * vget: get a particular vnode from the free list, increment its reference
- * count and return it.
- *
- * => Must be called with v_interlock held.
- *
- * If state is VS_RECLAIMING, the vnode may be eliminated in vcache_reclaim().
- * In that case, we cannot grab the vnode, so the process is awakened when
- * the transition is completed, and an error returned to indicate that the
- * vnode is no longer usable.
- *
- * If state is VS_LOADING or VS_BLOCKED, wait until the vnode enters a
- * stable state (VS_ACTIVE or VS_RECLAIMED).
- */
-int
-vget(vnode_t *vp, int flags, bool waitok)
-{
-
-	KASSERT(mutex_owned(vp->v_interlock));
-	KASSERT((flags & ~LK_NOWAIT) == 0);
-	KASSERT(waitok == ((flags & LK_NOWAIT) == 0));
-
-	/*
-	 * Before adding a reference, we must remove the vnode
-	 * from its freelist.
-	 */
-	if (vp->v_usecount == 0) {
-		vp->v_usecount = 1;
-	} else {
-		atomic_inc_uint(&vp->v_usecount);
-	}
-
-	/*
-	 * If the vnode is in the process of changing state we wait
-	 * for the change to complete and take care not to return
-	 * a clean vnode.
-	 */
-	if (! ISSET(flags, LK_NOWAIT))
-		VSTATE_WAIT_STABLE(vp);
-	if (VSTATE_GET(vp) == VS_RECLAIMED) {
-		vrelel(vp, 0);
-		return ENOENT;
-	} else if (VSTATE_GET(vp) != VS_ACTIVE) {
-		KASSERT(ISSET(flags, LK_NOWAIT));
-		vrelel(vp, 0);
-		return EBUSY;
-	}
-
-	/*
-	 * Ok, we got it in good shape.
-	 */
-	VSTATE_ASSERT(vp, VS_ACTIVE);
-	mutex_exit(vp->v_interlock);
-
-	return 0;
 }
 
 /*
@@ -1124,6 +1067,97 @@ vcache_free(vnode_impl_t *node)
 }
 
 /*
+ * Try to get an initial reference on this cached vnode.
+ * Returns zero on success,  ENOENT if the vnode has been reclaimed and
+ * EBUSY if the vnode state is unstable.
+ *
+ * v_interlock locked on entry and unlocked on exit.
+ */
+int
+vcache_tryvget(vnode_t *vp)
+{
+
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	/*
+	 * Before adding a reference, we must remove the vnode
+	 * from its freelist.
+	 */
+	if (vp->v_usecount == 0) {
+		vp->v_usecount = 1;
+	} else {
+		atomic_inc_uint(&vp->v_usecount);
+	}
+
+	/*
+	 * If the vnode is in the process of changing state we wait
+	 * for the change to complete and take care not to return
+	 * a clean vnode.
+	 */
+	if (VSTATE_GET(vp) == VS_RECLAIMED) {
+		vrelel(vp, 0);
+		return ENOENT;
+	} else if (VSTATE_GET(vp) != VS_ACTIVE) {
+		vrelel(vp, 0);
+		return EBUSY;
+	}
+
+	/*
+	 * Ok, we got it in good shape.
+	 */
+	VSTATE_ASSERT(vp, VS_ACTIVE);
+	mutex_exit(vp->v_interlock);
+
+	return 0;
+}
+
+/*
+ * Try to get an initial reference on this cached vnode.
+ * Returns zero on success and  ENOENT if the vnode has been reclaimed.
+ * Will wait for the vnode state to be stable.
+ *
+ * v_interlock locked on entry and unlocked on exit.
+ */
+int
+vcache_vget(vnode_t *vp)
+{
+
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	/*
+	 * Before adding a reference, we must remove the vnode
+	 * from its freelist.
+	 */
+	if (vp->v_usecount == 0) {
+		vp->v_usecount = 1;
+	} else {
+		atomic_inc_uint(&vp->v_usecount);
+	}
+
+	/*
+	 * If the vnode is in the process of changing state we wait
+	 * for the change to complete and take care not to return
+	 * a clean vnode.
+	 */
+	VSTATE_WAIT_STABLE(vp);
+	if (VSTATE_GET(vp) == VS_RECLAIMED) {
+		vrelel(vp, 0);
+		return ENOENT;
+	} else if (VSTATE_GET(vp) != VS_ACTIVE) {
+		vrelel(vp, 0);
+		return EBUSY;
+	}
+
+	/*
+	 * Ok, we got it in good shape.
+	 */
+	VSTATE_ASSERT(vp, VS_ACTIVE);
+	mutex_exit(vp->v_interlock);
+
+	return 0;
+}
+
+/*
  * Get a vnode / fs node pair by key and return it referenced through vpp.
  */
 int
@@ -1167,7 +1201,7 @@ again:
 		vp = VIMPL_TO_VNODE(node);
 		mutex_enter(vp->v_interlock);
 		mutex_exit(&vcache.lock);
-		error = vget(vp, 0, true /* wait */);
+		error = vcache_vget(vp);
 		if (error == ENOENT)
 			goto again;
 		if (error == 0)
@@ -1282,7 +1316,7 @@ vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
 		ovp = VIMPL_TO_VNODE(old_node);
 		mutex_enter(ovp->v_interlock);
 		mutex_exit(&vcache.lock);
-		error = vget(ovp, 0, true /* wait */);
+		error = vcache_vget(ovp);
 		KASSERT(error == ENOENT);
 		mutex_enter(&vcache.lock);
 	}

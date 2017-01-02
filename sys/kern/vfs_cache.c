@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.110 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.111 2017/01/02 10:33:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.110 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.111 2017/01/02 10:33:28 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.110 2016/07/07 06:55:43 msaitoh Exp 
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
+#include <sys/vnode_impl.h>
 #include <sys/namei.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -101,8 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.110 2016/07/07 06:55:43 msaitoh Exp 
  * is for DELETE, or NOCACHE is set (rewrite), and the
  * name is located in the cache, it will be dropped.
  * The entry is dropped also when it was not possible to lock
- * the cached vnode, either because vget() failed or the generation
- * number has changed while waiting for the lock.
+ * the cached vnode, either because vcache_tryvget() failed or
+ * the generation number has changed while waiting for the lock.
  */
 
 /*
@@ -588,9 +588,9 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	mutex_exit(&cpup->cpu_lock);
 
 	/*
-	 * Unlocked except for the vnode interlock.  Call vget().
+	 * Unlocked except for the vnode interlock.  Call vcache_tryvget().
 	 */
-	error = vget(vp, LK_NOWAIT, false /* !wait */);
+	error = vcache_tryvget(vp);
 	if (error) {
 		KASSERT(error == EBUSY);
 		/*
@@ -669,9 +669,9 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 	mutex_exit(&cpup->cpu_lock);
 
 	/*
-	 * Unlocked except for the vnode interlock.  Call vget().
+	 * Unlocked except for the vnode interlock.  Call vcache_tryvget().
 	 */
-	error = vget(vp, LK_NOWAIT, false /* !wait */);
+	error = vcache_tryvget(vp);
 	if (error) {
 		KASSERT(error == EBUSY);
 		/*
@@ -761,7 +761,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 			mutex_enter(dvp->v_interlock);
 			mutex_exit(&ncp->nc_lock);
 			mutex_exit(namecache_lock);
-			error = vget(dvp, LK_NOWAIT, false /* !wait */);
+			error = vcache_tryvget(dvp);
 			if (error) {
 				KASSERT(error == EBUSY);
 				if (bufp)
