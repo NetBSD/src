@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.25 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.26 2017/01/02 21:49:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2016 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.25 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.26 2017/01/02 21:49:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -181,6 +181,21 @@ npf_tableset_insert(npf_tableset_t *ts, npf_table_t *t)
 		error = EEXIST;
 	}
 	return error;
+}
+
+npf_table_t *
+npf_tableset_swap(npf_tableset_t *ts, npf_table_t *newt)
+{
+	const u_int tid = newt->t_id;
+	npf_table_t *oldt = ts->ts_map[tid];
+
+	KASSERT(tid < ts->ts_nitems);
+	KASSERT(oldt->t_id == newt->t_id);
+
+	newt->t_refcnt = oldt->t_refcnt;
+	oldt->t_refcnt = 0;
+
+	return atomic_swap_ptr(&ts->ts_map[tid], newt);
 }
 
 /*
@@ -354,7 +369,8 @@ npf_table_create(const char *name, u_int tid, int type,
 		LIST_INIT(&t->t_list);
 		break;
 	case NPF_TABLE_HASH:
-		t->t_hashl = hashinit(1024, HASH_LIST, true, &t->t_hashmask);
+		size = MIN(size, 128);
+		t->t_hashl = hashinit(size, HASH_LIST, true, &t->t_hashmask);
 		if (t->t_hashl == NULL) {
 			goto out;
 		}
@@ -407,6 +423,12 @@ npf_table_destroy(npf_table_t *t)
 	}
 	rw_destroy(&t->t_lock);
 	kmem_free(t, sizeof(npf_table_t));
+}
+
+u_int
+npf_table_getid(npf_table_t *t)
+{
+	return t->t_id;
 }
 
 /*
