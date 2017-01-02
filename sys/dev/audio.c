@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.288 2016/12/28 02:44:59 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.289 2017/01/02 00:16:45 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.288 2016/12/28 02:44:59 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.289 2017/01/02 00:16:45 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1107,7 +1107,8 @@ audio_printsc(struct audio_softc *sc)
 	printf("rring used 0x%x pring used=%d\n",
 	       audio_stream_get_used(&sc->sc_vchan[n]->sc_mrr.s),
 	       audio_stream_get_used(&sc->sc_vchan[n]->sc_mpr.s));
-	printf("rbus 0x%x pbus 0x%x ", sc->sc_vchan[n]->sc_rbus, sc->sc_vchan[n]->sc_pbus);
+	printf("rbus 0x%x pbus 0x%x ", sc->sc_vchan[n]->sc_rbus,
+	    sc->sc_vchan[n]->sc_pbus);
 	printf("blksize %d", sc->sc_vchan[n]->sc_mpr.blksize);
 	printf("hiwat %d lowat %d\n", sc->sc_vchan[n]->sc_mpr.usedhigh,
 	    sc->sc_vchan[n]->sc_mpr.usedlow);
@@ -3270,7 +3271,10 @@ audiostartp(struct audio_softc *sc, int n)
 
 		if (sc->sc_trigger_started == false) {
 			mix_write(sc);
-			mix_func(sc, &vc->sc_mpr, n);
+			audio_mix(sc);
+			vc = sc->sc_vchan[0];
+			vc->sc_mpr.s.outp = audio_stream_add_outp(&vc->sc_mpr.s,
+			    vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
 			mix_write(sc);
 
 			cv_broadcast(&sc->sc_condvar);
