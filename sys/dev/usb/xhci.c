@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.79 2017/01/02 16:32:23 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.80 2017/01/02 16:34:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.79 2017/01/02 16:32:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.80 2017/01/02 16:34:40 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2299,7 +2299,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 
 	if (depth == 0 && port == 0) {
 		usbd_attach_roothub(parent, dev);
-		DPRINTFN(1, "root_hub %p", bus->ub_roothub, 0, 0, 0);
+		DPRINTFN(1, "root hub %p", dev, 0, 0, 0);
 		return USBD_NORMAL_COMPLETION;
 	}
 
