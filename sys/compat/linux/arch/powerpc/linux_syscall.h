@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.76 2016/07/24 13:23:25 njoly Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.77 2017/01/02 16:32:39 manu Exp $ */
 
 /*
  * System call numbers.
@@ -599,6 +599,9 @@
 
 /* syscall: "fadvise64_64" ret: "int" args: "int" "off_t" "off_t" "int" */
 #define	LINUX_SYS_fadvise64_64	254
+
+/* syscall: "pselect6" ret: "int" args: "int" "fd_set *" "fd_set *" "fd_set *" "struct linux_timespec *" "linux_sized_sigset_t *" */
+#define	LINUX_SYS_pselect6	280
 
 /* syscall: "ppoll" ret: "int" args: "struct pollfd *" "u_int" "struct linux_timespec *" "linux_sigset_t *" */
 #define	LINUX_SYS_ppoll	281
