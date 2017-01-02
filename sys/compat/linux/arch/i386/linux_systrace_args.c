@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.4 2016/07/24 13:23:25 njoly Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.5 2017/01/02 19:54:12 martin Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1854,6 +1854,18 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[2] = SCARG(p, amode); /* int */
 		*n_args = 3;
+		break;
+	}
+	/* linux_sys_pselect6 */
+	case 308: {
+		struct linux_sys_pselect6_args *p = params;
+		iarg[0] = SCARG(p, nfds); /* int */
+		uarg[1] = (intptr_t) SCARG(p, readfds); /* fd_set * */
+		uarg[2] = (intptr_t) SCARG(p, writefds); /* fd_set * */
+		uarg[3] = (intptr_t) SCARG(p, exceptfds); /* fd_set * */
+		uarg[4] = (intptr_t) SCARG(p, timeout); /* struct linux_timespec * */
+		uarg[5] = (intptr_t) SCARG(p, ss); /* linux_sized_sigset_t * */
+		*n_args = 6;
 		break;
 	}
 	/* linux_sys_ppoll */
@@ -4915,6 +4927,31 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_pselect6 */
+	case 308:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "fd_set *";
+			break;
+		case 2:
+			p = "fd_set *";
+			break;
+		case 3:
+			p = "fd_set *";
+			break;
+		case 4:
+			p = "struct linux_timespec *";
+			break;
+		case 5:
+			p = "linux_sized_sigset_t *";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_ppoll */
 	case 309:
 		switch(ndx) {
@@ -6100,6 +6137,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_faccessat */
 	case 307:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_pselect6 */
+	case 308:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
