@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.h,v 1.7 2016/12/29 12:58:38 rin Exp $ */
+/* $NetBSD: uvm_physseg.h,v 1.8 2017/01/02 20:08:32 cherry Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 #include <sys/param.h>
 #include <sys/types.h>
 
-#ifdef _KERNEL
 /*
  * No APIs are explicitly #included in uvm_physseg.c
  */
@@ -143,7 +142,5 @@ bool uvm_physseg_unplug(paddr_t, size_t);
 void uvm_physseg_set_avail_start(uvm_physseg_t, paddr_t);
 void uvm_physseg_set_avail_end(uvm_physseg_t, paddr_t);
 #endif /* UVM_PHYSSEG_LEGACY */
-
-#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_PHYSSEG_H_ */
