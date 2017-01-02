@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.4 2017/01/02 21:20:00 christos Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -33,7 +33,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: gen.c,v 1.3 2017/01/02 17:45:27 christos Exp $");
+__RCSID("$NetBSD: gen.c,v 1.4 2017/01/02 21:20:00 christos Exp $");
 
 #include "tables.h"
 
@@ -1966,7 +1966,7 @@ void make_tables (void)
 		("if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )");
 	++indent_level;
 	indent_puts ("{");
-	indent_puts ("int yyl;");
+	indent_puts ("yy_size_t yyl;");
 	do_indent ();
 	out_str ("for ( yyl = %s; yyl < yyleng; ++yyl )\n",
 		 yymore_used ? (yytext_is_array ? "YY_G(yy_prev_more_offset)" :
