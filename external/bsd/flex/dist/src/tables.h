@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.h,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+/*	$NetBSD: tables.h,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
 
 /*  tables.h - tables serialization code
  *
@@ -47,7 +47,7 @@ extern  "C" {
 #include "tables_shared.h"
 struct yytbl_writer {
 	FILE   *out;
-	flex_uint32_t total_written;
+	int total_written;
 			    /**< bytes written so far */
 	fpos_t  th_ssize_pos;
 			    /**< position of th_ssize */

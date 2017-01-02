@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 6/24/90
-#	$NetBSD: Makefile,v 1.9 2011/03/08 19:25:32 plunky Exp $
+#	$NetBSD: Makefile,v 1.10 2017/01/02 17:45:26 christos Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -12,8 +12,10 @@
 #
 # To bootstrap lex, cp initscan.c to scan.c and run make.
 
+.include <bsd.init.mk>
+
 PROG=	lex
-CPPFLAGS+=-I. -I${.CURDIR}
+CPPFLAGS+=-I. -I${.CURDIR} -DVERSION=\"${VERSION}\"
 SRCS=	 \
 buf.c \
 ccl.c \
