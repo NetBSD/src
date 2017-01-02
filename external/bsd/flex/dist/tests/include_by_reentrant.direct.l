@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "config.h"
+
+int error = 0;
 %}
 
 %option 8bit prefix="test"
@@ -54,18 +56,20 @@
     if((fp=fopen(yytext,"r"))==NULL) {
         fprintf(stderr,"*** Error: Could not open include file \"%s\".\n",
             yytext);
+        error = 1;
         yyterminate();
     }
-    yylex_init(&scanner);
-    yyset_in( fp, scanner);
-    yyset_out( stdout, scanner);
-    yylex(scanner);
-    yylex_destroy(scanner);
+    testlex_init(&scanner);
+    testset_in( fp, scanner);
+    testset_out( stdout, scanner);
+    testlex(scanner);
+    testlex_destroy(scanner);
 
     BEGIN(0);
     }
 .|\n  {
     fprintf(stderr,"Invalid input \"%s\".\n", yytext);
+    error = 1;
     yyterminate();
    }
 }
@@ -77,9 +81,7 @@
 int main (int argc, char** argv);
 
 int
-main ( argc, argv )
-    int argc;
-    char ** argv;
+main ( int argc, char **argv )
 {
     FILE * fp;
     yyscan_t  scanner;
@@ -91,11 +93,14 @@ main ( argc, argv )
         fprintf(stderr,"*** Error: fopen(%s) failed.\n",argv[1]);
         exit(-1);
     }
-    yylex_init(&scanner);
-    yyset_in( fp, scanner);
-    yyset_out( stdout, scanner);
-    yylex(scanner);
-    yylex_destroy(scanner);
-    printf("TEST RETURNING OK.\n");
+    testlex_init(&scanner);
+    testset_in( fp, scanner);
+    testset_out( stdout, scanner);
+    testlex(scanner);
+    testlex_destroy(scanner);
+    if (!error)
+        printf("TEST RETURNING OK.\n");
+    else
+        exit(-1);
     return 0;
 }

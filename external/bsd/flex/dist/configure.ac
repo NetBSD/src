@@ -24,12 +24,11 @@
 
 # autoconf requirements and initialization
 
-AC_INIT([the fast lexical analyser generator], [2.6.0],
-[flex-help@lists.sourceforge.net], [flex])
+AC_INIT([the fast lexical analyser generator],[2.6.3],[flex-help@lists.sourceforge.net],[flex])
 AC_CONFIG_SRCDIR([src/scan.l])
 AC_CONFIG_AUX_DIR([build-aux])
 LT_INIT
-AM_INIT_AUTOMAKE([gnu check-news std-options dist-bzip2 dist-xz parallel-tests 1.14.1])
+AM_INIT_AUTOMAKE([-Wno-portability foreign check-news std-options dist-lzip parallel-tests subdir-objects 1.14.1])
 AC_CONFIG_HEADER([src/config.h])
 AC_CONFIG_LIBOBJ_DIR([lib])
 AC_CONFIG_MACRO_DIR([m4])
@@ -49,8 +48,48 @@ AC_PROG_LN_S
 AC_PROG_AWK
 AC_PROG_INSTALL
 
-AC_PATH_PROG(BISON, bison,bison)
-AC_PATH_PROG(HELP2MAN, help2man, help2man)
+# allow passing a variable `WARNINGFLAGS',
+#   either when invoking `configure', or when invoking `make'
+# default to something useful if GCC was detected
+
+AC_ARG_ENABLE([warnings],
+  [AS_HELP_STRING([--enable-warnings],
+                  [enable a bunch of compiler warning flags (defaults to GCC warning flags).])],
+  [AS_IF([test "x$GCC" = xyes],
+    [ : ${WARNINGFLAGS="-Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wnested-externs -Wold-style-definition -Wredundant-decls -Wconversion -Wno-unused-but-set-variable"} ])])
+
+AC_SUBST([WARNINGFLAGS])
+
+AC_ARG_ENABLE([libfl],
+  [AS_HELP_STRING([--disable-libfl],
+                  [do not build -lfl runtime support library])],
+  [], [enable_libfl=yes])
+AM_CONDITIONAL([ENABLE_LIBFL], [test "x$enable_libfl" = xyes])
+
+# --disable-bootstrap is intended only to workaround problems with bootstrap
+# (e.g. when cross-compiling flex or when bootstrapping has bugs).
+# Ideally we should be able to bootstrap even when cross-compiling.
+AC_ARG_ENABLE([bootstrap],
+  [AS_HELP_STRING([--disable-bootstrap],
+                  [don't perform a bootstrap when building flex])],
+  [], [enable_bootstrap=yes])
+AM_CONDITIONAL([ENABLE_BOOTSTRAP], [test "x$enable_bootstrap" = xyes])
+
+AC_PATH_PROG([BISON], bison, no)
+AS_IF([test "$BISON" != no],[],
+	[ AC_SUBST([BISON], [\${top_srcdir}/build-aux/missing bison])
+	  AC_MSG_NOTICE(no bison program found: only required for maintainers)
+	])
+
+AC_PATH_PROG([HELP2MAN], help2man, [\${top_srcdir}/build-aux/missing help2man])
+  AS_IF([test "$HELP2MAN" = "\${top_srcdir}/build-aux/missing help2man"],
+    AC_MSG_WARN(help2man: program not found: building man page will not work)
+  )
+
+AC_PATH_PROGS([TEXI2DVI], [gtexi2dvi texi2dvi], [\${top_srcdir}/build-aux/missing texi2dvi])
+  AS_IF([test "$TEXI2DVI" = "\${top_srcdir}/build-aux/missing texi2dvi"],
+    AC_MSG_WARN(texi2dvi: program not found: building pdf version of manual will not work)
+  )
 
 # Check for a m4 that supports -P
 
@@ -79,9 +118,7 @@ fi
 
 # checks for headers
 
-AC_HEADER_STDC
-AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([inttypes.h libintl.h limits.h locale.h malloc.h netinet/in.h regex.h stddef.h stdlib.h string.h strings.h unistd.h])
+AC_CHECK_HEADERS([inttypes.h libintl.h limits.h locale.h malloc.h netinet/in.h regex.h unistd.h])
 
 # checks for libraries
 
@@ -94,7 +131,7 @@ AC_DEFINE([HAVE_LIBPTHREAD], 1, [pthread library] ),
 AC_DEFINE([HAVE_LIBPTHREAD], 0, [pthread library] )
 )
 AC_CHECK_HEADERS([pthread.h])
-AM_CONDITIONAL([want_pthread], [test x$ac_cv_lib_pthread_pthread_mutex_lock = xyes])
+AM_CONDITIONAL([want_pthread], [test "x$ac_cv_lib_pthread_pthread_mutex_lock" = xyes])
 
 AC_CHECK_LIB(m, log10)
 
@@ -108,9 +145,25 @@ AC_TYPE_SIZE_T
 
 AC_FUNC_ALLOCA
 AC_FUNC_FORK
+dnl Autoconf bug: AC_FUNC_MALLOC and AC_FUNC_REALLOC might not warn of cross
+dnl compilation. Workaround this.
 AC_FUNC_MALLOC
+AS_IF([test "$cross_compiling" = yes],
+   AC_MSG_WARN([result $ac_cv_func_malloc_0_nonnull guessed because of cross compilation]))
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([dup2 isascii memset pow regcomp setlocale strchr strtol])
+AS_IF([test "$cross_compiling" = yes],
+   AC_MSG_WARN([result $ac_cv_func_realloc_0_nonnull guessed because of cross compilation]))
+
+AC_CHECK_FUNCS(dup2 dnl
+memset dnl
+pow dnl
+regcomp dnl
+setlocale dnl
+strchr dnl
+strdup dnl
+strtol)
+
+AC_REPLACE_FUNCS(reallocarray)
 
 AC_CONFIG_FILES(
 Makefile
