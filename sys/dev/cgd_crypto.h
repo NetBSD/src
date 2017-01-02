@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.h,v 1.9 2016/12/11 00:20:49 alnsn Exp $ */
+/* $NetBSD: cgd_crypto.h,v 1.10 2017/01/02 14:28:29 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
 #ifdef _KERNEL
 #define CGD_CIPHER_DECRYPT	1
 #define CGD_CIPHER_ENCRYPT	2
+#define CGD_AES_BLOCK_SIZE	16
+#define CGD_3DES_BLOCK_SIZE	8
+#define CGD_BF_BLOCK_SIZE	8
 
 typedef void *(cfunc_init)(size_t, const void *, size_t *);
 typedef void  (cfunc_destroy)(void *);
