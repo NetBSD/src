@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.47 2016/12/13 12:25:05 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.48 2017/01/02 21:02:03 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.47 2016/12/13 12:25:05 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.48 2017/01/02 21:02:03 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4275,7 +4275,7 @@ ATF_TC(lwpinfo1);
 ATF_TC_HEAD(lwpinfo1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Verify baic LWPINFO call for single thread (PT_TRACE_ME)");
+	    "Verify basic LWPINFO call for single thread (PT_TRACE_ME)");
 }
 
 ATF_TC_BODY(lwpinfo1, tc)
@@ -4343,7 +4343,7 @@ ATF_TC(lwpinfo2);
 ATF_TC_HEAD(lwpinfo2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Verify baic LWPINFO call for single thread (PT_ATTACH from "
+	    "Verify basic LWPINFO call for single thread (PT_ATTACH from "
 	    "tracer)");
 }
 
