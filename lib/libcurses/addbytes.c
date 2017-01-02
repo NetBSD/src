@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.44 2016/11/28 18:25:26 christos Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.45 2017/01/02 10:28:34 roy Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.44 2016/11/28 18:25:26 christos Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.45 2017/01/02 10:28:34 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -328,6 +328,7 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 		 *y, *x, *win->alines[*y]->firstchp,
 		 *win->alines[*y]->lastchp);
 #endif
+	__sync(win);
 	return (OK);
 }
 
@@ -608,6 +609,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "add_wch: %d : 0x%x\n", lp->ch, lp->attr);
 #endif /* DEBUG */
+	__sync(win);
 	return OK;
 #endif
 }

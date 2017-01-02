@@ -1,4 +1,4 @@
-/*   $NetBSD: insstr.c,v 1.3 2009/07/22 16:57:15 roy Exp $ */
+/*   $NetBSD: insstr.c,v 1.4 2017/01/02 10:28:34 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insstr.c,v 1.3 2009/07/22 16:57:15 roy Exp $");
+__RCSID("$NetBSD: insstr.c,v 1.4 2017/01/02 10:28:34 roy Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -205,5 +205,6 @@ winsnstr(WINDOW *win, const char *str, int n)
 	if ( win->ch_off + win->maxx - 1 > *lnp->lastchp )
 		*lnp->lastchp = win->ch_off + win->maxx - 1;
 	__touchline(win, (int)win->cury, (int)win->curx, (int)win->maxx - 1);
+	__sync(win);
 	return OK;
 }
