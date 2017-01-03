@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2017/01/03 00:22:56 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2017/01/03 01:56:03 christos Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -33,7 +33,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: main.c,v 1.5 2017/01/03 00:22:56 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 2017/01/03 01:56:03 christos Exp $");
 
 
 #include "version.h"
@@ -1590,9 +1590,9 @@ void readin (void)
 	if (!do_yywrap) {
 		if (!C_plus_plus) {
 			 if (reentrant)
-				outn ("\n#define yywrap(yyscanner) (/*CONSTCOND*/1)");
+				out_str ("\n#define %swrap(yyscanner) (/*CONSTCOND*/1)\n", prefix);
 			 else
-				outn ("\n#define yywrap() (/*CONSTCOND*/1)");
+				out_str ("\n#define %swrap() (/*CONSTCOND*/1)\n", prefix);
 		}
 		outn ("#define YY_SKIP_YYWRAP");
 	}
