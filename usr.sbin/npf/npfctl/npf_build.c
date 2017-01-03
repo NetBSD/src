@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_build.c,v 1.42 2016/12/27 22:35:33 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.43 2017/01/03 01:29:49 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.42 2016/12/27 22:35:33 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.43 2017/01/03 01:29:49 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -65,6 +65,7 @@ static nl_rule_t *		the_rule = NULL;
 static nl_rule_t *		current_group[MAX_RULE_NESTING];
 static unsigned			rule_nesting_level = 0;
 static nl_rule_t *		defgroup = NULL;
+static unsigned			npfctl_tid_counter = 0;
 
 static void			npfctl_dump_bpf(struct bpf_program *);
 
@@ -797,10 +798,9 @@ npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname)
 void
 npfctl_build_table(const char *tname, u_int type, const char *fname)
 {
-	static unsigned tid = 0;
 	nl_table_t *tl;
 
-	tl = npf_table_create(tname, tid++, type);
+	tl = npf_table_create(tname, npfctl_tid_counter++, type);
 	assert(tl != NULL);
 
 	if (npf_table_insert(npf_conf, tl)) {
@@ -812,6 +812,24 @@ npfctl_build_table(const char *tname, u_int type, const char *fname)
 	} else if (type == NPF_TABLE_CDB) {
 		errx(EXIT_FAILURE, "tables of cdb type must be static");
 	}
+}
+
+npfvar_t *
+npfctl_ifnet_table(const char *ifname)
+{
+	char tname[NPF_TABLE_MAXNAMELEN];
+	nl_table_t *tl;
+	u_int tid;
+
+	snprintf(tname, sizeof(tname), ".ifnet-%s", ifname);
+
+	tid = npfctl_table_getid(tname);
+	if (tid == (unsigned)-1) {
+		tid = npfctl_tid_counter++;
+		tl = npf_table_create(tname, tid, NPF_TABLE_TREE);
+		(void)npf_table_insert(npf_conf, tl);
+	}
+	return npfvar_create_element(NPFVAR_TABLE, &tid, sizeof(u_int));
 }
 
 /*

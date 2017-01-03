@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_parse.y,v 1.39 2016/12/27 22:35:33 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.40 2017/01/03 01:29:49 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -116,6 +116,7 @@ yyerror(const char *fmt, ...)
 %token			IN
 %token			INET4
 %token			INET6
+%token			IFADDRS
 %token			INTERFACE
 %token			MAP
 %token			MINUS
@@ -161,13 +162,14 @@ yyerror(const char *fmt, ...)
 %token	<str>		TABLE_ID
 %token	<str>		VAR_ID
 
-%type	<str>		addr, some_name, table_store
+%type	<str>		addr, some_name, table_store, dynamic_ifaddrs
 %type	<str>		proc_param_val, opt_apply, ifname, on_ifname, ifref
 %type	<num>		port, opt_final, number, afamily, opt_family
 %type	<num>		block_or_pass, rule_dir, group_dir, block_opts
 %type	<num>		maybe_not, opt_stateful, icmp_type, table_type
 %type	<num>		map_sd, map_algo, map_type
-%type	<var>		ifaddrs, addr_or_ifaddr, port_range, icmp_type_and_code
+%type	<var>		static_ifaddrs, addr_or_ifaddr
+%type	<var>		port_range, icmp_type_and_code
 %type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
 %type	<var>		procs, proc_call, proc_param_list, proc_param
 %type	<var>		element, list_elems, list, value
@@ -288,7 +290,8 @@ element
 		$$ = npfvar_create_from_string(NPFVAR_VAR_ID, $1);
 	}
 	| TABLE_ID		{ $$ = npfctl_parse_table_id($1); }
-	| ifaddrs		{ $$ = $1; }
+	| dynamic_ifaddrs	{ $$ = npfctl_ifnet_table($1); }
+	| static_ifaddrs	{ $$ = $1; }
 	| addr_and_mask		{ $$ = $1; }
 	;
 
@@ -634,6 +637,7 @@ filt_opts
 filt_addr
 	: list			{ $$ = $1; }
 	| addr_or_ifaddr	{ $$ = $1; }
+	| dynamic_ifaddrs	{ $$ = npfctl_ifnet_table($1); }
 	| TABLE_ID		{ $$ = npfctl_parse_table_id($1); }
 	| ANY			{ $$ = NULL; }
 	;
@@ -659,7 +663,7 @@ addr_or_ifaddr
 		assert($1 != NULL);
 		$$ = $1;
 	}
-	| ifaddrs
+	| static_ifaddrs
 	{
 		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
 		$$ = ifna->ifna_addrs;
@@ -679,6 +683,7 @@ again:
 			type = npfvar_get_type(vp, 0);
 			goto again;
 		case NPFVAR_FAM:
+		case NPFVAR_TABLE:
 			$$ = vp;
 			break;
 		case NPFVAR_INTERFACE:
@@ -814,16 +819,24 @@ ifname
 	}
 	;
 
-ifaddrs
+static_ifaddrs
 	: afamily PAR_OPEN ifname PAR_CLOSE
 	{
 		$$ = npfctl_parse_ifnet($3, $1);
 	}
 	;
 
+dynamic_ifaddrs
+	: IFADDRS PAR_OPEN ifname PAR_CLOSE
+	{
+		$$ = $3;
+	}
+	;
+
 ifref
 	: ifname
-	| ifaddrs
+	| dynamic_ifaddrs
+	| static_ifaddrs
 	{
 		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
 		npfctl_note_interface(ifna->ifna_name);
