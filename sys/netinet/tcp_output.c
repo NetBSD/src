@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.191 2017/01/03 15:07:59 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.192 2017/01/03 20:59:32 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.191 2017/01/03 15:07:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.192 2017/01/03 20:59:32 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1157,7 +1157,7 @@ send:
 		if (tp->t_in6pcb)
 			in6_pcbrtentry_unref(synrt, tp->t_in6pcb);
 #endif
-		if ((tp->t_flags & TF_NOOPT) == 0 && OPT_FITS(4)) {
+		if ((tp->t_flags & TF_NOOPT) == 0 && OPT_FITS(TCPOLEN_MAXSEG)) {
 			*optp++ = TCPOPT_MAXSEG;
 			*optp++ = TCPOLEN_MAXSEG;
 			*optp++ = (tp->t_ourmss >> 8) & 0xff;
@@ -1167,7 +1167,7 @@ send:
 			if ((tp->t_flags & TF_REQ_SCALE) &&
 			    ((flags & TH_ACK) == 0 ||
 			    (tp->t_flags & TF_RCVD_SCALE)) &&
-			    OPT_FITS(4)) {
+			    OPT_FITS(TCPOLEN_WINDOW + TCPOLEN_NOP)) {
 				*((uint32_t *)optp) = htonl(
 					TCPOPT_NOP << 24 |
 					TCPOPT_WINDOW << 16 |
@@ -1176,7 +1176,7 @@ send:
 				optp += TCPOLEN_WINDOW + TCPOLEN_NOP;
 				optlen += TCPOLEN_WINDOW + TCPOLEN_NOP;
 			}
-			if (tcp_do_sack && OPT_FITS(2)) {
+			if (tcp_do_sack && OPT_FITS(TCPOLEN_SACK_PERMITTED)) {
 				*optp++ = TCPOPT_SACK_PERMITTED;
 				*optp++ = TCPOLEN_SACK_PERMITTED;
 				optlen += TCPOLEN_SACK_PERMITTED;
@@ -1277,7 +1277,7 @@ send:
 
 	/* Terminate and pad TCP options to a 4 byte boundary. */
 	if (optlen % 4) {
-		if (!OPT_FITS(1)) {
+		if (!OPT_FITS(TCPOLEN_EOL)) {
 reset:			TCP_REASS_UNLOCK(tp);
 			error = ECONNABORTED;
 			goto out;
@@ -1292,7 +1292,7 @@ reset:			TCP_REASS_UNLOCK(tp);
 	 *   and later: "The padding is composed of zeros."
 	 */
 	while (optlen % 4) {
-		if (!OPT_FITS(1))
+		if (!OPT_FITS(TCPOLEN_PAD))
 			goto reset;
 		optlen += TCPOLEN_PAD;
 		*optp++ = TCPOPT_PAD;
