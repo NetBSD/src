@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.83 2017/01/02 16:55:50 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.84 2017/01/03 12:50:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.83 2017/01/02 16:55:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.84 2017/01/03 12:50:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2292,9 +2292,8 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 	dd = &dev->ud_ddesc;
 
 	if (depth == 0 && port == 0) {
-#define XHCI_ROOTHUB_INDEX 128
-		KASSERT(bus->ub_devices[XHCI_ROOTHUB_INDEX] == NULL);
-		bus->ub_devices[XHCI_ROOTHUB_INDEX] = dev;
+		KASSERT(bus->ub_devices[USB_ROOTHUB_INDEX] == NULL);
+		bus->ub_devices[USB_ROOTHUB_INDEX] = dev;
 		err = usbd_get_initial_ddesc(dev, dd);
 		if (err) {
 			DPRINTFN(1, "get_initial_ddesc %u", err, 0, 0, 0);
@@ -2356,12 +2355,12 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		KASSERTMSG(addr >= 1 && addr <= 127, "addr %d", addr);
 		dev->ud_addr = addr;
 
-		KASSERTMSG(bus->ub_devices[dev->ud_addr] == NULL,
+		KASSERTMSG(bus->ub_devices[usb_addr2dindex(dev->ud_addr)] == NULL,
 		    "addr %d already allocated", dev->ud_addr);
 		/*
-		 * The root hub is given a slot
+		 * The root hub is given its own slot
 		 */
-		bus->ub_devices[dev->ud_addr] = dev;
+		bus->ub_devices[usb_addr2dindex(dev->ud_addr)] = dev;
 
 		err = usbd_get_initial_ddesc(dev, dd);
 		if (err) {

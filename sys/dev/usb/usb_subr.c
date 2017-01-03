@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.38 2016/12/29 08:40:27 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.39 2017/01/03 12:50:50 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.38 2016/12/29 08:40:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.39 2017/01/03 12:50:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -832,9 +832,11 @@ usbd_getnewaddr(struct usbd_bus *bus)
 {
 	int addr;
 
-	for (addr = 1; addr < USB_MAX_DEVICES; addr++)
-		if (bus->ub_devices[addr] == NULL)
+	for (addr = 1; addr < USB_MAX_DEVICES; addr++) {
+		size_t dindex = usb_addr2dindex(addr);
+		if (bus->ub_devices[dindex] == NULL)
 			return addr;
+	}
 	return -1;
 }
 
@@ -1336,7 +1338,7 @@ usbd_new_device(device_t parent, struct usbd_bus *bus, int depth, int speed,
 	/* Allow device time to set new address */
 	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
 	dev->ud_addr = addr;	/* new device address now */
-	bus->ub_devices[addr] = dev;
+	bus->ub_devices[usb_addr2dindex(addr)] = dev;
 
 	/* Re-establish the default pipe with the new address. */
 	usbd_kill_pipe(dev->ud_pipe0);
@@ -1428,7 +1430,7 @@ usbd_remove_device(struct usbd_device *dev, struct usbd_port *up)
 	if (dev->ud_pipe0 != NULL)
 		usbd_kill_pipe(dev->ud_pipe0);
 	up->up_dev = NULL;
-	dev->ud_bus->ub_devices[dev->ud_addr] = NULL;
+	dev->ud_bus->ub_devices[usb_addr2dindex(dev->ud_addr)] = NULL;
 
 	kmem_free(dev, sizeof(*dev));
 }
@@ -1737,7 +1739,7 @@ usb_disconnect_port(struct usbd_port *up, device_t parent, int flags)
 	}
 
 	mutex_enter(dev->ud_bus->ub_lock);
-	dev->ud_bus->ub_devices[dev->ud_addr] = NULL;
+	dev->ud_bus->ub_devices[usb_addr2dindex(dev->ud_addr)] = NULL;
 	up->up_dev = NULL;
 	mutex_exit(dev->ud_bus->ub_lock);
 
