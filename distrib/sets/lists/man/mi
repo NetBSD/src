@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1540 2016/12/14 12:59:51 kre Exp $
+# $NetBSD: mi,v 1.1541 2017/01/03 08:49:04 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1250,7 +1250,7 @@
 ./usr/share/man/cat4/i386/mem.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/mms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/ndis.0		man-sys-catman		.cat
-./usr/share/man/cat4/i386/npx.0			man-sys-catman		.cat
+./usr/share/man/cat4/i386/npx.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/olms.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/omms.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/opms.0		man-obsolete		obsolete
@@ -4333,7 +4333,7 @@
 ./usr/share/man/html4/i386/mem.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/mms.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/ndis.html		man-sys-htmlman		html
-./usr/share/man/html4/i386/npx.html		man-sys-htmlman		html
+./usr/share/man/html4/i386/npx.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/pcibios.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/pnpbios.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/rdcide.html		man-sys-htmlman		html
@@ -7218,7 +7218,7 @@
 ./usr/share/man/man4/i386/mem.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/mms.4			man-sys-man		.man
 ./usr/share/man/man4/i386/ndis.4		man-sys-man		.man
-./usr/share/man/man4/i386/npx.4			man-sys-man		.man
+./usr/share/man/man4/i386/npx.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/olms.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/omms.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/opms.4		man-obsolete		obsolete
