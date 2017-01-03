@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.66 2017/01/02 21:49:51 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.67 2017/01/03 00:58:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -247,9 +247,9 @@ void		npf_ifmap_flush(npf_t *);
 u_int		npf_ifmap_getid(npf_t *, const ifnet_t *);
 const char *	npf_ifmap_getname(npf_t *, const u_int);
 
-void		npf_ifaddr_init(npf_t *);
 void		npf_ifaddr_sync(npf_t *, ifnet_t *);
 void		npf_ifaddr_flush(npf_t *, ifnet_t *);
+void		npf_ifaddr_syncall(npf_t *);
 
 /* Packet filter hooks. */
 int		npf_pfil_register(bool);
