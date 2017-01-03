@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.16.14.1 2017/01/03 06:19:21 snj Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.16.14.2 2017/01/03 06:37:25 snj Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.16.14.1 2017/01/03 06:19:21 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.16.14.2 2017/01/03 06:37:25 snj Exp $");
 
 #include "opt_ddb.h"
 
@@ -248,14 +248,14 @@ fpu_emulate(struct trapframe *tf, struct fpreg *fpf, ksiginfo_t *ksi)
 	case NOTFPU:
 	default:
 		DPRINTF(FPE_EX, ("fpu_emulate: SIGILL\n"));
-#ifdef DEBUG
+#if defined(DDB) && defined(DEBUG)
 		if (fpe_debug & FPE_EX) {
 			printf("fpu_emulate:  illegal insn %x at %p:",
 			insn.i_int, (void *) (tf->tf_srr0));
 			opc_disasm((vaddr_t)(tf->tf_srr0), insn.i_int);
 		}
 #endif
-#if defined(PPC_IBM4XX) && defined(DEBUG)
+#if defined(PPC_IBM4XX) && defined(DDB) && defined(DEBUG)
 		/*
 		* XXXX retry an illegal insn once due to cache issues.
 		*/
@@ -265,7 +265,7 @@ fpu_emulate(struct trapframe *tf, struct fpreg *fpf, ksiginfo_t *ksi)
 				Debugger();
 		}
 		lastill = tf->tf_srr0;
-#endif /* PPC_IBM4XX && DEBUG */
+#endif /* PPC_IBM4XX && DDB && DEBUG */
 		return false;
 	}
 }
