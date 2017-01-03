@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2092 2017/01/03 02:13:05 wiz Exp $
+#	$NetBSD: mi,v 1.2093 2017/01/03 04:12:18 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9323,7 +9323,7 @@
 ./usr/share/man/cat3/swapon.0			comp-c-catman		.cat
 ./usr/share/man/cat3/swprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/swscanf.0			comp-c-catman		.cat
-./usr/share/man/cat3/synckok.0			comp-c-catman		.cat
+./usr/share/man/cat3/syncok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sys_errlist.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sys_nerr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sys_siglist.0		comp-c-catman		.cat
