@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2093 2017/01/03 04:12:18 kamil Exp $
+#	$NetBSD: mi,v 1.2094 2017/01/03 18:43:13 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9631,6 +9631,7 @@
 ./usr/share/man/cat3/wctomb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wctrans.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wctype.0			comp-c-catman		.cat
+./usr/share/man/cat3/wcursyncup.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wcwidth.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wdelch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wdeleteln.0		comp-c-catman		.cat
@@ -9666,6 +9667,7 @@
 ./usr/share/man/cat3/wsetscrreg.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wstandend.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wstandout.0		comp-c-catman		.cat
+./usr/share/man/cat3/wsyncup.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wtimeout.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wtouchln.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wunderend.0		comp-c-catman		.cat
@@ -16900,6 +16902,7 @@
 ./usr/share/man/html3/wctomb.html		comp-c-htmlman		html
 ./usr/share/man/html3/wctrans.html		comp-c-htmlman		html
 ./usr/share/man/html3/wctype.html		comp-c-htmlman		html
+./usr/share/man/html3/wcursyncup.html		comp-c-htmlman		html
 ./usr/share/man/html3/wcwidth.html		comp-c-htmlman		html
 ./usr/share/man/html3/wdelch.html		comp-c-htmlman		html
 ./usr/share/man/html3/wdeleteln.html		comp-c-htmlman		html
@@ -16935,6 +16938,7 @@
 ./usr/share/man/html3/wsetscrreg.html		comp-c-htmlman		html
 ./usr/share/man/html3/wstandend.html		comp-c-htmlman		html
 ./usr/share/man/html3/wstandout.html		comp-c-htmlman		html
+./usr/share/man/html3/wsyncup.html		comp-c-htmlman		html
 ./usr/share/man/html3/wtimeout.html		comp-c-htmlman		html
 ./usr/share/man/html3/wtouchln.html		comp-c-htmlman		html
 ./usr/share/man/html3/wunderend.html		comp-c-htmlman		html
@@ -24240,6 +24244,7 @@
 ./usr/share/man/man3/wctomb.3			comp-c-man		.man
 ./usr/share/man/man3/wctrans.3			comp-c-man		.man
 ./usr/share/man/man3/wctype.3			comp-c-man		.man
+./usr/share/man/man3/wcursyncup.3		comp-c-man		.man
 ./usr/share/man/man3/wcwidth.3			comp-c-man		.man
 ./usr/share/man/man3/wdelch.3			comp-c-man		.man
 ./usr/share/man/man3/wdeleteln.3		comp-c-man		.man
@@ -24275,6 +24280,7 @@
 ./usr/share/man/man3/wsetscrreg.3		comp-c-man		.man
 ./usr/share/man/man3/wstandend.3		comp-c-man		.man
 ./usr/share/man/man3/wstandout.3		comp-c-man		.man
+./usr/share/man/man3/wsyncup.3			comp-c-man		.man
 ./usr/share/man/man3/wtimeout.3			comp-c-man		.man
 ./usr/share/man/man3/wtouchln.3			comp-c-man		.man
 ./usr/share/man/man3/wunderend.3		comp-c-man		.man
