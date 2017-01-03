@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.228 2016/12/31 09:41:05 ryo Exp $	*/
+/*	$NetBSD: in6.c,v 1.229 2017/01/03 15:14:31 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.228 2016/12/31 09:41:05 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.229 2017/01/03 15:14:31 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -377,7 +377,6 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	struct sockaddr_in6 *sa6;
 	int error, bound;
 	struct psref psref;
-	bool run_hooks = false;
 
 	switch (cmd) {
 	case SIOCAADDRCTL_POLICY:
@@ -704,14 +703,16 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		 */
 		if ((error = in6_update_ifa(ifp, ifra, ia, 0)) != 0)
 			break;
-		run_hooks = true;
+		pfil_run_addrhooks(if_pfil, cmd, &ia->ia_ifa);
 		break;
 	}
 
 	case SIOCDIFADDR_IN6:
-		pfil_run_addrhooks(if_pfil, cmd, (struct ifaddr *)ia);
 		ia6_release(ia, &psref);
+		ifaref(&ia->ia_ifa);
 		in6_purgeaddr(&ia->ia_ifa);
+		pfil_run_addrhooks(if_pfil, cmd, &ia->ia_ifa);
+		ifafree(&ia->ia_ifa);
 		ia = NULL;
 		break;
 
@@ -719,8 +720,6 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		error = ENOTTY;
 	}
 release:
-	if (run_hooks)
-		pfil_run_addrhooks(if_pfil, cmd, (struct ifaddr *)ia);
 	ia6_release(ia, &psref);
 out:
 	curlwp_bindx(bound);
