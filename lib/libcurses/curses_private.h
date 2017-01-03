@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.54 2017/01/02 10:28:34 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.55 2017/01/03 12:42:06 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -183,7 +183,7 @@ struct __pair {
 };
 
 /* Maximum colours */
-#define	MAX_COLORS	64
+#define	MAX_COLORS	256
 /* Maximum colour pairs - determined by number of colour bits in attr_t */
 #define	MAX_PAIRS	PAIR_NUMBER(__COLOR)
 
