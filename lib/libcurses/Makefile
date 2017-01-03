@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77 2017/01/02 10:28:34 roy Exp $
+#	$NetBSD: Makefile,v 1.78 2017/01/03 13:21:40 roy Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -167,6 +167,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_background.3 wbkgdset.3 curses_border.3 wborder.3 \
 	 curses_clear.3 wclear.3 curses_clear.3 wclrtobot.3 \
 	 curses_clear.3 wclrtoeol.3 curses_attributes.3 wcolor_set.3 \
+	 curses_cursor.3 wcursyncup.3 \
 	 curses_delch.3 wdelch.3 curses_deleteln.3 wdeleteln.3 \
 	 curses_echochar.3 wechochar.3 \
 	 curses_clear.3 werase.3 curses_input.3 wgetch.3 \
@@ -180,7 +181,8 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_refresh.3 wrefresh.3 curses_window.3 wresize.3 \
 	 curses_scanw.3 wscanw.3 curses_scroll.3 wscrl.3 \
 	 curses_scroll.3 wsetscrreg.3 curses_standout.3 wstandend.3 \
-	 curses_standout.3 wstandout.3 curses_input.3 wtimeout.3 \
+	 curses_standout.3 wstandout.3 curses_touch.3 wsyncup.3 \
+	 curses_input.3 wtimeout.3 \
 	 curses_touch.3 wtouchln.3 curses_underscore.3 wunderend.3 \
 	 curses_underscore.3 wunderscore.3 curses_line.3 wvline.3
 
