@@ -1,4 +1,4 @@
-.\"	$NetBSD: file.1,v 1.16 2015/01/02 21:15:32 christos Exp $
+.\"	$NetBSD: file.1,v 1.17 2017/01/03 11:34:41 abhinav Exp $
 .\"
 .\" $File: file.man,v 1.111 2014/12/16 23:18:40 christos Exp $
 .Dd December 16, 2014
@@ -231,8 +231,8 @@ or at least one filename argument must be present;
 to test the standard input, use
 .Sq -
 as a filename argument.
-Please note that 
-.Ar namefile 
+Please note that
+.Ar namefile
 is unwrapped and the enclosed filenames are processed when this option is
 encountered and before any further options processing is done.
 This allows one to process multiple lists of files with different command line
@@ -394,10 +394,10 @@ and
 .Fl h
 options.
 .Sh SEE ALSO
-.Xr magic 5 ,
 .Xr hexdump 1 ,
 .Xr od 1 ,
 .Xr strings 1 ,
+.Xr magic 5
 .Sh STANDARDS CONFORMANCE
 This program is believed to exceed the System V Interface Definition
 of FILE(CMD), as near as one can determine from the vague language
@@ -513,16 +513,15 @@ John Gilmore revised the code extensively, making it better than
 the first version.
 Geoff Collyer found several inadequacies
 and provided some magic file entries.
-Contributions by the
+Contribution of the
 .Sq \*[Am]
-operator by Rob McMahon, 
+operator by Rob McMahon,
 .Aq cudcv@warwick.ac.uk ,
 1989.
 .Pp
-Guy Harris, 
+Guy Harris,
 .Aq guy@netapp.com ,
 made many changes from 1993 to the present.
-1989.
 .Pp
 Primary development and maintenance from 1990 to the present by
 Christos Zoulas
@@ -570,7 +569,6 @@ program, and are not covered by the above license.
 .Nm
 returns 0 on success, and non-zero on error.
 .Sh BUGS
-.Pp
 Please report bugs and send patches to the bug tracker at
 .Pa http://bugs.gw.com/
 or the mailing list at
@@ -579,7 +577,6 @@ or the mailing list at
 .Pa http://mx.gw.com/mailman/listinfo/file
 first to subscribe).
 .Sh TODO
-.Pp
 Fix output so that tests for MIME and APPLE flags are not needed all
 over the place, and actual output is only done in one place.
 This needs a design.
@@ -615,16 +612,16 @@ Fix
 .Dq name
 and
 .Dq use
-to check for consistency at compile time (duplicate 
+to check for consistency at compile time (duplicate
 .Dq name ,
 .Dq use
 pointing to undefined
 .Dq name
 ).
-Make 
+Make
 .Dq name
 /
-.Dq use 
+.Dq use
 more efficient by keeping a sorted list of names.
 Special-case ^ to flip endianness in the parser so that it does not
 have to be escaped, and document it.
