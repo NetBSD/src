@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.42 2016/12/27 22:35:33 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.43 2017/01/03 01:29:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ int		npfctl_protono(const char *);
 in_port_t	npfctl_portno(const char *);
 uint8_t		npfctl_icmpcode(int, uint8_t, const char *);
 uint8_t		npfctl_icmptype(int, const char *);
+npfvar_t *	npfctl_ifnet_table(const char *);
 npfvar_t *	npfctl_parse_ifnet(const char *, const int);
 npfvar_t *	npfctl_parse_tcpflag(const char *);
 npfvar_t *	npfctl_parse_table_id(const char *);
