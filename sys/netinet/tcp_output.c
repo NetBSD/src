@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.189 2017/01/02 02:38:54 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.190 2017/01/03 13:09:33 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.189 2017/01/02 02:38:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.190 2017/01/03 13:09:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -566,8 +566,8 @@ tcp_output(struct tcpcb *tp)
 	struct ip6_hdr *ip6;
 #endif
 	struct tcphdr *th;
-	u_char opt[MAX_TCPOPTLEN], *optp;
-#define OPT_FITS(more)	((optlen + (more)) <= sizeof(opt))
+	u_char opt[MAX_TCPOPTLEN + 1], *optp;
+#define OPT_FITS(more)	((optlen + (more)) < sizeof(opt))
 	unsigned optlen, hdrlen, packetlen;
 	unsigned int sack_numblks;
 	int idle, sendalot, txsegsize, rxsegsize;
@@ -1219,7 +1219,6 @@ send:
 		}
 	}
 
-
 #ifdef TCP_SIGNATURE
 	if (tp->t_flags & TF_SIGNATURE) {
 		/*
@@ -1279,7 +1278,7 @@ send:
 	/* Terminate and pad TCP options to a 4 byte boundary. */
 	if (optlen % 4) {
 		if (!OPT_FITS(1)) {
-reset:			 TCP_REASS_UNLOCK(tp);
+reset:			TCP_REASS_UNLOCK(tp);
 			error = ECONNABORTED;
 			goto out;
 		}
