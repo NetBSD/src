@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.1 2016/09/26 20:05:03 jakllsch Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.2 2017/01/03 12:37:08 skrll Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.1 2016/09/26 20:05:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.2 2017/01/03 12:37:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -108,6 +108,14 @@ tegra_xusb_match(device_t parent, cfdata_t cf, void *aux)
 
 	return of_match_compatible(faa->faa_phandle, compatible);
 }
+
+#define tegra_xusb_attach_check(sc, cond, fmt, ...)			\
+    do {								\
+	if (cond) {							\
+		aprint_error_dev(sc->sc_dev, fmt, ## __VA_ARGS__);	\
+		return;							\
+	}								\
+    } while (0)
 
 static void
 tegra_xusb_attach(device_t parent, device_t self, void *aux)
@@ -206,24 +214,35 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk); /* XXX set frequency */
 	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	tegra_xusb_attach_check(sc, error, "failed to enable pll_e clock");
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_host_src");
 	error = clk_set_parent(clk, pll_p_out0);
+	tegra_xusb_attach_check(sc, error, "failed to set xusb_host_src clock parent");
+	
 	rate = clk_get_rate(clk);
 	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
 	error = clk_set_rate(clk, 102000000);
+	tegra_xusb_attach_check(sc, error, "failed to set xusb_host_src clock rate");
+
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk); /* XXX set frequency */
 	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	tegra_xusb_attach_check(sc, error, "failed to enable xusb_host_src clock");
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_falcon_src");
 	error = clk_set_parent(clk, pll_p_out0);
+	tegra_xusb_attach_check(sc, error, "failed to set xusb_falcon_src clock parent");
+
 	rate = clk_get_rate(clk);
 	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
 	error = clk_set_rate(clk, 204000000);
+	tegra_xusb_attach_check(sc, error, "failed to set xusb_falcon_src clock rate");
+
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk);
 	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	tegra_xusb_attach_check(sc, error, "failed to enable xusb_falcon_src clock");
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_host");
 	rate = clk_get_rate(clk);
@@ -234,32 +253,35 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk); /* XXX set frequency */
 	device_printf(sc->sc_dev, "xusb_ss rate %u error %d\n", rate, error);
+	tegra_xusb_attach_check(sc, error, "failed to enable xusb_ss clock");
 
 	psc->sc_clk_ss_src = fdtbus_clock_get(faa->faa_phandle, "xusb_ss_src");
-	if (psc->sc_clk_ss_src == NULL) {
-		printf("psc->sc_clk_ss_src %p\n", psc->sc_clk_ss_src);
-		Debugger();
-	}
-	error = 0;
+	tegra_xusb_attach_check(sc, psc->sc_clk_ss_src == NULL,
+		"failed to get xusb_ss_src clock");
 	rate = clk_get_rate(psc->sc_clk_ss_src);
-	device_printf(sc->sc_dev, "xusb_ss_src rate %u error %d\n", rate,
-	    error);
+	device_printf(sc->sc_dev, "xusb_ss_src rate %u\n", rate);
 
 	error = clk_set_rate(psc->sc_clk_ss_src, 2000000);
 	rate = clk_get_rate(psc->sc_clk_ss_src);
 	device_printf(sc->sc_dev, "xusb_ss_src rate %u error %d\n", rate,
 	    error);
+	tegra_xusb_attach_check(sc, error, "failed to get xusb_ss_src clock rate");
 
 	error = clk_set_parent(psc->sc_clk_ss_src, pll_u_480);
+	tegra_xusb_attach_check(sc, error, "failed to set xusb_ss_src clock parent");
+
 	rate = clk_get_rate(psc->sc_clk_ss_src);
-	device_printf(sc->sc_dev, "ss_src rate %u error %d\n", rate, error);
+	device_printf(sc->sc_dev, "ss_src rate %u\n", rate);
+	tegra_xusb_attach_check(sc, error, "failed to set xusb_ss_src clock rate");
 
 	error = clk_set_rate(psc->sc_clk_ss_src, 120000000);
 	rate = clk_get_rate(psc->sc_clk_ss_src);
 	device_printf(sc->sc_dev, "ss_src rate %u error %d\n", rate, error);
+	tegra_xusb_attach_check(sc, error, "failed to get xusb_ss_src clock rate");
 
 	error = clk_enable(psc->sc_clk_ss_src);
 	device_printf(sc->sc_dev, "ss_src rate %u error %d\n", rate, error);
+	tegra_xusb_attach_check(sc, error, "failed to enable xusb_ss_src clock");
 
 #if 0
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_hs_src");
@@ -270,9 +292,12 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_fs_src");
 	error = clk_set_parent(clk, pll_u_48);
+	tegra_xusb_attach_check(sc, error, "failed to set xusb_fs_src clock parent");
+
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk); /* XXX set frequency */
 	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	tegra_xusb_attach_check(sc, error, "failed to enable xusb_fs_src clock");
 
 	rst = fdtbus_reset_get(faa->faa_phandle, "xusb_host");
 	fdtbus_reset_deassert(rst);
