@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.141 2016/12/31 07:43:21 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.142 2017/01/03 07:08:05 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7810,4 +7810,28 @@ xsrc/external/mit/xorg-server/dist/include/servermd.h 1.7
 
 	ARM is not always little endian.  PR/50356
 	[rin, ticket #1344]
+
+sys/arch/powerpc/fpu/fpu_emu.c			1.19
+sys/arch/powerpc/fpu/fpu_explode.c		1.7
+
+	Fix PR port-powerpc/51368: powerpc FPU emulation fails for
+	single precision floating point arithmetic
+	[rin, ticket #1341]
+
+sys/arch/powerpc/fpu/fpu_emu.c			1.18
+
+	Fix build without DDB.
+	[rin, ticket #1342]
+
+sys/arch/amiga/dev/sbic.c			1.74
+
+	Make it compile with -DDEBUG again.
+	[mlelstv, ticket #1345]
+
+share/man/man9/bus_dma.9			1.61, 1.62
+
+	bus_dma man page:
+	- Use .An -nosplit
+	- Give a heads up about bus_dmatag_subregion()
+	[sevan, ticket #1346]
 
