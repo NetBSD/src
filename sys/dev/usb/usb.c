@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.156.2.16 2017/01/01 14:56:25 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.156.2.17 2017/01/03 12:50:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.16 2017/01/01 14:56:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.17 2017/01/03 12:50:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -727,8 +727,12 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EINVAL;
 			goto fail;
 		}
-		if (addr < 0 || addr >= USB_MAX_DEVICES ||
-		    sc->sc_bus->ub_devices[addr] == NULL) {
+		if (addr < 0 || addr >= USB_MAX_DEVICES) {
+			error = EINVAL;
+			goto fail;
+		}
+		size_t dindex = usb_addr2dindex(addr);
+		if (sc->sc_bus->ub_devices[dindex] == NULL) {
 			error = EINVAL;
 			goto fail;
 		}
@@ -750,7 +754,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 					goto ret;
 			}
 		}
-		err = usbd_do_request_flags(sc->sc_bus->ub_devices[addr],
+		err = usbd_do_request_flags(sc->sc_bus->ub_devices[dindex],
 			  &ur->ucr_request, ptr, ur->ucr_flags, &ur->ucr_actlen,
 			  USBD_DEFAULT_TIMEOUT);
 		if (err) {
@@ -783,7 +787,8 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EINVAL;
 			goto fail;
 		}
-		if ((dev = sc->sc_bus->ub_devices[addr]) == NULL) {
+		size_t dindex = usb_addr2dindex(addr);
+		if ((dev = sc->sc_bus->ub_devices[dindex]) == NULL) {
 			error = ENXIO;
 			goto fail;
 		}
@@ -802,7 +807,8 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EINVAL;
 			goto fail;
 		}
-		if ((dev = sc->sc_bus->ub_devices[addr]) == NULL) {
+		size_t dindex = usb_addr2dindex(addr);
+		if ((dev = sc->sc_bus->ub_devices[dindex]) == NULL) {
 			error = ENXIO;
 			goto fail;
 		}
