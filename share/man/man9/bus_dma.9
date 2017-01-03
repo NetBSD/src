@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.59 2013/10/30 04:16:44 msaitoh Exp $
+.\" $NetBSD: bus_dma.9,v 1.59.4.1 2017/01/03 06:49:30 snj Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 8, 2011
+.Dd January 2, 2017
 .Dt BUS_DMA 9
 .Os
 .Sh NAME
@@ -798,6 +798,8 @@ Given a bus_dma_tag_t
 create a new bus_dma_tag_t with a limited bus address space.
 This function should not normally be used, but is useful for devices
 that do not support the full address space of the parent bus.
+Not all ports implement this method; on ports where it is unavailable,
+EOPNOTSUPP is returned.
 The arguments are as follows:
 .Bl -tag -width max_addr -compact
 .It Fa tag
@@ -839,6 +841,7 @@ The
 interface appeared in
 .Nx 1.3 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 interface was designed and implemented by Jason R. Thorpe of the
