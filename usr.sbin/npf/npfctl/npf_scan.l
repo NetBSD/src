@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.24 2016/12/27 22:35:33 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.25 2017/01/03 01:29:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ off			return OFF;
 bpf.jit			return BPFJIT;
 inet6			return INET6;
 inet4			return INET4;
+ifaddrs			return IFADDRS;
 proto			return PROTO;
 family			return FAMILY;
 tcp			return TCP;
