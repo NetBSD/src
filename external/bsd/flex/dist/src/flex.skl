@@ -126,7 +126,6 @@ m4preproc_define(`M4_GEN_PREFIX',
 %endif
 
 %if-c-only
-%if-reentrant
 m4_ifelse(M4_YY_PREFIX,yy,,
     M4_GEN_PREFIX(`_create_buffer')
     M4_GEN_PREFIX(`_delete_buffer')
@@ -164,7 +163,6 @@ m4_ifelse(M4_YY_PREFIX,yy,,
     ]])
     M4_GEN_PREFIX(`wrap')
 )
-%endif
 %endif
 
 m4_ifdef( [[M4_YY_BISON_LVAL]],
