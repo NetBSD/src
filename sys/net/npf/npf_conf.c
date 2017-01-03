@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conf.c,v 1.10 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_conf.c,v 1.11 2017/01/03 00:58:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.10 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.11 2017/01/03 00:58:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -157,7 +157,7 @@ npf_config_load(npf_t *npf, npf_ruleset_t *rset, npf_tableset_t *tset,
 		npf_ifmap_flush(npf);
 		npf_conn_load(npf, conns, !flush);
 		mutex_exit(&npf->config_lock);
-		return;
+		goto done;
 	}
 
 	/*
@@ -183,6 +183,9 @@ npf_config_load(npf_t *npf, npf_ruleset_t *rset, npf_tableset_t *tset,
 
 	/* Finally, it is safe to destroy the old config. */
 	npf_config_destroy(onc);
+done:
+	/* Sync all interface address tables (can be done asynchronously). */
+	npf_ifaddr_syncall(npf);
 }
 
 /*
