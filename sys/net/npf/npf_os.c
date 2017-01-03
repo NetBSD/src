@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_os.c,v 1.4 2017/01/02 23:02:04 christos Exp $	*/
+/*	$NetBSD: npf_os.c,v 1.5 2017/01/03 00:58:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2016 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.4 2017/01/02 23:02:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.5 2017/01/03 00:58:05 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -153,7 +153,6 @@ npf_init(void)
 	npf = npf_create(0, NULL, &kern_ifops);
 	npf_setkernctx(npf);
 	npf_pfil_register(true);
-	npf_ifaddr_init(npf);
 
 #ifdef _MODULE
 	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
@@ -445,6 +444,12 @@ npf_pfil_register(bool init)
 		    PFIL_ALL, npf_ph_inet6);
 		KASSERT(error == 0);
 	}
+
+	/*
+	 * It is necessary to re-sync all/any interface address tables,
+	 * since we did not listen for any changes.
+	 */
+	npf_ifaddr_syncall(npf);
 	pfil_registered = true;
 out:
 	KERNEL_UNLOCK_ONE(NULL);

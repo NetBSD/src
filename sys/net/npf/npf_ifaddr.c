@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ifaddr.c,v 1.1 2017/01/02 21:49:51 rmind Exp $	*/
+/*	$NetBSD: npf_ifaddr.c,v 1.2 2017/01/03 00:58:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.1 2017/01/02 21:49:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.2 2017/01/03 00:58:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,20 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.1 2017/01/02 21:49:51 rmind Exp $")
 #include <netinet6/in6_var.h>
 
 #include "npf_impl.h"
-
-void
-npf_ifaddr_init(npf_t *npf)
-{
-	ifnet_t *ifp;
-
-	KERNEL_LOCK(1, NULL);
-	IFNET_LOCK();
-	IFNET_WRITER_FOREACH(ifp) {
-		npf_ifaddr_sync(npf, ifp);
-	}
-	IFNET_UNLOCK();
-	KERNEL_UNLOCK_ONE(NULL);
-}
 
 static npf_table_t *
 lookup_ifnet_table(npf_t *npf, ifnet_t *ifp)
@@ -177,3 +163,19 @@ npf_ifaddr_flush(npf_t *npf, ifnet_t *ifp)
 	}
 	replace_ifnet_table(npf, t);
 }
+
+void
+npf_ifaddr_syncall(npf_t *npf)
+{
+	ifnet_t *ifp;
+
+	KERNEL_LOCK(1, NULL);
+	IFNET_LOCK();
+	IFNET_WRITER_FOREACH(ifp) {
+		npf_ifaddr_sync(npf, ifp);
+	}
+	IFNET_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
+}
+
+
