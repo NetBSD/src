@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.42 2016/12/27 20:32:58 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.43 2017/01/03 00:59:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.42 2016/12/27 20:32:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.43 2017/01/03 00:59:31 christos Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -805,7 +805,7 @@ npf_rule_getid(nl_rule_t *rl)
 	uint64_t id = 0;
 
 	(void)prop_dictionary_get_uint64(rldict, "id", &id);
-	return (unsigned)id;
+	return id;
 }
 
 const void *
@@ -1330,6 +1330,7 @@ npf_nat_lookup(int fd, int af, npf_addr_t *addr[2], in_port_t port[2],
 		goto out;
 
 	prop_object_release(conn_res);
+	conn_res = NULL;
 
 #if !defined(_NPF_STANDALONE)
 	error = prop_dictionary_sendrecv_ioctl(conn_dict, fd,
