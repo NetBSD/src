@@ -113,7 +113,7 @@ m4_ifdef( [[M4_YY_PREFIX]],, [[m4_define([[M4_YY_PREFIX]], [[yy]])]])
 
 m4preproc_define(`M4_GEN_PREFIX',
     ``[[#define yy$1 ]]M4_YY_PREFIX[[$1]]
-m4_define([[yy$1]], [[M4_YY_PREFIX[[$1]]m4_ifelse($'`#,0,,[[($'`@)]])]])'')
+%# m4_define([[yy$1]], [[M4_YY_PREFIX[[$1]]m4_ifelse($'`#,0,,[[($'`@)]])]])'')
 
 %if-c++-only
     /* The c++ scanner is a mess. The FlexLexer.h header file relies on the
@@ -126,7 +126,8 @@ m4_define([[yy$1]], [[M4_YY_PREFIX[[$1]]m4_ifelse($'`#,0,,[[($'`@)]])]])'')
 %endif
 
 %if-c-only
-m4_ifelse(M4_YY_PREFIX,M4_YY_PREFIX,,
+%if-reentrant
+m4_ifelse(M4_YY_PREFIX,yy,,
     M4_GEN_PREFIX(`_create_buffer')
     M4_GEN_PREFIX(`_delete_buffer')
     M4_GEN_PREFIX(`_scan_buffer')
@@ -163,6 +164,7 @@ m4_ifelse(M4_YY_PREFIX,M4_YY_PREFIX,,
     ]])
     M4_GEN_PREFIX(`wrap')
 )
+%endif
 %endif
 
 m4_ifdef( [[M4_YY_BISON_LVAL]],
