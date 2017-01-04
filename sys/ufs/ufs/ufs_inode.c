@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.97 2016/10/28 20:38:12 jdolecek Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.98 2017/01/04 10:04:17 hannken Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.97 2016/10/28 20:38:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.98 2017/01/04 10:04:17 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -303,7 +303,7 @@ ufs_truncate_retry(struct vnode *vp, uint64_t newsize, kauth_cred_t cred)
 	/*
 	 * Truncate might temporarily fail, loop until done.
 	 */
-	while (ip->i_size != newsize) {
+	do {
 		error = UFS_WAPBL_BEGIN(mp);
 		if (error)
 			goto out;
@@ -313,7 +313,7 @@ ufs_truncate_retry(struct vnode *vp, uint64_t newsize, kauth_cred_t cred)
 
 		if (error != 0 && error != EAGAIN)
 			goto out;
-	}
+	} while (ip->i_size != newsize);
 
   out:
 	return error;
