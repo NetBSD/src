@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.106 2016/12/15 12:56:52 kre Exp $
+# $NetBSD: mi,v 1.107 2017/01/04 15:45:18 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -82,8 +82,8 @@
 ./@MODULEDIR@/dk_subr/dk_subr.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/dm				base-kernel-modules	lvm,kmod
 ./@MODULEDIR@/dm/dm.kmod			base-kernel-modules	lvm,kmod
-./@MODULEDIR@/drvctl				base-kernel-modules	lvm,kmod
-./@MODULEDIR@/drvctl/drvctl.kmod		base-kernel-modules	lvm,kmod
+./@MODULEDIR@/drvctl				base-kernel-modules	kmod
+./@MODULEDIR@/drvctl/drvctl.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/dtrace				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace/dtrace.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_fbt				base-kernel-modules	kmod,dtrace
