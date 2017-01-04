@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.352 2017/01/02 01:18:42 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.353 2017/01/04 12:35:14 kre Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.352 2017/01/02 01:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.353 2017/01/04 12:35:14 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4656,7 +4656,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	}
 
 	if (sc->sc_flags & SCF_TIMESTAMP) {
-                while (!optlen || optlen % 4 != 2) {
+                while (optlen % 4 != 2) {
                         optlen += TCPOLEN_NOP;
                         *optp++ = TCPOPT_NOP;
                 }
