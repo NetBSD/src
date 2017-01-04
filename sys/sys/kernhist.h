@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.15 2017/01/04 01:05:58 pgoyette Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.16 2017/01/04 01:52:13 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -80,9 +80,8 @@ struct sysctl_history_list_entry {
 
 /* info for a single history event */
 struct sysctl_history_event {
-	time_t		she_time_sec;
-	uint32_t	she_time_usec;
-	uint32_t	she_filler;
+	uint64_t	she_time_sec;
+	uint64_t	she_time_usec;
 	uint64_t	she_callnumber;
 	uint64_t	she_values[4];
 	uint32_t	she_cpunum;
