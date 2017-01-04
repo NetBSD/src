@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.68 2017/01/02 10:36:58 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.69 2017/01/04 17:13:50 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@
  *	and it is possible to wait for state change.
  *
  *	State is protected with v_interlock with one exception:
- *	to change from LOADING both v_interlock and vcache.lock must be held
+ *	to change from LOADING both v_interlock and vcache_lock must be held
  *	so it is possible to check "state == LOADING" without holding
  *	v_interlock.  See vcache_get() for details.
  *
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.68 2017/01/02 10:36:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.69 2017/01/04 17:13:50 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -202,15 +202,12 @@ static kcondvar_t	vdrain_gen_cv;
 static bool		vdrain_retry;
 static lwp_t *		vdrain_lwp;
 SLIST_HEAD(hashhead, vnode_impl);
-static struct {
-	kmutex_t	lock;
-	kcondvar_t	cv;
-	u_int		hashsize;
-	u_long		hashmask;
-	struct hashhead	*hashtab;
-	pool_cache_t	pool;
-}			vcache			__cacheline_aligned;
-
+static kmutex_t		vcache_lock		__cacheline_aligned;
+static kcondvar_t	vcache_cv		__cacheline_aligned;
+static u_int		vcache_hashsize;
+static u_long		vcache_hashmask;
+static struct hashhead	*vcache_hashtab		__cacheline_aligned;
+static pool_cache_t	vcache_pool;
 static void		lru_requeue(vnode_t *, vnodelst_t *);
 static vnodelst_t *	lru_which(vnode_t *);
 static vnode_impl_t *	vcache_alloc(void);
@@ -293,7 +290,7 @@ vstate_assert_change(vnode_t *vp, enum vnode_state from, enum vnode_state to,
 
 	KASSERTMSG(mutex_owned(vp->v_interlock), "at %s:%d", func, line);
 	if (from == VS_LOADING)
-		KASSERTMSG(mutex_owned(&vcache.lock), "at %s:%d", func, line);
+		KASSERTMSG(mutex_owned(&vcache_lock), "at %s:%d", func, line);
 
 	if (from == VS_MARKER)
 		vnpanic(vp, "from is %s at %s:%d",
@@ -311,7 +308,7 @@ vstate_assert_change(vnode_t *vp, enum vnode_state from, enum vnode_state to,
 
 	node->vi_state = to;
 	if (from == VS_LOADING)
-		cv_broadcast(&vcache.cv);
+		cv_broadcast(&vcache_cv);
 	if (to == VS_ACTIVE || to == VS_RECLAIMED)
 		cv_broadcast(&vp->v_cv);
 }
@@ -342,7 +339,7 @@ vstate_change(vnode_t *vp, enum vnode_state from, enum vnode_state to)
 
 	node->vi_state = to;
 	if (from == VS_LOADING)
-		cv_broadcast(&vcache.cv);
+		cv_broadcast(&vcache_cv);
 	if (to == VS_ACTIVE || to == VS_RECLAIMED)
 		cv_broadcast(&vp->v_cv);
 }
@@ -381,7 +378,7 @@ vnalloc_marker(struct mount *mp)
 	vnode_impl_t *node;
 	vnode_t *vp;
 
-	node = pool_cache_get(vcache.pool, PR_WAITOK);
+	node = pool_cache_get(vcache_pool, PR_WAITOK);
 	memset(node, 0, sizeof(*node));
 	vp = VIMPL_TO_VNODE(node);
 	uvm_obj_init(&vp->v_uobj, &uvm_vnodeops, true, 0);
@@ -403,7 +400,7 @@ vnfree_marker(vnode_t *vp)
 	node = VNODE_TO_VIMPL(vp);
 	KASSERT(node->vi_state == VS_MARKER);
 	uvm_obj_destroy(&vp->v_uobj, true);
-	pool_cache_put(vcache.pool, node);
+	pool_cache_put(vcache_pool, node);
 }
 
 /*
@@ -954,14 +951,14 @@ static void
 vcache_init(void)
 {
 
-	vcache.pool = pool_cache_init(sizeof(vnode_impl_t), 0, 0, 0,
+	vcache_pool = pool_cache_init(sizeof(vnode_impl_t), 0, 0, 0,
 	    "vcachepl", NULL, IPL_NONE, NULL, NULL, NULL);
-	KASSERT(vcache.pool != NULL);
-	mutex_init(&vcache.lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&vcache.cv, "vcache");
-	vcache.hashsize = desiredvnodes;
-	vcache.hashtab = hashinit(desiredvnodes, HASH_SLIST, true,
-	    &vcache.hashmask);
+	KASSERT(vcache_pool != NULL);
+	mutex_init(&vcache_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&vcache_cv, "vcache");
+	vcache_hashsize = desiredvnodes;
+	vcache_hashtab = hashinit(desiredvnodes, HASH_SLIST, true,
+	    &vcache_hashmask);
 }
 
 static void
@@ -974,21 +971,21 @@ vcache_reinit(void)
 	vnode_impl_t *node;
 
 	newtab = hashinit(desiredvnodes, HASH_SLIST, true, &newmask);
-	mutex_enter(&vcache.lock);
-	oldtab = vcache.hashtab;
-	oldmask = vcache.hashmask;
-	vcache.hashsize = desiredvnodes;
-	vcache.hashtab = newtab;
-	vcache.hashmask = newmask;
+	mutex_enter(&vcache_lock);
+	oldtab = vcache_hashtab;
+	oldmask = vcache_hashmask;
+	vcache_hashsize = desiredvnodes;
+	vcache_hashtab = newtab;
+	vcache_hashmask = newmask;
 	for (i = 0; i <= oldmask; i++) {
 		while ((node = SLIST_FIRST(&oldtab[i])) != NULL) {
 			SLIST_REMOVE(&oldtab[i], node, vnode_impl, vi_hash);
 			hash = vcache_hash(&node->vi_key);
-			SLIST_INSERT_HEAD(&newtab[hash & vcache.hashmask],
+			SLIST_INSERT_HEAD(&newtab[hash & vcache_hashmask],
 			    node, vi_hash);
 		}
 	}
-	mutex_exit(&vcache.lock);
+	mutex_exit(&vcache_lock);
 	hashdone(oldtab, HASH_SLIST, oldmask);
 }
 
@@ -998,9 +995,9 @@ vcache_hash_lookup(const struct vcache_key *key, uint32_t hash)
 	struct hashhead *hashp;
 	vnode_impl_t *node;
 
-	KASSERT(mutex_owned(&vcache.lock));
+	KASSERT(mutex_owned(&vcache_lock));
 
-	hashp = &vcache.hashtab[hash & vcache.hashmask];
+	hashp = &vcache_hashtab[hash & vcache_hashmask];
 	SLIST_FOREACH(node, hashp, vi_hash) {
 		if (key->vk_mount != node->vi_key.vk_mount)
 			continue;
@@ -1022,7 +1019,7 @@ vcache_alloc(void)
 	vnode_impl_t *node;
 	vnode_t *vp;
 
-	node = pool_cache_get(vcache.pool, PR_WAITOK);
+	node = pool_cache_get(vcache_pool, PR_WAITOK);
 	memset(node, 0, sizeof(*node));
 
 	/* SLIST_INIT(&node->vi_hash); */
@@ -1070,7 +1067,7 @@ vcache_free(vnode_impl_t *node)
 	rw_destroy(&vp->v_lock);
 	uvm_obj_destroy(&vp->v_uobj, true);
 	cv_destroy(&vp->v_cv);
-	pool_cache_put(vcache.pool, node);
+	pool_cache_put(vcache_pool, node);
 }
 
 /*
@@ -1161,7 +1158,7 @@ vcache_get(struct mount *mp, const void *key, size_t key_len,
 	hash = vcache_hash(&vcache_key);
 
 again:
-	mutex_enter(&vcache.lock);
+	mutex_enter(&vcache_lock);
 	node = vcache_hash_lookup(&vcache_key, hash);
 
 	/* If found, take a reference or retry. */
@@ -1169,19 +1166,19 @@ again:
 		/*
 		 * If the vnode is loading we cannot take the v_interlock
 		 * here as it might change during load (see uvm_obj_setlock()).
-		 * As changing state from VS_LOADING requires both vcache.lock
-		 * and v_interlock it is safe to test with vcache.lock held.
+		 * As changing state from VS_LOADING requires both vcache_lock
+		 * and v_interlock it is safe to test with vcache_lock held.
 		 *
 		 * Wait for vnodes changing state from VS_LOADING and retry.
 		 */
 		if (__predict_false(node->vi_state == VS_LOADING)) {
-			cv_wait(&vcache.cv, &vcache.lock);
-			mutex_exit(&vcache.lock);
+			cv_wait(&vcache_cv, &vcache_lock);
+			mutex_exit(&vcache_lock);
 			goto again;
 		}
 		vp = VIMPL_TO_VNODE(node);
 		mutex_enter(vp->v_interlock);
-		mutex_exit(&vcache.lock);
+		mutex_exit(&vcache_lock);
 		error = vcache_vget(vp);
 		if (error == ENOENT)
 			goto again;
@@ -1190,7 +1187,7 @@ again:
 		KASSERT((error != 0) == (*vpp == NULL));
 		return error;
 	}
-	mutex_exit(&vcache.lock);
+	mutex_exit(&vcache_lock);
 
 	/* Allocate and initialize a new vcache / vnode pair. */
 	error = vfs_busy(mp, NULL);
@@ -1199,10 +1196,10 @@ again:
 	new_node = vcache_alloc();
 	new_node->vi_key = vcache_key;
 	vp = VIMPL_TO_VNODE(new_node);
-	mutex_enter(&vcache.lock);
+	mutex_enter(&vcache_lock);
 	node = vcache_hash_lookup(&vcache_key, hash);
 	if (node == NULL) {
-		SLIST_INSERT_HEAD(&vcache.hashtab[hash & vcache.hashmask],
+		SLIST_INSERT_HEAD(&vcache_hashtab[hash & vcache_hashmask],
 		    new_node, vi_hash);
 		node = new_node;
 	}
@@ -1211,22 +1208,22 @@ again:
 	if (node != new_node) {
 		mutex_enter(vp->v_interlock);
 		VSTATE_CHANGE(vp, VS_LOADING, VS_RECLAIMED);
-		mutex_exit(&vcache.lock);
+		mutex_exit(&vcache_lock);
 		vrelel(vp, 0);
 		vfs_unbusy(mp, false, NULL);
 		goto again;
 	}
-	mutex_exit(&vcache.lock);
+	mutex_exit(&vcache_lock);
 
 	/* Load the fs node.  Exclusive as new_node is VS_LOADING. */
 	error = VFS_LOADVNODE(mp, vp, key, key_len, &new_key);
 	if (error) {
-		mutex_enter(&vcache.lock);
-		SLIST_REMOVE(&vcache.hashtab[hash & vcache.hashmask],
+		mutex_enter(&vcache_lock);
+		SLIST_REMOVE(&vcache_hashtab[hash & vcache_hashmask],
 		    new_node, vnode_impl, vi_hash);
 		mutex_enter(vp->v_interlock);
 		VSTATE_CHANGE(vp, VS_LOADING, VS_RECLAIMED);
-		mutex_exit(&vcache.lock);
+		mutex_exit(&vcache_lock);
 		vrelel(vp, 0);
 		vfs_unbusy(mp, false, NULL);
 		KASSERT(*vpp == NULL);
@@ -1241,12 +1238,12 @@ again:
 	vfs_unbusy(mp, true, NULL);
 
 	/* Finished loading, finalize node. */
-	mutex_enter(&vcache.lock);
+	mutex_enter(&vcache_lock);
 	new_node->vi_key.vk_key = new_key;
 	mutex_enter(vp->v_interlock);
 	VSTATE_CHANGE(vp, VS_LOADING, VS_ACTIVE);
 	mutex_exit(vp->v_interlock);
-	mutex_exit(&vcache.lock);
+	mutex_exit(&vcache_lock);
 	*vpp = vp;
 	return 0;
 }
@@ -1278,10 +1275,10 @@ vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
 	error = VFS_NEWVNODE(mp, dvp, vp, vap, cred,
 	    &new_node->vi_key.vk_key_len, &new_node->vi_key.vk_key);
 	if (error) {
-		mutex_enter(&vcache.lock);
+		mutex_enter(&vcache_lock);
 		mutex_enter(vp->v_interlock);
 		VSTATE_CHANGE(vp, VS_LOADING, VS_RECLAIMED);
-		mutex_exit(&vcache.lock);
+		mutex_exit(&vcache_lock);
 		vrelel(vp, 0);
 		vfs_unbusy(mp, false, NULL);
 		KASSERT(*vpp == NULL);
@@ -1292,28 +1289,28 @@ vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
 	hash = vcache_hash(&new_node->vi_key);
 
 	/* Wait for previous instance to be reclaimed, then insert new node. */
-	mutex_enter(&vcache.lock);
+	mutex_enter(&vcache_lock);
 	while ((old_node = vcache_hash_lookup(&new_node->vi_key, hash))) {
 		ovp = VIMPL_TO_VNODE(old_node);
 		mutex_enter(ovp->v_interlock);
-		mutex_exit(&vcache.lock);
+		mutex_exit(&vcache_lock);
 		error = vcache_vget(ovp);
 		KASSERT(error == ENOENT);
-		mutex_enter(&vcache.lock);
+		mutex_enter(&vcache_lock);
 	}
-	SLIST_INSERT_HEAD(&vcache.hashtab[hash & vcache.hashmask],
+	SLIST_INSERT_HEAD(&vcache_hashtab[hash & vcache_hashmask],
 	    new_node, vi_hash);
-	mutex_exit(&vcache.lock);
+	mutex_exit(&vcache_lock);
 	vfs_insmntque(vp, mp);
 	if ((mp->mnt_iflag & IMNT_MPSAFE) != 0)
 		vp->v_vflag |= VV_MPSAFE;
 	vfs_unbusy(mp, true, NULL);
 
 	/* Finished loading, finalize node. */
-	mutex_enter(&vcache.lock);
+	mutex_enter(&vcache_lock);
 	mutex_enter(vp->v_interlock);
 	VSTATE_CHANGE(vp, VS_LOADING, VS_ACTIVE);
-	mutex_exit(&vcache.lock);
+	mutex_exit(&vcache_lock);
 	mutex_exit(vp->v_interlock);
 	*vpp = vp;
 	return 0;
@@ -1348,16 +1345,16 @@ vcache_rekey_enter(struct mount *mp, struct vnode *vp,
 	tvp = VIMPL_TO_VNODE(new_node);
 
 	/* Insert locked new node used as placeholder. */
-	mutex_enter(&vcache.lock);
+	mutex_enter(&vcache_lock);
 	node = vcache_hash_lookup(&new_vcache_key, new_hash);
 	if (node != NULL) {
 		mutex_enter(tvp->v_interlock);
 		VSTATE_CHANGE(tvp, VS_LOADING, VS_RECLAIMED);
-		mutex_exit(&vcache.lock);
+		mutex_exit(&vcache_lock);
 		vrelel(tvp, 0);
 		return EEXIST;
 	}
-	SLIST_INSERT_HEAD(&vcache.hashtab[new_hash & vcache.hashmask],
+	SLIST_INSERT_HEAD(&vcache_hashtab[new_hash & vcache_hashmask],
 	    new_node, vi_hash);
 
 	/* Replace old nodes key with the temporary copy. */
@@ -1366,7 +1363,7 @@ vcache_rekey_enter(struct mount *mp, struct vnode *vp,
 	KASSERT(VIMPL_TO_VNODE(node) == vp);
 	KASSERT(node->vi_key.vk_key != old_vcache_key.vk_key);
 	node->vi_key = old_vcache_key;
-	mutex_exit(&vcache.lock);
+	mutex_exit(&vcache_lock);
 	return 0;
 }
 
@@ -1393,7 +1390,7 @@ vcache_rekey_exit(struct mount *mp, struct vnode *vp,
 	new_vcache_key.vk_key_len = new_key_len;
 	new_hash = vcache_hash(&new_vcache_key);
 
-	mutex_enter(&vcache.lock);
+	mutex_enter(&vcache_lock);
 
 	/* Lookup old and new node. */
 	old_node = vcache_hash_lookup(&old_vcache_key, old_hash);
@@ -1410,17 +1407,17 @@ vcache_rekey_exit(struct mount *mp, struct vnode *vp,
 	/* Rekey old node and put it onto its new hashlist. */
 	old_node->vi_key = new_vcache_key;
 	if (old_hash != new_hash) {
-		SLIST_REMOVE(&vcache.hashtab[old_hash & vcache.hashmask],
+		SLIST_REMOVE(&vcache_hashtab[old_hash & vcache_hashmask],
 		    old_node, vnode_impl, vi_hash);
-		SLIST_INSERT_HEAD(&vcache.hashtab[new_hash & vcache.hashmask],
+		SLIST_INSERT_HEAD(&vcache_hashtab[new_hash & vcache_hashmask],
 		    old_node, vi_hash);
 	}
 
 	/* Remove new node used as placeholder. */
-	SLIST_REMOVE(&vcache.hashtab[new_hash & vcache.hashmask],
+	SLIST_REMOVE(&vcache_hashtab[new_hash & vcache_hashmask],
 	    new_node, vnode_impl, vi_hash);
 	VSTATE_CHANGE(tvp, VS_LOADING, VS_RECLAIMED);
-	mutex_exit(&vcache.lock);
+	mutex_exit(&vcache_lock);
 	vrelel(tvp, 0);
 }
 
@@ -1466,10 +1463,10 @@ vcache_reclaim(vnode_t *vp)
 	} else {
 		temp_key = temp_buf;
 	}
-	mutex_enter(&vcache.lock);
+	mutex_enter(&vcache_lock);
 	memcpy(temp_key, node->vi_key.vk_key, temp_key_len);
 	node->vi_key.vk_key = temp_key;
-	mutex_exit(&vcache.lock);
+	mutex_exit(&vcache_lock);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
@@ -1515,11 +1512,11 @@ vcache_reclaim(vnode_t *vp)
 
 	/* Remove from vnode cache. */
 	hash = vcache_hash(&node->vi_key);
-	mutex_enter(&vcache.lock);
+	mutex_enter(&vcache_lock);
 	KASSERT(node == vcache_hash_lookup(&node->vi_key, hash));
-	SLIST_REMOVE(&vcache.hashtab[hash & vcache.hashmask],
+	SLIST_REMOVE(&vcache_hashtab[hash & vcache_hashmask],
 	    node, vnode_impl, vi_hash);
-	mutex_exit(&vcache.lock);
+	mutex_exit(&vcache_lock);
 	if (temp_key != temp_buf)
 		kmem_free(temp_key, temp_key_len);
 
@@ -1600,7 +1597,7 @@ vfs_drainvnodes(void)
 	if (numvnodes >= desiredvnodes)
 		return EBUSY;
 
-	if (vcache.hashsize != desiredvnodes)
+	if (vcache_hashsize != desiredvnodes)
 		vcache_reinit();
 
 	return 0;
