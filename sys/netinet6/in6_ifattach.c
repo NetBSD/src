@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.108 2016/12/19 03:32:54 ozaki-r Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.109 2017/01/04 19:37:14 christos Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.108 2016/12/19 03:32:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.109 2017/01/04 19:37:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,8 +576,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 	 * we know there's no other link-local address on the interface
 	 * and therefore we are adding one (instead of updating one).
 	 */
-	if ((error = in6_update_ifa(ifp, &ifra, NULL,
-	    IN6_IFAUPDATE_DADDELAY)) != 0) {
+	if ((error = in6_update_ifa(ifp, &ifra, IN6_IFAUPDATE_DADDELAY)) != 0) {
 		/*
 		 * XXX: When the interface does not support IPv6, this call
 		 * would fail in the SIOCINITIFADDR ioctl.  I believe the
@@ -634,7 +633,7 @@ in6_ifattach_loopback(struct ifnet *ifp)
 	 * We are sure that this is a newly assigned address, so we can set
 	 * NULL to the 3rd arg.
 	 */
-	if ((error = in6_update_ifa(ifp, &ifra, NULL, 0)) != 0) {
+	if ((error = in6_update_ifa(ifp, &ifra, 0)) != 0) {
 		nd6log(LOG_ERR, "failed to configure "
 		    "the loopback address on %s (errno=%d)\n",
 		    if_name(ifp), error);
