@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.9 2017/01/01 23:58:47 pgoyette Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.10 2017/01/04 01:05:58 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.9 2017/01/01 23:58:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.10 2017/01/04 01:05:58 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -466,7 +466,8 @@ sysctl_kernhist_helper(SYSCTLFN_ARGS)
 			out_evt->she_fmtoffset = 0;
 			continue;
 		}
-		TIMEVAL_TO_TIMESPEC(&in_evt->tv, &out_evt->she_tspec);
+		out_evt->she_time_sec = in_evt->tv.tv_sec;
+		out_evt->she_time_usec = in_evt->tv.tv_usec;
 		out_evt->she_callnumber = in_evt->call;
 		out_evt->she_cpunum = in_evt->cpunum;
 		out_evt->she_values[0] = in_evt->v[0];
