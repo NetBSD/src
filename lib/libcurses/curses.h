@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.113 2017/01/02 10:28:34 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.114 2017/01/04 02:05:23 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -283,7 +283,9 @@ typedef struct __screen SCREEN;
 
 #define	NUM_ACS	128
 
+__BEGIN_DECLS
 extern chtype _acs_char[NUM_ACS];
+__END_DECLS
 #ifdef __cplusplus
 #define __UC_CAST(a)	static_cast<unsigned char>(a)
 #else
@@ -327,7 +329,9 @@ extern chtype _acs_char[NUM_ACS];
 #define	ACS_STERLING	_acs_char[__UC_CAST('}')]
 
 #ifdef HAVE_WCHAR
+__BEGIN_DECLS
 extern cchar_t _wacs_char[NUM_ACS];
+__END_DECLS
 
 #define	WACS_RARROW     (&_wacs_char[(unsigned char)'+'])
 #define	WACS_LARROW     (&_wacs_char[(unsigned char)','])
@@ -399,6 +403,7 @@ extern cchar_t _wacs_char[NUM_ACS];
 #define	PAIR_NUMBER(n)	(((__UINT32_CAST(n)) & A_COLOR) >> 17)
 
 /* Curses external declarations. */
+__BEGIN_DECLS
 extern WINDOW	*curscr;		/* Current screen. */
 extern WINDOW	*stdscr;		/* Standard screen. */
 
@@ -411,6 +416,7 @@ extern int	 COLOR_PAIRS;		/* Max color pairs on the screen. */
 
 extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 extern int	 TABSIZE;		/* Size of a tab. */
+__END_DECLS
 
 #ifndef OK
 #define	ERR	(-1)			/* Error return. */
