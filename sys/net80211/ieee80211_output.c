@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.57 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.58 2017/01/04 03:05:24 nonaka Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.57 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.58 2017/01/04 03:05:24 nonaka Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -963,7 +963,7 @@ bad:
 /*
  * Add a supported rates element id to a frame.
  */
-static u_int8_t *
+u_int8_t *
 ieee80211_add_rates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 {
 	int nrates;
@@ -980,7 +980,7 @@ ieee80211_add_rates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 /*
  * Add an extended supported rates element id to a frame.
  */
-static u_int8_t *
+u_int8_t *
 ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 {
 	/*
@@ -999,7 +999,7 @@ ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 /* 
  * Add an ssid elemet to a frame.
  */
-static u_int8_t *
+u_int8_t *
 ieee80211_add_ssid(u_int8_t *frm, const u_int8_t *ssid, u_int len)
 {
 	*frm++ = IEEE80211_ELEMID_SSID;
@@ -1201,7 +1201,7 @@ ieee80211_setup_rsn_ie(struct ieee80211com *ic, u_int8_t *ie)
 /*
  * Add a WPA/RSN element to a frame.
  */
-static u_int8_t *
+u_int8_t *
 ieee80211_add_wpa(u_int8_t *frm, struct ieee80211com *ic)
 {
 
@@ -1217,7 +1217,7 @@ ieee80211_add_wpa(u_int8_t *frm, struct ieee80211com *ic)
 /*
  * Add a WME information element to a frame.
  */
-static u_int8_t *
+u_int8_t *
 ieee80211_add_wme_info(u_int8_t *frm, struct ieee80211_wme_state *wme)
 {
 	static const struct ieee80211_wme_info info = {
