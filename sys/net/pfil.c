@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.29 2016/12/26 23:21:49 christos Exp $	*/
+/*	$NetBSD: pfil.c,v 1.30 2017/01/04 13:03:41 ryo Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.29 2016/12/26 23:21:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.30 2017/01/04 13:03:41 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,8 @@ CTASSERT(PFIL_IN == 1);
 CTASSERT(PFIL_OUT == 2);
 
 struct pfil_head {
-	pfil_list_t	ph_inout[2];
+	pfil_list_t	ph_in;
+	pfil_list_t	ph_out;
 	pfil_list_t	ph_ifaddr;
 	pfil_list_t	ph_ifevent;
 	int		ph_type;
@@ -121,8 +122,9 @@ pfil_hook_get(int dir, pfil_head_t *ph)
 {
 	switch (dir) {
 	case PFIL_IN:
+		return &ph->ph_in;
 	case PFIL_OUT:
-		return &ph->ph_inout[dir];
+		return &ph->ph_out;
 	case PFIL_IFADDR:
 		return &ph->ph_ifaddr;
 	case PFIL_IFNET:
@@ -286,7 +288,7 @@ pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 	int ret = 0;
 
 	KASSERT((dir & ~PFIL_ALL) == 0);
-	if (__predict_false((phlist = &ph->ph_inout[dir]) == NULL)) {
+	if (__predict_false((phlist = pfil_hook_get(dir, ph)) == NULL)) {
 		return ret;
 	}
 
