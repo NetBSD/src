@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.81 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.82 2017/01/04 03:05:24 nonaka Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.81 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.82 2017/01/04 03:05:24 nonaka Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -322,13 +322,6 @@ static void	iwn_free_rbuf(struct mbuf *, void *, size_t, void *);
 static int	iwn_alloc_rpool(struct iwn_softc *);
 static void	iwn_free_rpool(struct iwn_softc *);
 #endif
-
-/* XXX needed by iwn_scan */
-static u_int8_t	*ieee80211_add_ssid(u_int8_t *, const u_int8_t *, u_int);
-static u_int8_t	*ieee80211_add_rates(u_int8_t *,
-    const struct ieee80211_rateset *);
-static u_int8_t	*ieee80211_add_xrates(u_int8_t *,
-    const struct ieee80211_rateset *);
 
 static void	iwn_fix_channel(struct ieee80211com *, struct mbuf *,
 		    struct iwn_rx_stat *);
@@ -6455,58 +6448,6 @@ iwn_free_rpool(struct iwn_softc *sc)
 	iwn_dma_contig_free(&sc->rxq.buf_dma);
 }
 #endif
-
-/*
- * XXX code from OpenBSD src/sys/net80211/ieee80211_output.c
- * Copyright (c) 2001 Atsushi Onoe
- * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
- * Copyright (c) 2007-2009 Damien Bergamini
- * All rights reserved.
- */
-
-/*
- * Add an SSID element to a frame (see 7.3.2.1).
- */
-static u_int8_t *
-ieee80211_add_ssid(u_int8_t *frm, const u_int8_t *ssid, u_int len)
-{
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = len;
-	memcpy(frm, ssid, len);
-	return frm + len;
-}
-
-/*
- * Add a supported rates element to a frame (see 7.3.2.2).
- */
-static u_int8_t *
-ieee80211_add_rates(u_int8_t *frm, const struct ieee80211_rateset *rs)
-{
-	int nrates;
-
-	*frm++ = IEEE80211_ELEMID_RATES;
-	nrates = min(rs->rs_nrates, IEEE80211_RATE_SIZE);
-	*frm++ = nrates;
-	memcpy(frm, rs->rs_rates, nrates);
-	return frm + nrates;
-}
-
-/*
- * Add an extended supported rates element to a frame (see 7.3.2.14).
- */
-static u_int8_t *
-ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
-{
-	int nrates;
-
-	KASSERT(rs->rs_nrates > IEEE80211_RATE_SIZE);
-
-	*frm++ = IEEE80211_ELEMID_XRATES;
-	nrates = rs->rs_nrates - IEEE80211_RATE_SIZE;
-	*frm++ = nrates;
-	memcpy(frm, rs->rs_rates + IEEE80211_RATE_SIZE, nrates);
-	return frm + nrates;
-}
 
 /*
  * XXX: Hack to set the current channel to the value advertised in beacons or
