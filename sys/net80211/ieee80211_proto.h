@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.22 2013/03/30 15:12:28 christos Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.23 2017/01/04 03:05:24 nonaka Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -84,6 +84,13 @@ struct mbuf *ieee80211_get_cts_to_self(struct ieee80211com *,
 		uint16_t);
 void	ieee80211_pwrsave(struct ieee80211com *, struct ieee80211_node *,
 		struct mbuf *);
+
+u_int8_t *ieee80211_add_rates(u_int8_t *, const struct ieee80211_rateset *);
+u_int8_t *ieee80211_add_xrates(u_int8_t *, const struct ieee80211_rateset *);
+u_int8_t *ieee80211_add_ssid(u_int8_t *, const u_int8_t *, u_int);
+u_int8_t *ieee80211_add_wpa(u_int8_t *, struct ieee80211com *);
+struct ieee80211_wme_state;
+u_int8_t *ieee80211_add_wme_info(u_int8_t *, struct ieee80211_wme_state *);
 
 void	ieee80211_reset_erp(struct ieee80211com *);
 void	ieee80211_set_shortslottime(struct ieee80211com *, int onoff);
