@@ -1,4 +1,4 @@
-/*	$NetBSD: nside.c,v 1.9 2013/10/07 19:51:55 jakllsch Exp $	*/
+/*	$NetBSD: nside.c,v 1.10 2017/01/04 15:49:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nside.c,v 1.9 2013/10/07 19:51:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nside.c,v 1.10 2017/01/04 15:49:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ void
 natsemi_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive, ndrives = 0;
+	int drive;
 	uint32_t idedma_ctl = 0;
         struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
         struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
@@ -171,7 +171,6 @@ natsemi_setup_channel(struct ata_channel *chp)
 		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 
-		ndrives++;
 		/* add timing values, setup DMA if needed */
 		if ((drvp->drive_flags & ATA_DRIVE_DMA) == 0) {
 			tim = natsemi_pio_pulse[drvp->PIO_mode] |
