@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.193 2017/01/04 12:35:14 kre Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.194 2017/01/04 15:09:37 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.193 2017/01/04 12:35:14 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.194 2017/01/04 15:09:37 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1267,7 +1267,7 @@ send:
 				*lp++ = htonl(tiqe->ipqe_seq + tiqe->ipqe_len +
 				    ((tiqe->ipqe_flags & TH_FIN) != 0 ? 1 : 0));
 			}
-			optlen += sack_len;
+			optlen += sack_len + 2;
 			optp += sack_len;
 		} else {
 			optp -= alen;
