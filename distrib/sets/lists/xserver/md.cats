@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.54 2016/09/24 21:57:38 mrg Exp $
+# $NetBSD: md.cats,v 1.55 2017/01/04 15:41:24 christos Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -326,3 +326,4 @@
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
 ./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg
+./usr/X11R7/share/aclocal/xtrans.m4			-unknown-	xorg

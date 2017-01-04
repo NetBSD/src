@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.98 2016/09/26 22:37:31 mrg Exp $
+# $NetBSD: md.amd64,v 1.99 2017/01/04 15:41:24 christos Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -461,3 +461,4 @@
 ./usr/X11R7/man/man4/xgi.4				-unknown-	.man,xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
 ./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg
+./usr/X11R7/share/aclocal/xtrans.m4			-unknown-	xorg
