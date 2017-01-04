@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.212 2017/01/02 09:24:54 pgoyette Exp $ */
+/* $NetBSD: vmstat.c,v 1.213 2017/01/04 01:06:26 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.212 2017/01/02 09:24:54 pgoyette Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.213 2017/01/04 01:06:26 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -2232,11 +2232,10 @@ hist_dodump_sysctl(int mib[], unsigned int miblen)
 		if (e->she_fmtoffset != 0) {
 			fmt = &strp[e->she_fmtoffset];
 			fn = &strp[e->she_funcoffset];
-			(void)printf("%06ld.%06ld ",
-			    (long int)e->she_tspec.tv_sec,
-			    (long int)(e->she_tspec.tv_nsec / 1000));
-			(void)printf("%s#%"PRIu64"@%"PRIu32": ", fn,
-			    e->she_callnumber, e->she_cpunum);
+			(void)printf("%06ld.%06ld %s#%"PRIu64"@%"PRIu32": ",
+			    (long int)e->she_time_sec,
+			    (long int)e->she_time_usec,
+			    fn, e->she_callnumber, e->she_cpunum);
 			(void)printf(fmt, e->she_values[0], e->she_values[1],
 			     e->she_values[2], e->she_values[3]);
  			(void)putchar('\n');
