@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.213 2017/01/04 01:06:26 pgoyette Exp $ */
+/* $NetBSD: vmstat.c,v 1.214 2017/01/04 01:29:18 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.213 2017/01/04 01:06:26 pgoyette Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.214 2017/01/04 01:29:18 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -2138,13 +2138,12 @@ hist_traverse_sysctl(int todo, const char *histname)
 	/* retrieve names of available histories */
 	miblen = __arraycount(mib);
 	error = sysctlnametomib("kern.hist", mib, &miblen);
-	if (error == ENOENT) {
- 		warnx("kernel history is not compiled into the kernel.");
- 		return;
- 	}
 	if (error != 0) {
-		err(1, "nametomib failed");
-		return;
+		if (errno == ENOENT) {
+ 			warnx("kernel history is not compiled into the kernel.");
+			return;
+		} else
+			err(EXIT_FAILURE, "nametomib failed");
 	}
  
 	/* get the list of nodenames below kern.hist */
