@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.114 2017/01/04 02:05:23 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.115 2017/01/04 03:51:29 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -59,7 +59,7 @@ typedef wchar_t	attr_t;
 #endif
 
 #ifdef HAVE_WCHAR
-/* 
+/*
  * The complex character structure required by the X/Open reference and used
  * in * functions such as in_wchstr(). It includes a string of up to 8 wide
  * characters and its length, an attribute, and a color-pair.
@@ -73,7 +73,7 @@ typedef struct {
 	wchar_t		vals[CURSES_CCHAR_MAX]; /* wide chars including
 						   non-spacing */
 } cchar_t;
-#else 
+#else
 typedef chtype cchar_t;
 #endif /* HAVE_WCHAR */
 
@@ -932,7 +932,7 @@ int border_set(const cchar_t *, const cchar_t *, const cchar_t *,
                const cchar_t *, const cchar_t *, const cchar_t *,
                const cchar_t *, const cchar_t *);
 int wborder_set(WINDOW *, const cchar_t *, const cchar_t *,
-                const cchar_t *, const cchar_t *, const cchar_t *, 
+                const cchar_t *, const cchar_t *, const cchar_t *,
                 const cchar_t *, const cchar_t *, const cchar_t *);
 int box_set(WINDOW *, const cchar_t *, const cchar_t *);
 int erasewchar(wchar_t *);
