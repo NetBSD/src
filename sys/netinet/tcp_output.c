@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.192 2017/01/03 20:59:32 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.193 2017/01/04 12:35:14 kre Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.192 2017/01/03 20:59:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.193 2017/01/04 12:35:14 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1194,7 +1194,7 @@ send:
 	    ((flags & (TH_SYN|TH_ACK)) == TH_SYN ||
 	     (tp->t_flags & TF_RCVD_TSTMP))) {
 		int alen = 0;
-		while (!optlen || optlen % 4 != 2) {
+		while (optlen % 4 != 2) {
 			optlen += TCPOLEN_NOP;
 			*optp++ = TCPOPT_NOP;
 			alen++;
@@ -1242,7 +1242,7 @@ send:
 	if (sack_numblks) {
 		int alen = 0;
 		int sack_len = sack_numblks * 8;
-		while (!optlen || optlen % 4 != 2) {
+		while (optlen % 4 != 2) {
 			optlen += TCPOLEN_NOP;
 			*optp++ = TCPOPT_NOP;
 			alen++;
