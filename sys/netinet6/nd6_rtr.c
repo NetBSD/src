@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.128 2016/12/19 07:51:34 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.129 2017/01/04 19:37:14 christos Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.128 2016/12/19 07:51:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.129 2017/01/04 19:37:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1988,7 +1988,7 @@ in6_ifadd(struct nd_prefixctl *prc, int mcast, struct psref *psref)
 	updateflags = 0;
 	if (mcast)
 		updateflags |= IN6_IFAUPDATE_DADDELAY;
-	if ((error = in6_update_ifa(ifp, &ifra, NULL, updateflags)) != 0) {
+	if ((error = in6_update_ifa(ifp, &ifra, updateflags)) != 0) {
 		nd6log(LOG_ERR, "failed to make ifaddr %s on %s (errno=%d)\n",
 		    ip6_sprintf(&ifra.ifra_addr.sin6_addr), if_name(ifp),
 		    error);
@@ -2109,7 +2109,7 @@ in6_tmpifadd(
 	updateflags = 0;
 	if (dad_delay)
 		updateflags |= IN6_IFAUPDATE_DADDELAY;
-	if ((error = in6_update_ifa(ifp, &ifra, NULL, updateflags)) != 0)
+	if ((error = in6_update_ifa(ifp, &ifra, updateflags)) != 0)
 		return (error);
 
 	s = pserialize_read_enter();
