@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.38 2015/08/24 08:30:17 hannken Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.39 2017/01/04 15:53:14 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.38 2015/08/24 08:30:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.39 2017/01/04 15:53:14 christos Exp $");
 #endif /* not lint */
 
 
@@ -1001,7 +1001,7 @@ udf_bitmap_check_trunc_free(struct udf_bitmap *bitmap, uint32_t to_trunc)
 		bitval = (1 << bit);
 		if (!(*bpos & bitval))
 			seq_free = 0;
-		offset++; to_trunc--;
+		to_trunc--;
 		bit++;
 		if (bit == 8) {
 			bpos++;
