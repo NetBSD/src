@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.28 2013/09/15 12:11:16 martin Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.29 2017/01/04 15:50:34 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.28 2013/09/15 12:11:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.29 2017/01/04 15:50:34 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -128,7 +128,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 	RF_VoidFuncPtr bFunc;
 	int     numStripesBailed = 0, cantCreateDAGs = RF_FALSE;
 	int     numStripeUnitsBailed = 0;
-	int     stripeNum, numUnitDags = 0, stripeUnitNum, numBlockDags = 0;
+	int     stripeNum, stripeUnitNum, numBlockDags = 0;
 	RF_StripeNum_t numStripeUnits;
 	RF_SectorNum_t numBlocks;
 	RF_RaidAddr_t address;
@@ -266,8 +266,6 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 							cantCreateDAGs = RF_TRUE;
 					}
 					numStripeUnitsBailed++;
-				} else {
-					numUnitDags++;
 				}
 			}
 			RF_ASSERT(j == numStripeUnits);
