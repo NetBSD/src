@@ -38,7 +38,7 @@
  * as well.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: update.c,v 1.10 2016/12/19 17:31:47 christos Exp $");
+__RCSID("$NetBSD: update.c,v 1.11 2017/01/04 16:11:20 christos Exp $");
 
 #include "cvs.h"
 #include <assert.h>
@@ -1382,7 +1382,6 @@ VERS: ", 0);
 
 	    xvers_ts = Version_TS (finfo, options, tag, date, 
 				   force_tag_match, set_time);
-
 	    if (strcmp (xvers_ts->options, "-V4") == 0)
 		xvers_ts->options[0] = '\0';
 
@@ -1777,7 +1776,7 @@ patch_file (struct file_info *finfo, Vers_TS *vers_ts, int *docheckout,
         /* This stuff is just copied blindly from checkout_file.  I
 	   don't really know what it does.  */
         xvers_ts = Version_TS (finfo, options, tag, date,
-			       force_tag_match, 1);
+			       force_tag_match, preserve_timestamps_on_update);
 	if (strcmp (xvers_ts->options, "-V4") == 0)
 	    xvers_ts->options[0] = '\0';
 
