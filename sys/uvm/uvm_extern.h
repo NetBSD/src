@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.202 2017/01/02 20:22:20 cherry Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.203 2017/01/04 23:59:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -472,7 +472,9 @@ extern bool vm_page_zero_enable;
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #include <uvm/uvm_map.h>
 #include <uvm/uvm_pager.h>
+#endif
 
+#ifdef _KERNEL
 /*
  * Include the uvm_hotplug(9) API unconditionally until
  * uvm_page_physload() et. al. are obsoleted
