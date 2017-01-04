@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.460 2016/12/28 07:32:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.461 2017/01/04 04:43:08 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.460 2016/12/28 07:32:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.461 2017/01/04 04:43:08 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6317,7 +6317,7 @@ wm_select_txqueue(struct ifnet *ifp, struct mbuf *m)
 	/*
 	 * Currently, simple distribute strategy.
 	 * TODO:
-	 * destribute by flowid(RSS has value).
+	 * distribute by flowid(RSS has value).
 	 */
 	return (cpuid + sc->sc_affinity_offset) % sc->sc_nqueues;
 }
