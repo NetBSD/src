@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.229 2017/01/03 15:14:31 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.230 2017/01/04 19:37:14 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.229 2017/01/03 15:14:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.230 2017/01/04 19:37:14 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -153,6 +153,8 @@ static int in6_ifremprefix(struct in6_ifaddr *);
 static int in6_ifinit(struct ifnet *, struct in6_ifaddr *,
 	const struct sockaddr_in6 *, int);
 static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
+static int in6_update_ifa1(struct ifnet *, struct in6_aliasreq *,
+    struct in6_ifaddr **, struct psref *, int);
 
 void
 in6_init(void)
@@ -701,7 +703,10 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		 * make (ia == NULL) or update (ia != NULL) the interface
 		 * address structure, and link it to the list.
 		 */
-		if ((error = in6_update_ifa(ifp, ifra, ia, 0)) != 0)
+		int s = splnet();
+		error = in6_update_ifa1(ifp, ifra, &ia, &psref, 0);
+		splx(s);
+		if (error)
 			break;
 		pfil_run_addrhooks(if_pfil, cmd, &ia->ia_ifa);
 		break;
@@ -779,7 +784,7 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
  */
 static int
 in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
-    struct in6_ifaddr *ia, int flags)
+    struct in6_ifaddr **iap, struct psref *psref, int flags)
 {
 	int error = 0, hostIsNew = 0, plen = -1;
 	struct sockaddr_in6 dst6;
@@ -788,6 +793,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	struct in6_multi *in6m_sol;
 	struct rtentry *rt;
 	int dad_delay, was_tentative;
+	struct in6_ifaddr *ia = iap ? *iap : NULL;
 
 	in6m_sol = NULL;
 
@@ -919,11 +925,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 * RA, it is called under an interrupt context.  So, we should
 		 * call malloc with M_NOWAIT.
 		 */
-		ia = (struct in6_ifaddr *) malloc(sizeof(*ia), M_IFADDR,
-		    M_NOWAIT);
+		ia = malloc(sizeof(*ia), M_IFADDR, M_NOWAIT|M_ZERO);
 		if (ia == NULL)
 			return ENOBUFS;
-		memset(ia, 0, sizeof(*ia));
 		LIST_INIT(&ia->ia6_memberships);
 		/* Initialize the address and masks, and put time stamp */
 		ia->ia_ifa.ifa_addr = sin6tosa(&ia->ia_addr);
@@ -944,6 +948,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia->ia_ifp = ifp;
 		IN6_ADDRLIST_ENTRY_INIT(ia);
 		ifa_psref_init(&ia->ia_ifa);
+		if (psref)
+			ia6_acquire(ia, psref);
 	}
 
 	/* update timestamp */
@@ -1292,6 +1298,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		nd6_dad_start(&ia->ia_ifa, dad_delay + 1);
 	}
 
+	if (iap)
+		*iap = ia;
+
 	return 0;
 
   cleanup:
@@ -1301,13 +1310,12 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 }
 
 int
-in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
-    struct in6_ifaddr *ia, int flags)
+in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra, int flags)
 {
 	int rc, s;
 
 	s = splnet();
-	rc = in6_update_ifa1(ifp, ifra, ia, flags);
+	rc = in6_update_ifa1(ifp, ifra, NULL, NULL, flags);
 	splx(s);
 	return rc;
 }
