@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.250 2016/04/09 18:51:44 riastradh Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.251 2017/01/04 15:43:04 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -213,10 +213,10 @@ SYSTEM_LD_HEAD?=@rm -f $@
 SYSTEM_LD?=	${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${LD} -Map ${.TARGET}.map --cref ${LINKFLAGS} -o ${.TARGET} \
-		'$${SYSTEM_OBJ:N*swap*netbsd*}' '$${EXTRA_OBJ}' vers.o \
+		'$${SYSTEM_OBJ:N*swap*${.TARGET}*}' '$${EXTRA_OBJ}' vers.o \
 		${OBJS:M*swap${.TARGET}.o}; \
 		${LD} -Map ${.TARGET}.map --cref ${LINKFLAGS} -o ${.TARGET} \
-		${SYSTEM_OBJ:N*swap*netbsd*} ${EXTRA_OBJ} vers.o \
+		${SYSTEM_OBJ:N*swap*${.TARGET}*} ${EXTRA_OBJ} vers.o \
 		${OBJS:M*swap${.TARGET}.o}
 
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
