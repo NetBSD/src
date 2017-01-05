@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.111 2017/01/02 21:42:01 cherry Exp $
+.\"	$NetBSD: uvm.9,v 1.112 2017/01/05 09:55:01 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -93,9 +93,10 @@ This is for use by the system startup for process zero, before any
 other processes are created.
 .Pp
 .Fn uvm_md_init
-does early boot initialization. This currently includes:
+does early boot initialization.
+This currently includes:
 .Fn uvm_setpagesize
-which initializes the uvmexp members pagesize (if not already done by 
+which initializes the uvmexp members pagesize (if not already done by
 machine-dependent code), pageshift and pagemask.
 .Fn uvm_physseg_init
 which initialises the
