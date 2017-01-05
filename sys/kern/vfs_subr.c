@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.453 2017/01/02 10:33:28 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.454 2017/01/05 10:05:11 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.453 2017/01/02 10:33:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.454 2017/01/05 10:05:11 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1091,7 +1091,7 @@ vprint_common(struct vnode *vp, const char *prefix,
 	int n;
 	char bf[96];
 	const uint8_t *cp;
-	vnode_impl_t *node;
+	vnode_impl_t *vip;
 	const char * const vnode_tags[] = { VNODE_TAGS };
 	const char * const vnode_types[] = { VNODE_TYPES };
 	const char vnode_flagbits[] = VNODE_FLAGBITS;
@@ -1100,7 +1100,7 @@ vprint_common(struct vnode *vp, const char *prefix,
 #define ARRAY_PRINT(idx, arr) \
     ((unsigned int)(idx) < ARRAY_SIZE(arr) ? (arr)[(idx)] : "UNKNOWN")
 
-	node = VNODE_TO_VIMPL(vp);
+	vip = VNODE_TO_VIMPL(vp);
 
 	snprintb(bf, sizeof(bf),
 	    vnode_flagbits, vp->v_iflag | vp->v_vflag | vp->v_uflag);
@@ -1116,14 +1116,14 @@ vprint_common(struct vnode *vp, const char *prefix,
 	    prefix, vp->v_size, vp->v_writesize, vp->v_numoutput);
 	(*pr)("%sdata %p lock %p\n", prefix, vp->v_data, &vp->v_lock);
 
-	(*pr)("%sstate %s key(%p %zd)", prefix, vstate_name(node->vi_state),
-	    node->vi_key.vk_mount, node->vi_key.vk_key_len);
-	n = node->vi_key.vk_key_len;
-	cp = node->vi_key.vk_key;
+	(*pr)("%sstate %s key(%p %zd)", prefix, vstate_name(vip->vi_state),
+	    vip->vi_key.vk_mount, vip->vi_key.vk_key_len);
+	n = vip->vi_key.vk_key_len;
+	cp = vip->vi_key.vk_key;
 	while (n-- > 0)
 		(*pr)(" %02x", *cp++);
 	(*pr)("\n");
-	(*pr)("%slrulisthd %p\n", prefix, node->vi_lrulisthd);
+	(*pr)("%slrulisthd %p\n", prefix, vip->vi_lrulisthd);
 
 #undef ARRAY_PRINT
 #undef ARRAY_SIZE
