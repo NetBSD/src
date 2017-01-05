@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.215 2017/01/05 03:42:27 pgoyette Exp $ */
+/* $NetBSD: vmstat.c,v 1.216 2017/01/05 07:53:20 ryo Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.215 2017/01/05 03:42:27 pgoyette Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.216 2017/01/05 07:53:20 ryo Exp $");
 #endif
 #endif /* not lint */
 
@@ -1216,10 +1216,11 @@ dointr(int verbose)
 
 	inttotal = 0;
 	uptime = getuptime();
-	(void)printf("%-34s %16s %8s\n", "interrupt", "total", "rate");
 	nintr = intrnl[X_EINTRCNT].n_value - intrnl[X_INTRCNT].n_value;
 	inamlen = intrnl[X_EINTRNAMES].n_value - intrnl[X_INTRNAMES].n_value;
 	if (nintr != 0 && inamlen != 0) {
+		(void)printf("%-34s %16s %8s\n", "interrupt", "total", "rate");
+
 		ointrcnt = intrcnt = malloc((size_t)nintr);
 		ointrname = intrname = malloc((size_t)inamlen);
 		if (intrcnt == NULL || intrname == NULL)
@@ -1250,19 +1251,17 @@ doevcnt(int verbose, int type)
 	uint64_t counttotal, uptime;
 	struct evcntlist allevents;
 	struct evcnt evcnt, *evptr;
+	size_t evlen_max, total_max, rate_max;
 	char evgroup[EVCNT_STRING_MAX], evname[EVCNT_STRING_MAX];
 
 	counttotal = 0;
 	uptime = getuptime();
-	if (type == EVCNT_TYPE_ANY)
-		(void)printf("%-34s %16s %8s %s\n", "event", "total", "rate",
-		    "type");
 
 	if (memf == NULL) do {
 		const int mib[4] = { CTL_KERN, KERN_EVCNT, type,
 		    verbose ? KERN_EVCNT_COUNT_ANY : KERN_EVCNT_COUNT_NONZERO };
-		size_t buflen = 0;
-		void *buf = NULL;
+		size_t buflen0, buflen = 0;
+		void *buf0, *buf = NULL;
 		const struct evcnt_sysctl *evs, *last_evs;
 		for (;;) {
 			size_t newlen;
@@ -1285,32 +1284,79 @@ doevcnt(int verbose, int type)
 				free(buf);
 			buflen = newlen;
 		}
-		evs = buf;
+		buflen0 = buflen;
+		evs = buf0 = buf;
+		last_evs = (void *)((char *)buf + buflen);
+		buflen /= sizeof(uint64_t);
+		/* calc columns */
+		evlen_max = 0;
+		total_max = sizeof("total") - 1;
+		rate_max = sizeof("rate") - 1;
+		while (evs < last_evs
+		    && buflen >= sizeof(*evs)/sizeof(uint64_t)
+		    && buflen >= evs->ev_len) {
+			char cbuf[64];
+			size_t len;
+			len = strlen(evs->ev_strings + evs->ev_grouplen + 1);
+			len += evs->ev_grouplen + 1;
+			if (evlen_max < len)
+				evlen_max= len;
+			len = snprintf(cbuf, sizeof(cbuf), "%"PRIu64,
+			    evs->ev_count);
+			if (total_max < len)
+				total_max = len;
+			len = snprintf(cbuf, sizeof(cbuf), "%"PRIu64,
+			    evs->ev_count / uptime);
+			if (rate_max < len)
+				rate_max = len;
+			buflen -= evs->ev_len;
+			evs = (const void *)
+			    ((const uint64_t *)evs + evs->ev_len);
+		}
+
+		(void)printf(type == EVCNT_TYPE_ANY ?
+		    "%-*s  %*s %*s %s\n" :
+		    "%-*s  %*s %*s\n",
+		    (int)evlen_max, "interrupt",
+		    (int)total_max, "total",
+		    (int)rate_max, "rate",
+		    "type");
+
+		buflen = buflen0;
+		evs = buf0;
 		last_evs = (void *)((char *)buf + buflen);
 		buflen /= sizeof(uint64_t);
 		while (evs < last_evs
 		    && buflen >= sizeof(*evs)/sizeof(uint64_t)
 		    && buflen >= evs->ev_len) {
 			(void)printf(type == EVCNT_TYPE_ANY ?
-			    "%s %s%*s %16"PRIu64" %8"PRIu64" %s\n" :
-			    "%s %s%*s %16"PRIu64" %8"PRIu64"\n",
+			    "%s %s%*s  %*"PRIu64" %*"PRIu64" %s\n" :
+			    "%s %s%*s  %*"PRIu64" %*"PRIu64"\n",
 			    evs->ev_strings,
 			    evs->ev_strings + evs->ev_grouplen + 1,
-			    34 - (evs->ev_grouplen + 1 + evs->ev_namelen), "",
-			    evs->ev_count,
-			    evs->ev_count / uptime,
+			    (int)evlen_max - (evs->ev_grouplen + 1
+			    + evs->ev_namelen), "",
+			    (int)total_max, evs->ev_count,
+			    (int)rate_max, evs->ev_count / uptime,
 			    (evs->ev_type < __arraycount(evtypes) ?
-				evtypes[evs->ev_type] : "?"));
+			    evtypes[evs->ev_type] : "?"));
 			buflen -= evs->ev_len;
 			counttotal += evs->ev_count;
-			evs = (const void *)((const uint64_t *)evs + evs->ev_len);
+			evs = (const void *)
+			    ((const uint64_t *)evs + evs->ev_len);
 		}
 		free(buf);
 		if (type != EVCNT_TYPE_ANY)
-			(void)printf("%-34s %16"PRIu64" %8"PRIu64"\n",
-			    "Total", counttotal, counttotal / uptime);
+			(void)printf("%-*s  %*"PRIu64" %*"PRIu64"\n",
+			    (int)evlen_max, "Total",
+			    (int)total_max, counttotal,
+			    (int)rate_max, counttotal / uptime);
 		return;
 	} while (/*CONSTCOND*/ 0);
+
+	if (type == EVCNT_TYPE_ANY)
+		(void)printf("%-34s %16s %8s %s\n", "event", "total", "rate",
+		    "type");
 
 	kread(namelist, X_ALLEVENTS, &allevents, sizeof allevents);
 	evptr = TAILQ_FIRST(&allevents);
