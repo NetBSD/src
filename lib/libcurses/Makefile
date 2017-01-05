@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.80 2017/01/05 21:25:17 roy Exp $
+#	$NetBSD: Makefile,v 1.81 2017/01/05 23:15:43 roy Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -101,9 +101,9 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_insertch.3 insch.3 curses_insdelln.3 insdelln.3 \
 	 curses_insertln.3 insertln.3 curses_inch.3 instr.3 \
 	 curses_tty.3 intrflush.3 \
-	 curses_pad.3 is_keypad.3 \
+	 curses_input.3 is_keypad.3 \
 	 curses_refresh.3 is_leaveok.3 curses_touch.3 is_linetouched.3 \
-	 curses_screen.3 is_term_resized.3 \
+	 curses_pad.3 is_pad.3 curses_screen.3 is_term_resized.3 \
 	 curses_touch.3 is_wintouched.3 curses_screen.3 isendwin.3 \
 	 curses_keyname.3 keyname.3 \
 	 curses_input.3 keypad.3 curses_tty.3 killchar.3 \
