@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1541 2017/01/03 08:49:04 maya Exp $
+# $NetBSD: mi,v 1.1542 2017/01/05 13:45:51 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -55,7 +55,7 @@
 ./usr/share/man/cat1/atf-compile.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat,atf,!kyua
 ./usr/share/man/cat1/atf-config.0		man-obsolete		.cat,kyua,obsolete
-./usr/share/man/cat1/atf-exec.0			man-atf-catman		obsolete
+./usr/share/man/cat1/atf-exec.0			man-obsolete		obsolete
 ./usr/share/man/cat1/atf-format.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-killpg.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-report.0		man-atf-catman		.cat,atf
@@ -3234,7 +3234,7 @@
 ./usr/share/man/html1/atf-compile.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-config.html		man-atf-htmlman		html,atf,!kyua
 ./usr/share/man/html1/atf-config.html		man-obsolete		html,kyua,obsolete
-./usr/share/man/html1/atf-exec.html		man-atf-htmlman		obsolete
+./usr/share/man/html1/atf-exec.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-format.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-killpg.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-report.html		man-atf-htmlman		html,atf
@@ -6023,7 +6023,7 @@
 ./usr/share/man/man1/atf-compile.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-config.1		man-atf-man		.man,atf,!kyua
 ./usr/share/man/man1/atf-config.1		man-obsolete		.man,kyua,obsolete
-./usr/share/man/man1/atf-exec.1			man-atf-man		obsolete
+./usr/share/man/man1/atf-exec.1			man-obsolete		obsolete
 ./usr/share/man/man1/atf-format.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-killpg.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-report.1		man-atf-man		.man,atf
