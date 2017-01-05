@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.74 2016/12/18 17:18:01 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.75 2017/01/05 22:51:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -158,6 +158,14 @@ bintime_sub(struct bintime *bt, const struct bintime *bt2)
  *   time_second ticks after N.999999999 not after N.4999999999
  */
 
+/*
+ * The magic numbers for converting to fraction:
+ *
+ *	1 ms = int(2^64 / 1000)       =  18446744073709551
+ *	1 us = int(2^64 / 1000000)    =     18446744073709
+ *	1 ns = int(2^64 / 1000000000) =        18446744073
+ */
+
 static __inline void
 bintime2timespec(const struct bintime *bt, struct timespec *ts)
 {
@@ -172,7 +180,6 @@ timespec2bintime(const struct timespec *ts, struct bintime *bt)
 {
 
 	bt->sec = ts->tv_sec;
-	/* 18446744073 = int(2^64 / 1000000000) */
 	bt->frac = (uint64_t)ts->tv_nsec * (uint64_t)18446744073ULL;
 }
 
@@ -190,7 +197,6 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 {
 
 	bt->sec = tv->tv_sec;
-	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = (uint64_t)tv->tv_usec * (uint64_t)18446744073709ULL;
 }
 
@@ -200,7 +206,7 @@ ms2bintime(uint64_t ms)
 	struct bintime bt;
 
 	bt.sec = (time_t)(ms / 1000U);
-	bt.frac = (((ms % 1000U) >> 32)/1000U) >> 32;
+	bt.frac = (uint64_t)(ms % 1000U) * (uint64_t)18446744073709551ULL;
 
 	return bt;
 }
@@ -211,7 +217,7 @@ us2bintime(uint64_t us)
 	struct bintime bt;
 
 	bt.sec = (time_t)(us / 1000000U);
-	bt.frac = (((us % 1000000U) >> 32)/1000000U) >> 32;
+	bt.frac = (uint64_t)(us % 1000000U) * (uint64_t)18446744073709ULL;
 
 	return bt;
 }
@@ -222,7 +228,7 @@ ns2bintime(uint64_t ns)
 	struct bintime bt;
 
 	bt.sec = (time_t)(ns / 1000000000U);
-	bt.frac = (((ns % 1000000000U) >> 32)/1000000000U) >> 32;
+	bt.frac = (uint64_t)(ns % 1000000000U) * (uint64_t)18446744073ULL;
 
 	return bt;
 }
