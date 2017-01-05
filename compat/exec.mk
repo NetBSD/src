@@ -1,4 +1,4 @@
-#	$NetBSD: exec.mk,v 1.2 2016/12/29 23:42:38 mrg Exp $
+#	$NetBSD: exec.mk,v 1.3 2017/01/05 21:28:42 skrll Exp $
 
 # this makefile fragment can be included to modify the default
 # ABI a program is compiled with.  this is designed to be used
@@ -36,7 +36,7 @@ LDSTATIC=-static
 
 . include <bsd.own.mk>
 
-. if ${MKCOMPAT} != "no" && !defined(RESCUEDIR)
+. if ${MKCOMPAT} != "no" && !defined(CRUNCHEDPROG)
 .  include "${.PARSEDIR}/mips64/64/bsd.64.mk"
 . endif # ${MKCOMPAT} != "no"
 
