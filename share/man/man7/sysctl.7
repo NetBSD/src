@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.105 2017/01/01 23:59:19 pgoyette Exp $
+.\"	$NetBSD: sysctl.7,v 1.106 2017/01/05 09:50:40 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -563,11 +563,13 @@ The values of the history tables are in an internal format, and can be
 decoded by the
 .Xr vmstat 1
 utility's
-.Dv -U
+.Fl U
 and
-.Dv u
+.Fl u
 options;
-the -l option can be used to see which tables are available.
+the
+.Fl l
+option can be used to see which tables are available.
 .It Li kern.hostid ( Dv KERN_HOSTID )
 Get or set the host identifier.
 This is aimed to replace the legacy
