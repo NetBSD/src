@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.6 2017/01/04 17:06:13 hannken Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.7 2017/01/05 10:05:11 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ struct vnode_impl {
 };
 typedef struct vnode_impl vnode_impl_t;
 
-#define VIMPL_TO_VNODE(node)	((vnode_t *)(node))
+#define VIMPL_TO_VNODE(vip)	((vnode_t *)(vip))
 #define VNODE_TO_VIMPL(vp)	((vnode_impl_t *)(vp))
 
 /*
