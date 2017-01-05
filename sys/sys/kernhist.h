@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.16 2017/01/04 01:52:13 pgoyette Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.17 2017/01/05 03:40:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 struct kern_history_ent {
-	struct timeval tv; 		/* time stamp */
+	struct bintime bt; 		/* time stamp */
 	int cpunum;
 	const char *fmt;		/* printf format */
 	size_t fmtlen;			/* length of printf format */
@@ -80,8 +80,7 @@ struct sysctl_history_list_entry {
 
 /* info for a single history event */
 struct sysctl_history_event {
-	uint64_t	she_time_sec;
-	uint64_t	she_time_usec;
+	struct bintime	she_bintime;
 	uint64_t	she_callnumber;
 	uint64_t	she_values[4];
 	uint32_t	she_cpunum;
@@ -213,7 +212,7 @@ do { \
 	} while (atomic_cas_uint(&(NAME).f, _i_, _j_) != _i_); \
 	struct kern_history_ent * const _e_ = &(NAME).e[_i_]; \
 	if (__predict_true(!cold)) \
-		microtime(&_e_->tv); \
+		bintime(&_e_->bt); \
 	_e_->cpunum = cpu_number(); \
 	_e_->fmt = (FMT); \
 	_e_->fmtlen = strlen(FMT); \
@@ -257,7 +256,10 @@ do { \
 static inline void
 kernhist_entry_print(const struct kern_history_ent *e, void (*pr)(const char *, ...) __printflike(1, 2))
 {
-	pr("%06" PRIu64 ".%06d ", e->tv.tv_sec, e->tv.tv_usec);
+	struct timeval tv;
+
+	bintime2timeval(&e->bt, &tv);
+	pr("%06" PRIu64 ".%06d ", tv.tv_sec, tv.tv_usec);
 	pr("%s#%ld@%d: ", e->fn, e->call, e->cpunum);
 	pr(e->fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
 	pr("\n");
