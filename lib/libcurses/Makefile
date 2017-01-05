@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78 2017/01/03 13:21:40 roy Exp $
+#	$NetBSD: Makefile,v 1.79 2017/01/05 20:31:37 roy Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -145,6 +145,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_scroll.3 scrl.3 curses_scroll.3 scroll.3 \
 	 curses_scroll.3 scrollok.3 curses_scroll.3 setscrreg.3 \
 	 curses_cursor.3 setsyx.3 \
+	 curses_input.3 set_escdelay.3 curses_screen.3 set_tabsize.3 \
 	 curses_screen.3 set_term.3 curses_screen.3 setterm.3 \
 	 curses_standout.3 standend.3 curses_standout.3 standout.3 \
 	 curses_color.3 start_color.3 curses_pad.3 subpad.3 \
