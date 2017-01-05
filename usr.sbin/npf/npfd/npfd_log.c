@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd_log.c,v 1.4 2016/12/30 19:55:46 christos Exp $	*/
+/*	$NetBSD: npfd_log.c,v 1.5 2017/01/05 16:23:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd_log.c,v 1.4 2016/12/30 19:55:46 christos Exp $");
+__RCSID("$NetBSD: npfd_log.c,v 1.5 2017/01/05 16:23:31 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,6 +91,10 @@ npfd_log_create(const char *ifname, const char *filter, int snaplen)
 
 	if (pcap_set_snaplen(ctx->pcap, snaplen) == -1)
 		errx(EXIT_FAILURE, "pcap_set_snaplen failed: %s",
+		    pcap_geterr(ctx->pcap));
+
+	if (pcap_set_timeout(ctx->pcap, 1000) == -1)
+		errx(EXIT_FAILURE, "pcap_set_timeout failed: %s",
 		    pcap_geterr(ctx->pcap));
 
 	if (pcap_activate(ctx->pcap) == -1)
