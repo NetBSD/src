@@ -1,5 +1,5 @@
-# $NetBSD: md.hppa,v 1.6 2016/03/18 03:08:25 mrg Exp $
-./usr/include/gcc-4.5/tgmath.h			comp-c-include		obsolete
+# $NetBSD: md.hppa,v 1.7 2017/01/05 13:45:51 wiz Exp $
+./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=53
 ./usr/include/hp700				comp-obsolete		obsolete
