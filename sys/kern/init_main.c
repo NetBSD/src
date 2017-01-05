@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.488 2016/12/26 23:12:33 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.489 2017/01/05 03:22:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.488 2016/12/26 23:12:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.489 2017/01/05 03:22:20 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.488 2016/12/26 23:12:33 pgoyette Exp
 #include "opt_ptrace.h"
 #include "opt_rnd_printf.h"
 #include "opt_splash.h"
+#include "opt_kernhist.h"
 
 #if defined(SPLASHSCREEN) && defined(makeoptions_SPLASHSCREEN_IMAGE)
 extern void *_binary_splash_image_start;
@@ -350,6 +351,10 @@ main(void)
 	/* Initialize the buffer cache */
 	bufinit();
 	biohist_init();
+
+#ifdef KERNHIST
+	sysctl_kernhist_init();
+#endif
 
 
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_IMAGE)
