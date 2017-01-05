@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcarm,v 1.23 2017/01/04 15:41:24 christos Exp $
+# $NetBSD: md.hpcarm,v 1.24 2017/01/05 02:22:19 christos Exp $
 ./etc/X11/xorg.conf.640x240-jp				-unknown	xorg
 ./etc/X11/xorg.conf.640x240-us				-unknown	xorg
 ./etc/X11/xorg.conf.640x480-jp				-unknown	xorg
@@ -120,4 +120,3 @@
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
 ./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg
-./usr/X11R7/share/aclocal/xtrans.m4			-unknown-	xorg
