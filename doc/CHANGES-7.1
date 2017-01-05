@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.142 2017/01/03 07:08:05 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.143 2017/01/05 08:10:50 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7834,4 +7834,10 @@ share/man/man9/bus_dma.9			1.61, 1.62
 	- Use .An -nosplit
 	- Give a heads up about bus_dmatag_subregion()
 	[sevan, ticket #1346]
+
+sys/netinet/tcp_congctl.c			1.23
+
+	Restore behaviour to pre- tcp_congctl.c:1.18 for SACK.
+	PR/51753 tcp SACK causes SSH disconnect.
+	[skrll, ticket #1347]
 
