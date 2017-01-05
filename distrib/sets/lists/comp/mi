@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2095 2017/01/05 13:45:51 wiz Exp $
+#	$NetBSD: mi,v 1.2096 2017/01/05 20:31:37 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -8841,6 +8841,7 @@
 ./usr/share/man/cat3/set_current_field.0	comp-c-catman		.cat
 ./usr/share/man/cat3/set_current_item.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_curterm.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_escdelay.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_field_back.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_field_buffer.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_field_fore.0		comp-c-catman		.cat
@@ -8884,6 +8885,7 @@
 ./usr/share/man/cat3/set_menu_win.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_new_page.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_panel_userptr.0	comp-c-catman		.cat
+./usr/share/man/cat3/set_tabsize.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_term.0			comp-c-catman		.cat
 ./usr/share/man/cat3/set_top_row.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setbuf.0			comp-c-catman		.cat
@@ -16148,6 +16150,7 @@
 ./usr/share/man/html3/set_current_field.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_current_item.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_curterm.html		comp-c-htmlman		html
+./usr/share/man/html3/set_escdelay.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_field_back.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_field_buffer.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_field_fore.html	comp-c-htmlman		html
@@ -16191,6 +16194,7 @@
 ./usr/share/man/html3/set_menu_win.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_new_page.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_panel_userptr.html	comp-c-htmlman		html
+./usr/share/man/html3/set_tabsize.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_term.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_top_row.html		comp-c-htmlman		html
 ./usr/share/man/html3/setbuf.html		comp-c-htmlman		html
@@ -23458,6 +23462,7 @@
 ./usr/share/man/man3/set_current_field.3	comp-c-man		.man
 ./usr/share/man/man3/set_current_item.3		comp-c-man		.man
 ./usr/share/man/man3/set_curterm.3		comp-c-man		.man
+./usr/share/man/man3/set_escdelay.3		comp-c-man		.man
 ./usr/share/man/man3/set_field_back.3		comp-c-man		.man
 ./usr/share/man/man3/set_field_buffer.3		comp-c-man		.man
 ./usr/share/man/man3/set_field_fore.3		comp-c-man		.man
@@ -23501,6 +23506,7 @@
 ./usr/share/man/man3/set_menu_win.3		comp-c-man		.man
 ./usr/share/man/man3/set_new_page.3		comp-c-man		.man
 ./usr/share/man/man3/set_panel_userptr.3	comp-c-man		.man
+./usr/share/man/man3/set_tabsize.3		comp-c-man		.man
 ./usr/share/man/man3/set_term.3			comp-c-man		.man
 ./usr/share/man/man3/set_top_row.3		comp-c-man		.man
 ./usr/share/man/man3/setbuf.3			comp-c-man		.man
