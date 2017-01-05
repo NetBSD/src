@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.214 2017/01/04 01:29:18 pgoyette Exp $ */
+/* $NetBSD: vmstat.c,v 1.215 2017/01/05 03:42:27 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.214 2017/01/04 01:29:18 pgoyette Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.215 2017/01/05 03:42:27 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -2069,6 +2069,7 @@ void
 hist_dodump(struct kern_history *histp)
 {
 	struct kern_history_ent *histents, *e;
+	struct timeval tv;
 	size_t histsize;
 	char *fmt = NULL, *fn = NULL;
 	size_t fmtlen = 0, fnlen = 0;
@@ -2110,8 +2111,9 @@ hist_dodump(struct kern_history *histp)
 			deref_kptr(e->fn, fn, fnlen, "function name");
 			fn[fnlen] = '\0';
 
-			(void)printf("%06ld.%06ld ", (long int)e->tv.tv_sec,
-			    (long int)e->tv.tv_usec);
+			bintime2timeval(&e->bt, &tv);
+			(void)printf("%06ld.%06ld ", (long int)tv.tv_sec,
+			    (long int)tv.tv_usec);
 			(void)printf("%s#%ld@%d: ", fn, e->call, e->cpunum);
 			(void)printf(fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
 			(void)putchar('\n');
@@ -2198,6 +2200,7 @@ hist_traverse_sysctl(int todo, const char *histname)
 hist_dodump_sysctl(int mib[], unsigned int miblen)
  {
 	struct sysctl_history *hist;
+	struct timeval tv;
 	struct sysctl_history_event *e;
  	size_t histsize;
 	char *strp;
@@ -2231,9 +2234,9 @@ hist_dodump_sysctl(int mib[], unsigned int miblen)
 		if (e->she_fmtoffset != 0) {
 			fmt = &strp[e->she_fmtoffset];
 			fn = &strp[e->she_funcoffset];
+			bintime2timeval(&e->she_bintime, &tv);
 			(void)printf("%06ld.%06ld %s#%"PRIu64"@%"PRIu32": ",
-			    (long int)e->she_time_sec,
-			    (long int)e->she_time_usec,
+			    (long int)tv.tv_sec, (long int)tv.tv_usec,
 			    fn, e->she_callnumber, e->she_cpunum);
 			(void)printf(fmt, e->she_values[0], e->she_values[1],
 			     e->she_values[2], e->she_values[3]);
