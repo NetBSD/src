@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.20 2009/07/22 16:57:15 roy Exp $	*/
+/*	$NetBSD: resize.c,v 1.21 2017/01/05 21:25:18 roy Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.20 2009/07/22 16:57:15 roy Exp $");
+__RCSID("$NetBSD: resize.c,v 1.21 2017/01/05 21:25:18 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -136,18 +136,55 @@ wresize(WINDOW *win, int req_nlines, int req_ncols)
 }
 
 /*
+ * is_term_resized --
+ *	Return true if the given dimensions do not match the
+ *	internal structures.
+ */
+bool
+is_term_resized(int nlines, int ncols)
+{
+
+	return (nlines > 0 && ncols > 0 && (nlines != LINES || ncols != COLS));
+}
+
+/*
  * resizeterm --
  *	Resize the terminal window, resizing the dependent windows.
+ *	Handles internal book-keeping.
  */
 int
 resizeterm(int nlines, int ncols)
+{
+	int result;
+
+#ifdef	DEBUG
+	__CTRACE(__CTRACE_WINDOW, "resizeterm: (%d, %d)\n", nlines, ncols);
+#endif
+
+	if (!is_term_resized(nlines, ncols))
+		return OK;
+
+	result = resizeterm(nlines, ncols);
+	clearok(curscr, TRUE);
+	return result;
+}
+
+/*
+ * resize_term --
+ *	Resize the terminal window, resizing the dependent windows.
+ */
+int
+resize_term(int nlines, int ncols)
 {
 	WINDOW *win;
 	struct __winlist *list;
 
 #ifdef	DEBUG
-	__CTRACE(__CTRACE_WINDOW, "resizeterm: (%d, %d)\n", nlines, ncols);
+	__CTRACE(__CTRACE_WINDOW, "resize_term: (%d, %d)\n", nlines, ncols);
 #endif
+
+	if (!is_term_resized(nlines, ncols))
+		return OK;
 
 	if (__resizeterm(curscr, nlines, ncols) == ERR)
 		return ERR;
@@ -167,7 +204,6 @@ resizeterm(int nlines, int ncols)
 			__swflags(win);
 	}
 
-	wrefresh(curscr);
 	return OK;
 }
 
