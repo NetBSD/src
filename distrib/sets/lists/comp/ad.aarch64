@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.13 2016/12/12 13:13:11 kamil Exp $
+# $NetBSD: ad.aarch64,v 1.14 2017/01/05 13:45:51 wiz Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -56,7 +56,7 @@
 ./usr/include/arm/arm26/types.h			comp-c-include
 ./usr/include/arm/arm32				comp-c-include
 ./usr/include/arm/arm32/frame.h			comp-c-include
-./usr/include/arm/arm32/katelib.h		comp-c-include		obsolete
+./usr/include/arm/arm32/katelib.h		comp-obsolete		obsolete
 ./usr/include/arm/arm32/param.h			comp-c-include
 ./usr/include/arm/arm32/pmap.h			comp-c-include
 ./usr/include/arm/arm32/psl.h			comp-c-include
