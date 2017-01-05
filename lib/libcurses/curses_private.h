@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.55 2017/01/03 12:42:06 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.56 2017/01/05 20:31:37 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -201,7 +201,10 @@ struct __screen {
 	int      lx, ly;        /* loop parameters for refresh */
 	int	 COLS;		/* Columns on the screen. */
 	int	 LINES;		/* Lines on the screen. */
+	int	 ESCDELAY;	/* Delay between keys in esc seq's. */
+#define	ESCDELAY_DEFAULT	300 /* milliseconds. */
 	int	 TABSIZE;	/* Size of a tab. */
+#define	TABSIZE_DEFAULT		8   /* spaces. */
 	int	 COLORS;	/* Maximum colors on the screen */
 	int	 COLOR_PAIRS;	/* Maximum color pairs on the screen */
 	int	 My_term;	/* Use Def_term regardless. */

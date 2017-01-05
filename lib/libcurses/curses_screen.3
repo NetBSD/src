@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.19 2017/01/05 12:35:41 wiz Exp $
+.\"	$NetBSD: curses_screen.3,v 1.20 2017/01/05 20:31:37 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd December 30, 2016
+.Dd January 5, 2017
 .Dt CURSES_SCREEN 3
 .Os
 .Sh NAME
@@ -44,7 +44,8 @@
 .Nm initscr ,
 .Nm isendwin ,
 .Nm resizeterm ,
-.Nm setterm
+.Nm setterm ,
+.Nm set_tabsize
 .Nd curses terminal and screen routines
 .Sh LIBRARY
 .Lb libcurses
@@ -70,6 +71,8 @@
 .Fn resizeterm "int lines" "int cols"
 .Ft int
 .Fn setterm "char *name"
+.Ft int
+.Fn set_tabsize "int value"
 .Pp
 .Va extern int LINES ;
 .Pp
@@ -209,6 +212,13 @@ must precede calls to
 .Fn newterm ,
 or
 .Fn setupterm .
+.Pp
+The
+.Fn set_tabsize
+function will set
+.Va TABSIZE
+of the current screen to
+.Va tabsize .
 .Sh RETURN VALUES
 Functions returning pointers will return
 .Dv NULL
@@ -241,3 +251,9 @@ function is a
 .Em ncurses
 extension to the Curses library and was added in
 .Nx 1.6 .
+The
+.Fn set_tabsize
+function is a
+.Em ncurses
+extension to the Curses library and was added in
+.Nx 8.0 .

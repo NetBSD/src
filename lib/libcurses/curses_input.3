@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.23 2017/01/01 03:06:06 roy Exp $
+.\"	$NetBSD: curses_input.3,v 1.24 2017/01/05 20:31:37 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -55,7 +55,8 @@
 .Nm timeout ,
 .Nm wtimeout ,
 .Nm nodelay ,
-.Nm ungetch
+.Nm ungetch ,
+.Nm set_escdelay
 .Nd curses input stream routines
 .Sh LIBRARY
 .Lb libcurses
@@ -103,6 +104,8 @@
 .Fn nodelay "WINDOW *win" "boolf flag"
 .Ft int
 .Fn ungetch "int c"
+.Ft int
+.Fn set_escdelay "int escdelay"
 .Pp
 .Va extern int ESCDELAY ;
 .Sh DESCRIPTION
@@ -385,6 +388,13 @@ will convert
 into an unsigned char and push that character back onto the input stream.
 Only one character of push-back is guaranteed to work, more may be possible
 depending on system resources.
+.Pp
+The
+.Fn set_escdelay
+function sets the
+.Va ESCDELAY
+value of the current screen to
+.Fa escdelay.
 .Sh RETURN VALUES
 The functions
 .Fn getch ,
@@ -592,3 +602,10 @@ Portable implementations should avoid the use of these functions.
 .Sh HISTORY
 The Curses package appeared in
 .Bx 4.0 .
+The
+.Fn set_tabsize
+function is a
+.Em ncurses
+extension to the Curses library and was added in
+.Nx 8.0 .
+
