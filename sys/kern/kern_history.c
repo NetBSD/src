@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.10 2017/01/04 01:05:58 pgoyette Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.11 2017/01/05 03:40:33 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.10 2017/01/04 01:05:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.11 2017/01/05 03:40:33 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -120,7 +120,7 @@ kernhist_dump(struct kern_history *l, void (*pr)(const char *, ...))
 static void
 kernhist_dump_histories(struct kern_history *hists[], void (*pr)(const char *, ...))
 {
-	struct timeval  tv;
+	struct bintime	bt;
 	int	cur[MAXHISTS];
 	int	lcv, hi;
 
@@ -136,7 +136,7 @@ kernhist_dump_histories(struct kern_history *hists[], void (*pr)(const char *, .
 	 */
 	for (;;) {
 		hi = -1;
-		tv.tv_sec = tv.tv_usec = 0;
+		bt.sec = 0; bt.frac = 0;
 
 		/* loop over each history */
 		for (lcv = 0; hists[lcv]; lcv++) {
@@ -159,12 +159,12 @@ restart:
 
 			/*
 			 * if the time hasn't been set yet, or this entry is
-			 * earlier than the current tv, set the time and history
+			 * earlier than the current bt, set the time and history
 			 * index.
 			 */
-			if (tv.tv_sec == 0 ||
-			    timercmp(&hists[lcv]->e[cur[lcv]].tv, &tv, <)) {
-				tv = hists[lcv]->e[cur[lcv]].tv;
+			if (bt.sec == 0 ||
+			    bintimecmp(&hists[lcv]->e[cur[lcv]].bt, &bt, <)) {
+				bt = hists[lcv]->e[cur[lcv]].bt;
 				hi = lcv;
 			}
 		}
@@ -466,8 +466,7 @@ sysctl_kernhist_helper(SYSCTLFN_ARGS)
 			out_evt->she_fmtoffset = 0;
 			continue;
 		}
-		out_evt->she_time_sec = in_evt->tv.tv_sec;
-		out_evt->she_time_usec = in_evt->tv.tv_usec;
+		out_evt->she_bintime = in_evt->bt;
 		out_evt->she_callnumber = in_evt->call;
 		out_evt->she_cpunum = in_evt->cpunum;
 		out_evt->she_values[0] = in_evt->v[0];
