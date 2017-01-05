@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.97 2016/12/23 07:15:27 cherry Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.98 2017/01/05 09:08:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.97 2016/12/23 07:15:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.98 2017/01/05 09:08:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,8 +361,6 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
-	*dmamp = map;
-
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
 	struct arm32_bus_dma_cookie *cookie;
 	int cookieflags;
@@ -382,6 +380,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 
 	if ((cookieflags & _BUS_DMA_MIGHT_NEED_BOUNCE) == 0) {
 		STAT_INCR(creates);
+		*dmamp = map;
 		return 0;
 	}
 
@@ -404,10 +403,12 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
  out:
 	if (error)
 		_bus_dmamap_destroy(t, map);
+	else
+		*dmamp = map;
 #else
+	*dmamp = map;
 	STAT_INCR(creates);
 #endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
-
 #ifdef DEBUG_DMA
 	printf("dmamap_create:map=%p\n", map);
 #endif	/* DEBUG_DMA */

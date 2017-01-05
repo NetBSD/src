@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.74 2015/10/27 18:49:26 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.75 2017/01/05 09:08:44 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.74 2015/10/27 18:49:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.75 2017/01/05 09:08:44 msaitoh Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -306,8 +306,6 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
-	*dmamp = map;
-
 	if (t->_bounce_thresh == 0 || _BUS_AVAIL_END <= t->_bounce_thresh)
 		map->_dm_bounce_thresh = 0;
 	cookieflags = 0;
@@ -321,8 +319,10 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	if (map->_dm_bounce_thresh != 0)
 		cookieflags |= X86_DMA_MIGHT_NEED_BOUNCE;
 
-	if ((cookieflags & X86_DMA_MIGHT_NEED_BOUNCE) == 0)
+	if ((cookieflags & X86_DMA_MIGHT_NEED_BOUNCE) == 0) {
+		*dmamp = map;
 		return 0;
+	}
 
 	cookiesize = sizeof(struct x86_bus_dma_cookie) +
 	    (sizeof(bus_dma_segment_t) * map->_dm_segcnt);
@@ -343,6 +343,8 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
  out:
 	if (error)
 		_bus_dmamap_destroy(t, map);
+	else
+		*dmamp = map;
 
 	return (error);
 }
