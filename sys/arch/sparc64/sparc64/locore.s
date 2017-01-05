@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.403 2017/01/04 20:19:29 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.404 2017/01/05 20:37:06 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1461,7 +1461,7 @@ intr_setup_msg:
 	wrpr	%g0, %g5, %otherwin; \
 	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
 \
-	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
+	SET_MMU_CONTEXTID %g0, %g7,%g5; 			/* Switch MMU to kernel primary context */ \
 	sethi	%hi(KERNBASE), %g5; \
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:
@@ -1577,7 +1577,7 @@ intr_setup_msg:
 	wrpr	%g0, %g5, %otherwin; \
 	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
 	\
-	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
+	SET_MMU_CONTEXTID %g0, %g7, %g5;			/* Switch MMU to kernel primary context */ \
 	sethi	%hi(KERNBASE), %g5; \
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:
