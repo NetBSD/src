@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2094 2017/01/03 18:43:13 christos Exp $
+#	$NetBSD: mi,v 1.2095 2017/01/05 13:45:51 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -27,14 +27,14 @@
 ./usr/bin/cvsbug				comp-cvs-bin		cvs
 ./usr/bin/cvslatest				comp-cvs-bin
 ./usr/bin/elfedit				comp-util-bin		binutils
-./usr/bin/f77					comp-fortran-bin	obsolete
+./usr/bin/f77					comp-obsolete	obsolete
 ./usr/bin/fgen					comp-util-bin
 ./usr/bin/flex					comp-c-bin
 ./usr/bin/flex++				comp-cxx-bin
-./usr/bin/fort77				comp-fortran-bin	obsolete
+./usr/bin/fort77				comp-obsolete	obsolete
 ./usr/bin/fpr					comp-fortran-bin
 ./usr/bin/g++					comp-cxx-bin		gcccmds
-./usr/bin/g77					comp-fortran-bin	obsolete
+./usr/bin/g77					comp-obsolete	obsolete
 ./usr/bin/gcc					comp-c-bin		gcccmds
 ./usr/bin/gcore					comp-debug-bin
 ./usr/bin/gcov					comp-debug-bin		gcccmds
@@ -936,14 +936,14 @@
 ./usr/include/g++/bits/alloc_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/allocated_ptr.h		comp-cxx-include	gcc=53,cxx,libstdcxx
 ./usr/include/g++/bits/allocator.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/atomic_0.h		comp-cxx-include	obsolete
-./usr/include/g++/bits/atomic_2.h		comp-cxx-include	obsolete
+./usr/include/g++/bits/atomic_0.h		comp-obsolete	obsolete
+./usr/include/g++/bits/atomic_2.h		comp-obsolete	obsolete
 ./usr/include/g++/bits/atomic_base.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/atomic_futex.h		comp-cxx-include	gcc=53,cxx,libstdcxx
 ./usr/include/g++/bits/atomic_lockfree_defines.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/atomic_word.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/atomicfwd_c.h		comp-cxx-include	obsolete
-./usr/include/g++/bits/atomicfwd_cxx.h		comp-cxx-include	obsolete
+./usr/include/g++/bits/atomicfwd_c.h		comp-obsolete	obsolete
+./usr/include/g++/bits/atomicfwd_cxx.h		comp-obsolete	obsolete
 ./usr/include/g++/bits/atomicity.h		comp-obsolete		obsolete
 ./usr/include/g++/bits/basic_file.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/basic_ios.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -958,7 +958,7 @@
 ./usr/include/g++/bits/c++io.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/c++locale.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/char_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/cmath.tcc		comp-cxx-include	obsolete
+./usr/include/g++/bits/cmath.tcc		comp-obsolete	obsolete
 ./usr/include/g++/bits/codecvt.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/codecvt_specializations.h	comp-obsolete		obsolete
 ./usr/include/g++/bits/concept_check.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -967,7 +967,7 @@
 ./usr/include/g++/bits/cpu_defines.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/ctype_base.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/ctype_inline.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/ctype_noninline.h	comp-cxx-include	obsolete
+./usr/include/g++/bits/ctype_noninline.h	comp-obsolete		obsolete
 ./usr/include/g++/bits/cxxabi_forced.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/cxxabi_tweaks.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/deque.tcc		comp-cxx-include	gcc,cxx,libstdcxx
@@ -987,7 +987,7 @@
 ./usr/include/g++/bits/gthr-default.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/gthr-posix.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/gthr-single.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/gthr-tpf.h		comp-cxx-include	obsolete
+./usr/include/g++/bits/gthr-tpf.h		comp-obsolete		obsolete
 ./usr/include/g++/bits/gthr.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/hash_bytes.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/hashtable.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1128,7 +1128,7 @@
 ./usr/include/g++/ctime				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/cwchar			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/cwctype			comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/cxxabi-forced.h		comp-cxx-include	obsolete
+./usr/include/g++/cxxabi-forced.h		comp-obsolete 		obsolete
 ./usr/include/g++/cxxabi.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/array			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/bitset			comp-cxx-include	gcc,cxx,libstdcxx
@@ -1173,8 +1173,8 @@
 ./usr/include/g++/deque.h			comp-obsolete		obsolete
 ./usr/include/g++/editbuf.h			comp-obsolete		obsolete
 ./usr/include/g++/exception			comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/exception_defines.h		comp-cxx-include	obsolete
-./usr/include/g++/exception_ptr.h		comp-cxx-include	obsolete
+./usr/include/g++/exception_defines.h		comp-obsolete		obsolete
+./usr/include/g++/exception_ptr.h		comp-obsolete		obsolete
 ./usr/include/g++/ext/algorithm			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/aligned_buffer.h		comp-cxx-include	gcc=53,cxx,libstdcxx
 ./usr/include/g++/ext/alloc_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1200,7 +1200,7 @@
 ./usr/include/g++/ext/new_allocator.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/numeric			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/numeric_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/ext/opt_random.h							comp-cxx-include	gcc,obsolete
+./usr/include/g++/ext/opt_random.h							comp-obsolete		obsolete
 ./usr/include/g++/ext/pb_ds/assoc_container.hpp						comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/bin_search_tree_.hpp		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/constructors_destructor_fn_imps.hpp comp-cxx-include	gcc,cxx,libstdcxx
@@ -1470,7 +1470,7 @@
 ./usr/include/g++/ext/vstring_util.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/faralloc.h			comp-obsolete		obsolete
 ./usr/include/g++/fdeque.h			comp-obsolete		obsolete
-./usr/include/g++/fenv.h			comp-cxx-include	obsolete
+./usr/include/g++/fenv.h			comp-obsolete		obsolete
 ./usr/include/g++/flist.h			comp-obsolete		obsolete
 ./usr/include/g++/floatio.h			comp-obsolete		obsolete
 ./usr/include/g++/fmap.h			comp-obsolete		obsolete
@@ -1658,7 +1658,7 @@
 ./usr/include/g++/multiset.h			comp-obsolete		obsolete
 ./usr/include/g++/mutex				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/neralloc.h			comp-obsolete		obsolete
-./usr/include/g++/nested_exception.h		comp-cxx-include	obsolete
+./usr/include/g++/nested_exception.h		comp-obsolete		obsolete
 ./usr/include/g++/new				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/new.h				comp-obsolete		obsolete
 ./usr/include/g++/nmap.h			comp-obsolete		obsolete
@@ -1818,7 +1818,7 @@
 ./usr/include/g++/std/valarray_array.h		comp-obsolete		obsolete
 ./usr/include/g++/std/valarray_array.tcc	comp-obsolete		obsolete
 ./usr/include/g++/std/valarray_meta.h		comp-obsolete		obsolete
-./usr/include/g++/stdatomic.h			comp-cxx-include	obsolete
+./usr/include/g++/stdatomic.h			comp-obsolete		obsolete
 ./usr/include/g++/stddef			comp-obsolete		obsolete
 ./usr/include/g++/stdexcept			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/stdiostream.h			comp-obsolete		obsolete
@@ -1867,7 +1867,7 @@
 ./usr/include/g++/system_error			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tempbuf.cc			comp-obsolete		obsolete
 ./usr/include/g++/tempbuf.h			comp-obsolete		obsolete
-./usr/include/g++/tgmath.h			comp-cxx-include	obsolete
+./usr/include/g++/tgmath.h			comp-obsolete		obsolete
 ./usr/include/g++/thread			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tr1/array			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tr1/bessel_function.tcc	comp-cxx-include	gcc,cxx,libstdcxx
@@ -1942,21 +1942,21 @@
 ./usr/include/g++/tr1/utility			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tr1/wchar.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tr1/wctype.h			comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/tr1_impl/array		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/boost_sp_counted_base.h	comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/cctype		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/cfenv		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/cinttypes		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/cmath		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/complex		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/cstdint		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/cstdio		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/cstdlib		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/cwchar		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/cwctype		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/regex		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/type_traits		comp-cxx-include	obsolete
-./usr/include/g++/tr1_impl/utility		comp-cxx-include	obsolete
+./usr/include/g++/tr1_impl/array		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/boost_sp_counted_base.h	comp-obsolete	obsolete
+./usr/include/g++/tr1_impl/cctype		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/cfenv		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/cinttypes		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/cmath		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/complex		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/cstdint		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/cstdio		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/cstdlib		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/cwchar		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/cwctype		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/regex		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/type_traits		comp-obsolete		obsolete
+./usr/include/g++/tr1_impl/utility		comp-obsolete		obsolete
 ./usr/include/g++/tr2/bool_set			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tr2/bool_set.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tr2/dynamic_bitset		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1978,8 +1978,8 @@
 ./usr/include/g++/values.h			comp-obsolete		obsolete
 ./usr/include/g++/vector			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/vector.h			comp-obsolete		obsolete
-./usr/include/gcc-4.5/mf-runtime.h		comp-gcc-include	obsolete
-./usr/include/gcc-4.5/omp.h			comp-gcc-include	obsolete
+./usr/include/gcc-4.5/mf-runtime.h		comp-obsolete		obsolete
+./usr/include/gcc-4.5/omp.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/mf-runtime.h		comp-gcc-include	gcc=48
 ./usr/include/gcc-4.8/omp.h			comp-gcc-include	gcc=48
 ./usr/include/gcc-5/omp.h			comp-gcc-include	gcc=53
@@ -1987,7 +1987,7 @@
 ./usr/include/gelf.h				comp-c-include
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
-./usr/include/gmp.h				comp-cxx-include	obsolete
+./usr/include/gmp.h				comp-obsolete		obsolete
 ./usr/include/grp.h				comp-c-include
 ./usr/include/gssapi.h				comp-krb5-include	kerberos
 ./usr/include/gssapi/gssapi.h			comp-krb5-include	kerberos
@@ -2177,10 +2177,10 @@
 ./usr/include/mj.h				comp-c-include		crypto
 ./usr/include/mntopts.h				comp-c-include
 ./usr/include/monetary.h			comp-c-include
-./usr/include/mpc-log.h				comp-c-include		obsolete
-./usr/include/mpc.h				comp-c-include		obsolete
-./usr/include/mpf2mpfr.h			comp-c-include		obsolete
-./usr/include/mpfr.h				comp-c-include		obsolete
+./usr/include/mpc-log.h				comp-obsolete		obsolete
+./usr/include/mpc.h				comp-obsolete		obsolete
+./usr/include/mpf2mpfr.h			comp-obsolete		obsolete
+./usr/include/mpfr.h				comp-obsolete		obsolete
 ./usr/include/mpool.h				comp-c-include
 ./usr/include/mqueue.h				comp-c-include
 ./usr/include/msdosfs/bootsect.h		comp-c-include
@@ -2192,7 +2192,7 @@
 ./usr/include/ndbm.h				comp-c-include
 ./usr/include/net/agr/if_agrioctl.h		comp-c-include
 ./usr/include/net/bpf.h				comp-c-include
-./usr/include/net/bpf_jit.h			comp-c-include		obsolete
+./usr/include/net/bpf_jit.h			comp-obsolete		obsolete
 ./usr/include/net/bpfdesc.h			comp-c-include
 ./usr/include/net/bpfjit.h			comp-c-include
 ./usr/include/net/dlt.h				comp-c-include
@@ -2460,20 +2460,20 @@
 ./usr/include/objc/NXConstStr.h			comp-c-include		gcc
 ./usr/include/objc/Object.h			comp-c-include		gcc
 ./usr/include/objc/Protocol.h			comp-c-include		gcc
-./usr/include/objc/encoding.h			comp-c-include		obsolete
-./usr/include/objc/hash.h			comp-c-include		obsolete
+./usr/include/objc/encoding.h			comp-obsolete		obsolete
+./usr/include/objc/hash.h			comp-obsolete		obsolete
 ./usr/include/objc/list.h			comp-obsolete		obsolete
 ./usr/include/objc/message.h			comp-objc-include	libstdcxx,gcc
-./usr/include/objc/objc-api.h			comp-c-include		obsolete
+./usr/include/objc/objc-api.h			comp-obsolete		obsolete
 ./usr/include/objc/objc-decls.h			comp-cxx-include	gcc,cxx
 ./usr/include/objc/objc-exception.h		comp-objc-include	libstdcxx,gcc
-./usr/include/objc/objc-list.h			comp-c-include		obsolete
+./usr/include/objc/objc-list.h			comp-obsolete		obsolete
 ./usr/include/objc/objc-sync.h			comp-objc-include	libstdcxx,gcc
 ./usr/include/objc/objc.h			comp-c-include		gcc
 ./usr/include/objc/runtime.h			comp-objc-include	libstdcxx,gcc
-./usr/include/objc/sarray.h			comp-c-include		obsolete
+./usr/include/objc/sarray.h			comp-obsolete		obsolete
 ./usr/include/objc/thr.h			comp-c-include		gcc
-./usr/include/objc/typedstream.h		comp-c-include		obsolete
+./usr/include/objc/typedstream.h		comp-obsolete		obsolete
 ./usr/include/openpgpsdk/accumulate.h		comp-obsolete		obsolete
 ./usr/include/openpgpsdk/armour.h		comp-obsolete		obsolete
 ./usr/include/openpgpsdk/callback.h		comp-obsolete		obsolete
@@ -3248,12 +3248,11 @@
 ./usr/lib/libg2c.a				comp-obsolete		obsolete
 ./usr/lib/libg2c_p.a				comp-obsolete		obsolete
 ./usr/lib/libgcc.a				comp-c-lib		compatfile,gcc
-./usr/lib/libgcc_p.a				comp-c-proflib		obsolete
+./usr/lib/libgcc_p.a				comp-obsolete		obsolete
 ./usr/lib/libgcc_s.a				comp-obsolete		obsolete
 ./usr/lib/libgcov.a				comp-c-lib		compatfile,gcc
-./usr/lib/libgmp.a				-unknown-		obsolete
-./usr/lib/libgmp.a				comp-c-lib		obsolete
-./usr/lib/libgmp_p.a				comp-c-proflib		obsolete
+./usr/lib/libgmp.a				comp-obsolete		obsolete
+./usr/lib/libgmp_p.a				comp-obsolete		obsolete
 ./usr/lib/libgnumalloc.a			comp-c-lib		compatfile
 ./usr/lib/libgnumalloc_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libgomp.a				comp-c-lib		compatfile,gcc
@@ -3332,12 +3331,12 @@
 ./usr/lib/libmilter.a				comp-obsolete		obsolete
 ./usr/lib/libmj.a				comp-c-lib		compatfile,crypto
 ./usr/lib/libmj_p.a				comp-c-proflib		compatfile,crypto,profile
-./usr/lib/libmpc.a				-unknown-		obsolete
-./usr/lib/libmpc.a				comp-c-lib		obsolete
-./usr/lib/libmpc_p.a				comp-c-proflib		obsolete
-./usr/lib/libmpfr.a				-unknown-		obsolete
-./usr/lib/libmpfr.a				comp-c-lib		obsolete
-./usr/lib/libmpfr_p.a				comp-c-proflib		obsolete
+./usr/lib/libmpc.a				-obsolete		obsolete
+./usr/lib/libmpc.a				comp-obsolete		obsolete
+./usr/lib/libmpc_p.a				comp-obsolete		obsolete
+./usr/lib/libmpfr.a				-obsolete		obsolete
+./usr/lib/libmpfr.a				comp-obsolete		obsolete
+./usr/lib/libmpfr_p.a				comp-obsolete		obsolete
 ./usr/lib/libmudflap.a				comp-c-lib		compatfile,gcc=48
 ./usr/lib/libmudflap_p.a			comp-c-proflib		compatfile,gcc=48,profile
 ./usr/lib/libmudflapth.a			comp-c-lib		compatfile,gcc=48
@@ -3697,7 +3696,7 @@
 ./usr/libdata/lint/llib-lexpat.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lfetch.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lform.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lgmp.ln			comp-c-lintlib		obsolete
+./usr/libdata/lint/llib-lgmp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lgnumalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lgssapi.ln		comp-krb5-lintlib	lint,kerberos
 ./usr/libdata/lint/llib-lheimbase.ln		comp-krb5-lintlib	lint,kerberos
@@ -3725,8 +3724,8 @@
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lmj.ln			comp-c-lintlib		lint,crypto
-./usr/libdata/lint/llib-lmpc.ln			comp-c-lintlib		obsolete
-./usr/libdata/lint/llib-lmpfr.ln		comp-c-lintlib		obsolete
+./usr/libdata/lint/llib-lmpc.ln			comp-obsolete		obsolete
+./usr/libdata/lint/llib-lmpfr.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lnetpgp.ln		comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lnetpgpverify.ln	comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lnpf.ln			comp-npf-lintlib	lint,npf
@@ -5474,16 +5473,16 @@
 ./usr/share/man/cat3/btree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/buffer.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/bufferevent.0		comp-c-catman		.cat
-./usr/share/man/cat3/bufferevent_base_set.0	comp-c-obsolete		obsolete
-./usr/share/man/cat3/bufferevent_disable.0	comp-c-obsolete		obsolete
-./usr/share/man/cat3/bufferevent_enable.0	comp-c-obsolete		obsolete
-./usr/share/man/cat3/bufferevent_free.0		comp-c-obsolete		obsolete
-./usr/share/man/cat3/bufferevent_new.0		comp-c-obsolete		obsolete
-./usr/share/man/cat3/bufferevent_read.0		comp-c-obsolete		obsolete
-./usr/share/man/cat3/bufferevent_settimeout.0	comp-c-obsolete		obsolete
+./usr/share/man/cat3/bufferevent_base_set.0	comp-obsolete		obsolete
+./usr/share/man/cat3/bufferevent_disable.0	comp-obsolete		obsolete
+./usr/share/man/cat3/bufferevent_enable.0	comp-obsolete		obsolete
+./usr/share/man/cat3/bufferevent_free.0		comp-obsolete		obsolete
+./usr/share/man/cat3/bufferevent_new.0		comp-obsolete		obsolete
+./usr/share/man/cat3/bufferevent_read.0		comp-obsolete		obsolete
+./usr/share/man/cat3/bufferevent_settimeout.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/bufferevent_ssl.0		comp-c-catman		.cat
-./usr/share/man/cat3/bufferevent_write.0	comp-c-obsolete		obsolete
-./usr/share/man/cat3/bufferevent_write_buffer.0 comp-c-obsolete		obsolete
+./usr/share/man/cat3/bufferevent_write.0	comp-obsolete		obsolete
+./usr/share/man/cat3/bufferevent_write_buffer.0 comp-obsolete		obsolete
 ./usr/share/man/cat3/byteorder.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bzero.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cabs.0			comp-c-catman		complex,.cat
@@ -11196,7 +11195,7 @@
 ./usr/share/man/cat9/vcache_new.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vcache_rekey_enter.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/vcache_rekey_exit.0	comp-sys-catman		.cat
-./usr/share/man/cat9/vcache_remove.0		comp-sys-catman		obsolete
+./usr/share/man/cat9/vcache_remove.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/vcons.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vcount.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vdead_check.0		comp-sys-catman		.cat
@@ -11236,7 +11235,7 @@
 ./usr/share/man/cat9/vfs_write_suspend.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/vfsops.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vfssubr.0			comp-sys-catman		.cat
-./usr/share/man/cat9/vget.0			comp-sys-catman		obsolete
+./usr/share/man/cat9/vget.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vgone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vgonel.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vhold.0			comp-sys-catman		.cat
@@ -11281,8 +11280,8 @@
 ./usr/share/man/cat9/vn_poll.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_rdwr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_read.0			comp-sys-catman		.cat
-./usr/share/man/cat9/vn_restorerecurse.0	comp-sys-catman		obsolete
-./usr/share/man/cat9/vn_setrecurse.0		comp-sys-catman		obsolete
+./usr/share/man/cat9/vn_restorerecurse.0	comp-obsolete		obsolete
+./usr/share/man/cat9/vn_setrecurse.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/vn_start_write.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/vn_stat.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_statfile.0		comp-sys-catman		.cat
@@ -11393,13 +11392,13 @@
 ./usr/share/man/html1/elf2aout.html		comp-sysutil-htmlman	html
 ./usr/share/man/html1/elf2ecoff.html		comp-sysutil-htmlman	html
 ./usr/share/man/html1/elfedit.html		comp-util-htmlman	binutils,html
-./usr/share/man/html1/f77.html			comp-fortran-htmlman	obsolete
+./usr/share/man/html1/f77.html			comp-obsolete	obsolete
 ./usr/share/man/html1/fgen.html			comp-util-htmlman	html
 ./usr/share/man/html1/flex.html			comp-c-htmlman		html
-./usr/share/man/html1/fort77.html		comp-fortran-htmlman	obsolete
+./usr/share/man/html1/fort77.html		comp-obsolete	obsolete
 ./usr/share/man/html1/fpr.html			comp-fortran-htmlman	html
 ./usr/share/man/html1/g++.html			comp-cxx-htmlman	gcccmds,html
-./usr/share/man/html1/g77.html			comp-fortran-htmlman	obsolete
+./usr/share/man/html1/g77.html			comp-obsolete	obsolete
 ./usr/share/man/html1/gcc.html			comp-c-htmlman		gcccmds,html
 ./usr/share/man/html1/gcore.html		comp-debug-htmlman	html
 ./usr/share/man/html1/gcov.html			comp-debug-htmlman	gcccmds,html
@@ -12872,16 +12871,16 @@
 ./usr/share/man/html3/btowc.html		comp-c-htmlman		html
 ./usr/share/man/html3/btree.html		comp-c-htmlman		html
 ./usr/share/man/html3/bufferevent.html		comp-c-htmlman		html
-./usr/share/man/html3/bufferevent_base_set.html comp-c-obsolete		obsolete
-./usr/share/man/html3/bufferevent_disable.html	comp-c-obsolete		obsolete
-./usr/share/man/html3/bufferevent_enable.html	comp-c-obsolete		obsolete
-./usr/share/man/html3/bufferevent_free.html	comp-c-obsolete		obsolete
-./usr/share/man/html3/bufferevent_new.html	comp-c-obsolete		obsolete
-./usr/share/man/html3/bufferevent_read.html	comp-c-obsolete		obsolete
-./usr/share/man/html3/bufferevent_settimeout.html	comp-c-obsolete		obsolete
+./usr/share/man/html3/bufferevent_base_set.html comp-obsolete		obsolete
+./usr/share/man/html3/bufferevent_disable.html	comp-obsolete		obsolete
+./usr/share/man/html3/bufferevent_enable.html	comp-obsolete		obsolete
+./usr/share/man/html3/bufferevent_free.html	comp-obsolete		obsolete
+./usr/share/man/html3/bufferevent_new.html	comp-obsolete		obsolete
+./usr/share/man/html3/bufferevent_read.html	comp-obsolete		obsolete
+./usr/share/man/html3/bufferevent_settimeout.html	comp-obsolete		obsolete
 ./usr/share/man/html3/bufferevent_ssl.html	comp-c-htmlman		html
-./usr/share/man/html3/bufferevent_write.html	comp-c-obsolete		obsolete
-./usr/share/man/html3/bufferevent_write_buffer.html	comp-c-obsolete		obsolete
+./usr/share/man/html3/bufferevent_write.html	comp-obsolete		obsolete
+./usr/share/man/html3/bufferevent_write_buffer.html	comp-obsolete		obsolete
 ./usr/share/man/html3/byteorder.html		comp-c-htmlman		html
 ./usr/share/man/html3/bzero.html		comp-c-htmlman		html
 ./usr/share/man/html3/cabs.html			comp-c-htmlman		complex,html
@@ -18385,7 +18384,7 @@
 ./usr/share/man/html9/vcache_new.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vcache_rekey_enter.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vcache_rekey_exit.html	comp-sys-htmlman	html
-./usr/share/man/html9/vcache_remove.html	comp-sys-htmlman	obsolete
+./usr/share/man/html9/vcache_remove.html	comp-obsolete	obsolete
 ./usr/share/man/html9/vcons.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vcount.html		comp-obsolete	obsolete
 ./usr/share/man/html9/vdead_check.html		comp-sys-htmlman	html
@@ -18422,7 +18421,7 @@
 ./usr/share/man/html9/vfs_vnode_iterator_next.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vfsops.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfssubr.html		comp-sys-htmlman	html
-./usr/share/man/html9/vget.html			comp-sys-htmlman	obsolete
+./usr/share/man/html9/vget.html			comp-obsolete	obsolete
 ./usr/share/man/html9/vgone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vgonel.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vhold.html		comp-sys-htmlman	html
@@ -18464,8 +18463,8 @@
 ./usr/share/man/html9/vn_poll.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vn_rdwr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vn_read.html		comp-sys-htmlman	html
-./usr/share/man/html9/vn_restorerecurse.html	comp-sys-htmlman	obsolete
-./usr/share/man/html9/vn_setrecurse.html	comp-sys-htmlman	obsolete
+./usr/share/man/html9/vn_restorerecurse.html	comp-obsolete	obsolete
+./usr/share/man/html9/vn_setrecurse.html	comp-obsolete	obsolete
 ./usr/share/man/html9/vn_stat.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vn_statfile.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vn_write.html		comp-sys-htmlman	html
@@ -20091,16 +20090,16 @@
 ./usr/share/man/man3/btree.3			comp-c-man		.man
 ./usr/share/man/man3/buffer.3			comp-obsolete		obsolete
 ./usr/share/man/man3/bufferevent.3		comp-c-man		.man
-./usr/share/man/man3/bufferevent_base_set.3	comp-c-obsolete		obsolete
-./usr/share/man/man3/bufferevent_disable.3	comp-c-obsolete		obsolete
-./usr/share/man/man3/bufferevent_enable.3	comp-c-obsolete		obsolete
-./usr/share/man/man3/bufferevent_free.3		comp-c-obsolete		obsolete
-./usr/share/man/man3/bufferevent_new.3		comp-c-obsolete		obsolete
-./usr/share/man/man3/bufferevent_read.3		comp-c-obsolete		obsolete
-./usr/share/man/man3/bufferevent_settimeout.3	comp-c-obsolete		obsolete
+./usr/share/man/man3/bufferevent_base_set.3	comp-obsolete		obsolete
+./usr/share/man/man3/bufferevent_disable.3	comp-obsolete		obsolete
+./usr/share/man/man3/bufferevent_enable.3	comp-obsolete		obsolete
+./usr/share/man/man3/bufferevent_free.3		comp-obsolete		obsolete
+./usr/share/man/man3/bufferevent_new.3		comp-obsolete		obsolete
+./usr/share/man/man3/bufferevent_read.3		comp-obsolete		obsolete
+./usr/share/man/man3/bufferevent_settimeout.3	comp-obsolete		obsolete
 ./usr/share/man/man3/bufferevent_ssl.3		comp-c-man		.man
-./usr/share/man/man3/bufferevent_write.3	comp-c-obsolete		obsolete
-./usr/share/man/man3/bufferevent_write_buffer.3 comp-c-obsolete		obsolete
+./usr/share/man/man3/bufferevent_write.3	comp-obsolete		obsolete
+./usr/share/man/man3/bufferevent_write_buffer.3 comp-obsolete		obsolete
 ./usr/share/man/man3/byteorder.3		comp-c-man		.man
 ./usr/share/man/man3/bzero.3			comp-c-man		.man
 ./usr/share/man/man3/cabs.3			comp-c-man		complex,.man
@@ -25808,7 +25807,7 @@
 ./usr/share/man/man9/vcache_new.9		comp-sys-man		.man
 ./usr/share/man/man9/vcache_rekey_enter.9	comp-sys-man		.man
 ./usr/share/man/man9/vcache_rekey_exit.9	comp-sys-man		.man
-./usr/share/man/man9/vcache_remove.9		comp-sys-man		obsolete
+./usr/share/man/man9/vcache_remove.9		comp-obsolete		obsolete
 ./usr/share/man/man9/vcons.9			comp-sys-man		.man
 ./usr/share/man/man9/vcount.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vdead_check.9		comp-sys-man		.man
@@ -25848,7 +25847,7 @@
 ./usr/share/man/man9/vfs_write_suspend.9	comp-obsolete		obsolete
 ./usr/share/man/man9/vfsops.9			comp-sys-man		.man
 ./usr/share/man/man9/vfssubr.9			comp-sys-man		.man
-./usr/share/man/man9/vget.9			comp-sys-man		obsolete
+./usr/share/man/man9/vget.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vgone.9			comp-sys-man		.man
 ./usr/share/man/man9/vgonel.9			comp-sys-man		.man
 ./usr/share/man/man9/vhold.9			comp-sys-man		.man
@@ -25893,8 +25892,8 @@
 ./usr/share/man/man9/vn_poll.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_rdwr.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_read.9			comp-sys-man		.man
-./usr/share/man/man9/vn_restorerecurse.9	comp-sys-man		obsolete
-./usr/share/man/man9/vn_setrecurse.9		comp-sys-man		obsolete
+./usr/share/man/man9/vn_restorerecurse.9	comp-obsolete		obsolete
+./usr/share/man/man9/vn_setrecurse.9		comp-obsolete		obsolete
 ./usr/share/man/man9/vn_start_write.9		comp-obsolete		obsolete
 ./usr/share/man/man9/vn_stat.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_statfile.9		comp-sys-man		.man
