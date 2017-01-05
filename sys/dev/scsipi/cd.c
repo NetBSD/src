@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.338 2016/12/21 21:28:30 mlelstv Exp $	*/
+/*	$NetBSD: cd.c,v 1.339 2017/01/05 16:35:33 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.338 2016/12/21 21:28:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.339 2017/01/05 16:35:33 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2815,11 +2815,11 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 	if (error) {
 		/* discinfo call failed, emulate for cd-rom/dvd-rom */
 		if (mmc_discinfo->mmc_profile == 0x08) /* CD-ROM */
-			return mmc_getdiscinfo_cdrom(periph, mmc_discinfo);
-		if (mmc_discinfo->mmc_profile == 0x10) /* DVD-ROM */
-			return mmc_getdiscinfo_dvdrom(periph, mmc_discinfo);
-		/* CD/DVD drive is violating specs */
-		error = EIO;
+			error = mmc_getdiscinfo_cdrom(periph, mmc_discinfo);
+		else if (mmc_discinfo->mmc_profile == 0x10) /* DVD-ROM */
+			error = mmc_getdiscinfo_dvdrom(periph, mmc_discinfo);
+		else /* CD/DVD drive is violating specs */
+			error = EIO;
 		goto out;
 	}
 
