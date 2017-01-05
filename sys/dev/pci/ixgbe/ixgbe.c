@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.58 2016/12/28 09:29:35 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.59 2017/01/05 05:53:23 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -413,7 +413,7 @@ ixgbe_lookup(const struct pci_attach_args *pa)
 	pcireg_t subid;
 	ixgbe_vendor_info_t *ent;
 
-	INIT_DEBUGOUT("ixgbe_probe: begin");
+	INIT_DEBUGOUT("ixgbe_lookup: begin");
 
 	if (PCI_VENDOR(pa->pa_id) != IXGBE_INTEL_VENDOR_ID)
 		return NULL;

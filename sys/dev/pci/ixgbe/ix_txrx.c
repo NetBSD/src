@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.13 2016/12/16 08:24:40 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.14 2017/01/05 05:53:23 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -693,7 +693,7 @@ ixgbe_free_transmit_buffers(struct tx_ring *txr)
 	struct ixgbe_tx_buf *tx_buffer;
 	int             i;
 
-	INIT_DEBUGOUT("ixgbe_free_transmit_ring: begin");
+	INIT_DEBUGOUT("ixgbe_free_transmit_buffers: begin");
 
 	if (txr->tx_buffers == NULL)
 		return;
