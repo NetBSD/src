@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.60 2017/01/01 03:06:06 roy Exp $	*/
+/*	$NetBSD: getch.c,v 1.61 2017/01/05 20:31:37 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.60 2017/01/01 03:06:06 roy Exp $");
+__RCSID("$NetBSD: getch.c,v 1.61 2017/01/05 20:31:37 roy Exp $");
 #endif
 #endif					/* not lint */
 
@@ -203,7 +203,7 @@ static const struct tcdata tc[] = {
 /* Number of TC entries .... */
 static const int num_tcs = (sizeof(tc) / sizeof(struct tcdata));
 
-int	ESCDELAY = 300;		/* Delay in ms between keys for esc seq's */
+int		ESCDELAY;	/* Delay in ms between keys for esc seq's */
 
 /* Key buffer */
 #define INBUF_SZ 16		/* size of key buffer - must be larger than
@@ -550,6 +550,7 @@ inkey(int to, int delay)
 	int              c, mapping;
 	keymap_t	*current = _cursesi_screen->base_keymap;
 	FILE            *infd = _cursesi_screen->infd;
+	int		escdelay = _cursesi_screen->ESCDELAY;
 
 	k = 0;		/* XXX gcc -Wuninitialized */
 
@@ -595,11 +596,11 @@ reread:
 		} else if (state == INKEY_ASSEMBLING) {
 			/* assembling a key sequence */
 			if (delay) {
-				if (__timeout(to ? (ESCDELAY / 100) : delay)
+				if (__timeout(to ? (escdelay / 100) : delay)
 				    == ERR)
 					return ERR;
 			} else {
-				if (to && (__timeout(ESCDELAY / 100) == ERR))
+				if (to && (__timeout(escdelay / 100) == ERR))
 					return ERR;
 			}
 
@@ -976,4 +977,17 @@ has_key(int key_type)
 
 	do_keyok(_cursesi_screen->base_keymap, key_type, false, false, &result);
 	return result;
+}
+
+/*
+ * set_escdelay --
+ *   Sets the escape delay for the current screen.
+ */
+int
+set_escdelay(int escdelay)
+{
+
+	_cursesi_screen->ESCDELAY = escdelay;
+	ESCDELAY = escdelay;
+	return OK;
 }
