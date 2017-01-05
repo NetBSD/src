@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.116 2017/01/05 20:31:37 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.117 2017/01/05 21:25:18 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -695,6 +695,7 @@ int	 intrflush(WINDOW *, bool);
 bool	 isendwin(void);
 bool	 is_linetouched(WINDOW *, int);
 bool	 is_wintouched(WINDOW *);
+bool	 is_term_resized(int, int);
 int      keyok(int, bool);
 int	 keypad(WINDOW *, bool);
 char	*keyname(int);
@@ -744,6 +745,7 @@ int	 reset_prog_mode(void);
 int	 reset_shell_mode(void);
 int	 resetty(void);
 int      resizeterm(int, int);
+int	 resize_term(int, int);
 int	 savetty(void);
 int	 scanw(const char *, ...) __scanflike(1, 2);
 int	 scroll(WINDOW *);

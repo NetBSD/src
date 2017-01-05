@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 2017/01/05 20:31:37 roy Exp $
+#	$NetBSD: Makefile,v 1.80 2017/01/05 21:25:17 roy Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -103,6 +103,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_tty.3 intrflush.3 \
 	 curses_pad.3 is_keypad.3 \
 	 curses_refresh.3 is_leaveok.3 curses_touch.3 is_linetouched.3 \
+	 curses_screen.3 is_term_resized.3 \
 	 curses_touch.3 is_wintouched.3 curses_screen.3 isendwin.3 \
 	 curses_keyname.3 keyname.3 \
 	 curses_input.3 keypad.3 curses_tty.3 killchar.3 \
@@ -140,7 +141,8 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_fileio.3 putwin.3 curses_tty.3 qiflush.3 \
 	 curses_tty.3 raw.3 curses_refresh.3 refresh.3 \
 	 curses_tty.3 reset_prog_mode.3 curses_tty.3 reset_shell_mode.3 \
-	 curses_tty.3 resetty.3 curses_screen.3 resizeterm.3 \
+	 curses_tty.3 resetty.3 \
+	 curses_screen.3 resizeterm.3 curses_screen.3 resize_term.3 \
 	 curses_tty.3 savetty.3 curses_scanw.3 scanw.3 \
 	 curses_scroll.3 scrl.3 curses_scroll.3 scroll.3 \
 	 curses_scroll.3 scrollok.3 curses_scroll.3 setscrreg.3 \

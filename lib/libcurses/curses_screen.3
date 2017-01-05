@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.20 2017/01/05 20:31:37 roy Exp $
+.\"	$NetBSD: curses_screen.3,v 1.21 2017/01/05 21:25:18 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -43,6 +43,8 @@
 .Nm endwin ,
 .Nm initscr ,
 .Nm isendwin ,
+.Nm is_term_resized ,
+.Nm resize_term ,
 .Nm resizeterm ,
 .Nm setterm ,
 .Nm set_tabsize
@@ -67,6 +69,10 @@
 .Fn initscr "void"
 .Ft bool
 .Fn isendwin "void"
+.Ft bool
+.Fn is_term_resized "int lines" "int cols"
+.Fn int
+.Fn resize_term "int lines" "int cols"
 .Ft int
 .Fn resizeterm "int lines" "int cols"
 .Ft int
@@ -155,8 +161,8 @@ function can be used to determine whether or not a refresh of the
 screen has occurred since the last call to
 .Fn endwin .
 .Pp
-The size of the screen may be changed  by calling
-.Fn resizeterm
+The size of the screen may be changed by calling
+.Fn resize_term
 with the updated number of lines and columns.
 This will resize the curses internal data structures to accommodate the
 changed terminal geometry.
@@ -167,7 +173,15 @@ and
 windows and any of their subwindows will be resized to fit the new
 screen size.
 The application must redraw the screen after a call to
-.Fn resizeterm .
+.Fn resize_term .
+The
+.Fn resizeterm
+function is a wrapper for
+.Fn resize_term
+and adjusts other structure data that handles window dimensions.
+The
+.Fn is_term_resized
+function tests if either of the above functions need to be called.
 .Pp
 The
 .Fn setterm
@@ -252,8 +266,11 @@ function is a
 extension to the Curses library and was added in
 .Nx 1.6 .
 The
+.Fn is_term_resized ,
+.Fn resize_term
+and
 .Fn set_tabsize
-function is a
+functions are
 .Em ncurses
 extension to the Curses library and was added in
 .Nx 8.0 .

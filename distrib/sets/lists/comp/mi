@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2096 2017/01/05 20:31:37 roy Exp $
+#	$NetBSD: mi,v 1.2097 2017/01/05 21:25:18 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6878,6 +6878,7 @@
 ./usr/share/man/cat3/is_keypad.0		comp-c-catman		.cat
 ./usr/share/man/cat3/is_leaveok.0		comp-c-catman		.cat
 ./usr/share/man/cat3/is_linetouched.0		comp-c-catman		.cat
+./usr/share/man/cat3/is_term_resized.0		comp-c-catman		.cat
 ./usr/share/man/cat3/is_wintouched.0		comp-c-catman		.cat
 ./usr/share/man/cat3/isalnum.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isalpha.0			comp-c-catman		.cat
@@ -8676,6 +8677,7 @@
 ./usr/share/man/cat3/reset_prog_mode.0		comp-c-catman		.cat
 ./usr/share/man/cat3/reset_shell_mode.0		comp-c-catman		.cat
 ./usr/share/man/cat3/resetty.0			comp-c-catman		.cat
+./usr/share/man/cat3/resize_term.0		comp-c-catman		.cat
 ./usr/share/man/cat3/resizeterm.0		comp-c-catman		.cat
 ./usr/share/man/cat3/resolver.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rewind.0			comp-c-catman		.cat
@@ -14230,6 +14232,7 @@
 ./usr/share/man/html3/is_keypad.html		comp-c-htmlman		html
 ./usr/share/man/html3/is_leaveok.html		comp-c-htmlman		html
 ./usr/share/man/html3/is_linetouched.html	comp-c-htmlman		html
+./usr/share/man/html3/is_term_resized.html	comp-c-htmlman		html
 ./usr/share/man/html3/is_wintouched.html	comp-c-htmlman		html
 ./usr/share/man/html3/isalnum.html		comp-c-htmlman		html
 ./usr/share/man/html3/isalpha.html		comp-c-htmlman		html
@@ -15988,6 +15991,7 @@
 ./usr/share/man/html3/reset_prog_mode.html	comp-c-htmlman		html
 ./usr/share/man/html3/reset_shell_mode.html	comp-c-htmlman		html
 ./usr/share/man/html3/resetty.html		comp-c-htmlman		html
+./usr/share/man/html3/resize_term.html		comp-c-htmlman		html
 ./usr/share/man/html3/resizeterm.html		comp-c-htmlman		html
 ./usr/share/man/html3/resolver.html		comp-c-htmlman		html
 ./usr/share/man/html3/rewind.html		comp-c-htmlman		html
@@ -21499,6 +21503,7 @@
 ./usr/share/man/man3/is_keypad.3		comp-c-man		.man
 ./usr/share/man/man3/is_leaveok.3		comp-c-man		.man
 ./usr/share/man/man3/is_linetouched.3		comp-c-man		.man
+./usr/share/man/man3/is_term_resized.3		comp-c-man		.man
 ./usr/share/man/man3/is_wintouched.3		comp-c-man		.man
 ./usr/share/man/man3/isalnum.3			comp-c-man		.man
 ./usr/share/man/man3/isalpha.3			comp-c-man		.man
@@ -23297,6 +23302,7 @@
 ./usr/share/man/man3/reset_prog_mode.3		comp-c-man		.man
 ./usr/share/man/man3/reset_shell_mode.3		comp-c-man		.man
 ./usr/share/man/man3/resetty.3			comp-c-man		.man
+./usr/share/man/man3/resize_term.3		comp-c-man		.man
 ./usr/share/man/man3/resizeterm.3		comp-c-man		.man
 ./usr/share/man/man3/resolver.3			comp-c-man		.man
 ./usr/share/man/man3/rewind.3			comp-c-man		.man
