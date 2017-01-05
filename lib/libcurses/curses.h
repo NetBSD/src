@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.115 2017/01/04 03:51:29 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.116 2017/01/05 20:31:37 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -749,6 +749,8 @@ int	 scanw(const char *, ...) __scanflike(1, 2);
 int	 scroll(WINDOW *);
 int	 scrollok(WINDOW *, bool);
 int	 setterm(char *);
+int	 set_escdelay(int);
+int	 set_tabsize(int);
 SCREEN  *set_term(SCREEN *);
 int	 start_color(void);
 WINDOW	*subpad(WINDOW *, int, int, int, int);
