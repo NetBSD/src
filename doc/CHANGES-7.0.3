@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.17 2016/12/24 04:25:56 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.18 2017/01/05 09:11:56 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -243,4 +243,10 @@ sys/arch/amd64/amd64/copy.S			patch
 
 	suword: Don't allow 4 bytes to overflow beyond the userland space.
 	[maxv, ticket #1278]
+
+sys/netinet/tcp_congctl.c			1.23
+
+	Restore behaviour to pre- tcp_congctl.c:1.18 for SACK.
+	PR/51753 tcp SACK causes SSH disconnect.
+	[skrll, ticket #1347]
 
