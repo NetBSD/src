@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.17 2016/12/31 17:46:35 roy Exp $
+.\"	$NetBSD: curses_screen.3,v 1.18 2017/01/05 09:46:08 wiz Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -129,9 +129,9 @@ size and then the
 .Xr terminfo 5
 entries for the terminal type.
 If the environment variables
-.Va LINES
+.Ev LINES
 or
-.Va COLS
+.Ev COLS
 are set, then these will be used instead.
 .Pp
 When either
@@ -196,14 +196,17 @@ Set lines equal to 1.
 .Pp
 The
 .Fn use_env
-function determines whether the environment variables LINES and COLUMNS
+function determines whether the environment variables
+.Ev LINES
+and
+.Ev COLUMNS
 override the normal values.
 The default is true.
 Any call to
 .Fn use_env
 must precede calls to
 .Fn initscr ,
-.Fn newterm
+.Fn newterm ,
 or
 .Fn setupterm .
 .Sh RETURN VALUES
