@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.57 2017/01/05 20:31:37 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.58 2017/01/05 21:42:04 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.57 2017/01/05 20:31:37 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.58 2017/01/05 21:42:04 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,11 +165,11 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	 * as this is all we can use.
 	 */
 	screen->padchar = t_pad_char(screen->term) ?
-	    t_pad_char(screen->term)[0] : 0; 
+	    t_pad_char(screen->term)[0] : 0;
 
 	/* If no scrolling commands, no quick change. */
 	screen->noqch =
-  	    (t_change_scroll_region(screen->term) == NULL ||
+	    (t_change_scroll_region(screen->term) == NULL ||
 		t_cursor_home(screen->term) == NULL ||
 		(t_parm_index(screen->term) == NULL &&
 		    t_scroll_forward(screen->term) == NULL) ||
