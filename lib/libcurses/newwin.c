@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.48 2016/10/23 21:20:56 christos Exp $	*/
+/*	$NetBSD: newwin.c,v 1.49 2017/01/05 23:15:43 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.48 2016/10/23 21:20:56 christos Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.49 2017/01/05 23:15:43 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -414,4 +414,15 @@ __swflags(WINDOW *win)
 		if (win->begy + win->maxy == LINES)
 			win->flags |= __SCROLLWIN;
 	}
+}
+
+/*
+ * is_pad --
+ *	Return true if window was created by newpad.
+ */
+bool
+is_pad(const WINDOW *win)
+{
+
+	return win->flags & __ISPAD ? true : false;
 }

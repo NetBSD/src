@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.24 2017/01/05 20:31:37 roy Exp $
+.\"	$NetBSD: curses_input.3,v 1.25 2017/01/05 23:15:43 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -51,6 +51,7 @@
 .Nm mvgetstr ,
 .Nm mvwgetstr ,
 .Nm keypad ,
+.Nm is_keypad ,
 .Nm notimeout ,
 .Nm timeout ,
 .Nm wtimeout ,
@@ -94,6 +95,8 @@
 .Fn mvwgetstr "WINDOW *win" "int y" "int x" "char *str"
 .Ft int
 .Fn keypad "WINDOW *win" "boolf flag"
+.Ft bool
+.Fn is_keypad "const WINDOW *win"
 .Ft int
 .Fn notimeout "WINDOW *win" "boolf flag"
 .Ft int
@@ -161,6 +164,15 @@ on a key symbol then
 will behave as if the character sequence associated with that key symbol
 was not recognised and will return the component characters one at a time to
 the caller.
+The
+.Fn is_keypad
+function returns
+.Dv TRUE
+if the
+.Fn
+keypad
+flag is set for the window specified by
+.Fa win .
 .Pp
 The
 .Fn has_key
@@ -603,9 +615,10 @@ Portable implementations should avoid the use of these functions.
 The Curses package appeared in
 .Bx 4.0 .
 The
+.Fn is_keypad
+and
 .Fn set_tabsize
-function is a
+functions are
 .Em ncurses
 extension to the Curses library and was added in
 .Nx 8.0 .
-

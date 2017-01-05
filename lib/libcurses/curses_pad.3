@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_pad.3,v 1.5 2016/12/31 13:50:16 roy Exp $
+.\"	$NetBSD: curses_pad.3,v 1.6 2017/01/05 23:15:43 roy Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 31, 2016
+.Dd January 5, 2016
 .Dt CURSES_PAD 3
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 .Ft int
 .Fn pnoutrefresh "WINDOW *pad" "int pbeg_y" "int pbeg_x" "int sbeg_y" "int sbeg_x" "int smax_y" "int smax_x"
 .Ft bool
-.Fn is_keypad "const WINDOW *pad"
+.Fn is_pad "const WINDOW *pad"
 .Sh DESCRIPTION
 These functions create and display pads on the current screen.
 .Pp
@@ -112,8 +112,10 @@ deferring the actual terminal updates until after a batch of updates
 to multiple pads has been done.
 .Pp
 The
-.Fn is_keypad
-function returns true if the given window is a pad, otherwise false.
+.Fn is_pad
+function returns true if the given window was created by
+.Fn newpad ,
+otherwise false.
 .Sh RETURN VALUES
 Functions returning pointers will return
 .Dv NULL
@@ -147,7 +149,7 @@ Single Unix Specification.
 The Curses package appeared in
 .Bx 4.0 .
 The
-.Fn is_keypad
+.Fn is_pad
 function is a
 .Em ncurses
 extension to the Curses library and was added in

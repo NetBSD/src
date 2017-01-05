@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2097 2017/01/05 21:25:18 roy Exp $
+#	$NetBSD: mi,v 1.2098 2017/01/05 23:15:43 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6878,6 +6878,7 @@
 ./usr/share/man/cat3/is_keypad.0		comp-c-catman		.cat
 ./usr/share/man/cat3/is_leaveok.0		comp-c-catman		.cat
 ./usr/share/man/cat3/is_linetouched.0		comp-c-catman		.cat
+./usr/share/man/cat3/is_pad.0			comp-c-catman		.cat
 ./usr/share/man/cat3/is_term_resized.0		comp-c-catman		.cat
 ./usr/share/man/cat3/is_wintouched.0		comp-c-catman		.cat
 ./usr/share/man/cat3/isalnum.0			comp-c-catman		.cat
@@ -7071,7 +7072,7 @@
 ./usr/share/man/cat3/krb5_checksum.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_checksum_disable.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_checksum_is_collision_proof.0 comp-krb5-catman	kerberos,.cat
-./usr/share/man/cat3/krb5_checksum_is_keyed.0	comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/krb5_checksum_	is_keyed.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_checksumsize.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_cksumtype_valid.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_clear_error_string.0	comp-obsolete		obsolete
@@ -14232,6 +14233,7 @@
 ./usr/share/man/html3/is_keypad.html		comp-c-htmlman		html
 ./usr/share/man/html3/is_leaveok.html		comp-c-htmlman		html
 ./usr/share/man/html3/is_linetouched.html	comp-c-htmlman		html
+./usr/share/man/html3/is_pad.html		comp-c-htmlman		html
 ./usr/share/man/html3/is_term_resized.html	comp-c-htmlman		html
 ./usr/share/man/html3/is_wintouched.html	comp-c-htmlman		html
 ./usr/share/man/html3/isalnum.html		comp-c-htmlman		html
@@ -21503,6 +21505,7 @@
 ./usr/share/man/man3/is_keypad.3		comp-c-man		.man
 ./usr/share/man/man3/is_leaveok.3		comp-c-man		.man
 ./usr/share/man/man3/is_linetouched.3		comp-c-man		.man
+./usr/share/man/man3/is_pad.3			comp-c-man		.man
 ./usr/share/man/man3/is_term_resized.3		comp-c-man		.man
 ./usr/share/man/man3/is_wintouched.3		comp-c-man		.man
 ./usr/share/man/man3/isalnum.3			comp-c-man		.man
