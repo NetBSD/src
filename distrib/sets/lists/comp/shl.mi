@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.298 2016/11/26 03:17:58 ozaki-r Exp $
+# $NetBSD: shl.mi,v 1.299 2017/01/05 13:45:51 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -48,13 +48,13 @@
 ./usr/lib/libg++_pic.a				comp-obsolete		obsolete
 ./usr/lib/libg2c_pic.a				comp-obsolete		obsolete
 ./usr/lib/libgcc_eh.a				comp-c-lib		compatfile,gcccmds
-./usr/lib/libgcc_eh_p.a				comp-c-proflib		obsolete
-./usr/lib/libgcc_eh_pic.a			comp-c-piclib		obsolete
-./usr/lib/libgcc_pic.a				comp-c-lib		obsolete
-./usr/lib/libgmp.so				comp-c-shlib		obsolete
-./usr/lib/libgmp.so.10				comp-c-shlib		obsolete
-./usr/lib/libgmp.so.10.2			comp-c-shlib		obsolete
-./usr/lib/libgmp_pic.a				comp-c-piclib		obsolete
+./usr/lib/libgcc_eh_p.a				comp-obsolete		obsolete
+./usr/lib/libgcc_eh_pic.a			comp-obsolete		obsolete
+./usr/lib/libgcc_pic.a				comp-obsolete		obsolete
+./usr/lib/libgmp.so				comp-obsolete		obsolete
+./usr/lib/libgmp.so.10				comp-obsolete		obsolete
+./usr/lib/libgmp.so.10.2			comp-obsolete		obsolete
+./usr/lib/libgmp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libgomp_pic.a				comp-c-piclib		compatfile,picinstall,gcc
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
@@ -92,14 +92,14 @@
 ./usr/lib/libmagic_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libmenu_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libmj_pic.a				comp-c-piclib		compatfile,picinstall,crypto
-./usr/lib/libmpc.so				comp-c-shlib		obsolete
-./usr/lib/libmpc.so.2				comp-c-shlib		obsolete
-./usr/lib/libmpc.so.2.0				comp-c-shlib		obsolete
-./usr/lib/libmpc_pic.a				comp-c-piclib		obsolete
-./usr/lib/libmpfr.so				comp-c-shlib		obsolete
-./usr/lib/libmpfr.so.4				comp-c-shlib		obsolete
-./usr/lib/libmpfr.so.4.1			comp-c-shlib		obsolete
-./usr/lib/libmpfr_pic.a				comp-c-piclib		obsolete
+./usr/lib/libmpc.so				comp-obsolete		obsolete
+./usr/lib/libmpc.so.2				comp-obsolete		obsolete
+./usr/lib/libmpc.so.2.0				comp-obsolete		obsolete
+./usr/lib/libmpc_pic.a				comp-obsolete		obsolete
+./usr/lib/libmpfr.so				comp-obsolete		obsolete
+./usr/lib/libmpfr.so.4				comp-obsolete		obsolete
+./usr/lib/libmpfr.so.4.1			comp-obsolete		obsolete
+./usr/lib/libmpfr_pic.a				comp-obsolete		obsolete
 ./usr/lib/libmudflap.so				comp-c-shlib		compatfile,gcc=48
 ./usr/lib/libmudflap.so.0			comp-c-shlib		compatfile,gcc=48
 ./usr/lib/libmudflap.so.0.0			comp-c-shlib		compatfile,gcc=48

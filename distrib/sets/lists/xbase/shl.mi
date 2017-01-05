@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.74 2016/12/15 12:56:52 kre Exp $
+# $NetBSD: shl.mi,v 1.75 2017/01/05 13:45:51 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -191,8 +191,8 @@
 ./usr/X11R7/lib/libglut.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libglut.so.4			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libglut.so.4.0			-unknown-		xorg,compatx11file
-./usr/X11R7/lib/liblbxutil.so			-obsolete		obsolete
-./usr/X11R7/lib/liblbxutil.so.2			-obsolete		obsolete
+./usr/X11R7/lib/liblbxutil.so			-unknown-		obsolete
+./usr/X11R7/lib/liblbxutil.so.2			-unknown-		obsolete
 ./usr/X11R7/lib/liblbxutil.so.2.0		-obsolete-		obsolete
 ./usr/X11R7/lib/libpciaccess.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libpciaccess.so.0		-unknown-		xorg,compatx11file
