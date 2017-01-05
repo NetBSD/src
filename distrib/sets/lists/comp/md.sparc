@@ -1,5 +1,5 @@
-# $NetBSD: md.sparc,v 1.89 2016/03/16 18:10:00 mrg Exp $
-./usr/include/gcc-4.5/tgmath.h			comp-c-include		obsolete
+# $NetBSD: md.sparc,v 1.90 2017/01/05 13:45:51 wiz Exp $
+./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/visintrin.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=53
