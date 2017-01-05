@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.75 2017/01/05 22:51:15 pgoyette Exp $	*/
+/*	$NetBSD: time.h,v 1.76 2017/01/05 23:24:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -159,12 +159,17 @@ bintime_sub(struct bintime *bt, const struct bintime *bt2)
  */
 
 /*
- * The magic numbers for converting to fraction:
- *
- *	1 ms = int(2^64 / 1000)       =  18446744073709551
- *	1 us = int(2^64 / 1000000)    =     18446744073709
- *	1 ns = int(2^64 / 1000000000) =        18446744073
+ * The magic numbers for converting ms/us/ns to fractions
  */
+
+/* 1ms = (2^64) / 1000       */
+#define	BINTIME_SCALE_MS	((uint64_t)18446744073709551ULL)
+
+/* 1us = (2^64) / 1000000    */
+#define	BINTIME_SCALE_US	((uint64_t)18446744073709ULL)
+
+/* 1ns = (2^64) / 1000000000 */
+#define	BINTIME_SCALE_NS	((uint64_t)18446744073ULL)
 
 static __inline void
 bintime2timespec(const struct bintime *bt, struct timespec *ts)
@@ -180,7 +185,7 @@ timespec2bintime(const struct timespec *ts, struct bintime *bt)
 {
 
 	bt->sec = ts->tv_sec;
-	bt->frac = (uint64_t)ts->tv_nsec * (uint64_t)18446744073ULL;
+	bt->frac = (uint64_t)ts->tv_nsec * (uint64_t)BINTIME_SCALE_NS;
 }
 
 static __inline void
@@ -197,7 +202,7 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 {
 
 	bt->sec = tv->tv_sec;
-	bt->frac = (uint64_t)tv->tv_usec * (uint64_t)18446744073709ULL;
+	bt->frac = (uint64_t)tv->tv_usec * (uint64_t)BINTIME_SCALE_US;
 }
 
 static __inline struct bintime
@@ -206,7 +211,7 @@ ms2bintime(uint64_t ms)
 	struct bintime bt;
 
 	bt.sec = (time_t)(ms / 1000U);
-	bt.frac = (uint64_t)(ms % 1000U) * (uint64_t)18446744073709551ULL;
+	bt.frac = (uint64_t)(ms % 1000U) * (uint64_t)BINTIME_SCALE_MS;
 
 	return bt;
 }
@@ -217,7 +222,7 @@ us2bintime(uint64_t us)
 	struct bintime bt;
 
 	bt.sec = (time_t)(us / 1000000U);
-	bt.frac = (uint64_t)(us % 1000000U) * (uint64_t)18446744073709ULL;
+	bt.frac = (uint64_t)(us % 1000000U) * (uint64_t)BINTIME_SCALE_US;
 
 	return bt;
 }
@@ -228,7 +233,7 @@ ns2bintime(uint64_t ns)
 	struct bintime bt;
 
 	bt.sec = (time_t)(ns / 1000000000U);
-	bt.frac = (uint64_t)(ns % 1000000000U) * (uint64_t)18446744073ULL;
+	bt.frac = (uint64_t)(ns % 1000000000U) * (uint64_t)BINTIME_SCALE_NS;
 
 	return bt;
 }
