@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.276 2017/01/04 19:34:47 martin Exp $
+$NetBSD: UPDATING,v 1.277 2017/01/05 05:40:46 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20170104:
+	xinput build options have changed.
+	Remove the obj directory (external/mit/xorg/bin/xinput)
+	if you build.sh -u
 
 20170103:
 	a new version of flex has been imported.
