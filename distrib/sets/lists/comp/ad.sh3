@@ -1,5 +1,5 @@
-# $NetBSD: ad.sh3,v 1.34 2016/12/14 12:59:51 kre Exp $
-./usr/include/gcc-4.5/tgmath.h			comp-c-include		obsolete
+# $NetBSD: ad.sh3,v 1.35 2017/01/05 13:45:51 wiz Exp $
+./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=53
 ./usr/include/ieeefp.h				comp-c-include
