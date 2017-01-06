@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.8 2016/12/15 06:48:14 pgoyette Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.9 2017/01/06 09:32:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.8 2016/12/15 06:48:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.9 2017/01/06 09:32:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,10 @@ static int
 spkr_pcppi_detach(device_t self, int flags)
 {
 	struct spkr_pcppi_softc *sc = device_private(self);
+	int error;
+
+	if ((error = spkr_detach(self, flags)) != 0)
+		return error;
 
 	sc->sc_pcppicookie = NULL;
 	pmf_device_deregister(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_audio.c,v 1.2 2016/12/15 06:48:14 pgoyette Exp $	*/
+/*	$NetBSD: spkr_audio.c,v 1.3 2017/01/06 09:32:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.2 2016/12/15 06:48:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.3 2017/01/06 09:32:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,10 @@ static int
 spkr_audio_detach(device_t self, int flags)
 {
 	struct spkr_audio_softc *sc = device_private(self);
+	int error;
+
+	if ((error = spkr_detach(self, flags)) != 0)
+		return error;
 
 	pmf_device_deregister(self);
 
@@ -160,7 +164,6 @@ spkr_audio_detach(device_t self, int flags)
 	kthread_join(sc->sc_bellthread);
 	cv_destroy(&sc->sc_bellcv);
 	mutex_destroy(&sc->sc_bellock);
-
 
 	return 0;
 }

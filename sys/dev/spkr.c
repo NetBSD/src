@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.5 2016/12/15 06:55:55 pgoyette Exp $	*/
+/*	$NetBSD: spkr.c,v 1.6 2017/01/06 09:32:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.5 2016/12/15 06:55:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.6 2017/01/06 09:32:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,10 +358,29 @@ spkr_attach(device_t self, void (*tone)(device_t, u_int, u_int),
 {
 	struct spkr_softc *sc = device_private(self);
 
+#ifdef SPKRDEBUG
+	aprint_debug("%s: entering for unit %d\n", __func__, self->dv_unit);
+#endif /* SPKRDEBUG */
 	sc->sc_dev = self;
 	sc->sc_tone = tone;
 	sc->sc_rest = rest;
 	sc->sc_inbuf = NULL;
+}
+
+int
+spkr_detach(device_t self, int flags)
+{
+	struct spkr_softc *sc = device_private(self);
+
+#ifdef SPKRDEBUG
+	aprint_debug("%s: entering for unit %d\n", __func__, self->dv_unit);
+#endif /* SPKRDEBUG */
+	if (sc == NULL)
+		return ENXIO;
+	if (sc->sc_inbuf != NULL)
+		return EBUSY;
+
+	return 0;
 }
 
 int
@@ -374,7 +393,7 @@ spkropen(dev_t dev, int	flags, int mode, struct lwp *l)
 
 	if (sc == NULL)
 		return ENXIO;
-	if (sc->sc_inbuf)
+	if (sc->sc_inbuf != NULL)
 		return EBUSY;
 
 	sc->sc_inbuf = malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
@@ -393,7 +412,7 @@ spkrwrite(dev_t dev, struct uio *uio, int flags)
 
 	if (sc == NULL)
 		return ENXIO;
-	if (!sc->sc_inbuf)
+	if (sc->sc_inbuf == NULL)
 		return EINVAL;
 
 	size_t n = min(DEV_BSIZE, uio->uio_resid);
@@ -414,7 +433,7 @@ spkrclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 	if (sc == NULL)
 		return ENXIO;
-	if (!sc->sc_inbuf)
+	if (sc->sc_inbuf == NULL)
 		return EINVAL;
 
 	sc->sc_tone(sc->sc_dev, 0, 0);
@@ -448,7 +467,7 @@ spkrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	if (sc == NULL)
 		return ENXIO;
-	if (!sc->sc_inbuf)
+	if (sc->sc_inbuf == NULL)
 		return EINVAL;
 
 	switch (cmd) {
@@ -493,20 +512,21 @@ spkr_modcmd(modcmd_t cmd, void *arg)
 			break;
 
 		error = config_init_component(cfdriver_ioconf_spkr,
-			cfattach_ioconf_spkr, cfdata_ioconf_spkr);
+		    cfattach_ioconf_spkr, cfdata_ioconf_spkr);
 		if (error) {
 			devsw_detach(NULL, &spkr_cdevsw);
 		}
 		break;
 
 	case MODULE_CMD_FINI:
-		return EBUSY;
-#ifdef notyet
-		error = config_fini_component(cfdriver_ioconf_spkr,
-			cfattach_ioconf_spkr, cfdata_ioconf_spkr);
 		devsw_detach(NULL, &spkr_cdevsw);
+		error = config_fini_component(cfdriver_ioconf_spkr,
+		    cfattach_ioconf_spkr, cfdata_ioconf_spkr);
+		if (error)
+			devsw_attach(spkr_cd.cd_name, NULL, &bmajor,
+			    &spkr_cdevsw, &cmajor);
 		break;
-#endif
+
 	default:
 		error = ENOTTY;
 		break;
