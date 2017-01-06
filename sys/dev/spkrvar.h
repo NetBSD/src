@@ -1,4 +1,4 @@
-/* $NetBSD: spkrvar.h,v 1.5 2016/12/15 06:48:14 pgoyette Exp $ */
+/* $NetBSD: spkrvar.h,v 1.6 2017/01/06 09:32:08 pgoyette Exp $ */
 
 #ifndef _SYS_DEV_SPKRVAR_H
 #define _SYS_DEV_SPKRVAR_H
@@ -22,5 +22,7 @@ struct spkr_softc {
 
 void spkr_attach(device_t,
     void (*)(device_t, u_int, u_int), void (*)(device_t, int));
+
+int spkr_detach(device_t, int);
 
 #endif /* _SYS_DEV_SPKRVAR_H */
