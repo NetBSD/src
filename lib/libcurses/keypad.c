@@ -1,4 +1,4 @@
-/*	$NetBSD: keypad.c,v 1.13 2016/12/31 13:50:16 roy Exp $  */
+/*	$NetBSD: keypad.c,v 1.14 2017/01/06 13:53:18 roy Exp $  */
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keypad.c,v 1.13 2016/12/31 13:50:16 roy Exp $");
+__RCSID("$NetBSD: keypad.c,v 1.14 2017/01/06 13:53:18 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -49,7 +49,7 @@ keypad(WINDOW *win, bool bf)
 	if (bf) {
 		win->flags |= __KEYPAD;
 		if (!(curscr->flags & __KEYPAD)) {
-			tputs (keypad_xmit, 0, __cputchar);
+			tputs(keypad_xmit, 0, __cputchar);
 			curscr->flags |= __KEYPAD;
 		}
 	} else

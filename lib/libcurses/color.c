@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.40 2017/01/06 09:14:07 roy Exp $	*/
+/*	$NetBSD: color.c,v 1.41 2017/01/06 13:53:18 roy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.40 2017/01/06 09:14:07 roy Exp $");
+__RCSID("$NetBSD: color.c,v 1.41 2017/01/06 13:53:18 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -67,9 +67,9 @@ has_colors(void)
 	    ((set_a_foreground != NULL && set_a_background != NULL) ||
 		initialize_pair != NULL || initialize_color != NULL ||
 		(set_background != NULL && set_foreground != NULL)))
-		return(TRUE);
+		return true;
 	else
-		return(FALSE);
+		return false;
 }
 
 /*
@@ -79,10 +79,7 @@ has_colors(void)
 bool
 can_change_color(void)
 {
-	if (can_change)
-		return(TRUE);
-	else
-		return(FALSE);
+	return can_change ? true : false;
 }
 
 /*
@@ -99,7 +96,7 @@ start_color(void)
 	int			 y, x;
 
 	if (has_colors() == FALSE)
-		return(ERR);
+		return ERR;
 
 	/* Max colours and colour pairs */
 	if (max_colors == -1)
@@ -117,7 +114,7 @@ start_color(void)
 		}
 	}
 	if (!COLORS)
-		return (ERR);
+		return ERR;
 
 	_cursesi_screen->COLORS = COLORS;
 	_cursesi_screen->COLOR_PAIRS = COLOR_PAIRS;
@@ -167,7 +164,7 @@ start_color(void)
 	 */
 	_cursesi_screen->nca = __NORMAL;
 	if (no_color_video != -1) {
-		temp_nc = (attr_t) t_no_color_video(_cursesi_screen->term);
+		temp_nc = (attr_t)t_no_color_video(_cursesi_screen->term);
 		if (temp_nc & 0x0001)
 			_cursesi_screen->nca |= __STANDOUT;
 		if (temp_nc & 0x0002)
@@ -195,21 +192,21 @@ start_color(void)
 	/* Set up initial 8 colours */
 #define	RGB_ON	680	/* Allow for bright colours */
 	if (COLORS >= COLOR_BLACK)
-		(void) init_color_value(COLOR_BLACK, 0, 0, 0);
+		(void)init_color_value(COLOR_BLACK, 0, 0, 0);
 	if (COLORS >= COLOR_RED)
-		(void) init_color_value(COLOR_RED, RGB_ON, 0, 0);
+		(void)init_color_value(COLOR_RED, RGB_ON, 0, 0);
 	if (COLORS >= COLOR_GREEN)
-		(void) init_color_value(COLOR_GREEN, 0, RGB_ON, 0);
+		(void)init_color_value(COLOR_GREEN, 0, RGB_ON, 0);
 	if (COLORS >= COLOR_YELLOW)
-		(void) init_color_value(COLOR_YELLOW, RGB_ON, RGB_ON, 0);
+		(void)init_color_value(COLOR_YELLOW, RGB_ON, RGB_ON, 0);
 	if (COLORS >= COLOR_BLUE)
-		(void) init_color_value(COLOR_BLUE, 0, 0, RGB_ON);
+		(void)init_color_value(COLOR_BLUE, 0, 0, RGB_ON);
 	if (COLORS >= COLOR_MAGENTA)
-		(void) init_color_value(COLOR_MAGENTA, RGB_ON, 0, RGB_ON);
+		(void)init_color_value(COLOR_MAGENTA, RGB_ON, 0, RGB_ON);
 	if (COLORS >= COLOR_CYAN)
-		(void) init_color_value(COLOR_CYAN, 0, RGB_ON, RGB_ON);
+		(void)init_color_value(COLOR_CYAN, 0, RGB_ON, RGB_ON);
 	if (COLORS >= COLOR_WHITE)
-		(void) init_color_value(COLOR_WHITE, RGB_ON, RGB_ON, RGB_ON);
+		(void)init_color_value(COLOR_WHITE, RGB_ON, RGB_ON, RGB_ON);
 
 	/* Initialise other colours */
 	for (i = 8; i < COLORS; i++) {
@@ -277,15 +274,15 @@ init_pair(short pair, short fore, short back)
 #endif
 
 	if (pair < 0 || pair >= COLOR_PAIRS)
-		return (ERR);
+		return ERR;
 
 	if (pair == 0) /* Ignore request for pair 0, it is default. */
 		return OK;
 
 	if (fore >= COLORS)
-		return (ERR);
+		return ERR;
 	if (back >= COLORS)
-		return (ERR);
+		return ERR;
 
 	/* Swap red/blue and yellow/cyan */
 	if (_cursesi_screen->color_type == COLOR_OTHER) {
@@ -334,7 +331,7 @@ init_pair(short pair, short fore, short back)
 
 	if (changed)
 		__change_pair(pair);
-	return (OK);
+	return OK;
 }
 
 /*
@@ -345,7 +342,7 @@ int
 pair_content(short pair, short *forep, short *backp)
 {
 	if (pair < 0 || pair > _cursesi_screen->COLOR_PAIRS)
-		return(ERR);
+		return ERR;
 
 	*forep = _cursesi_screen->colour_pairs[pair].fore;
 	*backp = _cursesi_screen->colour_pairs[pair].back;
@@ -381,7 +378,7 @@ pair_content(short pair, short *forep, short *backp)
 			break;
 		}
 	}
-	return(OK);
+	return OK;
 }
 
 /*
@@ -429,12 +426,12 @@ int
 color_content(short color, short *redp, short *greenp, short *bluep)
 {
 	if (color < 0 || color >= _cursesi_screen->COLORS)
-		return(ERR);
+		return ERR;
 
 	*redp = _cursesi_screen->colours[color].red;
 	*greenp = _cursesi_screen->colours[color].green;
 	*bluep = _cursesi_screen->colours[color].blue;
-	return(OK);
+	return OK;
 }
 
 /*
@@ -448,7 +445,7 @@ use_default_colors()
 	__CTRACE(__CTRACE_COLOR, "use_default_colors\n");
 #endif
 
-	return(assume_default_colors(-1, -1));
+	return (assume_default_colors(-1, -1));
 }
 
 /*
@@ -683,12 +680,12 @@ __change_pair(short pair)
 						if (!(lp->flags & __ISDIRTY))
 							lp->flags |= __ISDIRTY;
 						/*
-					 	* firstchp/lastchp are shared
-					 	* between parent window and
-					 	* sub-window.
-					 	*/
+						 * firstchp/lastchp are shared
+						 * between parent window and
+						 * sub-window.
+						 */
 						if (*lp->firstchp > x)
-						*lp->firstchp = x;
+							*lp->firstchp = x;
 						if (*lp->lastchp < x)
 							*lp->lastchp = x;
 					}

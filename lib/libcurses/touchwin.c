@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.29 2017/01/02 10:28:35 roy Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.30 2017/01/06 13:53:18 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.29 2017/01/02 10:28:35 roy Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.30 2017/01/06 13:53:18 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -67,7 +67,7 @@ is_linetouched(WINDOW *win, int line)
 	if (line > win->maxy)
 		return FALSE;
 
-	return ((win->alines[line]->flags & __ISDIRTY) != 0);
+	return (win->alines[line]->flags & __ISDIRTY) != 0;
 }
 
 /*
@@ -201,13 +201,14 @@ __touchwin(WINDOW *win)
 	maxy = win->maxy;
 	for (y = 0; y < maxy; y++)
 		__touchline(win, y, 0, (int) win->maxx - 1);
-	return (OK);
+	return OK;
 }
 
 int
 __touchline(WINDOW *win, int y, int sx, int ex)
 {
-	return (_cursesi_touchline_force(win, y, sx, ex, 0));
+
+	return _cursesi_touchline_force(win, y, sx, ex, 0);
 }
 
 /*
@@ -220,6 +221,7 @@ __touchline(WINDOW *win, int y, int sx, int ex)
 static int
 _cursesi_touchline_force(WINDOW *win, int y, int sx, int ex, int force)
 {
+
 #ifdef DEBUG
 	__CTRACE(__CTRACE_LINE, "__touchline: (%p, %d, %d, %d, %d)\n",
 	    win, y, sx, ex, force);
@@ -240,7 +242,7 @@ _cursesi_touchline_force(WINDOW *win, int y, int sx, int ex, int force)
 	__CTRACE(__CTRACE_LINE, "__touchline: first = %d, last = %d\n",
 	    *win->alines[y]->firstchp, *win->alines[y]->lastchp);
 #endif
-	return (OK);
+	return OK;
 }
 
 void

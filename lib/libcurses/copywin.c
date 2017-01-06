@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.16 2016/12/11 21:25:22 blymn Exp $	*/
+/*	$NetBSD: copywin.c,v 1.17 2017/01/06 13:53:18 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.16 2016/12/11 21:25:22 blymn Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.17 2017/01/06 13:53:18 roy Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -145,4 +145,3 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 	__touchwin(dstwin);
 	return OK;
 }
-
