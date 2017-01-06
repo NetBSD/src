@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.235 2016/12/22 16:29:05 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.236 2017/01/06 09:04:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235 2016/12/22 16:29:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.236 2017/01/06 09:04:06 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1481,12 +1481,12 @@ pmap_init_directmap(struct pmap *kpm)
 	extern phys_ram_seg_t mem_clusters[];
 	extern int mem_cluster_cnt;
 
-	paddr_t lastpa, dm_pd, dm_pdp, pdp;
+	paddr_t lastpa, L2page_pa, L3page_pa, pdp;
 	vaddr_t tmpva;
 	pt_entry_t *pte;
 	pd_entry_t *pde;
 	phys_ram_seg_t *mc;
-	long n_dm_pdp;
+	size_t nL3e;
 	int i;
 
 	const pd_entry_t pteflags = PG_V | PG_KW | pmap_pg_nx;
@@ -1506,18 +1506,18 @@ pmap_init_directmap(struct pmap *kpm)
 		panic("RAM limit reached: > 512GB not supported");
 	}
 
-	/* Allocate L3. */
-	dm_pdp = pmap_bootstrap_palloc(1);
-
-	/* Number of L3 entries. */
-	n_dm_pdp = (lastpa + NBPD_L3 - 1) >> L3_SHIFT;
-
-	/* In locore.S, we allocated a tmp va. Use it now. */
+	/* In locore.S, we allocated a tmp va. We will use it now. */
 	tmpva = (KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
 	pte = PTE_BASE + pl1_i(tmpva);
-	*pte = dm_pdp | pteflags;
+
+	/* Allocate L3, and zero it out. */
+	L3page_pa = pmap_bootstrap_palloc(1);
+	*pte = L3page_pa | pteflags;
 	pmap_update_pg(tmpva);
 	memset((void *)tmpva, 0, PAGE_SIZE);
+
+	/* Number of L3 entries. */
+	nL3e = (lastpa + NBPD_L3 - 1) >> L3_SHIFT;
 
 	/*
 	 * Map the direct map RW. Use super pages (1GB) or large pages (2MB) if
@@ -1525,8 +1525,8 @@ pmap_init_directmap(struct pmap *kpm)
 	 */
 	if (cpu_feature[2] & CPUID_P1GB) {
 		/* Super pages are supported. Just create L3. */
-		for (i = 0; i < n_dm_pdp; i++) {
-			pdp = (paddr_t)&(((pd_entry_t *)dm_pdp)[i]);
+		for (i = 0; i < nL3e; i++) {
+			pdp = (paddr_t)&(((pd_entry_t *)L3page_pa)[i]);
 			*pte = (pdp & PG_FRAME) | pteflags;
 			pmap_update_pg(tmpva);
 
@@ -1536,11 +1536,11 @@ pmap_init_directmap(struct pmap *kpm)
 		}
 	} else {
 		/* Allocate L2. */
-		dm_pd = pmap_bootstrap_palloc(n_dm_pdp);
+		L2page_pa = pmap_bootstrap_palloc(nL3e);
 
 		/* Zero out the L2 pages. */
-		for (i = 0; i < n_dm_pdp; i++) {
-			pdp = dm_pd + i * PAGE_SIZE;
+		for (i = 0; i < nL3e; i++) {
+			pdp = L2page_pa + i * PAGE_SIZE;
 			*pte = (pdp & PG_FRAME) | pteflags;
 			pmap_update_pg(tmpva);
 
@@ -1550,8 +1550,8 @@ pmap_init_directmap(struct pmap *kpm)
 		KASSERT(pmap_largepages != 0);
 
 		/* Large pages are supported. Just create L2. */
-		for (i = 0; i < NPDPG * n_dm_pdp; i++) {
-			pdp = (paddr_t)&(((pd_entry_t *)dm_pd)[i]);
+		for (i = 0; i < NPDPG * nL3e; i++) {
+			pdp = (paddr_t)&(((pd_entry_t *)L2page_pa)[i]);
 			*pte = (pdp & PG_FRAME) | pteflags;
 			pmap_update_pg(tmpva);
 
@@ -1561,17 +1561,17 @@ pmap_init_directmap(struct pmap *kpm)
 		}
 
 		/* Fill in the L3 entries, linked to L2. */
-		for (i = 0; i < n_dm_pdp; i++) {
-			pdp = (paddr_t)&(((pd_entry_t *)dm_pdp)[i]);
+		for (i = 0; i < nL3e; i++) {
+			pdp = (paddr_t)&(((pd_entry_t *)L3page_pa)[i]);
 			*pte = (pdp & PG_FRAME) | pteflags;
 			pmap_update_pg(tmpva);
 
 			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = (dm_pd + (i << PAGE_SHIFT)) | pteflags | PG_U;
+			*pde = (L2page_pa + (i << PAGE_SHIFT)) | pteflags | PG_U;
 		}
 	}
 
-	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dm_pdp | pteflags | PG_U;
+	kpm->pm_pdir[PDIR_SLOT_DIRECT] = L3page_pa | pteflags | PG_U;
 
 	*pte = 0;
 	pmap_update_pg(tmpva);
@@ -2011,9 +2011,9 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 		pmap->pm_ptphint[i - 2] = ptp;
 		pa = VM_PAGE_TO_PHYS(ptp);
 		pmap_pte_set(&pva[index], (pd_entry_t)
-		        (pmap_pa2pte(pa) | PG_u | PG_RW | PG_V));
+		    (pmap_pa2pte(pa) | PG_u | PG_RW | PG_V));
 #if defined(XEN) && defined(__x86_64__)
-		if(i == PTP_LEVELS) {
+		if (i == PTP_LEVELS) {
 			/*
 			 * Update the per-cpu PD on all cpus the current
 			 * pmap is active on
