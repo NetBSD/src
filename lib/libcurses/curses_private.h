@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.56 2017/01/05 20:31:37 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.57 2017/01/06 09:14:07 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -313,7 +313,7 @@ void     _cursesi_reset_wacs(SCREEN *);
 void     _cursesi_resetterm(SCREEN *);
 int      _cursesi_setterm(char *, SCREEN *);
 int	 __delay(void);
-u_int	 __hash_more(const void *, size_t, u_int);
+unsigned int	 __hash_more(const void *, size_t, unsigned int);
 #define	__hash(s, len)	__hash_more((s), (len), 0u)
 void	 __id_subwins(WINDOW *);
 void	 __init_getch(SCREEN *);
