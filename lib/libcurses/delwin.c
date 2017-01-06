@@ -1,4 +1,4 @@
-/*	$NetBSD: delwin.c,v 1.19 2016/10/23 21:20:56 christos Exp $	*/
+/*	$NetBSD: delwin.c,v 1.20 2017/01/06 13:53:18 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delwin.c,v 1.19 2016/10/23 21:20:56 christos Exp $");
+__RCSID("$NetBSD: delwin.c,v 1.20 2017/01/06 13:53:18 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -59,7 +59,7 @@ delwin(WINDOW *win)
 #endif
 
 	if (win == NULL)
-		return (OK);
+		return OK;
 
 	/*
 	 * Free any storage used by non-spacing characters in the window.
@@ -115,5 +115,5 @@ delwin(WINDOW *win)
 	if (win->fp)
 		fclose(win->fp);
 	free(win);
-	return (OK);
+	return OK;
 }
