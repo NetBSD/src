@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2017/01/06 17:13:22 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2017/01/06 17:26:41 christos Exp $
 
 WARNS?=	1
 
@@ -7,7 +7,7 @@ WARNS?=	1
 BINDIR?= /usr/bin
 
 IDIST=	${NETBSDSRCDIR}/external/bsd/flex/dist/src
-.if defined(HOSTPROGNAME)
+.if !empty(TOOL_SED:M*/*) && !exists(${TOOL_SED})
 VERSION = 3.x
 .else
 VERSION != ${TOOL_SED} -ne "s/PACKAGE_VERSION='\(.*\)'/\1/p" \
