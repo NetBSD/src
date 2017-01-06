@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.118 2017/01/05 23:15:43 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.119 2017/01/06 09:14:07 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -395,9 +395,9 @@ __END_DECLS
 #define	COLOR_WHITE	0x07
 
 #ifdef __cplusplus
-#define __UINT32_CAST(a)	static_cast<u_int32_t>(a)
+#define __UINT32_CAST(a)	static_cast<uint32_t>(a)
 #else
-#define __UINT32_CAST(a)	(u_int32_t)(a)
+#define __UINT32_CAST(a)	(uint32_t)(a)
 #endif
 #define	COLOR_PAIR(n)	(((__UINT32_CAST(n)) << 17) & A_COLOR)
 #define	PAIR_NUMBER(n)	(((__UINT32_CAST(n)) & A_COLOR) >> 17)

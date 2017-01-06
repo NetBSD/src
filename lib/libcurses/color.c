@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.39 2017/01/03 12:39:44 roy Exp $	*/
+/*	$NetBSD: color.c,v 1.40 2017/01/06 09:14:07 roy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.39 2017/01/03 12:39:44 roy Exp $");
+__RCSID("$NetBSD: color.c,v 1.40 2017/01/06 09:14:07 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -542,7 +542,7 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 	if ((curscr->wattr & __COLOR) == (attr & __COLOR))
 		return;
 
-	pair = PAIR_NUMBER((u_int32_t)attr);
+	pair = PAIR_NUMBER((uint32_t)attr);
 #ifdef DEBUG
 	__CTRACE(__CTRACE_COLOR, "__set_color: %d, %d, %d\n", pair,
 		 _cursesi_screen->colour_pairs[pair].fore,
