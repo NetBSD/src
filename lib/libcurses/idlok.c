@@ -1,4 +1,4 @@
-/*	$NetBSD: idlok.c,v 1.11 2003/08/07 16:44:22 agc Exp $	*/
+/*	$NetBSD: idlok.c,v 1.12 2017/01/06 13:53:18 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)idlok.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: idlok.c,v 1.11 2003/08/07 16:44:22 agc Exp $");
+__RCSID("$NetBSD: idlok.c,v 1.12 2017/01/06 13:53:18 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,5 +53,5 @@ idlok(WINDOW *win, bool bf)
 		win->flags |= __IDLINE;
 	else
 		win->flags &= ~__IDLINE;
-	return (OK);
+	return OK;
 }
