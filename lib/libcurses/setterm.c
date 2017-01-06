@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.58 2017/01/05 21:42:04 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.59 2017/01/06 13:53:18 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.58 2017/01/05 21:42:04 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.59 2017/01/06 13:53:18 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ use_env(bool value)
 int
 setterm(char *type)
 {
+
 	return _cursesi_setterm(type, _cursesi_screen);
 }
 
@@ -129,25 +130,25 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	/* POSIX 1003.2 requires that the environment override. */
 	if (__use_env) {
 		if (!screen->filtered && (p = getenv("LINES")) != NULL)
-			screen->LINES = (int) strtol(p, NULL, 0);
+			screen->LINES = (int)strtol(p, NULL, 0);
 		if ((p = getenv("COLUMNS")) != NULL)
-			screen->COLS = (int) strtol(p, NULL, 0);
+			screen->COLS = (int)strtol(p, NULL, 0);
 	}
 	if ((p = getenv("ESCDELAY")) != NULL)
-		screen->ESCDELAY = (int) strtol(p, NULL, 0);
+		screen->ESCDELAY = (int)strtol(p, NULL, 0);
 	else
 		screen->ESCDELAY = ESCDELAY_DEFAULT;
 	if ((p = getenv("TABSIZE")) != NULL)
-		screen->TABSIZE = (int) strtol(p, NULL, 0);
+		screen->TABSIZE = (int)strtol(p, NULL, 0);
 	else if (t_init_tabs(screen->term) >= 0)
-		screen->TABSIZE = (int) t_init_tabs(screen->term);
+		screen->TABSIZE = (int)t_init_tabs(screen->term);
 	else
 		screen->TABSIZE = TABSIZE_DEFAULT;
 	/*
 	 * Want cols > 4, otherwise things will fail.
 	 */
 	if (screen->COLS <= 4)
-		return (ERR);
+		return ERR;
 
 	LINES = screen->LINES;
 	COLS = screen->COLS;
@@ -269,7 +270,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 		}
 	}
 
-	return (unknown ? ERR : OK);
+	return unknown ? ERR : OK;
 }
 
 /*
