@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.76 2017/01/05 23:24:39 pgoyette Exp $	*/
+/*	$NetBSD: time.h,v 1.77 2017/01/06 03:33:19 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -185,7 +185,7 @@ timespec2bintime(const struct timespec *ts, struct bintime *bt)
 {
 
 	bt->sec = ts->tv_sec;
-	bt->frac = (uint64_t)ts->tv_nsec * (uint64_t)BINTIME_SCALE_NS;
+	bt->frac = (uint64_t)ts->tv_nsec * BINTIME_SCALE_NS;
 }
 
 static __inline void
@@ -202,7 +202,7 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 {
 
 	bt->sec = tv->tv_sec;
-	bt->frac = (uint64_t)tv->tv_usec * (uint64_t)BINTIME_SCALE_US;
+	bt->frac = (uint64_t)tv->tv_usec * BINTIME_SCALE_US;
 }
 
 static __inline struct bintime
@@ -211,7 +211,7 @@ ms2bintime(uint64_t ms)
 	struct bintime bt;
 
 	bt.sec = (time_t)(ms / 1000U);
-	bt.frac = (uint64_t)(ms % 1000U) * (uint64_t)BINTIME_SCALE_MS;
+	bt.frac = (uint64_t)(ms % 1000U) * BINTIME_SCALE_MS;
 
 	return bt;
 }
@@ -222,7 +222,7 @@ us2bintime(uint64_t us)
 	struct bintime bt;
 
 	bt.sec = (time_t)(us / 1000000U);
-	bt.frac = (uint64_t)(us % 1000000U) * (uint64_t)BINTIME_SCALE_US;
+	bt.frac = (uint64_t)(us % 1000000U) * BINTIME_SCALE_US;
 
 	return bt;
 }
@@ -233,7 +233,7 @@ ns2bintime(uint64_t ns)
 	struct bintime bt;
 
 	bt.sec = (time_t)(ns / 1000000000U);
-	bt.frac = (uint64_t)(ns % 1000000000U) * (uint64_t)BINTIME_SCALE_NS;
+	bt.frac = (uint64_t)(ns % 1000000000U) * BINTIME_SCALE_NS;
 
 	return bt;
 }
