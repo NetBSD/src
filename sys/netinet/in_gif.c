@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.86 2016/12/14 11:19:15 knakahara Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.87 2017/01/06 03:25:13 knakahara Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.86 2016/12/14 11:19:15 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.87 2017/01/06 03:25:13 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,10 +90,6 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	struct ip iphdr;	/* capsule IP header, host byte ordered */
 	int proto, error;
 	u_int8_t tos;
-	union {
-		struct sockaddr		dst;
-		struct sockaddr_in	dst4;
-	} u;
 
 	if (sin_src == NULL || sin_dst == NULL ||
 	    sin_src->sin_family != AF_INET ||
@@ -170,10 +166,8 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 		return ENOBUFS;
 	bcopy(&iphdr, mtod(m, struct ip *), sizeof(struct ip));
 
-	sockaddr_in_init(&u.dst4, &sin_dst->sin_addr, 0);
-
 	ro = percpu_getref(sc->gif_ro_percpu);
-	if ((rt = rtcache_lookup(ro, &u.dst)) == NULL) {
+	if ((rt = rtcache_lookup(ro, sc->gif_pdst)) == NULL) {
 		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;
