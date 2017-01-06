@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.461 2017/01/04 04:43:08 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.462 2017/01/06 08:05:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.461 2017/01/04 04:43:08 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.462 2017/01/06 08:05:26 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3709,11 +3709,11 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 		}
 		CSR_WRITE(sc, WMREG_TARC0, tarc0);
 
+		switch (sc->sc_type) {
 		/*
-		 * 8257[12] Errata No.52 and some others.
+		 * 8257[12] Errata No.52, 82573 Errata No.43 and some others.
 		 * Avoid RSS Hash Value bug.
 		 */
-		switch (sc->sc_type) {
 		case WM_T_82571:
 		case WM_T_82572:
 		case WM_T_82573:
@@ -3721,6 +3721,27 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 		case WM_T_ICH8:
 			reg = CSR_READ(sc, WMREG_RFCTL);
 			reg |= WMREG_RFCTL_NEWIPV6EXDIS |WMREG_RFCTL_IPV6EXDIS;
+			CSR_WRITE(sc, WMREG_RFCTL, reg);
+			break;
+		/*
+		 * 82575 Errata XXX, 82576 Errata 46, 82580 Errata 24,
+		 * I350 Errata 37, I210 Errata No. 31 and I211 Errata No. 11:
+		 * "Certain Malformed IPv6 Extension Headers are Not Processed
+		 * Correctly by the Device"
+		 *
+		 * I354(C2000) Errata AVR53:
+		 * "Malformed IPv6 Extension Headers May Result in LAN Device
+		 * Hang"
+		 */
+		case WM_T_82575:
+		case WM_T_82576:
+		case WM_T_82580:
+		case WM_T_I350:
+		case WM_T_I210:
+		case WM_T_I211:
+		case WM_T_I354:
+			reg = CSR_READ(sc, WMREG_RFCTL);
+			reg |= WMREG_RFCTL_IPV6EXDIS;
 			CSR_WRITE(sc, WMREG_RFCTL, reg);
 			break;
 		default:
@@ -4411,9 +4432,9 @@ wm_init_rss(struct wm_softc *sc)
 	else
 		mrqc = MRQC_ENABLE_RSS_MQ;
 
-	/* XXXX
-	 * The same as FreeBSD igb.
-	 * Why doesn't use MRQC_RSS_FIELD_IPV6_EX?
+	/*
+	 * MRQC_RSS_FIELD_IPV6_EX is not set because of an errata.
+	 * See IPV6EXDIS bit in wm_initialize_hardware_bits().
 	 */
 	mrqc |= (MRQC_RSS_FIELD_IPV4 | MRQC_RSS_FIELD_IPV4_TCP);
 	mrqc |= (MRQC_RSS_FIELD_IPV6 | MRQC_RSS_FIELD_IPV6_TCP);
