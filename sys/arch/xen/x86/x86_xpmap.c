@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.68 2016/12/16 19:52:22 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.69 2017/01/06 08:32:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.68 2016/12/16 19:52:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.69 2017/01/06 08:32:26 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -664,7 +664,7 @@ xen_locore(void)
 		count++;
 	}
 
-#ifndef __x86_64__
+#ifdef i386
 	/*
 	 * One more L2 page: we'll allocate several pages after kva_start
 	 * in pmap_bootstrap() before pmap_growkernel(), which have not been
@@ -832,21 +832,24 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	pdtpe[pl3_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_k | PG_V | PG_RW;
 #elif defined(PAE)
-	/* Our PAE-style level 2: 5 contigous pages (4 L2 + 1 shadow) */
+	/*
+	 * Our PAE-style level 2, 5 contiguous pages (4 L2 + 1 shadow).
+	 *                  +-----------------+----------------+---------+
+	 * Physical layout: | 3 * USERLAND L2 | L2 KERN SHADOW | L2 KERN |
+	 *                  +-----------------+----------------+---------+
+	 * However, we enter pdtpte[3] into L2 KERN, and not L2 KERN SHADOW.
+	 * This way, pde[L2_SLOT_KERN] always points to the shadow.
+	 */
 	pde = (pd_entry_t *)avail;
 	memset(pde, 0, PAGE_SIZE * 5);
 	avail += PAGE_SIZE * 5;
-	addr = ((u_long)pde) - KERNBASE;
 
 	/*
-	 * Enter L2 pages in L3. The real L2 kernel PD will be the last one
-	 * (so that pde[L2_SLOT_KERN] always points to the shadow).
+	 * Link L2 pages in L3, with a special case for L2 KERN. Xen doesn't
+	 * want RW permissions in L3 entries, it'll add them itself.
 	 */
+	addr = ((u_long)pde) - KERNBASE;
 	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
-		/*
-		 * Xen doesn't want RW mappings in L3 entries, it'll add it
-		 * itself.
-		 */
 		pdtpe[i] = xpmap_ptom_masked(addr) | PG_k | PG_V;
 	}
 	addr += PAGE_SIZE;
@@ -944,15 +947,11 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 	/* Install recursive page tables mapping */
 #ifdef PAE
-	/*
-	 * We need a shadow page for the kernel's L2 page.
-	 * The real L2 kernel PD will be the last one (so that
-	 * pde[L2_SLOT_KERN] always points to the shadow).
-	 */
+	/* Copy L2 KERN into L2 KERN SHADOW, and reference the latter in cpu0. */
 	memcpy(&pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN], PAGE_SIZE);
 	cpu_info_primary.ci_kpm_pdir = &pde[L2_SLOT_KERN + NPDPG];
 	cpu_info_primary.ci_kpm_pdirpa =
-	    (vaddr_t) cpu_info_primary.ci_kpm_pdir - KERNBASE;
+	    (vaddr_t)cpu_info_primary.ci_kpm_pdir - KERNBASE;
 
 	/*
 	 * We don't enter a recursive entry from the L3 PD. Instead, we enter
@@ -965,28 +964,16 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 		pde[PDIR_SLOT_PTE + i] = xpmap_ptom_masked(addr) | PG_k | PG_V |
 		    pg_nx;
 	}
-#if 0
-	addr += PAGE_SIZE; /* point to shadow L2 */
-	pde[PDIR_SLOT_PTE + 3] = xpmap_ptom_masked(addr) | PG_k | PG_V;
-#endif
-	/* Mark tables RO, and pin the kernel's shadow as L2 */
+
+	/* Mark tables RO, and pin L2 KERN SHADOW. */
 	addr = (u_long)pde - KERNBASE;
 	for (i = 0; i < 5; i++, addr += PAGE_SIZE) {
 		xen_bt_set_readonly(((vaddr_t)pde) + PAGE_SIZE * i);
-#if 0
-		if (i == 2 || i == 3)
-			continue;
-		xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
-#endif
 	}
 	if (final) {
 		addr = (u_long)pde - KERNBASE + 3 * PAGE_SIZE;
 		xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
 	}
-#if 0
-	addr = (u_long)pde - KERNBASE + 2 * PAGE_SIZE;
-	xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
-#endif
 #else /* PAE */
 
 	/* Recursive entry in pmap_kernel(). */
@@ -1000,7 +987,8 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 	/* Mark tables RO */
 	xen_bt_set_readonly((vaddr_t)pde);
-#endif
+#endif /* PAE */
+
 #if PTP_LEVELS > 2 || defined(PAE)
 	xen_bt_set_readonly((vaddr_t)pdtpe);
 #endif
