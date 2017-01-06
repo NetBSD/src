@@ -1,4 +1,4 @@
-/*	$NetBSD: immedok.c,v 1.1 2017/01/02 10:28:34 roy Exp $	*/
+/*	$NetBSD: immedok.c,v 1.2 2017/01/06 13:53:18 roy Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: immedok.c,v 1.1 2017/01/02 10:28:34 roy Exp $");
+__RCSID("$NetBSD: immedok.c,v 1.2 2017/01/06 13:53:18 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -48,5 +48,5 @@ immedok(WINDOW *win, bool bf)
 		win->flags |= __IMMEDOK;
 	else
 		win->flags &= ~__IMMEDOK;
-	return (OK);
+	return OK;
 }
