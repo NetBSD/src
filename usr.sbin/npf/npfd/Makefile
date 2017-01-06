@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2016/12/30 19:55:46 christos Exp $
+# $NetBSD: Makefile,v 1.4 2017/01/06 19:20:24 christos Exp $
 #
 # Public Domain
 #
@@ -6,7 +6,7 @@
 NOMAN=
 PROG=		npfd
 
-#DBG=-g
+DBG=-g
 SRCS=		npfd.c npfd_log.c
 CPPFLAGS+=	-I${.CURDIR}
 
