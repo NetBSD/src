@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.45 2016/12/31 22:47:01 roy Exp $	*/
+/*	$NetBSD: tty.c,v 1.46 2017/01/06 13:53:18 roy Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.45 2016/12/31 22:47:01 roy Exp $");
+__RCSID("$NetBSD: tty.c,v 1.46 2017/01/06 13:53:18 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -77,6 +77,7 @@ int __tcaction = TCSASOFT != 0;		/* Ignore hardware settings */
 int
 baudrate(void)
 {
+
 	if (_cursesi_screen->notty == TRUE)
 		return 0;
 
@@ -90,6 +91,7 @@ baudrate(void)
 int
 gettmode(void)
 {
+
 	if (_cursesi_gettmode(_cursesi_screen) == ERR)
 		return ERR;
 
@@ -278,7 +280,7 @@ halfdelay(int duration)
 	_cursesi_screen->half_delay = TRUE;
 	return OK;
 }
-	
+
 int
 __delay(void)
  {
@@ -500,13 +502,15 @@ nonl(void)
 void
 noqiflush(void)
 {
-	(void) intrflush(stdscr, FALSE);
+
+	(void)intrflush(stdscr, FALSE);
 }
 
 void
 qiflush(void)
 {
-	(void) intrflush(stdscr, TRUE);
+
+	(void)intrflush(stdscr, TRUE);
 }
 #endif	/* _CURSES_USE_MACROS */
 
@@ -539,7 +543,7 @@ void
 __startwin(SCREEN *screen)
 {
 
-	(void) fflush(screen->infd);
+	(void)fflush(screen->infd);
 
 	/*
 	 * Some C libraries default to a 1K buffer when talking to a tty.
@@ -555,7 +559,7 @@ __startwin(SCREEN *screen)
 		if ((screen->stdbuf = malloc(screen->len)) == NULL)
 			screen->len = 0;
 	}
-	(void) setvbuf(screen->outfd, screen->stdbuf, _IOFBF, screen->len);
+	(void)setvbuf(screen->outfd, screen->stdbuf, _IOFBF, screen->len);
 
 	ti_puts(screen->term, t_enter_ca_mode(screen->term), 0,
 		__cputchar_args, (void *) screen->outfd);
@@ -579,13 +583,15 @@ endwin(void)
 bool
 isendwin(void)
 {
+
 	return _cursesi_screen->endwin ? TRUE : FALSE;
 }
 
 int
 flushinp(void)
 {
-	(void) fpurge(_cursesi_screen->infd);
+
+	(void)fpurge(_cursesi_screen->infd);
 	return OK;
 }
 
@@ -598,19 +604,21 @@ flushinp(void)
 int
 savetty(void)
 {
+
 	if (_cursesi_screen->notty == TRUE)
 		return OK;
 	return tcgetattr(fileno(_cursesi_screen->infd),
-	    &_cursesi_screen->savedtty) ? ERR : OK;
+			 &_cursesi_screen->savedtty) ? ERR : OK;
 }
 
 int
 resetty(void)
 {
+
 	if (_cursesi_screen->notty == TRUE)
 		return OK;
 	return tcsetattr(fileno(_cursesi_screen->infd), TCSASOFT | TCSADRAIN,
-	    &_cursesi_screen->savedtty) ? ERR : OK;
+			 &_cursesi_screen->savedtty) ? ERR : OK;
 }
 
 /*
@@ -620,6 +628,7 @@ resetty(void)
 char
 erasechar(void)
 {
+
 	if (_cursesi_screen->notty == TRUE)
 		return 0;
 	return _cursesi_screen->baset.c_cc[VERASE];
@@ -632,6 +641,7 @@ erasechar(void)
 char
 killchar(void)
 {
+
 	if (_cursesi_screen->notty == TRUE)
 		return 0;
 	return _cursesi_screen->baset.c_cc[VKILL];
@@ -642,8 +652,9 @@ killchar(void)
  *     Return the wide character of the erase key.
  */
 int
-erasewchar( wchar_t *ch )
+erasewchar(wchar_t *ch)
 {
+
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
@@ -661,6 +672,7 @@ erasewchar( wchar_t *ch )
 int
 killwchar( wchar_t *ch )
 {
+
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
