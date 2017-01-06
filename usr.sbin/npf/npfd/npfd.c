@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd.c,v 1.4 2016/12/30 19:55:46 christos Exp $	*/
+/*	$NetBSD: npfd.c,v 1.5 2017/01/06 19:20:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd.c,v 1.4 2016/12/30 19:55:46 christos Exp $");
+__RCSID("$NetBSD: npfd.c,v 1.5 2017/01/06 19:20:24 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: npfd.c,v 1.4 2016/12/30 19:55:46 christos Exp $");
 
 #include "npfd.h"
 
-static volatile sig_atomic_t hup, stats, done;
+static volatile sig_atomic_t hup, stats, done, flush;
 
 static int
 npfd_getctl(void)
@@ -87,6 +87,9 @@ npfd_event_loop(npfd_log_t *log, int delay)
 		if (stats) {
 			stats = false;
 			npfd_log_stats(log);
+		}
+		if (flush) {
+			flush = false;
 			npfd_log_flush(log);
 		}
 		switch (poll(&pfd, 1, delay)) {
@@ -118,8 +121,10 @@ sighandler(int sig)
 		done = true;
 		break;
 	case SIGINFO:
-	case SIGQUIT:
 		stats = true;
+		break;
+	case SIGALRM:
+		flush = true;
 		break;
 	default:
 		syslog(LOG_ERR, "Unhandled signal %d", sig);
@@ -131,7 +136,8 @@ static __dead void
 usage(void)
 {
 	fprintf(stderr, "Usage: %s [-D] [-d <delay>] [-i <interface>]"
-	    " [-p <pidfile>] [-s <snaplen>] expression\n", getprogname());
+	    " [-f <filename>] [-p <pidfile>] [-s <snaplen>] expression\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -165,17 +171,21 @@ main(int argc, char **argv)
 	const char *iface = "npflog0";
 	int snaplen = 116;
 	char *pidname = NULL;
+	char *filename = NULL;
 
 	int fd = npfd_getctl();
 	(void)close(fd);
 
-	while ((ch = getopt(argc, argv, "Dd:i:p:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "Dd:f:i:p:s:")) != -1) {
 		switch (ch) {
 		case 'D':
 			daemon_off = true;
 			break;
 		case 'd':
 			delay = atoi(optarg) * 1000;
+			break;
+		case 'f':
+			filename = optarg;
 			break;
 		case 'i':
 			iface = optarg;
@@ -196,7 +206,7 @@ main(int argc, char **argv)
 
 	char *filter = copyargs(argc, argv);
 
-	npfd_log_t *log = npfd_log_create(iface, filter, snaplen);
+	npfd_log_t *log = npfd_log_create(filename, iface, filter, snaplen);
 
 	if (!daemon_off) {
 		if (daemon(0, 0) == -1)
