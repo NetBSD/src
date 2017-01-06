@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.438 2016/11/03 22:08:30 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.439 2017/01/06 22:42:58 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.438 2016/11/03 22:08:30 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.439 2017/01/06 22:42:58 kamil Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1318,6 +1318,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 		KSI_INIT_EMPTY(&ksi);
 		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_EXEC;
 		ksi.ksi_lid = l->l_lid;
 		kpsignal(p, &ksi, NULL);
 	}
