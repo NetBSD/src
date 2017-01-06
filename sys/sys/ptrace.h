@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.51 2016/12/15 20:04:36 martin Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.52 2017/01/06 22:53:17 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -34,6 +34,8 @@
 #ifndef	_SYS_PTRACE_H_
 #define	_SYS_PTRACE_H_
 
+#include <sys/siginfo.h>
+
 #define	PT_TRACE_ME		0	/* child declares it's being traced */
 #define	PT_READ_I		1	/* read word in child's I space */
 #define	PT_READ_D		2	/* read word in child's D space */
@@ -51,6 +53,8 @@
 #define	PT_SET_EVENT_MASK	16	/* set the event mask, defined below */
 #define	PT_GET_EVENT_MASK	17	/* get the event mask, defined below */
 #define	PT_GET_PROCESS_STATE	18	/* get process state, defined below */
+#define	PT_SET_SIGINFO		19	/* set signal state, defined below */
+#define	PT_GET_SIGINFO		20	/* get signal state, defined below */
 
 #define	PT_FIRSTMACH		32	/* for machine-specific requests */
 #include <machine/ptrace.h>		/* machine-specific requests, if any */
@@ -74,7 +78,9 @@
 /* 15 */    "PT_SYSCALLEMU", \
 /* 16 */    "PT_SET_EVENT_MASK", \
 /* 17 */    "PT_GET_EVENT_MASK", \
-/* 18 */    "PT_GET_PROCESS_STATE",
+/* 18 */    "PT_GET_PROCESS_STATE", \
+/* 19 */    "PT_SET_SIGINFO", \
+/* 20 */    "PT_GET_SIGINFO",
 
 /* PT_{G,S}EVENT_MASK */
 typedef struct ptrace_event {
@@ -130,6 +136,16 @@ typedef struct ptrace_watchpoint {
 	struct mdpw	pw_md;		/* MD fields */
 #endif
 } ptrace_watchpoint_t;
+
+/*
+ * Signal Information structure
+ */
+typedef struct ptrace_siginfo {
+	siginfo_t	psi_siginfo;	/* signal information structure */
+	lwpid_t		psi_lwpid;	/* destination LWP of the signal
+					 * value 0 means the whole process
+					 * (route signal to all LWPs) */
+} ptrace_siginfo_t;
 
 #ifdef _KERNEL
 
