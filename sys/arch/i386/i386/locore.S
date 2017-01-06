@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.143 2016/12/16 19:52:22 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.144 2017/01/06 08:36:56 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.143 2016/12/16 19:52:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.144 2017/01/06 08:36:56 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -633,7 +633,7 @@ no_NOX:
 	incl	%eax		/* one more PTP for VAs stolen by bootstrap */
 1:	movl	%eax,RELOC(nkptp)+1*4
 
-	/* tablesize = (PDP_SIZE + UPAGES + nkptp) << PGSHIFT; */
+	/* tablesize = (PDP_SIZE + UPAGES + nkptp[1]) << PGSHIFT; */
 	addl	$(PDP_SIZE+UPAGES),%eax
 #ifdef PAE
 	incl	%eax 		/* one more page for L3 */
@@ -643,7 +643,8 @@ no_NOX:
 #endif
 	movl	%eax,RELOC(tablesize)
 
-	/* Ensure that nkptp covers BOOTSTRAP TABLES. */
+	/* Ensure that nkptp[1] covers BOOTSTRAP TABLES, ie:
+	 * (esi + tablesize) >> L2_SHIFT + 1 < nkptp[1] */
 	addl	%esi,%eax
 	addl	$~L2_FRAME,%eax
 	shrl	$L2_SHIFT,%eax
