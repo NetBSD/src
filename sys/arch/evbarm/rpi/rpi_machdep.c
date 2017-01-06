@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.68 2016/02/02 13:55:51 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.69 2017/01/06 14:53:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.68 2016/02/02 13:55:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.69 2017/01/06 14:53:32 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -188,8 +188,7 @@ static struct __aligned(16) {
 	struct vcprop_tag_clockrate	vbt_emmcclockrate;
 	struct vcprop_tag_clockrate	vbt_armclockrate;
 	struct vcprop_tag end;
-} vb =
-{
+} vb = {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb),
 		.vpb_rcode = VCPROP_PROCESS_REQUEST,
@@ -276,8 +275,7 @@ static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_edidblock	vbt_edid;
 	struct vcprop_tag end;
-} vb_edid =
-{
+} vb_edid = {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_edid),
 		.vpb_rcode = VCPROP_PROCESS_REQUEST,
@@ -305,8 +303,7 @@ static struct __aligned(16) {
 	struct vcprop_tag_blankscreen	vbt_blank;
 	struct vcprop_tag_fbpitch	vbt_pitch;
 	struct vcprop_tag end;
-} vb_setfb =
-{
+} vb_setfb = {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_setfb),
 		.vpb_rcode = VCPROP_PROCESS_REQUEST,
