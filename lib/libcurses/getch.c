@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.61 2017/01/05 20:31:37 roy Exp $	*/
+/*	$NetBSD: getch.c,v 1.62 2017/01/06 13:53:18 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.61 2017/01/05 20:31:37 roy Exp $");
+__RCSID("$NetBSD: getch.c,v 1.62 2017/01/06 13:53:18 roy Exp $");
 #endif
 #endif					/* not lint */
 
@@ -267,10 +267,10 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 	    "Adding character %s of type %d, symbol 0x%x\n",
 	    unctrl(chr), key_type, symbol);
 #endif
-	if (current->mapping[(unsigned char) chr] < 0) {
-		if (current->mapping[(unsigned char) chr] == MAPPING_UNUSED) {
+	if (current->mapping[(unsigned char)chr] < 0) {
+		if (current->mapping[(unsigned char)chr] == MAPPING_UNUSED) {
 			  /* first time for this char */
-			current->mapping[(unsigned char) chr] =
+			current->mapping[(unsigned char)chr] =
 				current->count;	/* map new entry */
 			ki = current->count;
 
@@ -332,7 +332,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 #ifdef DEBUG
 		__CTRACE(__CTRACE_MISC, "Keymap already known\n");
 #endif
-		the_key = current->key[current->mapping[(unsigned char) chr]];
+		the_key = current->key[current->mapping[(unsigned char)chr]];
 	}
 
         return the_key;
@@ -392,7 +392,7 @@ add_key_sequence(SCREEN *screen, char *sequence, int key_type)
 #endif /* DEBUG */
 	current = screen->base_keymap;	/* always start with
 					 * base keymap. */
-	length = (int) strlen(sequence);
+	length = (int)strlen(sequence);
 
 	/*
 	 * OK - we really should never get a zero length string here, either
@@ -523,8 +523,8 @@ new_key(void)
 	key_entry_t *new_one;
 	int i;
 
-	if ((new_one = malloc(KEYMAP_ALLOC_CHUNK * sizeof(key_entry_t)))
-	    == NULL) {
+	new_one = malloc(KEYMAP_ALLOC_CHUNK * sizeof(key_entry_t));
+	if (new_one == NULL) {
 		perror("inkey: Cannot allocate new key entry chunk");
 		exit(2);
 	}
@@ -571,7 +571,7 @@ reread:
 			if (delay && (__notimeout() == ERR))
 				return ERR;
 
-			k = (wchar_t) c;
+			k = (wchar_t)c;
 #ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
 			    "inkey (state normal) got '%s'\n", unctrl(k));
@@ -929,7 +929,7 @@ wgetch(WINDOW *win)
 int
 ungetch(int c)
 {
-	return __unget((wint_t) c);
+	return __unget((wint_t)c);
 }
 
 /*
