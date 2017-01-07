@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.404 2017/01/05 20:37:06 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.405 2017/01/07 20:19:09 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3151,7 +3151,20 @@ Lslowtrap_reenter:
 	mov	%g2, %o2		! (pc)
 	sth	%o1, [%sp + CC64FSZ + STKB + TF_TT]! debug
 
-	wrpr	%g0, PSTATE_KERN, %pstate		! Get back to normal globals
+	! Get back to normal globals
+#ifdef SUN4V
+	sethi	%hi(cputyp), %g5
+	ld	[%g5 + %lo(cputyp)], %g5
+	cmp	%g5, CPU_SUN4V
+	bne,pt	%icc, 1f
+	 nop
+	NORMAL_GLOBALS_SUN4V
+	ba	2f
+	 nop
+1:	
+#endif	
+	NORMAL_GLOBALS_SUN4U
+2:
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + (1*8)]
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + (2*8)]
 	add	%sp, CC64FSZ + STKB, %o0		! (&tf)
