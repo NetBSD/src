@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd_log.c,v 1.6 2017/01/06 19:20:24 christos Exp $	*/
+/*	$NetBSD: npfd_log.c,v 1.7 2017/01/07 16:36:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd_log.c,v 1.6 2017/01/06 19:20:24 christos Exp $");
+__RCSID("$NetBSD: npfd_log.c,v 1.7 2017/01/07 16:36:54 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -260,6 +260,8 @@ npfd_log_create(const char *filename, const char *ifname, const char *filter,
 bool
 npfd_log_reopen(npfd_log_t *ctx, bool die)
 {
+	mode_t omask = umask(077);
+
 	if (ctx->dumper)
 		pcap_dump_close(ctx->dumper);
 	/*
@@ -277,6 +279,7 @@ npfd_log_reopen(npfd_log_t *ctx, bool die)
 		ctx->dumper = pcap_dump_open_append(ctx->pcap, ctx->path);
 		break;
 	}
+	(void)umask(omask);
 
 	if (ctx->dumper == NULL) {
 		if (die)
