@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.25 2017/01/07 16:19:28 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.26 2017/01/07 21:12:42 christos Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013, 2014, 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.25 2017/01/07 16:19:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.26 2017/01/07 21:12:42 christos Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -148,10 +148,12 @@ static struct {
 	{ MARVELL_TAG_SDRAM_CS3,
 	  MARVELL_ATTR_SDRAM_CS3,	MVSOC_UNITID_DDR },
 
+#ifdef MARVELL_ATTR_AXI_DDR /* XXX */
 	{ MARVELL_TAG_AXI_CS0,
 	  MARVELL_ATTR_AXI_DDR,		MVSOC_UNITID_DDR },
 	{ MARVELL_TAG_AXI_CS1,
 	  MARVELL_ATTR_AXI_DDR,		MVSOC_UNITID_DDR },
+#endif
 
 	{ MARVELL_TAG_DDR3_CS0,
 	  MARVELL_ATTR_SDRAM_CS0,	MVSOC_UNITID_DDR },
