@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.48 2017/01/07 01:32:35 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.49 2017/01/07 03:41:25 kamil Exp $
 .\"
 .\" This file is in the public domain.
 .Dd January 7, 2016
@@ -329,6 +329,57 @@ The
 .Fa data
 argument should be set to
 .Li sizeof(struct ptrace_state) .
+.It Dv PT_SET_SIGINFO
+This request can be used to specify signal information emitted to tracee.
+This signal information is specified in
+.Dq Li "struct ptrace_siginfo"
+defined as:
+.Bd -literal -offset indentq
+typedef struct ptrace_siginfo {
+	siginfo_t	psi_siginfo;
+	lwpid_t		psi_lwpid;
+} ptrace_siginfo_t;
+.Ed
+.Pp
+Where
+.Fa psi_siginfo
+is the set to signal information structure.
+The
+.Fa psi_lwpid
+field describes LWP address of the signal.
+Value
+.Dv 0
+means the whole process
+(route signal to all LWPs).
+.Pp
+A pointer to this structure is passed in
+.Fa addr .
+The
+.Fa data
+argument should be set to
+.Li sizeof(struct ptrace_siginfo) .
+.Pp
+In order to pass faked signal to the tracee,
+the siginal type must match the signal passed to process with
+.Dv PT_CONTINUE ,
+.Dv PT_DETACH
+or
+.Dv PT_STEP .
+.It Dv PT_GET_SIGINFO
+This request can be used to determine signal information that was received by
+a debugger
+.Po
+see
+.Xr siginfo 2
+.Pc .
+The information is read into the
+.Dq Li struct ptrace_siginfo
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument should be set to
+.Li sizeof(struct ptrace_siginfo) .
 .El
 .Pp
 Additionally, the following requests exist but are
