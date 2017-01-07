@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2016/08/20 11:24:48 christos Exp $
+#	$NetBSD: Makefile,v 1.56 2017/01/07 19:53:49 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -31,6 +31,9 @@ SUBDIR+= libc++
 .endif
 .if (${MKLLVM} != "no")
 SUBDIR+= llvm
+.endif
+.if (${MKNSD} != "no")
+SUBDIR+= nsd
 .endif
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
