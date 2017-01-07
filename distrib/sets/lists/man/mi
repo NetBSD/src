@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1544 2017/01/07 20:20:58 christos Exp $
+# $NetBSD: mi,v 1.1545 2017/01/07 20:49:23 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2158,6 +2158,7 @@
 ./usr/share/man/cat5/nisplus_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/nologin.0			man-sysutil-catman	.cat
 ./usr/share/man/cat5/npf.conf.0			man-npf-catman		.cat,npf
+./usr/share/man/cat5/nsd.conf.0			man-nsd-catman		.cat,nsd
 ./usr/share/man/cat5/nsswitch.conf.0		man-net-catman		.cat
 ./usr/share/man/cat5/ntp.conf.0			man-ntp-catman		.cat
 ./usr/share/man/cat5/ntp.keys.0			man-ntp-catman		.cat
@@ -5173,6 +5174,7 @@
 ./usr/share/man/html5/nisplus_table.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/nologin.html		man-sysutil-htmlman	html
 ./usr/share/man/html5/npf.conf.html		man-npf-htmlman		html,npf
+./usr/share/man/html5/nsd.conf.html		man-nsd-htmlman		html,nsd
 ./usr/share/man/html5/nsswitch.conf.html	man-net-htmlman		html
 ./usr/share/man/html5/ntp.conf.html		man-ntp-htmlman		html
 ./usr/share/man/html5/ntp.keys.html		man-ntp-htmlman		html
@@ -8136,6 +8138,7 @@
 ./usr/share/man/man5/nisplus_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/nologin.5			man-sysutil-man		.man
 ./usr/share/man/man5/npf.conf.5			man-npf-man		.man,npf
+./usr/share/man/man5/nsd.conf.5			man-nsd-man		.man,nsd
 ./usr/share/man/man5/nsswitch.conf.5		man-net-man		.man
 ./usr/share/man/man5/ntp.conf.5			man-ntp-man		.man
 ./usr/share/man/man5/ntp.keys.5			man-ntp-man		.man
