@@ -119,7 +119,7 @@
 #if !defined(sun)
 
 #include <sys/ctype.h>
-#include <sys/limits.h>
+#include <sys/syslimits.h>
 //#include <sys/kdb.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
