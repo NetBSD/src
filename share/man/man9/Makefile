@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.400 2017/01/02 10:33:28 hannken Exp $
+#       $NetBSD: Makefile,v 1.401 2017/01/07 04:44:12 ozaki-r Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -645,6 +645,40 @@ MLINKS+=pfil.9 pfil_hook_get.9 \
 	pfil.9 pfil_head_unregister.9 \
 	pfil.9 pfil_head_get.9 \
 	pfil.9 pfil_run_hooks.9
+MLINKS+=pmap.9 pmap_init.9 \
+	pmap.9 pmap_virtual_space.9 \
+	pmap.9 pmap_steal_memory.9 \
+	pmap.9 pmap_kernel.9 \
+	pmap.9 pmap_create.9 \
+	pmap.9 pmap_destroy.9 \
+	pmap.9 pmap_reference.9 \
+	pmap.9 pmap_fork.9 \
+	pmap.9 pmap_resident_count.9 \
+	pmap.9 pmap_wired_count.9 \
+	pmap.9 pmap_growkernel.9 \
+	pmap.9 pmap_enter.9 \
+	pmap.9 pmap_remove.9 \
+	pmap.9 pmap_remove_all.9 \
+	pmap.9 pmap_protect.9 \
+	pmap.9 pmap_unwire.9 \
+	pmap.9 pmap_extract.9 \
+	pmap.9 pmap_kenter_pa.9 \
+	pmap.9 pmap_kremove.9 \
+	pmap.9 pmap_copy.9 \
+	pmap.9 pmap_update.9 \
+	pmap.9 pmap_activate.9 \
+	pmap.9 pmap_deactivate.9 \
+	pmap.9 pmap_zero_page.9 \
+	pmap.9 pmap_copy_page.9 \
+	pmap.9 pmap_page_protect.9 \
+	pmap.9 pmap_clear_modify.9 \
+	pmap.9 pmap_clear_reference.9 \
+	pmap.9 pmap_is_modified.9 \
+	pmap.9 pmap_is_referenced.9 \
+	pmap.9 pmap_phys_address.9 \
+	pmap.9 PMAP_MAP_POOLPAGE.9 \
+	pmap.9 PMAP_UNMAP_POOLPAGE.9 \
+	pmap.9 PMAP_PREFER.9
 MLINKS+=pmc.9 pmc_get_num_counters.9 \
 	pmc.9 pmc_get_counter_type.9 \
 	pmc.9 pmc_save_context.9 \
