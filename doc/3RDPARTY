@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1390 2017/01/03 15:12:25 abhinav Exp $
+#	$NetBSD: 3RDPARTY,v 1.1391 2017/01/07 20:21:57 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -141,6 +141,20 @@ Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
 Location:	external/bsd/unbound/dist
+Notes:
+Use cleantags to import
+run configure and update config files in include
+
+Package:	nsd 
+Version:	4.1.14
+Current Vers:	4.1.14
+Maintainer:	Christos Zoulas
+Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
+Home Page:	https://www.nlnetlabs.nl/projects/nsd/
+Mailing List:	https://open.nlnetlabs.nl/mailman/listinfo/nsd-users/	
+Responsible:	christos
+License:	BSD-like
+Location:	external/bsd/nsd/dist
 Notes:
 Use cleantags to import
 run configure and update config files in include
