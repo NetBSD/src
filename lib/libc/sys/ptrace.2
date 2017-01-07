@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.46 2016/12/29 22:17:51 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.47 2017/01/07 01:29:18 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd November 1, 2016
+.Dd January 7, 2016
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -309,7 +309,7 @@ pointed to by
 The
 .Fa data
 argument should be set to
-.Li sizeof(struct ptrace_event) .
+.Li sizeof(struct ptrace_state) .
 .It Dv PT_GET_PROCESS_STATE
 This request reads the state information associated with the event
 that stopped the traced process.
@@ -322,6 +322,13 @@ typedef struct ptrace_state {
 	pid_t	pe_other_pid;
 } ptrace_state_t;
 .Ed
+.Pp
+A pointer to this structure is passed in
+.Fa addr .
+The
+.Fa data
+argument should be set to
+.Li sizeof(struct ptrace_event) .
 .El
 .Pp
 Additionally, the following requests exist but are
