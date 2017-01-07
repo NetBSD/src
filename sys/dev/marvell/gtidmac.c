@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.11 2014/03/15 13:33:48 kiyohara Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.12 2017/01/07 14:36:51 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008, 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.11 2014/03/15 13:33:48 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.12 2017/01/07 14:36:51 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -925,13 +925,6 @@ gtidmac_dmmap_unload(struct gtidmac_softc *sc, bus_dmamap_t dmamap, int read)
 	bus_dmamap_unload(sc->sc_dmat, dmamap);
 }
 
-
-void *
-gtidmac_tag_get(void)
-{
-
-	return gtidmac_softc;
-}
 
 /*
  * IDMAC functions
