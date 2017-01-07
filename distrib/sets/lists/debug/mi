@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.190 2017/01/07 17:29:24 christos Exp $
+# $NetBSD: mi,v 1.191 2017/01/07 20:40:08 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1151,6 +1151,10 @@
 ./usr/libdata/debug/usr/sbin/npfctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/npfd.debug		comp-npf-debug		npf,debug
 ./usr/libdata/debug/usr/sbin/npftest.debug	comp-npf-debug		npf,rump,debug,pic
+./usr/libdata/debug/usr/sbin/nsd.debug		comp-nsd-debug		nsd
+./usr/libdata/debug/usr/sbin/nsd-checkconf.debug	comp-nsd-debug	nsd
+./usr/libdata/debug/usr/sbin/nsd-checkzone.debug	comp-nsd-debug	nsd
+./usr/libdata/debug/usr/sbin/nsd-control.debug		comp-nsd-debug	nsd
 ./usr/libdata/debug/usr/sbin/nsec3hash.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/ntp-keygen.debug	comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/ntpd.debug		comp-ntp-debug		debug
