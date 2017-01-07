@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.11 2015/05/20 02:59:57 hsuenaga Exp $ */
+/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.12 2017/01/07 15:22:11 kiyohara Exp $ */
 
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MV_FMC0_SMP		(1 << 1) /* SMP/nAMP enable */
 #define MV_FMC0_PARITY		(1 << 2) /* Enable L1 Cache Parity */
-#define MV_FMC0_LFDIS		(1 << 7) /* Disable DC Speculative linefill*/
+#define MV_FMC0_LFDIS		(1 << 7) /* Disable DC Speculative linefill */
 #define MV_FMC0_FW		(1 << 8) /* Cache & TLB maintenance broadcast */
 
 #define MPIDR_CPUID_MASK	(0x3 << 0) /* CPUID */
