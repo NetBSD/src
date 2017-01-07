@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: flex2netbsd,v 1.4 2016/01/09 17:38:56 christos Exp $
+#	$NetBSD: flex2netbsd,v 1.5 2017/01/07 15:45:14 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,6 +42,11 @@
 #	check the config file and copy it to /usr/src/external/bsd/flex/include
 #	check the manual page against our copy if there are new options and
 #	update
+#	build the initparse.c and initscan.c without line numbers in src/dist
+#	and commit them:
+#       - nbyacc -l -d -o initparse.c parse.y
+#	- nblex -L -t -p scan.l > initscan.c
+
 
 if [ $# -ne 1 ]; then echo "flex2netbsd src"; exit 1; fi
 
