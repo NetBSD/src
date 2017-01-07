@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.155 2016/12/27 17:13:45 maya Exp $
+#	$NetBSD: special,v 1.156 2017/01/07 22:37:22 christos Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -251,6 +251,8 @@
 ./etc/rc.d/nfsd			type=file mode=0555
 ./etc/rc.d/nfslocking		type=file mode=0555
 ./etc/rc.d/npf			type=file mode=0555
+./etc/rc.d/npfd			type=file mode=0555
+./etc/rc.d/nsd			type=file mode=0555
 ./etc/rc.d/ntpd			type=file mode=0555
 ./etc/rc.d/ntpdate		type=file mode=0555
 ./etc/rc.d/perusertmp		type=file mode=0555
