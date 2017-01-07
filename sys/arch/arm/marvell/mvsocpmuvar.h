@@ -1,6 +1,6 @@
-/*	$NetBSD: marvellreg.h,v 1.5 2017/01/07 16:19:29 kiyohara Exp $  */
+/*	$NetBSD: mvsocpmuvar.h,v 1.1 2017/01/07 16:19:28 kiyohara Exp $	*/
 /*
- * Copyright (c) 2007 KIYOHARA Takashi
+ * Copyright (c) 2016 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,23 +24,25 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _EVBARM_MARVELLREG_H_
-#define _EVBARM_MARVELLREG_H_
 
-#include "opt_mvsoc.h"
+#include <dev/sysmon/sysmonvar.h>
 
-/*
- * Logical mapping for onboard/integrated peripherals
- * that are used while bootstrapping.
- */
-#define MARVELL_PEXMEM_PBASE			0xe0000000
-#define MARVELL_PEXMEM_SIZE			0x01000000
-#if defined(MVSOC_INTERREGS_PBASE)
-#define MARVELL_INTERREGS_PBASE			MVSOC_INTERREGS_PBASE
-#else
-#define MARVELL_INTERREGS_PBASE			0xf1000000
-#endif
-#define MARVELL_PEXIO_PBASE			0xf2000000
-#define MARVELL_PEXIO_SIZE			0x00100000
+struct mvsocpmu_softc {
+	device_t sc_dev;
 
-#endif /* _EVBARM_MARVELLREG_H_ */
+	bus_space_tag_t sc_iot;
+
+	/* Thermal Manager stuff */
+	bus_space_handle_t sc_tmh;
+#define MVSOC_PMU_TM_SIZE	(sizeof(uint32_t) * 3)
+	int (*sc_uc2val)(int);
+	int (*sc_val2uc)(int);
+
+	struct sysmon_envsys *sc_sme;
+	envsys_data_t sc_sensor;
+	sysmon_envsys_lim_t sc_deflims;
+	uint32_t sc_defprops;
+};
+
+int mvsocpmu_match(device_t, struct cfdata *, void *);
+void mvsocpmu_attach(device_t, device_t, void *);
