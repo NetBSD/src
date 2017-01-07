@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.26.2.1 2016/11/04 14:49:20 pgoyette Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.26.2.2 2017/01/07 08:56:50 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.26.2.1 2016/11/04 14:49:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.26.2.2 2017/01/07 08:56:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -275,7 +275,7 @@ mpls_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 	err = mpls_send_frame(m, rt1->rt_ifp, rt);
-	rtfree(rt1);
+	rt_unref(rt1);
 	return err;
 }
 
@@ -452,7 +452,7 @@ done:
 	if (error != 0 && m != NULL)
 		m_freem(m);
 	if (rt != NULL)
-		rtfree(rt);
+		rt_unref(rt);
 
 	return error;
 }

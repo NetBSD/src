@@ -5,7 +5,7 @@
  * Copied from nacl-20110221/crypto_hashblocks/sha512/ref/blocks.c
  */
 #include "includes.h"
-__RCSID("$NetBSD: blocks.c,v 1.3 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: blocks.c,v 1.3.4.1 2017/01/07 08:53:41 pgoyette Exp $");
 
 #include "crypto_api.h"
 

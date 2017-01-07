@@ -1,4 +1,4 @@
-/*	$NetBSD: insertln.c,v 1.13 2003/08/07 16:44:22 agc Exp $	*/
+/*	$NetBSD: insertln.c,v 1.13.80.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)insertln.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insertln.c,v 1.13 2003/08/07 16:44:22 agc Exp $");
+__RCSID("$NetBSD: insertln.c,v 1.13.80.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -50,7 +50,8 @@ __RCSID("$NetBSD: insertln.c,v 1.13 2003/08/07 16:44:22 agc Exp $");
 int
 insertln(void)
 {
-	return(winsdelln(stdscr, 1));
+
+	return winsdelln(stdscr, 1);
 }
 
 #endif
@@ -62,5 +63,6 @@ insertln(void)
 int
 winsertln(WINDOW *win)
 {
-	return(winsdelln(win, 1));
+
+	return winsdelln(win, 1);
 }

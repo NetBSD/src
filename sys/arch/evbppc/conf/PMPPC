@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.36 2016/03/19 23:21:02 gdt Exp $
+#	$NetBSD: PMPPC,v 1.36.2.1 2017/01/07 08:56:17 pgoyette Exp $
 #
 #	PMPPC
 #
@@ -431,6 +431,8 @@ radio*	at radiodev?
 
 # Audio support
 audio*	at audiobus?
+
+spkr*	at audio?		# PC speaker (synthesized)
 
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device

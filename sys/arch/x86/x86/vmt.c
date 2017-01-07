@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.13.2.1 2016/08/06 00:19:06 pgoyette Exp $ */
+/* $NetBSD: vmt.c,v 1.13.2.2 2017/01/07 08:56:28 pgoyette Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -825,9 +825,10 @@ vmt_tclo_tick(void *xarg)
 
 				guest_ip = satosin(iface_addr->ifa_addr);
 				ifa_acquire(iface_addr, &psref);
-				break;
+				goto got;
 			}
 		}
+	got:
 		pserialize_read_exit(s);
 
 		if (guest_ip != NULL) {

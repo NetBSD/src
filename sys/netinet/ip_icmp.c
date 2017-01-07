@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.150.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.150.2.3 2017/01/07 08:56:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.150.2.2 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.150.2.3 2017/01/07 08:56:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -652,7 +652,7 @@ reflect:
 			}
 		}
 		if (rt != NULL)
-			rtfree(rt);
+			rt_unref(rt);
 
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
 #if defined(IPSEC)
@@ -1148,16 +1148,19 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 		error = rtrequest(RTM_ADD, dst, rt->rt_gateway, NULL,
 		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
 		if (error) {
-			rtfree(rt);
+			rt_unref(rt);
 			return;
 		}
 		nrt->rt_rmx = rt->rt_rmx;
-		rtfree(rt);
+		rt_unref(rt);
 		rt = nrt;
 	}
+
+	if (ip_mtudisc_timeout_q == NULL)
+		ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q);
 	if (error) {
-		rtfree(rt);
+		rt_unref(rt);
 		return;
 	}
 
@@ -1205,8 +1208,8 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 		}
 	}
 
-	if (rt)
-		rtfree(rt);
+	if (rt != NULL)
+		rt_unref(rt);
 
 	/*
 	 * Notify protocols that the MTU for this destination

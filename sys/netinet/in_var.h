@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.78.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: in_var.h,v 1.78.2.3 2017/01/07 08:56:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,8 +145,6 @@ struct	in_aliasreq {
  */
 #define	IA_SIN(ia) (&(((struct in_ifaddr *)(ia))->ia_addr))
 
-#define iatoifa(ia)	(struct ifaddr *)(ia)
-
 #ifdef _KERNEL
 
 /* Note: 61, 127, 251, 509, 1021, 2039 are good. */
@@ -169,6 +167,7 @@ extern	u_long in_ifaddrhash;			/* size of hash table - 1 */
 extern  struct in_ifaddrhashhead *in_ifaddrhashtbl;	/* Hash table head */
 extern  struct in_ifaddrhead in_ifaddrhead;		/* List head (in ip_input) */
 
+extern pserialize_t in_ifaddrhash_psz;
 extern struct pslist_head *in_ifaddrhashtbl_pslist;
 extern u_long in_ifaddrhash_pslist;
 extern struct pslist_head in_ifaddrhead_pslist;
@@ -416,6 +415,8 @@ const char *in_fmtaddr(struct in_addr);
 int	in_control(struct socket *, u_long, void *, struct ifnet *);
 void	in_purgeaddr(struct ifaddr *);
 void	in_purgeif(struct ifnet *);
+void	in_addrhash_insert(struct in_ifaddr *);
+void	in_addrhash_remove(struct in_ifaddr *);
 int	ipflow_fastforward(struct mbuf *);
 
 struct ipid_state;

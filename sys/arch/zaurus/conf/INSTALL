@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.27 2016/02/16 05:14:31 nonaka Exp $
+# $NetBSD: INSTALL,v 1.27.2.1 2017/01/07 08:56:29 pgoyette Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -76,6 +76,7 @@ no wsmouse* at ztp?
 
 no zaudio0 at iic?
 no audio* at zaudio?
+no spkr* at audio?
 
 no ums* at uhidev?
 no wsmouse* at ums?

@@ -43,11 +43,6 @@
 # and 7-bit scanners when using uncompressed tables (-f or -F options).
 # For flex to always generate 8-bit scanners, add "-DDEFAULT_CSIZE=256"
 # to DEFS.
-#
-# For Vax/VMS, add "-DVMS" to DEFS.
-#
-# For MS-DOS, add "-DMS_DOS" to DEFS.  See the directory MISC/MSDOS for
-# additional info.
 
 VPATH = @srcdir@
 am__is_gnu_make = { \
@@ -236,11 +231,10 @@ am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(top_srcdir)/build-aux/install-sh \
 	$(top_srcdir)/build-aux/ltmain.sh \
 	$(top_srcdir)/build-aux/missing ABOUT-NLS AUTHORS COPYING \
-	ChangeLog INSTALL NEWS README THANKS TODO build-aux/compile \
-	build-aux/config.guess build-aux/config.rpath \
-	build-aux/config.sub build-aux/install-sh build-aux/ltmain.sh \
-	build-aux/mdate-sh build-aux/missing build-aux/texinfo.tex \
-	build-aux/ylwrap
+	ChangeLog NEWS THANKS build-aux/compile build-aux/config.guess \
+	build-aux/config.rpath build-aux/config.sub build-aux/depcomp \
+	build-aux/install-sh build-aux/ltmain.sh build-aux/mdate-sh \
+	build-aux/missing build-aux/texinfo.tex build-aux/ylwrap
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -276,9 +270,9 @@ am__relativize = \
     dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
   done; \
   reldir="$$dir2"
-DIST_ARCHIVES = $(distdir).tar.gz $(distdir).tar.bz2 $(distdir).tar.xz
+DIST_ARCHIVES = $(distdir).tar.gz $(distdir).tar.lz
 GZIP_ENV = --best
-DIST_TARGETS = dist-xz dist-bzip2 dist-gzip
+DIST_TARGETS = dist-lzip dist-gzip
 distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
@@ -371,8 +365,10 @@ SET_MAKE = @SET_MAKE@
 SHARED_VERSION_INFO = @SHARED_VERSION_INFO@
 SHELL = @SHELL@
 STRIP = @STRIP@
+TEXI2DVI = @TEXI2DVI@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
+WARNINGFLAGS = @WARNINGFLAGS@
 XGETTEXT = @XGETTEXT@
 XGETTEXT_015 = @XGETTEXT_015@
 XGETTEXT_EXTRA_OPTIONS = @XGETTEXT_EXTRA_OPTIONS@
@@ -423,6 +419,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -438,7 +435,7 @@ dist_doc_DATA = \
 	COPYING \
 	NEWS \
 	ONEWS \
-	README
+	README.md
 
 EXTRA_DIST = \
 	.indent.pro \
@@ -462,15 +459,15 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
-	      echo ' cd $(srcdir) && $(AUTOMAKE) --gnu'; \
-	      $(am__cd) $(srcdir) && $(AUTOMAKE) --gnu \
+	      echo ' cd $(srcdir) && $(AUTOMAKE) --foreign'; \
+	      $(am__cd) $(srcdir) && $(AUTOMAKE) --foreign \
 		&& exit 0; \
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu Makefile
+	  $(AUTOMAKE) --foreign Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -699,13 +696,14 @@ distdir: $(DISTFILES)
 dist-gzip: distdir
 	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir).tar.gz
 	$(am__post_remove_distdir)
+
 dist-bzip2: distdir
 	tardir=$(distdir) && $(am__tar) | BZIP2=$${BZIP2--9} bzip2 -c >$(distdir).tar.bz2
 	$(am__post_remove_distdir)
-
 dist-lzip: distdir
 	tardir=$(distdir) && $(am__tar) | lzip -c $${LZIP_OPT--9} >$(distdir).tar.lz
 	$(am__post_remove_distdir)
+
 dist-xz: distdir
 	tardir=$(distdir) && $(am__tar) | XZ_OPT=$${XZ_OPT--e} xz -c >$(distdir).tar.xz
 	$(am__post_remove_distdir)

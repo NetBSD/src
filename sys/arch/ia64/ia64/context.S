@@ -1,4 +1,4 @@
-/*	$NetBSD: context.S,v 1.5.16.1 2016/08/06 00:19:04 pgoyette Exp $	*/
+/*	$NetBSD: context.S,v 1.5.16.2 2017/01/07 08:56:19 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Marcel Moolenaar
@@ -821,7 +821,7 @@ ENTRY(cpu_switchto, 3)
 	 * Save old context, unless the LWP is exiting.
 	 */
 	cmp.eq		p6,p0=r0,in0		// p6 = (in0 == 0)
-	add		r14=PC_CURLWP,r13	// r2 = &ci->ci_curlwp
+	add		r14=PC_CURLWP,r13	// r14 = &ci->ci_curlwp
 	;;
 }
 {	.mii
@@ -840,7 +840,7 @@ ENTRY(cpu_switchto, 3)
 	nop		0
 	/*
 	 * Switch to new context, if p6 == true.
-	 * We assum to return to restorectx_return_here for swapped context.
+	 * We assume to return to restorectx_return_here for swapped context.
 	 */
 (p6)	ld8		out0=[r3]		// out0 = pcb of &newlwp
 (p6)	br.call.sptk.many rp=restorectx		// if (p6) restorectx(out0)
@@ -855,7 +855,25 @@ ENTRY(cpu_switchto, 3)
 	br.call.sptk.many rp=swapctx
 	;;
 }
-
+	/*
+	 * XXX seems to be a bug here...
+	 *
+	 * swapctx() and restorectx() (which is called by swapctx())
+	 * both adjust the bspstore (and hence bsp) registers.  When
+	 * returning to "restorectx_return_here:" the bspstore can
+	 * be greater than bsp, a state known as an "Incomplete Register Frame".
+	 *
+	 * That is not necessarily fatal in itself, but apparently the RSE
+	 * engine sets bsp=bspstore to adjust, which re-syncs the stacked
+	 * registers (r32-r127).  This clobbers our local registers below
+	 * (loc0 and loc1) on the br return from swapctx(), and you get all
+	 * kind of mysterious exceptions depeding on what gets restored from
+	 * the backing store.
+	 *
+	 * Not sure of a proper fix is yet or how cpu_switchto should/can
+	 * be interacting with restorectx()/swapctx()
+	 * 
+	 */
 restorectx_return_here:
 {	.mib
 	mov		r8=r9			// r8(ret0) = oldlwp

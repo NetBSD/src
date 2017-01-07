@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6_lifetime.sh,v 1.1.2.1 2016/11/04 14:49:24 pgoyette Exp $
+#	$NetBSD: t_ipv6_lifetime.sh,v 1.1.2.2 2017/01/07 08:56:56 pgoyette Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,13 +25,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-INET6SERVER="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet"
-INET6SERVER="$INET6SERVER -lrumpnet_netinet6 -lrumpnet_shmif"
-
 SOCK=unix://sock
 BUS=./bus
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 deprecated="[Dd][Ee][Pp][Rr][Ee][Cc][Aa][Tt][Ee][Dd]"
 
@@ -49,11 +46,11 @@ basic_body()
 	local bonus=2
 	local ip="fc00::1"
 
-	atf_check -s exit:0 ${INET6SERVER} $SOCK
+	rump_server_start $SOCK netinet6
+	rump_server_add_iface $SOCK shmif0 $BUS
+
 	export RUMP_SERVER=$SOCK
 
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr $BUS
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 
 	# A normal IP address doesn't contain preferred/valid lifetime
@@ -115,19 +112,7 @@ basic_body()
 	# Shouldn't remain anymore
 	atf_check -s exit:0 -o not-match:"$ip" rump.ifconfig -L shmif0
 
-	return 0
-}
-
-cleanup()
-{
-	env RUMP_SERVER=$SOCK rump.halt
-}
-
-dump()
-{
-	env RUMP_SERVER=$SOCK rump.ifconfig
-	env RUMP_SERVER=$SOCK rump.netstat -nr
-	shmif_dumpbus -p - $BUS 2>/dev/null| tcpdump -n -e -r -
+	rump_server_destroy_ifaces
 }
 
 basic_cleanup()

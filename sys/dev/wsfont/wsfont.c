@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.59 2015/05/09 16:40:37 mlelstv Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.59.2.1 2017/01/07 08:56:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.59 2015/05/09 16:40:37 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.59.2.1 2017/01/07 08:56:43 pgoyette Exp $");
 
 #include "opt_wsfont.h"
 
@@ -141,6 +141,10 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.59 2015/05/09 16:40:37 mlelstv Exp $");
 #include <dev/wsfont/Droid_Sans_Mono_19x36.h>
 #endif
 
+#ifdef FONT_GO_MONO12x23
+#include <dev/wsfont/Go_Mono_12x23.h>
+#endif
+
 /* Make sure we always have at least one bitmap font. */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
@@ -238,6 +242,9 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_DROID_SANS_MONO19x36
 	{ { NULL, NULL }, &Droid_Sans_Mono_19x36, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_GO_MONO12x23
+	{ { NULL, NULL }, &Go_Mono_12x23, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ { NULL, NULL }, NULL, 0, 0, 0 },
 };
@@ -574,6 +581,8 @@ wsfont_matches(struct wsdisplay_font *font, const char *name,
 
 	/* first weed out fonts the caller doesn't claim support for */
 	if (FONT_IS_ALPHA(font)) {
+		if (flags & WSFONT_PREFER_ALPHA)
+			score++;
 		if ((flags & WSFONT_FIND_ALPHA) == 0)
 			return 0;
 	} else {

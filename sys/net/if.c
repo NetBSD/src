@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.354.2.3 2016/11/04 14:49:20 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.354.2.4 2017/01/07 08:56:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.354.2.3 2016/11/04 14:49:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.354.2.4 2017/01/07 08:56:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -141,6 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.354.2.3 2016/11/04 14:49:20 pgoyette Exp $"
 #ifndef IPSEC
 #include <netinet/ip_encap.h>
 #endif
+#include <net/bpf.h>
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
@@ -185,7 +186,7 @@ int	ifqmaxlen = IFQ_MAXLEN;
 
 struct psref_class		*ifa_psref_class __read_mostly;
 
-static int	if_rt_walktree(struct rtentry *, void *);
+static int	if_delroute_matcher(struct rtentry *, void *);
 
 static struct if_clone *if_clone_lookup(const char *, int *);
 
@@ -193,7 +194,7 @@ static LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 static int if_cloners_count;
 
 /* Packet filtering hook for interfaces. */
-pfil_head_t *	if_pfil;
+pfil_head_t *			if_pfil __read_mostly;
 
 static kauth_listener_t if_listener;
 
@@ -223,9 +224,38 @@ static int sysctl_percpuq_drops_handler(SYSCTLFN_PROTO);
 static void sysctl_percpuq_setup(struct sysctllog **, const char *,
     struct if_percpuq *);
 
+struct if_deferred_start {
+	struct ifnet	*ids_ifp;
+	void		(*ids_if_start)(struct ifnet *);
+	void		*ids_si;
+};
+
+static void if_deferred_start_softint(void *);
+static void if_deferred_start_common(struct ifnet *);
+static void if_deferred_start_destroy(struct ifnet *);
+
 #if defined(INET) || defined(INET6)
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
 #endif
+
+/*
+ * Pointer to stub or real compat_cvtcmd() depending on presence of
+ * the compat module
+ */
+u_long stub_compat_cvtcmd(u_long);
+u_long (*vec_compat_cvtcmd)(u_long) = stub_compat_cvtcmd;
+
+/* Similarly, pointer to compat_ifioctl() if it is present */
+
+int (*vec_compat_ifioctl)(struct socket *, u_long, u_long, void *,
+	struct lwp *) = NULL;
+
+/* The stub version of compat_cvtcmd() */
+u_long stub_compat_cvtcmd(u_long cmd)
+{
+
+	return cmd;
+}
 
 static int
 if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -660,8 +690,7 @@ if_initialize(ifnet_t *ifp)
 	IFQ_LOCK_INIT(&ifp->if_snd);
 
 	ifp->if_pfil = pfil_head_create(PFIL_TYPE_IFNET, ifp);
-	(void)pfil_run_hooks(if_pfil,
-	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
+	pfil_run_ifhooks(if_pfil, PFIL_IFNET_ATTACH, ifp);
 
 	IF_AFDATA_LOCK_INIT(ifp);
 
@@ -746,8 +775,18 @@ if_percpuq_softint(void *arg)
 	struct ifnet *ifp = ipq->ipq_ifp;
 	struct mbuf *m;
 
-	while ((m = if_percpuq_dequeue(ipq)) != NULL)
+	while ((m = if_percpuq_dequeue(ipq)) != NULL) {
+		ifp->if_ipackets++;
+#ifndef NET_MPSAFE
+		KERNEL_LOCK(1, NULL);
+#endif
+		bpf_mtap(ifp, m);
+#ifndef NET_MPSAFE
+		KERNEL_UNLOCK_ONE(NULL);
+#endif
+
 		ifp->_if_input(ifp, m);
+	}
 }
 
 static void
@@ -814,6 +853,7 @@ if_percpuq_destroy(struct if_percpuq *ipq)
 	softint_disestablish(ipq->ipq_si);
 	percpu_foreach(ipq->ipq_ifqs, &if_percpuq_purge_ifq, NULL);
 	percpu_free(ipq->ipq_ifqs, sizeof(struct ifqueue));
+	kmem_free(ipq, sizeof(*ipq));
 }
 
 void
@@ -933,6 +973,94 @@ bad:
 	return;
 }
 
+/*
+ * The deferred if_start framework
+ *
+ * The common APIs to defer if_start to softint when if_start is requested
+ * from a device driver running in hardware interrupt context.
+ */
+/*
+ * Call ifp->if_start (or equivalent) in a dedicated softint for
+ * deferred if_start.
+ */
+static void
+if_deferred_start_softint(void *arg)
+{
+	struct if_deferred_start *ids = arg;
+	struct ifnet *ifp = ids->ids_ifp;
+
+	ids->ids_if_start(ifp);
+}
+
+/*
+ * The default callback function for deferred if_start.
+ */
+static void
+if_deferred_start_common(struct ifnet *ifp)
+{
+
+	if_start_lock(ifp);
+}
+
+static inline bool
+if_snd_is_used(struct ifnet *ifp)
+{
+
+	return ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit ||
+	    ALTQ_IS_ENABLED(&ifp->if_snd);
+}
+
+/*
+ * Schedule deferred if_start.
+ */
+void
+if_schedule_deferred_start(struct ifnet *ifp)
+{
+
+	KASSERT(ifp->if_deferred_start != NULL);
+
+	if (if_snd_is_used(ifp) && IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
+
+	softint_schedule(ifp->if_deferred_start->ids_si);
+}
+
+/*
+ * Create an instance of deferred if_start. A driver should call the function
+ * only if the driver needs deferred if_start. Drivers can setup their own
+ * deferred if_start function via 2nd argument.
+ */
+void
+if_deferred_start_init(struct ifnet *ifp, void (*func)(struct ifnet *))
+{
+	struct if_deferred_start *ids;
+
+	ids = kmem_zalloc(sizeof(*ids), KM_SLEEP);
+	if (ids == NULL)
+		panic("kmem_zalloc failed");
+
+	ids->ids_ifp = ifp;
+	ids->ids_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
+	    if_deferred_start_softint, ids);
+	if (func != NULL)
+		ids->ids_if_start = func;
+	else
+		ids->ids_if_start = if_deferred_start_common;
+
+	ifp->if_deferred_start = ids;
+}
+
+static void
+if_deferred_start_destroy(struct ifnet *ifp)
+{
+
+	if (ifp->if_deferred_start == NULL)
+		return;
+
+	softint_disestablish(ifp->if_deferred_start->ids_si);
+	kmem_free(ifp->if_deferred_start, sizeof(*ifp->if_deferred_start));
+	ifp->if_deferred_start = NULL;
+}
 
 /*
  * The common interface input routine that is called by device drivers,
@@ -945,6 +1073,15 @@ if_input(struct ifnet *ifp, struct mbuf *m)
 
 	KASSERT(ifp->if_percpuq == NULL);
 	KASSERT(!cpu_intr_p());
+
+	ifp->if_ipackets++;
+#ifndef NET_MPSAFE
+	KERNEL_LOCK(1, NULL);
+#endif
+	bpf_mtap(ifp, m);
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
+#endif
 
 	ifp->_if_input(ifp, m);
 }
@@ -1033,7 +1170,7 @@ if_deactivate(struct ifnet *ifp)
 }
 
 bool
-if_is_deactivated(struct ifnet *ifp)
+if_is_deactivated(const struct ifnet *ifp)
 {
 
 	return ifp->if_output == if_nulloutput;
@@ -1174,6 +1311,7 @@ if_detach(struct ifnet *ifp)
 		callout_destroy(ifp->if_slowtimo_ch);
 		kmem_free(ifp->if_slowtimo_ch, sizeof(*ifp->if_slowtimo_ch));
 	}
+	if_deferred_start_destroy(ifp);
 
 	/*
 	 * Do an if_down() to give protocols a chance to do something.
@@ -1260,11 +1398,9 @@ again:
 
 	if_free_sadl(ifp);
 
-	/* Walk the routing table looking for stragglers. */
-	for (i = 0; i <= AF_MAX; i++) {
-		while (rt_walktree(i, if_rt_walktree, ifp) == ERESTART)
-			continue;
-	}
+	/* Delete stray routes from the routing table. */
+	for (i = 0; i <= AF_MAX; i++)
+		rt_delete_matched_entries(i, if_delroute_matcher, ifp);
 
 	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifdetach != NULL && ifp->if_afdata[dp->dom_family])
@@ -1296,8 +1432,7 @@ again:
 		}
 	}
 
-	(void)pfil_run_hooks(if_pfil,
-	    (struct mbuf **)PFIL_IFNET_DETACH, ifp, PFIL_IFNET);
+	pfil_run_ifhooks(if_pfil, PFIL_IFNET_DETACH, ifp);
 	(void)pfil_head_destroy(ifp->if_pfil);
 
 	/* Announce that the interface is gone. */
@@ -1384,28 +1519,14 @@ if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
  * ifnet.
  */
 static int
-if_rt_walktree(struct rtentry *rt, void *v)
+if_delroute_matcher(struct rtentry *rt, void *v)
 {
 	struct ifnet *ifp = (struct ifnet *)v;
-	int error;
-	struct rtentry *retrt;
 
-	if (rt->rt_ifp != ifp)
+	if (rt->rt_ifp == ifp)
+		return 1;
+	else
 		return 0;
-
-	/* Delete the entry. */
-	error = rtrequest(RTM_DELETE, rt_getkey(rt), rt->rt_gateway,
-	    rt_mask(rt), rt->rt_flags, &retrt);
-	if (error == 0) {
-		KASSERT(retrt == rt);
-		KASSERT((retrt->rt_flags & RTF_UP) == 0);
-		retrt->rt_ifp = NULL;
-		rtfree(retrt);
-	} else {
-		printf("%s: warning: unable to delete rtentry @ %p, "
-		    "error = %d\n", ifp->if_xname, rt, error);
-	}
-	return ERESTART;
 }
 
 /*
@@ -1583,6 +1704,7 @@ ifa_psref_init(struct ifaddr *ifa)
 void
 ifaref(struct ifaddr *ifa)
 {
+	KASSERT(!ISSET(ifa->ifa_flags, IFA_DESTROYING));
 	ifa->ifa_refcnt++;
 }
 
@@ -1595,6 +1717,13 @@ ifafree(struct ifaddr *ifa)
 	if (--ifa->ifa_refcnt == 0) {
 		free(ifa, M_IFADDR);
 	}
+}
+
+bool
+ifa_is_destroying(struct ifaddr *ifa)
+{
+
+	return ISSET(ifa->ifa_flags, IFA_DESTROYING);
 }
 
 void
@@ -2769,7 +2898,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 
 #ifdef COMPAT_OIFREQ
-	cmd = compat_cvtcmd(cmd);
+	cmd = (*vec_compat_cvtcmd)(cmd);
 	if (cmd != ocmd) {
 		oifr = data;
 		data = ifr = &ifrb;
@@ -2866,11 +2995,12 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		error = EOPNOTSUPP;
 	else {
 #ifdef COMPAT_OSOCK
-		error = compat_ifioctl(so, ocmd, cmd, data, l);
-#else
-		error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
-		    cmd, data, ifp);
+		if (vec_compat_ifioctl != NULL)
+			error = (*vec_compat_ifioctl)(so, ocmd, cmd, data, l);
+		else
 #endif
+			error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
+			    cmd, data, ifp);
 	}
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
@@ -3015,7 +3145,7 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 	struct ifreq ifrb;
 	struct oifreq *oifr = NULL;
 	u_long ocmd = cmd;
-	cmd = compat_cvtcmd(cmd);
+	cmd = (*vec_compat_cvtcmd)(cmd);
 	if (cmd != ocmd) {
 		oifr = (struct oifreq *)(void *)ifr;
 		ifr = &ifrb;

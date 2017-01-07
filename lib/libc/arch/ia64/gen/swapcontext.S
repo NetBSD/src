@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.1.2.2 2016/08/06 00:19:02 pgoyette Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.1.2.3 2017/01/07 08:56:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 ENTRY(swapcontext,0)
 	
 	/* XXX implement, halt in ski */
-	break.i 0
+	break.i 1
 	
 END(swapcontext)
 

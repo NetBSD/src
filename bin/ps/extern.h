@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.35 2014/04/20 22:48:59 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.35.6.1 2017/01/07 08:53:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -36,8 +36,8 @@
  * defined the types we use.
  */
 
-extern double ccpu;
-extern int eval, fscale, mempages, nlistread, rawcpu, maxslp, uspace;
+extern double log_ccpu;
+extern int eval, fscale, mempages, nlistread, maxslp, uspace;
 extern int sumrusage, termwidth, totwidth;
 extern int needenv, needcomm, commandonly;
 extern uid_t myuid;
@@ -46,54 +46,54 @@ extern VAR var[];
 extern VARLIST displaylist;
 extern VARLIST sortlist;
 
-void	 command(void *, VARENT *, enum mode);
-void	 cpuid(void *, VARENT *, enum mode);
-void	 cputime(void *, VARENT *, enum mode);
-int	 donlist(void);
-int	 donlist_sysctl(void);
+void	 command(struct pinfo *, VARENT *, enum mode);
+void	 cpuid(struct pinfo *, VARENT *, enum mode);
+void	 cputime(struct pinfo *, VARENT *, enum mode);
+void	 donlist(void);
+void	 donlist_sysctl(void);
 void	 fmt_puts(char *, int *);
 void	 fmt_putc(int, int *);
-void	 elapsed(void *, VARENT *, enum mode);
+void	 elapsed(struct pinfo *, VARENT *, enum mode);
 double	 getpcpu(const struct kinfo_proc2 *);
 double	 getpmem(const struct kinfo_proc2 *);
-void	 gname(void *, VARENT *, enum mode);
-void	 groups(void *, VARENT *, enum mode);
-void	 groupnames(void *, VARENT *, enum mode);
-void	 lcputime(void *, VARENT *, enum mode);
-void	 logname(void *, VARENT *, enum mode);
-void	 longtname(void *, VARENT *, enum mode);
-void	 lname(void *, VARENT *, enum mode);
-void	 lstarted(void *, VARENT *, enum mode);
-void	 lstate(void *, VARENT *, enum mode);
-void	 maxrss(void *, VARENT *, enum mode);
+void	 gname(struct pinfo *, VARENT *, enum mode);
+void	 groups(struct pinfo *, VARENT *, enum mode);
+void	 groupnames(struct pinfo *, VARENT *, enum mode);
+void	 lcputime(struct pinfo *, VARENT *, enum mode);
+void	 logname(struct pinfo *, VARENT *, enum mode);
+void	 longtname(struct pinfo *, VARENT *, enum mode);
+void	 lname(struct pinfo *, VARENT *, enum mode);
+void	 lstarted(struct pinfo *, VARENT *, enum mode);
+void	 lstate(struct pinfo *, VARENT *, enum mode);
+void	 maxrss(struct pinfo *, VARENT *, enum mode);
 void	 nlisterr(struct nlist *);
-void	 p_rssize(void *, VARENT *, enum mode);
-void	 pagein(void *, VARENT *, enum mode);
+void	 p_rssize(struct pinfo *, VARENT *, enum mode);
+void	 pagein(struct pinfo *, VARENT *, enum mode);
 void	 parsefmt(const char *);
 void	 parsefmt_insert(const char *, VARENT **);
 void	 parsesort(const char *);
 VARENT * varlist_find(VARLIST *, const char *);
-void	 emul(void *, VARENT *, enum mode);
-void	 pcpu(void *, VARENT *, enum mode);
-void	 pmem(void *, VARENT *, enum mode);
-void	 pnice(void *, VARENT *, enum mode);
-void	 pri(void *, VARENT *, enum mode);
+void	 emul(struct pinfo *, VARENT *, enum mode);
+void	 pcpu(struct pinfo *, VARENT *, enum mode);
+void	 pmem(struct pinfo *, VARENT *, enum mode);
+void	 pnice(struct pinfo *, VARENT *, enum mode);
+void	 pri(struct pinfo *, VARENT *, enum mode);
 void	 printheader(void);
-void	 putimeval(void *, VARENT *, enum mode);
-void	 pvar(void *, VARENT *, enum mode);
-void	 rgname(void *, VARENT *, enum mode);
-void	 rssize(void *, VARENT *, enum mode);
-void	 runame(void *, VARENT *, enum mode);
+void	 putimeval(struct pinfo *, VARENT *, enum mode);
+void	 pvar(struct pinfo *, VARENT *, enum mode);
+void	 rgname(struct pinfo *, VARENT *, enum mode);
+void	 rssize(struct pinfo *, VARENT *, enum mode);
+void	 runame(struct pinfo *, VARENT *, enum mode);
 void	 showkey(void);
-void	 started(void *, VARENT *, enum mode);
-void	 state(void *, VARENT *, enum mode);
-void	 svgname(void *, VARENT *, enum mode);
-void	 svuname(void *, VARENT *, enum mode);
-void	 tdev(void *, VARENT *, enum mode);
-void	 tname(void *, VARENT *, enum mode);
-void	 tsize(void *, VARENT *, enum mode);
-void	 ucomm(void *, VARENT *, enum mode);
-void	 uname(void *, VARENT *, enum mode);
-void	 uvar(void *, VARENT *, enum mode);
-void	 vsize(void *, VARENT *, enum mode);
-void	 wchan(void *, VARENT *, enum mode);
+void	 started(struct pinfo *, VARENT *, enum mode);
+void	 state(struct pinfo *, VARENT *, enum mode);
+void	 svgname(struct pinfo *, VARENT *, enum mode);
+void	 svuname(struct pinfo *, VARENT *, enum mode);
+void	 tdev(struct pinfo *, VARENT *, enum mode);
+void	 tname(struct pinfo *, VARENT *, enum mode);
+void	 tsize(struct pinfo *, VARENT *, enum mode);
+void	 ucomm(struct pinfo *, VARENT *, enum mode);
+void	 uname(struct pinfo *, VARENT *, enum mode);
+void	 uvar(struct pinfo *, VARENT *, enum mode);
+void	 vsize(struct pinfo *, VARENT *, enum mode);
+void	 wchan(struct pinfo *, VARENT *, enum mode);

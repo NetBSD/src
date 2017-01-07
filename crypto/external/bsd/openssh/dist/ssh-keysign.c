@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keysign.c,v 1.11 2016/03/11 01:55:00 christos Exp $	*/
+/*	$NetBSD: ssh-keysign.c,v 1.11.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
 /* $OpenBSD: ssh-keysign.c,v 1.52 2016/02/15 09:47:49 dtucker Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.11 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.11.2.1 2017/01/07 08:53:42 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.18 2015/11/12 16:51:18 christos Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.18.2.1 2017/01/07 08:57:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.18 2015/11/12 16:51:18 christos Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.18.2.1 2017/01/07 08:57:01 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -180,8 +180,8 @@ getnode(struct puffs_usermount *pu, struct puffs_pathobj *po, int nodetype)
 	else
 		pn = puffs_pn_nodewalk(pu, puffs_path_walkcmp, po);
 
-	if (pn == NULL) 
-		return NULL;
+	if (pn != NULL) 
+		return pn;
 	/*
 	 * don't know nodetype?  query...
 	 *
@@ -349,9 +349,9 @@ sysctlfs_domount(struct puffs_usermount *pu)
 	filegid = getegid();
 
 	if (fileuid == 0)
-		fileperms = 0755;
+		fileperms = 0644;
 	else
-		fileperms = 0555;
+		fileperms = 0444;
 
 	return 0;
 }
@@ -580,6 +580,8 @@ sysctlfs_node_lookup(struct puffs_usermount *pu, void *opc,
 		nodetype = CTLTYPE_NODE;
 
 	pn_new = getnode(pu, &p2cn->pcn_po_full, nodetype);
+	if (pn_new == NULL)
+		return ENOENT;
 	sfs_new = pn_new->pn_data;
 
 	puffs_newinfo_setcookie(pni, pn_new);

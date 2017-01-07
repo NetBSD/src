@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.42 2016/06/10 13:27:14 ozaki-r Exp $	 */
+/* $NetBSD: if_bce.c,v 1.42.2.1 2017/01/07 08:56:33 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.42 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.42.2.1 2017/01/07 08:56:33 pgoyette Exp $");
 
 #include "vlan.h"
 
@@ -445,6 +445,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the interface */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	sc->enaddr[0] = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
 	    BCE_MAGIC_ENET0);
 	sc->enaddr[1] = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
@@ -713,7 +714,7 @@ bce_intr(void *xsc)
 			bce_init(ifp);
 		rnd_add_uint32(&sc->rnd_source, intstatus);
 		/* Try to get more packets going. */
-		bce_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 	return (handled);
 }
@@ -806,13 +807,6 @@ bce_rxintr(struct bce_softc *sc)
 
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
-		ifp->if_ipackets++;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

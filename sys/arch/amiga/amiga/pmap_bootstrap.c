@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.9 2009/12/06 06:41:29 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.9.44.1 2017/01/07 08:56:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.9 2009/12/06 06:41:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.9.44.1 2017/01/07 08:56:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ pmap_bootstrap(paddr_t firstaddr, paddr_t loadaddr)
 	 */
 
 	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * May want to check if first segment is Zorro-II?

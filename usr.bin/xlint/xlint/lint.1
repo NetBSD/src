@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.37 2013/04/19 18:51:14 christos Exp $
+.\" $NetBSD: lint.1,v 1.37.10.1 2017/01/07 08:56:59 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 19, 2013
+.Dd December 24, 2016
 .Dt LINT 1
 .Os
 .Sh NAME
@@ -61,6 +61,7 @@
 .Op Fl d Ar directory
 .Op Fl I Ar directory
 .Op Fl MD
+.Op Fl R Ar old=new
 .Op Fl U Ar name
 .Op Fl X Ar id Ns Op ,id ...
 .Ar
@@ -344,6 +345,12 @@ when assigning to wider integer types, overflow warnings when assigning
 to wider types.
 .It Fl p
 Attempt to check portability of code to other dialects of C.
+.It Fl R Ar old=new
+Remap
+.Ar old
+directory prefixes to
+.Ar new
+for reproducible builds.
 .It Fl r
 In case of redeclarations report the position of the
 previous declaration.
@@ -434,7 +441,7 @@ Suppress error messages about illegal bitfield types if the type
 is an integer type, and suppress non-portable bitfield type warnings.
 .It Li /* CONSTCOND */ No or Li /* CONSTANTCOND */ No or Li /* CONSTANTCONDITION */
 Suppress complaints about constant operands for the next expression.
-.It Li /*\ FALLTHRU\ */ No or Li /* FALLTHROUGH */
+.It Li /* FALLTHRU */ No or Li /* FALLTHROUGH */
 Suppress complaints about fall through to a
 .Sy case
 or
@@ -446,12 +453,12 @@ At the beginning of a file, mark all functions and variables defined
 in this file as
 .Em used .
 Also shut off complaints about unused function arguments.
-.It Li /* LINTED Ns Ar n Li Oo Ar comment Oc Li */ No or Li /* NOSTRICT Ns Ar n Li Oo Ar comment Oc Li */
+.It Li /* LINTED Ns Ar n Oo Ar comment Oc Li */ No or Li /* NOSTRICT Ns Ar n Oo Ar comment Oc Li */
 Suppresses any intra-file warning except those dealing with
 unused variables or functions.
 This directive should be placed
 on the line immediately preceding where the lint warning occurred.
-The optional numeric argument suppresses the specific numbered 
+The optional numeric argument suppresses the specific numbered
 message instead of every message.
 A list of messages and ids can be found in
 .Xr lint 7 .

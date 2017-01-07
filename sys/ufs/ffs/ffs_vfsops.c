@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.339.2.4 2016/11/04 14:49:22 pgoyette Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.339.2.5 2017/01/07 08:56:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.339.2.4 2016/11/04 14:49:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.339.2.5 2017/01/07 08:56:53 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1923,7 +1923,8 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	ctx.is_suspending = is_suspending;
 	while ((vp = vfs_vnode_iterator_next(marker, ffs_sync_selector, &ctx)))
 	{
-		error = vn_lock(vp, LK_EXCLUSIVE);
+		error = vn_lock(vp,
+		    LK_EXCLUSIVE | (waitfor == MNT_LAZY ? LK_NOWAIT : 0));
 		if (error) {
 			vrele(vp);
 			continue;

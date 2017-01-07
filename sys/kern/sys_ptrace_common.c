@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.1.2.2 2016/11/04 14:49:17 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.1.2.3 2017/01/07 08:56:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.1.2.2 2016/11/04 14:49:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.1.2.3 2017/01/07 08:56:49 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -202,9 +202,16 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 #ifdef PT_SETFPREGS
 	case PT_SETFPREGS:
 #endif
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+	case PT_READ_WATCHPOINT:
+	case PT_WRITE_WATCHPOINT:
+	case PT_COUNT_WATCHPOINTS:
+#endif
 	case PT_SET_EVENT_MASK:
 	case PT_GET_EVENT_MASK:
 	case PT_GET_PROCESS_STATE:
+	case PT_SET_SIGINFO:
+	case PT_GET_SIGINFO:
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
 #endif
@@ -295,6 +302,10 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	struct ptrace_event pe;
 	struct ptrace_state ps;
 	struct ptrace_lwpinfo pl;
+	struct ptrace_siginfo psi;
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+	struct ptrace_watchpoint pw;
+#endif
 	struct vmspace *vm;
 	int error, write, tmp, pheld;
 	int signo = 0;
@@ -405,6 +416,11 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
 #endif
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+	case  PT_READ_WATCHPOINT:
+	case  PT_WRITE_WATCHPOINT:
+	case  PT_COUNT_WATCHPOINTS:
+#endif
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
 #endif
@@ -435,6 +451,8 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case  PT_SET_EVENT_MASK:
 	case  PT_GET_EVENT_MASK:
 	case  PT_GET_PROCESS_STATE:
+	case  PT_SET_SIGINFO:
+	case  PT_GET_SIGINFO:
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -784,6 +802,16 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 				proc_unstop(t);
 			else
 				lwp_unstop(lt);
+		} else if (t->p_sigctx.ps_faked) {
+			if (signo != t->p_sigctx.ps_info._signo) {
+				error = EINVAL;
+				break;
+			}
+			t->p_sigctx.ps_faked = false;
+			KSI_INIT_EMPTY(&ksi);
+			ksi.ksi_info = t->p_sigctx.ps_info;
+			ksi.ksi_lid = t->p_sigctx.ps_lwp;
+			kpsignal2(t, &ksi);
 		} else if (signo != 0) {
 			KSI_INIT_EMPTY(&ksi);
 			ksi.ksi_signo = signo;
@@ -813,25 +841,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		 *   proc gets to see all the action.
 		 * Stop the target.
 		 */
-		t->p_opptr = t->p_pptr;
-		if (t->p_pptr != p) {
-			struct proc *parent = t->p_pptr;
-
-			if (parent->p_lock < t->p_lock) {
-				if (!mutex_tryenter(parent->p_lock)) {
-					mutex_exit(t->p_lock);
-					mutex_enter(parent->p_lock);
-					mutex_enter(t->p_lock);
-				}
-			} else if (parent->p_lock > t->p_lock) {
-				mutex_enter(parent->p_lock);
-			}
-			parent->p_slflag |= PSL_CHTRACED;
-			proc_reparent(t, p);
-			if (parent->p_lock != t->p_lock)
-				mutex_exit(parent->p_lock);
-		}
-		SET(t->p_slflag, PSL_TRACED);
+		proc_changeparent(t, p);
 		signo = SIGSTOP;
 		goto sendsig;
 
@@ -909,12 +919,79 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		if (lt) {
 			lwp_addref(lt);
 			pl.pl_lwpid = lt->l_lid;
-			if (lt->l_lid == t->p_sigctx.ps_lwp)
+			/*
+			 * If we match the lwp, or it was sent to every lwp,
+			 * we set PL_EVENT_SIGNAL.
+			 * XXX: ps_lwp == 0 means everyone and noone, so
+			 * check ps_signo too.
+			 */
+			if (lt->l_lid == t->p_sigctx.ps_lwp
+			    || (t->p_sigctx.ps_lwp == 0 &&
+			        t->p_sigctx.ps_info._signo))
 				pl.pl_event = PL_EVENT_SIGNAL;
 		}
 		mutex_exit(t->p_lock);
 
 		error = copyout(&pl, addr, sizeof(pl));
+		break;
+
+	case  PT_SET_SIGINFO:
+		if (data != sizeof(psi)) {
+			DPRINTF(("ptrace(%d): %d != %zu\n", req, data,
+			    sizeof(psi)));
+			error = EINVAL;
+			break;
+		}
+
+		error = copyin(addr, &psi, sizeof(psi));
+		if (error)
+			break;
+
+		/* Check that the data is a valid signal number or zero. */
+		if (psi.psi_siginfo.si_signo < 0 ||
+		    psi.psi_siginfo.si_signo >= NSIG) {
+			error = EINVAL;
+			break;
+		}
+
+		tmp = psi.psi_lwpid;
+		if (tmp != 0)
+			lwp_delref(lt);
+
+		mutex_enter(t->p_lock);
+
+		if (tmp != 0) {
+			lt = lwp_find(t, tmp);
+			if (lt == NULL) {
+				mutex_exit(t->p_lock);
+				error = ESRCH;
+				break;
+			}
+			lwp_addref(lt);
+		}
+
+		t->p_sigctx.ps_faked = true;
+		t->p_sigctx.ps_info = psi.psi_siginfo._info;
+		t->p_sigctx.ps_lwp = psi.psi_lwpid;
+		mutex_exit(t->p_lock);
+		break;
+
+	case  PT_GET_SIGINFO:
+		if (data != sizeof(psi)) {
+			DPRINTF(("ptrace(%d): %d != %zu\n", req, data,
+			    sizeof(psi)));
+			error = EINVAL;
+			break;
+		}
+		mutex_enter(t->p_lock);
+		psi.psi_siginfo._info = t->p_sigctx.ps_info;
+		psi.psi_lwpid = t->p_sigctx.ps_lwp;
+		mutex_exit(t->p_lock);
+
+		error = copyout(&psi, addr, sizeof(psi));
+		if (error)
+			break;
+
 		break;
 
 #ifdef PT_SETREGS
@@ -963,6 +1040,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
 		write = 1;
+		/*FALLTHROUGH*/
 #endif
 #ifdef PT_GETFPREGS
 	case  PT_GETFPREGS:
@@ -999,6 +1077,54 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 
 			error = ptm->ptm_dofpregs(l, lt, &uio);
 			uvmspace_free(vm);
+		}
+		break;
+#endif
+
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+		/*
+		 * The "write" variable is used as type of operation.
+		 * Possible values:
+		 *	0 - return the number of supported hardware watchpoints
+		 *	1 - set new watchpoint value
+		 *	2 - get existing watchpoint image
+		 */
+	case  PT_WRITE_WATCHPOINT:
+		write = 1;
+	case  PT_READ_WATCHPOINT:
+		/* write = 0 done above */
+
+		if (data != sizeof(pw)) {
+			DPRINTF(("ptrace(%d): %d != %zu\n", req,
+			    data, sizeof(pe)));
+			error = EINVAL;
+			break;
+		}
+		error = copyin(addr, &pw, sizeof(pw));
+		if (error)
+			break;
+		tmp = pw.pw_lwpid;
+		if (tmp != 0 && t->p_nlwps > 1) {
+			lwp_delref(lt);
+			mutex_enter(t->p_lock);
+			lt = lwp_find(t, tmp);
+			if (lt == NULL) {
+				mutex_exit(t->p_lock);
+				error = ESRCH;
+				break;
+			}
+			lwp_addref(lt);
+			mutex_exit(t->p_lock);
+		}
+		++write;
+	case  PT_COUNT_WATCHPOINTS:
+		if (!process_validwatchpoint(lt))
+			error = EINVAL;
+		else {
+			lwp_lock(lt);
+			error = ptm->ptm_dowatchpoint(l, lt, write, &pw, addr,
+			    retval);
+			lwp_unlock(lt);
 		}
 		break;
 #endif
@@ -1145,6 +1271,45 @@ process_auxv_offset(struct proc *p, struct uio *uio)
 #endif
 	return 0;
 }
+
+int
+process_dowatchpoint(struct lwp *curl /*tracer*/, struct lwp *l /*traced*/,
+    int operation, struct ptrace_watchpoint *pw, void *addr,
+    register_t *retval)
+{
+
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+	int error;
+
+	KASSERT(operation >= 0);
+	KASSERT(operation <= 2);
+
+	switch (operation) {
+	case 0:
+		return process_count_watchpoints(l, retval);
+	case 1:
+		error = process_read_watchpoint(l, pw);
+		if (error)
+			return error;
+		return copyout(pw, addr, sizeof(*pw));
+	default:
+		return process_write_watchpoint(l, pw);
+	}
+#else
+	return EINVAL;
+#endif
+}
+
+int
+process_validwatchpoint(struct lwp *l)
+{
+
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+	return (l->l_flag & LW_SYSTEM) == 0;
+#else
+	return 0;
+#endif
+}
 #endif /* PTRACE */
 
 MODULE(MODULE_CLASS_EXEC, ptrace_common, "");
@@ -1168,4 +1333,3 @@ ptrace_common_modcmd(modcmd_t cmd, void *arg)
         }
         return error;
 }
-

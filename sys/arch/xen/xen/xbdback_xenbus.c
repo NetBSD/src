@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.62.2.1 2016/07/20 23:50:56 pgoyette Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.62.2.2 2017/01/07 08:56:29 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.62.2.1 2016/07/20 23:50:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.62.2.2 2017/01/07 08:56:29 pgoyette Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -1680,9 +1680,8 @@ xbdback_wakeup_thread(struct xbdback_instance *xbdi)
 	/* only set RUN state when we are WAITING for work */
 	if (xbdi->xbdi_status == WAITING)
 	       xbdi->xbdi_status = RUN;
-	mutex_exit(&xbdi->xbdi_lock);
-
 	cv_broadcast(&xbdi->xbdi_cv);
+	mutex_exit(&xbdi->xbdi_lock);
 }
 
 /*

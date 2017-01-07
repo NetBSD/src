@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2013, Intel Corporation 
+  Copyright (c) 2001-2015, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_vf.h 247822 2013-03-04 23:07:40Z jfv $*/
-/*$NetBSD: ixgbe_vf.h,v 1.5 2015/04/24 07:00:51 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_vf.h 282289 2015-04-30 22:53:27Z erj $*/
+/*$NetBSD: ixgbe_vf.h,v 1.5.2.1 2017/01/07 08:56:40 pgoyette Exp $*/
 
 #ifndef __IXGBE_VF_H__
 #define __IXGBE_VF_H__
@@ -85,6 +85,9 @@
 #define IXGBE_VFGOTC_LSB	0x02020
 #define IXGBE_VFGOTC_MSB	0x02024
 #define IXGBE_VFMPRC		0x01034
+#define IXGBE_VFMRQC		0x3000
+#define IXGBE_VFRSSRK(x)	(0x3100 + ((x) * 4))
+#define IXGBE_VFRETA(x)	(0x3200 + ((x) * 4))
 
 
 struct ixgbevf_hw_stats {
@@ -100,11 +103,11 @@ struct ixgbevf_hw_stats {
 	u64 last_vfgotc;
 	u64 last_vfmprc;
 
-	u64 vfgprc;
-	u64 vfgptc;
-	u64 vfgorc;
-	u64 vfgotc;
-	u64 vfmprc;
+	struct evcnt vfgprc;
+	struct evcnt vfgptc;
+	struct evcnt vfgorc;
+	struct evcnt vfgotc;
+	struct evcnt vfmprc;
 
 	u64 saved_reset_vfgprc;
 	u64 saved_reset_vfgptc;

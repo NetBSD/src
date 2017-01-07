@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.122 2016/05/02 19:18:29 christos Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.122.2.1 2017/01/07 08:56:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.122 2016/05/02 19:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.122.2.1 2017/01/07 08:56:41 pgoyette Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -153,7 +153,7 @@ wdc_atapi_minphys(struct buf *bp)
 /*
  * Kill off all pending xfers for a periph.
  *
- * Must be called at splbio().
+ * Must be called with adapter lock held
  */
 static void
 wdc_atapi_kill_pending(struct scsipi_periph *periph)

@@ -87,7 +87,7 @@ struct eloop_data {
 #if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
 	int max_fd;
 	struct eloop_sock *fd_table;
-#endif
+#endif /* CONFIG_ELOOP_EPOLL || CONFIG_ELOOP_KQUEUE */
 #ifdef CONFIG_ELOOP_EPOLL
 	int epollfd;
 	int epoll_max_event_num;
@@ -165,7 +165,7 @@ int eloop_init(void)
 #ifdef CONFIG_ELOOP_EPOLL
 	eloop.epollfd = epoll_create1(0);
 	if (eloop.epollfd < 0) {
-		wpa_printf(MSG_ERROR, "%s: epoll_create1 failed. %s\n",
+		wpa_printf(MSG_ERROR, "%s: epoll_create1 failed. %s",
 			   __func__, strerror(errno));
 		return -1;
 	}
@@ -173,7 +173,7 @@ int eloop_init(void)
 #ifdef CONFIG_ELOOP_KQUEUE
 	eloop.kqueuefd = kqueue();
 	if (eloop.kqueuefd < 0) {
-		wpa_printf(MSG_ERROR, "%s: kqueue failed. %s\n",
+		wpa_printf(MSG_ERROR, "%s: kqueue failed: %s",
 			   __func__, strerror(errno));
 		return -1;
 	}
@@ -182,12 +182,13 @@ int eloop_init(void)
 	eloop.readers.type = EVENT_TYPE_READ;
 	eloop.writers.type = EVENT_TYPE_WRITE;
 	eloop.exceptions.type = EVENT_TYPE_EXCEPTION;
-#endif
+#endif /* CONFIG_ELOOP_EPOLL || CONFIG_ELOOP_KQUEUE */
 #ifdef WPA_TRACE
 	signal(SIGSEGV, eloop_sigsegv_handler);
 #endif /* WPA_TRACE */
 	return 0;
 }
+
 
 #ifdef CONFIG_ELOOP_EPOLL
 static int eloop_sock_queue(int sock, eloop_event_type type)
@@ -213,13 +214,14 @@ static int eloop_sock_queue(int sock, eloop_event_type type)
 	}
 	ev.data.fd = sock;
 	if (epoll_ctl(eloop.epollfd, EPOLL_CTL_ADD, sock, &ev) < 0) {
-		wpa_printf(MSG_ERROR, "%s: epoll_ctl(ADD) for fd=%d "
-			   "failed. %s\n", __func__, sock, strerror(errno));
+		wpa_printf(MSG_ERROR, "%s: epoll_ctl(ADD) for fd=%d failed: %s",
+			   __func__, sock, strerror(errno));
 		return -1;
 	}
 	return 0;
 }
 #endif /* CONFIG_ELOOP_EPOLL */
+
 
 #ifdef CONFIG_ELOOP_KQUEUE
 static int eloop_sock_queue(int sock, eloop_event_type type)
@@ -239,13 +241,14 @@ static int eloop_sock_queue(int sock, eloop_event_type type)
 	}
 	EV_SET(&ke, sock, filter, EV_ADD, 0, 0, 0);
 	if (kevent(eloop.kqueuefd, &ke, 1, NULL, 0, NULL) == -1) {
-		wpa_printf(MSG_ERROR, "%s: kevent(ADD) for fd=%d "
-			   "failed. %s\n", __func__, sock, strerror(errno));
+		wpa_printf(MSG_ERROR, "%s: kevent(ADD) for fd=%d failed: %s",
+			   __func__, sock, strerror(errno));
 		return -1;
 	}
 	return 0;
 }
 #endif /* CONFIG_ELOOP_KQUEUE */
+
 
 static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
                                      int sock, eloop_sock_handler handler,
@@ -260,7 +263,7 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 #if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
 	struct eloop_sock *temp_table;
 	int next;
-#endif
+#endif /* CONFIG_ELOOP_EPOLL || CONFIG_ELOOP_KQUEUE */
 	struct eloop_sock *tmp;
 	int new_max_sock;
 
@@ -307,7 +310,7 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 		eloop.max_fd = next;
 		eloop.fd_table = temp_table;
 	}
-#endif
+#endif /* CONFIG_ELOOP_EPOLL || CONFIG_ELOOP_KQUEUE */
 
 #ifdef CONFIG_ELOOP_EPOLL
 	if (eloop.count + 1 > eloop.epoll_max_event_num) {
@@ -316,8 +319,8 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 		temp_events = os_realloc_array(eloop.epoll_events, next,
 					       sizeof(struct epoll_event));
 		if (temp_events == NULL) {
-			wpa_printf(MSG_ERROR, "%s: malloc for epoll failed. "
-				   "%s\n", __func__, strerror(errno));
+			wpa_printf(MSG_ERROR, "%s: malloc for epoll failed: %s",
+				   __func__, strerror(errno));
 			return -1;
 		}
 
@@ -329,9 +332,10 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 	if (eloop.count + 1 > eloop.kqueue_nevents) {
 		next = eloop.kqueue_nevents == 0 ? 8 : eloop.kqueue_nevents * 2;
 		temp_events = os_malloc(next * sizeof(*temp_events));
-		if (temp_events == NULL) {
-			wpa_printf(MSG_ERROR, "%s: malloc for kqueue failed. "
-				   "%s\n", __func__, strerror(errno));
+		if (!temp_events) {
+			wpa_printf(MSG_ERROR,
+				   "%s: malloc for kqueue failed: %s",
+				   __func__, strerror(errno));
 			return -1;
 		}
 
@@ -362,11 +366,11 @@ static int eloop_sock_table_add_sock(struct eloop_sock_table *table,
 	eloop_trace_sock_add_ref(table);
 
 #if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
-	if (eloop_sock_queue(sock, table->type) == -1)
+	if (eloop_sock_queue(sock, table->type) < 0)
 		return -1;
 	os_memcpy(&eloop.fd_table[sock], &table->table[table->count - 1],
 		  sizeof(struct eloop_sock));
-#endif
+#endif /* CONFIG_ELOOP_EPOLL || CONFIG_ELOOP_KQUEUE */
 	return 0;
 }
 
@@ -376,7 +380,7 @@ static void eloop_sock_table_remove_sock(struct eloop_sock_table *table,
 {
 #ifdef CONFIG_ELOOP_KQUEUE
 	struct kevent ke;
-#endif
+#endif /* CONFIG_ELOOP_KQUEUE */
 	int i;
 
 	if (table == NULL || table->table == NULL || table->count == 0)
@@ -400,17 +404,17 @@ static void eloop_sock_table_remove_sock(struct eloop_sock_table *table,
 	eloop_trace_sock_add_ref(table);
 #ifdef CONFIG_ELOOP_EPOLL
 	if (epoll_ctl(eloop.epollfd, EPOLL_CTL_DEL, sock, NULL) < 0) {
-		wpa_printf(MSG_ERROR, "%s: epoll_ctl(DEL) for fd=%d "
-			   "failed. %s\n", __func__, sock, strerror(errno));
+		wpa_printf(MSG_ERROR, "%s: epoll_ctl(DEL) for fd=%d failed: %s",
+			   __func__, sock, strerror(errno));
 		return;
 	}
 	os_memset(&eloop.fd_table[sock], 0, sizeof(struct eloop_sock));
 #endif /* CONFIG_ELOOP_EPOLL */
 #ifdef CONFIG_ELOOP_KQUEUE
 	EV_SET(&ke, sock, 0, EV_DELETE, 0, 0, 0);
-	if (kevent(eloop.kqueuefd, &ke, 1, NULL, 0, NULL) == -1) {
-		wpa_printf(MSG_ERROR, "%s: kevent(DEL) for fd=%d "
-			   "failed. %s\n", __func__, sock, strerror(errno));
+	if (kevent(eloop.kqueuefd, &ke, 1, NULL, 0, NULL) < 0) {
+		wpa_printf(MSG_ERROR, "%s: kevent(DEL) for fd=%d failed: %s",
+			   __func__, sock, strerror(errno));
 		return;
 	}
 	os_memset(&eloop.fd_table[sock], 0, sizeof(struct eloop_sock));
@@ -622,6 +626,7 @@ static void eloop_sock_table_dispatch(struct epoll_event *events, int nfds)
 
 
 #ifdef CONFIG_ELOOP_KQUEUE
+
 static void eloop_sock_table_dispatch(struct kevent *events, int nfds)
 {
 	struct eloop_sock *table;
@@ -640,6 +645,7 @@ static void eloop_sock_table_dispatch(struct kevent *events, int nfds)
 	}
 }
 
+
 static int eloop_sock_table_requeue(struct eloop_sock_table *table)
 {
 	int i, r;
@@ -652,34 +658,33 @@ static int eloop_sock_table_requeue(struct eloop_sock_table *table)
 	return r;
 }
 
+#endif /* CONFIG_ELOOP_KQUEUE */
+
+
 int eloop_sock_requeue(void)
 {
 	int r = 0;
 
+#ifdef CONFIG_ELOOP_KQUEUE
 	close(eloop.kqueuefd);
 	eloop.kqueuefd = kqueue();
 	if (eloop.kqueuefd < 0) {
-		wpa_printf(MSG_ERROR, "%s: kqueue failed. %s\n",
+		wpa_printf(MSG_ERROR, "%s: kqueue failed: %s",
 			   __func__, strerror(errno));
 		return -1;
 	}
 
-	if (eloop_sock_table_requeue(&eloop.readers) == -1)
+	if (eloop_sock_table_requeue(&eloop.readers) < 0)
 		r = -1;
-	if (eloop_sock_table_requeue(&eloop.writers) == -1)
+	if (eloop_sock_table_requeue(&eloop.writers) < 0)
 		r = -1;
-	if (eloop_sock_table_requeue(&eloop.exceptions) == -1)
+	if (eloop_sock_table_requeue(&eloop.exceptions) < 0)
 		r = -1;
+#endif /* CONFIG_ELOOP_KQUEUE */
 
 	return r;
 }
-#else /* CONFIG_ELOOP_KQUEUE */
-int eloop_sock_requeue(void)
-{
 
-	return 0;
-}
-#endif /* !CONFIG_ELOOP_KQUEUE */
 
 static void eloop_sock_table_destroy(struct eloop_sock_table *table)
 {
@@ -1274,7 +1279,7 @@ void eloop_destroy(void)
 #endif /* CONFIG_ELOOP_POLL */
 #if defined(CONFIG_ELOOP_EPOLL) || defined(CONFIG_ELOOP_KQUEUE)
 	os_free(eloop.fd_table);
-#endif
+#endif /* CONFIG_ELOOP_EPOLL || CONFIG_ELOOP_KQUEUE */
 #ifdef CONFIG_ELOOP_EPOLL
 	os_free(eloop.epoll_events);
 	close(eloop.epollfd);

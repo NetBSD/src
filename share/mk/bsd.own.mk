@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.938.2.2 2016/11/04 14:48:56 pgoyette Exp $
+#	$NetBSD: bsd.own.mk,v 1.938.2.3 2017/01/07 08:56:08 pgoyette Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -131,15 +131,7 @@ USE_SSP?=	yes
 #
 # What GDB is used?
 #
-.if \
-    ${MACHINE} == "vax" || \
-    ${MACHINE_CPU} == "m68k" || \
-    ${MACHINE_ARCH} == "mips64el" || \
-    ${MACHINE_ARCH} == "mips64eb"
-HAVE_GDB?=	710
-.else
 HAVE_GDB?=	712
-.endif
 
 .if ${HAVE_GDB} == 712
 EXTERNAL_GDB_SUBDIR=		gdb
@@ -152,18 +144,12 @@ EXTERNAL_GDB_SUBDIR=		/does/not/exist
 #
 # What binutils is used?
 #
-.if \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64"
 HAVE_BINUTILS?=	227
-.else
-HAVE_BINUTILS?=	226
-.endif
 
-.if ${HAVE_BINUTILS} == 226
-EXTERNAL_BINUTILS_SUBDIR=	binutils.old
-.elif ${HAVE_BINUTILS} == 227
+.if ${HAVE_BINUTILS} == 227
 EXTERNAL_BINUTILS_SUBDIR=	binutils
+.elif ${HAVE_BINUTILS} == 226
+EXTERNAL_BINUTILS_SUBDIR=	binutils.old
 .else
 EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
 .endif
@@ -820,9 +806,10 @@ MKGDB.ia64=	no
 MKPICLIB:=	no
 .endif
 
-# PowerPC64 and AArch64 ABI's are PIC
-MKPICLIB.powerpc64=	no
-#MKPICLIB.aarch64=	no
+.if !defined(COMMON_MACHINE_ARCH)
+# Native PowerPC64 ABI is PIC.
+MKPICLIB.powerpc64:=	no
+.endif
 
 #
 # On VAX using ELF, all objects are PIC, not just shared libraries,
@@ -1447,8 +1434,8 @@ EXTRA_DRIVERS=	modesetting
 	ag10e apm ark ast ati ati-kms chips cirrus crime \
 	geode glint i128 i740 igs imstt intel intel-old \
 	${EXTRA_DRIVERS} mach64 mga \
-	neomagic newport nouveau nsc nv nvxbox openchrome pnozz \
-	r128 radeonhd rendition \
+	neomagic newport nouveau nsc nv openchrome pnozz \
+	r128 rendition \
 	s3 s3virge savage siliconmotion sis suncg14 \
 	suncg6 sunffb sunleo suntcx \
 	tdfx tga trident tseng vesa vga vmware wsfb xgi

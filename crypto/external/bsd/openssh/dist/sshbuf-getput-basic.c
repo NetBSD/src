@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf-getput-basic.c,v 1.4.2.1 2016/08/06 00:18:39 pgoyette Exp $");
+__RCSID("$NetBSD: sshbuf-getput-basic.c,v 1.4.2.2 2017/01/07 08:53:42 pgoyette Exp $");
 
 #include <sys/types.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.82 2014/12/22 15:24:14 dennis Exp $	*/
+/*	$NetBSD: w.c,v 1.82.2.1 2017/01/07 08:56:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.82 2014/12/22 15:24:14 dennis Exp $");
+__RCSID("$NetBSD: w.c,v 1.82.2.1 2017/01/07 08:56:59 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -621,27 +621,38 @@ static void
 fixhost(struct entry *ep)
 {
 	char host_buf[sizeof(ep->host)];
-	char *p, *x;
+	char *p, *x, *m;
 	struct hostent *hp;
-	struct in_addr l;
+	union {
+		struct in_addr l4;
+		struct in6_addr l6;
+	} l;
 
 	strlcpy(host_buf, *ep->host ? ep->host : "-", sizeof(host_buf));
 	p = host_buf;
 
 	/*
-	 * XXX: Historical behavior, ':' in hostname means X display number,
-	 * IPv6 not handled.
+	 * One ':' in hostname means X display number, more is IPv6.
 	 */
 	for (x = p; x < &host_buf[sizeof(host_buf)]; x++)
 		if (*x == '\0' || *x == ':')
 			break;
 	if (x == p + sizeof(host_buf) || *x != ':')
-		x = NULL;
-	else
-		*x++ = '\0';
-
-	if (!nflag && inet_aton(p, &l) &&
-	    (hp = gethostbyaddr((char *)&l, sizeof(l), AF_INET))) {
+		m = x = NULL;
+	else {
+		for (m = x + 1; m < &host_buf[sizeof(host_buf)]; m++)
+			if (*m == '\0' || *m == ':')
+				break;
+		if (m == p + sizeof(host_buf) || *m != ':') {
+			*x++ = '\0';
+			m = NULL;
+		} else
+			x = NULL;
+	}
+	int af = m ? AF_INET6 : AF_INET;
+	size_t alen = m ? sizeof(l.l6) : sizeof(l.l4);
+	if (!nflag && inet_pton(af, p, &l) &&
+	    (hp = gethostbyaddr((char *)&l, alen, af))) {
 		if (domain[0] != '\0') {
 			p = hp->h_name;
 			p += strlen(hp->h_name);

@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2013, Intel Corporation 
+  Copyright (c) 2001-2015, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,7 +30,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_dcb_82598.c 251964 2013-06-18 21:28:19Z jfv $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_dcb_82598.c 282289 2015-04-30 22:53:27Z erj $*/
 
 
 #include "ixgbe_type.h"
@@ -347,6 +347,8 @@ s32 ixgbe_dcb_hw_config_82598(struct ixgbe_hw *hw, int link_speed,
 			      u16 *refill, u16 *max, u8 *bwg_id,
 			      u8 *tsa)
 {
+	UNREFERENCED_1PARAMETER(link_speed);
+
 	ixgbe_dcb_config_rx_arbiter_82598(hw, refill, max, tsa);
 	ixgbe_dcb_config_tx_desc_arbiter_82598(hw, refill, max, bwg_id,
 					       tsa);

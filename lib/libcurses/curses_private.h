@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.50.8.1 2016/11/04 14:48:53 pgoyette Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.50.8.2 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -131,6 +131,8 @@ struct __window {		/* Window structure. */
 #define __IDCHAR	0x00040000	/* insert/delete char sequences */
 #define __ISPAD		0x00080000	/* "window" is a pad */
 #define __ISDERWIN	0x00100000	/* "window" is derived from parent */
+#define __IMMEDOK	0x00200000	/* refreshed when changed */
+#define __SYNCOK	0x00400000	/* sync when changed */
 	unsigned int flags;
 	int	delay;			/* delay for getch() */
 	attr_t	wattr;			/* Character attributes */
@@ -181,7 +183,7 @@ struct __pair {
 };
 
 /* Maximum colours */
-#define	MAX_COLORS	64
+#define	MAX_COLORS	256
 /* Maximum colour pairs - determined by number of colour bits in attr_t */
 #define	MAX_PAIRS	PAIR_NUMBER(__COLOR)
 
@@ -199,7 +201,10 @@ struct __screen {
 	int      lx, ly;        /* loop parameters for refresh */
 	int	 COLS;		/* Columns on the screen. */
 	int	 LINES;		/* Lines on the screen. */
+	int	 ESCDELAY;	/* Delay between keys in esc seq's. */
+#define	ESCDELAY_DEFAULT	300 /* milliseconds. */
 	int	 TABSIZE;	/* Size of a tab. */
+#define	TABSIZE_DEFAULT		8   /* spaces. */
 	int	 COLORS;	/* Maximum colors on the screen */
 	int	 COLOR_PAIRS;	/* Maximum color pairs on the screen */
 	int	 My_term;	/* Use Def_term regardless. */
@@ -252,6 +257,8 @@ struct __screen {
 	int resized;
 	wchar_t *unget_list;
 	int unget_len, unget_pos;
+	int filtered;
+	int checkfd;
 #ifdef HAVE_WCHAR
 #define MB_LEN_MAX 8
 #define MAX_CBUF_SIZE MB_LEN_MAX
@@ -306,7 +313,7 @@ void     _cursesi_reset_wacs(SCREEN *);
 void     _cursesi_resetterm(SCREEN *);
 int      _cursesi_setterm(char *, SCREEN *);
 int	 __delay(void);
-u_int	 __hash_more(const void *, size_t, u_int);
+unsigned int	 __hash_more(const void *, size_t, unsigned int);
 #define	__hash(s, len)	__hash_more((s), (len), 0u)
 void	 __id_subwins(WINDOW *);
 void	 __init_getch(SCREEN *);
@@ -342,6 +349,7 @@ void	 __startwin(SCREEN *);
 void	 __stop_signal_handler(int);
 int	 __stopwin(void);
 void	 __swflags(WINDOW *);
+void	 __sync(WINDOW *);
 int	 __timeout(int);
 int	 __touchline(WINDOW *, int, int, int);
 int	 __touchwin(WINDOW *);

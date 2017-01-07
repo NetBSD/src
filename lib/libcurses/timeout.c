@@ -1,4 +1,4 @@
-/*	$NetBSD: timeout.c,v 1.8 2009/11/04 21:24:57 dsl Exp $	*/
+/*	$NetBSD: timeout.c,v 1.8.28.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: timeout.c,v 1.8 2009/11/04 21:24:57 dsl Exp $");
+__RCSID("$NetBSD: timeout.c,v 1.8.28.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: timeout.c,v 1.8 2009/11/04 21:24:57 dsl Exp $");
 void
 timeout(int delay)
 {
+
 	wtimeout(stdscr, delay);
 }
 

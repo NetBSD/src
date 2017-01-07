@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.113.2.1 2016/11/04 14:49:15 pgoyette Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.113.2.2 2017/01/07 08:56:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -978,7 +978,10 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_SLCSR_HPE		__BIT(5)       /* Hot Plug Interrupt Enable */
 #define PCIE_SLCSR_AIC		__BITS(7, 6)   /* Attention Indicator Control*/
 #define PCIE_SLCSR_PIC		__BITS(9, 8)   /* Power Indicator Control */
-#define PCIE_SLCSR_PCC		__BIT(10)      /* Power Controller Control */
+#define PCIE_SLCSR_PCC		__BIT(10)      /*
+						* Power Controller Control:
+						* 0: Power on, 1: Power off.
+						*/
 #define PCIE_SLCSR_EIC		__BIT(11)      /* Electromechanical Interlock*/
 #define PCIE_SLCSR_DLLSCE	__BIT(12)      /* DataLinkLayer State Changed*/
 #define PCIE_SLCSR_AUTOSPLDIS	__BIT(13)      /* Auto Slot Power Limit Dis. */
@@ -1779,7 +1782,7 @@ struct pci_rom {
 
 /*
  * Extended capability ID: 0x0014
- * (Reserved for AMD)
+ * Enhanced Allocation
  */
 
 /*
@@ -1858,9 +1861,9 @@ struct pci_rom {
 #define	PCI_PASID_CAP_PRIVMODE	__BIT(2)	/* Privileged Mode Supported */
 #define	PCI_PASID_CAP_MAXPASIDW	__BITS(12, 8)	/* Max PASID Width */
 #define	PCI_PASID_CTL	0x04	/* Control Register */
-#define	PCI_PASID_CTL_PASID_EN	__BIT(0)	/* PASID Enable */
-#define	PCI_PASID_CTL_XPERM_EN	__BIT(1)	/* Execute Permission Enable */
-#define	PCI_PASID_CTL_PRIVMODE_EN __BIT(2)	/* Privileged Mode Enable */
+#define	PCI_PASID_CTL_PASID_EN	__BIT(0+16)	/* PASID Enable */
+#define	PCI_PASID_CTL_XPERM_EN	__BIT(1+16)	/* Execute Permission Enable */
+#define	PCI_PASID_CTL_PRIVMODE_EN __BIT(2+16)	/* Privileged Mode Enable */
 
 /*
  * Extended capability ID: 0x001c

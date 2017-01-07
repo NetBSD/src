@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.20.28.1 2016/11/04 14:49:27 pgoyette Exp $	*/
+/*	$NetBSD: mdsetimage.c,v 1.20.28.2 2017/01/07 08:57:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 2002 Christopher G. Demetriou
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1996\
  Christopher G. Demetriou.  All rights reserved.");
-__RCSID("$NetBSD: mdsetimage.c,v 1.20.28.1 2016/11/04 14:49:27 pgoyette Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.20.28.2 2017/01/07 08:57:00 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: mdsetimage.c,v 1.20.28.1 2016/11/04 14:49:27 pgoyette Exp $");
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

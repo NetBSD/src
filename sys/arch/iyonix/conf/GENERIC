@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.89 2015/09/26 11:16:12 maxv Exp $
+#	$NetBSD: GENERIC,v 1.89.2.1 2017/01/07 08:56:19 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.89 $"
+#ident 		"GENERIC-$Revision: 1.89.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -700,6 +700,8 @@ opl*	at yds?
 # Audio support
 audio*	at audiobus?
 
+spkr*	at audio?		# PC speaker (synthesized)
+
 # MPU 401 UARTs
 mpu*	at cmpci?
 mpu*	at eso?
@@ -848,6 +850,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #pseudo-device	veriexec

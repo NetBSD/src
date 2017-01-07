@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.122.2.3 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.122.2.4 2017/01/07 08:56:51 pgoyette Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.122.2.3 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.122.2.4 2017/01/07 08:56:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -84,6 +84,7 @@ static void nd6_dad_timer(struct ifaddr *);
 static void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
 static void nd6_dad_ns_input(struct ifaddr *);
 static void nd6_dad_na_input(struct ifaddr *);
+static void nd6_dad_duplicated(struct ifaddr *);
 
 static int dad_ignore_ns = 0;	/* ignore NS in DAD - specwise incorrect*/
 static int dad_maxtry = 15;	/* max # of *tries* to transmit DAD packet */
@@ -256,7 +257,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 			}
 		}
 		if (rt)
-			rtfree(rt);
+			rt_unref(rt);
 	}
 	if (ifa == NULL) {
 		/*
@@ -808,31 +809,24 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 */
 			struct nd_defrouter *dr;
 			const struct in6_addr *in6;
-			int s;
 
 			in6 = &ln->r_l3addr.addr6;
 
-			/*
-			 * Lock to protect the default router list.
-			 * XXX: this might be unnecessary, since this function
-			 * is only called under the network software interrupt
-			 * context.  However, we keep it just for safety.
-			 */
-			s = splsoftnet();
-			dr = defrouter_lookup(in6, ln->lle_tbl->llt_ifp);
+			ND6_WLOCK();
+			dr = nd6_defrouter_lookup(in6, ln->lle_tbl->llt_ifp);
 			if (dr)
-				defrtrlist_del(dr, NULL);
+				nd6_defrtrlist_del(dr, NULL);
 			else if (!ip6_forwarding) {
 				/*
 				 * Even if the neighbor is not in the default
 				 * router list, the neighbor may be used
 				 * as a next hop for some destinations
 				 * (e.g. redirect case). So we must
-				 * call rt6_flush explicitly.
+				 * call nd6_rt_flush explicitly.
 				 */
-				rt6_flush(&ip6->ip6_src, ln->lle_tbl->llt_ifp);
+				nd6_rt_flush(&ip6->ip6_src, ln->lle_tbl->llt_ifp);
 			}
-			splx(s);
+			ND6_UNLOCK();
 		}
 		ln->ln_router = is_router;
 	}
@@ -852,8 +846,11 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	if (ln != NULL)
 		LLE_WUNLOCK(ln);
 
-	if (checklink)
-		pfxlist_onlink_check();
+	if (checklink) {
+		ND6_WLOCK();
+		nd6_pfxlist_onlink_check();
+		ND6_UNLOCK();
+	}
 
 	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
@@ -1229,6 +1226,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 {
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct dadq *dp;
+	int duplicate = 0;
 
 #ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
@@ -1286,10 +1284,6 @@ nd6_dad_timer(struct ifaddr *ifa)
 		 * We have transmitted sufficient number of DAD packets.
 		 * See what we've got.
 		 */
-		int duplicate;
-
-		duplicate = 0;
-
 		if (dp->dad_na_icount) {
 			/*
 			 * the check is in nd6_dad_na_input(),
@@ -1306,7 +1300,6 @@ nd6_dad_timer(struct ifaddr *ifa)
 		if (duplicate) {
 			/* (*dp) will be freed in nd6_dad_duplicated() */
 			dp = NULL;
-			nd6_dad_duplicated(ifa);
 		} else {
 			/*
 			 * We are done with DAD.  No NA came, no NS came.
@@ -1329,13 +1322,17 @@ nd6_dad_timer(struct ifaddr *ifa)
 
 done:
 	mutex_exit(&nd6_dad_lock);
+
+	if (duplicate)
+		nd6_dad_duplicated(ifa);
+
 #ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 #endif
 }
 
-void
+static void
 nd6_dad_duplicated(struct ifaddr *ifa)
 {
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;

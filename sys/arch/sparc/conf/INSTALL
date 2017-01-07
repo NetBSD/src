@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.92 2016/04/13 17:32:27 macallan Exp $
+#	$NetBSD: INSTALL,v 1.92.2.1 2017/01/07 08:56:26 pgoyette Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -507,6 +507,8 @@ pseudo-device	loop
 
 #audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
 #audio*		at audiocs0
+
+#spkr*		at audio?		# PC speaker (synthesized)
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m

@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.21 2008/08/01 15:54:09 dillo Exp $ */
+/* $NetBSD: fuse.h,v 1.21.42.1 2017/01/07 08:56:04 pgoyette Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -150,21 +150,19 @@ struct fuse_operations {
 };
 
 
-struct fuse_chan *fuse_mount(const char *, struct fuse_args *);
-struct fuse *fuse_new(struct fuse_chan *, struct fuse_args *,
+struct fuse *fuse_new(struct fuse_args *,
 	const struct fuse_operations *, size_t, void *);
+
+int fuse_mount(struct fuse *, const char *);
+void fuse_unmount(struct fuse *);
+
+int fuse_daemonize(struct fuse *);
 
 int fuse_main_real(int, char **, const struct fuse_operations *, size_t, void *);
 int fuse_loop(struct fuse *);
 struct fuse_context *fuse_get_context(void);
 void fuse_exit(struct fuse *);
 void fuse_destroy(struct fuse *);
-
-void fuse_unmount(const char *, struct fuse_chan *);
-
-struct fuse *fuse_setup(int, char **, const struct fuse_operations *,
-	size_t, char **, int *, int *);
-void fuse_teardown(struct fuse *, char *);
 
 #if FUSE_USE_VERSION == 22
 #define fuse_unmount fuse_unmount_compat22
@@ -173,16 +171,12 @@ void fuse_teardown(struct fuse *, char *);
 void fuse_unmount_compat22(const char *);
 
 #if FUSE_USE_VERSION >= 26
-#define fuse_main(argc, argv, op, arg) \
-            fuse_main_real(argc, argv, op, sizeof(*(op)), arg)
-#define fuse_setup	fuse_setup26
+#define fuse_main(argc, argv, op, user_data) \
+            fuse_main_real(argc, argv, op, sizeof(*(op)), user_data)
 #else
 #define fuse_main(argc, argv, op) \
             fuse_main_real(argc, argv, op, sizeof(*(op)), NULL)
 #endif
-
-struct fuse *fuse_setup26(int, char **, const struct fuse_operations *,
-	size_t, char **, int *, void *);
 
 #ifdef __cplusplus
 }

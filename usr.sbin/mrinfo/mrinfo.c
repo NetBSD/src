@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.29 2011/08/31 13:32:38 joerg Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.29.24.1 2017/01/07 08:57:00 pgoyette Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,7 +80,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.29 2011/08/31 13:32:38 joerg Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.29.24.1 2017/01/07 08:57:00 pgoyette Exp $");
 #endif
 #endif
 
@@ -147,12 +147,15 @@ logit(int severity, int syserr, const char *format, ...)
 	case 0:
 		if (severity > LOG_WARNING)
 			return;
+		/* FALLTHROUGH */
 	case 1:
 		if (severity > LOG_NOTICE)
 			return;
+		/* FALLTHROUGH */
 	case 2:
 		if (severity > LOG_INFO)
 			return;
+		/* FALLTHROUGH */
 	default:
 		if (severity == LOG_WARNING)
 			fprintf(stderr, "warning - ");

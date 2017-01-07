@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.55 2014/09/13 18:08:39 matt Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.55.4.1 2017/01/07 08:56:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.55 2014/09/13 18:08:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.55.4.1 2017/01/07 08:56:14 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -453,8 +453,8 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
-	    physical_start, physical_end - 1);
+	printf("physmemory: %"PRIuPSIZE" pages at 0x%08lx -> 0x%08lx\n",
+	    physmem, physical_start, physical_end - 1);
 #endif
 
 	/*
@@ -742,7 +742,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("page ");
 #endif
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);

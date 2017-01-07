@@ -1,4 +1,4 @@
-/* $NetBSD: csqrtf.c,v 1.1 2007/08/20 16:01:37 drochner Exp $ */
+/* $NetBSD: csqrtf.c,v 1.1.54.1 2017/01/07 08:56:04 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,11 @@ csqrtf(float complex z)
 	x = crealf (z);
 	y = cimagf (z);
 
-	if (y == 0.0f) {
+	/* 
+	 * input is a real number and imaginary part isn't -0.0.
+	 * negative zero is on the branch cut.
+	 */
+	if ((y == 0.0f) && !signbit(y)) {
 		if (x < 0.0f) {
 			w = 0.0f + sqrtf(-x) * I;
 			return w;
@@ -54,12 +58,13 @@ csqrtf(float complex z)
 	}
 
 	if (x == 0.0f) {
-		r = fabsf(y);
-		r = sqrtf(0.5f * r);
-		if (y > 0)
+		if (y > 0) {
+			r = sqrtf(0.5f * y);
 			w = r + r * I;
-		else
+		} else {
+			r = sqrtf(-0.5f * y);
 			w = r - r * I;
+		}
 		return w;
 	}
 
@@ -91,9 +96,9 @@ csqrtf(float complex z)
 		r *= scale;
 	}
 
-	if (y < 0)
-		w = t - r * I;
-	else
+	if (y > 0)
 		w = t + r * I;
+	else
+		w = t - r * I;
 	return w;
 }

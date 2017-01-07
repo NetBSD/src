@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.84 2016/07/13 11:11:53 jmcneill Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.84.2.1 2017/01/07 08:56:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.84 2016/07/13 11:11:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.84.2.1 2017/01/07 08:56:30 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_ntp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.84 2016/07/13 11:11:53 jmcneill
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_ioctl.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+#include <compat/netbsd32/netbsd32_conv.h>
 
 #include <dev/vndvar.h>
 
@@ -421,6 +426,7 @@ netbsd32_to_clockctl_clock_settime(
 	p->tp = NETBSD32PTR64(s32p->tp);
 }
 
+#ifdef NTP
 static inline void
 netbsd32_to_clockctl_ntp_adjtime(
     const struct netbsd32_clockctl_ntp_adjtime *s32p,
@@ -431,6 +437,7 @@ netbsd32_to_clockctl_ntp_adjtime(
 	p->tp = NETBSD32PTR64(s32p->tp);
 	p->retval = s32p->retval;
 }
+#endif
 
 static inline void
 netbsd32_to_ksyms_gsymbol(
@@ -465,9 +472,7 @@ netbsd32_to_npf_ioctl_table(
 	case NPF_CMD_TABLE_LOOKUP:
 	case NPF_CMD_TABLE_ADD:
 	case NPF_CMD_TABLE_REMOVE:
-		p->nct_data.ent.alen = s32p->nct_data.ent.alen;
-		p->nct_data.ent.addr = s32p->nct_data.ent.addr;
-		p->nct_data.ent.mask = s32p->nct_data.ent.mask;
+		p->nct_data.ent = s32p->nct_data.ent;
 		break;
 	case NPF_CMD_TABLE_LIST:
 		p->nct_data.buf.buf = NETBSD32PTR64(s32p->nct_data.buf.buf);
@@ -841,6 +846,7 @@ netbsd32_from_clockctl_clock_settime(
 	NETBSD32PTR32(s32p->tp, p->tp);
 }
 
+#ifdef NTP
 static inline void
 netbsd32_from_clockctl_ntp_adjtime(
     const struct clockctl_ntp_adjtime *p,
@@ -851,6 +857,7 @@ netbsd32_from_clockctl_ntp_adjtime(
 	NETBSD32PTR32(s32p->tp, p->tp);
 	s32p->retval = p->retval;
 }
+#endif
 
 static inline void
 netbsd32_from_ksyms_gsymbol(
@@ -887,9 +894,7 @@ netbsd32_from_npf_ioctl_table(
 	case NPF_CMD_TABLE_LOOKUP:
 	case NPF_CMD_TABLE_ADD:
 	case NPF_CMD_TABLE_REMOVE:
-		s32p->nct_data.ent.alen = p->nct_data.ent.alen;
-		s32p->nct_data.ent.addr = p->nct_data.ent.addr;
-		s32p->nct_data.ent.mask = p->nct_data.ent.mask;
+		s32p->nct_data.ent = p->nct_data.ent;
 		break;
 	case NPF_CMD_TABLE_LIST:
 		NETBSD32PTR32(s32p->nct_data.buf.buf, p->nct_data.buf.buf);
@@ -920,6 +925,31 @@ netbsd32_from_devrescanargs(
 	s32p->numlocators = p->numlocators;
 	NETBSD32PTR32(s32p->locators, p->locators);
 }
+
+#ifdef NTP
+static int
+netbsd32_do_clockctl_ntp_adjtime(struct clockctl_ntp_adjtime *args)
+{
+
+	struct netbsd32_timex ntv32;
+	struct timex ntv;
+	int error;
+
+	error = copyin(args->tp, &ntv32, sizeof(ntv32));
+	if (error)
+		return (error);
+
+	netbsd32_to_timex(&ntv32, &ntv);
+	ntp_adjtime1(&ntv);
+	netbsd32_from_timex(&ntv, &ntv32);
+
+	error = copyout(&ntv32, args->tp, sizeof(ntv));
+	if (error == 0)
+		args->retval = ntp_timestatus();
+
+	return error;
+}
+#endif
 
 /*
  * main ioctl syscall.
@@ -1291,8 +1321,31 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(CLOCKCTL_CLOCK_SETTIME,
 		    clockctl_clock_settime);
 	case CLOCKCTL_NTP_ADJTIME32:
-		IOCTL_STRUCT_CONV_TO(CLOCKCTL_NTP_ADJTIME,
-		    clockctl_ntp_adjtime);
+#ifdef NTP
+		{
+			size = IOCPARM_LEN(CLOCKCTL_NTP_ADJTIME);
+			if (size > sizeof(stkbuf))
+				data = memp = kmem_alloc(size, KM_SLEEP);
+			else
+				data = (void *)stkbuf;
+
+			netbsd32_to_clockctl_ntp_adjtime(
+				(const struct netbsd32_clockctl_ntp_adjtime *)data32,
+				(struct clockctl_ntp_adjtime *)data,
+				CLOCKCTL_NTP_ADJTIME);
+			error = netbsd32_do_clockctl_ntp_adjtime(
+				(struct clockctl_ntp_adjtime *)data);
+			netbsd32_from_clockctl_ntp_adjtime(
+				(const struct clockctl_ntp_adjtime *)data,
+				(struct netbsd32_clockctl_ntp_adjtime *)data32,
+				CLOCKCTL_NTP_ADJTIME);
+
+			break;
+		}
+#else
+		error = ENOTTY;
+		break;
+#endif /* NTP */
 
 	case KIOCGSYMBOL32:
 		IOCTL_STRUCT_CONV_TO(KIOCGSYMBOL, ksyms_gsymbol);

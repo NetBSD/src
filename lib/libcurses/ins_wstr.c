@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.7.8.1 2016/11/04 14:48:53 pgoyette Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.7.8.2 2017/01/07 08:56:04 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.7.8.1 2016/11/04 14:48:53 pgoyette Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.7.8.2 2017/01/07 08:56:04 pgoyette Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -329,6 +329,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 	if (newx > *lnp->lastchp)
 		*lnp->lastchp = newx;
 	__touchline(win, (int) win->cury, sx, (int) win->maxx - 1);
+	__sync(win);
 	return OK;
 #endif /* HAVE_WCHAR */
 }

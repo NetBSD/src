@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.45.2.1 2016/07/26 03:24:17 pgoyette Exp $ */
+/* $NetBSD: sbmac.c,v 1.45.2.2 2017/01/07 08:56:21 pgoyette Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.45.2.1 2016/07/26 03:24:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.45.2.2 2017/01/07 08:56:21 pgoyette Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -917,7 +917,6 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			 */
 			m->m_pkthdr.len = m->m_len = len;
 
-			ifp->if_ipackets++;
 			m_set_rcvif(m, ifp);
 
 
@@ -934,7 +933,6 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			 * interface is in promiscuous mode.
 			 */
 
-			bpf_mtap(ifp, m);
 			/*
 			 * Pass the buffer to the kernel
 			 */

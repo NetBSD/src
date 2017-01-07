@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.164.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.164.2.3 2017/01/07 08:56:51 pgoyette Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.164.2.2 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.164.2.3 2017/01/07 08:56:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -264,7 +264,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	int nxt, ours = 0, rh_present = 0;
 	struct ifnet *deliverifp = NULL;
 	int srcrt = 0;
-	const struct rtentry *rt;
+	struct rtentry *rt = NULL;
 	union {
 		struct sockaddr		dst;
 		struct sockaddr_in6	dst6;
@@ -448,6 +448,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		goto bad;
 	}
 
+	ro = percpu_getref(ip6_forward_rt_percpu);
 	/*
 	 * Multicast check
 	 */
@@ -468,7 +469,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			ip6s[IP6_STAT_CANTFORWARD]++;
 			IP6_STAT_PUTREF();
 			in6_ifstat_inc(rcvif, ifs6_in_discard);
-			goto bad;
+			goto bad_unref;
 		}
 		deliverifp = rcvif;
 		goto hbhcheck;
@@ -479,7 +480,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	/*
 	 *  Unicast check
 	 */
-	rt = rtcache_lookup2(&ip6_forward_rt, &u.dst, 1, &hit);
+	rt = rtcache_lookup2(ro, &u.dst, 1, &hit);
 	if (hit)
 		IP6_STATINC(IP6_STAT_FORWARD_CACHEHIT);
 	else
@@ -525,7 +526,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			    ip6_sprintf(&ip6->ip6_src),
 			    ip6_sprintf(&ip6->ip6_dst));
 
-			goto bad;
+			goto bad_unref;
 		}
 	}
 
@@ -571,7 +572,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	if (!ip6_forwarding) {
 		IP6_STATINC(IP6_STAT_CANTFORWARD);
 		in6_ifstat_inc(rcvif, ifs6_in_discard);
-		goto bad;
+		goto bad_unref;
 	}
 
   hbhcheck:
@@ -610,6 +611,8 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 #if 0	/*touches NULL pointer*/
 			in6_ifstat_inc(rcvif, ifs6_in_discard);
 #endif
+			rtcache_unref(rt, ro);
+			percpu_putref(ip6_forward_rt_percpu);
 			return;	/* m have already been freed */
 		}
 
@@ -633,12 +636,16 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			icmp6_error(m, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_HEADER,
 				    (char *)&ip6->ip6_plen - (char *)ip6);
+			rtcache_unref(rt, ro);
+			percpu_putref(ip6_forward_rt_percpu);
 			return;
 		}
 		IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m, sizeof(struct ip6_hdr),
 			sizeof(struct ip6_hbh));
 		if (hbh == NULL) {
 			IP6_STATINC(IP6_STAT_TOOSHORT);
+			rtcache_unref(rt, ro);
+			percpu_putref(ip6_forward_rt_percpu);
 			return;
 		}
 		KASSERT(IP6_HDR_ALIGNED_P(hbh));
@@ -662,7 +669,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	if (m->m_pkthdr.len - sizeof(struct ip6_hdr) < plen) {
 		IP6_STATINC(IP6_STAT_TOOSHORT);
 		in6_ifstat_inc(rcvif, ifs6_in_truncated);
-		goto bad;
+		goto bad_unref;
 	}
 	if (m->m_pkthdr.len > sizeof(struct ip6_hdr) + plen) {
 		if (m->m_len == m->m_pkthdr.len) {
@@ -692,13 +699,17 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			SOFTNET_UNLOCK();
 
 			if (error != 0) {
+				rtcache_unref(rt, ro);
+				percpu_putref(ip6_forward_rt_percpu);
 				IP6_STATINC(IP6_STAT_CANTFORWARD);
 				goto bad;
 			}
 		}
 		if (!ours)
-			goto bad;
+			goto bad_unref;
 	} else if (!ours) {
+		rtcache_unref(rt, ro);
+		percpu_putref(ip6_forward_rt_percpu);
 		ip6_forward(m, srcrt);
 		return;
 	}
@@ -718,7 +729,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
 		IP6_STATINC(IP6_STAT_BADSCOPE);
 		in6_ifstat_inc(rcvif, ifs6_in_addrerr);
-		goto bad;
+		goto bad_unref;
 	}
 
 	/*
@@ -737,6 +748,12 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	IP6_STATINC(IP6_STAT_DELIVERED);
 	in6_ifstat_inc(deliverifp, ifs6_in_deliver);
 	nest = 0;
+
+	if (rt != NULL) {
+		rtcache_unref(rt, ro);
+		rt = NULL;
+	}
+	percpu_putref(ip6_forward_rt_percpu);
 
 	rh_present = 0;
 	while (nxt != IPPROTO_DONE) {
@@ -789,8 +806,13 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		SOFTNET_UNLOCK();
 	}
 	return;
+
+ bad_unref:
+	rtcache_unref(rt, ro);
+	percpu_putref(ip6_forward_rt_percpu);
  bad:
 	m_freem(m);
+	return;
 }
 
 /*

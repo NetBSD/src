@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.15 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.15.2.1 2017/01/07 08:56:33 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.15 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.15.2.1 2017/01/07 08:56:33 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -336,6 +336,7 @@ lii_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ec.ec_capabilities = ETHERCAP_VLAN_MTU;
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
 
 	if (pmf_device_register(self, NULL, NULL))
@@ -997,9 +998,6 @@ lii_rxintr(struct lii_softc *sc)
 		/* Copy the packet withhout the FCS */
 		m->m_pkthdr.len = m->m_len = size;
 		memcpy(mtod(m, void *), &rxp->rxp_data[0], size);
-		++ifp->if_ipackets;
-
-		bpf_mtap(ifp, m);
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
@@ -1048,7 +1046,7 @@ lii_txintr(struct lii_softc *sc)
 	}
 
 	if (sc->sc_free_tx_slots)
-		lii_start(ifp);
+		if_schedule_deferred_start(ifp);
 }
 
 static int

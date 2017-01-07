@@ -1,5 +1,5 @@
 #
-#	$NetBSD: DUOVERO,v 1.1.2.2 2016/11/04 14:49:00 pgoyette Exp $
+#	$NetBSD: DUOVERO,v 1.1.2.3 2017/01/07 08:56:13 pgoyette Exp $
 #
 #	DUOOVERO -- Gumstix. Inc. DuoVero COMS platforms kernel
 #
@@ -317,6 +317,7 @@ pseudo-device	wsfont
 pseudo-device	drvctl
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #pseudo-device	veriexec

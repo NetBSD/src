@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.1.10.1 2017/01/07 08:57:01 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,3 +50,6 @@ message dobootblks
 
 message set_kernel_1
 {Kernel (GENERIC)}
+
+message set_kernel_2
+{Kernel (GENERIC_USB)}

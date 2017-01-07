@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.63 2012/04/21 12:27:27 roy Exp $
+.\"	$NetBSD: curses.3,v 1.63.14.1 2017/01/07 08:56:04 pgoyette Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)curses.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 5, 2012
+.Dd January 5, 2017
 .Dt CURSES 3
 .Os
 .Sh NAME
@@ -215,12 +215,15 @@ must be called before any of the other routines that deal with color are used.
 .It reset_prog_mode Ta Xr curses_tty 3
 .It reset_shell_mode Ta Xr curses_tty 3
 .It resetty Ta Xr curses_tty 3
+.It resize_term Ta Xr curses_screen 3
 .It resizeterm Ta Xr curses_screen 3
 .It savetty Ta Xr curses_tty 3
 .It scanw Ta Xr curses_scanw 3
 .It scrl Ta Xr curses_scroll 3
 .It scroll Ta Xr curses_scroll 3
 .It scrollok Ta Xr curses_scroll 3
+.It set_escdelay Ta Xr curses_input 3
+.It set_tabsize Ta Xr curses_screen 3
 .It set_term Ta Xr curses_screen 3
 .It setscrreg Ta Xr curses_scroll 3
 .It setterm Ta Xr curses_screen 3
@@ -309,6 +312,9 @@ The maximum delay in milliseconds between characters in multi-character
 keystrokes (such are arrow keys) where the adjacent characters are considered
 part of the same multi-character sequence.
 The default is 300 milliseconds.
+.It TABSIZE
+The number of spaces making up a tab.
+The default is 8 if not specified by the terminal description.
 .It LINES
 The number of lines in the terminal if set.
 is usually automatically configured by querying the kernel.

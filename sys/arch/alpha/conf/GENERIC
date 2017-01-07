@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.368.2.1 2016/11/04 14:48:56 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.368.2.2 2017/01/07 08:56:09 pgoyette Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.368.2.1 $"
+ident		"GENERIC-$Revision: 1.368.2.2 $"
 
 maxusers 32
 
@@ -363,6 +363,7 @@ viaide* at	pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 pcn*	at	pci? dev ? function ?		# AMD PCnet-PCI Ethernet
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 pm2fb*	at	pci? dev ? function ?		# 3Dlabs Permedia 2 Graphics
+pm3fb*	at	pci? dev ? function ?		# 3Dlabs Permedia 3 Graphics
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
 radeonfb* at	pci? dev ? function ?		# ATI/AMD Radeon Graphics
@@ -439,7 +440,7 @@ pckbd*	at	pckbc?				# PC keyboard (kbd port)
 pms*	at	pckbc?				# PS/2-style mouse (aux port)
 attimer* at	isa?				# AT Timer
 pcppi*	at	isa?				# PC prog. periph. interface
-spkr0	at	pcppi?				# IBM BASIC emulation
+spkr*	at	pcppi?				# IBM BASIC emulation
 isabeep0 at	pcppi?				# "keyboard" beep
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
@@ -708,6 +709,8 @@ midi*	at midibus?
 midi*	at pcppi?
 midi*	at sb?
 
+spkr*	at audio?		# PC speaker (synthesized)
+
 # Workstation Console attachments
 wsdisplay0	at	wsemuldisplaydev? console 1
 wsdisplay*	at	wsemuldisplaydev?
@@ -777,6 +780,7 @@ pseudo-device	btuart			# Bluetooth HCI UART (H4)
 pseudo-device	putter			# for puffs and pud
 
 #options	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #

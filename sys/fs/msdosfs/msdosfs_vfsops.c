@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.118.2.1 2016/07/20 23:47:56 pgoyette Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.118.2.2 2017/01/07 08:56:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.118.2.1 2016/07/20 23:47:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.118.2.2 2017/01/07 08:56:47 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -911,9 +911,6 @@ msdosfs_unmount(struct mount *mp, int mntflags)
 		    vp->v_writecount, vp->v_holdcnt);
 		printf("mount %p, op %p\n",
 		    vp->v_mount, vp->v_op);
-		printf("freef %p, freeb %p, mount %p\n",
-		    vp->v_freelist.tqe_next, vp->v_freelist.tqe_prev,
-		    vp->v_mount);
 		printf("cleanblkhd %p, dirtyblkhd %p, numoutput %d, type %d\n",
 		    vp->v_cleanblkhd.lh_first,
 		    vp->v_dirtyblkhd.lh_first,

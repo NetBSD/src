@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.119 2016/07/14 04:00:46 msaitoh Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.119.2.1 2017/01/07 08:56:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.119 2016/07/14 04:00:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.119.2.1 2017/01/07 08:56:33 pgoyette Exp $");
 
 
 
@@ -777,16 +777,8 @@ vr_rxeof(struct vr_softc *sc)
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
 
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = total_len;
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet, but
-		 * don't pass it up to the ether_input() layer unless it's
-		 * a broadcast packet, multicast packet, matches our ethernet
-		 * address or the interface is in promiscuous mode.
-		 */
-		bpf_mtap(ifp, m);
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
@@ -987,7 +979,7 @@ vr_intr(void *arg)
 	CSR_WRITE_2(sc, VR_IMR, VR_INTRS);
 
 	if (dotx)
-		vr_start(ifp);
+		if_schedule_deferred_start(ifp);
 
 	return (handled);
 }
@@ -1745,6 +1737,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->vr_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(self),

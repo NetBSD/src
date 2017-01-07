@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.159.2.1 2016/07/16 20:40:30 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.159.2.2 2017/01/07 08:56:53 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -30,7 +30,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	mman.h module.h mount.h mqueue.h msg.h msgbuf.h mtio.h mutex.h \
 	namei.h null.h \
 	param.h pcu.h pipe.h pmc.h poll.h pool.h power.h proc.h \
-	protosw.h pset.h ptrace.h ptree.h \
+	protosw.h pset.h psref.h ptrace.h ptree.h \
 	queue.h quota.h quotactl.h \
 	ras.h rbtree.h reboot.h radioio.h resource.h resourcevar.h rmd160.h \
 	rnd.h rndio.h rwlock.h \

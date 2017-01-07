@@ -455,4 +455,4 @@ This extension is advertised in the SSH_FXP_VERSION hello with version
 "1".
 
 $OpenBSD: PROTOCOL,v 1.30 2016/04/08 06:35:54 djm Exp $
-$NetBSD: PROTOCOL,v 1.7.2.1 2016/08/06 00:18:38 pgoyette Exp $
+$NetBSD: PROTOCOL,v 1.7.2.2 2017/01/07 08:53:41 pgoyette Exp $

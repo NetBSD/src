@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.53 2012/02/08 17:55:21 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.53.28.1 2017/01/07 08:56:27 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -37,7 +37,7 @@
 #include "opt_memsize.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2012/02/08 17:55:21 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53.28.1 2017/01/07 08:56:27 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ main(int argc, char *argv[])
 	}
 	boothowto = tmpopt;
 
-	uvm_setpagesize();
+	uvm_md_init();
 	uvmexp.ncolors = 2;
 
 	pmap_bootstrap();

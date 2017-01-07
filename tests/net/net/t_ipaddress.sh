@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipaddress.sh,v 1.2.2.1 2016/11/04 14:49:24 pgoyette Exp $
+#	$NetBSD: t_ipaddress.sh,v 1.2.2.2 2017/01/07 08:56:56 pgoyette Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,61 +25,37 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-SERVER="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
-SERVER6="$SERVER -lrumpnet_netinet6"
 SOCK_LOCAL=unix://commsock1
 BUS=bus
 
-DEBUG=false
-
-check_entry()
-{
-	local ip=$(echo $1 |sed 's/\./\\./g')
-	local word=$2
-
-	atf_check -s exit:0 -o match:"$word" -e ignore -x \
-	    "rump.netstat -rn | grep ^'$ip'"
-}
-
-check_entry_fail()
-{
-	local ip=$(echo $1 |sed 's/\./\\./g')
-	local flags=$2  # Not used currently
-
-	atf_check -s not-exit:0 -e ignore -x \
-	    "rump.netstat -rn | grep ^'$ip'"
-}
+DEBUG=${DEBUG:-false}
 
 test_same_address()
 {
 	local ip=10.0.0.1
 	local net=10.0.0/24
 
-	atf_check -s exit:0 ${SERVER} ${SOCK_LOCAL}
+	rump_server_start $SOCK_LOCAL
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+
 	export RUMP_SERVER=$SOCK_LOCAL
 
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr ${BUS}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 $ip/24
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
 
 	$DEBUG && rump.netstat -nr -f inet
 
-	check_entry $ip UHl
-	check_entry $ip lo0
-	check_entry $ip 'link#2'
-	check_entry $net U
-	check_entry $net shmif0
-	check_entry $net 'link#2'
+	check_route $ip 'link#2' UHl lo0
+	check_route $net 'link#2' UC shmif0
 
 	# Delete the address
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 $ip delete
 
 	$DEBUG && rump.netstat -nr -f inet
 
-	check_entry_fail $ip
-	check_entry_fail $net
+	check_route_no_entry $ip
+	check_route_no_entry $net
 
 	# Assign the same address again
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 $ip/24
@@ -87,20 +63,18 @@ test_same_address()
 
 	$DEBUG && rump.netstat -nr -f inet
 
-	check_entry $ip UHl
-	check_entry $ip lo0
-	check_entry $ip 'link#2'
-	check_entry $net U
-	check_entry $net shmif0
-	check_entry $net 'link#2'
+	check_route $ip 'link#2' UHl lo0
+	check_route $net 'link#2' UC shmif0
 
 	# Delete the address again
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 $ip delete
 
 	$DEBUG && rump.netstat -nr -f inet
 
-	check_entry_fail $ip
-	check_entry_fail $net
+	check_route_no_entry $ip
+	check_route_no_entry $net
+
+	rump_server_destroy_ifaces
 }
 
 test_same_address6()
@@ -108,31 +82,27 @@ test_same_address6()
 	local ip=fc00::1
 	local net=fc00::/64
 
-	atf_check -s exit:0 ${SERVER6} ${SOCK_LOCAL}
+	rump_server_start $SOCK_LOCAL netinet6
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+
 	export RUMP_SERVER=$SOCK_LOCAL
 
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr ${BUS}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 $ip
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
 
 	$DEBUG && rump.netstat -nr -f inet6
 
-	check_entry $ip UHl
-	check_entry $ip lo0
-	check_entry $ip 'link#2'
-	check_entry $net U
-	check_entry $net shmif0
-	check_entry $net 'link#2'
+	check_route $ip 'link#2' UHl lo0
+	check_route $net 'link#2' UC shmif0
 
 	# Delete the address
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 $ip delete
 
 	$DEBUG && rump.netstat -nr -f inet6
 
-	check_entry_fail $ip
-	check_entry_fail $net
+	check_route_no_entry $ip
+	check_route_no_entry $net
 
 	# Assign the same address again
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 $ip
@@ -140,25 +110,26 @@ test_same_address6()
 
 	$DEBUG && rump.netstat -nr -f inet6
 
-	check_entry $ip UHl
-	check_entry $ip lo0
-	check_entry $ip 'link#2'
-	check_entry $net U
-	check_entry $net shmif0
-	check_entry $net 'link#2'
+	check_route $ip 'link#2' UHl lo0
+	check_route $net 'link#2' UC shmif0
 
 	# Delete the address again
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 $ip delete
 
 	$DEBUG && rump.netstat -nr -f inet6
 
-	check_entry_fail $ip
-	check_entry_fail $net
+	check_route_no_entry $ip
+	check_route_no_entry $net
+
+	rump_server_destroy_ifaces
 }
 
 test_auto_linklocal()
 {
-	atf_check -s exit:0 ${SERVER6} ${SOCK_LOCAL}
+
+	rump_server_start $SOCK_LOCAL netinet6
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+
 	export RUMP_SERVER=$SOCK_LOCAL
 
 	#
@@ -168,8 +139,6 @@ test_auto_linklocal()
 	# Check default value
 	atf_check -s exit:0 -o match:"1" rump.sysctl -n net.inet6.ip6.auto_linklocal
 
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr ${BUS}
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
 
@@ -183,8 +152,7 @@ test_auto_linklocal()
 	#
 	atf_check -s exit:0 -o ignore rump.sysctl -w -q net.inet6.ip6.auto_linklocal=0
 
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 create
-	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 linkstr ${BUS}
+	rump_server_add_iface $SOCK_LOCAL shmif1 $BUS
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 up
 	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
 
@@ -192,13 +160,8 @@ test_auto_linklocal()
 
 	# IPv6 link-local address is not set
 	atf_check -s exit:0 -o not-match:"inet6 fe80::" rump.ifconfig shmif1
-}
 
-cleanup()
-{
-
-	$DEBUG && shmif_dumpbus -p - $BUS 2>/dev/null | tcpdump -n -e -r -
-	env RUMP_SERVER=$SOCK_LOCAL rump.halt
+	rump_server_destroy_ifaces
 }
 
 add_test()
@@ -215,6 +178,7 @@ add_test()
 			test_${name}; \
 		}; \
 	    ipaddr_${name}_cleanup() { \
+			$DEBUG && dump; \
 			cleanup; \
 		}"
 	atf_add_test_case "ipaddr_${name}"

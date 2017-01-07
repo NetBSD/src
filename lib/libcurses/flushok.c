@@ -1,4 +1,4 @@
-/*	$NetBSD: flushok.c,v 1.5 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: flushok.c,v 1.5.44.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: flushok.c,v 1.5 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: flushok.c,v 1.5.44.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -48,5 +48,5 @@ flushok(WINDOW *win, bool bf)
 		win->flags |= __FLUSH;
 	else
 		win->flags &= ~__FLUSH;
-	return (OK);
+	return OK;
 }

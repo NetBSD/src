@@ -290,7 +290,7 @@
 #define DFLT_RLIMIT_MEMLOCK 32
 
 /* Default number of 4k pages for RLIMIT_STACK */
-#define DFLT_RLIMIT_STACK 64
+#define DFLT_RLIMIT_STACK 128
 
 /* Directory separator character, usually / or \\ */
 #define DIR_SEP '/'
@@ -1460,7 +1460,7 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.8p8"
+#define PACKAGE_STRING "ntp 4.2.8p9"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
@@ -1469,7 +1469,7 @@
 #define PACKAGE_URL "http://www.ntp.org./"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.8p8"
+#define PACKAGE_VERSION "4.2.8p9"
 
 /* data dir */
 #define PERLLIBDIR "/usr/local/share/ntp/lib"
@@ -1625,7 +1625,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.8p8"
+#define VERSION "4.2.8p9"
 
 /* vsnprintf expands "%m" to strerror(errno) */
 /* #undef VSNPRINTF_PERCENT_M */

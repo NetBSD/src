@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.161 2016/04/13 00:47:01 ozaki-r Exp $
+.\"	$NetBSD: ddb.4,v 1.161.2.1 2017/01/07 08:56:07 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd April 13, 2016
+.Dd December 28, 2016
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -744,12 +744,14 @@ Print a selection of UVM counters and statistics.
 .It Ic show kernhist Oo Ar addr Oc
 Dumps all the kernel histories if no address is specified, or the history
 at the address.
-This command is available only if a kernel is compiled with
-.Cd options KERNHIST
+This command is available only if a kernel is compiled with one or more
+of the kernel history options
+.Cd KERNHIST ,
+.Cd SYSCALL_DEBUG ,
+.Cd USB_DEBUG ,
+.Cd BIOHIST ,
 or
-.Cd options USB_DEBUG
-(or related options) or
-.Cd options UVMHIST .
+.Cd UVMHIST .
 .It Ic show vnode Ns Oo Cm /f Oc Ar address
 Print the vnode at
 .Ar address .

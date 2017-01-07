@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.74.2.1 2016/11/04 14:49:07 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.74.2.2 2017/01/07 08:56:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.74.2.1 2016/11/04 14:49:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.74.2.2 2017/01/07 08:56:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,7 +385,7 @@ netbsd32___utimes50(struct lwp *l, const struct netbsd32___utimes50_args *uap, r
 }
 
 static int
-netbds32_copyout_statvfs(const void *kp, void *up, size_t len)
+netbsd32_copyout_statvfs(const void *kp, void *up, size_t len)
 {
 	struct netbsd32_statvfs *sbuf_32;
 	int error;
@@ -412,7 +412,7 @@ netbsd32_statvfs1(struct lwp *l, const struct netbsd32_statvfs1_args *uap, regis
 	sb = STATVFSBUF_GET();
 	error = do_sys_pstatvfs(l, SCARG_P32(uap, path), SCARG(uap, flags), sb);
 	if (error == 0)
-		error = netbds32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
+		error = netbsd32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
 	STATVFSBUF_PUT(sb);
 	return error;
 }
@@ -431,7 +431,7 @@ netbsd32_fstatvfs1(struct lwp *l, const struct netbsd32_fstatvfs1_args *uap, reg
 	sb = STATVFSBUF_GET();
 	error = do_sys_fstatvfs(l, SCARG(uap, fd), SCARG(uap, flags), sb);
 	if (error == 0)
-		error = netbds32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
+		error = netbsd32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
 	STATVFSBUF_PUT(sb);
 	return error;
 }
@@ -446,7 +446,7 @@ netbsd32_getvfsstat(struct lwp *l, const struct netbsd32_getvfsstat_args *uap, r
 	} */
 
 	return do_sys_getvfsstat(l, SCARG_P32(uap, buf), SCARG(uap, bufsize),
-	    SCARG(uap, flags), netbds32_copyout_statvfs,
+	    SCARG(uap, flags), netbsd32_copyout_statvfs,
 	    sizeof (struct netbsd32_statvfs), retval);
 }
 
@@ -467,7 +467,7 @@ netbsd32___fhstatvfs140(struct lwp *l, const struct netbsd32___fhstatvfs140_args
 	    SCARG(uap, flags));
 
 	if (error == 0)
-		error = netbds32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
+		error = netbsd32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
 	STATVFSBUF_PUT(sb);
 
 	return error;

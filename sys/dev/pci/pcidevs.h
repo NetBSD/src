@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1246.2.2 2016/11/04 14:49:10 pgoyette Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1246.2.3 2017/01/07 08:56:34 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1271 2016/10/28 07:25:25 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1275 2016/12/27 14:09:57 msaitoh Exp
  */
 
 /*
@@ -1514,8 +1514,28 @@
 #define	PCI_PRODUCT_ATI_RADEON_X850XT_S	0x5d72		/* Radeon X850 XT Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_X700	0x5e4b		/* Radeon X700 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_X700_S	0x5e6b		/* Radeon X700 Pro Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_HD8790M	0x6606		/* Radeon HD 8790M */
+#define	PCI_PRODUCT_ATI_RADEON_HD8530M	0x6607		/* Radeon HD 8530M */
+#define	PCI_PRODUCT_ATI_RADEON_HD8600	0x6610		/* Radeon HD 8600 */
+#define	PCI_PRODUCT_ATI_RADEON_HD8570	0x6611		/* Radeon HD 8570 */
+#define	PCI_PRODUCT_ATI_RADEON_HD8500	0x6613		/* Radeon HD 8500 */
+#define	PCI_PRODUCT_ATI_RADEON_RX460	0x67ef		/* Radeon RX460 */
+#define	PCI_PRODUCT_ATI_RADEON_HD8800M	0x682b		/* Radeon HD 8800M */
+#define	PCI_PRODUCT_ATI_RADEON_HD7730M	0x682f		/* Radeon HD 7730M */
+#define	PCI_PRODUCT_ATI_RADEON_HD7800M	0x6830		/* Radeon HD 7800M */
+#define	PCI_PRODUCT_ATI_RADEON_HD7700M	0x6831		/* Radeon HD 7700M */
+#define	PCI_PRODUCT_ATI_RADEON_HD7730	0x6837		/* Radeon HD 7730 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7700	0x683b		/* Radeon HD 7700 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7770	0x683d		/* Radeon HD 7770 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7750	0x683f		/* Radeon HD 7750 */
+#define	PCI_PRODUCT_ATI_RADEON_HD7600M	0x6840		/* Radeon HD 7600M */
+#define	PCI_PRODUCT_ATI_RADEON_HD7550M	0x6841		/* Radeon HD 7550M */
+#define	PCI_PRODUCT_ATI_RADEON_HD7000M	0x6842		/* Radeon HD 7000M */
+#define	PCI_PRODUCT_ATI_RADEON_HD7670M	0x6843		/* Radeon HD 7670M */
+#define	PCI_PRODUCT_ATI_RADEON_HD7400	0x6849		/* Radeon HD 7400 */
 #define	PCI_PRODUCT_ATI_RADEON_HD5870	0x6898		/* Radeon HD 5870 Cypress */
 #define	PCI_PRODUCT_ATI_RADEON_HD5600_RD	0x68c1		/* Radeon HD 5600 Redwood */
+#define	PCI_PRODUCT_ATI_RADEON_HD5570	0x68d9		/* Radeon HD 5570 */
 #define	PCI_PRODUCT_ATI_RADEON_HD5450	0x68f9		/* Radeon HD 5450 */
 #define	PCI_PRODUCT_ATI_RADEON_X1300	0x7146		/* Radeon X1300 Series (RV515) */
 #define	PCI_PRODUCT_ATI_RADEON_X1300_S	0x7166		/* Radeon X1300 Series (RV515) Secondary */
@@ -1552,7 +1572,22 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD3650	0x9598		/* Radeon HD3650 */
 #define	PCI_PRODUCT_ATI_RADEON_HD3400_M82	0x95c4		/* Mobility Radeon HD 3400 Series (M82) */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250_S	0x95c5		/* Radeon HD4250 GPU (RV610) Secondary */
-#define	PCI_PRODUCT_ATI_RADEON_HD6520G	0x9647		/* Radeon HD6520G */
+#define	PCI_PRODUCT_ATI_RS780_HDMI_AUDIO	0x960f		/* RS780 HDMI Audio */
+#define	PCI_PRODUCT_ATI_RADEON_HD3200	0x9610		/* Radeon HD 3200 */
+#define	PCI_PRODUCT_ATI_RADEON_HD3100	0x9611		/* Radeon HD 3100 */
+#define	PCI_PRODUCT_ATI_RADEON_HD3200M	0x9612		/* Mobility Radeon HD 3200 */
+#define	PCI_PRODUCT_ATI_RADEON_3100	0x9613		/* Mobility Radeon 3100 */
+#define	PCI_PRODUCT_ATI_RADEON_HD3300	0x9614		/* Radeon HD 3300 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6550D	0x9640		/* Radeon HD 6550D */
+#define	PCI_PRODUCT_ATI_RADEON_HD6620G	0x9641		/* Radeon HD 6620G */
+#define	PCI_PRODUCT_ATI_RADEON_HD6370D	0x9642		/* Radeon HD 6370D */
+#define	PCI_PRODUCT_ATI_RADEON_HD6380G	0x9643		/* Radeon HD 6380G */
+#define	PCI_PRODUCT_ATI_RADEON_HD6410D_1	0x9644		/* Radeon HD 6410D */
+#define	PCI_PRODUCT_ATI_RADEON_HD6410D_2	0x9645		/* Radeon HD 6410D */
+#define	PCI_PRODUCT_ATI_RADEON_HD6520G	0x9647		/* Radeon HD 6520G */
+#define	PCI_PRODUCT_ATI_RADEON_HD6480G_1	0x9648		/* Radeon HD 6480G */
+#define	PCI_PRODUCT_ATI_RADEON_HD6480G_2	0x9649		/* Radeon HD 6480G */
+#define	PCI_PRODUCT_ATI_RADEON_HD6530D	0x964a		/* Radeon HD 6530D */
 #define	PCI_PRODUCT_ATI_RADEON_HD4200	0x9712		/* Radeon HD4200 Mobility */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250	0x9715		/* Radeon HD4250 GPU (RS880) */
 #define	PCI_PRODUCT_ATI_RADEON_HD6310	0x9802		/* Radeon HD6310 Graphics */
@@ -1565,6 +1600,8 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD4350_HD	0xaa38		/* Radeon HD4350 HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_HD5600_HDMI	0xaa60		/* Redwood HDMI Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD54XX_HDA	0xaa68		/* Radeon HD 54xx Audio */
+#define	PCI_PRODUCT_ATI_RADEON_HD7700_HDA	0xaab0		/* Radeon HD 7700 HD Audio */
+#define	PCI_PRODUCT_ATI_RADEON_RX460_HDA	0xaae0		/* Radeon RX460 HD Audio */
 
 /* Auravision products */
 #define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */
@@ -1613,6 +1650,7 @@
 #define	PCI_PRODUCT_ATHEROS_AR9300	0x0030		/* AR9300 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR9485	0x0032		/* AR9485 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR9462	0x0034		/* AR9462 Wireless LAN */
+#define	PCI_PRODUCT_ATHEROS_AR9565	0x0036		/* AR9565 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_QCA988X	0x003c		/* QCA986x/988x Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR5201_AP	0x0207		/* AR5201 Wireless LAN Reference Card (Early AP11) */
 #define	PCI_PRODUCT_ATHEROS_AR5201_DEFAULT	0x1107		/* AR5201 Wireless LAN (no eeprom) */
@@ -2901,7 +2939,7 @@
 #define	PCI_PRODUCT_INTEL_82598AT	0x10c8		/* 82598 10 Gigabit AT */
 #define	PCI_PRODUCT_INTEL_82576_COPPER	0x10c9		/* 82576 1000BaseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82576_VF	0x10ca		/* 82576 1000BaseT Ethernet Virtual Function */
-#define	PCI_PRODUCT_INTEL_82801H_IGP_M_V	0x10cb		/* i82801H IGP (MV) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IGP_M_V	0x10cb		/* i82801I IGP (MV) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801J_R_BM_LM	0x10cc		/* i82567LM-2 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801J_R_BM_LF	0x10cd		/* i82567LF-2 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801J_R_BM_V	0x10ce		/* i82567V-2 LAN Controller */
@@ -3021,10 +3059,15 @@
 #define	PCI_PRODUCT_INTEL_XL710_VF	0x154c		/* XL710 Ethernet Virtual Function */
 #define	PCI_PRODUCT_INTEL_82599_SFP_SF2	0x154d		/* 82599 (SFP+) 10 GbE Controller */
 #define	PCI_PRODUCT_INTEL_82599EN_SFP	0x1557		/* 82599 10 GbE Controller */
+#define	PCI_PRODUCT_INTEL_82599_QSFP_SF_QP	0x1558		/* X520 10 GbE QSFP+ */
 #define	PCI_PRODUCT_INTEL_I218_V	0x1559		/* I218-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I218_LM	0x155a		/* I218-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_X540_BYPASS	0x155c		/* X540 10 GbE Bypass */
 #define	PCI_PRODUCT_INTEL_82599_BYPASS	0x155d		/* 82599 10 GbE Bypass */
+#define	PCI_PRODUCT_INTEL_X540T1	0x1560		/* X540 10G Ethernet */
+#define	PCI_PRODUCT_INTEL_X550T	0x1563		/* X550 10G Ethernet */
+#define	PCI_PRODUCT_INTEL_X550_VF_HV	0x1564		/* X550 10 GbE Virtual Function */
+#define	PCI_PRODUCT_INTEL_X550_VF	0x1565		/* X550 10 GbE Virtual Function */
 #define	PCI_PRODUCT_INTEL_I219_LM	0x156f		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V	0x1570		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_XL710_VF_HV	0x1571		/* XL710 Ethernet Virtual Function */
@@ -3045,6 +3088,7 @@
 #define	PCI_PRODUCT_INTEL_I219_LM2	0x15b7		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V2	0x15b8		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM3	0x15b9		/* I219-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_X550T1	0x15d1		/* X550 10G Ethernet */
 #define	PCI_PRODUCT_INTEL_I219_V5	0x15d6		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM4	0x15d7		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V4	0x15d8		/* I219-V Ethernet Connection */

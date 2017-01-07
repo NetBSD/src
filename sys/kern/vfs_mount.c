@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.40.2.3 2016/11/04 14:49:17 pgoyette Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.40.2.4 2017/01/07 08:56:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.40.2.3 2016/11/04 14:49:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.40.2.4 2017/01/07 08:56:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -402,7 +402,7 @@ again:
 		TAILQ_INSERT_AFTER(&mp->mnt_vnodelist, vp, mvp, v_mntvnodes);
 		mvp->v_usecount = 1;
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, 0, true /* wait */);
+		error = vcache_vget(vp);
 		KASSERT(error == 0 || error == ENOENT);
 	} while (error != 0);
 
@@ -509,8 +509,8 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 	int error, busy = 0, when = 0;
 	struct vflush_ctx ctx;
 
-	/* First, flush out any vnode references from vrele_list. */
-	vrele_flush();
+	/* First, flush out any vnode references from deferred vrele list. */
+	vfs_drainvnodes();
 
 	vfs_vnode_iterator_init(mp, &marker);
 
@@ -553,7 +553,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		if (vp != NULL) {
 			mutex_enter(vp->v_interlock);
 			mutex_exit(&mntvnode_lock);
-			error = vget(vp, 0, true /* wait */);
+			error = vcache_vget(vp);
 			if (error == ENOENT)
 				continue;
 			else if (error == 0)

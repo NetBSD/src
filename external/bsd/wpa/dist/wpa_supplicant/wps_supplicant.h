@@ -33,6 +33,7 @@ int wpas_wps_start_pbc(struct wpa_supplicant *wpa_s, const u8 *bssid,
 		       int p2p_group);
 int wpas_wps_start_pin(struct wpa_supplicant *wpa_s, const u8 *bssid,
 		       const char *pin, int p2p_group, u16 dev_pw_id);
+void wpas_wps_pbc_overlap(struct wpa_supplicant *wpa_s);
 int wpas_wps_cancel(struct wpa_supplicant *wpa_s);
 int wpas_wps_start_reg(struct wpa_supplicant *wpa_s, const u8 *bssid,
 		       const char *pin, struct wps_new_ap_settings *settings);
@@ -84,6 +85,7 @@ int wpas_er_wps_nfc_report_handover(struct wpa_supplicant *wpa_s,
 void wpas_wps_update_ap_info(struct wpa_supplicant *wpa_s,
 			     struct wpa_scan_results *scan_res);
 void wpas_wps_notify_assoc(struct wpa_supplicant *wpa_s, const u8 *bssid);
+int wpas_wps_reenable_networks_pending(struct wpa_supplicant *wpa_s);
 
 #else /* CONFIG_WPS */
 
@@ -144,6 +146,12 @@ static inline void wpas_wps_update_ap_info(struct wpa_supplicant *wpa_s,
 static inline void wpas_wps_notify_assoc(struct wpa_supplicant *wpa_s,
 					 const u8 *bssid)
 {
+}
+
+static inline int
+wpas_wps_reenable_networks_pending(struct wpa_supplicant *wpa_s)
+{
+	return 0;
 }
 
 #endif /* CONFIG_WPS */

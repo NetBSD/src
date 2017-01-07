@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.259.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.259.2.3 2017/01/07 08:56:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.259.2.2 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.259.2.3 2017/01/07 08:56:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -361,10 +361,12 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			error = EHOSTUNREACH;
 			goto bad;
 		}
-		/*
-		 * XXX NOMPSAFE: depends on accessing rt->rt_ifa isn't racy.
-		 * Revisit when working on rtentry MP-ification.
-		 */
+		if (ifa_is_destroying(rt->rt_ifa)) {
+			rtcache_unref(rt, ro);
+			IP_STATINC(IP_STAT_NOROUTE);
+			error = EHOSTUNREACH;
+			goto bad;
+		}
 		ifa_acquire(rt->rt_ifa, &psref_ia);
 		ia = ifatoia(rt->rt_ifa);
 		ifp = rt->rt_ifp;
@@ -765,6 +767,7 @@ sendit:
 	}
 done:
 	ia4_release(ia, &psref_ia);
+	rtcache_unref(rt, ro);
 	if (ro == &iproute) {
 		rtcache_free(&iproute);
 	}
@@ -1543,6 +1546,7 @@ ip_get_membership(const struct sockopt *sopt, struct ifnet **ifp,
 		if (error != 0)
 			return error;
 		*ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp : NULL;
+		rtcache_unref(rt, &ro);
 		rtcache_free(&ro);
 	} else {
 		*ifp = ip_multicast_if(&mreq.imr_interface, NULL);

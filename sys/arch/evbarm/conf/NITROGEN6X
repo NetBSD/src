@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.7 2015/12/31 11:53:18 ryo Exp $
+# $NetBSD: NITROGEN6X,v 1.7.2.1 2017/01/07 08:56:13 pgoyette Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -409,6 +409,7 @@ pseudo-device	wsfont
 pseudo-device	drvctl
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #

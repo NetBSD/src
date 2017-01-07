@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.115.8.1 2016/11/04 14:49:03 pgoyette Exp $
+#	$NetBSD: files.pmax,v 1.115.8.2 2017/01/07 08:56:23 pgoyette Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -15,6 +15,12 @@ attach mainbus at root
 device cpu				# not optional
 attach cpu at mainbus
 file arch/pmax/pmax/cpu.c		cpu
+
+#
+# common mips stuff
+#
+file arch/mips/mips/bus_dma.c
+
 
 # Model support option headers
 defflag	DEC_3100	# DECstation 2100, 3100 (kn01)
@@ -122,8 +128,7 @@ attach le at ibus with le_pmax:		le24, le_dec_subr
 file	arch/pmax/ibus/if_le_ibus.c	le_pmax
 
 file	arch/pmax/pmax/autoconf.c
-file	arch/pmax/pmax/bus_dma.c
-file	arch/pmax/pmax/bus_space.c
+file	arch/pmax/pmax/bus.c
 file	arch/pmax/pmax/disksubr.c
 file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/mainbus.c
@@ -133,7 +138,6 @@ file	arch/pmax/pmax/sysconf.c
 file	arch/pmax/stand/common/callvec.c
 file	dev/cons.c
 
-file	dev/bus_dma/bus_dmamem_common.c
 
 #
 # Workstation console devices
@@ -177,5 +181,7 @@ file   dev/tc/xcfb.c                   xcfb needs-flag
 # Machine-independent USB device support
 #
 include "dev/usb/files.usb"
+
+include "dev/bluetooth/files.bluetooth"
 
 include "arch/pmax/conf/majors.pmax"

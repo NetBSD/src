@@ -1,4 +1,4 @@
-#	$NetBSD: t_change.sh,v 1.4.12.1 2016/07/26 03:24:24 pgoyette Exp $
+#	$NetBSD: t_change.sh,v 1.4.12.2 2017/01/07 08:56:56 pgoyette Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,7 +29,7 @@ netserver=\
 "rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
 export RUMP_SERVER=unix://commsock
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 atf_test_case route_change_reject2blackhole cleanup
 route_change_reject2blackhole_head()

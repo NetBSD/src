@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.23 2013/10/01 11:41:14 blymn Exp $	*/
+/*	$NetBSD: getstr.c,v 1.23.8.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.23 2013/10/01 11:41:14 blymn Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.23.8.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -142,10 +142,10 @@ int
 wgetnstr(WINDOW *win, char *str, int n)
 {
 	if (n < 1)
-		return (ERR);
+		return ERR;
 	if (n == 1) {
 		str[0] = '\0';
-		return (ERR);
+		return ERR;
 	}
 	return __wgetnstr(win, str, n);
 }
@@ -254,8 +254,8 @@ __wgetnstr(WINDOW *win, char *str, int n)
 
 	if (c == ERR) {
 		*str = '\0';
-		return (ERR);
+		return ERR;
 	}
 	*str = '\0';
-	return (OK);
+	return OK;
 }

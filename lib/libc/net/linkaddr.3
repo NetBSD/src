@@ -1,4 +1,4 @@
-.\"	$NetBSD: linkaddr.3,v 1.10 2003/08/07 16:43:11 agc Exp $
+.\"	$NetBSD: linkaddr.3,v 1.10.80.1 2017/01/07 08:56:03 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)linkaddr.3	8.1 (Berkeley) 7/28/93
 .\"
-.Dd July 28, 1993
+.Dd December 7, 2016
 .Dt LINK_ADDR 3
 .Os
 .Sh NAME
@@ -112,9 +112,12 @@ and
 functions appeared in
 .Bx 4.3 Reno .
 .Sh BUGS
-The returned values for
+The returned string for
 .Fn link_ntoa
-reside in a static memory area.
+resides in a static memory area.
+If it would overflow this area,
+.Fn link_ntoa
+silently truncates the result.
 .Pp
 The function
 .Fn link_addr

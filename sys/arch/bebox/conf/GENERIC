@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.146 2015/08/08 06:36:25 maxv Exp $
+# $NetBSD: GENERIC,v 1.146.2.1 2017/01/07 08:56:12 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.146 $"
+#ident 		"GENERIC-$Revision: 1.146.2.1 $"
 
 maxusers	32
 
@@ -202,12 +202,14 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 mcclock0 at isa? port 0x70		# time-of-day clock
 attimer0 at isa?
 #pcppi0	at isa?
-#spkr0	at pcppi?
+#spkr*	at pcppi?
 
 wss0	at isa? port 0x82c irq 30 drq 6 drq2 7	# Windows Sound System
 
 # Audio support
 audio*	at audiobus?
+
+spkr*	at audio?			# PC speaker (synthesized)
 
 # MIDI support
 #midi*	at pcppi?			# MIDI interface to the PC speaker
@@ -343,6 +345,7 @@ pseudo-device	wsfont
 #pseudo-device	drvctl
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 
 # Veriexec

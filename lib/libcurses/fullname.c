@@ -1,4 +1,4 @@
-/*	$NetBSD: fullname.c,v 1.11 2003/08/07 16:44:21 agc Exp $	*/
+/*	$NetBSD: fullname.c,v 1.11.80.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fullname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fullname.c,v 1.11 2003/08/07 16:44:21 agc Exp $");
+__RCSID("$NetBSD: fullname.c,v 1.11.80.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -60,5 +60,5 @@ fullname(const char *bp, char *def)
 		if (*bp == '|')
 			bp++;	/* Skip over '|' if that is case. */
 	}
-	return (def);
+	return def;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2013/01/02 10:43:11 dsl Exp $
+#	$NetBSD: Makefile,v 1.16.12.1 2017/01/07 08:57:00 pgoyette Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -18,5 +18,7 @@ CPPFLAGS+=-I${NETBSDSRCDIR}/sbin/swapctl
 CPPFLAGS+=-D_KMEMUSER
 
 .PATH: ${NETBSDSRCDIR}/sbin/swapctl
+
+.include "../../compat/exec.mk"
 
 .include <bsd.prog.mk>

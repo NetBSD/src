@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.89 2016/05/06 08:56:20 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.89.2.1 2017/01/07 08:56:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -202,6 +202,8 @@ struct livengood_tcpip_ctxdesc {
 /* registers for FLASH access on ICH8 */
 #define WM_ICH8_FLASH	0x0014
 
+#define WM_PCI_LTR_CAP_LPT	0xa8
+
 /* XXX Only for PCH_SPT? */
 #define WM_PCI_DESCRING_STATUS	0xe4
 #define DESCRING_STATUS_FLUSH_REQ	__BIT(8)
@@ -237,7 +239,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_SWDPIO_SHIFT	22
 #define	CTRL_SWDPIO_MASK	0x0f
 #define	CTRL_SWDPIO(x)		(1U << (CTRL_SWDPIO_SHIFT + (x)))
-#define CTRL_MEHE	(1U << 17)	/* Memory Error Handling Enable(I217)*/
+#define CTRL_MEHE	(1U << 19)	/* Memory Error Handling Enable(I217)*/
 #define	CTRL_RST	(1U << 26)	/* device reset */
 #define	CTRL_RFCE	(1U << 27)	/* Rx flow control enable */
 #define	CTRL_TFCE	(1U << 28)	/* Tx flow control enable */
@@ -255,17 +257,19 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_FUNCID_MASK  3		/* ... */
 #define	STATUS_TXOFF	(1U << 4)	/* Tx paused */
 #define	STATUS_TBIMODE	(1U << 5)	/* fiber mode (Livengood) */
-#define	STATUS_SPEED(x)	((x) << 6)	/* speed indication */
-#define	STATUS_SPEED_10	  STATUS_SPEED(0)
-#define	STATUS_SPEED_100  STATUS_SPEED(1)
-#define	STATUS_SPEED_1000 STATUS_SPEED(2)
+#define	STATUS_SPEED	__BITS(7, 6)	/* speed indication */
+#define	STATUS_SPEED_10	  0
+#define	STATUS_SPEED_100  1
+#define	STATUS_SPEED_1000 2
 #define	STATUS_ASDV(x)	((x) << 8)	/* auto speed det. val. (Livengood) */
 #define	STATUS_LAN_INIT_DONE (1U << 9)	/* Lan Init Completion by NVM */
 #define	STATUS_MTXCKOK	(1U << 10)	/* MTXD clock running */
 #define	STATUS_PHYRA	(1U << 10)	/* PHY Reset Asserted (PCH) */
 #define	STATUS_PCI66	(1U << 11)	/* 66MHz bus (Livengood) */
 #define	STATUS_BUS64	(1U << 12)	/* 64-bit bus (Livengood) */
+#define	STATUS_2P5_SKU	__BIT(12)	/* Value of the 2.5GBE SKU strap */
 #define	STATUS_PCIX_MODE (1U << 13)	/* PCIX mode (Cordova) */
+#define	STATUS_2P5_SKU_OVER __BIT(13)	/* Value of the 2.5GBE SKU override */
 #define	STATUS_PCIXSPD(x) ((x) << 14)	/* PCIX speed indication (Cordova) */
 #define	STATUS_PCIXSPD_50_66   STATUS_PCIXSPD(0)
 #define	STATUS_PCIXSPD_66_100  STATUS_PCIXSPD(1)
@@ -308,10 +312,14 @@ struct livengood_tcpip_ctxdesc {
 #define	EERD_ADDR_SHIFT	2	/* Shift to the address bits */
 #define	EERD_DATA_SHIFT	16	/* Offset to data in EEPROM read/write registers */
 
+#define	WMREG_FEXTNVM6	0x0010	/* Future Extended NVM 6 */
+#define	FEXTNVM6_K1_OFF_ENABLE	__BIT(31)
+
 #define	WMREG_CTRL_EXT	0x0018	/* Extended Device Control Register */
 #define	CTRL_EXT_NSICR		__BIT(0) /* Non Interrupt clear on read */
 #define	CTRL_EXT_GPI_EN(x)	(1U << (x)) /* gpin interrupt enable */
 #define CTRL_EXT_NVMVS		__BITS(0, 1) /* NVM valid sector */
+#define CTRL_EXT_LPCD		__BIT(2) /* LCD Power Cycle Done */
 #define	CTRL_EXT_SWDPINS_SHIFT	4
 #define	CTRL_EXT_SWDPINS_MASK	0x0d
 /* The bit order of the SW Definable pin is not 6543 but 3654! */
@@ -368,6 +376,11 @@ struct livengood_tcpip_ctxdesc {
 #define SCTL_CTL_POLL_TIMEOUT 640
 #define SCTL_DISABLE_SERDES_LOOPBACK 0x0400
 
+#define WMREG_FEXTNVM4	0x0024	/* Future Extended NVM 4 - RW */
+#define FEXTNVM4_BEACON_DURATION	__BITS(2, 0)
+#define FEXTNVM4_BEACON_DURATION_8US	0x7
+#define FEXTNVM4_BEACON_DURATION_16US	0x3
+
 #define	WMREG_FCAL	0x0028	/* Flow Control Address Low */
 #define	FCAL_CONST	0x00c28001	/* Flow Control MAC addr low */
 
@@ -413,6 +426,11 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_VET	0x0038	/* VLAN Ethertype */
 #define	WMREG_MDPHYA	0x003C	/* PHY address - RW */
+
+#define WMREG_FEXTNVM3	0x003c	/* Future Extended NVM 3 */
+#define FEXTNVM3_PHY_CFG_COUNTER_MASK	__BITS(27, 26)
+#define FEXTNVM3_PHY_CFG_COUNTER_50MS	__BIT(27)
+
 #define	WMREG_RAL_BASE	0x0040	/* Receive Address List */
 #define	WMREG_CORDOVA_RAL_BASE 0x5400
 #define	WMREG_RAL_LO(b, x) ((b) + ((x) << 3))
@@ -459,6 +477,21 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_ICS	0x00c8	/* Interrupt Cause Set Register */
 	/* See ICR bits. */
 
+#define	WMREG_IMS	0x00d0	/* Interrupt Mask Set Register */
+	/* See ICR bits. */
+
+#define	WMREG_IMC	0x00d8	/* Interrupt Mask Clear Register */
+	/* See ICR bits. */
+
+#define	WMREG_EIAC_82574 0x00dc	/* Interrupt Auto Clear Register */
+#define	WMREG_EIAC_82574_MSIX_MASK	(ICR_RXQ(0) | ICR_RXQ(1)	\
+	    | ICR_TXQ(0) | ICR_TXQ(1) | ICR_OTHER)
+
+#define WMREG_FEXTNVM7	0x00e4  /* Future Extended NVM 7 */
+#define FEXTNVM7_SIDE_CLK_UNGATE __BIT(2)
+#define FEXTNVM7_DIS_SMB_PERST	__BIT(5)
+#define FEXTNVM7_DIS_PB_READ	__BIT(18)
+
 #define WMREG_IVAR	0x00e4  /* Interrupt Vector Allocation Register */
 #define WMREG_IVAR0	0x01700 /* Interrupt Vector Allocation */
 #define IVAR_ALLOC_MASK  __BITS(0, 6)	/* Bit 5 and 6 are reserved */
@@ -483,15 +516,14 @@ struct livengood_tcpip_ctxdesc {
 #define IVAR_MISC_TCPTIMER __BITS(0, 7)
 #define IVAR_MISC_OTHER	__BITS(8, 15)
 
-#define	WMREG_IMS	0x00d0	/* Interrupt Mask Set Register */
-	/* See ICR bits. */
-
-#define	WMREG_IMC	0x00d8	/* Interrupt Mask Clear Register */
-	/* See ICR bits. */
-
-#define	WMREG_EIAC_82574 0x00dc	/* Interrupt Auto Clear Register */
-#define	WMREG_EIAC_82574_MSIX_MASK	(ICR_RXQ(0) | ICR_RXQ(1)	\
-	    | ICR_TXQ(0) | ICR_TXQ(1) | ICR_OTHER)
+#define	WMREG_LTRV	0x00f8	/* Latency Tolerance Reporting */
+#define	LTRV_VALUE	__BITS(9, 0)
+#define	LTRV_SCALE	__BITS(12, 10)
+#define	LTRV_SCALE_MAX	5
+#define	LTRV_SNOOP_REQ	__BIT(15)
+#define	LTRV_SEND	__BIT(30)
+#define	LTRV_NONSNOOP	__BITS(31, 16)
+#define	LTRV_NONSNOOP_REQ __BIT(31)
 
 #define	WMREG_RCTL	0x0100	/* Receive Control */
 #define	RCTL_EN		(1U << 1)	/* receiver enable */
@@ -728,6 +760,8 @@ struct livengood_tcpip_ctxdesc {
 #define	PHY_CTRL_NOND0A_GBE_DIS	(1 << 3)
 #define	PHY_CTRL_GBE_DIS	(1 << 6)
 
+#define	WMREG_PCIEANACFG 0x0f18	/* PCIE Analog Config */
+
 #define	WMREG_IOSFPC	0x0f28	/* Tx corrupted data */
 
 #define	WMREG_PBA	0x1000	/* Packet Buffer Allocation */
@@ -749,6 +783,7 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_40K		0x0028
 #define	PBA_48K		0x0030		/* 48K, default Rx allocation */
 #define	PBA_64K		0x0040
+#define	PBA_RXA_MASK	__BITS(15, 0)
 
 #define	WMREG_PBS	0x1008	/* Packet Buffer Size (ICH) */
 
@@ -882,8 +917,10 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_PCS_LSTS	0x420c	/* PCS Link Status */
 #define PCS_LSTS_LINKOK	__BIT(0)
-#define PCS_LSTS_SPEED_100  __BIT(1)
-#define PCS_LSTS_SPEED_1000 __BIT(2)
+#define PCS_LSTS_SPEED	__BITS(2, 1)
+#define PCS_LSTS_SPEED_10	0
+#define PCS_LSTS_SPEED_100	1
+#define PCS_LSTS_SPEED_1000	2
 #define PCS_LSTS_FDX	__BIT(3)
 #define PCS_LSTS_AN_COMP __BIT(16)
 
@@ -1013,6 +1050,10 @@ struct livengood_tcpip_ctxdesc {
 #define	SWSM_SWESMBI	0x00000002	/* FW Semaphore bit */
 #define	SWSM_WMNG	0x00000004	/* Wake MNG Clock */
 #define	SWSM_DRV_LOAD	0x00000008	/* Driver Loaded Bit */
+/* Intel driver defines H2ME register at 0x5b50 */
+#define	WMREG_H2ME	0x5b50	/* SW Semaphore */
+#define H2ME_ULP		__BIT(11)
+#define H2ME_ENFORCE_SETTINGS	__BIT(12)
 
 #define	WMREG_FWSM	0x5b54	/* FW Semaphore */
 #define	FWSM_MODE		__BITS(1, 3)
@@ -1020,6 +1061,7 @@ struct livengood_tcpip_ctxdesc {
 #define	MNG_IAMT_MODE		0x3
 #define FWSM_RSPCIPHY		__BIT(6)  /* Reset PHY on PCI reset */
 #define FWSM_WLOCK_MAC		__BITS(7, 9)  /* Reset PHY on PCI reset */
+#define FWSM_ULP_CFG_DONE	__BIT(10)
 #define FWSM_FW_VALID		__BIT(15) /* FW established a valid mode */
 
 #define	WMREG_SWSM2	0x5b58	/* SW Semaphore 2 */

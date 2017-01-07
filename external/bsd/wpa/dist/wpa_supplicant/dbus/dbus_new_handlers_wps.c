@@ -53,7 +53,7 @@ static int wpas_dbus_handler_wps_role(DBusMessage *message,
 	else if (os_strcmp(val, "registrar") == 0)
 		params->role = 2;
 	else {
-		wpa_printf(MSG_DEBUG, "dbus: WPS.Start - Uknown role %s", val);
+		wpa_printf(MSG_DEBUG, "dbus: WPS.Start - Unknown role %s", val);
 		*reply = wpas_dbus_error_invalid_args(message, val);
 		return -1;
 	}
@@ -113,7 +113,7 @@ static int wpas_dbus_handler_wps_bssid(DBusMessage *message,
 	dbus_message_iter_recurse(&variant_iter, &array_iter);
 	dbus_message_iter_get_fixed_array(&array_iter, &params->bssid, &len);
 	if (len != ETH_ALEN) {
-		wpa_printf(MSG_DEBUG, "dbus: WPS.Stsrt - Wrong Bssid length %d",
+		wpa_printf(MSG_DEBUG, "dbus: WPS.Start - Wrong Bssid length %d",
 			   len);
 		*reply = wpas_dbus_error_invalid_args(message,
 						      "Bssid is wrong length");
@@ -320,6 +320,26 @@ DBusMessage * wpas_dbus_handler_wps_start(DBusMessage *message,
 
 
 /**
+ * wpas_dbus_handler_wps_cancel - Cancel ongoing WPS configuration
+ * @message: Pointer to incoming dbus message
+ * @wpa_s: %wpa_supplicant data structure
+ * Returns: NULL on success or DBus error on failure
+ *
+ * Handler for "Cancel" method call. Returns NULL if WPS cancel successful
+ * or DBus error on WPS cancel failure
+ */
+DBusMessage * wpas_dbus_handler_wps_cancel(DBusMessage *message,
+					   struct wpa_supplicant *wpa_s)
+{
+	if (wpas_wps_cancel(wpa_s))
+		return wpas_dbus_error_unknown_error(message,
+						     "WPS cancel failed");
+
+	return NULL;
+}
+
+
+/**
  * wpas_dbus_getter_process_credentials - Check if credentials are processed
  * @message: Pointer to incoming dbus message
  * @wpa_s: %wpa_supplicant data structure
@@ -329,9 +349,9 @@ DBusMessage * wpas_dbus_handler_wps_start(DBusMessage *message,
  * true if wps_cred_processing configuration field is not equal to 1 or false
  * if otherwise.
  */
-dbus_bool_t wpas_dbus_getter_process_credentials(DBusMessageIter *iter,
-						 DBusError *error,
-						 void *user_data)
+dbus_bool_t wpas_dbus_getter_process_credentials(
+	const struct wpa_dbus_property_desc *property_desc,
+	DBusMessageIter *iter, DBusError *error, void *user_data)
 {
 	struct wpa_supplicant *wpa_s = user_data;
 	dbus_bool_t process = wpa_s->conf->wps_cred_processing != 1;
@@ -351,13 +371,15 @@ dbus_bool_t wpas_dbus_getter_process_credentials(DBusMessageIter *iter,
  * Setter for "ProcessCredentials" property. Sets credentials_processed on 2
  * if boolean argument is true or on 1 if otherwise.
  */
-dbus_bool_t wpas_dbus_setter_process_credentials(DBusMessageIter *iter,
-						 DBusError *error,
-						 void *user_data)
+dbus_bool_t wpas_dbus_setter_process_credentials(
+	const struct wpa_dbus_property_desc *property_desc,
+	DBusMessageIter *iter, DBusError *error, void *user_data)
 {
 	struct wpa_supplicant *wpa_s = user_data;
 	dbus_bool_t process_credentials, old_pc;
 
+	if (!wpa_s->dbus_new_path)
+		return FALSE;
 	if (!wpas_dbus_simple_property_setter(iter, error, DBUS_TYPE_BOOLEAN,
 					      &process_credentials))
 		return FALSE;
@@ -385,9 +407,9 @@ dbus_bool_t wpas_dbus_setter_process_credentials(DBusMessageIter *iter,
  * Getter for "ConfigMethods" property. Returned boolean will be true if
  * providing the relevant string worked, or false otherwise.
  */
-dbus_bool_t wpas_dbus_getter_config_methods(DBusMessageIter *iter,
-					    DBusError *error,
-					    void *user_data)
+dbus_bool_t wpas_dbus_getter_config_methods(
+	const struct wpa_dbus_property_desc *property_desc,
+	DBusMessageIter *iter, DBusError *error, void *user_data)
 {
 	struct wpa_supplicant *wpa_s = user_data;
 	char *methods = wpa_s->conf->config_methods;
@@ -409,9 +431,9 @@ dbus_bool_t wpas_dbus_getter_config_methods(DBusMessageIter *iter,
  * Setter for "ConfigMethods" property. Sets the methods string, apply such
  * change and returns true on success. Returns false otherwise.
  */
-dbus_bool_t wpas_dbus_setter_config_methods(DBusMessageIter *iter,
-					    DBusError *error,
-					    void *user_data)
+dbus_bool_t wpas_dbus_setter_config_methods(
+	const struct wpa_dbus_property_desc *property_desc,
+	DBusMessageIter *iter, DBusError *error, void *user_data)
 {
 	struct wpa_supplicant *wpa_s = user_data;
 	char *methods, *new_methods;

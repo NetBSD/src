@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2016/06/10 03:42:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.2.1 2017/01/07 08:56:01 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -110,7 +110,6 @@ IDRIVERS=	mouse keyboard acecad calcomp citron digitaledge \
 
 CPPFLAGS.xf86Bus.c=		-DBUILDERADDR='"xfree86@xfree86.org"'
 CPPFLAGS.xf86Init.c=		-DOSNAME='"NetBSD/${MACHINE} ${OS_RELEASE} -"' \
-				-DXORG_RELEASE='"Release 1.4.2"' \
 				-DBUILDERADDR='"xorg@xorg.org"' \
 				-DOSVENDOR='" The NetBSD Foundation, Inc."'
 CPPFLAGS.xf86Globals.c=		-DDEFAULT_LOGPREFIX='"/var/log/Xorg."' \

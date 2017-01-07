@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.10 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.10.2.1 2017/01/07 08:54:05 pgoyette Exp $	*/
 
 /*
  * audio.c - audio interface for reference clock audio drivers
@@ -57,7 +57,7 @@ static struct audio_device device; /* audio device ident */
 #ifdef PCM_STYLE_SOUND
 # define INIT_FILE "/etc/ntp.audio"
 int agc =	SOUND_MIXER_WRITE_RECLEV; /* or IGAIN or LINE */
-int monitor =	SOUND_MIXER_WRITE_VOLUME; /* or OGAIN */
+int audiomonitor =     SOUND_MIXER_WRITE_VOLUME; /* or OGAIN */
 int devmask = 0;
 int recmask = 0;
 char cf_c_dev[100], cf_i_dev[100], cf_agc[100], cf_monitor[100];
@@ -336,7 +336,7 @@ audio_init(
 		/* devmask */
 		i = mixer_name(cf_monitor, devmask);
 		if (i >= 0)
-			monitor = MIXER_WRITE(i);
+                       audiomonitor = MIXER_WRITE(i);
 		else
 			printf("monitor %s not in devmask %#x\n",
 			       cf_monitor, devmask);
@@ -414,7 +414,7 @@ audio_gain(
 # endif
 		l |= r << 8;
 		if (cf_monitor[0] != '\0')
-			rval = ioctl(ctl_fd, monitor, &l );
+                       rval = ioctl(ctl_fd, audiomonitor, &l );
 		else 
 			rval = ioctl(ctl_fd, SOUND_MIXER_WRITE_VOLUME,
 				     &l);

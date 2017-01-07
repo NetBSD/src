@@ -1,4 +1,4 @@
-#	$NetBSD: t_mtudisc.sh,v 1.2.2.2 2016/11/04 14:49:24 pgoyette Exp $
+#	$NetBSD: t_mtudisc.sh,v 1.2.2.3 2017/01/07 08:56:56 pgoyette Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,18 +25,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet"
-inetserver="$inetserver -lrumpnet_netinet6 -lrumpnet_shmif"
-inetserver="$inetserver -lrumpdev"
-HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
-
 SOCKLOCAL=unix://commsock1
 SOCKGATEWAY=unix://commsock2
 SOCKREMOTE=unix://commsock3
-HTTPD_PID=httpd.pid
 HTML_FILE=index.html
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 atf_test_case mtudisc_basic cleanup
 
@@ -53,10 +47,9 @@ setup_server()
 	local bus=$3
 	local ip=$4
 
-	export RUMP_SERVER=$sock
+	rump_server_add_iface $sock $if $bus
 
-	atf_check -s exit:0 rump.ifconfig $if create
-	atf_check -s exit:0 rump.ifconfig $if linkstr $bus
+	export RUMP_SERVER=$sock
 	atf_check -s exit:0 rump.ifconfig $if $ip
 	atf_check -s exit:0 rump.ifconfig $if up
 	atf_check -s exit:0 rump.ifconfig -w 10
@@ -64,43 +57,16 @@ setup_server()
 	$DEBUG && rump.ifconfig $if
 }
 
-extract_new_packets()
+prepare_download_file()
 {
-	local bus=$1
-	local old=./old
-
-	if [ ! -f $old ]; then
-		old=/dev/null
-	fi
-
-	shmif_dumpbus -p - $bus 2>/dev/null| \
-	    tcpdump -n -e -r - 2>/dev/null > ./new
-	diff -u $old ./new |grep '^+' |cut -d '+' -f 2 > ./diff
-	mv -f ./new ./old
-	cat ./diff
-}
-
-setup_httpd()
-{
-	local sock=$1
-	local ip=$2
+	local file=$1
 	local data="0123456789"
 
-	export RUMP_SERVER=$sock
-
-	touch $HTML_FILE
+	touch $file
 	for i in `seq 1 512`
 	do
-		echo $data >> $HTML_FILE
+		echo $data >> $file
 	done
-
-	# start httpd in daemon mode
-	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    /usr/libexec/httpd -P $HTTPD_PID -i $ip -b -s $(pwd)
-
-	$DEBUG && rump.netstat -a
-
-	sleep 5
 }
 
 do_http_get()
@@ -123,9 +89,9 @@ mtudisc_basic_body()
 	local remote_ip=10.0.1.2
 	local prefixlen=24
 
-	atf_check -s exit:0 ${inetserver} $SOCKLOCAL
-	atf_check -s exit:0 ${inetserver} $SOCKGATEWAY
-	atf_check -s exit:0 ${inetserver} $SOCKREMOTE
+	rump_server_start $SOCKLOCAL
+	rump_server_start $SOCKGATEWAY
+	rump_server_start $SOCKREMOTE
 
 	#
 	# Setup servers
@@ -158,7 +124,9 @@ mtudisc_basic_body()
 	atf_check -s exit:0 -o match:"1" rump.sysctl -n net.inet.ip.mtudisc
 
 	# Start httpd daemon
-	setup_httpd $SOCKREMOTE $remote_ip
+	prepare_download_file $HTML_FILE
+	start_httpd $SOCKREMOTE $remote_ip
+	$DEBUG && rump.netstat -a -f inet
 
 	# Teach the peer thar 10.0.0.2(local serer) is behind 10.0.1.1(gateway server)
 	atf_check -s exit:0 -o ignore rump.route add $local_ip/32 $gateway_remote_ip
@@ -208,43 +176,14 @@ mtudisc_basic_body()
 		-o match:"^10.0.0.2 +10.0.1.1 +UGHS +- +- +1280 +shmif0" \
 		rump.netstat -nr -f inet
 
-}
-
-cleanup()
-{
-	gdb -ex bt /usr/bin/rump_server rump_server.core
-	gdb -ex bt /usr/sbin/arp arp.core
-	env RUMP_SERVER=$SOCKLOCAL rump.halt
-	env RUMP_SERVER=$SOCKGATEWAY rump.halt
-	env RUMP_SERVER=$SOCKREMOTE rump.halt
-}
-
-dump_server()
-{
-	local sock=$1
-	export RUMP_SERVER=$sock
-	rump.netstat -nr
-	rump.arp -n -a
-	rump.ifconfig
-	$HIJACKING dmesg
-}
-
-dump()
-{
-	dump_server $SOCKLOCAL
-	dump_server $SOCKGATEWAY
-	dump_server $SOCKREMOTE
-	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
-	shmif_dumpbus -p - bus2 2>/dev/null| tcpdump -n -e -r -
+	rump_server_destroy_ifaces
 }
 
 mtudisc_basic_cleanup()
 {
 	$DEBUG && dump
-	kill "$(cat ${HTTPD_PID})"
-	env RUMP_SERVER=$SOCKLOCAL rump.halt
-	env RUMP_SERVER=$SOCKGATEWAY rump.halt
-	env RUMP_SERVER=$SOCKREMOTE rump.halt
+	stop_httpd
+	cleanup
 }
 
 atf_init_test_cases()

@@ -1,4 +1,4 @@
-# $NetBSD: A64EMUL,v 1.5 2015/09/26 16:33:16 maxv Exp $
+# $NetBSD: A64EMUL,v 1.5.2.1 2017/01/07 08:56:15 pgoyette Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/evbarm64/conf/std.a64emul"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"A64EMUL-$Revision: 1.5 $"
+ident		"A64EMUL-$Revision: 1.5.2.1 $"
 
 maxusers 32
 
@@ -249,6 +249,7 @@ pseudo-device	lockstat		# lock profiling
 pseudo-device	putter			# for puffs and pud
 
 #options	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #

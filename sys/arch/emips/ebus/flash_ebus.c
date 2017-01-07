@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.18 2015/12/13 19:36:40 christos Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.18.2.1 2017/01/07 08:56:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.18 2015/12/13 19:36:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.18.2.1 2017/01/07 08:56:13 pgoyette Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -1524,10 +1524,10 @@ eflashdetach(device_t self, int flags)
 	/* Kill off any queued buffers. */
 	bufq_drain(sc->sc_q);
 
-	bufq_free(sc->sc_q);
 	/*sc->atabus->ata_killpending(sc->drvp);*/
 
 	splx(s);
+	bufq_free(sc->sc_q);
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);

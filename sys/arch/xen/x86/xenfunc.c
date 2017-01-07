@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.13 2011/11/06 11:40:47 cherry Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.13.32.1 2017/01/07 08:56:29 pgoyette Exp $	*/
 
 /*
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.13 2011/11/06 11:40:47 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.13.32.1 2017/01/07 08:56:29 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -121,20 +121,87 @@ tlbflushg(void)
 	tlbflush();
 }
 
-vaddr_t
-rdr6(void)
+register_t
+rdr0(void)
 {
-	u_int val;
 
-	val = HYPERVISOR_get_debugreg(6);
-	return val;
+	return HYPERVISOR_get_debugreg(0);
 }
 
 void
-ldr6(vaddr_t val)
+ldr0(register_t val)
+{
+
+	HYPERVISOR_set_debugreg(0, val);
+}
+
+register_t
+rdr1(void)
+{
+
+	return HYPERVISOR_get_debugreg(1);
+}
+
+void
+ldr1(register_t val)
+{
+
+	HYPERVISOR_set_debugreg(1, val);
+}
+
+register_t
+rdr2(void)
+{
+
+	return HYPERVISOR_get_debugreg(2);
+}
+
+void
+ldr2(register_t val)
+{
+
+	HYPERVISOR_set_debugreg(2, val);
+}
+
+register_t
+rdr3(void)
+{
+
+	return HYPERVISOR_get_debugreg(3);
+}
+
+void
+ldr3(register_t val)
+{
+
+	HYPERVISOR_set_debugreg(3, val);
+}
+register_t
+rdr6(void)
+{
+
+	return HYPERVISOR_get_debugreg(6);
+}
+
+void
+ldr6(register_t val)
 {
 
 	HYPERVISOR_set_debugreg(6, val);
+}
+
+register_t
+rdr7(void)
+{
+
+	return HYPERVISOR_get_debugreg(7);
+}
+
+void
+ldr7(register_t val)
+{
+
+	HYPERVISOR_set_debugreg(7, val);
 }
 
 void

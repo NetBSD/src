@@ -1,4 +1,4 @@
-This is flex.info, produced by makeinfo version 6.0 from flex.texi.
+This is flex.info, produced by makeinfo version 6.1 from flex.texi.
 
 The flex manual is placed under the same licensing conditions as the
 rest of flex:
@@ -50,8 +50,8 @@ This manual describes 'flex', a tool for generating programs that
 perform pattern-matching on text.  The manual includes both tutorial and
 reference sections.
 
-   This edition of 'The flex Manual' documents 'flex' version 2.6.0.  It
-was last updated on 10 November 2015.
+   This edition of 'The flex Manual' documents 'flex' version 2.6.3.  It
+was last updated on 22 October 2016.
 
    This manual was written by Vern Paxson, Will Estes and John Millaway.
 
@@ -304,9 +304,8 @@ File: flex.info,  Node: Reporting Bugs,  Next: Introduction,  Prev: Copyright,  
 2 Reporting Bugs
 ****************
 
-If you find a bug in 'flex', please report it using the SourceForge Bug
-Tracking facilities which can be found on flex's SourceForge Page
-(http://sourceforge.net/projects/flex).
+If you find a bug in 'flex', please report it using GitHub's issue
+tracking facility at <https://github.com/westes/flex/issues/>
 
 
 File: flex.info,  Node: Introduction,  Next: Simple Examples,  Prev: Reporting Bugs,  Up: Top
@@ -405,7 +404,7 @@ other than a newline (indicated by the '.' regular expression).
 
          "+"|"-"|"*"|"/"   printf( "An operator: %s\n", yytext );
 
-         "{"[\^{}}\n]*"}"     /* eat up one-line comments */
+         "{"[^{}\n]*"}"     /* eat up one-line comments */
 
          [ \t\n]+          /* eat up whitespace */
 
@@ -1220,15 +1219,15 @@ and taking two floats as arguments.  Note that if you give arguments to
 the scanning routine using a K&R-style/non-prototyped function
 declaration, you must terminate the definition with a semi-colon (;).
 
-   'flex' generates 'C99' function definitions by default.  However flex
-does have the ability to generate obsolete, er, 'traditional', function
-definitions.  This is to support bootstrapping gcc on old systems.
+   'flex' generates 'C99' function definitions by default.  Flex used to
+have the ability to generate obsolete, er, 'traditional', function
+definitions.  This was to support bootstrapping gcc on old systems.
 Unfortunately, traditional definitions prevent us from using any
 standard data types smaller than int (such as short, char, or bool) as
-function arguments.  For this reason, future versions of 'flex' may
-generate standard C99 code only, leaving K&R-style functions to the
-historians.  Currently, if you do *not* want 'C99' definitions, then you
-must use '%option noansi-definitions'.
+function arguments.  Furthermore, traditional definitions support added
+extra complexity in the skeleton file.  For this reason, current
+versions of 'flex' generate standard C99 code only, leaving K&R-style
+functions to the historians.
 
    Whenever 'yylex()' is called, it scans tokens from the global input
 file 'yyin' (which defaults to stdin).  It continues until it either
@@ -2283,14 +2282,10 @@ File: flex.info,  Node: Code-Level And API Options,  Next: Options for Scanner S
 ===============================
 
 '--ansi-definitions, '%option ansi-definitions''
-     instruct flex to generate ANSI C99 definitions for functions.  This
-     option is enabled by default.  If '%option noansi-definitions' is
-     specified, then the obsolete style is generated.
+     Deprecated, ignored
 
 '--ansi-prototypes, '%option ansi-prototypes''
-     instructs flex to generate ANSI C99 prototypes for functions.  This
-     option is enabled by default.  If 'noansi-prototypes' is specified,
-     then prototypes will have empty parameter lists.
+     Deprecated, ignored
 
 '--bison-bridge, '%option bison-bridge''
      instructs flex to generate a C scanner that is meant to be called
@@ -5019,7 +5014,7 @@ Is there a way to make flex treat NULL like a regular character?
 ================================================================
 
 Yes, '\0' and '\x00' should both do the trick.  Perhaps you have an
-ancient version of 'flex'.  The latest release is version 2.6.0.
+ancient version of 'flex'.  The latest release is version 2.6.3.
 
 
 File: flex.info,  Node: Whenever flex can not match the input it says "flex scanner jammed".,  Next: Why doesn't flex have non-greedy operators like perl does?,  Prev: Is there a way to make flex treat NULL like a regular character?,  Up: FAQ

@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.25 2013/11/22 21:04:11 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.25.10.1 2017/01/07 08:56:53 pgoyette Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -210,6 +210,7 @@ typedef union siginfo {
 /* SIGTRAP */
 #define	TRAP_BRKPT	1	/* Process breakpoint			*/
 #define	TRAP_TRACE	2	/* Process trace trap			*/
+#define	TRAP_EXEC	3	/* Process exec trap			*/
 
 /* SIGCHLD */
 #define	CLD_EXITED	1	/* Child has exited			*/
@@ -221,7 +222,7 @@ typedef union siginfo {
 #define	CLD_STOPPED	5	/* Child has stopped			*/
 #define	CLD_CONTINUED	6	/* Stopped child has continued		*/
 
-/* SIGPOLL */
+/* SIGIO */
 #define	POLL_IN		1	/* Data input available			*/
 #define	POLL_OUT	2	/* Output buffers available		*/
 #define	POLL_MSG	3	/* Input message available		*/

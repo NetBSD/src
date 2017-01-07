@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.303.2.1 2016/11/04 14:49:05 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.303.2.2 2017/01/07 08:56:26 pgoyette Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.303.2.1 2016/11/04 14:49:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.303.2.2 2017/01/07 08:56:26 pgoyette Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -576,7 +576,7 @@ pmap_mp_init(void)
 	}
 
 	for (i = 0; i < PAGE_SIZE; i += sizeof(long))
-		flush(v + i);
+		sparc_flush_icache(v + i);
 
 	cpu_spinup_trampoline = (vaddr_t)v;
 }
@@ -778,7 +778,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	 */
 	uvmexp.pagesize = NBPG;
 	uvmexp.ncolors = pmap_calculate_colors();
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Get hold or the message buffer.

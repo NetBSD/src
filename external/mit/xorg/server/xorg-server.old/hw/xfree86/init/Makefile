@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2016/06/10 03:42:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.2.1 2017/01/07 08:56:01 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -56,7 +56,6 @@ CPPFLAGS+=	-DPCVT_SUPPORT
 .endif
 
 CPPFLAGS.xf86Init.c=	-DOSNAME='"NetBSD/${MACHINE} ${OS_RELEASE} -"' \
-			-DXORG_RELEASE='"Release 1.4.2"' \
 			-DBUILDERADDR='"xorg@xorg.org"' \
 			-DDEFAULT_MODULE_PATH=\"${X11USRLIBDIR}/modules\" \
 			-DDEFAULT_LIBRARY_PATH=\"${X11USRLIBDIR}\"

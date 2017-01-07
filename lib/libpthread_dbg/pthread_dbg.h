@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.h,v 1.6.24.1 2016/11/04 14:48:54 pgoyette Exp $	*/
+/*	$NetBSD: pthread_dbg.h,v 1.6.24.2 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -77,15 +77,16 @@ typedef struct td_thread_info_st {
 
 #define	TD_STATE_UNKNOWN	0
 #define TD_STATE_RUNNING	1	/* On a processor */
-#define	TD_STATE_RUNNABLE	2	/* On a run queue */
-#define	TD_STATE_BLOCKED	3	/* Blocked in the kernel */
-#define	TD_STATE_SLEEPING	4	/* Blocked on a sync object */
+#define	TD_STATE_UNUSED2	2	/* former TD_STATE_RUNNABLE for SA */
+#define	TD_STATE_UNUSED3	3	/* former TD_STATE_BLOCKED for SA */
+#define	TD_STATE_UNUSED4	4	/* former TD_STATE_SLEEPING for SA */
 #define	TD_STATE_ZOMBIE		5
-#define	TD_STATE_SUSPENDED	6	/* Removed from run queues */
+#define	TD_STATE_UNUSED6	6	/* former TD_STATE_SUSPENDED for SA */
+#define	TD_STATE_DEAD		7
 
-#define	TD_TYPE_UNKNOWN	0
-#define	TD_TYPE_USER	1
-#define	TD_TYPE_SYSTEM	2
+#define	TD_TYPE_UNUSED0	0
+#define	TD_TYPE_UNUSED1	1
+#define	TD_TYPE_UNUSED2	2
 
 typedef struct {
 	caddr_t	sync_addr;	/* Address within the process */

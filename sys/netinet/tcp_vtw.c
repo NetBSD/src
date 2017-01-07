@@ -111,7 +111,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet/icmp6.h>
-#include <netinet6/nd6.h>
 
 #include <netinet/tcp.h>
 #include <netinet/tcp_fsm.h>
@@ -123,7 +122,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.15.2.1 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.15.2.2 2017/01/07 08:56:51 pgoyette Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 

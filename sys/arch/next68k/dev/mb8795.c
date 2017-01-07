@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.56 2016/06/10 13:27:12 ozaki-r Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.56.2.1 2017/01/07 08:56:22 pgoyette Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.56 2016/06/10 13:27:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.56.2.1 2017/01/07 08:56:22 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -319,13 +319,6 @@ mb8795_rint(struct mb8795_softc *sc)
 				mb8795_hex_dump(mtod(m,u_char *), m->m_pkthdr.len < 255 ? m->m_pkthdr.len : 128 );
 			}
 #endif
-
-			/*
-			 * Pass packet to bpf if there is a listener.
-			 */
-			bpf_mtap(ifp, m);
-
-			ifp->if_ipackets++;
 
 			/* Pass the packet up. */
 			if_percpuq_enqueue(ifp->if_percpuq, m);

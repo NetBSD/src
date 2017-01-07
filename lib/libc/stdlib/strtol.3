@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.35 2015/11/13 16:00:32 christos Exp $
+.\"	$NetBSD: strtol.3,v 1.35.2.1 2017/01/07 08:56:03 pgoyette Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strtol.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 13, 2015
+.Dd November 4, 2016
 .Dt STRTOL 3
 .Os
 .Sh NAME
@@ -225,10 +225,15 @@ long lval;
 
 errno = 0;
 lval = strtol(buf, \*[Am]ep, 10);
-if (buf[0] == '\e0' || *ep != '\e0')
+if (ep == buf)
 	goto not_a_number;
-if (errno == ERANGE \*[Am]\*[Am] (lval == LONG_MAX || lval == LONG_MIN))
+if (*ep != '\e0')
+	goto trailing_garbage;
+if (errno) {
+	assert(errno == ERANGE);
+	assert(lval == LONG_MAX || lval == LONG_MIN);
 	goto out_of_range;
+}
 .Ed
 .Pp
 This example will accept
@@ -261,11 +266,15 @@ long lval;
 
 errno = 0;
 lval = strtol(buf, \*[Am]ep, 10);
-if (buf[0] == '\e0' || *ep != '\e0')
+if (ep == buf)
 	goto not_a_number;
-if ((errno == ERANGE \*[Am]\*[Am] (lval == LONG_MAX || lval == LONG_MIN)) ||
-    (lval \*[Gt] INT_MAX || lval \*[Lt] INT_MIN))
+if (*ep != '\e0')
+	goto trailing_garbage;
+if (errno == ERANGE || lval < INT_MIN || INT_MAX < lval)
 	goto out_of_range;
+assert(errno == 0);
+assert(INT_MIN <= lval);
+assert(lval <= INT_MAX);
 ival = lval;
 .Ed
 .Sh ERRORS

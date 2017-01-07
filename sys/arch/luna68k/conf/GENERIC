@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.119 2014/11/16 16:01:41 manu Exp $
+# $NetBSD: GENERIC,v 1.119.4.1 2017/01/07 08:56:19 pgoyette Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.119 $"
+#ident 		"GENERIC-$Revision: 1.119.4.1 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -162,6 +162,9 @@ spc0	at mainbus0
 spc1	at mainbus0		# 2nd SCSI on LUNA-II
 # framebuffer
 fb0	at mainbus0		# 16 or 256 pseudo color
+
+# HD647180X I/O processor
+xp0	at mainbus0
 
 # Workstation Console attachments
 wsdisplay*	at fb?
