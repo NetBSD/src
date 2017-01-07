@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1146 2017/01/07 20:10:09 christos Exp $
+# $NetBSD: mi,v 1.1147 2017/01/07 20:17:21 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1766,6 +1766,11 @@
 ./usr/sbin/npfd					base-npf-bin		npf
 ./usr/sbin/npfctl				base-obsolete		obsolete
 ./usr/sbin/npftest				base-npf-bin		npf,rump,pic
+nsd						base-nsd-bin		nsd
+nsd-checkconf					base-nsd-bin		nsd
+nsd-checkzone					base-nsd-bin		nsd
+nsd-control-setup				base-nsd-bin		nsd
+nsd-control					base-nsd-bin		nsd
 ./usr/sbin/nsec3hash				base-bind-bin
 ./usr/sbin/nslookup				base-obsolete		obsolete
 ./usr/sbin/nsquery				base-obsolete		obsolete
