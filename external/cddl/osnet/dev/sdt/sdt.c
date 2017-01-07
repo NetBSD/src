@@ -39,7 +39,7 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.17 2016/07/17 02:09:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.18 2017/01/07 21:39:52 christos Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.17 2016/07/17 02:09:10 pgoyette Exp $");
 #include <sys/eventhandler.h>
 #endif
 #include <sys/kernel.h>
-#include <sys/limits.h>
+#include <sys/syslimits.h>
 #ifdef __FreeBSD__
 #include <sys/linker.h>
 #include <sys/linker_set.h>
