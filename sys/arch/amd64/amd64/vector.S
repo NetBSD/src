@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.45 2015/11/22 13:41:24 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.45.2.1 2017/01/07 08:56:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -130,8 +130,9 @@ IDTVEC_END(recurse_lapic_ipi)
 IDTVEC(intr_lapic_ipi)
 	pushq	$0		
 	pushq	$T_ASTFLT
-	INTRENTRY		
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	INTRENTRY
+	movq	_C_LABEL(local_apic_va),%rbx
+	movl	$0,LAPIC_EOI(%rbx)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_HIGH,%ebx
 	jae	2f
@@ -157,7 +158,8 @@ IDTVEC(intrddb)
 	INTRENTRY
 	movl	$0xf,%eax
 	movq	%rax,%cr8
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	movq	_C_LABEL(local_apic_va),%rbx
+	movl	$0,LAPIC_EOI(%rbx)
 	sti
 	call	_C_LABEL(ddb_ipi)
 	xorl	%eax,%eax
@@ -181,8 +183,9 @@ IDTVEC_END(recurse_lapic_ltimer)
 IDTVEC(intr_lapic_ltimer)
 	pushq	$0		
 	pushq	$T_ASTFLT
-	INTRENTRY		
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	INTRENTRY
+	movq	_C_LABEL(local_apic_va),%rbx
+	movl	$0,LAPIC_EOI(%rbx)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f
@@ -211,7 +214,8 @@ IDTVEC(intr_lapic_tlb)
 	pushq	$0
 	pushq	$T_ASTFLT
 	INTRENTRY
-	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
+	movq	_C_LABEL(local_apic_va),%rax
+	movl	$0,LAPIC_EOI(%rax)
 	callq	_C_LABEL(pmap_tlb_intr)
 	INTRFASTEXIT
 IDTVEC_END(intr_lapic_tlb)

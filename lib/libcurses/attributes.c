@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.21 2010/12/25 10:08:20 blymn Exp $	*/
+/*	$NetBSD: attributes.c,v 1.21.28.1 2017/01/07 08:56:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.21 2010/12/25 10:08:20 blymn Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.21.28.1 2017/01/07 08:56:03 pgoyette Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -265,13 +265,13 @@ wattr_set(WINDOW *win, attr_t attr, short pair, void *opt)
 	__CTRACE(__CTRACE_ATTR, "wattr_set: win %p, attr %08x, pair %d\n",
 	    win, attr, pair);
 #endif
- 	wattr_off(win, __ATTRIBUTES, opt);
+	wattr_off(win, __ATTRIBUTES, opt);
 	/*
 	 * This overwrites any colour setting from the attributes
 	 * and is compatible with ncurses.
 	 */
- 	attr = (attr & ~__COLOR) | COLOR_PAIR(pair);
- 	wattr_on(win, attr, opt);
+	attr = (attr & ~__COLOR) | COLOR_PAIR(pair);
+	wattr_on(win, attr, opt);
 	return OK;
 }
 

@@ -13,7 +13,6 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
-
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -101,7 +100,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/gettext.m4 \
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/version.texi \
-	$(srcdir)/stamp-vti $(dist_doc_DATA) $(am__DIST_COMMON)
+	$(srcdir)/stamp-vti $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/src/config.h
 CONFIG_CLEAN_FILES =
@@ -156,7 +155,6 @@ PDFS = flex.pdf
 PSS = flex.ps
 HTMLS = flex.html
 TEXINFOS = flex.texi
-TEXI2DVI = texi2dvi
 TEXI2PDF = $(TEXI2DVI) --pdf --batch
 MAKEINFOHTML = $(MAKEINFO) --html
 AM_MAKEINFOHTMLFLAGS = $(AM_MAKEINFOFLAGS)
@@ -166,8 +164,7 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-am__installdirs = "$(DESTDIR)$(infodir)" "$(DESTDIR)$(man1dir)" \
-	"$(DESTDIR)$(docdir)"
+am__installdirs = "$(DESTDIR)$(infodir)" "$(DESTDIR)$(man1dir)"
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -198,7 +195,6 @@ am__uninstall_files_from_dir = { \
 man1dir = $(mandir)/man1
 NROFF = nroff
 MANS = $(dist_man_MANS)
-DATA = $(dist_doc_DATA)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 am__DIST_COMMON = $(dist_man_MANS) $(srcdir)/Makefile.in \
 	$(top_srcdir)/build-aux/mdate-sh \
@@ -292,8 +288,10 @@ SET_MAKE = @SET_MAKE@
 SHARED_VERSION_INFO = @SHARED_VERSION_INFO@
 SHELL = @SHELL@
 STRIP = @STRIP@
+TEXI2DVI = @TEXI2DVI@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
+WARNINGFLAGS = @WARNINGFLAGS@
 XGETTEXT = @XGETTEXT@
 XGETTEXT_015 = @XGETTEXT_015@
 XGETTEXT_EXTRA_OPTIONS = @XGETTEXT_EXTRA_OPTIONS@
@@ -344,6 +342,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -353,9 +352,10 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 help2man = @HELP2MAN@
+FLEX = $(top_builddir)/src/flex$(EXEEXT)
 info_TEXINFOS = flex.texi
 dist_man_MANS = flex.1
-dist_doc_DATA = flex.pdf
+MAINTAINERCLEANFILES = flex.1
 CLEANFILES = \
 	flex.aux \
 	flex.cp \
@@ -388,9 +388,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu doc/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign doc/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu doc/Makefile
+	  $(AUTOMAKE) --foreign doc/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -618,27 +618,6 @@ uninstall-man1:
 	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
 	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
 	dir='$(DESTDIR)$(man1dir)'; $(am__uninstall_files_from_dir)
-install-dist_docDATA: $(dist_doc_DATA)
-	@$(NORMAL_INSTALL)
-	@list='$(dist_doc_DATA)'; test -n "$(docdir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(docdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(docdir)" || exit 1; \
-	fi; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(docdir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(docdir)" || exit $$?; \
-	done
-
-uninstall-dist_docDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(dist_doc_DATA)'; test -n "$(docdir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(docdir)'; $(am__uninstall_files_from_dir)
 tags TAGS:
 
 ctags CTAGS:
@@ -681,9 +660,9 @@ distdir: $(DISTFILES)
 	  dist-info
 check-am: all-am
 check: check-am
-all-am: Makefile $(INFO_DEPS) $(MANS) $(DATA)
+all-am: Makefile $(INFO_DEPS) $(MANS)
 installdirs:
-	for dir in "$(DESTDIR)$(infodir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(docdir)"; do \
+	for dir in "$(DESTDIR)$(infodir)" "$(DESTDIR)$(man1dir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -717,6 +696,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-am
 
 clean-am: clean-aminfo clean-generic clean-libtool mostlyclean-am
@@ -737,7 +717,7 @@ info: info-am
 
 info-am: $(INFO_DEPS)
 
-install-data-am: install-dist_docDATA install-info-am install-man
+install-data-am: install-info-am install-man
 
 install-dvi: install-dvi-am
 
@@ -874,9 +854,8 @@ ps: ps-am
 
 ps-am: $(PSS)
 
-uninstall-am: uninstall-dist_docDATA uninstall-dvi-am \
-	uninstall-html-am uninstall-info-am uninstall-man \
-	uninstall-pdf-am uninstall-ps-am
+uninstall-am: uninstall-dvi-am uninstall-html-am uninstall-info-am \
+	uninstall-man uninstall-pdf-am uninstall-ps-am
 
 uninstall-man: uninstall-man1
 
@@ -886,28 +865,26 @@ uninstall-man: uninstall-man1
 	clean-libtool cscopelist-am ctags-am dist-info distclean \
 	distclean-generic distclean-libtool distdir dvi dvi-am html \
 	html-am info info-am install install-am install-data \
-	install-data-am install-dist_docDATA install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-man1 install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-aminfo \
-	maintainer-clean-generic maintainer-clean-vti mostlyclean \
-	mostlyclean-aminfo mostlyclean-generic mostlyclean-libtool \
-	mostlyclean-vti pdf pdf-am ps ps-am tags-am uninstall \
-	uninstall-am uninstall-dist_docDATA uninstall-dvi-am \
-	uninstall-html-am uninstall-info-am uninstall-man \
-	uninstall-man1 uninstall-pdf-am uninstall-ps-am
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-man1 install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
+	maintainer-clean-aminfo maintainer-clean-generic \
+	maintainer-clean-vti mostlyclean mostlyclean-aminfo \
+	mostlyclean-generic mostlyclean-libtool mostlyclean-vti pdf \
+	pdf-am ps ps-am tags-am uninstall uninstall-am \
+	uninstall-dvi-am uninstall-html-am uninstall-info-am \
+	uninstall-man uninstall-man1 uninstall-pdf-am uninstall-ps-am
 
 .PRECIOUS: Makefile
 
 
-$(dist_man_MANS): $(top_srcdir)/configure.ac $(top_srcdir)/src/flex.skl $(top_srcdir)/src/options.c $(top_srcdir)/src/options.h
-	for i in $(dist_man_MANS) ; do \
-	$(help2man) --name='$(PACKAGE_NAME)' \
-	--section=`echo $$i | sed -e 's/.*\.\([^.]*\)$$/\1/'` \
-	 $(top_srcdir)/src/flex$(EXEEXT) > $$i || rm -f $$i ; \
-	done
+flex.1: $(top_srcdir)/configure.ac $(top_srcdir)/src/flex.skl $(top_srcdir)/src/options.c $(top_srcdir)/src/options.h | $(FLEX)
+	$(help2man) --name='$(PACKAGE_NAME)' --section=1 \
+	--source='The Flex Project' --manual='Programming' \
+	--output=$@ $(FLEX) \
+	|| rm -f $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

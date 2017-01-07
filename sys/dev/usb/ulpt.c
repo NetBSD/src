@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.97.2.3 2016/07/26 05:54:40 pgoyette Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.97.2.4 2017/01/07 08:56:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.97.2.3 2016/07/26 05:54:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.97.2.4 2017/01/07 08:56:42 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.20 2015/08/21 01:52:08 uebayasi Exp $
+# 	$NetBSD: DEBUG,v 1.20.2.1 2017/01/07 08:56:23 pgoyette Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -112,6 +112,6 @@ uyap* at uhub? port ?
 
 audio*	at uaudio?
 
+spkr*	at audio?			# PC speaker (synthesized)
+
 pseudo-device	ppp			# Point-to-Point Protocol
-
-

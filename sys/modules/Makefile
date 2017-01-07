@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.167.2.2 2016/11/04 14:49:17 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.167.2.3 2017/01/07 08:56:49 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,10 @@ SUBDIR+=	aio
 SUBDIR+=	blowfish
 SUBDIR+=	bpf
 SUBDIR+=	bpf_filter
+SUBDIR+=	bufq_disksort
+SUBDIR+=	bufq_fcfs
+SUBDIR+=	bufq_priocscan
+SUBDIR+=	bufq_readprio
 SUBDIR+=	camellia
 SUBDIR+=	cast128
 SUBDIR+=	ccd
@@ -98,6 +102,8 @@ SUBDIR+=	skipjack
 SUBDIR+=	slcompress
 SUBDIR+=	smbfs
 SUBDIR+=	spdmem
+SUBDIR+=	spkr
+SUBDIR+=	sppp_subr
 SUBDIR+=	sysmon
 SUBDIR+=	sysmon_envsys
 SUBDIR+=	sysmon_power
@@ -346,7 +352,6 @@ SUBDIR+=	auvitek
 SUBDIR+=	coram
 SUBDIR+=	cxdtv
 SUBDIR+=	emdtv
-SUBDIR+=	spkr
 .endif
 
 .if (${MKISCSI} != "no")

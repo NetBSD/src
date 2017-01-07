@@ -1,6 +1,6 @@
-/*	$NetBSD: exec.c,v 1.61 2016/06/05 14:13:57 maxv Exp $	 */
+/*	$NetBSD: exec.c,v 1.61.2.1 2017/01/07 08:56:18 pgoyette Exp $	 */
 
-/*-
+/*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -88,8 +88,7 @@
  */
 
 /*
- * starts NetBSD a.out kernel
- * needs lowlevel startup from startprog.S
+ * Starts a NetBSD ELF kernel. The low level startup is done in startprog.S.
  * This is a special version of exec.c to support use of XMS.
  */
 
@@ -260,8 +259,8 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 {
 	int fd;
 #ifdef XMS
-	u_long		xmsmem;
-	physaddr_t	origaddr = loadaddr;
+	u_long xmsmem;
+	physaddr_t origaddr = loadaddr;
 #endif
 
 	*extmem = getextmem();
@@ -269,14 +268,14 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 
 #ifdef XMS
 	if ((getextmem1() == 0) && (xmsmem = checkxms())) {
-	        u_long kernsize;
+		u_long kernsize;
 
 		/*
 		 * With "CONSERVATIVE_MEMDETECT", extmem is 0 because
-		 *  getextmem() is getextmem1(). Without, the "smart"
-		 *  methods could fail to report all memory as well.
+		 * getextmem() is getextmem1(). Without, the "smart"
+		 * methods could fail to report all memory as well.
 		 * xmsmem is a few kB less than the actual size, but
-		 *  better than nothing.
+		 * better than nothing.
 		 */
 		if (xmsmem > *extmem)
 			*extmem = xmsmem;
@@ -343,17 +342,17 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 
 int
 exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
-	    void (*callback)(void))
+    void (*callback)(void))
 {
-	uint32_t	boot_argv[BOOT_NARGS];
-	u_long		marks[MARK_MAX];
+	uint32_t boot_argv[BOOT_NARGS];
+	u_long marks[MARK_MAX];
 	struct btinfo_symtab btinfo_symtab;
-	u_long		extmem;
-	u_long		basemem;
+	u_long extmem;
+	u_long basemem;
 
 #ifdef	DEBUG
-	printf("exec: file=%s loadaddr=0x%lx\n",
-	       file ? file : "NULL", loadaddr);
+	printf("exec: file=%s loadaddr=0x%lx\n", file ? file : "NULL",
+	    loadaddr);
 #endif
 
 	BI_ALLOC(BTINFO_MAX);
@@ -406,7 +405,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	if (callback != NULL)
 		(*callback)();
 	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv,
-		  x86_trunc_page(basemem*1024));
+	    x86_trunc_page(basemem * 1024));
 	panic("exec returned");
 
 out:
@@ -670,11 +669,11 @@ exec_multiboot(const char *file, char *args)
 	struct multiboot_info *mbi;
 	struct multiboot_module *mbm;
 	struct bi_modulelist_entry *bim;
-	int		i, len;
-	u_long		marks[MARK_MAX];
-	u_long		extmem;
-	u_long		basemem;
-	char		*cmdline;
+	int i, len;
+	u_long marks[MARK_MAX];
+	u_long extmem;
+	u_long basemem;
+	char *cmdline;
 
 	mbi = alloc(sizeof(struct multiboot_info));
 	mbi->mi_flags = MULTIBOOT_INFO_HAS_MEMORY;
@@ -721,7 +720,6 @@ exec_multiboot(const char *file, char *args)
 	    marks[MARK_NSYM], marks[MARK_SYM], marks[MARK_END]);
 #endif
 
-
 #if 0
 	if (btinfo_symtab.nsym) {
 		mbi->mi_flags |= MULTIBOOT_INFO_HAS_ELF_SYMS;
@@ -732,11 +730,11 @@ exec_multiboot(const char *file, char *args)
 #endif
 
 	multiboot(marks[MARK_ENTRY], vtophys(mbi),
-		  x86_trunc_page(mbi->mi_mem_lower*1024));
+	    x86_trunc_page(mbi->mi_mem_lower * 1024));
 	panic("exec returned");
 
 out:
-        dealloc(mbi, 0);
+	dealloc(mbi, 0);
 	return -1;
 }
 

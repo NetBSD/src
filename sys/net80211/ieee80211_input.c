@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.84.2.1 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.84.2.2 2017/01/07 08:56:51 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.84.2.1 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.84.2.2 2017/01/07 08:56:51 pgoyette Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -784,11 +784,6 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 		}
 	}
 	if (m != NULL) {
-		/*
-		 * XXX If we forward packet into transmitter of the AP,
-		 * we don't need to duplicate for DLT_EN10MB.
-		 */
-		bpf_mtap(ifp, m);
 
 		if (ni->ni_vlan != 0) {
 			/* attach vlan tag */

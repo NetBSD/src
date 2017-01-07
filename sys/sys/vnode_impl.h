@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.2.2.2 2016/11/04 14:49:22 pgoyette Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.2.2.3 2017/01/07 08:56:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -42,20 +42,35 @@ enum vnode_state {
 	VS_RECLAIMING,	/* Intermediate, detaching the fs node. */
 	VS_RECLAIMED	/* Stable, no fs node attached. */
 };
+
+TAILQ_HEAD(vnodelst, vnode_impl);
+typedef struct vnodelst vnodelst_t;
+
 struct vcache_key {
 	struct mount *vk_mount;
 	const void *vk_key;
 	size_t vk_key_len;
 };
+
+/*
+ * Reading or writing any of these items requires holding the appropriate
+ * lock.  Field markings and the corresponding locks:
+ *
+ *	c	vcache_lock
+ *	d	vdrain_lock
+ *	i	v_interlock
+ */
 struct vnode_impl {
 	struct vnode vi_vnode;
-	enum vnode_state vi_state;
-	SLIST_ENTRY(vnode_impl) vi_hash;
-	struct vcache_key vi_key;
+	enum vnode_state vi_state;		/* i: current state */
+	struct vnodelst *vi_lrulisthd;		/* d: current lru list head */
+	TAILQ_ENTRY(vnode_impl) vi_lrulist;	/* d: lru list */
+	SLIST_ENTRY(vnode_impl) vi_hash;	/* c: vnode cache list */
+	struct vcache_key vi_key;		/* c: vnode cache key */
 };
 typedef struct vnode_impl vnode_impl_t;
 
-#define VIMPL_TO_VNODE(node)	((vnode_t *)(node))
+#define VIMPL_TO_VNODE(vip)	((vnode_t *)(vip))
 #define VNODE_TO_VIMPL(vp)	((vnode_impl_t *)(vp))
 
 /*
@@ -67,5 +82,8 @@ vnode_t *
 	vnalloc_marker(struct mount *);
 void	vnfree_marker(vnode_t *);
 bool	vnis_marker(vnode_t *);
+int	vcache_vget(vnode_t *);
+int	vcache_tryvget(vnode_t *);
+int	vfs_drainvnodes(void);
 
 #endif /* !_SYS_VNODE_IMPL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.13.8.1 2016/11/04 14:49:00 pgoyette Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.13.8.2 2017/01/07 08:56:14 pgoyette Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -71,7 +71,7 @@
 #include <arm/omap/omap2_obioreg.h>
 #endif
 
-RCSID("$NetBSD: gumstix_start.S,v 1.13.8.1 2016/11/04 14:49:00 pgoyette Exp $")
+RCSID("$NetBSD: gumstix_start.S,v 1.13.8.2 2017/01/07 08:56:14 pgoyette Exp $")
 
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
@@ -212,6 +212,8 @@ _C_LABEL(gumstix_start):
 	cmp	r1, #0			/* Check MPIDR_MP (bit 31) */
 	orrlt	r1, r0, #TTBR_MPATTR
 	orrge	r1, r0, #TTBR_UPATTR
+#else
+	mov	r1, r0
 #endif
 	mcr	p15, 0, r1, c2, c0, 0	/* Set TTB */
 	mcr	p15, 0, r1, c8, c7, 0	/* Flush TLB */

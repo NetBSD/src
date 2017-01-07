@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.2.2 2016/07/26 03:24:16 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.2.3 2017/01/07 08:56:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.2.2 2016/07/26 03:24:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.2.3 2017/01/07 08:56:09 pgoyette Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -207,6 +207,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.2.2 2016/07/26 03:24:16 pgoyette E
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
 #include <machine/acpi_machdep.h>
+#else
+#include <machine/i82489var.h>
 #endif
 
 #include "isa.h"
@@ -252,14 +254,6 @@ size_t dump_npages;
 size_t dump_header_size;
 size_t dump_totalbytesleft;
 
-vaddr_t msgbuf_vaddr;
-
-struct {
-	paddr_t paddr;
-	psize_t sz;
-} msgbuf_p_seg[VM_PHYSSEG_MAX];
-unsigned int msgbuf_p_cnt = 0;
-
 vaddr_t idt_vaddr;
 paddr_t idt_paddr;
 
@@ -270,6 +264,7 @@ vaddr_t kern_end;
 
 struct vm_map *phys_map = NULL;
 
+extern paddr_t lowmem_rsvd;
 extern paddr_t avail_start, avail_end;
 #ifdef XEN
 extern paddr_t pmap_pa_start, pmap_pa_end;
@@ -373,12 +368,14 @@ cpu_startup(void)
 	/*
 	 * Create the module map.
 	 *
-	 * XXX: the module map is taken as what is left of the bootstrap memory
-	 * created in locore.S, which is not big enough if we want to load many
-	 * modules dynamically. We really should be using kernel_map instead.
+	 * The kernel uses RIP-relative addressing with a maximum offset of
+	 * 2GB. The problem is, kernel_map is too far away in memory from
+	 * the kernel .text. So we cannot use it, and have to create a
+	 * special module_map.
 	 *
-	 * But the modules must be located above the kernel image, and that
-	 * wouldn't be guaranteed if we were using kernel_map.
+	 * The module map is taken as what is left of the bootstrap memory
+	 * created in locore.S. This memory is right above the kernel
+	 * image, so this is the best place to put our modules.
 	 */
 	uvm_map_setup(&module_map_store, module_start, module_end, 0);
 	module_map_store.pmap = pmap_kernel();
@@ -474,6 +471,7 @@ x86_64_proc0_tss_ldt_init(void)
 	pmap_kernel()->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_rsp0 - 1;
+	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
 
 #if !defined(XEN)
 	lldt(pmap_kernel()->pm_ldt_sel);
@@ -779,6 +777,7 @@ sparse_dump_mark(void)
 	paddr_t p, pstart, pend;
 	struct vm_page *pg;
 	int i;
+	uvm_physseg_t upm;
 
 	/*
 	 * Mark all memory pages, then unmark pages that are uninteresting.
@@ -795,10 +794,25 @@ sparse_dump_mark(void)
 			setbit(sparse_dump_physmap, p);
 		}
 	}
-	for (i = 0; i < vm_nphysseg; i++) {
-		struct vm_physseg *seg = VM_PHYSMEM_PTR(i);
+        for (upm = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(upm);
+	     upm = uvm_physseg_get_next(upm)) {
+		paddr_t pfn;
 
-		for (pg = seg->pgs; pg < seg->lastpg; pg++) {
+		if (uvm_physseg_valid_p(upm) == false)
+			break;
+
+		const paddr_t startpfn = uvm_physseg_get_start(upm);
+		const paddr_t endpfn = uvm_physseg_get_end(upm);
+
+		KASSERT(startpfn != -1 && endpfn != -1);
+
+		/*
+		 * We assume that seg->start to seg->end are
+		 * uvm_page_physload()ed
+		 */
+		for (pfn = startpfn; pfn <= endpfn; pfn++) {
+			pg = PHYS_TO_VM_PAGE(ptoa(pfn));
 			if (pg->uanon || (pg->pqflags & PQ_FREE) ||
 			    (pg->uobject && pg->uobject->pgops)) {
 				p = VM_PAGE_TO_PHYS(pg) / PAGE_SIZE;
@@ -1324,6 +1338,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	l->l_proc->p_flag &= ~PK_32;
 
+	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
+
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
@@ -1454,62 +1470,6 @@ extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
 static void
-init_x86_64_msgbuf(void)
-{
-	/* Message buffer is located at end of core. */
-	struct vm_physseg *vps;
-	psize_t sz = round_page(MSGBUFSIZE);
-	psize_t reqsz = sz;
-	int x;
-		
- search_again:
-	vps = NULL;
-
-	for (x = 0; x < vm_nphysseg; x++) {
-		vps = VM_PHYSMEM_PTR(x);
-		if (ctob(vps->avail_end) == avail_end)
-			break;
-	}
-	if (x == vm_nphysseg)
-		panic("init_x86_64: can't find end of memory");
-
-	/* Shrink so it'll fit in the last segment. */
-	if ((vps->avail_end - vps->avail_start) < atop(sz))
-		sz = ctob(vps->avail_end - vps->avail_start);
-
-	vps->avail_end -= atop(sz);
-	vps->end -= atop(sz);
-            msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-            msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(vps->avail_end);
-
-	/* Remove the last segment if it now has no pages. */
-	if (vps->start == vps->end) {
-		for (vm_nphysseg--; x < vm_nphysseg; x++)
-			VM_PHYSMEM_PTR_SWAP(x, x + 1);
-	}
-
-	/* Now find where the new avail_end is. */
-	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
-		if (VM_PHYSMEM_PTR(x)->avail_end > avail_end)
-			avail_end = VM_PHYSMEM_PTR(x)->avail_end;
-	avail_end = ctob(avail_end);
-
-	if (sz == reqsz)
-		return;
-
-	reqsz -= sz;
-	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
-		/* No more segments available, bail out. */
-		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
-		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
-		return;
-	}
-
-	sz = reqsz;
-	goto search_again;
-}
-
-static void
 init_x86_64_ksyms(void)
 {
 #if NKSYMS || defined(DDB) || defined(MODULAR)
@@ -1551,8 +1511,11 @@ init_x86_64(paddr_t first_avail)
 	struct mem_segment_descriptor *ldt_segp;
 	int x;
 #ifndef XEN
+	extern paddr_t local_apic_pa;
 	int ist;
-#endif /* !XEN */
+#endif
+
+	KASSERT(first_avail % PAGE_SIZE == 0);
 
 #ifdef XEN
 	KASSERT(HYPERVISOR_shared_info != NULL);
@@ -1582,9 +1545,11 @@ init_x86_64(paddr_t first_avail)
 	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	uvmexp.ncolors = 2;
+
+	avail_start = first_avail;
 
 #ifndef XEN
 	/*
@@ -1598,22 +1563,25 @@ init_x86_64(paddr_t first_avail)
 	 * Page 6:	Temporary page map level 3
 	 * Page 7:	Temporary page map level 4
 	 */
-	avail_start = 8 * PAGE_SIZE;
+	lowmem_rsvd = 8 * PAGE_SIZE;
 
 	/* Initialize the memory clusters (needed in pmap_boostrap). */
 	init_x86_clusters();
-#else	/* XEN */
+#else
 	/* Parse Xen command line (replace bootinfo) */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 
-	/* Determine physical address space */
-	avail_start = first_avail;
 	avail_end = ctob(xen_start_info.nr_pages);
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
-	__PRINTK(("pmap_pa_start 0x%lx avail_start 0x%lx avail_end 0x%lx\n",
-	    pmap_pa_start, avail_start, avail_end));
-#endif	/* !XEN */
+#endif
+
+	/* End of the virtual space we have created so far. */
+	kern_end = (vaddr_t)atdevbase + IOM_SIZE;
+
+	/* The area for the module map. */
+	module_start = kern_end;
+	module_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
 
 	/*
 	 * Call pmap initialization to make new kernel address space.
@@ -1623,21 +1591,25 @@ init_x86_64(paddr_t first_avail)
 
 #ifndef XEN
 	/* Internalize the physical pages into the VM system. */
-	init_x86_vm(first_avail);
-#else	/* XEN */
-	kern_end = KERNBASE + first_avail;
+	init_x86_vm(avail_start);
+#else
 	physmem = xen_start_info.nr_pages;
+	uvm_page_physload(atop(avail_start), atop(avail_end),
+	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+#endif
 
-	uvm_page_physload(atop(avail_start),
-		atop(avail_end), atop(avail_start),
-		atop(avail_end), VM_FREELIST_DEFAULT);
-#endif	/* !XEN */
-
-	init_x86_64_msgbuf();
+	init_x86_msgbuf();
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	kpreempt_disable();
+
+#ifndef XEN
+	pmap_kenter_pa(local_apic_va, local_apic_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_update(pmap_kernel());
+	memset((void *)local_apic_va, 0, PAGE_SIZE);
+#endif
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());

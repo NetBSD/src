@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_iomux.c,v 1.2 2015/12/31 11:53:19 ryo Exp $	*/
+/*	$NetBSD: nitrogen6_iomux.c,v 1.2.2.1 2017/01/07 08:56:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 Ryo Shimizu <ryo@nerv.org>
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_iomux.c,v 1.2 2015/12/31 11:53:19 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_iomux.c,v 1.2.2.1 2017/01/07 08:56:14 pgoyette Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include <sys/bus.h>
@@ -52,10 +52,11 @@ static void nitrogen6_mux_config(const struct iomux_conf *);
 static void nitrogen6_gpio_config(const struct gpio_conf *);
 
 
-#define	nitrogen6x	1
-#define	nitrogen6max	2
-#define	cubox_i		3
-#define	hummingboard	4
+#define	nitrogen6x		1
+#define	nitrogen6max		2
+#define	cubox_i			3
+#define	hummingboard		4
+#define	hummingboard_edge	5
 
 #define PAD_UART	\
 		(PAD_CTL_HYS | PAD_CTL_PUS_100K_PU | PAD_CTL_PULL |	\
@@ -110,6 +111,10 @@ static void nitrogen6_gpio_config(const struct gpio_conf *);
 		(PAD_CTL_HYS | PAD_CTL_PUS_100K_PD | PAD_CTL_PULL |	\
 		 PAD_CTL_SPEED_100MHZ | PAD_CTL_DSE_40OHM | PAD_CTL_SRE_SLOW)
 #define PAD_OUTPUT_40OHM	(PAD_CTL_SPEED_100MHZ | PAD_CTL_DSE_40OHM)
+
+#define PAD_PCIE_GPIO \
+		(PAD_CTL_HYS | PAD_CTL_PUS_22K_PU | PAD_CTL_PULL |	\
+		 PAD_CTL_SPEED_50MHZ | PAD_CTL_DSE_40OHM | PAD_CTL_SRE_FAST)
 
 
 /* iMX6 SoloLite */
@@ -176,7 +181,8 @@ static const struct iomux_conf iomux_data_6sdl[] = {
 		.pad = 0
 	},
 #endif
-#if (EVBARM_BOARDTYPE == hummingboard)
+#if (EVBARM_BOARDTYPE == hummingboard) || \
+    (EVBARM_BOARDTYPE == hummingboard_edge)
 	{
 		.pin = MUX_PIN(IMX6SDL, GPIO05),
 		.mux = IOMUX_CONFIG_ALT3,	/* CCM_CLKO1 */
@@ -184,7 +190,8 @@ static const struct iomux_conf iomux_data_6sdl[] = {
 	},
 #endif
 #if (EVBARM_BOARDTYPE == cubox_i) || \
-    (EVBARM_BOARDTYPE == hummingboard)
+    (EVBARM_BOARDTYPE == hummingboard) || \
+    (EVBARM_BOARDTYPE == hummingboard_edge)
 	{
 		.pin = MUX_PIN(IMX6SDL, EIM_DATA22),
 		.mux = IOMUX_CONFIG_ALT5,	/* GPIO3_IO22 */
@@ -407,15 +414,33 @@ static const struct iomux_conf iomux_data_6dq[] = {
 		.pad = 0
 	},
 #endif
-#if (EVBARM_BOARDTYPE == hummingboard)
+#if (EVBARM_BOARDTYPE == hummingboard) || \
+    (EVBARM_BOARDTYPE == hummingboard_edge)
 	{
 		.pin = MUX_PIN(IMX6DQ, GPIO05),
 		.mux = IOMUX_CONFIG_ALT3,	/* CCM_CLKO1 */
 		.pad = PAD_USB
 	},
 #endif
+#if (EVBARM_BOARDTYPE == hummingboard)
+	/* PCIe */
+	{
+		.pin = MUX_PIN(IMX6DQ, EIM_AD04),
+		.mux = IOMUX_CONFIG_ALT5,
+		.pad = PAD_PCIE_GPIO
+	},
+#endif
+#if (EVBARM_BOARDTYPE == hummingboard_edge)
+	/* PCIe */
+	{
+		.pin = MUX_PIN(IMX6DQ, SD4_DATA3),
+		.mux = IOMUX_CONFIG_ALT5,
+		.pad = PAD_PCIE_GPIO
+	},
+#endif
 #if (EVBARM_BOARDTYPE == cubox_i) || \
-    (EVBARM_BOARDTYPE == hummingboard)
+    (EVBARM_BOARDTYPE == hummingboard) || \
+    (EVBARM_BOARDTYPE == hummingboard_edge)
 	{
 		.pin = MUX_PIN(IMX6DQ, EIM_DATA22),
 		.mux = IOMUX_CONFIG_ALT5,	/* GPIO3_IO22 */
@@ -456,6 +481,13 @@ static const struct gpio_conf gpio_data[] = {
 	{	3,	22,	GPIO_DIR_OUT,	1	}, /* USB OTG */
 	{	1,	0,	GPIO_DIR_OUT,	1	}, /* USB H1 */
 	{	1,	4,	GPIO_DIR_IN,	0	}, /* USDHC2 */
+	{	3,	4,	GPIO_DIR_OUT,	0	}, /* PCIe */
+#endif
+#if (EVBARM_BOARDTYPE == hummingboard_edge)
+	{	3,	22,	GPIO_DIR_OUT,	1	}, /* USB OTG */
+	{	1,	0,	GPIO_DIR_OUT,	1	}, /* USB H1 */
+	{	1,	4,	GPIO_DIR_IN,	0	}, /* USDHC2 */
+	{	2,	11,	GPIO_DIR_OUT,	0	}, /* PCIe */
 #endif
 
 	/* end of table */
@@ -553,6 +585,18 @@ nitrogen6_device_register(device_t self, void *aux)
 #endif
 #if (EVBARM_BOARDTYPE == hummingboard)
 		prop_dictionary_set_cstring(dict, "usdhc2-cd-gpio", "!1,4");
+#endif
+#if (EVBARM_BOARDTYPE == hummingboard_edge)
+		prop_dictionary_set_cstring(dict, "usdhc2-cd-gpio", "!1,4");
+#endif
+	}
+	if (device_is_a(self, "imxpcie") &&
+	    device_is_a(device_parent(self), "axi")) {
+#if (EVBARM_BOARDTYPE == hummingboard)
+		prop_dictionary_set_cstring(dict, "imx6pcie-reset-gpio", "!3,4");
+#endif
+#if (EVBARM_BOARDTYPE == hummingboard_edge)
+		prop_dictionary_set_cstring(dict, "imx6pcie-reset-gpio", "!2,11");
 #endif
 	}
 }

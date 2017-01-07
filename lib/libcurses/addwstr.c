@@ -1,4 +1,4 @@
-/*   $NetBSD: addwstr.c,v 1.2 2007/05/28 15:01:54 blymn Exp $ */
+/*   $NetBSD: addwstr.c,v 1.2.58.1 2017/01/07 08:56:03 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addwstr.c,v 1.2 2007/05/28 15:01:54 blymn Exp $");
+__RCSID("$NetBSD: addwstr.c,v 1.2.58.1 2017/01/07 08:56:03 pgoyette Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -163,7 +163,7 @@ waddnwstr(WINDOW *win, const wchar_t *s, int n)
 	size_t  len;
 	const wchar_t *p;
 	cchar_t cc;
-	wchar_t wc[ 2 ];
+	wchar_t wc[2];
 
 	/*
 	 * BSD curses: if (n > 0) then "at most n", else "len = strlen(s)"
@@ -171,10 +171,10 @@ waddnwstr(WINDOW *win, const wchar_t *s, int n)
 	 * XCURSES: if (n != -1) then "at most n", else "len = strlen(s)"
 	 */
 	/* compute the length and column width of string */
-	if ( n < -1 ) 
+	if (n < -1)
 		return ERR;
 	if (n >= 0)
-		for (p = s, len = 0; n-- && *p++; ++len );
+		for (p = s, len = 0; n-- && *p++; ++len);
 	else
 		len = wcslen(s);
 #ifdef DEBUG
@@ -182,16 +182,16 @@ waddnwstr(WINDOW *win, const wchar_t *s, int n)
 #endif /* DEBUG */
 
 	p = s;
-	while ( len ) {
-		wc[ 0 ] = *p;
-		wc[ 1 ] = L'\0';
-		if ( setcchar( &cc, wc, win->wattr, 0, NULL ) == ERR )
+	while (len) {
+		wc[0] = *p;
+		wc[1] = L'\0';
+		if (setcchar( &cc, wc, win->wattr, 0, NULL ) == ERR)
 			return ERR;
-		if ( wadd_wch( win, &cc ) == ERR )
+		if (wadd_wch( win, &cc ) == ERR)
 			return ERR;
 #ifdef DEBUG
-		__CTRACE(__CTRACE_INPUT, "waddnwstr: (%x,%x,%d) added\n", 
-				cc.vals[ 0 ], cc.attributes, cc.elements );
+		__CTRACE(__CTRACE_INPUT, "waddnwstr: (%x,%x,%d) added\n",
+			 cc.vals[ 0 ], cc.attributes, cc.elements );
 #endif /* DEBUG */
 		p++, len--;
 	}

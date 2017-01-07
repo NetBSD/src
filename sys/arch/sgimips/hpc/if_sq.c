@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.46 2016/06/10 13:27:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.46.2.1 2017/01/07 08:56:25 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.46 2016/06/10 13:27:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.46.2.1 2017/01/07 08:56:25 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -324,6 +324,7 @@ sq_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	memset(&sc->sq_trace, 0, sizeof(sc->sq_trace));
@@ -1016,12 +1017,9 @@ sq_rxintr(struct sq_softc *sc)
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = framelen;
 
-		ifp->if_ipackets++;
-
 		SQ_DPRINTF(("%s: sq_rxintr: buf %d len %d\n",
 		    device_xname(sc->sc_dev), i, framelen));
 
-		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
@@ -1110,7 +1108,7 @@ sq_txintr(struct sq_softc *sc)
 		ifp->if_timer = 0;
 
 	SQ_TRACE(SQ_TXINTR_EXIT, sc, sc->sc_prevtx, status);
-	sq_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return 1;
 }

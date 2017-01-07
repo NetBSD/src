@@ -367,6 +367,7 @@ map_session(session_t *session, device_t dev)
 	adapt->adapt_minphys = iscsi_minphys;
 	adapt->adapt_openings = session->send_window;
 	adapt->adapt_max_periph = CCBS_FOR_SCSIPI;
+	adapt->adapt_flags = SCSIPI_ADAPT_MPSAFE;
 
 	/*
 	 * Fill in the scsipi_channel.
@@ -595,9 +596,7 @@ iscsi_done(ccb_t *ccb)
 		}
 
 		DEB(99, ("Calling scsipi_done (%p), err = %d\n", xs, xs->error));
-		KERNEL_LOCK(1, curlwp);
 		scsipi_done(xs);
-		KERNEL_UNLOCK_ONE(curlwp);
 		DEB(99, ("scsipi_done returned\n"));
 	} else {
 		DEBOUT(("ISCSI: iscsi_done CCB %p without XS\n", ccb));

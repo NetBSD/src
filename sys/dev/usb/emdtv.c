@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.11 2016/04/23 10:15:31 skrll Exp $ */
+/* $NetBSD: emdtv.c,v 1.11.2.1 2017/01/07 08:56:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.11 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.11.2.1 2017/01/07 08:56:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ emdtv_detach(device_t self, int flags)
 	emdtv_dtv_detach(sc, flags);
 
 	if (sc->sc_iface != NULL) {
-        	status = usbd_set_interface(sc->sc_iface, 0);
+		status = usbd_set_interface(sc->sc_iface, 0);
 		if (status != USBD_NORMAL_COMPLETION)
 			aprint_error_dev(sc->sc_dev,
 			    "couldn't stop stream: %s\n", usbd_errstr(status));
@@ -383,7 +383,7 @@ emdtv_gpio_ctl(struct emdtv_softc *sc, emdtv_gpio_reg_t gpioreg, bool onoff)
 
 	if (sc->sc_board->eb_manual_gpio == false) {
 		val = eeprom_offset + gpioreg;
-		emdtv_write_1(sc, 0x03, 0xa0, val); 
+		emdtv_write_1(sc, 0x03, 0xa0, val);
 		gpio_value = emdtv_read_1(sc, 0x02, 0xa0);
 	} else {
 		const struct emdtv_gpio_regs *r = &eb->eb_gpio_regs;

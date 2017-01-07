@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.327.4.1 2016/07/20 23:50:55 pgoyette Exp $ */
+/*	$NetBSD: machdep.c,v 1.327.4.2 2017/01/07 08:56:26 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.327.4.1 2016/07/20 23:50:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.327.4.2 2017/01/07 08:56:26 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -943,6 +943,7 @@ cpu_dumpconf(void)
 
 #define	BYTES_PER_DUMP	(32 * 1024)	/* must be a multiple of pagesize */
 static vaddr_t dumpspace;
+struct pcb dumppcb;
 
 void *
 reserve_dumppages(void *p)
@@ -970,6 +971,7 @@ dumpsys(void)
 
 	/* copy registers to memory */
 	snapshot(cpuinfo.curpcb);
+	memcpy(&dumppcb, cpuinfo.curpcb, sizeof dumppcb);
 	stackdump();
 
 	if (dumpdev == NODEV)

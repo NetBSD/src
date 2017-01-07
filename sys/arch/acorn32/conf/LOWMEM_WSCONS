@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.67 2015/08/12 07:53:57 maxv Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.67.2.1 2017/01/07 08:56:08 pgoyette Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -217,6 +217,8 @@ lpt*	at pioc? offset 0x0278 irq 0
 # Audio device
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
+
+spkr*	at audio?			# PC speaker (synthesized)
 
 # Podule bus device
 #podulebus0	at root

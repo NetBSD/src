@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.93.2.1 2016/11/04 14:49:08 pgoyette Exp $	*/
+/*	$NetBSD: hme.c,v 1.93.2.2 2017/01/07 08:56:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.93.2.1 2016/11/04 14:49:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.93.2.2 2017/01/07 08:56:32 pgoyette Exp $");
 
 /* #define HMEDEBUG */
 
@@ -875,14 +875,6 @@ hme_read(struct hme_softc *sc, int ix, uint32_t flags)
 		ifp->if_ierrors++;
 		return;
 	}
-
-	ifp->if_ipackets++;
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	bpf_mtap(ifp, m);
 
 	/* Pass the packet up. */
 	if_percpuq_enqueue(ifp->if_percpuq, m);

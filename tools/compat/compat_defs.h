@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.103.2.1 2016/11/04 14:49:25 pgoyette Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.103.2.2 2017/01/07 08:56:57 pgoyette Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -42,10 +42,14 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <paths.h>
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if HAVE_ERR_H
+#include <err.h>
+#endif
 
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
@@ -62,6 +66,9 @@
 #endif
 #if HAVE_STDDEF_H
 #include <stddef.h>
+#endif
+#if HAVE_LIBGEN_H
+#include <libgen.h>
 #endif
 
 #if HAVE_RPC_TYPES_H
@@ -219,19 +226,19 @@ typedef unsigned short u_short;
 
 /* Prototypes for replacement functions. */
 
-#if !HAVE_ATOLL
+#if !HAVE_DECL_ATOLL
 long long int atoll(const char *);
 #endif
 
-#if !HAVE_ASPRINTF
+#if !HAVE_DECL_ASPRINTF
 int asprintf(char **, const char *, ...);
 #endif
 
-#if !HAVE_ASNPRINTF
+#if !HAVE_DECL_ASNPRINTF
 int asnprintf(char **, size_t, const char *, ...);
 #endif
 
-#if !HAVE_BASENAME
+#if !HAVE_DECL_BASENAME
 char *basename(char *);
 #endif
 
@@ -241,7 +248,7 @@ extern char *optarg;
 extern int optind, opterr, optopt;
 #endif
 
-#if !HAVE_DIRNAME
+#if !HAVE_DECL_DIRNAME
 char *dirname(char *);
 #endif
 
@@ -323,10 +330,10 @@ int easprintf(char **, const char *, ...);
 int evasprintf(char **, const char *, va_list);
 #endif
 
-#if !HAVE_FGETLN || defined(__NetBSD__)
+#if !HAVE_DECL_FGETLN
 char *fgetln(FILE *, size_t *);
 #endif
-#if !HAVE_DPRINTF
+#if !HAVE_DECL_DPRINTF
 int dprintf(int, const char *, ...);
 #endif
 
@@ -338,7 +345,7 @@ int dprintf(int, const char *, ...);
 int flock(int, int);
 #endif
 
-#if !HAVE_FPARSELN || BROKEN_FPARSELN || defined(__NetBSD__)
+#if !HAVE_DECL_FPARSELN || BROKEN_FPARSELN
 # define FPARSELN_UNESCESC	0x01
 # define FPARSELN_UNESCCONT	0x02
 # define FPARSELN_UNESCCOMM	0x04
@@ -347,16 +354,18 @@ int flock(int, int);
 char *fparseln(FILE *, size_t *, size_t *, const char [3], int);
 #endif
 
-#if !HAVE_GETLINE
+#if !HAVE_DECL_GETDELIM
 ssize_t getdelim(char **, size_t *, int, FILE *);
+#endif
+#if !HAVE_DECL_GETLINE
 ssize_t getline(char **, size_t *, FILE *);
 #endif
 
-#if !HAVE_ISSETUGID
+#if !HAVE_DECL_ISSETUGID
 int issetugid(void);
 #endif
 
-#if !HAVE_ISBLANK && !defined(isblank)
+#if !HAVE_DECL_ISBLANK && !defined(isblank)
 #define isblank(x) ((x) == ' ' || (x) == '\t')
 #endif
 
@@ -389,11 +398,11 @@ int issetugid(void);
 #define bswap64(x)	__nbcompat_bswap64(x)
 #endif
 
-#if !HAVE_MKSTEMP
+#if !HAVE_DECL_MKSTEMP
 int mkstemp(char *);
 #endif
 
-#if !HAVE_MKDTEMP
+#if !HAVE_DECL_MKDTEMP
 char *mkdtemp(char *);
 #endif
 
@@ -403,11 +412,11 @@ char *mkdtemp(char *);
 int __nbcompat_gettemp(char *, int *, int);
 #endif
 
-#if !HAVE_PREAD
+#if !HAVE_DECL_PREAD
 ssize_t pread(int, void *, size_t, off_t);
 #endif
 
-#if !HAVE_HEAPSORT
+#if !HAVE_DECL_HEAPSORT
 int heapsort (void *, size_t, size_t, int (*)(const void *, const void *));
 #endif
 /* Make them use our version */
@@ -484,7 +493,7 @@ int		lchmod(const char *, mode_t);
 int		lchown(const char *, uid_t, gid_t);
 #endif
 
-#if !HAVE_PWRITE
+#if !HAVE_DECL_PWRITE
 ssize_t pwrite(int, const void *, size_t, off_t);
 #endif
 
@@ -492,11 +501,11 @@ ssize_t pwrite(int, const void *, size_t, off_t);
 int raise_default_signal(int);
 #endif
 
-#if !HAVE_REALLOCARR
+#if !HAVE_DECL_REALLOCARR
 int reallocarr(void *, size_t, size_t);
 #endif
 
-#if !HAVE_SETENV
+#if !HAVE_DECL_SETENV
 int setenv(const char *, const char *, int);
 #endif
 
@@ -508,8 +517,10 @@ int setgroupent(int);
 int setpassent(int);
 #endif
 
-#if !HAVE_SETPROGNAME || defined(__NetBSD__)
+#if !HAVE_DECL_GETPROGNAME
 const char *getprogname(void);
+#endif
+#if !HAVE_DECL_SETPROGNAME
 void setprogname(const char *);
 #endif
 
@@ -518,27 +529,19 @@ int snprintb(char *, size_t, const char *, uint64_t);
 int snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 #endif
 
-#if !HAVE_SNPRINTF
+#if !HAVE_DECL_SNPRINTF
 int snprintf(char *, size_t, const char *, ...);
 #endif
 
-#if !HAVE_STRLCAT
-size_t strlcat(char *, const char *, size_t);
-#endif
-
-#if !HAVE_STRLCPY
-size_t strlcpy(char *, const char *, size_t);
-#endif
-
-#if !HAVE_STRMODE
+#if !HAVE_DECL_STRMODE
 void strmode(mode_t, char *);
 #endif
 
-#if !HAVE_STRNDUP
+#if !HAVE_DECL_STRNDUP
 char *strndup(const char *, size_t);
 #endif
 
-#if !HAVE_STRSEP || defined(__NetBSD__)
+#if !HAVE_DECL_STRSEP
 char *strsep(char **, const char *);
 #endif
 
@@ -548,37 +551,37 @@ long long strsuftollx(const char *, const char *,
 			long long, long long, char *, size_t);
 #endif
 
-#if !HAVE_STRTOLL
+#if !HAVE_DECL_STRTOLL
 long long strtoll(const char *, char **, int);
 #endif
 
-#if !HAVE_STRTOI
+#if !HAVE_DECL_STRTOI
 intmax_t strtoi(const char * __restrict, char ** __restrict, int,
     intmax_t, intmax_t, int *);
 #endif
 
-#if !HAVE_STRTOU
+#if !HAVE_DECL_STRTOU
 uintmax_t strtou(const char * __restrict, char ** __restrict, int,
     uintmax_t, uintmax_t, int *);
 #endif
 
-#if !HAVE_USER_FROM_UID
+#if !HAVE_DECL_USER_FROM_UID
 const char *user_from_uid(uid_t, int);
 #endif
 
-#if !HAVE_GROUP_FROM_GID
+#if !HAVE_DECL_GROUP_FROM_GID
 const char *group_from_gid(gid_t, int);
 #endif
 
-#if !HAVE_VASPRINTF
+#if !HAVE_DECL_VASPRINTF
 int vasprintf(char **, const char *, va_list);
 #endif
 
-#if !HAVE_VASNPRINTF
+#if !HAVE_DECL_VASNPRINTF
 int vasnprintf(char **, size_t, const char *, va_list);
 #endif
 
-#if !HAVE_VSNPRINTF
+#if !HAVE_DECL_VSNPRINTF
 int vsnprintf(char *, size_t, const char *, va_list);
 #endif
 

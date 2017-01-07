@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.171.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.171.2.3 2017/01/07 08:56:51 pgoyette Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.171.2.2 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.171.2.3 2017/01/07 08:56:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -133,14 +133,52 @@ static int ip6_insertfraghdr(struct mbuf *, struct mbuf *, int,
 	struct ip6_frag **);
 static int ip6_insert_jumboopt(struct ip6_exthdrs *, u_int32_t);
 static int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
-static int ip6_getpmtu(struct route *, struct route *, struct ifnet *,
-    const struct in6_addr *, u_long *, int *);
+static int ip6_getpmtu(struct rtentry *, struct ifnet *, u_long *, int *);
 static int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
 static int ip6_ifaddrvalid(const struct in6_addr *);
+static int ip6_handle_rthdr(struct ip6_rthdr *, struct ip6_hdr *);
 
 #ifdef RFC2292
 static int ip6_pcbopts(struct ip6_pktopts **, struct socket *, struct sockopt *);
 #endif
+
+static int
+ip6_handle_rthdr(struct ip6_rthdr *rh, struct ip6_hdr *ip6)
+{
+	struct ip6_rthdr0 *rh0;
+	struct in6_addr *addr;
+	struct sockaddr_in6 sa;
+	int error = 0;
+
+	switch (rh->ip6r_type) {
+	case IPV6_RTHDR_TYPE_0:
+		 rh0 = (struct ip6_rthdr0 *)rh;
+		 addr = (struct in6_addr *)(rh0 + 1);
+
+		 /*
+		  * construct a sockaddr_in6 form of the first hop.
+		  *
+		  * XXX we may not have enough information about its scope zone;
+		  * there is no standard API to pass the information from the
+		  * application.
+		  */
+		 sockaddr_in6_init(&sa, addr, 0, 0, 0);
+		 error = sa6_embedscope(&sa, ip6_use_defzone);
+		 if (error != 0)
+			 break;
+		 (void)memmove(&addr[0], &addr[1],
+		     sizeof(struct in6_addr) * (rh0->ip6r0_segleft - 1));
+		 addr[rh0->ip6r0_segleft - 1] = ip6->ip6_dst;
+		 ip6->ip6_dst = sa.sin6_addr;
+		 /* XXX */
+		 in6_clearscope(addr + rh0->ip6r0_segleft - 1);
+		 break;
+	default:	/* is it possible? */
+		 error = EINVAL;
+	}
+
+	return error;
+}
 
 /*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6
@@ -170,7 +208,7 @@ ip6_output(
 	int hlen, tlen, len, off;
 	bool tso;
 	struct route ip6route;
-	struct rtentry *rt = NULL;
+	struct rtentry *rt = NULL, *rt_pmtu;
 	const struct sockaddr_in6 *dst;
 	struct sockaddr_in6 src_sa, dst_sa;
 	int error = 0;
@@ -370,51 +408,22 @@ ip6_output(
 		    sizeof(struct ip6_hdr) + optlen);
 	}
 
+	/* Need to save for pmtu */
+	finaldst = ip6->ip6_dst;
+
 	/*
 	 * If there is a routing header, replace destination address field
 	 * with the first hop of the routing header.
 	 */
 	if (exthdrs.ip6e_rthdr) {
 		struct ip6_rthdr *rh;
-		struct ip6_rthdr0 *rh0;
-		struct in6_addr *addr;
-		struct sockaddr_in6 sa;
 
 		rh = (struct ip6_rthdr *)(mtod(exthdrs.ip6e_rthdr,
 		    struct ip6_rthdr *));
-		finaldst = ip6->ip6_dst;
-		switch (rh->ip6r_type) {
-		case IPV6_RTHDR_TYPE_0:
-			 rh0 = (struct ip6_rthdr0 *)rh;
-			 addr = (struct in6_addr *)(rh0 + 1);
 
-			 /*
-			  * construct a sockaddr_in6 form of
-			  * the first hop.
-			  *
-			  * XXX: we may not have enough
-			  * information about its scope zone;
-			  * there is no standard API to pass
-			  * the information from the
-			  * application.
-			  */
-			 sockaddr_in6_init(&sa, addr, 0, 0, 0);
-			 if ((error = sa6_embedscope(&sa,
-			     ip6_use_defzone)) != 0) {
-				 goto bad;
-			 }
-			 ip6->ip6_dst = sa.sin6_addr;
-			 (void)memmove(&addr[0], &addr[1],
-			     sizeof(struct in6_addr) *
-			     (rh0->ip6r0_segleft - 1));
-			 addr[rh0->ip6r0_segleft - 1] = finaldst;
-			 /* XXX */
-			 in6_clearscope(addr + rh0->ip6r0_segleft - 1);
-			 break;
-		default:	/* is it possible? */
-			 error = EINVAL;
-			 goto bad;
-		}
+		error = ip6_handle_rthdr(rh, ip6);
+		if (error != 0)
+			goto bad;
 	}
 
 	/* Source address validation */
@@ -492,12 +501,31 @@ ip6_output(
 	ip6 = mtod(m, struct ip6_hdr *);
 
 	sockaddr_in6_init(&dst_sa, &ip6->ip6_dst, 0, 0, 0);
-	if ((error = in6_selectroute(&dst_sa, opt, im6o, ro,
-	    &ifp, &psref, &rt, 0)) != 0) {
-		if (ifp != NULL)
-			in6_ifstat_inc(ifp, ifs6_out_discard);
-		goto bad;
+
+	/* We do not need a route for multicast */
+	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
+		struct in6_pktinfo *pi = NULL;
+
+		/*
+		 * If the outgoing interface for the address is specified by
+		 * the caller, use it.
+		 */
+		if (opt && (pi = opt->ip6po_pktinfo) != NULL) {
+			/* XXX boundary check is assumed to be already done. */
+			ifp = if_get_byindex(pi->ipi6_ifindex, &psref);
+		} else if (im6o != NULL) {
+			ifp = if_get_byindex(im6o->im6o_multicast_if_index,
+			    &psref);
+		}
 	}
+
+	if (ifp == NULL) {
+		error = in6_selectroute(&dst_sa, opt, &ro, &rt, true);
+		if (error != 0)
+			goto bad;
+		ifp = if_get_byindex(rt->rt_ifp->if_index, &psref);
+	}
+
 	if (rt == NULL) {
 		/*
 		 * If in6_selectroute() does not return a route entry,
@@ -571,18 +599,9 @@ ip6_output(
 		goto bad;
 	}
 
-	if (rt == NULL || IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
-		dst = satocsin6(rtcache_getdst(ro));
-		KASSERT(dst != NULL);
-	} else if (opt && rtcache_validate(&opt->ip6po_nextroute) != NULL) {
-		/*
-		 * The nexthop is explicitly specified by the
-		 * application.  We assume the next hop is an IPv6
-		 * address.
-		 */
-		dst = (struct sockaddr_in6 *)opt->ip6po_nexthop;
-	} else if ((rt->rt_flags & RTF_GATEWAY))
-		dst = (struct sockaddr_in6 *)rt->rt_gateway;
+	if (rt != NULL && (rt->rt_flags & RTF_GATEWAY) &&
+	    !IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
+		dst = satocsin6(rt->rt_gateway);
 	else
 		dst = satocsin6(rtcache_getdst(ro));
 
@@ -661,8 +680,26 @@ ip6_output(
 		*ifpp = ifp;
 
 	/* Determine path MTU. */
-	if ((error = ip6_getpmtu(ro_pmtu, ro, ifp, &finaldst, &mtu,
-	    &alwaysfrag)) != 0)
+	/*
+	 * ro_pmtu represent final destination while
+	 * ro might represent immediate destination.
+	 * Use ro_pmtu destination since MTU might differ.
+	 */
+	if (ro_pmtu != ro) {
+		union {
+			struct sockaddr		dst;
+			struct sockaddr_in6	dst6;
+		} u;
+
+		/* ro_pmtu may not have a cache */
+		sockaddr_in6_init(&u.dst6, &finaldst, 0, 0, 0);
+		rt_pmtu = rtcache_lookup(ro_pmtu, &u.dst);
+	} else
+		rt_pmtu = rt;
+	error = ip6_getpmtu(rt_pmtu, ifp, &mtu, &alwaysfrag);
+	if (rt_pmtu != NULL && rt_pmtu != rt)
+		rtcache_unref(rt_pmtu, ro_pmtu);
+	if (error != 0)
 		goto bad;
 
 	/*
@@ -1002,6 +1039,7 @@ sendorfree:
 		IP6_STATINC(IP6_STAT_FRAGMENTED);
 
 done:
+	rtcache_unref(rt, ro);
 	if (ro == &ip6route)
 		rtcache_free(&ip6route);
 
@@ -1232,25 +1270,13 @@ ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
 }
 
 static int
-ip6_getpmtu(struct route *ro_pmtu, struct route *ro, struct ifnet *ifp,
-    const struct in6_addr *dst, u_long *mtup, int *alwaysfragp)
+ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup,
+    int *alwaysfragp)
 {
-	struct rtentry *rt;
 	u_int32_t mtu = 0;
 	int alwaysfrag = 0;
 	int error = 0;
 
-	if (ro_pmtu != ro) {
-		union {
-			struct sockaddr		dst;
-			struct sockaddr_in6	dst6;
-		} u;
-
-		/* The first hop and the final destination may differ. */
-		sockaddr_in6_init(&u.dst6, dst, 0, 0, 0);
-		rt = rtcache_lookup(ro_pmtu, &u.dst);
-	} else
-		rt = rtcache_validate(ro_pmtu);
 	if (rt != NULL) {
 		u_int32_t ifmtu;
 
@@ -1830,6 +1856,11 @@ else 					\
 			u_long pmtu = 0;
 			struct ip6_mtuinfo mtuinfo;
 			struct route *ro = &in6p->in6p_route;
+			struct rtentry *rt;
+			union {
+				struct sockaddr		dst;
+				struct sockaddr_in6	dst6;
+			} u;
 
 			if (!(so->so_state & SS_ISCONNECTED))
 				return (ENOTCONN);
@@ -1838,8 +1869,10 @@ else 					\
 			 * routing, or optional information to specify
 			 * the outgoing interface.
 			 */
-			error = ip6_getpmtu(ro, NULL, NULL,
-			    &in6p->in6p_faddr, &pmtu, NULL);
+			sockaddr_in6_init(&u.dst6, &in6p->in6p_faddr, 0, 0, 0);
+			rt = rtcache_lookup(ro, &u.dst);
+			error = ip6_getpmtu(rt, NULL, &pmtu, NULL);
+			rtcache_unref(rt, ro);
 			if (error)
 				break;
 			if (pmtu > IPV6_MAXPACKET)
@@ -2376,7 +2409,10 @@ ip6_get_membership(const struct sockopt *sopt, struct ifnet **ifp, void *v,
 		error = rtcache_setdst(&ro, &u.dst);
 		if (error != 0)
 			return error;
-		*ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp : NULL;
+		rt = rtcache_init(&ro);
+		*ifp = rt != NULL ? rt->rt_ifp : NULL;
+		/* FIXME *ifp is NOMPSAFE */
+		rtcache_unref(rt, &ro);
 		rtcache_free(&ro);
 	} else {
 		/*

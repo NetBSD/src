@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.83.2.1 2016/11/04 14:49:15 pgoyette Exp $	*/
+/*	$NetBSD: be.c,v 1.83.2.2 2017/01/07 08:56:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.83.2.1 2016/11/04 14:49:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.83.2.2 2017/01/07 08:56:41 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -566,13 +566,7 @@ be_read(struct be_softc *sc, int idx, int len)
 		ifp->if_ierrors++;
 		return;
 	}
-	ifp->if_ipackets++;
 
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	bpf_mtap(ifp, m);
 	/* Pass the packet up. */
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }

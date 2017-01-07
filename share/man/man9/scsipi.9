@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.27.2.1 2016/08/06 00:19:03 pgoyette Exp $
+.\"	$NetBSD: scsipi.9,v 1.27.2.2 2017/01/07 08:56:08 pgoyette Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -24,7 +24,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd June 1, 2016
+.Dd November 20, 2016
 .Dt SCSIPI 9
 .Os
 .Sh NAME
@@ -55,6 +55,10 @@
 .Fn scsipi_target_detach "struct scsipi_channel *chan" "int target" "int lun" "int flags"
 .Ft int
 .Fn scsipi_thread_call_callback "struct scsipi_channel *chan" "void (*callback)(struct scsipi_channel *, void *)" "void *arg"
+.Ft int
+.Fn scsipi_adapter_addref "struct scsipi_adapter *adapt"
+.Ft void
+.Fn scsipi_adapter_delref "struct scsipi_adapter *adapt"
 .Sh DESCRIPTION
 The
 .Nm
@@ -108,6 +112,14 @@ total number of commands the adapter can handle (may be replaced by
 see below)
 .It Va int adapt_max_periph
 number of commands the adapter can handle per device
+.It Va int adapt_flags
+adapter properties
+.Bl -tag -width SCSIPI_ADAPT_POLL_ONLY -compact
+.It Dv SCSIPI_ADAPT_POLL_ONLY
+the HBA can't do interrupts
+.It Dv SCSIPI_ADAPT_MPSAFE
+don't acquire the kernel lock when doing HBA callbacks
+.El
 .El
 .Pp
 The following callbacks should be provided through the
@@ -402,6 +414,11 @@ Returns 0 if operation is successful, or error from
 This callback is optional, and is useful mostly for hot-plug devices.
 For example, this callback would power on or off
 the relevant PCMCIA socket for a PCMCIA controller.
+.Fn scsipi_adapter_addref
+and
+.Fn scsipi_adapter_delref
+maintain a reference count, the enable callback is called appropriately
+for the first reference and the last reference.
 .It int Fn adapt_getgeom "struct scsipi_periph *periph" "struct disk_parms *params" "u_long sectors"
 Optional callback, used by high-level drivers to get the fictitious geometry
 used by the controller's firmware for the specified periph.
@@ -565,7 +582,9 @@ will be called with
 and
 .Fa arg
 as arguments, from the channel completion thread.
-The callback is run at splbio.
+The callback is run at
+.Dv IPL_BIO
+with the channel lock held.
 .Fn scsipi_thread_call_callback
 will freeze the channel by one, it's up to the caller to thaw it when
 appropriate.

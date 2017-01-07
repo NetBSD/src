@@ -1,4 +1,4 @@
-.\"	$NetBSD: siginfo.2,v 1.9 2016/04/04 20:43:31 wiz Exp $
+.\"	$NetBSD: siginfo.2,v 1.9.2.1 2017/01/07 08:56:07 pgoyette Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 4, 2016
+.Dd January 7, 2017
 .Dt SIGINFO 2
 .Os
 .Sh NAME
@@ -79,27 +79,27 @@ The
 field contains the pid of the sending process and the
 .Fa si_uid
 field contains the user id of the sending process.
-.\" .It SI_QUEUE
-.\" The signal was generated via
-.\" .Xr sigqueue 3 .
-.\" The
-.\" .Nm
-.\" structure contains the following additional members:
-.\" .Bd -literal -offset indent
-.\" pid_t si_pid;
-.\" uid_t si_uid;
-.\" sigval_t si_value;
-.\" .Ed
-.\" .Pp
-.\" The
-.\" .Fa si_pid
-.\" field contains the pid of the sending process and the
-.\" .Fa si_uid
-.\" field contains the user id of the sending process.
-.\" Finally, the
-.\" .Fa si_value
-.\" field contains the value sent via
-.\" .Xr sigqueue 3 .
+.It SI_QUEUE
+The signal was generated via
+.Xr sigqueue 2 .
+The
+.Nm
+structure contains the following additional members:
+.Bd -literal -offset indent
+pid_t si_pid;
+uid_t si_uid;
+sigval_t si_value;
+.Ed
+.Pp
+The
+.Fa si_pid
+field contains the pid of the sending process and the
+.Fa si_uid
+field contains the user id of the sending process.
+Finally, the
+.Fa si_value
+field contains the value sent via
+.Xr sigqueue 2 .
 .It SI_TIMER
 The signal was generated because a timer set by
 .Xr timer_settime 2
@@ -141,11 +141,29 @@ on a normal write it will contain
 .Dv POLLOUT | POLLWRNORM ;
 on an out-of-band write it will contain
 .Dv POLLPRI | POLLWRBAND .
-.\" .It SI_MESGQ
-.\" The signal was generated because of the arrival of a message on an empty
-.\" message queue.
-.\" See
-.\" .Xr mq_notify 3 .
+.It SI_MESGQ
+The signal was generated because of the arrival of a message on an empty
+message queue.
+See
+.Xr mq_notify 3 .
+.It SI_LWP
+The signal was generated via
+.Xr _lwp_kill 2 .
+The
+.Nm
+structure contains the following additional members:
+.Bd -literal -offset indent
+pid_t si_pid;
+uid_t si_uid;
+.Ed
+.Pp
+The
+.Fa si_pid
+field contains the pid of the sending process and the
+.Fa si_uid
+field contains the user id of the sending process.
+.It SI_NOINFO
+The signal was generated without specific info available.
 .El
 .Pp
 If
@@ -213,6 +231,8 @@ Object-specific hardware error
 Process breakpoint
 .It TRAP_TRACE
 Process trace trap
+.It TRAP_EXEC
+Process exec trap
 .El
 .It SIGCHLD
 .Bl -tag -width CLD_CONTINUED
@@ -229,7 +249,7 @@ Child has stopped
 .It CLD_CONTINUED
 Stopped child has continued
 .El
-.It SIGPOLL
+.It SIGIO
 .Bl -tag -width POLL_OUT
 .It POLL_IN
 Data input available
@@ -286,7 +306,7 @@ the value of
 may be inaccurate.
 .Pp
 For
-.Dv SIGPOLL
+.Dv SIGIO
 the
 .Nm
 structure contains the following additional members:
@@ -336,6 +356,14 @@ The
 .Nm
 type conforms to
 .St -xsh5 .
+.Pp
+Signals specifying
+.Dv SI_LWP
+or
+.Dv SI_NOINFO
+are
+.Nx
+extensions.
 .Sh HISTORY
 The
 .Nm

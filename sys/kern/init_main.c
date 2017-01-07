@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.482.2.2 2016/11/04 14:49:17 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.482.2.3 2017/01/07 08:56:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.482.2.2 2016/11/04 14:49:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.482.2.3 2017/01/07 08:56:49 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.482.2.2 2016/11/04 14:49:17 pgoyette
 #include "opt_ptrace.h"
 #include "opt_rnd_printf.h"
 #include "opt_splash.h"
+#include "opt_kernhist.h"
 
 #if defined(SPLASHSCREEN) && defined(makeoptions_SPLASHSCREEN_IMAGE)
 extern void *_binary_splash_image_start;
@@ -175,6 +176,7 @@ extern void *_binary_splash_image_end;
 #include <sys/ksyms.h>
 #include <sys/uidinfo.h>
 #include <sys/kprintf.h>
+#include <sys/bufq.h>
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -351,6 +353,11 @@ main(void)
 
 	/* Initialize the buffer cache */
 	bufinit();
+	biohist_init();
+
+#ifdef KERNHIST
+	sysctl_kernhist_init();
+#endif
 
 
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_IMAGE)
@@ -482,6 +489,14 @@ main(void)
 
 	/* Initialize sockets thread(s) */
 	soinit1();
+
+	/*
+	 * Initialize the bufq strategy sub-system and any built-in
+	 * strategy modules - they may be needed by some devices during
+	 * auto-configuration
+	 */
+	bufq_init();
+	module_init_class(MODULE_CLASS_BUFQ);
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.16.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.16.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
 /* $OpenBSD: ssh-keyscan.c,v 1.106 2016/05/02 10:26:04 djm Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
@@ -9,7 +9,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.16.2.1 2016/08/06 00:18:38 pgoyette Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.16.2.2 2017/01/07 08:53:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.40 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.40.2.1 2017/01/07 08:56:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.40 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.40.2.1 2017/01/07 08:56:42 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -92,7 +96,7 @@ int	usscannerdebug = 0;
 #define USSCANNER_TIMEOUT 2000
 
 struct usscanner_softc {
- 	device_t		sc_dev;
+	device_t		sc_dev;
 	struct usbd_device	*sc_udev;
 	struct usbd_interface	*sc_iface;
 

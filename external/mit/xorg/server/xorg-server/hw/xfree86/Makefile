@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.33.24.1 2016/11/04 14:48:49 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.33.24.2 2017/01/07 08:56:00 pgoyette Exp $
 
-SUBDIR=		common init ddc dixmods doc dri dri2 i2c loader \
+SUBDIR=		common ddc dixmods doc dri dri2 i2c loader \
 		xf86modes exa \
 		xorgos ramdac shadowfb vbe vgahw \
 		x86emu xf86config \

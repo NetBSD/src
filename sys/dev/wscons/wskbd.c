@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.136.2.3 2016/07/26 05:54:40 pgoyette Exp $ */
+/* $NetBSD: wskbd.c,v 1.136.2.4 2017/01/07 08:56:43 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.136.2.3 2016/07/26 05:54:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.136.2.4 2017/01/07 08:56:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"

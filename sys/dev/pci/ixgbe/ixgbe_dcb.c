@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2013, Intel Corporation 
+  Copyright (c) 2001-2015, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,7 +30,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_dcb.c 251964 2013-06-18 21:28:19Z jfv $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_dcb.c 292674 2015-12-23 22:45:17Z sbruno $*/
 
 
 #include "ixgbe_type.h"
@@ -148,6 +148,11 @@ s32 ixgbe_dcb_calculate_tc_credits_cee(struct ixgbe_hw *hw,
 		/* Calculate credit refill ratio using multiplier */
 		credit_refill = min(link_percentage * min_multiplier,
 				    (u32)IXGBE_DCB_MAX_CREDIT_REFILL);
+
+		/* Refill at least minimum credit */
+		if (credit_refill < min_credit)
+			credit_refill = min_credit;
+
 		p->data_credits_refill = (u16)credit_refill;
 
 		/* Calculate maximum credit for the TC */
@@ -158,7 +163,7 @@ s32 ixgbe_dcb_calculate_tc_credits_cee(struct ixgbe_hw *hw,
 		 * of a TC is too small, the maximum credit may not be
 		 * enough to send out a jumbo frame in data plane arbitration.
 		 */
-		if (credit_max && (credit_max < min_credit))
+		if (credit_max < min_credit)
 			credit_max = min_credit;
 
 		if (direction == IXGBE_DCB_TX_CONFIG) {
@@ -394,6 +399,8 @@ s32 ixgbe_dcb_get_tc_stats(struct ixgbe_hw *hw, struct ixgbe_hw_stats *stats,
 		break;
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
 #if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_get_tc_stats_82599(hw, stats, tc_count);
 		break;
@@ -422,6 +429,8 @@ s32 ixgbe_dcb_get_pfc_stats(struct ixgbe_hw *hw, struct ixgbe_hw_stats *stats,
 		break;
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
 #if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_get_pfc_stats_82599(hw, stats, tc_count);
 		break;
@@ -461,6 +470,8 @@ s32 ixgbe_dcb_config_rx_arbiter_cee(struct ixgbe_hw *hw,
 		break;
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
 #if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_config_rx_arbiter_82599(hw, refill, max, bwgid,
 							tsa, map);
@@ -500,6 +511,8 @@ s32 ixgbe_dcb_config_tx_desc_arbiter_cee(struct ixgbe_hw *hw,
 		break;
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
 #if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_config_tx_desc_arbiter_82599(hw, refill, max,
 							     bwgid, tsa);
@@ -541,6 +554,8 @@ s32 ixgbe_dcb_config_tx_data_arbiter_cee(struct ixgbe_hw *hw,
 		break;
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
 #if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_config_tx_data_arbiter_82599(hw, refill, max,
 							     bwgid, tsa,
@@ -576,6 +591,8 @@ s32 ixgbe_dcb_config_pfc_cee(struct ixgbe_hw *hw,
 		break;
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
 #if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_config_pfc_82599(hw, pfc_en, map);
 		break;
@@ -602,6 +619,8 @@ s32 ixgbe_dcb_config_tc_stats(struct ixgbe_hw *hw)
 		break;
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
 #if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_config_tc_stats_82599(hw, NULL);
 		break;
@@ -647,6 +666,8 @@ s32 ixgbe_dcb_hw_config_cee(struct ixgbe_hw *hw,
 		break;
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
 #if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ixgbe_dcb_config_82599(hw, dcb_config);
 		ret = ixgbe_dcb_hw_config_82599(hw, dcb_config->link_speed,
@@ -679,6 +700,8 @@ s32 ixgbe_dcb_config_pfc(struct ixgbe_hw *hw, u8 pfc_en, u8 *map)
 		break;
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
 #if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ret = ixgbe_dcb_config_pfc_82599(hw, pfc_en, map);
 		break;
@@ -702,6 +725,8 @@ s32 ixgbe_dcb_hw_config(struct ixgbe_hw *hw, u16 *refill, u16 *max,
 		break;
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
 #if !defined(NO_82599_SUPPORT) || !defined(NO_X540_SUPPORT)
 		ixgbe_dcb_config_rx_arbiter_82599(hw, refill, max, bwg_id,
 						  tsa, map);

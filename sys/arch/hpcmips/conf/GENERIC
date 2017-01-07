@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.230 2016/03/19 23:21:02 gdt Exp $
+# $NetBSD: GENERIC,v 1.230.2.1 2017/01/07 08:56:18 pgoyette Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.230 $"
+#ident 		"GENERIC-$Revision: 1.230.2.1 $"
 
 maxusers	16
 
@@ -654,6 +654,8 @@ ugen*	at uhub? port ?
 
 audio*	at uaudio?
 midi*	at midibus?
+
+spkr*	at audio?			# PC speaker (synthesized)
 
 # Pseudo-Devices
 

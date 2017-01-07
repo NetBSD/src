@@ -355,7 +355,7 @@
 /* #undef USE_MMAP */
 
 /* Define if we should default to creating read-only plt entries */
-#define USE_SECUREPLT 1
+/* #undef USE_SECUREPLT */
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE

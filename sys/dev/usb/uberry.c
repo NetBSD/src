@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.10 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: uberry.c,v 1.10.2.1 2017/01/07 08:56:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.10 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.10.2.1 2017/01/07 08:56:42 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +73,7 @@ int	uberrydebug = 0;
 #endif
 
 struct uberry_softc {
- 	device_t		sc_dev;
+	device_t		sc_dev;
 	struct usbd_device *	sc_udev;
 };
 
@@ -99,15 +103,15 @@ uberry_cmd(struct uberry_softc *sc, uint8_t requestType, uint8_t reqno,
 {
 	usb_device_request_t req;
 	usbd_status err;
- 
+
 	DPRINTF(("berry cmd type=%x, number=%x, value=%d, index=%d, len=%d\n",
 	    requestType, reqno, value, index, length));
         req.bmRequestType = requestType;
         req.bRequest = reqno;
-        USETW(req.wValue, value); 
+        USETW(req.wValue, value);
         USETW(req.wIndex, index);
         USETW(req.wLength, length);
-   
+
         if ((err = usbd_do_request(sc->sc_udev, &req, data)) != 0)
 		aprint_error_dev(sc->sc_dev, "sending command failed %d\n",
 		    err);
@@ -152,7 +156,7 @@ uberry_dual_mode(struct uberry_softc *sc)
 }
 
 
-int 
+int
 uberry_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -162,7 +166,7 @@ uberry_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 uberry_attach(device_t parent, device_t self, void *aux)
 {
 	struct uberry_softc *sc = device_private(self);
@@ -195,7 +199,7 @@ uberry_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 uberry_detach(device_t self, int flags)
 {
 	struct uberry_softc *sc = device_private(self);

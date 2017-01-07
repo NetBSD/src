@@ -42,7 +42,6 @@
  */
 
 #include "acpisrc.h"
-#include "acapps.h"
 
 /* Local prototypes */
 
@@ -322,7 +321,7 @@ AsConvertFile (
         ConditionalTable    = ConversionTable->SourceConditionalTable;
         StructTable         = ConversionTable->SourceStructTable;
         SpecialMacroTable   = ConversionTable->SourceSpecialMacroTable;
-       break;
+        break;
 
     case FILE_TYPE_HEADER:
 

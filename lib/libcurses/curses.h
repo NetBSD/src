@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.107 2015/06/08 12:38:57 joerg Exp $	*/
+/*	$NetBSD: curses.h,v 1.107.2.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -59,7 +59,7 @@ typedef wchar_t	attr_t;
 #endif
 
 #ifdef HAVE_WCHAR
-/* 
+/*
  * The complex character structure required by the X/Open reference and used
  * in * functions such as in_wchstr(). It includes a string of up to 8 wide
  * characters and its length, an attribute, and a color-pair.
@@ -73,7 +73,7 @@ typedef struct {
 	wchar_t		vals[CURSES_CCHAR_MAX]; /* wide chars including
 						   non-spacing */
 } cchar_t;
-#else 
+#else
 typedef chtype cchar_t;
 #endif /* HAVE_WCHAR */
 
@@ -283,7 +283,9 @@ typedef struct __screen SCREEN;
 
 #define	NUM_ACS	128
 
+__BEGIN_DECLS
 extern chtype _acs_char[NUM_ACS];
+__END_DECLS
 #ifdef __cplusplus
 #define __UC_CAST(a)	static_cast<unsigned char>(a)
 #else
@@ -327,7 +329,9 @@ extern chtype _acs_char[NUM_ACS];
 #define	ACS_STERLING	_acs_char[__UC_CAST('}')]
 
 #ifdef HAVE_WCHAR
+__BEGIN_DECLS
 extern cchar_t _wacs_char[NUM_ACS];
+__END_DECLS
 
 #define	WACS_RARROW     (&_wacs_char[(unsigned char)'+'])
 #define	WACS_LARROW     (&_wacs_char[(unsigned char)','])
@@ -391,14 +395,15 @@ extern cchar_t _wacs_char[NUM_ACS];
 #define	COLOR_WHITE	0x07
 
 #ifdef __cplusplus
-#define __UINT32_CAST(a)	static_cast<u_int32_t>(a)
+#define __UINT32_CAST(a)	static_cast<uint32_t>(a)
 #else
-#define __UINT32_CAST(a)	(u_int32_t)(a)
+#define __UINT32_CAST(a)	(uint32_t)(a)
 #endif
 #define	COLOR_PAIR(n)	(((__UINT32_CAST(n)) << 17) & A_COLOR)
 #define	PAIR_NUMBER(n)	(((__UINT32_CAST(n)) & A_COLOR) >> 17)
 
 /* Curses external declarations. */
+__BEGIN_DECLS
 extern WINDOW	*curscr;		/* Current screen. */
 extern WINDOW	*stdscr;		/* Standard screen. */
 
@@ -411,6 +416,7 @@ extern int	 COLOR_PAIRS;		/* Max color pairs on the screen. */
 
 extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 extern int	 TABSIZE;		/* Size of a tab. */
+__END_DECLS
 
 #ifndef OK
 #define	ERR	(-1)			/* Error return. */
@@ -614,6 +620,24 @@ __END_DECLS
 #define	getmaxyx(w, y, x)	(y) = getmaxy(w), (x) = getmaxx(w)
 #define	getparyx(w, y, x)	(y) = getpary(w), (x) = getparx(w)
 
+#define	getsyx(y, x)						\
+	do {							\
+		if (is_leaveok(curscr))				\
+			(y) = (x) = -1;				\
+		else						\
+			getyx(curscr,(y), (x));			\
+	} while(0 /* CONSTCOND */)
+#define	setsyx(y, x)						\
+	do {							\
+		if ((y) == -1 && (x) == -1)			\
+			leaveok(curscr, TRUE);			\
+		else {						\
+			leaveok(curscr, FALSE);			\
+			wmove(curscr, (y), (x));		\
+		}						\
+	} while(0 /* CONSTCOND */)
+
+
 /* Public function prototypes. */
 __BEGIN_DECLS
 int	 assume_default_colors(short, short);
@@ -638,6 +662,7 @@ int	 doupdate(void);
 int	 echo(void);
 int	 endwin(void);
 char     erasechar(void);
+void	 filter(void);
 int	 flash(void);
 int	 flushinp(void);
 int	 flushok(WINDOW *, bool);
@@ -658,9 +683,11 @@ int	 halfdelay(int);
 bool	 has_colors(void);
 bool	 has_ic(void);
 bool	 has_il(void);
+int	 has_key(int);
 int	 hline(chtype, int);
 int	 idcok(WINDOW *, bool);
 int	 idlok(WINDOW *, bool);
+int	 immedok(WINDOW *, bool);
 int	 init_color(short, short, short, short);
 int	 init_pair(short, short, short);
 WINDOW	*initscr(void);
@@ -668,6 +695,7 @@ int	 intrflush(WINDOW *, bool);
 bool	 isendwin(void);
 bool	 is_linetouched(WINDOW *, int);
 bool	 is_wintouched(WINDOW *);
+bool	 is_term_resized(int, int);
 int      keyok(int, bool);
 int	 keypad(WINDOW *, bool);
 char	*keyname(int);
@@ -717,23 +745,29 @@ int	 reset_prog_mode(void);
 int	 reset_shell_mode(void);
 int	 resetty(void);
 int      resizeterm(int, int);
+int	 resize_term(int, int);
 int	 savetty(void);
 int	 scanw(const char *, ...) __scanflike(1, 2);
 int	 scroll(WINDOW *);
 int	 scrollok(WINDOW *, bool);
 int	 setterm(char *);
+int	 set_escdelay(int);
+int	 set_tabsize(int);
 SCREEN  *set_term(SCREEN *);
 int	 start_color(void);
 WINDOW	*subpad(WINDOW *, int, int, int, int);
 WINDOW	*subwin(WINDOW *, int, int, int, int);
+int	 syncok(WINDOW *, bool);
 chtype	 termattrs(void);
 attr_t	 term_attrs(void);
 int	 touchline(WINDOW *, int, int);
 int	 touchoverlap(WINDOW *, WINDOW *);
 int	 touchwin(WINDOW *);
+int	 typeahead(int);
 int	 ungetch(int);
 int	 untouchwin(WINDOW *);
 int	 use_default_colors(void);
+void	 use_env(bool);
 int	 vline(chtype, int);
 int	 vw_printw(WINDOW *, const char *, __va_list) __printflike(2, 0);
 int	 vw_scanw(WINDOW *, const char *, __va_list) __scanflike(2, 0);
@@ -902,7 +936,7 @@ int border_set(const cchar_t *, const cchar_t *, const cchar_t *,
                const cchar_t *, const cchar_t *, const cchar_t *,
                const cchar_t *, const cchar_t *);
 int wborder_set(WINDOW *, const cchar_t *, const cchar_t *,
-                const cchar_t *, const cchar_t *, const cchar_t *, 
+                const cchar_t *, const cchar_t *, const cchar_t *,
                 const cchar_t *, const cchar_t *, const cchar_t *);
 int box_set(WINDOW *, const cchar_t *, const cchar_t *);
 int erasewchar(wchar_t *);
@@ -921,6 +955,11 @@ int getbkgrnd(cchar_t *);
 int wbkgrnd(WINDOW *, const cchar_t *);
 void wbkgrndset(WINDOW *, const cchar_t *);
 int wgetbkgrnd(WINDOW *, cchar_t *);
+
+/* ncurses window tests */
+bool is_keypad(const WINDOW *);
+bool is_leaveok(const WINDOW *);
+bool is_pad(const WINDOW *);
 
 /* Private functions that are needed for user programs prototypes. */
 int	 __cputchar(int);

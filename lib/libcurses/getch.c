@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.59 2012/04/21 12:27:28 roy Exp $	*/
+/*	$NetBSD: getch.c,v 1.59.14.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.59 2012/04/21 12:27:28 roy Exp $");
+__RCSID("$NetBSD: getch.c,v 1.59.14.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif
 #endif					/* not lint */
 
@@ -203,7 +203,7 @@ static const struct tcdata tc[] = {
 /* Number of TC entries .... */
 static const int num_tcs = (sizeof(tc) / sizeof(struct tcdata));
 
-int	ESCDELAY = 300;		/* Delay in ms between keys for esc seq's */
+int		ESCDELAY;	/* Delay in ms between keys for esc seq's */
 
 /* Key buffer */
 #define INBUF_SZ 16		/* size of key buffer - must be larger than
@@ -216,7 +216,8 @@ static void add_key_sequence(SCREEN *screen, char *sequence, int key_type);
 static key_entry_t *add_new_key(keymap_t *current, char ch, int key_type,
         int symbol);
 static void delete_key_sequence(keymap_t *current, int key_type);
-static void do_keyok(keymap_t *current, int key_type, bool flag, int *retval);
+static void do_keyok(keymap_t *current, int key_type, bool set, bool flag,
+	int *retval);
 static keymap_t *new_keymap(void); /* create a new keymap */
 static key_entry_t *new_key(void); /* create a new key entry */
 static wchar_t		inkey(int to, int delay);
@@ -266,10 +267,10 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 	    "Adding character %s of type %d, symbol 0x%x\n",
 	    unctrl(chr), key_type, symbol);
 #endif
-	if (current->mapping[(unsigned char) chr] < 0) {
-		if (current->mapping[(unsigned char) chr] == MAPPING_UNUSED) {
+	if (current->mapping[(unsigned char)chr] < 0) {
+		if (current->mapping[(unsigned char)chr] == MAPPING_UNUSED) {
 			  /* first time for this char */
-			current->mapping[(unsigned char) chr] =
+			current->mapping[(unsigned char)chr] =
 				current->count;	/* map new entry */
 			ki = current->count;
 
@@ -331,7 +332,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 #ifdef DEBUG
 		__CTRACE(__CTRACE_MISC, "Keymap already known\n");
 #endif
-		the_key = current->key[current->mapping[(unsigned char) chr]];
+		the_key = current->key[current->mapping[(unsigned char)chr]];
 	}
 
         return the_key;
@@ -391,7 +392,7 @@ add_key_sequence(SCREEN *screen, char *sequence, int key_type)
 #endif /* DEBUG */
 	current = screen->base_keymap;	/* always start with
 					 * base keymap. */
-	length = (int) strlen(sequence);
+	length = (int)strlen(sequence);
 
 	/*
 	 * OK - we really should never get a zero length string here, either
@@ -522,8 +523,8 @@ new_key(void)
 	key_entry_t *new_one;
 	int i;
 
-	if ((new_one = malloc(KEYMAP_ALLOC_CHUNK * sizeof(key_entry_t)))
-	    == NULL) {
+	new_one = malloc(KEYMAP_ALLOC_CHUNK * sizeof(key_entry_t));
+	if (new_one == NULL) {
 		perror("inkey: Cannot allocate new key entry chunk");
 		exit(2);
 	}
@@ -549,6 +550,7 @@ inkey(int to, int delay)
 	int              c, mapping;
 	keymap_t	*current = _cursesi_screen->base_keymap;
 	FILE            *infd = _cursesi_screen->infd;
+	int		escdelay = _cursesi_screen->ESCDELAY;
 
 	k = 0;		/* XXX gcc -Wuninitialized */
 
@@ -569,7 +571,7 @@ reread:
 			if (delay && (__notimeout() == ERR))
 				return ERR;
 
-			k = (wchar_t) c;
+			k = (wchar_t)c;
 #ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
 			    "inkey (state normal) got '%s'\n", unctrl(k));
@@ -594,11 +596,11 @@ reread:
 		} else if (state == INKEY_ASSEMBLING) {
 			/* assembling a key sequence */
 			if (delay) {
-				if (__timeout(to ? (ESCDELAY / 100) : delay)
+				if (__timeout(to ? (escdelay / 100) : delay)
 				    == ERR)
 					return ERR;
 			} else {
-				if (to && (__timeout(ESCDELAY / 100) == ERR))
+				if (to && (__timeout(escdelay / 100) == ERR))
 					return ERR;
 			}
 
@@ -733,7 +735,7 @@ keyok(int key_type, bool flag)
 {
 	int result = ERR;
 
-	do_keyok(_cursesi_screen->base_keymap, key_type, flag, &result);
+	do_keyok(_cursesi_screen->base_keymap, key_type, true, flag, &result);
 	return result;
 }
 
@@ -742,8 +744,8 @@ keyok(int key_type, bool flag)
  *       Does the actual work for keyok, we need to recurse through the
  * keymaps finding the passed key symbol.
  */
-void
-do_keyok(keymap_t *current, int key_type, bool flag, int *retval)
+static void
+do_keyok(keymap_t *current, int key_type, bool set, bool flag, int *retval)
 {
 	key_entry_t *key;
 	int i;
@@ -759,10 +761,11 @@ do_keyok(keymap_t *current, int key_type, bool flag, int *retval)
 		key = current->key[current->mapping[i]];
 
 		if (key->type == KEYMAP_MULTI)
-			do_keyok(key->value.next, key_type, flag, retval);
+			do_keyok(key->value.next, key_type, set, flag, retval);
 		else if ((key->type == KEYMAP_LEAF)
 			 && (key->value.symbol == key_type)) {
-			key->enable = flag;
+			if (set)
+				key->enable = flag;
 			*retval = OK; /* we found at least one instance, ok */
 		}
 	}
@@ -926,7 +929,7 @@ wgetch(WINDOW *win)
 int
 ungetch(int c)
 {
-	return __unget((wint_t) c);
+	return __unget((wint_t)c);
 }
 
 /*
@@ -964,5 +967,27 @@ __unget(wint_t c)
 	}
 	_cursesi_screen->unget_list[_cursesi_screen->unget_pos] = c;
 	_cursesi_screen->unget_pos++;
+	return OK;
+}
+
+int
+has_key(int key_type)
+{
+	int result = ERR;
+
+	do_keyok(_cursesi_screen->base_keymap, key_type, false, false, &result);
+	return result;
+}
+
+/*
+ * set_escdelay --
+ *   Sets the escape delay for the current screen.
+ */
+int
+set_escdelay(int escdelay)
+{
+
+	_cursesi_screen->ESCDELAY = escdelay;
+	ESCDELAY = escdelay;
 	return OK;
 }

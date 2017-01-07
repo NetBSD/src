@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher-bf1.c,v 1.6 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: cipher-bf1.c,v 1.6.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
 /* $OpenBSD: cipher-bf1.c,v 1.7 2015/01/14 10:24:42 markus Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -20,7 +20,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher-bf1.c,v 1.6 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: cipher-bf1.c,v 1.6.2.1 2017/01/07 08:53:41 pgoyette Exp $");
 #include <sys/types.h>
 #include <string.h>
 #include <openssl/evp.h>

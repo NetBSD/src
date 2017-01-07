@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.145 2016/06/10 13:27:13 ozaki-r Exp $	*/
+/*	$NetBSD: i82557.c,v 1.145.2.1 2017/01/07 08:56:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.145 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.145.2.1 2017/01/07 08:56:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1450,12 +1450,6 @@ fxp_rxintr(struct fxp_softc *sc)
 
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

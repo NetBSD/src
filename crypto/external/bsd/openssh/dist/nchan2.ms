@@ -1,4 +1,4 @@
-.\"	$NetBSD: nchan2.ms,v 1.4 2015/04/03 23:58:19 christos Exp $
+.\"	$NetBSD: nchan2.ms,v 1.4.2.1 2017/01/07 08:53:42 pgoyette Exp $
 .\"	$OpenBSD: nchan2.ms,v 1.4 2008/05/15 23:52:24 djm Exp $
 .\"
 .\" Copyright (c) 2000 Markus Friedl.  All rights reserved.

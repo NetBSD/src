@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wstr.c,v 1.3 2008/04/14 20:33:59 jdc Exp $ */
+/*   $NetBSD: get_wstr.c,v 1.3.46.1 2017/01/07 08:56:04 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wstr.c,v 1.3 2008/04/14 20:33:59 jdc Exp $");
+__RCSID("$NetBSD: get_wstr.c,v 1.3.46.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -173,10 +173,10 @@ wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 	return ERR;
 #else
 	if (n < 1)
-		return (ERR);
+		return ERR;
 	if (n == 1) {
 		wstr[0] = L'\0';
-		return (ERR);
+		return ERR;
 	}
 	return __wgetn_wstr(win, wstr, n);
 #endif /* HAVE_WCHAR */
@@ -198,13 +198,13 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 	cchar_t cc;
 
 	ostr = wstr;
-	if ( erasewchar( &ec ) == ERR )
+	if (erasewchar(&ec) == ERR)
 		return ERR;
-	if ( killwchar( &kc ) == ERR )
+	if (killwchar(&kc) == ERR)
 		return ERR;
-	sc[ 0 ] = ( wchar_t )btowc( ' ' );
-	sc[ 1 ] = L'\0';
-	setcchar( &cc, sc, win->wattr, 0, NULL );
+	sc[0] = (wchar_t)btowc( ' ' );
+	sc[1] = L'\0';
+	setcchar(&cc, sc, win->wattr, 0, NULL);
 	oldx = win->curx;
 	remain = n - 1;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2009/04/22 15:23:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.10.28.1 2017/01/07 08:56:59 pgoyette Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	kgmon
@@ -12,5 +12,7 @@ LDADD=	-lkvm
 #
 #BINOWN=root
 #BINMODE=4555
+
+.include "../../compat/exec.mk"
 
 .include <bsd.prog.mk>

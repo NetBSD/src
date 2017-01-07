@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.16.44.1 2016/11/04 14:49:20 pgoyette Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.16.44.2 2017/01/07 08:56:50 pgoyette Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -25,6 +25,9 @@
  *
  * From: Id: if_sppp.h,v 1.7 1998/12/01 20:20:19 hm Exp
  */
+
+#include <sys/workqueue.h>
+#include <sys/pcq.h>
 
 #include <net/if_media.h>
 
@@ -61,6 +64,11 @@ struct sipcp {
 	uint32_t saved_hisaddr;/* if hisaddr (IPv4) is dynamic, save original one here, in network byte order */
 	uint32_t req_hisaddr;	/* remote address requested */
 	uint32_t req_myaddr;	/* local address requested */
+
+	struct workqueue *update_addrs_wq;
+	struct work update_addrs_wk;
+	u_int update_addrs_enqueued;
+	pcq_t *update_addrs_q;
 };
 
 struct sauth {
@@ -103,6 +111,7 @@ struct sppp {
 	int	pp_auth_failures;	/* authorization failures */
 	int	pp_max_auth_fail;	/* max. allowed authorization failures */
 	int	pp_phase;	/* phase we're currently in */
+	kmutex_t	*pp_lock;	/* lock for sppp structure */
 	int	query_dns;	/* 1 if we want to know the dns addresses */
 	uint32_t	dns_addrs[2];
 	int	state[IDX_COUNT];	/* state machine */
@@ -172,5 +181,8 @@ int sppp_ioctl(struct ifnet *, u_long, void *);
 struct mbuf *sppp_dequeue (struct ifnet *);
 int sppp_isempty (struct ifnet *);
 void sppp_flush (struct ifnet *);
+void sppp_lock_enter(struct sppp *);
+void sppp_lock_exit(struct sppp *);
+int sppp_locked(struct sppp *);
 #endif
 #endif /* !_NET_IF_SPPPVAR_H_ */

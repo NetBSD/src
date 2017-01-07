@@ -29,10 +29,9 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: fpgetsticky.c,v 1.1 2015/07/05 22:07:09 matt Exp $");
+__RCSID("$NetBSD: fpgetsticky.c,v 1.1.2.1 2017/01/07 08:56:02 pgoyette Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/bitops.h>
 
 #include "namespace.h"

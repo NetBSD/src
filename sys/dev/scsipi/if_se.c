@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.90.2.1 2016/11/04 14:49:15 pgoyette Exp $	*/
+/*	$NetBSD: if_se.c,v 1.90.2.2 2017/01/07 08:56:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.90.2.1 2016/11/04 14:49:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.90.2.2 2017/01/07 08:56:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -371,11 +371,9 @@ se_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_generic *cmd,
     struct buf *bp, int flags)
 {
 	int error;
-	int s = splbio();
 
 	error = scsipi_command(periph, cmd, cmdlen, data_addr,
 	    datalen, retries, timeout, bp, flags);
-	splx(s);
 	return (error);
 }
 
@@ -665,13 +663,6 @@ se_read(struct se_softc *sc, char *data, int datalen)
 		if ((ifp->if_flags & IFF_PROMISC) != 0) {
 			m_adj(m, SE_PREFIX);
 		}
-		ifp->if_ipackets++;
-
-		/*
-		 * Check if there's a BPF listener on this interface.
-		 * If so, hand off the raw packet to BPF.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass the packet up. */
 		if_input(ifp, m);

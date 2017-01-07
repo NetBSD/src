@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.1.2.1 2016/11/04 14:49:24 pgoyette Exp $
+#	$NetBSD: t_pppoe.sh,v 1.1.2.2 2017/01/07 08:56:56 pgoyette Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,8 +25,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-server="rump_server -lrump -lrumpnet -lrumpnet_net -lrumpnet_netinet \
-		    -lrumpnet_netinet6 -lrumpnet_shmif -lrumpnet_pppoe"
+server="rump_server -lrump -lrumpnet -lrumpnet_net -lrumpnet_netinet	\
+		    -lrumpnet_netinet6 -lrumpnet_shmif -lrumpdev	\
+		    -lrumpnet_pppoe"
+# pppoectl doesn't work with RUMPHIJACK=sysctl=yes
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so"
 
 SERVER=unix://commsock1
@@ -40,8 +42,8 @@ AUTHNAME=foobar@baz.com
 SECRET=oink
 BUS=bus0
 TIMEOUT=3
-WAITTIME=5
-DEBUG=false
+WAITTIME=10
+DEBUG=${DEBUG:-false}
 
 atf_test_case pap cleanup
 
@@ -118,8 +120,14 @@ wait_for_disconnected()
 	local n=$WAITTIME
 
 	for i in $(seq $n); do
-		$HIJACKING pppoectl -d pppoe0 | grep -q "state = session"
-		[ $? -eq 0 ] || return
+		$HIJACKING pppoectl -d pppoe0 | grep -q "state = initial"
+		[ $? = 0 ] && return
+		# If PPPoE client is disconnected by PPPoE server and then
+		# the client kicks callout of pppoe_timeout(), the client
+		# state is changed to PPPOE_STATE_PADI_SENT while padi retrying.
+		$HIJACKING pppoectl -d pppoe0 | grep -q "state = PADI sent"
+		[ $? = 0 ] && return
+
 		sleep 1
 	done
 
@@ -155,8 +163,11 @@ run_test()
 	unset RUMP_SERVER
 
 	# test for disconnection from server
-	atf_check -s exit:0 -x "env RUMP_SERVER=$SERVER rump.ifconfig pppoe0 down"
+	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
 	export RUMP_SERVER=$CLIENT
+	wait_for_disconnected
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 	atf_check -s exit:0 -o match:'PADI sent' -x "$HIJACKING pppoectl -d pppoe0"
@@ -170,8 +181,11 @@ run_test()
 	unset RUMP_SERVER
 
 	# test for disconnection from client
-	atf_check -s exit:0 -x "env RUMP_SERVER=$CLIENT rump.ifconfig pppoe0 down"
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 -x rump.ifconfig pppoe0 down
+	wait_for_disconnected
 	export RUMP_SERVER=$SERVER
+	wait_for_disconnected
 	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -c 1 -w $TIMEOUT $CLIENT_IP
@@ -196,6 +210,7 @@ run_test()
 	# test for invalid password
 	export RUMP_SERVER=$CLIENT
 	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	wait_for_disconnected
 	local setup_clientparam="pppoectl pppoe0 myauthproto=$auth \
 				    'myauthname=$AUTHNAME' \
 				    'myauthsecret=invalidsecret' \
@@ -205,7 +220,7 @@ run_test()
 	wait_for_session_established dontfail
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
-	atf_check -s exit:0 -o match:'initial' -x "$HIJACKING pppoectl -d pppoe0"
+	atf_check -s exit:0 -o match:'DETACHED' rump.ifconfig pppoe0
 	unset RUMP_SERVER
 }
 
@@ -292,7 +307,7 @@ run_test6()
 	export RUMP_SERVER=$CLIENT
 	wait_for_disconnected
 	atf_check -s not-exit:0 -o ignore -e ignore \
-	    rump.ping6 -c 1 -w $TIMEOUT $SERVER_IP6
+	    rump.ping6 -c 1 -X $TIMEOUT $SERVER_IP6
 	atf_check -s exit:0 -o not-match:"$session_id" -x "$HIJACKING pppoectl -d pppoe0"
 	unset RUMP_SERVER
 
@@ -314,8 +329,8 @@ run_test6()
 	wait_for_disconnected
 
 	export RUMP_SERVER=$SERVER
-	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	wait_for_disconnected
+	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping6 -c 1 -X $TIMEOUT $CLIENT_IP6
 	atf_check -s exit:0 -o match:'initial' -x "$HIJACKING pppoectl -d pppoe0"

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.95 2016/06/18 16:51:44 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.95.2.1 2017/01/07 08:56:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.95 2016/06/18 16:51:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.95.2.1 2017/01/07 08:56:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,8 +361,6 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
-	*dmamp = map;
-
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
 	struct arm32_bus_dma_cookie *cookie;
 	int cookieflags;
@@ -382,6 +380,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 
 	if ((cookieflags & _BUS_DMA_MIGHT_NEED_BOUNCE) == 0) {
 		STAT_INCR(creates);
+		*dmamp = map;
 		return 0;
 	}
 
@@ -404,10 +403,12 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
  out:
 	if (error)
 		_bus_dmamap_destroy(t, map);
+	else
+		*dmamp = map;
 #else
+	*dmamp = map;
 	STAT_INCR(creates);
 #endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
-
 #ifdef DEBUG_DMA
 	printf("dmamap_create:map=%p\n", map);
 #endif	/* DEBUG_DMA */
@@ -1086,9 +1087,13 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #else
 	const int post_ops = 0;
 #endif
-	if (!bouncing && pre_ops == 0 && post_ops == BUS_DMASYNC_POSTWRITE) {
-		STAT_INCR(sync_postwrite);
-		return;
+	if (!bouncing) {
+		if (pre_ops == 0 && post_ops == BUS_DMASYNC_POSTWRITE) {
+			STAT_INCR(sync_postwrite);
+			return;
+		} else if (pre_ops == 0 && post_ops == 0) {
+			return;
+		}
 	}
 	KASSERTMSG(bouncing || pre_ops != 0 || (post_ops & BUS_DMASYNC_POSTREAD),
 	    "pre_ops %#x post_ops %#x", pre_ops, post_ops);
@@ -1361,11 +1366,11 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		 * The page can only be direct mapped if was allocated out
 		 * of the arm poolpage vm freelist.
 		 */
-		int lcv = vm_physseg_find(atop(pa), NULL);
-		KASSERT(lcv != -1);
+		uvm_physseg_t upm = uvm_physseg_find(atop(pa), NULL);
+		KASSERT(uvm_physseg_valid_p(upm));
 		if (direct_mapable) {
 			direct_mapable =
-			    (arm_poolpage_vmfreelist == VM_PHYSMEM_PTR(lcv)->free_list);
+			    (arm_poolpage_vmfreelist == uvm_physseg_get_free_list(upm));
 		}
 #endif
 

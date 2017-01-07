@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.71.2.3 2016/11/04 14:49:02 pgoyette Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.71.2.4 2017/01/07 08:56:21 pgoyette Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -136,12 +136,6 @@
 
 #if defined(MIPS1) || defined(MIPS2)
 #error use locore_mips1.S
-#endif
-
-#if defined(MIPS3)
-#define	MFC0_HAZARD	nop
-#else
-#define	MFC0_HAZARD	/* nothing */
 #endif
 
 #if defined(__mips_o32)
@@ -643,17 +637,16 @@ _VECTOR_END(MIPSX(exception))
  */
 VECTOR(MIPSX(intr), unknown)
 	.set	noat
-	mfc0	k1, MIPS_COP_0_STATUS		#00: get the status register
+	mfc0	k0, MIPS_COP_0_STATUS		#00: get the status register
 	MFC0_HAZARD				#01: stall
-	and	k1, k1, MIPS3_SR_KSU_USER	#02: test for user mode
-	PTR_LA	k0, MIPSX(user_intr)		#03: assume user mode
-	bnez	k1, 1f				#04: yep, do it
-	 nop					#05:  branch deay
-	PTR_LA	k0, MIPSX(kern_intr)		#06: nope, kernel intr
+	and	k0, k0, MIPS3_SR_KSU_USER	#02: test for user mode
+	bnez	k0, 1f				#03: yep, do it
+	 nop					#04:  branch deay
+	j	MIPSX(kern_intr)		#05: nope, kernel intr
 1:
-	lui	k1, %hi(CPUVAR(CURLWP))		#07: k1=hi of curlwp
-	jr	k0				#08: jump to the function
-	 PTR_L	k1, %lo(CPUVAR(CURLWP))(k1)	#09: k1=lo of curlwp
+	lui	k1, %hi(CPUVAR(CURLWP))		#06: k1=hi of curlwp
+	j	MIPSX(user_intr)		#07: user intr
+	 PTR_L	k1, %lo(CPUVAR(CURLWP))(k1)	#08: k1=lo of curlwp
 	.set	at
 _VECTOR_END(MIPSX(intr))
 

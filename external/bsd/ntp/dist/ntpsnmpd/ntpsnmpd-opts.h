@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpsnmpd-opts.h,v 1.8 2016/06/03 20:39:03 christos Exp $	*/
+/*	$NetBSD: ntpsnmpd-opts.h,v 1.8.2.1 2017/01/07 08:54:06 pgoyette Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (ntpsnmpd-opts.h)
  *
- *  It has been AutoGen-ed  June  2, 2016 at 07:37:55 AM by AutoGen 5.18.5
+ *  It has been AutoGen-ed  November 21, 2016 at 08:03:11 AM by AutoGen 5.18.5
  *  From the definitions    ntpsnmpd-opts.def
  *  and the template file   options
  *
@@ -78,9 +78,9 @@ typedef enum {
 /** count of all options for ntpsnmpd */
 #define OPTION_CT    8
 /** ntpsnmpd version */
-#define NTPSNMPD_VERSION       "4.2.8p8"
+#define NTPSNMPD_VERSION       "4.2.8p9"
 /** Full ntpsnmpd version text */
-#define NTPSNMPD_FULL_VERSION  "ntpsnmpd 4.2.8p8"
+#define NTPSNMPD_FULL_VERSION  "ntpsnmpd 4.2.8p9"
 
 /**
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED

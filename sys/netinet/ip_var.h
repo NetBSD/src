@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.114.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.114.2.2 2017/01/07 08:56:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -245,7 +245,7 @@ int	ip_if_output(struct ifnet * const, struct mbuf * const,
 /* IP Flow interface. */
 void	ipflow_init(void);
 void	ipflow_poolinit(void);
-void	ipflow_create(const struct route *, struct mbuf *);
+void	ipflow_create(struct route *, struct mbuf *);
 void	ipflow_slowtimo(void);
 int	ipflow_invalidate_all(int);
 

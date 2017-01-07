@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.83.2.1 2016/11/04 14:48:57 pgoyette Exp $	*/
+/*	$NetBSD: trap.c,v 1.83.2.2 2017/01/07 08:56:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83.2.1 2016/11/04 14:48:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83.2.2 2017/01/07 08:56:09 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -673,6 +673,19 @@ faultcommon:
 	}
 
 	case T_TRCTRAP:
+		/*
+		 * Ignore debug register trace traps due to
+		 * accesses in the user's address space, which
+		 * can happen under several conditions such as
+		 * if a user sets a watchpoint on a buffer and
+		 * then passes that buffer to a system call.
+		 * We still want to get TRCTRAPS for addresses
+		 * in kernel space because that is useful when
+		 * debugging the kernel.
+		 */
+		if (user_trap_x86_hw_watchpoint())
+			break;
+
 		/* Check whether they single-stepped into a lcall. */
 		if (frame->tf_rip == (uint64_t)IDTVEC(oosyscall) ||
 		    frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||

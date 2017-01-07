@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.89 2016/07/14 20:38:20 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.89.2.1 2017/01/07 08:56:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.89 2016/07/14 20:38:20 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.89.2.1 2017/01/07 08:56:58 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ static void intpr_sysctl(void);
 static void intpr_kvm(u_long, void (*)(const char *));
 
 struct iftot iftot[MAXIF], ip_cur, ip_old, sum_cur, sum_old;
-bool	signalled;			/* set if alarm goes off "early" */
+static sig_atomic_t signalled;		/* set when alarm goes off */
 
 static unsigned redraw_lines = 21;
 
@@ -712,7 +712,9 @@ iftot_print_sum(struct iftot *cur, struct iftot *old)
 __dead static void
 sidewaysintpr_sysctl(unsigned interval)
 {
+	struct itimerval it;
 	sigset_t emptyset;
+	sigset_t noalrm;
 	unsigned line;
 
 	set_lines();
@@ -724,9 +726,18 @@ sidewaysintpr_sysctl(unsigned interval)
 		exit(1);
 	}
 
-	(void)signal(SIGALRM, catchalarm);
+	sigemptyset(&emptyset);
+	sigemptyset(&noalrm);
+	sigaddset(&noalrm, SIGALRM);
+	sigprocmask(SIG_SETMASK, &noalrm, NULL);
+
 	signalled = 0;
-	(void)alarm(interval);
+	(void)signal(SIGALRM, catchalarm);
+
+	it.it_interval.tv_sec = it.it_value.tv_sec = interval;
+	it.it_interval.tv_usec = it.it_value.tv_usec = 0;
+	setitimer(ITIMER_REAL, &it, NULL);
+
 banner:
 	iftot_banner(&ip_cur);
 
@@ -749,11 +760,10 @@ loop:
 	putchar('\n');
 	fflush(stdout);
 	line++;
-	sigemptyset(&emptyset);
-	if (!signalled)
+	if (signalled == 0) {
 		sigsuspend(&emptyset);
+	}
 	signalled = 0;
-	(void)alarm(interval);
 	if (line == redraw_lines)
 		goto banner;
 	goto loop;
@@ -764,13 +774,14 @@ static void
 sidewaysintpr_kvm(unsigned interval, u_long off)
 {
 	struct itimerval it;
+	sigset_t emptyset;
+	sigset_t noalrm;
 	struct ifnet ifnet;
 	u_long firstifnet;
 	struct iftot *ip, *total;
 	unsigned line;
 	struct iftot *lastif, *sum, *interesting;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
-	int oldmask;
 
 	set_lines();
 
@@ -806,8 +817,13 @@ sidewaysintpr_kvm(unsigned interval, u_long off)
 	}
 	lastif = ip;
 
+	sigemptyset(&emptyset);
+	sigemptyset(&noalrm);
+	sigaddset(&noalrm, SIGALRM);
+	sigprocmask(SIG_SETMASK, &noalrm, NULL);
+
+	signalled = 0;
 	(void)signal(SIGALRM, catchalarm);
-	signalled = false;
 
 	it.it_interval.tv_sec = it.it_value.tv_sec = interval;
 	it.it_interval.tv_usec = it.it_value.tv_usec = 0;
@@ -980,12 +996,10 @@ loop:
 	putchar('\n');
 	fflush(stdout);
 	line++;
-	oldmask = sigblock(sigmask(SIGALRM));
-	if (! signalled) {
-		sigpause(0);
+	if (signalled == 0) {
+		sigsuspend(&emptyset);
 	}
-	sigsetmask(oldmask);
-	signalled = false;
+	signalled = 0;
 	if (line == redraw_lines)
 		goto banner;
 	goto loop;

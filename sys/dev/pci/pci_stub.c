@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_stub.c,v 1.5 2016/07/11 06:14:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_stub.c,v 1.5.2.1 2017/01/07 08:56:33 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -17,21 +17,10 @@ int default_pci_bus_devorder(pci_chipset_tag_t, int, uint8_t *, int);
 int default_pci_chipset_tag_create(pci_chipset_tag_t, uint64_t,
     const struct pci_overrides *, void *, pci_chipset_tag_t *);
 void default_pci_chipset_tag_destroy(pci_chipset_tag_t);
-pci_intr_type_t default_pci_intr_type(pci_chipset_tag_t, pci_intr_handle_t);
-int default_pci_intr_alloc(const struct pci_attach_args *,
-    pci_intr_handle_t **, int *, pci_intr_type_t);
-void default_pci_intr_release(pci_chipset_tag_t, pci_intr_handle_t *, int);
-void *default_pci_intr_establish_xname(pci_chipset_tag_t, pci_intr_handle_t,
-    int, int (*)(void *), void *, const char *);
 
 __strict_weak_alias(pci_bus_devorder, default_pci_bus_devorder);
 __strict_weak_alias(pci_chipset_tag_create, default_pci_chipset_tag_create);
 __strict_weak_alias(pci_chipset_tag_destroy, default_pci_chipset_tag_destroy);
-
-__strict_weak_alias(pci_intr_type, default_pci_intr_type);
-__strict_weak_alias(pci_intr_alloc, default_pci_intr_alloc);
-__strict_weak_alias(pci_intr_release, default_pci_intr_release);
-__strict_weak_alias(pci_intr_establish_xname, default_pci_intr_establish_xname);
 
 int
 default_pci_bus_devorder(pci_chipset_tag_t pc, int bus, uint8_t *devs,
@@ -58,47 +47,98 @@ default_pci_chipset_tag_create(pci_chipset_tag_t opc, const uint64_t present,
 	return EOPNOTSUPP;
 }
 
+#ifndef __HAVE_PCI_MSI_MSIX
 pci_intr_type_t
-default_pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 
 	return PCI_INTR_TYPE_INTX;
 }
 
 int
-default_pci_intr_alloc(const struct pci_attach_args *pa,
-    pci_intr_handle_t **ihps, int *counts, pci_intr_type_t max_type)
+pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *counts, pci_intr_type_t max_type)
 {
-	pci_intr_handle_t *ihp;
 
 	if (counts != NULL && counts[PCI_INTR_TYPE_INTX] == 0)
 		return EINVAL;
 
-	ihp = kmem_alloc(sizeof(*ihp), KM_SLEEP);
-	if (ihp == NULL)
-		return ENOMEM;
-
-	if (pci_intr_map(pa, ihp)) {
-		kmem_free(ihp, sizeof(*ihp));
-		return EINVAL;
-	}
-
-	ihps[0] = ihp;
-	return 0;
+	return pci_intx_alloc(pa, ihps);
 }
 
 void
-default_pci_intr_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih,
-    int count)
+pci_intr_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih, int count)
 {
 
 	kmem_free(pih, sizeof(*pih));
 }
 
 void *
-default_pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih,
-    int level, int (*func)(void *), void *arg, const char *__nouse)
+pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg, const char *__nouse)
 {
 
 	return pci_intr_establish(pc, ih, level, func, arg);
 }
+
+int
+pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihp)
+{
+	pci_intr_handle_t *pih;
+
+	if (ihp == NULL)
+		return EINVAL;
+
+	pih = kmem_alloc(sizeof(*pih), KM_SLEEP);
+	if (pih == NULL)
+		return ENOMEM;
+
+	if (pci_intr_map(pa, pih)) {
+		kmem_free(pih, sizeof(*pih));
+		return EINVAL;
+	}
+
+	*ihp = pih;
+	return 0;
+}
+
+int
+pci_msi_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+pci_msi_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int count)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+pci_msix_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int *count)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+pci_msix_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    int count)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+pci_msix_alloc_map(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
+    u_int *table_indexes, int count)
+{
+
+	return EOPNOTSUPP;
+}
+#endif	/* __HAVE_PCI_MSI_MSIX */

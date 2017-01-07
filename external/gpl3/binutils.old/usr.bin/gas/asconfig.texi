@@ -1,2 +1,0 @@
-@c $NetBSD: asconfig.texi,v 1.1.1.1.2.1 2016/11/04 14:45:02 pgoyette Exp $
-@include all.texi

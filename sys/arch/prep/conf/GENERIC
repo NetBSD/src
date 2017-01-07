@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.175 2015/09/26 11:16:12 maxv Exp $
+# $NetBSD: GENERIC,v 1.175.2.1 2017/01/07 08:56:24 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.175 $"
+#ident		"GENERIC-$Revision: 1.175.2.1 $"
 
 maxusers	32
 
@@ -506,7 +506,8 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pcppi?		# PC speaker
+#spkr*	at pcppi?		# PC speaker
+#spkr*	at audio?		# PC speaker (synthesized)
 
 
 # Joysticks
@@ -585,6 +586,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #

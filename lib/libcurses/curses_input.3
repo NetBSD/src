@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.22 2012/04/21 12:27:28 roy Exp $
+.\"	$NetBSD: curses_input.3,v 1.22.14.1 2017/01/07 08:56:04 pgoyette Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd April 5, 2012
+.Dd January 1, 2017
 .Dt CURSES_INPUT 3
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Nm mvwgetch ,
 .Nm define_key ,
 .Nm keyok ,
+.Nm has_key ,
 .Nm getnstr ,
 .Nm wgetnstr ,
 .Nm mvgetnstr ,
@@ -50,11 +51,13 @@
 .Nm mvgetstr ,
 .Nm mvwgetstr ,
 .Nm keypad ,
+.Nm is_keypad ,
 .Nm notimeout ,
 .Nm timeout ,
 .Nm wtimeout ,
 .Nm nodelay ,
-.Nm ungetch
+.Nm ungetch ,
+.Nm set_escdelay
 .Nd curses input stream routines
 .Sh LIBRARY
 .Lb libcurses
@@ -70,6 +73,8 @@
 .Fn mvwgetch "WINDOW *win" "int y" "int x"
 .Ft int
 .Fn keyok "int key_symbol" "bool flag"
+.Ft int
+.Fn has_key "int key_symbol"
 .Ft int
 .Fn define_key "char *sequence" "int key_symbol"
 .Ft int
@@ -90,6 +95,8 @@
 .Fn mvwgetstr "WINDOW *win" "int y" "int x" "char *str"
 .Ft int
 .Fn keypad "WINDOW *win" "boolf flag"
+.Ft bool
+.Fn is_keypad "const WINDOW *win"
 .Ft int
 .Fn notimeout "WINDOW *win" "boolf flag"
 .Ft int
@@ -100,6 +107,8 @@
 .Fn nodelay "WINDOW *win" "boolf flag"
 .Ft int
 .Fn ungetch "int c"
+.Ft int
+.Fn set_escdelay "int escdelay"
 .Pp
 .Va extern int ESCDELAY ;
 .Sh DESCRIPTION
@@ -155,6 +164,22 @@ on a key symbol then
 will behave as if the character sequence associated with that key symbol
 was not recognised and will return the component characters one at a time to
 the caller.
+The
+.Fn is_keypad
+function returns
+.Dv TRUE
+if the
+.Fn
+keypad
+flag is set for the window specified by
+.Fa win .
+.Pp
+The
+.Fn has_key
+function takes a key value and returns
+.Dv TRUE
+if the current terminal recognises a key with that value, otherwise
+.Dv FALSE .
 .Pp
 Custom associations between sequences of characters and a key symbol can
 be made by using the
@@ -375,6 +400,13 @@ will convert
 into an unsigned char and push that character back onto the input stream.
 Only one character of push-back is guaranteed to work, more may be possible
 depending on system resources.
+.Pp
+The
+.Fn set_escdelay
+function sets the
+.Va ESCDELAY
+value of the current screen to
+.Fa escdelay.
 .Sh RETURN VALUES
 The functions
 .Fn getch ,
@@ -582,3 +614,11 @@ Portable implementations should avoid the use of these functions.
 .Sh HISTORY
 The Curses package appeared in
 .Bx 4.0 .
+The
+.Fn is_keypad
+and
+.Fn set_tabsize
+functions are
+.Em ncurses
+extension to the Curses library and was added in
+.Nx 8.0 .

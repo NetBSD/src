@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.18 2014/09/13 18:08:38 matt Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.18.4.1 2017/01/07 08:56:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.18 2014/09/13 18:08:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.18.4.1 2017/01/07 08:56:11 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -511,7 +511,7 @@ at91bus_setup(BootConfig *mem)
 #ifdef VERBOSE_INIT_ARM
 	printf("page ");
 #endif
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);

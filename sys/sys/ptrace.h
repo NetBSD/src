@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.46.2.1 2016/11/04 14:49:22 pgoyette Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.46.2.2 2017/01/07 08:56:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -34,6 +34,8 @@
 #ifndef	_SYS_PTRACE_H_
 #define	_SYS_PTRACE_H_
 
+#include <sys/siginfo.h>
+
 #define	PT_TRACE_ME		0	/* child declares it's being traced */
 #define	PT_READ_I		1	/* read word in child's I space */
 #define	PT_READ_D		2	/* read word in child's D space */
@@ -51,6 +53,8 @@
 #define	PT_SET_EVENT_MASK	16	/* set the event mask, defined below */
 #define	PT_GET_EVENT_MASK	17	/* get the event mask, defined below */
 #define	PT_GET_PROCESS_STATE	18	/* get process state, defined below */
+#define	PT_SET_SIGINFO		19	/* set signal state, defined below */
+#define	PT_GET_SIGINFO		20	/* get signal state, defined below */
 
 #define	PT_FIRSTMACH		32	/* for machine-specific requests */
 #include <machine/ptrace.h>		/* machine-specific requests, if any */
@@ -74,7 +78,9 @@
 /* 15 */    "PT_SYSCALLEMU", \
 /* 16 */    "PT_SET_EVENT_MASK", \
 /* 17 */    "PT_GET_EVENT_MASK", \
-/* 18 */    "PT_GET_PROCESS_STATE",
+/* 18 */    "PT_GET_PROCESS_STATE", \
+/* 19 */    "PT_SET_SIGINFO", \
+/* 20 */    "PT_GET_SIGINFO",
 
 /* PT_{G,S}EVENT_MASK */
 typedef struct ptrace_event {
@@ -118,6 +124,29 @@ struct ptrace_lwpinfo {
 #define PL_EVENT_NONE	0
 #define PL_EVENT_SIGNAL	1
 
+/*
+ * Hardware Watchpoints
+ *
+ * MD code handles switch informing whether a particular watchpoint is enabled
+ */
+typedef struct ptrace_watchpoint {
+	int		pw_index;	/* HW Watchpoint ID (count from 0) */
+	lwpid_t		pw_lwpid;	/* LWP described */
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+	struct mdpw	pw_md;		/* MD fields */
+#endif
+} ptrace_watchpoint_t;
+
+/*
+ * Signal Information structure
+ */
+typedef struct ptrace_siginfo {
+	siginfo_t	psi_siginfo;	/* signal information structure */
+	lwpid_t		psi_lwpid;	/* destination LWP of the signal
+					 * value 0 means the whole process
+					 * (route signal to all LWPs) */
+} ptrace_siginfo_t;
+
 #ifdef _KERNEL
 
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
@@ -138,12 +167,22 @@ struct fpreg;
 #define process_fpreg64 struct fpreg
 #endif
 #endif
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+#ifndef process_watchpoint32
+#define process_watchpoint32 struct ptrace_watchpoint
+#endif
+#ifndef process_watchpoint64
+#define process_watchpoint64 struct ptrace_watchpoint
+#endif
+#endif
 
 struct ptrace_methods {
 	int (*ptm_copyinpiod)(struct ptrace_io_desc *, const void *);
 	void (*ptm_copyoutpiod)(const struct ptrace_io_desc *, void *);
 	int (*ptm_doregs)(struct lwp *, struct lwp *, struct uio *);
 	int (*ptm_dofpregs)(struct lwp *, struct lwp *, struct uio *);
+	int (*ptm_dowatchpoint)(struct lwp *, struct lwp *, int,
+	    struct ptrace_watchpoint *, void *, register_t *);
 };
 
 int	ptrace_init(void);
@@ -156,11 +195,16 @@ int	process_validregs(struct lwp *);
 int	process_dofpregs(struct lwp *, struct lwp *, struct uio *);
 int	process_validfpregs(struct lwp *);
 
+int	process_dowatchpoint(struct lwp *, struct lwp *, int,
+	    struct ptrace_watchpoint *, void *, register_t *);
+int	process_validwatchpoint(struct lwp *);
+
 int	process_domem(struct lwp *, struct lwp *, struct uio *);
 
 void	process_stoptrace(void);
 
 void	proc_reparent(struct proc *, struct proc *);
+void	proc_changeparent(struct proc *, struct proc *);
 
 
 int	do_ptrace(struct ptrace_methods *, struct lwp *, int, pid_t, void *,
@@ -210,10 +254,34 @@ int	process_write_regs(struct lwp *, const struct reg *);
 #endif
 #endif
 
-#ifdef __HAVE_PROCFS_MACHDEP
+#ifdef __HAVE_PTRACE_WATCHPOINTS
+int	process_count_watchpoints(struct lwp *, register_t *retval);
+#ifndef process_count_watchpoints32
+#define process_count_watchpoints32	process_count_watchpoints
+#endif
+#ifndef process_count_watchpoints64
+#define process_count_watchpoints64	process_count_watchpoints
+#endif
+
+int	process_read_watchpoint(struct lwp *, struct ptrace_watchpoint *);
+#ifndef process_read_watchpoint32
+#define process_read_watchpoint32	process_read_watchpoint
+#endif
+#ifndef process_read_watchpoint64
+#define process_read_watchpoint64	process_read_watchpoint
+#endif
+
+int	process_write_watchpoint(struct lwp *, struct ptrace_watchpoint *);
+#ifndef process_write_watchpoint32
+#define process_write_watchpoint32	process_write_watchpoint
+#endif
+#ifndef process_write_watchpoint64
+#define process_write_watchpoint64	process_write_watchpoint
+#endif
+#endif
+
 int	ptrace_machdep_dorequest(struct lwp *, struct lwp *, int,
 	    void *, int);
-#endif
 
 #ifndef FIX_SSTEP
 #define FIX_SSTEP(p)

@@ -1,4 +1,4 @@
-/*	$NetBSD: delch.c,v 1.22 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: delch.c,v 1.22.28.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delch.c,v 1.22 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: delch.c,v 1.22.28.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,7 +94,7 @@ wdelch(WINDOW *win)
 	temp1 = &win->alines[win->cury]->line[win->curx];
 	temp2 = temp1 + 1;
 	while (temp1 < end) {
-		(void) memcpy(temp1, temp2, sizeof(__LDATA));
+		(void)memcpy(temp1, temp2, sizeof(__LDATA));
 		temp1++, temp2++;
 	}
 	temp1->ch = win->bch;
@@ -102,8 +102,8 @@ wdelch(WINDOW *win)
 		temp1->attr = win->battr & __COLOR;
 	else
 		temp1->attr = 0;
-	__touchline(win, (int) win->cury, (int) win->curx, (int) win->maxx - 1);
-	return (OK);
+	__touchline(win, (int)win->cury, (int)win->curx, (int)win->maxx - 1);
+	return OK;
 #else
 	int cw, sx;
 	nschar_t *np, *tnp;
@@ -111,37 +111,38 @@ wdelch(WINDOW *win)
 	end = &win->alines[win->cury]->line[win->maxx - 1];
 	sx = win->curx;
 	temp1 = &win->alines[win->cury]->line[win->curx];
-	cw = WCOL( *temp1 );
-	if ( cw < 0 ) {
+	cw = WCOL(*temp1);
+	if (cw < 0) {
 		temp1 += cw;
 		sx += cw;
-		cw = WCOL( *temp1 );
+		cw = WCOL(*temp1);
 	}
 	np = temp1->nsp;
 	if (np) {
-		while ( np ) {
+		while (np) {
 			tnp = np->next;
-			free( np );
+			free(np);
 			np = tnp;
 		}
 		temp1->nsp = NULL;
 	}
-	if ( sx + cw < win->maxx ) {
+	if (sx + cw < win->maxx) {
 		temp2 = temp1 + cw;
-		while ( temp1 < end - ( cw - 1 )) {
-			( void )memcpy( temp1, temp2, sizeof( __LDATA ));
+		while (temp1 < end - (cw - 1)) {
+			(void)memcpy(temp1, temp2, sizeof(__LDATA));
 			temp1++, temp2++;
 		}
 	}
-	while ( temp1 <= end ) {
-		temp1->ch = ( wchar_t )btowc(( int ) win->bch );
+	while (temp1 <= end) {
+		temp1->ch = ( wchar_t )btowc((int) win->bch);
 		temp1->attr = 0;
 		if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR)
 			return ERR;
 		SET_WCOL(*temp1, 1);
 		temp1++;
 	}
-	__touchline(win, (int) win->cury, sx, (int) win->maxx - 1);
-	return (OK);
+	__touchline(win, (int)win->cury, sx, (int)win->maxx - 1);
+	__sync(win);
+	return OK;
 #endif /* HAVE_WCHAR */
 }

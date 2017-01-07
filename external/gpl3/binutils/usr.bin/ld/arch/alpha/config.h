@@ -15,6 +15,9 @@
 /* Define if you want compressed debug sections by default. */
 /* #undef DEFAULT_FLAG_COMPRESS_DEBUG */
 
+/* Define to 1 if you want to enable -z relro in ELF linker by default. */
+#define DEFAULT_LD_Z_RELRO 0
+
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #define ENABLE_NLS 1
@@ -170,7 +173,7 @@
 #define PACKAGE_NAME "ld"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ld 2.26.1"
+#define PACKAGE_STRING "ld 2.27"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ld"
@@ -179,7 +182,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.26.1"
+#define PACKAGE_VERSION "2.27"
 
 /* The size of `void *', as computed by sizeof. */
 #define SIZEOF_VOID_P 8
@@ -216,7 +219,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.26.1"
+#define VERSION "2.27"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */

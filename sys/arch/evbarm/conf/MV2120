@@ -1,4 +1,4 @@
-#	$NetBSD: MV2120,v 1.26 2015/08/12 07:53:57 maxv Exp $
+#	$NetBSD: MV2120,v 1.26.2.1 2017/01/07 08:56:13 pgoyette Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
@@ -251,6 +251,8 @@ include "dev/bluetooth/bluetoothdevices.config"
 audio*  at audiobus?
 midi*   at midibus?
 
+spkr*	at audio?		# PC speaker (synthesized)
+
 # Pseudo-Devices
 
 pseudo-device	crypto			# /dev/crypto device
@@ -324,6 +326,7 @@ pseudo-device	wsfont
 pseudo-device	dm
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 pseudo-device	veriexec

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.53 2016/07/03 07:27:37 skrll Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.53.2.1 2017/01/07 08:56:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.53 2016/07/03 07:27:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.53.2.1 2017/01/07 08:56:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -194,6 +194,7 @@ umass_scsipi_setup(struct umass_softc *sc)
 	scbus->sc_adapter.adapt_minphys = umass_scsipi_minphys;
 	scbus->sc_adapter.adapt_ioctl = umass_scsipi_ioctl;
 	scbus->sc_adapter.adapt_getgeom = umass_scsipi_getgeom;
+	scbus->sc_adapter.adapt_flags = SCSIPI_ADAPT_MPSAFE;
 
 	/* Fill in the channel. */
 	memset(&scbus->sc_channel, 0, sizeof(scbus->sc_channel));
@@ -316,9 +317,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 
 		/* Return if command finishes early. */
  done:
-		KERNEL_LOCK(1, curlwp);
 		scsipi_done(xs);
-		KERNEL_UNLOCK_ONE(curlwp);
 		return;
 	default:
 		/* Not supported, nothing to do. */
@@ -397,7 +396,6 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	struct scsipi_xfer *xs = priv;
 	struct scsipi_periph *periph = xs->xs_periph;
 	int cmdlen, senselen;
-	int s;
 #ifdef UMASS_DEBUG
 	struct timeval tv;
 	u_int delta;
@@ -454,11 +452,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	DPRINTFM(UDMASS_CMD, "return xs->error=%d, xs->xs_status=0x%x"
 	    " xs->resid=%d", xs->error, xs->xs_status, xs->resid, 0);
 
-	s = splbio();
-	KERNEL_LOCK(1, curlwp);
 	scsipi_done(xs);
-	KERNEL_UNLOCK_ONE(curlwp);
-	splx(s);
 }
 
 /*
@@ -470,7 +464,6 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 {
 	UMASSHIST_FUNC(); UMASSHIST_CALLED();
 	struct scsipi_xfer *xs = priv;
-	int s;
 
 	DPRINTFM(UDMASS_CMD, "sc %p: xs=%p residue=%d status=%d", sc, xs,
 	    residue, status);
@@ -495,11 +488,7 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	DPRINTFM(UDMASS_CMD, "return xs->error=%d, xs->xs_status=0x%x"
 	    " xs->resid=%d", xs->error, xs->xs_status, xs->resid, 0);
 
-	s = splbio();
-	KERNEL_LOCK(1, curlwp);
 	scsipi_done(xs);
-	KERNEL_UNLOCK_ONE(curlwp);
-	splx(s);
 }
 
 #if NATAPIBUS > 0
@@ -518,17 +507,13 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	if (target != UMASS_ATAPI_DRIVE)	/* only probe drive 0 */
 		return;
 
-	KERNEL_LOCK(1, curlwp);
-
 	/* skip if already attached */
 	if (scsipi_lookup_periph(chan, target, 0) != NULL) {
-		KERNEL_UNLOCK_ONE(curlwp);
 		return;
 	}
 
 	periph = scsipi_alloc_periph(M_NOWAIT);
 	if (periph == NULL) {
-		KERNEL_UNLOCK_ONE(curlwp);
 		aprint_error_dev(atapi->sc_dev,
 		    "can't allocate link for drive %d\n", target);
 		return;
@@ -544,7 +529,6 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	/* Now go ask the device all about itself. */
 	memset(&inqbuf, 0, sizeof(inqbuf));
 	if (scsipi_inquire(periph, &inqbuf, XS_CTL_DISCOVERY) != 0) {
-		KERNEL_UNLOCK_ONE(curlwp);
 		DPRINTFM(UDMASS_SCSI, "scsipi_inquire failed", 0, 0, 0, 0);
 		free(periph, M_DEVBUF);
 		return;
@@ -570,7 +554,5 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 
 	atapi_probe_device(atapi, target, periph, &sa);
 	/* atapi_probe_device() frees the periph when there is no device.*/
-
-	KERNEL_UNLOCK_ONE(curlwp);
 }
 #endif

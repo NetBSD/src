@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.23 2015/08/12 07:53:57 maxv Exp $
+#	$NetBSD: MARVELL_NAS,v 1.23.2.1 2017/01/07 08:56:13 pgoyette Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -334,6 +334,7 @@ pseudo-device	swdmover		# software dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 pseudo-device	veriexec

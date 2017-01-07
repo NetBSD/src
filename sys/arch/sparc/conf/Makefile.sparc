@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.94 2016/02/27 19:26:13 joerg Exp $
+# 	$NetBSD: Makefile.sparc,v 1.94.2.1 2017/01/07 08:56:26 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -39,6 +39,7 @@ CFLAGS+=	${${ACTIVE_CC} == "clang":? -Qunused-arguments :}
 AFLAGS+=	-x assembler-with-cpp
 AFLAGS+=	-Wa,-Av8
 AFLAGS+=	${${ACTIVE_CC} == "clang":? -Qunused-arguments :}
+COPTS.kern_timeout.c += -Wno-stack-protector
 
 ##
 ## (3) libkern and compat

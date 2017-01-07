@@ -1,4 +1,4 @@
-/*	$NetBSD: progressmeter.h,v 1.4 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: progressmeter.h,v 1.4.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
 /* $OpenBSD: progressmeter.h,v 1.3 2015/01/14 13:54:13 djm Exp $ */
 /*
  * Copyright (c) 2002 Nils Nordman.  All rights reserved.

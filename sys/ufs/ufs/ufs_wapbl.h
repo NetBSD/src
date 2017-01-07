@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.11.2.1 2016/11/04 14:49:22 pgoyette Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.11.2.2 2017/01/07 08:56:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -146,15 +146,22 @@ ufs_wapbl_end(struct mount *mp)
 #define	UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)			\
 	if (mp->mnt_wapbl) wapbl_unregister_inode(mp->mnt_wapbl, ino, mode)
 
-#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)			\
+#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len, cookiep)		\
 	(mp->mnt_wapbl)							\
-	    ? wapbl_register_deallocation(mp->mnt_wapbl, blk, len, false) : 0
+	    ? wapbl_register_deallocation(mp->mnt_wapbl, blk, len,	\
+		false, cookiep)						\
+	    : 0
 
 #define	UFS_WAPBL_REGISTER_DEALLOCATION_FORCE(mp, blk, len)		\
 	(								\
 	  (mp->mnt_wapbl)						\
-	    ? wapbl_register_deallocation(mp->mnt_wapbl, blk, len, true) : 0 \
+	    ? wapbl_register_deallocation(mp->mnt_wapbl, blk, len,	\
+		true, NULL)						\
+	    : 0								\
 	)
+
+#define	UFS_WAPBL_UNREGISTER_DEALLOCATION(mp, cookie)			\
+	if (mp->mnt_wapbl) wapbl_unregister_deallocation(mp->mnt_wapbl, cookie)
 
 #else /* ! WAPBL */
 #define	UFS_WAPBL_BEGIN(mp) (__USE(mp), 0)
@@ -164,8 +171,9 @@ ufs_wapbl_end(struct mount *mp)
 #define	UFS_WAPBL_JUNLOCK_ASSERT(mp)
 #define	UFS_WAPBL_REGISTER_INODE(mp, ino, mode)		do { } while (0)
 #define	UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)	do { } while (0)
-#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)		0
-#define	UFS_WAPBL_REGISTER_DEALLOCATION_FORCE(mp, blk, len)	0
+#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len, cookiep)		0
+#define	UFS_WAPBL_REGISTER_DEALLOCATION_FORCE(mp, blk, len)		0
+#define	UFS_WAPBL_UNREGISTER_DEALLOCATION(mp, cookie)	do { } while (0)
 #endif
 
 #endif /* !_UFS_UFS_UFS_WAPBL_H_ */

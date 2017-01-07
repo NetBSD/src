@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.2.1 2016/08/06 00:18:41 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.14.2.2 2017/01/07 08:54:16 pgoyette Exp $
 
 # $FreeBSD: src/cddl/lib/libdtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -118,6 +118,12 @@ beforedepend:	dt_errtags.c dt_names.c
 
 foo:
 	echo ${OPENSOLARIS_USR_DISTDIR}
+
+.SUFFIXES: .in
+.in:
+	${CPP} -D_KERNEL ${CPPFLAGS} $< | tr -d ' ' | tr '"' '@' | \
+	    ${TOOL_SED} -e 's/\&/\\\&/g' | grep '^s/' > ${.TARGET}
+
 
 FILES=		${DSRCS}
 FILESDIR=	/usr/lib/dtrace

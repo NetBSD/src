@@ -1,4 +1,4 @@
-/*	$NetBSD: mac.c,v 1.11.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/*	$NetBSD: mac.c,v 1.11.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
 /* $OpenBSD: mac.c,v 1.33 2016/07/08 03:44:42 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mac.c,v 1.11.2.1 2016/08/06 00:18:38 pgoyette Exp $");
+__RCSID("$NetBSD: mac.c,v 1.11.2.2 2017/01/07 08:53:42 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <string.h>

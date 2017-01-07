@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_puffs.c,v 1.4 2011/08/29 14:35:02 joerg Exp $	*/
+/*	$NetBSD: mount_puffs.c,v 1.4.24.1 2017/01/07 08:56:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,13 +26,14 @@
  */
 
 /*
- * This is to support -o getargs without having to replicate
- * it in every file server.
+ * This is to support -o getargs without having to replicate it in
+ * every file server. It also allows puffs filesystems to be mounted
+ * via "mount -a".
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_puffs.c,v 1.4 2011/08/29 14:35:02 joerg Exp $");
+__RCSID("$NetBSD: mount_puffs.c,v 1.4.24.1 2017/01/07 08:56:06 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -41,61 +42,29 @@ __RCSID("$NetBSD: mount_puffs.c,v 1.4 2011/08/29 14:35:02 joerg Exp $");
 #include <fs/puffs/puffs_msgif.h>
 
 #include <err.h>
-#include <mntopts.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/cdefs.h>
 #include <unistd.h>
+#include <util.h>
 
-const struct mntopt getargmopt[] = {
-	MOPT_GETARGS,
-	MOPT_NULL,
-};
-
-__dead static void
+static int
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s -o getargs spec dir\n", getprogname());
-	exit(1);
+	fprintf(stderr, "usage: %s [-o options] program[#source] mountpoint\n", getprogname());
+	return 1;
 }
 
-int
-main(int argc, char *argv[])
+static int show_puffs_mount_args(const char *mountpoint)
 {
 	const char *vtypes[] = { VNODE_TYPES };
 	struct puffs_kargs kargs;
-	mntoptparse_t mp;
-	int mntflags, f;
-	int ch;
 
-	if (argc < 3)
-		usage();
-
-	mntflags = 0;
-	while ((ch = getopt(argc, argv, "o:")) != -1) {
-		switch (ch) {
-		case 'o':
-			mp = getmntopts(optarg, getargmopt, &mntflags, &f);
-			if (mp == NULL)
-				err(1, "getmntopts");
-			freemntopts(mp);
-			break;
-		default:
-			usage();
-		}
-	}
-	argc -= optind;
-	argv += optind;
-
-	if (argc != 2)
-		usage();
-
-	if (mntflags != MNT_GETARGS)
-		usage();
-
-	if (mount(MOUNT_PUFFS, argv[1], mntflags, &kargs, sizeof(kargs)) == -1)
+	if (mount(MOUNT_PUFFS, mountpoint, MNT_GETARGS, &kargs, sizeof(kargs)) == -1)
 		err(1, "mount");
-	
+
 	printf("version=%d, ", kargs.pa_vers);
 	printf("flags=0x%x, ", kargs.pa_flags);
 
@@ -110,4 +79,105 @@ main(int argc, char *argv[])
 	printf("\n");
 
 	return 0;
+}
+
+static int
+mount_puffs_filesystem(const char *program, const char *opts,
+					const char *source, const char *mountpoint)
+{
+	int argc = 0;
+	const char **argv;
+	int rv = 0;
+
+	/* Construct an argument vector:
+	 * program [-o opts] [source] mountpoint */
+	argv = ecalloc(1 + 2 + 1 + 1, sizeof(*argv));
+	argv[argc++] = program;
+	if (opts != NULL) {
+		argv[argc++] = "-o";
+		argv[argc++] = opts;
+	}
+	if (source != NULL) {
+		argv[argc++] = source;
+	}
+	argv[argc++] = mountpoint;
+	argv[argc] = NULL;
+
+	/* We intentionally use execvp(3) here because the program can
+	 * actually be a basename. */
+	if (execvp(program, __UNCONST(argv)) == -1) {
+		warn("Cannot execute %s", program);
+		rv = 1;
+	}
+
+	free(argv);
+	return rv;
+}
+
+static void add_opt(char **opts, const char *opt)
+{
+	const size_t orig_len = *opts == NULL ? 0 : strlen(*opts);
+
+	*opts = erealloc(*opts, orig_len + 1 + strlen(opt) + 1);
+
+	if (orig_len == 0) {
+		strcpy(*opts, opt);
+	}
+	else {
+		strcat(*opts, ",");
+		strcat(*opts, opt);
+	}
+}
+
+int
+main(int argc, char *argv[])
+{
+	int mntflags = 0;
+	int ch;
+	char *opts = NULL;
+	int rv = 0;
+
+	while ((ch = getopt(argc, argv, "o:")) != -1) {
+		switch (ch) {
+		case 'o':
+			for (char *opt = optarg; (opt = strtok(opt, ",")) != NULL; opt = NULL) {
+				if (strcmp(opt, "getargs") == 0) {
+					mntflags |= MNT_GETARGS;
+					break; /* No need to parse it any further. */
+				}
+				else {
+					add_opt(&opts, opt);
+				}
+			}
+			break;
+		default:
+			rv = usage();
+			goto free_opts;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 2) {
+		rv = usage();
+		goto free_opts;
+	}
+
+	if (mntflags & MNT_GETARGS) {
+		/* Special case for -o getargs: retrieve kernel arguments for
+		 * an already mounted filesystem. */
+		rv = show_puffs_mount_args(argv[1]);
+	}
+	else {
+		/* Split the program name and source. This is to allow
+		 * filesystems to be mounted via "mount -a" i.e. /etc/fstab */
+		char *source  = argv[0];
+		char *program = strsep(&source, "#");
+
+		rv = mount_puffs_filesystem(program, opts, source, argv[1]);
+	}
+
+free_opts:
+	free(opts);
+	return rv;
 }

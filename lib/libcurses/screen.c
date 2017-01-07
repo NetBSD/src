@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.24 2015/11/26 01:05:08 christos Exp $	*/
+/*	$NetBSD: screen.c,v 1.24.2.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.24 2015/11/26 01:05:08 christos Exp $");
+__RCSID("$NetBSD: screen.c,v 1.24.2.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif
 #endif					/* not lint */
 
@@ -42,6 +42,18 @@ __RCSID("$NetBSD: screen.c,v 1.24 2015/11/26 01:05:08 christos Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
+
+static int filtered;
+
+/*
+ * filter has to be called before either initscr or newterm.
+ */
+void
+filter(void)
+{
+
+	filtered = TRUE;
+}
 
 /*
  * set_term --
@@ -91,7 +103,7 @@ set_term(SCREEN *new)
 
 	_cursesi_reset_acs(new);
 #ifdef HAVE_WCHAR
-    _cursesi_reset_wacs(new);
+	_cursesi_reset_wacs(new);
 #endif /* HAVE_WCHAR */
 
 #ifdef DEBUG
@@ -114,7 +126,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	char *sp;
 
 	sp = type;
-	if ((type == NULL) && (sp = getenv("TERM")) == NULL)
+	if (type == NULL && (sp = getenv("TERM")) == NULL)
 		return NULL;
 
 	if ((new_screen = calloc(1, sizeof(SCREEN))) == NULL)
@@ -125,9 +137,12 @@ newterm(char *type, FILE *outfd, FILE *infd)
 #endif
 
 	new_screen->infd = infd;
+	new_screen->checkfd = fileno(infd);
 	new_screen->outfd = outfd;
 	new_screen->echoit = new_screen->nl = 1;
 	new_screen->pfast = new_screen->rawmode = new_screen->noqch = 0;
+	new_screen->filtered = filtered;
+	filtered = FALSE; /* filter() must preceed each newterm() */
 	new_screen->nca = A_NORMAL;
 	new_screen->color_type = COLOR_NONE;
 	new_screen->COLOR_PAIRS = 0;

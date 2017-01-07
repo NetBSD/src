@@ -1,9 +1,11 @@
-#	$NetBSD: files.uvm,v 1.25 2015/07/27 09:24:28 maxv Exp $
+#	$NetBSD: files.uvm,v 1.25.2.1 2017/01/07 08:56:53 pgoyette Exp $
 
 #
 # UVM options
 # 
-defflag opt_uvmhist.h		UVMHIST UVMHIST_PRINT: KERNHIST
+defflag opt_uvmhist.h		UVMHIST: KERNHIST
+defflag opt_uvmhist.h		UVMHIST_PRINT: KERNHIST_PRINT
+defparam opt_uvmhist.h		UVMHIST_MAPHIST_SIZE UVMHIST_PDHIST_SIZE
 defflag opt_uvm.h		USE_TOPDOWN_VM UVMMAP_COUNTERS
 defparam opt_uvm.h		UVM_RESERVED_PAGES_PER_CPU
 defflag opt_vmswap.h		VMSWAP
@@ -13,6 +15,7 @@ defparam opt_pagermap.h		PAGER_MAP_SIZE
 defflag				PDPOLICY_CLOCKPRO
 defparam			USER_VA0_DISABLE_DEFAULT
 defflag opt_uvm_page_trkown.h	UVM_PAGE_TRKOWN
+defflag opt_uvm_hotplug.h	UVM_HOTPLUG
 
 define	uvm
 defflag	opt_uvm.h			UVM
@@ -40,6 +43,7 @@ file	uvm/uvm_pdaemon.c		uvm
 file	uvm/uvm_pdpolicy_clock.c	!pdpolicy_clockpro
 file	uvm/uvm_pdpolicy_clockpro.c	pdpolicy_clockpro
 file	uvm/uvm_pglist.c		uvm
+file	uvm/uvm_physseg.c		uvm
 file	uvm/uvm_readahead.c		uvm
 file	uvm/uvm_stat.c                	uvm
 file	uvm/uvm_swap.c			vmswap

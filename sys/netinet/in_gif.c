@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.81.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.81.2.2 2017/01/07 08:56:51 pgoyette Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.81.2.1 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.81.2.2 2017/01/07 08:56:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -89,16 +89,13 @@ int
 in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct rtentry *rt;
+	struct route *ro;
 	struct gif_softc *sc = ifp->if_softc;
 	struct sockaddr_in *sin_src = satosin(sc->gif_psrc);
 	struct sockaddr_in *sin_dst = satosin(sc->gif_pdst);
 	struct ip iphdr;	/* capsule IP header, host byte ordered */
 	int proto, error;
 	u_int8_t tos;
-	union {
-		struct sockaddr		dst;
-		struct sockaddr_in	dst4;
-	} u;
 
 	if (sin_src == NULL || sin_dst == NULL ||
 	    sin_src->sin_family != AF_INET ||
@@ -175,20 +172,25 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 		return ENOBUFS;
 	bcopy(&iphdr, mtod(m, struct ip *), sizeof(struct ip));
 
-	sockaddr_in_init(&u.dst4, &sin_dst->sin_addr, 0);
-	if ((rt = rtcache_lookup(&sc->gif_ro, &u.dst)) == NULL) {
+	ro = percpu_getref(sc->gif_ro_percpu);
+	if ((rt = rtcache_lookup(ro, sc->gif_pdst)) == NULL) {
+		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;
 	}
 
 	/* If the route constitutes infinite encapsulation, punt. */
 	if (rt->rt_ifp == ifp) {
-		rtcache_free(&sc->gif_ro);
+		rtcache_unref(rt, ro);
+		rtcache_free(ro);
+		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
 		return ENETUNREACH;	/*XXX*/
 	}
+	rtcache_unref(rt, ro);
 
-	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL, NULL);
+	error = ip_output(m, NULL, ro, 0, NULL, NULL);
+	percpu_putref(sc->gif_ro_percpu);
 	return (error);
 }
 
@@ -335,10 +337,10 @@ gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
 			    (u_int32_t)ntohl(u.sin.sin_addr.s_addr));
 #endif
 			if (rt != NULL)
-				rtfree(rt);
+				rt_unref(rt);
 			return 0;
 		}
-		rtfree(rt);
+		rt_unref(rt);
 	}
 
 	return 32 * 2;
@@ -403,7 +405,7 @@ in_gif_detach(struct gif_softc *sc)
 
 	error = in_gif_pause(sc);
 
-	rtcache_free(&sc->gif_ro);
+	percpu_foreach(sc->gif_ro_percpu, gif_rtcache_free_pc, NULL);
 
 	return error;
 }

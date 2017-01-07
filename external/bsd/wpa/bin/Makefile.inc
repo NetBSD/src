@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2016/01/24 18:49:05 christos Exp $
+# $NetBSD: Makefile.inc,v 1.4.2.1 2017/01/07 08:54:10 pgoyette Exp $
 
 BINDIR?=	/usr/sbin
 
@@ -14,6 +14,7 @@ HOSTAPD_DISTDIR?=		${WPA_DISTDIR}/hostapd
 	${WPA_DISTDIR}/src/crypto \
 	${WPA_DISTDIR}/src/eap_common \
 	${WPA_DISTDIR}/src/eapol_supp \
+	${WPA_DISTDIR}/src/fst \
 	${WPA_DISTDIR}/src/l2_packet \
 	${WPA_DISTDIR}/src/utils
 

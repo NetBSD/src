@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.90 2016/06/22 10:44:32 knakahara Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.90.2.1 2017/01/07 08:56:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.90 2016/06/22 10:44:32 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.90.2.1 2017/01/07 08:56:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -543,6 +543,10 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFCAP:
 		ifcr = data;
 		/* make sure caps are enabled on parent */
+		if (ifv->ifv_p == NULL) {
+			error = EINVAL;
+			break;
+		}
 		if ((ifv->ifv_p->if_capenable & ifcr->ifcr_capenable) !=
 		    ifcr->ifcr_capenable) {
 			error = EINVAL;
@@ -904,8 +908,6 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 
 	m_set_rcvif(m, &ifv->ifv_if);
 	ifv->ifv_if.if_ipackets++;
-
-	bpf_mtap(&ifv->ifv_if, m);
 
 	m->m_flags &= ~M_PROMISC;
 	if_input(&ifv->ifv_if, m);

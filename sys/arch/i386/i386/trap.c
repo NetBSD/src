@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.276.2.1 2016/11/04 14:49:01 pgoyette Exp $	*/
+/*	$NetBSD: trap.c,v 1.276.2.2 2017/01/07 08:56:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,14 +68,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.276.2.1 2016/11/04 14:49:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.276.2.2 2017/01/07 08:56:18 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_vm86.h"
-#include "opt_kstack_dr0.h"
 #include "opt_xen.h"
 #include "opt_dtrace.h"
 
@@ -233,24 +232,6 @@ trap_print(const struct trapframe *frame, const lwp_t *l)
 	    l, l->l_proc->p_pid, l->l_lid, KSTACK_LOWEST_ADDR(l));
 }
 
-static void
-check_dr0(void)
-{
-#ifdef KSTACK_CHECK_DR0
-	u_int mask, dr6 = rdr6();
-
-	mask = 1 << 0; /* dr0 */
-	if (dr6 & mask) {
-		panic("trap on DR0: maybe kernel stack overflow\n");
-#if 0
-		dr6 &= ~mask;
-		ldr6(dr6);
-		return;
-#endif
-	}
-#endif
-}
-
 /*
  * trap(frame): exception, fault, and trap interface to BSD kernel.
  *
@@ -327,9 +308,7 @@ trap(struct trapframe *frame)
 
 	default:
 	we_re_toast:
-		if (type == T_TRCTRAP)
-			check_dr0();
-		else
+		if (type != T_TRCTRAP)
 			trap_print(frame, l);
 
 		if (kdb_trap(type, 0, frame))

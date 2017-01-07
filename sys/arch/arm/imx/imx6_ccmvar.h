@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccmvar.h,v 1.3 2015/01/09 09:50:46 ryo Exp $	*/
+/*	$NetBSD: imx6_ccmvar.h,v 1.3.2.1 2017/01/07 08:56:11 pgoyette Exp $	*/
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -75,7 +75,7 @@ enum imx6_clock {
 
 uint32_t imx6_get_clock(enum imx6_clock);
 int imx6_set_clock(enum imx6_clock, uint32_t);
-int imx6_pll_power(uint32_t, int);
+int imx6_pll_power(uint32_t, int, uint32_t);
 
 uint32_t imx6_ccm_read(uint32_t);
 void imx6_ccm_write(uint32_t, uint32_t);

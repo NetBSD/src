@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.67.2.1 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.67.2.2 2017/01/07 08:56:51 pgoyette Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -376,7 +376,7 @@ void	frag6_drainstub(void);
 int	ip6flow_init(int);
 void	ip6flow_poolinit(void);
 struct  ip6flow *ip6flow_reap(int);
-void    ip6flow_create(const struct route *, struct mbuf *);
+void    ip6flow_create(struct route *, struct mbuf *);
 void    ip6flow_slowtimo(void);
 int	ip6flow_invalidate_all(int);
 
@@ -399,8 +399,7 @@ int	in6_selectsrc(struct sockaddr_in6 *, struct ip6_pktopts *,
 	   struct ip6_moptions *, struct route *, struct in6_addr *,
 	   struct ifnet **, struct psref *, struct in6_addr *);
 int in6_selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
-	struct ip6_moptions *, struct route *, struct ifnet **,
-	struct psref *, struct rtentry **, int);
+	struct route **, struct rtentry **, bool);
 int	ip6_get_membership(const struct sockopt *, struct ifnet **, void *,
 	size_t);
 

@@ -751,7 +751,11 @@ uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
     return module_name_len;
   }
 #if SANITIZER_FREEBSD || SANITIZER_NETBSD
+# if SANITIZER_FREEBSD
   const int Mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+# else
+  const int Mib[4] = { CTL_KERN, KERN_PROC_ARGS, -1, KERN_PROC_PATHNAME };
+# endif
   size_t Size = buf_len;
   bool IsErr = (sysctl(Mib, 4, buf, &Size, NULL, 0) != 0);
   int readlink_error = IsErr ? errno : 0;

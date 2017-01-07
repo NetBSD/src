@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.2 2016/08/06 00:19:02 pgoyette Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1.2.3 2017/01/07 08:56:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -41,5 +41,5 @@ void
 makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 {
   /* XXX implement, halt in ski */
-  __asm __volatile("break.i 0");
+  __asm __volatile("break.i 1");
 }

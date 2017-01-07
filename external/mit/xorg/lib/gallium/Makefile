@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14.2.1 2016/11/04 14:48:48 pgoyette Exp $
+# $NetBSD: Makefile,v 1.14.2.2 2017/01/07 08:55:59 pgoyette Exp $
 
 # Link the gallium mega driver.
 
@@ -536,6 +536,12 @@ SRCS+=	${GALLIUM_SOURCES.${_d}}
 #. endif
 
 .include "../libloader.mk"
+
+.if ${BUILD_RADEON} == 1
+CFLAGS+=	-pthread
+LDFLAGS+=	-pthread
+LIBDPLIBS+=	pthread		${.CURDIR}/../../../../../lib/libpthread
+.endif
 
 LIBDPLIBS+=	m		${.CURDIR}/../../../../../lib/libm
 LIBDPLIBS+= 	drm		${.CURDIR}/../libdrm

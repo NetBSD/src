@@ -1,8 +1,10 @@
-#	$NetBSD: XEN3_DOM0,v 1.98.2.1 2016/08/06 00:19:04 pgoyette Exp $
+#	$NetBSD: XEN3_DOM0,v 1.98.2.2 2017/01/07 08:56:18 pgoyette Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
 include 	"arch/xen/conf/std.xen"
+
+#options 	MULTIPROCESSOR	# (experimental)
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -56,6 +58,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 
+options 	MODULAR		# new style module(7) framework
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
@@ -718,6 +721,8 @@ hdafg*		at hdaudiobus?
 
 # Audio support
 audio*	at audiobus?
+
+spkr*	at audio?			# PC speaker (synthesized)
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card

@@ -1,4 +1,4 @@
-.\" $NetBSD: tc.4,v 1.4 2001/10/29 18:59:55 gmcgarry Exp $
+.\" $NetBSD: tc.4,v 1.4.84.1 2017/01/07 08:56:07 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Jonathan Stone.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 12, 2001
+.Dd December 26, 2016
 .Dt TC 4
 .Os
 .Sh NAME
@@ -48,7 +48,8 @@ expansion bus found on all DEC 5000-series machines with MIPS and DEC
 .Pp
 Your system may support additional
 .Tn TURBOchannel
-devices.  Drivers for
+devices.
+Drivers for
 .Tn TURBOchannel
 devices not listed here are machine-dependent.
 Consult your system's
@@ -93,6 +94,8 @@ PMAG-J TX 24-bit colour unaccelerated 2-D framebuffer
 .Bl -tag -width pcdisplay -offset indent
 .It ioasic
 baseboard IO control ASIC for DEC TURBOchannel systems
+.It tcu
+TC-USB USB host and GPIO option
 .El
 .Sh SEE ALSO
 .Xr asc 4 ,
@@ -106,6 +109,7 @@ baseboard IO control ASIC for DEC TURBOchannel systems
 .Xr pxg 4 ,
 .Xr sfb 4 ,
 .Xr tcds 4 ,
+.Xr tcu 4 ,
 .Xr tfb 4
 .Sh HISTORY
 The

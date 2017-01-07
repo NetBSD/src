@@ -1,4 +1,4 @@
-/*	 $NetBSD: i82093reg.h,v 1.8 2008/07/03 14:02:25 drochner Exp $ */
+/*	 $NetBSD: i82093reg.h,v 1.8.64.1 2017/01/07 08:56:18 pgoyette Exp $ */
 
 #include <x86/i82093reg.h>
 
@@ -9,7 +9,8 @@
 #endif
 
 #define ioapic_asm_ack(num) \
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	movl	_C_LABEL(local_apic_va),%eax	; \
+	movl	$0,LAPIC_EOI(%eax)
 
 #ifdef MULTIPROCESSOR
 

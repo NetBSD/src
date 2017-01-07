@@ -1,4 +1,4 @@
-/* $NetBSD: csqrt.c,v 1.1 2007/08/20 16:01:37 drochner Exp $ */
+/* $NetBSD: csqrt.c,v 1.1.54.1 2017/01/07 08:56:04 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,27 +41,32 @@ csqrt(double complex z)
 	x = creal (z);
 	y = cimag (z);
 
-	if (y == 0.0) {
+	/* 
+	 * input is a real number and imaginary part isn't -0.0.
+	 * negative zero is on the branch cut.
+	 */
+	if ((y == 0.0) && !signbit(y)) {
 		if (x == 0.0) {
 			w = 0.0 + y * I;
 		} else {
-			r = fabs(x);
-			r = sqrt(r);
 			if (x < 0.0) {
+				r = sqrt(-x);
 				w = 0.0 + r * I;
 			} else {
-				w = r + y * I;
+				r = sqrt(x);
+				w = r;
 			}
 		}
 		return w;
 	}
 	if (x == 0.0) {
-		r = fabs(y);
-		r = sqrt(0.5 * r);
-		if (y > 0)
+		if (y > 0) {
+			r = sqrt(0.5 * y);
 			w = r + r * I;
-		else
+		} else {
+			r = sqrt(-0.5 * y);
 			w = r - r * I;
+		}
 		return w;
 	}
 	/* Rescale to avoid internal overflow or underflow.  */
@@ -91,9 +96,9 @@ csqrt(double complex z)
 		t = scale * fabs((0.5 * y) / r);
 		r *= scale;
 	}
-	if (y < 0)
-		w = t - r * I;
-	else
+	if (y > 0)
 		w = t + r * I;
+	else
+		w = t - r * I;
 	return w;
 }

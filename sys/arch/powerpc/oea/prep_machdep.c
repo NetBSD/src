@@ -1,4 +1,4 @@
-/* $NetBSD: prep_machdep.c,v 1.10 2012/02/11 13:53:59 kiyohara Exp $ */
+/* $NetBSD: prep_machdep.c,v 1.10.28.1 2017/01/07 08:56:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.10 2012/02/11 13:53:59 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.10.28.1 2017/01/07 08:56:24 pgoyette Exp $");
 
 #include "opt_modular.h"
 
@@ -163,7 +163,7 @@ prep_initppc(u_long startkernel, u_long endkernel, u_int args)
 	consinit();
 
 	/* Set the page size */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/* Initialize pmap module */
 	pmap_bootstrap(startkernel, endkernel);

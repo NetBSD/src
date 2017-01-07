@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.778.2.2 2016/11/04 14:42:38 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.778.2.3 2017/01/07 08:53:43 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -25,9 +25,9 @@
 ./lib/libcrypto.so				base-crypto-shlib	dynamicroot,crypto
 ./lib/libcrypto.so.12				base-crypto-shlib	dynamicroot,crypto
 ./lib/libcrypto.so.12.0				base-crypto-shlib	dynamicroot,crypto
-./lib/libdevmapper.so				base-lvm-shlib		dynamicroot
-./lib/libdevmapper.so.1				base-lvm-shlib		dynamicroot
-./lib/libdevmapper.so.1.0			base-lvm-shlib		dynamicroot
+./lib/libdevmapper.so				base-lvm-shlib		dynamicroot,lvm
+./lib/libdevmapper.so.1				base-lvm-shlib		dynamicroot,lvm
+./lib/libdevmapper.so.1.0			base-lvm-shlib		dynamicroot,lvm
 ./lib/libdm.so					base-sys-shlib		dynamicroot
 ./lib/libdm.so.0				base-sys-shlib		dynamicroot
 ./lib/libdm.so.0.0				base-sys-shlib		dynamicroot
@@ -55,9 +55,9 @@
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
 ./lib/libm.so.0.11				base-sys-shlib		dynamicroot
-./lib/libnpf.so					base-npf-shlib		dynamicroot
-./lib/libnpf.so.0				base-npf-shlib		dynamicroot
-./lib/libnpf.so.0.0				base-npf-shlib		dynamicroot
+./lib/libnpf.so					base-npf-shlib		dynamicroot,npf
+./lib/libnpf.so.0				base-npf-shlib		dynamicroot,npf
+./lib/libnpf.so.0.1				base-npf-shlib		dynamicroot,npf
 ./lib/libpcap.so				base-sys-shlib		dynamicroot
 ./lib/libpcap.so.5				base-sys-shlib		dynamicroot
 ./lib/libpcap.so.5.1				base-sys-shlib		dynamicroot
@@ -237,7 +237,7 @@
 ./usr/lib/libctf.so.3.0				base-sys-shlib		compatfile,ctf
 ./usr/lib/libcurses.so				base-sys-shlib		compatfile
 ./usr/lib/libcurses.so.7			base-sys-shlib		compatfile
-./usr/lib/libcurses.so.7.0			base-sys-shlib		compatfile
+./usr/lib/libcurses.so.7.1			base-sys-shlib		compatfile
 ./usr/lib/libdes.so				base-crypto-shlib	compatfile,crypto
 ./usr/lib/libdes.so.12				base-crypto-shlib	compatfile,crypto
 ./usr/lib/libdes.so.12.0				base-crypto-shlib	compatfile,crypto
@@ -405,7 +405,7 @@
 ./usr/lib/libnetpgpverify.so.4.0		base-crypto-shlib	compatfile,crypto
 ./usr/lib/libnpf.so				base-npf-shlib		npf,compatfile
 ./usr/lib/libnpf.so.0				base-npf-shlib		npf,compatfile
-./usr/lib/libnpf.so.0.0				base-npf-shlib		npf,compatfile
+./usr/lib/libnpf.so.0.1				base-npf-shlib		npf,compatfile
 ./usr/lib/libnvpair.so				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libnvpair.so.0			base-zfs-shlib		compatfile,zfs
 ./usr/lib/libnvpair.so.0.0			base-zfs-shlib		compatfile,zfs
@@ -739,6 +739,9 @@
 ./usr/lib/librumpnet_virtif.so			base-rump-shlib		rump
 ./usr/lib/librumpnet_virtif.so.0		base-rump-shlib		rump
 ./usr/lib/librumpnet_virtif.so.0.0		base-rump-shlib		rump
+./usr/lib/librumpnet_vlan.so			base-rump-shlib		rump
+./usr/lib/librumpnet_vlan.so.0			base-rump-shlib		rump
+./usr/lib/librumpnet_vlan.so.0.0		base-rump-shlib		rump
 ./usr/lib/librumpuser.so			base-rump-shlib		compatfile,rump
 ./usr/lib/librumpuser.so.0			base-rump-shlib		compatfile,rump
 ./usr/lib/librumpuser.so.0.1			base-rump-shlib		compatfile,rump
@@ -769,8 +772,8 @@
 ./usr/lib/libsqlite3.so.1.2			base-sys-shlib		compatfile
 ./usr/lib/libss.so				base-obsolete		obsolete
 ./usr/lib/libssh.so				base-secsh-shlib	compatfile,crypto
-./usr/lib/libssh.so.28				base-secsh-shlib	compatfile,crypto
-./usr/lib/libssh.so.28.0			base-secsh-shlib	compatfile,crypto
+./usr/lib/libssh.so.29				base-secsh-shlib	compatfile,crypto
+./usr/lib/libssh.so.29.0			base-secsh-shlib	compatfile,crypto
 ./usr/lib/libssl.so				base-crypto-shlib	compatfile,crypto
 ./usr/lib/libssl.so.12				base-crypto-shlib	compatfile,crypto
 ./usr/lib/libssl.so.12.0			base-crypto-shlib	compatfile,crypto
@@ -806,6 +809,9 @@
 ./usr/lib/libumem.so				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libumem.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libumem.so.0.0			base-zfs-shlib		compatfile,zfs
+./usr/lib/libunbound.so				base-sys-shlib		compatfile,crypto,unbound
+./usr/lib/libunbound.so.6			base-sys-shlib		compatfile,crypto,unbound
+./usr/lib/libunbound.so.6.1			base-sys-shlib		compatfile,crypto,unbound
 ./usr/lib/libusbhid.so				base-sys-shlib		compatfile
 ./usr/lib/libusbhid.so.1			base-sys-shlib		compatfile
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib		compatfile

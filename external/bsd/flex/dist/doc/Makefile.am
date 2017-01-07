@@ -1,8 +1,10 @@
 help2man = @HELP2MAN@
 
+FLEX = $(top_builddir)/src/flex$(EXEEXT)
+
 info_TEXINFOS =	flex.texi
 dist_man_MANS = flex.1
-dist_doc_DATA= flex.pdf
+MAINTAINERCLEANFILES = flex.1
 
 CLEANFILES = \
 	flex.aux \
@@ -23,9 +25,8 @@ CLEANFILES = \
 	flex.vr \
 	flex.vrs
 
-$(dist_man_MANS): $(top_srcdir)/configure.ac $(top_srcdir)/src/flex.skl $(top_srcdir)/src/options.c $(top_srcdir)/src/options.h
-	for i in $(dist_man_MANS) ; do \
-	$(help2man) --name='$(PACKAGE_NAME)' \
-	--section=`echo $$i | sed -e 's/.*\.\([^.]*\)$$/\1/'` \
-	 $(top_srcdir)/src/flex$(EXEEXT) > $$i || rm -f $$i ; \
-	done
+flex.1: $(top_srcdir)/configure.ac $(top_srcdir)/src/flex.skl $(top_srcdir)/src/options.c $(top_srcdir)/src/options.h | $(FLEX)
+	$(help2man) --name='$(PACKAGE_NAME)' --section=1 \
+	--source='The Flex Project' --manual='Programming' \
+	--output=$@ $(FLEX) \
+	|| rm -f $@

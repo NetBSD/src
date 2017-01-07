@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.24 2016/07/11 16:06:52 matt Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.24.2.1 2017/01/07 08:56:23 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.24 2016/07/11 16:06:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.24.2.1 2017/01/07 08:56:23 pgoyette Exp $");
 
 #include "opt_modular.h"
 
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.24 2016/07/11 16:06:52 matt Exp 
 #include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
 
 #include <powerpc/pcb.h>
 #include <powerpc/spr.h>
@@ -275,8 +277,13 @@ cpu_reboot(int howto, char *what)
 	}
 
 	if (howto & RB_HALT) {
-		printf("halted\n\n");
+		printf("The operating system has halted.\n"
+		    "Press any key to reboot.\n\n");
+		cnpollc(1);	/* For proper keyboard command handling */
+		cngetc();
+		cnpollc(0);
 
+		printf("rebooting...\n\n");
 		goto reboot;	/* XXX for now... */
 
 #ifdef DDB

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.56 2016/07/14 04:19:27 msaitoh Exp $	*/
+/*	$NetBSD: ubt.c,v 1.56.2.1 2017/01/07 08:56:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.56 2016/07/14 04:19:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.56.2.1 2017/01/07 08:56:42 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>

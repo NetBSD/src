@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient-script,v 1.2 2015/02/26 09:59:55 roy Exp $
+# $NetBSD: dhclient-script,v 1.2.2.1 2017/01/07 08:53:48 pgoyette Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -85,7 +85,7 @@ delete_old_routes() {
 		shift; shift
 	done
 
-	route -n flush -inet -llinfo -host
+	route -n flush -inet -host
 }
 
 # Invoke the local dhcp client enter hooks, if they exist.

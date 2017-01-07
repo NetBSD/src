@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.398.2.2 2016/11/04 14:49:05 pgoyette Exp $	*/
+/*	$NetBSD: locore.s,v 1.398.2.3 2017/01/07 08:56:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1140,11 +1140,11 @@ _C_LABEL(trapbase_sun4v):
 	!
 	! trap level 1
 	!
-	sun4v_trap_entry_fail 36				! 0x000-0x023
+	sun4v_trap_entry 36					! 0x000-0x023
 	CLEANWIN1						! 0x24-0x27 = clean window
-	sun4v_trap_entry_fail 9					! 0x028-0x030			
+	sun4v_trap_entry 9					! 0x028-0x030
 	VTRAP(T_DATA_MMU_MISS, sun4v_dtsb_miss)			! 0x031 = data MMU miss
-	sun4v_trap_entry_fail 78				! 0x032-0x07f
+	sun4v_trap_entry 78					! 0x032-0x07f
 	SPILL64(uspill8_sun4vt1,ASI_AIUS)			! 0x080 spill_0_normal -- save user windows
 	SPILL32(uspill4_sun4vt1,ASI_AIUS)			! 0x084 spill_1_normal
 	SPILLBOTH(uspill8_sun4vt1,uspill4_sun4vt1,ASI_AIUS)	! 0x088 spill_2_normal
@@ -1461,7 +1461,7 @@ intr_setup_msg:
 	wrpr	%g0, %g5, %otherwin; \
 	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
 \
-	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
+	SET_MMU_CONTEXTID %g0, %g7,%g5; 			/* Switch MMU to kernel primary context */ \
 	sethi	%hi(KERNBASE), %g5; \
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:
@@ -1577,7 +1577,7 @@ intr_setup_msg:
 	wrpr	%g0, %g5, %otherwin; \
 	wrpr	%g0, WSTATE_KERN, %wstate;			/* Enable kernel mode window traps -- now we can trap again */ \
 	\
-	stxa	%g0, [%g7] ASI_DMMU; 				/* Switch MMU to kernel primary context */ \
+	SET_MMU_CONTEXTID %g0, %g7, %g5;			/* Switch MMU to kernel primary context */ \
 	sethi	%hi(KERNBASE), %g5; \
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.12 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_et.c,v 1.12.2.1 2017/01/07 08:56:33 pgoyette Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.12 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.12.2.1 2017/01/07 08:56:33 pgoyette Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -284,6 +284,7 @@ et_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	callout_init(&sc->sc_tick, 0);
@@ -1756,9 +1757,6 @@ et_rxeof(struct et_softc *sc)
 				    ETHER_CRC_LEN;
 				m_set_rcvif(m, ifp);
 
-				bpf_mtap(ifp, m);
-
-				ifp->if_ipackets++;
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			}
 		} else {
@@ -1971,7 +1969,7 @@ et_txeof(struct et_softc *sc)
 	if (tbd->tbd_used + ET_NSEG_SPARE <= ET_TX_NDESC)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
-	et_start(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 void

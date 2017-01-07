@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.22.2.1 2016/11/04 14:49:16 pgoyette Exp $	*/
+/*	$NetBSD: uhso.c,v 1.22.2.2 2017/01/07 08:56:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.22.2.1 2016/11/04 14:49:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.22.2.2 2017/01/07 08:56:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "opt_usb.h"
 #endif
 
 #include <sys/param.h>

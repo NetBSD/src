@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.206.2.1 2016/11/04 14:49:26 pgoyette Exp $ */
+/* $NetBSD: vmstat.c,v 1.206.2.2 2017/01/07 08:56:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.206.2.1 2016/11/04 14:49:26 pgoyette Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.206.2.2 2017/01/07 08:56:59 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -310,6 +310,8 @@ void	doforkst(void);
 
 void	hist_traverse(int, const char *);
 void	hist_dodump(struct kern_history *);
+void	hist_traverse_sysctl(int, const char *);
+void	hist_dodump_sysctl(int[], unsigned int);
 
 int	main(int, char **);
 char	**choosedrives(char **);
@@ -476,7 +478,10 @@ main(int argc, char *argv[])
 				    (HISTLIST|HISTDUMP))
 					errx(1, "you may list or dump,"
 					    " but not both!");
-				hist_traverse(todo, histname);
+				if (memf != NULL)
+					hist_traverse(todo, histname);
+				else
+					hist_traverse_sysctl(todo, histname);
 				(void)putchar('\n');
 			}
 			if (todo & FORKSTAT) {
@@ -1212,10 +1217,11 @@ dointr(int verbose)
 
 	inttotal = 0;
 	uptime = getuptime();
-	(void)printf("%-34s %16s %8s\n", "interrupt", "total", "rate");
 	nintr = intrnl[X_EINTRCNT].n_value - intrnl[X_INTRCNT].n_value;
 	inamlen = intrnl[X_EINTRNAMES].n_value - intrnl[X_INTRNAMES].n_value;
 	if (nintr != 0 && inamlen != 0) {
+		(void)printf("%-34s %16s %8s\n", "interrupt", "total", "rate");
+
 		ointrcnt = intrcnt = malloc((size_t)nintr);
 		ointrname = intrname = malloc((size_t)inamlen);
 		if (intrcnt == NULL || intrname == NULL)
@@ -1246,19 +1252,17 @@ doevcnt(int verbose, int type)
 	uint64_t counttotal, uptime;
 	struct evcntlist allevents;
 	struct evcnt evcnt, *evptr;
+	size_t evlen_max, total_max, rate_max;
 	char evgroup[EVCNT_STRING_MAX], evname[EVCNT_STRING_MAX];
 
 	counttotal = 0;
 	uptime = getuptime();
-	if (type == EVCNT_TYPE_ANY)
-		(void)printf("%-34s %16s %8s %s\n", "event", "total", "rate",
-		    "type");
 
 	if (memf == NULL) do {
 		const int mib[4] = { CTL_KERN, KERN_EVCNT, type,
 		    verbose ? KERN_EVCNT_COUNT_ANY : KERN_EVCNT_COUNT_NONZERO };
-		size_t buflen = 0;
-		void *buf = NULL;
+		size_t buflen0, buflen = 0;
+		void *buf0, *buf = NULL;
 		const struct evcnt_sysctl *evs, *last_evs;
 		for (;;) {
 			size_t newlen;
@@ -1281,32 +1285,79 @@ doevcnt(int verbose, int type)
 				free(buf);
 			buflen = newlen;
 		}
-		evs = buf;
+		buflen0 = buflen;
+		evs = buf0 = buf;
+		last_evs = (void *)((char *)buf + buflen);
+		buflen /= sizeof(uint64_t);
+		/* calc columns */
+		evlen_max = 0;
+		total_max = sizeof("total") - 1;
+		rate_max = sizeof("rate") - 1;
+		while (evs < last_evs
+		    && buflen >= sizeof(*evs)/sizeof(uint64_t)
+		    && buflen >= evs->ev_len) {
+			char cbuf[64];
+			size_t len;
+			len = strlen(evs->ev_strings + evs->ev_grouplen + 1);
+			len += evs->ev_grouplen + 1;
+			if (evlen_max < len)
+				evlen_max= len;
+			len = snprintf(cbuf, sizeof(cbuf), "%"PRIu64,
+			    evs->ev_count);
+			if (total_max < len)
+				total_max = len;
+			len = snprintf(cbuf, sizeof(cbuf), "%"PRIu64,
+			    evs->ev_count / uptime);
+			if (rate_max < len)
+				rate_max = len;
+			buflen -= evs->ev_len;
+			evs = (const void *)
+			    ((const uint64_t *)evs + evs->ev_len);
+		}
+
+		(void)printf(type == EVCNT_TYPE_ANY ?
+		    "%-*s  %*s %*s %s\n" :
+		    "%-*s  %*s %*s\n",
+		    (int)evlen_max, "interrupt",
+		    (int)total_max, "total",
+		    (int)rate_max, "rate",
+		    "type");
+
+		buflen = buflen0;
+		evs = buf0;
 		last_evs = (void *)((char *)buf + buflen);
 		buflen /= sizeof(uint64_t);
 		while (evs < last_evs
 		    && buflen >= sizeof(*evs)/sizeof(uint64_t)
 		    && buflen >= evs->ev_len) {
 			(void)printf(type == EVCNT_TYPE_ANY ?
-			    "%s %s%*s %16"PRIu64" %8"PRIu64" %s\n" :
-			    "%s %s%*s %16"PRIu64" %8"PRIu64"\n",
+			    "%s %s%*s  %*"PRIu64" %*"PRIu64" %s\n" :
+			    "%s %s%*s  %*"PRIu64" %*"PRIu64"\n",
 			    evs->ev_strings,
 			    evs->ev_strings + evs->ev_grouplen + 1,
-			    34 - (evs->ev_grouplen + 1 + evs->ev_namelen), "",
-			    evs->ev_count,
-			    evs->ev_count / uptime,
+			    (int)evlen_max - (evs->ev_grouplen + 1
+			    + evs->ev_namelen), "",
+			    (int)total_max, evs->ev_count,
+			    (int)rate_max, evs->ev_count / uptime,
 			    (evs->ev_type < __arraycount(evtypes) ?
-				evtypes[evs->ev_type] : "?"));
+			    evtypes[evs->ev_type] : "?"));
 			buflen -= evs->ev_len;
 			counttotal += evs->ev_count;
-			evs = (const void *)((const uint64_t *)evs + evs->ev_len);
+			evs = (const void *)
+			    ((const uint64_t *)evs + evs->ev_len);
 		}
 		free(buf);
 		if (type != EVCNT_TYPE_ANY)
-			(void)printf("%-34s %16"PRIu64" %8"PRIu64"\n",
-			    "Total", counttotal, counttotal / uptime);
+			(void)printf("%-*s  %*"PRIu64" %*"PRIu64"\n",
+			    (int)evlen_max, "Total",
+			    (int)total_max, counttotal,
+			    (int)rate_max, counttotal / uptime);
 		return;
 	} while (/*CONSTCOND*/ 0);
+
+	if (type == EVCNT_TYPE_ANY)
+		(void)printf("%-34s %16s %8s %s\n", "event", "total", "rate",
+		    "type");
 
 	kread(namelist, X_ALLEVENTS, &allevents, sizeof allevents);
 	evptr = TAILQ_FIRST(&allevents);
@@ -2065,6 +2116,7 @@ void
 hist_dodump(struct kern_history *histp)
 {
 	struct kern_history_ent *histents, *e;
+	struct timeval tv;
 	size_t histsize;
 	char *fmt = NULL, *fn = NULL;
 	size_t fmtlen = 0, fnlen = 0;
@@ -2076,6 +2128,9 @@ hist_dodump(struct kern_history *histp)
 		err(1, "malloc history entries");
 
 	(void)memset(histents, 0, histsize);
+
+	(void)printf("%"PRIu32" entries, next is %"PRIu32"\n",
+	    histp->n, histp->f);
 
 	deref_kptr(histp->e, histents, histsize, "history entries");
 	i = histp->f;
@@ -2103,8 +2158,9 @@ hist_dodump(struct kern_history *histp)
 			deref_kptr(e->fn, fn, fnlen, "function name");
 			fn[fnlen] = '\0';
 
-			(void)printf("%06ld.%06ld ", (long int)e->tv.tv_sec,
-			    (long int)e->tv.tv_usec);
+			bintime2timeval(&e->bt, &tv);
+			(void)printf("%06ld.%06ld ", (long int)tv.tv_sec,
+			    (long int)tv.tv_usec);
 			(void)printf("%s#%ld@%d: ", fn, e->call, e->cpunum);
 			(void)printf(fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
 			(void)putchar('\n');
@@ -2118,6 +2174,126 @@ hist_dodump(struct kern_history *histp)
 	if (fn != NULL)
 		free(fn);
 }
+
+void
+hist_traverse_sysctl(int todo, const char *histname)
+{
+	int error;
+	int mib[4];
+	unsigned int i;
+	size_t len, miblen;
+	struct sysctlnode query, histnode[32];
+
+	/* retrieve names of available histories */
+	miblen = __arraycount(mib);
+	error = sysctlnametomib("kern.hist", mib, &miblen);
+	if (error != 0) {
+		if (errno == ENOENT) {
+ 			warnx("kernel history is not compiled into the kernel.");
+			return;
+		} else
+			err(EXIT_FAILURE, "nametomib failed");
+	}
+ 
+	/* get the list of nodenames below kern.hist */
+	mib[2] = CTL_QUERY;
+	memset(&query, 0, sizeof(query));
+	query.sysctl_flags = SYSCTL_VERSION;
+	len = sizeof(histnode);
+	error = sysctl(mib, 3, &histnode[0], &len, &query, sizeof(query));
+	if (error != 0) {
+		err(1, "query failed");
+		return;
+	}
+	if (len == 0) {
+ 		warnx("No active kernel history logs.");
+ 		return;
+ 	}
+ 
+	len = len / sizeof(histnode[0]);	/* get # of entries returned */
+
+ 	if (todo & HISTLIST)
+ 		(void)printf("Active kernel histories:");
+ 
+	for (i = 0; i < len; i++) {
+ 		if (todo & HISTLIST)
+			(void)printf(" %s", histnode[i].sysctl_name);
+ 		else {
+ 			/*
+ 			 * If we're dumping all histories, do it, else
+ 			 * check to see if this is the one we want.
+ 			 */
+			if (histname == NULL ||
+			    strcmp(histname, histnode[i].sysctl_name) == 0) {
+ 				if (histname == NULL)
+ 					(void)printf(
+					    "\nkernel history `%s':\n",
+					    histnode[i].sysctl_name);
+				mib[2] = histnode[i].sysctl_num;
+				mib[3] = CTL_EOL;
+				hist_dodump_sysctl(mib, 4);
+ 			}
+ 		}
+ 	}
+ 
+ 	if (todo & HISTLIST)
+ 		(void)putchar('\n');
+ }
+ 
+ /*
+  * Actually dump the history buffer at the specified KVA.
+  */
+ void
+hist_dodump_sysctl(int mib[], unsigned int miblen)
+ {
+	struct sysctl_history *hist;
+	struct timeval tv;
+	struct sysctl_history_event *e;
+ 	size_t histsize;
+	char *strp;
+ 	unsigned i;
+	char *fmt = NULL, *fn = NULL;
+ 
+	hist = NULL;
+	histsize = 0;
+ 	do {
+		errno = 0;
+		if (sysctl(mib, miblen, hist, &histsize, NULL, 0) == 0)
+			break;
+		if (errno != ENOMEM)
+			break;
+		if ((hist = realloc(hist, histsize)) == NULL)
+			errx(1, "realloc history buffer");
+	} while (errno == ENOMEM);
+	if (errno != 0)
+		err(1, "sysctl failed");
+ 
+	strp = (char *)(&hist->sh_events[hist->sh_listentry.shle_numentries]);
+ 
+	(void)printf("%"PRIu32" entries, next is %"PRIu32"\n",
+	    hist->sh_listentry.shle_numentries,
+	    hist->sh_listentry.shle_nextfree);
+ 
+	i = hist->sh_listentry.shle_nextfree;
+
+	do {
+		e = &hist->sh_events[i];
+		if (e->she_fmtoffset != 0) {
+			fmt = &strp[e->she_fmtoffset];
+			fn = &strp[e->she_funcoffset];
+			bintime2timeval(&e->she_bintime, &tv);
+			(void)printf("%06ld.%06ld %s#%"PRIu64"@%"PRIu32": ",
+			    (long int)tv.tv_sec, (long int)tv.tv_usec,
+			    fn, e->she_callnumber, e->she_cpunum);
+			(void)printf(fmt, e->she_values[0], e->she_values[1],
+			     e->she_values[2], e->she_values[3]);
+ 			(void)putchar('\n');
+ 		}
+		i = (i + 1) % hist->sh_listentry.shle_numentries;
+	} while (i != hist->sh_listentry.shle_nextfree);
+ 
+	free(hist);
+ }
 
 static void
 usage(void)

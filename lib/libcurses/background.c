@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.15.28.1 2016/11/04 14:48:53 pgoyette Exp $	*/
+/*	$NetBSD: background.c,v 1.15.28.2 2017/01/07 08:56:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.15.28.1 2016/11/04 14:48:53 pgoyette Exp $");
+__RCSID("$NetBSD: background.c,v 1.15.28.2 2017/01/07 08:56:03 pgoyette Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -167,9 +167,9 @@ int wbkgrnd(WINDOW *win, const cchar_t *wch)
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
-/* 	int	y, x, i; */
+/*	int	y, x, i; */
 	attr_t battr;
-/* 	nschar_t *np, *tnp, *pnp; */
+/*	nschar_t *np, *tnp, *pnp; */
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wbkgrnd: (%p), '%s', %x\n",
@@ -177,7 +177,7 @@ int wbkgrnd(WINDOW *win, const cchar_t *wch)
 #endif
 
 	/* ignore multi-column characters */
-	if ( !wch->elements || wcwidth( wch->vals[ 0 ]) > 1 )
+	if (!wch->elements || wcwidth( wch->vals[ 0 ]) > 1)
 		return ERR;
 
 	/* Background attributes (check colour). */
@@ -205,47 +205,47 @@ void wbkgrndset(WINDOW *win, const cchar_t *wch)
 #endif
 
 	/* ignore multi-column characters */
-	if ( !wch->elements || wcwidth( wch->vals[ 0 ]) > 1 )
+	if (!wch->elements || wcwidth(wch->vals[0]) > 1)
 		return;
 
 	/* Background character. */
 	tnp = np = win->bnsp;
-	if ( wcwidth( wch->vals[ 0 ]))
-		win->bch = wch->vals[ 0 ];
+	if (wcwidth( wch->vals[0]))
+		win->bch = wch->vals[0];
 	else {
-		if ( !np ) {
+		if (!np) {
 			np = malloc(sizeof(nschar_t));
 			if (!np)
 				return;
 			np->next = NULL;
 			win->bnsp = np;
 		}
-		np->ch = wch->vals[ 0 ];
+		np->ch = wch->vals[0];
 		tnp = np;
 		np = np->next;
 	}
 	/* add non-spacing characters */
-	if ( wch->elements > 1 ) {
-		for ( i = 1; i < wch->elements; i++ ) {
+	if (wch->elements > 1) {
+		for (i = 1; i < wch->elements; i++) {
 			if ( !np ) {
 				np = malloc(sizeof(nschar_t));
 				if (!np)
 					return;
 				np->next = NULL;
-				if ( tnp )
+				if (tnp)
 					tnp->next = np;
 				else
 					win->bnsp = np;
 			}
-			np->ch = wch->vals[ i ];
+			np->ch = wch->vals[i];
 			tnp = np;
 			np = np->next;
 		}
 	}
 	/* clear the old non-spacing characters */
-	while ( np ) {
+	while (np) {
 		tnp = np->next;
-		free( np );
+		free(np);
 		np = tnp;
 	}
 
@@ -267,15 +267,15 @@ int wgetbkgrnd(WINDOW *win, cchar_t *wch)
 
 	/* Background attributes (check colour). */
 	wch->attributes = win->battr & WA_ATTRIBUTES;
-	if (__using_color && (( wch->attributes & __COLOR )
+	if (__using_color && ((wch->attributes & __COLOR)
 			== __default_color))
 		wch->attributes &= ~__default_color;
-	wch->vals[ 0 ] = win->bch;
+	wch->vals[0] = win->bch;
 	wch->elements = 1;
 	np = win->bnsp;
 	if (np) {
-		while ( np && wch->elements < CURSES_CCHAR_MAX ) {
-			wch->vals[ wch->elements++ ] = np->ch;
+		while (np && wch->elements < CURSES_CCHAR_MAX) {
+			wch->vals[wch->elements++] = np->ch;
 			np = np->next;
 		}
 	}

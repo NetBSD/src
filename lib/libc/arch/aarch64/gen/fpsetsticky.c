@@ -29,10 +29,9 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: fpsetsticky.c,v 1.1 2015/07/07 21:40:19 matt Exp $");
+__RCSID("$NetBSD: fpsetsticky.c,v 1.1.2.1 2017/01/07 08:56:02 pgoyette Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/bitops.h>
 
 #include "namespace.h"

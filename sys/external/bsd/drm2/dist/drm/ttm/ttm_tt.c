@@ -203,6 +203,9 @@ int ttm_tt_init(struct ttm_tt *ttm, struct ttm_bo_device *bdev,
 	ttm->dummy_read_page = dummy_read_page;
 	ttm->state = tt_unpopulated;
 #ifdef __NetBSD__
+	WARN(size == 0, "zero-size allocation in %s, please file a NetBSD PR",
+	    __func__);	/* paranoia -- can't prove in five minutes */
+	size = MAX(size, 1);
 	ttm->swap_storage = uao_create(roundup2(size, PAGE_SIZE), 0);
 	uao_set_pgfl(ttm->swap_storage, bus_dmamem_pgfl(bdev->dmat));
 #else
@@ -245,6 +248,9 @@ int ttm_dma_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_bo_device *bdev,
 	ttm->dummy_read_page = dummy_read_page;
 	ttm->state = tt_unpopulated;
 #ifdef __NetBSD__
+	WARN(size == 0, "zero-size allocation in %s, please file a NetBSD PR",
+	    __func__);	/* paranoia -- can't prove in five minutes */
+	size = MAX(size, 1);
 	ttm->swap_storage = uao_create(roundup2(size, PAGE_SIZE), 0);
 	uao_set_pgfl(ttm->swap_storage, bus_dmamem_pgfl(bdev->dmat));
 #else

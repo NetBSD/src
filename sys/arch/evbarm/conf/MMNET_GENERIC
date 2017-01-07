@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.22 2015/10/25 22:48:23 khorben Exp $
+# $NetBSD: MMNET_GENERIC,v 1.22.2.1 2017/01/07 08:56:13 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.22.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -519,6 +519,8 @@ ucom*	at uvscom? portno ?
 # Audio support
 #audio*	at audiobus?
 
+#spkr*	at audio?		# PC speaker (synthesized)
+
 # MIDI support
 #midi*	at midibus?
 #midi*	at pcppi?		# MIDI interface to the PC speaker
@@ -621,6 +623,7 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	wsfont
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #pseudo-device	veriexec

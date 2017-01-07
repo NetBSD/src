@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.11.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/*	$NetBSD: auth2.c,v 1.11.2.2 2017/01/07 08:53:41 pgoyette Exp $	*/
 /* $OpenBSD: auth2.c,v 1.136 2016/05/02 08:49:03 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.11.2.1 2016/08/06 00:18:38 pgoyette Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.11.2.2 2017/01/07 08:53:41 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>

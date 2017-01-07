@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21.2.1 2016/08/06 00:19:03 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.21.2.2 2017/01/07 08:56:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.21.2.1 2016/08/06 00:19:03 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.21.2.2 2017/01/07 08:56:06 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -55,7 +55,8 @@ static const char *classes[] = {
 	"vfs",
 	"driver",
 	"exec",
-	"secmodel"
+	"secmodel",
+	"bufq"
 };
 const unsigned int class_max = __arraycount(classes);
 

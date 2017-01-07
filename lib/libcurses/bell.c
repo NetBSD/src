@@ -1,4 +1,4 @@
-/*	$NetBSD: bell.c,v 1.8 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: bell.c,v 1.8.28.1 2017/01/07 08:56:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bell.c,v 1.8 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: bell.c,v 1.8.28.1 2017/01/07 08:56:03 pgoyette Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -55,7 +55,7 @@ beep(void)
 #endif
 		tputs(flash_screen, 0, __cputchar);
 	}
-	return (1);
+	return OK;
 }
 
 /*
@@ -76,5 +76,5 @@ flash(void)
 #endif
 		tputs(bell, 0, __cputchar);
 	}
-	return (1);
+	return OK;
 }

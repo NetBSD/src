@@ -1,4 +1,4 @@
-/*	$NetBSD: deleteln.c,v 1.14 2003/08/07 16:44:21 agc Exp $	*/
+/*	$NetBSD: deleteln.c,v 1.14.80.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)deleteln.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: deleteln.c,v 1.14 2003/08/07 16:44:21 agc Exp $");
+__RCSID("$NetBSD: deleteln.c,v 1.14.80.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: deleteln.c,v 1.14 2003/08/07 16:44:21 agc Exp $");
 int
 deleteln(void)
 {
-	return(winsdelln(stdscr, -1));
+	return winsdelln(stdscr, -1);
 }
 
 #endif
@@ -61,5 +61,5 @@ deleteln(void)
 int
 wdeleteln(WINDOW *win)
 {
-	return(winsdelln(win, -1));
+	return winsdelln(win, -1);
 }

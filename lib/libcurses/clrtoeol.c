@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.26 2012/02/19 19:38:13 christos Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.26.14.1 2017/01/07 08:56:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.26 2012/02/19 19:38:13 christos Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.26.14.1 2017/01/07 08:56:03 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -77,7 +77,7 @@ wclrtoeol(WINDOW *win)
 			win->cury = y;
 			win->curx = x;
 		} else
-			return (OK);
+			return OK;
 	}
 	end = &win->alines[y]->line[win->maxx];
 	minx = -1;
@@ -90,7 +90,7 @@ wclrtoeol(WINDOW *win)
 #ifndef HAVE_WCHAR
 		if (sp->ch != win->bch || sp->attr != attr) {
 #else
-		if (sp->ch != ( wchar_t )btowc(( int ) win->bch ) ||
+		if (sp->ch != (wchar_t)btowc((int) win->bch ) ||
 		    (sp->attr & WA_ATTRIBUTES) != attr || sp->nsp
 		    || (WCOL(*sp) < 0)) {
 #endif /* HAVE_WCHAR */
@@ -99,10 +99,10 @@ wclrtoeol(WINDOW *win)
 				minx = (int) (sp - win->alines[y]->line);
 			sp->attr = attr | (sp->attr & __ALTCHARSET);
 #ifdef HAVE_WCHAR
-			sp->ch = ( wchar_t )btowc(( int ) win->bch);
+			sp->ch = (wchar_t)btowc((int) win->bch);
 			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
 				return ERR;
-			SET_WCOL( *sp, 1 );
+			SET_WCOL(*sp, 1);
 #else
 			sp->ch = win->bch;
 #endif /* HAVE_WCHAR */
@@ -110,9 +110,11 @@ wclrtoeol(WINDOW *win)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ERASE, "CLRTOEOL: y = %d, minx = %d, maxx = %d, "
 	    "firstch = %d, lastch = %d\n",
-	    y, minx, (int) (maxx - win->alines[y]->line),
+	    y, minx, (int)(maxx - win->alines[y]->line),
 	    *win->alines[y]->firstchp, *win->alines[y]->lastchp);
 #endif
 	/* Update firstch and lastch for the line. */
-	return (__touchline(win, y, x, (int) win->maxx - 1));
+	__touchline(win, y, x, (int)win->maxx - 1);
+	__sync(win);
+	return OK;
 }

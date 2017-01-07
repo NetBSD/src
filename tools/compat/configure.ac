@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.84.2.1 2016/11/04 14:49:25 pgoyette Exp $
+#	$NetBSD: configure.ac,v 1.84.2.2 2017/01/07 08:56:57 pgoyette Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -82,7 +82,7 @@ AC_CHECK_HEADERS(sys/mtio.h sys/sysmacros.h sys/syslimits.h \
 	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h rpc/types.h)
 AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
 	sys/endian.h sys/featuretest.h err.h inttypes.h libgen.h paths.h \
-	stdint.h util.h resolv.h arpa/nameser.h,,
+	libgen.h stdint.h util.h resolv.h arpa/nameser.h,,
 	[test -f include/$ac_header || touch include/$ac_header])
 AC_CHECK_HEADERS(rpc/types.h netconfig.h,,
 	[echo '#include "nbtool_config.h"' >include/$ac_header.new
@@ -140,6 +140,33 @@ AC_CHECK_MEMBERS(struct statvfs.f_iosize,,, [#include <sys/statvfs.h>])
 AC_CHECK_MEMBERS(struct tm.tm_gmtoff,,, [#include <time.h>])
 
 # Global variable decls.
+AC_CHECK_DECLS([asprintf, vasprintf, vasnprintf, vsnprintf, fgetln, fparseln
+	getdelim, getline, snprintf],,, [
+#include <stdio.h>
+])
+
+AC_CHECK_DECLS([atoll, heapsort, mkdtemp, mkstemp, reallocarr,
+	setenv, strtoi, strtoll, strtou, setprogname, getprogname],,, [
+#include <stdlib.h>
+])
+
+AC_CHECK_DECLS([basename, dirname],,, [
+#include <libgen.h>
+])
+
+AC_CHECK_DECLS([raise_default_signal],,, [
+#include <util.h>
+])
+
+AC_CHECK_DECLS([issetugid, pread, pwrite, strmode],,, [
+#include <unistd.h>
+])
+
+AC_CHECK_DECLS([isblank],,, [
+#include <ctype.h>
+])
+
+
 AC_CHECK_DECLS([optind, optreset],,, [
 #include <stdio.h>
 #include <stdlib.h>
@@ -169,7 +196,7 @@ AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
 AC_CHECK_DECLS([group_from_gid, gid_from_group, pwcache_groupdb],,,[
 #include <grp.h>
 ])
-AC_CHECK_DECLS([strlcpy, strlcat, strndup, strnlen],,,[
+AC_CHECK_DECLS([strlcpy, strlcat, strndup, strnlen, strsep],,,[
 #include <string.h>
 ])
 AC_CHECK_DECLS([strsuftoll, mi_vector_hash],,,[#include <stdlib.h>])

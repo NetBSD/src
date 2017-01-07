@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.84 2016/01/26 23:12:18 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.84.2.1 2017/01/07 08:56:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.84 2016/01/26 23:12:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.84.2.1 2017/01/07 08:56:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.84 2016/01/26 23:12:18 pooka Exp $");
 #include <sys/vfs_syscalls.h>
 #include <sys/vnode.h>
 #include <sys/wapbl.h>
+#include <sys/bufq.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -120,6 +121,7 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 		bufpages = rump_physmemlimit / (20 * PAGE_SIZE);
 	}
 
+	bufq_init();
 	vfsinit();
 	bufinit();
 	cwd_sys_init();
@@ -169,6 +171,7 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 		}
 	}
 
+	module_init_class(MODULE_CLASS_BUFQ);
 	module_init_class(MODULE_CLASS_VFS);
 
 	/*

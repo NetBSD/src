@@ -2,7 +2,7 @@
 # Generated from: NetBSD: mknative-binutils,v 1.9 2013/10/01 15:41:17 skrll Exp 
 # Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp 
 #
-G_VERSION=2.26.1
+G_VERSION=2.27
 G_DEFS=-DHAVE_CONFIG_H
 G_INCLUDES=
 G_PROGRAMS=size objdump ar  strings ranlib objcopy   addr2line readelf  elfedit nm-new strip-new cxxfilt bfdtest1 bfdtest2

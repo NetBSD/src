@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.6.8.1 2016/11/04 14:48:53 pgoyette Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.6.8.2 2017/01/07 08:56:04 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.6.8.1 2016/11/04 14:48:53 pgoyette Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.6.8.2 2017/01/07 08:56:04 pgoyette Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -107,7 +107,7 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 	wchar_t ws[] = L"		";
 
 	/* check for non-spacing characters */
-	if ( !wch )
+	if (!wch)
 		return OK;
 	cw = wcwidth(wch->vals[0]);
 	if (cw < 0)
@@ -117,7 +117,7 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "--before--\n");
-	for ( x = 0; x < win->maxx; x++ )
+	for (x = 0; x < win->maxx; x++)
 		__CTRACE(__CTRACE_INPUT, "wins_wch: (0,%d)=(%x,%x,%p)\n", x,
 		    win->alines[0]->line[x].ch,
 		    win->alines[0]->line[x].attr,
@@ -128,9 +128,9 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wins_wch: (%d,%d)\n", y, x);
 #endif /* DEBUG */
-	switch ( wch->vals[ 0 ]) {
+	switch (wch->vals[0]) {
 		case L'\b':
-			if ( --x < 0 )
+			if (--x < 0)
 				x = 0;
 			win->curx = x;
 			return OK;
@@ -138,7 +138,7 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 			win->curx = 0;
 			return OK;
 		case L'\n':
-			wclrtoeol( win );
+			wclrtoeol(win);
 			if (y == win->scr_b) {
 				if (!(win->flags & __SCROLLOK))
 					return ERR;
@@ -156,26 +156,26 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 	/* locate current cell */
 	x = win->curx;
 	y = win->cury;
-	lnp = win->alines[ y ];
-	start = &win->alines[ y ]->line[ x ];
+	lnp = win->alines[y];
+	start = &win->alines[y]->line[x];
 	sx = x;
-	pcw = WCOL( *start );
+	pcw = WCOL(*start);
 	if (pcw < 0) {
 		start += pcw;
 		sx += pcw;
 	}
-	if ( cw > win->maxx - sx )
+	if (cw > win->maxx - sx)
 		return ERR;
 	lnp->flags |= __ISDIRTY;
 	newx = sx + win->ch_off;
-	if ( newx < *lnp->firstchp )
+	if (newx < *lnp->firstchp)
 		*lnp->firstchp = newx;
 
 	/* shift all complete characters */
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wins_wch: shift all characters\n");
 #endif /* DEBUG */
-	temp1 = &win->alines[ y ]->line[ win->maxx - 1 ];
+	temp1 = &win->alines[y]->line[win->maxx - 1];
 	temp2 = temp1 - cw;
 	pcw = WCOL(*(temp2 + 1));
 	if (pcw < 0) {
@@ -183,40 +183,40 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 		__CTRACE(__CTRACE_INPUT, "wins_wch: clear EOL\n");
 #endif /* DEBUG */
 		temp2 += pcw;
-		while ( temp1 > temp2 + cw ) {
+		while (temp1 > temp2 + cw) {
 			np = temp1->nsp;
 			if (np) {
-				while ( np ) {
+				while (np) {
 					tnp = np->next;
-					free( np );
+					free(np);
 					np = tnp;
 				}
 				temp1->nsp = NULL;
 			}
-			temp1->ch = ( wchar_t )btowc(( int ) win->bch );
+			temp1->ch = (wchar_t)btowc((int)win->bch );
 			if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR)
 				return ERR;
 			temp1->attr = win->battr;
-			SET_WCOL( *temp1, 1 );
+			SET_WCOL(*temp1, 1);
 			temp1--;
 		}
 	}
-	while ( temp2 >= start ) {
-		( void )memcpy( temp1, temp2, sizeof( __LDATA ));
+	while (temp2 >= start) {
+		(void)memcpy(temp1, temp2, sizeof(__LDATA));
 		temp1--, temp2--;
 	}
 
 	/* update character under cursor */
 	start->nsp = NULL;
-	start->ch = wch->vals[ 0 ];
+	start->ch = wch->vals[0];
 	start->attr = wch->attributes & WA_ATTRIBUTES;
-	SET_WCOL( *start, cw );
-	if ( wch->elements > 1 ) {
-		for ( i = 1; i < wch->elements; i++ ) {
+	SET_WCOL(*start, cw);
+	if (wch->elements > 1) {
+		for (i = 1; i < wch->elements; i++) {
 			np = malloc(sizeof(nschar_t));
 			if (!np)
 				return ERR;
-			np->ch = wch->vals[ i ];
+			np->ch = wch->vals[i];
 			np->next = start->nsp;
 			start->nsp = np;
 		}
@@ -227,16 +227,16 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 #endif /* DEBUG */
 	temp1 = start + 1;
 	ex = x + 1;
-	while ( ex - x < cw ) {
-		temp1->ch = wch->vals[ 0 ];
-		SET_WCOL( *temp1, x - ex );
+	while (ex - x < cw) {
+		temp1->ch = wch->vals[0];
+		SET_WCOL(*temp1, x - ex);
 		temp1->nsp = NULL;
 		ex++, temp1++;
 	}
 #ifdef DEBUG
 	{
 		__CTRACE(__CTRACE_INPUT, "--after---\n");
-		for ( x = 0; x < win->maxx; x++ )
+		for (x = 0; x < win->maxx; x++)
 			__CTRACE(__CTRACE_INPUT,
 			    "wins_wch: (0,%d)=(%x,%x,%p)\n", x,
 			    win->alines[0]->line[x].ch,
@@ -245,10 +245,10 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 	}
 #endif /* DEBUG */
 	newx = win->maxx - 1 + win->ch_off;
-	if ( newx > *lnp->lastchp )
+	if (newx > *lnp->lastchp)
 		*lnp->lastchp = newx;
-	__touchline(win, y, sx, (int) win->maxx - 1);
-
+	__touchline(win, y, sx, (int)win->maxx - 1);
+	__sync(win);
 	return OK;
 #endif /* HAVE_WCHAR */
 }

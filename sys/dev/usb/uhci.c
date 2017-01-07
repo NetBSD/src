@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.273 2016/05/10 15:14:03 pooka Exp $	*/
+/*	$NetBSD: uhci.c,v 1.273.2.1 2017/01/07 08:56:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.273 2016/05/10 15:14:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.273.2.1 2017/01/07 08:56:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -804,7 +804,7 @@ uhci_dump_td(uhci_soft_td_t *p)
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 	DPRINTF("TD(%p) at 0x%08x", p, p->physaddr, 0, 0);
- 	DPRINTF("   link=0x%08x status=0x%08x "
+	DPRINTF("   link=0x%08x status=0x%08x "
 	    "token=0x%08x buffer=0x%08x",
 	     le32toh(p->td.td_link),
 	     le32toh(p->td.td_status),

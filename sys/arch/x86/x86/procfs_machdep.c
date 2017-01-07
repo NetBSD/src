@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.12 2016/04/27 08:45:22 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.12.2.1 2017/01/07 08:56:28 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.12 2016/04/27 08:45:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.12.2.1 2017/01/07 08:56:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,9 +125,9 @@ static const char * const x86_features[][32] = {
 
 	{ /* (9) Intel-defined: 00000007 ebx */
 	"fsgsbase", "tsc_adjust", NULL, "bmi1", "hle", "avx2", NULL, "smep",
-	"bmi2", "erms", "invpcid", "rtm", "cqm", NULL, "mpx", NULL,
+	"bmi2", "erms", "invpcid", "rtm", "cqm", NULL, "mpx", "rdt_a",
 	"avx512f", "avx512dq", "rdseed", "adx",
-	"smap", NULL, "pcommit", "clflushopt",
+	"smap", NULL, NULL, "clflushopt",
 	"clwb", NULL, "avx512pf", "avx512er",
 	"avx512cd", "sha_ni", "avx512bw", "avx512vl"},
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.c,v 1.1.2.2 2016/08/06 00:19:02 pgoyette Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.1.2.3 2017/01/07 08:56:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@ fp_except_t
 fpsetsticky(fp_except_t sticky)
 {
   /* XXX implement, pause in ski */
-  __asm __volatile("break.i 0");
+  __asm __volatile("break.i 1");
   
   return (fp_except_t)0;
 }

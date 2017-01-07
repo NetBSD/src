@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.32 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.32.2.1 2017/01/07 08:56:42 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.32 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.32.2.1 2017/01/07 08:56:42 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +289,7 @@ ubsa_attach(device_t parent, device_t self, void *aux)
 	ucaa.ucaa_arg = sc;
 	ucaa.ucaa_info = NULL;
 	DPRINTF(("ubsa: int#=%d, in = 0x%x, out = 0x%x, intr = 0x%x\n",
-    		i, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
+	    i, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
 	sc->sc_subdevs[0] = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 				    ucomprint, ucomsubmatch);
 

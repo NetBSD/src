@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.19 2016/01/05 10:20:22 hannken Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.19.2.1 2017/01/07 08:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -68,9 +68,18 @@ void	lcr8(vaddr_t);
 vaddr_t	rcr8(void);
 void	tlbflush(void);
 void	tlbflushg(void);
-void	dr0(void *, uint32_t, uint32_t, uint32_t);
-vaddr_t	rdr6(void);
-void	ldr6(vaddr_t);
+register_t	rdr0(void);
+void		ldr0(register_t);
+register_t	rdr1(void);
+void		ldr1(register_t);
+register_t	rdr2(void);
+void		ldr2(register_t);
+register_t	rdr3(void);
+void		ldr3(register_t);
+register_t	rdr6(void);
+void		ldr6(register_t);
+register_t	rdr7(void);
+void		ldr7(register_t);
 void	wbinvd(void);
 void	breakpoint(void);
 void	x86_hlt(void);

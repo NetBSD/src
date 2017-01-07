@@ -1,5 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.104 2016/07/07 06:55:40 msaitoh Exp $	*/
-/* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
+/*	$NetBSD: cpu.c,v 1.104.2.1 2017/01/07 08:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -66,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.104 2016/07/07 06:55:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.104.2.1 2017/01/07 08:56:28 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -294,8 +293,7 @@ vcpu_match(device_t parent, cfdata_t match, void *aux)
 
 	if (strcmp(vcaa->vcaa_name, match->cf_name) == 0) {
 		error = HYPERVISOR_vcpu_op(VCPUOP_get_runstate_info,
-					   vcaa->vcaa_caa.cpu_number,
-					   &vcr);
+		    vcaa->vcaa_caa.cpu_number, &vcr);
 		switch (error) {
 		case 0:
 			return 1;
@@ -341,7 +339,7 @@ cpu_vm_init(struct cpu_info *ci)
 		cai = &ci->ci_cinfo[i];
 
 		tcolors = atop(cai->cai_totalsize);
-		switch(cai->cai_associativity) {
+		switch (cai->cai_associativity) {
 		case 0xff:
 			tcolors = 1; /* fully associative */
 			break;
@@ -465,14 +463,12 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		atomic_or_32(&ci->ci_flags, CPUF_SP);
 		cpu_identify(ci);
 		x86_cpu_idle_init();
-
 		break;
 
 	case CPU_ROLE_BP:
 		atomic_or_32(&ci->ci_flags, CPUF_BSP);
 		cpu_identify(ci);
 		x86_cpu_idle_init();
-
 		break;
 
 	case CPU_ROLE_AP:
@@ -521,9 +517,9 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		    l,
 #ifdef i386
 		    (void *)pcb->pcb_esp
-#else /* i386 */
+#else
 		    (void *)pcb->pcb_rsp
-#endif /* i386 */
+#endif
 		);
 		
 	}
@@ -695,7 +691,7 @@ cpu_hatch(void *v)
 	xen_ipi_init();
 
 	xen_initclocks();
-	
+
 #ifdef __x86_64__
 	fpuinit(ci);
 #endif
@@ -764,10 +760,8 @@ gdt_prepframes(paddr_t *frames, vaddr_t base, uint32_t entries)
 {
 	int i;
 	for (i = 0; i < roundup(entries, PAGE_SIZE) >> PAGE_SHIFT; i++) {
-
-		frames[i] = ((paddr_t) xpmap_ptetomach(
-				(pt_entry_t *) (base + (i << PAGE_SHIFT))))
-			>> PAGE_SHIFT;
+		frames[i] = ((paddr_t)xpmap_ptetomach(
+		    (pt_entry_t *)(base + (i << PAGE_SHIFT)))) >> PAGE_SHIFT;
 
 		/* Mark Read-only */
 		pmap_pte_clearbits(kvtopte(base + (i << PAGE_SHIFT)),
@@ -779,9 +773,8 @@ gdt_prepframes(paddr_t *frames, vaddr_t base, uint32_t entries)
 extern char *ldtstore;
 
 static void
-xen_init_amd64_vcpuctxt(struct cpu_info *ci,
-			struct vcpu_guest_context *initctx, 
-			void targetrip(struct cpu_info *))
+xen_init_amd64_vcpuctxt(struct cpu_info *ci, struct vcpu_guest_context *initctx,
+    void targetrip(struct cpu_info *))
 {
 	/* page frames to point at GDT */
 	extern int gdt_size;
@@ -798,12 +791,12 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci,
 	KASSERT(initctx != NULL);
 	KASSERT(targetrip != NULL);
 
-	memset(initctx, 0, sizeof *initctx);
+	memset(initctx, 0, sizeof(*initctx));
 
 	gdt_ents = roundup(gdt_size, PAGE_SIZE) >> PAGE_SHIFT;
 	KASSERT(gdt_ents <= 16);
 
-	gdt_prepframes(frames, (vaddr_t) ci->ci_gdt, gdt_ents);
+	gdt_prepframes(frames, (vaddr_t)ci->ci_gdt, gdt_ents);
 
 	/* Initialise the vcpu context: We use idle_loop()'s pcb context. */
 
@@ -842,11 +835,11 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci,
 	initctx->user_regs.ds = GSEL(GDATA_SEL, SEL_KPL);
 
 	/* GDT */
-	memcpy(initctx->gdt_frames, frames, sizeof frames);
+	memcpy(initctx->gdt_frames, frames, sizeof(frames));
 	initctx->gdt_ents = gdt_ents;
 
 	/* LDT */
-	initctx->ldt_base = (unsigned long) ldtstore;
+	initctx->ldt_base = (unsigned long)ldtstore;
 	initctx->ldt_ents = LDT_SIZE >> 3;
 
 	/* Kernel context state */
@@ -854,19 +847,18 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci,
 	initctx->kernel_sp = pcb->pcb_rsp0;
 	initctx->ctrlreg[0] = pcb->pcb_cr0;
 	initctx->ctrlreg[1] = 0; /* "resuming" from kernel - no User cr3. */
-	initctx->ctrlreg[2] = (vaddr_t) targetrip;
-	/* 
+	initctx->ctrlreg[2] = (vaddr_t)targetrip;
+	/*
 	 * Use pmap_kernel() L4 PD directly, until we setup the
 	 * per-cpu L4 PD in pmap_cpu_init_late()
 	 */
 	initctx->ctrlreg[3] = xen_pfn_to_cr3(x86_btop(xpmap_ptom(ci->ci_kpm_pdirpa)));
 	initctx->ctrlreg[4] = CR4_PAE | CR4_OSFXSR | CR4_OSXMMEXCPT;
 
-
 	/* Xen callbacks */
-	initctx->event_callback_eip = (unsigned long) hypervisor_callback;
-	initctx->failsafe_callback_eip = (unsigned long) failsafe_callback;
-	initctx->syscall_callback_eip = (unsigned long) Xsyscall;
+	initctx->event_callback_eip = (unsigned long)hypervisor_callback;
+	initctx->failsafe_callback_eip = (unsigned long)failsafe_callback;
+	initctx->syscall_callback_eip = (unsigned long)Xsyscall;
 
 	return;
 }
@@ -875,9 +867,8 @@ extern union descriptor *ldt;
 extern void Xsyscall(void);
 
 static void
-xen_init_i386_vcpuctxt(struct cpu_info *ci,
-			struct vcpu_guest_context *initctx, 
-			void targeteip(struct cpu_info *))
+xen_init_i386_vcpuctxt(struct cpu_info *ci, struct vcpu_guest_context *initctx,
+    void targeteip(struct cpu_info *))
 {
 	/* page frames to point at GDT */
 	extern int gdt_size;
@@ -894,12 +885,12 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci,
 	KASSERT(initctx != NULL);
 	KASSERT(targeteip != NULL);
 
-	memset(initctx, 0, sizeof *initctx);
+	memset(initctx, 0, sizeof(*initctx));
 
 	gdt_ents = roundup(gdt_size, PAGE_SIZE) >> PAGE_SHIFT;
 	KASSERT(gdt_ents <= 16);
 
-	gdt_prepframes(frames, (vaddr_t) ci->ci_gdt, gdt_ents);
+	gdt_prepframes(frames, (vaddr_t)ci->ci_gdt, gdt_ents);
 
 	/* 
 	 * Initialise the vcpu context: 
@@ -929,13 +920,13 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci,
 
 	initctx->user_regs.esp = pcb->pcb_esp - 4; /* Leave word for
 						      arg1 */
-	{ /* targeteip(ci); */
-		uint32_t *arg = (uint32_t *) initctx->user_regs.esp;
-		arg[1] = (uint32_t) ci; /* arg1 */
-
+	{
+		/* targeteip(ci); */
+		uint32_t *arg = (uint32_t *)initctx->user_regs.esp;
+		arg[1] = (uint32_t)ci; /* arg1 */
 	}
 
-	initctx->user_regs.eip = (vaddr_t) targeteip;
+	initctx->user_regs.eip = (vaddr_t)targeteip;
 	initctx->user_regs.cs = GSEL(GCODE_SEL, SEL_KPL);
 	initctx->user_regs.eflags |= pcb->pcb_iopl;
 
@@ -946,11 +937,11 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci,
 	initctx->user_regs.fs = GSEL(GDATA_SEL, SEL_KPL);
 
 	/* GDT */
-	memcpy(initctx->gdt_frames, frames, sizeof frames);
+	memcpy(initctx->gdt_frames, frames, sizeof(frames));
 	initctx->gdt_ents = gdt_ents;
 
 	/* LDT */
-	initctx->ldt_base = (unsigned long) ldt;
+	initctx->ldt_base = (unsigned long)ldt;
 	initctx->ldt_ents = NLDT;
 
 	/* Kernel context state */
@@ -958,19 +949,18 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci,
 	initctx->kernel_sp = pcb->pcb_esp0;
 	initctx->ctrlreg[0] = pcb->pcb_cr0;
 	initctx->ctrlreg[1] = 0; /* "resuming" from kernel - no User cr3. */
-	initctx->ctrlreg[2] = (vaddr_t) targeteip;
+	initctx->ctrlreg[2] = (vaddr_t)targeteip;
 #ifdef PAE
 	initctx->ctrlreg[3] = xen_pfn_to_cr3(x86_btop(xpmap_ptom(ci->ci_pae_l3_pdirpa)));
-#else /* PAE */
+#else
 	initctx->ctrlreg[3] = xen_pfn_to_cr3(x86_btop(xpmap_ptom(pcb->pcb_cr3)));
-#endif /* PAE */
-	initctx->ctrlreg[4] = /* CR4_PAE |  */CR4_OSFXSR | CR4_OSXMMEXCPT;
-
+#endif
+	initctx->ctrlreg[4] = /* CR4_PAE | */CR4_OSFXSR | CR4_OSXMMEXCPT;
 
 	/* Xen callbacks */
-	initctx->event_callback_eip = (unsigned long) hypervisor_callback;
+	initctx->event_callback_eip = (unsigned long)hypervisor_callback;
 	initctx->event_callback_cs = GSEL(GCODE_SEL, SEL_KPL);
-	initctx->failsafe_callback_eip = (unsigned long) failsafe_callback;
+	initctx->failsafe_callback_eip = (unsigned long)failsafe_callback;
 	initctx->failsafe_callback_cs = GSEL(GCODE_SEL, SEL_KPL);
 
 	return;
@@ -980,7 +970,6 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci,
 int
 mp_cpu_start(struct cpu_info *ci, vaddr_t target)
 {
-
 	int hyperror;
 	struct vcpu_guest_context vcpuctx;
 
@@ -990,9 +979,9 @@ mp_cpu_start(struct cpu_info *ci, vaddr_t target)
 
 #ifdef __x86_64__
 	xen_init_amd64_vcpuctxt(ci, &vcpuctx, (void (*)(struct cpu_info *))target);
-#else  /* i386 */
+#else
 	xen_init_i386_vcpuctxt(ci, &vcpuctx, (void (*)(struct cpu_info *))target);
-#endif /* __x86_64__ */
+#endif
 
 	/* Initialise the given vcpu to execute cpu_hatch(ci); */
 	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_initialise, ci->ci_cpuid, &vcpuctx))) {
@@ -1026,11 +1015,9 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 {
 	if (vcpu_is_up(ci)) {
 		aprint_debug_dev(ci->ci_dev, "is started.\n");
-	}
-	else {
+	} else {
 		aprint_error_dev(ci->ci_dev, "did not start up.\n");
 	}
-
 }
 
 void
@@ -1038,28 +1025,27 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 {
 #ifdef __x86_64__
 	if (full) {
-		HYPERVISOR_set_segment_base (SEGBASE_FS, 0);
-		HYPERVISOR_set_segment_base (SEGBASE_GS_KERNEL, (uint64_t) ci);
-		HYPERVISOR_set_segment_base (SEGBASE_GS_USER, 0);
+		HYPERVISOR_set_segment_base(SEGBASE_FS, 0);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_KERNEL, (uint64_t)ci);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER, 0);
 	}
-#endif	/* __x86_64__ */
+#endif
 
 	if (cpu_feature[2] & CPUID_NOX)
 		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
-
 }
 
 void
 cpu_offline_md(void)
 {
-        int s;
+	int s;
 
-        s = splhigh();
-        fpusave_cpu(true);
-        splx(s);
+	s = splhigh();
+	fpusave_cpu(true);
+	splx(s);
 }
 
-void    
+void
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
 	uint32_t vcpu_tversion;
@@ -1070,7 +1056,7 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 
 	uint64_t freq = 1000000000ULL << 32;
 	freq = freq / (uint64_t)tinfo->tsc_to_system_mul;
-	if ( tinfo->tsc_shift < 0 )
+	if (tinfo->tsc_shift < 0)
 		freq = freq << -tinfo->tsc_shift;
 	else
 		freq = freq >> tinfo->tsc_shift;
@@ -1108,6 +1094,7 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 	/* make new pmap visible to xen_kpm_sync() */
 	kcpuset_atomic_set(pmap->pm_xen_ptp_cpus, cid);
 #endif
+
 #ifdef i386
 #ifdef PAE
 	{
@@ -1145,7 +1132,7 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 			KASSERT(pmap != pmap_kernel() || new_pgd[i] == 0);
 			if (ci->ci_kpm_pdir[i] != new_pgd[i]) {
 				xpq_queue_pte_update(
-				   l4_pd_ma + i * sizeof(pd_entry_t),
+				    l4_pd_ma + i * sizeof(pd_entry_t),
 				    new_pgd[i]);
 			}
 		}
@@ -1155,8 +1142,8 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 
 		tlbflush();
 	}
-
 #endif /* __x86_64__ */
+
 #if defined(__x86_64__) || defined(PAE)
 	/* old pmap no longer visible to xen_kpm_sync() */
 	if (oldpmap != pmap_kernel()) {
@@ -1166,23 +1153,24 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 #endif
 }
 
- /*
-  * pmap_cpu_init_late: perform late per-CPU initialization.
-  * Short note about percpu PDIR pages:
-  * Both the PAE and __x86_64__ architectures have per-cpu PDIR
-  * tables. This is to get around Xen's pagetable setup constraints for
-  * PAE (multiple L3[3]s cannot point to the same L2 - Xen
-  * will refuse to pin a table setup this way.) and for multiple cpus
-  * to map in different user pmaps on __x86_64__ (see: cpu_load_pmap())
-  *
-  * What this means for us is that the PDIR of the pmap_kernel() is
-  * considered to be a canonical "SHADOW" PDIR with the following
-  * properties: 
-  * - Its recursive mapping points to itself
-  * - per-cpu recursive mappings point to themselves on __x86_64__
-  * - per-cpu L4 pages' kernel entries are expected to be in sync with
-  *   the shadow
-  */
+/*
+ * pmap_cpu_init_late: perform late per-CPU initialization.
+ * 
+ * Short note about percpu PDIR pages. Both the PAE and __x86_64__ architectures
+ * have per-cpu PDIR tables, for two different reasons:
+ *  - on PAE, this is to get around Xen's pagetable setup constraints (multiple
+ *    L3[3]s cannot point to the same L2 - Xen will refuse to pin a table set up
+ *    this way).
+ *  - on __x86_64__, this is for multiple CPUs to map in different user pmaps
+ *    (see cpu_load_pmap()).
+ *
+ * What this means for us is that the PDIR of the pmap_kernel() is considered
+ * to be a canonical "SHADOW" PDIR with the following properties: 
+ *  - its recursive mapping points to itself
+ *  - per-cpu recursive mappings point to themselves on __x86_64__
+ *  - per-cpu L4 pages' kernel entries are expected to be in sync with
+ *    the shadow
+ */
 
 void
 pmap_cpu_init_late(struct cpu_info *ci)
@@ -1224,9 +1212,9 @@ pmap_cpu_init_late(struct cpu_info *ci)
 
 	if (ci->ci_kpm_pdir == NULL) {
 		panic("%s: failed to allocate L4 per-cpu PD for CPU %d\n",
-		      __func__, cpu_index(ci));
+		    __func__, cpu_index(ci));
 	}
-	ci->ci_kpm_pdirpa = vtophys((vaddr_t) ci->ci_kpm_pdir);
+	ci->ci_kpm_pdirpa = vtophys((vaddr_t)ci->ci_kpm_pdir);
 	KASSERT(ci->ci_kpm_pdirpa != 0);
 
 #if defined(__x86_64__)
@@ -1237,32 +1225,33 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	memcpy(ci->ci_kpm_pdir, pmap_kernel()->pm_pdir, PAGE_SIZE);
 
 	/* Recursive kernel mapping */
-	ci->ci_kpm_pdir[PDIR_SLOT_PTE] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PG_k | PG_V;
+	ci->ci_kpm_pdir[PDIR_SLOT_PTE] = xpmap_ptom_masked(ci->ci_kpm_pdirpa)
+	    | PG_k | PG_V;
 #elif defined(PAE)
 	/* Copy over the pmap_kernel() shadow L2 entries that map the kernel */
-	memcpy(ci->ci_kpm_pdir, pmap_kernel()->pm_pdir + PDIR_SLOT_KERN, nkptp[PTP_LEVELS - 1] * sizeof(pd_entry_t));
+	memcpy(ci->ci_kpm_pdir, pmap_kernel()->pm_pdir + PDIR_SLOT_KERN,
+	    nkptp[PTP_LEVELS - 1] * sizeof(pd_entry_t));
 #endif /* __x86_64__ else PAE */
 
-	/* Xen wants R/O */
+	/* Xen wants a RO pdir. */
 	pmap_protect(pmap_kernel(), (vaddr_t)ci->ci_kpm_pdir,
 	    (vaddr_t)ci->ci_kpm_pdir + PAGE_SIZE, VM_PROT_READ);
 	pmap_update(pmap_kernel());
 #if defined(PAE)
-	/* Initialise L3 entry 3. This mapping is shared across all
-	 * pmaps and is static, ie; loading a new pmap will not update
-	 * this entry.
+	/*
+	 * Initialize L3 entry 3. This mapping is shared across all pmaps and is
+	 * static, ie: loading a new pmap will not update this entry.
 	 */
-	
 	ci->ci_pae_l3_pdir[3] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PG_k | PG_V;
 
-	/* Mark L3 R/O (Xen wants this) */
+	/* Xen wants a RO L3. */
 	pmap_protect(pmap_kernel(), (vaddr_t)ci->ci_pae_l3_pdir,
 	    (vaddr_t)ci->ci_pae_l3_pdir + PAGE_SIZE, VM_PROT_READ);
 	pmap_update(pmap_kernel());
 
 	xpq_queue_pin_l3_table(xpmap_ptom_masked(ci->ci_pae_l3_pdirpa));
 
-#elif defined(__x86_64__)	
+#elif defined(__x86_64__)
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(ci->ci_kpm_pdirpa));
 #endif /* PAE , __x86_64__ */
 #endif /* defined(PAE) || defined(__x86_64__) */

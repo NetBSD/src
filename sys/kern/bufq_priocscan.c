@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.18 2014/01/28 12:50:54 martin Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.18.10.1 2017/01/07 08:56:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c)2004,2005,2006,2008,2009,2011,2012 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.18 2014/01/28 12:50:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.18.10.1 2017/01/07 08:56:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.18 2014/01/28 12:50:54 martin E
 #include <sys/bufq_impl.h>
 #include <sys/kmem.h>
 #include <sys/rbtree.h>
+#include <sys/module.h>
 
 #undef	PRIOCSCAN_USE_GLOBAL_POSITION
 
@@ -440,5 +441,21 @@ bufq_priocscan_init(struct bufq_state *bufq)
 		struct cscan_queue *cq = &q->bq_queue[i].q_queue;
 
 		cscan_init(cq, sortby);
+	}
+}
+
+MODULE(MODULE_CLASS_BUFQ, bufq_priocscan, NULL);
+
+static int
+bufq_priocscan_modcmd(modcmd_t cmd, void *opaque)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return bufq_register(&bufq_strat_priocscan);
+	case MODULE_CMD_FINI:
+		return bufq_unregister(&bufq_strat_priocscan);
+	default:
+		return ENOTTY;
 	}
 }

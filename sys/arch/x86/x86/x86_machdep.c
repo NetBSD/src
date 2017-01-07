@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.70.2.2 2016/08/06 00:19:06 pgoyette Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.70.2.3 2017/01/07 08:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.70.2.2 2016/08/06 00:19:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.70.2.3 2017/01/07 08:56:28 pgoyette Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -100,6 +100,16 @@ struct bootinfo bootinfo;
 /* --------------------------------------------------------------------- */
 
 static kauth_listener_t x86_listener;
+
+extern paddr_t lowmem_rsvd, avail_start, avail_end;
+
+vaddr_t msgbuf_vaddr;
+
+struct msgbuf_p_seg msgbuf_p_seg[VM_PHYSSEG_MAX];
+
+unsigned int msgbuf_p_cnt = 0;
+
+void init_x86_msgbuf(void);
 
 /*
  * Given the type of a bootinfo entry, looks for a matching item inside
@@ -482,8 +492,6 @@ static struct {
 	{ VM_FREELIST_FIRST16,	16 * 1024 * 1024 },
 };
 
-extern paddr_t avail_start, avail_end;
-
 int
 x86_select_freelist(uint64_t maxaddr)
 {
@@ -833,12 +841,13 @@ init_x86_clusters(void)
 
 /*
  * init_x86_vm: initialize the VM system on x86. We basically internalize as
- * many physical pages as we can, starting at avail_start, but we don't
- * internalize the kernel physical pages (from IOM_END to pa_kend).
+ * many physical pages as we can, starting at lowmem_rsvd, but we don't
+ * internalize the kernel physical pages (from pa_kstart to pa_kend).
  */
 int
 init_x86_vm(paddr_t pa_kend)
 {
+	paddr_t pa_kstart = (KERNTEXTOFF - KERNBASE);
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
 	int x;
@@ -849,24 +858,11 @@ init_x86_vm(paddr_t pa_kend)
 			x86_freelists[i].freelist = VM_FREELIST_DEFAULT;
 	}
 
-	/* Make sure the end of the space used by the kernel is rounded. */
-	pa_kend = round_page(pa_kend);
-
-#ifdef amd64
-	extern vaddr_t kern_end;
-	extern vaddr_t module_start, module_end;
-
-	kern_end = KERNBASE + pa_kend;
-	module_start = kern_end;
-	module_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
-#endif
-
 	/*
 	 * Now, load the memory clusters (which have already been rounded and
 	 * truncated) into the VM system.
 	 *
-	 * NOTE: we assume that memory starts at 0 and that the kernel is
-	 * loaded at IOM_END (1MB).
+	 * NOTE: we assume that memory starts at 0.
 	 */
 	for (x = 0; x < mem_cluster_cnt; x++) {
 		const phys_ram_seg_t *cluster = &mem_clusters[x];
@@ -877,11 +873,11 @@ init_x86_vm(paddr_t pa_kend)
 		seg_end1 = 0;
 
 		/* Skip memory before our available starting point. */
-		if (seg_end <= avail_start)
+		if (seg_end <= lowmem_rsvd)
 			continue;
 
-		if (seg_start <= avail_start && avail_start < seg_end) {
-			seg_start = avail_start;
+		if (seg_start <= lowmem_rsvd && lowmem_rsvd < seg_end) {
+			seg_start = lowmem_rsvd;
 			if (seg_start == seg_end)
 				continue;
 		}
@@ -890,10 +886,10 @@ init_x86_vm(paddr_t pa_kend)
 		 * If this segment contains the kernel, split it in two, around
 		 * the kernel.
 		 */
-		if (seg_start <= IOM_END && pa_kend <= seg_end) {
+		if (seg_start <= pa_kstart && pa_kend <= seg_end) {
 			seg_start1 = pa_kend;
 			seg_end1 = seg_end;
-			seg_end = IOM_END;
+			seg_end = pa_kstart;
 			KASSERT(seg_end < seg_end1);
 		}
 
@@ -912,6 +908,52 @@ init_x86_vm(paddr_t pa_kend)
 }
 
 #endif /* !XEN */
+
+void
+init_x86_msgbuf(void)
+{
+	/* Message buffer is located at end of core. */
+	psize_t sz = round_page(MSGBUFSIZE);
+	psize_t reqsz = sz;
+	uvm_physseg_t x;
+		
+ search_again:
+        for (x = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(x);
+	     x = uvm_physseg_get_next(x)) {
+
+		if (ctob(uvm_physseg_get_avail_end(x)) == avail_end)
+			break;
+	}
+
+	if (uvm_physseg_valid_p(x) == false)
+		panic("init_x86_msgbuf: can't find end of memory");
+
+	/* Shrink so it'll fit in the last segment. */
+	if (uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x) < atop(sz))
+		sz = ctob(uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x));
+
+	uvm_physseg_unplug(uvm_physseg_get_end(x) - atop(sz), atop(sz));
+	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
+        msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(uvm_physseg_get_avail_end(x));
+
+	/* Now find where the new avail_end is. */
+	avail_end = ctob(uvm_physseg_get_avail_end(x));
+
+	if (sz == reqsz)
+		return;
+
+	reqsz -= sz;
+	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
+		/* No more segments available, bail out. */
+		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
+		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
+		return;
+	}
+
+	sz = reqsz;
+	goto search_again;
+}
 
 void
 x86_reset(void)

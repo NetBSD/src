@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1344.2.3 2016/11/04 14:42:40 pgoyette Exp $
+#	$NetBSD: 3RDPARTY,v 1.1344.2.4 2017/01/07 08:53:45 pgoyette Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -40,8 +40,8 @@
 #
 
 Package:	acpica
-Version:	20160527
-Current Vers:	20160527
+Version:	20160930
+Current Vers:	20160930
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
@@ -411,11 +411,11 @@ Notes:
 use file2netbsd
 
 Package:	flex
-Version:	2.6.0
-Current Vers:	2.6.0
+Version:	2.6.3
+Current Vers:	2.6.3
 Maintainer:	Will Estes <wlestes@users.sourceforge.net>
-Archive Site:	http://flex.sourceforge.net/
-Home Page:	http://flex.sourceforge.net/
+Archive Site:	https://github.com/westes/flex/releases
+Home Page:	https://github.com/westes/flex
 Mailing List:	http://lists.sourceforge.net/mailman/listinfo/flex-announce
 Responsible:
 License:	BSD-like
@@ -425,7 +425,7 @@ There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
 Version:	4.8.5/5.4
-Current Vers:	4.8.5/5.4/6.1
+Current Vers:	4.8.5/5.4/6.3
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
@@ -928,8 +928,8 @@ and ndbootd-raw.c.  Restore saved config.h, and force it to define
 HAVE_STRICT_ALIGNMENT.  Fix RCS IDs, import.
 
 Package:	ntp
-Version:	4.2.8p8
-Current Vers:	4.2.8p8
+Version:	4.2.8p9
+Current Vers:	4.2.8p9
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	http://www.ntp.org/
 Home Page:	http://www.ntp.org/, http://support.ntp.org/
@@ -978,8 +978,8 @@ Location:	external/bsd/openpam/dist
 Notes:
 
 Package:	openresolv
-Version:	3.8.0
-Current Vers:	3.8.0
+Version:	3.9.0
+Current Vers:	3.9.0
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/openresolv/
 Home Page:	http://roy.marples.name/projects/openresolv/
@@ -1003,8 +1003,8 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	7.3
-Current Vers:	7.3 / portable 7.3p1
+Version:	7.4
+Current Vers:	7.4 / portable 7.4p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
@@ -1258,7 +1258,7 @@ original.
 
 Package:	sqlite
 Version:	3.13.0
-Current Vers:	3.13.0
+Current Vers:	3.16.0
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
 Responsible:	joerg
@@ -1384,8 +1384,8 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2016h / tzdata2016i
-Current Vers:	tzcode2016i / tzdata2016i
+Version:	tzcode2016i / tzdata2016j
+Current Vers:	tzcode2016j / tzdata2016j
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
@@ -1403,11 +1403,11 @@ is too much inertia to apply them. Check for .gitignore files.
 For the data files, do use external/public-domain/tz/tzdata2netbsd.
 
 Package:	wpa_supplicant/hostapd
-Version:	2.4
-Current Vers:	2.4
+Version:	2.6
+Current Vers:	2.6
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
-Archive Site:	http://hostap.epitest.fi/releases/
-Home Page:	http://hostap.epitest.fi/wpa_supplicant/
+Archive Site:	http://w1.fi/releases/
+Home Page:	http://w1.fi/wpa_supplicant/
 Mailing List:
 Responsible:	scw, dyoung, christos
 License:	BSD or GPLv2

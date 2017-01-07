@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.137 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.137.2.1 2017/01/07 08:56:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,9 +78,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.137 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.137.2.1 2017/01/07 08:56:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_usb.h"
 #include "opt_inet.h"
 #endif
 
@@ -661,7 +662,7 @@ aue_reset(struct aue_softc *sc)
 	 *
 	 * Note: We force all of the GPIO pins low first, *then*
 	 * enable the ones we want.
-  	 */
+	 */
 	if (sc->aue_flags & LSYS) {
 		/* Grrr. LinkSys has to be different from everyone else. */
 		aue_csr_write_1(sc, AUE_GPIO0,
@@ -670,7 +671,7 @@ aue_reset(struct aue_softc *sc)
 		aue_csr_write_1(sc, AUE_GPIO0,
 		    AUE_GPIO_OUT0 | AUE_GPIO_SEL0);
 	}
-  	aue_csr_write_1(sc, AUE_GPIO0,
+	aue_csr_write_1(sc, AUE_GPIO0,
 	    AUE_GPIO_OUT0 | AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
 
 	if (sc->aue_flags & PII)
@@ -1151,7 +1152,6 @@ aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m = c->aue_mbuf;
 	total_len -= ETHER_CRC_LEN + 4;
 	m->m_pkthdr.len = m->m_len = total_len;
-	ifp->if_ipackets++;
 
 	m_set_rcvif(m, ifp);
 
@@ -1162,14 +1162,6 @@ aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		ifp->if_ierrors++;
 		goto done1;
 	}
-
-	/*
-	 * Handle BPF listeners. Let the BPF user see the packet, but
-	 * don't pass it up to the ether_input() layer unless it's
-	 * a broadcast packet, multicast packet, matches our ethernet
-	 * address or the interface is in promiscuous mode.
-	 */
-	bpf_mtap(ifp, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->aue_dev),
 		    __func__, m->m_len));

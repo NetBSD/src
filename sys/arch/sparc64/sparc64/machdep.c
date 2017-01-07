@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.285.2.2 2016/11/04 14:49:05 pgoyette Exp $ */
+/*	$NetBSD: machdep.c,v 1.285.2.3 2017/01/07 08:56:26 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.285.2.2 2016/11/04 14:49:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.285.2.3 2017/01/07 08:56:26 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2300,6 +2300,9 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 
 	if (!(flags & BUS_SPACE_MAP_CACHEABLE))
 		pm_flags |= PMAP_NC;
+
+	if ((flags & BUS_SPACE_MAP_PREFETCHABLE))
+		pm_flags |= PMAP_WC;
 
 	if ((err = extent_alloc(io_space, size, PAGE_SIZE,
 		0, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&v)))

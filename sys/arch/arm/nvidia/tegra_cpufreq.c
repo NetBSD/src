@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_cpufreq.c,v 1.3 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra_cpufreq.c,v 1.3.2.1 2017/01/07 08:56:11 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_cpufreq.c,v 1.3 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_cpufreq.c,v 1.3.2.1 2017/01/07 08:56:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_cpufreq.c,v 1.3 2015/12/22 22:10:36 jmcneill E
 #include <sys/kernel.h>
 #include <sys/atomic.h>
 #include <sys/kmem.h>
-#include <sys/xcall.h>
 #include <sys/sysctl.h>
 
 #include <arm/nvidia/tegra_var.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.135.2.2 2016/11/04 14:49:01 pgoyette Exp $	*/
+/*	$NetBSD: locore.S,v 1.135.2.3 2017/01/07 08:56:18 pgoyette Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.135.2.2 2016/11/04 14:49:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.135.2.3 2017/01/07 08:56:18 pgoyette Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -269,16 +269,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.135.2.2 2016/11/04 14:49:01 pgoyette Ex
  * Initialization
  */
 	.data
-
-#if NLAPIC > 0
-	.align	PAGE_SIZE
-	.globl	_C_LABEL(local_apic)
-
-	.type	_C_LABEL(local_apic), @object
-LABEL(local_apic)
-	.space	PAGE_SIZE
-END(local_apic)
-#endif
 
 	.globl	_C_LABEL(tablesize)
 	.globl	_C_LABEL(nox_flag)
@@ -611,7 +601,7 @@ no_NOX:
  */
 
 	/* Find end of kernel image; brings us on (1). */
-	movl	$RELOC(end),%edi
+	movl	$RELOC(__kernel_end),%edi
 
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB)
 	/* Save the symbols (if loaded); brinds us on (2). */
@@ -643,7 +633,7 @@ no_NOX:
 	incl	%eax		/* one more PTP for VAs stolen by bootstrap */
 1:	movl	%eax,RELOC(nkptp)+1*4
 
-	/* tablesize = (PDP_SIZE + UPAGES + nkptp) << PGSHIFT; */
+	/* tablesize = (PDP_SIZE + UPAGES + nkptp[1]) << PGSHIFT; */
 	addl	$(PDP_SIZE+UPAGES),%eax
 #ifdef PAE
 	incl	%eax 		/* one more page for L3 */
@@ -653,7 +643,8 @@ no_NOX:
 #endif
 	movl	%eax,RELOC(tablesize)
 
-	/* Ensure that nkptp covers BOOTSTRAP TABLES. */
+	/* Ensure that nkptp[1] covers BOOTSTRAP TABLES, ie:
+	 * (esi + tablesize) >> L2_SHIFT + 1 < nkptp[1] */
 	addl	%esi,%eax
 	addl	$~L2_FRAME,%eax
 	shrl	$L2_SHIFT,%eax
@@ -847,7 +838,7 @@ begin:
 	pushl	$0	/* init386() expects a 64 bits paddr_t with PAE */
 #endif
 	pushl	%eax
-	call	_C_LABEL(init386)	/* wire 386 chip for unix operation */
+	call	_C_LABEL(init386)
 	addl	$PDE_SIZE,%esp		/* pop paddr_t */
 	addl	$NGDT*8,%esp		/* pop temporary gdt */
 
@@ -876,62 +867,67 @@ begin:
 	popfl
 
 	cld
-	movl	%esp, %ebx		/* save start of available space */
-	movl	$_RELOC(tmpstk),%esp	/* bootstrap stack end location */
+
+	/*
+	 * Xen info:
+	 * - %esp -> stack, *theoretically* the last used page by Xen bootstrap
+	 */
+	movl	%esp,%ebx
+	movl	$_RELOC(tmpstk),%esp
 
 	/* Clear BSS. */
 	xorl	%eax,%eax
 	movl	$RELOC(__bss_start),%edi
 	movl	$RELOC(_end),%ecx
 	subl	%edi,%ecx
-	rep stosb
+	rep
+	stosb
 
 	/* Copy the necessary stuff from start_info structure. */
 	/* We need to copy shared_info early, so that sti/cli work */
 	movl	$RELOC(start_info_union),%edi
 	movl	$128,%ecx
-	rep movsl
+	rep
+	movsl
 
-	/* Clear segment registers; always null in proc0. */
+	/* Clear segment registers. */
 	xorl	%eax,%eax
 	movw	%ax,%fs
 	movw	%ax,%gs
-	decl	%eax
-	movl	%eax,RELOC(cpuid_level)
 
 	xorl	%eax,%eax
 	cpuid
 	movl	%eax,RELOC(cpuid_level)
 
 	/*
-	 * Use a temp page. We'll re- add it to uvm(9) once we're
-	 * done using it.
+	 * Use a temporary GDT page. We'll re-add it to uvm(9) once we're done
+	 * using it.
 	 */
-	movl	$RELOC(tmpgdt), %eax
+	movl	$RELOC(tmpgdt),%eax
 	pushl	%eax		/* start of temporary gdt */
 	call	_C_LABEL(initgdt)
 	addl	$4,%esp
 
-	call	xen_pmap_bootstrap
+	call	xen_locore
 
 	/*
-	 * First avail returned by xen_pmap_bootstrap in %eax
+	 * The first VA available is returned by xen_locore in %eax. We
+	 * use it as the UAREA, and set up the stack here.
 	 */
-	movl	%eax, %esi;
-	movl	%esi, _C_LABEL(lwp0uarea)
-
-	/* Set up bootstrap stack. */
+	movl	%eax,%esi
+	movl	%esi,_C_LABEL(lwp0uarea)
 	leal	(USPACE-FRAMESIZE)(%eax),%esp
 	xorl	%ebp,%ebp		/* mark end of frames */
 
-	addl	$USPACE, %esi
-	subl	$KERNBASE, %esi		/* init386 wants a physical address */
+	/* Set first_avail after the DUMMY PAGE (see xen_locore). */
+	addl	$(USPACE+PAGE_SIZE),%esi
+	subl	$KERNBASE,%esi		/* init386 wants a physical address */
 
 #ifdef PAE
 	pushl	$0	/* init386() expects a 64 bits paddr_t with PAE */
 #endif
 	pushl	%esi
-	call	_C_LABEL(init386)	/* wire 386 chip for unix operation */
+	call	_C_LABEL(init386)
 	addl	$PDE_SIZE,%esp		/* pop paddr_t */
 	call 	_C_LABEL(main)
 #endif /* XEN */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npfstream.c,v 1.6 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npfstream.c,v 1.6.8.1 2017/01/07 08:57:00 pgoyette Exp $	*/
 
 /*
  * NPF stream processor.
@@ -16,6 +16,7 @@
 
 #include <arpa/inet.h>
 
+#if !defined(_NPF_STANDALONE)
 #include <net/if.h>
 #include <net/ethertypes.h>
 #include <net/if_ether.h>
@@ -25,6 +26,7 @@
 #include <netinet/tcp.h>
 
 #include <rump/rump.h>
+#endif
 
 #include "npftest.h"
 

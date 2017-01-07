@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.21 2015/05/21 01:09:00 ozaki-r Exp $	*/
+/*	$NetBSD: net.c,v 1.21.2.1 2017/01/07 08:57:01 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -833,30 +833,17 @@ done:
 	}
 
 	/*
-	 * wait a couple of seconds for the interface to go live.
+	 * wait for addresses to become valid
 	 */
 	if (!nfs_root) {
 		msg_display_add(MSG_wait_network);
-		sleep(5);
+		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
+		    "/sbin/ifconfig -w 15 -W 5");
+	} else {
+		/* Assume network is up. */
+		network_up = 1;
 	}
 
-	/*
-	 * ping should be verbose, so users can see the cause
-	 * of a network failure.
-	 */
-	if (net_defroute[0] != '\0' && network_up)
-		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
-		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_defroute);
-	if (net_namesvr[0] != '\0' && network_up) {
-#ifdef INET6
-		if (strchr(net_namesvr, ':'))
-			network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
-			    "/sbin/ping6 -v -c 3 -n %s", net_namesvr);
-		else
-#endif
-			network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
-			    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_namesvr);
-	}
 	fflush(NULL);
 
 	return network_up;

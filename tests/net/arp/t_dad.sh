@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.6.2.1 2016/11/04 14:49:23 pgoyette Exp $
+#	$NetBSD: t_dad.sh,v 1.6.2.2 2017/01/07 08:56:55 pgoyette Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,13 +25,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
-HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
-
 SOCKLOCAL=unix://commsock1
 SOCKPEER=unix://commsock2
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 
 atf_test_case dad_basic cleanup
 atf_test_case dad_duplicated cleanup
@@ -53,10 +50,9 @@ setup_server()
 	local sock=$1
 	local ip=$2
 
-	export RUMP_SERVER=$sock
+	rump_server_add_iface $sock shmif0 bus1
 
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
+	export RUMP_SERVER=$sock
 	atf_check -s exit:0 rump.ifconfig shmif0 inet $ip/24
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 	atf_check -s exit:0 rump.ifconfig -w 10
@@ -73,30 +69,15 @@ make_pkt_str()
 	echo $pkt
 }
 
-extract_new_packets()
-{
-	local old=./old
-
-	if [ ! -f $old ]; then
-		old=/dev/null
-	fi
-
-	shmif_dumpbus -p - bus1 2>/dev/null| \
-	    tcpdump -n -e -r - 2>/dev/null > ./new
-	diff -u $old ./new |grep '^+' |cut -d '+' -f 2 > ./diff
-	mv -f ./new ./old
-	cat ./diff
-}
-
 dad_basic_body()
 {
 	local pkt=
 
-	atf_check -s exit:0 ${inetserver} $SOCKLOCAL
+	rump_server_start $SOCKLOCAL
+	rump_server_add_iface $SOCKLOCAL shmif0 bus1
+
 	export RUMP_SERVER=$SOCKLOCAL
 
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.1/24
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.2/24 alias
 	$DEBUG && rump.ifconfig shmif0
@@ -112,7 +93,7 @@ dad_basic_body()
 	#atf_check -s exit:0 -x "cat ./out |grep 10.0.0.2 |grep -iq tentative"
 
 	atf_check -s exit:0 sleep 2
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	# Check DAD probe packets
@@ -126,7 +107,7 @@ dad_basic_body()
 	atf_check -s exit:0 rump.ifconfig -w 10
 	# Give a chance to send a DAD announce packet
 	atf_check -s exit:0 sleep 1
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	# Check the DAD announce packet
@@ -146,7 +127,7 @@ dad_basic_body()
 
 	# Check DAD probe packets
 	atf_check -s exit:0 sleep 2
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 	pkt=$(make_pkt_str 10.0.0.3 0.0.0.0)
 	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
@@ -155,7 +136,7 @@ dad_basic_body()
 	atf_check -s exit:0 rump.ifconfig -w 10
 	# Give a chance to send a DAD announce packet
 	atf_check -s exit:0 sleep 1
-	extract_new_packets > ./out
+	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	# Check the DAD announce packet
@@ -163,6 +144,8 @@ dad_basic_body()
 	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
 	# The new address left tentative
 	atf_check -s not-exit:0 -x "rump.ifconfig shmif0 |grep 10.0.0.3 |grep -iq tentative"
+
+	rump_server_destroy_ifaces
 }
 
 dad_duplicated_body()
@@ -171,8 +154,8 @@ dad_duplicated_body()
 	local localip2=10.0.1.11
 	local peerip=10.0.1.2
 
-	atf_check -s exit:0 ${inetserver} $SOCKLOCAL
-	atf_check -s exit:0 ${inetserver} $SOCKPEER
+	rump_server_start $SOCKLOCAL
+	rump_server_start $SOCKPEER
 
 	setup_server $SOCKLOCAL $localip1
 	setup_server $SOCKPEER $peerip
@@ -195,44 +178,14 @@ dad_duplicated_body()
 	atf_check -s exit:0 rump.ifconfig shmif0 inet $localip2 alias
 	atf_check -s exit:0 sleep 1
 	atf_check -s not-exit:0 -x "rump.ifconfig shmif0 |grep $localip2 |grep -iq duplicated"
-}
 
-cleanup()
-{
-	env RUMP_SERVER=$SOCKLOCAL rump.halt
-	env RUMP_SERVER=$SOCKPEER rump.halt
-}
-
-dump_local()
-{
-	export RUMP_SERVER=$SOCKLOCAL
-	rump.netstat -nr
-	rump.arp -n -a
-	rump.ifconfig
-	$HIJACKING dmesg
-}
-
-dump_peer()
-{
-	export RUMP_SERVER=$SOCKPEER
-	rump.netstat -nr
-	rump.arp -n -a
-	rump.ifconfig
-	$HIJACKING dmesg
-}
-
-dump()
-{
-	dump_local
-	dump_peer
-	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
+	rump_server_destroy_ifaces
 }
 
 dad_basic_cleanup()
 {
-	$DEBUG && dump_local
-	$DEBUG && shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
-	env RUMP_SERVER=$SOCKLOCAL rump.halt
+	$DEBUG && dump
+	cleanup
 }
 
 dad_duplicated_cleanup()

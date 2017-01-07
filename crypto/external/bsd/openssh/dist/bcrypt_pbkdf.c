@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: bcrypt_pbkdf.c,v 1.2 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: bcrypt_pbkdf.c,v 1.2.4.1 2017/01/07 08:53:41 pgoyette Exp $");
 
 #ifndef HAVE_BCRYPT_PBKDF
 

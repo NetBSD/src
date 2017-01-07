@@ -1,4 +1,4 @@
-/*	$NetBSD: pslist.h,v 1.3 2016/07/07 06:56:25 ozaki-r Exp $	*/
+/*	$NetBSD: pslist.h,v 1.3.2.1 2017/01/07 08:56:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -175,6 +175,13 @@ pslist_writer_remove(struct pslist_entry *entry)
 		entry->ple_next->ple_prevp = entry->ple_prevp;
 	*entry->ple_prevp = entry->ple_next;
 	entry->ple_prevp = NULL;
+
+	/*
+	 * Leave entry->ple_next intact so that any extant readers can
+	 * continue iterating through the list.  The caller must then
+	 * wait for readers to drain, e.g. with pserialize_perform,
+	 * before destroying and reusing the entry.
+	 */
 }
 
 static inline struct pslist_entry *

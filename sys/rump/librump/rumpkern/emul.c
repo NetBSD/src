@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.179 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.179.2.1 2017/01/07 08:56:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.179 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.179.2.1 2017/01/07 08:56:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -54,7 +54,7 @@ void (*rump_vfs_fini)(void) = (void *)nullop;
  * calling rump_init()
  */
 #define PHYSMEM 512*256
-int physmem = PHYSMEM;
+psize_t physmem = PHYSMEM;
 int nkmempages = PHYSMEM/2; /* from le chapeau */
 #undef PHYSMEM
 

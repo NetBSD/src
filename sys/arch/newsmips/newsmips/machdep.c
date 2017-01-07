@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117.2.1 2016/07/26 03:24:18 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.117.2.2 2017/01/07 08:56:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117.2.1 2016/07/26 03:24:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117.2.2 2017/01/07 08:56:22 pgoyette Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -240,10 +240,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 		kernend = (char *)mips_round_page(esym);
 #endif
 
-	/*
-	 * Set the VM page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	boothowto = x_boothowto;
 	bootdev = x_bootdev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: addnstr.c,v 1.14 2014/07/13 01:58:08 blymn Exp $	*/
+/*	$NetBSD: addnstr.c,v 1.14.6.1 2017/01/07 08:56:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addnstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addnstr.c,v 1.14 2014/07/13 01:58:08 blymn Exp $");
+__RCSID("$NetBSD: addnstr.c,v 1.14.6.1 2017/01/07 08:56:03 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -146,12 +146,12 @@ waddnstr(WINDOW *win, const char *s, int n)
 	 * BSD curses: if (n > 0) then "at most n", else "len = strlen(s)"
 	 * ncurses: if (n >= 0) then "at most n", else "len = strlen(s)"
 	 * XCURSES: if (n != -1) then "at most n", else "len = strlen(s)"
-	 * 
+	 *
 	 */
 	if (n >= 0)
 		for (p = s, len = 0; n-- && *p++; ++len);
 	else
 		len = strlen(s);
-	
-	return(waddbytes(win, s, (int) len));
+
+	return waddbytes(win, s, (int) len);
 }

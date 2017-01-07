@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.56 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.56.2.1 2017/01/07 08:56:41 pgoyette Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.56 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.56.2.1 2017/01/07 08:56:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
@@ -515,7 +516,6 @@ upl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m = c->upl_mbuf;
 	memcpy(mtod(c->upl_mbuf, char *), c->upl_buf, total_len);
 
-	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = total_len;
 
 	m_set_rcvif(m, ifp);
@@ -527,14 +527,6 @@ upl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		ifp->if_ierrors++;
 		goto done1;
 	}
-
-	/*
-	 * Handle BPF listeners. Let the BPF user see the packet, but
-	 * don't pass it up to the ether_input() layer unless it's
-	 * a broadcast packet, multicast packet, matches our ethernet
-	 * address or the interface is in promiscuous mode.
-	 */
-	bpf_mtap(ifp, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->sc_dev),
 		    __func__, m->m_len));

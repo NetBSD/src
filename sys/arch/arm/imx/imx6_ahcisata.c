@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ahcisata.c,v 1.3 2016/02/25 13:27:33 ryo Exp $	*/
+/*	$NetBSD: imx6_ahcisata.c,v 1.3.2.1 2017/01/07 08:56:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.3 2016/02/25 13:27:33 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.3.2.1 2017/01/07 08:56:11 pgoyette Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -266,7 +266,8 @@ ixm6_ahcisata_init(struct imx_ahci_softc *sc)
 	imx6_ccm_write(CCM_CCGR5, v | CCM_CCGR5_100M_CLK_ENABLE(3));
 
 	/* PLL power up */
-	if (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1) != 0) {
+	if (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
+		CCM_ANALOG_PLL_ENET_ENABLE_100M) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't enable CCM_ANALOG_PLL_ENET\n");
 		return -1;

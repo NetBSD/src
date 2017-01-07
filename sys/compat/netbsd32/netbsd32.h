@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.109.2.1 2016/11/04 14:49:07 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.109.2.2 2017/01/07 08:56:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -210,7 +210,7 @@ struct netbsd32_timeval50 {
 typedef netbsd32_pointer_t netbsd32_timevalp_t;
 struct netbsd32_timeval {
 	netbsd32_time_t	tv_sec;		/* seconds */
-	netbsd32_long	tv_usec;	/* and microseconds */
+	suseconds_t	tv_usec;	/* and microseconds */
 };
 
 typedef netbsd32_pointer_t netbsd32_timezonep_t;

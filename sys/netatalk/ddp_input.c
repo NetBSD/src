@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.27.2.1 2016/11/04 14:49:21 pgoyette Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.27.2.2 2017/01/07 08:56:51 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.27.2.1 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.27.2.2 2017/01/07 08:56:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,9 +279,11 @@ ddp_input(struct mbuf *m, struct ifnet *ifp, struct elaphdr *elh, int phase)
 		}
 #endif
 		if (ddp_firewall && (rt == NULL || rt->rt_ifp != ifp)) {
+			rtcache_unref(rt, &forwro);
 			m_freem(m);
 			return;
 		}
+		rtcache_unref(rt, &forwro);
 		ddpe.deh_hops++;
 		ddpe.deh_bytes = htonl(ddpe.deh_bytes);
 		memcpy((void *) deh, (void *) & ddpe, sizeof(u_short));/*XXX*/

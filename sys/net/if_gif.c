@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.119.2.1 2016/11/04 14:49:20 pgoyette Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.119.2.2 2017/01/07 08:56:50 pgoyette Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.119.2.1 2016/11/04 14:49:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.119.2.2 2017/01/07 08:56:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -180,6 +180,9 @@ gif_clone_create(struct if_clone *ifc, int unit)
 
 	gifattach0(sc);
 
+	sc->gif_ro_percpu = percpu_alloc(sizeof(struct route));
+	KASSERTMSG(sc->gif_ro_percpu != NULL,
+	    "failed to allocate sc->gif_ro_percpu");
 	LIST_INSERT_HEAD(&gif_softc_list, sc, gif_list);
 	return (0);
 }
@@ -208,6 +211,14 @@ gifattach0(struct gif_softc *sc)
 	bpf_attach(&sc->gif_if, DLT_NULL, sizeof(u_int));
 }
 
+void
+gif_rtcache_free_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct route *ro = p;
+
+	rtcache_free(ro);
+}
+
 static int
 gif_clone_destroy(struct ifnet *ifp)
 {
@@ -218,8 +229,8 @@ gif_clone_destroy(struct ifnet *ifp)
 	gif_delete_tunnel(&sc->gif_if);
 	bpf_detach(ifp);
 	if_detach(ifp);
-	rtcache_free(&sc->gif_ro);
-
+	percpu_foreach(sc->gif_ro_percpu, gif_rtcache_free_pc, NULL);
+	percpu_free(sc->gif_ro_percpu, sizeof(struct route));
 	kmem_free(sc, sizeof(struct gif_softc));
 
 	return (0);

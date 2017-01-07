@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.78.2.1 2016/08/06 00:19:07 pgoyette Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.78.2.2 2017/01/07 08:56:33 pgoyette Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.78.2.1 2016/08/06 00:19:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.78.2.2 2017/01/07 08:56:33 pgoyette Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -323,13 +323,6 @@ static int	iwn_alloc_rpool(struct iwn_softc *);
 static void	iwn_free_rpool(struct iwn_softc *);
 #endif
 
-/* XXX needed by iwn_scan */
-static u_int8_t	*ieee80211_add_ssid(u_int8_t *, const u_int8_t *, u_int);
-static u_int8_t	*ieee80211_add_rates(u_int8_t *,
-    const struct ieee80211_rateset *);
-static u_int8_t	*ieee80211_add_xrates(u_int8_t *,
-    const struct ieee80211_rateset *);
-
 static void	iwn_fix_channel(struct ieee80211com *, struct mbuf *,
 		    struct iwn_rx_stat *);
 
@@ -593,6 +586,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ieee80211_ifattach(ic);
 	ic->ic_node_alloc = iwn_node_alloc;
 	ic->ic_newassoc = iwn_newassoc;
@@ -2341,7 +2335,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int ackfailcnt,
 		sc->qfullmsk &= ~(1 << ring->qid);
 		if (sc->qfullmsk == 0 && (ifp->if_flags & IFF_OACTIVE)) {
 			ifp->if_flags &= ~IFF_OACTIVE;
-			(*ifp->if_start)(ifp);
+			if_schedule_deferred_start(ifp);
 		}
 	}
 }
@@ -2642,12 +2636,16 @@ iwn_intr(void *arg)
 
 	/* Read interrupts from ICT (fast) or from registers (slow). */
 	if (sc->sc_flags & IWN_FLAG_USE_ICT) {
+		bus_dmamap_sync(sc->sc_dmat, sc->ict_dma.map, 0,
+		    IWN_ICT_SIZE, BUS_DMASYNC_POSTREAD);
 		tmp = 0;
 		while (sc->ict[sc->ict_cur] != 0) {
 			tmp |= sc->ict[sc->ict_cur];
 			sc->ict[sc->ict_cur] = 0;	/* Acknowledge. */
 			sc->ict_cur = (sc->ict_cur + 1) % IWN_ICT_COUNT;
 		}
+		bus_dmamap_sync(sc->sc_dmat, sc->ict_dma.map, 0,
+		    IWN_ICT_SIZE, BUS_DMASYNC_PREWRITE);
 		tmp = le32toh(tmp);
 		if (tmp == 0xffffffff)	/* Shouldn't happen. */
 			tmp = 0;
@@ -6450,58 +6448,6 @@ iwn_free_rpool(struct iwn_softc *sc)
 	iwn_dma_contig_free(&sc->rxq.buf_dma);
 }
 #endif
-
-/*
- * XXX code from OpenBSD src/sys/net80211/ieee80211_output.c
- * Copyright (c) 2001 Atsushi Onoe
- * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
- * Copyright (c) 2007-2009 Damien Bergamini
- * All rights reserved.
- */
-
-/*
- * Add an SSID element to a frame (see 7.3.2.1).
- */
-static u_int8_t *
-ieee80211_add_ssid(u_int8_t *frm, const u_int8_t *ssid, u_int len)
-{
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = len;
-	memcpy(frm, ssid, len);
-	return frm + len;
-}
-
-/*
- * Add a supported rates element to a frame (see 7.3.2.2).
- */
-static u_int8_t *
-ieee80211_add_rates(u_int8_t *frm, const struct ieee80211_rateset *rs)
-{
-	int nrates;
-
-	*frm++ = IEEE80211_ELEMID_RATES;
-	nrates = min(rs->rs_nrates, IEEE80211_RATE_SIZE);
-	*frm++ = nrates;
-	memcpy(frm, rs->rs_rates, nrates);
-	return frm + nrates;
-}
-
-/*
- * Add an extended supported rates element to a frame (see 7.3.2.14).
- */
-static u_int8_t *
-ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
-{
-	int nrates;
-
-	KASSERT(rs->rs_nrates > IEEE80211_RATE_SIZE);
-
-	*frm++ = IEEE80211_ELEMID_XRATES;
-	nrates = rs->rs_nrates - IEEE80211_RATE_SIZE;
-	*frm++ = nrates;
-	memcpy(frm, rs->rs_rates + IEEE80211_RATE_SIZE, nrates);
-	return frm + nrates;
-}
 
 /*
  * XXX: Hack to set the current channel to the value advertised in beacons or

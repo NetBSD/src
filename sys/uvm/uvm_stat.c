@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.37 2011/05/17 04:18:07 mrg Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.37.36.1 2017/01/07 08:56:53 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.37 2011/05/17 04:18:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.37.36.1 2017/01/07 08:56:53 pgoyette Exp $");
 
 #include "opt_readahead.h"
 #include "opt_ddb.h"
@@ -60,7 +60,7 @@ uvmexp_print(void (*pr)(const char *, ...)
 	uvm_estimatepageable(&active, &inactive);
 
 	(*pr)("Current UVM status:\n");
-	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d\n, ncolors=%d",
+	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d, ncolors=%d\n",
 	    uvmexp.pagesize, uvmexp.pagesize, uvmexp.pagemask,
 	    uvmexp.pageshift, uvmexp.ncolors);
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
@@ -70,6 +70,8 @@ uvmexp_print(void (*pr)(const char *, ...)
 	    uvmexp.anonpages, uvmexp.filepages, uvmexp.execpages);
 	(*pr)("  freemin=%d, free-target=%d, wired-max=%d\n",
 	    uvmexp.freemin, uvmexp.freetarg, uvmexp.wiredmax);
+	(*pr)("  resv-pg=%d, resv-kernel=%d, zeropages=%d\n",
+	    uvmexp.reserve_pagedaemon, uvmexp.reserve_kernel, uvmexp.zeropages);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		(*pr)("  cpu%u:\n", cpu_index(ci));

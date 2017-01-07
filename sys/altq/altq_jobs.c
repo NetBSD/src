@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.9 2016/04/20 08:58:48 knakahara Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.9.2.1 2017/01/07 08:56:08 pgoyette Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.9 2016/04/20 08:58:48 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.9.2.1 2017/01/07 08:56:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -1547,7 +1547,7 @@ static int64_t *
 update_error(struct jobs_if *jif)
 {
 	int i;
-	int active_classes, backlogged_classes;
+	int active_classes;
 	u_int64_t mean_weighted_delay;
 	u_int64_t delays[JOBS_MAXPRI];
 	int64_t* error;
@@ -1562,7 +1562,6 @@ update_error(struct jobs_if *jif)
 
 	mean_weighted_delay = 0;
 	active_classes = 0;
-	backlogged_classes = 0;
 
 	for (i = 0; i <= jif->jif_maxpri; i++) {
 		cl = jif->jif_classes[i];
@@ -1570,7 +1569,6 @@ update_error(struct jobs_if *jif)
 		is_backlogged = (class_exists && !qempty(cl->cl_q));
 
 		if (is_backlogged) {
-			backlogged_classes++;
 			if (cl->concerned_rdc) {
 				delays[i] = proj_delay(jif, i);
 				mean_weighted_delay += cl->delay_prod_others*delays[i];
@@ -1685,7 +1683,7 @@ pick_dropped_rlc(struct jobs_if *jif)
 {
 	int64_t mean;
 	int64_t* loss_error;
-	int i, active_classes, backlogged_classes;
+	int i, active_classes;
 	int class_exists, is_backlogged;
 	int class_dropped;
 	int64_t max_error;
@@ -1704,14 +1702,12 @@ pick_dropped_rlc(struct jobs_if *jif)
 	max_error = 0;
 	mean = 0;
 	active_classes = 0;
-	backlogged_classes = 0;
 
 	for (i = 0; i <= jif->jif_maxpri; i++) {
 		cl = jif->jif_classes[i];
 		class_exists = (cl != NULL);
 		is_backlogged = (class_exists && !qempty(cl->cl_q));
 		if (is_backlogged) {
-			backlogged_classes ++;
 			if (cl->concerned_rlc) {
 				mean += cl->loss_prod_others
 				    * cl->current_loss;

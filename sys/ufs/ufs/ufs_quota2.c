@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.40 2015/03/28 19:24:05 maxv Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.40.2.1 2017/01/07 08:56:53 pgoyette Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.40 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.40.2.1 2017/01/07 08:56:53 pgoyette Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -200,7 +200,7 @@ quota2_walk_list(struct ufsmount *ump, struct buf *hbp, int type,
 	struct quota2_entry *q2e;
 	daddr_t lblkno, blkoff, olblkno = 0;
 
-	KASSERT(mutex_owner(&dqlock));
+	KASSERT(mutex_owned(&dqlock));
 
 	while (off != 0) {
 		lblkno = (off >> ump->um_mountp->mnt_fs_bshift);

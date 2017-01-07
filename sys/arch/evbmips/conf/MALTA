@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.82 2015/09/26 11:16:12 maxv Exp $
+#	$NetBSD: MALTA,v 1.82.2.1 2017/01/07 08:56:16 pgoyette Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.82 $"
+#ident 		"MALTA-$Revision: 1.82.2.1 $"
 
 maxusers	32
 
@@ -295,6 +295,8 @@ clct*		at pci? dev ? function ?	# Cirrus Logic CS4281
 
 # Audio support
 audio*		at clct?
+
+spkr*		at audio?			# PC speaker (synthesized)
 
 # Pseudo-devices
 

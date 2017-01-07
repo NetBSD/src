@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.65 2014/08/10 23:35:26 matt Exp $	 */
+/*	$NetBSD: symbol.c,v 1.65.6.1 2017/01/07 08:56:05 pgoyette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.65 2014/08/10 23:35:26 matt Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.65.6.1 2017/01/07 08:56:05 pgoyette Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -77,43 +77,6 @@ _rtld_donelist_check(DoneList *dlp, const Obj_Entry *obj)
 	 */
 	if (dlp->num_used < dlp->num_alloc)
 		dlp->objs[dlp->num_used++] = obj;
-	return false;
-}
-
-static bool
-_rtld_is_exported(const Elf_Sym *def)
-{
-	static const fptr_t _rtld_exports[] = {
-		(fptr_t)dlopen,
-		(fptr_t)dlclose,
-		(fptr_t)dlsym,
-		(fptr_t)dlvsym,
-		(fptr_t)dlerror,
-		(fptr_t)dladdr,
-		(fptr_t)dlinfo,
-		(fptr_t)dl_iterate_phdr,
-		(fptr_t)_dlauxinfo,
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-		(fptr_t)_rtld_tls_allocate,
-		(fptr_t)_rtld_tls_free,
-		(fptr_t)__tls_get_addr,
-#ifdef __i386__
-		(fptr_t)___tls_get_addr,
-#endif
-#endif
-#if defined(__ARM_EABI__) && !defined(__ARM_DWARF_EH__)
-		(fptr_t)__gnu_Unwind_Find_exidx,	/* for gcc EHABI */
-#endif
-		NULL
-	};
-	int i;
-	fptr_t value;
-
-	value = (fptr_t)(_rtld_objself.relocbase + def->st_value);
-	for (i = 0; _rtld_exports[i] != NULL; i++) {
-		if (value == _rtld_exports[i])
-			return true;
-	}
 	return false;
 }
 
@@ -565,15 +528,13 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 	/*
 	 * Search the dynamic linker itself, and possibly resolve the
 	 * symbol from there.  This is how the application links to
-	 * dynamic linker services such as dlopen.  Only the values listed
-	 * in the "_rtld_exports" array can be resolved from the dynamic
-	 * linker.
+	 * dynamic linker services such as dlopen.
 	 */
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
 		rdbg(("Search the dynamic linker itself."));
 		symp = _rtld_symlook_obj(name, hash, &_rtld_objself, flags,
 		    ventry);
-		if (symp != NULL && _rtld_is_exported(symp)) {
+		if (symp != NULL) {
 			def = symp;
 			defobj = &_rtld_objself;
 		}

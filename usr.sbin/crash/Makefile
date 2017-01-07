@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2015/06/16 23:48:20 christos Exp $
+#	$NetBSD: Makefile,v 1.31.2.1 2017/01/07 08:56:59 pgoyette Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -16,11 +16,14 @@ DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 .if    ${MACHINE} == "amd64" \
     || ${MACHINE} == "hppa" \
     || ${MACHINE} == "i386" \
+    || ${MACHINE} == "sparc" \
     || ${MACHINE} == "sparc64" \
     || (${MACHINE_CPU} == "arm" && ${MACHINE} != "acorn26") \
     || ${MACHINE_ARCH} == "m68k"
 SRCS+=	db_trace.c
-.if ${MACHINE_ARCH} != "m68k"
+.if ${MACHINE_ARCH} == "sparc"
+SRCS+=	db_interface.c
+.elif ${MACHINE_ARCH} != "m68k"
 SRCS+=	db_machdep.c
 .endif
 REALCRASH=yes
@@ -56,8 +59,7 @@ CPPFLAGS+=	-I${S}/arch
 . if    ${MACHINE} == "amd64" \
      || ${MACHINE} == "i386"
 MACHINE_FAMILY = x86
-. elif    ${MACHINE} == "sparc64" \
-     || ${MACHINE} == "sparc64"
+. elif  ${MACHINE} == "sparc64"
 MACHINE_FAMILY = sparc
 . else
 MACHINE_FAMILY = ${MACHINE_CPU}
@@ -94,6 +96,8 @@ CLEANFILES+=	vers.c version
 SRCS+=	unsupported.c
 
 .endif				# }
+
+.include "../../compat/exec.mk"
 
 .include <bsd.prog.mk>
 .include <bsd.klinks.mk>

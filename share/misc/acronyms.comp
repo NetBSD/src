@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.166 2016/05/31 23:15:05 jnemeth Exp $
+$NetBSD: acronyms.comp,v 1.166.2.1 2017/01/07 08:56:08 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -43,6 +43,7 @@ AM	alignment mask
 AM	amplitude modulation
 AMI	alternate mark inversion
 AMQP	advanced message queuing protocol
+AMP	asymmetric multiprocessing
 AMT	active management technology
 AN	Arabic number
 ANSI	American National Standards Institute
@@ -900,6 +901,7 @@ PBE	programming by example
 PC	personal computer
 PC	program counter
 PCB	printed circuit board
+PCB	process control block
 PCC	Portable C Compiler
 PCD	page-level cache disable
 PCE	performance-monitor counter enable

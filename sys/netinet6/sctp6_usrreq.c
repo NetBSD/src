@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.6.2.2 2016/08/06 00:19:10 pgoyette Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.6.2.3 2017/01/07 08:56:51 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,12 +33,13 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.6.2.2 2016/08/06 00:19:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.6.2.3 2017/01/07 08:56:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_sctp.h"
+#include "opt_net_mpsafe.h"
 #endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
@@ -78,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.6.2.2 2016/08/06 00:19:10 pgoyett
 #include <netinet/icmp6.h>
 #include <netinet6/sctp6_var.h>
 #include <netinet6/ip6protosw.h>
-#include <netinet6/nd6.h>
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
@@ -90,8 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.6.2.2 2016/08/06 00:19:10 pgoyett
 #endif
 
 #include <net/net_osdep.h>
-
-extern struct protosw inetsw[];
 
 #if defined(HAVE_NRL_INPCB) || defined(__FreeBSD__)
 #ifndef in6pcb
@@ -1301,9 +1299,13 @@ sctp6_purgeif(struct socket *so, struct ifnet *ifp)
 		}
 	}
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
+#endif
 	in6_purgeif(ifp);
+#ifndef NET_MPSAFE
 	mutex_exit(softnet_lock);
+#endif
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1530.2.1 2016/11/04 14:42:39 pgoyette Exp $
+# $NetBSD: mi,v 1.1530.2.2 2017/01/07 08:53:44 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -55,7 +55,7 @@
 ./usr/share/man/cat1/atf-compile.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat,atf,!kyua
 ./usr/share/man/cat1/atf-config.0		man-obsolete		.cat,kyua,obsolete
-./usr/share/man/cat1/atf-exec.0			man-atf-catman		obsolete
+./usr/share/man/cat1/atf-exec.0			man-obsolete		obsolete
 ./usr/share/man/cat1/atf-format.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-killpg.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-report.0		man-atf-catman		.cat,atf
@@ -390,12 +390,12 @@
 ./usr/share/man/cat1/openssl_genrsa.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_nseq.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_passwd.0		man-crypto-catman	crypto,.cat
-./usr/share/man/cat1/openssl_pkey.0		man-crypto-catman	crypto,.cat
-./usr/share/man/cat1/openssl_pkeyparam.0	man-crypto-catman	crypto,.cat
-./usr/share/man/cat1/openssl_pkeyutl.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_pkcs12.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_pkcs7.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_pkcs8.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_pkey.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_pkeyparam.0	man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_pkeyutl.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_rand.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_req.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_rsa.0		man-crypto-catman	crypto,.cat
@@ -1248,7 +1248,7 @@
 ./usr/share/man/cat4/i386/mem.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/mms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/ndis.0		man-sys-catman		.cat
-./usr/share/man/cat4/i386/npx.0			man-sys-catman		.cat
+./usr/share/man/cat4/i386/npx.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/olms.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/omms.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/opms.0		man-obsolete		obsolete
@@ -1529,6 +1529,7 @@
 ./usr/share/man/cat4/piixpm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pim.0			man-sys-catman		.cat
 ./usr/share/man/cat4/plip.0			man-sys-catman		.cat
+./usr/share/man/cat4/pm3fb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pmax/asc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pmax/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/pmax/dc.0			man-obsolete		obsolete
@@ -3225,7 +3226,7 @@
 ./usr/share/man/html1/atf-compile.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-config.html		man-atf-htmlman		html,atf,!kyua
 ./usr/share/man/html1/atf-config.html		man-obsolete		html,kyua,obsolete
-./usr/share/man/html1/atf-exec.html		man-atf-htmlman		obsolete
+./usr/share/man/html1/atf-exec.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-format.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-killpg.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-report.html		man-atf-htmlman		html,atf
@@ -4322,7 +4323,7 @@
 ./usr/share/man/html4/i386/mem.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/mms.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/ndis.html		man-sys-htmlman		html
-./usr/share/man/html4/i386/npx.html		man-sys-htmlman		html
+./usr/share/man/html4/i386/npx.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/pcibios.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/pnpbios.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/rdcide.html		man-sys-htmlman		html
@@ -4568,6 +4569,7 @@
 ./usr/share/man/html4/piixpm.html		man-sys-htmlman		html
 ./usr/share/man/html4/pim.html			man-sys-htmlman		html
 ./usr/share/man/html4/plip.html			man-sys-htmlman		html
+./usr/share/man/html4/pm3fb.html		man-sys-htmlman		html
 ./usr/share/man/html4/pmax/asc.html		man-sys-htmlman		html
 ./usr/share/man/html4/pmax/autoconf.html	man-sys-htmlman		html
 ./usr/share/man/html4/pmax/ibus.html		man-sys-htmlman		html
@@ -6005,7 +6007,7 @@
 ./usr/share/man/man1/atf-compile.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-config.1		man-atf-man		.man,atf,!kyua
 ./usr/share/man/man1/atf-config.1		man-obsolete		.man,kyua,obsolete
-./usr/share/man/man1/atf-exec.1			man-atf-man		obsolete
+./usr/share/man/man1/atf-exec.1			man-obsolete		obsolete
 ./usr/share/man/man1/atf-format.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-killpg.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-report.1		man-atf-man		.man,atf
@@ -7198,7 +7200,7 @@
 ./usr/share/man/man4/i386/mem.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/mms.4			man-sys-man		.man
 ./usr/share/man/man4/i386/ndis.4		man-sys-man		.man
-./usr/share/man/man4/i386/npx.4			man-sys-man		.man
+./usr/share/man/man4/i386/npx.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/olms.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/omms.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/opms.4		man-obsolete		obsolete
@@ -7479,6 +7481,7 @@
 ./usr/share/man/man4/piixpm.4			man-sys-man		.man
 ./usr/share/man/man4/pim.4			man-sys-man		.man
 ./usr/share/man/man4/plip.4			man-sys-man		.man
+./usr/share/man/man4/pm3fb.4			man-sys-man		.man
 ./usr/share/man/man4/pmax/asc.4			man-sys-man		.man
 ./usr/share/man/man4/pmax/autoconf.4		man-sys-man		.man
 ./usr/share/man/man4/pmax/dc.4			man-obsolete		obsolete

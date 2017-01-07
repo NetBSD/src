@@ -1,4 +1,4 @@
-#	$NetBSD: t_ping6_opts.sh,v 1.1.2.2 2016/11/04 14:49:24 pgoyette Exp $
+#	$NetBSD: t_ping6_opts.sh,v 1.1.2.3 2017/01/07 08:56:56 pgoyette Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,9 +25,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-RUMP_LIBS="-lrumpdev -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
-RUMP_LIBS_IPV6="$RUMP_LIBS -lrumpnet_netinet6"
-
 SOCKSRC=unix://commsock1
 SOCKFWD=unix://commsock2
 SOCKDST=unix://commsock3
@@ -41,7 +38,7 @@ BUS_DSTGW=bus2
 IP6SRC2=fc00:0:0:1::3
 IP6SRCGW2=fc00:0:0:1::254
 
-DEBUG=false
+DEBUG=${DEBUG:-false}
 TIMEOUT=1
 
 #
@@ -54,9 +51,9 @@ setup_endpoint()
 	local bus=${3}
 	local gw=${4}
 
+	rump_server_add_iface $sock shmif0 $bus
+
 	export RUMP_SERVER=${sock}
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr ${bus}
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 ${addr}
 	atf_check -s exit:0 -o ignore rump.route add -inet6 default ${gw}
 	atf_check -s exit:0 rump.ifconfig shmif0 up
@@ -71,12 +68,10 @@ setup_endpoint()
 setup_forwarder()
 {
 
-	export RUMP_SERVER=$SOCKFWD
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr $BUS_SRCGW
+	rump_server_add_iface $SOCKFWD shmif0 $BUS_SRCGW
+	rump_server_add_iface $SOCKFWD shmif1 $BUS_DSTGW
 
-	atf_check -s exit:0 rump.ifconfig shmif1 create
-	atf_check -s exit:0 rump.ifconfig shmif1 linkstr $BUS_DSTGW
+	export RUMP_SERVER=$SOCKFWD
 
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 ${IP6SRCGW}
 	atf_check -s exit:0 rump.ifconfig shmif1 inet6 ${IP6DSTGW}
@@ -100,44 +95,13 @@ setup_forwarding6()
 setup6()
 {
 
-	atf_check -s exit:0 rump_server $RUMP_LIBS_IPV6 $SOCKSRC
-	atf_check -s exit:0 rump_server $RUMP_LIBS_IPV6 $SOCKFWD
-	atf_check -s exit:0 rump_server $RUMP_LIBS_IPV6 $SOCKDST
+	rump_server_start $SOCKSRC netinet6
+	rump_server_start $SOCKFWD netinet6
+	rump_server_start $SOCKDST netinet6
 
 	setup_endpoint $SOCKSRC $IP6SRC $BUS_SRCGW $IP6SRCGW
 	setup_endpoint $SOCKDST $IP6DST $BUS_DSTGW $IP6DSTGW
 	setup_forwarder
-}
-
-extract_new_packets()
-{
-	local bus=$1
-	local old=./old
-
-	if [ ! -f $old ]; then
-		old=/dev/null
-	fi
-
-	shmif_dumpbus -p - $bus 2>/dev/null| \
-	    tcpdump -n -e -r - 2>/dev/null > ./new
-	diff -u $old ./new |grep '^+' |cut -d '+' -f 2 > ./diff
-	mv -f ./new ./old
-	cat ./diff
-}
-
-get_lladdr()
-{
-
-	env RUMP_SERVER=${1} \
-	    rump.ifconfig ${2} inet6 | grep "fe80" \
-	    | awk '{print $2}' | sed -e "s/%$2//g" -e 's;/[0-9]*$;;'
-}
-
-get_macaddr()
-{
-
-	env RUMP_SERVER=${1} \
-	    rump.ifconfig ${2} |awk '/address/ {print $2;}'
 }
 
 check_echo_request_pkt()
@@ -160,27 +124,18 @@ check_echo_request_pkt_with_macaddr()
 	atf_check -s exit:0 -o match:"$pkt" cat ./out
 }
 
-dump()
+check_echo_request_pkt_with_macaddr_and_rthdr0()
 {
+	local pkt=
 
-	env RUMP_SERVER=$SOCKSRC rump.ifconfig
-	env RUMP_SERVER=$SOCKFWD rump.ifconfig
-	env RUMP_SERVER=$SOCKDST rump.ifconfig
+	pkt="$1 > $2, .+ $3 > $4:"
+	pkt="$pkt srcrt \\(len=2, type=0, segleft=1, \\[0\\]$5\\)"
+	pkt="$pkt .+ echo request"
 
-	env RUMP_SERVER=$SOCKSRC rump.netstat -nr
-	env RUMP_SERVER=$SOCKFWD rump.netstat -nr
-	env RUMP_SERVER=$SOCKDST rump.netstat -nr
-
-	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
-	shmif_dumpbus -p - bus2 2>/dev/null| tcpdump -n -e -r -
-}
-
-cleanup()
-{
-
-	env RUMP_SERVER=$SOCKSRC rump.halt
-	env RUMP_SERVER=$SOCKFWD rump.halt
-	env RUMP_SERVER=$SOCKDST rump.halt
+	extract_new_packets $BUS_SRCGW > ./out
+	$DEBUG && echo $pkt
+	$DEBUG && cat ./out
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
 }
 
 #
@@ -218,6 +173,8 @@ ping6_opts_sourceaddr_body()
 	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
 	    -S $IP6SRC2 $IP6DST
 	check_echo_request_pkt $IP6SRC2 $IP6DST
+
+	rump_server_destroy_ifaces
 }
 
 ping6_opts_sourceaddr_cleanup()
@@ -244,18 +201,17 @@ ping6_opts_interface_body()
 	setup6
 	setup_forwarding6
 
-	shmif0_lladdr=$(get_lladdr ${SOCKSRC} shmif0)
-	gw_lladdr=$(get_lladdr ${SOCKFWD} shmif0)
+	shmif0_lladdr=$(get_linklocal_addr ${SOCKSRC} shmif0)
+	gw_lladdr=$(get_linklocal_addr ${SOCKFWD} shmif0)
 
 	export RUMP_SERVER=$SOCKSRC
 	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT $gw_lladdr
 	check_echo_request_pkt $shmif0_lladdr $gw_lladdr
 
-	atf_check -s exit:0 rump.ifconfig shmif1 create
-	atf_check -s exit:0 rump.ifconfig shmif1 linkstr $BUS_SRCGW
+	rump_server_add_iface $SOCKSRC shmif1 $BUS_SRCGW
 	atf_check -s exit:0 rump.ifconfig shmif1 up
 	atf_check -s exit:0 rump.ifconfig -w 10
-	shmif1_lladdr=$(get_lladdr ${SOCKSRC} shmif1)
+	shmif1_lladdr=$(get_linklocal_addr ${SOCKSRC} shmif1)
 
 	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT $gw_lladdr
 	check_echo_request_pkt $shmif0_lladdr $gw_lladdr
@@ -268,6 +224,8 @@ ping6_opts_interface_body()
 	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
 	    -I shmif1 $gw_lladdr
 	check_echo_request_pkt $shmif1_lladdr $gw_lladdr
+
+	rump_server_destroy_ifaces
 }
 
 ping6_opts_interface_cleanup()
@@ -302,9 +260,8 @@ ping6_opts_gateway_body()
 	check_echo_request_pkt_with_macaddr \
 	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6DST
 
+	rump_server_add_iface $SOCKFWD shmif2 $BUS_SRCGW
 	export RUMP_SERVER=$SOCKFWD
-	atf_check -s exit:0 rump.ifconfig shmif2 create
-	atf_check -s exit:0 rump.ifconfig shmif2 linkstr $BUS_SRCGW
 	atf_check -s exit:0 rump.ifconfig shmif2 inet6 $IP6SRCGW2
 	atf_check -s exit:0 rump.ifconfig -w 10
 	gw_shmif2_macaddr=$(get_macaddr ${SOCKFWD} shmif2)
@@ -324,9 +281,89 @@ ping6_opts_gateway_body()
 	    -g $IP6SRCGW2 $IP6DST
 	check_echo_request_pkt_with_macaddr \
 	    $my_macaddr $gw_shmif2_macaddr $IP6SRC $IP6DST
+
+	rump_server_destroy_ifaces
 }
 
 ping6_opts_gateway_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case ping6_opts_hops cleanup
+ping6_opts_hops_head()
+{
+
+	atf_set "descr" "tests of ping6 hops (Type 0 Routing Header)"
+	atf_set "require.progs" "rump_server"
+}
+
+ping6_opts_hops_body()
+{
+	local my_macaddr=
+	local gw_shmif0_macaddr=
+	local gw_shmif2_macaddr=
+
+	setup6
+	setup_forwarding6
+
+	my_macaddr=$(get_macaddr ${SOCKSRC} shmif0)
+	gw_shmif0_macaddr=$(get_macaddr ${SOCKFWD} shmif0)
+
+	export RUMP_SERVER=$SOCKSRC
+	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT $IP6DST
+	check_echo_request_pkt_with_macaddr \
+	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6DST
+
+	rump_server_add_iface $SOCKFWD shmif2 $BUS_SRCGW
+	export RUMP_SERVER=$SOCKFWD
+	atf_check -s exit:0 rump.ifconfig shmif2 inet6 $IP6SRCGW2
+	atf_check -s exit:0 rump.ifconfig -w 10
+	gw_shmif2_macaddr=$(get_macaddr ${SOCKFWD} shmif2)
+
+	export RUMP_SERVER=$SOCKSRC
+	atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT $IP6DST
+	check_echo_request_pkt_with_macaddr \
+	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6DST
+
+	# ping6 hops
+
+	# ping6 fails expectedly because the kernel doesn't support
+	# to receive packets with type 0 routing headers, but we can
+	# check whether a sent packet is correct.
+	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
+	    $IP6SRCGW $IP6DST
+	check_echo_request_pkt_with_macaddr_and_rthdr0 \
+	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6SRCGW $IP6DST
+
+	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
+	    $IP6SRCGW2 $IP6DST
+	check_echo_request_pkt_with_macaddr_and_rthdr0 \
+	    $my_macaddr $gw_shmif2_macaddr $IP6SRC $IP6SRCGW2 $IP6DST
+
+	# ping6 -g <gateway> hops
+	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
+	    -g $IP6SRCGW $IP6SRCGW $IP6DST
+	check_echo_request_pkt_with_macaddr_and_rthdr0 \
+	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6SRCGW $IP6DST
+
+	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
+	    -g $IP6SRCGW2 $IP6SRCGW2 $IP6DST
+	check_echo_request_pkt_with_macaddr_and_rthdr0 \
+	    $my_macaddr $gw_shmif2_macaddr $IP6SRC $IP6SRCGW2 $IP6DST
+
+	# ping6 -g <gateway> hops, but different nexthops (is it valid?)
+	atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X $TIMEOUT \
+	    -g $IP6SRCGW $IP6SRCGW2 $IP6DST
+	check_echo_request_pkt_with_macaddr_and_rthdr0 \
+	    $my_macaddr $gw_shmif0_macaddr $IP6SRC $IP6SRCGW2 $IP6DST
+
+	rump_server_destroy_ifaces
+}
+
+ping6_opts_hops_cleanup()
 {
 
 	$DEBUG && dump
@@ -339,4 +376,5 @@ atf_init_test_cases()
 	atf_add_test_case ping6_opts_sourceaddr
 	atf_add_test_case ping6_opts_interface
 	atf_add_test_case ping6_opts_gateway
+	atf_add_test_case ping6_opts_hops
 }

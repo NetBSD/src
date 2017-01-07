@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.5.2.1 2016/11/04 14:42:40 pgoyette Exp $
+# $NetBSD: md.sparc64,v 1.5.2.2 2017/01/07 08:53:45 pgoyette Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg,obsolete
@@ -53,8 +53,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ag10e_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ag10e_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libag10e_drv.so.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libati_drv.so.6.debug	obsolete		xorg,obsolete

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.73 2015/08/21 01:52:07 uebayasi Exp $
+#	$NetBSD: INSTALL,v 1.73.2.1 2017/01/07 08:56:08 pgoyette Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.73 $"
+#ident		"INSTALL-$Revision: 1.73.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -239,6 +239,8 @@ lpt*	at pioc? offset 0x0278 irq 0
 # Audio device
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
+
+spkr*	at audio?			# PC speaker (synthesized)
 
 # Podule bus device
 podulebus0	at root

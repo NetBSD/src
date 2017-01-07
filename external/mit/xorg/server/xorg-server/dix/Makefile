@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2012/03/22 23:46:28 joerg Exp $
+#	$NetBSD: Makefile,v 1.12.14.1 2017/01/07 08:56:00 pgoyette Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -21,8 +21,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xorg
 CPPFLAGS+=	${X11FLAGS.PERVASIVE_EXTENSION}
 CPPFLAGS+=	${X11FLAGS.DIX} ${X11INCS.DIX}
 
-CPPFLAGS.globals.c=	-DCOMPILEDDEFAULTFONTPATH=\"${X11DEFAULTFONTPATH:ts,}\" \
-			-DRGB_DB=\"${X11LIBDIR}/rgb\"
+CPPFLAGS.globals.c=	-DCOMPILEDDEFAULTFONTPATH=\"${X11DEFAULTFONTPATH:ts,}\"
 
 # XXX make user variables
 CPPFLAGS.dispatch.c=	-DVENDOR_NAME="\"The Xorg Foundation\""

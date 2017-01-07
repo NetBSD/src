@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.59 2015/08/21 01:52:07 uebayasi Exp $
+# $NetBSD: INSTALL,v 1.59.2.1 2017/01/07 08:56:12 pgoyette Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.59 $"
+#ident 		"INSTALL-$Revision: 1.59.2.1 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -282,6 +282,8 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 
 # Audio support
 #audio*		at audiobus?
+
+#spkr*		at audio?			# PC speaker (synthesized)
 
 # Pseudo-devices
 

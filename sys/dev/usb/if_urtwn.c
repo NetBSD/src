@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.45.2.1 2016/11/04 14:49:15 pgoyette Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.45.2.2 2017/01/07 08:56:41 pgoyette Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,10 +25,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.45.2.1 2016/11/04 14:49:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.45.2.2 2017/01/07 08:56:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
@@ -189,7 +190,8 @@ static const struct urtwn_dev {
 	URTWN_RTL8188E_DEV(ELECOM, WDC150SU2M),
 	URTWN_RTL8188E_DEV(REALTEK, RTL8188ETV),
 	URTWN_RTL8188E_DEV(REALTEK, RTL8188EU),
-	
+	URTWN_RTL8188E_DEV(ABOCOM, RTL8188EU),
+
 	/* URTWN_RTL8192EU */
 	URTWN_RTL8192EU_DEV(REALTEK,	RTL8192EU),
 };
@@ -3077,7 +3079,7 @@ urtwn_r92e_power_on(struct urtwn_softc *sc)
 
 	if (urtwn_read_4(sc, R92E_SYS_CFG1_8192E) & R92E_SPSLDO_SEL){
 		/* LDO. */
-		urtwn_write_1(sc, R92E_LDO_SWR_CTRL, 0xc3); 
+		urtwn_write_1(sc, R92E_LDO_SWR_CTRL, 0xc3);
 	}
 	else	{
 		urtwn_write_2(sc, R92C_SYS_SWR_CTRL2, urtwn_read_2(sc,
@@ -3125,7 +3127,7 @@ urtwn_r92e_power_on(struct urtwn_softc *sc)
 		    "timeout waiting for chip power up\n");
 		return ETIMEDOUT;
 	}
-	    
+
 	urtwn_write_2(sc, R92C_CR, 0x00);
 	reg = urtwn_read_2(sc, R92C_CR);
 	reg |= R92C_CR_HCI_TXDMA_EN | R92C_CR_HCI_RXDMA_EN |
@@ -3207,9 +3209,9 @@ urtwn_llt_init(struct urtwn_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
-	if (sc->chip & URTWN_CHIP_88E) 
+	if (sc->chip & URTWN_CHIP_88E)
 		page_count = R88E_TX_PAGE_COUNT;
-	else if (sc->chip & URTWN_CHIP_92EU) 
+	else if (sc->chip & URTWN_CHIP_92EU)
 		page_count = R92E_TX_PAGE_COUNT;
 	else
 		page_count = R92C_TX_PAGE_COUNT;
@@ -3423,7 +3425,7 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 
 	/* Reset the FWDL checksum. */
 	urtwn_write_1(sc, R92C_MCUFWDL,
-   	    urtwn_read_1(sc, R92C_MCUFWDL) | R92C_MCUFWDL_CHKSUM_RPT);
+	urtwn_read_1(sc, R92C_MCUFWDL) | R92C_MCUFWDL_CHKSUM_RPT);
 
 	DELAY(50);
 	/* download firmware */
@@ -3644,7 +3646,7 @@ urtwn_mac_init(struct urtwn_softc *sc)
 		for (i = 0; i < __arraycount(rtl8188eu_mac); i++)
 			urtwn_write_1(sc, rtl8188eu_mac[i].reg,
 			    rtl8188eu_mac[i].val);
- 	} else if (ISSET(sc->chip, URTWN_CHIP_92EU)) {
+	} else if (ISSET(sc->chip, URTWN_CHIP_92EU)) {
 		for (i = 0; i < __arraycount(rtl8192eu_mac); i++)
 			urtwn_write_1(sc, rtl8192eu_mac[i].reg,
 			    rtl8192eu_mac[i].val);
@@ -4411,7 +4413,7 @@ urtwn_iq_calib(struct urtwn_softc *sc, bool inited)
 	reg0 = urtwn_bb_read(sc, R92C_OFDM0_TRXPATHENA);
 	reg1 = urtwn_bb_read(sc, R92C_OFDM0_TRMUXPAR);
 	reg2 = urtwn_bb_read(sc, R92C_FPGA0_RFIFACESW(1));
-	
+
 	/* Save adda regs to be restored when finished. */
 	for (i = 0; i < __arraycount(addaReg); i++)
 		addaBackup[i] = urtwn_bb_read(sc, addaReg[i]);
@@ -4441,7 +4443,7 @@ urtwn_iq_calib(struct urtwn_softc *sc, bool inited)
 		    urtwn_bb_read(sc, R92C_HSSI_PARAM1(1))|
 		    R92C_HSSI_PARAM1_PI);
 	}
-	
+
 	attempt = 1;
 
 next_attempt:
@@ -4460,7 +4462,7 @@ next_attempt:
 
 	if (sc->ntxchains > 1)
 		urtwn_bb_write(sc, R92C_LSSI_PARAM(1), R92C_IQK_LSSI_PARAM);
-		
+
 	urtwn_write_1(sc, R92C_TXPAUSE, (~TP_STOPBECON) & TP_STOPALL);
 	urtwn_write_1(sc, R92C_BCN_CTRL, (iqkBackup[1] &
 	    ~R92C_BCN_CTRL_EN_BCN));

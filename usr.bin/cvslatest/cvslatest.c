@@ -1,4 +1,4 @@
-/*	$NetBSD: cvslatest.c,v 1.2 2016/01/24 20:14:44 christos Exp $	*/
+/*	$NetBSD: cvslatest.c,v 1.2.2.1 2017/01/07 08:56:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cvslatest.c,v 1.2 2016/01/24 20:14:44 christos Exp $");
+__RCSID("$NetBSD: cvslatest.c,v 1.2.2.1 2017/01/07 08:56:57 pgoyette Exp $");
 
 /*
  * Find the latest timestamp in a set of CVS trees, by examining the
@@ -113,6 +113,7 @@ getlatest(const char *path, const char *repo, struct latest *lat)
 			if (!ignore)
 				exit(EXIT_FAILURE);
 		}
+		tm.tm_isdst = 0;	// We are in GMT anyway
 		if ((t = mktime(&tm)) == (time_t)-1)
 			errx(EXIT_FAILURE, "Time conversion `%s' in `%s'",
 			    dt, name);
@@ -120,7 +121,7 @@ getlatest(const char *path, const char *repo, struct latest *lat)
 			lat->time = t;
 			snprintf(lat->path, sizeof(lat->path),
 			    "%s/%s", repo, fn);
-			if (debug)
+			if (debug > 1)
 				printlat(lat);
 		}
 	}
@@ -152,8 +153,8 @@ cvsscan(char **pathv, const char *name, struct latest *lat)
 		if (strcmp(entry->fts_name, name) != 0)
                         continue;
 
-		getrepo(entry->fts_path, repo, sizeof(repo));
-		getlatest(entry->fts_path, repo, lat);
+		getrepo(entry->fts_accpath, repo, sizeof(repo));
+		getlatest(entry->fts_accpath, repo, lat);
         }
 
         (void)fts_close(dh);
@@ -191,6 +192,9 @@ main(int argc, char *argv[])
 
 	if (argc == optind)
 		usage();
+
+	// So that mktime behaves consistently
+	setenv("TZ", "UTC", 1);
 
 	cvsscan(argv + optind, name, &lat);
 	if (debug)
