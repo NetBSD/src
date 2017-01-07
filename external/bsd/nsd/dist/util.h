@@ -268,6 +268,7 @@ read_uint64(const void *src)
 
 extern unsigned nsd_debug_facilities;
 extern int nsd_debug_level;
+#undef DEBUG	/* XXX */
 #ifdef NDEBUG
 #define DEBUG(facility, level, args)  /* empty */
 #else
