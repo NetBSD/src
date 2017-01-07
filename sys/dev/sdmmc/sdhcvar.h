@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.26 2015/12/31 11:53:19 ryo Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.27 2017/01/07 15:05:08 kiyohara Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -59,6 +59,8 @@ struct sdhc_softc {
 #define	SDHC_FLAG_POLL_CARD_DET	0x00200000 /* polling card detect */
 #define	SDHC_FLAG_SLOW_SDR50  	0x00400000 /* reduce SDR50 speed */
 #define	SDHC_FLAG_USDHC		0x00800000 /* Freescale uSDHC */
+#define	SDHC_FLAG_NO_AUTO_STOP	0x01000000 /* No auto CMD12 */
+#define	SDHC_FLAG_NO_BUSY_INTR	0x02000000 /* No intr when RESP_BUSY */
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */

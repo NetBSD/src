@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.96 2017/01/07 15:00:38 kiyohara Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.97 2017/01/07 15:05:08 kiyohara Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.96 2017/01/07 15:00:38 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.97 2017/01/07 15:05:08 kiyohara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -595,7 +595,9 @@ adma_done:
 		saa.saa_clkmin = hp->clkbase / 0x3ff;
 	else
 		saa.saa_clkmin = hp->clkbase / 256;
-	saa.saa_caps = SMC_CAPS_4BIT_MODE|SMC_CAPS_AUTO_STOP;
+	if (!ISSET(sc->sc_flags, SDHC_FLAG_NO_AUTO_STOP))
+		saa.saa_caps |= SMC_CAPS_AUTO_STOP;
+	saa.saa_caps |= SMC_CAPS_4BIT_MODE;
 	if (ISSET(sc->sc_flags, SDHC_FLAG_8BIT_MODE))
 		saa.saa_caps |= SMC_CAPS_8BIT_MODE;
 	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP))
@@ -1572,7 +1574,8 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (cmd->c_error == 0 && cmd->c_data != NULL)
 		sdhc_transfer_data(hp, cmd);
 	else if (ISSET(cmd->c_flags, SCF_RSP_BSY)) {
-		if (!sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE, hz * 10, false)) {
+		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_BUSY_INTR) &&
+		    !sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE, hz * 10, false)) {
 			DPRINTF(1,("%s: sdhc_exec_command: RSP_BSY\n",
 			    HDEVNAME(hp)));
 			cmd->c_error = ETIMEDOUT;
@@ -1587,6 +1590,10 @@ out:
 		HCLR1(hp, SDHC_HOST_CTL, SDHC_LED_ON);
 	}
 	SET(cmd->c_flags, SCF_ITSDONE);
+
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_AUTO_STOP) &&
+	    cmd->c_opcode == MMC_STOP_TRANSMISSION)
+		(void)sdhc_soft_reset(hp, SDHC_RESET_CMD|SDHC_RESET_DAT);
 
 	mutex_exit(&hp->intr_lock);
 
@@ -1642,7 +1649,8 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	if (blkcount > 1) {
 		mode |= SDHC_MULTI_BLOCK_MODE;
 		/* XXX only for memory commands? */
-		mode |= SDHC_AUTO_CMD12_ENABLE;
+		if (!ISSET(sc->sc_flags, SDHC_FLAG_NO_AUTO_STOP))
+			mode |= SDHC_AUTO_CMD12_ENABLE;
 	}
 	if (cmd->c_dmamap != NULL && cmd->c_datalen > 0 &&
 	    ISSET(hp->flags,  SHF_MODE_DMAEN)) {
