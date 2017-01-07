@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd.c,v 1.5 2017/01/06 19:20:24 christos Exp $	*/
+/*	$NetBSD: npfd.c,v 1.6 2017/01/07 16:48:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd.c,v 1.5 2017/01/06 19:20:24 christos Exp $");
+__RCSID("$NetBSD: npfd.c,v 1.6 2017/01/07 16:48:03 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -98,6 +98,7 @@ npfd_event_loop(npfd_log_t *log, int delay)
 				continue;
 			syslog(LOG_ERR, "poll failed: %m");
 			exit(EXIT_FAILURE);
+			/*NOTREACHED*/
 		case 0:
 			npfd_log_flush(log);
 			continue;

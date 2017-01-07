@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd_log.c,v 1.7 2017/01/07 16:36:54 christos Exp $	*/
+/*	$NetBSD: npfd_log.c,v 1.8 2017/01/07 16:48:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd_log.c,v 1.7 2017/01/07 16:36:54 christos Exp $");
+__RCSID("$NetBSD: npfd_log.c,v 1.8 2017/01/07 16:48:03 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,7 +100,7 @@ npfd_log_gethdr(npfd_log_t *ctx, struct pcap_file_header*hdr)
 	return fp;
 out:
 	fclose(fp);
-	hdr->magic = -1;
+	hdr->magic = (uint32_t)-1;
 	return NULL;
 }
 
@@ -170,7 +170,7 @@ fix:
 		syslog(LOG_WARNING,
 		    "Incomplete last packet in `%s', truncating",
 		    ctx->path);
-		if (truncate(ctx->path, o) == -1) {
+		if (truncate(ctx->path, (off_t)o) == -1) {
 			syslog(LOG_ERR, "Cannot truncate `%s': %m", ctx->path);
 			goto rename;
 		}
@@ -324,7 +324,7 @@ npfd_log(npfd_log_t *ctx)
 {
 	pcap_dumper_t *dumper = ctx->dumper;
 
-	pcap_dispatch(ctx->pcap, PCAP_NPACKETS, pcap_dump, (uint8_t *)dumper);
+	pcap_dispatch(ctx->pcap, PCAP_NPACKETS, pcap_dump, (void *)dumper);
 }
 
 void
