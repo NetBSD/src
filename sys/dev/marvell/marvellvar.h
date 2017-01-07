@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellvar.h,v 1.5 2014/03/15 11:47:43 kiyohara Exp $	*/
+/*	$NetBSD: marvellvar.h,v 1.6 2017/01/07 14:26:37 kiyohara Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -33,6 +33,9 @@ enum marvell_tags {
 	MARVELL_TAG_SDRAM_CS1,
 	MARVELL_TAG_SDRAM_CS2,
 	MARVELL_TAG_SDRAM_CS3,
+
+	MARVELL_TAG_AXI_CS0,	/* Advanced eXtensible Interface */
+	MARVELL_TAG_AXI_CS1,	/* Advanced eXtensible Interface */
 
 	MARVELL_TAG_DDR3_CS0,
 	MARVELL_TAG_DDR3_CS1,
