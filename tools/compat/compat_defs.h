@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.105 2017/01/07 02:52:04 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.106 2017/01/07 02:55:19 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -42,6 +42,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <paths.h>
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
