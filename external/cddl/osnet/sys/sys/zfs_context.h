@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.16 2014/03/28 02:50:18 ozaki-r Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.17 2017/01/07 21:39:53 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -582,7 +582,7 @@ extern char *kmem_asprintf(const char *fmt, ...);
 
 #include <sys/systm.h>
 #include <sys/kcondvar.h>
-#include <sys/limits.h>
+#include <sys/syslimits.h>
 #include <sys/kmem.h>
 #include <sys/param.h>
 #include <sys/stdint.h>
