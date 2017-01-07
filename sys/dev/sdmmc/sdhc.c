@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.95 2016/08/10 04:24:17 nonaka Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.96 2017/01/07 15:00:38 kiyohara Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.95 2016/08/10 04:24:17 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.96 2017/01/07 15:00:38 kiyohara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -290,38 +290,42 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	callout_init(&hp->tuning_timer, CALLOUT_MPSAFE);
 	callout_setfunc(&hp->tuning_timer, sdhc_tuning_timer, hp);
 
-	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
-		sdhcver = SDHC_SPEC_VERS_300 << SDHC_SPEC_VERS_SHIFT;
-	} else if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
-		sdhcver = HREAD4(hp, SDHC_ESDHC_HOST_CTL_VERSION);
+	if (iosize <= SDHC_HOST_CTL_VERSION) {
+		aprint_normal_dev(sc->sc_dev, "SDHC NO-VERS");
+		hp->specver = -1;
 	} else {
-		sdhcver = HREAD2(hp, SDHC_HOST_CTL_VERSION);
+		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+			sdhcver = SDHC_SPEC_VERS_300 << SDHC_SPEC_VERS_SHIFT;
+		} else if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+			sdhcver = HREAD4(hp, SDHC_ESDHC_HOST_CTL_VERSION);
+		} else
+			sdhcver = HREAD2(hp, SDHC_HOST_CTL_VERSION);
+		aprint_normal_dev(sc->sc_dev, "SDHC ");
+		hp->specver = SDHC_SPEC_VERSION(sdhcver);
+		switch (SDHC_SPEC_VERSION(sdhcver)) {
+		case SDHC_SPEC_VERS_100:
+			aprint_normal("1.0");
+			break;
+
+		case SDHC_SPEC_VERS_200:
+			aprint_normal("2.0");
+			break;
+
+		case SDHC_SPEC_VERS_300:
+			aprint_normal("3.0");
+			break;
+
+		case SDHC_SPEC_VERS_400:
+			aprint_normal("4.0");
+			break;
+
+		default:
+			aprint_normal("unknown version(0x%x)",
+			    SDHC_SPEC_VERSION(sdhcver));
+			break;
+		}
+		aprint_normal(", rev %u", SDHC_VENDOR_VERSION(sdhcver));
 	}
-	aprint_normal_dev(sc->sc_dev, "SDHC ");
-	hp->specver = SDHC_SPEC_VERSION(sdhcver);
-	switch (SDHC_SPEC_VERSION(sdhcver)) {
-	case SDHC_SPEC_VERS_100:
-		aprint_normal("1.0");
-		break;
-
-	case SDHC_SPEC_VERS_200:
-		aprint_normal("2.0");
-		break;
-
-	case SDHC_SPEC_VERS_300:
-		aprint_normal("3.0");
-		break;
-
-	case SDHC_SPEC_VERS_400:
-		aprint_normal("4.0");
-		break;
-
-	default:
-		aprint_normal("unknown version(0x%x)",
-		    SDHC_SPEC_VERSION(sdhcver));
-		break;
-	}
-	aprint_normal(", rev %u", SDHC_VENDOR_VERSION(sdhcver));
 
 	/*
 	 * Reset the host controller and enable interrupts.
