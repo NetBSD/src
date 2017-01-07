@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.12 2017/01/07 15:22:11 kiyohara Exp $ */
+/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.13 2017/01/07 16:19:28 kiyohara Exp $ */
 
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
@@ -102,6 +102,7 @@ ENTRY(pj4b_config)
 	RET
 END(pj4b_config)
 
+#ifdef AURORA_IO_CACHE_COHERENCY
 /* LINTSTUB: void pj4b_io_coherency_barrier(vaddr_t, paddr_t, vsize_t); */
 ENTRY_NP(pj4b_io_coherency_barrier)
 	movw	r0, #:lower16:_C_LABEL(armadaxp_l2_barrier_reg)
@@ -120,3 +121,4 @@ END(pj4b_io_coherency_barrier)
 STRONG_ALIAS(pj4b_dcache_cfu_wbinv_range, pj4b_io_coherency_barrier)
 STRONG_ALIAS(pj4b_dcache_cfu_inv_range, pj4b_io_coherency_barrier)
 STRONG_ALIAS(pj4b_dcache_cfu_wb_range, pj4b_io_coherency_barrier)
+#endif
