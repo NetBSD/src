@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxpvar.h,v 1.2 2015/06/03 02:53:19 hsuenaga Exp $	*/
+/*	$NetBSD: armadaxpvar.h,v 1.3 2017/01/07 16:19:28 kiyohara Exp $	*/
 /*
  * Copyright (c) 2015 SUENAGA Hiroki
  * All rights reserved.
@@ -28,10 +28,6 @@
 #define _ARMDAXPVAR_H_
 #include <arm/marvell/mvsocvar.h>
 #include <machine/bus_defs.h>
-
-/* device initalization */
-extern void armadaxp_io_coherency_init(void);
-extern int armadaxp_l2_init(bus_addr_t);
 
 /* l2cache maintanance */
 extern void armadaxp_sdcache_inv_all(void);
