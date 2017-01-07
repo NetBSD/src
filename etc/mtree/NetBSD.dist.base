@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.154 2016/08/20 11:21:50 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.155 2017/01/07 20:00:07 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -41,6 +41,7 @@
 ./etc/mail
 ./etc/mtree
 ./etc/namedb
+./etc/nsd
 ./etc/openldap
 ./etc/openssl
 ./etc/openssl/certs
@@ -1270,6 +1271,12 @@
 ./var/chroot/named/var/run/lwresd	mode=0775 gname=named
 ./var/chroot/named/var/run/named	mode=0775 gname=named
 ./var/chroot/named/var/tmp	mode=01775 gname=named
+./var/chroot/nsd		mode=0755 uname=_nsd gname=_nsd
+./var/chroot/nsd/etc		mode=0755 uname=_nsd gname=_nsd
+./var/chroot/nsd/etc/nsd	mode=0755 uname=_nsd gname=_nsd
+./var/chroot/nsd/var		mode=0755 uname=_nsd gname=_nsd
+./var/chroot/nsd/var/db		mode=0755 uname=_nsd gname=_nsd
+./var/chroot/nsd/var/db/nsd	mode=0755 uname=_nsd gname=_nsd
 ./var/chroot/ntpd
 ./var/chroot/ntpd/dev
 ./var/chroot/ntpd/etc
