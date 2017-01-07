@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.106 2017/01/07 02:55:19 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.107 2017/01/07 21:29:30 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -529,7 +529,7 @@ int snprintb(char *, size_t, const char *, uint64_t);
 int snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 #endif
 
-#if !HAVE_DECL_SNPRINTF
+#if !HAVE_DECL_SNPRINTF && !defined(snprintf)
 int snprintf(char *, size_t, const char *, ...);
 #endif
 
@@ -581,7 +581,7 @@ int vasprintf(char **, const char *, va_list);
 int vasnprintf(char **, size_t, const char *, va_list);
 #endif
 
-#if !HAVE_DECL_VSNPRINTF
+#if !HAVE_DECL_VSNPRINTF && !defined(vsnprintf)
 int vsnprintf(char *, size_t, const char *, va_list);
 #endif
 
