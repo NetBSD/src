@@ -1,4 +1,4 @@
-.\"	$NetBSD: siginfo.2,v 1.17 2017/01/07 01:22:12 kamil Exp $
+.\"	$NetBSD: siginfo.2,v 1.18 2017/01/07 06:01:20 kamil Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -364,8 +364,21 @@ or
 are
 .Nx
 extensions.
+.Pp
+The
+.Dv TRAP_EXEC
+signal specific reason of
+.Dv SIGTRAP
+is
+.Nx
+extension.
 .Sh HISTORY
 The
 .Nm
 functionality first appeared in
 .At V.4 .
+.Pp
+.Dv TRAP_EXEC
+first appeared
+in
+.Nx 8 .
