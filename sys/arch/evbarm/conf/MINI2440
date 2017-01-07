@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.16 2015/08/12 07:53:57 maxv Exp $
+#	$NetBSD: MINI2440,v 1.16.2.1 2017/01/07 08:56:13 pgoyette Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -239,6 +239,8 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
 # Audio support
 audio*	at audiobus?
+
+spkr*	at audio?		# PC speaker (synthesized)
 
 dme0     at ssextio? intr 7 addr 0x20000300
 

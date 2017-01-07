@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.90 2014/07/25 08:10:38 dholland Exp $	*/
+/*	$NetBSD: ch.c,v 1.90.8.1 2017/01/07 08:56:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.90 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.90.8.1 2017/01/07 08:56:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ const struct cdevsw ch_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = chkqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 /* SCSI glue */

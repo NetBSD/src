@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.133.2.1 2016/11/04 14:48:55 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.133.2.2 2017/01/07 08:56:05 pgoyette Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -124,6 +124,7 @@ CPPFLAGS+=	-DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
 COPTS.rtld.c+=	-Wno-stack-protector
 COPTS.symbol.c+=-Wno-stack-protector
 
+LDADD+=		-Wl,--version-script=${.CURDIR}/symbols.map
 LDADD+=		-L${CLIBOBJ} -L${DESTDIR}${LIBDIR}
 .if ${MKPICLIB} != "no"
 LDADD+=		-lc_pic

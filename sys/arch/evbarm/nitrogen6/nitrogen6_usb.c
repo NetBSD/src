@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_usb.c,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: nitrogen6_usb.c,v 1.1.4.1 2017/01/07 08:56:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2013  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_usb.c,v 1.1 2014/09/25 05:05:28 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_usb.c,v 1.1.4.1 2017/01/07 08:56:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ init_otg(struct imxehci_softc *sc)
 	imx6_ccm_write(USB_ANALOG_USB1_CHRG_DETECT, 
 	    USB_ANALOG_USB_CHRG_DETECT_EN_B |
 	    USB_ANALOG_USB_CHRG_DETECT_CHK_CHRG_B);
-	imx6_pll_power(CCM_ANALOG_PLL_USB1, 1);
+	imx6_pll_power(CCM_ANALOG_PLL_USB1, 1, CCM_ANALOG_PLL_USBn_ENABLE);
 	imx6_ccm_write(CCM_ANALOG_PLL_USB1_CLR,
 	    CCM_ANALOG_PLL_USBn_BYPASS);
 	imx6_ccm_write(CCM_ANALOG_PLL_USB1_SET,

@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.119 2015/08/25 13:50:19 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.119.2.1 2017/01/07 08:56:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.119 2015/08/25 13:50:19 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.119.2.1 2017/01/07 08:56:05 pgoyette Exp $");
 #endif
 
 #include <sys/param.h>
@@ -987,7 +987,6 @@ fd_rump2host_withdup(int fd)
 static int
 fd_host2rump(int fd)
 {
-
 	if (!isdup2d(fd))
 		return fd - hijack_fdoff;
 	else
@@ -1377,6 +1376,7 @@ fcntl(int fd, int cmd, ...)
 	DPRINTF(("fcntl -> %d (cmd %d)\n", fd, cmd));
 
 	switch (cmd) {
+	case F_DUPFD_CLOEXEC:	/* Ignore CLOEXEC bit for now */
 	case F_DUPFD:
 		va_start(ap, cmd);
 		minfd = va_arg(ap, int);

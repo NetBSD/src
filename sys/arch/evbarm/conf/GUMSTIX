@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.85 2015/08/08 06:36:25 maxv Exp $
+#	$NetBSD: GUMSTIX,v 1.85.2.1 2017/01/07 08:56:13 pgoyette Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -203,6 +203,8 @@ pxaacu0	at pxaip? addr 0x40500000 intr 14	# Audiostix, Audiostx2, GPSstix
 
 # Audio support
 audio*	at audiobus?
+
+spkr*	at audio?				# PC speaker (synthesized)
 
 # LCD
 lcd0	at pxaip? addr 0x44000000		# consoleLCD-vx,consoleLCD16-vx
@@ -418,6 +420,7 @@ pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 pseudo-device	drvctl
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #pseudo-device	veriexec

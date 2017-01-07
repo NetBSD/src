@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.208.2.3 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: in6.c,v 1.208.2.4 2017/01/07 08:56:51 pgoyette Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.208.2.3 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.208.2.4 2017/01/07 08:56:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -151,6 +151,8 @@ static int in6_lifaddr_ioctl(struct socket *, u_long, void *,
 static int in6_ifinit(struct ifnet *, struct in6_ifaddr *,
 	const struct sockaddr_in6 *, int);
 static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
+static int in6_update_ifa1(struct ifnet *, struct in6_aliasreq *,
+    struct in6_ifaddr **, struct psref *, int);
 
 void
 in6_init(void)
@@ -293,7 +295,6 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	struct sockaddr_in6 *sa6;
 	int error, bound;
 	struct psref psref;
-	bool run_hooks = false;
 
 	switch (cmd) {
 	case SIOCAADDRCTL_POLICY:
@@ -623,145 +624,29 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		 * first, make (ia == NULL) or update (ia != NULL) the interface
 		 * address structure, and link it to the list.
 		 */
-		if ((error = in6_update_ifa(ifp, ifra, ia, 0)) != 0)
+		int s = splnet();
+		error = in6_update_ifa1(ifp, ifra, &ia, &psref, 0);
+		splx(s);
+		if (error)
 			break;
-		s = pserialize_read_enter();
-		_ia = in6ifa_ifpwithaddr(ifp, &ifra->ifra_addr.sin6_addr);
-		if (_ia == NULL) {
-			pserialize_read_exit(s);
-		    	/*
-			 * this can happen when the user specify the 0 valid
-			 * lifetime.
-			 */
-			break;
-		}
-		/*
-		 * If ia == NULL, _ia has been created and we need to acquire
-		 * a reference. Otherwise, a reference is already taken.
-		 */
-		if (ia == NULL) {
-			ia6_acquire(_ia, &psref);
-			ia = _ia;
-		} else
-			KASSERT(_ia == ia);
-		pserialize_read_exit(s);
-
-		/*
-		 * then, make the prefix on-link on the interface.
-		 * XXX: we'd rather create the prefix before the address, but
-		 * we need at least one address to install the corresponding
-		 * interface route, so we configure the address first.
-		 */
-
-		/*
-		 * convert mask to prefix length (prefixmask has already
-		 * been validated in in6_update_ifa().
-		 */
-		memset(&prc0, 0, sizeof(prc0));
-		prc0.ndprc_ifp = ifp;
-		prc0.ndprc_plen = in6_mask2len(&ifra->ifra_prefixmask.sin6_addr,
-		    NULL);
-		if (prc0.ndprc_plen == 128) {
-			break;	/* we don't need to install a host route. */
-		}
-		prc0.ndprc_prefix = ifra->ifra_addr;
-		/* apply the mask for safety. */
-		for (i = 0; i < 4; i++) {
-			prc0.ndprc_prefix.sin6_addr.s6_addr32[i] &=
-			    ifra->ifra_prefixmask.sin6_addr.s6_addr32[i];
-		}
-		/*
-		 * XXX: since we don't have an API to set prefix (not address)
-		 * lifetimes, we just use the same lifetimes as addresses.
-		 * The (temporarily) installed lifetimes can be overridden by
-		 * later advertised RAs (when accept_rtadv is non 0), which is
-		 * an intended behavior.
-		 */
-		prc0.ndprc_raf_onlink = 1; /* should be configurable? */
-		prc0.ndprc_raf_auto =
-		    ((ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0);
-		prc0.ndprc_vltime = ifra->ifra_lifetime.ia6t_vltime;
-		prc0.ndprc_pltime = ifra->ifra_lifetime.ia6t_pltime;
-
-		/* add the prefix if not yet. */
-		if ((pr = nd6_prefix_lookup(&prc0)) == NULL) {
-			/*
-			 * nd6_prelist_add will install the corresponding
-			 * interface route.
-			 */
-			if ((error = nd6_prelist_add(&prc0, NULL, &pr)) != 0)
-				break;
-			if (pr == NULL) {
-				log(LOG_ERR, "nd6_prelist_add succeeded but "
-				    "no prefix\n");
-				error = EINVAL; /* XXX panic here? */
-				break;
-			}
-		}
-
-		/* relate the address to the prefix */
-		if (ia->ia6_ndpr == NULL) {
-			ia->ia6_ndpr = pr;
-			pr->ndpr_refcnt++;
-
-			/*
-			 * If this is the first autoconf address from the
-			 * prefix, create a temporary address as well
-			 * (when required).
-			 */
-			if ((ia->ia6_flags & IN6_IFF_AUTOCONF) &&
-			    ip6_use_tempaddr && pr->ndpr_refcnt == 1) {
-				int e;
-				if ((e = in6_tmpifadd(ia, 1, 0)) != 0) {
-					log(LOG_NOTICE, "in6_control: failed "
-					    "to create a temporary address, "
-					    "errno=%d\n", e);
-				}
-			}
-		}
-
-		/*
-		 * this might affect the status of autoconfigured addresses,
-		 * that is, this address might make other addresses detached.
-		 */
-		pfxlist_onlink_check();
-
-		run_hooks = true;
+		pfil_run_addrhooks(if_pfil, cmd, &ia->ia_ifa);
 		break;
 	}
 
 	case SIOCDIFADDR_IN6:
-	{
-		struct nd_prefix *pr;
-
-		/*
-		 * If the address being deleted is the only one that owns
-		 * the corresponding prefix, expire the prefix as well.
-		 * XXX: theoretically, we don't have to worry about such
-		 * relationship, since we separate the address management
-		 * and the prefix management.  We do this, however, to provide
-		 * as much backward compatibility as possible in terms of
-		 * the ioctl operation.
-		 * Note that in6_purgeaddr() will decrement ndpr_refcnt.
-		 */
-		pr = ia->ia6_ndpr;
 		ia6_release(ia, &psref);
+		ifaref(&ia->ia_ifa);
 		in6_purgeaddr(&ia->ia_ifa);
+		pfil_run_addrhooks(if_pfil, cmd, &ia->ia_ifa);
+		ifafree(&ia->ia_ifa);
 		ia = NULL;
-		if (pr && pr->ndpr_refcnt == 0)
-			prelist_remove(pr);
-		run_hooks = true;
 		break;
-	}
 
 	default:
 		error = ENOTTY;
 	}
 release:
 	ia6_release(ia, &psref);
-
-	if (run_hooks)
-		pfil_run_hooks(if_pfil, (struct mbuf **)cmd, ifp, PFIL_IFADDR);
 out:
 	curlwp_bindx(bound);
 	return error;
@@ -820,7 +705,7 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
  */
 static int
 in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
-    struct in6_ifaddr *ia, int flags)
+    struct in6_ifaddr **iap, struct psref *psref, int flags)
 {
 	int error = 0, hostIsNew = 0, plen = -1;
 	struct sockaddr_in6 dst6;
@@ -829,6 +714,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	struct in6_multi *in6m_sol;
 	struct rtentry *rt;
 	int dad_delay, was_tentative;
+	struct in6_ifaddr *ia = iap ? *iap : NULL;
 
 	in6m_sol = NULL;
 
@@ -960,11 +846,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 * RA, it is called under an interrupt context.  So, we should
 		 * call malloc with M_NOWAIT.
 		 */
-		ia = (struct in6_ifaddr *) malloc(sizeof(*ia), M_IFADDR,
-		    M_NOWAIT);
+		ia = malloc(sizeof(*ia), M_IFADDR, M_NOWAIT|M_ZERO);
 		if (ia == NULL)
 			return ENOBUFS;
-		memset(ia, 0, sizeof(*ia));
 		LIST_INIT(&ia->ia6_memberships);
 		/* Initialize the address and masks, and put time stamp */
 		ia->ia_ifa.ifa_addr = sin6tosa(&ia->ia_addr);
@@ -985,6 +869,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia->ia_ifp = ifp;
 		IN6_ADDRLIST_ENTRY_INIT(ia);
 		ifa_psref_init(&ia->ia_ifa);
+		if (psref)
+			ia6_acquire(ia, psref);
 	}
 
 	/* update timestamp */
@@ -1167,7 +1053,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (memcmp(&mltaddr.sin6_addr,
 			    &satocsin6(rt_getkey(rt))->sin6_addr,
 			    MLTMASK_LEN)) {
-				rtfree(rt);
+				rt_unref(rt);
 				rt = NULL;
 			} else if (rt->rt_ifp != ifp) {
 				IN6_DPRINTF("%s: rt_ifp %p -> %p (%s) "
@@ -1195,7 +1081,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (error)
 				goto cleanup;
 		} else {
-			rtfree(rt);
+			rt_unref(rt);
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
 		if (!imm) {
@@ -1248,7 +1134,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (memcmp(&mltaddr.sin6_addr,
 			    &satocsin6(rt_getkey(rt))->sin6_addr,
 			    32 / NBBY)) {
-				rtfree(rt);
+				rt_unref(rt);
 				rt = NULL;
 			} else if (rt->rt_ifp != ifp) {
 				IN6_DPRINTF("%s: rt_ifp %p -> %p (%s) "
@@ -1276,7 +1162,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 				goto cleanup;
 #undef	MLTMASK_LEN
 		} else {
-			rtfree(rt);
+			rt_unref(rt);
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
 		if (!imm) {
@@ -1334,6 +1220,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		nd6_dad_start(&ia->ia_ifa, dad_delay + 1);
 	}
 
+	if (iap)
+		*iap = ia;
+
 	return 0;
 
   cleanup:
@@ -1343,13 +1232,12 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 }
 
 int
-in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
-    struct in6_ifaddr *ia, int flags)
+in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra, int flags)
 {
 	int rc, s;
 
 	s = splnet();
-	rc = in6_update_ifa1(ifp, ifra, ia, flags);
+	rc = in6_update_ifa1(ifp, ifra, NULL, NULL, flags);
 	splx(s);
 	return rc;
 }
@@ -1360,6 +1248,10 @@ in6_purgeaddr(struct ifaddr *ifa)
 	struct ifnet *ifp = ifa->ifa_ifp;
 	struct in6_ifaddr *ia = (struct in6_ifaddr *) ifa;
 	struct in6_multi_mship *imm;
+
+	KASSERT(!ifa_held(ifa));
+
+	ifa->ifa_flags |= IFA_DESTROYING;
 
 	/* stop DAD processing */
 	nd6_dad_stop(ifa);
@@ -1428,21 +1320,21 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	 * Release the reference to the base prefix.  There should be a
 	 * positive reference.
 	 */
-	if (ia->ia6_ndpr == NULL) {
-		nd6log(LOG_NOTICE, "autoconf'ed address %p has no prefix\n",
-		    ia);
-	} else {
-		ia->ia6_ndpr->ndpr_refcnt--;
+	if (ia->ia6_ndpr != NULL) {
+		nd6_prefix_unref(ia->ia6_ndpr);
 		ia->ia6_ndpr = NULL;
 	}
 
 	/*
 	 * Also, if the address being removed is autoconf'ed, call
-	 * pfxlist_onlink_check() since the release might affect the status of
+	 * nd6_pfxlist_onlink_check() since the release might affect the status of
 	 * other (detached) addresses.
 	 */
-	if ((ia->ia6_flags & IN6_IFF_AUTOCONF) != 0)
-		pfxlist_onlink_check();
+	if ((ia->ia6_flags & IN6_IFF_AUTOCONF) != 0) {
+		ND6_WLOCK();
+		nd6_pfxlist_onlink_check();
+		ND6_UNLOCK();
+	}
 
 	IN6_ADDRLIST_ENTRY_DESTROY(ia);
 
@@ -2204,7 +2096,9 @@ in6_if_link_up(struct ifnet *ifp)
 	curlwp_bindx(bound);
 
 	/* Restore any detached prefixes */
-	pfxlist_onlink_check();
+	ND6_WLOCK();
+	nd6_pfxlist_onlink_check();
+	ND6_UNLOCK();
 }
 
 void
@@ -2231,7 +2125,9 @@ in6_if_link_down(struct ifnet *ifp)
 	int s, bound;
 
 	/* Any prefixes on this interface should be detached as well */
-	pfxlist_onlink_check();
+	ND6_WLOCK();
+	nd6_pfxlist_onlink_check();
+	ND6_UNLOCK();
 
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
@@ -2418,24 +2314,42 @@ in6_lltable_match_prefix(const struct sockaddr *prefix,
 static void
 in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 {
-	struct ifnet *ifp __diagused;
+	struct ifnet *ifp = llt->llt_ifp;
 
+	IF_AFDATA_WLOCK_ASSERT(ifp);
 	LLE_WLOCK_ASSERT(lle);
-	KASSERT(llt != NULL);
 
 	/* Unlink entry from table */
 	if ((lle->la_flags & LLE_LINKED) != 0) {
 
-		ifp = llt->llt_ifp;
-		IF_AFDATA_WLOCK_ASSERT(ifp);
 		lltable_unlink_entry(llt, lle);
+		KASSERT((lle->la_flags & LLE_LINKED) == 0);
 	}
+	/*
+	 * We need to release the lock here to lle_timer proceeds;
+	 * lle_timer should stop immediately if LLE_LINKED isn't set.
+	 * Note that we cannot pass lle->lle_lock to callout_halt
+	 * because it's a rwlock.
+	 */
+	LLE_ADDREF(lle);
+	LLE_WUNLOCK(lle);
+	IF_AFDATA_WUNLOCK(ifp);
 
-	KASSERT(mutex_owned(softnet_lock));
-	callout_halt(&lle->lle_timer, softnet_lock);
+#ifdef NET_MPSAFE
+	callout_halt(&lle->lle_timer, NULL);
+#else
+	if (mutex_owned(softnet_lock))
+		callout_halt(&lle->lle_timer, softnet_lock);
+	else
+		callout_halt(&lle->lle_timer, NULL);
+#endif
+	LLE_WLOCK(lle);
 	LLE_REMREF(lle);
 
-	llentry_free(lle);
+	lltable_drop_entry_queue(lle);
+	LLE_FREE_LOCKED(lle);
+
+	IF_AFDATA_WLOCK(ifp);
 }
 
 static int
@@ -2462,17 +2376,17 @@ in6_lltable_rtcheck(struct ifnet *ifp,
 		if (ifa != NULL) {
 			pserialize_read_exit(s);
 			if (rt != NULL)
-				rtfree(rt);
+				rt_unref(rt);
 			return 0;
 		}
 		pserialize_read_exit(s);
 		log(LOG_INFO, "IPv6 address: \"%s\" is not on the network\n",
 		    ip6_sprintf(&((const struct sockaddr_in6 *)l3addr)->sin6_addr));
 		if (rt != NULL)
-			rtfree(rt);
+			rt_unref(rt);
 		return EINVAL;
 	}
-	rtfree(rt);
+	rt_unref(rt);
 	return 0;
 }
 

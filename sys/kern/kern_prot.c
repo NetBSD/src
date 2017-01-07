@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.119 2015/08/24 22:50:32 pooka Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.119.2.1 2017/01/07 08:56:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.119 2015/08/24 22:50:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.119.2.1 2017/01/07 08:56:49 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_43.h"

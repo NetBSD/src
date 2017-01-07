@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.530.2.2 2016/11/04 14:42:38 pgoyette Exp $
+.\"	$NetBSD: main,v 1.530.2.3 2017/01/07 08:53:43 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1328,6 +1328,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Tatoku Ogaito Ta Mt tacha@NetBSD.org
 .It Ta OKANO Takayoshi Ta Mt kano@NetBSD.org
 .It Ta Masaru Oki Ta Mt oki@NetBSD.org
+.It Ta Rin Okuyama Ta Mt rin@NetBSD.org
 .It Ta Ryo ONODERA Ta Mt ryoon@NetBSD.org
 .It Ta Atsushi Onoe Ta Mt onoe@NetBSD.org
 .It Ta Greg Oster Ta Mt oster@NetBSD.org

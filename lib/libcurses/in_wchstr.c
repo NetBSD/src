@@ -1,4 +1,4 @@
-/*   $NetBSD: in_wchstr.c,v 1.3 2009/07/22 16:57:14 roy Exp $ */
+/*   $NetBSD: in_wchstr.c,v 1.3.28.1 2017/01/07 08:56:04 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: in_wchstr.c,v 1.3 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: in_wchstr.c,v 1.3.28.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -171,24 +171,24 @@ win_wchnstr(WINDOW *win, cchar_t *wchstr, int n)
 	wcp = wchstr;
 	/* (n - 1) to leave room for the trailing 0 element */
 	while ((x < win->maxx) && ((n < 0) || ((n > 1) && (cnt < n - 1)))) {
-		cw = WCOL( *start );
-		wcp->vals[ 0 ] = start->ch;
+		cw = WCOL(*start);
+		wcp->vals[0] = start->ch;
 		wcp->attributes = start->attr;
 		wcp->elements = 1;
 		np = start->nsp;
 		if (np) {
 			do {
-				wcp->vals[ wcp->elements++ ] = np->ch;
+				wcp->vals[wcp->elements++] = np->ch;
 				np = np->next;
-			} while ( np );
+			} while (np);
 		}
 		wcp++;
 		cnt++;
 		x += cw;
-		if ( x < win->maxx ) 
+		if (x < win->maxx)
 			start += cw;
 	}
-	wcp->vals[ 0 ] = L'\0';
+	wcp->vals[0] = L'\0';
 	wcp->elements = 1;
 	wcp->attributes = win->wattr;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.100 2016/06/07 00:40:00 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.100.2.1 2017/01/07 08:56:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -487,7 +487,7 @@ char * Check_Cwd_Cmd(const char *);
 void Check_Cwd(const char **);
 void PrintOnError(GNode *, const char *);
 void Main_ExportMAKEFLAGS(Boolean);
-Boolean Main_SetObjdir(const char *);
+Boolean Main_SetObjdir(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 int mkTempFile(const char *, char **);
 int str2Lst_Append(Lst, char *, const char *);
 int cached_lstat(const char *, void *);

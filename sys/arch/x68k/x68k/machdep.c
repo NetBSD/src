@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193.2.1 2016/07/20 23:50:56 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.193.2.2 2017/01/07 08:56:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193.2.1 2016/07/20 23:50:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193.2.2 2017/01/07 08:56:28 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193.2.1 2016/07/20 23:50:56 pgoyette E
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm.h>
+#include <uvm/uvm_physseg.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -553,7 +554,7 @@ cpu_init_kcore_hdr(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	int i;
+	uvm_physseg_t i;
 
 	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
@@ -604,11 +605,22 @@ cpu_init_kcore_hdr(void)
 	 */
 	m->ram_segs[0].start = lowram;
 	m->ram_segs[0].size = mem_size - lowram;
-	for (i = 1; i < vm_nphysseg; i++) {
-		m->ram_segs[i].start =
-		    ctob(VM_PHYSMEM_PTR(i)->start);
-		m->ram_segs[i].size  =
-		    ctob(VM_PHYSMEM_PTR(i)->end - VM_PHYSMEM_PTR(i)->start);
+
+	i = uvm_physseg_get_first();
+	
+        for (uvm_physseg_get_next(i); uvm_physseg_valid_p(i); i = uvm_physseg_get_next(i)) {
+		if (uvm_physseg_valid_p(i) == false)
+			break;
+
+		const paddr_t startpfn = uvm_physseg_get_start(i);
+		const paddr_t endpfn = uvm_physseg_get_end(i);
+
+		KASSERT(startpfn != -1 && endpfn != -1);
+
+		m->ram_segs[i].start = 
+		    ctob(startpfn);
+		m->ram_segs[i].size  =			
+		    ctob(endpfn - startpfn);
 	}
 }
 
@@ -1250,11 +1262,14 @@ cpu_intr_p(void)
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
-	int i;
+	uvm_physseg_t i;
 
-	for (i = 0; i < vm_nphysseg; i++) {
-		if (ctob(vm_physmem[i].start) <= pa &&
-		    pa < ctob(vm_physmem[i].end))
+	for (i = uvm_physseg_get_first(); uvm_physseg_valid_p(i); i = uvm_physseg_get_next(i)) {
+		if (uvm_physseg_valid_p(i) == false)
+			break;
+
+		if (ctob(uvm_physseg_get_start(i)) <= pa &&
+		    pa < ctob(uvm_physseg_get_end(i)))
 			return 0;
 	}
 	return EFAULT;

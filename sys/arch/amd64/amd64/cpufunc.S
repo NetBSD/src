@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.25 2014/02/12 23:24:09 dsl Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.25.10.1 2017/01/07 08:56:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -158,12 +158,52 @@ ENTRY(tlbflush)
 	movq	%rax, %cr3
 	ret
 
+ENTRY(ldr0)
+	movq	%rdi, %dr0
+	ret
+
+ENTRY(rdr0)
+	movq	%dr0, %rax
+	ret
+
+ENTRY(ldr1)
+	movq	%rdi, %dr1
+	ret
+
+ENTRY(rdr1)
+	movq	%dr1, %rax
+	ret
+
+ENTRY(ldr2)
+	movq	%rdi, %dr2
+	ret
+
+ENTRY(rdr2)
+	movq	%dr2, %rax
+	ret
+
+ENTRY(ldr3)
+	movq	%rdi, %dr3
+	ret
+
+ENTRY(rdr3)
+	movq	%dr3, %rax
+	ret
+
 ENTRY(ldr6)
 	movq	%rdi, %dr6
 	ret
 
 ENTRY(rdr6)
-	movq	%dr6, %rdi
+	movq	%dr6, %rax
+	ret
+
+ENTRY(ldr7)
+	movq	%rdi, %dr7
+	ret
+
+ENTRY(rdr7)
+	movq	%dr7, %rax
 	ret
 
 ENTRY(x86_disable_intr)

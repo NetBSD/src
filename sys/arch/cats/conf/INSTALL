@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.96 2015/08/21 01:52:07 uebayasi Exp $
+#	$NetBSD: INSTALL,v 1.96.2.1 2017/01/07 08:56:12 pgoyette Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -398,7 +398,8 @@ lpt1	at isa? port 0x278 irq 5
 #ep*	at isa? port ? irq ?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pcppi?			# PC speaker
+#spkr*	at pcppi?			# PC speaker
+#spkr*	at audio?			# PC speaker (synthesized)
 
 ds1687rtc0	at isa? port 0x72	# Dallas RTC
 

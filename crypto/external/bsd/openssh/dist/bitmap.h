@@ -1,4 +1,4 @@
-/*	$NetBSD: bitmap.h,v 1.2 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: bitmap.h,v 1.2.4.1 2017/01/07 08:53:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 Damien Miller <djm@mindrot.org>

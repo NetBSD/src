@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.191 2016/06/22 20:12:59 palle Exp $
+# $NetBSD: GENERIC,v 1.191.2.1 2017/01/07 08:56:26 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.191 $"
+#ident		"GENERIC-$Revision: 1.191.2.1 $"
 
 maxusers	64
 
@@ -882,6 +882,8 @@ auacer* 	at pci? dev ? function ?	# Ultra45
 
 audio*		at audiobus?
 
+spkr*		at audio?			# PC speaker (synthesized)
+
 midi*		at midibus?
 
 
@@ -993,6 +995,7 @@ pseudo-device	lockstat		# lock profiling
 pseudo-device	putter			# for puffs and pud
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #

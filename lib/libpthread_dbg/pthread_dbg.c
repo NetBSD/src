@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.44 2016/01/23 14:02:21 christos Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.44.2.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.44 2016/01/23 14:02:21 christos Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.44.2.1 2017/01/07 08:56:04 pgoyette Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -210,7 +210,7 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 {
 	int tmp, val;
 
-	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
+	val = READ(thread->proc, OFFSET(thread, pt_magic), &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
 
@@ -225,19 +225,15 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	case PT_STATE_RUNNING:
 		info->thread_state = TD_STATE_RUNNING;
 		break;
-#ifdef XXXLWP
-	case PT_STATE_SUSPENDED:
-		info->thread_state = TD_STATE_SUSPENDED;
-		break;
-#endif
 	case PT_STATE_ZOMBIE:
 		info->thread_state = TD_STATE_ZOMBIE;
+		break;
+	case PT_STATE_DEAD:
+		info->thread_state = TD_STATE_DEAD;
 		break;
 	default:
 		info->thread_state = TD_STATE_UNKNOWN;
 	}
-
-	info->thread_type = TD_TYPE_USER;
 
 	if ((val = READ(thread->proc, OFFSET(thread, pt_stack),
 	    &info->thread_stack, sizeof(stack_t))) != 0)
@@ -263,7 +259,7 @@ td_thr_getname(td_thread_t *thread, char *name, int len)
 	caddr_t nameaddr;
 	
 
-	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
+	val = READ(thread->proc, OFFSET(thread, pt_magic), &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
 
@@ -279,6 +275,9 @@ td_thr_getname(td_thread_t *thread, char *name, int len)
 	else if ((val = READ(thread->proc, nameaddr,
 	    name, (size_t)MIN(PTHREAD_MAX_NAMELEN_NP, len))) != 0)
 		return val;
+
+	if (len < PTHREAD_MAX_NAMELEN_NP)
+		name[len - 1] = '\0';
 
 	return 0;
 }
@@ -303,6 +302,7 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 			return val;
 		break;
 	case PT_STATE_ZOMBIE:
+	case PT_STATE_DEAD:
 	default:
 		return TD_ERR_BADTHREAD;
 	}
@@ -330,6 +330,7 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 			return val;
 		break;
 	case PT_STATE_ZOMBIE:
+	case PT_STATE_DEAD:
 	default:
 		return TD_ERR_BADTHREAD;
 	}
@@ -342,7 +343,7 @@ td_map_pth2thr(td_proc_t *proc, pthread_t thread, td_thread_t **threadp)
 {
 	int magic, val;
 
-	val = READ(proc, (void *)thread, &magic, sizeof(magic));
+	val = READ(proc, (caddr_t)&thread->pt_magic, &magic, sizeof(magic));
 	if (val != 0)
 		return val;
 
@@ -441,7 +442,7 @@ td_thr_suspend(td_thread_t *thread)
 	int tmp, val;
 
 	/* validate the thread */
-	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
+	val = READ(thread->proc, OFFSET(thread, pt_magic), &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
 	if (tmp != PT_MAGIC)
@@ -463,7 +464,7 @@ td_thr_resume(td_thread_t *thread)
 	int tmp, val;
 
 	/* validate the thread */
-	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
+	val = READ(thread->proc, OFFSET(thread, pt_magic), &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
 	if (tmp != PT_MAGIC)

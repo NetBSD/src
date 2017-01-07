@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.39.2.2 2016/11/04 14:49:27 pgoyette Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.39.2.3 2017/01/07 08:56:59 pgoyette Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.39.2.2 2016/11/04 14:49:27 pgoyette Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.39.2.3 2017/01/07 08:56:59 pgoyette Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -526,9 +526,10 @@ traversedir(const char *parent, const char *file, sqlite3 *db,
 			}
 		}
 		closedir(dp);
+		return;
 	}
 
-	if (!S_ISREG(sb.st_mode) && !S_ISLNK(sb.st_mode))
+	if (!S_ISREG(sb.st_mode))
 		return;
 
 	if (sb.st_size == 0) {
@@ -820,15 +821,8 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 		if (md5_status == 0) {
 			/*
 			 * The MD5 hash is already present in the database,
-			 * so simply update the metadata, ignoring symlinks.
+			 * so simply update the metadata.
 			 */
-			struct stat sb;
-			stat(file, &sb);
-			if (S_ISLNK(sb.st_mode)) {
-				free(md5sum);
-				link_count++;
-				continue;
-			}
 			update_existing_entry(db, file, md5sum, rec,
 			    &new_count, &link_count, &err_count);
 			free(md5sum);
@@ -867,12 +861,12 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 	}
 
 	if (mflags.verbosity == 2) {
-		printf("Total Number of new or updated pages encountered = %d\n"
-		    "Total number of (hard or symbolic) links found = %d\n"
-		    "Total number of pages that were successfully"
-		    " indexed/updated = %d\n"
-		    "Total number of pages that could not be indexed"
-		    " due to errors = %d\n",
+		printf("Number of new or updated pages encountered: %d\n"
+		    "Number of hard links found: %d\n"
+		    "Number of pages that were successfully"
+		    " indexed or updated: %d\n"
+		    "Number of pages that could not be indexed"
+		    " due to errors: %d\n",
 		    total_count - link_count, link_count, new_count, err_count);
 	}
 
@@ -1002,6 +996,8 @@ pmdoc_Nd(const struct roff_node *n, mandb_rec *rec)
 {
 	if (n->type == ROFFT_BODY)
 		deroff(&rec->name_desc, n);
+	if (rec->name_desc)
+		replace_hyph(rec->name_desc);
 
 }
 

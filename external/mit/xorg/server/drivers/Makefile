@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.75.2.1 2016/11/04 14:48:48 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.75.2.2 2017/01/07 08:56:00 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -215,6 +215,7 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-ati \
 	xf86-video-chips \
+	xf86-video-glint \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-nv \
@@ -293,7 +294,6 @@ SUBDIR+= \
 	xf86-video-sunleo \
 	xf86-video-wsfb
 #	xf86-video-ag10e \
-#	xf86-video-glint \
 
 .if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 SUBDIR+= \

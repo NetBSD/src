@@ -511,6 +511,11 @@ static struct wpabuf * eap_mschapv2_change_password(
 	struct eap_sm *sm, struct eap_mschapv2_data *data,
 	struct eap_method_ret *ret, const struct eap_mschapv2_hdr *req, u8 id)
 {
+#ifdef CONFIG_NO_RC4
+	wpa_printf(MSG_ERROR,
+		"EAP-MSCHAPV2: RC4 not support in the build - cannot change password");
+	return NULL;
+#else /* CONFIG_NO_RC4 */
 	struct wpabuf *resp;
 	int ms_len;
 	const u8 *username, *password, *new_password;
@@ -628,6 +633,7 @@ static struct wpabuf * eap_mschapv2_change_password(
 fail:
 	wpabuf_free(resp);
 	return NULL;
+#endif /* CONFIG_NO_RC4 */
 }
 
 
@@ -874,7 +880,6 @@ static u8 * eap_mschapv2_getKey(struct eap_sm *sm, void *priv, size_t *len)
 int eap_peer_mschapv2_register(void)
 {
 	struct eap_method *eap;
-	int ret;
 
 	eap = eap_peer_method_alloc(EAP_PEER_METHOD_INTERFACE_VERSION,
 				    EAP_VENDOR_IETF, EAP_TYPE_MSCHAPV2,
@@ -888,8 +893,5 @@ int eap_peer_mschapv2_register(void)
 	eap->isKeyAvailable = eap_mschapv2_isKeyAvailable;
 	eap->getKey = eap_mschapv2_getKey;
 
-	ret = eap_peer_method_register(eap);
-	if (ret)
-		eap_peer_method_free(eap);
-	return ret;
+	return eap_peer_method_register(eap);
 }

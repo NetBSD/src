@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141.2.1 2016/11/04 14:49:04 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141.2.2 2017/01/07 08:56:25 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141.2.1 2016/11/04 14:49:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141.2.2 2017/01/07 08:56:25 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -287,7 +287,7 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 
 	cpu_setmodel("%s", arcbios_system_identifier);
 
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/* set up bootinfo structures */
 	if (magic == BOOTINFO_MAGIC && bip != NULL) {

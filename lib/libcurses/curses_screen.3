@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.15 2012/04/21 12:27:28 roy Exp $
+.\"	$NetBSD: curses_screen.3,v 1.15.14.1 2017/01/07 08:56:04 pgoyette Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,24 +30,33 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd April 5, 2012
+.Dd January 5, 2017
 .Dt CURSES_SCREEN 3
 .Os
 .Sh NAME
 .Nm curses_screen ,
+.Nm filter ,
+.Nm use_env ,
 .Nm newterm ,
 .Nm set_term ,
 .Nm delscreen ,
 .Nm endwin ,
 .Nm initscr ,
 .Nm isendwin ,
+.Nm is_term_resized ,
+.Nm resize_term ,
 .Nm resizeterm ,
-.Nm setterm
+.Nm setterm ,
+.Nm set_tabsize
 .Nd curses terminal and screen routines
 .Sh LIBRARY
 .Lb libcurses
 .Sh SYNOPSIS
 .In curses.h
+.Ft void
+.Fn filter "void"
+.Ft void
+.Fn use_env "bool value"
 .Ft SCREEN *
 .Fn newterm "char *type" "FILE *outfd" "FILE *infd"
 .Ft SCREEN *
@@ -60,10 +69,16 @@
 .Fn initscr "void"
 .Ft bool
 .Fn isendwin "void"
+.Ft bool
+.Fn is_term_resized "int lines" "int cols"
+.Fn int
+.Fn resize_term "int lines" "int cols"
 .Ft int
 .Fn resizeterm "int lines" "int cols"
 .Ft int
 .Fn setterm "char *name"
+.Ft int
+.Fn set_tabsize "int value"
 .Pp
 .Va extern int LINES ;
 .Pp
@@ -123,9 +138,9 @@ size and then the
 .Xr terminfo 5
 entries for the terminal type.
 If the environment variables
-.Va LINES
+.Ev LINES
 or
-.Va COLS
+.Ev COLUMNS
 are set, then these will be used instead.
 .Pp
 When either
@@ -146,8 +161,8 @@ function can be used to determine whether or not a refresh of the
 screen has occurred since the last call to
 .Fn endwin .
 .Pp
-The size of the screen may be changed  by calling
-.Fn resizeterm
+The size of the screen may be changed by calling
+.Fn resize_term
 with the updated number of lines and columns.
 This will resize the curses internal data structures to accommodate the
 changed terminal geometry.
@@ -158,7 +173,15 @@ and
 windows and any of their subwindows will be resized to fit the new
 screen size.
 The application must redraw the screen after a call to
-.Fn resizeterm .
+.Fn resize_term .
+The
+.Fn resizeterm
+function is a wrapper for
+.Fn resize_term
+and adjusts other structure data that handles window dimensions.
+The
+.Fn is_term_resized
+function tests if either of the above functions need to be called.
 .Pp
 The
 .Fn setterm
@@ -170,6 +193,46 @@ The
 argument must be a valid name or alias in the
 .Xr terminfo 5
 database for this function to succeed.
+.Pp
+The
+.Fn filter
+function changes the way the terminal is initialised.
+A subsequent call to
+.Fn initscr
+or
+.Fn newterm
+performs the following additonal actions:
+.Bl -bullet -compact
+.It
+Disable use of clear, cud, cud1, cup, cuu, cuu1 and vpa.
+.It
+Set the value of the home string to the value of the cr string.
+.It
+Set lines equal to 1.
+.El
+.Pp
+The
+.Fn use_env
+function determines whether the environment variables
+.Ev LINES
+and
+.Ev COLUMNS
+override the normal values.
+The default is true.
+Any call to
+.Fn use_env
+must precede calls to
+.Fn initscr ,
+.Fn newterm ,
+or
+.Fn setupterm .
+.Pp
+The
+.Fn set_tabsize
+function will set
+.Va TABSIZE
+of the current screen to
+.Va tabsize .
 .Sh RETURN VALUES
 Functions returning pointers will return
 .Dv NULL
@@ -202,3 +265,12 @@ function is a
 .Em ncurses
 extension to the Curses library and was added in
 .Nx 1.6 .
+The
+.Fn is_term_resized ,
+.Fn resize_term
+and
+.Fn set_tabsize
+functions are
+.Em ncurses
+extension to the Curses library and was added in
+.Nx 8.0 .

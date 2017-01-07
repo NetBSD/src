@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.58 2013/12/14 16:19:28 christos Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.58.10.1 2017/01/07 08:56:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.58 2013/12/14 16:19:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.58.10.1 2017/01/07 08:56:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,8 +541,10 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		goto out;
 	if (saddr->sa_len > argp->ex_addrlen)
 		saddr->sa_len = argp->ex_addrlen;
-	if (sacheck(saddr) == -1)
-		return EINVAL;
+	if (sacheck(saddr) == -1) {
+		error = EINVAL;
+		goto out;
+	}
 	if (argp->ex_masklen) {
 		smask = (struct sockaddr *)((char *)saddr + argp->ex_addrlen);
 		error = copyin(argp->ex_mask, smask, argp->ex_masklen);
@@ -550,10 +552,14 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 			goto out;
 		if (smask->sa_len > argp->ex_masklen)
 			smask->sa_len = argp->ex_masklen;
-		if (smask->sa_family != saddr->sa_family)
-			return EINVAL;
-		if (sacheck(smask) == -1)
-			return EINVAL;
+		if (smask->sa_family != saddr->sa_family) {
+			error = EINVAL;
+			goto out;
+		}
+		if (sacheck(smask) == -1) {
+			error = EINVAL;
+			goto out;
+		}
 	}
 	i = saddr->sa_family;
 	if ((rnh = nep->ne_rtable[i]) == 0) {

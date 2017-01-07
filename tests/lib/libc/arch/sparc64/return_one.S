@@ -1,8 +1,11 @@
-/*	$NetBSD: return_one.S,v 1.1 2011/07/18 23:16:10 jym Exp $ */
+/*	$NetBSD: return_one.S,v 1.1.24.1 2017/01/07 08:56:54 pgoyette Exp $ */
 
 #include <machine/asm.h>
 
-.globl	return_one, return_one_end;
+.global	return_one_end
 
-return_one: return_one_end:
-	nop
+ENTRY(return_one)
+return_one:
+	retl
+	 mov 1, %o0
+return_one_end:

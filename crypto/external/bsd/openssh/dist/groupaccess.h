@@ -1,4 +1,4 @@
-/*	$NetBSD: groupaccess.h,v 1.4 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: groupaccess.h,v 1.4.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
 /* $OpenBSD: groupaccess.h,v 1.8 2008/07/04 03:44:59 djm Exp $ */
 
 /*

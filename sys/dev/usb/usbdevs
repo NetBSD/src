@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.715.2.1 2016/11/04 14:49:16 pgoyette Exp $
+$NetBSD: usbdevs,v 1.715.2.2 2017/01/07 08:56:42 pgoyette Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -649,6 +649,7 @@ product ABOCOM XX9		0x4104	XX9
 product ABOCOM UFE2000		0x420a	UFE2000 USB2.0 Fast Ethernet Adapter
 product ABOCOM WL54		0x6001	WL54
 product ABOCOM RTL8192CU	0x8178	RTL8192CU
+product ABOCOM RTL8188EU	0x8179	RTL8188EU
 product ABOCOM RTL8188CU_1	0x8188	RTL8188CU
 product ABOCOM RTL8188CU_2	0x8189	RTL8188CU
 product ABOCOM XX10		0xabc1	XX10
@@ -1789,7 +1790,7 @@ product HUAWEI E1820		0x14ac	Huawei E1820
 product HUAWEI E171INIT		0x14fe	Huawei E171 USB CD
 product HUAWEI E171		0x1506	Huawei E171
 product HUAWEI E353_HiLink	0x1507	Huawei E353_HiLink
-/* Accessing http://192.168.1.1/html/switchProjectMode.html on 
+/* Accessing http://192.168.1.1/html/switchProjectMode.html on
    a Huawei HiLink device will switch it to u3g mode */
 product HUAWEI E353             0x1442  Huawei E353
 product HUAWEI K3765INIT	0x1520	Huawei K3765 USB CD
@@ -1854,6 +1855,7 @@ product INTEL TESTBOARD		0x9890	82930 test board
 
 product INTEL2 RMH		0x0020	Rate Matching Hub
 product INTEL2 RMH2		0x0024	Rate Matching Hub
+product INTEL2 N_6235_BT	0x07da	Advanced-N 6235 Combo Bluetooth
 
 /* Intersil products */
 product INTERSIL PRISM_GT	0x1000	PrismGT USB 2.0 WLAN
@@ -2026,6 +2028,7 @@ product LEXMARK S2450		0x0009	Optra S 2450
 /* Linksys products */
 product LINKSYS MAUSB2		0x0105	Camedia MAUSB-2
 product LINKSYS USB10TX1	0x200c	USB10TX
+product LINKSYS HG20F9		0x20f9	HG20F9 Ethernet
 product LINKSYS USB10T		0x2202	USB10T Ethernet
 product LINKSYS USB100TX	0x2203	USB100TX Ethernet
 product LINKSYS USB100H1	0x2204	USB100H1 Ethernet/HPNA
@@ -3027,6 +3030,7 @@ product SITECOMEU RT3072_6	0x004d	RT3072
 product SITECOMEU WL349V4	0x0050	WL-349 v4
 product SITECOMEU RT3070_1	0x0051	RT3070
 product SITECOMEU RTL8188CU	0x0052	RTL8188CU
+product SITECOMEU LN031		0x0056	LN-031
 product SITECOMEU RTL8188CU_2	0x005c	RTL8188CU
 product SITECOMEU RT3072_5	0x005f	RT3072
 product SITECOMEU WLA4000	0x0060	WLA-4000
@@ -3329,6 +3333,7 @@ product VALIDITY VFS451		0x0007	VFS451 Fingerprint Reader
 product VALIDITY VFS300		0x0008	VFS300 Fingerprint Reader
 product VALIDITY VFS5011	0x0011	VFS5011 Fingerprint Reader
 product VALIDITY VFS471		0x003c	VFS471 Fingerprint Reader
+product VALIDITY VFS491		0x003d	VFS491 Fingerprint Reader
 
 /* VidzMedia products */
 product VIDZMEDIA MONSTERTV	0x4fb1	MonsterTV P2H
@@ -3378,7 +3383,8 @@ product WESTERN EXTHDD		0x0400	External HDD
 
 /* WinChipHead products */
 product WINCHIPHEAD CH341SER	0x5523	CH341/CH340 USB-Serial Bridge
-product WINCHIPHEAD2 CH341	0x7523	CH341 serial/parallel
+product WINCHIPHEAD2 CH341	0x7523	CH341 USB-Serial Bridge
+product WINCHIPHEAD2 CH341_2	0x5523	CH341 USB-Serial Bridge
 
 /* Wistron NeWeb products */
 product WISTRONNEWEB WNC0600	0x0326	WNC-0600USB

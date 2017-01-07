@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.h,v 1.15.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/*	$NetBSD: readconf.h,v 1.15.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
 /* $OpenBSD: readconf.h,v 1.117 2016/07/15 00:24:30 djm Exp $ */
 
 /*

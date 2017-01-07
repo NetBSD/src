@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.3 2016/07/11 16:06:09 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.3.2.1 2017/01/07 08:56:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.3 2016/07/11 16:06:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.3.2.1 2017/01/07 08:56:53 pgoyette Exp $");
 
 /*
  *	Manages physical address maps.
@@ -130,6 +130,24 @@ struct pmap_segtab_info {
 
 kmutex_t pmap_segtab_lock __cacheline_aligned;
 
+static void
+pmap_check_stp(pmap_segtab_t *stp, const char *caller, const char *why)
+{
+#ifdef DEBUG
+	for (size_t i = 0; i < PMAP_SEGTABSIZE; i++) {
+		if (stp->seg_tab[i] != 0) {
+#ifdef DEBUG_NOISY
+			for (size_t j = i; j < PMAP_SEGTABSIZE; j++)
+				printf("%s: pm_segtab.seg_tab[%zu] = 0x%p\n",
+				       caller, j, stp->seg_tab[j]);
+#endif
+			panic("%s: pm_segtab.seg_tab[%zu] != 0 (0x%p): %s",
+			      caller, i, stp->seg_tab[i], why);
+		}
+	}
+#endif
+}
+
 static inline struct vm_page *
 pmap_pte_pagealloc(void)
 {
@@ -190,7 +208,9 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 {
 	pmap_segtab_t *stp = *stp_p;
 
-	for (size_t i = va / vinc; i < PMAP_SEGTABSIZE; i++, va += vinc) {
+	for (size_t i = (va / vinc) & (PMAP_SEGTABSIZE - 1);
+	     i < PMAP_SEGTABSIZE;
+	     i++, va += vinc) {
 #ifdef _LP64
 		if (vinc > NBSEG) {
 			if (stp->seg_seg[i] != NULL) {
@@ -236,6 +256,8 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 	}
 
 	if (free_stp) {
+		pmap_check_stp(stp, __func__, 
+			       vinc == NBSEG ? "release seg" : "release xseg");
 		pmap_segtab_free(stp);
 		*stp_p = NULL;
 	}
@@ -257,6 +279,7 @@ static pmap_segtab_t *
 pmap_segtab_alloc(void)
 {
 	pmap_segtab_t *stp;
+	bool found_on_freelist = false;
 
  again:
 	mutex_spin_enter(&pmap_segtab_lock);
@@ -264,6 +287,7 @@ pmap_segtab_alloc(void)
 		pmap_segtab_info.free_segtab = stp->seg_seg[0];
 		stp->seg_seg[0] = NULL;
 		SEGTAB_ADD(nget, 1);
+		found_on_freelist = true;
 	}
 	mutex_spin_exit(&pmap_segtab_lock);
 
@@ -300,12 +324,9 @@ pmap_segtab_alloc(void)
 		}
 	}
 
-#ifdef DEBUG
-	for (size_t i = 0; i < PMAP_SEGTABSIZE; i++) {
-		if (stp->seg_tab[i] != 0)
-			panic("%s: pm_segtab.seg_tab[%zu] != 0", __func__, i);
-	}
-#endif
+	pmap_check_stp(stp, __func__,
+		       found_on_freelist ? "from free list" : "allocated");
+
 	return stp;
 }
 
@@ -420,6 +441,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 #ifdef MULTIPROCESSOR
 			pmap_segtab_t *ostp = atomic_cas_ptr(stp_p, NULL, nstp);
 			if (__predict_false(ostp != NULL)) {
+				pmap_check_stp(nstp, __func__, "reserve");
 				pmap_segtab_free(nstp);
 				nstp = ostp;
 			}

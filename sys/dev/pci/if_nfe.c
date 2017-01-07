@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.61 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.61.2.1 2017/01/07 08:56:33 pgoyette Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.61 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.61.2.1 2017/01/07 08:56:33 pgoyette Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -409,6 +409,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, nfe_ifflags_cb);
 
@@ -631,8 +632,8 @@ nfe_intr(void *arg)
 		}
 	}
 
-	if (handled && !IF_IS_EMPTY(&ifp->if_snd))
-		nfe_start(ifp);
+	if (handled)
+		if_schedule_deferred_start(ifp);
 
 	return handled;
 }
@@ -944,8 +945,6 @@ mbufcopied:
 				    device_xname(sc->sc_dev)));
 			}
 		}
-		bpf_mtap(ifp, m);
-		ifp->if_ipackets++;
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 skip1:

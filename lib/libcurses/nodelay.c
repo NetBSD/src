@@ -1,4 +1,4 @@
-/*      $NetBSD: nodelay.c,v 1.6 2003/12/04 21:24:36 jdc Exp $  */
+/*      $NetBSD: nodelay.c,v 1.6.80.1 2017/01/07 08:56:04 pgoyette Exp $  */
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nodelay.c,v 1.6 2003/12/04 21:24:36 jdc Exp $");
+__RCSID("$NetBSD: nodelay.c,v 1.6.80.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -42,9 +42,10 @@ __RCSID("$NetBSD: nodelay.c,v 1.6 2003/12/04 21:24:36 jdc Exp $");
 int
 nodelay(WINDOW *win, bool bf)
 {
+
 	if (bf)
 		win->delay = 0;
 	else
 		win->delay = -1;
-	return(OK);
+	return OK;
 }

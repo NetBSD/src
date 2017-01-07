@@ -1,4 +1,4 @@
-/*	$NetBSD: uipad.c,v 1.2 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: uipad.c,v 1.2.2.1 2017/01/07 08:56:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.2 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.2.2.1 2017/01/07 08:56:42 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +73,7 @@ int	uipaddebug = 0;
 #endif
 
 struct uipad_softc {
- 	device_t		sc_dev;
+	device_t		sc_dev;
 	struct usbd_device *	sc_udev;
 };
 
@@ -98,15 +102,15 @@ uipad_cmd(struct uipad_softc *sc, uint8_t requestType, uint8_t reqno,
 {
 	usb_device_request_t req;
 	usbd_status err;
- 
+
 	DPRINTF(("ipad cmd type=%x, number=%x, value=%d, index=%d\n",
 	    requestType, reqno, value, index));
         req.bmRequestType = requestType;
         req.bRequest = reqno;
-        USETW(req.wValue, value); 
+        USETW(req.wValue, value);
         USETW(req.wIndex, index);
         USETW(req.wLength, 0);
-   
+
         if ((err = usbd_do_request(sc->sc_udev, &req, NULL)) != 0)
 		aprint_error_dev(sc->sc_dev, "sending command failed %d\n",
 		    err);
@@ -119,7 +123,7 @@ uipad_charge(struct uipad_softc *sc)
 		uipad_cmd(sc, UT_VENDOR | UT_WRITE, 0x40, 0x6400, 0x6400);
 }
 
-int 
+int
 uipad_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -129,7 +133,7 @@ uipad_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void 
+void
 uipad_attach(device_t parent, device_t self, void *aux)
 {
 	struct uipad_softc *sc = device_private(self);
@@ -160,7 +164,7 @@ uipad_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 uipad_detach(device_t self, int flags)
 {
 	struct uipad_softc *sc = device_private(self);

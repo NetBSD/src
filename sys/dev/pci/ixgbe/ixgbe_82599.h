@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2013, Intel Corporation 
+  Copyright (c) 2001-2015, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,7 +30,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.h 247822 2013-03-04 23:07:40Z jfv $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.h 282289 2015-04-30 22:53:27Z erj $*/
 
 #ifndef _IXGBE_82599_H_
 #define _IXGBE_82599_H_
@@ -41,9 +41,8 @@ enum ixgbe_media_type ixgbe_get_media_type_82599(struct ixgbe_hw *hw);
 void ixgbe_disable_tx_laser_multispeed_fiber(struct ixgbe_hw *hw);
 void ixgbe_enable_tx_laser_multispeed_fiber(struct ixgbe_hw *hw);
 void ixgbe_flap_tx_laser_multispeed_fiber(struct ixgbe_hw *hw);
-s32 ixgbe_setup_mac_link_multispeed_fiber(struct ixgbe_hw *hw,
-					  ixgbe_link_speed speed,
-					  bool autoneg_wait_to_complete);
+void ixgbe_set_hard_rate_select_speed(struct ixgbe_hw *hw,
+					ixgbe_link_speed speed);
 s32 ixgbe_setup_mac_link_smartspeed(struct ixgbe_hw *hw,
 				    ixgbe_link_speed speed,
 				    bool autoneg_wait_to_complete);
@@ -61,4 +60,6 @@ s32 ixgbe_identify_phy_82599(struct ixgbe_hw *hw);
 s32 ixgbe_init_phy_ops_82599(struct ixgbe_hw *hw);
 u32 ixgbe_get_supported_physical_layer_82599(struct ixgbe_hw *hw);
 s32 ixgbe_enable_rx_dma_82599(struct ixgbe_hw *hw, u32 regval);
+s32 prot_autoc_read_82599(struct ixgbe_hw *hw, bool *locked, u32 *reg_val);
+s32 prot_autoc_write_82599(struct ixgbe_hw *hw, u32 reg_val, bool locked);
 #endif /* _IXGBE_82599_H_ */

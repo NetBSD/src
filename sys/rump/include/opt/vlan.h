@@ -1,3 +1,3 @@
-/*	$NetBSD: vlan.h,v 1.1 2015/08/24 23:04:42 pooka Exp $	*/
+/*	$NetBSD: vlan.h,v 1.1.4.1 2017/01/07 08:56:52 pgoyette Exp $	*/
 
-/* dummy */
+#define NVLAN	1

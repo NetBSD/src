@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.30 2015/06/09 20:23:53 matt Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.30.2.1 2017/01/07 08:56:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.30 2015/06/09 20:23:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.30.2.1 2017/01/07 08:56:23 pgoyette Exp $");
 
 #define	_PMAX_BUS_DMA_PRIVATE
 /*
@@ -112,7 +112,7 @@ tcbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	tba->tba_busname = "tc";
-	tba->tba_memt = 0;
+	tba->tba_memt = normal_memt;
 	tba->tba_intr_evcnt = tc_ds_intr_evcnt;
 	tba->tba_intr_establish = tc_ds_intr_establish;
 	tba->tba_intr_disestablish = tc_ds_intr_disestablish;
@@ -178,8 +178,6 @@ tc_ds_get_dma_tag(int slot)
 
 #include <pmax/pmax/cons.h>
 #include <pmax/dec_prom.h>
-
-int	tc_checkslot(tc_addr_t, char *);
 
 struct cnboards {
 	const char	*cb_tcname;

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.61.2.2 2016/11/04 14:49:26 pgoyette Exp $ */
+/* $NetBSD: decl.c,v 1.61.2.3 2017/01/07 08:56:59 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.61.2.2 2016/11/04 14:49:26 pgoyette Exp $");
+__RCSID("$NetBSD: decl.c,v 1.61.2.3 2017/01/07 08:56:59 pgoyette Exp $");
 #endif
 
 #include <sys/param.h>
@@ -531,6 +531,12 @@ addpacked(void)
 		dcs->d_ispacked = 1;
 	else
 		setpackedsize(dcs->d_type);
+}
+
+void
+addused(void)
+{
+	dcs->d_used = 1;
 }
 
 /*
@@ -2353,6 +2359,7 @@ decl1arg(sym_t *sym, int initflg)
 	if (sym->s_type->t_tspec != VOID)
 		(void)length(sym->s_type, sym->s_name);
 
+	sym->s_used = dcs->d_used;
 	setsflg(sym);
 
 	return (sym);

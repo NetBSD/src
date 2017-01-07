@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.4.2.1 2016/11/04 14:49:10 pgoyette Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.4.2.2 2017/01/07 08:56:33 pgoyette Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.4.2.1 2016/11/04 14:49:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.4.2.2 2017/01/07 08:56:33 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,13 +68,6 @@ int nvme_pci_mpsafe = 1;
 int nvme_pci_mq = 1;		/* INTx: ioq=1, MSI/MSI-X: ioq=ncpu */
 
 #define NVME_PCI_BAR		0x10
-
-#ifndef __HAVE_PCI_MSI_MSIX
-#define pci_intr_release(pc, intrs, nintrs) \
-	kmem_free(intrs, sizeof(*intrs) * nintrs)
-#define pci_intr_establish_xname(pc, ih, level, intrhand, intrarg, xname) \
-	pci_intr_establish(pc, ih, level, intrhand, intrarg)
-#endif 
 
 struct nvme_pci_softc {
 	struct nvme_softc	psc_nvme;
@@ -121,9 +114,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t memtype, reg;
 	bus_addr_t memaddr;
 	int flags, error;
-#ifdef __HAVE_PCI_MSI_MSIX
 	int msixoff;
-#endif
 
 	sc->sc_dev = self;
 	psc->psc_pc = pa->pa_pc;
@@ -154,7 +145,6 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-#ifdef __HAVE_PCI_MSI_MSIX
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSIX, &msixoff,
 	    NULL)) {
 		pcireg_t msixtbl;
@@ -169,7 +159,6 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 			sc->sc_ios = table_offset;
 		}
 	}
-#endif /* __HAVE_PCI_MSI_MSIX */
 
 	error = bus_space_map(sc->sc_iot, memaddr, sc->sc_ios, flags,
 	    &sc->sc_ioh);
@@ -266,9 +255,7 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 	int (*ih_func)(void *);
 	void (*ih_func_soft)(void *);
 	void *ih_arg;
-#ifdef __HAVE_PCI_MSI_MSIX
 	int error;
-#endif
 
 	KASSERT(sc->sc_use_mq || qid == NVME_ADMIN_Q);
 	KASSERT(sc->sc_ih[qid] == NULL);
@@ -278,17 +265,13 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 		    PCI_INTR_MPSAFE, true);
 	}
 
-#ifdef __HAVE_PCI_MSI_MSIX
 	if (!sc->sc_use_mq) {
-#endif
 		snprintf(intr_xname, sizeof(intr_xname), "%s",
 		    device_xname(sc->sc_dev));
 		ih_arg = sc;
 		ih_func = nvme_intr;
 		ih_func_soft = nvme_softintr_intx;
-#ifdef __HAVE_PCI_MSI_MSIX
-	}
-	else {
+	} else {
 		if (qid == NVME_ADMIN_Q) {
 			snprintf(intr_xname, sizeof(intr_xname), "%s adminq",
 			    device_xname(sc->sc_dev));
@@ -300,7 +283,6 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 		ih_func = nvme_intr_msi;
 		ih_func_soft = nvme_softintr_msi;
 	}
-#endif /* __HAVE_PCI_MSI_MSIX */
 
 	/* establish hardware interrupt */
 	sc->sc_ih[qid] = pci_intr_establish_xname(psc->psc_pc,
@@ -329,9 +311,7 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 	    sizeof(intrbuf));
 	if (!sc->sc_use_mq) {
 		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
-	}
-#ifdef __HAVE_PCI_MSI_MSIX
-	else if (qid == NVME_ADMIN_Q) {
+	} else if (qid == NVME_ADMIN_Q) {
 		aprint_normal_dev(sc->sc_dev,
 		    "for admin queue interrupting at %s\n", intrstr);
 	} else if (!nvme_pci_mpsafe) {
@@ -352,7 +332,6 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 			aprint_normal(" affinity to cpu%lu", affinity_to);
 		aprint_normal("\n");
 	}
-#endif
 	return 0;
 }
 
@@ -379,16 +358,11 @@ static int
 nvme_pci_setup_intr(struct pci_attach_args *pa, struct nvme_pci_softc *psc)
 {
 	struct nvme_softc *sc = &psc->psc_nvme;
-#ifdef __HAVE_PCI_MSI_MSIX
 	int error;
 	int counts[PCI_INTR_TYPE_SIZE], alloced_counts[PCI_INTR_TYPE_SIZE];
 	pci_intr_handle_t *ihps;
 	int max_type, intr_type;
-#else
-	pci_intr_handle_t ih;
-#endif /* __HAVE_PCI_MSI_MSIX */
 
-#ifdef __HAVE_PCI_MSI_MSIX
 	if (nvme_pci_force_intx) {
 		max_type = PCI_INTR_TYPE_INTX;
 		goto force_intx;
@@ -489,18 +463,6 @@ retry:
 	sc->sc_use_mq = alloced_counts[intr_type] > 1;
 	sc->sc_nq = sc->sc_use_mq ? alloced_counts[intr_type] - 1 : 1;
 
-#else /* !__HAVE_PCI_MSI_MSIX */
-        if (pci_intr_map(pa, &ih)) {
-                aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
-                return EBUSY;
-        }
-
-	psc->psc_intrs = kmem_zalloc(sizeof(ih), KM_SLEEP);
-	psc->psc_intrs[0] = ih;
-	psc->psc_nintrs = 1;
-	sc->sc_use_mq = 0;
-	sc->sc_nq = 1;
-#endif /* __HAVE_PCI_MSI_MSIX */
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.43 2012/12/10 18:11:33 christos Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.43.12.1 2017/01/07 08:57:01 pgoyette Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.43 2012/12/10 18:11:33 christos Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.43.12.1 2017/01/07 08:57:01 pgoyette Exp $");
 #endif
 #endif
 
@@ -569,7 +569,7 @@ main(int argc, char *argv[])
 		ep = NULL;
 		errno = 0;
 		datalen = strtoul(*argv, &ep, 0);
-		if (errno || !*argv || *ep)
+		if (errno || *ep)
 			errx(1, "Invalid packet length `%s'", *argv);
 	}
 	if (useicmp)

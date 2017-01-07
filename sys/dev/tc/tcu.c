@@ -1,4 +1,4 @@
-/* $NetBSD: tcu.c,v 1.2.2.2 2016/09/14 03:04:17 pgoyette Exp $ */
+/* $NetBSD: tcu.c,v 1.2.2.3 2017/01/07 08:56:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2016, Felix Deichmann
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcu.c,v 1.2.2.2 2016/09/14 03:04:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcu.c,v 1.2.2.3 2017/01/07 08:56:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcu.c,v 1.2.2.2 2016/09/14 03:04:17 pgoyette Exp $")
 
 #define TCU_CFG		0x0
 #define   TCU_CFG_RUN	__BIT(7)	/* write-only */
+#define   TCU_CFG_S1_1	__BIT(3)	/* read-only */
+#define   TCU_CFG_S1_2	__BIT(2)	/* read-only */
+#define   TCU_CFG_S1_3	__BIT(1)	/* read-only */
+#define   TCU_CFG_S1_4	__BIT(0)	/* read-only */
 #define TCU_GPIO_DIR	0x4
 #define TCU_GPIO_IN	0x8
 #define TCU_GPIO_OUT	0xc
@@ -136,6 +140,10 @@ tcu_attach(device_t parent, device_t self, void *aux)
 	    "b\0S1-4\0"
 	    "\0", cfg);
 	aprint_normal_dev(self, "config %s\n", buf);
+
+	if ((cfg & TCU_CFG_S1_1) != 0 && ta->ta_busspeed != TC_SPEED_12_5_MHZ)
+		aprint_error_dev(self, "warning: switch S1-1 asserted with "
+		    "clock != 12.5 MHz\n");
 
 #if NSLHCI_TCU > 0
 	/* Attach slhci. */

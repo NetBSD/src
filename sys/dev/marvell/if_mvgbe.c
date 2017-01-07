@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.45 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.45.2.1 2017/01/07 08:56:32 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.45 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.45.2.1 2017/01/07 08:56:32 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -909,6 +909,7 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 
 	ether_ifattach(ifp, sc->sc_enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, mvgbe_ifflags_cb);
@@ -1050,8 +1051,7 @@ mvgbe_intr(void *arg)
 			mvgbe_txeof(sc);
 	}
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		mvgbe_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	rnd_add_uint32(&sc->sc_rnd_source, datum);
 
@@ -2079,10 +2079,6 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 
 		/* Skip on first 2byte (HW header) */
 		m_adj(m,  MVGBE_HWHEADER_SIZE);
-
-		ifp->if_ipackets++;
-
-		bpf_mtap(ifp, m);
 
 		/* pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

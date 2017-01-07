@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.26 2013/03/29 21:46:32 christos Exp $
+.\"	$NetBSD: scsictl.8,v 1.26.10.1 2017/01/07 08:56:07 pgoyette Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 29, 2013
+.Dd November 19, 2016
 .Dt SCSICTL 8
 .Os
 .Sh NAME
@@ -60,10 +60,8 @@ will be decoded by
 and displayed to the standard output.
 .Sh DEVICE COMMANDS
 The following commands are supported for SCSI devices:
-.Pp
-.Nm debug
-.Ar level
-.Pp
+.Bl -tag -width flushcacheXX
+.It Cm debug Ar level
 Set the debugging level for the given device; the following flags are
 supported:
 .Pp
@@ -80,24 +78,13 @@ Device specific debugging.
 .Pp
 This option is only supported with kernels compiled with
 .Dv SCSIPI_DEBUG .
-.Pp
-.Nm defects
-.Op primary
-.Op grown
-.Op block|byte|physical
-.Pp
+.It Cm defects Oo primary Oc Oo grown Oc Oo block|byte|physical Oc
 Read the primary and/or grown defect lists from the specified device
 in block, byte from index, or physical sector format.
 The default is to return both the primary and grown defect lists
 in physical sector format.
 This command is only supported on direct access devices.
-.Pp
-.Nm format
-.Oo blocksize
-.Oo immediate
-.Oc
-.Oc
-.Pp
+.It Cm format Oo blocksize Oo immediate Oc Oc
 (Low level) format the named device.
 If the optional
 .Li blocksize
@@ -132,73 +119,47 @@ This associated sense data has a progress indicator which indicates
 how far the format is progressing.
 Note well that most SCSI disk drives prior to
 a few years ago do not support this option.
-.Pp
-.Nm identify
-.Pp
+.It Cm identify
 Identify the specified device, displaying the device's SCSI
 bus, target, and lun, as well as the device's vendor, product,
 and revision strings.
-.Pp
-.Nm reassign
-.Ar blkno
-.Oo blkno Oo ...
-.Oc
-.Oc
-.Pp
+.Cm It reassign Ar blkno Oo blkno Oo ... Oc Oc
 Issues a
 .Li REASSIGN BLOCKS
 command to the device, adding the specified blocks to the
 grown defect list.
 This command is only supported on direct access devices.
-.Pp
-.Nm release
-.Pp
+.It Cm release
 Send a
 .Dq RELEASE
 command to the device to release a reservation on it.
-.Pp
-.Nm reserve
-.Pp
+.It Cm reserve
 Send a
 .Dq RESERVE
 command to the device to place a reservation on it.
-.Pp
-.Nm reset
-.Pp
+.It Cm reset
 Reset the device.
 This command is only supported for devices which support the
 .Li SCIOCRESET
 ioctl.
-.Pp
-.Nm start
-.Pp
+.It Cm start
 Send a
 .Dq START
 command to the device.
 This is useful typically only for disk devices.
-.Pp
-.Nm stop
-.Pp
+.It Cm stop
 Send a
 .Dq STOP
 command to the device.
 This is useful typically only for disk devices.
-.Pp
-.Nm tur
-.Pp
+.It Cm tur
 Send a
 .Dq TEST UNIT READY
 command to the device.
 This is useful for generating current device status.
-.Pp
-.Nm getcache
-.Pp
+.It Cm getcache
 Returns basic cache parameters for the device.
-.Pp
-.Nm setcache
-.Ar none|r|w|rw
-.Op Ar save
-.Pp
+.It Cm setcache Ar none|r|w|rw Op Ar save
 Set basic cache parameters for the device.
 The cache may be disabled
 .Pq none ,
@@ -212,32 +173,39 @@ If the drive's cache parameters are savable, specifying
 .Ar save
 after the cache enable state will cause the parameters to be saved in
 non-volatile storage.
-.Pp
-.Nm flushcache
-.Pp
+.It Cm flushcache
 Explicitly flushes the write cache.
-.Pp
-.Nm setspeed
-.Ar speed
-.Pp
+.It Cm setspeed Ar speed
 Set the highest speed that the optical drive should use for reading
 data.
 The units are multiples of a single speed CDROM (150 KB/s).
 Specify 0 to use the drive's fastest speed.
+.It Cm getrealloc
+Returns automatic reallocation parameters for the device.
+.It Cm setrealloc Ar none|r|w|rw Op Ar save
+Set automatic reallocation parameters for the device.
+Automatic reallocation may be disabled
+.Pq none ,
+the automatic read reallocation enabled
+.Pq r ,
+the automatic write reallocation enabled
+.Pq w ,
+or both automatic read and write reallocation enabled
+.Pq rw .
+If the drive's automatic reallocation parameters are savable, specifying
+.Ar save
+after the automatic reallocation enable state will cause the parameters to be
+saved in non-volatile storage.
+.El
 .Sh BUS COMMANDS
 The following commands are supported for SCSI busses:
-.Pp
-.Nm reset
-.Pp
+.Bl -tag width scanXtargetXlunXX
+.It Cm reset
 Reset the SCSI bus.
 This command is only supported if the host adapter supports the
 .Li SCBUSIORESET
 ioctl.
-.Pp
-.Nm scan
-.Ar target
-.Ar lun
-.Pp
+.It Cm scan Ar target Ar lun
 Scan the SCSI bus for devices.
 This is useful if a device was not connected or powered
 on when the system was booted.
@@ -250,11 +218,7 @@ Either may be wildcarded by specifying the keyword
 .Dq any
 or
 .Dq all .
-.Pp
-.Nm detach
-.Ar target
-.Ar lun
-.Pp
+.It Cm detach Ar target Ar lun
 Detach the specified device from the bus.
 Useful if a device is powered down after use.
 The
@@ -262,8 +226,9 @@ The
 and
 .Ar lun
 arguments have the same meaning as for the
-.Nm scan
+.Cm scan
 command, and may also be wildcarded.
+.El
 .Sh NOTES
 When scanning the SCSI bus, information about newly recognized devices
 is printed to console.
@@ -275,6 +240,7 @@ No information is printed for already probed devices.
 .Xr ioctl 2 ,
 .Xr cd 4 ,
 .Xr ch 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr se 4 ,
 .Xr ss 4 ,
@@ -288,7 +254,9 @@ The
 command first appeared in
 .Nx 1.4 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
-command was written by Jason R. Thorpe of the Numerical Aerospace Simulation
-Facility, NASA Ames Research Center.
+command was written by
+.An Jason R. Thorpe
+of the Numerical Aerospace Simulation Facility, NASA Ames Research Center.

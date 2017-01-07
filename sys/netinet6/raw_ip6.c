@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.146.2.3 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.146.2.4 2017/01/07 08:56:51 pgoyette Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,10 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.146.2.3 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.146.2.4 2017/01/07 08:56:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -92,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.146.2.3 2016/11/04 14:49:21 pgoyette E
 #include <netinet/icmp6.h>
 #include <netinet6/icmp6_private.h>
 #include <netinet6/in6_pcb.h>
-#include <netinet6/nd6.h>
 #include <netinet6/ip6protosw.h>
 #include <netinet6/scope6_var.h>
 #include <netinet6/raw_ip6.h>
@@ -935,11 +935,15 @@ static int
 rip6_purgeif(struct socket *so, struct ifnet *ifp)
 {
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
+#endif
 	in6_pcbpurgeif0(&raw6cbtable, ifp);
 	in6_purgeif(ifp);
 	in6_pcbpurgeif(&raw6cbtable, ifp);
+#ifndef NET_MPSAFE
 	mutex_exit(softnet_lock);
+#endif
 
 	return 0;
 }

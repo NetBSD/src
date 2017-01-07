@@ -12163,7 +12163,7 @@ if test "${enable_secureplt+set}" = set; then :
   *)    as_fn_error "bad value ${enableval} for secureplt option" "$LINENO" 5 ;;
 esac
 else
-  use_secureplt=true
+  use_secureplt=false
 fi
 if test $use_secureplt = true; then
 
@@ -14706,7 +14706,7 @@ if test "${target}" = "${host}"; then
 	;;
   arm-*-freebsd* | arm-*-kfreebsd*-gnu)
 	COREFILE='' ;;
-  arm-*-netbsd* | arm-*-openbsd*)
+  arm*-*-netbsd* | arm-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
   arm-*-riscix)		COREFILE=trad-core.lo ;;
@@ -14776,7 +14776,7 @@ if test "${target}" = "${host}"; then
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/i860mach3.h"'
 	;;
-  mips-*-netbsd* | mips*-*-openbsd*)
+  mips*-*-netbsd* | mips*-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
   mips-dec-*)

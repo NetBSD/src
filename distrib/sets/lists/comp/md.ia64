@@ -1,6 +1,6 @@
-# $NetBSD: md.ia64,v 1.1.2.2 2016/08/06 00:18:39 pgoyette Exp $
-./usr/include/gcc-4.8/ia64intrin.h	comp-c-include			obsolete
-./usr/include/gcc-4.8/tgmath.h		comp-c-include			obsolete
+# $NetBSD: md.ia64,v 1.1.2.3 2017/01/07 08:53:43 pgoyette Exp $
+./usr/include/gcc-4.8/ia64intrin.h	comp-obsolete			obsolete
+./usr/include/gcc-4.8/tgmath.h		comp-obsolete			obsolete
 ./usr/include/gcc-5/ia64intrin.h	comp-c-include
 ./usr/include/gcc-5/tgmath.h		comp-c-include
 ./usr/include/ia64			comp-c-include

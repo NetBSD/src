@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.17.2.1 2016/11/04 14:42:41 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.17.2.2 2017/01/07 08:53:48 pgoyette Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
@@ -129,6 +129,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/digital_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/fujitsu_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/hp_vndr
+./usr/X11R7/lib/X11/xkb/symbols/jolla_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/nec_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/nokia_vndr

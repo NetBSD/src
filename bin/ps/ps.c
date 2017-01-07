@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.83 2015/06/16 22:31:08 christos Exp $	*/
+/*	$NetBSD: ps.c,v 1.83.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.83 2015/06/16 22:31:08 christos Exp $");
+__RCSID("$NetBSD: ps.c,v 1.83.2.1 2017/01/07 08:53:41 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ __RCSID("$NetBSD: ps.c,v 1.83 2015/06/16 22:31:08 christos Exp $");
 #include <kvm.h>
 #include <limits.h>
 #include <locale.h>
+#include <math.h>
 #include <nlist.h>
 #include <paths.h>
 #include <pwd.h>
@@ -103,15 +104,13 @@ __RCSID("$NetBSD: ps.c,v 1.83 2015/06/16 22:31:08 christos Exp $");
  * ARGOPTS must contain all option characters that take arguments
  * (except for 't'!) - it is used in kludge_oldps_options()
  */
-#define	GETOPTSTR	"aAcCeghjk:LlM:mN:O:o:p:rSsTt:U:uvW:wx"
+#define	GETOPTSTR	"aAcCdeghjk:LlM:mN:O:o:p:rSsTt:U:uvW:wx"
 #define	ARGOPTS		"kMNOopUW"
 
-struct kinfo_proc2 *kinfo;
 struct varlist displaylist = SIMPLEQ_HEAD_INITIALIZER(displaylist);
 struct varlist sortlist = SIMPLEQ_HEAD_INITIALIZER(sortlist);
 
 int	eval;			/* exit value */
-int	rawcpu;			/* -C */
 int	sumrusage;		/* -S */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
@@ -124,12 +123,14 @@ static struct kinfo_lwp
 		    struct kinfo_lwp *, int);
 static struct kinfo_proc2
 		*getkinfo_kvm(kvm_t *, int, int, int *);
+static struct pinfo
+		*setpinfo(struct kinfo_proc2 *, int, int, int);
 static char	*kludge_oldps_options(char *);
 static int	 pscomp(const void *, const void *);
 static void	 scanvars(void);
 __dead static void	 usage(void);
 static int	 parsenum(const char *, const char *);
-int		 main(int, char *[]);
+static void	 descendant_sort(struct pinfo *, int);
 
 char dfmt[] = "pid tt state time command";
 char jfmt[] = "user pid ppid pgid sess jobc state tt time command";
@@ -198,12 +199,14 @@ ttyname2dev(const char *ttname, int *xflg, int *what)
 int
 main(int argc, char *argv[])
 {
+	struct kinfo_proc2 *kinfo;
+	struct pinfo *pinfo;
 	struct varent *vent;
 	struct winsize ws;
 	struct kinfo_lwp *kl, *l;
-	int ch, i, j, fmt, lineno, nentries, nlwps;
+	int ch, i, j, fmt, lineno, descendancy, nentries, nlwps;
 	long long flag;
-	int prtheader, wflag, what, xflg, showlwps;
+	int calc_pcpu, prtheader, wflag, what, xflg, rawcpu, showlwps;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	char *ttname;
 
@@ -221,7 +224,7 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		argv[1] = kludge_oldps_options(argv[1]);
 
-	fmt = prtheader = wflag = xflg = showlwps = 0;
+	descendancy = fmt = prtheader = wflag = xflg = showlwps = 0;
 	what = KERN_PROC_UID;
 	flag = myuid = getuid();
 	memf = nlistf = swapf = NULL;
@@ -238,6 +241,9 @@ main(int argc, char *argv[])
 			break;
 		case 'c':
 			commandonly = 1;
+			break;
+		case 'd':
+			descendancy = 1;
 			break;
 		case 'e':			/* XXX set ufmt */
 			needenv = 1;
@@ -262,8 +268,7 @@ main(int argc, char *argv[])
 			break;			/* no-op - was dontuseprocfs */
 		case 'L':
 			showkey();
-			exit(0);
-			/* NOTREACHED */
+			return 0;
 		case 'l':
 			parsefmt(lfmt);
 			fmt = 1;
@@ -388,7 +393,7 @@ main(int argc, char *argv[])
 	} else
 		kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
 
-	if (kd == 0)
+	if (kd == NULL)
 		errx(1, "%s", errbuf);
 
 	if (!fmt)
@@ -396,11 +401,20 @@ main(int argc, char *argv[])
 
 	/* Add default sort criteria */
 	parsesort("tdev,pid");
+	calc_pcpu = 0;
 	SIMPLEQ_FOREACH(vent, &sortlist, next) {
 		if (vent->var->flag & LWP || vent->var->type == UNSPECIFIED)
 			warnx("Cannot sort on %s, sort key ignored",
 				vent->var->name);
+		if (vent->var->type == PCPU)
+			calc_pcpu = 1;
 	}
+	if (!calc_pcpu)
+		SIMPLEQ_FOREACH(vent, &displaylist, next)
+			if (vent->var->type == PCPU) {
+				calc_pcpu = 1;
+				break;
+			}
 
 	/*
 	 * scan requested variables, noting what structures are needed.
@@ -414,12 +428,21 @@ main(int argc, char *argv[])
 		err(1, "%s", kvm_geterr(kd));
 	if (nentries == 0) {
 		printheader();
-		exit(1);
+		return 1;
 	}
+	pinfo = setpinfo(kinfo, nentries, calc_pcpu, rawcpu);
+
 	/*
 	 * sort proc list
 	 */
-	qsort(kinfo, nentries, sizeof(struct kinfo_proc2), pscomp);
+	qsort(pinfo, nentries, sizeof(struct pinfo), pscomp);
+
+	/*
+	 * We want things in descendant order
+	 */
+	if (descendancy)
+		descendant_sort(pinfo, nentries);
+
 	/*
 	 * For each proc, call each variable output function in
 	 * "setwidth" mode to determine the widest element of
@@ -427,7 +450,8 @@ main(int argc, char *argv[])
 	 */
 
 	for (i = 0; i < nentries; i++) {
-		struct kinfo_proc2 *ki = &kinfo[i];
+		struct pinfo *pi = &pinfo[i];
+		struct kinfo_proc2 *ki = pi->ki;
 
 		if (xflg == 0 && (ki->p_tdev == (uint32_t)NODEV ||
 		    (ki->p_flag & P_CONTROLT) == 0))
@@ -440,7 +464,7 @@ main(int argc, char *argv[])
 		if (showlwps == 0) {
 			l = pick_representative_lwp(ki, kl, nlwps);
 			SIMPLEQ_FOREACH(vent, &displaylist, next)
-				OUTPUT(vent, ki, l, WIDTHMODE);
+				OUTPUT(vent, l, pi, ki, WIDTHMODE);
 		} else {
 			/* The printing is done with the loops
 			 * reversed, but here we don't need that,
@@ -448,7 +472,7 @@ main(int argc, char *argv[])
 			 */
 			SIMPLEQ_FOREACH(vent, &displaylist, next)
 				for (j = 0; j < nlwps; j++)
-					OUTPUT(vent, ki, &kl[j], WIDTHMODE);
+					OUTPUT(vent, &kl[j], pi, ki, WIDTHMODE);
 		}
 	}
 	/*
@@ -462,7 +486,8 @@ main(int argc, char *argv[])
 	 * print mode.
 	 */
 	for (i = lineno = 0; i < nentries; i++) {
-		struct kinfo_proc2 *ki = &kinfo[i];
+		struct pinfo *pi = &pinfo[i];
+		struct kinfo_proc2 *ki = pi->ki;
 
 		if (xflg == 0 && (ki->p_tdev == (uint32_t)NODEV ||
 		    (ki->p_flag & P_CONTROLT ) == 0))
@@ -474,7 +499,7 @@ main(int argc, char *argv[])
 		if (showlwps == 0) {
 			l = pick_representative_lwp(ki, kl, nlwps);
 			SIMPLEQ_FOREACH(vent, &displaylist, next) {
-				OUTPUT(vent, ki, l, PRINTMODE);
+				OUTPUT(vent, l, pi, ki, PRINTMODE);
 				if (SIMPLEQ_NEXT(vent, next) != NULL)
 					(void)putchar(' ');
 			}
@@ -487,7 +512,7 @@ main(int argc, char *argv[])
 		} else {
 			for (j = 0; j < nlwps; j++) {
 				SIMPLEQ_FOREACH(vent, &displaylist, next) {
-					OUTPUT(vent, ki, &kl[j], PRINTMODE);
+					OUTPUT(vent, &kl[j], pi, ki, PRINTMODE);
 					if (SIMPLEQ_NEXT(vent, next) != NULL)
 						(void)putchar(' ');
 				}
@@ -500,8 +525,7 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-	exit(eval);
-	/* NOTREACHED */
+	return eval;
 }
 
 static struct kinfo_lwp *
@@ -562,13 +586,41 @@ pick_representative_lwp(struct kinfo_proc2 *ki, struct kinfo_lwp *kl, int nlwps)
 	return kl;
 }
 
-
 static struct kinfo_proc2 *
 getkinfo_kvm(kvm_t *kdp, int what, int flag, int *nentriesp)
 {
 
 	return (kvm_getproc2(kdp, what, flag, sizeof(struct kinfo_proc2),
 	    nentriesp));
+}
+
+static struct pinfo *
+setpinfo(struct kinfo_proc2 *ki, int nentries, int calc_pcpu, int rawcpu)
+{
+	struct pinfo *pi;
+	int i;
+
+	pi = calloc(nentries, sizeof(*pi));
+	if (pi == NULL)
+		err(1, "calloc");
+
+	if (calc_pcpu && !nlistread)
+		donlist();
+
+	for (i = 0; i < nentries; i++) {
+		pi[i].ki = &ki[i];
+		if (!calc_pcpu)
+			continue;
+		if (ki[i].p_swtime == 0 || ki[i].p_realstat == SZOMB) {
+			pi[i].pcpu = 0.0;
+			continue;
+		}
+		pi[i].pcpu = 100.0 * (double)ki[i].p_pctcpu / fscale;
+		if (!rawcpu)
+			pi[i].pcpu /= 1.0 - exp(ki[i].p_swtime * log_ccpu);
+	}
+
+	return pi;
 }
 
 static void
@@ -589,8 +641,10 @@ scanvars(void)
 static int
 pscomp(const void *a, const void *b)
 {
-	const struct kinfo_proc2 *ka = (const struct kinfo_proc2 *)a;
-	const struct kinfo_proc2 *kb = (const struct kinfo_proc2 *)b;
+	const struct pinfo *pa = (const struct pinfo *)a;
+	const struct pinfo *pb = (const struct pinfo *)b;
+	const struct kinfo_proc2 *ka = pa->ki;
+	const struct kinfo_proc2 *kb = pb->ki;
 
 	int i;
 	int64_t i64;
@@ -635,8 +689,8 @@ pscomp(const void *a, const void *b)
 		case UINT32:
 			RDIFF(uint32_t);
 		case SIGLIST:
-			sa = (const void *)((const char *)a + v->off);
-			sb = (const void *)((const char *)b + v->off);
+			sa = (const void *)((const char *)ka + v->off);
+			sb = (const void *)((const char *)kb + v->off);
 			i = 0;
 			do {
 				if (sa->__bits[i] > sb->__bits[i])
@@ -670,7 +724,7 @@ pscomp(const void *a, const void *b)
 				return i64 > 0 ? 1 : -1;
 			continue;
 		case PCPU:
-			i = getpcpu(kb) - getpcpu(ka);
+			i = pb->pcpu - pa->pcpu;
 			if (i != 0)
 				return i;
 			continue;
@@ -770,12 +824,122 @@ parsenum(const char *str, const char *msg)
 }
 
 static void
+descendant_sort(struct pinfo *ki, int items)
+{
+	int dst, lvl, maxlvl, n, ndst, nsrc, siblings, src;
+	unsigned char *path;
+	struct pinfo kn;
+
+	/*
+	 * First, sort the entries by descendancy, tracking the descendancy
+	 * depth in the level field.
+	 */
+	src = 0;
+	maxlvl = 0;
+	while (src < items) {
+		if (ki[src].level) {
+			src++;
+			continue;
+		}
+		for (nsrc = 1; src + nsrc < items; nsrc++)
+			if (!ki[src + nsrc].level)
+				break;
+
+		for (dst = 0; dst < items; dst++) {
+			if (ki[dst].ki->p_pid == ki[src].ki->p_pid)
+				continue;
+			if (ki[dst].ki->p_pid == ki[src].ki->p_ppid)
+				break;
+		}
+
+		if (dst == items) {
+			src += nsrc;
+			continue;
+		}
+
+		for (ndst = 1; dst + ndst < items; ndst++)
+			if (ki[dst + ndst].level <= ki[dst].level)
+				break;
+
+		for (n = src; n < src + nsrc; n++) {
+			ki[n].level += ki[dst].level + 1;
+			if (maxlvl < ki[n].level)
+				maxlvl = ki[n].level;
+		}
+
+		while (nsrc) {
+			if (src < dst) {
+				kn = ki[src];
+				memmove(ki + src, ki + src + 1,
+				    (dst - src + ndst - 1) * sizeof *ki);
+				ki[dst + ndst - 1] = kn;
+				nsrc--;
+				dst--;
+				ndst++;
+			} else if (src != dst + ndst) {
+				kn = ki[src];
+				memmove(ki + dst + ndst + 1, ki + dst + ndst,
+				    (src - dst - ndst) * sizeof *ki);
+				ki[dst + ndst] = kn;
+				ndst++;
+				nsrc--;
+				src++;
+			} else {
+				ndst += nsrc;
+				src += nsrc;
+				nsrc = 0;
+			}
+		}
+	}
+
+	/*
+	 * Now populate prefix (instead of level) with the command
+	 * prefix used to show descendancies.
+	 */
+	path = malloc((maxlvl + 7) / 8);
+	memset(path, '\0', (maxlvl + 7) / 8);
+	for (src = 0; src < items; src++) {
+		if ((lvl = ki[src].level) == 0) {
+			ki[src].prefix = NULL;
+			continue;
+		}
+		if ((ki[src].prefix = malloc(lvl * 2 + 1)) == NULL)
+			errx(1, "malloc failed");
+		for (n = 0; n < lvl - 2; n++) {
+			ki[src].prefix[n * 2] =
+			    path[n / 8] & 1 << (n % 8) ? '|' : ' ';
+			ki[src].prefix[n * 2 + 1] = ' ';
+				
+		}
+		if (n == lvl - 2) {
+			/* Have I any more siblings? */
+			for (siblings = 0, dst = src + 1; dst < items; dst++) {
+				if (ki[dst].level > lvl)
+					continue;
+				if (ki[dst].level == lvl)
+					siblings = 1;
+				break;
+			}
+			if (siblings)
+				path[n / 8] |= 1 << (n % 8);
+			else
+				path[n / 8] &= ~(1 << (n % 8));
+			ki[src].prefix[n * 2] = siblings ? '|' : '`';
+			ki[src].prefix[n * 2 + 1] = '-';
+			n++;
+		}
+		strcpy(ki[src].prefix + n * 2, "- ");
+	}
+	free(path);
+}
+
+static void
 usage(void)
 {
 
 	(void)fprintf(stderr,
 	    "usage:\t%s\n\t   %s\n\t%s\n",
-	    "ps [-AaCcehjlmrSsTuvwx] [-k key] [-M core] [-N system] [-O fmt]",
+	    "ps [-AaCcdehjlmrSsTuvwx] [-k key] [-M core] [-N system] [-O fmt]",
 	    "[-o fmt] [-p pid] [-t tty] [-U user] [-W swap]",
 	    "ps -L");
 	exit(1);

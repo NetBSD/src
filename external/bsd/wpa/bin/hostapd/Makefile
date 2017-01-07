@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2016/06/29 19:16:23 christos Exp $
+# $NetBSD: Makefile,v 1.9.2.1 2017/01/07 08:54:10 pgoyette Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -21,19 +21,24 @@ hostapd.c \
 ieee802_11_auth.c \
 ieee802_11_shared.c \
 ieee802_1x.c \
+neighbor_db.c \
 peerkey_auth.c \
 pmksa_cache_auth.c \
 preauth_auth.c \
+rrm.c \
 sta_info.c \
 tkip_countermeasures.c \
 utils.c \
+vlan_ifconfig.c \
 vlan_init.c \
+vlan.c \
 wpa_auth.c \
 wpa_auth_glue.c \
 wpa_auth_ie.c
 
 # common
 SRCS+= \
+ctrl_iface_common.c \
 hw_features_common.c \
 ieee802_11_common.c \
 wpa_common.c \
@@ -91,6 +96,7 @@ sha1-prf.c
 
 # crypto for non-openssl
 NO_SRCS+= \
+aes-cbc.c \
 aes-wrap.c \
 md5.c
 
@@ -144,7 +150,6 @@ CPPFLAGS+= -DPKCS12_FUNCS
 
 # crypto
 SRCS+= \
-aes-cbc.c \
 aes-ctr.c \
 aes-eax.c \
 aes-encblock.c \

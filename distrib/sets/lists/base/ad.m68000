@@ -1,2 +1,2 @@
-# $NetBSD: ad.m68000,v 1.2 2010/03/10 23:13:09 abs Exp $
-./sbin/edlabel					base-sysutil-root	obsolete
+# $NetBSD: ad.m68000,v 1.2.30.1 2017/01/07 08:53:43 pgoyette Exp $
+./sbin/edlabel					base-obsolete	obsolete

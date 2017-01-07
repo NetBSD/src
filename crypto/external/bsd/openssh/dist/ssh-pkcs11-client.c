@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-pkcs11-client.c,v 1.7 2016/03/11 01:55:00 christos Exp $	*/
+/*	$NetBSD: ssh-pkcs11-client.c,v 1.7.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
 /* $OpenBSD: ssh-pkcs11-client.c,v 1.6 2015/12/11 00:20:04 mmcc Exp $ */
 
 /*
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.7 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.7.2.1 2017/01/07 08:53:42 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>

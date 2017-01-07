@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.10 2016/03/11 22:09:54 macallan Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.10.2.1 2017/01/07 08:56:40 pgoyette Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.10 2016/03/11 22:09:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.10.2.1 2017/01/07 08:56:40 pgoyette Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -356,6 +356,7 @@ cmalo_attach(void *arg)
 
 	/* attach interface */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ieee80211_ifattach(ic);
 
 	sc->sc_newstate = ic->ic_newstate;
@@ -1008,14 +1009,9 @@ cmalo_rx(struct malo_softc *sc)
 		return;
 	}
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
-
 	/* push the frame up to the network stack if not in monitor mode */
-	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+	if (ic->ic_opmode != IEEE80211_M_MONITOR)
 		if_percpuq_enqueue(ifp->if_percpuq, m);
-		ifp->if_ipackets++;
-	}
 }
 
 static int
@@ -1070,7 +1066,7 @@ cmalo_tx_done(struct malo_softc *sc)
 	ifp->if_opackets++;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
-	cmalo_start(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 static void

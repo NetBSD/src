@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.125 2016/06/14 13:06:41 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.125.2.1 2017/01/07 08:56:05 pgoyette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -416,6 +416,7 @@ Elf_Addr _rtld_resolve_ifunc(const Obj_Entry *, const Elf_Sym *);
 Obj_Entry *_rtld_load_library(const char *, const Obj_Entry *, int);
 
 /* symbol.c */
+bool _rtld_is_exported(const Elf_Sym *);
 unsigned long _rtld_elf_hash(const char *);
 const Elf_Sym *_rtld_symlook_obj(const char *, unsigned long,
     const Obj_Entry *, u_int, const Ver_Entry *);

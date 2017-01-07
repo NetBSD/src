@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.421.2.2 2016/08/06 00:19:07 pgoyette Exp $ */
+/*	$NetBSD: wd.c,v 1.421.2.3 2017/01/07 08:56:31 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.421.2.2 2016/08/06 00:19:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.421.2.3 2017/01/07 08:56:31 pgoyette Exp $");
 
 #include "opt_ata.h"
 
@@ -482,12 +482,12 @@ wddetach(device_t self, int flags)
 	/* Kill off any queued buffers. */
 	bufq_drain(sc->sc_q);
 
-	bufq_free(sc->sc_q);
 	sc->atabus->ata_killpending(sc->drvp);
 	if (flags & DETACH_POWEROFF)
 		wd_standby(sc, AT_POLL);
 
 	splx(s);
+	bufq_free(sc->sc_q);
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);

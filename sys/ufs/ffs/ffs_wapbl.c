@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.30.2.1 2016/11/04 14:49:22 pgoyette Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.30.2.2 2017/01/07 08:56:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.30.2.1 2016/11/04 14:49:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.30.2.2 2017/01/07 08:56:53 pgoyette Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -182,7 +182,7 @@ ffs_wapbl_sync_metadata(struct mount *mp, struct wapbl_dealloc *fdealloc)
 	ufs_wapbl_verify_inodes(mp, __func__);
 #endif
 
-	for (wd = fdealloc; wd != NULL; wd = SIMPLEQ_NEXT(wd, wd_entries)) {
+	for (wd = fdealloc; wd != NULL; wd = TAILQ_NEXT(wd, wd_entries)) {
 		/*
 		 * blkfree errors are unreported, might silently fail
 		 * if it cannot read the cylinder group block
@@ -206,7 +206,7 @@ ffs_wapbl_abort_sync_metadata(struct mount *mp, struct wapbl_dealloc *fdealloc)
 	struct fs *fs = ump->um_fs;
 	struct wapbl_dealloc *wd;
 
-	for (wd = fdealloc; wd != NULL; wd = SIMPLEQ_NEXT(wd, wd_entries)) {
+	for (wd = fdealloc; wd != NULL; wd = TAILQ_NEXT(wd, wd_entries)) {
 		/*
 		 * Since the above blkfree may have failed, this blkalloc might
 		 * fail as well, so don't check its error.  Note that if the
@@ -371,6 +371,23 @@ ffs_wapbl_start(struct mount *mp)
 				if (error)
 					goto out;
 			}
+
+			/*
+			 * XXX discard interferes with block deallocation
+			 * registration and hence log consistency
+			 */
+			if (mp->mnt_flag & MNT_DISCARD) {
+				CLR(mp->mnt_flag, MNT_DISCARD);
+				printf("%s: %s: disabling discard to preserve log consistency\n", __func__,
+				    fs->fs_fsmnt);
+
+				if (ump->um_discarddata != NULL) {
+		                	ffs_discard_finish(ump->um_discarddata,
+					    0);
+	                		ump->um_discarddata = NULL;
+				}
+			}
+
 		} else if (fs->fs_flags & FS_DOWAPBL) {
 			fs->fs_fmod = 1;
 			fs->fs_flags &= ~FS_DOWAPBL;

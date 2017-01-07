@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.48 2015/09/26 11:16:13 maxv Exp $
+# $NetBSD: MRCOFFEE,v 1.48.2.1 2017/01/07 08:56:26 pgoyette Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.48 $"
+#ident 		"MRCOFFEE-$Revision: 1.48.2.1 $"
 
 maxusers	32
 
@@ -314,6 +314,8 @@ pseudo-device	bpfilter
 ##
 audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
 audio0		at audiocs0
+
+spkr*		at audio?		# PC speaker (synthesized)
 
 ## Sun "tcx" accelerated color framebuffer.
 tcx0		at sbus? slot ? offset ?

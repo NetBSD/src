@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.26 2016/07/13 11:12:56 jmcneill Exp $
+# $NetBSD: LOONGSON,v 1.26.2.1 2017/01/07 08:56:16 pgoyette Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.26 $"
+#ident 		"LOONGSON-$Revision: 1.26.2.1 $"
 
 maxusers	16
 
@@ -208,6 +208,8 @@ com1		at isa? port 0x3f8 irq 4	# Fuloong 2F only (IR port)
 
 gcscaudio*	at pci?
 audio*		at audiobus?
+
+spkr*		at audio?		# PC speaker (synthesized)
 
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers

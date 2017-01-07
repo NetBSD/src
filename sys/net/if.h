@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.221.2.3 2016/11/04 14:49:20 pgoyette Exp $	*/
+/*	$NetBSD: if.h,v 1.221.2.4 2017/01/07 08:56:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -230,6 +230,7 @@ struct bridge_iflist;
 struct callout;
 struct krwlock;
 struct if_percpuq;
+struct if_deferred_start;
 
 typedef unsigned short if_index_t;
 
@@ -342,6 +343,7 @@ typedef struct ifnet {
 	struct pslist_entry	if_pslist_entry;
 	struct psref_target     if_psref;
 	struct pslist_head	if_addr_pslist;
+	struct if_deferred_start	*if_deferred_start;
 #endif
 } ifnet_t;
  
@@ -508,8 +510,6 @@ if_is_link_state_changeable(struct ifnet *ifp)
 	KASSERT(rw_read_held((ifp)->if_afdata_lock))
 #define	IF_AFDATA_WLOCK_ASSERT(ifp)	\
 	KASSERT(rw_write_held((ifp)->if_afdata_lock))
-#define	IF_AFDATA_UNLOCK_ASSERT(ifp)	\
-	KASSERT(!rw_lock_held((ifp)->if_afdata_lock))
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
@@ -602,6 +602,7 @@ struct ifaddr {
 #endif
 };
 #define	IFA_ROUTE	RTF_UP	/* (0x01) route installed */
+#define	IFA_DESTROYING	0x2
 
 /*
  * Message format for use in obtaining information about interfaces from
@@ -947,7 +948,7 @@ void	if_register(struct ifnet *);
 void	if_attach(struct ifnet *); /* Deprecated. Use if_initialize and if_register */
 void	if_attachdomain(void);
 void	if_deactivate(struct ifnet *);
-bool	if_is_deactivated(struct ifnet *);
+bool	if_is_deactivated(const struct ifnet *);
 void	if_purgeaddrs(struct ifnet *, int, void (*)(struct ifaddr *));
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
@@ -989,6 +990,9 @@ void	if_percpuq_destroy(struct if_percpuq *);
 void
 	if_percpuq_enqueue(struct if_percpuq *, struct mbuf *);
 
+void	if_deferred_start_init(struct ifnet *, void (*)(struct ifnet *));
+void	if_schedule_deferred_start(struct ifnet *);
+
 void ifa_insert(struct ifnet *, struct ifaddr *);
 void ifa_remove(struct ifnet *, struct ifaddr *);
 
@@ -996,6 +1000,7 @@ void	ifa_psref_init(struct ifaddr *);
 void	ifa_acquire(struct ifaddr *, struct psref *);
 void	ifa_release(struct ifaddr *, struct psref *);
 bool	ifa_held(struct ifaddr *);
+bool	ifa_is_destroying(struct ifaddr *);
 
 void	ifaref(struct ifaddr *);
 void	ifafree(struct ifaddr *);
@@ -1030,7 +1035,6 @@ int	loioctl(struct ifnet *, u_long, void *);
 void	loopattach(int);
 int	looutput(struct ifnet *,
 	   struct mbuf *, const struct sockaddr *, const struct rtentry *);
-void	lortrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
 /*
  * These are exported because they're an easy way to tell if

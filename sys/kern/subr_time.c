@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.18 2016/04/23 23:08:26 christos Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.18.2.1 2017/01/07 08:56:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.18 2016/04/23 23:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.18.2.1 2017/01/07 08:56:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -232,9 +232,9 @@ ticks2ts(uint64_t ticks, struct timespec *ts)
 {
 	ts->tv_sec = ticks / hz;
 	uint64_t sticks = ticks - ts->tv_sec * hz;
-	if (sticks > 18446744073709551LL)	/* floor(2^64 / 1000) */
+	if (sticks > BINTIME_SCALE_MS)	/* floor(2^64 / 1000) */
 		ts->tv_nsec = sticks / hz * 1000000000LL;
-   	else if (sticks > 18446744073709LL)	/* floor(2^64 / 1000000) */
+   	else if (sticks > BINTIME_SCALE_US)	/* floor(2^64 / 1000000) */
    		ts->tv_nsec = sticks * 1000LL / hz * 1000000LL;
 	else
    		ts->tv_nsec = sticks * 1000000000LL / hz;

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.90.2.1 2016/07/26 03:24:19 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.90.2.2 2017/01/07 08:56:29 pgoyette Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -731,7 +731,10 @@
 			    linux_umode_t mode); }
 462	STD		{ int|linux_sys||faccessat(int fd, const char *path, \
 			    int amode); }
-463	UNIMPL		pselect6
+463	STD		{ int|linux_sys||pselect6(int nfds, fd_set *readfds, \
+			   fd_set *writefds, fd_set *exceptfds, \
+			   struct linux_timespec *timeout, \
+			   linux_sized_sigset_t *ss); }
 464	STD		{ int|linux_sys||ppoll(struct pollfd *fds, u_int nfds, \
 			    struct linux_timespec *timeout, \
 			    linux_sigset_t *sigset); }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.7 2016/05/17 06:44:45 ryo Exp $
+#	$NetBSD: files.imx6,v 1.7.2.1 2017/01/07 08:56:11 pgoyette Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -25,6 +25,11 @@ file	arch/arm/imx/imx6_board.c
 device	axi { [addr=-1], [size=0], [irq=-1], [irqbase=-1]} : bus_space_generic
 attach	axi at mainbus
 file	arch/arm/imx/imx6_axi.c			axi
+
+# iMX6 PCIe
+device	imxpcie: pcibus
+attach	imxpcie at axi
+file	arch/arm/imx/imx6_pcie.c		imxpcie
 
 # iMX6 Clock Control Module
 device	imxccm
@@ -101,4 +106,3 @@ device	imxsnvs
 attach	imxsnvs at axi
 file	arch/arm/imx/imxsnvs.c			imxsnvs
 file	arch/arm/imx/imx6_snvs.c		imxsnvs
-

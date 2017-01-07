@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.197.2.1 2016/07/26 03:24:24 pgoyette Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.197.2.2 2017/01/07 08:56:53 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -474,6 +474,16 @@ extern bool vm_page_zero_enable;
 #include <uvm/uvm_pager.h>
 #endif
 
+#ifdef _KERNEL
+/*
+ * Include the uvm_hotplug(9) API unconditionally until
+ * uvm_page_physload() et. al. are obsoleted
+ *
+ * After this, MD code will have to explicitly include it if needed.
+ */
+#include <uvm/uvm_physseg.h> 
+#endif
+
 /*
  * helpers for calling ubc_release()
  */
@@ -619,6 +629,7 @@ void			uvm_cpu_attach(struct cpu_info *);
 
 
 /* uvm_init.c */
+void			uvm_md_init(void);
 void			uvm_init(void);
 
 /* uvm_io.c */
@@ -635,12 +646,10 @@ void			uvm_km_free(struct vm_map *, vaddr_t, vsize_t,
 struct vm_map		*uvm_km_suballoc(struct vm_map *, vaddr_t *,
 			    vaddr_t *, vsize_t, int, bool,
 			    struct vm_map *);
-#ifdef _KERNEL
 int			uvm_km_kmem_alloc(vmem_t *, vmem_size_t, vm_flag_t,
 			    vmem_addr_t *);
 void			uvm_km_kmem_free(vmem_t *, vmem_addr_t, vmem_size_t);
 bool			uvm_km_va_starved_p(void);
-#endif
 
 /* uvm_map.c */
 int			uvm_map(struct vm_map *, vaddr_t *, vsize_t,
@@ -708,9 +717,6 @@ void			uvm_pagereplace(struct vm_page *,
 			    struct vm_page *);
 void			uvm_pagerealloc(struct vm_page *,
 			    struct uvm_object *, voff_t);
-/* Actually, uvm_page_physload takes PF#s which need their own type */
-void			uvm_page_physload(paddr_t, paddr_t, paddr_t,
-			    paddr_t, int);
 void			uvm_setpagesize(void);
 
 /* uvm_pager.c */

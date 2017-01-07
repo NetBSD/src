@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.28 2016/01/07 07:37:08 jdc Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.28.2.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.28 2016/01/07 07:37:08 jdc Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.28.2.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -42,6 +42,20 @@ __RCSID("$NetBSD: touchwin.c,v 1.28 2016/01/07 07:37:08 jdc Exp $");
 #include "curses_private.h"
 
 static int _cursesi_touchline_force(WINDOW *, int, int, int, int);
+
+/*
+ * __sync --
+ *	To be called after each window change.
+ */
+void
+__sync(WINDOW *win)
+{
+
+	if (win->flags & __IMMEDOK)
+		wrefresh(win);
+	if (win->flags & __SYNCOK)
+		wsyncup(win);
+}
 
 /*
  * is_linetouched --
@@ -53,7 +67,7 @@ is_linetouched(WINDOW *win, int line)
 	if (line > win->maxy)
 		return FALSE;
 
-	return ((win->alines[line]->flags & __ISDIRTY) != 0);
+	return (win->alines[line]->flags & __ISDIRTY) != 0;
 }
 
 /*
@@ -187,13 +201,14 @@ __touchwin(WINDOW *win)
 	maxy = win->maxy;
 	for (y = 0; y < maxy; y++)
 		__touchline(win, y, 0, (int) win->maxx - 1);
-	return (OK);
+	return OK;
 }
 
 int
 __touchline(WINDOW *win, int y, int sx, int ex)
 {
-	return (_cursesi_touchline_force(win, y, sx, ex, 0));
+
+	return _cursesi_touchline_force(win, y, sx, ex, 0);
 }
 
 /*
@@ -206,6 +221,7 @@ __touchline(WINDOW *win, int y, int sx, int ex)
 static int
 _cursesi_touchline_force(WINDOW *win, int y, int sx, int ex, int force)
 {
+
 #ifdef DEBUG
 	__CTRACE(__CTRACE_LINE, "__touchline: (%p, %d, %d, %d, %d)\n",
 	    win, y, sx, ex, force);
@@ -226,7 +242,7 @@ _cursesi_touchline_force(WINDOW *win, int y, int sx, int ex, int force)
 	__CTRACE(__CTRACE_LINE, "__touchline: first = %d, last = %d\n",
 	    *win->alines[y]->firstchp, *win->alines[y]->lastchp);
 #endif
-	return (OK);
+	return OK;
 }
 
 void

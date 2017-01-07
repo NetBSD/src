@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisavar.h,v 1.6 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: ofisavar.h,v 1.6.144.1 2017/01/07 08:56:33 pgoyette Exp $	*/
 
 /*
  * Copyright 1998
@@ -98,5 +98,6 @@ void	ofisa_intr_print(struct ofisa_intr_desc *, int);
 int	ofisa_dma_count(int);
 int	ofisa_dma_get(int, struct ofisa_dma_desc *, int);
 void	ofisa_dma_print(struct ofisa_dma_desc *, int);
+void	ofisa_print_model(device_t, int);
 
 #endif /* _DEV_OFISA_OFISAVAR_H_ */

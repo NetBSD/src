@@ -1,4 +1,4 @@
-.\"     $NetBSD: bufq.9,v 1.20 2009/04/12 19:00:56 joerg Exp $
+.\"     $NetBSD: bufq.9,v 1.20.30.1 2017/01/07 08:56:08 pgoyette Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,11 +27,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 24, 2009
+.Dd November 17, 2016
 .Dt BUFQ 9
 .Os
 .Sh NAME
 .Nm bufq ,
+.Nm bufq_init ,
+.Nm bufq_register ,
+.Nm bufq_unregister ,
 .Nm bufq_state ,
 .Nm bufq_alloc ,
 .Nm bufq_drain ,
@@ -45,6 +48,12 @@
 .Nd device buffer queues
 .Sh SYNOPSIS
 .In sys/bufq.h
+.Ft void
+.Fn bufq_init "void"
+.Ft int
+.Fn bufq_register "struct bufq_strat *"
+.Ft int
+.Fn bufq_unregister "struct bufq_strat *"
 .Ft int
 .Fn bufq_alloc "struct bufq_state **bufq" "const char *strategy" "int flags"
 .Ft void
@@ -67,12 +76,42 @@
 The
 .Nm
 subsystem is a set of operations for the management of device buffer queues.
+Various strategies for ordering of entries in the buffer queues can be
+provided by loadable kernel modules (see
+.Xr module 9 ) .
+By default, the
+.Dv BUFQ_FCFS
+and
+.Dv BUFQ_DISKSORT
+strategies are included in
+the kernel; see
+.Xr options 4
+for more details.
 .Pp
 The primary data type for using the operations is the
 .Em bufq_state
 structure, which is opaque for users.
+Each buffer queue strategy module is defined by the
+.Em bufq_strat
+structure, which is also opaque for users.
 .Sh FUNCTIONS
 .Bl -tag -width compact
+.It Fn bufq_init "void"
+Initialize the
+.Nm
+subsystem.
+This routine must be called before any other
+.Nm
+routines.
+.It Fn bufq_register "bs"
+Registers the specified buffer queue strategy module so it can be used
+in subsequent operations.
+.It Fn bufq_unregister "bs"
+Unregisters the specified buffer queue strategy module.
+The routine will fail if any buffer queues for the specified strategy
+are in use (see
+.Fn bufq_alloc
+below).
 .It Fn bufq_alloc "bufq" "strategy" "flags"
 Allocate and initialize a
 .Em bufq_state
@@ -119,6 +158,11 @@ If this flag is not specified,
 .Fn bufq_alloc
 will silently use one of available strategies.
 .El
+.Pp
+If a specific strategy is specified but not currently available, the
+.Nm bufq
+subsystem will attempt to auto-load the corresponding kernel module using
+.Xr module_autoload 9 .
 .It Fn bufq_drain "bufq"
 Drain a
 .Em bufq_state
@@ -172,6 +216,15 @@ a lot of buffers queued.
 The actual code implementing the device buffer queues can be found
 in the file
 .Pa sys/kern/subr_bufq.c .
+The code implementing specific buffer queue strategies can be found in
+the files
+.Pa sys/kern/bufq_*.c .
+.Sh NOTES
+A list of currently available buffer queue strategies is available via
+the
+.Dq kern.bufq.strategies
+.Xr sysctl 7
+variables.
 .Sh HISTORY
 The
 .Nm

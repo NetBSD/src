@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.63.2.1 2016/08/06 00:19:09 pgoyette Exp $	*/
+/*	$NetBSD: uk.c,v 1.63.2.2 2017/01/07 08:56:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.63.2.1 2016/08/06 00:19:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.63.2.2 2017/01/07 08:56:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ const struct cdevsw uk_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 static int

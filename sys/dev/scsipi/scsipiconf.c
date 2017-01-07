@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.41 2016/05/02 19:18:29 christos Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.41.2.1 2017/01/07 08:56:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.41 2016/05/02 19:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.41.2.1 2017/01/07 08:56:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,8 @@ void (*scsipi_print_sense_data)(struct scsi_sense_data *, int) =
 
 int scsi_verbose_loaded = 0; 
 
-int scsipi_print_sense_stub(struct scsipi_xfer * xs, int verbosity)
+int
+scsipi_print_sense_stub(struct scsipi_xfer * xs, int verbosity)
 {
 	scsipi_load_verbose();
 	if (scsi_verbose_loaded)
@@ -78,7 +79,8 @@ int scsipi_print_sense_stub(struct scsipi_xfer * xs, int verbosity)
 		return 0;
 }
 
-void scsipi_print_sense_data_stub(struct scsi_sense_data *sense, int verbosity)
+void
+scsipi_print_sense_data_stub(struct scsi_sense_data *sense, int verbosity)
 {
 	scsipi_load_verbose();
 	if (scsi_verbose_loaded)
@@ -91,13 +93,21 @@ scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
     struct buf *bp, int flags)
 {
 	struct scsipi_xfer *xs;
+	int rc;
 
-	xs = scsipi_make_xs(periph, cmd, cmdlen, data_addr, datalen, retries,
+	/*
+	 * execute unlocked to allow waiting for memory
+	 */
+	xs = scsipi_make_xs_unlocked(periph, cmd, cmdlen, data_addr, datalen, retries,
 	    timeout, bp, flags);
 	if (!xs)
 		return (ENOMEM);
 
-	return (scsipi_execute_xs(xs));
+	mutex_enter(chan_mtx(periph->periph_channel));
+	rc = scsipi_execute_xs(xs);
+	mutex_exit(chan_mtx(periph->periph_channel));
+
+	return rc;
 }
 
 /* 
@@ -137,8 +147,19 @@ scsipi_alloc_periph(int malloc_flag)
 
 	TAILQ_INIT(&periph->periph_xferq);
 	callout_init(&periph->periph_callout, 0);
+	cv_init(&periph->periph_cv, "periph");
 
 	return periph;
+}
+
+/*
+ * cleanup and free scsipi_periph structure
+ */
+void
+scsipi_free_periph(struct scsipi_periph *periph)
+{
+	cv_destroy(&periph->periph_cv);
+	free(periph, M_DEVBUF);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.39 2015/08/12 07:53:57 maxv Exp $
+#	$NetBSD: WZERO3,v 1.39.2.1 2017/01/07 08:56:17 pgoyette Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.39 $"
+#ident 		"GENERIC-$Revision: 1.39.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -236,6 +236,8 @@ wd* at umass?
 # USB audio
 uaudio* at uhub? port ? configuration ?
 audio*	at audiobus?
+
+spkr*	at audio?		# PC speaker (synthesized)
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2014/03/04 14:58:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.11.8.1 2017/01/07 08:56:04 pgoyette Exp $
 #
 
 WARNS?=		5
@@ -39,6 +39,15 @@ CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__
 
 INCS=	pthread_dbg.h
 INCSDIR=/usr/include
+
+MAN+=	pthread_dbg.3
+MAN+=	td_open.3
+MAN+=	td_map_pth2thr.3
+MAN+=	td_thr_getname.3
+MAN+=	td_thr_info.3
+MAN+=	td_thr_iter.3
+
+MLINKS+=	td_open.3 td_close.3
 
 .include <bsd.lib.mk>
 

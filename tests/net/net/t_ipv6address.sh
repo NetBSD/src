@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6address.sh,v 1.6.2.1 2016/11/04 14:49:24 pgoyette Exp $
+#	$NetBSD: t_ipv6address.sh,v 1.6.2.2 2017/01/07 08:56:56 pgoyette Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@ BUS2=bus2
 BUSSRC=bus_src
 BUSDST=bus_dst
 
-DEBUG=true
+DEBUG=${DEBUG:-true}
 TIMEOUT=3
 
 atf_test_case linklocal cleanup
@@ -119,10 +119,10 @@ setup_route()
 {
 	local tmp_rump_server=$RUMP_SERVER
 
-	local src_if0_lladdr=`get_lladdr ${SOCKSRC} shmif0`
-	local dst_if0_lladdr=`get_lladdr ${SOCKDST} shmif0`
-	local fwd_if0_lladdr=`get_lladdr ${SOCKFWD} shmif0`
-	local fwd_if1_lladdr=`get_lladdr ${SOCKFWD} shmif1`
+	local src_if0_lladdr=`get_linklocal_addr ${SOCKSRC} shmif0`
+	local dst_if0_lladdr=`get_linklocal_addr ${SOCKDST} shmif0`
+	local fwd_if0_lladdr=`get_linklocal_addr ${SOCKFWD} shmif0`
+	local fwd_if1_lladdr=`get_linklocal_addr ${SOCKFWD} shmif1`
 
 	export RUMP_SERVER=${SOCKSRC}
 	atf_check -s ignore -o ignore -e ignore \
@@ -198,17 +198,6 @@ cleanup_bus()
 	export RUMP_SERVER=$tmp_rump_server
 }
 
-
-get_lladdr()
-{
-	export RUMP_SERVER=${1}
-	rump.ifconfig ${2} inet6 | grep "fe80" \
-	    | awk '{print $2}' | sed -e "s/%$2//g" -e 's;/[0-9]*$;;'
-	unset RUMP_SERVER
-
-	return 0
-}
-
 cleanup_rump_servers()
 {
 
@@ -226,7 +215,7 @@ dump_bus()
 	shmif_dumpbus -p - ${BUS2}   2>/dev/null| tcpdump -n -e -r -
 }
 
-dump()
+_dump()
 {
 
 	export RUMP_SERVER=${SOCKSRC}
@@ -253,11 +242,11 @@ linklocal_body()
 {
 	setup
 
-	local src_if0_lladdr=`get_lladdr ${SOCKSRC} shmif0`
-	local src_if1_lladdr=`get_lladdr ${SOCKSRC} shmif1`
-	local dst_if0_lladdr=`get_lladdr ${SOCKDST} shmif0`
-	local fwd_if0_lladdr=`get_lladdr ${SOCKFWD} shmif0`
-	local fwd_if1_lladdr=`get_lladdr ${SOCKFWD} shmif1`
+	local src_if0_lladdr=`get_linklocal_addr ${SOCKSRC} shmif0`
+	local src_if1_lladdr=`get_linklocal_addr ${SOCKSRC} shmif1`
+	local dst_if0_lladdr=`get_linklocal_addr ${SOCKDST} shmif0`
+	local fwd_if0_lladdr=`get_linklocal_addr ${SOCKFWD} shmif0`
+	local fwd_if1_lladdr=`get_linklocal_addr ${SOCKFWD} shmif1`
 
 	export RUMP_SERVER=${SOCKSRC}
 	$DEBUG && rump.ifconfig
@@ -298,7 +287,7 @@ linklocal_body()
 	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
 
 	$DEBUG && rump.ifconfig shmif0
-	$DEBUG && dump
+	$DEBUG && _dump
 
 	export RUMP_SERVER=${SOCKSRC}
 	atf_check -s exit:0 -o match:"0.0% packet loss" \
@@ -343,7 +332,7 @@ linklocal_body()
 linklocal_cleanup()
 {
 
-	$DEBUG && dump
+	$DEBUG && _dump
 	$DEBUG && dump_bus
 	cleanup_rump_servers
 }
@@ -362,7 +351,7 @@ linklocal_ops_body()
 
 	setup
 
-	src_if0_lladdr=`get_lladdr ${SOCKSRC} shmif0`
+	src_if0_lladdr=`get_linklocal_addr ${SOCKSRC} shmif0`
 
 	export RUMP_SERVER=${SOCKSRC}
 

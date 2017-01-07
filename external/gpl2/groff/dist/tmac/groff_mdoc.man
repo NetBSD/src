@@ -1718,6 +1718,8 @@ and their results are:
 .Lb libposix
 .It Li libpthread
 .Lb libpthread
+.It Li libpthread_dbg
+.Lb libpthread_dbg
 .It Li libresolv
 .Lb libresolv
 .It Li librt

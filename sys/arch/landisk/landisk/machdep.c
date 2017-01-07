@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2015/11/22 18:44:25 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18.2.1 2017/01/07 08:56:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2015/11/22 18:44:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18.2.1 2017/01/07 08:56:19 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -367,11 +367,7 @@ haltsys:
 
 	printf("rebooting...\n");
 	machine_reset();
-
 	/*NOTREACHED*/
-	for (;;) {
-		continue;
-	}
 }
 
 void
@@ -379,8 +375,7 @@ machine_reset(void)
 {
 
 	_cpu_exception_suspend();
-	_reg_write_4(SH_(EXPEVT), EXPEVT_RESET_MANUAL);
-	(void)*(volatile uint32_t *)0x80000001;	/* CPU shutdown */
+	asm("trapa #0");
 
 	/*NOTREACHED*/
 	for (;;) {

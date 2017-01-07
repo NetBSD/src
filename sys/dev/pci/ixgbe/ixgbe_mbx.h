@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2013, Intel Corporation 
+  Copyright (c) 2001-2015, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.h 247822 2013-03-04 23:07:40Z jfv $*/
-/*$NetBSD: ixgbe_mbx.h,v 1.4 2015/04/24 07:00:51 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.h 283883 2015-06-01 17:43:34Z jfv $*/
+/*$NetBSD: ixgbe_mbx.h,v 1.4.2.1 2017/01/07 08:56:40 pgoyette Exp $*/
 
 #ifndef _IXGBE_MBX_H_
 #define _IXGBE_MBX_H_
@@ -81,6 +81,21 @@
 /* bits 23:16 are used for extra info for certain messages */
 #define IXGBE_VT_MSGINFO_MASK	(0xFF << IXGBE_VT_MSGINFO_SHIFT)
 
+/* definitions to support mailbox API version negotiation */
+
+/*
+ * each element denotes a version of the API; existing numbers may not
+ * change; any additions must go at the end
+ */
+enum ixgbe_pfvf_api_rev {
+	ixgbe_mbox_api_10,	/* API version 1.0, linux/freebsd VF driver */
+	ixgbe_mbox_api_20,	/* API version 2.0, solaris Phase1 VF driver */
+	ixgbe_mbox_api_11,	/* API version 1.1, linux/freebsd VF driver */
+	/* This value should always be last */
+	ixgbe_mbox_api_unknown,	/* indicates that API version is not known */
+};
+
+/* mailbox API, legacy requests */
 #define IXGBE_VF_RESET		0x01 /* VF requests reset */
 #define IXGBE_VF_SET_MAC_ADDR	0x02 /* VF requests PF to set MAC addr */
 #define IXGBE_VF_SET_MULTICAST	0x03 /* VF requests PF to set MC addr */
@@ -107,6 +122,18 @@
 
 #define IXGBE_PF_CONTROL_MSG		0x0100 /* PF control message */
 
+/* mailbox API, version 2.0 VF requests */
+#define IXGBE_VF_API_NEGOTIATE		0x08 /* negotiate API version */
+#define IXGBE_VF_GET_QUEUES		0x09 /* get queue configuration */
+#define IXGBE_VF_ENABLE_MACADDR		0x0A /* enable MAC address */
+#define IXGBE_VF_DISABLE_MACADDR	0x0B /* disable MAC address */
+#define IXGBE_VF_GET_MACADDRS		0x0C /* get all configured MAC addrs */
+#define IXGBE_VF_SET_MCAST_PROMISC	0x0D /* enable multicast promiscuous */
+#define IXGBE_VF_GET_MTU		0x0E /* get bounds on MTU */
+#define IXGBE_VF_SET_MTU		0x0F /* set a specific MTU */
+
+/* mailbox API, version 2.0 PF requests */
+#define IXGBE_PF_TRANSPARENT_VLAN	0x0101 /* enable transparent vlan */
 
 #define IXGBE_VF_MBX_INIT_TIMEOUT	2000 /* number of retries on mailbox */
 #define IXGBE_VF_MBX_INIT_DELAY		500  /* microseconds between retries */

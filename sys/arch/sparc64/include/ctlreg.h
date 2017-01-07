@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.63 2016/02/03 20:33:52 palle Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.63.2.1 2017/01/07 08:56:26 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -865,8 +865,9 @@ SPARC64_ST_DEF64(stxa, uint64_t)
 
 
 
-/* flush address from data cache */
-#define	flush(loc) __asm volatile("flush %0" : : "r" ((__uintptr_t)(loc)))
+/* flush address from cache */
+#define	sparc_flush_icache(loc) __asm \
+	volatile("flush %0" : : "r" ((__uintptr_t)(loc)))
 
 /*
  * SPARC V9 memory barrier instructions.

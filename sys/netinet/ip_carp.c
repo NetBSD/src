@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.74.2.3 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.74.2.4 2017/01/07 08:56:51 pgoyette Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.74.2.3 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.74.2.4 2017/01/07 08:56:51 pgoyette Exp $");
 
 /*
  * TODO:
@@ -397,7 +397,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			hr_otherif = (rt && rt->rt_ifp != &sc->sc_if &&
 			    (rt->rt_flags & RTF_CONNECTED));
 			if (rt != NULL) {
-				rtfree(rt);
+				rt_unref(rt);
 				rt = NULL;
 			}
 
@@ -441,7 +441,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 				break;
 			}
 			if (rt != NULL) {
-				rtfree(rt);
+				rt_unref(rt);
 				rt = NULL;
 			}
 			break;
@@ -835,33 +835,17 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = carp_ioctl;
 	ifp->if_start = carp_start;
-	ifp->if_output = carp_output;
-	ifp->if_type = IFT_CARP;
-	ifp->if_addrlen = ETHER_ADDR_LEN;
-	ifp->if_hdrlen = ETHER_HDR_LEN;
-	ifp->if_mtu = ETHERMTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
 	IFQ_SET_READY(&ifp->if_snd);
-	if_attach(ifp);
-
-	if_alloc_sadl(ifp);
-	ifp->if_broadcastaddr = etherbroadcastaddr;
+	if_initialize(ifp);
+	ether_ifattach(ifp, NULL);
 	carp_set_enaddr(sc);
-	LIST_INIT(&sc->sc_ac.ec_multiaddrs);
-	bpf_attach(ifp, DLT_EN10MB, ETHER_HDR_LEN);
-#ifdef MBUFTRACE
-	strlcpy(sc->sc_ac.ec_tx_mowner.mo_name, ifp->if_xname,
-	    sizeof(sc->sc_ac.ec_tx_mowner.mo_name));
-	strlcpy(sc->sc_ac.ec_tx_mowner.mo_descr, "tx",
-	    sizeof(sc->sc_ac.ec_tx_mowner.mo_descr));
-	strlcpy(sc->sc_ac.ec_rx_mowner.mo_name, ifp->if_xname,
-	    sizeof(sc->sc_ac.ec_rx_mowner.mo_name));
-	strlcpy(sc->sc_ac.ec_rx_mowner.mo_descr, "rx",
-	    sizeof(sc->sc_ac.ec_rx_mowner.mo_descr));
-	MOWNER_ATTACH(&sc->sc_ac.ec_tx_mowner);
-	MOWNER_ATTACH(&sc->sc_ac.ec_rx_mowner);
-	ifp->if_mowner = &sc->sc_ac.ec_tx_mowner;
-#endif
+	/* Overwrite ethernet defaults */
+	ifp->if_type = IFT_CARP;
+	ifp->if_output = carp_output;
+	ifp->if_extflags &= ~IFEF_OUTPUT_MPSAFE;
+	if_register(ifp);
+
 	return (0);
 }
 

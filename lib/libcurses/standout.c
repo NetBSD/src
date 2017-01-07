@@ -1,4 +1,4 @@
-/*	$NetBSD: standout.c,v 1.16 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: standout.c,v 1.16.28.1 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)standout.c	8.3 (Berkeley) 8/10/94";
 #else
-__RCSID("$NetBSD: standout.c,v 1.16 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: standout.c,v 1.16.28.1 2017/01/07 08:56:04 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: standout.c,v 1.16 2010/02/03 15:34:40 roy Exp $");
 int
 standout(void)
 {
+
 	return wstandout(stdscr);
 }
 
@@ -60,6 +61,7 @@ standout(void)
 int
 standend(void)
 {
+
 	return wstandend(stdscr);
 }
 
@@ -72,6 +74,7 @@ standend(void)
 int
 wstandout(WINDOW *win)
 {
+
 	/*
 	 * If standout/standend strings, or can underline, set the
 	 * screen standout bit.
@@ -79,7 +82,7 @@ wstandout(WINDOW *win)
 	if ((enter_standout_mode != NULL && exit_standout_mode != NULL) ||
 	    underline_char != NULL)
 		win->wattr |= __STANDOUT;
-	return (1);
+	return 1;
 }
 
 /*
@@ -89,6 +92,8 @@ wstandout(WINDOW *win)
 int
 wstandend(WINDOW *win)
 {
-	win->wattr &= ~__STANDOUT;
-	return (1);
+
+	// http://pubs.opengroup.org/onlinepubs/7908799/xcurses/wstandend.html
+	win->wattr = __NORMAL;
+	return 1;
 }

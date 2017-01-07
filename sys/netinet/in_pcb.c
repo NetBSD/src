@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.166.2.3 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.166.2.4 2017/01/07 08:56:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.166.2.3 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.166.2.4 2017/01/07 08:56:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -777,8 +777,11 @@ in_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 		if (inp->inp_af != AF_INET)
 			continue;
 		if ((rt = rtcache_validate(&inp->inp_route)) != NULL &&
-		    rt->rt_ifp == ifp)
+		    rt->rt_ifp == ifp) {
+			rtcache_unref(rt, &inp->inp_route);
 			in_rtchange(inp, 0);
+		} else
+			rtcache_unref(rt, &inp->inp_route);
 	}
 }
 
@@ -805,10 +808,17 @@ in_losing(struct inpcb *inp)
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
-	if (rt->rt_flags & RTF_DYNAMIC)
-		(void) rtrequest(RTM_DELETE, rt_getkey(rt),
-			rt->rt_gateway, rt_mask(rt), rt->rt_flags,
-			NULL);
+	if (rt->rt_flags & RTF_DYNAMIC) {
+		int error;
+		struct rtentry *nrt;
+
+		error = rtrequest(RTM_DELETE, rt_getkey(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, &nrt);
+		rtcache_unref(rt, &inp->inp_route);
+		if (error == 0)
+			rt_free(nrt);
+	} else
+		rtcache_unref(rt, &inp->inp_route);
 	/*
 	 * A new route can be allocated
 	 * the next time output is attempted.
@@ -1087,4 +1097,11 @@ in_pcbrtentry(struct inpcb *inp)
 
 	sockaddr_in_init(&u.dst4, &inp->inp_faddr, 0);
 	return rtcache_lookup(ro, &u.dst);
+}
+
+void
+in_pcbrtentry_unref(struct rtentry *rt, struct inpcb *inp)
+{
+
+	rtcache_unref(rt, &inp->inp_route);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_build.c,v 1.40 2015/06/08 01:00:43 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.40.2.1 2017/01/07 08:57:00 pgoyette Exp $	*/
 
 /*-
- * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,11 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.40 2015/06/08 01:00:43 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.40.2.1 2017/01/07 08:57:00 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#define	__FAVOR_BSD
 #include <netinet/tcp.h>
 
 #include <stdlib.h>
@@ -46,6 +47,7 @@ __RCSID("$NetBSD: npf_build.c,v 1.40 2015/06/08 01:00:43 rmind Exp $");
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <err.h>
 
@@ -63,6 +65,7 @@ static nl_rule_t *		the_rule = NULL;
 static nl_rule_t *		current_group[MAX_RULE_NESTING];
 static unsigned			rule_nesting_level = 0;
 static nl_rule_t *		defgroup = NULL;
+static unsigned			npfctl_tid_counter = 0;
 
 static void			npfctl_dump_bpf(struct bpf_program *);
 
@@ -80,30 +83,47 @@ npfctl_config_init(bool debug)
 int
 npfctl_config_send(int fd, const char *out)
 {
-	int error;
+	npf_error_t errinfo;
+	int error = 0;
 
-	if (out) {
-		_npf_config_setsubmit(npf_conf, out);
-		printf("\nSaving to %s\n", out);
-	}
 	if (!defgroup) {
 		errx(EXIT_FAILURE, "default group was not defined");
 	}
 	npf_rule_insert(npf_conf, NULL, defgroup);
-	error = npf_config_submit(npf_conf, fd);
+	if (out) {
+		printf("\nSaving to %s\n", out);
+		npfctl_config_save(npf_conf, out);
+	} else {
+		error = npf_config_submit(npf_conf, fd, &errinfo);
+	}
 	if (error == EEXIST) { /* XXX */
 		errx(EXIT_FAILURE, "(re)load failed: "
 		    "some table has a duplicate entry?");
 	}
 	if (error) {
-		nl_error_t ne;
-		_npf_config_error(npf_conf, &ne);
-		npfctl_print_error(&ne);
+		npfctl_print_error(&errinfo);
 	}
-	if (fd) {
-		npf_config_destroy(npf_conf);
-	}
+	npf_config_destroy(npf_conf);
 	return error;
+}
+
+void
+npfctl_config_save(nl_config_t *ncf, const char *outfile)
+{
+	void *blob;
+	size_t len;
+	int fd;
+
+	blob = npf_config_export(ncf, &len);
+	if (!blob)
+		err(EXIT_FAILURE, "npf_config_export");
+	if ((fd = open(outfile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) == -1)
+		err(EXIT_FAILURE, "could not open %s", outfile);
+	if (write(fd, blob, len) != (ssize_t)len) {
+		err(EXIT_FAILURE, "write to %s failed", outfile);
+	}
+	free(blob);
+	close(fd);
 }
 
 nl_config_t *
@@ -249,7 +269,7 @@ npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 			assert(false);
 		}
 	}
-	npfctl_bpf_endgroup(ctx);
+	npfctl_bpf_endgroup(ctx, (opts & MATCH_INVERT) != 0);
 }
 
 static void
@@ -302,6 +322,7 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	const addr_port_t *apto = &fopts->fo_to;
 	const int proto = op->op_proto;
 	npf_bpf_t *bc;
+	unsigned opts;
 	size_t len;
 
 	/* If none specified, then no byte-code. */
@@ -346,8 +367,10 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	}
 
 	/* Build IP address blocks. */
-	npfctl_build_vars(bc, family, apfrom->ap_netaddr, MATCH_SRC);
-	npfctl_build_vars(bc, family, apto->ap_netaddr, MATCH_DST);
+	opts = MATCH_SRC | (fopts->fo_finvert ? MATCH_INVERT : 0);
+	npfctl_build_vars(bc, family, apfrom->ap_netaddr, opts);
+	opts = MATCH_DST | (fopts->fo_tinvert ? MATCH_INVERT : 0);
+	npfctl_build_vars(bc, family, apto->ap_netaddr, opts);
 
 	/* Build port-range blocks. */
 	if (need_tcpudp) {
@@ -355,7 +378,7 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 		npfctl_bpf_group(bc);
 		npfctl_bpf_proto(bc, AF_UNSPEC, IPPROTO_TCP);
 		npfctl_bpf_proto(bc, AF_UNSPEC, IPPROTO_UDP);
-		npfctl_bpf_endgroup(bc);
+		npfctl_bpf_endgroup(bc, false);
 	}
 	npfctl_build_vars(bc, family, apfrom->ap_portrange, MATCH_SRC);
 	npfctl_build_vars(bc, family, apto->ap_portrange, MATCH_DST);
@@ -742,7 +765,9 @@ npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname)
 		void *cdb;
 		int fd;
 
-		strlcpy(sfn, "/tmp/npfcdb.XXXXXX", sizeof(sfn));
+		strncpy(sfn, "/tmp/npfcdb.XXXXXX", sizeof(sfn));
+		sfn[sizeof(sfn) - 1] = '\0';
+
 		if ((fd = mkstemp(sfn)) == -1) {
 			err(EXIT_FAILURE, "mkstemp");
 		}
@@ -773,10 +798,9 @@ npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname)
 void
 npfctl_build_table(const char *tname, u_int type, const char *fname)
 {
-	static unsigned tid = 0;
 	nl_table_t *tl;
 
-	tl = npf_table_create(tname, tid++, type);
+	tl = npf_table_create(tname, npfctl_tid_counter++, type);
 	assert(tl != NULL);
 
 	if (npf_table_insert(npf_conf, tl)) {
@@ -788,6 +812,24 @@ npfctl_build_table(const char *tname, u_int type, const char *fname)
 	} else if (type == NPF_TABLE_CDB) {
 		errx(EXIT_FAILURE, "tables of cdb type must be static");
 	}
+}
+
+npfvar_t *
+npfctl_ifnet_table(const char *ifname)
+{
+	char tname[NPF_TABLE_MAXNAMELEN];
+	nl_table_t *tl;
+	u_int tid;
+
+	snprintf(tname, sizeof(tname), ".ifnet-%s", ifname);
+
+	tid = npfctl_table_getid(tname);
+	if (tid == (unsigned)-1) {
+		tid = npfctl_tid_counter++;
+		tl = npf_table_create(tname, tid, NPF_TABLE_TREE);
+		(void)npf_table_insert(npf_conf, tl);
+	}
+	return npfvar_create_element(NPFVAR_TABLE, &tid, sizeof(u_int));
 }
 
 /*

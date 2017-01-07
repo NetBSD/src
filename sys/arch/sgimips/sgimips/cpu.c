@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.26 2011/02/20 07:59:51 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.26.36.1 2017/01/07 08:56:25 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2011/02/20 07:59:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26.36.1 2017/01/07 08:56:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -108,6 +108,11 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 	int ipl;
 
 	curcpu()->ci_data.cpu_nintr++;
+
+#if !defined(__mips_o32)
+	KASSERTMSG(mips_cp0_status_read() & MIPS_SR_KX,
+	           "pc %"PRIxVADDR ", status %x\n", pc, status);
+#endif
 
 	(void)(*platform.watchdog_reset)();
 

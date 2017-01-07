@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.22.24.1 2016/11/04 14:48:53 pgoyette Exp $	*/
+/*	$NetBSD: printw.c,v 1.22.24.2 2017/01/07 08:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.22.24.1 2016/11/04 14:48:53 pgoyette Exp $");
+__RCSID("$NetBSD: printw.c,v 1.22.24.2 2017/01/07 08:56:04 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -60,7 +60,7 @@ printw(const char *fmt,...)
 	va_start(ap, fmt);
 	ret = vw_printw(stdscr, fmt, ap);
 	va_end(ap);
-	return (ret);
+	return ret;
 }
 /*
  * wprintw --
@@ -75,7 +75,7 @@ wprintw(WINDOW *win, const char *fmt,...)
 	va_start(ap, fmt);
 	ret = vw_printw(win, fmt, ap);
 	va_end(ap);
-	return (ret);
+	return ret;
 }
 /*
  * mvprintw, mvwprintw --
@@ -89,11 +89,11 @@ mvprintw(int y, int x, const char *fmt,...)
 	int     ret;
 
 	if (move(y, x) != OK)
-		return (ERR);
+		return ERR;
 	va_start(ap, fmt);
 	ret = vw_printw(stdscr, fmt, ap);
 	va_end(ap);
-	return (ret);
+	return ret;
 }
 
 int
@@ -103,12 +103,12 @@ mvwprintw(WINDOW * win, int y, int x, const char *fmt,...)
 	int     ret;
 
 	if (wmove(win, y, x) != OK)
-		return (ERR);
+		return ERR;
 
 	va_start(ap, fmt);
 	ret = vw_printw(win, fmt, ap);
 	va_end(ap);
-	return (ret);
+	return ret;
 }
 /*
  * Internal write-buffer-to-window function.
@@ -125,7 +125,7 @@ winwrite(void   *cookie, const void *vbuf, size_t n)
 		__CTRACE(__CTRACE_MISC, "__winwrite: %c\n", *buf);
 #endif
 		if (waddch(win, (chtype) (*buf++ & __CHARTEXT)) == ERR)
-			return (-1);
+			return -1;
 	}
 	return (ssize_t)n;
 }

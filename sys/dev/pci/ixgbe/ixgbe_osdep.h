@@ -1,6 +1,6 @@
 /******************************************************************************
 
-  Copyright (c) 2001-2013, Intel Corporation 
+  Copyright (c) 2001-2015, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 251964 2013-06-18 21:28:19Z jfv $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.10 2015/08/13 04:56:43 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 294734 2016-01-25 16:18:53Z smh $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.10.2.1 2017/01/07 08:56:40 pgoyette Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
@@ -55,6 +55,15 @@
 #define ASSERT(x) if(!(x)) panic("IXGBE: x")
 #define EWARN(H, W, S) printf(W)
 
+enum {
+	IXGBE_ERROR_SOFTWARE,
+	IXGBE_ERROR_POLLING,
+	IXGBE_ERROR_INVALID_STATE,
+	IXGBE_ERROR_UNSUPPORTED,
+	IXGBE_ERROR_ARGUMENT,
+	IXGBE_ERROR_CAUTION,
+};
+
 /* The happy-fun DELAY macro is defined in /usr/src/sys/i386/include/clock.h */
 #define usec_delay(x) DELAY(x)
 #define msec_delay(x) DELAY(1000*(x))
@@ -71,9 +80,23 @@
 	#define DEBUGOUT5(S,A,B,C,D,E)  printf(S "\n",A,B,C,D,E)
 	#define DEBUGOUT6(S,A,B,C,D,E,F)  printf(S "\n",A,B,C,D,E,F)
 	#define DEBUGOUT7(S,A,B,C,D,E,F,G)  printf(S "\n",A,B,C,D,E,F,G)
-	#define ERROR_REPORT1(S,A)      printf(S A "\n")
-	#define ERROR_REPORT2(S,A,B)    printf(S A "\n",B)
-	#define ERROR_REPORT3(S,A,B,C)  printf(S A "\n",B,C)
+	#define ERROR_REPORT1 ERROR_REPORT
+	#define ERROR_REPORT2 ERROR_REPORT
+	#define ERROR_REPORT3 ERROR_REPORT
+	#define ERROR_REPORT(level, format, arg...) do { \
+		switch (level) { \
+		case IXGBE_ERROR_SOFTWARE: \
+		case IXGBE_ERROR_CAUTION: \
+		case IXGBE_ERROR_POLLING: \
+		case IXGBE_ERROR_INVALID_STATE: \
+		case IXGBE_ERROR_UNSUPPORTED: \
+		case IXGBE_ERROR_ARGUMENT: \
+			device_printf(ixgbe_dev_from_hw(hw), format, ## arg); \
+			break; \
+		default: \
+			break; \
+		} \
+	} while (0)
 #else
 	#define DEBUGOUT(S)		do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT1(S,A)		do { } while (/*CONSTCOND*/false)
@@ -107,13 +130,14 @@
 #define UNREFERENCED_3PARAMETER(_p, _q, _r)
 #define UNREFERENCED_4PARAMETER(_p, _q, _r, _s)
 
-
 #define IXGBE_NTOHL(_i)	ntohl(_i)
 #define IXGBE_NTOHS(_i)	ntohs(_i)
 
 /* XXX these need to be revisited */
-#define IXGBE_CPU_TO_LE32 le32toh
-#define IXGBE_LE32_TO_CPUS le32dec
+#define IXGBE_CPU_TO_LE32 htole32
+#define IXGBE_LE32_TO_CPUS(x)
+#define IXGBE_CPU_TO_BE16 htobe16
+#define IXGBE_CPU_TO_BE32 htobe32
 
 typedef uint8_t		u8;
 typedef int8_t		s8;
@@ -125,8 +149,6 @@ typedef uint64_t	u64;
 
 #define le16_to_cpu 
 
-#ifdef __HAVE_PCI_MSI_MSIX
-#define NETBSD_MSI_OR_MSIX
 /*
  * This device driver divides interrupt to TX, RX and link state.
  * Each MSI-X vector indexes are below.
@@ -135,9 +157,6 @@ typedef uint64_t	u64;
 #define IXG_MSIX_TXRXINTR_IDX	0
 #define IXG_MSIX_LINKINTR_IDX	1
 #define IXG_MAX_NINTR		IXG_MSIX_NINTR
-#else
-#define IXG_MAX_NINTR		1
-#endif
 
 #if __FreeBSD_version < 800000
 #if defined(__i386__) || defined(__amd64__)
@@ -166,7 +185,7 @@ void prefetch(void *x)
  * non-overlapping regions and 32-byte padding on both src and dst.
  */
 static __inline int
-ixgbe_bcopy(void *_src, void *_dst, int l)
+ixgbe_bcopy(void *restrict _src, void *restrict _dst, int l)
 {
 	uint64_t *src = _src;
 	uint64_t *dst = _dst;
@@ -189,15 +208,17 @@ struct ixgbe_osdep
 	bus_space_handle_t mem_bus_space_handle;
 	bus_size_t         mem_size;
 	bus_dma_tag_t      dmat;
-	device_t           dev;
 	pci_intr_handle_t  *intrs;
 	int		   nintrs;
 	void               *ihs[IXG_MAX_NINTR];
 	bool		   attached;
 };
 
-/* These routines are needed by the shared code */
+/* These routines need struct ixgbe_hw declared */
 struct ixgbe_hw; 
+device_t ixgbe_dev_from_hw(struct ixgbe_hw *hw);
+
+/* These routines are needed by the shared code */
 extern u16 ixgbe_read_pci_cfg(struct ixgbe_hw *, u32);
 #define IXGBE_READ_PCIE_WORD ixgbe_read_pci_cfg
 
@@ -206,26 +227,18 @@ extern void ixgbe_write_pci_cfg(struct ixgbe_hw *, u32, u16);
 
 #define IXGBE_WRITE_FLUSH(a) IXGBE_READ_REG(a, IXGBE_STATUS)
 
-#define IXGBE_READ_REG(a, reg) (\
-   bus_space_read_4( ((a)->back)->mem_bus_space_tag, \
-                     ((a)->back)->mem_bus_space_handle, \
-                     reg))
+extern u32 ixgbe_read_reg(struct ixgbe_hw *, u32);
+#define IXGBE_READ_REG(a, reg) ixgbe_read_reg(a, reg)
 
-#define IXGBE_WRITE_REG(a, reg, value) (\
-   bus_space_write_4( ((a)->back)->mem_bus_space_tag, \
-                     ((a)->back)->mem_bus_space_handle, \
-                     reg, value))
+extern void ixgbe_write_reg(struct ixgbe_hw *, u32, u32);
+#define IXGBE_WRITE_REG(a, reg, val) ixgbe_write_reg(a, reg, val)
 
+extern u32 ixgbe_read_reg_array(struct ixgbe_hw *, u32, u32);
+#define IXGBE_READ_REG_ARRAY(a, reg, offset) \
+    ixgbe_read_reg_array(a, reg, offset)
 
-#define IXGBE_READ_REG_ARRAY(a, reg, offset) (\
-   bus_space_read_4( ((a)->back)->mem_bus_space_tag, \
-                     ((a)->back)->mem_bus_space_handle, \
-                     (reg + ((offset) << 2))))
-
-#define IXGBE_WRITE_REG_ARRAY(a, reg, offset, value) (\
-      bus_space_write_4( ((a)->back)->mem_bus_space_tag, \
-                      ((a)->back)->mem_bus_space_handle, \
-                      (reg + ((offset) << 2)), value))
-
+extern void ixgbe_write_reg_array(struct ixgbe_hw *, u32, u32, u32);
+#define IXGBE_WRITE_REG_ARRAY(a, reg, offset, val) \
+    ixgbe_write_reg_array(a, reg, offset, val)
 
 #endif /* _IXGBE_OS_H_ */

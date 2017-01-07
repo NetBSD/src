@@ -1,6 +1,6 @@
-/* $NetBSD: loadfile_elf32.c,v 1.31 2015/07/25 07:06:11 isaki Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.31.2.1 2017/01/07 08:56:49 pgoyette Exp $ */
 
-/*-
+/*
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -255,6 +255,25 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
 #define	externalize_shdr(bo, shdr)	/* nothing */
 #endif /* _STANDALONE */
 
+#define IS_TEXT(p)	(p.p_flags & PF_X)
+#define IS_DATA(p)	(p.p_flags & PF_W)
+#define IS_BSS(p)	(p.p_filesz < p.p_memsz)
+
+/*
+ * Load the ELF binary into memory. Layout of the memory:
+ * +-----------------+------------+-----------------+-----------------+
+ * | KERNEL SEGMENTS | ELF HEADER | SECTION HEADERS | SYMBOL SECTIONS |
+ * +-----------------+------------+-----------------+-----------------+
+ * The KERNEL SEGMENTS start address is fixed by the segments themselves. We
+ * then map the rest by increasing maxp.
+ *
+ * The offsets of the SYMBOL SECTIONS are relative to the start address of the
+ * ELF HEADER. The shdr offset of ELF HEADER points to SECTION HEADERS.
+ *
+ * We just give the kernel a pointer to the ELF HEADER, which is enough for it
+ * to find the location and number of symbols by itself later.
+ */
+
 int
 ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 {
@@ -268,9 +287,9 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	u_long offset = marks[MARK_START];
 	ssize_t nr;
 	struct __packed {
-		Elf_Nhdr	nh;
-		uint8_t		name[ELF_NOTE_NETBSD_NAMESZ + 1];
-		uint8_t		desc[ELF_NOTE_NETBSD_DESCSZ];
+		Elf_Nhdr nh;
+		uint8_t name[ELF_NOTE_NETBSD_NAMESZ + 1];
+		uint8_t desc[ELF_NOTE_NETBSD_DESCSZ];
 	} note;
 	char *shstr = NULL;
 	size_t shstrsz = 0;
@@ -312,16 +331,10 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		    (phdr[i].p_flags & (PF_W|PF_X)) == 0)
 			continue;
 
-#define IS_TEXT(p)	(p.p_flags & PF_X)
-#define IS_DATA(p)	(p.p_flags & PF_W)
-#define IS_BSS(p)	(p.p_filesz < p.p_memsz)
-		/*
-		 * XXX: Assume first address is lowest
-		 */
 		if ((IS_TEXT(phdr[i]) && (flags & LOAD_TEXT)) ||
 		    (IS_DATA(phdr[i]) && (flags & LOAD_DATA))) {
-
 		loadseg:
+			/* XXX: Assume first address is lowest */
 			if (marks[MARK_DATA] == 0 && IS_DATA(phdr[i]))
 				marks[MARK_DATA] = LOADADDR(phdr[i].p_vaddr);
 
@@ -344,10 +357,9 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				goto freephdr;
 			}
 			first = 0;
-
 		}
 		if ((IS_TEXT(phdr[i]) && (flags & (LOAD_TEXT|COUNT_TEXT))) ||
-		    (IS_DATA(phdr[i]) && (flags & (LOAD_DATA|COUNT_TEXT)))) {
+		    (IS_DATA(phdr[i]) && (flags & (LOAD_DATA|COUNT_DATA)))) {
 			pos = phdr[i].p_vaddr;
 			if (minp > pos)
 				minp = pos;
@@ -407,7 +419,7 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		/* Internalize the section headers. */
 		for (i = 0; i < elf->e_shnum; i++)
 			internalize_shdr(elf->e_ident[EI_DATA], &shp[i]);
-#endif /* ! _STANDALONE */
+#endif
 
 		/*
 		 * First load the section names section.
@@ -466,8 +478,7 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				if (boot_load_ctf && shstr) {
 					/* got a CTF section? */
 					if (strncmp(".SUNW_ctf",
-					            &shstr[shp[i].sh_name],
-					            10) == 0) {
+					    &shstr[shp[i].sh_name], 10) == 0) {
 						goto havesym;
 					}
 				}
@@ -548,7 +559,7 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 			for (i = 0; i < elf->e_shnum; i++)
 				externalize_shdr(elf->e_ident[EI_DATA],
 				    &shp[i]);
-#endif /* ! _STANDALONE */
+#endif
 			BCOPY(shp, shpp, sz);
 
 			if (first == 0)
@@ -556,7 +567,7 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		}
 		DEALLOC(shp, sz);
 	}
-	
+
 	if (shstr) {
 	    DEALLOC(shstr, shstrsz);
 	}
@@ -588,9 +599,11 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	marks[MARK_SYM] = LOADADDR(elfp);
 	marks[MARK_END] = LOADADDR(maxp);
 	return 0;
+
 freephdr:
 	DEALLOC(phdr, sz);
 	return 1;
+
 freeshp:
 	DEALLOC(shp, sz);
 	return 1;

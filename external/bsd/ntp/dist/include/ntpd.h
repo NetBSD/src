@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.8 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.8.2.1 2017/01/07 08:54:04 pgoyette Exp $	*/
 
 /*
  * ntpd.h - Prototypes and external variables for ntpd.
@@ -485,6 +485,7 @@ extern int	sys_bclient;		/* we set our time to broadcasts */
 extern double	sys_bdelay; 		/* broadcast client default delay */
 extern int	sys_authenticate;	/* requre authentication for config */
 extern l_fp	sys_authdelay;		/* authentication delay */
+extern u_char	sys_bcpollbstep;	/* broadcast poll backstep gate */
 extern u_long 	sys_epoch;		/* last clock update time */
 extern keyid_t	sys_private;		/* private value for session seed */
 extern int	sys_manycastserver;	/* respond to manycast client pkts */

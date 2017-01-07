@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6.2.1 2016/11/04 14:49:00 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6.2.2 2017/01/07 08:56:16 pgoyette Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,9 +112,10 @@
  */
 
 #include "opt_multiprocessor.h"
+#include "opt_cavium.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.2.1 2016/11/04 14:49:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.2.2 2017/01/07 08:56:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +204,11 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 	    sizeof(octeon_btinfo));
 
 	corefreq = octeon_btinfo.obt_eclock_hz;
+#ifdef OCTEON_MEMSIZE // avoid uvm issue
+	memsize = OCTEON_MEMSIZE;
+#else
 	memsize = octeon_btinfo.obt_dram_size * 1024 * 1024;
+#endif
 
 	octeon_cal_timer(corefreq);
 
@@ -220,8 +225,7 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 	
 	mach_init_vector();
 
-	/* set the VM page size */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	mach_init_bus_space();
 

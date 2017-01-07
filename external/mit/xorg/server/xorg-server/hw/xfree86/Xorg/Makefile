@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/06/29 19:36:56 christos Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2017/01/07 08:56:01 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,6 @@ LDFLAGS+=	-rdynamic
 
 LDADD+=	-Wl,--whole-archive
 LDADD+=	${LDADD.dix}
-LDADD+=	${LDADD.hw/xfree86/init}
 LDADD+=	${LDADD.config}
 LDADD+=	${LDADD.hw/xfree86/loader}
 LDADD+=	${LDADD.hw/xfree86/common}
@@ -107,7 +106,6 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.hw/xfree86/dri2} \
 	${DPADD.hw/xfree86/dixmods/fb} \
 	${DPADD.hw/xfree86/fb} \
-	${DPADD.hw/xfree86/init} \
 	${DPADD.hw/xfree86/common} \
 	${DPADD.hw/xfree86/loader} \
 	${DPADD.hw/xfree86/xf86config} \

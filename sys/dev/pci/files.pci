@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.381 2016/05/01 10:21:02 nonaka Exp $
+#	$NetBSD: files.pci,v 1.381.2.1 2017/01/07 08:56:33 pgoyette Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -667,16 +667,19 @@ file	dev/pci/if_stge.c		stge
 # Intel i82598 & i82599 10-Gigabit Ethernet
 device	ixg: ether, ifnet, arp
 attach	ixg at pci
-file	dev/pci/ixgbe/ixgbe.c		ixg
-file	dev/pci/ixgbe/ixgbe_netbsd.c	ixg
-file	dev/pci/ixgbe/ixgbe_82598.c	ixg
-file	dev/pci/ixgbe/ixgbe_82599.c	ixg
-file	dev/pci/ixgbe/ixgbe_x540.c	ixg
-file	dev/pci/ixgbe/ixgbe_api.c	ixg
-file	dev/pci/ixgbe/ixgbe_common.c	ixg
-file	dev/pci/ixgbe/ixgbe_mbx.c	ixg
-file	dev/pci/ixgbe/ixgbe_phy.c	ixg
-file	dev/pci/ixgbe/ixgbe_vf.c	ixg
+file	dev/pci/ixgbe/ixgbe.c		ixg | ixv
+file	dev/pci/ixgbe/ix_txrx.c		ixg | ixv
+file	dev/pci/ixgbe/ixgbe_netbsd.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_82598.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_82599.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_x540.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_x550.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_api.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_common.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_mbx.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_osdep.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_phy.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_vf.c	ixg | ixv
 
 # This appears to be the driver for virtual instances of i82599.
 device	ixv: ether, ifnet, arp
@@ -1077,6 +1080,11 @@ device	pm2fb: wsemuldisplaydev, rasops8, rasops32, vcons, videomode, i2cbus, i2c
 attach	pm2fb at pci
 file	dev/pci/pm2fb.c		pm2fb
 defflag	opt_pm2fb.h	PM2FB_DEBUG
+
+# Permedia 3 / Oxygen VX1 / Proformance 3  
+device  pm3fb: wsemuldisplaydev, rasops8, vcons, videomode, i2cbus, i2c_bitbang, ddc_read_edid, edid
+attach  pm3fb at pci
+file	dev/pci/pm3fb.c		pm3fb
 
 # 3Dlabs Wildcat / Sun XVR-500, 1200, Expert3D etc.
 device		wcfb: wsemuldisplaydev, rasops8, vcons

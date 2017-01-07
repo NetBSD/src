@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.115.2.1 2016/08/06 00:19:09 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.115.2.2 2017/01/07 08:56:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.115.2.1 2016/08/06 00:19:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.115.2.2 2017/01/07 08:56:49 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 

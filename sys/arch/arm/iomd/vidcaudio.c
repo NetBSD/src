@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.53 2014/10/25 10:58:12 skrll Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.53.4.1 2017/01/07 08:56:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.53 2014/10/25 10:58:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.53.4.1 2017/01/07 08:56:11 pgoyette Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */

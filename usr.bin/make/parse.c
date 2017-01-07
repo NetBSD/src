@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.214 2016/04/06 09:57:00 gson Exp $	*/
+/*	$NetBSD: parse.c,v 1.214.2.1 2017/01/07 08:56:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.214 2016/04/06 09:57:00 gson Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.214.2.1 2017/01/07 08:56:58 pgoyette Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.214 2016/04/06 09:57:00 gson Exp $");
+__RCSID("$NetBSD: parse.c,v 1.214.2.1 2017/01/07 08:56:58 pgoyette Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1644,7 +1644,7 @@ ParseDoDependency(char *line)
 		    Suff_SetNull(line);
 		    break;
 		case ExObjdir:
-		    Main_SetObjdir(line);
+		    Main_SetObjdir("%s", line);
 		    break;
 		default:
 		    break;
@@ -1844,7 +1844,7 @@ Parse_DoVar(char *line, GNode *ctxt)
      * XXX Rather than counting () and {} we should look for $ and
      * then expand the variable.
      */
-    for (depth = 0, cp = line + 1; depth != 0 || *cp != '='; cp++) {
+    for (depth = 0, cp = line + 1; depth > 0 || *cp != '='; cp++) {
 	if (*cp == '(' || *cp == '{') {
 	    depth++;
 	    continue;

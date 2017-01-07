@@ -1,4 +1,4 @@
-/*	$NetBSD: box.c,v 1.14 2007/05/28 15:01:54 blymn Exp $	*/
+/*	$NetBSD: box.c,v 1.14.58.1 2017/01/07 08:56:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)box.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: box.c,v 1.14 2007/05/28 15:01:54 blymn Exp $");
+__RCSID("$NetBSD: box.c,v 1.14.58.1 2017/01/07 08:56:03 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -51,12 +51,13 @@ box(WINDOW *win, chtype vert, chtype hor)
 	return (wborder(win, vert, vert, hor, hor, 0, 0, 0, 0));
 }
 
-int 
+int
 box_set(WINDOW *win, const cchar_t *verch, const cchar_t *horch)
 {
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
-	return wborder_set(win, verch, verch, horch, horch, NULL, NULL, NULL, NULL);
+	return wborder_set(win, verch, verch, horch, horch,
+			   NULL, NULL, NULL, NULL);
 #endif /* HAVE_WCHAR */
 }

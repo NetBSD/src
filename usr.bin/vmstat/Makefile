@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2016/03/06 18:01:28 christos Exp $
+#	$NetBSD: Makefile,v 1.33.2.1 2017/01/07 08:56:59 pgoyette Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -18,5 +18,7 @@ COPTS.vmstat.c += -Wno-format-nonliteral
 
 # sparc64 is broken!
 COPTS.vmstat.c += -Wno-error=stack-protector
+
+.include "../../compat/exec.mk"
 
 .include <bsd.prog.mk>

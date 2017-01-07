@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.25 2014/03/11 20:55:19 para Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25.10.1 2017/01/07 08:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25 2014/03/11 20:55:19 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25.10.1 2017/01/07 08:56:28 pgoyette Exp $");
 
 #include "opt_mtrr.h"
 
@@ -231,6 +231,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_esp = (int)sf;
 	pcb2->pcb_ebp = (int)l2;
 #endif
+
+	/*
+	 * Do not inherit hardware watchpoints. If they are desired, userland
+	 * should do it on its own.
+	 */
+	memset(l2->l_md.md_watchpoint, 0, sizeof(*l2->l_md.md_watchpoint));
 }
 
 /*
@@ -249,6 +255,12 @@ cpu_lwp_free(struct lwp *l, int proc)
 	if (proc && l->l_proc->p_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
 #endif
+	/*
+	 * Free deferred mappings if any.
+	 */
+	struct vm_page *empty_ptps = l->l_md.md_gc_ptp;
+	l->l_md.md_gc_ptp = NULL;
+	pmap_free_ptps(empty_ptps);
 }
 
 /*

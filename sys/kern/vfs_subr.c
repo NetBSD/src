@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.449.2.1 2016/11/04 14:49:17 pgoyette Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.449.2.2 2017/01/07 08:56:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.449.2.1 2016/11/04 14:49:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.449.2.2 2017/01/07 08:56:49 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -736,7 +736,7 @@ lazy_sync_vnode(struct vnode *vp)
 	/* We are locking in the wrong direction. */
 	if (mutex_tryenter(vp->v_interlock)) {
 		mutex_exit(&syncer_data_lock);
-		if (vget(vp, LK_NOWAIT, false /* !wait */) == 0) {
+		if (vcache_tryvget(vp) == 0) {
 			if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
 				synced = true;
 				(void) VOP_FSYNC(vp, curlwp->l_cred,
@@ -1091,7 +1091,7 @@ vprint_common(struct vnode *vp, const char *prefix,
 	int n;
 	char bf[96];
 	const uint8_t *cp;
-	vnode_impl_t *node;
+	vnode_impl_t *vip;
 	const char * const vnode_tags[] = { VNODE_TAGS };
 	const char * const vnode_types[] = { VNODE_TYPES };
 	const char vnode_flagbits[] = VNODE_FLAGBITS;
@@ -1100,7 +1100,7 @@ vprint_common(struct vnode *vp, const char *prefix,
 #define ARRAY_PRINT(idx, arr) \
     ((unsigned int)(idx) < ARRAY_SIZE(arr) ? (arr)[(idx)] : "UNKNOWN")
 
-	node = VNODE_TO_VIMPL(vp);
+	vip = VNODE_TO_VIMPL(vp);
 
 	snprintb(bf, sizeof(bf),
 	    vnode_flagbits, vp->v_iflag | vp->v_vflag | vp->v_uflag);
@@ -1114,16 +1114,16 @@ vprint_common(struct vnode *vp, const char *prefix,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
 	(*pr)("%ssize %" PRIx64 " writesize %" PRIx64 " numoutput %d\n",
 	    prefix, vp->v_size, vp->v_writesize, vp->v_numoutput);
-	(*pr)("%sfreelisthd %p data %p lock %p\n", prefix,
-	    vp->v_freelisthd, vp->v_data, &vp->v_lock);
+	(*pr)("%sdata %p lock %p\n", prefix, vp->v_data, &vp->v_lock);
 
-	(*pr)("%sstate %s key(%p %zd)", prefix, vstate_name(node->vi_state),
-	    node->vi_key.vk_mount, node->vi_key.vk_key_len);
-	n = node->vi_key.vk_key_len;
-	cp = node->vi_key.vk_key;
+	(*pr)("%sstate %s key(%p %zd)", prefix, vstate_name(vip->vi_state),
+	    vip->vi_key.vk_mount, vip->vi_key.vk_key_len);
+	n = vip->vi_key.vk_key_len;
+	cp = vip->vi_key.vk_key;
 	while (n-- > 0)
 		(*pr)(" %02x", *cp++);
 	(*pr)("\n");
+	(*pr)("%slrulisthd %p\n", prefix, vip->vi_lrulisthd);
 
 #undef ARRAY_PRINT
 #undef ARRAY_SIZE

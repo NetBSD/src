@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.9 2015/08/17 06:16:03 knakahara Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.9.2.1 2017/01/07 08:56:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.9 2015/08/17 06:16:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.9.2.1 2017/01/07 08:56:28 pgoyette Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -88,6 +88,7 @@ pci_msi_calculate_handle(struct pic *msi_pic, int vector)
 	return pih;
 }
 
+#ifdef __HAVE_PCI_MSI_MSIX
 static pci_intr_handle_t *
 pci_msi_alloc_vectors(struct pic *msi_pic, uint *table_indexes, int *count)
 {
@@ -130,6 +131,7 @@ pci_msi_alloc_vectors(struct pic *msi_pic, uint *table_indexes, int *count)
 
 	return vectors;
 }
+#endif /* __HAVE_PCI_MSI_MSIX */
 
 static void
 pci_msi_free_vectors(struct pic *msi_pic, pci_intr_handle_t *pihs, int count)
@@ -151,6 +153,7 @@ pci_msi_free_vectors(struct pic *msi_pic, pci_intr_handle_t *pihs, int count)
 	kmem_free(pihs, sizeof(pihs[0]) * count);
 }
 
+#ifdef __HAVE_PCI_MSI_MSIX
 static int
 pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count,
     const struct pci_attach_args *pa, bool exact)
@@ -205,6 +208,7 @@ pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count,
 	*ihps = vectors;
 	return 0;
 }
+#endif /* __HAVE_PCI_MSI_MSIX */
 
 static void *
 pci_msi_common_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
@@ -231,6 +235,7 @@ pci_msi_common_disestablish(pci_chipset_tag_t pc, void *cookie)
 	intr_disestablish(cookie);
 }
 
+#ifdef __HAVE_PCI_MSI_MSIX
 static int
 pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes,
     int *count, const struct pci_attach_args *pa, bool exact)
@@ -299,6 +304,7 @@ x86_pci_msi_alloc_exact(pci_intr_handle_t **ihps, int count,
 
 	return pci_msi_alloc_common(ihps, &count, pa, true);
 }
+#endif /* __HAVE_PCI_MSI_MSIX */
 
 static void
 x86_pci_msi_release_internal(pci_intr_handle_t *pihs, int count)
@@ -313,6 +319,7 @@ x86_pci_msi_release_internal(pci_intr_handle_t *pihs, int count)
 	msipic_destruct_msi_pic(pic);
 }
 
+#ifdef __HAVE_PCI_MSI_MSIX
 static int
 x86_pci_msix_alloc(pci_intr_handle_t **ihps, int *count,
     const struct pci_attach_args *pa)
@@ -336,6 +343,7 @@ x86_pci_msix_alloc_map(pci_intr_handle_t **ihps, u_int *table_indexes,
 
 	return pci_msix_alloc_common(ihps, table_indexes, &count, pa, true);
 }
+#endif /* __HAVE_PCI_MSI_MSIX */
 
 static void
 x86_pci_msix_release_internal(pci_intr_handle_t *pihs, int count)
@@ -467,6 +475,7 @@ x86_pci_msix_disestablish(pci_chipset_tag_t pc, void *cookie)
 	pci_msi_common_disestablish(pc, cookie);
 }
 
+#ifdef __HAVE_PCI_MSI_MSIX
 /*****************************************************************************/
 /*
  * extern for MI code.
@@ -638,3 +647,4 @@ pci_msix_alloc_map(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 
 	return x86_pci_msix_alloc_map(ihps, table_indexes, count, pa);
 }
+#endif /* __HAVE_PCI_MSI_MSIX */
