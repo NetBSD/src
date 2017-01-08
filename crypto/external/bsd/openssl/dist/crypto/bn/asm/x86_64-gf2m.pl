@@ -167,8 +167,8 @@ $code.=<<___;
 .type	bn_GF2m_mul_2x2,\@abi-omnipotent
 .align	16
 bn_GF2m_mul_2x2:
-	mov	OPENSSL_ia32cap_P+4(%rip),%rax
-	bt	\$1,%rax	 # check PCLMULQDQ bit
+	mov	OPENSSL_ia32cap_P+4(%rip),%eax
+	bt	\$1,%eax	 # check PCLMULQDQ bit
 
 	jnc	.Lvanilla_mul_2x2
 
