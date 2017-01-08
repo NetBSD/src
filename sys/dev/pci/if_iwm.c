@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.49 2017/01/08 06:49:10 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.50 2017/01/08 07:42:00 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.147 2016/11/17 14:12:33 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.49 2017/01/08 06:49:10 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.50 2017/01/08 07:42:00 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -455,7 +455,7 @@ static int	iwm_setrates(struct iwm_node *);
 static int	iwm_media_change(struct ifnet *);
 static void	iwm_newstate_cb(struct work *, void *);
 static int	iwm_newstate(struct ieee80211com *, enum ieee80211_state, int);
-static void	iwm_endscan_cb(struct work *, void *);
+static void	iwm_endscan(struct iwm_softc *);
 static void	iwm_fill_sf_command(struct iwm_softc *, struct iwm_sf_cfg_cmd *,
 		    struct ieee80211_node *);
 static int	iwm_sf_config(struct iwm_softc *, int);
@@ -474,6 +474,7 @@ static void	iwm_nic_error(struct iwm_softc *);
 static void	iwm_nic_umac_error(struct iwm_softc *);
 #endif
 static void	iwm_notif_intr(struct iwm_softc *);
+static void	iwm_softintr(void *);
 static int	iwm_intr(void *);
 static int	iwm_preinit(struct iwm_softc *);
 static void	iwm_attach_hook(device_t);
@@ -3472,6 +3473,7 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	uint32_t len;
 	uint32_t rx_pkt_status;
 	int rssi;
+	int s;
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, IWM_RBUF_SIZE,
 	    BUS_DMASYNC_POSTREAD);
@@ -3518,6 +3520,8 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 
 	if (le32toh(phy_info->channel) < __arraycount(ic->ic_channels))
 		c = &ic->ic_channels[le32toh(phy_info->channel)];
+
+	s = splnet();
 
 	ni = ieee80211_find_rxnode(ic, (struct ieee80211_frame_min *)wh);
 	if (c)
@@ -3568,6 +3572,8 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	}
 	ieee80211_input(ic, m, ni, rssi, device_timestamp);
 	ieee80211_free_node(ni);
+
+	splx(s);
 }
 
 static void
@@ -3639,12 +3645,7 @@ iwm_rx_tx_cmd(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		sc->qfullmsk &= ~(1 << ring->qid);
 		if (sc->qfullmsk == 0 && (ifp->if_flags & IFF_OACTIVE)) {
 			ifp->if_flags &= ~IFF_OACTIVE;
-			/*
-			 * Well, we're in interrupt context, but then again
-			 * I guess net80211 does all sorts of stunts in
-			 * interrupt context, so maybe this is no biggie.
-			 */
-			if_schedule_deferred_start(ifp);
+			if_start_lock(ifp);
 		}
 	}
 }
@@ -5892,9 +5893,8 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 }
 
 static void
-iwm_endscan_cb(struct work *work __unused, void *arg)
+iwm_endscan(struct iwm_softc *sc)
 {
-	struct iwm_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	DPRINTF(("scan ended\n"));
@@ -6311,6 +6311,7 @@ iwm_start(struct ifnet *ifp)
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m) {
 			ni = M_GETCTX(m, struct ieee80211_node *);
+			M_CLEARCTX(m);
 			ac = WME_AC_BE;
 			goto sendit;
 		}
@@ -6319,8 +6320,9 @@ iwm_start(struct ifnet *ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (!m)
+		if (m == NULL)
 			break;
+
 		if (m->m_len < sizeof (*eh) &&
 		   (m = m_pullup(m, sizeof (*eh))) == NULL) {
 			ifp->if_oerrors++;
@@ -6334,6 +6336,7 @@ iwm_start(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			continue;
 		}
+
 		/* classify mbuf so we can find which tx ring to use */
 		if (ieee80211_classify(ic, m, ni) != 0) {
 			m_freem(m);
@@ -6943,21 +6946,21 @@ iwm_notif_intr(struct iwm_softc *sc)
 		case IWM_SCAN_ITERATION_COMPLETE: {
 			struct iwm_lmac_scan_complete_notif *notif;
 			SYNC_RESP_STRUCT(notif, pkt);
-			workqueue_enqueue(sc->sc_eswq, &sc->sc_eswk, NULL);
+			iwm_endscan(sc);
 			break;
 		}
 
 		case IWM_SCAN_COMPLETE_UMAC: {
 			struct iwm_umac_scan_complete *notif;
 			SYNC_RESP_STRUCT(notif, pkt);
-			workqueue_enqueue(sc->sc_eswq, &sc->sc_eswk, NULL);
+			iwm_endscan(sc);
 			break;
 		}
 
 		case IWM_SCAN_ITERATION_COMPLETE_UMAC: {
 			struct iwm_umac_scan_iter_complete_notif *notif;
 			SYNC_RESP_STRUCT(notif, pkt);
-			workqueue_enqueue(sc->sc_eswq, &sc->sc_eswk, NULL);
+			iwm_endscan(sc);
 			break;
 		}
 
@@ -7017,14 +7020,98 @@ iwm_notif_intr(struct iwm_softc *sc)
 	IWM_WRITE(sc, IWM_FH_RSCSR_CHNL0_WPTR, hw & ~7);
 }
 
+static void
+iwm_softintr(void *arg)
+{
+	struct iwm_softc *sc = arg;
+	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
+	uint32_t r1;
+	int isperiodic = 0;
+
+	r1 = atomic_swap_32(&sc->sc_soft_flags, 0);
+
+ restart:
+	if (r1 & IWM_CSR_INT_BIT_SW_ERR) {
+#ifdef IWM_DEBUG
+		int i;
+
+		iwm_nic_error(sc);
+
+		/* Dump driver status (TX and RX rings) while we're here. */
+		DPRINTF(("driver status:\n"));
+		for (i = 0; i < IWM_MAX_QUEUES; i++) {
+			struct iwm_tx_ring *ring = &sc->txq[i];
+			DPRINTF(("  tx ring %2d: qid=%-2d cur=%-3d "
+			    "queued=%-3d\n",
+			    i, ring->qid, ring->cur, ring->queued));
+		}
+		DPRINTF(("  rx ring: cur=%d\n", sc->rxq.cur));
+		DPRINTF(("  802.11 state %s\n",
+		    ieee80211_state_name[sc->sc_ic.ic_state]));
+#endif
+
+		aprint_error_dev(sc->sc_dev, "fatal firmware error\n");
+ fatal:
+		ifp->if_flags &= ~IFF_UP;
+		iwm_stop(ifp, 1);
+		/* Don't restore interrupt mask */
+		return;
+
+	}
+
+	if (r1 & IWM_CSR_INT_BIT_HW_ERR) {
+		aprint_error_dev(sc->sc_dev,
+		    "hardware error, stopping device\n");
+		goto fatal;
+	}
+
+	/* firmware chunk loaded */
+	if (r1 & IWM_CSR_INT_BIT_FH_TX) {
+		IWM_WRITE(sc, IWM_CSR_FH_INT_STATUS, IWM_CSR_FH_INT_TX_MASK);
+		sc->sc_fw_chunk_done = 1;
+		wakeup(&sc->sc_fw);
+	}
+
+	if (r1 & IWM_CSR_INT_BIT_RF_KILL) {
+		if (iwm_check_rfkill(sc) && (ifp->if_flags & IFF_UP)) {
+			ifp->if_flags &= ~IFF_UP;
+			iwm_stop(ifp, 1);
+		}
+	}
+
+	if (r1 & IWM_CSR_INT_BIT_RX_PERIODIC) {
+		IWM_WRITE(sc, IWM_CSR_INT, IWM_CSR_INT_BIT_RX_PERIODIC);
+		if ((r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX)) == 0)
+			IWM_WRITE_1(sc,
+			    IWM_CSR_INT_PERIODIC_REG, IWM_CSR_INT_PERIODIC_DIS);
+		isperiodic = 1;
+	}
+
+	if ((r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX)) ||
+	    isperiodic) {
+		IWM_WRITE(sc, IWM_CSR_FH_INT_STATUS, IWM_CSR_FH_INT_RX_MASK);
+
+		iwm_notif_intr(sc);
+
+		/* enable periodic interrupt, see above */
+		if (r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX) &&
+		    !isperiodic)
+			IWM_WRITE_1(sc, IWM_CSR_INT_PERIODIC_REG,
+			    IWM_CSR_INT_PERIODIC_ENA);
+	}
+
+	r1 = atomic_swap_32(&sc->sc_soft_flags, 0);
+	if (r1 != 0)
+		goto restart;
+
+	iwm_restore_interrupts(sc);
+}
+
 static int
 iwm_intr(void *arg)
 {
 	struct iwm_softc *sc = arg;
-	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
-	int handled = 0;
-	int r1, r2, rv = 0;
-	int isperiodic = 0;
+	int r1, r2;
 
 	IWM_WRITE(sc, IWM_CSR_INT_MASK, 0);
 
@@ -7072,91 +7159,14 @@ iwm_intr(void *arg)
 
 	IWM_WRITE(sc, IWM_CSR_INT, r1 | ~sc->sc_intmask);
 
-	/* ignored */
-	handled |= (r1 & (IWM_CSR_INT_BIT_ALIVE /*| IWM_CSR_INT_BIT_SCD*/));
-
-	if (r1 & IWM_CSR_INT_BIT_SW_ERR) {
-#ifdef IWM_DEBUG
-		int i;
-
-		iwm_nic_error(sc);
-
-		/* Dump driver status (TX and RX rings) while we're here. */
-		DPRINTF(("driver status:\n"));
-		for (i = 0; i < IWM_MAX_QUEUES; i++) {
-			struct iwm_tx_ring *ring = &sc->txq[i];
-			DPRINTF(("  tx ring %2d: qid=%-2d cur=%-3d "
-			    "queued=%-3d\n",
-			    i, ring->qid, ring->cur, ring->queued));
-		}
-		DPRINTF(("  rx ring: cur=%d\n", sc->rxq.cur));
-		DPRINTF(("  802.11 state %s\n",
-		    ieee80211_state_name[sc->sc_ic.ic_state]));
-#endif
-
-		aprint_error_dev(sc->sc_dev, "fatal firmware error\n");
-		ifp->if_flags &= ~IFF_UP;
-		iwm_stop(ifp, 1);
-		rv = 1;
-		goto out;
-
-	}
-
-	if (r1 & IWM_CSR_INT_BIT_HW_ERR) {
-		handled |= IWM_CSR_INT_BIT_HW_ERR;
-		aprint_error_dev(sc->sc_dev,
-		    "hardware error, stopping device\n");
-		ifp->if_flags &= ~IFF_UP;
-		iwm_stop(ifp, 1);
-		rv = 1;
-		goto out;
-	}
-
-	/* firmware chunk loaded */
-	if (r1 & IWM_CSR_INT_BIT_FH_TX) {
-		IWM_WRITE(sc, IWM_CSR_FH_INT_STATUS, IWM_CSR_FH_INT_TX_MASK);
-		handled |= IWM_CSR_INT_BIT_FH_TX;
-		sc->sc_fw_chunk_done = 1;
-		wakeup(&sc->sc_fw);
-	}
-
-	if (r1 & IWM_CSR_INT_BIT_RF_KILL) {
-		handled |= IWM_CSR_INT_BIT_RF_KILL;
-		if (iwm_check_rfkill(sc) && (ifp->if_flags & IFF_UP)) {
-			ifp->if_flags &= ~IFF_UP;
-			iwm_stop(ifp, 1);
-		}
-	}
-
-	if (r1 & IWM_CSR_INT_BIT_RX_PERIODIC) {
-		handled |= IWM_CSR_INT_BIT_RX_PERIODIC;
-		IWM_WRITE(sc, IWM_CSR_INT, IWM_CSR_INT_BIT_RX_PERIODIC);
-		if ((r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX)) == 0)
-			IWM_WRITE_1(sc,
-			    IWM_CSR_INT_PERIODIC_REG, IWM_CSR_INT_PERIODIC_DIS);
-		isperiodic = 1;
-	}
-
-	if ((r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX)) ||
-	    isperiodic) {
-		handled |= (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX);
-		IWM_WRITE(sc, IWM_CSR_FH_INT_STATUS, IWM_CSR_FH_INT_RX_MASK);
-
-		iwm_notif_intr(sc);
-
-		/* enable periodic interrupt, see above */
-		if (r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX) &&
-		    !isperiodic)
-			IWM_WRITE_1(sc, IWM_CSR_INT_PERIODIC_REG,
-			    IWM_CSR_INT_PERIODIC_ENA);
-	}
-
-	rv = 1;
+	atomic_or_32(&sc->sc_soft_flags, r1);
+	softint_schedule(sc->sc_soft_ih);
+	return 1;
 
  out_ena:
 	iwm_restore_interrupts(sc);
  out:
-	return rv;
+	return 0;
 }
 
 /*
@@ -7273,14 +7283,13 @@ iwm_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, NULL);
 
-	if (workqueue_create(&sc->sc_eswq, "iwmes",
-	    iwm_endscan_cb, sc, PRI_NONE, IPL_NET, 0))
-		panic("%s: could not create workqueue: scan",
-		    device_xname(self));
 	if (workqueue_create(&sc->sc_nswq, "iwmns",
 	    iwm_newstate_cb, sc, PRI_NONE, IPL_NET, 0))
 		panic("%s: could not create workqueue: newstate",
 		    device_xname(self));
+	sc->sc_soft_ih = softint_establish(SOFTINT_NET, iwm_softintr, sc);
+	if (sc->sc_soft_ih == NULL)
+		panic("%s: could not establish softint", device_xname(self));
 
 	/*
 	 * Get the offset of the PCI Express Capability Structure in PCI
