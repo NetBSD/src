@@ -2513,7 +2513,7 @@ vchiq_dump_service_use_state(VCHIQ_STATE_T *state)
 	VCHIQ_ARM_STATE_T *arm_state = vchiq_platform_get_arm_state(state);
 	int i, j = 0;
 	/* Only dump 64 services */
-	static const int local_max_services = 64;
+#define local_max_services 64
 	/* If there's more than 64 services, only dump ones with
 	 * non-zero counts */
 	int only_nonzero = 0;
