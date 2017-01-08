@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.48 2017/01/08 06:48:06 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.49 2017/01/08 06:49:10 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.147 2016/11/17 14:12:33 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.48 2017/01/08 06:48:06 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.49 2017/01/08 06:49:10 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -7328,8 +7328,8 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(sc->sc_pct, sc->sc_pihp[0], intrbuf,
 	    sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, sc->sc_pihp[0], IPL_NET,
-	    iwm_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pct, sc->sc_pihp[0],
+	    IPL_NET, iwm_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
