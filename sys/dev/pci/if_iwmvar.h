@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.10 2016/12/18 02:18:29 nonaka Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.11 2017/01/08 07:42:00 nonaka Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp 	*/
 
 /*
@@ -372,6 +372,8 @@ struct iwm_softc {
 	pcitag_t sc_pcitag;
 	pcireg_t sc_pciid;
 	const void *sc_ih;
+	void *sc_soft_ih;
+	uint32_t sc_soft_flags;
 
 	/* TX scheduler rings. */
 	struct iwm_dma_info		sched_dma;
@@ -455,8 +457,7 @@ struct iwm_softc {
 	uint8_t sc_cmd_resp[IWM_CMD_RESP_MAX];
 	int sc_wantresp;
 
-	struct workqueue *sc_nswq, *sc_eswq;
-	struct work sc_eswk;
+	struct workqueue *sc_nswq;
 
 	struct iwm_rx_phy_info sc_last_phy_info;
 	int sc_ampdu_ref;
@@ -471,7 +472,7 @@ struct iwm_softc {
 
 	struct sysctllog *sc_clog;
 
-	struct bpf_if *		sc_drvbpf;
+	struct bpf_if *sc_drvbpf;
 
 	union {
 		struct iwm_rx_radiotap_header th;
