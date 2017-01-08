@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.253 2017/01/04 21:37:46 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.254 2017/01/08 05:02:08 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -117,6 +117,9 @@ COPTS.${j}+=-g
 # This allows gdb to use type informations.
 #
 COPTS.debugsyms.c+=	-g
+
+# XXX: Gcc bug?
+COPTS.xhci.c+=	-Wno-stack-protector
 
 # Add CTF sections for DTrace
 .if defined(CTFCONVERT)
