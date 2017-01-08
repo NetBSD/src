@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2016/10/14 16:09:44 spz Exp $
+#	$NetBSD: Makefile,v 1.11 2017/01/08 01:56:31 christos Exp $
 
 .include "bsd.own.mk"
 
@@ -12,10 +12,10 @@ CC+= -fno-integrated-as
 regen:
 	for i in $$(find ${OPENSSLSRC} -name \*${MACHINE_ARCH}.pl) \
 		$$(find ${OPENSSLSRC}/crypto/bn/asm -name ${MACHINE_ARCH}-\*.pl) \
+		$$(find ${OPENSSLSRC}/crypto/bn/asm -name ${MACHINE_ARCH}-\*.pl) \
 		${OPENSSLSRC}/crypto/bn/asm/rsaz-avx2.pl \
 		${OPENSSLSRC}/crypto/${MACHINE_ARCH}cpuid.pl ; do \
-                (echo "#include <machine/asm.h>"; CC=${CC:Q} perl $$i elf | sed \
-		    -e 's/\(OPENSSL[A-Za-z0-9_]*\)(%rip)/\1@GOTPCREL(%rip)/' \
+                (set +x; echo "#include <machine/asm.h>"; CC=${CC:Q} perl $$i elf | sed \
 		    -e 's/.hidden	OPENSSL_cpuid_setup/.globl	OPENSSL_cpuid_setup/' \
 		    -e 's/call	OPENSSL_cpuid_setup/call	PIC_PLT(OPENSSL_cpuid_setup)/' \
 		    -e 's/rdseedq/rdseed/') \
