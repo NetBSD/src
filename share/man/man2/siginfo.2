@@ -1,4 +1,4 @@
-.\"	$NetBSD: siginfo.2,v 1.18 2017/01/07 06:01:20 kamil Exp $
+.\"	$NetBSD: siginfo.2,v 1.19 2017/01/08 13:53:28 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -173,48 +173,48 @@ why the signal was generated:
 .Bl -tag -width SIGCHLD
 .It SIGILL
 .Bl -tag -width ILL_ILLOPC
+.It ILL_BADSTK
+Internal stack error
+.It ILL_COPROC
+Coprocessor error
+.It ILL_ILLADR
+Illegal addressing mode
 .It ILL_ILLOPC
 Illegal opcode
 .It ILL_ILLOPN
 Illegal operand
-.It ILL_ILLADR
-Illegal addressing mode
 .It ILL_ILLTRP
 Illegal trap
 .It ILL_PRVOPC
 Privileged opcode
 .It ILL_PRVREG
 Privileged register
-.It ILL_COPROC
-Coprocessor error
-.It ILL_BADSTK
-Internal stack error
 .El
 .It SIGFPE
 .Bl -tag -width FPE_INTDIV
+.It FPE_FLTDIV
+Floating-point divide by zero
+.It FPE_FLTINV
+Invalid floating-point operation
+.It FPE_FLTOVF
+Floating-point overflow
+.It FPE_FLTRES
+Floating-point inexact result
+.It FPE_FLTUND
+Floating-point underflow
+.It FPE_FLTSUB
+Subscript out of range
 .It FPE_INTDIV
 Integer divide by zero
 .It FPE_INTOVF
 Integer overflow
-.It FPE_FLTDIV
-Floating-point divide by zero
-.It FPE_FLTOVF
-Floating-point overflow
-.It FPE_FLTUND
-Floating-point underflow
-.It FPE_FLTRES
-Floating-point inexact result
-.It FPE_FLTINV
-Invalid floating-point operation
-.It FPE_FLTSUB
-Subscript out of range
 .El
 .It SIGSEGV
 .Bl -tag -width SEGV_MAPERR
-.It SEGV_MAPERR
-Address not mapped to object
 .It SEGV_ACCERR
 Invalid permissions for mapped object
+.It SEGV_MAPERR
+Address not mapped to object
 .El
 .It SIGBUS
 .Bl -tag -width BUS_ADRALN
@@ -229,40 +229,40 @@ Object-specific hardware error
 .Bl -tag -width TRAP_BRKPT
 .It TRAP_BRKPT
 Process breakpoint
-.It TRAP_TRACE
-Process trace trap
 .It TRAP_EXEC
 Process exec trap
+.It TRAP_TRACE
+Process trace trap
 .El
 .It SIGCHLD
 .Bl -tag -width CLD_CONTINUED
+.It CLD_CONTINUED
+Stopped child has continued
+.It CLD_DUMPED
+Child has terminated abnormally and created a core file
 .It CLD_EXITED
 Child has exited
 .It CLD_KILLED
 Child has terminated abnormally but did not create a core file
-.It CLD_DUMPED
-Child has terminated abnormally and created a core file
-.It CLD_TRAPPED
-Traced child has trapped
 .It CLD_STOPPED
 Child has stopped
-.It CLD_CONTINUED
-Stopped child has continued
+.It CLD_TRAPPED
+Traced child has trapped
 .El
 .It SIGIO
 .Bl -tag -width POLL_OUT
-.It POLL_IN
-Data input available
-.It POLL_OUT
-Output buffers available
-.It POLL_MSG
-Input message available
 .It POLL_ERR
 I/O error
-.It POLL_PRI
-High priority input available
 .It POLL_HUP
 Device disconnected
+.It POLL_IN
+Data input available
+.It POLL_MSG
+Input message available
+.It POLL_OUT
+Output buffers available
+.It POLL_PRI
+High priority input available
 .El
 .El
 .Pp
