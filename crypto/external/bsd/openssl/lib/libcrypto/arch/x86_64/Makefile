@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2017/01/08 01:56:31 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2017/01/08 17:12:21 christos Exp $
 
 .include "bsd.own.mk"
 
@@ -11,7 +11,6 @@ CC+= -fno-integrated-as
 
 regen:
 	for i in $$(find ${OPENSSLSRC} -name \*${MACHINE_ARCH}.pl) \
-		$$(find ${OPENSSLSRC}/crypto/bn/asm -name ${MACHINE_ARCH}-\*.pl) \
 		$$(find ${OPENSSLSRC}/crypto/bn/asm -name ${MACHINE_ARCH}-\*.pl) \
 		${OPENSSLSRC}/crypto/bn/asm/rsaz-avx2.pl \
 		${OPENSSLSRC}/crypto/${MACHINE_ARCH}cpuid.pl ; do \
