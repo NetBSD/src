@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.50 2017/01/08 07:42:00 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.51 2017/01/08 08:29:23 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.147 2016/11/17 14:12:33 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.50 2017/01/08 07:42:00 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.51 2017/01/08 08:29:23 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -3231,8 +3231,7 @@ iwm_send_phy_cfg_cmd(struct iwm_softc *sc)
 }
 
 static int
-iwm_load_ucode_wait_alive(struct iwm_softc *sc,
-	enum iwm_ucode_type ucode_type)
+iwm_load_ucode_wait_alive(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 {
 	enum iwm_ucode_type old_type = sc->sc_uc_current;
 	int err;
@@ -3399,8 +3398,7 @@ iwm_calc_rssi(struct iwm_softc *sc, struct iwm_rx_phy_info *phy_info)
  * values by -256dBm: practically 0 power and a non-feasible 8 bit value.
  */
 static int
-iwm_get_signal_strength(struct iwm_softc *sc,
-    struct iwm_rx_phy_info *phy_info)
+iwm_get_signal_strength(struct iwm_softc *sc, struct iwm_rx_phy_info *phy_info)
 {
 	int energy_a, energy_b, energy_c, max_energy;
 	uint32_t val;
@@ -4415,7 +4413,7 @@ iwm_led_blink_stop(struct iwm_softc *sc)
 
 static int
 iwm_beacon_filter_send_cmd(struct iwm_softc *sc,
-	struct iwm_beacon_filter_cmd *cmd)
+    struct iwm_beacon_filter_cmd *cmd)
 {
 	return iwm_send_cmd_pdu(sc, IWM_REPLY_BEACON_FILTERING_CMD,
 	    0, sizeof(struct iwm_beacon_filter_cmd), cmd);
