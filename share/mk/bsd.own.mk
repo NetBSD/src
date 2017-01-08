@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1000 2017/01/07 22:27:36 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1001 2017/01/08 17:40:44 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -654,22 +654,6 @@ check_RELEASEDIR: .PHONY .NOTMAIN
 .endif
 
 #
-# Build a dynamically linked /bin and /sbin, with the necessary shared
-# libraries moved from /usr/lib to /lib and the shared linker moved
-# from /usr/libexec to /lib
-#
-# Note that if the BINDIR is not /bin or /sbin, then we always use the
-# non-DYNAMICROOT behavior (i.e. it is only enabled for programs in /bin
-# and /sbin).  See <bsd.shlib.mk>.
-#
-MKDYNAMICROOT?=	yes
-
-# For ia64, ld.elf_so not yet implemented
-.if ${MACHINE_ARCH} == "ia64"
-MKDYNAMICROOT=	no
-.endif
-
-#
 # Where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj (for example).
 #
@@ -999,20 +983,6 @@ MKSOFTFLOAT?=	yes
 SOFTFLOAT_BITS=	32
 .endif
 
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "sparc" 
-MKSLJIT?=	yes
-.else
-MKSLJIT?=	no
-.endif
-
-#
-# MK* backward compatibility.
-#
-.if defined(MKBFD)
-MKBINUTILS?=	${MKBFD}
-.endif
 
 #
 # We want to build zfs only for amd64 by default for now.
@@ -1064,6 +1034,7 @@ _MKVARS.yes= \
 	MKBINUTILS \
 	MKCRYPTO MKCOMPLEX MKCVS MKCXX \
 	MKDOC \
+	MKDYNAMICROOT \
 	MKGCC MKGDB MKGROFF \
 	MKHESIOD MKHTML \
 	MKIEEEFP MKINET6 MKINFO MKIPFILTER MKISCSI \
@@ -1106,23 +1077,51 @@ MKRUMP=		no
 .endif
 
 #
+# Build a dynamically linked /bin and /sbin, with the necessary shared
+# libraries moved from /usr/lib to /lib and the shared linker moved
+# from /usr/libexec to /lib
+#
+# Note that if the BINDIR is not /bin or /sbin, then we always use the
+# non-DYNAMICROOT behavior (i.e. it is only enabled for programs in /bin
+# and /sbin).  See <bsd.shlib.mk>.
+#
+# For ia64, ld.elf_so not yet implemented
+.if ${MACHINE_ARCH} == "ia64"
+MKDYNAMICROOT=	no
+.endif
+
+.if defined(MKREPRO)
+MKARZERO ?= ${MKREPRO}
+.endif
+
+#
 # MK* options which default to "no".  Note that MKZFS has a different
 # default for some platforms, see above.
 #
 _MKVARS.no= \
+	MKARZERO \
 	MKBSDGREP MKBSDTAR \
 	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCRYPTO_RC5 MKCTF MKDEBUG \
 	MKDEBUGLIB MKDTRACE MKEXTSRC MKGROFFHTMLDOC \
 	MKKYUA MKLLD MKLLDB MKLINT \
 	MKMANZ MKMCLINKER MKOBJDIRS \
+	MKSLJIT \
 	MKLIBCXX MKLLVM MKNSD MKPCC \
 	MKPIGZGZIP \
+	MKRADEONFIRMWARE \
 	MKREPRO \
 	MKSOFTFLOAT MKSTRIPIDENT MKTPM \
+	MKXORG_SERVER \
 	MKUNPRIVED MKUPDATE MKX11 MKX11MOTIF MKZFS
 .for var in ${_MKVARS.no}
 ${var}?=	${${var}.${MACHINE_ARCH}:Uno}
 .endfor
+
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "sparc" 
+MKSLJIT=	yes
+.endif
 
 #
 # Which platforms build the xorg-server drivers (as opposed
@@ -1156,9 +1155,13 @@ ${var}?=	${${var}.${MACHINE_ARCH}:Uno}
     ${MACHINE} == "sparc64"	|| \
     ${MACHINE} == "vax"		|| \
     ${MACHINE} == "zaurus"
-MKXORG_SERVER?=yes
+MKXORG_SERVER=yes
 .else
-MKXORG_SERVER?=no
+.endif
+
+# Only install the radeon firmware on DRM-happy systems.
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+MKRADEONFIRMWARE=		yes
 .endif
 
 #
@@ -1453,11 +1456,6 @@ EXTRA_DRIVERS=	modesetting
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
 
-# Only install the radeon firmware on DRM-happy systems.
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
-MKRADEONFIRMWARE?=		yes
-.endif
-MKRADEONFIRMWARE?=		no
 
 X11DRI?=			yes
 X11LOADABLE?=			yes
