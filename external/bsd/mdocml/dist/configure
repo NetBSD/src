@@ -363,8 +363,10 @@ fi
 [ ${HAVE_GETSUBOPT} -eq 0 ] && \
 	echo "extern	int	  getsubopt(char **, char * const *, char **);"
 
-[ ${HAVE_ISBLANK} -eq 0 ] && \
+if [ ${HAVE_ISBLANK} -eq 0 ]; then
+	echo "#undef isblank"
 	echo "extern	int	  isblank(int);"
+fi
 
 [ ${HAVE_MKDTEMP} -eq 0 ] && \
 	echo "extern	char	 *mkdtemp(char *);"
