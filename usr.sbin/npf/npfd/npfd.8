@@ -1,4 +1,4 @@
-.\"	$NetBSD: npfd.8,v 1.2 2017/01/07 18:48:47 christos Exp $
+.\"	$NetBSD: npfd.8,v 1.3 2017/01/08 13:59:53 wiz Exp $
 .\"	$OpenBSD: pflogd.8,v 1.35 2007/05/31 19:19:47 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" 
+.\"
 .Dd January 5, 2017
 .Dt NPFD 8
 .Os
@@ -34,7 +34,6 @@
 .Nd packet filter logging and state synchronization daemon
 .Sh SYNOPSIS
 .Nm npfd
-.Bk -words
 .Op Fl D
 .Op Fl d Ar delay
 .Op Fl f Ar filename
@@ -42,7 +41,6 @@
 .Op Fl p Ar pidfile
 .Op Fl s Ar snaplen
 .Op Ar expression
-.Ek
 .Sh DESCRIPTION
 .Nm
 is a background daemon which reads packets logged by
@@ -167,7 +165,7 @@ Log specific tcp packets to a different log file with a large snaplen
 .Pp
 Log from another
 .\" .Xr pflog 4
-npflog 
+npflog
 interface, excluding specific packets:
 .Bd -literal -offset indent
 # npfd -i npflog3 -f network3.log "not (tcp and port 23)"
@@ -229,12 +227,12 @@ the wi0 interface:
 .Ed
 .Pp
 Each
-.Xr npf 4
+.Xr npf 7
 rule is marked with an id number, shown using:
 .Bd -literal -offset indent
 # npfctl show
 ...
-        block final all apply "log" # id="45" 
+        block final all apply "log" # id="45"
 ...
 .Ed
 .Pp
@@ -251,8 +249,8 @@ options [mss 1440], length 0
 .Xr pcap 3 ,
 \" .Xr if_npflog 4 ,
 .Xr npf.conf 5 ,
-.Xr newsyslog 8 ,
 .Xr npf 7 ,
+.Xr newsyslog 8 ,
 .Xr npfctl 8 ,
 .Xr tcpdump 8
 .Sh HISTORY
