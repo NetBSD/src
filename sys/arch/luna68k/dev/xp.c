@@ -1,4 +1,4 @@
-/* $NetBSD: xp.c,v 1.1 2016/12/03 17:38:02 tsutsui Exp $ */
+/* $NetBSD: xp.c,v 1.2 2017/01/08 16:34:44 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2016 Izumi Tsutsui.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xp.c,v 1.1 2016/12/03 17:38:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xp.c,v 1.2 2017/01/08 16:34:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ xp_ioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 	case XPIOCDOWNLD:
 		downld = addr;
 		loadsize = downld->size;
-		if (loadsize == 0 || loadsize >= XP_SHM_SIZE) {
+		if (loadsize == 0 || loadsize > XP_SHM_SIZE) {
 			return EINVAL;
 		}
 
