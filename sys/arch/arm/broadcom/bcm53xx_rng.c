@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_rng.c,v 1.9 2017/01/08 05:04:45 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_rng.c,v 1.10 2017/01/08 05:05:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -170,7 +170,7 @@ bcmrng_empty(struct bcmrng_softc *sc)
 		return 0;
 	}
 	if (nwords > __arraycount(data))
-		nords = __arraycount(data);
+		nwords = __arraycount(data);
 
 	bcmrng_read_multi_4(sc, RNG_DATA, data, nwords);
 
