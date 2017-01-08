@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.11 2017/01/05 03:40:33 pgoyette Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.12 2017/01/08 19:49:25 christos Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.11 2017/01/05 03:40:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.12 2017/01/08 19:49:25 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -82,6 +82,8 @@ int kernhist_print_enabled = 1;
 
 int sysctl_hist_node;
 
+static int sysctl_kernhist_helper(SYSCTLFN_PROTO);
+
 #ifdef DDB
 
 /*
@@ -94,7 +96,6 @@ void kernhist_dumpmask(uint32_t);
 static void kernhist_dump_histories(struct kern_history *[],
     void (*)(const char *, ...) __printflike(1, 2));
 
-static int sysctl_kernhist_helper(SYSCTLFN_PROTO);
 
 /*
  * call this from ddb
@@ -380,7 +381,7 @@ sysctl_kernhist_helper(SYSCTLFN_ARGS)
 	struct addr_xlt *xlate_t, *xlt;
 	size_t bufsize, xlate_s;
 	size_t xlate_c;
-	const char *strp;
+	const char *strp __diagused;
 	char *next;
 	int i, j;
 	int error;
