@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.46 2017/01/04 03:05:24 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.47 2017/01/08 06:23:29 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.147 2016/11/17 14:12:33 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.46 2017/01/04 03:05:24 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.47 2017/01/08 06:23:29 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -4315,7 +4315,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	seg = data->map->dm_segs;
 	for (i = 0; i < data->map->dm_nsegs; i++, seg++) {
 		desc->tbs[i+2].lo = htole32(seg->ds_addr);
-		desc->tbs[i+2].hi_n_len = \
+		desc->tbs[i+2].hi_n_len =
 		    htole16(iwm_get_dma_hi_addr(seg->ds_addr))
 		    | ((seg->ds_len) << 4);
 	}
@@ -6368,8 +6368,6 @@ iwm_start(struct ifnet *ifp)
 			ifp->if_timer = 1;
 		}
 	}
-
-	return;
 }
 
 static void
@@ -7637,7 +7635,7 @@ fail1:	iwm_dma_contig_free(&sc->fw_dma);
 void
 iwm_radiotap_attach(struct iwm_softc *sc)
 {
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
 
 	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
@@ -7654,10 +7652,10 @@ iwm_radiotap_attach(struct iwm_softc *sc)
 
 #if 0
 static void
-iwm_init_task(void *arg1)
+iwm_init_task(void *arg)
 {
-	struct iwm_softc *sc = arg1;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct iwm_softc *sc = arg;
+	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
 	int s;
 
 	rw_enter_write(&sc->ioctl_rwl);
