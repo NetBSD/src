@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.47 2017/01/08 06:23:29 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.48 2017/01/08 06:48:06 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.147 2016/11/17 14:12:33 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.47 2017/01/08 06:23:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.48 2017/01/08 06:48:06 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -3523,7 +3523,7 @@ iwm_rx_rx_mpdu(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	if (c)
 		ni->ni_chan = c;
 
-	if (sc->sc_drvbpf != NULL) {
+	if (__predict_false(sc->sc_drvbpf != NULL)) {
 		struct iwm_rx_radiotap_header *tap = &sc->sc_rxtap;
 
 		tap->wr_flags = 0;
@@ -4161,7 +4161,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 
 	rinfo = iwm_tx_fill_cmd(sc, in, wh, tx);
 
-	if (sc->sc_drvbpf != NULL) {
+	if (__predict_false(sc->sc_drvbpf != NULL)) {
 		struct iwm_tx_radiotap_header *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
@@ -6326,8 +6326,6 @@ iwm_start(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			continue;
 		}
-		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp, m);
 
 		eh = mtod(m, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
@@ -6348,6 +6346,8 @@ iwm_start(struct ifnet *ifp)
 		ac = (eh->ether_type != htons(ETHERTYPE_PAE)) ?
 		    M_WME_GETAC(m) : WME_AC_BE;
 
+		bpf_mtap(ifp, m);
+
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
 			ifp->if_oerrors++;
@@ -6355,8 +6355,8 @@ iwm_start(struct ifnet *ifp)
 		}
 
  sendit:
-		if (ic->ic_rawbpf != NULL)
-			bpf_mtap3(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m);
+
 		if (iwm_tx(sc, m, ni, ac) != 0) {
 			ieee80211_free_node(ni);
 			ifp->if_oerrors++;
