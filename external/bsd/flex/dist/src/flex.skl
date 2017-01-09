@@ -1503,9 +1503,9 @@ void yyFlexLexer::switch_streams( std::istream* new_in, std::ostream* new_out )
 }
 
 #ifdef YY_INTERACTIVE
-int yyFlexLexer::LexerInput( char* buf, yy_size_t /* max_size */ )
+int yyFlexLexer::LexerInput( char* buf, int /* max_size */ )
 #else
-int yyFlexLexer::LexerInput( char* buf, yy_size_t max_size )
+int yyFlexLexer::LexerInput( char* buf, int max_size )
 #endif
 {
 	if ( yyin.eof() || yyin.fail() )
@@ -1989,7 +1989,7 @@ static void yy_load_buffer_state  (M4_YY_DEF_ONLY_ARG)
     YY_BUFFER_STATE yy_create_buffer  YYFARGS2( FILE *,file, yy_size_t ,size)
 %endif
 %if-c++-only
-    YY_BUFFER_STATE yyFlexLexer::yy_create_buffer( std::istream& file, yy_size_t size )
+    YY_BUFFER_STATE yyFlexLexer::yy_create_buffer( std::istream& file, int size )
 %endif
 {
 	YY_BUFFER_STATE b;
@@ -2022,7 +2022,7 @@ static void yy_load_buffer_state  (M4_YY_DEF_ONLY_ARG)
  * M4_YY_DOC_PARAM
  * @return the allocated buffer state.
  */
-	YY_BUFFER_STATE yyFlexLexer::yy_create_buffer( std::istream* file, yy_size_t size )
+	YY_BUFFER_STATE yyFlexLexer::yy_create_buffer( std::istream* file, int size )
 {
 	return yy_create_buffer( *file, size );
 }
