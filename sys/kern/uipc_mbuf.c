@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.169 2016/10/04 14:13:21 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.170 2017/01/09 14:25:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.169 2016/10/04 14:13:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.170 2017/01/09 14:25:52 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1328,6 +1328,9 @@ m_makewritable(struct mbuf **mp, int off, int len, int how)
 	error = m_copyback0(mp, off, len, NULL,
 	    M_COPYBACK0_PRESERVE|M_COPYBACK0_COW, how);
 
+	if (error)
+		return error;
+
 #if defined(DEBUG)
 	int reslen = 0;
 	for (struct mbuf *n = *mp; n; n = n->m_next)
@@ -1338,7 +1341,7 @@ m_makewritable(struct mbuf **mp, int off, int len, int how)
 		panic("m_makewritable: inconsist");
 #endif /* defined(DEBUG) */
 
-	return error;
+	return 0;
 }
 
 /*
