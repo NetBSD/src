@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.208 2017/01/07 19:55:35 christos Exp $
+# $NetBSD: postinstall,v 1.209 2017/01/09 19:51:31 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1488,7 +1488,13 @@ update_rc()
 	local op=$1
 	local dir=$2
 	local name=$3
-	local rcdir=$4
+	local bindir=$4
+	local rcdir=$5
+
+	if [ ! -x "${DEST_DIR}/${bindir}/${name}" ]; then
+		return 0
+	fi
+
 	if ! find_file_in_dirlist "${name}" "${name}" \
 	    "${rcdir}" "${SRC_DIR}/etc/rc.d"; then
 		return 1
@@ -1523,15 +1529,15 @@ do_rc()
 		${extra_scripts}
 	failed=$(( ${failed} + $? ))
 
-	update_rc "${op}" "${dir}" blacklistd \
+	update_rc "${op}" "${dir}" blacklistd /sbin \
 	    "${SRC_DIR}/external/bsd/blacklist/etc/rc.d"
 	failed=$(( ${failed} + $? ))
 
-	update_rc "${op}" "${dir}" unbound \
+	update_rc "${op}" "${dir}" unbound /usr/sbin \
 	    "${SRC_DIR}/external/bsd/unbound/etc/rc.d"
 	failed=$(( ${failed} + $? ))
 
-	update_rc "${op}" "${dir}" nsd \
+	update_rc "${op}" "${dir}" nsd /usr/sbin \
 	    "${SRC_DIR}/external/bsd/nsd/etc/rc.d"
 	failed=$(( ${failed} + $? ))
 
