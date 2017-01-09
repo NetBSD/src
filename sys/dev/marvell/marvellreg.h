@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellreg.h,v 1.10 2016/10/04 15:02:27 kiyohara Exp $	*/
+/*	$NetBSD: marvellreg.h,v 1.11 2017/01/09 14:06:35 kiyohara Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -88,5 +88,6 @@
 #define MARVELL_ATTR_SDRAM_CS2		0x0b
 #define MARVELL_ATTR_SDRAM_CS3		0x07
 #endif
+#define MARVELL_ATTR_AXI_DDR		0x00
 
 #endif	/* _DEV_MARVELL_MARVELLREG_H_ */
