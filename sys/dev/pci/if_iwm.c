@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.52 2017/01/09 08:05:14 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.53 2017/01/09 08:10:25 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.147 2016/11/17 14:12:33 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.52 2017/01/09 08:05:14 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.53 2017/01/09 08:10:25 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -951,7 +951,7 @@ iwm_write_prph(struct iwm_softc *sc, uint32_t addr, uint32_t val)
 static int
 iwm_read_mem(struct iwm_softc *sc, uint32_t addr, void *buf, int dwords)
 {
-	int offs, err = 0;
+	int offs;
 	uint32_t *vals = buf;
 
 	if (iwm_nic_lock(sc)) {
@@ -959,10 +959,9 @@ iwm_read_mem(struct iwm_softc *sc, uint32_t addr, void *buf, int dwords)
 		for (offs = 0; offs < dwords; offs++)
 			vals[offs] = IWM_READ(sc, IWM_HBUS_TARG_MEM_RDAT);
 		iwm_nic_unlock(sc);
-	} else {
-		err = EBUSY;
+		return 0;
 	}
-	return err;
+	return EBUSY;
 }
 #endif
 
@@ -980,10 +979,9 @@ iwm_write_mem(struct iwm_softc *sc, uint32_t addr, const void *buf, int dwords)
 			IWM_WRITE(sc, IWM_HBUS_TARG_MEM_WDAT, val);
 		}
 		iwm_nic_unlock(sc);
-	} else {
-		return EBUSY;
+		return 0;
 	}
-	return 0;
+	return EBUSY;
 }
 
 static int
