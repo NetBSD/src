@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.54 2017/01/09 09:15:54 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.55 2017/01/09 10:42:45 khorben Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.147 2016/11/17 14:12:33 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.54 2017/01/09 09:15:54 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.55 2017/01/09 10:42:45 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -4500,6 +4500,8 @@ iwm_power_update_device(struct iwm_softc *sc)
 	struct iwm_device_power_cmd cmd = {
 #ifdef notyet
 		.flags = htole16(IWM_DEVICE_POWER_FLAGS_POWER_SAVE_ENA_MSK),
+#else
+		.flags = 0,
 #endif
 	};
 
