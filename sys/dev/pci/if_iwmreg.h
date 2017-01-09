@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmreg.h,v 1.3 2016/12/18 02:18:29 nonaka Exp $	*/
+/*	$NetBSD: if_iwmreg.h,v 1.4 2017/01/09 09:15:54 nonaka Exp $	*/
 /*	OpenBSD: if_iwmreg.h,v 1.19 2016/09/20 11:46:09 stsp Exp 	*/
 
 /******************************************************************************
@@ -4301,6 +4301,18 @@ enum iwm_tx_flags {
 	IWM_TX_CMD_FLG_PAPD_TYPE	= (1 << 28),
 	IWM_TX_CMD_FLG_HCCA_CHUNK	= (1 << 31)
 }; /* IWM_TX_FLAGS_BITS_API_S_VER_1 */
+
+/**
+ * enum iwm_tx_pm_timeouts - pm timeout values in TX command
+ * @IWM_PM_FRAME_NONE: no need to suspend sleep mode
+ * @IWM_PM_FRAME_MGMT: fw suspend sleep mode for 100TU
+ * @IWM_PM_FRAME_ASSOC: fw suspend sleep mode for 10sec
+ */
+enum iwm_tx_pm_timeouts {
+	IWM_PM_FRAME_NONE	= 0,
+	IWM_PM_FRAME_MGMT	= 2,
+	IWM_PM_FRAME_ASSOC	= 3,
+};
 
 /*
  * TX command security control
