@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.139 2016/10/28 18:32:26 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.140 2017/01/09 03:09:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.139 2016/10/28 18:32:26 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.140 2017/01/09 03:09:05 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -556,7 +556,7 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 			idx++;
 		}
 		if (sign)
-			num = history_length - num + 1;
+			num = history_length - num + history_base;
 
 		if (!(he = history_get(num)))
 			return NULL;
