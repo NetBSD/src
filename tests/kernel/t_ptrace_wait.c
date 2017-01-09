@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.50 2017/01/06 22:40:06 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.51 2017/01/09 22:09:20 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.50 2017/01/06 22:40:06 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.51 2017/01/09 22:09:20 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4458,7 +4458,6 @@ ATF_TC_BODY(lwpinfo2, tc)
 }
 #endif
 
-#if defined(HAVE_SIGINFO)
 ATF_TC(siginfo1);
 ATF_TC_HEAD(siginfo1, tc)
 {
@@ -4516,9 +4515,7 @@ ATF_TC_BODY(siginfo1, tc)
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
-#endif
 
-#if defined(HAVE_SIGINFO)
 ATF_TC(siginfo2);
 ATF_TC_HEAD(siginfo2, tc)
 {
@@ -4599,9 +4596,7 @@ ATF_TC_BODY(siginfo2, tc)
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
-#endif
 
-#if defined(HAVE_SIGINFO)
 ATF_TC(siginfo3);
 ATF_TC_HEAD(siginfo3, tc)
 {
@@ -4699,9 +4694,7 @@ ATF_TC_BODY(siginfo3, tc)
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
-#endif
 
-#if defined(HAVE_SIGINFO)
 ATF_TC(siginfo4);
 ATF_TC_HEAD(siginfo4, tc)
 {
@@ -4759,7 +4752,6 @@ ATF_TC_BODY(siginfo4, tc)
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
-#endif
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -4843,10 +4835,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, lwpinfo1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, lwpinfo2);
 
-	ATF_TP_ADD_TC_HAVE_SIGINFO(tp, siginfo1);
-	ATF_TP_ADD_TC_HAVE_SIGINFO(tp, siginfo2);
-	ATF_TP_ADD_TC_HAVE_SIGINFO(tp, siginfo3);
-	ATF_TP_ADD_TC_HAVE_SIGINFO(tp, siginfo4);
+	ATF_TP_ADD_TC(tp, siginfo1);
+	ATF_TP_ADD_TC(tp, siginfo2);
+	ATF_TP_ADD_TC(tp, siginfo3);
+	ATF_TP_ADD_TC(tp, siginfo4);
 
 	return atf_no_error();
 }
