@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.53 2017/01/09 08:10:25 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.54 2017/01/09 09:15:54 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.147 2016/11/17 14:12:33 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.53 2017/01/09 08:10:25 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.54 2017/01/09 09:15:54 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -4214,11 +4214,11 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 
 		if (subtype == IEEE80211_FC0_SUBTYPE_ASSOC_REQ ||
 		    subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ)
-			tx->pm_frame_timeout = htole16(3);
+			tx->pm_frame_timeout = htole16(IWM_PM_FRAME_ASSOC);
 		else
-			tx->pm_frame_timeout = htole16(2);
+			tx->pm_frame_timeout = htole16(IWM_PM_FRAME_MGMT);
 	} else {
-		tx->pm_frame_timeout = htole16(0);
+		tx->pm_frame_timeout = htole16(IWM_PM_FRAME_NONE);
 	}
 
 	if (hdrlen & 3) {
