@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.196 2016/11/04 18:14:04 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.197 2017/01/09 00:31:30 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.196 2016/11/04 18:14:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.197 2017/01/09 00:31:30 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -570,14 +570,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Preserve synchronization semantics of vfork.  If waiting for
 	 * child to exec or exit, sleep until it clears LP_VFORKWAIT.
 	 */
-#if 0
-	while (l1->l_pflag & LP_VFORKWAIT) {
-		cv_wait(&l1->l_waitcv, proc_lock);
-	}
-#else
 	while (p2->p_lflag & PL_PPWAIT)
 		cv_wait(&p1->p_waitcv, proc_lock);
-#endif
 
 	/*
 	 * Let the parent know that we are tracing its child.
