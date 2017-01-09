@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.51 2017/01/08 08:29:23 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.52 2017/01/09 08:05:14 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.147 2016/11/17 14:12:33 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.51 2017/01/08 08:29:23 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.52 2017/01/09 08:05:14 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -3856,7 +3856,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	desc->num_tbs = 1;
 
 	DPRINTFN(8, ("iwm_send_cmd 0x%x size=%zu %s\n",
-	    code, sizeof(cmd->hdr) + paylen, async ? " (async)" : ""));
+	    code, hdrlen + paylen, async ? " (async)" : ""));
 
 	if (paylen > datasz) {
 		bus_dmamap_sync(sc->sc_dmat, txdata->map, 0,
