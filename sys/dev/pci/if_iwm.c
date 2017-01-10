@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.57 2017/01/10 04:27:04 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.58 2017/01/10 05:54:03 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.57 2017/01/10 04:27:04 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.58 2017/01/10 05:54:03 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -519,14 +519,6 @@ iwm_firmload(struct iwm_softc *sc)
 	if (fw->fw_rawsize < sizeof(uint32_t)) {
 		aprint_error_dev(sc->sc_dev,
 		    "firmware too short: %zd bytes\n", fw->fw_rawsize);
-		err = EINVAL;
-		goto out;
-	}
-
-	/* some sanity */
-	if (fw->fw_rawsize > IWM_FWMAXSIZE) {
-		aprint_error_dev(sc->sc_dev,
-		    "firmware size is ridiculous: %zd bytes\n", fw->fw_rawsize);
 		err = EINVAL;
 		goto out;
 	}
@@ -7179,12 +7171,14 @@ static const pci_product_id_t iwm_devices[] = {
 	PCI_PRODUCT_INTEL_WIFI_LINK_3160_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_7265_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_7265_2,
-#if 0
+#ifdef notyet
 	PCI_PRODUCT_INTEL_WIFI_LINK_3165_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_3165_2,
+#endif
 	PCI_PRODUCT_INTEL_WIFI_LINK_8260_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_8260_2,
-#endif
+	PCI_PRODUCT_INTEL_WIFI_LINK_4165_1,
+	PCI_PRODUCT_INTEL_WIFI_LINK_4165_2,
 };
 
 static int
@@ -7383,6 +7377,8 @@ iwm_attach(device_t parent, device_t self, void *aux)
 		break;
 	case PCI_PRODUCT_INTEL_WIFI_LINK_8260_1:
 	case PCI_PRODUCT_INTEL_WIFI_LINK_8260_2:
+	case PCI_PRODUCT_INTEL_WIFI_LINK_4165_1:
+	case PCI_PRODUCT_INTEL_WIFI_LINK_4165_2:
 		sc->sc_fwname = "iwlwifi-8000C-16.ucode";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
