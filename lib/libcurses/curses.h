@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.119 2017/01/06 09:14:07 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.120 2017/01/10 10:13:24 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -746,6 +746,7 @@ int	 reset_shell_mode(void);
 int	 resetty(void);
 int      resizeterm(int, int);
 int	 resize_term(int, int);
+int	 ripoffline(int, int (*)(WINDOW *, int));
 int	 savetty(void);
 int	 scanw(const char *, ...) __scanflike(1, 2);
 int	 scroll(WINDOW *);

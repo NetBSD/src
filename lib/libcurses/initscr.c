@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.30 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: initscr.c,v 1.31 2017/01/10 10:13:24 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.30 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.31 2017/01/10 10:13:24 roy Exp $");
 #endif
 #endif	/* not lint */
 
@@ -73,7 +73,8 @@ initscr(void)
 	__rawmode = _cursesi_screen->rawmode;
 	__noqch = _cursesi_screen->noqch;
 	COLS = _cursesi_screen->COLS;
-	LINES = _cursesi_screen->LINES;
+	LINES = _cursesi_screen->LINES
+	    - _cursesi_screen->ripped_top - _cursesi_screen->ripped_bottom;
 	COLORS = _cursesi_screen->COLORS;
 	COLOR_PAIRS = _cursesi_screen->COLOR_PAIRS;
 	__GT = _cursesi_screen->GT;

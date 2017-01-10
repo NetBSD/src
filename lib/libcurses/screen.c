@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.27 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: screen.c,v 1.28 2017/01/10 10:13:24 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.27 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: screen.c,v 1.28 2017/01/10 10:13:24 roy Exp $");
 #endif
 #endif					/* not lint */
 
@@ -45,6 +45,14 @@ __RCSID("$NetBSD: screen.c,v 1.27 2017/01/06 13:53:18 roy Exp $");
 
 static int filtered;
 
+/* List of ripoffline calls */
+#define	NRIPS	5
+static struct ripoff {
+	int	nlines;
+	int	(*init)(WINDOW *, int);
+} ripoffs[NRIPS];
+static int nrips;
+
 /*
  * filter has to be called before either initscr or newterm.
  */
@@ -53,6 +61,24 @@ filter(void)
 {
 
 	filtered = TRUE;
+}
+
+/*
+ *ripoffline --
+ *	Ripoff a line from the top of bottom of stdscr.
+ *	Must be called before initscr or newterm.
+ */
+int
+ripoffline(int line, int (*init)(WINDOW *, int))
+{
+
+	if (nrips >= NRIPS || init == NULL)
+		return ERR; /* This makes sense, but not standards compliant. */
+	if (line == 0)
+		return OK;
+	ripoffs[nrips].nlines = line < 0 ? -1 : 1;
+	ripoffs[nrips++].init = init;
+	return OK;
 }
 
 /*
@@ -72,7 +98,8 @@ set_term(SCREEN *new)
 		old_screen->rawmode = __rawmode;
 		old_screen->noqch = __noqch;
 		old_screen->COLS = COLS;
-		old_screen->LINES = LINES;
+		old_screen->LINES = LINES
+		    + old_screen->ripped_top + old_screen->ripped_bottom;
 		old_screen->COLORS = COLORS;
 		old_screen->COLOR_PAIRS = COLOR_PAIRS;
 		old_screen->GT = __GT;
@@ -87,7 +114,7 @@ set_term(SCREEN *new)
 	__rawmode = new->rawmode;
 	__noqch = new->noqch;
 	COLS = new->COLS;
-	LINES = new->LINES;
+	LINES = new->LINES - new->ripped_top - new->ripped_bottom;
 	COLORS = new->COLORS;
 	COLOR_PAIRS = new->COLOR_PAIRS;
 	__GT = new->GT;
@@ -124,6 +151,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 {
 	SCREEN *new_screen;
 	char *sp;
+	int i;
 
 	sp = type;
 	if (type == NULL && (sp = getenv("TERM")) == NULL)
@@ -158,7 +186,8 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	new_screen->unget_len = 32;
 
 	if ((new_screen->unget_list =
-	    malloc(sizeof(wchar_t) * new_screen->unget_len)) == NULL) {
+	    malloc(sizeof(wchar_t) * new_screen->unget_len)) == NULL)
+	{
 		goto error_exit;
 	}
 	new_screen->unget_pos = 0;
@@ -180,20 +209,47 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	    0, 0, 0, FALSE)) == NULL)
 		goto error_exit;
 
-	if ((new_screen->stdscr = __newwin(new_screen, 0,
-	    0, 0, 0, FALSE)) == NULL) {
+	if ((new_screen->__virtscr = __newwin(new_screen, 0,
+	    0, 0, 0, FALSE)) == NULL)
+	{
 		delwin(new_screen->curscr);
+		goto error_exit;
+	}
+
+	for (i = 0; i < nrips; i++) {
+		const struct ripoff *r = &ripoffs[i];
+		int nlines = r->nlines < 0 ? -r->nlines : r->nlines;
+		WINDOW *w;
+
+		w = __newwin(new_screen, nlines, 0,
+		    r->nlines < 0 ? LINES + r->nlines : new_screen->ripped_top,
+		    0, FALSE);
+		if (w != NULL) {
+			if (r->nlines < 0)
+				new_screen->ripped_bottom += nlines;
+			else
+				new_screen->ripped_top += nlines;
+			LINES -= nlines;
+		}
+		r->init(w, COLS);
+#ifdef DEBUG
+		if (w != NULL)
+			__CTRACE(__CTRACE_SCREEN,
+			    "newterm: ripped %d lines from the %s\n",
+			    nlines, r->nlines < 0 ? "bottom" : "top");
+#endif
+	}
+	nrips = 0; /* Reset the stack. */
+
+	new_screen->stdscr = __newwin(new_screen, LINES, 0,
+	    new_screen->ripped_top, 0, FALSE);
+	if (new_screen->stdscr == NULL) {
+		delwin(new_screen->curscr);
+		delwin(new_screen->__virtscr);
 		goto error_exit;
 	}
 
 	clearok(new_screen->stdscr, 1);
-
-	if ((new_screen->__virtscr = __newwin(new_screen, 0,
-	    0, 0, 0, FALSE)) == NULL) {
-		delwin(new_screen->curscr);
-		delwin(new_screen->stdscr);
-		goto error_exit;
-	}
 
 	__init_getch(new_screen);
 	__init_acs(new_screen);
