@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.12 2017/01/10 05:54:03 nonaka Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.13 2017/01/10 07:34:04 nonaka Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp 	*/
 
 /*
@@ -466,7 +466,13 @@ struct iwm_softc {
 	struct iwm_notif_statistics sc_stats;
 	int sc_noise;
 
+	int sc_cmd_hold_nic_awake;
+
+	/* device needs host interrupt operation mode set */
 	int host_interrupt_operation_mode;
+	/* should the MAC access REQ be asserted when a command is in flight.
+	 * This is due to a HW bug in 7260, 3160 and 7265. */
+	int apmg_wake_up_wa;
 
 	struct sysctllog *sc_clog;
 
