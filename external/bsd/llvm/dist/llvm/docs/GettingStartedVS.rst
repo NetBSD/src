@@ -39,13 +39,13 @@ and software you will need.
 
 Hardware
 --------
-Any system that can adequately run Visual Studio 2013 is fine. The LLVM
+Any system that can adequately run Visual Studio 2015 is fine. The LLVM
 source tree and object files, libraries and executables will consume
 approximately 3GB.
 
 Software
 --------
-You will need Visual Studio 2013 or higher.
+You will need Visual Studio 2015 or higher, with the latest Update installed.
 
 You will also need the `CMake <http://www.cmake.org/>`_ build system since it
 generates the project files you will use to build with.
@@ -91,6 +91,10 @@ Here's the short story for getting up and running quickly with LLVM:
      using LLVM.  Another important option is ``LLVM_TARGETS_TO_BUILD``,
      which controls the LLVM target architectures that are included on the
      build.
+   * If CMake complains that it cannot find the compiler, make sure that
+     you have the Visual Studio C++ Tools installed, not just Visual Studio
+     itself (trying to create a C++ project in Visual Studio will generally
+     download the C++ tools if they haven't already been).
    * See the :doc:`LLVM CMake guide <CMake>` for detailed information about
      how to configure the LLVM build.
    * CMake generates project files for all build types. To select a specific

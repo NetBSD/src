@@ -12,7 +12,6 @@
 
 #include "NVPTXSection.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
-#include <string>
 
 namespace llvm {
 class GlobalVariable;
@@ -87,18 +86,17 @@ public:
   }
 
   MCSection *getSectionForConstant(const DataLayout &DL, SectionKind Kind,
-                                   const Constant *C) const override {
+                                   const Constant *C,
+                                   unsigned &Align) const override {
     return ReadOnlySection;
   }
 
-  MCSection *getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
-                                      Mangler &Mang,
+  MCSection *getExplicitSectionGlobal(const GlobalObject *GO, SectionKind Kind,
                                       const TargetMachine &TM) const override {
     return DataSection;
   }
 
-  MCSection *SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                                    Mangler &Mang,
+  MCSection *SelectSectionForGlobal(const GlobalObject *GO, SectionKind Kind,
                                     const TargetMachine &TM) const override;
 };
 
