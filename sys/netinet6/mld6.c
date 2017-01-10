@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.75 2016/11/18 06:50:04 knakahara Exp $	*/
+/*	$NetBSD: mld6.c,v 1.76 2017/01/10 05:42:34 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.75 2016/11/18 06:50:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.76 2017/01/10 05:42:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1099,7 +1099,8 @@ done:
 	return error;
 }
 
-SYSCTL_SETUP(sysctl_in6_mklude_setup, "sysctl net.inet6.multicast_kludge subtree setup")
+void
+in6_sysctl_multicast_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
