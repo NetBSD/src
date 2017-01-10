@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.57 2017/01/06 09:14:07 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.58 2017/01/10 10:13:24 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -201,6 +201,8 @@ struct __screen {
 	int      lx, ly;        /* loop parameters for refresh */
 	int	 COLS;		/* Columns on the screen. */
 	int	 LINES;		/* Lines on the screen. */
+	int	 ripped_top;	/* Lines ripped from the top of the screen. */
+	int	 ripped_bottom;	/* Lines ripped from the bottom. */
 	int	 ESCDELAY;	/* Delay between keys in esc seq's. */
 #define	ESCDELAY_DEFAULT	300 /* milliseconds. */
 	int	 TABSIZE;	/* Size of a tab. */
