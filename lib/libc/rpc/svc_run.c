@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_run.c,v 1.27 2015/11/10 20:56:20 christos Exp $	*/
+/*	$NetBSD: svc_run.c,v 1.28 2017/01/10 17:45:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_run.c,v 1.27 2015/11/10 20:56:20 christos Exp $");
+__RCSID("$NetBSD: svc_run.c,v 1.28 2017/01/10 17:45:27 christos Exp $");
 #endif
 #endif
 
@@ -169,7 +169,7 @@ svc_run_poll(void)
 
 		rwlock_unlock(&svc_fd_lock);
 
-		switch ((i = poll(pfd, (size_t)*maxfd, 30 * 1000))) {
+		switch ((i = poll(pfd, (nfds_t)*maxfd, 30 * 1000))) {
 		case -1:
 #ifndef RUMP_RPC		
 			if ((errno == EINTR || errno == EBADF) && probs < 100) {
