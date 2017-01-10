@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.17 2017/01/07 21:39:53 christos Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.18 2017/01/10 19:20:35 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -210,7 +210,7 @@ typedef pthread_t kthread_t;
 
 #define newproc(f, a, cid, pri, ctp, pid)   (ENOSYS)
 	
-extern kthread_t *zk_thread_create(void (*func)(), void *arg);
+extern kthread_t *zk_thread_create(void (*func)(void *), void *arg);
 
 /* In NetBSD struct proc may be visible in userspace therefore we use it's original
    definition. */
