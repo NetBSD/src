@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2233 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2234 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -445,3 +445,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	ptrace(2): Add signal information accessors API:
 		PT_GET_SIGINFO and PT_SET_SIGINFO [kamil 20170107]
 	nsd(8): Add the NSD Authoritative DNS server [christos 20170107]
+	zlib(3): Import 1.2.10 [christos 20170109]
