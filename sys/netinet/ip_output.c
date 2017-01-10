@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.265 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.266 2017/01/10 07:39:52 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.265 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.266 2017/01/10 07:39:52 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -363,6 +363,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		}
 		if (ifa_is_destroying(rt->rt_ifa)) {
 			rtcache_unref(rt, ro);
+			rt = NULL;
 			IP_STATINC(IP_STAT_NOROUTE);
 			error = EHOSTUNREACH;
 			goto bad;
