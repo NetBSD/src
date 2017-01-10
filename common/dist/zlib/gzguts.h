@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include "zlib.h"
 #ifdef STDC
+#  include <unistd.h>
 #  include <string.h>
 #  include <stdlib.h>
 #  include <limits.h>
