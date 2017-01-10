@@ -37,6 +37,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/Utils/LoopSimplify.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
@@ -326,6 +327,8 @@ static Loop *separateNestedLoop(Loop *L, BasicBlock *Preheader,
     else
       NewOuter->addChildLoop(L->removeChildLoop(SubLoops.begin() + I));
 
+  SmallVector<BasicBlock *, 8> OuterLoopBlocks;
+  OuterLoopBlocks.push_back(NewBB);
   // Now that we know which blocks are in L and which need to be moved to
   // OuterLoop, move any blocks that need it.
   for (unsigned i = 0; i != L->getBlocks().size(); ++i) {
@@ -333,10 +336,38 @@ static Loop *separateNestedLoop(Loop *L, BasicBlock *Preheader,
     if (!BlocksInL.count(BB)) {
       // Move this block to the parent, updating the exit blocks sets
       L->removeBlockFromLoop(BB);
-      if ((*LI)[BB] == L)
+      if ((*LI)[BB] == L) {
         LI->changeLoopFor(BB, NewOuter);
+        OuterLoopBlocks.push_back(BB);
+      }
       --i;
     }
+  }
+
+  // Split edges to exit blocks from the inner loop, if they emerged in the
+  // process of separating the outer one.
+  SmallVector<BasicBlock *, 8> ExitBlocks;
+  L->getExitBlocks(ExitBlocks);
+  SmallSetVector<BasicBlock *, 8> ExitBlockSet(ExitBlocks.begin(),
+                                               ExitBlocks.end());
+  for (BasicBlock *ExitBlock : ExitBlockSet) {
+    if (any_of(predecessors(ExitBlock),
+               [L](BasicBlock *BB) { return !L->contains(BB); })) {
+      rewriteLoopExitBlock(L, ExitBlock, DT, LI, PreserveLCSSA);
+    }
+  }
+
+  if (PreserveLCSSA) {
+    // Fix LCSSA form for L. Some values, which previously were only used inside
+    // L, can now be used in NewOuter loop. We need to insert phi-nodes for them
+    // in corresponding exit blocks.
+    // We don't need to form LCSSA recursively, because there cannot be uses
+    // inside a newly created loop of defs from inner loops as those would
+    // already be a use of an LCSSA phi node.
+    formLCSSA(*L, *DT, LI, SE);
+
+    assert(NewOuter->isRecursivelyLCSSAForm(*DT, *LI) &&
+           "LCSSA is broken after separating nested loops!");
   }
 
   return NewOuter;
@@ -439,13 +470,21 @@ static BasicBlock *insertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader,
   }
 
   // Now that all of the PHI nodes have been inserted and adjusted, modify the
-  // backedge blocks to just to the BEBlock instead of the header.
+  // backedge blocks to jump to the BEBlock instead of the header.
+  // If one of the backedges has llvm.loop metadata attached, we remove
+  // it from the backedge and add it to BEBlock.
+  unsigned LoopMDKind = BEBlock->getContext().getMDKindID("llvm.loop");
+  MDNode *LoopMD = nullptr;
   for (unsigned i = 0, e = BackedgeBlocks.size(); i != e; ++i) {
     TerminatorInst *TI = BackedgeBlocks[i]->getTerminator();
+    if (!LoopMD)
+      LoopMD = TI->getMetadata(LoopMDKind);
+    TI->setMetadata(LoopMDKind, nullptr);
     for (unsigned Op = 0, e = TI->getNumSuccessors(); Op != e; ++Op)
       if (TI->getSuccessor(Op) == Header)
         TI->setSuccessor(Op, BEBlock);
   }
+  BEBlock->getTerminator()->setMetadata(LoopMDKind, LoopMD);
 
   //===--- Update all analyses which we must preserve now -----------------===//
 
@@ -489,14 +528,9 @@ ReprocessLoop:
       DEBUG(dbgs() << "LoopSimplify: Deleting edge from dead predecessor "
                    << P->getName() << "\n");
 
-      // Inform each successor of each dead pred.
-      for (succ_iterator SI = succ_begin(P), SE = succ_end(P); SI != SE; ++SI)
-        (*SI)->removePredecessor(P);
       // Zap the dead pred's terminator and replace it with unreachable.
       TerminatorInst *TI = P->getTerminator();
-       TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
-      P->getTerminator()->eraseFromParent();
-      new UnreachableInst(P->getContext(), P);
+      changeToUnreachable(TI, /*UseLLVMTrap=*/false, PreserveLCSSA);
       Changed = true;
     }
   }
@@ -506,14 +540,13 @@ ReprocessLoop:
   // trip count computations.
   SmallVector<BasicBlock*, 8> ExitingBlocks;
   L->getExitingBlocks(ExitingBlocks);
-  for (SmallVectorImpl<BasicBlock *>::iterator I = ExitingBlocks.begin(),
-       E = ExitingBlocks.end(); I != E; ++I)
-    if (BranchInst *BI = dyn_cast<BranchInst>((*I)->getTerminator()))
+  for (BasicBlock *ExitingBlock : ExitingBlocks)
+    if (BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator()))
       if (BI->isConditional()) {
         if (UndefValue *Cond = dyn_cast<UndefValue>(BI->getCondition())) {
 
           DEBUG(dbgs() << "LoopSimplify: Resolving \"br i1 undef\" to exit in "
-                       << (*I)->getName() << "\n");
+                       << ExitingBlock->getName() << "\n");
 
           BI->setCondition(ConstantInt::get(Cond->getType(),
                                             !L->contains(BI->getSuccessor(0))));
@@ -545,20 +578,13 @@ ReprocessLoop:
 
   SmallSetVector<BasicBlock *, 8> ExitBlockSet(ExitBlocks.begin(),
                                                ExitBlocks.end());
-  for (SmallSetVector<BasicBlock *, 8>::iterator I = ExitBlockSet.begin(),
-         E = ExitBlockSet.end(); I != E; ++I) {
-    BasicBlock *ExitBlock = *I;
-    for (pred_iterator PI = pred_begin(ExitBlock), PE = pred_end(ExitBlock);
-         PI != PE; ++PI)
-      // Must be exactly this loop: no subloops, parent loops, or non-loop preds
-      // allowed.
-      if (!L->contains(*PI)) {
-        if (rewriteLoopExitBlock(L, ExitBlock, DT, LI, PreserveLCSSA)) {
-          ++NumInserted;
-          Changed = true;
-        }
-        break;
-      }
+  for (BasicBlock *ExitBlock : ExitBlockSet) {
+    if (any_of(predecessors(ExitBlock),
+               [L](BasicBlock *BB) { return !L->contains(BB); })) {
+      rewriteLoopExitBlock(L, ExitBlock, DT, LI, PreserveLCSSA);
+      ++NumInserted;
+      Changed = true;
+    }
   }
 
   // If the header has more than two predecessors at this point (from the
@@ -604,8 +630,10 @@ ReprocessLoop:
        (PN = dyn_cast<PHINode>(I++)); )
     if (Value *V = SimplifyInstruction(PN, DL, nullptr, DT, AC)) {
       if (SE) SE->forgetValue(PN);
-      PN->replaceAllUsesWith(V);
-      PN->eraseFromParent();
+      if (!PreserveLCSSA || LI->replacementPreservesLCSSAForm(PN, V)) {
+        PN->replaceAllUsesWith(V);
+        PN->eraseFromParent();
+      }
     }
 
   // If this loop has multiple exits and the exits all go to the same
@@ -691,8 +719,10 @@ ReprocessLoop:
       }
       DT->eraseNode(ExitingBlock);
 
-      BI->getSuccessor(0)->removePredecessor(ExitingBlock);
-      BI->getSuccessor(1)->removePredecessor(ExitingBlock);
+      BI->getSuccessor(0)->removePredecessor(
+          ExitingBlock, /* DontDeleteUselessPHIs */ PreserveLCSSA);
+      BI->getSuccessor(1)->removePredecessor(
+          ExitingBlock, /* DontDeleteUselessPHIs */ PreserveLCSSA);
       ExitingBlock->eraseFromParent();
     }
   }
@@ -731,11 +761,6 @@ namespace {
       initializeLoopSimplifyPass(*PassRegistry::getPassRegistry());
     }
 
-    DominatorTree *DT;
-    LoopInfo *LI;
-    ScalarEvolution *SE;
-    AssumptionCache *AC;
-
     bool runOnFunction(Function &F) override;
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -753,7 +778,8 @@ namespace {
       AU.addPreserved<GlobalsAAWrapperPass>();
       AU.addPreserved<ScalarEvolutionWrapperPass>();
       AU.addPreserved<SCEVAAWrapperPass>();
-      AU.addPreserved<DependenceAnalysis>();
+      AU.addPreservedID(LCSSAID);
+      AU.addPreserved<DependenceAnalysisWrapperPass>();
       AU.addPreservedID(BreakCriticalEdgesID);  // No critical edges added.
     }
 
@@ -768,9 +794,6 @@ INITIALIZE_PASS_BEGIN(LoopSimplify, "loop-simplify",
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(BasicAAWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(GlobalsAAWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(SCEVAAWrapperPass)
 INITIALIZE_PASS_END(LoopSimplify, "loop-simplify",
                 "Canonicalize natural loops", false, false)
 
@@ -783,18 +806,66 @@ Pass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
 ///
 bool LoopSimplify::runOnFunction(Function &F) {
   bool Changed = false;
-  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  LoopInfo *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   auto *SEWP = getAnalysisIfAvailable<ScalarEvolutionWrapperPass>();
-  SE = SEWP ? &SEWP->getSE() : nullptr;
-  AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
+  ScalarEvolution *SE = SEWP ? &SEWP->getSE() : nullptr;
+  AssumptionCache *AC =
+      &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
+
   bool PreserveLCSSA = mustPreserveAnalysisID(LCSSAID);
+#ifndef NDEBUG
+  if (PreserveLCSSA) {
+    assert(DT && "DT not available.");
+    assert(LI && "LI not available.");
+    bool InLCSSA = all_of(
+        *LI, [&](Loop *L) { return L->isRecursivelyLCSSAForm(*DT, *LI); });
+    assert(InLCSSA && "Requested to preserve LCSSA, but it's already broken.");
+  }
+#endif
 
   // Simplify each loop nest in the function.
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
     Changed |= simplifyLoop(*I, DT, LI, SE, AC, PreserveLCSSA);
 
+#ifndef NDEBUG
+  if (PreserveLCSSA) {
+    bool InLCSSA = all_of(
+        *LI, [&](Loop *L) { return L->isRecursivelyLCSSAForm(*DT, *LI); });
+    assert(InLCSSA && "LCSSA is broken after loop-simplify.");
+  }
+#endif
   return Changed;
+}
+
+PreservedAnalyses LoopSimplifyPass::run(Function &F,
+                                        FunctionAnalysisManager &AM) {
+  bool Changed = false;
+  LoopInfo *LI = &AM.getResult<LoopAnalysis>(F);
+  DominatorTree *DT = &AM.getResult<DominatorTreeAnalysis>(F);
+  ScalarEvolution *SE = AM.getCachedResult<ScalarEvolutionAnalysis>(F);
+  AssumptionCache *AC = &AM.getResult<AssumptionAnalysis>(F);
+
+  // FIXME: This pass should verify that the loops on which it's operating
+  // are in canonical SSA form, and that the pass itself preserves this form.
+  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
+    Changed |= simplifyLoop(*I, DT, LI, SE, AC, true /* PreserveLCSSA */);
+
+  // FIXME: We need to invalidate this to avoid PR28400. Is there a better
+  // solution?
+  AM.invalidate<ScalarEvolutionAnalysis>(F);
+
+  if (!Changed)
+    return PreservedAnalyses::all();
+  PreservedAnalyses PA;
+  PA.preserve<DominatorTreeAnalysis>();
+  PA.preserve<LoopAnalysis>();
+  PA.preserve<BasicAA>();
+  PA.preserve<GlobalsAA>();
+  PA.preserve<SCEVAA>();
+  PA.preserve<ScalarEvolutionAnalysis>();
+  PA.preserve<DependenceAnalysis>();
+  return PA;
 }
 
 // FIXME: Restore this code when we re-enable verification in verifyAnalysis

@@ -99,15 +99,18 @@ public:
   }
 
   /// Return the pass name.
-  const char* getPassName() const override {
-    return "PBQP Register Allocator";
-  }
+  StringRef getPassName() const override { return "PBQP Register Allocator"; }
 
   /// PBQP analysis usage.
   void getAnalysisUsage(AnalysisUsage &au) const override;
 
   /// Perform register allocation
   bool runOnMachineFunction(MachineFunction &MF) override;
+
+  MachineFunctionProperties getRequiredProperties() const override {
+    return MachineFunctionProperties().set(
+        MachineFunctionProperties::Property::NoPHIs);
+  }
 
 private:
 
@@ -122,6 +125,12 @@ private:
   char *customPassID;
 
   RegSet VRegsToAlloc, EmptyIntervalVRegs;
+
+  /// Inst which is a def of an original reg and whose defs are already all
+  /// dead after remat is saved in DeadRemats. The deletion of such inst is
+  /// postponed till all the allocations are done, so its remat expr is
+  /// always available for the remat of all the siblings of the original reg.
+  SmallPtrSet<MachineInstr *, 32> DeadRemats;
 
   /// \brief Finds the initial set of vreg intervals to allocate.
   void findVRegIntervalsToAlloc(const MachineFunction &MF, LiveIntervals &LIS);
@@ -146,6 +155,7 @@ private:
   void finalizeAlloc(MachineFunction &MF, LiveIntervals &LIS,
                      VirtRegMap &VRM) const;
 
+  void postOptimization(Spiller &VRegSpiller, LiveIntervals &LIS);
 };
 
 char RegAllocPBQP::ID = 0;
@@ -631,7 +641,8 @@ void RegAllocPBQP::spillVReg(unsigned VReg,
                              VirtRegMap &VRM, Spiller &VRegSpiller) {
 
   VRegsToAlloc.erase(VReg);
-  LiveRangeEdit LRE(&LIS.getInterval(VReg), NewIntervals, MF, LIS, &VRM);
+  LiveRangeEdit LRE(&LIS.getInterval(VReg), NewIntervals, MF, LIS, &VRM,
+                    nullptr, &DeadRemats);
   VRegSpiller.spill(LRE);
 
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
@@ -711,6 +722,16 @@ void RegAllocPBQP::finalizeAlloc(MachineFunction &MF,
 
     VRM.assignVirt2Phys(LI.reg, PReg);
   }
+}
+
+void RegAllocPBQP::postOptimization(Spiller &VRegSpiller, LiveIntervals &LIS) {
+  VRegSpiller.postOptimization();
+  /// Remove dead defs because of rematerialization.
+  for (auto DeadInst : DeadRemats) {
+    LIS.RemoveMachineInstrFromMaps(*DeadInst);
+    DeadInst->eraseFromParent();
+  }
+  DeadRemats.clear();
 }
 
 static inline float normalizePBQPSpillWeight(float UseDefFreq, unsigned Size,
@@ -798,6 +819,7 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
 
   // Finalise allocation, allocate empty ranges.
   finalizeAlloc(MF, LIS, VRM);
+  postOptimization(*VRegSpiller, LIS);
   VRegsToAlloc.clear();
   EmptyIntervalVRegs.clear();
 
@@ -839,7 +861,7 @@ void PBQP::RegAlloc::PBQPRAGraph::dump(raw_ostream &OS) const {
   }
 }
 
-void PBQP::RegAlloc::PBQPRAGraph::dump() const { dump(dbgs()); }
+LLVM_DUMP_METHOD void PBQP::RegAlloc::PBQPRAGraph::dump() const { dump(dbgs()); }
 
 void PBQP::RegAlloc::PBQPRAGraph::printDot(raw_ostream &OS) const {
   OS << "graph {\n";

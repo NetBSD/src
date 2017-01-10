@@ -10,6 +10,7 @@
 #include "llvm/MC/MCFragment.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmLayout.h"
@@ -25,7 +26,6 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
-#include <tuple>
 using namespace llvm;
 
 MCAsmLayout::MCAsmLayout(MCAssembler &Asm)
@@ -232,13 +232,7 @@ uint64_t llvm::computeBundlePadding(const MCAssembler &Assembler,
 
 /* *** */
 
-void ilist_node_traits<MCFragment>::deleteNode(MCFragment *V) {
-  V->destroy();
-}
-
-MCFragment::MCFragment() : Kind(FragmentType(~0)), HasInstructions(false),
-                           AlignToBundleEnd(false), BundlePadding(0) {
-}
+void ilist_alloc_traits<MCFragment>::deleteNode(MCFragment *V) { V->destroy(); }
 
 MCFragment::~MCFragment() { }
 
@@ -289,6 +283,12 @@ void MCFragment::destroy() {
     case FT_SafeSEH:
       delete cast<MCSafeSEHFragment>(this);
       return;
+    case FT_CVInlineLines:
+      delete cast<MCCVInlineLineTableFragment>(this);
+      return;
+    case FT_CVDefRange:
+      delete cast<MCCVDefRangeFragment>(this);
+      return;
     case FT_Dummy:
       delete cast<MCDummyFragment>(this);
       return;
@@ -310,8 +310,7 @@ raw_ostream &operator<<(raw_ostream &OS, const MCFixup &AF) {
 
 }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-void MCFragment::dump() {
+LLVM_DUMP_METHOD void MCFragment::dump() {
   raw_ostream &OS = llvm::errs();
 
   OS << "<";
@@ -327,9 +326,9 @@ void MCFragment::dump() {
   case MCFragment::FT_DwarfFrame: OS << "MCDwarfCallFrameFragment"; break;
   case MCFragment::FT_LEB:   OS << "MCLEBFragment"; break;
   case MCFragment::FT_SafeSEH:    OS << "MCSafeSEHFragment"; break;
-  case MCFragment::FT_Dummy:
-    OS << "MCDummyFragment";
-    break;
+  case MCFragment::FT_CVInlineLines: OS << "MCCVInlineLineTableFragment"; break;
+  case MCFragment::FT_CVDefRange: OS << "MCCVDefRangeTableFragment"; break;
+  case MCFragment::FT_Dummy: OS << "MCDummyFragment"; break;
   }
 
   OS << "<MCFragment " << (void*) this << " LayoutOrder:" << LayoutOrder
@@ -386,8 +385,7 @@ void MCFragment::dump() {
   }
   case MCFragment::FT_Fill:  {
     const MCFillFragment *FF = cast<MCFillFragment>(this);
-    OS << " Value:" << FF->getValue() << " ValueSize:" << FF->getValueSize()
-       << " Size:" << FF->getSize();
+    OS << " Value:" << FF->getValue() << " Size:" << FF->getSize();
     break;
   }
   case MCFragment::FT_Relaxable:  {
@@ -428,13 +426,29 @@ void MCFragment::dump() {
     OS << " Sym:" << F->getSymbol();
     break;
   }
+  case MCFragment::FT_CVInlineLines: {
+    const auto *F = cast<MCCVInlineLineTableFragment>(this);
+    OS << "\n       ";
+    OS << " Sym:" << *F->getFnStartSym();
+    break;
+  }
+  case MCFragment::FT_CVDefRange: {
+    const auto *F = cast<MCCVDefRangeFragment>(this);
+    OS << "\n       ";
+    for (std::pair<const MCSymbol *, const MCSymbol *> RangeStartEnd :
+         F->getRanges()) {
+      OS << " RangeStart:" << RangeStartEnd.first;
+      OS << " RangeEnd:" << RangeStartEnd.second;
+    }
+    break;
+  }
   case MCFragment::FT_Dummy:
     break;
   }
   OS << ">";
 }
 
-void MCAssembler::dump() {
+LLVM_DUMP_METHOD void MCAssembler::dump() {
   raw_ostream &OS = llvm::errs();
 
   OS << "<MCAssembler\n";
@@ -455,4 +469,3 @@ void MCAssembler::dump() {
   }
   OS << "]>\n";
 }
-#endif

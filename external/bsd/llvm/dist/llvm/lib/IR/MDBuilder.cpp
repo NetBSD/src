@@ -40,7 +40,7 @@ MDNode *MDBuilder::createBranchWeights(uint32_t TrueWeight,
 }
 
 MDNode *MDBuilder::createBranchWeights(ArrayRef<uint32_t> Weights) {
-  assert(Weights.size() >= 2 && "Need at least two branch weights!");
+  assert(Weights.size() >= 1 && "Need at least one branch weights!");
 
   SmallVector<Metadata *, 4> Vals(Weights.size() + 1);
   Vals[0] = createString("branch_weights");
@@ -61,6 +61,12 @@ MDNode *MDBuilder::createFunctionEntryCount(uint64_t Count) {
   return MDNode::get(Context,
                      {createString("function_entry_count"),
                       createConstant(ConstantInt::get(Int64Ty, Count))});
+}
+
+MDNode *MDBuilder::createFunctionSectionPrefix(StringRef Prefix) {
+  return MDNode::get(Context,
+                     {createString("function_section_prefix"),
+                      createString(Prefix)});
 }
 
 MDNode *MDBuilder::createRange(const APInt &Lo, const APInt &Hi) {

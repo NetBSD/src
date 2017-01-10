@@ -44,11 +44,13 @@ class LockedValue(object):
     value = property(_get_value, _set_value)
 
 class TestProvider(object):
-    def __init__(self, tests, num_jobs, queue_impl, canceled_flag):
+    def __init__(self, queue_impl, canceled_flag):
         self.canceled_flag = canceled_flag
 
         # Create a shared queue to provide the test indices.
         self.queue = queue_impl()
+
+    def queue_tests(self, tests, num_jobs):
         for i in range(len(tests)):
             self.queue.put(i)
         for i in range(num_jobs):
@@ -150,6 +152,21 @@ def run_one_tester(run, provider, display):
 
 ###
 
+class _Display(object):
+    def __init__(self, display, provider, maxFailures):
+        self.display = display
+        self.provider = provider
+        self.maxFailures = maxFailures or object()
+        self.failedCount = 0
+    def update(self, test):
+        self.display.update(test)
+        self.failedCount += (test.result.code == lit.Test.FAIL)
+        if self.failedCount == self.maxFailures:
+            self.provider.cancel()
+
+def handleFailures(provider, consumer, maxFailures):
+    consumer.display = _Display(consumer.display, provider, maxFailures)
+
 class Run(object):
     """
     This class represents a concrete, configured testing run.
@@ -229,7 +246,16 @@ class Run(object):
             consumer = ThreadResultsConsumer(display)
 
         # Create the test provider.
-        provider = TestProvider(self.tests, jobs, queue_impl, canceled_flag)
+        provider = TestProvider(queue_impl, canceled_flag)
+        handleFailures(provider, consumer, self.lit_config.maxFailures)
+
+        # Queue the tests outside the main thread because we can't guarantee
+        # that we can put() all the tests without blocking:
+        # https://docs.python.org/2/library/multiprocessing.html
+        # e.g: On Mac OS X, we will hang if we put 2^15 elements in the queue
+        # without taking any out.
+        queuer = task_impl(target=provider.queue_tests, args=(self.tests, jobs))
+        queuer.start()
 
         # Install a console-control signal handler on Windows.
         if win32api is not None:
@@ -251,6 +277,8 @@ class Run(object):
         else:
             # Otherwise, execute the tests in parallel
             self._execute_tests_in_parallel(task_impl, provider, consumer, jobs)
+
+        queuer.join()
 
         # Cancel the timeout handler.
         if max_time is not None:

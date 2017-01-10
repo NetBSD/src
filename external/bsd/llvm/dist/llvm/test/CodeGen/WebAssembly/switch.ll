@@ -1,4 +1,4 @@
-; RUN: llc < %s -asm-verbose=false -disable-block-placement -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -asm-verbose=false -disable-wasm-fallthrough-return-opt -disable-block-placement -verify-machineinstrs | FileCheck %s
 
 ; Test switch instructions. Block placement is disabled because it reorders
 ; the blocks in a way that isn't interesting here.
@@ -14,14 +14,14 @@ declare void @foo4()
 declare void @foo5()
 
 ; CHECK-LABEL: bar32:
-; CHECK: block{{$}}
-; CHECK: block{{$}}
-; CHECK: block{{$}}
-; CHECK: block{{$}}
-; CHECK: block{{$}}
-; CHECK: block{{$}}
-; CHECK: block{{$}}
-; CHECK: tableswitch {{[^,]*}}, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5{{$}}
+; CHECK: block   {{$}}
+; CHECK: block   {{$}}
+; CHECK: block   {{$}}
+; CHECK: block   {{$}}
+; CHECK: block   {{$}}
+; CHECK: block   {{$}}
+; CHECK: block   {{$}}
+; CHECK: br_table {{[^,]+}}, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5, 0{{$}}
 ; CHECK: .LBB0_2:
 ; CHECK:   call foo0@FUNCTION{{$}}
 ; CHECK: .LBB0_3:
@@ -94,14 +94,14 @@ sw.epilog:                                        ; preds = %entry, %sw.bb.5, %s
 }
 
 ; CHECK-LABEL: bar64:
-; CHECK: block{{$}}
-; CHECK: block{{$}}
-; CHECK: block{{$}}
-; CHECK: block{{$}}
-; CHECK: block{{$}}
-; CHECK: block{{$}}
-; CHECK: block{{$}}
-; CHECK: tableswitch {{[^,]*}}, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5{{$}}
+; CHECK: block   {{$}}
+; CHECK: block   {{$}}
+; CHECK: block   {{$}}
+; CHECK: block   {{$}}
+; CHECK: block   {{$}}
+; CHECK: block   {{$}}
+; CHECK: block   {{$}}
+; CHECK: br_table {{[^,]+}}, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 4, 5, 0{{$}}
 ; CHECK: .LBB1_2:
 ; CHECK:   call foo0@FUNCTION{{$}}
 ; CHECK: .LBB1_3:

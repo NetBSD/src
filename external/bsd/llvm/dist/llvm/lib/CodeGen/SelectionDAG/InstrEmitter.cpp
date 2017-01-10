@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
@@ -319,7 +320,6 @@ InstrEmitter::AddRegisterOperand(MachineInstrBuilder &MIB,
          "Chain and glue operands should occur at end of operand list!");
   // Get/emit the operand.
   unsigned VReg = getVR(Op, VRBaseMap);
-  assert(TargetRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
 
   const MCInstrDesc &MCID = MIB->getDesc();
   bool isOptDef = IIOpNum < MCID.getNumOperands() &&
@@ -330,14 +330,24 @@ InstrEmitter::AddRegisterOperand(MachineInstrBuilder &MIB,
   // shrink VReg's register class within reason.  For example, if VReg == GR32
   // and II requires a GR32_NOSP, just constrain VReg to GR32_NOSP.
   if (II) {
-    const TargetRegisterClass *DstRC = nullptr;
+    const TargetRegisterClass *OpRC = nullptr;
     if (IIOpNum < II->getNumOperands())
-      DstRC = TRI->getAllocatableClass(TII->getRegClass(*II,IIOpNum,TRI,*MF));
-    if (DstRC && !MRI->constrainRegClass(VReg, DstRC, MinRCSize)) {
-      unsigned NewVReg = MRI->createVirtualRegister(DstRC);
-      BuildMI(*MBB, InsertPos, Op.getNode()->getDebugLoc(),
-              TII->get(TargetOpcode::COPY), NewVReg).addReg(VReg);
-      VReg = NewVReg;
+      OpRC = TII->getRegClass(*II, IIOpNum, TRI, *MF);
+
+    if (OpRC) {
+      const TargetRegisterClass *ConstrainedRC
+        = MRI->constrainRegClass(VReg, OpRC, MinRCSize);
+      if (!ConstrainedRC) {
+        OpRC = TRI->getAllocatableClass(OpRC);
+        assert(OpRC && "Constraints cannot be fulfilled for allocation");
+        unsigned NewVReg = MRI->createVirtualRegister(OpRC);
+        BuildMI(*MBB, InsertPos, Op.getNode()->getDebugLoc(),
+                TII->get(TargetOpcode::COPY), NewVReg).addReg(VReg);
+        VReg = NewVReg;
+      } else {
+        assert(ConstrainedRC->isAllocatable() &&
+           "Constraining an allocatable VReg produced an unallocatable class?");
+      }
     }
   }
 
@@ -440,7 +450,7 @@ void InstrEmitter::AddOperand(MachineInstrBuilder &MIB,
 }
 
 unsigned InstrEmitter::ConstrainForSubReg(unsigned VReg, unsigned SubIdx,
-                                          MVT VT, DebugLoc DL) {
+                                          MVT VT, const DebugLoc &DL) {
   const TargetRegisterClass *VRC = MRI->getRegClass(VReg);
   const TargetRegisterClass *RC = TRI->getSubClassWithSubReg(VRC, SubIdx);
 
@@ -873,7 +883,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
 
   // Run post-isel target hook to adjust this instruction if needed.
   if (II.hasPostISelHook())
-    TLI->AdjustInstrPostInstrSelection(MIB, Node);
+    TLI->AdjustInstrPostInstrSelection(*MIB, Node);
 }
 
 /// EmitSpecialNode - Generate machine code for a target-independent node and

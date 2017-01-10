@@ -37,7 +37,7 @@ class DarwinAsmParser : public MCAsmParserExtension {
     getParser().addDirectiveHandler(Directive, Handler);
   }
 
-  bool parseSectionSwitch(const char *Segment, const char *Section,
+  bool parseSectionSwitch(StringRef Segment, StringRef Section,
                           unsigned TAA = 0, unsigned ImplicitAlign = 0,
                           unsigned StubSize = 0);
 
@@ -50,6 +50,7 @@ public:
     // Call the base implementation.
     this->MCAsmParserExtension::Initialize(Parser);
 
+    addDirectiveHandler<&DarwinAsmParser::parseDirectiveAltEntry>(".alt_entry");
     addDirectiveHandler<&DarwinAsmParser::parseDirectiveDesc>(".desc");
     addDirectiveHandler<&DarwinAsmParser::parseDirectiveIndirectSymbol>(
       ".indirect_symbol");
@@ -111,6 +112,9 @@ public:
     addDirectiveHandler<
       &DarwinAsmParser::parseSectionDirectiveNonLazySymbolPointers>(
         ".non_lazy_symbol_pointer");
+    addDirectiveHandler<
+      &DarwinAsmParser::parseSectionDirectiveThreadLocalVariablePointers>(
+        ".thread_local_variable_pointer");
     addDirectiveHandler<&DarwinAsmParser::parseSectionDirectiveObjCCatClsMeth>(
       ".objc_cat_cls_meth");
     addDirectiveHandler<&DarwinAsmParser::parseSectionDirectiveObjCCatInstMeth>(
@@ -179,6 +183,7 @@ public:
     LastVersionMinDirective = SMLoc();
   }
 
+  bool parseDirectiveAltEntry(StringRef, SMLoc);
   bool parseDirectiveDesc(StringRef, SMLoc);
   bool parseDirectiveIndirectSymbol(StringRef, SMLoc);
   bool parseDirectiveDumpOrLoad(StringRef, SMLoc);
@@ -260,6 +265,10 @@ public:
   bool parseSectionDirectiveLazySymbolPointers(StringRef, SMLoc) {
     return parseSectionSwitch("__DATA", "__la_symbol_ptr",
                               MachO::S_LAZY_SYMBOL_POINTERS, 4);
+  }
+  bool parseSectionDirectiveThreadLocalVariablePointers(StringRef, SMLoc) {
+    return parseSectionSwitch("__DATA", "__thread_ptr",
+                              MachO::S_THREAD_LOCAL_VARIABLE_POINTERS, 4);
   }
   bool parseSectionDirectiveDyld(StringRef, SMLoc) {
     return parseSectionSwitch("__DATA", "__dyld");
@@ -380,8 +389,7 @@ public:
 
 } // end anonymous namespace
 
-bool DarwinAsmParser::parseSectionSwitch(const char *Segment,
-                                         const char *Section,
+bool DarwinAsmParser::parseSectionSwitch(StringRef Segment, StringRef Section,
                                          unsigned TAA, unsigned Align,
                                          unsigned StubSize) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
@@ -405,6 +413,26 @@ bool DarwinAsmParser::parseSectionSwitch(const char *Segment,
   if (Align)
     getStreamer().EmitValueToAlignment(Align);
 
+  return false;
+}
+
+/// parseDirectiveAltEntry
+///  ::= .alt_entry identifier
+bool DarwinAsmParser::parseDirectiveAltEntry(StringRef, SMLoc) {
+  StringRef Name;
+  if (getParser().parseIdentifier(Name))
+    return TokError("expected identifier in directive");
+
+  // Look up symbol.
+  MCSymbol *Sym = getContext().getOrCreateSymbol(Name);
+
+  if (Sym->isDefined())
+    return TokError(".alt_entry must preceed symbol definition");
+
+  if (!getStreamer().EmitSymbolAttribute(Sym, MCSA_AltEntry))
+    return TokError("unable to emit symbol attribute");
+
+  Lex();
   return false;
 }
 
@@ -440,11 +468,12 @@ bool DarwinAsmParser::parseDirectiveDesc(StringRef, SMLoc) {
 /// parseDirectiveIndirectSymbol
 ///  ::= .indirect_symbol identifier
 bool DarwinAsmParser::parseDirectiveIndirectSymbol(StringRef, SMLoc Loc) {
-  const MCSectionMachO *Current = static_cast<const MCSectionMachO*>(
-                                       getStreamer().getCurrentSection().first);
+  const MCSectionMachO *Current = static_cast<const MCSectionMachO *>(
+      getStreamer().getCurrentSectionOnly());
   MachO::SectionType SectionType = Current->getType();
   if (SectionType != MachO::S_NON_LAZY_SYMBOL_POINTERS &&
       SectionType != MachO::S_LAZY_SYMBOL_POINTERS &&
+      SectionType != MachO::S_THREAD_LOCAL_VARIABLE_POINTERS &&
       SectionType != MachO::S_SYMBOL_STUBS)
     return Error(Loc, "indirect symbol not in a symbol pointer or stub "
                       "section");
@@ -507,7 +536,6 @@ bool DarwinAsmParser::parseDirectiveLinkerOption(StringRef IDVal, SMLoc) {
 
     Args.push_back(Data);
 
-    Lex();
     if (getLexer().is(AsmToken::EndOfStatement))
       break;
 
@@ -586,7 +614,7 @@ bool DarwinAsmParser::parseDirectiveSection(StringRef, SMLoc) {
                                           TAA, TAAParsed, StubSize);
 
   if (!ErrorStr.empty())
-    return Error(Loc, ErrorStr.c_str());
+    return Error(Loc, ErrorStr);
 
   // Issue a warning if the target is not powerpc and Section is a *coal* section.
   Triple TT = getParser().getContext().getObjectFileInfo()->getTargetTriple();
@@ -671,7 +699,7 @@ bool DarwinAsmParser::parseDirectiveSecureLogUnique(StringRef, SMLoc IDLoc) {
   if (!OS) {
     std::error_code EC;
     auto NewOS = llvm::make_unique<raw_fd_ostream>(
-        SecureLogFile, EC, sys::fs::F_Append | sys::fs::F_Text);
+        StringRef(SecureLogFile), EC, sys::fs::F_Append | sys::fs::F_Text);
     if (EC)
        return Error(IDLoc, Twine("can't open secure log file: ") +
                                SecureLogFile + " (" + EC.message() + ")");
@@ -929,8 +957,8 @@ bool DarwinAsmParser::parseVersionMin(StringRef Directive, SMLoc Loc) {
     if (getLexer().isNot(AsmToken::Integer))
       return TokError("invalid OS update number");
     Update = getLexer().getTok().getIntVal();
-  if (Update > 255 || Update < 0)
-    return TokError("invalid OS update number");
+    if (Update > 255 || Update < 0)
+      return TokError("invalid OS update number");
     Lex();
   }
 

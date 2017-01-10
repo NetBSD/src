@@ -173,14 +173,12 @@ define <8 x i32> @load_splat_8i32_4i32_33333333(<4 x i32>* %ptr) nounwind uwtabl
 ; X32-LABEL: load_splat_8i32_4i32_33333333:
 ; X32:       ## BB#0: ## %entry
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    vpermilps {{.*#+}} xmm0 = mem[3,3,3,3]
-; X32-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; X32-NEXT:    vbroadcastss 12(%eax), %ymm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: load_splat_8i32_4i32_33333333:
 ; X64:       ## BB#0: ## %entry
-; X64-NEXT:    vpermilps {{.*#+}} xmm0 = mem[3,3,3,3]
-; X64-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; X64-NEXT:    vbroadcastss 12(%rdi), %ymm0
 ; X64-NEXT:    retq
 entry:
   %ld = load <4 x i32>, <4 x i32>* %ptr
@@ -277,16 +275,12 @@ define <4 x i64> @load_splat_4i64_2i64_1111(<2 x i64>* %ptr) nounwind uwtable re
 ; X32-LABEL: load_splat_4i64_2i64_1111:
 ; X32:       ## BB#0: ## %entry
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    vmovaps (%eax), %xmm0
-; X32-NEXT:    vmovhlps {{.*#+}} xmm0 = xmm0[1,1]
-; X32-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; X32-NEXT:    vbroadcastsd 8(%eax), %ymm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: load_splat_4i64_2i64_1111:
 ; X64:       ## BB#0: ## %entry
-; X64-NEXT:    vmovaps (%rdi), %xmm0
-; X64-NEXT:    vmovhlps {{.*#+}} xmm0 = xmm0[1,1]
-; X64-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; X64-NEXT:    vbroadcastsd 8(%rdi), %ymm0
 ; X64-NEXT:    retq
 entry:
   %ld = load <2 x i64>, <2 x i64>* %ptr
@@ -315,14 +309,12 @@ define <2 x double> @load_splat_2f64_2f64_1111(<2 x double>* %ptr) nounwind uwta
 ; X32-LABEL: load_splat_2f64_2f64_1111:
 ; X32:       ## BB#0: ## %entry
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    vmovaps (%eax), %xmm0
-; X32-NEXT:    vmovhlps {{.*#+}} xmm0 = xmm0[1,1]
+; X32-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: load_splat_2f64_2f64_1111:
 ; X64:       ## BB#0: ## %entry
-; X64-NEXT:    vmovaps (%rdi), %xmm0
-; X64-NEXT:    vmovhlps {{.*#+}} xmm0 = xmm0[1,1]
+; X64-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
 ; X64-NEXT:    retq
 entry:
   %ld = load <2 x double>, <2 x double>* %ptr
@@ -554,3 +546,64 @@ define <4 x double> @splat_concat4(double* %p) {
   %6 = shufflevector <2 x double> %3, <2 x double> %5, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
   ret <4 x double> %6
 }
+
+;
+; When VBROADCAST replaces an existing load, ensure it still respects lifetime dependencies.
+;
+define float @broadcast_lifetime() nounwind {
+; X32-LABEL: broadcast_lifetime:
+; X32:       ## BB#0:
+; X32-NEXT:    pushl %esi
+; X32-NEXT:    subl $56, %esp
+; X32-NEXT:    leal {{[0-9]+}}(%esp), %esi
+; X32-NEXT:    movl %esi, (%esp)
+; X32-NEXT:    calll _gfunc
+; X32-NEXT:    vbroadcastss {{[0-9]+}}(%esp), %xmm0
+; X32-NEXT:    vmovaps %xmm0, {{[0-9]+}}(%esp) ## 16-byte Spill
+; X32-NEXT:    movl %esi, (%esp)
+; X32-NEXT:    calll _gfunc
+; X32-NEXT:    vbroadcastss {{[0-9]+}}(%esp), %xmm0
+; X32-NEXT:    vsubss {{[0-9]+}}(%esp), %xmm0, %xmm0 ## 16-byte Folded Reload
+; X32-NEXT:    vmovss %xmm0, {{[0-9]+}}(%esp)
+; X32-NEXT:    flds {{[0-9]+}}(%esp)
+; X32-NEXT:    addl $56, %esp
+; X32-NEXT:    popl %esi
+; X32-NEXT:    retl
+;
+; X64-LABEL: broadcast_lifetime:
+; X64:       ## BB#0:
+; X64-NEXT:    subq $40, %rsp
+; X64-NEXT:    movq %rsp, %rdi
+; X64-NEXT:    callq _gfunc
+; X64-NEXT:    vbroadcastss {{[0-9]+}}(%rsp), %xmm0
+; X64-NEXT:    vmovaps %xmm0, {{[0-9]+}}(%rsp) ## 16-byte Spill
+; X64-NEXT:    movq %rsp, %rdi
+; X64-NEXT:    callq _gfunc
+; X64-NEXT:    vbroadcastss {{[0-9]+}}(%rsp), %xmm0
+; X64-NEXT:    vsubss {{[0-9]+}}(%rsp), %xmm0, %xmm0 ## 16-byte Folded Reload
+; X64-NEXT:    addq $40, %rsp
+; X64-NEXT:    retq
+  %1 = alloca <4 x float>, align 16
+  %2 = alloca <4 x float>, align 16
+  %3 = bitcast <4 x float>* %1 to i8*
+  %4 = bitcast <4 x float>* %2 to i8*
+
+  call void @llvm.lifetime.start(i64 16, i8* %3)
+  call void @gfunc(<4 x float>* %1)
+  %5 = load <4 x float>, <4 x float>* %1, align 16
+  call void @llvm.lifetime.end(i64 16, i8* %3)
+
+  call void @llvm.lifetime.start(i64 16, i8* %4)
+  call void @gfunc(<4 x float>* %2)
+  %6 = load <4 x float>, <4 x float>* %2, align 16
+  call void @llvm.lifetime.end(i64 16, i8* %4)
+
+  %7 = extractelement <4 x float> %5, i32 1
+  %8 = extractelement <4 x float> %6, i32 1
+  %9 = fsub float %8, %7
+  ret float %9
+}
+
+declare void @gfunc(<4 x float>*)
+declare void @llvm.lifetime.start(i64, i8*)
+declare void @llvm.lifetime.end(i64, i8*)

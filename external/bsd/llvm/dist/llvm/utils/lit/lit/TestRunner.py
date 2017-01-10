@@ -110,6 +110,18 @@ class TimeoutHelper(object):
             self._procs = [] # Python2 doesn't have list.clear()
             self._doneKillPass = True
 
+class ShellCommandResult(object):
+    """Captures the result of an individual command."""
+
+    def __init__(self, command, stdout, stderr, exitCode, timeoutReached,
+                 outputFiles = []):
+        self.command = command
+        self.stdout = stdout
+        self.stderr = stderr
+        self.exitCode = exitCode
+        self.timeoutReached = timeoutReached
+        self.outputFiles = list(outputFiles)
+               
 def executeShCmd(cmd, shenv, results, timeout=0):
     """
         Wrapper around _executeShCmd that handles
@@ -127,6 +139,62 @@ def executeShCmd(cmd, shenv, results, timeout=0):
         timeoutInfo = 'Reached timeout of {} seconds'.format(timeout)
 
     return (finalExitCode, timeoutInfo)
+
+def quote_windows_command(seq):
+    """
+    Reimplement Python's private subprocess.list2cmdline for MSys compatibility
+
+    Based on CPython implementation here:
+      https://hg.python.org/cpython/file/849826a900d2/Lib/subprocess.py#l422
+
+    Some core util distributions (MSys) don't tokenize command line arguments
+    the same way that MSVC CRT does. Lit rolls its own quoting logic similar to
+    the stock CPython logic to paper over these quoting and tokenization rule
+    differences.
+
+    We use the same algorithm from MSDN as CPython
+    (http://msdn.microsoft.com/en-us/library/17w5ykft.aspx), but we treat more
+    characters as needing quoting, such as double quotes themselves.
+    """
+    result = []
+    needquote = False
+    for arg in seq:
+        bs_buf = []
+
+        # Add a space to separate this argument from the others
+        if result:
+            result.append(' ')
+
+        # This logic differs from upstream list2cmdline.
+        needquote = (" " in arg) or ("\t" in arg) or ("\"" in arg) or not arg
+        if needquote:
+            result.append('"')
+
+        for c in arg:
+            if c == '\\':
+                # Don't know if we need to double yet.
+                bs_buf.append(c)
+            elif c == '"':
+                # Double backslashes.
+                result.append('\\' * len(bs_buf)*2)
+                bs_buf = []
+                result.append('\\"')
+            else:
+                # Normal char
+                if bs_buf:
+                    result.extend(bs_buf)
+                    bs_buf = []
+                result.append(c)
+
+        # Add remaining backslashes, if any.
+        if bs_buf:
+            result.extend(bs_buf)
+
+        if needquote:
+            result.extend(bs_buf)
+            result.append('"')
+
+    return ''.join(result)
 
 def _executeShCmd(cmd, shenv, results, timeoutHelper):
     if timeoutHelper.timeoutReached():
@@ -243,8 +311,13 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
                 result = subprocess.PIPE
             else:
                 if r[2] is None:
+                    redir_filename = None
                     if kAvoidDevNull and r[0] == '/dev/null':
                         r[2] = tempfile.TemporaryFile(mode=r[1])
+                    elif kIsWindows and r[0] == '/dev/tty':
+                        # Simulate /dev/tty on Windows.
+                        # "CON" is a special filename for the console.
+                        r[2] = open("CON", r[1])
                     else:
                         # Make sure relative paths are relative to the cwd.
                         redir_filename = os.path.join(cmd_shenv.cwd, r[0])
@@ -254,7 +327,7 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
                     # FIXME: Actually, this is probably an instance of PR6753.
                     if r[1] == 'a':
                         r[2].seek(0, 2)
-                    opened_files.append(r[2])
+                    opened_files.append(tuple(r) + (redir_filename,))
                 result = r[2]
             final_redirects.append(result)
 
@@ -298,6 +371,11 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
                     named_temp_files.append(f.name)
                     args[i] = f.name
 
+        # On Windows, do our own command line quoting for better compatibility
+        # with some core utility distributions.
+        if kIsWindows:
+            args = quote_windows_command(args)
+
         try:
             procs.append(subprocess.Popen(args, cwd=cmd_shenv.cwd,
                                           executable = executable,
@@ -328,7 +406,7 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
     # need to release any handles we may have on the temporary files (important
     # on Win32, for example). Since we have already spawned the subprocess, our
     # handles have already been transferred so we do not need them anymore.
-    for f in opened_files:
+    for (name, mode, f, path) in opened_files:
         f.close()
 
     # FIXME: There is probably still deadlock potential here. Yawn.
@@ -365,15 +443,36 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
 
         # Ensure the resulting output is always of string type.
         try:
-            out = to_string(out.decode('utf-8'))
+            if out is None:
+                out = ''
+            else:
+                out = to_string(out.decode('utf-8', errors='replace'))
         except:
             out = str(out)
         try:
-            err = to_string(err.decode('utf-8'))
+            if err is None:
+                err = ''
+            else:
+                err = to_string(err.decode('utf-8', errors='replace'))
         except:
             err = str(err)
 
-        results.append((cmd.commands[i], out, err, res, timeoutHelper.timeoutReached()))
+        # Gather the redirected output files for failed commands.
+        output_files = []
+        if res != 0:
+            for (name, mode, f, path) in sorted(opened_files):
+                if path is not None and mode in ('w', 'a'):
+                    try:
+                        with open(path, 'rb') as f:
+                            data = f.read()
+                    except:
+                        data = None
+                    if data is not None:
+                        output_files.append((name, path, data))
+            
+        results.append(ShellCommandResult(
+            cmd.commands[i], out, err, res, timeoutHelper.timeoutReached(),
+            output_files))
         if cmd.pipe_err:
             # Python treats the exit code as a signed char.
             if exitCode is None:
@@ -418,21 +517,60 @@ def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
     except InternalShellError:
         e = sys.exc_info()[1]
         exitCode = 127
-        results.append((e.command, '', e.message, exitCode, False))
+        results.append(
+            ShellCommandResult(e.command, '', e.message, exitCode, False))
 
     out = err = ''
-    for i,(cmd, cmd_out, cmd_err, res, timeoutReached) in enumerate(results):
-        out += 'Command %d: %s\n' % (i, ' '.join('"%s"' % s for s in cmd.args))
-        out += 'Command %d Result: %r\n' % (i, res)
+    for i,result in enumerate(results):
+        # Write the command line run.
+        out += '$ %s\n' % (' '.join('"%s"' % s
+                                    for s in result.command.args),)
+
+        # If nothing interesting happened, move on.
+        if litConfig.maxIndividualTestTime == 0 and \
+               result.exitCode == 0 and \
+               not result.stdout.strip() and not result.stderr.strip():
+            continue
+
+        # Otherwise, something failed or was printed, show it.
+
+        # Add the command output, if redirected.
+        for (name, path, data) in result.outputFiles:
+            if data.strip():
+                out += "# redirected output from %r:\n" % (name,)
+                data = to_string(data.decode('utf-8', errors='replace'))
+                if len(data) > 1024:
+                    out += data[:1024] + "\n...\n"
+                    out += "note: data was truncated\n"
+                else:
+                    out += data
+                out += "\n"
+                    
+        if result.stdout.strip():
+            out += '# command output:\n%s\n' % (result.stdout,)
+        if result.stderr.strip():
+            out += '# command stderr:\n%s\n' % (result.stderr,)
+        if not result.stdout.strip() and not result.stderr.strip():
+            out += "note: command had no output on stdout or stderr\n"
+
+        # Show the error conditions:
+        if result.exitCode != 0:
+            # On Windows, a negative exit code indicates a signal, and those are
+            # easier to recognize or look up if we print them in hex.
+            if litConfig.isWindows and result.exitCode < 0:
+                codeStr = hex(int(result.exitCode & 0xFFFFFFFF)).rstrip("L")
+            else:
+                codeStr = str(result.exitCode)
+            out += "error: command failed with exit status: %s\n" % (
+                codeStr,)
         if litConfig.maxIndividualTestTime > 0:
-            out += 'Command %d Reached Timeout: %s\n\n' % (i, str(timeoutReached))
-        out += 'Command %d Output:\n%s\n\n' % (i, cmd_out)
-        out += 'Command %d Stderr:\n%s\n\n' % (i, cmd_err)
+            out += 'error: command reached timeout: %s\n' % (
+                str(result.timeoutReached),)
 
     return out, err, exitCode, timeoutInfo
 
 def executeScript(test, litConfig, tmpBase, commands, cwd):
-    bashPath = litConfig.getBashPath();
+    bashPath = litConfig.getBashPath()
     isWin32CMDEXE = (litConfig.isWindows and not bashPath)
     script = tmpBase + '.script'
     if isWin32CMDEXE:
@@ -492,7 +630,7 @@ def parseIntegratedTestScriptCommands(source_path, keywords):
     # version.
 
     keywords_re = re.compile(
-        to_bytes("(%s)(.*)\n" % ("|".join(k for k in keywords),)))
+        to_bytes("(%s)(.*)\n" % ("|".join(re.escape(k) for k in keywords),)))
 
     f = open(source_path, 'rb')
     try:
@@ -519,7 +657,7 @@ def parseIntegratedTestScriptCommands(source_path, keywords):
             # Python 2, to avoid other code having to differentiate between the
             # str and unicode types.
             keyword,ln = match.groups()
-            yield (line_number, to_string(keyword[:-1].decode('utf-8')),
+            yield (line_number, to_string(keyword.decode('utf-8')),
                    to_string(ln.decode('utf-8')))
     finally:
         f.close()
@@ -564,6 +702,24 @@ def getDefaultSubstitutions(test, tmpDir, tmpBase, normalize_slashes=False):
             ('%/t', tmpBase.replace('\\', '/') + '.tmp'),
             ('%/T', tmpDir.replace('\\', '/')),
             ])
+
+    # "%:[STpst]" are paths without colons.
+    if kIsWindows:
+        substitutions.extend([
+                ('%:s', re.sub(r'^(.):', r'\1', sourcepath)),
+                ('%:S', re.sub(r'^(.):', r'\1', sourcedir)),
+                ('%:p', re.sub(r'^(.):', r'\1', sourcedir)),
+                ('%:t', re.sub(r'^(.):', r'\1', tmpBase) + '.tmp'),
+                ('%:T', re.sub(r'^(.):', r'\1', tmpDir)),
+                ])
+    else:
+        substitutions.extend([
+                ('%:s', sourcepath),
+                ('%:S', sourcedir),
+                ('%:p', sourcedir),
+                ('%:t', tmpBase + '.tmp'),
+                ('%:T', tmpDir),
+                ])
     return substitutions
 
 def applySubstitutions(script, substitutions):
@@ -583,10 +739,119 @@ def applySubstitutions(script, substitutions):
     # convert to list before returning.
     return list(map(processLine, script))
 
-def parseIntegratedTestScript(test, require_script=True):
+
+class ParserKind(object):
+    """
+    An enumeration representing the style of an integrated test keyword or
+    command.
+
+    TAG: A keyword taking no value. Ex 'END.'
+    COMMAND: A Keyword taking a list of shell commands. Ex 'RUN:'
+    LIST: A keyword taking a comma separated list of value. Ex 'XFAIL:'
+    CUSTOM: A keyword with custom parsing semantics.
+    """
+    TAG = 0
+    COMMAND = 1
+    LIST = 2
+    CUSTOM = 3
+
+
+class IntegratedTestKeywordParser(object):
+    """A parser for LLVM/Clang style integrated test scripts.
+
+    keyword: The keyword to parse for. It must end in either '.' or ':'.
+    kind: An value of ParserKind.
+    parser: A custom parser. This value may only be specified with
+            ParserKind.CUSTOM.
+    """
+    def __init__(self, keyword, kind, parser=None, initial_value=None):
+        if not keyword.endswith('.') and not keyword.endswith(':'):
+            raise ValueError("keyword '%s' must end with either '.' or ':' "
+                             % keyword)
+        if keyword.endswith('.') and kind in \
+                [ParserKind.LIST, ParserKind.COMMAND]:
+            raise ValueError("Keyword '%s' should end in ':'" % keyword)
+
+        elif keyword.endswith(':') and kind in [ParserKind.TAG]:
+            raise ValueError("Keyword '%s' should end in '.'" % keyword)
+        if parser is not None and kind != ParserKind.CUSTOM:
+            raise ValueError("custom parsers can only be specified with "
+                             "ParserKind.CUSTOM")
+        self.keyword = keyword
+        self.kind = kind
+        self.parsed_lines = []
+        self.value = initial_value
+        self.parser = parser
+
+        if kind == ParserKind.COMMAND:
+            self.parser = self._handleCommand
+        elif kind == ParserKind.LIST:
+            self.parser = self._handleList
+        elif kind == ParserKind.TAG:
+            if not keyword.endswith('.'):
+                raise ValueError("keyword '%s' should end with '.'" % keyword)
+            self.parser = self._handleTag
+        elif kind == ParserKind.CUSTOM:
+            if parser is None:
+                raise ValueError("ParserKind.CUSTOM requires a custom parser")
+            self.parser = parser
+        else:
+            raise ValueError("Unknown kind '%s'" % kind)
+
+    def parseLine(self, line_number, line):
+        self.parsed_lines += [(line_number, line)]
+        self.value = self.parser(line_number, line, self.value)
+
+    def getValue(self):
+        return self.value
+
+    @staticmethod
+    def _handleTag(line_number, line, output):
+        """A helper for parsing TAG type keywords"""
+        return (not line.strip() or output)
+
+    @staticmethod
+    def _handleCommand(line_number, line, output):
+        """A helper for parsing COMMAND type keywords"""
+        # Trim trailing whitespace.
+        line = line.rstrip()
+        # Substitute line number expressions
+        line = re.sub('%\(line\)', str(line_number), line)
+
+        def replace_line_number(match):
+            if match.group(1) == '+':
+                return str(line_number + int(match.group(2)))
+            if match.group(1) == '-':
+                return str(line_number - int(match.group(2)))
+        line = re.sub('%\(line *([\+-]) *(\d+)\)', replace_line_number, line)
+        # Collapse lines with trailing '\\'.
+        if output and output[-1][-1] == '\\':
+            output[-1] = output[-1][:-1] + line
+        else:
+            if output is None:
+                output = []
+            output.append(line)
+        return output
+
+    @staticmethod
+    def _handleList(line_number, line, output):
+        """A parser for LIST type keywords"""
+        if output is None:
+            output = []
+        output.extend([s.strip() for s in line.split(',')])
+        return output
+
+
+def parseIntegratedTestScript(test, additional_parsers=[],
+                              require_script=True):
     """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
     script and extract the lines to 'RUN' as well as 'XFAIL' and 'REQUIRES'
-    and 'UNSUPPORTED' information. If 'require_script' is False an empty script
+    'REQUIRES-ANY' and 'UNSUPPORTED' information.
+
+    If additional parsers are specified then the test is also scanned for the
+    keywords they specify and all matches are passed to the custom parser.
+
+    If 'require_script' is False an empty script
     may be returned. This can be used for test formats where the actual script
     is optional or ignored.
     """
@@ -594,41 +859,38 @@ def parseIntegratedTestScript(test, require_script=True):
     sourcepath = test.getSourcePath()
     script = []
     requires = []
+    requires_any = []
     unsupported = []
-    keywords = ['RUN:', 'XFAIL:', 'REQUIRES:', 'UNSUPPORTED:', 'END.']
+    builtin_parsers = [
+        IntegratedTestKeywordParser('RUN:', ParserKind.COMMAND,
+                                    initial_value=script),
+        IntegratedTestKeywordParser('XFAIL:', ParserKind.LIST,
+                                    initial_value=test.xfails),
+        IntegratedTestKeywordParser('REQUIRES:', ParserKind.LIST,
+                                    initial_value=requires),
+        IntegratedTestKeywordParser('REQUIRES-ANY:', ParserKind.LIST,
+                                    initial_value=requires_any),
+        IntegratedTestKeywordParser('UNSUPPORTED:', ParserKind.LIST,
+                                    initial_value=unsupported),
+        IntegratedTestKeywordParser('END.', ParserKind.TAG)
+    ]
+    keyword_parsers = {p.keyword: p for p in builtin_parsers}
+    for parser in additional_parsers:
+        if not isinstance(parser, IntegratedTestKeywordParser):
+            raise ValueError('additional parser must be an instance of '
+                             'IntegratedTestKeywordParser')
+        if parser.keyword in keyword_parsers:
+            raise ValueError("Parser for keyword '%s' already exists"
+                             % parser.keyword)
+        keyword_parsers[parser.keyword] = parser
+
     for line_number, command_type, ln in \
-            parseIntegratedTestScriptCommands(sourcepath, keywords):
-        if command_type == 'RUN':
-            # Trim trailing whitespace.
-            ln = ln.rstrip()
-
-            # Substitute line number expressions
-            ln = re.sub('%\(line\)', str(line_number), ln)
-            def replace_line_number(match):
-                if match.group(1) == '+':
-                    return str(line_number + int(match.group(2)))
-                if match.group(1) == '-':
-                    return str(line_number - int(match.group(2)))
-            ln = re.sub('%\(line *([\+-]) *(\d+)\)', replace_line_number, ln)
-
-            # Collapse lines with trailing '\\'.
-            if script and script[-1][-1] == '\\':
-                script[-1] = script[-1][:-1] + ln
-            else:
-                script.append(ln)
-        elif command_type == 'XFAIL':
-            test.xfails.extend([s.strip() for s in ln.split(',')])
-        elif command_type == 'REQUIRES':
-            requires.extend([s.strip() for s in ln.split(',')])
-        elif command_type == 'UNSUPPORTED':
-            unsupported.extend([s.strip() for s in ln.split(',')])
-        elif command_type == 'END':
-            # END commands are only honored if the rest of the line is empty.
-            if not ln.strip():
-                break
-        else:
-            raise ValueError("unknown script command type: %r" % (
-                    command_type,))
+            parseIntegratedTestScriptCommands(sourcepath,
+                                              keyword_parsers.keys()):
+        parser = keyword_parsers[command_type]
+        parser.parseLine(line_number, ln)
+        if command_type == 'END.' and parser.getValue() is True:
+            break
 
     # Verify the script contains a run line.
     if require_script and not script:
@@ -645,20 +907,30 @@ def parseIntegratedTestScript(test, require_script=True):
     if missing_required_features:
         msg = ', '.join(missing_required_features)
         return lit.Test.Result(Test.UNSUPPORTED,
-                               "Test requires the following features: %s" % msg)
+                               "Test requires the following features: %s"
+                               % msg)
+    requires_any_features = [f for f in requires_any
+                             if f in test.config.available_features]
+    if requires_any and not requires_any_features:
+        msg = ' ,'.join(requires_any)
+        return lit.Test.Result(Test.UNSUPPORTED,
+                               "Test requires any of the following features: "
+                               "%s" % msg)
     unsupported_features = [f for f in unsupported
                             if f in test.config.available_features]
     if unsupported_features:
         msg = ', '.join(unsupported_features)
-        return lit.Test.Result(Test.UNSUPPORTED,
-                    "Test is unsupported with the following features: %s" % msg)
+        return lit.Test.Result(
+            Test.UNSUPPORTED,
+            "Test is unsupported with the following features: %s" % msg)
 
     unsupported_targets = [f for f in unsupported
                            if f in test.suite.config.target_triple]
     if unsupported_targets:
-      return lit.Test.Result(Test.UNSUPPORTED,
-                  "Test is unsupported with the following triple: %s" % (
-                      test.suite.config.target_triple,))
+        return lit.Test.Result(
+            Test.UNSUPPORTED,
+            "Test is unsupported with the following triple: %s" % (
+             test.suite.config.target_triple,))
 
     if test.config.limit_to_features:
         # Check that we have one of the limit_to_features features in requires.
@@ -666,10 +938,11 @@ def parseIntegratedTestScript(test, require_script=True):
                                    if f in requires]
         if not limit_to_features_tests:
             msg = ', '.join(test.config.limit_to_features)
-            return lit.Test.Result(Test.UNSUPPORTED,
-                 "Test requires one of the limit_to_features features %s" % msg)
-
+            return lit.Test.Result(
+                Test.UNSUPPORTED,
+                "Test requires one of the limit_to_features features %s" % msg)
     return script
+
 
 def _runShTest(test, litConfig, useExternalSh, script, tmpBase):
     # Create the output directory if it does not already exist.
@@ -687,7 +960,7 @@ def _runShTest(test, litConfig, useExternalSh, script, tmpBase):
     if exitCode == 0:
         status = Test.PASS
     else:
-        if timeoutInfo == None:
+        if timeoutInfo is None:
             status = Test.FAIL
         else:
             status = Test.TIMEOUT
@@ -696,7 +969,7 @@ def _runShTest(test, litConfig, useExternalSh, script, tmpBase):
     output = """Script:\n--\n%s\n--\nExit Code: %d\n""" % (
         '\n'.join(script), exitCode)
 
-    if timeoutInfo != None:
+    if timeoutInfo is not None:
         output += """Timeout: %s\n""" % (timeoutInfo,)
     output += "\n"
 

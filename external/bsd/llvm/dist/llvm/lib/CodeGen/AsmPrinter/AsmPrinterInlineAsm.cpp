@@ -23,10 +23,10 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
@@ -100,6 +100,8 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MCSubtargetInfo &STI,
   }
 
   SourceMgr SrcMgr;
+  SrcMgr.setIncludeDirs(MCOptions.IASSearchPaths);
+
   SrcMgrDiagInfo DiagInfo;
 
   // If the current LLVMContext has an inline asm handler, set it in SourceMgr.
@@ -192,6 +194,23 @@ static void EmitMSInlineAsmStr(const char *AsmStr, const MachineInstr *MI,
         break;
       }
       if (Done) break;
+
+      // If we have ${:foo}, then this is not a real operand reference, it is a
+      // "magic" string reference, just like in .td files.  Arrange to call
+      // PrintSpecial.
+      if (LastEmitted[0] == '{' && LastEmitted[1] == ':') {
+        LastEmitted += 2;
+        const char *StrStart = LastEmitted;
+        const char *StrEnd = strchr(StrStart, '}');
+        if (!StrEnd)
+          report_fatal_error("Unterminated ${:foo} operand in inline asm"
+                             " string: '" + Twine(AsmStr) + "'");
+
+        std::string Val(StrStart, StrEnd);
+        AP->PrintSpecial(MI, OS, Val.c_str());
+        LastEmitted = StrEnd+1;
+        break;
+      }
 
       const char *IDStart = LastEmitted;
       const char *IDEnd = IDStart;

@@ -20,9 +20,12 @@ using namespace llvm::orc;
 
 namespace {
 
+// FIXME: This class is only here to support the transition to llvm::Error. It
+// will be removed once this transition is complete. Clients should prefer to
+// deal with the Error value directly, rather than converting to error_code.
 class OrcErrorCategory : public std::error_category {
 public:
-  const char *name() const LLVM_NOEXCEPT override { return "orc"; }
+  const char *name() const noexcept override { return "orc"; }
 
   std::string message(int condition) const override {
     switch (static_cast<OrcErrorCode>(condition)) {
@@ -36,8 +39,14 @@ public:
       return "Remote indirect stubs owner does not exist";
     case OrcErrorCode::RemoteIndirectStubsOwnerIdAlreadyInUse:
       return "Remote indirect stubs owner Id already in use";
+    case OrcErrorCode::RPCResponseAbandoned:
+      return "RPC response abandoned";
     case OrcErrorCode::UnexpectedRPCCall:
       return "Unexpected RPC call";
+    case OrcErrorCode::UnexpectedRPCResponse:
+      return "Unexpected RPC response";
+    case OrcErrorCode::UnknownRPCFunction:
+      return "Unknown RPC function";
     }
     llvm_unreachable("Unhandled error code");
   }
@@ -49,9 +58,10 @@ static ManagedStatic<OrcErrorCategory> OrcErrCat;
 namespace llvm {
 namespace orc {
 
-std::error_code orcError(OrcErrorCode ErrCode) {
+Error orcError(OrcErrorCode ErrCode) {
   typedef std::underlying_type<OrcErrorCode>::type UT;
-  return std::error_code(static_cast<UT>(ErrCode), *OrcErrCat);
+  return errorCodeToError(
+      std::error_code(static_cast<UT>(ErrCode), *OrcErrCat));
 }
 }
 }

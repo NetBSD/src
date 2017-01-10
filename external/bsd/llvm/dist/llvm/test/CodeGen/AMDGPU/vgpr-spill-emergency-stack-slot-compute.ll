@@ -11,10 +11,6 @@
 
 ; FIXME: The same register is initialized to 0 for every spill.
 
-declare i32 @llvm.r600.read.tgid.x() #1
-declare i32 @llvm.r600.read.tgid.y() #1
-declare i32 @llvm.r600.read.tgid.z() #1
-
 ; GCN-LABEL: {{^}}spill_vgpr_compute:
 
 ; HSA: enable_sgpr_private_segment_buffer = 1
@@ -23,18 +19,25 @@ declare i32 @llvm.r600.read.tgid.z() #1
 
 ; GCN-NOT: flat_scr
 
-; GCNMESA: s_mov_b32 s16, s3
-; GCNMESA: s_mov_b32 s12, SCRATCH_RSRC_DWORD0
-; GCNMESA-NEXT: s_mov_b32 s13, SCRATCH_RSRC_DWORD1
-; GCNMESA-NEXT: s_mov_b32 s14, -1
-; SIMESA-NEXT: s_mov_b32 s15, 0x98f000
-; VIMESA-NEXT: s_mov_b32 s15, 0x980000
+; GCNMESA-DAG: s_mov_b32 s16, s3
+; GCNMESA-DAG: s_mov_b32 s12, SCRATCH_RSRC_DWORD0
+; GCNMESA--DAG: s_mov_b32 s13, SCRATCH_RSRC_DWORD1
+; GCNMESA-DAG: s_mov_b32 s14, -1
+; SIMESA-DAG: s_mov_b32 s15, 0xe8f000
+; VIMESA-DAG: s_mov_b32 s15, 0xe80000
 
 
-; GCN: buffer_store_dword {{v[0-9]+}}, s[12:15], s16 offset:{{[0-9]+}} ; 4-byte Folded Spill
+; GCN: buffer_store_dword {{v[0-9]+}}, off, s[12:15], s16 offset:{{[0-9]+}} ; 4-byte Folded Spill
 
-; GCN: buffer_store_dword {{v[0-9]+}}, {{v[0-9]+}}, s[12:15], s16 offen offset:{{[0-9]+}}
-; GCN: buffer_load_dwordx4 {{v\[[0-9]+:[0-9]+\]}}, {{v[0-9]+}}, s[12:15], s16 offen offset:{{[0-9]+}}
+; GCN: buffer_store_dword {{v[0-9]}}, off, s[12:15], s16 offset:{{[0-9]+}}
+; GCN: buffer_store_dword {{v[0-9]}}, off, s[12:15], s16 offset:{{[0-9]+}}
+; GCN: buffer_store_dword {{v[0-9]}}, off, s[12:15], s16 offset:{{[0-9]+}}
+; GCN: buffer_store_dword {{v[0-9]}}, off, s[12:15], s16 offset:{{[0-9]+}}
+
+; GCN: buffer_load_dword {{v[0-9]+}}, off, s[12:15], s16 offset:{{[0-9]+}}
+; GCN: buffer_load_dword {{v[0-9]+}}, off, s[12:15], s16 offset:{{[0-9]+}}
+; GCN: buffer_load_dword {{v[0-9]+}}, off, s[12:15], s16 offset:{{[0-9]+}}
+; GCN: buffer_load_dword {{v[0-9]+}}, off, s[12:15], s16 offset:{{[0-9]+}}
 
 ; GCN: NumVgprs: 256
 ; GCN: ScratchSize: 1024
@@ -181,7 +184,8 @@ bb12:                                             ; preds = %bb145, %bb
   %tmp140 = phi float [ 0.000000e+00, %bb ], [ %tmp405, %bb145 ]
   %tmp141 = phi float [ 0.000000e+00, %bb ], [ %tmp406, %bb145 ]
   %tmp142 = bitcast float %tmp95 to i32
-  %tmp143 = icmp sgt i32 %tmp142, 125
+  %tid = call i32 @llvm.r600.read.tidig.x() #1
+  %tmp143 = icmp sgt i32 %tmp142, %tid
   br i1 %tmp143, label %bb144, label %bb145
 
 bb144:                                            ; preds = %bb12
@@ -586,6 +590,8 @@ bb145:                                            ; preds = %bb12
   %tmp409 = bitcast i32 %tmp408 to float
   br label %bb12
 }
+
+declare i32 @llvm.r600.read.tidig.x() #1
 
 attributes #0 = { nounwind }
 attributes #1 = { nounwind readnone }

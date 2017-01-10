@@ -15,7 +15,6 @@
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/SectionKind.h"
 #include "llvm/Support/DataTypes.h"
-#include <vector>
 
 namespace llvm {
 class MCAsmBackend;
@@ -58,7 +57,7 @@ public:
   void EmitCOFFSymbolType(int Type) override;
   void EndCOFFSymbolDef() override;
 
-  void emitELFSize(MCSymbolELF *Symbol, const MCExpr *Value) override;
+  void emitELFSize(MCSymbol *Symbol, const MCExpr *Value) override;
 
   void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                              unsigned ByteAlignment) override;

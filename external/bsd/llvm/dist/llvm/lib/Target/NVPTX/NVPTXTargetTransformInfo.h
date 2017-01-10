@@ -41,16 +41,13 @@ public:
       : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl()),
         TLI(ST->getTargetLowering()) {}
 
-  // Provide value semantics. MSVC requires that we spell all of these out.
-  NVPTXTTIImpl(const NVPTXTTIImpl &Arg)
-      : BaseT(static_cast<const BaseT &>(Arg)), ST(Arg.ST), TLI(Arg.TLI) {}
-  NVPTXTTIImpl(NVPTXTTIImpl &&Arg)
-      : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
-        TLI(std::move(Arg.TLI)) {}
-
   bool hasBranchDivergence() { return true; }
 
   bool isSourceOfDivergence(const Value *V);
+
+  // Increase the inlining cost threshold by a factor of 5, reflecting that
+  // calls are particularly expensive in NVPTX.
+  unsigned getInliningThresholdMultiplier() { return 5; }
 
   int getArithmeticInstrCost(
       unsigned Opcode, Type *Ty,
