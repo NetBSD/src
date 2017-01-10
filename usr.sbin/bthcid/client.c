@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.4 2006/09/29 20:06:11 plunky Exp $	*/
+/*	$NetBSD: client.c,v 1.5 2017/01/10 20:56:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client.c,v 1.4 2006/09/29 20:06:11 plunky Exp $");
+__RCSID("$NetBSD: client.c,v 1.5 2017/01/10 20:56:41 christos Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 #include <bluetooth.h>
 #include <errno.h>
