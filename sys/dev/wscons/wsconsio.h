@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.115 2016/06/10 21:26:43 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.116 2017/01/10 20:08:52 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -46,6 +46,7 @@
 
 #include <sys/types.h>
 #include <sys/ioccom.h>
+#include <sys/time.h>
 #include <dev/wscons/wsksymvar.h>
 
 
