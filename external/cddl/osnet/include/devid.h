@@ -1,4 +1,4 @@
-/*	$NetBSD: devid.h,v 1.3 2010/02/21 01:46:34 darran Exp $	*/
+/*	$NetBSD: devid.h,v 1.4 2017/01/10 19:20:35 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -46,8 +46,8 @@ typedef struct devid_nmlist {
 
 int devid_str_decode(char *devidstr, ddi_devid_t *retdevid,
     char **retminor_name);
-int devid_deviceid_to_nmlist(char *search_path, ddi_devid_t devid,
-    char *minor_name, devid_nmlist_t **retlist);
+int devid_deviceid_to_nmlist(const char *search_path, ddi_devid_t devid,
+    const char *minor_name, devid_nmlist_t **retlist);
 void devid_str_free(char *str);
 void devid_free(ddi_devid_t devid);
 void devid_free_nmlist(devid_nmlist_t *list);
