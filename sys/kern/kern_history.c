@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.13 2017/01/10 00:50:57 pgoyette Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.14 2017/01/10 22:08:14 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.13 2017/01/10 00:50:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.14 2017/01/10 22:08:14 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.13 2017/01/10 00:50:57 pgoyette E
 #include "opt_biohist.h"
 #include "opt_sysctl.h"
 
+#include <sys/atomic.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
@@ -289,6 +290,7 @@ sysctl_kernhist_new(struct kern_history *hist)
 	struct kern_history *h;
 	const struct sysctlnode *rnode = NULL;
 
+	membar_consumer();
 	if (kernhist_sysctl_ready == 0)
 		return;
 
@@ -329,6 +331,7 @@ sysctl_kernhist_init(void)
 	sysctl_hist_node = rnode->sysctl_num;
 
 	kernhist_sysctl_ready = 1;
+	membar_producer();
 
 	sysctl_kernhist_new(NULL);
 }
