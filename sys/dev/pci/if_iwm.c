@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.56 2017/01/09 12:45:49 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.57 2017/01/10 04:27:04 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.56 2017/01/09 12:45:49 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.57 2017/01/10 04:27:04 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1332,6 +1332,7 @@ iwm_free_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring)
 			    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 			m_freem(data->m);
+			data->m = NULL;
 		}
 		if (data->map != NULL) {
 			bus_dmamap_destroy(sc->sc_dmat, data->map);
