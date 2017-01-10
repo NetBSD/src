@@ -1,4 +1,4 @@
-/*	$NetBSD: services_mkdb.c,v 1.18 2010/10/07 01:28:50 christos Exp $	*/
+/*	$NetBSD: services_mkdb.c,v 1.19 2017/01/10 21:04:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,10 +31,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: services_mkdb.c,v 1.18 2010/10/07 01:28:50 christos Exp $");
+__RCSID("$NetBSD: services_mkdb.c,v 1.19 2017/01/10 21:04:06 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <assert.h>
 #include <err.h>
