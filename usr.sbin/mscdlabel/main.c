@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.4 2006/05/25 00:42:23 christos Exp $ */
+/* $NetBSD: main.c,v 1.5 2017/01/10 21:03:36 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2005
@@ -33,14 +33,17 @@
  *  - support simulation of multisession CDs in a vnd(4) disk
  */
 
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/cdio.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/cdio.h>
-#include <sys/disklabel.h>
-#include <sys/param.h>
 #include <err.h>
 #include <util.h>
 #include <string.h>
