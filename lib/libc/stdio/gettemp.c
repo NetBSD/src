@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.20 2015/02/05 16:05:20 christos Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.21 2017/01/10 17:45:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.20 2015/02/05 16:05:20 christos Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.21 2017/01/10 17:45:12 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
 
