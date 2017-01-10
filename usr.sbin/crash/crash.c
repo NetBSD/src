@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.10 2015/06/16 23:48:20 christos Exp $	*/
+/*	$NetBSD: crash.c,v 1.11 2017/01/10 20:57:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,13 +31,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.10 2015/06/16 23:48:20 christos Exp $");
+__RCSID("$NetBSD: crash.c,v 1.11 2017/01/10 20:57:26 christos Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <sys/ioctl.h>
 
 #include <machine/frame.h>
