@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.59 2017/01/10 07:34:04 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.60 2017/01/10 08:40:27 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.59 2017/01/10 07:34:04 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.60 2017/01/10 08:40:27 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -488,6 +488,7 @@ static void	iwm_radiotap_attach(struct iwm_softc *);
 static int	iwm_sysctl_fw_loaded_handler(SYSCTLFN_PROTO);
 
 static int iwm_sysctl_root_num;
+static int iwm_lar_disable;
 
 static int
 iwm_firmload(struct iwm_softc *sc)
@@ -2857,6 +2858,14 @@ iwm_parse_nvm_data(struct iwm_softc *sc, const uint16_t *nvm_hw,
 		data->hw_addr[5] = hw_addr[4];
 	} else
 		iwm_set_hw_address_8000(sc, data, mac_override, nvm_hw);
+
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000) {
+		uint16_t lar_offset, lar_config;
+		lar_offset = data->nvm_version < 0xE39 ?
+		    IWM_NVM_LAR_OFFSET_8000_OLD : IWM_NVM_LAR_OFFSET_8000;
+		lar_config = le16_to_cpup(regulatory + lar_offset);
+                data->lar_enabled = !!(lar_config & IWM_NVM_LAR_ENABLED_8000);
+	}
 
 	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000)
 		iwm_init_channel_map(sc, &nvm_sw[IWM_NVM_CHANNELS],
@@ -6101,6 +6110,26 @@ iwm_send_bt_init_conf(struct iwm_softc *sc)
 	return iwm_send_cmd_pdu(sc, IWM_BT_CONFIG, 0, sizeof(bt_cmd), &bt_cmd);
 }
 
+static bool
+iwm_is_lar_supported(struct iwm_softc *sc)
+{
+	bool nvm_lar = sc->sc_nvm.lar_enabled;
+	bool tlv_lar = isset(sc->sc_enabled_capa,
+	    IWM_UCODE_TLV_CAPA_LAR_SUPPORT);
+
+	if (iwm_lar_disable)
+		return false;
+
+	/*
+	 * Enable LAR only if it is supported by the FW (TLV) &&
+	 * enabled in the NVM
+	 */
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_8000)
+		return nvm_lar && tlv_lar;
+	else
+		return tlv_lar;
+}
+
 static int
 iwm_send_update_mcc_cmd(struct iwm_softc *sc, const char *alpha2)
 {
@@ -6110,9 +6139,14 @@ iwm_send_update_mcc_cmd(struct iwm_softc *sc, const char *alpha2)
 		.flags = IWM_CMD_WANT_SKB,
 		.data = { &mcc_cmd },
 	};
+	int err;
 	int resp_v2 = isset(sc->sc_enabled_capa,
 	    IWM_UCODE_TLV_CAPA_LAR_SUPPORT_V2);
-	int err;
+
+	if (!iwm_is_lar_supported(sc)) {
+		DPRINTF(("%s: no LAR support\n", __func__));
+		return 0;
+	}
 
 	memset(&mcc_cmd, 0, sizeof(mcc_cmd));
 	mcc_cmd.mcc = htole16(alpha2[0] << 8 | alpha2[1]);
@@ -6248,13 +6282,11 @@ iwm_init_hw(struct iwm_softc *sc)
 		goto err;
 	}
 
-	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_LAR_SUPPORT)) {
-		err = iwm_send_update_mcc_cmd(sc, "ZZ");
-		if (err) {
-			aprint_error_dev(sc->sc_dev,
-			    "could not init LAR (error %d)\n", err);
-			goto err;
-		}
+	err = iwm_send_update_mcc_cmd(sc, "ZZ");
+	if (err) {
+		aprint_error_dev(sc->sc_dev,
+		    "could not init LAR (error %d)\n", err);
+		goto err;
 	}
 
 	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_UMAC_SCAN)) {

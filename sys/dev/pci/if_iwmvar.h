@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.13 2017/01/10 07:34:04 nonaka Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.14 2017/01/10 08:40:27 nonaka Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp 	*/
 
 /*
@@ -204,6 +204,8 @@ struct iwm_nvm_data {
 
 	uint16_t nvm_version;
 	uint8_t max_tx_pwr_half_dbm;
+
+	bool lar_enabled;
 };
 
 /* max bufs per tfd the driver will use */
