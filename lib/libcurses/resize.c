@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.23 2017/01/10 10:13:24 roy Exp $	*/
+/*	$NetBSD: resize.c,v 1.24 2017/01/10 23:28:45 roy Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.23 2017/01/10 10:13:24 roy Exp $");
+__RCSID("$NetBSD: resize.c,v 1.24 2017/01/10 23:28:45 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -145,8 +145,7 @@ is_term_resized(int nlines, int ncols)
 {
 
 	return (nlines > 0 && ncols > 0 &&
-	    (nlines != _cursesi_screen->LINES
-	    + _cursesi_screen->ripped_top + _cursesi_screen->ripped_bottom ||
+	    (nlines != _cursesi_screen->LINES ||
 	    ncols != _cursesi_screen->COLS));
 }
 
@@ -167,7 +166,7 @@ resizeterm(int nlines, int ncols)
 	if (!is_term_resized(nlines, ncols))
 		return OK;
 
-	result = resizeterm(nlines, ncols);
+	result = resize_term(nlines, ncols);
 	clearok(curscr, TRUE);
 	return result;
 }
