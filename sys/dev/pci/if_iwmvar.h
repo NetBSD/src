@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.11 2017/01/08 07:42:00 nonaka Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.12 2017/01/10 05:54:03 nonaka Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp 	*/
 
 /*
@@ -140,8 +140,6 @@ struct iwm_tx_radiotap_header {
 #define IWM_UCODE_SECT_MAX 16
 #define IWM_FWDMASEGSZ (192*1024)
 #define IWM_FWDMASEGSZ_8000 (320*1024)
-/* sanity check value */
-#define IWM_FWMAXSIZE (2*1024*1024)
 
 /*
  * fw_status is used to determine if we've already parsed the firmware file
