@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.463 2017/01/10 08:22:43 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.464 2017/01/10 08:56:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.463 2017/01/10 08:22:43 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.464 2017/01/10 08:56:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3721,6 +3721,10 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 			reg |= WMREG_RFCTL_NEWIPV6EXDIS |WMREG_RFCTL_IPV6EXDIS;
 			CSR_WRITE(sc, WMREG_RFCTL, reg);
 			break;
+		default:
+			break;
+		}
+	} else if ((sc->sc_type >= WM_T_82575) && (sc->sc_type <= WM_T_I211)) {
 		/*
 		 * 82575 Errata XXX, 82576 Errata 46, 82580 Errata 24,
 		 * I350 Errata 37, I210 Errata No. 31 and I211 Errata No. 11:
@@ -3731,20 +3735,10 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 		 * "Malformed IPv6 Extension Headers May Result in LAN Device
 		 * Hang"
 		 */
-		case WM_T_82575:
-		case WM_T_82576:
-		case WM_T_82580:
-		case WM_T_I350:
-		case WM_T_I210:
-		case WM_T_I211:
-		case WM_T_I354:
-			reg = CSR_READ(sc, WMREG_RFCTL);
-			reg |= WMREG_RFCTL_IPV6EXDIS;
-			CSR_WRITE(sc, WMREG_RFCTL, reg);
-			break;
-		default:
-			break;
-		}
+		reg = CSR_READ(sc, WMREG_RFCTL);
+		reg |= WMREG_RFCTL_IPV6EXDIS;
+		CSR_WRITE(sc, WMREG_RFCTL, reg);
+		printf("XXX RFCTL=%08x\n", CSR_READ(sc, WMREG_RFCTL));
 	}
 }
 
