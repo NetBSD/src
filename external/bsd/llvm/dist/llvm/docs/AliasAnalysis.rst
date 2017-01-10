@@ -31,8 +31,7 @@ well together.
 
 This document contains information necessary to successfully implement this
 interface, use it, and to test both sides.  It also explains some of the finer
-points about what exactly results mean.  If you feel that something is unclear
-or should be added, please `let me know <mailto:sabre@nondot.org>`_.
+points about what exactly results mean.  
 
 ``AliasAnalysis`` Class Overview
 ================================
@@ -702,6 +701,12 @@ algorithm will have a lower number of may aliases).
 
 Memory Dependence Analysis
 ==========================
+
+.. note::
+
+  We are currently in the process of migrating things from
+  ``MemoryDependenceAnalysis`` to :doc:`MemorySSA`. Please try to use
+  that instead.
 
 If you're just looking to be a client of alias analysis information, consider
 using the Memory Dependence Analysis interface instead.  MemDep is a lazy,
