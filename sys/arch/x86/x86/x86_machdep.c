@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.80 2016/12/26 17:54:07 cherry Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.81 2017/01/10 09:48:22 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.80 2016/12/26 17:54:07 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.81 2017/01/10 09:48:22 cherry Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -933,12 +933,12 @@ init_x86_msgbuf(void)
 	if (uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x) < atop(sz))
 		sz = ctob(uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x));
 
-	uvm_physseg_unplug(uvm_physseg_get_end(x) - atop(sz), atop(sz));
 	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-        msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(uvm_physseg_get_avail_end(x));
+	msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(uvm_physseg_get_avail_end(x)) - sz;
+	uvm_physseg_unplug(uvm_physseg_get_end(x) - atop(sz), atop(sz));
 
 	/* Now find where the new avail_end is. */
-	avail_end = ctob(uvm_physseg_get_avail_end(x));
+	avail_end = ctob(uvm_physseg_get_highest_frame());
 
 	if (sz == reqsz)
 		return;
