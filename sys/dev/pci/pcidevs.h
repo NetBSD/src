@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1267 2016/12/27 14:10:26 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1268 2017/01/10 05:05:09 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1275 2016/12/27 14:09:57 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1276 2017/01/10 05:04:31 nonaka Exp
  */
 
 /*
@@ -3446,6 +3446,7 @@
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_8260_2	0x24f4		/* Dual Band Wireless AC 8260 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_4165_1	0x24f5		/* Dual Band Wireless AC 4165 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_4165_2	0x24f6		/* Dual Band Wireless AC 4165 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_8265_2	0x24fd		/* Dual Band Wireless AC 8265 */
 #define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH (Camino) */
 #define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
 #define	PCI_PRODUCT_INTEL_82850_HB	0x2530		/* 82850 Host */
