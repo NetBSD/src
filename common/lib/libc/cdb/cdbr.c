@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbr.c,v 1.1 2013/12/11 01:24:08 joerg Exp $	*/
+/*	$NetBSD: cdbr.c,v 1.2 2017/01/10 23:06:06 christos Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbr.c,v 1.1 2013/12/11 01:24:08 joerg Exp $");
+__RCSID("$NetBSD: cdbr.c,v 1.2 2017/01/10 23:06:06 christos Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include "namespace.h"
@@ -156,7 +156,7 @@ cdbr_open(const char *path, int flags)
 #endif
 
 struct cdbr *
-cdbr_open_mem(void *base, size_t size, int flags,
+cdbr_open_mem(void *base, size_t size, int flags __unused,
     void (*unmap)(void *, void *, size_t), void *cookie)
 {
 	struct cdbr *cdbr;
