@@ -18,14 +18,14 @@
 #include "NVPTX.h"
 #include "NVPTXSubtarget.h"
 #include "NVPTXTargetMachine.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetMachine.h"
 #include <fstream>
@@ -195,7 +195,7 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
   void emitSrcInText(StringRef filename, unsigned line);
 
 private:
-  const char *getPassName() const override { return "NVPTX Assembly Printer"; }
+  StringRef getPassName() const override { return "NVPTX Assembly Printer"; }
 
   const Function *F;
   std::string CurrentFnName;
@@ -293,7 +293,7 @@ private:
   bool isLoopHeaderOfNoUnroll(const MachineBasicBlock &MBB) const;
 
   LineReader *reader;
-  LineReader *getReader(std::string);
+  LineReader *getReader(const std::string &);
 
   // Used to control the need to emit .generic() in the initializer of
   // module scope variables.
