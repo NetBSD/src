@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/12/01 20:15:42 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2017/01/10 13:51:36 christos Exp $
 #
 
 USE_FORT?= yes	# data driven bugs?
@@ -41,3 +41,5 @@ magic.h:        magic.h.in
 CLEANFILES+=	magic.h
 
 .include <bsd.lib.mk>
+
+${ALLOBJS}:	magic.h
