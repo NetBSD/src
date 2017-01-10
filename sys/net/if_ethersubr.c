@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.233 2017/01/10 05:40:59 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.234 2017/01/10 05:42:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.233 2017/01/10 05:40:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.234 2017/01/10 05:42:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1620,7 +1620,8 @@ out:
 	return error;
 }
 
-SYSCTL_SETUP(sysctl_net_ether_setup, "sysctl net.ether subtree setup")
+static void
+ether_sysctl_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode = NULL;
 
@@ -1642,5 +1643,7 @@ SYSCTL_SETUP(sysctl_net_ether_setup, "sysctl net.ether subtree setup")
 void
 etherinit(void)
 {
+
 	mutex_init(&bigpktpps_lock, MUTEX_DEFAULT, IPL_NET);
+	ether_sysctl_setup(NULL);
 }
