@@ -116,6 +116,9 @@ def SDTIntBinOp : SDTypeProfile<1, 2, [     // add, and, or, xor, udiv, etc.
 def SDTIntShiftOp : SDTypeProfile<1, 2, [   // shl, sra, srl
   SDTCisSameAs<0, 1>, SDTCisInt<0>, SDTCisInt<2>
 ]>;
+def SDTIntSatNoShOp : SDTypeProfile<1, 2, [   // ssat with no shift
+  SDTCisSameAs<0, 1>, SDTCisInt<2>
+]>;
 def SDTIntBinHiLoOp : SDTypeProfile<2, 2, [ // mulhi, mullo, sdivrem, udivrem
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>,SDTCisInt<0>
 ]>;
@@ -167,7 +170,7 @@ def SDTSelect : SDTypeProfile<1, 3, [       // select
 ]>;
 
 def SDTVSelect : SDTypeProfile<1, 3, [       // vselect
-  SDTCisInt<1>, SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>
+  SDTCisInt<1>, SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>, SDTCisSameNumEltsAs<0, 1>
 ]>;
 
 def SDTSelectCC : SDTypeProfile<1, 5, [     // select_cc
@@ -300,7 +303,9 @@ def SDNPWantParent  : SDNodeProperty;   // ComplexPattern gets the parent
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Pattern Operations
-class SDPatternOperator;
+class SDPatternOperator {
+  list<SDNodeProperty> Properties = [];
+}
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node definitions.
@@ -310,7 +315,7 @@ class SDNode<string opcode, SDTypeProfile typeprof,
              : SDPatternOperator {
   string Opcode  = opcode;
   string SDClass = sdclass;
-  list<SDNodeProperty> Properties = props;
+  let Properties = props;
   SDTypeProfile TypeProfile = typeprof;
 }
 
@@ -391,10 +396,14 @@ def subc       : SDNode<"ISD::SUBC"      , SDTIntBinOp,
                         [SDNPOutGlue]>;
 def sube       : SDNode<"ISD::SUBE"      , SDTIntBinOp,
                         [SDNPOutGlue, SDNPInGlue]>;
-def smin       : SDNode<"ISD::SMIN"      , SDTIntBinOp>;
-def smax       : SDNode<"ISD::SMAX"      , SDTIntBinOp>;
-def umin       : SDNode<"ISD::UMIN"      , SDTIntBinOp>;
-def umax       : SDNode<"ISD::UMAX"      , SDTIntBinOp>;
+def smin       : SDNode<"ISD::SMIN"      , SDTIntBinOp,
+                                  [SDNPCommutative, SDNPAssociative]>;
+def smax       : SDNode<"ISD::SMAX"      , SDTIntBinOp,
+                                  [SDNPCommutative, SDNPAssociative]>;
+def umin       : SDNode<"ISD::UMIN"      , SDTIntBinOp,
+                                  [SDNPCommutative, SDNPAssociative]>;
+def umax       : SDNode<"ISD::UMAX"      , SDTIntBinOp,
+                                  [SDNPCommutative, SDNPAssociative]>;
 
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def bitreverse : SDNode<"ISD::BITREVERSE" , SDTIntUnaryOp>;
@@ -421,11 +430,14 @@ def frem       : SDNode<"ISD::FREM"       , SDTFPBinOp>;
 def fma        : SDNode<"ISD::FMA"        , SDTFPTernaryOp>;
 def fmad       : SDNode<"ISD::FMAD"       , SDTFPTernaryOp>;
 def fabs       : SDNode<"ISD::FABS"       , SDTFPUnaryOp>;
-def fminnum    : SDNode<"ISD::FMINNUM"    , SDTFPBinOp>;
-def fmaxnum    : SDNode<"ISD::FMAXNUM"    , SDTFPBinOp>;
+def fminnum    : SDNode<"ISD::FMINNUM"    , SDTFPBinOp,
+                                  [SDNPCommutative, SDNPAssociative]>;
+def fmaxnum    : SDNode<"ISD::FMAXNUM"    , SDTFPBinOp,
+                                  [SDNPCommutative, SDNPAssociative]>;
 def fminnan    : SDNode<"ISD::FMINNAN"    , SDTFPBinOp>;
 def fmaxnan    : SDNode<"ISD::FMAXNAN"    , SDTFPBinOp>;
 def fgetsign   : SDNode<"ISD::FGETSIGN"   , SDTFPToIntOp>;
+def fcanonicalize : SDNode<"ISD::FCANONICALIZE", SDTFPUnaryOp>;
 def fneg       : SDNode<"ISD::FNEG"       , SDTFPUnaryOp>;
 def fsqrt      : SDNode<"ISD::FSQRT"      , SDTFPUnaryOp>;
 def fsin       : SDNode<"ISD::FSIN"       , SDTFPUnaryOp>;
@@ -438,10 +450,10 @@ def ftrunc     : SDNode<"ISD::FTRUNC"     , SDTFPUnaryOp>;
 def fceil      : SDNode<"ISD::FCEIL"      , SDTFPUnaryOp>;
 def ffloor     : SDNode<"ISD::FFLOOR"     , SDTFPUnaryOp>;
 def fnearbyint : SDNode<"ISD::FNEARBYINT" , SDTFPUnaryOp>;
-def frnd       : SDNode<"ISD::FROUND"     , SDTFPUnaryOp>;
+def fround     : SDNode<"ISD::FROUND"     , SDTFPUnaryOp>;
 
-def fround     : SDNode<"ISD::FP_ROUND"   , SDTFPRoundOp>;
-def fextend    : SDNode<"ISD::FP_EXTEND"  , SDTFPExtendOp>;
+def fpround    : SDNode<"ISD::FP_ROUND"   , SDTFPRoundOp>;
+def fpextend   : SDNode<"ISD::FP_EXTEND"  , SDTFPExtendOp>;
 def fcopysign  : SDNode<"ISD::FCOPYSIGN"  , SDTFPSignOp>;
 
 def sint_to_fp : SDNode<"ISD::SINT_TO_FP" , SDTIntToFPOp>;
@@ -944,6 +956,18 @@ def unalignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
   return St->getAlignment() < St->getMemoryVT().getStoreSize();
 }]>;
 
+// nontemporal load fragments.
+def nontemporalload : PatFrag<(ops node:$ptr),
+                               (load node:$ptr), [{
+  return cast<LoadSDNode>(N)->isNonTemporal();
+}]>;
+
+def alignednontemporalload : PatFrag<(ops node:$ptr),
+                                      (nontemporalload node:$ptr), [{
+  LoadSDNode *Ld = cast<LoadSDNode>(N);
+  return Ld->getAlignment() >= Ld->getMemoryVT().getStoreSize();
+}]>;
+
 // setcc convenience fragments.
 def setoeq : PatFrag<(ops node:$lhs, node:$rhs),
                      (setcc node:$lhs, node:$rhs, SETOEQ)>;
@@ -1141,10 +1165,12 @@ class Pat<dag pattern, dag result> : Pattern<pattern, [result]>;
 // e.g. X86 addressing mode - def addr : ComplexPattern<4, "SelectAddr", [add]>;
 //
 class ComplexPattern<ValueType ty, int numops, string fn,
-                     list<SDNode> roots = [], list<SDNodeProperty> props = []> {
+                     list<SDNode> roots = [], list<SDNodeProperty> props = [],
+                     int complexity = -1> {
   ValueType Ty = ty;
   int NumOperands = numops;
   string SelectFunc = fn;
   list<SDNode> RootNodes = roots;
   list<SDNodeProperty> Properties = props;
+  int Complexity = complexity;
 }

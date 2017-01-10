@@ -52,9 +52,9 @@
 #include <system_error>
 
 // These includes must be last.
-#include <Windows.h>
-#include <WinError.h>
-#include <Dbghelp.h>
+#include <windows.h>
+#include <winerror.h>
+#include <dbghelp.h>
 #include <psapi.h>
 
 using namespace llvm;
@@ -296,7 +296,7 @@ static StringRef ExceptionCodeToString(DWORD ExceptionCode) {
 
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
@@ -337,7 +337,7 @@ int main(int argc, char **argv) {
     errs() << ToolName << ": Program Image Path: " << ProgramToRun << '\n'
            << ToolName << ": Command Line: " << CommandLine << '\n';
 
-  STARTUPINFO StartupInfo;
+  STARTUPINFOA StartupInfo;
   PROCESS_INFORMATION ProcessInfo;
   std::memset(&StartupInfo, 0, sizeof(StartupInfo));
   StartupInfo.cb = sizeof(StartupInfo);
@@ -349,7 +349,7 @@ int main(int argc, char **argv) {
   ::_set_error_mode(_OUT_TO_STDERR);
 
   BOOL success = ::CreateProcessA(ProgramToRun.c_str(),
-                            LPSTR(CommandLine.c_str()),
+                                  const_cast<LPSTR>(CommandLine.c_str()),
                                   NULL,
                                   NULL,
                                   FALSE,
