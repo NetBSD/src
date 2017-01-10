@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.10 2017/01/10 15:31:11 christos Exp $ */
+/* $NetBSD: t_sleep.c,v 1.11 2017/01/10 15:43:59 maya Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -33,12 +33,11 @@
 
 #include <atf-c.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #include <string.h>
-#include <inttypes.h>
 #include <time.h>
 #include <unistd.h>
 
