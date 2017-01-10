@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.12 2017/01/08 19:49:25 christos Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.13 2017/01/10 00:50:57 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.12 2017/01/08 19:49:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.13 2017/01/10 00:50:57 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -77,6 +77,7 @@ struct addr_xlt {
  */
 
 struct kern_history_head kern_histories;
+bool kernhist_sysctl_ready = 0;
 
 int kernhist_print_enabled = 1;
 
@@ -275,20 +276,25 @@ kernhist_print(void *addr, void (*pr)(const char *, ...) __printflike(1,2))
  */
 
 /*
- * sysctl_hist_new()
+ * sysctl_kernhist_new()
  *
- *	Scan the list of histories;  for any history that does not already
- *	have a sysctl node (under kern.hist) we create a new one and record
- *	it's node number.
+ *	If the specified history (or, if no history is specified, any
+ *	history) does not already have a sysctl node (under kern.hist)
+ *	we create a new one and record it's node number.
  */
-static void
-sysctl_hist_new(void)
+void
+sysctl_kernhist_new(struct kern_history *hist)
 {
 	int error;
 	struct kern_history *h;
 	const struct sysctlnode *rnode = NULL;
 
+	if (kernhist_sysctl_ready == 0)
+		return;
+
 	LIST_FOREACH(h, &kern_histories, list) {
+		if (hist && h != hist)
+			continue;
 		if (h->s != 0)
 			continue;
 		error = sysctl_createv(NULL, 0, NULL, &rnode,
@@ -299,6 +305,8 @@ sysctl_hist_new(void)
 			    CTL_KERN, sysctl_hist_node, CTL_CREATE, CTL_EOL);
 		if (error == 0)
 			h->s = rnode->sysctl_num;
+		if (hist == h)
+			break;
 	}
 }
 
@@ -320,7 +328,9 @@ sysctl_kernhist_init(void)
 			CTL_KERN, CTL_CREATE, CTL_EOL);
 	sysctl_hist_node = rnode->sysctl_num;
 
-	sysctl_hist_new();
+	kernhist_sysctl_ready = 1;
+
+	sysctl_kernhist_new(NULL);
 }
 
 /*
@@ -385,8 +395,6 @@ sysctl_kernhist_helper(SYSCTLFN_ARGS)
 	char *next;
 	int i, j;
 	int error;
-
-	sysctl_hist_new();	/* make sure we're up to date */
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return sysctl_query(SYSCTLFN_CALL(rnode));
