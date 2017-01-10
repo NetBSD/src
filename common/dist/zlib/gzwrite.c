@@ -74,8 +74,10 @@ local int gz_comp(state, flush)
     gz_statep state;
     int flush;
 {
-    int ret, writ;
-    unsigned have, put, max = ((unsigned)-1 >> 2) + 1;
+    int ret;
+    ssize_t writ;
+    size_t put;
+    unsigned have, max = ((unsigned)-1 >> 2) + 1;
     z_streamp strm = &(state->strm);
 
     /* allocate memory if this is the first time through */
@@ -225,7 +227,7 @@ local z_size_t gz_write(state, buf, len)
             return 0;
 
         /* directly compress user buffer to file */
-        state->strm.next_in = (z_const Bytef *)buf;
+        state->strm.next_in = __UNCONST(buf);
         do {
             unsigned n = (unsigned)-1;
             if (n > len)
@@ -658,6 +660,7 @@ int ZEXPORT gzclose_w(file)
     }
     gz_error(state, Z_OK, NULL);
     free(state->path);
+/*###661 [cc] error: implicit declaration of function 'close' [-Werror=implicit-function-declaration]%%%*/
     if (close(state->fd) == -1)
         ret = Z_ERRNO;
     free(state);
