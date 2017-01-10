@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.58 2017/01/10 05:54:03 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.59 2017/01/10 07:34:04 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.58 2017/01/10 05:54:03 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.59 2017/01/10 07:34:04 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1003,6 +1003,9 @@ iwm_nic_lock(struct iwm_softc *sc)
 {
 	int rv = 0;
 
+	if (sc->sc_cmd_hold_nic_awake)
+		return 1;
+
 	IWM_SETBITS(sc, IWM_CSR_GP_CNTRL,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
 
@@ -1025,6 +1028,10 @@ iwm_nic_lock(struct iwm_softc *sc)
 static void
 iwm_nic_unlock(struct iwm_softc *sc)
 {
+
+	if (sc->sc_cmd_hold_nic_awake)
+		return;
+
 	IWM_CLRBITS(sc, IWM_CSR_GP_CNTRL,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
 }
@@ -1284,6 +1291,57 @@ fail:	iwm_free_tx_ring(sc, ring);
 }
 
 static void
+iwm_clear_cmd_in_flight(struct iwm_softc *sc)
+{
+
+	if (!sc->apmg_wake_up_wa)
+		return;
+
+	if (!sc->sc_cmd_hold_nic_awake) {
+		aprint_error_dev(sc->sc_dev,
+		    "cmd_hold_nic_awake not set\n");
+		return;
+	}
+
+	sc->sc_cmd_hold_nic_awake = 0;
+	IWM_CLRBITS(sc, IWM_CSR_GP_CNTRL,
+	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
+}
+
+static int
+iwm_set_cmd_in_flight(struct iwm_softc *sc)
+{
+	int ret;
+
+	/*
+	 * wake up the NIC to make sure that the firmware will see the host
+	 * command - we will let the NIC sleep once all the host commands
+	 * returned. This needs to be done only on NICs that have
+	 * apmg_wake_up_wa set.
+	 */
+	if (sc->apmg_wake_up_wa && !sc->sc_cmd_hold_nic_awake) {
+
+		IWM_SETBITS(sc, IWM_CSR_GP_CNTRL,
+		    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
+
+		ret = iwm_poll_bit(sc, IWM_CSR_GP_CNTRL,
+		    IWM_CSR_GP_CNTRL_REG_VAL_MAC_ACCESS_EN,
+		    (IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY |
+		     IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP),
+		    15000);
+		if (ret == 0) {
+			IWM_CLRBITS(sc, IWM_CSR_GP_CNTRL,
+			    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
+			aprint_error_dev(sc->sc_dev,
+			    "failed to wake NIC for hcmd\n");
+			return EIO;
+		}
+		sc->sc_cmd_hold_nic_awake = 1;
+	}
+
+	return 0;
+}
+static void
 iwm_reset_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring)
 {
 	int i;
@@ -1306,6 +1364,9 @@ iwm_reset_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring)
 	sc->qfullmsk &= ~(1 << ring->qid);
 	ring->queued = 0;
 	ring->cur = 0;
+
+	if (ring->qid == IWM_CMD_QUEUE && sc->sc_cmd_hold_nic_awake)
+		iwm_clear_cmd_in_flight(sc);
 }
 
 static void
@@ -3861,16 +3922,10 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	    (char *)(void *)desc - (char *)(void *)ring->desc_dma.vaddr,
 	    sizeof(*desc), BUS_DMASYNC_PREWRITE);
 
-	IWM_SETBITS(sc, IWM_CSR_GP_CNTRL,
-	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
-	if (!iwm_poll_bit(sc, IWM_CSR_GP_CNTRL,
-	    IWM_CSR_GP_CNTRL_REG_VAL_MAC_ACCESS_EN,
-	    (IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY |
-	     IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP), 15000)) {
-		aprint_error_dev(sc->sc_dev, "acquiring device failed\n");
-		err = EBUSY;
+	err = iwm_set_cmd_in_flight(sc);
+	if (err)
 		goto out;
-	}
+	ring->queued++;
 
 #if 0
 	iwm_update_sched(sc, ring->qid, ring->cur, 0, 0);
@@ -3999,6 +4054,16 @@ iwm_cmd_done(struct iwm_softc *sc, int qid, int idx)
 		data->m = NULL;
 	}
 	wakeup(&ring->desc[idx]);
+
+	if (((idx + ring->queued) % IWM_TX_RING_COUNT) != ring->cur) {
+		aprint_error_dev(sc->sc_dev,
+		    "Some HCMDs skipped?: idx=%d queued=%d cur=%d\n",
+		    idx, ring->queued, ring->cur);
+	}
+
+	KASSERT(ring->queued > 0);
+	if (--ring->queued == 0)
+		iwm_clear_cmd_in_flight(sc);
 }
 
 #if 0
@@ -7001,9 +7066,6 @@ iwm_notif_intr(struct iwm_softc *sc)
 		ADVANCE_RXQ(sc);
 	}
 
-	IWM_CLRBITS(sc, IWM_CSR_GP_CNTRL,
-	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
-
 	/*
 	 * Seems like the hardware gets upset unless we align the write by 8??
 	 */
@@ -7349,6 +7411,7 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_WIFI_LINK_3160_2:
 		sc->sc_fwname = "iwlwifi-3160-16.ucode";
 		sc->host_interrupt_operation_mode = 1;
+		sc->apmg_wake_up_wa = 1;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		break;
@@ -7356,6 +7419,7 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_WIFI_LINK_3165_2:
 		sc->sc_fwname = "iwlwifi-7265D-16.ucode";
 		sc->host_interrupt_operation_mode = 0;
+		sc->apmg_wake_up_wa = 1;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		break;
@@ -7363,6 +7427,7 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_WIFI_LINK_7260_2:
 		sc->sc_fwname = "iwlwifi-7260-16.ucode";
 		sc->host_interrupt_operation_mode = 1;
+		sc->apmg_wake_up_wa = 1;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		break;
@@ -7372,6 +7437,7 @@ iwm_attach(device_t parent, device_t self, void *aux)
 		    IWM_CSR_HW_REV_TYPE_7265D ?
 		    "iwlwifi-7265D-16.ucode": "iwlwifi-7265-16.ucode";
 		sc->host_interrupt_operation_mode = 0;
+		sc->apmg_wake_up_wa = 1;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		break;
@@ -7381,6 +7447,7 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_WIFI_LINK_4165_2:
 		sc->sc_fwname = "iwlwifi-8000C-16.ucode";
 		sc->host_interrupt_operation_mode = 0;
+		sc->apmg_wake_up_wa = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
 		break;
