@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.47 2016/05/12 13:31:37 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.48 2017/01/10 20:43:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,12 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.47 2016/05/12 13:31:37 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.48 2017/01/10 20:43:08 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>	/* PIPE_BUF */
+#include <sys/stat.h>
 #include <signal.h>
 #include <string.h>
 #include <fcntl.h>
