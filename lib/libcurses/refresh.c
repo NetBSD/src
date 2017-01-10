@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.84 2017/01/10 09:32:01 roy Exp $	*/
+/*	$NetBSD: refresh.c,v 1.85 2017/01/10 10:33:49 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.84 2017/01/10 09:32:01 roy Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.85 2017/01/10 10:33:49 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -57,6 +57,8 @@ static int _cursesi_wnoutrefresh(SCREEN *, WINDOW *,
 int cellcmp( __LDATA *, __LDATA * );
 int linecmp( __LDATA *, __LDATA *, size_t );
 #endif /* HAVE_WCHAR */
+
+#define	CHECK_INTERVAL		5 /* Change N lines before checking typeahead */
 
 #ifndef _CURSES_USE_MACROS
 
@@ -498,7 +500,7 @@ doupdate(void)
 	WINDOW	*win;
 	__LINE	*wlp, *vlp;
 	short	 wy;
-	int	 dnum, was_cleared;
+	int	 dnum, was_cleared, changed;
 #ifdef HAVE_WCHAR
 	__LDATA *lp;
 	nschar_t *np;
@@ -595,16 +597,6 @@ doupdate(void)
 			quickch();
 	}
 
-	if (_cursesi_screen->checkfd != -1) {
-		struct pollfd fds[1];
-
-		/* If we have input, abort the update. */
-		fds[0].fd = _cursesi_screen->checkfd;
-		fds[0].events = POLLIN;
-		if (poll(fds, 1, 0) > 0)
-			goto cleanup;
-	}
-
 #ifdef DEBUG
 	{
 		int	i, j;
@@ -657,6 +649,7 @@ doupdate(void)
 	}
 #endif /* DEBUG */
 
+	changed = 0;
 	for (wy = 0; wy < win->maxy; wy++) {
 		wlp = win->alines[wy];
 		vlp = _cursesi_screen->__virtscr->alines[win->begy + wy];
@@ -695,6 +688,21 @@ doupdate(void)
 					    "doupdate: line %d notdirty\n", wy);
 #endif /* DEBUG */
 					wlp->flags &= ~(__ISDIRTY | __ISFORCED);
+				}
+
+				/* Check if we have input after
+				 * changing N lines. */
+				if (_cursesi_screen->checkfd != -1 &&
+				    ++changed == CHECK_INTERVAL)
+				{
+					struct pollfd fds[1];
+
+					/* If we have input, abort. */
+					fds[0].fd = _cursesi_screen->checkfd;
+					fds[0].events = POLLIN;
+					if (poll(fds, 1, 0) > 0)
+						goto cleanup;
+					changed = 0;
 				}
 			}
 		}
