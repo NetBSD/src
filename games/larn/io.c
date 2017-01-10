@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.27 2012/06/19 05:30:43 dholland Exp $	*/
+/*	$NetBSD: io.c,v 1.28 2017/01/10 20:41:40 christos Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.27 2012/06/19 05:30:43 dholland Exp $");
+__RCSID("$NetBSD: io.c,v 1.28 2017/01/10 20:41:40 christos Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -71,6 +71,7 @@ __RCSID("$NetBSD: io.c,v 1.27 2012/06/19 05:30:43 dholland Exp $");
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <term.h>
 #include <fcntl.h>
 #include <errno.h>
