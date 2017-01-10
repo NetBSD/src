@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.19 2014/06/13 16:04:41 joerg Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.20 2017/01/10 05:43:27 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifmcstat.c,v 1.19 2014/06/13 16:04:41 joerg Exp $");
+__RCSID("$NetBSD: ifmcstat.c,v 1.20 2017/01/10 05:43:27 ozaki-r Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -79,19 +79,29 @@ inet6_n2a(void *p)
 		return "(invalid)";
 }
 
+static bool
+check_inet6_availability(void)
+{
+	size_t dummy;
+	
+	return sysctlnametomib("net.inet6.multicast", NULL, &dummy) == 0;
+}
+
 int
 main(void)
 {
 	struct if_nameindex  *ifps;
 	size_t i;
-
+	bool inet6_available = check_inet6_availability();
 
 	ifps = if_nameindex();
 	if (ifps == NULL)
 		errx(1, "failed to obtain list of interfaces");
+
 	for (i = 0; ifps[i].if_name != NULL; ++i) {
 		printf("%s:\n", ifps[i].if_name);
-		print_inet6_mcast(ifps[i].if_index, ifps[i].if_name);
+		if (inet6_available)
+			print_inet6_mcast(ifps[i].if_index, ifps[i].if_name);
 		print_ether_mcast(ifps[i].if_index);
 	}
 	if_freenameindex(ifps);
