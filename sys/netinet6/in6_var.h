@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.88 2017/01/04 19:37:14 christos Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.89 2017/01/10 05:42:34 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -819,6 +819,8 @@ int	in6_is_addr_deprecated(struct sockaddr_in6 *);
 struct in6pcb;
 
 #define	LLTABLE6(ifp)	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->lltable)
+
+void	in6_sysctl_multicast_setup(struct sysctllog **);
 
 #endif /* _KERNEL */
 

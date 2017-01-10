@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.230 2017/01/04 19:37:14 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.231 2017/01/10 05:42:34 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.230 2017/01/04 19:37:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.231 2017/01/10 05:42:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -162,6 +162,8 @@ in6_init(void)
 
 	PSLIST_INIT(&in6_ifaddr_list);
 	mutex_init(&in6_ifaddr_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	in6_sysctl_multicast_setup(NULL);
 }
 
 /*

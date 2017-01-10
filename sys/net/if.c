@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.369 2016/12/26 23:21:49 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.370 2017/01/10 05:42:34 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.369 2016/12/26 23:21:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.370 2017/01/10 05:42:34 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -238,6 +238,8 @@ static void if_deferred_start_destroy(struct ifnet *);
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
 #endif
 
+static void if_sysctl_setup(struct sysctllog **);
+
 /*
  * Pointer to stub or real compat_cvtcmd() depending on presence of
  * the compat module
@@ -286,13 +288,8 @@ if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 void
 ifinit(void)
 {
-#if defined(INET)
-	sysctl_net_pktq_setup(NULL, PF_INET);
-#endif
-#ifdef INET6
-	if (in6_present)
-		sysctl_net_pktq_setup(NULL, PF_INET6);
-#endif
+
+	if_sysctl_setup(NULL);
 
 #if (defined(INET) || defined(INET6)) && !defined(IPSEC)
 	encapinit();
@@ -3555,7 +3552,8 @@ out0:
 	return error;
 }
 
-SYSCTL_SETUP(sysctl_net_sdl_setup, "sysctl net.sdl subtree setup")
+static void
+if_sysctl_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode = NULL;
 
@@ -3565,4 +3563,12 @@ SYSCTL_SETUP(sysctl_net_sdl_setup, "sysctl net.sdl subtree setup")
 		       SYSCTL_DESCR("Get active link-layer address"),
 		       if_sdl_sysctl, 0, NULL, 0,
 		       CTL_NET, CTL_CREATE, CTL_EOL);
+
+#if defined(INET)
+	sysctl_net_pktq_setup(NULL, PF_INET);
+#endif
+#ifdef INET6
+	if (in6_present)
+		sysctl_net_pktq_setup(NULL, PF_INET6);
+#endif
 }
