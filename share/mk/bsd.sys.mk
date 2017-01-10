@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.263 2016/12/24 17:44:22 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.264 2017/01/10 17:16:19 maya Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -56,7 +56,7 @@ CFLAGS+=	-Wno-sign-compare
 CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-traditional :}
 .if !defined(NOGCCERROR)
 # Set assembler warnings to be fatal
-CFLAGS+=	-Wa,--fatal-warnings
+CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wa,--fatal-warnings :}
 .endif
 
 .if ${MKRELRO:Uno} != "no"
