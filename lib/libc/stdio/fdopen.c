@@ -1,4 +1,4 @@
-/*	$NetBSD: fdopen.c,v 1.16 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: fdopen.c,v 1.17 2017/01/10 17:00:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,12 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)fdopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fdopen.c,v 1.16 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: fdopen.c,v 1.17 2017/01/10 17:00:58 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <assert.h>
 #include <errno.h>
