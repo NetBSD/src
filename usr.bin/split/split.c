@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.26 2011/09/16 15:39:29 joerg Exp $	*/
+/*	$NetBSD: split.c,v 1.27 2017/01/10 21:14:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,10 +39,11 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.26 2011/09/16 15:39:29 joerg Exp $");
+__RCSID("$NetBSD: split.c,v 1.27 2017/01/10 21:14:13 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <ctype.h>
 #include <err.h>
