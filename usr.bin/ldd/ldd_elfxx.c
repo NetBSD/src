@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd_elfxx.c,v 1.6 2012/07/08 00:53:44 matt Exp $	*/
+/*	$NetBSD: ldd_elfxx.c,v 1.7 2017/01/10 21:11:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,12 +62,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd_elfxx.c,v 1.6 2012/07/08 00:53:44 matt Exp $");
+__RCSID("$NetBSD: ldd_elfxx.c,v 1.7 2017/01/10 21:11:25 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 #include <dirent.h>
 #include <err.h>
