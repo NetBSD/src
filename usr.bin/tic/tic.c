@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.26 2016/11/24 17:12:23 christos Exp $ */
+/* $NetBSD: tic.c,v 1.27 2017/01/10 21:15:23 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,10 +32,11 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.26 2016/11/24 17:12:23 christos Exp $");
+__RCSID("$NetBSD: tic.c,v 1.27 2017/01/10 21:15:23 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
