@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.32 2017/01/02 01:18:42 christos Exp $	*/
+/*	$NetBSD: tcp.h,v 1.33 2017/01/10 20:32:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -160,7 +160,9 @@ struct tcp_info {
 	uint8_t		__tcpi_probes;
 	uint8_t		__tcpi_backoff;
 	uint8_t		tcpi_options;	       /* Options enabled on conn. */
+	/*LINTED: non-portable bitfield*/
 	uint8_t		tcpi_snd_wscale:4,	/* RFC1323 send shift value. */
+	/*LINTED: non-portable bitfield*/
 			tcpi_rcv_wscale:4; /* RFC1323 recv shift value. */
 
 	uint32_t	tcpi_rto;		/* Retransmission timeout (usec). */
