@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac.c,v 1.3 2016/07/01 22:41:39 christos Exp $	*/
+/*	$NetBSD: hmac.c,v 1.4 2017/01/10 17:46:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hmac.c,v 1.3 2016/07/01 22:41:39 christos Exp $");
+__RCSID("$NetBSD: hmac.c,v 1.4 2017/01/10 17:46:26 christos Exp $");
 
 #include <string.h>
 #include <stdlib.h>
@@ -153,7 +153,7 @@ hmac(const char *name,
 	(*h->final)(p, c);
 
 	(*h->init)(c);
-	(*h->update)(c, opad, h->blocksize);
+	(*h->update)(c, opad, (unsigned int)h->blocksize);
 	(*h->update)(c, digest, (unsigned int)h->digsize);
 	(*h->final)(p, c);
 
