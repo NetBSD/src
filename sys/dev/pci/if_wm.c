@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.464 2017/01/10 08:56:02 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.465 2017/01/10 08:57:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.464 2017/01/10 08:56:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.465 2017/01/10 08:57:39 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3738,7 +3738,6 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 		reg = CSR_READ(sc, WMREG_RFCTL);
 		reg |= WMREG_RFCTL_IPV6EXDIS;
 		CSR_WRITE(sc, WMREG_RFCTL, reg);
-		printf("XXX RFCTL=%08x\n", CSR_READ(sc, WMREG_RFCTL));
 	}
 }
 
