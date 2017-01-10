@@ -1,4 +1,4 @@
-/*	$NetBSD: asysctl.c,v 1.1 2014/06/13 15:45:05 joerg Exp $ */
+/*	$NetBSD: asysctl.c,v 1.2 2017/01/10 17:45:58 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: asysctl.c,v 1.1 2014/06/13 15:45:05 joerg Exp $");
+__RCSID("$NetBSD: asysctl.c,v 1.2 2017/01/10 17:45:58 christos Exp $");
 
 #include "namespace.h"
 #include <sys/sysctl.h>
@@ -50,7 +50,7 @@ asysctl(const int *oids, size_t oidlen, size_t *len)
 	data = NULL;
 
 	for (;;) {
-		if (sysctl(oids, oidlen, data, len, NULL, 0) == 0) {
+		if (sysctl(oids, (u_int)oidlen, data, len, NULL, 0) == 0) {
 			if (*len == 0) {
 				free(data);
 				return NULL;
