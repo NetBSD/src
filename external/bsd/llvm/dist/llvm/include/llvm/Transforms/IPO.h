@@ -15,17 +15,20 @@
 #ifndef LLVM_TRANSFORMS_IPO_H
 #define LLVM_TRANSFORMS_IPO_H
 
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringRef.h"
+#include <functional>
+#include <vector>
 
 namespace llvm {
 
-class FunctionInfoIndex;
+struct InlineParams;
+class StringRef;
+class ModuleSummaryIndex;
 class ModulePass;
 class Pass;
 class Function;
 class BasicBlock;
 class GlobalValue;
+class raw_ostream;
 
 //===----------------------------------------------------------------------===//
 //
@@ -40,6 +43,10 @@ ModulePass *createStripSymbolsPass(bool OnlyDebugInfo = false);
 // Only debugging information is not stripped.
 //
 ModulePass *createStripNonDebugSymbolsPass();
+
+/// This function returns a new pass that downgrades the debug info in the
+/// module to line tables only.
+ModulePass *createStripNonLineTableDebugInfoPass();
 
 //===----------------------------------------------------------------------===//
 //
@@ -88,7 +95,7 @@ ModulePass *createGVExtractionPass(std::vector<GlobalValue*>& GVs, bool
 
 //===----------------------------------------------------------------------===//
 /// This pass performs iterative function importing from other modules.
-Pass *createFunctionImportPass(const FunctionInfoIndex *Index = nullptr);
+Pass *createFunctionImportPass();
 
 //===----------------------------------------------------------------------===//
 /// createFunctionInliningPass - Return a new pass object that uses a heuristic
@@ -102,12 +109,7 @@ Pass *createFunctionImportPass(const FunctionInfoIndex *Index = nullptr);
 Pass *createFunctionInliningPass();
 Pass *createFunctionInliningPass(int Threshold);
 Pass *createFunctionInliningPass(unsigned OptLevel, unsigned SizeOptLevel);
-
-//===----------------------------------------------------------------------===//
-/// createAlwaysInlinerPass - Return a new pass object that inlines only
-/// functions that are marked as "always_inline".
-Pass *createAlwaysInlinerPass();
-Pass *createAlwaysInlinerPass(bool InsertLifetime);
+Pass *createFunctionInliningPass(InlineParams &Params);
 
 //===----------------------------------------------------------------------===//
 /// createPruneEHPass - Return a new pass object which transforms invoke
@@ -119,14 +121,17 @@ Pass *createPruneEHPass();
 /// createInternalizePass - This pass loops over all of the functions in the
 /// input module, internalizing all globals (functions and variables) it can.
 ////
-/// The symbols in \p ExportList are never internalized.
+/// Before internalizing a symbol, the callback \p MustPreserveGV is invoked and
+/// gives to the client the ability to prevent internalizing specific symbols.
 ///
 /// The symbol in DSOList are internalized if it is safe to drop them from
 /// the symbol table.
 ///
 /// Note that commandline options that are used with the above function are not
 /// used now!
-ModulePass *createInternalizePass(ArrayRef<const char *> ExportList);
+ModulePass *
+createInternalizePass(std::function<bool(const GlobalValue &)> MustPreserveGV);
+
 /// createInternalizePass - Same as above, but with an empty exportList.
 ModulePass *createInternalizePass();
 
@@ -183,15 +188,6 @@ ModulePass *createBlockExtractorPass();
 ModulePass *createStripDeadPrototypesPass();
 
 //===----------------------------------------------------------------------===//
-/// createPostOrderFunctionAttrsPass - This pass walks SCCs of the call graph
-/// in post-order to deduce and propagate function attributes. It can discover
-/// functions that do not access memory, or only read memory, and give them the
-/// readnone/readonly attribute. It also discovers function arguments that are
-/// not captured by the function and marks them with the nocapture attribute.
-///
-Pass *createPostOrderFunctionAttrsPass();
-
-//===----------------------------------------------------------------------===//
 /// createReversePostOrderFunctionAttrsPass - This pass walks SCCs of the call
 /// graph in RPO to deduce and propagate function attributes. Currently it
 /// only handles synthesizing norecurse attributes.
@@ -219,18 +215,40 @@ ModulePass *createMetaRenamerPass();
 /// manager.
 ModulePass *createBarrierNoopPass();
 
-/// \brief This pass lowers bitset metadata and the llvm.bitset.test intrinsic
-/// to bitsets.
-ModulePass *createLowerBitSetsPass();
+/// What to do with the summary when running the LowerTypeTests pass.
+enum class LowerTypeTestsSummaryAction {
+  None,   ///< Do nothing.
+  Import, ///< Import typeid resolutions from summary and globals.
+  Export, ///< Export typeid resolutions to summary and globals.
+};
+
+/// \brief This pass lowers type metadata and the llvm.type.test intrinsic to
+/// bitsets.
+/// \param Action What to do with the summary passed as Index.
+/// \param Index The summary to use for importing or exporting, this can be null
+///              when Action is None.
+ModulePass *createLowerTypeTestsPass(LowerTypeTestsSummaryAction Action,
+                                     ModuleSummaryIndex *Index);
 
 /// \brief This pass export CFI checks for use by external modules.
 ModulePass *createCrossDSOCFIPass();
+
+/// \brief This pass implements whole-program devirtualization using type
+/// metadata.
+ModulePass *createWholeProgramDevirtPass();
+
+/// This pass splits globals into pieces for the benefit of whole-program
+/// devirtualization and control-flow integrity.
+ModulePass *createGlobalSplitPass();
 
 //===----------------------------------------------------------------------===//
 // SampleProfilePass - Loads sample profile data from disk and generates
 // IR metadata to reflect the profile.
 ModulePass *createSampleProfileLoaderPass();
 ModulePass *createSampleProfileLoaderPass(StringRef Name);
+
+/// Write ThinLTO-ready bitcode to Str.
+ModulePass *createWriteThinLTOBitcodePass(raw_ostream &Str);
 
 } // End llvm namespace
 

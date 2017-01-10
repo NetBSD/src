@@ -26,7 +26,7 @@ EVT EVT::changeExtendedTypeToInteger() const {
 
 EVT EVT::changeExtendedVectorElementTypeToInteger() const {
   LLVMContext &Context = LLVMTy->getContext();
-  EVT IntTy = getIntegerVT(Context, getVectorElementType().getSizeInBits());
+  EVT IntTy = getIntegerVT(Context, getScalarSizeInBits());
   return getVectorVT(Context, IntTy, getVectorNumElements());
 }
 
@@ -53,6 +53,11 @@ bool EVT::isExtendedFloatingPoint() const {
 bool EVT::isExtendedInteger() const {
   assert(isExtended() && "Type is not extended!");
   return LLVMTy->isIntOrIntVectorTy();
+}
+
+bool EVT::isExtendedScalarInteger() const {
+  assert(isExtended() && "Type is not extended!");
+  return LLVMTy->isIntegerTy();
 }
 
 bool EVT::isExtendedVector() const {

@@ -34,12 +34,16 @@ public:
     void *Mem = ::operator new(totalSizeToAlloc<short>(NumShorts));
     return new (Mem) Class1(ShortArray, NumShorts);
   }
+  void operator delete(void *p) { ::operator delete(p); }
 
   short get(unsigned Num) const { return getTrailingObjects<short>()[Num]; }
 
   unsigned numShorts() const { return NumShorts; }
 
   // Pull some protected members in as public, for testability.
+  template <typename... Ty>
+  using FixedSizeStorage = TrailingObjects::FixedSizeStorage<Ty...>;
+
   using TrailingObjects::totalSizeToAlloc;
   using TrailingObjects::additionalSizeToAlloc;
   using TrailingObjects::getTrailingObjects;
@@ -78,6 +82,7 @@ public:
       *C->getTrailingObjects<double>() = D;
     return C;
   }
+  void operator delete(void *p) { ::operator delete(p); }
 
   short getShort() const {
     if (!HasShort)
@@ -92,6 +97,9 @@ public:
   }
 
   // Pull some protected members in as public, for testability.
+  template <typename... Ty>
+  using FixedSizeStorage = TrailingObjects::FixedSizeStorage<Ty...>;
+
   using TrailingObjects::totalSizeToAlloc;
   using TrailingObjects::additionalSizeToAlloc;
   using TrailingObjects::getTrailingObjects;
@@ -104,7 +112,16 @@ TEST(TrailingObjects, OneArg) {
   EXPECT_EQ(Class1::additionalSizeToAlloc<short>(1), sizeof(short));
   EXPECT_EQ(Class1::additionalSizeToAlloc<short>(3), sizeof(short) * 3);
 
+  EXPECT_EQ(alignof(Class1),
+            alignof(Class1::FixedSizeStorage<short>::with_counts<1>::type));
+  EXPECT_EQ(sizeof(Class1::FixedSizeStorage<short>::with_counts<1>::type),
+            llvm::alignTo(Class1::totalSizeToAlloc<short>(1), alignof(Class1)));
   EXPECT_EQ(Class1::totalSizeToAlloc<short>(1), sizeof(Class1) + sizeof(short));
+
+  EXPECT_EQ(alignof(Class1),
+            alignof(Class1::FixedSizeStorage<short>::with_counts<3>::type));
+  EXPECT_EQ(sizeof(Class1::FixedSizeStorage<short>::with_counts<3>::type),
+            llvm::alignTo(Class1::totalSizeToAlloc<short>(3), alignof(Class1)));
   EXPECT_EQ(Class1::totalSizeToAlloc<short>(3),
             sizeof(Class1) + sizeof(short) * 3);
 
@@ -118,9 +135,8 @@ TEST(TrailingObjects, TwoArg) {
   Class2 *C1 = Class2::create(4);
   Class2 *C2 = Class2::create(0, 4.2);
 
-  EXPECT_EQ(sizeof(Class2), llvm::RoundUpToAlignment(sizeof(bool) * 2,
-                                                     llvm::alignOf<double>()));
-  EXPECT_EQ(llvm::alignOf<Class2>(), llvm::alignOf<double>());
+  EXPECT_EQ(sizeof(Class2), llvm::alignTo(sizeof(bool) * 2, alignof(double)));
+  EXPECT_EQ(alignof(Class2), alignof(double));
 
   EXPECT_EQ((Class2::additionalSizeToAlloc<double, short>(1, 0)),
             sizeof(double));
@@ -129,6 +145,14 @@ TEST(TrailingObjects, TwoArg) {
   EXPECT_EQ((Class2::additionalSizeToAlloc<double, short>(3, 1)),
             sizeof(double) * 3 + sizeof(short));
 
+  EXPECT_EQ(
+      alignof(Class2),
+      (alignof(
+          Class2::FixedSizeStorage<double, short>::with_counts<1, 1>::type)));
+  EXPECT_EQ(
+      sizeof(Class2::FixedSizeStorage<double, short>::with_counts<1, 1>::type),
+      llvm::alignTo(Class2::totalSizeToAlloc<double, short>(1, 1),
+                    alignof(Class2)));
   EXPECT_EQ((Class2::totalSizeToAlloc<double, short>(1, 1)),
             sizeof(Class2) + sizeof(double) + sizeof(short));
 
@@ -162,8 +186,18 @@ class Class3 final : public TrailingObjects<Class3, double, short, bool> {
 TEST(TrailingObjects, ThreeArg) {
   EXPECT_EQ((Class3::additionalSizeToAlloc<double, short, bool>(1, 1, 3)),
             sizeof(double) + sizeof(short) + 3 * sizeof(bool));
-  EXPECT_EQ(sizeof(Class3),
-            llvm::RoundUpToAlignment(1, llvm::alignOf<double>()));
+  EXPECT_EQ(sizeof(Class3), llvm::alignTo(1, alignof(double)));
+
+  EXPECT_EQ(
+      alignof(Class3),
+      (alignof(Class3::FixedSizeStorage<double, short,
+                                        bool>::with_counts<1, 1, 3>::type)));
+  EXPECT_EQ(
+      sizeof(Class3::FixedSizeStorage<double, short,
+                                      bool>::with_counts<1, 1, 3>::type),
+      llvm::alignTo(Class3::totalSizeToAlloc<double, short, bool>(1, 1, 3),
+                    alignof(Class3)));
+
   std::unique_ptr<char[]> P(new char[1000]);
   Class3 *C = reinterpret_cast<Class3 *>(P.get());
   EXPECT_EQ(C->getTrailingObjects<double>(), reinterpret_cast<double *>(C + 1));
@@ -183,13 +217,22 @@ class Class4 final : public TrailingObjects<Class4, char, long> {
 
 TEST(TrailingObjects, Realignment) {
   EXPECT_EQ((Class4::additionalSizeToAlloc<char, long>(1, 1)),
-            llvm::RoundUpToAlignment(sizeof(long) + 1, llvm::alignOf<long>()));
-  EXPECT_EQ(sizeof(Class4), llvm::RoundUpToAlignment(1, llvm::alignOf<long>()));
+            llvm::alignTo(sizeof(long) + 1, alignof(long)));
+  EXPECT_EQ(sizeof(Class4), llvm::alignTo(1, alignof(long)));
+
+  EXPECT_EQ(
+      alignof(Class4),
+      (alignof(Class4::FixedSizeStorage<char, long>::with_counts<1, 1>::type)));
+  EXPECT_EQ(
+      sizeof(Class4::FixedSizeStorage<char, long>::with_counts<1, 1>::type),
+      llvm::alignTo(Class4::totalSizeToAlloc<char, long>(1, 1),
+                    alignof(Class4)));
+
   std::unique_ptr<char[]> P(new char[1000]);
   Class4 *C = reinterpret_cast<Class4 *>(P.get());
   EXPECT_EQ(C->getTrailingObjects<char>(), reinterpret_cast<char *>(C + 1));
   EXPECT_EQ(C->getTrailingObjects<long>(),
             reinterpret_cast<long *>(llvm::alignAddr(
-                reinterpret_cast<char *>(C + 1) + 1, llvm::alignOf<long>())));
+                reinterpret_cast<char *>(C + 1) + 1, alignof(long))));
 }
 }
