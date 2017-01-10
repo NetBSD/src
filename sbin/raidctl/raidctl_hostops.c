@@ -1,4 +1,4 @@
-/*	$NetBSD: raidctl_hostops.c,v 1.2 2011/02/09 11:22:49 pooka Exp $	*/
+/*	$NetBSD: raidctl_hostops.c,v 1.3 2017/01/10 20:47:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,11 +28,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: raidctl_hostops.c,v 1.2 2011/02/09 11:22:49 pooka Exp $");
+__RCSID("$NetBSD: raidctl_hostops.c,v 1.3 2017/01/10 20:47:05 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #include <fcntl.h>
 #include <unistd.h>
