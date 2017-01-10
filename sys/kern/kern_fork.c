@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.197 2017/01/09 00:31:30 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.198 2017/01/10 00:48:37 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.197 2017/01/09 00:31:30 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.198 2017/01/10 00:48:37 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -581,6 +581,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 		KSI_INIT_EMPTY(&ksi);
 		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_CHLD;
 		ksi.ksi_lid = l1->l_lid;
 		kpsignal(p1, &ksi, NULL);
 	}
