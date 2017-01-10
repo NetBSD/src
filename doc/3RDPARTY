@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1395 2017/01/09 09:54:34 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1396 2017/01/10 01:29:31 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1444,7 +1444,7 @@ Notes:
 See /usr/src/external/bsd/wpa/NetBSD-upgrade for update instructions.
 
 Package:	zlib
-Version:	1.2.3
+Version:	1.2.10
 Current Vers:	1.2.10
 Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
 Archive Site:	http://www.zlib.net/
@@ -1455,6 +1455,7 @@ License:	BSD (3-clause)
 Location:	common/dist/zlib
 Notes:
 Imported to src/common/dist/zlib and shared by the kernel and userland.
+Remember to run cleantags
 
 Package:	services, protocols
 Version:	2013-02-21 (services), 2013-02-17 (protocols)
