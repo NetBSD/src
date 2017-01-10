@@ -1,4 +1,4 @@
-/*	$NetBSD: output_db.c,v 1.1 2010/04/25 00:54:46 joerg Exp $	*/
+/*	$NetBSD: output_db.c,v 1.2 2017/01/10 21:04:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,10 +31,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: output_db.c,v 1.1 2010/04/25 00:54:46 joerg Exp $");
+__RCSID("$NetBSD: output_db.c,v 1.2 2017/01/10 21:04:58 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <assert.h>
 #include <db.h>
