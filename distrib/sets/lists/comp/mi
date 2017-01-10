@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2100 2017/01/07 04:44:12 ozaki-r Exp $
+#	$NetBSD: mi,v 1.2101 2017/01/10 10:13:24 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -8689,6 +8689,7 @@
 ./usr/share/man/cat3/rintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rintl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ripemd.0			comp-obsolete		obsolete
+./usr/share/man/cat3/ripoffline.0		comp-c-catman		.cat
 ./usr/share/man/cat3/rmd160.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rmtops.0			comp-c-catman		.cat
 ./usr/share/man/cat3/round.0			comp-c-catman		.cat
@@ -16037,6 +16038,7 @@
 ./usr/share/man/html3/rint.html			comp-c-htmlman		html
 ./usr/share/man/html3/rintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/rintl.html		comp-c-htmlman		html
+./usr/share/man/html3/ripoffline.html		comp-c-htmlman		html
 ./usr/share/man/html3/rmd160.html		comp-c-htmlman		html
 ./usr/share/man/html3/rmtops.html		comp-c-htmlman		html
 ./usr/share/man/html3/round.html		comp-c-htmlman		html
@@ -23384,6 +23386,7 @@
 ./usr/share/man/man3/rintf.3			comp-c-man		.man
 ./usr/share/man/man3/rintl.3			comp-c-man		.man
 ./usr/share/man/man3/ripemd.3			comp-obsolete		obsolete
+./usr/share/man/man3/ripoffline.3		comp-c-man		.man
 ./usr/share/man/man3/rmd160.3			comp-c-man		.man
 ./usr/share/man/man3/rmtops.3			comp-c-man		.man
 ./usr/share/man/man3/round.3			comp-c-man		.man
