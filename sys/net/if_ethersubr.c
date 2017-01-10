@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.232 2016/12/31 15:07:02 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.233 2017/01/10 05:40:59 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.232 2016/12/31 15:07:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.233 2017/01/10 05:40:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -967,7 +967,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 		if_set_sadl(ifp, lla, ETHER_ADDR_LEN, !ETHER_IS_LOCAL(lla));
 
 	LIST_INIT(&ec->ec_multiaddrs);
-	ec->ec_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	ec->ec_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 #ifdef MBUFTRACE
@@ -1535,13 +1535,15 @@ static int
 ether_multicast_sysctl(SYSCTLFN_ARGS)
 {
 	struct ether_multi *enm;
-	struct ether_multi_sysctl addr;
 	struct ifnet *ifp;
 	struct ethercom *ec;
 	int error = 0;
 	size_t written;
 	struct psref psref;
 	int bound, s;
+	unsigned int multicnt;
+	struct ether_multi_sysctl *addrs;
+	int i;
 
 	if (namelen != 1)
 		return EINVAL;
@@ -1561,30 +1563,55 @@ ether_multicast_sysctl(SYSCTLFN_ARGS)
 
 	if (oldp == NULL) {
 		if_put(ifp, &psref);
-		*oldlenp = ec->ec_multicnt * sizeof(addr);
+		*oldlenp = ec->ec_multicnt * sizeof(*addrs);
 		goto out;
 	}
 
-	memset(&addr, 0, sizeof(addr));
-	error = 0;
-	written = 0;
+	/*
+	 * ec->ec_lock is a spin mutex so we cannot call sysctl_copyout, which
+	 * is sleepable, with holding it. Copy data to a local buffer first
+	 * with holding it and then call sysctl_copyout without holding it.
+	 */
+retry:
+	multicnt = ec->ec_multicnt;
+	addrs = kmem_alloc(sizeof(*addrs) * multicnt, KM_SLEEP);
 
 	s = splnet();
 	mutex_enter(ec->ec_lock);
+	if (multicnt < ec->ec_multicnt) {
+		/* The number of multicast addresses have increased */
+		mutex_exit(ec->ec_lock);
+		splx(s);
+		kmem_free(addrs, sizeof(*addrs) * multicnt);
+		goto retry;
+	}
+
+	i = 0;
 	LIST_FOREACH(enm, &ec->ec_multiaddrs, enm_list) {
-		if (written + sizeof(addr) > *oldlenp)
-			break;
-		addr.enm_refcount = enm->enm_refcount;
-		memcpy(addr.enm_addrlo, enm->enm_addrlo, ETHER_ADDR_LEN);
-		memcpy(addr.enm_addrhi, enm->enm_addrhi, ETHER_ADDR_LEN);
-		error = sysctl_copyout(l, &addr, oldp, sizeof(addr));
-		if (error)
-			break;
-		written += sizeof(addr);
-		oldp = (char *)oldp + sizeof(addr);
+		struct ether_multi_sysctl *addr = &addrs[i];
+		addr->enm_refcount = enm->enm_refcount;
+		memcpy(addr->enm_addrlo, enm->enm_addrlo, ETHER_ADDR_LEN);
+		memcpy(addr->enm_addrhi, enm->enm_addrhi, ETHER_ADDR_LEN);
+		i++;
 	}
 	mutex_exit(ec->ec_lock);
 	splx(s);
+
+	error = 0;
+	written = 0;
+	for (i = 0; i < multicnt; i++) {
+		struct ether_multi_sysctl *addr = &addrs[i];
+
+		if (written + sizeof(*addr) > *oldlenp)
+			break;
+		error = sysctl_copyout(l, addr, oldp, sizeof(*addr));
+		if (error)
+			break;
+		written += sizeof(*addr);
+		oldp = (char *)oldp + sizeof(*addr);
+	}
+	kmem_free(addrs, sizeof(*addrs) * multicnt);
+
 	if_put(ifp, &psref);
 
 	*oldlenp = written;
