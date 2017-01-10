@@ -17,12 +17,10 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GenericDomTreeConstruction.h"
 #include "llvm/Support/raw_ostream.h"
@@ -30,7 +28,7 @@
 using namespace llvm;
 
 // Always verify dominfo if expensive checking is enabled.
-#ifdef XDEBUG
+#ifdef EXPENSIVE_CHECKS
 static bool VerifyDomInfo = true;
 #else
 static bool VerifyDomInfo = false;
@@ -66,9 +64,13 @@ template class llvm::DomTreeNodeBase<BasicBlock>;
 template class llvm::DominatorTreeBase<BasicBlock>;
 
 template void llvm::Calculate<Function, BasicBlock *>(
-    DominatorTreeBase<GraphTraits<BasicBlock *>::NodeType> &DT, Function &F);
+    DominatorTreeBase<
+        typename std::remove_pointer<GraphTraits<BasicBlock *>::NodeRef>::type>
+        &DT,
+    Function &F);
 template void llvm::Calculate<Function, Inverse<BasicBlock *>>(
-    DominatorTreeBase<GraphTraits<Inverse<BasicBlock *>>::NodeType> &DT,
+    DominatorTreeBase<typename std::remove_pointer<
+        GraphTraits<Inverse<BasicBlock *>>::NodeRef>::type> &DT,
     Function &F);
 
 // dominates - Return true if Def dominates a use in User. This performs
@@ -302,27 +304,28 @@ void DominatorTree::verifyDomTree() const {
 //
 //===----------------------------------------------------------------------===//
 
-DominatorTree DominatorTreeAnalysis::run(Function &F) {
+DominatorTree DominatorTreeAnalysis::run(Function &F,
+                                         FunctionAnalysisManager &) {
   DominatorTree DT;
   DT.recalculate(F);
   return DT;
 }
 
-char DominatorTreeAnalysis::PassID;
+AnalysisKey DominatorTreeAnalysis::Key;
 
 DominatorTreePrinterPass::DominatorTreePrinterPass(raw_ostream &OS) : OS(OS) {}
 
 PreservedAnalyses DominatorTreePrinterPass::run(Function &F,
-                                                FunctionAnalysisManager *AM) {
+                                                FunctionAnalysisManager &AM) {
   OS << "DominatorTree for function: " << F.getName() << "\n";
-  AM->getResult<DominatorTreeAnalysis>(F).print(OS);
+  AM.getResult<DominatorTreeAnalysis>(F).print(OS);
 
   return PreservedAnalyses::all();
 }
 
 PreservedAnalyses DominatorTreeVerifierPass::run(Function &F,
-                                                 FunctionAnalysisManager *AM) {
-  AM->getResult<DominatorTreeAnalysis>(F).verifyDomTree();
+                                                 FunctionAnalysisManager &AM) {
+  AM.getResult<DominatorTreeAnalysis>(F).verifyDomTree();
 
   return PreservedAnalyses::all();
 }

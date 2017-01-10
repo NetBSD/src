@@ -7,44 +7,68 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Simplistic RDF-based copy propagation.
+// RDF-based copy propagation.
 
 #include "RDFCopy.h"
 #include "RDFGraph.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
-
-#include <atomic>
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
+using namespace llvm;
+using namespace rdf;
 
 #ifndef NDEBUG
 static cl::opt<unsigned> CpLimit("rdf-cp-limit", cl::init(0), cl::Hidden);
 static unsigned CpCount = 0;
 #endif
 
-using namespace llvm;
-using namespace rdf;
+bool CopyPropagation::interpretAsCopy(const MachineInstr *MI, EqualityMap &EM) {
+  unsigned Opc = MI->getOpcode();
+  switch (Opc) {
+    case TargetOpcode::COPY: {
+      const MachineOperand &Dst = MI->getOperand(0);
+      const MachineOperand &Src = MI->getOperand(1);
+      RegisterRef DstR = DFG.makeRegRef(Dst.getReg(), Dst.getSubReg());
+      RegisterRef SrcR = DFG.makeRegRef(Src.getReg(), Src.getSubReg());
+      assert(TargetRegisterInfo::isPhysicalRegister(DstR.Reg));
+      assert(TargetRegisterInfo::isPhysicalRegister(SrcR.Reg));
+      const TargetRegisterInfo &TRI = DFG.getTRI();
+      if (TRI.getMinimalPhysRegClass(DstR.Reg) !=
+          TRI.getMinimalPhysRegClass(SrcR.Reg))
+        return false;
+      EM.insert(std::make_pair(DstR, SrcR));
+      return true;
+    }
+    case TargetOpcode::REG_SEQUENCE:
+      llvm_unreachable("Unexpected REG_SEQUENCE");
+  }
+  return false;
+}
 
-void CopyPropagation::recordCopy(NodeAddr<StmtNode*> SA, MachineInstr *MI) {
-  assert(MI->getOpcode() == TargetOpcode::COPY);
-  const MachineOperand &Op0 = MI->getOperand(0), &Op1 = MI->getOperand(1);
-  RegisterRef DstR = { Op0.getReg(), Op0.getSubReg() };
-  RegisterRef SrcR = { Op1.getReg(), Op1.getSubReg() };
-  auto FS = DefM.find(SrcR);
-  if (FS == DefM.end() || FS->second.empty())
-    return;
+
+void CopyPropagation::recordCopy(NodeAddr<StmtNode*> SA, EqualityMap &EM) {
+  CopyMap.insert(std::make_pair(SA.Id, EM));
   Copies.push_back(SA.Id);
-  RDefMap[SrcR][SA.Id] = FS->second.top()->Id;
-  // Insert DstR into the map.
-  RDefMap[DstR];
+
+  for (auto I : EM) {
+    auto FS = DefM.find(I.second.Reg);
+    if (FS == DefM.end() || FS->second.empty())
+      continue; // Undefined source
+    RDefMap[I.second][SA.Id] = FS->second.top()->Id;
+    // Insert DstR into the map.
+    RDefMap[I.first];
+  }
 }
 
 
 void CopyPropagation::updateMap(NodeAddr<InstrNode*> IA) {
   RegisterSet RRs;
   for (NodeAddr<RefNode*> RA : IA.Addr->members(DFG))
-    RRs.insert(RA.Addr->getRegRef());
+    RRs.insert(RA.Addr->getRegRef(DFG));
   bool Common = false;
   for (auto &R : RDefMap) {
     if (!RRs.count(R.first))
@@ -58,7 +82,7 @@ void CopyPropagation::updateMap(NodeAddr<InstrNode*> IA) {
   for (auto &R : RDefMap) {
     if (!RRs.count(R.first))
       continue;
-    auto F = DefM.find(R.first);
+    auto F = DefM.find(R.first.Reg);
     if (F == DefM.end() || F->second.empty())
       continue;
     R.second[IA.Id] = F->second.top()->Id;
@@ -74,9 +98,9 @@ bool CopyPropagation::scanBlock(MachineBasicBlock *B) {
   for (NodeAddr<InstrNode*> IA : BA.Addr->members(DFG)) {
     if (DFG.IsCode<NodeAttrs::Stmt>(IA)) {
       NodeAddr<StmtNode*> SA = IA;
-      MachineInstr *MI = SA.Addr->getCode();
-      if (MI->isCopy())
-        recordCopy(SA, MI);
+      EqualityMap EM;
+      if (interpretAsCopy(SA.Addr->getCode(), EM))
+        recordCopy(SA, EM);
     }
 
     updateMap(IA);
@@ -97,8 +121,14 @@ bool CopyPropagation::run() {
 
   if (trace()) {
     dbgs() << "Copies:\n";
-    for (auto I : Copies)
-      dbgs() << *DFG.addr<StmtNode*>(I).Addr->getCode();
+    for (auto I : Copies) {
+      dbgs() << "Instr: " << *DFG.addr<StmtNode*>(I).Addr->getCode();
+      dbgs() << "   eq: {";
+      for (auto J : CopyMap[I])
+        dbgs() << ' ' << Print<RegisterRef>(J.first, DFG) << '='
+               << Print<RegisterRef>(J.second, DFG);
+      dbgs() << " }\n";
+    }
     dbgs() << "\nRDef map:\n";
     for (auto R : RDefMap) {
       dbgs() << Print<RegisterRef>(R.first, DFG) << " -> {";
@@ -110,70 +140,100 @@ bool CopyPropagation::run() {
   }
 
   bool Changed = false;
-  NodeSet Deleted;
 #ifndef NDEBUG
   bool HasLimit = CpLimit.getNumOccurrences() > 0;
 #endif
 
-  for (auto I : Copies) {
+  auto MinPhysReg = [this] (RegisterRef RR) -> unsigned {
+    const TargetRegisterInfo &TRI = DFG.getTRI();
+    const TargetRegisterClass &RC = *TRI.getMinimalPhysRegClass(RR.Reg);
+    if ((RC.LaneMask & RR.Mask) == RC.LaneMask)
+      return RR.Reg;
+    for (MCSubRegIndexIterator S(RR.Reg, &TRI); S.isValid(); ++S)
+      if (RR.Mask == TRI.getSubRegIndexLaneMask(S.getSubRegIndex()))
+        return S.getSubReg();
+    llvm_unreachable("Should have found a register");
+    return 0;
+  };
+
+  for (auto C : Copies) {
 #ifndef NDEBUG
     if (HasLimit && CpCount >= CpLimit)
       break;
 #endif
-    if (Deleted.count(I))
+    auto SA = DFG.addr<InstrNode*>(C);
+    auto FS = CopyMap.find(SA.Id);
+    if (FS == CopyMap.end())
       continue;
-    auto SA = DFG.addr<InstrNode*>(I);
-    NodeList Ds = SA.Addr->members_if(DFG.IsDef, DFG);
-    if (Ds.size() != 1)
-      continue;
-    NodeAddr<DefNode*> DA = Ds[0];
-    RegisterRef DR0 = DA.Addr->getRegRef();
-    NodeList Us = SA.Addr->members_if(DFG.IsUse, DFG);
-    if (Us.size() != 1)
-      continue;
-    NodeAddr<UseNode*> UA0 = Us[0];
-    RegisterRef UR0 = UA0.Addr->getRegRef();
-    NodeId RD0 = UA0.Addr->getReachingDef();
 
-    for (NodeId N = DA.Addr->getReachedUse(), NextN; N; N = NextN) {
-      auto UA = DFG.addr<UseNode*>(N);
-      NextN = UA.Addr->getSibling();
-      uint16_t F = UA.Addr->getFlags();
-      if ((F & NodeAttrs::PhiRef) || (F & NodeAttrs::Fixed))
+    EqualityMap &EM = FS->second;
+    for (NodeAddr<DefNode*> DA : SA.Addr->members_if(DFG.IsDef, DFG)) {
+      RegisterRef DR = DA.Addr->getRegRef(DFG);
+      auto FR = EM.find(DR);
+      if (FR == EM.end())
         continue;
-      if (UA.Addr->getRegRef() != DR0)
+      RegisterRef SR = FR->second;
+      if (DR == SR)
         continue;
-      NodeAddr<InstrNode*> IA = UA.Addr->getOwner(DFG);
-      assert(DFG.IsCode<NodeAttrs::Stmt>(IA));
-      MachineInstr *MI = NodeAddr<StmtNode*>(IA).Addr->getCode();
-      if (RDefMap[UR0][IA.Id] != RD0)
-        continue;
-      MachineOperand &Op = UA.Addr->getOp();
-      if (Op.isTied())
-        continue;
-      if (trace()) {
-        dbgs() << "can replace " << Print<RegisterRef>(DR0, DFG)
-               << " with " << Print<RegisterRef>(UR0, DFG) << " in "
-               << *NodeAddr<StmtNode*>(IA).Addr->getCode();
-      }
 
-      Op.setReg(UR0.Reg);
-      Op.setSubReg(UR0.Sub);
-      Changed = true;
-#ifndef NDEBUG
-      if (HasLimit && CpCount >= CpLimit)
-        break;
-      CpCount++;
-#endif
+      auto &RDefSR = RDefMap[SR];
+      NodeId RDefSR_SA = RDefSR[SA.Id];
 
-      if (MI->isCopy()) {
-        MachineOperand &Op0 = MI->getOperand(0), &Op1 = MI->getOperand(1);
-        if (Op0.getReg() == Op1.getReg() && Op0.getSubReg() == Op1.getSubReg())
-          MI->eraseFromParent();
-        Deleted.insert(IA.Id);
-      }
-    }
-  }
+      for (NodeId N = DA.Addr->getReachedUse(), NextN; N; N = NextN) {
+        auto UA = DFG.addr<UseNode*>(N);
+        NextN = UA.Addr->getSibling();
+        uint16_t F = UA.Addr->getFlags();
+        if ((F & NodeAttrs::PhiRef) || (F & NodeAttrs::Fixed))
+          continue;
+        if (UA.Addr->getRegRef(DFG) != DR)
+          continue;
+
+        NodeAddr<InstrNode*> IA = UA.Addr->getOwner(DFG);
+        assert(DFG.IsCode<NodeAttrs::Stmt>(IA));
+        if (RDefSR[IA.Id] != RDefSR_SA)
+          continue;
+
+        MachineOperand &Op = UA.Addr->getOp();
+        if (Op.isTied())
+          continue;
+        if (trace()) {
+          dbgs() << "Can replace " << Print<RegisterRef>(DR, DFG)
+                 << " with " << Print<RegisterRef>(SR, DFG) << " in "
+                 << *NodeAddr<StmtNode*>(IA).Addr->getCode();
+        }
+
+        unsigned NewReg = MinPhysReg(SR);
+        Op.setReg(NewReg);
+        Op.setSubReg(0);
+        DFG.unlinkUse(UA, false);
+        if (RDefSR_SA != 0) {
+          UA.Addr->linkToDef(UA.Id, DFG.addr<DefNode*>(RDefSR_SA));
+        } else {
+          UA.Addr->setReachingDef(0);
+          UA.Addr->setSibling(0);
+        }
+
+        Changed = true;
+  #ifndef NDEBUG
+        if (HasLimit && CpCount >= CpLimit)
+          break;
+        CpCount++;
+  #endif
+
+        auto FC = CopyMap.find(IA.Id);
+        if (FC != CopyMap.end()) {
+          // Update the EM map in the copy's entry.
+          auto &M = FC->second;
+          for (auto &J : M) {
+            if (J.second != DR)
+              continue;
+            J.second = SR;
+            break;
+          }
+        }
+      } // for (N in reached-uses)
+    } // for (DA in defs)
+  } // for (C in Copies)
 
   return Changed;
 }

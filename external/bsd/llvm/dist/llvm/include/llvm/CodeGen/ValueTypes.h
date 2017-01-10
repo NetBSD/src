@@ -34,9 +34,9 @@ namespace llvm {
     Type *LLVMTy;
 
   public:
-    LLVM_CONSTEXPR EVT() : V(MVT::INVALID_SIMPLE_VALUE_TYPE), LLVMTy(nullptr) {}
-    LLVM_CONSTEXPR EVT(MVT::SimpleValueType SVT) : V(SVT), LLVMTy(nullptr) {}
-    LLVM_CONSTEXPR EVT(MVT S) : V(S), LLVMTy(nullptr) {}
+    constexpr EVT() : V(MVT::INVALID_SIMPLE_VALUE_TYPE), LLVMTy(nullptr) {}
+    constexpr EVT(MVT::SimpleValueType SVT) : V(SVT), LLVMTy(nullptr) {}
+    constexpr EVT(MVT S) : V(S), LLVMTy(nullptr) {}
 
     bool operator==(EVT VT) const {
       return !(*this != VT);
@@ -122,6 +122,11 @@ namespace llvm {
     /// isInteger - Return true if this is an integer, or a vector integer type.
     bool isInteger() const {
       return isSimple() ? V.isInteger() : isExtendedInteger();
+    }
+
+    /// isScalarInteger - Return true if this is an integer, but not a vector.
+    bool isScalarInteger() const {
+      return isSimple() ? V.isScalarInteger() : isExtendedScalarInteger();
     }
 
     /// isVector - Return true if this is a vector value type.
@@ -367,6 +372,7 @@ namespace llvm {
                                    unsigned NumElements);
     bool isExtendedFloatingPoint() const LLVM_READONLY;
     bool isExtendedInteger() const LLVM_READONLY;
+    bool isExtendedScalarInteger() const LLVM_READONLY;
     bool isExtendedVector() const LLVM_READONLY;
     bool isExtended16BitVector() const LLVM_READONLY;
     bool isExtended32BitVector() const LLVM_READONLY;
@@ -378,7 +384,7 @@ namespace llvm {
     bool isExtended2048BitVector() const LLVM_READONLY;
     EVT getExtendedVectorElementType() const;
     unsigned getExtendedVectorNumElements() const LLVM_READONLY;
-    unsigned getExtendedSizeInBits() const;
+    unsigned getExtendedSizeInBits() const LLVM_READONLY;
   };
 
 } // End llvm namespace

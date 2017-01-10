@@ -319,11 +319,88 @@ entry:
     ret i8 %d
 }
 
+; This test checks if invariant.group understands gep with zeros
+; CHECK-LABEL: define void @testGEP0() {
+define void @testGEP0() {
+  %a = alloca %struct.A, align 8
+  %1 = bitcast %struct.A* %a to i8*
+  %2 = getelementptr inbounds %struct.A, %struct.A* %a, i64 0, i32 0
+  store i32 (...)** bitcast (i8** getelementptr inbounds ([3 x i8*], [3 x i8*]* @_ZTV1A, i64 0, i64 2) to i32 (...)**), i32 (...)*** %2, align 8, !invariant.group !0
+; CHECK: call void @_ZN1A3fooEv(%struct.A* nonnull dereferenceable(8) %a)
+  call void @_ZN1A3fooEv(%struct.A* nonnull dereferenceable(8) %a) ; This call may change vptr
+  %3 = load i8, i8* @unknownPtr, align 4
+  %4 = icmp eq i8 %3, 0
+  br i1 %4, label %_Z1gR1A.exit, label %5
+
+; This should be devirtualized by invariant.group
+  %6 = bitcast %struct.A* %a to void (%struct.A*)***
+  %7 = load void (%struct.A*)**, void (%struct.A*)*** %6, align 8, !invariant.group !0
+  %8 = load void (%struct.A*)*, void (%struct.A*)** %7, align 8
+; CHECK: call void @_ZN1A3fooEv(%struct.A* nonnull %a)
+  call void %8(%struct.A* nonnull %a)
+  br label %_Z1gR1A.exit
+
+_Z1gR1A.exit:                                     ; preds = %0, %5
+  ret void
+}
+
+; Check if no optimizations are performed with global pointers.
+; FIXME: we could do the optimizations if we would check if dependency comes
+; from the same function.
+; CHECK-LABEL: define void @testGlobal() {
+define void @testGlobal() {
+; CHECK:  %a = load i8, i8* @unknownPtr, !invariant.group !0
+   %a = load i8, i8* @unknownPtr, !invariant.group !0
+   call void @foo2(i8* @unknownPtr, i8 %a)
+; CHECK:  %1 = load i8, i8* @unknownPtr, !invariant.group !0
+   %1 = load i8, i8* @unknownPtr, !invariant.group !0
+   call void @bar(i8 %1)
+
+   %b0 = bitcast i8* @unknownPtr to i1*
+   call void @fooBit(i1* %b0, i1 1)
+; Adding regex because of canonicalization of bitcasts
+; CHECK: %2 = load i1, i1* {{.*}}, !invariant.group !0
+   %2 = load i1, i1* %b0, !invariant.group !0
+   call void @fooBit(i1* %b0, i1 %2)
+; CHECK:  %3 = load i1, i1* {{.*}}, !invariant.group !0
+   %3 = load i1, i1* %b0, !invariant.group !0
+   call void @fooBit(i1* %b0, i1 %3)
+   ret void
+}
+; And in the case it is not global
+; CHECK-LABEL: define void @testNotGlobal() {
+define void @testNotGlobal() {
+   %a = alloca i8
+   call void @foo(i8* %a)
+; CHECK:  %b = load i8, i8* %a, !invariant.group !0
+   %b = load i8, i8* %a, !invariant.group !0
+   call void @foo2(i8* %a, i8 %b)
+
+   %1 = load i8, i8* %a, !invariant.group !0
+; CHECK: call void @bar(i8 %b)
+   call void @bar(i8 %1)
+
+   %b0 = bitcast i8* %a to i1*
+   call void @fooBit(i1* %b0, i1 1)
+; CHECK: %trunc = trunc i8 %b to i1
+   %2 = load i1, i1* %b0, !invariant.group !0
+; CHECK-NEXT: call void @fooBit(i1* %b0, i1 %trunc)
+   call void @fooBit(i1* %b0, i1 %2)
+   %3 = load i1, i1* %b0, !invariant.group !0
+; CHECK-NEXT: call void @fooBit(i1* %b0, i1 %trunc)
+   call void @fooBit(i1* %b0, i1 %3)
+   ret void
+}
+
+
 declare void @foo(i8*)
+declare void @foo2(i8*, i8)
 declare void @bar(i8)
 declare i8* @getPointer(i8*)
 declare void @_ZN1A3fooEv(%struct.A*)
 declare void @_ZN1AC1Ev(%struct.A*)
+declare void @fooBit(i1*, i1)
+
 declare i8* @llvm.invariant.group.barrier(i8*)
 
 ; Function Attrs: nounwind
