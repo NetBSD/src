@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.462 2017/01/06 08:05:26 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.463 2017/01/10 08:22:43 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.462 2017/01/06 08:05:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.463 2017/01/10 08:22:43 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2877,14 +2877,12 @@ wm_tick(void *arg)
 	else
 		wm_tbi_tick(sc);
 
+	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
 out:
 	WM_CORE_UNLOCK(sc);
 #ifndef WM_MPSAFE
 	splx(s);
 #endif
-
-	if (!sc->sc_core_stopping)
-		callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
 }
 
 static int
