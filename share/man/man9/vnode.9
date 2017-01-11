@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.75 2017/01/11 09:04:37 hannken Exp $
+.\"     $NetBSD: vnode.9,v 1.76 2017/01/11 09:06:57 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -167,13 +167,11 @@ struct vnode {
 	int		v_numoutput;		/* # of pending writes */
 	int		v_writecount;		/* ref count of writers */
 	int		v_holdcnt;		/* page & buffer refs */
-	int		v_synclist_slot;	/* synclist slot index */
 	struct mount	*v_mount;		/* ptr to vfs we are in */
 	int		(**v_op)(void *);	/* vnode operations vector */
 	TAILQ_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
-	TAILQ_ENTRY(vnode) v_synclist;		/* vnodes with dirty bufs */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
@@ -483,9 +481,8 @@ The members
 .Em v_numoutput ,
 .Em v_holdcnt ,
 .Em v_dirtyblkhd ,
-.Em v_cleanblkhd ,
 and
-.Em v_synclist
+.Em v_cleanblkhd
 are modified in interrupt context and must be protected by
 .Xr splbio 9
 unless it is certain that there is no chance an interrupt handler will
