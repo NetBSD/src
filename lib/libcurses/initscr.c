@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.31 2017/01/10 10:13:24 roy Exp $	*/
+/*	$NetBSD: initscr.c,v 1.32 2017/01/11 17:15:27 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.31 2017/01/10 10:13:24 roy Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.32 2017/01/11 17:15:27 roy Exp $");
 #endif
 #endif	/* not lint */
 
@@ -67,19 +67,6 @@ initscr(void)
 	/* LINTED const castaway; newterm does not modify sp! */
 	if ((_cursesi_screen = newterm((char *) sp, stdout, stdin)) == NULL)
 		return NULL;
-
-	__echoit = _cursesi_screen->echoit;
-        __pfast = _cursesi_screen->pfast;
-	__rawmode = _cursesi_screen->rawmode;
-	__noqch = _cursesi_screen->noqch;
-	COLS = _cursesi_screen->COLS;
-	LINES = _cursesi_screen->LINES
-	    - _cursesi_screen->ripped_top - _cursesi_screen->ripped_bottom;
-	COLORS = _cursesi_screen->COLORS;
-	COLOR_PAIRS = _cursesi_screen->COLOR_PAIRS;
-	__GT = _cursesi_screen->GT;
-	__NONL = _cursesi_screen->NONL;
-	__UPPERCASE = _cursesi_screen->UPPERCASE;
 
 	set_term(_cursesi_screen);
 	wrefresh(curscr);
