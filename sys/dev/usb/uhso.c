@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.24 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: uhso.c,v 1.25 2017/01/11 22:09:38 maya Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.24 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.25 2017/01/11 22:09:38 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -641,14 +641,14 @@ uhso_get_iface_spec(struct usb_attach_arg *uaa, uint8_t ifnum, uint8_t *spec)
 
 	switch (hd->type) {
 	case UHSOTYPE_DEFAULT:
-		if (ifnum > __arraycount(uhso_spec_default))
+		if (ifnum >= __arraycount(uhso_spec_default))
 			break;
 
 		*spec = uhso_spec_default[ifnum];
 		return 1;
 
 	case UHSOTYPE_ICON321:
-		if (ifnum > __arraycount(uhso_spec_icon321))
+		if (ifnum >= __arraycount(uhso_spec_icon321))
 			break;
 
 		*spec = uhso_spec_icon321[ifnum];
@@ -665,8 +665,8 @@ uhso_get_iface_spec(struct usb_attach_arg *uaa, uint8_t ifnum, uint8_t *spec)
 		if (status != USBD_NORMAL_COMPLETION)
 			break;
 
-		if (ifnum > __arraycount(config)
-		    || config[ifnum] > __arraycount(uhso_spec_config))
+		if (ifnum >= __arraycount(config)
+		    || config[ifnum] >= __arraycount(uhso_spec_config))
 			break;
 
 		*spec = uhso_spec_config[config[ifnum]];
