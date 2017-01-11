@@ -2,7 +2,6 @@
 // RUN: %clang_cc1 -fopenmp -x c++ -std=c++11 -triple x86_64-unknown-unknown -fexceptions -fcxx-exceptions -emit-pch -o %t < %s
 // RUN: %clang_cc1 -fopenmp -x c++ -triple x86_64-unknown-unknown -fexceptions -fcxx-exceptions -debug-info-kind=limited -std=c++11 -include-pch %t -verify -emit-llvm -o - < %s | FileCheck %s
 // RUN: %clang_cc1 -verify -triple x86_64-apple-darwin10 -fopenmp -fexceptions -fcxx-exceptions -debug-info-kind=line-tables-only -x c++ -emit-llvm -o - < %s | FileCheck %s --check-prefix=TERM_DEBUG
-// REQUIRES: x86-registered-target
 // expected-no-diagnostics
 #ifndef HEADER
 #define HEADER
@@ -17,12 +16,12 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK: [[UB_VAL:%.+]] = load i32, i32* [[UB]],
 // CHECK: [[CMP:%.+]] = icmp sgt i32 [[UB_VAL]], 5
 // CHECK: br i1 [[CMP]], label %[[TRUE:.+]], label %[[FALSE:[^,]+]]
-// CHECK: [[TRUE]]
+// CHECK: [[TRUE]]:
 // CHECK: br label %[[SWITCH:[^,]+]]
-// CHECK: [[FALSE]]
+// CHECK: [[FALSE]]:
 // CHECK: [[UB_VAL:%.+]] = load i32, i32* [[UB]],
 // CHECK: br label %[[SWITCH]]
-// CHECK: [[SWITCH]]
+// CHECK: [[SWITCH]]:
 // CHECK: [[UP:%.+]] = phi i32 [ 5, %[[TRUE]] ], [ [[UB_VAL]], %[[FALSE]] ]
 // CHECK: store i32 [[UP]], i32* [[UB]],
 // CHECK: [[LB_VAL:%.+]] = load i32, i32* [[LB]],
@@ -33,7 +32,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[CMP:%.+]] = icmp sle i32 [[IV]], [[UB_VAL]]
 // CHECK-NEXT: br i1 [[CMP]], label %[[SIMPLE_LOOP1_BODY:.+]], label %[[SIMPLE_LOOP1_END:[^,]+]]
   for (int i = 3; i < 32; i += 5) {
-// CHECK: [[SIMPLE_LOOP1_BODY]]
+// CHECK: [[SIMPLE_LOOP1_BODY]]:
 // Start of body: calculate i from IV:
 // CHECK: [[IV1_1:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}
 // CHECK: [[CALC_I_1:%.+]] = mul nsw i32 [[IV1_1]], 5
@@ -48,23 +47,23 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: store i32 [[ADD1_2]], i32* [[OMP_IV]]
 // br label %{{.+}}, !llvm.loop !{{.+}}
   }
-// CHECK: [[SIMPLE_LOOP1_END]]
+// CHECK: [[SIMPLE_LOOP1_END]]:
 // CHECK: call void @__kmpc_for_static_fini(%ident_t* {{.+}}, i32 %{{.+}})
 // CHECK: call void @__kmpc_barrier(%ident_t* {{.+}}, i32 %{{.+}})
 
   long long k = get_val();
 
-  #pragma omp for simd linear(k : 3) schedule(dynamic)
+  #pragma omp for simd linear(k : 3) schedule(simd, nonmonotonic: dynamic)
 // CHECK: [[K0:%.+]] = call {{.*}}i64 @{{.*}}get_val
 // CHECK-NEXT: store i64 [[K0]], i64* [[K_VAR:%[^,]+]]
 // CHECK: [[K0LOAD:%.+]] = load i64, i64* [[K_VAR]]
 // CHECK-NEXT: store i64 [[K0LOAD]], i64* [[LIN0:%[^,]+]]
 
-// CHECK: call void @__kmpc_dispatch_init_4(%ident_t* {{.+}}, i32 %{{.+}}, i32 35, i32 0, i32 8, i32 1, i32 1)
+// CHECK: call void @__kmpc_dispatch_init_4(%ident_t* {{.+}}, i32 %{{.+}}, i32 1073741859, i32 0, i32 8, i32 1, i32 1)
 // CHECK: [[NEXT:%.+]] = call i32 @__kmpc_dispatch_next_4(%ident_t* {{.+}}, i32 %{{.+}}, i32* %{{.+}}, i32* [[LB:%.+]], i32* [[UB:%.+]], i32* %{{.+}})
 // CHECK: [[COND:%.+]] = icmp ne i32 [[NEXT]], 0
 // CHECK: br i1 [[COND]], label %[[CONT:.+]], label %[[END:.+]]
-// CHECK: [[CONT]]
+// CHECK: [[CONT]]:
 // CHECK: [[LB_VAL:%.+]] = load i32, i32* [[LB]],
 // CHECK: store i32 [[LB_VAL]], i32* [[OMP_IV2:%[^,]+]],
 
@@ -73,7 +72,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[CMP2:%.+]] = icmp sle i32 [[IV2]], [[UB_VAL]]
 // CHECK-NEXT: br i1 [[CMP2]], label %[[SIMPLE_LOOP2_BODY:.+]], label %[[SIMPLE_LOOP2_END:[^,]+]]
   for (int i = 10; i > 1; i--) {
-// CHECK: [[SIMPLE_LOOP2_BODY]]
+// CHECK: [[SIMPLE_LOOP2_BODY]]:
 // Start of body: calculate i from IV:
 // CHECK: [[IV2_0:%.+]] = load i32, i32* [[OMP_IV2]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP2_ID]]
 // FIXME: It is interesting, why the following "mul 1" was not constant folded?
@@ -95,7 +94,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: store i32 [[ADD2_2]], i32* [[OMP_IV2]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP2_ID]]
 // br label {{.+}}, !llvm.loop ![[SIMPLE_LOOP2_ID]]
   }
-// CHECK: [[SIMPLE_LOOP2_END]]
+// CHECK: [[SIMPLE_LOOP2_END]]:
 //
 // Update linear vars after loop, as the loop was operating on a private version.
 // CHECK: [[LIN0_2:%.+]] = load i64, i64* [[LIN0]]
@@ -121,12 +120,12 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK: [[UB_VAL:%.+]] = load i64, i64* [[UB]],
 // CHECK: [[CMP:%.+]] = icmp ugt i64 [[UB_VAL]], 3
 // CHECK: br i1 [[CMP]], label %[[TRUE:.+]], label %[[FALSE:[^,]+]]
-// CHECK: [[TRUE]]
+// CHECK: [[TRUE]]:
 // CHECK: br label %[[SWITCH:[^,]+]]
-// CHECK: [[FALSE]]
+// CHECK: [[FALSE]]:
 // CHECK: [[UB_VAL:%.+]] = load i64, i64* [[UB]],
 // CHECK: br label %[[SWITCH]]
-// CHECK: [[SWITCH]]
+// CHECK: [[SWITCH]]:
 // CHECK: [[UP:%.+]] = phi i64 [ 3, %[[TRUE]] ], [ [[UB_VAL]], %[[FALSE]] ]
 // CHECK: store i64 [[UP]], i64* [[UB]],
 // CHECK: [[LB_VAL:%.+]] = load i64, i64* [[LB]],
@@ -137,7 +136,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[CMP3:%.+]] = icmp ule i64 [[IV3]], [[UB_VAL]]
 // CHECK-NEXT: br i1 [[CMP3]], label %[[SIMPLE_LOOP3_BODY:.+]], label %[[SIMPLE_LOOP3_END:[^,]+]]
   for (unsigned long long it = 2000; it >= 600; it-=400) {
-// CHECK: [[SIMPLE_LOOP3_BODY]]
+// CHECK: [[SIMPLE_LOOP3_BODY]]:
 // Start of body: calculate it from IV:
 // CHECK: [[IV3_0:%.+]] = load i64, i64* [[OMP_IV3]]
 // CHECK-NEXT: [[LC_IT_1:%.+]] = mul i64 [[IV3_0]], 400
@@ -163,7 +162,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[ADD3_2:%.+]] = add i64 [[IV3_2]], 1
 // CHECK-NEXT: store i64 [[ADD3_2]], i64* [[OMP_IV3]]
   }
-// CHECK: [[SIMPLE_LOOP3_END]]
+// CHECK: [[SIMPLE_LOOP3_END]]:
 // CHECK: call void @__kmpc_for_static_fini(%ident_t* {{.+}}, i32 %{{.+}})
 //
 // Linear start and step are used to calculate final value of the linear variables.
@@ -179,12 +178,12 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK: [[UB_VAL:%.+]] = load i32, i32* [[UB]],
 // CHECK: [[CMP:%.+]] = icmp sgt i32 [[UB_VAL]], 3
 // CHECK: br i1 [[CMP]], label %[[TRUE:.+]], label %[[FALSE:[^,]+]]
-// CHECK: [[TRUE]]
+// CHECK: [[TRUE]]:
 // CHECK: br label %[[SWITCH:[^,]+]]
-// CHECK: [[FALSE]]
+// CHECK: [[FALSE]]:
 // CHECK: [[UB_VAL:%.+]] = load i32, i32* [[UB]],
 // CHECK: br label %[[SWITCH]]
-// CHECK: [[SWITCH]]
+// CHECK: [[SWITCH]]:
 // CHECK: [[UP:%.+]] = phi i32 [ 3, %[[TRUE]] ], [ [[UB_VAL]], %[[FALSE]] ]
 // CHECK: store i32 [[UP]], i32* [[UB]],
 // CHECK: [[LB_VAL:%.+]] = load i32, i32* [[LB]],
@@ -195,7 +194,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[CMP4:%.+]] = icmp sle i32 [[IV4]], [[UB_VAL]]
 // CHECK-NEXT: br i1 [[CMP4]], label %[[SIMPLE_LOOP4_BODY:.+]], label %[[SIMPLE_LOOP4_END:[^,]+]]
   for (short it = 6; it <= 20; it-=-4) {
-// CHECK: [[SIMPLE_LOOP4_BODY]]
+// CHECK: [[SIMPLE_LOOP4_BODY]]:
 // Start of body: calculate it from IV:
 // CHECK: [[IV4_0:%.+]] = load i32, i32* [[OMP_IV4]]
 // CHECK-NEXT: [[LC_IT_1:%.+]] = mul nsw i32 [[IV4_0]], 4
@@ -207,7 +206,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[ADD4_2:%.+]] = add nsw i32 [[IV4_2]], 1
 // CHECK-NEXT: store i32 [[ADD4_2]], i32* [[OMP_IV4]]
   }
-// CHECK: [[SIMPLE_LOOP4_END]]
+// CHECK: [[SIMPLE_LOOP4_END]]:
 // CHECK: call void @__kmpc_for_static_fini(%ident_t* {{.+}}, i32 %{{.+}})
 // CHECK: call void @__kmpc_barrier(%ident_t* {{.+}}, i32 %{{.+}})
 
@@ -216,12 +215,12 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK: [[UB_VAL:%.+]] = load i32, i32* [[UB]],
 // CHECK: [[CMP:%.+]] = icmp sgt i32 [[UB_VAL]], 25
 // CHECK: br i1 [[CMP]], label %[[TRUE:.+]], label %[[FALSE:[^,]+]]
-// CHECK: [[TRUE]]
+// CHECK: [[TRUE]]:
 // CHECK: br label %[[SWITCH:[^,]+]]
-// CHECK: [[FALSE]]
+// CHECK: [[FALSE]]:
 // CHECK: [[UB_VAL:%.+]] = load i32, i32* [[UB]],
 // CHECK: br label %[[SWITCH]]
-// CHECK: [[SWITCH]]
+// CHECK: [[SWITCH]]:
 // CHECK: [[UP:%.+]] = phi i32 [ 25, %[[TRUE]] ], [ [[UB_VAL]], %[[FALSE]] ]
 // CHECK: store i32 [[UP]], i32* [[UB]],
 // CHECK: [[LB_VAL:%.+]] = load i32, i32* [[LB]],
@@ -232,7 +231,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[CMP5:%.+]] = icmp sle i32 [[IV5]], [[UB_VAL]]
 // CHECK-NEXT: br i1 [[CMP5]], label %[[SIMPLE_LOOP5_BODY:.+]], label %[[SIMPLE_LOOP5_END:[^,]+]]
   for (unsigned char it = 'z'; it >= 'a'; it+=-1) {
-// CHECK: [[SIMPLE_LOOP5_BODY]]
+// CHECK: [[SIMPLE_LOOP5_BODY]]:
 // Start of body: calculate it from IV:
 // CHECK: [[IV5_0:%.+]] = load i32, i32* [[OMP_IV5]]
 // CHECK-NEXT: [[IV5_1:%.+]] = mul nsw i32 [[IV5_0]], 1
@@ -244,7 +243,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[ADD5_2:%.+]] = add nsw i32 [[IV5_2]], 1
 // CHECK-NEXT: store i32 [[ADD5_2]], i32* [[OMP_IV5]]
   }
-// CHECK: [[SIMPLE_LOOP5_END]]
+// CHECK: [[SIMPLE_LOOP5_END]]:
 // CHECK: call void @__kmpc_for_static_fini(%ident_t* {{.+}}, i32 %{{.+}})
 // CHECK: call void @__kmpc_barrier(%ident_t* {{.+}}, i32 %{{.+}})
 
@@ -263,25 +262,25 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK: [[UB_VAL:%.+]] = load i64, i64* [[UB]],
 // CHECK: [[CMP:%.+]] = icmp sgt i64 [[UB_VAL]], 6
 // CHECK: br i1 [[CMP]], label %[[TRUE:.+]], label %[[FALSE:[^,]+]]
-// CHECK: [[TRUE]]
+// CHECK: [[TRUE]]:
 // CHECK: br label %[[SWITCH:[^,]+]]
-// CHECK: [[FALSE]]
+// CHECK: [[FALSE]]:
 // CHECK: [[UB_VAL:%.+]] = load i64, i64* [[UB]],
 // CHECK: br label %[[SWITCH]]
-// CHECK: [[SWITCH]]
+// CHECK: [[SWITCH]]:
 // CHECK: [[UP:%.+]] = phi i64 [ 6, %[[TRUE]] ], [ [[UB_VAL]], %[[FALSE]] ]
 // CHECK: store i64 [[UP]], i64* [[UB]],
 // CHECK: [[LB_VAL:%.+]] = load i64, i64* [[LB]],
 // CHECK: store i64 [[LB_VAL]], i64* [[OMP_IV7:%[^,]+]],
 
 // CHECK: br label %[[SIMD_LOOP7_COND:[^,]+]]
-// CHECK: [[SIMD_LOOP7_COND]]
+// CHECK: [[SIMD_LOOP7_COND]]:
 // CHECK-NEXT: [[IV7:%.+]] = load i64, i64* [[OMP_IV7]]
 // CHECK-NEXT: [[UB_VAL:%.+]] = load i64, i64* [[UB]]
 // CHECK-NEXT: [[CMP7:%.+]] = icmp sle i64 [[IV7]], [[UB_VAL]]
 // CHECK-NEXT: br i1 [[CMP7]], label %[[SIMPLE_LOOP7_BODY:.+]], label %[[SIMPLE_LOOP7_END:[^,]+]]
   for (long long i = -10; i < 10; i += 3) {
-// CHECK: [[SIMPLE_LOOP7_BODY]]
+// CHECK: [[SIMPLE_LOOP7_BODY]]:
 // Start of body: calculate i from IV:
 // CHECK: [[IV7_0:%.+]] = load i64, i64* [[OMP_IV7]]
 // CHECK-NEXT: [[LC_IT_1:%.+]] = mul nsw i64 [[IV7_0]], 3
@@ -295,7 +294,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[ADD7_2:%.+]] = add nsw i64 [[IV7_2]], 1
 // CHECK-NEXT: store i64 [[ADD7_2]], i64* [[OMP_IV7]]
   }
-// CHECK: [[SIMPLE_LOOP7_END]]
+// CHECK: [[SIMPLE_LOOP7_END]]:
 // CHECK: call void @__kmpc_for_static_fini(%ident_t* {{.+}}, i32 %{{.+}})
 // CHECK: load i32, i32*
 // CHECK: icmp ne i32 %{{.+}}, 0
@@ -316,25 +315,25 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK: [[UB_VAL:%.+]] = load i64, i64* [[UB]],
 // CHECK: [[CMP:%.+]] = icmp sgt i64 [[UB_VAL]], 6
 // CHECK: br i1 [[CMP]], label %[[TRUE:.+]], label %[[FALSE:[^,]+]]
-// CHECK: [[TRUE]]
+// CHECK: [[TRUE]]:
 // CHECK: br label %[[SWITCH:[^,]+]]
-// CHECK: [[FALSE]]
+// CHECK: [[FALSE]]:
 // CHECK: [[UB_VAL:%.+]] = load i64, i64* [[UB]],
 // CHECK: br label %[[SWITCH]]
-// CHECK: [[SWITCH]]
+// CHECK: [[SWITCH]]:
 // CHECK: [[UP:%.+]] = phi i64 [ 6, %[[TRUE]] ], [ [[UB_VAL]], %[[FALSE]] ]
 // CHECK: store i64 [[UP]], i64* [[UB]],
 // CHECK: [[LB_VAL:%.+]] = load i64, i64* [[LB]],
 // CHECK: store i64 [[LB_VAL]], i64* [[OMP_IV8:%[^,]+]],
 
 // CHECK: br label %[[SIMD_LOOP8_COND:[^,]+]]
-// CHECK: [[SIMD_LOOP8_COND]]
+// CHECK: [[SIMD_LOOP8_COND]]:
 // CHECK-NEXT: [[IV8:%.+]] = load i64, i64* [[OMP_IV8]]
 // CHECK-NEXT: [[UB_VAL:%.+]] = load i64, i64* [[UB]]
 // CHECK-NEXT: [[CMP8:%.+]] = icmp sle i64 [[IV8]], [[UB_VAL]]
 // CHECK-NEXT: br i1 [[CMP8]], label %[[SIMPLE_LOOP8_BODY:.+]], label %[[SIMPLE_LOOP8_END:[^,]+]]
   for (long long i = -10; i < 10; i += 3) {
-// CHECK: [[SIMPLE_LOOP8_BODY]]
+// CHECK: [[SIMPLE_LOOP8_BODY]]:
 // Start of body: calculate i from IV:
 // CHECK: [[IV8_0:%.+]] = load i64, i64* [[OMP_IV8]]
 // CHECK-NEXT: [[LC_IT_1:%.+]] = mul nsw i64 [[IV8_0]], 3
@@ -347,7 +346,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[ADD8_2:%.+]] = add nsw i64 [[IV8_2]], 1
 // CHECK-NEXT: store i64 [[ADD8_2]], i64* [[OMP_IV8]]
   }
-// CHECK: [[SIMPLE_LOOP8_END]]
+// CHECK: [[SIMPLE_LOOP8_END]]:
 // CHECK: call void @__kmpc_for_static_fini(%ident_t* {{.+}}, i32 %{{.+}})
 // CHECK: call i32 @__kmpc_reduce(
 // CHECK: [[R_PRIV_VAL:%.+]] = load i32, i32* [[R_PRIV]],
@@ -362,7 +361,7 @@ template <class T, unsigned K> T tfoo(T a) { return a + K; }
 
 template <typename T, unsigned N>
 int templ1(T a, T *z) {
-  #pragma omp for simd collapse(N)
+  #pragma omp for simd collapse(N) schedule(simd: static, N)
   for (int i = 0; i < N * 2; i++) {
     for (long long j = 0; j < (N + N + N + N); j += 2) {
       z[i + j] = a + tfoo<T, N>(i + j);
@@ -373,27 +372,28 @@ int templ1(T a, T *z) {
 
 // Instatiation templ1<float,2>
 // CHECK-LABEL: define {{.*i32}} @{{.*}}templ1{{.*}}(float {{.+}}, float* {{.+}})
-// CHECK: call void @__kmpc_for_static_init_8(%ident_t* {{[^,]+}}, i32 %{{[^,]+}}, i32 34, i32* %{{[^,]+}}, i64* [[LB:%[^,]+]], i64* [[UB:%[^,]+]], i64* [[STRIDE:%[^,]+]], i64 1, i64 1)
+// CHECK: call void @__kmpc_for_static_init_8(%ident_t* {{[^,]+}}, i32 %{{[^,]+}}, i32 45, i32* %{{[^,]+}}, i64* [[LB:%[^,]+]], i64* [[UB:%[^,]+]], i64* [[STRIDE:%[^,]+]], i64 1, i64 2)
 // CHECK: [[UB_VAL:%.+]] = load i64, i64* [[UB]],
 // CHECK: [[CMP:%.+]] = icmp sgt i64 [[UB_VAL]], 15
 // CHECK: br i1 [[CMP]], label %[[TRUE:.+]], label %[[FALSE:[^,]+]]
-// CHECK: [[TRUE]]
+// CHECK: [[TRUE]]:
 // CHECK: br label %[[SWITCH:[^,]+]]
-// CHECK: [[FALSE]]
+// CHECK: [[FALSE]]:
 // CHECK: [[UB_VAL:%.+]] = load i64, i64* [[UB]],
 // CHECK: br label %[[SWITCH]]
-// CHECK: [[SWITCH]]
+// CHECK: [[SWITCH]]:
 // CHECK: [[UP:%.+]] = phi i64 [ 15, %[[TRUE]] ], [ [[UB_VAL]], %[[FALSE]] ]
 // CHECK: store i64 [[UP]], i64* [[UB]],
 // CHECK: [[LB_VAL:%.+]] = load i64, i64* [[LB]],
 // CHECK: store i64 [[LB_VAL]], i64* [[T1_OMP_IV:%[^,]+]],
 
 // ...
+// CHECK: icmp sle i64
 // CHECK: [[IV:%.+]] = load i64, i64* [[T1_OMP_IV]]
 // CHECK-NEXT: [[UB_VAL:%.+]] = load i64, i64* [[UB]]
 // CHECK-NEXT: [[CMP1:%.+]] = icmp sle i64 [[IV]], [[UB_VAL]]
 // CHECK-NEXT: br i1 [[CMP1]], label %[[T1_BODY:.+]], label %[[T1_END:[^,]+]]
-// CHECK: [[T1_BODY]]
+// CHECK: [[T1_BODY]]:
 // Loop counters i and j updates:
 // CHECK: [[IV1:%.+]] = load i64, i64* [[T1_OMP_IV]]
 // CHECK-NEXT: [[I_1:%.+]] = sdiv i64 [[IV1]], 4
@@ -411,7 +411,7 @@ int templ1(T a, T *z) {
 // CHECK-NEXT: [[INC:%.+]] = add nsw i64 [[IV3]], 1
 // CHECK-NEXT: store i64 [[INC]], i64* [[T1_OMP_IV]]
 // CHECK-NEXT: br label {{%.+}}
-// CHECK: [[T1_END]]
+// CHECK: [[T1_END]]:
 // CHECK: call void @__kmpc_for_static_fini(%ident_t* {{.+}}, i32 %{{.+}})
 // CHECK: call void @__kmpc_barrier(%ident_t* {{.+}}, i32 %{{.+}})
 // CHECK: ret i32 0
@@ -468,13 +468,13 @@ void iter_simple(IterDouble ia, IterDouble ib, IterDouble ic) {
 // CHECK-DAG: [[OMP_LAST_IT_VAL:%.+]] = load i32, i32* [[OMP_LAST_IT]],
 // CHECK: [[CMP:%.+]] = icmp sgt i32 [[UB_VAL]], [[OMP_LAST_IT_VAL]]
 // CHECK: br i1 [[CMP]], label %[[TRUE:.+]], label %[[FALSE:[^,]+]]
-// CHECK: [[TRUE]]
+// CHECK: [[TRUE]]:
 // CHECK: [[OMP_LAST_IT_VAL:%.+]] = load i32, i32* [[OMP_LAST_IT]],
 // CHECK: br label %[[SWITCH:[^,]+]]
-// CHECK: [[FALSE]]
+// CHECK: [[FALSE]]:
 // CHECK: [[UB_VAL:%.+]] = load i32, i32* [[UB]],
 // CHECK: br label %[[SWITCH]]
-// CHECK: [[SWITCH]]
+// CHECK: [[SWITCH]]:
 // CHECK: [[UP:%.+]] = phi i32 [ [[OMP_LAST_IT_VAL]], %[[TRUE]] ], [ [[UB_VAL]], %[[FALSE]] ]
 // CHECK: store i32 [[UP]], i32* [[UB]],
 // CHECK: [[LB_VAL:%.+]] = load i32, i32* [[LB]],
@@ -485,7 +485,7 @@ void iter_simple(IterDouble ia, IterDouble ib, IterDouble ic) {
 // CHECK-NEXT: [[CMP:%.+]] = icmp sle i32 [[IV]], [[UB_VAL]]
 // CHECK-NEXT: br i1 [[CMP]], label %[[IT_BODY:[^,]+]], label %[[IT_END:[^,]+]]
   for (IterDouble i = ia; i < ib; ++i) {
-// CHECK: [[IT_BODY]]
+// CHECK: [[IT_BODY]]:
 // Start of body: calculate i from index:
 // CHECK: [[IV1:%.+]] = load i32, i32* [[IT_OMP_IV]]
 // Call of operator+ (i, IV).
@@ -503,7 +503,7 @@ void iter_simple(IterDouble ia, IterDouble ib, IterDouble ic) {
 // CHECK-NEXT: store i32 [[ADD2]], i32* [[IT_OMP_IV]]
 // br label %{{.*}}, !llvm.loop ![[ITER_LOOP_ID]]
   }
-// CHECK: [[IT_END]]
+// CHECK: [[IT_END]]:
 // CHECK: call void @__kmpc_for_static_fini(%ident_t* {{.+}}, i32 %{{.+}})
 // CHECK: call void @__kmpc_barrier(%ident_t* {{.+}}, i32 %{{.+}})
 // CHECK: ret void
@@ -520,12 +520,12 @@ void collapsed(float *a, float *b, float *c, float *d) {
 // CHECK: [[UB_VAL:%.+]] = load i32, i32* [[UB]],
 // CHECK: [[CMP:%.+]] = icmp ugt i32 [[UB_VAL]], 119
 // CHECK: br i1 [[CMP]], label %[[TRUE:.+]], label %[[FALSE:[^,]+]]
-// CHECK: [[TRUE]]
+// CHECK: [[TRUE]]:
 // CHECK: br label %[[SWITCH:[^,]+]]
-// CHECK: [[FALSE]]
+// CHECK: [[FALSE]]:
 // CHECK: [[UB_VAL:%.+]] = load i32, i32* [[UB]],
 // CHECK: br label %[[SWITCH]]
-// CHECK: [[SWITCH]]
+// CHECK: [[SWITCH]]:
 // CHECK: [[UP:%.+]] = phi i32 [ 119, %[[TRUE]] ], [ [[UB_VAL]], %[[FALSE]] ]
 // CHECK: store i32 [[UP]], i32* [[UB]],
 // CHECK: [[LB_VAL:%.+]] = load i32, i32* [[LB]],
@@ -542,7 +542,7 @@ void collapsed(float *a, float *b, float *c, float *d) {
       for (int k = 3; k <= 6; k++) // 4 iterations
         for (l = 4; l < 9; ++l) // 5 iterations
         {
-// CHECK: [[COLL1_BODY]]
+// CHECK: [[COLL1_BODY]]:
 // Start of body: calculate i from index:
 // CHECK: [[IV1:%.+]] = load i32, i32* [[OMP_IV]]
 // Calculation of the loop counters values.
@@ -577,13 +577,15 @@ void collapsed(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[ADD2:%.+]] = add i32 [[IV2]], 1
 // CHECK-NEXT: store i32 [[ADD2]], i32* [[OMP_IV]]
 // br label %{{[^,]+}}, !llvm.loop ![[COLL1_LOOP_ID]]
-// CHECK: [[COLL1_END]]
+// CHECK: [[COLL1_END]]:
   }
 // i,j,l are updated; k is not updated.
 // CHECK: call void @__kmpc_for_static_fini(%ident_t* {{.+}}, i32 %{{.+}})
-// CHECK-NEXT: store i32 3, i32* [[I:%[^,]+]]
-// CHECK-NEXT: store i32 5, i32* [[I:%[^,]+]]
-// CHECK-NEXT: store i16 9, i16* [[I:%[^,]+]]
+// CHECK: br i1
+// CHECK: store i32 3, i32*
+// CHECK-NEXT: store i32 5,
+// CHECK-NEXT: store i32 7,
+// CHECK-NEXT: store i16 9, i16*
 // CHECK: call void @__kmpc_barrier(%ident_t* {{.+}}, i32 %{{.+}})
 // CHECK: ret void
 }
@@ -607,13 +609,13 @@ void widened(float *a, float *b, float *c, float *d) {
 // CHECK-DAG: [[OMP_LAST_IT_VAL:%.+]] = load i64, i64* [[OMP_LAST_IT]],
 // CHECK: [[CMP:%.+]] = icmp sgt i64 [[UB_VAL]], [[OMP_LAST_IT_VAL]]
 // CHECK: br i1 [[CMP]], label %[[TRUE:.+]], label %[[FALSE:[^,]+]]
-// CHECK: [[TRUE]]
+// CHECK: [[TRUE]]:
 // CHECK: [[OMP_LAST_IT_VAL:%.+]] = load i64, i64* [[OMP_LAST_IT]],
 // CHECK: br label %[[SWITCH:[^,]+]]
-// CHECK: [[FALSE]]
+// CHECK: [[FALSE]]:
 // CHECK: [[UB_VAL:%.+]] = load i64, i64* [[UB]],
 // CHECK: br label %[[SWITCH]]
-// CHECK: [[SWITCH]]
+// CHECK: [[SWITCH]]:
 // CHECK: [[UP:%.+]] = phi i64 [ [[OMP_LAST_IT_VAL]], %[[TRUE]] ], [ [[UB_VAL]], %[[FALSE]] ]
 // CHECK: store i64 [[UP]], i64* [[UB]],
 // CHECK: [[LB_VAL:%.+]] = load i64, i64* [[LB]],
@@ -628,7 +630,7 @@ void widened(float *a, float *b, float *c, float *d) {
   for (i = 1; i < 3; i++) // 2 iterations
     for (j = 0; j < foo(); j++) // foo() iterations
   {
-// CHECK: [[WIDE1_BODY]]
+// CHECK: [[WIDE1_BODY]]:
 // Start of body: calculate i from index:
 // CHECK: [[IV1:%.+]] = load i64, i64* [[OMP_IV]]
 // Calculation of the loop counters values...
@@ -652,7 +654,7 @@ void widened(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: store i64 [[ADD2]], i64* [[OMP_IV]]
 //
 // br label %{{[^,]+}}, !llvm.loop ![[WIDE1_LOOP_ID]]
-// CHECK: [[WIDE1_END]]
+// CHECK: [[WIDE1_END]]:
   }
 // i,j are updated.
 // CHECK: store i32 3, i32* [[I:%[^,]+]]
