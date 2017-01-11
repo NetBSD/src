@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.17 2017/01/11 00:51:22 maya Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.18 2017/01/11 00:55:57 maya Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.17 2017/01/11 00:51:22 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.18 2017/01/11 00:55:57 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2554,6 +2554,10 @@ vmxnet3_txq_offload_ctx(struct vmxnet3_txqueue *txq, struct mbuf *m,
 
 	*csum_start = *start + csum_off;
 	mp = m_pulldown(m, 0, *csum_start + 2, &offp);
+	if (!mp) {
+		/* m is already freed */
+		return ENOBUFS;
+	}
 
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) {
 		struct tcphdr *tcp;
