@@ -16,3 +16,4 @@
 -- add algo for "with short"
 -- implement "port-unr"
 -- implement block return-icmp in log final all with ipopts
+-- handle array variables in more places
