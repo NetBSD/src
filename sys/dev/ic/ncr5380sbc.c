@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.66 2012/07/28 00:43:23 matt Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.67 2017/01/11 07:16:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.66 2012/07/28 00:43:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.67 2017/01/11 07:16:48 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -2575,7 +2575,7 @@ ncr5380_attach(struct ncr5380_softc *sc)
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
-	 * config_found() to make sure the adatper is disabled.
+	 * config_found() to make sure the adapter is disabled.
 	 */
 	if (scsipi_adapter_addref(adapt) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to enable controller\n");
