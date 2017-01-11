@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.2 2013/09/21 22:28:12 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2017/01/11 12:19:43 joerg Exp $
 
 WARNS?=	1	# XXX -Wcast-qual -Wshadow
 CWARNFLAGS.clang+=	-Wno-format -Wno-tautological-compare \
 			-Wno-self-assign -Wno-array-bounds \
-			-Wno-error=unused-const-variable
+			-Wno-error=unused-const-variable \
+			-Wno-error=address-of-packed-member
 
 .include <bsd.own.mk>
 
