@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.56 2017/01/11 13:44:24 wiz Exp $
+.\"	$NetBSD: makefs.8,v 1.57 2017/01/11 13:47:27 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 23, 2015
+.Dd January 11, 2017
 .Dt MAKEFS 8
 .Os
 .Sh NAME
@@ -393,9 +393,63 @@ Type of the media.
 NOR: 0 or NAND: 1.
 .El
 .Ss msdos-specific options
-See
+.Sy msdos
+images have MS-DOS-specific optional parameters that may be
+provided.
+The arguments consist of a keyword, an equal sign
+.Pq Ql = ,
+and a value.
+The following keywords are supported (see
 .Xr newfs_msdos 8
-for related options.
+for more details):
+.Pp
+.Bl -tag -width omit-trailing-period -offset indent -compact
+.It Cm backup_sector
+Location of the backup boot sector.
+.It Cm block_size
+Block size.
+.It Cm bootstrap
+Bootstrap file.
+.It Cm bytes_per_sector
+Bytes per sector.
+.It Cm create_size
+Create file size.
+.It Cm directory_entries
+Directory entries.
+.It Cm drive_heads
+Drive heads.
+.It Cm fat_type
+FAT type (12, 16, or 32).
+.It Cm floppy
+Preset drive parameters for standard format floppy disks
+(160, 180, 320, 360, 640, 720, 1200, 1232, 1440, or 2880).
+.It Cm hidden_sectors
+Hidden sectors.
+.It Cm info_sector
+Location of the info sector.
+.It Cm media_descriptor
+Media descriptor.
+.It Cm num_FAT
+Number of FATs.
+.It Cm OEM_string
+OEM string.
+.It Cm offset
+Offset in device.
+.It Cm reserved_sectors
+Reserved sectors.
+.It Cm sectors_per_cluster
+Sectors per cluster.
+.It Cm sectors_per_fat
+Sectors per FAT.
+.It Cm sectors_per_track
+Sectors per track.
+.It Cm size
+File System size.
+.It Cm volume_id
+Volume ID.
+.It Cm volume_label
+Volume Label.
+.El
 .Ss V7FS-specific options
 The following keywords are supported:
 .Pp
