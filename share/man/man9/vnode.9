@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.77 2017/01/11 09:07:57 hannken Exp $
+.\"     $NetBSD: vnode.9,v 1.78 2017/01/11 09:08:58 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -180,7 +180,6 @@ struct vnode {
 	} v_un;
 	enum vtype	v_type;			/* vnode type */
 	enum vtagtype	v_tag;			/* type of underlying data */
-	struct vnlock	v_lock;			/* lock for this vnode */
 	void 		*v_data;		/* private data for fs */
 	struct klist	v_klist;		/* notes attached to vnode */
 };
@@ -433,9 +432,7 @@ universal disk format file system
 systemV boot file system
 .El
 .Pp
-All vnode locking operations use
-.Em v_lock .
-This lock is acquired by calling
+The vnode lock is acquired by calling
 .Xr vn_lock 9
 and released by calling
 .Xr VOP_UNLOCK 9 .
@@ -461,10 +458,8 @@ locking.
 Multiple-reader locking functions equivalently only in the presence
 of big-lock SMP locking or a uni-processor machine.
 The lock may be held while sleeping.
-While the
-.Em v_lock
-is acquired, the holder is guaranteed that the vnode will not be
-reclaimed or invalidated.
+While the vnode lock is acquired, the holder is guaranteed that the
+vnode will not be reclaimed or invalidated.
 Most file system functions require that you hold the vnode lock on entry.
 See
 .Xr lock 9
