@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.5 2014/09/02 09:54:20 jmcneill Exp $	*/
+/*	$NetBSD: completion.h,v 1.6 2017/01/11 11:42:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -83,6 +83,16 @@ init_completion(struct completion *completion)
 
 	mutex_init(&completion->c_lock, MUTEX_DEFAULT, IPL_SCHED);
 	cv_init(&completion->c_cv, "lnxcmplt");
+	completion->c_done = 0;
+}
+
+/*
+ * re-initialize a completion object.
+ */
+static inline void
+reinit_completion(struct completion *completion)
+{
+
 	completion->c_done = 0;
 }
 
