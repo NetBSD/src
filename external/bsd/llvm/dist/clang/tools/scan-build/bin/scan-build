@@ -53,6 +53,7 @@ my %Options = (
   IgnoreErrors => 0,         # Ignore build errors.
   ViewResults => 0,          # View results when the build terminates.
   ExitStatusFoundBugs => 0,  # Exit status reflects whether bugs were found
+  ShowDescription => 0,      # Display the description of the defect in the list
   KeepEmpty => 0,            # Don't remove output directory even with 0 results.
   EnableCheckers => {},
   DisableCheckers => {},
@@ -69,7 +70,8 @@ my %Options = (
   MaxLoop => 0,
   PluginsToLoad => [],
   AnalyzerDiscoveryMethod => undef,
-  OverrideCompiler => 0      # The flag corresponding to the --override-compiler command line option.
+  OverrideCompiler => 0,      # The flag corresponding to the --override-compiler command line option.
+  ForceAnalyzeDebugCode => 0
 );
 lock_keys(%Options);
 
@@ -452,6 +454,10 @@ sub ScanFile {
 
   push @$Index,[ $FName, $BugCategory, $BugType, $BugFile, $BugFunction, $BugLine,
                  $BugPathLength ];
+
+  if ($Options{ShowDescription}) {
+      push @{ $Index->[-1] }, $BugDescription
+  }
 }
 
 ##----------------------------------------------------------------------------##
@@ -745,6 +751,15 @@ print OUT <<ENDTEXT;
   <td>Function/Method</td>
   <td class="Q">Line</td>
   <td class="Q">Path Length</td>
+ENDTEXT
+
+if ($Options{ShowDescription}) {
+print OUT <<ENDTEXT;
+    <td class="Q">Description</td>
+ENDTEXT
+}
+
+print OUT <<ENDTEXT;
   <td class="sorttable_nosort"></td>
   <!-- REPORTBUGCOL -->
 </tr></thead>
@@ -770,10 +785,10 @@ ENDTEXT
 
       print OUT "<tr class=\"bt_$x\">";
       print OUT "<td class=\"DESC\">";
-      print OUT $row->[1];
+      print OUT $row->[1]; # $BugCategory
       print OUT "</td>";
       print OUT "<td class=\"DESC\">";
-      print OUT $row->[2];
+      print OUT $row->[2]; # $BugType
       print OUT "</td>";
 
       # Update the file prefix.
@@ -801,11 +816,11 @@ ENDTEXT
       print OUT "</td>";
 
       print OUT "<td class=\"DESC\">";
-      print OUT $row->[4];
+      print OUT $row->[4]; # Function
       print OUT "</td>";
 
       # Print out the quantities.
-      for my $j ( 5 .. 6 ) {
+      for my $j ( 5 .. 6 ) { # Line & Path length
         print OUT "<td class=\"Q\">$row->[$j]</td>";
       }
 
@@ -951,7 +966,8 @@ sub SetEnv {
                    'CCC_CC',
                    'CCC_CXX',
                    'CCC_REPORT_FAILURES',
-                   'CLANG_ANALYZER_TARGET') {
+                   'CLANG_ANALYZER_TARGET',
+                   'CCC_ANALYZER_FORCE_ANALYZE_DEBUG_CODE') {
     my $x = $EnvVars->{$var};
     if (defined $x) { $ENV{$var} = $x }
   }
@@ -1118,6 +1134,11 @@ OPTIONS:
    Also analyze functions in #included files.  By default, such functions
    are skipped unless they are called by functions within the main source file.
 
+ --force-analyze-debug-code
+
+   Tells analyzer to enable assertions in code even if they were disabled
+   during compilation to enable more precise results.
+
  -o <output location>
 
    Specifies the output directory for analyzer reports. Subdirectories will be
@@ -1142,6 +1163,10 @@ OPTIONS:
 
    Specify the title used on generated HTML pages. If not specified, a default
    title will be used.
+
+ --show-description
+
+   Display the description of defects in the list
 
  -plist
 
@@ -1579,6 +1604,12 @@ sub ProcessArgs {
       next;
     }
 
+    if ($arg eq "--show-description") {
+      shift @$Args;
+      $Options{ShowDescription} = 1;
+      next;
+    }
+
     if ($arg eq "-store") {
       shift @$Args;
       $Options{StoreModel} = shift @$Args;
@@ -1678,6 +1709,12 @@ sub ProcessArgs {
     if ($arg eq "--override-compiler") {
       shift @$Args;
       $Options{OverrideCompiler} = 1;
+      next;
+    }
+
+    if ($arg eq "--force-analyze-debug-code") {
+      shift @$Args;
+      $Options{ForceAnalyzeDebugCode} = 1;
       next;
     }
 
@@ -1796,7 +1833,8 @@ my %EnvVars = (
   'CCC_ANALYZER_CONSTRAINTS_MODEL' => $Options{ConstraintsModel},
   'CCC_ANALYZER_INTERNAL_STATS' => $Options{InternalStats},
   'CCC_ANALYZER_OUTPUT_FORMAT' => $Options{OutputFormat},
-  'CLANG_ANALYZER_TARGET' => $Options{AnalyzerTarget}
+  'CLANG_ANALYZER_TARGET' => $Options{AnalyzerTarget},
+  'CCC_ANALYZER_FORCE_ANALYZE_DEBUG_CODE' => $Options{ForceAnalyzeDebugCode}
 );
 
 # Run the build.

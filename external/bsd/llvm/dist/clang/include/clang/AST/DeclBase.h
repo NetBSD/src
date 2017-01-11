@@ -17,6 +17,7 @@
 #include "clang/AST/AttrIterator.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/Basic/Specifiers.h"
+#include "clang/Basic/VersionTuple.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
@@ -32,6 +33,7 @@ class DeclContext;
 class DeclarationName;
 class DependentDiagnostic;
 class EnumDecl;
+class ExportDecl;
 class FunctionDecl;
 class FunctionType;
 enum Linkage : unsigned char;
@@ -52,6 +54,7 @@ struct PrintingPolicy;
 class RecordDecl;
 class Stmt;
 class StoredDeclsMap;
+class TemplateDecl;
 class TranslationUnitDecl;
 class UsingDirectiveDecl;
 }
@@ -72,13 +75,10 @@ namespace clang {
 ///
 /// Note: There are objects tacked on before the *beginning* of Decl
 /// (and its subclasses) in its Decl::operator new(). Proper alignment
-/// of all subclasses (not requiring more than DeclObjAlignment) is
+/// of all subclasses (not requiring more than the alignment of Decl) is
 /// asserted in DeclBase.cpp.
-class Decl {
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) Decl {
 public:
-  /// \brief Alignment guaranteed when allocating Decl and any subtypes.
-  enum { DeclObjAlignment = llvm::AlignOf<uint64_t>::Alignment };
-
   /// \brief Lists the kind of concrete classes of Decl.
   enum Kind {
 #define DECL(DERIVED, BASE) DERIVED,
@@ -166,7 +166,10 @@ public:
     /// has been declared outside any function. These act mostly like
     /// invisible friend declarations, but are also visible to unqualified
     /// lookup within the scope of the declaring function.
-    IDNS_LocalExtern         = 0x0800
+    IDNS_LocalExtern         = 0x0800,
+
+    /// This declaration is an OpenMP user defined reduction construction.
+    IDNS_OMPReduction        = 0x1000
   };
 
   /// ObjCDeclQualifier - 'Qualifiers' written next to the return and
@@ -256,7 +259,7 @@ private:
   SourceLocation Loc;
 
   /// DeclKind - This indicates which class this is.
-  unsigned DeclKind : 8;
+  unsigned DeclKind : 7;
 
   /// InvalidDecl - This indicates a semantic error occurred.
   unsigned InvalidDecl :  1;
@@ -296,7 +299,7 @@ protected:
   unsigned Hidden : 1;
   
   /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
-  unsigned IdentifierNamespace : 12;
+  unsigned IdentifierNamespace : 13;
 
   /// \brief If 0, we have not computed the linkage of this declaration.
   /// Otherwise, it is the linkage + 1.
@@ -514,8 +517,8 @@ public:
   bool isImplicit() const { return Implicit; }
   void setImplicit(bool I = true) { Implicit = I; }
 
-  /// \brief Whether this declaration was used, meaning that a definition
-  /// is required.
+  /// \brief Whether *any* (re-)declaration of the entity was used, meaning that
+  /// a definition is required.
   ///
   /// \param CheckUsedAttr When true, also consider the "used" attribute
   /// (in addition to the "used" bit set by \c setUsed()) when determining
@@ -525,7 +528,8 @@ public:
   /// \brief Set whether the declaration is used, in the sense of odr-use.
   ///
   /// This should only be used immediately after creating a declaration.
-  void setIsUsed() { Used = true; }
+  /// It intentionally doesn't notify any listeners.
+  void setIsUsed() { getCanonicalDecl()->Used = true; }
 
   /// \brief Mark the declaration used, in the sense of odr-use.
   ///
@@ -564,6 +568,17 @@ public:
     return NextInContextAndBits.getInt() & ModulePrivateFlag;
   }
 
+  /// \brief Whether this declaration is exported (by virtue of being lexically
+  /// within an ExportDecl or by being a NamespaceDecl).
+  bool isExported() const;
+
+  /// Return true if this declaration has an attribute which acts as
+  /// definition of the entity, such as 'alias' or 'ifunc'.
+  bool hasDefiningAttr() const;
+
+  /// Return this declaration's defining attribute if it has one.
+  const Attr *getDefiningAttr() const;
+
 protected:
   /// \brief Specify whether this declaration was marked as being private
   /// to the module in which it was defined.
@@ -594,7 +609,12 @@ public:
   /// AR_Available, will be set to a (possibly empty) message
   /// describing why the declaration has not been introduced, is
   /// deprecated, or is unavailable.
-  AvailabilityResult getAvailability(std::string *Message = nullptr) const;
+  ///
+  /// \param EnclosingVersion The version to compare with. If empty, assume the
+  /// deployment target version.
+  AvailabilityResult
+  getAvailability(std::string *Message = nullptr,
+                  VersionTuple EnclosingVersion = VersionTuple()) const;
 
   /// \brief Determine whether this declaration is marked 'deprecated'.
   ///
@@ -895,6 +915,10 @@ public:
            DeclKind == FunctionTemplate;
   }
 
+  /// \brief If this is a declaration that describes some template, this
+  /// method returns that template declaration.
+  TemplateDecl *getDescribedTemplate() const;
+
   /// \brief Returns the function itself, or the templated function if this is a
   /// function template.
   FunctionDecl *getAsFunction() LLVM_READONLY;
@@ -1116,7 +1140,9 @@ public:
 ///   ObjCMethodDecl
 ///   ObjCContainerDecl
 ///   LinkageSpecDecl
+///   ExportDecl
 ///   BlockDecl
+///   OMPDeclareReductionDecl
 ///
 class DeclContext {
   /// DeclKind - This indicates which class this is.
@@ -1259,7 +1285,8 @@ public:
 
   /// \brief Test whether the context supports looking up names.
   bool isLookupContext() const {
-    return !isFunctionOrMethod() && DeclKind != Decl::LinkageSpec;
+    return !isFunctionOrMethod() && DeclKind != Decl::LinkageSpec &&
+           DeclKind != Decl::Export;
   }
 
   bool isFileContext() const {
@@ -1306,6 +1333,9 @@ public:
   /// \brief Determines whether this context or some of its ancestors is a
   /// linkage specification context that specifies C linkage.
   bool isExternCContext() const;
+
+  /// \brief Retrieve the nearest enclosing C linkage specification context.
+  const LinkageSpecDecl *getExternCContext() const;
 
   /// \brief Determines whether this context or some of its ancestors is a
   /// linkage specification context that specifies C++ linkage.
