@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.114 2016/12/18 01:19:34 dholland Exp $	*/
+/*	$NetBSD: ping.c,v 1.115 2017/01/11 12:13:52 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.114 2016/12/18 01:19:34 dholland Exp $");
+__RCSID("$NetBSD: ping.c,v 1.115 2017/01/11 12:13:52 joerg Exp $");
 #endif
 
 #include <stdio.h>
@@ -1781,7 +1781,8 @@ pr_iph(struct icmp *icp,
 {
 	int	hlen;
 	u_char	*cp;
-	struct ip ipb, *ip = &ipb;
+	struct ip __aligned(4) ipb;
+	struct ip *ip = &ipb;
 
 	(void) memcpy(ip, icp->icmp_data, sizeof(*ip));
 
