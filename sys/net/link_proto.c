@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.33 2016/12/26 07:25:00 ozaki-r Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.34 2017/01/11 07:03:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.33 2016/12/26 07:25:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.34 2017/01/11 07:03:59 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -216,7 +216,13 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 			else {
 				/* TBD routing socket */
 				rt_newaddrmsg(RTM_DELETE, ifa, 0, NULL);
+				/* We need to release psref for ifa_remove */
+				ifaref(ifa);
+				ifa_release(ifa, &psref);
 				ifa_remove(ifp, ifa);
+				KASSERT(ifa->ifa_refcnt == 1);
+				ifafree(ifa);
+				ifa = NULL;
 			}
 			break;
 		case SIOCALIFADDR:
