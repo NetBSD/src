@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.22 2016/09/09 05:36:59 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.23 2017/01/11 21:44:50 maya Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.22 2016/09/09 05:36:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.23 2017/01/11 21:44:50 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -244,7 +244,7 @@ spdmem_common_probe(struct spdmem_softc *sc)
 	} else if (spd_type == SPDMEM_MEMTYPE_DDR4SDRAM) {
 		(sc->sc_read)(sc, 0, &val);
 		spd_len = val & 0x0f;
-		if ((unsigned int)spd_len > __arraycount(spd_rom_sizes))
+		if ((unsigned int)spd_len >= __arraycount(spd_rom_sizes))
 			return 0;
 		spd_len = spd_rom_sizes[spd_len];
 		spd_crc_cover = 125; /* For byte 0 to 125 */
