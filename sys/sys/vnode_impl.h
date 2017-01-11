@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.8 2017/01/11 09:04:37 hannken Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.9 2017/01/11 09:06:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ struct vcache_key {
  *	d	vdrain_lock
  *	i	v_interlock
  *	n	namecache_lock
+ *	s	syncer_data_lock
  */
 struct vnode_impl {
 	struct vnode vi_vnode;
@@ -70,6 +71,8 @@ struct vnode_impl {
 	TAILQ_ENTRY(vnode_impl) vi_lrulist;	/* d: lru list */
 	LIST_HEAD(, namecache) vi_dnclist;	/* n: namecaches (children) */
 	LIST_HEAD(, namecache) vi_nclist;	/* n: namecaches (parent) */
+	int vi_synclist_slot;			/* s: synclist slot index */
+	TAILQ_ENTRY(vnode_impl) vi_synclist;	/* s: vnodes with dirty bufs */
 	SLIST_ENTRY(vnode_impl) vi_hash;	/* c: vnode cache list */
 	struct vcache_key vi_key;		/* c: vnode cache key */
 };
