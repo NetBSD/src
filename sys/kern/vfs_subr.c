@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.456 2017/01/11 09:07:57 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.457 2017/01/11 09:08:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.456 2017/01/11 09:07:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.457 2017/01/11 09:08:58 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1116,7 +1116,7 @@ vprint_common(struct vnode *vp, const char *prefix,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
 	(*pr)("%ssize %" PRIx64 " writesize %" PRIx64 " numoutput %d\n",
 	    prefix, vp->v_size, vp->v_writesize, vp->v_numoutput);
-	(*pr)("%sdata %p lock %p\n", prefix, vp->v_data, &vp->v_lock);
+	(*pr)("%sdata %p lock %p\n", prefix, vp->v_data, &vip->vi_lock);
 
 	(*pr)("%sstate %s key(%p %zd)", prefix, vstate_name(vip->vi_state),
 	    vip->vi_key.vk_mount, vip->vi_key.vk_key_len);
