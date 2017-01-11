@@ -82,6 +82,7 @@ namespace test5 {
     static int var; // expected-warning {{variable 'test5::B<test5::(anonymous namespace)::A>::var' has internal linkage but is not defined}}
     static void foo(); // expected-warning {{function 'test5::B<test5::(anonymous namespace)::A>::foo' has internal linkage but is not defined}}
   };
+  extern template int B<A>::var;
 
   void test() {
     B<A>::var = 0; // expected-note {{used here}}
@@ -185,10 +186,15 @@ namespace OverloadUse {
   namespace {
     void f();
     void f(int); // expected-warning {{function 'OverloadUse::(anonymous namespace)::f' has internal linkage but is not defined}}
+    void f(int, int); // expected-warning {{function 'OverloadUse::(anonymous namespace)::f' has internal linkage but is not defined}}
   }
-  template<void x()> void t(int*) { x(); }
-  template<void x(int)> void t(long*) { x(10); } // expected-note {{used here}}
-  void g() { long a; t<f>(&a); }
+  template<void x()> void t() { x(); }
+  template<void x(int)> void t(int*) { x(10); }
+  template<void x(int, int)> void t(int*, int*) {}
+  void g(int n) {
+    t<f>(&n); // expected-note {{used here}}
+    t<f>(&n, &n); // expected-note {{used here}}
+  }
 }
 
 namespace test7 {

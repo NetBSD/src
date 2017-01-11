@@ -21,6 +21,7 @@ import glob
 import json
 import logging
 import contextlib
+import datetime
 from libscanbuild import duplicate_check
 from libscanbuild.clang import get_version
 
@@ -34,8 +35,14 @@ def report_directory(hint, keep):
     hint -- could specify the parent directory of the output directory.
     keep -- a boolean value to keep or delete the empty report directory. """
 
-    stamp = time.strftime('scan-build-%Y-%m-%d-%H%M%S-', time.localtime())
-    name = tempfile.mkdtemp(prefix=stamp, dir=hint)
+    stamp_format = 'scan-build-%Y-%m-%d-%H-%M-%S-%f-'
+    stamp = datetime.datetime.now().strftime(stamp_format)
+
+    parentdir = os.path.abspath(hint)
+    if not os.path.exists(parentdir):
+        os.makedirs(parentdir)
+
+    name = tempfile.mkdtemp(prefix=stamp, dir=parentdir)
 
     logging.info('Report directory created: %s', name)
 

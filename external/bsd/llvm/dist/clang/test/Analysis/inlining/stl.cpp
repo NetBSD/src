@@ -6,8 +6,7 @@
 void clang_analyzer_eval(bool);
 
 void testVector(std::vector<int> &nums) {
-  if (nums.begin()) return;
-  if (nums.end()) return;
+  if (nums.begin() != nums.end()) return;
   
   clang_analyzer_eval(nums.size() == 0);
 #if INLINE
@@ -26,29 +25,4 @@ void testException(std::exception e) {
 #else
   // expected-warning@-4 {{UNKNOWN}}
 #endif
-}
-
-void testList_pop_front(std::list<int> list) {
-  while(!list.empty())
-    list.pop_front();  // no-warning
-}
-
-void testBasicStringSuppression() {
-  std::basic_string<uint8_t> v;
-  v.push_back(1); // no-warning
-}
-
-void testBasicStringSuppression_append() {
-  std::basic_string<char32_t> v;
-  v += 'c'; // no-warning
-}
-
-void testBasicStringSuppression_assign(std::basic_string<char32_t> &v,
-                                       const std::basic_string<char32_t> &v2) {
-  v = v2;
-}
-
-class MyEngine;
-void testSupprerssion_independent_bits_engine(MyEngine& e) {
-  std::__independent_bits_engine<MyEngine, unsigned int> x(e, 64); // no-warning
 }
