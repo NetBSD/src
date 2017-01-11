@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.90 2016/11/24 00:05:13 dholland Exp $	*/
+/*	$NetBSD: if.c,v 1.91 2017/01/11 01:25:05 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.90 2016/11/24 00:05:13 dholland Exp $");
+__RCSID("$NetBSD: if.c,v 1.91 2017/01/11 01:25:05 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ struct	iftot {
 };
 
 static void set_lines(void);
-static void print_addr(const char *, struct sockaddr *, struct sockaddr **,
+static void print_addr(const int, struct sockaddr *, struct sockaddr **,
     struct if_data *, struct ifnet *);
 static void sidewaysintpr(u_int, u_long);
 
@@ -179,6 +179,7 @@ intpr_sysctl(void)
 	size_t len;
 	int did = 1, rtax = 0, n;
 	char name[IFNAMSIZ + 1];	/* + 1 for `*' */
+	int ifindex = 0;
 
 	if (prog_sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
 		err(1, "sysctl");
@@ -215,6 +216,8 @@ intpr_sysctl(void)
 
 			if (interface != 0 && strcmp(name, interface) != 0)
 				continue;
+
+			ifindex = sdl->sdl_index;
 
 			/* mark inactive interfaces with a '*' */
 			cp = strchr(name, '\0');
@@ -264,7 +267,7 @@ intpr_sysctl(void)
 			n = 5;
 
 		printf("%-*.*s %-5" PRIu64 " ", n, n, name, ifd->ifi_mtu);
-		print_addr(name, rti_info[rtax], rti_info, ifd, NULL);
+		print_addr(ifindex, rti_info[rtax], rti_info, ifd, NULL);
 	}
 }
 
@@ -346,8 +349,8 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 			cp = (CP(ifaddr.ifa.ifa_addr) - CP(ifaddraddr)) +
 			    CP(&ifaddr);
 			sa = (struct sockaddr *)cp;
-			print_addr(name, sa, (void *)&ifaddr, &ifnet.if_data,
-			    &ifnet);
+			print_addr(ifnet.if_index, sa, (void *)&ifaddr,
+			    &ifnet.if_data, &ifnet);
 		}
 		ifaddraddr = (u_long)ifaddr.ifa.ifa_list.tqe_next;
 	}
@@ -355,16 +358,12 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 }
 
 static void
-mc_print(const char *ifname, const size_t ias, const char *oid, int *mcast_oids,
+mc_print(const int ifindex, const size_t ias, const char *oid, int *mcast_oids,
     void (*pr)(const void *))
 {
 	uint8_t *mcast_addrs, *p;
 	const size_t incr = 2 * ias + sizeof(uint32_t);
 	size_t len;
-	int ifindex;
-
-	if ((ifindex = if_nametoindex(ifname)) == 0)
-		warn("Interface %s not found", ifname);
 
 	if (mcast_oids[0] == 0) {
 		size_t oidlen = 4;
@@ -423,11 +422,11 @@ ia6_print(const struct in6_addr *ia)
 }
 
 static void
-mc6_print(const char *ifname)
+mc6_print(const int ifindex)
 {
 	static int mcast_oids[4];
 
-	mc_print(ifname, sizeof(struct in6_addr), "net.inet6.multicast",
+	mc_print(ifindex, sizeof(struct in6_addr), "net.inet6.multicast",
 	    mcast_oids, (void (*)(const void *))ia6_print);
 }
 #endif
@@ -439,17 +438,17 @@ ia4_print(const struct in_addr *ia)
 }
 
 static void
-mc4_print(const char *ifname)
+mc4_print(const int ifindex)
 {
 	static int mcast_oids[4];
 
-	mc_print(ifname, sizeof(struct in_addr), "net.inet.multicast",
+	mc_print(ifindex, sizeof(struct in_addr), "net.inet.multicast",
 	    mcast_oids, (void (*)(const void *))ia4_print);
 }
 
 static void
-print_addr(const char *name, struct sockaddr *sa, struct sockaddr **rtinfo,
-    struct if_data *ifd, struct ifnet *ifnet)
+print_addr(const int ifindex, struct sockaddr *sa,
+    struct sockaddr **rtinfo, struct if_data *ifd, struct ifnet *ifnet)
 {
 	char hexsep = '.';		/* for hexprint */
 	static const char hexfmt[] = "%02x%c";	/* for hexprint */
@@ -503,7 +502,7 @@ print_addr(const char *name, struct sockaddr *sa, struct sockaddr **rtinfo,
 				multiaddr = (u_long)inm.inm_list.le_next;
 			}
 		} else {
-			mc4_print(name);
+			mc4_print(ifindex);
 		}
 		break;
 #ifdef INET6
@@ -555,7 +554,7 @@ print_addr(const char *name, struct sockaddr *sa, struct sockaddr **rtinfo,
 				multiaddr = (u_long)inm.in6m_entry.le_next;
 			}
 		} else {
-			mc6_print(name);
+			mc6_print(ifindex);
 		}
 		break;
 #endif /*INET6*/
