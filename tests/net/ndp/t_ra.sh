@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.18 2016/12/26 01:26:25 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.19 2017/01/11 03:15:11 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -127,7 +127,8 @@ check_entries()
 	    -o match:"$ll_srv%shmif0 +$mac_srv +shmif0 +(23h59m|1d0h0m)..s S R" \
 	    rump.ndp -n -a
 	atf_check -s exit:0 -o match:$addr_prefix rump.ndp -n -a
-	atf_check -s exit:0 -o match:$addr_prefix rump.ifconfig shmif0 inet6
+	atf_check -s exit:0 -o match:"$addr_prefix.+<AUTOCONF>" \
+	    rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
 }
 
