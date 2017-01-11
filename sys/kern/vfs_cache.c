@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.111 2017/01/02 10:33:28 hannken Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.112 2017/01/11 09:04:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.111 2017/01/02 10:33:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.112 2017/01/11 09:04:37 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -844,9 +844,9 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 
 	/* Fill in cache info. */
 	ncp->nc_dvp = dvp;
-	LIST_INSERT_HEAD(&dvp->v_dnclist, ncp, nc_dvlist);
+	LIST_INSERT_HEAD(&VNODE_TO_VIMPL(dvp)->vi_dnclist, ncp, nc_dvlist);
 	if (vp)
-		LIST_INSERT_HEAD(&vp->v_nclist, ncp, nc_vlist);
+		LIST_INSERT_HEAD(&VNODE_TO_VIMPL(vp)->vi_nclist, ncp, nc_vlist);
 	else {
 		ncp->nc_vlist.le_prev = NULL;
 		ncp->nc_vlist.le_next = NULL;
@@ -1031,8 +1031,8 @@ cache_purge1(struct vnode *vp, const char *name, size_t namelen, int flags)
 	if (flags & PURGE_PARENTS) {
 		SDT_PROBE(vfs, namecache, purge, parents, vp, 0, 0, 0, 0);
 
-		for (ncp = LIST_FIRST(&vp->v_nclist); ncp != NULL;
-		    ncp = ncnext) {
+		for (ncp = LIST_FIRST(&VNODE_TO_VIMPL(vp)->vi_nclist);
+		    ncp != NULL; ncp = ncnext) {
 			ncnext = LIST_NEXT(ncp, nc_vlist);
 			mutex_enter(&ncp->nc_lock);
 			cache_invalidate(ncp);
@@ -1042,8 +1042,8 @@ cache_purge1(struct vnode *vp, const char *name, size_t namelen, int flags)
 	}
 	if (flags & PURGE_CHILDREN) {
 		SDT_PROBE(vfs, namecache, purge, children, vp, 0, 0, 0, 0);
-		for (ncp = LIST_FIRST(&vp->v_dnclist); ncp != NULL;
-		    ncp = ncnext) {
+		for (ncp = LIST_FIRST(&VNODE_TO_VIMPL(vp)->vi_dnclist);
+		    ncp != NULL; ncp = ncnext) {
 			ncnext = LIST_NEXT(ncp, nc_dvlist);
 			mutex_enter(&ncp->nc_lock);
 			cache_invalidate(ncp);

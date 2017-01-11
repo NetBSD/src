@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.70 2017/01/05 10:05:11 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.71 2017/01/11 09:04:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.70 2017/01/05 10:05:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.71 2017/01/11 09:04:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1023,12 +1023,12 @@ vcache_alloc(void)
 	memset(vip, 0, sizeof(*vip));
 
 	/* SLIST_INIT(&vip->vi_hash); */
+	/* LIST_INIT(&vip->vi_nclist); */
+	/* LIST_INIT(&vip->vi_dnclist); */
 
 	vp = VIMPL_TO_VNODE(vip);
 	uvm_obj_init(&vp->v_uobj, &uvm_vnodeops, true, 0);
 	cv_init(&vp->v_cv, "vnode");
-	/* LIST_INIT(&vp->v_nclist); */
-	/* LIST_INIT(&vp->v_dnclist); */
 
 	rw_init(&vp->v_lock);
 	vp->v_usecount = 1;
