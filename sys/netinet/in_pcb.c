@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.172 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.173 2017/01/11 13:08:29 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.172 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.173 2017/01/11 13:08:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.172 2016/12/12 03:55:57 ozaki-r Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/ioctl.h>
