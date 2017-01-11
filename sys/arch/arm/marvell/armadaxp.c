@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.17 2017/01/11 19:32:25 maya Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.18 2017/01/11 19:42:02 maya Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.17 2017/01/11 19:32:25 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.18 2017/01/11 19:42:02 maya Exp $");
 
 #define _INTR_PRIVATE
 
@@ -708,7 +708,7 @@ static void
 armadaxp_err_pic_source_name(struct pic_softc *pic, int irq,
     char *buf, size_t len)
 {
-	if (irq > __arraycount(armadaxp_err_pic_source_names)) {
+	if (irq >= __arraycount(armadaxp_err_pic_source_names)) {
 		snprintf(buf, len, "Unknown IRQ %d", irq);
 		return;
 	}
