@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.82 2017/01/10 10:13:24 roy Exp $
+#	$NetBSD: Makefile,v 1.83 2017/01/11 20:43:03 roy Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -22,9 +22,9 @@ SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
 	idcok.c immedok.c inch.c inchstr.c initscr.c insch.c insdelln.c \
 	insertln.c instr.c keypad.c keyname.c leaveok.c line.c meta.c move.c \
 	mvwin.c newwin.c nodelay.c notimeout.c overlay.c overwrite.c pause.c \
-	printw.c putchar.c refresh.c resize.c scanw.c screen.c scroll.c \
-	scrollok.c setterm.c standout.c syncok.c timeout.c toucholap.c \
-	touchwin.c tstp.c tty.c unctrl.c underscore.c
+	printw.c putchar.c refresh.c resize.c ripoffline.c scanw.c screen.c \
+	scroll.c scrollok.c setterm.c standout.c syncok.c timeout.c \
+	toucholap.c touchwin.c tstp.c tty.c unctrl.c underscore.c
 
 MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
 	curses_attributes.3 curses_background.3 curses_border.3 \

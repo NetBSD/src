@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.58 2017/01/10 10:13:24 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.59 2017/01/11 20:43:03 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -189,6 +189,13 @@ struct __pair {
 
 typedef struct keymap keymap_t;
 
+
+#define	MAX_RIPS	5
+struct __ripoff {
+	int	nlines;
+	WINDOW	*win;
+};
+
 /* this is the encapsulation of the terminal definition, one for
  * each terminal that curses talks to.
  */
@@ -201,8 +208,8 @@ struct __screen {
 	int      lx, ly;        /* loop parameters for refresh */
 	int	 COLS;		/* Columns on the screen. */
 	int	 LINES;		/* Lines on the screen. */
-	int	 ripped_top;	/* Lines ripped from the top of the screen. */
-	int	 ripped_bottom;	/* Lines ripped from the bottom. */
+	int	 nripped;	/* Number of ripofflines. */
+	struct __ripoff ripped[MAX_RIPS];	/* ripofflines. */
 	int	 ESCDELAY;	/* Delay between keys in esc seq's. */
 #define	ESCDELAY_DEFAULT	300 /* milliseconds. */
 	int	 TABSIZE;	/* Size of a tab. */
@@ -342,6 +349,9 @@ void     __restore_meta_state(void);
 void	 __restore_termios(void);
 void	 __restore_stophandler(void);
 void	 __restore_winchhandler(void);
+int	 __ripoffscreen(SCREEN *, int *);
+void	 __ripoffresize(SCREEN *);
+int	 __rippedlines(const SCREEN *);
 void	 __save_termios(void);
 void	 __set_color(WINDOW *win, attr_t attr);
 void	 __set_stophandler(void);
