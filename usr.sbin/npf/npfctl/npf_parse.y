@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.40 2017/01/03 01:29:49 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.41 2017/01/11 02:11:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
@@ -665,6 +665,8 @@ addr_or_ifaddr
 	}
 	| static_ifaddrs
 	{
+		if (npfvar_get_count($1) != 1)
+			yyerror("multiple interfaces are not supported");
 		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
 		$$ = ifna->ifna_addrs;
 	}
@@ -765,6 +767,8 @@ tcp_flags_and_mask
 	}
 	| FLAGS tcp_flags
 	{
+		if (npfvar_get_count($2) != 1)
+			yyerror("multiple tcpflags are not supported");
 		char *s = npfvar_get_data($2, NPFVAR_TCPFLAG, 0);
 		npfvar_add_elements($2, npfctl_parse_tcpflag(s));
 		$$ = $2;
@@ -804,6 +808,9 @@ ifname
 			$$ = npfvar_expand_string(vp);
 			break;
 		case NPFVAR_INTERFACE:
+			if (npfvar_get_count(vp) != 1)
+				yyerror(
+				    "multiple interfaces are not supported");
 			ifna = npfvar_get_data(vp, type, 0);
 			$$ = ifna->ifna_name;
 			break;
@@ -838,6 +845,8 @@ ifref
 	| dynamic_ifaddrs
 	| static_ifaddrs
 	{
+		if (npfvar_get_count($1) != 1)
+			yyerror("multiple interfaces are not supported");
 		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
 		npfctl_note_interface(ifna->ifna_name);
 		$$ = ifna->ifna_name;
