@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.454 2017/01/05 10:05:11 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.455 2017/01/11 09:06:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.454 2017/01/05 10:05:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.455 2017/01/11 09:06:57 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -552,7 +552,7 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 
 #define SYNCER_MAXDELAY		32
 
-typedef TAILQ_HEAD(synclist, vnode) synclist_t;
+typedef TAILQ_HEAD(synclist, vnode_impl) synclist_t;
 
 static void	vn_syncer_add1(struct vnode *, int);
 static void	sysctl_vfs_syncfs_setup(struct sysctllog **);
@@ -624,6 +624,7 @@ static void
 vn_syncer_add1(struct vnode *vp, int delayx)
 {
 	synclist_t *slp;
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
 	KASSERT(mutex_owned(&syncer_data_lock));
 
@@ -633,17 +634,17 @@ vn_syncer_add1(struct vnode *vp, int delayx)
 		 * Note: called from sched_sync(), which will not hold
 		 * interlock, therefore we cannot modify v_iflag here.
 		 */
-		slp = &syncer_workitem_pending[vp->v_synclist_slot];
-		TAILQ_REMOVE(slp, vp, v_synclist);
+		slp = &syncer_workitem_pending[vip->vi_synclist_slot];
+		TAILQ_REMOVE(slp, vip, vi_synclist);
 	} else {
 		KASSERT(mutex_owned(vp->v_interlock));
 		vp->v_iflag |= VI_ONWORKLST;
 	}
 
-	vp->v_synclist_slot = sync_delay_slot(delayx);
+	vip->vi_synclist_slot = sync_delay_slot(delayx);
 
-	slp = &syncer_workitem_pending[vp->v_synclist_slot];
-	TAILQ_INSERT_TAIL(slp, vp, v_synclist);
+	slp = &syncer_workitem_pending[vip->vi_synclist_slot];
+	TAILQ_INSERT_TAIL(slp, vip, vi_synclist);
 }
 
 void
@@ -664,14 +665,15 @@ void
 vn_syncer_remove_from_worklist(struct vnode *vp)
 {
 	synclist_t *slp;
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
 	mutex_enter(&syncer_data_lock);
 	if (vp->v_iflag & VI_ONWORKLST) {
 		vp->v_iflag &= ~VI_ONWORKLST;
-		slp = &syncer_workitem_pending[vp->v_synclist_slot];
-		TAILQ_REMOVE(slp, vp, v_synclist);
+		slp = &syncer_workitem_pending[vip->vi_synclist_slot];
+		TAILQ_REMOVE(slp, vip, vi_synclist);
 	}
 	mutex_exit(&syncer_data_lock);
 }
@@ -795,14 +797,14 @@ sched_sync(void *arg)
 		if (syncer_delayno >= syncer_last)
 			syncer_delayno = 0;
 
-		while ((vp = TAILQ_FIRST(slp)) != NULL) {
+		while ((vp = VIMPL_TO_VNODE(TAILQ_FIRST(slp))) != NULL) {
 			synced = lazy_sync_vnode(vp);
 
 			/*
 			 * XXX The vnode may have been recycled, in which
 			 * case it may have a new identity.
 			 */
-			if (TAILQ_FIRST(slp) == vp) {
+			if (VIMPL_TO_VNODE(TAILQ_FIRST(slp)) == vp) {
 				/*
 				 * Put us back on the worklist.  The worklist
 				 * routine will remove us from our current
