@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.266 2017/01/10 07:39:52 knakahara Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.267 2017/01/11 13:08:29 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.266 2017/01/10 07:39:52 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.267 2017/01/11 13:08:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -106,13 +106,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.266 2017/01/10 07:39:52 knakahara Ex
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/kauth.h>
-#ifdef IPSEC
-#include <sys/domain.h>
-#endif
 #include <sys/systm.h>
 #include <sys/syslog.h>
 

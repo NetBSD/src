@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.76 2017/01/10 05:42:34 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.77 2017/01/11 13:08:29 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.76 2017/01/10 05:42:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.77 2017/01/11 13:08:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -114,7 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.76 2017/01/10 05:42:34 ozaki-r Exp $");
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/protosw.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
 #include <sys/kernel.h>

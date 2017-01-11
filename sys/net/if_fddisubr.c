@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.102 2016/10/03 11:06:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.103 2017/01/11 13:08:29 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.102 2016/10/03 11:06:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.103 2017/01/11 13:08:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -111,8 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.102 2016/10/03 11:06:06 ozaki-r Ex
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.33 2016/12/08 05:16:34 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.34 2017/01/11 13:08:29 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.33 2016/12/08 05:16:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.34 2017/01/11 13:08:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -48,9 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.33 2016/12/08 05:16:34 ozaki-r Exp $"
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/time.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.58 2016/12/08 05:16:34 ozaki-r Exp $	*/
+/*	$NetBSD: frag6.c,v 1.59 2017/01/11 13:08:29 ozaki-r Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,15 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.58 2016/12/08 05:16:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.59 2017/01/11 13:08:29 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kmem.h>

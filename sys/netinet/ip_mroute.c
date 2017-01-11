@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.144 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.145 2017/01/11 13:08:29 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.144 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.145 2017/01/11 13:08:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -111,7 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.144 2016/08/01 03:15:30 ozaki-r Exp 
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.78 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.79 2017/01/11 13:08:29 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.78 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.79 2017/01/11 13:08:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -40,9 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.78 2016/12/08 05:16:33 ozaki-r Exp $")
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/time.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.133 2016/10/02 14:17:07 christos Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.134 2017/01/11 13:08:29 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.133 2016/10/02 14:17:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.134 2017/01/11 13:08:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -26,7 +26,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.133 2016/10/02 14:17:07 christos Exp $"
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/buf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
