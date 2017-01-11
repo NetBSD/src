@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.16 2017/01/07 16:19:28 kiyohara Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.17 2017/01/11 19:32:25 maya Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.16 2017/01/07 16:19:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.17 2017/01/11 19:32:25 maya Exp $");
 
 #define _INTR_PRIVATE
 
@@ -665,7 +665,7 @@ armadaxp_pic_set_priority(struct pic_softc *pic, int ipl)
 static void
 armadaxp_pic_source_name(struct pic_softc *pic, int irq, char *buf, size_t len)
 {
-	if (irq > __arraycount(armadaxp_pic_source_names)) {
+	if (irq >= __arraycount(armadaxp_pic_source_names)) {
 		snprintf(buf, len, "Unknown IRQ %d", irq);
 		return;
 	}
