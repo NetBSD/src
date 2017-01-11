@@ -10,13 +10,14 @@
 #ifndef LLVM_CLANG_LIB_DRIVER_TOOLS_H
 #define LLVM_CLANG_LIB_DRIVER_TOOLS_H
 
+#include "clang/Basic/DebugInfoOptions.h"
 #include "clang/Basic/VersionTuple.h"
 #include "clang/Driver/Tool.h"
 #include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"
-#include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Option/Option.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Compiler.h"
 
 namespace clang {
@@ -57,8 +58,7 @@ private:
                                const Driver &D, const llvm::opt::ArgList &Args,
                                llvm::opt::ArgStringList &CmdArgs,
                                const InputInfo &Output,
-                               const InputInfoList &Inputs,
-                               const ToolChain *AuxToolChain) const;
+                               const InputInfoList &Inputs) const;
 
   void AddAArch64TargetArgs(const llvm::opt::ArgList &Args,
                             llvm::opt::ArgStringList &CmdArgs) const;
@@ -82,6 +82,8 @@ private:
                         llvm::opt::ArgStringList &CmdArgs) const;
   void AddHexagonTargetArgs(const llvm::opt::ArgList &Args,
                             llvm::opt::ArgStringList &CmdArgs) const;
+  void AddLanaiTargetArgs(const llvm::opt::ArgList &Args,
+                          llvm::opt::ArgStringList &CmdArgs) const;
   void AddWebAssemblyTargetArgs(const llvm::opt::ArgList &Args,
                                 llvm::opt::ArgStringList &CmdArgs) const;
 
@@ -91,14 +93,20 @@ private:
                                  llvm::opt::ArgStringList &cmdArgs,
                                  RewriteKind rewrite) const;
 
-  void AddClangCLArgs(const llvm::opt::ArgList &Args,
+  void AddClangCLArgs(const llvm::opt::ArgList &Args, types::ID InputType,
                       llvm::opt::ArgStringList &CmdArgs,
-                      enum CodeGenOptions::DebugInfoKind *DebugInfoKind,
+                      codegenoptions::DebugInfoKind *DebugInfoKind,
                       bool *EmitCodeView) const;
 
   visualstudio::Compiler *getCLFallback() const;
 
   mutable std::unique_ptr<visualstudio::Compiler> CLFallback;
+
+  mutable std::unique_ptr<llvm::raw_fd_ostream> CompilationDatabase = nullptr;
+  void DumpCompilationDatabase(Compilation &C, StringRef Filename,
+                               StringRef Target,
+                               const InputInfo &Output, const InputInfo &Input,
+                               const llvm::opt::ArgList &Args) const;
 
 public:
   // CAUTION! The first constructor argument ("clang") is not arbitrary,
@@ -124,6 +132,8 @@ public:
       : Tool("clang::as", "clang integrated assembler", TC, RF_Full) {}
   void AddMIPSTargetArgs(const llvm::opt::ArgList &Args,
                          llvm::opt::ArgStringList &CmdArgs) const;
+  void AddX86TargetArgs(const llvm::opt::ArgList &Args,
+                        llvm::opt::ArgStringList &CmdArgs) const;
   bool hasGoodDiagnostics() const override { return true; }
   bool hasIntegratedAssembler() const override { return false; }
   bool hasIntegratedCPP() const override { return false; }
@@ -132,6 +142,24 @@ public:
                     const InputInfo &Output, const InputInfoList &Inputs,
                     const llvm::opt::ArgList &TCArgs,
                     const char *LinkingOutput) const override;
+};
+
+/// Offload bundler tool.
+class LLVM_LIBRARY_VISIBILITY OffloadBundler final : public Tool {
+public:
+  OffloadBundler(const ToolChain &TC)
+      : Tool("offload bundler", "clang-offload-bundler", TC) {}
+
+  bool hasIntegratedCPP() const override { return false; }
+  void ConstructJob(Compilation &C, const JobAction &JA,
+                    const InputInfo &Output, const InputInfoList &Inputs,
+                    const llvm::opt::ArgList &TCArgs,
+                    const char *LinkingOutput) const override;
+  void ConstructJobMultipleOutputs(Compilation &C, const JobAction &JA,
+                                   const InputInfoList &Outputs,
+                                   const InputInfoList &Inputs,
+                                   const llvm::opt::ArgList &TCArgs,
+                                   const char *LinkingOutput) const override;
 };
 
 /// \brief Base class for all GNU tools that provide the same behavior when
@@ -289,6 +317,7 @@ enum class FloatABI {
 };
 
 NanEncoding getSupportedNanEncoding(StringRef &CPU);
+bool hasCompactBranches(StringRef &CPU);
 void getMipsCPUAndABI(const llvm::opt::ArgList &Args,
                       const llvm::Triple &Triple, StringRef &CPUName,
                       StringRef &ABIName);
@@ -297,6 +326,7 @@ std::string getMipsABILibSuffix(const llvm::opt::ArgList &Args,
 bool hasMipsAbiArg(const llvm::opt::ArgList &Args, const char *Value);
 bool isUCLibc(const llvm::opt::ArgList &Args);
 bool isNaN2008(const llvm::opt::ArgList &Args, const llvm::Triple &Triple);
+bool isFP64ADefault(const llvm::Triple &Triple, StringRef CPUName);
 bool isFPXXDefault(const llvm::Triple &Triple, StringRef CPUName,
                    StringRef ABIName, mips::FloatABI FloatABI);
 bool shouldUseFPXX(const llvm::opt::ArgList &Args, const llvm::Triple &Triple,
@@ -591,6 +621,21 @@ public:
 };
 } // end namespace nacltools
 
+namespace fuchsia {
+class LLVM_LIBRARY_VISIBILITY Linker : public GnuTool {
+public:
+  Linker(const ToolChain &TC) : GnuTool("fuchsia::Linker", "ld.lld", TC) {}
+
+  bool hasIntegratedCPP() const override { return false; }
+  bool isLinkJob() const override { return true; }
+
+  void ConstructJob(Compilation &C, const JobAction &JA,
+                    const InputInfo &Output, const InputInfoList &Inputs,
+                    const llvm::opt::ArgList &TCArgs,
+                    const char *LinkingOutput) const override;
+};
+} // end namespace fuchsia
+
 /// minix -- Directly call GNU Binutils assembler and linker
 namespace minix {
 class LLVM_LIBRARY_VISIBILITY Assembler : public GnuTool {
@@ -680,9 +725,6 @@ public:
 
 /// Visual studio tools.
 namespace visualstudio {
-VersionTuple getMSVCVersion(const Driver *D, const llvm::Triple &Triple,
-                            const llvm::opt::ArgList &Args, bool IsWindowsMSVC);
-
 class LLVM_LIBRARY_VISIBILITY Linker : public Tool {
 public:
   Linker(const ToolChain &TC)
@@ -772,6 +814,16 @@ enum class FloatABI {
 
 FloatABI getPPCFloatABI(const Driver &D, const llvm::opt::ArgList &Args);
 } // end namespace ppc
+
+namespace sparc {
+enum class FloatABI {
+  Invalid,
+  Soft,
+  Hard,
+};
+
+FloatABI getSparcFloatABI(const Driver &D, const llvm::opt::ArgList &Args);
+} // end namespace sparc
 
 namespace XCore {
 // For XCore, we do not need to instantiate tools for PreProcess, PreCompile and
@@ -902,6 +954,54 @@ public:
                     const char *LinkingOutput) const override;
 };
 } // end namespace PS4cpu
+
+namespace NVPTX {
+
+// Run ptxas, the NVPTX assembler.
+class LLVM_LIBRARY_VISIBILITY Assembler : public Tool {
+ public:
+   Assembler(const ToolChain &TC)
+       : Tool("NVPTX::Assembler", "ptxas", TC, RF_Full, llvm::sys::WEM_UTF8,
+              "--options-file") {}
+
+   bool hasIntegratedCPP() const override { return false; }
+
+   void ConstructJob(Compilation &C, const JobAction &JA,
+                     const InputInfo &Output, const InputInfoList &Inputs,
+                     const llvm::opt::ArgList &TCArgs,
+                     const char *LinkingOutput) const override;
+};
+
+// Runs fatbinary, which combines GPU object files ("cubin" files) and/or PTX
+// assembly into a single output file.
+class LLVM_LIBRARY_VISIBILITY Linker : public Tool {
+ public:
+   Linker(const ToolChain &TC)
+       : Tool("NVPTX::Linker", "fatbinary", TC, RF_Full, llvm::sys::WEM_UTF8,
+              "--options-file") {}
+
+   bool hasIntegratedCPP() const override { return false; }
+
+   void ConstructJob(Compilation &C, const JobAction &JA,
+                     const InputInfo &Output, const InputInfoList &Inputs,
+                     const llvm::opt::ArgList &TCArgs,
+                     const char *LinkingOutput) const override;
+};
+
+}  // end namespace NVPTX
+
+namespace AVR {
+class LLVM_LIBRARY_VISIBILITY Linker : public GnuTool {
+public:
+  Linker(const ToolChain &TC) : GnuTool("AVR::Linker", "avr-ld", TC) {}
+  bool hasIntegratedCPP() const override { return false; }
+  bool isLinkJob() const override { return true; }
+  void ConstructJob(Compilation &C, const JobAction &JA,
+                    const InputInfo &Output, const InputInfoList &Inputs,
+                    const llvm::opt::ArgList &TCArgs,
+                    const char *LinkingOutput) const override;
+};
+} // end namespace AVR
 
 } // end namespace tools
 } // end namespace driver
