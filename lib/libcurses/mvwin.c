@@ -1,4 +1,4 @@
-/*	$NetBSD: mvwin.c,v 1.20 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: mvwin.c,v 1.21 2017/01/11 20:43:03 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mvwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: mvwin.c,v 1.20 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: mvwin.c,v 1.21 2017/01/11 20:43:03 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -102,7 +102,8 @@ mvwin(WINDOW *win, int by, int bx)
 	WINDOW *orig;
 	int     dy, dx;
 
-	if (by < 0 || by + win->maxy > LINES || bx < 0 || bx + win->maxx > COLS)
+	if (by < 0 || by + win->maxy > win->screen->LINES ||
+	    bx < 0 || bx + win->maxx > win->screen->COLS)
 		return ERR;
 	dy = by - win->begy;
 	dx = bx - win->begx;
@@ -117,9 +118,9 @@ mvwin(WINDOW *win, int by, int bx)
 		} while (win != orig);
 	} else {
 		if (by < orig->begy || win->maxy + dy > orig->maxy)
-			return (ERR);
+			return ERR;
 		if (bx < orig->begx || win->maxx + dx > orig->maxx)
-			return (ERR);
+			return ERR;
 		win->begy = by;
 		win->begx = bx;
 		__swflags(win);
