@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.270 2017/01/11 09:06:57 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.271 2017/01/11 09:07:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -126,7 +126,6 @@ LIST_HEAD(buflists, buf);
  *	:	stable, reference to the vnode is required
  *	f	vnode_free_list_lock, or vrele_lock for vrele_list
  *	i	v_interlock
- *	m	mntvnode_lock
  *	u	locked by underlying filesystem
  *	v	vnode lock
  *	x	v_interlock + bufcache_lock to modify, either to inspect
@@ -147,7 +146,6 @@ struct vnode {
 	int		v_holdcnt;		/* i: page & buffer refs */
 	struct mount	*v_mount;		/* v: ptr to vfs we are in */
 	int		(**v_op)(void *);	/* :: vnode operations vector */
-	TAILQ_ENTRY(vnode) v_mntvnodes;		/* m: vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* x: clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* x: dirty blocklist head */
 	union {

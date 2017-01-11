@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.455 2017/01/11 09:06:57 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.456 2017/01/11 09:07:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.455 2017/01/11 09:06:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.456 2017/01/11 09:07:57 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1594,9 +1594,11 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 
 	{
 		int cnt = 0;
-		struct vnode *vp;
+		vnode_t *vp;
+		vnode_impl_t *vip;
 		(*pr)("locked vnodes =");
-		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
+			vp = VIMPL_TO_VNODE(vip);
 			if (VOP_ISLOCKED(vp)) {
 				if ((++cnt % 6) == 0) {
 					(*pr)(" %p,\n\t", vp);
@@ -1610,10 +1612,12 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 
 	if (full) {
 		int cnt = 0;
-		struct vnode *vp;
+		vnode_t *vp;
+		vnode_impl_t *vip;
 		(*pr)("all vnodes =");
-		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-			if (!TAILQ_NEXT(vp, v_mntvnodes)) {
+		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
+			vp = VIMPL_TO_VNODE(vip);
+			if (!TAILQ_NEXT(vip, vi_mntvnodes)) {
 				(*pr)(" %p", vp);
 			} else if ((++cnt % 6) == 0) {
 				(*pr)(" %p,\n\t", vp);
@@ -1621,7 +1625,7 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 				(*pr)(" %p,", vp);
 			}
 		}
-		(*pr)("\n", vp);
+		(*pr)("\n");
 	}
 }
 
@@ -1634,7 +1638,8 @@ void
 printlockedvnodes(void)
 {
 	struct mount *mp, *nmp;
-	struct vnode *vp;
+	vnode_t *vp;
+	vnode_impl_t *vip;
 
 	printf("Locked vnodes\n");
 	mutex_enter(&mountlist_lock);
@@ -1642,7 +1647,8 @@ printlockedvnodes(void)
 		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
-		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
+			vp = VIMPL_TO_VNODE(vip);
 			if (VOP_ISLOCKED(vp))
 				vprint(NULL, vp);
 		}
