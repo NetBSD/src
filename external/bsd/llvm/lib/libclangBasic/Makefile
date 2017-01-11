@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/02/27 21:47:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2017/01/11 12:02:32 joerg Exp $
 
 LIB=	clangBasic
 
@@ -9,6 +9,7 @@ LIB=	clangBasic
 SRCS+=	Attributes.cpp \
 	Builtins.cpp \
 	CharInfo.cpp \
+	Cuda.cpp \
 	Diagnostic.cpp \
 	DiagnosticIDs.cpp \
 	DiagnosticOptions.cpp \
