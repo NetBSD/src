@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.108 2017/01/09 20:08:26 hubertf Exp $
+.\"	$NetBSD: sysctl.7,v 1.109 2017/01/11 11:53:07 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1070,8 +1070,8 @@ distributed on and moved between CPUs.
 .It kern.sched.kpreempt_pri	   integer	 yes
 .It kern.sched.upreempt_pri	   integer	 yes
 .It kern.sched.maxts	   integer	 yes
-.It kern.sched.mints	   integer	 yes 
-.It kern.sched.name	   string	 no 
+.It kern.sched.mints	   integer	 yes
+.It kern.sched.name	   string	 no
 .It kern.sched.rtts	   integer	 no
 .It kern.sched.pri_min	   integer	 no
 .It kern.sched.pri_max	   integer	 no
@@ -1081,34 +1081,34 @@ The variables are as follows:
 .Bl -tag -width "123456"
 .It Li kern.sched.cacheht_time ( dynamic )
 Cache hotness time in which a LWP is kept on one particular CPU
-and not moved to another CPU. This reduces the overhead of flushing
-and reloading caches.  
+and not moved to another CPU.
+This reduces the overhead of flushing and reloading caches.
 Defaults to 3ms.
-Needs to be given in 
+Needs to be given in
 .Dq hz
 units, see
 .Xr mstohz 9 .
 .It Li kern.sched.balance_period ( dynamic )
 Interval at which the CPU queues are checked for re-balancing.
 Defaults to 300ms.
-Needs to be given in 
+Needs to be given in
 .Dq hz
 units, see
 .Xr mstohz 9 .
 .It Li kern.sched.average_weight ( dynamic )
 Can be used to influence how likely LWPs are to be migrated from
-one CPU's queue of LWPs that are ready to run to a different, idle CPU. 
+one CPU's queue of LWPs that are ready to run to a different, idle CPU.
 The value gives the percentage for weighting the average count of
 migratable threads from the past against the current number of
-migratable threads. 
-A small value gives more weight to the past, a larger values more weight 
+migratable threads.
+A small value gives more weight to the past, a larger values more weight
 on the current situation.
-Defaults to 50 and must be between 0 and 100. 
+Defaults to 50 and must be between 0 and 100.
 .It Li kern.sched.min_catch ( dynamic )
 Minimum count of migratable (runable) threads for catching (stealing)
 from another CPU.
 Defaults to 1 but can be increased to decrease chance of thread
-migration between CPUs. 
+migration between CPUs.
 .It Li kern.sched.timesoftints ( dynamic )
 Enable tracking of CPU time for soft interrupts
 as part of a LWP's real execution time.
@@ -1125,7 +1125,7 @@ Scheduler specific maximal time quantum (in milliseconds).
 Must be set to a value larger than
 .Dq mints
 and between 10 and
-.Dq hz 
+.Dq hz
 as given by the
 .Dv kern.clockrate
 sysctl.
@@ -1135,13 +1135,13 @@ Scheduler specific minimal time quantum (in milliseconds).
 Must be set to a value smaller than
 .Dq maxts
 and between 1 and
-.Dq hz 
+.Dq hz
 as given by the
 .Dq kern.clockrate
 sysctl.
 Provided by the M2 scheduler.
 .It Li kern.sched.name ( dynamic )
-Scheduler name. 
+Scheduler name.
 Provided both by the M2 and the 4BSD scheduler.
 .It Li kern.sched.rtts ( dynamic )
 Fixed scheduler specific round-robin time quantum in milliseconds.
