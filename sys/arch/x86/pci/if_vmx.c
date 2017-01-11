@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.16 2017/01/11 00:41:38 maya Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.17 2017/01/11 00:51:22 maya Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.16 2017/01/11 00:41:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.17 2017/01/11 00:51:22 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2531,6 +2531,7 @@ vmxnet3_txq_offload_ctx(struct vmxnet3_txqueue *txq, struct mbuf *m,
 		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 		break;
 	default:
+		m_free(m);
 		return (EINVAL);
 	}
 
@@ -2660,9 +2661,9 @@ vmxnet3_txq_encap(struct vmxnet3_txqueue *txq, struct mbuf **m0)
 	} else if (m->m_pkthdr.csum_flags & VMXNET3_CSUM_ALL_OFFLOAD) {
 		error = vmxnet3_txq_offload_ctx(txq, m, &start, &csum_start);
 		if (error) {
+			/* m is already freed */
 			txq->vxtxq_stats.vmtxs_offload_failed++;
 			vmxnet3_txq_unload_mbuf(txq, dmap);
-			m_freem(m);
 			*m0 = NULL;
 			return (error);
 		}
