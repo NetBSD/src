@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2015/01/29 20:41:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2017/01/11 12:02:31 joerg Exp $
 
 LIB=	LLVMSelectionDAG
 
@@ -27,9 +27,9 @@ SRCS+=	DAGCombiner.cpp \
 	SelectionDAGDumper.cpp \
 	SelectionDAGISel.cpp \
 	SelectionDAGPrinter.cpp \
+	SelectionDAGTargetInfo.cpp \
 	StatepointLowering.cpp \
-	TargetLowering.cpp \
-	TargetSelectionDAGInfo.cpp
+	TargetLowering.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

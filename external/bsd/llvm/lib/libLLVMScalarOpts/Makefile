@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2016/02/27 21:47:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2017/01/11 12:02:31 joerg Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -18,11 +18,14 @@ SRCS+=	ADCE.cpp \
 	FlattenCFGPass.cpp \
 	Float2Int.cpp \
 	GVN.cpp \
+	GVNHoist.cpp \
+	GuardWidening.cpp \
 	IndVarSimplify.cpp \
 	InductiveRangeCheckElimination.cpp \
 	JumpThreading.cpp \
 	LICM.cpp \
 	LoadCombine.cpp \
+	LoopDataPrefetch.cpp \
 	LoopDistribute.cpp \
 	LoopDeletion.cpp \
 	LoopIdiomRecognize.cpp \
@@ -31,14 +34,19 @@ SRCS+=	ADCE.cpp \
 	LoopLoadElimination.cpp \
 	LoopRerollPass.cpp \
 	LoopRotation.cpp \
+	LoopSimplifyCFG.cpp \
+	LoopSink.cpp \
 	LoopStrengthReduce.cpp \
 	LoopUnrollPass.cpp \
 	LoopUnswitch.cpp \
+	LoopVersioningLICM.cpp \
 	LowerAtomic.cpp \
 	LowerExpectIntrinsic.cpp \
+	LowerGuardIntrinsic.cpp \
 	MemCpyOptimizer.cpp \
 	MergedLoadStoreMotion.cpp \
 	NaryReassociate.cpp \
+	NewGVN.cpp \
 	PartiallyInlineLibCalls.cpp \
 	PlaceSafepoints.cpp \
 	Reassociate.cpp \
@@ -47,7 +55,6 @@ SRCS+=	ADCE.cpp \
 	SCCP.cpp \
 	SROA.cpp \
 	Scalar.cpp \
-	ScalarReplAggregates.cpp \
 	Scalarizer.cpp \
 	SeparateConstOffsetFromGEP.cpp \
 	SimplifyCFGPass.cpp \
