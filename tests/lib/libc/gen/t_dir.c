@@ -1,4 +1,4 @@
-/* $NetBSD: t_dir.c,v 1.8 2017/01/11 07:26:17 christos Exp $ */
+/* $NetBSD: t_dir.c,v 1.9 2017/01/11 18:09:40 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ ATF_TC_BODY(seekdir_basic, tc)
 
 #define	CREAT(x, m)	do {						\
 		int _creat_fd;						\
-		ATF_REQUIRE_MSG((_creat_fd = creat((x), (m)) != -1),	\
+		ATF_REQUIRE_MSG((_creat_fd = creat((x), (m))) != -1,	\
 		    "creat(%s, %x) failed: %s", (x), (m),		\
 		    strerror(errno));					\
 		(void)close(_creat_fd);					\
