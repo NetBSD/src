@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2016/02/27 21:47:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2017/01/11 12:02:30 joerg Exp $
 
 LIB=	LLVMObject
 
@@ -10,20 +10,20 @@ SRCS+=	Archive.cpp \
 	ArchiveWriter.cpp \
 	Binary.cpp \
 	COFFObjectFile.cpp \
-	COFFYAML.cpp \
 	ELF.cpp \
 	ELFObjectFile.cpp \
-	ELFYAML.cpp \
 	Error.cpp \
-	FunctionIndexObjectFile.cpp \
 	IRObjectFile.cpp \
 	MachOObjectFile.cpp \
 	MachOUniversal.cpp \
+	ModuleSummaryIndexObjectFile.cpp \
+	ModuleSymbolTable.cpp \
 	Object.cpp \
 	ObjectFile.cpp \
 	RecordStreamer.cpp \
 	SymbolSize.cpp \
-	SymbolicFile.cpp
+	SymbolicFile.cpp \
+	WasmObjectFile.cpp \
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/02/27 21:47:33 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2017/01/11 12:02:29 joerg Exp $
 
 LIB=	LLVMDebugInfoCodeView
 
@@ -6,13 +6,22 @@ LIB=	LLVMDebugInfoCodeView
 
 .PATH: ${LLVM_SRCDIR}/lib/DebugInfo/CodeView
 
-SRCS+=	FieldListRecordBuilder.cpp \
+SRCS+=	CVSymbolVisitor.cpp \
+	CVTypeVisitor.cpp \
+	CodeViewError.cpp \
+	CodeViewRecordIO.cpp \
+	EnumTables.cpp \
 	Line.cpp \
-	MemoryTypeTableBuilder.cpp \
-	MethodListRecordBuilder.cpp \
-	ListRecordBuilder.cpp \
-	TypeRecordBuilder.cpp \
-	TypeTableBuilder.cpp
+	ModuleSubstream.cpp \
+	ModuleSubstreamVisitor.cpp \
+	RecordSerialization.cpp \
+	SymbolDumper.cpp \
+	SymbolRecordMapping.cpp \
+	TypeDumper.cpp \
+	TypeRecord.cpp \
+	TypeRecordMapping.cpp \
+	TypeSerializer.cpp \
+	TypeStreamMerger.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
