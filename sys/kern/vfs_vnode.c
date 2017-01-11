@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.71 2017/01/11 09:04:37 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.72 2017/01/11 09:08:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.71 2017/01/11 09:04:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.72 2017/01/11 09:08:58 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1022,6 +1022,7 @@ vcache_alloc(void)
 	vip = pool_cache_get(vcache_pool, PR_WAITOK);
 	memset(vip, 0, sizeof(*vip));
 
+	rw_init(&vip->vi_lock);
 	/* SLIST_INIT(&vip->vi_hash); */
 	/* LIST_INIT(&vip->vi_nclist); */
 	/* LIST_INIT(&vip->vi_dnclist); */
@@ -1030,7 +1031,6 @@ vcache_alloc(void)
 	uvm_obj_init(&vp->v_uobj, &uvm_vnodeops, true, 0);
 	cv_init(&vp->v_cv, "vnode");
 
-	rw_init(&vp->v_lock);
 	vp->v_usecount = 1;
 	vp->v_type = VNON;
 	vp->v_size = vp->v_writesize = VSIZENOTSET;
@@ -1064,7 +1064,7 @@ vcache_free(vnode_impl_t *vip)
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		spec_node_destroy(vp);
 
-	rw_destroy(&vp->v_lock);
+	rw_destroy(&vip->vi_lock);
 	uvm_obj_destroy(&vp->v_uobj, true);
 	cv_destroy(&vp->v_cv);
 	pool_cache_put(vcache_pool, vip);
