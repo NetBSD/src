@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.20 2017/01/11 03:15:44 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.21 2017/01/11 07:22:43 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -127,7 +127,8 @@ check_entries()
 	    -o match:"$ll_srv%shmif0 +$mac_srv +shmif0 +(23h59m|1d0h0m)..s S R" \
 	    rump.ndp -n -a
 	atf_check -s exit:0 -o match:$addr_prefix rump.ndp -n -a
-	atf_check -s exit:0 -o match:"$addr_prefix.+<AUTOCONF>" \
+	atf_check -s exit:0 \
+	    -o match:"$addr_prefix.+<(TENTATIVE,)?AUTOCONF>" \
 	    rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
 }
@@ -651,7 +652,8 @@ ra_temporary_address_body()
 
 	# Check temporary address
 	export RUMP_SERVER=${RUMPCLI}
-	atf_check -s exit:0 -o match:"$IP6SRV_PREFIX.+<AUTOCONF,TEMPORARY>" \
+	atf_check -s exit:0 \
+	    -o match:"$IP6SRV_PREFIX.+<(TENTATIVE,)?AUTOCONF,TEMPORARY>" \
 	    rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
 
