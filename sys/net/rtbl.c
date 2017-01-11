@@ -1,4 +1,4 @@
-/*	$NetBSD: rtbl.c,v 1.5 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: rtbl.c,v 1.6 2017/01/11 13:08:29 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008, 2011 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #endif /* _KERNEL && _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.5 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.6 2017/01/11 13:08:29 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -107,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.5 2016/12/12 03:55:57 ozaki-r Exp $");
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/pool.h>

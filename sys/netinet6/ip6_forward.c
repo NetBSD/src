@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.82 2016/12/08 05:16:34 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.83 2017/01/11 13:08:29 ozaki-r Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.82 2016/12/08 05:16:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.83 2017/01/11 13:08:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -41,9 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.82 2016/12/08 05:16:34 ozaki-r Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>

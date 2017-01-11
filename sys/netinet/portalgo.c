@@ -1,4 +1,4 @@
-/*	$NetBSD: portalgo.c,v 1.10 2016/04/26 08:44:44 ozaki-r Exp $	*/
+/*	$NetBSD: portalgo.c,v 1.11 2017/01/11 13:08:29 ozaki-r Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.10 2016/04/26 08:44:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.11 2017/01/11 13:08:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.10 2016/04/26 08:44:44 ozaki-r Exp $"
 #include <sys/errno.h>
 #include <sys/kauth.h>
 #include <sys/uidinfo.h>
-#include <sys/domain.h>
 #include <sys/md5.h>
 #include <sys/cprng.h>
 #include <sys/bitops.h>
