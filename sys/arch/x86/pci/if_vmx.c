@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.15 2016/12/28 07:32:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.16 2017/01/11 00:41:38 maya Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.15 2016/12/28 07:32:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.16 2017/01/11 00:41:38 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -97,22 +97,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.15 2016/12/28 07:32:16 ozaki-r Exp $");
 #define VMXNET3_CORE_LOCK(_sc)		mutex_enter((_sc)->vmx_mtx)
 #define VMXNET3_CORE_UNLOCK(_sc)	mutex_exit((_sc)->vmx_mtx)
 #define VMXNET3_CORE_LOCK_ASSERT(_sc)	mutex_owned((_sc)->vmx_mtx)
-#define VMXNET3_CORE_LOCK_ASSERT_NOTOWNED(_sc) \
-    (!mutex_owned((_sc)->vmx_mtx))
 
 #define VMXNET3_RXQ_LOCK(_rxq)		mutex_enter((_rxq)->vxrxq_mtx)
 #define VMXNET3_RXQ_UNLOCK(_rxq)	mutex_exit((_rxq)->vxrxq_mtx)
 #define VMXNET3_RXQ_LOCK_ASSERT(_rxq)		\
     mutex_owned((_rxq)->vxrxq_mtx)
-#define VMXNET3_RXQ_LOCK_ASSERT_NOTOWNED(_rxq)	\
-    (!mutex_owned((_rxq)->vxrxq_mtx))
 
 #define VMXNET3_TXQ_LOCK(_txq)		mutex_enter((_txq)->vxtxq_mtx)
 #define VMXNET3_TXQ_UNLOCK(_txq)	mutex_exit((_txq)->vxtxq_mtx)
 #define VMXNET3_TXQ_LOCK_ASSERT(_txq)		\
     mutex_owned((_txq)->vxtxq_mtx)
-#define VMXNET3_TXQ_LOCK_ASSERT_NOTOWNED(_txq)	\
-    (!mutex_owned((_txq)->vxtxq_mtx))
 
 struct vmxnet3_dma_alloc {
 	bus_addr_t dma_paddr;
