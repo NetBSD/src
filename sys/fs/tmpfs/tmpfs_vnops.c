@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.128 2016/08/20 12:37:08 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.129 2017/01/11 12:12:32 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.128 2016/08/20 12:37:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.129 2017/01/11 12:12:32 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1244,11 +1244,6 @@ tmpfs_putpages(void *v)
 	if (vp->v_type != VREG) {
 		mutex_exit(vp->v_interlock);
 		return 0;
-	}
-
-	if ((vp->v_mount->mnt_flag & MNT_RDONLY) != 0) {
-		mutex_exit(vp->v_interlock);
-		return EROFS;
 	}
 
 	node = VP_TO_TMPFS_NODE(vp);
