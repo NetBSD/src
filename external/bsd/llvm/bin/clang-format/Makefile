@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/01/29 20:41:33 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2017/01/11 12:02:25 joerg Exp $
 
 PROG_CXX=	clang-format
 NOMAN=		yes
@@ -30,7 +30,8 @@ LLVM_LIBS+= \
 	MCParser \
 	MC \
 	Option \
-	Support
+	Support \
+	Demangle
 
 .include "${.PARSEDIR}/../../link.mk"
 
