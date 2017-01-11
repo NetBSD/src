@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.7 2017/01/05 10:05:11 hannken Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.8 2017/01/11 09:04:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 
 #include <sys/vnode.h>
 
+struct namecache;
+
 enum vnode_state {
 	VS_MARKER,	/* Stable, used as marker. Will not change. */
 	VS_LOADING,	/* Intermediate, initialising the fs node. */
@@ -59,12 +61,15 @@ struct vcache_key {
  *	c	vcache_lock
  *	d	vdrain_lock
  *	i	v_interlock
+ *	n	namecache_lock
  */
 struct vnode_impl {
 	struct vnode vi_vnode;
 	enum vnode_state vi_state;		/* i: current state */
 	struct vnodelst *vi_lrulisthd;		/* d: current lru list head */
 	TAILQ_ENTRY(vnode_impl) vi_lrulist;	/* d: lru list */
+	LIST_HEAD(, namecache) vi_dnclist;	/* n: namecaches (children) */
+	LIST_HEAD(, namecache) vi_nclist;	/* n: namecaches (parent) */
 	SLIST_ENTRY(vnode_impl) vi_hash;	/* c: vnode cache list */
 	struct vcache_key vi_key;		/* c: vnode cache key */
 };
