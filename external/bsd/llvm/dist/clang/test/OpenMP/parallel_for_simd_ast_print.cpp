@@ -1,12 +1,64 @@
-// RUN: %clang_cc1 -verify -fopenmp -ast-print %s | FileCheck %s
-// RUN: %clang_cc1 -fopenmp -x c++ -std=c++11 -emit-pch -o %t %s
-// RUN: %clang_cc1 -fopenmp -std=c++11 -include-pch %t -fsyntax-only -verify %s -ast-print | FileCheck %s
+// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -ast-print %s | FileCheck %s
+// RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -std=c++11 -emit-pch -o %t %s
+// RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -std=c++11 -include-pch %t -fsyntax-only -verify %s -ast-print | FileCheck %s
 // expected-no-diagnostics
 
 #ifndef HEADER
 #define HEADER
 
 void foo() {}
+
+struct S1 {
+  S1() : a(0) {}
+  S1(int v) : a(v) {}
+  int a;
+  typedef int type;
+};
+
+template <typename T>
+class S7 : public T {
+protected:
+  T a;
+  S7() : a(0) {}
+
+public:
+  S7(typename T::type v) : a(v) {
+#pragma omp parallel for simd private(a) private(this->a) private(T::a)
+    for (int k = 0; k < a.a; ++k)
+      ++this->a.a;
+  }
+  S7 &operator=(S7 &s) {
+#pragma omp parallel for simd private(a) private(this->a)
+    for (int k = 0; k < s.a.a; ++k)
+      ++s.a.a;
+    return *this;
+  }
+};
+
+// CHECK: #pragma omp parallel for simd private(this->a) private(this->a) private(T::a)
+// CHECK: #pragma omp parallel for simd private(this->a) private(this->a)
+// CHECK: #pragma omp parallel for simd private(this->a) private(this->a) private(this->S1::a)
+
+class S8 : public S7<S1> {
+  S8() {}
+
+public:
+  S8(int v) : S7<S1>(v){
+#pragma omp parallel for simd private(a) private(this->a) private(S7<S1>::a) 
+    for (int k = 0; k < a.a; ++k)
+      ++this->a.a;
+  }
+  S8 &operator=(S8 &s) {
+#pragma omp parallel for simd private(a) private(this->a)
+    for (int k = 0; k < s.a.a; ++k)
+      ++s.a.a;
+    return *this;
+  }
+};
+
+// CHECK: #pragma omp parallel for simd private(this->a) private(this->a) private(this->S7<S1>::a)
+// CHECK: #pragma omp parallel for simd private(this->a) private(this->a)
+
 int g_ind = 1;
 template<class T, class N> T reduct(T* arr, N num) {
   N i;
@@ -74,7 +126,7 @@ template<int LEN> struct S2 {
 };
 
 // S2<4>::func is called below in main.
-// CHECK: template <int LEN = 4> struct S2 {
+// CHECK: template<> struct S2<4> {
 // CHECK-NEXT: static void func(int n, float *a, float *b, float *c)     {
 // CHECK-NEXT:   int k1 = 0, k2 = 0;
 // CHECK-NEXT: #pragma omp parallel for simd safelen(4) linear(k1,k2: 4) aligned(a: 4) simdlen(4)

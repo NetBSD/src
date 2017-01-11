@@ -23,7 +23,7 @@ namespace comments {
 
 namespace {
 #include "clang/AST/CommentHTMLTagsProperties.inc"
-} // unnamed namespace
+} // end anonymous namespace
 
 Sema::Sema(llvm::BumpPtrAllocator &Allocator, const SourceManager &SourceMgr,
            DiagnosticsEngine &Diags, CommandTraits &Traits,
@@ -353,8 +353,6 @@ void Sema::actOnTParamCommandParamNameArg(TParamCommandComment *Command,
       << CorrectedName
       << FixItHint::CreateReplacement(ArgRange, CorrectedName);
   }
-
-  return;
 }
 
 void Sema::actOnTParamCommandFinish(TParamCommandComment *Command,
@@ -952,20 +950,19 @@ unsigned Sema::resolveParmVarReference(StringRef Name,
 
 namespace {
 class SimpleTypoCorrector {
+  const NamedDecl *BestDecl;
+
   StringRef Typo;
   const unsigned MaxEditDistance;
 
-  const NamedDecl *BestDecl;
   unsigned BestEditDistance;
   unsigned BestIndex;
   unsigned NextIndex;
 
 public:
-  SimpleTypoCorrector(StringRef Typo) :
-      Typo(Typo), MaxEditDistance((Typo.size() + 2) / 3),
-      BestDecl(nullptr), BestEditDistance(MaxEditDistance + 1),
-      BestIndex(0), NextIndex(0)
-  { }
+  explicit SimpleTypoCorrector(StringRef Typo)
+      : BestDecl(nullptr), Typo(Typo), MaxEditDistance((Typo.size() + 2) / 3),
+        BestEditDistance(MaxEditDistance + 1), BestIndex(0), NextIndex(0) {}
 
   void addDecl(const NamedDecl *ND);
 
@@ -1002,7 +999,7 @@ void SimpleTypoCorrector::addDecl(const NamedDecl *ND) {
     BestIndex = CurrIndex;
   }
 }
-} // unnamed namespace
+} // end anonymous namespace
 
 unsigned Sema::correctTypoInParmVarReference(
                                     StringRef Typo,
@@ -1040,7 +1037,7 @@ bool ResolveTParamReferenceHelper(
   }
   return false;
 }
-} // unnamed namespace
+} // end anonymous namespace
 
 bool Sema::resolveTParamReference(
                             StringRef Name,
@@ -1067,7 +1064,7 @@ void CorrectTypoInTParamReferenceHelper(
                                          Corrector);
   }
 }
-} // unnamed namespace
+} // end anonymous namespace
 
 StringRef Sema::correctTypoInTParamReference(
                             StringRef Typo,
@@ -1095,4 +1092,3 @@ Sema::getInlineCommandRenderKind(StringRef Name) const {
 
 } // end namespace comments
 } // end namespace clang
-

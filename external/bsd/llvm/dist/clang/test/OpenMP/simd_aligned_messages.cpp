@@ -121,7 +121,8 @@ template<class I, class C> int foomain(I argc, C **argv) {
   for (I k = 0; k < argc; ++k) ++k;
   #pragma omp simd aligned (argc, // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
   for (I k = 0; k < argc; ++k) ++k;
-  #pragma omp simd aligned (argc > 0 ? argv[1] : argv[2]) // expected-error {{expected variable name}}
+// FIXME: Should argc really be a pointer?
+  #pragma omp simd aligned (*argc > 0 ? argv[1] : argv[2]) // expected-error {{expected variable name}}
   for (I k = 0; k < argc; ++k) ++k;
   #pragma omp simd aligned (argc : 5) // expected-warning {{aligned clause will be ignored because the requested alignment is not a power of 2}}
   for (I k = 0; k < argc; ++k) ++k;
@@ -196,6 +197,7 @@ int main(int argc, char **argv) {
   #pragma omp simd aligned(h)
   for (int k = 0; k < argc; ++k) ++k;
   int *pargc = &argc;
+  // expected-note@+1 {{in instantiation of function template specialization 'foomain<int *, char>' requested here}}
   foomain<int*,char>(pargc,argv);
   return 0;
 }

@@ -21,6 +21,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/BasicValueFactory.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
 
 namespace clang {
 
@@ -65,7 +66,7 @@ public:
       SymMgr(context, BasicVals, alloc),
       MemMgr(context, alloc),
       StateMgr(stateMgr),
-      ArrayIndexTy(context.IntTy),
+      ArrayIndexTy(context.LongLongTy),
       ArrayIndexWidth(context.getTypeSize(ArrayIndexTy)) {}
 
   virtual ~SValBuilder() {}
@@ -197,9 +198,13 @@ public:
   DefinedOrUnknownSVal getDerivedRegionValueSymbolVal(
       SymbolRef parentSymbol, const TypedValueRegion *region);
 
-  DefinedSVal getMetadataSymbolVal(
-      const void *symbolTag, const MemRegion *region,
-      const Expr *expr, QualType type, unsigned count);
+  DefinedSVal getMetadataSymbolVal(const void *symbolTag,
+                                   const MemRegion *region,
+                                   const Expr *expr, QualType type,
+                                   const LocationContext *LCtx,
+                                   unsigned count);
+
+  DefinedSVal getMemberPointer(const DeclaratorDecl *DD);
 
   DefinedSVal getFunctionPointer(const FunctionDecl *func);
   
@@ -221,6 +226,14 @@ public:
                              const TypedValueRegion *region) {
     return nonloc::LazyCompoundVal(
         BasicVals.getLazyCompoundValData(store, region));
+  }
+
+  NonLoc makePointerToMember(const DeclaratorDecl *DD) {
+    return nonloc::PointerToMember(DD);
+  }
+
+  NonLoc makePointerToMember(const PointerToMemberData *PTMD) {
+    return nonloc::PointerToMember(PTMD);
   }
 
   NonLoc makeZeroArrayIndex() {

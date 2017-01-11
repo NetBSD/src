@@ -2,7 +2,7 @@
 // RUN:         -o - -mconstructor-aliases -fcxx-exceptions -fexceptions | \
 // RUN:         FileCheck %s --check-prefix=CHECK --check-prefix=CXXEH
 // RUN: %clang_cc1 -std=c++11 -fblocks -fms-extensions %s -triple=x86_64-windows-msvc -emit-llvm \
-// RUN:         -o - -mconstructor-aliases -O1 -disable-llvm-optzns | \
+// RUN:         -o - -mconstructor-aliases -O1 -disable-llvm-passes | \
 // RUN:         FileCheck %s --check-prefix=CHECK --check-prefix=NOCXX
 
 extern "C" unsigned long _exception_code();
@@ -95,7 +95,7 @@ void use_seh_in_lambda() {
 // NOCXX-NOT: invoke
 // NOCXX: ret void
 
-// CHECK-LABEL: define internal void @"\01??R<lambda_0>@?use_seh_in_lambda@@YAXXZ@QEBAXXZ"(%class.anon* %this)
+// CHECK-LABEL: define internal void @"\01??R<lambda_0>@?0??use_seh_in_lambda@@YAXXZ@QEBA@XZ"(%class.anon* %this)
 // CXXEH-SAME:  personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // CHECK: invoke void @might_throw() #[[NOINLINE]]
 // CHECK: catchpad

@@ -86,7 +86,7 @@ void Preprocessor::EnterCachingLexMode() {
 const Token &Preprocessor::PeekAhead(unsigned N) {
   assert(CachedLexPos + N > CachedTokens.size() && "Confused caching.");
   ExitCachingLexMode();
-  for (unsigned C = CachedLexPos + N - CachedTokens.size(); C > 0; --C) {
+  for (size_t C = CachedLexPos + N - CachedTokens.size(); C > 0; --C) {
     CachedTokens.push_back(Token());
     Lex(CachedTokens.back());
   }
@@ -105,7 +105,7 @@ void Preprocessor::AnnotatePreviousCachedTokens(const Token &Tok) {
   for (CachedTokensTy::size_type i = CachedLexPos; i != 0; --i) {
     CachedTokensTy::iterator AnnotBegin = CachedTokens.begin() + i-1;
     if (AnnotBegin->getLocation() == Tok.getLocation()) {
-      assert((BacktrackPositions.empty() || BacktrackPositions.back() < i) &&
+      assert((BacktrackPositions.empty() || BacktrackPositions.back() <= i) &&
              "The backtrack pos points inside the annotated tokens!");
       // Replace the cached tokens with the single annotation token.
       if (i < CachedLexPos)
@@ -115,4 +115,30 @@ void Preprocessor::AnnotatePreviousCachedTokens(const Token &Tok) {
       return;
     }
   }
+}
+
+bool Preprocessor::IsPreviousCachedToken(const Token &Tok) const {
+  // There's currently no cached token...
+  if (!CachedLexPos)
+    return false;
+
+  const Token LastCachedTok = CachedTokens[CachedLexPos - 1];
+  if (LastCachedTok.getKind() != Tok.getKind())
+    return false;
+
+  int RelOffset = 0;
+  if ((!getSourceManager().isInSameSLocAddrSpace(
+          Tok.getLocation(), getLastCachedTokenLocation(), &RelOffset)) ||
+      RelOffset)
+    return false;
+
+  return true;
+}
+
+void Preprocessor::ReplacePreviousCachedToken(ArrayRef<Token> NewToks) {
+  assert(CachedLexPos != 0 && "Expected to have some cached tokens");
+  CachedTokens.insert(CachedTokens.begin() + CachedLexPos - 1, NewToks.begin(),
+                      NewToks.end());
+  CachedTokens.erase(CachedTokens.begin() + CachedLexPos - 1 + NewToks.size());
+  CachedLexPos += NewToks.size() - 1;
 }
