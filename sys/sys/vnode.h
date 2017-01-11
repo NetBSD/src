@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.268 2017/01/02 10:33:28 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.269 2017/01/11 09:04:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@
 #include <uvm/uvm_object.h>	/* XXX */
 #include <uvm/uvm_extern.h>	/* XXX */
 
-struct namecache;
 struct uvm_ractx;
 #endif
 
@@ -128,7 +127,6 @@ LIST_HEAD(buflists, buf);
  *	f	vnode_free_list_lock, or vrele_lock for vrele_list
  *	i	v_interlock
  *	m	mntvnode_lock
- *	n	namecache_lock
  *	s	syncer_data_lock
  *	u	locked by underlying filesystem
  *	v	vnode lock
@@ -155,8 +153,6 @@ struct vnode {
 	struct buflists	v_cleanblkhd;		/* x: clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* x: dirty blocklist head */
 	TAILQ_ENTRY(vnode) v_synclist;		/* s: vnodes with dirty bufs */
-	LIST_HEAD(, namecache) v_dnclist;	/* n: namecaches (children) */
-	LIST_HEAD(, namecache) v_nclist;	/* n: namecaches (parent) */
 	union {
 		struct mount	*vu_mountedhere;/* v: ptr to vfs (VDIR) */
 		struct socket	*vu_socket;	/* v: unix ipc (VSOCK) */
