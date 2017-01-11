@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2011/05/19 22:23:12 tsutsui Exp $
+# $NetBSD: Makefile,v 1.16 2017/01/11 04:04:12 christos Exp $
 # Small zcat (i.e. for install media)
 #
 # Note: gzio.c is compiled here so that crunchgen will assume
@@ -12,7 +12,7 @@ WARNS?=		4
 PROG=		zcat
 NOMAN=		# defined
 
-SRCS=		zcat.c gzio.c
+SRCS=		zcat.c gzread.c gzclose.c gzlib.c
 
 CPPFLAGS+=	-I${SRCDIR} -DNO_GZCOMPRESS
 DPADD+=		${LIBZ}
