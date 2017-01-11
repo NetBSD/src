@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.271 2017/01/11 09:07:57 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.272 2017/01/11 09:08:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -157,7 +157,6 @@ struct vnode {
 	} v_un;
 	enum vtype	v_type;			/* :: vnode type */
 	enum vtagtype	v_tag;			/* :: type of underlying data */
-	krwlock_t	v_lock;			/* v: lock for this vnode */
 	void 		*v_data;		/* :: private data for fs */
 	struct klist	v_klist;		/* i: notes attached to vnode */
 };
