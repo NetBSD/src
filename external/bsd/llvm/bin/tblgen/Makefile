@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2016/02/27 21:47:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2017/01/11 12:02:28 joerg Exp $
 
 PROG_CXX=	llvm-tblgen
 NOMAN=		yes
@@ -29,20 +29,25 @@ SRCS=	AsmMatcherEmitter.cpp \
 	DisassemblerEmitter.cpp \
 	FastISelEmitter.cpp \
 	FixedLenDecoderEmitter.cpp \
+	GlobalISelEmitter.cpp \
 	InstrInfoEmitter.cpp \
 	IntrinsicEmitter.cpp \
 	OptParserEmitter.cpp \
 	PseudoLoweringEmitter.cpp \
 	RegisterInfoEmitter.cpp \
+	SearchableTableEmitter.cpp \
 	SubtargetEmitter.cpp \
+	SubtargetFeatureInfo.cpp \
 	TableGen.cpp \
+	Types.cpp \
 	X86DisassemblerTables.cpp \
 	X86ModRMFilters.cpp \
 	X86RecognizableInstr.cpp
 
 LLVM_LIBS+= \
 	TableGen \
-	Support
+	Support \
+	Demangle
 
 .include "${.PARSEDIR}/../../link.mk"
 
