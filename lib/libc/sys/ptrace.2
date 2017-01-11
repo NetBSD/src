@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.50 2017/01/07 05:51:14 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.51 2017/01/11 07:31:14 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd January 7, 2016
+.Dd January 11, 2016
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ terminate or continue as appropriate.
 .Fn ptrace
 is the mechanism by which all this happens.
 .Pp
-When a process that is traced by a debugger request and calls
+When a process that is traced by a debugger requests and calls
 .Xr execve 2
 or any of the routines built on it
 .Po
@@ -90,6 +90,20 @@ with
 .Dv si_code
 set to
 .Dv TRAP_TRACE .
+This event is always enabled and cannot be disabled.
+.Pp
+Child program traps are reported with
+.Dv SIGTRAP
+and the
+.Dv si_code
+value set to
+.Dv TRAP_CHLD .
+These events are by default disabled and can be configured with
+.Dv PT_SET_EVENT_MASK .
+If this event occurs,
+check with
+.Dv PT_GET_PROCESS_STATE
+the details of the process state associated with this event.
 .Pp
 A debugger might reuse a port specific symbols,
 to help writing portable code as described in the port specific part of the
@@ -366,6 +380,23 @@ This set is formed by OR'ing together the following values:
 Report
 .Xr fork 2 .
 .El
+.Pp
+The
+.Xr fork 2
+event can occur with similar operations,
+like
+.Xr clone 2
+or
+.Xr posix_spawn 2 .
+The
+.Dv PTRACE_FORK
+value means that process gives birth to its child
+without pending on its termination.
+If enabled,
+the child is also traced by the debugger and
+.Dv SIGRAP
+is generated twice,
+first for the parent and second for the child.
 .Pp
 A pointer to this structure is passed in
 .Fa addr .
