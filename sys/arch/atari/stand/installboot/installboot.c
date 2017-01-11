@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.35 2015/08/12 17:59:51 tsutsui Exp $	*/
+/*	$NetBSD: installboot.c,v 1.36 2017/01/11 18:32:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -30,8 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
