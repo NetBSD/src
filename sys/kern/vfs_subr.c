@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.458 2017/01/11 12:17:34 joerg Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.459 2017/01/11 14:52:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.458 2017/01/11 12:17:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.459 2017/01/11 14:52:02 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1543,13 +1543,13 @@ void
 vfs_vnode_lock_print(void *vlock, int full, void (*pr)(const char *, ...))
 {
 	struct mount *mp;
-	struct vnode *vp;
+	vnode_impl_t *vip;
 
 	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
-		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-			if (&vp->v_lock != vlock)
+		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
+			if (&vip->vi_lock != vlock)
 				continue;
-			vfs_vnode_print(vp, full, pr);
+			vfs_vnode_print(VIMPL_TO_VNODE(vip), full, pr);
 		}
 	}
 }
