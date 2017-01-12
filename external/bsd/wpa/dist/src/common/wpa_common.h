@@ -9,6 +9,7 @@
 #ifndef WPA_COMMON_H
 #define WPA_COMMON_H
 
+
 /* IEEE 802.11i */
 #define PMKID_LEN 16
 #define PMK_LEN 32
@@ -104,7 +105,9 @@ RSN_SELECTOR(0x00, 0x0f, 0xac, 13)
 #define WFA_KEY_DATA_IP_ADDR_REQ RSN_SELECTOR(0x50, 0x6f, 0x9a, 4)
 #define WFA_KEY_DATA_IP_ADDR_ALLOC RSN_SELECTOR(0x50, 0x6f, 0x9a, 5)
 
+#ifndef WPA_OUI_TYPE
 #define WPA_OUI_TYPE RSN_SELECTOR(0x00, 0x50, 0xf2, 1)
+#endif
 
 #define RSN_SELECTOR_PUT(a, val) WPA_PUT_BE32((u8 *) (a), (val))
 #define RSN_SELECTOR_GET(a) WPA_GET_BE32((const u8 *) (a))
