@@ -1,13 +1,13 @@
-# $NetBSD: std.xen,v 1.8 2016/09/23 13:31:33 joerg Exp $
+# $NetBSD: std.xen,v 1.9 2017/01/12 05:24:36 ryo Exp $
 # NetBSD: std.i386,v 1.24 2003/02/26 21:33:36 fvdl Exp 
 #
 # standard, required NetBSD/i386 'options'
 
 machine xen amd64
-include		"conf/std"	# MI standard options
+include 	"conf/std"	# MI standard options
 
 options 	XEN	#Xen support
-#options		__XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
+#options 	__XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
 
 options 	CPU_IN_CKSUM
 options 	EXEC_ELF64	# exec ELF binaries
