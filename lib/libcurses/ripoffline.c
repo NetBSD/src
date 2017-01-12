@@ -1,4 +1,4 @@
-/*	$NetBSD: ripoffline.c,v 1.1 2017/01/11 20:43:03 roy Exp $	*/
+/*	$NetBSD: ripoffline.c,v 1.2 2017/01/12 16:23:46 roy Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ripoffline.c,v 1.1 2017/01/11 20:43:03 roy Exp $");
+__RCSID("$NetBSD: ripoffline.c,v 1.2 2017/01/12 16:23:46 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -137,13 +137,10 @@ __ripoffscreen(SCREEN *screen, int *rtop)
 void
 __ripoffresize(SCREEN *screen)
 {
-	int rbot = _cursesi_screen->LINES, i;
+	int rbot = screen->LINES, i;
 	struct __ripoff *rip;
 
-	for (i = 0, rip = _cursesi_screen->ripped;
-	     i < _cursesi_screen->nripped;
-	     i++, rip++)
-	{
+	for (i = 0, rip = screen->ripped; i < screen->nripped; i++, rip++) {
 		if (rip->nlines > 0)
 			touchwin(rip->win);
 		else {
