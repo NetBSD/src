@@ -63,6 +63,24 @@ grep "status: YXDOMAIN" dig.out.ns4.toolong > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking cname to dname from authoritative"
+ret=0
+$DIG cname.example @10.53.0.2 a -p 5300 > dig.out.ns2.cname
+grep "status: NOERROR" dig.out.ns2.cname > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking cname to dname from recursive"
+ret=0
+$DIG cname.example @10.53.0.4 a -p 5300 > dig.out.ns4.cname
+grep "status: NOERROR" dig.out.ns4.cname > /dev/null || ret=1
+grep '^cname.example.' dig.out.ns4.cname > /dev/null || ret=1
+grep '^cnamedname.example.' dig.out.ns4.cname > /dev/null || ret=1
+grep '^a.cnamedname.example.' dig.out.ns4.cname > /dev/null || ret=1
+grep '^a.target.example.' dig.out.ns4.cname > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:exit status: $status"
 
 exit $status
