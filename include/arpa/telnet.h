@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.h,v 1.12 2006/01/24 17:13:59 christos Exp $	*/
+/*	$NetBSD: telnet.h,v 1.13 2017/01/12 18:42:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -231,11 +231,11 @@ extern const char *telopts[NTELOPTS+1];
  			0
 
 #ifdef	SLC_NAMES
-char *slc_names[] = {
+const char *slc_names[] = {
 	SLC_NAMELIST
 };
 #else
-extern char *slc_names[];
+extern const char *slc_names[];
 #define	SLC_NAMES SLC_NAMELIST
 #endif
 
