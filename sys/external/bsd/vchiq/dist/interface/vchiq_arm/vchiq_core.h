@@ -55,22 +55,22 @@
 #ifndef vchiq_log_error
 #define vchiq_log_error(cat, fmt, ...) \
 	do { if (cat >= VCHIQ_LOG_ERROR) \
-		printf(VCHIQ_LOG_PREFIX fmt "\n", ##__VA_ARGS__); } while (0)
+		printf_tolog(VCHIQ_LOG_PREFIX fmt "\n", ##__VA_ARGS__); } while (0)
 #endif
 #ifndef vchiq_log_warning
 #define vchiq_log_warning(cat, fmt, ...) \
 	do { if (cat >= VCHIQ_LOG_WARNING) \
-		 printf(VCHIQ_LOG_PREFIX fmt "\n", ##__VA_ARGS__); } while (0)
+		 printf_tolog(VCHIQ_LOG_PREFIX fmt "\n", ##__VA_ARGS__); } while (0)
 #endif
 #ifndef vchiq_log_info
 #define vchiq_log_info(cat, fmt, ...) \
 	do { if (cat >= VCHIQ_LOG_INFO) \
-		printf(VCHIQ_LOG_PREFIX fmt "\n", ##__VA_ARGS__); } while (0)
+		printf_tolog(VCHIQ_LOG_PREFIX fmt "\n", ##__VA_ARGS__); } while (0)
 #endif
 #ifndef vchiq_log_trace
 #define vchiq_log_trace(cat, fmt, ...) \
 	do { if (cat >= VCHIQ_LOG_TRACE) \
-		printf(VCHIQ_LOG_PREFIX fmt "\n", ##__VA_ARGS__); } while (0)
+		printf_tolog(VCHIQ_LOG_PREFIX fmt "\n", ##__VA_ARGS__); } while (0)
 #endif
 
 #define vchiq_loud_error(...) \
@@ -295,6 +295,7 @@ typedef struct vchiq_service_struct {
 	char auto_close;
 	char sync;
 	char closing;
+	char trace;
 	atomic_t poll_flags;
 	short version;
 	short version_min;
@@ -402,6 +403,7 @@ struct vchiq_state_struct {
 	int initialised;
 	VCHIQ_CONNSTATE_T conn_state;
 	int is_master;
+	short version_common;
 
 	VCHIQ_SHARED_STATE_T *local;
 	VCHIQ_SHARED_STATE_T *remote;
@@ -603,6 +605,10 @@ find_service_by_port(VCHIQ_STATE_T *state, int localport);
 
 extern VCHIQ_SERVICE_T *
 find_service_for_instance(VCHIQ_INSTANCE_T instance,
+	VCHIQ_SERVICE_HANDLE_T handle);
+
+extern VCHIQ_SERVICE_T *
+find_closed_service_for_instance(VCHIQ_INSTANCE_T instance,
 	VCHIQ_SERVICE_HANDLE_T handle);
 
 extern VCHIQ_SERVICE_T *
