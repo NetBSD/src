@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.232 2017/01/11 18:25:46 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.233 2017/01/12 04:43:59 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.232 2017/01/11 18:25:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.233 2017/01/12 04:43:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -797,6 +797,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	int dad_delay, was_tentative;
 	struct in6_ifaddr *ia = iap ? *iap : NULL;
 
+	KASSERT((iap == NULL && psref == NULL) ||
+	    (iap != NULL && psref != NULL));
+
 	in6m_sol = NULL;
 
 	/* Validate parameters */
@@ -950,8 +953,6 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia->ia_ifp = ifp;
 		IN6_ADDRLIST_ENTRY_INIT(ia);
 		ifa_psref_init(&ia->ia_ifa);
-		if (psref)
-			ia6_acquire(ia, psref);
 	}
 
 	/* update timestamp */
@@ -1300,8 +1301,11 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		nd6_dad_start(&ia->ia_ifa, dad_delay + 1);
 	}
 
-	if (iap)
+	if (iap != NULL) {
 		*iap = ia;
+		if (hostIsNew)
+			ia6_acquire(ia, psref);
+	}
 
 	return 0;
 
