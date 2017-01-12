@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.h,v 1.6 2003/08/07 09:44:12 agc Exp $	*/
+/*	$NetBSD: ftp.h,v 1.7 2017/01/12 18:42:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -54,7 +54,7 @@
 #define	TYPE_L		4	/* local byte size */
 
 #ifdef FTP_NAMES
-char *typenames[] =  {"0", "ASCII", "EBCDIC", "Image", "Local" };
+const char *typenames[] =  {"0", "ASCII", "EBCDIC", "Image", "Local" };
 #endif
 
 /*
@@ -64,7 +64,7 @@ char *typenames[] =  {"0", "ASCII", "EBCDIC", "Image", "Local" };
 #define	FORM_T		2	/* telnet format effectors */
 #define	FORM_C		3	/* carriage control (ASA) */
 #ifdef FTP_NAMES
-char *formnames[] =  {"0", "Nonprint", "Telnet", "Carriage-control" };
+const char *formnames[] =  {"0", "Nonprint", "Telnet", "Carriage-control" };
 #endif
 
 /*
@@ -74,7 +74,7 @@ char *formnames[] =  {"0", "Nonprint", "Telnet", "Carriage-control" };
 #define	STRU_R		2	/* record structure */
 #define	STRU_P		3	/* page structure */
 #ifdef FTP_NAMES
-char *strunames[] =  {"0", "File", "Record", "Page" };
+const char *strunames[] =  {"0", "File", "Record", "Page" };
 #endif
 
 /*
@@ -84,7 +84,7 @@ char *strunames[] =  {"0", "File", "Record", "Page" };
 #define	MODE_B		2	/* block */
 #define	MODE_C		3	/* compressed */
 #ifdef FTP_NAMES
-char *modenames[] =  {"0", "Stream", "Block", "Compressed" };
+const char *modenames[] =  {"0", "Stream", "Block", "Compressed" };
 #endif
 
 /*
