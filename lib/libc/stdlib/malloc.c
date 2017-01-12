@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.57 2017/01/12 01:02:09 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.58 2017/01/12 02:00:42 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -93,7 +93,7 @@ int utrace(const char *, void *, size_t);
 # include <sys/cdefs.h>
 # include "extern.h"
 # if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.57 2017/01/12 01:02:09 christos Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.58 2017/01/12 02:00:42 christos Exp $");
 # endif /* LIBC_SCCS and not lint */
 # include <reentrant.h>
 # ifdef _REENTRANT
@@ -458,7 +458,11 @@ malloc_init(void)
     /*
      * Compute page-size related variables.
      */
+#ifdef _LIBC
     malloc_pagesize = (size_t)sysconf(_SC_PAGESIZE);
+#else
+    malloc_pagesize = 4096;
+#endif
     malloc_pagemask = malloc_pagesize - 1;
     for (malloc_pageshift = 0;
 	 (1UL << malloc_pageshift) != malloc_pagesize;
