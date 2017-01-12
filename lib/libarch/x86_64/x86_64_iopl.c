@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_64_iopl.c,v 1.2 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: x86_64_iopl.c,v 1.3 2017/01/12 19:02:22 maya Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,8 +35,7 @@
 #include <machine/sysarch.h>
 
 int
-x86_64_iopl(iopl)
-	int iopl;
+x86_64_iopl(int iopl)
 {
 	struct x86_64_iopl_args p;
 
