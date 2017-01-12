@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.57 2017/01/12 01:58:39 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.58 2017/01/12 18:16:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.57 2017/01/12 01:58:39 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.58 2017/01/12 18:16:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -133,11 +133,7 @@ unlock(const struct syslog_data *data)
 static struct syslog_fun _syslog_fun = {
 	timefun,
 	strerror_r,
-#ifndef __lint__
-	_vsnprintf,
-#else
 	vsnprintf,
-#endif
 	lock,
 	unlock,
 };

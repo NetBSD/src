@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.183 2017/01/12 00:35:38 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.184 2017/01/12 18:16:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
 #define _NAMESPACE_H_
 
 #include <sys/cdefs.h>
+#include <ssp/ssp.h>
 
 #ifndef __lint__
 #define aio_suspend	_aio_suspend
@@ -625,7 +626,7 @@
 #define sl_free			_sl_free
 #define sl_init			_sl_init
 #define sleep			_sleep
-#ifndef snprintf
+#if __SSP_FORTIFY_LEVEL == 0
 #define snprintf		_snprintf
 #endif
 #define snprintf_l		_snprintf_l
@@ -735,7 +736,7 @@
 #define vasprintf		_vasprintf
 #define vasprintf_l		_vasprintf_l
 #define	vdprintf		_vdprintf
-#ifndef vsnprintf
+#if __SSP_FORTIFY_LEVEL == 0
 #define vsnprintf		_vsnprintf
 #endif
 #define vdprintf_l		_vdprintf_l
