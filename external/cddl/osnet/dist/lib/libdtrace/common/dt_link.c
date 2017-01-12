@@ -27,12 +27,17 @@
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #define	ELF_TARGET_ALL
-#include <elf.h>
 #ifdef __NetBSD__
 #ifdef __x86_64__
 #include <i386/elf_machdep.h>
+#undef ELF32_MACHDEP_ID_CASES
+#undef ELF64_MACHDEP_ID_CASES
+#undef ELF64_MACHDEP_ENDIANNESS
+#undef ARCH_ELFSIZE
+#undef R_TYPE
 #endif
 #endif
+#include <elf.h>
 
 #include <sys/types.h>
 #ifdef illumos
