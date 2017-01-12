@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.264 2017/01/10 17:16:19 maya Exp $
+#	$NetBSD: bsd.sys.mk,v 1.265 2017/01/12 16:47:18 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -53,6 +53,10 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # differently in traditional and ansi environments' which is the warning
 # we wanted, and now we don't get anymore.
 CFLAGS+=	-Wno-sign-compare
+# Don't suppress warnings coming from constructs in system headers.
+# Our system headers should be clean and we want to warn about things like:
+# isdigit((char)1)
+CFLAGS+=	-Wsystem-headers
 CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-traditional :}
 .if !defined(NOGCCERROR)
 # Set assembler warnings to be fatal
