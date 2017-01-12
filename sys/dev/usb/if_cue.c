@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.75 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.76 2017/01/12 18:26:08 maya Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.75 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.76 2017/01/12 18:26:08 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -542,7 +542,7 @@ cue_attach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = cue_ioctl;
 	ifp->if_start = cue_start;
 	ifp->if_watchdog = cue_watchdog;
-	strncpy(ifp->if_xname, device_xname(sc->cue_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->cue_dev), IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
 
