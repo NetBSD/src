@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf.c,v 1.28 2014/09/29 14:58:33 christos Exp $	*/
+/*	$NetBSD: vsnprintf.c,v 1.29 2017/01/12 18:16:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf.c,v 1.28 2014/09/29 14:58:33 christos Exp $");
+__RCSID("$NetBSD: vsnprintf.c,v 1.29 2017/01/12 18:16:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,11 +51,15 @@ __RCSID("$NetBSD: vsnprintf.c,v 1.28 2014/09/29 14:58:33 christos Exp $");
 #include "setlocale_local.h"
 #include "local.h"
 
-#if defined(_FORTIFY_SOURCE) && !defined(__lint__)
-#undef vsnprintf
-#define vsnprintf _vsnprintf
-#undef snprintf
-#define snprintf _snprintf
+#if __SSP_FORTIFY_LEVEL != 0
+# undef vsnprintf
+# define vsnprintf _vsnprintf
+# undef snprintf
+# define snprintf _snprintf
+int      snprintf(char * __restrict, size_t, const char * __restrict, ...)
+    __printflike(3, 4);
+int      vsnprintf(char * __restrict, size_t, const char * __restrict,
+    __va_list) __printflike(3, 0);
 #endif
 
 #ifdef __weak_alias
