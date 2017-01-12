@@ -1,3 +1,27 @@
+	--- 9.10.4-P5 released ---
+
+4530.	[bug]		Change 4489 broke the handling of CNAME -> DNAME
+			in responses resulting in SERVFAIL being returned.
+			[RT #43779]
+
+4528.	[bug]		Only set the flag bits for the i/o we are waiting
+			for on EPOLLERR or EPOLLHUP. [RT #43617]
+
+4519.	[port]		win32: handle ERROR_MORE_DATA. [RT #43534]
+
+4517.	[security]	Named could mishandle authority sections that were
+			missing RRSIGs triggering an assertion failure.
+			(CVE-2016-9444) [RT # 43632]
+
+4510.	[security]	Named mishandled some responses where covering RRSIG
+			records are returned without the requested data
+			resulting in a assertion failure. (CVE-2016-9147)
+			[RT #43548]
+
+4508.	[security]	Named incorrectly tried to cache TKEY records which
+			could trigger a assertion failure when there was
+			a class mismatch. (CVE-2016-9131) [RT #43522]
+
 	--- 9.10.4-P4 released ---
 
 4489.	[security]	It was possible to trigger assertions when processing
