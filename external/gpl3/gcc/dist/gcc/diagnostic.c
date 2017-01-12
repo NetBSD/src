@@ -154,7 +154,7 @@ diagnostic_initialize (diagnostic_context *context, int n_opts)
   context->opt_permissive = 0;
   context->fatal_errors = false;
   context->dc_inhibit_warnings = false;
-  context->dc_warn_system_headers = false;
+  context->dc_warn_system_headers = true;
   context->max_errors = 0;
   context->internal_error = NULL;
   diagnostic_starter (context) = default_diagnostic_starter;
