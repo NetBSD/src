@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.182 2016/09/24 21:31:25 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.183 2017/01/12 00:35:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 #define sbrk		_sbrk
 #define strerror_l	_strerror_l
 #define strerror_r	_strerror_r
+#define strerror_r_ss	_strerror_r_ss
 #define strlcat		_strlcat
 #define strlcpy		_strlcpy
 #define strtod_l	_strtod_l
