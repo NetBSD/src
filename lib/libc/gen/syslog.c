@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.56 2017/01/12 00:38:01 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.57 2017/01/12 01:58:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.56 2017/01/12 00:38:01 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.57 2017/01/12 01:58:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,6 +67,15 @@ __weak_alias(syslog,_syslog)
 __weak_alias(vsyslog,_vsyslog)
 __weak_alias(syslogp,_syslogp)
 __weak_alias(vsyslogp,_vsyslogp)
+__weak_alias(closelog,_closelog)
+__weak_alias(openlog,_openlog)
+__weak_alias(setlogmask,_setlogmask)
+#endif
+
+static struct syslog_data _syslog_data = SYSLOG_DATA_INIT;
+
+#ifdef _REENTRANT
+static mutex_t	syslog_mutex = MUTEX_INITIALIZER;
 #endif
 
 static size_t
@@ -103,6 +112,24 @@ timefun(char *p, size_t tbuf_left)
 	return (size_t)(p - op);
 }
 
+static int
+lock(const struct syslog_data *data)
+{
+	int rv = data == &_syslog_data;
+	if (rv)
+		mutex_lock(&syslog_mutex);
+	return rv;
+}
+
+static int
+unlock(const struct syslog_data *data)
+{
+	int rv = data == &_syslog_data;
+	if (rv)
+		mutex_unlock(&syslog_mutex);
+	return rv;
+}
+
 static struct syslog_fun _syslog_fun = {
 	timefun,
 	strerror_r,
@@ -111,7 +138,45 @@ static struct syslog_fun _syslog_fun = {
 #else
 	vsnprintf,
 #endif
+	lock,
+	unlock,
 };
+
+void
+openlog(const char *ident, int logstat, int logfac)
+{
+	openlog_r(ident, logstat, logfac, &_syslog_data);
+}
+
+void
+closelog(void)
+{
+	closelog_r(&_syslog_data);
+}
+
+/* setlogmask -- set the log mask level */
+int
+setlogmask(int pmask)
+{
+	return setlogmask_r(pmask, &_syslog_data);
+}
+
+void
+openlog_r(const char *ident, int logstat, int logfac, struct syslog_data *data)
+{
+	lock(data);
+	_openlog_unlocked_r(ident, logstat, logfac, data);
+	unlock(data);
+}
+
+void
+closelog_r(struct syslog_data *data)
+{
+	lock(data);
+	_closelog_unlocked_r(data);
+	data->log_tag = NULL;
+	unlock(data);
+}
 
 /*
  * syslog, vsyslog --
