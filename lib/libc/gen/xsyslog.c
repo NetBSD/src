@@ -1,4 +1,4 @@
-/*	$NetBSD: xsyslog.c,v 1.1 2017/01/12 00:38:01 christos Exp $	*/
+/*	$NetBSD: xsyslog.c,v 1.2 2017/01/12 01:58:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: xsyslog.c,v 1.1 2017/01/12 00:38:01 christos Exp $");
+__RCSID("$NetBSD: xsyslog.c,v 1.2 2017/01/12 01:58:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,40 +58,70 @@ __RCSID("$NetBSD: xsyslog.c,v 1.1 2017/01/12 00:38:01 christos Exp $");
 #include "reentrant.h"
 #include "extern.h"
 
-#ifdef __weak_alias
-__weak_alias(closelog,_closelog)
-__weak_alias(openlog,_openlog)
-__weak_alias(setlogmask,_setlogmask)
-#endif
-
-struct syslog_data _syslog_data = SYSLOG_DATA_INIT;
-
-static void	openlog_unlocked_r(const char *, int, int,
-    struct syslog_data *);
-static void	disconnectlog_r(struct syslog_data *);
-static void	connectlog_r(struct syslog_data *);
-
-#ifdef _REENTRANT
-static mutex_t	syslog_mutex = MUTEX_INITIALIZER;
-#endif
-
-void
-openlog(const char *ident, int logstat, int logfac)
+static void
+disconnectlog_r(struct syslog_data *data)
 {
-	openlog_r(ident, logstat, logfac, &_syslog_data);
+	/*
+	 * If the user closed the FD and opened another in the same slot,
+	 * that's their problem.  They should close it before calling on
+	 * system services.
+	 */
+	if (data->log_file != -1) {
+		(void)close(data->log_file);
+		data->log_file = -1;
+	}
+	data->log_connected = 0;		/* retry connect */
+}
+
+static void
+connectlog_r(struct syslog_data *data)
+{
+	/* AF_UNIX address of local logger */
+	static const struct sockaddr_un sun = {
+		.sun_family = AF_LOCAL,
+		.sun_len = sizeof(sun),
+		.sun_path = _PATH_LOG,
+	};
+
+	if (data->log_file == -1 || fcntl(data->log_file, F_GETFL, 0) == -1) {
+		if ((data->log_file = socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC,
+		    0)) == -1)
+			return;
+		data->log_connected = 0;
+	}
+	if (!data->log_connected) {
+		if (connect(data->log_file,
+		    (const struct sockaddr *)(const void *)&sun,
+		    (socklen_t)sizeof(sun)) == -1) {
+			(void)close(data->log_file);
+			data->log_file = -1;
+		} else
+			data->log_connected = 1;
+	}
 }
 
 void
-closelog(void)
+_openlog_unlocked_r(const char *ident, int logstat, int logfac,
+    struct syslog_data *data)
 {
-	closelog_r(&_syslog_data);
+	if (ident != NULL)
+		data->log_tag = ident;
+	data->log_stat = logstat;
+	if (logfac != 0 && (logfac &~ LOG_FACMASK) == 0)
+		data->log_fac = logfac;
+
+	if (data->log_stat & LOG_NDELAY)	/* open immediately */
+		connectlog_r(data);
+
+	data->log_opened = 1;
 }
 
-/* setlogmask -- set the log mask level */
-int
-setlogmask(int pmask)
+void
+_closelog_unlocked_r(struct syslog_data *data)
 {
-	return setlogmask_r(pmask, &_syslog_data);
+	(void)close(data->log_file);
+	data->log_file = -1;
+	data->log_connected = 0;
 }
 
 static void
@@ -151,8 +181,7 @@ _vxsyslogp_r(int pri, struct syslog_fun *fun,
 
 	prlen = (*fun->timefun)(p, tbuf_left);
 
-	if (data == &_syslog_data)
-		mutex_lock(&syslog_mutex);
+	(*fun->lock)(data);
 
 	if (data->log_hostname[0] == '\0' && gethostname(data->log_hostname,
 	    sizeof(data->log_hostname)) == -1) {
@@ -171,8 +200,7 @@ _vxsyslogp_r(int pri, struct syslog_fun *fun,
 	prlen = snprintf_ss(p, tbuf_left, "%s ",
 	    data->log_tag ? data->log_tag : "-");
 
-	if (data == &_syslog_data)
-		mutex_unlock(&syslog_mutex);
+	(*fun->unlock)(data);
 
 	if (data->log_stat & (LOG_PERROR|LOG_CONS)) {
 		iovcnt = 0;
@@ -279,11 +307,10 @@ _vxsyslogp_r(int pri, struct syslog_fun *fun,
 	}
 
 	/* Get connected, output the message to the local logger. */
-	if (data == &_syslog_data)
-		mutex_lock(&syslog_mutex);
+	(*fun->lock)(data);
 	opened = !data->log_opened;
 	if (opened)
-		openlog_unlocked_r(data->log_tag, data->log_stat, 0, data);
+		_openlog_unlocked_r(data->log_tag, data->log_stat, 0, data);
 	connectlog_r(data);
 
 	/*
@@ -318,96 +345,8 @@ _vxsyslogp_r(int pri, struct syslog_fun *fun,
 		(void)close(fd);
 	}
 
-	if (data == &_syslog_data)
-		mutex_unlock(&syslog_mutex);
-
-	if (data != &_syslog_data && opened) {
-		/* preserve log tag */
-		const char *ident = data->log_tag;
-		closelog_r(data);
-		data->log_tag = ident;
-	}
-}
-
-static void
-disconnectlog_r(struct syslog_data *data)
-{
-	/*
-	 * If the user closed the FD and opened another in the same slot,
-	 * that's their problem.  They should close it before calling on
-	 * system services.
-	 */
-	if (data->log_file != -1) {
-		(void)close(data->log_file);
-		data->log_file = -1;
-	}
-	data->log_connected = 0;		/* retry connect */
-}
-
-static void
-connectlog_r(struct syslog_data *data)
-{
-	/* AF_UNIX address of local logger */
-	static const struct sockaddr_un sun = {
-		.sun_family = AF_LOCAL,
-		.sun_len = sizeof(sun),
-		.sun_path = _PATH_LOG,
-	};
-
-	if (data->log_file == -1 || fcntl(data->log_file, F_GETFL, 0) == -1) {
-		if ((data->log_file = socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC,
-		    0)) == -1)
-			return;
-		data->log_connected = 0;
-	}
-	if (!data->log_connected) {
-		if (connect(data->log_file,
-		    (const struct sockaddr *)(const void *)&sun,
-		    (socklen_t)sizeof(sun)) == -1) {
-			(void)close(data->log_file);
-			data->log_file = -1;
-		} else
-			data->log_connected = 1;
-	}
-}
-
-static void
-openlog_unlocked_r(const char *ident, int logstat, int logfac,
-    struct syslog_data *data)
-{
-	if (ident != NULL)
-		data->log_tag = ident;
-	data->log_stat = logstat;
-	if (logfac != 0 && (logfac &~ LOG_FACMASK) == 0)
-		data->log_fac = logfac;
-
-	if (data->log_stat & LOG_NDELAY)	/* open immediately */
-		connectlog_r(data);
-
-	data->log_opened = 1;
-}
-
-void
-openlog_r(const char *ident, int logstat, int logfac, struct syslog_data *data)
-{
-	if (data == &_syslog_data)
-		mutex_lock(&syslog_mutex);
-	openlog_unlocked_r(ident, logstat, logfac, data);
-	if (data == &_syslog_data)
-		mutex_unlock(&syslog_mutex);
-}
-
-void
-closelog_r(struct syslog_data *data)
-{
-	if (data == &_syslog_data)
-		mutex_lock(&syslog_mutex);
-	(void)close(data->log_file);
-	data->log_file = -1;
-	data->log_connected = 0;
-	data->log_tag = NULL;
-	if (data == &_syslog_data)
-		mutex_unlock(&syslog_mutex);
+	if (!(*fun->unlock)(data) && opened)
+		_closelog_unlocked_r(data);
 }
 
 int
