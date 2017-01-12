@@ -14,8 +14,6 @@
 #include "driver.h"
 
 #include <sys/ioctl.h>
-#undef IFNAMSIZ
-#include <net/if.h>
 #ifdef __linux__
 #include <netpacket/packet.h>
 #include <net/if_arp.h>
