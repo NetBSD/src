@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.30 2017/01/04 13:03:41 ryo Exp $	*/
+/*	$NetBSD: pfil.c,v 1.31 2017/01/12 17:19:17 ryo Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.30 2017/01/04 13:03:41 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.31 2017/01/12 17:19:17 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ struct pfil_head {
 };
 
 static const int pfil_flag_cases[] = {
-	PFIL_IN, PFIL_OUT, PFIL_IFADDR, PFIL_IFNET
+	PFIL_IN, PFIL_OUT
 };
 
 static LIST_HEAD(, pfil_head) pfil_head_list __read_mostly =
@@ -208,18 +208,20 @@ pfil_add_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 }
 
 /*
- * pfil_add_hook: add an interface-event function (hook) to the packet
+ * pfil_add_ihook: add an interface-event function (hook) to the packet
  * filter head.  The possible flags are:
  *
- *	PFIL_IFADDR	call on interface reconfig (mbuf is ioctl #)
- *	PFIL_IFNET	call on interface attach/detach (mbuf is PFIL_IFNET_*)
+ *	PFIL_IFADDR	call on interface reconfig (cmd is ioctl #)
+ *	PFIL_IFNET	call on interface attach/detach (cmd is PFIL_IFNET_*)
  */
 int
 pfil_add_ihook(pfil_ifunc_t func, void *arg, int flags, pfil_head_t *ph)
 {
 	pfil_list_t *phlist;
 
+	KASSERT(func != NULL);
 	KASSERT(flags == PFIL_IFADDR || flags == PFIL_IFNET);
+
 	phlist = pfil_hook_get(flags, ph);
 	return pfil_list_add(phlist, (pfil_polyfunc_t)func, arg, flags);
 }
@@ -253,6 +255,8 @@ pfil_list_remove(pfil_list_t *phlist, pfil_polyfunc_t func, void *arg)
 int
 pfil_remove_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 {
+	KASSERT((flags & ~PFIL_ALL) == 0);
+
 	for (u_int i = 0; i < __arraycount(pfil_flag_cases); i++) {
 		const int fcase = pfil_flag_cases[i];
 		pfil_list_t *pflist;
@@ -287,7 +291,7 @@ pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 	pfil_list_t *phlist;
 	int ret = 0;
 
-	KASSERT((dir & ~PFIL_ALL) == 0);
+	KASSERT(dir == PFIL_IN || dir == PFIL_OUT);
 	if (__predict_false((phlist = pfil_hook_get(dir, ph)) == NULL)) {
 		return ret;
 	}
