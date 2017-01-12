@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.196 2016/10/04 09:41:41 kamil Exp $
+#	$NetBSD: Makefile.inc,v 1.197 2017/01/12 00:38:01 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -32,12 +32,12 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	siglist.c signal.c signame.c sigrelse.c \
 	sigset.c sigsetops.c sleep.c \
 	stringlist.c sysconf.c sysctl.c sysctlbyname.c sysctlgetmibinfo.c \
-	sysctlnametomib.c syslog.c telldir.c time.c timespec_get.c \
+	sysctlnametomib.c syslog.c syslog_ss.c telldir.c time.c timespec_get.c \
 	times.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c ualarm.c \
 	ulimit.c uname.c unvis.c usleep.c utime.c utimens.c utmp.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitid.c waitpid.c warn.c \
-	warnx.c warnc.c vwarn.c vwarnx.c vwarnc.c verr.c verrx.c verrc.c \
-	wordexp.c
+	warnx.c warnc.c wordexp.c xsyslog.c \
+	vwarn.c vwarnx.c vwarnc.c verr.c verrx.c verrc.c
 
 # uses alloca
 COPTS.execvp.c = -Wno-stack-protector
