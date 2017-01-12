@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog_ss.c,v 1.1 2017/01/12 00:38:01 christos Exp $	*/
+/*	$NetBSD: syslog_ss.c,v 1.2 2017/01/12 01:58:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: syslog_ss.c,v 1.1 2017/01/12 00:38:01 christos Exp $");
+__RCSID("$NetBSD: syslog_ss.c,v 1.2 2017/01/12 01:58:39 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -54,10 +54,24 @@ timefun_ss(char *p, size_t tbuf_left)
 #endif
 }
 
+static int
+lock_ss(const struct syslog_data *data __unused)
+{
+	return 0;
+}
+
+static int
+unlock_ss(const struct syslog_data *data __unused)
+{
+	return 0;
+}
+
 struct syslog_fun _syslog_ss_fun = {
 	timefun_ss,
 	strerror_r_ss,
 	vsnprintf_ss,
+	lock_ss,
+	unlock_ss,
 };
 
 void
