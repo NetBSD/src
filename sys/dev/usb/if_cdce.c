@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.43 2016/12/15 09:28:06 ozaki-r Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.44 2017/01/12 18:26:08 maya Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.43 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.44 2017/01/12 18:26:08 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -281,7 +281,7 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = cdce_ioctl;
 	ifp->if_start = cdce_start;
 	ifp->if_watchdog = cdce_watchdog;
-	strncpy(ifp->if_xname, device_xname(sc->cdce_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->cdce_dev), IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
 
