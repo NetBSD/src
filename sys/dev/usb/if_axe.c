@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.79 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.80 2017/01/12 18:26:08 maya Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.79 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.80 2017/01/12 18:26:08 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -988,7 +988,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	/* Initialize interface info.*/
 	ifp = &sc->sc_if;
 	ifp->if_softc = sc;
-	strncpy(ifp->if_xname, devname, IFNAMSIZ);
+	strlcpy(ifp->if_xname, devname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = axe_ioctl;
 	ifp->if_start = axe_start;
