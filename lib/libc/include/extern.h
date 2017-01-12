@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.24 2017/01/12 00:35:38 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.25 2017/01/12 00:43:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -73,5 +73,6 @@ void	_malloc_postfork(void);
 int	_sys_setcontext(const ucontext_t *);
 
 int	strerror_r_ss(int, char *, size_t);
+__aconst char *strerror_ss(int);
 
 __END_DECLS

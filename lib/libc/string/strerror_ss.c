@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror_ss.c,v 1.1 2017/01/12 00:35:38 christos Exp $	*/
+/*	$NetBSD: strerror_ss.c,v 1.2 2017/01/12 00:43:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strerror_ss.c,v 1.1 2017/01/12 00:35:38 christos Exp $");
+__RCSID("$NetBSD: strerror_ss.c,v 1.2 2017/01/12 00:43:55 christos Exp $");
 
 #include "namespace.h"
 
@@ -53,7 +53,6 @@ strerror_r_ss(int num, char *buf, size_t len)
 	return 0;
 }
 
-#ifdef notyet
 __aconst char *
 strerror_ss(int num)
 {
@@ -62,4 +61,3 @@ strerror_ss(int num)
 	strerror_r_ss(num, buf, sizeof(buf));
 	return buf;
 }
-#endif
