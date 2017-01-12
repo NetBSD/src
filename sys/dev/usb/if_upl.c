@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.58 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.59 2017/01/12 18:26:08 maya Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.58 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.59 2017/01/12 18:26:08 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -295,7 +295,7 @@ upl_attach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = upl_ioctl;
 	ifp->if_start = upl_start;
 	ifp->if_watchdog = upl_watchdog;
-	strncpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
 	ifp->if_type = IFT_OTHER;
 	ifp->if_addrlen = 0;

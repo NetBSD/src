@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.50 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.51 2017/01/12 18:26:08 maya Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.50 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.51 2017/01/12 18:26:08 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -283,7 +283,7 @@ udav_attach(device_t parent, device_t self, void *aux)
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
-	strncpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = udav_start;
 	ifp->if_ioctl = udav_ioctl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.140 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.141 2017/01/12 18:26:08 maya Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.140 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.141 2017/01/12 18:26:08 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -836,7 +836,7 @@ aue_attach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = aue_ioctl;
 	ifp->if_start = aue_start;
 	ifp->if_watchdog = aue_watchdog;
-	strncpy(ifp->if_xname, device_xname(sc->aue_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->aue_dev), IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
 
