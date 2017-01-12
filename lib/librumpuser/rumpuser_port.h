@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.47 2015/11/07 16:21:42 nros Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.48 2017/01/12 18:23:04 christos Exp $	*/
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
@@ -216,6 +216,8 @@ aligned_alloc(size_t alignment, size_t size)
 #ifndef __RCSID
 #define __RCSID(a)
 #endif
+
+#include <poll.h>
 
 #ifndef INFTIM
 #define INFTIM (-1)
