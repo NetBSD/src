@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.5 2015/07/11 15:23:57 riastradh Exp $
+	$NetBSD: README,v 1.6 2017/01/12 00:38:25 riastradh Exp $
 
 libc: The C library.
 
@@ -217,14 +217,17 @@ compiled with the old signature, will continue to use the old symbol.
 
    Then compat_time.c defines `time' normally:
 
-	time_t
-	time(time_t *t)
+	int32_t
+	time(int32_t *t)
 	{
 	...
 
    Again, macro expansion replaces `time' by `_time', but since there
    is no __RENAME directive in <compat/include/time.h>, the resulting
-   ELF global symbol is `_time'.
+   ELF global symbol is `_time'.  (Actually, compat_time.c just has
+   `#define time_t int32_t' and `#include "gen/time.c"' to get the same
+   text of the definition of time.  The above definition is what we get
+   effectively by substituting int32_t for the type time_t.)
 
    Finally, alongside the definition in compat_time.c is
 
