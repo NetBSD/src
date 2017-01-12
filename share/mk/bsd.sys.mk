@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.265 2017/01/12 16:47:18 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.266 2017/01/12 19:10:34 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -56,7 +56,7 @@ CFLAGS+=	-Wno-sign-compare
 # Don't suppress warnings coming from constructs in system headers.
 # Our system headers should be clean and we want to warn about things like:
 # isdigit((char)1)
-CFLAGS+=	-Wsystem-headers
+#CFLAGS+=	-Wsystem-headers
 CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-traditional :}
 .if !defined(NOGCCERROR)
 # Set assembler warnings to be fatal
