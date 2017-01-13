@@ -1,4 +1,4 @@
-/*	$NetBSD: t_threads.c,v 1.7 2016/11/24 19:26:32 joerg Exp $	*/
+/*	$NetBSD: t_threads.c,v 1.8 2017/01/13 05:12:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_threads.c,v 1.7 2016/11/24 19:26:32 joerg Exp $");
+__RCSID("$NetBSD: t_threads.c,v 1.8 2017/01/13 05:12:44 christos Exp $");
 
 #include <dlfcn.h>
 #include <pthread.h>
@@ -72,9 +72,9 @@ ATF_TC_BODY(threads1, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t max_threads = 10;
+	const size_t MAX_THREADS = 10;
 	size_t i;
-	pthread_t threads[max_threads];
+	pthread_t threads[MAX_THREADS];
 
 	dummy_callbacks.proc_read	= basic_proc_read;
 	dummy_callbacks.proc_write	= basic_proc_write;
@@ -83,7 +83,7 @@ ATF_TC_BODY(threads1, tc)
 	dummy_callbacks.proc_getregs	= dummy_proc_getregs;
 	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		printf("Creating thread %zu\n", i);
 		PTHREAD_REQUIRE
 		    (pthread_create(&threads[i], NULL, busyFunction1, NULL));
@@ -134,9 +134,9 @@ ATF_TC_BODY(threads2, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t max_threads = 10;
+	const size_t MAX_THREADS = 10;
 	size_t i;
-	pthread_t threads[max_threads];
+	pthread_t threads[MAX_THREADS];
 	int count = 0;
 
 	dummy_callbacks.proc_read	= basic_proc_read;
@@ -147,7 +147,7 @@ ATF_TC_BODY(threads2, tc)
 	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
 
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		printf("Creating thread %zu\n", i);
 		PTHREAD_REQUIRE
 		    (pthread_create(&threads[i], NULL, busyFunction2, NULL));
@@ -163,9 +163,9 @@ ATF_TC_BODY(threads2, tc)
 	printf("Calling td_close(3)\n");
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
-	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	ATF_REQUIRE_EQ_MSG(count, MAX_THREADS + 1,
 	    "counted threads (%d) != expected threads (%zu)",
-	    count, max_threads + 1);
+	    count, MAX_THREADS + 1);
 }
 
 ATF_TC(threads3);
@@ -205,9 +205,9 @@ ATF_TC_BODY(threads3, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t max_threads = 10;
+	const size_t MAX_THREADS = 10;
 	size_t i;
-	pthread_t threads[max_threads];
+	pthread_t threads[MAX_THREADS];
 	int count = 0;
 
 	dummy_callbacks.proc_read	= basic_proc_read;
@@ -218,7 +218,7 @@ ATF_TC_BODY(threads3, tc)
 	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
 
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		printf("Creating thread %zu\n", i);
 		PTHREAD_REQUIRE
 		    (pthread_create(&threads[i], NULL, busyFunction3, NULL));
@@ -234,9 +234,9 @@ ATF_TC_BODY(threads3, tc)
 	printf("Calling td_close(3)\n");
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
-	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	ATF_REQUIRE_EQ_MSG(count, MAX_THREADS + 1,
 	    "counted threads (%d) != expected threads (%zu)",
-	    count, max_threads + 1);
+	    count, MAX_THREADS + 1);
 }
 
 ATF_TC(threads4);
@@ -279,9 +279,9 @@ ATF_TC_BODY(threads4, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t max_threads = 10;
+	const size_t MAX_THREADS = 10;
 	size_t i;
-	pthread_t threads[max_threads];
+	pthread_t threads[MAX_THREADS];
 	int count = 0;
 
 	dummy_callbacks.proc_read	= basic_proc_read;
@@ -291,13 +291,13 @@ ATF_TC_BODY(threads4, tc)
 	dummy_callbacks.proc_getregs	= dummy_proc_getregs;
 	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		printf("Creating thread %zu\n", i);
 		PTHREAD_REQUIRE
 		    (pthread_create(&threads[i], NULL, busyFunction4, NULL));
 	}
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		PTHREAD_REQUIRE
 		    (pthread_setname_np(threads[i], "test_%d", (void*)i));
 	}
@@ -312,9 +312,9 @@ ATF_TC_BODY(threads4, tc)
 	printf("Calling td_close(3)\n");
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
-	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	ATF_REQUIRE_EQ_MSG(count, MAX_THREADS + 1,
 	    "counted threads (%d) != expected threads (%zu)",
-	    count, max_threads + 1);
+	    count, MAX_THREADS + 1);
 }
 
 ATF_TC(threads5);
@@ -361,9 +361,9 @@ ATF_TC_BODY(threads5, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t max_threads = 10;
+	const size_t MAX_THREADS = 10;
 	size_t i;
-	pthread_t threads[max_threads];
+	pthread_t threads[MAX_THREADS];
 	int count = 0;
 
 	dummy_callbacks.proc_read	= basic_proc_read;
@@ -373,13 +373,13 @@ ATF_TC_BODY(threads5, tc)
 	dummy_callbacks.proc_getregs	= dummy_proc_getregs;
 	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		printf("Creating thread %zu\n", i);
 		PTHREAD_REQUIRE
 		    (pthread_create(&threads[i], NULL, busyFunction5, NULL));
 	}
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		PTHREAD_REQUIRE
 		    (pthread_setname_np(threads[i], "test_%d", (void*)i));
 	}
@@ -394,9 +394,9 @@ ATF_TC_BODY(threads5, tc)
 	printf("Calling td_close(3)\n");
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
-	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	ATF_REQUIRE_EQ_MSG(count, MAX_THREADS + 1,
 	    "counted threads (%d) != expected threads (%zu)",
-	    count, max_threads + 1);
+	    count, MAX_THREADS + 1);
 }
 
 ATF_TC(threads6);
@@ -435,9 +435,9 @@ ATF_TC_BODY(threads6, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t max_threads = 10;
+	const size_t MAX_THREADS = 10;
 	size_t i;
-	pthread_t threads[max_threads];
+	pthread_t threads[MAX_THREADS];
 	int count = 0;
 
 	dummy_callbacks.proc_read	= basic_proc_read;
@@ -447,7 +447,7 @@ ATF_TC_BODY(threads6, tc)
 	dummy_callbacks.proc_getregs	= dummy_proc_getregs;
 	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		printf("Creating thread %zu\n", i);
 		PTHREAD_REQUIRE
 		    (pthread_create(&threads[i], NULL, busyFunction6, NULL));
@@ -458,7 +458,7 @@ ATF_TC_BODY(threads6, tc)
 
 	ATF_REQUIRE(td_thr_iter(main_ta, iterateThreads6, &count) == TD_ERR_OK);
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		td_thread_t *td_thread;
 		ATF_REQUIRE(td_map_pth2thr(main_ta, threads[i], &td_thread)
 		    == TD_ERR_OK);
@@ -469,9 +469,9 @@ ATF_TC_BODY(threads6, tc)
 	printf("Calling td_close(3)\n");
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
-	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	ATF_REQUIRE_EQ_MSG(count, MAX_THREADS + 1,
 	    "counted threads (%d) != expected threads (%zu)",
-	    count, max_threads + 1);
+	    count, MAX_THREADS + 1);
 }
 
 ATF_TC(threads7);
@@ -510,9 +510,9 @@ ATF_TC_BODY(threads7, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t max_threads = 10;
+	const size_t MAX_THREADS = 10;
 	size_t i;
-	pthread_t threads[max_threads];
+	pthread_t threads[MAX_THREADS];
 	int count = 0;
 
 	dummy_callbacks.proc_read	= basic_proc_read;
@@ -522,7 +522,7 @@ ATF_TC_BODY(threads7, tc)
 	dummy_callbacks.proc_getregs	= dummy_proc_getregs;
 	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		printf("Creating thread %zu\n", i);
 		PTHREAD_REQUIRE
 		    (pthread_create(&threads[i], NULL, busyFunction7, NULL));
@@ -531,7 +531,7 @@ ATF_TC_BODY(threads7, tc)
 	printf("Calling td_open(3)\n");
 	ATF_REQUIRE(td_open(&dummy_callbacks, NULL, &main_ta) == TD_ERR_OK);
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		td_thread_t *td_thread;
 		ATF_REQUIRE(td_map_pth2thr(main_ta, threads[i], &td_thread)
 		    == TD_ERR_OK);
@@ -544,9 +544,9 @@ ATF_TC_BODY(threads7, tc)
 	printf("Calling td_close(3)\n");
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
-	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	ATF_REQUIRE_EQ_MSG(count, MAX_THREADS + 1,
 	    "counted threads (%d) != expected threads (%zu)",
-	    count, max_threads + 1);
+	    count, MAX_THREADS + 1);
 }
 
 ATF_TC(threads8);
@@ -585,9 +585,9 @@ ATF_TC_BODY(threads8, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t max_threads = 10;
+#define MAX_THREADS 10
 	size_t i;
-	pthread_t threads[max_threads];
+	pthread_t threads[MAX_THREADS];
 	int count = 0;
 
 	dummy_callbacks.proc_read	= basic_proc_read;
@@ -597,7 +597,7 @@ ATF_TC_BODY(threads8, tc)
 	dummy_callbacks.proc_getregs	= dummy_proc_getregs;
 	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		printf("Creating thread %zu\n", i);
 		PTHREAD_REQUIRE
 		    (pthread_create(&threads[i], NULL, busyFunction8, NULL));
@@ -608,7 +608,7 @@ ATF_TC_BODY(threads8, tc)
 
 	ATF_REQUIRE(td_thr_iter(main_ta, iterateThreads8, &count) == TD_ERR_OK);
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		td_thread_t *td_thread;
 		const int len = PTHREAD_MAX_NAMELEN_NP;
 		char td_threadname[len];
@@ -627,9 +627,9 @@ ATF_TC_BODY(threads8, tc)
 	printf("Calling td_close(3)\n");
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
-	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	ATF_REQUIRE_EQ_MSG(count, MAX_THREADS + 1,
 	    "counted threads (%d) != expected threads (%zu)",
-	    count, max_threads + 1);
+	    count, MAX_THREADS + 1);
 }
 
 ATF_TC(threads9);
@@ -668,9 +668,9 @@ ATF_TC_BODY(threads9, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t max_threads = 10;
+	const size_t MAX_THREADS = 10;
 	size_t i;
-	pthread_t threads[max_threads];
+	pthread_t threads[MAX_THREADS];
 	int count = 0;
 
 	dummy_callbacks.proc_read	= basic_proc_read;
@@ -680,7 +680,7 @@ ATF_TC_BODY(threads9, tc)
 	dummy_callbacks.proc_getregs	= dummy_proc_getregs;
 	dummy_callbacks.proc_setregs	= dummy_proc_setregs;
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		printf("Creating thread %zu\n", i);
 		PTHREAD_REQUIRE
 		    (pthread_create(&threads[i], NULL, busyFunction9, NULL));
@@ -689,7 +689,7 @@ ATF_TC_BODY(threads9, tc)
 	printf("Calling td_open(3)\n");
 	ATF_REQUIRE(td_open(&dummy_callbacks, NULL, &main_ta) == TD_ERR_OK);
 
-	for (i = 0; i < max_threads; i++) {
+	for (i = 0; i < MAX_THREADS; i++) {
 		td_thread_t *td_thread;
 		td_thread_info_t info;
 		ATF_REQUIRE(td_map_pth2thr(main_ta, threads[i], &td_thread)
@@ -705,9 +705,9 @@ ATF_TC_BODY(threads9, tc)
 	printf("Calling td_close(3)\n");
 	ATF_REQUIRE(td_close(main_ta) == TD_ERR_OK);
 
-	ATF_REQUIRE_EQ_MSG(count, max_threads + 1,
+	ATF_REQUIRE_EQ_MSG(count, MAX_THREADS + 1,
 	    "counted threads (%d) != expected threads (%zu)",
-	    count, max_threads + 1);
+	    count, MAX_THREADS + 1);
 }
 
 ATF_TP_ADD_TCS(tp)
