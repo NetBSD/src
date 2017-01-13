@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.23 2017/01/13 06:30:33 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.24 2017/01/13 08:11:01 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -667,7 +667,6 @@ ra_temporary_address_body()
 
 	atf_check -s exit:0 -o ignore rump.ping6 -n -X 2 -c 1 $IP6SRV
 	# autoconf, temporal address should be used as the source address
-	check_echo_request_pkt bus1 $ip_auto $IP6SRV
 	check_echo_request_pkt bus1 $ip_temp $IP6SRV
 
 	unset RUMP_SERVER
