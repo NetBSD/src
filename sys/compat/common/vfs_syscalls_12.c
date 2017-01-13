@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.32 2017/01/13 20:58:59 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.33 2017/01/13 22:29:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.32 2017/01/13 20:58:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.33 2017/01/13 22:29:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ again:
 		idb.d_type = (uint8_t)bdp->d_type;
 		idb.d_namlen = (uint8_t)bdp->d_namlen;
 		memcpy(idb.d_name, bdp->d_name, MIN(sizeof(idb.d_name),
-		    idb.d_namlen));
+		    bdp->d_namlen));
 		if ((error = copyout(&idb, outp, old_reclen)))
 			goto out;
 		/* advance past this real entry */
