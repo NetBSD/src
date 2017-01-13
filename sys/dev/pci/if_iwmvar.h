@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.14 2017/01/10 08:40:27 nonaka Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.15 2017/01/13 11:21:47 nonaka Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp 	*/
 
 /*
@@ -448,6 +448,7 @@ struct iwm_softc {
 	int sc_rx_ba_sessions;
 
 	int sc_scan_last_antenna;
+	int sc_mgmt_last_antenna;
 
 	int sc_fixed_ridx;
 

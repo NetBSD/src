@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1149 2017/01/11 12:02:24 joerg Exp $
+# $NetBSD: mi,v 1.1150 2017/01/13 11:21:47 nonaka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -163,7 +163,8 @@
 ./libdata/firmware/if_iwm/iwlwifi-7260-9.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-7265-16.ucode	base-firmware-root
 ./libdata/firmware/if_iwm/iwlwifi-7265-9.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-7265D-16.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-7265D-16.ucode	base-obsolete	obsolete
+./libdata/firmware/if_iwm/iwlwifi-7265D-17.ucode	base-firmware-root
 ./libdata/firmware/if_iwm/iwlwifi-8000C-16.ucode	base-firmware-root
 ./libdata/firmware/if_iwn			base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-100-ucode	base-firmware-root

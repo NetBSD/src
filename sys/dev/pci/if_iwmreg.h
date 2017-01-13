@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmreg.h,v 1.4 2017/01/09 09:15:54 nonaka Exp $	*/
+/*	$NetBSD: if_iwmreg.h,v 1.5 2017/01/13 11:21:47 nonaka Exp $	*/
 /*	OpenBSD: if_iwmreg.h,v 1.19 2016/09/20 11:46:09 stsp Exp 	*/
 
 /******************************************************************************
@@ -1777,7 +1777,7 @@ enum {
 	/* Phy */
 	IWM_PHY_CONFIGURATION_CMD = 0x6a,
 	IWM_CALIB_RES_NOTIF_PHY_DB = 0x6b,
-	/* IWM_PHY_DB_CMD = 0x6c, */
+	IWM_PHY_DB_CMD = 0x6c,
 
 	/* Power - legacy power table command */
 	IWM_POWER_TABLE_CMD = 0x77,
@@ -1865,6 +1865,25 @@ enum {
 	IWM_NET_DETECT_HOTSPOTS_QUERY_CMD = 0x59,
 
 	IWM_REPLY_MAX = 0xff,
+};
+
+enum iwm_phy_ops_subcmd_ids {
+	IWM_CMD_DTS_MEASUREMENT_TRIGGER_WIDE = 0x0,
+	IWM_CTDP_CONFIG_CMD = 0x03,
+	IWM_TEMP_REPORTING_THRESHOLDS_CMD = 0x04,
+	IWM_CT_KILL_NOTIFICATION = 0xFE,
+	IWM_DTS_MEASUREMENT_NOTIF_WIDE = 0xFF,
+};
+
+/* command groups */
+enum {
+	IWM_LEGACY_GROUP = 0x0,
+	IWM_LONG_GROUP = 0x1,
+	IWM_SYSTEM_GROUP = 0x2,
+	IWM_MAC_CONF_GROUP = 0x3,
+	IWM_PHY_OPS_GROUP = 0x4,
+	IWM_DATA_PATH_GROUP = 0x5,
+	IWM_PROT_OFFLOAD_GROUP = 0xb,
 };
 
 /**
@@ -1965,8 +1984,6 @@ enum iwm_phy_db_section_type {
 	IWM_PHY_DB_CALIB_CHG_TXP,
 	IWM_PHY_DB_MAX
 };
-
-#define IWM_PHY_DB_CMD 0x6c /* TEMP API - The actual is 0x8c */
 
 /*
  * phy db - configure operational ucode
@@ -4816,6 +4833,7 @@ struct iwm_scd_txq_cfg_rsp {
 
 /* Masks for iwm_scan_channel.type flags */
 #define IWM_SCAN_CHANNEL_TYPE_ACTIVE	(1 << 0)
+#define IWM_SCAN_CHANNEL_NSSIDS(x)	(((1 << (x)) - 1) << 1)
 #define IWM_SCAN_CHANNEL_NARROW_BAND	(1 << 22)
 
 /* Max number of IEs for direct SSID scans in a command */
@@ -5622,6 +5640,7 @@ enum iwm_umac_scan_general_flags {
  */
 struct iwm_scan_channel_cfg_umac {
 	uint32_t flags;
+#define IWM_SCAN_CHANNEL_UMAC_NSSIDS(x)	((1 << (x)) - 1)
 	uint8_t channel_num;
 	uint8_t iter_count;
 	uint16_t iter_interval;
@@ -6321,6 +6340,30 @@ enum iwm_mcc_source {
 	IWM_MCC_SOURCE_GETTING_MCC_TEST_MODE = 0x11,
 };
 
+/**
+ * struct iwm_dts_measurement_notif_v1 - measurements notification
+ *
+ * @temp: the measured temperature
+ * @voltage: the measured voltage
+ */
+struct iwm_dts_measurement_notif_v1 {
+	int32_t temp;
+	int32_t voltage;
+} __packed; /* TEMPERATURE_MEASUREMENT_TRIGGER_NTFY_S_VER_1*/
+
+/**
+ * struct iwm_dts_measurement_notif_v2 - measurements notification
+ *
+ * @temp: the measured temperature
+ * @voltage: the measured voltage
+ * @threshold_idx: the trip index that was crossed
+ */
+struct iwm_dts_measurement_notif_v2 {
+	int32_t temp;
+	int32_t voltage;
+	int32_t threshold_idx;
+} __packed; /* TEMPERATURE_MEASUREMENT_TRIGGER_NTFY_S_VER_2 */
+
 /*
  * Some cherry-picked definitions
  */
@@ -6386,6 +6429,12 @@ struct iwm_cmd_header_wide {
 	uint8_t version;
 } __packed;
 
+/**
+ * enum iwm_power_scheme
+ * @IWM_POWER_LEVEL_CAM - Continuously Active Mode
+ * @IWM_POWER_LEVEL_BPS - Balanced Power Save (default)
+ * @IWM_POWER_LEVEL_LP  - Low Power
+ */
 enum iwm_power_scheme {
 	IWM_POWER_SCHEME_CAM = 1,
 	IWM_POWER_SCHEME_BPS,
@@ -6450,6 +6499,11 @@ iwm_rx_packet_payload_len(const struct iwm_rx_packet *pkt)
 	return iwm_rx_packet_len(pkt) - sizeof(pkt->hdr);
 }
 
+/*
+ * Maximum number of HW queues the transport layer
+ * currently supports
+ */
+#define IWM_MAX_TID_COUNT	8
 
 #define IWM_MIN_DBM	-100
 #define IWM_MAX_DBM	-33	/* realistic guess */
