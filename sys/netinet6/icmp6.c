@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.203 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.204 2017/01/13 10:38:37 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.203 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.204 2017/01/13 10:38:37 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -451,7 +451,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	struct ip6_hdr *ip6, *nip6;
 	struct icmp6_hdr *icmp6, *nicmp6;
 	int off = *offp;
-	int icmp6len = m->m_pkthdr.len - *offp;
+	int icmp6len = m->m_pkthdr.len - off;
 	int code, sum, noff;
 	struct ifnet *rcvif;
 	struct psref psref;
@@ -891,7 +891,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	m_put_rcvif_psref(rcvif, &psref);
 
 	/* deliver the packet to appropriate sockets */
-	icmp6_rip6_input(&m, *offp);
+	icmp6_rip6_input(&m, off);
 
 	return IPPROTO_DONE;
 
