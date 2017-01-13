@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.34 2012/03/20 20:34:58 matt Exp $	*/
+/*	$NetBSD: unix.c,v 1.35 2017/01/13 04:22:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.34 2012/03/20 20:34:58 matt Exp $");
+__RCSID("$NetBSD: unix.c,v 1.35 2017/01/13 04:22:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,9 @@ __RCSID("$NetBSD: unix.c,v 1.34 2012/03/20 20:34:58 matt Exp $");
 #include <sys/sysctl.h>
 #include <sys/un.h>
 #include <sys/unpcb.h>
-#define _KERNEL
+#define _KMEMUSER
 #include <sys/file.h>
-#undef _KERNEL
+#undef _KMEMUSER
 
 #include <netinet/in.h>
 
