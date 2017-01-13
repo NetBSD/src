@@ -1,4 +1,4 @@
-$NetBSD: desktop,v 1.1 2017/01/13 10:17:18 dholland Exp $
+$NetBSD: desktop,v 1.2 2017/01/13 10:41:16 leot Exp $
 
 NetBSD Desktop Roadmap
 ======================
@@ -85,7 +85,7 @@ Explanations
 It's embarrassing that in 2016 we were still shipping twm as the
 default window system config. Heck, it was embarrassing in 2006. The
 work needed to move to ctwm has been largely done (by youri) and at
-least some of it committed, but this still (as of January 2007) isn't
+least some of it committed, but this still (as of January 2017) isn't
 enabled by default.
 
   - As of January 2017 nobody is actively working on this.
