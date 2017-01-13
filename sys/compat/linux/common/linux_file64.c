@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.56 2017/01/13 21:02:05 christos Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.57 2017/01/13 22:46:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.56 2017/01/13 21:02:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.57 2017/01/13 22:46:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,7 @@ again:
 		idb.d_off = off;
 		idb.d_reclen = (u_short)linux_reclen;
 		memcpy(idb.d_name, bdp->d_name, MIN(sizeof(idb.d_name),
-		   bdp.d_namlen);
+		   bdp->d_namlen));
 		if ((error = copyout((void *)&idb, outp, linux_reclen)))
 			goto out;
 		/* advance past this real entry */
