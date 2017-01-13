@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.85 2017/01/12 17:11:22 maya Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.86 2017/01/13 14:48:18 maya Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.85 2017/01/12 17:11:22 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.86 2017/01/13 14:48:18 maya Exp $");
 
 #include "opt_inet.h"
 
@@ -553,8 +553,7 @@ ray_attach(device_t parent, device_t self, void *aux)
 	 */
 	memset(&sc->sc_dnwid, 0, sizeof(sc->sc_dnwid));
 	sc->sc_dnwid.i_len = strlen(RAY_DEF_NWID);
-	if (sc->sc_dnwid.i_len > 0)
-		memcpy(sc->sc_dnwid.i_nwid, RAY_DEF_NWID, sc->sc_dnwid.i_len);
+	memcpy(sc->sc_dnwid.i_nwid, RAY_DEF_NWID, sc->sc_dnwid.i_len);
 	memcpy(&sc->sc_cnwid, &sc->sc_dnwid, sizeof(sc->sc_cnwid));
 	sc->sc_omode = sc->sc_mode = RAY_MODE_DEFAULT;
 	sc->sc_countrycode = sc->sc_dcountrycode =
