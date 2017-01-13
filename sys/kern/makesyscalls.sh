@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.165 2016/10/28 23:44:32 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.166 2017/01/13 06:11:27 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -793,7 +793,7 @@ function putsystrace(type, compatwrap_) {
 	printf("\t/* %s */\n\tcase %d:\n", funcname, syscall) > systraceret
 	if (argc > 0) {
 		printf("\t\tswitch(ndx) {\n") > systracetmp
-		printf("\t\tstruct %s%s_args *p = params;\n", compatwrap_, funcname) > systrace
+		printf("\t\tconst struct %s%s_args *p = params;\n", compatwrap_, funcname) > systrace
 		for (i = 1; i <= argc; i++) {
 			arg = argtype[i]
 			sub("__restrict$", "", arg)
