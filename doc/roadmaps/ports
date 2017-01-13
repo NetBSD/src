@@ -1,0 +1,106 @@
+$NetBSD: ports,v 1.1 2017/01/13 10:14:58 dholland Exp $
+
+NetBSD Ports Roadmap
+====================
+
+This roadmap covers ports and port-specific issues, and also bus-level
+material even if it's not strictly port-specific.
+
+The following elements, projects, and goals are considered strategic
+priorities for the project:
+
+ 1. EFI boot for x86
+ 2. xhci support
+ 3. Get arm64/aarch64 working
+
+The following elements, projects, and goals are not strategic
+priorities but are still important undertakings worth doing:
+
+ 4. USER_LDT for amd64
+ 5. riscv and/or or1k ports
+ 6. cheri port
+
+The following elements, projects, and goals are perhaps less pressing;
+this doesn't mean one shouldn't work on them but the expected payoff
+is perhaps less than for other things:
+
+ 7. pdp10/risc36/odd-bitsize ports
+
+
+Explanations
+============
+
+
+ 1. EFI boot for x86
+
+EFI boot is now often required for new x86 hardware. This is
+effectively a mandatory item for -8. Fortunately, nonaka has most of
+it done, though it's not yet committed.
+
+ - As of January 2017 nobody is known to be working on this.
+ - There is currently no clear timeframe or release target.
+ - Contact agc for further information.
+
+
+ 2. xhci support
+
+xhci is also critical for new x86 hardware. Enough has been committed
+to be able to use USB on xhci machines; but (AIUI) the USB 3.0
+specific features mostly aren't implemented yet. We would like to get
+this pulled into -7
+
+ - As of January 2017 ... who is working on this? XXX
+ - Contact jakllsch (?) for further information.
+
+
+ 3. Get arm64/aarch64 working
+
+We have some arm64 code but apparently it doesn't really work yet.
+
+ - As of January 2017 nobody is known to be actively working on this.
+ - There is currently no clear timeframe or release target.
+ - Contact: ? (XXX)
+
+
+ 4. USER_LDT for amd64
+
+The amd64 port is lacking the USER_LDT bits needed to be able to run
+Wine. Adding these bits does not seem to be a particularly large job
+(and some of the bits are in place already) but it persistently
+doesn't get done. Money's been offered in the past, without result.
+
+ - As of January 2017 nobody is known to be working on this.
+ - There is currently no clear timeframe or release target.
+ - Contact ? (XXX) for further information.
+
+
+ 5. riscv and/or or1k ports
+
+We have some riscv code and a bit of or1k code, but neither is done.
+
+ - As of January 2017 nobody is known to be working on this.
+ - There is currently no clear timeframe or release target.
+ - Contact matt@ for further information.
+
+
+ 6. cheri port
+
+https://cheri-cpu.org
+There are a number of reasons to tackle this; it will serve as a code
+quality lever. Also there's already a FreeBSD port to steal from.
+
+
+ 7. pdp10/risc36/odd-bitsize ports
+
+There's been a fair amount of loose talk over the years about doing a
+port to a machine that's got 9-bit bytes, or is word-addressed, or
+both. The PDP-10 is one such target; it's also been observed that a
+more modern architecture would probably be more likely to allow a
+vaguely performant FPGA implementation, and something tentatively
+called "risc36" was conceived.
+
+This is both a quixotic retrocomputing project and also a quixotic
+code quality project: making the NetBSD code base work on either
+word-addressed machines or 9-bit/36-bit machines or both would be good
+for it. However, it's also a rather large undertaking.
+
