@@ -1,10 +1,9 @@
-/* $NetBSD: strlcat.S,v 1.2 2013/08/20 21:08:54 matt Exp $ */
+/* $NetBSD: strlcat.S,v 1.3 2017/01/13 13:14:54 christos Exp $ */
 
 #include <machine/asm.h>
 
 #ifdef _LIBC
 WEAK_ALIAS(strlcat, _strlcat)
-#include "namespace.h"
 #endif
 
 #if defined(_STANDALONE) && 0	/* arm version is always smaller */

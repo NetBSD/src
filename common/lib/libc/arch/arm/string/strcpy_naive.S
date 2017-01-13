@@ -28,13 +28,12 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcpy_naive.S,v 1.4 2013/08/20 21:37:39 matt Exp $")
+RCSID("$NetBSD: strcpy_naive.S,v 1.5 2017/01/13 13:14:54 christos Exp $")
 
 #ifdef _LIBC
 #ifdef STRLCPY
 WEAK_ALIAS(strlcpy, _strlcpy)           
 #endif
-#include "namespace.h"
 #endif
 
 /*
@@ -44,7 +43,7 @@ WEAK_ALIAS(strlcpy, _strlcpy)
 
 #if defined(STRLCPY)
 /* LINTSTUB: size_t strlcpy(char *, const char *, size_t) */
-ENTRY(strlcpy)
+ENTRY(_strlcpy)
 	add	ip, r1, #1		/* save src pointer (+ NUL) */
 	subs	r2, r2, #1		/* make sure there's room for a NUL */
 	blt	3f			/*   no room, do the strlen */
@@ -63,10 +62,10 @@ ENTRY(strlcpy)
 	bne	3b			/*   no, get next byte */
 4:	sub	r0, r1, ip 		/* return length of src string */
 	RET
-END(strlcpy)
+END(_strlcpy)
 #elif defined(STRNCPY)
 /* LINTSTUB: char * strncpy(char *, const char *, size_t) */
-ENTRY(strncpy)
+ENTRY(_strncpy)
 	mov	ip, r0			/* we want to preserve r0 */
 	add	r2, r2, r0		/* get end of dst buffer */
 1:	cmp	ip, r2			/* are at the end of dst already? */
@@ -79,15 +78,15 @@ ENTRY(strncpy)
 	strblt	r3, [ip], #1		/*   no, write a NUL */
 	blt	2b			/*       until dst is filled */
 3:	RET				/* return dst pointer */
-END(strncpy)
+END(_strncpy)
 #else
 /* LINTSTUB: char * strcpy(char *, const char *) */
-ENTRY(strcpy)
+ENTRY(_strcpy)
 	mov	ip, r0			/* we want to preserve r0 */
 1:	ldrb	r3, [r1], #1		/* read a byte */
 	strb	r3, [ip], #1		/* write a byte */
 	teq	r3, #0			/* was it a NUL? */
 	bne	1b			/*   no, try next byte */
 	RET				/* return dst pointer */
-END(strcpy)
+END(_strcpy)
 #endif
