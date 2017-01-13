@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.12 2016/01/26 14:05:29 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.13 2017/01/13 05:49:27 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1450,7 +1450,7 @@ incoregpt(pm_devs_t *pm_cur, partinfo *lp)
 					strcmp(tt, "part") &&
 					strcmp(tt, "-")
 					)
-						strncat(p_type, tt, STRSIZE);
+						strlcat(p_type, tt, STRSIZE);
 			i++;
 		}
 		if (p_start == 0 || p_size == 0)
