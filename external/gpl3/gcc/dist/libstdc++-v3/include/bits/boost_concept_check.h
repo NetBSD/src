@@ -110,7 +110,7 @@ struct _Aux_require_same<_Tp,_Tp> { typedef _Tp _Type; };
   struct _SameTypeConcept
   {
     void __constraints() {
-      typedef typename _Aux_require_same<_Tp1, _Tp2>::_Type _Required;
+      typedef typename _Aux_require_same<_Tp1, _Tp2>::_Type _Required _IsUnused;
     }
   };
 
@@ -440,11 +440,11 @@ struct _Aux_require_same<_Tp,_Tp> { typedef _Tp _Type; };
     void __constraints() {
       __function_requires< _TrivialIteratorConcept<_Tp> >();
       // require iterator_traits typedef's
-      typedef typename std::iterator_traits<_Tp>::difference_type _Diff;
+      typedef typename std::iterator_traits<_Tp>::difference_type _Diff _IsUnused;
 //      __function_requires< _SignedIntegerConcept<_Diff> >();
-      typedef typename std::iterator_traits<_Tp>::reference _Ref;
-      typedef typename std::iterator_traits<_Tp>::pointer _Pt;
-      typedef typename std::iterator_traits<_Tp>::iterator_category _Cat;
+      typedef typename std::iterator_traits<_Tp>::reference _Ref _IsUnused;
+      typedef typename std::iterator_traits<_Tp>::pointer _Pt _IsUnused;
+      typedef typename std::iterator_traits<_Tp>::iterator_category _Cat _IsUnused;
       __function_requires< _ConvertibleConcept<
         typename std::iterator_traits<_Tp>::iterator_category,
         std::input_iterator_tag> >();
@@ -528,7 +528,7 @@ struct _Aux_require_same<_Tp,_Tp> { typedef _Tp _Type; };
         typename std::iterator_traits<_Tp>::iterator_category,
         std::random_access_iterator_tag> >();
       // ??? We don't use _Ref, are we just checking for "referenceability"?
-      typedef typename std::iterator_traits<_Tp>::reference _Ref;
+      typedef typename std::iterator_traits<_Tp>::reference _Ref _IsUnused;
 
       __i += __n;                       // require assignment addition operator
       __i = __i + __n; __i = __n + __i; // require addition with difference type
