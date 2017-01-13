@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigaction.c,v 1.4 2017/01/13 20:08:38 christos Exp $ */
+/* $NetBSD: t_sigaction.c,v 1.5 2017/01/13 21:30:41 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sigaction.c,v 1.4 2017/01/13 20:08:38 christos Exp $");
+__RCSID("$NetBSD: t_sigaction.c,v 1.5 2017/01/13 21:30:41 christos Exp $");
 
 #include <sys/wait.h>
 
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: t_sigaction.c,v 1.4 2017/01/13 20:08:38 christos Exp $");
 
 #include <atf-c.h>
 
-#include "../../../h_macros.h"
+#include "h_macros.h"
 
 static bool handler_called = false;
 
