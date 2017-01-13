@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigaction.c,v 1.3 2014/11/04 00:20:19 justin Exp $ */
+/* $NetBSD: t_sigaction.c,v 1.4 2017/01/13 20:08:38 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sigaction.c,v 1.3 2014/11/04 00:20:19 justin Exp $");
+__RCSID("$NetBSD: t_sigaction.c,v 1.4 2017/01/13 20:08:38 christos Exp $");
 
 #include <sys/wait.h>
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: t_sigaction.c,v 1.3 2014/11/04 00:20:19 justin Exp $");
 static bool handler_called = false;
 
 static void
-handler(int signo)
+handler(int signo __unused)
 {
     handler_called = true;
 }
@@ -79,7 +79,7 @@ wait_and_check_child(const pid_t pid, const char *fail_message)
 }
 
 static void
-catch(int sig)
+catch(int sig __unused)
 {
 	return;
 }
