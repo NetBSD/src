@@ -1,4 +1,4 @@
-/* $NetBSD: t_clock_subr.c,v 1.2 2016/08/17 12:06:49 jakllsch Exp $ */
+/* $NetBSD: t_clock_subr.c,v 1.3 2017/01/13 21:30:39 christos Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2016\
  Jonathan A. Kollasch. All rights reserved.");
-__RCSID("$NetBSD: t_clock_subr.c,v 1.2 2016/08/17 12:06:49 jakllsch Exp $");
+__RCSID("$NetBSD: t_clock_subr.c,v 1.3 2017/01/13 21:30:39 christos Exp $");
 
 #include <sys/types.h>
 #include <dev/clock_subr.h>
@@ -40,16 +40,16 @@ __RCSID("$NetBSD: t_clock_subr.c,v 1.2 2016/08/17 12:06:49 jakllsch Exp $");
 
 #include <atf-c.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 #define FILL(ti,ye,mo,da,wd,ho,mi,se) \
 { .time = (ti), .clock = { .dt_year = (ye), .dt_mon = (mo), .dt_day = (da), \
 	  .dt_wday = (wd), .dt_hour = (ho), .dt_min = (mi), .dt_sec = (se), } }
 
-struct clock_test {
+static struct clock_test {
 	time_t time;
 	struct clock_ymdhms clock;
-} static const clock_tests[] = {
+} const clock_tests[] = {
 	FILL(          0,1970, 1, 1,4, 0, 0, 0), // Thu Jan  1 00:00:00 UTC 1970
 	FILL(   15638400,1970, 7, 1,3, 0, 0, 0), // Wed Jul  1 00:00:00 UTC 1970
 	FILL(   31536000,1971, 1, 1,5, 0, 0, 0), // Fri Jan  1 00:00:00 UTC 1971

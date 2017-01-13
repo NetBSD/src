@@ -1,4 +1,4 @@
-/* $NetBSD: t_clock_gettime.c,v 1.2 2017/01/13 20:10:57 christos Exp $ */
+/* $NetBSD: t_clock_gettime.c,v 1.3 2017/01/13 21:30:41 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clock_gettime.c,v 1.2 2017/01/13 20:10:57 christos Exp $");
+__RCSID("$NetBSD: t_clock_gettime.c,v 1.3 2017/01/13 21:30:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -74,7 +74,7 @@ __RCSID("$NetBSD: t_clock_gettime.c,v 1.2 2017/01/13 20:10:57 christos Exp $");
 #include <time.h>
 #include <unistd.h>
 
-#include "../../../h_macros.h"
+#include "h_macros.h"
 
 #define MINPOSDIFF	15000000	/* 15 ms for now */
 #define TIMEOUT		5
