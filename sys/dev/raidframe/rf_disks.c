@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.88 2017/01/13 04:22:16 christos Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.89 2017/01/13 13:01:13 christos Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.88 2017/01/13 04:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.89 2017/01/13 13:01:13 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -701,16 +701,17 @@ static int rf_check_label_vitals(RF_Raid_t *raidPtr, int row, int column,
 
 
 static void
-rf_handle_hosed(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, int hosed_column)
+rf_handle_hosed(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, int hosed_column,
+    int again)
 {
 	printf("Hosed component: %s\n", &cfgPtr->devnames[0][hosed_column][0]);
 	if (!cfgPtr->force)
 		return;
 
 	/* we'll fail this component, as if there are
-	   other major errors, we arn't forcing things
+	   other major errors, we aren't forcing things
 	   and we'll abort the config anyways */
-	if (raidPtr->Disks[hosed_column].status == rf_ds_failed)
+	if (again && raidPtr->Disks[hosed_column].status == rf_ds_failed)
 		return;
 
 	raidPtr->Disks[hosed_column].status = rf_ds_failed;
@@ -840,7 +841,8 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 				}
 			}
 			if (hosed_column != -1)
-				rf_handle_hosed(raidPtr, cfgPtr, hosed_column);
+				rf_handle_hosed(raidPtr, cfgPtr, hosed_column,
+				    0);
 		} else {
 			too_fatal = 1;
 		}
@@ -897,7 +899,8 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 				}
 			}
 			if (hosed_column != -1)
-				rf_handle_hosed(raidPtr, cfgPtr, hosed_column);
+				rf_handle_hosed(raidPtr, cfgPtr, hosed_column,
+				    1);
 		} else {
 			too_fatal = 1;
 		}
