@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.234 2017/01/10 05:42:34 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.235 2017/01/13 06:11:56 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.234 2017/01/10 05:42:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.235 2017/01/13 06:11:56 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1474,10 +1474,6 @@ ether_enable_vlan_mtu(struct ifnet *ifp)
 {
 	int error;
 	struct ethercom *ec = (void *)ifp;
-
-	/* Already have VLAN's do nothing. */
-	if (ec->ec_nvlans != 0)
-		return 0;
 
 	/* Parent does not support VLAN's */
 	if ((ec->ec_capabilities & ETHERCAP_VLAN_MTU) == 0)
