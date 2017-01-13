@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.54 2017/01/12 21:35:53 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.55 2017/01/13 03:01:09 kre Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.54 2017/01/12 21:35:53 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.55 2017/01/13 03:01:09 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -64,6 +64,19 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.54 2017/01/12 21:35:53 kamil Exp $");
 
 #define PARENT_FROM_CHILD(info, fds, msg) \
     ATF_REQUIRE(msg_read_child(info " from parent " # fds, &fds, &msg, sizeof(msg)) == 0)
+
+/*
+ * ptrace(2) command PT_SET_EVENT_MASK: option PTRACE_VFORK unsupported
+ */
+#ifndef PTRACE_VFORK
+#define PTRACE_VFORK 0
+#endif
+/*
+ * ptrace(2) command PT_SET_EVENT_MASK: option PTRACE_VFORK_DONE unsupported
+ */
+#ifndef PTRACE_VFORK_DONE
+#define PTRACE_VFORK_DONE 0
+#endif
 
 ATF_TC(traceme1);
 ATF_TC_HEAD(traceme1, tc)
@@ -1296,19 +1309,6 @@ ATF_TC_BODY(vfork1, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 
-	/*
-	 * ptrace(2) command PT_SET_EVENT_MASK: option PTRACE_VFORK unsupported
-	 */
-#ifndef PTRACE_VFORK
-#define PTRACE_VFORK 0
-#endif
-	/*
-	 * ptrace(2) command PT_SET_EVENT_MASK: option PTRACE_VFORK_DONE
-	 * unsupported
-	 */
-#ifndef PTRACE_VFORK_DONE
-#define PTRACE_VFORK_DONE 0
-#endif
 	atf_tc_expect_fail("PR kern/51630");
 
 	printf("Before forking process PID=%d\n", getpid());
