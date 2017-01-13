@@ -1,4 +1,4 @@
-/*	$NetBSD: t_threads.c,v 1.8 2017/01/13 05:12:44 christos Exp $	*/
+/*	$NetBSD: t_threads.c,v 1.9 2017/01/13 05:18:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_threads.c,v 1.8 2017/01/13 05:12:44 christos Exp $");
+__RCSID("$NetBSD: t_threads.c,v 1.9 2017/01/13 05:18:22 christos Exp $");
 
 #include <dlfcn.h>
 #include <pthread.h>
@@ -40,6 +40,8 @@ __RCSID("$NetBSD: t_threads.c,v 1.8 2017/01/13 05:12:44 christos Exp $");
 #include <atf-c.h>
 
 #include "h_common.h"
+
+#define MAX_THREADS (size_t)10
 
 ATF_TC(threads1);
 ATF_TC_HEAD(threads1, tc)
@@ -72,7 +74,6 @@ ATF_TC_BODY(threads1, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t MAX_THREADS = 10;
 	size_t i;
 	pthread_t threads[MAX_THREADS];
 
@@ -134,7 +135,6 @@ ATF_TC_BODY(threads2, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t MAX_THREADS = 10;
 	size_t i;
 	pthread_t threads[MAX_THREADS];
 	int count = 0;
@@ -205,7 +205,6 @@ ATF_TC_BODY(threads3, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t MAX_THREADS = 10;
 	size_t i;
 	pthread_t threads[MAX_THREADS];
 	int count = 0;
@@ -279,7 +278,6 @@ ATF_TC_BODY(threads4, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t MAX_THREADS = 10;
 	size_t i;
 	pthread_t threads[MAX_THREADS];
 	int count = 0;
@@ -361,7 +359,6 @@ ATF_TC_BODY(threads5, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t MAX_THREADS = 10;
 	size_t i;
 	pthread_t threads[MAX_THREADS];
 	int count = 0;
@@ -435,7 +432,6 @@ ATF_TC_BODY(threads6, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t MAX_THREADS = 10;
 	size_t i;
 	pthread_t threads[MAX_THREADS];
 	int count = 0;
@@ -510,7 +506,6 @@ ATF_TC_BODY(threads7, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t MAX_THREADS = 10;
 	size_t i;
 	pthread_t threads[MAX_THREADS];
 	int count = 0;
@@ -585,7 +580,6 @@ ATF_TC_BODY(threads8, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-#define MAX_THREADS 10
 	size_t i;
 	pthread_t threads[MAX_THREADS];
 	int count = 0;
@@ -610,15 +604,14 @@ ATF_TC_BODY(threads8, tc)
 
 	for (i = 0; i < MAX_THREADS; i++) {
 		td_thread_t *td_thread;
-		const int len = PTHREAD_MAX_NAMELEN_NP;
-		char td_threadname[len];
-		char pth_threadname[len];
+		char td_threadname[PTHREAD_MAX_NAMELEN_NP];
+		char pth_threadname[PTHREAD_MAX_NAMELEN_NP];
 		ATF_REQUIRE(td_map_pth2thr(main_ta, threads[i], &td_thread)
 		    == TD_ERR_OK);
-		ATF_REQUIRE(td_thr_getname(td_thread, td_threadname, len)
-		    == TD_ERR_OK);
-		PTHREAD_REQUIRE
-		    (pthread_getname_np(threads[i], pth_threadname, len));
+		ATF_REQUIRE(td_thr_getname(td_thread, td_threadname,
+		    sizeof(td_threadname)) == TD_ERR_OK);
+		PTHREAD_REQUIRE(pthread_getname_np(threads[i], pth_threadname,
+		    sizeof(pth_threadname)));
 		ATF_REQUIRE(strcmp(td_threadname, pth_threadname) == 0);
 	}
 
@@ -668,7 +661,6 @@ ATF_TC_BODY(threads9, tc)
 {
 	struct td_proc_callbacks_t dummy_callbacks;
 	td_proc_t *main_ta;
-	const size_t MAX_THREADS = 10;
 	size_t i;
 	pthread_t threads[MAX_THREADS];
 	int count = 0;
