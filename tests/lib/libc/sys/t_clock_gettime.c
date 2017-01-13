@@ -1,4 +1,4 @@
-/* $NetBSD: t_clock_gettime.c,v 1.1 2011/10/15 06:42:16 jruoho Exp $ */
+/* $NetBSD: t_clock_gettime.c,v 1.2 2017/01/13 20:10:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,16 +58,17 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clock_gettime.c,v 1.1 2011/10/15 06:42:16 jruoho Exp $");
+__RCSID("$NetBSD: t_clock_gettime.c,v 1.2 2017/01/13 20:10:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
-#include <machine/int_limits.h>
 
 #include <atf-c.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
