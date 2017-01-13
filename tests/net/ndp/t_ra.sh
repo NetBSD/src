@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.22 2017/01/13 06:30:09 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.23 2017/01/13 06:30:33 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -604,8 +604,19 @@ ra_temporary_address_head()
 	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
 }
 
+check_echo_request_pkt()
+{
+	local pkt="$2 > $3: .+ echo request"
+
+	extract_new_packets $1 > ./out
+	$DEBUG && echo $pkt
+	$DEBUG && cat ./out
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
+}
+
 ra_temporary_address_body()
 {
+	local ip_auto= ip_temp=
 
 	rump_server_fs_start $RUMPSRV netinet6
 	rump_server_start $RUMPCLI netinet6
@@ -627,11 +638,38 @@ ra_temporary_address_body()
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
-	# Check temporary address
 	export RUMP_SERVER=$RUMPCLI
+
+	# Check temporary address
 	atf_check -s exit:0 \
 	    -o match:"$IP6SRV_PREFIX.+<(TENTATIVE,)?AUTOCONF,TEMPORARY>" \
 	    rump.ifconfig shmif0 inet6
+
+	#
+	# Testing net.inet6.ip6.prefer_tempaddr
+	#
+	atf_check -s exit:0 rump.ifconfig -w 10
+	$DEBUG && rump.ifconfig shmif0
+	ip_auto=$(rump.ifconfig shmif0 |awk '/<AUTOCONF>/ {sub(/\/[0-9]*/, ""); print $2;}')
+	ip_temp=$(rump.ifconfig shmif0 |awk '/<AUTOCONF,TEMPORARY>/ {sub(/\/[0-9]*/, ""); print $2;}')
+	$DEBUG && echo $ip_auto $ip_temp
+
+	# Ignore old packets
+	extract_new_packets bus1 > /dev/null
+
+	atf_check -s exit:0 -o ignore rump.ping6 -n -X 2 -c 1 $IP6SRV
+	# autoconf (non-temporal) address should be used as the source address
+	check_echo_request_pkt bus1 $ip_auto $IP6SRV
+
+	# Enable net.inet6.ip6.prefer_tempaddr
+	atf_check -s exit:0 -o match:'0.->.1' \
+	    rump.sysctl -w net.inet6.ip6.prefer_tempaddr=1
+
+	atf_check -s exit:0 -o ignore rump.ping6 -n -X 2 -c 1 $IP6SRV
+	# autoconf, temporal address should be used as the source address
+	check_echo_request_pkt bus1 $ip_auto $IP6SRV
+	check_echo_request_pkt bus1 $ip_temp $IP6SRV
+
 	unset RUMP_SERVER
 
 	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
