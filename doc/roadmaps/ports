@@ -1,4 +1,4 @@
-$NetBSD: ports,v 1.1 2017/01/13 10:14:58 dholland Exp $
+$NetBSD: ports,v 1.2 2017/01/13 13:40:44 reinoud Exp $
 
 NetBSD Ports Roadmap
 ====================
@@ -85,7 +85,7 @@ We have some riscv code and a bit of or1k code, but neither is done.
 
  6. cheri port
 
-https://cheri-cpu.org
+http://cheri-cpu.org
 There are a number of reasons to tackle this; it will serve as a code
 quality lever. Also there's already a FreeBSD port to steal from.
 
