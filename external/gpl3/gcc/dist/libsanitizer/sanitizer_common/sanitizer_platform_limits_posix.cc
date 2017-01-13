@@ -75,6 +75,20 @@
 #include <linux/posix_types.h>
 #endif
 
+#if SANITIZER_FREEBSD
+# include <sys/consio.h>
+# include <sys/kbio.h>
+# include <sys/link_elf.h>
+# include <net/ethernet.h>
+#endif
+
+#if SANITIZER_NETBSD
+# include <link_elf.h>
+# include <net/if_ether.h>
+# define statfs statvfs
+# define d_ino d_fileno
+#endif
+
 #if SANITIZER_FREEBSD || SANITIZER_NETBSD
 # include <sys/mount.h>
 # include <sys/sockio.h>
@@ -104,19 +118,6 @@
 #undef INLINE  // to avoid clashes with sanitizers' definitions
 #endif
 
-#if SANITIZER_FREEBSD
-# include <sys/consio.h>
-# include <sys/kbio.h>
-# include <sys/link_elf.h>
-# include <net/ethernet.h>
-#endif
-
-#if SANITIZER_NETBSD
-# include <link_elf.h>
-# include <net/if_ether.h>
-# define statfs statvfs
-# define d_ino d_fileno
-#endif
 
 #if SANITIZER_FREEBSD || SANITIZER_IOS || SANITIZER_NETBSD
 #undef IOC_DIRMASK
