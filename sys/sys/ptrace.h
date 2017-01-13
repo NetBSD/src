@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.52 2017/01/06 22:53:17 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.53 2017/01/13 23:00:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -93,7 +93,9 @@ typedef struct ptrace_state {
 	pid_t	pe_other_pid;
 } ptrace_state_t;
 
-#define	PTRACE_FORK	0x0001	/* Report forks */
+#define	PTRACE_FORK		0x0001	/* Report forks */
+#define	PTRACE_VFORK		0x0002	/* Report vforks */
+#define	PTRACE_VFORK_DONE	0x0004	/* Report parent resumed from vforks */
 
 /*
  * Argument structure for PT_IO.
