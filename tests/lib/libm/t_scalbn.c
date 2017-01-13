@@ -1,4 +1,4 @@
-/* $NetBSD: t_scalbn.c,v 1.13 2017/01/13 21:00:59 agc Exp $ */
+/* $NetBSD: t_scalbn.c,v 1.14 2017/01/13 21:09:12 agc Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_scalbn.c,v 1.13 2017/01/13 21:00:59 agc Exp $");
+__RCSID("$NetBSD: t_scalbn.c,v 1.14 2017/01/13 21:09:12 agc Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -81,7 +81,7 @@ ATF_TC_BODY(scalbn_val, tc)
 	double rv;
 
 	for (i = 0; i < tcnt; i++) {
-		errno = 0
+		errno = 0;
 		rv = scalbn(tests[i].inval, tests[i].exp);
 		ATF_CHECK_EQ_MSG(errno, tests[i].error,
 		    "test %zu: errno %d instead of %d", i, errno,
@@ -368,7 +368,7 @@ ATF_TC_BODY(scalbnl_val, tc)
 	long double rv;
 
 	for (i = 0; i < tcnt; i++) {
-		errno = 0
+		errno = 0;
 		rv = scalbnl(tests[i].inval, tests[i].exp);
 		ATF_CHECK_EQ_MSG(errno, tests[i].error,
 		    "test %zu: errno %d instead of %d", i, errno,
