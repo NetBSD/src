@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.36 2016/08/12 19:04:03 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.37 2017/01/13 18:04:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -205,7 +205,7 @@ struct ext2fs_dinode {
 #define EXT2_PROJINHERIT	0x20000000 /* Children inherit project ID */
 
 /* Size of on-disk inode. */
-#define EXT2_REV0_DINODE_SIZE	128
+#define EXT2_REV0_DINODE_SIZE	128U
 #define EXT2_DINODE_SIZE(fs)	((fs)->e2fs.e2fs_rev > E2FS_REV0 ?	\
 				    (fs)->e2fs.e2fs_inode_size :	\
 				    EXT2_REV0_DINODE_SIZE)
