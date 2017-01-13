@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.335 2016/10/19 09:44:01 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.336 2017/01/13 23:00:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -310,6 +310,8 @@ struct proc {
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 	pid_t		p_ppid;		/* :: cached parent pid */
 	pid_t 		p_fpid;		/* :: forked pid */
+	pid_t 		p_vfpid;	/* :: vforked pid */
+	pid_t 		p_vfpid_done;	/* :: vforked done pid */
 	u_int		p_nsems;	/* Count of semaphores */
 
 /*
@@ -398,6 +400,9 @@ struct proc {
  * and p_lock.  Access from process context only.
  */
 #define	PSL_TRACEFORK	0x00000001 /* traced process wants fork events */
+#define	PSL_TRACEVFORK	0x00000002 /* traced process wants vfork events */
+#define	PSL_TRACEVFORK_DONE	\
+			0x00000004 /* traced process wants vfork done events */
 #define	PSL_TRACED	0x00000800 /* Debugged process being traced */
 #define	PSL_FSTRACE	0x00010000 /* Debugger process being traced by procfs */
 #define	PSL_CHTRACED	0x00400000 /* Child has been traced & reparented */

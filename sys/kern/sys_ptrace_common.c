@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.8 2017/01/06 22:53:17 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.9 2017/01/13 23:00:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.8 2017/01/06 22:53:17 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.9 2017/01/13 23:00:35 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -790,6 +790,8 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		}
 	sendsig:
 		t->p_fpid = 0;
+		t->p_vfpid = 0;
+		t->p_vfpid_done = 0;
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
 			/*
@@ -855,6 +857,10 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		memset(&pe, 0, sizeof(pe));
 		pe.pe_set_event = ISSET(t->p_slflag, PSL_TRACEFORK) ?
 		    PTRACE_FORK : 0;
+		pe.pe_set_event |= ISSET(t->p_slflag, PSL_TRACEVFORK) ?
+		    PTRACE_VFORK : 0;
+		pe.pe_set_event |= ISSET(t->p_slflag, PSL_TRACEVFORK_DONE) ?
+		    PTRACE_VFORK_DONE : 0;
 		error = copyout(&pe, addr, sizeof(pe));
 		break;
 
@@ -871,6 +877,21 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			SET(t->p_slflag, PSL_TRACEFORK);
 		else
 			CLR(t->p_slflag, PSL_TRACEFORK);
+#if notyet
+		if (pe.pe_set_event & PTRACE_VFORK)
+			SET(t->p_slflag, PSL_TRACEVFORK);
+		else
+			CLR(t->p_slflag, PSL_TRACEVFORK);
+#else
+		if (pe.pe_set_event & PTRACE_VFORK) {
+			error = ENOTSUP;
+			break;
+		}
+#endif
+		if (pe.pe_set_event & PTRACE_VFORK_DONE)
+			SET(t->p_slflag, PSL_TRACEVFORK_DONE);
+		else
+			CLR(t->p_slflag, PSL_TRACEVFORK_DONE);
 		break;
 
 	case  PT_GET_PROCESS_STATE:
@@ -884,6 +905,12 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		if (t->p_fpid) {
 			ps.pe_report_event = PTRACE_FORK;
 			ps.pe_other_pid = t->p_fpid;
+		} else if (t->p_vfpid) {
+			ps.pe_report_event = PTRACE_VFORK;
+			ps.pe_other_pid = t->p_vfpid;
+		} else if (t->p_vfpid_done) {
+			ps.pe_report_event = PTRACE_VFORK_DONE;
+			ps.pe_other_pid = t->p_vfpid_done;
 		}
 		error = copyout(&ps, addr, sizeof(ps));
 		break;
