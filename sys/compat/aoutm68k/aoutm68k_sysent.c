@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_sysent.c,v 1.47 2015/09/24 14:40:09 christos Exp $ */
+/* $NetBSD: aoutm68k_sysent.c,v 1.48 2017/01/13 06:19:35 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_sysent.c,v 1.47 2015/09/24 14:40:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_sysent.c,v 1.48 2017/01/13 06:19:35 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"

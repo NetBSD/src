@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_syscalls.c,v 1.64 2015/09/24 14:44:44 christos Exp $ */
+/* $NetBSD: ultrix_syscalls.c,v 1.65 2017/01/13 06:19:36 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_syscalls.c,v 1.64 2015/09/24 14:44:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_syscalls.c,v 1.65 2017/01/13 06:19:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <sys/param.h>
