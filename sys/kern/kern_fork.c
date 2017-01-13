@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.198 2017/01/10 00:48:37 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.199 2017/01/13 23:00:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.198 2017/01/10 00:48:37 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.199 2017/01/13 23:00:35 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -219,7 +219,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	int		count;
 	vaddr_t		uaddr;
 	int		tnprocs;
-	int		tracefork;
+	int		tracefork, tracevforkdone;
 	int		error = 0;
 
 	p1 = l1->l_proc;
@@ -471,11 +471,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_exitsig = exitsig;		/* signal for parent on exit */
 
 	/*
-	 * We don't want to tracefork vfork()ed processes because they
-	 * will not receive the SIGTRAP until it is too late.
+	 * Trace fork(2) and vfork(2)-like events on demand in a debugger.
 	 */
 	tracefork = (p1->p_slflag & (PSL_TRACEFORK|PSL_TRACED)) ==
 	    (PSL_TRACEFORK|PSL_TRACED) && (flags && FORK_PPWAIT) == 0;
+	tracevforkdone = (p1->p_slflag & (PSL_TRACEVFORK_DONE|PSL_TRACED)) ==
+	    (PSL_TRACEVFORK_DONE|PSL_TRACED) && (flags && FORK_PPWAIT);
 	if (tracefork) {
 		proc_changeparent(p2, p1->p_pptr);
 		/*
@@ -483,6 +484,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		 */
 		p1->p_fpid = p2->p_pid;
 		p2->p_fpid = p1->p_pid;
+	}
+	if (tracevforkdone) {
+		/*
+		 * Set ptrace status.
+		 */
+		p1->p_vfpid_done = p2->p_pid;
 	}
 
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
@@ -576,7 +583,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Let the parent know that we are tracing its child.
 	 */
-	if (tracefork) {
+	if (tracefork || tracevforkdone) {
 		ksiginfo_t ksi;
 
 		KSI_INIT_EMPTY(&ksi);
