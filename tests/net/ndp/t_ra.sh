@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.21 2017/01/11 07:22:43 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.22 2017/01/13 06:30:09 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -610,55 +610,32 @@ ra_temporary_address_body()
 	rump_server_fs_start $RUMPSRV netinet6
 	rump_server_start $RUMPCLI netinet6
 
-	setup_shmif0 ${RUMPSRV} ${IP6SRV}
+	setup_shmif0 $RUMPSRV $IP6SRV
 	init_server $RUMPSRV
+	setup_shmif0 $RUMPCLI $IP6CLI
 
-	setup_shmif0 ${RUMPCLI} ${IP6CLI}
-	export RUMP_SERVER=${RUMPCLI}
-	$DEBUG && rump.ndp -n -a
-	atf_check -s exit:0 -o match:'= 0' \
-	    rump.sysctl net.inet6.ip6.accept_rtadv
-	atf_check -s exit:0 -o match:'= 0' \
-	    rump.sysctl net.inet6.ip6.use_tempaddr
-	unset RUMP_SERVER
-
-	create_rtadvdconfig
-	start_rtadvd $RUMPSRV $PIDFILE
-	sleep $WAITTIME
-
-	export RUMP_SERVER=${RUMPCLI}
-	atf_check -s exit:0 -o empty rump.ndp -r
-	atf_check -s exit:0 -o not-match:'advertised' rump.ndp -p
-	atf_check -s exit:0 -o match:'linkmtu=0' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o not-match:'S R' rump.ndp -n -a
-	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ndp -n -a
-	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ifconfig shmif0 inet6
-	unset RUMP_SERVER
-
-	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
-	wait_term ${PIDFILE}
-
-	export RUMP_SERVER=${RUMPCLI}
+	export RUMP_SERVER=$RUMPCLI
 	atf_check -s exit:0 -o match:'0.->.1' \
 	    rump.sysctl -w net.inet6.ip6.accept_rtadv=1
 	atf_check -s exit:0 -o match:'0.->.1' \
 	    rump.sysctl -w net.inet6.ip6.use_tempaddr=1
 	unset RUMP_SERVER
 
+	create_rtadvdconfig
 	start_rtadvd $RUMPSRV $PIDFILE
 	sleep $WAITTIME
 
 	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
 
 	# Check temporary address
-	export RUMP_SERVER=${RUMPCLI}
+	export RUMP_SERVER=$RUMPCLI
 	atf_check -s exit:0 \
 	    -o match:"$IP6SRV_PREFIX.+<(TENTATIVE,)?AUTOCONF,TEMPORARY>" \
 	    rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
 
 	atf_check -s exit:0 kill -TERM `cat ${PIDFILE}`
-	wait_term ${PIDFILE}
+	wait_term $PIDFILE
 
 	rump_server_destroy_ifaces
 }
