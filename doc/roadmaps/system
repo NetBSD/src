@@ -1,21 +1,29 @@
-$NetBSD: system,v 1.12 2017/01/13 05:45:46 dholland Exp $
+$NetBSD: system,v 1.13 2017/01/13 10:14:58 dholland Exp $
 
 NetBSD System Roadmap
 =====================
 
-This is a small roadmap document, and deals with the main system
-aspects of the operating system.
+This is a roadmap document dealing deals with core system aspects of
+the operating system.
 
-The following elements, projects, and goals will appear in NetBSD 8.0:
+The following elements, projects, and goals are considered strategic
+priorities for the project:
 
-The following projects may make it into future releases:
-3. Full kernel preemption for real-time threads
+1. Tickless timing and scheduling (discussed in the mobile roadmap)
+2. Long-term graphics architecture (discussed in the desktop roadmap)
+8. Processor and cache topology aware scheduler
+
+The following elements, projects, and goals are not strategic
+priorities but are still important undertakings worth doing:
+
+3. Full kernel preemption for real-time threads on non-x86
 4. POSIX shared memory
 6. Better resource controls
 7. Improved observability: online crashdumps, remote debugging
-8. Processor and cache topology aware scheduler
 
-We'll continue to update this roadmap as features and dates get firmed up.
+The following elements, projects, and goals are perhaps less pressing;
+this doesn't mean one shouldn't work on them but the expected payoff
+is perhaps less than for other things:
 
 
 Some explanations
@@ -44,6 +52,8 @@ space of a process.  Changes were proposed on tech-kern, although
 there were some concerns with the kernel implementation, and so a
 different approach using wrapper functions on tmpfs is being aimed at
 for 6.0.
+
+XXX: what's the current state?
 
 Responsible: rmind
 
