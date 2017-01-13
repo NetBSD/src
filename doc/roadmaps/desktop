@@ -1,4 +1,4 @@
-$NetBSD: desktop,v 1.2 2017/01/13 10:41:16 leot Exp $
+$NetBSD: desktop,v 1.3 2017/01/13 10:44:27 leot Exp $
 
 NetBSD Desktop Roadmap
 ======================
@@ -277,7 +277,7 @@ all that much different either) are based on Windows. They share a
 number of properties that are not consistent with the Unix philosophy
 or design model.
 
-First, Unix is about files, and like or or not, files in Unix are
+First, Unix is about files, and like it or not, files in Unix are
 organized in a hierarchical namespace. The Windows-like desktops, like
 Windows, provide a file manager as an afterthought and the desktop
 workspace itself has no notion of current directory, no notion of
