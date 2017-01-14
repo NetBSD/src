@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.289 2017/01/02 00:16:45 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.290 2017/01/14 20:05:37 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.289 2017/01/02 00:16:45 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.290 2017/01/14 20:05:37 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1783,7 +1783,7 @@ audio_initbufs(struct audio_softc *sc, int n)
 	    (sc->sc_vchan[n]->sc_open & AUOPEN_READ)) {
 		audio_init_ringbuffer(sc, &sc->sc_vchan[n]->sc_mrr,
 		    AUMODE_RECORD);
-		if (sc->sc_opens == 1 && hw->init_input &&
+		if (sc->sc_opens == 0 && hw->init_input &&
 		    (sc->sc_vchan[n]->sc_mode & AUMODE_RECORD)) {
 			error = hw->init_input(sc->hw_hdl, vc->sc_mrr.s.start,
 				       vc->sc_mrr.s.end - vc->sc_mrr.s.start);
@@ -1797,7 +1797,7 @@ audio_initbufs(struct audio_softc *sc, int n)
 		audio_init_ringbuffer(sc, &sc->sc_vchan[n]->sc_mpr,
 		    AUMODE_PLAY);
 		sc->sc_vchan[n]->sc_sil_count = 0;
-		if (sc->sc_opens == 1 && hw->init_output &&
+		if (sc->sc_opens == 0 && hw->init_output &&
 		    (sc->sc_vchan[n]->sc_mode & AUMODE_PLAY)) {
 			error = hw->init_output(sc->hw_hdl, vc->sc_mpr.s.start,
 					vc->sc_mpr.s.end - vc->sc_mpr.s.start);
@@ -1921,9 +1921,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		return EBUSY;
 	}
 
-	sc->sc_opens++;
-	sc->sc_audiopid[n].pid = curproc->p_pid;
-	sc->sc_despid[n].pid = curproc->p_pid;
 	error = audio_alloc_ring(sc, &vc->sc_mpr,
 	    	    AUMODE_PLAY, AU_RING_SIZE);
 	if (!error) {
@@ -1931,22 +1928,16 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	    	    AUMODE_RECORD, AU_RING_SIZE);
 	}
 	if (error) {
-		sc->sc_opens--;
-		sc->sc_audiopid[n].pid = -1;
-		sc->sc_despid[n].pid = -1;
 		kmem_free(vc, sizeof(struct virtual_channel));
 		return error;
 	}
 
-	if (sc->sc_opens == 1) {
+	if (sc->sc_opens == 0) {
 		if (hw->open != NULL) {
 			mutex_enter(sc->sc_intr_lock);
 			error = hw->open(sc->hw_hdl, flags);
 			mutex_exit(sc->sc_intr_lock);
 			if (error) {
-				sc->sc_opens--;
-				sc->sc_audiopid[n].pid = -1;
-				sc->sc_despid[n].pid = -1;
 				kmem_free(vc,
 				    sizeof(struct virtual_channel));
 				return error;
@@ -1972,7 +1963,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	if (flags & FREAD) {
 		vc->sc_open |= AUOPEN_READ;
 		mode |= AUMODE_RECORD;
-		sc->sc_recopens++;
 	}
 	if (flags & FWRITE) {
 		vc->sc_open |= AUOPEN_WRITE;
@@ -2012,6 +2002,11 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	DPRINTF(("audio_open: done sc_mode = 0x%x\n", vc->sc_mode));
 
 	mutex_enter(sc->sc_intr_lock);
+	if (flags & FREAD)
+		sc->sc_recopens++;
+	sc->sc_opens++;
+	sc->sc_audiopid[n].pid = curproc->p_pid;
+	sc->sc_despid[n].pid = curproc->p_pid;
 	sc->sc_nmixer_states += 2;
 	mutex_exit(sc->sc_intr_lock);
 
