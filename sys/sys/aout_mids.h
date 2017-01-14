@@ -1,4 +1,4 @@
-/* $NetBSD: aout_mids.h,v 1.6 2014/12/08 20:51:02 christos Exp $ */
+/* $NetBSD: aout_mids.h,v 1.7 2017/01/14 21:29:02 christos Exp $ */
 
 /*
  * Copyright (c) 2009, The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #define	MID_M680002K	0x090	/* m68000 with 2K page sizes */
 #define	MID_SH3		0x091	/* SH3 */
 
+#define	MID_POWERPC64	0x094	/* big-endian PowerPC 64 */
 #define	MID_POWERPC	0x095	/* big-endian PowerPC */
 #define	MID_VAX		0x096	/* VAX */
 #define	MID_MIPS1	0x097	/* MIPS1 */
