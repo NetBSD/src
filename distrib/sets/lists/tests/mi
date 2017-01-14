@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.713 2017/01/05 13:45:51 wiz Exp $
+# $NetBSD: mi,v 1.714 2017/01/14 01:44:13 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2778,6 +2778,7 @@
 ./usr/tests/lib/libc/sys/t_wait_noproc		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_wait_noproc_wnohang	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_write		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/truncate_test.root_owned	tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/libc/t_atexit			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_cdb			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/t_cerror			tests-obsolete		obsolete
