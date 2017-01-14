@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.54 2017/01/14 07:17:38 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.55 2017/01/14 14:33:18 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd January 14, 2016
@@ -413,7 +413,7 @@ is generated twice,
 first for the parent and second for the child.
 The
 .Dv PTRACE_VFORK
-is the same like
+event is the same as
 .Dv PTRACE_FORK ,
 but the parent blocks after giving birth to the child.
 The
@@ -723,4 +723,4 @@ should be able to sidestep this.
 .Pp
 .Dv PTRACE_VFORK
 is currently unimplemented and it will return
-.Dv ENOTSUP .
+.Er ENOTSUP .
