@@ -28,7 +28,7 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcpy_naive.S,v 1.7 2017/01/14 04:53:25 christos Exp $")
+RCSID("$NetBSD: strcpy_naive.S,v 1.8 2017/01/14 04:54:42 christos Exp $")
 
 #ifdef _LIBC
 #ifdef STRLCPY
@@ -82,12 +82,12 @@ ENTRY(strncpy)
 END(strncpy)
 #else
 /* LINTSTUB: char * strcpy(char *, const char *) */
-ENTRY(_strcpy)
+ENTRY(strcpy)
 	mov	ip, r0			/* we want to preserve r0 */
 1:	ldrb	r3, [r1], #1		/* read a byte */
 	strb	r3, [ip], #1		/* write a byte */
 	teq	r3, #0			/* was it a NUL? */
 	bne	1b			/*   no, try next byte */
 	RET				/* return dst pointer */
-END(_strcpy)
+END(strcpy)
 #endif
