@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.29 2013/01/29 15:47:16 kiyohara Exp $	*/
+/*	$NetBSD: param.h,v 1.30 2017/01/14 21:33:09 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,17 +41,26 @@
 #endif
 
 /*
- * Machine dependent constants for PowerPC (32-bit only currently)
+ * Machine dependent constants for PowerPC
  * For userland regardless of port, force MACHINE to be "powerpc"
  */
 #ifndef _KERNEL
 #undef MACHINE
 #endif
-#ifndef MACHINE
-#define	MACHINE		"powerpc"
+
+#ifdef _LP64
+# ifndef MACHINE
+#  define	MACHINE		"powerpc64"
+# endif
+# define	MACHINE_ARCH	"powerpc64"
+# define	MID_MACHINE	MID_POWERPC64
+#else
+# ifndef MACHINE
+#  define	MACHINE		"powerpc"
+# endif
+# define	MACHINE_ARCH	"powerpc"
+# define	MID_MACHINE	MID_POWERPC
 #endif
-#define	MACHINE_ARCH	"powerpc"
-#define	MID_MACHINE	MID_POWERPC
 
 /* PowerPC-specific macro to align a stack pointer (downwards). */
 #define	STACK_ALIGNBYTES	(16 - 1)	/* AltiVec */
