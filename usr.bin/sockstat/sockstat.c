@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.18 2017/01/12 18:52:15 christos Exp $ */
+/*	$NetBSD: sockstat.c,v 1.19 2017/01/14 01:01:48 christos Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,12 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.18 2017/01/12 18:52:15 christos Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.19 2017/01/14 01:01:48 christos Exp $");
 #endif
 
-#define _KERNEL
+#define _KMEMUSER
 #include <sys/types.h>
-#undef _KERNEL
+#undef _KMEMUSER
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
