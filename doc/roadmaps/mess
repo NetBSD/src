@@ -1,4 +1,4 @@
-$NetBSD: mess,v 1.1 2017/01/13 10:14:58 dholland Exp $
+$NetBSD: mess,v 1.2 2017/01/14 20:50:15 dholland Exp $
 
 NetBSD Messes and Tentacular Horrors Roadmap
 ============================================
@@ -76,6 +76,10 @@ suspected that there is a lot of incorrect locking. Also, a lot of the
 naming and terminology (things like BO_DELWRI) is really ancient and
 reflects non-current assumptions about the way file system buffers
 should work.
+
+The first step on this is to disentangle the buffer cache
+(buffercache(9)) from the buffer I/O path (bufferio(9)) -- right now
+they both abusively share the same struct buf.
 
  - As of January 2017 nobody is currently working on this.
  - There is currently no clear timeframe or release target.
