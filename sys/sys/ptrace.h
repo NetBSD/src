@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.53 2017/01/13 23:00:35 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.54 2017/01/14 06:36:52 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -90,12 +90,20 @@ typedef struct ptrace_event {
 /* PT_GET_PROCESS_STATE */
 typedef struct ptrace_state {
 	int	pe_report_event;
-	pid_t	pe_other_pid;
+	union {
+		pid_t	_pe_other_pid;
+		lwpid_t	_pe_lwp;
+	} _option;
 } ptrace_state_t;
+
+#define	pe_other_pid	_option._pe_other_pid
+#define	pe_lwp		_option._pe_lwp
 
 #define	PTRACE_FORK		0x0001	/* Report forks */
 #define	PTRACE_VFORK		0x0002	/* Report vforks */
 #define	PTRACE_VFORK_DONE	0x0004	/* Report parent resumed from vforks */
+#define	PTRACE_LWP_CREATE	0x0008	/* Report LWP creation */
+#define	PTRACE_LWP_EXIT		0x0010	/* Report LWP termination */
 
 /*
  * Argument structure for PT_IO.
