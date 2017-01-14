@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.10 2017/01/08 04:27:36 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.11 2017/01/14 01:36:28 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -16,7 +16,7 @@ Items we (currently) plan to finish in the ptrace(2) field:
    in all ports
  - integrate all ptrace(2) features in gdb
  - add ptrace(2) NetBSD support in LLDB
- - evaluate equivalent for PTRACE_O_TRACECLONE from Linux
+ - add proper implementation of PTRACE_VFORK for vfork(2)-like events
  - remove exect(3) - there is no usecase for it
  - refactor pthread_dbg(3) to only query private pthread_t data, otherwise it
    duplicates ptrace(2) interface and cannot cover all types of threads
