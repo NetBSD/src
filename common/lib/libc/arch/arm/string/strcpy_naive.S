@@ -28,7 +28,7 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcpy_naive.S,v 1.6 2017/01/14 03:35:21 christos Exp $")
+RCSID("$NetBSD: strcpy_naive.S,v 1.7 2017/01/14 04:53:25 christos Exp $")
 
 #ifdef _LIBC
 #ifdef STRLCPY
@@ -66,7 +66,7 @@ ENTRY(strlcpy)
 END(strlcpy)
 #elif defined(STRNCPY)
 /* LINTSTUB: char * strncpy(char *, const char *, size_t) */
-ENTRY(_strncpy)
+ENTRY(strncpy)
 	mov	ip, r0			/* we want to preserve r0 */
 	add	r2, r2, r0		/* get end of dst buffer */
 1:	cmp	ip, r2			/* are at the end of dst already? */
@@ -79,7 +79,7 @@ ENTRY(_strncpy)
 	strblt	r3, [ip], #1		/*   no, write a NUL */
 	blt	2b			/*       until dst is filled */
 3:	RET				/* return dst pointer */
-END(_strncpy)
+END(strncpy)
 #else
 /* LINTSTUB: char * strcpy(char *, const char *) */
 ENTRY(_strcpy)
