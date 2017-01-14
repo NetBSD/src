@@ -1,4 +1,5 @@
-# $NetBSD: Makefile.inc,v 1.3 2017/01/13 21:30:39 christos Exp $
+# $NetBSD: Makefile.inc,v 1.4 2017/01/14 00:33:19 christos Exp $
 WARNS ?= 4
 CWARNFLAGS+= -Wno-missing-noreturn
-CPPFLAGS:= ${CPPFLAGS} -I${.PARSEDIR}
+TOPSRCDIR:= ${.PARSEDIR}
+CPPFLAGS+= -I${TOPSRCDIR}
