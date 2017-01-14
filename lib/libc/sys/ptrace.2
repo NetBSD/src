@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.53 2017/01/14 00:02:40 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.54 2017/01/14 07:17:38 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd January 13, 2016
+.Dd January 14, 2016
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -385,6 +385,10 @@ Report
 .It PTRACE_VFORK_DONE
 Report parent resumed after
 .Xr vfork 2 .
+.It PTRACE_LWP_CREATE
+Report thread birth.
+.It PTRACE_LWP_EXIT
+Report thread termination.
 .El
 .Pp
 The
