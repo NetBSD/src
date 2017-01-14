@@ -1,4 +1,4 @@
-/* $NetBSD: crtbegin.h,v 1.1 2013/07/11 16:40:27 matt Exp $ */
+/* $NetBSD: crtbegin.h,v 1.2 2017/01/14 15:50:24 christos Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,6 @@
  */
 
 #include <sys/cdefs.h>
-#include <alpha/asm.h>
 
 /* Assume we need to reload our GP. */
 __asm(		".pushsection .init"
