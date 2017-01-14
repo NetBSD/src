@@ -28,11 +28,12 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcpy_naive.S,v 1.5 2017/01/13 13:14:54 christos Exp $")
+RCSID("$NetBSD: strcpy_naive.S,v 1.6 2017/01/14 03:35:21 christos Exp $")
 
 #ifdef _LIBC
 #ifdef STRLCPY
 WEAK_ALIAS(strlcpy, _strlcpy)           
+#define strlcpy _strlcpy
 #endif
 #endif
 
@@ -43,7 +44,7 @@ WEAK_ALIAS(strlcpy, _strlcpy)
 
 #if defined(STRLCPY)
 /* LINTSTUB: size_t strlcpy(char *, const char *, size_t) */
-ENTRY(_strlcpy)
+ENTRY(strlcpy)
 	add	ip, r1, #1		/* save src pointer (+ NUL) */
 	subs	r2, r2, #1		/* make sure there's room for a NUL */
 	blt	3f			/*   no room, do the strlen */
@@ -62,7 +63,7 @@ ENTRY(_strlcpy)
 	bne	3b			/*   no, get next byte */
 4:	sub	r0, r1, ip 		/* return length of src string */
 	RET
-END(_strlcpy)
+END(strlcpy)
 #elif defined(STRNCPY)
 /* LINTSTUB: char * strncpy(char *, const char *, size_t) */
 ENTRY(_strncpy)
