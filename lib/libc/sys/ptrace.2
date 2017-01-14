@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.52 2017/01/11 07:32:36 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.53 2017/01/14 00:02:40 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd January 11, 2016
+.Dd January 13, 2016
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -379,11 +379,19 @@ This set is formed by OR'ing together the following values:
 .It PTRACE_FORK
 Report
 .Xr fork 2 .
+.It PTRACE_VFORK
+Report
+.Xr vfork 2 .
+.It PTRACE_VFORK_DONE
+Report parent resumed after
+.Xr vfork 2 .
 .El
 .Pp
 The
 .Xr fork 2
-event can occur with similar operations,
+and
+.Xr vfork 2
+events can occur with similar operations,
 like
 .Xr clone 2
 or
@@ -391,12 +399,22 @@ or
 The
 .Dv PTRACE_FORK
 value means that process gives birth to its child
-without pending on its termination.
+without pending on its termination or
+.Xr execve 2
+operation.
 If enabled,
 the child is also traced by the debugger and
 .Dv SIGRAP
 is generated twice,
 first for the parent and second for the child.
+The
+.Dv PTRACE_VFORK
+is the same like
+.Dv PTRACE_FORK ,
+but the parent blocks after giving birth to the child.
+The
+.Dv PTRACE_VFORK_DONE
+event can be used to report unblocking of the parent.
 .Pp
 A pointer to this structure is passed in
 .Fa addr .
@@ -698,3 +716,7 @@ to
 .Fn ptrace
 .Ec ,
 should be able to sidestep this.
+.Pp
+.Dv PTRACE_VFORK
+is currently unimplemented and it will return
+.Dv ENOTSUP .
