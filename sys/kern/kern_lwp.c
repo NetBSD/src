@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.186 2017/01/14 06:36:52 kamil Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.187 2017/01/14 19:32:10 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.186 2017/01/14 06:36:52 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.187 2017/01/14 19:32:10 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1056,7 +1056,7 @@ lwp_exit(struct lwp *l)
 		/* Tracing */
 		KASSERT((l->l_flag & LW_SYSTEM) == 0);
 
-		p->p_lwp_created = l->l_lid;
+		p->p_lwp_exited = l->l_lid;
 
 		KSI_INIT_EMPTY(&ksi);
 		ksi.ksi_signo = SIGTRAP;
