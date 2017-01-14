@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.59 2017/01/14 06:36:52 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.60 2017/01/14 19:17:10 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.59 2017/01/14 06:36:52 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.60 2017/01/14 19:17:10 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5482,6 +5482,8 @@ ATF_TC_BODY(lwp_create1, tc)
 
 	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 
+	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_LWP_CREATE);
+
 	lid = state.pe_lwp;
 	printf("Reported PTRACE_LWP_CREATE event with lid %d\n", lid);
 
@@ -5575,6 +5577,8 @@ ATF_TC_BODY(lwp_exit1, tc)
 	validate_status_stopped(status, SIGTRAP);
 
 	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+
+	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_LWP_EXIT);
 
 	lid = state.pe_lwp;
 	printf("Reported PTRACE_LWP_EXIT event with lid %d\n", lid);
