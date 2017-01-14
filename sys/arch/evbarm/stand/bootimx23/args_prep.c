@@ -1,4 +1,4 @@
-/* $Id: args_prep.c,v 1.1 2013/02/23 16:22:39 jkunz Exp $ */
+/* $Id: args_prep.c,v 1.2 2017/01/14 12:45:28 martin Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -81,6 +81,8 @@
 
 #include <arm/imx/imx23_digctlreg.h>
 #include <arm/imx/imx23_uartdbgreg.h>
+
+#include <string.h>
 
 #include "common.h"
 
