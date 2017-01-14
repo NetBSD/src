@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.34 2013/07/11 19:50:55 matt Exp $ */
+/* $NetBSD: asm.h,v 1.35 2017/01/14 16:15:10 martin Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -133,6 +133,7 @@
 /*
  * Useful stuff.
  */
+#undef __CONCAT
 #ifdef __STDC__
 #define	__CONCAT(a,b)	a ## b
 #else
@@ -642,6 +643,7 @@ label:	ASCIZ msg;						\
 /*
  * Kernel RCS ID tag and copyright macros
  */
+#undef __SECTIONSTRING
 #define	__SECTIONSTRING(_sec, _str)				\
 	.pushsection _sec ; .asciz _str ; .popsection
 
