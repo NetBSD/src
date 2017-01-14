@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.9 2017/01/13 23:00:35 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.10 2017/01/14 06:36:52 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.9 2017/01/13 23:00:35 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.10 2017/01/14 06:36:52 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -792,6 +792,8 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		t->p_fpid = 0;
 		t->p_vfpid = 0;
 		t->p_vfpid_done = 0;
+		t->p_lwp_created = 0;
+		t->p_lwp_exited = 0;
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
 			/*
@@ -861,6 +863,10 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		    PTRACE_VFORK : 0;
 		pe.pe_set_event |= ISSET(t->p_slflag, PSL_TRACEVFORK_DONE) ?
 		    PTRACE_VFORK_DONE : 0;
+		pe.pe_set_event |= ISSET(t->p_slflag, PSL_TRACELWP_CREATE) ?
+		    PTRACE_LWP_CREATE : 0;
+		pe.pe_set_event |= ISSET(t->p_slflag, PSL_TRACELWP_EXIT) ?
+		    PTRACE_LWP_EXIT : 0;
 		error = copyout(&pe, addr, sizeof(pe));
 		break;
 
@@ -892,6 +898,14 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			SET(t->p_slflag, PSL_TRACEVFORK_DONE);
 		else
 			CLR(t->p_slflag, PSL_TRACEVFORK_DONE);
+		if (pe.pe_set_event & PTRACE_LWP_CREATE)
+			SET(t->p_slflag, PSL_TRACELWP_CREATE);
+		else
+			CLR(t->p_slflag, PSL_TRACELWP_CREATE);
+		if (pe.pe_set_event & PTRACE_LWP_EXIT)
+			SET(t->p_slflag, PSL_TRACELWP_EXIT);
+		else
+			CLR(t->p_slflag, PSL_TRACELWP_EXIT);
 		break;
 
 	case  PT_GET_PROCESS_STATE:
@@ -911,6 +925,12 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		} else if (t->p_vfpid_done) {
 			ps.pe_report_event = PTRACE_VFORK_DONE;
 			ps.pe_other_pid = t->p_vfpid_done;
+		} else if (t->p_lwp_created) {
+			ps.pe_report_event = PTRACE_LWP_CREATE;
+			ps.pe_lwp = t->p_lwp_created;
+		} else if (t->p_lwp_exited) {
+			ps.pe_report_event = PTRACE_LWP_EXIT;
+			ps.pe_lwp = t->p_lwp_exited;
 		}
 		error = copyout(&ps, addr, sizeof(ps));
 		break;
