@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2236 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2237 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -449,3 +449,6 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	ptrace(2): Add new si_code value of SIGTRAP: TRAP_CHLD [kamil 20170110]
 	ptrace(2): Add new options in EVENT_MASK: PTRACE_VFORK and
 		PTRACE_VFORK_DONE [kamil 20170113]
+	ptrace(2): Add new options in EVENT_MASK: PTRACE_LWP_CREATE and
+		PTRACE_LWP_EXIT [kamil 20170114]
+	siginfo(2): Add new si_code for SIGTRAP: TRAP_LWP [kamil 20170114]
