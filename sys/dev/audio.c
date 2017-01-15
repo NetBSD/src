@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.290 2017/01/14 20:05:37 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.291 2017/01/15 00:04:01 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.290 2017/01/14 20:05:37 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.291 2017/01/15 00:04:01 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2027,11 +2027,6 @@ bad:
 	vc->sc_nrfilters = 0;
 	if (hw->close != NULL && sc->sc_opens == 0)
 		hw->close(sc->hw_hdl);
-	if (flags & FREAD)
-		sc->sc_recopens--;
-	sc->sc_opens--;
-	sc->sc_audiopid[n].pid = -1;
-	sc->sc_despid[n].pid = -1;
 	mutex_exit(sc->sc_lock);
 	audio_free_ring(sc, &vc->sc_mpr);
 	audio_free_ring(sc, &vc->sc_mrr);
