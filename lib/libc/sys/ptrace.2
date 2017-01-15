@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.55 2017/01/14 14:33:18 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.56 2017/01/15 22:18:11 kamil Exp $
 .\"
 .\" This file is in the public domain.
 .Dd January 14, 2016
@@ -111,7 +111,7 @@ to help writing portable code as described in the port specific part of the
 header.
 Among these symbols,
 there are:
-.Bl -dash -tag
+.Bl -dash
 .It
 .Dv PTRACE_REG_PC
 .It
@@ -704,6 +704,11 @@ No process having the specified process ID exists.
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr signal 7
+.Sh HISTORY
+The
+.Fn ptrace
+function appeared in
+.At v7 .
 .Sh BUGS
 On the SPARC, the PC is set to the provided PC value for
 .Dv PT_CONTINUE
