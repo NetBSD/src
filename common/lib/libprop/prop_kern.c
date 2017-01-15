@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.19 2015/05/11 16:48:34 christos Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.20 2017/01/15 18:15:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -384,8 +384,8 @@ prop_dictionary_sendrecv_ioctl(prop_dictionary_t dict, int fd,
 
 #include "prop_object_impl.h"
 
-/* Arbitrary limit ioctl input to 64KB */
-unsigned int prop_object_copyin_limit = 65536;
+/* Arbitrary limit ioctl input to 128KB */
+unsigned int prop_object_copyin_limit = 128 * 1024;
 
 /* initialize proplib for use in the kernel */
 void
@@ -408,7 +408,7 @@ _prop_object_copyin(const struct plistref *pref, const prop_type_t type,
 	int error;
 
 	if (pref->pref_len >= prop_object_copyin_limit)
-		return EINVAL;
+		return E2BIG;
 
 	/*
 	 * Allocate an extra byte so we can guarantee NUL-termination.
