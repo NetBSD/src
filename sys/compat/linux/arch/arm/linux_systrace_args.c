@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.4 2017/01/13 06:18:31 christos Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.5 2017/01/15 11:46:21 martin Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -302,7 +302,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	case 48: {
 		const struct linux_sys_signal_args *p = params;
 		iarg[0] = SCARG(p, signum); /* int */
-		iarg[1] = SCARG(p, handler); /* linux_handler_t */
+		iarg[1] = (intptr_t) SCARG(p, handler); /* linux_handler_t */
 		*n_args = 2;
 		break;
 	}
