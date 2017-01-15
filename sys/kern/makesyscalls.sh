@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.166 2017/01/13 06:11:27 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.167 2017/01/15 15:18:52 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -799,7 +799,7 @@ function putsystrace(type, compatwrap_) {
 			sub("__restrict$", "", arg)
 			printf("\t\tcase %d:\n\t\t\tp = \"%s\";\n\t\t\tbreak;\n", i - 1, arg) > systracetmp
 			if (arg ~ /.*p_t$/ || arg ~ /.*p$/ || arg ~ /.*_t_p$/ ||
-			    arg ~ /.*_pointer_t$/)
+			    arg ~ /.*_pointer_t$/ || arg ~ /.*_handler_t$/)
 				printf("\t\tuarg[%d] = (intptr_t) SCARG(p, %s).i32; /* %s */\n", \
 				     i - 1, \
 				     argname[i], arg) > systrace
