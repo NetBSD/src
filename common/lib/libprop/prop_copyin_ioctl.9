@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_copyin_ioctl.9,v 1.9 2011/01/20 10:47:33 wiz Exp $
+.\"	$NetBSD: prop_copyin_ioctl.9,v 1.10 2017/01/15 21:42:09 pgoyette Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -167,6 +167,9 @@ Input/output error
 Cannot allocate memory
 .It Bq Er ENOTSUP
 Not supported
+.It Bq Er E2BIG
+The object being copied is larger than an arbitrarily established limit
+(currently set to 128Kbytes).
 .El
 .Pp
 .Fn prop_array_copyout_ioctl
