@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.48 2016/12/28 02:44:59 nat Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.49 2017/01/15 07:46:57 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ struct audio_softc {
 
 	/**
 	 *  userland
-	 *	|  write(2) & uiomove(9)
+	 *      |  write(2) & uiomove(9)
 	 *  sc_pstreams[0]	<sc_pparams> == sc_pustream;
 	 *      |  sc_pfilters[0]
 	 *  sc_pstreams[1]	<list_t::filters[n-1].param>
@@ -216,9 +216,9 @@ struct audio_softc {
 	 *    sc_pr
 	 *      |
 	 *  vchan[0]->sc_pustream
-	 *	|
+	 *      |
 	 *  vchan[0]->sc_mpr
-	 *	|
+	 *      |
 	 *  hardware
 	 */
 
@@ -226,20 +226,21 @@ struct audio_softc {
 
 	/**
 	 *  hardware
-	 *	|
+	 *      |
 	 * oc->sc_mrr		oc = sc->sc_vchan[0]
-	 *	:		Transform though filters same process as each vc to IF
+	 *      :		Transform though filters same process as each
+	 *      :		 vc to IF
 	 * oc->sc_rustream	Audio now in intermediate format (IF)
-	 *	|	mix_read();
+	 *      |	mix_read();
 	 *    sc_rr
-	 *	|	audio_upmix	vc = sc->sc_vchan[n]
+	 *      |	audio_upmix	vc = sc->sc_vchan[n]
 	 * vc->sc_mrr		<list_t::filters[0].param>
-	 *	|  vc->sc_rfilters[0]
+	 *      |  vc->sc_rfilters[0]
 	 *  vc->sc_rstreams[0]	<list_t::filters[1].param>
 	 *      |  vc->sc_rfilters[1]
 	 *  vc->sc_rstreams[1]	<list_t::filters[2].param>
 	 *      :
-	 *	|  vc->sc_rfilters[n-1]
+	 *      |  vc->sc_rfilters[n-1]
 	 *  vc->sc_rstreams[n-1]	<vc->sc_rparams> == vc->sc_rustream
 	 *      |  uiomove(9) & read(2)
 	 *  userland
