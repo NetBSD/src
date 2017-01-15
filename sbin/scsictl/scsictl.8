@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.25 2008/04/30 13:10:53 martin Exp $
+.\"	$NetBSD: scsictl.8,v 1.25.22.1 2017/01/15 23:51:32 snj Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 22, 2007
+.Dd November 19, 2016
 .Dt SCSICTL 8
 .Os
 .Sh NAME
@@ -204,6 +204,28 @@ Set the highest speed that the optical drive should use for reading
 data.
 The units are multiples of a single speed CDROM (150 KB/s).
 Specify 0 to use the drive's fastest speed.
+.Pp
+.Nm getrealloc
+.Pp
+Returns automatic reallocation parameters for the device.
+.Pp
+.Nm setrealloc
+.Ar none|r|w|rw
+.Op Ar save
+.Pp
+Set automatic reallocation parameters for the device.
+Automatic reallocation may be disabled
+.Pq none ,
+the automatic read reallocation enabled
+.Pq r ,
+the automatic write reallocation enabled
+.Pq w ,
+or both automatic read and write reallocation enabled
+.Pq rw .
+If the drive's automatic reallocation parameters are savable, specifying
+.Ar save
+after the automatic reallocation enable state will cause the parameters to be
+saved in non-volatile storage.
 .Sh BUS COMMANDS
 The following commands are supported for SCSI busses:
 .Pp
@@ -255,6 +277,7 @@ No information is printed for already probed devices.
 .Xr ioctl 2 ,
 .Xr cd 4 ,
 .Xr ch 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr se 4 ,
 .Xr ss 4 ,
