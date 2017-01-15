@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.268 2016/11/16 18:07:03 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.269 2017/01/15 23:53:13 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -15420,4 +15420,15 @@ sys/arch/alpha/stand/common/prom.c		1.15
 	Match the two prom_getenv() and fix buffer overflow causing
 	wrong host controller SCSI ID for DEC 3000.
 	[flxd, ticket #1416]
+
+sbin/scsictl/scsictl.8				1.27, 1.29, 1.30 via patch
+sbin/scsictl/scsictl.c				1.39 via patch
+sys/dev/scsipi/scsi_disk.h			1.32
+
+	Add "getrealloc" and "setrealloc" commands to get/set automatic
+	reallocation parameters/enables for error recovery, similar to
+	{get,set}cache.  Many old SCSI disks shipped with reallocation
+	disabled, albeit supporting it.  Minor (cosmetic) fixup of
+	scsi_disk_pages while there.  PR bin/29165.
+	[flxd, ticket #1418]
 
