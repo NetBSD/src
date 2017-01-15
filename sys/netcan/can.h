@@ -1,4 +1,4 @@
-/*	$NetBSD: can.h,v 1.1.2.1 2017/01/15 20:27:33 bouyer Exp $	*/
+/*	$NetBSD: can.h,v 1.1.2.2 2017/01/15 21:01:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct can_frame {
 	uint8_t	__pad;
 	uint8_t	__res0;
 	uint8_t __res1;
-	uint8_t	data[CAN_MAX_DLEN];
+	uint8_t	data[CAN_MAX_DLEN] __aligned(8);
 };
 
 #define CAN_MTU         (sizeof(struct can_frame))
