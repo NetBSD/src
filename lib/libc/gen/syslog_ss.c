@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog_ss.c,v 1.2 2017/01/12 01:58:39 christos Exp $	*/
+/*	$NetBSD: syslog_ss.c,v 1.3 2017/01/15 16:41:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: syslog_ss.c,v 1.2 2017/01/12 01:58:39 christos Exp $");
+__RCSID("$NetBSD: syslog_ss.c,v 1.3 2017/01/15 16:41:39 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -80,7 +80,7 @@ syslog_ss(int pri, struct syslog_data *data, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	_vxsyslogp_r(pri, NULL, data, NULL, NULL, fmt, ap);
+	_vxsyslogp_r(pri, &_syslog_ss_fun, data, NULL, NULL, fmt, ap);
 	va_end(ap);
 }
 
@@ -91,19 +91,19 @@ syslogp_ss(int pri, struct syslog_data *data, const char *msgid,
 	va_list ap;
 
 	va_start(ap, msgfmt);
-	_vxsyslogp_r(pri, NULL, data, msgid, sdfmt, msgfmt, ap);
+	_vxsyslogp_r(pri, &_syslog_ss_fun, data, msgid, sdfmt, msgfmt, ap);
 	va_end(ap);
 }
 
 void
 vsyslog_ss(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 {
-	_vxsyslogp_r(pri, NULL, data, NULL, NULL, fmt, ap);
+	_vxsyslogp_r(pri, &_syslog_ss_fun, data, NULL, NULL, fmt, ap);
 }
 
 void
 vsyslogp_ss(int pri, struct syslog_data *data, const char *msgid,
 	const char *sdfmt, const char *msgfmt, va_list ap)
 {
-	_vxsyslogp_r(pri, NULL, data, msgid, sdfmt, msgfmt, ap);
+	_vxsyslogp_r(pri, &_syslog_ss_fun, data, msgid, sdfmt, msgfmt, ap);
 }
