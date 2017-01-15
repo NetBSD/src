@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1268 2017/01/10 05:05:09 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1269 2017/01/15 03:49:43 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1276 2017/01/10 05:04:31 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1277 2017/01/15 03:49:09 msaitoh Exp
  */
 
 /*
@@ -4135,6 +4135,30 @@
 #define	PCI_PRODUCT_INTEL_EP80579_LAN_2	0x5044		/* EP80579 LAN */
 #define	PCI_PRODUCT_INTEL_EP80579_LAN_3	0x5048		/* EP80579 LAN */
 #define	PCI_PRODUCT_INTEL_80312_ATU	0x530d		/* 80310 ATU */
+#define	PCI_PRODUCT_INTEL_CORE7G_H_M_D_HOST_DRAM	0x5900		/* Core 7G (H, Mobile, Dual) Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_CORE7G_PCIE_X16	0x5901		/* Core 7G PCIe x16 */
+#define	PCI_PRODUCT_INTEL_CORE7G_S_GT1	0x5902		/* HD Graphics 610 (GT1) */
+#define	PCI_PRODUCT_INTEL_CORE7G_U_HOST_DRAM	0x5904		/* Core 7G (U) Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_CORE7G_PCIE_X8	0x5905		/* Core 7G PCIe x8 */
+#define	PCI_PRODUCT_INTEL_CORE7G_U_GT1	0x5906		/* HD Graphics 610 (GT1) */
+#define	PCI_PRODUCT_INTEL_CORE7G_PCIE_X4	0x5909		/* Core 7G PCIe x4 */
+#define	PCI_PRODUCT_INTEL_CORE7G_H_GT1	0x590b		/* HD Graphics (GT1) */
+#define	PCI_PRODUCT_INTEL_CORE7G_Y_HOST_DRAM	0x590c		/* Core 7G (Y) Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_CORE7G_Y_GT1	0x590e		/* HD Graphics (GT1) */
+#define	PCI_PRODUCT_INTEL_CORE7G_S_D_HOST_DRAM	0x590f		/* Core 7G (S, Dual) Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_CORE7G_H_M_Q_HOST_DRAM	0x5910		/* Core 7G (H, Mobile, Quad) Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_CORE7G_GMM	0x5911		/* Core 7G Gaussian Mixture Model */
+#define	PCI_PRODUCT_INTEL_CORE7G_S_GT2	0x5912		/* HD Graphics 630 (GT1) */
+#define	PCI_PRODUCT_INTEL_CORE7G_U_GT2	0x5916		/* HD Graphics 620 (GT2) */
+#define	PCI_PRODUCT_INTEL_CORE7G_H_SW_HOST_DRAM	0x5918		/* Core 7G (H, Server or Workstation) Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_CORE7G_IU	0x5919		/* Core 7G Image Unit */
+#define	PCI_PRODUCT_INTEL_CORE7G_H_M_GT2	0x591b		/* HD Graphics 630 (GT2, Mobile) */
+#define	PCI_PRODUCT_INTEL_CORE7G_HU_GT2	0x591d		/* HD Graphics P630 (GT2, H or U) */
+#define	PCI_PRODUCT_INTEL_CORE7G_Y_GT2	0x591e		/* HD Graphics 615 (GT2) */
+#define	PCI_PRODUCT_INTEL_CORE7G_S_Q_HOST_DRAM	0x591f		/* Core 7G (S, Quad) Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_CORE7G_U_GT3	0x5923		/* HD Graphics (GT3) */
+#define	PCI_PRODUCT_INTEL_CORE7G_U_GT3E_15W	0x5926		/* Iris Plus Graphics 640 (GT3e, 15W) */
+#define	PCI_PRODUCT_INTEL_CORE7G_U_GT3E_28W	0x5927		/* Iris Plus Graphics 650 (GT3e, 28W) */
 #define	PCI_PRODUCT_INTEL_XEOND_HB_DMI2	0x6f00		/* Core i7-6xxxK/Xeon-D Host Bridge (DMI2) */
 #define	PCI_PRODUCT_INTEL_XEOND_HB_PCIE	0x6f01		/* Xeon-D Host Bridge (PCIe) */
 #define	PCI_PRODUCT_INTEL_XEOND_PCIE_1	0x6f02		/* Xeon-D PCIe Root Port (x8 or x4 max) */
