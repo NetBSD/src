@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.77 2017/01/07 18:28:49 christos Exp $ */
+/* $NetBSD: scan.l,v 1.78 2017/01/15 21:10:24 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.77 2017/01/07 18:28:49 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.78 2017/01/15 21:10:24 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1090,6 +1090,9 @@ directive(void)
 		continue;
 
 	if (!isdigit((unsigned char)c)) {
+		if (strncmp(cp, "pragma", 6) == 0
+		    && isspace((unsigned char)cp[6]))
+			return;
 	error:
 		/* undefined or invalid # directive */
 		warning(255);
