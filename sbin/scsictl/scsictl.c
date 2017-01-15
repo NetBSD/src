@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.33 2011/08/29 14:35:04 joerg Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.33.4.1 2017/01/15 23:51:32 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.33 2011/08/29 14:35:04 joerg Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.33.4.1 2017/01/15 23:51:32 snj Exp $");
 #endif
 
 
@@ -92,6 +92,8 @@ void	device_getcache(int, char *[]);
 void	device_setcache(int, char *[]);
 void	device_flushcache(int, char *[]);
 void	device_setspeed(int, char *[]);
+void	device_getrealloc(int, char *[]);
+void	device_setrealloc(int, char *[]);
 
 struct command device_commands[] = {
 	{ "defects",	"[primary] [grown] [block|byte|physical]",
@@ -112,6 +114,8 @@ struct command device_commands[] = {
 	{ "setcache",	"none|r|w|rw [save]",	device_setcache },
 	{ "flushcache",	"",			device_flushcache },
 	{ "setspeed",	"[speed]",		device_setspeed },
+	{ "getrealloc",	"",			device_getrealloc },
+	{ "setrealloc",	"none|r|w|rw [save]",	device_setrealloc },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -981,6 +985,93 @@ device_setspeed(int argc, char *argv[])
 	scsi_command(fd, &cmd, sizeof(cmd), pd, sizeof(pd), 10000, SCCMD_WRITE);
 
 	return;
+}
+
+/*
+ * device_getrealloc:
+ *
+ *	Get the automatic reallocation parameters for a SCSI disk.
+ */
+void
+device_getrealloc(int argc, char *argv[])
+{
+	struct {
+		struct scsi_mode_parameter_header_6 header;
+		struct scsi_general_block_descriptor blk_desc;
+		struct page_err_recov err_recov_params;
+	} data;
+	u_int8_t flags;
+
+	/* No arguments. */
+	if (argc != 0)
+		usage();
+
+	scsi_mode_sense(fd, 0x01, 0x00, &data, sizeof(data));
+
+	flags = data.err_recov_params.flags;
+	if ((flags & (ERR_RECOV_ARRE | ERR_RECOV_AWRE)) == 0)
+		printf("%s: no automatic reallocation enabled\n", dvname);
+	else {
+		printf("%s: automatic read reallocation %senabled\n", dvname,
+		    (flags & ERR_RECOV_ARRE) ? "" : "not ");
+		printf("%s: automatic write reallocation %senabled\n", dvname,
+		    (flags & ERR_RECOV_AWRE) ? "" : "not ");
+	}
+	printf("%s: error recovery parameters are %ssavable\n", dvname,
+	    (data.err_recov_params.pg_code & PGCODE_PS) ? "" : "not ");
+}
+
+/*
+ * device_setrealloc:
+ *
+ *	Set the automatic reallocation parameters for a SCSI disk.
+ */
+void
+device_setrealloc(int argc, char *argv[])
+{
+	struct {
+		struct scsi_mode_parameter_header_6 header;
+		struct scsi_general_block_descriptor blk_desc;
+		struct page_err_recov err_recov_params;
+	} data;
+	int dlen;
+	u_int8_t flags, byte2;
+
+	if (argc > 2 || argc == 0)
+		usage();
+
+	flags = 0;
+	byte2 = 0;
+	if (strcmp(argv[0], "none") == 0)
+		flags = 0;
+	else if (strcmp(argv[0], "r") == 0)
+		flags = ERR_RECOV_ARRE;
+	else if (strcmp(argv[0], "w") == 0)
+		flags = ERR_RECOV_AWRE;
+	else if (strcmp(argv[0], "rw") == 0)
+		flags = ERR_RECOV_ARRE | ERR_RECOV_AWRE;
+	else
+		usage();
+
+	if (argc == 2) {
+		if (strcmp(argv[1], "save") == 0)
+			byte2 = SMS_SP;
+		else
+			usage();
+	}
+
+	scsi_mode_sense(fd, 0x01, 0x00, &data, sizeof(data));
+
+	data.err_recov_params.pg_code &= PGCODE_MASK;
+	data.err_recov_params.flags &= ~(ERR_RECOV_ARRE | ERR_RECOV_AWRE);
+	data.err_recov_params.flags |= flags;
+
+	data.header.data_length = 0;
+
+	dlen = sizeof(data.header) + sizeof(data.blk_desc) + 2 +
+	    data.err_recov_params.pg_length;
+
+	scsi_mode_select(fd, byte2, &data, dlen);
 }
 
 /*
