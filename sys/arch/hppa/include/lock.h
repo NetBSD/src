@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.18 2017/01/15 15:27:41 christos Exp $	*/
+/* 	$NetBSD: lock.h,v 1.19 2017/01/15 18:03:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #define HPPA_LDCW_ALIGN	16UL
 
 #define __SIMPLELOCK_ALIGN(p) \
-    (volatile unsigned long *)(((uintptr_t)((p) + HPPA_LDCW_ALIGN - 1)) & \
+    (volatile unsigned long *)((((uintptr_t)(p) + HPPA_LDCW_ALIGN - 1)) & \
     ~(HPPA_LDCW_ALIGN - 1))
 
 #define __SIMPLELOCK_RAW_LOCKED		0UL
