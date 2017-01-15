@@ -1,4 +1,4 @@
-/*	$NetBSD: drvctl_component.c,v 1.3 2017/01/14 21:36:58 pgoyette Exp $	*/
+/*	$NetBSD: drvctl_component.c,v 1.4 2017/01/15 01:48:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,14 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drvctl_component.c,v 1.3 2017/01/14 21:36:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drvctl_component.c,v 1.4 2017/01/15 01:48:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/stat.h>
-
-#include "ioconf.c"
 
 #include <rump-sys/kern.h>
 #include <rump-sys/vfs.h>
