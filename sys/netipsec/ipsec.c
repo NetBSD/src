@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.67 2016/12/08 05:16:34 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.68 2017/01/16 07:33:36 ryo Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.67 2016/12/08 05:16:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.68 2017/01/16 07:33:36 ryo Exp $");
 
 /*
  * IPsec controller part.
@@ -2313,6 +2313,10 @@ inet_ntoa4(struct in_addr ina)
 const char *
 ipsec_address(const union sockaddr_union *sa)
 {
+#if INET6
+	static char ip6buf[INET6_ADDRSTRLEN];	/* XXX: NOMPSAFE */
+#endif
+
 	switch (sa->sa.sa_family) {
 #if INET
 	case AF_INET:
@@ -2321,7 +2325,7 @@ ipsec_address(const union sockaddr_union *sa)
 
 #if INET6
 	case AF_INET6:
-		return ip6_sprintf(&sa->sin6.sin6_addr);
+		return ip6_sprintf(ip6buf, &sa->sin6.sin6_addr);
 #endif /* INET6 */
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.89 2017/01/10 05:42:34 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.90 2017/01/16 07:33:36 ryo Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -806,7 +806,7 @@ struct in6_ifaddr *
 	in6ifa_ifpwithaddr_psref(const struct ifnet *, const struct in6_addr *,
 	    struct psref *);
 struct in6_ifaddr *in6ifa_ifwithaddr(const struct in6_addr *, uint32_t);
-char	*ip6_sprintf(const struct in6_addr *);
+char	*ip6_sprintf(char *, const struct in6_addr *);
 int	in6_matchlen(struct in6_addr *, struct in6_addr *);
 int	in6_are_prefix_equal(struct in6_addr *, struct in6_addr *, int);
 void	in6_prefixlen2mask(struct in6_addr *, int);
