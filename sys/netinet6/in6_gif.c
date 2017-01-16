@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.84 2017/01/16 07:33:36 ryo Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.85 2017/01/16 15:44:47 christos Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.84 2017/01/16 07:33:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.85 2017/01/16 15:44:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -330,7 +330,7 @@ gif_validate6(const struct ip6_hdr *ip6, struct gif_softc *sc,
 			char ip6buf[INET6_ADDRSTRLEN];
 			log(LOG_WARNING, "%s: packet from %s dropped "
 			    "due to ingress filter\n", if_name(&sc->gif_if),
-			    ip6_sprintf(ip6buf, &u.sin6.sin6_addr));
+			    IN6_PRINT(ip6buf, &u.sin6.sin6_addr));
 #endif
 			if (rt != NULL)
 				rt_unref(rt);

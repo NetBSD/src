@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.225 2017/01/16 07:33:36 ryo Exp $	*/
+/*	$NetBSD: nd6.c,v 1.226 2017/01/16 15:44:47 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.225 2017/01/16 07:33:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.226 2017/01/16 15:44:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -926,13 +926,13 @@ nd6_assert_purged(struct ifnet *ifp)
 	ND_DEFROUTER_LIST_FOREACH(dr) {
 		KASSERTMSG(dr->ifp != ifp,
 		    "defrouter %s remains on %s",
-		    ip6_sprintf(ip6buf, &dr->rtaddr), ifp->if_xname);
+		    IN6_PRINT(ip6buf, &dr->rtaddr), ifp->if_xname);
 	}
 
 	ND_PREFIX_LIST_FOREACH(pr) {
 		KASSERTMSG(pr->ndpr_ifp != ifp,
 		    "prefix %s/%d remains on %s",
-		    ip6_sprintf(ip6buf, &pr->ndpr_prefix.sin6_addr),
+		    IN6_PRINT(ip6buf, &pr->ndpr_prefix.sin6_addr),
 		    pr->ndpr_plen, ifp->if_xname);
 	}
 	ND6_UNLOCK();
@@ -1594,7 +1594,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 					char ip6buf[INET6_ADDRSTRLEN];
 					nd6log(LOG_ERR, "%s: failed to join "
 					    "%s (errno=%d)\n", if_name(ifp),
-					    ip6_sprintf(ip6buf, &llsol), error);
+					    IN6_PRINT(ip6buf, &llsol), error);
 				}
 			}
 		}
@@ -2347,7 +2347,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 			log(LOG_DEBUG,
 			    "nd6_output: can't allocate llinfo for %s "
 			    "(ln=%p, rt=%p)\n",
-			    ip6_sprintf(ip6buf, &dst->sin6_addr), ln, rt);
+			    IN6_PRINT(ip6buf, &dst->sin6_addr), ln, rt);
 			senderr(EIO);	/* XXX: good error? */
 		}
 		goto sendpkt;	/* send anyway */
@@ -2696,7 +2696,7 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 				char ip6buf[INET6_ADDRSTRLEN];
 				log(LOG_ERR,
 				    "scope error in router list (%s)\n",
-				    ip6_sprintf(ip6buf, &d->rtaddr.sin6_addr));
+				    IN6_PRINT(ip6buf, &d->rtaddr.sin6_addr));
 				/* XXX: press on... */
 			}
 			d->flags = dr->flags;
@@ -2754,7 +2754,7 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 			if (sa6_recoverscope(&pfx.prefix)) {
 				log(LOG_ERR,
 				    "scope error in prefix list (%s)\n",
-				    ip6_sprintf(ip6buf, &pfx.prefix.sin6_addr));
+				    IN6_PRINT(ip6buf, &pfx.prefix.sin6_addr));
 				/* XXX: press on... */
 			}
 			pfx.raflags = pr->ndpr_raf;
@@ -2797,7 +2797,7 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 					log(LOG_ERR,
 					    "scope error in "
 					    "prefix list (%s)\n",
-					    ip6_sprintf(ip6buf,
+					    IN6_PRINT(ip6buf,
 					    &pfr->router->rtaddr));
 				}
 				advrtrs++;
