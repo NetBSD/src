@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_osfp.c,v 1.12 2017/01/16 07:33:36 ryo Exp $	*/
+/*	$NetBSD: pf_osfp.c,v 1.13 2017/01/16 15:46:19 christos Exp $	*/
 /*	$OpenBSD: pf_osfp.c,v 1.12 2006/12/13 18:14:10 itojun Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_osfp.c,v 1.12 2017/01/16 07:33:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_osfp.c,v 1.13 2017/01/16 15:46:19 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -172,8 +172,8 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6, const st
 		fp.fp_flags |= PF_OSFP_DF;
 		fp.fp_flags |= PF_OSFP_INET6;
 #ifdef _KERNEL
-		CTASSERT(sizeof(srcname) >= INET6_ADDRSTRLEN);
-		ip6_sprintf(srcname, (const struct in6_addr *)&ip6->ip6_src);
+		in6_print(srcname, sizeof(srcname),
+		    (const struct in6_addr *)&ip6->ip6_src);
 #else
 		memset(&sin6, 0, sizeof(sin6));
 		sin6.sin6_family = AF_INET6;
