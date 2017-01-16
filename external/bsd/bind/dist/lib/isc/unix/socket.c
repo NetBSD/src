@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.15.2.4 2016/10/14 12:01:32 martin Exp $	*/
+/*	$NetBSD: socket.c,v 1.15.2.5 2017/01/16 11:54:44 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -4077,7 +4077,8 @@ process_fds(isc__socketmgr_t *manager, struct epoll_event *events, int nevents)
 			 * events.  Note also that the read or write attempt
 			 * won't block because we use non-blocking sockets.
 			 */
-			events[i].events |= (EPOLLIN | EPOLLOUT);
+			int fd = events[i].data.fd;
+			events[i].events |= manager->epoll_events[fd];
 		}
 		process_fd(manager, events[i].data.fd,
 			   (events[i].events & EPOLLIN) != 0,

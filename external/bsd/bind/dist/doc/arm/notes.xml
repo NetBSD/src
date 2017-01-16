@@ -24,6 +24,10 @@
       This document summarizes changes since BIND 9.10.4:
     </para>
     <para>
+      BIND 9.10.4-P5 addresses the security issues described in
+      CVE-2016-9131, CVE-2016-9147, CVE-2016-9444 and CVE-2016-9778.
+    </para>
+    <para>
       BIND 9.10.4-P4 addresses the security issue described in
       CVE-2016-8864.
     </para>
@@ -57,6 +61,37 @@
 
   <section xml:id="relnotes_security"><info><title>Security Fixes</title></info>
     <itemizedlist>
+      <listitem>
+	<para>
+	  A coding error in the <option>nxdomain-redirect</option>
+	  feature could lead to an assertion failure if the redirection
+	  namespace was served from a local authoritative data source
+	  such as a local zone or a DLZ instead of via recursive
+	  lookup. This flaw is disclosed in CVE-2016-9778. [RT #43837]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Named could mishandle authority sections that were missing
+	  RRSIGs triggering an assertion failure.  This flaw is
+	  disclosed in CVE-2016-9444. [RT # 43632]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Named mishandled some responses where covering RRSIG
+	  records are returned without the requested data
+	  resulting in a assertion failure. This flaw is disclosed in
+	  CVE-2016-9147. [RT #43548]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Named incorrectly tried to cache TKEY records which could
+	  trigger a assertion failure when there was a class mismatch.
+	  This flaw is disclosed in CVE-2016-9131.  [RT #43522]
+	</para>
+      </listitem>
       <listitem>
 	<para>
 	  It was possible to trigger assertions when processing
