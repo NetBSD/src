@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.12 2016/12/15 12:04:18 kamil Exp $	*/
+/*	$NetBSD: userret.h,v 1.13 2017/01/16 21:19:14 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,12 +79,9 @@ userret(struct lwp *l)
 	mi_userret(l);
 
 	/*
-	 * Never mix debug registers with single step, while technically
-	 * possible on x86 CPUs, it adds unnecessary complications we do
-	 * not want to handle it.
+	 * Allow to mix debug registers with single step.
 	 */
-	if ((l->l_md.md_regs->tf_eflags & PSL_T) == 0 &&
-	    l->l_md.md_flags & MDL_X86_HW_WATCHPOINTS)
+	if (l->l_md.md_flags & MDL_X86_HW_WATCHPOINTS)
 		set_x86_hw_watchpoints(l);
 	else
 		clear_x86_hw_watchpoints();
