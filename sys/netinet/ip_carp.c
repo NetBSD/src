@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.82 2017/01/16 07:33:36 ryo Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.83 2017/01/16 15:44:47 christos Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.82 2017/01/16 07:33:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.83 2017/01/16 15:44:47 christos Exp $");
 
 /*
  * TODO:
@@ -706,7 +706,7 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		case AF_INET6:
 			ip6 = mtod(m, struct ip6_hdr *);
 			CARP_LOG(sc, ("incorrect hash from %s",
-			    ip6_sprintf(ip6buf, &ip6->ip6_src)));
+			    IN6_PRINT(ip6buf, &ip6->ip6_src)));
 			break;
 
 		default: CARP_LOG(sc, ("incorrect hash"));

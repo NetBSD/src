@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_asconf.c,v 1.8 2017/01/16 07:33:36 ryo Exp $ */
+/*	$NetBSD: sctp_asconf.c,v 1.9 2017/01/16 15:44:47 christos Exp $ */
 /*	$KAME: sctp_asconf.c,v 1.25 2005/06/16 20:44:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.8 2017/01/16 07:33:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.9 2017/01/16 15:44:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -981,7 +981,7 @@ sctp_asconf_queue_add(struct sctp_tcb *stcb, struct ifaddr *ifa, uint16_t type)
 		memcpy(&aa->ap.addrp.addr, &sin6->sin6_addr,
 		    sizeof(struct in6_addr));
 #ifdef SCTP_DEBUG
-		strlcpy(buf, ip6_sprintf(ip6buf, &sin6->sin6_addr), sizeof(buf));
+		strlcpy(buf, IN6_PRINT(ip6buf, &sin6->sin6_addr), sizeof(buf));
 #endif /* SCTP_DEBUG */
 
 	} else if (ifa->ifa_addr->sa_family == AF_INET) {
@@ -1672,7 +1672,7 @@ sctp_addr_mgmt_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 
 		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
 #ifdef SCTP_DEBUG
-		strlcpy(buf, ip6_sprintf(ip6buf, &sin6->sin6_addr), sizeof(buf));
+		strlcpy(buf, IN6_PRINT(ip6buf, &sin6->sin6_addr), sizeof(buf));
 #endif /* SCTP_DEBUG */
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 			/* we skip unspecifed addresses */
