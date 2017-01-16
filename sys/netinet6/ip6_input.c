@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.172 2017/01/16 07:33:36 ryo Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.173 2017/01/16 15:44:47 christos Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.172 2017/01/16 07:33:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.173 2017/01/16 15:44:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -531,8 +531,8 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			char ip6bufs[INET6_ADDRSTRLEN];
 			char ip6bufd[INET6_ADDRSTRLEN];
 			nd6log(LOG_INFO, "packet to an unready address %s->%s\n",
-			    ip6_sprintf(ip6bufs, &ip6->ip6_src),
-			    ip6_sprintf(ip6bufd, &ip6->ip6_dst));
+			    IN6_PRINT(ip6bufs, &ip6->ip6_src),
+			    IN6_PRINT(ip6bufd, &ip6->ip6_dst));
 
 			goto bad_unref;
 		}
