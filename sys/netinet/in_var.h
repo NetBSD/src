@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.91 2017/01/02 23:00:25 christos Exp $	*/
+/*	$NetBSD: in_var.h,v 1.92 2017/01/16 07:33:36 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -414,7 +414,7 @@ void	in_savemkludge(struct in_ifaddr *);
 void	in_restoremkludge(struct in_ifaddr *, struct ifnet *);
 void	in_purgemkludge(struct ifnet *);
 void	in_setmaxmtu(void);
-const char *in_fmtaddr(struct in_addr);
+const char *in_fmtaddr(char *, struct in_addr);
 int	in_control(struct socket *, u_long, void *, struct ifnet *);
 void	in_purgeaddr(struct ifaddr *);
 void	in_purgeif(struct ifnet *);

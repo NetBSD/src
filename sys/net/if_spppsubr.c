@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.165 2016/12/27 13:49:58 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.166 2017/01/16 07:33:36 ryo Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.165 2016/12/27 13:49:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.166 2017/01/16 07:33:36 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3584,6 +3584,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	int ifidcount;
 	int type;
 	int collision, nohisaddr;
+	char ip6buf[INET6_ADDRSTRLEN];
 
 	KASSERT(sppp_locked(sp));
 
@@ -3690,7 +3691,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 
 				if (debug) {
 					addlog(" %s [%s]",
-					    ip6_sprintf(&desiredaddr),
+					    ip6_sprintf(ip6buf, &desiredaddr),
 					    sppp_cp_type_name(type));
 				}
 				continue;
@@ -3712,7 +3713,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 				memcpy(&p[2], &suggestaddr.s6_addr[8], 8);
 			}
 			if (debug)
-				addlog(" %s [%s]", ip6_sprintf(&desiredaddr),
+				addlog(" %s [%s]", ip6_sprintf(ip6buf, &desiredaddr),
 				    sppp_cp_type_name(type));
 			break;
 		}
@@ -3739,7 +3740,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 
 		if (debug) {
 			addlog(" send %s suggest %s\n",
-			    sppp_cp_type_name(type), ip6_sprintf(&suggestaddr));
+			    sppp_cp_type_name(type), ip6_sprintf(ip6buf, &suggestaddr));
 		}
 		sppp_cp_send(sp, PPP_IPV6CP, type, h->ident, rlen, buf);
 	}
@@ -3818,6 +3819,7 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
 	struct in6_addr suggestaddr;
+	char ip6buf[INET6_ADDRSTRLEN];
 
 	KASSERT(sppp_locked(sp));
 
@@ -3857,7 +3859,7 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 			sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
 			if (debug)
 				addlog(" [suggestaddr %s]",
-				       ip6_sprintf(&suggestaddr));
+				       ip6_sprintf(ip6buf, &suggestaddr));
 #ifdef IPV6CP_MYIFID_DYN
 			/*
 			 * When doing dynamic address assignment,
