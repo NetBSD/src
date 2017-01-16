@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.9 2017/01/13 21:30:41 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.10 2017/01/16 21:35:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.9 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.10 2017/01/16 21:35:59 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -247,6 +247,7 @@ ATF_TC_BODY(watchpoint_read, tc)
 		printf("struct ptrace {\n");
 		printf("\t.pw_index=%d\n", pw.pw_index);
 		printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+		printf("\t.pw_type=%#x\n", pw.pw_type);
 		printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 		printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 		printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -320,6 +321,7 @@ ATF_TC_BODY(watchpoint_write_unmodified, tc)
 		printf("struct ptrace {\n");
 		printf("\t.pw_index=%d\n", pw.pw_index);
 		printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+		printf("\t.pw_type=%#x\n", pw.pw_type);
 		printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 		printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 		printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -390,6 +392,7 @@ ATF_TC_BODY(watchpoint_trap_code0, tc)
 
 	pw.pw_index = i;
 	pw.pw_lwpid = 0;
+	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw.pw_md.md_address = (void *)check_happy;
 	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_EXECUTION;
 	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
@@ -397,6 +400,7 @@ ATF_TC_BODY(watchpoint_trap_code0, tc)
 	printf("struct ptrace {\n");
 	printf("\t.pw_index=%d\n", pw.pw_index);
 	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+	printf("\t.pw_type=%#x\n", pw.pw_type);
 	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -478,6 +482,7 @@ ATF_TC_BODY(watchpoint_trap_code1, tc)
 
 	pw.pw_index = i;
 	pw.pw_lwpid = 0;
+	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw.pw_md.md_address = (void *)check_happy;
 	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_EXECUTION;
 	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
@@ -485,6 +490,7 @@ ATF_TC_BODY(watchpoint_trap_code1, tc)
 	printf("struct ptrace {\n");
 	printf("\t.pw_index=%d\n", pw.pw_index);
 	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+	printf("\t.pw_type=%d\n", pw.pw_type);
 	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -566,6 +572,7 @@ ATF_TC_BODY(watchpoint_trap_code2, tc)
 
 	pw.pw_index = i;
 	pw.pw_lwpid = 0;
+	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw.pw_md.md_address = (void *)check_happy;
 	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_EXECUTION;
 	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
@@ -573,6 +580,7 @@ ATF_TC_BODY(watchpoint_trap_code2, tc)
 	printf("struct ptrace {\n");
 	printf("\t.pw_index=%d\n", pw.pw_index);
 	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+	printf("\t.pw_type=%#x\n", pw.pw_type);
 	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -654,6 +662,7 @@ ATF_TC_BODY(watchpoint_trap_code3, tc)
 
 	pw.pw_index = i;
 	pw.pw_lwpid = 0;
+	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw.pw_md.md_address = (void *)check_happy;
 	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_EXECUTION;
 	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
@@ -661,6 +670,7 @@ ATF_TC_BODY(watchpoint_trap_code3, tc)
 	printf("struct ptrace {\n");
 	printf("\t.pw_index=%d\n", pw.pw_index);
 	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+	printf("\t.pw_type=%#x\n", pw.pw_type);
 	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -741,6 +751,7 @@ ATF_TC_BODY(watchpoint_trap_data_write0, tc)
 	printf("Preparing code watchpoint trap %d\n", i);
 
 	pw.pw_index = 0;
+	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw.pw_md.md_address = &watchme;
 	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_WRITE;
 	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
@@ -748,6 +759,7 @@ ATF_TC_BODY(watchpoint_trap_data_write0, tc)
 	printf("struct ptrace {\n");
 	printf("\t.pw_index=%d\n", pw.pw_index);
 	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+	printf("\t.pw_type=%#x\n", pw.pw_type);
 	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -824,6 +836,7 @@ ATF_TC_BODY(watchpoint_trap_data_write1, tc)
 	printf("Preparing code watchpoint trap %d\n", i);
 
 	pw.pw_index = i;
+	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw.pw_md.md_address = &watchme;
 	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_WRITE;
 	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
@@ -831,6 +844,7 @@ ATF_TC_BODY(watchpoint_trap_data_write1, tc)
 	printf("struct ptrace {\n");
 	printf("\t.pw_index=%d\n", pw.pw_index);
 	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+	printf("\t.pw_type=%#x\n", pw.pw_type);
 	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -907,6 +921,7 @@ ATF_TC_BODY(watchpoint_trap_data_write2, tc)
 	printf("Preparing code watchpoint trap %d\n", i);
 
 	pw.pw_index = i;
+	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw.pw_md.md_address = &watchme;
 	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_WRITE;
 	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
@@ -914,6 +929,7 @@ ATF_TC_BODY(watchpoint_trap_data_write2, tc)
 	printf("struct ptrace {\n");
 	printf("\t.pw_index=%d\n", pw.pw_index);
 	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+	printf("\t.pw_type=%#x\n", pw.pw_type);
 	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -991,6 +1007,7 @@ ATF_TC_BODY(watchpoint_trap_data_write3, tc)
 	printf("Preparing code watchpoint trap %d\n", i);
 
 	pw.pw_index = i;
+	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw.pw_md.md_address = &watchme;
 	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_WRITE;
 	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
@@ -998,6 +1015,7 @@ ATF_TC_BODY(watchpoint_trap_data_write3, tc)
 	printf("struct ptrace {\n");
 	printf("\t.pw_index=%d\n", pw.pw_index);
 	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+	printf("\t.pw_type=%#x\n", pw.pw_type);
 	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -1074,6 +1092,7 @@ ATF_TC_BODY(watchpoint_trap_data_rw0, tc)
 	printf("Preparing code watchpoint trap %d\n", i);
 
 	pw.pw_index = i;
+	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw.pw_md.md_address = &watchme;
 	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_READWRITE;
 	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
@@ -1081,6 +1100,7 @@ ATF_TC_BODY(watchpoint_trap_data_rw0, tc)
 	printf("struct ptrace {\n");
 	printf("\t.pw_index=%d\n", pw.pw_index);
 	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+	printf("\t.pw_type=%#x\n", pw.pw_type);
 	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -1157,6 +1177,7 @@ ATF_TC_BODY(watchpoint_trap_data_rw1, tc)
 	printf("Preparing code watchpoint trap %d\n", i);
 
 	pw.pw_index = i;
+	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw.pw_md.md_address = &watchme;
 	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_READWRITE;
 	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
@@ -1164,6 +1185,7 @@ ATF_TC_BODY(watchpoint_trap_data_rw1, tc)
 	printf("struct ptrace {\n");
 	printf("\t.pw_index=%d\n", pw.pw_index);
 	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+	printf("\t.pw_type=%#x\n", pw.pw_type);
 	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -1240,6 +1262,7 @@ ATF_TC_BODY(watchpoint_trap_data_rw2, tc)
 	printf("Preparing code watchpoint trap %d\n", i);
 
 	pw.pw_index = i;
+	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw.pw_md.md_address = &watchme;
 	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_READWRITE;
 	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
@@ -1247,6 +1270,7 @@ ATF_TC_BODY(watchpoint_trap_data_rw2, tc)
 	printf("struct ptrace {\n");
 	printf("\t.pw_index=%d\n", pw.pw_index);
 	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+	printf("\t.pw_type=%#x\n", pw.pw_type);
 	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
@@ -1323,6 +1347,7 @@ ATF_TC_BODY(watchpoint_trap_data_rw3, tc)
 	printf("Preparing code watchpoint trap %d\n", i);
 
 	pw.pw_index = i;
+	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw.pw_md.md_address = &watchme;
 	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_READWRITE;
 	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
@@ -1330,6 +1355,7 @@ ATF_TC_BODY(watchpoint_trap_data_rw3, tc)
 	printf("struct ptrace {\n");
 	printf("\t.pw_index=%d\n", pw.pw_index);
 	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
+	printf("\t.pw_type=%#x\n", pw.pw_type);
 	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
 	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
 	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);

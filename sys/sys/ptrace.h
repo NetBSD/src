@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.54 2017/01/14 06:36:52 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.55 2017/01/16 21:35:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -142,6 +142,7 @@ struct ptrace_lwpinfo {
 typedef struct ptrace_watchpoint {
 	int		pw_index;	/* HW Watchpoint ID (count from 0) */
 	lwpid_t		pw_lwpid;	/* LWP described */
+	int		pw_type;	/* HW Watchpoint type w/ MD content */
 #ifdef __HAVE_PTRACE_WATCHPOINTS
 	struct mdpw	pw_md;		/* MD fields */
 #endif
