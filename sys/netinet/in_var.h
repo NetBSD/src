@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.93 2017/01/16 15:14:16 christos Exp $	*/
+/*	$NetBSD: in_var.h,v 1.94 2017/01/16 15:44:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -383,7 +383,8 @@ extern int arp_debug;
 #define ARPLOGADDR(a) in_fmtaddr(_ipbuf, a)
 #define ARPLOG(level, fmt, args...) 					\
 	do {								\
-		char _ipbuf[INET_ADDRSTRLEN] __used; 			\
+		char _ipbuf[INET_ADDRSTRLEN];	 			\
+		(void)_ipbuf;						\
 		if (arp_debug) 						\
 			log(level, "%s: " fmt, __func__, ##args);	\
 	} while (/*CONSTCOND*/0)
