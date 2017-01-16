@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.11 2017/01/16 07:33:36 ryo Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.12 2017/01/16 15:44:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.11 2017/01/16 07:33:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.12 2017/01/16 15:44:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3054,7 +3054,7 @@ sctp_print_address(const struct sockaddr *sa)
 		const struct sockaddr_in6 *sin6;
 		sin6 = (const struct sockaddr_in6 *)sa;
 		printf("IPv6 address: %s:%d scope:%u\n",
-		    ip6_sprintf(ip6buf, &sin6->sin6_addr), ntohs(sin6->sin6_port),
+		    IN6_PRINT(ip6buf, &sin6->sin6_addr), ntohs(sin6->sin6_port),
 		    sin6->sin6_scope_id);
 	} else if (sa->sa_family == AF_INET) {
 		const struct sockaddr_in *sin;
