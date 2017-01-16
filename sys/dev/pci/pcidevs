@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1278 2017/01/15 04:43:27 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1279 2017/01/16 04:44:38 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2758,6 +2758,7 @@ product INTEL CORE4G_M_ULT_GT3	0x0a26	HD Graphics 5000 (GT3)
 product INTEL CORE4G_S_ULT_GT3	0x0a2a	HD Graphics
 product INTEL CORE4G_R_ULT_GT3_1 0x0a2b	HD Graphics
 product INTEL CORE4G_R_ULT_GT3_2 0x0a2e	Iris Graphics 5100
+product INTEL DC_P3520_SSD	0x0a53	SSD DC P3520
 product INTEL HASWELL_HOST_DRAM	0x0c00	Haswell Host Bridge, DRAM
 product INTEL HASWELL_PCIE16	0x0c01	Haswell PCI-E x16 Controller
 product INTEL HASWELL_PCIE8	0x0c05	Haswell PCI-E x8 Controller
