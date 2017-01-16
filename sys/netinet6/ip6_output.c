@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.181 2017/01/16 07:33:36 ryo Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.182 2017/01/16 15:44:47 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.181 2017/01/16 07:33:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.182 2017/01/16 15:44:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -584,7 +584,7 @@ ip6_output(
 		char ip6buf[INET6_ADDRSTRLEN];
 		nd6log(LOG_ERR,
 		    "refusing to send from invalid address %s (pid %d)\n",
-		    ip6_sprintf(ip6buf, &src0), curproc->p_pid);
+		    IN6_PRINT(ip6buf, &src0), curproc->p_pid);
 		IP6_STATINC(IP6_STAT_ODROPPED);
 		in6_ifstat_inc(origifp, ifs6_out_discard);
 		if (error == 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.235 2017/01/16 08:26:30 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.236 2017/01/16 15:44:47 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.235 2017/01/16 08:26:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.236 2017/01/16 15:44:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -914,7 +914,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 * configuration mistake or a tool's bug.
 		 */
 		nd6log(LOG_INFO, "valid lifetime is 0 for %s\n",
-		    ip6_sprintf(ip6buf, &ifra->ifra_addr.sin6_addr));
+		    IN6_PRINT(ip6buf, &ifra->ifra_addr.sin6_addr));
 
 		if (ia == NULL)
 			return 0; /* there's nothing to do */
@@ -974,7 +974,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 				nd6log(LOG_INFO, "the prefix length of an"
 				    " existing (%s) autoconf address should"
 				    " not be changed\n",
-				    ip6_sprintf(ip6buf,
+				    IN6_PRINT(ip6buf,
 				    &ia->ia_addr.sin6_addr));
 				error = EINVAL;
 				if (hostIsNew)
@@ -1109,7 +1109,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (!imm) {
 			nd6log(LOG_ERR,
 			    "addmulti failed for %s on %s (errno=%d)\n",
-			    ip6_sprintf(ip6buf, &llsol), if_name(ifp), error);
+			    IN6_PRINT(ip6buf, &llsol), if_name(ifp), error);
 			goto cleanup;
 		}
 		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
@@ -1170,7 +1170,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (!imm) {
 			nd6log(LOG_WARNING,
 			    "addmulti failed for %s on %s (errno=%d)\n",
-			    ip6_sprintf(ip6buf, &mltaddr.sin6_addr),
+			    IN6_PRINT(ip6buf, &mltaddr.sin6_addr),
 			    if_name(ifp), error);
 			goto cleanup;
 		}
@@ -1194,7 +1194,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		          dad_delay)) == NULL) { /* XXX jinmei */
 			nd6log(LOG_WARNING,
 			    "addmulti failed for %s on %s (errno=%d)\n",
-			    ip6_sprintf(ip6buf, &mltaddr.sin6_addr),
+			    IN6_PRINT(ip6buf, &mltaddr.sin6_addr),
 			    if_name(ifp), error);
 			/* XXX not very fatal, go on... */
 		} else {
@@ -1251,7 +1251,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (!imm) {
 			nd6log(LOG_WARNING,
 			    "addmulti failed for %s on %s (errno=%d)\n",
-			    ip6_sprintf(ip6buf, &mltaddr.sin6_addr),
+			    IN6_PRINT(ip6buf, &mltaddr.sin6_addr),
 			    if_name(ifp), error);
 			goto cleanup;
 		} else {
@@ -1873,17 +1873,6 @@ bestia(struct in6_ifaddr *best_ia, struct in6_ifaddr *ia)
 }
 
 /*
- * Convert IP6 address to printable (loggable) representation.
- * Caller has to make sure that ip6buf is at least INET6_ADDRSTRLEN long.
- */
-char *
-ip6_sprintf(char *ip6buf, const struct in6_addr *addr)
-{
-	in6_print(ip6buf, INET6_ADDRSTRLEN, addr);
-	return ip6buf;
-}
-
-/*
  * Determine if an address is on a local network.
  */
 int
@@ -2126,7 +2115,7 @@ in6_if_link_up(struct ifnet *ifp)
 			if (if_do_dad(ifp)) {
 				ia->ia6_flags |= IN6_IFF_TENTATIVE;
 				nd6log(LOG_ERR, "%s marked tentative\n",
-				    ip6_sprintf(ip6buf,
+				    IN6_PRINT(ip6buf,
 				    &ia->ia_addr.sin6_addr));
 			} else if ((ia->ia6_flags & IN6_IFF_TENTATIVE) == 0)
 				rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
@@ -2216,7 +2205,7 @@ in6_if_link_down(struct ifnet *ifp)
 		 */
 		if (!(ia->ia6_flags & IN6_IFF_DETACHED)) {
 			nd6log(LOG_DEBUG, "%s marked detached\n",
-			    ip6_sprintf(ip6buf, &ia->ia_addr.sin6_addr));
+			    IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr));
 			ia->ia6_flags |= IN6_IFF_DETACHED;
 			ia->ia6_flags &=
 			    ~(IN6_IFF_TENTATIVE | IN6_IFF_DUPLICATED);
@@ -2444,7 +2433,7 @@ in6_lltable_rtcheck(struct ifnet *ifp,
 		}
 		pserialize_read_exit(s);
 		log(LOG_INFO, "IPv6 address: \"%s\" is not on the network\n",
-		    ip6_sprintf(ip6buf,
+		    IN6_PRINT(ip6buf,
 		    &((const struct sockaddr_in6 *)l3addr)->sin6_addr));
 		if (rt != NULL)
 			rt_unref(rt);
