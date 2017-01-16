@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.167 2016/10/04 14:13:21 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.167.2.1 2017/01/16 18:02:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -897,6 +897,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_VLAN				1  /* VLAN ID */
 #define PACKET_TAG_ENCAP			2  /* encapsulation data */
 #define PACKET_TAG_ESP				3  /* ESP information */
+#define PACKET_TAG_SO				4  /* sending socket pointer */
 #define PACKET_TAG_PF				11 /* packet filter */
 #define PACKET_TAG_ALTQ_QID			12 /* ALTQ queue id */
 
