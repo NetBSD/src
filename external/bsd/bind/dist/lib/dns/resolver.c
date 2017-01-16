@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.19.2.3.2.3 2016/11/05 17:47:33 martin Exp $	*/
+/*	$NetBSD: resolver.c,v 1.19.2.3.2.4 2017/01/16 11:56:44 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -5467,16 +5467,13 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
 							      rdataset->type,
 							      &noqname);
 					if (tresult == ISC_R_SUCCESS &&
-					    noqname != NULL) {
-						tresult =
-						     dns_rdataset_addnoqname(
+					    noqname != NULL)
+						(void) dns_rdataset_addnoqname(
 							    rdataset, noqname);
-						RUNTIME_CHECK(tresult ==
-							      ISC_R_SUCCESS);
-					}
 				}
-				if ((fctx->options & DNS_FETCHOPT_PREFETCH) != 0)
-						options = DNS_DBADD_PREFETCH;
+				if ((fctx->options &
+				     DNS_FETCHOPT_PREFETCH) != 0)
+					options = DNS_DBADD_PREFETCH;
 				addedrdataset = ardataset;
 				result = dns_db_addrdataset(fctx->cache, node,
 							    NULL, now, rdataset,
@@ -5609,11 +5606,9 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
 				tresult = findnoqname(fctx, name,
 						      rdataset->type, &noqname);
 				if (tresult == ISC_R_SUCCESS &&
-				    noqname != NULL) {
-					tresult = dns_rdataset_addnoqname(
-							    rdataset, noqname);
-					RUNTIME_CHECK(tresult == ISC_R_SUCCESS);
-				}
+				    noqname != NULL)
+					(void) dns_rdataset_addnoqname(
+						       rdataset, noqname);
 			}
 
 			/*
@@ -6751,7 +6746,7 @@ static isc_result_t
 answer_response(fetchctx_t *fctx) {
 	isc_result_t result;
 	dns_message_t *message;
-	dns_name_t *name, *dname = NULL, *qname, *dqname, tname, *ns_name;
+	dns_name_t *name, *dname = NULL, *qname, tname, *ns_name;
 	dns_name_t *cname = NULL;
 	dns_rdataset_t *rdataset, *ns_rdataset;
 	isc_boolean_t done, external, chaining, aa, found, want_chaining;
@@ -6759,7 +6754,7 @@ answer_response(fetchctx_t *fctx) {
 	isc_boolean_t wanted_chaining;
 	unsigned int aflag;
 	dns_rdatatype_t type;
-	dns_fixedname_t fdname, fqname, fqdname;
+	dns_fixedname_t fdname, fqname;
 	dns_view_t *view;
 
 	FCTXTRACE("answer_response");
@@ -6783,13 +6778,12 @@ answer_response(fetchctx_t *fctx) {
 		aa = ISC_TRUE;
 	else
 		aa = ISC_FALSE;
-	dqname = qname = &fctx->name;
+	qname = &fctx->name;
 	type = fctx->type;
 	view = fctx->res->view;
-	dns_fixedname_init(&fqdname);
 	result = dns_message_firstname(message, DNS_SECTION_ANSWER);
 	while (!done && result == ISC_R_SUCCESS) {
-		dns_namereln_t namereln, dnamereln;
+		dns_namereln_t namereln;
 		int order;
 		unsigned int nlabels;
 
@@ -6797,8 +6791,6 @@ answer_response(fetchctx_t *fctx) {
 		dns_message_currentname(message, DNS_SECTION_ANSWER, &name);
 		external = ISC_TF(!dns_name_issubdomain(name, &fctx->domain));
 		namereln = dns_name_fullcompare(qname, name, &order, &nlabels);
-		dnamereln = dns_name_fullcompare(dqname, name, &order,
-						 &nlabels);
 		if (namereln == dns_namereln_equal) {
 			wanted_chaining = ISC_FALSE;
 			for (rdataset = ISC_LIST_HEAD(name->list);
@@ -6813,6 +6805,19 @@ answer_response(fetchctx_t *fctx) {
 					 * appear in the answer section.
 					 */
 					log_formerr(fctx, "NSEC3 in answer");
+					return (DNS_R_FORMERR);
+				}
+				if (rdataset->type == dns_rdatatype_tkey) {
+					/*
+					 * TKEY is not a valid record in a
+					 * response to any query we can make.
+					 */
+					log_formerr(fctx, "TKEY in answer");
+					return (DNS_R_FORMERR);
+				}
+				if (rdataset->rdclass != fctx->res->rdclass) {
+					log_formerr(fctx, "Mismatched class "
+						    "in answer");
 					return (DNS_R_FORMERR);
 				}
 
@@ -6923,15 +6928,19 @@ answer_response(fetchctx_t *fctx) {
 						 * a CNAME or DNAME).
 						 */
 						INSIST(!external);
-						if ((rdataset->type !=
-						     dns_rdatatype_cname) ||
-						    !found_dname ||
-						    (aflag ==
-						     DNS_RDATASETATTR_ANSWER))
+						/*
+						 * Don't use found_cname here
+						 * as we have just set it
+						 * above.
+						 */
+						if (cname == NULL &&
+						    !found_dname &&
+						    aflag ==
+						     DNS_RDATASETATTR_ANSWER)
 						{
 							have_answer = ISC_TRUE;
-							if (rdataset->type ==
-							    dns_rdatatype_cname)
+							if (found_cname &&
+							    cname == NULL)
 								cname = name;
 							name->attributes |=
 							    DNS_NAMEATTR_ANSWER;
@@ -7001,6 +7010,12 @@ answer_response(fetchctx_t *fctx) {
 			     rdataset != NULL;
 			     rdataset = ISC_LIST_NEXT(rdataset, link))
 			{
+				if (rdataset->rdclass != fctx->res->rdclass) {
+					log_formerr(fctx, "Mismatched class "
+						    "in answer");
+					return (DNS_R_FORMERR);
+				}
+
 				/*
 				 * Only pass DNAME or RRSIG(DNAME).
 				 */
@@ -7028,11 +7043,24 @@ answer_response(fetchctx_t *fctx) {
 					return (DNS_R_FORMERR);
 				}
 
-				if (dnamereln != dns_namereln_subdomain) {
+				/*
+				 * If DNAME + synthetic CNAME then the
+				 * namereln is dns_namereln_subdomain.
+				 *
+				 * If synthetic CNAME + DNAME then the
+				 * namereln is dns_namereln_commonancestor
+				 * and the number of label must match the
+				 * DNAME.  This order is not RFC compliant.
+				 */
+
+				if (namereln != dns_namereln_subdomain &&
+				    (namereln != dns_namereln_commonancestor ||
+				     nlabels != dns_name_countlabels(name)))
+				{
 					char qbuf[DNS_NAME_FORMATSIZE];
 					char obuf[DNS_NAME_FORMATSIZE];
 
-					dns_name_format(dqname, qbuf,
+					dns_name_format(qname, qbuf,
 							sizeof(qbuf));
 					dns_name_format(name, obuf,
 							sizeof(obuf));
@@ -7047,7 +7075,7 @@ answer_response(fetchctx_t *fctx) {
 					want_chaining = ISC_TRUE;
 					POST(want_chaining);
 					aflag = DNS_RDATASETATTR_ANSWER;
-					result = dname_target(rdataset, dqname,
+					result = dname_target(rdataset, qname,
 							      nlabels, &fdname);
 					if (result == ISC_R_NOSPACE) {
 						/*
@@ -7064,13 +7092,11 @@ answer_response(fetchctx_t *fctx) {
 
 					dname = dns_fixedname_name(&fdname);
 					if (!is_answertarget_allowed(view,
-						     dqname, rdataset->type,
+						     qname, rdataset->type,
 						     dname, &fctx->domain))
 					{
 						return (DNS_R_SERVFAIL);
 					}
-					dqname = dns_fixedname_name(&fqdname);
-					dns_name_copy(dname, dqname, NULL);
 				} else {
 					/*
 					 * We've found a signature that
@@ -7216,7 +7242,8 @@ answer_response(fetchctx_t *fctx) {
 						rdataset->trust =
 						    dns_trust_additional;
 
-					if (rdataset->type == dns_rdatatype_ns) {
+					if (rdataset->type == dns_rdatatype_ns)
+					{
 						ns_name = name;
 						ns_rdataset = rdataset;
 					}

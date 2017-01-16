@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.8.2.2.2.1 2016/10/14 11:42:50 martin Exp $	*/
+/*	$NetBSD: socket.c,v 1.8.2.2.2.2 2017/01/16 11:56:45 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -2490,15 +2490,18 @@ SocketIoThread(LPVOID ThreadContext) {
 
 		request = lpo->request_type;
 
-		errstatus = 0;
-		if (!bSuccess) {
+		if (!bSuccess)
+			errstatus = GetLastError();
+		else
+			errstatus = 0;
+		if (!bSuccess && errstatus != ERROR_MORE_DATA) {
 			isc_result_t isc_result;
 
 			/*
 			 * Did the I/O operation complete?
 			 */
-			errstatus = GetLastError();
-			isc_result = isc__errno2resultx(errstatus, __FILE__, __LINE__);
+			isc_result = isc__errno2resultx(errstatus,
+							__FILE__, __LINE__);
 
 			LOCK(&sock->lock);
 			CONSISTENT(sock);
