@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.205 2017/01/16 07:33:36 ryo Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.206 2017/01/16 15:44:47 christos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.205 2017/01/16 07:33:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.206 2017/01/16 15:44:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -504,7 +504,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	 */
 	if ((sum = in6_cksum(m, IPPROTO_ICMPV6, off, icmp6len)) != 0) {
 		nd6log(LOG_ERR, "ICMP6 checksum error(%d|%x) %s\n",
-		    icmp6->icmp6_type, sum, ip6_sprintf(ip6buf, &ip6->ip6_src));
+		    icmp6->icmp6_type, sum, IN6_PRINT(ip6buf, &ip6->ip6_src));
 		ICMP6_STATINC(ICMP6_STAT_CHECKSUM);
 		icmp6_ifstat_inc(rcvif, ifs6_in_error);
 		goto freeit;
@@ -864,8 +864,8 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		nd6log(LOG_DEBUG,
 		    "unknown type %d(src=%s, dst=%s, ifid=%d)\n",
 		    icmp6->icmp6_type,
-		    ip6_sprintf(ip6buf, &ip6->ip6_src),
-		    ip6_sprintf(ip6buf2, &ip6->ip6_dst),
+		    IN6_PRINT(ip6buf, &ip6->ip6_src),
+		    IN6_PRINT(ip6buf2, &ip6->ip6_dst),
 		    rcvif ? rcvif->if_index : 0);
 		if (icmp6->icmp6_type < ICMP6_ECHO_REQUEST) {
 			/* ICMPv6 error: MUST deliver it by spec... */
@@ -2136,7 +2136,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 			nd6log(LOG_DEBUG,
 			    "source can't be determined: "
 			    "dst=%s, error=%d\n",
-			    ip6_sprintf(ip6buf, &sin6.sin6_addr), e);
+			    IN6_PRINT(ip6buf, &sin6.sin6_addr), e);
 			goto bad;
 		}
 	}
@@ -2191,8 +2191,8 @@ icmp6_redirect_diag(char *buf, size_t buflen, struct in6_addr *src6, struct in6_
 	char ip6buft[INET6_ADDRSTRLEN];
 
 	snprintf(buf, buflen, "(src=%s dst=%s tgt=%s)",
-	    ip6_sprintf(ip6bufs, src6), ip6_sprintf(ip6bufd, dst6),
-	    ip6_sprintf(ip6buft, tgt6));
+	    IN6_PRINT(ip6bufs, src6), IN6_PRINT(ip6bufd, dst6),
+	    IN6_PRINT(ip6buft, tgt6));
 	return buf;
 }
 
@@ -2244,14 +2244,14 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	if (!IN6_IS_ADDR_LINKLOCAL(&src6)) {
 		nd6log(LOG_ERR,
 		    "ICMP6 redirect sent from %s rejected; "
-		    "must be from linklocal\n", ip6_sprintf(ip6buf, &src6));
+		    "must be from linklocal\n", IN6_PRINT(ip6buf, &src6));
 		goto bad;
 	}
 	if (ip6->ip6_hlim != 255) {
 		nd6log(LOG_ERR,
 		    "ICMP6 redirect sent from %s rejected; "
 		    "hlim=%d (must be 255)\n",
-		    ip6_sprintf(ip6buf, &src6), ip6->ip6_hlim);
+		    IN6_PRINT(ip6buf, &src6), ip6->ip6_hlim);
 		goto bad;
 	}
     {
@@ -2278,7 +2278,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 			nd6log(LOG_ERR,
 			    "ICMP6 redirect rejected; "
 			    "not equal to gw-for-src=%s (must be same): %s\n",
-			    ip6_sprintf(ip6buf, gw6),
+			    IN6_PRINT(ip6buf, gw6),
 			    icmp6_redirect_diag(diagbuf, sizeof(diagbuf),
 			    &src6, &reddst6, &redtgt6));
 			rt_unref(rt);
@@ -2334,7 +2334,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
 		nd6log(LOG_INFO, "lladdrlen mismatch for %s "
 		    "(if %d, icmp6 packet %d): %s\n",
-		    ip6_sprintf(ip6buf, &redtgt6),
+		    IN6_PRINT(ip6buf, &redtgt6),
 		    ifp->if_addrlen, lladdrlen - 2,
 		    icmp6_redirect_diag(diagbuf, sizeof(diagbuf),
 		    &src6, &reddst6, &redtgt6));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.78 2017/01/16 07:33:36 ryo Exp $	*/
+/*	$NetBSD: mld6.c,v 1.79 2017/01/16 15:44:47 christos Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.78 2017/01/16 07:33:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.79 2017/01/16 15:44:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -377,8 +377,8 @@ mld_input(struct mbuf *m, int off)
 		char ip6bufm[INET6_ADDRSTRLEN];
 		log(LOG_INFO,
 		    "mld_input: src %s is not link-local (grp=%s)\n",
-		    ip6_sprintf(ip6bufs,&ip6->ip6_src),
-		    ip6_sprintf(ip6bufm, &mldh->mld_addr));
+		    IN6_PRINT(ip6bufs,&ip6->ip6_src),
+		    IN6_PRINT(ip6bufm, &mldh->mld_addr));
 #endif
 		goto out;
 	}
