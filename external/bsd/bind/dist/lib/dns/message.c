@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.13.2.4 2016/10/14 12:01:28 martin Exp $	*/
+/*	$NetBSD: message.c,v 1.13.2.5 2017/01/16 11:54:44 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -1158,6 +1158,63 @@ update(dns_section_t section, dns_rdataclass_t rdclass) {
 	return (ISC_FALSE);
 }
 
+/*
+ * Check to confirm that all DNSSEC records (DS, NSEC, NSEC3) have
+ * covering RRSIGs.
+ */
+static isc_boolean_t
+auth_signed(dns_namelist_t *section) {
+	dns_name_t *name;
+
+	for (name = ISC_LIST_HEAD(*section);
+	     name != NULL;
+	     name = ISC_LIST_NEXT(name, link))
+	{
+		int auth_dnssec = 0, auth_rrsig = 0;
+		dns_rdataset_t *rds;
+
+		for (rds = ISC_LIST_HEAD(name->list);
+		     rds != NULL;
+		     rds = ISC_LIST_NEXT(rds, link))
+		{
+			switch (rds->type) {
+			case dns_rdatatype_ds:
+				auth_dnssec |= 0x1;
+				break;
+			case dns_rdatatype_nsec:
+				auth_dnssec |= 0x2;
+				break;
+			case dns_rdatatype_nsec3:
+				auth_dnssec |= 0x4;
+				break;
+			case dns_rdatatype_rrsig:
+				break;
+			default:
+				continue;
+			}
+
+			switch (rds->covers) {
+			case dns_rdatatype_ds:
+				auth_rrsig |= 0x1;
+				break;
+			case dns_rdatatype_nsec:
+				auth_rrsig |= 0x2;
+				break;
+			case dns_rdatatype_nsec3:
+				auth_rrsig |= 0x4;
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (auth_dnssec != auth_rrsig)
+			return (ISC_FALSE);
+	}
+
+	return (ISC_TRUE);
+}
+
 static isc_result_t
 getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 	   dns_section_t sectionid, unsigned int options)
@@ -1183,11 +1240,11 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 	best_effort = ISC_TF(options & DNS_MESSAGEPARSE_BESTEFFORT);
 	seen_problem = ISC_FALSE;
 
+	section = &msg->sections[sectionid];
+
 	for (count = 0; count < msg->counts[sectionid]; count++) {
 		int recstart = source->current;
 		isc_boolean_t skip_name_search, skip_type_search;
-
-		section = &msg->sections[sectionid];
 
 		skip_name_search = ISC_FALSE;
 		skip_type_search = ISC_FALSE;
@@ -1362,7 +1419,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			goto cleanup;
 		rdata->rdclass = rdclass;
 		issigzero = ISC_FALSE;
-		if (rdtype == dns_rdatatype_rrsig  &&
+		if (rdtype == dns_rdatatype_rrsig &&
 		    rdata->flags == 0) {
 			covers = dns_rdata_covers(rdata);
 			if (covers == 0)
@@ -1572,6 +1629,19 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		INSIST(free_name == ISC_FALSE);
 		INSIST(free_rdataset == ISC_FALSE);
 	}
+
+	/*
+	 * If any of DS, NSEC or NSEC3 appeared in the
+	 * authority section of a query response without
+	 * a covering RRSIG, FORMERR
+	 */
+	if (sectionid == DNS_SECTION_AUTHORITY &&
+	    msg->opcode == dns_opcode_query &&
+	    ((msg->flags & DNS_MESSAGEFLAG_QR) != 0) &&
+	    ((msg->flags & DNS_MESSAGEFLAG_TC) == 0) &&
+	    !preserve_order &&
+	    !auth_signed(section))
+		DO_FORMERR;
 
 	if (seen_problem)
 		return (DNS_R_RECOVERABLE);
