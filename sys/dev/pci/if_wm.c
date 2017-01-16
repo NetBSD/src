@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.467 2017/01/16 00:14:04 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.468 2017/01/16 09:58:04 maya Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.467 2017/01/16 00:14:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.468 2017/01/16 09:58:04 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7693,8 +7693,6 @@ wm_rxeof(struct wm_rxqueue *rxq)
 	int count = 0;
 	uint32_t status, errors;
 	uint16_t vlantag;
-	uint32_t rsshash __debugused;
-	uint8_t rsstype  __debugused;
 
 	KASSERT(mutex_owned(rxq->rxq_lock));
 
@@ -7711,8 +7709,8 @@ wm_rxeof(struct wm_rxqueue *rxq)
 		len = le16toh(wm_rxdesc_get_pktlen(rxq, i));
 		vlantag = wm_rxdesc_get_vlantag(rxq, i);
 #ifdef WM_DEBUG
-		rsshash = wm_rxdesc_get_rsshash(rxq, i);
-		rsstype = wm_rxdesc_get_rsstype(rxq, i);
+		uint32_t rsshash = wm_rxdesc_get_rsshash(rxq, i);
+		uint8_t rsstype = wm_rxdesc_get_rsstype(rxq, i);
 #endif
 
 		if (!wm_rxdesc_dd(rxq, i, status))
