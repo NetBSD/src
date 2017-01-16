@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.30 2016/12/15 12:04:17 kamil Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.31 2017/01/16 21:35:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.30 2016/12/15 12:04:17 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.31 2017/01/16 21:35:59 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,7 @@ int
 process_read_watchpoint(struct lwp *l, struct ptrace_watchpoint *pw)
 {
 
+	pw->pw_type = PTRACE_PW_TYPE_DBREGS;
 	pw->pw_md.md_address =
 	    (void*)(intptr_t)l->l_md.md_watchpoint[pw->pw_index].address;
 	pw->pw_md.md_condition = l->l_md.md_watchpoint[pw->pw_index].condition;
@@ -208,6 +209,9 @@ process_write_watchpoint(struct lwp *l, struct ptrace_watchpoint *pw)
 {
 
 	if (pw->pw_index > X86_HW_WATCHPOINTS)
+		return (EINVAL);
+
+	if (pw->pw_type != PTRACE_PW_TYPE_DBREGS)
 		return (EINVAL);
 
 	if (pw->pw_md.md_address == 0) {

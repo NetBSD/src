@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.8 2016/12/15 12:04:17 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.9 2017/01/16 21:35:59 kamil Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -68,6 +68,22 @@
 #define __HAVE_PTRACE_WATCHPOINTS
 
 /*
+ * The current list of supported hardware watchpoints
+ */
+#define PTRACE_PW_TYPE_DBREGS	1
+
+struct mdpw {
+	union {
+		/* Debug Registers DR0-3, DR6, DR7 */
+		struct {
+			void	*_md_address;
+			int	 _md_condition;
+			int	 _md_length;
+		} _dbregs;
+	} _type;
+};
+
+/*
  * This MD structure translates into x86_hw_watchpoint
  *
  * pw_address - 0 represents disabled hardware watchpoint
@@ -87,11 +103,11 @@
  * Helper symbols for conditions and length are available in <x86/dbregs.h>
  *
  */
-struct mdpw {
-	void	*md_address;
-	int	 md_condition;
-	int	 md_length;
-};
+
+#define	md_address	_type._dbregs._md_address
+#define	md_condition	_type._dbregs._md_condition
+#define	md_length	_type._dbregs._md_length
+
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
