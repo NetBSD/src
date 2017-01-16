@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.224 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.225 2017/01/16 07:33:36 ryo Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.224 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.225 2017/01/16 07:33:36 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -920,18 +920,19 @@ nd6_assert_purged(struct ifnet *ifp)
 {
 	struct nd_defrouter *dr;
 	struct nd_prefix *pr;
+	char ip6buf[INET6_ADDRSTRLEN] __diagused;
 
 	ND6_RLOCK();
 	ND_DEFROUTER_LIST_FOREACH(dr) {
 		KASSERTMSG(dr->ifp != ifp,
 		    "defrouter %s remains on %s",
-		    ip6_sprintf(&dr->rtaddr), ifp->if_xname);
+		    ip6_sprintf(ip6buf, &dr->rtaddr), ifp->if_xname);
 	}
 
 	ND_PREFIX_LIST_FOREACH(pr) {
 		KASSERTMSG(pr->ndpr_ifp != ifp,
 		    "prefix %s/%d remains on %s",
-		    ip6_sprintf(&pr->ndpr_prefix.sin6_addr),
+		    ip6_sprintf(ip6buf, &pr->ndpr_prefix.sin6_addr),
 		    pr->ndpr_plen, ifp->if_xname);
 	}
 	ND6_UNLOCK();
@@ -1590,9 +1591,10 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 				if (in6_setscope(&llsol, ifp, NULL))
 					goto out;
 				if (!in6_addmulti(&llsol, ifp, &error, 0)) {
+					char ip6buf[INET6_ADDRSTRLEN];
 					nd6log(LOG_ERR, "%s: failed to join "
 					    "%s (errno=%d)\n", if_name(ifp),
-					    ip6_sprintf(&llsol), error);
+					    ip6_sprintf(ip6buf, &llsol), error);
 				}
 			}
 		}
@@ -2341,10 +2343,11 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 	if (ln == NULL) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0 &&
 		    !(ND_IFINFO(ifp)->flags & ND6_IFF_PERFORMNUD)) {
+			char ip6buf[INET6_ADDRSTRLEN];
 			log(LOG_DEBUG,
 			    "nd6_output: can't allocate llinfo for %s "
 			    "(ln=%p, rt=%p)\n",
-			    ip6_sprintf(&dst->sin6_addr), ln, rt);
+			    ip6_sprintf(ip6buf, &dst->sin6_addr), ln, rt);
 			senderr(EIO);	/* XXX: good error? */
 		}
 		goto sendpkt;	/* send anyway */
@@ -2690,9 +2693,10 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 			memset(d, 0, sizeof(*d));
 			sockaddr_in6_init(&d->rtaddr, &dr->rtaddr, 0, 0, 0);
 			if (sa6_recoverscope(&d->rtaddr)) {
+				char ip6buf[INET6_ADDRSTRLEN];
 				log(LOG_ERR,
 				    "scope error in router list (%s)\n",
-				    ip6_sprintf(&d->rtaddr.sin6_addr));
+				    ip6_sprintf(ip6buf, &d->rtaddr.sin6_addr));
 				/* XXX: press on... */
 			}
 			d->flags = dr->flags;
@@ -2726,6 +2730,7 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 	uint8_t *p = NULL, *ps = NULL;
 	uint8_t *pe = NULL;
 	size_t l;
+	char ip6buf[INET6_ADDRSTRLEN];
 
 	if (oldp) {
 		ps = p = (uint8_t*)oldp;
@@ -2749,7 +2754,7 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 			if (sa6_recoverscope(&pfx.prefix)) {
 				log(LOG_ERR,
 				    "scope error in prefix list (%s)\n",
-				    ip6_sprintf(&pfx.prefix.sin6_addr));
+				    ip6_sprintf(ip6buf, &pfx.prefix.sin6_addr));
 				/* XXX: press on... */
 			}
 			pfx.raflags = pr->ndpr_raf;
@@ -2787,12 +2792,13 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 				}
 
 				sockaddr_in6_init(&sin6, &pfr->router->rtaddr,
-				    0, 0, 0);
+					    0, 0, 0);
 				if (sa6_recoverscope(&sin6)) {
 					log(LOG_ERR,
 					    "scope error in "
 					    "prefix list (%s)\n",
-					    ip6_sprintf(&pfr->router->rtaddr));
+					    ip6_sprintf(ip6buf,
+					    &pfr->router->rtaddr));
 				}
 				advrtrs++;
 				memcpy(p, &sin6, sizeof(sin6));
