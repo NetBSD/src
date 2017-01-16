@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.77 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.78 2017/01/16 07:33:36 ryo Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.77 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.78 2017/01/16 07:33:36 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -373,9 +373,12 @@ mld_input(struct mbuf *m, int off)
 		 * though RFC3590 says "SHOULD log" if the source of a query
 		 * is the unspecified address.
 		 */
+		char ip6bufs[INET6_ADDRSTRLEN];
+		char ip6bufm[INET6_ADDRSTRLEN];
 		log(LOG_INFO,
 		    "mld_input: src %s is not link-local (grp=%s)\n",
-		    ip6_sprintf(&ip6->ip6_src), ip6_sprintf(&mldh->mld_addr));
+		    ip6_sprintf(ip6bufs,&ip6->ip6_src),
+		    ip6_sprintf(ip6bufm, &mldh->mld_addr));
 #endif
 		goto out;
 	}
