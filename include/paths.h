@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.42 2015/05/06 23:06:26 pgoyette Exp $	*/
+/*	$NetBSD: paths.h,v 1.43 2017/01/16 19:15:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -67,6 +67,7 @@
 #define	_PATH_DEVCDB	"/var/run/dev.cdb"
 #define	_PATH_DEVDB	"/var/run/dev.db"
 #define	_PATH_DEVNULL	"/dev/null"
+#define	_PATH_DEVZERO	"/dev/zero"
 #define	_PATH_DRUM	"/dev/drum"
 #define	_PATH_ESDB	"/usr/share/i18n/esdb"
 #define	_PATH_FTPUSERS	"/etc/ftpusers"
