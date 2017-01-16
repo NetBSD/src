@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1270 2017/01/15 04:44:01 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1271 2017/01/16 04:45:06 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1278 2017/01/15 04:43:27 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1279 2017/01/16 04:44:38 msaitoh Exp
  */
 
 /*
@@ -2765,6 +2765,7 @@
 #define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT3	0x0a2a		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_1	0x0a2b		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_2	0x0a2e		/* Iris Graphics 5100 */
+#define	PCI_PRODUCT_INTEL_DC_P3520_SSD	0x0a53		/* SSD DC P3520 */
 #define	PCI_PRODUCT_INTEL_HASWELL_HOST_DRAM	0x0c00		/* Haswell Host Bridge, DRAM */
 #define	PCI_PRODUCT_INTEL_HASWELL_PCIE16	0x0c01		/* Haswell PCI-E x16 Controller */
 #define	PCI_PRODUCT_INTEL_HASWELL_PCIE8	0x0c05		/* Haswell PCI-E x8 Controller */
