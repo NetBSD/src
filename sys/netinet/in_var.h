@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.92 2017/01/16 07:33:36 ryo Exp $	*/
+/*	$NetBSD: in_var.h,v 1.93 2017/01/16 15:14:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -380,10 +380,15 @@ extern pktqueue_t *ip_pktq;
 extern int ip_dad_count;		/* Duplicate Address Detection probes */
 #if defined(INET) && NARP > 0
 extern int arp_debug;
-#define arplog(level, fmt, args...) \
-	do { if (arp_debug) log(level, "%s: " fmt, __func__, ##args);} while (0)
+#define ARPLOGADDR(a) in_fmtaddr(_ipbuf, a)
+#define ARPLOG(level, fmt, args...) 					\
+	do {								\
+		char _ipbuf[INET_ADDRSTRLEN] __used; 			\
+		if (arp_debug) 						\
+			log(level, "%s: " fmt, __func__, ##args);	\
+	} while (/*CONSTCOND*/0)
 #else
-#define arplog(level, fmt, args...)
+#define ARPLOG(level, fmt, args...)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.234 2017/01/16 07:33:36 ryo Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.235 2017/01/16 15:14:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.234 2017/01/16 07:33:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.235 2017/01/16 15:14:16 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -689,10 +689,9 @@ arpannounce(struct ifnet *ifp, struct ifaddr *ifa, const uint8_t *enaddr)
 {
 	struct in_ifaddr *ia = ifatoia(ifa);
 	struct in_addr *ip = &IA_SIN(ifa)->sin_addr;
-	char ipbuf[INET_ADDRSTRLEN];
 
 	if (ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED)) {
-		arplog(LOG_DEBUG, "%s not ready\n", in_fmtaddr(ipbuf, *ip));
+		ARPLOG(LOG_DEBUG, "%s not ready\n", ARPLOGADDR(*ip));
 		return;
 	}
 	arprequest(ifp, ip, ip, enaddr);
@@ -1631,8 +1630,8 @@ arp_dad_start(struct ifaddr *ifa)
 	dp->dad_arp_acount = dp->dad_arp_ocount = dp->dad_arp_tcount = 0;
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
-	arplog(LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
-	    in_fmtaddr(ipbuf, ia->ia_addr.sin_addr));
+	ARPLOG(LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
+	    ARPLOGADDR(ia->ia_addr.sin_addr));
 
 	arp_dad_starttimer(dp, cprng_fast32() % (PROBE_WAIT * hz));
 
@@ -1706,7 +1705,7 @@ arp_dad_timer(struct ifaddr *ifa)
 
 	/* timeouted with IFF_{RUNNING,UP} check */
 	if (dp->dad_arp_tcount > dad_maxtry) {
-		arplog(LOG_INFO, "%s: could not run DAD, driver problem?\n",
+		ARPLOG(LOG_INFO, "%s: could not run DAD, driver problem?\n",
 		    if_name(ifa->ifa_ifp));
 
 		TAILQ_REMOVE(&dadq, dp, dad_list);
@@ -1739,10 +1738,9 @@ arp_dad_timer(struct ifaddr *ifa)
 		 */
 		ia->ia4_flags &= ~IN_IFF_TENTATIVE;
 		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
-		arplog(LOG_DEBUG,
+		ARPLOG(LOG_DEBUG,
 		    "%s: DAD complete for %s - no duplicates found\n",
-		    if_name(ifa->ifa_ifp),
-		    in_fmtaddr(ipbuf, ia->ia_addr.sin_addr));
+		    if_name(ifa->ifa_ifp), ARPLOGADDR(ia->ia_addr.sin_addr));
 		dp->dad_arp_announce = ANNOUNCE_NUM;
 		goto announce;
 	} else if (dp->dad_arp_acount < dp->dad_arp_announce) {
@@ -1756,10 +1754,9 @@ announce:
 			arp_dad_starttimer(dp, ANNOUNCE_INTERVAL * hz);
 			goto done;
 		}
-		arplog(LOG_DEBUG,
+		ARPLOG(LOG_DEBUG,
 		    "%s: ARP announcement complete for %s\n",
-		    if_name(ifa->ifa_ifp),
-		    in_fmtaddr(ipbuf, ia->ia_addr.sin_addr));
+		    if_name(ifa->ifa_ifp), ARPLOGADDR(ia->ia_addr.sin_addr));
 	}
 
 	TAILQ_REMOVE(&dadq, dp, dad_list);
