@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.234 2017/01/16 07:33:36 ryo Exp $	*/
+/*	$NetBSD: in6.c,v 1.235 2017/01/16 08:26:30 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.234 2017/01/16 07:33:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.235 2017/01/16 08:26:30 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1775,8 +1775,6 @@ struct in6_ifaddr *
 in6ifa_ifpforlinklocal(const struct ifnet *ifp, const int ignoreflags)
 {
 	struct ifaddr *best_ifa = NULL, *ifa;
-
-	KASSERT(ifp != NULL);
 
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
