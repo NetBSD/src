@@ -1,4 +1,4 @@
-/*	$NetBSD: can_proto.c,v 1.1.2.1 2017/01/15 20:27:33 bouyer Exp $	*/
+/*	$NetBSD: can_proto.c,v 1.1.2.2 2017/01/16 18:03:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can_proto.c,v 1.1.2.1 2017/01/15 20:27:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can_proto.c,v 1.1.2.2 2017/01/16 18:03:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -57,6 +57,7 @@ const struct protosw cansw[] = {
 	.pr_init = can_init,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_usrreqs = &can_usrreqs,
+	.pr_ctloutput = &can_ctloutput,
 }
 };
 

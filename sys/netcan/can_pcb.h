@@ -1,4 +1,4 @@
-/*	$NetBSD: can_pcb.h,v 1.1.2.1 2017/01/15 20:27:33 bouyer Exp $	*/
+/*	$NetBSD: can_pcb.h,v 1.1.2.2 2017/01/16 18:03:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -49,8 +49,9 @@ struct canpcb {
 	LIST_ENTRY(canpcb) canp_lhash;
 	TAILQ_ENTRY(canpcb) canp_queue;
 	int		canp_state;
+	int		canp_flags;
 	struct		socket *canp_socket;	/* back pointer to socket */
-	struct		ifnet *canp_ifp;
+	struct		ifnet *canp_ifp; /* interface this socket is bound to */
 	struct		canpcbtable *canp_table;
 };
 
@@ -68,12 +69,15 @@ struct canpcbtable {
 	u_long	canpt_connecthash;
 };
 
-/* states in inp_state: */
+/* states in canp_state: */
 #define	CANP_ATTACHED		0
 #define	CANP_BOUND		1
 #define	CANP_CONNECTED		2
 
-/* flags in inp_flags: */
+/* flags in canp_flags: */
+#define CANP_NO_LOOPBACK	0x0001 /* local loopback disabled */
+#define CANP_RECEIVE_OWN	0x0002 /* receive own message */
+
 
 #define	sotocanpcb(so)		((struct canpcb *)(so)->so_pcb)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.1 2017/01/15 20:27:33 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.2 2017/01/16 18:03:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.1 2017/01/15 20:27:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.2 2017/01/16 18:03:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
+#include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/socket.h>
@@ -119,25 +120,35 @@ can_output(struct mbuf *m, struct canpcb *canp)
 {
 	struct ifnet *ifp;
 	int error = 0;
+	struct m_tag *sotag;
 
-	if (canp == 0) {
+	if (canp == NULL) {
 		printf("can_output: no pcb\n");
 		error = EINVAL;
-		goto done;
+		return error;
 	}
 	ifp = canp->canp_ifp;
 	if (ifp == 0) {
 		error = EDESTADDRREQ;
-		goto done;
+		goto bad;
 	}
+	sotag = m_tag_get(PACKET_TAG_SO, sizeof(struct socket *), PR_NOWAIT);
+	if (sotag == NULL) {
+		ifp->if_oerrors++;
+		error = ENOMEM;
+		goto bad;
+	}
+	*(struct socket **)(sotag + 1) = canp->canp_socket;
+	m_tag_prepend(m, sotag);
+
 	if (m->m_len <= ifp->if_mtu) {
 		can_output_cnt++;
 		error = (*ifp->if_output)(ifp, m, NULL, 0);
-		goto done;
-	} else error = EMSGSIZE;
-
+		return error;
+	} else
+		error = EMSGSIZE;
+bad:
 	m_freem(m);
-done:
 	return (error);
 }
 
@@ -180,6 +191,9 @@ canintr(void)
 
 	struct sockaddr_can from;
 	struct canpcb   *canp;
+	struct m_tag	*sotag;
+	struct socket	*so;
+	struct canpcb	*sender_canp;
 
 	mutex_enter(softnet_lock);
 	for (;;) {
@@ -187,9 +201,22 @@ canintr(void)
 		IF_DEQUEUE(&canintrq, m);
 		IFQ_UNLOCK(&canintrq);
 
-		if (m == 0)	/* no more queued packets */
+		if (m == NULL)	/* no more queued packets */
 			break;
 
+		sotag = m_tag_find(m, PACKET_TAG_SO, NULL);
+		if (sotag) {
+			so = *(struct socket **)(sotag + 1);
+			sender_canp = sotocanpcb(so);
+			m_tag_delete(m, sotag);
+			/* if the sender doesn't want loopback, don't do it */
+			if (sender_canp->canp_flags & CANP_NO_LOOPBACK) {
+				m_freem(m);
+				continue;
+			}
+		} else {
+			sender_canp = NULL;
+		}
 		memset(&from, 0, sizeof(struct sockaddr_can));
 		rcv_ifindex = m->m_pkthdr.rcvif_index;
 #if 0
@@ -201,10 +228,17 @@ canintr(void)
 
 		TAILQ_FOREACH(canp, &cbtable.canpt_queue, canp_queue) {
 			struct mbuf *mc;
+
+			/* don't loop back to sockets on other interfaces */
 			if (canp->canp_ifp != NULL &&
 			    canp->canp_ifp->if_index != rcv_ifindex) {
 				continue;
 			}
+			/* don't loop back to myself if I don't want it */
+			if (canp == sender_canp &&
+			    (canp->canp_flags & CANP_RECEIVE_OWN) == 0)
+				continue;
+
 			if (TAILQ_NEXT(canp, canp_queue) != NULL) {
 				/*
 				 * we can't be sure we won't need 
@@ -652,6 +686,97 @@ can_ctlinput(int cmd, struct sockaddr *sa, void *v)
 	return NULL;
 }
 #endif
+
+static int
+can_raw_getop(struct canpcb *canp, struct sockopt *sopt)
+{
+	int optval = 0;
+	int error;
+
+	switch (sopt->sopt_name) {
+	case CAN_RAW_LOOPBACK:
+		optval = (canp->canp_flags & CANP_NO_LOOPBACK) ? 0 : 1;
+		error = sockopt_set(sopt, &optval, sizeof(optval));
+		break;
+	case CAN_RAW_RECV_OWN_MSGS: 
+		optval = (canp->canp_flags & CANP_RECEIVE_OWN) ? 1 : 0;
+		error = sockopt_set(sopt, &optval, sizeof(optval));
+		break;
+	default:
+		error = ENOPROTOOPT;
+		break;
+	}
+	return error;
+}
+
+static int
+can_raw_setop(struct canpcb *canp, struct sockopt *sopt)
+{
+	int optval = 0;
+	int error;
+
+	switch (sopt->sopt_name) {
+	case CAN_RAW_LOOPBACK:
+		error = sockopt_getint(sopt, &optval);
+		if (error == 0) {
+			if (optval) {
+				canp->canp_flags &= ~CANP_NO_LOOPBACK;
+			} else {
+				canp->canp_flags |= CANP_NO_LOOPBACK;
+			}
+		}
+		break;
+	case CAN_RAW_RECV_OWN_MSGS: 
+		error = sockopt_getint(sopt, &optval);
+		if (error == 0) {
+			if (optval) {
+				canp->canp_flags |= CANP_RECEIVE_OWN;
+			} else {
+				canp->canp_flags &= ~CANP_RECEIVE_OWN;
+			}
+		}
+		break;
+	default:
+		error = ENOPROTOOPT;
+		break;
+	}
+	return error;
+}
+
+/*
+ * Called by getsockopt and setsockopt.
+ *
+ */
+int
+can_ctloutput(int op, struct socket *so, struct sockopt *sopt)
+{
+	struct canpcb *canp;
+	int error;
+	int s;
+
+	if (so->so_proto->pr_domain->dom_family != PF_CAN)	
+		return EAFNOSUPPORT;
+
+	if (sopt->sopt_level != SOL_CAN_RAW)
+		return EINVAL;
+
+	s = splsoftnet();
+	canp = sotocanpcb(so);
+	if (canp == NULL) {
+		splx(s);
+		return ECONNRESET;
+	}
+
+	if (op == PRCO_SETOPT) {
+		error = can_raw_setop(canp, sopt);
+	} else if (op ==  PRCO_GETOPT) {
+		error = can_raw_getop(canp, sopt);
+	} else {
+		error = EINVAL;
+	}
+	splx(s);
+	return error;
+}
 
 PR_WRAP_USRREQS(can)
 #define	can_attach	can_attach_wrapper
