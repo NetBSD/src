@@ -1,4 +1,4 @@
-/*	$NetBSD: t_can.c,v 1.1.2.1 2017/01/15 20:29:01 bouyer Exp $	*/
+/*	$NetBSD: t_can.c,v 1.1.2.2 2017/01/16 18:04:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_can.c,v 1.1.2.1 2017/01/15 20:29:01 bouyer Exp $");
+__RCSID("$NetBSD: t_can.c,v 1.1.2.2 2017/01/16 18:04:27 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: t_can.c,v 1.1.2.1 2017/01/15 20:29:01 bouyer Exp $");
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <sys/sockio.h>
+#include <sys/param.h>
 
 #include <atf-c.h>
 #include <assert.h>
@@ -119,6 +120,121 @@ ATF_TC_BODY(canlocreate, tc)
 	}
 }
 
+ATF_TC(cannoown);
+ATF_TC_HEAD(cannoown, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "check that CAN sockets don't gets its own message");
+	atf_tc_set_md_var(tc, "timeout", "5");
+}
+
+ATF_TC_BODY(cannoown, tc)
+{
+	const char ifname[] = "canlo0";
+	int s, rv, v, vlen;
+	struct sockaddr_can sa;
+	int salen;
+	struct ifreq ifr;
+	struct can_frame cf_send, cf_receive;
+	fd_set rfds;
+	struct timeval tmout;
+
+	rump_init();
+	cancfg_rump_createif(ifname);
+
+	s = -1;
+	if ((s = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
+		atf_tc_fail_errno("CAN socket");
+	}
+
+	strcpy(ifr.ifr_name, ifname );
+	if (rump_sys_ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
+		atf_tc_fail_errno("SIOCGIFINDEX");
+	}
+	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
+	    ifname, ifr.ifr_ifindex);
+
+	sa.can_family = AF_CAN;
+	sa.can_ifindex = ifr.ifr_ifindex;
+
+	if (rump_sys_bind(s, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
+		atf_tc_fail_errno("bind");
+	}
+
+	/* check sockopt CAN_RAW_LOOPBACK */
+	vlen = sizeof(v);
+	if (rump_sys_getsockopt(s, SOL_CAN_RAW, CAN_RAW_LOOPBACK,
+	    &v, &vlen) < 0) {
+		atf_tc_fail_errno("getsockopt(CAN_RAW_LOOPBACK)");
+	}
+	ATF_CHECK_MSG(vlen == sizeof(v), "getsockopt(CAN_RAW_LOOPBACK) returns wrong len %d", vlen);
+	ATF_CHECK_MSG(v == 1, "CAN_RAW_LOOPBACK is not on by default");
+
+	/* check sockopt CAN_RAW_RECV_OWN_MSGS, and set it */
+	vlen = sizeof(v);
+	if (rump_sys_getsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, &vlen) < 0) {
+		atf_tc_fail_errno("getsockopt(CAN_RAW_RECV_OWN_MSGS)");
+	}
+	ATF_CHECK_MSG(vlen == sizeof(v), "getsockopt(CAN_RAW_RECV_OWN_MSGS) returns wrong len %d", vlen);
+	ATF_CHECK_MSG(v == 0, "CAN_RAW_RECV_OWN_MSGS is not off by default");
+
+	/*
+	 * send a single byte message, but make sure remaining payload is
+	 * not 0.
+	 */
+
+	memset(&cf_send, 0, sizeof(cf_send));
+	cf_send.can_id = 1;
+	cf_send.can_dlc = 1;
+	cf_send.data[0] = 0xde;
+	cf_send.data[1] = 0xad;
+	cf_send.data[2] = 0xbe;
+	cf_send.data[3] = 0xef;
+
+	if (rump_sys_write(s, &cf_send, sizeof(cf_send) - 7) < 0) {
+		atf_tc_fail_errno("write");
+	}
+
+	/* now try to read */
+
+	memset(&cf_receive, 0, sizeof(cf_receive));
+	FD_ZERO(&rfds);
+	FD_SET(s, &rfds);
+	/* we should receive no message; wait for 2 seconds */
+	tmout.tv_sec = 2;
+	tmout.tv_usec = 0;
+	rv = rump_sys_select(s + 1, &rfds, NULL, NULL, &tmout);
+	switch(rv) {
+	case -1:
+		atf_tc_fail_errno("select");
+		break;
+	case 0:
+		/* timeout: expected case */
+		return;
+	default: break;
+	}
+	salen = sizeof(sa);
+	ATF_CHECK_MSG(FD_ISSET(s, &rfds), "select returns but s not in set");
+	if (( rv = rump_sys_recvfrom(s, &cf_receive, sizeof(cf_receive),
+	    0, (struct sockaddr *)&sa, &salen)) < 0) {
+		atf_tc_fail_errno("recvfrom");
+	}
+
+	ATF_CHECK_MSG(rv > 0, "short read on socket");
+
+	ATF_CHECK_MSG(memcmp(&cf_send, &cf_receive, sizeof(cf_send)) == 0,
+	    "recvfrom packet is not what we sent");
+	ATF_CHECK_MSG(sa.can_family == AF_CAN,
+	    "recvfrom provided wrong %d family", sa.can_family);
+	ATF_CHECK_MSG(salen == sizeof(sa),
+	    "recvfrom provided wrong size %d (!= %d)", salen, sizeof(sa));
+	ATF_CHECK_MSG(sa.can_ifindex == ifr.ifr_ifindex,
+	   "recvfrom provided wrong ifindex %d (!= %d)",
+	    sa.can_ifindex, ifr.ifr_ifindex);
+	atf_tc_fail("we got our own message");
+}
+
 ATF_TC(canwritelo);
 ATF_TC_HEAD(canwritelo, tc)
 {
@@ -130,7 +246,7 @@ ATF_TC_HEAD(canwritelo, tc)
 ATF_TC_BODY(canwritelo, tc)
 {
 	const char ifname[] = "canlo0";
-	int s, rv;
+	int s, rv, v, vlen;
 	struct sockaddr_can sa;
 	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive;
@@ -144,7 +260,7 @@ ATF_TC_BODY(canwritelo, tc)
 	}
 
 	strcpy(ifr.ifr_name, ifname );
-	if ((rv = rump_sys_ioctl(s, SIOCGIFINDEX, &ifr)) < 0) {
+	if (rump_sys_ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
 		atf_tc_fail_errno("SIOCGIFINDEX");
 	}
 	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
@@ -153,9 +269,39 @@ ATF_TC_BODY(canwritelo, tc)
 	sa.can_family = AF_CAN;
 	sa.can_ifindex = ifr.ifr_ifindex;
 
-	if ((rv = rump_sys_bind(s, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
+	if (rump_sys_bind(s, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
 		atf_tc_fail_errno("bind");
 	}
+
+	/* check sockopt CAN_RAW_LOOPBACK */
+	vlen = sizeof(v);
+	if (rump_sys_getsockopt(s, SOL_CAN_RAW, CAN_RAW_LOOPBACK,
+	    &v, &vlen) < 0) {
+		atf_tc_fail_errno("getsockopt(CAN_RAW_LOOPBACK)");
+	}
+	ATF_CHECK_MSG(vlen == sizeof(v), "getsockopt(CAN_RAW_LOOPBACK) returns wrong len %d", vlen);
+	ATF_CHECK_MSG(v == 1, "CAN_RAW_LOOPBACK is not on by default");
+
+	/* check sockopt CAN_RAW_RECV_OWN_MSGS, and set it */
+	vlen = sizeof(v);
+	if (rump_sys_getsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, &vlen) < 0) {
+		atf_tc_fail_errno("getsockopt(CAN_RAW_RECV_OWN_MSGS)");
+	}
+	ATF_CHECK_MSG(vlen == sizeof(v), "getsockopt(CAN_RAW_RECV_OWN_MSGS) returns wrong len %d", vlen);
+	ATF_CHECK_MSG(v == 0, "CAN_RAW_RECV_OWN_MSGS is not off by default");
+	v = 1;
+	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, sizeof(v)) < 0) {
+		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
+	}
+	/* check sockopt CAN_RAW_RECV_OWN_MSGS again */
+	vlen = sizeof(v);
+	if (rump_sys_getsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, &vlen) < 0) {
+		atf_tc_fail_errno("getsockopt(CAN_RAW_RECV_OWN_MSGS)");
+	}
+	ATF_CHECK_MSG(v == 1, "CAN_RAW_RECV_OWN_MSGS is not on");
 
 	/*
 	 * send a single byte message, but make sure remaining payload is
@@ -240,7 +386,7 @@ ATF_TC_HEAD(cansendtolo, tc)
 ATF_TC_BODY(cansendtolo, tc)
 {
 	const char ifname[] = "canlo0";
-	int s, rv;
+	int s, v, rv;
 	struct sockaddr_can sa;
 	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive;
@@ -251,6 +397,12 @@ ATF_TC_BODY(cansendtolo, tc)
 	s = -1;
 	if ((s = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		atf_tc_fail_errno("CAN socket");
+	}
+
+	v = 1;
+	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, sizeof(v)) < 0) {
+		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
 	}
 
 	strcpy(ifr.ifr_name, ifname );
@@ -309,7 +461,7 @@ ATF_TC_HEAD(cansendtowrite, tc)
 ATF_TC_BODY(cansendtowrite, tc)
 {
 	const char ifname[] = "canlo0";
-	int s, rv;
+	int s, rv, v;
 	struct sockaddr_can sa;
 	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive;
@@ -320,6 +472,11 @@ ATF_TC_BODY(cansendtowrite, tc)
 	s = -1;
 	if ((s = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		atf_tc_fail_errno("CAN socket");
+	}
+	v = 1;
+	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, sizeof(v)) < 0) {
+		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
 	}
 
 	strcpy(ifr.ifr_name, ifname );
@@ -381,6 +538,7 @@ ATF_TC_BODY(canreadlocal, tc)
 	const char ifname[] = "canlo0";
 	int s1, rv1;
 	int s2, rv2;
+	int v;
 	struct sockaddr_can sa;
 	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive1, cf_receive2;
@@ -407,6 +565,11 @@ ATF_TC_BODY(canreadlocal, tc)
 	s2 = -1;
 	if ((s2 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		atf_tc_fail_errno("CAN socket");
+	}
+	v = 1;
+	if (rump_sys_setsockopt(s2, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, sizeof(v)) < 0) {
+		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
 	}
 
 	strcpy(ifr.ifr_name, ifname );
@@ -467,6 +630,7 @@ ATF_TC_BODY(canrecvfrom, tc)
 	const char ifname[] = "canlo0";
 	int s1, rv1;
 	int s2, rv2;
+	int v;
 	struct sockaddr_can sa;
 	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive1, cf_receive2;
@@ -494,6 +658,11 @@ ATF_TC_BODY(canrecvfrom, tc)
 	s2 = -1;
 	if ((s2 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		atf_tc_fail_errno("CAN socket");
+	}
+	v = 1;
+	if (rump_sys_setsockopt(s2, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, sizeof(v)) < 0) {
+		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
 	}
 
 	strcpy(ifr.ifr_name, ifname );
@@ -560,6 +729,7 @@ ATF_TC_BODY(canbindfilter, tc)
 	const char ifname2[] = "canlo1";
 	int s1, rv1;
 	int s2, rv2;
+	int v;
 	struct sockaddr_can sa;
 	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive1, cf_receive2;
@@ -584,6 +754,11 @@ ATF_TC_BODY(canbindfilter, tc)
 	if ((s1 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		atf_tc_fail_errno("CAN socket");
 	}
+	v = 1;
+	if (rump_sys_setsockopt(s1, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, sizeof(v)) < 0) {
+		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
+	}
 
 	strcpy(ifr.ifr_name, ifname );
 	if ((rv1 = rump_sys_ioctl(s1, SIOCGIFINDEX, &ifr)) < 0) {
@@ -604,6 +779,11 @@ ATF_TC_BODY(canbindfilter, tc)
 	s2 = -1;
 	if ((s2 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		atf_tc_fail_errno("CAN socket");
+	}
+	v = 1;
+	if (rump_sys_setsockopt(s2, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, sizeof(v)) < 0) {
+		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
 	}
 
 	strcpy(ifr.ifr_name, ifname2);
@@ -672,10 +852,166 @@ ATF_TC_BODY(canbindfilter, tc)
 	atf_tc_fail("we got message from other interface");
 }
 
+ATF_TC(cannoloop);
+ATF_TC_HEAD(cannoloop, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "check that disabling loopback works");
+	atf_tc_set_md_var(tc, "timeout", "5");
+}
+
+ATF_TC_BODY(cannoloop, tc)
+{
+	const char ifname[] = "canlo0";
+	int s1, rv1;
+	int s2, rv2;
+	int v, vlen;
+	struct sockaddr_can sa;
+	struct ifreq ifr;
+	struct can_frame cf_send, cf_receive1, cf_receive2;
+	socklen_t salen;
+	fd_set rfds;
+	struct timeval tmout;
+
+	rump_init();
+	cancfg_rump_createif(ifname);
+
+	memset(&cf_send, 0, sizeof(cf_send));
+	cf_send.can_id = 1;
+	cf_send.can_dlc = 8;
+	cf_send.data[0] = 0xde;
+	cf_send.data[1] = 0xad;
+	cf_send.data[2] = 0xbe;
+	cf_send.data[3] = 0xef;
+
+
+	s1 = -1;
+	if ((s1 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
+		atf_tc_fail_errno("CAN socket");
+	}
+	v = 1;
+	if (rump_sys_setsockopt(s1, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, sizeof(v)) < 0) {
+		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
+	}
+	v = 0;
+	if (rump_sys_setsockopt(s1, SOL_CAN_RAW, CAN_RAW_LOOPBACK,
+	    &v, sizeof(v)) < 0) {
+		atf_tc_fail_errno("setsockopt(LOOPBACK)");
+	}
+	v = -1;
+	vlen = sizeof(v);
+	if (rump_sys_getsockopt(s1, SOL_CAN_RAW, CAN_RAW_LOOPBACK,
+	    &v, &vlen) < 0) {
+		atf_tc_fail_errno("getsockopt(CAN_RAW_LOOPBACK)");
+	}
+	ATF_CHECK_MSG(vlen == sizeof(v), "getsockopt(CAN_RAW_LOOPBACK) returns wrong len %d", vlen);
+	ATF_CHECK_MSG(v == 0, "CAN_RAW_LOOPBACK is not off");
+
+	strcpy(ifr.ifr_name, ifname );
+	if ((rv1 = rump_sys_ioctl(s1, SIOCGIFINDEX, &ifr)) < 0) {
+		atf_tc_fail_errno("SIOCGIFINDEX (1)");
+	}
+	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
+	    ifname, ifr.ifr_ifindex);
+
+	sa.can_family = AF_CAN;
+	sa.can_ifindex = ifr.ifr_ifindex;
+
+	if ((rv1 = rump_sys_bind(s1, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
+		atf_tc_fail_errno("bind (1)");
+	}
+
+	/* create a second socket */
+
+	s2 = -1;
+	if ((s2 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
+		atf_tc_fail_errno("CAN socket");
+	}
+	v = 1;
+	if (rump_sys_setsockopt(s2, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, sizeof(v)) < 0) {
+		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
+	}
+
+	if (rump_sys_write(s1, &cf_send, sizeof(cf_send)) < 0) {
+		atf_tc_fail_errno("write");
+	}
+
+
+	/* now check the sockets */
+	memset(&cf_receive1, 0, sizeof(cf_receive1));
+	memset(&cf_receive2, 0, sizeof(cf_receive2));
+	FD_ZERO(&rfds);
+	FD_SET(s1, &rfds);
+	FD_SET(s2, &rfds);
+	/* we should receive no message; wait for 2 seconds */
+	tmout.tv_sec = 2;
+	tmout.tv_usec = 0;
+	rv1 = rump_sys_select(MAX(s1,s2) + 1, &rfds, NULL, NULL, &tmout);
+	switch(rv1) {
+	case -1:
+		atf_tc_fail_errno("select");
+		break;
+	case 0:
+		/* timeout: expected case */
+		return;
+	default: break;
+	}
+	salen = sizeof(sa);
+	ATF_CHECK_MSG(FD_ISSET(s1, &rfds) || FD_ISSET(s2, &rfds),
+	   "select returns but s1 nor s2 is in set");
+	if (FD_ISSET(s1, &rfds)) {
+		if (( rv1 = rump_sys_recvfrom(s1, &cf_receive1,
+		    sizeof(cf_receive1), 0,
+		    (struct sockaddr *)&sa, &salen)) < 0) {
+			atf_tc_fail_errno("recvfrom");
+		}
+
+		ATF_CHECK_MSG(rv1 > 0, "short read on socket");
+
+		ATF_CHECK_MSG(memcmp(&cf_send, &cf_receive1,
+		    sizeof(cf_send)) == 0,
+		    "recvfrom (1) packet is not what we sent");
+		ATF_CHECK_MSG(sa.can_family == AF_CAN,
+		    "recvfrom provided wrong %d family", sa.can_family);
+		ATF_CHECK_MSG(salen == sizeof(sa),
+		    "recvfrom provided wrong size %d (!= %d)",
+		    salen, sizeof(sa));
+		ATF_CHECK_MSG(sa.can_ifindex == ifr.ifr_ifindex,
+		   "recvfrom provided wrong ifindex %d (!= %d)",
+		    sa.can_ifindex, ifr.ifr_ifindex);
+		atf_tc_fail_nonfatal("we got message on s1");
+	}
+	if (FD_ISSET(s2, &rfds)) {
+		if (( rv2 = rump_sys_recvfrom(s2, &cf_receive2,
+		    sizeof(cf_receive2), 0,
+		    (struct sockaddr *)&sa, &salen)) < 0) {
+			atf_tc_fail_errno("recvfrom");
+		}
+
+		ATF_CHECK_MSG(rv2 > 0, "short read on socket");
+
+		ATF_CHECK_MSG(memcmp(&cf_send, &cf_receive2,
+		    sizeof(cf_send)) == 0,
+		    "recvfrom (2) packet is not what we sent");
+		ATF_CHECK_MSG(sa.can_family == AF_CAN,
+		    "recvfrom provided wrong %d family", sa.can_family);
+		ATF_CHECK_MSG(salen == sizeof(sa),
+		    "recvfrom provided wrong size %d (!= %d)",
+		    salen, sizeof(sa));
+		ATF_CHECK_MSG(sa.can_ifindex == ifr.ifr_ifindex,
+		   "recvfrom provided wrong ifindex %d (!= %d)",
+		    sa.can_ifindex, ifr.ifr_ifindex);
+		atf_tc_fail_nonfatal("we got message on s2");
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
         ATF_TP_ADD_TC(tp, canlocreate);
+        ATF_TP_ADD_TC(tp, cannoown);
         ATF_TP_ADD_TC(tp, canwritelo);
         ATF_TP_ADD_TC(tp, canwriteunbound);
         ATF_TP_ADD_TC(tp, cansendtolo);
@@ -683,6 +1019,7 @@ ATF_TP_ADD_TCS(tp)
         ATF_TP_ADD_TC(tp, canreadlocal);
         ATF_TP_ADD_TC(tp, canrecvfrom);
         ATF_TP_ADD_TC(tp, canbindfilter);
+        ATF_TP_ADD_TC(tp, cannoloop);
 	return atf_no_error();
 }
 
