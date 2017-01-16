@@ -1,4 +1,4 @@
-/*	$NetBSD: can_var.h,v 1.1.2.1 2017/01/15 20:27:33 bouyer Exp $	*/
+/*	$NetBSD: can_var.h,v 1.1.2.2 2017/01/16 18:03:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ extern const struct pr_usrreqs can_usrreqs;
 
 void can_input(struct ifnet *, struct mbuf *);
 void *can_ctlinput(int, struct sockaddr *, void *);
-int can_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int can_ctloutput(int, struct socket *, struct sockopt *);
 void can_init(void);
 void canintr(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: can.h,v 1.1.2.2 2017/01/15 21:01:34 bouyer Exp $	*/
+/*	$NetBSD: can.h,v 1.1.2.3 2017/01/16 18:03:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -77,8 +77,6 @@ struct can_frame {
 #define CAN_RAW         1 /* RAW sockets */
 #define CAN_NPROTO	2
 
-#define SOL_CAN_BASE 100
-
 /*
  * Socket address, CAN style
  */
@@ -94,11 +92,14 @@ struct sockaddr_can {
 };
 
 /*
- * Options for use with [gs]etsockopt
+ * Options for use with [gs]etsockopt for raw sockets
  * First word of comment is data type; bool is stored in int.
  */
+#define SOL_CAN_RAW CAN_RAW
 
-#define CAN_RAW_FILTER	1 /* struct can_filter: set filter */
+#define CAN_RAW_FILTER	1	/* struct can_filter: set filter */
+#define CAN_RAW_LOOPBACK 4	/* bool: loopback to local sockets (default:on) */
+#define CAN_RAW_RECV_OWN_MSGS 5	/* bool: receive my own msgs (default:off) */
 
 /*
  * CAN ID based filter
