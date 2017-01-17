@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.30 2016/12/28 07:32:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.31 2017/01/17 01:25:21 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.30 2016/12/28 07:32:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.31 2017/01/17 01:25:21 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1451,12 +1451,12 @@ vioif_rx_filter(struct vioif_softc *sc)
 	while (nentries++, enm != NULL) {
 		if (nentries >= VIRTIO_NET_CTRL_MAC_MAXENTRIES) {
 			allmulti = 1;
-			goto set;
+			goto set_unlock;
 		}
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			   ETHER_ADDR_LEN)) {
 			allmulti = 1;
-			goto set;
+			goto set_unlock;
 		}
 		memcpy(sc->sc_ctrl_mac_tbl_mc->macs[nentries],
 		       enm->enm_addrlo, ETHER_ADDR_LEN);
@@ -1464,9 +1464,10 @@ vioif_rx_filter(struct vioif_softc *sc)
 	}
 	rxfilter = 1;
 
-set:
+set_unlock:
 	ETHER_UNLOCK(&sc->sc_ethercom);
 
+set:
 	if (rxfilter) {
 		sc->sc_ctrl_mac_tbl_uc->nentries = 0;
 		sc->sc_ctrl_mac_tbl_mc->nentries = nentries;
