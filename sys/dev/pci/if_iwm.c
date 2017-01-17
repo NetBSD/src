@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.63 2017/01/17 08:44:31 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.64 2017/01/17 08:47:32 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.63 2017/01/17 08:44:31 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.64 2017/01/17 08:47:32 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -2585,6 +2585,19 @@ iwm_init_channel_map(struct iwm_softc *sc, const uint16_t * const nvm_ch_flags,
 
 	for (ch_idx = 0; ch_idx < nchan; ch_idx++) {
 		ch_flags = le16_to_cpup(nvm_ch_flags + ch_idx);
+		aprint_debug_dev(sc->sc_dev,
+		    "Ch. %d: %svalid %cibss %s %cradar %cdfs"
+		    " %cwide %c40MHz %c80MHz %c160MHz\n",
+		    nvm_channels[ch_idx],
+		    ch_flags & IWM_NVM_CHANNEL_VALID ? "" : "in",
+		    ch_flags & IWM_NVM_CHANNEL_IBSS ? '+' : '-',
+		    ch_flags & IWM_NVM_CHANNEL_ACTIVE ? "active" : "passive",
+		    ch_flags & IWM_NVM_CHANNEL_RADAR ? '+' : '-',
+		    ch_flags & IWM_NVM_CHANNEL_DFS ? '+' : '-',
+		    ch_flags & IWM_NVM_CHANNEL_WIDE ? '+' : '-',
+		    ch_flags & IWM_NVM_CHANNEL_40MHZ ? '+' : '-',
+		    ch_flags & IWM_NVM_CHANNEL_80MHZ ? '+' : '-',
+		    ch_flags & IWM_NVM_CHANNEL_160MHZ ? '+' : '-');
 
 		if (ch_idx >= IWM_NUM_2GHZ_CHANNELS &&
 		    !data->sku_cap_band_52GHz_enable)
@@ -2592,10 +2605,8 @@ iwm_init_channel_map(struct iwm_softc *sc, const uint16_t * const nvm_ch_flags,
 
 		if (!(ch_flags & IWM_NVM_CHANNEL_VALID)) {
 			DPRINTF(("Ch. %d Flags %x [%sGHz] - No traffic\n",
-			    iwm_nvm_channels[ch_idx],
-			    ch_flags,
-			    (ch_idx >= IWM_NUM_2GHZ_CHANNELS) ?
-			    "5.2" : "2.4"));
+			    nvm_channels[ch_idx], ch_flags,
+			    (ch_idx >= IWM_NUM_2GHZ_CHANNELS) ? "5" : "2.4"));
 			continue;
 		}
 
