@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.61 2017/01/13 11:21:47 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.62 2017/01/17 08:35:16 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.61 2017/01/13 11:21:47 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.62 2017/01/17 08:35:16 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -7221,12 +7221,12 @@ iwm_intr(void *arg)
 		while (tmp) {
 			r1 |= tmp;
 			ict[sc->ict_cur] = 0;	/* Acknowledge. */
-			bus_dmamap_sync(sc->sc_dmat, sc->ict_dma.map,
-			    &ict[sc->ict_cur] - ict, sizeof(*ict),
-			    BUS_DMASYNC_PREWRITE);
 			sc->ict_cur = (sc->ict_cur + 1) % IWM_ICT_COUNT;
 			tmp = htole32(ict[sc->ict_cur]);
 		}
+
+		bus_dmamap_sync(sc->sc_dmat, sc->ict_dma.map,
+		    0, sc->ict_dma.size, BUS_DMASYNC_PREWRITE);
 
 		/* this is where the fun begins.  don't ask */
 		if (r1 == 0xffffffff)
