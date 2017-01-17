@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_asconf.c,v 1.9 2017/01/16 15:44:47 christos Exp $ */
+/*	$NetBSD: sctp_asconf.c,v 1.10 2017/01/17 01:24:44 ozaki-r Exp $ */
 /*	$KAME: sctp_asconf.c,v 1.25 2005/06/16 20:44:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.9 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.10 2017/01/17 01:24:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1667,7 +1667,9 @@ sctp_addr_mgmt_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	 * note: this would leave the address on both inp and asoc lists
 	 */
 	if (ifa->ifa_addr->sa_family == AF_INET6) {
+#ifdef SCTP_DEBUG
 		char ip6buf[INET6_ADDRSTRLEN];
+#endif /* SCTP_DEBUG */
 		struct sockaddr_in6 *sin6;
 
 		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
