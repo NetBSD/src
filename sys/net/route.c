@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.186 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.187 2017/01/17 07:53:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.186 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.187 2017/01/17 07:53:06 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -909,7 +909,7 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 			 * this destination.  Should check about netmask!!!
 			 */
 			/*
-			 * FIXME NOMPAFE: the rtentry is updated with the existence
+			 * FIXME NOMPSAFE: the rtentry is updated with the existence
 			 * of refeferences of it.
 			 */
 			error = rt_setgate(rt, gateway);
@@ -1486,7 +1486,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		break;
 	case RTM_ADD:
 		/*
-		 * FIXME NOMPAFE: the rtentry is updated with the existence
+		 * FIXME NOMPSAFE: the rtentry is updated with the existence
 		 * of refeferences of it.
 		 */
 		/*
