@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.62 2017/01/17 08:35:16 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.63 2017/01/17 08:44:31 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.62 2017/01/17 08:35:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.63 2017/01/17 08:44:31 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -7204,7 +7204,7 @@ iwm_intr(void *arg)
 
 	IWM_WRITE(sc, IWM_CSR_INT_MASK, 0);
 
-	if (sc->sc_flags & IWM_FLAG_USE_ICT) {
+	if (__predict_true(sc->sc_flags & IWM_FLAG_USE_ICT)) {
 		uint32_t *ict = sc->ict_dma.vaddr;
 		int tmp;
 
@@ -7246,7 +7246,10 @@ iwm_intr(void *arg)
 		goto out_ena;
 	}
 
+	/* Acknowledge interrupts. */
 	IWM_WRITE(sc, IWM_CSR_INT, r1 | ~sc->sc_intmask);
+	if (__predict_false(!(sc->sc_flags & IWM_FLAG_USE_ICT)))
+		IWM_WRITE(sc, IWM_CSR_FH_INT_STATUS, r2);
 
 	atomic_or_32(&sc->sc_soft_flags, r1);
 	softint_schedule(sc->sc_soft_ih);
