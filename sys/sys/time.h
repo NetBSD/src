@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.78 2017/01/17 13:13:07 maya Exp $	*/
+/*	$NetBSD: time.h,v 1.79 2017/01/17 15:28:34 maya Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -194,7 +194,7 @@ bintime2timeval(const struct bintime *bt, struct timeval *tv)
 
 	tv->tv_sec = bt->sec;
 	tv->tv_usec =
-	    (suseconds_t)((1000000UL * (uint32_t)(bt->frac >> 32)) >> 32);
+	    (suseconds_t)((1000000ULL * (uint32_t)(bt->frac >> 32)) >> 32);
 }
 
 static __inline void
