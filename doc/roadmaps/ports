@@ -1,4 +1,4 @@
-$NetBSD: ports,v 1.2 2017/01/13 13:40:44 reinoud Exp $
+$NetBSD: ports,v 1.3 2017/01/18 18:22:13 dholland Exp $
 
 NetBSD Ports Roadmap
 ====================
@@ -24,7 +24,7 @@ The following elements, projects, and goals are perhaps less pressing;
 this doesn't mean one shouldn't work on them but the expected payoff
 is perhaps less than for other things:
 
- 7. pdp10/risc36/odd-bitsize ports
+ [none presently]
 
 
 Explanations
@@ -88,19 +88,3 @@ We have some riscv code and a bit of or1k code, but neither is done.
 http://cheri-cpu.org
 There are a number of reasons to tackle this; it will serve as a code
 quality lever. Also there's already a FreeBSD port to steal from.
-
-
- 7. pdp10/risc36/odd-bitsize ports
-
-There's been a fair amount of loose talk over the years about doing a
-port to a machine that's got 9-bit bytes, or is word-addressed, or
-both. The PDP-10 is one such target; it's also been observed that a
-more modern architecture would probably be more likely to allow a
-vaguely performant FPGA implementation, and something tentatively
-called "risc36" was conceived.
-
-This is both a quixotic retrocomputing project and also a quixotic
-code quality project: making the NetBSD code base work on either
-word-addressed machines or 9-bit/36-bit machines or both would be good
-for it. However, it's also a rather large undertaking.
-
