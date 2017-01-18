@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.281 2016/12/13 10:54:27 kamil Exp $	*/
+/*	$NetBSD: trap.c,v 1.282 2017/01/18 05:11:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.281 2016/12/13 10:54:27 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.282 2017/01/18 05:11:59 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -251,7 +251,7 @@ trap(struct trapframe *frame)
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
 	void *onfault;
-	int type, error;
+	int type, error, wptnfo;
 	uint32_t cr2;
 	bool pfail;
 
@@ -700,7 +700,11 @@ faultcommon:
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = type & ~T_USER;
-			if (type == (T_BPTFLT|T_USER))
+			if ((wptnfo = user_trap_x86_hw_watchpoint())) {
+				ksi.ksi_code = TRAP_HWWPT;
+				ksi.ksi_trap2 = x86_hw_watchpoint_reg(wptnfo);
+				ksi.ksi_trap3 = x86_hw_watchpoint_type(wptnfo);
+			} else if (type == (T_BPTFLT|T_USER))
 				ksi.ksi_code = TRAP_BRKPT;
 			else
 				ksi.ksi_code = TRAP_TRACE;
