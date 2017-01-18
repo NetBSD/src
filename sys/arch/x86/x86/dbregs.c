@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.3 2017/01/18 05:48:16 kamil Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.4 2017/01/18 12:15:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -144,8 +144,8 @@ clear_x86_hw_watchpoints(void)
 }
 
 /* Local temporary bitfield concept to compose event and register that fired */
-#define DR_EVENT_MASK		__BITS(15,8)
-#define DR_REGISTER_MASK	__BITS(7,0)
+#define DR_EVENT_MASK		__BITS(7,0)
+#define DR_REGISTER_MASK	__BITS(15,8)
 
 int
 user_trap_x86_hw_watchpoint(void)
