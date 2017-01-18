@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.14 2017/01/05 05:53:23 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.15 2017/01/18 08:15:22 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -567,7 +567,11 @@ ixgbe_allocate_transmit_buffers(struct tx_ring *txr)
 	return 0;
 fail:
 	/* We free all, it handles case where we are in the middle */
+#if 0 /* XXX was FreeBSD */
 	ixgbe_free_transmit_structures(adapter);
+#else
+	ixgbe_free_transmit_buffers(txr);
+#endif
 	return (error);
 }
 
