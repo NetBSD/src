@@ -1,4 +1,4 @@
-$NetBSD: ports,v 1.3 2017/01/18 18:22:13 dholland Exp $
+NetBSD: ports,v 1.3 2017/01/18 18:22:13 dholland Exp $
 
 NetBSD Ports Roadmap
 ====================
@@ -10,15 +10,14 @@ The following elements, projects, and goals are considered strategic
 priorities for the project:
 
  1. EFI boot for x86
- 2. xhci support
- 3. Get arm64/aarch64 working
+ 2. Get arm64/aarch64 working
 
 The following elements, projects, and goals are not strategic
 priorities but are still important undertakings worth doing:
 
- 4. USER_LDT for amd64
- 5. riscv and/or or1k ports
- 6. cheri port
+ 3. USER_LDT for amd64
+ 4. riscv and/or or1k ports
+ 5. cheri port
 
 The following elements, projects, and goals are perhaps less pressing;
 this doesn't mean one shouldn't work on them but the expected payoff
@@ -42,18 +41,7 @@ it done, though it's not yet committed.
  - Contact agc for further information.
 
 
- 2. xhci support
-
-xhci is also critical for new x86 hardware. Enough has been committed
-to be able to use USB on xhci machines; but (AIUI) the USB 3.0
-specific features mostly aren't implemented yet. We would like to get
-this pulled into -7
-
- - As of January 2017 ... who is working on this? XXX
- - Contact jakllsch (?) for further information.
-
-
- 3. Get arm64/aarch64 working
+ 2. Get arm64/aarch64 working
 
 We have some arm64 code but apparently it doesn't really work yet.
 
@@ -62,7 +50,7 @@ We have some arm64 code but apparently it doesn't really work yet.
  - Contact: ? (XXX)
 
 
- 4. USER_LDT for amd64
+ 3. USER_LDT for amd64
 
 The amd64 port is lacking the USER_LDT bits needed to be able to run
 Wine. Adding these bits does not seem to be a particularly large job
@@ -74,7 +62,7 @@ doesn't get done. Money's been offered in the past, without result.
  - Contact ? (XXX) for further information.
 
 
- 5. riscv and/or or1k ports
+ 4. riscv and/or or1k ports
 
 We have some riscv code and a bit of or1k code, but neither is done.
 
@@ -83,7 +71,7 @@ We have some riscv code and a bit of or1k code, but neither is done.
  - Contact matt@ for further information.
 
 
- 6. cheri port
+ 5. cheri port
 
 http://cheri-cpu.org
 There are a number of reasons to tackle this; it will serve as a code
