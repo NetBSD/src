@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.h,v 1.2 2016/12/15 12:04:18 kamil Exp $	*/
+/*	$NetBSD: dbregs.h,v 1.3 2017/01/18 05:12:00 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 #ifndef	_X86_DBREGS_H_
 #define	_X86_DBREGS_H_
 
-#if defined(_KMEMUSER) || defined(_KERNEL)
+#if defined(_KERNEL)
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -79,10 +79,10 @@
 #define X86_HW_WATCHPOINT_DR7_DR3_CONDITION_MASK		__BITS(28, 29)
 #define X86_HW_WATCHPOINT_DR7_DR3_LENGTH_MASK			__BITS(30, 31)
 
-#endif /* !defined(_KMEMUSER) && !defined(_KERNEL) */
+#endif /* !defined(_KERNEL) */
 
 /*
- * X86_HW_WATCHPOINT_DR7_CONDITION_IO_READWRITE is unused
+ * X86_HW_WATCHPOINT_DR7_CONDITION_IO_READWRITE is currently unused
  * it requires DE (debug extension) flag in control register CR4 set
  * not all CPUs support it
  */
@@ -101,6 +101,15 @@ enum x86_hw_watchpoint_length {
 	X86_HW_WATCHPOINT_DR7_LENGTH_TWOBYTES	= 0x1,
 	/* 0x2 undefined */
 	X86_HW_WATCHPOINT_DR7_LENGTH_FOURBYTES	= 0x3
+};
+
+/*
+ * 0x2 is currently unimplemented - it reflects 8 bytes on modern CPUs
+ */
+enum x86_hw_watchpoint_event {
+	X86_HW_WATCHPOINT_EVENT_NONE		= 0x0,
+	X86_HW_WATCHPOINT_EVENT_FIRED		= 0x1,
+	X86_HW_WATCHPOINT_EVENT_FIRED_AND_SSTEP	= 0x2,
 };
 
 #if defined(_KMEMUSER) || defined(_KERNEL)
@@ -122,6 +131,9 @@ struct x86_hw_watchpoint {
 	enum x86_hw_watchpoint_length length;
 };
 
+#endif /* !defined(_KMEMUSER) && !defined(_KERNEL) */
+
+#if defined(_KERNEL)
 /*
  * Set CPU Debug Registers - to be used before entering user-land context
  */
@@ -134,11 +146,19 @@ void clear_x86_hw_watchpoints(void);
 
 /*
  * Check if trap is triggered from user-land if so return nonzero value
- *
- * This resets Debug Status Register (DR6) break point detection
  */
 int user_trap_x86_hw_watchpoint(void);
 
-#endif /* !defined(_KMEMUSER) && !defined(_KERNEL) */
+/*
+ * Check if trap is triggered from user-land if so return nonzero value
+ */
+int x86_hw_watchpoint_type(int);
+
+/*
+ * Return register that fired
+ */
+int x86_hw_watchpoint_reg(int);
+
+#endif /* !defined(_KERNEL) */
 
 #endif /* !_X86_DBREGS_H_ */
