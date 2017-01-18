@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.2 2017/01/18 05:12:00 kamil Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.3 2017/01/18 05:48:16 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -92,13 +92,6 @@ void
 set_x86_hw_watchpoints(struct lwp *l)
 {
 	size_t i;
-
-	/* Assert that Debug Registers are not mixed with Debug Trap Flag */
-#ifdef __x86_64__
-	KASSERT((l->l_md.md_regs->tf_rflags & PSL_T) == 0);
-#else
-	KASSERT((l->l_md.md_regs->tf_eflags & PSL_T) == 0);
-#endif
 
 	/* Assert that there are available watchpoints */
 	KASSERT(l->l_md.md_flags & MDL_X86_HW_WATCHPOINTS);
