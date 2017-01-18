@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -52,7 +52,7 @@ cat $infile $keyname1.key $keyname2.key >$zonefile
 $SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
 
 zone=keyless.example.
-infile=keyless.example.db.in
+infile=generic.example.db.in
 zonefile=keyless.example.db
 
 keyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
@@ -505,3 +505,30 @@ zskname=`$KEYGEN -q -r $RANDFILE $zone`
 cat $infile $kskname.key $zskname.key >$zonefile
 $SIGNER -P -s +3600 -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
 cp -f $kskname.key trusted-future.key
+
+#
+# A zone with future signatures.
+#
+zone=managed-future.example
+infile=managed-future.example.db.in
+zonefile=managed-future.example.db
+kskname=`$KEYGEN -q -r $RANDFILE -f KSK $zone`
+zskname=`$KEYGEN -q -r $RANDFILE $zone`
+cat $infile $kskname.key $zskname.key >$zonefile
+$SIGNER -P -s +3600 -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+#
+# A zone with a revoked key
+#
+zone=revkey.example.
+infile=generic.example.db.in
+zonefile=revkey.example.db
+
+ksk1=`$KEYGEN -q -r $RANDFILE -3fk $zone`
+ksk1=`$REVOKE $ksk1`
+ksk2=`$KEYGEN -q -r $RANDFILE -3fk $zone`
+zsk1=`$KEYGEN -q -r $RANDFILE -3 $zone`
+
+cat $infile ${ksk1}.key ${ksk2}.key ${zsk1}.key >$zonefile
+
+$SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1

@@ -1,4 +1,4 @@
-/*	$NetBSD: wire_test.c,v 1.5.4.1 2016/03/13 08:06:04 martin Exp $	*/
+/*	$NetBSD: wire_test.c,v 1.5.4.1.2.1 2017/01/18 08:45:55 skrll Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -213,7 +213,7 @@ main(int argc, char *argv[]) {
 				rp++;
 			}
 			if (len == 0U)
-				break;
+				continue;
 			if (len % 2 != 0U) {
 				fprintf(stderr, "bad input format: %lu\n",
 				       (unsigned long)len);

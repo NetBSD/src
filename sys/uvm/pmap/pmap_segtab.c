@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.1 2012/10/03 00:51:46 christos Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.1.20.1 2017/01/18 08:46:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1 2012/10/03 00:51:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.20.1 2017/01/18 08:46:46 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -190,7 +190,9 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 {
 	pmap_segtab_t *stp = *stp_p;
 
-	for (size_t i = va / vinc; i < PMAP_SEGTABSIZE; i++, va += vinc) {
+	for (size_t i = (va / vinc) & (PMAP_SEGTABSIZE - 1);
+	     i < PMAP_SEGTABSIZE;
+	     i++, va += vinc) {
 #ifdef _LP64
 		if (vinc > NBSEG) {
 			if (stp->seg_seg[i] != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.183.2.4 2016/02/26 21:50:54 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.183.2.4.2.1 2017/01/18 08:46:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.4 2016/02/26 21:50:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.4.2.1 2017/01/18 08:46:26 skrll Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2405,7 +2405,7 @@ pmap_create(void)
  * pmap_free_ptps: put a list of ptps back to the freelist.
  */
 
-static void
+void
 pmap_free_ptps(struct vm_page *empty_ptps)
 {
 	struct vm_page *ptp;

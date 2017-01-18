@@ -55,7 +55,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;USE_MD5;@CRYPTO@_DEBUG;_WINDOWS;_USRDLL;LIBLWRES_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;..\..\lwres\win32\include;..\..\..\;include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>
       <ObjectFileName>.\$(Configuration)\</ObjectFileName>
@@ -140,6 +140,7 @@
     <ClInclude Include="..\include\lwres\result.h" />
     <ClInclude Include="..\include\lwres\stdlib.h" />
     <ClInclude Include="..\include\lwres\string.h" />
+    <ClInclude Include="..\include\lwres\version.h" />
     <ClInclude Include="include\lwres\int.h" />
     <ClInclude Include="include\lwres\net.h" />
     <ClInclude Include="include\lwres\netdb.h" />

@@ -1,4 +1,4 @@
-# Copyright (C) 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -93,14 +93,14 @@ QNUM=1
 burst () {
     BURST_LIMIT=$1; shift
     BURST_DOM_BASE="$1"; shift
-    while test "$BURST_LIMIT" -ge 1; do
-	CNT=`expr "00$QNUM" : '.*\(...\)'`
+    CNTS=`$PERL -e 'for ( $i = 0; $i < '$BURST_LIMIT'; $i++) { printf "%03d\n", '$QNUM' + $i; }'`
+    for CNT in $CNTS
+    do
 	eval BURST_DOM="$BURST_DOM_BASE"
 	FILE="dig.out-$BURST_DOM-$CNT"
 	digcmd $FILE $BURST_DOM $* &
-	QNUM=`expr $QNUM + 1`
-	BURST_LIMIT=`expr "$BURST_LIMIT" - 1`
     done
+    QNUM=`expr $QNUM + $BURST_LIMIT`
 }
 
 

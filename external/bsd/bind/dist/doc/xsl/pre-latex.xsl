@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2005, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -19,9 +19,11 @@
 <!--
   - Whack &mdash; into something that won't choke LaTeX.
   - There's probably a better way to do this, but this will work for now.
-  --> 
+  -->
 
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet version="1.0"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:db="http://docbook.org/ns/docbook">
 
   <xsl:variable name="mdash" select="'&#8212;'"/>
 

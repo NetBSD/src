@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2005, 2007, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005, 2007, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -23,7 +23,9 @@ SYSTEMTESTTOP=..
 DIGOPTS="+tcp +noadd +nosea +nostat +noquest +nocomm +nocmd"
 
 status=0
+n=0
 
+n=`expr $n + 1`
 echo "I:testing basic zone transfer functionality"
 $DIG $DIGOPTS example. \
 	@10.53.0.2 axfr -p 5300 > dig.out.ns2 || status=1
@@ -49,6 +51,7 @@ $PERL ../digcomp.pl dig1.good dig.out.ns2 || status=1
 
 $PERL ../digcomp.pl dig1.good dig.out.ns3 || status=1
 
+n=`expr $n + 1`
 echo "I:testing TSIG signed zone transfers"
 $DIG $DIGOPTS tsigzone. \
     	@10.53.0.2 axfr -y tsigzone.:1234abcd8765 -p 5300 \
@@ -124,6 +127,7 @@ grep "1397051952 ; serial" ns2/slave.db > /dev/null 2>&1 || tmp=1
 if test $tmp != 0 ; then echo "I:failed"; fi
 status=`expr $status + $tmp`
 
+n=`expr $n + 1`
 echo "I:testing ixfr-from-differences yes;"
 tmp=0
 for i in 0 1 2 3 4 5 6 7 8 9
@@ -146,6 +150,7 @@ test -f ns3/example.bk.jnl || tmp=1
 if test $tmp != 0 ; then echo "I:failed"; fi
 status=`expr $status + $tmp`
 
+n=`expr $n + 1`
 echo "I:testing ixfr-from-differences master; (master zone)"
 tmp=0
 
@@ -166,6 +171,7 @@ test -f ns3/master.bk.jnl || tmp=1
 if test $tmp != 0 ; then echo "I:failed"; fi
 status=`expr $status + $tmp`
 
+n=`expr $n + 1`
 echo "I:testing ixfr-from-differences master; (slave zone)"
 tmp=0
 
@@ -186,6 +192,7 @@ test -f ns6/slave.bk.jnl && tmp=1
 if test $tmp != 0 ; then echo "I:failed"; fi
 status=`expr $status + $tmp`
 
+n=`expr $n + 1`
 echo "I:testing ixfr-from-differences slave; (master zone)"
 tmp=0
 
@@ -195,6 +202,8 @@ test -f ns7/master2.db.jnl && tmp=1
 
 if test $tmp != 0 ; then echo "I:failed"; fi
 status=`expr $status + $tmp`
+
+n=`expr $n + 1`
 echo "I:testing ixfr-from-differences slave; (slave zone)"
 tmp=0
 
@@ -246,9 +255,9 @@ zone "nil" {
 };
 EOF
 
-$RNDCCMD reload | sed 's/^/I:ns4 /'
-
 cur=`awk 'END {print NR}' ns4/named.run`
+
+$RNDCCMD reload | sed 's/^/I:ns4 /'
 
 for i in 0 1 2 3 4 5 6 7 8 9
 do
@@ -257,7 +266,7 @@ do
 	sleep 1
 done
 
-tail -n +"$cur" < ns4/named.run | grep "Transfer status: success" > /dev/null || {
+sed -n "$cur,\$p" < ns4/named.run | grep "Transfer status: success" > /dev/null || {
     echo "I: failed: expected status was not logged"
     status=1
 }
@@ -277,7 +286,7 @@ $RNDCCMD retransfer nil | sed 's/^/I:ns4 /'
 
 sleep 2
 
-tail -n +"$cur" < ns4/named.run | grep "Transfer status: expected a TSIG or SIG(0)" > /dev/null || {
+sed -n "$cur,\$p" < ns4/named.run | grep "Transfer status: expected a TSIG or SIG(0)" > /dev/null || {
     echo "I: failed: expected status was not logged"
     status=1
 }
@@ -297,7 +306,7 @@ $RNDCCMD retransfer nil | sed 's/^/I:ns4 /'
 
 sleep 2
 
-tail -n +"$cur" < ns4/named.run | grep "Transfer status: tsig verify failure" > /dev/null || {
+sed -n "$cur,\$p" < ns4/named.run | grep "Transfer status: tsig verify failure" > /dev/null || {
     echo "I: failed: expected status was not logged"
     status=1
 }
@@ -317,7 +326,7 @@ $RNDCCMD retransfer nil | sed 's/^/I:ns4 /'
 
 sleep 2
 
-tail -n +"$cur" < ns4/named.run | grep "Transfer status: expected a TSIG or SIG(0)" > /dev/null || {
+sed -n "$cur,\$p" < ns4/named.run | grep "Transfer status: expected a TSIG or SIG(0)" > /dev/null || {
     echo "I: failed: expected status was not logged"
     status=1
 }
@@ -337,7 +346,7 @@ $RNDCCMD retransfer nil | sed 's/^/I:ns4 /'
 
 sleep 2
 
-tail -n +"$cur" < ns4/named.run | grep "tsig key 'tsig_key': key name and algorithm do not match" > /dev/null || {
+sed -n "$cur,\$p" < ns4/named.run | grep "tsig key 'tsig_key': key name and algorithm do not match" > /dev/null || {
     echo "I: failed: expected status was not logged"
     status=1
 }
@@ -357,7 +366,7 @@ $RNDCCMD retransfer nil | sed 's/^/I:ns4 /'
 
 sleep 2
 
-tail -n +"$cur" < ns4/named.run | grep "tsig key 'tsig_key': key name and algorithm do not match" > /dev/null || {
+sed -n "$cur,\$p" < ns4/named.run | grep "tsig key 'tsig_key': key name and algorithm do not match" > /dev/null || {
     echo "I: failed: expected status was not logged"
     status=1
 }
@@ -367,6 +376,20 @@ $DIGCMD nil. TXT | grep 'incorrect key AXFR' >/dev/null && {
     echo "I:failed"
     status=1
 }
+
+n=`expr $n + 1`
+echo "I:test mapped zone with out of zone data ($n)"
+tmp=0
+$DIG -p 5300 txt mapped @10.53.0.3 > dig.out.1.$n
+grep "status: NOERROR," dig.out.1.$n > /dev/null || tmp=1
+$PERL $SYSTEMTESTTOP/stop.pl . ns3
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart . ns3
+$DIG -p 5300 txt mapped @10.53.0.3 > dig.out.2.$n
+grep "status: NOERROR," dig.out.2.$n > /dev/null || tmp=1
+$DIG -p 5300 axfr mapped @10.53.0.3 > dig.out.3.$n
+$PERL ../digcomp.pl knowngood.mapped dig.out.3.$n || tmp=1
+if test $tmp != 0 ; then echo "I:failed"; fi
+status=`expr $status + $tmp`
 
 echo "I:exit status: $status"
 exit $status

@@ -49,12 +49,14 @@ copy ..\..\doc\arm\*.html ..\..\Build\Release
 copy ..\..\doc\arm\notes.pdf ..\..\Build\Release
 copy ..\..\doc\arm\Bv9ARM.pdf ..\..\Build\Release
 copy ..\..\CHANGES ..\..\Build\Release
-if Exist ..\CHANGES.SE copy ..\CHANGES.SE ..\Build\Release
+if Exist ..\..\CHANGES.SE copy ..\..\CHANGES.SE ..\..\Build\Release
 copy ..\..\FAQ ..\..\Build\Release
 
 echo Copying the standalone manual pages.
 
 copy ..\..\bin\named\named.html ..\..\Build\Release
+copy ..\..\bin\named\named.conf.html ..\..\Build\Release
+copy ..\..\bin\named\lwresd.html ..\..\Build\Release
 copy ..\..\bin\rndc\*.html ..\..\Build\Release
 copy ..\..\bin\confgen\*.html ..\..\Build\Release
 copy ..\..\bin\dig\*.html ..\..\Build\Release
@@ -132,10 +134,10 @@ copy @GEOIP_DLL@ ..\..\Build\Debug\
 @IF IDNKIT
 echo Copying the IDN kit DLL.
 
-copy @IDN_DLL@ ..\Build\Release\
-copy @IDN_DLL@ ..\Build\Debug\
-copy @ICONV_DLL@ ..\Build\Release\
-copy @ICONV_DLL@ ..\Build\Debug\
+copy @IDN_DLL@ ..\..\Build\Release\
+copy @IDN_DLL@ ..\..\Build\Debug\
+copy @ICONV_DLL@ ..\..\Build\Release\
+copy @ICONV_DLL@ ..\..\Build\Debug\
 @END IDNKIT
 
 echo Copying the redistributable runtime object.
@@ -146,6 +148,13 @@ rem
 
 copy /Y @VCREDIST_PATH@ ..\..\Build\Release\
 copy /Y @VCREDIST_PATH@ ..\..\Build\Debug\
+
+echo Copying install files (flags and file list).
+
+copy ..\InstallFlags ..\..\Build\Release\
+copy ..\InstallFlags ..\..\Build\Debug\
+copy ..\InstallFiles ..\..\Build\Release\
+copy ..\InstallFiles ..\..\Build\Debug\
 
 @IF TESTS
 cd ..\..\bin\tests\dst

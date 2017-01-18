@@ -1,8 +1,7 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-	       "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-	       [<!ENTITY mdash "&#8212;">]>
+<!DOCTYPE book [
+<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2011, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,10 +17,14 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<refentry id="man.dig">
-
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.dig">
+  <info>
+    <date>2014-02-19</date>
+  </info>
   <refentryinfo>
-    <date>February 19, 2014</date>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
   </refentryinfo>
 
   <refmeta>
@@ -48,6 +51,7 @@
       <year>2013</year>
       <year>2014</year>
       <year>2015</year>
+      <year>2016</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -60,42 +64,42 @@
   </docinfo>
 
   <refsynopsisdiv>
-    <cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
       <command>dig</command>
-      <arg choice="opt">@server</arg>
-      <arg><option>-b <replaceable class="parameter">address</replaceable></option></arg>
-      <arg><option>-c <replaceable class="parameter">class</replaceable></option></arg>
-      <arg><option>-f <replaceable class="parameter">filename</replaceable></option></arg>
-      <arg><option>-k <replaceable class="parameter">filename</replaceable></option></arg>
-      <arg><option>-m</option></arg>
-      <arg><option>-p <replaceable class="parameter">port#</replaceable></option></arg>
-      <arg><option>-q <replaceable class="parameter">name</replaceable></option></arg>
-      <arg><option>-t <replaceable class="parameter">type</replaceable></option></arg>
-      <arg><option>-v</option></arg>
-      <arg><option>-x <replaceable class="parameter">addr</replaceable></option></arg>
-      <arg><option>-y <replaceable class="parameter"><optional>hmac:</optional>name:key</replaceable></option></arg>
-      <arg><option>-4</option></arg>
-      <arg><option>-6</option></arg>
-      <arg choice="opt">name</arg>
-      <arg choice="opt">type</arg>
-      <arg choice="opt">class</arg>
+      <arg choice="opt" rep="norepeat">@server</arg>
+      <arg choice="opt" rep="norepeat"><option>-b <replaceable class="parameter">address</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">class</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-f <replaceable class="parameter">filename</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-k <replaceable class="parameter">filename</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-m</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">port#</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-q <replaceable class="parameter">name</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">type</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-x <replaceable class="parameter">addr</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-y <replaceable class="parameter"><optional>hmac:</optional>name:key</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-4</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-6</option></arg>
+      <arg choice="opt" rep="norepeat">name</arg>
+      <arg choice="opt" rep="norepeat">type</arg>
+      <arg choice="opt" rep="norepeat">class</arg>
       <arg choice="opt" rep="repeat">queryopt</arg>
     </cmdsynopsis>
 
-    <cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
       <command>dig</command>
-      <arg><option>-h</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-h</option></arg>
     </cmdsynopsis>
 
-    <cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
       <command>dig</command>
       <arg choice="opt" rep="repeat">global-queryopt</arg>
       <arg choice="opt" rep="repeat">query</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsect1>
-    <title>DESCRIPTION</title>
+  <refsection><info><title>DESCRIPTION</title></info>
+
     <para><command>dig</command>
       (domain information groper) is a flexible tool
       for interrogating DNS name servers.  It performs DNS lookups and
@@ -141,15 +145,15 @@
     <para>
       The IN and CH class names overlap with the IN and CH top level
       domain names.  Either use the <option>-t</option> and
-      <option>-c</option> options to specify the type and class, 
+      <option>-c</option> options to specify the type and class,
       use the <option>-q</option> the specify the domain name, or
       use "IN." and "CH." when looking up these top level domains.
     </para>
 
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>SIMPLE USAGE</title>
+  <refsection><info><title>SIMPLE USAGE</title></info>
+
 
     <para>
       A typical invocation of <command>dig</command> looks like:
@@ -212,10 +216,10 @@
       </variablelist>
     </para>
 
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>OPTIONS</title>
+  <refsection><info><title>OPTIONS</title></info>
+
 
     <variablelist>
       <varlistentry>
@@ -415,10 +419,10 @@
       </varlistentry>
 
     </variablelist>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>QUERY OPTIONS</title>
+  <refsection><info><title>QUERY OPTIONS</title></info>
+
 
     <para><command>dig</command>
       provides a number of query options which affect
@@ -973,11 +977,20 @@
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>+[no]subnet=addr/prefix</option></term>
+	  <term><option>+[no]subnet=addr[/prefix-length]</option></term>
 	  <listitem>
 	    <para>
-	      Send an EDNS Client Subnet option with the specified
-	      IP address or network prefix.
+	      Send (don't send) an EDNS Client Subnet option with the
+	      specified IP address or network prefix.
+	    </para>
+	    <para>
+              <command>dig +subnet=0.0.0.0/0</command>, or simply
+              <command>dig +subnet=0</command> for short, sends an EDNS
+              client-subnet option with an empty address and a source
+              prefix-length of zero, which signals a resolver that
+              the client's address information must
+              <emphasis>not</emphasis> be used when resolving
+              this query.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1098,10 +1111,10 @@
       </variablelist>
 
     </para>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>MULTIPLE QUERIES</title>
+  <refsection><info><title>MULTIPLE QUERIES</title></info>
+
 
     <para>
       The BIND 9 implementation of <command>dig </command>
@@ -1147,10 +1160,10 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
       <literal>isc.org</literal>.
     </para>
 
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>IDN SUPPORT</title>
+  <refsection><info><title>IDN SUPPORT</title></info>
+
     <para>
       If <command>dig</command> has been built with IDN (internationalized
       domain name) support, it can accept and display non-ASCII domain names.
@@ -1159,21 +1172,21 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
       reply from the server.
       If you'd like to turn off the IDN support for some reason, defines
       the <envar>IDN_DISABLE</envar> environment variable.
-      The IDN support is disabled if the variable is set when 
+      The IDN support is disabled if the variable is set when
       <command>dig</command> runs.
     </para>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>FILES</title>
+  <refsection><info><title>FILES</title></info>
+
     <para><filename>/etc/resolv.conf</filename>
     </para>
     <para><filename>${HOME}/.digrc</filename>
     </para>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>SEE ALSO</title>
+  <refsection><info><title>SEE ALSO</title></info>
+
     <para><citerefentry>
 	<refentrytitle>host</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>,
@@ -1185,16 +1198,13 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
       </citerefentry>,
       <citetitle>RFC1035</citetitle>.
     </para>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>BUGS</title>
+  <refsection><info><title>BUGS</title></info>
+
     <para>
       There are probably too many query options.
     </para>
-  </refsect1>
-</refentry><!--
- - Local variables:
- - mode: sgml
- - End:
--->
+  </refsection>
+
+</refentry>

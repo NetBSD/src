@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -117,6 +117,7 @@ grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
+
 echo "I:checking for AD in authoritative answer ($n)"
 ret=0
 $DIG $DIGOPTS a.example. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
@@ -866,6 +867,25 @@ if [ -x ${DELV} ] ; then
    echo "I:checking that validation fails when key record is missing using dns_client ($n)"
    $DELV $DELVOPTS +cd @10.53.0.4 a a.b.keyless.example > delv.out$n 2>&1 || ret=1
    grep "resolution failed: broken trust chain" delv.out$n > /dev/null || ret=1
+   n=`expr $n + 1`
+   if [ $ret != 0 ]; then echo "I:failed"; fi
+   status=`expr $status + $ret`
+fi
+
+echo "I:checking that validation succeeds when a revoked key is encountered ($n)"
+ret=0
+$DIG $DIGOPTS revkey.example soa @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags: .* ad" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+if [ -x ${DELV} ] ; then
+   ret=0
+   echo "I:checking that validation succeeds when a revoked key is encountered using dns_client ($n)"
+   $DELV $DELVOPTS +cd @10.53.0.4 soa revkey.example > delv.out$n 2>&1 || ret=1
+   grep "fully validated" delv.out$n > /dev/null || ret=1
    n=`expr $n + 1`
    if [ $ret != 0 ]; then echo "I:failed"; fi
    status=`expr $status + $ret`
@@ -2784,6 +2804,63 @@ lines=`awk '$4 == "RRSIG" && $5 == "CDNSKEY" {print}' dig.out.test$n | wc -l`
 test ${lines:-0} -eq 2 || ret=1
 lines=`awk '$4 == "CDNSKEY" {print}' dig.out.test$n | wc -l`
 test ${lines:-0} -eq 2 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that RRSIGs are correctly removed from apex when RRset is removed  NSEC ($n)"
+ret=0
+# generate signed zone with MX and AAAA records at apex.
+(
+cd signer
+$KEYGEN -q -r $RANDFILE -3 -fK remove > /dev/null
+$KEYGEN -q -r $RANDFILE -3 remove > /dev/null
+echo > remove.db.signed
+$SIGNER -S -o remove -D -f remove.db.signed remove.db.in > signer.out.1.$n 2>&1
+)
+grep -w MX signer/remove.db.signed > /dev/null || {
+	ret=1 ; cp signer/remove.db.signed signer/remove.db.signed.pre$n;
+}
+# re-generate signed zone without MX and AAAA records at apex.
+(
+cd signer
+$SIGNER -S -o remove -D -f remove.db.signed remove2.db.in > signer.out.2.$n 2>&1
+)
+grep -w MX signer/remove.db.signed > /dev/null &&  {
+	ret=1 ; cp signer/remove.db.signed signer/remove.db.signed.post$n;
+}
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that RRSIGs are correctly removed from apex when RRset is removed  NSEC3 ($n)"
+ret=0
+# generate signed zone with MX and AAAA records at apex.
+(
+cd signer
+echo > remove.db.signed
+$SIGNER -3 - -S -o remove -D -f remove.db.signed remove.db.in > signer.out.1.$n 2>&1
+)
+grep -w MX signer/remove.db.signed > /dev/null || {
+	ret=1 ; cp signer/remove.db.signed signer/remove.db.signed.pre$n;
+}
+# re-generate signed zone without MX and AAAA records at apex.
+(
+cd signer
+$SIGNER -3 - -S -o remove -D -f remove.db.signed remove2.db.in > signer.out.2.$n 2>&1
+)
+grep -w MX signer/remove.db.signed > /dev/null &&  {
+	ret=1 ; cp signer/remove.db.signed signer/remove.db.signed.post$n;
+}
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that a named managed zone that was signed 'in-the-future' is re-signed when loaded"
+ret=0
+$DIG $DIGOPTS managed-future.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

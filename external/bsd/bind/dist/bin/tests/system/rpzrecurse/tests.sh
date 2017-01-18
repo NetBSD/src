@@ -217,8 +217,8 @@ echo "I:running dig to follow CNAME (blocks, so runs in the background) (${t})"
 $DIG $DIGOPTS @10.53.0.2 -p 5300 www.test.example.org A > dig.out.${t} &
 sleep 1
 echo "I:removing the policy zone"
-cp ns2/named.default.conf ns2/db.6a.00.policy.local
-$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 reload 6a.00.policy.local 2>&1 | sed 's/^/I:ns2 /'
+cp ns2/named.default.conf ns2/named.conf
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 reconfig 2>&1 | sed 's/^/I:ns2 /'
 sleep 1
 echo "I:resuming authority server"
 kill -CONT `cat ns1/named.pid`

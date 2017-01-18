@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2005, 2007, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -14,11 +14,11 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: isc-docbook-html.xsl.in,v 1.6 2007/06/19 23:47:13 tbox Exp  -->
+<!-- ISC customizations for Docbook-XSL HTML generator -->
 
-<!-- ISC customizations for Docbook-XSL HTML generator --> 
-
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet version="1.0"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:db="http://docbook.org/ns/docbook">
 
   <!-- Import the Docbook HTML stuff -->
   <xsl:import href="@XSLT_DOCBOOK_STYLE_HTML@"/>
@@ -37,6 +37,10 @@
 
   <!-- Set comment convention for this output format -->
   <xsl:param name="isc.copyright.leader"> - </xsl:param>
+  <xsl:param name="isc.copyright.breakline"/>
+
+  <!-- Generate consistent id attributes -->
+  <xsl:param name="generate.consistent.ids" select="1"/>
 
   <!-- Override Docbook template to insert copyright -->
   <xsl:template name="user.preroot">
@@ -44,8 +48,6 @@
       <xsl:text>&#10;</xsl:text>
       <xsl:value-of select="$isc.copyright"/>
     </xsl:comment>
-    <xsl:text>&#10;</xsl:text>
-    <xsl:comment> &#36;Id&#36; </xsl:comment>
     <xsl:text>&#10;</xsl:text>
   </xsl:template>
 
@@ -55,7 +57,7 @@
 
 </xsl:stylesheet>
 
-<!-- 
+<!--
   - Local variables:
   - mode: sgml
   - End:

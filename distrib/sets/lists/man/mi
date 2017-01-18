@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1485.2.9 2015/04/30 06:07:32 riz Exp $
+# $NetBSD: mi,v 1.1485.2.9.4.1 2017/01/18 08:45:48 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -372,6 +372,7 @@
 ./usr/share/man/cat1/openssl.0			man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_CA.pl.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_asn1parse.0	man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_c_rehash.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_ca.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_ciphers.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_crl.0		man-crypto-catman	crypto,.cat
@@ -402,6 +403,7 @@
 ./usr/share/man/cat1/openssl_smime.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_speed.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_spkac.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_tsget.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_verify.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_version.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_x509.0		man-crypto-catman	crypto,.cat
@@ -2107,6 +2109,7 @@
 ./usr/share/man/cat5/magic.0			man-util-catman		.cat
 ./usr/share/man/cat5/mailer.conf.0		man-mailwrapper-catman	.cat
 ./usr/share/man/cat5/man.conf.0			man-man-catman		.cat
+./usr/share/man/cat5/malloc.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/map3270.0			man-obsolete		obsolete
 ./usr/share/man/cat5/master.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/master.passwd.0		man-sys-catman		.cat
@@ -3490,6 +3493,7 @@
 ./usr/share/man/html1/openssl.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_CA.pl.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_asn1parse.html	man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openssl_c_rehash.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_ca.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_ciphers.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_crl.html		man-crypto-htmlman	crypto,html
@@ -3520,6 +3524,7 @@
 ./usr/share/man/html1/openssl_smime.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_speed.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_spkac.html	man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openssl_tsget.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_verify.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_version.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_x509.html		man-crypto-htmlman	crypto,html
@@ -5072,6 +5077,7 @@
 ./usr/share/man/html5/lvm.conf.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html5/magic.html		man-util-htmlman	html
 ./usr/share/man/html5/mailer.conf.html		man-mailwrapper-htmlman	html
+./usr/share/man/html5/malloc.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/man.conf.html		man-man-htmlman		html
 ./usr/share/man/html5/map3270.html		man-obsolete		obsolete
 ./usr/share/man/html5/master.html		man-postfix-htmlman	postfix,html
@@ -6254,6 +6260,7 @@
 ./usr/share/man/man1/openssl.1			man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_CA.pl.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_asn1parse.1	man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_c_rehash.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_ca.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_ciphers.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_crl.1		man-crypto-man		crypto,.man
@@ -6284,6 +6291,7 @@
 ./usr/share/man/man1/openssl_smime.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_speed.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_spkac.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_tsget.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_verify.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_version.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_x509.1		man-crypto-man		crypto,.man
@@ -7989,6 +7997,7 @@
 ./usr/share/man/man5/lvm.conf.5			man-lvm-man		lvm,.man
 ./usr/share/man/man5/magic.5			man-util-man		.man
 ./usr/share/man/man5/mailer.conf.5		man-mailwrapper-man	.man
+./usr/share/man/man5/malloc.conf.5		man-sys-man		.man
 ./usr/share/man/man5/man.conf.5			man-man-man		.man
 ./usr/share/man/man5/map3270.5			man-obsolete		obsolete
 ./usr/share/man/man5/master.5			man-postfix-man		postfix,.man

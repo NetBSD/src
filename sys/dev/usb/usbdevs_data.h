@@ -2355,6 +2355,10 @@ const struct usb_product usb_products[] = {
 	    "RTL8192CU",
 	},
 	{
+	    USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_RTL8188EU,
+	    "RTL8188EU",
+	},
+	{
 	    USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_RTL8188CU_1,
 	    "RTL8188CU",
 	},
@@ -4107,6 +4111,10 @@ const struct usb_product usb_products[] = {
 	    "Bluetooth USB Adapter",
 	},
 	{
+	    USB_VENDOR_CMEDIA, USB_PRODUCT_CMEDIA_USBAUDIO,
+	    "USB Pnp Sound",
+	},
+	{
 	    USB_VENDOR_CTX, USB_PRODUCT_CTX_EX1300,
 	    "Ex1300 hub",
 	},
@@ -4323,6 +4331,10 @@ const struct usb_product usb_products[] = {
 	    "EasyCAP008 DVI",
 	},
 	{
+	    USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_FYDVI2,
+	    "DisplayLink FY-DVI2",
+	},
+	{
 	    USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_GXDVIU2,
 	    "BUFFALO GX-DVI/U2",
 	},
@@ -4389,6 +4401,10 @@ const struct usb_product usb_products[] = {
 	{
 	    USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_UM7X0,
 	    "nanovision MiMo",
+	},
+	{
+	    USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_FYDVI,
+	    "DisplayLink FY-DVI",
 	},
 	{
 	    USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DUBE100,
@@ -5643,6 +5659,10 @@ const struct usb_product usb_products[] = {
 	    "Huawei E171",
 	},
 	{
+	    USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E353_HiLink,
+	    "Huawei E353_HiLink",
+	},
+	{
 	    USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E353,
 	    "Huawei E353",
 	},
@@ -5825,6 +5845,10 @@ const struct usb_product usb_products[] = {
 	{
 	    USB_VENDOR_INTEL2, USB_PRODUCT_INTEL2_RMH2,
 	    "Rate Matching Hub",
+	},
+	{
+	    USB_VENDOR_INTEL2, USB_PRODUCT_INTEL2_N_6235_BT,
+	    "Advanced-N 6235 Combo Bluetooth",
 	},
 	{
 	    USB_VENDOR_INTERSIL, USB_PRODUCT_INTERSIL_PRISM_GT,
@@ -6289,6 +6313,10 @@ const struct usb_product usb_products[] = {
 	{
 	    USB_VENDOR_LINKSYS, USB_PRODUCT_LINKSYS_USB10TX1,
 	    "USB10TX",
+	},
+	{
+	    USB_VENDOR_LINKSYS, USB_PRODUCT_LINKSYS_HG20F9,
+	    "HG20F9 Ethernet",
 	},
 	{
 	    USB_VENDOR_LINKSYS, USB_PRODUCT_LINKSYS_USB10T,
@@ -8459,6 +8487,10 @@ const struct usb_product usb_products[] = {
 	    "RTL8188CUS",
 	},
 	{
+	    USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8192EU,
+	    "RTL8192EU",
+	},
+	{
 	    USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8188CU_3,
 	    "RTL8188CU",
 	},
@@ -9303,6 +9335,10 @@ const struct usb_product usb_products[] = {
 	    "RTL8188CU",
 	},
 	{
+	    USB_VENDOR_SITECOMEU, USB_PRODUCT_SITECOMEU_LN031,
+	    "LN-031",
+	},
+	{
 	    USB_VENDOR_SITECOMEU, USB_PRODUCT_SITECOMEU_RTL8188CU_2,
 	    "RTL8188CU",
 	},
@@ -10059,6 +10095,10 @@ const struct usb_product usb_products[] = {
 	    "VFS471 Fingerprint Reader",
 	},
 	{
+	    USB_VENDOR_VALIDITY, USB_PRODUCT_VALIDITY_VFS491,
+	    "VFS491 Fingerprint Reader",
+	},
+	{
 	    USB_VENDOR_VIDZMEDIA, USB_PRODUCT_VIDZMEDIA_MONSTERTV,
 	    "MonsterTV P2H",
 	},
@@ -10168,7 +10208,11 @@ const struct usb_product usb_products[] = {
 	},
 	{
 	    USB_VENDOR_WINCHIPHEAD2, USB_PRODUCT_WINCHIPHEAD2_CH341,
-	    "CH341 serial/parallel",
+	    "CH341 USB-Serial Bridge",
+	},
+	{
+	    USB_VENDOR_WINCHIPHEAD2, USB_PRODUCT_WINCHIPHEAD2_CH341_2,
+	    "CH341 USB-Serial Bridge",
 	},
 	{
 	    USB_VENDOR_WISTRONNEWEB, USB_PRODUCT_WISTRONNEWEB_WNC0600,
@@ -10519,4 +10563,4 @@ const struct usb_product usb_products[] = {
 	    "Prestige",
 	},
 };
-const int usb_nproducts = 2080;
+const int usb_nproducts = 2091;

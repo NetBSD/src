@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -580,6 +580,35 @@ if [ $ret -ne 0 ]; then
     echo "I:failed"
     status=1
 fi
+
+n=`expr $n + 1`
+echo "I:check adding of delegating NS records processing ($n)"
+ret=0
+$NSUPDATE -v << EOF > nsupdate.out-$n 2>&1 || ret=1
+server 10.53.0.3 5300
+zone delegation.test.
+update add child.delegation.test. 3600 NS foo.example.net.
+update add child.delegation.test. 3600 NS bar.example.net.
+send
+EOF
+$DIG +tcp @10.53.0.3 -p 5300 ns child.delegation.test > dig.out.ns1.test$n
+grep "status: NOERROR" dig.out.ns1.test$n > /dev/null 2>&1 || ret=1
+grep "AUTHORITY: 2" dig.out.ns1.test$n > /dev/null 2>&1 || ret=1
+[ $ret = 0 ] || { echo I:failed; status=1; }
+
+n=`expr $n + 1`
+echo "I:check deleting of delegating NS records processing ($n)"
+ret=0
+$NSUPDATE -v << EOF > nsupdate.out-$n 2>&1 || ret=1
+server 10.53.0.3 5300
+zone delegation.test.
+update del child.delegation.test. 3600 NS foo.example.net.
+update del child.delegation.test. 3600 NS bar.example.net.
+send
+EOF
+$DIG +tcp @10.53.0.3 -p 5300 ns child.delegation.test > dig.out.ns1.test$n
+grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null 2>&1 || ret=1
+[ $ret = 0 ] || { echo I:failed; status=1; }
 
 echo "I:exit status: $status"
 exit $status

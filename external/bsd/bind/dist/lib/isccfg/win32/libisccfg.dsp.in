@@ -152,6 +152,10 @@ SOURCE=..\include\isccfg\log.h
 
 SOURCE=..\include\isccfg\namedconf.h
 # End Source File
+# Begin Source File
+
+SOURCE=..\include\isccfg\version.h
+# End Source File
 # End Group
 # Begin Group "Resource Files"
 

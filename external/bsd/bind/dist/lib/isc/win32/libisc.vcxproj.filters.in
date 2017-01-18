@@ -229,6 +229,9 @@
     <ClInclude Include="..\include\isc\socket.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\isc\stats.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\isc\stdio.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>

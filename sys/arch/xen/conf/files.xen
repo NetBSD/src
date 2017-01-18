@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.133 2014/02/12 23:24:09 dsl Exp $
+#	$NetBSD: files.xen,v 1.133.8.1 2017/01/18 08:46:26 skrll Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -92,9 +92,9 @@ file	arch/xen/x86/xen_pmap.c
 file	arch/xen/x86/xen_intr.c
 file	arch/xen/x86/xenfunc.c
 
-file	arch/xen/xen/xen_ucode.c	dom0ops | cpu_ucode needs-flag
-file	arch/x86/x86/cpu_ucode_amd.c	dom0ops | cpu_ucode needs-flag
-file	arch/x86/x86/cpu_ucode_intel.c	dom0ops | cpu_ucode needs-flag
+file	arch/xen/xen/xen_ucode.c	dom0ops & cpu_ucode needs-flag
+file	arch/x86/x86/cpu_ucode_amd.c	dom0ops & cpu_ucode needs-flag
+file	arch/x86/x86/cpu_ucode_intel.c	dom0ops & cpu_ucode needs-flag
 
 file	arch/xen/xen/xen_machdep.c
 file	arch/xen/xen/xen_debug.c
@@ -107,6 +107,12 @@ file	arch/xen/xen/xengnt.c
 
 file	dev/cons.c
 
+
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"
 
 #
 # Machine-independent SCSI drivers

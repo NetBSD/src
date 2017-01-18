@@ -1,7 +1,7 @@
-Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2013-2016  Internet Systems Consortium, Inc. ("ISC")
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
-       BIND 9.10 for Win32 Source Build Instructions.  02-Feb-2014
+       BIND 9.10 for Win32 Source Build Instructions.  17-Apr-2015
 
 Building BIND 9.10 on Windows has the following prerequisites:
 
@@ -42,25 +42,25 @@ Step 1: Download and build OpenSSL
 
   Download and untar the OpenSSL sources from http://www.openssl.org/.
   Extract them at in the same directory in which you extracted the BIND 9
-  source:  If BIND 9 is in \build\bind-9.10.0, for instance, OpenSSL should
-  be in \build\openssl-1.0.1g (subject to version number changes).
+  source:  If BIND 9 is in \build\bind-9.10.2, for instance, OpenSSL should
+  be in \build\openssl-1.0.2a (subject to version number changes).
 
   Note: Building OpenSSL requires that you install Perl as it uses it
   during its build process. The following commands work as of
-  openssl-1.0.1g, but you should check the OpenSSL distribution to see
+  openssl-1.0.2a, but you should check the OpenSSL distribution to see
   if the build instructions in the INSTALL.W32 (or INSTALL.W64) file
   have changed, in particular for the assembler options:
 
     32-bit builds:
       (In an x86 Visual Studio Command Prompt window)
-      cd openssl-1.0.1g
+      cd openssl-1.0.2a
       perl Configure --prefix=c:\openssl enable-static-engine VC-WIN32
       ms\do_ms
       nmake /f ms\ntdll.mak
 
     64-bit builds:
       (In an x64 Visual Studio Command Prompt window)
-      cd openssl-1.0.1g
+      cd openssl-1.0.2a
       perl Configure --prefix=c:\openssl64 enable-static-engine VC-WIN64A
       ms\do_win64a
       nmake /f ms\ntdll.mak
@@ -72,9 +72,12 @@ Step 1: Download and build OpenSSL
   If you wish to use OpenSSL-based PKCS#11 to control a cryptographic
   hardware service module, please see "PKCS#11 (Cryptoki) support" in
   chapter 4 of the BIND 9 Administrator Reference Guide.  You will need to
-  apply the patch in bind9\bin\pkcs11\openssl-1.0.1g-patch (this can be
+  apply the patch in bind9\bin\pkcs11\openssl-1.0.2a-patch (this can be
   done using the Cygwin 'patch' utility) and add --pk11-libname and
   --pk11-flavor to the Configure command above.
+
+  If you don't have the required assembler (nasm), just add 'no-asm'
+  to the configure arguments.
 
 Step 2: Download and build LibXML2
 
@@ -83,16 +86,21 @@ Step 2: Download and build LibXML2
 
   Download and untar the libxml2 sources from ftp://xmlsoft.org/libxml2.
   Extract them in the same directory in which you extracted the BIND 9
-  source:  If BIND 9 is in \build\bind-9.10.0, for instance, libxml2 should
-  be in \build\libxml2-2.9.1 (subject to version number changes).
+  source:  If BIND 9 is in \build\bind-9.10.2, for instance, libxml2 should
+  be in \build\libxml2-2.9.2 (subject to version number changes).
 
   Now build libxml2, and copy the resulting files into the include and lib
   directories:
 
-    cd libxml2-2.9.1\win32
+    cd libxml2-2.9.2\win32
     cscript configure.js compiler=msvc vcmanifest=yes static=yes \
          debug=no iconv=no
     nmake /f Makefile.msvc libxml
+
+  Note some recent distributions show 2 bugs: some files are extracted
+  with no writable rights, cscript tries to open the configure.in file
+  (in the libxml2-2.9.2 directory) when the correct file is configure.ac
+  so raises a 'not found' error.
 
 Step 3: Download and build GeoIP
 
@@ -117,18 +125,21 @@ Step 4: Download and build Readline
   step 5.
 
   Because the original GNU source for the readline library has no WIN32
-  support, it will be necessary to download  a version of the static
+  support, it will be necessary to download a version of the static
   readline library source that is ready to be built by Visual Studio.  One
   such version is available at:
 
     http://gpsim.sourceforge.net/gpsimWin32/gpsimWin32.html#readline_lib
+
+  Note: Windows command (cmd.exe) provides an integrated line edition
+  feature so it is not recommended to configure bind with readline.
 
 Step 5: Make the redistributable runtime object available
 
   Check that the Microsoft redistributable object (vcredist_x86.exe or
   vcredist_x64.exe) is available to the build.  The file may be placed
   in the directory in which the BIND 9 source was extracted (for
-  instance, if BIND 9 is in \build\bind-9.10.0, the redistributable
+  instance, if BIND 9 is in \build\bind-9.10.2, the redistributable
   may be placed in \build\vcredist_x86.exe).  Or, the path to the file
   can be specified via the VCREDIST_PATH environment variable, or via
   the "with-vcredist=PATH" option to the configuration script (see
@@ -140,7 +151,7 @@ Step 6: Configuring the BIND build
   From the command prompt, cd to the win32utils directory under
   the BIND 9 root:
 
-    cd bind-9.10.0\win32utils
+    cd bind-9.10.2\win32utils
 
   In this directory, you can prepare the Windows build by running:
 
@@ -196,6 +207,15 @@ Step 8: Install
   This is only distributed with non-free (i.e., not "Express") versions of
   Visual Studio. The other BIND 9 libraries and applications do not have
   this dependency.
+
+  The very last version of BINDInstall uses two files created by
+  the Configure perl script:
+   - InstallFlags: 32/64 bit build, and/or should the redistributable
+    object be run.
+   - InstallFiles: the list of files to install with for each files
+    4 flags (destination, importance, check version and part of tools).
+  The idea is to be able to use any BINDInstall.exe binary so
+  a non-free version of Visual Studio is no longer required.
 
 Please report bugs, whether in the process of building the application
 or in BIND 9 itself, to bind9-bugs@isc.org.

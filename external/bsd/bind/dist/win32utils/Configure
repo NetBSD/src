@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -379,6 +379,7 @@ my @substdefh = ("AES_SIT",
 my %configdefp;
 
 my @substdefp = ("ISC_PLATFORM_HAVEATOMICSTORE",
+                 "ISC_PLATFORM_HAVEATOMICSTOREQ",
                  "ISC_PLATFORM_HAVECMPXCHG",
                  "ISC_PLATFORM_HAVEXADD",
                  "ISC_PLATFORM_HAVEXADDQ",
@@ -430,7 +431,8 @@ my @substdll = ("COMERR_DLL",
 
 my %configvar;
 
-my @substvar = ("BUILD_MACHINE",
+my @substvar = ("BIND9_VERSION",
+                "BUILD_MACHINE",
                 "BUILD_PLATFORM",
                 "COPTI",
                 "COPTML",
@@ -474,6 +476,8 @@ my @substcond = ("AES",
                  "TESTS",
                  "XTESTS");
 
+my @allcond = (@substcond, "NOTYET", "NOLONGER");
+
 # arguments
 
 # enable-xxx/disable-xxx
@@ -507,7 +511,7 @@ my @withlist = ("aes",
                 "python",
                 "readline",
                 "samples",
-                "sit-alg",
+                "cc-alg",
                 "tests",
                 "tuning",
                 "vcredist");
@@ -686,6 +690,45 @@ if (($want_win32 eq "yes") && ($want_x64 eq "yes")) {
     $configvar{"MACHINE"} = "/machine:X64";
     $configvar{"BUILD_MACHINE"} = "/machine:X64";
 }
+
+# get the version information
+
+my %Versions;
+
+sub getversion {
+    my $data;
+    my $name;
+    my $value;
+    my $version;
+
+    open V, "..\\version" || die $!;
+    while (<V>) {
+        chomp;
+        ($data) = split(/\#/);
+        if ($data) {
+            ($name, $value) = split(/=/, $data);
+            ($name) = split(/\s+/, $name);
+            if ($name eq 'PRODUCT' || $name eq 'DESCRIPTION') {
+                ($value) =~ s/^["\s]+//;
+                ($value) =~ s/["\s]+$//;
+            } else {
+                ($value) = split(/\s+/, $value);
+            }
+            $Versions{$name} = $value;
+        }
+    }
+    close V;
+
+    $version = "$Versions{'MAJORVER'}.$Versions{'MINORVER'}";
+    if ($Versions{'PATCHVER'} ne "") {
+        $version = "$version.$Versions{'PATCHVER'}";
+    }
+    $version = "$version$Versions{'RELEASETYPE'}$Versions{'RELEASEVER'}";
+    $version = "$version$Versions{'EXTENSIONS'}";
+    $configvar{"BIND9_VERSION"} = "$version";
+}
+
+getversion();
 
 # append seen args to CONFIGARGS define
 
@@ -1301,6 +1344,7 @@ if ($enable_intrinsics eq "yes") {
     $configdefp{"ISC_PLATFORM_HAVEXADD"} = 1;
     if ($want_x64 eq "yes") {
         $configdefp{"ISC_PLATFORM_HAVEXADDQ"} = 1;
+        $configdefp{"ISC_PLATFORM_HAVEATOMICSTOREQ"} = 1;
     }
     $configdefp{"ISC_PLATFORM_HAVEATOMICSTORE"} = 1;
     $configdefp{"ISC_PLATFORM_HAVECMPXCHG"} = 1;
@@ -2420,11 +2464,15 @@ sub setupfile {
                 unshift(@conds, $cond);
                 unshift(@passes, $pass);
             }
-            $cond = $1;
-            if (defined($configcond{$cond})) {
-                # do nothing
+            if ($1 ~~ @allcond) {
+                $cond = $1;
+                if (defined($configcond{$cond})) {
+                    # do nothing
+                } else {
+                    $pass = 0;
+                }
             } else {
-                $pass = 0;
+                die "unknown condition \@IF $1 in $filename\n";
             }
             next;
         } elsif ($line =~ /^\@ELSE (.*)$/) {
@@ -2535,11 +2583,15 @@ sub setupproject {
                 unshift(@conds, $cond);
                 unshift(@passes, $pass);
             }
-            $cond = $1;
-            if (defined($configcond{$cond})) {
-                # do nothing
+            if ($1 ~~ @allcond) {
+                $cond = $1;
+                if (defined($configcond{$cond})) {
+                    # do nothing
+                } else {
+                    $pass = 0;
+                }
             } else {
-                $pass = 0;
+                die "unknown condition \@IF $1 in $projectname\n";
             }
             next;
         } elsif ($line =~ /^\@ELSE (.*)$/) {
@@ -2639,7 +2691,6 @@ sub makeversion {
         "isccfg"  => "LIBISCCFG_EXPORTS",
         "lwres"   => "LIBLWRES_EXPORTS");
     my @VersionNames = ("LIBINTERFACE", "LIBREVISION", "LIBAGE");
-    my %Versions;
     my $Version;
     my %ApiVersions;
     my $Mapapi;
@@ -2649,26 +2700,6 @@ sub makeversion {
     my $data;
     my $name;
     my $value;
-
-    # First get the version information
-
-    open V, "..\\version" || die $!;
-    while (<V>) {
-        chomp;
-        ($data) = split(/\#/);
-        if ($data) {
-            ($name, $value) = split(/=/, $data);
-            ($name) = split(/\s+/, $name);
-            if ($name eq 'PRODUCT' || $name eq 'DESCRIPTION') {
-                ($value) =~ s/^["\s]+//;
-                ($value) =~ s/["\s]+$//;
-            } else {
-                ($value) = split(/\s+/, $value);
-            }
-            $Versions{$name} = $value;
-        }
-    }
-    close V;
 
     # And the mapapi one
 
@@ -2730,7 +2761,7 @@ sub makeversion {
 ';
 
     $Version = "$Versions{'MAJORVER'}.$Versions{'MINORVER'}";
-    if ($Versions{'PATCHVER'} != "") {
+    if ($Versions{'PATCHVER'} ne "") {
         $Version = "$Version.$Versions{'PATCHVER'}";
     }
     $Version = "$Version$Versions{'RELEASETYPE'}$Versions{'RELEASEVER'}";
@@ -2843,6 +2874,104 @@ sub makesrcid {
     close SOUT;
 }
 
+# Build install files
+
+sub makeinstallfile {
+    open FOUT, ">InstallFlags" || die "cannot open InstallFlags: $!\n";
+    print FOUT "# Flags for BINDInstall\n";
+    if ($msc_ver >= 1400) {
+        print FOUT "runvcredist\n";
+    }
+    if ($want_x64 eq "yes") {
+        print FOUT "forwin64\n";
+    }
+    close FOUT;
+
+    open LOUT, ">InstallFiles" || die "cannot open InstallFiles: $!\n";
+    print LOUT "# File list for BINDInstall\n";
+    if ($msc_ver < 1400) {
+        if ($msc_ver >= 1310) {
+            print LOUT "mfc71.dll-WCTT\n";
+            print LOUT "msvcr71.dll-WCTT\n";
+        } elsif (($msc_ver > 1200) && ($msc_ver < 1310)) {
+            print LOUT "mfc70.dll-WCTT\n";
+            print LOUT "msvcr70.dll-WCTT\n";
+        }
+    }
+    print LOUT "bindevt.dll-BNFT\n";
+    print LOUT "libbind9.dll-BCFT\n";
+    print LOUT "libisc.dll-BCFT\n";
+    print LOUT "libisccfg.dll-BCFT\n";
+    print LOUT "libisccc.dll-BCFT\n";
+    print LOUT "libdns.dll-BCFT\n";
+    print LOUT "liblwres.dll-BCFT\n";
+    print LOUT "libirs.dll-BCFT\n";
+    if ($use_openssl eq "yes") {
+        print LOUT "libeay32.dll-BCFT\n";
+    }
+    if ($use_libxml2 eq "yes") {
+        print LOUT "libxml2.dll-BCFT\n";
+    }
+    if ($use_gssapi eq "yes") {
+        if ($want_x64 eq "yes") {
+            print LOUT "gssapi64.dll-BCFT\n";
+            print LOUT "krb5_64.dll-BCFT\n";
+        } else {
+            print LOUT "gssapi32.dll-BCFT\n";
+            print LOUT "krb5_32.dll-BCFT\n";
+        }
+    }
+    if ($use_geoip eq "yes") {
+        print LOUT "libgeoip.dll-BCFT\n";
+    }
+    if ($use_idn eq "yes") {
+        print LOUT "idnkit.dll-BCFT\n";
+        print LOUT "iconv.dll-BCFT\n";
+    }
+    print LOUT "named.exe-BCFF\n";
+    print LOUT "nsupdate.exe-BNFT\n";
+    print LOUT "BINDInstall.exe-BNFT\n";
+    print LOUT "InstallFlags-BNFT\n";
+    print LOUT "InstallFiles-BNFT\n";
+    print LOUT "rndc.exe-BNFF\n";
+    print LOUT "dig.exe-BNFT\n";
+    print LOUT "host.exe-BNFT\n";
+    print LOUT "nslookup.exe-BNFT\n";
+    print LOUT "delv.exe-BNFT\n";
+    print LOUT "arpaname.exe-BNFT\n";
+    print LOUT "nsec3hash.exe-BNFF\n";
+    print LOUT "genrandom.exe-BNFF\n";
+    print LOUT "rndc-confgen.exe-BNFF\n";
+    print LOUT "ddns-confgen.exe-BNFF\n";
+    print LOUT "tsig-keygen.exe-BNFF\n";
+    print LOUT "dnssec-keygen.exe-BNFF\n";
+    print LOUT "dnssec-signzone.exe-BNFF\n";
+    print LOUT "dnssec-dsfromkey.exe-BNFF\n";
+    print LOUT "dnssec-importkey.exe-BNFF\n";
+    print LOUT "dnssec-keyfromlabel.exe-BNFF\n";
+    print LOUT "dnssec-revoke.exe-BNFF\n";
+    print LOUT "dnssec-settime.exe-BNFF\n";
+    print LOUT "dnssec-verify.exe-BNFF\n";
+    print LOUT "named-checkconf.exe-BNFF\n";
+    print LOUT "named-checkzone.exe-BNFF\n";
+    print LOUT "named-compilezone.exe-BNFF\n";
+    print LOUT "named-journalprint.exe-BNFF\n";
+    print LOUT "named-rrchecker.exe-BNFF\n";
+    print LOUT "isc-hmax-fixup.exe-BNFF\n";
+    if ($use_pkcs11 eq "yes") {
+        print LOUT "pkcs11-destroy.exe-BNFF\n";
+        print LOUT "pkcs11-keygen.exe-BNFF\n";
+        print LOUT "pkcs11-list.exe-BNFF\n";
+        print LOUT "pkcs11-tokens.exe-BNFF\n";
+    }
+    if ($use_python eq "yes") {
+        print LOUT "dnssec-checkds.py-BNFF\n";
+        print LOUT "dnssec-coverage.py-BNFF\n";
+    }
+    print LOUT "readme1st.txt-BTFT\n";
+    close LOUT;
+}
+
 # Status
 
 if ($verbose) {
@@ -2936,6 +3065,8 @@ if (($want_win32 eq "yes") || ($want_x64 eq "yes")) {
 
     makesrcid();
 
+    makeinstallfile();
+
     print "Configured.\n";
 } else {
     print "add win32 or x64 to commit configuration to build files\n";
@@ -2952,10 +3083,9 @@ exit 0;
 #  --enable-threads included without a way to disable it
 #  --enable-backtrace backtrace included without a way to disable it
 #  --enable-symtable incompatible with DLLs (or libtool)
-#  --enable-exportlib TODO (obsolete)
 #  --enable-ipv6 included without a way to disable it
 #  --enable-atomic supported (renamed to intrinsic)
-#  --enable-spnego support (part of GSSAPI)
+#  --enable-isc-spnego supported (part of GSSAPI)
 #  --enable-fixed-rrset supported
 #  --enable-querytrace supported
 #  --disable-rpz-nsip supported
@@ -2963,6 +3093,7 @@ exit 0;
 #  --enable-filter-aaaa supported
 #  --enable-sit supported
 #  --enable-full-report supported by verbose
+#  --enable-seccomp not supported (Linux specific)
 #  --with-python supported
 #  --with-openssl supported
 #  --with-pkcs11 supported
@@ -2974,13 +3105,14 @@ exit 0;
 #  --with-gssapi supported with MIT (K)erberos (f)or (W)indows
 #  --with-libxml2 supported
 #  --with-libjson not supported on WIN32 (package not available on WIN32)
-#  --with-purify ? (package available on WIN32 but for free?)
-#  --with-gperftools-profiler (package not available on WIN32)
+#  --with-purify not supported (package available on WIN32 but for free?)
+#  --with-gperftools-profiler not supported (package not available on WIN32)
 #  --with-libtool not supported on WIN32 (never)
 #  --with-locktype not supported on WIN32 (not yet available on WIN32)
 #  --with-readline supported
-#  --with-idn support
-#  --with-[lib]iconv (part of IDN)
+#  --with-docbook-xsl not supported (?)
+#  --with-idn[lib] supported
+#  --with-[lib]iconv supported (part of IDN)
 #  --with-atf not supported on WIN32 (package not available on WIN32)
 #  --with-tuning supported
 #  --with-dlopen included without a way to disable it

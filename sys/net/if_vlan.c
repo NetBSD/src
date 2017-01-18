@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.70.2.3 2015/04/23 19:23:45 snj Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.70.2.3.4.1 2017/01/18 08:46:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.70.2.3 2015/04/23 19:23:45 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.70.2.3.4.1 2017/01/18 08:46:46 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -550,6 +550,10 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFCAP:
 		ifcr = data;
 		/* make sure caps are enabled on parent */
+		if (ifv->ifv_p == NULL) {
+			error = EINVAL;
+			break;
+		}
 		if ((ifv->ifv_p->if_capenable & ifcr->ifcr_capenable) !=
 		    ifcr->ifcr_capenable) {
 			error = EINVAL;
