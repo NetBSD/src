@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.61 2017/01/18 10:18:40 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.62 2017/01/18 10:22:09 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -337,7 +337,7 @@ SYSCTL_INT(_hw_ix, OID_AUTO, enable_msix, CTLFLAG_RDTUN, &ixgbe_enable_msix, 0,
  * number of cpus with a max of 8. This
  * can be overriden manually here.
  */
-static int ixgbe_num_queues = 1;
+static int ixgbe_num_queues = 0;
 SYSCTL_INT(_hw_ix, OID_AUTO, num_queues, CTLFLAG_RDTUN, &ixgbe_num_queues, 0,
     "Number of queues to configure, 0 indicates autoconfigure");
 
@@ -2702,19 +2702,19 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		aprint_normal_dev(dev, "for TX/RX, interrupting at %s",
 		    intrstr);
 		if (error == 0) {
-#ifdef IXGBE_DEBUG
+#if 1 /* def IXGBE_DEBUG */
 #ifdef	RSS
 			aprintf_normal(
-			    ", bound RSS bucket %d to CPU %d\n",
+			    ", bound RSS bucket %d to CPU %d",
 			    i, cpu_id);
 #else
 			aprint_normal(
-			    ", bound queue %d to cpu %d\n",
+			    ", bound queue %d to cpu %d",
 			    i, cpu_id);
 #endif
 #endif /* IXGBE_DEBUG */
-		} else
-			aprint_normal("\n");
+		}
+		aprint_normal("\n");
 #ifndef IXGBE_LEGACY_TX
 		txr->txq_si = softint_establish(SOFTINT_NET,
 		    ixgbe_deferred_mq_start, txr);
@@ -2795,7 +2795,8 @@ ixgbe_setup_msix(struct adapter *adapter)
 
 	/* First try MSI/X */
 	msgs = pci_msix_count(adapter->osdep.pc, adapter->osdep.tag);
-	if (msgs < IXG_MSIX_NINTR)
+	msgs = MIN(msgs, IXG_MAX_NINTR);
+	if (msgs < 2)
 		goto msi;
 
 	adapter->msix_mem = (void *)1; /* XXX */
