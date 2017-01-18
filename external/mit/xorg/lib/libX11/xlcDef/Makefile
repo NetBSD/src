@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2008/09/07 13:15:11 rtr Exp $
+# $NetBSD: Makefile,v 1.1.46.1 2017/01/18 08:46:21 skrll Exp $
 
 LIBISMODULE=	yes
 SHLIB_MAJOR=	2 # XXX
@@ -12,3 +12,4 @@ LIBDIR=	${X11LIBDIR}/locale/lib/common
 SRCS=	${SRCS.xlcDef}
 
 .include "../Makefile.xlcDef"
+.include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21.2.1 2014/08/18 07:42:02 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.21.2.1.4.1 2017/01/18 08:45:49 skrll Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -29,7 +29,8 @@ IDIST=		${NETBSDSRCDIR}/external/bsd/bind/dist
 BIND_SRCDIR=	${NETBSDSRCDIR}/external/bsd/bind
 BIND_HTMLDIR=	/usr/share/doc/reference/ref8/bind9
 
-.include "${IDIST}/version"
+VERSIONFILE=${IDIST}/version
+.include "${VERSIONFILE}"
 
 VERSION=${MAJORVER}.${MINORVER}.${PATCHVER}${RELEASETYPE}${RELEASEVER}
 SYSCONFDIR=/etc
@@ -90,7 +91,7 @@ LIBDPLIBS+=      pthread  ${NETBSDSRCDIR}/lib/libpthread
 .endif
 
 .if ${NAMED_USE_OPENSSL} == "yes"
-CPPFLAGS+=-DOPENSSL -DUSE_ISC_SPNEGO
+CPPFLAGS+=-DOPENSSL -DUSE_ISC_SPNEGO -DHAVE_OPENSSL_GOST
 .if ${MKKERBEROS} != "no"
 CPPFLAGS+=-DGSSAPI
 .endif

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -24,4 +24,5 @@
 rm -f dig.out.ns2
 rm -f dig.out.expire
 rm -f */named.memstats
+rm -f */named.run
 rm -f ns2/named_dump.db

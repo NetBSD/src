@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -314,6 +314,13 @@ if $TESTSOCK6 fd92:7065:b8e:ffff::2; then
     j=`cat dig.out.ns2.test$n.2 | tr -d '"'`
     [ "$j" = "2" ] || ret=1
 fi
+[ $ret -eq 0 ] || echo "I:failed"
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking other GeoIP options are parsed correctly ($n)"
+ret=0
+$CHECKCONF options.conf || ret=1
 [ $ret -eq 0 ] || echo "I:failed"
 status=`expr $status + $ret`
 

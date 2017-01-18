@@ -1,4 +1,4 @@
-/*	$NetBSD: cname_5.c,v 1.3.12.1 2016/03/13 08:06:13 martin Exp $	*/
+/*	$NetBSD: cname_5.c,v 1.3.12.1.2.1 2017/01/18 08:46:12 skrll Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -44,7 +44,8 @@ fromtext_cname(ARGS_FROMTEXT) {
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	origin = (origin != NULL) ? origin : dns_rootname;
+	if (origin == NULL)
+		origin = dns_rootname;
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	return (ISC_R_SUCCESS);
 }

@@ -172,7 +172,7 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\named.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib kernel32.lib ws2_32.lib ../../../lib/isc/win32/Release/libisc.lib ../../../lib/dns/win32/Release/libdns.lib ../../../lib/isccc/win32/Release/libisccc.lib ../../../lib/lwres/win32/Release/liblwres.lib ../../../lib/isccfg/win32/Release/libisccfg.lib ../../../lib/bind9/win32/Release/libbind9.lib $(LIBXML) @OPENSSL_LIB@ @GSSAPI_LIB@ @GEOIP_LIB@ /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\named.pdb" @MACHINE@ /out:"../../../Build/Release/named.exe" 
+LINK32_FLAGS=user32.lib advapi32.lib kernel32.lib version.lib ws2_32.lib ../../../lib/isc/win32/Release/libisc.lib ../../../lib/dns/win32/Release/libdns.lib ../../../lib/isccc/win32/Release/libisccc.lib ../../../lib/lwres/win32/Release/liblwres.lib ../../../lib/isccfg/win32/Release/libisccfg.lib ../../../lib/bind9/win32/Release/libbind9.lib $(LIBXML) @OPENSSL_LIB@ @GSSAPI_LIB@ @GEOIP_LIB@ /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\named.pdb" @MACHINE@ /out:"../../../Build/Release/named.exe" 
 LINK32_OBJS= \
 	"$(INTDIR)\client.obj" \
 	"$(INTDIR)\config.obj" \
@@ -371,7 +371,7 @@ BSC32_SBRS= \
 <<
 
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib kernel32.lib ws2_32.lib ../../../lib/isc/win32/Debug/libisc.lib ../../../lib/dns/win32/Debug/libdns.lib ../../../lib/isccc/win32/Debug/libisccc.lib ../../../lib/lwres/win32/Debug/liblwres.lib ../../../lib/isccfg/win32/Debug/libisccfg.lib ../../../lib/bind9/win32/Debug/libbind9.lib $(LIBXML) @OPENSSL_LIB@ @GSSAPI_LIB@ @GEOIP_LIB@ /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\named.pdb" /map:"$(INTDIR)\named.map" /debug @MACHINE@ /out:"../../../Build/Debug/named.exe" /pdbtype:sept 
+LINK32_FLAGS=user32.lib advapi32.lib kernel32.lib version.lib ws2_32.lib ../../../lib/isc/win32/Debug/libisc.lib ../../../lib/dns/win32/Debug/libdns.lib ../../../lib/isccc/win32/Debug/libisccc.lib ../../../lib/lwres/win32/Debug/liblwres.lib ../../../lib/isccfg/win32/Debug/libisccfg.lib ../../../lib/bind9/win32/Debug/libbind9.lib $(LIBXML) @OPENSSL_LIB@ @GSSAPI_LIB@ @GEOIP_LIB@ /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\named.pdb" /map:"$(INTDIR)\named.map" /debug @MACHINE@ /out:"../../../Build/Debug/named.exe" /pdbtype:sept 
 LINK32_OBJS= \
 	"$(INTDIR)\client.obj" \
 	"$(INTDIR)\config.obj" \

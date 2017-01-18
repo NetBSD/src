@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
 <!--
- - Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -15,10 +14,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id -->
+<!-- Converted by db4-upgrade version 1.0 -->
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="dlz-info"><info><title>DLZ (Dynamically Loadable Zones)</title></info>
 
-<sect1 id="dlz-info">
-  <title>DLZ (Dynamically Loadable Zones)</title>
   <para>
     DLZ (Dynamically Loadable Zones) is an extension to BIND 9 that allows
     zone data to be retrieved directly from an external database.  There is
@@ -56,16 +54,16 @@
     zones in the database.)
   </para>
 
-  <sect2>
-    <title>Configuring DLZ</title>
+  <section><info><title>Configuring DLZ</title></info>
+
     <para>
       A DLZ database is configured with a <command>dlz</command>
       statement in <filename>named.conf</filename>:
     </para>
     <screen>
     dlz example {
-        database "dlopen driver.so <option>args</option>";
-        search yes;
+	database "dlopen driver.so <option>args</option>";
+	search yes;
     };
     </screen>
     <para>
@@ -94,18 +92,18 @@
     </para>
     <screen>
     dlz other {
-        database "dlopen driver.so <option>args</option>";
-        search no;
+	database "dlopen driver.so <option>args</option>";
+	search no;
     };
 
     zone "." {
-        type redirect;
-        dlz other;
+	type redirect;
+	dlz other;
     };
     </screen>
-  </sect2>
-  <sect2>
-    <title>Sample DLZ Driver</title>
+  </section>
+  <section><info><title>Sample DLZ Driver</title></info>
+
     <para>
       For guidance in implementation of DLZ modules, the directory
       <filename>contrib/dlz/example</filename> contains a basic
@@ -117,7 +115,7 @@
     </para>
     <screen>
     dlz other {
-        database "dlopen driver.so example.nil";
+	database "dlopen driver.so example.nil";
     };
     </screen>
     <para>
@@ -128,8 +126,8 @@
     </para>
     <screen>
  example.nil.  3600    IN      SOA     example.nil. hostmaster.example.nil. (
-                                               123 900 600 86400 3600
-                                       )
+					       123 900 600 86400 3600
+				       )
  example.nil.  3600    IN      NS      example.nil.
  example.nil.  1800    IN      A       10.53.0.1
     </screen>
@@ -137,7 +135,7 @@
       The sample driver is capable of retrieving information about the
       querying client, and altering its response on the basis of this
       information.  To demonstrate this feature, the example driver
-      responds to queries for "source-addr.<option>zonename</option>>/TXT"
+      responds to queries for "source-addr.<option>zonename</option>&gt;/TXT"
       with the source address of the query.  Note, however, that this
       record will *not* be included in AXFR or ANY responses.  Normally,
       this feature would be used to alter responses in some other fashion,
@@ -151,5 +149,5 @@
       defines the API and should be included by any dynamically-linkable
       DLZ module.
     </para>
-  </sect2>
-</sect1>
+  </section>
+</section>

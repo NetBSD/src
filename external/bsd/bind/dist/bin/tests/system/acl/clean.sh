@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2008, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,8 +14,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.3 2008/01/10 23:47:01 tbox Exp 
-
 #
 # Clean up after zone transfer tests.
 #
@@ -23,3 +21,4 @@
 rm -f dig.out.*
 rm -f ns2/example.db ns2/tsigzone.db ns2/example.db.jnl ns2/named.conf
 rm -f */named.memstats
+rm -f */named.run

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -358,14 +358,14 @@ typedef __int64 off_t;
 /* HMAC_*() return ints */
 @HMAC_RETURN_INT@
 
-/* Use AES for Source Identity Token generation */
-@AES_SIT@
+/* Use AES for Client Cookie generation */
+@AES_CC@
 
-/* Use HMAC-SHA1 for Source Identity Token generation */
-@HMAC_SHA1_SIT@
+/* Use HMAC-SHA1 for Client Cookie generation */
+@HMAC_SHA1_CC@
 
-/* Use HMAC-SHA256 for Source Identity Token generation */
-@HMAC_SHA256_SIT@
+/* Use HMAC-SHA256 for Client Cookie generation */
+@HMAC_SHA256_CC@
 
 /* Define to 1 if you have the `readline' function. */
 @HAVE_READLINE@

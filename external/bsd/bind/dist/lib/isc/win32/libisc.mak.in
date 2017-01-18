@@ -1212,12 +1212,14 @@ SOURCE=..\aes.c
 
 
 "$(INTDIR)\aes.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "libisc - @PLATFORM@ Debug"
 
 
 "$(INTDIR)\aes.obj"	"$(INTDIR)\aes.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 

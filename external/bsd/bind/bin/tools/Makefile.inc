@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2011/09/11 18:55:24 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.1.28.1 2017/01/18 08:45:50 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ TOOLS=${IDIST}/bin/tools
 
 PROG=${BASE}
 SRCS=${BASE}.c
+${BASE}.o: ${VERSIONFILE}
 .if exists(${TOOLS}/${BASE}.8)
 BINDIR=/usr/sbin
 MAN=${BASE}.8

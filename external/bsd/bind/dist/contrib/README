@@ -44,6 +44,12 @@ but reported bugs will be fixed as time permits.
       Contains source for 'idnkit', which provides support for
       Internationalized Domain Name processing.
 
+    - dnsperf-2.1.0.0-1/
+
+      DNS server performance testing tools, like 'queryperf' but more
+      advanced: 'dnsperf' focuses on authoritative server performance
+      and 'resperf' on recursive server performance.
+
     - nslint-3.0a2
 
       A lint-like tool for checking DNS files

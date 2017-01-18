@@ -1,4 +1,4 @@
-; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011-2013, 2016  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,10 +12,6 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id
-
-
-
 ; RPZ test
 ;   This basic file is copied to several zone files before being used.
 ;   Its contents are also changed with nsupdate
@@ -25,3 +21,5 @@ $TTL	300
 @	SOA	blx.  hostmaster.ns.blx. ( 1 3600 1200 604800 60 )
 	NS	ns.tld3.
 
+; regression testing for some old crashes
+example.com     NS	example.org.
