@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 303890 2016-08-09 19:32:06Z dumbbell $*/
-/*$NetBSD: ixgbe.h,v 1.18 2016/12/05 08:50:29 msaitoh Exp $*/
+/*$NetBSD: ixgbe.h,v 1.19 2017/01/18 10:18:40 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -617,6 +617,7 @@ struct adapter {
 	u64			noproto;
 #endif
 	struct sysctllog	*sysctllog;
+	const struct sysctlnode *sysctltop;
 	ixgbe_extmem_head_t jcl_head;
 };
 

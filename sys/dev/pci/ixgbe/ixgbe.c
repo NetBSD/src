@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.60 2017/01/18 08:23:03 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.61 2017/01/18 10:18:40 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -4436,6 +4436,9 @@ ixgbe_sysctl_instance(struct adapter *adapter)
 	struct sysctllog **log;
 	int rc;
 	const struct sysctlnode *rnode;
+
+	if (adapter->sysctltop != NULL)
+		return adapter->sysctltop;
 
 	log = &adapter->sysctllog;
 	dvname = device_xname(adapter->dev);
