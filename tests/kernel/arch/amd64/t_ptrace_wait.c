@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.10 2017/01/16 21:35:59 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.11 2017/01/18 05:14:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.10 2017/01/16 21:35:59 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.11 2017/01/18 05:14:34 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -366,6 +366,8 @@ ATF_TC_BODY(watchpoint_trap_code0, tc)
 	struct ptrace_watchpoint pw;
 	int len = sizeof(pw);
 	int watchme = 1234;
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -418,6 +420,20 @@ ATF_TC_BODY(watchpoint_trap_code0, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 0);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
+
 	pw.pw_md.md_address = NULL;
 	printf("Before writing watchpoint %d (disable it)\n", i);
 	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
@@ -456,6 +472,8 @@ ATF_TC_BODY(watchpoint_trap_code1, tc)
 	struct ptrace_watchpoint pw;
 	int len = sizeof(pw);
 	int watchme = 1234;
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -508,6 +526,20 @@ ATF_TC_BODY(watchpoint_trap_code1, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 1);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
+
 	pw.pw_md.md_address = NULL;
 	printf("Before writing watchpoint %d (disable it)\n", i);
 	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
@@ -546,6 +578,8 @@ ATF_TC_BODY(watchpoint_trap_code2, tc)
 	struct ptrace_watchpoint pw;
 	int len = sizeof(pw);
 	int watchme = 1234;
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -597,6 +631,20 @@ ATF_TC_BODY(watchpoint_trap_code2, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 2);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
 
 	pw.pw_md.md_address = NULL;
 	printf("Before writing watchpoint %d (disable it)\n", i);
@@ -636,6 +684,8 @@ ATF_TC_BODY(watchpoint_trap_code3, tc)
 	struct ptrace_watchpoint pw;
 	int len = sizeof(pw);
 	int watchme = 1234;
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -688,6 +738,20 @@ ATF_TC_BODY(watchpoint_trap_code3, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 3);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
+
 	pw.pw_md.md_address = NULL;
 	printf("Before writing watchpoint %d (disable it)\n", i);
 	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
@@ -726,6 +790,8 @@ ATF_TC_BODY(watchpoint_trap_data_write0, tc)
 	struct ptrace_watchpoint pw;
 	int len = sizeof(pw);
 	int watchme = 1234;
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -777,6 +843,20 @@ ATF_TC_BODY(watchpoint_trap_data_write0, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 0);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
+
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
@@ -811,6 +891,8 @@ ATF_TC_BODY(watchpoint_trap_data_write1, tc)
 	struct ptrace_watchpoint pw;
 	int len = sizeof(pw);
 	int watchme = 1234;
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -861,6 +943,20 @@ ATF_TC_BODY(watchpoint_trap_data_write1, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 1);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -896,6 +992,8 @@ ATF_TC_BODY(watchpoint_trap_data_write2, tc)
 	struct ptrace_watchpoint pw;
 	int len = sizeof(pw);
 	int watchme = 1234;
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -946,6 +1044,20 @@ ATF_TC_BODY(watchpoint_trap_data_write2, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 2);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -982,6 +1094,8 @@ ATF_TC_BODY(watchpoint_trap_data_write3, tc)
 	struct ptrace_watchpoint pw;
 	int len = sizeof(pw);
 	int watchme = 1234;
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1033,6 +1147,20 @@ ATF_TC_BODY(watchpoint_trap_data_write3, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 3);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
+
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
@@ -1067,6 +1195,8 @@ ATF_TC_BODY(watchpoint_trap_data_rw0, tc)
 	struct ptrace_watchpoint pw;
 	int len = sizeof(pw);
 	int watchme = 1234;
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1117,6 +1247,20 @@ ATF_TC_BODY(watchpoint_trap_data_rw0, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 0);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -1152,6 +1296,8 @@ ATF_TC_BODY(watchpoint_trap_data_rw1, tc)
 	struct ptrace_watchpoint pw;
 	int len = sizeof(pw);
 	int watchme = 1234;
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1202,6 +1348,20 @@ ATF_TC_BODY(watchpoint_trap_data_rw1, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 1);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -1237,6 +1397,8 @@ ATF_TC_BODY(watchpoint_trap_data_rw2, tc)
 	struct ptrace_watchpoint pw;
 	int len = sizeof(pw);
 	int watchme = 1234;
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1287,6 +1449,20 @@ ATF_TC_BODY(watchpoint_trap_data_rw2, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 2);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -1322,6 +1498,8 @@ ATF_TC_BODY(watchpoint_trap_data_rw3, tc)
 	struct ptrace_watchpoint pw;
 	int len = sizeof(pw);
 	int watchme = 1234;
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1372,6 +1550,20 @@ ATF_TC_BODY(watchpoint_trap_data_rw3, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 3);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
