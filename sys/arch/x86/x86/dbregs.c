@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.1 2016/12/15 12:04:18 kamil Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.2 2017/01/18 05:12:00 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -150,14 +150,17 @@ clear_x86_hw_watchpoints(void)
 	      X86_HW_WATCHPOINT_DR6_DR3_BREAKPOINT_CONDITION_DETECTED));
 }
 
+/* Local temporary bitfield concept to compose event and register that fired */
+#define DR_EVENT_MASK		__BITS(15,8)
+#define DR_REGISTER_MASK	__BITS(7,0)
+
 int
 user_trap_x86_hw_watchpoint(void)
 {
 	register_t dr7, dr6;	/* debug registers dr6 and dr7 */
 	register_t bp;		/* breakpoint bits extracted from dr6 */
-	int nbp;		/* number of breakpoints that triggered */
-	vaddr_t addr[X86_HW_WATCHPOINTS];	/* breakpoint addresses */
-	int i;
+	register_t dr;		/* temporary value of dr0-dr3 */
+	int rv;			/* register and event that fired (if any) */
 
 	dr7 = rdr7();
 	if ((dr7 &
@@ -173,7 +176,6 @@ user_trap_x86_hw_watchpoint(void)
 		return 0;
 	}
 
-	nbp = 0;
 	dr6 = rdr6();
 	bp = dr6 & \
 	    (X86_HW_WATCHPOINT_DR6_DR0_BREAKPOINT_CONDITION_DETECTED |
@@ -190,41 +192,88 @@ user_trap_x86_hw_watchpoint(void)
 	}
 
 	/*
+	 * Clear Status Register (DR6) now as it's not done by CPU.
+	 *
+ 	 * Clear BREAKPOINT_CONDITION_DETECTED and SINGLE_STEP bits and ignore
+	 * the rest.
+	 */
+	ldr6(dr6 &
+	   ~(X86_HW_WATCHPOINT_DR6_DR0_BREAKPOINT_CONDITION_DETECTED |
+	     X86_HW_WATCHPOINT_DR6_DR1_BREAKPOINT_CONDITION_DETECTED |
+	     X86_HW_WATCHPOINT_DR6_DR2_BREAKPOINT_CONDITION_DETECTED |
+	     X86_HW_WATCHPOINT_DR6_DR3_BREAKPOINT_CONDITION_DETECTED |
+	     X86_HW_WATCHPOINT_DR6_SINGLE_STEP));
+
+	/*
 	 * at least one of the breakpoints were hit, check to see
 	 * which ones and if any of them are user space addresses
 	 */
 
-	if (bp & X86_HW_WATCHPOINT_DR6_DR0_BREAKPOINT_CONDITION_DETECTED)
-		addr[nbp++] = (vaddr_t)rdr0();
-	if (bp & X86_HW_WATCHPOINT_DR6_DR1_BREAKPOINT_CONDITION_DETECTED)
-		addr[nbp++] = (vaddr_t)rdr1();
-	if (bp & X86_HW_WATCHPOINT_DR6_DR2_BREAKPOINT_CONDITION_DETECTED)
-		addr[nbp++] = (vaddr_t)rdr2();
-	if (bp & X86_HW_WATCHPOINT_DR6_DR3_BREAKPOINT_CONDITION_DETECTED)
-		addr[nbp++] = (vaddr_t)rdr3();
-
-	for (i = 0; i < nbp; i++) {
-		/* Check if addr[i] is in user space */
-		if (addr[i] >= (vaddr_t)VM_MAXUSER_ADDRESS)
-			continue;
-
-		/*
-		 * Clear Status Register (DR6) now as it's not done by CPU.
-		 *
-	 	 * Clear BREAKPOINT_CONDITION_DETECTED bits and ignore
-		 * the rest.
-		 */
-		ldr6(dr6 &
-		   ~(X86_HW_WATCHPOINT_DR6_DR0_BREAKPOINT_CONDITION_DETECTED |
-		     X86_HW_WATCHPOINT_DR6_DR1_BREAKPOINT_CONDITION_DETECTED |
-		     X86_HW_WATCHPOINT_DR6_DR2_BREAKPOINT_CONDITION_DETECTED |
-		     X86_HW_WATCHPOINT_DR6_DR3_BREAKPOINT_CONDITION_DETECTED));
-
-		return nbp;
+	if (bp & X86_HW_WATCHPOINT_DR6_DR0_BREAKPOINT_CONDITION_DETECTED) {
+		dr = rdr0();	
+		if (dr < (vaddr_t)VM_MAXUSER_ADDRESS) {
+			rv = 0;
+			if (bp & X86_HW_WATCHPOINT_DR6_SINGLE_STEP)
+				rv |= X86_HW_WATCHPOINT_EVENT_FIRED_AND_SSTEP;
+			else
+				rv |= X86_HW_WATCHPOINT_EVENT_FIRED;
+			return rv;
+		}
+		
 	}
 
-	/*
-	 * None of the breakpoints are in user space.
-	 */
+	if (bp & X86_HW_WATCHPOINT_DR6_DR1_BREAKPOINT_CONDITION_DETECTED) {
+		dr = rdr1();
+		if (dr < (vaddr_t)VM_MAXUSER_ADDRESS) {
+			rv = __SHIFTIN(1, DR_REGISTER_MASK);
+			if (bp & X86_HW_WATCHPOINT_DR6_SINGLE_STEP)
+				rv |= X86_HW_WATCHPOINT_EVENT_FIRED_AND_SSTEP;
+			else
+				rv |= X86_HW_WATCHPOINT_EVENT_FIRED;
+			return rv;
+		}
+		
+	}
+
+	if (bp & X86_HW_WATCHPOINT_DR6_DR2_BREAKPOINT_CONDITION_DETECTED) {
+		dr = rdr2();
+		if (dr < (vaddr_t)VM_MAXUSER_ADDRESS) {
+			rv = __SHIFTIN(2, DR_REGISTER_MASK);
+			if (bp & X86_HW_WATCHPOINT_DR6_SINGLE_STEP)
+				rv |= X86_HW_WATCHPOINT_EVENT_FIRED_AND_SSTEP;
+			else
+				rv |= X86_HW_WATCHPOINT_EVENT_FIRED;
+			return rv;
+		}
+		
+	}
+
+	if (bp & X86_HW_WATCHPOINT_DR6_DR3_BREAKPOINT_CONDITION_DETECTED) {
+		dr = rdr3();
+		if (dr < (vaddr_t)VM_MAXUSER_ADDRESS) {
+			rv = __SHIFTIN(3, DR_REGISTER_MASK);
+			if (bp & X86_HW_WATCHPOINT_DR6_SINGLE_STEP)
+				rv |= X86_HW_WATCHPOINT_EVENT_FIRED_AND_SSTEP;
+			else
+				rv |= X86_HW_WATCHPOINT_EVENT_FIRED;
+			return rv;
+		}
+		
+	}
+
 	return 0;
+}
+
+int
+x86_hw_watchpoint_type(int wptnfo)
+{
+
+	return __SHIFTOUT(wptnfo, DR_EVENT_MASK);
+}
+
+int
+x86_hw_watchpoint_reg(int wptnfo)
+{
+
+	return __SHIFTOUT(wptnfo, DR_REGISTER_MASK);
 }
