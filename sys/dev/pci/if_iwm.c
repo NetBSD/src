@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.64 2017/01/17 08:47:32 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.65 2017/01/19 11:24:05 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.64 2017/01/17 08:47:32 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.65 2017/01/19 11:24:05 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -453,6 +453,8 @@ static void	iwm_setrates_task(void *);
 static int	iwm_setrates(struct iwm_node *);
 #endif
 static int	iwm_media_change(struct ifnet *);
+static int	iwm_do_newstate(struct ieee80211com *, enum ieee80211_state,
+		    int);
 static void	iwm_newstate_cb(struct work *, void *);
 static int	iwm_newstate(struct ieee80211com *, enum ieee80211_state, int);
 static void	iwm_endscan(struct iwm_softc *);
@@ -2706,7 +2708,6 @@ iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 			sc->sc_rx_ba_sessions--;
 	} else if (start)
 		ieee80211_addba_req_refuse(ic, ni, tid);
-
 	splx(s);
 }
 
@@ -3750,7 +3751,8 @@ iwm_rx_tx_cmd(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		sc->qfullmsk &= ~(1 << qid);
 		if (sc->qfullmsk == 0 && (ifp->if_flags & IFF_OACTIVE)) {
 			ifp->if_flags &= ~IFF_OACTIVE;
-			if_start_lock(ifp);
+			KASSERT(KERNEL_LOCKED_P());
+			iwm_start(ifp);
 		}
 	}
 
@@ -5837,30 +5839,14 @@ iwm_media_change(struct ifnet *ifp)
 	return err;
 }
 
-static void
-iwm_newstate_cb(struct work *wk, void *v)
+static int
+iwm_do_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
-	struct iwm_softc *sc = v;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwm_newstate_state *iwmns = (struct iwm_newstate_state *)wk;
-	enum ieee80211_state nstate = iwmns->ns_nstate;
+	struct ifnet *ifp = IC2IFP(ic);
+	struct iwm_softc *sc = ifp->if_softc;
 	enum ieee80211_state ostate = ic->ic_state;
-	int generation = iwmns->ns_generation;
 	struct iwm_node *in;
-	int arg = iwmns->ns_arg;
 	int err;
-
-	kmem_free(iwmns, sizeof(*iwmns));
-
-	DPRINTF(("Prepare to switch state %d->%d\n", ostate, nstate));
-	if (sc->sc_generation != generation) {
-		DPRINTF(("newstate_cb: someone pulled the plug meanwhile\n"));
-		if (nstate == IEEE80211_S_INIT) {
-			DPRINTF(("newstate_cb: nstate == IEEE80211_S_INIT: calling sc_newstate()\n"));
-			sc->sc_newstate(ic, nstate, arg);
-		}
-		return;
-	}
 
 	DPRINTF(("switching state %s->%s\n", ieee80211_state_name[ostate],
 	    ieee80211_state_name[nstate]));
@@ -5900,26 +5886,26 @@ iwm_newstate_cb(struct work *wk, void *v)
 	case IEEE80211_S_SCAN:
 		if (ostate == nstate &&
 		    ISSET(sc->sc_flags, IWM_FLAG_SCANNING))
-			return;
+			return 0;
 		if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_UMAC_SCAN))
 			err = iwm_umac_scan(sc);
 		else
 			err = iwm_lmac_scan(sc);
 		if (err) {
 			DPRINTF(("%s: could not initiate scan\n", DEVNAME(sc)));
-			return;
+			return err;
 		}
 		SET(sc->sc_flags, IWM_FLAG_SCANNING);
 		ic->ic_state = nstate;
 		iwm_led_blink_start(sc);
-		return;
+		return 0;
 
 	case IEEE80211_S_AUTH:
 		err = iwm_auth(sc);
 		if (err) {
 			DPRINTF(("%s: could not move to auth state: %d\n",
 			    DEVNAME(sc), err));
-			return;
+			return err;
 		}
 		break;
 
@@ -5928,7 +5914,7 @@ iwm_newstate_cb(struct work *wk, void *v)
 		if (err) {
 			DPRINTF(("%s: failed to associate: %d\n", DEVNAME(sc),
 			    err));
-			return;
+			return err;
 		}
 		break;
 
@@ -5939,14 +5925,14 @@ iwm_newstate_cb(struct work *wk, void *v)
 		err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 1);
 		if (err) {
 			aprint_error_dev(sc->sc_dev, "failed to update MAC\n");
-			return;
+			return err;
 		}
 
 		err = iwm_power_update_device(sc);
 		if (err) {
 			aprint_error_dev(sc->sc_dev,
 			    "could send power command (error %d)\n", err);
-			return;
+			return err;
 		}
 #ifdef notyet
 		/*
@@ -5958,21 +5944,21 @@ iwm_newstate_cb(struct work *wk, void *v)
 		if (err) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not enable beacon filter\n");
-			return;
+			return err;
 		}
 #endif
 		err = iwm_power_mac_update_mode(sc, in);
 		if (err) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not update MAC power (error %d)\n", err);
-			return;
+			return err;
 		}
 
 		err = iwm_update_quotas(sc, in);
 		if (err) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not update quotas (error %d)\n", err);
-			return;
+			return err;
 		}
 
 		ieee80211_amrr_node_init(&sc->sc_amrr, &in->in_amn);
@@ -5992,7 +5978,36 @@ iwm_newstate_cb(struct work *wk, void *v)
 		break;
 	}
 
-	sc->sc_newstate(ic, nstate, arg);
+	return sc->sc_newstate(ic, nstate, arg);
+}
+
+static void
+iwm_newstate_cb(struct work *wk, void *v)
+{
+	struct iwm_softc *sc = v;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwm_newstate_state *iwmns = (struct iwm_newstate_state *)wk;
+	enum ieee80211_state nstate = iwmns->ns_nstate;
+	int generation = iwmns->ns_generation;
+	int arg = iwmns->ns_arg;
+	int s;
+
+	kmem_free(iwmns, sizeof(*iwmns));
+
+	s = splnet();
+
+	DPRINTF(("Prepare to switch state %d->%d\n", ic->ic_state, nstate));
+	if (sc->sc_generation != generation) {
+		DPRINTF(("newstate_cb: someone pulled the plug meanwhile\n"));
+		if (nstate == IEEE80211_S_INIT) {
+			DPRINTF(("newstate_cb: nstate == IEEE80211_S_INIT: "
+			    "calling sc_newstate()\n"));
+			(void) sc->sc_newstate(ic, nstate, arg);
+		}
+	} else
+		(void) iwm_do_newstate(ic, nstate, arg);
+
+	splx(s);
 }
 
 static int
@@ -6419,7 +6434,6 @@ iwm_init(struct ifnet *ifp)
 {
 	struct iwm_softc *sc = ifp->if_softc;
 	int err;
-	int s;
 
 	if (ISSET(sc->sc_flags, IWM_FLAG_HW_INITED))
 		return 0;
@@ -6436,10 +6450,7 @@ iwm_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
 
-	s = splnet();
 	ieee80211_begin_scan(&sc->sc_ic, 0);
-	splx(s);
-
 	SET(sc->sc_flags, IWM_FLAG_HW_INITED);
 
 	return 0;
@@ -6537,7 +6548,6 @@ iwm_stop(struct ifnet *ifp, int disable)
 	struct iwm_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (struct iwm_node *)ic->ic_bss;
-	int s;
 
 	sc->sc_flags &= ~IWM_FLAG_HW_INITED;
 	sc->sc_flags |= IWM_FLAG_STOPPED;
@@ -6547,10 +6557,8 @@ iwm_stop(struct ifnet *ifp, int disable)
 	if (in)
 		in->in_phyctxt = NULL;
 
-	s = splnet();
 	if (ic->ic_state != IEEE80211_S_INIT)
 		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
-	splx(s);
 
 	callout_stop(&sc->sc_calib_to);
 	iwm_led_blink_stop(sc);
