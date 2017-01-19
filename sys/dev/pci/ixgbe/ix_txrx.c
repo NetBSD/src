@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.15 2017/01/18 08:15:22 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.16 2017/01/19 06:56:33 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -515,6 +515,7 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 
 	return 0;
 }
+
 
 /*********************************************************************
  *
@@ -2396,4 +2397,3 @@ tx_fail:
 fail:
 	return (error);
 }
-
