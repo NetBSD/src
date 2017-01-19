@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.172 2017/01/19 03:39:16 riastradh Exp $
+$NetBSD: acronyms.comp,v 1.173 2017/01/19 19:09:06 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -771,6 +771,7 @@ ML	maximum likelihood
 MLC	multi-level cell
 MLD	multicast listener discovery
 MLHP	micro loop heat pipe
+MMF	multi-mode fiber
 MMIC	monolithic microwave integrated circuit
 MMIO	memory mapped input/output
 MMORPG	massive multiplayer online role playing game
@@ -1182,6 +1183,7 @@ SMAP	supervisor mode access prevention
 SMART	self-monitoring analysis and reporting technology
 SMBIOS	System Management BIOS
 SMC	system management controller
+SMF	single mode fiber
 SMI	structure of management information
 SMI	system management interrupt
 SMM	system management mode
