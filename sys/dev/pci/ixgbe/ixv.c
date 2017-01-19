@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.32 2017/01/18 10:22:09 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.33 2017/01/19 09:42:08 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1521,7 +1521,6 @@ map_err:
 
 	/* Pick up the tuneable queues */
 	adapter->num_queues = ixv_num_queues;
-
 	adapter->hw.back = adapter;
 
 	/*

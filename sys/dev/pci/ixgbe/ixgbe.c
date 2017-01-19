@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.62 2017/01/18 10:22:09 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.63 2017/01/19 09:42:08 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -161,6 +161,7 @@ static int      ixgbe_allocate_legacy(struct adapter *,
 static int	ixgbe_setup_msix(struct adapter *);
 static void	ixgbe_free_pci_resources(struct adapter *);
 static void	ixgbe_local_timer(void *);
+static void	ixgbe_local_timer1(void *);
 static int	ixgbe_setup_interface(device_t, struct adapter *);
 static void	ixgbe_config_gpie(struct adapter *);
 static void	ixgbe_config_dmac(struct adapter *);
@@ -435,7 +436,6 @@ ixgbe_lookup(const struct pci_attach_args *pa)
 	}
 	return NULL;
 }
-
 
 /*********************************************************************
  *  Device initialization routine
@@ -2219,6 +2219,16 @@ ixgbe_mc_array_itr(struct ixgbe_hw *hw, u8 **update_ptr, u32 *vmdq)
  **********************************************************************/
 
 static void
+ixgbe_local_timer(void *arg)
+{
+	struct adapter *adapter = arg;
+
+	IXGBE_CORE_LOCK(adapter);
+	ixgbe_local_timer1(adapter);
+	IXGBE_CORE_UNLOCK(adapter);
+}
+
+static void
 ixgbe_local_timer1(void *arg)
 {
 	struct adapter	*adapter = arg;
@@ -2269,6 +2279,7 @@ ixgbe_local_timer1(void *arg)
 		}
 
 	}
+
 	/* Only truely watchdog if all queues show hung */
 	if (hung == adapter->num_queues)
 		goto watchdog;
@@ -2285,16 +2296,6 @@ watchdog:
 	adapter->ifp->if_flags &= ~IFF_RUNNING;
 	adapter->watchdog_events.ev_count++;
 	ixgbe_init_locked(adapter);
-}
-
-static void
-ixgbe_local_timer(void *arg)
-{
-	struct adapter *adapter = arg;
-
-	IXGBE_CORE_LOCK(adapter);
-	ixgbe_local_timer1(adapter);
-	IXGBE_CORE_UNLOCK(adapter);
 }
 
 
@@ -5577,6 +5578,30 @@ ixgbe_disable_rx_drop(struct adapter *adapter)
 #endif
 }
 
+static void
+ixgbe_rearm_queues(struct adapter *adapter, u64 queues)
+{
+	u32 mask;
+
+	switch (adapter->hw.mac.type) {
+	case ixgbe_mac_82598EB:
+		mask = (IXGBE_EIMS_RTX_QUEUE & queues);
+		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EICS, mask);
+		break;
+	case ixgbe_mac_82599EB:
+	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
+		mask = (queues & 0xFFFFFFFF);
+		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EICS_EX(0), mask);
+		mask = (queues >> 32);
+		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EICS_EX(1), mask);
+		break;
+	default:
+		break;
+	}
+}
+
 #ifdef PCI_IOV
 
 /*
@@ -6295,26 +6320,3 @@ ixgbe_add_vf(device_t dev, u16 vfnum, const nvlist_t *config)
 	return (0);
 }
 #endif /* PCI_IOV */
-static void
-ixgbe_rearm_queues(struct adapter *adapter, u64 queues)
-{
-	u32 mask;
-
-	switch (adapter->hw.mac.type) {
-	case ixgbe_mac_82598EB:
-		mask = (IXGBE_EIMS_RTX_QUEUE & queues);
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EICS, mask);
-		break;
-	case ixgbe_mac_82599EB:
-	case ixgbe_mac_X540:
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-		mask = (queues & 0xFFFFFFFF);
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EICS_EX(0), mask);
-		mask = (queues >> 32);
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EICS_EX(1), mask);
-		break;
-	default:
-		break;
-	}
-}
