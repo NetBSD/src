@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.187 2017/01/17 07:53:06 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.188 2017/01/19 06:58:55 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.187 2017/01/17 07:53:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.188 2017/01/19 06:58:55 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -288,7 +288,9 @@ static int rtcache_setdst_locked(struct route *, const struct sockaddr *);
 
 static void rtcache_ref(struct rtentry *, struct route *);
 
+#ifdef NET_MPSAFE
 static void rt_update_wait(void);
+#endif
 
 static bool rt_wait_ok(void);
 static void rt_wait_refcnt(const char *, struct rtentry *, int);
@@ -561,7 +563,9 @@ rtalloc1_locked(const struct sockaddr *dst, int report, bool wait_ok)
 	struct rtentry *rt;
 	int s;
 
+#ifdef NET_MPSAFE
 retry:
+#endif
 	s = splsoftnet();
 	rtbl = rt_gettable(dst->sa_family);
 	if (rtbl == NULL)
@@ -574,6 +578,7 @@ retry:
 	if (!ISSET(rt->rt_flags, RTF_UP))
 		goto miss;
 
+#ifdef NET_MPSAFE
 	if (ISSET(rt->rt_flags, RTF_UPDATING) &&
 	    /* XXX updater should be always able to acquire */
 	    curlwp != rt_update_global.lwp) {
@@ -596,6 +601,7 @@ retry:
 			RTCACHE_WLOCK();
 		goto retry;
 	}
+#endif /* NET_MPSAFE */
 
 	rt_ref(rt);
 	RT_REFCNT_TRACE(rt);
@@ -689,7 +695,9 @@ _rt_free(struct rtentry *rt)
 	 * Need to avoid a deadlock on rt_wait_refcnt of update
 	 * and a conflict on psref_target_destroy of update.
 	 */
+#ifdef NET_MPSAFE
 	rt_update_wait();
+#endif
 
 	RT_REFCNT_TRACE(rt);
 	KASSERTMSG(rt->rt_refcnt >= 0, "refcnt=%d", rt->rt_refcnt);
@@ -755,6 +763,7 @@ rt_free(struct rtentry *rt)
 	}
 }
 
+#ifdef NET_MPSAFE
 static void
 rt_update_wait(void)
 {
@@ -767,6 +776,7 @@ rt_update_wait(void)
 	}
 	mutex_exit(&rt_update_global.lock);
 }
+#endif
 
 int
 rt_update_prepare(struct rtentry *rt)
@@ -1964,7 +1974,9 @@ rtcache_validate_locked(struct route *ro)
 {
 	struct rtentry *rt = NULL;
 
+#ifdef NET_MPSAFE
 retry:
+#endif
 	rt = ro->_ro_rt;
 	rtcache_invariants(ro);
 
@@ -1975,6 +1987,7 @@ retry:
 
 	RT_RLOCK();
 	if (rt != NULL && (rt->rt_flags & RTF_UP) != 0 && rt->rt_ifp != NULL) {
+#ifdef NET_MPSAFE
 		if (ISSET(rt->rt_flags, RTF_UPDATING)) {
 			if (rt_wait_ok()) {
 				RT_UNLOCK();
@@ -1987,6 +2000,7 @@ retry:
 				rt = NULL;
 			}
 		} else
+#endif
 			rtcache_ref(rt, ro);
 	} else
 		rt = NULL;
