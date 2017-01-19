@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.68 2017/01/19 16:05:00 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.69 2017/01/19 20:35:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.68 2017/01/19 16:05:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.69 2017/01/19 20:35:44 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -813,7 +813,7 @@ xhci_ecp(struct xhci_softc *sc, uint32_t hcc)
 	bus_size_t ecp = XHCI_HCC_XECP(hcc) * 4;
 	while (ecp != 0) {
 		uint32_t ecr = xhci_read_4(sc, ecp);
-		aprint_debug_dev(sc->sc_dev, "ECR %lx: %08x\n", ecp, ecr);
+		aprint_debug_dev(sc->sc_dev, "ECR: 0x%08x\n", ecr);
 		switch (XHCI_XECP_ID(ecr)) {
 		case XHCI_ID_PROTOCOLS: {
 			xhci_id_protocols(sc, ecp);
