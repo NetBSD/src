@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.41 2017/01/11 02:11:21 christos Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.42 2017/01/19 20:18:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __NetBSD__
 #include <vis.h>
+#endif
 
 #include "npfctl.h"
 
@@ -65,11 +67,14 @@ yyerror(const char *fmt, ...)
 	fprintf(stderr, "%s:%d:%d: %s", yyfilename,
 	    yylineno - (int)eol, yycolumn, msg);
 	if (!eol) {
+#ifdef __NetBSD__
 		size_t len = strlen(context);
 		char *dst = ecalloc(1, len * 4 + 1);
 
 		strvisx(dst, context, len, VIS_WHITE|VIS_CSTYLE);
-		fprintf(stderr, " near '%s'", dst);
+		context = dst
+#endif
+		fprintf(stderr, " near '%s'", context);
 	}
 	fprintf(stderr, "\n");
 	exit(EXIT_FAILURE);
@@ -347,13 +352,14 @@ mapseg
 	;
 
 map
-	: MAP ifref map_sd map_algo mapseg map_type mapseg PASS filt_opts
+	: MAP ifref map_sd map_algo mapseg map_type mapseg
+	  PASS opt_proto filt_opts
 	{
-		npfctl_build_natseg($3, $6, $2, &$5, &$7, &$9, $4);
+		npfctl_build_natseg($3, $6, $2, &$5, &$7, &$9, &$10, $4);
 	}
-	| MAP ifref map_sd map_algo mapseg map_type mapseg
+	| MAP ifref map_sd map_algo opt_proto mapseg map_type mapseg
 	{
-		npfctl_build_natseg($3, $6, $2, &$5, &$7, NULL, $4);
+		npfctl_build_natseg($3, $7, $2, &$6, &$8, &$5, NULL, $4);
 	}
 	| MAP RULESET group_opts
 	{
@@ -722,12 +728,14 @@ port_range
 	}
 	| PORT VAR_ID
 	{
-		$$ = npfctl_parse_port_range_variable($2);
+		npfvar_t *vp = npfvar_lookup($2);
+		$$ = npfctl_parse_port_range_variable($2, vp);
 	}
-	|
+	| PORT list
 	{
-		$$ = NULL;
+		$$ = npfctl_parse_port_range_variable(NULL, $2);
 	}
+	|			{ $$ = NULL; }
 	;
 
 port
