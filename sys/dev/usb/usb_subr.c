@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.217 2016/12/04 10:12:35 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.218 2017/01/19 16:05:00 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.217 2016/12/04 10:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.218 2017/01/19 16:05:00 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -801,7 +801,7 @@ usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
 	if (err) {
 		DPRINTF("endpoint=0x%x failed, error=%d",
 		    ep->ue_edesc->bEndpointAddress, err, 0, 0);
-		kmem_intr_free(p, dev->ud_bus->ub_pipesize);
+		kmem_free(p, dev->ud_bus->ub_pipesize);
 		return err;
 	}
 
@@ -832,9 +832,11 @@ usbd_getnewaddr(struct usbd_bus *bus)
 {
 	int addr;
 
-	for (addr = 1; addr < USB_MAX_DEVICES; addr++)
-		if (bus->ub_devices[addr] == NULL)
+	for (addr = 1; addr < USB_MAX_DEVICES; addr++) {
+		size_t dindex = usb_addr2dindex(addr);
+		if (bus->ub_devices[dindex] == NULL)
 			return addr;
+	}
 	return -1;
 }
 
@@ -1160,8 +1162,8 @@ usbd_get_initial_ddesc(struct usbd_device *dev, usb_device_descriptor_t *desc)
  * and attach a driver.
  */
 usbd_status
-usbd_new_device(device_t parent, struct usbd_bus* bus, int depth,
-                int speed, int port, struct usbd_port *up)
+usbd_new_device(device_t parent, struct usbd_bus *bus, int depth, int speed,
+    int port, struct usbd_port *up)
 {
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	struct usbd_device *dev, *adev;
@@ -1248,7 +1250,7 @@ usbd_new_device(device_t parent, struct usbd_bus* bus, int depth,
 
 	/* Establish the default pipe. */
 	err = usbd_setup_pipe_flags(dev, 0, &dev->ud_ep0, USBD_DEFAULT_INTERVAL,
-			      &dev->ud_pipe0, USBD_MPSAFE);
+	    &dev->ud_pipe0, USBD_MPSAFE);
 	if (err) {
 		usbd_remove_device(dev, up);
 		return err;
@@ -1261,6 +1263,11 @@ usbd_new_device(device_t parent, struct usbd_bus* bus, int depth,
 		err = usbd_get_initial_ddesc(dev, dd);
 		if (!err)
 			break;
+		/*
+		 * The root hub can never fail to give the initial descriptor,
+		 * but assert it just in case.
+		 */
+		KASSERT(up->up_parent);
 		usbd_delay_ms(dev, 200);
 		if ((i & 3) == 3)
 			usbd_reset_port(up->up_parent, port, &ps);
@@ -1331,7 +1338,7 @@ usbd_new_device(device_t parent, struct usbd_bus* bus, int depth,
 	/* Allow device time to set new address */
 	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
 	dev->ud_addr = addr;	/* new device address now */
-	bus->ub_devices[addr] = dev;
+	bus->ub_devices[usb_addr2dindex(addr)] = dev;
 
 	/* Re-establish the default pipe with the new address. */
 	usbd_kill_pipe(dev->ud_pipe0);
@@ -1423,7 +1430,7 @@ usbd_remove_device(struct usbd_device *dev, struct usbd_port *up)
 	if (dev->ud_pipe0 != NULL)
 		usbd_kill_pipe(dev->ud_pipe0);
 	up->up_dev = NULL;
-	dev->ud_bus->ub_devices[dev->ud_addr] = NULL;
+	dev->ud_bus->ub_devices[usb_addr2dindex(dev->ud_addr)] = NULL;
 
 	kmem_free(dev, sizeof(*dev));
 }
@@ -1553,7 +1560,8 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 		if (p->up_dev)
 			err = p->up_dev->ud_addr;
 		else {
-			int s = UGETW(p->up_status.wPortStatus);
+			const int s = UGETW(p->up_status.wPortStatus);
+			const bool sshub_p = USB_IS_SS(dev->ud_speed);
 			if (s & UPS_PORT_ENABLED)
 				err = USB_PORT_ENABLED;
 			else if (s & UPS_SUSPEND)
@@ -1563,10 +1571,9 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 			 * on 3.x, and UPS_PORT_POWER is available
 			 * only on 2.0 or 1.1.
 			 */
-			else if (USB_IS_SS(dev->ud_speed) &&
-			    (s & UPS_PORT_POWER_SS))
+			else if (sshub_p && (s & UPS_PORT_POWER_SS))
 				err = USB_PORT_POWERED;
-			else if (s & UPS_PORT_POWER)
+			else if (!sshub_p && (s & UPS_PORT_POWER))
 				err = USB_PORT_POWERED;
 			else
 				err = USB_PORT_DISABLED;
@@ -1629,7 +1636,7 @@ usbd_fill_deviceinfo_old(struct usbd_device *dev, struct usb_device_info_old *di
 		if (p->up_dev)
 			err = p->up_dev->ud_addr;
 		else {
-			int s = UGETW(p->up_status.wPortStatus);
+			const int s = UGETW(p->up_status.wPortStatus);
 			if (s & UPS_PORT_ENABLED)
 				err = USB_PORT_ENABLED;
 			else if (s & UPS_SUSPEND)
@@ -1731,9 +1738,14 @@ usb_disconnect_port(struct usbd_port *up, device_t parent, int flags)
 		KASSERT(!dev->ud_nifaces_claimed);
 	}
 
-	usbd_add_dev_event(USB_EVENT_DEVICE_DETACH, dev);
-	dev->ud_bus->ub_devices[dev->ud_addr] = NULL;
+	mutex_enter(dev->ud_bus->ub_lock);
+	dev->ud_bus->ub_devices[usb_addr2dindex(dev->ud_addr)] = NULL;
 	up->up_dev = NULL;
+	mutex_exit(dev->ud_bus->ub_lock);
+
+	usbd_add_dev_event(USB_EVENT_DEVICE_DETACH, dev);
+
 	usb_free_device(dev);
+
 	return 0;
 }
