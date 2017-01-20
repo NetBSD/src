@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.237 2017/01/20 17:50:52 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.238 2017/01/20 19:21:01 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.237 2017/01/20 17:50:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.238 2017/01/20 19:21:01 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1040,6 +1040,9 @@ in_arpinput(struct mbuf *m)
 		break;
 	}
 
+	if (ah->ar_pln != sizeof(struct in_addr))
+		goto drop;
+
 	memcpy(&isaddr, ar_spa(ah), sizeof(isaddr));
 	memcpy(&itaddr, ar_tpa(ah), sizeof(itaddr));
 
@@ -1060,7 +1063,8 @@ in_arpinput(struct mbuf *m)
 		    ((ia->ia_ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    (IFF_UP|IFF_RUNNING))) {
 			index++;
-			if (ia->ia_ifp == rcvif &&
+			/* XXX: ar_hln? */
+			if (ia->ia_ifp == rcvif && (ah->ar_hln >= 6) &&
 			    carp_iamatch(ia, ar_sha(ah),
 			    &count, index)) {
 				break;
@@ -1095,6 +1099,14 @@ in_arpinput(struct mbuf *m)
 	if (ia != NULL)
 		ia4_acquire(ia, &psref_ia);
 	pserialize_read_exit(s);
+
+	if (ah->ar_hln != ifp->if_addrlen) {
+		ARP_STATINC(ARP_STAT_RCVBADLEN);
+		log(LOG_WARNING,
+		    "arp from %s: addr len: new %d, i/f %d (ignored)\n",
+		    in_fmtaddr(ipbuf, isaddr), ah->ar_hln, ifp->if_addrlen);
+		goto out;
+	}
 
 	if (ia == NULL) {
 		ia = in_get_ia_on_iface_psref(isaddr, rcvif, &psref_ia);
@@ -1210,15 +1222,6 @@ in_arpinput(struct mbuf *m)
 		    in_fmtaddr(ipbuf, isaddr), ah->ar_hln, sdl->sdl_alen);
 	}
 #endif
-
-	if (ifp->if_addrlen != ah->ar_hln) {
-		ARP_STATINC(ARP_STAT_RCVBADLEN);
-		log(LOG_WARNING,
-		    "arp from %s: addr len: new %d, i/f %d (ignored)\n",
-		    in_fmtaddr(ipbuf, isaddr), ah->ar_hln,
-		    ifp->if_addrlen);
-		goto reply;
-	}
 
 #if NTOKEN > 0
 	/*
