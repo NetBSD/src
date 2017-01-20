@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.42 2017/01/19 20:18:17 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.43 2017/01/20 03:16:40 kre Exp $	*/
 
 /*-
  * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ yyerror(const char *fmt, ...)
 		char *dst = ecalloc(1, len * 4 + 1);
 
 		strvisx(dst, context, len, VIS_WHITE|VIS_CSTYLE);
-		context = dst
+		context = dst;
 #endif
 		fprintf(stderr, " near '%s'", context);
 	}
