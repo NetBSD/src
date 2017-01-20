@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.236 2017/01/20 17:45:42 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.237 2017/01/20 17:50:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.236 2017/01/20 17:45:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.237 2017/01/20 17:50:52 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -979,18 +979,17 @@ out:
 }
 
 /*
- * ARP for Internet protocols on 10 Mb/s Ethernet.
- * Algorithm is that given in RFC 826.
- * In addition, a sanity check is performed on the sender
- * protocol address, to catch impersonators.
- * We no longer handle negotiations for use of trailer protocol:
- * Formerly, ARP replied for protocol type ETHERTYPE_TRAIL sent
- * along with IP replies if we wanted trailers sent to us,
- * and also sent them in response to IP replies.
- * This allowed either end to announce the desire to receive
- * trailer packets.
- * We no longer reply to requests for ETHERTYPE_TRAIL protocol either,
- * but formerly didn't normally send requests.
+ * ARP for Internet protocols on 10 Mb/s Ethernet. Algorithm is that given in
+ * RFC 826. In addition, a sanity check is performed on the sender protocol
+ * address, to catch impersonators.
+ *
+ * We no longer handle negotiations for use of trailer protocol: formerly, ARP
+ * replied for protocol type ETHERTYPE_TRAIL sent along with IP replies if we
+ * wanted trailers sent to us, and also sent them in response to IP replies.
+ * This allowed either end to announce the desire to receive trailer packets.
+ *
+ * We no longer reply to requests for ETHERTYPE_TRAIL protocol either, but
+ * formerly didn't normally send requests.
  */
 static void
 in_arpinput(struct mbuf *m)
@@ -1023,9 +1022,10 @@ in_arpinput(struct mbuf *m)
 	rcvif = ifp = m_get_rcvif_psref(m, &psref);
 	if (__predict_false(rcvif == NULL))
 		goto drop;
+
 	/*
-	 * Fix up ah->ar_hrd if necessary, before using ar_tha() or
-	 * ar_tpa().
+	 * Fix up ah->ar_hrd if necessary, before using ar_tha() or ar_tpa().
+	 * XXX check ar_hrd more strictly?
 	 */
 	switch (ifp->if_type) {
 	case IFT_IEEE1394:
@@ -1033,21 +1033,18 @@ in_arpinput(struct mbuf *m)
 			;
 		else {
 			/* XXX this is to make sure we compute ar_tha right */
-			/* XXX check ar_hrd more strictly? */
 			ah->ar_hrd = htons(ARPHRD_IEEE1394);
 		}
 		break;
 	default:
-		/* XXX check ar_hrd? */
 		break;
 	}
 
-	memcpy(&isaddr, ar_spa(ah), sizeof (isaddr));
-	memcpy(&itaddr, ar_tpa(ah), sizeof (itaddr));
+	memcpy(&isaddr, ar_spa(ah), sizeof(isaddr));
+	memcpy(&itaddr, ar_tpa(ah), sizeof(itaddr));
 
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		ARP_STATINC(ARP_STAT_RCVMCAST);
-
 
 	/*
 	 * Search for a matching interface address
@@ -1137,7 +1134,7 @@ in_arpinput(struct mbuf *m)
 
 	/*
 	 * If the target IP address is zero, ignore the packet.
-	 * This prevents the code below from tring to answer
+	 * This prevents the code below from trying to answer
 	 * when we are using IP address zero (booting).
 	 */
 	if (in_nullhost(itaddr)) {
@@ -1252,7 +1249,7 @@ in_arpinput(struct mbuf *m)
 #endif /* NTOKEN > 0 */
 
 	KASSERT(sizeof(la->ll_addr) >= ifp->if_addrlen);
-	(void)memcpy(&la->ll_addr, ar_sha(ah), ifp->if_addrlen);
+	memcpy(&la->ll_addr, ar_sha(ah), ifp->if_addrlen);
 	la->la_flags |= LLE_VALID;
 	if ((la->la_flags & LLE_STATIC) == 0) {
 		la->la_expire = time_uptime + arpt_keep;
@@ -1299,7 +1296,7 @@ reply:
 	}
 	ARP_STATINC(ARP_STAT_RCVREQUEST);
 	if (in_hosteq(itaddr, myaddr)) {
-		/* If our address is unuseable, don't reply */
+		/* If our address is unusable, don't reply */
 		if (ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
 			goto out;
 		/* I am the target */
