@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.135 2017/01/20 02:22:42 maya Exp $        */
+/*      $NetBSD: ukbd.c,v 1.136 2017/01/20 02:25:24 maya Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.135 2017/01/20 02:22:42 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.136 2017/01/20 02:25:24 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1004,7 +1004,7 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	sc->sc_flags &= ~FLAG_POLLING;
 	c = sc->sc_pollchars[0];
 	sc->sc_npollchar--;
-	memcpy(sc->sc_pollchars, sc->sc_pollchars+1,
+	memmove(sc->sc_pollchars, sc->sc_pollchars+1,
 	       sc->sc_npollchar * sizeof(uint16_t));
 	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*data = c & CODEMASK;
