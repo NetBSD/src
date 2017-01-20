@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.43 2017/01/20 03:16:40 kre Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.44 2017/01/20 23:00:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ yyerror(const char *fmt, ...)
 %type	<var>		element, list_elems, list, value
 %type	<addrport>	mapseg
 %type	<filtopts>	filt_opts, all_or_filt_opts
-%type	<optproto>	opt_proto
+%type	<optproto>	proto opt_proto
 %type	<rulegroup>	group_opts
 %type	<tf>		onoff
 
@@ -357,7 +357,11 @@ map
 	{
 		npfctl_build_natseg($3, $6, $2, &$5, &$7, &$9, &$10, $4);
 	}
-	| MAP ifref map_sd map_algo opt_proto mapseg map_type mapseg
+	| MAP ifref map_sd map_algo mapseg map_type mapseg
+	{
+		npfctl_build_natseg($3, $6, $2, &$5, &$7, NULL, NULL, $4);
+	}
+	| MAP ifref map_sd map_algo proto mapseg map_type mapseg
 	{
 		npfctl_build_natseg($3, $7, $2, &$6, &$8, &$5, NULL, $4);
 	}
@@ -546,7 +550,7 @@ opt_family
 	|			{ $$ = AF_UNSPEC; }
 	;
 
-opt_proto
+proto
 	: PROTO TCP tcp_flags_and_mask
 	{
 		$$.op_proto = IPPROTO_TCP;
@@ -572,6 +576,10 @@ opt_proto
 		$$.op_proto = $2;
 		$$.op_opts = NULL;
 	}
+	;
+
+opt_proto
+	: proto			{ $$ = $1; }
 	|
 	{
 		$$.op_proto = -1;
