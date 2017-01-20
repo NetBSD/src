@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.267 2016/12/28 06:25:40 pgoyette Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.268 2017/01/20 08:16:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.267 2016/12/28 06:25:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.268 2017/01/20 08:16:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1968,10 +1968,10 @@ getiobuf(struct vnode *vp, bool waitok)
 
 	buf_init(bp);
 
-	if ((bp->b_vp = vp) == NULL)
-		bp->b_objlock = &buffer_lock;
-	else
+	if ((bp->b_vp = vp) != NULL) {
 		bp->b_objlock = vp->v_interlock;
+	else
+		KASSERT(bp->b_objlock == &buffer_lock);
 	
 	return bp;
 }
