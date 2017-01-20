@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.134 2016/11/25 12:50:13 skrll Exp $        */
+/*      $NetBSD: ukbd.c,v 1.135 2017/01/20 02:22:42 maya Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.134 2016/11/25 12:50:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.135 2017/01/20 02:22:42 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -719,7 +719,10 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	int s;
 	int nkeys, i, j;
 	int key;
-#define ADDKEY(c) ibuf[nkeys++] = (c)
+#define ADDKEY(c) do { \
+    KASSERT(nkeys < MAXKEYS); \
+    ibuf[nkeys++] = (c); \
+} while (0)
 
 #ifdef UKBD_DEBUG
 	/*
