@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.371 2017/01/10 08:45:45 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.372 2017/01/20 08:35:33 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.371 2017/01/10 08:45:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.372 2017/01/20 08:35:33 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1537,6 +1537,8 @@ if_clone_create(const char *name)
 	struct ifnet *ifp;
 	struct psref psref;
 
+	KASSERT(mutex_owned(&if_clone_mtx));
+
 	ifc = if_clone_lookup(name, &unit);
 	if (ifc == NULL)
 		return EINVAL;
@@ -1559,6 +1561,8 @@ if_clone_destroy(const char *name)
 	struct if_clone *ifc;
 	struct ifnet *ifp;
 	struct psref psref;
+
+	KASSERT(mutex_owned(&if_clone_mtx));
 
 	ifc = if_clone_lookup(name, NULL);
 	if (ifc == NULL)
@@ -1595,6 +1599,8 @@ if_clone_lookup(const char *name, int *unitp)
 	const char *cp;
 	char *dp, ifname[IFNAMSIZ + 3];
 	int unit;
+
+	KASSERT(mutex_owned(&if_clone_mtx));
 
 	strcpy(ifname, "if_");
 	/* separate interface name from unit */
@@ -1641,8 +1647,10 @@ void
 if_clone_attach(struct if_clone *ifc)
 {
 
+	mutex_enter(&if_clone_mtx);
 	LIST_INSERT_HEAD(&if_cloners, ifc, ifc_list);
 	if_cloners_count++;
+	mutex_exit(&if_clone_mtx);
 }
 
 /*
@@ -1652,6 +1660,7 @@ void
 if_clone_detach(struct if_clone *ifc)
 {
 
+	KASSERT(mutex_owned(&if_clone_mtx));
 	LIST_REMOVE(ifc, ifc_list);
 	if_cloners_count--;
 }
@@ -1666,14 +1675,17 @@ if_clone_list(int buf_count, char *buffer, int *total)
 	struct if_clone *ifc;
 	int count, error = 0;
 
+	mutex_enter(&if_clone_mtx);
 	*total = if_cloners_count;
 	if ((dst = buffer) == NULL) {
 		/* Just asking how many there are. */
-		return 0;
+		goto out;
 	}
 
-	if (buf_count < 0)
-		return EINVAL;
+	if (buf_count < 0) {
+		error = EINVAL;
+		goto out;
+	}
 
 	count = (if_cloners_count < buf_count) ?
 	    if_cloners_count : buf_count;
@@ -1681,13 +1693,17 @@ if_clone_list(int buf_count, char *buffer, int *total)
 	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL && count != 0;
 	     ifc = LIST_NEXT(ifc, ifc_list), count--, dst += IFNAMSIZ) {
 		(void)strncpy(outbuf, ifc->ifc_name, sizeof(outbuf));
-		if (outbuf[sizeof(outbuf) - 1] != '\0')
-			return ENAMETOOLONG;
+		if (outbuf[sizeof(outbuf) - 1] != '\0') {
+			error = ENAMETOOLONG;
+			goto out;
+		}
 		error = copyout(outbuf, dst, sizeof(outbuf));
 		if (error != 0)
 			break;
 	}
 
+out:
+	mutex_exit(&if_clone_mtx);
 	return error;
 }
 
