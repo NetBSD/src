@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.235 2017/01/16 15:14:16 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.236 2017/01/20 17:45:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.235 2017/01/16 15:14:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.236 2017/01/20 17:45:42 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1327,8 +1327,9 @@ reply:
 		IF_AFDATA_RUNLOCK(ifp);
 
 		if ((lle != NULL) && (lle->la_flags & LLE_PUB)) {
-			(void)memcpy(tha, ar_sha(ah), ah->ar_hln);
-			(void)memcpy(ar_sha(ah), &lle->ll_addr, ah->ar_hln);
+			if (tha)
+				memcpy(tha, ar_sha(ah), ah->ar_hln);
+			memcpy(ar_sha(ah), &lle->ll_addr, ah->ar_hln);
 			LLE_RUNLOCK(lle);
 		} else {
 			if (lle != NULL)
