@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.67 2017/01/21 05:43:24 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.68 2017/01/21 05:46:57 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.67 2017/01/21 05:43:24 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.68 2017/01/21 05:46:57 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -5489,6 +5489,7 @@ iwm_rx_missed_beacons_notif(struct iwm_softc *sc,
 	struct iwm_rx_packet *pkt, struct iwm_rx_data *data)
 {
 	struct iwm_missed_beacons_notif *mb = (void *)pkt->data;
+	int s;
 
 	DPRINTF(("missed bcn mac_id=%u, consecutive=%u (%u, %u, %u)\n",
 	    le32toh(mb->mac_id),
@@ -5502,8 +5503,11 @@ iwm_rx_missed_beacons_notif(struct iwm_softc *sc,
 	 * and/or in case of a CS flow on one of the other AP vifs.
 	 */
 	if (le32toh(mb->consec_missed_beacons_since_last_rx) >
-	    IWM_MISSED_BEACONS_THRESHOLD)
+	    IWM_MISSED_BEACONS_THRESHOLD) {
+		s = splnet();
 		ieee80211_beacon_miss(&sc->sc_ic);
+		splx(s);
+	}
 }
 
 static int
@@ -7286,7 +7290,7 @@ iwm_softintr(void *arg)
 	struct iwm_softc *sc = arg;
 	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
 	uint32_t r1;
-	int isperiodic = 0;
+	int isperiodic = 0, s;
 
 	r1 = atomic_swap_32(&sc->sc_soft_flags, 0);
 
@@ -7311,8 +7315,10 @@ iwm_softintr(void *arg)
 
 		aprint_error_dev(sc->sc_dev, "fatal firmware error\n");
  fatal:
+		s = splnet();
 		ifp->if_flags &= ~IFF_UP;
 		iwm_stop(ifp, 1);
+		splx(s);
 		/* Don't restore interrupt mask */
 		return;
 
@@ -7332,10 +7338,8 @@ iwm_softintr(void *arg)
 	}
 
 	if (r1 & IWM_CSR_INT_BIT_RF_KILL) {
-		if (iwm_check_rfkill(sc) && (ifp->if_flags & IFF_UP)) {
-			ifp->if_flags &= ~IFF_UP;
-			iwm_stop(ifp, 1);
-		}
+		if (iwm_check_rfkill(sc) && (ifp->if_flags & IFF_UP))
+			goto fatal;
 	}
 
 	if (r1 & IWM_CSR_INT_BIT_RX_PERIODIC) {
