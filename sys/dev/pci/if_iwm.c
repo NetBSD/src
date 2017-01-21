@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.66 2017/01/21 05:40:47 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.67 2017/01/21 05:43:24 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.66 2017/01/21 05:40:47 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.67 2017/01/21 05:43:24 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -3998,7 +3998,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 
 	if (!async) {
 		int generation = sc->sc_generation;
-		err = tsleep(desc, PCATCH, "iwmcmd", mstohz(1000));
+		err = tsleep(desc, PCATCH, "iwmcmd", mstohz(2000));
 		if (err == 0) {
 			/* if hardware is no longer up, return error */
 			if (generation != sc->sc_generation) {
