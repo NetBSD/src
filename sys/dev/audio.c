@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.293 2017/01/21 22:54:11 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.294 2017/01/21 23:37:17 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.293 2017/01/21 22:54:11 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.294 2017/01/21 23:37:17 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -5780,8 +5780,8 @@ audio_sysctl_frequency(SYSCTLFN_ARGS)
 	error = audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL
 	    | AUMODE_RECORD, &sc->sc_format[0], 0);
 	if (error)
-		aprint_error("Invalid channel format, please check hardware "
-			     "capabilities\n");
+		aprint_error_dev(sc->sc_dev, "Error setting frequency, "
+				 "please check hardware capabilities\n");
 	mutex_exit(sc->sc_lock);
 
 	return error;
@@ -5832,8 +5832,8 @@ audio_sysctl_precision(SYSCTLFN_ARGS)
 	error = audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL
 	    | AUMODE_RECORD, &sc->sc_format[0], 0);
 	if (error)
-		aprint_error("Invalid channel format, please check hardware "
-			     "capabilities\n");
+		aprint_error_dev(sc->sc_dev, "Error setting precision, "
+				 "please check hardware capabilities\n");
 	mutex_exit(sc->sc_lock);
 
 	return error;
@@ -5873,8 +5873,8 @@ audio_sysctl_channels(SYSCTLFN_ARGS)
 	error = audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL
 	    | AUMODE_RECORD, &sc->sc_format[0], 0);
 	if (error)
-		aprint_error("Invalid channel format, please check hardware "
-			     "capabilities\n");
+		aprint_error_dev(sc->sc_dev, "Error setting channels, "
+				 "please check hardware capabilities\n");
 	mutex_exit(sc->sc_lock);
 
 	return error;
@@ -5910,8 +5910,8 @@ vchan_autoconfig(struct audio_softc *sc)
 					error = EINVAL;
 
 				if (error == 0) {
-					aprint_normal("Virtual format "
-					    		      "configured - "
+					aprint_normal_dev(sc->sc_dev,
+					    "Virtual format configured - "
 					    "Format SLINEAR, precision %d, "
 					    "channels %d, frequency %d\n",
 					    sc->sc_precision, sc->sc_channels,
@@ -5924,7 +5924,7 @@ vchan_autoconfig(struct audio_softc *sc)
 		}
 	}
 
-	aprint_error("Virtual format auto config failed!\n"
+	aprint_error_dev(sc->sc_dev, "Virtual format auto config failed!\n"
 		     "Please check hardware capabilities\n");
 	mutex_exit(sc->sc_lock);
 
