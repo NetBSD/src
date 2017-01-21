@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1545 2017/01/07 20:49:23 christos Exp $
+# $NetBSD: mi,v 1.1546 2017/01/21 20:21:57 jdolecek Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2016,6 +2016,7 @@
 ./usr/share/man/cat4/xenbus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xennet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xge.0			man-sys-catman		.cat
+./usr/share/man/cat4/xhci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xirc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xpci.0			man-sys-catman		.cat
@@ -5040,6 +5041,7 @@
 ./usr/share/man/html4/xenbus.html		man-sys-htmlman		html
 ./usr/share/man/html4/xennet.html		man-sys-htmlman		html
 ./usr/share/man/html4/xge.html			man-sys-htmlman		html
+./usr/share/man/html4/xhci.html			man-sys-htmlman		html
 ./usr/share/man/html4/xi.html			man-sys-htmlman		html
 ./usr/share/man/html4/xirc.html			man-sys-htmlman		html
 ./usr/share/man/html4/xpci.html			man-sys-htmlman		html
@@ -7995,6 +7997,7 @@
 ./usr/share/man/man4/xc5k.4			man-sys-man		.man
 ./usr/share/man/man4/xenbus.4			man-sys-man		.man
 ./usr/share/man/man4/xennet.4			man-sys-man		.man
+./usr/share/man/man4/xhci.4			man-sys-man		.man
 ./usr/share/man/man4/xge.4			man-sys-man		.man
 ./usr/share/man/man4/xi.4			man-sys-man		.man
 ./usr/share/man/man4/xirc.4			man-sys-man		.man
