@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.68 2017/01/21 05:46:57 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.69 2017/01/21 05:54:06 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.68 2017/01/21 05:46:57 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.69 2017/01/21 05:54:06 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1032,7 +1032,7 @@ iwm_nic_lock(struct iwm_softc *sc)
 	     | IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP, 15000)) {
 		rv = 1;
 	} else {
-		aprint_error_dev(sc->sc_dev, "resetting device via NMI\n");
+		DPRINTF(("%s: resetting device via NMI\n", DEVNAME(sc)));
 		IWM_WRITE(sc, IWM_CSR_RESET, IWM_CSR_RESET_REG_FLAG_FORCE_NMI);
 	}
 
@@ -5864,23 +5864,22 @@ iwm_do_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	/* Reset the device if moving out of AUTH, ASSOC, or RUN. */
 	/* XXX Is there a way to switch states without a full reset? */
 	if (ostate > IEEE80211_S_SCAN && nstate < ostate) {
-		iwm_stop_device(sc);
-		iwm_init_hw(sc);
-
 		/*
 		 * Upon receiving a deauth frame from AP the net80211 stack
 		 * puts the driver into AUTH state. This will fail with this
 		 * driver so bring the FSM from RUN to SCAN in this case.
 		 */
-		if (nstate == IEEE80211_S_SCAN ||
-		    nstate == IEEE80211_S_AUTH ||
-		    nstate == IEEE80211_S_ASSOC) {
+		if (nstate != IEEE80211_S_INIT) {
 			DPRINTF(("Force transition to INIT; MGT=%d\n", arg));
 			/* Always pass arg as -1 since we can't Tx right now. */
 			sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
-			DPRINTF(("Going INIT->SCAN\n"));
-			nstate = IEEE80211_S_SCAN;
+			iwm_stop(ifp, 0);
+			iwm_init(ifp);
+			return 0;
 		}
+
+		iwm_stop_device(sc);
+		iwm_init_hw(sc);
 	}
 
 	switch (nstate) {
@@ -5896,7 +5895,8 @@ iwm_do_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		else
 			err = iwm_lmac_scan(sc);
 		if (err) {
-			DPRINTF(("%s: could not initiate scan\n", DEVNAME(sc)));
+			DPRINTF(("%s: could not initiate scan: %d\n",
+			    DEVNAME(sc), err));
 			return err;
 		}
 		SET(sc->sc_flags, IWM_FLAG_SCANNING);
