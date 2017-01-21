@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.15 2017/01/13 11:21:47 nonaka Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.16 2017/01/21 05:58:49 nonaka Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp 	*/
 
 /*
@@ -356,7 +356,6 @@ struct iwm_softc {
 	struct ieee80211com sc_ic;
 
 	int (*sc_newstate)(struct ieee80211com *, enum ieee80211_state, int);
-	int sc_newstate_pending;
 
 	struct ieee80211_amrr sc_amrr;
 	struct callout sc_calib_to;
