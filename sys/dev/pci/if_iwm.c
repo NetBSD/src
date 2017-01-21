@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.65 2017/01/19 11:24:05 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.66 2017/01/21 05:40:47 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.65 2017/01/19 11:24:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.66 2017/01/21 05:40:47 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -125,7 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.65 2017/01/19 11:24:05 nonaka Exp $");
 #include <sys/bus.h>
 #include <sys/workqueue.h>
 #include <machine/endian.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
