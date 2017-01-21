@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.292 2017/01/21 22:22:41 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.293 2017/01/21 22:54:11 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.292 2017/01/21 22:22:41 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.293 2017/01/21 22:54:11 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1186,7 +1186,6 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 	vc = sc->sc_vchan[m];
 
 	/* Construct new filters. */
-	mutex_exit(sc->sc_lock);
 	memset(pf, 0, sizeof(pf));
 	memset(ps, 0, sizeof(ps));
 	from_param = pp;
@@ -1210,10 +1209,8 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 				pf[i]->dtor(pf[i]);
 			audio_stream_dtor(&ps[i]);
 		}
-		mutex_enter(sc->sc_lock);
 		return EINVAL;
 	}
-	mutex_enter(sc->sc_lock);
 
 	/* Swap in new filters. */
 	mutex_enter(sc->sc_intr_lock);
@@ -1237,12 +1234,10 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 	mutex_exit(sc->sc_intr_lock);
 
 	/* Destroy old filters. */
-	mutex_exit(sc->sc_lock);
 	for (i = 0; i < onfilters; i++) {
 		of[i]->dtor(of[i]);
 		audio_stream_dtor(&os[i]);
 	}
-	mutex_enter(sc->sc_lock);
 
 #ifdef AUDIO_DEBUG
 	printf("%s: HW-buffer=%p pustream=%p\n",
@@ -1273,7 +1268,6 @@ audio_setup_rfilters(struct audio_softc *sc, const audio_params_t *rp,
 	vc = sc->sc_vchan[m];
 
 	/* Construct new filters. */
-	mutex_exit(sc->sc_lock);
 	memset(rf, 0, sizeof(rf));
 	memset(rs, 0, sizeof(rs));
 	for (i = 0; i < rfilters->req_size; i++) {
@@ -1302,10 +1296,8 @@ audio_setup_rfilters(struct audio_softc *sc, const audio_params_t *rp,
 				rf[i]->dtor(rf[i]);
 			audio_stream_dtor(&rs[i]);
 		}
-		mutex_enter(sc->sc_lock);
 		return EINVAL;
 	}
-	mutex_enter(sc->sc_lock);
 
 	/* Swap in new filters. */
 	mutex_enter(sc->sc_intr_lock);
@@ -1340,12 +1332,10 @@ audio_setup_rfilters(struct audio_softc *sc, const audio_params_t *rp,
 #endif /* AUDIO_DEBUG */
 
 	/* Destroy old filters. */
-	mutex_exit(sc->sc_lock);
 	for (i = 0; i < onfilters; i++) {
 		of[i]->dtor(of[i]);
 		audio_stream_dtor(&os[i]);
 	}
-	mutex_enter(sc->sc_lock);
 
 	return 0;
 }
@@ -1784,8 +1774,7 @@ audio_initbufs(struct audio_softc *sc, int n)
 	DPRINTF(("audio_initbufs: mode=0x%x\n", sc->sc_vchan[n]->sc_mode));
 	vc = sc->sc_vchan[0];
 	hw = sc->hw_if;
-	if ((audio_can_capture(sc) && n == 0) ||
-	    (sc->sc_vchan[n]->sc_open & AUOPEN_READ)) {
+	if (audio_can_capture(sc) || (sc->sc_vchan[n]->sc_open & AUOPEN_READ)) {
 		audio_init_ringbuffer(sc, &sc->sc_vchan[n]->sc_mrr,
 		    AUMODE_RECORD);
 		if (sc->sc_opens == 0 && hw->init_input &&
@@ -1797,8 +1786,8 @@ audio_initbufs(struct audio_softc *sc, int n)
 		}
 	}
 
-	if ((audio_can_playback(sc) && n == 0) ||
-	    (sc->sc_vchan[n]->sc_open & AUOPEN_WRITE)) {
+	if (audio_can_playback(sc) ||
+				 (sc->sc_vchan[n]->sc_open & AUOPEN_WRITE)) {
 		audio_init_ringbuffer(sc, &sc->sc_vchan[n]->sc_mpr,
 		    AUMODE_PLAY);
 		sc->sc_vchan[n]->sc_sil_count = 0;
@@ -1936,6 +1925,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		kmem_free(vc, sizeof(struct virtual_channel));
 		return error;
 	}
+
+	audio_initbufs(sc, n);
 
 	if (sc->sc_opens == 0) {
 		if (hw->open != NULL) {
@@ -3204,9 +3195,7 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot)
 		}
 	}
 
-	mutex_exit(sc->sc_lock);
 	rv = (paddr_t)(uintptr_t)(cb->s.start + off);
-	mutex_enter(sc->sc_lock);
 
 	return rv;
 }
