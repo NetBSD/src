@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.238 2017/01/20 19:21:01 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.239 2017/01/21 11:07:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.238 2017/01/20 19:21:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.239 2017/01/21 11:07:46 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1901,6 +1901,10 @@ in_revarpinput(struct mbuf *m)
 		goto wake;
 	tha = ar_tha(ah);
 	if (tha == NULL)
+		goto out;
+	if (ah->ar_pln != sizeof(struct in_addr))
+		goto out;
+	if (ah->ar_hln != rcvif->if_sadl->sdl_alen)
 		goto out;
 	if (memcmp(tha, CLLADDR(rcvif->if_sadl), rcvif->if_sadl->sdl_alen))
 		goto out;
