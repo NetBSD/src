@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_carreg.h,v 1.4 2017/01/22 17:39:18 jakllsch Exp $ */
+/* $NetBSD: tegra124_carreg.h,v 1.5 2017/01/22 17:40:06 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -473,7 +473,7 @@
 #define CAR_UTMIP_PLL_CFG1_ENABLE_DLY_COUNT	__BITS(31,27)
 #define CAR_UTMIP_PLL_CFG1_PLLU_POWERUP		__BIT(17)
 #define CAR_UTMIP_PLL_CFG1_PLLU_POWERDOWN	__BIT(16)
-#define CAR_UTMIP_PLL_CFG1_PLL_ENABLE_POWERUP 	__BIT(15)
+#define CAR_UTMIP_PLL_CFG1_PLL_ENABLE_POWERUP	__BIT(15)
 #define CAR_UTMIP_PLL_CFG1_PLL_ENABLE_POWERDOWN	__BIT(14)
 #define CAR_UTMIP_PLL_CFG1_XTAL_FREQ_COUNT	__BITS(11,0)
 
