@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.92 2017/01/22 04:26:31 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.93 2017/01/22 04:52:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.92 2017/01/22 04:26:31 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.93 2017/01/22 04:52:04 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,9 @@ intpr_sysctl(void)
 {
 	struct if_msghdr *ifm;
 	int mib[6] = { CTL_NET, AF_ROUTE, 0, 0, NET_RT_IFLIST, 0 };
-	char *buf = NULL, *next, *lim, *cp;
+	static char *buf = NULL;
+	static size_t olen;
+	char *next, *lim, *cp;
 	struct rt_msghdr *rtm;
 	struct ifa_msghdr *ifam;
 	struct if_data *ifd = NULL;
@@ -183,8 +185,12 @@ intpr_sysctl(void)
 
 	if (prog_sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
 		err(1, "sysctl");
-	if ((buf = malloc(len)) == NULL)
-		err(1, NULL);
+	if (len > olen) {
+		free(buf);
+		if ((buf = malloc(len)) == NULL)
+			err(1, NULL);
+		olen = len;
+	}
 	if (prog_sysctl(mib, 6, buf, &len, NULL, 0) == -1)
 		err(1, "sysctl");
 
@@ -269,7 +275,6 @@ intpr_sysctl(void)
 		printf("%-*.*s %-5" PRIu64 " ", n, n, name, ifd->ifi_mtu);
 		print_addr(ifindex, rti_info[rtax], rti_info, ifd, NULL);
 	}
-	free(buf);
 }
 
 union ifaddr_u {
@@ -1058,14 +1063,20 @@ fetchifs(void)
 	struct if_data *ifd = NULL;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
 	struct sockaddr_dl *sdl;
-	char *buf, *next, *lim;
+	static char *buf = NULL;
+	static size_t olen;
+	char *next, *lim;
 	char name[IFNAMSIZ];
 	size_t len;
 
 	if (prog_sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
 		err(1, "sysctl");
-	if ((buf = malloc(len)) == NULL)
-		err(1, NULL);
+	if (len > olen) {
+		free(buf);
+		if ((buf = malloc(len)) == NULL)
+			err(1, NULL);
+		olen = len;
+	}
 	if (prog_sysctl(mib, 6, buf, &len, NULL, 0) == -1)
 		err(1, "sysctl");
 
@@ -1127,5 +1138,4 @@ fetchifs(void)
 		ip_cur.ift_co = ifd->ifi_collisions;
 		ip_cur.ift_dr = ifd->ifi_iqdrops;
 	}
-	free(buf);
 }
