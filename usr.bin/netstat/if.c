@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.91 2017/01/11 01:25:05 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.92 2017/01/22 04:26:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.91 2017/01/11 01:25:05 ozaki-r Exp $");
+__RCSID("$NetBSD: if.c,v 1.92 2017/01/22 04:26:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,6 +269,7 @@ intpr_sysctl(void)
 		printf("%-*.*s %-5" PRIu64 " ", n, n, name, ifd->ifi_mtu);
 		print_addr(ifindex, rti_info[rtax], rti_info, ifd, NULL);
 	}
+	free(buf);
 }
 
 union ifaddr_u {
@@ -1126,4 +1127,5 @@ fetchifs(void)
 		ip_cur.ift_co = ifd->ifi_collisions;
 		ip_cur.ift_dr = ifd->ifi_iqdrops;
 	}
+	free(buf);
 }
