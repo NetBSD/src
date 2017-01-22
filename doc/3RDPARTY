@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1399 2017/01/22 14:41:19 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1400 2017/01/22 22:26:16 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -375,7 +375,7 @@ which nouveau2netbsd adds them).  For the next import, remember to add
 them!
 
 Package:	gmake
-Version:	3.81
+Version:	3.81 (Last GPlv2+ version)
 Current Vers:	4.0
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/make/
@@ -427,7 +427,7 @@ Please use "expat" as the vendor tag for CVS imports.
 
 Package:	file
 Version:	5.22
-Current Vers:	5.22
+Current Vers:	5.29
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:	http://www.darwinsys.com/file/
