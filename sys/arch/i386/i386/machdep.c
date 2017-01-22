@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.776 2016/12/26 17:54:06 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.777 2017/01/22 20:17:10 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.776 2016/12/26 17:54:06 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.777 2017/01/22 20:17:10 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1006,11 +1006,11 @@ initgdt(union descriptor *tgdt)
 		 * which are in the callpath of pmap_kenter_pa().
 		 * So we mash up our own - this is MD code anyway.
 		 */
+		extern pt_entry_t xpmap_pg_nx;
 		pt_entry_t pte;
-		pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
 
 		pte = pmap_pa2pte((vaddr_t)gdt - KERNBASE);
-		pte |= PG_k | PG_RO | pg_nx | PG_V;
+		pte |= PG_k | PG_RO | xpmap_pg_nx | PG_V;
 
 		if (HYPERVISOR_update_va_mapping((vaddr_t)gdt, pte, UVMF_INVLPG) < 0) {
 			panic("gdt page RO update failed.\n");
@@ -1208,11 +1208,11 @@ init386(paddr_t first_avail)
 
 	/* Reclaim the boot gdt page - see locore.s */
 	{
+		extern pt_entry_t xpmap_pg_nx;
 		pt_entry_t pte;
-		pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
 
 		pte = pmap_pa2pte((vaddr_t)tmpgdt - KERNBASE);
-		pte |= PG_k | PG_RW | pg_nx | PG_V;
+		pte |= PG_k | PG_RW | xpmap_pg_nx | PG_V;
 
 		if (HYPERVISOR_update_va_mapping((vaddr_t)tmpgdt, pte, UVMF_INVLPG) < 0) {
 			panic("tmpgdt page relaim RW update failed.\n");
