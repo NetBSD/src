@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.105 2016/11/25 12:20:03 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.106 2017/01/22 19:42:48 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.105 2016/11/25 12:20:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.106 2017/01/22 19:42:48 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1218,20 +1218,19 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	KASSERT(ci->ci_kpm_pdirpa != 0);
 
 #if defined(__x86_64__)
-	/*
-	 * Copy over the pmap_kernel() shadow L4 entries 
-	 */
+	extern pt_entry_t xpmap_pg_nx;
 
+	/* Copy over the pmap_kernel() shadow L4 entries */
 	memcpy(ci->ci_kpm_pdir, pmap_kernel()->pm_pdir, PAGE_SIZE);
 
 	/* Recursive kernel mapping */
 	ci->ci_kpm_pdir[PDIR_SLOT_PTE] = xpmap_ptom_masked(ci->ci_kpm_pdirpa)
-	    | PG_k | PG_V;
+	    | PG_k | PG_V | xpmap_pg_nx;
 #elif defined(PAE)
-	/* Copy over the pmap_kernel() shadow L2 entries that map the kernel */
+	/* Copy over the pmap_kernel() shadow L2 entries */
 	memcpy(ci->ci_kpm_pdir, pmap_kernel()->pm_pdir + PDIR_SLOT_KERN,
 	    nkptp[PTP_LEVELS - 1] * sizeof(pd_entry_t));
-#endif /* __x86_64__ else PAE */
+#endif
 
 	/* Xen wants a RO pdir. */
 	pmap_protect(pmap_kernel(), (vaddr_t)ci->ci_kpm_pdir,
