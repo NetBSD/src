@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.294 2017/01/21 23:37:17 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.295 2017/01/22 19:52:02 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.294 2017/01/21 23:37:17 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.295 2017/01/22 19:52:02 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1925,8 +1925,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		kmem_free(vc, sizeof(struct virtual_channel));
 		return error;
 	}
-
-	audio_initbufs(sc, n);
 
 	if (sc->sc_opens == 0) {
 		if (hw->open != NULL) {
