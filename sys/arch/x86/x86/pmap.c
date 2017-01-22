@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.c,v 1.236 2017/01/06 09:04:06 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.237 2017/01/22 20:04:35 maxv Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.236 2017/01/06 09:04:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.237 2017/01/22 20:04:35 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -398,13 +398,9 @@ paddr_t avail_start __read_mostly; /* PA of first available physical page */
 paddr_t avail_end __read_mostly; /* PA of last available physical page */
 
 #ifdef XEN
-#ifdef __x86_64__
-/* Dummy PGD for user cr3, used between pmap_deactivate() and pmap_activate() */
-static paddr_t xen_dummy_user_pgd;
-#endif /* __x86_64__ */
 paddr_t pmap_pa_start; /* PA of first physical page for this domain */
 paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
-#endif /* XEN */
+#endif
 
 #define	VM_PAGE_TO_PP(pg)	(&(pg)->mdpage.mp_pp)
 
@@ -1390,10 +1386,12 @@ pmap_bootstrap(vaddr_t kva_start)
 
 #if defined(XEN) && defined(__x86_64__)
 	extern vaddr_t xen_dummy_page;
+	paddr_t xen_dummy_user_pgd;
+
 	/*
-	 * We want a dummy page directory for Xen: when deactivating a pmap, Xen
-	 * will still consider it active. So we set user PGD to this one to lift
-	 * all protection on the now inactive page tables set.
+	 * We want a dummy page directory for Xen: when deactivating a pmap,
+	 * Xen will still consider it active. So we set user PGD to this one
+	 * to lift all protection on the now inactive page tables set.
 	 */
 	xen_dummy_user_pgd = xen_dummy_page - KERNBASE;
 
@@ -1401,7 +1399,8 @@ pmap_bootstrap(vaddr_t kva_start)
 	memset((void *)(xen_dummy_user_pgd + KERNBASE), 0, PAGE_SIZE);
 	/* Mark read-only */
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
-	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
+	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V | pmap_pg_nx,
+	    UVMF_INVLPG);
 	/* Pin as L4 */
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
 #endif
