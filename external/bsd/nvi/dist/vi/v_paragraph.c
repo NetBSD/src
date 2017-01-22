@@ -1,4 +1,4 @@
-/*	$NetBSD: v_paragraph.c,v 1.5 2017/01/21 22:22:28 rin Exp $ */
+/*	$NetBSD: v_paragraph.c,v 1.6 2017/01/22 05:11:22 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: v_paragraph.c,v 10.10 2001/06/25 15:19:32 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:32 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: v_paragraph.c,v 1.5 2017/01/21 22:22:28 rin Exp $");
+__RCSID("$NetBSD: v_paragraph.c,v 1.6 2017/01/22 05:11:22 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -94,14 +94,14 @@ v_paragraphf(SCR *sp, VICMD *vp)
 	 * hesitate, just hit them.
 	 */
 	if (db_last(sp, &lastlno))
-		return 1;
+		return (1);
 	lno = vp->m_start.lno;
 	if (ISMOTION(vp) && lno != lastlno) {
 		if ((cno = vp->m_start.cno) == 0)
 			F_SET(vp, VM_LMODE);
 		else {
 			if (nonblank(sp, lno, &len))
-				return 1;
+				return (1);
 			if (cno <= len)
 				F_SET(vp, VM_LMODE);
 		}
@@ -114,9 +114,9 @@ v_paragraphf(SCR *sp, VICMD *vp)
 	if (db_eget(sp, lno, &p, &len, &isempty)) {
 		if (isempty) {
 			vp->m_stop = vp->m_final = vp->m_start;
-			return 0;
+			return (0);
 		} else
-			return 1;
+			return (1);
 	}
 
 	/*
@@ -138,7 +138,7 @@ v_paragraphf(SCR *sp, VICMD *vp)
 		if (++lno > lastlno)
 			goto eof;
 		if (db_get(sp, lno, 0, &p, &len))
-			return 1;
+			return (1);
 		switch (pstate) {
 		case P_INTEXT:
 			INTEXT_CHECK;
@@ -168,7 +168,7 @@ found:			if (ISMOTION(vp)) {
 				vp->m_stop.cno = 0;
 				vp->m_final = vp->m_stop;
 			}
-			return 0;
+			return (0);
 		default:
 			abort();
 		}
@@ -184,7 +184,7 @@ found:			if (ISMOTION(vp)) {
 eof:	lastcno = len ? len - 1 : 0;
 	if (vp->m_start.lno == lastlno && vp->m_start.cno == lastcno) {
 		v_eof(sp, NULL);
-		return 1;
+		return (1);
 	}
 	/*
 	 * !!!
@@ -201,7 +201,7 @@ eof:	lastcno = len ? len - 1 : 0;
 	vp->m_stop.lno = lastlno;
 	vp->m_stop.cno = lastcno;
 	vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
-	return 0;
+	return (0);
 }
 
 /*
@@ -243,7 +243,7 @@ v_paragraphb(SCR *sp, VICMD *vp)
 		if (vp->m_start.cno == 0) {
 			if (vp->m_start.lno == 1) {
 				v_sof(sp, &vp->m_start);
-				return 1;
+				return (1);
 			} else
 				--vp->m_start.lno;
 			F_SET(vp, VM_LMODE);
@@ -309,7 +309,7 @@ found:	vp->m_stop.lno = lno;
 	 * adjusted the start of the range for motion commands).
 	 */
 	vp->m_final = vp->m_stop;
-	return 0;
+	return (0);
 }
 
 /*
@@ -333,7 +333,7 @@ v_buildps(SCR *sp, const char *p_p, const char *s_p)
 	s_len = s_p == NULL ? 0 : strlen(s_p);
 
 	if (p_len == 0 && s_len == 0)
-		return 0;
+		return (0);
 
 	MALLOC_RET(sp, p, char *, p_len + s_len + 1);
 
@@ -346,5 +346,5 @@ v_buildps(SCR *sp, const char *p_p, const char *s_p)
 	if (s_p != NULL)
 		memmove(p + p_len, s_p, s_len + 1);
 	vip->ps = p;
-	return 0;
+	return (0);
 }
