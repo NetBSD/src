@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_carreg.h,v 1.3 2016/09/08 00:38:23 jakllsch Exp $ */
+/* $NetBSD: tegra124_carreg.h,v 1.4 2017/01/22 17:39:18 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -54,6 +54,14 @@
 #define CAR_PLLP_BASE_DIVM		__BITS(4,0)
 
 #define CAR_PLLP_OUTA_REG	0xa4
+#define CAR_PLLP_OUTA_OUT2_RATIO	__BITS(31,24)
+#define CAR_PLLP_OUTA_OUT2_OVRRIDE	__BIT(18)
+#define CAR_PLLP_OUTA_OUT2_CLKEN	__BIT(17)
+#define CAR_PLLP_OUTA_OUT2_RSTN		__BIT(16)
+#define CAR_PLLP_OUTA_OUT1_RATIO	__BITS(15,8)
+#define CAR_PLLP_OUTA_OUT1_OVRRIDE	__BIT(2)
+#define CAR_PLLP_OUTA_OUT1_CLKEN	__BIT(1)
+#define CAR_PLLP_OUTA_OUT1_RSTN		__BIT(0)
 #define CAR_PLLP_OUTB_REG	0xa8
 #define CAR_PLLP_OUTB_OUT4_RATIO	__BITS(31,24)
 #define CAR_PLLP_OUTB_OUT4_OVRRIDE	__BIT(18)
