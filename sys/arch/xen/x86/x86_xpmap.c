@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.69 2017/01/06 08:32:26 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.70 2017/01/22 19:24:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.69 2017/01/06 08:32:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.70 2017/01/22 19:24:51 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -104,6 +104,8 @@ union start_info_union start_info_union __aligned(PAGE_SIZE);
 unsigned long *xpmap_phys_to_machine_mapping;
 kmutex_t pte_lock;
 vaddr_t xen_dummy_page;
+
+pt_entry_t xpmap_pg_nx;
 
 void xen_failsafe_handler(void);
 
@@ -609,6 +611,7 @@ xen_locore(void)
 {
 	size_t count, oldcount, mapsize;
 	vaddr_t bootstrap_tables, init_tables;
+	u_int descs[4];
 
 	xen_init_features();
 
@@ -616,6 +619,10 @@ xen_locore(void)
 
 	xpmap_phys_to_machine_mapping =
 	    (unsigned long *)xen_start_info.mfn_list;
+
+	/* Set the NX/XD bit, if available. descs[3] = %edx. */
+	x86_cpuid(0x80000001, descs);
+	xpmap_pg_nx = (descs[3] & CPUID_NOX) ? PG_NX : 0;
 
 	/* Space after Xen boostrap tables should be free */
 	init_tables = xen_start_info.pt_base;
@@ -738,14 +745,6 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	extern char __data_start;
 	extern char __kernel_end;
 	extern char *early_zerop; /* from pmap.c */
-	pt_entry_t pg_nx;
-	u_int descs[4];
-
-	/*
-	 * Set the NX/XD bit, if available. descs[3] = %edx.
-	 */
-	x86_cpuid(0x80000001, descs);
-	pg_nx = (descs[3] & CPUID_NOX) ? PG_NX : 0;
 
 	/*
 	 * Layout of RW area after the kernel image:
@@ -895,7 +894,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 			    page < (vaddr_t)atdevbase + IOM_SIZE) {
 				pte[pl1_pi(page)] =
 				    IOM_BEGIN + (page - (vaddr_t)atdevbase);
-				pte[pl1_pi(page)] |= pg_nx;
+				pte[pl1_pi(page)] |= xpmap_pg_nx;
 			}
 #endif
 
@@ -906,15 +905,15 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 			} else if (page >= (vaddr_t)&__rodata_start &&
 			    page < (vaddr_t)&__data_start) {
 				/* Map the kernel rodata R. */
-				pte[pl1_pi(page)] |= PG_RO | pg_nx;
+				pte[pl1_pi(page)] |= PG_RO | xpmap_pg_nx;
 			} else if (page >= old_pgd &&
 			    page < old_pgd + (old_count * PAGE_SIZE)) {
 				/* Map the old page tables R. */
-				pte[pl1_pi(page)] |= PG_RO | pg_nx;
+				pte[pl1_pi(page)] |= PG_RO | xpmap_pg_nx;
 			} else if (page >= new_pgd &&
 			    page < new_pgd + ((new_count + l2_4_count) * PAGE_SIZE)) {
 				/* Map the new page tables R. */
-				pte[pl1_pi(page)] |= PG_RO | pg_nx;
+				pte[pl1_pi(page)] |= PG_RO | xpmap_pg_nx;
 #ifdef i386
 			} else if (page == (vaddr_t)tmpgdt) {
 				/*
@@ -928,10 +927,10 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 			} else if (page >= (vaddr_t)&__data_start &&
 			    page < (vaddr_t)&__kernel_end) {
 				/* Map the kernel data+bss RW. */
-				pte[pl1_pi(page)] |= PG_RW | pg_nx;
+				pte[pl1_pi(page)] |= PG_RW | xpmap_pg_nx;
 			} else {
 				/* Map the page RW. */
-				pte[pl1_pi(page)] |= PG_RW | pg_nx;
+				pte[pl1_pi(page)] |= PG_RW | xpmap_pg_nx;
 			}
 
 			page += PAGE_SIZE;
@@ -962,7 +961,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	addr = (u_long)pde - KERNBASE;
 	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
 		pde[PDIR_SLOT_PTE + i] = xpmap_ptom_masked(addr) | PG_k | PG_V |
-		    pg_nx;
+		    xpmap_pg_nx;
 	}
 
 	/* Mark tables RO, and pin L2 KERN SHADOW. */
@@ -978,11 +977,11 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 	/* Recursive entry in pmap_kernel(). */
 	bt_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_pgd - KERNBASE)
-	    | PG_k | PG_RO | PG_V | pg_nx;
+	    | PG_k | PG_RO | PG_V | xpmap_pg_nx;
 #ifdef __x86_64__
 	/* Recursive entry in higher-level per-cpu PD. */
 	bt_cpu_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_cpu_pgd - KERNBASE)
-	    | PG_k | PG_RO | PG_V | pg_nx;
+	    | PG_k | PG_RO | PG_V | xpmap_pg_nx;
 #endif
 
 	/* Mark tables RO */
@@ -1061,23 +1060,16 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	xpq_flush_queue();
 }
 
-
 /*
- * Bootstrap helper functions
+ * Mark a page read-only, assuming vaddr = paddr + KERNBASE.
  */
-
-/*
- * Mark a page readonly
- * XXX: assuming vaddr = paddr + KERNBASE
- */
-
 static void
 xen_bt_set_readonly(vaddr_t page)
 {
 	pt_entry_t entry;
 
 	entry = xpmap_ptom_masked(page - KERNBASE);
-	entry |= PG_k | PG_V;
+	entry |= PG_k | PG_V | xpmap_pg_nx;
 
 	HYPERVISOR_update_va_mapping(page, entry, UVMF_INVLPG);
 }
