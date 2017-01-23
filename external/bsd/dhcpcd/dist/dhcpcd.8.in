@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.50 2016/08/15 11:04:53 roy Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.51 2017/01/23 10:50:11 abhinav Exp $
 .\" Copyright (c) 2006-2016 Roy Marples
 .\" All rights reserved
 .\"
@@ -790,7 +790,7 @@ running on the
 .It Pa @RUNDIR@/dhcpcd.sock
 Control socket to the master daemon.
 .It Pa @RUNDIR@/dhcpcd.unpriv.sock
-Unpriviledged socket to the master daemon, only allows state retrieval.
+Unprivileged socket to the master daemon, only allows state retrieval.
 .It Pa @RUNDIR@/dhcpcd\- Ns Ar interface Ns .sock
 Control socket to per interface daemon.
 .El
