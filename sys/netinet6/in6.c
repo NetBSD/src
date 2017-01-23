@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.236 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.237 2017/01/23 10:19:03 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.236 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.237 2017/01/23 10:19:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -705,7 +705,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		 * make (ia == NULL) or update (ia != NULL) the interface
 		 * address structure, and link it to the list.
 		 */
-		int s = splnet();
+		int s = splsoftnet();
 		error = in6_update_ifa1(ifp, ifra, &ia, &psref, 0);
 		splx(s);
 		if (error)
@@ -766,7 +766,7 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		break;
 	}
 
-	s = splnet();
+	s = splsoftnet();
 #ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 #endif
@@ -782,7 +782,7 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
  * Update parameters of an IPv6 interface address.
  * If necessary, a new entry is created and linked into address chains.
  * This function is separated from in6_control().
- * XXX: should this be performed under splnet()?
+ * XXX: should this be performed under splsoftnet()?
  */
 static int
 in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
@@ -1322,7 +1322,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra, int flags)
 {
 	int rc, s;
 
-	s = splnet();
+	s = splsoftnet();
 	rc = in6_update_ifa1(ifp, ifra, NULL, NULL, flags);
 	splx(s);
 	return rc;
@@ -1362,7 +1362,7 @@ in6_purgeaddr(struct ifaddr *ifa)
 static void
 in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 {
-	int	s = splnet();
+	int	s = splsoftnet();
 
 	mutex_enter(&in6_ifaddr_lock);
 	IN6_ADDRLIST_WRITER_REMOVE(ia);
@@ -1707,7 +1707,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 	const struct sockaddr_in6 *sin6, int newhost)
 {
 	int	error = 0, ifacount = 0;
-	int	s = splnet();
+	int	s = splsoftnet();
 	struct ifaddr *ifa;
 
 	/*
