@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.68 2017/01/12 05:24:36 ryo Exp $
+# $NetBSD: XEN3_DOMU,v 1.69 2017/01/23 17:35:34 christos Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -180,6 +180,7 @@ xencons*	at hypervisor?		# Xen virtual console
 # you then need to add your PCI devices drivers below.
 
 cinclude "arch/amd64/conf/GENERIC.local"
+cinclude "arch/amd64/conf/XEN3_DOMU.local"
 
 # Pseudo-Devices
 
