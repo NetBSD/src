@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.32 2017/01/16 09:28:40 ryo Exp $	*/
+/*	$NetBSD: pfil.c,v 1.33 2017/01/23 02:30:47 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.32 2017/01/16 09:28:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.33 2017/01/23 02:30:47 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,7 +384,7 @@ pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 	pfil_listset_t *phlistset;
 	pfil_list_t *phlist;
 	struct psref psref;
-	int s;
+	int s, bound;
 	int ret = 0;
 
 	KASSERT(dir == PFIL_IN || dir == PFIL_OUT);
@@ -392,6 +392,7 @@ pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 		return ret;
 	}
 
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	phlist = phlistset->active;
 	membar_datadep_consumer();
@@ -406,6 +407,7 @@ pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 			break;
 	}
 	psref_release(&psref, &phlist->psref, pfil_psref_class);
+	curlwp_bindx(bound);
 
 	if (mp) {
 		*mp = m;
@@ -418,8 +420,9 @@ pfil_run_arg(pfil_listset_t *phlistset, u_long cmd, void *arg)
 {
 	pfil_list_t *phlist;
 	struct psref psref;
-	int s;
+	int s, bound;
 
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	phlist = phlistset->active;
 	membar_datadep_consumer();
@@ -431,6 +434,7 @@ pfil_run_arg(pfil_listset_t *phlistset, u_long cmd, void *arg)
 		(*func)(pfh->pfil_arg, cmd, arg);
 	}
 	psref_release(&psref, &phlist->psref, pfil_psref_class);
+	curlwp_bindx(bound);
 }
 
 void
