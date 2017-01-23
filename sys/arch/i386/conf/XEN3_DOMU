@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.71 2017/01/12 05:24:36 ryo Exp $
+# $NetBSD: XEN3_DOMU,v 1.72 2017/01/23 17:36:16 christos Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -197,6 +197,7 @@ xbd*		at xenbus?		# Xen virtual block device
 balloon*	at xenbus?		# Xen balloon device
 
 cinclude "arch/i386/conf/GENERIC.local"
+cinclude "arch/i386/conf/XEN3_DOMU.local"
 
 # Pseudo-Devices
 
