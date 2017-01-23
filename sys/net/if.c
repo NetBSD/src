@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.372 2017/01/20 08:35:33 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.373 2017/01/23 10:19:03 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.372 2017/01/20 08:35:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.373 2017/01/23 10:19:03 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -526,7 +526,7 @@ if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa0,
 	struct ifaddr *ifa;
 	int bound = curlwp_bind();
 
-	s = splnet();
+	s = splsoftnet();
 
 	if_deactivate_sadl(ifp);
 
@@ -567,7 +567,7 @@ if_free_sadl(struct ifnet *ifp)
 
 	KASSERT(ifp->if_sadl != NULL);
 
-	s = splnet();
+	s = splsoftnet();
 	rtinit(ifa, RTM_DELETE, 0);
 	ifa_remove(ifp, ifa);
 	if_deactivate_sadl(ifp);
@@ -1126,7 +1126,7 @@ if_attachdomain1(struct ifnet *ifp)
 	struct domain *dp;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	/* address family dependent data region */
 	memset(ifp->if_afdata, 0, sizeof(ifp->if_afdata));
@@ -1148,7 +1148,7 @@ if_deactivate(struct ifnet *ifp)
 {
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	ifp->if_output	 = if_nulloutput;
 	ifp->_if_input	 = if_nullinput;
@@ -2450,7 +2450,7 @@ if_slowtimo(void *arg)
 	if (__predict_false(slowtimo == NULL))
 		return;
 
-	s = splnet();
+	s = splsoftnet();
 	if (ifp->if_timer != 0 && --ifp->if_timer == 0)
 		(*slowtimo)(ifp);
 
@@ -2720,12 +2720,12 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		ifr = data;
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
-			s = splnet();
+			s = splsoftnet();
 			if_down(ifp);
 			splx(s);
 		}
 		if (ifr->ifr_flags & IFF_UP && (ifp->if_flags & IFF_UP) == 0) {
-			s = splnet();
+			s = splsoftnet();
 			if_up(ifp);
 			splx(s);
 		}
@@ -3026,7 +3026,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			int s = splnet();
+			int s = splsoftnet();
 			if_up(ifp);
 			splx(s);
 		}
