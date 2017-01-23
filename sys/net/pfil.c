@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.33 2017/01/23 02:30:47 ozaki-r Exp $	*/
+/*	$NetBSD: pfil.c,v 1.34 2017/01/23 02:32:54 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,7 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.33 2017/01/23 02:30:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.34 2017/01/23 02:32:54 ozaki-r Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,11 +234,15 @@ pfil_list_add(pfil_listset_t *phlistset, pfil_polyfunc_t func, void *arg,
 	/* switch from oldlist to newlist */
 	phlistset->active = newlist;
 	membar_producer();
+#ifdef NET_MPSAFE
 	pserialize_perform(pfil_psz);
+#endif
 	mutex_exit(&pfil_mtx);
 
 	/* Wait for all readers */
+#ifdef NET_MPSAFE
 	psref_target_destroy(&oldlist->psref, pfil_psref_class);
+#endif
 
 	return 0;
 }
@@ -330,11 +338,15 @@ pfil_list_remove(pfil_listset_t *phlistset, pfil_polyfunc_t func, void *arg)
 		/* switch from oldlist to newlist */
 		phlistset->active = newlist;
 		membar_producer();
+#ifdef NET_MPSAFE
 		pserialize_perform(pfil_psz);
+#endif
 		mutex_exit(&pfil_mtx);
 
 		/* Wait for all readers */
+#ifdef NET_MPSAFE
 		psref_target_destroy(&oldlist->psref, pfil_psref_class);
+#endif
 
 		return 0;
 	}
