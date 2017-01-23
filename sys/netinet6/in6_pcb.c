@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.155 2016/12/13 08:29:03 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.156 2017/01/23 09:14:24 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.155 2016/12/13 08:29:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.156 2017/01/23 09:14:24 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -158,9 +158,7 @@ in6_pcballoc(struct socket *so, void *v)
 	struct in6pcb *in6p;
 	int s;
 
-	s = splnet();
 	in6p = pool_get(&in6pcb_pool, PR_NOWAIT);
-	splx(s);
 	if (in6p == NULL)
 		return (ENOBUFS);
 	memset((void *)in6p, 0, sizeof(*in6p));
@@ -175,9 +173,7 @@ in6_pcballoc(struct socket *so, void *v)
 	if (ipsec_enabled) {
 		int error = ipsec_init_pcbpolicy(so, &in6p->in6p_sp);
 		if (error != 0) {
-			s = splnet();
 			pool_put(&in6pcb_pool, in6p);
-			splx(s);
 			return error;
 		}
 	}
