@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.134 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.135 2017/01/23 15:32:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,37 +15,37 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.134 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.135 2017/01/23 15:32:04 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/systm.h>
-#include <sys/mbuf.h>
 #include <sys/buf.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
-#include <sys/syslog.h>
-#include <sys/select.h>
-#include <sys/poll.h>
-#include <sys/file.h>
-#include <sys/signalvar.h>
 #include <sys/conf.h>
-#include <sys/kauth.h>
-#include <sys/mutex.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/errno.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
+#include <sys/mbuf.h>
 #include <sys/module.h>
+#include <sys/mutex.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
+#include <sys/select.h>
+#include <sys/signalvar.h>
+#include <sys/socket.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/time.h>
 
+#include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <net/route.h>
-
 
 #ifdef INET
 #include <netinet/in.h>
@@ -54,10 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.134 2017/01/11 13:08:29 ozaki-r Exp $")
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-
-#include <sys/time.h>
-#include <net/bpf.h>
 
 #include <net/if_tun.h>
 
@@ -179,7 +175,7 @@ tun_find_unit(dev_t dev)
 		mutex_enter(&tp->tun_lock);
 	mutex_exit(&tun_softc_lock);
 
-	return (tp);
+	return tp;
 }
 
 /*
@@ -203,7 +199,7 @@ tun_find_zunit(int unit)
 		printf("tun%d: inconsistent flags: %x\n", unit, tp->tun_flags);
 #endif
 
-	return (tp);
+	return tp;
 }
 
 static int
@@ -234,7 +230,7 @@ tun_clone_create(struct if_clone *ifc, int unit)
 	LIST_INSERT_HEAD(&tun_softc_list, tp, tun_list);
 	mutex_exit(&tun_softc_lock);
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -310,7 +306,7 @@ tun_clone_destroy(struct ifnet *ifp)
 		free(tp, M_DEVBUF);
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -327,7 +323,7 @@ tunopen(dev_t dev, int flag, int mode, struct lwp *l)
 	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE_TUN,
 	    KAUTH_REQ_NETWORK_INTERFACE_TUN_ADD, NULL, NULL, NULL);
 	if (error)
-		return (error);
+		return error;
 
 	tp = tun_find_unit(dev);
 
@@ -351,7 +347,7 @@ tunopen(dev_t dev, int flag, int mode, struct lwp *l)
 out:
 	mutex_exit(&tp->tun_lock);
 out_nolock:
-	return (error);
+	return error;
 }
 
 /*
@@ -413,7 +409,7 @@ tunclose(dev_t dev, int flag, int mode,
 		}
 	}
 out_nolock:
-	return (0);
+	return 0;
 }
 
 /*
@@ -527,7 +523,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 /*
@@ -763,7 +759,7 @@ out:
 	mutex_exit(&tp->tun_lock);
 out_nolock:
 	splx(s);
-	return (error);
+	return error;
 }
 
 /*
@@ -849,13 +845,13 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 	if (error)
 		ifp->if_ierrors++;
 
-	return (error);
+	return error;
 
 out:
 	mutex_exit(&tp->tun_lock);
 out_nolock:
 	splx(s);
-	return (error);
+	return error;
 }
 
 /*
@@ -999,7 +995,7 @@ out:
 out_nolock:
 	splx(s);
 out0:
-	return (error);
+	return error;
 }
 
 #ifdef ALTQ
@@ -1073,7 +1069,7 @@ tunpoll(dev_t dev, int events, struct lwp *l)
 	mutex_exit(&tp->tun_lock);
 out_nolock:
 	splx(s);
-	return (revents);
+	return revents;
 }
 
 static void
@@ -1099,14 +1095,14 @@ filt_tunread(struct knote *kn, long hint)
 	IF_POLL(&ifp->if_snd, m);
 	if (m == NULL) {
 		splx(s);
-		return (0);
+		return 0;
 	}
 
 	for (kn->kn_data = 0; m != NULL; m = m->m_next)
 		kn->kn_data += m->m_len;
 
 	splx(s);
-	return (1);
+	return 1;
 }
 
 static const struct filterops tunread_filtops =
@@ -1151,7 +1147,7 @@ out:
 	mutex_exit(&tp->tun_lock);
 out_nolock:
 	splx(s);
-	return (rv);
+	return rv;
 }
 
 /*
