@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.203 2016/07/19 02:47:45 pgoyette Exp $	*/
+/*	$NetBSD: bpf.c,v 1.204 2017/01/23 10:17:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.203 2016/07/19 02:47:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.204 2017/01/23 10:17:36 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -144,6 +144,7 @@ static int	bpf_movein(struct uio *, int, uint64_t,
 static void	bpf_attachd(struct bpf_d *, struct bpf_if *);
 static void	bpf_detachd(struct bpf_d *);
 static int	bpf_setif(struct bpf_d *, struct ifreq *);
+static int	bpf_setf(struct bpf_d *, struct bpf_program *);
 static void	bpf_timed_out(void *);
 static inline void
 		bpf_wakeup(struct bpf_d *);
@@ -1101,7 +1102,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
  * Set d's packet filter program to fp.  If this file already has a filter,
  * free it and replace it.  Returns EINVAL for bogus requests.
  */
-int
+static int
 bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 {
 	struct bpf_insn *fcode, *old;
