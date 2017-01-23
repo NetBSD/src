@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.42 2016/12/12 10:09:52 wiz Exp $
+.\"	$NetBSD: disk.9,v 1.43 2017/01/23 11:42:03 abhinav Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -102,7 +102,7 @@ struct disk {
 	 * Information required to be the parent of a disk wedge.
 	 */
 	kmutex_t	dk_rawlock;	/* lock on these fields */
-	u_int		dk_rawopens;	/* # of openes of rawvp */
+	u_int		dk_rawopens;	/* # of opens of rawvp */
 	struct vnode	*dk_rawvp;	/* vnode for the RAW_PART bdev */
 
 	kmutex_t	dk_openlock;	/* lock on these and openmask */
