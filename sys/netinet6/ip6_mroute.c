@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.115 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.116 2017/01/24 07:09:25 ozaki-r Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.115 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.116 2017/01/24 07:09:25 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1310,6 +1310,7 @@ expire_upcalls(void *unused)
 	struct mf6c *mfc, **nptr;
 	int i;
 
+	/* XXX NOMPSAFE still need softnet_lock */
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 
