@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.13 2012/10/26 18:15:55 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2017/01/24 18:04:02 christos Exp $
 
 IMAGESIZE=	7m
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	all ipty
-MAKEFS_FLAGS=	-o density=4k
+MAKEFS_FLAGS+=	-o density=4k
 IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/install.md \
 		${KERNOBJDIR}/INSTALL/netbsd
