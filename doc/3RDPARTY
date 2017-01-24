@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1400 2017/01/22 22:26:16 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1401 2017/01/24 23:31:03 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -779,8 +779,8 @@ libdevmapper ioctl protocol code, therefore we should test it before
 import. Talk to haad before importing new version.
 
 Package:	libpcap
-Version:	1.7.2
-Current Vers:	1.7.2
+Version:	1.8.1
+Current Vers:	1.8.1
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
@@ -1296,8 +1296,8 @@ Notes:
 Run cleantags before importing because sqlite3.c has an RCSID
 
 Package:	tcpdump
-Version:	4.7.3
-Current Vers:	4.7.3
+Version:	4.8.1
+Current Vers:	4.8.1
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
