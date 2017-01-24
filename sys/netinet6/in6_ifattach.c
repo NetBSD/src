@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.109 2017/01/04 19:37:14 christos Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.110 2017/01/24 07:09:25 ozaki-r Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.109 2017/01/04 19:37:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.110 2017/01/24 07:09:25 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -860,6 +860,7 @@ in6_tmpaddrtimer(void *ignored_arg)
 	struct ifnet *ifp;
 	int s;
 
+	/* XXX NOMPSAFE still need softnet_lock */
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 

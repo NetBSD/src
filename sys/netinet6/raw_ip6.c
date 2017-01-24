@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.154 2016/12/13 08:29:03 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.155 2017/01/24 07:09:25 ozaki-r Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.154 2016/12/13 08:29:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.155 2017/01/24 07:09:25 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -935,15 +935,17 @@ static int
 rip6_purgeif(struct socket *so, struct ifnet *ifp)
 {
 
-#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
-#endif
 	in6_pcbpurgeif0(&raw6cbtable, ifp);
-	in6_purgeif(ifp);
-	in6_pcbpurgeif(&raw6cbtable, ifp);
-#ifndef NET_MPSAFE
+#ifdef NET_MPSAFE
 	mutex_exit(softnet_lock);
 #endif
+	in6_purgeif(ifp);
+#ifdef NET_MPSAFE
+	mutex_enter(softnet_lock);
+#endif
+	in6_pcbpurgeif(&raw6cbtable, ifp);
+	mutex_exit(softnet_lock);
 
 	return 0;
 }
