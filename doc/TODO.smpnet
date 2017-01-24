@@ -1,0 +1,28 @@
+$NetBSD: TODO.smpnet,v 1.1 2017/01/24 09:05:27 ozaki-r Exp $
+
+Non MP-safe components
+======================
+
+ - bpf
+ - To be listed more...
+
+bpf
+===
+
+MP-ification of bpf requires all of bpf_mtap* are called in normal LWP context
+or softint context, i.e., not in hardware interrupt context.  For Tx, all
+bpf_mtap satisfy the requrement.  For Rx, most of bpf_mtap are called in softint.
+Unfortunately some bpf_mtap on Rx are still called in hardware interrupt context.
+
+This is the list of the functions that have such bpf_mtap:
+
+ - sca_frame_process() @ sys/dev/ic/hd64570.c
+ - en_intr() @ sys/dev/ic/midway.c
+ - rxintr_cleanup() and txintr_cleanup() @ sys/dev/pci/if_lmc.c
+ - ipr_rx_data_rdy() @ sys/netisdn/i4b_ipr.c
+
+Ideally we should make the functions run in softint somehow, but we don't have
+actual devices, no time (or interest/love) to work on the task, so instead we
+provide a deferred bpf_mtap mechanism that forcibly runs bpf_mtap in softint
+context.  It's a workaround and once the functions run in softint, we should use
+the original bpf_mtap again.
