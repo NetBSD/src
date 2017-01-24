@@ -23,19 +23,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bootp.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.7 2017/01/24 23:29:13 christos Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
 #include "extract.h"
 
@@ -1002,7 +1001,7 @@ rfc1048_print(netdissect_options *ndo,
 						break;
 					}
 					if (len < suboptlen) {
-						ND_PRINT((ndo, "ERROR: malformed option"));
+						ND_PRINT((ndo, "ERROR: invalid option"));
 						bp += len;
 						len = 0;
 						break;
