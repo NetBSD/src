@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.796 2017/01/02 12:38:16 roy Exp $
+# $NetBSD: shl.mi,v 1.797 2017/01/24 22:30:53 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -59,8 +59,8 @@
 ./lib/libnpf.so.0				base-npf-shlib		dynamicroot,npf
 ./lib/libnpf.so.0.1				base-npf-shlib		dynamicroot,npf
 ./lib/libpcap.so				base-sys-shlib		dynamicroot
-./lib/libpcap.so.5				base-sys-shlib		dynamicroot
-./lib/libpcap.so.5.1				base-sys-shlib		dynamicroot
+./lib/libpcap.so.6				base-sys-shlib		dynamicroot
+./lib/libpcap.so.6.0				base-sys-shlib		dynamicroot
 ./lib/libppath.so				base-sys-shlib		dynamicroot
 ./lib/libppath.so.0				base-sys-shlib		dynamicroot
 ./lib/libppath.so.0.0				base-sys-shlib		dynamicroot
@@ -428,8 +428,8 @@
 ./usr/lib/libpanel.so.1				base-sys-shlib		compatfile
 ./usr/lib/libpanel.so.1.0			base-sys-shlib		compatfile
 ./usr/lib/libpcap.so				base-net-shlib		compatfile
-./usr/lib/libpcap.so.5				base-net-shlib		compatfile
-./usr/lib/libpcap.so.5.1			base-net-shlib		compatfile
+./usr/lib/libpcap.so.6				base-net-shlib		compatfile
+./usr/lib/libpcap.so.6.0			base-net-shlib		compatfile
 ./usr/lib/libpci.so				base-sys-shlib		compatfile
 ./usr/lib/libpci.so.2				base-sys-shlib		compatfile
 ./usr/lib/libpci.so.2.2				base-sys-shlib		compatfile
