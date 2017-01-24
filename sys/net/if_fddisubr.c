@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.103 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.104 2017/01/24 18:37:20 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.103 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.104 2017/01/24 18:37:20 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -261,11 +261,13 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	case AF_ARP: {
 		struct arphdr *ah = mtod(m, struct arphdr *);
 		if (m->m_flags & M_BCAST)
-                	memcpy(edst, etherbroadcastaddr, sizeof(edst));
+			memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else {
 			void *tha = ar_tha(ah);
-			if (tha == NULL)
+			if (tha == NULL) {
+				m_freem(m);
 				return 0;
+			}
 			memcpy(edst, tha, sizeof(edst));
 		}
 
