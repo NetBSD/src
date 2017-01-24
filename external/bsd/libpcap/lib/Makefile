@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2017/01/24 22:29:29 christos Exp $	
+# $NetBSD: Makefile,v 1.14 2017/01/24 22:37:31 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -136,7 +136,8 @@ CPPFLAGS+=	-DINET6
 
 SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
 	inet.c grammar.y gencode.c fad-getad.c etherent.c bpf_image.c \
-	bpf_dump.c version.c sf-pcap-ng.c sf-pcap.c pcap-common.c
+	bpf_dump.c pcap_version.c sf-pcap-ng.c sf-pcap.c pcap-common.c \
+	fad-getad.c fad-helpers.c
 
 .PATH:	${NETBSDSRCDIR}/sys/net
 SRCS+=	bpf_filter.c
