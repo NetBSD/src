@@ -1,7 +1,7 @@
-/*	$NetBSD: diskbuf.c,v 1.7 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: conf.c,v 1.1 2017/01/24 11:09:14 nonaka Exp $	 */
 
 /*
- * Copyright (c) 1996
+ * Copyright (c) 1997
  *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,39 +23,47 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-/* data buffer for BIOS disk / DOS I/O  */
-
-#include <sys/inttypes.h>
+#include <sys/cdefs.h>
+#include <sys/types.h>
 
 #include <lib/libsa/stand.h>
-#include "diskbuf.h"
-
-char *diskbufp;		/* allocated from heap */
-
-const void *diskbuf_user;
-
-/*
- * Global shared "diskbuf" is used as read ahead buffer.
- * This MAY have to not cross a 64k boundary.
- * In practise it is allocated out of the heap early on...
- * NB a statically allocated diskbuf is not guaranteed to not
- * cross a 64k boundary.
- */
-char *
-alloc_diskbuf(const void *user)
-{
-	diskbuf_user = user;
-	if (!diskbufp) {
-		diskbufp = alloc(DISKBUFSIZE);
-#ifndef EFIBOOT
-		if (((uintptr_t)diskbufp & 0xffff) + DISKBUFSIZE > 0x10000) {
-			printf("diskbufp %" PRIxPTR "\n", (uintptr_t)diskbufp);
-			panic("diskbuf crosses 64k boundary");
-		}
+#include <lib/libsa/ufs.h>
+#include <lib/libsa/lfs.h>
+#ifdef SUPPORT_EXT2FS
+#include <lib/libsa/ext2fs.h>
 #endif
-	}
-	return diskbufp;
-}
+#ifdef SUPPORT_MINIXFS3
+#include <lib/libsa/minixfs3.h>
+#endif
+#ifdef SUPPORT_DOSFS
+#include <lib/libsa/dosfs.h>
+#endif
+#ifdef SUPPORT_CD9660
+#include <lib/libsa/cd9660.h>
+#endif
+#include <biosdisk.h>
+
+struct devsw devsw[] = {
+	{ "disk", biosdisk_strategy, biosdisk_open, biosdisk_close, biosdisk_ioctl },
+};
+int ndevs = __arraycount(devsw);
+
+struct fs_ops file_system[] = {
+#ifdef SUPPORT_CD9660
+	FS_OPS(cd9660),
+#endif
+	FS_OPS(ffsv1), FS_OPS(ffsv2),
+	FS_OPS(lfsv1), FS_OPS(lfsv2),
+#ifdef SUPPORT_EXT2FS
+	FS_OPS(ext2fs),
+#endif
+#ifdef SUPPORT_MINIXFS3
+	FS_OPS(minixfs3),
+#endif
+#ifdef SUPPORT_DOSFS
+	FS_OPS(dosfs),
+#endif
+};
+int nfsys = __arraycount(file_system);
