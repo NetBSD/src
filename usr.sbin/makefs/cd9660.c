@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.53 2016/11/25 23:02:44 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.54 2017/01/24 11:22:43 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.53 2016/11/25 23:02:44 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.54 2017/01/24 11:22:43 nonaka Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -321,6 +321,7 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 		OPT_STR('\0', "no-boot", "No boot support"),
 		OPT_STR('\0', "hard-disk-boot", "Boot from hard disk"),
 		OPT_STR('\0', "boot-load-segment", "Boot load segment"),
+		OPT_STR('\0', "platformid", "Section Header Platform ID"),
 
 		{ .name = NULL }
 	};
@@ -458,7 +459,8 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 			/* RRIP */
 			cd9660_eltorito_add_boot_option(diskStructure, name, 0);
 			rv = 1;
-		} else if (strcmp(name, "boot-load-segment") == 0) {
+		} else if (strcmp(name, "boot-load-segment") == 0 ||
+		    strcmp(name, "platformid") == 0) {
 			if (buf[0] == '\0') {
 				warnx("Option `%s' doesn't contain a value",
 				    name);
