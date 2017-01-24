@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.57 2017/01/11 13:47:27 wiz Exp $
+.\"	$NetBSD: makefs.8,v 1.58 2017/01/24 11:22:43 nonaka Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -366,6 +366,8 @@ ElTorito image.
 Do not pad the image (apparently Linux needs the padding).
 .\" .It Sy omit-trailing-period
 .\" Unknown
+.It Sy platformid
+Set platform ID of section header entry of the boot image.
 .It Sy preparer
 Preparer ID of the image.
 .It Sy publisher
