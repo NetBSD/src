@@ -21,15 +21,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ipcomp.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-ipcomp.c,v 1.5 2017/01/24 23:29:14 christos Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 struct ipcomp {
 	uint8_t comp_nxt;	/* Next Header */
@@ -41,7 +40,7 @@ struct ipcomp {
 #include <zlib.h>
 #endif
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 int
@@ -54,13 +53,13 @@ ipcomp_print(netdissect_options *ndo, register const u_char *bp, int *nhdr _U_)
 	int advance;
 #endif
 
-	ipcomp = (struct ipcomp *)bp;
+	ipcomp = (const struct ipcomp *)bp;
 	cpi = EXTRACT_16BITS(&ipcomp->comp_cpi);
 
 	/* 'ep' points to the end of available data. */
 	ep = ndo->ndo_snapend;
 
-	if ((u_char *)(ipcomp + 1) >= ep - sizeof(struct ipcomp)) {
+	if ((const u_char *)(ipcomp + 1) >= ep - sizeof(struct ipcomp)) {
 		ND_PRINT((ndo, "[|IPCOMP]"));
 		goto fail;
 	}

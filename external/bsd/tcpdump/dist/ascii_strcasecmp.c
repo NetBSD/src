@@ -10,6 +10,11 @@
  * is provided ``as is'' without express or implied warranty.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ascii_strcasecmp.c,v 1.2 2017/01/24 23:29:13 christos Exp $");
+#endif
+
 #include "ascii_strcasecmp.h"
 
 /*
