@@ -21,14 +21,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setsignal.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: setsignal.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <signal.h>
 #ifdef HAVE_SIGACTION

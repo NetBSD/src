@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: machdep.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: machdep.c,v 1.7 2017/01/24 23:29:13 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: machdep.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
  * need to do to get it defined?  This is clearly wrong, as we shouldn't
  * have to include UNIX or Windows system header files to get it.
  */
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #ifndef HAVE___ATTRIBUTE__
 #define __attribute__(x)

@@ -35,6 +35,11 @@
  *	@(#)in_cksum.c	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: in_cksum.c,v 1.2 2017/01/24 23:29:13 christos Exp $");
+#endif
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
