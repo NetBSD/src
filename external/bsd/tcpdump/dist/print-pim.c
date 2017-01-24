@@ -21,21 +21,22 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-pim.c,v 1.7 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-pim.c,v 1.8 2017/01/24 23:29:14 christos Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
 #include "extract.h"
 
 #include "ip.h"
+#include "ip6.h"
+#include "ipproto.h"
 
 #define PIMV1_TYPE_QUERY           0
 #define PIMV1_TYPE_REGISTER        1
@@ -139,7 +140,7 @@ struct pim {
 	u_short	pim_cksum;	/* IP style check sum */
 };
 
-static void pimv2_print(netdissect_options *, register const u_char *bp, register u_int len, u_int cksum);
+static void pimv2_print(netdissect_options *, register const u_char *bp, register u_int len, const u_char *);
 
 static void
 pimv1_join_prune_print(netdissect_options *ndo,
@@ -420,10 +421,10 @@ trunc:
 
 void
 pim_print(netdissect_options *ndo,
-          register const u_char *bp, register u_int len, u_int cksum)
+          register const u_char *bp, register u_int len, const u_char *bp2)
 {
 	register const u_char *ep;
-	register struct pim *pim = (struct pim *)bp;
+	register const struct pim *pim = (const struct pim *)bp;
 
 	ep = (const u_char *)ndo->ndo_snapend;
 	if (bp >= ep)
@@ -445,7 +446,7 @@ pim_print(netdissect_options *ndo,
 			          PIM_VER(pim->pim_typever),
 			          len,
 			          tok2str(pimv2_type_values,"Unknown Type",PIM_TYPE(pim->pim_typever))));
-			pimv2_print(ndo, bp, len, cksum);
+			pimv2_print(ndo, bp, len, bp2);
 		}
 		break;
 	default:
@@ -539,12 +540,10 @@ pimv2_addr_print(netdissect_options *ndo,
 			af = AF_INET;
 			len = sizeof(struct in_addr);
 			break;
-#ifdef INET6
 		case 2:
 			af = AF_INET6;
 			len = sizeof(struct in6_addr);
 			break;
-#endif
 		default:
 			return -1;
 		}
@@ -556,11 +555,9 @@ pimv2_addr_print(netdissect_options *ndo,
 		case sizeof(struct in_addr):
 			af = AF_INET;
 			break;
-#ifdef INET6
 		case sizeof(struct in6_addr):
 			af = AF_INET6;
 			break;
-#endif
 		default:
 			return -1;
 			break;
@@ -577,12 +574,10 @@ pimv2_addr_print(netdissect_options *ndo,
 			if (!silent)
 				ND_PRINT((ndo, "%s", ipaddr_string(ndo, bp)));
 		}
-#ifdef INET6
 		else if (af == AF_INET6) {
 			if (!silent)
 				ND_PRINT((ndo, "%s", ip6addr_string(ndo, bp)));
 		}
-#endif
 		return hdrlen + len;
 	case pimv2_group:
 	case pimv2_source:
@@ -594,7 +589,6 @@ pimv2_addr_print(netdissect_options *ndo,
 					ND_PRINT((ndo, "/%u", bp[1]));
 			}
 		}
-#ifdef INET6
 		else if (af == AF_INET6) {
 			if (!silent) {
 				ND_PRINT((ndo, "%s", ip6addr_string(ndo, bp + 2)));
@@ -602,7 +596,6 @@ pimv2_addr_print(netdissect_options *ndo,
 					ND_PRINT((ndo, "/%u", bp[1]));
 			}
 		}
-#endif
 		if (bp[0] && !silent) {
 			if (at == pimv2_group) {
 				ND_PRINT((ndo, "(0x%02x)", bp[0]));
@@ -625,13 +618,45 @@ trunc:
 	return -1;
 }
 
+enum checksum_status {
+	CORRECT,
+	INCORRECT,
+	UNVERIFIED
+};
+
+static enum checksum_status
+pimv2_check_checksum(netdissect_options *ndo, const u_char *bp, const u_char *bp2, u_int len)
+{
+	const struct ip *ip;
+	u_int cksum;
+
+	ip = (const struct ip *)bp2;
+	if (IP_V(ip) == 4) {
+		struct cksum_vec vec[1];
+
+		vec[0].ptr = bp;
+		vec[0].len = len;
+		cksum = in_cksum(vec, 1);
+		return (cksum ? INCORRECT : CORRECT);
+	} else if (IP_V(ip) == 6) {
+		const struct ip6_hdr *ip6;
+
+		ip6 = (const struct ip6_hdr *)bp2;
+		cksum = nextproto6_cksum(ndo, ip6, bp, len, len, IPPROTO_PIM);
+		return (cksum ? INCORRECT : CORRECT);
+	} else {
+		return (UNVERIFIED);
+	}
+}
+
 static void
 pimv2_print(netdissect_options *ndo,
-            register const u_char *bp, register u_int len, u_int cksum)
+            register const u_char *bp, register u_int len, const u_char *bp2)
 {
 	register const u_char *ep;
-	register struct pim *pim = (struct pim *)bp;
+	register const struct pim *pim = (const struct pim *)bp;
 	int advance;
+	enum checksum_status cksum_status;
 
 	ep = (const u_char *)ndo->ndo_snapend;
 	if (bp >= ep)
@@ -647,7 +672,41 @@ pimv2_print(netdissect_options *ndo,
 	if (EXTRACT_16BITS(&pim->pim_cksum) == 0) {
 		ND_PRINT((ndo, "(unverified)"));
 	} else {
-		ND_PRINT((ndo, "(%scorrect)", ND_TTEST2(bp[0], len) && cksum ? "in" : "" ));
+		if (PIM_TYPE(pim->pim_typever) == PIMV2_TYPE_REGISTER) {
+			/*
+			 * The checksum only covers the packet header,
+			 * not the encapsulated packet.
+			 */
+			cksum_status = pimv2_check_checksum(ndo, bp, bp2, 8);
+			if (cksum_status == INCORRECT) {
+				/*
+				 * To quote RFC 4601, "For interoperability
+				 * reasons, a message carrying a checksum
+				 * calculated over the entire PIM Register
+				 * message should also be accepted."
+				 */
+				cksum_status = pimv2_check_checksum(ndo, bp, bp2, len);
+			}
+		} else {
+			/*
+			 * The checksum covers the entire packet.
+			 */
+			cksum_status = pimv2_check_checksum(ndo, bp, bp2, len);
+		}
+		switch (cksum_status) {
+
+		case CORRECT:
+			ND_PRINT((ndo, "(correct)"));
+			break;
+
+		case INCORRECT:
+			ND_PRINT((ndo, "(incorrect)"));
+			break;
+
+		case UNVERIFIED:
+			ND_PRINT((ndo, "(unverified)"));
+			break;
+		}
 	}
 
 	switch (PIM_TYPE(pim->pim_typever)) {
@@ -724,8 +783,6 @@ pimv2_print(netdissect_options *ndo,
 				if (ndo->ndo_vflag > 1) {
 					const u_char *ptr = bp;
 					while (ptr < (bp+olen)) {
-						int advance;
-
 						ND_PRINT((ndo, "\n\t    "));
 						advance = pimv2_addr_print(ndo, ptr, pimv2_unicast, 0);
 						if (advance < 0) {
@@ -751,7 +808,7 @@ pimv2_print(netdissect_options *ndo,
 
 	case PIMV2_TYPE_REGISTER:
 	{
-		struct ip *ip;
+		const struct ip *ip;
 
 		ND_TCHECK2(*(bp + 4), PIMV2_REGISTER_FLAG_LEN);
 
@@ -762,7 +819,7 @@ pimv2_print(netdissect_options *ndo,
 
 		bp += 8; len -= 8;
 		/* encapsulated multicast packet */
-		ip = (struct ip *)bp;
+		ip = (const struct ip *)bp;
 		switch (IP_V(ip)) {
                 case 0: /* Null header */
 			ND_PRINT((ndo, "IP-Null-header %s > %s",
