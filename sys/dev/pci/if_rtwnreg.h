@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwnreg.h,v 1.2 2015/11/06 14:22:17 nonaka Exp $	*/
+/*	$NetBSD: if_rtwnreg.h,v 1.3 2017/01/24 10:18:33 nonaka Exp $	*/
 /*	$OpenBSD: if_rtwnreg.h,v 1.3 2015/06/14 08:02:47 stsp Exp $	*/
 
 /*-
@@ -1168,6 +1168,8 @@ struct r92c_tx_desc {
 #define RTWN_NTXQUEUES			9
 #define RTWN_RX_LIST_COUNT		256
 #define RTWN_TX_LIST_COUNT		256
+#define RTWN_TX_LIST_LOMARK		192
+#define RTWN_TX_LIST_HIMARK		255
 #define RTWN_HOST_CMD_RING_COUNT	32
 
 /* TX queue indices. */

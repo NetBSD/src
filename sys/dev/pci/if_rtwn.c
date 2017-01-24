@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.9 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.10 2017/01/24 10:18:33 nonaka Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.9 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.10 2017/01/24 10:18:33 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1989,7 +1989,7 @@ rtwn_tx(struct rtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	tx_ring->cur = (tx_ring->cur + 1) % RTWN_TX_LIST_COUNT;
 	tx_ring->queued++;
 
-	if (tx_ring->queued >= (RTWN_TX_LIST_COUNT - 1))
+	if (tx_ring->queued > RTWN_TX_LIST_HIMARK)
 		sc->qfullmsk |= (1 << qid);
 
 	/* Kick TX. */
@@ -2035,7 +2035,7 @@ rtwn_tx_done(struct rtwn_softc *sc, int qid)
 		tx_ring->queued--;
 	}
 
-	if (tx_ring->queued < (RTWN_TX_LIST_COUNT - 1))
+	if (tx_ring->queued < RTWN_TX_LIST_LOMARK)
 		sc->qfullmsk &= ~(1 << qid);
 }
 
