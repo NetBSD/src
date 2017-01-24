@@ -15,6 +15,11 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: strtoaddr.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

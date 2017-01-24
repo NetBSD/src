@@ -21,19 +21,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ripng.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-ripng.c,v 1.5 2017/01/24 23:29:14 christos Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#ifdef INET6
+#include <netdissect-stdinc.h>
 
-#include <tcpdump-stdinc.h>
-
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
 #include "extract.h"
 
@@ -114,7 +111,7 @@ rip6_entry_print(netdissect_options *ndo, register const struct netinfo6 *ni, in
 void
 ripng_print(netdissect_options *ndo, const u_char *dat, unsigned int length)
 {
-	register const struct rip6 *rp = (struct rip6 *)dat;
+	register const struct rip6 *rp = (const struct rip6 *)dat;
 	register const struct netinfo6 *ni;
 	register u_int amt;
 	register u_int i;
@@ -178,4 +175,3 @@ ripng_print(netdissect_options *ndo, const u_char *dat, unsigned int length)
 	if (rp->rip6_vers != RIP6_VERSION)
 		ND_PRINT((ndo, " [vers %d]", rp->rip6_vers));
 }
-#endif /* INET6 */

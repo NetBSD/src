@@ -8,19 +8,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-smb.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-smb.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 #include "smb.h"
 
@@ -105,7 +104,7 @@ trans2_findfirst(netdissect_options *ndo,
     smb_fdata(ndo, param, fmt, param + pcnt, unicodestr);
     if (dcnt) {
 	ND_PRINT((ndo, "data:\n"));
-	print_data(ndo, data, dcnt);
+	smb_print_data(ndo, data, dcnt);
     }
 }
 
@@ -140,7 +139,7 @@ trans2_qfsinfo(netdissect_options *ndo,
     }
     if (dcnt) {
 	ND_PRINT((ndo, "data:\n"));
-	print_data(ndo, data, dcnt);
+	smb_print_data(ndo, data, dcnt);
     }
     return;
 trunc:
@@ -421,7 +420,7 @@ print_negprot(netdissect_options *ndo,
 	smb_fdata(ndo, words + 1, f1, min(words + 1 + wct * 2, maxbuf),
 	    unicodestr);
     else
-	print_data(ndo, words + 1, min(wct * 2, PTR_DIFF(maxbuf, words + 1)));
+	smb_print_data(ndo, words + 1, min(wct * 2, PTR_DIFF(maxbuf, words + 1)));
 
     ND_TCHECK2(*data, 2);
     bcc = EXTRACT_LE_16BITS(data);
@@ -431,7 +430,7 @@ print_negprot(netdissect_options *ndo,
 	    smb_fdata(ndo, data + 2, f2, min(data + 2 + EXTRACT_LE_16BITS(data),
 		maxbuf), unicodestr);
 	else
-	    print_data(ndo, data + 2, min(EXTRACT_LE_16BITS(data), PTR_DIFF(maxbuf, data + 2)));
+	    smb_print_data(ndo, data + 2, min(EXTRACT_LE_16BITS(data), PTR_DIFF(maxbuf, data + 2)));
     }
     return;
 trunc:
@@ -465,7 +464,7 @@ print_sesssetup(netdissect_options *ndo,
 	smb_fdata(ndo, words + 1, f1, min(words + 1 + wct * 2, maxbuf),
 	    unicodestr);
     else
-	print_data(ndo, words + 1, min(wct * 2, PTR_DIFF(maxbuf, words + 1)));
+	smb_print_data(ndo, words + 1, min(wct * 2, PTR_DIFF(maxbuf, words + 1)));
 
     ND_TCHECK2(*data, 2);
     bcc = EXTRACT_LE_16BITS(data);
@@ -475,7 +474,7 @@ print_sesssetup(netdissect_options *ndo,
 	    smb_fdata(ndo, data + 2, f2, min(data + 2 + EXTRACT_LE_16BITS(data),
 		maxbuf), unicodestr);
 	else
-	    print_data(ndo, data + 2, min(EXTRACT_LE_16BITS(data), PTR_DIFF(maxbuf, data + 2)));
+	    smb_print_data(ndo, data + 2, min(EXTRACT_LE_16BITS(data), PTR_DIFF(maxbuf, data + 2)));
     }
     return;
 trunc:
@@ -515,7 +514,7 @@ print_lockingandx(netdissect_options *ndo,
 	    smb_fdata(ndo, data + 2, f2, min(data + 2 + EXTRACT_LE_16BITS(data),
 		maxbuf), unicodestr);
 	else
-	    print_data(ndo, data + 2, min(EXTRACT_LE_16BITS(data), PTR_DIFF(maxbuf, data + 2)));
+	    smb_print_data(ndo, data + 2, min(EXTRACT_LE_16BITS(data), PTR_DIFF(maxbuf, data + 2)));
     }
     return;
 trunc:
@@ -888,7 +887,7 @@ print_smb(netdissect_options *ndo,
 	    } else {
 		if (bcc > 0) {
 		    ND_PRINT((ndo, "smb_buf[]=\n"));
-		    print_data(ndo, data + 2, min(bcc, PTR_DIFF(maxbuf, data + 2)));
+		    smb_print_data(ndo, data + 2, min(bcc, PTR_DIFF(maxbuf, data + 2)));
 		}
 	    }
 	}
@@ -1214,7 +1213,7 @@ nbt_udp137_print(netdissect_options *ndo,
 			p += 2;
 		    }
 		} else {
-		    print_data(ndo, p, min(rdlen, length - (p - data)));
+		    smb_print_data(ndo, p, min(rdlen, length - (p - data)));
 		    p += rdlen;
 		}
 	    }

@@ -21,23 +21,23 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-domain.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-domain.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include "nameser.h"
 
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
-#include "extract.h"                    /* must come after interface.h */
+#include "addrtostr.h"
+#include "extract.h"
 
 static const char *ns_ops[] = {
 	"", " inv_q", " stat", " op3", " notify", " update", " op6", " op7",
@@ -486,17 +486,14 @@ ns_rprint(netdissect_options *ndo,
 			EXTRACT_16BITS(cp), EXTRACT_16BITS(cp + 2)));
 		break;
 
-#ifdef INET6
 	case T_AAAA:
 	    {
-		struct in6_addr addr;
 		char ntop_buf[INET6_ADDRSTRLEN];
 
 		if (!ND_TTEST2(*cp, sizeof(struct in6_addr)))
 			return(NULL);
-		memcpy(&addr, cp, sizeof(struct in6_addr));
 		ND_PRINT((ndo, " %s",
-		    inet_ntop(AF_INET6, &addr, ntop_buf, sizeof(ntop_buf))));
+		    addrtostr6(cp, ntop_buf, sizeof(ntop_buf))));
 
 		break;
 	    }
@@ -520,7 +517,7 @@ ns_rprint(netdissect_options *ndo,
 			memset(&a, 0, sizeof(a));
 			memcpy(&a.s6_addr[pbyte], cp + 1, sizeof(a) - pbyte);
 			ND_PRINT((ndo, " %u %s", pbit,
-			    inet_ntop(AF_INET6, &a, ntop_buf, sizeof(ntop_buf))));
+			    addrtostr6(&a, ntop_buf, sizeof(ntop_buf))));
 		}
 		if (pbit > 0) {
 			ND_PRINT((ndo, " "));
@@ -529,12 +526,11 @@ ns_rprint(netdissect_options *ndo,
 		}
 		break;
 	    }
-#endif /*INET6*/
 
 	case T_OPT:
 		ND_PRINT((ndo, " UDPsize=%u", class));
 		if (opt_flags & 0x8000)
-			ND_PRINT((ndo, " OK"));
+			ND_PRINT((ndo, " DO"));
 		break;
 
 	case T_UNSPECA:		/* One long string */
@@ -671,7 +667,7 @@ ns_print(netdissect_options *ndo,
 		    DNS_CD(np) ? "%" : ""));
 
 		/* any weirdness? */
-		b2 = EXTRACT_16BITS(((u_short *)np)+1);
+		b2 = EXTRACT_16BITS(((const u_short *)np)+1);
 		if (b2 & 0x6cf)
 			ND_PRINT((ndo, " [b2&3=0x%x]", b2));
 

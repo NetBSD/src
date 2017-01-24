@@ -25,6 +25,11 @@
  *	Seth Webster <swebster@sst.ll.mit.edu>
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -219,6 +224,9 @@ static const struct printer printers[] = {
 #endif
 #ifdef DLT_PPP_SERIAL
 	{ ppp_hdlc_if_print,	DLT_PPP_SERIAL },
+#endif
+#ifdef DLT_PFSYNC
+        { pfsync_if_print,	DLT_PFSYNC },
 #endif
 	{ NULL,			0 },
 };

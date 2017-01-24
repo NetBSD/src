@@ -21,19 +21,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-lldp.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-lldp.c,v 1.7 2017/01/24 23:29:14 christos Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <stdio.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 #include "addrtoname.h"
 #include "af.h"
@@ -1284,15 +1283,15 @@ lldp_network_addr_print(netdissect_options *ndo, const u_char *tptr, u_int len)
     case AFNUM_INET:
         if (len < 4)
           return NULL;
+        /* This cannot be assigned to ipaddr_string(), which is a macro. */
         pfunc = getname;
         break;
-#ifdef INET6
     case AFNUM_INET6:
         if (len < 16)
           return NULL;
+        /* This cannot be assigned to ip6addr_string(), which is a macro. */
         pfunc = getname6;
         break;
-#endif
     case AFNUM_802:
         if (len < 6)
           return NULL;
