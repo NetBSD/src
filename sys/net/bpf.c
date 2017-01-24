@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.204 2017/01/23 10:17:36 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.205 2017/01/24 09:05:28 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,12 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.204 2017/01/23 10:17:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.205 2017/01/24 09:05:28 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
 #include "sl.h"
 #include "strip.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -60,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.204 2017/01/23 10:17:36 ozaki-r Exp $");
 #include <sys/stat.h>
 #include <sys/module.h>
 #include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -73,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.204 2017/01/23 10:17:36 ozaki-r Exp $");
 #include <sys/poll.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/slip.h>
@@ -1594,6 +1597,92 @@ _bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
 	m_freem(m);
 }
 
+static struct mbuf *
+bpf_mbuf_enqueue(struct bpf_if *bp, struct mbuf *m)
+{
+	struct mbuf *dup;
+
+	dup = m_dup(m, 0, M_COPYALL, M_NOWAIT);
+	if (dup == NULL)
+		return NULL;
+
+	if (bp->bif_mbuf_tail != NULL) {
+		bp->bif_mbuf_tail->m_nextpkt = dup;
+	} else {
+		bp->bif_mbuf_head = dup;
+	}
+	bp->bif_mbuf_tail = dup;
+#ifdef BPF_MTAP_SOFTINT_DEBUG
+	log(LOG_DEBUG, "%s: enqueued mbuf=%p to %s\n",
+	    __func__, dup, bp->bif_ifp->if_xname);
+#endif
+
+	return dup;
+}
+
+static struct mbuf *
+bpf_mbuf_dequeue(struct bpf_if *bp)
+{
+	struct mbuf *m;
+	int s;
+
+	s = splnet();
+	m = bp->bif_mbuf_head;
+	if (m != NULL) {
+		bp->bif_mbuf_head = m->m_nextpkt;
+		m->m_nextpkt = NULL;
+
+		if (bp->bif_mbuf_head == NULL)
+			bp->bif_mbuf_tail = NULL;
+#ifdef BPF_MTAP_SOFTINT_DEBUG
+		log(LOG_DEBUG, "%s: dequeued mbuf=%p from %s\n",
+		    __func__, m, bp->bif_ifp->if_xname);
+#endif
+	}
+	splx(s);
+
+	return m;
+}
+
+static void
+bpf_mtap_si(void *arg)
+{
+	struct bpf_if *bp = arg;
+	struct mbuf *m;
+
+	while ((m = bpf_mbuf_dequeue(bp)) != NULL) {
+#ifdef BPF_MTAP_SOFTINT_DEBUG
+		log(LOG_DEBUG, "%s: tapping mbuf=%p on %s\n",
+		    __func__, m, bp->bif_ifp->if_xname);
+#endif
+#ifndef NET_MPSAFE
+		KERNEL_LOCK(1, NULL);
+#endif
+		bpf_ops->bpf_mtap(bp, m);
+#ifndef NET_MPSAFE
+		KERNEL_UNLOCK_ONE(NULL);
+#endif
+		m_freem(m);
+	}
+}
+
+void
+bpf_mtap_softint(struct ifnet *ifp, struct mbuf *m)
+{
+	struct bpf_if *bp = ifp->if_bpf;
+	struct mbuf *dup;
+
+	KASSERT(cpu_intr_p());
+
+	if (bp == NULL || bp->bif_dlist == NULL)
+		return;
+	KASSERT(bp->bif_si != NULL);
+
+	dup = bpf_mbuf_enqueue(bp, m);
+	if (dup != NULL)
+		softint_schedule(bp->bif_si);
+}
+
 static int
 bpf_hdrlen(struct bpf_d *d)
 {
@@ -1790,6 +1879,7 @@ _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 	bp->bif_driverp = driverp;
 	bp->bif_ifp = ifp;
 	bp->bif_dlt = dlt;
+	bp->bif_si = NULL;
 
 	bp->bif_next = bpf_iflist;
 	bpf_iflist = bp;
@@ -1801,6 +1891,29 @@ _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 #if 0
 	printf("bpf: %s attached\n", ifp->if_xname);
 #endif
+}
+
+void
+bpf_mtap_softint_init(struct ifnet *ifp)
+{
+	struct bpf_if *bp;
+
+	mutex_enter(&bpf_mtx);
+	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+		if (bp->bif_ifp != ifp)
+			continue;
+
+		bp->bif_mbuf_head = NULL;
+		bp->bif_mbuf_tail = NULL;
+		bp->bif_si = softint_establish(SOFTINT_NET, bpf_mtap_si, bp);
+		if (bp->bif_si == NULL)
+			panic("%s: softint_establish() failed", __func__);
+		break;
+	}
+	mutex_exit(&bpf_mtx);
+
+	if (bp == NULL)
+		panic("%s: no bpf_if found for %s", __func__, ifp->if_xname);
 }
 
 /*
@@ -1833,6 +1946,16 @@ _bpfdetach(struct ifnet *ifp)
 	     bp != NULL; pbp = &bp->bif_next, bp = bp->bif_next) {
 		if (bp->bif_ifp == ifp) {
 			*pbp = bp->bif_next;
+			if (bp->bif_si != NULL) {
+				s = splnet();
+				while (bp->bif_mbuf_head != NULL) {
+					struct mbuf *m = bp->bif_mbuf_head;
+					bp->bif_mbuf_head = m->m_nextpkt;
+					m_freem(m);
+				}
+				splx(s);
+				softint_disestablish(bp->bif_si);
+			}
 			free(bp, M_DEVBUF);
 			goto again;
 		}

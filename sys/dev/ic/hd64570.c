@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.51 2016/12/15 09:35:24 ozaki-r Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.52 2017/01/24 09:05:28 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.51 2016/12/15 09:35:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.52 2017/01/24 09:05:28 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -457,6 +457,7 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 	bpf_attach(ifp, DLT_HDLC, HDLC_HDRLEN);
+	bpf_mtap_softint_init(ifp);
 
 	if (sc->sc_parent == NULL)
 		printf("%s: port %d\n", ifp->if_xname, port);
@@ -1574,7 +1575,7 @@ sca_frame_process(sca_port_t *scp)
 		return;
 	}
 
-	bpf_mtap(&scp->sp_if, m); /* XXX not in softint */
+	bpf_mtap_softint(&scp->sp_if, m);
 
 	scp->sp_if.if_ipackets++;
 
