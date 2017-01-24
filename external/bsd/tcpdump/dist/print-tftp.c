@@ -23,19 +23,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-tftp.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-tftp.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 /*
@@ -136,7 +135,7 @@ tftp_print(netdissect_options *ndo,
 	case RRQ:
 	case WRQ:
 	case OACK:
-		p = (u_char *)tp->th_stuff;
+		p = (const u_char *)tp->th_stuff;
 		ND_PRINT((ndo, " "));
 		/* Print filename or first option */
 		if (opcode != OACK)
