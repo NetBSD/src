@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.373 2017/01/23 10:19:03 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.374 2017/01/24 07:58:58 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.373 2017/01/23 10:19:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.374 2017/01/24 07:58:58 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2450,7 +2450,7 @@ if_slowtimo(void *arg)
 	if (__predict_false(slowtimo == NULL))
 		return;
 
-	s = splsoftnet();
+	s = splnet();
 	if (ifp->if_timer != 0 && --ifp->if_timer == 0)
 		(*slowtimo)(ifp);
 
