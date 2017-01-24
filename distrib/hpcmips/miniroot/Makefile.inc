@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.20 2012/10/26 18:15:55 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2017/01/24 18:04:02 christos Exp $
 
 DBG=		-Os
 
 IMAGESIZE=	4352k
-MAKEFS_FLAGS=	-o density=2k
+MAKEFS_FLAGS+=	-o density=2k
 IMAGEENDIAN=	le
 MAKEDEVTARGETS=	all ipty
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
