@@ -19,14 +19,13 @@
  *
  */
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 
 
 #if defined(HAVE_PCAP_USB_H) && defined(DLT_USB_LINUX)
