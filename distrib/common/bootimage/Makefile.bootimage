@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.12 2015/11/25 00:50:57 christos Exp $
+#	$NetBSD: Makefile.bootimage,v 1.13 2017/01/24 18:01:07 christos Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -127,8 +127,8 @@
 
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-.if ${MKREPRO:Uno} == "yes"
-TIMESTAMP=-T ${NETBSDSRCDIR}/sys/sys/param.h
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+MAKEFS_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
 .endif
 
 .if empty(IMGBASE)
@@ -296,7 +296,7 @@ ${TARGETFS}: prepare_md_post
 	${TOOL_MAKEFS} -M ${FSSIZE} -m ${FSSIZE}			\
 	    -B ${TARGET_ENDIANNESS}					\
 	    -F ${WORKSPEC} -N ${WORKDIR}/etc				\
-	    ${TIMESTAMP}						\
+	    ${MAKEFS_TIMESTAMP}						\
 	    ${IMGMAKEFSOPTIONS}						\
 	    ${WORKFS} ${WORKDIR}
 .if !empty(PRIMARY_BOOT) && ${INSTALLBOOT_AFTER_DISKLABEL} == "no"
