@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.67 2015/09/05 20:01:21 dholland Exp $	*/
+/*	$NetBSD: bpf.h,v 1.68 2017/01/24 09:05:28 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -516,6 +516,9 @@ int	bpf_validate_ext(const bpf_ctx_t *, const struct bpf_insn *, int);
 
 bpfjit_func_t bpf_jit_generate(bpf_ctx_t *, void *, size_t);
 void	bpf_jit_freecode(bpfjit_func_t);
+
+void	bpf_mtap_softint_init(struct ifnet *);
+void	bpf_mtap_softint(struct ifnet *, struct mbuf *);
 
 #endif
 
