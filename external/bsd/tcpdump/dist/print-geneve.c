@@ -15,6 +15,11 @@
  * FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print-geneve.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

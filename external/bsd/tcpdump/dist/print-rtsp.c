@@ -11,6 +11,11 @@
  * FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print-rtsp.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+#endif
+
 #ifndef lint
 static const char rcsid[] _U_ =
     "@(#) Header";

@@ -20,17 +20,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-slow.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-slow.c,v 1.7 2017/01/24 23:29:14 christos Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 #include "addrtoname.h"
 #include "ether.h"
@@ -482,7 +481,7 @@ slow_oam_print(netdissect_options *ndo,
         const struct slow_oam_loopbackctrl_t *slow_oam_loopbackctrl;
     } tlv;
 
-    ptr.slow_oam_common_header = (struct slow_oam_common_header_t *)tptr;
+    ptr.slow_oam_common_header = (const struct slow_oam_common_header_t *)tptr;
     tptr += sizeof(struct slow_oam_common_header_t);
     tlen -= sizeof(struct slow_oam_common_header_t);
 

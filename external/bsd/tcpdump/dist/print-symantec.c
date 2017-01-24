@@ -21,17 +21,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-symantec.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-symantec.c,v 1.5 2017/01/24 23:29:14 christos Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 #include "ethertype.h"
 
@@ -80,7 +79,7 @@ symantec_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_
 {
 	u_int length = h->len;
 	u_int caplen = h->caplen;
-	struct symantec_header *sp;
+	const struct symantec_header *sp;
 	u_short ether_type;
 
 	if (caplen < sizeof (struct symantec_header)) {
@@ -93,7 +92,7 @@ symantec_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_
 
 	length -= sizeof (struct symantec_header);
 	caplen -= sizeof (struct symantec_header);
-	sp = (struct symantec_header *)p;
+	sp = (const struct symantec_header *)p;
 	p += sizeof (struct symantec_header);
 
 	ether_type = EXTRACT_16BITS(&sp->ether_type);
@@ -101,14 +100,14 @@ symantec_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_
 	if (ether_type <= ETHERMTU) {
 		/* ether_type not known, print raw packet */
 		if (!ndo->ndo_eflag)
-			symantec_hdr_print(ndo, (u_char *)sp, length + sizeof (struct symantec_header));
+			symantec_hdr_print(ndo, (const u_char *)sp, length + sizeof (struct symantec_header));
 
 		if (!ndo->ndo_suppress_default_print)
 			ND_DEFAULTPRINT(p, caplen);
 	} else if (ethertype_print(ndo, ether_type, p, length, caplen) == 0) {
 		/* ether_type not known, print raw packet */
 		if (!ndo->ndo_eflag)
-			symantec_hdr_print(ndo, (u_char *)sp, length + sizeof (struct symantec_header));
+			symantec_hdr_print(ndo, (const u_char *)sp, length + sizeof (struct symantec_header));
 
 		if (!ndo->ndo_suppress_default_print)
 			ND_DEFAULTPRINT(p, caplen);

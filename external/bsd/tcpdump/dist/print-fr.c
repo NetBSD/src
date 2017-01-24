@@ -21,20 +21,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-fr.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-fr.c,v 1.7 2017/01/24 23:29:14 christos Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <stdio.h>
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
 #include "ethertype.h"
 #include "llc.h"
@@ -336,7 +335,7 @@ fr_print(netdissect_options *ndo,
 		break;
 
 	case NLPID_SNAP:
-		if (snap_print(ndo, p, length, length, 0) == 0) {
+		if (snap_print(ndo, p, length, length, NULL, NULL, 0) == 0) {
 			/* ether_type not known, print raw packet */
                         if (!ndo->ndo_eflag)
                             fr_hdr_print(ndo, length + hdr_len, hdr_len,
@@ -602,6 +601,10 @@ frf15_print(netdissect_options *ndo,
 {
     uint16_t sequence_num, flags;
 
+    if (length < 2)
+        goto trunc;
+    ND_TCHECK2(*p, 2);
+
     flags = p[0]&MFR_BEC_MASK;
     sequence_num = (p[0]&0x1e)<<7 | p[1];
 
@@ -619,7 +622,10 @@ frf15_print(netdissect_options *ndo,
  * model is end-to-end or interface based wether we want to print
  * another Q.922 header
  */
+     return;
 
+trunc:
+     ND_PRINT((ndo, "[|frf15]"));
 }
 
 /*
@@ -771,17 +777,16 @@ q933_print(netdissect_options *ndo,
            const u_char *p, u_int length)
 {
 	const u_char *ptemp = p;
-	struct ie_tlv_header_t  *ie_p;
+	const struct ie_tlv_header_t  *ie_p;
         int olen;
 	int is_ansi = 0;
         u_int codeset;
         u_int ie_is_known = 0;
 
-	if (length < 9) {	/* shortest: Q.933a LINK VERIFY */
-		ND_PRINT((ndo, "[|q.933]"));
-		return;
-	}
+	if (length < 9)	/* shortest: Q.933a LINK VERIFY */
+		goto trunc;
 
+	ND_TCHECK2(*p, 3);
         codeset = p[2]&0x0f;   /* extract the codeset */
 
 	if (p[2] == MSG_ANSI_LOCKING_SHIFT) {
@@ -819,7 +824,7 @@ q933_print(netdissect_options *ndo,
 
 	/* Loop through the rest of IE */
 	while (length > sizeof(struct ie_tlv_header_t)) {
-		ie_p = (struct ie_tlv_header_t  *)ptemp;
+		ie_p = (const struct ie_tlv_header_t  *)ptemp;
 		if (length < sizeof(struct ie_tlv_header_t) ||
 		    length < sizeof(struct ie_tlv_header_t) + ie_p->ie_len) {
                     if (ndo->ndo_vflag) { /* not bark if there is just a trailer */
@@ -828,6 +833,12 @@ q933_print(netdissect_options *ndo,
                         ND_PRINT((ndo, ", length %u", olen));
 		    }
                     return;
+		}
+		if (!ND_TTEST(*ie_p)) {
+			if (ndo->ndo_vflag)
+				ND_PRINT((ndo, "\n"));
+			ND_PRINT((ndo, "\n[|q.933]"));
+			return;
 		}
 
                 /* lets do the full IE parsing only in verbose mode
@@ -841,10 +852,14 @@ q933_print(netdissect_options *ndo,
                            ie_p->ie_len));
 		}
 
-                /* sanity check */
+                /* sanity checks */
                 if (ie_p->ie_type == 0 || ie_p->ie_len == 0) {
                     return;
 		}
+                if (length < ie_p->ie_len + 2U) {
+                    goto trunc;
+                }
+                ND_TCHECK2(*ptemp, ie_p->ie_len + 2U);
 
                 if (fr_q933_print_ie_codeset[codeset] != NULL) {
                     ie_is_known = fr_q933_print_ie_codeset[codeset](ndo, ie_p, ptemp);
@@ -859,12 +874,16 @@ q933_print(netdissect_options *ndo,
                     print_unknown_data(ndo, ptemp+2, "\n\t  ", ie_p->ie_len);
 		}
 
-		length = length - ie_p->ie_len - 2;
-		ptemp = ptemp + ie_p->ie_len + 2;
+		length -= ie_p->ie_len + 2U;
+		ptemp += ie_p->ie_len + 2U;
 	}
         if (!ndo->ndo_vflag) {
             ND_PRINT((ndo, ", length %u", olen));
 	}
+	return;
+
+trunc:
+	ND_PRINT((ndo, "[|q.933]"));
 }
 
 static int

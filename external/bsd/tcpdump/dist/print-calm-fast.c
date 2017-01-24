@@ -15,6 +15,11 @@
  * Original code by Ola Martin Lykkja (ola.lykkja@q-free.com)
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print-calm-fast.c,v 1.2 2017/01/24 23:29:13 christos Exp $");
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
