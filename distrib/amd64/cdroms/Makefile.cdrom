@@ -1,12 +1,16 @@
-# $NetBSD: Makefile.cdrom,v 1.20 2015/07/19 10:16:55 martin Exp $
+# $NetBSD: Makefile.cdrom,v 1.21 2017/01/24 11:27:55 nonaka Exp $
 
 .include <bsd.own.mk>
+.include <bsd.endian.mk>
 
 SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
 
+EFIBOOTIMG=	efiboot.img
+CLEANFILES+=	${EFIBOOTIMG}
+
 # Need multidot for the boot loader to read kernel modules as it doesn't
 # understand rockridge.
-CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot
+CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot,bootimage=i386;${EFIBOOTIMG},platformid=efi,no-emul-boot
 CDINSTKERNEL=	../../instkernel
 CDKERNELS=	netbsd-GENERIC.gz       netbsd
 CDRELEASE_NOISOS=	true
@@ -15,7 +19,15 @@ CD_SETS=	base etc
 CD_SETS+=	modules
 .endif
 
-image_md_pre:
+${EFIBOOTIMG}: ${DESTDIR}/usr/mdec/bootx64.efi ${DESTDIR}/usr/mdec/bootia32.efi
+	${RM} -f ${EFIBOOTIMG}
+	${RM} -rf efiboot/EFI/boot
+	${MKDIR} efiboot/EFI/boot
+	${CP} ${.ALLSRC} efiboot/EFI/boot/
+	${TOOL_MAKEFS} -M 1m -m 1m -B ${TARGET_ENDIANNESS} \
+		-t msdos -o F=12,c=1 ${EFIBOOTIMG} efiboot
+
+image_md_pre: ${EFIBOOTIMG}
 	${RM} -f cdrom/etc/gettytab cdrom/etc/ttys cdrom/etc/rc
 	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
 	${INSTALL} ${COPY} ${.CURDIR}/../etc.ttys cdrom/etc/ttys
