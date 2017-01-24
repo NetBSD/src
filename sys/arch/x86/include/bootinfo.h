@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.24 2016/01/28 01:09:56 christos Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.25 2017/01/24 11:09:14 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -39,10 +39,11 @@
 #define BTINFO_FRAMEBUFFER	12
 #define BTINFO_USERCONFCOMMANDS	13
 #define BTINFO_EFI		14
+#define BTINFO_EFIMEMMAP	15
 
 #define BTINFO_STR "bootpath", "rootdevice", "bootdisk", "netif", \
     "console", "biosgeom", "symtab", "memmap", "bootwedge", "modulelist", \
-    "framebuffer", "userconfcommands", "efi",
+    "framebuffer", "userconfcommands", "efi", "efimemmap",
 
 #ifndef _LOCORE
 
@@ -221,7 +222,18 @@ struct btinfo_userconfcommands {
 /* EFI Information */
 struct btinfo_efi {
 	struct btinfo_common common;
-	paddr_t bi_systbl;	/* Physical address of the EFI System Table */
+	uint64_t systblpa;	/* Physical address of the EFI System Table */
+	uint32_t flags;
+#define BI_EFI_32BIT	__BIT(0)	/* 32bit UEFI */
+	uint8_t reserved[12];
+};
+
+struct btinfo_efimemmap {
+	struct btinfo_common common;
+	uint32_t num;		/* number of memory descriptor */
+	uint32_t version;	/* version of memory descriptor */
+	uint32_t size;		/* size of memory descriptor */
+	uint8_t memmap[1];	/* whole memory descriptors */
 };
 
 #endif /* _LOCORE */
