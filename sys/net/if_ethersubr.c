@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.235 2017/01/13 06:11:56 msaitoh Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.236 2017/01/24 18:37:20 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.235 2017/01/13 06:11:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.236 2017/01/24 18:37:20 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -279,6 +279,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 			if (tha == NULL) {
 				/* fake with ARPHDR_IEEE1394 */
+				m_freem(m);
 				return 0;
 			}
 			memcpy(edst, tha, sizeof(edst));
