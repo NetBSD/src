@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.29 2017/01/11 20:43:03 roy Exp $	*/
+/*	$NetBSD: screen.c,v 1.30 2017/01/24 17:27:30 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.29 2017/01/11 20:43:03 roy Exp $");
+__RCSID("$NetBSD: screen.c,v 1.30 2017/01/24 17:27:30 roy Exp $");
 #endif
 #endif					/* not lint */
 
@@ -179,6 +179,10 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	    0, 0, 0, FALSE)) == NULL)
 		goto error_exit;
 
+	/* If Soft Label Keys are setup, they will ripoffline. */
+	if (__slk_init(new_screen) == ERR)
+		goto error_exit;
+
 	if (__ripoffscreen(new_screen, &rtop) == ERR)
 		goto error_exit;
 
@@ -191,7 +195,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	__init_getch(new_screen);
 	__init_acs(new_screen);
 #ifdef HAVE_WCHAR
-	__init_get_wch( new_screen );
+	__init_get_wch(new_screen);
 	__init_wacs(new_screen);
 #endif /* HAVE_WCHAR */
 
@@ -239,6 +243,9 @@ delscreen(SCREEN *screen)
 
 	  /* free the storage of the keymaps */
 	_cursesi_free_keymap(screen->base_keymap);
+
+	  /* free the Soft Label Keys */
+	__slk_free(screen);
 
 	free(screen->stdbuf);
 	free(screen->unget_list);
