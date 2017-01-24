@@ -19,14 +19,13 @@
  * Expansion and refactoring by Rick Jones <rick.jones2@hp.com>
  */
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 #include "addrtoname.h"
 
@@ -304,8 +303,8 @@ print_sflow_counter_generic(netdissect_options *ndo,
     if (len < sizeof(struct sflow_generic_counter_t))
 	return 1;
 
-
     sflow_gen_counter = (const struct sflow_generic_counter_t *)pointer;
+    ND_TCHECK(*sflow_gen_counter);
     ND_PRINT((ndo, "\n\t      ifindex %u, iftype %u, ifspeed %" PRIu64 ", ifdirection %u (%s)",
 	   EXTRACT_32BITS(sflow_gen_counter->ifindex),
 	   EXTRACT_32BITS(sflow_gen_counter->iftype),
@@ -339,6 +338,9 @@ print_sflow_counter_generic(netdissect_options *ndo,
 	   EXTRACT_32BITS(sflow_gen_counter->ifpromiscmode)));
 
     return 0;
+
+trunc:
+    return 1;
 }
 
 static int
@@ -351,6 +353,7 @@ print_sflow_counter_ethernet(netdissect_options *ndo,
 	return 1;
 
     sflow_eth_counter = (const struct sflow_ethernet_counter_t *)pointer;
+    ND_TCHECK(*sflow_eth_counter);
     ND_PRINT((ndo, "\n\t      align errors %u, fcs errors %u, single collision %u, multiple collision %u, test error %u",
 	   EXTRACT_32BITS(sflow_eth_counter->alignerrors),
 	   EXTRACT_32BITS(sflow_eth_counter->fcserrors),
@@ -369,6 +372,9 @@ print_sflow_counter_ethernet(netdissect_options *ndo,
 	   EXTRACT_32BITS(sflow_eth_counter->symbol_errors)));
 
     return 0;
+
+trunc:
+    return 1;
 }
 
 static int
@@ -388,6 +394,7 @@ print_sflow_counter_basevg(netdissect_options *ndo,
 	return 1;
 
     sflow_100basevg_counter = (const struct sflow_100basevg_counter_t *)pointer;
+    ND_TCHECK(*sflow_100basevg_counter);
     ND_PRINT((ndo, "\n\t      in high prio frames %u, in high prio octets %" PRIu64,
 	   EXTRACT_32BITS(sflow_100basevg_counter->in_highpriority_frames),
 	   EXTRACT_64BITS(sflow_100basevg_counter->in_highpriority_octets)));
@@ -412,6 +419,9 @@ print_sflow_counter_basevg(netdissect_options *ndo,
 	   EXTRACT_64BITS(sflow_100basevg_counter->hc_out_highpriority_octets)));
 
     return 0;
+
+trunc:
+    return 1;
 }
 
 static int
@@ -424,6 +434,7 @@ print_sflow_counter_vlan(netdissect_options *ndo,
 	return 1;
 
     sflow_vlan_counter = (const struct sflow_vlan_counter_t *)pointer;
+    ND_TCHECK(*sflow_vlan_counter);
     ND_PRINT((ndo, "\n\t      vlan_id %u, octets %" PRIu64
 	   ", unicast_pkt %u, multicast_pkt %u, broadcast_pkt %u, discards %u",
 	   EXTRACT_32BITS(sflow_vlan_counter->vlan_id),
@@ -434,6 +445,9 @@ print_sflow_counter_vlan(netdissect_options *ndo,
 	   EXTRACT_32BITS(sflow_vlan_counter->discards)));
 
     return 0;
+
+trunc:
+    return 1;
 }
 
 struct sflow_processor_counter_t {
@@ -454,6 +468,7 @@ print_sflow_counter_processor(netdissect_options *ndo,
 	return 1;
 
     sflow_processor_counter = (const struct sflow_processor_counter_t *)pointer;
+    ND_TCHECK(*sflow_processor_counter);
     ND_PRINT((ndo, "\n\t      5sec %u, 1min %u, 5min %u, total_mem %" PRIu64
 	   ", total_mem %" PRIu64,
 	   EXTRACT_32BITS(sflow_processor_counter->five_sec_util),
@@ -463,6 +478,9 @@ print_sflow_counter_processor(netdissect_options *ndo,
 	   EXTRACT_64BITS(sflow_processor_counter->free_memory)));
 
     return 0;
+
+trunc:
+    return 1;
 }
 
 static int
@@ -486,6 +504,7 @@ sflow_print_counter_records(netdissect_options *ndo,
 	if (tlen < sizeof(struct sflow_counter_record_t))
 	    return 1;
 	sflow_counter_record = (const struct sflow_counter_record_t *)tptr;
+	ND_TCHECK(*sflow_counter_record);
 
 	enterprise = EXTRACT_32BITS(sflow_counter_record->format);
 	counter_type = enterprise & 0x0FFF;
@@ -541,6 +560,9 @@ sflow_print_counter_records(netdissect_options *ndo,
     }
 
     return 0;
+
+trunc:
+    return 1;
 }
 
 static int
@@ -553,11 +575,11 @@ sflow_print_counter_sample(netdissect_options *ndo,
     u_int           type;
     u_int           index;
 
-
     if (len < sizeof(struct sflow_counter_sample_t))
 	return 1;
 
     sflow_counter_sample = (const struct sflow_counter_sample_t *)pointer;
+    ND_TCHECK(*sflow_counter_sample);
 
     typesource = EXTRACT_32BITS(sflow_counter_sample->typesource);
     nrecords   = EXTRACT_32BITS(sflow_counter_sample->records);
@@ -574,6 +596,8 @@ sflow_print_counter_sample(netdissect_options *ndo,
 				       len - sizeof(struct sflow_counter_sample_t),
 				       nrecords);
 
+trunc:
+    return 1;
 }
 
 static int
@@ -588,6 +612,7 @@ sflow_print_expanded_counter_sample(netdissect_options *ndo,
 	return 1;
 
     sflow_expanded_counter_sample = (const struct sflow_expanded_counter_sample_t *)pointer;
+    ND_TCHECK(*sflow_expanded_counter_sample);
 
     nrecords = EXTRACT_32BITS(sflow_expanded_counter_sample->records);
 
@@ -601,6 +626,8 @@ sflow_print_expanded_counter_sample(netdissect_options *ndo,
 				       len - sizeof(struct sflow_expanded_counter_sample_t),
 				       nrecords);
 
+trunc:
+    return 1;
 }
 
 static int
@@ -613,6 +640,7 @@ print_sflow_raw_packet(netdissect_options *ndo,
 	return 1;
 
     sflow_flow_raw = (const struct sflow_expanded_flow_raw_t *)pointer;
+    ND_TCHECK(*sflow_flow_raw);
     ND_PRINT((ndo, "\n\t      protocol %s (%u), length %u, stripped bytes %u, header_size %u",
 	   tok2str(sflow_flow_raw_protocol_values,"Unknown",EXTRACT_32BITS(sflow_flow_raw->protocol)),
 	   EXTRACT_32BITS(sflow_flow_raw->protocol),
@@ -624,6 +652,9 @@ print_sflow_raw_packet(netdissect_options *ndo,
        assuming of course there is wnough data present to do so... */
 
     return 0;
+
+trunc:
+    return 1;
 }
 
 static int
@@ -636,12 +667,16 @@ print_sflow_ethernet_frame(netdissect_options *ndo,
 	return 1;
 
     sflow_ethernet_frame = (const struct sflow_ethernet_frame_t *)pointer;
+    ND_TCHECK(*sflow_ethernet_frame);
 
     ND_PRINT((ndo, "\n\t      frame len %u, type %u",
 	   EXTRACT_32BITS(sflow_ethernet_frame->length),
 	   EXTRACT_32BITS(sflow_ethernet_frame->type)));
 
     return 0;
+
+trunc:
+    return 1;
 }
 
 static int
@@ -654,6 +689,7 @@ print_sflow_extended_switch_data(netdissect_options *ndo,
 	return 1;
 
     sflow_extended_sw_data = (const struct sflow_extended_switch_data_t *)pointer;
+    ND_TCHECK(*sflow_extended_sw_data);
     ND_PRINT((ndo, "\n\t      src vlan %u, src pri %u, dst vlan %u, dst pri %u",
 	   EXTRACT_32BITS(sflow_extended_sw_data->src_vlan),
 	   EXTRACT_32BITS(sflow_extended_sw_data->src_pri),
@@ -661,6 +697,9 @@ print_sflow_extended_switch_data(netdissect_options *ndo,
 	   EXTRACT_32BITS(sflow_extended_sw_data->dst_pri)));
 
     return 0;
+
+trunc:
+    return 1;
 }
 
 static int
@@ -685,6 +724,7 @@ sflow_print_flow_records(netdissect_options *ndo,
 	    return 1;
 
 	sflow_flow_record = (const struct sflow_flow_record_t *)tptr;
+	ND_TCHECK(*sflow_flow_record);
 
 	/* so, the funky encoding means we cannot blythly mask-off
 	   bits, we must also check the enterprise. */
@@ -747,6 +787,9 @@ sflow_print_flow_records(netdissect_options *ndo,
     }
 
     return 0;
+
+trunc:
+    return 1;
 }
 
 static int
@@ -762,7 +805,8 @@ sflow_print_flow_sample(netdissect_options *ndo,
     if (len < sizeof(struct sflow_flow_sample_t))
 	return 1;
 
-    sflow_flow_sample = (struct sflow_flow_sample_t *)pointer;
+    sflow_flow_sample = (const struct sflow_flow_sample_t *)pointer;
+    ND_TCHECK(*sflow_flow_sample);
 
     typesource = EXTRACT_32BITS(sflow_flow_sample->typesource);
     nrecords = EXTRACT_32BITS(sflow_flow_sample->records);
@@ -784,6 +828,8 @@ sflow_print_flow_sample(netdissect_options *ndo,
 				    len - sizeof(struct sflow_flow_sample_t),
 				    nrecords);
 
+trunc:
+    return 1;
 }
 
 static int
@@ -797,6 +843,7 @@ sflow_print_expanded_flow_sample(netdissect_options *ndo,
 	return 1;
 
     sflow_expanded_flow_sample = (const struct sflow_expanded_flow_sample_t *)pointer;
+    ND_TCHECK(*sflow_expanded_flow_sample);
 
     nrecords = EXTRACT_32BITS(sflow_expanded_flow_sample->records);
 
@@ -813,6 +860,8 @@ sflow_print_expanded_flow_sample(netdissect_options *ndo,
 				    len - sizeof(struct sflow_expanded_flow_sample_t),
 				    nrecords);
 
+trunc:
+    return 1;
 }
 
 void
@@ -826,7 +875,6 @@ sflow_print(netdissect_options *ndo,
     u_int tlen;
     uint32_t sflow_sample_type, sflow_sample_len;
     uint32_t nsamples;
-
 
     tptr = pptr;
     tlen = len;

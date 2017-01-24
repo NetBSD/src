@@ -17,16 +17,15 @@
  * Original code by Hannes Gredler (hannes@juniper.net)
  */
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 #include "addrtoname.h"
 
@@ -175,10 +174,10 @@ rpki_rtr_pdu_print (netdissect_options *ndo, const u_char *tptr, u_int indent)
     u_int pdu_type, pdu_len, hexdump;
     const u_char *msg;
 
-    pdu_header = (rpki_rtr_pdu *)tptr;
+    pdu_header = (const rpki_rtr_pdu *)tptr;
     pdu_type = pdu_header->pdu_type;
     pdu_len = EXTRACT_32BITS(pdu_header->length);
-    ND_TCHECK2(tptr, pdu_len);
+    ND_TCHECK2(*tptr, pdu_len);
     hexdump = FALSE;
 
     ND_PRINT((ndo, "%sRPKI-RTRv%u, %s PDU (%u), length: %u",
@@ -221,9 +220,9 @@ rpki_rtr_pdu_print (netdissect_options *ndo, const u_char *tptr, u_int indent)
 
     case RPKI_RTR_IPV4_PREFIX_PDU:
 	{
-	    rpki_rtr_pdu_ipv4_prefix *pdu;
+	    const rpki_rtr_pdu_ipv4_prefix *pdu;
 
-	    pdu = (rpki_rtr_pdu_ipv4_prefix *)tptr;
+	    pdu = (const rpki_rtr_pdu_ipv4_prefix *)tptr;
 	    ND_PRINT((ndo, "%sIPv4 Prefix %s/%u-%u, origin-as %u, flags 0x%02x",
 		   indent_string(indent+2),
 		   ipaddr_string(ndo, pdu->prefix),
@@ -232,12 +231,11 @@ rpki_rtr_pdu_print (netdissect_options *ndo, const u_char *tptr, u_int indent)
 	}
 	break;
 
-#ifdef INET6
     case RPKI_RTR_IPV6_PREFIX_PDU:
 	{
-	    rpki_rtr_pdu_ipv6_prefix *pdu;
+	    const rpki_rtr_pdu_ipv6_prefix *pdu;
 
-	    pdu = (rpki_rtr_pdu_ipv6_prefix *)tptr;
+	    pdu = (const rpki_rtr_pdu_ipv6_prefix *)tptr;
 	    ND_PRINT((ndo, "%sIPv6 Prefix %s/%u-%u, origin-as %u, flags 0x%02x",
 		   indent_string(indent+2),
 		   ip6addr_string(ndo, pdu->prefix),
@@ -245,16 +243,15 @@ rpki_rtr_pdu_print (netdissect_options *ndo, const u_char *tptr, u_int indent)
 		   EXTRACT_32BITS(pdu->as), pdu->flags));
 	}
 	break;
-#endif
 
     case RPKI_RTR_ERROR_REPORT_PDU:
 	{
-	    rpki_rtr_pdu_error_report *pdu;
+	    const rpki_rtr_pdu_error_report *pdu;
 	    u_int encapsulated_pdu_length, text_length, tlen, error_code;
-	    u_char buf[80];
 
-	    pdu = (rpki_rtr_pdu_error_report *)tptr;
+	    pdu = (const rpki_rtr_pdu_error_report *)tptr;
 	    encapsulated_pdu_length = EXTRACT_32BITS(pdu->encapsulated_pdu_length);
+	    ND_TCHECK2(*tptr, encapsulated_pdu_length);
 	    tlen = pdu_len;
 
 	    error_code = EXTRACT_16BITS(pdu->pdu_header.u.error_code);
@@ -287,11 +284,11 @@ rpki_rtr_pdu_print (netdissect_options *ndo, const u_char *tptr, u_int indent)
 		tptr += 4;
 		tlen -= 4;
 	    }
-            printf("text_length: %u tlen %u\n", text_length, tlen);
+	    ND_TCHECK2(*tptr, text_length);
 	    if (text_length && (text_length <= tlen )) {
-		memcpy(buf, tptr, min(sizeof(buf)-1, text_length));
-		buf[text_length] = '\0';
-		ND_PRINT((ndo, "%sError text: %s", indent_string(indent+2), buf));
+		ND_PRINT((ndo, "%sError text: ", indent_string(indent+2)));
+		if (fn_printn(ndo, tptr, text_length, ndo->ndo_snapend))
+			goto trunc;
 	    }
 	}
 	break;
@@ -334,16 +331,16 @@ rpki_rtr_print(netdissect_options *ndo, register const u_char *pptr, register u_
 
         ND_TCHECK2(*tptr, sizeof(rpki_rtr_pdu));
 
-	pdu_header = (rpki_rtr_pdu *)tptr;
+	pdu_header = (const rpki_rtr_pdu *)tptr;
         pdu_type = pdu_header->pdu_type;
         pdu_len = EXTRACT_32BITS(pdu_header->length);
+        ND_TCHECK2(*tptr, pdu_len);
 
         /* infinite loop check */
         if (!pdu_type || !pdu_len) {
             break;
         }
 
-        ND_TCHECK2(*tptr, pdu_len);
         if (tlen < pdu_len) {
             goto trunc;
         }

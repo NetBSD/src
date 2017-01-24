@@ -9,16 +9,15 @@
  * Contributed by Lennert Buytenhek <buytenh@gnu.org>
  */
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <stdio.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 #define	RSTP_EXTRACT_PORT_ROLE(x) (((x)&0x0C)>>2)
@@ -369,7 +368,7 @@ stp_print(netdissect_options *ndo, const u_char *p, u_int length)
     u_int                  mstp_len;
     u_int                  spb_len;
 
-    stp_bpdu = (struct stp_bpdu_*)p;
+    stp_bpdu = (const struct stp_bpdu_*)p;
 
     /* Minimum STP Frame size. */
     if (length < 4)

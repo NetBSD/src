@@ -2,23 +2,22 @@
  * Copyright (C) 2000, Richard Sharpe
  *
  * This software may be distributed either under the terms of the
- * BSD-style licence that accompanies tcpdump or under the GNU GPL
+ * BSD-style license that accompanies tcpdump or under the GNU GPL
  * version 2 or later.
  *
  * print-beep.c
  *
  */
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 
 /* Check for a string but not go beyond length
  * Return TRUE on match, FALSE otherwise

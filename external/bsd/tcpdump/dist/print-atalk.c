@@ -21,20 +21,19 @@
  * Format and print AppleTalk packets.
  */
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <stdio.h>
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
 #include "ethertype.h"
-#include "extract.h"			/* must come after interface.h */
+#include "extract.h"
 #include "appletalk.h"
 
 static const char tstr[] = "[|atalk]";
@@ -380,7 +379,7 @@ nbp_print(netdissect_options *ndo,
           register u_char snode, register u_char skt)
 {
 	register const struct atNBPtuple *tp =
-		(const struct atNBPtuple *)((u_char *)np + nbpHeaderSize);
+		(const struct atNBPtuple *)((const u_char *)np + nbpHeaderSize);
 	int i;
 	const u_char *ep;
 
@@ -567,8 +566,11 @@ ataddr_string(netdissect_options *ndo,
 			     tp->nxt; tp = tp->nxt)
 				;
 			tp->addr = i2;
-			tp->nxt = newhnamemem();
+			tp->nxt = newhnamemem(ndo);
 			tp->name = strdup(nambuf);
+			if (tp->name == NULL)
+				(*ndo->ndo_error)(ndo,
+						  "ataddr_string: strdup(nambuf)");
 		}
 		fclose(fp);
 	}
@@ -582,20 +584,25 @@ ataddr_string(netdissect_options *ndo,
 	for (tp2 = &hnametable[i & (HASHNAMESIZE-1)]; tp2->nxt; tp2 = tp2->nxt)
 		if (tp2->addr == i) {
 			tp->addr = (atnet << 8) | athost;
-			tp->nxt = newhnamemem();
+			tp->nxt = newhnamemem(ndo);
 			(void)snprintf(nambuf, sizeof(nambuf), "%s.%d",
 			    tp2->name, athost);
 			tp->name = strdup(nambuf);
+			if (tp->name == NULL)
+				(*ndo->ndo_error)(ndo,
+						  "ataddr_string: strdup(nambuf)");
 			return (tp->name);
 		}
 
 	tp->addr = (atnet << 8) | athost;
-	tp->nxt = newhnamemem();
+	tp->nxt = newhnamemem(ndo);
 	if (athost != 255)
 		(void)snprintf(nambuf, sizeof(nambuf), "%d.%d", atnet, athost);
 	else
 		(void)snprintf(nambuf, sizeof(nambuf), "%d", atnet);
 	tp->name = strdup(nambuf);
+	if (tp->name == NULL)
+		(*ndo->ndo_error)(ndo, "ataddr_string: strdup(nambuf)");
 
 	return (tp->name);
 }

@@ -19,16 +19,15 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
-#include "extract.h"            /* must come after interface.h */
+#include "extract.h"
 
 #ifndef IN_CLASSD
 #define IN_CLASSD(i) (((int32_t)(i) & 0xf0000000) == 0xe0000000)

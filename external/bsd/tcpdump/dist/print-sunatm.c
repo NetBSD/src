@@ -30,17 +30,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 struct mbuf;
 struct rtentry;
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 #include "atm.h"

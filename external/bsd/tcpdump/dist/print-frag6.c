@@ -19,17 +19,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#ifdef INET6
-
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include "ip6.h"
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 int
@@ -68,4 +65,3 @@ trunc:
 	ND_PRINT((ndo, "[|frag]"));
 	return -1;
 }
-#endif /* INET6 */

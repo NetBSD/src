@@ -18,14 +18,13 @@
  * Original code by Hannes Gredler (hannes@juniper.net)
  */
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 #include "addrtoname.h"
 #include "ether.h"
@@ -477,7 +476,7 @@ slow_oam_print(netdissect_options *ndo,
         const struct slow_oam_loopbackctrl_t *slow_oam_loopbackctrl;
     } tlv;
 
-    ptr.slow_oam_common_header = (struct slow_oam_common_header_t *)tptr;
+    ptr.slow_oam_common_header = (const struct slow_oam_common_header_t *)tptr;
     tptr += sizeof(struct slow_oam_common_header_t);
     tlen -= sizeof(struct slow_oam_common_header_t);
 

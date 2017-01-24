@@ -32,20 +32,20 @@
  */
 
 /*
- * tcpdump filter for GRE - Generic Routing Encapsulation
+ * netdissect printer for GRE - Generic Routing Encapsulation
  * RFC1701 (GRE), RFC1702 (GRE IPv4), and RFC2637 (Enhanced GRE)
  */
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
+#include "addrtostr.h"
 #include "extract.h"
 #include "ethertype.h"
 
@@ -315,15 +315,15 @@ gre_sre_print(netdissect_options *ndo, uint16_t af, uint8_t sreoff,
 	case GRESRE_IP:
 		ND_PRINT((ndo, ", (rtaf=ip"));
 		gre_sre_ip_print(ndo, sreoff, srelen, bp, len);
-		ND_PRINT((ndo, ") "));
+		ND_PRINT((ndo, ")"));
 		break;
 	case GRESRE_ASN:
 		ND_PRINT((ndo, ", (rtaf=asn"));
 		gre_sre_asn_print(ndo, sreoff, srelen, bp, len);
-		ND_PRINT((ndo, ") "));
+		ND_PRINT((ndo, ")"));
 		break;
 	default:
-		ND_PRINT((ndo, ", (rtaf=0x%x) ", af));
+		ND_PRINT((ndo, ", (rtaf=0x%x)", af));
 	}
 }
 
@@ -331,8 +331,8 @@ static void
 gre_sre_ip_print(netdissect_options *ndo, uint8_t sreoff, uint8_t srelen,
                  const u_char *bp, u_int len)
 {
-	struct in_addr a;
 	const u_char *up = bp;
+	char buf[INET_ADDRSTRLEN];
 
 	if (sreoff & 3) {
 		ND_PRINT((ndo, ", badoffset=%u", sreoff));
@@ -351,10 +351,9 @@ gre_sre_ip_print(netdissect_options *ndo, uint8_t sreoff, uint8_t srelen,
 		if (len < 4 || srelen == 0)
 			return;
 
-		memcpy(&a, bp, sizeof(a));
+		addrtostr(bp, buf, sizeof(buf));
 		ND_PRINT((ndo, " %s%s",
-		    ((bp - up) == sreoff) ? "*" : "",
-		    inet_ntoa(a)));
+		    ((bp - up) == sreoff) ? "*" : "", buf));
 
 		bp += 4;
 		len -= 4;
