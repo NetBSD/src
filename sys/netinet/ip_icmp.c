@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.154 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.155 2017/01/24 07:09:24 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.154 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.155 2017/01/24 07:09:24 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.154 2016/12/12 03:55:57 ozaki-r Exp $"
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h> /* For softnet_lock */
 #include <sys/kmem.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -1012,6 +1013,9 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 		return (EINVAL);
 	icmp_redirtimeout = tmp;
 
+	/* XXX NOMPSAFE still need softnet_lock */
+	mutex_enter(softnet_lock);
+
 	/*
 	 * was it a *defined* side-effect that anyone even *reading*
 	 * this value causes these things to happen?
@@ -1028,6 +1032,8 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 		icmp_redirect_timeout_q =
 		    rt_timer_queue_create(icmp_redirtimeout);
 	}
+
+	mutex_exit(softnet_lock);
 
 	return (0);
 }

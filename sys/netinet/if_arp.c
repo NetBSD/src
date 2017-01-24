@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.239 2017/01/21 11:07:46 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.240 2017/01/24 07:09:24 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.239 2017/01/21 11:07:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.240 2017/01/24 07:09:24 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1676,8 +1676,10 @@ arp_dad_timer(struct ifaddr *ifa)
 	struct dadq *dp;
 	char ipbuf[INET_ADDRSTRLEN];
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 	mutex_enter(&arp_dad_lock);
 
 	/* Sanity check */
@@ -1767,8 +1769,10 @@ announce:
 
 done:
 	mutex_exit(&arp_dad_lock);
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 static void
