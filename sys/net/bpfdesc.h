@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.39 2017/01/23 10:17:36 ozaki-r Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.40 2017/01/24 09:05:28 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -139,6 +139,9 @@ struct bpf_if {
 	u_int bif_dlt;			/* link layer type */
 	u_int bif_hdrlen;		/* length of header (with padding) */
 	struct ifnet *bif_ifp;		/* corresponding interface */
+	void *bif_si;
+	struct mbuf *bif_mbuf_head;
+	struct mbuf *bif_mbuf_tail;
 };
 
 #endif /* !_NET_BPFDESC_H_ */
