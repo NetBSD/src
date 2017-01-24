@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2102 2017/01/11 12:02:24 joerg Exp $
+#	$NetBSD: mi,v 1.2103 2017/01/24 17:27:30 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5739,6 +5739,7 @@
 ./usr/share/man/cat3/curses_scanw.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_screen.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_scroll.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses_slk.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_standout.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_termcap.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_touch.0		comp-c-catman		.cat
@@ -9008,6 +9009,22 @@
 ./usr/share/man/cat3/sl_find.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sl_free.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sl_init.0			comp-c-catman		.cat
+./usr/share/man/cat3/slk_attroff.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_attr_off.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_attron.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_attr_on.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_attrset.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_attr_set.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_clear.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_color.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_init.0			comp-c-catman		.cat
+./usr/share/man/cat3/slk_label.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_noutrefresh.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_refresh.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_restore.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_set.0			comp-c-catman		.cat
+./usr/share/man/cat3/slk_touch.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_wset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sleep.0			comp-c-catman		.cat
 ./usr/share/man/cat3/snprintb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/snprintb_m.0		comp-c-catman		.cat
@@ -13134,6 +13151,7 @@
 ./usr/share/man/html3/curses_scanw.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_screen.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_scroll.html	comp-c-htmlman		html
+./usr/share/man/html3/curses_slk.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_standout.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_termcap.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_touch.html		comp-c-htmlman		html
@@ -16339,6 +16357,22 @@
 ./usr/share/man/html3/sl_find.html		comp-c-htmlman		html
 ./usr/share/man/html3/sl_free.html		comp-c-htmlman		html
 ./usr/share/man/html3/sl_init.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_attroff.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_attr_off.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_attron.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_attr_on.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_attrset.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_attr_set.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_clear.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_color.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_init.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_label.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_noutrefresh.html	comp-c-htmlman		html
+./usr/share/man/html3/slk_refresh.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_restore.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_set.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_touch.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_wset.html		comp-c-htmlman		html
 ./usr/share/man/html3/sleep.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintb.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintb_m.html		comp-c-htmlman		html
@@ -20436,6 +20470,7 @@
 ./usr/share/man/man3/curses_scanw.3		comp-c-man		.man
 ./usr/share/man/man3/curses_screen.3		comp-c-man		.man
 ./usr/share/man/man3/curses_scroll.3		comp-c-man		.man
+./usr/share/man/man3/curses_slk.3		comp-c-man		.man
 ./usr/share/man/man3/curses_standout.3		comp-c-man		.man
 ./usr/share/man/man3/curses_termcap.3		comp-c-man		.man
 ./usr/share/man/man3/curses_touch.3		comp-c-man		.man
@@ -23701,6 +23736,22 @@
 ./usr/share/man/man3/sl_find.3			comp-c-man		.man
 ./usr/share/man/man3/sl_free.3			comp-c-man		.man
 ./usr/share/man/man3/sl_init.3			comp-c-man		.man
+./usr/share/man/man3/slk_attroff.3		comp-c-man		.man
+./usr/share/man/man3/slk_attr_off.3		comp-c-man		.man
+./usr/share/man/man3/slk_attron.3		comp-c-man		.man
+./usr/share/man/man3/slk_attr_on.3		comp-c-man		.man
+./usr/share/man/man3/slk_attrset.3		comp-c-man		.man
+./usr/share/man/man3/slk_attr_set.3		comp-c-man		.man
+./usr/share/man/man3/slk_clear.3		comp-c-man		.man
+./usr/share/man/man3/slk_color.3		comp-c-man		.man
+./usr/share/man/man3/slk_init.3			comp-c-man		.man
+./usr/share/man/man3/slk_label.3		comp-c-man		.man
+./usr/share/man/man3/slk_noutrefresh.3		comp-c-man		.man
+./usr/share/man/man3/slk_refresh.3		comp-c-man		.man
+./usr/share/man/man3/slk_restore.3		comp-c-man		.man
+./usr/share/man/man3/slk_set.3			comp-c-man		.man
+./usr/share/man/man3/slk_touch.3		comp-c-man		.man
+./usr/share/man/man3/slk_wset.3			comp-c-man		.man
 ./usr/share/man/man3/sleep.3			comp-c-man		.man
 ./usr/share/man/man3/snprintb.3			comp-c-man		.man
 ./usr/share/man/man3/snprintb_m.3		comp-c-man		.man
