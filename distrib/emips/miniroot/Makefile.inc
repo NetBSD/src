@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.3 2012/10/26 18:15:55 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2017/01/24 18:04:01 christos Exp $
 
 DBG=		-Os
 
 IMAGESIZE=	32m
-MAKEFS_FLAGS=	-f 15
+MAKEFS_FLAGS+=	-f 15
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	all ipty
 LISTS+=		${DISTRIBDIR}/common/list.sysinst

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2014/08/10 05:47:35 matt Exp $
+#	$NetBSD: Makefile,v 1.2 2017/01/24 18:04:02 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	r4098k
-MAKEFS_FLAGS=	-f 15
+MAKEFS_FLAGS+=	-f 15
 
 WARNS=		1
 DBG=		-Os -fomit-frame-pointer
