@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.53 2016/07/14 04:00:45 msaitoh Exp $ */
+/*	$NetBSD: igsfb.c,v 1.54 2017/01/25 15:51:07 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.53 2016/07/14 04:00:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.54 2017/01/25 15:51:07 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,10 +389,11 @@ igsfb_init_cmap(struct igsfb_devconfig *dc)
 	/* propagate to the device */
 	igsfb_update_cmap(dc, 0, IGS_CMAP_SIZE);
 
-	/* set overscan color (XXX: use defattr's background?) */
-	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_RED,   0);
-	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_GREEN, 0);
-	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_BLUE,  0);
+	/* set overscan color */
+	p = &rasops_cmap[WSDISPLAY_BORDER_COLOR * 3];
+	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_RED,   p[0]);
+	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_GREEN, p[1]);
+	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_BLUE,  p[2]);
 }
 
 
