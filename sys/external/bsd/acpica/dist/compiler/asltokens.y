@@ -6,7 +6,7 @@ NoEcho('
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -464,6 +464,9 @@ NoEcho('
 
 %left <i>  PARSEOP_EXP_INCREMENT
            PARSEOP_EXP_DECREMENT
+
+%left <i>  PARSEOP_OPEN_PAREN
+           PARSEOP_CLOSE_PAREN
 
 /* Brackets for Index() support */
 
