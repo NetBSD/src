@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.374 2017/01/24 07:58:58 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.375 2017/01/25 03:04:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.374 2017/01/24 07:58:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.375 2017/01/25 03:04:21 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1619,8 +1619,13 @@ again:
 	}
 
 	if (ifc == NULL) {
-		if (*ifname == '\0' ||
-		    module_autoload(ifname, MODULE_CLASS_DRIVER))
+		int error;
+		if (*ifname == '\0')
+			return NULL;
+		mutex_exit(&if_clone_mtx);
+		error = module_autoload(ifname, MODULE_CLASS_DRIVER);
+		mutex_enter(&if_clone_mtx);
+		if (error)
 			return NULL;
 		*ifname = '\0';
 		goto again;
