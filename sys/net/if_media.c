@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.31 2017/01/25 07:17:19 msaitoh Exp $	*/
+/*	$NetBSD: if_media.c,v 1.32 2017/01/25 07:19:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.31 2017/01/25 07:17:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.32 2017/01/25 07:19:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,6 +419,8 @@ ifmedia_removeall(struct ifmedia *ifm)
 		TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
 		free(ife, M_IFMEDIA);
 	}
+	ifm->ifm_cur = NULL;
+	ifm->ifm_media = IFM_NONE;
 }
 
 
