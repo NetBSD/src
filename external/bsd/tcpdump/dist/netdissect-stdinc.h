@@ -279,13 +279,13 @@ typedef char* caddr_t;
  * avoid the bswap instruction, as OS X only supports machines that
  * have it.)
  */
-#if defined(__GNUC__) && defined(__i386__) && !defined(__APPLE__) && !defined(__ntohl)
+#if defined(__GNUC__) && defined(__i386__) && !defined(__APPLE__) && !defined(__ntohl) && !defined(ntohl)
   #undef ntohl
   #undef ntohs
   #undef htonl
   #undef htons
 
-  static __inline__ unsigned long __ntohl (unsigned long x);
+  static __inline__ unsigned int __ntohl (unsigned int x);
   static __inline__ unsigned short __ntohs (unsigned short x);
 
   #define ntohl(x)  __ntohl(x)
@@ -293,7 +293,7 @@ typedef char* caddr_t;
   #define htonl(x)  __ntohl(x)
   #define htons(x)  __ntohs(x)
 
-  static __inline__ unsigned long __ntohl (unsigned long x)
+  static __inline__ unsigned int __ntohl (unsigned int x)
   {
     __asm__ ("xchgb %b0, %h0\n\t"   /* swap lower bytes  */
              "rorl  $16, %0\n\t"    /* swap words        */
