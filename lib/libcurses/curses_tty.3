@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_tty.3,v 1.10 2016/12/31 22:47:01 roy Exp $
+.\"	$NetBSD: curses_tty.3,v 1.11 2017/01/25 12:42:05 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,11 +30,12 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd December 31, 2016
+.Dd January 25, 2017
 .Dt CURSES_TTY 3
 .Os
 .Sh NAME
 .Nm curses_tty ,
+.Nm baudrate ,
 .Nm beep ,
 .Nm flash ,
 .Nm curs_set ,
@@ -73,6 +74,8 @@
 .Lb libcurses
 .Sh SYNOPSIS
 .In curses.h
+.Ft int
+.Fn baudrate "void"
 .Ft int
 .Fn beep "void"
 .Ft int
@@ -141,6 +144,11 @@
 .Fn resetty "void"
 .Sh DESCRIPTION
 These functions manipulate curses terminal settings.
+.Pp
+The
+.Fn baudrate
+function extrats the output speed of the terminal
+and returns it in bits per second.
 .Pp
 The
 .Fn beep
