@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.30 2009/10/05 21:27:36 dyoung Exp $	*/
+/*	$NetBSD: if_media.c,v 1.31 2017/01/25 07:17:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.30 2009/10/05 21:27:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.31 2017/01/25 07:17:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ ifmedia_init(struct ifmedia *ifm, int dontcare_mask,
 
 	TAILQ_INIT(&ifm->ifm_list);
 	ifm->ifm_cur = NULL;
-	ifm->ifm_media = 0;
+	ifm->ifm_media = IFM_NONE;
 	ifm->ifm_mask = dontcare_mask;		/* IF don't-care bits */
 	ifm->ifm_change = change_callback;
 	ifm->ifm_status = status_callback;
