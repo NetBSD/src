@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.55 2017/01/25 16:11:54 jakllsch Exp $ */
+/*	$NetBSD: igsfb.c,v 1.56 2017/01/25 17:31:55 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.55 2017/01/25 16:11:54 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.56 2017/01/25 17:31:55 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,7 +359,6 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 	 * Init graphic coprocessor for accelerated rasops.
 	 */
 	if (dc->dc_id >= 0x2000) { /* XXX */
-		/* XXX: hardcoded 8bpp */
 		bus_space_write_2(dc->dc_iot, dc->dc_coph,
 				  IGS_COP_SRC_MAP_WIDTH_REG,
 				  dc->dc_width - 1);
@@ -369,7 +368,7 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 
 		bus_space_write_1(dc->dc_iot, dc->dc_coph,
 				  IGS_COP_MAP_FMT_REG,
-				  IGS_COP_MAP_8BPP);
+				  howmany(dc->dc_depth, NBBY) - 1);
 	}
 
 	/* make sure screen is not blanked */
@@ -635,7 +634,7 @@ igsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return 0;
 
 	case WSDISPLAYIO_LINEBYTES:
-		*(int *)data = dc->dc_width * (dc->dc_maxdepth >> 3);
+		*(int *)data = dc->dc_width * howmany(dc->dc_maxdepth, NBBY);
 		return 0;
 
 	case WSDISPLAYIO_SMODE:
@@ -1192,7 +1191,8 @@ igsfb_accel_wait(struct igsfb_devconfig *dc)
 	int timo = 100000;
 	uint8_t reg;
 
-	bus_space_write_1(t, h, IGS_COP_MAP_FMT_REG, (dc->dc_depth >> 3) - 1);
+	bus_space_write_1(t, h, IGS_COP_MAP_FMT_REG,
+	    howmany(dc->dc_depth, NBBY) - 1);
 	while (timo--) {
 		reg = bus_space_read_1(t, h, IGS_COP_CTL_REG);
 		if ((reg & IGS_COP_CTL_BUSY) == 0)
