@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.64 2017/01/25 07:46:53 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.65 2017/01/25 07:49:23 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -3961,7 +3961,7 @@ ixgbe_handle_mod(void *context)
 	u32 err;
 
 	IXGBE_CORE_LOCK(adapter);
-	printf("%s: called\n", __func__);
+
 	/* Check to see if the PHY type changed */
 	if (hw->phy.ops.identify) {
 		hw->phy.type = ixgbe_phy_unknown;
@@ -4036,7 +4036,6 @@ ixgbe_handle_msf(void *context)
 	bool negotiate;
 
 	IXGBE_CORE_LOCK(adapter);
-	printf("%s: called\n", __func__);
 	/* get_supported_phy_layer will call hw->phy.ops.identify_sfp() */
 	adapter->phy_layer = ixgbe_get_supported_physical_layer(hw);
 
