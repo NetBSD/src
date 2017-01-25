@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@
  * Note: All tokens require a space separator.
  * Long lines are automatically split during output.
  */
-const AH_ASL_OPERATOR       AslOperatorInfo[] =
+const AH_ASL_OPERATOR       Gbl_AslOperatorInfo[] =
 {
     {"AccessAs",                "(AccessType, AccessAttribKeyword | "
                                 "ExtendedAttribKeyword (AccessLength))",

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
+#define DEFINE_AHELP_GLOBALS
 #include "acpihelp.h"
 
 
@@ -60,6 +61,7 @@ AhDisplayUsage (
 
 #define ACPI_OPTION(Name, Description) \
     AcpiOsPrintf ("  %-24s%s\n", Name, Description);
+
 
 /******************************************************************************
  *
