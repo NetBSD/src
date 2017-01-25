@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@
 
 /* Current ACPICA subsystem version in YYYYMMDD format */
 
-#define ACPI_CA_VERSION                 0x20160930
+#define ACPI_CA_VERSION                 0x20170119
 
 #include "acconfig.h"
 #include "actypes.h"
@@ -291,6 +291,15 @@ ACPI_INIT_GLOBAL (UINT32,           AcpiDbgLayer, ACPI_COMPONENT_DEFAULT);
 /* Optionally enable timer output with Debug Object output */
 
 ACPI_INIT_GLOBAL (UINT8,            AcpiGbl_DisplayDebugTimer, FALSE);
+
+/*
+ * Debugger command handshake globals. Host OSes need to access these
+ * variables to implement their own command handshake mechanism.
+ */
+#ifdef ACPI_DEBUGGER
+ACPI_INIT_GLOBAL (BOOLEAN,          AcpiGbl_MethodExecuting, FALSE);
+ACPI_GLOBAL (char,                  AcpiGbl_DbLineBuf[ACPI_DB_LINE_BUFFER_SIZE]);
+#endif
 
 /*
  * Other miscellaneous globals
@@ -581,6 +590,11 @@ AcpiGetTable (
     ACPI_CONST_STRING       Signature,
     UINT32                  Instance,
     ACPI_TABLE_HEADER       **OutTable))
+
+ACPI_EXTERNAL_RETURN_VOID (
+void
+AcpiPutTable (
+    ACPI_TABLE_HEADER       *Table))
 
 ACPI_EXTERNAL_RETURN_STATUS (
 ACPI_STATUS
@@ -1260,6 +1274,10 @@ AcpiInitializeDebugger (
 void
 AcpiTerminateDebugger (
     void);
+
+void
+AcpiRunDebugger (
+    char                    *BatchBuffer);
 
 void
 AcpiSetDebuggerThreadId (
