@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.68 2017/01/24 09:05:28 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.h,v 1.69 2017/01/25 01:04:23 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -423,6 +423,9 @@ struct bpf_ops {
 	void (*bpf_mtap_af)(struct bpf_if *, uint32_t, struct mbuf *);
 	void (*bpf_mtap_sl_in)(struct bpf_if *, u_char *, struct mbuf **);
 	void (*bpf_mtap_sl_out)(struct bpf_if *, u_char *, struct mbuf *);
+
+	void (*bpf_mtap_softint_init)(struct ifnet *);
+	void (*bpf_mtap_softint)(struct ifnet *, struct mbuf *);
 };
 
 extern struct bpf_ops *bpf_ops;
@@ -498,6 +501,20 @@ bpf_mtap_sl_out(struct ifnet *_ifp, u_char *_hdr, struct mbuf *_m)
 		bpf_ops->bpf_mtap_sl_out(_ifp->if_bpf, _hdr, _m);
 }
 
+static inline void
+bpf_mtap_softint_init(struct ifnet *_ifp)
+{
+
+	bpf_ops->bpf_mtap_softint_init(_ifp);
+}
+
+static inline void
+bpf_mtap_softint(struct ifnet *_ifp, struct mbuf *_m)
+{
+
+	if (_ifp->if_bpf)
+		bpf_ops->bpf_mtap_softint(_ifp, _m);
+}
 
 void	bpf_setops(void);
 
@@ -516,9 +533,6 @@ int	bpf_validate_ext(const bpf_ctx_t *, const struct bpf_insn *, int);
 
 bpfjit_func_t bpf_jit_generate(bpf_ctx_t *, void *, size_t);
 void	bpf_jit_freecode(bpfjit_func_t);
-
-void	bpf_mtap_softint_init(struct ifnet *);
-void	bpf_mtap_softint(struct ifnet *, struct mbuf *);
 
 #endif
 

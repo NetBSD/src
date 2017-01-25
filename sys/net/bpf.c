@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.205 2017/01/24 09:05:28 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.206 2017/01/25 01:04:23 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.205 2017/01/24 09:05:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.206 2017/01/25 01:04:23 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1666,15 +1666,16 @@ bpf_mtap_si(void *arg)
 	}
 }
 
-void
-bpf_mtap_softint(struct ifnet *ifp, struct mbuf *m)
+static void
+_bpf_mtap_softint(struct ifnet *ifp, struct mbuf *m)
 {
 	struct bpf_if *bp = ifp->if_bpf;
 	struct mbuf *dup;
 
 	KASSERT(cpu_intr_p());
 
-	if (bp == NULL || bp->bif_dlist == NULL)
+	/* To avoid extra invocations of the softint */
+	if (bp->bif_dlist == NULL)
 		return;
 	KASSERT(bp->bif_si != NULL);
 
@@ -1893,8 +1894,8 @@ _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 #endif
 }
 
-void
-bpf_mtap_softint_init(struct ifnet *ifp)
+static void
+_bpf_mtap_softint_init(struct ifnet *ifp)
 {
 	struct bpf_if *bp;
 
@@ -2227,6 +2228,9 @@ struct bpf_ops bpf_ops_kernel = {
 	.bpf_mtap_af =		_bpf_mtap_af,
 	.bpf_mtap_sl_in =	_bpf_mtap_sl_in,
 	.bpf_mtap_sl_out =	_bpf_mtap_sl_out,
+
+	.bpf_mtap_softint =		_bpf_mtap_softint,
+	.bpf_mtap_softint_init =	_bpf_mtap_softint_init,
 };
 
 MODULE(MODULE_CLASS_DRIVER, bpf, "bpf_filter");
