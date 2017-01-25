@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.440 2017/01/09 00:31:30 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.441 2017/01/25 17:57:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.440 2017/01/09 00:31:30 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.441 2017/01/25 17:57:14 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1411,10 +1411,11 @@ calcargs(struct execve_data * restrict data, const size_t argenvstrlen)
 	    data->ed_argc +		/* char *argv[] */
 	    1 +				/* \0 */
 	    data->ed_envc +		/* char *env[] */
-	    1 +				/* \0 */
-	    epp->ep_esch->es_arglen;	/* auxinfo */
+	    1;				/* \0 */
 
-	return (nargenvptrs * ptrsz(epp)) + argenvstrlen;
+	return (nargenvptrs * ptrsz(epp))	/* pointers */
+	    + argenvstrlen			/* strings */
+	    + epp->ep_esch->es_arglen;		/* auxinfo */
 }
 
 static size_t
@@ -1665,9 +1666,8 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	    argc +			/* char *argv[] */
 	    1 +				/* \0 */
 	    envc +			/* char *env[] */
-	    1 +				/* \0 */
-	    /* XXX auxinfo multiplied by ptr size? */
-	    pack->ep_esch->es_arglen);	/* auxinfo */
+	    1) +			/* \0 */
+	    pack->ep_esch->es_arglen;	/* auxinfo */
 	sp = argp;
 
 	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0) {
