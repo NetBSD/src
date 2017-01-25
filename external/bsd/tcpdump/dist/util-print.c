@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util-print.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: util-print.c,v 1.3 2017/01/25 08:14:07 martin Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -788,7 +788,7 @@ txtproto_print(netdissect_options *ndo, const u_char *pptr, u_int len,
 
 	/* Capitalize the protocol name */
 	for (pnp = protoname; *pnp != '\0'; pnp++)
-		ND_PRINT((ndo, "%c", toupper(*pnp)));
+		ND_PRINT((ndo, "%c", toupper((unsigned char)*pnp)));
 
 	if (is_reqresp) {
 		/*
