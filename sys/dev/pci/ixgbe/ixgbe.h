@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 303890 2016-08-09 19:32:06Z dumbbell $*/
-/*$NetBSD: ixgbe.h,v 1.19 2017/01/18 10:18:40 msaitoh Exp $*/
+/*$NetBSD: ixgbe.h,v 1.20 2017/01/25 07:46:53 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -698,14 +698,20 @@ ixgbe_is_sfp(struct ixgbe_hw *hw)
 	case ixgbe_phy_sfp_unknown:
 	case ixgbe_phy_sfp_passive_tyco:
 	case ixgbe_phy_sfp_passive_unknown:
+	case ixgbe_phy_sfp_unsupported:
 	case ixgbe_phy_qsfp_passive_unknown:
 	case ixgbe_phy_qsfp_active_unknown:
 	case ixgbe_phy_qsfp_intel:
 	case ixgbe_phy_qsfp_unknown:
 		return TRUE;
 	default:
-		return FALSE;
+		break;
 	}
+
+	if (hw->phy.sfp_type == ixgbe_sfp_type_not_present)
+		return TRUE;
+
+	return FALSE;
 }
 
 /* Workaround to make 8.0 buildable */
