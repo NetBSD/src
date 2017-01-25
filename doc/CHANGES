@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2238 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2239 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -454,3 +454,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	siginfo(2): Add new si_code for SIGTRAP: TRAP_LWP [kamil 20170114]
 	libpcap: Import 1.8.1. [christos 20170124]
 	tcpdump(8): Import 4.8.1. [christos 20170124]
+	acpi(4): Updated ACPICA to 20170119. [christos 20170125]
