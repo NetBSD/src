@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.50 2017/01/06 22:53:17 kamil Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.51 2017/01/25 17:55:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.50 2017/01/06 22:53:17 kamil Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.51 2017/01/25 17:55:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -416,7 +416,7 @@ coredump_note_auxv(struct lwp *l, struct note_state *ns)
 
 	size_t ptrsz = PROC_PTRSZ(p);
 	uauxv = (void *)((char *)pss.ps_envstr + (pss.ps_nenvstr + 1) * ptrsz);
-	size_t len = p->p_execsw->es_arglen * ptrsz;
+	size_t len = p->p_execsw->es_arglen;
 
 	kauxv = kmem_alloc(len, KM_SLEEP);
 	error = copyin_proc(p, uauxv, kauxv, len);
