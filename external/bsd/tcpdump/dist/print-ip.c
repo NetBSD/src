@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ip.c,v 1.9 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.10 2017/01/25 08:20:15 martin Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -483,7 +483,7 @@ again:
 		break;
 
 	case IPPROTO_PFSYNC:
-		pfsync_ip_print(ipds->cp, ipds->len, (const u_char *)ipds->ip);
+		pfsync_ip_print(ndo, ipds->cp, ipds->len, (const u_char *)ipds->ip);
 		break;
 
 	default:
