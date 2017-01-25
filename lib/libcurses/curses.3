@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.66 2017/01/08 13:49:21 wiz Exp $
+.\"	$NetBSD: curses.3,v 1.67 2017/01/25 11:44:55 roy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)curses.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd January 5, 2017
+.Dd January 25, 2017
 .Dt CURSES 3
 .Os
 .Sh NAME
@@ -227,6 +227,22 @@ must be called before any of the other routines that deal with color are used.
 .It set_term Ta Xr curses_screen 3
 .It setscrreg Ta Xr curses_scroll 3
 .It setterm Ta Xr curses_screen 3
+.It slk_attroff Ta Xr curses_slk 3
+.It slk_attr_off Ta Xr curses_slk 3
+.It slk_attron Ta Xr curses_slk 3
+.It slk_attr_on Ta Xr curses_slk 3
+.It slk_attrset Ta Xr curses_slk 3
+.It slk_attr_set Ta Xr curses_slk 3
+.It slk_clear Ta Xr curses_slk 3
+.It slk_color Ta Xr curses_slk 3
+.It slk_init Ta Xr curses_slk 3
+.It slk_label Ta Xr curses_slk 3
+.It slk_noutrefresh Ta Xr curses_slk 3
+.It slk_refresh Ta Xr curses_slk 3
+.It slk_restore Ta Xr curses_slk 3
+.It slk_set Ta Xr curses_slk 3
+.It slk_touch Ta Xr curses_slk 3
+.It slk_wset Ta Xr curses_slk 3
 .It standend Ta Xr curses_standout 3
 .It standout Ta Xr curses_standout 3
 .It start_color Ta Xr curses_color 3
