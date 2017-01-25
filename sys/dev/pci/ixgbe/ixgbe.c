@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.63 2017/01/19 09:42:08 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.64 2017/01/25 07:46:53 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1799,12 +1799,12 @@ ixgbe_msix_link(void *arg)
 		mod_mask = IXGBE_EICR_GPI_SDP2_BY_MAC(hw);
 
 	if (ixgbe_is_sfp(hw)) {
-		if (reg_eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw)) {
-			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
-			softint_schedule(adapter->msf_si);
-		} else if (reg_eicr & mod_mask) {
+		if (reg_eicr & mod_mask) {
 			IXGBE_WRITE_REG(hw, IXGBE_EICR, mod_mask);
 			softint_schedule(adapter->mod_si);
+		} else if (reg_eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw)) {
+			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
+			softint_schedule(adapter->msf_si);
 		}
 	}
 
@@ -3961,7 +3961,7 @@ ixgbe_handle_mod(void *context)
 	u32 err;
 
 	IXGBE_CORE_LOCK(adapter);
-
+	printf("%s: called\n", __func__);
 	/* Check to see if the PHY type changed */
 	if (hw->phy.ops.identify) {
 		hw->phy.type = ixgbe_phy_unknown;
@@ -3996,8 +3996,6 @@ ixgbe_handle_mod(void *context)
 		    "Setup failure - unsupported SFP+ module type.\n");
 		goto out;
 	}
-	if (hw->phy.multispeed_fiber)
-		softint_schedule(adapter->msf_si);
 out:
 	/* Update media type */
 	switch (hw->mac.ops.get_media_type(hw)) {
@@ -4015,6 +4013,12 @@ out:
 			break;
 	}
 
+	/* Adjust media types shown in ifconfig */
+	ifmedia_removeall(&adapter->media);
+	ixgbe_add_media_types(adapter);
+	ifmedia_set(&adapter->media, IFM_ETHER | IFM_AUTO);
+
+	softint_schedule(adapter->msf_si);
 	IXGBE_CORE_UNLOCK(adapter);
 	return;
 }
@@ -4032,6 +4036,7 @@ ixgbe_handle_msf(void *context)
 	bool negotiate;
 
 	IXGBE_CORE_LOCK(adapter);
+	printf("%s: called\n", __func__);
 	/* get_supported_phy_layer will call hw->phy.ops.identify_sfp() */
 	adapter->phy_layer = ixgbe_get_supported_physical_layer(hw);
 
@@ -4043,9 +4048,6 @@ ixgbe_handle_msf(void *context)
 	if (hw->mac.ops.setup_link)
 		hw->mac.ops.setup_link(hw, autoneg, TRUE);
 
-	/* Adjust media types shown in ifconfig */
-	ifmedia_removeall(&adapter->media);
-	ixgbe_add_media_types(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
 	return;
 }
