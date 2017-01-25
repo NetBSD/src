@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.65 2017/01/25 07:49:23 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.66 2017/01/25 13:08:31 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -4015,6 +4015,8 @@ out:
 
 	/* Adjust media types shown in ifconfig */
 	ifmedia_removeall(&adapter->media);
+	/* get_supported_phy_layer will call hw->phy.ops.identify_sfp() */
+	adapter->phy_layer = ixgbe_get_supported_physical_layer(hw);
 	ixgbe_add_media_types(adapter);
 	ifmedia_set(&adapter->media, IFM_ETHER | IFM_AUTO);
 
@@ -4036,8 +4038,6 @@ ixgbe_handle_msf(void *context)
 	bool negotiate;
 
 	IXGBE_CORE_LOCK(adapter);
-	/* get_supported_phy_layer will call hw->phy.ops.identify_sfp() */
-	adapter->phy_layer = ixgbe_get_supported_physical_layer(hw);
 
 	autoneg = hw->phy.autoneg_advertised;
 	if ((!autoneg) && (hw->mac.ops.get_link_capabilities))
