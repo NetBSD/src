@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,6 +63,8 @@
 /* Globals */
 
 EXTERN BOOLEAN              INIT_GLOBAL (Gbl_TerseMode, FALSE);
+EXTERN BOOLEAN              INIT_GLOBAL (AbGbl_DisplayAllMiscompares, FALSE);
+EXTERN UINT32               INIT_GLOBAL (AbGbl_CompareOffset, 0);
 
 
 /* Prototypes */

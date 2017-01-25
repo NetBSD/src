@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -154,7 +154,9 @@ Unlock:
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
         "**** Begin Table Object Initialization\n"));
 
+    AcpiExEnterInterpreter ();
     Status = AcpiDsInitializeObjects (TableIndex, Node);
+    AcpiExExitInterpreter ();
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
         "**** Completed Table Object Initialization\n"));
