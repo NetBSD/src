@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.69 2017/01/25 12:05:26 roy Exp $
+.\"	$NetBSD: curses.3,v 1.70 2017/01/25 12:21:18 roy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -291,6 +291,7 @@ must be called before any of the other routines that deal with color are used.
 .It wclrtobot Ta Xr curses_clear 3
 .It wclrtoeol Ta Xr curses_clear 3
 .It wcolor_set Ta Xr curses_attributes 3
+.It wcursyncup Ta Xr curses_cursor 3
 .It wdelch Ta Xr curses_delch 3
 .It wdeleteln Ta Xr curses_deleteln 3
 .It werase Ta Xr curses_clear 3
@@ -317,6 +318,8 @@ must be called before any of the other routines that deal with color are used.
 .It wsetscrreg Ta Xr curses_scroll 3
 .It wstandend Ta Xr curses_standout 3
 .It wstandout Ta Xr curses_standout 3
+.It wsyncup Ta Xr curses_touch 3
+.It wsyncdown Ta Xr curses_touch 3
 .It wtimeout Ta Xr curses_input 3
 .It wtouchln Ta Xr curses_touch 3
 .It wunderend Ta Xr curses_underscore 3
