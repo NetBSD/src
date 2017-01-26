@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.48.4.11 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: if_url.c,v 1.48.4.12 2017/01/26 12:40:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.11 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.12 2017/01/26 12:40:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -192,7 +192,7 @@ url_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	struct mii_data *mii;
 	u_char eaddr[ETHER_ADDR_LEN];
-	int i, s;
+	int i;
 
 	sc->sc_dev = self;
 
@@ -256,8 +256,6 @@ url_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
-	s = splnet();
-
 	/* reset the adapter */
 	url_reset(sc);
 
@@ -266,7 +264,6 @@ url_attach(device_t parent, device_t self, void *aux)
 		      ETHER_ADDR_LEN);
 	if (err) {
 		aprint_error_dev(self, "read MAC address failed\n");
-		splx(s);
 		goto bad;
 	}
 
@@ -321,7 +318,6 @@ url_attach(device_t parent, device_t self, void *aux)
 
 	callout_init(&sc->sc_stat_ch, 0);
 	sc->sc_attached = 1;
-	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, sc->sc_dev);
 

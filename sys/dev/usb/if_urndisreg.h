@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndisreg.h,v 1.1.32.4 2016/12/28 08:55:20 skrll Exp $ */
+/*	$NetBSD: if_urndisreg.h,v 1.1.32.5 2017/01/26 12:40:16 skrll Exp $ */
 /*	$OpenBSD: if_urndisreg.h,v 1.14 2010/07/08 18:22:01 ckuethe Exp $ */
 
 /*
@@ -42,9 +42,9 @@ struct urndis_cdata {
 struct urndis_softc {
 	device_t			sc_dev;
 
-	kmutex_t			urndis_lock;
-	kmutex_t			urndis_txlock;
-	kmutex_t			urndis_rxlock;
+	kmutex_t			sc_lock;
+	kmutex_t			sc_txlock;
+	kmutex_t			sc_rxlock;
 
 	char				sc_attached;
 	int				sc_dying;

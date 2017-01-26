@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9.4.14 2016/12/29 08:04:08 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.4.15 2017/01/26 12:40:16 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.14 2016/12/29 08:04:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.15 2017/01/26 12:40:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1046,9 +1046,9 @@ urndis_init(struct ifnet *ifp)
 {
 	struct urndis_softc *sc = ifp->if_softc;
 
-	mutex_enter(&sc->urndis_lock);
+	mutex_enter(&sc->sc_lock);
 	int ret = urndis_init_locked(ifp);
-	mutex_exit(&sc->urndis_lock);
+	mutex_exit(&sc->sc_lock);
 
 	return ret;
 }
@@ -1130,9 +1130,9 @@ urndis_stop(struct ifnet *ifp)
 {
 	struct urndis_softc *sc = ifp->if_softc;
 
-	mutex_enter(&sc->urndis_lock);
+	mutex_enter(&sc->sc_lock);
 	urndis_stop_locked(ifp);
-	mutex_exit(&sc->urndis_lock);
+	mutex_exit(&sc->sc_lock);
 }
 
 static void
@@ -1188,9 +1188,9 @@ urndis_start(struct ifnet *ifp)
 	struct urndis_softc *sc = ifp->if_softc;
 	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
 
-	mutex_enter(&sc->urndis_txlock);
+	mutex_enter(&sc->sc_txlock);
 	urndis_start_locked(ifp);
-	mutex_exit(&sc->urndis_txlock);
+	mutex_exit(&sc->sc_txlock);
 }
 
 static void
@@ -1476,9 +1476,9 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	return;
 
 found:
-	mutex_init(&sc->urndis_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->urndis_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->urndis_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mutex_init(&sc->sc_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
 
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
@@ -1537,9 +1537,9 @@ found:
 	return;
 
 fail:
-	mutex_destroy(&sc->urndis_lock);
-	mutex_destroy(&sc->urndis_txlock);
-	mutex_destroy(&sc->urndis_rxlock);
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_txlock);
+	mutex_destroy(&sc->sc_rxlock);
 }
 
 static int
@@ -1568,9 +1568,9 @@ urndis_detach(device_t self, int flags)
 
 	urndis_stop(ifp);
 
-	mutex_destroy(&sc->urndis_rxlock);
-	mutex_destroy(&sc->urndis_txlock);
-	mutex_destroy(&sc->urndis_lock);
+	mutex_destroy(&sc->sc_rxlock);
+	mutex_destroy(&sc->sc_txlock);
+	mutex_destroy(&sc->sc_lock);
 
 	sc->sc_attached = 0;
 
