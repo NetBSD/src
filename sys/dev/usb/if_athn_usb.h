@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.h,v 1.2.20.1 2016/09/06 20:33:08 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.h,v 1.2.20.2 2017/01/26 21:54:24 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.h,v 1.3 2012/11/10 14:35:06 mikeb Exp $	*/
 
 /*-
@@ -443,6 +443,15 @@ struct athn_usb_softc {
 
 	int				usc_athn_attached;
 
+	kmutex_t			usc_lock;
+	kcondvar_t			usc_wmi_cv;
+	kcondvar_t			usc_htc_cv;
+
+	kmutex_t			usc_msg_mtx;
+	kcondvar_t			usc_msg_cv;
+	kmutex_t			usc_cmd_mtx;
+	kcondvar_t			usc_cmd_cv;
+
 	kcondvar_t			usc_task_cv;
 	kmutex_t			usc_task_mtx;
 	kmutex_t			usc_tx_mtx;
@@ -469,7 +478,8 @@ struct athn_usb_softc {
 	struct ar_wmi_cmd_reg_write	usc_wbuf[AR_MAX_WRITE_COUNT];
 	int				usc_wcount;
 
-	int				usc_wmi_done;
+	bool				usc_wmiactive;
+	bool				usc_htcactive;
 	uint16_t			usc_wmi_seq_no;
 	uint16_t			usc_wait_cmd_id;
 	uint16_t			usc_wait_msg_id;
@@ -481,6 +491,7 @@ struct athn_usb_softc {
 	struct athn_usb_tx_data		usc_tx_data[ATHN_USB_TX_LIST_COUNT];
 	TAILQ_HEAD(, athn_usb_tx_data)	usc_tx_free_list;
 	struct athn_usb_tx_data		usc_tx_cmd;
+	struct athn_usb_tx_data		usc_tx_msg;
 	struct athn_usb_tx_data		*usc_tx_bcn;
 
 	uint8_t				usc_ep_ctrl;

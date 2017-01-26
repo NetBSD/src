@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.6.10.1 2016/09/06 20:33:08 skrll Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.6.10.2 2017/01/26 21:54:24 skrll Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.10.1 2016/09/06 20:33:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.10.2 2017/01/26 21:54:24 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2204,7 +2208,7 @@ urtw_tx_enable(struct urtw_softc *sc)
 		    URTW_CW_CONF_PERPACKET_RETRY);
 		urtw_write8_m(sc, URTW_CW_CONF, data8);
 
- 		urtw_read8_m(sc, URTW_TX_AGC_CTL, &data8);
+		urtw_read8_m(sc, URTW_TX_AGC_CTL, &data8);
 		data8 &= ~URTW_TX_AGC_CTL_PERPACKET_GAIN;
 		data8 &= ~URTW_TX_AGC_CTL_PERPACKET_ANTSEL;
 		data8 &= ~URTW_TX_AGC_CTL_FEEDBACK_ANT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.75.8.1 2016/09/06 20:33:09 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.75.8.2 2017/01/26 21:54:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.8.1 2016/09/06 20:33:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.8.2 2017/01/26 21:54:25 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,7 +377,7 @@ uscanneropen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sc == NULL)
 		return ENXIO;
 
- 	DPRINTFN(5, ("uscanneropen: flag=%d, mode=%d, unit=%d\n",
+	DPRINTFN(5, ("uscanneropen: flag=%d, mode=%d, unit=%d\n",
 		     flag, mode, unit));
 
 	if (sc->sc_dying)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.9.20.1 2016/09/06 20:33:08 skrll Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.9.20.2 2017/01/26 21:54:24 skrll Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -187,6 +187,9 @@ struct udav_softc {
 	struct ethercom		sc_ec; /* ethernet common */
 	struct mii_data		sc_mii;
 	kmutex_t		sc_mii_lock;
+	kmutex_t		sc_lock;
+	kmutex_t		sc_txlock;
+	kmutex_t		sc_rxlock;
 	int			sc_link;
 #define	sc_media udav_mii.mii_media
 	krndsource_t	rnd_source;
@@ -200,4 +203,6 @@ struct udav_softc {
 	struct usb_task		sc_stop_task;
 
 	uint16_t		sc_flags;
+
+	struct if_percpuq *	sc_ipq;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.74.2.2.2.1 2016/09/06 20:33:09 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.74.2.2.2.2 2017/01/26 21:54:25 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.2.2.2.1 2016/09/06 20:33:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.2.2.2.2 2017/01/26 21:54:25 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -339,7 +339,7 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 	 * USB-RSAQ1 has two interface
 	 *
 	 *  USB-RSAQ1       | USB-RSAQ2
- 	 * -----------------+-----------------
+	 * -----------------+-----------------
 	 * Interface 0      |Interface 0
 	 *  Interrupt(0x81) | Interrupt(0x81)
 	 * -----------------+ BulkIN(0x02)

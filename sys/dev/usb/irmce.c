@@ -1,4 +1,4 @@
-/* $NetBSD: irmce.c,v 1.1.36.1 2016/09/06 20:33:09 skrll Exp $ */
+/* $NetBSD: irmce.c,v 1.1.36.2 2017/01/26 21:54:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.36.1 2016/09/06 20:33:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.36.2 2017/01/26 21:54:24 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,7 +150,8 @@ irmce_attach(device_t parent, device_t self, void *opaque)
 	unsigned int i;
 	uint8_t nep;
 
-	pmf_device_register(self, NULL, NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	aprint_naive("\n");
 

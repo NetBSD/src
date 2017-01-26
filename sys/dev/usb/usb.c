@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.154.2.1.2.1 2016/09/06 20:33:09 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.154.2.1.2.2 2017/01/26 21:54:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.154.2.1.2.1 2016/09/06 20:33:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.154.2.1.2.2 2017/01/26 21:54:25 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -132,7 +132,7 @@ struct usb_softc {
 #if 0
 	device_t	sc_dev;		/* base device */
 #endif
-	struct usbd_bus *sc_bus;		/* USB controller */
+	struct usbd_bus *sc_bus;	/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
 	struct lwp	*sc_event_thread;
@@ -343,7 +343,7 @@ usb_doattach(device_t self)
 	usb_add_event(USB_EVENT_CTRLR_ATTACH, ue);
 
 	err = usbd_new_device(self, sc->sc_bus, 0, speed, 0,
-		  &sc->sc_port);
+	    &sc->sc_port);
 	if (!err) {
 		dev = sc->sc_port.up_dev;
 		if (dev->ud_hub == NULL) {
@@ -727,8 +727,12 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EINVAL;
 			goto fail;
 		}
-		if (addr < 0 || addr >= USB_MAX_DEVICES ||
-		    sc->sc_bus->ub_devices[addr] == NULL) {
+		if (addr < 0 || addr >= USB_MAX_DEVICES) {
+			error = EINVAL;
+			goto fail;
+		}
+		size_t dindex = usb_addr2dindex(addr);
+		if (sc->sc_bus->ub_devices[dindex] == NULL) {
 			error = EINVAL;
 			goto fail;
 		}
@@ -750,7 +754,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 					goto ret;
 			}
 		}
-		err = usbd_do_request_flags(sc->sc_bus->ub_devices[addr],
+		err = usbd_do_request_flags(sc->sc_bus->ub_devices[dindex],
 			  &ur->ucr_request, ptr, ur->ucr_flags, &ur->ucr_actlen,
 			  USBD_DEFAULT_TIMEOUT);
 		if (err) {
@@ -783,7 +787,8 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EINVAL;
 			goto fail;
 		}
-		if ((dev = sc->sc_bus->ub_devices[addr]) == NULL) {
+		size_t dindex = usb_addr2dindex(addr);
+		if ((dev = sc->sc_bus->ub_devices[dindex]) == NULL) {
 			error = ENXIO;
 			goto fail;
 		}
@@ -802,7 +807,8 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EINVAL;
 			goto fail;
 		}
-		if ((dev = sc->sc_bus->ub_devices[addr]) == NULL) {
+		size_t dindex = usb_addr2dindex(addr);
+		if ((dev = sc->sc_bus->ub_devices[dindex]) == NULL) {
 			error = ENXIO;
 			goto fail;
 		}

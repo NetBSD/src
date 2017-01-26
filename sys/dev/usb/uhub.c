@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.124.4.1.2.1 2016/09/06 20:33:09 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.124.4.1.2.2 2017/01/26 21:54:24 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.124.4.1.2.1 2016/09/06 20:33:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.124.4.1.2.2 2017/01/26 21:54:24 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 
@@ -321,7 +325,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
 	if (USB_IS_SS(dev->ud_speed) && dev->ud_depth != 0) {
 		aprint_debug_dev(self, "setting hub depth %u\n",
-		    dev->ud_depth-1);
+		    dev->ud_depth - 1);
 		err = usbd_set_hub_depth(dev, dev->ud_depth - 1);
 		if (err) {
 			aprint_error_dev(self, "can't set depth\n");
