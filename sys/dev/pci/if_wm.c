@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.468 2017/01/16 09:58:04 maya Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.469 2017/01/26 10:14:52 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.468 2017/01/16 09:58:04 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.469 2017/01/26 10:14:52 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5918,6 +5918,13 @@ wm_free_txrx_queues(struct wm_softc *sc)
 
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
+		struct mbuf *m;
+
+		/* drain txq_interq */
+		while ((m = pcq_get(txq->txq_interq)) != NULL)
+			m_freem(m);
+		pcq_destroy(txq->txq_interq);
+
 		wm_free_tx_buffer(sc, txq);
 		wm_free_tx_descs(sc, txq);
 		if (txq->txq_lock)
