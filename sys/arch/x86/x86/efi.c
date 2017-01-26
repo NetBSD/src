@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.5 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: efi.c,v 1.6 2017/01/26 01:35:51 nonaka Exp $	*/
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.5 2017/01/24 11:09:14 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.6 2017/01/26 01:35:51 nonaka Exp $");
 #include <sys/kmem.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ efi_getcfgtblhead(void)
 	if (efi_cfgtblhead_va != NULL)
 		return efi_cfgtblhead_va;
 
-	pa = (paddr_t) efi_systbl_va->st_cfgtbl;
+	pa = (paddr_t)(u_long) efi_systbl_va->st_cfgtbl;
 	aprint_debug("efi: cfgtbl at pa %" PRIxPADDR "\n", pa);
 	va = efi_getva(pa);
 	aprint_debug("efi: cfgtbl mapped at va %" PRIxVADDR "\n", va);
@@ -210,7 +210,7 @@ efi_getcfgtblpa(const struct uuid * uuid)
 	count = efi_systbl_va->st_entries;
 	for (; count; count--, ct++)
 		if (efi_uuideq(&ct->ct_uuid, uuid))
-			return (paddr_t) ct->ct_data;
+			return (paddr_t)(u_long) ct->ct_data;
 
 	return 0;	/* Not found. */
 }
