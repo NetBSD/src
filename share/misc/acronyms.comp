@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.173 2017/01/19 19:09:06 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.174 2017/01/26 19:00:13 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1385,6 +1385,7 @@ VOD	video on demand
 VPN	virtual private network
 VR	virtual reality
 VRAM	video random access memory
+VRF	virtual routing and forwarding
 VRM	voltage regulator module
 VRRP	Virtual Router Redundancy Protocol
 VSTP	VLAN Spanning Tree Protocol
