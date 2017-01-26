@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.199 2016/11/14 08:55:51 kre Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.200 2017/01/26 03:54:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.199 2016/11/14 08:55:51 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.200 2017/01/26 03:54:54 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -104,6 +104,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.199 2016/11/14 08:55:51 kre Exp $");
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
 
+#ifndef COMPAT_NETBSD32
+#define COMPAT_NETBSD32
+#endif
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32.h>
 #endif
