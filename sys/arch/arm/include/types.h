@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.32 2016/01/23 22:31:19 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.33 2017/01/26 15:55:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -90,6 +90,7 @@ typedef	int		__register_t;
 #if defined(__ARM_EABI__) && defined(_ARM_ARCH_6)
 #define	__HAVE_ATOMIC64_OPS
 #endif
+#define	__HAVE_COMPAT_NETBSD32
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #define	PCU_FPU			0
