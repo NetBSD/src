@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.82 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.83 2017/01/26 01:36:35 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.82 2017/01/24 11:09:14 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.83 2017/01/26 01:36:35 nonaka Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -666,8 +666,8 @@ x86_parse_clusters(struct btinfo_common *bi, struct extent *iomem_ex)
 			    ", size=0x%016" PRIx64 ", attr=0x%016" PRIx64
 			    ", type=%d(%s)\n",
 			    addr, addr + size - 1,
-			    (uint64_t)md->md_virt,
-			    (uint64_t)md->md_virt + size - 1,
+			    (uint64_t)(u_long)md->md_virt,
+			    (uint64_t)(u_long)md->md_virt + size - 1,
 			    size, md->md_attr, md->md_type,
 			    efi_getmemtype_str(md->md_type));
 #endif
