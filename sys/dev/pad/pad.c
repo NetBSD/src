@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.26 2016/10/15 07:08:06 nat Exp $ */
+/* $NetBSD: pad.c,v 1.27 2017/01/26 04:10:27 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.26 2016/10/15 07:08:06 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.27 2017/01/26 04:10:27 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -362,11 +362,11 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 
 	err = 0;
 
-	mutex_enter(&sc->sc_lock);
-	intr = sc->sc_intr;
-	intrarg = sc->sc_intrarg;
-
 	while (uio->uio_resid > 0 && !err) {
+		mutex_enter(&sc->sc_lock);
+		intr = sc->sc_intr;
+		intrarg = sc->sc_intrarg;
+
 		getmicrotime(&now);
 		nowusec = (now.tv_sec * 1000000) + now.tv_usec;
 		lastusec = (sc->sc_last.tv_sec * 1000000) +
@@ -394,7 +394,6 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 
 			mutex_exit(&sc->sc_lock);
 			err = uiomove(pb.pb_ptr, pb.pb_len, uio);
-			mutex_enter(&sc->sc_lock);
 			continue;
 		}
 
@@ -407,16 +406,17 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 			intr = sc->sc_intr;
 			intrarg = sc->sc_intrarg;
 			err = 0;
+			mutex_exit(&sc->sc_lock);
 			continue;
 		}
 		err = cv_wait_sig(&sc->sc_condvar, &sc->sc_lock);
-		if (err != 0)
+		if (err != 0) {
+			mutex_exit(&sc->sc_lock);
 			break;
+		}
 
-		intr = sc->sc_intr;
-		intrarg = sc->sc_intrarg;
+		mutex_exit(&sc->sc_lock);
 	}
-	mutex_exit(&sc->sc_lock);
 
 	return err;
 }
