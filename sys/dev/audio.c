@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.296 2017/01/23 00:21:34 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.297 2017/01/26 04:15:38 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.296 2017/01/23 00:21:34 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.297 2017/01/26 04:15:38 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1975,8 +1975,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	}
 	if (error)
 		goto bad;
-	vc->sc_mrr.blksize = sc->sc_vchan[0]->sc_mrr.blksize;
-	vc->sc_mpr.blksize = sc->sc_vchan[0]->sc_mpr.blksize;
 
 #ifdef DIAGNOSTIC
 	/*
@@ -3252,11 +3250,16 @@ audiostartp(struct audio_softc *sc, int n)
 		mix_func(sc, &vc->sc_mpr, n);
 
 		if (sc->sc_trigger_started == false) {
+			sc->sc_pr.s.inp = audio_stream_add_inp(&sc->sc_pr.s,
+			    sc->sc_pr.s.inp, vc->sc_mpr.blksize);
 			mix_write(sc);
 			audio_mix(sc);
 			vc = sc->sc_vchan[0];
-			vc->sc_mpr.s.outp = audio_stream_add_outp(&vc->sc_mpr.s,
-			    vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
+			if (sc->hw_if->trigger_output == NULL) {
+				vc->sc_mpr.s.outp =
+				    audio_stream_add_outp(&vc->sc_mpr.s,
+				      vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
+			}
 			mix_write(sc);
 
 			cv_broadcast(&sc->sc_condvar);
@@ -3379,10 +3382,14 @@ audio_pint(void *v)
 	if (sc->sc_dying == true)
 		return;
 
+	if (audio_stream_get_used(&sc->sc_pr.s) < vc->sc_mpr.blksize)
+		goto wake_mix;
+
 	vc->sc_mpr.s.outp = audio_stream_add_outp(&vc->sc_mpr.s,
 	    vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
 	mix_write(sc);
 
+wake_mix:
 	cv_broadcast(&sc->sc_condvar);
 }
 
@@ -3543,6 +3550,9 @@ audio_mix(void *v)
 	}
 	if (sc->sc_saturate == true && sc->sc_opens > 1)
 		saturate_func(sc);
+
+	cb = &sc->sc_pr;
+	cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, cb->blksize);
 
 	kpreempt_disable();
 	if (sc->schedule_wih == true)
@@ -4444,11 +4454,11 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset, int n)
 		pausechange = true;
 	}
 
-	if (SPECIFIED(ai->blocksize) || reset) {
+	if (SPECIFIED(ai->blocksize)) {
 		int pblksize, rblksize;
 
 		/* Block size specified explicitly. */
-		if (ai->blocksize == 0 || reset) {
+		if (ai->blocksize == 0) {
 			if (!cleared) {
 				audio_clear_intr_unlocked(sc, n);
 				cleared = true;
@@ -5199,33 +5209,61 @@ mix_write(void *arg)
 	stream_filter_t *filter;
 	stream_fetcher_t *fetcher;
 	stream_fetcher_t null_fetcher;
-	int cc, cc1, blksize, error;
-	uint8_t *inp;
+	int cc, cc1, cc2, blksize, error, used;
+	uint8_t *inp, *orig, *tocopy;
 
 	vc = sc->sc_vchan[0];
 	blksize = vc->sc_mpr.blksize;
 	cc = blksize;
 	error = 0;
 
-	cc1 = cc;
-	if (vc->sc_pustream->inp + cc > vc->sc_pustream->end)
-		cc1 = vc->sc_pustream->end - vc->sc_pustream->inp;
-	memcpy(vc->sc_pustream->inp, sc->sc_pr.s.start, cc1);
-	if (cc1 < cc) {
-		memcpy(vc->sc_pustream->start, sc->sc_pr.s.start + cc1,
-		    cc - cc1);
-	}
-	memset(sc->sc_pr.s.start, 0, cc);
+	tocopy = vc->sc_pustream->inp;
+	orig = __UNCONST(sc->sc_pr.s.outp);
+	used = blksize;
+	while (used > 0) {
+		cc = used;
+		cc1 = vc->sc_pustream->end - tocopy;
+		cc2 = sc->sc_pr.s.end - orig;
+		if (cc2 < cc1)
+			cc = cc2;
+		else
+			cc = cc1;
+		if (cc > used)
+			cc = used;
+		memcpy(tocopy, orig, cc);
+		orig += cc;
+		tocopy += cc;
+
+		if (tocopy >= vc->sc_pustream->end)
+			tocopy = vc->sc_pustream->start;
+		if (orig >= sc->sc_pr.s.end)
+			orig = sc->sc_pr.s.start;
+
+		used -= cc;
+ 	}
 
 	inp = vc->sc_pustream->inp;
-	vc->sc_pustream->inp = audio_stream_add_inp(vc->sc_pustream, inp, cc);
+	vc->sc_pustream->inp = audio_stream_add_inp(vc->sc_pustream,
+	    inp, blksize);
+
+	cc = blksize;
+	cc2 = sc->sc_pr.s.end - sc->sc_pr.s.inp;
+	if (cc2 < cc) {
+		memset(sc->sc_pr.s.inp, 0, cc2);
+		cc -= cc2;
+		memset(sc->sc_pr.s.start, 0, cc);
+	} else
+		memset(sc->sc_pr.s.inp, 0, cc);
+
+	sc->sc_pr.s.outp = audio_stream_add_outp(&sc->sc_pr.s,
+	    sc->sc_pr.s.outp, blksize);
 
 	if (vc->sc_npfilters > 0) {
 		null_fetcher.fetch_to = null_fetcher_fetch_to;
 		filter = vc->sc_pfilters[0];
 		filter->set_fetcher(filter, &null_fetcher);
 		fetcher = &vc->sc_pfilters[vc->sc_npfilters - 1]->base;
-		fetcher->fetch_to(sc, fetcher, &vc->sc_mpr.s, cc);
+		fetcher->fetch_to(sc, fetcher, &vc->sc_mpr.s, blksize);
  	}
 
 	if (sc->hw_if->trigger_output && sc->sc_trigger_started == false) {
@@ -5259,7 +5297,7 @@ mix_func8(struct audio_softc *sc, struct audio_ringbuffer *cb, int n)
 	resid = blksize;
 
 	tomix = __UNCONST(cb->s.outp);
-	orig = (int8_t *)(sc->sc_pr.s.start);
+	orig = (int8_t *)(sc->sc_pr.s.inp);
 
 	while (resid > 0) {
 		cc = resid;
@@ -5295,7 +5333,7 @@ mix_func16(struct audio_softc *sc, struct audio_ringbuffer *cb, int n)
 	resid = blksize;
 
 	tomix = __UNCONST(cb->s.outp);
-	orig = (int16_t *)(sc->sc_pr.s.start);
+	orig = (int16_t *)(sc->sc_pr.s.inp);
 
 	while (resid > 0) {
 		cc = resid;
@@ -5331,7 +5369,7 @@ mix_func32(struct audio_softc *sc, struct audio_ringbuffer *cb, int n)
 	resid = blksize;
 
 	tomix = __UNCONST(cb->s.outp);
-	orig = (int32_t *)(sc->sc_pr.s.start);
+	orig = (int32_t *)(sc->sc_pr.s.inp);
 
 	while (resid > 0) {
 		cc = resid;
@@ -5387,10 +5425,15 @@ saturate_func8(struct audio_softc *sc)
 	if (sc->sc_trigger_started == false)
 		resid *= 2;
 
-	orig = (int8_t *)(sc->sc_pr.s.start);
+	orig = (int8_t *)(sc->sc_pr.s.inp);
 
 	for (m = 0; m < resid;  m++) {
 		i = 0;
+		if (&orig[m] >= (int8_t *)sc->sc_pr.s.end) { 
+			orig = (int8_t *)sc->sc_pr.s.start;
+			resid -= m;
+			m = 0;
+		}
 		if (orig[m] != 0) {
 			if (orig[m] > 0)
 				i = INT8_MAX / orig[m];
@@ -5414,10 +5457,15 @@ saturate_func16(struct audio_softc *sc)
 	if (sc->sc_trigger_started == false)
 		resid *= 2;
 
-	orig = (int16_t *)(sc->sc_pr.s.start);
+	orig = (int16_t *)(sc->sc_pr.s.inp);
 
-	for (m = 0; m < resid;  m++) {
+	for (m = 0; m < resid / 2;  m++) {
 		i = 0;
+		if (&orig[m] >= (int16_t *)sc->sc_pr.s.end) { 
+			orig = (int16_t *)sc->sc_pr.s.start;
+			resid -= m;
+			m = 0;
+		}
 		if (orig[m] != 0) {
 			if (orig[m] > 0)
 				i = INT16_MAX / orig[m];
@@ -5441,10 +5489,15 @@ saturate_func32(struct audio_softc *sc)
 	if (sc->sc_trigger_started == false)
 		resid *= 2;
 
-	orig = (int32_t *)(sc->sc_pr.s.start);
+	orig = (int32_t *)(sc->sc_pr.s.inp);
 
-	for (m = 0; m < resid;  m++) {
+	for (m = 0; m < resid / 4;  m++) {
 		i = 0;
+		if (&orig[m] >= (int32_t *)sc->sc_pr.s.end) { 
+			orig = (int32_t *)sc->sc_pr.s.start;
+			resid -= m;
+			m = 0;
+		}
 		if (orig[m] != 0) {
 			if (orig[m] > 0)
 				i = INT32_MAX / orig[m];
