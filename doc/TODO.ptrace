@@ -1,10 +1,11 @@
-$NetBSD: TODO.ptrace,v 1.12 2017/01/26 01:04:23 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.13 2017/01/26 01:12:13 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
  - verify ppid of core dump generated with PT_DUMPCORE
    it must point to the real parent, not tracer
  - adapt OpenBSD regress test (regress/sys/ptrace/ptrace.c) for the ATF context
+ - reiterate over FreeBSD tests and add missing ones if applicable
  - add new ptrace(2) calls to lock (suspend) and unlock LWP within a process
  - add PT_DUMPCORE tests in the ATF framework
  - add ATF tests for PT_WRITE_I and PIOD_WRITE_I - test mprotect restrictions
