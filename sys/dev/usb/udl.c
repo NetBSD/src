@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.11.4.1.4.1 2016/09/06 20:33:09 skrll Exp $	*/
+/*	$NetBSD: udl.c,v 1.11.4.1.4.2 2017/01/26 21:54:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.4.1.4.1 2016/09/06 20:33:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.4.1.4.2 2017/01/26 21:54:24 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.4.1.4.1 2016/09/06 20:33:09 skrll Exp $
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/condvar.h>
 #include <uvm/uvm.h>
 
 #include <sys/bus.h>
@@ -172,6 +178,8 @@ static uint16_t		udl_lfsr(uint16_t);
 static int		udl_set_resolution(struct udl_softc *,
 			    const struct videomode *);
 static const struct videomode *udl_videomode_lookup(const char *);
+static void		udl_update_thread(void *);
+static inline void udl_startstop(struct udl_softc *, bool);
 
 static inline void
 udl_cmd_add_1(struct udl_softc *sc, uint8_t val)
@@ -330,7 +338,9 @@ static const struct usb_devno udl_devs[] = {
 	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_PLUGABLE },
 	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LT1421WIDE },
 	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_SD_U2VDH },
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_UM7X0 }
+	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_UM7X0 },
+	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_FYDVI },
+	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_FYDVI2 }
 };
 
 static int
@@ -466,6 +476,13 @@ udl_attach(device_t parent, device_t self, void *aux)
 	    config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
+
+	mutex_init(&sc->sc_thread_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_thread_cv, "udlcv");
+	sc->sc_dying = false;
+	sc->sc_thread_stop = true;
+	kthread_create(PRI_BIO, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
+	    udl_update_thread, sc, &sc->sc_thread, "udlupd");
 }
 
 static int
@@ -490,9 +507,6 @@ udl_detach(device_t self, int flags)
 		usbd_close_pipe(sc->sc_tx_pipeh);
 	}
 
-	cv_destroy(&sc->sc_cv);
-	mutex_destroy(&sc->sc_mtx);
-
 	/*
 	 * Free Huffman table.
 	 */
@@ -502,6 +516,17 @@ udl_detach(device_t self, int flags)
 	 * Free framebuffer memory.
 	 */
 	udl_fbmem_free(sc);
+
+	mutex_enter(&sc->sc_thread_mtx);
+	sc->sc_dying = true;
+	cv_broadcast(&sc->sc_thread_cv);
+	mutex_exit(&sc->sc_thread_mtx);
+	kthread_join(sc->sc_thread);
+
+	cv_destroy(&sc->sc_cv);
+	mutex_destroy(&sc->sc_mtx);
+	cv_destroy(&sc->sc_thread_cv);
+	mutex_destroy(&sc->sc_thread_mtx);
 
 	/*
 	 * Detach wsdisplay.
@@ -554,6 +579,7 @@ udl_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 			return 0;
 		switch (mode) {
 		case WSDISPLAYIO_VIDEO_OFF:
+			udl_startstop(sc, true);
 			udl_blank(sc, 1);
 			break;
 		case WSDISPLAYIO_VIDEO_ON:
@@ -562,7 +588,8 @@ udl_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		default:
 			return EINVAL;
 		}
-		udl_cmd_send_async(sc);
+		if (UDL_CMD_BUFSIZE(sc) > 0)
+			udl_cmd_send_async(sc);
 		udl_cmdq_flush(sc);
 		sc->sc_blank = mode;
 		return 0;
@@ -573,10 +600,12 @@ udl_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 			return 0;
 		switch (mode) {
 		case WSDISPLAYIO_MODE_EMUL:
+			udl_startstop(sc, true);
 			/* clear screen */
 			udl_fill_rect(sc, 0, 0, 0, sc->sc_width,
 			    sc->sc_height);
-			udl_cmd_send_async(sc);
+			if (UDL_CMD_BUFSIZE(sc) > 0)
+				udl_cmd_send_async(sc);
 			udl_cmdq_flush(sc);
 			udl_comp_unload(sc);
 			break;
@@ -585,6 +614,7 @@ udl_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 				udl_cmd_send_async(sc);
 			udl_cmdq_flush(sc);
 			udl_comp_load(sc);
+			udl_startstop(sc, false);
 			break;
 		default:
 			return EINVAL;
@@ -634,6 +664,8 @@ udl_mmap(void *v, void *vs, off_t off, int prot)
 	/* allocate framebuffer memory */
 	if (udl_fbmem_alloc(sc) != 0)
 		return -1;
+
+	udl_startstop(sc, false);
 
 	vaddr = (vaddr_t)sc->sc_fbmem + off;
 	rv = pmap_extract(pmap_kernel(), vaddr, &paddr);
@@ -808,11 +840,24 @@ static int
 udl_fbmem_alloc(struct udl_softc *sc)
 {
 
+	mutex_enter(&sc->sc_thread_mtx);
 	if (sc->sc_fbmem == NULL) {
-		sc->sc_fbmem = kmem_alloc(UDL_FBMEM_SIZE(sc), KM_SLEEP);
-		if (sc->sc_fbmem == NULL)
+		sc->sc_fbmem = kmem_zalloc(UDL_FBMEM_SIZE(sc), KM_SLEEP);
+		if (sc->sc_fbmem == NULL) {
+			mutex_exit(&sc->sc_thread_mtx);
 			return -1;
+		}
 	}
+	if (sc->sc_fbmem_prev == NULL) {
+		sc->sc_fbmem_prev = kmem_zalloc(UDL_FBMEM_SIZE(sc), KM_SLEEP);
+		if (sc->sc_fbmem_prev == NULL) {
+			kmem_free(sc->sc_fbmem, UDL_FBMEM_SIZE(sc));
+			sc->sc_fbmem = NULL;
+			mutex_exit(&sc->sc_thread_mtx);
+			return -1;
+		}
+	}
+	mutex_exit(&sc->sc_thread_mtx);
 
 	return 0;
 }
@@ -821,10 +866,16 @@ static void
 udl_fbmem_free(struct udl_softc *sc)
 {
 
+	mutex_enter(&sc->sc_thread_mtx);
 	if (sc->sc_fbmem != NULL) {
 		kmem_free(sc->sc_fbmem, UDL_FBMEM_SIZE(sc));
 		sc->sc_fbmem = NULL;
 	}
+	if (sc->sc_fbmem_prev != NULL) {
+		kmem_free(sc->sc_fbmem_prev, UDL_FBMEM_SIZE(sc));
+		sc->sc_fbmem_prev = NULL;
+	}
+	mutex_exit(&sc->sc_thread_mtx);
 }
 
 static int
@@ -1364,9 +1415,9 @@ udl_cmd_add_buf_comp(struct udl_softc *sc, uint16_t *buf, int width)
 	}
 
 	/*
- 	 * If we have bits left in our last byte, round up to the next
- 	 * byte, so we don't overwrite them.
- 	 */
+	 * If we have bits left in our last byte, round up to the next
+	 * byte, so we don't overwrite them.
+	 */
 	if (bit_pos > 0) {
 		sc->sc_cmd_buf++;
 		sc->sc_cmd_cblen++;
@@ -1760,4 +1811,93 @@ udl_videomode_lookup(const char *name)
 			return &videomode_list[i];
 
 	return NULL;
+}
+
+static void
+udl_update_thread(void *v)
+{
+	struct udl_softc *sc = v;
+	int stride;
+#ifdef notyet
+	bool update = false;
+	int linecount, x, y;
+	uint16_t *fb, *fbcopy;
+	uint8_t *curfb;
+#else
+	uint16_t *fb;
+	int offs;
+#endif
+
+	mutex_enter(&sc->sc_thread_mtx);
+
+	for (;;) {
+		stride = min(sc->sc_width, UDL_CMD_WIDTH_MAX - 8);
+		if (sc->sc_dying == true) {
+			mutex_exit(&sc->sc_thread_mtx);
+			kthread_exit(0);
+		}
+
+		if (sc->sc_thread_stop == true || sc->sc_fbmem == NULL)
+			goto thread_wait;
+
+#ifdef notyet
+		curfb = kmem_zalloc(UDL_FBMEM_SIZE(sc), KM_SLEEP);
+		memcpy(curfb, sc->sc_fbmem, sc->sc_height * sc->sc_width * 2);
+		fb = (uint16_t *)curfb;
+		fbcopy = (uint16_t *)sc->sc_fbmem_prev;
+		for (y = 0; y < sc->sc_height; y++) {
+			linecount = 0;
+			update = false;
+			for (x = 0; x < sc->sc_width; x++) {
+				if (linecount >= stride) {
+					udl_draw_line(sc, &fb[y * sc->sc_width
+					    + x - linecount], y * sc->sc_width
+					    + x - linecount, linecount);
+					linecount = 0;
+					update = false;
+				}
+				if (fb[y * sc->sc_width + x] ^ fbcopy[y *
+				    sc->sc_width + x]) {
+					update = true;
+					linecount ++;
+				} else if (update == true) {
+					udl_draw_line(sc, &fb[y * sc->sc_width
+					    + x - linecount], y * sc->sc_width
+					    + x - linecount, linecount);
+					linecount = 0;
+					update = false;
+				}
+			}
+			if (linecount) {
+				udl_draw_line(sc, &fb[y * sc->sc_width + x -
+				    linecount], y * sc->sc_width  + x -
+				    linecount, linecount);
+			}
+		}
+		memcpy(sc->sc_fbmem_prev, curfb, sc->sc_height * sc->sc_width
+		    * 2);
+		kmem_free(curfb, UDL_FBMEM_SIZE(sc));
+#else
+		fb = (uint16_t *)sc->sc_fbmem;
+		for (offs = 0; offs < sc->sc_height * sc->sc_width; offs += stride)
+			udl_draw_line(sc, &fb[offs], offs, stride);
+
+#endif
+
+		kpause("udlslp", false, (40 * hz)/1000 + 1, &sc->sc_thread_mtx);
+		continue;
+
+thread_wait:
+		cv_wait(&sc->sc_thread_cv, &sc->sc_thread_mtx);
+	}
+}
+
+static inline void
+udl_startstop(struct udl_softc *sc, bool stop)
+{
+	mutex_enter(&sc->sc_thread_mtx);
+	sc->sc_thread_stop = stop;
+	if (!stop)
+		cv_broadcast(&sc->sc_thread_cv);
+	mutex_exit(&sc->sc_thread_mtx);
 }

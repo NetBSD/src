@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.13.10.2 2017/01/18 08:46:43 skrll Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.13.10.3 2017/01/26 21:54:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13.10.2 2017/01/18 08:46:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13.10.3 2017/01/26 21:54:24 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.

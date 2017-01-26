@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_i2c.c,v 1.3 2011/10/02 16:30:58 jmcneill Exp $ */
+/* $NetBSD: auvitek_i2c.c,v 1.3.38.1 2017/01/26 21:54:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_i2c.c,v 1.3 2011/10/02 16:30:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_i2c.c,v 1.3.38.1 2017/01/26 21:54:24 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

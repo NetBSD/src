@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.107.4.1.2.1 2016/09/06 20:33:09 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.107.4.1.2.2 2017/01/26 21:54:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -139,6 +139,9 @@ struct usbd_hub {
 };
 
 /*****/
+/* 0, root, and 1->127 */
+#define USB_ROOTHUB_INDEX	1
+#define USB_TOTAL_DEVICES	(USB_MAX_DEVICES + 1)
 
 struct usbd_bus {
 	/* Filled by HC driver */
@@ -164,7 +167,7 @@ struct usbd_bus {
 	struct usbd_device     *ub_roothub;
 	uint8_t			ub_rhaddr;	/* roothub address */
 	uint8_t			ub_rhconf;	/* roothub configuration */
-	struct usbd_device     *ub_devices[USB_MAX_DEVICES];
+	struct usbd_device     *ub_devices[USB_TOTAL_DEVICES];
 	kcondvar_t              ub_needsexplore_cv;
 	char			ub_needsexplore;/* a hub a signalled a change */
 	char			ub_usepolling;
@@ -350,6 +353,13 @@ usbd_xfer_isread(struct usbd_xfer *xfer)
 
 	return xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress &
 	   UE_DIR_IN;
+}
+
+static inline size_t
+usb_addr2dindex(int addr)
+{
+
+	return USB_ROOTHUB_INDEX + addr;
 }
 
 /*

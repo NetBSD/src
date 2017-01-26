@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscvar.h,v 1.3.8.1 2016/09/06 20:33:08 skrll Exp $	*/
+/*	$NetBSD: if_smscvar.h,v 1.3.8.2 2017/01/26 21:54:24 skrll Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -54,6 +54,7 @@ struct smsc_softc {
 	device_t		sc_dev;
 	struct usbd_device *	sc_udev;
 	bool			sc_dying;
+	bool			sc_stopping;
 
 	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
 	struct ethercom		sc_ec;
@@ -80,6 +81,9 @@ struct smsc_softc {
 	int			sc_ed[SMSC_ENDPT_MAX];
 	struct usbd_pipe *	sc_ep[SMSC_ENDPT_MAX];
 
+	kmutex_t		sc_lock;
+	kmutex_t		sc_txlock;
+	kmutex_t		sc_rxlock;
 	kmutex_t		sc_mii_lock;
 
 	struct smsc_cdata	sc_cdata;
@@ -90,6 +94,9 @@ struct smsc_softc {
 
 	uint32_t		sc_flags;
 #define	SMSC_FLAG_LINK      0x0001
+
+	struct if_percpuq *sc_ipq;		/* softint-based input queues */
+
 };
 
 #define SMSC_MIN_BUFSZ		2048

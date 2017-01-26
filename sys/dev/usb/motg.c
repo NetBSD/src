@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.6.4.2.4.1 2016/09/06 20:33:09 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.6.4.2.4.2 2017/01/26 21:54:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.6.4.2.4.1 2016/09/06 20:33:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.6.4.2.4.2 2017/01/26 21:54:24 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_motg.h"
@@ -2087,10 +2087,9 @@ motg_device_intr_tx(struct motg_softc *sc, int epnumber)
 complete:
 	DPRINTFN(MD_BULK, "xfer %p complete, status %d", xfer,
 	    (xfer != NULL) ? xfer->ux_status : 0, 0, 0);
-#ifdef DIAGNOSTIC
-	if (xfer && xfer->ux_status == USBD_IN_PROGRESS && ep->phase != DATA_OUT)
-		panic("motg_device_intr_tx: bad phase %d", ep->phase);
-#endif
+	KASSERTMSG(xfer && xfer->ux_status == USBD_IN_PROGRESS &&
+	    ep->phase == DATA_OUT, "xfer %p status %d phase %d",
+	    xfer, xfer->ux_status, ep->phase);
 	ep->phase = IDLE;
 	ep->xfer = NULL;
 	if (xfer && xfer->ux_status == USBD_IN_PROGRESS) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uirdavar.h,v 1.5.42.1 2016/09/06 20:33:09 skrll Exp $	*/
+/*	$NetBSD: uirdavar.h,v 1.5.42.2 2017/01/26 21:54:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ typedef struct {
 
 
 struct uirda_softc {
- 	device_t		sc_dev;
+	device_t		sc_dev;
 	struct usbd_device 	*sc_udev;
 	struct usbd_interface	*sc_iface;
 

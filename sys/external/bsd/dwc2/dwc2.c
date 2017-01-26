@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.31.2.1.4.1 2016/09/06 20:33:10 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.31.2.1.4.2 2017/01/26 21:54:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.31.2.1.4.1 2016/09/06 20:33:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.31.2.1.4.2 2017/01/26 21:54:24 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1012,6 +1012,10 @@ dwc2_device_start(struct usbd_xfer *xfer)
 		dwc2_urb->usbdma = &xfer->ux_dmabuf;
 		dwc2_urb->buf = KERNADDR(dwc2_urb->usbdma, 0);
 		dwc2_urb->dma = DMAADDR(dwc2_urb->usbdma, 0);
+
+		usb_syncmem(&xfer->ux_dmabuf, 0, len,
+		    dir == UE_DIR_IN ?
+			BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
  	}
 	dwc2_urb->length = len;
  	dwc2_urb->flags = flags;

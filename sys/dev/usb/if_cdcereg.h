@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdcereg.h,v 1.7.28.1 2016/09/06 20:33:08 skrll Exp $ */
+/*	$NetBSD: if_cdcereg.h,v 1.7.28.2 2017/01/26 21:54:24 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -68,7 +68,7 @@ struct cdce_cdata {
 struct cdce_softc {
 	device_t cdce_dev;
 	struct ethercom		 cdce_ec;
-	krndsource_t	 rnd_source;
+	krndsource_t		 rnd_source;
 #define GET_IFP(sc) (&(sc)->cdce_ec.ec_if)
 	struct usbd_device *	 cdce_udev;
 	struct usbd_interface *	 cdce_ctl_iface;
@@ -83,4 +83,10 @@ struct cdce_softc {
 	int			 cdce_rxeof_errors;
 	uint16_t		 cdce_flags;
 	char			 cdce_attached;
+
+	struct if_percpuq	*cdce_ipq;
+
+	kmutex_t		 cdce_lock;
+	kmutex_t		 cdce_txlock;
+	kmutex_t		 cdce_rxlock;
 };
