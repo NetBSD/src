@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.11 2017/01/25 17:55:47 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.12 2017/01/26 03:54:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.11 2017/01/25 17:55:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.12 2017/01/26 03:54:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -626,8 +626,6 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 				uio.uio_resid = tmp - uio.uio_offset;
 			piod.piod_len = iov.iov_len = uio.uio_resid;
 			error = process_auxv_offset(t, &uio);
-			if (error)
-				return error;
 			break;
 		default:
 			error = EINVAL;
