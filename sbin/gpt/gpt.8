@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.50 2016/11/01 16:15:51 jdolecek Exp $
+.\" $NetBSD: gpt.8,v 1.51 2017/01/27 10:21:16 abhinav Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -638,7 +638,7 @@ nas# gpt show wd3
   3907029167           1         Sec GPT header
 nas# gpt add -s 10486224 -t swap -i 1 wd3
 nas# gpt label -i 1 -l swap_1 wd3
-parition 1 on rwd3d labeled swap_1
+partition 1 on rwd3d labeled swap_1
 nas# gpt show wd3
        start        size  index  contents
            0           1         PMBR
