@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.45 2017/01/13 10:10:32 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.46 2017/01/27 10:46:18 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.45 2017/01/13 10:10:32 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.46 2017/01/27 10:46:18 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -478,87 +478,108 @@ int busyprt = 0;	/* print out busy vnodes */
 struct ctldebug debug1 = { "busyprt", &busyprt };
 #endif
 
-struct vflush_ctx {
-	const struct vnode *skipvp;
-	int flags;
-};
-
-static bool
-vflush_selector(void *cl, struct vnode *vp)
-{
-	struct vflush_ctx *c = cl;
-	/*
-	 * Skip over a selected vnode.
-	 */
-	if (vp == c->skipvp)
-		return false;
-	/*
-	 * Skip over a vnodes marked VSYSTEM.
-	 */
-	if ((c->flags & SKIPSYSTEM) && (vp->v_vflag & VV_SYSTEM))
-		return false;
-
-	/*
-	 * If WRITECLOSE is set, only flush out regular file
-	 * vnodes open for writing.
-	 */
-	if ((c->flags & WRITECLOSE) && vp->v_type == VREG) {
-		if (vp->v_writecount == 0)
-			return false;
-	}
-	return true;
-}
-
 static vnode_t *
-vflushnext(struct vnode_iterator *marker, void *ctx, int *when)
+vflushnext(struct vnode_iterator *marker, int *when)
 {
 	if (hardclock_ticks > *when) {
 		yield();
 		*when = hardclock_ticks + hz / 10;
 	}
-	return vfs_vnode_iterator_next1(marker, vflush_selector, ctx, true);
+	return vfs_vnode_iterator_next1(marker, NULL, NULL, true);
 }
 
+/*
+ * Flush one vnode.  Referenced on entry, unreferenced on return.
+ */
+static int
+vflush_one(vnode_t *vp, vnode_t *skipvp, int flags)
+{
+	int error;
+	struct vattr vattr;
+
+	if (vp == skipvp ||
+	    ((flags & SKIPSYSTEM) && (vp->v_vflag & VV_SYSTEM))) {
+		vrele(vp);
+		return 0;
+	}
+	/*
+	 * If WRITECLOSE is set, only flush out regular file
+	 * vnodes open for writing or open and unlinked.
+	 */
+	if ((flags & WRITECLOSE)) {
+		if (vp->v_type != VREG) {
+			vrele(vp);
+			return 0;
+		}
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error) {
+			KASSERT(error == ENOENT);
+			vrele(vp);
+			return 0;
+		}
+		error = VOP_FSYNC(vp, curlwp->l_cred, FSYNC_WAIT, 0, 0);
+		if (error == 0)
+			error = VOP_GETATTR(vp, &vattr, curlwp->l_cred);
+		VOP_UNLOCK(vp);
+		if (error) {
+			vrele(vp);
+			return error;
+		}
+		if (vp->v_writecount == 0 && vattr.va_nlink > 0) {
+			vrele(vp);
+			return 0;
+		}
+	}
+	/*
+	 * First try to recycle the vnode.
+	 */
+	if (vrecycle(vp))
+		return 0;
+	/*
+	 * If FORCECLOSE is set, forcibly close the vnode.
+	 */
+	if (flags & FORCECLOSE) {
+		vgone(vp);
+		return 0;
+	}
+	vrele(vp);
+	return EBUSY;
+}
 
 int
 vflush(struct mount *mp, vnode_t *skipvp, int flags)
 {
 	vnode_t *vp;
 	struct vnode_iterator *marker;
-	int busy = 0, when = 0;
-	struct vflush_ctx ctx;
+	int busy, error, when;
+
+	busy = error = when = 0;
 
 	/* First, flush out any vnode references from deferred vrele list. */
 	vfs_drainvnodes();
 
 	vfs_vnode_iterator_init(mp, &marker);
 
-	ctx.skipvp = skipvp;
-	ctx.flags = flags;
-	while ((vp = vflushnext(marker, &ctx, &when)) != NULL) {
-		/*
-		 * First try to recycle the vnode.
-		 */
-		if (vrecycle(vp))
-			continue;
-		/*
-		 * If FORCECLOSE is set, forcibly close the vnode.
-		 */
-		if (flags & FORCECLOSE) {
-			vgone(vp);
-			continue;
-		}
+	while ((vp = vflushnext(marker, &when)) != NULL) {
+		error = vflush_one(vp, skipvp, flags);
+		if (error == EBUSY) {
+			error = 0;
+			busy++;
 #ifdef DEBUG
-		if (busyprt)
-			vprint("vflush: busy vnode", vp);
+			if (busyprt)
+				vprint("vflush: busy vnode", vp);
 #endif
-		vrele(vp);
-		busy++;
+		} else if (error != 0) {
+			break;
+		}
 	}
-	vfs_vnode_iterator_destroy(marker);
-	if (busy)
-		return (EBUSY);
 
+	vfs_vnode_iterator_destroy(marker);
+
+	if (error)
+		return error;
+	if (busy)
+		return EBUSY;
 	return 0;
 }
 
