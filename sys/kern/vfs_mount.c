@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.46 2017/01/27 10:46:18 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.47 2017/01/27 10:50:10 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.46 2017/01/27 10:46:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.47 2017/01/27 10:50:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -551,30 +551,35 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 {
 	vnode_t *vp;
 	struct vnode_iterator *marker;
-	int busy, error, when;
+	int busy, error, when, retries = 2;
 
-	busy = error = when = 0;
+	do {
+		busy = error = when = 0;
 
-	/* First, flush out any vnode references from deferred vrele list. */
-	vfs_drainvnodes();
+		/*
+		 * First, flush out any vnode references from the
+		 * deferred vrele list.
+		 */
+		vfs_drainvnodes();
 
-	vfs_vnode_iterator_init(mp, &marker);
+		vfs_vnode_iterator_init(mp, &marker);
 
-	while ((vp = vflushnext(marker, &when)) != NULL) {
-		error = vflush_one(vp, skipvp, flags);
-		if (error == EBUSY) {
-			error = 0;
-			busy++;
+		while ((vp = vflushnext(marker, &when)) != NULL) {
+			error = vflush_one(vp, skipvp, flags);
+			if (error == EBUSY) {
+				error = 0;
+				busy++;
 #ifdef DEBUG
-			if (busyprt)
-				vprint("vflush: busy vnode", vp);
+				if (busyprt && retries == 0)
+					vprint("vflush: busy vnode", vp);
 #endif
-		} else if (error != 0) {
-			break;
+			} else if (error != 0) {
+				break;
+			}
 		}
-	}
 
-	vfs_vnode_iterator_destroy(marker);
+		vfs_vnode_iterator_destroy(marker);
+	} while (error == 0 && busy > 0 && retries-- > 0);
 
 	if (error)
 		return error;
