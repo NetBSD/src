@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.57 2017/01/25 17:12:56 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.58 2017/01/27 12:52:39 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd January 25, 2016
@@ -291,8 +291,8 @@ The
 operation can be used to read from the ELF auxiliary vector.
 The
 .Fa piod_offs
-argument sets offset withing the tracee's vector.
-To read from the beginning of it, this value must be set to 0 and casted to
+argument sets the offset within the tracee's vector.
+To read from the beginning of it, this value must be set to 0 and cast to
 .Dv (void *) .
 .Pp
 A pointer to the I/O descriptor is passed in the
