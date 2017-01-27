@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.72 2017/01/11 09:08:58 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.73 2017/01/27 10:50:10 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.72 2017/01/11 09:08:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.73 2017/01/27 10:50:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -872,11 +872,21 @@ vrecycle(vnode_t *vp)
 	VSTATE_CHANGE(vp, VS_ACTIVE, VS_BLOCKED);
 	mutex_exit(vp->v_interlock);
 
-	error = vn_lock(vp, LK_EXCLUSIVE);
-	KASSERT(error == 0);
+	/*
+	 * On a leaf file system this lock will always succeed as we hold
+	 * the last reference and prevent further references.
+	 * On layered file systems waiting for the lock would open a can of
+	 * deadlocks as the lower vnodes may have other active references.
+	 */
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT);
 
 	mutex_enter(vp->v_interlock);
 	VSTATE_CHANGE(vp, VS_BLOCKED, VS_ACTIVE);
+
+	if (error) {
+		mutex_exit(vp->v_interlock);
+		return false;
+	}
 
 	KASSERT(vp->v_usecount == 1);
 	vcache_reclaim(vp);
