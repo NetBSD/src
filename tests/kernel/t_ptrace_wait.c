@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.68 2017/01/27 16:35:47 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.69 2017/01/27 16:43:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.68 2017/01/27 16:35:47 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.69 2017/01/27 16:43:07 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6345,7 +6345,6 @@ ATF_TC_BODY(signal8, tc)
 	validate_status_stopped(status, sigmasked);
 
 	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
-	printf("report_event=%d\n", state.pe_report_event);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK_DONE);
 
 	child2 = state.pe_other_pid;
