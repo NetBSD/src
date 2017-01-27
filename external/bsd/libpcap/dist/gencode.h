@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.h,v 1.4 2017/01/24 22:29:28 christos Exp $	*/
+/*	$NetBSD: gencode.h,v 1.5 2017/01/27 15:52:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -368,7 +368,8 @@ struct icode {
 };
 
 void bpf_optimize(compiler_state_t *, struct icode *ic);
-void bpf_syntax_error(compiler_state_t *, const char *);
+void bpf_syntax_error(compiler_state_t *, const char *)
+    __attribute__((noreturn));
 void bpf_error(compiler_state_t *, const char *, ...)
     __attribute__((noreturn))
 #ifdef __ATTRIBUTE___FORMAT_OK
