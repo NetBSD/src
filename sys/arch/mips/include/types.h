@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.65 2017/01/26 15:55:10 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.66 2017/01/27 17:22:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -168,6 +168,5 @@ typedef __uint32_t tlb_asid_t;
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_MM_MD_KERNACC
 #define	__HAVE_MM_MD_CACHE_ALIASING
-#define	__HAVE_COMPAT_NETBSD32
 
 #endif	/* _MIPS_TYPES_H_ */
