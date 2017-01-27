@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.297 2017/01/26 04:15:38 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.298 2017/01/27 05:05:51 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.297 2017/01/26 04:15:38 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.298 2017/01/27 05:05:51 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1761,7 +1761,7 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
 	rp->copying = false;
 	rp->needfill = false;
 	rp->mmapped = false;
-	memset(rp->s.start, 0, blksize * 2);
+	memset(rp->s.start, 0, AU_RING_SIZE);
 }
 
 int
@@ -3225,7 +3225,7 @@ int
 audiostartp(struct audio_softc *sc, int n)
 {
 	struct virtual_channel *vc = sc->sc_vchan[n];
-	int used, error;
+	int error, used;
 
 	KASSERT(mutex_owned(sc->sc_lock));
 	KASSERT(mutex_owned(sc->sc_intr_lock));
@@ -3246,24 +3246,17 @@ audiostartp(struct audio_softc *sc, int n)
 	}
 	
 	vc->sc_pbus = true;
-	if (sc->sc_opens > 0) {
-		mix_func(sc, &vc->sc_mpr, n);
+	if (sc->sc_trigger_started == false) {
+		audio_mix(sc);
+		mix_write(sc);
 
-		if (sc->sc_trigger_started == false) {
-			sc->sc_pr.s.inp = audio_stream_add_inp(&sc->sc_pr.s,
-			    sc->sc_pr.s.inp, vc->sc_mpr.blksize);
-			mix_write(sc);
-			audio_mix(sc);
-			vc = sc->sc_vchan[0];
-			if (sc->hw_if->trigger_output == NULL) {
-				vc->sc_mpr.s.outp =
-				    audio_stream_add_outp(&vc->sc_mpr.s,
-				      vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
-			}
-			mix_write(sc);
-
-			cv_broadcast(&sc->sc_condvar);
-		}
+		vc = sc->sc_vchan[0];
+		vc->sc_mpr.s.outp =
+		    audio_stream_add_outp(&vc->sc_mpr.s,
+		      vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
+		audio_mix(sc);
+		mix_write(sc);
+		cv_broadcast(&sc->sc_condvar);
 	}
 
 	return error;
@@ -3417,6 +3410,7 @@ audio_mix(void *v)
 		return;
 
 	i = sc->sc_opens;
+	blksize = sc->sc_vchan[0]->sc_mpr.blksize;
 	for (n = 1; n < VAUDIOCHANS; n++) {
 		if (!sc->sc_opens || i <= 0)
 			break;		/* ignore interrupt if not open */
@@ -3431,7 +3425,6 @@ audio_mix(void *v)
 			continue;
 
 		cb = &vc->sc_mpr;
-		blksize = sc->sc_vchan[0]->sc_mpr.blksize;
 
 		sc->sc_writeme = true;
 
@@ -3532,8 +3525,8 @@ audio_mix(void *v)
 
 		DPRINTFN(5, ("audio_pint: outp=%p cc=%d\n", cb->s.outp,
 			 blksize));
-		cb->s.outp = audio_stream_add_outp(&cb->s, cb->s.outp, blksize);
 		mix_func(sc, cb, n);
+		cb->s.outp = audio_stream_add_outp(&cb->s, cb->s.outp, blksize);
 
 		DPRINTFN(2, ("audio_pint: mode=%d pause=%d used=%d lowat=%d\n",
 			     vc->sc_mode, cb->pause,
@@ -3552,7 +3545,7 @@ audio_mix(void *v)
 		saturate_func(sc);
 
 	cb = &sc->sc_pr;
-	cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, cb->blksize);
+	cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, blksize);
 
 	kpreempt_disable();
 	if (sc->schedule_wih == true)
