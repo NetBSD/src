@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.469 2017/01/26 10:14:52 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.470 2017/01/27 05:04:47 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.469 2017/01/26 10:14:52 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.470 2017/01/27 05:04:47 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7018,6 +7018,16 @@ wm_nq_transmit(struct ifnet *ifp, struct mbuf *m)
 	if (m->m_flags & M_MCAST)
 		ifp->if_omcasts++;
 
+	/*
+	 * The situations which this mutex_tryenter() fails at running time
+	 * are below two patterns.
+	 *     (1) contention with interrupt handler(wm_txrxintr_msix())
+	 *     (2) contention with deferred if_start softint(wm_deferred_start())
+	 * In the case of (1), the last packet enqueued to txq->txq_interq is
+	 * dequeued by wm_deferred_start(). So, it does not get stuck.
+	 * In the case of (2), the last packet enqueued to txq->txq_interq is also
+	 * dequeued by wm_deferred_start(). So, it does not get stuck, either.
+	 */
 	if (mutex_tryenter(txq->txq_lock)) {
 		if (!txq->txq_stopping)
 			wm_nq_transmit_locked(ifp, txq);
