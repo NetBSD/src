@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.55 2017/01/26 15:55:10 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.56 2017/01/27 17:22:39 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -99,6 +99,5 @@ typedef __uint32_t tlb_asid_t;		/* for booke */
 #if defined(_KERNEL)
 #define	__HAVE_RAS
 #endif
-#define	__HAVE_COMPAT_NETBSD32
 
 #endif	/* _POWERPC_TYPES_H_ */
