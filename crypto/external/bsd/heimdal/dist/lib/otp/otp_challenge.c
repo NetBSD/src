@@ -1,4 +1,4 @@
-/*	$NetBSD: otp_challenge.c,v 1.1.1.3 2017/01/28 20:46:52 christos Exp $	*/
+/*	$NetBSD: otp_challenge.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-__RCSID("$NetBSD: otp_challenge.c,v 1.1.1.3 2017/01/28 20:46:52 christos Exp $");
+__RCSID("$NetBSD: otp_challenge.c,v 1.2 2017/01/28 21:31:50 christos Exp $");
 #endif
 
 #include "otp_locl.h"

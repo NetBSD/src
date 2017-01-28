@@ -1,4 +1,4 @@
-/*	$NetBSD: pkinit-ec.c,v 1.1.1.1 2017/01/28 20:46:52 christos Exp $	*/
+/*	$NetBSD: pkinit-ec.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2016 Kungliga Tekniska Högskolan
@@ -59,6 +59,8 @@
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #define HEIM_NO_CRYPTO_HDRS
+#else
+#include <hcrypto/des.h>
 #endif
 
 /*
@@ -75,7 +77,6 @@
 #define NO_HCRYPTO_POLLUTION
 
 #include "krb5_locl.h"
-#include <hcrypto/des.h>
 #include <krb5/cms_asn1.h>
 #include <krb5/pkcs8_asn1.h>
 #include <krb5/pkcs9_asn1.h>

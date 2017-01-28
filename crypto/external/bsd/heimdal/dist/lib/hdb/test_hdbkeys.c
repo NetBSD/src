@@ -1,4 +1,4 @@
-/*	$NetBSD: test_hdbkeys.c,v 1.1.1.2 2017/01/28 20:46:43 christos Exp $	*/
+/*	$NetBSD: test_hdbkeys.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan

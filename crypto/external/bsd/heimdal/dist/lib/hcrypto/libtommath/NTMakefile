@@ -124,6 +124,7 @@ libltm_OBJs=	\
 	$(OBJ)\bn_mp_prime_is_prime.obj	\
 	$(OBJ)\bn_mp_prime_next_prime.obj	\
 	$(OBJ)\bn_mp_find_prime.obj	\
+	$(OBJ)\bn_mp_isprime.obj	\
 	$(OBJ)\bn_mp_dr_reduce.obj	\
 	$(OBJ)\bn_mp_dr_is_modulus.obj	\
 	$(OBJ)\bn_mp_dr_setup.obj	\

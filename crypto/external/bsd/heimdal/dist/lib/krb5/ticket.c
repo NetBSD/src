@@ -1,4 +1,4 @@
-/*	$NetBSD: ticket.c,v 1.1.1.3 2017/01/28 20:46:52 christos Exp $	*/
+/*	$NetBSD: ticket.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan

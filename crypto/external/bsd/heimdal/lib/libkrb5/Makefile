@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2014/04/24 13:50:53 pettai Exp $
+# $NetBSD: Makefile,v 1.9 2017/01/28 21:31:52 christos Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -9,7 +9,7 @@ CWARNFLAGS.clang=	-Wno-conversion -Wno-tautological-compare
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
-.PATH:		${HEIMDIST}/lib/krb5 ${HEIMDIST}/doc ${HEIMBASE}/include
+.PATH:		${HEIMDIST}/lib/krb5 ${HEIMDIST}/lib/vers ${HEIMDIST}/doc ${HEIMBASE}/include
 
 WARNS?=		0
 
@@ -47,7 +47,8 @@ SRCS=						\
 	copy_host_realm.c			\
 	crc.c					\
 	creds.c					\
-	crypto-aes.c				\
+	crypto-aes-sha1.c			\
+	crypto-aes-sha2.c			\
 	crypto-algs.c				\
 	crypto-arcfour.c			\
 	crypto-des-common.c			\
@@ -59,13 +60,17 @@ SRCS=						\
 	crypto-rand.c				\
 	crypto.c				\
 	data.c					\
+	db_plugin.c				\
+	dcache.c				\
 	deprecated.c				\
 	digest.c				\
 	doxygen.c				\
 	eai_to_heim_errno.c			\
+	enomem.c				\
 	error_string.c				\
 	expand_hostname.c			\
 	expand_path.c				\
+	fast.c					\
 	fcache.c				\
 	free.c					\
 	free_host_realm.c			\
@@ -107,8 +112,10 @@ SRCS=						\
 	padata.c				\
 	pcache.c				\
 	pkinit.c				\
+	pkinit-ec.c				\
 	plugin.c				\
 	principal.c				\
+	print_version.c				\
 	prog_setup.c				\
 	prompter_posix.c			\
 	rd_cred.c				\
@@ -120,7 +127,8 @@ SRCS=						\
 	read_message.c				\
 	recvauth.c				\
 	replay.c				\
-	salt-aes.c				\
+	salt-aes-sha1.c				\
+	salt-aes-sha2.c				\
 	salt-arcfour.c				\
 	salt-des.c				\
 	salt-des3.c				\
@@ -130,11 +138,13 @@ SRCS=						\
 	sendauth.c				\
 	set_default_realm.c			\
 	sock_principal.c			\
+	sp800-108-kdf.c				\
 	store-int.c				\
 	store.c					\
 	store_emem.c				\
 	store_fd.c				\
 	store_mem.c				\
+	store_sock.c				\
 	ticket.c				\
 	time.c					\
 	transited.c				\
@@ -532,7 +542,8 @@ heimdal.texi: vars.texi
 vars.texi: vars.tin
 	< ${HEIMDIST}/doc/vars.tin > $@			\
 	sed -e 's,[@]dbdir[@],/var/heimdal,g'		\
-	    -e 's,[@]PACKAGE_VERSION[@],1.5.3,g'
+	    -e 's,[@]dbtype[@],db1,g'
+	    -e 's,[@]PACKAGE_VERSION[@],7.1.0,g'
 
 CLEANFILES+=	vars.texi
 

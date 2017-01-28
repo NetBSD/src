@@ -1,4 +1,4 @@
-/*	$NetBSD: pprime.c,v 1.1.1.3 2017/01/28 20:46:47 christos Exp $	*/
+/*	$NetBSD: pprime.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /* Generates provable primes
  *
@@ -165,7 +165,7 @@ mp_digit prime_digit(void)
    int n;
    mp_digit d;
 
-   n = labs(rand()) % n_prime;
+   n = abs(rand()) % n_prime;
    fseek(primes, n * sizeof(mp_digit), SEEK_SET);
    fread(&d, 1, sizeof(mp_digit), primes);
    return d;

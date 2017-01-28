@@ -1,4 +1,4 @@
-/*	$NetBSD: mpi.c,v 1.1.1.4 2017/01/28 20:46:47 christos Exp $	*/
+/*	$NetBSD: mpi.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
     mpi.c
@@ -494,7 +494,7 @@ void   mp_set(mp_int *mp, mp_digit d)
 mp_err mp_set_int(mp_int *mp, long z)
 {
   int            ix;
-  unsigned long  v = labs(z);
+  unsigned long  v = abs(z);
   mp_err         res;
 
   ARGCHK(mp != NULL, MP_BADARG);

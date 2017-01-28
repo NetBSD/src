@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.3 2017/01/28 20:46:42 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kcm_locl.h"
 
-__RCSID("$NetBSD: main.c,v 1.1.1.3 2017/01/28 20:46:42 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2017/01/28 21:31:44 christos Exp $");
 
 krb5_context kcm_context = NULL;
 

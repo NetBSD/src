@@ -1,4 +1,4 @@
-/*	$NetBSD: duplicate_name.c,v 1.1.1.2 2017/01/28 20:46:44 christos Exp $	*/
+/*	$NetBSD: duplicate_name.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -39,7 +39,7 @@
 
 OM_uint32 _netlogon_duplicate_name (
             OM_uint32 * minor_status,
-            gss_const_name_t src_name,
+            const gss_name_t src_name,
             gss_name_t * dest_name
            )
 {

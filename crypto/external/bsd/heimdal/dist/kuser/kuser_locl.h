@@ -1,4 +1,4 @@
-/*	$NetBSD: kuser_locl.h,v 1.1.1.3 2017/01/28 20:46:42 christos Exp $	*/
+/*	$NetBSD: kuser_locl.h,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan

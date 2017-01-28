@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_krb5_conf.c,v 1.1.1.3 2017/01/28 20:46:52 christos Exp $	*/
+/*	$NetBSD: verify_krb5_conf.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2005 Kungliga Tekniska Högskolan

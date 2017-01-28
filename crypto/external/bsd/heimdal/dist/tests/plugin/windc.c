@@ -1,4 +1,4 @@
-/*	$NetBSD: windc.c,v 1.1.1.3 2017/01/28 20:46:56 christos Exp $	*/
+/*	$NetBSD: windc.c,v 1.2 2017/01/28 21:31:51 christos Exp $	*/
 
 #include <krb5/krb5.h>
 #include <krb5/hdb.h>

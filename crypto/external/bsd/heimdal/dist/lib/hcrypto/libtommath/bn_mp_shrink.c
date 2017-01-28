@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_shrink.c,v 1.1.1.3 2017/01/28 20:46:45 christos Exp $	*/
+/*	$NetBSD: bn_mp_shrink.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_SHRINK_C

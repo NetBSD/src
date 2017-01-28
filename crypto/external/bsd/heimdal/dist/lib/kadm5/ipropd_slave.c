@@ -1,4 +1,4 @@
-/*	$NetBSD: ipropd_slave.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: ipropd_slave.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "iprop.h"
 
-__RCSID("$NetBSD: ipropd_slave.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $");
+__RCSID("$NetBSD: ipropd_slave.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 static const char *config_name = "ipropd-slave";
 
@@ -594,7 +594,7 @@ static void
 slave_status(krb5_context context,
 	     const char *file,
 	     const char *status, ...)
-     __attribute__ ((format (printf, 3, 4)));
+     __attribute__ ((__format__ (__printf__, 3, 4)));
 
 
 static void

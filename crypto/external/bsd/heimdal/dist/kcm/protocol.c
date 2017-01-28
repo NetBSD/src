@@ -1,4 +1,4 @@
-/*	$NetBSD: protocol.c,v 1.1.1.3 2017/01/28 20:46:42 christos Exp $	*/
+/*	$NetBSD: protocol.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.

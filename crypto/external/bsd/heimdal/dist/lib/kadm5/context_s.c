@@ -1,4 +1,4 @@
-/*	$NetBSD: context_s.c,v 1.1.1.3 2017/01/28 20:46:50 christos Exp $	*/
+/*	$NetBSD: context_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: context_s.c,v 1.1.1.3 2017/01/28 20:46:50 christos Exp $");
+__RCSID("$NetBSD: context_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 static kadm5_ret_t
 kadm5_s_lock(void *server_handle)

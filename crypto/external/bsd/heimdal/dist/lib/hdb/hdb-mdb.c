@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb-mdb.c,v 1.1.1.1 2017/01/28 20:46:43 christos Exp $	*/
+/*	$NetBSD: hdb-mdb.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan

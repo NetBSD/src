@@ -1,4 +1,4 @@
-/*	$NetBSD: pkinit.c,v 1.1.1.3 2017/01/28 20:46:52 christos Exp $	*/
+/*	$NetBSD: pkinit.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2016 Kungliga Tekniska Högskolan
@@ -66,7 +66,7 @@ pk_copy_error(krb5_context context,
 	      int hxret,
 	      const char *fmt,
 	      ...)
-    __attribute__ ((format (printf, 4, 5)));
+    __attribute__ ((__format__ (__printf__, 4, 5)));
 
 /*
  *

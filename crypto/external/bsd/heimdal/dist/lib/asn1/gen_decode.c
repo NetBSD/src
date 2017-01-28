@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_decode.c,v 1.1.1.3 2017/01/28 20:46:43 christos Exp $	*/
+/*	$NetBSD: gen_decode.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "gen_locl.h"
 #include "lex.h"
 
-__RCSID("$NetBSD: gen_decode.c,v 1.1.1.3 2017/01/28 20:46:43 christos Exp $");
+__RCSID("$NetBSD: gen_decode.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
 
 static void
 decode_primitive (const char *typename, const char *name, const char *forwstr)

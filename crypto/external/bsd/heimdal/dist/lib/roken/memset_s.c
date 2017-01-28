@@ -1,4 +1,4 @@
-/*	$NetBSD: memset_s.c,v 1.1.1.1 2017/01/28 20:46:53 christos Exp $	*/
+/*	$NetBSD: memset_s.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2015, Your File System Inc.

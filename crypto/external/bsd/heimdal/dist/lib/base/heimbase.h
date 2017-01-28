@@ -1,4 +1,4 @@
-/*	$NetBSD: heimbase.h,v 1.1.1.1 2017/01/28 20:46:43 christos Exp $	*/
+/*	$NetBSD: heimbase.h,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -116,12 +116,12 @@ heim_base_once_f(heim_base_once_t *, void *, void (*)(void *));
 void
 heim_abort(const char *fmt, ...)
     HEIMDAL_NORETURN_ATTRIBUTE
-    HEIMDAL_PRINTF_ATTRIBUTE((printf, 1, 2));
+    HEIMDAL_PRINTF_ATTRIBUTE((__printf__, 1, 2));
 
 void
 heim_abortv(const char *fmt, va_list ap)
     HEIMDAL_NORETURN_ATTRIBUTE
-    HEIMDAL_PRINTF_ATTRIBUTE((printf, 1, 0));
+    HEIMDAL_PRINTF_ATTRIBUTE((__printf__, 1, 0));
 
 #define heim_assert(e,t) \
     (heim_builtin_expect(!(e), 0) ? heim_abort(t ":" #e) : (void)0)
@@ -222,13 +222,13 @@ typedef struct heim_error * heim_error_t;
 heim_error_t heim_error_create_enomem(void);
 
 heim_error_t	heim_error_create(int, const char *, ...)
-    HEIMDAL_PRINTF_ATTRIBUTE((printf, 2, 3));
+    HEIMDAL_PRINTF_ATTRIBUTE((__printf__, 2, 3));
 
 void		heim_error_create_opt(heim_error_t *error, int error_code, const char *fmt, ...)
-    HEIMDAL_PRINTF_ATTRIBUTE((printf, 3, 4));
+    HEIMDAL_PRINTF_ATTRIBUTE((__printf__, 3, 4));
 
 heim_error_t	heim_error_createv(int, const char *, va_list)
-    HEIMDAL_PRINTF_ATTRIBUTE((printf, 2, 0));
+    HEIMDAL_PRINTF_ATTRIBUTE((__printf__, 2, 0));
 
 heim_string_t heim_error_copy_string(heim_error_t);
 int heim_error_get_code(heim_error_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: compare_name.c,v 1.1.1.2 2017/01/28 20:46:44 christos Exp $	*/
+/*	$NetBSD: compare_name.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -39,8 +39,8 @@
 
 OM_uint32 _netlogon_compare_name
            (OM_uint32 * minor_status,
-            gss_const_name_t name1,
-            gss_const_name_t name2,
+            const gss_name_t name1,
+            const gss_name_t name2,
             int * name_equal
            )
 {

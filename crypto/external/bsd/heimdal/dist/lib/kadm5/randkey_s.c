@@ -1,4 +1,4 @@
-/*	$NetBSD: randkey_s.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: randkey_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2001, 2003-2006 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: randkey_s.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $");
+__RCSID("$NetBSD: randkey_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 /*
  * Set the keys of `princ' to random values, returning the random keys

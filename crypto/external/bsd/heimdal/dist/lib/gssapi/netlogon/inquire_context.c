@@ -1,4 +1,4 @@
-/*	$NetBSD: inquire_context.c,v 1.1.1.2 2017/01/28 20:46:44 christos Exp $	*/
+/*	$NetBSD: inquire_context.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -39,7 +39,7 @@
 
 OM_uint32 _netlogon_inquire_context (
             OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            const gss_ctx_id_t context_handle,
             gss_name_t * src_name,
             gss_name_t * targ_name,
             OM_uint32 * lifetime_rec,

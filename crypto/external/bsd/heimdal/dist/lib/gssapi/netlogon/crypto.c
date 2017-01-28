@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.1.1.2 2017/01/28 20:46:44 christos Exp $	*/
+/*	$NetBSD: crypto.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -660,7 +660,7 @@ _netlogon_wrap_iov_length(OM_uint32 * minor_status,
 
 OM_uint32 _netlogon_get_mic
            (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            const gss_ctx_id_t context_handle,
             gss_qop_t qop_req,
             const gss_buffer_t message_buffer,
             gss_buffer_t message_token
@@ -686,7 +686,7 @@ OM_uint32 _netlogon_get_mic
 OM_uint32
 _netlogon_verify_mic
            (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            const gss_ctx_id_t context_handle,
             const gss_buffer_t message_buffer,
             const gss_buffer_t token_buffer,
             gss_qop_t * qop_state
@@ -706,7 +706,7 @@ _netlogon_verify_mic
 OM_uint32
 _netlogon_wrap_size_limit (
             OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
+            const gss_ctx_id_t context_handle,
             int conf_req_flag,
             gss_qop_t qop_req,
             OM_uint32 req_output_size,

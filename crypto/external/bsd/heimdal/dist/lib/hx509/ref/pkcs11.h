@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11.h,v 1.1.1.2 2017/01/28 20:46:50 christos Exp $	*/
+/*	$NetBSD: pkcs11.h,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
 
 /* pkcs11.h
    Copyright 2006, 2007 g10 Code GmbH
