@@ -1,4 +1,4 @@
-/*	$NetBSD: kpasswd-generator.c,v 1.1.1.3 2017/01/28 20:46:42 christos Exp $	*/
+/*	$NetBSD: kpasswd-generator.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2004 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kpasswd_locl.h"
 
-__RCSID("$NetBSD: kpasswd-generator.c,v 1.1.1.3 2017/01/28 20:46:42 christos Exp $");
+__RCSID("$NetBSD: kpasswd-generator.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
 
 static unsigned
 read_words(const char *filename, char ***ret_w)

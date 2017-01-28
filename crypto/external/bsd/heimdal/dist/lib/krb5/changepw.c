@@ -1,4 +1,4 @@
-/*	$NetBSD: changepw.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: changepw.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -42,7 +42,7 @@
 static void
 str2data (krb5_data *d,
 	  const char *fmt,
-	  ...) __attribute__ ((format (printf, 2, 3)));
+	  ...) __attribute__ ((__format__ (__printf__, 2, 3)));
 
 static void
 str2data (krb5_data *d,

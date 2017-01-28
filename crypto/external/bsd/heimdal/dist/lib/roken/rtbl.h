@@ -1,4 +1,4 @@
-/*	$NetBSD: rtbl.h,v 1.1.1.3 2017/01/28 20:46:53 christos Exp $	*/
+/*	$NetBSD: rtbl.h,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2000,2004 Kungliga Tekniska Högskolan
@@ -74,14 +74,14 @@ rtbl_add_column_by_id (rtbl_t, unsigned int, const char*, unsigned int);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rtbl_add_column_entryv_by_id (rtbl_t table, unsigned int id,
 			      const char *fmt, ...)
-	__attribute__ ((format (printf, 3, 0)));
+	__attribute__ ((__format__ (__printf__, 3, 0)));
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rtbl_add_column_entry (rtbl_t, const char*, const char*);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rtbl_add_column_entryv (rtbl_t, const char*, const char*, ...)
-	__attribute__ ((format (printf, 3, 0)));
+	__attribute__ ((__format__ (__printf__, 3, 0)));
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rtbl_add_column_entry_by_id (rtbl_t, unsigned int, const char*);

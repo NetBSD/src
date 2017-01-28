@@ -1,4 +1,4 @@
-/*	$NetBSD: rand.c,v 1.1.1.2 2017/01/28 20:46:53 christos Exp $	*/
+/*	$NetBSD: rand.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
