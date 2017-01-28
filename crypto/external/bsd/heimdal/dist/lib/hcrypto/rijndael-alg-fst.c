@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-alg-fst.c,v 1.1.1.2 2017/01/28 20:46:45 christos Exp $	*/
+/*	$NetBSD: rijndael-alg-fst.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*	NetBSD: rijndael-alg-fst.c,v 1.5 2001/11/13 01:40:10 lukem Exp	*/
 /*	$KAME: rijndael-alg-fst.c,v 1.10 2003/07/15 10:47:16 itojun Exp $	*/

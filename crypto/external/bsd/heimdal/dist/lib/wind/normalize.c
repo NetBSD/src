@@ -1,4 +1,4 @@
-/*	$NetBSD: normalize.c,v 1.1.1.3 2017/01/28 20:46:55 christos Exp $	*/
+/*	$NetBSD: normalize.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
