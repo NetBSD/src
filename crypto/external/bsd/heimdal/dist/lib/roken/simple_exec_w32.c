@@ -1,4 +1,4 @@
-/*	$NetBSD: simple_exec_w32.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: simple_exec_w32.c,v 1.1.1.3 2017/01/28 20:46:53 christos Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2009, Secure Endpoints Inc.
@@ -186,6 +186,7 @@ collect_commandline(const char * fn, va_list * ap)
 		    free(cmd);
 		return NULL;
 	    }
+	    cmd = nc;
 	}
 
 	if (cmd == NULL)
