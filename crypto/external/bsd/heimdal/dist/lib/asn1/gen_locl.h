@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_locl.h,v 1.1.1.2 2011/04/14 14:08:21 elric Exp $	*/
+/*	$NetBSD: gen_locl.h,v 1.1.1.3 2017/01/28 20:46:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -94,10 +94,13 @@ void gen_template_import(const Symbol *);
 
 
 extern FILE *privheaderfile, *headerfile, *codefile, *logfile, *templatefile;
+extern const char *fuzzer_string;
 extern int support_ber;
 extern int template_flag;
 extern int rfc1510_bitstring;
 extern int one_code_file;
+extern int parse_units_flag;
+extern char *type_file_string;
 
 extern int error_flag;
 
