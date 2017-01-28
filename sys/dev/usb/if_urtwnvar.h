@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.8.4.4 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.8.4.5 2017/01/28 12:04:17 skrll Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -128,6 +128,7 @@ struct urtwn_softc {
 	callout_t			sc_scan_to;
 	callout_t			sc_calib_to;
 
+	kcondvar_t			sc_task_cv;
 	kmutex_t			sc_task_mtx;
 	kmutex_t			sc_fwcmd_mtx;
 	kmutex_t			sc_tx_mtx;

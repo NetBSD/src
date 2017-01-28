@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.34.4.15 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.34.4.16 2017/01/28 12:04:17 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.15 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.16 2017/01/28 12:04:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -372,6 +372,7 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 
 	(void) usbd_do_request(sc->sc_udev, &req, 0);
 
+	cv_init(&sc->sc_task_cv, "urtwntsk");
 	mutex_init(&sc->sc_task_mtx, MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&sc->sc_tx_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_rx_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -559,6 +560,7 @@ urtwn_detach(device_t self, int flags)
 	callout_destroy(&sc->sc_scan_to);
 	callout_destroy(&sc->sc_calib_to);
 
+	cv_destroy(&sc->sc_task_cv);
 	mutex_destroy(&sc->sc_write_mtx);
 	mutex_destroy(&sc->sc_fwcmd_mtx);
 	mutex_destroy(&sc->sc_tx_mtx);
@@ -823,8 +825,8 @@ urtwn_task(void *arg)
 		ring->queued--;
 		ring->next = (ring->next + 1) % URTWN_HOST_CMD_RING_COUNT;
 	}
+	cv_broadcast(&sc->sc_task_cv);
 	mutex_spin_exit(&sc->sc_task_mtx);
-	wakeup(&sc->cmdq);
 	splx(s);
 }
 
@@ -863,8 +865,10 @@ urtwn_wait_async(struct urtwn_softc *sc)
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	/* Wait for all queued asynchronous commands to complete. */
+	mutex_spin_enter(&sc->sc_task_mtx);
 	while (sc->cmdq.queued > 0)
-		tsleep(&sc->cmdq, 0, "endtask", 0);
+		cv_wait(&sc->sc_task_cv, &sc->sc_task_mtx);
+	mutex_spin_exit(&sc->sc_task_mtx);
 }
 
 static int
