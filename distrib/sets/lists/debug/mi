@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.193 2017/01/27 10:45:11 hannken Exp $
+# $NetBSD: mi,v 1.194 2017/01/28 16:55:54 nat Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1009,6 +1009,7 @@
 ./usr/libdata/debug/usr/sbin/bootpef.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/bootpgw.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/bootptest.debug	comp-bootserver-debug	debug
+./usr/libdata/debug/usr/sbin/bta2dpd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/btattach.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/btconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/btcontrol.debug	comp-obsolete		obsolete
