@@ -1,4 +1,4 @@
-/*	$NetBSD: free.c,v 1.1.1.3 2017/01/28 20:46:50 christos Exp $	*/
+/*	$NetBSD: free.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: free.c,v 1.1.1.3 2017/01/28 20:46:50 christos Exp $");
+__RCSID("$NetBSD: free.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 void
 kadm5_free_key_data(void *server_handle,

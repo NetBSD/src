@@ -1,4 +1,4 @@
-/*	$NetBSD: create_c.c,v 1.1.1.3 2017/01/28 20:46:50 christos Exp $	*/
+/*	$NetBSD: create_c.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2000, 2005-2006 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: create_c.c,v 1.1.1.3 2017/01/28 20:46:50 christos Exp $");
+__RCSID("$NetBSD: create_c.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 kadm5_ret_t
 kadm5_c_create_principal(void *server_handle,

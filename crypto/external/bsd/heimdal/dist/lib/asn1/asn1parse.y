@@ -1,4 +1,4 @@
-/*	$NetBSD: asn1parse.y,v 1.1.1.4 2017/01/28 20:46:43 christos Exp $	*/
+/*	$NetBSD: asn1parse.y,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan

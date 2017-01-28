@@ -1,4 +1,4 @@
-/*	$NetBSD: kimpersonate.c,v 1.1.1.3 2017/01/28 20:46:42 christos Exp $	*/
+/*	$NetBSD: kimpersonate.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2007 Kungliga Tekniska Högskolan

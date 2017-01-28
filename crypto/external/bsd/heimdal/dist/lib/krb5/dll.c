@@ -1,4 +1,4 @@
-/*	$NetBSD: dll.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: dll.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2009, Secure Endpoints Inc.

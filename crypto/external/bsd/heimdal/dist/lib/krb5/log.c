@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.3 2017/01/28 20:46:52 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
@@ -413,7 +413,7 @@ krb5_vlog_msg(krb5_context context,
 	      int level,
 	      const char *fmt,
 	      va_list ap)
-     __attribute__((format (printf, 5, 0)))
+     __attribute__ ((__format__ (__printf__, 5, 0)))
 {
 
     char *msg = NULL;
@@ -451,7 +451,7 @@ krb5_vlog(krb5_context context,
 	  int level,
 	  const char *fmt,
 	  va_list ap)
-     __attribute__((format (printf, 4, 0)))
+     __attribute__ ((__format__ (__printf__, 4, 0)))
 {
     return krb5_vlog_msg(context, fac, NULL, level, fmt, ap);
 }
@@ -463,7 +463,7 @@ krb5_log_msg(krb5_context context,
 	     char **reply,
 	     const char *fmt,
 	     ...)
-     __attribute__((format (printf, 5, 6)))
+     __attribute__ ((__format__ (__printf__, 5, 6)))
 {
     va_list ap;
     krb5_error_code ret;
@@ -481,7 +481,7 @@ krb5_log(krb5_context context,
 	 int level,
 	 const char *fmt,
 	 ...)
-     __attribute__((format (printf, 4, 5)))
+     __attribute__ ((__format__ (__printf__, 4, 5)))
 {
     va_list ap;
     krb5_error_code ret;
@@ -497,7 +497,7 @@ _krb5_debug(krb5_context context,
 	    int level,
 	    const char *fmt,
 	    ...)
-    __attribute__((format (printf, 3, 4)))
+    __attribute__ ((__format__ (__printf__, 3, 4)))
 {
     va_list ap;
 

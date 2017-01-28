@@ -1,4 +1,4 @@
-/*	$NetBSD: rename_s.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: rename_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001, 2003, 2005 - 2005 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: rename_s.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $");
+__RCSID("$NetBSD: rename_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
 
 kadm5_ret_t
 kadm5_s_rename_principal(void *server_handle,
