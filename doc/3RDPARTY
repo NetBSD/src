@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1403 2017/01/27 23:00:46 spz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1404 2017/01/28 21:47:24 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -564,8 +564,8 @@ distribution for import.
 Update MDATE in src/external/gpl2/groff/Makefile.inc.
 
 Package:	heimdal
-Version:	1.5.3
-Current Vers:	1.5.3
+Version:	7.1.0 (HEAD-2017-01-28)
+Current Vers:	7.1.0
 Maintainer:	Heimdal <heimdal@h5l.org>
 Archive Site:	ftp://ftp.h5l.org/pub/heimdal/src/
 Home Page:	http://www.h5l.org/
