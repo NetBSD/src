@@ -1,4 +1,4 @@
-/*	$NetBSD: evp-hcrypto.c,v 1.1.1.2 2017/01/28 20:46:45 christos Exp $	*/
+/*	$NetBSD: evp-hcrypto.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan

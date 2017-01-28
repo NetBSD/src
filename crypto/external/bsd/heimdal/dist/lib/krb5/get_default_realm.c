@@ -1,4 +1,4 @@
-/*	$NetBSD: get_default_realm.c,v 1.1.1.2 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: get_default_realm.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001, 2004 Kungliga Tekniska Högskolan

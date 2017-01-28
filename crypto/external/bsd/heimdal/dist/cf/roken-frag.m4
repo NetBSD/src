@@ -317,6 +317,8 @@ AC_FIND_IF_NOT_BROKEN(gai_strerror,,
 #include <ws2tcpip.h>
 #endif],[0])
 
+AC_CHECK_LIB(util, emalloc)
+
 case "$host_os" in
 	darwin*)
 		;;

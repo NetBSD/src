@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_template.c,v 1.1.1.3 2017/01/28 20:46:43 christos Exp $	*/
+/*	$NetBSD: gen_template.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -262,13 +262,13 @@ struct tlist {
 
 ASN1_TAILQ_HEAD(tlisthead, tlist);
 
-static void tlist_header(struct tlist *, const char *, ...) __attribute__((__format__(__printf__, 2, 3)));
+static void tlist_header(struct tlist *, const char *, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
 static struct template *
-    add_line(struct templatehead *, const char *, ...) __attribute__((__format__(__printf__, 2, 3)));
+    add_line(struct templatehead *, const char *, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
 static int tlist_cmp(const struct tlist *, const struct tlist *);
 
 static void add_line_pointer(struct templatehead *, const char *, const char *, const char *, ...)
-    __attribute__((__format__(__printf__, 4, 5)));
+    __attribute__ ((__format__ (__printf__, 4, 5)));
 
 
 static struct tlisthead tlistmaster = ASN1_TAILQ_HEAD_INITIALIZER(tlistmaster);
