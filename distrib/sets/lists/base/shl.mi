@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.797 2017/01/24 22:30:53 christos Exp $
+# $NetBSD: shl.mi,v 1.798 2017/01/28 21:42:41 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -179,8 +179,8 @@
 ./usr/lib/libasan.so.1				base-sys-shlib		compatfile,gcc=53
 ./usr/lib/libasan.so.1.0			base-sys-shlib		compatfile,gcc=53
 ./usr/lib/libasn1.so				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libasn1.so.9				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libasn1.so.9.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libasn1.so.10				base-krb5-shlib		compatfile,kerberos
+./usr/lib/libasn1.so.10.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libatf-c++.so				base-atf-shlib		compatfile,atf
 ./usr/lib/libatf-c++.so.1			base-atf-shlib		compatfile,atf
 ./usr/lib/libatf-c++.so.1.0			base-atf-shlib		compatfile,atf
@@ -217,8 +217,8 @@
 ./usr/lib/libc.so.12.205			base-sys-shlib		compatfile
 ./usr/lib/libcdk.so				base-obsolete		compatfile,obsolete
 ./usr/lib/libcom_err.so				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libcom_err.so.7			base-krb5-shlib		compatfile,kerberos
-./usr/lib/libcom_err.so.7.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libcom_err.so.8			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libcom_err.so.8.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libcrypt.so				base-sys-shlib		compatfile
 ./usr/lib/libcrypt.so.1				base-sys-shlib		compatfile
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib		compatfile
@@ -299,20 +299,20 @@
 ./usr/lib/libgomp.so.1.2			base-sys-shlib		gcc=53,machine_arch=mips64eb
 ./usr/lib/libgomp.so.1.2			base-sys-shlib		gcc=53,machine_arch=mips64el
 ./usr/lib/libgssapi.so				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libgssapi.so.10			base-krb5-shlib		compatfile,kerberos
-./usr/lib/libgssapi.so.10.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libgssapi.so.11			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libgssapi.so.11.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libhdb.so				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libhdb.so.14				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libhdb.so.14.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libhdb.so.15				base-krb5-shlib		compatfile,kerberos
+./usr/lib/libhdb.so.15.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libheimbase.so			base-krb5-shlib		compatfile,kerberos
-./usr/lib/libheimbase.so.1			base-krb5-shlib		compatfile,kerberos
-./usr/lib/libheimbase.so.1.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libheimbase.so.2			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libheimbase.so.2.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libheimntlm.so			base-krb5-shlib		compatfile,kerberos
-./usr/lib/libheimntlm.so.4			base-krb5-shlib		compatfile,kerberos
-./usr/lib/libheimntlm.so.4.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libheimntlm.so.5			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libheimntlm.so.5.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libhx509.so				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libhx509.so.5				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libhx509.so.5.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libhx509.so.6				base-krb5-shlib		compatfile,kerberos
+./usr/lib/libhx509.so.6.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libintl.so				base-sys-shlib		compatfile
 ./usr/lib/libintl.so.1				base-sys-shlib		compatfile
 ./usr/lib/libintl.so.1.1			base-sys-shlib		compatfile
@@ -339,22 +339,22 @@
 ./usr/lib/libisns.so.0.0			base-isns-shlib		compatfile
 ./usr/lib/libkadm.so				base-obsolete		obsolete
 ./usr/lib/libkadm5clnt.so			base-krb5-shlib		compatfile,kerberos
-./usr/lib/libkadm5clnt.so.13			base-krb5-shlib		compatfile,kerberos
-./usr/lib/libkadm5clnt.so.13.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libkadm5clnt.so.14			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libkadm5clnt.so.14.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libkadm5srv.so			base-krb5-shlib		compatfile,kerberos
-./usr/lib/libkadm5srv.so.14			base-krb5-shlib		compatfile,kerberos
-./usr/lib/libkadm5srv.so.14.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libkadm5srv.so.15			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libkadm5srv.so.15.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libkafs.so				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libkafs.so.12				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libkafs.so.12.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libkafs.so.13				base-krb5-shlib		compatfile,kerberos
+./usr/lib/libkafs.so.13.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libkdb.so				base-obsolete		obsolete
 ./usr/lib/libkdc.so				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libkdc.so.2				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libkdc.so.2.0				base-krb5-shlib		compatfile,kerberos
+./usr/lib/libkdc.so.3				base-krb5-shlib		compatfile,kerberos
+./usr/lib/libkdc.so.3.0				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libkrb.so				base-obsolete		obsolete
 ./usr/lib/libkrb5.so				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libkrb5.so.26				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libkrb5.so.26.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libkrb5.so.27				base-krb5-shlib		compatfile,kerberos
+./usr/lib/libkrb5.so.27.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libkstream.so				base-obsolete		obsolete
 ./usr/lib/libkvm.so				base-sys-shlib		compatfile
 ./usr/lib/libkvm.so.6				base-sys-shlib		compatfile
@@ -470,8 +470,8 @@
 ./usr/lib/libresolv.so.3			base-net-shlib		compatfile
 ./usr/lib/libresolv.so.3.0			base-net-shlib		compatfile
 ./usr/lib/libroken.so				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libroken.so.19			base-krb5-shlib		compatfile,kerberos
-./usr/lib/libroken.so.19.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libroken.so.20			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libroken.so.20.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/librpcsvc.so				base-net-shlib		compatfile
 ./usr/lib/librpcsvc.so.1			base-net-shlib		compatfile
 ./usr/lib/librpcsvc.so.1.0			base-net-shlib		compatfile
@@ -768,8 +768,8 @@
 ./usr/lib/libskey.so.2				base-sys-shlib		compatfile,skey
 ./usr/lib/libskey.so.2.0			base-sys-shlib		compatfile,skey
 ./usr/lib/libsl.so				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libsl.so.5				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libsl.so.5.0				base-krb5-shlib		compatfile,kerberos
+./usr/lib/libsl.so.6				base-krb5-shlib		compatfile,kerberos
+./usr/lib/libsl.so.6.0				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libsqlite3.so				base-sys-shlib		compatfile
 ./usr/lib/libsqlite3.so.1			base-sys-shlib		compatfile
 ./usr/lib/libsqlite3.so.1.2			base-sys-shlib		compatfile
@@ -825,8 +825,8 @@
 ./usr/lib/libuutil.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libuutil.so.0.0			base-zfs-shlib		compatfile,zfs
 ./usr/lib/libwind.so				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libwind.so.0				base-krb5-shlib		compatfile,kerberos
-./usr/lib/libwind.so.0.0			base-krb5-shlib		compatfile,kerberos
+./usr/lib/libwind.so.1				base-krb5-shlib		compatfile,kerberos
+./usr/lib/libwind.so.1.0			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libwrap.so				base-net-shlib		compatfile
 ./usr/lib/libwrap.so.1				base-net-shlib		compatfile
 ./usr/lib/libwrap.so.1.0			base-net-shlib		compatfile
