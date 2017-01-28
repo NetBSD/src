@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2017/01/28 16:55:54 nat Exp $
+# $NetBSD: Makefile,v 1.2 2017/01/28 23:19:20 christos Exp $
+
+.include <bsd.own.mk>
 
 WARNS?=		6
 
@@ -12,10 +14,16 @@ LDADD+=		-lbluetooth -levent
 CLEANFILES+=	sbc_crc.h sbc_coeffs.h
 
 sbc_encode.c:	sbc_coeffs.h sbc_crc.h
-sbc_coeffs.h:
-	../cosdata-gen/cosdata > sbc_coeffs.h
-sbc_crc.h:
-	../sbc_crc-gen/sbc_crc > sbc_crc.h
+
+COSDATA_GENOBJDIR!=  cd ${.CURDIR}/../cosdata-gen && ${PRINTOBJDIR}
+SBC_CRC_GENOBJDIR!=  cd ${.CURDIR}/../sbc_crc-gen && ${PRINTOBJDIR}
+
+
+sbc_coeffs.h: ${COSDATA_GENOBJDIR}/cosdata
+	${.ALLSRC} > ${.TARGET}
+
+sbc_crc.h: ${SBC_CRC_GENOBJDIR}/sbc_crc
+	${.ALLSRC} > ${.TARGET}
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
