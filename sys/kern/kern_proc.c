@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.204 2017/01/27 03:53:01 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.205 2017/01/28 16:43:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,13 +62,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.204 2017/01/27 03:53:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.205 2017/01/28 16:43:59 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
 #include "opt_dtrace.h"
 #include "opt_compat_netbsd32.h"
+#endif
+
+#if defined(__HAVE_COMPAT_NETBSD32) && !defined(COMPAT_NETBSD32) \
+    && !defined(_RUMPKERNEL)
+#define COMPAT_NETBSD32
 #endif
 
 #include <sys/param.h>
@@ -103,11 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.204 2017/01/27 03:53:01 christos Exp
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
-
-#if defined(__HAVE_COMPAT_NETBSD32) && !defined(COMPAT_NETBSD32) \
-    && !defined(_RUMPKERNEL)
-#define COMPAT_NETBSD32
-#endif
 
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32.h>
