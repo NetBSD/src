@@ -1,4 +1,4 @@
-/*	$NetBSD: sha512.c,v 1.1.1.3 2017/01/28 20:46:45 christos Exp $	*/
+/*	$NetBSD: sha512.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010 Kungliga Tekniska Högskolan
