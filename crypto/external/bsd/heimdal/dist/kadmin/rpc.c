@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: rpc.c,v 1.1.1.3 2017/01/28 20:46:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -465,7 +465,7 @@ ret_principal_ent(krb5_context contextp,
     ent->max_life = flag;
     CHECK(krb5_ret_uint32(sp, &flag));
     if (flag == 0)
-	ret_principal_xdr(contextp, sp, &ent->mod_name);
+	CHECK(ret_principal_xdr(contextp, sp, &ent->mod_name));
     CHECK(krb5_ret_uint32(sp, &flag));
     ent->mod_date = flag;
     CHECK(krb5_ret_uint32(sp, &flag));
@@ -1099,7 +1099,7 @@ handle_mit(krb5_context contextp, void *buf, size_t len, krb5_socket_t sock)
 
     dcontext = contextp;
 
-    sp = krb5_storage_from_fd(sock);
+    sp = krb5_storage_from_socket(sock);
     INSIST(sp != NULL);
 
     process_stream(contextp, buf, len, sp);
