@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.8.4.6 2017/01/28 09:43:28 skrll Exp $
+$NetBSD: TODO.usbmp,v 1.8.4.7 2017/01/28 10:05:09 skrll Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -103,7 +103,6 @@ wakeup/tsleep drivers:
   - udsir.c
   - uirda.c
   - umass_isdata.c
-  - ulpt.c
   - ustir.c
   - uthum.c
   - uyurex.c
