@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.36.14.12 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.36.14.13 2017/01/28 12:12:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.12 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.13 2017/01/28 12:12:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -343,6 +343,8 @@ zyd_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	cv_init(&sc->sc_cmdcv, "zydcmd");
 	SIMPLEQ_INIT(&sc->sc_rqh);
 
 	/* defer configrations after file system is ready to load firmware */
@@ -466,12 +468,11 @@ zyd_detach(device_t self, int flags)
 	struct zyd_softc *sc = device_private(self);
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
-	int s;
 
 	if (!sc->attached)
 		return 0;
 
-	s = splusb();
+	mutex_enter(&sc->sc_lock);
 
 	zyd_stop(ifp, 1);
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
@@ -487,7 +488,10 @@ zyd_detach(device_t self, int flags)
 	ieee80211_ifdetach(ic);
 	if_detach(ifp);
 
-	splx(s);
+	mutex_exit(&sc->sc_lock);
+
+	mutex_destroy(&sc->sc_lock);
+	cv_destroy(&sc->sc_cmdcv);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
@@ -792,7 +796,6 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 	uint16_t xferflags;
 	int error;
 	usbd_status uerror;
-	int s = 0;
 
 	error = usbd_create_xfer(sc->zyd_ep[ZYD_ENDPT_IOUT],
 	    sizeof(uint16_t) + ilen, USBD_FORCE_SHORT_XFER, 0, &xfer);
@@ -806,19 +809,18 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 	if (!(flags & ZYD_CMD_FLAG_READ))
 		xferflags |= USBD_SYNCHRONOUS;
 	else {
-		s = splusb();
 		rq.idata = idata;
 		rq.odata = odata;
 		rq.len = olen / sizeof(struct zyd_pair);
+		mutex_enter(&sc->sc_lock);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_rqh, &rq, rq);
+		mutex_exit(&sc->sc_lock);
 	}
 
 	usbd_setup_xfer(xfer, 0, &cmd, sizeof(uint16_t) + ilen, xferflags,
 	    ZYD_INTR_TIMEOUT, NULL);
 	uerror = usbd_transfer(xfer);
 	if (uerror != USBD_IN_PROGRESS && uerror != 0) {
-		if (flags & ZYD_CMD_FLAG_READ)
-			splx(s);
 		printf("%s: could not send command (error=%s)\n",
 		    device_xname(sc->sc_dev), usbd_errstr(uerror));
 		(void)usbd_destroy_xfer(xfer);
@@ -829,11 +831,12 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 		return 0;	/* write: don't wait for reply */
 	}
 	/* wait at most one second for command reply */
-	error = tsleep(odata, PCATCH, "zydcmd", hz);
+	mutex_enter(&sc->sc_lock);
+	error = cv_timedwait_sig(&sc->sc_cmdcv, &sc->sc_lock, hz);
 	if (error == EWOULDBLOCK)
 		printf("%s: zyd_read sleep timeout\n", device_xname(sc->sc_dev));
 	SIMPLEQ_REMOVE(&sc->sc_rqh, &rq, rq, rq);
-	splx(s);
+	mutex_exit(&sc->sc_lock);
 
 	(void)usbd_destroy_xfer(xfer);
 	return error;
@@ -1872,6 +1875,7 @@ zyd_intr(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		datalen -= sizeof(cmd->code);
 		datalen -= 2;	/* XXX: padding? */
 
+		mutex_enter(&sc->sc_lock);
 		SIMPLEQ_FOREACH(rqp, &sc->sc_rqh, rq) {
 			int i;
 
@@ -1888,10 +1892,11 @@ zyd_intr(struct usbd_xfer *xfer, void * priv, usbd_status status)
 			/* copy answer into caller-supplied buffer */
 			memcpy(rqp->odata, cmd->data,
 			    sizeof(struct zyd_pair) * rqp->len);
-			wakeup(rqp->odata);	/* wakeup caller */
-
+			cv_signal(&sc->sc_cmdcv);
+			mutex_exit(&sc->sc_lock);
 			return;
 		}
+		mutex_exit(&sc->sc_lock);
 		return;	/* unexpected IORD notification */
 	} else {
 		printf("%s: unknown notification %x\n", device_xname(sc->sc_dev),
