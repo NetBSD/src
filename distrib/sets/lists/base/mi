@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1150 2017/01/13 11:21:47 nonaka Exp $
+# $NetBSD: mi,v 1.1151 2017/01/28 16:55:54 nat Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1591,6 +1591,7 @@
 ./usr/sbin/bootpgw				base-bootserver-bin
 ./usr/sbin/bootptest				base-bootserver-bin
 ./usr/sbin/bpm					base-obsolete		obsolete
+./usr/sbin/bta2dpd				base-sysutil-bin
 ./usr/sbin/btattach				base-sysutil-bin
 ./usr/sbin/btconfig				base-sysutil-bin
 ./usr/sbin/btcontrol				base-obsolete		obsolete
