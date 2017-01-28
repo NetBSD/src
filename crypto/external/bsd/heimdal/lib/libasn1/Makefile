@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2013/09/11 23:04:09 joerg Exp $
+# $NetBSD: Makefile,v 1.3 2017/01/28 21:31:51 christos Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -51,7 +51,9 @@ SRCS=			\
 	der_copy.c	\
 	der_cmp.c	\
 	der_format.c	\
+	fuzzer.c	\
 	extra.c		\
+	template.c	\
 	timegm.c
 
 .if ${USETOOLS} != "yes"

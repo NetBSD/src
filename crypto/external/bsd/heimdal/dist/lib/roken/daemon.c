@@ -1,4 +1,4 @@
-/*	$NetBSD: daemon.c,v 1.1.1.2 2017/01/28 20:46:52 christos Exp $	*/
+/*	$NetBSD: daemon.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
