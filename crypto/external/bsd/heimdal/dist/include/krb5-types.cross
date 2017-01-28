@@ -56,6 +56,12 @@ typedef ssize_t krb5_ssize_t;
 #endif
 #endif
 
+#ifndef HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE
+#if __has_extension(__warn_unused_result__) || KRB5TYPES_REQUIRE_GNUC(3,3,0)
+#define HEIMDAL_WARN_UNUSED_RESULT_ATTRIBUTE __attribute__((__warn_unused_result__))
+#endif
+#endif
+
 typedef int krb5_socket_t;
 
 #endif /* __krb5_types_h__ */
