@@ -1,4 +1,4 @@
-/*	$NetBSD: process_context_token.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: process_context_token.c,v 1.1.1.2 2017/01/28 20:46:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -39,7 +39,7 @@
 
 OM_uint32 _netlogon_process_context_token (
         OM_uint32          *minor_status,
-        const gss_ctx_id_t context_handle,
+        gss_const_ctx_id_t context_handle,
         const gss_buffer_t token_buffer
     )
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtbl.h,v 1.1.1.2 2011/04/14 14:09:31 elric Exp $	*/
+/*	$NetBSD: rtbl.h,v 1.1.1.3 2017/01/28 20:46:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2000,2004 Kungliga Tekniska Högskolan
@@ -63,6 +63,7 @@ typedef struct rtbl_data *rtbl_t;
 
 /* flags */
 #define RTBL_HEADER_STYLE_NONE	1
+#define RTBL_JSON		2
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rtbl_add_column (rtbl_t, const char*, unsigned int);
@@ -93,6 +94,9 @@ rtbl_destroy (rtbl_t);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rtbl_format (rtbl_t, FILE*);
+
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+rtbl_format_str (rtbl_t);
 
 ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
 rtbl_get_flags (rtbl_t);

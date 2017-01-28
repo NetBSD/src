@@ -1,4 +1,4 @@
-/*	$NetBSD: warn.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
+/*	$NetBSD: warn.c,v 1.1.1.3 2017/01/28 20:46:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -86,6 +86,12 @@ _warnerr(krb5_context context, int do_errtext,
     va_list ap;								\
     va_start(ap, fmt);							\
     ret = _warnerr(context, ETEXT, CODE, LEVEL, fmt, ap); 		\
+    va_end(ap);
+
+#define FUNC_NORET(ETEXT, CODE, LEVEL)					\
+    va_list ap;								\
+    va_start(ap, fmt);							\
+    (void) _warnerr(context, ETEXT, CODE, LEVEL, fmt, ap); 		\
     va_end(ap);
 
 #undef __attribute__
@@ -204,7 +210,7 @@ krb5_err(krb5_context context, int eval, krb5_error_code code,
 	 const char *fmt, ...)
      __attribute__ ((noreturn, format (printf, 4, 5)))
 {
-    FUNC(1, code, 0);
+    FUNC_NORET(1, code, 0);
     exit(eval);
     UNREACHABLE(return 0);
 }
@@ -243,7 +249,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_errx(krb5_context context, int eval, const char *fmt, ...)
      __attribute__ ((noreturn, format (printf, 3, 4)))
 {
-    FUNC(0, 0, 0);
+    FUNC_NORET(0, 0, 0);
     exit(eval);
     UNREACHABLE(return 0);
 }
@@ -277,6 +283,7 @@ krb5_vabort(krb5_context context, krb5_error_code code,
  * @param context A Kerberos 5 context
  * @param code error code of the last error
  * @param fmt message to print
+ * @param ... arguments for format string
  *
  * @ingroup krb5_error
  */
@@ -285,7 +292,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_abort(krb5_context context, krb5_error_code code, const char *fmt, ...)
      __attribute__ ((noreturn, format (printf, 3, 4)))
 {
-    FUNC(1, code, 0);
+    FUNC_NORET(1, code, 0);
     abort();
     UNREACHABLE(return 0);
 }
@@ -303,8 +310,8 @@ krb5_vabortx(krb5_context context, const char *fmt, va_list ap)
  * Log a warning to the log, default stderr, and then abort.
  *
  * @param context A Kerberos 5 context
- * @param code error code of the last error
- * @param fmt message to print
+ * @param fmt printf format string of message to print
+ * @param ... arguments for format string
  *
  * @ingroup krb5_error
  */
@@ -313,7 +320,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_abortx(krb5_context context, const char *fmt, ...)
      __attribute__ ((noreturn, format (printf, 2, 3)))
 {
-    FUNC(0, 0, 0);
+    FUNC_NORET(0, 0, 0);
     abort();
     UNREACHABLE(return 0);
 }

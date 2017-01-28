@@ -1,4 +1,4 @@
-/*	$NetBSD: mtest.c,v 1.1.1.2 2014/04/24 12:45:39 pettai Exp $	*/
+/*	$NetBSD: mtest.c,v 1.1.1.3 2017/01/28 20:46:47 christos Exp $	*/
 
 /* makes a bignum test harness with NUM tests per operation
  *
@@ -283,7 +283,7 @@ int main(void)
       printf("%s\n", buf);
    } else if (n == 13) {
       rand_num2(&a);
-      tmp = abs(rand()) & THE_MASK;
+      tmp = labs(rand()) & THE_MASK;
       mp_add_d(&a, tmp, &b);
       printf("add_d\n");
       mp_to64(&a, buf);
@@ -292,7 +292,7 @@ int main(void)
       printf("%s\n", buf);
    } else if (n == 14) {
       rand_num2(&a);
-      tmp = abs(rand()) & THE_MASK;
+      tmp = labs(rand()) & THE_MASK;
       mp_sub_d(&a, tmp, &b);
       printf("sub_d\n");
       mp_to64(&a, buf);

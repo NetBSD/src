@@ -1,4 +1,4 @@
-/*	$NetBSD: ec.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: ec.c,v 1.1.1.3 2017/01/28 20:46:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -32,6 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <config.h>
+#include <krb5/roken.h>
 
 #include "ec.h"
 

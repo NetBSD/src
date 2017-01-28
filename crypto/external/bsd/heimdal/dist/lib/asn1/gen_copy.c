@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_copy.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: gen_copy.c,v 1.1.1.3 2017/01/28 20:46:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "gen_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: gen_copy.c,v 1.1.1.3 2017/01/28 20:46:43 christos Exp $");
 
 static int used_fail;
 

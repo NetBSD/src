@@ -19,7 +19,7 @@
 \def\gcd{{\rm gcd}}
 \def\log{{\rm log}}
 \def\ord{{\rm ord}}
-\def\abs{{\mathit abs}}
+\def\labs{{\mathit labs}}
 \def\rep{{\mathit rep}}
 \def\mod{{\mathit\ mod\ }}
 \renewcommand{\pmod}[1]{\ ({\rm mod\ }{#1})}
