@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.22 2017/01/29 02:07:57 christos Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.23 2017/01/29 02:29:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -510,7 +510,7 @@ int
 prop_array_copyin_ioctl(const struct plistref *pref, const u_long cmd,
     prop_array_t *arrayp)
 {
-	return prop_array_copyin_ioctl(pref, cmd, arrayp,
+	return prop_array_copyin_ioctl_size(pref, cmd, arrayp,
 	    prop_object_copyin_limit);
 }
 
@@ -530,7 +530,7 @@ int
 prop_dictionary_copyin_ioctl(const struct plistref *pref, const u_long cmd,
     prop_dictionary_t *dictp)
 {
-    return prop_dictionary_copyin_ioctl(pref, cmd, dictp,
+    return prop_dictionary_copyin_ioctl_size(pref, cmd, dictp,
 	prop_object_copyin_limit);
 }
 
