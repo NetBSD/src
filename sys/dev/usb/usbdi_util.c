@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.63.2.14 2016/10/27 07:46:19 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.63.2.15 2017/01/29 15:58:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.14 2016/10/27 07:46:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.15 2017/01/29 15:58:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -112,7 +112,7 @@ usbd_get_bos_desc(struct usbd_device *dev, int confidx,
 	err = usbd_get_desc(dev, UDESC_BOS, confidx,
 			    USB_BOS_DESCRIPTOR_SIZE, d);
 	if (err)
-		return (err);
+		return err;
 	if (d->bDescriptorType != UDESC_BOS) {
 		DPRINTFN(1, "confidx=%d, bad desc len=%d type=%d",
 		    confidx, d->bLength, d->bDescriptorType, 0);
@@ -212,7 +212,7 @@ usbd_get_port_status_ext(struct usbd_device *dev, int port,
 	USETW2(req.wValue, 0, UR_PST_EXT_PORT_STATUS);
 	USETW(req.wIndex, port);
 	USETW(req.wLength, sizeof(*pse));
-	return (usbd_do_request(dev, &req, pse));
+	return usbd_do_request(dev, &req, pse);
 }
 
 usbd_status

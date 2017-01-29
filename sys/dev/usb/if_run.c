@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.10.6.12 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: if_run.c,v 1.10.6.13 2017/01/29 15:58:14 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.12 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.13 2017/01/29 15:58:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1110,7 +1110,7 @@ run_efuse_read(struct run_softc *sc, uint16_t addr, uint16_t *val, int count)
 static int
 run_efuse_read_2(struct run_softc *sc, uint16_t addr, uint16_t *val)
 {
-	return (run_efuse_read(sc, addr, val, 2));
+	return run_efuse_read(sc, addr, val, 2);
 }
 
 static int
@@ -4100,7 +4100,7 @@ run_rt3593_rf_init(struct run_softc *sc)
 
 	run_read(sc, RT3070_OPT_14, &tmp);
 	run_write(sc, RT3070_OPT_14, tmp | 1);
-	return (0);
+	return 0;
 }
 
 static int
@@ -4165,7 +4165,7 @@ run_rt5390_rf_init(struct run_softc *sc)
 
 	run_read(sc, RT3070_OPT_14, &tmp);
 	run_write(sc, RT3070_OPT_14, tmp | 1);
-	return (0);
+	return 0;
 }
 
 static int
@@ -4486,7 +4486,7 @@ run_adjust_freq_offset(struct run_softc *sc)
 	if (tmp != rf)
 		run_mcu_cmd(sc, 0x74, (tmp << 8 ) | rf);
 
-	return (0);
+	return 0;
 }
 
 static int

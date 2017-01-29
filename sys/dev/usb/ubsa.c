@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.30.16.9 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.30.16.10 2017/01/29 15:58:14 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.30.16.9 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.30.16.10 2017/01/29 15:58:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -341,7 +341,7 @@ ubsa_detach(device_t self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
