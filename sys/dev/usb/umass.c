@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.17 2017/01/29 10:08:38 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.18 2017/01/29 10:10:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.17 2017/01/29 10:08:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.18 2017/01/29 10:10:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -140,7 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.17 2017/01/29 10:08:38 skrll Exp $
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/sysctl.h>
 
 #include <dev/usb/usb.h>
@@ -822,7 +821,7 @@ umass_detach(device_t self, int flags)
 	if (scbus != NULL) {
 		if (scbus->sc_child != NULL)
 			rv = config_detach(scbus->sc_child, flags);
-		free(scbus, M_DEVBUF);
+		kmem_free(scbus, sizeof(*scbus));
 		sc->bus = NULL;
 	}
 
