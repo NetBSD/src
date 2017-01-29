@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.5.in,v 1.21 2017/01/12 13:53:11 roy Exp $
+.\"	$NetBSD: terminfo.5.in,v 1.22 2017/01/29 16:52:38 abhinav Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -197,7 +197,7 @@ hts=\eEH, ht=^I,
 This implementation uses hashed databases managed by
 .Xr cdb 5
 instead of directories.
-To maintain compatability with other implementations,
+To maintain compatibility with other implementations,
 .Pa .cdb
 is appended to each file checked.
 .Pp
