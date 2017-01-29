@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.137 2017/01/26 21:38:11 skrll Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.138 2017/01/29 18:30:33 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.137 2017/01/26 21:38:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.138 2017/01/29 18:30:33 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -540,6 +540,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		TUNDEBUG ("%s: not ready 0%o\n", ifp->if_xname,
 			  tp->tun_flags);
 		error = EHOSTDOWN;
+		mutex_exit(&tp->tun_lock);
 		goto out;
 	}
 	// XXXrmind
@@ -619,9 +620,9 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		softint_schedule(tp->tun_isih);
 
 	selnotify(&tp->tun_rsel, 0, 0);
-out:
-	mutex_exit(&tp->tun_lock);
 
+	mutex_exit(&tp->tun_lock);
+out:
 	if (error && m0) {
 		m_freem(m0);
 	}
