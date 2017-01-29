@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.6.14.8 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: uark.c,v 1.6.14.9 2017/01/29 15:58:14 skrll Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.6.14.8 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.6.14.9 2017/01/29 15:58:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -229,7 +229,7 @@ uark_activate(device_t self, enum devact act)
 		sc->sc_dying = 1;
 		break;
 	}
-	return (rv);
+	return rv;
 }
 
 void
@@ -272,7 +272,7 @@ uark_param(void *vsc, int portno, struct termios *t)
 		uark_cmd(sc, 3, 0x03);
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	if (ISSET(t->c_cflag, CSTOPB))
@@ -317,7 +317,7 @@ uark_param(void *vsc, int portno, struct termios *t)
 	}
 #endif
 
-	return (0);
+	return 0;
 }
 
 void
@@ -363,7 +363,7 @@ uark_cmd(struct uark_softc *sc, uint16_t index, uint16_t value)
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 
 	if (err)
-		return (EIO);
+		return EIO;
 
-	return (0);
+	return 0;
 }

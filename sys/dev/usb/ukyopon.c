@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.16.16.8 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.16.16.9 2017/01/29 15:58:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.16.8 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.16.9 2017/01/29 15:58:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -117,9 +117,9 @@ ukyopon_match(device_t parent, cfdata_t match, void *aux)
 	    uiaa->uiaa_product == USB_PRODUCT_KYOCERA_AHK3001V &&
 	    (uiaa->uiaa_ifaceno == UKYOPON_MODEM_IFACE_INDEX ||
 	     uiaa->uiaa_ifaceno == UKYOPON_DATA_IFACE_INDEX))
-		return (UMATCH_VENDOR_PRODUCT);
+		return UMATCH_VENDOR_PRODUCT;
 
-	return (UMATCH_NONE);
+	return UMATCH_NONE;
 }
 
 void
@@ -178,7 +178,7 @@ ukyopon_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
 		break;
 	}
 
-	return (error);
+	return error;
 }
 
 int
