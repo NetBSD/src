@@ -3,12 +3,14 @@
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
-#endif
+#define arc4random random
+#define arc4random_stir() srandom(time(NULL))
 #undef PACKAGE_NAME
 #undef PACKAGE_STRING
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
 #undef PACKAGE_BUGREPORT
+#endif
 
 #ifndef RCSID
 #define RCSID(msg) \
