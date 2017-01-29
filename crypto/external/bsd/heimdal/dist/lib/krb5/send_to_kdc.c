@@ -1,4 +1,4 @@
-/*	$NetBSD: send_to_kdc.c,v 1.4 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: send_to_kdc.c,v 1.5 2017/01/29 18:57:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -1246,12 +1246,16 @@ out:
     }
 
     _krb5_debug(context, 1,
-		"krb5_sendto_context %s done: %d hosts %lu packets %lu wc: %ld.%06ld nr: %ld.%06ld kh: %ld.%06ld tid: %08x",
-		realm, ret,
+		"%s %s done: %d hosts %lu packets %lu:
+		" wc: %jd.%06ld nr: %jd.%06ld kh: %jd.%06ld tid: %08x",
+		realm, ret, __func__,
 		ctx->stats.num_hosts, ctx->stats.sent_packets,
-		stop_time.tv_sec, (long)stop_time.tv_usec,
-		ctx->stats.name_resolution.tv_sec, (long)ctx->stats.name_resolution.tv_usec,
-		ctx->stats.krbhst.tv_sec, (long)ctx->stats.krbhst.tv_usec, ctx->stid);
+		(intmax_t)stop_time.tv_sec,
+		(long)stop_time.tv_usec,
+		(intmax_t)ctx->stats.name_resolution.tv_sec,
+		(long)ctx->stats.name_resolution.tv_usec,
+		(intmax_t)ctx->stats.krbhst.tv_sec,
+		(long)ctx->stats.krbhst.tv_usec, ctx->stid);
 
 
     if (freectx)
