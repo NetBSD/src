@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.9.14.10 2017/01/29 09:55:21 skrll Exp $ */
+/*	$NetBSD: uyurex.c,v 1.9.14.11 2017/01/29 11:27:52 skrll Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.10 2017/01/29 09:55:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.11 2017/01/29 11:27:52 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -125,7 +125,7 @@ uyurex_match(device_t parent, cfdata_t match, void *aux)
 	if (uyurex_lookup(uha->uiaa->uiaa_vendor, uha->uiaa->uiaa_product) == NULL)
 		return UMATCH_NONE;
 
-	return (UMATCH_VENDOR_PRODUCT);
+	return UMATCH_VENDOR_PRODUCT;
 }
 
 void
@@ -224,7 +224,7 @@ uyurex_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    sc->sc_hdev.sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -237,7 +237,7 @@ uyurex_activate(device_t self, enum devact act)
 		sc->sc_dying = 1;
 		break;
 	}
-	return (0);
+	return 0;
 }
 
 void
