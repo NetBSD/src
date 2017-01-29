@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.49.2.7 2017/01/29 10:10:30 skrll Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.49.2.8 2017/01/29 10:13:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.49.2.7 2017/01/29 10:10:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.49.2.8 2017/01/29 10:13:51 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.49.2.7 2017/01/29 10:10:30 skrll 
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/lwp.h>
+#include <sys/malloc.h>
 
 /* SCSI & ATAPI */
 #include <sys/scsiio.h>
