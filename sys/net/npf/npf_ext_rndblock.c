@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_rndblock.c,v 1.6 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_ext_rndblock.c,v 1.7 2017/01/29 00:15:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_rndblock.c,v 1.6 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_rndblock.c,v 1.7 2017/01/29 00:15:54 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/cprng.h>
@@ -99,7 +99,8 @@ npf_ext_rndblock_dtor(npf_rproc_t *rp, void *meta)
  * npf_ext_rndblock: main routine implementing the extension functionality.
  */
 static bool
-npf_ext_rndblock(npf_cache_t *npc, void *meta, int *decision)
+npf_ext_rndblock(npf_cache_t *npc, void *meta, const npf_match_info_t *mi,
+    int *decision)
 {
 	npf_ext_rndblock_t *rndblock = meta;
 	unsigned long c;
