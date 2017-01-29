@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2017/01/28 22:25:44 christos Exp $
+# $NetBSD: Makefile,v 1.11 2017/01/29 15:42:58 christos Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -15,14 +15,16 @@ WARNS?=		0
 
 LIB=		krb5
 
-LIBDPLIBS+=	hx509		${HEIMBASE}/lib/libhx509	\
-		crypto		${SSLBASE}/lib/libcrypto	\
-		asn1		${HEIMBASE}/lib/libasn1		\
-		com_err		${HEIMBASE}/lib/libcom_err	\
-		roken		${HEIMBASE}/lib/libroken	\
-		wind		${HEIMBASE}/lib/libwind		\
-		heimbase	${HEIMBASE}/lib/libheimbase	\
-		crypt		${NETBSDSRCDIR}/lib/libcrypt
+LIBDPLIBS+=	\
+	hx509		${HEIMBASE}/lib/libhx509	\
+	crypto		${SSLBASE}/lib/libcrypto	\
+	asn1		${HEIMBASE}/lib/libasn1		\
+	com_err		${HEIMBASE}/lib/libcom_err	\
+	roken		${HEIMBASE}/lib/libroken	\
+	wind		${HEIMBASE}/lib/libwind		\
+	heimbase	${HEIMBASE}/lib/libheimbase	\
+	sqlite3		${NETBSDSRCDIR}/external/public-domain/sqlite/lib \
+	crypt		${NETBSDSRCDIR}/lib/libcrypt
 
 HEIMSRCS= krb_err.et krb5_err.et heim_err.et k524_err.et
 
