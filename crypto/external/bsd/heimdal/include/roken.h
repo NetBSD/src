@@ -99,7 +99,7 @@ typedef int rk_socket_t;
 
 
 
-#include "roken-common.h"
+#include <krb5/roken-common.h>
 
 ROKEN_CPP_START
 
