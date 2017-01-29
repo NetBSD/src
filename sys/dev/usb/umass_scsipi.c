@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.49.2.6 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.49.2.7 2017/01/29 10:10:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.49.2.6 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.49.2.7 2017/01/29 10:10:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.49.2.6 2016/12/05 10:55:18 skrll 
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/lwp.h>
-#include <sys/malloc.h>
 
 /* SCSI & ATAPI */
 #include <sys/scsiio.h>
@@ -180,7 +179,7 @@ umass_scsipi_setup(struct umass_softc *sc)
 {
 	struct umass_scsipi_softc *scbus;
 
-	scbus = malloc(sizeof(*scbus), M_DEVBUF, M_WAITOK | M_ZERO);
+	scbus = kmem_zalloc(sizeof(*scbus), KM_SLEEP);
 	sc->bus = &scbus->base;
 
 	/* Only use big commands for USB SCSI devices. */
