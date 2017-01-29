@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.146 2017/01/22 05:53:52 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.147 2017/01/29 05:31:46 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -7923,4 +7923,18 @@ crypto/external/bsd/openssh/dist/moduli		up to 1.8
 
 	Update moduli file.
 	[aymeric/agc, ticket #1318]
+
+lib/libutil/opendisk.3				1.12, 1.13
+lib/libutil/opendisk.c				1.14
+
+	PR/51216: Instead of trying to open files in the current
+	working directory first for paths that don't contain "/", first
+	try the /dev paths to avoid confusion with files in the working
+	directory that happen to match disk names.
+	[pgoyette, ticket #1349]
+
+sys/external/bsd/drm2/dist/drm/ttm/ttm_tt.c	1.8
+
+	Guarantee no zero-size uao/kmem allocations via ttm.
+	[maya, ticket #1350]
 
