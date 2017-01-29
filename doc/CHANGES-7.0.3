@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.20 2017/01/22 05:53:23 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.21 2017/01/29 05:25:27 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -324,4 +324,9 @@ crypto/external/bsd/openssh/dist/moduli		up to 1.8
 
 	Update moduli file.
 	[aymeric/agc, ticket #1318]
+
+sys/external/bsd/drm2/dist/drm/ttm/ttm_tt.c	1.8
+
+	Guarantee no zero-size uao/kmem allocations via ttm.
+	[maya, ticket #1350]
 
