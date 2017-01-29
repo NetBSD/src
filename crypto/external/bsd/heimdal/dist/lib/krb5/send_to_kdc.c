@@ -1,4 +1,4 @@
-/*	$NetBSD: send_to_kdc.c,v 1.5 2017/01/29 18:57:06 christos Exp $	*/
+/*	$NetBSD: send_to_kdc.c,v 1.6 2017/01/29 18:58:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -1246,7 +1246,7 @@ out:
     }
 
     _krb5_debug(context, 1,
-		"%s %s done: %d hosts %lu packets %lu:
+		"%s %s done: %d hosts %lu packets %lu:"
 		" wc: %jd.%06ld nr: %jd.%06ld kh: %jd.%06ld tid: %08x",
 		realm, ret, __func__,
 		ctx->stats.num_hosts, ctx->stats.sent_packets,
