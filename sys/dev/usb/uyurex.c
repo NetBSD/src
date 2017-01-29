@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.9.14.9 2017/01/28 10:15:01 skrll Exp $ */
+/*	$NetBSD: uyurex.c,v 1.9.14.10 2017/01/29 09:55:21 skrll Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.9 2017/01/28 10:15:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.10 2017/01/29 09:55:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -341,7 +341,7 @@ uyurex_set_mode(struct uyurex_softc *sc, uint8_t val)
 	}
 
 	/* wait ack */
-	tsleep(&sc->sc_sme, 0, "uyurex", (1000*hz+999)/1000 + 1);
+	kpause("uyurexsm", false, (1000*hz+999)/1000 + 1, NULL);
 }
 
 void
