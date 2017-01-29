@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.21 2017/01/29 00:16:42 christos Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.22 2017/01/29 02:07:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -492,7 +492,7 @@ prop_dictionary_copyin(const struct plistref *pref, prop_dictionary_t *dictp)
 {
 	return prop_dictionary_copyin_size(pref, dictp,
 	    prop_object_copyin_limit);
-
+}
 
 /*
  * prop_array_copyin_ioctl --
