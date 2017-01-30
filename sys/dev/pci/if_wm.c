@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.470 2017/01/27 05:04:47 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.471 2017/01/30 09:33:38 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.470 2017/01/27 05:04:47 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.471 2017/01/30 09:33:38 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7726,7 +7726,7 @@ wm_rxeof(struct wm_rxqueue *rxq)
 		len = le16toh(wm_rxdesc_get_pktlen(rxq, i));
 		vlantag = wm_rxdesc_get_vlantag(rxq, i);
 #ifdef WM_DEBUG
-		uint32_t rsshash = wm_rxdesc_get_rsshash(rxq, i);
+		uint32_t rsshash = le32toh(wm_rxdesc_get_rsshash(rxq, i));
 		uint8_t rsstype = wm_rxdesc_get_rsstype(rxq, i);
 #endif
 
@@ -7838,13 +7838,13 @@ wm_rxeof(struct wm_rxqueue *rxq)
 		/* No errors.  Receive the packet. */
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = len;
-                /*
-                 * TODO
-                 * should be save rsshash and rsstype to this mbuf.
-                 */
-                DPRINTF(WM_DEBUG_RX,
-                    ("%s: RX: RSS type=%" PRIu8 ", RSS hash=%" PRIu32 "\n",
-                        device_xname(sc->sc_dev), rsstype, rsshash));
+		/*
+		 * TODO
+		 * should be save rsshash and rsstype to this mbuf.
+		 */
+		DPRINTF(WM_DEBUG_RX,
+		    ("%s: RX: RSS type=%" PRIu8 ", RSS hash=%" PRIu32 "\n",
+			device_xname(sc->sc_dev), rsstype, rsshash));
 
 		/*
 		 * If VLANs are enabled, VLAN packets have been unwrapped
