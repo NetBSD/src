@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.63 2017/01/30 14:55:58 roy Exp $	*/
+/*	$NetBSD: getch.c,v 1.64 2017/01/30 16:50:44 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.63 2017/01/30 14:55:58 roy Exp $");
+__RCSID("$NetBSD: getch.c,v 1.64 2017/01/30 16:50:44 roy Exp $");
 #endif
 #endif					/* not lint */
 
@@ -342,7 +342,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
  * Delete the given key symbol from the key mappings for the screen.
  *
  */
-void
+static void
 delete_key_sequence(keymap_t *current, int key_type)
 {
 	key_entry_t *key;
@@ -379,7 +379,7 @@ delete_key_sequence(keymap_t *current, int key_type)
  * Add the sequence of characters given in sequence as the key mapping
  * for the given key symbol.
  */
-void
+static void
 add_key_sequence(SCREEN *screen, char *sequence, int key_type)
 {
 	key_entry_t *tmp_key;
@@ -543,7 +543,7 @@ new_key(void)
  *
  */
 
-wchar_t
+static wchar_t
 inkey(int to, int delay)
 {
 	wchar_t		 k;
@@ -736,7 +736,9 @@ keyok(int key_type, bool flag)
 {
 	int result = ERR;
 
-	do_keyok(_cursesi_screen->base_keymap, key_type, true, flag, &result);
+	if (_cursesi_screen != NULL)
+		do_keyok(_cursesi_screen->base_keymap, key_type,
+		    true, flag, &result);
 	return result;
 }
 
@@ -781,7 +783,7 @@ int
 define_key(char *sequence, int symbol)
 {
 
-	if (symbol <= 0)
+	if (symbol <= 0 || _cursesi_screen == NULL)
 		return ERR;
 
 	if (sequence == NULL) {
@@ -810,10 +812,12 @@ wgetch(WINDOW *win)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wgetch: win(%p)\n", win);
 #endif
+	if (win == NULL)
+		return ERR;
 	if (!(win->flags & __SCROLLOK) && (win->flags & __FULLWIN)
 	    && win->curx == win->maxx - 1 && win->cury == win->maxy - 1
 	    && __echoit)
-		return (ERR);
+		return ERR;
 
 	if (is_wintouched(win))
 		wrefresh(win);
@@ -946,6 +950,8 @@ __unget(wint_t c)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "__unget(%x)\n", c);
 #endif
+	if (_cursesi_screen == NULL)
+		return ERR;
 	if (_cursesi_screen->unget_pos >= _cursesi_screen->unget_len) {
 		len = _cursesi_screen->unget_len + 32;
 		if ((p = realloc(_cursesi_screen->unget_list,
@@ -976,7 +982,9 @@ has_key(int key_type)
 {
 	int result = ERR;
 
-	do_keyok(_cursesi_screen->base_keymap, key_type, false, false, &result);
+	if (_cursesi_screen != NULL)
+		do_keyok(_cursesi_screen->base_keymap, key_type,
+		    false, false, &result);
 	return result;
 }
 
@@ -988,6 +996,8 @@ int
 set_escdelay(int escdelay)
 {
 
+	if (_cursesi_screen == NULL)
+		return ERR;
 	_cursesi_screen->ESCDELAY = escdelay;
 	_reentrant = true;
 	ESCDELAY = escdelay;
