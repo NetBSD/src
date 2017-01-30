@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.5 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.6 2017/01/30 18:59:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2010 Kungliga Tekniska Högskolan
@@ -506,6 +506,7 @@ copy_etypes (krb5_context context,
 
     *ret_enctypes = malloc(sizeof(enctypes[0]) * i);
     if (*ret_enctypes == NULL)
+	return krb5_enomem(context);
     memcpy(*ret_enctypes, enctypes, sizeof(enctypes[0]) * i);
     return 0;
 }
