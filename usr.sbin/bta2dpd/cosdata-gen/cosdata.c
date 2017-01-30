@@ -1,4 +1,4 @@
-/* $NetBSD: cosdata.c,v 1.1 2017/01/28 16:55:54 nat Exp $ */
+/* $NetBSD: cosdata.c,v 1.2 2017/01/30 14:55:17 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -89,7 +89,7 @@ main (void)
 	printf("#define COEFFSMULTI\t%d\n\n", vali);
 
 	printf("static const int32_t sbc_coeffs8[] = {\n    ");
-	for (k = 0;k < (int)__arraycount(sbc8_coeffs);k++) {
+	for (k = 0;k < (int)(sizeof(sbc8_coeffs)/sizeof(sbc8_coeffs[0]));k++) {
 		if (count % 8 == 0 && count != 0)
 			printf("\n    ");
 		val = (float)(sbc8_coeffs[k] * COEFFS_MULTI);
@@ -101,7 +101,7 @@ main (void)
 
 	count = 0;
 	printf("static const int32_t sbc_coeffs4[] = {\n    ");
-	for (k = 0;k < (int)__arraycount(sbc4_coeffs);k++) {
+	for (k = 0;k < (int)(sizeof(sbc4_coeffs)/sizeof(sbc4_coeffs[0]));k++) {
 		if (count % 8 == 0 && count != 0)
 			printf("\n    ");
 		val = (float)(sbc4_coeffs[k] * COEFFS_MULTI);
