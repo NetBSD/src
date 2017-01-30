@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 303890 2016-08-09 19:32:06Z dumbbell $*/
-/*$NetBSD: ixgbe.h,v 1.20 2017/01/25 07:46:53 msaitoh Exp $*/
+/*$NetBSD: ixgbe.h,v 1.21 2017/01/30 05:02:43 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -590,8 +590,8 @@ struct adapter {
 	struct evcnt	   	other_tx_dma_setup;
 	struct evcnt	   	eagain_tx_dma_setup;
 	struct evcnt	   	enomem_tx_dma_setup;
-	struct evcnt	   	watchdog_events;
 	struct evcnt	   	tso_err;
+	struct evcnt	   	watchdog_events;
 	struct evcnt		link_irq;
 	struct evcnt		morerx;
 	struct evcnt		moretx;
