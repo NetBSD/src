@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.267 2017/01/30 21:32:39 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.268 2017/01/30 21:34:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.267 2017/01/30 21:32:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.268 2017/01/30 21:34:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -633,7 +633,7 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 		 */
 		curlen = len;
 		if (sphyspg != ephyspg &&
-		    sphyspg + OHCI_PAGE_SIZE != ephyspg)) {
+		    sphyspg + OHCI_PAGE_SIZE != ephyspg) {
 			/* must use multiple TDs, fill as much as possible. */
 			curlen = 2 * OHCI_PAGE_SIZE -
 			    (sdataphys & (OHCI_PAGE_SIZE - 1));
