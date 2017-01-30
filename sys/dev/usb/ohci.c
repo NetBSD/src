@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.269 2017/01/30 21:35:59 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.270 2017/01/30 21:39:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.269 2017/01/30 21:35:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.270 2017/01/30 21:39:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -622,10 +622,10 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 		KASSERT(next != cur);
 
 		curlen = 0;
-		ohci_physaddr_t sdataphys = DMAADDR(dma, curoffs);
+		const ohci_physaddr_t sdataphys = DMAADDR(dma, curoffs);
 		ohci_physaddr_t edataphys = DMAADDR(dma, curoffs + len - 1);
 
-		ohci_physaddr_t sphyspg = OHCI_PAGE(sdataphys);
+		const ohci_physaddr_t sphyspg = OHCI_PAGE(sdataphys);
 		ohci_physaddr_t ephyspg = OHCI_PAGE(edataphys);
 		/*
 		 * The OHCI hardware can handle at most one page
