@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.9 2017/01/02 10:28:34 roy Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.10 2017/01/30 14:55:58 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.9 2017/01/02 10:28:34 roy Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.10 2017/01/30 14:55:58 roy Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -266,7 +266,8 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 				}
 				continue;
 			case L'\t':
-				tabsize = win->screen->TABSIZE;
+				tabsize = _reentrant ?
+				    win->screen->TABSIZE : TABSIZE;
 				if (wins_nwstr(win, ws,
 				    min(win->maxx - x, tabsize - (x % tabsize)))
 				    == ERR)
