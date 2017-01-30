@@ -19,4 +19,6 @@ do not evaluate or expand :? if discarding
 is set
 year=2016 month=04 day=01
 date=20160401
+Version=1.2.3 == 10203
+Literal=3.4.5 == 30405
 exit status 0
