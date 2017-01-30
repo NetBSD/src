@@ -128,7 +128,7 @@
 #define HAVE_PCAP_FREE_DATALINKS 1
 
 /* Define to 1 if the system has the type `pcap_if_t'. */
-/* #undef HAVE_PCAP_IF_T */
+#define HAVE_PCAP_IF_T 1
 
 /* Define to 1 if you have the `pcap_lib_version' function. */
 #define HAVE_PCAP_LIB_VERSION 1
