@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.406 2017/01/27 21:35:38 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.407 2017/01/30 21:24:33 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1137,7 +1137,7 @@ _C_LABEL(trapbase_sun4v):
 	sun4v_trap_entry_spill_fill_fail 1			! 0x0f4 fill_5_other
 	sun4v_trap_entry_spill_fill_fail 1			! 0x0f8 fill_6_other
 	sun4v_trap_entry_spill_fill_fail 1			! 0x0fc fill_7_other
-	sun4v_trap_entry 1					! 0x100
+	SYSCALL							! 0x100 = syscall
 	BPT							! 0x101 = pseudo breakpoint instruction
 	sun4v_trap_entry 254					! 0x102-0x1ff
 	!
@@ -3676,7 +3676,21 @@ syscall_setup:
 	sth	%o1, [%sp + CC64FSZ + STKB + TF_TT]! debug
 #endif
 
-	wrpr	%g0, PSTATE_KERN, %pstate	! Get back to normal globals
+	! Get back to normal globals
+#ifdef SUN4V
+	sethi	%hi(cputyp), %g5
+	ld	[%g5 + %lo(cputyp)], %g5
+	cmp	%g5, CPU_SUN4V
+	bne,pt	%icc, 1f
+	 nop
+	NORMAL_GLOBALS_SUN4V
+	ba	2f
+	 nop
+1:	
+#endif	
+	NORMAL_GLOBALS_SUN4U
+2:
+	
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
 	mov	%g1, %o1			! code
 	rdpr	%tpc, %o2			! (pc)
