@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.33 2017/01/19 09:42:08 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.34 2017/01/30 06:11:56 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -897,7 +897,12 @@ ixv_msix_que(void *arg)
 	ixv_disable_queue(adapter, que->msix);
 	++que->irqs.ev_count;
 
+#ifdef __NetBSD__
+	/* Don't run ixgbe_rxeof in interrupt context */
+	more = true;
+#else
 	more = ixgbe_rxeof(que);
+#endif
 
 	IXGBE_TX_LOCK(txr);
 	ixgbe_txeof(txr);
@@ -1606,8 +1611,9 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 #endif
 	ifp->if_snd.ifq_maxlen = adapter->num_tx_desc - 2;
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
+	if_register(ifp);
 	ether_set_ifflags_cb(ec, ixv_ifflags_cb);
 
 	adapter->max_frame_size =
