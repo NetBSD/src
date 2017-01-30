@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.62 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: getch.c,v 1.63 2017/01/30 14:55:58 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.62 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: getch.c,v 1.63 2017/01/30 14:55:58 roy Exp $");
 #endif
 #endif					/* not lint */
 
@@ -550,7 +550,8 @@ inkey(int to, int delay)
 	int              c, mapping;
 	keymap_t	*current = _cursesi_screen->base_keymap;
 	FILE            *infd = _cursesi_screen->infd;
-	int		escdelay = _cursesi_screen->ESCDELAY;
+	int		escdelay = _reentrant ?
+			    _cursesi_screen->ESCDELAY : ESCDELAY;
 
 	k = 0;		/* XXX gcc -Wuninitialized */
 
@@ -988,6 +989,7 @@ set_escdelay(int escdelay)
 {
 
 	_cursesi_screen->ESCDELAY = escdelay;
+	_reentrant = true;
 	ESCDELAY = escdelay;
 	return OK;
 }

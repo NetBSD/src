@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.26 2016/10/22 21:55:06 christos Exp $	*/
+/*	$NetBSD: curses.c,v 1.27 2017/01/30 14:55:58 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.26 2016/10/22 21:55:06 christos Exp $");
+__RCSID("$NetBSD: curses.c,v 1.27 2017/01/30 14:55:58 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -64,6 +64,7 @@ WINDOW	*curscr;			/* Current screen. */
 WINDOW	*stdscr;			/* Standard screen. */
 WINDOW	*__virtscr;			/* Virtual screen (for doupdate()). */
 SCREEN  *_cursesi_screen;               /* the current screen we are using */
+volatile bool	 _reentrant;		/* If true, some global vars are ro. */
 int	 COLS;				/* Columns on the screen. */
 int	 LINES;				/* Lines on the screen. */
 int	 TABSIZE;			/* Size of a tab. */
