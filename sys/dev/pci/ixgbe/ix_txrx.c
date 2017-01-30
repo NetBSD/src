@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.16 2017/01/19 06:56:33 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.17 2017/01/30 05:02:43 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -770,8 +770,14 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 
 
 	/* First check if TSO is to be used */
-	if (mp->m_pkthdr.csum_flags & (M_CSUM_TSOv4|M_CSUM_TSOv6))
-		return (ixgbe_tso_setup(txr, mp, cmd_type_len, olinfo_status));
+	if (mp->m_pkthdr.csum_flags & (M_CSUM_TSOv4|M_CSUM_TSOv6)) {
+		int rv = ixgbe_tso_setup(txr, mp, cmd_type_len, olinfo_status);
+
+		if (rv != 0) {
+			++adapter->tso_err.ev_count;
+			return rv;
+		}
+	}
 
 	if ((mp->m_pkthdr.csum_flags & M_CSUM_OFFLOAD) == 0)
 		offload = FALSE;
