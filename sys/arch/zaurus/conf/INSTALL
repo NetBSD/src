@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.30 2016/12/13 20:42:21 christos Exp $
+# $NetBSD: INSTALL,v 1.31 2017/01/30 02:41:12 nonaka Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -68,6 +68,8 @@ no options 		DIAGNOSTIC
 no options 		DDB
 no options 		DDB_HISTORY_SIZE
 no makeoptions	COPY_SYMTAB
+
+no options 		PXA2X0_DMAC_DMOVER_CONCURRENCY
 
 no zrc0 at pxaip?
 
