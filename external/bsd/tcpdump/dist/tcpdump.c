@@ -30,7 +30,7 @@
 static const char copyright[] _U_ =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000\n\
 The Regents of the University of California.  All rights reserved.\n";
-__RCSID("$NetBSD: tcpdump.c,v 1.13 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.14 2017/01/30 13:15:43 christos Exp $");
 #endif
 
 /*
@@ -195,6 +195,7 @@ RETSIGTYPE requestinfo(int);
 static void info(int);
 static u_int packets_captured;
 
+#ifdef HAVE_PCAP_FINDALLDEVS
 static const struct tok status_flags[] = {
 #ifdef PCAP_IF_UP
 	{ PCAP_IF_UP,       "Up"       },
@@ -205,6 +206,7 @@ static const struct tok status_flags[] = {
 	{ PCAP_IF_LOOPBACK, "Loopback" },
 	{ 0, NULL }
 };
+#endif
 
 static pcap_t *pd;
 
