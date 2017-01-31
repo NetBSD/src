@@ -1,9 +1,9 @@
-/*	$NetBSD: cgi-bozo.c,v 1.36 2017/01/31 14:33:54 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.37 2017/01/31 14:36:09 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2015 Matthew R. Green
+ * Copyright (c) 1997-2017 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
