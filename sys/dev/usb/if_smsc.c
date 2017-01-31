@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.20 2017/01/31 11:39:46 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.21 2017/01/31 11:41:14 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1038,7 +1038,6 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	}
 	/* Setup the endpoints for the SMSC LAN95xx device(s) */
 	usb_init_task(&sc->sc_tick_task, smsc_tick_task, sc, 0);
-	usb_init_task(&sc->sc_stop_task, (void (*)(void *))smsc_stop, sc, 0);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
@@ -1185,7 +1184,6 @@ smsc_detach(device_t self, int flags)
 	 * in the same thread as detach.
 	 */
 	usb_rem_task(sc->sc_udev, &sc->sc_tick_task);
-	usb_rem_task(sc->sc_udev, &sc->sc_stop_task);
 
 	s = splusb();
 

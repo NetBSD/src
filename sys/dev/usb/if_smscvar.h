@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscvar.h,v 1.3.4.5 2016/12/28 08:53:56 skrll Exp $	*/
+/*	$NetBSD: if_smscvar.h,v 1.3.4.6 2017/01/31 11:41:14 skrll Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -78,7 +78,6 @@ struct smsc_softc {
 	int			sc_refcnt;
 
 	struct usb_task		sc_tick_task;
-	struct usb_task		sc_stop_task;
 
 	int			sc_ed[SMSC_ENDPT_MAX];
 	struct usbd_pipe *	sc_ep[SMSC_ENDPT_MAX];
