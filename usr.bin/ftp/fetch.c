@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.226 2016/12/15 04:49:15 nonaka Exp $	*/
+/*	$NetBSD: fetch.c,v 1.227 2017/01/31 21:05:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.226 2016/12/15 04:49:15 nonaka Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.227 2017/01/31 21:05:35 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1369,6 +1369,12 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			savefile = ftp_strdup(cp + 1);
 		else
 			savefile = ftp_strdup(decodedpath);
+		/*
+		 * Use the first URL we requested not the name after a
+		 * possible redirect, but careful to save it because our
+		 * "safety" check is the match to outfile.
+		 */
+		outfile = ftp_strdup(savefile);
 	}
 	DPRINTF("%s: savefile `%s'\n", __func__, savefile);
 	if (EMPTYSTRING(savefile)) {
