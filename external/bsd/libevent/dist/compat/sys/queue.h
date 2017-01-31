@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.1.1.1 2013/04/11 16:43:34 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.1.1.2 2017/01/31 21:14:53 christos Exp $	*/
 /*	$OpenBSD: queue.h,v 1.16 2000/09/07 19:47:59 art Exp $	*/
 /*	NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp 	*/
 
@@ -33,8 +33,8 @@
  *	@(#)queue.h	8.5 (Berkeley) 8/20/94
  */
 
-#ifndef	_SYS_QUEUE_H_
-#define	_SYS_QUEUE_H_
+#ifndef	SYS_QUEUE_H__
+#define	SYS_QUEUE_H__
 
 /*
  * This file defines five types of data structures: singly-linked lists,
@@ -94,7 +94,7 @@ struct name {								\
 #define	SLIST_HEAD_INITIALIZER(head)					\
 	{ NULL }
 
-#ifndef WIN32
+#ifndef _WIN32
 #define SLIST_ENTRY(type)						\
 struct {								\
 	struct type *sle_next;	/* next element */			\
@@ -486,4 +486,4 @@ struct {								\
 		(elm2)->field.cqe_prev->field.cqe_next = (elm2);	\
 } while (0)
 
-#endif	/* !_SYS_QUEUE_H_ */
+#endif	/* !SYS_QUEUE_H__ */
