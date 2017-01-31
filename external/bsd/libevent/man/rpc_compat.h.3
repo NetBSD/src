@@ -1,10 +1,8 @@
-.TH "event2/rpc_compat.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
+.TH "event2/rpc_compat.h" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-event2/rpc_compat.h \- 
-.PP
-Deprecated versions of the functions in \fBrpc\&.h\fP: provided only for backwards compatibility\&.  
+event2/rpc_compat.h \- Deprecated versions of the functions in \fBrpc\&.h\fP: provided only for backwards compatibility\&.  
 
 .SH SYNOPSIS
 .br
@@ -13,7 +11,7 @@ Deprecated versions of the functions in \fBrpc\&.h\fP: provided only for backwar
 
 .in +1c
 .ti -1c
-.RI "#define \fBEVTAG_LEN\fP(msg, member)   ((msg)->member##_length)"
+.RI "#define \fBEVTAG_LEN\fP(msg,  member)   ((msg)\->member##_length)"
 .br
 .RI "\fIbackwards compatible accessors that work only with gcc \fP"
 .in -1c

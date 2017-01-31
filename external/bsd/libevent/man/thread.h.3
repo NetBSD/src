@@ -1,15 +1,15 @@
-.TH "event2/thread.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
+.TH "event2/thread.h" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-event2/thread.h \- 
-.PP
-Functions for multi-threaded applications using Libevent\&.  
+event2/thread.h \- Functions for multi-threaded applications using Libevent\&.  
 
 .SH SYNOPSIS
 .br
 .PP
-\fC#include <event2/event-config\&.h>\fP
+\fC#include <event2/visibility\&.h>\fP
+.br
+\fC#include <event2/event\-config\&.h>\fP
 .br
 
 .SS "Data Structures"
@@ -81,31 +81,34 @@ Functions for multi-threaded applications using Libevent\&.
 
 .in +1c
 .ti -1c
-.RI "void \fBevthread_enable_lock_debuging\fP (void)"
+.RI "EVENT2_EXPORT_SYMBOL void \fBevthread_enable_lock_debugging\fP (void)"
 .br
 .RI "\fIEnable debugging wrappers around the current lock callbacks\&. \fP"
 .ti -1c
-.RI "int \fBevthread_make_base_notifiable\fP (struct \fBevent_base\fP *base)"
+.RI "EVENT2_EXPORT_SYMBOL void \fBevthread_enable_lock_debuging\fP (void)"
+.br
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBevthread_make_base_notifiable\fP (struct \fBevent_base\fP *base)"
 .br
 .RI "\fIMake sure it's safe to tell an event base to wake up from another thread or a signal handler\&. \fP"
 .ti -1c
-.RI "int \fBevthread_set_condition_callbacks\fP (const struct \fBevthread_condition_callbacks\fP *)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevthread_set_condition_callbacks\fP (const struct \fBevthread_condition_callbacks\fP *)"
 .br
 .RI "\fISets a group of functions that Libevent should use for condition variables\&. \fP"
 .ti -1c
-.RI "void \fBevthread_set_id_callback\fP (unsigned long(*id_fn)(void))"
+.RI "EVENT2_EXPORT_SYMBOL void \fBevthread_set_id_callback\fP (unsigned long(*id_fn)(void))"
 .br
 .RI "\fISets the function for determining the thread id\&. \fP"
 .ti -1c
-.RI "int \fBevthread_set_lock_callbacks\fP (const struct \fBevthread_lock_callbacks\fP *)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevthread_set_lock_callbacks\fP (const struct \fBevthread_lock_callbacks\fP *)"
 .br
 .RI "\fISets a group of functions that Libevent should use for locking\&. \fP"
 .ti -1c
-.RI "int \fBevthread_use_pthreads\fP (void)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevthread_use_pthreads\fP (void)"
 .br
 .RI "\fISets up Libevent for use with Pthreads locking and thread ID functions\&. \fP"
 .ti -1c
-.RI "int \fBevthread_use_windows_threads\fP (void)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevthread_use_windows_threads\fP (void)"
 .br
 .RI "\fISets up Libevent for use with Windows builtin locking and thread ID functions\&. \fP"
 .in -1c
@@ -138,16 +141,16 @@ A flag passed to a locking callback when we don't want to block waiting for the 
 A flag passed to a locking callback when the lock was allocated as a read-write lock, and we want to acquire or release the lock for writing\&. 
 .SH "Function Documentation"
 .PP 
-.SS "void evthread_enable_lock_debuging (void)"
+.SS "EVENT2_EXPORT_SYMBOL void evthread_enable_lock_debugging (void)"
 
 .PP
 Enable debugging wrappers around the current lock callbacks\&. If Libevent makes one of several common locking errors, exit with an assertion failure\&.
 .PP
 If you're going to call this function, you must do so before any locks are allocated\&. 
-.SS "int evthread_make_base_notifiable (struct \fBevent_base\fP *base)"
+.SS "EVENT2_EXPORT_SYMBOL int evthread_make_base_notifiable (struct \fBevent_base\fP * base)"
 
 .PP
-Make sure it's safe to tell an event base to wake up from another thread or a signal handler\&. 
+Make sure it's safe to tell an event base to wake up from another thread or a signal handler\&. You shouldn't need to call this by hand; configuring the base with thread support should be necessary and sufficient\&.
 .PP
 \fBReturns:\fP
 .RS 4
@@ -155,13 +158,13 @@ Make sure it's safe to tell an event base to wake up from another thread or a si
 .RE
 .PP
 
-.SS "int evthread_set_condition_callbacks (const struct \fBevthread_condition_callbacks\fP *)"
+.SS "EVENT2_EXPORT_SYMBOL int evthread_set_condition_callbacks (const struct \fBevthread_condition_callbacks\fP *)"
 
 .PP
 Sets a group of functions that Libevent should use for condition variables\&. For full information on the required callback API, see the documentation for the individual members of \fBevthread_condition_callbacks\fP\&.
 .PP
 Note that if you're using Windows or the Pthreads threading library, you probably shouldn't call this function; instead, use \fBevthread_use_windows_threads()\fP or \fBevthread_use_pthreads()\fP if you can\&. 
-.SS "void evthread_set_id_callback (unsigned long(*)(void)id_fn)"
+.SS "EVENT2_EXPORT_SYMBOL void evthread_set_id_callback (unsigned long(*)(void) id_fn)"
 
 .PP
 Sets the function for determining the thread id\&. 
@@ -174,13 +177,13 @@ Sets the function for determining the thread id\&.
 .RE
 .PP
 
-.SS "int evthread_set_lock_callbacks (const struct \fBevthread_lock_callbacks\fP *)"
+.SS "EVENT2_EXPORT_SYMBOL int evthread_set_lock_callbacks (const struct \fBevthread_lock_callbacks\fP *)"
 
 .PP
 Sets a group of functions that Libevent should use for locking\&. For full information on the required callback API, see the documentation for the individual members of \fBevthread_lock_callbacks\fP\&.
 .PP
 Note that if you're using Windows or the Pthreads threading library, you probably shouldn't call this function; instead, use \fBevthread_use_windows_threads()\fP or evthread_use_posix_threads() if you can\&. 
-.SS "int evthread_use_pthreads (void)"
+.SS "EVENT2_EXPORT_SYMBOL int evthread_use_pthreads (void)"
 
 .PP
 Sets up Libevent for use with Pthreads locking and thread ID functions\&. Unavailable if Libevent is not build for use with pthreads\&. Requires libraries to link against Libevent_pthreads as well as Libevent\&.
@@ -191,7 +194,7 @@ Sets up Libevent for use with Pthreads locking and thread ID functions\&. Unavai
 .RE
 .PP
 
-.SS "int evthread_use_windows_threads (void)"
+.SS "EVENT2_EXPORT_SYMBOL int evthread_use_windows_threads (void)"
 
 .PP
 Sets up Libevent for use with Windows builtin locking and thread ID functions\&. Unavailable if Libevent is not built for Windows\&.
