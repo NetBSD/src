@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2016/05/01 20:25:37 joerg Exp $
+# $NetBSD: Makefile,v 1.7 2017/01/31 23:49:28 christos Exp $
 
 # Try to undo the doxygen lossage in the man pages.
 
@@ -25,7 +25,6 @@ ev${i:S/.h.3/.3/g}: $i
 
 HSRCS2= \
 bufferevent_ssl.h.3 \
-event.h.3 \
 event_compat.h.3
 
 .for i in ${HSRCS2}
@@ -46,14 +45,20 @@ ev$i: $i
 
 MAN+= \
 bufferevent.3 \
+bufferevent.h.3 \
+evbuffer.3 \
 evbuffer_cb_info.3 \
 evbuffer_iovec.3 \
 evbuffer_ptr.3 \
+event.3 \
+event.h.3 \
 event_base.3 \
 event_config.3 \
 evthread_condition_callbacks.3 \
 evthread_lock_callbacks.3 \
-evutil_addrinfo.3
+evutil_addrinfo.3 \
+evutil_monotonic_timer.3
+
 
 MAN+= ${HMAN1} ${HMAN2} ${MAN1}
 
