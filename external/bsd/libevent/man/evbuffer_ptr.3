@@ -1,10 +1,8 @@
-.TH "evbuffer_ptr" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
+.TH "evbuffer_ptr" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-evbuffer_ptr \- 
-.PP
-Pointer to a position within an evbuffer\&.  
+evbuffer_ptr \- Pointer to a position within an evbuffer\&.  
 
 .SH SYNOPSIS
 .br
@@ -24,7 +22,7 @@ Pointer to a position within an evbuffer\&.
 .RI "   size_t \fBpos_in_chain\fP"
 .br
 .ti -1c
-.RI "} \fB_internal\fP"
+.RI "} \fBinternal_\fP"
 .br
 .ti -1c
 .RI "ev_ssize_t \fBpos\fP"
@@ -34,7 +32,16 @@ Pointer to a position within an evbuffer\&.
 .PP 
 Pointer to a position within an evbuffer\&. 
 
-Used when repeatedly searching through a buffer\&. Calling any function that modifies or re-packs the buffer contents may invalidate all evbuffer_ptrs for that buffer\&. Do not modify these values except with evbuffer_ptr_set\&. 
+Used when repeatedly searching through a buffer\&. Calling any function that modifies or re-packs the buffer contents may invalidate all evbuffer_ptrs for that buffer\&. Do not modify or contruct these values except with evbuffer_ptr_set\&.
+.PP
+An \fBevbuffer_ptr\fP can represent any position from the start of a buffer up to a position immediately after the end of a buffer\&.
+.PP
+\fBSee also:\fP
+.RS 4
+\fBevbuffer_ptr_set()\fP 
+.RE
+.PP
+
 
 .SH "Author"
 .PP 

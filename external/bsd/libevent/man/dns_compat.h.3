@@ -1,15 +1,13 @@
-.TH "event2/dns_compat.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
+.TH "event2/dns_compat.h" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-event2/dns_compat.h \- 
-.PP
-Potentially non-threadsafe versions of the functions in \fBdns\&.h\fP: provided only for backwards compatibility\&.  
+event2/dns_compat.h \- Potentially non-threadsafe versions of the functions in \fBdns\&.h\fP: provided only for backwards compatibility\&.  
 
 .SH SYNOPSIS
 .br
 .PP
-\fC#include <event2/event-config\&.h>\fP
+\fC#include <event2/event\-config\&.h>\fP
 .br
 \fC#include <event2/util\&.h>\fP
 .br
@@ -97,7 +95,7 @@ Potentially non-threadsafe versions of the functions in \fBdns\&.h\fP: provided 
 
 .SH "Function Documentation"
 .PP 
-.SS "struct evdns_server_port* evdns_add_server_port (\fBevutil_socket_t\fPsocket, intflags, \fBevdns_request_callback_fn_type\fPcallback, void *user_data)"
+.SS "struct evdns_server_port* evdns_add_server_port (\fBevutil_socket_t\fP socket, int flags, \fBevdns_request_callback_fn_type\fP callback, void * user_data)"
 
 .PP
 As evdns_server_new_with_base\&. 
@@ -185,7 +183,7 @@ This function is deprecated because it always uses the current event base, and i
 .RE
 .PP
 
-.SS "int evdns_nameserver_add (unsigned long intaddress)"
+.SS "int evdns_nameserver_add (unsigned long int address)"
 
 .PP
 Add a nameserver\&. The address should be an IPv4 address in network byte order\&. The type of address is chosen so that it matches in_addr\&.s_addr\&.
@@ -212,7 +210,7 @@ This function is deprecated because it does not allow the caller to specify whic
 .RE
 .PP
 
-.SS "int evdns_nameserver_ip_add (const char *ip_as_string)"
+.SS "int evdns_nameserver_ip_add (const char * ip_as_string)"
 
 .PP
 Add a nameserver\&. This wraps the \fBevdns_nameserver_add()\fP function by parsing a string as an IP address and adds it as a nameserver\&.
@@ -234,7 +232,7 @@ This function is deprecated because it does not allow the caller to specify whic
 .RE
 .PP
 
-.SS "int evdns_resolv_conf_parse (intflags, const char *constfilename)"
+.SS "int evdns_resolv_conf_parse (int flags, const char *const filename)"
 
 .PP
 Parse a resolv\&.conf file\&. The 'flags' parameter determines what information is parsed from the resolv\&.conf file\&. See the man page for resolv\&.conf for the format of this file\&.
@@ -267,7 +265,7 @@ resolv\&.conf(3), evdns_config_windows_nameservers()
 .RE
 .PP
 
-.SS "int evdns_resolve_ipv4 (const char *name, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
+.SS "int evdns_resolve_ipv4 (const char * name, int flags, \fBevdns_callback_type\fP callback, void * ptr)"
 
 .PP
 Lookup an A record for a given name\&. 
@@ -300,7 +298,7 @@ This function is deprecated because it does not allow the caller to specify whic
 .RE
 .PP
 
-.SS "int evdns_resolve_ipv6 (const char *name, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
+.SS "int evdns_resolve_ipv6 (const char * name, int flags, \fBevdns_callback_type\fP callback, void * ptr)"
 
 .PP
 Lookup an AAAA record for a given name\&. 
@@ -327,7 +325,7 @@ Lookup an AAAA record for a given name\&.
 .RE
 .PP
 
-.SS "int evdns_resolve_reverse (const struct in_addr *in, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
+.SS "int evdns_resolve_reverse (const struct in_addr * in, int flags, \fBevdns_callback_type\fP callback, void * ptr)"
 
 .PP
 Lookup a PTR record for a given IP address\&. 
@@ -360,7 +358,7 @@ This function is deprecated because it does not allow the caller to specify whic
 .RE
 .PP
 
-.SS "int evdns_resolve_reverse_ipv6 (const struct in6_addr *in, intflags, \fBevdns_callback_type\fPcallback, void *ptr)"
+.SS "int evdns_resolve_reverse_ipv6 (const struct in6_addr * in, int flags, \fBevdns_callback_type\fP callback, void * ptr)"
 
 .PP
 Lookup a PTR record for a given IPv6 address\&. 
@@ -415,7 +413,7 @@ This function is deprecated because it does not allow the caller to specify whic
 .RE
 .PP
 
-.SS "void evdns_search_add (const char *domain)"
+.SS "void evdns_search_add (const char * domain)"
 
 .PP
 Add a domain to the list of search domains\&. 
@@ -443,7 +441,7 @@ This function is deprecated because it does not allow the caller to specify whic
 .RE
 .PP
 
-.SS "void evdns_search_ndots_set (const intndots)"
+.SS "void evdns_search_ndots_set (const int ndots)"
 
 .PP
 Set the 'ndots' parameter for searches\&. Sets the number of dots which, when found in a name, causes the first query to be without any search domain\&.
@@ -460,7 +458,7 @@ This function is deprecated because it does not allow the caller to specify whic
 .RE
 .PP
 
-.SS "int evdns_set_option (const char *option, const char *val, intflags)"
+.SS "int evdns_set_option (const char * option, const char * val, int flags)"
 
 .PP
 Set the value of a configuration option\&. The currently available configuration options are:
@@ -488,7 +486,7 @@ This function is deprecated because it does not allow the caller to specify whic
 .RE
 .PP
 
-.SS "void evdns_shutdown (intfail_requests)"
+.SS "void evdns_shutdown (int fail_requests)"
 
 .PP
 Shut down the asynchronous DNS resolver and terminate all active requests\&. If the 'fail_requests' option is enabled, all active requests will return an empty result with the error flag set to DNS_ERR_SHUTDOWN\&. Otherwise, the requests will be silently discarded\&.
