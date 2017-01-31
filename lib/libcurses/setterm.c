@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.63 2017/01/30 16:50:44 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.64 2017/01/31 09:17:53 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.63 2017/01/30 16:50:44 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.64 2017/01/31 09:17:53 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -406,7 +406,6 @@ set_tabsize(int tabsize)
 	if (_cursesi_screen == NULL)
 		return ERR;
 	_cursesi_screen->TABSIZE = tabsize;
-	_reentrant = true;
 	TABSIZE = tabsize;
 	return OK;
 }
