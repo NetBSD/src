@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.251 2017/01/18 17:29:52 riastradh Exp $
+$NetBSD: acronyms,v 1.252 2017/01/31 03:44:14 riastradh Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -327,6 +327,7 @@ MYOB	mind your own business
 N/A	not {applicable,available}
 N/M	never mind
 NAFAIK	not as far as I know
+NB	nota bene
 NBD	no big deal
 NE1	anyone
 NEDM	not even Doom music
