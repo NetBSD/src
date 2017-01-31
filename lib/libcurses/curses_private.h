@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.61 2017/01/30 14:55:58 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.62 2017/01/31 09:17:53 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -314,7 +314,6 @@ extern char	 __UPPERCASE;		/* Terminal is uppercase only. */
 extern int	 My_term;		/* Use Def_term regardless. */
 extern const char	*Def_term;	/* Default terminal type. */
 extern SCREEN   *_cursesi_screen;       /* The current screen in use */
-extern volatile bool	 _reentrant;	/* If true, some global vars are ro. */
 
 /* Debugging options/functions. */
 #ifdef DEBUG
