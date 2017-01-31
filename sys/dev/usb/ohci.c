@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.253.2.2.2.1 2016/09/06 20:33:09 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.253.2.2.2.2 2017/01/31 07:26:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.253.2.2.2.1 2016/09/06 20:33:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.253.2.2.2.2 2017/01/31 07:26:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -622,22 +622,24 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 		KASSERT(next != cur);
 
 		curlen = 0;
-		ohci_physaddr_t sdataphys = DMAADDR(dma, curoffs);
+		const ohci_physaddr_t sdataphys = DMAADDR(dma, curoffs);
 		ohci_physaddr_t edataphys = DMAADDR(dma, curoffs + len - 1);
 
-		ohci_physaddr_t sphyspg = OHCI_PAGE(sdataphys);
+		const ohci_physaddr_t sphyspg = OHCI_PAGE(sdataphys);
 		ohci_physaddr_t ephyspg = OHCI_PAGE(edataphys);
 		/*
 		 * The OHCI hardware can handle at most one page
 		 * crossing per TD
 		 */
 		curlen = len;
-		if (!(sphyspg == ephyspg || sphyspg + 1 == ephyspg)) {
+		if (sphyspg != ephyspg &&
+		    sphyspg + OHCI_PAGE_SIZE != ephyspg) {
 			/* must use multiple TDs, fill as much as possible. */
 			curlen = 2 * OHCI_PAGE_SIZE -
-			    (sdataphys & (OHCI_PAGE_SIZE - 1));
+			    OHCI_PAGE_OFFSET(sdataphys);
 			/* the length must be a multiple of the max size */
 			curlen -= curlen % mps;
+			edataphys = DMAADDR(dma, curoffs + curlen - 1);
 		}
 		KASSERT(curlen != 0);
 		DPRINTFN(4, "sdataphys=0x%08x edataphys=0x%08x "
