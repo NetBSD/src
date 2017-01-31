@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2104 2017/01/24 23:27:52 christos Exp $
+#	$NetBSD: mi,v 1.2105 2017/01/31 23:55:03 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5477,6 +5477,7 @@
 ./usr/share/man/cat3/btree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/buffer.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/bufferevent.0		comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent.h.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bufferevent_base_set.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/bufferevent_disable.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/bufferevent_enable.0	comp-obsolete		obsolete
@@ -6258,6 +6259,7 @@
 ./usr/share/man/cat3/evdns_set_log_fn.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/evdns_shutdown.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/event.0			comp-c-catman		.cat
+./usr/share/man/cat3/event.h.0			comp-c-catman		.cat
 ./usr/share/man/cat3/event_add.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/event_base.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_base_dispatch.0	comp-obsolete		obsolete
@@ -6298,6 +6300,7 @@
 ./usr/share/man/cat3/evtimer_set.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/evutil.0			comp-c-catman		.cat
 ./usr/share/man/cat3/evutil_addrinfo.0		comp-c-catman		.cat
+./usr/share/man/cat3/evutil_monotonic_timer.0	comp-c-catman		.cat
 ./usr/share/man/cat3/exec.0			comp-c-catman		.cat
 ./usr/share/man/cat3/execl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/execle.0			comp-c-catman		.cat
@@ -12932,6 +12935,7 @@
 ./usr/share/man/html3/btowc.html		comp-c-htmlman		html
 ./usr/share/man/html3/btree.html		comp-c-htmlman		html
 ./usr/share/man/html3/bufferevent.html		comp-c-htmlman		html
+./usr/share/man/html3/bufferevent.h.html	comp-c-htmlman		html
 ./usr/share/man/html3/bufferevent_base_set.html comp-obsolete		obsolete
 ./usr/share/man/html3/bufferevent_disable.html	comp-obsolete		obsolete
 ./usr/share/man/html3/bufferevent_enable.html	comp-obsolete		obsolete
@@ -13668,6 +13672,7 @@
 ./usr/share/man/html3/evdns_set_log_fn.html	comp-obsolete		obsolete
 ./usr/share/man/html3/evdns_shutdown.html	comp-obsolete		obsolete
 ./usr/share/man/html3/event.html			comp-c-htmlman		html
+./usr/share/man/html3/event.h.html			comp-c-htmlman		html
 ./usr/share/man/html3/event_add.html		comp-obsolete		obsolete
 ./usr/share/man/html3/event_base.html		comp-c-htmlman		html
 ./usr/share/man/html3/event_base_dispatch.html	comp-obsolete		obsolete
@@ -13708,6 +13713,7 @@
 ./usr/share/man/html3/evtimer_set.html		comp-obsolete		obsolete
 ./usr/share/man/html3/evutil.html		comp-c-htmlman		html
 ./usr/share/man/html3/evutil_addrinfo.html	comp-c-htmlman		html
+./usr/share/man/html3/evutil_monotonic_timer.html	comp-c-htmlman		html
 ./usr/share/man/html3/exec.html			comp-c-htmlman		html
 ./usr/share/man/html3/execl.html		comp-c-htmlman		html
 ./usr/share/man/html3/execle.html		comp-c-htmlman		html
@@ -20208,6 +20214,7 @@
 ./usr/share/man/man3/btree.3			comp-c-man		.man
 ./usr/share/man/man3/buffer.3			comp-obsolete		obsolete
 ./usr/share/man/man3/bufferevent.3		comp-c-man		.man
+./usr/share/man/man3/bufferevent.h.3		comp-c-man		.man
 ./usr/share/man/man3/bufferevent_base_set.3	comp-obsolete		obsolete
 ./usr/share/man/man3/bufferevent_disable.3	comp-obsolete		obsolete
 ./usr/share/man/man3/bufferevent_enable.3	comp-obsolete		obsolete
@@ -20989,6 +20996,7 @@
 ./usr/share/man/man3/evdns_set_log_fn.3		comp-obsolete		obsolete
 ./usr/share/man/man3/evdns_shutdown.3		comp-obsolete		obsolete
 ./usr/share/man/man3/event.3			comp-c-man		.man
+./usr/share/man/man3/event.h.3			comp-c-man		.man
 ./usr/share/man/man3/event_add.3		comp-obsolete		obsolete
 ./usr/share/man/man3/event_base.3		comp-c-man		.man
 ./usr/share/man/man3/event_base_dispatch.3	comp-obsolete		obsolete
@@ -21029,6 +21037,7 @@
 ./usr/share/man/man3/evtimer_set.3		comp-obsolete		obsolete
 ./usr/share/man/man3/evutil.3			comp-c-man		.man
 ./usr/share/man/man3/evutil_addrinfo.3		comp-c-man		.man
+./usr/share/man/man3/evutil_monotonic_timer.3		comp-c-man		.man
 ./usr/share/man/man3/exec.3			comp-c-man		.man
 ./usr/share/man/man3/execl.3			comp-c-man		.man
 ./usr/share/man/man3/execle.3			comp-c-man		.man
