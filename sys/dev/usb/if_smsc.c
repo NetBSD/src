@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.22 2017/01/31 16:52:39 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.23 2017/01/31 17:09:08 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1032,14 +1032,8 @@ smsc_attach(device_t parent, device_t self, void *aux)
 		    ", err=%s\n", usbd_errstr(err));
 		return;
 	}
+
 	/* Setup the endpoints for the SMSC LAN95xx device(s) */
-	usb_init_task(&sc->sc_tick_task, smsc_tick_task, sc, 0);
-
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_mii_lock, MUTEX_DEFAULT, IPL_NONE);
-
 	err = usbd_device2interface_handle(dev, SMSC_IFACE_IDX, &sc->sc_iface);
 	if (err) {
 		aprint_error_dev(self, "getting interface handle failed\n");
@@ -1071,6 +1065,13 @@ smsc_attach(device_t parent, device_t self, void *aux)
 			sc->sc_ed[SMSC_ENDPT_INTR] = ed->bEndpointAddress;
 		}
 	}
+
+	usb_init_task(&sc->sc_tick_task, smsc_tick_task, sc, 0);
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mutex_init(&sc->sc_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mutex_init(&sc->sc_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	ifp = &sc->sc_ec.ec_if;
 	ifp->if_softc = sc;
