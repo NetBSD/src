@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.271 2017/01/30 21:42:08 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.272 2017/01/31 07:34:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.271 2017/01/30 21:42:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.272 2017/01/31 07:34:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -655,15 +655,15 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 		cur->xfer = xfer;
 	 	ohci_hash_add_td(sc, cur);
 
-		usb_syncmem(&cur->dma, cur->offs, sizeof(cur->td),
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
 		curoffs += curlen;
 		len -= curlen;
 
 		if (len != 0) {
 			KASSERT(next != NULL);
 			DPRINTFN(10, "extend chain", 0, 0, 0, 0);
+			usb_syncmem(&cur->dma, cur->offs, sizeof(cur->td),
+			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
 			cur = next;
 		}
 	}
@@ -673,6 +673,10 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 	if (!rd &&
 	    (flags & USBD_FORCE_SHORT_XFER) &&
 	    alen % mps == 0) {
+		/* We're adding a ZLP so sync the previous TD */
+		usb_syncmem(&cur->dma, cur->offs, sizeof(cur->td),
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
 		/* Force a 0 length transfer at the end. */
 
 		KASSERT(next != NULL);
@@ -688,10 +692,10 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 		cur->xfer = xfer;
 	 	ohci_hash_add_td(sc, cur);
 
-		usb_syncmem(&cur->dma, cur->offs, sizeof(cur->td),
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		DPRINTFN(2, "add 0 xfer", 0, 0, 0, 0);
 	}
+
+	/* Last TD gets usb_syncmem'ed by caller */
 	*ep = cur;
 }
 
