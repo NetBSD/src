@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.19 2017/01/31 08:30:38 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.20 2017/01/31 11:39:46 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1116,16 +1116,17 @@ smsc_attach(device_t parent, device_t self, void *aux)
 		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
 		memcpy(sc->sc_enaddr, prop_data_data_nocopy(eaprop),
 		    ETHER_ADDR_LEN);
-	} else
-	/* Check if there is already a MAC address in the register */
-	if ((smsc_read_reg(sc, SMSC_MAC_ADDRL, &mac_l) == 0) &&
-	    (smsc_read_reg(sc, SMSC_MAC_ADDRH, &mac_h) == 0)) {
-		sc->sc_enaddr[5] = (uint8_t)((mac_h >> 8) & 0xff);
-		sc->sc_enaddr[4] = (uint8_t)((mac_h) & 0xff);
-		sc->sc_enaddr[3] = (uint8_t)((mac_l >> 24) & 0xff);
-		sc->sc_enaddr[2] = (uint8_t)((mac_l >> 16) & 0xff);
-		sc->sc_enaddr[1] = (uint8_t)((mac_l >> 8) & 0xff);
-		sc->sc_enaddr[0] = (uint8_t)((mac_l) & 0xff);
+	} else {
+		/* Check if there is already a MAC address in the register */
+		if ((smsc_read_reg(sc, SMSC_MAC_ADDRL, &mac_l) == 0) &&
+		    (smsc_read_reg(sc, SMSC_MAC_ADDRH, &mac_h) == 0)) {
+			sc->sc_enaddr[5] = (uint8_t)((mac_h >> 8) & 0xff);
+			sc->sc_enaddr[4] = (uint8_t)((mac_h) & 0xff);
+			sc->sc_enaddr[3] = (uint8_t)((mac_l >> 24) & 0xff);
+			sc->sc_enaddr[2] = (uint8_t)((mac_l >> 16) & 0xff);
+			sc->sc_enaddr[1] = (uint8_t)((mac_l >> 8) & 0xff);
+			sc->sc_enaddr[0] = (uint8_t)((mac_l) & 0xff);
+		}
 	}
 
 	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(sc->sc_enaddr));
