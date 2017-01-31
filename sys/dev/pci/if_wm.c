@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.471 2017/01/30 09:33:38 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.472 2017/01/31 03:06:06 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.471 2017/01/30 09:33:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.472 2017/01/31 03:06:06 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7850,7 +7850,6 @@ wm_rxeof(struct wm_rxqueue *rxq)
 		 * If VLANs are enabled, VLAN packets have been unwrapped
 		 * for us.  Associate the tag with the packet.
 		 */
-		/* XXXX should check for i350 and i354 */
 		if (!wm_rxdesc_input_vlantag(rxq, status, vlantag, m))
 			continue;
 
