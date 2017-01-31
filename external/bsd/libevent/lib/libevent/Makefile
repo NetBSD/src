@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2013/11/09 00:26:06 christos Exp $
+# $NetBSD: Makefile,v 1.3 2017/01/31 23:17:40 christos Exp $
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -20,6 +20,7 @@ evrpc.c \
 evthread.c \
 evutil.c \
 evutil_rand.c \
+evutil_time.c \
 http.c \
 kqueue.c \
 listener.c \
