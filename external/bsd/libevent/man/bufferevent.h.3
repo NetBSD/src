@@ -1,0 +1,1253 @@
+.TH "event2/bufferevent.h" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+event2/bufferevent.h \- Functions for buffering data for network sending or receiving\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <event2/visibility\&.h>\fP
+.br
+\fC#include <event2/event\-config\&.h>\fP
+.br
+\fC#include <event2/util\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBbufferevent\fP"
+.br
+.RI "\fIAn opaque type for handling buffered IO\&. \fP"
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBEV_RATE_LIMIT_MAX\fP   EV_SSIZE_MAX"
+.br
+.RI "\fIMaximum configurable rate- or burst-limit\&. \fP"
+.in -1c
+.PP
+.RI "\fBBufferevent event codes\fP"
+.br
+These flags are passed as arguments to a bufferevent's event callback\&. 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "#define \fBBEV_EVENT_READING\fP   0x01"
+.br
+.RI "\fIerror encountered while reading \fP"
+.ti -1c
+.RI "#define \fBBEV_EVENT_WRITING\fP   0x02"
+.br
+.RI "\fIerror encountered while writing \fP"
+.ti -1c
+.RI "#define \fBBEV_EVENT_EOF\fP   0x10"
+.br
+.RI "\fIeof file reached \fP"
+.ti -1c
+.RI "#define \fBBEV_EVENT_ERROR\fP   0x20"
+.br
+.RI "\fIunrecoverable error encountered \fP"
+.ti -1c
+.RI "#define \fBBEV_EVENT_TIMEOUT\fP   0x40"
+.br
+.RI "\fIuser-specified timeout reached \fP"
+.ti -1c
+.RI "#define \fBBEV_EVENT_CONNECTED\fP   0x80"
+.br
+.RI "\fIconnect operation finished\&. \fP"
+.in -1c
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef void(* \fBbufferevent_data_cb\fP) (struct \fBbufferevent\fP *bev, void *ctx)"
+.br
+.RI "\fIA read or write callback for a bufferevent\&. \fP"
+.ti -1c
+.RI "typedef void(* \fBbufferevent_event_cb\fP) (struct \fBbufferevent\fP *bev, short what, void *ctx)"
+.br
+.RI "\fIAn event/error callback for a bufferevent\&. \fP"
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBbufferevent_flush_mode\fP { \fBBEV_NORMAL\fP = 0, \fBBEV_FLUSH\fP = 1, \fBBEV_FINISHED\fP = 2 }
+.RI "\fIFlags that can be passed into filters to let them know how to deal with the incoming data\&. \fP""
+.br
+.ti -1c
+.RI "enum \fBbufferevent_options\fP { \fBBEV_OPT_CLOSE_ON_FREE\fP = (1<<0), \fBBEV_OPT_THREADSAFE\fP = (1<<1), \fBBEV_OPT_DEFER_CALLBACKS\fP = (1<<2), \fBBEV_OPT_UNLOCK_CALLBACKS\fP = (1<<3) }
+.RI "\fIOptions that can be specified when creating a bufferevent\&. \fP""
+.br
+.ti -1c
+.RI "enum \fBbufferevent_trigger_options\fP { \fBBEV_TRIG_IGNORE_WATERMARKS\fP = (1<<16), \fBBEV_TRIG_DEFER_CALLBACKS\fP = BEV_OPT_DEFER_CALLBACKS }
+.RI "\fIFlags for bufferevent_trigger(_event) that modify when and how to trigger the callback\&. \fP""
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_add_to_rate_limit_group\fP (struct \fBbufferevent\fP *bev, struct bufferevent_rate_limit_group *g)"
+.br
+.RI "\fIAdd 'bev' to the list of bufferevents whose aggregate reading and writing is restricted by 'g'\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_base_set\fP (struct \fBevent_base\fP *base, struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIAssign a bufferevent to a specific \fBevent_base\fP\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_decref\fP (struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIPublic interface to manually decrement the reference count of a bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_disable\fP (struct \fBbufferevent\fP *bufev, short \fBevent\fP)"
+.br
+.RI "\fIDisable a bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_enable\fP (struct \fBbufferevent\fP *bufev, short \fBevent\fP)"
+.br
+.RI "\fIEnable a bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_flush\fP (struct \fBbufferevent\fP *bufev, short iotype, enum \fBbufferevent_flush_mode\fP mode)"
+.br
+.RI "\fITriggers the bufferevent to produce more data if possible\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBbufferevent_free\fP (struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIDeallocate the storage associated with a bufferevent structure\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL struct \fBevent_base\fP * \fBbufferevent_get_base\fP (struct \fBbufferevent\fP *bev)"
+.br
+.RI "\fIReturn the \fBevent_base\fP used by a bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL short \fBbufferevent_get_enabled\fP (struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIReturn the events that are enabled on a given bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL struct \fBevbuffer\fP * \fBbufferevent_get_input\fP (struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIReturns the input buffer\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL ev_ssize_t \fBbufferevent_get_max_single_read\fP (struct \fBbufferevent\fP *bev)"
+.br
+.RI "\fIGet the current size limit for single read operation\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL ev_ssize_t \fBbufferevent_get_max_single_write\fP (struct \fBbufferevent\fP *bev)"
+.br
+.RI "\fIGet the current size limit for single write operation\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL ev_ssize_t \fBbufferevent_get_max_to_read\fP (struct \fBbufferevent\fP *bev)"
+.br
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL ev_ssize_t \fBbufferevent_get_max_to_write\fP (struct \fBbufferevent\fP *bev)"
+.br
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL struct \fBevbuffer\fP * \fBbufferevent_get_output\fP (struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIReturns the output buffer\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_get_priority\fP (const struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIReturn the priority of a bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL const struct ev_token_bucket_cfg * \fBbufferevent_get_token_bucket_cfg\fP (const struct \fBbufferevent\fP *bev)"
+.br
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL struct \fBbufferevent\fP * \fBbufferevent_get_underlying\fP (struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIReturns the underlying bufferevent associated with a bufferevent (if the bufferevent is a wrapper), or NULL if there is no underlying bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBbufferevent_getcb\fP (struct \fBbufferevent\fP *bufev, \fBbufferevent_data_cb\fP *readcb_ptr, \fBbufferevent_data_cb\fP *writecb_ptr, \fBbufferevent_event_cb\fP *eventcb_ptr, void **cbarg_ptr)"
+.br
+.RI "\fIRetrieves the callbacks for a bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL \fBevutil_socket_t\fP \fBbufferevent_getfd\fP (struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIReturns the file descriptor associated with a bufferevent, or -1 if no file descriptor is associated with the bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_getwatermark\fP (struct \fBbufferevent\fP *bufev, short events, size_t *lowmark, size_t *highmark)"
+.br
+.RI "\fIRetrieves the watermarks for read or write events\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBbufferevent_incref\fP (struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIPublic interface to manually increase the reference count of a bufferevent this is useful in situations where a user may reference the bufferevent somewhere eles (unknown to libevent) \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBbufferevent_lock\fP (struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIAcquire the lock on a bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL struct \fBbufferevent\fP * \fBbufferevent_pair_get_partner\fP (struct \fBbufferevent\fP *bev)"
+.br
+.RI "\fIGiven one bufferevent returned by \fBbufferevent_pair_new()\fP, returns the other one if it still exists\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_pair_new\fP (struct \fBevent_base\fP *base, int options, struct \fBbufferevent\fP *pair[2])"
+.br
+.RI "\fIAllocate a pair of linked bufferevents\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_priority_set\fP (struct \fBbufferevent\fP *bufev, int pri)"
+.br
+.RI "\fIAssign a priority to a bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBbufferevent_rate_limit_group_free\fP (struct bufferevent_rate_limit_group *)"
+.br
+.RI "\fIFree a rate-limiting group\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBbufferevent_rate_limit_group_get_totals\fP (struct bufferevent_rate_limit_group *grp, ev_uint64_t *total_read_out, ev_uint64_t *total_written_out)"
+.br
+.RI "\fIInspect the total bytes read/written on a group\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL struct bufferevent_rate_limit_group * \fBbufferevent_rate_limit_group_new\fP (struct \fBevent_base\fP *base, const struct ev_token_bucket_cfg *cfg)"
+.br
+.RI "\fICreate a new rate-limit group for bufferevents\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBbufferevent_rate_limit_group_reset_totals\fP (struct bufferevent_rate_limit_group *grp)"
+.br
+.RI "\fIReset the total bytes read/written on a group\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_rate_limit_group_set_cfg\fP (struct bufferevent_rate_limit_group *, const struct ev_token_bucket_cfg *)"
+.br
+.RI "\fIChange the rate-limiting settings for a given rate-limiting group\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_rate_limit_group_set_min_share\fP (struct bufferevent_rate_limit_group *, size_t)"
+.br
+.RI "\fIChange the smallest quantum we're willing to allocate to any single bufferevent in a group for reading or writing at a time\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL size_t \fBbufferevent_read\fP (struct \fBbufferevent\fP *bufev, void *data, size_t size)"
+.br
+.RI "\fIRead data from a bufferevent buffer\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_read_buffer\fP (struct \fBbufferevent\fP *bufev, struct \fBevbuffer\fP *buf)"
+.br
+.RI "\fIRead data from a bufferevent buffer into an evbuffer\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_remove_from_rate_limit_group\fP (struct \fBbufferevent\fP *bev)"
+.br
+.RI "\fIRemove 'bev' from its current rate-limit group (if any)\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_set_max_single_read\fP (struct \fBbufferevent\fP *bev, size_t size)"
+.br
+.RI "\fISet the size limit for single read operation\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_set_max_single_write\fP (struct \fBbufferevent\fP *bev, size_t size)"
+.br
+.RI "\fISet the size limit for single write operation\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_set_rate_limit\fP (struct \fBbufferevent\fP *bev, struct ev_token_bucket_cfg *cfg)"
+.br
+.RI "\fISet the rate-limit of a the bufferevent 'bev' to the one specified in 'cfg'\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_set_timeouts\fP (struct \fBbufferevent\fP *bufev, const struct timeval *timeout_read, const struct timeval *timeout_write)"
+.br
+.RI "\fISet the read and write timeout for a bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBbufferevent_setcb\fP (struct \fBbufferevent\fP *bufev, \fBbufferevent_data_cb\fP readcb, \fBbufferevent_data_cb\fP writecb, \fBbufferevent_event_cb\fP eventcb, void *cbarg)"
+.br
+.RI "\fIChanges the callbacks for a bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_setfd\fP (struct \fBbufferevent\fP *bufev, \fBevutil_socket_t\fP fd)"
+.br
+.RI "\fIChanges the file descriptor on which the bufferevent operates\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBbufferevent_setwatermark\fP (struct \fBbufferevent\fP *bufev, short events, size_t lowmark, size_t highmark)"
+.br
+.RI "\fISets the watermarks for read and write events\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_socket_connect\fP (struct \fBbufferevent\fP *, const struct sockaddr *, int)"
+.br
+.RI "\fILaunch a connect() attempt with a socket-based bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_socket_connect_hostname\fP (struct \fBbufferevent\fP *, struct evdns_base *, int, const char *, int)"
+.br
+.RI "\fIResolve the hostname 'hostname' and connect to it as with \fBbufferevent_socket_connect()\fP\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_socket_get_dns_error\fP (struct \fBbufferevent\fP *bev)"
+.br
+.RI "\fIReturn the error code for the last failed DNS lookup attempt made by \fBbufferevent_socket_connect_hostname()\fP\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL struct \fBbufferevent\fP * \fBbufferevent_socket_new\fP (struct \fBevent_base\fP *base, \fBevutil_socket_t\fP fd, int options)"
+.br
+.RI "\fICreate a new socket bufferevent over an existing socket\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBbufferevent_trigger\fP (struct \fBbufferevent\fP *bufev, short iotype, int options)"
+.br
+.RI "\fITriggers bufferevent data callbacks\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBbufferevent_trigger_event\fP (struct \fBbufferevent\fP *bufev, short what, int options)"
+.br
+.RI "\fITriggers the bufferevent event callback\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBbufferevent_unlock\fP (struct \fBbufferevent\fP *bufev)"
+.br
+.RI "\fIRelease the lock on a bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_write\fP (struct \fBbufferevent\fP *bufev, const void *data, size_t size)"
+.br
+.RI "\fIWrite data to a bufferevent buffer\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_write_buffer\fP (struct \fBbufferevent\fP *bufev, struct \fBevbuffer\fP *buf)"
+.br
+.RI "\fIWrite data from an evbuffer to a bufferevent buffer\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBev_token_bucket_cfg_free\fP (struct ev_token_bucket_cfg *cfg)"
+.br
+.RI "\fIFree all storage held in 'cfg'\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL struct ev_token_bucket_cfg * \fBev_token_bucket_cfg_new\fP (size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, const struct timeval *tick_len)"
+.br
+.RI "\fIInitialize and return a new object to configure the rate-limiting behavior of bufferevents\&. \fP"
+.in -1c
+.PP
+.RI "\fBRate limit inspection\fP"
+.br
+Return the current read or write bucket size for a bufferevent\&.
+.PP
+If it is not configured with a per-bufferevent ratelimit, return EV_SSIZE_MAX\&. This function does not inspect the group limit, if any\&. Note that it can return a negative value if the bufferevent has been made to read or write more than its limit\&. 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL ev_ssize_t \fBbufferevent_get_read_limit\fP (struct \fBbufferevent\fP *bev)"
+.br
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL ev_ssize_t \fBbufferevent_get_write_limit\fP (struct \fBbufferevent\fP *bev)"
+.br
+.in -1c
+.in -1c
+.PP
+.RI "\fBGroup Rate limit inspection\fP"
+.br
+Return the read or write bucket size for a bufferevent rate limit group\&.
+.PP
+Note that it can return a negative value if bufferevents in the group have been made to read or write more than their limits\&. 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL ev_ssize_t \fBbufferevent_rate_limit_group_get_read_limit\fP (struct bufferevent_rate_limit_group *)"
+.br
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL ev_ssize_t \fBbufferevent_rate_limit_group_get_write_limit\fP (struct bufferevent_rate_limit_group *)"
+.br
+.in -1c
+.in -1c
+.PP
+.RI "\fBRate limit manipulation\fP"
+.br
+Subtract a number of bytes from a bufferevent's read or write bucket\&.
+.PP
+The decrement value can be negative, if you want to manually refill the bucket\&. If the change puts the bucket above or below zero, the bufferevent will resume or suspend reading writing as appropriate\&. These functions make no change in the buckets for the bufferevent's group, if any\&.
+.PP
+Returns 0 on success, -1 on internal error\&. 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_decrement_read_limit\fP (struct \fBbufferevent\fP *bev, ev_ssize_t decr)"
+.br
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_decrement_write_limit\fP (struct \fBbufferevent\fP *bev, ev_ssize_t decr)"
+.br
+.in -1c
+.in -1c
+.PP
+.RI "\fBGroup rate limit manipulation\fP"
+.br
+Subtract a number of bytes from a bufferevent rate-limiting group's read or write bucket\&.
+.PP
+The decrement value can be negative, if you want to manually refill the bucket\&. If the change puts the bucket above or below zero, the bufferevents in the group will resume or suspend reading writing as appropriate\&.
+.PP
+Returns 0 on success, -1 on internal error\&. 
+.PP
+.in +1c
+.in +1c
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_rate_limit_group_decrement_read\fP (struct bufferevent_rate_limit_group *, ev_ssize_t)"
+.br
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBbufferevent_rate_limit_group_decrement_write\fP (struct bufferevent_rate_limit_group *, ev_ssize_t)"
+.br
+.in -1c
+.in -1c
+.SS "Filtering support"
+
+.in +1c
+.ti -1c
+.RI "enum \fBbufferevent_filter_result\fP { \fBBEV_OK\fP = 0, \fBBEV_NEED_MORE\fP = 1, \fBBEV_ERROR\fP = 2 }
+.RI "\fIValues that filters can return\&. \fP""
+.br
+.ti -1c
+.RI "typedef enum \fBbufferevent_filter_result\fP(* \fBbufferevent_filter_cb\fP) (struct \fBevbuffer\fP *src, struct \fBevbuffer\fP *dst, ev_ssize_t dst_limit, enum \fBbufferevent_flush_mode\fP mode, void *ctx)"
+.br
+.RI "\fIA callback function to implement a filter for a bufferevent\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL struct \fBbufferevent\fP * \fBbufferevent_filter_new\fP (struct \fBbufferevent\fP *underlying, \fBbufferevent_filter_cb\fP input_filter, \fBbufferevent_filter_cb\fP output_filter, int options, void(*free_context)(void *), void *ctx)"
+.br
+.RI "\fIAllocate a new filtering bufferevent on top of an existing bufferevent\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Functions for buffering data for network sending or receiving\&. 
+
+Bufferevents are higher level than evbuffers: each has an underlying evbuffer for reading and one for writing, and callbacks that are invoked under certain circumstances\&.
+.PP
+A bufferevent provides input and output buffers that get filled and drained automatically\&. The user of a bufferevent no longer deals directly with the I/O, but instead is reading from input and writing to output buffers\&.
+.PP
+Once initialized, the bufferevent structure can be used repeatedly with \fBbufferevent_enable()\fP and \fBbufferevent_disable()\fP\&.
+.PP
+When reading is enabled, the bufferevent will try to read from the file descriptor onto its input buffer, and call the read callback\&. When writing is enabled, the bufferevent will try to write data onto its file descriptor when the output buffer has enough data, and call the write callback when the output buffer is sufficiently drained\&.
+.PP
+Bufferevents come in several flavors, including:
+.PP
+.IP "\fBSocket-based bufferevents \fP" 1c
+A bufferevent that reads and writes data onto a network socket\&. Created with \fBbufferevent_socket_new()\fP\&.
+.PP
+.IP "\fBPaired bufferevents \fP" 1c
+A pair of bufferevents that send and receive data to one another without touching the network\&. Created with \fBbufferevent_pair_new()\fP\&.
+.PP
+.IP "\fBFiltering bufferevents \fP" 1c
+A bufferevent that transforms data, and sends or receives it over another underlying bufferevent\&. Created with \fBbufferevent_filter_new()\fP\&.
+.PP
+.IP "\fBSSL-backed bufferevents \fP" 1c
+A bufferevent that uses the openssl library to send and receive data over an encrypted connection\&. Created with \fBbufferevent_openssl_socket_new()\fP or \fBbufferevent_openssl_filter_new()\fP\&. 
+.PP
+
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define BEV_EVENT_CONNECTED   0x80"
+
+.PP
+connect operation finished\&. 
+.SS "#define EV_RATE_LIMIT_MAX   EV_SSIZE_MAX"
+
+.PP
+Maximum configurable rate- or burst-limit\&. 
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef void(* bufferevent_data_cb) (struct \fBbufferevent\fP *bev, void *ctx)"
+
+.PP
+A read or write callback for a bufferevent\&. The read callback is triggered when new data arrives in the input buffer and the amount of readable data exceed the low watermark which is 0 by default\&.
+.PP
+The write callback is triggered if the write buffer has been exhausted or fell below its low watermark\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbev\fP the bufferevent that triggered the callback 
+.br
+\fIctx\fP the user-specified context for this bufferevent 
+.RE
+.PP
+
+.SS "typedef void(* bufferevent_event_cb) (struct \fBbufferevent\fP *bev, short what, void *ctx)"
+
+.PP
+An event/error callback for a bufferevent\&. The event callback is triggered if either an EOF condition or another unrecoverable error was encountered\&.
+.PP
+For bufferevents with deferred callbacks, this is a bitwise OR of all errors that have happened on the bufferevent since the last callback invocation\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbev\fP the bufferevent for which the error condition was reached 
+.br
+\fIwhat\fP a conjunction of flags: BEV_EVENT_READING or BEV_EVENT_WRITING to indicate if the error was encountered on the read or write path, and one of the following flags: BEV_EVENT_EOF, BEV_EVENT_ERROR, BEV_EVENT_TIMEOUT, BEV_EVENT_CONNECTED\&.
+.br
+\fIctx\fP the user-specified context for this bufferevent 
+.RE
+.PP
+
+.SS "typedef enum \fBbufferevent_filter_result\fP(* bufferevent_filter_cb) (struct \fBevbuffer\fP *src, struct \fBevbuffer\fP *dst, ev_ssize_t dst_limit, enum \fBbufferevent_flush_mode\fP mode, void *ctx)"
+
+.PP
+A callback function to implement a filter for a bufferevent\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIsrc\fP An evbuffer to drain data from\&. 
+.br
+\fIdst\fP An evbuffer to add data to\&. 
+.br
+\fIlimit\fP A suggested upper bound of bytes to write to dst\&. The filter may ignore this value, but doing so means that it will overflow the high-water mark associated with dst\&. -1 means 'no limit'\&. 
+.br
+\fImode\fP Whether we should write data as may be convenient (BEV_NORMAL), or flush as much data as we can (BEV_FLUSH), or flush as much as we can, possibly including an end-of-stream marker (BEV_FINISH)\&. 
+.br
+\fIctx\fP A user-supplied pointer\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+BEV_OK if we wrote some data; BEV_NEED_MORE if we can't produce any more output until we get some input; and BEV_ERROR on an error\&. 
+.RE
+.PP
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBbufferevent_filter_result\fP"
+
+.PP
+Values that filters can return\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIBEV_OK \fP\fP
+everything is okay 
+.TP
+\fB\fIBEV_NEED_MORE \fP\fP
+the filter needs to read more data before output 
+.TP
+\fB\fIBEV_ERROR \fP\fP
+the filter encountered a critical error, no further data can be processed\&. 
+.SS "enum \fBbufferevent_flush_mode\fP"
+
+.PP
+Flags that can be passed into filters to let them know how to deal with the incoming data\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIBEV_NORMAL \fP\fP
+usually set when processing data 
+.TP
+\fB\fIBEV_FLUSH \fP\fP
+want to checkpoint all data sent\&. 
+.TP
+\fB\fIBEV_FINISHED \fP\fP
+encountered EOF on read or done sending data 
+.SS "enum \fBbufferevent_options\fP"
+
+.PP
+Options that can be specified when creating a bufferevent\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIBEV_OPT_CLOSE_ON_FREE \fP\fP
+If set, we close the underlying file descriptor/bufferevent/whatever when this bufferevent is freed\&. 
+.TP
+\fB\fIBEV_OPT_THREADSAFE \fP\fP
+If set, and threading is enabled, operations on this bufferevent are protected by a lock\&. 
+.TP
+\fB\fIBEV_OPT_DEFER_CALLBACKS \fP\fP
+If set, callbacks are run deferred in the event loop\&. 
+.TP
+\fB\fIBEV_OPT_UNLOCK_CALLBACKS \fP\fP
+If set, callbacks are executed without locks being held on the bufferevent\&. This option currently requires that BEV_OPT_DEFER_CALLBACKS also be set; a future version of Libevent might remove the requirement\&. 
+.SS "enum \fBbufferevent_trigger_options\fP"
+
+.PP
+Flags for bufferevent_trigger(_event) that modify when and how to trigger the callback\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIBEV_TRIG_IGNORE_WATERMARKS \fP\fP
+trigger the callback regardless of the watermarks 
+.TP
+\fB\fIBEV_TRIG_DEFER_CALLBACKS \fP\fP
+defer even if the callbacks are not 
+.SH "Function Documentation"
+.PP 
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_add_to_rate_limit_group (struct \fBbufferevent\fP * bev, struct bufferevent_rate_limit_group * g)"
+
+.PP
+Add 'bev' to the list of bufferevents whose aggregate reading and writing is restricted by 'g'\&. If 'g' is NULL, remove 'bev' from its current group\&.
+.PP
+A bufferevent may belong to no more than one rate-limit group at a time\&. If 'bev' is already a member of a group, it will be removed from its old group before being added to 'g'\&.
+.PP
+Return 0 on success and -1 on failure\&. 
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_base_set (struct \fBevent_base\fP * base, struct \fBbufferevent\fP * bufev)"
+
+.PP
+Assign a bufferevent to a specific \fBevent_base\fP\&. NOTE that only socket bufferevents support this function\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbase\fP an \fBevent_base\fP returned by \fBevent_init()\fP 
+.br
+\fIbufev\fP a bufferevent struct returned by bufferevent_new() or \fBbufferevent_socket_new()\fP 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+bufferevent_new() 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_decref (struct \fBbufferevent\fP * bufev)"
+
+.PP
+Public interface to manually decrement the reference count of a bufferevent\&. Warning: make sure you know what you're doing\&. This is mainly used in conjunction with \fBbufferevent_incref()\fP\&. This will free up all data associated with a bufferevent if the reference count hits 0\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to decrement the refcount on
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+1 if the bufferevent was freed, otherwise 0 (still referenced) 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_disable (struct \fBbufferevent\fP * bufev, short event)"
+
+.PP
+Disable a bufferevent\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to be disabled 
+.br
+\fIevent\fP any combination of EV_READ | EV_WRITE\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+\fBbufferevent_enable()\fP 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_enable (struct \fBbufferevent\fP * bufev, short event)"
+
+.PP
+Enable a bufferevent\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to be enabled 
+.br
+\fIevent\fP any combination of EV_READ | EV_WRITE\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+\fBbufferevent_disable()\fP 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL struct \fBbufferevent\fP* bufferevent_filter_new (struct \fBbufferevent\fP * underlying, \fBbufferevent_filter_cb\fP input_filter, \fBbufferevent_filter_cb\fP output_filter, int options, void(*)(void *) free_context, void * ctx)"
+
+.PP
+Allocate a new filtering bufferevent on top of an existing bufferevent\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIunderlying\fP the underlying bufferevent\&. 
+.br
+\fIinput_filter\fP The filter to apply to data we read from the underlying bufferevent 
+.br
+\fIoutput_filter\fP The filer to apply to data we write to the underlying bufferevent 
+.br
+\fIoptions\fP A bitfield of bufferevent options\&. 
+.br
+\fIfree_context\fP A function to use to free the filter context when this bufferevent is freed\&. 
+.br
+\fIctx\fP A context pointer to pass to the filter functions\&. 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_flush (struct \fBbufferevent\fP * bufev, short iotype, enum \fBbufferevent_flush_mode\fP mode)"
+
+.PP
+Triggers the bufferevent to produce more data if possible\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent object 
+.br
+\fIiotype\fP either EV_READ or EV_WRITE or both\&. 
+.br
+\fImode\fP either BEV_NORMAL or BEV_FLUSH or BEV_FINISHED 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+-1 on failure, 0 if no data was produces, 1 if data was produced 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL void bufferevent_free (struct \fBbufferevent\fP * bufev)"
+
+.PP
+Deallocate the storage associated with a bufferevent structure\&. If there is pending data to write on the bufferevent, it probably won't be flushed before the bufferevent is freed\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent structure to be freed\&. 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL short bufferevent_get_enabled (struct \fBbufferevent\fP * bufev)"
+
+.PP
+Return the events that are enabled on a given bufferevent\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to inspect 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+A combination of EV_READ | EV_WRITE 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL struct \fBevbuffer\fP* bufferevent_get_input (struct \fBbufferevent\fP * bufev)"
+
+.PP
+Returns the input buffer\&. The user MUST NOT set the callback on this buffer\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent from which to get the evbuffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the evbuffer object for the input buffer 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL ev_ssize_t bufferevent_get_max_single_read (struct \fBbufferevent\fP * bev)"
+
+.PP
+Get the current size limit for single read operation\&. 
+.SS "EVENT2_EXPORT_SYMBOL ev_ssize_t bufferevent_get_max_single_write (struct \fBbufferevent\fP * bev)"
+
+.PP
+Get the current size limit for single write operation\&. 
+.SS "EVENT2_EXPORT_SYMBOL struct \fBevbuffer\fP* bufferevent_get_output (struct \fBbufferevent\fP * bufev)"
+
+.PP
+Returns the output buffer\&. The user MUST NOT set the callback on this buffer\&.
+.PP
+When filters are being used, the filters need to be manually triggered if the output buffer was manipulated\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent from which to get the evbuffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the evbuffer object for the output buffer 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_get_priority (const struct \fBbufferevent\fP * bufev)"
+
+.PP
+Return the priority of a bufferevent\&. Only supported for socket bufferevents 
+.SS "EVENT2_EXPORT_SYMBOL void bufferevent_getcb (struct \fBbufferevent\fP * bufev, \fBbufferevent_data_cb\fP * readcb_ptr, \fBbufferevent_data_cb\fP * writecb_ptr, \fBbufferevent_event_cb\fP * eventcb_ptr, void ** cbarg_ptr)"
+
+.PP
+Retrieves the callbacks for a bufferevent\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to examine\&. 
+.br
+\fIreadcb_ptr\fP if readcb_ptr is nonnull, *readcb_ptr is set to the current read callback for the bufferevent\&. 
+.br
+\fIwritecb_ptr\fP if writecb_ptr is nonnull, *writecb_ptr is set to the current write callback for the bufferevent\&. 
+.br
+\fIeventcb_ptr\fP if eventcb_ptr is nonnull, *eventcb_ptr is set to the current event callback for the bufferevent\&. 
+.br
+\fIcbarg_ptr\fP if cbarg_ptr is nonnull, *cbarg_ptr is set to the current callback argument for the bufferevent\&. 
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+buffervent_setcb() 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_getwatermark (struct \fBbufferevent\fP * bufev, short events, size_t * lowmark, size_t * highmark)"
+
+.PP
+Retrieves the watermarks for read or write events\&. Returns non-zero if events contains not only EV_READ or EV_WRITE\&. Returns zero if events equal EV_READ or EV_WRITE
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to be examined 
+.br
+\fIevents\fP EV_READ or EV_WRITE 
+.br
+\fIlowmark\fP receives the lower watermark if not NULL 
+.br
+\fIhighmark\fP receives the high watermark if not NULL 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL void bufferevent_incref (struct \fBbufferevent\fP * bufev)"
+
+.PP
+Public interface to manually increase the reference count of a bufferevent this is useful in situations where a user may reference the bufferevent somewhere eles (unknown to libevent) 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to increase the refcount on 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL void bufferevent_lock (struct \fBbufferevent\fP * bufev)"
+
+.PP
+Acquire the lock on a bufferevent\&. Has no effect if locking was not enabled with BEV_OPT_THREADSAFE\&. 
+.SS "EVENT2_EXPORT_SYMBOL struct \fBbufferevent\fP* bufferevent_pair_get_partner (struct \fBbufferevent\fP * bev)"
+
+.PP
+Given one bufferevent returned by \fBbufferevent_pair_new()\fP, returns the other one if it still exists\&. Otherwise returns NULL\&. 
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_pair_new (struct \fBevent_base\fP * base, int options, struct \fBbufferevent\fP * pair[2])"
+
+.PP
+Allocate a pair of linked bufferevents\&. The bufferevents behave as would two bufferevent_sock instances connected to opposite ends of a socketpair(), except that no internal socketpair is allocated\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbase\fP The event base to associate with the socketpair\&. 
+.br
+\fIoptions\fP A set of options for this bufferevent 
+.br
+\fIpair\fP A pointer to an array to hold the two new bufferevent objects\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure\&. 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_priority_set (struct \fBbufferevent\fP * bufev, int pri)"
+
+.PP
+Assign a priority to a bufferevent\&. Only supported for socket bufferevents\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP a bufferevent struct 
+.br
+\fIpri\fP the priority to be assigned 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL void bufferevent_rate_limit_group_free (struct bufferevent_rate_limit_group *)"
+
+.PP
+Free a rate-limiting group\&. The group must have no members when this function is called\&. 
+.SS "EVENT2_EXPORT_SYMBOL void bufferevent_rate_limit_group_get_totals (struct bufferevent_rate_limit_group * grp, ev_uint64_t * total_read_out, ev_uint64_t * total_written_out)"
+
+.PP
+Inspect the total bytes read/written on a group\&. Set the variable pointed to by total_read_out to the total number of bytes ever read on grp, and the variable pointed to by total_written_out to the total number of bytes ever written on grp\&. 
+.SS "EVENT2_EXPORT_SYMBOL struct bufferevent_rate_limit_group* bufferevent_rate_limit_group_new (struct \fBevent_base\fP * base, const struct ev_token_bucket_cfg * cfg)"
+
+.PP
+Create a new rate-limit group for bufferevents\&. A rate-limit group constrains the maximum number of bytes sent and received, in toto, by all of its bufferevents\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbase\fP An \fBevent_base\fP to run any necessary timeouts for the group\&. Note that all bufferevents in the group do not necessarily need to share this \fBevent_base\fP\&. 
+.br
+\fIcfg\fP The rate-limit for this group\&.
+.RE
+.PP
+Note that all rate-limits hare are currently best-effort: future versions of Libevent may implement them more tightly\&.
+.PP
+Note also that only some bufferevent types currently respect rate-limiting\&. They are: socket-based bufferevents (normal and IOCP-based), and SSL-based bufferevents\&. 
+.SS "EVENT2_EXPORT_SYMBOL void bufferevent_rate_limit_group_reset_totals (struct bufferevent_rate_limit_group * grp)"
+
+.PP
+Reset the total bytes read/written on a group\&. Reset the number of bytes read or written on grp as given by \fBbufferevent_rate_limit_group_reset_totals()\fP\&. 
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_rate_limit_group_set_cfg (struct bufferevent_rate_limit_group *, const struct ev_token_bucket_cfg *)"
+
+.PP
+Change the rate-limiting settings for a given rate-limiting group\&. Return 0 on success, -1 on failure\&. 
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_rate_limit_group_set_min_share (struct bufferevent_rate_limit_group *, size_t)"
+
+.PP
+Change the smallest quantum we're willing to allocate to any single bufferevent in a group for reading or writing at a time\&. The rationale is that, because of TCP/IP protocol overheads and kernel behavior, if a rate-limiting group is so tight on bandwidth that you're only willing to send 1 byte per tick per bufferevent, you might instead want to batch up the reads and writes so that you send N bytes per 1/N of the bufferevents (chosen at random) each tick, so you still wind up send 1 byte per tick per bufferevent on average, but you don't send so many tiny packets\&.
+.PP
+The default min-share is currently 64 bytes\&.
+.PP
+Returns 0 on success, -1 on faulre\&. 
+.SS "EVENT2_EXPORT_SYMBOL size_t bufferevent_read (struct \fBbufferevent\fP * bufev, void * data, size_t size)"
+
+.PP
+Read data from a bufferevent buffer\&. The \fBbufferevent_read()\fP function is used to read data from the input buffer\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to be read from 
+.br
+\fIdata\fP pointer to a buffer that will store the data 
+.br
+\fIsize\fP the size of the data buffer, in bytes 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the amount of data read, in bytes\&. 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_read_buffer (struct \fBbufferevent\fP * bufev, struct \fBevbuffer\fP * buf)"
+
+.PP
+Read data from a bufferevent buffer into an evbuffer\&. This avoids memory copies\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to be read from 
+.br
+\fIbuf\fP the evbuffer to which to add data 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred\&. 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_remove_from_rate_limit_group (struct \fBbufferevent\fP * bev)"
+
+.PP
+Remove 'bev' from its current rate-limit group (if any)\&. 
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_set_max_single_read (struct \fBbufferevent\fP * bev, size_t size)"
+
+.PP
+Set the size limit for single read operation\&. Set to 0 for a reasonable default\&.
+.PP
+Return 0 on success and -1 on failure\&. 
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_set_max_single_write (struct \fBbufferevent\fP * bev, size_t size)"
+
+.PP
+Set the size limit for single write operation\&. Set to 0 for a reasonable default\&.
+.PP
+Return 0 on success and -1 on failure\&. 
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_set_rate_limit (struct \fBbufferevent\fP * bev, struct ev_token_bucket_cfg * cfg)"
+
+.PP
+Set the rate-limit of a the bufferevent 'bev' to the one specified in 'cfg'\&. If 'cfg' is NULL, disable any per-bufferevent rate-limiting on 'bev'\&.
+.PP
+Note that only some bufferevent types currently respect rate-limiting\&. They are: socket-based bufferevents (normal and IOCP-based), and SSL-based bufferevents\&.
+.PP
+Return 0 on sucess, -1 on failure\&. 
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_set_timeouts (struct \fBbufferevent\fP * bufev, const struct timeval * timeout_read, const struct timeval * timeout_write)"
+
+.PP
+Set the read and write timeout for a bufferevent\&. A bufferevent's timeout will fire the first time that the indicated amount of time has elapsed since a successful read or write operation, during which the bufferevent was trying to read or write\&.
+.PP
+(In other words, if reading or writing is disabled, or if the bufferevent's read or write operation has been suspended because there's no data to write, or not enough banwidth, or so on, the timeout isn't active\&. The timeout only becomes active when we we're willing to actually read or write\&.)
+.PP
+Calling bufferevent_enable or setting a timeout for a bufferevent whose timeout is already pending resets its timeout\&.
+.PP
+If the timeout elapses, the corresponding operation (EV_READ or EV_WRITE) becomes disabled until you re-enable it again\&. The bufferevent's event callback is called with the BEV_EVENT_TIMEOUT|BEV_EVENT_READING or BEV_EVENT_TIMEOUT|BEV_EVENT_WRITING\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to be modified 
+.br
+\fItimeout_read\fP the read timeout, or NULL 
+.br
+\fItimeout_write\fP the write timeout, or NULL 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL void bufferevent_setcb (struct \fBbufferevent\fP * bufev, \fBbufferevent_data_cb\fP readcb, \fBbufferevent_data_cb\fP writecb, \fBbufferevent_event_cb\fP eventcb, void * cbarg)"
+
+.PP
+Changes the callbacks for a bufferevent\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent object for which to change callbacks 
+.br
+\fIreadcb\fP callback to invoke when there is data to be read, or NULL if no callback is desired 
+.br
+\fIwritecb\fP callback to invoke when the file descriptor is ready for writing, or NULL if no callback is desired 
+.br
+\fIeventcb\fP callback to invoke when there is an event on the file descriptor 
+.br
+\fIcbarg\fP an argument that will be supplied to each of the callbacks (readcb, writecb, and errorcb) 
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+bufferevent_new() 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_setfd (struct \fBbufferevent\fP * bufev, \fBevutil_socket_t\fP fd)"
+
+.PP
+Changes the file descriptor on which the bufferevent operates\&. Not supported for all bufferevent types\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent object for which to change the file descriptor 
+.br
+\fIfd\fP the file descriptor to operate on 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL void bufferevent_setwatermark (struct \fBbufferevent\fP * bufev, short events, size_t lowmark, size_t highmark)"
+
+.PP
+Sets the watermarks for read and write events\&. On input, a bufferevent does not invoke the user read callback unless there is at least low watermark data in the buffer\&. If the read buffer is beyond the high watermark, the bufferevent stops reading from the network\&.
+.PP
+On output, the user write callback is invoked whenever the buffered data falls below the low watermark\&. Filters that write to this bufev will try not to write more bytes to this buffer than the high watermark would allow, except when flushing\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to be modified 
+.br
+\fIevents\fP EV_READ, EV_WRITE or both 
+.br
+\fIlowmark\fP the lower watermark to set 
+.br
+\fIhighmark\fP the high watermark to set 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_socket_connect (struct \fBbufferevent\fP *, const struct sockaddr *, int)"
+
+.PP
+Launch a connect() attempt with a socket-based bufferevent\&. When the connect succeeds, the eventcb will be invoked with BEV_EVENT_CONNECTED set\&.
+.PP
+If the bufferevent does not already have a socket set, we allocate a new socket here and make it nonblocking before we begin\&.
+.PP
+If no address is provided, we assume that the socket is already connecting, and configure the bufferevent so that a BEV_EVENT_CONNECTED event will be yielded when it is done connecting\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP an existing bufferevent allocated with \fBbufferevent_socket_new()\fP\&. 
+.br
+\fIaddr\fP the address we should connect to 
+.br
+\fIsocklen\fP The length of the address 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure\&. 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_socket_connect_hostname (struct \fBbufferevent\fP *, struct evdns_base *, int, const char *, int)"
+
+.PP
+Resolve the hostname 'hostname' and connect to it as with \fBbufferevent_socket_connect()\fP\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP An existing bufferevent allocated with \fBbufferevent_socket_new()\fP 
+.br
+\fIevdns_base\fP Optionally, an evdns_base to use for resolving hostnames asynchronously\&. May be set to NULL for a blocking resolve\&. 
+.br
+\fIfamily\fP A preferred address family to resolve addresses to, or AF_UNSPEC for no preference\&. Only AF_INET, AF_INET6, and AF_UNSPEC are supported\&. 
+.br
+\fIhostname\fP The hostname to resolve; see below for notes on recognized formats 
+.br
+\fIport\fP The port to connect to on the resolved address\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, -1 on failure\&.
+.RE
+.PP
+Recognized hostname formats are: 
+.PP
+.nf
+www.example.com (hostname)
+1.2.3.4     (ipv4address)
+::1     (ipv6address)
+[::1]       ([ipv6address])
+
+.fi
+.PP
+.PP
+Performance note: If you do not provide an evdns_base, this function may block while it waits for a DNS response\&. This is probably not what you want\&. 
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_socket_get_dns_error (struct \fBbufferevent\fP * bev)"
+
+.PP
+Return the error code for the last failed DNS lookup attempt made by \fBbufferevent_socket_connect_hostname()\fP\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbev\fP The bufferevent object\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+DNS error code\&. 
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+evutil_gai_strerror() 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL struct \fBbufferevent\fP* bufferevent_socket_new (struct \fBevent_base\fP * base, \fBevutil_socket_t\fP fd, int options)"
+
+.PP
+Create a new socket bufferevent over an existing socket\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbase\fP the event base to associate with the new bufferevent\&. 
+.br
+\fIfd\fP the file descriptor from which data is read and written to\&. This file descriptor is not allowed to be a pipe(2)\&. It is safe to set the fd to -1, so long as you later set it with bufferevent_setfd or \fBbufferevent_socket_connect()\fP\&. 
+.br
+\fIoptions\fP Zero or more BEV_OPT_* flags 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a pointer to a newly allocated bufferevent struct, or NULL if an error occurred 
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+\fBbufferevent_free()\fP 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL void bufferevent_trigger (struct \fBbufferevent\fP * bufev, short iotype, int options)"
+
+.PP
+Triggers bufferevent data callbacks\&. The function will honor watermarks unless options contain BEV_TRIG_IGNORE_WATERMARKS\&. If the options contain BEV_OPT_DEFER_CALLBACKS, the callbacks are deferred\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent object 
+.br
+\fIiotype\fP either EV_READ or EV_WRITE or both\&. 
+.br
+\fIoptions\fP 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL void bufferevent_trigger_event (struct \fBbufferevent\fP * bufev, short what, int options)"
+
+.PP
+Triggers the bufferevent event callback\&. If the options contain BEV_OPT_DEFER_CALLBACKS, the callbacks are deferred\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent object 
+.br
+\fIwhat\fP the flags to pass onto the event callback 
+.br
+\fIoptions\fP 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL void bufferevent_unlock (struct \fBbufferevent\fP * bufev)"
+
+.PP
+Release the lock on a bufferevent\&. Has no effect if locking was not enabled with BEV_OPT_THREADSAFE\&. 
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_write (struct \fBbufferevent\fP * bufev, const void * data, size_t size)"
+
+.PP
+Write data to a bufferevent buffer\&. The \fBbufferevent_write()\fP function can be used to write data to the file descriptor\&. The data is appended to the output buffer and written to the descriptor automatically as it becomes available for writing\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to be written to 
+.br
+\fIdata\fP a pointer to the data to be written 
+.br
+\fIsize\fP the length of the data, in bytes 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+\fBbufferevent_write_buffer()\fP 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int bufferevent_write_buffer (struct \fBbufferevent\fP * bufev, struct \fBevbuffer\fP * buf)"
+
+.PP
+Write data from an evbuffer to a bufferevent buffer\&. The evbuffer is being drained as a result\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbufev\fP the bufferevent to be written to 
+.br
+\fIbuf\fP the evbuffer to be written 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+\fBSee also:\fP
+.RS 4
+\fBbufferevent_write()\fP 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL void ev_token_bucket_cfg_free (struct ev_token_bucket_cfg * cfg)"
+
+.PP
+Free all storage held in 'cfg'\&. Note: 'cfg' is not currently reference-counted; it is not safe to free it until no bufferevent is using it\&. 
+.SS "EVENT2_EXPORT_SYMBOL struct ev_token_bucket_cfg* ev_token_bucket_cfg_new (size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, const struct timeval * tick_len)"
+
+.PP
+Initialize and return a new object to configure the rate-limiting behavior of bufferevents\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIread_rate\fP The maximum number of bytes to read per tick on average\&. 
+.br
+\fIread_burst\fP The maximum number of bytes to read in any single tick\&. 
+.br
+\fIwrite_rate\fP The maximum number of bytes to write per tick on average\&. 
+.br
+\fIwrite_burst\fP The maximum number of bytes to write in any single tick\&. 
+.br
+\fItick_len\fP The length of a single tick\&. Defaults to one second\&. Any fractions of a millisecond are ignored\&.
+.RE
+.PP
+Note that all rate-limits hare are currently best-effort: future versions of Libevent may implement them more tightly\&. 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for libevent from the source code\&.
