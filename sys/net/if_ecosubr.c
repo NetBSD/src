@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.50 2017/01/24 18:37:20 maxv Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.51 2017/01/31 17:13:36 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.50 2017/01/24 18:37:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.51 2017/01/31 17:13:36 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -194,12 +194,11 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 #ifdef INET
 	case AF_INET:
 		if (m->m_flags & M_BCAST)
-                	memcpy(ehdr.eco_dhost, eco_broadcastaddr,
-			    ECO_ADDR_LEN);
+			memcpy(ehdr.eco_dhost, eco_broadcastaddr, ECO_ADDR_LEN);
+		else if ((error = arpresolve(ifp, rt, m, dst, ehdr.eco_dhost,
+		    sizeof(ehdr.eco_dhost))) != 0)
+			return error == EWOULDBLOCK ? 0 : error;
 
-		else if (!arpresolve(ifp, rt, m, dst, ehdr.eco_dhost,
-		    sizeof(ehdr.eco_dhost)))
-			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
