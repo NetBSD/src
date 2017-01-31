@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.157 2017/01/28 21:42:41 christos Exp $
+# $NetBSD: shl.mi,v 1.158 2017/01/31 23:19:20 christos Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.205.debug			comp-sys-debug	debug,dynamicroot
@@ -7,7 +7,7 @@
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libedit.so.3.1.debug			comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libevent.so.4.0.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libevent.so.4.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libgcc_s.so.1.0.debug			comp-sys-debug	debug,dynamicroot,gcc
 ./usr/libdata/debug/lib/libipsec.so.3.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libkvm.so.6.0.debug			comp-sys-debug	debug,dynamicroot
@@ -88,9 +88,9 @@
 ./usr/libdata/debug/usr/lib/libdwarf.so.2.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libedit.so.3.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libelf.so.2.0.debug			comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libevent.so.4.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,compatfile,crypto
-./usr/libdata/debug/usr/lib/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libevent.so.4.1.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libevent_openssl.so.4.1.debug	comp-sys-debug	debug,compatfile,crypto
+./usr/libdata/debug/usr/lib/libevent_pthreads.so.4.1.debug	comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libexecinfo.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libexpat.so.2.3.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libfetch.so.3.0.debug		comp-sys-debug	debug,compatfile
