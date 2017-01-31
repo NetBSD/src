@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.21 2017/01/31 11:41:14 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.22 2017/01/31 16:52:39 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -367,7 +367,6 @@ smsc_miibus_statchg(struct ifnet *ifp)
 			afc_cfg |= 0xf;
 		else
 			afc_cfg &= ~0xf;
-
 	} else {
 		smsc_dbg_printf(sc, "half duplex operation\n");
 		sc->sc_mac_csr &= ~SMSC_MAC_CSR_FDPX;
@@ -710,8 +709,6 @@ smsc_stop_locked(struct ifnet *ifp, int disable)
 	struct smsc_softc * const sc = ifp->if_softc;
 	usbd_status err;
 
-//	smsc_reset(sc);
-
 	KASSERT(mutex_owned(&sc->sc_lock));
 	mutex_enter(&sc->sc_rxlock);
 	mutex_enter(&sc->sc_txlock);
@@ -973,7 +970,6 @@ int
 smsc_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct smsc_softc	*sc = ifp->if_softc;
-// 	struct ifreq /*const*/	*ifr = data;
 	int			s, error = 0;
 
 	if (sc->sc_dying)
