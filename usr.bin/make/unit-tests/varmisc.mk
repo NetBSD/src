@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.7 2017/01/30 02:46:20 sjg Exp $
+# $Id: varmisc.mk,v 1.8 2017/01/31 18:56:35 sjg Exp $
 #
 # Miscellaneous variable tests.
 
@@ -50,12 +50,13 @@ strftime:
 	@echo date=${%Y%m%d:L:${gmtime=${April1}:L}}
 
 # big jumps to handle 3 digits per step
-M_cmpv.units = 1 100 10000 1000000
-# this will produce the same result as the .for loop below
+M_cmpv.units = 1 1000 1000000
 M_cmpv = S,., ,g:_:range:@i@+ $${_:[-$$i]} \* $${M_cmpv.units:[$$i]}@:S,^,expr 0 ,1:sh
 
-Version = 1.2.3
+Version = 123.456.789
+cmpv.only = target specific vars
 
 cmpv:
 	@echo Version=${Version} == ${Version:${M_cmpv}}
 	@echo Literal=3.4.5 == ${3.4.5:L:${M_cmpv}}
+	@echo We have ${${.TARGET:T}.only}
