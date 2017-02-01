@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.240 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: wi.c,v 1.241 2017/02/01 02:37:43 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.240 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.241 2017/02/01 02:37:43 nonaka Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1366,8 +1366,10 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	if ((error = wi_ioctl_enter(sc)) != 0)
+	if ((error = wi_ioctl_enter(sc)) != 0) {
+		splx(s);
 		return error;
+	}
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
