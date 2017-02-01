@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.40 2017/01/24 09:05:28 ozaki-r Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.41 2017/02/01 08:07:27 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -102,6 +102,7 @@ struct bpf_d {
 	int		bd_compat32;	/* 32-bit stream on LP64 system */
 #endif
 	bpfjit_func_t	bd_jitcode;	/* compiled filter program */
+	size_t		bd_filter_size;
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.207 2017/02/01 08:06:01 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.208 2017/02/01 08:07:27 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.207 2017/02/01 08:06:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.208 2017/02/01 08:07:27 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -446,7 +446,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
 
-	d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK|M_ZERO);
+	d = kmem_zalloc(sizeof(*d), KM_SLEEP);
 	d->bd_bufsize = bpf_bufsize;
 	d->bd_seesent = 1;
 	d->bd_feedback = 0;
@@ -511,7 +511,7 @@ bpf_close(struct file *fp)
 	callout_destroy(&d->bd_callout);
 	seldestroy(&d->bd_sel);
 	softint_disestablish(d->bd_sih);
-	free(d, M_DEVBUF);
+	kmem_free(d, sizeof(*d));
 
 	return (0);
 }
@@ -840,7 +840,11 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 * Set buffer length.
 	 */
 	case BIOCSBLEN:
-		if (d->bd_bif != NULL)
+		/*
+		 * Forbid to change the buffer length if buffers are already
+		 * allocated.
+		 */
+		if (d->bd_bif != NULL || d->bd_sbuf != NULL)
 			error = EINVAL;
 		else {
 			u_int size = *(u_int *)addr;
@@ -1110,7 +1114,7 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 {
 	struct bpf_insn *fcode, *old;
 	bpfjit_func_t jcode, oldj;
-	size_t flen, size;
+	size_t flen, size = 0, old_size;
 	int s;
 
 	jcode = NULL;
@@ -1126,10 +1130,10 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 		 * userspace and validate it.
 		 */
 		size = flen * sizeof(*fp->bf_insns);
-		fcode = malloc(size, M_DEVBUF, M_WAITOK);
+		fcode = kmem_alloc(size, KM_SLEEP);
 		if (copyin(fp->bf_insns, fcode, size) != 0 ||
 		    !bpf_validate(fcode, (int)flen)) {
-			free(fcode, M_DEVBUF);
+			kmem_free(fcode, size);
 			return EINVAL;
 		}
 		membar_consumer();
@@ -1139,16 +1143,19 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 		fcode = NULL;
 	}
 
+	old_size = d->bd_filter_size;
+
 	s = splnet();
 	old = d->bd_filter;
 	d->bd_filter = fcode;
+	d->bd_filter_size = size;
 	oldj = d->bd_jitcode;
 	d->bd_jitcode = jcode;
 	reset_d(d);
 	splx(s);
 
 	if (old) {
-		free(old, M_DEVBUF);
+		kmem_free(old, old_size);
 	}
 	if (oldj) {
 		bpf_jit_freecode(oldj);
@@ -1822,12 +1829,12 @@ static int
 bpf_allocbufs(struct bpf_d *d)
 {
 
-	d->bd_fbuf = malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	d->bd_fbuf = kmem_alloc(d->bd_bufsize, KM_NOSLEEP);
 	if (!d->bd_fbuf)
 		return (ENOBUFS);
-	d->bd_sbuf = malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	d->bd_sbuf = kmem_alloc(d->bd_bufsize, KM_NOSLEEP);
 	if (!d->bd_sbuf) {
-		free(d->bd_fbuf, M_DEVBUF);
+		kmem_free(d->bd_fbuf, d->bd_bufsize);
 		return (ENOBUFS);
 	}
 	d->bd_slen = 0;
@@ -1848,14 +1855,14 @@ bpf_freed(struct bpf_d *d)
 	 * free.
 	 */
 	if (d->bd_sbuf != NULL) {
-		free(d->bd_sbuf, M_DEVBUF);
+		kmem_free(d->bd_sbuf, d->bd_bufsize);
 		if (d->bd_hbuf != NULL)
-			free(d->bd_hbuf, M_DEVBUF);
+			kmem_free(d->bd_hbuf, d->bd_bufsize);
 		if (d->bd_fbuf != NULL)
-			free(d->bd_fbuf, M_DEVBUF);
+			kmem_free(d->bd_fbuf, d->bd_bufsize);
 	}
 	if (d->bd_filter)
-		free(d->bd_filter, M_DEVBUF);
+		kmem_free(d->bd_filter, d->bd_filter_size);
 
 	if (d->bd_jitcode != NULL) {
 		bpf_jit_freecode(d->bd_jitcode);
@@ -1871,7 +1878,7 @@ static void
 _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 {
 	struct bpf_if *bp;
-	bp = malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
+	bp = kmem_alloc(sizeof(*bp), KM_NOSLEEP);
 	if (bp == NULL)
 		panic("bpfattach");
 
@@ -1957,7 +1964,7 @@ _bpfdetach(struct ifnet *ifp)
 				splx(s);
 				softint_disestablish(bp->bif_si);
 			}
-			free(bp, M_DEVBUF);
+			kmem_free(bp, sizeof(*bp));
 			goto again;
 		}
 	}
