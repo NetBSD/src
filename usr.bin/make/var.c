@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.211 2017/01/31 07:00:59 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.212 2017/02/01 18:00:14 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.211 2017/01/31 07:00:59 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.212 2017/02/01 18:00:14 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.211 2017/01/31 07:00:59 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.212 2017/02/01 18:00:14 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2743,7 +2743,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    }
 	case '_':			/* remember current value */
 	    if CHARMOD_MATCH(tstr[1]) {
-		Var_Set("_", nstr, VAR_INTERNAL, 0);
+		Var_Set("_", nstr, ctxt, 0);
 		newStr = nstr;
 		cp = ++tstr;
 		termc = *tstr;
@@ -3729,7 +3729,6 @@ char *
 Var_Parse(const char *str, GNode *ctxt, int flags,
 	  int *lengthPtr, void **freePtr)
 {
-    GNode	   *mctxt;
     const char	   *tstr;    	/* Pointer into str */
     Var		   *v;		/* Variable in invocation */
     Boolean 	    haveModifier;/* TRUE if have modifiers for the variable */
@@ -3747,12 +3746,6 @@ Var_Parse(const char *str, GNode *ctxt, int flags,
     const char     *extramodifiers; /* extra modifiers to apply first */
     char	  name[2];
 
-    /*
-     * We can safely (and only need to?) use VAR_INTERNAL for modifiers
-     * (so correct $_ is found) if ctxt is any of VAR_CMD, VAR_GLOBAL
-     * or VAR_INTERNAL, otherwise leave it alone.
-     */
-    mctxt = (ctxt == VAR_GLOBAL || ctxt == VAR_CMD) ? VAR_INTERNAL : ctxt;
     *freePtr = NULL;
     extramodifiers = NULL;
     dynamic = FALSE;
@@ -3999,7 +3992,7 @@ Var_Parse(const char *str, GNode *ctxt, int flags,
 	extraFree = NULL;
 	if (extramodifiers != NULL) {
 		nstr = ApplyModifiers(nstr, extramodifiers, '(', ')',
-				      v, mctxt, flags, &used, &extraFree);
+				      v, ctxt, flags, &used, &extraFree);
 	}
 
 	if (haveModifier) {
@@ -4007,7 +4000,7 @@ Var_Parse(const char *str, GNode *ctxt, int flags,
 		tstr++;
 
 		nstr = ApplyModifiers(nstr, tstr, startc, endc,
-				      v, mctxt, flags, &used, freePtr);
+				      v, ctxt, flags, &used, freePtr);
 		tstr += used;
 		free(extraFree);
 	} else {
