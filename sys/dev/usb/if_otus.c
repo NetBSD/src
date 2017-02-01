@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.25.6.9 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.25.6.10 2017/02/01 07:55:08 skrll Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.9 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.10 2017/02/01 07:55:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1493,7 +1493,7 @@ otus_node_alloc(struct ieee80211_node_table *ntp)
 	DPRINTFN(DBG_FN, DBG_NO_SC, "\n");
 
 	on = malloc(sizeof(*on), M_DEVBUF, M_NOWAIT | M_ZERO);
-	return &on->ni;
+	return on ? &on->ni : NULL;
 }
 
 Static int
