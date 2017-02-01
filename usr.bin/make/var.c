@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.212 2017/02/01 18:00:14 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.213 2017/02/01 18:39:27 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.212 2017/02/01 18:00:14 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.213 2017/02/01 18:39:27 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.212 2017/02/01 18:00:14 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.213 2017/02/01 18:39:27 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2742,11 +2742,24 @@ ApplyModifiers(char *nstr, const char *tstr,
 		break;
 	    }
 	case '_':			/* remember current value */
-	    if CHARMOD_MATCH(tstr[1]) {
-		Var_Set("_", nstr, ctxt, 0);
+	    cp = tstr + 1;	/* make sure it is set */
+	    if (STRMOD_MATCHX(tstr, "_", 1)) {
+		if (tstr[1] == '=') {
+		    char *np;
+		    int n;
+
+		    cp++;
+		    n = strcspn(cp, ":)}");
+		    np = bmake_strndup(cp, n+1);
+		    np[n] = '\0';
+		    cp = tstr + 2 + n;
+		    Var_Set(np, nstr, ctxt, 0);
+		    free(np);
+		} else {
+		    Var_Set("_", nstr, ctxt, 0);
+		}
 		newStr = nstr;
-		cp = ++tstr;
-		termc = *tstr;
+		termc = *cp;
 		break;
 	    }
 	    goto default_case;
