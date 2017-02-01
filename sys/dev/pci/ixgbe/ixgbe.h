@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 303890 2016-08-09 19:32:06Z dumbbell $*/
-/*$NetBSD: ixgbe.h,v 1.21 2017/01/30 05:02:43 msaitoh Exp $*/
+/*$NetBSD: ixgbe.h,v 1.22 2017/02/01 10:47:13 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -69,9 +69,7 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#if __FreeBSD_version >= 800000
-#include <sys/buf_ring.h>
-#endif
+#include <sys/pcq.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -107,6 +105,7 @@
 #include <sys/workqueue.h>
 #include <sys/cpu.h>
 #include <sys/interrupt.h>
+#include <sys/bitops.h>
 
 #ifdef PCI_IOV
 #include <sys/nv.h>
@@ -390,8 +389,8 @@ struct tx_ring {
 	ixgbe_dma_tag_t		*txtag;
 	char			mtx_name[16];
 #ifndef IXGBE_LEGACY_TX
-	struct buf_ring		*br;
-	void			*txq_si;
+	pcq_t			*txr_interq;
+	void			*txr_si;
 #endif
 #ifdef IXGBE_FDIR
 	u16			atr_sample;
@@ -404,6 +403,7 @@ struct tx_ring {
 	struct evcnt	   	no_tx_map_avail;
 	struct evcnt		no_desc_avail;
 	struct evcnt		total_packets;
+	struct evcnt		pcq_drops;
 };
 
 
@@ -757,15 +757,13 @@ ixv_check_ether_addr(u8 *addr)
 
 /* Shared Prototypes */
 
-#ifdef IXGBE_LEGACY_TX
 void	ixgbe_start(struct ifnet *);
 void	ixgbe_start_locked(struct tx_ring *, struct ifnet *);
-#else /* ! IXGBE_LEGACY_TX */
+#ifndef IXGBE_LEGACY_TX
 int	ixgbe_mq_start(struct ifnet *, struct mbuf *);
 int	ixgbe_mq_start_locked(struct ifnet *, struct tx_ring *);
-void	ixgbe_qflush(struct ifnet *);
-void	ixgbe_deferred_mq_start(void *, int);
-#endif /* IXGBE_LEGACY_TX */
+void	ixgbe_deferred_mq_start(void *);
+#endif /* !IXGBE_LEGACY_TX */
 
 int	ixgbe_allocate_queues(struct adapter *);
 int	ixgbe_allocate_transmit_buffers(struct tx_ring *);
