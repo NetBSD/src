@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.206 2017/01/25 01:04:23 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.207 2017/02/01 08:06:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.206 2017/01/25 01:04:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.207 2017/02/01 08:06:01 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -108,9 +108,9 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.206 2017/01/25 01:04:23 ozaki-r Exp $");
  * XXX the default values should be computed dynamically based
  * on available memory size and available mbuf clusters.
  */
-int bpf_bufsize = BPF_BUFSIZE;
-int bpf_maxbufsize = BPF_DFLTBUFSIZE;	/* XXX set dynamically, see above */
-bool bpf_jit = false;
+static int bpf_bufsize = BPF_BUFSIZE;
+static int bpf_maxbufsize = BPF_DFLTBUFSIZE;	/* XXX set dynamically, see above */
+static bool bpf_jit = false;
 
 struct bpfjit_ops bpfjit_module_ops = {
 	.bj_generate_code = NULL,
@@ -120,7 +120,7 @@ struct bpfjit_ops bpfjit_module_ops = {
 /*
  * Global BPF statistics returned by net.bpf.stats sysctl.
  */
-struct bpf_stat	bpf_gstats;
+static struct bpf_stat	bpf_gstats;
 
 /*
  * Use a mutex to avoid a race condition between gathering the stats/peers
@@ -132,8 +132,8 @@ static kmutex_t bpf_mtx;
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
  *  bpf_dtab holds the descriptors, indexed by minor device #
  */
-struct bpf_if	*bpf_iflist;
-LIST_HEAD(, bpf_d) bpf_list;
+static struct bpf_if	*bpf_iflist;
+static LIST_HEAD(, bpf_d) bpf_list;
 
 static int	bpf_allocbufs(struct bpf_d *);
 static void	bpf_deliver(struct bpf_if *,
