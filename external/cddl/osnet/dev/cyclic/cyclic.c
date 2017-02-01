@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic.c,v 1.6 2017/02/01 20:06:21 chs Exp $	*/
+/*	$NetBSD: cyclic.c,v 1.7 2017/02/01 21:59:09 chs Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -336,6 +336,7 @@
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/cmn_err.h>
+#include <sys/dtrace_bsd.h>
 #ifdef __FreeBSD__
 #include <machine/cpu.h>
 #endif
