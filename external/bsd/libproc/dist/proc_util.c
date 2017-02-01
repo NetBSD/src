@@ -36,6 +36,7 @@
 #include <err.h>
 #include <errno.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include "_libproc.h"
@@ -216,17 +217,39 @@ proc_getlwpstatus(struct proc_handle *phdl)
 	struct ptrace_lwpinfo lwpinfo;
 	lwpstatus_t *psp = &phdl->lwps;
 	siginfo_t *siginfo;
+	bool have_siginfo, sysentry, sysexit;
 
 	if (phdl == NULL)
 		return (NULL);
-	lwpinfo.pl_lwpid = 1;
+	lwpinfo.pl_lwpid = 0;
 	if (ptrace(PT_LWPINFO, phdl->pid, (void *)&lwpinfo,
 	    sizeof(lwpinfo)) < 0)
 		return (NULL);
+
 #ifdef PL_FLAG_SI
-	siginfo = &lwpinfo.pl_siginfo;
-	if (lwpinfo.pl_event == PL_EVENT_SIGNAL &&
-	    (lwpinfo.pl_flags & PL_FLAG_SI) != 0) {
+	have_siginfo = (lwpinfo.pl_flags & PL_FLAG_SI) != 0;
+	sysentry = (lwpinfo.pl_flags & PL_FLAG_SCE) != 0;
+	sysexit = (lwpinfo.pl_flags & PL_FLAG_SCX) != 0;
+#endif
+#ifdef PT_GET_SIGINFO
+	have_siginfo = 1;
+	sysentry = 0;
+	sysexit = 0;
+#endif
+
+	if (lwpinfo.pl_event == PL_EVENT_SIGNAL && have_siginfo) {
+#ifdef PL_FLAG_SI
+		siginfo = &lwpinfo.pl_siginfo;
+#endif
+#ifdef PT_GET_SIGINFO
+		struct ptrace_siginfo si;
+
+		if (ptrace(PT_GET_SIGINFO, phdl->pid, (void *)&si,
+			   sizeof(si)) < 0)
+			return (NULL);
+
+		siginfo = &si.psi_siginfo;
+#endif
 		if (siginfo->si_signo == SIGTRAP &&
 		    (siginfo->si_code == TRAP_BRKPT ||
 		    siginfo->si_code == TRAP_TRACE)) {
@@ -236,12 +259,10 @@ proc_getlwpstatus(struct proc_handle *phdl)
 			psp->pr_why = PR_SIGNALLED;
 			psp->pr_what = siginfo->si_signo;
 		}
-	} else if (lwpinfo.pl_flags & PL_FLAG_SCE) {
+	} else if (sysentry) {
 		psp->pr_why = PR_SYSENTRY;
-	} else if (lwpinfo.pl_flags & PL_FLAG_SCX) {
+	} else if (sysexit) {
 		psp->pr_why = PR_SYSEXIT;
 	}
-#endif
-
 	return (psp);
 }
