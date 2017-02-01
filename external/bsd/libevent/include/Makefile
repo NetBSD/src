@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/04/11 16:55:51 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2017/02/01 01:22:39 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -33,6 +33,7 @@ event2/rpc_struct.h \
 event2/tag.h \
 event2/tag_compat.h \
 event2/thread.h \
-event2/util.h
+event2/util.h \
+event2/visibility.h
 
 .include <bsd.prog.mk>
