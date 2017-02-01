@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2105 2017/01/31 23:55:03 christos Exp $
+#	$NetBSD: mi,v 1.2106 2017/02/01 01:23:17 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -805,6 +805,7 @@
 ./usr/include/event2/tag_compat.h		comp-c-include
 ./usr/include/event2/thread.h			comp-c-include
 ./usr/include/event2/util.h			comp-c-include
+./usr/include/event2/visibility.h		comp-c-include
 ./usr/include/evhttp.h				comp-c-include
 ./usr/include/evrpc.h				comp-c-include
 ./usr/include/evutil.h				comp-c-include
