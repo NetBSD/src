@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.123 2016/12/27 01:31:06 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.124 2017/02/01 17:58:47 maxv Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.123 2016/12/27 01:31:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.124 2017/02/01 17:58:47 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -621,19 +621,21 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		case PPPOE_TAG_ACNAME:
 			error = NULL;
 			if (sc != NULL && len > 0) {
-				error = malloc(len+1, M_TEMP, M_NOWAIT);
-				if (error) {
-					n = m_pulldown(m, off + sizeof(*pt),
-					    len, &noff);
-					if (n) {
-						strlcpy(error,
-						    mtod(n, char*) + noff,
-						    len);
-					}
-					printf("%s: connected to %s\n",
-					    devname, error);
+				error = malloc(len + 1, M_TEMP, M_NOWAIT);
+				if (error == NULL)
+					break;
+
+				n = m_pulldown(m, off + sizeof(*pt), len,
+				    &noff);
+				if (!n) {
+					m = NULL;
 					free(error, M_TEMP);
+					goto done;
 				}
+
+				strlcpy(error, mtod(n, char*) + noff, len + 1);
+				printf("%s: connected to %s\n", devname, error);
+				free(error, M_TEMP);
 			}
 			break;	/* ignored */
 		case PPPOE_TAG_HUNIQUE: {
@@ -704,12 +706,15 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		if (err_msg) {
 			error = NULL;
 			if (errortag && len) {
-				error = malloc(len+1, M_TEMP, M_NOWAIT);
+				error = malloc(len + 1, M_TEMP,
+				    M_NOWAIT|M_ZERO);
 				n = m_pulldown(m, off + sizeof(*pt), len,
 				    &noff);
-				if (n && error) {
-					strlcpy(error, 
-					    mtod(n, char *) + noff, len);
+				if (!n) {
+					m = NULL;
+				} else if (error) {
+					strlcpy(error, mtod(n, char *) + noff,
+					    len + 1);
 				}
 			}
 			if (error) {
