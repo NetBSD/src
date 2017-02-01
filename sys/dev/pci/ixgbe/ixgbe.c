@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.66 2017/01/25 13:08:31 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.67 2017/02/01 10:47:13 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -749,7 +749,7 @@ ixgbe_detach(device_t dev, int flags)
 
 	for (int i = 0; i < adapter->num_queues; i++, que++, txr++) {
 #ifndef IXGBE_LEGACY_TX
-		softint_disestablish(txr->txq_si);
+		softint_disestablish(txr->txr_si);
 #endif
 		softint_disestablish(que->que_si);
 	}
@@ -1030,6 +1030,35 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
 	case SIOCSIFMTU:
 		IOCTL_DEBUGOUT("ioctl: SIOCSIFMTU (Set Interface MTU)");
 		break;
+#ifdef __NetBSD__
+	case SIOCINITIFADDR:
+		IOCTL_DEBUGOUT("ioctl: SIOCINITIFADDR");
+		break;
+	case SIOCGIFFLAGS:
+		IOCTL_DEBUGOUT("ioctl: SIOCGIFFLAGS");
+		break;
+	case SIOCGIFAFLAG_IN:
+		IOCTL_DEBUGOUT("ioctl: SIOCGIFAFLAG_IN");
+		break;
+	case SIOCGIFADDR:
+		IOCTL_DEBUGOUT("ioctl: SIOCGIFADDR");
+		break;
+	case SIOCGIFMTU:
+		IOCTL_DEBUGOUT("ioctl: SIOCGIFMTU (Get Interface MTU)");
+		break;
+	case SIOCGIFCAP:
+		IOCTL_DEBUGOUT("ioctl: SIOCGIFCAP (Get IF cap)");
+		break;
+	case SIOCGETHERCAP:
+		IOCTL_DEBUGOUT("ioctl: SIOCGETHERCAP (Get ethercap)");
+		break;
+	case SIOCGLIFADDR:
+		IOCTL_DEBUGOUT("ioctl: SIOCGLIFADDR (Get Interface addr)");
+		break;
+	case SIOCAIFADDR:
+		IOCTL_DEBUGOUT("ioctl: SIOCAIFADDR (add/chg IF alias)");
+		break;
+#endif
 	default:
 		IOCTL_DEBUGOUT1("ioctl: UNKNOWN (0x%X)", (int)command);
 		break;
@@ -1540,7 +1569,7 @@ ixgbe_handle_que(void *context)
 		IXGBE_TX_LOCK(txr);
 		ixgbe_txeof(txr);
 #ifndef IXGBE_LEGACY_TX
-		if (!drbr_empty(ifp, txr->br))
+		if (pcq_peek(txr->txr_interq) != NULL)
 			ixgbe_mq_start_locked(ifp, txr);
 #else
 		if (!IFQ_IS_EMPTY(&ifp->if_snd))
@@ -1601,7 +1630,7 @@ ixgbe_legacy_irq(void *arg)
 		if (!IFQ_IS_EMPTY(&ifp->if_snd))
 			ixgbe_start_locked(txr, ifp);
 #else
-		if (!drbr_empty(ifp, txr->br))
+		if (pcq_peek(txr->txr_interq) != NULL)
 			ixgbe_mq_start_locked(ifp, txr);
 #endif
 		IXGBE_TX_UNLOCK(txr);
@@ -1626,7 +1655,7 @@ ixgbe_legacy_irq(void *arg)
 
 	if (more)
 #ifndef IXGBE_LEGACY_TX
-		softint_schedule(txr->txq_si);
+		softint_schedule(txr->txr_si);
 #else
 		softint_schedule(que->que_si);
 #endif
@@ -1652,7 +1681,6 @@ ixgbe_msix_que(void *arg)
 	bool		more;
 	u32		newitr = 0;
 
-
 	/* Protect against spurious interrupts */
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return 0;
@@ -1673,7 +1701,7 @@ ixgbe_msix_que(void *arg)
 	if (!IFQ_IS_EMPTY(&adapter->ifp->if_snd))
 		ixgbe_start_locked(txr, ifp);
 #else
-	if (!drbr_empty(ifp, txr->br))
+	if (pcq_peek(txr->txr_interq) != NULL)
 		ixgbe_mq_start_locked(ifp, txr);
 #endif
 	IXGBE_TX_UNLOCK(txr);
@@ -2562,7 +2590,7 @@ alloc_retry:
 	 * processing contexts.
 	 */
 #ifndef IXGBE_LEGACY_TX
-	txr->txq_si = softint_establish(SOFTINT_NET, ixgbe_deferred_mq_start,
+	txr->txr_si = softint_establish(SOFTINT_NET, ixgbe_deferred_mq_start,
 	    txr);
 #endif
 	que->que_si = softint_establish(SOFTINT_NET, ixgbe_handle_que, que);
@@ -2717,7 +2745,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		}
 		aprint_normal("\n");
 #ifndef IXGBE_LEGACY_TX
-		txr->txq_si = softint_establish(SOFTINT_NET,
+		txr->txr_si = softint_establish(SOFTINT_NET,
 		    ixgbe_deferred_mq_start, txr);
 #endif
 		que->que_si = softint_establish(SOFTINT_NET, ixgbe_handle_que,
@@ -2969,18 +2997,22 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 #endif
 #ifndef IXGBE_LEGACY_TX
 	ifp->if_transmit = ixgbe_mq_start;
-	ifp->if_qflush = ixgbe_qflush;
 #else
-	ifp->if_start = ixgbe_start;
 	IFQ_SET_MAXLEN(&ifp->if_snd, adapter->num_tx_desc - 2);
 #if 0
 	ifp->if_snd.ifq_drv_maxlen = adapter->num_tx_desc - 2;
 #endif
 	IFQ_SET_READY(&ifp->if_snd);
 #endif
+	ifp->if_start = ixgbe_start;
 
 	if_initialize(ifp);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
+#ifndef IXGBE_LEGACY_TX
+#if 0	/* We use per TX queue softint */
+	if_deferred_start_init(ifp, ixgbe_deferred_mq_start);
+#endif
+#endif
 	if_register(ifp);
 	ether_set_ifflags_cb(ec, ixgbe_ifflags_cb);
 
@@ -4736,9 +4768,9 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    NULL, adapter->queues[i].evnamebuf,
 		    "Queue Packets Transmitted");
 #ifndef IXGBE_LEGACY_TX
-		evcnt_attach_dynamic(&txr->br->br_drops, EVCNT_TYPE_MISC,
+		evcnt_attach_dynamic(&txr->pcq_drops, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
-		    "Packets dropped in buf_ring");
+		    "Packets dropped in pcq");
 #endif
 
 #ifdef LRO
