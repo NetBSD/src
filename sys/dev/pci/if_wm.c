@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.473 2017/02/01 03:54:49 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.474 2017/02/01 07:50:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.473 2017/02/01 03:54:49 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.474 2017/02/01 07:50:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8671,6 +8671,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		break;
 	case PCI_PRODUCT_INTEL_82801H_82567V_3:
 	case PCI_PRODUCT_INTEL_82801I_BM:
+	case PCI_PRODUCT_INTEL_82801I_IGP_M_AMT: /* Not IGP but BM */
 	case PCI_PRODUCT_INTEL_82801J_R_BM_LM:
 	case PCI_PRODUCT_INTEL_82801J_R_BM_LF:
 	case PCI_PRODUCT_INTEL_82801J_D_BM_LM:
