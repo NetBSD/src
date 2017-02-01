@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.34 2017/01/30 06:11:56 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.35 2017/02/01 10:47:13 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -527,7 +527,9 @@ ixv_detach(device_t dev, int flags)
 
 	for (int i = 0; i < adapter->num_queues; i++, que++) {
 #ifndef IXGBE_LEGACY_TX
-		softint_disestablish(txr->txq_si);
+		struct tx_ring *txr = adapter->tx_rings;
+
+		softint_disestablish(txr->txr_si);
 #endif
 		softint_disestablish(que->que_si);
 	}
@@ -858,8 +860,8 @@ ixv_handle_que(void *context)
 		more = ixgbe_rxeof(que);
 		IXGBE_TX_LOCK(txr);
 		ixgbe_txeof(txr);
-#if __FreeBSD_version >= 800000
-		if (!drbr_empty(ifp, txr->br))
+#ifndef IXGBE_LEGACY_TX
+		if (pcq_peek(txr->txr_interq) != NULL)
 			ixgbe_mq_start_locked(ifp, txr);
 #else
 		if (!IFQ_IS_EMPTY(&ifp->if_snd))
@@ -915,7 +917,7 @@ ixv_msix_que(void *arg)
 	if (!IFQ_IS_EMPTY(&adapter->ifp->if_snd))
 		ixgbe_start_locked(txr, ifp);
 #else
-	if (!drbr_empty(adapter->ifp, txr->br))
+	if (pcq_peek(txr->txr_interq) != NULL)
 		ixgbe_mq_start_locked(ifp, txr);
 #endif
 	IXGBE_TX_UNLOCK(txr);
@@ -1392,7 +1394,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 			aprint_normal("\n");
 
 #ifndef IXGBE_LEGACY_TX
-		txr->txq_si = softint_establish(SOFTINT_NET,
+		txr->txr_si = softint_establish(SOFTINT_NET,
 		    ixgbe_deferred_mq_start, txr);
 #endif
 		que->que_si = softint_establish(SOFTINT_NET, ixv_handle_que,
@@ -1603,16 +1605,19 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	ifp->if_softc = adapter;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = ixv_ioctl;
-#if __FreeBSD_version >= 800000
+#ifndef IXGBE_LEGACY_TX
 	ifp->if_transmit = ixgbe_mq_start;
-	ifp->if_qflush = ixgbe_qflush;
-#else
-	ifp->if_start = ixgbe_start;
 #endif
+	ifp->if_start = ixgbe_start;
 	ifp->if_snd.ifq_maxlen = adapter->num_tx_desc - 2;
 
 	if_initialize(ifp);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
+#ifndef IXGBE_LEGACY_TX
+#if 0	/* We use per TX queue softint */
+	if_deferred_start_init(ifp, ixgbe_deferred_mq_start);
+#endif
+#endif
 	if_register(ifp);
 	ether_set_ifflags_cb(ec, ixv_ifflags_cb);
 
