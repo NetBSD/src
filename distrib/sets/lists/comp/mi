@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2106 2017/02/01 01:23:17 christos Exp $
+#	$NetBSD: mi,v 1.2107 2017/02/01 12:33:58 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6226,6 +6226,7 @@
 ./usr/share/man/cat3/ethers.0			comp-c-catman		.cat
 ./usr/share/man/cat3/evasprintf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/evbuffer.0			comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer.h.0		comp-c-catman		.cat
 ./usr/share/man/cat3/evbuffer_add.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/evbuffer_add_buffer.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/evbuffer_add_printf.0	comp-obsolete		obsolete
@@ -13639,6 +13640,7 @@
 ./usr/share/man/html3/ethers.html		comp-c-htmlman		html
 ./usr/share/man/html3/evasprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/evbuffer.html		comp-c-htmlman		html
+./usr/share/man/html3/evbuffer.h.html		comp-c-htmlman		html
 ./usr/share/man/html3/evbuffer_add.html		comp-obsolete		obsolete
 ./usr/share/man/html3/evbuffer_add_buffer.html	comp-obsolete		obsolete
 ./usr/share/man/html3/evbuffer_add_printf.html	comp-obsolete		obsolete
@@ -20963,6 +20965,7 @@
 ./usr/share/man/man3/ethers.3			comp-c-man		.man
 ./usr/share/man/man3/evasprintf.3		comp-c-man		.man
 ./usr/share/man/man3/evbuffer.3			comp-c-man		.man
+./usr/share/man/man3/evbuffer.h.3		comp-c-man		.man
 ./usr/share/man/man3/evbuffer_add.3		comp-obsolete		obsolete
 ./usr/share/man/man3/evbuffer_add_buffer.3	comp-obsolete		obsolete
 ./usr/share/man/man3/evbuffer_add_printf.3	comp-obsolete		obsolete
