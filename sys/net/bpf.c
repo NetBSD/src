@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.209 2017/02/01 08:13:45 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.210 2017/02/01 08:15:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.209 2017/02/01 08:13:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.210 2017/02/01 08:15:15 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.209 2017/02/01 08:13:45 ozaki-r Exp $");
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
 #include <sys/syslog.h>
+#include <sys/percpu.h>
 
 #include <net/if.h>
 #include <net/slip.h>
@@ -120,7 +121,15 @@ struct bpfjit_ops bpfjit_module_ops = {
 /*
  * Global BPF statistics returned by net.bpf.stats sysctl.
  */
-static struct bpf_stat	bpf_gstats;
+static struct percpu	*bpf_gstats_percpu; /* struct bpf_stat */
+
+#define BPF_STATINC(id)					\
+	{						\
+		struct bpf_stat *__stats =		\
+		    percpu_getref(bpf_gstats_percpu);	\
+		__stats->bs_##id++;			\
+		percpu_putref(bpf_gstats_percpu);	\
+	}
 
 /*
  * Use a mutex to avoid a race condition between gathering the stats/peers
@@ -466,9 +475,7 @@ bpf_init(void)
 	PSLIST_INIT(&bpf_iflist);
 	PSLIST_INIT(&bpf_dlist);
 
-	bpf_gstats.bs_recv = 0;
-	bpf_gstats.bs_drop = 0;
-	bpf_gstats.bs_capt = 0;
+	bpf_gstats_percpu = percpu_alloc(sizeof(struct bpf_stat));
 
 	return;
 }
@@ -1496,7 +1503,7 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 			continue;
 		}
 		d->bd_rcount++;
-		bpf_gstats.bs_recv++;
+		BPF_STATINC(recv);
 
 		if (d->bd_jitcode)
 			slen = d->bd_jitcode(NULL, &args);
@@ -1787,7 +1794,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	int do_wakeup = 0;
 
 	++d->bd_ccount;
-	++bpf_gstats.bs_capt;
+	BPF_STATINC(capt);
 	/*
 	 * Figure out how many bytes to move.  If the packet is
 	 * greater or equal to the snapshot length, transfer that
@@ -1826,7 +1833,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 			 * so drop the packet.
 			 */
 			++d->bd_dcount;
-			++bpf_gstats.bs_drop;
+			BPF_STATINC(drop);
 			return;
 		}
 		ROTATE_BUFFERS(d);
@@ -2244,6 +2251,38 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 	return (error);
 }
 
+static void
+bpf_stats(void *p, void *arg, struct cpu_info *ci __unused)
+{
+	struct bpf_stat *const stats = p;
+	struct bpf_stat *sum = arg;
+
+	sum->bs_recv += stats->bs_recv;
+	sum->bs_drop += stats->bs_drop;
+	sum->bs_capt += stats->bs_capt;
+}
+
+static int
+bpf_sysctl_gstats_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error;
+	struct bpf_stat sum;
+
+	memset(&sum, 0, sizeof(sum));
+	node = *rnode;
+
+	percpu_foreach(bpf_gstats_percpu, bpf_stats, &sum);
+
+	node.sysctl_data = &sum;
+	node.sysctl_size = sizeof(sum);
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	return 0;
+}
+
 static struct sysctllog *bpf_sysctllog;
 static void
 sysctl_net_bpf_setup(void)
@@ -2276,7 +2315,7 @@ sysctl_net_bpf_setup(void)
 			CTLFLAG_PERMANENT,
 			CTLTYPE_STRUCT, "stats",
 			SYSCTL_DESCR("BPF stats"),
-			NULL, 0, &bpf_gstats, sizeof(bpf_gstats),
+			bpf_sysctl_gstats_handler, 0, NULL, 0,
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT,
