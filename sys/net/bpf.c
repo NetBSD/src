@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.211 2017/02/01 08:16:42 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.212 2017/02/01 08:18:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.211 2017/02/01 08:16:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.212 2017/02/01 08:18:33 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -632,9 +632,8 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 	while (d->bd_hbuf == NULL) {
 		if (fp->f_flag & FNONBLOCK) {
 			if (d->bd_slen == 0) {
-				splx(s);
-				KERNEL_UNLOCK_ONE(NULL);
-				return (EWOULDBLOCK);
+				error = EWOULDBLOCK;
+				goto out;
 			}
 			ROTATE_BUFFERS(d);
 			break;
@@ -654,11 +653,9 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 		error = cv_timedwait_sig(&d->bd_cv, d->bd_mtx, d->bd_rtout);
 		mutex_exit(d->bd_mtx);
 
-		if (error == EINTR || error == ERESTART) {
-			splx(s);
-			KERNEL_UNLOCK_ONE(NULL);
-			return (error);
-		}
+		if (error == EINTR || error == ERESTART)
+			goto out;
+
 		if (error == EWOULDBLOCK) {
 			/*
 			 * On a timeout, return what's in the buffer,
@@ -674,15 +671,14 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 				break;
 
 			if (d->bd_slen == 0) {
-				splx(s);
-				KERNEL_UNLOCK_ONE(NULL);
-				return (0);
+				error = 0;
+				goto out;
 			}
 			ROTATE_BUFFERS(d);
 			break;
 		}
 		if (error != 0)
-			goto done;
+			goto out;
 	}
 	/*
 	 * At this point, we know we have something in the hold slot.
@@ -700,7 +696,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 	d->bd_fbuf = d->bd_hbuf;
 	d->bd_hbuf = NULL;
 	d->bd_hlen = 0;
-done:
+out:
 	splx(s);
 	KERNEL_UNLOCK_ONE(NULL);
 	return (error);
