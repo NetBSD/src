@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.95 2017/01/16 00:09:06 knakahara Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.96 2017/02/01 04:18:43 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -127,21 +127,21 @@ typedef struct wiseman_rxdesc {
 
 /* extended RX descriptor for 82574 */
 typedef union ext_rxdesc {
-        struct {
-                uint64_t erxd_addr;	/* Packet Buffer Address */
-                uint64_t erxd_dd;	/* 63:1 reserved, 0 DD */
-        } erx_data;
-        struct {
-                uint32_t erxc_mrq;	/*
-                                         * 31:13 reserved
-                                         * 12:8 Rx queue associated with the packet
-                                         * 7:4 reserved 3:0 RSS Type
-                                         */
-                uint32_t erxc_rsshash;	/* RSS Hash or {Fragment Checksum, IP identification } */
-                uint32_t erxc_err_stat;	/* 31:20 Extended Error, 19:0 Extened Status */
-                uint16_t erxc_pktlen;	/* PKT_LEN */
-                uint16_t erxc_vlan;	/* VLAN Tag */
-        } erx_ctx;
+	struct {
+		uint64_t erxd_addr;	/* Packet Buffer Address */
+		uint64_t erxd_dd;	/* 63:1 reserved, 0 DD */
+	} erx_data;
+	struct {
+		uint32_t erxc_mrq;	/*
+					 * 31:13 reserved
+					 * 12:8 Rx queue associated with the packet
+					 * 7:4 reserved 3:0 RSS Type
+					 */
+		uint32_t erxc_rsshash;	/* RSS Hash or {Fragment Checksum, IP identification } */
+		uint32_t erxc_err_stat;	/* 31:20 Extended Error, 19:0 Extened Status */
+		uint16_t erxc_pktlen;	/* PKT_LEN */
+		uint16_t erxc_vlan;	/* VLAN Tag */
+	} erx_ctx;
 } __packed ext_rxdesc_t;
 
 #define EXTRXD_DD_MASK		__BIT(0)
@@ -210,21 +210,21 @@ typedef union ext_rxdesc {
 
 /* advanced RX descriptor for 82575 and newer */
 typedef union nq_rxdesc {
-        struct {
-                uint64_t nrxd_paddr;	/* 63:1 Packet Buffer Address, 0 A0/NSE */
-                uint64_t nrxd_haddr;	/* 63:1 HEader Buffer Address, 0 DD */
-        } nqrx_data;
-        struct {
-                uint32_t nrxc_misc;	/*
-                                         * 31: SPH, 30:21 HDR_LEN[9:0],
-                                         * 20:19 HDR_LEN[11:10], 18:17 RSV,
-                                         * 16:4 Packet Type 3:0 RSS Type
-                                         */
-                uint32_t nrxc_rsshash;	/* RSS Hash or {Fragment Checksum, IP identification } */
-                uint32_t nrxc_err_stat;	/* 31:20 Extended Error, 19:0 Extened Status */
-                uint16_t nrxc_pktlen;	/* PKT_LEN */
-                uint16_t nrxc_vlan;	/* VLAN Tag */
-        } nqrx_ctx;
+	struct {
+		uint64_t nrxd_paddr;	/* 63:1 Packet Buffer Address, 0 A0/NSE */
+		uint64_t nrxd_haddr;	/* 63:1 HEader Buffer Address, 0 DD */
+	} nqrx_data;
+	struct {
+		uint32_t nrxc_misc;	/*
+					 * 31: SPH, 30:21 HDR_LEN[9:0],
+					 * 20:19 HDR_LEN[11:10], 18:17 RSV,
+					 * 16:4 Packet Type 3:0 RSS Type
+					 */
+		uint32_t nrxc_rsshash;	/* RSS Hash or {Fragment Checksum, IP identification } */
+		uint32_t nrxc_err_stat;	/* 31:20 Extended Error, 19:0 Extened Status */
+		uint16_t nrxc_pktlen;	/* PKT_LEN */
+		uint16_t nrxc_vlan;	/* VLAN Tag */
+	} nqrx_ctx;
 } __packed nq_rxdesc_t;
 
 /* for nrxd_paddr macros */
