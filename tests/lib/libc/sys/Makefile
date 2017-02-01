@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.47 2017/01/14 03:59:58 pgoyette Exp $
+# $NetBSD: Makefile,v 1.48 2017/02/01 10:18:27 martin Exp $
 
 MKMAN=	no
 
@@ -86,10 +86,10 @@ CPPFLAGS.t_lwp_create.c += -D_KERNTYPES
 
 FILES=		truncate_test.root_owned
 FILESBUILD=	yes
-FILESDIR=	${TESTSDIR}
-FILESMODE=	0600
-FILESOWNER=	root
-FILESGRP=	wheel
+FILESDIR_truncate_test.root_owned=	${TESTSDIR}
+FILESMODE_truncate_test.root_owned=	0600
+FILESOWNER_truncate_test.root_owned=	root
+FILESGRP_truncate_test.root_owned=	wheel
 
 CLEANFILES=   truncate_test.root_owned
 truncate_test.root_owned:
