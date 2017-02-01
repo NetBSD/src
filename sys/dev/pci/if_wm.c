@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.474 2017/02/01 07:50:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.475 2017/02/01 08:56:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.474 2017/02/01 07:50:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.475 2017/02/01 08:56:41 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -726,6 +726,7 @@ static int	wm_linkintr_msix(void *);
 static void	wm_tbi_serdes_set_linkled(struct wm_softc *);
 /* GMII related */
 static void	wm_gmii_reset(struct wm_softc *);
+static void	wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t, uint16_t);
 static int	wm_get_phy_id_82575(struct wm_softc *);
 static void	wm_gmii_mediainit(struct wm_softc *, pci_product_id_t);
 static int	wm_gmii_mediachange(struct ifnet *);
@@ -8557,6 +8558,251 @@ wm_gmii_reset(struct wm_softc *sc)
 }
 
 /*
+ * Setup sc_phytype and mii_{read|write}reg.
+ *
+ *  To identify PHY type, correct read/write function should be selected.
+ * To select correct read/write function, PCI ID or MAC type are required
+ * without accessing PHY registers.
+ *
+ *  On the first call of this function, PHY ID is not known yet. Check
+ * PCI ID or MAC type. The list of the PCI ID may not be perfect, so the
+ * result might be incorrect.
+ *
+ *  In the second call, PHY OUI and model is used to identify PHY type.
+ * It might not be perfpect because of the lack of compared entry, but it
+ * would be better than the first call.
+ *
+ *  If the detected new result and previous assumption is different,
+ * diagnous message will be printed.
+ */
+static void
+wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
+    uint16_t phy_model)
+{
+	device_t dev = sc->sc_dev;
+	struct mii_data *mii = &sc->sc_mii;
+	uint16_t new_phytype = WMPHY_UNKNOWN;
+	uint16_t doubt_phytype = WMPHY_UNKNOWN;
+	mii_readreg_t new_readreg;
+	mii_writereg_t new_writereg;
+
+	if (mii->mii_readreg == NULL) {
+		/*
+		 *  This is the first call of this function. For ICH and PCH
+		 * variants, it's difficult to determine the PHY access method
+		 * by sc_type, so use the PCI product ID for some devices.
+		 */
+
+		switch (sc->sc_pcidevid) {
+		case PCI_PRODUCT_INTEL_PCH_M_LM:
+		case PCI_PRODUCT_INTEL_PCH_M_LC:
+			/* 82577 */
+			new_phytype = WMPHY_82577;
+			break;
+		case PCI_PRODUCT_INTEL_PCH_D_DM:
+		case PCI_PRODUCT_INTEL_PCH_D_DC:
+			/* 82578 */
+			new_phytype = WMPHY_82578;
+			break;
+		case PCI_PRODUCT_INTEL_PCH2_LV_LM:
+		case PCI_PRODUCT_INTEL_PCH2_LV_V:
+			/* 82579 */
+			new_phytype = WMPHY_82579;
+			break;
+		case PCI_PRODUCT_INTEL_82801H_82567V_3:
+		case PCI_PRODUCT_INTEL_82801I_BM:
+		case PCI_PRODUCT_INTEL_82801I_IGP_M_AMT: /* Not IGP but BM */
+		case PCI_PRODUCT_INTEL_82801J_R_BM_LM:
+		case PCI_PRODUCT_INTEL_82801J_R_BM_LF:
+		case PCI_PRODUCT_INTEL_82801J_D_BM_LM:
+		case PCI_PRODUCT_INTEL_82801J_D_BM_LF:
+		case PCI_PRODUCT_INTEL_82801J_R_BM_V:
+			/* ICH8, 9, 10 with 82567 */
+			new_phytype = WMPHY_BM;
+			break;
+		default:
+			break;
+		}
+	} else {
+		/* It's not the first call. Use PHY OUI and model */
+		switch (phy_oui) {
+		case MII_OUI_ATHEROS: /* XXX ??? */
+			switch (phy_model) {
+			case 0x0004: /* XXX */
+				new_phytype = WMPHY_82578;
+				break;
+			default:
+				break;
+			}
+			break;
+		case MII_OUI_xxMARVELL:
+			switch (phy_model) {
+			case MII_MODEL_xxMARVELL_I210:
+				new_phytype = WMPHY_I210;
+				break;
+			case MII_MODEL_xxMARVELL_E1011:
+			case MII_MODEL_xxMARVELL_E1000_3:
+			case MII_MODEL_xxMARVELL_E1000_5:
+			case MII_MODEL_xxMARVELL_E1112:
+				new_phytype = WMPHY_M88;
+				break;
+			case MII_MODEL_xxMARVELL_E1149:
+				new_phytype = WMPHY_BM;
+				break;
+			case MII_MODEL_xxMARVELL_E1111:
+			case MII_MODEL_xxMARVELL_I347:
+			case MII_MODEL_xxMARVELL_E1512:
+			case MII_MODEL_xxMARVELL_E1340M:
+			case MII_MODEL_xxMARVELL_E1543:
+				new_phytype = WMPHY_M88;
+				break;
+			case MII_MODEL_xxMARVELL_I82563:
+				new_phytype = WMPHY_GG82563;
+				break;
+			default:
+				break;
+			}
+			break;
+		case MII_OUI_INTEL:
+			switch (phy_model) {
+			case MII_MODEL_INTEL_I82577:
+				new_phytype = WMPHY_82577;
+				break;
+			case MII_MODEL_INTEL_I82579:
+				new_phytype = WMPHY_82579;
+				break;
+			case MII_MODEL_INTEL_I217:
+				new_phytype = WMPHY_I217;
+				break;
+			case MII_MODEL_INTEL_I82580:
+			case MII_MODEL_INTEL_I350:
+				new_phytype = WMPHY_82580;
+				break;
+			default:
+				break;
+			}
+			break;
+		case MII_OUI_yyINTEL:
+			switch (phy_model) {
+			case MII_MODEL_yyINTEL_I82562G:
+			case MII_MODEL_yyINTEL_I82562EM:
+			case MII_MODEL_yyINTEL_I82562ET:
+				new_phytype = WMPHY_IFE;
+				break;
+			case MII_MODEL_yyINTEL_IGP01E1000:
+				new_phytype = WMPHY_IGP;
+				break;
+			case MII_MODEL_yyINTEL_I82566:
+				new_phytype = WMPHY_IGP_3;
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		if (new_phytype == WMPHY_UNKNOWN)
+			aprint_verbose_dev(dev, "%s: unknown PHY model\n",
+			    __func__);
+
+		if ((sc->sc_phytype != WMPHY_UNKNOWN)
+		    && (sc->sc_phytype != new_phytype )) {
+			aprint_error_dev(dev, "Previously assumed PHY type(%u)"
+			    "was incorrect. PHY type from PHY ID = %u\n",
+			    sc->sc_phytype, new_phytype);
+		}
+	}
+
+	/* Next, use sc->sc_flags and sc->sc_type to set read/write funcs. */
+	if (((sc->sc_flags & WM_F_SGMII) != 0) && !wm_sgmii_uses_mdio(sc)) {
+		/* SGMII */
+		new_readreg = wm_sgmii_readreg;
+		new_writereg = wm_sgmii_writereg;
+	} else if ((sc->sc_type == WM_T_82574) || (sc->sc_type == WM_T_82583)){
+		/* BM2 (phyaddr == 1) */
+		if ((sc->sc_phytype != WMPHY_UNKNOWN)
+		    && (new_phytype != WMPHY_BM)
+		    && (new_phytype != WMPHY_UNKNOWN))
+			doubt_phytype = new_phytype;
+		new_phytype = WMPHY_BM;
+		new_readreg = wm_gmii_bm_readreg;
+		new_writereg = wm_gmii_bm_writereg;
+	} else if (sc->sc_type >= WM_T_PCH) {
+		/* All PCH* use _hv_ */
+		new_readreg = wm_gmii_hv_readreg;
+		new_writereg = wm_gmii_hv_writereg;
+	} else if (sc->sc_type >= WM_T_ICH8) {
+		/* non-82567 ICH8, 9 and 10 */
+		new_readreg = wm_gmii_i82544_readreg;
+		new_writereg = wm_gmii_i82544_writereg;
+	} else if (sc->sc_type >= WM_T_80003) {
+		/* 80003 */
+		if ((sc->sc_phytype != WMPHY_UNKNOWN)
+		    && (new_phytype != WMPHY_GG82563)
+		    && (new_phytype != WMPHY_UNKNOWN))
+			doubt_phytype = new_phytype;
+		new_phytype = WMPHY_GG82563;
+		new_readreg = wm_gmii_i80003_readreg;
+		new_writereg = wm_gmii_i80003_writereg;
+	} else if (sc->sc_type >= WM_T_I210) {
+		/* I210 and I211 */
+		if ((sc->sc_phytype != WMPHY_UNKNOWN)
+		    && (new_phytype != WMPHY_I210)
+		    && (new_phytype != WMPHY_UNKNOWN))
+			doubt_phytype = new_phytype;
+		new_phytype = WMPHY_I210;
+		new_readreg = wm_gmii_gs40g_readreg;
+		new_writereg = wm_gmii_gs40g_writereg;
+	} else if (sc->sc_type >= WM_T_82580) {
+		/* 82580, I350 and I354 */
+		new_readreg = wm_gmii_82580_readreg;
+		new_writereg = wm_gmii_82580_writereg;
+	} else if (sc->sc_type >= WM_T_82544) {
+		/* 82544, 0, [56], [17], 8257[1234] and 82583 */
+		new_readreg = wm_gmii_i82544_readreg;
+		new_writereg = wm_gmii_i82544_writereg;
+	} else {
+		new_readreg = wm_gmii_i82543_readreg;
+		new_writereg = wm_gmii_i82543_writereg;
+	}
+
+	if (new_phytype == WMPHY_BM) {
+		/* All BM use _bm_ */
+		new_readreg = wm_gmii_bm_readreg;
+		new_writereg = wm_gmii_bm_writereg;
+	}
+	if ((sc->sc_type >= WM_T_PCH) && (sc->sc_type <= WM_T_PCH_SPT)) {
+		/* All PCH* use _hv_ */
+		new_readreg = wm_gmii_hv_readreg;
+		new_writereg = wm_gmii_hv_writereg;
+	}
+
+	/* Diag output */
+	if (doubt_phytype != WMPHY_UNKNOWN)
+		aprint_error_dev(dev, "Assumed new PHY type was "
+		    "incorrect. old = %u, new = %u\n", sc->sc_phytype,
+		    new_phytype);
+	else if ((sc->sc_phytype != WMPHY_UNKNOWN)
+	    && (sc->sc_phytype != new_phytype ))
+		aprint_error_dev(dev, "Previously assumed PHY type(%u)"
+		    "was incorrect. New PHY type = %u\n",
+		    sc->sc_phytype, new_phytype);
+
+	if ((mii->mii_readreg != NULL) && (new_phytype == WMPHY_UNKNOWN))
+		aprint_error_dev(dev, "PHY type is still unknown.\n");
+
+	if ((mii->mii_readreg != NULL) && (mii->mii_readreg != new_readreg))
+		aprint_error_dev(dev, "Previously assumed PHY read/write "
+		    "function was incorrect.\n");
+	
+	/* Update now */
+	sc->sc_phytype = new_phytype;
+	mii->mii_readreg = new_readreg;
+	mii->mii_writereg = new_writereg;
+}
+
+/*
  * wm_get_phy_id_82575:
  *
  * Return PHY ID. Return -1 if it failed.
@@ -8603,6 +8849,7 @@ wm_get_phy_id_82575(struct wm_softc *sc)
 static void
 wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 {
+	device_t dev = sc->sc_dev;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t reg;
@@ -8640,94 +8887,11 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	mii->mii_ifp = ifp;
 
 	/*
-	 * Determine the PHY access method.
-	 *
-	 *  For SGMII, use SGMII specific method.
-	 *
-	 *  For some devices, we can determine the PHY access method
-	 * from sc_type.
-	 *
-	 *  For ICH and PCH variants, it's difficult to determine the PHY
-	 * access  method by sc_type, so use the PCI product ID for some
-	 * devices.
-	 * For other ICH8 variants, try to use igp's method. If the PHY
-	 * can't detect, then use bm's method.
+	 * The first call of wm_mii_setup_phytype. The result might be
+	 * incorrect.
 	 */
-	switch (prodid) {
-	case PCI_PRODUCT_INTEL_PCH_M_LM:
-	case PCI_PRODUCT_INTEL_PCH_M_LC:
-		/* 82577 */
-		sc->sc_phytype = WMPHY_82577;
-		break;
-	case PCI_PRODUCT_INTEL_PCH_D_DM:
-	case PCI_PRODUCT_INTEL_PCH_D_DC:
-		/* 82578 */
-		sc->sc_phytype = WMPHY_82578;
-		break;
-	case PCI_PRODUCT_INTEL_PCH2_LV_LM:
-	case PCI_PRODUCT_INTEL_PCH2_LV_V:
-		/* 82579 */
-		sc->sc_phytype = WMPHY_82579;
-		break;
-	case PCI_PRODUCT_INTEL_82801H_82567V_3:
-	case PCI_PRODUCT_INTEL_82801I_BM:
-	case PCI_PRODUCT_INTEL_82801I_IGP_M_AMT: /* Not IGP but BM */
-	case PCI_PRODUCT_INTEL_82801J_R_BM_LM:
-	case PCI_PRODUCT_INTEL_82801J_R_BM_LF:
-	case PCI_PRODUCT_INTEL_82801J_D_BM_LM:
-	case PCI_PRODUCT_INTEL_82801J_D_BM_LF:
-	case PCI_PRODUCT_INTEL_82801J_R_BM_V:
-		/* ICH8, 9, 10 with 82567 */
-		sc->sc_phytype = WMPHY_BM;
-		mii->mii_readreg = wm_gmii_bm_readreg;
-		mii->mii_writereg = wm_gmii_bm_writereg;
-		break;
-	default:
-		if (((sc->sc_flags & WM_F_SGMII) != 0)
-		    && !wm_sgmii_uses_mdio(sc)){
-			/* SGMII */
-			mii->mii_readreg = wm_sgmii_readreg;
-			mii->mii_writereg = wm_sgmii_writereg;
-		} else if ((sc->sc_type == WM_T_82574)
-		    || (sc->sc_type == WM_T_82583)) {
-			/* BM2 (phyaddr == 1) */
-			sc->sc_phytype = WMPHY_BM;
-			mii->mii_readreg = wm_gmii_bm_readreg;
-			mii->mii_writereg = wm_gmii_bm_writereg;
-		} else if (sc->sc_type >= WM_T_ICH8) {
-			/* non-82567 ICH8, 9 and 10 */
-			mii->mii_readreg = wm_gmii_i82544_readreg;
-			mii->mii_writereg = wm_gmii_i82544_writereg;
-		} else if (sc->sc_type >= WM_T_80003) {
-			/* 80003 */
-			sc->sc_phytype = WMPHY_GG82563;
-			mii->mii_readreg = wm_gmii_i80003_readreg;
-			mii->mii_writereg = wm_gmii_i80003_writereg;
-		} else if (sc->sc_type >= WM_T_I210) {
-			/* I210 and I211 */
-			sc->sc_phytype = WMPHY_210;
-			mii->mii_readreg = wm_gmii_gs40g_readreg;
-			mii->mii_writereg = wm_gmii_gs40g_writereg;
-		} else if (sc->sc_type >= WM_T_82580) {
-			/* 82580, I350 and I354 */
-			sc->sc_phytype = WMPHY_82580;
-			mii->mii_readreg = wm_gmii_82580_readreg;
-			mii->mii_writereg = wm_gmii_82580_writereg;
-		} else if (sc->sc_type >= WM_T_82544) {
-			/* 82544, 0, [56], [17], 8257[1234] and 82583 */
-			mii->mii_readreg = wm_gmii_i82544_readreg;
-			mii->mii_writereg = wm_gmii_i82544_writereg;
-		} else {
-			mii->mii_readreg = wm_gmii_i82543_readreg;
-			mii->mii_writereg = wm_gmii_i82543_writereg;
-		}
-		break;
-	}
-	if ((sc->sc_type >= WM_T_PCH) && (sc->sc_type <= WM_T_PCH_SPT)) {
-		/* All PCH* use _hv_ */
-		mii->mii_readreg = wm_gmii_hv_readreg;
-		mii->mii_writereg = wm_gmii_hv_writereg;
-	}
+	wm_gmii_setup_phytype(sc, 0, 0);
+
 	mii->mii_statchg = wm_gmii_statchg;
 
 	/* get PHY control from SMBus to PCIe */
@@ -8799,6 +8963,10 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	 */
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		/* if failed, retry with *_bm_* */
+		aprint_verbose_dev(dev, "Assumed PHY access function "
+		    "(type = %d) might be incorrect. Use BM and retry.\n",
+		    sc->sc_phytype);
+		sc->sc_phytype = WMPHY_BM;
 		mii->mii_readreg = wm_gmii_bm_readreg;
 		mii->mii_writereg = wm_gmii_bm_writereg;
 
@@ -8812,17 +8980,14 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 		sc->sc_phytype = WMPHY_NONE;
 	} else {
-		/*
-		 * PHY Found!
-		 * Check PHY type.
-		 */
-		uint32_t model;
-		struct mii_softc *child;
+		struct mii_softc *child = LIST_FIRST(&mii->mii_phys);
 
-		child = LIST_FIRST(&mii->mii_phys);
-		model = child->mii_mpd_model;
-		if (model == MII_MODEL_yyINTEL_I82566)
-			sc->sc_phytype = WMPHY_IGP_3;
+		/*
+		 * PHY Found! Check PHY type again by the second call of
+		 * wm_mii_setup_phytype.
+		 */
+		wm_gmii_setup_phytype(sc, child->mii_mpd_oui,
+		    child->mii_mpd_model);
 
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	}
