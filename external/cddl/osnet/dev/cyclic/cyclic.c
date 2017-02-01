@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic.c,v 1.5 2016/04/09 14:50:08 riastradh Exp $	*/
+/*	$NetBSD: cyclic.c,v 1.6 2017/02/01 20:06:21 chs Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -336,7 +336,6 @@
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/cmn_err.h>
-#include <sys/dtrace_bsd.h>
 #ifdef __FreeBSD__
 #include <machine/cpu.h>
 #endif
@@ -1466,5 +1465,5 @@ cyclic_modcmd(modcmd_t cmd, void *data)
 	}
 }
 
-MODULE(MODULE_CLASS_MISC, cyclic, "dtrace");
+MODULE(MODULE_CLASS_MISC, cyclic, "solaris");
 #endif
