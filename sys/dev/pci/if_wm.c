@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.472 2017/01/31 03:06:06 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.473 2017/02/01 03:54:49 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.472 2017/01/31 03:06:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.473 2017/02/01 03:54:49 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7626,18 +7626,6 @@ wm_rxdesc_dd(struct wm_rxqueue *rxq, int idx, uint32_t status)
 	if (!wm_rxdesc_is_set_status(sc, status, WRX_ST_DD, EXTRXC_STATUS_DD,
 		NQRXC_STATUS_DD)) {
 		/* We have processed all of the receive descriptors. */
-		struct wm_rxsoft *rxs = &rxq->rxq_soft[idx];
-
-		if (sc->sc_type == WM_T_82574) {
-			rxq->rxq_ext_descs[idx].erx_data.erxd_addr =
-				htole64(rxs->rxs_dmamap->dm_segs[0].ds_addr
-				    + sc->sc_align_tweak);
-		} else if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
-			rxq->rxq_nq_descs[idx].nqrx_data.nrxd_paddr =
-				htole64(rxs->rxs_dmamap->dm_segs[0].ds_addr
-				    + sc->sc_align_tweak);
-		}
-
 		wm_cdrxsync(rxq, idx, BUS_DMASYNC_PREREAD);
 		return false;
 	}
