@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.265 2017/01/30 02:46:20 sjg Exp $
+.\"	$NetBSD: make.1,v 1.266 2017/02/01 18:39:27 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd January 29, 2017
+.Dd February 1, 2017
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1425,24 +1425,22 @@ For example.
 .Pp
 However a single character variable is often more readable:
 .Dl ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}
-.It Cm \&:_
+.It Cm \&:_[=var]
 Save the current variable value in
 .Ql $_
+or the named
+.Va var
 for later reference.
-This
-.Ql $_
-is internal to the variable modifier processing and
-will not conflict with any set in a makefile.
 Example usage:
 .Bd -literal -offset indent
-M_cmpv.units = 1 100 10000
+M_cmpv.units = 1 1000 1000000
 M_cmpv = S,., ,g:_:range:@i@+ $${_:[-$$i]} \&\\
 \\* $${M_cmpv.units:[$$i]}@:S,^,expr 0 ,1:sh
 
 .Dv .if ${VERSION:${M_cmpv}} < ${3.1.12:L:${M_cmpv}}
 
 .Ed
-Here the 
+Here
 .Ql $_
 is used to save the result of the
 .Ql :S
