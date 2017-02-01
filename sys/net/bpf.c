@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.208 2017/02/01 08:07:27 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.209 2017/02/01 08:13:45 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.208 2017/02/01 08:07:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.209 2017/02/01 08:13:45 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -132,8 +132,60 @@ static kmutex_t bpf_mtx;
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
  *  bpf_dtab holds the descriptors, indexed by minor device #
  */
-static struct bpf_if	*bpf_iflist;
-static LIST_HEAD(, bpf_d) bpf_list;
+static struct pslist_head bpf_iflist;
+static struct pslist_head bpf_dlist;
+
+/* Macros for bpf_d on bpf_dlist */
+#define BPF_DLIST_WRITER_INSEART_HEAD(__d)				\
+	PSLIST_WRITER_INSERT_HEAD(&bpf_dlist, (__d), bd_bpf_dlist_entry)
+#define BPF_DLIST_READER_FOREACH(__d)					\
+	PSLIST_READER_FOREACH((__d), &bpf_dlist, struct bpf_d,		\
+	                      bd_bpf_dlist_entry)
+#define BPF_DLIST_WRITER_FOREACH(__d)					\
+	PSLIST_WRITER_FOREACH((__d), &bpf_dlist, struct bpf_d,		\
+	                      bd_bpf_dlist_entry)
+#define BPF_DLIST_ENTRY_INIT(__d)					\
+	PSLIST_ENTRY_INIT((__d), bd_bpf_dlist_entry)
+#define BPF_DLIST_WRITER_REMOVE(__d)					\
+	PSLIST_WRITER_REMOVE((__d), bd_bpf_dlist_entry)
+#define BPF_DLIST_ENTRY_DESTROY(__d)					\
+	PSLIST_ENTRY_DESTROY((__d), bd_bpf_dlist_entry)
+
+/* Macros for bpf_if on bpf_iflist */
+#define BPF_IFLIST_WRITER_INSERT_HEAD(__bp)				\
+	PSLIST_WRITER_INSERT_HEAD(&bpf_iflist, (__bp), bif_iflist_entry)
+#define BPF_IFLIST_READER_FOREACH(__bp)					\
+	PSLIST_READER_FOREACH((__bp), &bpf_iflist, struct bpf_if,	\
+	                      bif_iflist_entry)
+#define BPF_IFLIST_WRITER_FOREACH(__bp)					\
+	PSLIST_WRITER_FOREACH((__bp), &bpf_iflist, struct bpf_if,	\
+	                      bif_iflist_entry)
+#define BPF_IFLIST_WRITER_REMOVE(__bp)					\
+	PSLIST_WRITER_REMOVE((__bp), bif_iflist_entry)
+#define BPF_IFLIST_ENTRY_INIT(__bp)					\
+	PSLIST_ENTRY_INIT((__bp), bif_iflist_entry)
+#define BPF_IFLIST_ENTRY_DESTROY(__bp)					\
+	PSLIST_ENTRY_DESTROY((__bp), bif_iflist_entry)
+
+/* Macros for bpf_d on bpf_if#bif_dlist_pslist */
+#define BPFIF_DLIST_READER_FOREACH(__d, __bp)				\
+	PSLIST_READER_FOREACH((__d), &(__bp)->bif_dlist_head, struct bpf_d, \
+	                      bd_bif_dlist_entry)
+#define BPFIF_DLIST_WRITER_INSERT_HEAD(__bp, __d)			\
+	PSLIST_WRITER_INSERT_HEAD(&(__bp)->bif_dlist_head, (__d),	\
+	                          bd_bif_dlist_entry)
+#define BPFIF_DLIST_WRITER_REMOVE(__d)					\
+	PSLIST_WRITER_REMOVE((__d), bd_bif_dlist_entry)
+#define BPFIF_DLIST_ENTRY_INIT(__d)					\
+	PSLIST_ENTRY_INIT((__d), bd_bif_dlist_entry)
+#define	BPFIF_DLIST_READER_EMPTY(__bp)					\
+	(PSLIST_READER_FIRST(&(__bp)->bif_dlist_head, struct bpf_d,	\
+	                     bd_bif_dlist_entry) == NULL)
+#define	BPFIF_DLIST_WRITER_EMPTY(__bp)					\
+	(PSLIST_WRITER_FIRST(&(__bp)->bif_dlist_head, struct bpf_d,	\
+	                     bd_bif_dlist_entry) == NULL)
+#define BPFIF_DLIST_ENTRY_DESTROY(__d)					\
+	PSLIST_ENTRY_DESTROY((__d), bd_bif_dlist_entry)
 
 static int	bpf_allocbufs(struct bpf_d *);
 static void	bpf_deliver(struct bpf_if *,
@@ -350,8 +402,7 @@ bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
 	 * it will divert packets to bpf.
 	 */
 	d->bd_bif = bp;
-	d->bd_next = bp->bif_dlist;
-	bp->bif_dlist = d;
+	BPFIF_DLIST_WRITER_INSERT_HEAD(bp, d);
 
 	*bp->bif_driverp = bp;
 }
@@ -362,7 +413,6 @@ bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
 static void
 bpf_detachd(struct bpf_d *d)
 {
-	struct bpf_d **p;
 	struct bpf_if *bp;
 
 	KASSERT(mutex_owned(&bpf_mtx));
@@ -389,19 +439,21 @@ bpf_detachd(struct bpf_d *d)
 			printf("%s: ifpromisc failed: %d", __func__, error);
 #endif
 	}
+
 	/* Remove d from the interface's descriptor list. */
-	p = &bp->bif_dlist;
-	while (*p != d) {
-		p = &(*p)->bd_next;
-		if (*p == NULL)
-			panic("%s: descriptor not in list", __func__);
-	}
-	*p = (*p)->bd_next;
-	if (bp->bif_dlist == NULL)
+	BPFIF_DLIST_WRITER_REMOVE(d);
+
+	/* TODO pserialize_perform(); */
+	/* TODO psref_target_destroy(); */
+	BPFIF_DLIST_ENTRY_DESTROY(d);
+
+	/* XXX NOMPSAFE? */
+	if (BPFIF_DLIST_WRITER_EMPTY(bp)) {
 		/*
 		 * Let the driver know that there are no more listeners.
 		 */
 		*d->bd_bif->bif_driverp = NULL;
+	}
 	d->bd_bif = NULL;
 }
 
@@ -411,7 +463,8 @@ bpf_init(void)
 
 	mutex_init(&bpf_mtx, MUTEX_DEFAULT, IPL_NONE);
 
-	LIST_INIT(&bpf_list);
+	PSLIST_INIT(&bpf_iflist);
+	PSLIST_INIT(&bpf_dlist);
 
 	bpf_gstats.bs_recv = 0;
 	bpf_gstats.bs_drop = 0;
@@ -461,9 +514,11 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	selinit(&d->bd_sel);
 	d->bd_sih = softint_establish(SOFTINT_CLOCK, bpf_softintr, d);
 	d->bd_jitcode = NULL;
+	BPF_DLIST_ENTRY_INIT(d);
+	BPFIF_DLIST_ENTRY_INIT(d);
 
 	mutex_enter(&bpf_mtx);
-	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
+	BPF_DLIST_WRITER_INSEART_HEAD(d);
 	mutex_exit(&bpf_mtx);
 
 	return fd_clone(fp, fd, flag, &bpf_fileops, d);
@@ -502,11 +557,15 @@ bpf_close(struct file *fp)
 		bpf_detachd(d);
 	splx(s);
 	bpf_freed(d);
-	LIST_REMOVE(d, bd_list);
+	BPF_DLIST_WRITER_REMOVE(d);
 	fp->f_bpf = NULL;
 
 	mutex_exit(&bpf_mtx);
 	KERNEL_UNLOCK_ONE(NULL);
+
+	/* TODO pserialize_perform(); */
+	/* TODO psref_target_destroy(); */
+	BPF_DLIST_ENTRY_DESTROY(d);
 
 	callout_destroy(&d->bd_callout);
 	seldestroy(&d->bd_sel);
@@ -1203,7 +1262,7 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 	/*
 	 * Look through attached interfaces for the named one.
 	 */
-	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+	BPF_IFLIST_WRITER_FOREACH(bp) {
 		struct ifnet *ifp = bp->bif_ifp;
 
 		if (ifp == NULL ||
@@ -1423,13 +1482,14 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 	};
 	bool gottime = false;
 	struct timespec ts;
+	struct bpf_d *d;
 
 	/*
 	 * Note that the IPL does not have to be raised at this point.
 	 * The only problem that could arise here is that if two different
 	 * interfaces shared any data.  This is not the case.
 	 */
-	for (struct bpf_d *d = bp->bif_dlist; d != NULL; d = d->bd_next) {
+	BPFIF_DLIST_READER_FOREACH(d, bp) {
 		u_int slen;
 
 		if (!d->bd_seesent && !rcv) {
@@ -1682,7 +1742,7 @@ _bpf_mtap_softint(struct ifnet *ifp, struct mbuf *m)
 	KASSERT(cpu_intr_p());
 
 	/* To avoid extra invocations of the softint */
-	if (bp->bif_dlist == NULL)
+	if (BPFIF_DLIST_READER_EMPTY(bp))
 		return;
 	KASSERT(bp->bif_si != NULL);
 
@@ -1883,14 +1943,14 @@ _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 		panic("bpfattach");
 
 	mutex_enter(&bpf_mtx);
-	bp->bif_dlist = NULL;
 	bp->bif_driverp = driverp;
 	bp->bif_ifp = ifp;
 	bp->bif_dlt = dlt;
 	bp->bif_si = NULL;
+	BPF_IFLIST_ENTRY_INIT(bp);
+	PSLIST_INIT(&bp->bif_dlist_head);
 
-	bp->bif_next = bpf_iflist;
-	bpf_iflist = bp;
+	BPF_IFLIST_WRITER_INSERT_HEAD(bp);
 
 	*bp->bif_driverp = NULL;
 
@@ -1907,7 +1967,7 @@ _bpf_mtap_softint_init(struct ifnet *ifp)
 	struct bpf_if *bp;
 
 	mutex_enter(&bpf_mtx);
-	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+	BPF_IFLIST_WRITER_FOREACH(bp) {
 		if (bp->bif_ifp != ifp)
 			continue;
 
@@ -1930,13 +1990,14 @@ _bpf_mtap_softint_init(struct ifnet *ifp)
 static void
 _bpfdetach(struct ifnet *ifp)
 {
-	struct bpf_if *bp, **pbp;
+	struct bpf_if *bp;
 	struct bpf_d *d;
 	int s;
 
 	mutex_enter(&bpf_mtx);
 	/* Nuke the vnodes for any open instances */
-	LIST_FOREACH(d, &bpf_list, bd_list) {
+  again_d:
+	BPF_DLIST_WRITER_FOREACH(d) {
 		if (d->bd_bif != NULL && d->bd_bif->bif_ifp == ifp) {
 			/*
 			 * Detach the descriptor from an interface now.
@@ -1946,14 +2007,17 @@ _bpfdetach(struct ifnet *ifp)
 			d->bd_promisc = 0;	/* we can't touch device. */
 			bpf_detachd(d);
 			splx(s);
+			goto again_d;
 		}
 	}
 
   again:
-	for (bp = bpf_iflist, pbp = &bpf_iflist;
-	     bp != NULL; pbp = &bp->bif_next, bp = bp->bif_next) {
+	BPF_IFLIST_WRITER_FOREACH(bp) {
 		if (bp->bif_ifp == ifp) {
-			*pbp = bp->bif_next;
+			BPF_IFLIST_WRITER_REMOVE(bp);
+			/* TODO pserialize_perform(); */
+			/* TODO psref_target_destroy(); */
+			BPF_IFLIST_ENTRY_DESTROY(bp);
 			if (bp->bif_si != NULL) {
 				s = splnet();
 				while (bp->bif_mbuf_head != NULL) {
@@ -1979,7 +2043,7 @@ _bpf_change_type(struct ifnet *ifp, u_int dlt, u_int hdrlen)
 {
 	struct bpf_if *bp;
 
-	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+	BPF_IFLIST_READER_FOREACH(bp) {
 		if (bp->bif_driverp == &ifp->if_bpf)
 			break;
 	}
@@ -2004,7 +2068,7 @@ bpf_getdltlist(struct bpf_d *d, struct bpf_dltlist *bfl)
 	ifp = d->bd_bif->bif_ifp;
 	n = 0;
 	error = 0;
-	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+	BPF_IFLIST_READER_FOREACH(bp) {
 		if (bp->bif_ifp != ifp)
 			continue;
 		if (bfl->bfl_list != NULL) {
@@ -2034,7 +2098,7 @@ bpf_setdlt(struct bpf_d *d, u_int dlt)
 	if (d->bd_bif->bif_dlt == dlt)
 		return 0;
 	ifp = d->bd_bif->bif_ifp;
-	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+	BPF_IFLIST_WRITER_FOREACH(bp) {
 		if (bp->bif_ifp == ifp && bp->bif_dlt == dlt)
 			break;
 	}
@@ -2142,7 +2206,7 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	mutex_enter(&bpf_mtx);
-	LIST_FOREACH(dp, &bpf_list, bd_list) {
+	BPF_DLIST_WRITER_FOREACH(dp) {
 		if (len >= elem_size && elem_count > 0) {
 #define BPF_EXT(field)	dpe.bde_ ## field = dp->bd_ ## field
 			BPF_EXT(bufsize);
