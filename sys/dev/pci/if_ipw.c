@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.61 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.62 2017/02/01 03:00:41 nonaka Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.61 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.62 2017/02/01 03:00:41 nonaka Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1176,7 +1176,7 @@ ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 		sbuf = sbd->priv;
 
 		bus_dmamap_sync(sc->sc_dmat, sbuf->map,
-		    0, MCLBYTES, BUS_DMASYNC_POSTWRITE);
+		    0, sbuf->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sbuf->map);
 		m_freem(sbuf->m);
 		if (sbuf->ni != NULL)
@@ -1452,7 +1452,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	bus_dmamap_sync(sc->sc_dmat, sc->hdr_map, shdr->offset,
 	    sizeof (struct ipw_hdr), BUS_DMASYNC_PREWRITE);
 
-	bus_dmamap_sync(sc->sc_dmat, sbuf->map, 0, MCLBYTES,
+	bus_dmamap_sync(sc->sc_dmat, sbuf->map, 0, sbuf->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
 	/* Inform firmware about this new packet */
