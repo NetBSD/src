@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.42 2017/02/01 08:13:45 ozaki-r Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.43 2017/02/01 08:16:42 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -47,6 +47,8 @@
 #include <net/bpfjit.h>			/* for bpfjit_function_t */
 #ifdef _KERNEL
 #include <sys/pslist.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #endif
 
 /*
@@ -111,6 +113,8 @@ struct bpf_d {
 #ifdef _KERNEL
 	struct pslist_entry	bd_bif_dlist_entry; /* For bpf_if */
 	struct pslist_entry	bd_bpf_dlist_entry; /* For the global list */
+	kmutex_t	*bd_mtx;
+	kcondvar_t	bd_cv;
 #endif
 };
 

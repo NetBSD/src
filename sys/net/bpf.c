@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.210 2017/02/01 08:15:15 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.211 2017/02/01 08:16:42 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.210 2017/02/01 08:15:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.211 2017/02/01 08:16:42 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -523,6 +523,8 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	d->bd_jitcode = NULL;
 	BPF_DLIST_ENTRY_INIT(d);
 	BPFIF_DLIST_ENTRY_INIT(d);
+	d->bd_mtx = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+	cv_init(&d->bd_cv, "bpf");
 
 	mutex_enter(&bpf_mtx);
 	BPF_DLIST_WRITER_INSEART_HEAD(d);
@@ -577,6 +579,9 @@ bpf_close(struct file *fp)
 	callout_destroy(&d->bd_callout);
 	seldestroy(&d->bd_sel);
 	softint_disestablish(d->bd_sih);
+	mutex_obj_free(d->bd_mtx);
+	cv_destroy(&d->bd_cv);
+
 	kmem_free(d, sizeof(*d));
 
 	return (0);
@@ -644,8 +649,11 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 			ROTATE_BUFFERS(d);
 			break;
 		}
-		error = tsleep(d, PRINET|PCATCH, "bpf",
-				d->bd_rtout);
+
+		mutex_enter(d->bd_mtx);
+		error = cv_timedwait_sig(&d->bd_cv, d->bd_mtx, d->bd_rtout);
+		mutex_exit(d->bd_mtx);
+
 		if (error == EINTR || error == ERESTART) {
 			splx(s);
 			KERNEL_UNLOCK_ONE(NULL);
@@ -705,7 +713,11 @@ done:
 static inline void
 bpf_wakeup(struct bpf_d *d)
 {
-	wakeup(d);
+
+	mutex_enter(d->bd_mtx);
+	cv_broadcast(&d->bd_cv);
+	mutex_exit(d->bd_mtx);
+
 	if (d->bd_async)
 		softint_schedule(d->bd_sih);
 	selnotify(&d->bd_sel, 0, 0);
