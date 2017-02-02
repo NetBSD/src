@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.27 2017/02/02 07:35:36 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.28 2017/02/02 07:36:45 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1626,7 +1626,7 @@ smsc_encap(struct smsc_softc *sc, struct mbuf *m, int idx)
 	 * length of the packet and buffer.
 	 */
 	txhdr = SMSC_TX_CTRL_0_BUF_SIZE(m->m_pkthdr.len) |
-			SMSC_TX_CTRL_0_FIRST_SEG | SMSC_TX_CTRL_0_LAST_SEG;
+	    SMSC_TX_CTRL_0_FIRST_SEG | SMSC_TX_CTRL_0_LAST_SEG;
 	txhdr = htole32(txhdr);
 	memcpy(c->sc_buf, &txhdr, sizeof(txhdr));
 
