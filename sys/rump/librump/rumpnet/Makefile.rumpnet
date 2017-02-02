@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.20 2017/01/17 08:10:37 ozaki-r Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.21 2017/02/02 02:52:10 ozaki-r Exp $
 #
 
 LIB=		rumpnet
@@ -37,6 +37,9 @@ SRCS+=
 
 # bpf stubs, required for all kernels
 SRCS+=	bpf_stub.c
+
+# workqueue-based pr_input (required by inet and inet6)
+SRCS+=	wqinput.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 

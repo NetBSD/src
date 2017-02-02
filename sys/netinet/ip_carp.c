@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.83 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.84 2017/02/02 02:52:10 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.83 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.84 2017/02/02 02:52:10 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.83 2017/01/16 15:44:47 christos Exp $"
 #include <net/netisr.h>
 #include <net/net_stats.h>
 #include <netinet/if_inarp.h>
+#include <netinet/wqinput.h>
 
 #if NFDDI > 0
 #include <net/if_fddi.h>
@@ -233,6 +234,14 @@ static int	carp_ether_delmulti(struct carp_softc *, struct ifreq *);
 static void	carp_ether_purgemulti(struct carp_softc *);
 
 static void	sysctl_net_inet_carp_setup(struct sysctllog **);
+
+/* workqueue-based pr_input */
+static struct wqinput *carp_wqinput;
+static void _carp_proto_input(struct mbuf *, int, int);
+#ifdef INET6
+static struct wqinput *carp6_wqinput;
+static void _carp6_proto_input(struct mbuf *, int, int);
+#endif
 
 struct if_clone carp_cloner =
     IF_CLONE_INITIALIZER("carp", carp_clone_create, carp_clone_destroy);
@@ -468,18 +477,14 @@ carp_setroute(struct carp_softc *sc, int cmd)
  * we have rearranged checks order compared to the rfc,
  * but it seems more efficient this way or not possible otherwise.
  */
-void
-carp_proto_input(struct mbuf *m, ...)
+static void
+_carp_proto_input(struct mbuf *m, int hlen, int proto)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct carp_softc *sc = NULL;
 	struct carp_header *ch;
 	int iplen, len;
-	va_list ap;
 	struct ifnet *rcvif;
-
-	va_start(ap, m);
-	va_end(ap);
 
 	CARP_STATINC(CARP_STAT_IPACKETS);
 	MCLAIM(m, &carp_proto_mowner_rx);
@@ -542,11 +547,17 @@ carp_proto_input(struct mbuf *m, ...)
 	carp_proto_input_c(m, ch, AF_INET);
 }
 
-#ifdef INET6
-int
-carp6_proto_input(struct mbuf **mp, int *offp, int proto)
+void
+carp_proto_input(struct mbuf *m, ...)
 {
-	struct mbuf *m = *mp;
+
+	wqinput_input(carp_wqinput, m, 0, 0);
+}
+
+#ifdef INET6
+static void
+_carp6_proto_input(struct mbuf *m, int off, int proto)
+{
 	struct carp_softc *sc = NULL;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct carp_header *ch;
@@ -558,7 +569,7 @@ carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 
 	if (!carp_opts[CARPCTL_ALLOW]) {
 		m_freem(m);
-		return (IPPROTO_DONE);
+		return;
 	}
 
 	rcvif = m_get_rcvif_NOMPSAFE(m);
@@ -569,7 +580,7 @@ carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 		CARP_LOG(sc, ("packet received on non-carp interface: %s",
 		    rcvif->if_xname));
 		m_freem(m);
-		return (IPPROTO_DONE);
+		return;
 	}
 
 	/* verify that the IP TTL is 255 */
@@ -578,31 +589,40 @@ carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 		CARP_LOG(sc, ("received ttl %d != %d on %s", ip6->ip6_hlim,
 		    CARP_DFLTTL, rcvif->if_xname));
 		m_freem(m);
-		return (IPPROTO_DONE);
+		return;
 	}
 
 	/* verify that we have a complete carp packet */
 	len = m->m_len;
-	IP6_EXTHDR_GET(ch, struct carp_header *, m, *offp, sizeof(*ch));
+	IP6_EXTHDR_GET(ch, struct carp_header *, m, off, sizeof(*ch));
 	if (ch == NULL) {
 		CARP_STATINC(CARP_STAT_BADLEN);
 		CARP_LOG(sc, ("packet size %u too small", len));
-		return (IPPROTO_DONE);
+		return;
 	}
 
 
 	/* verify the CARP checksum */
-	m->m_data += *offp;
+	m->m_data += off;
 	if (carp_cksum(m, sizeof(*ch))) {
 		CARP_STATINC(CARP_STAT_BADSUM);
 		CARP_LOG(sc, ("checksum failed, on %s", rcvif->if_xname));
 		m_freem(m);
-		return (IPPROTO_DONE);
+		return;
 	}
-	m->m_data -= *offp;
+	m->m_data -= off;
 
 	carp_proto_input_c(m, ch, AF_INET6);
-	return (IPPROTO_DONE);
+	return;
+}
+
+int
+carp6_proto_input(struct mbuf **mp, int *offp, int proto)
+{
+
+	wqinput_input(carp6_wqinput, *mp, *offp, proto);
+
+	return IPPROTO_DONE;
 }
 #endif /* INET6 */
 
@@ -2341,6 +2361,11 @@ carp_init(void)
 	MOWNER_ATTACH(&carp_proto_mowner_tx);
 	MOWNER_ATTACH(&carp_proto6_mowner_rx);
 	MOWNER_ATTACH(&carp_proto6_mowner_tx);
+#endif
+
+	carp_wqinput = wqinput_create("carp", _carp_proto_input);
+#ifdef INET6
+	carp6_wqinput = wqinput_create("carp6", _carp6_proto_input);
 #endif
 }
 
