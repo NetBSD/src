@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.206 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.207 2017/02/02 02:52:10 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.206 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.207 2017/02/02 02:52:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.206 2017/01/16 15:44:47 christos Exp $")
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
+#include <netinet/wqinput.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>
 #include <netinet/icmp6.h>
@@ -169,6 +170,9 @@ static void icmp6_mtudisc_timeout(struct rtentry *, struct rttimer *);
 static void icmp6_redirect_timeout(struct rtentry *, struct rttimer *);
 static void sysctl_net_inet6_icmp6_setup(struct sysctllog **);
 
+/* workqueue-based pr_input */
+static struct wqinput *icmp6_wqinput;
+static void _icmp6_input(struct mbuf *m, int off, int proto);
 
 void
 icmp6_init(void)
@@ -180,6 +184,8 @@ icmp6_init(void)
 	icmp6_redirect_timeout_q = rt_timer_queue_create(icmp6_redirtimeout);
 
 	icmp6stat_percpu = percpu_alloc(sizeof(uint64_t) * ICMP6_NSTATS);
+
+	icmp6_wqinput = wqinput_create("icmp6", _icmp6_input);
 }
 
 static void
@@ -444,13 +450,12 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 /*
  * Process a received ICMP6 message.
  */
-int
-icmp6_input(struct mbuf **mp, int *offp, int proto)
+static void
+_icmp6_input(struct mbuf *m, int off, int proto)
 {
-	struct mbuf *m = *mp, *n;
+	struct mbuf *n;
 	struct ip6_hdr *ip6, *nip6;
 	struct icmp6_hdr *icmp6, *nicmp6;
-	int off = *offp;
 	int icmp6len = m->m_pkthdr.len - off;
 	int code, sum, noff;
 	struct ifnet *rcvif;
@@ -879,7 +884,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		if (icmp6_notify_error(m, off, icmp6len, code)) {
 			/* In this case, m should've been freed. */
 			m_put_rcvif_psref(rcvif, &psref);
-			return (IPPROTO_DONE);
+			return;
 		}
 		break;
 
@@ -896,11 +901,20 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	/* deliver the packet to appropriate sockets */
 	icmp6_rip6_input(&m, off);
 
-	return IPPROTO_DONE;
+	return;
 
  freeit:
 	m_put_rcvif_psref(rcvif, &psref);
 	m_freem(m);
+	return;
+}
+
+int
+icmp6_input(struct mbuf **mp, int *offp, int proto)
+{
+
+	wqinput_input(icmp6_wqinput, *mp, *offp, proto);
+
 	return IPPROTO_DONE;
 }
 

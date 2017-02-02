@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.155 2017/01/24 07:09:24 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.156 2017/02/02 02:52:10 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.155 2017/01/24 07:09:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.156 2017/02/02 02:52:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.155 2017/01/24 07:09:24 ozaki-r Exp $"
 #include <netinet/in_proto.h>
 #include <netinet/icmp_var.h>
 #include <netinet/icmp_private.h>
+#include <netinet/wqinput.h>
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
@@ -175,6 +176,10 @@ static void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
 
 static void sysctl_netinet_icmp_setup(struct sysctllog **);
 
+/* workqueue-based pr_input */
+static struct wqinput *icmp_wqinput;
+static void _icmp_input(struct mbuf *, int, int);
+
 void
 icmp_init(void)
 {
@@ -191,6 +196,7 @@ icmp_init(void)
 	}
 
 	icmpstat_percpu = percpu_alloc(sizeof(uint64_t) * ICMP_NSTATS);
+	icmp_wqinput = wqinput_create("icmp", _icmp_input);
 }
 
 /*
@@ -384,10 +390,9 @@ struct sockaddr_in icmpmask = {
 /*
  * Process a received ICMP message.
  */
-void
-icmp_input(struct mbuf *m, ...)
+static void
+_icmp_input(struct mbuf *m, int hlen, int proto)
 {
-	int proto;
 	struct icmp *icp;
 	struct ip *ip = mtod(m, struct ip *);
 	int icmplen;
@@ -395,14 +400,7 @@ icmp_input(struct mbuf *m, ...)
 	struct in_ifaddr *ia;
 	void *(*ctlfunc)(int, const struct sockaddr *, void *);
 	int code;
-	int hlen;
-	va_list ap;
 	struct rtentry *rt;
-
-	va_start(ap, m);
-	hlen = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
 
 	/*
 	 * Locate icmp structure in mbuf, and check
@@ -683,6 +681,20 @@ raw:
 freeit:
 	m_freem(m);
 	return;
+}
+
+void
+icmp_input(struct mbuf *m, ...)
+{
+	int hlen, proto;
+	va_list ap;
+
+	va_start(ap, m);
+	hlen = va_arg(ap, int);
+	proto = va_arg(ap, int);
+	va_end(ap);
+
+	wqinput_input(icmp_wqinput, m, hlen, proto);
 }
 
 /*
