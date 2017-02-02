@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.25 2017/02/02 07:23:03 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.26 2017/02/02 07:34:15 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -473,9 +473,6 @@ smsc_sethwcsum(struct smsc_softc *sc)
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	uint32_t val;
 	int err;
-
-	if (!ifp)
-		return EIO;
 
 	err = smsc_read_reg(sc, SMSC_COE_CTRL, &val);
 	if (err != 0) {
