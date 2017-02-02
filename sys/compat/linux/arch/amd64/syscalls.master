@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.58 2017/01/02 16:32:09 manu Exp $
+	$NetBSD: syscalls.master,v 1.59 2017/02/02 15:35:46 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -516,7 +516,9 @@
 285	UNIMPL		fallocate
 286	UNIMPL		timerfd_settime
 287	UNIMPL		timerfd_gettime
-288	UNIMPL		accept4
+288	STD		{ int|linux_sys||accept4(int s, \
+			    struct osockaddr *name, \
+			    int *anamelen, int flags); }
 289	UNIMPL		signalfd4
 290	UNIMPL		eventfd2
 291	UNIMPL		epoll_create1
