@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.475 2017/02/01 08:56:41 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.476 2017/02/02 10:29:10 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.475 2017/02/01 08:56:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.476 2017/02/02 10:29:10 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4720,6 +4720,9 @@ wm_turnon(struct wm_softc *sc)
 
 	KASSERT(WM_CORE_LOCKED(sc));
 
+	/*
+	 * must unset stopping flags in ascending order.
+	 */
 	for(i = 0; i < sc->sc_nqueues; i++) {
 		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
 		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
@@ -4745,6 +4748,9 @@ wm_turnoff(struct wm_softc *sc)
 
 	sc->sc_core_stopping = true;
 
+	/*
+	 * must set stopping flags in ascending order.
+	 */
 	for(i = 0; i < sc->sc_nqueues; i++) {
 		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
 		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
@@ -7334,22 +7340,23 @@ wm_deferred_start(struct ifnet *ifp)
 	 * Try to transmit on all Tx queues. Passing a txq somehow and
 	 * transmitting only on the txq may be better.
 	 */
-restart:
-	WM_CORE_LOCK(sc);
-	if (sc->sc_core_stopping)
-		goto out;
-
 	for (; qid < sc->sc_nqueues; qid++) {
 		struct wm_txqueue *txq = &sc->sc_queue[qid].wmq_txq;
 
-		if (!mutex_tryenter(txq->txq_lock))
-			continue;
-
+		/*
+		 * We must mutex_enter(txq->txq_lock) instead of
+		 * mutex_tryenter(txq->txq_lock) here.
+		 * mutex_tryenter(txq->txq_lock) would fail as this txq's
+		 * txq_stopping flag is being set. In this case, this device
+		 * begin to stop, so we must not start any Tx processing.
+		 * However, it may start Tx processing for sc_queue[qid+1]
+		 * if we use mutex_tryenter() here.
+		 */
+		mutex_enter(txq->txq_lock);
 		if (txq->txq_stopping) {
 			mutex_exit(txq->txq_lock);
-			continue;
+			return;
 		}
-		WM_CORE_UNLOCK(sc);
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 			/* XXX need for ALTQ */
@@ -7363,12 +7370,7 @@ restart:
 			wm_transmit_locked(ifp, txq);
 		}
 		mutex_exit(txq->txq_lock);
-
-		qid++;
-		goto restart;
 	}
-out:
-	WM_CORE_UNLOCK(sc);
 }
 
 /* Interrupt */
