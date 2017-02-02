@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.133 2016/09/13 07:01:07 martin Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.134 2017/02/02 15:36:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.133 2016/09/13 07:01:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.134 2017/02/02 15:36:55 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1706,4 +1706,39 @@ linux_sys_accept(struct lwp *l, const struct linux_sys_accept_args *uap, registe
 		return (error);
 
 	return (0);
+}
+
+int
+linux_sys_accept4(struct lwp *l, const struct linux_sys_accept4_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) s;
+		syscallarg(struct osockaddr *) name;
+		syscallarg(int *) anamelen;
+		syscallarg(int) flags;
+	} */
+	int error, flags;
+	struct sockaddr_big name;
+
+	if ((flags = linux_to_bsd_type(SCARG(uap, flags))) == -1)
+		return EINVAL;
+
+	name.sb_len = UCHAR_MAX;
+	error = do_sys_accept(l, SCARG(uap, s), (struct sockaddr *)&name,
+	    retval, NULL, flags, 0);
+	if (error != 0)
+		return error;
+
+	error = copyout_sockname_sb((struct sockaddr *)SCARG(uap, name),
+	    SCARG(uap, anamelen), MSG_LENUSRSPACE, &name);
+	if (error != 0) {
+		int fd = (int)*retval;
+		if (fd_getfile(fd) != NULL)
+			(void)fd_close(fd);
+		return error;
+	}
+	if (SCARG(uap, name) && (error = linux_sa_put(SCARG(uap, name))))
+		return error;
+
+	return 0;
 }
