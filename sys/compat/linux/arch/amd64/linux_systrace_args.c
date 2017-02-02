@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.8 2017/01/16 00:11:09 christos Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.9 2017/02/02 15:36:12 christos Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1740,6 +1740,16 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[2] = (intptr_t) SCARG(p, times); /* struct linux_timespec * */
 		iarg[3] = SCARG(p, flag); /* int */
+		*n_args = 4;
+		break;
+	}
+	/* linux_sys_accept4 */
+	case 288: {
+		const struct linux_sys_accept4_args *p = params;
+		iarg[0] = SCARG(p, s); /* int */
+		uarg[1] = (intptr_t) SCARG(p, name); /* struct osockaddr * */
+		uarg[2] = (intptr_t) SCARG(p, anamelen); /* int * */
+		iarg[3] = SCARG(p, flags); /* int */
 		*n_args = 4;
 		break;
 	}
@@ -4656,6 +4666,25 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_accept4 */
+	case 288:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct osockaddr *";
+			break;
+		case 2:
+			p = "int *";
+			break;
+		case 3:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_dup3 */
 	case 292:
 		switch(ndx) {
@@ -5693,6 +5722,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_utimensat */
 	case 280:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_accept4 */
+	case 288:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
