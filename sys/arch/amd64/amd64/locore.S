@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.118 2016/12/17 13:49:05 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.119 2017/02/02 19:12:09 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -647,7 +647,7 @@ no_NOX:
 	 */
 	leal	(PROC0_PTP1_OFF)(%esi),%ebx
 
-	/* Skip the first MB. */
+	/* Skip the area below the kernel text. */
 	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%ecx
 	shrl	$PGSHIFT,%ecx
 	fillkpt_blank
