@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.69 2017/01/21 05:54:06 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.70 2017/02/02 10:05:35 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.69 2017/01/21 05:54:06 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.70 2017/02/02 10:05:35 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -7223,9 +7223,21 @@ static int
 iwm_intr(void *arg)
 {
 	struct iwm_softc *sc = arg;
-	int r1, r2;
 
+	/* Disable interrupts */
 	IWM_WRITE(sc, IWM_CSR_INT_MASK, 0);
+
+	softint_schedule(sc->sc_soft_ih);
+	return 1;
+}
+
+static void
+iwm_softintr(void *arg)
+{
+	struct iwm_softc *sc = arg;
+	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
+	uint32_t r1, r2;
+	int isperiodic = 0, s;
 
 	if (__predict_true(sc->sc_flags & IWM_FLAG_USE_ICT)) {
 		uint32_t *ict = sc->ict_dma.vaddr;
@@ -7234,8 +7246,8 @@ iwm_intr(void *arg)
 		bus_dmamap_sync(sc->sc_dmat, sc->ict_dma.map,
 		    0, sc->ict_dma.size, BUS_DMASYNC_POSTREAD);
 		tmp = htole32(ict[sc->ict_cur]);
-		if (!tmp)
-			goto out_ena;
+		if (tmp == 0)
+			goto out_ena;	/* Interrupt not for us. */
 
 		/*
 		 * ok, there was something.  keep plowing until we have all.
@@ -7262,37 +7274,17 @@ iwm_intr(void *arg)
 	} else {
 		r1 = IWM_READ(sc, IWM_CSR_INT);
 		if (r1 == 0xffffffff || (r1 & 0xfffffff0) == 0xa5a5a5a0)
-			goto out;
+			return;	/* Hardware gone! */
 		r2 = IWM_READ(sc, IWM_CSR_FH_INT_STATUS);
 	}
 	if (r1 == 0 && r2 == 0) {
-		goto out_ena;
+		goto out_ena;	/* Interrupt not for us. */
 	}
 
 	/* Acknowledge interrupts. */
 	IWM_WRITE(sc, IWM_CSR_INT, r1 | ~sc->sc_intmask);
 	if (__predict_false(!(sc->sc_flags & IWM_FLAG_USE_ICT)))
 		IWM_WRITE(sc, IWM_CSR_FH_INT_STATUS, r2);
-
-	atomic_or_32(&sc->sc_soft_flags, r1);
-	softint_schedule(sc->sc_soft_ih);
-	return 1;
-
- out_ena:
-	iwm_restore_interrupts(sc);
- out:
-	return 0;
-}
-
-static void
-iwm_softintr(void *arg)
-{
-	struct iwm_softc *sc = arg;
-	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
-	uint32_t r1;
-	int isperiodic = 0, s;
-
-	r1 = atomic_swap_32(&sc->sc_soft_flags, 0);
 
 	if (r1 & IWM_CSR_INT_BIT_SW_ERR) {
 #ifdef IWM_DEBUG
@@ -7363,6 +7355,7 @@ iwm_softintr(void *arg)
 			    IWM_CSR_INT_PERIODIC_ENA);
 	}
 
+out_ena:
 	iwm_restore_interrupts(sc);
 }
 
