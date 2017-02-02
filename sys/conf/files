@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1168 2016/12/26 23:12:33 pgoyette Exp $
+#	$NetBSD: files,v 1.1169 2017/02/02 19:50:35 macallan Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -1213,7 +1213,7 @@ device	igsfb: wsemuldisplaydev, rasops8, vcons, videomode
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
 
-device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
+device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode, glyphcache
 file	dev/ic/ct65550.c		chipsfb
 defflag	opt_chipsfb.h	CHIPSFB_DEBUG
 defflag	opt_chipsfb.h	CHIPSFB_WAIT
