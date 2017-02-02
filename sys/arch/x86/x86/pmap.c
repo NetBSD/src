@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.238 2017/02/02 08:57:04 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.239 2017/02/02 17:37:49 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.238 2017/02/02 08:57:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.239 2017/02/02 17:37:49 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1595,7 +1595,7 @@ pmap_remap_largepages(void)
 	paddr_t pa;
 
 	/* Remap the kernel text using large pages. */
-	kva = KERNBASE;
+	kva = rounddown((vaddr_t)KERNTEXTOFF, NBPD_L2);
 	kva_end = rounddown((vaddr_t)&__rodata_start, NBPD_L1);
 	pa = kva - KERNBASE;
 	for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
