@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.28 2017/02/02 07:36:45 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.29 2017/02/02 07:40:51 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -679,7 +679,7 @@ smsc_start_locked(struct ifnet *ifp)
 void
 smsc_tick(void *xsc)
 {
-	struct smsc_softc *sc = xsc;
+	struct smsc_softc * const sc = xsc;
 
 	if (sc == NULL)
 		return;
@@ -1225,22 +1225,20 @@ smsc_detach(device_t self, int flags)
 void
 smsc_tick_task(void *xsc)
 {
-	int			 s;
-	struct smsc_softc	*sc = xsc;
-	struct ifnet		*ifp;
-	struct mii_data		*mii;
+	struct smsc_softc * const sc = xsc;
 
 	if (sc == NULL)
 		return;
 
 	if (sc->sc_dying)
 		return;
-	ifp = &sc->sc_ec.ec_if;
-	mii = &sc->sc_mii;
+
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	struct mii_data	* const mii = &sc->sc_mii;
 	if (mii == NULL)
 		return;
 
-	s = splnet();
+	const int s = splnet();
 
 	mii_tick(mii);
 	if ((sc->sc_flags & SMSC_FLAG_LINK) == 0)
