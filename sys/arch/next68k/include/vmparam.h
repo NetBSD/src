@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.24 2017/02/02 21:50:23 rin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25 2017/02/02 21:53:54 rin Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -77,7 +77,7 @@
  * Virtual memory related constants, all in bytes
  */
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(8*1024*1024)		/* max text size */
+#define	MAXTSIZ		(32*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
 #define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
