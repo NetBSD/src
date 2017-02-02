@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwnreg.h,v 1.3 2017/01/24 10:18:33 nonaka Exp $	*/
+/*	$NetBSD: if_rtwnreg.h,v 1.4 2017/02/02 10:05:35 nonaka Exp $	*/
 /*	$OpenBSD: if_rtwnreg.h,v 1.3 2015/06/14 08:02:47 stsp Exp $	*/
 
 /*-
@@ -1287,7 +1287,7 @@ struct rtwn_softc {
 	bus_space_handle_t		sc_sh;
 	bus_size_t			sc_mapsize;
 	int				sc_cap_off;
-
+	void				*sc_soft_ih;
 
 	struct callout			scan_to;
 	struct callout			calib_to;

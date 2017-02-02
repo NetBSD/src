@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560var.h,v 1.9 2012/02/18 13:38:36 drochner Exp $	*/
+/*	$NetBSD: rt2560var.h,v 1.10 2017/02/02 10:05:35 nonaka Exp $	*/
 /*	$OpenBSD: rt2560var.h,v 1.2 2006/01/14 12:43:27 damien Exp $  */
 
 /*-
@@ -109,6 +109,7 @@ struct rt2560_softc {
 	bus_dma_tag_t		sc_dmat;
 	bus_space_tag_t		sc_st;
 	bus_space_handle_t	sc_sh;
+	void			*sc_soft_ih;
 
 	struct sysctllog	*sc_sysctllog;
 
