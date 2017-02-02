@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 2017/02/02 21:17:40 uwe Exp $	*/
+/*	$NetBSD: pmap.c,v 1.82 2017/02/02 21:35:29 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2017/02/02 21:17:40 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2017/02/02 21:35:29 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,8 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 	for (bank = uvm_physseg_get_first();
 	     uvm_physseg_valid_p(bank);
 	     bank = uvm_physseg_get_next(bank)) {
-		if (npage <= uvm_physseg_get_end(bank) - uvm_physseg_get_start(bank))
+		if (npage <= uvm_physseg_get_avail_end(bank)
+				- uvm_physseg_get_avail_start(bank))
 			break;
 	}
 
