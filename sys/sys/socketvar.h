@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.142 2017/02/02 15:37:42 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.143 2017/02/02 18:01:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -247,6 +247,7 @@ struct lwp;
 struct msghdr;
 struct stat;
 struct knote;
+struct sockaddr_big;
 
 struct	mbuf *getsombuf(struct socket *, int);
 
