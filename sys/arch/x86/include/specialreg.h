@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.91 2016/12/08 06:11:03 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.92 2017/02/02 05:43:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -292,7 +292,7 @@
 #define CPUID_DSPM_HWP_ACTWIN  __BIT(9)	/* HWP Activity Window */
 #define CPUID_DSPM_HWP_EPP __BIT(10)	/* HWP Energy Performance Preference */
 #define CPUID_DSPM_HWP_PLR __BIT(11)	/* HWP Package Level Request */
-#define CPUID_DSPM_HDC	__BIT(13)	/* HDC */
+#define CPUID_DSPM_HDC	__BIT(13)	/* Hardware Duty Cycling */
 
 #define CPUID_DSPM_FLAGS	"\20" \
 	"\1" "DTS"	"\2" "IDA"	"\3" "ARAT" 			\
