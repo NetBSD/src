@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.141 2016/09/13 07:01:08 martin Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.142 2017/02/02 15:37:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -346,6 +346,8 @@ int	sockopt_setmbuf(struct sockopt *, struct mbuf *);
 struct mbuf *sockopt_getmbuf(const struct sockopt *);
 
 int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
+int	copyout_sockname_sb(struct sockaddr *, unsigned int *,
+    int , struct sockaddr_big *);
 int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);
 void	free_control_mbuf(struct lwp *, struct mbuf *, struct mbuf *);
 
