@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.96 2017/02/01 04:18:43 knakahara Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.97 2017/02/02 05:38:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1161,7 +1161,7 @@ struct livengood_tcpip_ctxdesc {
 #define	WUC_APME		0x00000001 /* APM Enable */
 #define	WUC_PME_EN		0x00000002 /* PME Enable */
 
-#define	WMREG_WUFC	0x5808	/* Wakeup Filter COntrol */
+#define	WMREG_WUFC	0x5808	/* Wakeup Filter Control */
 #define WUFC_MAG		0x00000002 /* Magic Packet Wakeup Enable */
 #define WUFC_EX			0x00000004 /* Directed Exact Wakeup Enable */
 #define WUFC_MC			0x00000008 /* Directed Multicast Wakeup En */
